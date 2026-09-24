@@ -9177,6 +9177,12 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 		return errDomainBusy
 	}
 	defer unlock()
+	// The entry's former names keep its copy rule unless a container installed
+	// under one follows its own.
+	installed, err := s.installedContainers(ctx)
+	if err != nil {
+		return fmt.Errorf("nothing was deleted: the installed containers could not be listed: %w", err)
+	}
 	if protection == appendOnlyNone {
 		s.unlockStale(ctx, repo, mode)
 	}
@@ -9227,7 +9233,7 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 
 	// Remove the target row + its run history so the container disappears from
 	// the "not installed" list once its backups are gone.
-	if err := s.store.DeleteTarget(name); err != nil {
+	if err := s.store.DeleteTarget(name, installed); err != nil {
 		return fmt.Errorf("delete target: %w", err)
 	}
 	return nil
@@ -9285,7 +9291,11 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 		if _, sErr := s.snapshotsForTag(ctx, repo, s.repoModeFor(settings, "vms", source, repo), "vm:"+name); sErr != nil {
 			return sErr
 		}
-		if dErr := s.refuseDefinedVM(ctx, settings, name); dErr != nil {
+		installed, lErr := s.installedVMs(ctx, settings)
+		if lErr != nil {
+			return fmt.Errorf("%q keeps its entry until the VMs on the host can be listed: %w", name, lErr)
+		}
+		if dErr := refuseDefinedVM(installed, name); dErr != nil {
 			return dErr
 		}
 		unlock, ok := s.tryLockDomainFor("vms", "delete")
@@ -9296,7 +9306,7 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 		if err := refuseDeleteWithPartialIdentity(name, s.vmIdentity(name)); err != nil {
 			return err
 		}
-		if err := s.store.DeleteVMTarget(name); err != nil {
+		if err := s.store.DeleteVMTarget(name, installed); err != nil {
 			return fmt.Errorf("delete vm target: %w", err)
 		}
 		return nil
@@ -9306,6 +9316,12 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 		return errDomainBusy
 	}
 	defer unlock()
+	// The entry's former names keep its copy rule unless a VM defined under
+	// one follows its own.
+	installed, err := s.installedVMs(ctx, settings)
+	if err != nil {
+		return fmt.Errorf("nothing was deleted: the VMs on the host could not be listed: %w", err)
+	}
 	mode := s.repoModeFor(settings, "vms", source, repo)
 	s.unlockStale(ctx, repo, mode)
 
@@ -9327,7 +9343,7 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 		}
 	}
 
-	if err := s.store.DeleteVMTarget(name); err != nil {
+	if err := s.store.DeleteVMTarget(name, installed); err != nil {
 		return fmt.Errorf("delete vm target: %w", err)
 	}
 	return nil
@@ -9349,7 +9365,11 @@ func (s *Service) ForgetVMTarget(ctx context.Context, name string) error {
 	if err != nil {
 		return fmt.Errorf("read settings: %w", err)
 	}
-	if err := s.refuseDefinedVM(ctx, settings, name); err != nil {
+	installed, err := s.installedVMs(ctx, settings)
+	if err != nil {
+		return fmt.Errorf("%q keeps its entry until the VMs on the host can be listed: %w", name, err)
+	}
+	if err := refuseDefinedVM(installed, name); err != nil {
 		return err
 	}
 	unlock, ok := s.tryLockDomainFor("vms", "delete")
@@ -9364,7 +9384,7 @@ func (s *Service) ForgetVMTarget(ctx context.Context, name string) error {
 	if err := s.refuseRowRemovalWithBackups(ctx, settings, "vms", name, repo, s.vmIdentity(name)); err != nil {
 		return err
 	}
-	if err := s.store.DeleteVMTarget(name); err != nil {
+	if err := s.store.DeleteVMTarget(name, installed); err != nil {
 		return fmt.Errorf("forget vm target: %w", err)
 	}
 	return nil
@@ -9405,24 +9425,46 @@ func refuseDeleteWithPartialIdentity(name string, id entryIdentity) error {
 	return fmt.Errorf("nothing was deleted: the backups of %q could not be checked: %w", name, id.readErr)
 }
 
-// refuseDefinedVM answers an error when the VM is defined on the host, asked the
-// way ListVMs asks: libvirt only while VMs are enabled, because with VMs off
-// every entry is listed as not installed. For the routes that remove only a VM's
-// entry, so none of them can drop the settings and history of a live VM.
-func (s *Service) refuseDefinedVM(ctx context.Context, settings store.Settings, name string) error {
+// refuseDefinedVM answers an error when name is among installed, for the routes
+// that remove only a VM's entry, so none of them can drop the settings and
+// history of a live VM.
+func refuseDefinedVM(installed map[string]bool, name string) error {
+	if installed[name] {
+		return fmt.Errorf("VM %q is defined on the host, so its entry stays", name)
+	}
+	return nil
+}
+
+// installedContainers is the set of containers Docker lists, the ones the
+// container list shows as installed.
+func (s *Service) installedContainers(ctx context.Context) (map[string]bool, error) {
+	infos, err := s.docker.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	installed := make(map[string]bool, len(infos))
+	for _, c := range infos {
+		installed[c.Name] = true
+	}
+	return installed, nil
+}
+
+// installedVMs is the set of VMs the VM list shows as installed: the ones
+// libvirt defines while VMs are enabled, and none while they are off, when
+// every entry is listed as not installed.
+func (s *Service) installedVMs(ctx context.Context, settings store.Settings) (map[string]bool, error) {
+	installed := map[string]bool{}
 	if !settings.VMsEnabled {
-		return nil
+		return installed, nil
 	}
 	infos, err := s.virsh.List(ctx)
 	if err != nil {
-		return fmt.Errorf("list vms: virsh: %w", err)
+		return nil, err
 	}
 	for _, vm := range infos {
-		if vm.Name == name {
-			return fmt.Errorf("VM %q is defined on the host, so its entry stays", name)
-		}
+		installed[vm.Name] = true
 	}
-	return nil
+	return installed, nil
 }
 
 // ForgetTarget removes a container's target row + run history WITHOUT touching
@@ -9435,14 +9477,12 @@ func (s *Service) refuseDefinedVM(ctx context.Context, settings store.Settings, 
 // too while the entry owns a backup anywhere it replicates to
 // (refuseRowRemovalWithBackups).
 func (s *Service) ForgetTarget(ctx context.Context, name string) error {
-	infos, err := s.docker.List(ctx)
+	installed, err := s.installedContainers(ctx)
 	if err != nil {
 		return fmt.Errorf("list containers: %w", err)
 	}
-	for _, c := range infos {
-		if c.Name == name {
-			return fmt.Errorf("container %q is installed, so its entry stays", name)
-		}
+	if installed[name] {
+		return fmt.Errorf("container %q is installed, so its entry stays", name)
 	}
 	unlock, ok := s.tryLockDomainFor("containers", "delete")
 	if !ok {
@@ -9460,7 +9500,7 @@ func (s *Service) ForgetTarget(ctx context.Context, name string) error {
 	if err := s.refuseRowRemovalWithBackups(ctx, settings, "containers", name, repo, s.containerIdentity(name)); err != nil {
 		return err
 	}
-	if err := s.store.DeleteTarget(name); err != nil {
+	if err := s.store.DeleteTarget(name, installed); err != nil {
 		return fmt.Errorf("forget target: %w", err)
 	}
 	return nil
@@ -9708,13 +9748,9 @@ func (s *Service) TakeOverContainer(ctx context.Context, oldName, newName string
 		return errDomainBusy
 	}
 	defer unlock()
-	infos, err := s.docker.List(ctx)
+	live, err := s.installedContainers(ctx)
 	if err != nil {
 		return fmt.Errorf("list containers: %w", err)
-	}
-	live := make(map[string]bool, len(infos))
-	for _, c := range infos {
-		live[c.Name] = true
 	}
 	if !live[newName] {
 		return fmt.Errorf("container %q is not installed", newName)
@@ -9771,7 +9807,7 @@ func (s *Service) TakeOverContainer(ctx context.Context, oldName, newName string
 			}
 			return fmt.Errorf("%q already has its own configured entry (%s), refusing to delete it; unlink or remove it yourself first", newName, strings.Join(labels, ", "))
 		}
-		if err := s.store.DeleteTarget(newName); err != nil {
+		if err := s.store.DeleteTarget(newName, live); err != nil {
 			return fmt.Errorf("remove the empty entry of %q: %w", newName, err)
 		}
 	}
@@ -9884,13 +9920,9 @@ func (s *Service) UnlinkContainerAlias(ctx context.Context, oldName string) erro
 	defer unlock()
 	// Under the lock, like the takeover gate: a backup of a machine under
 	// oldName landing between these checks and the unlink would slip past them.
-	infos, err := s.docker.List(ctx)
+	live, err := s.installedContainers(ctx)
 	if err != nil {
 		return fmt.Errorf("%q stays linked until the installed containers can be listed: %w", oldName, err)
-	}
-	live := make(map[string]bool, len(infos))
-	for _, c := range infos {
-		live[c.Name] = true
 	}
 	if live[oldName] && live[currentName] {
 		return fmt.Errorf("%q stays linked: another container is installed under that name; rename that container first", oldName)
@@ -9913,7 +9945,7 @@ func (s *Service) UnlinkContainerAlias(ctx context.Context, oldName string) erro
 	if err := s.dropLinkRecords("container", settings, currentName, ownRepo, tg.Definition); err != nil {
 		return err
 	}
-	if err := s.store.UnlinkAlias(oldName, newDefinition); err != nil {
+	if err := s.store.UnlinkAlias(oldName, newDefinition, live); err != nil {
 		return err
 	}
 	s.relistAfterUnlink("containers", "container:"+currentName)

@@ -122,6 +122,16 @@ func (e entryTable) carries(tx *sql.Tx, name string) (bool, error) {
 	return n > 0, nil
 }
 
+// holds reports whether something answers to name today: a row of e, or a
+// machine in installed, the names the host reports for e's domain. A container
+// or VM has no row until its first backup, yet its card can carry a rule.
+func (e entryTable) holds(tx *sql.Tx, name string, installed map[string]bool) (bool, error) {
+	if installed[name] {
+		return true, nil
+	}
+	return e.carries(tx, name)
+}
+
 // renameWithAlias moves the entry of e on oldName to newName and links
 // oldName to it, in one transaction; see RenameTargetWithAlias. A VM alias
 // keeps the definition the entry had under oldName, and a VM row takes uuid.
@@ -186,7 +196,7 @@ func (r *Repo) renameWithAlias(e entryTable, oldName, newName, newDefinition, uu
 // unlinkAlias moves the entry of e that oldName is linked to back onto
 // oldName and removes the alias, in one transaction; see UnlinkAlias. A VM
 // row takes uuid.
-func (r *Repo) unlinkAlias(e entryTable, oldName, newDefinition, uuid string) error {
+func (r *Repo) unlinkAlias(e entryTable, oldName, newDefinition, uuid string, installed map[string]bool) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return fmt.Errorf("unlink %q: %w", oldName, err)
@@ -219,7 +229,7 @@ func (r *Repo) unlinkAlias(e entryTable, oldName, newDefinition, uuid string) er
 	}
 	// The snapshots taken under current while linked stay the entry's, and
 	// nothing links current to it any more.
-	if err := keepRuleOnNameTx(tx, e, oldName, current); err != nil {
+	if err := keepRuleOnNameTx(tx, e, oldName, current, installed); err != nil {
 		return fmt.Errorf("unlink %q: %w", oldName, err)
 	}
 	if _, err := tx.Exec(`DELETE FROM target_aliases WHERE domain = ? AND old_name = ?`, e.domain, oldName); err != nil {

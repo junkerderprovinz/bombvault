@@ -98,7 +98,7 @@ func (s *Service) TakeOverVM(ctx context.Context, oldName, newName string) error
 		}
 		newDefinition = back.PrevDefinition
 	}
-	if err := s.removeEmptyVMRow(ctx, newName); err != nil {
+	if err := s.removeEmptyVMRow(ctx, newName, defined); err != nil {
 		return err
 	}
 	// The rule check and the definition mirrors follow as in TakeOverContainer.
@@ -176,7 +176,7 @@ func (s *Service) UnlinkVMAlias(ctx context.Context, oldName string) error {
 	if err := s.dropLinkRecords("vm", settings, tg.Name, ownRepo, tg.Definition); err != nil {
 		return err
 	}
-	if err := s.store.UnlinkVMAlias(oldName, alias.PrevDefinition, definitionUUID(alias.PrevDefinition)); err != nil {
+	if err := s.store.UnlinkVMAlias(oldName, alias.PrevDefinition, definitionUUID(alias.PrevDefinition), defined); err != nil {
 		return err
 	}
 	s.relistAfterUnlink("vms", "vm:"+tg.Name)
@@ -254,8 +254,8 @@ func (s *Service) refreshedVMDefinition(ctx context.Context, def vmDefinition, u
 
 // removeEmptyVMRow deletes the row on name when it has no backups, nothing
 // configured and no copy rule, so the entry can move there, and refuses any
-// other row.
-func (s *Service) removeEmptyVMRow(ctx context.Context, name string) error {
+// other row. installed are the VMs the host defines.
+func (s *Service) removeEmptyVMRow(ctx context.Context, name string, installed map[string]bool) error {
 	tg, err := s.store.GetVMTargetByName(name)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -280,7 +280,7 @@ func (s *Service) removeEmptyVMRow(ctx context.Context, name string) error {
 	if has {
 		return fmt.Errorf("%q already has its own entry with backups", name)
 	}
-	if err := s.store.DeleteVMTarget(name); err != nil {
+	if err := s.store.DeleteVMTarget(name, installed); err != nil {
 		return fmt.Errorf("remove the empty entry of %q: %w", name, err)
 	}
 	return nil

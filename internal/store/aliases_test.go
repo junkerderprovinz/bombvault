@@ -325,7 +325,7 @@ func TestUnlinkAlias(t *testing.T) {
 		t.Fatalf("RenameTargetWithAlias: %v", err)
 	}
 
-	if err := st.UnlinkAlias("radarr-movies", ""); err != nil {
+	if err := st.UnlinkAlias("radarr-movies", "", nil); err != nil {
 		t.Fatalf("UnlinkAlias: %v", err)
 	}
 	got, err := st.GetTargetByContainer("radarr-movies")
@@ -361,7 +361,7 @@ func TestUnlinkAliasWritesDefinitionAtomically(t *testing.T) {
 	if err := st.RenameTargetWithAlias("radarr-movies", "radarr", "as-radarr"); err != nil {
 		t.Fatalf("RenameTargetWithAlias: %v", err)
 	}
-	if err := st.UnlinkAlias("radarr-movies", "as-radarr-movies"); err != nil {
+	if err := st.UnlinkAlias("radarr-movies", "as-radarr-movies", nil); err != nil {
 		t.Fatalf("UnlinkAlias: %v", err)
 	}
 	got, err := st.GetTargetByContainer("radarr-movies")
@@ -395,7 +395,7 @@ func TestUnlinkAliasRefusesOccupiedName(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := st.UnlinkAlias("radarr-movies", ""); err == nil {
+	if err := st.UnlinkAlias("radarr-movies", "", nil); err == nil {
 		t.Fatal("a name that has since been reused by a different entry must be refused")
 	}
 
@@ -430,7 +430,7 @@ func TestUnlinkAliasLeavesAVMsFormerNameAlone(t *testing.T) {
 	if err := st.RenameVMTargetWithAlias("windows-11", "win11", "", ""); err != nil {
 		t.Fatalf("RenameVMTargetWithAlias: %v", err)
 	}
-	if err := st.UnlinkAlias("windows-11", ""); err == nil {
+	if err := st.UnlinkAlias("windows-11", "", nil); err == nil {
 		t.Fatal("UnlinkAlias must not unlink a VM's former name")
 	}
 	if a, err := st.AliasByOldName("vm", "windows-11"); err != nil || a.TargetID != vm.ID {
@@ -453,7 +453,7 @@ func TestUnlinkAliasRefusesAnAliasWhoseEntryIsGone(t *testing.T) {
 	if _, err := st.AddAliasAt("container", "radarr-movies", "no-such-entry", 100); err != nil {
 		t.Fatal(err)
 	}
-	if err := st.UnlinkAlias("radarr-movies", ""); err == nil {
+	if err := st.UnlinkAlias("radarr-movies", "", nil); err == nil {
 		t.Fatal("an unlink that moves no row back must fail")
 	}
 	if _, err := st.AliasByOldName("container", "radarr-movies"); err != nil {
@@ -470,7 +470,7 @@ func TestUnlinkAliasRefusesUnknownName(t *testing.T) {
 	}
 	st := store.New(db)
 
-	if err := st.UnlinkAlias("never-linked", ""); err == nil {
+	if err := st.UnlinkAlias("never-linked", "", nil); err == nil {
 		t.Fatal("an unknown old name must be refused")
 	}
 }
@@ -492,7 +492,7 @@ func TestDeleteTargetRemovesItsOwnAliases(t *testing.T) {
 		t.Fatalf("RenameTargetWithAlias: %v", err)
 	}
 
-	if err := st.DeleteTarget("radarr"); err != nil {
+	if err := st.DeleteTarget("radarr", nil); err != nil {
 		t.Fatalf("DeleteTarget: %v", err)
 	}
 	if _, err := st.GetTargetByContainer("radarr"); !errors.Is(err, sql.ErrNoRows) {
@@ -531,7 +531,7 @@ func TestDeleteTargetLeavesUnrelatedAliasAlone(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := st.DeleteTarget("radarr-movies"); err != nil {
+	if err := st.DeleteTarget("radarr-movies", nil); err != nil {
 		t.Fatalf("DeleteTarget: %v", err)
 	}
 	alias, err := st.AliasByOldName("container", "radarr-movies")
@@ -562,7 +562,7 @@ func TestDeleteTargetLeavesAVMAliasWithTheSameIDAlone(t *testing.T) {
 	if _, err := st.AddAliasAt("vm", "windows-11", tg.ID, 100); err != nil {
 		t.Fatal(err)
 	}
-	if err := st.DeleteTarget("radarr"); err != nil {
+	if err := st.DeleteTarget("radarr", nil); err != nil {
 		t.Fatalf("DeleteTarget: %v", err)
 	}
 	if _, err := st.AliasByOldName("vm", "windows-11"); err != nil {

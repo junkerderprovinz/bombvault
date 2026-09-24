@@ -90,6 +90,95 @@ func TestAnUnlinkKeepsTheBackupsOfTheLinkedPeriodOutOfTheTarget(t *testing.T) {
 	}
 }
 
+// Beside B2, which the containers default leaves out, db copies everywhere so
+// a replication shows it ran.
+func b2OutByDefault(t *testing.T) (*placementFixture, store.OffsiteTarget) {
+	t.Helper()
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.listing("containers", b2.ID, 50)
+	f.setDefault("containers", "", b2.ID)
+	f.container("db", "")
+	f.rule("containers", "container:db")
+	return f, b2
+}
+
+func TestAnUnlinkLeavesNoRuleOnALiveContainerUnderTheNameItLeaves(t *testing.T) {
+	f, b2 := b2OutByDefault(t)
+	f.container("nginx", "")
+	f.rule("containers", "container:nginx")
+	f.dock.installed = map[string]bool{"web": true}
+	ctx := context.Background()
+	if err := f.svc.TakeOverContainer(ctx, "nginx", "web"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+
+	if err := f.svc.UnlinkContainerAlias(ctx, "nginx"); err != nil {
+		t.Fatalf("UnlinkContainerAlias: %v", err)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:web"); ok {
+		t.Fatalf("web, installed at the unlink, took the rule %v", skip)
+	}
+	later := time.Now().Add(10 * time.Second).Unix()
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0004", later, "container:web"),
+		snap("aaaa0005", later, "container:db"))
+	if err := f.svc.ReplicateOffsite(ctx, "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"aaaa0005"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+func TestADeleteLeavesNoRuleOnALiveContainerUnderAFormerName(t *testing.T) {
+	f, b2 := b2OutByDefault(t)
+	f.container("nginx", "")
+	f.rule("containers", "container:nginx")
+	f.dock.installed = map[string]bool{"web": true}
+	ctx := context.Background()
+	if err := f.svc.TakeOverContainer(ctx, "nginx", "web"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	f.dock.installed = map[string]bool{"nginx": true}
+
+	if err := f.svc.DeleteBackups(ctx, "web", "local"); err != nil {
+		t.Fatalf("DeleteBackups: %v", err)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:nginx"); ok {
+		t.Fatalf("nginx, installed without a row, took the rule %v", skip)
+	}
+	f.openContainer("nginx")
+	later := time.Now().Add(10 * time.Second).Unix()
+	f.hold(f.domainPath("containers"),
+		snap("bbbb0001", later, "container:nginx"),
+		snap("bbbb0002", later, "container:db"))
+	if err := f.svc.ReplicateOffsite(ctx, "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"bbbb0002"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+func TestADeleteWaitsForTheInstalledContainers(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("web", "")
+	f.hold(f.domainPath("containers"), snap("aaaa0001", 100, "container:web"))
+	f.dock.listErr = errors.New("docker socket unreachable")
+
+	err := f.svc.DeleteBackups(context.Background(), "web", "local")
+	if err == nil || !strings.Contains(err.Error(), "nothing was deleted") {
+		t.Fatalf("DeleteBackups = %v, want a refusal", err)
+	}
+	if _, err := f.st.GetTargetByContainer("web"); err != nil {
+		t.Fatalf("the entry went although the delete was refused: %v", err)
+	}
+	if len(f.eng.deletes) > 0 {
+		t.Fatalf("forgot %v although the delete was refused", f.eng.deletes)
+	}
+}
+
 func TestAFileExportedBeforeATakeoverKeepsTheOldHistoryOutOfTheTarget(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.target("containers", "B2", "b2:bucket/containers")
@@ -297,13 +386,13 @@ func TestAVMTakeoverOntoARowWithOnlyACopyRuleIsACopyRuleRefusal(t *testing.T) {
 	f.vm("win11", "")
 	f.rule("vms", "vm:win11", store.SkipAll)
 
-	if err := f.svc.removeEmptyVMRow(context.Background(), "win11"); !errors.Is(err, store.ErrCopyRuleTaken) {
+	if err := f.svc.removeEmptyVMRow(context.Background(), "win11", nil); !errors.Is(err, store.ErrCopyRuleTaken) {
 		t.Fatalf("err = %v, want ErrCopyRuleTaken", err)
 	}
 	if err := f.st.SetVMInclude("win11", true); err != nil {
 		t.Fatal(err)
 	}
-	err := f.svc.removeEmptyVMRow(context.Background(), "win11")
+	err := f.svc.removeEmptyVMRow(context.Background(), "win11", nil)
 	if errors.Is(err, store.ErrCopyRuleTaken) || err == nil || !strings.Contains(err.Error(), "scheduled, copy rule") {
 		t.Fatalf("err = %v, want a refusal that names both settings", err)
 	}
@@ -314,7 +403,7 @@ func TestAVMTakeoverKeepsTheRowOfANameWithACopyRule(t *testing.T) {
 	f.vm("win11", "")
 	f.rule("vms", "vm:win11", store.SkipAll)
 
-	err := f.svc.removeEmptyVMRow(context.Background(), "win11")
+	err := f.svc.removeEmptyVMRow(context.Background(), "win11", nil)
 	if err == nil || !strings.Contains(err.Error(), "copy rule") {
 		t.Fatalf("err = %v, want a refusal that names the copy rule", err)
 	}
@@ -333,7 +422,7 @@ func TestADeletedEntryKeepsTheHistoryItTookOverOutOfTheTarget(t *testing.T) {
 	if err := f.st.RenameTargetWithAlias("nginx", "web", ""); err != nil {
 		t.Fatal(err)
 	}
-	if err := f.st.DeleteTarget("web"); err != nil {
+	if err := f.st.DeleteTarget("web", nil); err != nil {
 		t.Fatal(err)
 	}
 	f.hold(f.domainPath("containers"),

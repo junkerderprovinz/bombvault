@@ -555,13 +555,18 @@ func (e *placementEngine) Stats(context.Context, string, string, restic.Mode) (r
 	return restic.StatsResult{}, nil
 }
 
-// placementDocker reports the named containers as installed with nothing mounted.
+// placementDocker reports the named containers as installed with nothing
+// mounted, or listErr.
 type placementDocker struct {
 	dockercli.Docker
 	installed map[string]bool
+	listErr   error
 }
 
 func (d *placementDocker) List(context.Context) ([]dockercli.ContainerInfo, error) {
+	if d.listErr != nil {
+		return nil, d.listErr
+	}
 	out := []dockercli.ContainerInfo{}
 	for _, name := range slices.Sorted(maps.Keys(d.installed)) {
 		if d.installed[name] {

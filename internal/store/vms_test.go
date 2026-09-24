@@ -231,7 +231,7 @@ func TestDeleteVMTarget(t *testing.T) {
 	if err := r.FinishRun(runID, "success", "abc123", 1024, ""); err != nil {
 		t.Fatal(err)
 	}
-	if err := r.DeleteVMTarget("deleteme"); err != nil {
+	if err := r.DeleteVMTarget("deleteme", nil); err != nil {
 		t.Fatalf("delete: %v", err)
 	}
 	if _, err := r.GetVMTargetByName("deleteme"); err == nil {
@@ -254,7 +254,7 @@ func TestDeleteVMTargetNotFoundIsNoop(t *testing.T) {
 	r := store.New(db)
 
 	// Deleting a non-existent VM must not error.
-	if err := r.DeleteVMTarget("ghost"); err != nil {
+	if err := r.DeleteVMTarget("ghost", nil); err != nil {
 		t.Fatalf("delete non-existent: %v", err)
 	}
 }
