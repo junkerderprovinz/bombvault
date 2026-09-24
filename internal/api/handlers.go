@@ -6056,7 +6056,8 @@ func (h *Handler) handleForeignClose(w http.ResponseWriter, r *http.Request) {
 // see StartForeignRestore's doc comment. There is no UI for this field yet —
 // it is reachable via a direct API call only; the request fails with a clear,
 // actionable error instead of a deep zfs-receive failure when it's needed but
-// missing.
+// missing. wholeTree, for the zfs domain, restores every dataset of the
+// snapshot's run into its own subfolder of target.
 func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Session   string   `json:"session"`
@@ -6068,11 +6069,21 @@ func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 		Paths     []string `json:"paths"`
 		Overwrite bool     `json:"overwrite"`
 		ZvolPool  string   `json:"zvolPool"`
+		WholeTree bool     `json:"wholeTree"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	started, err := h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target, body.Paths, body.Overwrite, body.ZvolPool)
+	var started bool
+	var err error
+	switch {
+	case body.WholeTree && body.Domain != zfsDomain:
+		err = errors.New("only a ZFS tree can be restored whole")
+	case body.WholeTree:
+		started, err = h.svc.StartForeignRestoreZFSTree(r.Context(), body.Session, body.Item, body.Snapshot, body.Confirm, body.Target)
+	default:
+		started, err = h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target, body.Paths, body.Overwrite, body.ZvolPool)
+	}
 	if err != nil { // synchronous validation failed — nothing was started
 		writeJSON(w, http.StatusBadRequest, failEnvelope(err))
 		return
