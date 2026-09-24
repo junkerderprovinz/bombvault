@@ -64,6 +64,9 @@ func matchSnapshotSummaries(runs []store.UnmeasuredRun, snaps []restic.SnapshotM
 	bySnapshot := make(map[string]string, len(runs))
 	byID := make(map[string]store.UnmeasuredRun, len(runs))
 	for _, run := range runs {
+		if run.Dataset != "" {
+			continue
+		}
 		byID[run.ID] = run
 		if run.SnapshotID != "" {
 			bySnapshot[run.SnapshotID] = run.ID
@@ -124,6 +127,39 @@ func matchSnapshotSummaries(runs []store.UnmeasuredRun, snaps []restic.SnapshotM
 			m.Bytes = &bytes
 		}
 		out[runID] = m
+	}
+	return out, withoutSummary
+}
+
+// matchDatasetSummaries pairs the datasets of ZFS runs with the snapshot each
+// one wrote, and counts the matched snapshots that are too old to carry a
+// summary. The data a dataset added is already on its row.
+func matchDatasetSummaries(runs []store.UnmeasuredRun, snaps []restic.SnapshotMeta) (map[store.ZFSMemberRef]store.RunMetrics, int) {
+	bySnapshot := map[string]store.ZFSMemberRef{}
+	for _, run := range runs {
+		if run.Dataset != "" {
+			bySnapshot[run.SnapshotID] = store.ZFSMemberRef{RunID: run.ID, Dataset: run.Dataset}
+		}
+	}
+	out := map[store.ZFSMemberRef]store.RunMetrics{}
+	withoutSummary := 0
+	for _, snap := range snaps {
+		ref, ok := bySnapshot[snap.ID]
+		if !ok {
+			continue
+		}
+		if snap.Summary == nil {
+			withoutSummary++
+			continue
+		}
+		hasParent := snap.Parent != ""
+		out[ref] = store.RunMetrics{
+			SourceBytes: clampToInt64(snap.Summary.TotalBytesProcessed),
+			SourceFiles: clampToInt64(snap.Summary.TotalFilesProcessed),
+			FilesNew:    clampToInt64(snap.Summary.FilesNew),
+			ResticMS:    max(snap.Summary.BackupEnd.Sub(snap.Summary.BackupStart).Milliseconds(), 0),
+			HasParent:   &hasParent,
+		}
 	}
 	return out, withoutSummary
 }
@@ -240,6 +276,7 @@ func enabledDomains(settings store.Settings) []string {
 		{"flash", settings.FlashEnabled},
 		{"config", settings.ConfigEnabled},
 		{"files", settings.FilesEnabled},
+		{zfsDomain, settings.ZFSEnabled},
 	} {
 		if d.enabled {
 			out = append(out, d.name)
@@ -298,6 +335,15 @@ func (e *anomalyEngine) readSlot(ctx context.Context, settings store.Settings, s
 		e.recordBackfill(record)
 		return false
 	}
+	members, membersWithout := matchDatasetSummaries(pending, snaps)
+	setMembers, err := e.svc.store.SetZFSMemberMetrics(members)
+	if err != nil {
+		record.Error = scrubError(err)
+		e.recordBackfill(record)
+		return false
+	}
+	set += setMembers
+	withoutSummary += membersWithout
 	record.Done = true
 	record.Filled += set
 	record.WithoutSummary += withoutSummary

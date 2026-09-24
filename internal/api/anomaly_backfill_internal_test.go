@@ -92,6 +92,39 @@ func TestMatchSnapshotSummariesKeepsADumpOffItsBackupRun(t *testing.T) {
 	}
 }
 
+// A ZFS run wrote one snapshot per dataset, and each dataset is a series of
+// its own, so each snapshot fills its dataset's row and never the run's.
+func TestMatchDatasetSummariesFillsEachDatasetOfAZFSRun(t *testing.T) {
+	runs := []store.UnmeasuredRun{
+		{ID: "run-z", TargetID: "tree", Kind: "backup", SnapshotID: "snaproot", Dataset: "tank"},
+		{ID: "run-z", TargetID: "tree", Kind: "backup", SnapshotID: "snapmedia", Dataset: "tank/media"},
+		{ID: "run-z", TargetID: "tree", Kind: "backup", SnapshotID: "snapold", Dataset: "tank/old"},
+	}
+	snaps := []restic.SnapshotMeta{
+		meta("snaproot", "older", 1<<30, 50, 1<<20, anomalyNow, 10, "zfs:tank"),
+		meta("snapmedia", "", 800<<30, 9000, 800<<30, anomalyNow, 3600, "zfs:tank/media"),
+		{ID: "snapold", Tags: []string{"zfs:tank/old"}},
+	}
+
+	runMetrics, _ := matchSnapshotSummaries(runs, snaps)
+	if len(runMetrics) != 0 {
+		t.Fatalf("a dataset's snapshot filled the run itself: %+v", runMetrics)
+	}
+
+	members, withoutSummary := matchDatasetSummaries(runs, snaps)
+	root := members[store.ZFSMemberRef{RunID: "run-z", Dataset: "tank"}]
+	if root.SourceBytes != 1<<30 || root.SourceFiles != 50 || root.HasParent == nil || !*root.HasParent {
+		t.Fatalf("root = %+v", root)
+	}
+	media := members[store.ZFSMemberRef{RunID: "run-z", Dataset: "tank/media"}]
+	if media.SourceBytes != 800<<30 || media.HasParent == nil || *media.HasParent {
+		t.Fatalf("media = %+v, want its own figures and no parent", media)
+	}
+	if len(members) != 2 || withoutSummary != 1 {
+		t.Fatalf("members = %+v, %d without a summary; want two filled and one too old", members, withoutSummary)
+	}
+}
+
 func TestMatchSnapshotSummariesClampsABackwardsClock(t *testing.T) {
 	runs := []store.UnmeasuredRun{{ID: "run-c", TargetID: "tg-1", Kind: "backup", SnapshotID: "snapc"}}
 	snaps := []restic.SnapshotMeta{meta("snapc", "older", 1<<30, 5, 1<<20, anomalyNow, -30)}
