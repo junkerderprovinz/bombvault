@@ -466,6 +466,7 @@ const hr: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "posljednji ispis baze nije uspio",
   "coverage.reason.dbDumpOnlyCopyOff": "ispis baze je isključen i druga dosljedna kopija nije poznata",
   "coverage.reason.dbNotScheduled": "baza bez vlastite sigurnosne kopije, pa se nikad ne ispisuje",
+  "coverage.reason.zfsMemberSkipped": "skup podataka koji zadnja sigurnosna kopija njegove zakazane ZFS stavke nije mogla pročitati",
   "diagnostics.heading": "Paket podrške",
   "diagnostics.hint": "Pročišćeni ZIP za prijavu greške: provjera integracije s hostom, vaše postavke s uklonjenim svim tajnama, nedavna izvršavanja, što je sljedeće zakazano, i nedavni zapisnik. To nije sigurnosna kopija postavki i iz njega se ništa ne može vratiti. Traži lozinku za prijavu jer nosi cijelu vašu konfiguraciju.",
   "diagnostics.button": "Preuzmi dijagnostiku",

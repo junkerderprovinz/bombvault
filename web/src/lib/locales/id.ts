@@ -466,6 +466,7 @@ const id: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "dump basis data terakhir gagal",
   "coverage.reason.dbDumpOnlyCopyOff": "dump basis data mati dan tidak ada salinan utuh lain yang diketahui",
   "coverage.reason.dbNotScheduled": "basis data tanpa cadangan sendiri, jadi tidak pernah di-dump",
+  "coverage.reason.zfsMemberSkipped": "set data yang tidak dapat dibaca oleh pencadangan terakhir item ZFS terjadwalnya",
   "diagnostics.heading": "Paket dukungan",
   "diagnostics.hint": "Sebuah ZIP yang disunting untuk laporan bug: pemeriksaan integrasi host, konfigurasi Anda dengan semua rahasia dihapus, eksekusi terbaru, apa yang dijadwalkan berikutnya, dan log terbaru. Ini bukan cadangan konfigurasi dan tidak dapat dipakai untuk memulihkan. Perlu kata sandi masuk, karena berisi seluruh konfigurasi Anda.",
   "diagnostics.button": "Unduh diagnostik",

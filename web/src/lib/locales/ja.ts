@@ -523,6 +523,7 @@ const ja: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "最後のデータベースダンプが失敗しました",
   "coverage.reason.dbDumpOnlyCopyOff": "データベースダンプが無効で、ほかに一貫した控えも見つかりません",
   "coverage.reason.dbNotScheduled": "自身のバックアップがないデータベースなので、ダンプも取られません",
+  "coverage.reason.zfsMemberSkipped": "スケジュールされた ZFS 項目の前回のバックアップで読み取れなかったデータセット",
   "diagnostics.heading": "サポートバンドル",
   "diagnostics.hint": "バグ報告用に秘匿処理を施した ZIP です。ホスト統合チェック、シークレットをすべて取り除いた構成、最近の実行、次にスケジュールされている内容、そして最近のログが入っています。これは構成のバックアップではなく、ここから復元することはできません。構成全体が含まれるため、ログインパスワードが必要です。",
   "diagnostics.button": "診断情報をダウンロード",

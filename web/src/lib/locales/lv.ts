@@ -466,6 +466,7 @@ const lv: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "pēdējā datubāzes izgāztuve neizdevās",
   "coverage.reason.dbDumpOnlyCopyOff": "izgāztuve ir izslēgta, un cita saskanīga kopija nav zināma",
   "coverage.reason.dbNotScheduled": "datubāze bez sava dublējuma, tāpēc tā nekad netiek izgāzta",
+  "coverage.reason.zfsMemberSkipped": "datu kopa, ko tās ieplānotā ZFS vienuma pēdējā dublēšana nevarēja nolasīt",
   "diagnostics.heading": "Atbalsta komplekts",
   "diagnostics.hint": "Anonimizēts ZIP fails kļūdas ziņojumam: saimniekdatora integrācijas pārbaude, jūsu konfigurācija bez jebkādiem noslēpumiem, nesenie izpildījumi, kas ieplānots tālāk, un nesenais žurnāls. Tā nav konfigurācijas rezerves kopija, un no tās nevar atjaunot. Nepieciešama pieteikšanās parole, jo tajā ir visa jūsu konfigurācija.",
   "diagnostics.button": "Lejupielādēt diagnostiku",

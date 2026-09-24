@@ -523,6 +523,7 @@ const zh: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "最近一次数据库转储失败",
   "coverage.reason.dbDumpOnlyCopyOff": "数据库转储已关闭，也没有其他一致的副本",
   "coverage.reason.dbNotScheduled": "没有自己备份的数据库，因此从不转储",
+  "coverage.reason.zfsMemberSkipped": "所属的已计划 ZFS 项目上次备份时未能读取的数据集",
   "diagnostics.heading": "支持包",
   "diagnostics.hint": "用于提交错误报告的脱敏 ZIP 文件，包含主机集成检查、已移除全部机密的配置、最近运行、计划中的下一项任务，以及最近的日志。它不是配置备份，也无法用它恢复配置。需要登录密码，因为它携带了你的全部配置。",
   "diagnostics.button": "下载诊断信息",

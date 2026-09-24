@@ -526,6 +526,7 @@ const tr: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "son veritabanı dökümü başarısız oldu",
   "coverage.reason.dbDumpOnlyCopyOff": "veritabanı dökümü kapalı ve başka tutarlı bir kopya bilinmiyor",
   "coverage.reason.dbNotScheduled": "kendi yedeği olmayan bir veritabanı, bu yüzden dökümü hiç alınmıyor",
+  "coverage.reason.zfsMemberSkipped": "zamanlanmış ZFS öğesinin son yedeklemesinin okuyamadığı bir veri kümesi",
   "diagnostics.heading": "Destek paketi",
   "diagnostics.hint": "Hata bildirimine eklemek için gizli bilgileri temizlenmiş bir ZIP: host entegrasyon denetimi, tüm sırları çıkarılmış yapılandırmanız, son çalışmalar, zamanlamada sıradaki iş ve son günlük. Bu bir yapılandırma yedeği değildir ve ondan geri yükleme yapılamaz. Tüm yapılandırmanızı taşıdığı için oturum açma parolası ister.",
   "diagnostics.button": "Tanılamayı indir",

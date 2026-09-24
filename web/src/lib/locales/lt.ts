@@ -466,6 +466,7 @@ const lt: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "paskutinė duomenų bazės išklotinė nepavyko",
   "coverage.reason.dbDumpOnlyCopyOff": "išklotinė išjungta, o kitos nuoseklios kopijos nežinoma",
   "coverage.reason.dbNotScheduled": "duomenų bazė be savo atsarginės kopijos, tad niekada neišklojama",
+  "coverage.reason.zfsMemberSkipped": "duomenų rinkinys, kurio paskutinė suplanuoto ZFS elemento atsarginė kopija negalėjo perskaityti",
   "diagnostics.heading": "Palaikymo rinkinys",
   "diagnostics.hint": "Nuasmenintas ZIP failas klaidos pranešimui: pagrindinio kompiuterio integracijos patikra, jūsų konfigūracija be jokių paslapčių, naujausi vykdymai, kas suplanuota toliau, ir naujausias žurnalas. Tai nėra konfigūracijos atsarginė kopija ir iš jos atkurti negalima. Reikia prisijungimo slaptažodžio, nes jame yra visa jūsų konfigūracija.",
   "diagnostics.button": "Atsisiųsti diagnostiką",

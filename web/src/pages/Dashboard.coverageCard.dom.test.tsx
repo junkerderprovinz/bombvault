@@ -48,6 +48,29 @@ describe("CoverageCard", () => {
     expect(screen.getByText(new RegExp(en["coverage.reason.notSetUp"], "i"))).toBeTruthy();
   });
 
+  it("names a dataset a scheduled ZFS item skipped, with the reason it was skipped", () => {
+    renderCard({
+      total: 1,
+      protected: 1,
+      domains: [
+        {
+          domain: "zfs",
+          enabled: true,
+          total: 1,
+          protected: 1,
+          unprotected: [
+            { name: "cache/appdata/secret", reason: "zfs-member-skipped", code: "key-not-loaded", neverBackedUp: false },
+          ],
+        },
+      ],
+    });
+
+    expect(screen.getByText("cache/appdata/secret")).toBeTruthy();
+    expect(screen.getByText(en["coverage.reason.zfsMemberSkipped"])).toBeTruthy();
+    expect(screen.queryByText(en["coverage.reason.noSchedule"])).toBeNull();
+    expect(screen.getByLabelText(new RegExp(en["zfs.code.key-not-loaded"]))).toBeTruthy();
+  });
+
   it("says everything is protected rather than showing an empty box", () => {
     renderCard({
       total: 3,

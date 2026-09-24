@@ -520,6 +520,7 @@ const nl: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "de laatste databasedump is mislukt",
   "coverage.reason.dbDumpOnlyCopyOff": "de databasedump staat uit en er is geen andere consistente kopie bekend",
   "coverage.reason.dbNotScheduled": "database zonder eigen back-up, dus er wordt nooit een dump gemaakt",
+  "coverage.reason.zfsMemberSkipped": "een dataset die de laatste back-up van zijn geplande ZFS-item niet kon lezen",
   "diagnostics.heading": "Supportpakket",
   "diagnostics.hint": "Een geschoonde ZIP voor een bugrapport: de host-integratiecontrole, je configuratie met elk geheim verwijderd, recente uitvoeringen, wat er als volgende gepland staat, en het recente logboek. Het is geen back-up van je configuratie en er kan niets uit worden teruggezet. Vereist een inlogwachtwoord, omdat het je hele configuratie bevat.",
   "diagnostics.button": "Diagnostiek downloaden",

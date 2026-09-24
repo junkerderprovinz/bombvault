@@ -187,30 +187,33 @@ func TestCoverageZFSItemsAndSkippedMembers(t *testing.T) {
 	if domain.Domain == "" {
 		t.Fatalf("no zfs domain in %+v", report.Domains)
 	}
-	names := map[string]bool{}
+	codes := map[string]string{}
 	for _, item := range domain.Unprotected {
-		names[item.Name] = true
+		codes[item.Name] = item.Code
+		if item.Code != "" && item.Reason != CoverageZFSMemberSkipped {
+			t.Fatalf("%s carries code %q under reason %q", item.Name, item.Code, item.Reason)
+		}
 	}
-	if !names["cache/media"] {
-		t.Fatalf("the item nothing schedules is missing from %v", names)
+	if _, ok := codes["cache/media"]; !ok {
+		t.Fatalf("the item nothing schedules is missing from %v", codes)
 	}
-	for _, wanted := range []string{
-		"cache/appdata/secret (key-not-loaded)",
-		"cache/appdata/broken (backup-failed)",
-		"cache/appdata/hidden (canmount-off)",
+	for dataset, code := range map[string]string{
+		"cache/appdata/secret": "key-not-loaded",
+		"cache/appdata/broken": "backup-failed",
+		"cache/appdata/hidden": "canmount-off",
 	} {
-		if !names[wanted] {
-			t.Fatalf("%s is missing from %v", wanted, names)
+		if codes[dataset] != code {
+			t.Fatalf("%s has code %q in %v, want %q", dataset, codes[dataset], codes, code)
 		}
 	}
 	for _, unwanted := range []string{
-		"cache/appdata/fresh ()",
-		"cache/appdata (backed-up)",
-		"cache/appdata/disk (zvol)",
-		"cache/appdata/struct (canmount-off)",
-		"cache/appdata/cachey (excluded)",
+		"cache/appdata/fresh",
+		"cache/appdata",
+		"cache/appdata/disk",
+		"cache/appdata/struct",
+		"cache/appdata/cachey",
 	} {
-		if names[unwanted] {
+		if _, ok := codes[unwanted]; ok {
 			t.Fatalf("%s must not count as unprotected", unwanted)
 		}
 	}

@@ -466,6 +466,7 @@ const is: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "síðasta gagnagrunnsafritið mistókst",
   "coverage.reason.dbDumpOnlyCopyOff": "slökkt er á gagnagrunnsafritinu og ekkert annað heilt eintak er þekkt",
   "coverage.reason.dbNotScheduled": "gagnagrunnur án eigin öryggisafrits, svo hann er aldrei afritaður",
+  "coverage.reason.zfsMemberSkipped": "gagnasafn sem síðasta afritun áætlaða ZFS-atriðisins gat ekki lesið",
   "diagnostics.heading": "Stuðningspakki",
   "diagnostics.hint": "Ritskoðuð ZIP-skrá fyrir villuskýrslu: samþættingarpróf hýsils, stillingarnar þínar án allra leyndarmála, nýlegar keyrslur, hvað er næst á áætlun og nýlegar skráningar. Þetta er ekki afrit af stillingum og ekki er hægt að endurheimta út frá því. Krefst innskráningarlykilorðs, því það inniheldur allar stillingarnar þínar.",
   "diagnostics.button": "Sækja greiningargögn",

@@ -523,6 +523,7 @@ const vi: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "bản kết xuất cơ sở dữ liệu gần nhất đã thất bại",
   "coverage.reason.dbDumpOnlyCopyOff": "việc kết xuất đang tắt và không biết bản sao nhất quán nào khác",
   "coverage.reason.dbNotScheduled": "cơ sở dữ liệu không có bản sao lưu riêng nên không bao giờ được kết xuất",
+  "coverage.reason.zfsMemberSkipped": "một tập dữ liệu mà lần sao lưu gần nhất của mục ZFS đã lên lịch không đọc được",
   "diagnostics.heading": "Gói hỗ trợ",
   "diagnostics.hint": "Tệp ZIP đã lược bỏ thông tin nhạy cảm để gửi kèm báo cáo lỗi: kiểm tra tích hợp máy chủ, cấu hình của bạn với mọi bí mật đã được gỡ bỏ, các lần chạy gần đây, việc tiếp theo trong lịch trình và nhật ký gần đây. Đây không phải bản sao lưu cấu hình và không thể khôi phục từ nó. Cần mật khẩu đăng nhập, vì tệp mang toàn bộ cấu hình của bạn.",
   "diagnostics.button": "Tải chẩn đoán",

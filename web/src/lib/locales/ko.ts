@@ -523,6 +523,7 @@ const ko: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "마지막 데이터베이스 덤프가 실패했습니다",
   "coverage.reason.dbDumpOnlyCopyOff": "데이터베이스 덤프가 꺼져 있고 다른 일관된 사본도 없습니다",
   "coverage.reason.dbNotScheduled": "자체 백업이 없는 데이터베이스라 덤프도 받지 않습니다",
+  "coverage.reason.zfsMemberSkipped": "예약된 ZFS 항목의 마지막 백업이 읽지 못한 데이터세트",
   "diagnostics.heading": "지원 번들",
   "diagnostics.hint": "버그 신고용으로 민감한 정보를 지운 ZIP입니다. 호스트 통합 확인, 비밀을 모두 제거한 구성, 최근 실행, 다음에 예약된 항목, 최근 로그가 들어 있습니다. 구성 백업이 아니며 이 파일로는 복원할 수 없습니다. 구성 전체가 들어 있으므로 로그인 비밀번호가 필요합니다.",
   "diagnostics.button": "진단 정보 다운로드",

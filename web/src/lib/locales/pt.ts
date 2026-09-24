@@ -523,6 +523,7 @@ const pt: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "o último despejo da base de dados falhou",
   "coverage.reason.dbDumpOnlyCopyOff": "o despejo está desligado e não se conhece outra cópia coerente",
   "coverage.reason.dbNotScheduled": "base de dados sem cópia própria, por isso nunca é despejada",
+  "coverage.reason.zfsMemberSkipped": "um conjunto de dados que a última cópia do seu elemento ZFS agendado não conseguiu ler",
   "diagnostics.heading": "Pacote de suporte",
   "diagnostics.hint": "Um ficheiro ZIP depurado para um relatório de erro: a verificação de integração com o host, a sua configuração com todos os segredos removidos, as execuções recentes, o que está agendado a seguir e o registo recente. Não é uma cópia de segurança da configuração e não pode ser usado para restaurar. Requer uma palavra-passe de acesso, porque transporta toda a sua configuração.",
   "diagnostics.button": "Descarregar diagnóstico",

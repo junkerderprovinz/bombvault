@@ -526,6 +526,7 @@ const fr: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "le dernier export SQL a échoué",
   "coverage.reason.dbDumpOnlyCopyOff": "l'export SQL est désactivé et aucune autre copie cohérente n'est connue",
   "coverage.reason.dbNotScheduled": "base de données sans sauvegarde propre, donc jamais exportée",
+  "coverage.reason.zfsMemberSkipped": "un jeu de données que la dernière sauvegarde de son élément ZFS planifié n'a pas pu lire",
   "diagnostics.heading": "Paquet d'assistance",
   "diagnostics.hint": "Un ZIP expurgé pour un rapport de bogue : la vérification d'intégration hôte, votre configuration avec tous les secrets retirés, les exécutions récentes, ce qui est planifié ensuite, et le journal récent. Ce n'est pas une sauvegarde de configuration et il ne permet aucune restauration. Il demande un mot de passe de connexion, car il contient toute votre configuration.",
   "diagnostics.button": "Télécharger les diagnostics",

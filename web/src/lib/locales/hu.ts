@@ -526,6 +526,7 @@ const hu: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "a legutóbbi adatbázis-mentés meghiúsult",
   "coverage.reason.dbDumpOnlyCopyOff": "az adatbázis-mentés ki van kapcsolva, és más ép másolatról nincs tudomás",
   "coverage.reason.dbNotScheduled": "adatbázis saját mentés nélkül, így soha nem készül róla mentés",
+  "coverage.reason.zfsMemberSkipped": "adatkészlet, amelyet az ütemezett ZFS-elemének legutóbbi mentése nem tudott beolvasni",
   "diagnostics.heading": "Támogatási csomag",
   "diagnostics.hint": "Egy kitakart ZIP hibajelentéshez: a hosztellenőrzés, a beállításaid minden titok nélkül, a legutóbbi futások, a következő ütemezett feladatok és a legutóbbi napló. Ez nem konfigurációmentés, és nem lehet belőle visszaállítani. Belépési jelszó kell hozzá, mert a teljes konfigurációdat tartalmazza.",
   "diagnostics.button": "Diagnosztika letöltése",

@@ -518,6 +518,7 @@ const pl: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "ostatni zrzut bazy danych się nie udał",
   "coverage.reason.dbDumpOnlyCopyOff": "zrzut bazy jest wyłączony i nie jest znana inna spójna kopia",
   "coverage.reason.dbNotScheduled": "baza danych bez własnej kopii, więc nigdy nie jest zrzucana",
+  "coverage.reason.zfsMemberSkipped": "zbiór danych, którego ostatnia kopia zaplanowanego elementu ZFS nie mogła odczytać",
   "diagnostics.heading": "Pakiet wsparcia",
   "diagnostics.hint": "Oczyszczony plik ZIP do zgłoszenia błędu: sprawdzenie integracji z hostem, Twoja konfiguracja z usuniętymi wszystkimi sekretami, ostatnie uruchomienia, co jest zaplanowane jako następne, oraz najnowszy dziennik. To nie jest kopia zapasowa konfiguracji i nie da się z niej niczego przywrócić. Wymaga hasła logowania, ponieważ zawiera całą Twoją konfigurację.",
   "diagnostics.button": "Pobierz diagnostykę",
