@@ -219,6 +219,44 @@ func TestCoverageZFSItemsAndSkippedMembers(t *testing.T) {
 	}
 }
 
+func TestCoverageCountsAnItemWithASkippedMemberAsUnprotected(t *testing.T) {
+	s, st, _ := zfsDomainFixture(t)
+	gappy, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true})
+	if err != nil {
+		t.Fatalf("create item: %v", err)
+	}
+	whole, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/media", Enabled: true})
+	if err != nil {
+		t.Fatalf("create item: %v", err)
+	}
+	if err := st.ReplaceZFSMembers(gappy.ID, []store.ZFSMember{
+		{ItemID: gappy.ID, Dataset: "cache/appdata", Outcome: "backed-up"},
+		{ItemID: gappy.ID, Dataset: "cache/appdata/nextcloud", Outcome: "not-mounted"},
+	}); err != nil {
+		t.Fatalf("write members: %v", err)
+	}
+	if err := st.ReplaceZFSMembers(whole.ID, []store.ZFSMember{
+		{ItemID: whole.ID, Dataset: "cache/media", Outcome: "backed-up"},
+	}); err != nil {
+		t.Fatalf("write members: %v", err)
+	}
+
+	report, err := s.Coverage(context.Background())
+	if err != nil {
+		t.Fatalf("coverage: %v", err)
+	}
+	for _, d := range report.Domains {
+		if d.Domain != zfsDomain {
+			continue
+		}
+		if d.Total != 2 || d.Protected != 1 {
+			t.Fatalf("the ZFS domain counts %d of %d protected, want 1 of 2", d.Protected, d.Total)
+		}
+		return
+	}
+	t.Fatalf("no zfs domain in %+v", report.Domains)
+}
+
 func TestWatchdogIncludesZFS(t *testing.T) {
 	s, st, _ := zfsDomainFixture(t)
 	bodies := zfsCaptureNotifications(t, s)

@@ -326,8 +326,13 @@ func (s *Service) coverZFSDatasets(settings store.Settings) CoverageDomain {
 			})
 			continue
 		}
+		// An item with a skipped member is short of protected the way a
+		// container with failing dumps is, so the ratio agrees with the list.
+		if skipped := s.zfsSkippedMembers(d); len(skipped) > 0 {
+			out.Unprotected = append(out.Unprotected, skipped...)
+			continue
+		}
 		out.Protected++
-		out.Unprotected = append(out.Unprotected, s.zfsSkippedMembers(d)...)
 	}
 	return out
 }
