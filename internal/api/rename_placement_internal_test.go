@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -53,6 +54,35 @@ func TestTakeoverAndUnlinkCarryTheCopyRule(t *testing.T) {
 	}
 	if skip, ok := ruleOf(t, f, "containers", "container:nginx"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
 		t.Fatalf("rule of nginx after the unlink = %v (found %v), want [*]", skip, ok)
+	}
+}
+
+func TestAnUnlinkKeepsTheBackupsOfTheLinkedPeriodOutOfTheTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.listing("containers", b2.ID, 50)
+	f.container("nginx", "")
+	f.rule("containers", "container:nginx", store.SkipAll)
+	f.dock.installed = map[string]bool{"web": true}
+	ctx := context.Background()
+	if err := f.svc.TakeOverContainer(ctx, "nginx", "web"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	linked := time.Now().Add(5 * time.Second).Unix()
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", linked, "container:web", "formerly:nginx"),
+		snap("aaaa0003", linked, "container:db"))
+	f.dock.installed = map[string]bool{"nginx": true}
+
+	if err := f.svc.UnlinkContainerAlias(ctx, "nginx"); err != nil {
+		t.Fatalf("UnlinkContainerAlias: %v", err)
+	}
+	if err := f.svc.ReplicateOffsite(ctx, "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"aaaa0003"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
 	}
 }
 

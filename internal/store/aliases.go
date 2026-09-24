@@ -193,6 +193,11 @@ func (r *Repo) unlinkAlias(e entryTable, oldName, newDefinition, uuid string) er
 	if err := e.moveRow(tx, targetID, oldName, newDefinition, uuid); err != nil {
 		return fmt.Errorf("unlink %q: %w", oldName, err)
 	}
+	// The snapshots taken under current while linked stay the entry's, and
+	// nothing links current to it any more.
+	if err := keepRuleOnNameTx(tx, e, oldName, current); err != nil {
+		return fmt.Errorf("unlink %q: %w", oldName, err)
+	}
 	if _, err := tx.Exec(`DELETE FROM target_aliases WHERE domain = ? AND old_name = ?`, e.domain, oldName); err != nil {
 		return fmt.Errorf("unlink %q: delete alias: %w", oldName, err)
 	}

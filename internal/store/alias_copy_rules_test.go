@@ -40,7 +40,68 @@ func TestARenamedContainerTakesItsCopyRuleAndGivesItBackOnUnlink(t *testing.T) {
 		t.Fatalf("UnlinkAlias: %v", err)
 	}
 	mustRule(t, r, "containers", "container:nginx", "t-b2")
-	mustNoRule(t, r, "containers", "container:web")
+	mustRule(t, r, "containers", "container:web", "t-b2")
+}
+
+func TestAnUnlinkInAChainLeavesTheRuleOnTheNameTheEntryLeaves(t *testing.T) {
+	r := newRepo(t)
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "nginx"}); err != nil {
+		t.Fatal(err)
+	}
+	store.SeedCopyRule(t, r, "containers", "container:nginx", store.SkipAll)
+	if err := r.RenameTargetWithAlias("nginx", "web", ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.RenameTargetWithAlias("web", "app", ""); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := r.UnlinkAlias("web", ""); err != nil {
+		t.Fatalf("UnlinkAlias: %v", err)
+	}
+	mustRule(t, r, "containers", "container:web", store.SkipAll)
+	mustRule(t, r, "containers", "container:app", store.SkipAll)
+	mustNoRule(t, r, "containers", "container:nginx")
+}
+
+func TestAContainerTakenOverAgainAfterAnUnlinkKeepsItsRule(t *testing.T) {
+	r := newRepo(t)
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "nginx"}); err != nil {
+		t.Fatal(err)
+	}
+	store.SeedCopyRule(t, r, "containers", "container:nginx", "t-b2")
+	if err := r.RenameTargetWithAlias("nginx", "web", ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.UnlinkAlias("nginx", ""); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := r.RenameTargetWithAlias("nginx", "web", ""); err != nil {
+		t.Fatalf("RenameTargetWithAlias: %v", err)
+	}
+	mustRule(t, r, "containers", "container:web", "t-b2")
+	mustNoRule(t, r, "containers", "container:nginx")
+}
+
+func TestATakeoverOntoANameWithADifferentRuleLeftByAnUnlinkIsRefused(t *testing.T) {
+	r := newRepo(t)
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "nginx"}); err != nil {
+		t.Fatal(err)
+	}
+	store.SeedCopyRule(t, r, "containers", "container:nginx", "t-b2")
+	if err := r.RenameTargetWithAlias("nginx", "web", ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.UnlinkAlias("nginx", ""); err != nil {
+		t.Fatal(err)
+	}
+	store.SeedCopyRule(t, r, "containers", "container:nginx", store.SkipAll)
+
+	if err := r.RenameTargetWithAlias("nginx", "web", ""); !errors.Is(err, store.ErrCopyRuleTaken) {
+		t.Fatalf("err = %v, want ErrCopyRuleTaken", err)
+	}
+	mustRule(t, r, "containers", "container:web", "t-b2")
 }
 
 func TestARenameOntoANameWithACopyRuleIsRefused(t *testing.T) {
@@ -188,7 +249,7 @@ func TestARenamedVMTakesItsCopyRuleAndGivesItBackOnUnlink(t *testing.T) {
 		t.Fatalf("UnlinkVMAlias: %v", err)
 	}
 	mustRule(t, r, "vms", "vm:windows-11", store.SkipAll)
-	mustNoRule(t, r, "vms", "vm:win11")
+	mustRule(t, r, "vms", "vm:win11", store.SkipAll)
 }
 
 func TestAVMRenameOntoANameWithACopyRuleIsRefused(t *testing.T) {
