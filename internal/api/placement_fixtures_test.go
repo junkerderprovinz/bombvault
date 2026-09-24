@@ -71,6 +71,7 @@ func newPlacementFixture(t *testing.T) *placementFixture {
 		snaps:   map[string][]restic.Snapshot{},
 		listErr: map[string]error{},
 		opens:   map[string]bool{},
+		openErr: map[string]error{},
 		lists:   map[string]int{},
 	}
 	dock := &placementDocker{installed: map[string]bool{}}
@@ -417,8 +418,9 @@ type placementEngine struct {
 	mu      sync.Mutex
 	snaps   map[string][]restic.Snapshot // by slash-spelled location
 	listErr map[string]error
-	opens   map[string]bool // RepoOpens; a missing entry is true
-	lists   map[string]int  // Snapshots calls per location
+	opens   map[string]bool  // RepoOpens; a missing entry is true
+	openErr map[string]error // RepoOpensErr's message for a location in opens=false; default is a generic one
+	lists   map[string]int   // Snapshots calls per location
 	copies  []copyCall
 	forgets []forgetCall
 	deletes []forgetIDsCall
@@ -463,6 +465,9 @@ func (e *placementEngine) RepoOpens(_ context.Context, repo string, _ restic.Mod
 func (e *placementEngine) RepoOpensErr(ctx context.Context, repo string, mode restic.Mode) error {
 	if e.RepoOpens(ctx, repo, mode) {
 		return nil
+	}
+	if err := e.openErr[filepath.ToSlash(repo)]; err != nil {
+		return err
 	}
 	return errors.New("repository does not exist: unable to open config file")
 }

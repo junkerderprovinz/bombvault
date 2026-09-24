@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -24,6 +25,30 @@ var errMirroredField = errors.New("a direct repository takes this value from its
 var errForeignDomain = errors.New("that direct repository belongs to a target of another domain")
 
 var errTargetInUse = errors.New("this target's direct repository is still in use")
+
+// errDirectAccessDenied marks a direct-repository probe that reached the
+// backend but was turned away: the key does not cover this particular place,
+// most often because it is scoped to the target's own folder rather than the
+// one above it.
+var errDirectAccessDenied = errors.New("the key cannot read this place")
+
+// restStatus403 matches 403 as a status code rather than as three digits
+// inside a longer number, the same way restStatus401 does.
+var restStatus403 = regexp.MustCompile(`(^|[^0-9])403([^0-9]|$)`)
+
+// isAccessDenied reports whether a direct-repository probe's error means the
+// backend was reached and refused the key, rather than being unreachable or
+// simply empty. S3 and B2 answer "Access Denied"; a rest-server answers 401
+// or 403.
+func isAccessDenied(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	noSpace := strings.ReplaceAll(msg, " ", "")
+	return strings.Contains(noSpace, "accessdenied") || strings.Contains(msg, "forbidden") ||
+		isAuthRefusal(msg) || restStatus403.MatchString(msg)
+}
 
 // targetUseView is the JSON shape of the store.TargetUse a refused off-site
 // target delete carries back, so the SPA can point at what is still using the
@@ -229,7 +254,12 @@ func (s *Service) probeDirectLocation(ctx context.Context, target store.OffsiteT
 			return true, false, nil
 		}
 	}
-	return s.probeOffsiteRepo(ctx, loc, s.offsiteModeForTarget(settings, target))
+	reachable, initialized, err = s.probeOffsiteRepo(ctx, loc, s.offsiteModeForTarget(settings, target))
+	var pathUser *restPathUserErr
+	if err != nil && !errors.As(err, &pathUser) && isAccessDenied(err) {
+		err = fmt.Errorf("%w: %s", errDirectAccessDenied, err.Error())
+	}
+	return reachable, initialized, err
 }
 
 // offsiteTargetParam reads {id} as an off-site target of a domain that can
