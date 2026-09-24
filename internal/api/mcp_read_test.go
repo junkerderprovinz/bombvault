@@ -1164,3 +1164,66 @@ func TestMCPListRunsShowsOriginLabelEvenWhenRevoked(t *testing.T) {
 		t.Fatalf("GET /api/runs does not carry the run at all: %v", httpRuns)
 	}
 }
+
+// A run's error is stored as restic wrote it, so the tool's own scrub is the
+// last thing between a repository location and a chat transcript.
+func TestMCPRunErrorsLeaveTheBoxScrubbed(t *testing.T) {
+	const location = "rest:https://backupuser:Tr0ub4dor3@backup.example:8000/containers"
+	const path = "/mnt/user/appdata/plex"
+	docker := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("plex")}}
+	h, st, _, key := newMCPToolRouter(t, docker, &fakeResticEngine{})
+	plex := seedTarget(t, st, "plex")
+
+	runID, err := st.StartRunWith(plex.ID, "backup", store.RunMeta{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(runID, "failed", "", 0, "unable to open "+location+" while reading "+path); err != nil {
+		t.Fatal(err)
+	}
+
+	res := mcpCallTool(t, h, key, "list_runs", `{"domain":"containers","item":"plex"}`)
+	rows := mcpRunRows(t, res)
+	if len(rows) != 1 {
+		t.Fatalf("list_runs returned %v", rows)
+	}
+	got, _ := rows[0]["error"].(string)
+	if !strings.Contains(got, "[repository]") || !strings.Contains(got, "[path]") {
+		t.Fatalf("the error reads %q, want the location and the path replaced", got)
+	}
+	for _, leak := range []string{"Tr0ub4dor3", "backup.example", path} {
+		if strings.Contains(res.text(t), leak) {
+			t.Fatalf("the answer repeats %q: %s", leak, res.text(t))
+		}
+	}
+}
+
+// The same holds for the two detail sentences get_status carries: they come
+// from a drill's stored reason, and not every writer of one scrubs it first.
+func TestMCPStatusDrillDetailsLeaveTheBoxScrubbed(t *testing.T) {
+	const location = "s3:https://key:secret@s3.example/containers"
+	const path = "/mnt/user/backups/containers/data"
+	h, st, _, key := newMCPToolRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	for _, d := range []store.RestoreDrill{
+		{Domain: "containers", Source: "local", At: 1000, Detail: "pack broken in " + location},
+		{Domain: "containers", Source: "offsite", At: 1000, Kind: "dr", Detail: "restore stopped at " + path},
+	} {
+		if err := st.AddRestoreDrill(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	res := mcpCallTool(t, h, key, "get_status", "")
+	if res.IsError {
+		t.Fatalf("get_status: %v", res.Structured)
+	}
+	text := res.text(t)
+	if !strings.Contains(text, "[repository]") || !strings.Contains(text, "[path]") {
+		t.Fatalf("the status keeps the details as they were stored: %s", text)
+	}
+	for _, leak := range []string{"secret", "s3.example", path} {
+		if strings.Contains(text, leak) {
+			t.Fatalf("the status repeats %q: %s", leak, text)
+		}
+	}
+}
