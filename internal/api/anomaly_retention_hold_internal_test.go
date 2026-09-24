@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"testing"
 
@@ -94,6 +95,31 @@ func TestHoldSurvivesAFloodOfOpenCriticals(t *testing.T) {
 	items := f.e.itemViews()
 	if len(items) != 1 || !items[0].RetentionHeld {
 		t.Fatalf("the item badge lost the hold: %+v", items)
+	}
+}
+
+// A repository that cannot be listed is a different problem from a hold. The
+// run record names both, or the operator acknowledges findings while the real
+// reason nothing was deleted stays invisible.
+func TestRepoWideRetentionNamesTheListingFailureAndTheHold(t *testing.T) {
+	f := newEngineFixture(t)
+	id := f.container(t, "nextcloud")
+	f.steadySeries(t, id, "backup", 12, 40*gib)
+	f.run(t, id, "backup", f.now-60, 20*mib)
+	f.pass(t)
+	if len(f.openRows(t)) != 1 {
+		t.Fatalf("want the collapse raised, got %+v", f.openRows(t))
+	}
+	f.svc.engine = &previewEngine{snapsErr: errors.New("repository is unreachable")}
+
+	paused, err := f.svc.applyRetentionPerIdentity(context.Background(), "/repo",
+		restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
+
+	if len(paused) == 0 {
+		t.Fatal("the held item was not reported as paused")
+	}
+	if err == nil || !strings.Contains(err.Error(), "unreachable") || !strings.Contains(err.Error(), "paused") {
+		t.Fatalf("error = %v, want the listing failure next to the hold", err)
 	}
 }
 

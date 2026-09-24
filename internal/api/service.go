@@ -1769,11 +1769,17 @@ func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p 
 	snaps, sErr := s.engine.Snapshots(ctx, repo, mode)
 	tags := identityTags(snaps)
 	if sErr != nil || len(tags) == 0 {
-		if len(held) > 0 {
-			return held.names(), errRetentionPaused(len(held))
-		}
+		var listErr error
 		if sErr != nil {
-			return nil, fmt.Errorf("list snapshots for retention: %w", sErr)
+			listErr = fmt.Errorf("list snapshots for retention: %w", sErr)
+		}
+		// Both reasons reach the run record: a destination that cannot be
+		// listed is not something an acknowledge fixes.
+		if len(held) > 0 {
+			return held.names(), errors.Join(listErr, errRetentionPaused(len(held)))
+		}
+		if listErr != nil {
+			return nil, listErr
 		}
 		return nil, s.forgetWithLockHeal(ctx, repo, p, mode, nil, true)
 	}
