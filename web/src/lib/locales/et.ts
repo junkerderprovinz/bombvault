@@ -1670,6 +1670,7 @@ const et: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Sellel nimel on juba kopeerimisreeglid. Vali teine nimi.",
   "placementCode.domainBusy": "Varundamine on käimas. Vali uuesti, kui see on lõppenud.",
   "placementCode.hasBackups": "Asukohta ei saa enam muuta, kui üksusel on varukoopiaid. Need jäävad sinna, kuhu need kirjutati.",
+  "placementCode.homeUncheckable": "Ei õnnestunud kontrollida, kas sellel üksusel on juba varukoopiaid, seega jääb selle asukoht samaks. Proovi uuesti, kui hoidlat saab lugeda.",
   "placementCode.stale": "Numbrid on pärast kuvamist muutunud. Kontrolli neid uuesti.",
   "placementCode.repoInvalid": "See hoidla puudub, on välja lülitatud või seda ei õnnestu lahendada.",
   "placementCode.repoInUseDefault": "{domains} vaikeväärtus osutab sellele hoidlale. Muuda kõigepealt vaikeväärtust.",

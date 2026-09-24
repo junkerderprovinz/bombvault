@@ -1654,6 +1654,7 @@ const sl: Partial<Translations> = {
   "placementCode.copyRuleTaken": "To ime že ima pravila kopiranja. Izberi drugo ime.",
   "placementCode.domainBusy": "Varnostno kopiranje je v teku. Izberi znova, ko se konča.",
   "placementCode.hasBackups": "Lokacije ni več mogoče spremeniti, ko ima element varnostne kopije. Ostanejo tam, kjer so bile zapisane.",
+  "placementCode.homeUncheckable": "Ni bilo mogoče preveriti, ali ima ta element že varnostne kopije, zato njegova lokacija ostane taka, kot je. Poskusi znova, ko bo repozitorij mogoče prebrati.",
   "placementCode.stale": "Številke so se od prikaza spremenile. Preveri jih znova.",
   "placementCode.repoInvalid": "Ta repozitorij manjka, je onemogočen ali ga ni mogoče razrešiti.",
   "placementCode.repoInUseDefault": "Privzeta vrednost za {domains} kaže na ta repozitorij. Najprej spremeni privzeto vrednost.",

@@ -1651,6 +1651,7 @@ const vi: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Tên đó đã có quy tắc sao chép. Chọn tên khác.",
   "placementCode.domainBusy": "Đang sao lưu. Chọn lại khi hoàn tất.",
   "placementCode.hasBackups": "Vị trí không thể thay đổi nữa khi mục đã có bản sao lưu. Chúng vẫn ở nơi đã được ghi.",
+  "placementCode.homeUncheckable": "Không thể kiểm tra xem mục này đã có bản sao lưu hay chưa, vì vậy vị trí của nó vẫn giữ nguyên. Hãy thử lại khi có thể đọc được kho.",
   "placementCode.stale": "Các con số đã thay đổi kể từ khi hiển thị. Kiểm tra lại.",
   "placementCode.repoInvalid": "Kho đó bị thiếu, đã tắt, hoặc không thể phân giải.",
   "placementCode.repoInUseDefault": "Giá trị mặc định cho {domains} đang trỏ đến kho này. Đổi giá trị mặc định trước.",

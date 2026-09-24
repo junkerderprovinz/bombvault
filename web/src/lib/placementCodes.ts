@@ -16,6 +16,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "copy-rule-taken": "placementCode.copyRuleTaken",
   "domain-busy": "placementCode.domainBusy",
   "has-backups": "placementCode.hasBackups",
+  "home-uncheckable": "placementCode.homeUncheckable",
   stale: "placementCode.stale",
   "repo-invalid": "placementCode.repoInvalid",
   "default-repo-missing": "placementCode.defaultRepoMissing",

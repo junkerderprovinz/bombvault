@@ -1670,6 +1670,7 @@ const hr: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Taj naziv već ima pravila kopiranja. Odaberi drugi naziv.",
   "placementCode.domainBusy": "Sigurnosno kopiranje je u tijeku. Odaberi ponovno kad završi.",
   "placementCode.hasBackups": "Lokacija se više ne može promijeniti kad stavka ima sigurnosne kopije. Ostaju ondje gdje su zapisane.",
+  "placementCode.homeUncheckable": "Nije se moglo provjeriti ima li ova stavka već sigurnosne kopije, pa njezina lokacija ostaje kakva jest. Pokušaj ponovno kad se repozitorij bude mogao pročitati.",
   "placementCode.stale": "Brojevi su se promijenili otkad su prikazani. Provjeri ih ponovno.",
   "placementCode.repoInvalid": "Taj repozitorij nedostaje, isključen je ili se ne može razriješiti.",
   "placementCode.repoInUseDefault": "Zadana vrijednost za {domains} pokazuje na ovaj repozitorij. Prvo promijeni zadanu vrijednost.",

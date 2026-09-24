@@ -1659,6 +1659,7 @@ const he: Partial<Translations> = {
   "placementCode.copyRuleTaken": "לשם הזה כבר יש כללי העתקה. בחר שם אחר.",
   "placementCode.domainBusy": "מתבצע כרגע גיבוי. בחר שוב לאחר שיסתיים.",
   "placementCode.hasBackups": "המיקום כבר לא יכול להשתנות ברגע שיש לפריט גיבויים. הם נשארים היכן שנכתבו.",
+  "placementCode.homeUncheckable": "לא ניתן היה לבדוק אם לפריט הזה כבר יש גיבויים, כך שהמיקום שלו נשאר כפי שהוא. נסה שוב כשניתן יהיה לקרוא את המאגר.",
   "placementCode.stale": "המספרים השתנו מאז שהוצגו. בדוק אותם שוב.",
   "placementCode.repoInvalid": "המאגר הזה חסר, כבוי, או שלא ניתן לפתור אותו.",
   "placementCode.repoInUseDefault": "ברירת המחדל של {domains} מצביעה על המאגר הזה. שנה קודם את ברירת המחדל.",

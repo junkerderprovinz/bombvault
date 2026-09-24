@@ -1670,6 +1670,7 @@ const ms: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Nama itu sudah mempunyai peraturan salinan. Pilih nama lain.",
   "placementCode.domainBusy": "Sandaran sedang berjalan. Pilih semula selepas ia selesai.",
   "placementCode.hasBackups": "Lokasi tidak boleh berubah lagi sebaik sahaja item mempunyai sandaran. Ia kekal di tempat ia ditulis.",
+  "placementCode.homeUncheckable": "Tidak dapat disemak sama ada item ini sudah mempunyai sandaran, jadi lokasinya kekal seperti sekarang. Cuba lagi apabila repositori dapat dibaca.",
   "placementCode.stale": "Nombor telah berubah sejak ia dipaparkan. Semak semula.",
   "placementCode.repoInvalid": "Repositori itu hilang, dimatikan atau tidak dapat diselesaikan.",
   "placementCode.repoInUseDefault": "Lalai untuk {domains} menunjuk ke repositori ini. Ubah lalai itu dahulu.",

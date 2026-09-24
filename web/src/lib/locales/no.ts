@@ -1659,6 +1659,7 @@ const no: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Det navnet har allerede kopieringsregler. Velg et annet navn.",
   "placementCode.domainBusy": "En sikkerhetskopiering pågår. Velg på nytt når den er ferdig.",
   "placementCode.hasBackups": "Plasseringen kan ikke endres når elementet har sikkerhetskopier. De blir værende der de ble skrevet.",
+  "placementCode.homeUncheckable": "Det kunne ikke sjekkes om dette elementet allerede har sikkerhetskopier, så plasseringen forblir som den er. Prøv igjen når depotet kan leses.",
   "placementCode.stale": "Tallene har endret seg siden de ble vist. Sjekk dem på nytt.",
   "placementCode.repoInvalid": "Det depotet mangler, er slått av eller kan ikke løses opp.",
   "placementCode.repoInUseDefault": "Standardverdien for {domains} peker på dette depotet. Endre standardverdien først.",

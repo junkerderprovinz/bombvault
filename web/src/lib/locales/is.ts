@@ -1670,6 +1670,7 @@ const is: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Þetta nafn hefur nú þegar afritunarreglur. Veldu annað nafn.",
   "placementCode.domainBusy": "Öryggisafritun er í gangi. Veldu aftur þegar henni er lokið.",
   "placementCode.hasBackups": "Staðsetningin getur ekki breyst eftir að atriðið hefur öryggisafrit. Þau verða áfram þar sem þau voru skrifuð.",
+  "placementCode.homeUncheckable": "Ekki var hægt að athuga hvort þetta atriði hafi nú þegar öryggisafrit, svo staðsetning þess helst óbreytt. Reyndu aftur þegar hægt er að lesa geymsluna.",
   "placementCode.stale": "Tölurnar hafa breyst síðan þær voru sýndar. Athugaðu þær aftur.",
   "placementCode.repoInvalid": "Þessa geymslu vantar, hún er óvirk eða ekki hægt að leysa hana.",
   "placementCode.repoInUseDefault": "Sjálfgefið gildi fyrir {domains} vísar á þessa geymslu. Breyttu sjálfgefna gildinu fyrst.",

@@ -1651,6 +1651,7 @@ const ja: Partial<Translations> = {
   "placementCode.copyRuleTaken": "その名前にはすでにコピールールがあります。別の名前を選んでください。",
   "placementCode.domainBusy": "バックアップが実行中です。完了したらもう一度選んでください。",
   "placementCode.hasBackups": "項目にバックアップがあると、場所はもう変更できません。書き込まれた場所にとどまります。",
+  "placementCode.homeUncheckable": "この項目にすでにバックアップがあるかどうかを確認できなかったため、保存場所はそのままになります。リポジトリを読み取れるようになったら、もう一度試してください。",
   "placementCode.stale": "表示されてから数値が変わりました。もう一度確認してください。",
   "placementCode.repoInvalid": "そのリポジトリが見つからないか、無効か、解決できません。",
   "placementCode.repoInUseDefault": "{domains} の既定値はこのリポジトリを指しています。まず既定値を変更してください。",

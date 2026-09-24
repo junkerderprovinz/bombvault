@@ -1659,6 +1659,7 @@ const da: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Det navn har allerede kopieringsregler. Vælg et andet navn.",
   "placementCode.domainBusy": "Der kører en sikkerhedskopiering. Vælg igen, når den er færdig.",
   "placementCode.hasBackups": "Placeringen kan ikke ændres, når elementet har sikkerhedskopier. De bliver, hvor de blev skrevet.",
+  "placementCode.homeUncheckable": "Det kunne ikke tjekkes, om dette element allerede har sikkerhedskopier, så dets placering forbliver, som den er. Prøv igen, når depotet kan læses.",
   "placementCode.stale": "Tallene har ændret sig, siden de blev vist. Tjek dem igen.",
   "placementCode.repoInvalid": "Det depot mangler, er slået fra, eller kan ikke findes.",
   "placementCode.repoInUseDefault": "Standarden for {domains} peger på dette depot. Skift standarden først.",

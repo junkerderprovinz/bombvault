@@ -1651,6 +1651,7 @@ const ko: Partial<Translations> = {
   "placementCode.copyRuleTaken": "그 이름에는 이미 복사 규칙이 있습니다. 다른 이름을 선택하세요.",
   "placementCode.domainBusy": "백업이 진행 중입니다. 끝나면 다시 선택하세요.",
   "placementCode.hasBackups": "항목에 백업이 있으면 위치를 더 이상 변경할 수 없습니다. 백업은 기록된 곳에 그대로 남습니다.",
+  "placementCode.homeUncheckable": "이 항목에 이미 백업이 있는지 확인할 수 없어 위치가 그대로 유지됩니다. 저장소를 읽을 수 있게 되면 다시 시도하세요.",
   "placementCode.stale": "표시된 이후 숫자가 바뀌었습니다. 다시 확인하세요.",
   "placementCode.repoInvalid": "해당 저장소가 없거나, 꺼져 있거나, 확인할 수 없습니다.",
   "placementCode.repoInUseDefault": "{domains}의 기본값이 이 저장소를 가리킵니다. 먼저 기본값을 바꾸세요.",

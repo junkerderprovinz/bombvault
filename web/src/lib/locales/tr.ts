@@ -1659,6 +1659,7 @@ const tr: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Bu adın zaten kopyalama kuralları var. Başka bir ad seç.",
   "placementCode.domainBusy": "Bir yedekleme çalışıyor. Bittiğinde tekrar seç.",
   "placementCode.hasBackups": "Öge yedeklere sahip olduktan sonra konum artık değişemez. Yazıldıkları yerde kalırlar.",
+  "placementCode.homeUncheckable": "Bu ögenin zaten yedeklerinin olup olmadığı kontrol edilemedi, bu yüzden konumu olduğu gibi kalır. Depo okunabilir hale geldiğinde tekrar dene.",
   "placementCode.stale": "Sayılar gösterildikten sonra değişti. Onları tekrar kontrol et.",
   "placementCode.repoInvalid": "Bu depo eksik, kapalı veya çözülemiyor.",
   "placementCode.repoInUseDefault": "{domains} için varsayılan bu depoyu gösteriyor. Önce varsayılanı değiştir.",

@@ -1662,6 +1662,7 @@ const hu: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Ennek a névnek már vannak másolási szabályai. Válassz másik nevet.",
   "placementCode.domainBusy": "Éppen mentés folyik. Válassz újra, ha befejeződött.",
   "placementCode.hasBackups": "A hely már nem változtatható, ha az elemnek mentései vannak. Ott maradnak, ahová írták őket.",
+  "placementCode.homeUncheckable": "Nem sikerült ellenőrizni, hogy ennek az elemnek már vannak-e mentései, ezért a helye marad, ahol van. Próbáld újra, ha a tároló olvashatóvá válik.",
   "placementCode.stale": "A számok a megjelenítésük óta megváltoztak. Ellenőrizd őket újra.",
   "placementCode.repoInvalid": "Ez a tároló hiányzik, ki van kapcsolva, vagy nem oldható fel.",
   "placementCode.repoInUseDefault": "A(z) {domains} alapértelmezése erre a tárolóra mutat. Először változtasd meg az alapértelmezést.",

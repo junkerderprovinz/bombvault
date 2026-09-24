@@ -1654,6 +1654,7 @@ const pl: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Ta nazwa ma już reguły kopiowania. Wybierz inną nazwę.",
   "placementCode.domainBusy": "Trwa tworzenie kopii zapasowej. Wybierz ponownie, gdy się zakończy.",
   "placementCode.hasBackups": "Lokalizacji nie można już zmienić, gdy element ma kopie zapasowe. Pozostają tam, gdzie zostały zapisane.",
+  "placementCode.homeUncheckable": "Nie udało się sprawdzić, czy ten element ma już kopie zapasowe, więc jego lokalizacja pozostaje bez zmian. Spróbuj ponownie, gdy repozytorium będzie można odczytać.",
   "placementCode.stale": "Liczby zmieniły się od czasu wyświetlenia. Sprawdź je ponownie.",
   "placementCode.repoInvalid": "Tego repozytorium brakuje, jest wyłączone lub nie da się go rozpoznać.",
   "placementCode.repoInUseDefault": "Wartość domyślna dla {domains} wskazuje to repozytorium. Najpierw zmień wartość domyślną.",

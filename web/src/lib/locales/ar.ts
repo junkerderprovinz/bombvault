@@ -1662,6 +1662,7 @@ const ar: Partial<Translations> = {
   "placementCode.copyRuleTaken": "هذا الاسم لديه بالفعل قواعد نسخ. اختر اسمًا آخر.",
   "placementCode.domainBusy": "يجري تنفيذ نسخة احتياطية الآن. اختر مجددًا بعد انتهائها.",
   "placementCode.hasBackups": "لا يمكن تغيير الموقع بعد أن يصبح للعنصر نسخ احتياطية. تبقى حيث كُتبت.",
+  "placementCode.homeUncheckable": "تعذّر التحقق مما إذا كان هذا العنصر يحتوي على نسخ احتياطية بالفعل، لذا يبقى موقعه كما هو. حاول مرة أخرى بعد أن يصبح المستودع قابلاً للقراءة.",
   "placementCode.stale": "تغيّرت الأرقام منذ عرضها. تحقّق منها مجددًا.",
   "placementCode.repoInvalid": "هذا المستودع مفقود أو معطّل أو يتعذّر تحليله.",
   "placementCode.repoInUseDefault": "القيمة الافتراضية لـ {domains} تشير إلى هذا المستودع. غيّر القيمة الافتراضية أولًا.",
