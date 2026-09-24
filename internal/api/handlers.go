@@ -3198,6 +3198,11 @@ func (h *Handler) handleSetCloud(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &c) {
 		return
 	}
+	before, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	if err := h.svc.SetCloudCreds(c); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -3209,7 +3214,9 @@ func (h *Handler) handleSetCloud(w http.ResponseWriter, r *http.Request) {
 		h.svc.syncAllPrimaryOffsiteTargets(settings)
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"warnings": h.svc.directCredsWarnings(r.Context(), func(direct, _ store.OffsiteTarget) bool { return direct.CredsRef == "" }),
+		"warnings": h.svc.directCredsWarnings(r.Context(), before, func(direct, target store.OffsiteTarget) bool {
+			return direct.CredsRef == "" || target.CredsRef == ""
+		}),
 	}))
 }
 
@@ -3249,12 +3256,17 @@ func (h *Handler) handleSetCloudCredSets(w http.ResponseWriter, r *http.Request)
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	before, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	if err := h.svc.SetCloudCredSets(body.Sets); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"warnings": h.svc.directCredsWarnings(r.Context(), func(direct, target store.OffsiteTarget) bool {
+		"warnings": h.svc.directCredsWarnings(r.Context(), before, func(direct, target store.OffsiteTarget) bool {
 			return direct.CredsRef != "" || target.CredsRef != ""
 		}),
 	}))

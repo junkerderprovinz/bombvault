@@ -16,13 +16,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// newMeshCredSetID returns an id for the credential set an accepted mesh offer
-// creates, in the form store.newID uses. Other credential set ids are minted by
-// the SPA.
-func newMeshCredSetID() string {
+// newCredSetID returns an id for a credential set the server creates itself,
+// the one an accepted mesh offer brings or the one a direct repository keeps,
+// in the form store.newID uses. Other credential set ids are minted by the SPA.
+func newCredSetID() string {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
-		panic(fmt.Sprintf("newMeshCredSetID: %v", err))
+		panic(fmt.Sprintf("newCredSetID: %v", err))
 	}
 	return hex.EncodeToString(b)
 }
@@ -190,7 +190,7 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 	if label == "" {
 		label = "mesh peer"
 	}
-	setID := newMeshCredSetID()
+	setID := newCredSetID()
 	sets, err := h.svc.CloudCredSets()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
