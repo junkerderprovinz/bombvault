@@ -475,18 +475,58 @@ func TestATakeoverOntoARowWithOnlyACopyRuleAnswersWithItsCode(t *testing.T) {
 	}
 }
 
+func TestATakeoverOntoARowWhoseOnlySettingIsTheEntrysOwnRule(t *testing.T) {
+	for _, c := range []struct {
+		name    string
+		webRule []string
+		refused bool
+	}{
+		{"the same rule goes ahead", []string{store.SkipAll}, false},
+		{"another rule is refused", []string{"t-b2"}, true},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			f := newPlacementFixture(t)
+			nginx := f.container("nginx", "")
+			f.rule("containers", "container:nginx", store.SkipAll)
+			f.container("web", "")
+			f.rule("containers", "container:web", c.webRule...)
+			f.dock.installed = map[string]bool{"web": true}
+
+			err := f.svc.TakeOverContainer(context.Background(), "nginx", "web")
+			if c.refused {
+				if !errors.Is(err, store.ErrCopyRuleTaken) {
+					t.Fatalf("err = %v, want ErrCopyRuleTaken", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("TakeOverContainer: %v", err)
+			}
+			if tg, err := f.st.GetTargetByContainer("web"); err != nil || tg.ID != nginx.ID {
+				t.Fatalf("entry on web = %+v, %v; want the one from nginx", tg, err)
+			}
+			if skip, ok := ruleOf(t, f, "containers", "container:web"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+				t.Fatalf("rule of web = %v (found %v), want [*]", skip, ok)
+			}
+			if skip, ok := ruleOf(t, f, "containers", "container:nginx"); ok {
+				t.Fatalf("nginx kept the rule %v", skip)
+			}
+		})
+	}
+}
+
 func TestAVMTakeoverOntoARowWithOnlyACopyRuleIsACopyRuleRefusal(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.vm("win11", "")
 	f.rule("vms", "vm:win11", store.SkipAll)
 
-	if err := f.svc.removeEmptyVMRow(context.Background(), "win11", nil); !errors.Is(err, store.ErrCopyRuleTaken) {
+	if err := f.svc.removeEmptyVMRow(context.Background(), "windows-11", "win11", nil); !errors.Is(err, store.ErrCopyRuleTaken) {
 		t.Fatalf("err = %v, want ErrCopyRuleTaken", err)
 	}
 	if err := f.st.SetVMInclude("win11", true); err != nil {
 		t.Fatal(err)
 	}
-	err := f.svc.removeEmptyVMRow(context.Background(), "win11", nil)
+	err := f.svc.removeEmptyVMRow(context.Background(), "windows-11", "win11", nil)
 	if errors.Is(err, store.ErrCopyRuleTaken) || err == nil || !strings.Contains(err.Error(), "scheduled, copy rule") {
 		t.Fatalf("err = %v, want a refusal that names both settings", err)
 	}
@@ -497,7 +537,7 @@ func TestAVMTakeoverKeepsTheRowOfANameWithACopyRule(t *testing.T) {
 	f.vm("win11", "")
 	f.rule("vms", "vm:win11", store.SkipAll)
 
-	err := f.svc.removeEmptyVMRow(context.Background(), "win11", nil)
+	err := f.svc.removeEmptyVMRow(context.Background(), "windows-11", "win11", nil)
 	if err == nil || !strings.Contains(err.Error(), "copy rule") {
 		t.Fatalf("err = %v, want a refusal that names the copy rule", err)
 	}
