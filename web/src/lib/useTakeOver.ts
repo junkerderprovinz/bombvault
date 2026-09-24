@@ -9,7 +9,8 @@ import {
   type ListSnapshotsResponse,
   type OkEnvelope,
 } from "./api";
-import type { TranslationKey, useT } from "./i18n";
+import { useT, type TranslationKey } from "./i18n";
+import { placementErrorText } from "./placementCodes";
 import { useConfirm } from "./useConfirm";
 import { useToast } from "./toast";
 
@@ -61,10 +62,12 @@ function historyKey(backups: number | null): TranslationKey {
 
 /**
  * Takes a former entry over onto entry, and unlinks one again, behind the
- * confirmation dialog it returns. A refusal toasts the server's reason and calls
- * onRefused, so the caller can shake the button that asked.
+ * confirmation dialog it returns. A refusal toasts the server's reason,
+ * translated when it carries a known code, and calls onRefused, so the caller
+ * can shake the button that asked.
  */
 export function useTakeOver(entry: TakeoverEntry, onDone: () => void, t: T) {
+  const { lang } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [busy, setBusy] = useState(false);
@@ -77,7 +80,7 @@ export function useTakeOver(entry: TakeoverEntry, onDone: () => void, t: T) {
         onDone();
         return true;
       }
-      push(res.error ?? t(fallback), "fail");
+      push(placementErrorText(t, lang, res, fallback), "fail");
     } catch (err) {
       push(err instanceof Error ? err.message : t(fallback), "fail");
     } finally {
