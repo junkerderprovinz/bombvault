@@ -242,7 +242,11 @@ func (s *Service) ListAnomalies(ctx context.Context, f store.AnomalyFilter) (Ano
 	if err != nil {
 		return AnomalyPage{}, err
 	}
-	items, err := s.anomalyItemRefs()
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return AnomalyPage{}, err
+	}
+	items, err := s.readAnomalyItems(settings)
 	if err != nil {
 		return AnomalyPage{}, err
 	}
@@ -253,7 +257,7 @@ func (s *Service) ListAnomalies(ctx context.Context, f store.AnomalyFilter) (Ano
 	page := AnomalyPage{Anomalies: make([]AnomalyView, 0, len(rows)), NextCursor: cursor}
 	targets := s.offsiteTargetNames(rows)
 	for _, row := range rows {
-		page.Anomalies = append(page.Anomalies, anomalyViewOf(row, items, targets, points))
+		page.Anomalies = append(page.Anomalies, anomalyViewOf(row, items, targets, points, settings))
 	}
 	return page, ctx.Err()
 }
@@ -279,7 +283,11 @@ func (s *Service) GetAnomaly(ctx context.Context, id string) (AnomalyView, bool,
 	if err != nil || !found {
 		return AnomalyView{}, found, err
 	}
-	items, err := s.anomalyItemRefs()
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return AnomalyView{}, false, err
+	}
+	items, err := s.readAnomalyItems(settings)
 	if err != nil {
 		return AnomalyView{}, false, err
 	}
@@ -287,7 +295,8 @@ func (s *Service) GetAnomaly(ctx context.Context, id string) (AnomalyView, bool,
 	if err != nil {
 		return AnomalyView{}, false, err
 	}
-	return anomalyViewOf(row, items, s.offsiteTargetNames([]store.Anomaly{row}), points), true, ctx.Err()
+	targets := s.offsiteTargetNames([]store.Anomaly{row})
+	return anomalyViewOf(row, items, targets, points, settings), true, ctx.Err()
 }
 
 // offsiteTargetNames resolves the named off-site targets the given drill rows
@@ -321,6 +330,10 @@ func (s *Service) MarkAnomaliesExpected(ctx context.Context, ids []string, note 
 }
 
 func (s *Service) closeAnomalyEpisodes(ctx context.Context, ids []string, note string, expected bool) (int, int, int, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return 0, 0, 0, err
+	}
 	wanted := dedupedIDs(ids)
 	skipped := 0
 	if len(wanted) > anomalyActionLimit {
@@ -330,10 +343,10 @@ func (s *Service) closeAnomalyEpisodes(ctx context.Context, ids []string, note s
 
 	var closable []store.Anomaly
 	for _, id := range wanted {
-		row, found, err := s.store.GetAnomaly(id)
+		row, found, gErr := s.store.GetAnomaly(id)
 		switch {
-		case err != nil:
-			return 0, 0, 0, err
+		case gErr != nil:
+			return 0, 0, 0, gErr
 		case !found || row.State != "open":
 			skipped++
 		case expected && !anomalyExpectable(row.Metric):
@@ -355,9 +368,9 @@ func (s *Service) closeAnomalyEpisodes(ctx context.Context, ids []string, note s
 	if expected {
 		closeRows, state = s.store.MarkAnomaliesExpected, "expected"
 	}
-	closed, err := closeRows(anomalyIDsOf(closable), note, now)
-	if err != nil {
-		return 0, 0, 0, err
+	closed, cErr := closeRows(anomalyIDsOf(closable), note, now)
+	if cErr != nil {
+		return 0, 0, 0, cErr
 	}
 	if expected {
 		for _, row := range closed {
@@ -370,15 +383,15 @@ func (s *Service) closeAnomalyEpisodes(ctx context.Context, ids []string, note s
 
 	s.anomalies.markScopesDirty(anomalyScopesOf(closed))
 	s.anomalies.refresh()
-	return len(closed), skipped + len(closable) - len(closed), heldAmong(closable, closed), ctx.Err()
+	return len(closed), skipped + len(closable) - len(closed), heldAmong(closable, closed, settings), ctx.Err()
 }
 
 // heldAmong counts the closed episodes that were pausing retention, which is
 // what the page reports back as released.
-func heldAmong(before, closed []store.Anomaly) int {
+func heldAmong(before, closed []store.Anomaly, settings store.Settings) int {
 	n := 0
 	for _, row := range before {
-		if anomalyHolds(row) && slices.ContainsFunc(closed, func(c store.Anomaly) bool { return c.ID == row.ID }) {
+		if anomalyHolds(row, settings) && slices.ContainsFunc(closed, func(c store.Anomaly) bool { return c.ID == row.ID }) {
 			n++
 		}
 	}
@@ -490,7 +503,7 @@ func (s *Service) StartAnomalyEngine(ctx context.Context) {
 }
 
 func anomalyViewOf(row store.Anomaly, items map[string]anomalyItemRef, targets map[string]string,
-	points map[string]store.RestorePoint) AnomalyView {
+	points map[string]store.RestorePoint, settings store.Settings) AnomalyView {
 	view := AnomalyView{
 		ID: row.ID, Detector: row.Detector, Metric: row.Metric,
 		Severity: row.Severity, State: row.State,
@@ -505,7 +518,7 @@ func anomalyViewOf(row store.Anomaly, items map[string]anomalyItemRef, targets m
 		AckedAt: row.AckedAt, ClearedAt: row.ClearedAt,
 		AckNote: row.AckNote, NotifiedAt: row.NotifiedAt,
 		Expectable:    anomalyExpectable(row.Metric),
-		RetentionHeld: anomalyHolds(row),
+		RetentionHeld: anomalyHolds(row, settings),
 		StillPresent:  row.ClearedAt == 0 && (row.State == "acknowledged" || row.State == "expected"),
 	}
 	if row.ScopeKind == anomalyScopeZFSDS {
@@ -528,9 +541,12 @@ func offsiteTargetOf(row store.Anomaly) string {
 }
 
 // anomalyHolds is the one predicate behind a retention hold, a held badge and
-// the count in the summary, so they can never disagree.
-func anomalyHolds(row store.Anomaly) bool {
-	return row.State == "open" && row.Severity == "critical" &&
+// the count in the summary, so they can never disagree. A finding pauses
+// nothing while either switch is off, so the flag must not promise a hold the
+// retention pass does not apply.
+func anomalyHolds(row store.Anomaly, settings store.Settings) bool {
+	return settings.AnomalyEnabled && settings.AnomalyRetentionHold &&
+		row.State == "open" && row.Severity == "critical" &&
 		row.RecoveredAt == 0 && slices.Contains(holdingMetrics, row.Metric)
 }
 
