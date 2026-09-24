@@ -980,6 +980,27 @@ func TestUnlinkVMAliasRoute(t *testing.T) {
 	}
 }
 
+func TestTheVMTakeoverRoutesRefuseACopyRuleWithItsCode(t *testing.T) {
+	f := newVMTakeover(t)
+	if err := f.st.SetCopyRule("vms", "vm:win11", []string{store.SkipAll}); err != nil {
+		t.Fatal(err)
+	}
+	if _, m := doJSON(t, f.router(), http.MethodPost, "/api/vms/win11/takeover", `{"from":"windows-11"}`); m["ok"] != false || m["code"] != "copy-rule-taken" {
+		t.Fatalf("takeover = %v, want the copy-rule-taken refusal", m)
+	}
+
+	g := newVMTakeover(t)
+	if err := g.svc.TakeOverVM(context.Background(), "windows-11", "win11"); err != nil {
+		t.Fatalf("TakeOverVM: %v", err)
+	}
+	if err := g.st.SetCopyRule("vms", "vm:windows-11", []string{store.SkipAll}); err != nil {
+		t.Fatal(err)
+	}
+	if _, m := doJSON(t, g.router(), http.MethodDelete, "/api/vms/win11/alias/windows-11", ""); m["ok"] != false || m["code"] != "copy-rule-taken" {
+		t.Fatalf("unlink = %v, want the copy-rule-taken refusal", m)
+	}
+}
+
 // Every former name of an entry that is a live VM again is a conflict, listed
 // alphabetically, and a row without one carries an empty list.
 func TestListVMsRouteListsEveryLiveFormerNameAsAConflict(t *testing.T) {

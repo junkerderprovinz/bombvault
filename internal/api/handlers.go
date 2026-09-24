@@ -920,6 +920,17 @@ func (h *Handler) handleForgetContainer(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// takeoverFail answers a refused takeover or unlink. A copy rule already on the
+// name gets the code the placement routes send for it, so the interface can say
+// it in the user's language.
+func takeoverFail(w http.ResponseWriter, err error) {
+	if errors.Is(err, store.ErrCopyRuleTaken) {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, failEnvelope(err))
+}
+
 // handleTakeOverContainer moves a not-installed entry onto the name its
 // container was renamed to, keeping its history and settings with the old name
 // as an alias. POST /api/containers/{name}/takeover with body
@@ -941,7 +952,7 @@ func (h *Handler) handleTakeOverContainer(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if err := h.svc.TakeOverContainer(r.Context(), body.From, name); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		takeoverFail(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
@@ -960,7 +971,7 @@ func (h *Handler) handleUnlinkContainerAlias(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	if err := h.svc.UnlinkContainerAlias(r.Context(), old); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		takeoverFail(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
@@ -985,7 +996,7 @@ func (h *Handler) handleTakeOverVM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.svc.TakeOverVM(r.Context(), body.From, name); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		takeoverFail(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
@@ -1003,7 +1014,7 @@ func (h *Handler) handleUnlinkVMAlias(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.svc.UnlinkVMAlias(r.Context(), old); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		takeoverFail(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
