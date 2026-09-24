@@ -578,6 +578,20 @@ func (h *Handler) mcpRetentionHold(s store.Settings, item mcpItem, now time.Time
 			}, nil
 		}
 	}
+	if item.Domain == zfsDomain {
+		datasets, zErr := h.store.ZFSDatasetsWithMCPWindow(item.ID, keepLast-1)
+		if zErr != nil {
+			return nil, zErr
+		}
+		if len(datasets) > 0 {
+			return &mcpHeldBack{
+				message: fmt.Sprintf("retention keeps the newest %d restore points of each dataset of %s, and the last %d of %s came through MCP; "+
+					"another one would leave only MCP-made restore points. "+
+					"The next scheduled backup makes room again, or start it in the web interface", keepLast, item.Name, keepLast-1, datasets[0]),
+				detail: h.retentionRetryDetail(keepLast, keepLast-1, item.Domain, now),
+			}, nil
+		}
+	}
 	return nil, nil
 }
 

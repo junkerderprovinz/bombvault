@@ -430,6 +430,59 @@ func TestMCPRetentionGuardKeepsOlderRestorePoints(t *testing.T) {
 	})
 }
 
+// A ZFS run that could not read one dataset fails, but the datasets it did
+// read wrote snapshots that retention ages all the same, so the guard counts
+// those snapshots and not the successful runs.
+func TestMCPRetentionGuardCountsTheSnapshotsOfEachZFSDataset(t *testing.T) {
+	h, repo, _ := newMCPStartHandler(t)
+	s, err := repo.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.RetentionKeepLast = 3
+	s.RetentionKeepDaily = 0
+	if err := repo.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	d, err := repo.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	item := mcpItem{Domain: zfsDomain, ID: d.ID, Name: d.Dataset}
+	halfRun := func(via string) {
+		t.Helper()
+		id, err := repo.StartRunWith(d.ID, "backup", store.RunMeta{StartedVia: via, StartedViaKey: "0b7e"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for dataset, outcome := range map[string]string{"cache/appdata": "backed-up", "cache/appdata/nextcloud": "backup-failed"} {
+			if err := repo.AddZFSRunMember(store.ZFSRunMember{RunID: id, Dataset: dataset, Outcome: outcome}); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if err := repo.FinishRun(id, "failed", "", 0, "zfs backup: cache/appdata/nextcloud [backup-failed]"); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	halfRun("")
+	halfRun("mcp")
+	if hold, err := h.mcpRetentionHold(s, item, time.Now()); err != nil || hold != nil {
+		t.Fatalf("one MCP snapshot in the window was held back: %v, %v", hold, err)
+	}
+	halfRun("mcp")
+	hold, err := h.mcpRetentionHold(s, item, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hold == nil {
+		t.Fatal("the scheduled snapshot of cache/appdata would rotate out behind MCP ones, and the start was allowed")
+	}
+	if hold.detail["keepLast"] != 3 || hold.detail["mcpInWindow"] != 2 {
+		t.Fatalf("detail = %v, want keepLast 3 and mcpInWindow 2", hold.detail)
+	}
+}
+
 // Off-site retention runs per destination, so the guard has to hold a start to
 // the tightest destination the item replicates to, not to the global columns
 // that only seed the first one.

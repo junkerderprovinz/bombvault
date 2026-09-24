@@ -577,6 +577,56 @@ func (r *Repo) ListZFSRunMembersByDataset(dataset string, limit int) ([]ZFSRunMe
 		LIMIT ?`, "ListZFSRunMembersByDataset", dataset, limit)
 }
 
+// ZFSDatasetsWithMCPWindow names the datasets of an item whose newest n
+// snapshots all came from runs an MCP key started. A run that failed on one
+// dataset still wrote the others, and retention ages each dataset under its
+// own tag whatever the run's status, so the snapshots are counted, not the
+// successful runs.
+func (r *Repo) ZFSDatasetsWithMCPWindow(itemID string, n int) ([]string, error) {
+	if n <= 0 {
+		return nil, nil
+	}
+	rows, err := r.db.Query(`
+		SELECT m.dataset, r.started_via
+		FROM zfs_run_members m
+		JOIN runs r ON r.id = m.run_id
+		WHERE r.target_id = ? AND r.kind = 'backup' AND m.outcome = 'backed-up'
+		ORDER BY m.dataset, r.started_at DESC, r.rowid DESC`, itemID)
+	if err != nil {
+		return nil, fmt.Errorf("ZFSDatasetsWithMCPWindow: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var order []string
+	seen, viaMCP := map[string]int{}, map[string]int{}
+	for rows.Next() {
+		var dataset, via string
+		if err := rows.Scan(&dataset, &via); err != nil {
+			return nil, fmt.Errorf("ZFSDatasetsWithMCPWindow: %w", err)
+		}
+		if seen[dataset] == n {
+			continue
+		}
+		if seen[dataset] == 0 {
+			order = append(order, dataset)
+		}
+		seen[dataset]++
+		if via == "mcp" {
+			viaMCP[dataset]++
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("ZFSDatasetsWithMCPWindow: %w", err)
+	}
+	var out []string
+	for _, dataset := range order {
+		if seen[dataset] == n && viaMCP[dataset] == n {
+			out = append(out, dataset)
+		}
+	}
+	return out, nil
+}
+
 func (r *Repo) zfsRunMembers(query, label string, args ...any) ([]ZFSRunMember, error) {
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
