@@ -36,11 +36,7 @@ func (s *Service) zfsPreflight(ctx context.Context, d store.ZFSDataset, previous
 	defer cancel()
 	tree, err := s.zfs.Tree(lctx, d.Dataset)
 	if err != nil {
-		code := zfs.Classify("", err)
-		if zfs.IsNotFound(err) {
-			code = "not-found"
-		}
-		return nil, &backup.ZFSRefusal{Code: code, Detail: err.Error()}
+		return nil, &backup.ZFSRefusal{Code: zfsErrCode(err), Detail: zfsDetail(err.Error())}
 	}
 	if ref := zfsTreeRefusal(d.Dataset, tree); ref != nil {
 		return nil, ref

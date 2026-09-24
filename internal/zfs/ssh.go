@@ -2,7 +2,10 @@ package zfs
 
 import (
 	"context"
+	"errors"
 	"sync/atomic"
+
+	"github.com/junkerderprovinz/bombvault/internal/sshconn"
 )
 
 // Runner is the transport SSHHost speaks over, satisfied by sshconn.Conn.
@@ -13,10 +16,6 @@ type Runner interface {
 // usrSbinZFS is where zfs lives on Debian-based hosts whose non-interactive
 // PATH for a non-root user leaves /usr/sbin out.
 const usrSbinZFS = "/usr/sbin/zfs"
-
-// maxOutput bounds a listing. A host with Docker's ZFS storage driver can have
-// thousands of layer datasets, and the whole listing is read into memory.
-const maxOutput = 16 << 20
 
 // SSHHost runs the ZFS tools on the pool owner over SSH.
 type SSHHost struct {
@@ -145,17 +144,14 @@ func (h *SSHHost) Prime(ctx context.Context, hostMountpoint, snap string) error 
 	return nil
 }
 
+// runCapped runs a listing. A listing the transport cut would parse into a
+// tree with datasets silently missing, so it is refused whole.
 func (h *SSHHost) runCapped(ctx context.Context, args []string) (string, error) {
 	out, err := h.run(ctx, args)
-	if err != nil {
-		return "", err
+	if errors.Is(err, sshconn.ErrStdoutCut) {
+		return "", &CmdError{Args: args, Code: "zfs-error", Stderr: "dataset listing is larger than the 16 MiB limit", Err: err}
 	}
-	// The transport stops reading at the same limit, so a listing that
-	// reaches it was cut and parsing it would drop datasets silently.
-	if len(out) >= maxOutput {
-		return "", &CmdError{Args: args, Code: "zfs-error", Stderr: "dataset listing is larger than the 16 MiB limit"}
-	}
-	return out, nil
+	return out, err
 }
 
 // run sends a zfs argv to the host. A host that answers "command not found"

@@ -467,10 +467,7 @@ func (s *Service) zfsRestoreMount(ctx context.Context, root, dataset string) (st
 	defer cancel()
 	tree, err := s.zfs.Tree(lctx, root)
 	if err != nil {
-		if zfs.IsNotFound(err) {
-			return "", "not-found"
-		}
-		return "", zfs.Classify("", err)
+		return "", zfsErrCode(err)
 	}
 	entry, ok := zfsTreeEntry(tree, dataset)
 	if !ok {
@@ -509,7 +506,7 @@ func (s *Service) takeZFSSafetySnapshot(ctx context.Context, d store.ZFSDataset,
 	sctx, cancel := context.WithTimeout(ctx, zfsSnapshotTimeout)
 	defer cancel()
 	if err := s.zfs.SnapshotSafety(sctx, dataset, name); err != nil {
-		return "", zfsRefuse("safety-snapshot-failed", err.Error())
+		return "", zfsRefuse("safety-snapshot-failed", zfsDetail(err.Error()))
 	}
 	if err := s.store.UpsertZFSSafetySnapshot(store.ZFSSafetySnapshot{
 		ItemID: d.ID, Dataset: dataset, Name: name, CreatedAt: time.Now().Unix(),

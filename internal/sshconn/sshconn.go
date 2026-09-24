@@ -8,6 +8,7 @@ package sshconn
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -182,8 +183,16 @@ func (c *Conn) RunCapture(ctx context.Context, args ...string) (string, string, 
 	if err != nil {
 		return out, errOut, fmt.Errorf("sshconn: run %q: %w", args[0], err)
 	}
+	if stdout.cut {
+		return out, errOut, fmt.Errorf("sshconn: run %q: %w", args[0], ErrStdoutCut)
+	}
 	return out, errOut, nil
 }
+
+// ErrStdoutCut is what RunCapture returns when stdout ran past its limit. The
+// trimmed output cannot show a cut that fell on a line boundary, so a caller
+// parsing a listing has to hear it from here.
+var ErrStdoutCut = errors.New("the output is larger than the 16 MiB capture limit")
 
 // cappedBuffer keeps the first max bytes and reports the rest as written, so a
 // remote command that floods a stream neither fills the container's memory nor
@@ -191,16 +200,17 @@ func (c *Conn) RunCapture(ctx context.Context, args ...string) (string, string, 
 type cappedBuffer struct {
 	buf bytes.Buffer
 	max int
+	cut bool
 }
 
 func (b *cappedBuffer) Write(p []byte) (int, error) {
 	n := len(p)
-	if room := b.max - b.buf.Len(); room > 0 {
-		if n > room {
-			p = p[:room]
-		}
-		b.buf.Write(p) //nolint:errcheck // bytes.Buffer.Write never fails
+	room := b.max - b.buf.Len()
+	if n > room {
+		b.cut = true
+		p = p[:max(room, 0)]
 	}
+	b.buf.Write(p) //nolint:errcheck // bytes.Buffer.Write never fails
 	return n, nil
 }
 

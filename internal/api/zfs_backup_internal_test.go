@@ -155,6 +155,13 @@ func TestZFSBackupPreflightRefusals(t *testing.T) {
 			},
 		},
 		{
+			name: "the host refuses BombVault's key",
+			code: "ssh-auth",
+			setUp: func(_ *testing.T, _ *store.Repo, host *fakeZFSHost) {
+				host.treeErr = &zfs.CmdError{Code: "ssh-auth", Stderr: "root@tower: Permission denied (publickey)."}
+			},
+		},
+		{
 			name: "the root is a volume",
 			code: "not-filesystem",
 			setUp: func(_ *testing.T, _ *store.Repo, host *fakeZFSHost) {
@@ -232,6 +239,28 @@ func TestZFSBackupPreflightRefusals(t *testing.T) {
 	}
 }
 
+func TestZFSBackupPreflightScrubsTheHostsOutput(t *testing.T) {
+	s, st, host, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+	d := zfsSeedItem(t, st, zfsRoot)
+	host.treeErr = &zfs.CmdError{Code: "zfs-error", Stderr: "/etc/profile.d/motd.sh: \x1b[1mwelcome\x1b[0m\ninternal error"}
+
+	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err == nil {
+		t.Fatal("a failed listing must fail the run")
+	}
+	row, err := st.GetZFSDataset(d.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, text := range []string{zfsLastRun(t, st, d.ID).Error, row.LastCheckDetail} {
+		if strings.Contains(text, "/etc/profile.d") || strings.ContainsRune(text, '\x1b') {
+			t.Fatalf("stored %q, want the host's paths and control characters out", text)
+		}
+		if !strings.Contains(text, "internal error") {
+			t.Fatalf("stored %q, want the reason kept", text)
+		}
+	}
+}
+
 func TestZFSBackupOrchestratorRefusalsKeepDatasetName(t *testing.T) {
 	t.Run("the snapshot itself fails", func(t *testing.T) {
 		s, st, host, _ := zfsRunFixture(t, zfsTwoDatasetTree())
@@ -248,6 +277,24 @@ func TestZFSBackupOrchestratorRefusalsKeepDatasetName(t *testing.T) {
 		}
 		if !strings.Contains(run.Error, "snapshot-failed") {
 			t.Fatalf("run error = %q, want the snapshot-failed code", run.Error)
+		}
+	})
+
+	t.Run("the host's own output is scrubbed", func(t *testing.T) {
+		s, st, host, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+		d := zfsSeedItem(t, st, zfsRoot)
+		host.snapshotErr = &zfs.CmdError{Code: "zfs-error",
+			Stderr: "/root/.bashrc: line 4: \x1b[31mwarning\x1b[0m\ncannot create snapshot: out of space"}
+
+		if _, err := s.BackupZFSDataset(context.Background(), d.ID); err == nil {
+			t.Fatal("a failed snapshot must fail the run")
+		}
+		run := zfsLastRun(t, st, d.ID)
+		if strings.Contains(run.Error, "/root/.bashrc") || strings.ContainsRune(run.Error, '\x1b') {
+			t.Fatalf("run error = %q, want the host's paths and control characters out", run.Error)
+		}
+		if !strings.Contains(run.Error, zfsRoot) || !strings.Contains(run.Error, "out of space") {
+			t.Fatalf("run error = %q, want the dataset and the reason kept", run.Error)
 		}
 	})
 
