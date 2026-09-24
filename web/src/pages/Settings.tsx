@@ -4198,7 +4198,7 @@ export function SettingsPage() {
           }}
           hueIndex={nextHue()}
         />
-        <McpServerCard hueIndex={nextHue()} />
+        <McpServerCard hueIndex={nextHue()} passwordSet={authEnabled} />
         </>
       )}
 

@@ -122,6 +122,20 @@ describe("the MCP card without a key", () => {
     expect(screen.queryByRole("button", { name: en["mcp.newKey"] })).toBeNull();
     expect(screen.queryByRole("button", { name: en["mcp.rotate"] })).toBeNull();
   });
+
+  it("offers key creation once a login password is set on this page", async () => {
+    vi.stubGlobal("location", new URL("https://backup.example.com/settings"));
+    listMcpKeys.mockReset();
+    listMcpKeys.mockResolvedValue(payload({ authEnabled: false, hostAllowsKeys: false }));
+    const view = render(<McpServerCard hueIndex={0} passwordSet={false} />);
+    await waitFor(() => expect(screen.getByText(en["mcp.noPasswordWarning"])).toBeTruthy());
+
+    listMcpKeys.mockResolvedValue(payload());
+    view.rerender(<McpServerCard hueIndex={0} passwordSet />);
+
+    await waitFor(() => expect(screen.getByRole("button", { name: en["mcp.newKey"] })).toBeTruthy());
+    expect(screen.queryByText(en["mcp.noPasswordWarning"])).toBeNull();
+  });
 });
 
 describe("minting a key", () => {
@@ -143,6 +157,41 @@ describe("minting a key", () => {
     await waitFor(() => expect(screen.queryByText(en["mcp.newKeyTitle"])).toBeNull());
     expect(cardText()).not.toContain("bvmcp_abcdef123456");
     expect(cardText()).toContain("<your key>");
+  });
+
+  it("keeps a new key on screen when the list cannot be reloaded", async () => {
+    await renderCard(payload());
+    listMcpKeys.mockRejectedValueOnce(new Error("503"));
+    createMcpKey.mockResolvedValue({ ok: true, key: "bvmcp_abcdef123456", item: key({ label: "laptop" }) });
+
+    fireEvent.click(screen.getByRole("button", { name: en["mcp.newKey"] }));
+    fireEvent.change(screen.getByLabelText(en["mcp.labelLabel"]), { target: { value: "laptop" } });
+    fireEvent.click(screen.getByRole("button", { name: en["mcp.createKey"] }));
+
+    await waitFor(() => expect(screen.getByText(en["mcp.loadFailed"])).toBeTruthy());
+    expect(screen.getByDisplayValue("bvmcp_abcdef123456")).toBeTruthy();
+    expect(screen.getByRole("button", { name: en["mcp.copyKey"] })).toBeTruthy();
+  });
+
+  it("takes a new key off screen once the list shows it revoked", async () => {
+    await renderCard(
+      payload({ keys: [key()] }),
+      payload({ keys: [key({ hint: "9999", rotatedAt: 1_700_000_100 })] }),
+      payload({ revoked: [key({ hint: "9999", revokedAt: 1_700_000_200, revokedReason: "user" })] })
+    );
+    rotateMcpKey.mockResolvedValue({ ok: true, key: "bvmcp_rotated9999", item: key({ hint: "9999" }) });
+    revokeMcpKey.mockResolvedValue({ ok: true });
+
+    fireEvent.click(screen.getByRole("button", { name: en["mcp.rotate"] }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["mcp.rotate"] }));
+    await waitFor(() => expect(screen.getByDisplayValue("bvmcp_rotated9999")).toBeTruthy());
+
+    fireEvent.click(screen.getByRole("button", { name: en["mcp.revoke"] }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["mcp.revoke"] }));
+
+    await waitFor(() => expect(revokeMcpKey).toHaveBeenCalledWith("k1"));
+    await waitFor(() => expect(screen.queryByText(en["mcp.newKeyTitle"])).toBeNull());
+    expect(cardText()).not.toContain("bvmcp_rotated9999");
   });
 
   it("keeps the connect section while a key is active", async () => {
@@ -202,6 +251,38 @@ describe("the certificate of this address", () => {
     expect(screen.getByText(en["mcp.certDownload"]).getAttribute("href")).toBe("/api/mcp/certificate");
     expect(cardText()).not.toContain(en["mcp.certNotForThisAddress"].replace("{host}", "192.168.1.10"));
     expect(cardText()).toContain("NODE_EXTRA_CA_CERTS");
+  });
+
+  it("matches an IPv6 address without its brackets", async () => {
+    vi.stubGlobal("location", new URL("https://[fd00::10]:3443/settings"));
+    await renderCard(payload({ keys: [key()], certificate: selfIssued }));
+    addMcpCertificateName.mockResolvedValue({ ok: true });
+
+    await waitFor(() =>
+      expect(screen.getByText(en["mcp.certNotForThisAddress"].replace("{host}", "fd00::10"))).toBeTruthy()
+    );
+    fireEvent.click(screen.getByRole("button", { name: en["mcp.certAddAddress"] }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["mcp.certAddAddress"] }));
+    await waitFor(() => expect(addMcpCertificateName).toHaveBeenCalledWith("fd00::10"));
+    cleanup();
+
+    await renderCard(payload({ keys: [key()], certificate: { ...selfIssued, names: ["localhost", "fd00::10"] } }));
+    await waitFor(() => expect(screen.getByText(en["mcp.certDownload"])).toBeTruthy());
+    expect(cardText()).toContain("NODE_EXTRA_CA_CERTS");
+  });
+
+  it("does not offer a certificate name the server would refuse", async () => {
+    vi.stubGlobal("location", new URL("https://backup.example.com/settings"));
+    await renderCard(
+      payload({ authEnabled: false, hostAllowsKeys: false, keys: [key()], certificate: selfIssued })
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(en["mcp.certNotForThisAddress"].replace("{host}", "backup.example.com"))
+      ).toBeTruthy()
+    );
+    expect(screen.queryByRole("button", { name: en["mcp.certAddAddress"] })).toBeNull();
   });
 
   it("leaves an operator's own certificate alone", async () => {
@@ -389,6 +470,27 @@ describe("a refusal from the server", () => {
         en["mcp.needsPasswordForHost"].replace("{host}", "backup.example.com")
       )
     );
+  });
+
+  it("refreshes the list when the server wants a login password first", async () => {
+    vi.stubGlobal("location", new URL("https://backup.example.com/settings"));
+    await createWith({ ok: false, code: "mcp-key-needs-password", error: "needs password" });
+
+    await waitFor(() => expect(listMcpKeys.mock.calls.length).toBeGreaterThan(1));
+  });
+
+  it("keeps a refused new name open and shakes it", async () => {
+    await renderCard(payload({ keys: [key()] }));
+    updateMcpKey.mockResolvedValue({ ok: false, code: "mcp-key-label-taken", error: "taken" });
+
+    fireEvent.click(screen.getByRole("button", { name: en["common.edit"] }));
+    const input = screen.getByLabelText(en["mcp.labelLabel"]);
+    fireEvent.change(input, { target: { value: "desk" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    await waitFor(() => expect(pushed.map((p) => p.message)).toContain(en["mcp.labelTaken"]));
+    expect(screen.getByDisplayValue("desk").className).toContain("glim-shake");
+    expect(screen.getByRole("button", { name: en["mcp.revoke"] }).className).not.toContain("glim-shake");
   });
 
   it("refreshes the list when a key is already gone", async () => {
