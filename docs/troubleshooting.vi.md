@@ -61,6 +61,10 @@ Việc nhập sẽ dừng container, dời thư mục dữ liệu của nó sang
 
 Để đặt lại bằng tay: dừng container, đổi tên thư mục dữ liệu hiện tại cho khuất lối, đổi tên thư mục được giữ về tên gốc, rồi khởi động container. Trên Unraid, trình quản lý tệp ở thẻ Shares làm được việc này.
 
+## Trợ lý AI không kết nối được
+
+Trang [Máy chủ MCP](mcp.md#troubleshooting) giải thích ý nghĩa của từng mã trạng thái và từng lần từ chối của điểm kết nối MCP, cùng cách xử lý.
+
 ## Container cứ khởi động lại hoặc trông không khỏe mạnh
 
 BombVault báo khỏe mạnh/không khỏe mạnh từ `/api/health` của chính nó. Một công cụ tự phục hồi (chẳng hạn Autoheal) có thể khởi động lại nó tự động nếu công cụ có bao giờ bị kẹt. Kiểm tra nhật ký container và báo cáo `/spike` để tìm nguyên nhân cơ bản.

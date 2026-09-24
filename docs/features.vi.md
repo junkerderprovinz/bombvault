@@ -82,6 +82,10 @@ BombVault đơn giản theo mặc định và sâu sắc khi bạn cần. Giao d
 - **Xuất thô VM.** Các VM có cùng **Export (plain tar)**: `<name>.tar.gz` của (các) ảnh đĩa cùng với `<name>.xml`, có thể khôi phục bằng `virsh define` cùng với đĩa, không cần BombVault hay restic.
 - **Mã hóa các bản xuất thô (age).** Các bản xuất nằm ngoài restic, nên chúng là văn bản thô theo mặc định. Bật mã hóa age trong Settings và thêm một hoặc nhiều người nhận (một khóa công khai age hoặc một khóa công khai SSH). Mỗi bản xuất (`.tar.gz` của container và VM, các tệp `.xml` đi kèm, và ZIP flash) sau đó được niêm phong cho những người nhận đó, và bạn giải mã nó sau này ngoài máy chủ bằng khóa riêng khớp. Như một quy tắc an toàn, khi bật mã hóa mà không có người nhận hợp lệ, một bản xuất sẽ thất bại với một lỗi rõ ràng thay vì bao giờ ghi văn bản thô.
 
+## Trợ lý AI (MCP) {#mcp}
+
+BombVault có sẵn một máy chủ MCP, nhờ đó một trợ lý như Claude Code hay Claude Desktop có thể đọc trạng thái sao lưu, độ bao phủ, lịch sử chạy, các điểm khôi phục và hoạt động đang diễn ra. Với khóa được phép, trợ lý còn có thể bắt đầu sao lưu một mục, một miền hoặc tất cả, và hủy các lần sao lưu do chính nó bắt đầu. Khôi phục, xóa, prune và cài đặt vẫn nằm trong giao diện web. Mỗi máy khách nhận khóa riêng tại **Cài đặt, Hệ thống, Máy chủ MCP**; khóa chỉ hiện một lần, chỉ được lưu dưới dạng dấu vân tay, và có thể đổi tên, thay thế hoặc thu hồi bất cứ lúc nào. Số lần bắt đầu bị giới hạn theo giờ và theo mục, và bảo vệ lưu giữ ngăn các bản sao lưu của trợ lý đẩy điểm khôi phục của chính bạn ra khỏi chính sách "giữ N bản gần nhất". Mọi lần chạy do trợ lý bắt đầu đều được đánh dấu "qua MCP" kèm tên khóa. Xem [Máy chủ MCP](mcp.md).
+
 ## Khác
 
 - **Sao lưu nhiều cái cùng lúc.** Chọn nhiều container và nhấp **Back up selected**. Lô này chạy ở phía máy chủ, nên nó tiếp tục ngay cả khi bạn đóng tab hay mất kết nối. BombVault không bao giờ sao lưu (và do đó không bao giờ dừng) container của chính nó.
