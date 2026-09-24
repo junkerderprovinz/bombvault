@@ -98,6 +98,7 @@ const DOMAIN_FILTERS: { value: string; key: TranslationKey }[] = [
   { value: "container,containers", key: "dashboard.domainContainers" },
   { value: "vm,vms", key: "dashboard.domainVMs" },
   { value: "files", key: "dashboard.domainFiles" },
+  { value: "zfs", key: "dashboard.domainZFS" },
   { value: "flash", key: "dashboard.domainFlash" },
   { value: "config", key: "dashboard.domainConfig" },
 ];

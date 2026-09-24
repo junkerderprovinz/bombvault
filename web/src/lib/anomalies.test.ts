@@ -384,6 +384,10 @@ describe("anomalyDomainsLabel", () => {
     expect(anomalyDomainsLabel("container,files", t)).toBe("Containers, Folders");
   });
 
+  it("names a disk that holds the ZFS repository", () => {
+    expect(anomalyDomainsLabel("zfs,files", t)).toBe(`${en["dashboard.domainZFS"]}, Folders`);
+  });
+
   // A capacity finding belongs to a volume, which no backup type may own; the
   // sentence still has to name what the disk holds.
   it("falls back to the repositories where no backup type is named", () => {

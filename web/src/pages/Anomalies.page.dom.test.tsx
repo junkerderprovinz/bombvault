@@ -213,6 +213,12 @@ describe("the findings tab's filters", () => {
     expect(screen.queryByRole("combobox", { name: en["anomaly.filter.period"] })).toBeNull();
   });
 
+  it("narrows to the findings about ZFS datasets", async () => {
+    await renderPage();
+    await pick(en["anomaly.filter.domain"], en["dashboard.domainZFS"]);
+    expect(getAnomalies.mock.calls.at(-1)![0]!.domain).toBe("zfs");
+  });
+
   it("narrows to one item from the query string and lets that go again", async () => {
     getAnomalies.mockImplementation(() => page([finding({ targetId: "tg-plex", name: "plex" })]));
     await renderPage("/anomalies?scope=item:tg-plex");

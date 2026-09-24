@@ -91,6 +91,7 @@ export const ANOMALY_DOMAIN_LABEL: Record<string, TranslationKey> = {
   vm: "dashboard.domainVMs",
   vms: "dashboard.domainVMs",
   files: "dashboard.domainFiles",
+  zfs: "dashboard.domainZFS",
   flash: "dashboard.domainFlash",
   config: "dashboard.domainConfig",
 };
