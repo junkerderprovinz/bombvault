@@ -89,6 +89,10 @@ Po aktualizacji BombVault raz odczytuje rozmiary wcześniejszych kopii z każdeg
 
 Na udziale użytkownika Unraid (`/mnt/user`) wolne miejsce to wolne miejsce całej macierzy, a nie jednego dysku. Repozytoria zdalne są mierzone tylko przez zdalne zasoby rclone, które podają swoje wolne miejsce; repozytoria S3, B2, REST i SFTP nie mają wartości i figurują na karcie **Anomalie** jako niezmierzone.
 
+## Asystent AI nie może się połączyć
+
+Strona [Serwer MCP](mcp.md#troubleshooting) wyjaśnia, co oznacza każdy kod stanu i każda odmowa punktu końcowego MCP oraz co z tym zrobić.
+
 ## Kontener wciąż się restartuje lub wygląda na niesprawny
 
 BombVault zgłasza stan healthy/unhealthy z własnego `/api/health`. Narzędzie do auto-naprawy (takie jak Autoheal) może go automatycznie zrestartować, jeśli silnik kiedykolwiek się zaklinuje. Sprawdź log kontenera oraz raport `/spike` w poszukiwaniu przyczyny źródłowej.

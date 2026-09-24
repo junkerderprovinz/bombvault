@@ -54,9 +54,14 @@ Pro každý kontejner si BombVault sám vybírá, která připojení bind a pojm
 - Protože je ochrana volitelná, když není nastavena, jsou celé UI a API (včetně nastavení mimo lokalitu, tras testu odolnosti a sady pro obnovu) dosažitelné každým, kdo se dostane k portu. Zapněte ochranu, jakmile používáte mimo lokalitu, neměnné zálohy nebo šifrování.
 - Provozujte BombVault pouze v důvěryhodné, nevystavené síti. Pro vzdálený přístup jej umístěte za reverzní proxy, která přidává autentizaci a TLS. Odpovědi nesou základní bezpečnostní hlavičky (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Za reverzní proxy nese každý požadavek adresu proxy, takže bez `TRUSTED_PROXY` počítá omezení všechny klienty dohromady a neúspěchy útočníka zamknou i tebe. Uveď proxy v `TRUSTED_PROXY` a počítání se vrátí na jednotlivé klienty.
+- Reverzní proxy před BombVaultem musí předávat hlavičku `Authorization` nebo `X-API-Key` na `/mcp` a nesmí bufferovat odpovědi, jinak se asistenti nepřipojí. Viz [Server MCP](mcp.md#tls).
 - S `HTTP_ONLY=true` ztrácí session cookie svůj příznak `Secure` (musí, aby fungovala přes prosté HTTP), takže zapněte heslo za proxy terminující TLS jen pokud je důvěrnost důležitá.
 - SSH připojení pro zálohu VM důvěřuje hostitelskému klíči při prvním připojení (TOFU) a poté jej připne. Ověřte hostitelský klíč mimo pásmo, pokud vaše cesta z kontejneru k hostiteli není důvěryhodná.
 - Zálohy jsou šifrovány pomocí restic, když je šifrování povoleno (Nastavení; ve výchozím stavu zapnuto), s klíčem odvozeným z `APP_KEY`.
+
+## Server MCP {#mcp-server}
+
+Server MCP nepotřebuje žádnou proměnnou prostředí. Zapnete ho vytvořením klíče v **Nastavení, Systém, Server MCP** a odpovídá na `/mcp` na stejném portu jako webové rozhraní (například `https://192.168.1.10:3443/mcp`). Bez aktivního klíče tato cesta odpovídá `404`. Klienty, certifikáty a limity popisuje stránka [Server MCP](mcp.md).
 
 ## Záloha VM přes SSH
 

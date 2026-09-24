@@ -54,9 +54,14 @@ Pentru fiecare container, BombVault alege singur ce montări bind și ce volume 
 - Deoarece bariera este opțională, când nu este setată, întreaga interfață și API (inclusiv configurarea off-site, rutele de test de manipulare și kitul de recuperare) sunt accesibile oricui poate ajunge la port. Activează bariera odată ce sunt folosite backupuri off-site, imuabile sau criptarea.
 - Rulează BombVault doar într-o rețea de încredere, neexpusă. Pentru acces la distanță, pune-l în spatele unui reverse proxy care adaugă autentificare și TLS. Răspunsurile poartă anteturi de securitate de bază (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - În spatele unui proxy invers fiecare cerere poartă adresa proxy-ului, deci fără `TRUSTED_PROXY` limitarea numără toți clienții în aceeași găleată, iar eșecurile unui atacator te blochează și pe tine. Indică proxy-ul în `TRUSTED_PROXY` pentru a reveni la numărarea pe client.
+- Un proxy invers în fața BombVault trebuie să transmită antetul `Authorization` sau `X-API-Key` către `/mcp` și nu are voie să pună răspunsurile în buffer, altfel asistenții nu se pot conecta. Vezi [Server MCP](mcp.md#tls).
 - Cu `HTTP_ONLY=true` cookie-ul de sesiune își pierde indicatorul `Secure` (trebuie, ca să funcționeze peste HTTP simplu), deci activează parola în spatele unui proxy care termină TLS doar dacă confidențialitatea contează.
 - Conexiunea SSH de backup VM are încredere în cheia gazdei la prima conexiune (TOFU) și o fixează ulterior. Verifică cheia gazdei prin alt canal dacă drumul container-către-gazdă nu este de încredere.
 - Backupurile sunt criptate de restic când criptarea este activată (Setări; activată implicit), cu cheia derivată din `APP_KEY`.
+
+## Server MCP {#mcp-server}
+
+Serverul MCP nu are nevoie de nicio variabilă de mediu. Îl pornești creând o cheie în **Setări, Sistem, Server MCP**, iar el răspunde la `/mcp` pe același port ca interfața web (de exemplu `https://192.168.1.10:3443/mcp`). Fără o cheie activă, calea răspunde `404`. Clienții, certificatele și limitele sunt descrise în [Server MCP](mcp.md).
 
 ## Backup VM prin SSH
 

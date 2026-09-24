@@ -89,6 +89,10 @@ Päivityksen jälkeen BombVault lukee kerran aiempien varmuuskopioiden koot joka
 
 Unraidin käyttäjäjaolla (`/mnt/user`) vapaa tila on koko arrayn, ei yksittäisen levyn. Etätietovarastot mitataan vain rclone-etäkohteiden kautta, jotka ilmoittavat vapaan tilansa; S3-, B2-, REST- ja SFTP-tietovarastoilla ei ole lukua, ja ne näkyvät kortissa **Poikkeamat** mittaamattomina.
 
+## Tekoälyavustaja ei saa yhteyttä
+
+Sivu [MCP-palvelin](mcp.md#troubleshooting) kertoo, mitä kukin tilakoodi ja kukin MCP-päätepisteen hylkäys tarkoittaa ja mitä asialle voi tehdä.
+
 ## Kontti käynnistyy jatkuvasti uudelleen tai näyttää epäterveeltä
 
 BombVault raportoi terve/epäterve omasta `/api/health`-päätepisteestään. Automaattinen korjaustyökalu (kuten Autoheal) voi käynnistää sen uudelleen automaattisesti, jos moottori koskaan jumiutuu. Tarkista kontin loki ja `/spike`-raportti taustalla olevan syyn selvittämiseksi.

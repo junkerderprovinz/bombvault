@@ -89,6 +89,10 @@ Frissítés után a BombVault egyszer beolvassa a korábbi mentések méretét m
 
 Az Unraid felhasználói megosztásán (`/mnt/user`) a szabad hely az egész tömbé, nem egyetlen lemezé. A távoli tárolókat csak olyan rclone távoli tárolókon keresztül méri, amelyek jelentik a szabad helyüket; az S3, B2, REST és SFTP tárolóknak nincs adatuk, és az **Anomáliák** kártyán nem mértként szerepelnek.
 
+## Egy MI-asszisztens nem tud csatlakozni
+
+Az [MCP-kiszolgáló](mcp.md#troubleshooting) oldal leírja, mit jelentenek az MCP-végpont egyes állapotkódjai és elutasításai, és mit tehetsz ellenük.
+
 ## A konténer folyamatosan újraindul vagy egészségtelennek tűnik
 
 A BombVault a saját `/api/health`-jéből jelent egészségeset/egészségtelent. Egy automatikus gyógyító eszköz (mint az Autoheal) automatikusan újraindíthatja, ha a motor valaha beragadna. Ellenőrizd a konténer naplóját és a `/spike` jelentést a mögöttes okért.

@@ -54,9 +54,14 @@ Dla każdego kontenera BombVault sam wybiera, które montowania bind i wolumeny 
 - Ponieważ brama jest opcjonalna, gdy nie jest ustawiona, cały interfejs i API (w tym konfiguracja poza siedzibą, trasy tamper testu oraz zestaw odzyskiwania) są osiągalne dla każdego, kto może dotrzeć do portu. Włącz bramę, gdy tylko używasz kopii poza siedzibą, kopii niezmiennych lub szyfrowania.
 - Uruchamiaj BombVault wyłącznie w zaufanej, nieudostępnianej na zewnątrz sieci. Do zdalnego dostępu umieść go za odwrotnym proxy dodającym uwierzytelnianie i TLS. Odpowiedzi niosą podstawowe nagłówki bezpieczeństwa (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Za odwrotnym proxy każde żądanie niesie adres proxy, więc bez `TRUSTED_PROXY` ogranicznik liczy wszystkich klientów razem, a nieudane próby atakującego blokują także ciebie. Wskaż proxy w `TRUSTED_PROXY`, aby wrócić do liczenia na klienta.
+- Reverse proxy przed BombVault musi przekazywać nagłówek `Authorization` albo `X-API-Key` do `/mcp` i nie może buforować odpowiedzi, inaczej asystenci się nie połączą. Zobacz [Serwer MCP](mcp.md#tls).
 - Przy `HTTP_ONLY=true` ciasteczko sesji traci flagę `Secure` (musi, aby działać po zwykłym HTTP), więc włączaj hasło za proxy terminującym TLS tylko, jeśli poufność ma znaczenie.
 - Połączenie SSH do kopii VM ufa kluczowi hosta przy pierwszym połączeniu (TOFU) i przypina go potem. Zweryfikuj klucz hosta poza pasmem, jeśli ścieżka od kontenera do hosta nie jest zaufana.
 - Kopie zapasowe są szyfrowane przez restic, gdy szyfrowanie jest włączone (Ustawienia; domyślnie włączone), z kluczem wyprowadzonym z `APP_KEY`.
+
+## Serwer MCP {#mcp-server}
+
+Serwer MCP nie potrzebuje żadnej zmiennej środowiskowej. Włączasz go, tworząc klucz w **Ustawienia, System, Serwer MCP**, a odpowiada pod `/mcp` na tym samym porcie co interfejs WWW (na przykład `https://192.168.1.10:3443/mcp`). Bez aktywnego klucza ta ścieżka odpowiada `404`. Klientów, certyfikaty i limity opisuje strona [Serwer MCP](mcp.md).
 
 ## Kopia VM przez SSH
 

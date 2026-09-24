@@ -89,6 +89,10 @@ Po aktualizaci BombVault jednou načte velikosti dřívějších záloh z každ�
 
 Na uživatelské sdílené složce Unraidu (`/mnt/user`) je volné místo celého pole, ne jednoho disku. Vzdálené repozitáře se měří jen přes rclone remoty, které hlásí své volné místo; repozitáře S3, B2, REST a SFTP žádný údaj nemají a na kartě **Anomálie** jsou uvedeny jako neměřené.
 
+## Asistent s umělou inteligencí se nepřipojí
+
+Stránka [Server MCP](mcp.md#troubleshooting) uvádí, co znamená každý stavový kód a každé odmítnutí koncového bodu MCP a co s tím dělat.
+
 ## Kontejner se stále restartuje nebo vypadá unhealthy
 
 BombVault hlásí healthy/unhealthy ze svého vlastního `/api/health`. Nástroj pro automatické hojení (například Autoheal) jej může restartovat automaticky, pokud se engine kdy zasekne. Zkontrolujte log kontejneru a report `/spike` pro základní příčinu.
