@@ -9,23 +9,25 @@ BombVault are un server integrat pentru Model Context Protocol (MCP), protocolul
 | `get_health` | Versiunea, numele instanței, dacă rulează o copie și ce are voie să facă această cheie | citire |
 | `get_status` | Starea protecției pe fiecare domeniu: ultima copie reușită, intervalul așteptat, verificările și controalele off-site, următoarele rulări programate | citire |
 | `get_coverage` | Ce protejează BombVault și ce nu, cu motivul pentru fiecare | citire |
-| `list_items` | Fiecare container, VM și set de foldere protejat, stick-ul flash și configurația aplicației, cu programarea, ce oprește o copie, ultima copie și cât a durat; containerele de baze de date arată și ultimul dump | citire |
+| `list_items` | Fiecare container, VM și set de foldere protejat, stick-ul flash și configurația aplicației, cu programarea, ce oprește o copie, ultima copie și cât a durat; containerele de baze de date arată și ultimul dump; apar și seturile de date ZFS, cu rezultatul ultimei lor verificări | citire |
 | `list_runs` | Istoricul rulărilor, cele mai noi primele, filtrabil după domeniu, element, stare, tip și timp | citire |
-| `list_restore_points` | Punctele de restaurare ale unui element din depozitul lui principal și, pentru un container, dumpurile lui de baze de date | citire |
+| `list_restore_points` | Punctele de restaurare ale unui element din depozitul lui principal și, pentru un container, dumpurile lui de baze de date; un set de date ZFS are câte un punct de restaurare pentru fiecare copie, cu un snapshot al fiecărui set de date de sub el | citire |
 | `get_activity` | Ce rulează chiar acum, cu fază și procent | citire |
 | `get_storage_stats` | Istoricul de dimensiune al depozitului principal al unui domeniu și creșterea lui pe săptămână | citire |
+| `list_anomalies` | Copiile neobișnuite observate de BombVault, filtrabile după stare, gravitate și domeniu, cu un rezumat al celor deschise | citire |
+| `get_anomaly` | Una dintre aceste constatări, cu nota lăsată la confirmarea ei | citire |
 | `start_backup` | Face imediat copia unui element | pornire |
 | `start_domain_backup` | Face copia fiecărui element protejat dintr-un domeniu | pornire |
 | `start_backup_everything` | Rulează trecerea Backup Everything | pornire |
 | `cancel_backup` | Anulează o copie în curs pornită de această cheie | anulare |
 
-Rămân în interfața web: restaurările de orice fel (inclusiv descărcarea, salvarea sau importul unui dump de bază de date), ștergerea copiilor, prune, unlock, verificările și exercițiile, replicarea off-site, setările, datele de autentificare și cheile MCP, precum și anularea unei copii pornite de programare, de interfața web sau de altă cheie. Motivul: răspunsurile uneltelor conțin nume și mesaje de eroare de pe serverul tău, iar oricare dintre ele poate conține un text scris ca să manipuleze asistentul. Un asistent care se lasă păcălit de un asemenea text poate cel mult să pornească o copie în limitele de mai jos sau să anuleze una pe care a pornit-o el.
+Rămân în interfața web: restaurările de orice fel (inclusiv descărcarea, salvarea sau importul unui dump de bază de date), ștergerea copiilor, prune, unlock, verificările și exercițiile, replicarea off-site, setările, datele de autentificare și cheile MCP, precum și anularea unei copii pornite de programare, de interfața web sau de altă cheie. La fel și confirmarea unei anomalii sau marcarea ei ca așteptată, care se face pe pagina **Anomalii**. Motivul: răspunsurile uneltelor conțin nume și mesaje de eroare de pe serverul tău, iar oricare dintre ele poate conține un text scris ca să manipuleze asistentul. Un asistent care se lasă păcălit de un asemenea text poate cel mult să pornească o copie în limitele de mai jos sau să anuleze una pe care a pornit-o el.
 
 Dacă depozitul principal al unui element e la distanță (S3, REST, SFTP, rclone), `list_restore_points` îl contactează, iar apelul poate dura puțin. Copiile off-site nu pot fi listate prin MCP.
 
 ## Ce face o copie pornită {#starting-backups}
 
-Copia unui asistent e aceeași copie pe care o pornește interfața web. Un container care rulează este oprit până se termină copia lui, împreună cu containerele setate să se oprească odată cu el. O VM cu metoda "graceful" este oprită și pornită din nou. Seturile de foldere, stick-ul flash și configurația continuă să ruleze. După aceea, BombVault aplică politica de păstrare și poate copia în depozitul off-site. `list_items` îi spune asistentului ce oprește un element și cât a durat ultima lui copie, iar descrierile uneltelor îi cer să-ți spună asta înainte să pornească ceva.
+Copia unui asistent e aceeași copie pe care o pornește interfața web. Un container care rulează este oprit până se termină copia lui, împreună cu containerele setate să se oprească odată cu el. O VM cu metoda "graceful" este oprită și pornită din nou. Un set de date ZFS oprește containerele setate pentru el cât timp i se face snapshotul. Seturile de foldere, stick-ul flash și configurația continuă să ruleze. După aceea, BombVault aplică politica de păstrare și poate copia în depozitul off-site. `list_items` îi spune asistentului ce oprește un element și cât a durat ultima lui copie, iar descrierile uneltelor îi cer să-ți spună asta înainte să pornească ceva.
 
 Pentru că o copie oprește servicii și scoate afară puncte de restaurare vechi, pornirile prin MCP sunt limitate:
 

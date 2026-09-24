@@ -9,23 +9,25 @@ BombVault heeft een ingebouwde server voor het Model Context Protocol (MCP), het
 | `get_health` | Versie, naam van de instantie, of er een back-up loopt en wat deze sleutel mag | lezen |
 | `get_status` | Beschermingsstatus per domein: laatste geslaagde back-up, verwacht interval, verificaties en off-site-controles, volgende geplande runs | lezen |
 | `get_coverage` | Wat BombVault beschermt en wat niet, telkens met de reden | lezen |
-| `list_items` | Elke beschermde container, VM en mappenset, de flashstick en de app-configuratie, met planning, wat een back-up ervan stopt, de laatste back-up en hoe lang die duurde; databasecontainers vermelden ook hun laatste dump | lezen |
+| `list_items` | Elke beschermde container, VM en mappenset, de flashstick en de app-configuratie, met planning, wat een back-up ervan stopt, de laatste back-up en hoe lang die duurde; databasecontainers vermelden ook hun laatste dump; ZFS-datasets staan er ook in, met de uitkomst van hun laatste controle | lezen |
 | `list_runs` | Runhistorie, nieuwste eerst, te filteren op domein, item, status, soort en tijd | lezen |
-| `list_restore_points` | Herstelpunten van één item uit zijn primaire repository, en bij een container ook zijn databasedumps | lezen |
+| `list_restore_points` | Herstelpunten van één item uit zijn primaire repository, en bij een container ook zijn databasedumps; een ZFS-dataset krijgt één herstelpunt per back-up, met een snapshot van elke dataset eronder | lezen |
 | `get_activity` | Wat er nu loopt, met fase en percentage | lezen |
 | `get_storage_stats` | Groottegeschiedenis van de primaire repository van een domein en de groei per week | lezen |
+| `list_anomalies` | Ongewone back-ups die BombVault heeft opgemerkt, te filteren op status, ernst en domein, met een overzicht van wat nog openstaat | lezen |
+| `get_anomaly` | Eén van die meldingen, met de notitie die bij het bevestigen is achtergelaten | lezen |
 | `start_backup` | Maakt nu een back-up van één item | starten |
 | `start_domain_backup` | Maakt een back-up van elk beschermd item van een domein | starten |
 | `start_backup_everything` | Start de Backup Everything-ronde | starten |
 | `cancel_backup` | Annuleert een lopende back-up die deze sleutel heeft gestart | annuleren |
 
-Dit blijft in de webinterface: herstel van elke soort (ook het downloaden, opslaan of importeren van een databasedump), back-ups verwijderen, prune, unlock, controles en oefeningen, off-site-replicatie, instellingen, inloggegevens en MCP-sleutels, en het annuleren van een back-up die de planning, de webinterface of een andere sleutel heeft gestart. De reden: de antwoorden van de hulpmiddelen bevatten namen en foutmeldingen van je server, en in elk daarvan kan tekst staan die bedoeld is om de assistent te sturen. Een assistent die daarin trapt, kan in het ergste geval een back-up starten binnen de grenzen hieronder, of er een annuleren die hij zelf heeft gestart.
+Dit blijft in de webinterface: herstel van elke soort (ook het downloaden, opslaan of importeren van een databasedump), back-ups verwijderen, prune, unlock, controles en oefeningen, off-site-replicatie, instellingen, inloggegevens en MCP-sleutels, en het annuleren van een back-up die de planning, de webinterface of een andere sleutel heeft gestart. Hetzelfde geldt voor het bevestigen van een anomalie of het markeren ervan als verwacht, wat op de pagina **Anomalieën** gebeurt. De reden: de antwoorden van de hulpmiddelen bevatten namen en foutmeldingen van je server, en in elk daarvan kan tekst staan die bedoeld is om de assistent te sturen. Een assistent die daarin trapt, kan in het ergste geval een back-up starten binnen de grenzen hieronder, of er een annuleren die hij zelf heeft gestart.
 
 Staat de primaire repository van een item elders (S3, REST, SFTP, rclone), dan neemt `list_restore_points` daar contact mee op en kan de aanroep even duren. Off-site-kopieën zijn via MCP niet op te vragen.
 
 ## Wat een gestarte back-up doet {#starting-backups}
 
-De back-up van een assistent is dezelfde back-up die de webinterface start. Een draaiende container wordt gestopt tot zijn back-up klaar is, samen met de containers die met hem mee moeten stoppen. Een VM met de methode "graceful" wordt afgesloten en weer gestart. Mappensets, de flashstick en de configuratie blijven draaien. Daarna past BombVault het bewaarbeleid toe en kopieert het eventueel naar de off-site-repository. `list_items` vertelt de assistent wat een item stopt en hoe lang de laatste back-up duurde, en de beschrijvingen van de hulpmiddelen vragen hem dat aan jou te melden voor hij iets start.
+De back-up van een assistent is dezelfde back-up die de webinterface start. Een draaiende container wordt gestopt tot zijn back-up klaar is, samen met de containers die met hem mee moeten stoppen. Een VM met de methode "graceful" wordt afgesloten en weer gestart. Een ZFS-dataset stopt de containers die ervoor zijn ingesteld zolang de snapshot wordt gemaakt. Mappensets, de flashstick en de configuratie blijven draaien. Daarna past BombVault het bewaarbeleid toe en kopieert het eventueel naar de off-site-repository. `list_items` vertelt de assistent wat een item stopt en hoe lang de laatste back-up duurde, en de beschrijvingen van de hulpmiddelen vragen hem dat aan jou te melden voor hij iets start.
 
 Omdat een back-up dingen stilzet en oude herstelpunten eruit duwt, zijn starts via MCP begrensd:
 

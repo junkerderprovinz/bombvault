@@ -9,23 +9,25 @@ BombVault incluye un servidor para el Model Context Protocol (MCP), el protocolo
 | `get_health` | Versión, nombre de la instancia, si hay una copia en curso y qué puede hacer esta clave | lectura |
 | `get_status` | Estado de protección por dominio: última copia correcta, intervalo esperado, verificaciones y comprobaciones externas, próximas ejecuciones programadas | lectura |
 | `get_coverage` | Qué protege BombVault y qué no, con el motivo de cada caso | lectura |
-| `list_items` | Cada contenedor, VM y conjunto de carpetas protegido, la memoria flash y la configuración de la app, con su programación, lo que detiene una copia, su última copia y cuánto duró; los contenedores de bases de datos indican también su último volcado | lectura |
+| `list_items` | Cada contenedor, VM y conjunto de carpetas protegido, la memoria flash y la configuración de la app, con su programación, lo que detiene una copia, su última copia y cuánto duró; los contenedores de bases de datos indican también su último volcado; los datasets ZFS también aparecen, con el resultado de su última comprobación | lectura |
 | `list_runs` | Historial de ejecuciones, primero las más recientes, filtrable por dominio, elemento, estado, tipo y fecha | lectura |
-| `list_restore_points` | Puntos de restauración de un elemento en su repositorio principal y, para un contenedor, sus volcados de base de datos | lectura |
+| `list_restore_points` | Puntos de restauración de un elemento en su repositorio principal y, para un contenedor, sus volcados de base de datos; un dataset ZFS tiene un punto de restauración por copia, con un snapshot de cada dataset que cuelga de él | lectura |
 | `get_activity` | Lo que se está ejecutando ahora, con fase y porcentaje | lectura |
 | `get_storage_stats` | Historial de tamaño del repositorio principal de un dominio y su crecimiento semanal | lectura |
+| `list_anomalies` | Copias inusuales que BombVault ha detectado, filtrables por estado, gravedad y dominio, con un resumen de lo que está abierto | lectura |
+| `get_anomaly` | Uno de esos hallazgos, con la nota que se dejó al reconocerlo | lectura |
 | `start_backup` | Hace ahora la copia de un elemento | inicio |
 | `start_domain_backup` | Hace la copia de cada elemento protegido de un dominio | inicio |
 | `start_backup_everything` | Lanza la pasada de Backup Everything | inicio |
 | `cancel_backup` | Cancela una copia en curso que inició esta clave | cancelación |
 
-Esto se queda en la interfaz web: las restauraciones de cualquier tipo (también descargar, guardar o importar un volcado de base de datos), borrar copias, prune, unlock, las comprobaciones y los simulacros, la replicación externa, los ajustes, las credenciales y las claves MCP, y cancelar una copia que haya iniciado la programación, la interfaz web u otra clave. El motivo: las respuestas de las herramientas contienen nombres y mensajes de error de tu servidor, y cualquiera de ellos podría llevar un texto escrito para manipular al asistente. Un asistente que caiga en ese texto puede, como mucho, iniciar una copia dentro de los límites de abajo o cancelar una que haya iniciado él mismo.
+Esto se queda en la interfaz web: las restauraciones de cualquier tipo (también descargar, guardar o importar un volcado de base de datos), borrar copias, prune, unlock, las comprobaciones y los simulacros, la replicación externa, los ajustes, las credenciales y las claves MCP, y cancelar una copia que haya iniciado la programación, la interfaz web u otra clave. Lo mismo vale para reconocer una anomalía o marcarla como esperada, que se hace en la página **Anomalías**. El motivo: las respuestas de las herramientas contienen nombres y mensajes de error de tu servidor, y cualquiera de ellos podría llevar un texto escrito para manipular al asistente. Un asistente que caiga en ese texto puede, como mucho, iniciar una copia dentro de los límites de abajo o cancelar una que haya iniciado él mismo.
 
 Si el repositorio principal de un elemento es remoto (S3, REST, SFTP, rclone), `list_restore_points` lo consulta y la llamada puede tardar un rato. Las copias externas no se pueden listar por MCP.
 
 ## Qué hace una copia iniciada {#starting-backups}
 
-La copia de un asistente es la misma que inicia la interfaz web. Un contenedor en marcha se detiene hasta que termina su copia, junto con los contenedores configurados para detenerse con él. Una VM con el método "graceful" se apaga y se vuelve a arrancar. Los conjuntos de carpetas, la memoria flash y la configuración siguen funcionando. Después, BombVault aplica la política de retención y puede copiar al repositorio externo. `list_items` le dice al asistente qué detiene un elemento y cuánto duró su última copia, y las descripciones de las herramientas le piden que te lo diga antes de iniciar nada.
+La copia de un asistente es la misma que inicia la interfaz web. Un contenedor en marcha se detiene hasta que termina su copia, junto con los contenedores configurados para detenerse con él. Una VM con el método "graceful" se apaga y se vuelve a arrancar. Un dataset ZFS detiene los contenedores configurados para él mientras se toma su snapshot. Los conjuntos de carpetas, la memoria flash y la configuración siguen funcionando. Después, BombVault aplica la política de retención y puede copiar al repositorio externo. `list_items` le dice al asistente qué detiene un elemento y cuánto duró su última copia, y las descripciones de las herramientas le piden que te lo diga antes de iniciar nada.
 
 Como una copia detiene servicios y saca puntos de restauración antiguos, los inicios por MCP están limitados:
 

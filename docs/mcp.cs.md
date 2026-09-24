@@ -9,23 +9,25 @@ BombVault má vestavěný server pro Model Context Protocol (MCP), protokol, př
 | `get_health` | Verze, název instance, zda běží záloha a co tento klíč smí | čtení |
 | `get_status` | Stav ochrany podle domén: poslední úspěšná záloha, očekávaný interval, ověření a kontroly off-site, další naplánované běhy | čtení |
 | `get_coverage` | Co BombVault chrání a co ne, u každé položky s důvodem | čtení |
-| `list_items` | Každý chráněný kontejner, VM a sada složek, flash disk a konfigurace aplikace, s plánem, tím, co záloha zastaví, poslední zálohou a její délkou; databázové kontejnery uvádějí i poslední dump | čtení |
+| `list_items` | Každý chráněný kontejner, VM a sada složek, flash disk a konfigurace aplikace, s plánem, tím, co záloha zastaví, poslední zálohou a její délkou; databázové kontejnery uvádějí i poslední dump; uvádí i datasety ZFS s výsledkem jejich poslední kontroly | čtení |
 | `list_runs` | Historie běhů od nejnovějších, filtrovatelná podle domény, položky, stavu, druhu a času | čtení |
-| `list_restore_points` | Body obnovy jedné položky z jejího primárního repozitáře a u kontejneru i jeho databázové dumpy | čtení |
+| `list_restore_points` | Body obnovy jedné položky z jejího primárního repozitáře a u kontejneru i jeho databázové dumpy; dataset ZFS má jeden bod obnovy na zálohu se snapshotem každého datasetu pod ním | čtení |
 | `get_activity` | Co právě běží, s fází a procenty | čtení |
 | `get_storage_stats` | Historie velikosti primárního repozitáře domény a její týdenní růst | čtení |
+| `list_anomalies` | Neobvyklé zálohy, kterých si BombVault všiml, lze filtrovat podle stavu, závažnosti a domény, se souhrnem toho, co je otevřené | čtení |
+| `get_anomaly` | Jedno z těchto zjištění s poznámkou, která zůstala při jeho potvrzení | čtení |
 | `start_backup` | Hned zazálohuje jednu položku | spuštění |
 | `start_domain_backup` | Zazálohuje každou chráněnou položku jedné domény | spuštění |
 | `start_backup_everything` | Spustí průchod Backup Everything | spuštění |
 | `cancel_backup` | Zruší běžící zálohu, kterou spustil tento klíč | zrušení |
 
-Ve webovém rozhraní zůstává: obnova jakéhokoli druhu (včetně stažení, uložení nebo importu databázového dumpu), mazání záloh, prune, unlock, kontroly a cvičení, replikace off-site, nastavení, přihlašovací údaje a klíče MCP a také zrušení zálohy, kterou spustil plán, webové rozhraní nebo jiný klíč. Důvod: odpovědi nástrojů obsahují názvy a chybové zprávy z vašeho serveru a kterákoli z nich může nést text napsaný tak, aby asistenta ovládl. Asistent, který na takový text naletí, může nanejvýš spustit zálohu v mezích uvedených níže nebo zrušit zálohu, kterou sám spustil.
+Ve webovém rozhraní zůstává: obnova jakéhokoli druhu (včetně stažení, uložení nebo importu databázového dumpu), mazání záloh, prune, unlock, kontroly a cvičení, replikace off-site, nastavení, přihlašovací údaje a klíče MCP a také zrušení zálohy, kterou spustil plán, webové rozhraní nebo jiný klíč. Totéž platí pro potvrzení anomálie nebo její označení jako očekávané, což se dělá na stránce **Anomálie**. Důvod: odpovědi nástrojů obsahují názvy a chybové zprávy z vašeho serveru a kterákoli z nich může nést text napsaný tak, aby asistenta ovládl. Asistent, který na takový text naletí, může nanejvýš spustit zálohu v mezích uvedených níže nebo zrušit zálohu, kterou sám spustil.
 
 Pokud je primární repozitář položky vzdálený (S3, REST, SFTP, rclone), `list_restore_points` se k němu připojí a volání může chvíli trvat. Kopie off-site přes MCP vypsat nelze.
 
 ## Co spuštěná záloha dělá {#starting-backups}
 
-Záloha spuštěná asistentem je stejná záloha, jakou spouští webové rozhraní. Běžící kontejner se zastaví, dokud jeho záloha neskončí, spolu s kontejnery nastavenými k zastavení s ním. VM s metodou "graceful" se vypne a znovu spustí. Sady složek, flash disk a konfigurace běží dál. Poté BombVault použije zásady uchovávání a případně zkopíruje data do repozitáře off-site. `list_items` asistentovi řekne, co položka zastaví a jak dlouho trvala její poslední záloha, a popisy nástrojů ho žádají, aby vám to řekl dřív, než cokoli spustí.
+Záloha spuštěná asistentem je stejná záloha, jakou spouští webové rozhraní. Běžící kontejner se zastaví, dokud jeho záloha neskončí, spolu s kontejnery nastavenými k zastavení s ním. VM s metodou "graceful" se vypne a znovu spustí. Dataset ZFS zastaví kontejnery, které jsou pro něj nastavené, po dobu pořizování svého snapshotu. Sady složek, flash disk a konfigurace běží dál. Poté BombVault použije zásady uchovávání a případně zkopíruje data do repozitáře off-site. `list_items` asistentovi řekne, co položka zastaví a jak dlouho trvala její poslední záloha, a popisy nástrojů ho žádají, aby vám to řekl dřív, než cokoli spustí.
 
 Protože záloha zastavuje služby a vytlačuje staré body obnovy, jsou spuštění přes MCP omezená:
 

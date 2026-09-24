@@ -9,23 +9,25 @@ A BombVault beépített kiszolgálót kínál a Model Context Protocolhoz (MCP),
 | `get_health` | Verzió, a példány neve, fut-e mentés, és mit tehet ez a kulcs | olvasás |
 | `get_status` | Védettségi állapot tartományonként: utolsó sikeres mentés, várt időköz, ellenőrzések és off-site vizsgálatok, következő ütemezett futások | olvasás |
 | `get_coverage` | Mit véd a BombVault és mit nem, mindegyiknél az okkal | olvasás |
-| `list_items` | Minden védett konténer, VM és mappakészlet, a flash meghajtó és az alkalmazás beállításai, ütemezéssel, azzal, hogy egy mentés mit állít le, az utolsó mentéssel és annak idejével; az adatbázis-konténerek az utolsó dumpot is megadják | olvasás |
+| `list_items` | Minden védett konténer, VM és mappakészlet, a flash meghajtó és az alkalmazás beállításai, ütemezéssel, azzal, hogy egy mentés mit állít le, az utolsó mentéssel és annak idejével; az adatbázis-konténerek az utolsó dumpot is megadják; a ZFS-adatkészletek is szerepelnek, a legutóbbi ellenőrzésük eredményével | olvasás |
 | `list_runs` | Futási előzmények, a legújabbak elöl, tartomány, elem, állapot, fajta és idő szerint szűrhetően | olvasás |
-| `list_restore_points` | Egy elem visszaállítási pontjai az elsődleges tárolójából, konténernél az adatbázis-dumpjai is | olvasás |
+| `list_restore_points` | Egy elem visszaállítási pontjai az elsődleges tárolójából, konténernél az adatbázis-dumpjai is; egy ZFS-adatkészletnek mentésenként egy visszaállítási pontja van, az alatta lévő minden adatkészlet pillanatképével | olvasás |
 | `get_activity` | Mi fut éppen, fázissal és százalékkal | olvasás |
 | `get_storage_stats` | Egy tartomány elsődleges tárolójának méretelőzménye és heti növekedése | olvasás |
+| `list_anomalies` | Szokatlan mentések, amelyeket a BombVault észrevett, állapot, súlyosság és tartomány szerint szűrhetők, a nyitott tételek összesítésével | olvasás |
+| `get_anomaly` | Egy ilyen észlelés, a nyugtázáskor hagyott megjegyzéssel | olvasás |
 | `start_backup` | Azonnal elmenti egy elem adatait | indítás |
 | `start_domain_backup` | Egy tartomány minden védett elemét menti | indítás |
 | `start_backup_everything` | Lefuttatja a Backup Everything menetet | indítás |
 | `cancel_backup` | Megszakít egy futó mentést, amelyet ez a kulcs indított | megszakítás |
 
-Ezek a webes felületen maradnak: bármilyen visszaállítás (beleértve egy adatbázis-dump letöltését, mentését vagy importálását is), mentések törlése, prune, unlock, ellenőrzések és gyakorlatok, off-site replikáció, beállítások, hitelesítő adatok és MCP-kulcsok, valamint olyan mentés megszakítása, amelyet az ütemezés, a webes felület vagy egy másik kulcs indított. Az ok: az eszközök válaszai a kiszolgálódról származó neveket és hibaüzeneteket tartalmaznak, és bármelyikükben lehet olyan szöveg, amelyet az asszisztens irányítására írtak. Egy asszisztens, amely bedől ennek, legrosszabb esetben elindít egy mentést az alábbi korlátokon belül, vagy megszakít egyet, amelyet maga indított.
+Ezek a webes felületen maradnak: bármilyen visszaállítás (beleértve egy adatbázis-dump letöltését, mentését vagy importálását is), mentések törlése, prune, unlock, ellenőrzések és gyakorlatok, off-site replikáció, beállítások, hitelesítő adatok és MCP-kulcsok, valamint olyan mentés megszakítása, amelyet az ütemezés, a webes felület vagy egy másik kulcs indított. Ugyanez vonatkozik egy anomália nyugtázására vagy vártként megjelölésére, ami az **Anomáliák** oldalon történik. Az ok: az eszközök válaszai a kiszolgálódról származó neveket és hibaüzeneteket tartalmaznak, és bármelyikükben lehet olyan szöveg, amelyet az asszisztens irányítására írtak. Egy asszisztens, amely bedől ennek, legrosszabb esetben elindít egy mentést az alábbi korlátokon belül, vagy megszakít egyet, amelyet maga indított.
 
 Ha egy elem elsődleges tárolója máshol van (S3, REST, SFTP, rclone), a `list_restore_points` kapcsolódik hozzá, és a hívás eltarthat egy ideig. Az off-site másolatok MCP-n keresztül nem listázhatók.
 
 ## Mit csinál egy elindított mentés {#starting-backups}
 
-Az asszisztens mentése ugyanaz, mint amit a webes felület indít. Egy futó konténer leáll, amíg a mentése be nem fejeződik, azokkal a konténerekkel együtt, amelyek beállítás szerint vele együtt állnak le. Egy "graceful" módszerű VM leáll, majd újraindul. A mappakészletek, a flash meghajtó és a beállítások tovább futnak. Utána a BombVault alkalmazza a megőrzési szabályt, és esetleg átmásol az off-site tárolóba. A `list_items` megmondja az asszisztensnek, mit állít le egy elem és mennyi ideig tartott az utolsó mentése, az eszközök leírása pedig arra kéri, hogy ezt mondja el neked, mielőtt bármit elindít.
+Az asszisztens mentése ugyanaz, mint amit a webes felület indít. Egy futó konténer leáll, amíg a mentése be nem fejeződik, azokkal a konténerekkel együtt, amelyek beállítás szerint vele együtt állnak le. Egy "graceful" módszerű VM leáll, majd újraindul. Egy ZFS-adatkészlet a pillanatképe készítésének idejére leállítja a hozzá beállított konténereket. A mappakészletek, a flash meghajtó és a beállítások tovább futnak. Utána a BombVault alkalmazza a megőrzési szabályt, és esetleg átmásol az off-site tárolóba. A `list_items` megmondja az asszisztensnek, mit állít le egy elem és mennyi ideig tartott az utolsó mentése, az eszközök leírása pedig arra kéri, hogy ezt mondja el neked, mielőtt bármit elindít.
 
 Mivel egy mentés leállít dolgokat és kiszorítja a régi visszaállítási pontokat, az MCP-n keresztüli indítások korlátozottak:
 

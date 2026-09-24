@@ -9,23 +9,25 @@ BombVault ma wbudowany serwer Model Context Protocol (MCP), czyli protokołu, pr
 | `get_health` | Wersja, nazwa instancji, czy trwa kopia i co wolno temu kluczowi | odczyt |
 | `get_status` | Stan ochrony w każdej domenie: ostatnia udana kopia, oczekiwany odstęp, weryfikacje i kontrole off-site, kolejne zaplanowane przebiegi | odczyt |
 | `get_coverage` | Co BombVault chroni, a czego nie, z podanym powodem | odczyt |
-| `list_items` | Każdy chroniony kontener, VM i zestaw folderów, pamięć flash i konfiguracja aplikacji, z harmonogramem, tym, co zatrzymuje kopia, ostatnią kopią i czasem jej trwania; kontenery baz danych podają też ostatni zrzut | odczyt |
+| `list_items` | Każdy chroniony kontener, VM i zestaw folderów, pamięć flash i konfiguracja aplikacji, z harmonogramem, tym, co zatrzymuje kopia, ostatnią kopią i czasem jej trwania; kontenery baz danych podają też ostatni zrzut; są tu też zbiory danych ZFS z wynikiem ich ostatniej kontroli | odczyt |
 | `list_runs` | Historia przebiegów od najnowszych, z filtrem według domeny, elementu, stanu, rodzaju i czasu | odczyt |
-| `list_restore_points` | Punkty przywracania jednego elementu z jego głównego repozytorium, a dla kontenera także jego zrzuty baz danych | odczyt |
+| `list_restore_points` | Punkty przywracania jednego elementu z jego głównego repozytorium, a dla kontenera także jego zrzuty baz danych; zbiór danych ZFS ma jeden punkt przywracania na kopię, ze snapshotem każdego zbioru danych pod nim | odczyt |
 | `get_activity` | Co działa w tej chwili, z etapem i procentem | odczyt |
 | `get_storage_stats` | Historia rozmiaru głównego repozytorium domeny i jego przyrost tygodniowy | odczyt |
+| `list_anomalies` | Nietypowe kopie, które zauważył BombVault, z filtrowaniem według stanu, wagi i domeny oraz podsumowaniem tego, co otwarte | odczyt |
+| `get_anomaly` | Jedno z tych zgłoszeń wraz z notatką zostawioną przy jego potwierdzeniu | odczyt |
 | `start_backup` | Od razu robi kopię jednego elementu | uruchomienie |
 | `start_domain_backup` | Robi kopię każdego chronionego elementu jednej domeny | uruchomienie |
 | `start_backup_everything` | Uruchamia przebieg Backup Everything | uruchomienie |
 | `cancel_backup` | Anuluje trwającą kopię uruchomioną przez ten klucz | anulowanie |
 
-W interfejsie WWW zostaje: przywracanie każdego rodzaju (także pobieranie, zapisywanie i import zrzutu bazy danych), usuwanie kopii, prune, unlock, kontrole i ćwiczenia, replikacja off-site, ustawienia, dane logowania i klucze MCP oraz anulowanie kopii uruchomionej przez harmonogram, interfejs WWW albo inny klucz. Powód: odpowiedzi narzędzi zawierają nazwy i komunikaty błędów z twojego serwera, a w każdym z nich może się znaleźć tekst napisany po to, by sterować asystentem. Asystent, który się na to nabierze, może w najgorszym razie uruchomić kopię w granicach opisanych niżej albo anulować kopię, którą sam uruchomił.
+W interfejsie WWW zostaje: przywracanie każdego rodzaju (także pobieranie, zapisywanie i import zrzutu bazy danych), usuwanie kopii, prune, unlock, kontrole i ćwiczenia, replikacja off-site, ustawienia, dane logowania i klucze MCP oraz anulowanie kopii uruchomionej przez harmonogram, interfejs WWW albo inny klucz. To samo dotyczy potwierdzenia anomalii lub oznaczenia jej jako oczekiwanej, co robi się na stronie **Anomalie**. Powód: odpowiedzi narzędzi zawierają nazwy i komunikaty błędów z twojego serwera, a w każdym z nich może się znaleźć tekst napisany po to, by sterować asystentem. Asystent, który się na to nabierze, może w najgorszym razie uruchomić kopię w granicach opisanych niżej albo anulować kopię, którą sam uruchomił.
 
 Jeśli główne repozytorium elementu jest zdalne (S3, REST, SFTP, rclone), `list_restore_points` się z nim łączy i wywołanie może chwilę potrwać. Kopii off-site nie da się wylistować przez MCP.
 
 ## Co robi uruchomiona kopia {#starting-backups}
 
-Kopia uruchomiona przez asystenta to ta sama kopia, którą uruchamia interfejs WWW. Działający kontener zostaje zatrzymany do końca swojej kopii, razem z kontenerami ustawionymi do zatrzymania razem z nim. VM z metodą "graceful" jest wyłączana i uruchamiana ponownie. Zestawy folderów, pamięć flash i konfiguracja działają dalej. Potem BombVault stosuje zasady przechowywania i może skopiować dane do repozytorium off-site. `list_items` mówi asystentowi, co zatrzymuje element i jak długo trwała jego ostatnia kopia, a opisy narzędzi proszą go, żeby powiedział ci o tym, zanim cokolwiek uruchomi.
+Kopia uruchomiona przez asystenta to ta sama kopia, którą uruchamia interfejs WWW. Działający kontener zostaje zatrzymany do końca swojej kopii, razem z kontenerami ustawionymi do zatrzymania razem z nim. VM z metodą "graceful" jest wyłączana i uruchamiana ponownie. Zbiór danych ZFS zatrzymuje ustawione dla niego kontenery na czas wykonywania swojego snapshotu. Zestawy folderów, pamięć flash i konfiguracja działają dalej. Potem BombVault stosuje zasady przechowywania i może skopiować dane do repozytorium off-site. `list_items` mówi asystentowi, co zatrzymuje element i jak długo trwała jego ostatnia kopia, a opisy narzędzi proszą go, żeby powiedział ci o tym, zanim cokolwiek uruchomi.
 
 Ponieważ kopia zatrzymuje usługi i wypycha stare punkty przywracania, uruchomienia przez MCP są ograniczone:
 

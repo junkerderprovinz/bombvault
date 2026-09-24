@@ -9,23 +9,25 @@ O BombVault traz um servidor para o Model Context Protocol (MCP), o protocolo co
 | `get_health` | Versão, nome da instância, se há uma cópia em curso e o que esta chave pode fazer | leitura |
 | `get_status` | Estado de proteção por domínio: última cópia bem-sucedida, intervalo esperado, verificações e controlos externos, próximas execuções agendadas | leitura |
 | `get_coverage` | O que o BombVault protege e o que não protege, com o motivo de cada caso | leitura |
-| `list_items` | Cada contentor, VM e conjunto de pastas protegido, a pen flash e a configuração da app, com o agendamento, o que uma cópia para, a última cópia e quanto demorou; os contentores de base de dados indicam também o último dump | leitura |
+| `list_items` | Cada contentor, VM e conjunto de pastas protegido, a pen flash e a configuração da app, com o agendamento, o que uma cópia para, a última cópia e quanto demorou; os contentores de base de dados indicam também o último dump; os datasets ZFS também aparecem, com o resultado da sua última verificação | leitura |
 | `list_runs` | Histórico de execuções, as mais recentes primeiro, filtrável por domínio, elemento, estado, tipo e data | leitura |
-| `list_restore_points` | Pontos de restauro de um elemento no seu repositório principal e, para um contentor, os seus dumps de base de dados | leitura |
+| `list_restore_points` | Pontos de restauro de um elemento no seu repositório principal e, para um contentor, os seus dumps de base de dados; um dataset ZFS tem um ponto de restauro por cópia, com um snapshot de cada dataset abaixo dele | leitura |
 | `get_activity` | O que está a correr agora, com fase e percentagem | leitura |
 | `get_storage_stats` | Histórico de tamanho do repositório principal de um domínio e o seu crescimento semanal | leitura |
+| `list_anomalies` | Cópias invulgares que o BombVault detetou, filtráveis por estado, gravidade e domínio, com um resumo do que está em aberto | leitura |
+| `get_anomaly` | Uma dessas ocorrências, com a nota deixada quando foi reconhecida | leitura |
 | `start_backup` | Faz já a cópia de um elemento | início |
 | `start_domain_backup` | Faz a cópia de cada elemento protegido de um domínio | início |
 | `start_backup_everything` | Corre a passagem Backup Everything | início |
 | `cancel_backup` | Cancela uma cópia em curso que esta chave iniciou | cancelamento |
 
-Fica na interface web: os restauros de qualquer tipo (incluindo descarregar, guardar ou importar um dump de base de dados), apagar cópias, prune, unlock, as verificações e os exercícios, a replicação externa, as definições, as credenciais e as chaves MCP, e cancelar uma cópia iniciada pelo agendamento, pela interface web ou por outra chave. O motivo: as respostas das ferramentas contêm nomes e mensagens de erro do seu servidor, e qualquer um deles pode trazer texto escrito para manipular o assistente. Um assistente que caia nesse texto pode, no pior caso, iniciar uma cópia dentro dos limites abaixo ou cancelar uma que ele próprio iniciou.
+Fica na interface web: os restauros de qualquer tipo (incluindo descarregar, guardar ou importar um dump de base de dados), apagar cópias, prune, unlock, as verificações e os exercícios, a replicação externa, as definições, as credenciais e as chaves MCP, e cancelar uma cópia iniciada pelo agendamento, pela interface web ou por outra chave. O mesmo vale para reconhecer uma anomalia ou marcá-la como esperada, o que se faz na página **Anomalias**. O motivo: as respostas das ferramentas contêm nomes e mensagens de erro do seu servidor, e qualquer um deles pode trazer texto escrito para manipular o assistente. Um assistente que caia nesse texto pode, no pior caso, iniciar uma cópia dentro dos limites abaixo ou cancelar uma que ele próprio iniciou.
 
 Se o repositório principal de um elemento for remoto (S3, REST, SFTP, rclone), `list_restore_points` contacta-o e a chamada pode demorar algum tempo. As cópias externas não podem ser listadas por MCP.
 
 ## O que faz uma cópia iniciada {#starting-backups}
 
-A cópia de um assistente é a mesma que a interface web inicia. Um contentor em execução é parado até a sua cópia terminar, junto com os contentores configurados para parar com ele. Uma VM com o método "graceful" é desligada e arrancada de novo. Os conjuntos de pastas, a pen flash e a configuração continuam a correr. Depois, o BombVault aplica a política de retenção e pode copiar para o repositório externo. `list_items` diz ao assistente o que um elemento para e quanto demorou a sua última cópia, e as descrições das ferramentas pedem-lhe que lho diga antes de iniciar o que quer que seja.
+A cópia de um assistente é a mesma que a interface web inicia. Um contentor em execução é parado até a sua cópia terminar, junto com os contentores configurados para parar com ele. Uma VM com o método "graceful" é desligada e arrancada de novo. Um dataset ZFS para os contentores configurados para ele enquanto o seu snapshot é criado. Os conjuntos de pastas, a pen flash e a configuração continuam a correr. Depois, o BombVault aplica a política de retenção e pode copiar para o repositório externo. `list_items` diz ao assistente o que um elemento para e quanto demorou a sua última cópia, e as descrições das ferramentas pedem-lhe que lho diga antes de iniciar o que quer que seja.
 
 Como uma cópia para serviços e faz sair pontos de restauro antigos, os inícios por MCP são limitados:
 

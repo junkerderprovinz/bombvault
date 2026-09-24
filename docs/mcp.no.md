@@ -9,23 +9,25 @@ BombVault har en innebygd server for Model Context Protocol (MCP), protokollet s
 | `get_health` | Versjon, instansnavn, om en sikkerhetskopi kjører, og hva denne nøkkelen får gjøre | lese |
 | `get_status` | Beskyttelsesstatus per domene: siste vellykkede sikkerhetskopi, forventet intervall, verifiseringer og off-site-kontroller, neste planlagte kjøringer | lese |
 | `get_coverage` | Hva BombVault beskytter og hva det ikke beskytter, med grunnen for hver | lese |
-| `list_items` | Hver beskyttet container, VM og mappesett, flashminnet og app-konfigurasjonen, med tidsplan, hva en sikkerhetskopi stopper, siste sikkerhetskopi og hvor lang tid den tok; databasecontainere viser også sin siste dump | lese |
+| `list_items` | Hver beskyttet container, VM og mappesett, flashminnet og app-konfigurasjonen, med tidsplan, hva en sikkerhetskopi stopper, siste sikkerhetskopi og hvor lang tid den tok; databasecontainere viser også sin siste dump; ZFS-datasett er også med, med resultatet av den siste kontrollen | lese |
 | `list_runs` | Kjøringshistorikk, nyeste først, kan filtreres på domene, element, status, type og tid | lese |
-| `list_restore_points` | Gjenopprettingspunkter for ett element fra dets primære repository, og for en container også databasedumpene | lese |
+| `list_restore_points` | Gjenopprettingspunkter for ett element fra dets primære repository, og for en container også databasedumpene; et ZFS-datasett får ett gjenopprettingspunkt per sikkerhetskopi, med et snapshot av hvert datasett under det | lese |
 | `get_activity` | Hva som kjører akkurat nå, med fase og prosent | lese |
 | `get_storage_stats` | Størrelseshistorikk for et domenes primære repository og veksten per uke | lese |
+| `list_anomalies` | Uvanlige sikkerhetskopier BombVault har lagt merke til, kan filtreres på tilstand, alvorlighet og domene, med en oversikt over det som er åpent | lese |
+| `get_anomaly` | Ett av disse avvikene, med notatet som ble skrevet da det ble kvittert ut | lese |
 | `start_backup` | Sikkerhetskopierer ett element med en gang | starte |
 | `start_domain_backup` | Sikkerhetskopierer hvert beskyttet element i et domene | starte |
 | `start_backup_everything` | Kjører Backup Everything-gjennomgangen | starte |
 | `cancel_backup` | Avbryter en kjørende sikkerhetskopi som denne nøkkelen har startet | avbryte |
 
-Dette blir værende i webgrensesnittet: gjenopprettinger av alle slag (også å laste ned, lagre eller importere en databasedump), sletting av sikkerhetskopier, prune, unlock, kontroller og øvelser, off-site-replikering, innstillinger, påloggingsdetaljer og MCP-nøkler, og å avbryte en sikkerhetskopi som tidsplanen, webgrensesnittet eller en annen nøkkel har startet. Grunnen er at verktøyenes svar inneholder navn og feilmeldinger fra serveren din, og hvilken som helst av dem kan inneholde tekst skrevet for å styre assistenten. En assistent som går på slik tekst, kan i verste fall starte en sikkerhetskopi innenfor grensene nedenfor eller avbryte en den selv har startet.
+Dette blir værende i webgrensesnittet: gjenopprettinger av alle slag (også å laste ned, lagre eller importere en databasedump), sletting av sikkerhetskopier, prune, unlock, kontroller og øvelser, off-site-replikering, innstillinger, påloggingsdetaljer og MCP-nøkler, og å avbryte en sikkerhetskopi som tidsplanen, webgrensesnittet eller en annen nøkkel har startet. Det samme gjelder å kvittere ut et avvik eller merke det som forventet, noe som skjer på siden **Avvik**. Grunnen er at verktøyenes svar inneholder navn og feilmeldinger fra serveren din, og hvilken som helst av dem kan inneholde tekst skrevet for å styre assistenten. En assistent som går på slik tekst, kan i verste fall starte en sikkerhetskopi innenfor grensene nedenfor eller avbryte en den selv har startet.
 
 Ligger det primære repositoryet til et element et annet sted (S3, REST, SFTP, rclone), kontakter `list_restore_points` det, og kallet kan ta litt tid. Off-site-kopier kan ikke listes via MCP.
 
 ## Hva en startet sikkerhetskopi gjør {#starting-backups}
 
-En assistents sikkerhetskopi er den samme som webgrensesnittet starter. En kjørende container stoppes til sikkerhetskopien er ferdig, sammen med containerne som er satt til å stoppe med den. En VM med metoden "graceful" slås av og startes igjen. Mappesett, flashminnet og konfigurasjonen fortsetter å kjøre. Etterpå bruker BombVault oppbevaringspolicyen og kopierer eventuelt til off-site-repositoryet. `list_items` forteller assistenten hva et element stopper og hvor lang tid den siste sikkerhetskopien tok, og verktøybeskrivelsene ber den si det til deg før den starter noe.
+En assistents sikkerhetskopi er den samme som webgrensesnittet starter. En kjørende container stoppes til sikkerhetskopien er ferdig, sammen med containerne som er satt til å stoppe med den. En VM med metoden "graceful" slås av og startes igjen. Et ZFS-datasett stopper containerne som er satt opp for det, mens snapshotet tas. Mappesett, flashminnet og konfigurasjonen fortsetter å kjøre. Etterpå bruker BombVault oppbevaringspolicyen og kopierer eventuelt til off-site-repositoryet. `list_items` forteller assistenten hva et element stopper og hvor lang tid den siste sikkerhetskopien tok, og verktøybeskrivelsene ber den si det til deg før den starter noe.
 
 Fordi en sikkerhetskopi stopper ting og skyver ut gamle gjenopprettingspunkter, er starter via MCP begrenset:
 

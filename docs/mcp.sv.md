@@ -9,23 +9,25 @@ BombVault har en inbyggd server för Model Context Protocol (MCP), protokollet s
 | `get_health` | Version, instansnamn, om en säkerhetskopia pågår och vad den här nyckeln får göra | läsa |
 | `get_status` | Skyddsstatus per domän: senaste lyckade säkerhetskopia, förväntat intervall, verifieringar och off-site-kontroller, nästa schemalagda körningar | läsa |
 | `get_coverage` | Vad BombVault skyddar och vad det inte skyddar, med skälet för varje | läsa |
-| `list_items` | Varje skyddad container, VM och mappuppsättning, flashminnet och appkonfigurationen, med schema, vad en säkerhetskopia stoppar, senaste säkerhetskopian och hur lång tid den tog; databascontainrar visar även sin senaste dump | läsa |
+| `list_items` | Varje skyddad container, VM och mappuppsättning, flashminnet och appkonfigurationen, med schema, vad en säkerhetskopia stoppar, senaste säkerhetskopian och hur lång tid den tog; databascontainrar visar även sin senaste dump; ZFS-dataset finns också med, med resultatet av sin senaste kontroll | läsa |
 | `list_runs` | Körningshistorik, nyaste först, filtrerbar på domän, objekt, status, typ och tid | läsa |
-| `list_restore_points` | Återställningspunkter för ett objekt från dess primära repository, och för en container även dess databasdumpar | läsa |
+| `list_restore_points` | Återställningspunkter för ett objekt från dess primära repository, och för en container även dess databasdumpar; ett ZFS-dataset får en återställningspunkt per säkerhetskopia, med en snapshot av varje dataset under det | läsa |
 | `get_activity` | Vad som körs just nu, med fas och procent | läsa |
 | `get_storage_stats` | Storlekshistorik för en domäns primära repository och dess tillväxt per vecka | läsa |
+| `list_anomalies` | Ovanliga säkerhetskopior som BombVault har upptäckt, kan filtreras på tillstånd, allvarlighet och domän, med en sammanfattning av det som är öppet | läsa |
+| `get_anomaly` | En av dessa avvikelser, med anteckningen som lämnades när den kvitterades | läsa |
 | `start_backup` | Säkerhetskopierar ett objekt direkt | starta |
 | `start_domain_backup` | Säkerhetskopierar varje skyddat objekt i en domän | starta |
 | `start_backup_everything` | Kör Backup Everything-genomgången | starta |
 | `cancel_backup` | Avbryter en pågående säkerhetskopia som den här nyckeln har startat | avbryta |
 
-Detta stannar i webbgränssnittet: återställningar av alla slag (även att ladda ner, spara eller importera en databasdump), att radera säkerhetskopior, prune, unlock, kontroller och övningar, off-site-replikering, inställningar, inloggningsuppgifter och MCP-nycklar, samt att avbryta en säkerhetskopia som schemat, webbgränssnittet eller en annan nyckel har startat. Skälet är att verktygens svar innehåller namn och felmeddelanden från din server, och vilket som helst av dem kan innehålla text som skrivits för att styra assistenten. En assistent som går på sådan text kan i värsta fall starta en säkerhetskopia inom gränserna nedan eller avbryta en som den själv startat.
+Detta stannar i webbgränssnittet: återställningar av alla slag (även att ladda ner, spara eller importera en databasdump), att radera säkerhetskopior, prune, unlock, kontroller och övningar, off-site-replikering, inställningar, inloggningsuppgifter och MCP-nycklar, samt att avbryta en säkerhetskopia som schemat, webbgränssnittet eller en annan nyckel har startat. Detsamma gäller att kvittera en avvikelse eller markera den som förväntad, vilket görs på sidan **Avvikelser**. Skälet är att verktygens svar innehåller namn och felmeddelanden från din server, och vilket som helst av dem kan innehålla text som skrivits för att styra assistenten. En assistent som går på sådan text kan i värsta fall starta en säkerhetskopia inom gränserna nedan eller avbryta en som den själv startat.
 
 Om ett objekts primära repository ligger någon annanstans (S3, REST, SFTP, rclone) kontaktar `list_restore_points` det, och anropet kan ta en stund. Off-site-kopior kan inte listas via MCP.
 
 ## Vad en startad säkerhetskopia gör {#starting-backups}
 
-En assistents säkerhetskopia är samma säkerhetskopia som webbgränssnittet startar. En körande container stoppas tills dess säkerhetskopia är klar, tillsammans med de containrar som är inställda att stoppas med den. En VM med metoden "graceful" stängs av och startas igen. Mappuppsättningar, flashminnet och konfigurationen fortsätter att köra. Efteråt tillämpar BombVault lagringspolicyn och kopierar eventuellt till off-site-repositoryt. `list_items` talar om för assistenten vad ett objekt stoppar och hur lång tid dess senaste säkerhetskopia tog, och verktygens beskrivningar ber den säga det till dig innan den startar något.
+En assistents säkerhetskopia är samma säkerhetskopia som webbgränssnittet startar. En körande container stoppas tills dess säkerhetskopia är klar, tillsammans med de containrar som är inställda att stoppas med den. En VM med metoden "graceful" stängs av och startas igen. Ett ZFS-dataset stoppar de containrar som är inställda för det medan dess snapshot tas. Mappuppsättningar, flashminnet och konfigurationen fortsätter att köra. Efteråt tillämpar BombVault lagringspolicyn och kopierar eventuellt till off-site-repositoryt. `list_items` talar om för assistenten vad ett objekt stoppar och hur lång tid dess senaste säkerhetskopia tog, och verktygens beskrivningar ber den säga det till dig innan den startar något.
 
 Eftersom en säkerhetskopia stoppar saker och trycker ut gamla återställningspunkter är starter via MCP begränsade:
 

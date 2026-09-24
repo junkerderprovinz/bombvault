@@ -9,23 +9,25 @@ BombVaultissa on sisäänrakennettu palvelin Model Context Protocolia (MCP) vart
 | `get_health` | Versio, instanssin nimi, onko varmuuskopio käynnissä ja mitä tämä avain saa tehdä | luku |
 | `get_status` | Suojauksen tila toimialueittain: viimeisin onnistunut varmuuskopio, odotettu väli, tarkistukset ja off-site-valvonta, seuraavat ajastetut ajot | luku |
 | `get_coverage` | Mitä BombVault suojaa ja mitä ei, kunkin kohdalla syy | luku |
-| `list_items` | Jokainen suojattu kontti, VM ja kansiojoukko, flash-muisti ja sovelluksen asetukset, ajastuksen, varmuuskopion pysäyttämien palveluiden, viimeisimmän varmuuskopion ja sen keston kera; tietokantakonteilla myös viimeisin dumppi | luku |
+| `list_items` | Jokainen suojattu kontti, VM ja kansiojoukko, flash-muisti ja sovelluksen asetukset, ajastuksen, varmuuskopion pysäyttämien palveluiden, viimeisimmän varmuuskopion ja sen keston kera; tietokantakonteilla myös viimeisin dumppi; mukana ovat myös ZFS-datasetit viimeisimmän tarkistuksensa tuloksen kera | luku |
 | `list_runs` | Ajohistoria uusimmat ensin, suodatettavissa toimialueen, kohteen, tilan, lajin ja ajan mukaan | luku |
-| `list_restore_points` | Yhden kohteen palautuspisteet sen ensisijaisesta repositoriosta, ja kontille myös sen tietokantadumpit | luku |
+| `list_restore_points` | Yhden kohteen palautuspisteet sen ensisijaisesta repositoriosta, ja kontille myös sen tietokantadumpit; ZFS-datasetillä on yksi palautuspiste varmuuskopiota kohden, ja siinä on snapshot jokaisesta sen alla olevasta datasetista | luku |
 | `get_activity` | Mikä on käynnissä juuri nyt, vaiheen ja prosentin kera | luku |
 | `get_storage_stats` | Toimialueen ensisijaisen repositorion koon historia ja kasvu viikossa | luku |
+| `list_anomalies` | Epätavalliset varmuuskopiot, jotka BombVault on huomannut, suodatettavissa tilan, vakavuuden ja toimialueen mukaan, sekä yhteenveto avoimista | luku |
+| `get_anomaly` | Yksi näistä havainnoista sekä muistiinpano, joka jätettiin sitä kuitatessa | luku |
 | `start_backup` | Varmuuskopioi yhden kohteen heti | käynnistys |
 | `start_domain_backup` | Varmuuskopioi toimialueen jokaisen suojatun kohteen | käynnistys |
 | `start_backup_everything` | Ajaa Backup Everything -kierroksen | käynnistys |
 | `cancel_backup` | Peruu käynnissä olevan varmuuskopion, jonka tämä avain käynnisti | peruutus |
 
-Nämä jäävät verkkokäyttöliittymään: kaikenlaiset palautukset (myös tietokantadumpin lataaminen, tallentaminen tai tuonti), varmuuskopioiden poistaminen, prune, unlock, tarkistukset ja harjoitukset, off-site-replikointi, asetukset, tunnukset ja MCP-avaimet sekä sellaisen varmuuskopion peruminen, jonka ajastus, verkkokäyttöliittymä tai toinen avain käynnisti. Syy on se, että työkalujen vastauksissa on palvelimesi nimiä ja virheilmoituksia, ja mikä tahansa niistä voi sisältää tekstiä, joka on kirjoitettu ohjaamaan avustajaa. Avustaja, joka lankeaa sellaiseen, voi pahimmillaan käynnistää varmuuskopion alla olevien rajojen sisällä tai perua sellaisen, jonka se itse käynnisti.
+Nämä jäävät verkkokäyttöliittymään: kaikenlaiset palautukset (myös tietokantadumpin lataaminen, tallentaminen tai tuonti), varmuuskopioiden poistaminen, prune, unlock, tarkistukset ja harjoitukset, off-site-replikointi, asetukset, tunnukset ja MCP-avaimet sekä sellaisen varmuuskopion peruminen, jonka ajastus, verkkokäyttöliittymä tai toinen avain käynnisti. Sama koskee poikkeaman kuittaamista tai sen merkitsemistä odotetuksi, mikä tehdään **Poikkeamat**-sivulla. Syy on se, että työkalujen vastauksissa on palvelimesi nimiä ja virheilmoituksia, ja mikä tahansa niistä voi sisältää tekstiä, joka on kirjoitettu ohjaamaan avustajaa. Avustaja, joka lankeaa sellaiseen, voi pahimmillaan käynnistää varmuuskopion alla olevien rajojen sisällä tai perua sellaisen, jonka se itse käynnisti.
 
 Jos kohteen ensisijainen repositorio on muualla (S3, REST, SFTP, rclone), `list_restore_points` ottaa siihen yhteyttä, ja kutsu voi kestää hetken. Off-site-kopioita ei voi listata MCP:n kautta.
 
 ## Mitä käynnistetty varmuuskopio tekee {#starting-backups}
 
-Avustajan varmuuskopio on sama varmuuskopio, jonka verkkokäyttöliittymä käynnistää. Käynnissä oleva kontti pysäytetään, kunnes sen varmuuskopio on valmis, yhdessä niiden konttien kanssa, jotka on asetettu pysähtymään sen mukana. VM, jolla on "graceful"-menetelmä, sammutetaan ja käynnistetään uudelleen. Kansiojoukot, flash-muisti ja asetukset jatkavat toimintaansa. Sen jälkeen BombVault soveltaa säilytyskäytäntöä ja voi kopioida off-site-repositorioon. `list_items` kertoo avustajalle, mitä kohde pysäyttää ja kauanko sen viimeisin varmuuskopio kesti, ja työkalujen kuvaukset pyytävät sitä kertomaan sen sinulle ennen kuin se käynnistää mitään.
+Avustajan varmuuskopio on sama varmuuskopio, jonka verkkokäyttöliittymä käynnistää. Käynnissä oleva kontti pysäytetään, kunnes sen varmuuskopio on valmis, yhdessä niiden konttien kanssa, jotka on asetettu pysähtymään sen mukana. VM, jolla on "graceful"-menetelmä, sammutetaan ja käynnistetään uudelleen. ZFS-datasetti pysäyttää sille asetetut kontit siksi aikaa, kun sen snapshot otetaan. Kansiojoukot, flash-muisti ja asetukset jatkavat toimintaansa. Sen jälkeen BombVault soveltaa säilytyskäytäntöä ja voi kopioida off-site-repositorioon. `list_items` kertoo avustajalle, mitä kohde pysäyttää ja kauanko sen viimeisin varmuuskopio kesti, ja työkalujen kuvaukset pyytävät sitä kertomaan sen sinulle ennen kuin se käynnistää mitään.
 
 Koska varmuuskopio pysäyttää asioita ja työntää vanhoja palautuspisteitä ulos, MCP:n kautta tehtyjä käynnistyksiä on rajoitettu:
 

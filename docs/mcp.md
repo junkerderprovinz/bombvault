@@ -9,23 +9,25 @@ BombVault has a built-in server for the Model Context Protocol (MCP), the protoc
 | `get_health` | Version, instance name, whether a backup is running, and what this key may do | read |
 | `get_status` | Protection status per domain: last successful backup, expected interval, verification and off-site checks, next scheduled runs | read |
 | `get_coverage` | What BombVault protects and what it does not, with the reason for each | read |
-| `list_items` | Every protected container, VM, folder set, the flash drive and the app configuration, with its schedule, what a backup of it stops, its last backup and how long that took; database containers also carry their last dump | read |
+| `list_items` | Every protected container, VM, folder set, the flash drive and the app configuration, with its schedule, what a backup of it stops, its last backup and how long that took; database containers also carry their last dump; ZFS datasets are listed too, with the result of their last check | read |
 | `list_runs` | Run history, newest first, filterable by domain, item, status, kind and time | read |
-| `list_restore_points` | Restore points of one item from its primary repository, and for a container its database dumps | read |
+| `list_restore_points` | Restore points of one item from its primary repository, and for a container its database dumps; a ZFS dataset gets one restore point per backup, with a snapshot of every dataset below it | read |
 | `get_activity` | What is running right now, with phase and percentage | read |
 | `get_storage_stats` | Size history of one domain's primary repository and its growth per week | read |
+| `list_anomalies` | Unusual backups BombVault noticed, filterable by state, severity and domain, with a summary of what is open | read |
+| `get_anomaly` | One of those findings, with the note left when it was acknowledged | read |
 | `start_backup` | Backs up one item now | start |
 | `start_domain_backup` | Backs up every protected item of one domain | start |
 | `start_backup_everything` | Runs the Backup Everything pass | start |
 | `cancel_backup` | Cancels a running backup that this key started | cancel |
 
-These stay in the web interface: restores of any kind (including downloading, saving or importing a database dump), deleting backups, prune, unlock, checks and drills, off-site replication, settings, credentials and MCP keys, and cancelling a backup that the schedule, the web interface or another key started. The reason is that tool output contains names and error messages from your server, and any of them could carry text written to steer the assistant. An assistant that falls for such text can at worst start a backup within the limits below, or cancel one it started itself.
+These stay in the web interface: restores of any kind (including downloading, saving or importing a database dump), deleting backups, prune, unlock, checks and drills, off-site replication, settings, credentials and MCP keys, and cancelling a backup that the schedule, the web interface or another key started. The same goes for acknowledging an anomaly or marking it as expected, which happens on the **Anomalies** page. The reason is that tool output contains names and error messages from your server, and any of them could carry text written to steer the assistant. An assistant that falls for such text can at worst start a backup within the limits below, or cancel one it started itself.
 
 If the primary repository of an item is remote (S3, REST, SFTP, rclone), `list_restore_points` contacts it, so the call can take a while. Off-site copies cannot be listed through MCP.
 
 ## What a started backup does {#starting-backups}
 
-An assistant's backup is the same backup the web interface starts. A running container is stopped until its backup finishes, together with the containers set to stop with it. A VM with the graceful method is shut down and started again. Folder sets, the flash drive and the configuration keep running. Afterwards BombVault applies the retention policy and may copy to the off-site repository. `list_items` tells the assistant what an item stops and how long its last backup took, and the tool descriptions ask it to tell you before it starts anything.
+An assistant's backup is the same backup the web interface starts. A running container is stopped until its backup finishes, together with the containers set to stop with it. A VM with the graceful method is shut down and started again. A ZFS dataset stops the containers set for it while its snapshot is taken. Folder sets, the flash drive and the configuration keep running. Afterwards BombVault applies the retention policy and may copy to the off-site repository. `list_items` tells the assistant what an item stops and how long its last backup took, and the tool descriptions ask it to tell you before it starts anything.
 
 Because a backup stops things and rotates old restore points out, starts through MCP are limited:
 

@@ -9,23 +9,25 @@ BombVault, Model Context Protocol (MCP) için yerleşik bir sunucu içerir. Bu p
 | `get_health` | Sürüm, örnek adı, bir yedeklemenin sürüp sürmediği ve bu anahtarın neye izni olduğu | okuma |
 | `get_status` | Alan başına koruma durumu: son başarılı yedek, beklenen aralık, doğrulamalar ve off-site denetimleri, sıradaki zamanlanmış çalıştırmalar | okuma |
 | `get_coverage` | BombVault'un neyi koruduğu ve neyi korumadığı, her biri için gerekçesiyle | okuma |
-| `list_items` | Korunan her kapsayıcı, VM ve klasör kümesi, flash sürücü ve uygulama yapılandırması; zamanlama, bir yedeklemenin neyi durdurduğu, son yedek ve ne kadar sürdüğü ile; veritabanı kapsayıcıları son dökümlerini de gösterir | okuma |
+| `list_items` | Korunan her kapsayıcı, VM ve klasör kümesi, flash sürücü ve uygulama yapılandırması; zamanlama, bir yedeklemenin neyi durdurduğu, son yedek ve ne kadar sürdüğü ile; veritabanı kapsayıcıları son dökümlerini de gösterir; ZFS veri kümeleri de son denetimlerinin sonucuyla birlikte listelenir | okuma |
 | `list_runs` | Çalıştırma geçmişi, en yeniler önce; alan, öğe, durum, tür ve zamana göre süzülebilir | okuma |
-| `list_restore_points` | Bir öğenin birincil deposundaki geri yükleme noktaları, bir kapsayıcı için ayrıca veritabanı dökümleri | okuma |
+| `list_restore_points` | Bir öğenin birincil deposundaki geri yükleme noktaları, bir kapsayıcı için ayrıca veritabanı dökümleri; bir ZFS veri kümesinin her yedek için bir geri yükleme noktası vardır ve bu noktada altındaki her veri kümesinin anlık görüntüsü bulunur | okuma |
 | `get_activity` | Şu anda neyin çalıştığı, aşama ve yüzdesiyle | okuma |
 | `get_storage_stats` | Bir alanın birincil deposunun boyut geçmişi ve haftalık büyümesi | okuma |
+| `list_anomalies` | BombVault'un fark ettiği olağandışı yedekler; duruma, önem derecesine ve alana göre süzülebilir, açık olanların özetiyle birlikte | okuma |
+| `get_anomaly` | Bu bulgulardan biri, onaylanırken bırakılan notla birlikte | okuma |
 | `start_backup` | Bir öğeyi hemen yedekler | başlatma |
 | `start_domain_backup` | Bir alandaki korunan her öğeyi yedekler | başlatma |
 | `start_backup_everything` | Backup Everything turunu çalıştırır | başlatma |
 | `cancel_backup` | Bu anahtarın başlattığı, süren bir yedeklemeyi iptal eder | iptal |
 
-Şunlar web arayüzünde kalır: her türlü geri yükleme (bir veritabanı dökümünü indirmek, kaydetmek ya da içe aktarmak dâhil), yedekleri silmek, prune, unlock, denetimler ve tatbikatlar, off-site çoğaltma, ayarlar, kimlik bilgileri ve MCP anahtarları ile zamanlamanın, web arayüzünün ya da başka bir anahtarın başlattığı bir yedeklemeyi iptal etmek. Nedeni şu: araçların yanıtları sunucunuzdan gelen adları ve hata iletilerini içerir ve bunların herhangi biri asistanı yönlendirmek için yazılmış bir metin taşıyabilir. Böyle bir metne kanan bir asistan en kötü ihtimalle aşağıdaki sınırlar içinde bir yedekleme başlatabilir ya da kendi başlattığı bir yedeklemeyi iptal edebilir.
+Şunlar web arayüzünde kalır: her türlü geri yükleme (bir veritabanı dökümünü indirmek, kaydetmek ya da içe aktarmak dâhil), yedekleri silmek, prune, unlock, denetimler ve tatbikatlar, off-site çoğaltma, ayarlar, kimlik bilgileri ve MCP anahtarları ile zamanlamanın, web arayüzünün ya da başka bir anahtarın başlattığı bir yedeklemeyi iptal etmek. Bir anormalliği onaylamak ya da beklenen olarak işaretlemek de orada kalır; bu, **Anormallikler** sayfasında yapılır. Nedeni şu: araçların yanıtları sunucunuzdan gelen adları ve hata iletilerini içerir ve bunların herhangi biri asistanı yönlendirmek için yazılmış bir metin taşıyabilir. Böyle bir metne kanan bir asistan en kötü ihtimalle aşağıdaki sınırlar içinde bir yedekleme başlatabilir ya da kendi başlattığı bir yedeklemeyi iptal edebilir.
 
 Bir öğenin birincil deposu başka bir yerdeyse (S3, REST, SFTP, rclone), `list_restore_points` ona bağlanır ve çağrı biraz sürebilir. Off-site kopyalar MCP üzerinden listelenemez.
 
 ## Başlatılan bir yedekleme ne yapar {#starting-backups}
 
-Bir asistanın başlattığı yedekleme, web arayüzünün başlattığı yedeklemenin aynısıdır. Çalışan bir kapsayıcı, yedeği bitene kadar, onunla birlikte durması ayarlanan kapsayıcılarla beraber durdurulur. "graceful" yöntemli bir VM kapatılır ve yeniden başlatılır. Klasör kümeleri, flash sürücü ve yapılandırma çalışmaya devam eder. Ardından BombVault saklama politikasını uygular ve off-site depoya kopyalayabilir. `list_items`, asistana bir öğenin neyi durdurduğunu ve son yedeğinin ne kadar sürdüğünü söyler; araç açıklamaları da ondan bir şey başlatmadan önce bunu size söylemesini ister.
+Bir asistanın başlattığı yedekleme, web arayüzünün başlattığı yedeklemenin aynısıdır. Çalışan bir kapsayıcı, yedeği bitene kadar, onunla birlikte durması ayarlanan kapsayıcılarla beraber durdurulur. "graceful" yöntemli bir VM kapatılır ve yeniden başlatılır. Bir ZFS veri kümesi, anlık görüntüsü alınırken kendisi için ayarlanan kapsayıcıları durdurur. Klasör kümeleri, flash sürücü ve yapılandırma çalışmaya devam eder. Ardından BombVault saklama politikasını uygular ve off-site depoya kopyalayabilir. `list_items`, asistana bir öğenin neyi durdurduğunu ve son yedeğinin ne kadar sürdüğünü söyler; araç açıklamaları da ondan bir şey başlatmadan önce bunu size söylemesini ister.
 
 Bir yedekleme hizmetleri durdurduğu ve eski geri yükleme noktalarını dışarı ittiği için MCP üzerinden başlatmalar sınırlıdır:
 

@@ -9,23 +9,25 @@ BombVault có sẵn một máy chủ cho Model Context Protocol (MCP), giao th�
 | `get_health` | Phiên bản, tên phiên bản cài đặt, có đang sao lưu không và khóa này được phép làm gì | đọc |
 | `get_status` | Trạng thái bảo vệ theo từng miền: lần sao lưu thành công gần nhất, khoảng thời gian dự kiến, các lần xác minh và kiểm tra off-site, các lần chạy theo lịch tiếp theo | đọc |
 | `get_coverage` | Những gì BombVault bảo vệ và không bảo vệ, kèm lý do cho từng mục | đọc |
-| `list_items` | Mọi container, VM và bộ thư mục được bảo vệ, ổ flash và cấu hình ứng dụng, kèm lịch, những gì một lần sao lưu sẽ dừng, lần sao lưu gần nhất và thời gian của nó; container cơ sở dữ liệu còn cho biết bản dump gần nhất | đọc |
+| `list_items` | Mọi container, VM và bộ thư mục được bảo vệ, ổ flash và cấu hình ứng dụng, kèm lịch, những gì một lần sao lưu sẽ dừng, lần sao lưu gần nhất và thời gian của nó; container cơ sở dữ liệu còn cho biết bản dump gần nhất; các dataset ZFS cũng được liệt kê, kèm kết quả lần kiểm tra gần nhất | đọc |
 | `list_runs` | Lịch sử chạy, mới nhất trước, lọc được theo miền, mục, trạng thái, loại và thời gian | đọc |
-| `list_restore_points` | Các điểm khôi phục của một mục trong kho chính của nó, và với container thì có cả các bản dump cơ sở dữ liệu | đọc |
+| `list_restore_points` | Các điểm khôi phục của một mục trong kho chính của nó, và với container thì có cả các bản dump cơ sở dữ liệu; một dataset ZFS có một điểm khôi phục cho mỗi lần sao lưu, kèm snapshot của mọi dataset bên dưới nó | đọc |
 | `get_activity` | Những gì đang chạy ngay lúc này, kèm giai đoạn và phần trăm | đọc |
 | `get_storage_stats` | Lịch sử dung lượng kho chính của một miền và mức tăng mỗi tuần | đọc |
+| `list_anomalies` | Những lần sao lưu bất thường mà BombVault nhận thấy, lọc được theo trạng thái, mức độ nghiêm trọng và miền, kèm bản tóm tắt những mục còn mở | đọc |
+| `get_anomaly` | Một trong các phát hiện đó, kèm ghi chú để lại khi xác nhận | đọc |
 | `start_backup` | Sao lưu ngay một mục | bắt đầu |
 | `start_domain_backup` | Sao lưu mọi mục được bảo vệ trong một miền | bắt đầu |
 | `start_backup_everything` | Chạy lượt Backup Everything | bắt đầu |
 | `cancel_backup` | Hủy một lần sao lưu đang chạy do khóa này bắt đầu | hủy |
 
-Những việc sau vẫn nằm trong giao diện web: mọi kiểu khôi phục (kể cả tải xuống, lưu hoặc nhập một bản dump cơ sở dữ liệu), xóa bản sao lưu, prune, unlock, kiểm tra và diễn tập, sao chép off-site, cài đặt, thông tin đăng nhập và khóa MCP, cùng việc hủy một lần sao lưu do lịch, giao diện web hoặc khóa khác bắt đầu. Lý do: câu trả lời của công cụ chứa tên và thông báo lỗi từ máy chủ của bạn, và bất kỳ mục nào trong đó cũng có thể chứa văn bản viết ra để điều khiển trợ lý. Một trợ lý mắc bẫy văn bản như vậy, trong trường hợp xấu nhất, chỉ có thể bắt đầu một lần sao lưu trong các giới hạn bên dưới hoặc hủy một lần sao lưu do chính nó bắt đầu.
+Những việc sau vẫn nằm trong giao diện web: mọi kiểu khôi phục (kể cả tải xuống, lưu hoặc nhập một bản dump cơ sở dữ liệu), xóa bản sao lưu, prune, unlock, kiểm tra và diễn tập, sao chép off-site, cài đặt, thông tin đăng nhập và khóa MCP, cùng việc hủy một lần sao lưu do lịch, giao diện web hoặc khóa khác bắt đầu. Việc xác nhận một bất thường hoặc đánh dấu nó là dự kiến cũng vậy, và được thực hiện trên trang **Bất thường**. Lý do: câu trả lời của công cụ chứa tên và thông báo lỗi từ máy chủ của bạn, và bất kỳ mục nào trong đó cũng có thể chứa văn bản viết ra để điều khiển trợ lý. Một trợ lý mắc bẫy văn bản như vậy, trong trường hợp xấu nhất, chỉ có thể bắt đầu một lần sao lưu trong các giới hạn bên dưới hoặc hủy một lần sao lưu do chính nó bắt đầu.
 
 Nếu kho chính của một mục nằm ở nơi khác (S3, REST, SFTP, rclone), `list_restore_points` sẽ kết nối tới đó và lệnh gọi có thể mất một lúc. Không thể liệt kê bản sao off-site qua MCP.
 
 ## Một lần sao lưu được bắt đầu sẽ làm gì {#starting-backups}
 
-Lần sao lưu do trợ lý bắt đầu giống hệt lần sao lưu do giao diện web bắt đầu. Container đang chạy sẽ dừng cho đến khi sao lưu xong, cùng với các container được đặt để dừng theo nó. VM dùng phương thức "graceful" sẽ được tắt rồi khởi động lại. Bộ thư mục, ổ flash và cấu hình vẫn tiếp tục chạy. Sau đó BombVault áp dụng chính sách lưu giữ và có thể sao chép sang kho off-site. `list_items` cho trợ lý biết một mục sẽ dừng những gì và lần sao lưu gần nhất mất bao lâu, còn mô tả của công cụ yêu cầu trợ lý báo cho bạn trước khi bắt đầu bất cứ việc gì.
+Lần sao lưu do trợ lý bắt đầu giống hệt lần sao lưu do giao diện web bắt đầu. Container đang chạy sẽ dừng cho đến khi sao lưu xong, cùng với các container được đặt để dừng theo nó. VM dùng phương thức "graceful" sẽ được tắt rồi khởi động lại. Một dataset ZFS dừng các container được đặt cho nó trong lúc chụp snapshot. Bộ thư mục, ổ flash và cấu hình vẫn tiếp tục chạy. Sau đó BombVault áp dụng chính sách lưu giữ và có thể sao chép sang kho off-site. `list_items` cho trợ lý biết một mục sẽ dừng những gì và lần sao lưu gần nhất mất bao lâu, còn mô tả của công cụ yêu cầu trợ lý báo cho bạn trước khi bắt đầu bất cứ việc gì.
 
 Vì sao lưu làm dừng dịch vụ và đẩy các điểm khôi phục cũ ra ngoài, việc bắt đầu qua MCP có giới hạn:
 

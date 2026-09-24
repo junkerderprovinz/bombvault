@@ -9,23 +9,25 @@ BombVault ha un server integrato per il Model Context Protocol (MCP), il protoco
 | `get_health` | Versione, nome dell'istanza, se è in corso un backup e cosa può fare questa chiave | lettura |
 | `get_status` | Stato di protezione per dominio: ultimo backup riuscito, intervallo previsto, verifiche e controlli off-site, prossime esecuzioni pianificate | lettura |
 | `get_coverage` | Cosa protegge BombVault e cosa no, con il motivo per ciascuno | lettura |
-| `list_items` | Ogni container, VM e set di cartelle protetto, la chiavetta flash e la configurazione dell'app, con pianificazione, cosa ferma un backup, l'ultimo backup e quanto è durato; i container di database riportano anche l'ultimo dump | lettura |
+| `list_items` | Ogni container, VM e set di cartelle protetto, la chiavetta flash e la configurazione dell'app, con pianificazione, cosa ferma un backup, l'ultimo backup e quanto è durato; i container di database riportano anche l'ultimo dump; compaiono anche i dataset ZFS, con l'esito del loro ultimo controllo | lettura |
 | `list_runs` | Cronologia delle esecuzioni, le più recenti prima, filtrabile per dominio, elemento, stato, tipo e data | lettura |
-| `list_restore_points` | Punti di ripristino di un elemento nel suo repository principale e, per un container, i suoi dump di database | lettura |
+| `list_restore_points` | Punti di ripristino di un elemento nel suo repository principale e, per un container, i suoi dump di database; un dataset ZFS ha un punto di ripristino per backup, con uno snapshot di ogni dataset sottostante | lettura |
 | `get_activity` | Cosa è in esecuzione adesso, con fase e percentuale | lettura |
 | `get_storage_stats` | Storico delle dimensioni del repository principale di un dominio e la sua crescita settimanale | lettura |
+| `list_anomalies` | Backup insoliti notati da BombVault, filtrabili per stato, gravità e dominio, con un riepilogo di ciò che è aperto | lettura |
+| `get_anomaly` | Una di queste segnalazioni, con la nota lasciata quando è stata confermata | lettura |
 | `start_backup` | Esegue subito il backup di un elemento | avvio |
 | `start_domain_backup` | Esegue il backup di ogni elemento protetto di un dominio | avvio |
 | `start_backup_everything` | Avvia il passaggio Backup Everything | avvio |
 | `cancel_backup` | Annulla un backup in corso avviato da questa chiave | annullamento |
 
-Restano nell'interfaccia web: i ripristini di ogni tipo (compresi scaricare, salvare o importare un dump di database), l'eliminazione di backup, prune, unlock, verifiche ed esercitazioni, la replica off-site, le impostazioni, le credenziali e le chiavi MCP, e l'annullamento di un backup avviato dalla pianificazione, dall'interfaccia web o da un'altra chiave. Il motivo: le risposte degli strumenti contengono nomi e messaggi di errore del tuo server, e ognuno di essi potrebbe contenere un testo scritto per manipolare l'assistente. Un assistente che ci casca può al massimo avviare un backup entro i limiti qui sotto, o annullarne uno che ha avviato lui stesso.
+Restano nell'interfaccia web: i ripristini di ogni tipo (compresi scaricare, salvare o importare un dump di database), l'eliminazione di backup, prune, unlock, verifiche ed esercitazioni, la replica off-site, le impostazioni, le credenziali e le chiavi MCP, e l'annullamento di un backup avviato dalla pianificazione, dall'interfaccia web o da un'altra chiave. Lo stesso vale per confermare un'anomalia o segnarla come prevista, cosa che si fa nella pagina **Anomalie**. Il motivo: le risposte degli strumenti contengono nomi e messaggi di errore del tuo server, e ognuno di essi potrebbe contenere un testo scritto per manipolare l'assistente. Un assistente che ci casca può al massimo avviare un backup entro i limiti qui sotto, o annullarne uno che ha avviato lui stesso.
 
 Se il repository principale di un elemento è remoto (S3, REST, SFTP, rclone), `list_restore_points` lo contatta e la chiamata può richiedere un po' di tempo. Le copie off-site non si possono elencare tramite MCP.
 
 ## Cosa fa un backup avviato {#starting-backups}
 
-Il backup di un assistente è lo stesso che avvia l'interfaccia web. Un container in esecuzione viene fermato finché il suo backup non termina, insieme ai container impostati per fermarsi con lui. Una VM con il metodo "graceful" viene spenta e riavviata. I set di cartelle, la chiavetta flash e la configurazione continuano a funzionare. Dopo, BombVault applica la politica di conservazione e può copiare nel repository off-site. `list_items` dice all'assistente cosa ferma un elemento e quanto è durato il suo ultimo backup, e le descrizioni degli strumenti gli chiedono di dirtelo prima di avviare qualsiasi cosa.
+Il backup di un assistente è lo stesso che avvia l'interfaccia web. Un container in esecuzione viene fermato finché il suo backup non termina, insieme ai container impostati per fermarsi con lui. Una VM con il metodo "graceful" viene spenta e riavviata. Un dataset ZFS ferma i container impostati per lui mentre viene preso il suo snapshot. I set di cartelle, la chiavetta flash e la configurazione continuano a funzionare. Dopo, BombVault applica la politica di conservazione e può copiare nel repository off-site. `list_items` dice all'assistente cosa ferma un elemento e quanto è durato il suo ultimo backup, e le descrizioni degli strumenti gli chiedono di dirtelo prima di avviare qualsiasi cosa.
 
 Poiché un backup ferma dei servizi e fa uscire vecchi punti di ripristino, gli avvii tramite MCP sono limitati:
 
