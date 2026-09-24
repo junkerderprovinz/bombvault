@@ -89,6 +89,10 @@ Nach dem Update liest BombVault einmal die Größen früherer Backups aus jedem 
 
 Auf dem Unraid-User-Share (`/mnt/user`) ist der freie Platz der des ganzen Arrays, nicht der einer einzelnen Platte. Entfernte Repositories werden nur über rclone-Remotes gemessen, die ihren freien Platz melden; S3-, B2-, REST- und SFTP-Repositories haben keine Angabe und stehen in der Karte **Anomalien** als nicht gemessen.
 
+## Ein KI-Assistent verbindet sich nicht
+
+Die Seite [MCP-Server](mcp.md#troubleshooting) listet auf, was jeder Statuscode und jede Ablehnung des MCP-Endpunkts bedeutet und was du dagegen tun kannst.
+
 ## Der Container startet ständig neu oder wirkt ungesund
 
 BombVault meldet gesund/ungesund aus seinem eigenen `/api/health`. Ein Auto-Heal-Werkzeug (wie Autoheal) kann ihn automatisch neu starten, falls sich die Engine je verklemmt. Prüfe das Container-Log und den `/spike`-Bericht auf die zugrunde liegende Ursache.

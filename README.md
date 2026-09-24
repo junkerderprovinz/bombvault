@@ -104,7 +104,7 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 
 Unraid's usual backup answer is [**Appdata.Backup**](https://github.com/Commifreak/unraid-appdata.backup) (the community-maintained successor to the old Appdata Backup/Restore plugin) — a native CA plugin, but a file-level one: it archives the appdata folder (and optionally VM disks + Unraid flash), with no awareness of what a Docker container or a libvirt VM *is*, so a restore is copying files back, not the container reappearing in the Docker tab on its own. The other well-known route is a generic dedup/encrypted engine — [Duplicati](https://duplicati.com), [Kopia](https://kopia.io), [Duplicacy](https://duplicacy.com) or [BorgBackup](https://borgbackup.readthedocs.io) — run by hand or via a community Docker template; all are solid, actively developed engines (restic's own closest siblings, in Kopia's, Duplicacy's and Borg's case), but none of them know what a container or a VM is either, and none ship as a native Unraid plugin.
 
-The closest thing to a direct counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by [@ruaan-deysel](https://github.com/ruaan-deysel), a native Unraid plugin that shares the core idea: it, too, recreates containers through the Docker API and re-defines VMs through libvirt on restore. It reaches further in places BombVault does not cover yet: installed Unraid plugins as a backup source and volumes that no VM uses. It stops short in others: it runs a backup engine of its own rather than an established one, so a backup is readable only by Vault itself; it has no append-only off-site mode; and it verifies a restore point by reading the data back and re-hashing it rather than by actually restoring it. Worth a look, and the honest comparison is below.
+The closest thing to a direct counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by [@ruaan-deysel](https://github.com/ruaan-deysel), a native Unraid plugin that shares the core idea: it, too, recreates containers through the Docker API and re-defines VMs through libvirt on restore. It reaches further in places BombVault does not cover yet: installed Unraid plugins as a backup source and volumes that no VM uses. It stops short in others: it runs a backup engine of its own rather than an established one, so a backup is readable only by Vault itself; it has no append-only off-site mode; and it verifies a restore point by reading the data back and re-hashing it rather than by actually restoring it. Both have an MCP server for AI assistants; BombVault's asks every client for a key of its own and keeps restores and deletions in the web interface. Worth a look, and the honest comparison is below.
 
 | | **BombVault** | Vault (plugin) | Appdata.Backup (CA) | Duplicati | Kopia | BorgBackup |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
@@ -122,6 +122,7 @@ The closest thing to a direct counterpart is [**Vault**](https://github.com/ruaa
 | Live restore progress + cancel | ✅ | ✅ | ❓ | ✅ | ❌ [confirmed gap](https://github.com/kopia/kopia/issues/3609) | ⚠️ CLI progress, no true cancel |
 | Notification channels | ✅ 6+ incl. SMTP, Matrix, Apprise | ⚠️ Discord + Unraid | ⚠️ Unraid only | ✅ | ❌ | ❌ |
 | Anomaly detection (new data, rewrites, source and dump shrink and growth, file count, restic duration, failures, restore-check regressions, disk-full ETA) | ✅ per item and per database dump; keeps old backups when a source shrinks sharply or is rewritten | ✅ per job | ❌ | ❌ | ❌ | ❌ |
+| MCP server for AI assistants | ✅ a key per client, reads and starts backups, restores stay in the UI | ⚠️ 27 tools incl. restore and delete, open without an API key | ❌ | ❌ none built in | ❌ | ❌ |
 | Runs outside Unraid too | ✅ Docker host, TrueNAS Scale | ❌ Unraid 7 only | ❌ | ✅ | ✅ | ✅ |
 | Native platform packaging | ✅ Unraid CA | ✅ Unraid plugin | ✅ Unraid CA | ❌ generic Docker template | ❌ generic Docker template | ❌ generic Docker template |
 | Web UI | ✅ | ✅ | ✅ | ✅ | ⚠️ separate project (KopiaUI) | ❌ CLI/config-file only |
@@ -263,6 +264,18 @@ The closest thing to a direct counterpart is [**Vault**](https://github.com/ruaa
 </details>
 
 <details>
+<summary><b>AI assistants (MCP)</b></summary>
+
+- **What an assistant can read:** backup status per domain, coverage, the protected items with their last backup and what a backup of them stops, run history, restore points including database dumps, current activity and repository growth.
+- **What it can start:** a backup of one item, of one domain or Backup Everything, and it can cancel the backups its own key started. No other tool writes anything.
+- **Keys and limits:** one key per client, created under **Settings → System → MCP server**, shown once and stored as a fingerprint, with read-only keys for clients you trust less. 12 starts per hour per key, 15 minutes between starts of the same item, 4 per item a day, and a retention guard that keeps assistant backups from pushing your own restore points out of a "keep last N" policy.
+- **You see what it did:** every run it starts, and the prune and off-site copy that follow, reads "via MCP" with the key's name in the Activity log, the error panel and the backup notification. Every key change sends a notification too.
+- **Works on a plain Unraid install:** the default self-signed certificate names only `localhost`, so the MCP card adds the address you use to it with one click and hands you the certificate file for the client. A reverse proxy or Tailscale works as well.
+- **Stays in the web interface:** restores, deletions, prune, settings, credentials and keys. Tool output carries text from your server, and none of it can reach those. The setup for Claude Code, Claude Desktop and other clients is in [docs/mcp.md](docs/mcp.md).
+
+</details>
+
+<details>
 <summary><b>Other</b></summary>
 
 - **Stop a backup that is running** — every card that can start a backup carries a **Cancel backup** button beside its progress bar while the run is active: containers, VMs, flash, config and folder sets. The run it stops is recorded as *cancelled*, not failed. Interrupting a backup is safe, because restic writes its snapshot last, so an aborted run leaves unreferenced data and no snapshot. A restore keeps its own control, with its own warning about a half-restored target.
@@ -349,6 +362,12 @@ Two caveats for the security-conscious: with `HTTP_ONLY=true` the session cookie
 TLS-terminating proxy if confidentiality matters. And the VM-backup SSH connection trusts the
 host key on first connect (TOFU) and pins it thereafter — fine on a trusted LAN, but verify the
 host's key out-of-band if your container↔host path isn't trusted.
+
+The MCP endpoint `/mcp` is off until a key exists (it answers 404), and it asks every client for
+its key even with the login password off. No address is exempt, not even `localhost`, and it has no
+restore or delete tools. Keys are shown once and stored as fingerprints, restoring a configuration
+backup revokes all of them, and backups an assistant starts can never fill a "keep last N"
+retention window on their own.
 
 Backups are encrypted by restic when encryption is enabled (Settings; on by default), with the
 key derived from `APP_KEY`.

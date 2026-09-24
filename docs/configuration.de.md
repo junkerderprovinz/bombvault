@@ -54,9 +54,14 @@ Für jeden Container wählt BombVault selbst aus, welche Bind-Mounts und benannt
 - Weil die Sperre Opt-in ist, sind bei nicht gesetztem Passwort die gesamte UI und API (einschließlich der Off-site-Einrichtung, der Manipulationstest-Routen und des Recovery-Kits) für jeden erreichbar, der den Port erreichen kann. Aktiviere die Sperre, sobald Off-site-, unveränderliche Backups oder Verschlüsselung im Einsatz sind.
 - Betreibe BombVault nur in einem vertrauenswürdigen, nicht exponierten Netzwerk. Für Fernzugriff setze es hinter einen Reverse Proxy, der Authentifizierung und TLS ergänzt. Antworten tragen grundlegende Sicherheits-Header (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Hinter einem Reverse Proxy trägt jede Anfrage die Adresse des Proxys, ohne `TRUSTED_PROXY` zählt die Anmeldebremse also alle Clients in einen Topf und die Fehlversuche eines Angreifers sperren auch dich aus. Trage den Proxy in `TRUSTED_PROXY` ein, dann zählt sie wieder pro Client.
+- Ein Reverse Proxy vor BombVault muss den `Authorization`- oder `X-API-Key`-Header an `/mcp` durchreichen und darf die Antworten nicht puffern, sonst können sich Assistenten nicht verbinden. Siehe [MCP-Server](mcp.md#tls).
 - Mit `HTTP_ONLY=true` verliert das Session-Cookie sein `Secure`-Flag (das muss es, um über schlichtes HTTP zu funktionieren), aktiviere das Passwort also nur hinter einem TLS-terminierenden Proxy, wenn Vertraulichkeit wichtig ist.
 - Die SSH-Verbindung für das VM-Backup vertraut dem Host-Key beim ersten Verbinden (TOFU) und pinnt ihn danach. Verifiziere den Host-Key außerhalb des Kanals, wenn dein Pfad vom Container zum Host nicht vertrauenswürdig ist.
 - Backups werden von restic verschlüsselt, wenn die Verschlüsselung aktiviert ist (Einstellungen; standardmäßig an), mit dem aus `APP_KEY` abgeleiteten Schlüssel.
+
+## MCP-Server {#mcp-server}
+
+Der MCP-Server braucht keine Umgebungsvariable. Du schaltest ihn ein, indem du unter **Einstellungen, System, MCP-Server** einen Schlüssel anlegst, und er antwortet unter `/mcp` auf demselben Port wie die Web-Oberfläche (zum Beispiel `https://192.168.1.10:3443/mcp`). Ohne aktiven Schlüssel antwortet dieser Pfad mit `404`. Clients, Zertifikate und Grenzen beschreibt die Seite [MCP-Server](mcp.md).
 
 ## VM-Backup über SSH
 
