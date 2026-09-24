@@ -3199,7 +3199,9 @@ func (s *Service) sampleVolumesFor(ctx context.Context, domain string) {
 		log.Printf("api: capacity: %s: the previous readings could not be read: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		return
 	}
-	seen := map[string]int64{}
+	// The attempts count as well as the readings: a remote that timed out wrote
+	// no sample, and asking it again on the next backup costs the same wait.
+	seen := s.anomalies.lastVolumeProbes()
 	for _, sample := range recent {
 		seen[sample.Volume] = max(seen[sample.Volume], sample.At)
 	}
@@ -3264,6 +3266,7 @@ func (s *Service) probeVolume(ctx context.Context, ref domainRepoRef,
 	if now-seen[volume] < volumeSampleRemoteEvery {
 		return nil, nil
 	}
+	s.anomalies.noteVolumeProbe(volume, now)
 	about, err := s.rcloneAboutFn()(ctx, rcloneRemoteOf(ref.Loc))
 	if err != nil {
 		return nil, err

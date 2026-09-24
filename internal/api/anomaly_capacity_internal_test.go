@@ -86,6 +86,24 @@ func TestVolumeSamplesOnEveryAttempt(t *testing.T) {
 		}
 	})
 
+	t.Run("a remote that could not be reached waits like one that answered", func(t *testing.T) {
+		f := newCapacityFixture(t)
+		f.namedRepo(t, "box", "rclone:box:bv")
+		f.aboutErr = errors.New("dial tcp: network is unreachable")
+
+		f.svc.sampleVolumesFor(context.Background(), "containers")
+		f.now += 3601
+		f.svc.sampleVolumesFor(context.Background(), "containers")
+		if f.abouts != 1 {
+			t.Fatalf("the remote was asked again an hour after it failed (%d calls)", f.abouts)
+		}
+		f.now += 6 * 3600
+		f.svc.sampleVolumesFor(context.Background(), "containers")
+		if f.abouts != 2 {
+			t.Fatalf("the remote was not tried again after six hours (%d calls)", f.abouts)
+		}
+	})
+
 	t.Run("a backend that reports nothing is named, not skipped", func(t *testing.T) {
 		f := newCapacityFixture(t)
 		f.namedRepo(t, "cold", "s3:example.com/bucket/cold")
@@ -139,6 +157,30 @@ func TestCapacityFindingsComeFromTheSamples(t *testing.T) {
 	}
 	if f.e.summary().Open.Critical+f.e.summary().Open.Warning == 0 {
 		t.Fatalf("the summary does not carry the capacity finding: %+v", f.e.summary())
+	}
+}
+
+// Readings older than the trend window are never read again, so housekeeping
+// drops them instead of letting the table grow for as long as the box runs.
+func TestOldVolumeReadingsArePruned(t *testing.T) {
+	f := newCapacityFixture(t)
+	total := int64(1) << 40
+	for _, at := range []int64{f.now - (capacityWindowDays+12)*86400, f.now - 86400} {
+		if err := f.st.AddVolumeSample(store.VolumeSample{
+			Volume: "dev:801", At: at, FreeBytes: 200 << 30, TotalBytes: &total,
+			Domains: []string{"containers"}, Source: "statfs",
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := f.e.passOnce(context.Background()); err != nil {
+		t.Fatalf("pass: %v", err)
+	}
+
+	got := f.samples(t)
+	if len(got) != 1 || got[0].At != f.now-86400 {
+		t.Fatalf("readings after housekeeping = %+v, want the one inside the window", got)
 	}
 }
 
