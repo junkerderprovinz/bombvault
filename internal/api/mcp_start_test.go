@@ -414,6 +414,35 @@ func TestMCPStartBackupEverythingRefusedWhenEveryItemIsHeld(t *testing.T) {
 	}
 }
 
+// A container on a cadence of its own is not part of the pass, so it cannot be
+// what keeps a pass going whose every other item the guard holds back.
+func TestMCPStartBackupEverythingCountsOnlyWhatThePassRuns(t *testing.T) {
+	rig := newMCPStartRig(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	s := mustSettings(t, rig.st)
+	s.RetentionKeepLast = 2
+	s.PerItemSchedules = true
+	if err := rig.st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	plex := rig.target(t, "plex")
+	immich := rig.target(t, "immich")
+	if err := rig.st.SetScheduleCadence("immich", "daily 03:00"); err != nil {
+		t.Fatal(err)
+	}
+	seedRun(t, rig.st, plex.ID, "backup", "success", store.RunMeta{StartedVia: "mcp", StartedViaKey: rig.keyID})
+
+	res := mcpCallTool(t, rig.h, rig.key, "start_backup_everything", "")
+	if code := res.code(t); code != "retention_guard" {
+		t.Fatalf("code = %q, want retention_guard (result %v)", code, res.Structured)
+	}
+	if rig.svc.EverythingInProgress() {
+		t.Fatal("the refused call started a pass anyway")
+	}
+	if n := backupRunCount(t, rig.st, immich.ID); n != 0 {
+		t.Fatalf("the container on its own cadence has %d backups, want none", n)
+	}
+}
+
 // backupRunCount is how many backup runs an item has, whatever started them.
 func backupRunCount(t *testing.T, st *store.Repo, targetID string) int {
 	t.Helper()
