@@ -63,13 +63,15 @@ func (h *Handler) handleZFSConnection(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleZFSHostDatasets lists the pools as the host has them, with what each
-// dataset may become. GET /api/zfs/host
+// dataset may become. The name limit travels along because a name-too-long
+// blocker's sentence states it. GET /api/zfs/host
 func (h *Handler) handleZFSHostDatasets(w http.ResponseWriter, r *http.Request) {
 	res := h.svc.DiscoverZFSHost(r.Context())
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"available": res.Available, "code": res.Code, "target": res.Target,
 		"datasets": res.Datasets, "hiddenLegacy": res.HiddenLegacy,
 		"unusedZvols": res.UnusedZvols, "notInItem": res.NotInItem, "truncated": res.Truncated,
+		"maxNameLength": zfs.MaxDatasetNameLen,
 	}))
 }
 

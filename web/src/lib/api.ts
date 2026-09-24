@@ -3090,6 +3090,8 @@ export interface ZFSHostResult extends OkEnvelope {
   unusedZvols: number;
   notInItem: number;
   truncated: boolean;
+  /** The longest root name an item accepts, for the name-too-long sentence. */
+  maxNameLength: number;
 }
 
 /** One item the add dialog asks for. */

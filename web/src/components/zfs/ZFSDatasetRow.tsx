@@ -18,6 +18,7 @@ import type {
   ZFSDatasetPatch,
   ZFSDatasetView,
   ZFSExcludePreviewRow,
+  ZFSHostDataset,
   ZFSRunDetail,
   ZFSSafetySnapshot,
 } from "../../lib/api";
@@ -46,6 +47,7 @@ import { SelectField } from "../SelectField";
 import { IconBackupNow, IconPencil, IconTrash } from "../Sidebar";
 import { ToggleRow } from "../../pages/settings/shared";
 import { ZFSMemberList, zfsMemberActionable } from "./ZFSMemberList";
+import { ZFSRestorePanel } from "./ZFSRestorePanel";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -555,12 +557,19 @@ export function ZFSDatasetRow({
   t,
   onRefresh,
   index,
+  host,
+  hostMountRoot,
+  restoreFolder,
 }: {
   item: ZFSDatasetView;
   t: T;
   onRefresh: () => void;
   /** Rainbow position by list index, as on the Folders cards. */
   index: number;
+  /** The cached host listing by dataset name, for the restore panel. */
+  host: ReadonlyMap<string, ZFSHostDataset>;
+  hostMountRoot: string;
+  restoreFolder: string;
 }) {
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
@@ -786,6 +795,13 @@ export function ZFSDatasetRow({
       {item.safetyCount > 0 && <ZFSSafetySection item={item} t={t} />}
 
       {editing && <ZFSItemSettings item={item} t={t} onChanged={onRefresh} />}
+
+      <ZFSRestorePanel
+        item={item}
+        host={host}
+        hostMountRoot={hostMountRoot}
+        restoreFolder={restoreFolder}
+      />
 
       <RecentRunsList
         name={item.dataset}

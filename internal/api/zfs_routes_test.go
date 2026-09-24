@@ -14,6 +14,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
 // newZFSTestRouter serves the ZFS routes over a seeded repository and no host,
@@ -113,6 +114,9 @@ func TestZFSRoutesRoundTrip(t *testing.T) {
 	}
 	if m["available"] != false {
 		t.Fatalf("host listing without a host = %v, want unavailable", m)
+	}
+	if m["maxNameLength"] != float64(zfs.MaxDatasetNameLen) {
+		t.Fatalf("host listing maxNameLength = %v, want the longest root name an item accepts", m["maxNameLength"])
 	}
 
 	w, m = doJSON(t, h, http.MethodGet, "/api/zfs/datasets/"+id+"/restore-points", "")
