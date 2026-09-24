@@ -937,3 +937,50 @@ func (s *Service) foreignBindWarnings(binds, appdataPaths []string) []ForeignBin
 	}
 	return out
 }
+
+// foreignVMDestBase resolves the destination base directory (a container
+// path) for a cross-instance VM restore's disks. Resolution order, never
+// the source pool: an explicit target subpath (the request Target) wins;
+// else the configured RestoreFolder (the settings default restore
+// location); else the platform's conventional local VM domains location
+// under the host mount (see platform.Platform.ForeignVMDestBase: Unraid's
+// "user/domains" share, generic's identity default). Target and
+// RestoreFolder are relative subpaths validated by paths.Resolve (no
+// absolute path, no traversal), as in the file-set to-folder restore.
+func (s *Service) foreignVMDestBase(target string) (string, error) {
+	if sub := strings.TrimSpace(target); sub != "" {
+		return paths.Resolve(s.cfg.HostMountRoot, sub)
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return "", fmt.Errorf("read settings: %w", err)
+	}
+	if sub := strings.TrimSpace(settings.RestoreFolder); sub != "" {
+		return paths.Resolve(s.cfg.HostMountRoot, sub)
+	}
+	return s.platformFn().ForeignVMDestBase(path.Clean(s.cfg.HostMountRoot)), nil
+}
+
+// foreignContainerDestBase resolves the destination base directory (a
+// container path) a cross-instance container restore remaps appdata into,
+// the container counterpart of foreignVMDestBase (#125). Resolution order,
+// never the source pool: an explicit request Target wins; else the
+// configured RestoreFolder; else the platform's conventional local appdata
+// location under the host mount (see
+// platform.Platform.ForeignContainerDestBase: Unraid's "user/appdata"
+// share, generic's identity default). Target and RestoreFolder are
+// relative subpaths validated by paths.Resolve (no absolute path, no
+// traversal).
+func (s *Service) foreignContainerDestBase(target string) (string, error) {
+	if sub := strings.TrimSpace(target); sub != "" {
+		return paths.Resolve(s.cfg.HostMountRoot, sub)
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return "", fmt.Errorf("read settings: %w", err)
+	}
+	if sub := strings.TrimSpace(settings.RestoreFolder); sub != "" {
+		return paths.Resolve(s.cfg.HostMountRoot, sub)
+	}
+	return s.platformFn().ForeignContainerDestBase(path.Clean(s.cfg.HostMountRoot)), nil
+}
