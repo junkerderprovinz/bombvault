@@ -75,7 +75,7 @@ Anomali denetimlerinin çoğu bir öğenin 10 başarılı yedeğinden sonra baş
 
 ## Saklama, bir öğenin eski yedeklerini silmeyi bıraktı
 
-Açık bir kritik anomali onları tutuyor: öğenin kaynağı neredeyse boş, çok küçülmüş ya da bir yedek verilerin çoğunu yeniden kaydetmiş. Anomaliyi öğedeki rozetten açın. Veri eksikse ya da şifrelenmişse önce bağlantısı verilen son iyi yedekten geri yükleyin. Ardından anomaliyi onaylayın ya da değişiklik sizden geldiyse beklenen olarak işaretleyin; sonraki çalıştırma her zamanki gibi temizler. Saklama önizlemesi böyle bir öğeyi tutulmuş olarak işaretler.
+Açık bir kritik anomali onları tutuyor: öğenin kaynağı neredeyse boş, çok küçülmüş ya da bir yedek verilerin çoğunu yeniden kaydetmiş. Anomaliyi öğedeki rozetten açın. Veri eksikse ya da şifrelenmişse önce bağlantısı verilen son iyi yedekten geri yükleyin. Ardından anomaliyi onaylayın ya da değişiklik sizden geldiyse beklenen olarak işaretleyin; sonraki çalıştırma her zamanki gibi temizler. Saklama önizlemesi böyle bir öğeyi tutulmuş olarak işaretler. Bir ZFS öğesinde eski yedeklerini yalnızca anomalinin adını verdiği veri kümesi tutar; ağacın diğer veri kümeleri her zamanki gibi temizlenir.
 
 ## Elle temizlik bazı öğelerin tutulduğunu söylüyor
 

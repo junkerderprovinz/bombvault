@@ -102,7 +102,7 @@ La detección de anomalías se configura en la tarjeta **Anomalías** de **Ajust
 | **Enviar una notificación para** | Solo hallazgos críticos | La gravedad mínima que envía un mensaje por los canales configurados en Notificaciones. Los fallos repetidos de copias y volcados y las comprobaciones de restauración programadas fallidas ya envían su propio mensaje y no se envían dos veces. |
 | **Conservar las copias antiguas cuando un origen se reduce mucho o se reescribe** | Activado | Mientras un elemento tenga un hallazgo abierto por una fuente casi vacía, un encogimiento fuerte o la mayoría de sus datos guardados de nuevo, la retención y la limpieza no tocan sus copias antiguas. Confirma el hallazgo o márcalo como esperado para liberarlas. |
 
-Cada elemento puede tener su propia sensibilidad y su propio mínimo de notificación. Ajústalos en la pestaña **Elementos** de la página **Anomalías**, o en el panel del propio elemento: la sección de carpetas de un contenedor y los ajustes de una VM (ambos en modo avanzado), el editor de carpetas de un conjunto de carpetas y las páginas **Flash** y **Autocopia**.
+Cada elemento puede tener su propia sensibilidad y su propio mínimo de notificación. Ajústalos en la pestaña **Elementos** de la página **Anomalías**, o en el panel del propio elemento: la sección de carpetas de un contenedor y los ajustes de una VM (ambos en modo avanzado), el editor de carpetas de un conjunto de carpetas y las páginas **Flash** y **Autocopia**. En un elemento ZFS están en su editor de la página **ZFS** y valen para todos los conjuntos de datos de su árbol.
 
 ## Ajustes portátiles (exportar e importar) {#portable-settings-export-and-import}
 

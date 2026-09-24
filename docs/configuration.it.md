@@ -102,7 +102,7 @@ Il rilevamento delle anomalie si imposta nella scheda **Anomalie** di **Impostaz
 | **Invia una notifica per** | Solo riscontri critici | La gravità minima che invia un messaggio tramite i canali configurati in Notifiche. Gli errori ripetuti di backup e dump e i controlli di ripristino pianificati falliti inviano già un proprio messaggio e non vengono inviati due volte. |
 | **Conserva i backup vecchi quando una sorgente si riduce molto o viene riscritta** | Attivo | Finché un elemento ha un rilevamento aperto per una sorgente quasi vuota, una forte riduzione o la maggior parte dei dati salvata di nuovo, la conservazione e la pulizia lasciano stare i suoi vecchi backup. Conferma il rilevamento o segnalo come previsto per liberarli. |
 
-Ogni elemento può avere una propria sensibilità e un proprio minimo di notifica. Impostali nella scheda **Elementi** della pagina **Anomalie**, oppure nel pannello dell'elemento stesso: la sezione cartelle di un container e le impostazioni di una VM (entrambe in modalità avanzata), l'editor delle cartelle di un set di cartelle e le pagine **Flash** e **Auto-backup**.
+Ogni elemento può avere una propria sensibilità e un proprio minimo di notifica. Impostali nella scheda **Elementi** della pagina **Anomalie**, oppure nel pannello dell'elemento stesso: la sezione cartelle di un container e le impostazioni di una VM (entrambe in modalità avanzata), l'editor delle cartelle di un set di cartelle e le pagine **Flash** e **Auto-backup**. Per un elemento ZFS si trovano nel suo editor nella pagina **ZFS** e valgono per ogni dataset del suo albero.
 
 ## Impostazioni portatili (esporta e importa) {#portable-settings-export-and-import}
 

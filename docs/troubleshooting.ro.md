@@ -75,7 +75,7 @@ Majoritatea verificărilor de anomalii încep după 10 backupuri reușite ale un
 
 ## Retenția nu mai șterge backupurile vechi ale unui element
 
-Le ține o anomalie critică deschisă: sursa elementului este aproape goală, s-a micșorat mult sau un backup a salvat din nou cea mai mare parte a datelor. Deschide anomalia din insigna elementului. Dacă lipsesc date sau au fost criptate, restaurează mai întâi din ultimul backup bun indicat. Apoi confirmă anomalia sau marcheaz-o ca așteptată dacă schimbarea a fost a ta, iar următoarea rulare curăță ca de obicei. Previzualizarea retenției marchează un astfel de element ca păstrat.
+Le ține o anomalie critică deschisă: sursa elementului este aproape goală, s-a micșorat mult sau un backup a salvat din nou cea mai mare parte a datelor. Deschide anomalia din insigna elementului. Dacă lipsesc date sau au fost criptate, restaurează mai întâi din ultimul backup bun indicat. Apoi confirmă anomalia sau marcheaz-o ca așteptată dacă schimbarea a fost a ta, iar următoarea rulare curăță ca de obicei. Previzualizarea retenției marchează un astfel de element ca păstrat. La un element ZFS doar setul de date numit în anomalie își păstrează backupurile vechi; celelalte seturi ale arborelui sunt curățate ca de obicei.
 
 ## Curățarea manuală spune că unele elemente au fost păstrate
 

@@ -75,7 +75,7 @@ La plupart des contrôles d'anomalies commencent après 10 sauvegardes réussies
 
 ## La rétention ne supprime plus les anciennes sauvegardes d'un élément
 
-Une anomalie critique ouverte les retient : la source de l'élément est presque vide, a fortement rétréci, ou une sauvegarde a réenregistré la plupart de ses données. Ouvrez l'anomalie depuis le badge de l'élément. Si des données manquent ou ont été chiffrées, restaurez d'abord depuis la dernière bonne sauvegarde indiquée. Accusez ensuite réception de l'anomalie, ou marquez-la comme attendue si le changement vient de vous, et l'exécution suivante nettoie comme d'habitude. L'aperçu de rétention signale un tel élément comme conservé.
+Une anomalie critique ouverte les retient : la source de l'élément est presque vide, a fortement rétréci, ou une sauvegarde a réenregistré la plupart de ses données. Ouvrez l'anomalie depuis le badge de l'élément. Si des données manquent ou ont été chiffrées, restaurez d'abord depuis la dernière bonne sauvegarde indiquée. Accusez ensuite réception de l'anomalie, ou marquez-la comme attendue si le changement vient de vous, et l'exécution suivante nettoie comme d'habitude. L'aperçu de rétention signale un tel élément comme conservé. Pour un élément ZFS, seul le jeu de données nommé dans l'anomalie garde ses anciennes sauvegardes ; les autres jeux de données de l'arborescence sont nettoyés comme d'habitude.
 
 ## Le nettoyage manuel indique que certains éléments ont été conservés
 

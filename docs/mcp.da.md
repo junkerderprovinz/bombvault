@@ -14,7 +14,7 @@ BombVault har en indbygget server til Model Context Protocol (MCP), den protokol
 | `list_restore_points` | Gendannelsespunkter for ét element fra dets primære repository, og for en container også dens databasedumps; et ZFS-datasæt får ét gendannelsespunkt pr. sikkerhedskopi, med et snapshot af hvert datasæt under det | læse |
 | `get_activity` | Hvad der kører lige nu, med fase og procent | læse |
 | `get_storage_stats` | Størrelseshistorik for et domænes primære repository og dets vækst pr. uge | læse |
-| `list_anomalies` | Usædvanlige sikkerhedskopier, som BombVault har bemærket, kan filtreres efter tilstand, alvor og domæne, med en oversigt over det, der er åbent | læse |
+| `list_anomalies` | Afvigelser, som BombVault har bemærket i sikkerhedskopierne, kan filtreres efter tilstand, alvor og domæne, med en oversigt over det, der er åbent | læse |
 | `get_anomaly` | Én af disse afvigelser, med den note, der blev skrevet, da den blev kvitteret | læse |
 | `start_backup` | Sikkerhedskopierer ét element med det samme | starte |
 | `start_domain_backup` | Sikkerhedskopierer hvert beskyttet element i et domæne | starte |

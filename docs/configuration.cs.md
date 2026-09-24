@@ -102,7 +102,7 @@ Detekce anomálií se nastavuje na kartě **Anomálie** v **Nastavení, Integrit
 | **Posílat oznámení pro** | Jen kritické nálezy | Nejnižší závažnost, která pošle zprávu kanály nastavenými v Oznámení. Opakovaně selhané zálohy a výpisy a selhané plánované kontroly obnovy už posílají vlastní zprávu a neposílají se dvakrát. |
 | **Ponechat staré zálohy, když se zdroj prudce zmenší nebo je přepsán** | Zapnuto | Dokud má položka otevřené zjištění kvůli téměř prázdnému zdroji, výraznému zmenšení nebo znovu uložené většině dat, uchovávání a čištění nechají její staré zálohy na pokoji. Potvrďte zjištění nebo ho označte jako očekávané, aby se uvolnily. |
 
-Každá položka může mít vlastní citlivost a vlastní minimum oznámení. Nastavíte je na záložce **Položky** stránky **Anomálie** nebo v panelu samotné položky: v sekci složek kontejneru a v nastavení virtuálního počítače (obojí v pokročilém režimu), v editoru složek sady složek a na stránkách **Flash** a **Autozáloha**.
+Každá položka může mít vlastní citlivost a vlastní minimum oznámení. Nastavíte je na záložce **Položky** stránky **Anomálie** nebo v panelu samotné položky: v sekci složek kontejneru a v nastavení virtuálního počítače (obojí v pokročilém režimu), v editoru složek sady složek a na stránkách **Flash** a **Autozáloha**. U položky ZFS jsou v jejím editoru na stránce **ZFS** a platí pro každou datovou sadu jejího stromu.
 
 ## Přenositelná nastavení (export a import) {#portable-settings-export-and-import}
 

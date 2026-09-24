@@ -75,7 +75,7 @@ A legtöbb anomália-ellenőrzés egy elem 10 sikeres mentése után indul, és 
 
 ## A megőrzés nem törli többé egy elem régi mentéseit
 
-Egy nyitott kritikus anomália tartja vissza őket: az elem forrása majdnem üres, erősen összezsugorodott, vagy egy mentés az adatok nagy részét újra eltárolta. Nyisd meg az anomáliát az elem jelvényéről. Ha adat hiányzik vagy titkosították, előbb állítsd vissza a hivatkozott utolsó jó mentésből. Utána nyugtázd az anomáliát, vagy jelöld várhatónak, ha a változás tőled jött, és a következő futás a szokásos módon takarít. A megőrzési előnézet az ilyen elemet megtartottként jelöli.
+Egy nyitott kritikus anomália tartja vissza őket: az elem forrása majdnem üres, erősen összezsugorodott, vagy egy mentés az adatok nagy részét újra eltárolta. Nyisd meg az anomáliát az elem jelvényéről. Ha adat hiányzik vagy titkosították, előbb állítsd vissza a hivatkozott utolsó jó mentésből. Utána nyugtázd az anomáliát, vagy jelöld várhatónak, ha a változás tőled jött, és a következő futás a szokásos módon takarít. A megőrzési előnézet az ilyen elemet megtartottként jelöli. Egy ZFS-elemnél csak az anomáliában megnevezett adatkészlet tartja meg a régi mentéseit; a fa többi adatkészlete a szokásos módon takarítódik.
 
 ## A kézi tisztítás szerint néhány elemet megtartott
 

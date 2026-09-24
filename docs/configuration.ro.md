@@ -102,7 +102,7 @@ Detecția anomaliilor se configurează în cardul **Anomalii** din **Setări, In
 | **Trimite o notificare pentru** | Doar constatări critice | Gravitatea minimă care trimite un mesaj prin canalele configurate în Notificări. Eșecurile repetate ale backupurilor și dumpurilor și verificările de restaurare programate eșuate trimit deja propriul mesaj și nu sunt trimise de două ori. |
 | **Păstrează copiile vechi când o sursă se micșorează brusc sau este rescrisă** | Pornit | Cât timp un element are o constatare deschisă pentru o sursă aproape goală, o micșorare puternică sau cea mai mare parte a datelor salvată din nou, retenția și curățarea lasă în pace backupurile lui vechi. Confirmă constatarea sau marcheaz-o ca așteptată ca să le eliberezi. |
 
-Fiecare element poate avea propria sensibilitate și propriul minim de notificare. Setează-le în fila **Elemente** a paginii **Anomalii** sau în panoul elementului: secțiunea de foldere a unui container și setările unei VM (ambele în modul avansat), editorul de foldere al unui set de foldere și paginile **Flash** și **Auto-backup**.
+Fiecare element poate avea propria sensibilitate și propriul minim de notificare. Setează-le în fila **Elemente** a paginii **Anomalii** sau în panoul elementului: secțiunea de foldere a unui container și setările unei VM (ambele în modul avansat), editorul de foldere al unui set de foldere și paginile **Flash** și **Auto-backup**. Pentru un element ZFS se află în editorul lui de pe pagina **ZFS** și se aplică fiecărui set de date din arborele lui.
 
 ## Setări portabile (export și import) {#portable-settings-export-and-import}
 

@@ -14,7 +14,7 @@ BombVault má vestavěný server pro Model Context Protocol (MCP), protokol, př
 | `list_restore_points` | Body obnovy jedné položky z jejího primárního repozitáře a u kontejneru i jeho databázové dumpy; dataset ZFS má jeden bod obnovy na zálohu se snapshotem každého datasetu pod ním | čtení |
 | `get_activity` | Co právě běží, s fází a procenty | čtení |
 | `get_storage_stats` | Historie velikosti primárního repozitáře domény a její týdenní růst | čtení |
-| `list_anomalies` | Neobvyklé zálohy, kterých si BombVault všiml, lze filtrovat podle stavu, závažnosti a domény, se souhrnem toho, co je otevřené | čtení |
+| `list_anomalies` | Anomálie, kterých si BombVault všiml v zálohách, lze filtrovat podle stavu, závažnosti a domény, se souhrnem toho, co je otevřené | čtení |
 | `get_anomaly` | Jedno z těchto zjištění s poznámkou, která zůstala při jeho potvrzení | čtení |
 | `start_backup` | Hned zazálohuje jednu položku | spuštění |
 | `start_domain_backup` | Zazálohuje každou chráněnou položku jedné domény | spuštění |

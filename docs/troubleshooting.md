@@ -75,7 +75,7 @@ Most anomaly checks start after 10 successful backups of an item, and the count 
 
 ## Retention stopped deleting old backups of one item
 
-An open critical anomaly is holding them: the item's source is almost empty, shrank sharply, or one backup stored most of its data again. Open the anomaly from the badge on the item. If data is missing or was encrypted, restore from the linked last good backup first. Then acknowledge the anomaly, or mark it as expected if the change was yours, and the next run prunes as usual. The retention preview marks such an item as kept.
+An open critical anomaly is holding them: the item's source is almost empty, shrank sharply, or one backup stored most of its data again. Open the anomaly from the badge on the item. If data is missing or was encrypted, restore from the linked last good backup first. Then acknowledge the anomaly, or mark it as expected if the change was yours, and the next run prunes as usual. The retention preview marks such an item as kept. For a ZFS item only the dataset named in the anomaly keeps its old backups, and the other datasets of the tree are pruned as usual.
 
 ## Manual prune says some items were kept
 

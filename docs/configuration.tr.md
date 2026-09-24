@@ -102,7 +102,7 @@ Anomali algılama **Ayarlar, Bütünlük** altındaki **Anormallikler** kartınd
 | **Şunlar için bildirim gönder** | Yalnızca kritik bulgular | Bildirimler altında kurulan kanallar üzerinden mesaj gönderen en düşük önem derecesi. Tekrarlanan başarısız yedekler ve dökümler ile başarısız zamanlanmış geri yükleme denetimleri zaten kendi mesajlarını gönderir ve iki kez gönderilmez. |
 | **Bir kaynak sert biçimde küçüldüğünde veya yeniden yazıldığında eski yedekleri tut** | Açık | Bir öğenin neredeyse boş kaynak, güçlü küçülme ya da verilerin çoğunun yeniden kaydedilmesi için açık bir bulgusu olduğu sürece saklama ve temizlik o öğenin eski yedeklerine dokunmaz. Serbest bırakmak için bulguyu onaylayın ya da beklenen olarak işaretleyin. |
 
-Her öğenin kendi hassasiyeti ve kendi bildirim alt sınırı olabilir. Bunları **Anormallikler** sayfasının **Ögeler** sekmesinde ya da öğenin kendi panelinde ayarlayın: bir konteynerin klasörler bölümü ve bir VM'nin ayarları (ikisi de gelişmiş modda), bir klasör setinin klasör düzenleyicisi ve **Flash** ile **Öz yedek** sayfaları.
+Her öğenin kendi hassasiyeti ve kendi bildirim alt sınırı olabilir. Bunları **Anormallikler** sayfasının **Ögeler** sekmesinde ya da öğenin kendi panelinde ayarlayın: bir konteynerin klasörler bölümü ve bir VM'nin ayarları (ikisi de gelişmiş modda), bir klasör setinin klasör düzenleyicisi ve **Flash** ile **Öz yedek** sayfaları. Bir ZFS öğesinde bunlar **ZFS** sayfasındaki öğe düzenleyicisindedir ve ağacın her veri kümesi için geçerlidir.
 
 ## Taşınabilir ayarlar (dışa ve içe aktarma) {#portable-settings-export-and-import}
 

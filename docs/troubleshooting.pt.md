@@ -75,7 +75,7 @@ A maioria das verificações de anomalias começa após 10 backups bem-sucedidos
 
 ## A retenção deixou de apagar os backups antigos de um elemento
 
-Uma anomalia crítica aberta está a segurá-los: a origem do elemento está quase vazia, encolheu muito, ou um backup voltou a guardar a maior parte dos dados. Abra a anomalia a partir do distintivo do elemento. Se faltarem dados ou tiverem sido cifrados, restaure primeiro a partir do último backup bom indicado. Depois confirme a anomalia, ou marque-a como esperada se a alteração foi sua, e a execução seguinte limpa como de costume. A pré-visualização da retenção assinala esse elemento como mantido.
+Uma anomalia crítica aberta está a segurá-los: a origem do elemento está quase vazia, encolheu muito, ou um backup voltou a guardar a maior parte dos dados. Abra a anomalia a partir do distintivo do elemento. Se faltarem dados ou tiverem sido cifrados, restaure primeiro a partir do último backup bom indicado. Depois confirme a anomalia, ou marque-a como esperada se a alteração foi sua, e a execução seguinte limpa como de costume. A pré-visualização da retenção assinala esse elemento como mantido. Num elemento ZFS só o conjunto de dados indicado na anomalia mantém os backups antigos; os outros conjuntos da árvore são limpos como de costume.
 
 ## A limpeza manual diz que alguns elementos foram mantidos
 

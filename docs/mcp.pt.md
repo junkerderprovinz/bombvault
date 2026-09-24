@@ -14,7 +14,7 @@ O BombVault traz um servidor para o Model Context Protocol (MCP), o protocolo co
 | `list_restore_points` | Pontos de restauro de um elemento no seu repositório principal e, para um contentor, os seus dumps de base de dados; um dataset ZFS tem um ponto de restauro por cópia, com um snapshot de cada dataset abaixo dele | leitura |
 | `get_activity` | O que está a correr agora, com fase e percentagem | leitura |
 | `get_storage_stats` | Histórico de tamanho do repositório principal de um domínio e o seu crescimento semanal | leitura |
-| `list_anomalies` | Cópias invulgares que o BombVault detetou, filtráveis por estado, gravidade e domínio, com um resumo do que está em aberto | leitura |
+| `list_anomalies` | Anomalias que o BombVault detetou nas cópias, filtráveis por estado, gravidade e domínio, com um resumo do que está em aberto | leitura |
 | `get_anomaly` | Uma dessas ocorrências, com a nota deixada quando foi reconhecida | leitura |
 | `start_backup` | Faz já a cópia de um elemento | início |
 | `start_domain_backup` | Faz a cópia de cada elemento protegido de um domínio | início |

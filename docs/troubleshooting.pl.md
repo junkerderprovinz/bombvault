@@ -75,7 +75,7 @@ Większość kontroli anomalii zaczyna się po 10 udanych kopiach elementu, a li
 
 ## Retencja przestała usuwać stare kopie jednego elementu
 
-Wstrzymuje je otwarta krytyczna anomalia: źródło elementu jest prawie puste, mocno się skurczyło albo kopia zapisała ponownie większość danych. Otwórz anomalię ze znaczka przy elemencie. Jeśli brakuje danych albo zostały zaszyfrowane, najpierw przywróć je z podlinkowanej ostatniej dobrej kopii. Potem potwierdź anomalię albo oznacz ją jako oczekiwaną, jeśli zmiana była twoja, a następny przebieg posprząta jak zwykle. Podgląd retencji oznacza taki element jako zachowany.
+Wstrzymuje je otwarta krytyczna anomalia: źródło elementu jest prawie puste, mocno się skurczyło albo kopia zapisała ponownie większość danych. Otwórz anomalię ze znaczka przy elemencie. Jeśli brakuje danych albo zostały zaszyfrowane, najpierw przywróć je z podlinkowanej ostatniej dobrej kopii. Potem potwierdź anomalię albo oznacz ją jako oczekiwaną, jeśli zmiana była twoja, a następny przebieg posprząta jak zwykle. Podgląd retencji oznacza taki element jako zachowany. W elemencie ZFS stare kopie zachowuje tylko zbiór danych wskazany w anomalii; pozostałe zbiory drzewa są czyszczone jak zwykle.
 
 ## Ręczne czyszczenie mówi, że niektóre elementy zostały zachowane
 

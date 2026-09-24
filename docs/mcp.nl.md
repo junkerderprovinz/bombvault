@@ -14,7 +14,7 @@ BombVault heeft een ingebouwde server voor het Model Context Protocol (MCP), het
 | `list_restore_points` | Herstelpunten van één item uit zijn primaire repository, en bij een container ook zijn databasedumps; een ZFS-dataset krijgt één herstelpunt per back-up, met een snapshot van elke dataset eronder | lezen |
 | `get_activity` | Wat er nu loopt, met fase en percentage | lezen |
 | `get_storage_stats` | Groottegeschiedenis van de primaire repository van een domein en de groei per week | lezen |
-| `list_anomalies` | Ongewone back-ups die BombVault heeft opgemerkt, te filteren op status, ernst en domein, met een overzicht van wat nog openstaat | lezen |
+| `list_anomalies` | Anomalieën die BombVault in de back-ups heeft opgemerkt, te filteren op status, ernst en domein, met een overzicht van wat nog openstaat | lezen |
 | `get_anomaly` | Eén van die meldingen, met de notitie die bij het bevestigen is achtergelaten | lezen |
 | `start_backup` | Maakt nu een back-up van één item | starten |
 | `start_domain_backup` | Maakt een back-up van elk beschermd item van een domein | starten |

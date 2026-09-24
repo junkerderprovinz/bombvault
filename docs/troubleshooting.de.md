@@ -75,7 +75,7 @@ Die meisten Anomalie-Prüfungen beginnen nach 10 erfolgreichen Backups eines Ele
 
 ## Die Aufbewahrung löscht bei einem Element keine alten Backups mehr
 
-Eine offene kritische Anomalie hält sie fest: Die Quelle des Elements ist fast leer, stark geschrumpft, oder ein Backup hat die meisten Daten neu gespeichert. Öffne die Anomalie über das Abzeichen am Element. Wenn Daten fehlen oder verschlüsselt wurden, stelle zuerst aus dem verlinkten letzten guten Backup wieder her. Quittiere die Anomalie danach, oder markiere sie als erwartet, wenn die Änderung von dir kam, und der nächste Lauf räumt wieder wie gewohnt auf. Die Aufbewahrungsvorschau kennzeichnet so ein Element als behalten.
+Eine offene kritische Anomalie hält sie fest: Die Quelle des Elements ist fast leer, stark geschrumpft, oder ein Backup hat die meisten Daten neu gespeichert. Öffne die Anomalie über das Abzeichen am Element. Wenn Daten fehlen oder verschlüsselt wurden, stelle zuerst aus dem verlinkten letzten guten Backup wieder her. Quittiere die Anomalie danach, oder markiere sie als erwartet, wenn die Änderung von dir kam, und der nächste Lauf räumt wieder wie gewohnt auf. Die Aufbewahrungsvorschau kennzeichnet so ein Element als behalten. Bei einem ZFS-Element behält nur das Dataset, das die Anomalie nennt, seine alten Backups; die übrigen Datasets des Baums werden wie gewohnt aufgeräumt.
 
 ## Das manuelle Aufräumen meldet, dass einige Elemente behalten wurden
 

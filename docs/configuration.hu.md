@@ -102,7 +102,7 @@ Az anomáliák észlelését a **Beállítások, Integritás** alatti **Anomáli
 | **Értesítés küldése ekkor** | Csak kritikus leletek | Az a legalacsonyabb súlyosság, amely üzenetet küld az Értesítések alatt beállított csatornákon. Az ismételten sikertelen mentések és dumpok, valamint a sikertelen ütemezett visszaállítási ellenőrzések már saját üzenetet küldenek, ezeket nem küldi el kétszer. |
 | **Régi mentések megtartása, ha egy forrás erősen zsugorodik vagy újraíródik** | Be | Amíg egy elemnek nyitott észlelése van majdnem üres forrás, erős zsugorodás vagy az adatok nagy részének újbóli eltárolása miatt, a megőrzés és a tisztítás békén hagyja a régi mentéseit. Nyugtázd az észlelést vagy jelöld várhatónak, hogy felszabaduljanak. |
 
-Minden elemnek lehet saját érzékenysége és saját értesítési minimuma. Ezeket az **Anomáliák** oldal **Elemek** lapján vagy az elem saját paneljén állítod be: egy konténer mappaszakaszában és egy virtuális gép beállításaiban (mindkettő speciális módban), egy mappakészlet mappaszerkesztőjében, valamint a **Flash** és a **Önmentés** oldalon.
+Minden elemnek lehet saját érzékenysége és saját értesítési minimuma. Ezeket az **Anomáliák** oldal **Elemek** lapján vagy az elem saját paneljén állítod be: egy konténer mappaszakaszában és egy virtuális gép beállításaiban (mindkettő speciális módban), egy mappakészlet mappaszerkesztőjében, valamint a **Flash** és a **Önmentés** oldalon. Egy ZFS-elemnél ezek az elem szerkesztőjében vannak a **ZFS** oldalon, és a fa minden adatkészletére érvényesek.
 
 ## Hordozható beállítások (exportálás és importálás) {#portable-settings-export-and-import}
 

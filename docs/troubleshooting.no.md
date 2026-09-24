@@ -75,7 +75,7 @@ De fleste avvikskontroller begynner etter 10 vellykkede sikkerhetskopier av et e
 
 ## Oppbevaringen sletter ikke lenger gamle sikkerhetskopier av ett element
 
-Et åpent kritisk avvik holder dem tilbake: elementets kilde er nesten tom, har krympet kraftig, eller en sikkerhetskopi har lagret det meste av dataene på nytt. Åpne avviket fra merket ved elementet. Mangler det data, eller er de kryptert, gjenopprett først fra den lenkede siste gode sikkerhetskopien. Kvitter deretter for avviket, eller merk det som forventet hvis endringen var din, så rydder neste kjøring som vanlig. Forhåndsvisningen av oppbevaringen merker et slikt element som beholdt.
+Et åpent kritisk avvik holder dem tilbake: elementets kilde er nesten tom, har krympet kraftig, eller en sikkerhetskopi har lagret det meste av dataene på nytt. Åpne avviket fra merket ved elementet. Mangler det data, eller er de kryptert, gjenopprett først fra den lenkede siste gode sikkerhetskopien. Kvitter deretter for avviket, eller merk det som forventet hvis endringen var din, så rydder neste kjøring som vanlig. Forhåndsvisningen av oppbevaringen merker et slikt element som beholdt. For et ZFS-element beholder bare datasettet avviket nevner, sine gamle sikkerhetskopier; de andre datasettene i treet ryddes som vanlig.
 
 ## Manuell opprydding sier at noen elementer ble beholdt
 

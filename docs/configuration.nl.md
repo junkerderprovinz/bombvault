@@ -102,7 +102,7 @@ Anomaliedetectie stel je in op de kaart **Anomalieën** onder **Instellingen, In
 | **Een melding sturen voor** | Alleen kritieke bevindingen | De laagste ernst die een bericht stuurt via de kanalen die onder Meldingen zijn ingesteld. Herhaald mislukte back-ups en dumps en mislukte geplande herstelcontroles sturen al een eigen bericht en worden niet dubbel verstuurd. |
 | **Oude back-ups bewaren als een bron sterk krimpt of wordt herschreven** | Aan | Zolang een item een open bevinding heeft voor een bijna lege bron, een sterke krimp of het grootste deel van de data opnieuw opgeslagen, laten retentie en opschonen de oude back-ups van dat item met rust. Bevestig de bevinding of markeer haar als verwacht om ze vrij te geven. |
 
-Elk item kan een eigen gevoeligheid en een eigen meldingsminimum hebben. Stel ze in op het tabblad **Items** van de pagina **Anomalieën**, of in het eigen paneel van het item: het mappengedeelte van een container en de instellingen van een VM (allebei in de geavanceerde modus), de mappeneditor van een mappenset en de pagina's **Flash** en **Zelf-back-up**.
+Elk item kan een eigen gevoeligheid en een eigen meldingsminimum hebben. Stel ze in op het tabblad **Items** van de pagina **Anomalieën**, of in het eigen paneel van het item: het mappengedeelte van een container en de instellingen van een VM (allebei in de geavanceerde modus), de mappeneditor van een mappenset en de pagina's **Flash** en **Zelf-back-up**. Voor een ZFS-item staan ze in de editor op de pagina **ZFS** en gelden ze voor elke dataset van de boom.
 
 ## Portable instellingen (exporteren en importeren) {#portable-settings-export-and-import}
 

@@ -75,7 +75,7 @@ De flesta avvikelsekontroller börjar efter 10 lyckade säkerhetskopior av ett o
 
 ## Gallringen har slutat ta bort gamla säkerhetskopior för ett objekt
 
-En öppen kritisk avvikelse håller kvar dem: objektets källa är nästan tom, har krympt kraftigt, eller en säkerhetskopia har sparat det mesta av datan på nytt. Öppna avvikelsen från märket på objektet. Om data saknas eller har krypterats, återställ först från den länkade senaste bra säkerhetskopian. Kvittera sedan avvikelsen, eller markera den som väntad om ändringen var din, så gallrar nästa körning som vanligt. Förhandsvisningen av gallringen markerar ett sådant objekt som behållet.
+En öppen kritisk avvikelse håller kvar dem: objektets källa är nästan tom, har krympt kraftigt, eller en säkerhetskopia har sparat det mesta av datan på nytt. Öppna avvikelsen från märket på objektet. Om data saknas eller har krypterats, återställ först från den länkade senaste bra säkerhetskopian. Kvittera sedan avvikelsen, eller markera den som väntad om ändringen var din, så gallrar nästa körning som vanligt. Förhandsvisningen av gallringen markerar ett sådant objekt som behållet. För ett ZFS-objekt behåller bara den datauppsättning som avvikelsen nämner sina gamla säkerhetskopior; trädets övriga datauppsättningar gallras som vanligt.
 
 ## Manuell rensning säger att vissa objekt behölls
 

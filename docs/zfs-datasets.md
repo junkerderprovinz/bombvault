@@ -118,6 +118,14 @@ Only names that match exactly `bombvault-` plus 14 digits are removed. Safety sn
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
+## Anomalies {#anomalies}
+
+A child that was emptied barely changes the total of a large tree, so anomaly detection watches every dataset of an item on its own: its size, file count, new data and restic time each have their own history. That history belongs to the dataset's name, so it stays when the tree is later backed up by another item.
+
+A dataset that the previous run backed up and this run could not read counts as emptied, as long as the item's selection did not change. That covers a key that is not loaded, a dataset that is not mounted and one that is gone from the tree. A child you exclude yourself changes the selection, so its history starts afresh instead. While a finding about lost data is open, retention keeps the old backups of that one dataset and prunes the rest of the tree as usual.
+
+On the **Items** tab of the **Anomalies** page every dataset has a line of its own under its item, and the item's tree on this page shows the open findings next to each dataset. The link in a finding opens the item's restore panel on the dataset's last good backup. Whether a run finishes is judged for the whole item, because a run succeeds or fails as a whole.
+
 ## Reason codes {#reason-codes}
 
 The page, the run history and the notifications name a problem with one of these codes. Most have the fix next to them on the page as well.

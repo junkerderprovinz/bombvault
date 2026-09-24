@@ -75,7 +75,7 @@ De fleste anomalitjek begynder efter 10 vellykkede sikkerhedskopier af et elemen
 
 ## Opbevaringen sletter ikke længere gamle sikkerhedskopier af ét element
 
-En åben kritisk anomali holder dem tilbage: elementets kilde er næsten tom, er skrumpet kraftigt, eller en sikkerhedskopi har gemt det meste af dataene igen. Åbn anomalien fra mærket ved elementet. Hvis der mangler data, eller de er blevet krypteret, så gendan først fra den linkede seneste gode sikkerhedskopi. Kvittér derefter for anomalien, eller markér den som forventet, hvis ændringen kom fra dig, så rydder næste kørsel op som normalt. Forhåndsvisningen af opbevaringen markerer et sådant element som beholdt.
+En åben kritisk anomali holder dem tilbage: elementets kilde er næsten tom, er skrumpet kraftigt, eller en sikkerhedskopi har gemt det meste af dataene igen. Åbn anomalien fra mærket ved elementet. Hvis der mangler data, eller de er blevet krypteret, så gendan først fra den linkede seneste gode sikkerhedskopi. Kvittér derefter for anomalien, eller markér den som forventet, hvis ændringen kom fra dig, så rydder næste kørsel op som normalt. Forhåndsvisningen af opbevaringen markerer et sådant element som beholdt. For et ZFS-element beholder kun det datasæt, anomalien nævner, sine gamle sikkerhedskopier; de øvrige datasæt i træet ryddes op som normalt.
 
 ## Manuel oprydning siger, at nogle elementer blev beholdt
 

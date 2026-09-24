@@ -75,7 +75,7 @@ Useimmat poikkeamatarkistukset alkavat kohteen 10 onnistuneen varmuuskopion jäl
 
 ## Säilytys ei enää poista yhden kohteen vanhoja varmuuskopioita
 
-Avoin kriittinen poikkeama pitää ne: kohteen lähde on lähes tyhjä, on kutistunut voimakkaasti tai varmuuskopio on tallentanut suurimman osan datasta uudelleen. Avaa poikkeama kohteen merkistä. Jos dataa puuttuu tai se on salattu, palauta ensin linkitetystä viimeisestä hyvästä varmuuskopiosta. Kuittaa sitten poikkeama tai merkitse se odotetuksi, jos muutos oli sinun, niin seuraava ajo siivoaa tavalliseen tapaan. Säilytyksen esikatselu merkitsee tällaisen kohteen säilytetyksi.
+Avoin kriittinen poikkeama pitää ne: kohteen lähde on lähes tyhjä, on kutistunut voimakkaasti tai varmuuskopio on tallentanut suurimman osan datasta uudelleen. Avaa poikkeama kohteen merkistä. Jos dataa puuttuu tai se on salattu, palauta ensin linkitetystä viimeisestä hyvästä varmuuskopiosta. Kuittaa sitten poikkeama tai merkitse se odotetuksi, jos muutos oli sinun, niin seuraava ajo siivoaa tavalliseen tapaan. Säilytyksen esikatselu merkitsee tällaisen kohteen säilytetyksi. ZFS-kohteessa vain poikkeaman nimeämä tietojoukko säilyttää vanhat varmuuskopionsa; puun muut tietojoukot siivotaan tavalliseen tapaan.
 
 ## Manuaalinen siivous kertoo, että joitakin kohteita säilytettiin
 

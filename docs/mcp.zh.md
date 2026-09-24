@@ -14,7 +14,7 @@ BombVault 内置了一个 Model Context Protocol（MCP）服务器。MCP 是 Cla
 | `list_restore_points` | 一个项目在其主仓库中的还原点；对于容器，还包括它的数据库转储；ZFS 数据集每次备份对应一个还原点，其中包含它下面每个数据集的快照 | 读取 |
 | `get_activity` | 此刻正在运行的内容，带阶段和百分比 | 读取 |
 | `get_storage_stats` | 某个域主仓库的大小历史及每周增长 | 读取 |
-| `list_anomalies` | BombVault 注意到的异常备份，可按状态、严重程度和域筛选，并附有未处理项的摘要 | 读取 |
+| `list_anomalies` | BombVault 在备份中注意到的异常，可按状态、严重程度和域筛选，并附有未处理项的摘要 | 读取 |
 | `get_anomaly` | 其中一条，附确认时留下的备注 | 读取 |
 | `start_backup` | 立即备份一个项目 | 启动 |
 | `start_domain_backup` | 备份一个域中所有受保护的项目 | 启动 |

@@ -75,7 +75,7 @@ La maggior parte dei controlli di anomalia parte dopo 10 backup riusciti di un e
 
 ## La conservazione non elimina più i vecchi backup di un elemento
 
-Li trattiene un'anomalia critica aperta: la sorgente dell'elemento è quasi vuota, si è ridotta molto, oppure un backup ha salvato di nuovo la maggior parte dei dati. Apri l'anomalia dal badge dell'elemento. Se mancano dati o sono stati cifrati, ripristina prima dall'ultimo backup buono collegato. Poi conferma l'anomalia, o segnala come prevista se il cambiamento è tuo, e l'esecuzione successiva pulisce come sempre. L'anteprima della conservazione indica un elemento del genere come mantenuto.
+Li trattiene un'anomalia critica aperta: la sorgente dell'elemento è quasi vuota, si è ridotta molto, oppure un backup ha salvato di nuovo la maggior parte dei dati. Apri l'anomalia dal badge dell'elemento. Se mancano dati o sono stati cifrati, ripristina prima dall'ultimo backup buono collegato. Poi conferma l'anomalia, o segnala come prevista se il cambiamento è tuo, e l'esecuzione successiva pulisce come sempre. L'anteprima della conservazione indica un elemento del genere come mantenuto. Per un elemento ZFS solo il dataset indicato nell'anomalia conserva i vecchi backup; gli altri dataset dell'albero vengono ripuliti come sempre.
 
 ## La pulizia manuale dice che alcuni elementi sono stati mantenuti
 

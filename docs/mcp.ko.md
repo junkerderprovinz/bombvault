@@ -14,7 +14,7 @@ BombVault에는 Model Context Protocol(MCP) 서버가 내장되어 있습니다.
 | `list_restore_points` | 한 항목의 기본 저장소에 있는 복원 지점, 컨테이너라면 데이터베이스 덤프도. ZFS 데이터 세트는 백업마다 복원 지점이 하나이고, 그 아래 모든 데이터 세트의 스냅숏이 들어 있습니다 | 읽기 |
 | `get_activity` | 지금 실행 중인 것, 단계와 진행률 포함 | 읽기 |
 | `get_storage_stats` | 한 도메인의 기본 저장소 크기 기록과 주간 증가량 | 읽기 |
-| `list_anomalies` | BombVault가 알아챈 평소와 다른 백업. 상태, 심각도, 도메인으로 거를 수 있고 열려 있는 것의 요약 포함 | 읽기 |
+| `list_anomalies` | BombVault가 백업에서 알아챈 이상 징후. 상태, 심각도, 도메인으로 거를 수 있고 열려 있는 것의 요약 포함 | 읽기 |
 | `get_anomaly` | 그중 하나와 확인할 때 남긴 메모 | 읽기 |
 | `start_backup` | 한 항목을 바로 백업합니다 | 시작 |
 | `start_domain_backup` | 한 도메인의 보호 대상 항목을 모두 백업합니다 | 시작 |

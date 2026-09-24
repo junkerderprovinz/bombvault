@@ -102,7 +102,7 @@ Anomaliregistreringen indstilles i kortet **Afvigelser** under **Indstillinger, 
 | **Send en notifikation for** | Kun kritiske fund | Den laveste alvorlighed, der sender en besked via de kanaler, der er sat op under Notifikationer. Gentagne fejlede sikkerhedskopier og dumps og fejlede planlagte gendannelsestjek sender allerede deres egen besked og sendes ikke to gange. |
 | **Behold gamle sikkerhedskopier, når en kilde skrumper kraftigt eller omskrives** | Til | Så længe et element har et åbent fund for en næsten tom kilde, en kraftig skrumpning eller det meste af dataene gemt igen, lader opbevaring og oprydning elementets gamle sikkerhedskopier være. Kvittér for fundet eller markér det som forventet for at frigive dem. |
 
-Hvert element kan have sin egen følsomhed og sit eget notifikationsminimum. Indstil dem på fanen **Elementer** på siden **Afvigelser** eller i elementets eget panel: mappeafsnittet for en container og indstillingerne for en VM (begge i avanceret tilstand), mappeeditoren for et mappesæt og siderne **Flash** og **Auto-sikkerhedskopi**.
+Hvert element kan have sin egen følsomhed og sit eget notifikationsminimum. Indstil dem på fanen **Elementer** på siden **Afvigelser** eller i elementets eget panel: mappeafsnittet for en container og indstillingerne for en VM (begge i avanceret tilstand), mappeeditoren for et mappesæt og siderne **Flash** og **Auto-sikkerhedskopi**. For et ZFS-element findes de i elementets editor på siden **ZFS** og gælder for hvert datasæt i dets træ.
 
 ## Bærbare indstillinger (eksportér og importér) {#portable-settings-export-and-import}
 

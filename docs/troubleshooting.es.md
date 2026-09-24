@@ -75,7 +75,7 @@ La mayoría de las comprobaciones de anomalías empiezan tras 10 copias correcta
 
 ## La retención dejó de borrar las copias antiguas de un elemento
 
-Una anomalía crítica abierta las retiene: la fuente del elemento está casi vacía, encogió mucho, o una copia volvió a guardar la mayoría de sus datos. Abre la anomalía desde la insignia del elemento. Si faltan datos o se cifraron, restaura primero desde la última copia buena enlazada. Después confirma la anomalía, o márcala como esperada si el cambio fue tuyo, y la siguiente ejecución limpia como siempre. La vista previa de retención marca ese elemento como conservado.
+Una anomalía crítica abierta las retiene: la fuente del elemento está casi vacía, encogió mucho, o una copia volvió a guardar la mayoría de sus datos. Abre la anomalía desde la insignia del elemento. Si faltan datos o se cifraron, restaura primero desde la última copia buena enlazada. Después confirma la anomalía, o márcala como esperada si el cambio fue tuyo, y la siguiente ejecución limpia como siempre. La vista previa de retención marca ese elemento como conservado. En un elemento ZFS solo el conjunto de datos que nombra la anomalía conserva sus copias antiguas; los demás conjuntos del árbol se limpian como siempre.
 
 ## La limpieza manual dice que se conservaron algunos elementos
 

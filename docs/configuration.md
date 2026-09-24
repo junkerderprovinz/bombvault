@@ -104,7 +104,7 @@ Anomaly detection is set up in the **Anomalies** card on **Settings, Integrity**
 | **Send a notification for** | Critical findings only | The lowest severity that sends a message through the channels set up under Notifications. Repeated backup and dump failures and failed scheduled restore checks already send their own message and are not sent twice. |
 | **Keep old backups when a source shrinks sharply or is rewritten** | On | While an item has an open finding for an almost empty source, a sharp shrink or most of its data stored again, retention and prune leave that item's old backups alone. Acknowledge the finding or mark it as expected to let them go. |
 
-Each item can use its own sensitivity and notification minimum. Set them on the **Items** tab of the **Anomalies** page, or in the item's own panel: the folders section of a container and the settings of a VM (both in advanced mode), the folder editor of a folder set, and the **Flash** and **Self-Backup** pages.
+Each item can use its own sensitivity and notification minimum. Set them on the **Items** tab of the **Anomalies** page, or in the item's own panel: the folders section of a container and the settings of a VM (both in advanced mode), the folder editor of a folder set, and the **Flash** and **Self-Backup** pages. For a ZFS item they are in its editor on the **ZFS** page and apply to every dataset of its tree.
 
 ## Portable settings (export and import) {#portable-settings-export-and-import}
 

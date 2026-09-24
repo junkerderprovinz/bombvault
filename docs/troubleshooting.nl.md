@@ -75,7 +75,7 @@ De meeste anomaliecontroles beginnen na 10 geslaagde back-ups van een item, en d
 
 ## Retentie verwijdert geen oude back-ups meer van één item
 
-Een open kritieke anomalie houdt ze vast: de bron van het item is bijna leeg, sterk gekrompen, of een back-up heeft het grootste deel van de data opnieuw opgeslagen. Open de anomalie via de badge bij het item. Als er data ontbreekt of versleuteld is, herstel dan eerst vanaf de gelinkte laatste goede back-up. Bevestig daarna de anomalie, of markeer haar als verwacht als de wijziging van jou kwam, en de volgende run schoont weer gewoon op. De retentievoorvertoning markeert zo'n item als bewaard.
+Een open kritieke anomalie houdt ze vast: de bron van het item is bijna leeg, sterk gekrompen, of een back-up heeft het grootste deel van de data opnieuw opgeslagen. Open de anomalie via de badge bij het item. Als er data ontbreekt of versleuteld is, herstel dan eerst vanaf de gelinkte laatste goede back-up. Bevestig daarna de anomalie, of markeer haar als verwacht als de wijziging van jou kwam, en de volgende run schoont weer gewoon op. De retentievoorvertoning markeert zo'n item als bewaard. Bij een ZFS-item houdt alleen de dataset die de anomalie noemt zijn oude back-ups; de andere datasets van de boom worden gewoon opgeschoond.
 
 ## Handmatig opschonen meldt dat sommige items zijn bewaard
 

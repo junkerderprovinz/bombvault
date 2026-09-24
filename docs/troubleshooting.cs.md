@@ -75,7 +75,7 @@ Většina kontrol anomálií začíná po 10 úspěšných zálohách položky a
 
 ## Uchovávání přestalo mazat staré zálohy jedné položky
 
-Drží je otevřená kritická anomálie: zdroj položky je téměř prázdný, výrazně se zmenšil, nebo záloha znovu uložila většinu dat. Otevřete anomálii z odznaku u položky. Pokud data chybí nebo byla zašifrována, obnovte nejprve z odkazované poslední dobré zálohy. Pak anomálii potvrďte, nebo ji označte jako očekávanou, pokud změna pochází od vás, a další běh uklidí jako obvykle. Náhled uchovávání takovou položku označí jako ponechanou.
+Drží je otevřená kritická anomálie: zdroj položky je téměř prázdný, výrazně se zmenšil, nebo záloha znovu uložila většinu dat. Otevřete anomálii z odznaku u položky. Pokud data chybí nebo byla zašifrována, obnovte nejprve z odkazované poslední dobré zálohy. Pak anomálii potvrďte, nebo ji označte jako očekávanou, pokud změna pochází od vás, a další běh uklidí jako obvykle. Náhled uchovávání takovou položku označí jako ponechanou. U položky ZFS si staré zálohy ponechá jen datová sada, kterou anomálie jmenuje; ostatní datové sady stromu se pročistí jako obvykle.
 
 ## Ruční čištění hlásí, že některé položky byly ponechány
 

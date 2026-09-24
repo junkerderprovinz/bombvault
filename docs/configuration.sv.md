@@ -102,7 +102,7 @@ Avvikelsedetekteringen ställs in i kortet **Avvikelser** under **Inställningar
 | **Skicka avisering för** | Bara kritiska fynd | Den lägsta allvarlighetsgrad som skickar ett meddelande via kanalerna som ställts in under Aviseringar. Upprepade misslyckade säkerhetskopior och dumpar och misslyckade schemalagda återställningskontroller skickar redan ett eget meddelande och skickas inte två gånger. |
 | **Behåll gamla säkerhetskopior när en källa krymper kraftigt eller skrivs om** | På | Så länge ett objekt har ett öppet fynd för en nästan tom källa, en kraftig krympning eller det mesta av datan sparad på nytt låter gallring och rensning objektets gamla säkerhetskopior vara. Kvittera fyndet eller markera det som väntat för att släppa dem. |
 
-Varje objekt kan ha en egen känslighet och ett eget aviseringsminimum. Ställ in dem på fliken **Objekt** på sidan **Avvikelser**, eller i objektets egen panel: mappavsnittet för en container och inställningarna för en VM (båda i avancerat läge), mappredigeraren för en mappuppsättning och sidorna **Flash** och **Auto-säkerhetskopia**.
+Varje objekt kan ha en egen känslighet och ett eget aviseringsminimum. Ställ in dem på fliken **Objekt** på sidan **Avvikelser**, eller i objektets egen panel: mappavsnittet för en container och inställningarna för en VM (båda i avancerat läge), mappredigeraren för en mappuppsättning och sidorna **Flash** och **Auto-säkerhetskopia**. För ett ZFS-objekt finns de i objektets redigerare på sidan **ZFS** och gäller för varje datauppsättning i dess träd.
 
 ## Portabla inställningar (exportera och importera) {#portable-settings-export-and-import}
 

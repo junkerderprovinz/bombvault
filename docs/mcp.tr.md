@@ -14,7 +14,7 @@ BombVault, Model Context Protocol (MCP) için yerleşik bir sunucu içerir. Bu p
 | `list_restore_points` | Bir öğenin birincil deposundaki geri yükleme noktaları, bir kapsayıcı için ayrıca veritabanı dökümleri; bir ZFS veri kümesinin her yedek için bir geri yükleme noktası vardır ve bu noktada altındaki her veri kümesinin anlık görüntüsü bulunur | okuma |
 | `get_activity` | Şu anda neyin çalıştığı, aşama ve yüzdesiyle | okuma |
 | `get_storage_stats` | Bir alanın birincil deposunun boyut geçmişi ve haftalık büyümesi | okuma |
-| `list_anomalies` | BombVault'un fark ettiği olağandışı yedekler; duruma, önem derecesine ve alana göre süzülebilir, açık olanların özetiyle birlikte | okuma |
+| `list_anomalies` | BombVault'un yedeklerde fark ettiği anormallikler; duruma, önem derecesine ve alana göre süzülebilir, açık olanların özetiyle birlikte | okuma |
 | `get_anomaly` | Bu bulgulardan biri, onaylanırken bırakılan notla birlikte | okuma |
 | `start_backup` | Bir öğeyi hemen yedekler | başlatma |
 | `start_domain_backup` | Bir alandaki korunan her öğeyi yedekler | başlatma |

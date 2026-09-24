@@ -75,7 +75,7 @@ Phần lớn kiểm tra bất thường bắt đầu sau 10 bản sao lưu thàn
 
 ## Chính sách lưu giữ không còn xóa bản sao lưu cũ của một mục
 
-Một bất thường nghiêm trọng đang mở giữ chúng lại: nguồn của mục gần như trống, đã co lại mạnh, hoặc một bản sao lưu đã lưu lại phần lớn dữ liệu. Mở bất thường từ huy hiệu trên mục. Nếu thiếu dữ liệu hoặc dữ liệu đã bị mã hóa, trước tiên hãy khôi phục từ bản sao lưu tốt cuối cùng được liên kết. Sau đó xác nhận bất thường, hoặc đánh dấu là đã lường trước nếu thay đổi do bạn, và lần chạy kế tiếp sẽ dọn dẹp như thường. Bản xem trước lưu giữ đánh dấu mục như vậy là được giữ lại.
+Một bất thường nghiêm trọng đang mở giữ chúng lại: nguồn của mục gần như trống, đã co lại mạnh, hoặc một bản sao lưu đã lưu lại phần lớn dữ liệu. Mở bất thường từ huy hiệu trên mục. Nếu thiếu dữ liệu hoặc dữ liệu đã bị mã hóa, trước tiên hãy khôi phục từ bản sao lưu tốt cuối cùng được liên kết. Sau đó xác nhận bất thường, hoặc đánh dấu là đã lường trước nếu thay đổi do bạn, và lần chạy kế tiếp sẽ dọn dẹp như thường. Bản xem trước lưu giữ đánh dấu mục như vậy là được giữ lại. Với một mục ZFS, chỉ tập dữ liệu mà bất thường nêu tên mới giữ các bản sao lưu cũ; các tập dữ liệu khác trong cây vẫn được dọn như thường.
 
 ## Dọn dẹp thủ công báo rằng một số mục đã được giữ lại
 

@@ -102,7 +102,7 @@ Poikkeamien tunnistus asetetaan kortissa **Poikkeamat** kohdassa **Asetukset, Eh
 | **Lähetä ilmoitus, kun kyseessä on** | Vain kriittiset havainnot | Alin vakavuus, joka lähettää viestin kohdassa Ilmoitukset määritettyjen kanavien kautta. Toistuvasti epäonnistuneet varmuuskopiot ja vedokset sekä epäonnistuneet ajastetut palautustarkistukset lähettävät jo oman viestinsä, eikä niitä lähetetä kahdesti. |
 | **Säilytä vanhat varmuuskopiot, kun lähde kutistuu jyrkästi tai kirjoitetaan uudelleen** | Päällä | Niin kauan kuin kohteella on avoin havainto lähes tyhjästä lähteestä, voimakkaasta kutistumisesta tai suurimman osan datasta uudelleentallennuksesta, säilytys ja siivous jättävät kohteen vanhat varmuuskopiot rauhaan. Kuittaa havainto tai merkitse se odotetuksi vapauttaaksesi ne. |
 
-Jokaisella kohteella voi olla oma herkkyys ja oma ilmoitusminimi. Aseta ne sivun **Poikkeamat** välilehdellä **Kohteet** tai kohteen omassa paneelissa: kontin kansio-osiossa ja virtuaalikoneen asetuksissa (molemmat lisätilassa), kansiojoukon kansioeditorissa sekä sivuilla **Flash** ja **Itsevarmuuskopio**.
+Jokaisella kohteella voi olla oma herkkyys ja oma ilmoitusminimi. Aseta ne sivun **Poikkeamat** välilehdellä **Kohteet** tai kohteen omassa paneelissa: kontin kansio-osiossa ja virtuaalikoneen asetuksissa (molemmat lisätilassa), kansiojoukon kansioeditorissa sekä sivuilla **Flash** ja **Itsevarmuuskopio**. ZFS-kohteella ne ovat kohteen muokkaimessa **ZFS**-sivulla ja koskevat puun jokaista tietojoukkoa.
 
 ## Siirrettävät asetukset (vienti ja tuonti) {#portable-settings-export-and-import}
 

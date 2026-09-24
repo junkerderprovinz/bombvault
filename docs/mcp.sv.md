@@ -14,7 +14,7 @@ BombVault har en inbyggd server för Model Context Protocol (MCP), protokollet s
 | `list_restore_points` | Återställningspunkter för ett objekt från dess primära repository, och för en container även dess databasdumpar; ett ZFS-dataset får en återställningspunkt per säkerhetskopia, med en snapshot av varje dataset under det | läsa |
 | `get_activity` | Vad som körs just nu, med fas och procent | läsa |
 | `get_storage_stats` | Storlekshistorik för en domäns primära repository och dess tillväxt per vecka | läsa |
-| `list_anomalies` | Ovanliga säkerhetskopior som BombVault har upptäckt, kan filtreras på tillstånd, allvarlighet och domän, med en sammanfattning av det som är öppet | läsa |
+| `list_anomalies` | Avvikelser som BombVault har upptäckt i säkerhetskopiorna, kan filtreras på tillstånd, allvarlighet och domän, med en sammanfattning av det som är öppet | läsa |
 | `get_anomaly` | En av dessa avvikelser, med anteckningen som lämnades när den kvitterades | läsa |
 | `start_backup` | Säkerhetskopierar ett objekt direkt | starta |
 | `start_domain_backup` | Säkerhetskopierar varje skyddat objekt i en domän | starta |
