@@ -315,6 +315,34 @@ func TestVMTimelineNeverShowsADiskSnapshotAsARow(t *testing.T) {
 	}
 }
 
+// renamedVMWithAnOldDisk is win11, formerly windows-11 and linked at 200, whose
+// run r1 from before the link holds a disk image under the former name.
+func renamedVMWithAnOldDisk(t *testing.T) *placementFixture {
+	t.Helper()
+	f := newPlacementFixture(t)
+	win11 := f.vm("win11", "")
+	if _, err := f.st.AddAliasAt("vm", "windows-11", win11.ID, 200); err != nil {
+		t.Fatal(err)
+	}
+	f.hold(f.domainPath("vms"),
+		snap("bbbb0001", 100, "vm:windows-11", "vmrun:r1"),
+		snap("bbbb0002", 100, "vm:windows-11:zvol:sda", "vmrun:r1"),
+		snap("bbbb0003", 300, "vm:win11", "vmrun:r2"),
+	)
+	return f
+}
+
+func TestVMTimelineShowsNoDiskUnderAFormerNameAsARow(t *testing.T) {
+	f := renamedVMWithAnOldDisk(t)
+	tl, err := f.svc.Timeline(context.Background(), "vms", "win11")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := rowKeys(tl.Rows); !slices.Equal(got, []string{"bbbb0003", "bbbb0001"}) {
+		t.Fatalf("rows = %v, want both runs and no disk", got)
+	}
+}
+
 func TestFlashAndConfigTimelinesShowTheDomainPathAndItsTargets(t *testing.T) {
 	for _, domain := range []string{"flash", "config"} {
 		t.Run(domain, func(t *testing.T) {

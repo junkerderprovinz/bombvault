@@ -182,6 +182,25 @@ func TestTimelineDeleteOfAVMRunTakesItsDisksAtThatPlace(t *testing.T) {
 	}
 }
 
+func TestTimelineDeleteOfARunFromBeforeARenameTakesItsDiskUnderTheFormerName(t *testing.T) {
+	f := renamedVMWithAnOldDisk(t)
+	ctx := context.Background()
+
+	del, _, err := f.svc.timelineDeletePreview(ctx, "vms", "win11", "bbbb0001", []string{"local"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(del) != 1 || !slices.Equal(del[0].SnapshotIDs, []string{"bbbb0001", "bbbb0002"}) {
+		t.Fatalf("delete = %+v, want the run and its disk", del)
+	}
+	if _, _, err := f.svc.timelineDelete(ctx, "vms", "win11", "bbbb0001", del); err != nil {
+		t.Fatal(err)
+	}
+	if got := forgottenAt(f, f.domainPath("vms")); !slices.Equal(got, []string{"bbbb0001", "bbbb0002"}) {
+		t.Fatalf("forgotten = %v", got)
+	}
+}
+
 func TestTimelineDeleteRoutes(t *testing.T) {
 	f, b2 := nginxAtHomeAndB2(t)
 
