@@ -113,6 +113,10 @@ type anomalyEngine struct {
 	signal     chan struct{}
 	scopeLocks sync.Map
 	cache      atomic.Pointer[anomalyCache]
+	// rebuildMu makes one rebuild's reads and its publish atomic against the
+	// next one's. It cannot be e.mu, which is never held across a store call.
+	rebuildMu   sync.Mutex
+	backfilling atomic.Bool
 
 	debounce     time.Duration
 	idleTick     time.Duration
@@ -788,7 +792,11 @@ func (e *anomalyEngine) EvaluateNow(ctx context.Context, sc anomalyScope) error 
 	if err := e.evaluateGuarded(ctx, sc, p); err != nil {
 		return err
 	}
-	return e.rebuildCache()
+	// The series is judged and on record. The read side the page polls is
+	// rebuilt from it, and a failure there is not a reason to hold up the
+	// caller, which is about to delete old backups.
+	e.refresh()
+	return nil
 }
 
 // RetentionHeld reports whether deleting old backups of this series has to
@@ -1035,6 +1043,9 @@ func (e *anomalyEngine) prune(now int64) {
 // rebuildCache replaces the whole read side in one go, one generation further
 // on, so the SPA can tell that something moved with a single number.
 func (e *anomalyEngine) rebuildCache() error {
+	e.rebuildMu.Lock()
+	defer e.rebuildMu.Unlock()
+
 	settings, err := e.svc.store.GetSettings()
 	if err != nil {
 		return err
@@ -1061,7 +1072,9 @@ func (e *anomalyEngine) rebuildCache() error {
 	}
 	notifyCfg, err := e.svc.NotifyConfig()
 	if err != nil {
-		return err
+		// A configuration that cannot be read is a channel that cannot deliver,
+		// which is what every other reader of it makes of the same error.
+		log.Printf("anomaly: read the notification settings: %v", err)
 	}
 
 	e.mu.Lock()
