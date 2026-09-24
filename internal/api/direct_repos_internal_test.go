@@ -1219,17 +1219,19 @@ func TestASettingsSaveWarnsWhenTheFieldTargetsDirectRepositoryKeepsLess(t *testi
 
 func TestSharedCloudCredentialsAreProbedOnDirectRepositories(t *testing.T) {
 	f := newPlacementFixture(t)
-	d := f.direct(f.target("containers", "B2", "b2:bkt:containers"))
+	if err := f.svc.SetCloudCreds(CloudCreds{RESTUser: "bv", RESTPassword: "old"}); err != nil {
+		t.Fatal(err)
+	}
+	d := f.direct(f.target("containers", "NAS", "rest:http://nas:8000/bv/containers"))
 	f.container("web", d.ID)
-	empty := f.direct(f.target("vms", "B2 vms", "b2:bkt:vms"))
+	empty := f.direct(f.target("vms", "NAS vms", "rest:http://nas:8000/bv/vms"))
 	f.eng.opens[d.Repo] = false
 	f.eng.opens[empty.Repo] = false
 	if codes := warningCodes(t, f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": []any{}})); len(codes) != 0 {
 		t.Fatalf("a direct repository on the shared credentials was probed for a set change: %v", codes)
 	}
-	res := f.do("POST", "/api/cloud", map[string]any{
-		"s3KeyId": "k", "s3Secret": "s", "s3Region": "", "restUser": "", "restPassword": "", "s3StorageClass": "",
-	})
+	f.opensOnlyWith(d.Repo, "old")
+	res := f.do("POST", "/api/cloud", map[string]any{"restUser": "bv", "restPassword": "new"})
 	// empty is probed too (same shared creds) but nothing uses it, so it stays quiet.
 	if codes := warningCodes(t, res); !slices.Equal(codes, []string{"direct-creds-kept"}) {
 		t.Fatalf("warnings = %v", codes)
@@ -1505,7 +1507,10 @@ func TestOldValuesThatDoNotOpenADirectRepositoryAreNotKept(t *testing.T) {
 	f := newPlacementFixture(t)
 	_, d := f.restDirect()
 	f.eng.opens[d.Repo] = false
-	f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "rest-creds", "rotated")})
+	res := f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "rest-creds", "rotated")})
+	if codes := warningCodes(t, res); len(codes) != 0 {
+		t.Fatalf("warnings = %v, want none: nothing was kept", codes)
+	}
 	if kept := f.keptFor(d.ID); len(kept) != 0 {
 		t.Fatalf("kept sets = %+v, want none", kept)
 	}
@@ -1539,7 +1544,10 @@ func TestADirectRepositoryOnItsOwnSelectorIsProbedWithItsNewValues(t *testing.T)
 	}
 
 	eng.passwords[d.Repo] = "rotated"
-	f.do("POST", "/api/cloud", map[string]any{"restUser": "bv", "restPassword": "rotated"})
+	res := f.do("POST", "/api/cloud", map[string]any{"restUser": "bv", "restPassword": "rotated"})
+	if codes := warningCodes(t, res); len(codes) != 0 {
+		t.Fatalf("warnings = %v, want none: the new shared values open it", codes)
+	}
 	if sets := f.storedCredSets(); len(sets) != 1 {
 		t.Fatalf("sets = %+v, want only Other: the new shared values open it", sets)
 	}
@@ -1547,7 +1555,10 @@ func TestADirectRepositoryOnItsOwnSelectorIsProbedWithItsNewValues(t *testing.T)
 		t.Fatalf("a backup into the direct repository runs with %v, want the new shared password", env)
 	}
 
-	f.do("POST", "/api/cloud", map[string]any{"restUser": "bv", "restPassword": "typo"})
+	res = f.do("POST", "/api/cloud", map[string]any{"restUser": "bv", "restPassword": "typo"})
+	if codes := warningCodes(t, res); !slices.Equal(codes, []string{"direct-creds-kept"}) {
+		t.Fatalf("warnings = %v", codes)
+	}
 	kept := f.keptFor(d.ID)
 	if len(kept) != 1 || kept[0].RESTPassword != "rotated" {
 		t.Fatalf("kept sets = %+v, want one holding rotated", kept)

@@ -625,45 +625,45 @@ func (s *Service) mirrorDirectCreds(ctx context.Context, targetID string) (*save
 }
 
 // keepDirectCreds runs after a save of credential values that left a direct
-// repository unable to open with its target's. If the save also changed the
-// values behind the repository's own selector and those fail too, the values
-// from before are probed, and only when they open it does it move to a new set
-// holding them. A repository that opens with neither stays on its selector, so
-// a server that was down during the save does not pin it to a key about to be
-// revoked.
-func (s *Service) keepDirectCreds(ctx context.Context, before store.Settings, direct, target store.OffsiteTarget) error {
+// repository unable to open with its target's, and reports whether the
+// repository still runs on the values from before, as the direct-creds-kept
+// warning says. When the save changed its own values too and they fail, it
+// moves to a set holding the old values, but only once those have opened it,
+// so a server that was down during the save does not pin it to a key about to
+// be revoked.
+func (s *Service) keepDirectCreds(ctx context.Context, before store.Settings, direct, target store.OffsiteTarget) (bool, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return fmt.Errorf("read settings: %w", err)
+		return false, fmt.Errorf("read settings: %w", err)
 	}
 	old, err := s.decodeCloudFor(before, direct.CredsRef)
 	if err != nil {
-		return err
+		return false, err
 	}
 	mode := s.offsiteModeForTarget(settings, direct)
 	if slices.Equal(cloudEnv(old), mode.Env) {
-		return nil
+		return true, nil
 	}
 	loc, err := s.resolveRepo(direct.Repo)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if !slices.Equal(mode.Env, s.offsiteModeForTarget(settings, target).Env) && s.opensWith(ctx, loc, mode) {
-		return nil
+		return false, nil
 	}
 	mode.Env = cloudEnv(old)
 	if !s.opensWith(ctx, loc, mode) {
-		return nil
+		return false, nil
 	}
 	kept := CloudCredSet{ID: newCredSetID(), Name: direct.Name + " (kept credentials)", KeptFor: direct.ID, CloudCreds: old}
 	if err := s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet { return append(sets, kept) }); err != nil {
-		return err
+		return false, err
 	}
 	// The set is written first, so a direct repository never names one that is
 	// not there. One the swap did not use is left to dropKeptCreds.
-	_, err = s.store.SwapCompanionCreds(direct.ID, direct.CredsRef, kept.ID)
+	swapped, err := s.store.SwapCompanionCreds(direct.ID, direct.CredsRef, kept.ID)
 	s.dropKeptCreds(direct.ID)
-	return err
+	return swapped, err
 }
 
 // dropKeptCreds removes the sets kept for a direct repository that nothing
@@ -706,7 +706,8 @@ func (s *Service) targetSaveWarnings(ctx context.Context, before, after store.Of
 
 // directCredsWarnings runs mirrorDirectCreds for the direct repositories pick
 // selects after a save of credential values, and keepDirectCreds for those it
-// warns about. before is the settings row as it was ahead of the save.
+// warns about. The warning stands only for a repository that still runs on the
+// values from before. before is the settings row as it was ahead of the save.
 func (s *Service) directCredsWarnings(ctx context.Context, before store.Settings, pick func(direct, target store.OffsiteTarget) bool) []saveWarning {
 	out := []saveWarning{}
 	repos, err := s.store.ListNamedRepos()
@@ -734,10 +735,13 @@ func (s *Service) directCredsWarnings(ctx context.Context, before store.Settings
 		if w == nil {
 			continue
 		}
-		if err := s.keepDirectCreds(ctx, before, d, target); err != nil {
+		kept, err := s.keepDirectCreds(ctx, before, d, target)
+		if err != nil {
 			log.Printf("api: repository %s: could not keep the credentials it opened with: %v", d.ID, err) //nolint:gosec // G706: the id is store-generated
 		}
-		out = append(out, *w)
+		if kept {
+			out = append(out, *w)
+		}
 	}
 	return out
 }
