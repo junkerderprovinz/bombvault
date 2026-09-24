@@ -653,6 +653,35 @@ func (r *Repo) DatasetSeries(dataset string, cutoff int64, limit int) ([]SeriesR
 	return out, rows.Err()
 }
 
+// DatasetRestorePoints resolves runs to the snapshot one dataset wrote in each
+// of them. A run that read nothing of the dataset is absent from the result.
+func (r *Repo) DatasetRestorePoints(dataset string, runIDs []string) (map[string]RestorePoint, error) {
+	out := make(map[string]RestorePoint, len(runIDs))
+	if len(runIDs) == 0 {
+		return out, nil
+	}
+	in, args := inClause("m.run_id", runIDs)
+	//nolint:gosec // G202: inClause writes placeholders only; the ids travel as bound parameters.
+	rows, err := r.db.Query(`
+		SELECT m.run_id, m.restic_snapshot, COALESCE(r.finished_at, r.started_at)
+		FROM zfs_run_members m
+		JOIN runs r ON r.id = m.run_id
+		WHERE m.dataset = ? AND `+in+` AND m.restic_snapshot <> ''`, append([]any{dataset}, args...)...)
+	if err != nil {
+		return nil, fmt.Errorf("DatasetRestorePoints: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	for rows.Next() {
+		var p RestorePoint
+		if err := rows.Scan(&p.RunID, &p.SnapshotID, &p.At); err != nil {
+			return nil, fmt.Errorf("DatasetRestorePoints: %w", err)
+		}
+		out[p.RunID] = p
+	}
+	return out, rows.Err()
+}
+
 // ZFSDatasetOwners maps every dataset a ZFS run has recorded to the item whose
 // newest run recorded it. A dataset keeps its history when its tree is taken
 // over by another item, so it belongs to whichever item backs it up now.

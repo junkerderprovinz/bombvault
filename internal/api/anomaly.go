@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"maps"
 	"slices"
 	"strings"
 
@@ -271,20 +272,51 @@ func (s *Service) ListAnomalies(ctx context.Context, f store.AnomalyFilter) (Ano
 // restore needs and not only run ids.
 func (s *Service) lastGoodPoints(rows []store.Anomaly) (map[string]store.RestorePoint, error) {
 	var ids []string
+	datasets := map[string][]string{}
 	for _, row := range rows {
 		if row.LastGoodRunID == "" {
 			continue
 		}
 		for _, id := range []string{row.LastGoodRunID, row.RunID, row.LastRunID} {
-			if id != "" && !slices.Contains(ids, id) {
+			switch {
+			case id == "":
+			case row.ScopeKind == anomalyScopeZFSDS:
+				if !slices.Contains(datasets[row.ScopeID], id) {
+					datasets[row.ScopeID] = append(datasets[row.ScopeID], id)
+				}
+			case !slices.Contains(ids, id):
 				ids = append(ids, id)
 			}
 		}
 	}
-	if len(ids) == 0 {
-		return nil, nil
+	out := map[string]store.RestorePoint{}
+	if len(ids) > 0 {
+		points, err := s.store.RestorePoints(ids)
+		if err != nil {
+			return nil, err
+		}
+		maps.Copy(out, points)
 	}
-	return s.store.RestorePoints(ids)
+	for dataset, runIDs := range datasets {
+		points, err := s.store.DatasetRestorePoints(dataset, runIDs)
+		if err != nil {
+			return nil, err
+		}
+		for runID, p := range points {
+			out[restorePointKey(anomalyScopeZFSDS, dataset, runID)] = p
+		}
+	}
+	return out, nil
+}
+
+// restorePointKey is where lastGoodPoints files the backup one run left for a
+// finding's series. Each dataset of a ZFS run wrote a snapshot of its own,
+// and the run row carries only the root's.
+func restorePointKey(scopeKind, scopeID, runID string) string {
+	if scopeKind == anomalyScopeZFSDS {
+		return scopeID + "@" + runID
+	}
+	return runID
 }
 
 // GetAnomaly serves one finding by id.
@@ -545,10 +577,10 @@ func anomalyViewOf(row store.Anomaly, items map[string]anomalyItemRef, targets m
 	if row.ScopeKind == anomalyScopeZFSDS {
 		view.Part = row.ScopeID
 	}
-	if p, found := points[row.LastGoodRunID]; found {
+	if p, found := points[restorePointKey(row.ScopeKind, row.ScopeID, row.LastGoodRunID)]; found {
 		view.LastGood = &RestorePointRef{RunID: p.RunID, SnapshotID: p.SnapshotID, At: p.At}
 		for _, id := range []string{row.RunID, row.LastRunID} {
-			if f, ok := points[id]; ok && !slices.Contains(view.FlaggedSnapshots, f.SnapshotID) {
+			if f, ok := points[restorePointKey(row.ScopeKind, row.ScopeID, id)]; ok && !slices.Contains(view.FlaggedSnapshots, f.SnapshotID) {
 				view.FlaggedSnapshots = append(view.FlaggedSnapshots, f.SnapshotID)
 			}
 		}

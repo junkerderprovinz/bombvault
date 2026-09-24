@@ -220,3 +220,29 @@ func TestZFSItemListsItsDatasets(t *testing.T) {
 		t.Fatalf("item learning = %+v, want what its datasets learned", view.Learning)
 	}
 }
+
+// Every dataset of a run wrote its own snapshot, and the run row carries only
+// the root's. A finding about a child has to point at the child's backups, or
+// the restore it offers would bring back the wrong dataset.
+func TestZFSDatasetFindingPointsAtTheDatasetsOwnSnapshots(t *testing.T) {
+	f := newEngineFixture(t)
+	item := f.zfsItem(t, "tank/a")
+	f.steadyTree(t, item, 5, backedUp("tank/a", 1000*gib), backedUp("tank/a/child", 20*gib))
+	emptied := f.zfsRun(t, item, f.now-3600, "tree-1", backedUp("tank/a", 1000*gib), backedUp("tank/a/child", 30*mib))
+	f.pass(t)
+
+	page, err := f.svc.ListAnomalies(t.Context(), store.AnomalyFilter{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(page.Anomalies) != 1 {
+		t.Fatalf("findings = %+v", page.Anomalies)
+	}
+	view := page.Anomalies[0]
+	if view.LastGood == nil || view.LastGood.SnapshotID != "snap-tank/a/child-"+view.LastGood.RunID {
+		t.Fatalf("last good = %+v, want the child's own snapshot of that run", view.LastGood)
+	}
+	if want := []string{"snap-tank/a/child-" + emptied}; !slices.Equal(view.FlaggedSnapshots, want) {
+		t.Fatalf("flagged = %v, want %v", view.FlaggedSnapshots, want)
+	}
+}
