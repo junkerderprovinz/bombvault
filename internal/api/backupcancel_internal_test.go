@@ -30,7 +30,7 @@ func TestCancelBackupRunCancelsAndReportsIt(t *testing.T) {
 	done := make(chan struct{})
 	s.registerBackupCancel("files:abc", func() { close(done); cancel() })
 
-	if !s.CancelBackupRun("files:abc") {
+	if !s.CancelBackupRun("files:abc", "") {
 		t.Fatal("CancelBackupRun on a running key must report true")
 	}
 	select {
@@ -47,7 +47,7 @@ func TestCancelBackupRunIsIdempotentOnAnUnknownKey(t *testing.T) {
 	s := &Service{}
 	// A browser tab still showing the button for a backup that finished a
 	// second ago must not produce an error.
-	if s.CancelBackupRun("files:gone") {
+	if s.CancelBackupRun("files:gone", "") {
 		t.Fatal("an unknown key must report false, not true")
 	}
 	if s.backupWasCancelled("files:gone") {
@@ -60,7 +60,7 @@ func TestUnregisterClearsTheCancellationMark(t *testing.T) {
 	// failure as a cancellation.
 	s := &Service{}
 	s.registerBackupCancel("files:abc", func() {})
-	s.CancelBackupRun("files:abc")
+	s.CancelBackupRun("files:abc", "")
 	s.unregisterBackupCancel("files:abc")
 	if s.backupWasCancelled("files:abc") {
 		t.Fatal("the mark outlived the run it belonged to")
@@ -74,7 +74,7 @@ func TestCancelBackupRunLeavesRestoresAlone(t *testing.T) {
 	reached := false
 	s.registerCancel("container:plex", func() { reached = true })
 
-	if s.CancelBackupRun("container:plex") {
+	if s.CancelBackupRun("container:plex", "") {
 		t.Fatal("CancelBackupRun must not find a RESTORE's cancel entry")
 	}
 	if reached {
@@ -88,7 +88,7 @@ func TestBackupWasCancelledIgnoresTheEmptyKey(t *testing.T) {
 	// themselves the moment any backup anywhere was cancelled.
 	s := &Service{}
 	s.registerBackupCancel("", func() {})
-	s.CancelBackupRun("")
+	s.CancelBackupRun("", "")
 	if s.backupWasCancelled("") {
 		t.Fatal("the empty key must never count as cancelled")
 	}
@@ -101,7 +101,7 @@ func TestCancelledBackupRecordsCancelledNotFailed(t *testing.T) {
 	st := newTestStore(t)
 	s := &Service{store: st}
 	s.registerBackupCancel("files:set1", func() {})
-	s.CancelBackupRun("files:set1")
+	s.CancelBackupRun("files:set1", "")
 
 	runID, err := st.StartRun("set1", "backup")
 	if err != nil {
@@ -163,7 +163,7 @@ func TestASuccessfulBackupIsNeverRelabelled(t *testing.T) {
 	st := newTestStore(t)
 	s := &Service{store: st}
 	s.registerBackupCancel("files:set3", func() {})
-	s.CancelBackupRun("files:set3")
+	s.CancelBackupRun("files:set3", "")
 
 	runID, err := st.StartRun("set3", "backup")
 	if err != nil {

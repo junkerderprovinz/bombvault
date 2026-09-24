@@ -545,9 +545,39 @@ func TestMCPCancelDerivesTheServiceKey(t *testing.T) {
 	}
 }
 
-// The progress key belongs to the item, not to the run, so a backup that ends
-// in the moment the cancel arrives can hand the key to the next one. The answer
-// then has to say that nothing of this run was stopped.
+// The progress key belongs to the item, not to the run. Once the key's run has
+// ended, the next backup under it is somebody else's, and a cancel aimed at the
+// finished run must not reach it.
+func TestMCPCancelReachesOnlyTheRunItNames(t *testing.T) {
+	h, repo, sets := newMCPStartHandler(t, "docs")
+	mine, err := repo.StartRunWith(sets["docs"].ID, "backup",
+		store.RunMeta{StartedVia: "mcp", StartedViaKey: "0b7e"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	next, err := repo.StartRunWith(sets["docs"].ID, "backup", store.RunMeta{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cancelled := false
+	h.svc.registerBackupCancel("files:docs", func() { cancelled = true })
+	h.svc.bindBackupRun("files:docs", next)
+
+	req := &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
+		Name:      "cancel_backup",
+		Arguments: json.RawMessage(fmt.Sprintf(`{"runId":%q}`, mine)),
+	}}
+	res, _ := h.toolCancelBackup(mcpStartCaller("0b7e", true), req)
+	if cancelled {
+		t.Fatal("the cancel reached the operator's backup that runs under the same key")
+	}
+	if code := mcpErrorCode(t, res); code != "not_running" {
+		t.Fatalf("code = %q, want not_running", code)
+	}
+}
+
+// A backup can finish in the moment the cancel arrives. The answer then has to
+// say that nothing was stopped.
 func TestMCPCancelReportsARunThatEndedFirst(t *testing.T) {
 	h, repo, sets := newMCPStartHandler(t, "docs")
 	runID, err := repo.StartRunWith(sets["docs"].ID, "backup",
@@ -560,6 +590,7 @@ func TestMCPCancelReportsARunThatEndedFirst(t *testing.T) {
 			t.Error(fErr)
 		}
 	})
+	h.svc.bindBackupRun("files:docs", runID)
 
 	req := &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
 		Name:      "cancel_backup",

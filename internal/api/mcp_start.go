@@ -368,7 +368,7 @@ func (h *Handler) toolCancelBackup(ctx context.Context, req *mcp.CallToolRequest
 		h.logMCPCall(ctx, tool, "not_found")
 		return mcpToolError("not_found", "the item this run belongs to is not set up in BombVault any more", nil), nil
 	}
-	if !h.svc.CancelBackupRun(key) {
+	if !h.svc.CancelBackupRun(key, run.ID) {
 		h.logMCPCall(ctx, tool, "not_running")
 		return mcpToolError("not_running", mcpNotRunningMessage, nil), nil
 	}
@@ -379,12 +379,11 @@ func (h *Handler) toolCancelBackup(ctx context.Context, req *mcp.CallToolRequest
 		"domain":    item.Domain,
 		"item":      mcpStartItem{ID: item.ID, Name: item.Name},
 	}
-	// The row is read once more because the run could have ended between the
-	// check above and the cancel, in which case the cancel reached whatever
-	// registered the same progress key next.
+	// restic writes the snapshot last, so a backup that was nearly done can
+	// finish before the cancellation reaches it.
 	if after, aErr := h.store.GetRun(run.ID); aErr == nil && after.Status != "running" && after.Status != "cancelled" {
 		out["cancelled"] = false
-		out["warning"] = "this backup had already finished; the cancellation may have reached a later backup of the same item"
+		out["warning"] = "this backup finished before the cancellation reached it"
 	}
 	h.logMCPCall(ctx, tool, "ok")
 	return mcpOK(out), nil
