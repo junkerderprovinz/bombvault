@@ -45,6 +45,7 @@ import { useConfirm } from "../lib/useConfirm";
 import { hueVars } from "../lib/appearance";
 import { Selector, type SelectorItem } from "../components/Selector";
 import { useToast } from "../lib/toast";
+import { useDebouncedSave } from "../lib/useDebouncedSave";
 import { IconSearch } from "../components/glyphs";
 
 import { Toggle } from "../components/Toggle";
@@ -424,50 +425,6 @@ function ExportButton({ name, t }: { name: string; t: T }) {
   );
 }
 
-// useDebouncedSave — a small per-instance "call `run` DELAY_MS after the last
-// invocation, cancel the pending one if called again first" hook: the exact
-// same shape/delay as Settings.tsx's own page-level debouncedSave/DEBOUNCE_MS
-// (which every remaining free-text field in this app — registry host/user/
-// token, the age-recipients list, cron/schedule strings — already auto-saves
-// through), just scoped to ONE component instance instead of a shared
-// page-level timer map keyed by field name. HooksEditor/ExcludesEditor below
-// are each their own instance (one per container row), so unlike
-// SettingsPage — which can have several unrelated debounced fields live at
-// once and needs a string key to keep their timers apart — each of these only
-// ever has ONE outstanding timer of its own, so no key is needed here.
-const AUTOSAVE_DEBOUNCE_MS = 800;
-
-function useDebouncedSave(delayMs: number = AUTOSAVE_DEBOUNCE_MS) {
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // A pending debounce must not fire after this component has unmounted (the
-  // user edits a field then closes/navigates away within the delay window) —
-  // same "capture the ref, clear on unmount" guard Settings.tsx's own
-  // debounce-cleanup effect uses.
-  useEffect(() => {
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
-    };
-  }, []);
-  function debouncedSave(run: () => void) {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(run, delayMs);
-  }
-  // cancel() is what lets an IMMEDIATE save win over a pending debounced one.
-  // Without it the two paths raced and the timer won by construction, because
-  // it fires later: clicking a suggestion chip within 800ms of a keystroke saved
-  // the chip's list, then the timer wrote the PRE-CHIP list back over it — and
-  // both paths toasted "Saved". A caller that saves right now must retire the
-  // timer first; every such caller already computes the full next list, so
-  // nothing typed is lost by dropping it.
-  function cancel() {
-    if (timer.current) {
-      clearTimeout(timer.current);
-      timer.current = null;
-    }
-  }
-  return { debouncedSave, cancel };
-}
-
 // HooksEditor edits the per-container pre/post-backup commands (collapsible).
 // `open` is now controlled by the caller (Containers.tsx's ContainerRow, via
 // its own shared five-chip Selector strip — see that call site's own comment)
@@ -477,7 +434,7 @@ function useDebouncedSave(delayMs: number = AUTOSAVE_DEBOUNCE_MS) {
 // Live-save conversion (jdp, live review: "Brauchen wir die Speichern-Buttons
 // in den Aufklappcards überhaupt? Es soll doch immer live speichern."): the
 // explicit Save button is GONE — both fields now debounce-auto-save via
-// useDebouncedSave above, 800ms after the last keystroke, combined into ONE
+// useDebouncedSave, 800ms after the last keystroke, combined into ONE
 // setContainerHooks(pre, post) call (the same "compute the next value
 // locally, pass it straight into the debounced closure" shape Settings.tsx's
 // own registryAuths row edits use for their own multi-field-into-one-PATCH

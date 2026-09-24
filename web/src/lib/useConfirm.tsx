@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useT, type TranslationKey } from "./i18n";
@@ -22,6 +22,8 @@ export interface ConfirmOptions {
    *  glyph ("Delete") rather than a bare "Confirm". */
   confirmKey?: TranslationKey;
   cancelLabel?: string;
+  /** A switch the action needs an answer to, shown under the question. */
+  extra?: ReactNode;
 }
 
 interface PendingConfirm extends ConfirmOptions {
@@ -105,6 +107,7 @@ export function useConfirm() {
           confirmLabel={t(pending.confirmKey ?? "common.confirm")}
           confirmLabelKey={pending.confirmKey ?? "common.confirm"}
           cancelLabel={pending.cancelLabel ?? t("common.cancel")}
+          extra={pending.extra}
           onConfirm={() => settle(true)}
           onCancel={() => settle(false)}
         />,

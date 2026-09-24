@@ -27,13 +27,13 @@ export function RepoPicker({
   onChange: (next: string) => void;
   /** True once the item has backups: the choice is frozen with a reason. */
   locked?: boolean;
-  hintKey?: "repos.itemHint" | "files.repoHint";
-  labelKey?: "repos.itemLabel" | "files.repo";
-  defaultLabelKey?: "repos.itemDefault" | "files.repoPlaceholder";
+  hintKey?: "repos.itemHint" | "files.repoHint" | "zfs.repoHint";
+  labelKey?: "repos.itemLabel" | "files.repo" | "zfs.repo";
+  defaultLabelKey?: "repos.itemDefault" | "files.repoPlaceholder" | "zfs.repoPlaceholder";
   /** Why the choice is frozen. A folder set says it in its own words ("delete
    *  this set's backups first, or create a new set"), which is more use than
    *  the generic sentence. */
-  lockedKey?: "repos.itemLocked" | "files.repoLocked";
+  lockedKey?: "repos.itemLocked" | "files.repoLocked" | "zfs.repoLocked";
   disabled?: boolean;
 }) {
   const { t } = useT();
