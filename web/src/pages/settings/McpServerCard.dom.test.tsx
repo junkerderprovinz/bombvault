@@ -218,6 +218,29 @@ describe("the certificate of this address", () => {
     expect(screen.queryByRole("button", { name: en["mcp.certAddAddress"] })).toBeNull();
   });
 
+  it("puts the certificate warning right under the password warning", async () => {
+    vi.stubGlobal("location", new URL("https://192.168.1.10:3443/settings"));
+    await renderCard(
+      payload({
+        authEnabled: false,
+        keys: [key({ unusable: "app-key-changed" })],
+        revoked: [key({ id: "k0", revokedAt: 1_800_000_000, revokedReason: "config-restore" })],
+        certificate: selfIssued,
+      })
+    );
+
+    await waitFor(() => expect(screen.getByText(en["mcp.appKeyChanged"])).toBeTruthy());
+    const order = [
+      en["mcp.noPasswordWarning"],
+      en["mcp.certNotForThisAddress"].replace("{host}", "192.168.1.10"),
+      en["mcp.restoreRevokedNotice"],
+      en["mcp.appKeyChanged"],
+    ].map((text) => screen.getByText(text));
+    for (let i = 1; i < order.length; i++) {
+      expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+  });
+
   it("says nothing about certificates over plain HTTP", async () => {
     vi.stubGlobal("location", new URL("http://tower:3443/settings"));
     await renderCard(payload({ keys: [key()], certificate: selfIssued }));
