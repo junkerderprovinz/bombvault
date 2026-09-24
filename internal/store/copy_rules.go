@@ -280,15 +280,11 @@ func cloneCopyRuleTx(tx *sql.Tx, domain, from, to string) error {
 	return nil
 }
 
-// keepRuleOnAliasesTx leaves the rule of an entry that is about to be deleted
-// on each of its former names, because the snapshots taken under them outlive
-// the row.
-func keepRuleOnAliasesTx(tx *sql.Tx, aliasDomain, targetID, name string) error {
-	domain, prefix, err := placementDomainForAlias(aliasDomain)
-	if err != nil {
-		return err
-	}
-	rows, err := tx.Query(`SELECT old_name FROM target_aliases WHERE domain = ? AND target_id = ?`, aliasDomain, targetID)
+// keepRuleOnAliasesTx leaves the rule of an entry of e that is about to be
+// deleted on each of its former names, because the snapshots taken under them
+// outlive the row.
+func keepRuleOnAliasesTx(tx *sql.Tx, e entryTable, targetID, name string) error {
+	rows, err := tx.Query(`SELECT old_name FROM target_aliases WHERE domain = ? AND target_id = ?`, e.domain, targetID)
 	if err != nil {
 		return fmt.Errorf("read the former names of %s: %w", name, err)
 	}
@@ -305,9 +301,28 @@ func keepRuleOnAliasesTx(tx *sql.Tx, aliasDomain, targetID, name string) error {
 		return fmt.Errorf("read the former names of %s: %w", name, err)
 	}
 	for _, old := range olds {
-		if err := cloneCopyRuleTx(tx, domain, prefix+name, prefix+old); err != nil {
+		if err := keepRuleOnNameTx(tx, e, name, old); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// keepRuleOnNameTx writes the rule of the entry of e called name onto left, a
+// name the entry has given up, unless a row of e carries left today: that
+// entry's placement is its own, whatever the older snapshots under the name
+// need.
+func keepRuleOnNameTx(tx *sql.Tx, e entryTable, name, left string) error {
+	domain, prefix, err := placementDomainForAlias(e.domain)
+	if err != nil {
+		return err
+	}
+	var carried int
+	if err := tx.QueryRow(`SELECT count(*) FROM `+e.table+` WHERE `+e.nameCol+` = ?`, left).Scan(&carried); err != nil {
+		return fmt.Errorf("check the entry of %s: %w", left, err)
+	}
+	if carried > 0 {
+		return nil
+	}
+	return cloneCopyRuleTx(tx, domain, prefix+name, prefix+left)
 }

@@ -173,7 +173,7 @@ func (r *Repo) SetVMInclude(name string, include bool) error {
 // DeleteVMTarget removes a VM target and all its run history by name, in a
 // single transaction. It is a no-op (no error) if the target does not exist.
 // Like DeleteTarget it also deletes the VM aliases whose target_id is this row,
-// and leaves the entry's copy rule on each former name.
+// and leaves the entry's copy rule on each former name no other row carries.
 func (r *Repo) DeleteVMTarget(name string) error {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -197,7 +197,7 @@ func (r *Repo) DeleteVMTarget(name string) error {
 		return fmt.Errorf("DeleteVMTarget: %w", err)
 	}
 	if hasRow {
-		if err := keepRuleOnAliasesTx(tx, "vm", id, name); err != nil {
+		if err := keepRuleOnAliasesTx(tx, vmEntries, id, name); err != nil {
 			return fmt.Errorf("DeleteVMTarget: %w", err)
 		}
 		if _, err := tx.Exec(`DELETE FROM target_aliases WHERE domain = 'vm' AND target_id = ?`, id); err != nil {
