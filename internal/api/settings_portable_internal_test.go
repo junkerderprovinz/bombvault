@@ -855,3 +855,75 @@ func TestExportImportCarriesEveryDumpZFSAndAnomalySettingOnce(t *testing.T) {
 		t.Fatalf("after the import:\n got %+v\nwant %+v", have, want)
 	}
 }
+
+func TestImportOfFileWithoutZFSKeepsTheZFSSetup(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	body, _ := doExport(t, src, "")
+
+	var raw map[string]any
+	if err := json.Unmarshal(body, &raw); err != nil {
+		t.Fatal(err)
+	}
+	settings := raw["settings"].(map[string]any)
+	for key := range settings {
+		if strings.HasPrefix(key, "zfs") {
+			delete(settings, key)
+		}
+	}
+	older, err := json.Marshal(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	s, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ZFSEnabled = true
+	s.ZFSPath = "zfs"
+	s.ZFSSchedule = "daily 03:30"
+	s.ZFSOffsite = "s3:offsite-zfs"
+	s.ZFSOffsiteSchedule = "weekly Sun 05:00"
+	s.ZFSOffsiteImmutable = true
+	if err := dstStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	for _, tg := range []store.OffsiteTarget{
+		{ID: "tgt-zfs", Domain: zfsDomain, Name: "Primary", Repo: "s3:offsite-zfs", Enabled: true, CreatedAt: 3000, SortOrder: 0},
+		{ID: "tgt-zfs-2", Domain: zfsDomain, Name: "Second site", Repo: "s3:offsite-zfs-2", Enabled: true, CreatedAt: 4000, SortOrder: 1},
+	} {
+		if _, err := dstStore.UpsertOffsiteTarget(tg); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if env := doImport(t, dst, older, "?apply=true"); env["ok"] != true {
+		t.Fatalf("a file from before the ZFS domain has to import: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.ZFSEnabled || got.ZFSPath != "zfs" || got.ZFSSchedule != "daily 03:30" ||
+		got.ZFSOffsite != "s3:offsite-zfs" || got.ZFSOffsiteSchedule != "weekly Sun 05:00" || !got.ZFSOffsiteImmutable {
+		t.Fatalf("the ZFS setup must survive a file that does not know it: %+v", got)
+	}
+	if got.ContainersPath != "containers" {
+		t.Fatalf("the rest of the file must still apply: containersPath=%q", got.ContainersPath)
+	}
+	targets, err := dstStore.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var keptZFS bool
+	for _, tg := range targets {
+		if tg.ID == "tgt-zfs-2" && tg.Repo == "s3:offsite-zfs-2" {
+			keptZFS = true
+		}
+	}
+	if !keptZFS {
+		t.Fatalf("the ZFS off-site destination must survive the import: %+v", targets)
+	}
+}

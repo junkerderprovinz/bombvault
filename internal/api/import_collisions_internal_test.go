@@ -144,3 +144,23 @@ func TestAnImportWithNoRepositoriesIsStillCheckedAgainstTheStoredOnes(t *testing
 			"domain path still has to be checked against them")
 	}
 }
+
+func TestAFileWithoutZFSIsCheckedAgainstTheZFSPathTheApplyKeeps(t *testing.T) {
+	h, st := newPortableHandler(t, appKeyA)
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ZFSPath = "backups/zfs"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	exp := settingsExport{
+		NamedRepos:  []offsiteTargetView{{Name: "Warm", Repo: "backups/zfs", Enabled: true}},
+		predatesZFS: true,
+	}
+	if msg := h.rejectImportCollisions(exp); !strings.Contains(msg, "ZFS") {
+		t.Fatalf("a repository on the ZFS path this instance keeps must be refused, got %q", msg)
+	}
+}

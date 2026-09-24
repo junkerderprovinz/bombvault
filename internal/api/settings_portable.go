@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -56,6 +57,26 @@ type settingsExport struct {
 	OffsiteTargets []offsiteTargetView `json:"offsiteTargets"`
 	NamedRepos     []offsiteTargetView `json:"namedRepos,omitempty"`
 	Credentials    *exportCredentials  `json:"credentials,omitempty"`
+	// predatesZFS is set when the file carries no zfsEnabled key: it comes from
+	// a build without the ZFS domain, so its empty ZFS fields say nothing about
+	// the ZFS setup of the instance it is applied to.
+	predatesZFS bool
+}
+
+func (e *settingsExport) UnmarshalJSON(b []byte) error {
+	type plain settingsExport
+	if err := json.Unmarshal(b, (*plain)(e)); err != nil {
+		return err
+	}
+	var probe struct {
+		Settings map[string]json.RawMessage `json:"settings"`
+	}
+	if err := json.Unmarshal(b, &probe); err != nil {
+		return err
+	}
+	_, hasZFS := probe.Settings["zfsEnabled"]
+	e.predatesZFS = !hasZFS
+	return nil
 }
 
 // buildSettingsView returns the export's settings block: the user-facing view with
@@ -499,6 +520,25 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 	type place struct{ label, loc string }
 	var occupied []place
 	s := exp.Settings
+	offsite := exp.OffsiteTargets
+	if exp.predatesZFS {
+		// The apply keeps this instance's ZFS locations, so those are the ones
+		// a repository in the file must not land on.
+		cur, err := h.store.GetSettings()
+		if err != nil {
+			return "could not check this file against the repositories already set up; try again"
+		}
+		s.ZFSPath, s.ZFSOffsite = cur.ZFSPath, cur.ZFSOffsite
+		targets, err := h.store.ListOffsiteTargets()
+		if err != nil {
+			return "could not check this file against the repositories already set up; try again"
+		}
+		for _, t := range targets {
+			if t.Domain == zfsDomain {
+				offsite = append(slices.Clip(offsite), offsiteTargetView{Repo: t.Repo})
+			}
+		}
+	}
 	for _, p := range []place{
 		{"the Containers path", s.ContainersPath}, {"the VMs path", s.VMsPath},
 		{"the Flash path", s.FlashPath}, {"the Config path", s.ConfigPath},
@@ -515,7 +555,7 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 			occupied = append(occupied, place{p.label, loc})
 		}
 	}
-	for _, tv := range exp.OffsiteTargets {
+	for _, tv := range offsite {
 		if loc, ok := resolve(tv.Repo); ok {
 			occupied = append(occupied, place{"an off-site destination", loc})
 		}
@@ -746,6 +786,9 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	var anomalyChanged bool
 	if _, err := h.store.MutateSettings(func(cur *store.Settings) error {
 		merged := mergeImportedSettings(*cur, exp.Settings)
+		if exp.predatesZFS {
+			keepZFSSettings(&merged, *cur)
+		}
 		anomalyChanged = anomalySettingsMoved(*cur, merged)
 		*cur = merged
 		return nil
@@ -759,7 +802,7 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	// Replace the off-site targets with the imported set (a clean, deterministic
 	// round-trip): drop the current rows, then upsert each imported target
 	// preserving its id + created_at so the far instance reproduces the source.
-	if err := h.replaceOffsiteTargets(exp.OffsiteTargets); err != nil {
+	if err := h.replaceOffsiteTargets(exp.OffsiteTargets, exp.predatesZFS); err != nil {
 		return err
 	}
 
@@ -800,8 +843,9 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 }
 
 // replaceOffsiteTargets drops all current off-site targets and re-inserts the
-// imported set, preserving each id + created_at for an exact round-trip.
-func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView) error {
+// imported set, preserving each id + created_at for an exact round-trip. With
+// keepZFS the ZFS destinations stay, because the file cannot describe them.
+func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, keepZFS bool) error {
 	current, err := h.store.ListOffsiteTargets()
 	if err != nil {
 		return err
@@ -814,6 +858,9 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView) error {
 		currentRepo[t.ID] = t.Repo
 	}
 	for _, t := range current {
+		if keepZFS && t.Domain == zfsDomain {
+			continue
+		}
 		if err := h.store.DeleteOffsiteTarget(t.ID); err != nil {
 			return err
 		}
@@ -940,6 +987,17 @@ func (h *Handler) applyImportedCredentials(c exportCredentials) error {
 		}
 	}
 	return nil
+}
+
+// keepZFSSettings puts the instance's own ZFS setup back over a merge from a
+// file that predates the domain, which would otherwise switch it off.
+func keepZFSSettings(out *store.Settings, existing store.Settings) {
+	out.ZFSEnabled = existing.ZFSEnabled
+	out.ZFSPath = existing.ZFSPath
+	out.ZFSSchedule = existing.ZFSSchedule
+	out.ZFSOffsite = existing.ZFSOffsite
+	out.ZFSOffsiteSchedule = existing.ZFSOffsiteSchedule
+	out.ZFSOffsiteImmutable = existing.ZFSOffsiteImmutable
 }
 
 // mergeImportedSettings maps the imported view onto a Settings row, keeping the
