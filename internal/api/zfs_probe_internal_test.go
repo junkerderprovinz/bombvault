@@ -370,6 +370,18 @@ func TestProbeZFSSnapshotAccessReportsAnInvisibleSnapshot(t *testing.T) {
 	if !hostDid(host, "destroy -r ") {
 		t.Fatal("a failed probe must still remove its snapshot")
 	}
+	members, err := st.ListZFSMembers(d.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(members) != 2 {
+		t.Fatalf("stored tree = %+v, want both datasets", members)
+	}
+	for _, m := range members {
+		if m.Outcome != "snapshot-not-visible" {
+			t.Fatalf("%s stored as %q, want the probe's own verdict", m.Dataset, m.Outcome)
+		}
+	}
 }
 
 func containsString(list []string, want string) bool {
