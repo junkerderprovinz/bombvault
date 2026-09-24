@@ -80,6 +80,18 @@ func TestHomeChangeIsRefusedOnceAnItemHasBackups(t *testing.T) {
 	}
 }
 
+func TestAHomeChangeThatCannotCheckForBackupsIsRefusedWithItsCode(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.openContainer("nginx")
+	f.eng.listErr[f.domainPath("containers")] = errors.New("wrong password or no key found")
+
+	res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{"home": map[string]any{"repo": nas.ID}})
+	if res["ok"] != false || res["code"] != "home-uncheckable" {
+		t.Fatalf("PATCH = %v, want home-uncheckable", res)
+	}
+}
+
 // TestPinningAnOpenItemToTheDomainPathIsAllowedWhenThatIsWhereItsBackupsAre
 // pins that the has-backups guard judges "nothing moves" by the row's raw
 // repo field, the same place itemBackups looks for an open item: pinning it

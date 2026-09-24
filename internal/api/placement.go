@@ -58,6 +58,7 @@ var placementCodes = []struct {
 	{store.ErrCopyRuleTaken, "copy-rule-taken"},
 	{errPlacementBusy, "domain-busy"},
 	{errHomeHasBackups, "has-backups"},
+	{errHomeUncheckable, "home-uncheckable"},
 	{errPlacementStale, "stale"},
 	{errForeignDomain, "foreign-domain"},
 	{errRepoInvalid, "repo-invalid"},
