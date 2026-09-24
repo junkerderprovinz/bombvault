@@ -263,6 +263,12 @@ export function NotifyCard({
         </div>
       )}
 
+      {/* A plain hash link: the settings page switches tabs on hashchange,
+          which a router navigation does not fire. */}
+      <a href="#integrity" className="text-xs text-accentText hover:underline">
+        {t("anomaly.settings.notifyCrossLink")}
+      </a>
+
       {/* Test lives on this card rather than the channels card so it still
           works with Advanced off. */}
       <div className="flex items-center gap-3 pt-1 flex-wrap">

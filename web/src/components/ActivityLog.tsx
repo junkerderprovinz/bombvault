@@ -7,6 +7,8 @@ import { hueVars } from "../lib/appearance";
 import { listRuns, getScheduleNext } from "../lib/api";
 import type { Run, ScheduleNext } from "../lib/api";
 import { useProgress } from "../lib/progress";
+import { useOpenAnomalies } from "../lib/useAnomalies";
+import { RunAnomalyBadge } from "./RunAnomalyBadge";
 import { useT } from "../lib/i18n";
 import { SelectField } from "./SelectField";
 import type { TranslationKey } from "../lib/i18n";
@@ -94,6 +96,7 @@ export function ActivityLog({
   const [scheduleNext, setScheduleNext] = useState<ScheduleNext[]>([]);
   const [now, setNow] = useState<number>(() => Date.now());
   const progressMap = useProgress();
+  const { byRunId } = useOpenAnomalies();
 
   const [filterText, setFilterText] = useState("");
   const [filterDomain, setFilterDomain] = useState<LogFilterDomain>("all");
@@ -283,6 +286,7 @@ export function ActivityLog({
                 <span className="shrink-0 text-carbon-textMuted">{domainLabel(resolveName, l.domain)}</span>
               )}
               <span className={`flex-1 min-w-0 wrap-break-word ${l.warn ? "text-statusWarn" : colorFor(l.status)}`}>{l.text}</span>
+              {l.runId && <RunAnomalyBadge findings={byRunId.get(l.runId)} t={t} />}
             </div>
           ))}
         </div>

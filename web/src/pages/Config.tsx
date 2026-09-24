@@ -23,6 +23,11 @@ import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconTrash } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
+import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
+import { findingSnapshotId } from "../lib/anomalies";
+import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
+import { useRestoreRequest } from "../lib/restoreRequest";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -185,11 +190,18 @@ function ConfigSettingsCard({
 function ConfigSnapshotRow({
   snap,
   source,
+  flagged,
+  preselected,
   onDeleted,
   t,
 }: {
   snap: Snapshot;
   source: RepoSource;
+  /** An open data-loss finding was raised on this snapshot. */
+  flagged: boolean;
+  /** A finding's restore link asked for this snapshot, so the row stands out
+   *  from its neighbours. */
+  preselected: boolean;
   onDeleted: () => void;
   t: T;
 }) {
@@ -218,12 +230,21 @@ function ConfigSnapshotRow({
   return (
     // py-1.5 keeps the row at 44px around the 32px delete badge, as in
     // RestorePanel's SnapshotRow.
-    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
+    <div
+      className={`flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0${
+        preselected ? " bg-carbon-surface2 px-2 rounded-control" : ""
+      }`}
+    >
       <div className="flex items-center gap-3 text-sm">
         <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
         </span>
+        {flagged && (
+          <Badge tone="fail" size="small">
+            {t("anomaly.snapshotFlagged")}
+          </Badge>
+        )}
         {/* Accent rather than red: the glyph, the label and the confirm dialog
             already mark the action as destructive. */}
         <Button
@@ -248,6 +269,10 @@ function ConfigSnapshotRow({
 export function Config() {
   const { t } = useT();
   const [settings, setSettings] = useState<Settings | null>(null);
+  const anomaly = useAnomalyItems().find("config", "config");
+  const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const { flagged } = useOpenAnomalies();
+  const restoreRequest = useRestoreRequest();
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -300,7 +325,10 @@ export function Config() {
   return (
     <div className={PAGE_SHELL}>
       <div>
-        <h1 className="text-2xl font-semibold text-carbon-text">{t("config.title")}</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold text-carbon-text">{t("config.title")}</h1>
+          <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
+        </div>
         <p className="mt-1 text-sm text-carbon-textSub">{t("config.subtitle")}</p>
       </div>
 
@@ -327,6 +355,16 @@ export function Config() {
               busyPhase={running.phase}
             />
           </div>
+          <ItemAnomalySettings
+            item={anomaly}
+            enabled={anomalyEnabled}
+            globals={
+              settings
+                ? { sensitivity: settings.anomalySensitivity, notifyMin: settings.anomalyNotifyMin }
+                : undefined
+            }
+            t={t}
+          />
 
           {/* A restore has its own control with its own warning. */}
           {progress && progress.active && progress.phase !== "restore" && (
@@ -383,6 +421,8 @@ export function Config() {
                 key={snap.id}
                 snap={snap}
                 source={source}
+                flagged={flagged.has(findingSnapshotId(snap))}
+                preselected={findingSnapshotId(snap) === restoreRequest.snapshot}
                 onDeleted={reload}
                 t={t}
               />

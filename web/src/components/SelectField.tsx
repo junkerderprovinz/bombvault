@@ -1,5 +1,6 @@
 import { useId, useRef, useState, type ReactNode, type Ref } from "react";
 import { DropdownListbox } from "./DropdownListbox";
+import { InfoBubble } from "./InfoBubble";
 import { mergeRefs } from "../lib/mergeRefs";
 import { stepIndex } from "../lib/selectScroll";
 
@@ -143,11 +144,14 @@ export function SelectField<T extends string>({
  *  settings row share. */
 export function LabelledSelect<T extends string>({
   label,
+  hint,
   value,
   onChange,
   options,
 }: {
   label: string;
+  /** Explanation in an (i) bubble beside the caption. */
+  hint?: string;
   value: T;
   onChange: (next: T) => void;
   options: SelectOption<T>[];
@@ -155,9 +159,12 @@ export function LabelledSelect<T extends string>({
   const id = useId();
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-xs text-carbon-textMuted">
-        {label}
-      </label>
+      <span className="flex items-center gap-1.5">
+        <label htmlFor={id} className="text-xs text-carbon-textMuted">
+          {label}
+        </label>
+        {hint && <InfoBubble tip={hint} />}
+      </span>
       <SelectField
         id={id}
         label={label}

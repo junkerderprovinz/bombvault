@@ -9,6 +9,7 @@ import { AnomalyRow } from "../components/AnomalyRow";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
+import { ItemAnomalySettings, type AnomalyGlobals } from "../components/ItemAnomalySettings";
 import { LabelledSelect } from "../components/SelectField";
 import { Selector } from "../components/Selector";
 import { Card } from "./settings/shared";
@@ -18,7 +19,6 @@ import {
   getAnomalies,
   getSettings,
   markAnomaliesExpected,
-  setItemAnomalyPrefs,
   type AnomalyActionResult,
   type AnomalyFilter,
   type AnomalyItem,
@@ -32,13 +32,12 @@ import {
   ANOMALY_DETECTOR_LABEL,
   ANOMALY_DOMAIN_LABEL,
   ANOMALY_FAMILY_LABEL,
-  ANOMALY_NOTIFY_LABEL,
-  ANOMALY_SENSITIVITY_LABEL,
   ANOMALY_SEVERITY_LABEL,
   anomalyErrorText,
   anomalyItemLabel,
   anomalyLearningText,
   anomalySeverityTone,
+  itemOpenCounts,
   worstSeverity,
 } from "../lib/anomalies";
 import { humanBytes } from "../lib/forecast";
@@ -569,8 +568,11 @@ function ItemsTab({
   loading: boolean;
   onRetry: () => void;
 }) {
-  const globalPreset = settings?.anomalySensitivity ?? "balanced";
-  const globalNotify = settings?.anomalyNotifyMin ?? "warning";
+  const globals: AnomalyGlobals = {
+    sensitivity: settings?.anomalySensitivity ?? "balanced",
+    notifyMin: settings?.anomalyNotifyMin ?? "critical",
+  };
+  const enabled = settings?.anomalyEnabled ?? true;
 
   if (failed || loading || items.length === 0) {
     return (
@@ -608,8 +610,8 @@ function ItemsTab({
                 key={item.targetId}
                 t={t}
                 item={item}
-                globalPreset={globalPreset}
-                globalNotify={globalNotify}
+                globals={globals}
+                enabled={enabled}
               />
             ))}
         </div>
@@ -621,30 +623,17 @@ function ItemsTab({
 function ItemRow({
   t,
   item,
-  globalPreset,
-  globalNotify,
+  globals,
+  enabled,
 }: {
   t: T;
   item: AnomalyItem;
-  globalPreset: string;
-  globalNotify: string;
+  globals: AnomalyGlobals;
+  enabled: boolean;
 }) {
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
-  const [sensitivity, setSensitivity] = useState(item.sensitivity);
-  const [notifyMin, setNotifyMin] = useState(item.notifyMin);
   const [forgotten, setForgotten] = useState<string[]>([]);
-
-  async function save(patch: { sensitivity?: string; notifyMin?: string }, revert: () => void) {
-    try {
-      const res = await setItemAnomalyPrefs(item.targetId, patch);
-      if (res.ok) return;
-      push(anomalyErrorText(res.code, t), "fail");
-    } catch {
-      push(anomalyErrorText(undefined, t), "fail");
-    }
-    revert();
-  }
 
   async function forget(family: string, scopeKind: string, part: string) {
     if (!(await confirm(t("anomaly.expectation.forgetConfirm"), { confirmKey: "anomaly.expectation.forget" }))) {
@@ -659,30 +648,10 @@ function ItemRow({
     window.dispatchEvent(new Event(ANOMALY_CHANGED_EVENT));
   }
 
-  const openCount = item.open.critical + item.open.warning + item.open.info;
-  const worst = worstSeverity(item.open);
+  const counts = itemOpenCounts(item);
+  const openCount = counts.critical + counts.warning + counts.info;
+  const worst = worstSeverity(counts);
   const typical = item.typical;
-
-  const sensitivityOptions = [
-    {
-      value: "",
-      label: t("anomaly.sensitivity.follow").replace(
-        "{preset}",
-        t(ANOMALY_SENSITIVITY_LABEL[globalPreset] ?? "anomaly.sensitivity.balanced")
-      ),
-    },
-    ...Object.entries(ANOMALY_SENSITIVITY_LABEL).map(([value, key]) => ({ value, label: t(key) })),
-  ];
-  const notifyOptions = [
-    {
-      value: "",
-      label: t("anomaly.items.notifyFollow").replace(
-        "{value}",
-        t(ANOMALY_NOTIFY_LABEL[globalNotify] ?? "anomaly.settings.notify.warning")
-      ),
-    },
-    ...Object.entries(ANOMALY_NOTIFY_LABEL).map(([value, key]) => ({ value, label: t(key) })),
-  ];
 
   return (
     <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 px-3 py-2">
@@ -764,28 +733,7 @@ function ItemRow({
           </div>
         ))}
 
-      <div className="flex flex-wrap items-end gap-3">
-        <LabelledSelect
-          label={t("anomaly.items.sensitivity")}
-          value={sensitivity}
-          onChange={(next: string) => {
-            const before = sensitivity;
-            setSensitivity(next);
-            void save({ sensitivity: next }, () => setSensitivity(before));
-          }}
-          options={sensitivityOptions}
-        />
-        <LabelledSelect
-          label={t("anomaly.items.notifyMin")}
-          value={notifyMin}
-          onChange={(next: string) => {
-            const before = notifyMin;
-            setNotifyMin(next);
-            void save({ notifyMin: next }, () => setNotifyMin(before));
-          }}
-          options={notifyOptions}
-        />
-      </div>
+      <ItemAnomalySettings item={item} enabled={enabled} globals={globals} t={t} />
       {confirmDialog}
     </div>
   );

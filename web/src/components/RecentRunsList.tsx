@@ -4,6 +4,8 @@ import { listRuns } from "../lib/api";
 import type { Run } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { formatTs, formatDuration } from "../lib/reltime";
+import { useOpenAnomalies } from "../lib/useAnomalies";
+import { RunAnomalyBadge } from "./RunAnomalyBadge";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -51,6 +53,7 @@ export function RecentRunsList({
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
   const [openRun, setOpenRun] = useState("");
+  const { byRunId } = useOpenAnomalies();
 
   useEffect(() => {
     let alive = true;
@@ -100,23 +103,30 @@ export function RecentRunsList({
             {dur && <span className="text-carbon-textMuted whitespace-nowrap">({dur})</span>}
           </>
         );
+        const badge = <RunAnomalyBadge findings={byRunId.get(run.id)} t={t} />;
         if (!renderDetail) {
           return (
             <div key={run.id} className="flex items-center gap-2 text-caption">
               {line}
+              {badge}
             </div>
           );
         }
+        // The badge carries its own bubble button, so it sits beside the row's
+        // toggle and not inside it.
         return (
           <div key={run.id} className="flex flex-col gap-1">
-            <button
-              type="button"
-              aria-expanded={open}
-              onClick={() => setOpenRun(open ? "" : run.id)}
-              className="flex items-center gap-2 text-caption text-start hover:text-carbon-text"
-            >
-              {line}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-expanded={open}
+                onClick={() => setOpenRun(open ? "" : run.id)}
+                className="flex items-center gap-2 text-caption text-start hover:text-carbon-text"
+              >
+                {line}
+              </button>
+              {badge}
+            </div>
             {open && renderDetail(run.id)}
           </div>
         );

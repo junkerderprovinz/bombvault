@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerRepo, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody } from "../lib/api";
-import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse } from "../lib/api";
+import type { AnomalyItem, Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { SelectionTree } from "../components/SelectionTree";
 import { RepoPicker } from "../components/RepoPicker";
@@ -18,6 +18,10 @@ import { Advanced, useAdvanced } from "../lib/advanced";
 import { BackupButton } from "../components/BackupButton";
 import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
+import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
+import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
+import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
@@ -655,11 +659,17 @@ export function FoldersEditor({
   t,
   lastBackup = null,
   repo = "",
+  anomaly,
+  anomalyEnabled = false,
 }: {
   name: string;
   stack: string;
   open: boolean;
   t: T;
+  /** What anomaly detection knows about this container, for its own
+   *  sensitivity and notification setting beside the repository. */
+  anomaly?: AnomalyItem;
+  anomalyEnabled?: boolean;
   /** This container's own repository (#204), "" for the Containers domain
    *  repository. It lives in this section because "where do the backups go" is
    *  the same question as "which folders go into them", and the two answers
@@ -1372,6 +1382,7 @@ export function FoldersEditor({
           locked={lastBackup !== null}
         />
       )}
+      {!loading && <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />}
 
       {/* D-02: the mount rows and custom rows ARE the tree's level-1 items —
           rendered by SelectionTree with lazy children under each, per-node
@@ -2245,6 +2256,9 @@ export function ContainerRow({
   onToggleSelect,
   linkCandidates = [],
   index,
+  anomaly,
+  anomalyEnabled = false,
+  restoreRequest,
 }: {
   container: Container;
   /** Every installed container on this BombVault instance — threaded down
@@ -2265,6 +2279,11 @@ export function ContainerRow({
    *  the list index rather than a hash of `container.name`; see the callers
    *  below. */
   index: number;
+  anomaly?: AnomalyItem;
+  anomalyEnabled?: boolean;
+  /** A finding's restore link for this container: the card opens its backups
+   *  and comes into view. */
+  restoreRequest?: RestoreRequest;
 }) {
   const installed = container.installed;
   const progressMap = useProgress();
@@ -2298,10 +2317,17 @@ export function ContainerRow({
   // Selector stays `select="many"` — which is what keeps a section CLOSABLE by
   // clicking its own chip again. A `select="one"` strip always has exactly one
   // thing selected and could never close the last one.
-  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
+  const [openSections, setOpenSections] = useState<Set<string>>(
+    () => new Set(restoreRequest ? ["backups"] : [])
+  );
   function toggleSection(id: string) {
     setOpenSections((prev) => (prev.has(id) ? new Set() : new Set([id])));
   }
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // jsdom has no scrollIntoView.
+    if (restoreRequest) cardRef.current?.scrollIntoView?.({ block: "start" });
+  }, [restoreRequest]);
 
   // "Has data configured" indicator — the same three facts
   // StopContainersEditor/ExcludesEditor/HooksEditor used to check internally
@@ -2337,6 +2363,7 @@ export function ContainerRow({
 
   return (
     <div
+      ref={cardRef}
       id={`container-${container.name}`}
       style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
       // glim-hue owns the position; glim-tint washes the WHOLE card with it
@@ -2372,6 +2399,7 @@ export function ContainerRow({
             <span className="font-semibold text-carbon-text text-sm min-w-0 truncate">
               {container.name}
             </span>
+            <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
             {installed ? (
               <Badge tone={stateTone(container.state)}>{stateLabel(t, container.state)}</Badge>
             ) : (
@@ -2554,6 +2582,8 @@ export function ContainerRow({
             t={t}
             lastBackup={container.lastBackup}
             repo={container.repo ?? ""}
+            anomaly={anomaly}
+            anomalyEnabled={anomalyEnabled}
           />
           <StopContainersEditor
             name={container.name}
@@ -2578,6 +2608,7 @@ export function ContainerRow({
         </Advanced>
         <RestorePanel
           name={container.name}
+          preselect={restoreRequest && !restoreRequest.dump ? restoreRequest.snapshot : ""}
           aliases={aliases}
           t={t}
           installed={installed}
@@ -3306,6 +3337,9 @@ function BackupOrderPanel({
 
 export function Containers() {
   const { t } = useT();
+  const anomalies = useAnomalyItems();
+  const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const restoreRequest = useRestoreRequest();
   // Advanced-mode flag read directly (not just via the <Advanced> wrapper
   // below): BackupOrderPanel's own hueIndex must only be resolved via
   // `nextHue()` when the panel will ACTUALLY render — a JSX child's props
@@ -3920,6 +3954,9 @@ export function Containers() {
               onToggleSelect={c.self ? undefined : () => toggleSelect(c.name)}
               linkCandidates={notInstalledNames}
               index={i}
+              anomaly={anomalies.find("container", c.name)}
+              anomalyEnabled={anomalyEnabled}
+              restoreRequest={restoreRequest.item === c.name ? restoreRequest : undefined}
             />
           ))}
         </div>
@@ -3956,7 +3993,17 @@ export function Containers() {
               i % palette.length); that is intended, because a repeat then
               lands a full palette apart rather than adjacent. */}
           {orphans.map((c, i) => (
-            <ContainerRow key={c.name} container={c} installedContainers={installedContainers} t={t} onDeleted={() => void loadContainers()} index={live.length + i} />
+            <ContainerRow
+              key={c.name}
+              container={c}
+              installedContainers={installedContainers}
+              t={t}
+              onDeleted={() => void loadContainers()}
+              index={live.length + i}
+              anomaly={anomalies.find("container", c.name)}
+              anomalyEnabled={anomalyEnabled}
+              restoreRequest={restoreRequest.item === c.name ? restoreRequest : undefined}
+            />
           ))}
         </div>
       )}

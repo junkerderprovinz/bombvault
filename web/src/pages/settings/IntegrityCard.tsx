@@ -14,6 +14,7 @@ import { IconCheckCircle } from "../../components/Sidebar";
 import { RepoSource, SourceToggle, isOffsiteSource } from "../../components/SourceToggle";
 import { IconKey, IconPrune } from "../../components/glyphs";
 import { useAdvanced } from "../../lib/advanced";
+import { heldTagLabel } from "../../lib/anomalies";
 import { Container, RestoreDrill, Settings, VM, checkDomain, getDrills, getStatus, listContainers, listVMs, pruneDomain, runDrill, tamperTest, unlockDomain } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
@@ -205,6 +206,10 @@ export function IntegrityCard({
       const skipped: string[] = "skipped" in r && Array.isArray(r.skipped) ? r.skipped : [];
       if (skipped.length) {
         push(t("integrity.unlockPartial").replace("{list}", skipped.join(", ")), "warn");
+      }
+      const paused: string[] = "paused" in r && Array.isArray(r.paused) ? r.paused : [];
+      if (r.ok && paused.length) {
+        push(t("anomaly.prunePaused").replace("{names}", paused.map((tag) => heldTagLabel(tag, t)).join(", ")), "warn");
       }
       if (r.ok) {
         setState((s) => ({ ...s, [key]: "ok" }));

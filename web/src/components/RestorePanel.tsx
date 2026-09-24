@@ -22,6 +22,8 @@ import { SelectField } from "./SelectField";
 import { InfoBubble } from "./InfoBubble";
 import { IconRestore, IconTrash } from "./Sidebar";
 import { IconDisclosure } from "./IconDisclosure";
+import { findingSnapshotId } from "../lib/anomalies";
+import { useOpenAnomalies } from "../lib/useAnomalies";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -235,6 +237,8 @@ function SnapshotFileBrowser({
 
 interface RestorePanelProps {
   name: string;
+  /** The snapshot a finding's restore link asked for. */
+  preselect?: string;
   /** The entry's former names, whose ownership tags are hidden like its own. */
   aliases?: string[];
   t: T;
@@ -629,6 +633,8 @@ function SnapshotRow({
   defaultFolder,
   paired,
   coverage,
+  flagged,
+  preselected,
   onDeleted,
   onTagged,
   t,
@@ -643,6 +649,11 @@ function SnapshotRow({
   paired: boolean;
   /** What the files in this snapshot are worth, for the restore warning. */
   coverage: DbDataCoverage;
+  /** An open data-loss finding was raised on this snapshot. */
+  flagged: boolean;
+  /** A finding's restore link asked for this snapshot, so its restore
+   *  choices start open. */
+  preselected: boolean;
   onDeleted: () => void;
   onTagged: () => void;
   t: T;
@@ -653,7 +664,7 @@ function SnapshotRow({
   // Delete waits only for this container's own backup or restore, not for
   // unrelated activity.
   const busy = progressMap[`container:${containerName}`]?.active ?? false;
-  const [showRestore, setShowRestore] = useState(false);
+  const [showRestore, setShowRestore] = useState(preselected);
   // Basic mode offers only the in-place restore.
   const [mode, setMode] = useState<RestoreMode>("inPlace");
   const effectiveMode: RestoreMode = advanced ? mode : "inPlace";
@@ -695,6 +706,11 @@ function SnapshotRow({
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
         </span>
+        {flagged && (
+          <Badge tone="fail" size="small">
+            {t("anomaly.snapshotFlagged")}
+          </Badge>
+        )}
         {/* The tip repeats in a bubble: a title alone is out of reach for
             touch and keyboard. */}
         {paired && (
@@ -831,6 +847,7 @@ export const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
 
 export function RestorePanel({
   name,
+  preselect = "",
   aliases = [],
   t,
   installed = true,
@@ -853,6 +870,7 @@ export function RestorePanel({
   // Held here as well as in the list, because the pairing badge sits on the
   // snapshot rows above it.
   const [dumps, setDumps] = useState<DBDumpView[]>([]);
+  const { flagged } = useOpenAnomalies();
 
   // Seeds the restore-to-folder pickers once the panel opens.
   useEffect(() => {
@@ -940,6 +958,8 @@ export function RestorePanel({
           defaultFolder={restoreFolder}
           paired={dumps.some((dump) => pairsWith(dump, snap))}
           coverage={dbCoverage}
+          flagged={flagged.has(findingSnapshotId(snap))}
+          preselected={findingSnapshotId(snap) === preselect}
           onDeleted={() => setReloadTick((n) => n + 1)}
           onTagged={() => setReloadTick((n) => n + 1)}
           t={t}

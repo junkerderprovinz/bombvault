@@ -18,6 +18,7 @@ import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
 import { ActivityLog } from "../components/ActivityLog";
 import { AnomalyRow, type AnomalyAction } from "../components/AnomalyRow";
+import { RunAnomalyBadge } from "../components/RunAnomalyBadge";
 import { InfoBubble } from "../components/InfoBubble";
 import { ANOMALY_CHANGED_EVENT, sortOpenAnomalies } from "../lib/anomalies";
 import { useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
@@ -1413,6 +1414,7 @@ export function RansomwareCard({
 
 export function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const [runs, setRuns] = useState<Run[]>([]);
+  const { byRunId } = useOpenAnomalies();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [day, setDay] = useState("all");
@@ -1478,6 +1480,7 @@ export function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
                   <span className="text-carbon-text flex-1 truncate min-w-0">
                     {runTargetText(t, run)}
                   </span>
+                  <RunAnomalyBadge findings={byRunId.get(run.id)} t={t} />
                   {/* Start → end + duration, with the relative age underneath (#45/#50). */}
                   <span className="flex flex-col items-end shrink-0 text-xs leading-tight">
                     <span className="text-carbon-textSub whitespace-nowrap">

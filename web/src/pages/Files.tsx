@@ -23,7 +23,7 @@ import {
   getSettings,
   getFileSetPreset,
 } from "../lib/api";
-import type { BrowseResponse, FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
+import type { AnomalyItem, BrowseResponse, FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
 import { applyToggle, browseRelToHost, splitFlatSet, toFlatList } from "../lib/selectionTree";
 import { SelectionTree } from "../components/SelectionTree";
 import { RepoPicker } from "../components/RepoPicker";
@@ -57,6 +57,11 @@ import { CheckDraw } from "../components/CheckDraw";
 import { useToast } from "../lib/toast";
 import { IconRestore } from "../components/Sidebar";
 import { IconDisclosure } from "../components/IconDisclosure";
+import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
+import { findingSnapshotId } from "../lib/anomalies";
+import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
+import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -465,6 +470,8 @@ function FileSetSnapshotRow({
   source,
   hostMountRoot,
   restoreFolder,
+  flagged,
+  preselected,
   onDeleted,
   t,
 }: {
@@ -473,6 +480,11 @@ function FileSetSnapshotRow({
   source: RepoSource;
   hostMountRoot: string;
   restoreFolder: string;
+  /** An open data-loss finding was raised on this snapshot. */
+  flagged: boolean;
+  /** A finding's restore link asked for this snapshot, so the row stands out
+   *  from its neighbours. */
+  preselected: boolean;
   onDeleted: () => void;
   t: T;
 }) {
@@ -506,11 +518,22 @@ function FileSetSnapshotRow({
   return (
     // py-1.5 keeps the row at 44px around the 32px icon badge, as in
     // RestorePanel.tsx and Config.tsx.
-    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
+    <div
+      className={`flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0${
+        preselected ? " bg-carbon-surface2 px-2 rounded-control" : ""
+      }`}
+    >
       {/* The date sits under the id, so it reads as a property of it. */}
-      <div className="flex flex-col">
-        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs">
-          {snap.id.slice(0, 8)}
+      <div className="flex flex-col items-start">
+        <span className="flex items-center gap-2">
+          <span dir="ltr" className="font-mono text-start text-carbon-text text-xs">
+            {snap.id.slice(0, 8)}
+          </span>
+          {flagged && (
+            <Badge tone="fail" size="small">
+              {t("anomaly.snapshotFlagged")}
+            </Badge>
+          )}
         </span>
         <span className="text-carbon-textMuted text-xs">
           {new Date(snap.time).toLocaleString()}
@@ -557,6 +580,7 @@ function FileSetRestorePanel({
   t,
   onSetsChanged,
   trailing,
+  preselect = "",
 }: {
   set: FileSetView;
   hostMountRoot: string;
@@ -564,13 +588,16 @@ function FileSetRestorePanel({
   t: T;
   /** Delete-all forgets the whole set, so the parent must reload the list. */
   onSetsChanged: () => void;
+  /** The snapshot a finding's restore link asked for; the list starts open. */
+  preselect?: string;
   /** A summary at the far end of the disclosure's row, always visible, as the
    *  container card shows its last backup there. */
   trailing?: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(preselect !== "");
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const { flagged } = useOpenAnomalies();
   const [loading, setLoading] = useState(false);
   // A failed list load replaces the whole list, so it stays inline rather
   // than going into a toast.
@@ -699,6 +726,8 @@ function FileSetRestorePanel({
                 source={source}
                 hostMountRoot={hostMountRoot}
                 restoreFolder={restoreFolder}
+                flagged={flagged.has(findingSnapshotId(snap))}
+                preselected={findingSnapshotId(snap) === preselect}
                 onDeleted={() => setReloadTick((n) => n + 1)}
                 t={t}
               />
@@ -936,10 +965,16 @@ export function FileSetFoldersEditor({
   set,
   hostMountRoot,
   t,
+  anomaly,
+  anomalyEnabled = false,
 }: {
   set: FileSetView;
   hostMountRoot: string;
   t: T;
+  /** What anomaly detection knows about this set, for its own sensitivity
+   *  and notification setting under the tree. */
+  anomaly?: AnomalyItem;
+  anomalyEnabled?: boolean;
 }) {
   const regionId = useId();
   const [open, setOpen] = useState(false);
@@ -1135,6 +1170,7 @@ export function FileSetFoldersEditor({
             // Points to deleting the set rather than to a Reset.
             blockedMessage={t("files.emptySelectionBlocked")}
           />
+          <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
         </div>
       )}
     </div>
@@ -1149,6 +1185,9 @@ export function FileSetRow({
   onRefresh,
   onEdit,
   index,
+  anomaly,
+  anomalyEnabled = false,
+  restoreRequest,
 }: {
   set: FileSetView;
   hostMountRoot: string;
@@ -1158,6 +1197,11 @@ export function FileSetRow({
   onEdit: () => void;
   /** Rainbow position by list index, not a hash of the id or name. */
   index: number;
+  anomaly?: AnomalyItem;
+  anomalyEnabled?: boolean;
+  /** A finding's restore link for this set: the card opens its backups and
+   *  comes into view. */
+  restoreRequest?: RestoreRequest;
 }) {
   const progressMap = useProgress();
   const progress = progressMap[`files:${set.name}`];
@@ -1169,6 +1213,11 @@ export function FileSetRow({
 
   const noPath = set.path === "";
   const pathMissing = !noPath && !set.pathExists;
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // jsdom has no scrollIntoView.
+    if (restoreRequest) cardRef.current?.scrollIntoView?.({ block: "start" });
+  }, [restoreRequest]);
 
   async function handleRemove() {
     if (!(await confirm(t("files.deleteSetConfirm"), { confirmKey: "common.delete" }))) return;
@@ -1190,6 +1239,7 @@ export function FileSetRow({
 
   return (
     <div
+      ref={cardRef}
       style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
       // glim-active while this set's own backup or restore runs, as in
       // ContainerRow and VMRow.
@@ -1204,6 +1254,7 @@ export function FileSetRow({
             <span className="font-semibold text-carbon-text text-sm truncate">
               {set.name}
             </span>
+            <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
             {set.excludes.length > 0 && (
               <Badge tone="neutral" wrap>
                 {t("files.excludesCount").replace("{n}", String(set.excludes.length))}
@@ -1281,6 +1332,7 @@ export function FileSetRow({
         restoreFolder={restoreFolder}
         t={t}
         onSetsChanged={onRefresh}
+        preselect={restoreRequest?.snapshot}
         trailing={
           // A column, so the note that something else is running sits above
           // the date it qualifies. At rest only the date shows.
@@ -1300,7 +1352,14 @@ export function FileSetRow({
       {/* Keyed by fileSetEditorKey, because the editor seeds from its
           mount-time props and has to remount after a path edit. */}
       {!noPath && (
-        <FileSetFoldersEditor key={fileSetEditorKey(set)} set={set} hostMountRoot={hostMountRoot} t={t} />
+        <FileSetFoldersEditor
+          key={fileSetEditorKey(set)}
+          set={set}
+          hostMountRoot={hostMountRoot}
+          t={t}
+          anomaly={anomaly}
+          anomalyEnabled={anomalyEnabled}
+        />
       )}
 
       {/* Pinned to the card's bottom edge. */}
@@ -1326,6 +1385,9 @@ export function FileSetRow({
 
 export function Files() {
   const { t } = useT();
+  const anomalies = useAnomalyItems();
+  const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const restoreRequest = useRestoreRequest();
   const { push } = useToast();
   // Any backup, restore or replication in flight disables the bulk buttons.
   const running = anyActive(useProgress());
@@ -1569,6 +1631,9 @@ export function Files() {
               onRefresh={() => void loadSets()}
               onEdit={() => setDialog(s)}
               index={i}
+              anomaly={anomalies.find("files", s.id)}
+              anomalyEnabled={anomalyEnabled}
+              restoreRequest={restoreRequest.item === s.name ? restoreRequest : undefined}
             />
           ))}
         </div>

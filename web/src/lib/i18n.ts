@@ -599,6 +599,7 @@ export const en = {
   "retentionPreview.keeps": "keeps",
   "retentionPreview.skipped": "These repositories were not covered:",
   "retentionPreview.failed": "The preview could not be produced.",
+  "retentionPreview.paused": "Kept: this item has an open anomaly",
   // Merged card (GlimStone follow-up round, Paths & Storage tab rework, merge
   // A) — image cleanup, Unraid's own update-status reconciliation, and
   // private registry credentials all sit under one roof: everything the
@@ -2391,6 +2392,7 @@ export const en = {
   "settingsIO.group.monitoring": "Monitoring",
   "settingsIO.group.language": "Language",
   "settingsIO.group.exportEncryption": "Export encryption",
+  "settingsIO.group.anomalies": "Anomaly detection",
 
   // Backup order (#119) — manual per-container backup sequence, Containers page.
   "backupOrder.title": "Backup order",
@@ -2579,6 +2581,28 @@ export const en = {
   "anomaly.settings.notify.warning": "Warnings and critical findings",
   "anomaly.settings.notify.info": "Every finding",
   "anomaly.settings.notify.off": "Nothing",
+  "anomaly.runBadge": "Anomaly",
+  "anomaly.snapshotFlagged": "Flagged as an anomaly",
+  "anomaly.prunePaused": "Pruned. Old backups were kept for items with an open anomaly: {names}",
+  "anomaly.settings.title": "Anomalies",
+  "anomaly.settings.hint": "Compares every backup of an item with its own history and reports what does not fit. It runs in the background after each backup and never slows one down. Most checks start after 10 backups of an item; failures, a rewrite of most data and an almost empty source are checked from the start. Disk space is watched for local repositories and for rclone repositories that report it; on the Unraid user share it is the free space of the whole array.",
+  "anomaly.settings.toggle": "Detect anomalies",
+  "anomaly.settings.sensitivity": "Sensitivity",
+  "anomaly.settings.sensitivityHint": "Strict reports smaller changes, Permissive only large ones, Balanced suits most servers. Each item can use its own setting under Anomalies, Items.",
+  "anomaly.settings.notifyMin": "Send a notification for",
+  "anomaly.settings.notifyHint": "Uses the channels set up under Notifications. Each item can override this under Anomalies, Items. Repeated backup and dump failures and failed scheduled restore checks already send their own message, so they are not sent a second time.",
+  "anomaly.settings.notifyMuted": "Nothing is sent right now: notifications are switched off or no channel is set up.",
+  "anomaly.settings.openNotifications": "Open notification settings",
+  "anomaly.settings.notifyCrossLink": "Which anomalies send a notification is set under Integrity, Anomalies.",
+  "anomaly.settings.holdToggle": "Keep old backups when a source shrinks sharply or is rewritten",
+  "anomaly.settings.holdHint": "Three findings pause the deletion of old backups: a source that is suddenly almost empty, one that became much smaller, and a backup that stored most of the data again, which is what ransomware looks like. Retention would delete the good older backups one run at a time. While such an anomaly is open, old backups of that one item (or that one database dump or ZFS dataset) are kept; everything else is pruned as usual. Acknowledge the anomaly or mark it as expected to resume.",
+  "anomaly.settings.backfill": "History read from repositories: {done} of {slots}",
+  "anomaly.settings.backfillPending": "Reading earlier backups from the repositories.",
+  "anomaly.settings.backfillFailed": "Repositories whose history could not be read: {failed}. Tried again once a day.",
+  "anomaly.settings.backfillOld": "Backups made before restic 0.17 carry no size history: {n}",
+  "anomaly.settings.evalErrors": "Items that could not be checked in the last pass: {n}. The log names them.",
+  "anomaly.settings.unmeasured": "Repositories without a free-space figure: {names}",
+  "anomaly.settings.openPage": "Show anomalies",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -3069,6 +3093,7 @@ export const de: Translations = {
   "retentionPreview.keeps": "behält",
   "retentionPreview.skipped": "Diese Depots wurden nicht abgedeckt:",
   "retentionPreview.failed": "Die Vorschau konnte nicht erstellt werden.",
+  "retentionPreview.paused": "Behalten: Dieses Element hat eine offene Anomalie",
   "settings.imageMaintenanceTitle": "Image-Bereinigung & Update-Status",
   "settings.imageMaintenanceHint": "Wartung rund um das Container-Update nach dem Backup: das abgelöste Image aufräumen und Unraids eigenen Update-Status zurücksetzen.",
   "settings.pruneImageAfterUpdate": "Altes Image nach Update entfernen",
@@ -4645,6 +4670,7 @@ export const de: Translations = {
   "settingsIO.group.monitoring": "Überwachung",
   "settingsIO.group.language": "Sprache",
   "settingsIO.group.exportEncryption": "Export-Verschlüsselung",
+  "settingsIO.group.anomalies": "Anomalie-Erkennung",
 
   // Backup order (#119)
   "backupOrder.title": "Backup-Reihenfolge",
@@ -4831,6 +4857,28 @@ export const de: Translations = {
   "anomaly.settings.notify.warning": "Warnungen und kritische Funde",
   "anomaly.settings.notify.info": "Jeden Fund",
   "anomaly.settings.notify.off": "Nichts",
+  "anomaly.runBadge": "Anomalie",
+  "anomaly.snapshotFlagged": "Als Anomalie markiert",
+  "anomaly.prunePaused": "Aufgeräumt. Für Elemente mit offener Anomalie blieben alte Backups erhalten: {names}",
+  "anomaly.settings.title": "Anomalien",
+  "anomaly.settings.hint": "Vergleicht jedes Backup eines Elements mit seinem eigenen Verlauf und meldet, was nicht dazu passt. Das läuft nach jedem Backup im Hintergrund und bremst keines aus. Die meisten Prüfungen beginnen nach 10 Backups eines Elements; Fehlschläge, ein Neuschreiben der meisten Daten und eine fast leere Quelle werden von Anfang an geprüft. Den freien Platz beobachtet BombVault bei lokalen Repositories und bei rclone-Repositories, die ihn melden; auf dem Unraid-User-Share ist es der freie Platz des ganzen Arrays.",
+  "anomaly.settings.toggle": "Anomalien erkennen",
+  "anomaly.settings.sensitivity": "Empfindlichkeit",
+  "anomaly.settings.sensitivityHint": "Streng meldet schon kleinere Änderungen, Nachsichtig nur große, Ausgewogen passt für die meisten Server. Jedes Element kann unter Anomalien, Elemente eine eigene Einstellung bekommen.",
+  "anomaly.settings.notifyMin": "Benachrichtigen bei",
+  "anomaly.settings.notifyHint": "Nutzt die Kanäle, die unter Benachrichtigungen eingerichtet sind. Jedes Element kann das unter Anomalien, Elemente anders einstellen. Wiederholt fehlgeschlagene Backups und Dumps sowie fehlgeschlagene geplante Wiederherstellungsprüfungen schicken schon eine eigene Nachricht und werden deshalb nicht ein zweites Mal gemeldet.",
+  "anomaly.settings.notifyMuted": "Im Moment wird nichts verschickt: Benachrichtigungen sind ausgeschaltet oder kein Kanal ist eingerichtet.",
+  "anomaly.settings.openNotifications": "Benachrichtigungen öffnen",
+  "anomaly.settings.notifyCrossLink": "Welche Anomalien eine Benachrichtigung schicken, stellst du unter Integrität, Anomalien ein.",
+  "anomaly.settings.holdToggle": "Alte Backups behalten, wenn eine Quelle stark schrumpft oder neu geschrieben wird",
+  "anomaly.settings.holdHint": "Drei Funde halten das Löschen alter Backups an: eine Quelle, die plötzlich fast leer ist, eine, die viel kleiner geworden ist, und ein Backup, das die meisten Daten neu gespeichert hat, so wie es nach Ransomware aussieht. Die Aufbewahrung würde sonst die guten älteren Backups Lauf für Lauf löschen. Solange eine solche Anomalie offen ist, bleiben die alten Backups genau dieses Elements (oder dieses einen Datenbank-Dumps oder ZFS-Datasets) erhalten; alles andere wird wie gewohnt aufgeräumt. Quittiere die Anomalie oder markiere sie als erwartet, damit es weitergeht.",
+  "anomaly.settings.backfill": "Verlauf aus den Repositories gelesen: {done} von {slots}",
+  "anomaly.settings.backfillPending": "Frühere Backups werden aus den Repositories gelesen.",
+  "anomaly.settings.backfillFailed": "Repositories, deren Verlauf nicht gelesen werden konnte: {failed}. Einmal am Tag wird es erneut versucht.",
+  "anomaly.settings.backfillOld": "Backups aus der Zeit vor restic 0.17 haben keinen Größenverlauf: {n}",
+  "anomaly.settings.evalErrors": "Elemente, die im letzten Durchgang nicht geprüft werden konnten: {n}. Das Log nennt sie.",
+  "anomaly.settings.unmeasured": "Repositories ohne Angabe zum freien Platz: {names}",
+  "anomaly.settings.openPage": "Anomalien zeigen",
 };
 
 // ---------------------------------------------------------------------------

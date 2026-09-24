@@ -8,12 +8,14 @@
 
 import type {
   AnomalyDetector,
+  AnomalyItem,
   AnomalySeverity,
   AnomalyState,
   AnomalyView,
 } from "./api";
 import type { TranslationKey } from "./i18n";
 import type { BadgeTone } from "../components/Badge";
+import { dbDumpNameOf, isDbDumpIdentity } from "./dbdump";
 import { humanBytes } from "./forecast";
 import { formatDuration } from "./reltime";
 
@@ -177,6 +179,33 @@ export function worstSeverity(open: Record<AnomalySeverity, number>): AnomalySev
   if (open.warning > 0) return "warning";
   if (open.info > 0) return "info";
   return null;
+}
+
+/** An item's open findings with those of its dump and its datasets, the set
+ *  the item's own filter on the Anomalies page shows. */
+export function itemOpenCounts(item: AnomalyItem): Record<AnomalySeverity, number> {
+  const series = [item, ...(item.dump ? [item.dump] : []), ...item.datasets];
+  return {
+    critical: series.reduce((n, s) => n + s.open.critical, 0),
+    warning: series.reduce((n, s) => n + s.open.warning, 0),
+    info: series.reduce((n, s) => n + s.open.info, 0),
+  };
+}
+
+/** The id findings use for a snapshot. An off-site copy has an id of its own
+ *  and carries the local one as `original`. */
+export function findingSnapshotId(snap: { id: string; original?: string }): string {
+  return snap.original || snap.id;
+}
+
+/**
+ * heldTagLabel names an item from the identity tag retention works with, for
+ * the message that says whose backups a prune kept.
+ */
+export function heldTagLabel(tag: string, t: TranslateAnomaly): string {
+  if (isDbDumpIdentity(tag)) return t("anomaly.dumpOf").replace("{name}", dbDumpNameOf(tag));
+  const colon = tag.indexOf(":");
+  return colon >= 0 ? tag.slice(colon + 1) : tag;
 }
 
 const SEVERITY_RANK: Record<AnomalySeverity, number> = { critical: 0, warning: 1, info: 2 };
