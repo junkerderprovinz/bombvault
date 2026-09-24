@@ -54,10 +54,11 @@ type timeline struct {
 
 // timelineItem is whose snapshots a timeline shows and where the item writes.
 type timelineItem struct {
-	domain   string
-	identity string   // "" for flash and config, whose repositories hold nothing else
-	homeID   string   // named repository id, "" for the domain path
-	zvolDevs []string // disks a restore of the VM looks up by their own snapshot
+	domain       string
+	identity     string   // "" for flash and config, whose repositories hold nothing else
+	homeID       string   // named repository id, "" for the domain path
+	zvolDevs     []string // disks a restore of the VM looks up by their own snapshot
+	diskPrefixes []string // vm:<name>:zvol: for a VM's name and each of its former names
 }
 
 // placeRef is a place with what it takes to list it; openErr says why its
@@ -84,14 +85,24 @@ func (s *Service) timelineItemFor(domain, key string) (timelineItem, error) {
 		return timelineItem{}, err
 	}
 	it := timelineItem{domain: domain, identity: identity, homeID: home.Repo}
-	if domain == "vms" {
-		vm, err := s.store.GetVMTargetByName(key)
-		switch {
-		case err == nil:
-			it.zvolDevs = zvolDevsOf(vm.Definition)
-		case !errors.Is(err, sql.ErrNoRows):
-			return timelineItem{}, err
-		}
+	if domain != "vms" {
+		return it, nil
+	}
+	it.diskPrefixes = []string{identity + ":zvol:"}
+	vm, err := s.store.GetVMTargetByName(key)
+	if errors.Is(err, sql.ErrNoRows) {
+		return it, nil
+	}
+	if err != nil {
+		return timelineItem{}, err
+	}
+	it.zvolDevs = zvolDevsOf(vm.Definition)
+	former, err := s.store.AliasNames("vm", vm.ID)
+	if err != nil {
+		return timelineItem{}, err
+	}
+	for _, name := range former {
+		it.diskPrefixes = append(it.diskPrefixes, "vm:"+name+":zvol:")
 	}
 	return it, nil
 }
@@ -116,10 +127,11 @@ func zvolDevsOf(definition string) []string {
 	return devs
 }
 
-// isDisk reports whether snap is one of the VM's disk snapshots rather than a run.
+// isDisk reports whether snap is one of the VM's disk snapshots rather than a
+// run. A run from before a rename keeps its disks under the name it had then.
 func (it timelineItem) isDisk(snap restic.Snapshot) bool {
-	return it.domain == "vms" && slices.ContainsFunc(snap.Tags, func(tag string) bool {
-		return strings.HasPrefix(tag, it.identity+":zvol:")
+	return slices.ContainsFunc(snap.Tags, func(tag string) bool {
+		return slices.ContainsFunc(it.diskPrefixes, func(prefix string) bool { return strings.HasPrefix(tag, prefix) })
 	})
 }
 
