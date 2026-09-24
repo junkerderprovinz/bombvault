@@ -37,7 +37,7 @@ type mcpKeyView struct {
 
 var (
 	errMCPKeyLabel         = errors.New("a key needs a name of 1 to 64 characters")
-	errMCPKeyNeedsPassword = errors.New("set a login password before creating a key from this address")
+	errMCPKeyNeedsPassword = errors.New("set a login password before creating a key or adding a certificate name from this address")
 )
 
 // mcpErrorCodes translates the refusals of the card's two subjects, the keys
@@ -361,6 +361,9 @@ func (h *Handler) handleMCPCertificate(w http.ResponseWriter, r *http.Request) {
 
 // handleAddMCPCertificateName adds the address the operator reached BombVault
 // on to its certificate, which is what a Node client needs before it connects.
+// It follows the same host rule as creating a key: the names are material the
+// server then presents, there are only sixteen of them, and nothing in the
+// product takes one back.
 func (h *Handler) handleAddMCPCertificateName(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Host string `json:"host"`
@@ -370,6 +373,10 @@ func (h *Handler) handleAddMCPCertificateName(w http.ResponseWriter, r *http.Req
 	}
 	if h.cfg.HTTPOnly {
 		http.NotFound(w, r)
+		return
+	}
+	if !h.mcpKeysAllowedFrom(r) {
+		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyNeedsPassword, "mcp-key-needs-password"))
 		return
 	}
 	info, err := h.svc.AddCertificateName(body.Host)
