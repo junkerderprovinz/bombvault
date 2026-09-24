@@ -434,13 +434,22 @@ func backupRunCount(t *testing.T, st *store.Repo, targetID string) int {
 // be turned away by the handler rather than by a missing tool.
 func TestMCPReadOnlyKeyGetsNotPermitted(t *testing.T) {
 	rig := newMCPStartRig(t, &fakeServiceDocker{}, &fakeResticEngine{})
-	rig.target(t, "plex")
-	readOnly, _ := createMCPKey(t, rig.h, "Desktop", false)
+	plex := rig.target(t, "plex")
+	readOnly, readOnlyID := createMCPKey(t, rig.h, "Desktop", false)
+
+	// A run that key started while it still could: taking the permission away
+	// has to take the cancel with it, not only the starts.
+	running, err := rig.st.StartRunWith(plex.ID, "backup",
+		store.RunMeta{StartedVia: "mcp", StartedViaKey: readOnlyID})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, c := range []struct{ tool, args string }{
 		{"start_backup", `{"domain":"containers","item":"plex"}`},
 		{"start_domain_backup", `{"domain":"containers"}`},
 		{"start_backup_everything", ""},
+		{"cancel_backup", fmt.Sprintf(`{"runId":%q}`, running)},
 	} {
 		res := mcpCallTool(t, rig.h, readOnly, c.tool, c.args)
 		if code := res.code(t); code != "not_permitted" {
@@ -450,7 +459,14 @@ func TestMCPReadOnlyKeyGetsNotPermitted(t *testing.T) {
 			t.Fatalf("%s: message %q does not say where to change it", c.tool, msg)
 		}
 	}
-	wantNoRuns(t, rig.st)
+
+	runs, err := rig.st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 1 || runs[0].ID != running || runs[0].Status != "running" {
+		t.Fatalf("runs = %+v, want the seeded run alone and untouched", runs)
+	}
 }
 
 // seedSelectionContainers writes the four containers the domain selection has to
