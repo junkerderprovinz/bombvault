@@ -3880,11 +3880,9 @@ func WithRunGroup(ctx context.Context, groupID string) context.Context {
 }
 
 // runGroupFromContext reports the parent run id this context's backup call
-// belongs to, or "" when it isn't part of a "Backup Everything" pass — true
-// for every context in the codebase today, and for every restore/other-kind
-// runsAdapter construction site that isn't part of such a pass. A nil ctx
-// (e.g. a zero-value runsAdapter/startedRunsAdapter built without one) is
-// treated the same as "no group", never a panic.
+// belongs to, or "" when it isn't part of a "Backup Everything" pass. A nil ctx
+// (a zero-value runsAdapter built without one) is treated the same as "no
+// group", never a panic.
 func runGroupFromContext(ctx context.Context) string {
 	if ctx == nil {
 		return ""
@@ -10771,8 +10769,8 @@ func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMs
 // "vmrun:<runID>" (RunTag drives every restic tag the orchestrator builds —
 // see VMBackupDeps.RunTag's doc comment — so it cannot be filled in only
 // AFTER the orchestrator's own Runs.Start call, which is where the run id was
-// generated before this adapter existed). BackupVM calls store.StartRun
-// itself up front and wraps the result in this adapter so the orchestrator's
+// generated before this adapter existed). BackupVM calls startRun itself up
+// front and wraps the result in this adapter so the orchestrator's
 // internal Start call is a no-op read rather than a second, orphaned run row;
 // Finish still delegates to the real store, exactly like runsAdapter.
 type startedRunsAdapter struct {

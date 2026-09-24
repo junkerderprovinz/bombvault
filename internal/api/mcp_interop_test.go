@@ -5,8 +5,8 @@ package api_test
 // The gate tests state what BombVault answers to a request the tests compose
 // themselves; these fixtures state what a client sends, down to the header
 // spelling and the order of the calls. They are the check that survives an SDK
-// bump: a compatibility default that changes under us shows up here as a status
-// or an envelope that no longer matches.
+// bump: a compatibility default the new version changes shows up here as a
+// status or an envelope that no longer matches.
 
 import (
 	"encoding/json"

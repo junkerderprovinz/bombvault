@@ -33,8 +33,8 @@ var mcpStartTools = []string{
 	"cancel_backup",
 }
 
-// The era Claude Code and mcp-remote negotiate today. A client that speaks it
-// must reach the tool list without sending anything newer.
+// The era Claude Code and mcp-remote negotiate. A client that speaks it must
+// reach the tool list without sending anything newer.
 func TestMCPLegacyEraHandshake(t *testing.T) {
 	h, _, _, key := newMCPToolRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
