@@ -47,6 +47,9 @@ const DETAIL_LABEL: [string, TranslationKey][] = [
   ["z", "anomaly.detail.z"],
   ["refBytes", "anomaly.detail.refBytes"],
   ["refRate", "anomaly.detail.refRate"],
+  ["etaGrowthDays", "anomaly.detail.etaGrowth"],
+  ["etaFreeDays", "anomaly.detail.etaFree"],
+  ["slopePerDay", "anomaly.detail.slope"],
 ];
 
 /** The item's own page, for the link out of a finding. */
@@ -148,7 +151,7 @@ export function AnomalyRow({
     // The detector measures a rate per second; an hour is the span a reader
     // can picture for a backup.
     else if (key === "refRate") details.push([t(labelKey), humanBytes(value * 3600)]);
-    else if (key === "refBytes") details.push([t(labelKey), humanBytes(value)]);
+    else if (key === "refBytes" || key === "slopePerDay") details.push([t(labelKey), humanBytes(value)]);
     else details.push([t(labelKey), metricValue(a, value, lang, t)]);
   }
 

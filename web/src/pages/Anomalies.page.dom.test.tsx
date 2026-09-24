@@ -350,6 +350,28 @@ describe("a finding's own lines", () => {
     const term = screen.getByText(en["anomaly.detail.refRate"]);
     expect(term.nextElementSibling?.textContent).toBe("3.5 MB");
   });
+
+  // The two projections are independent: one is what BombVault itself writes,
+  // the other is everything filling the same disk.
+  it("says where a capacity projection comes from", async () => {
+    getAnomalies.mockImplementation(() =>
+      page([
+        finding({
+          metric: "capacity_eta",
+          detector: "capacity",
+          scopeKind: "volume",
+          observed: 6,
+          details: { etaGrowthDays: 12, etaFreeDays: 6, slopePerDay: 2 * 1024 ** 3 },
+        }),
+      ])
+    );
+    await renderPage();
+    fireEvent.click(screen.getByRole("button", { name: en["anomaly.action.details"] }));
+    const value = (label: string) => screen.getByText(label).nextElementSibling?.textContent;
+    expect(value(en["anomaly.detail.etaGrowth"])).toBe("12 days");
+    expect(value(en["anomaly.detail.etaFree"])).toBe("6 days");
+    expect(value(en["anomaly.detail.slope"])).toBe("2.0 GB");
+  });
 });
 
 describe("the items tab", () => {
