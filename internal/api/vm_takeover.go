@@ -101,7 +101,10 @@ func (s *Service) TakeOverVM(ctx context.Context, oldName, newName string) error
 	if err := s.removeEmptyVMRow(ctx, newName); err != nil {
 		return err
 	}
-	// The definition mirrors follow as in TakeOverContainer.
+	// The rule check and the definition mirrors follow as in TakeOverContainer.
+	if err := s.store.CheckCopyRuleMove("vms", "vm:"+oldName, "vm:"+newName); err != nil {
+		return err
+	}
 	if err := s.dropLinkRecords("vm", settings, oldName, ownRepo, oldTg.Definition); err != nil {
 		return err
 	}
@@ -165,6 +168,9 @@ func (s *Service) UnlinkVMAlias(ctx context.Context, oldName string) error {
 		return fmt.Errorf("resolve the linked entry's repository: %w", err)
 	}
 	if err := s.refuseUnlinkWhileOldNameReused(ctx, settings, alias, ownRepo); err != nil {
+		return err
+	}
+	if err := s.store.CheckCopyRuleMove("vms", "vm:"+tg.Name, "vm:"+oldName); err != nil {
 		return err
 	}
 	if err := s.dropLinkRecords("vm", settings, tg.Name, ownRepo, tg.Definition); err != nil {
