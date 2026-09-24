@@ -1436,7 +1436,7 @@ func (s *Service) finishSaveDBDumpRun(runID, snapshotID string, written int64, s
 	if runID == "" {
 		return
 	}
-	if err := (runsAdapter{st: s.store, ctx: context.Background()}).Finish(runID, "success", snapshotID, written, ""); err != nil {
+	if err := (runsAdapter{st: s.store, ctx: context.Background()}).Finish(runID, "success", backup.Summary{SnapshotID: snapshotID, Bytes: written}, ""); err != nil {
 		log.Printf("api: save database dump: record the run result failed: %v", err)
 	}
 }
