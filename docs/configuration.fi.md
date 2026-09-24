@@ -73,7 +73,7 @@ Malli lisää `--add-host=host.docker.internal:host-gateway`, jotta kontti tavoi
 
 Määritä etäreplika **Asetukset, Etä** -välilehdellä. Katso [Etäsijainti ja palautus](offsite-recovery.md) koko työnkulkua varten (muuttumaton/append-only, peukalointitestaus ja DR-harjoitukset). Lyhyesti:
 
-- **Taustajärjestelmät:** SMB/CIFS ja NFS (liitä jako ja osoita varmuuskopiopolku siihen), natiivit restic-taustajärjestelmät ilman rclonea (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) tai mikä tahansa rclone-etäsijainti (`rclone:<remote>:<bucket>/path`).
+- **Taustajärjestelmät:** SMB/CIFS ja NFS (liitä jako ja osoita varmuuskopiopolku siihen), natiivit restic-taustajärjestelmät ilman rclonea (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) tai mikä tahansa rclone-etäsijainti (`rclone:<remote>:<bucket>/path`).
 - **Pilvitunnukset** tallennetaan salattuina kohdassa Asetukset, Etä, Pilvitunnukset.
 - **SSH-kohteet eivät vaadi mitään asennettavaksi vastapuolelle.** `sftp:` tarvitsee vain SSH-palvelimen. Lisää julkinen avain kohdasta **Asetukset, Järjestelmä, VM Backup over SSH** (myös tiedostossa `/config/ssh/id_ed25519.pub`) kohdekäyttäjän tiedostoon `~/.ssh/authorized_keys`.
 - **Etäkopio:** BombVault replikoi uudet tilannevedokset `restic copy` -komennolla parhaan yrityksen periaatteella. Paikallinen repo pysyy ensisijaisena. Jokaisella toimialueella on oma etäaikataulunsa sekä **Replikoi nyt** -painike.

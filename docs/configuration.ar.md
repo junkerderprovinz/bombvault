@@ -73,7 +73,7 @@
 
 أعدّ نسخة متماثلة خارج الموقع في تبويب **Settings, Off-site**. راجع [النسخ خارج الموقع والتعافي](offsite-recovery.md) لسير العمل الكامل (غير قابل للتغيير/append-only، واختبار العبث، وتمارين التعافي من الكوارث). باختصار:
 
-- **الخلفيات:** SMB/CIFS وNFS (ركّب المشاركة ووجّه مسار نسخ احتياطي إليها)، أو خلفيات restic الأصلية دون rclone (`s3:...`، `rest:http://host:8000/repo`، `b2:...`، `sftp:user@host:/repo`)، أو أي remote في rclone (`rclone:<remote>:<bucket>/path`).
+- **الخلفيات:** SMB/CIFS وNFS (ركّب المشاركة ووجّه مسار نسخ احتياطي إليها)، أو خلفيات restic الأصلية دون rclone (`s3:...`، `rest:http://host:8000/repo`، `sftp:user@host:/repo`)، أو أي remote في rclone (`rclone:<remote>:<bucket>/path`).
 - **بيانات اعتماد السحابة** تُخزَّن مشفَّرة ضمن الإعدادات، Off-site، Cloud credentials.
 - **أهداف SSH لا تحتاج تثبيت أي شيء على الطرف البعيد.** يحتاج `sftp:` فقط خادم SSH. أضف المفتاح العام من **Settings, System, VM Backup over SSH** (أيضاً في `/config/ssh/id_ed25519.pub`) إلى `~/.ssh/authorized_keys` للمستخدم الهدف.
 - **نسخة خارج الموقع:** ينسخ BombVault اللقطات الجديدة بـ `restic copy` على أساس بذل أفضل جهد. يبقى المستودع المحلي أساسياً. لكل نطاق جدوله الزمني الخاص خارج الموقع، إضافة إلى زر **Replicate now**.

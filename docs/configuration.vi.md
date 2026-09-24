@@ -73,7 +73,7 @@ Template thêm `--add-host=host.docker.internal:host-gateway` để container c�
 
 Thiết lập một bản sao off-site trên tab **Settings, Off-site**. Xem [Off-site & khôi phục](offsite-recovery.md) để biết quy trình đầy đủ (bất biến/append-only, kiểm tra can thiệp và diễn tập DR). Tóm lại:
 
-- **Backend:** SMB/CIFS và NFS (gắn kết share và trỏ một Backup Path tới đó), các backend restic gốc không cần rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), hoặc bất kỳ remote rclone nào (`rclone:<remote>:<bucket>/path`).
+- **Backend:** SMB/CIFS và NFS (gắn kết share và trỏ một Backup Path tới đó), các backend restic gốc không cần rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), hoặc bất kỳ remote rclone nào (`rclone:<remote>:<bucket>/path`).
 - **Thông tin đăng nhập đám mây** được lưu mã hóa dưới Settings, Off-site, Cloud credentials.
 - **Đích SSH không cần cài đặt gì ở phía bên kia.** `sftp:` chỉ cần một máy chủ SSH. Thêm khóa công khai từ **Settings, System, VM Backup over SSH** (cũng nằm tại `/config/ssh/id_ed25519.pub`) vào `~/.ssh/authorized_keys` của người dùng đích.
 - **Bản sao off-site:** BombVault nhân bản các snapshot mới bằng `restic copy` theo kiểu nỗ lực tối đa. Kho cục bộ vẫn là chính. Mỗi miền có lịch trình off-site riêng, cùng với một nút **Replicate now**.

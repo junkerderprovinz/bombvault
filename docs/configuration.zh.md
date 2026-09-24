@@ -73,7 +73,7 @@ BombVault **不挂载任何 libvirt 路径**即可备份 KVM/libvirt 虚拟机�
 
 在**设置，异地**标签页设置异地副本。完整的工作流程（不可变/append-only、篡改测试和 DR 演练）参见[异地与恢复](offsite-recovery.md)。简而言之：
 
-- **后端：** SMB/CIFS 和 NFS（挂载共享并将备份路径指向它）、无需 rclone 的原生 restic 后端（`s3:...`、`rest:http://host:8000/repo`、`b2:...`、`sftp:user@host:/repo`），或任意 rclone 远程（`rclone:<remote>:<bucket>/path`）。
+- **后端：** SMB/CIFS 和 NFS（挂载共享并将备份路径指向它）、无需 rclone 的原生 restic 后端（`s3:...`、`rest:http://host:8000/repo`、`sftp:user@host:/repo`），或任意 rclone 远程（`rclone:<remote>:<bucket>/path`）。
 - **云凭据**以加密方式存储在设置，异地，云凭据之下。
 - **SSH 目标无需在对端安装任何东西。** `sftp:` 只需要一个 SSH 服务器。将来自**设置，系统，通过 SSH 备份虚拟机**的公钥（也位于 `/config/ssh/id_ed25519.pub`）添加到目标用户的 `~/.ssh/authorized_keys`。
 - **异地复制：** BombVault 以尽力而为的方式用 `restic copy` 复制新快照。本地仓库保持为主。每个域都有各自的异地计划，外加一个**立即复制**按钮。

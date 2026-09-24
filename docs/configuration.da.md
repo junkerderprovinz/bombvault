@@ -73,7 +73,7 @@ Skabelonen tilføjer `--add-host=host.docker.internal:host-gateway`, så contain
 
 Opsæt en off-site-replika på fanen **Indstillinger, Off-site**. Se [Off-site og gendannelse](offsite-recovery.md) for det fulde arbejdsforløb (uforanderlig/append-only, manipulationstest og DR-øvelser). Kort sagt:
 
-- **Backends:** SMB/CIFS og NFS (montér share'en, og peg en Backup Path mod den), native restic-backends uden rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS og NFS (montér share'en, og peg en Backup Path mod den), native restic-backends uden rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
 - **Cloud-legitimationsoplysninger** gemmes krypteret under Indstillinger, Off-site, Cloud credentials.
 - **SSH-destinationer kræver intet installeret på den anden side.** `sftp:` kræver kun en SSH-server. Tilføj den offentlige nøgle fra **Indstillinger, System, VM Backup over SSH** (også på `/config/ssh/id_ed25519.pub`) til destinationsbrugerens `~/.ssh/authorized_keys`.
 - **Off-site-kopi:** BombVault replikerer nye øjebliksbilleder med `restic copy` på et best-effort-grundlag. Det lokale repo forbliver primært. Hvert domæne har sin egen off-site-tidsplan plus en **Replikér nu**-knap.

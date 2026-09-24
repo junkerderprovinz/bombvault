@@ -73,7 +73,7 @@ Hızlı kurulum:
 
 **Ayarlar, Site dışı** sekmesinde bir site dışı kopya kurun. Tam iş akışı için (değiştirilemez/yalnızca ekleme, kurcalama testi ve DR tatbikatları) bkz. [Site dışı ve kurtarma](offsite-recovery.md). Kısaca:
 
-- **Arka uçlar:** SMB/CIFS ve NFS (paylaşımı bağlayın ve ona bir Yedekleme Yolu ayarlayın), rclone olmadan yerel restic arka uçları (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) ya da herhangi bir rclone uzak konumu (`rclone:<remote>:<bucket>/path`).
+- **Arka uçlar:** SMB/CIFS ve NFS (paylaşımı bağlayın ve ona bir Yedekleme Yolu ayarlayın), rclone olmadan yerel restic arka uçları (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) ya da herhangi bir rclone uzak konumu (`rclone:<remote>:<bucket>/path`).
 - **Bulut kimlik bilgileri** Ayarlar, Site dışı, Bulut kimlik bilgileri altında şifreli saklanır.
 - **SSH hedefleri karşı tarafta hiçbir şey kurmayı gerektirmez.** `sftp:` yalnızca bir SSH sunucusu gerektirir. **Ayarlar, Sistem, SSH üzerinden VM Yedeği** bölümündeki genel anahtarı (ayrıca `/config/ssh/id_ed25519.pub` konumunda) hedef kullanıcının `~/.ssh/authorized_keys` dosyasına ekleyin.
 - **Site dışı kopya:** BombVault yeni anlık görüntüleri en iyi çaba temelinde `restic copy` ile çoğaltır. Yerel depo birincil kalır. Her etki alanının kendi site dışı zamanlaması ve ayrıca bir **Şimdi çoğalt** düğmesi vardır.

@@ -73,7 +73,7 @@ Szablon dodaje `--add-host=host.docker.internal:host-gateway`, aby kontener móg
 
 Skonfiguruj replikę poza siedzibą w zakładce **Ustawienia, Poza siedzibą**. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md), aby poznać pełny przepływ pracy (niezmienne/append-only, tamper testy i próby DR). W skrócie:
 
-- **Backendy:** SMB/CIFS i NFS (zamontuj udział i skieruj na niego Ścieżkę kopii), natywne backendy restic bez rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) lub dowolny zdalny rclone (`rclone:<remote>:<bucket>/path`).
+- **Backendy:** SMB/CIFS i NFS (zamontuj udział i skieruj na niego Ścieżkę kopii), natywne backendy restic bez rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) lub dowolny zdalny rclone (`rclone:<remote>:<bucket>/path`).
 - **Poświadczenia chmurowe** są przechowywane zaszyfrowane w Ustawienia, Poza siedzibą, Poświadczenia chmurowe.
 - **Cele SSH nie wymagają niczego zainstalowanego po drugiej stronie.** `sftp:` wymaga jedynie serwera SSH. Dodaj klucz publiczny z **Ustawienia, System, Kopia VM przez SSH** (dostępny też pod `/config/ssh/id_ed25519.pub`) do pliku `~/.ssh/authorized_keys` użytkownika docelowego.
 - **Kopia poza siedzibą:** BombVault replikuje nowe migawki poleceniem `restic copy` w trybie best-effort. Repozytorium lokalne pozostaje główne. Każda domena ma własny harmonogram poza siedzibą oraz przycisk **Replikuj teraz**.

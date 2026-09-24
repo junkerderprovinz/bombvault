@@ -73,7 +73,7 @@ Configurare rapidă:
 
 Configurează o replică off-site în fila **Setări, Off-site**. Vezi [Off-site și recuperare](offsite-recovery.md) pentru fluxul complet (imuabil/append-only, testarea manipulării și exercițiile DR). Pe scurt:
 
-- **Backenduri:** SMB/CIFS și NFS (montează partajarea și îndreaptă o cale de backup către ea), backenduri restic native fără rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) sau orice remote rclone (`rclone:<remote>:<bucket>/path`).
+- **Backenduri:** SMB/CIFS și NFS (montează partajarea și îndreaptă o cale de backup către ea), backenduri restic native fără rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) sau orice remote rclone (`rclone:<remote>:<bucket>/path`).
 - **Credențialele cloud** sunt stocate criptat sub Setări, Off-site, Credențiale cloud.
 - **Țintele SSH nu necesită nimic instalat pe partea îndepărtată.** `sftp:` necesită doar un server SSH. Adaugă cheia publică din **Setări, Sistem, VM Backup over SSH** (de asemenea la `/config/ssh/id_ed25519.pub`) la `~/.ssh/authorized_keys` al utilizatorului țintă.
 - **Copie off-site:** BombVault replică instantaneele noi cu `restic copy` pe bază de best-effort. Depozitul local rămâne principal. Fiecare domeniu are propria programare off-site, plus un buton **Replicate now**.

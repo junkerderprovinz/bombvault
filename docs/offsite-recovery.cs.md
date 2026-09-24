@@ -35,7 +35,7 @@ Nový cíl mimo lokalitu dostane každou položku, která není nastavena na Mí
 
 ### Přímé repozitáře
 
-Volba přímého repozitáře cíle pod Jen mimo lokalitu otevře dialog s navrhovaným umístěním vedle cíle, například `b2:bucket:containers-direct`, a testem připojení, který nic nezaloží. **Vytvořit a použít** vytvoří repozitář a nasměruje na něj položku. Přímý repozitář přebírá klíč cíle, třídu úložiště, limity, nastavení append-only a uchovávání a mění se s nimi; karta Repozitáře jej zobrazuje jako jen pro čtení. Když nový klíč cíle repozitář neotevře, přímý repozitář si ponechá klíč, který má, a uložení to oznámí. Jeho snímky nesou značku `bv:direct` a každý další běh uchovávání je ponechá, takže přímý repozitář, který ztratil spojení se svým cílem, nikdy nestárne podle místních pravidel. Klíč B2 omezený na vlastní složku cíle se nedostane do složky vedle ní; omezte klíč místo toho na složku nad cílem.
+Volba přímého repozitáře cíle pod Jen mimo lokalitu otevře dialog s navrhovaným umístěním vedle cíle, například `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, a testem připojení, který nic nezaloží. **Vytvořit a použít** vytvoří repozitář a nasměruje na něj položku. Přímý repozitář přebírá klíč cíle, třídu úložiště, limity, nastavení append-only a uchovávání a mění se s nimi; karta Repozitáře jej zobrazuje jako jen pro čtení. Když nový klíč cíle repozitář neotevře, přímý repozitář si ponechá klíč, který má, a uložení to oznámí. Jeho snímky nesou značku `bv:direct` a každý další běh uchovávání je ponechá, takže přímý repozitář, který ztratil spojení se svým cílem, nikdy nestárne podle místních pravidel. K B2 se přistupuje přes její S3 endpoint, kde jako přihlašovací údaje S3 zadáte ID klíče a aplikační klíč; klíč omezený na vlastní složku cíle se nedostane do složky vedle ní, proto klíč omezte místo toho na složku nad cílem.
 
 ### Mimo objekt
 
@@ -47,7 +47,7 @@ Volby kopírování žijí ve vlastním nastavení BombVaultu. Po opětovném se
 
 ## Vzdálené primární repozitáře {#remote-primary-repositories}
 
-Cesta zálohy domény (Nastavení, Cesty a úložiště) se neomezuje na místní složku: nasměrujte ji rovnou na vzdálený repozitář resticu (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:uživatel@host:/repo`, `rclone:remote:bucket/cesta`) a BombVault zálohuje přímo tam, bez samostatné místní kopie a bez kroku replikace. Je to opravdu jiný tvar než replikace mimo lokalitu výše: tam je primární místní repozitář a ten mimo lokalitu je jeho archivem podle možností; zde **je** primární ten vzdálený a je jedinou kopií, dokud pro tuto doménu nenastavíte i replikaci mimo lokalitu (nebo druhý vzdálený repozitář).
+Cesta zálohy domény (Nastavení, Cesty a úložiště) se neomezuje na místní složku: nasměrujte ji rovnou na vzdálený repozitář resticu (`s3:...`, `rest:http://host:8000/repo`, `sftp:uživatel@host:/repo`, `rclone:remote:bucket/cesta`) a BombVault zálohuje přímo tam, bez samostatné místní kopie a bez kroku replikace. Je to opravdu jiný tvar než replikace mimo lokalitu výše: tam je primární místní repozitář a ten mimo lokalitu je jeho archivem podle možností; zde **je** primární ten vzdálený a je jedinou kopií, dokud pro tuto doménu nenastavíte i replikaci mimo lokalitu (nebo druhý vzdálený repozitář).
 
 Každé z pěti polí cesty (Kontejnery, Virtuální stroje, Flash, Konfigurace, Soubory) má hned vedle přepínač **Místní / Vzdálené**:
 
