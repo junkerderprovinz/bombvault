@@ -9772,6 +9772,11 @@ func (s *Service) TakeOverContainer(ctx context.Context, oldName, newName string
 			return fmt.Errorf("remove the empty entry of %q: %w", newName, err)
 		}
 	}
+	// The store refuses such a rule too, but only after the mirrors below
+	// have dropped their link records.
+	if err := s.store.CheckCopyRuleMove("containers", "container:"+oldName, "container:"+newName); err != nil {
+		return err
+	}
 	// Discover rebuilds a link only from the definition mirrors, so the name the
 	// entry leaves stops recording links before the rename and the new name
 	// records them after it.
@@ -9898,7 +9903,10 @@ func (s *Service) UnlinkContainerAlias(ctx context.Context, oldName string) erro
 	if err := s.refuseUnlinkWhileOldNameReused(ctx, settings, alias, ownRepo); err != nil {
 		return err
 	}
-	// The definition mirrors follow as in TakeOverContainer.
+	// The rule check and the definition mirrors follow as in TakeOverContainer.
+	if err := s.store.CheckCopyRuleMove("containers", "container:"+currentName, "container:"+oldName); err != nil {
+		return err
+	}
 	if err := s.dropLinkRecords("container", settings, currentName, ownRepo, tg.Definition); err != nil {
 		return err
 	}

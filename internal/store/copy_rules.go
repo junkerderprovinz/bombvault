@@ -269,6 +269,13 @@ func renameCopyRuleTx(tx *sql.Tx, domain, from, to string) error {
 	return moveCopyRuleTx(tx, domain, from, to)
 }
 
+// CheckCopyRuleMove is the ErrCopyRuleTaken a rename or an unlink carrying the
+// rule of from onto to would meet, found without writing anything.
+func (r *Repo) CheckCopyRuleMove(domain, from, to string) error {
+	_, err := checkRuleMoveQ(r.db, domain, from, to)
+	return err
+}
+
 // checkRuleMoveQ is ErrCopyRuleTaken while to has a rule that from does not
 // share, and reports whether to already holds the rule of from.
 func checkRuleMoveQ(q queryer, domain, from, to string) (same bool, err error) {
