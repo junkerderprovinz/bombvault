@@ -2,10 +2,12 @@ package api
 
 import (
 	"database/sql"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/selfrestore"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -33,11 +35,23 @@ func newStoreWithMCPKeys(t *testing.T) (*store.Repo, *sql.DB) {
 	return st, db
 }
 
+// markRestoreApplied leaves the mark ApplyPending writes when it swaps a
+// restored database into place.
+func markRestoreApplied(t *testing.T, dataDir string) {
+	t.Helper()
+	if err := os.WriteFile(selfrestore.AppliedMarkerPath(dataDir), []byte("applied"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestConfigRestoreRevokesMCPKeys(t *testing.T) {
-	st, db := newStoreWithMCPKeys(t)
+	st, _ := newStoreWithMCPKeys(t)
+	dataDir := t.TempDir()
 	now := time.Unix(1789600000, 0)
 
-	RevokeMCPKeysAfterConfigRestore(st, false, now)
+	if err := RevokeMCPKeysAfterConfigRestore(st, dataDir, now); err != nil {
+		t.Fatal(err)
+	}
 	active, err := st.ActiveMCPKeys()
 	if err != nil {
 		t.Fatal(err)
@@ -46,7 +60,12 @@ func TestConfigRestoreRevokesMCPKeys(t *testing.T) {
 		t.Fatalf("a boot without a restore must leave %d keys alone, %d left", 2, len(active))
 	}
 
-	out := captureLog(t, func() { RevokeMCPKeysAfterConfigRestore(st, true, now) })
+	markRestoreApplied(t, dataDir)
+	out := captureLog(t, func() {
+		if err := RevokeMCPKeysAfterConfigRestore(st, dataDir, now); err != nil {
+			t.Fatal(err)
+		}
+	})
 	active, err = st.ActiveMCPKeys()
 	if err != nil {
 		t.Fatal(err)
@@ -66,12 +85,25 @@ func TestConfigRestoreRevokesMCPKeys(t *testing.T) {
 	if !strings.Contains(out, "revoked 2 MCP key") {
 		t.Fatalf("the revoke is not in the log: %q", out)
 	}
+	if _, err := os.Stat(selfrestore.AppliedMarkerPath(dataDir)); !os.IsNotExist(err) {
+		t.Fatalf("the restore is still marked after the revoke went through: %v", err)
+	}
+}
 
+// A boot that cannot revoke must not come up with the restored keys active, and
+// the next boot has to try again.
+func TestConfigRestoreRevokeFailureStopsTheBoot(t *testing.T) {
+	st, db := newStoreWithMCPKeys(t)
+	dataDir := t.TempDir()
+	markRestoreApplied(t, dataDir)
 	if err := db.Close(); err != nil {
 		t.Fatal(err)
 	}
-	out = captureLog(t, func() { RevokeMCPKeysAfterConfigRestore(st, true, now) })
-	if !strings.Contains(out, "could not revoke MCP keys") {
-		t.Fatalf("a store error must be logged, got %q", out)
+
+	if err := RevokeMCPKeysAfterConfigRestore(st, dataDir, time.Unix(1789600000, 0)); err == nil {
+		t.Fatal("a failed revoke was not reported")
+	}
+	if _, err := os.Stat(selfrestore.AppliedMarkerPath(dataDir)); err != nil {
+		t.Fatalf("the mark is gone although the revoke failed, so no later boot revokes: %v", err)
 	}
 }

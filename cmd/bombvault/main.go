@@ -212,7 +212,9 @@ func run() error {
 	}
 	st := store.New(db)
 
-	api.RevokeMCPKeysAfterConfigRestore(st, applied, time.Now())
+	if err := api.RevokeMCPKeysAfterConfigRestore(st, cfg.DataDir, time.Now()); err != nil {
+		return err
+	}
 
 	// Reap runs left in 'running' by a previous lifetime (crash/update mid-backup)
 	// so they don't linger as a perpetual "running" status on the dashboard.

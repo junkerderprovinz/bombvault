@@ -9,12 +9,14 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/junkerderprovinz/bombvault/internal/secret"
+	"github.com/junkerderprovinz/bombvault/internal/selfrestore"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -415,19 +417,22 @@ func newMCPKeyID() string {
 	return hex.EncodeToString(buf)
 }
 
-// RevokeMCPKeysAfterConfigRestore revokes every active MCP key when a staged
-// configuration restore was applied at this boot: the restored database may
-// hold keys that were revoked after it was saved.
-func RevokeMCPKeysAfterConfigRestore(st *store.Repo, applied bool, now time.Time) {
-	if !applied {
-		return
+// RevokeMCPKeysAfterConfigRestore revokes every active MCP key while a restored
+// configuration database is marked as applied: it may hold keys that were
+// revoked after it was saved. The mark goes only once the revoke went through,
+// so a boot that fails in between leaves the revoke to the next one, and an
+// error here has to stop the boot rather than serve the restored keys.
+func RevokeMCPKeysAfterConfigRestore(st *store.Repo, dataDir string, now time.Time) error {
+	marker := selfrestore.AppliedMarkerPath(dataDir)
+	if _, err := os.Stat(marker); os.IsNotExist(err) {
+		return nil
 	}
 	n, err := st.RevokeAllMCPKeys("config-restore", now.Unix())
 	if err != nil {
-		log.Printf("selfrestore: could not revoke MCP keys after the configuration restore: %v", err)
-		return
+		return fmt.Errorf("revoke MCP keys after the configuration restore: %w", err)
 	}
 	if n > 0 {
 		log.Printf("selfrestore: revoked %d MCP key(s): a restored configuration may contain keys that were revoked after it was saved; create new keys under Settings > System > MCP server", n)
 	}
+	return os.Remove(marker)
 }
