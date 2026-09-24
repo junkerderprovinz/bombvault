@@ -1651,7 +1651,7 @@ const sl: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Element v oddaljenem ali neposrednem repozitoriju ne dobiva kopij.",
   "placementCode.unknownTarget": "Ta zunanji cilj v tej domeni ne obstaja.",
   "placementCode.stackRule": "Projektne mape sledijo privzeti vrednosti za vsebnike in nimajo lastnega pravila.",
-  "placementCode.copyRuleTaken": "To ime že ima svoja pravila kopiranja. Najprej jih ponastavi tam.",
+  "placementCode.copyRuleTaken": "To ime že ima svoja pravila kopiranja.",
   "placementCode.domainBusy": "Varnostno kopiranje je v teku. Izberi znova, ko se konča.",
   "placementCode.hasBackups": "Lokacije ni več mogoče spremeniti, ko ima element varnostne kopije. Ostanejo tam, kjer so bile zapisane.",
   "placementCode.homeUncheckable": "Ni bilo mogoče preveriti, ali ima ta element že varnostne kopije, zato njegova lokacija ostane taka, kot je. Poskusi znova, ko bo repozitorij mogoče prebrati.",

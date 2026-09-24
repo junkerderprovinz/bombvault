@@ -1656,7 +1656,7 @@ const pt: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Um item num repositório remoto ou direto não recebe cópias.",
   "placementCode.unknownTarget": "Esse destino externo não existe neste domínio.",
   "placementCode.stackRule": "As pastas de projeto seguem o padrão de contentores e não têm regra própria.",
-  "placementCode.copyRuleTaken": "Esse nome já tem regras de cópia próprias. Repõe-as lá primeiro.",
+  "placementCode.copyRuleTaken": "Esse nome já tem regras de cópia próprias.",
   "placementCode.domainBusy": "Uma cópia de segurança está em curso. Escolhe novamente quando terminar.",
   "placementCode.hasBackups": "O local não pode mudar depois de o item ter cópias de segurança. Ficam onde foram escritas.",
   "placementCode.homeUncheckable": "Não foi possível verificar se este item já tem cópias de segurança, por isso a localização permanece como está. Tenta novamente quando o repositório puder ser lido.",

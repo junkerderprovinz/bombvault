@@ -1656,7 +1656,7 @@ const it: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Un elemento su un repository remoto o diretto non riceve copie.",
   "placementCode.unknownTarget": "Quella destinazione off-site non esiste in questo dominio.",
   "placementCode.stackRule": "Le cartelle di progetto seguono il valore predefinito dei container e non hanno una regola propria.",
-  "placementCode.copyRuleTaken": "Quel nome ha già le proprie regole di copia. Ripristinale prima lì.",
+  "placementCode.copyRuleTaken": "Quel nome ha già le proprie regole di copia.",
   "placementCode.domainBusy": "È in corso un backup. Scegli di nuovo quando sarà terminato.",
   "placementCode.hasBackups": "La posizione non può più cambiare una volta che l'elemento ha backup. Restano dove sono stati scritti.",
   "placementCode.homeUncheckable": "Non è stato possibile verificare se questo elemento ha già dei backup, quindi la sua posizione resta invariata. Riprova quando il repository potrà essere letto.",

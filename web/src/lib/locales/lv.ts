@@ -1667,7 +1667,7 @@ const lv: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Vienums attālinātā vai tiešā krātuvē kopijas nesaņem.",
   "placementCode.unknownTarget": "Šis attālinātais mērķis šajā domēnā neeksistē.",
   "placementCode.stackRule": "Projekta mapes seko konteineru noklusējuma vērtībai un savu noteikumu nesaņem.",
-  "placementCode.copyRuleTaken": "Šim nosaukumam jau ir savi kopēšanas noteikumi. Vispirms atiestati tos tur.",
+  "placementCode.copyRuleTaken": "Šim nosaukumam jau ir savi kopēšanas noteikumi.",
   "placementCode.domainBusy": "Notiek dublēšana. Izvēlies vēlreiz, kad tā pabeigta.",
   "placementCode.hasBackups": "Atrašanās vietu vairs nevar mainīt, tiklīdz vienumam ir dublējumi. Tie paliek tur, kur bija rakstīti.",
   "placementCode.homeUncheckable": "Neizdevās pārbaudīt, vai šim vienumam jau ir dublējumi, tāpēc tā atrašanās vieta paliek tāda, kāda ir. Mēģini vēlreiz, kad krātuvi varēs nolasīt.",

@@ -1648,7 +1648,7 @@ const ko: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "원격 또는 직접 저장소의 항목은 사본을 받지 않습니다.",
   "placementCode.unknownTarget": "해당 오프사이트 대상이 이 도메인에 존재하지 않습니다.",
   "placementCode.stackRule": "프로젝트 폴더는 컨테이너의 기본값을 따르며 자체 규칙이 없습니다.",
-  "placementCode.copyRuleTaken": "그 이름에는 이미 자체 복사 규칙이 있습니다. 먼저 거기서 초기화하세요.",
+  "placementCode.copyRuleTaken": "그 이름에는 이미 자체 복사 규칙이 있습니다.",
   "placementCode.domainBusy": "백업이 진행 중입니다. 끝나면 다시 선택하세요.",
   "placementCode.hasBackups": "항목에 백업이 있으면 위치를 더 이상 변경할 수 없습니다. 백업은 기록된 곳에 그대로 남습니다.",
   "placementCode.homeUncheckable": "이 항목에 이미 백업이 있는지 확인할 수 없어 위치가 그대로 유지됩니다. 저장소를 읽을 수 있게 되면 다시 시도하세요.",

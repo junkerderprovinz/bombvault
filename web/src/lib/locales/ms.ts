@@ -1667,7 +1667,7 @@ const ms: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Item pada repositori jauh atau langsung tidak menerima salinan.",
   "placementCode.unknownTarget": "Sasaran luar tapak itu tidak wujud dalam domain ini.",
   "placementCode.stackRule": "Folder projek mengikut lalai bekas dan tidak mempunyai peraturan sendiri.",
-  "placementCode.copyRuleTaken": "Nama itu sudah mempunyai peraturan salinannya sendiri. Tetapkan semula dahulu di sana.",
+  "placementCode.copyRuleTaken": "Nama itu sudah mempunyai peraturan salinannya sendiri.",
   "placementCode.domainBusy": "Sandaran sedang berjalan. Pilih semula selepas ia selesai.",
   "placementCode.hasBackups": "Lokasi tidak boleh berubah lagi sebaik sahaja item mempunyai sandaran. Ia kekal di tempat ia ditulis.",
   "placementCode.homeUncheckable": "Tidak dapat disemak sama ada item ini sudah mempunyai sandaran, jadi lokasinya kekal seperti sekarang. Cuba lagi apabila repositori dapat dibaca.",

@@ -1667,7 +1667,7 @@ const is: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Atriði í fjarlægri eða beinni geymslu fær engin afrit.",
   "placementCode.unknownTarget": "Þessi fjarlægi áfangastaður er ekki til í þessu léni.",
   "placementCode.stackRule": "Verkefnamöppur fylgja sjálfgefnu gildi gáma og fá enga eigin reglu.",
-  "placementCode.copyRuleTaken": "Þetta nafn hefur nú þegar sínar eigin afritunarreglur. Endurstilltu þær þar fyrst.",
+  "placementCode.copyRuleTaken": "Þetta nafn hefur nú þegar sínar eigin afritunarreglur.",
   "placementCode.domainBusy": "Öryggisafritun er í gangi. Veldu aftur þegar henni er lokið.",
   "placementCode.hasBackups": "Staðsetningin getur ekki breyst eftir að atriðið hefur öryggisafrit. Þau verða áfram þar sem þau voru skrifuð.",
   "placementCode.homeUncheckable": "Ekki var hægt að athuga hvort þetta atriði hafi nú þegar öryggisafrit, svo staðsetning þess helst óbreytt. Reyndu aftur þegar hægt er að lesa geymsluna.",

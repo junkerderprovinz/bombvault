@@ -1659,7 +1659,7 @@ const hu: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Egy távoli vagy közvetlen tárolón lévő elem nem kap másolatot.",
   "placementCode.unknownTarget": "Ez a külső cél nem létezik ebben a tartományban.",
   "placementCode.stackRule": "A projektmappák a konténerek alapértelmezését követik, és nincs saját szabályuk.",
-  "placementCode.copyRuleTaken": "Ennek a névnek már megvannak a saját másolási szabályai. Először ott állítsd vissza őket.",
+  "placementCode.copyRuleTaken": "Ennek a névnek már megvannak a saját másolási szabályai.",
   "placementCode.domainBusy": "Éppen mentés folyik. Válassz újra, ha befejeződött.",
   "placementCode.hasBackups": "A hely már nem változtatható, ha az elemnek mentései vannak. Ott maradnak, ahová írták őket.",
   "placementCode.homeUncheckable": "Nem sikerült ellenőrizni, hogy ennek az elemnek már vannak-e mentései, ezért a helye marad, ahol van. Próbáld újra, ha a tároló olvashatóvá válik.",

@@ -1656,7 +1656,7 @@ const fr: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Un élément sur un dépôt distant ou direct ne reçoit pas de copies.",
   "placementCode.unknownTarget": "Cette cible hors site n'existe pas dans ce domaine.",
   "placementCode.stackRule": "Les dossiers de projet suivent la valeur par défaut des conteneurs et n'ont pas de règle propre.",
-  "placementCode.copyRuleTaken": "Ce nom a déjà ses propres règles de copie. Réinitialisez-les d'abord là-bas.",
+  "placementCode.copyRuleTaken": "Ce nom a déjà ses propres règles de copie.",
   "placementCode.domainBusy": "Une sauvegarde est en cours. Choisissez de nouveau une fois qu'elle est terminée.",
   "placementCode.hasBackups": "L'emplacement ne peut plus changer une fois que l'élément a des sauvegardes. Elles restent là où elles ont été écrites.",
   "placementCode.homeUncheckable": "Impossible de vérifier si cet élément a déjà des sauvegardes, donc son emplacement reste tel quel. Réessayez une fois que le dépôt pourra être lu.",

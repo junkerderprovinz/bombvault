@@ -1659,7 +1659,7 @@ const ar: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "عنصر في مستودع بعيد أو مباشر لا يحصل على نسخ.",
   "placementCode.unknownTarget": "هذا الهدف الخارجي غير موجود في هذا النطاق.",
   "placementCode.stackRule": "مجلدات المشروع تتبع القيمة الافتراضية للحاويات ولا تملك قاعدة خاصة بها.",
-  "placementCode.copyRuleTaken": "هذا الاسم لديه بالفعل قواعد نسخ خاصة به. أعد تعيينها هناك أولاً.",
+  "placementCode.copyRuleTaken": "هذا الاسم لديه بالفعل قواعد نسخ خاصة به.",
   "placementCode.domainBusy": "يجري تنفيذ نسخة احتياطية الآن. اختر مجددًا بعد انتهائها.",
   "placementCode.hasBackups": "لا يمكن تغيير الموقع بعد أن يصبح للعنصر نسخ احتياطية. تبقى حيث كُتبت.",
   "placementCode.homeUncheckable": "تعذّر التحقق مما إذا كان هذا العنصر يحتوي على نسخ احتياطية بالفعل، لذا يبقى موقعه كما هو. حاول مرة أخرى بعد أن يصبح المستودع قابلاً للقراءة.",

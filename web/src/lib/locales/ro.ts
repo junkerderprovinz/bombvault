@@ -1659,7 +1659,7 @@ const ro: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Un element dintr-un depozit la distanță sau direct nu primește copii.",
   "placementCode.unknownTarget": "Acea țintă externă nu există în acest domeniu.",
   "placementCode.stackRule": "Folderele de proiect urmează valoarea implicită a containerelor și nu au regulă proprie.",
-  "placementCode.copyRuleTaken": "Acel nume are deja reguli de copiere proprii. Resetează-le acolo mai întâi.",
+  "placementCode.copyRuleTaken": "Acel nume are deja reguli de copiere proprii.",
   "placementCode.domainBusy": "O copie de siguranță este în curs. Alege din nou după ce se termină.",
   "placementCode.hasBackups": "Locația nu se mai poate schimba după ce elementul are copii de siguranță. Rămân unde au fost scrise.",
   "placementCode.homeUncheckable": "Nu s-a putut verifica dacă acest element are deja copii de siguranță, așa că locația lui rămâne așa cum este. Încearcă din nou după ce depozitul poate fi citit.",
