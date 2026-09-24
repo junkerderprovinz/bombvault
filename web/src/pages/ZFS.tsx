@@ -111,6 +111,9 @@ export function ZFS() {
         push(res.error ?? t("settings.error"), "fail");
         setShakeBackupAll((n) => n + 1);
       }
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      setShakeBackupAll((n) => n + 1);
     } finally {
       setBackupAllBusy(false);
     }

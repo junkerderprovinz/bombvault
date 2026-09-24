@@ -143,6 +143,9 @@ export function zfsFixKey(code: string): TranslationKey | null {
  *  says something true. */
 export function zfsCodeSentence(t: Translate, code: string, vars: ZFSCodeVars = {}): string {
   if (!isReasonCode(code)) return t("zfs.code.unknown").replace("{code}", code);
+  // A run can name a dataset that has left the tree, and its mountpoint went
+  // with it.
+  if (code === "not-visible" && !vars.hostMountpoint) return tLtr(t, "zfs.notVisibleNoPath");
   let text = tLtr(t, ZFS_CODE_KEY[code]);
   for (const [placeholder, field] of Object.entries(ZFS_CODE_VARS[code] ?? {})) {
     const value = vars[field];

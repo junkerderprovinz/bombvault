@@ -266,18 +266,19 @@ describe("ZFS restore panel", () => {
     expect(stop.getAttribute("aria-checked")).toBe("true");
   });
 
-  it("shows a refusal the server coded where the restore was asked for", async () => {
-    ack = { ok: false, code: "destination-not-mounted" };
+  it("shows a refusal the server coded as its sentence alone", async () => {
+    ack = { ok: false, code: "read-only-mount", error: "read-only-mount: cache/appdata" };
     await openPanel();
     fireEvent.click(screen.getByRole("button", { name: en["snapshots.restore"] }));
     fireEvent.click(
       within(await screen.findByRole("dialog")).getByRole("button", { name: en["snapshots.restore"] }),
     );
-    expect(await screen.findByText(en["zfs.code.destination-not-mounted"])).toBeTruthy();
+    expect(await screen.findByText(en["zfs.code.read-only-mount"])).toBeTruthy();
+    expect(screen.queryByText(/read-only-mount: cache\/appdata/)).toBeNull();
   });
 
   it("names the host mountpoint in a refusal about the dataset's mount", async () => {
-    ack = { ok: false, code: "not-visible" };
+    ack = { ok: false, code: "not-visible", error: "not-visible: cache/appdata" };
     await openPanel();
     fireEvent.click(screen.getByRole("button", { name: en["snapshots.restore"] }));
     fireEvent.click(

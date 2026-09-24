@@ -4,13 +4,14 @@
 // authorizes it, because a basic-mode user with VM backups off never sees the
 // Settings card that otherwise carries them.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import type { ZFSConnectionResult } from "../../lib/api";
 
 let connection: ZFSConnectionResult;
 let connectionCalls = 0;
+let connectionFails = false;
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -18,6 +19,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     ...actual,
     zfsConnection: () => {
       connectionCalls += 1;
+      if (connectionFails) return Promise.reject(new actual.ApiError(502, "HTTP 502 Bad Gateway"));
       return Promise.resolve(connection);
     },
     getVMSSH: () => Promise.resolve({ ok: true, host: "tower", publicKey: "ssh-ed25519 AAAAKEY bombvault" }),
@@ -53,12 +55,23 @@ function renderCard() {
 
 beforeEach(() => {
   connectionCalls = 0;
+  connectionFails = false;
   connection = result({});
 });
 
 afterEach(cleanup);
 
 describe("ZFS connection card", () => {
+  it("says the test could not run and offers it again", async () => {
+    connectionFails = true;
+    renderCard();
+    expect(await screen.findByText(en["common.networkError"])).toBeTruthy();
+    connectionFails = false;
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.connection.test"] }));
+    expect(await screen.findByText("Connected as root@192.168.1.10")).toBeTruthy();
+    expect(connectionCalls).toBe(2);
+  });
+
   it("collapses a working connection to the target and the version", async () => {
     renderCard();
     expect(screen.getByText(en["zfs.connection.testing"])).toBeTruthy();

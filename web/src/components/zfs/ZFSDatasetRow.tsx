@@ -113,7 +113,13 @@ function DeleteSafetyToggle({ label, sink }: { label: string; sink: { current: b
   );
 }
 
-function ZFSRunDetailView({ runId, t }: { runId: string; t: T }) {
+/** The message of a request the server turned away, for example while a ZFS
+ *  run holds the domain. */
+function failText(t: T, err: unknown): string {
+  return err instanceof Error ? err.message : t("settings.error");
+}
+
+function ZFSRunDetailView({ runId, item, t }: { runId: string; item: ZFSDatasetView; t: T }) {
   const [detail, setDetail] = useState<ZFSRunDetail | null>(null);
 
   useEffect(() => {
@@ -148,7 +154,11 @@ function ZFSRunDetailView({ runId, t }: { runId: string; t: T }) {
               </Badge>
             )}
             <span className="text-carbon-textMuted">
-              {memberKey ? t(memberKey) : zfsCodeSentence(t, m.outcome)}
+              {memberKey
+                ? t(memberKey)
+                : zfsCodeSentence(t, m.outcome, {
+                    hostMountpoint: item.members.find((known) => known.dataset === m.dataset)?.hostMountpoint,
+                  })}
             </span>
             {m.bytesAdded > 0 && <span className="text-carbon-textMuted">{humanBytes(m.bytesAdded)}</span>}
           </p>
@@ -166,7 +176,7 @@ function ZFSRunDetailView({ runId, t }: { runId: string; t: T }) {
   );
 }
 
-function ZFSSafetySection({ item, t }: { item: ZFSDatasetView; t: T }) {
+function ZFSSafetySection({ item, t, onRefresh }: { item: ZFSDatasetView; t: T; onRefresh: () => void }) {
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [open, setOpen] = useState(false);
@@ -191,9 +201,17 @@ function ZFSSafetySection({ item, t }: { item: ZFSDatasetView; t: T }) {
       .replace("{name}", snap.name)
       .replace("{dataset}", snap.dataset);
     if (!(await confirm(question, { confirmKey: "common.delete" }))) return;
-    const res = await deleteZFSSafetySnapshot(item.id, snap.dataset, snap.name);
-    if (res.ok) load();
-    else push(res.error ?? t("common.deleteFailed"), "fail");
+    try {
+      const res = await deleteZFSSafetySnapshot(item.id, snap.dataset, snap.name);
+      if (res.ok) {
+        load();
+        onRefresh();
+      } else {
+        push(res.error ?? t("common.deleteFailed"), "fail");
+      }
+    } catch (err) {
+      push(failText(t, err), "fail");
+    }
   }
 
   const old = item.safetyOldestAt > 0 && Date.now() / 1000 - item.safetyOldestAt > 30 * DAY;
@@ -343,6 +361,9 @@ function ZFSItemSettings({ item, t, onChanged }: { item: ZFSDatasetView; t: T; o
       }
       push(res.code ? zfsCodeSentence(t, res.code) : (res.error ?? t("settings.error")), "fail");
       return false;
+    } catch (err) {
+      push(failText(t, err), "fail");
+      return false;
     } finally {
       setBusy(false);
     }
@@ -380,6 +401,8 @@ function ZFSItemSettings({ item, t, onChanged }: { item: ZFSDatasetView; t: T; o
       const res = await probeZFSDataset(item.id);
       if (!res.ok) push(res.error ?? t("settings.error"), "fail");
       onChanged();
+    } catch (err) {
+      push(failText(t, err), "fail");
     } finally {
       setProbing(false);
     }
@@ -387,9 +410,13 @@ function ZFSItemSettings({ item, t, onChanged }: { item: ZFSDatasetView; t: T; o
 
   async function handleDeleteBackups() {
     if (!(await confirm(t("zfs.deleteBackupsConfirm"), { confirmKey: "snapshots.deleteAll" }))) return;
-    const res = await deleteBackupsZFSDataset(item.id);
-    if (res.ok) onChanged();
-    else push(res.error ?? t("common.deleteBackupsFailed"), "fail");
+    try {
+      const res = await deleteBackupsZFSDataset(item.id);
+      if (res.ok) onChanged();
+      else push(res.error ?? t("common.deleteBackupsFailed"), "fail");
+    } catch (err) {
+      push(failText(t, err), "fail");
+    }
   }
 
   const known = new Set(item.members.map((m) => m.dataset));
@@ -603,6 +630,10 @@ export function ZFSDatasetRow({
         push(res.error ?? t("schedule.updateFailed"), "fail");
         setShake((n) => n + 1);
       }
+    } catch (err) {
+      setEnabled(!next);
+      push(failText(t, err), "fail");
+      setShake((n) => n + 1);
     } finally {
       setEnabledBusy(false);
     }
@@ -618,7 +649,14 @@ export function ZFSDatasetRow({
         ) : undefined,
     });
     if (!answered) return;
-    const res = await deleteZFSDataset(item.id, deleteSafetyToo.current);
+    let res: Awaited<ReturnType<typeof deleteZFSDataset>>;
+    try {
+      res = await deleteZFSDataset(item.id, deleteSafetyToo.current);
+    } catch (err) {
+      push(failText(t, err), "fail");
+      setShake((n) => n + 1);
+      return;
+    }
     if (!res.ok) {
       push(res.error ?? t("common.removeFailed"), "fail");
       setShake((n) => n + 1);
@@ -641,6 +679,8 @@ export function ZFSDatasetRow({
       if (res.ok && remaining === 0) push(t("zfs.sweepDone"), "success");
       else push(t("zfs.sweepRemaining").replace("{n}", String(remaining)), "warn");
       onRefresh();
+    } catch (err) {
+      push(failText(t, err), "fail");
     } finally {
       setSweeping(false);
     }
@@ -674,7 +714,7 @@ export function ZFSDatasetRow({
                 {t("zfs.notChecked")}
               </Badge>
             )}
-            {!runFailed && checkCode !== "" && checkCode !== "ok" && (
+            {checkCode !== "" && checkCode !== "ok" && (
               <Badge tone={RED_CODES.has(checkCode) ? "fail" : "warn"} wrap>
                 {zfsCodeSentence(t, checkCode, {
                   hostMountpoint: item.hostMountpoint,
@@ -792,7 +832,7 @@ export function ZFSDatasetRow({
         {membersOpen && <ZFSMemberList members={item.members} root={item.dataset} t={t} />}
       </div>
 
-      {item.safetyCount > 0 && <ZFSSafetySection item={item} t={t} />}
+      {item.safetyCount > 0 && <ZFSSafetySection item={item} t={t} onRefresh={onRefresh} />}
 
       {editing && <ZFSItemSettings item={item} t={t} onChanged={onRefresh} />}
 
@@ -807,7 +847,7 @@ export function ZFSDatasetRow({
         name={item.dataset}
         domain="zfs"
         t={t}
-        renderDetail={(runId) => <ZFSRunDetailView runId={runId} t={t} />}
+        renderDetail={(runId) => <ZFSRunDetailView runId={runId} item={item} t={t} />}
       />
 
       {progress && (
