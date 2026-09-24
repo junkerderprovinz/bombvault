@@ -313,7 +313,7 @@ const uk: Partial<Translations> = {
   "errorPanel.resolveAll": "Позначити всі як вирішені",
   "errorPanel.affected": "Зачеплені",
   "errorPanel.empty": "Немає невирішених помилок резервного копіювання.",
-  "errorPanel.count": "one={n} випадок|few={n} випадки|many={n} випадків|other={n} випадка",
+  "errorPanel.count": "one={n} випадок|few={n} випадки|many={n} випадків|other={n} випадку",
   "errorPanel.filterPlaceholder": "Фільтрувати помилки…",
 
   // Jobs page
