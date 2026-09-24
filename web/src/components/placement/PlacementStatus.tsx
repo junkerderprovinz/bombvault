@@ -34,7 +34,7 @@ export function PlacementStatus({
   const [removing, setRemoving] = useState<{ id: string; name: string } | null>(null);
 
   const plan = view.plan ? planLines(t, lang, host, item.domain, view.plan, options?.targets.length === 0) : [];
-  const observed = view.observed ? observedLine(t, lang, view.observed) : [];
+  const observed = view.observed ? observedLine(t, view.observed) : [];
 
   return (
     <div className="flex flex-col gap-1 text-xs">
@@ -59,7 +59,7 @@ export function PlacementStatus({
             {t("placement.older")
               .replace("{target}", () => o.name)
               .replace("{n}", String(o.count))
-              .replace("{date}", () => new Date(o.seenAt * 1000).toLocaleDateString(lang))}
+              .replace("{date}", () => new Date(o.seenAt * 1000).toLocaleDateString())}
           </span>
           <Button
             label={t("offsiteRemoval.delete").replace("{target}", () => o.name)}
