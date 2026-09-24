@@ -248,6 +248,23 @@ func TestRewriteHoldsRetentionUntilTheUserActs(t *testing.T) {
 	}
 }
 
+// The restore panel marks the backup a data-loss finding was raised on, so the
+// row has to name that snapshot next to the last good one.
+func TestDataLossFindingNamesTheSnapshotItFlagged(t *testing.T) {
+	eng := &fakeResticEngine{backupSummaries: []restic.Summary{measuredSummary(40*holdGiB, 30*holdGiB)}}
+	svc, st, db := holdService(t, eng, "plex")
+	seedSteadySeries(t, st, db, "plex", 12, 40*holdGiB)
+
+	backupOnce(t, svc, "plex")
+	row := onlyHeldRow(t, svc)
+	if !slices.Equal(row.FlaggedSnapshots, []string{"deadbeef12345678"}) {
+		t.Fatalf("flagged snapshots = %v, want the rewrite's own snapshot", row.FlaggedSnapshots)
+	}
+	if row.LastGood == nil || slices.Contains(row.FlaggedSnapshots, row.LastGood.SnapshotID) {
+		t.Fatalf("the last good backup must never be the flagged one: %+v", row.LastGood)
+	}
+}
+
 // A rewrite the user called normal fixes a ceiling, so the same amount written
 // again is no longer a finding.
 func TestExpectedRewriteIsNotRaisedAgain(t *testing.T) {
