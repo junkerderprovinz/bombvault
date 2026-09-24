@@ -3548,7 +3548,7 @@ export async function foreignRestore(req: {
   }
 }
 
-/** POST /api/foreign/files — list the files of one file set's or one dataset's
+/** POST /api/foreign/files: list the files of one file set's or one dataset's
  *  snapshot in an open foreign session, so the Recovery card can offer a
  *  subfolder/file picker before a selective foreign restore (#123). Read-only;
  *  `snapshot` accepts "latest". The foreign, session-scoped twin of
