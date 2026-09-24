@@ -1,4 +1,4 @@
-# BombVault task runner — run `just` to list recipes.
+# BombVault task runner. Run `just` to list the recipes.
 # Recipes use sh (Git Bash on Windows).
 
 # List available recipes
@@ -25,7 +25,7 @@ check:
     go test ./...
     hadolint Dockerfile
 
-# Build the frontend SPA (embedded into the binary) — run when web/ changed
+# Build the frontend SPA embedded into the binary, after a change in web/
 web:
     cd web && npm ci && npm run build
 
@@ -37,4 +37,4 @@ secrets:
 notes version:
     printf '## v{{version}}\n\n### Fixed\n\n### Changed\n' > .github/release-notes/v{{version}}.md
     cp .github/release-notes/v{{version}}.md internal/releasenotes/notes/v{{version}}.md
-    @echo "Wrote both release-note copies for v{{version}} — edit, then commit."
+    @echo "Wrote both release-note copies for v{{version}}; edit them, then commit."
