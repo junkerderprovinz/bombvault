@@ -425,31 +425,13 @@ function ExportButton({ name, t }: { name: string; t: T }) {
   );
 }
 
-// HooksEditor edits the per-container pre/post-backup commands (collapsible).
-// `open` is now controlled by the caller (Containers.tsx's ContainerRow, via
-// its own shared five-chip Selector strip — see that call site's own comment)
-// rather than an internal useState: this component no longer renders its own
-// trigger button, only the content pane, shown or hidden by the prop.
-//
-// Live-save conversion (jdp, live review: "Brauchen wir die Speichern-Buttons
-// in den Aufklappcards überhaupt? Es soll doch immer live speichern."): the
-// explicit Save button is GONE — both fields now debounce-auto-save via
-// useDebouncedSave, 800ms after the last keystroke, combined into ONE
-// setContainerHooks(pre, post) call (the same "compute the next value
-// locally, pass it straight into the debounced closure" shape Settings.tsx's
-// own registryAuths row edits use for their own multi-field-into-one-PATCH
-// save). No revert-on-failure and no `.glim-shake` here — matching
-// Settings.tsx's OWN debouncedSave text-field convention exactly (see e.g.
-// pathSaveState's "only the setters are needed" comment): a shell command is
-// free text like a cron string or a registry token, already saved this exact
-// way elsewhere in this app with zero exception, and reverting a field the
-// user might still be actively typing into would be jarring rather than
-// helpful — the toast alone reports a failure, and the value simply stays as
-// typed for the next edit (or a reload) to pick up. Discrete boolean/
-// selection saves (FoldersEditor's mount checkboxes, StopContainersEditor's
-// picker rows) are the other half of this conversion and DO keep revert +
-// shake, since those really are one-click toggles, not continuous typing —
-// see FoldersEditor's own `toggle()` comment for that half's reasoning.
+// HooksEditor edits the per-container pre/post-backup commands. The caller's
+// Selector strip decides whether the pane is open. Both fields save through
+// useDebouncedSave, 800ms after the last keystroke, as one
+// setContainerHooks(pre, post) call. A failed save does not revert the field:
+// a shell command is free text the user may still be typing, so the toast
+// reports the failure and the value stays for the next edit. One-click toggles
+// such as FoldersEditor's mount switches do revert on failure.
 function HooksEditor({
   name,
   initialPre,

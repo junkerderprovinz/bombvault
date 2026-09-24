@@ -776,10 +776,10 @@ export function ProtectionCard({
         <div className="@container divide-y divide-carbon-border glim-content-fade">
           {domains.map((d) => {
             const off = d.status === "off";
-            // Only containers, flash, files and ZFS ever run an off-site DR
-            // drill (schedule.go drillTasks / runDRDrill). VMs + config can
-            // have an off-site repo but cannot be DR-drilled, so they must show
-            // NO DR pill or Run-DR button.
+            // Only containers, flash, files and ZFS run an off-site DR drill
+            // (schedule.go drillTasks / runDRDrill). VMs and config can have an
+            // off-site repo but cannot be drilled, so they show no DR pill and
+            // no Run-DR button.
             const drCapable =
               d.domain === "containers" || d.domain === "flash" || d.domain === "files" || d.domain === "zfs";
             // Off-site DR opt-out (#37): the scheduled DR drill is turned off for a
