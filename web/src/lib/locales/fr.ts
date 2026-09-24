@@ -1651,7 +1651,7 @@ const fr: Partial<Translations> = {
   "repos.offPremisesHint": "Compte comme un site à part entière pour les sites et le 3-2-1 sur les cartes. Les copies ne sont pas affectées. Un rest-server dans le même bâtiment devrait avoir ceci désactivé.",
 
   // Refusals
-  "placementCode.unreadable": "Les règles de placement n'ont pas pu être lues, rien n'est donc copié tant que ce n'est pas de nouveau possible.",
+  "placementCode.unreadable": "Les règles d'emplacement n'ont pas pu être lues, rien n'est donc copié tant que ce n'est pas de nouveau possible.",
   "placementCode.invalid": "Ce choix de placement n'est pas valide.",
   "placementCode.copiesNotAllowed": "Un élément sur un dépôt distant ou direct ne reçoit pas de copies.",
   "placementCode.unknownTarget": "Cette cible hors site n'existe pas dans ce domaine.",

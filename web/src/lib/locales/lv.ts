@@ -801,7 +801,7 @@ const lv: Partial<Translations> = {
   "ransomware.replicationCurrent": "replicēšana aktuāla",
   "ransomware.replicationOverdue": "replicēšana nokavēta",
   "ransomware.replicationNever": "vēl nav replicēts",
-  "ransomware.replicationPaused": "kopēšana ārpus vietas apturēta: apstipriniet izvietojumu",
+  "ransomware.replicationPaused": "kopēšana ārpus vietas apturēta: apstipriniet novietojumu",
   "ransomware.drillOffsite": "atjaunošanas pārbaude (attālināta)",
   "ransomware.drillOverdue": "atjaunošanas pārbaude nokavēta",
   "ransomware.drillFailed": "atjaunošanas pārbaude neizdevās",
@@ -1662,7 +1662,7 @@ const lv: Partial<Translations> = {
   "repos.offPremisesHint": "Karšu vietu un 3-2-1 aprēķinā tiek skaitīts kā sava atsevišķa vieta. Kopijas tas neietekmē. Tajā pašā ēkā esošam rest-server šim vajadzētu būt izslēgtam.",
 
   // Refusals
-  "placementCode.unreadable": "Izvietojuma noteikumus nevarēja nolasīt, tāpēc nekas netiek kopēts, kamēr tos atkal nevarēs nolasīt.",
+  "placementCode.unreadable": "Novietojuma noteikumus nevarēja nolasīt, tāpēc nekas netiek kopēts, kamēr tos atkal nevarēs nolasīt.",
   "placementCode.invalid": "Šī izvietojuma izvēle nav derīga.",
   "placementCode.copiesNotAllowed": "Vienums attālinātā vai tiešā krātuvē kopijas nesaņem.",
   "placementCode.unknownTarget": "Šis attālinātais mērķis šajā domēnā neeksistē.",
@@ -1831,7 +1831,7 @@ const lv: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Netiek dublēts: noklusējums norāda uz {home}, kas ir izslēgts.",
   "placement.planNotBackedUpMissing": "Netiek dublēts: noklusējums norāda uz krātuvi, kuras vairs nav.",
   "placement.planCopied": "Kopēts uz {targets}.",
-  "placement.planNoCopy": "Nav kopijas ārpus telpām.",
+  "placement.planNoCopy": "Nav kopijas ārpus ēkas.",
   "placement.planNoTarget": "{domain} nav iestatīta kopija ārpus vietas.",
   "placement.sitesOne": "Vienā vietā",
   "placement.sites": "{n} vietās",

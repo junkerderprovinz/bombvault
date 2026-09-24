@@ -1643,7 +1643,7 @@ const zh: Partial<Translations> = {
   "repos.offPremisesHint": "在卡片上的站点数和3-2-1计算中，算作独立的站点。不影响副本。同一建筑物中的 rest-server 应关闭此项。",
 
   // Refusals
-  "placementCode.unreadable": "位置规则无法读取，因此在能够再次读取之前不会复制任何内容。",
+  "placementCode.unreadable": "存放位置规则无法读取，因此在能够再次读取之前不会复制任何内容。",
   "placementCode.invalid": "此位置选择无效。",
   "placementCode.copiesNotAllowed": "远程或直接存储库上的项目不会获得副本。",
   "placementCode.unknownTarget": "该异地目标在此域中不存在。",

@@ -1831,7 +1831,7 @@ const eu: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Ez da babesten: lehenetsiak {home} seinalatzen du, eta hori itzalita dago.",
   "placement.planNotBackedUpMissing": "Ez da babesten: lehenetsiak jada existitzen ez den biltegi bat seinalatzen du.",
   "placement.planCopied": "{targets}(e)ra kopiatuta.",
-  "placement.planNoCopy": "Ez dago kopiarik instalazioetatik kanpo.",
+  "placement.planNoCopy": "Ez dago kopiarik eraikinetik kanpo.",
   "placement.planNoTarget": "{domain} domeinurako ez dago kanpoko kopiarik konfiguratuta.",
   "placement.sitesOne": "Kokapen batean",
   "placement.sites": "{n} kokapenetan",

@@ -1662,7 +1662,7 @@ const hr: Partial<Translations> = {
   "repos.offPremisesHint": "Za lokacije i 3-2-1 na karticama broji se kao zasebna lokacija. Kopije time nisu pogođene. Rest-server u istoj zgradi trebao bi imati ovo isključeno.",
 
   // Refusals
-  "placementCode.unreadable": "Pravila razmještaja nije bilo moguće pročitati, pa se ništa ne kopira dok se ponovno ne mogu pročitati.",
+  "placementCode.unreadable": "Pravila smještaja nije bilo moguće pročitati, pa se ništa ne kopira dok se ponovno ne mogu pročitati.",
   "placementCode.invalid": "Ovaj izbor razmještaja nije valjan.",
   "placementCode.copiesNotAllowed": "Stavka u udaljenom ili izravnom repozitoriju ne prima kopije.",
   "placementCode.unknownTarget": "To izvanmrežno odredište ne postoji u ovoj domeni.",
@@ -1831,7 +1831,7 @@ const hr: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Nema sigurnosne kopije: zadano pokazuje na {home}, koje je isključeno.",
   "placement.planNotBackedUpMissing": "Nema sigurnosne kopije: zadano pokazuje na repozitorij koji više ne postoji.",
   "placement.planCopied": "Kopirano u {targets}.",
-  "placement.planNoCopy": "Nema kopije izvan prostorija.",
+  "placement.planNoCopy": "Nema kopije izvan objekta.",
   "placement.planNoTarget": "Za {domain} nije postavljena kopija izvan lokacije.",
   "placement.sitesOne": "Na jednoj lokaciji",
   "placement.sites": "Na {n} lokacija",

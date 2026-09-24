@@ -1651,7 +1651,7 @@ const pt: Partial<Translations> = {
   "repos.offPremisesHint": "Conta como um local próprio para os locais e o 3-2-1 nos cartões. As cópias não são afetadas. Um rest-server no mesmo edifício devia ter isto desligado.",
 
   // Refusals
-  "placementCode.unreadable": "As regras de colocação não puderam ser lidas, por isso nada é copiado até que voltem a poder ser lidas.",
+  "placementCode.unreadable": "As regras de localização não puderam ser lidas, por isso nada é copiado até que voltem a poder ser lidas.",
   "placementCode.invalid": "Esta escolha de colocação não é válida.",
   "placementCode.copiesNotAllowed": "Um item num repositório remoto ou direto não recebe cópias.",
   "placementCode.unknownTarget": "Esse destino externo não existe neste domínio.",

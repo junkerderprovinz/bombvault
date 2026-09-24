@@ -1817,7 +1817,7 @@ const nl: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Wordt niet geback-upt: de standaard wijst naar {home}, dat uit staat.",
   "placement.planNotBackedUpMissing": "Wordt niet geback-upt: de standaard wijst naar een repository die niet meer bestaat.",
   "placement.planCopied": "Gekopieerd naar {targets}.",
-  "placement.planNoCopy": "Geen kopie buiten de locatie.",
+  "placement.planNoCopy": "Geen kopie buiten het pand.",
   "placement.planNoTarget": "Er is geen off-site kopie ingesteld voor {domain}.",
   "placement.sitesOne": "Op één locatie",
   "placement.sites": "Op {n} locaties",

@@ -801,7 +801,7 @@ const fa: Partial<Translations> = {
   "ransomware.replicationCurrent": "همانندسازی به‌روز است",
   "ransomware.replicationOverdue": "همانندسازی معوق است",
   "ransomware.replicationNever": "هنوز همانندسازی نشده",
-  "ransomware.replicationPaused": "نسخه‌برداری خارج از محل متوقف است: جای‌گذاری را تأیید کنید",
+  "ransomware.replicationPaused": "نسخه‌برداری خارج از محل متوقف است: مکان‌گذاری را تأیید کنید",
   "ransomware.drillOffsite": "بررسی بازیابی (خارج از محل)",
   "ransomware.drillOverdue": "بررسی بازیابی معوق است",
   "ransomware.drillFailed": "بررسی بازیابی ناموفق بود",
@@ -1662,7 +1662,7 @@ const fa: Partial<Translations> = {
   "repos.offPremisesHint": "برای محل‌ها و قاعدهٔ ۳-۲-۱ روی کارت‌ها، به‌عنوان محل جداگانه‌ای شمرده می‌شود. روی نسخه‌ها تأثیری ندارد. یک rest-server در همان ساختمان باید این گزینه خاموش باشد.",
 
   // Refusals
-  "placementCode.unreadable": "قوانین جایگذاری خوانده نشد، بنابراین تا وقتی دوباره قابل خواندن نشوند چیزی کپی نمی‌شود.",
+  "placementCode.unreadable": "قوانین مکان‌گذاری خوانده نشد، بنابراین تا وقتی دوباره قابل خواندن نشوند چیزی کپی نمی‌شود.",
   "placementCode.invalid": "این انتخاب جایگذاری معتبر نیست.",
   "placementCode.copiesNotAllowed": "موردی در مخزن دوردست یا مستقیم کپی دریافت نمی‌کند.",
   "placementCode.unknownTarget": "آن مقصد خارج از محل در این دامنه وجود ندارد.",
@@ -1831,7 +1831,7 @@ const fa: Partial<Translations> = {
   "placement.planNotBackedUpOff": "پشتیبان‌گیری نمی‌شود: پیش‌فرض به {home} اشاره دارد که خاموش است.",
   "placement.planNotBackedUpMissing": "پشتیبان‌گیری نمی‌شود: پیش‌فرض به مخزنی اشاره دارد که دیگر وجود ندارد.",
   "placement.planCopied": "به {targets} کپی شد.",
-  "placement.planNoCopy": "نسخه‌ای خارج از محل وجود ندارد.",
+  "placement.planNoCopy": "نسخه‌ای خارج از ساختمان وجود ندارد.",
   "placement.planNoTarget": "برای {domain} نسخه‌ای خارج از محل تنظیم نشده است.",
   "placement.sitesOne": "در یک مکان",
   "placement.sites": "در {n} مکان",

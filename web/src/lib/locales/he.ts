@@ -1820,7 +1820,7 @@ const he: Partial<Translations> = {
   "placement.planNotBackedUpOff": "לא מגובה: ברירת המחדל מצביעה על {home}, שכבוי.",
   "placement.planNotBackedUpMissing": "לא מגובה: ברירת המחדל מצביעה על מאגר שכבר לא קיים.",
   "placement.planCopied": "הועתק אל {targets}.",
-  "placement.planNoCopy": "אין עותק מחוץ למתחם.",
+  "placement.planNoCopy": "אין עותק מחוץ למבנה.",
   "placement.planNoTarget": "לא הוגדר עותק מחוץ לאתר עבור {domain}.",
   "placement.sitesOne": "באתר אחד",
   "placement.sites": "ב-{n} אתרים",

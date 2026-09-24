@@ -1651,7 +1651,7 @@ const it: Partial<Translations> = {
   "repos.offPremisesHint": "Conta come una sede propria per le sedi e il 3-2-1 sulle schede. Le copie non ne risentono. Un rest-server nello stesso edificio dovrebbe avere questo disattivato.",
 
   // Refusals
-  "placementCode.unreadable": "Le regole di posizionamento non sono state leggibili, quindi non viene copiato nulla finché non lo saranno di nuovo.",
+  "placementCode.unreadable": "Le regole di collocazione non sono state leggibili, quindi non viene copiato nulla finché non lo saranno di nuovo.",
   "placementCode.invalid": "Questa scelta di posizionamento non è valida.",
   "placementCode.copiesNotAllowed": "Un elemento su un repository remoto o diretto non riceve copie.",
   "placementCode.unknownTarget": "Quella destinazione off-site non esiste in questo dominio.",

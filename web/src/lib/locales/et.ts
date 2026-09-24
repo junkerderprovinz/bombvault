@@ -1662,7 +1662,7 @@ const et: Partial<Translations> = {
   "repos.offPremisesHint": "Loetakse kaartidel asukohtade ja 3-2-1 jaoks omaette asukohaks. Koopiaid see ei mõjuta. Sama hoone rest-serveril peaks see väljas olema.",
 
   // Refusals
-  "placementCode.unreadable": "Asukohareegleid ei õnnestunud lugeda, seega ei kopeerita midagi enne, kui neid saab jälle lugeda.",
+  "placementCode.unreadable": "Paigutusreegleid ei õnnestunud lugeda, seega ei kopeerita midagi enne, kui neid saab jälle lugeda.",
   "placementCode.invalid": "See asukohavalik ei ole kehtiv.",
   "placementCode.copiesNotAllowed": "Kauge- või otsehoidlas olev üksus koopiaid ei saa.",
   "placementCode.unknownTarget": "Seda kaugsihtkohta ei ole selles domeenis.",
@@ -1831,7 +1831,7 @@ const et: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Ei varundata: vaikeväärtus osutab kohale {home}, mis on välja lülitatud.",
   "placement.planNotBackedUpMissing": "Ei varundata: vaikeväärtus osutab hoidlale, mida enam ei ole.",
   "placement.planCopied": "Kopeeritud kohta {targets}.",
-  "placement.planNoCopy": "Koopiat väljaspool asukohta pole.",
+  "placement.planNoCopy": "Koopiat väljaspool hoonet pole.",
   "placement.planNoTarget": "Domeenile {domain} pole väliskoopiat seadistatud.",
   "placement.sitesOne": "Ühes kohas",
   "placement.sites": "{n} kohas",

@@ -1654,7 +1654,7 @@ const ro: Partial<Translations> = {
   "repos.offPremisesHint": "Se numără drept sit propriu pentru site-uri și regula 3-2-1 de pe carduri. Copiile nu sunt afectate. Un rest-server în aceeași clădire ar trebui să aibă asta dezactivat.",
 
   // Refusals
-  "placementCode.unreadable": "Regulile de plasare nu au putut fi citite, așa că nu se copiază nimic până când vor putea fi citite din nou.",
+  "placementCode.unreadable": "Regulile de amplasare nu au putut fi citite, așa că nu se copiază nimic până când vor putea fi citite din nou.",
   "placementCode.invalid": "Această alegere de plasare nu este validă.",
   "placementCode.copiesNotAllowed": "Un element dintr-un depozit la distanță sau direct nu primește copii.",
   "placementCode.unknownTarget": "Acea țintă externă nu există în acest domeniu.",

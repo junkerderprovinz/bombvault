@@ -1812,7 +1812,7 @@ const ja: Partial<Translations> = {
   "placement.planNotBackedUpOff": "バックアップされていません。既定値は {home} を指していますが、オフになっています。",
   "placement.planNotBackedUpMissing": "バックアップされていません。既定値はもう存在しないリポジトリを指しています。",
   "placement.planCopied": "{targets} にコピー済み。",
-  "placement.planNoCopy": "施設外への複製はありません。",
+  "placement.planNoCopy": "敷地外への複製はありません。",
   "placement.planNoTarget": "{domain} にはオフサイトの複製が設定されていません。",
   "placement.sitesOne": "1 か所に",
   "placement.sites": "{n} か所に",
