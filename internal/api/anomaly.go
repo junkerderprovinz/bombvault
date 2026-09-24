@@ -53,6 +53,9 @@ type AnomalyView struct {
 	// LastGood is the backup to restore from after a loss of data, absent on
 	// every finding that is not about one.
 	LastGood *RestorePointRef `json:"lastGood,omitempty"`
+	// FlaggedSnapshots are the backups a data-loss finding was raised and last
+	// seen on, the ones a restore should not pick.
+	FlaggedSnapshots []string `json:"flaggedSnapshots,omitempty"`
 
 	Observed  float64 `json:"observed"`
 	Expected  float64 `json:"expected"`
@@ -263,13 +266,19 @@ func (s *Service) ListAnomalies(ctx context.Context, f store.AnomalyFilter) (Ano
 	return page, ctx.Err()
 }
 
-// lastGoodPoints resolves the runs the data-loss findings point back to, so a
-// row carries the snapshot a restore needs and not only a run id.
+// lastGoodPoints resolves the runs a data-loss finding points at, the good one
+// before it and the ones it was seen on, so a row carries the snapshots a
+// restore needs and not only run ids.
 func (s *Service) lastGoodPoints(rows []store.Anomaly) (map[string]store.RestorePoint, error) {
 	var ids []string
 	for _, row := range rows {
-		if row.LastGoodRunID != "" && !slices.Contains(ids, row.LastGoodRunID) {
-			ids = append(ids, row.LastGoodRunID)
+		if row.LastGoodRunID == "" {
+			continue
+		}
+		for _, id := range []string{row.LastGoodRunID, row.RunID, row.LastRunID} {
+			if id != "" && !slices.Contains(ids, id) {
+				ids = append(ids, id)
+			}
 		}
 	}
 	if len(ids) == 0 {
@@ -538,6 +547,11 @@ func anomalyViewOf(row store.Anomaly, items map[string]anomalyItemRef, targets m
 	}
 	if p, found := points[row.LastGoodRunID]; found {
 		view.LastGood = &RestorePointRef{RunID: p.RunID, SnapshotID: p.SnapshotID, At: p.At}
+		for _, id := range []string{row.RunID, row.LastRunID} {
+			if f, ok := points[id]; ok && !slices.Contains(view.FlaggedSnapshots, f.SnapshotID) {
+				view.FlaggedSnapshots = append(view.FlaggedSnapshots, f.SnapshotID)
+			}
+		}
 	}
 	view.TargetName = targets[offsiteTargetOf(row)]
 	return view
