@@ -71,6 +71,13 @@ describe("labels", () => {
     expect(viewHomeLabel(t, "Unraid", placementView({ repo: "abc", repoLabel: "abc", repoKind: "missing" }), opts)).toBe("abc (unknown)");
   });
 
+  // Send to lists only the targets that are switched on, and a direct
+  // repository goes on taking backups while its target is off.
+  it("names a direct repository whose target the lists leave out by its own name", () => {
+    const direct = placementView({ segment: "offsite-only", repo: "repo-b2-direct", repoLabel: "B2 direct", repoKind: "direct", skip: ["*"] });
+    expect(viewHomeLabel(t, "Unraid", direct, placementOptions({ sendTo: [] }))).toBe("B2 direct");
+  });
+
   it("gives each locked segment its reason", () => {
     const items = segmentItems(t, { "offsite-only": "home-fixed" }, "NAS Keller · mounted");
     expect(items.map((i) => [i.id, i.label, i.disabled, i.title])).toEqual([
