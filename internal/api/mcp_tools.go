@@ -367,6 +367,15 @@ func (h *Handler) logMCPCall(ctx context.Context, tool, outcome string) {
 	log.Printf("api: mcp: key %s ...%s tool %s -> %s", caller.KeyID, caller.Hint, tool, outcome)
 }
 
+// mcpErrorCodeOf is the code of a tool error built further down, which is
+// what the call is logged and counted under.
+func mcpErrorCodeOf(res *mcp.CallToolResult) string {
+	content, _ := res.StructuredContent.(map[string]any)
+	body, _ := content["error"].(map[string]any)
+	code, _ := body["code"].(string)
+	return code
+}
+
 // mcpScrubText strips repository locations, absolute paths and URL credentials
 // from text an assistant will read. Unlike scrubError it has no bypass list:
 // the web interface may show an operator the path a message is about, a

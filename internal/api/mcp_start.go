@@ -67,7 +67,7 @@ func (h *Handler) toolStartBackup(ctx context.Context, req *mcp.CallToolRequest)
 
 	item, bad := h.resolveMCPItem(in.Domain, in.Item)
 	if bad != nil {
-		h.logMCPCall(ctx, tool, "refused")
+		h.logMCPCall(ctx, tool, mcpErrorCodeOf(bad))
 		return bad, nil
 	}
 	if in.Domain == "containers" && item.Name == h.svc.SelfContainerName(ctx) {

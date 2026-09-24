@@ -693,7 +693,7 @@ func (h *Handler) toolListRuns(ctx context.Context, req *mcp.CallToolRequest) (*
 	case in.Item != "":
 		item, bad := h.resolveMCPItem(in.Domain, in.Item)
 		if bad != nil {
-			h.logMCPCall(ctx, "list_runs", "refused")
+			h.logMCPCall(ctx, "list_runs", mcpErrorCodeOf(bad))
 			return bad, nil
 		}
 		filter.TargetIDs = []string{item.ID}
@@ -822,7 +822,7 @@ func (h *Handler) toolListRestorePoints(ctx context.Context, req *mcp.CallToolRe
 
 	item, bad := h.resolveMCPItem(in.Domain, in.Item)
 	if bad != nil {
-		h.logMCPCall(ctx, "list_restore_points", "refused")
+		h.logMCPCall(ctx, "list_restore_points", mcpErrorCodeOf(bad))
 		return bad, nil
 	}
 	settings, err := h.store.GetSettings()
