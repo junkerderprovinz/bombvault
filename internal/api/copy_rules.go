@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -588,16 +589,18 @@ func withTarget(skip []string, targetID string) []string {
 
 const copyRuleLabel = "copy rule"
 
-// withCopyRule adds "copy rule" to the settings a takeover would drop. The
-// store refuses the rename that moves a rule onto a name that has one, but by
-// then the row on that name is gone.
-func (s *Service) withCopyRule(labels []string, domain, identity string) ([]string, error) {
-	_, found, err := s.store.CopyRuleFor(domain, identity)
-	if err != nil {
-		return nil, fmt.Errorf("read the copy rule of %s: %w", identity, err)
-	}
-	if found {
-		labels = append(labels, copyRuleLabel)
+// withCopyRule adds "copy rule" to the settings a takeover from one name onto
+// another would drop: a rule on to that the entry on from does not share. The
+// store refuses the rename that moves a rule onto such a name, but by then the
+// row on that name is gone. The entry's own rule there is no loss, since the
+// store keeps it for the entry.
+func (s *Service) withCopyRule(labels []string, domain, from, to string) ([]string, error) {
+	err := s.store.CheckCopyRuleMove(domain, from, to)
+	switch {
+	case errors.Is(err, store.ErrCopyRuleTaken):
+		return append(labels, copyRuleLabel), nil
+	case err != nil:
+		return nil, err
 	}
 	return labels, nil
 }

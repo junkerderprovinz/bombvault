@@ -9617,11 +9617,12 @@ func configuredStateLabels(t store.Target) []string {
 }
 
 // targetOccupyingNewNameIsEmpty reports whether t, the row already on a
-// takeover's new name, may be deleted to make way: it has no backups, no
-// operator-set configuration and no copy rule. labels names what it found, so
-// the refusal can say what would be lost.
-func (s *Service) targetOccupyingNewNameIsEmpty(ctx context.Context, t store.Target) (empty bool, labels []string, err error) {
-	labels, err = s.withCopyRule(configuredStateLabels(t), "containers", "container:"+t.ContainerName)
+// takeover's new name, may be deleted to make way for the entry on from: it has
+// no backups, no operator-set configuration and no copy rule other than the
+// entry's own. labels names what it found, so the refusal can say what would
+// be lost.
+func (s *Service) targetOccupyingNewNameIsEmpty(ctx context.Context, t store.Target, from string) (empty bool, labels []string, err error) {
+	labels, err = s.withCopyRule(configuredStateLabels(t), "containers", "container:"+from, "container:"+t.ContainerName)
 	if err != nil {
 		return false, nil, err
 	}
@@ -9811,7 +9812,7 @@ func (s *Service) TakeOverContainer(ctx context.Context, oldName, newName string
 	if existing, err := s.store.GetTargetByContainer(newName); err == nil {
 		// RenameTargetWithAlias refuses an occupied name, so an empty row on it
 		// is cleared first; one with backups or settings is kept.
-		empty, labels, err := s.targetOccupyingNewNameIsEmpty(ctx, existing)
+		empty, labels, err := s.targetOccupyingNewNameIsEmpty(ctx, existing, oldName)
 		if err != nil {
 			return fmt.Errorf("check the existing entry of %q: %w", newName, err)
 		}

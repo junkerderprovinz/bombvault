@@ -98,7 +98,7 @@ func (s *Service) TakeOverVM(ctx context.Context, oldName, newName string) error
 		}
 		newDefinition = back.PrevDefinition
 	}
-	if err := s.removeEmptyVMRow(ctx, newName, defined); err != nil {
+	if err := s.removeEmptyVMRow(ctx, oldName, newName, defined); err != nil {
 		return err
 	}
 	// The rule check and the definition mirrors follow as in TakeOverContainer.
@@ -253,9 +253,10 @@ func (s *Service) refreshedVMDefinition(ctx context.Context, def vmDefinition, u
 }
 
 // removeEmptyVMRow deletes the row on name when it has no backups, nothing
-// configured and no copy rule, so the entry can move there, and refuses any
-// other row. installed are the VMs the host defines.
-func (s *Service) removeEmptyVMRow(ctx context.Context, name string, installed map[string]bool) error {
+// configured and no copy rule other than that of the entry on from, so the
+// entry can move there, and refuses any other row. installed are the VMs the
+// host defines.
+func (s *Service) removeEmptyVMRow(ctx context.Context, from, name string, installed map[string]bool) error {
 	tg, err := s.store.GetVMTargetByName(name)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -263,7 +264,7 @@ func (s *Service) removeEmptyVMRow(ctx context.Context, name string, installed m
 	case err != nil:
 		return fmt.Errorf("read the entry of %q: %w", name, err)
 	}
-	labels, err := s.withCopyRule(vmConfiguredStateLabels(tg), "vms", "vm:"+name)
+	labels, err := s.withCopyRule(vmConfiguredStateLabels(tg), "vms", "vm:"+from, "vm:"+name)
 	if err != nil {
 		return err
 	}

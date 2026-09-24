@@ -719,6 +719,28 @@ func TestUnlinkVMAliasLeavesNoRuleOnTheVMDefinedUnderTheNameItLeaves(t *testing.
 	}
 }
 
+func TestTakeOverVMOntoARowWhoseOnlySettingIsTheEntrysOwnRule(t *testing.T) {
+	f := newVMTakeover(t, vmPre)
+	for _, identity := range []string{"vm:windows-11", "vm:win11"} {
+		if err := f.st.SetCopyRule("vms", identity, []string{store.SkipAll}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := f.st.UpsertVMTarget(store.VMTarget{Name: "win11", Method: "graceful"}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := f.svc.TakeOverVM(context.Background(), "windows-11", "win11"); err != nil {
+		t.Fatalf("TakeOverVM: %v", err)
+	}
+	if tg, err := f.st.GetVMTargetByName("win11"); err != nil || tg.ID != f.id {
+		t.Fatalf("entry on win11 = %+v, %v; want the one from windows-11", tg, err)
+	}
+	if _, found, err := f.st.CopyRuleFor("vms", "vm:win11"); err != nil || !found {
+		t.Fatalf("win11 lost the rule (found %v, %v)", found, err)
+	}
+}
+
 func TestDeleteBackupsVMWaitsForTheVMsOnTheHost(t *testing.T) {
 	f := newVMTakeover(t, vmPre)
 	f.virsh.listErr = errors.New("libvirt is not running")
