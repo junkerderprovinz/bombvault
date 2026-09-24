@@ -89,6 +89,10 @@ Sau khi cập nhật, BombVault đọc một lần kích thước của các b�
 
 Trên chia sẻ người dùng của Unraid (`/mnt/user`), dung lượng trống là của cả mảng, không phải của một đĩa. Kho từ xa chỉ được đo qua các remote rclone có báo dung lượng trống; kho S3, B2, REST và SFTP không có số liệu và được liệt kê là chưa đo trong thẻ **Bất thường**.
 
+## Trợ lý AI không kết nối được
+
+Trang [Máy chủ MCP](mcp.md#troubleshooting) giải thích ý nghĩa của từng mã trạng thái và từng lần từ chối của điểm kết nối MCP, cùng cách xử lý.
+
 ## Container cứ khởi động lại hoặc trông không khỏe mạnh
 
 BombVault báo khỏe mạnh/không khỏe mạnh từ `/api/health` của chính nó. Một công cụ tự phục hồi (chẳng hạn Autoheal) có thể khởi động lại nó tự động nếu công cụ có bao giờ bị kẹt. Kiểm tra nhật ký container và báo cáo `/spike` để tìm nguyên nhân cơ bản.

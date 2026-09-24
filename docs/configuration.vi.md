@@ -54,9 +54,14 @@ Với mỗi container, BombVault tự chọn những bind mount và volume có t
 - Vì cổng bảo vệ là tùy chọn tham gia, khi chưa đặt thì toàn bộ giao diện và API (bao gồm thiết lập off-site, các tuyến kiểm tra can thiệp và bộ khôi phục) đều có thể truy cập bởi bất kỳ ai truy cập được cổng. Bật cổng bảo vệ một khi bạn dùng đến off-site, sao lưu bất biến hoặc mã hóa.
 - Chỉ chạy BombVault trên một mạng tin cậy, không phơi ra ngoài. Để truy cập từ xa, đặt nó phía sau một reverse proxy có thêm xác thực và TLS. Các phản hồi mang theo các tiêu đề bảo mật cơ bản (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Sau một proxy ngược, mọi yêu cầu đều mang địa chỉ của proxy, nên nếu không có `TRUSTED_PROXY` thì bộ hãm đếm tất cả máy khách vào một giỏ và những lần thất bại của kẻ tấn công cũng khóa bạn ở ngoài. Khai báo proxy trong `TRUSTED_PROXY` để việc đếm trở lại theo từng máy khách.
+- Reverse proxy đặt trước BombVault phải chuyển tiếp header `Authorization` hoặc `X-API-Key` tới `/mcp` và không được đệm câu trả lời, nếu không trợ lý sẽ không kết nối được. Xem [Máy chủ MCP](mcp.md#tls).
 - Với `HTTP_ONLY=true` cookie phiên mất cờ `Secure` của nó (bắt buộc phải vậy, để hoạt động qua HTTP thuần), nên chỉ bật mật khẩu phía sau một proxy kết thúc TLS nếu tính bảo mật là quan trọng.
 - Kết nối SSH sao lưu VM tin cậy host key ở lần kết nối đầu tiên (TOFU) và ghim nó sau đó. Xác minh khóa của máy chủ ngoài luồng nếu đường dẫn container-tới-máy-chủ của bạn không tin cậy.
 - Các bản sao lưu được mã hóa bởi restic khi bật mã hóa (Settings; mặc định bật), với khóa dẫn xuất từ `APP_KEY`.
+
+## Máy chủ MCP {#mcp-server}
+
+Máy chủ MCP không cần biến môi trường nào. Bạn bật nó bằng cách tạo một khóa tại **Cài đặt, Hệ thống, Máy chủ MCP**, và nó trả lời ở `/mcp` trên cùng cổng với giao diện web (ví dụ `https://192.168.1.10:3443/mcp`). Khi không có khóa đang hoạt động, đường dẫn này trả lời `404`. Máy khách, chứng chỉ và các giới hạn được mô tả tại [Máy chủ MCP](mcp.md).
 
 ## Sao lưu VM qua SSH
 
