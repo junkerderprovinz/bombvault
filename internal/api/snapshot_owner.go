@@ -270,6 +270,18 @@ func (c ownerContext) throughLink(id string, ts time.Time, timed bool) (possible
 	return []string{id}, id
 }
 
+// namesItem reports whether snap carries identity, or a former name linked to
+// it, as a tag of its own. A disk image carries neither, only a tag derived
+// from one.
+func (c ownerContext) namesItem(snap restic.Snapshot, identity string) bool {
+	for _, tag := range snap.Tags {
+		if tag == identity || c.aliases[tag].identity == identity {
+			return true
+		}
+	}
+	return false
+}
+
 // runTag is the vmrun:<id> tag that ties the snapshots of one VM backup together.
 func runTag(sn restic.Snapshot) string {
 	for _, tag := range sn.Tags {
