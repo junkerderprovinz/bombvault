@@ -161,6 +161,19 @@ describe("the rename suggestion on a container card", () => {
     expect(await screen.findByText("radarr already has backups of its own")).toBeTruthy();
   });
 
+  it("shows the translated reason when the refusal carries a code", async () => {
+    vi.mocked(takeOverContainer).mockResolvedValueOnce({
+      ok: false,
+      error: 'rename "radarr-movies": container:radarr: that name already has a copy rule',
+      code: "copy-rule-taken",
+    });
+    renderRow(suggested);
+    fireEvent.click(screen.getByRole("button", { name: "Take over" }));
+    await confirmDialog();
+
+    expect(await screen.findByText(en["placementCode.copyRuleTaken"])).toBeTruthy();
+  });
+
   it("stays hidden for that pair after Not this one, across a fresh render", async () => {
     renderRow(suggested);
     fireEvent.click(screen.getByRole("button", { name: "Not this one" }));
@@ -341,6 +354,19 @@ describe("a container card that took over an entry", () => {
     await confirmDialog();
 
     expect(await screen.findByText("radarr-old stays linked")).toBeTruthy();
+  });
+
+  it("shows the translated reason when the unlink refusal carries a code", async () => {
+    vi.mocked(unlinkContainerAlias).mockResolvedValueOnce({
+      ok: false,
+      error: 'unlink "radarr-old": container:radarr-old: that name already has a copy rule',
+      code: "copy-rule-taken",
+    });
+    renderRow(linked);
+    fireEvent.click(screen.getByRole("button", { name: "Unlink radarr-old" }));
+    await confirmDialog();
+
+    expect(await screen.findByText(en["placementCode.copyRuleTaken"])).toBeTruthy();
   });
 
   it("does not unlink when the dialog is cancelled", async () => {
