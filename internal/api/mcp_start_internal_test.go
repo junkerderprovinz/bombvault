@@ -355,6 +355,52 @@ func TestMCPRetentionGuardKeepsOlderRestorePoints(t *testing.T) {
 	})
 }
 
+// Off-site retention runs per destination, so the guard has to hold a start to
+// the tightest destination the item replicates to, not to the global columns
+// that only seed the first one.
+func TestMCPRetentionGuardReadsEachOffsiteDestination(t *testing.T) {
+	h, repo, sets := newMCPStartHandler(t, "docs")
+	set := sets["docs"]
+	s, err := repo.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.RetentionKeepLast = 0
+	s.RetentionKeepDaily = 7
+	s.OffsiteRetentionKeepLast = 0
+	if err := repo.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	for _, dest := range []store.OffsiteTarget{
+		{Domain: "files", Name: "NAS", Repo: "rest:http://nas/files", RetentionKeepLast: 5, Enabled: true},
+		{Domain: "files", Name: "B2", Repo: "b2:bucket:files", RetentionKeepLast: 2, Enabled: true},
+		{Domain: "files", Name: "Vault", Repo: "rest:http://vault/files", RetentionKeepLast: 1, Immutable: true, Enabled: true},
+		{Domain: "files", Name: "Old", Repo: "rest:http://old/files", RetentionKeepLast: 1, Enabled: false},
+	} {
+		if _, err := repo.UpsertOffsiteTarget(dest); err != nil {
+			t.Fatal(err)
+		}
+	}
+	item := mcpItem{Domain: "files", ID: set.ID, Name: set.Name}
+
+	seedBackup(t, repo, set.ID, "", "")
+	if hold, err := h.mcpRetentionHold(s, item, time.Now()); err != nil || hold != nil {
+		t.Fatalf("the first MCP backup was held back: %v, %v", hold, err)
+	}
+
+	seedBackup(t, repo, set.ID, "mcp", "0b7e")
+	hold, err := h.mcpRetentionHold(s, item, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hold == nil {
+		t.Fatal("B2 keeps the last 2, one of them came through MCP, and a second MCP backup was allowed")
+	}
+	if hold.detail["keepLast"] != 2 {
+		t.Fatalf("detail = %v, want the keepLast of B2, the tightest destination that prunes", hold.detail)
+	}
+}
+
 // The tool list is one list for every key, so the permission is the handler's
 // to check on every call.
 func TestMCPStartPermissionRecheckedInHandler(t *testing.T) {
