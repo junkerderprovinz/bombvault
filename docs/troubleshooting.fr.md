@@ -75,7 +75,7 @@ Même cause : le nettoyage laisse intactes les anciennes sauvegardes d'un élém
 
 ## L'import de l'historique indique qu'un dépôt n'a pas pu être lu
 
-Après la mise à jour, BombVault lit une fois la taille des sauvegardes antérieures dans chaque dépôt. Un dépôt injoignable à ce moment, par exemple une cible hors site en panne ou un partage non monté, est listé dans la carte **Anomalies** de **Paramètres, Intégrité** et réessayé une fois par jour. Ses éléments apprennent entre-temps des nouvelles sauvegardes.
+Après la mise à jour, BombVault lit une fois la taille des sauvegardes antérieures dans chaque dépôt. Un dépôt injoignable à ce moment, par exemple une cible hors site en panne ou un partage non monté, est compté dans la carte **Anomalies** de **Paramètres, Intégrité** et réessayé une fois par jour. Ses éléments apprennent entre-temps des nouvelles sauvegardes.
 
 ## L'alerte d'espace disque ne correspond pas au tableau de bord Unraid
 

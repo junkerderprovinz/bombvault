@@ -75,7 +75,7 @@ The same cause: prune leaves the old backups of an item with such an anomaly alo
 
 ## History import says a repository could not be read
 
-After the upgrade BombVault reads the sizes of earlier backups from each repository once. A repository it could not reach at that time, such as an off-site target that was down or a share that was not mounted, is listed on the **Anomalies** card under **Settings, Integrity** and tried again once a day. Its items learn from new backups in the meantime.
+After the upgrade BombVault reads the sizes of earlier backups from each repository once. A repository it could not reach at that time, such as an off-site target that was down or a share that was not mounted, is counted on the **Anomalies** card under **Settings, Integrity** and tried again once a day. Its items learn from new backups in the meantime.
 
 ## The disk-space warning does not match the Unraid dashboard
 
