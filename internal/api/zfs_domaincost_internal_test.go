@@ -163,9 +163,12 @@ func TestCoverageZFSItemsAndSkippedMembers(t *testing.T) {
 	}
 	if err := st.ReplaceZFSMembers(scheduled.ID, []store.ZFSMember{
 		{ItemID: scheduled.ID, Dataset: "cache/appdata", Outcome: "backed-up"},
+		{ItemID: scheduled.ID, Dataset: "cache/appdata/fresh", Outcome: ""},
 		{ItemID: scheduled.ID, Dataset: "cache/appdata/secret", Outcome: "key-not-loaded"},
+		{ItemID: scheduled.ID, Dataset: "cache/appdata/broken", Outcome: "backup-failed"},
 		{ItemID: scheduled.ID, Dataset: "cache/appdata/disk", Outcome: "zvol"},
-		{ItemID: scheduled.ID, Dataset: "cache/appdata/struct", Outcome: "canmount-off"},
+		{ItemID: scheduled.ID, Dataset: "cache/appdata/struct", Outcome: "canmount-off", UsedByDataset: 128 << 10},
+		{ItemID: scheduled.ID, Dataset: "cache/appdata/hidden", Outcome: "canmount-off", UsedByDataset: 5 << 30},
 		{ItemID: scheduled.ID, Dataset: "cache/appdata/cachey", Outcome: "excluded"},
 	}); err != nil {
 		t.Fatalf("write members: %v", err)
@@ -191,10 +194,18 @@ func TestCoverageZFSItemsAndSkippedMembers(t *testing.T) {
 	if !names["cache/media"] {
 		t.Fatalf("the item nothing schedules is missing from %v", names)
 	}
-	if !names["cache/appdata/secret (key-not-loaded)"] {
-		t.Fatalf("the unreadable member is missing from %v", names)
+	for _, wanted := range []string{
+		"cache/appdata/secret (key-not-loaded)",
+		"cache/appdata/broken (backup-failed)",
+		"cache/appdata/hidden (canmount-off)",
+	} {
+		if !names[wanted] {
+			t.Fatalf("%s is missing from %v", wanted, names)
+		}
 	}
 	for _, unwanted := range []string{
+		"cache/appdata/fresh ()",
+		"cache/appdata (backed-up)",
 		"cache/appdata/disk (zvol)",
 		"cache/appdata/struct (canmount-off)",
 		"cache/appdata/cachey (excluded)",

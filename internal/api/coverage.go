@@ -329,10 +329,16 @@ func (s *Service) coverZFSDatasets(settings store.Settings) CoverageDomain {
 	return out
 }
 
-// zfsSkippedMembers turns the members the last run left out into their own
-// entries. A volume and a structure dataset with canmount=off hold no files
-// this domain could protect, and an excluded child is a decision, so none of
-// the three is a gap.
+// zfsStructureLimit is the most a canmount=off dataset may hold and still count
+// as the usual empty parent of a set of child datasets rather than as data
+// nobody can read.
+const zfsStructureLimit = 1 << 20
+
+// zfsSkippedMembers turns the members the last run left out or failed into
+// their own entries. An empty outcome is a member the preflight found readable
+// and no run has reached since. A volume and a structure dataset with
+// canmount=off hold no files this domain could protect, and an excluded child
+// is a decision, so none of these is a gap.
 func (s *Service) zfsSkippedMembers(d store.ZFSDataset) []CoverageItem {
 	members, err := s.store.ListZFSMembers(d.ID)
 	if err != nil {
@@ -342,8 +348,12 @@ func (s *Service) zfsSkippedMembers(d store.ZFSDataset) []CoverageItem {
 	var out []CoverageItem
 	for _, m := range members {
 		switch m.Outcome {
-		case "backed-up", "empty", "excluded", "zvol", "canmount-off":
+		case "", "backed-up", "empty", "excluded", "zvol":
 			continue
+		case "canmount-off":
+			if m.UsedByDataset < zfsStructureLimit {
+				continue
+			}
 		}
 		out = append(out, CoverageItem{
 			Name:   m.Dataset + " (" + m.Outcome + ")",

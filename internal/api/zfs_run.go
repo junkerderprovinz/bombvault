@@ -46,9 +46,14 @@ func (s *Service) zfsPreflight(ctx context.Context, d store.ZFSDataset, previous
 		return nil, ref
 	}
 
-	seen := make(map[string]bool, len(previous))
-	for _, p := range previous {
-		seen[p.Dataset] = true
+	// Without a previous tree every dataset would be new, and a first run is no
+	// news about the children.
+	var seen map[string]bool
+	if len(previous) > 0 {
+		seen = make(map[string]bool, len(previous))
+		for _, p := range previous {
+			seen[p.Dataset] = true
+		}
 	}
 	members := s.zfsResolveMembers(tree, d.Dataset, d.ExcludedChildren, seen)
 	readable := 0
@@ -61,6 +66,15 @@ func (s *Service) zfsPreflight(ctx context.Context, d store.ZFSDataset, previous
 		return nil, &backup.ZFSRefusal{Code: "nothing-readable", Detail: d.Dataset}
 	}
 
+	s.recordZFSMembers(d, members)
+	if _, err := s.store.SetZFSCheck(d.ID, "ok", "", tree[0].Mountpoint, time.Now().Unix()); err != nil {
+		log.Printf("api: zfs: recording the check of %s failed: %v", d.Dataset, err)
+	}
+	return members, nil
+}
+
+// recordZFSMembers stores the tree as a preflight or a probe resolved it.
+func (s *Service) recordZFSMembers(d store.ZFSDataset, members []zfsMember) {
 	rows := make([]store.ZFSMember, 0, len(members))
 	for _, m := range members {
 		rows = append(rows, store.ZFSMember{
@@ -74,10 +88,6 @@ func (s *Service) zfsPreflight(ctx context.Context, d store.ZFSDataset, previous
 	if err := s.store.ReplaceZFSMembers(d.ID, rows); err != nil {
 		log.Printf("api: zfs: recording the tree of %s failed: %v", d.Dataset, err)
 	}
-	if _, err := s.store.SetZFSCheck(d.ID, "ok", "", tree[0].Mountpoint, time.Now().Unix()); err != nil {
-		log.Printf("api: zfs: recording the check of %s failed: %v", d.Dataset, err)
-	}
-	return members, nil
 }
 
 // zfsTreeRefusal refuses a tree no item can be built on, before anything looks
@@ -248,7 +258,16 @@ func (r zfsRunRecorder) RecordRun(runID, snap string, window time.Duration, hook
 	return r.st.RecordZFSRun(runID, r.itemID, snap, seconds, hookDetail)
 }
 
+// AddMember records the member on the run and on the item's tree, which is what
+// the coverage card and the row read.
 func (r zfsRunRecorder) AddMember(runID string, m backup.ZFSMemberResult) error {
+	var backedUpAt int64
+	if m.Outcome == outcomeBackedUp || m.Outcome == "empty" {
+		backedUpAt = time.Now().Unix()
+	}
+	if err := r.st.SetZFSMemberOutcome(r.itemID, m.Dataset, m.Outcome, backedUpAt); err != nil {
+		log.Printf("api: zfs: recording the outcome of %s on its tree failed: %v", m.Dataset, err)
+	}
 	return r.st.AddZFSRunMember(store.ZFSRunMember{
 		RunID:           runID,
 		Dataset:         m.Dataset,
@@ -385,11 +404,15 @@ func zfsSplitMembers(members []zfsMember) ([]backup.ZFSMemberPlan, []backup.ZFSM
 }
 
 // zfsMemberChanges names the datasets the tree gained or lost since the
-// previous run, and the ones whose readability changed.
+// previous run, and the ones whose readability changed. The first run of an
+// item has nothing to compare with.
 func zfsMemberChanges(previous []store.ZFSMember, members []zfsMember) []string {
+	if len(previous) == 0 {
+		return nil
+	}
 	was := make(map[string]string, len(previous))
 	for _, p := range previous {
-		was[p.Dataset] = p.Outcome
+		was[p.Dataset] = zfsSkipCode(p.Outcome)
 	}
 	present := make(map[string]bool, len(members))
 	var out []string
@@ -414,11 +437,21 @@ func zfsMemberChanges(previous []store.ZFSMember, members []zfsMember) []string 
 	return out
 }
 
+// zfsSkipCode is the preflight's verdict inside a stored member outcome: what
+// a run did to a member the preflight could read is no skip.
+func zfsSkipCode(outcome string) string {
+	switch outcome {
+	case outcomeBackedUp, "empty", "backup-failed", "snapshot-not-visible", "snapshot-loop", "not-reached":
+		return ""
+	}
+	return outcome
+}
+
 // recordZFSLeftover counts a snapshot the run could not destroy and says so
 // once, on a context the scheduled summary cannot swallow.
 func (s *Service) recordZFSLeftover(d store.ZFSDataset, root, snap string, err error) {
 	log.Printf("api: zfs: %s@%s could not be removed, the next sweep retries it: %v", root, snap, err)
-	if sErr := s.store.SetZFSLeftovers(d.ID, d.LeftoverCount+1, time.Now().Unix()); sErr != nil {
+	if sErr := s.store.AddZFSLeftover(d.ID, time.Now().Unix()); sErr != nil {
 		log.Printf("api: zfs: recording the leftover snapshot of %s failed: %v", root, sErr)
 	}
 	s.notifyZFSUnsuppressed(notify.Event{

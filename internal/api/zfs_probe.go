@@ -319,6 +319,9 @@ func (s *Service) ProbeZFSSnapshotAccess(ctx context.Context, id string) ZFSChec
 
 	check, members := s.checkZFSTree(ctx, d.Dataset, d.ExcludedChildren)
 	s.recordZFSCheck(d, check)
+	if members != nil {
+		s.recordZFSMembers(d, members)
+	}
 	if check.Code != "ok" || s.zfs == nil {
 		return check
 	}
@@ -353,6 +356,9 @@ func (s *Service) ProbeZFSSnapshotAccess(ctx context.Context, id string) ZFSChec
 		var ref *backup.ZFSRefusal
 		if errors.As(vErr, &ref) {
 			check.Members[i].Outcome = ref.Code
+			if err := s.store.SetZFSMemberOutcome(d.ID, m.Entry.Name, ref.Code, 0); err != nil {
+				log.Printf("api: zfs: recording the probe of %s failed: %v", m.Entry.Name, err)
+			}
 			if check.Code == "ok" {
 				check.Code = ref.Code
 				check.Detail = ref.Detail

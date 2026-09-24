@@ -380,6 +380,7 @@ func TestZFSBackupHappyPath(t *testing.T) {
 
 func TestZFSBackupPicksUpNewChildAndReportsIt(t *testing.T) {
 	s, st, host, eng := zfsRunFixture(t, []zfs.ListEntry{zfsEntry(zfsRoot, "/mnt/cache/appdata")})
+	messages := zfsCaptureNotifications(t, s)
 	d := zfsSeedItem(t, st, zfsRoot)
 
 	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err != nil {
@@ -407,8 +408,93 @@ func TestZFSBackupPicksUpNewChildAndReportsIt(t *testing.T) {
 	if child.Dataset == "" || !child.IsNew {
 		t.Fatalf("second run's members = %v, want %s marked new", members, zfsChild)
 	}
-	if changes := zfsMemberChanges(nil, nil); len(changes) != 0 {
-		t.Fatalf("an unchanged tree reported %v", changes)
+	if !zfsAnyMessageContains(messages(), zfsChild+" is new") {
+		t.Fatalf("notifications = %v, want the new child named", messages())
+	}
+}
+
+func TestZFSBackupFirstRunReportsNothingAsNew(t *testing.T) {
+	s, st, _, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+	messages := zfsCaptureNotifications(t, s)
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	members, err := st.ListZFSRunMembers(zfsLastRun(t, st, d.ID).ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range members {
+		if m.IsNew {
+			t.Fatalf("%s marked new on the item's first run", m.Dataset)
+		}
+	}
+	if zfsAnyMessageContains(messages(), "changed") {
+		t.Fatalf("notifications = %v, want no change message for a new item", messages())
+	}
+}
+
+func TestZFSBackupUnchangedTreeSendsNoChangeMessage(t *testing.T) {
+	tree := append(zfsTwoDatasetTree(), zfsEntry(zfsRoot+"/off", "/mnt/cache/appdata/off"))
+	tree[2].Canmount = "off"
+	s, st, _, _ := zfsRunFixture(t, tree)
+	messages := zfsCaptureNotifications(t, s)
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	for i := 0; i < 2; i++ {
+		if _, err := s.BackupZFSDataset(context.Background(), d.ID); err != nil {
+			t.Fatalf("backup %d: %v", i+1, err)
+		}
+	}
+	if zfsAnyMessageContains(messages(), "changed") {
+		t.Fatalf("notifications = %v, want no change message for the same tree", messages())
+	}
+}
+
+func TestZFSBackupRecordsEachMembersResultOnTheTree(t *testing.T) {
+	s, st, host, eng := zfsRunFixture(t, zfsTwoDatasetTree())
+	host.onSnapshot = func(snap string) {
+		eng.backupErr = map[string]error{zfsChildPath + "/.zfs/snapshot/" + snap: errors.New("restic: read error")}
+	}
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err == nil {
+		t.Fatal("a member that failed must fail the run")
+	}
+	members, err := st.ListZFSMembers(d.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]store.ZFSMember{}
+	for _, m := range members {
+		got[m.Dataset] = m
+	}
+	if root := got[zfsRoot]; root.Outcome != "backed-up" || root.LastBackupAt == 0 {
+		t.Fatalf("root = %+v, want it backed up with its time", root)
+	}
+	if child := got[zfsChild]; child.Outcome != "backup-failed" || child.LastBackupAt != 0 {
+		t.Fatalf("child = %+v, want the run's failure and no backup time", child)
+	}
+}
+
+func TestZFSBackupCountsALeftoverOnTheSweptCount(t *testing.T) {
+	s, st, host, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+	d := zfsSeedItem(t, st, zfsRoot)
+	if err := st.SetZFSLeftovers(d.ID, 3, time.Now().Unix()); err != nil {
+		t.Fatal(err)
+	}
+	host.destroyErr = &zfs.CmdError{Code: "zfs-permission", Stderr: "cannot destroy snapshot: permission denied"}
+
+	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	row, err := st.GetZFSDataset(d.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if row.LeftoverCount != 1 {
+		t.Fatalf("leftover count = %d, want the one snapshot the sweep did not find", row.LeftoverCount)
 	}
 }
 

@@ -266,6 +266,14 @@ func (r *Repo) SetZFSLeftovers(id string, count int, at int64) error {
 		`UPDATE zfs_datasets SET leftover_count = ?, leftover_checked_at = ? WHERE id = ?`, count, at, id)
 }
 
+// AddZFSLeftover counts one more snapshot stamp that could not be removed. It
+// adds to the stored count rather than to a copy the caller read, because a
+// sweep may have rewritten the count since.
+func (r *Repo) AddZFSLeftover(id string, at int64) error {
+	return r.updateZFSDataset("AddZFSLeftover", id,
+		`UPDATE zfs_datasets SET leftover_count = leftover_count + 1, leftover_checked_at = ? WHERE id = ?`, at, id)
+}
+
 // ListZFSDatasets returns every item ordered by its root dataset.
 func (r *Repo) ListZFSDatasets() ([]ZFSDataset, error) {
 	return r.zfsDatasets("ListZFSDatasets", `SELECT `+zfsDatasetColumns+` FROM zfs_datasets ORDER BY dataset`)
@@ -398,6 +406,20 @@ func (r *Repo) ReplaceZFSMembers(itemID string, ms []ZFSMember) error {
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("ReplaceZFSMembers commit: %w", err)
+	}
+	return nil
+}
+
+// SetZFSMemberOutcome records what a run did to one member of the tree. A
+// backedUpAt of zero keeps the member's last backup time.
+func (r *Repo) SetZFSMemberOutcome(itemID, dataset, outcome string, backedUpAt int64) error {
+	_, err := r.db.Exec(`
+		UPDATE zfs_members
+		SET outcome = ?, last_backup_at = CASE WHEN ? > 0 THEN ? ELSE last_backup_at END
+		WHERE item_id = ? AND dataset = ?`,
+		outcome, backedUpAt, backedUpAt, itemID, dataset)
+	if err != nil {
+		return fmt.Errorf("SetZFSMemberOutcome %s: %w", dataset, err)
 	}
 	return nil
 }
