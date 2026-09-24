@@ -1,18 +1,14 @@
 {#
-  Sidebar footer controls — a faithful copy of the app's SidebarControls
-  (web/src/components/Sidebar.tsx): a flag + language-name button that opens a
-  listbox of the 26 documentation languages, and a sun/moon dark/light row.
-  Rendered inside .md-sidebar--primary and pinned to the bottom by extra.css;
-  wired by javascripts/bv-sidebar-controls.js.
+  The app's SidebarControls (web/src/components/Sidebar.tsx) for the docs: a
+  flag and language button that opens a listbox of the documentation
+  languages, and a dark/light row. extra.css pins it to the bottom of the
+  rail; javascripts/bv-sidebar-controls.js wires it up.
 
-  The count is deliberately NOT the app's: the interface ships in 42 languages,
-  these docs are translated into 26, and this picker offers exactly the doc set
-  (mkdocs.yml's i18n plugin languages, kept in step with bv_langs below).
-
-  Language list mirrors the app locales (web/src/lib/i18n.ts): [locale, native
-  name, ISO 3166-1 alpha-2 for the flag]. The flag emoji is derived from the ISO
-  code at runtime so this template stays plain. English is the default (served at
-  the site root, no locale prefix).
+  The app ships 42 languages but the docs only 26, so bv_langs lists the
+  languages of mkdocs.yml's i18n plugin and has to stay in step with them.
+  Each entry is [locale, native name, ISO 3166-1 alpha-2 code for the flag];
+  the flag is derived from the code at runtime. English is the default and is
+  served at the site root without a locale prefix.
 #}
 {% set bv_langs = [
   ["en", "English",     "gb"],
@@ -43,7 +39,7 @@
   ["zh", "中文",         "cn"]
 ] %}
 <div class="bv-sidebar-controls" data-bv-default="en" data-bv-base="{{ base_url }}">
-  {# Language picker — current flag + name, dropdown opens upward. #}
+  {# The current flag and name; the menu opens upward. #}
   <div class="bv-lang-wrap">
     <button type="button" class="bv-ctl-row bv-lang" aria-haspopup="listbox" aria-expanded="false" data-bv-lang-toggle title="Language">
       <span class="bv-ctl-flag" data-bv-current-flag aria-hidden="true"></span>
@@ -62,7 +58,6 @@
     </div>
   </div>
 
-  {# Dark / light — icon + current-mode label, mirrors the app's theme row. #}
   <button type="button" class="bv-ctl-row bv-theme" data-bv-theme-toggle title="Toggle dark / light">
     <span class="bv-ctl-flag bv-theme-icon" aria-hidden="true"></span>
     <span class="bv-ctl-label" data-bv-theme-label>Dark</span>
