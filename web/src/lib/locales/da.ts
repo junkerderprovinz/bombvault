@@ -1598,7 +1598,7 @@ const da: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Skal hele puljen {dataset} kopieres som ét element? Den indeholder: {names}",
   "zfs.add.shareSplit": "{dataset} findes også på {names}. Filer, som moveren har lagt der, er ikke med i dette element.",
   "zfs.add.hiddenLegacy": "Datasæt til Docker-lag: {n}",
-  "zfs.add.truncated": "Kun de første {n} datasæt vises. Brug filteret for at finde resten.",
+  "zfs.add.truncated": "Listen er afkortet. Viste datasæt: {n}. Brug filteret for at finde resten.",
   "zfs.add.submit": "Tilføj de valgte ({n})",
   "zfs.add.result.ok": "{dataset} tilføjet",
   "zfs.add.result.failed": "{dataset} blev ikke tilføjet: {reason}",

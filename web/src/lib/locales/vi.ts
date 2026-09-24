@@ -1590,7 +1590,7 @@ const vi: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Sao lưu cả pool {dataset} thành một mục? Nó chứa: {names}",
   "zfs.add.shareSplit": "{dataset} cũng có trên {names}. Những tệp mover đã chuyển sang đó không nằm trong mục này.",
   "zfs.add.hiddenLegacy": "Tập dữ liệu lớp Docker: {n}",
-  "zfs.add.truncated": "Chỉ hiện {n} tập dữ liệu đầu tiên. Dùng bộ lọc để tìm phần còn lại.",
+  "zfs.add.truncated": "Danh sách đã bị rút gọn. Số tập dữ liệu đang hiện: {n}. Dùng bộ lọc để tìm phần còn lại.",
   "zfs.add.submit": "Thêm những mục đã chọn ({n})",
   "zfs.add.result.ok": "Đã thêm {dataset}",
   "zfs.add.result.failed": "{dataset} không được thêm: {reason}",

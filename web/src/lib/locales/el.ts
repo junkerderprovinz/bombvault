@@ -1598,7 +1598,7 @@ const el: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Να αντιγραφεί ολόκληρη η ομάδα {dataset} ως μία εγγραφή; Περιέχει: {names}",
   "zfs.add.shareSplit": "Το {dataset} υπάρχει και σε {names}. Τα αρχεία που έβαλε εκεί ο mover δεν είναι σε αυτή την εγγραφή.",
   "zfs.add.hiddenLegacy": "Σύνολα δεδομένων επιπέδων Docker: {n}",
-  "zfs.add.truncated": "Εμφανίζονται μόνο τα πρώτα {n} σύνολα δεδομένων. Χρησιμοποίησε το φίλτρο για τα υπόλοιπα.",
+  "zfs.add.truncated": "Η λίστα είναι περικομμένη. Εμφανιζόμενα σύνολα δεδομένων: {n}. Χρησιμοποίησε το φίλτρο για τα υπόλοιπα.",
   "zfs.add.submit": "Πρόσθεσε τα επιλεγμένα ({n})",
   "zfs.add.result.ok": "Το {dataset} προστέθηκε",
   "zfs.add.result.failed": "Το {dataset} δεν προστέθηκε: {reason}",

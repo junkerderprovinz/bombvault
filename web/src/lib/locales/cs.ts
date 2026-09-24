@@ -1596,7 +1596,7 @@ const cs: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Zálohovat celý pool {dataset} jako jednu položku? Obsahuje: {names}",
   "zfs.add.shareSplit": "{dataset} existuje i na {names}. Soubory, které tam přesunul mover, v této položce nejsou.",
   "zfs.add.hiddenLegacy": "Datové sady vrstev Dockeru: {n}",
-  "zfs.add.truncated": "Zobrazeno je jen prvních {n} datových sad. Zbytek najdeš filtrem.",
+  "zfs.add.truncated": "Seznam je zkrácený. Zobrazené datové sady: {n}. Zbytek najdeš filtrem.",
   "zfs.add.submit": "Přidat vybrané ({n})",
   "zfs.add.result.ok": "{dataset} přidán",
   "zfs.add.result.failed": "{dataset} nebyl přidán: {reason}",

@@ -1598,7 +1598,7 @@ const it: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Salvare tutto il pool {dataset} come un solo elemento? Contiene: {names}",
   "zfs.add.shareSplit": "{dataset} esiste anche su {names}. I file che il mover ha messo lì non sono in questo elemento.",
   "zfs.add.hiddenLegacy": "Dataset dei livelli Docker: {n}",
-  "zfs.add.truncated": "Sono mostrati solo i primi {n} dataset. Usa il filtro per trovare gli altri.",
+  "zfs.add.truncated": "L'elenco è troncato. Dataset mostrati: {n}. Usa il filtro per trovare gli altri.",
   "zfs.add.submit": "Aggiungi i selezionati ({n})",
   "zfs.add.result.ok": "{dataset} aggiunto",
   "zfs.add.result.failed": "{dataset} non è stato aggiunto: {reason}",

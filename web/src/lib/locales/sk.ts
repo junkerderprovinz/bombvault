@@ -1803,7 +1803,7 @@ const sk: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Zálohovať celý pool {dataset} ako jednu položku? Obsahuje: {names}",
   "zfs.add.shareSplit": "{dataset} je aj na {names}. Súbory, ktoré tam presunul mover, v tejto položke nie sú.",
   "zfs.add.hiddenLegacy": "Dátové sady vrstiev Dockeru: {n}",
-  "zfs.add.truncated": "Zobrazených je len prvých {n} dátových sád. Zvyšok nájdeš filtrom.",
+  "zfs.add.truncated": "Zoznam je skrátený. Zobrazené dátové sady: {n}. Zvyšok nájdeš filtrom.",
   "zfs.add.submit": "Pridať vybraté ({n})",
   "zfs.add.result.ok": "{dataset} pridaný",
   "zfs.add.result.failed": "{dataset} nebol pridaný: {reason}",

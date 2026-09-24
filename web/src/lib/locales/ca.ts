@@ -1803,7 +1803,7 @@ const ca: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Vols copiar tot el conjunt {dataset} com un sol element? Conté: {names}",
   "zfs.add.shareSplit": "{dataset} també existeix a {names}. Els fitxers que el mover hi ha posat no són en aquest element.",
   "zfs.add.hiddenLegacy": "Conjunts de dades de capes de Docker: {n}",
-  "zfs.add.truncated": "Només es mostren els primers {n} conjunts de dades. Fes servir el filtre per trobar la resta.",
+  "zfs.add.truncated": "La llista està retallada. Conjunts de dades mostrats: {n}. Fes servir el filtre per trobar la resta.",
   "zfs.add.submit": "Afegeix els seleccionats ({n})",
   "zfs.add.result.ok": "{dataset} afegit",
   "zfs.add.result.failed": "{dataset} no s'ha afegit: {reason}",

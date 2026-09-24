@@ -1803,7 +1803,7 @@ const ms: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Sandarkan seluruh kolam {dataset} sebagai satu item? Ia mengandungi: {names}",
   "zfs.add.shareSplit": "{dataset} juga wujud pada {names}. Fail yang dipindahkan mover ke sana tiada dalam item ini.",
   "zfs.add.hiddenLegacy": "Set data lapisan Docker: {n}",
-  "zfs.add.truncated": "Hanya {n} set data pertama ditunjukkan. Guna penapis untuk mencari yang lain.",
+  "zfs.add.truncated": "Senarai ini dipendekkan. Set data yang ditunjukkan: {n}. Guna penapis untuk mencari yang lain.",
   "zfs.add.submit": "Tambah yang dipilih ({n})",
   "zfs.add.result.ok": "{dataset} ditambah",
   "zfs.add.result.failed": "{dataset} tidak ditambah: {reason}",

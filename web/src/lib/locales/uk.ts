@@ -1593,7 +1593,7 @@ const uk: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Скопіювати весь пул {dataset} як один запис? У ньому є: {names}",
   "zfs.add.shareSplit": "{dataset} є й на {names}. Файли, які mover переніс туди, до цього запису не входять.",
   "zfs.add.hiddenLegacy": "Наборів даних шарів Docker: {n}",
-  "zfs.add.truncated": "Показано лише перші {n} наборів даних. Решту знайди через фільтр.",
+  "zfs.add.truncated": "Список скорочено. Показано наборів даних: {n}. Решту знайди через фільтр.",
   "zfs.add.submit": "Додати вибрані ({n})",
   "zfs.add.result.ok": "{dataset} додано",
   "zfs.add.result.failed": "{dataset} не додано: {reason}",

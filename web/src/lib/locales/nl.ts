@@ -1595,7 +1595,7 @@ const nl: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "De hele pool {dataset} als één item back-uppen? Hij bevat: {names}",
   "zfs.add.shareSplit": "{dataset} bestaat ook op {names}. Bestanden die de mover daarheen heeft gezet, zitten niet in dit item.",
   "zfs.add.hiddenLegacy": "Datasets van Docker-lagen: {n}",
-  "zfs.add.truncated": "Alleen de eerste {n} datasets worden getoond. Gebruik het filter om de rest te vinden.",
+  "zfs.add.truncated": "De lijst is ingekort. Getoonde datasets: {n}. Gebruik het filter om de rest te vinden.",
   "zfs.add.submit": "Gekozen toevoegen ({n})",
   "zfs.add.result.ok": "{dataset} toegevoegd",
   "zfs.add.result.failed": "{dataset} is niet toegevoegd: {reason}",

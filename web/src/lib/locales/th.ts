@@ -1601,7 +1601,7 @@ const th: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "จะสำรองพูล {dataset} ทั้งพูลเป็นรายการเดียวไหม ข้างในมี: {names}",
   "zfs.add.shareSplit": "{dataset} มีอยู่บน {names} ด้วย ไฟล์ที่ mover ย้ายไปไว้ตรงนั้นไม่ได้อยู่ในรายการนี้",
   "zfs.add.hiddenLegacy": "ชุดข้อมูลชั้นของ Docker: {n}",
-  "zfs.add.truncated": "แสดงเพียง {n} ชุดข้อมูลแรก ใช้ตัวกรองเพื่อหาที่เหลือ",
+  "zfs.add.truncated": "รายการถูกตัดให้สั้นลง ชุดข้อมูลที่แสดง: {n} ใช้ตัวกรองเพื่อหาที่เหลือ",
   "zfs.add.submit": "เพิ่มที่เลือกไว้ ({n})",
   "zfs.add.result.ok": "เพิ่ม {dataset} แล้ว",
   "zfs.add.result.failed": "{dataset} ไม่ได้ถูกเพิ่ม: {reason}",

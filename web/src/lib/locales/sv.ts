@@ -1598,7 +1598,7 @@ const sv: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Ska hela poolen {dataset} kopieras som en enda post? Den innehåller: {names}",
   "zfs.add.shareSplit": "{dataset} finns också på {names}. Filer som movern lagt där ingår inte i den här posten.",
   "zfs.add.hiddenLegacy": "Datauppsättningar för Docker-lager: {n}",
-  "zfs.add.truncated": "Bara de första {n} datauppsättningarna visas. Använd filtret för att hitta resten.",
+  "zfs.add.truncated": "Listan är förkortad. Visade datauppsättningar: {n}. Använd filtret för att hitta resten.",
   "zfs.add.submit": "Lägg till de valda ({n})",
   "zfs.add.result.ok": "{dataset} tillagd",
   "zfs.add.result.failed": "{dataset} lades inte till: {reason}",

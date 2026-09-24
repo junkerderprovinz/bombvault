@@ -1601,7 +1601,7 @@ const ro: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Copiezi tot bazinul {dataset} ca un singur element? Conține: {names}",
   "zfs.add.shareSplit": "{dataset} există și pe {names}. Fișierele pe care moverul le-a pus acolo nu sunt în acest element.",
   "zfs.add.hiddenLegacy": "Seturi de date ale straturilor Docker: {n}",
-  "zfs.add.truncated": "Se arată doar primele {n} seturi de date. Folosește filtrul ca să le găsești pe celelalte.",
+  "zfs.add.truncated": "Lista este scurtată. Seturi de date afișate: {n}. Folosește filtrul ca să le găsești pe celelalte.",
   "zfs.add.submit": "Adaugă cele selectate ({n})",
   "zfs.add.result.ok": "{dataset} adăugat",
   "zfs.add.result.failed": "{dataset} nu a fost adăugat: {reason}",

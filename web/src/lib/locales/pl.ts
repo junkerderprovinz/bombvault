@@ -1593,7 +1593,7 @@ const pl: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Skopiować całą pulę {dataset} jako jedną pozycję? Zawiera: {names}",
   "zfs.add.shareSplit": "{dataset} istnieje też na {names}. Plików, które mover tam przeniósł, nie ma w tej pozycji.",
   "zfs.add.hiddenLegacy": "Zbiory danych warstw Dockera: {n}",
-  "zfs.add.truncated": "Widać tylko pierwsze {n} zbiorów danych. Resztę znajdziesz filtrem.",
+  "zfs.add.truncated": "Lista jest skrócona. Widoczne zbiory danych: {n}. Resztę znajdziesz filtrem.",
   "zfs.add.submit": "Dodaj wybrane ({n})",
   "zfs.add.result.ok": "{dataset} dodany",
   "zfs.add.result.failed": "{dataset} nie został dodany: {reason}",

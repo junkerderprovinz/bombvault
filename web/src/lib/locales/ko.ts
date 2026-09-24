@@ -1590,7 +1590,7 @@ const ko: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "풀 {dataset} 전체를 항목 하나로 백업할까요? 안에 있는 것: {names}",
   "zfs.add.shareSplit": "{dataset}은 {names}에도 있습니다. mover가 그쪽으로 옮긴 파일은 이 항목에 들어가지 않습니다.",
   "zfs.add.hiddenLegacy": "Docker 레이어 데이터세트: {n}",
-  "zfs.add.truncated": "처음 {n}개의 데이터세트만 보입니다. 나머지는 거르기로 찾으세요.",
+  "zfs.add.truncated": "목록이 잘렸습니다. 표시된 데이터세트: {n}. 나머지는 거르기로 찾으세요.",
   "zfs.add.submit": "선택한 것 추가 ({n})",
   "zfs.add.result.ok": "{dataset} 추가됨",
   "zfs.add.result.failed": "{dataset}은 추가되지 않았습니다: {reason}",

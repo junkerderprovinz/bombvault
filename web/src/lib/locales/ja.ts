@@ -1590,7 +1590,7 @@ const ja: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "プール {dataset} 全体をひとつの項目としてバックアップしますか。中身: {names}",
   "zfs.add.shareSplit": "{dataset} は {names} にもあります。mover がそちらへ移したファイルはこの項目に入りません。",
   "zfs.add.hiddenLegacy": "Docker レイヤーのデータセット: {n}",
-  "zfs.add.truncated": "最初の {n} 件のデータセットだけを表示しています。残りは絞り込みで探してください。",
+  "zfs.add.truncated": "一覧は途中までです。表示中のデータセット: {n}。残りは絞り込みで探してください。",
   "zfs.add.submit": "選択したものを追加 ({n})",
   "zfs.add.result.ok": "{dataset} を追加しました",
   "zfs.add.result.failed": "{dataset} は追加されませんでした: {reason}",

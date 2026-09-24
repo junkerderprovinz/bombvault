@@ -1803,7 +1803,7 @@ const fa: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "کل استخر {dataset} همچون یک مورد نگهداری شود؟ اینها را دارد: {names}",
   "zfs.add.shareSplit": "{dataset} روی {names} هم هست. پرونده‌هایی که mover به آنجا برده در این مورد نیستند.",
   "zfs.add.hiddenLegacy": "مجموعه‌داده‌های لایه‌های Docker: {n}",
-  "zfs.add.truncated": "تنها {n} مجموعه‌داده نخست نشان داده می‌شود. برای یافتن بقیه از پالایه استفاده کن.",
+  "zfs.add.truncated": "فهرست کوتاه شده است. مجموعه‌داده‌های نشان‌داده‌شده: {n}. برای یافتن بقیه از پالایه استفاده کن.",
   "zfs.add.submit": "افزودن برگزیده‌ها ({n})",
   "zfs.add.result.ok": "{dataset} افزوده شد",
   "zfs.add.result.failed": "{dataset} افزوده نشد: {reason}",

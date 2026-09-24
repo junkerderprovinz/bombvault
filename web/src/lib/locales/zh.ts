@@ -1590,7 +1590,7 @@ const zh: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "把整个存储池 {dataset} 作为一个条目备份吗？里面有：{names}",
   "zfs.add.shareSplit": "{dataset} 在 {names} 上也有。mover 挪过去的文件不在这个条目里。",
   "zfs.add.hiddenLegacy": "Docker 层数据集：{n}",
-  "zfs.add.truncated": "只显示前 {n} 个数据集。用筛选找出其余的。",
+  "zfs.add.truncated": "列表已截断。显示的数据集：{n}。用筛选找出其余的。",
   "zfs.add.submit": "添加所选（{n}）",
   "zfs.add.result.ok": "已添加 {dataset}",
   "zfs.add.result.failed": "{dataset} 没有添加：{reason}",

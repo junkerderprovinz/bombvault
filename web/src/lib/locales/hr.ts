@@ -1803,7 +1803,7 @@ const hr: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Kopirati cijeli bazen {dataset} kao jednu stavku? Sadrži: {names}",
   "zfs.add.shareSplit": "{dataset} postoji i na {names}. Datoteke koje je mover premjestio onamo nisu u ovoj stavci.",
   "zfs.add.hiddenLegacy": "Skupovi podataka Docker slojeva: {n}",
-  "zfs.add.truncated": "Prikazano je samo prvih {n} skupova podataka. Ostale nađi filtrom.",
+  "zfs.add.truncated": "Popis je skraćen. Prikazani skupovi podataka: {n}. Ostale nađi filtrom.",
   "zfs.add.submit": "Dodaj odabrano ({n})",
   "zfs.add.result.ok": "{dataset} dodan",
   "zfs.add.result.failed": "{dataset} nije dodan: {reason}",

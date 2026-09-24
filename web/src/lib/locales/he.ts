@@ -1598,7 +1598,7 @@ const he: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "לגבות את כל המאגר {dataset} כפריט אחד? הוא מכיל: {names}",
   "zfs.add.shareSplit": "{dataset} קיים גם ב{names}. קבצים שה mover העביר לשם אינם בפריט הזה.",
   "zfs.add.hiddenLegacy": "מערכי נתונים של שכבות Docker: {n}",
-  "zfs.add.truncated": "מוצגים רק {n} מערכי הנתונים הראשונים. השתמש בסינון כדי למצוא את השאר.",
+  "zfs.add.truncated": "הרשימה מקוצרת. מערכי נתונים מוצגים: {n}. השתמש בסינון כדי למצוא את השאר.",
   "zfs.add.submit": "הוסף את הנבחרים ({n})",
   "zfs.add.result.ok": "{dataset} נוסף",
   "zfs.add.result.failed": "{dataset} לא נוסף: {reason}",

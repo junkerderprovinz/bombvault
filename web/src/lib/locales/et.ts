@@ -1803,7 +1803,7 @@ const et: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Kas varundada kogu kogum {dataset} ühe kirjena? See sisaldab: {names}",
   "zfs.add.shareSplit": "{dataset} on olemas ka kettal {names}. Failid, mille mover sinna viis, ei ole selles kirjes.",
   "zfs.add.hiddenLegacy": "Dockeri kihtide andmestikke: {n}",
-  "zfs.add.truncated": "Näidatakse ainult esimesi {n} andmestikku. Ülejäänud leiad filtriga.",
+  "zfs.add.truncated": "Loend on kärbitud. Näidatud andmestikud: {n}. Ülejäänud leiad filtriga.",
   "zfs.add.submit": "Lisa valitud ({n})",
   "zfs.add.result.ok": "{dataset} lisatud",
   "zfs.add.result.failed": "{dataset} jäi lisamata: {reason}",
