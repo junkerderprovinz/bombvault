@@ -1670,7 +1670,7 @@ const es: Partial<Translations> = {
   "placementCode.targetInUseItems": "Elementos siguen respaldando en el repositorio directo de este destino: {n}. Apúntalos a otro sitio primero.",
   "placementCode.targetInUseDefault": "El valor predeterminado de {domains} apunta al repositorio directo de este destino. Cambia primero el valor predeterminado.",
   "placementCode.directRepo": "Este repositorio va con {target}. Quita ese destino en su lugar.",
-  "placementCode.appendOnly": "El destino es de solo añadir. Desde aquí no se puede borrar nada de él.",
+  "placementCode.appendOnly": "El destino es append-only. Desde aquí no se puede borrar nada de él.",
   "placementCode.removalGrown": "Ahora existen más instantáneas solo allí de las que se mostraron. Comprueba la lista de nuevo.",
   "placementCode.nameMismatch": "El nombre escrito no coincide.",
   "placementCode.homeUnreadable": "No se pudo leer la ubicación del elemento, así que no se borró nada.",
@@ -1736,7 +1736,7 @@ const es: Partial<Translations> = {
   "timeline.deleteRow": "Borrar en todas partes",
   "timeline.deleteLast": "Esta es la última copia de esta copia de seguridad.",
   "timeline.deleteHeldBy": "Todavía retenida por: {list}",
-  "timeline.deleteSkipped": "Excluida, solo añadir: {list}",
+  "timeline.deleteSkipped": "Excluida, append-only: {list}",
   "timeline.deletePartial": "Ya borrada en: {list}",
   "timeline.deleteSpace": "El espacio no se recupera hasta que se ejecuta una poda.",
   "timeline.deleteFinal": "Esto no se puede deshacer.",
@@ -1844,7 +1844,7 @@ const es: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "No se pudo comprobar si {home} todavía las tiene.",
   "offsiteRemoval.typeName": "Escribe {name} para confirmar",
   "offsiteRemoval.done": "Borrada en {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} es de solo añadir. Desde aquí no se puede borrar nada de él.",
+  "offsiteRemoval.appendOnly": "{target} es append-only. Desde aquí no se puede borrar nada de él.",
 };
 
 export default es;

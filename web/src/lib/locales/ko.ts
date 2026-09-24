@@ -1664,7 +1664,7 @@ const ko: Partial<Translations> = {
   "placementCode.targetInUseItems": "항목이 아직 이 대상의 직접 저장소로 백업되고 있습니다: {n}개. 먼저 다른 곳으로 돌리세요.",
   "placementCode.targetInUseDefault": "{domains}의 기본값이 이 대상의 직접 저장소를 가리킵니다. 먼저 기본값을 바꾸세요.",
   "placementCode.directRepo": "이 저장소는 {target}과(와) 함께 갑니다. 대신 그 대상을 없애세요.",
-  "placementCode.appendOnly": "대상은 추가 전용입니다. 여기서는 아무것도 삭제할 수 없습니다.",
+  "placementCode.appendOnly": "대상은 append-only입니다. 여기서는 아무것도 삭제할 수 없습니다.",
   "placementCode.removalGrown": "표시된 것보다 그곳에만 더 많은 스냅샷이 존재합니다. 목록을 다시 확인하세요.",
   "placementCode.nameMismatch": "입력한 이름이 일치하지 않습니다.",
   "placementCode.homeUnreadable": "항목의 위치를 읽을 수 없어 아무것도 삭제되지 않았습니다.",
@@ -1730,7 +1730,7 @@ const ko: Partial<Translations> = {
   "timeline.deleteRow": "모든 곳에서 삭제",
   "timeline.deleteLast": "이것이 이 백업의 마지막 사본입니다.",
   "timeline.deleteHeldBy": "여전히 보관 중: {list}",
-  "timeline.deleteSkipped": "제외됨, 추가 전용: {list}",
+  "timeline.deleteSkipped": "제외됨, append-only: {list}",
   "timeline.deletePartial": "이미 삭제됨: {list}",
   "timeline.deleteSpace": "정리가 실행될 때까지 공간이 회수되지 않습니다.",
   "timeline.deleteFinal": "되돌릴 수 없습니다.",
@@ -1838,7 +1838,7 @@ const ko: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "{home}에 아직 있는지 확인할 수 없었습니다.",
   "offsiteRemoval.typeName": "확인하려면 {name}을(를) 입력하세요",
   "offsiteRemoval.done": "{target}에서 삭제됨: {n}",
-  "offsiteRemoval.appendOnly": "{target}은(는) 추가 전용입니다. 여기서는 아무것도 삭제할 수 없습니다.",
+  "offsiteRemoval.appendOnly": "{target}은(는) append-only입니다. 여기서는 아무것도 삭제할 수 없습니다.",
 };
 
 export default ko;

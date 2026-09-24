@@ -1675,7 +1675,7 @@ const hu: Partial<Translations> = {
   "placementCode.targetInUseItems": "Elemek még mindig ide mentenek e cél közvetlen tárolójába: {n}. Először irányítsd őket máshová.",
   "placementCode.targetInUseDefault": "A(z) {domains} alapértelmezése e cél közvetlen tárolójára mutat. Először változtasd meg az alapértelmezést.",
   "placementCode.directRepo": "Ez a tároló a(z) {target} céllal jár együtt. Helyette a célt távolítsd el.",
-  "placementCode.appendOnly": "A cél csak hozzáfűzésre szolgál. Innen semmi sem törölhető belőle.",
+  "placementCode.appendOnly": "A cél append-only. Innen semmi sem törölhető belőle.",
   "placementCode.removalGrown": "Most több pillanatkép létezik ott, mint amennyi meg lett jelenítve. Ellenőrizd újra a listát.",
   "placementCode.nameMismatch": "A begépelt név nem egyezik.",
   "placementCode.homeUnreadable": "Az elem helyét nem sikerült beolvasni, ezért semmi sem törlődött.",
@@ -1741,7 +1741,7 @@ const hu: Partial<Translations> = {
   "timeline.deleteRow": "Törlés mindenhol",
   "timeline.deleteLast": "Ez ennek a mentésnek az utolsó másolata.",
   "timeline.deleteHeldBy": "Még mindig tartja: {list}",
-  "timeline.deleteSkipped": "Kihagyva, csak hozzáfűzés: {list}",
+  "timeline.deleteSkipped": "Kihagyva, append-only: {list}",
   "timeline.deletePartial": "Már törölve itt: {list}",
   "timeline.deleteSpace": "A hely csak a nyesés lefutása után szabadul fel.",
   "timeline.deleteFinal": "Ez nem vonható vissza.",
@@ -1849,7 +1849,7 @@ const hu: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Nem sikerült ellenőrizni, hogy {home}-nek megvannak-e még.",
   "offsiteRemoval.typeName": "Írd be a(z) {name} nevet a megerősítéshez",
   "offsiteRemoval.done": "Törölve itt: {target}: {n}",
-  "offsiteRemoval.appendOnly": "A {target} csak hozzáfűzésre szolgál. Innen semmi sem törölhető belőle.",
+  "offsiteRemoval.appendOnly": "A {target} append-only. Innen semmi sem törölhető belőle.",
 };
 
 export default hu;

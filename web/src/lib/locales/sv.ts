@@ -1672,7 +1672,7 @@ const sv: Partial<Translations> = {
   "placementCode.targetInUseItems": "Objekt säkerhetskopieras fortfarande till det här målets direktarkiv: {n}. Peka om dem först.",
   "placementCode.targetInUseDefault": "Standardvärdet för {domains} pekar på det här målets direktarkiv. Ändra standardvärdet först.",
   "placementCode.directRepo": "Det här arkivet hör ihop med {target}. Ta bort målet i stället.",
-  "placementCode.appendOnly": "Målet är endast tillägg. Härifrån får inget raderas från det.",
+  "placementCode.appendOnly": "Målet är append-only. Härifrån får inget raderas från det.",
   "placementCode.removalGrown": "Nu finns det fler ögonblicksbilder där än vad som visades. Kontrollera listan igen.",
   "placementCode.nameMismatch": "Det inskrivna namnet stämmer inte.",
   "placementCode.homeUnreadable": "Objektets plats kunde inte läsas, så inget raderades.",
@@ -1738,7 +1738,7 @@ const sv: Partial<Translations> = {
   "timeline.deleteRow": "Radera överallt",
   "timeline.deleteLast": "Detta är den sista kopian av den här säkerhetskopian.",
   "timeline.deleteHeldBy": "Hålls fortfarande av: {list}",
-  "timeline.deleteSkipped": "Utelämnad, endast tillägg: {list}",
+  "timeline.deleteSkipped": "Utelämnad, append-only: {list}",
   "timeline.deletePartial": "Redan raderad i: {list}",
   "timeline.deleteSpace": "Utrymmet frigörs inte förrän en städning körs.",
   "timeline.deleteFinal": "Detta kan inte ångras.",
@@ -1846,7 +1846,7 @@ const sv: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Det kunde inte kontrolleras om {home} fortfarande har dem.",
   "offsiteRemoval.typeName": "Skriv {name} för att bekräfta",
   "offsiteRemoval.done": "Raderad hos {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} är endast tillägg. Härifrån får inget raderas från det.",
+  "offsiteRemoval.appendOnly": "{target} är append-only. Härifrån får inget raderas från det.",
 };
 
 export default sv;

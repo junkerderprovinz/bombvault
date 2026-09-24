@@ -1675,7 +1675,7 @@ const th: Partial<Translations> = {
   "placementCode.targetInUseItems": "ยังมีรายการที่สำรองข้อมูลไปยังที่เก็บข้อมูลโดยตรงของเป้าหมายนี้: {n} รายการ ชี้ไปที่อื่นก่อน",
   "placementCode.targetInUseDefault": "ค่าเริ่มต้นสำหรับ {domains} ชี้ไปที่ที่เก็บข้อมูลโดยตรงของเป้าหมายนี้ เปลี่ยนค่าเริ่มต้นก่อน",
   "placementCode.directRepo": "ที่เก็บข้อมูลนี้ไปด้วยกันกับ {target} ให้ลบเป้าหมายนั้นแทน",
-  "placementCode.appendOnly": "ปลายทางนี้เพิ่มได้อย่างเดียว จากที่นี่ไม่สามารถลบสิ่งใดออกจากมันได้",
+  "placementCode.appendOnly": "ปลายทางนี้เป็น append-only จากที่นี่ไม่สามารถลบสิ่งใดออกจากมันได้",
   "placementCode.removalGrown": "ตอนนี้มีสแนปช็อตอยู่ที่นั่นมากกว่าที่แสดงไว้ ตรวจสอบรายการอีกครั้ง",
   "placementCode.nameMismatch": "ชื่อที่พิมพ์ไม่ตรงกัน",
   "placementCode.homeUnreadable": "อ่านตำแหน่งของรายการไม่ได้ จึงไม่มีการลบสิ่งใด",
@@ -1741,7 +1741,7 @@ const th: Partial<Translations> = {
   "timeline.deleteRow": "ลบทุกที่",
   "timeline.deleteLast": "นี่คือสำเนาสุดท้ายของการสำรองข้อมูลนี้",
   "timeline.deleteHeldBy": "ยังคงถูกเก็บไว้โดย: {list}",
-  "timeline.deleteSkipped": "ข้ามไป เพิ่มได้อย่างเดียว: {list}",
+  "timeline.deleteSkipped": "ข้ามไป append-only: {list}",
   "timeline.deletePartial": "ลบไปแล้วที่: {list}",
   "timeline.deleteSpace": "พื้นที่จะไม่ถูกคืนจนกว่าจะมีการเก็บกวาด",
   "timeline.deleteFinal": "ไม่สามารถยกเลิกการกระทำนี้ได้",
@@ -1849,7 +1849,7 @@ const th: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "ตรวจสอบไม่ได้ว่า {home} ยังมีสิ่งเหล่านี้อยู่หรือไม่",
   "offsiteRemoval.typeName": "พิมพ์ {name} เพื่อยืนยัน",
   "offsiteRemoval.done": "ลบแล้วที่ {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} เพิ่มได้อย่างเดียว จากที่นี่ไม่สามารถลบสิ่งใดออกจากมันได้",
+  "offsiteRemoval.appendOnly": "{target} เป็น append-only จากที่นี่ไม่สามารถลบสิ่งใดออกจากมันได้",
 };
 
 export default th;

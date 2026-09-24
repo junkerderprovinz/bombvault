@@ -1672,7 +1672,7 @@ const el: Partial<Translations> = {
   "placementCode.targetInUseItems": "Στοιχεία εξακολουθούν να αντιγράφονται στο άμεσο αποθετήριο αυτού του προορισμού: {n}. Στρέψε τα πρώτα αλλού.",
   "placementCode.targetInUseDefault": "Η προεπιλογή για {domains} δείχνει στο άμεσο αποθετήριο αυτού του προορισμού. Άλλαξε πρώτα την προεπιλογή.",
   "placementCode.directRepo": "Αυτό το αποθετήριο πηγαίνει μαζί με {target}. Αφαίρεσε τον προορισμό αντ' αυτού.",
-  "placementCode.appendOnly": "Ο προορισμός είναι μόνο προσθήκης. Τίποτα εδώ δεν μπορεί να διαγραφεί από αυτόν.",
+  "placementCode.appendOnly": "Ο προορισμός είναι append-only. Τίποτα εδώ δεν μπορεί να διαγραφεί από αυτόν.",
   "placementCode.removalGrown": "Τώρα υπάρχουν εκεί περισσότερα στιγμιότυπα από όσα εμφανίστηκαν. Έλεγξε ξανά τη λίστα.",
   "placementCode.nameMismatch": "Το όνομα που πληκτρολογήθηκε δεν ταιριάζει.",
   "placementCode.homeUnreadable": "Δεν ήταν δυνατή η ανάγνωση της θέσης του στοιχείου, οπότε δεν διαγράφηκε τίποτα.",
@@ -1738,7 +1738,7 @@ const el: Partial<Translations> = {
   "timeline.deleteRow": "Διαγραφή παντού",
   "timeline.deleteLast": "Αυτό είναι το τελευταίο αντίγραφο αυτού του αντιγράφου ασφαλείας.",
   "timeline.deleteHeldBy": "Εξακολουθεί να κρατείται από: {list}",
-  "timeline.deleteSkipped": "Παραλείφθηκε, μόνο προσθήκη: {list}",
+  "timeline.deleteSkipped": "Παραλείφθηκε, append-only: {list}",
   "timeline.deletePartial": "Ήδη διαγραμμένο σε: {list}",
   "timeline.deleteSpace": "Ο χώρος δεν ανακτάται μέχρι να εκτελεστεί εκκαθάριση.",
   "timeline.deleteFinal": "Αυτό δεν μπορεί να αναιρεθεί.",
@@ -1846,7 +1846,7 @@ const el: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Δεν ήταν δυνατός ο έλεγχος αν το {home} τα έχει ακόμα.",
   "offsiteRemoval.typeName": "Πληκτρολόγησε {name} για επιβεβαίωση",
   "offsiteRemoval.done": "Διαγράφηκε στο {target}: {n}",
-  "offsiteRemoval.appendOnly": "Το {target} είναι μόνο προσθήκης. Τίποτα εδώ δεν μπορεί να διαγραφεί από αυτό.",
+  "offsiteRemoval.appendOnly": "Το {target} είναι append-only. Τίποτα εδώ δεν μπορεί να διαγραφεί από αυτό.",
 };
 
 export default el;

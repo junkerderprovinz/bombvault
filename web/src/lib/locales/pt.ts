@@ -1672,7 +1672,7 @@ const pt: Partial<Translations> = {
   "placementCode.targetInUseItems": "Ainda há itens a fazer cópia de segurança para o repositório direto deste destino: {n}. Aponta-os para outro lado primeiro.",
   "placementCode.targetInUseDefault": "O padrão para {domains} aponta para o repositório direto deste destino. Muda primeiro o padrão.",
   "placementCode.directRepo": "Este repositório vai com {target}. Remove esse destino em vez disso.",
-  "placementCode.appendOnly": "O destino é só de acrescentar. Daqui não se pode apagar nada dele.",
+  "placementCode.appendOnly": "O destino é append-only. Daqui não se pode apagar nada dele.",
   "placementCode.removalGrown": "Agora existem ali mais instantâneos do que os mostrados. Verifica a lista novamente.",
   "placementCode.nameMismatch": "O nome digitado não corresponde.",
   "placementCode.homeUnreadable": "Não foi possível ler a localização do item, por isso nada foi apagado.",
@@ -1738,7 +1738,7 @@ const pt: Partial<Translations> = {
   "timeline.deleteRow": "Apagar em todo o lado",
   "timeline.deleteLast": "Esta é a última cópia deste backup.",
   "timeline.deleteHeldBy": "Ainda retida por: {list}",
-  "timeline.deleteSkipped": "Deixada de fora, só acrescentar: {list}",
+  "timeline.deleteSkipped": "Deixada de fora, append-only: {list}",
   "timeline.deletePartial": "Já apagada em: {list}",
   "timeline.deleteSpace": "O espaço só é recuperado depois de uma limpeza ser executada.",
   "timeline.deleteFinal": "Isto não pode ser desfeito.",
@@ -1846,7 +1846,7 @@ const pt: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Não foi possível verificar se {home} ainda as tem.",
   "offsiteRemoval.typeName": "Escreve {name} para confirmar",
   "offsiteRemoval.done": "Apagada em {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} é só de acrescentar. Daqui não se pode apagar nada dele.",
+  "offsiteRemoval.appendOnly": "{target} é append-only. Daqui não se pode apagar nada dele.",
 };
 
 export default pt;

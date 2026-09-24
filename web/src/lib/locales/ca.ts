@@ -1683,7 +1683,7 @@ const ca: Partial<Translations> = {
   "placementCode.targetInUseItems": "Encara hi ha elements que fan còpia de seguretat al repositori directe d'aquest destí: {n}. Apunta'ls a un altre lloc primer.",
   "placementCode.targetInUseDefault": "El valor predeterminat de {domains} apunta al repositori directe d'aquest destí. Canvia primer el valor predeterminat.",
   "placementCode.directRepo": "Aquest repositori va amb {target}. Treu aquell destí en lloc d'això.",
-  "placementCode.appendOnly": "L'objectiu és només afegir. Res d'aquí es pot esborrar.",
+  "placementCode.appendOnly": "L'objectiu és append-only. Res d'aquí es pot esborrar.",
   "placementCode.removalGrown": "Ara hi ha més instantànies només allà de les que es van mostrar. Comprova la llista de nou.",
   "placementCode.nameMismatch": "El nom escrit no coincideix.",
   "placementCode.homeUnreadable": "No s'ha pogut llegir la ubicació de l'element, així que no s'ha esborrat res.",
@@ -1749,7 +1749,7 @@ const ca: Partial<Translations> = {
   "timeline.deleteRow": "Esborrar a tot arreu",
   "timeline.deleteLast": "Aquesta és l'última còpia d'aquesta còpia de seguretat.",
   "timeline.deleteHeldBy": "Encara la manté: {list}",
-  "timeline.deleteSkipped": "Exclòs, només afegir: {list}",
+  "timeline.deleteSkipped": "Exclòs, append-only: {list}",
   "timeline.deletePartial": "Ja esborrada a: {list}",
   "timeline.deleteSpace": "L'espai no es recupera fins que s'executa una neteja.",
   "timeline.deleteFinal": "Això no es pot desfer.",
@@ -1857,7 +1857,7 @@ const ca: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "No s'ha pogut comprovar si {home} encara les té.",
   "offsiteRemoval.typeName": "Escriu {name} per confirmar",
   "offsiteRemoval.done": "Esborrada a {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} és només afegir. Res d'aquí es pot esborrar.",
+  "offsiteRemoval.appendOnly": "{target} és append-only. Res d'aquí es pot esborrar.",
 };
 
 export default ca;

@@ -1667,7 +1667,7 @@ const pl: Partial<Translations> = {
   "placementCode.targetInUseItems": "Elementy nadal tworzą kopie zapasowe w repozytorium bezpośrednim tego celu: {n}. Najpierw skieruj je gdzie indziej.",
   "placementCode.targetInUseDefault": "Wartość domyślna dla {domains} wskazuje repozytorium bezpośrednie tego celu. Najpierw zmień wartość domyślną.",
   "placementCode.directRepo": "To repozytorium idzie razem z celem {target}. Usuń zamiast niego ten cel.",
-  "placementCode.appendOnly": "Cel jest tylko do dopisywania. Stąd nic nie można z niego usunąć.",
+  "placementCode.appendOnly": "Cel jest typu append-only. Stąd nic nie można z niego usunąć.",
   "placementCode.removalGrown": "Teraz istnieje tam więcej migawek, niż pokazano. Sprawdź listę ponownie.",
   "placementCode.nameMismatch": "Wpisana nazwa się nie zgadza.",
   "placementCode.homeUnreadable": "Nie udało się odczytać lokalizacji elementu, więc nic nie zostało usunięte.",
@@ -1733,7 +1733,7 @@ const pl: Partial<Translations> = {
   "timeline.deleteRow": "Usuń wszędzie",
   "timeline.deleteLast": "To ostatnia kopia tej kopii zapasowej.",
   "timeline.deleteHeldBy": "Wciąż przytrzymywana przez: {list}",
-  "timeline.deleteSkipped": "Pominięto, tylko dopisywanie: {list}",
+  "timeline.deleteSkipped": "Pominięto, append-only: {list}",
   "timeline.deletePartial": "Już usunięta w: {list}",
   "timeline.deleteSpace": "Miejsce zwalnia się dopiero po uruchomieniu porządkowania.",
   "timeline.deleteFinal": "Tego nie można cofnąć.",
@@ -1841,7 +1841,7 @@ const pl: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Nie udało się sprawdzić, czy {home} nadal je ma.",
   "offsiteRemoval.typeName": "Wpisz {name}, aby potwierdzić",
   "offsiteRemoval.done": "Usunięto w {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} jest tylko do dopisywania. Stąd nic nie można z niego usunąć.",
+  "offsiteRemoval.appendOnly": "{target} jest typu append-only. Stąd nic nie można z niego usunąć.",
 };
 
 export default pl;

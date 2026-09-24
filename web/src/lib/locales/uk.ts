@@ -1667,7 +1667,7 @@ const uk: Partial<Translations> = {
   "placementCode.targetInUseItems": "Елементи досі резервуються у прямий репозиторій цієї цілі: {n}. Спочатку спрямуй їх деінде.",
   "placementCode.targetInUseDefault": "Типове значення для {domains} вказує на прямий репозиторій цієї цілі. Спочатку зміни типове значення.",
   "placementCode.directRepo": "Цей репозиторій іде разом із ціллю {target}. Прибери натомість ціль.",
-  "placementCode.appendOnly": "Ціль лише для додавання. Звідси з неї нічого не можна видалити.",
+  "placementCode.appendOnly": "Ціль працює в режимі append-only. Звідси з неї нічого не можна видалити.",
   "placementCode.removalGrown": "Тепер там існує більше знімків, ніж було показано. Перевір список знову.",
   "placementCode.nameMismatch": "Введене ім'я не збігається.",
   "placementCode.homeUnreadable": "Не вдалося прочитати розташування елемента, тому нічого не було видалено.",
@@ -1733,7 +1733,7 @@ const uk: Partial<Translations> = {
   "timeline.deleteRow": "Видалити скрізь",
   "timeline.deleteLast": "Це остання копія цієї резервної копії.",
   "timeline.deleteHeldBy": "Досі утримується: {list}",
-  "timeline.deleteSkipped": "Пропущено, лише додавання: {list}",
+  "timeline.deleteSkipped": "Пропущено, append-only: {list}",
   "timeline.deletePartial": "Уже видалено в: {list}",
   "timeline.deleteSpace": "Місце не звільняється, доки не запуститься очищення.",
   "timeline.deleteFinal": "Це неможливо скасувати.",
@@ -1841,7 +1841,7 @@ const uk: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Не вдалося перевірити, чи {home} досі їх має.",
   "offsiteRemoval.typeName": "Введи {name} для підтвердження",
   "offsiteRemoval.done": "Видалено в {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} лише для додавання. Звідси з нього нічого не можна видалити.",
+  "offsiteRemoval.appendOnly": "{target} працює в режимі append-only. Звідси з нього нічого не можна видалити.",
 };
 
 export default uk;

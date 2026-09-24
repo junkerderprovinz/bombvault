@@ -1664,7 +1664,7 @@ const zh: Partial<Translations> = {
   "placementCode.targetInUseItems": "仍有项目在备份到此目标的直接存储库：{n}。请先将它们指向别处。",
   "placementCode.targetInUseDefault": "{domains} 的默认设置指向此目标的直接存储库。请先更改默认设置。",
   "placementCode.directRepo": "此存储库与 {target} 一同存在。请改为移除该目标。",
-  "placementCode.appendOnly": "目标仅可追加。此处无法从中删除任何内容。",
+  "placementCode.appendOnly": "目标是 append-only。此处无法从中删除任何内容。",
   "placementCode.removalGrown": "现在那里存在的快照比显示的更多。请重新检查列表。",
   "placementCode.nameMismatch": "输入的名称不匹配。",
   "placementCode.homeUnreadable": "无法读取该项目的位置，因此未删除任何内容。",
@@ -1730,7 +1730,7 @@ const zh: Partial<Translations> = {
   "timeline.deleteRow": "在所有位置删除",
   "timeline.deleteLast": "这是此备份的最后一份副本。",
   "timeline.deleteHeldBy": "仍被保留于：{list}",
-  "timeline.deleteSkipped": "已跳过，仅追加：{list}",
+  "timeline.deleteSkipped": "已跳过，append-only：{list}",
   "timeline.deletePartial": "已在以下位置删除：{list}",
   "timeline.deleteSpace": "在运行清理之前不会回收空间。",
   "timeline.deleteFinal": "此操作无法撤销。",
@@ -1838,7 +1838,7 @@ const zh: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "无法检查 {home} 是否仍有它们。",
   "offsiteRemoval.typeName": "输入 {name} 以确认",
   "offsiteRemoval.done": "已在 {target} 删除：{n}",
-  "offsiteRemoval.appendOnly": "{target} 仅可追加。此处无法从中删除任何内容。",
+  "offsiteRemoval.appendOnly": "{target} 是 append-only。此处无法从中删除任何内容。",
 };
 
 export default zh;
