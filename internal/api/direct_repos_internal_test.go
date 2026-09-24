@@ -1315,10 +1315,27 @@ func withPassword(drafts []map[string]any, id, password string) []map[string]any
 	return drafts
 }
 
+// passwordEngine opens a location only with the REST password it holds for it.
+type passwordEngine struct {
+	*placementEngine
+	passwords map[string]string
+}
+
+func (e *passwordEngine) RepoOpens(_ context.Context, repo string, mode restic.Mode) bool {
+	return slices.Contains(mode.Env, "RESTIC_REST_PASSWORD="+e.passwords[repo])
+}
+
+// opensOnlyWith lets location open with password and nothing else.
+func (f *placementFixture) opensOnlyWith(location, password string) *passwordEngine {
+	eng := &passwordEngine{placementEngine: f.eng, passwords: map[string]string{location: password}}
+	f.svc.engine = eng
+	return eng
+}
+
 func TestADirectRepositoryKeepsTheSetValuesItOpenedWith(t *testing.T) {
 	f := newPlacementFixture(t)
 	target, d := f.restDirect()
-	f.eng.opens[d.Repo] = false
+	f.opensOnlyWith(d.Repo, "old")
 	res := f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "rest-creds", "wrong")})
 	if codes := warningCodes(t, res); !slices.Equal(codes, []string{"direct-creds-kept"}) {
 		t.Fatalf("warnings = %v", codes)
@@ -1349,7 +1366,7 @@ func TestADirectRepositoryKeepsTheSharedValuesItOpenedWith(t *testing.T) {
 	}
 	d := f.direct(f.target("containers", "NAS", "rest:http://nas:8000/bv/containers"))
 	f.container("web", d.ID)
-	f.eng.opens[d.Repo] = false
+	f.opensOnlyWith(d.Repo, "old")
 	res := f.do("POST", "/api/cloud", map[string]any{"restUser": "bv", "restPassword": "wrong"})
 	if codes := warningCodes(t, res); !slices.Equal(codes, []string{"direct-creds-kept"}) {
 		t.Fatalf("warnings = %v", codes)
@@ -1370,13 +1387,13 @@ func TestCredentialsThatOpenADirectRepositoryAgainRetireItsKeptSet(t *testing.T)
 	f := newPlacementFixture(t)
 	_, d := f.restDirect()
 	spare := map[string]any{"id": "spare", "name": "Spare", "restUser": "u", "restPassword": "mine"}
-	f.eng.opens[d.Repo] = false
+	eng := f.opensOnlyWith(d.Repo, "old")
 	f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": append(withPassword(f.credSetDrafts(), "rest-creds", "wrong"), spare)})
 	if len(f.keptFor(d.ID)) != 1 {
 		t.Fatalf("nothing kept: %+v", f.storedCredSets())
 	}
 
-	f.eng.opens[d.Repo] = true
+	eng.passwords[d.Repo] = "right"
 	res := f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "rest-creds", "right")})
 	if codes := warningCodes(t, res); len(codes) != 0 {
 		t.Fatalf("warnings = %v", codes)
@@ -1409,13 +1426,13 @@ func TestSharedCredentialsThatOpenADirectRepositoryAgainRetireItsKeptSet(t *test
 	}
 	d := f.direct(f.target("containers", "NAS", "rest:http://nas:8000/bv/containers"))
 	f.container("web", d.ID)
-	f.eng.opens[d.Repo] = false
+	eng := f.opensOnlyWith(d.Repo, "old")
 	f.do("POST", "/api/cloud", map[string]any{"restUser": "bv", "restPassword": "wrong"})
 	if len(f.keptFor(d.ID)) != 1 {
 		t.Fatalf("nothing kept: %+v", f.storedCredSets())
 	}
 
-	f.eng.opens[d.Repo] = true
+	eng.passwords[d.Repo] = "right"
 	if codes := warningCodes(t, f.do("POST", "/api/cloud", map[string]any{"restUser": "bv", "restPassword": "right"})); len(codes) != 0 {
 		t.Fatalf("warnings = %v", codes)
 	}
@@ -1430,7 +1447,7 @@ func TestSharedCredentialsThatOpenADirectRepositoryAgainRetireItsKeptSet(t *test
 func TestAKeptSetSomethingElseNamesStays(t *testing.T) {
 	f := newPlacementFixture(t)
 	_, d := f.restDirect()
-	f.eng.opens[d.Repo] = false
+	eng := f.opensOnlyWith(d.Repo, "old")
 	f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "rest-creds", "wrong")})
 	kept := f.keptFor(d.ID)
 	if len(kept) != 1 {
@@ -1442,7 +1459,7 @@ func TestAKeptSetSomethingElseNamesStays(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	f.eng.opens[d.Repo] = true
+	eng.passwords[d.Repo] = "right"
 	f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "rest-creds", "right")})
 	if got, err := f.st.GetNamedRepo(d.ID); err != nil || got.CredsRef != "rest-creds" {
 		t.Fatalf("direct repository = %+v, %v; want it back on rest-creds", got, err)
@@ -1455,7 +1472,7 @@ func TestAKeptSetSomethingElseNamesStays(t *testing.T) {
 func TestPostingTheSetsBackKeepsWhatASetWasKeptFor(t *testing.T) {
 	f := newPlacementFixture(t)
 	_, d := f.restDirect()
-	f.eng.opens[d.Repo] = false
+	f.opensOnlyWith(d.Repo, "old")
 	f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "rest-creds", "wrong")})
 	kept := f.keptFor(d.ID)
 	if len(kept) != 1 {
@@ -1482,14 +1499,22 @@ func TestCredentialsThatOpenADirectRepositoryKeepNothing(t *testing.T) {
 	}
 }
 
-// passwordEngine opens a location only with the REST password it holds for it.
-type passwordEngine struct {
-	*placementEngine
-	passwords map[string]string
-}
-
-func (e *passwordEngine) RepoOpens(_ context.Context, repo string, mode restic.Mode) bool {
-	return slices.Contains(mode.Env, "RESTIC_REST_PASSWORD="+e.passwords[repo])
+// A key rotated while the server is down opens nothing, the old one included,
+// so the repository follows its set to the new key.
+func TestOldValuesThatDoNotOpenADirectRepositoryAreNotKept(t *testing.T) {
+	f := newPlacementFixture(t)
+	_, d := f.restDirect()
+	f.eng.opens[d.Repo] = false
+	f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "rest-creds", "rotated")})
+	if kept := f.keptFor(d.ID); len(kept) != 0 {
+		t.Fatalf("kept sets = %+v, want none", kept)
+	}
+	if got, err := f.st.GetNamedRepo(d.ID); err != nil || got.CredsRef != "rest-creds" {
+		t.Fatalf("direct repository = %+v, %v; want it still on rest-creds", got, err)
+	}
+	if env := f.runsWith(d); !slices.Contains(env, "RESTIC_REST_PASSWORD=rotated") {
+		t.Fatalf("a backup into the direct repository runs with %v, want the new password", env)
+	}
 }
 
 // A direct repository that kept the shared credentials when its target moved to
@@ -1505,8 +1530,7 @@ func TestADirectRepositoryOnItsOwnSelectorIsProbedWithItsNewValues(t *testing.T)
 	target := f.target("containers", "NAS", "rest:http://nas:8000/bv/containers")
 	d := f.direct(target)
 	f.container("web", d.ID)
-	eng := &passwordEngine{placementEngine: f.eng, passwords: map[string]string{d.Repo: "old"}}
-	f.svc.engine = eng
+	eng := f.opensOnlyWith(d.Repo, "old")
 	v := offsiteTargetToView(target)
 	v.CredsRef = "other"
 	f.do("PUT", "/api/offsite/targets/"+target.ID, v)
