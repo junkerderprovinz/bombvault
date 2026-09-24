@@ -533,6 +533,37 @@ func TestTakenOverVMHistoryFollowsTheRuleOfItsOwner(t *testing.T) {
 	}
 }
 
+func TestDeletingAContainersBackupsAtATargetTakesItsHistoryUnderAFormerName(t *testing.T) {
+	f, b2 := takenOver(t, "containers", "nginx", "web")
+	f.hold(b2.Repo,
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", 300, "container:nginx"),
+		snap("aaaa0003", 400, "container:web", "formerly:nginx"))
+
+	if err := f.svc.DeleteBackups(context.Background(), "web", offsiteSourcePrefix+b2.ID); err != nil {
+		t.Fatalf("DeleteBackups: %v", err)
+	}
+	if got, want := forgottenAt(f, b2.Repo), []string{"aaaa0001", "aaaa0003"}; !slices.Equal(got, want) {
+		t.Fatalf("deleted %v at B2, want %v", got, want)
+	}
+}
+
+func TestDeletingAVMsBackupsAtATargetTakesItsHistoryUnderAFormerName(t *testing.T) {
+	f, b2 := takenOver(t, "vms", "windows-11", "win11")
+	f.hold(b2.Repo,
+		snap("bbbb0001", 100, "vm:windows-11", "vmrun:r1"),
+		snap("bbbb0002", 100, "vm:windows-11:zvol:sda", "vmrun:r1"),
+		snap("bbbb0003", 300, "vm:windows-11", "vmrun:r2"),
+		snap("bbbb0005", 400, "vm:win11", "vmrun:r3"))
+
+	if err := f.svc.DeleteBackupsVM(context.Background(), "win11", offsiteSourcePrefix+b2.ID); err != nil {
+		t.Fatalf("DeleteBackupsVM: %v", err)
+	}
+	if got, want := forgottenAt(f, b2.Repo), []string{"bbbb0001", "bbbb0005"}; !slices.Equal(got, want) {
+		t.Fatalf("deleted %v at B2, want %v", got, want)
+	}
+}
+
 func TestASnapshotWithoutAReadableTimeStaysOutOnlyWhenBothPossibleOwnersExclude(t *testing.T) {
 	undated := restic.Snapshot{ID: "aaaa0009", Time: "not a time", Tags: []string{"container:nginx"}}
 	for _, c := range []struct {

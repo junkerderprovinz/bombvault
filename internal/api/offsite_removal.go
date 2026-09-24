@@ -46,7 +46,8 @@ func (s *Service) listRepo(ctx context.Context, repo string, mode restic.Mode) (
 type snapScope int
 
 const (
-	// taggedForItem is the item's own snapshots, the list its backup panel shows.
+	// taggedForItem is the item's own snapshots, under its name or a former
+	// one, the list its backup panel shows.
 	taggedForItem snapScope = iota
 	// ownedByItem is everything the ownership rule gives the item, a machine's
 	// disk images included. Only the window that previews them uses it.
@@ -79,7 +80,7 @@ func (s *Service) listItemAtTarget(ctx context.Context, settings store.Settings,
 		if owners[snap.ID].Owner != identity {
 			continue
 		}
-		if scope == taggedForItem && !slices.Contains(snap.Tags, identity) {
+		if scope == taggedForItem && !oc.namesItem(snap, identity) {
 			continue
 		}
 		at.Snaps = append(at.Snaps, snap)
