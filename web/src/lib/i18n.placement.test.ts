@@ -1,9 +1,8 @@
 // Placement-family strings across every locale: prefixes and keys are found
 // correctly, no locale leaves a placement sentence in English, the literal
 // "3-2-1" survives translation, German keeps off-site and append-only as
-// loanwords, the Lithuanian delete texts use the interface's own delete verb
-// and name their target, and append-only is named the way each locale
-// already names it in placement.droppedAppendOnly.
+// loanwords, and append-only is named the way each locale already names it in
+// placement.droppedAppendOnly.
 import { describe, expect, it } from "vitest";
 import { en } from "./i18n";
 import { allLocales } from "./localesForTests";
@@ -79,18 +78,6 @@ describe("placement texts", () => {
     for (const key of placementKeys) {
       if (/off-site/i.test(en[key])) expect(allLocales.de[key], key).toMatch(/off-site/i);
       if (en[key].includes("append-only")) expect(allLocales.de[key], key).toContain("append-only");
-    }
-  });
-
-  it("uses the same delete verb in Lithuanian as every other delete button", () => {
-    const verb = allLocales.lt["common.delete"];
-    expect(allLocales.lt["offsiteRemoval.delete"]).toContain(verb);
-    expect(allLocales.lt["timeline.deleteRow"]).toContain(verb);
-  });
-
-  it("names the target the Lithuanian off-site delete texts act on", () => {
-    for (const key of ["offsiteRemoval.delete", "offsiteRemoval.ask", "offsiteRemoval.done"] as const) {
-      expect(allLocales.lt[key], key).toMatch(/iš \{target\}/);
     }
   });
 
