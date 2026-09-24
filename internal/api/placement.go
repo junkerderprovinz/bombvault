@@ -471,7 +471,7 @@ func (s *Service) notifyPlacementPaused(ctx context.Context, domain string, why 
 		return
 	}
 	subject := "Off-site replication paused for " + domain
-	msg := fmt.Sprintf("Nothing in %s is copied off site: %s. Confirm the placement default under Settings > Storage > Placement defaults to resume.", domain, pauseReasons[why])
+	msg := fmt.Sprintf("Nothing in %s is copied off site: %s. Confirm the placement default under Settings > Paths & Storage > Placement defaults to resume.", domain, pauseReasons[why])
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + ": " + msg, OK: false})
 	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
