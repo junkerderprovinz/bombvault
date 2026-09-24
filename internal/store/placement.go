@@ -278,13 +278,19 @@ type PlacementImport struct {
 // PlacementDomains does not list.
 var ErrUnknownDomain = errors.New("that domain has no placement")
 
+// Installed are the containers Docker lists and the VMs the host reports.
+type Installed struct {
+	Containers, VMs map[string]bool
+}
+
 // ImportPlacement replaces defaults and rules from a settings file in one
 // transaction. A paused domain keeps its pause and its row: only a confirmation
 // may end it, because its exclusions were lost with the old configuration. A
 // domain an operator already confirmed keeps that marker too, as long as the
 // file still names it: saving a default, imported or typed, never earns that
-// marker on its own.
-func (r *Repo) ImportPlacement(in PlacementImport) error {
+// marker on its own. A rule on a former name stays there while a row or an
+// installed machine answers to that name.
+func (r *Repo) ImportPlacement(in PlacementImport, installed Installed) error {
 	now := time.Now().Unix()
 	return r.inTx(func(tx *sql.Tx) error {
 		if in.HasDefaults {
@@ -327,10 +333,11 @@ func (r *Repo) ImportPlacement(in PlacementImport) error {
 			}
 			// A file written before a takeover keeps the rule under the name the
 			// entry has left since.
-			for _, e := range []entryTable{containerEntries, vmEntries} {
-				if err := carryFormerNameRulesTx(tx, e, ""); err != nil {
-					return fmt.Errorf("ImportPlacement: %w", err)
-				}
+			if err := carryFormerNameRulesTx(tx, containerEntries, "", installed.Containers); err != nil {
+				return fmt.Errorf("ImportPlacement: %w", err)
+			}
+			if err := carryFormerNameRulesTx(tx, vmEntries, "", installed.VMs); err != nil {
+				return fmt.Errorf("ImportPlacement: %w", err)
 			}
 		}
 		return nil

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -350,7 +351,7 @@ func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.applyImport(r, exp); err != nil {
+	if err := h.applyImport(r.Context(), exp); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -722,7 +723,12 @@ func settingsGroups(v settingsView) []string {
 // applyImport writes a validated export: the settings row, a full replace of the
 // off-site targets, and any credentials (re-encrypted with the local APP_KEY). It
 // never touches repos, snapshots or run history.
-func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
+func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
+	installed, err := h.installedForImport(ctx, exp)
+	if err != nil {
+		return fmt.Errorf("the settings were not imported: %w", err)
+	}
+
 	// Map the imported view onto the CURRENT row, PRESERVING the per-instance
 	// fields the file intentionally omits (auth password, session epoch,
 	// recovery-kit ack, registry-auth blob) and the encrypted credential blobs
@@ -769,7 +775,7 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	// already protects the named repository it points at before the delete loop
 	// below runs.
 	h.svc.placementMu.Lock()
-	err := h.store.ImportPlacement(importedPlacement(exp))
+	err = h.store.ImportPlacement(importedPlacement(exp), installed)
 	h.svc.placementMu.Unlock()
 	if err != nil {
 		return err
@@ -807,8 +813,29 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 			return err
 		}
 	}
-	_ = r
 	return nil
+}
+
+// installedForImport reads the containers and VMs installed on the host when
+// the file carries copy rules: a rule on an entry's former name moves to the
+// entry only while nothing installed answers to that name.
+func (h *Handler) installedForImport(ctx context.Context, exp settingsExport) (store.Installed, error) {
+	if exp.CopyRules == nil {
+		return store.Installed{}, nil
+	}
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		return store.Installed{}, fmt.Errorf("read settings: %w", err)
+	}
+	containers, err := h.svc.installedContainers(ctx)
+	if err != nil {
+		return store.Installed{}, fmt.Errorf("the installed containers could not be listed: %w", err)
+	}
+	vms, err := h.svc.installedVMs(ctx, settings)
+	if err != nil {
+		return store.Installed{}, fmt.Errorf("the VMs on the host could not be listed: %w", err)
+	}
+	return store.Installed{Containers: containers, VMs: vms}, nil
 }
 
 // offsiteRepoFromView reads a domain's off-site location straight off the

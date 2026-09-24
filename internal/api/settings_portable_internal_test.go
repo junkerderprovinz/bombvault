@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -36,7 +37,8 @@ func newPortableHandler(t *testing.T, appKey string) (*Handler, *store.Repo) {
 	// domain's copy sources to describe the targets a file adds, and that
 	// walk reaches the engine even with nothing ever run here.
 	eng := &placementEngine{snaps: map[string][]restic.Snapshot{}, listErr: map[string]error{}, opens: map[string]bool{}, lists: map[string]int{}}
-	svc := &Service{cfg: cfg, store: st, engine: eng}
+	// A file with copy rules asks Docker for the installed containers.
+	svc := &Service{cfg: cfg, store: st, engine: eng, docker: &placementDocker{}}
 	return &Handler{cfg: cfg, store: st, svc: svc}, st
 }
 
@@ -690,7 +692,7 @@ func TestImportLogsWhenAFileIDCollidesAcrossRoles(t *testing.T) {
 			{ID: target.ID, Name: "claim-repo", Repo: "backups/claim", Enabled: true},
 		},
 	}
-	if err := h.applyImport(nil, exp); err != nil {
+	if err := h.applyImport(context.Background(), exp); err != nil {
 		t.Fatal(err)
 	}
 

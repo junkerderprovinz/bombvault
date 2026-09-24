@@ -11,7 +11,7 @@ func TestAnImportWithoutPlacementBlocksChangesNothing(t *testing.T) {
 	r := repoChoiceStore(t)
 	store.SeedDefault(t, r, "containers", "", "t-b2")
 	store.SeedCopyRule(t, r, "vms", "vm:win11", store.SkipAll)
-	if err := r.ImportPlacement(store.PlacementImport{}); err != nil {
+	if err := r.ImportPlacement(store.PlacementImport{}, store.Installed{}); err != nil {
 		t.Fatal(err)
 	}
 	if d, found, err := r.PlacementDefaultFor("containers"); err != nil || !found || len(d.Skip) != 1 {
@@ -25,7 +25,7 @@ func TestAnImportWithoutPlacementBlocksChangesNothing(t *testing.T) {
 func TestAnEmptyRulesBlockClearsEveryRule(t *testing.T) {
 	r := repoChoiceStore(t)
 	store.SeedCopyRule(t, r, "vms", "vm:win11", store.SkipAll)
-	if err := r.ImportPlacement(store.PlacementImport{HasRules: true}); err != nil {
+	if err := r.ImportPlacement(store.PlacementImport{HasRules: true}, store.Installed{}); err != nil {
 		t.Fatal(err)
 	}
 	rules, err := r.ListCopyRules()
@@ -40,7 +40,7 @@ func TestImportedDefaultsReplaceTheConfirmedOnes(t *testing.T) {
 	store.SeedDefault(t, r, "vms", "")
 	err := r.ImportPlacement(store.PlacementImport{HasDefaults: true, Defaults: []store.PlacementDefault{
 		{Domain: "containers", Home: "repo-nas", Skip: []string{store.SkipAll}},
-	}})
+	}}, store.Installed{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func TestAPausedDomainStaysPausedThroughAnImport(t *testing.T) {
 	}
 	err := r.ImportPlacement(store.PlacementImport{HasDefaults: true, Defaults: []store.PlacementDefault{
 		{Domain: "files", Home: "repo-nas", Skip: []string{"t-b2"}},
-	}})
+	}}, store.Installed{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestAPausedDomainStaysPausedThroughAnImport(t *testing.T) {
 	if err != nil || !found || !d.Paused() || d.Home != "repo-nas" || len(d.Skip) != 1 {
 		t.Fatalf("files = %+v, %v, %v, want the file's values and still paused", d, found, err)
 	}
-	if err := r.ImportPlacement(store.PlacementImport{HasDefaults: true}); err != nil {
+	if err := r.ImportPlacement(store.PlacementImport{HasDefaults: true}, store.Installed{}); err != nil {
 		t.Fatal(err)
 	}
 	if d, found, _ := r.PlacementDefaultFor("files"); !found || !d.Paused() {
@@ -86,7 +86,7 @@ func TestAConfirmedDefaultKeepsItsManualMarkerThroughAnImportThatNamesIt(t *test
 	}
 	err := r.ImportPlacement(store.PlacementImport{HasDefaults: true, Defaults: []store.PlacementDefault{
 		{Domain: "containers", Home: "repo-nas", Skip: []string{store.SkipAll}},
-	}})
+	}}, store.Installed{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func TestAConfirmedDefaultIsDroppedByAnImportThatDoesNotNameIt(t *testing.T) {
 	if err := r.ConfirmPlacement("containers", nil); err != nil {
 		t.Fatal(err)
 	}
-	if err := r.ImportPlacement(store.PlacementImport{HasDefaults: true}); err != nil {
+	if err := r.ImportPlacement(store.PlacementImport{HasDefaults: true}, store.Installed{}); err != nil {
 		t.Fatal(err)
 	}
 	if _, found, _ := r.PlacementDefaultFor("containers"); found {
@@ -119,7 +119,7 @@ func TestAProjectFolderRuleRefusesTheWholeImport(t *testing.T) {
 		HasDefaults: true,
 		HasRules:    true,
 		Rules:       []store.CopyRule{{Domain: "containers", Identity: "stack:immich", Skip: []string{}}},
-	})
+	}, store.Installed{})
 	if !errors.Is(err, store.ErrStackCopyRule) {
 		t.Fatalf("err = %v, want ErrStackCopyRule", err)
 	}
@@ -132,7 +132,7 @@ func TestAMalformedSkipRefusesTheImport(t *testing.T) {
 	r := repoChoiceStore(t)
 	err := r.ImportPlacement(store.PlacementImport{HasRules: true, Rules: []store.CopyRule{
 		{Domain: "vms", Identity: "vm:win11", Skip: []string{store.SkipAll, "t-b2"}},
-	}})
+	}}, store.Installed{})
 	if !errors.Is(err, store.ErrBadSkip) {
 		t.Fatalf("err = %v, want ErrBadSkip", err)
 	}
@@ -142,7 +142,7 @@ func TestSkipIdsWithoutATargetStayInTheRule(t *testing.T) {
 	r := repoChoiceStore(t)
 	err := r.ImportPlacement(store.PlacementImport{HasRules: true, Rules: []store.CopyRule{
 		{Domain: "vms", Identity: "vm:win11", Skip: []string{"t-gone"}},
-	}})
+	}}, store.Installed{})
 	if err != nil {
 		t.Fatal(err)
 	}
