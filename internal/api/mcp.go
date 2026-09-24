@@ -29,7 +29,7 @@ const (
 	mcpItemStartsPerDay = 4
 )
 
-// mcpSDKVersion is the protocol library this stage was tested against. A bump
+// mcpSDKVersion is the protocol library the interop checks ran against. A bump
 // moves the protocol surface and the SDK's own security defaults, so it goes in
 // on its own and with the interop checks re-run.
 const mcpSDKVersion = "v1.8.0"

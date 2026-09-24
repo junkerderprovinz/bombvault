@@ -11,8 +11,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// The handshake every gate test sends once it is past the gate. The legacy era
-// is what Claude Code and mcp-remote negotiate today.
+// The handshake every gate test sends once it is past the gate, in the legacy
+// era Claude Code and mcp-remote negotiate.
 const mcpInitializeBody = `{"jsonrpc":"2.0","id":1,"method":"initialize",` +
 	`"params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"bombvault-tests","version":"1"}}}`
 
