@@ -360,6 +360,76 @@ func TestMCPStartBackupEverything(t *testing.T) {
 	}
 }
 
+// The widest start tool is held to the retention guard item by item: a
+// container whose kept window would end up MCP-made is left out of the pass and
+// named under skipped, and a pass with nothing left to run is refused.
+func TestMCPStartBackupEverythingHoldsGuardedItemsBack(t *testing.T) {
+	rig := newMCPStartRig(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	s := mustSettings(t, rig.st)
+	s.RetentionKeepLast = 2
+	if err := rig.st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	plex := rig.target(t, "plex")
+	immich := rig.target(t, "immich")
+	seedRun(t, rig.st, plex.ID, "backup", "success", store.RunMeta{StartedVia: "mcp", StartedViaKey: rig.keyID})
+
+	res := mcpCallTool(t, rig.h, rig.key, "start_backup_everything", "")
+	if res.IsError {
+		t.Fatalf("start_backup_everything: %v", res.Structured)
+	}
+	skipped := mcpRows(t, res, "skipped")
+	if len(skipped) != 1 || skipped[0]["id"] != plex.ID || skipped[0]["reason"] != "retention_guard" {
+		t.Fatalf("skipped = %v, want the guarded container with its reason", skipped)
+	}
+	waitForEverythingDone(t, rig.svc)
+
+	if n := backupRunCount(t, rig.st, plex.ID); n != 1 {
+		t.Fatalf("the guarded container has %d backups, want only the one from before the pass", n)
+	}
+	if n := backupRunCount(t, rig.st, immich.ID); n != 1 {
+		t.Fatalf("the container the guard leaves alone has %d backups, want one from the pass", n)
+	}
+}
+
+func TestMCPStartBackupEverythingRefusedWhenEveryItemIsHeld(t *testing.T) {
+	rig := newMCPStartRig(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	s := mustSettings(t, rig.st)
+	s.RetentionKeepLast = 2
+	if err := rig.st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	plex := rig.target(t, "plex")
+	seedRun(t, rig.st, plex.ID, "backup", "success", store.RunMeta{StartedVia: "mcp", StartedViaKey: rig.keyID})
+
+	res := mcpCallTool(t, rig.h, rig.key, "start_backup_everything", "")
+	if code := res.code(t); code != "retention_guard" {
+		t.Fatalf("code = %q, want retention_guard (result %v)", code, res.Structured)
+	}
+	if rig.svc.EverythingInProgress() {
+		t.Fatal("the refused call started a pass anyway")
+	}
+	if n := backupRunCount(t, rig.st, plex.ID); n != 1 {
+		t.Fatalf("the container has %d backups, want only the one from before the call", n)
+	}
+}
+
+// backupRunCount is how many backup runs an item has, whatever started them.
+func backupRunCount(t *testing.T, st *store.Repo, targetID string) int {
+	t.Helper()
+	runs, err := st.ListRuns(100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	n := 0
+	for _, run := range runs {
+		if run.TargetID == targetID && run.Kind == "backup" {
+			n++
+		}
+	}
+	return n
+}
+
 // The tool list is the same for every key, so a key that may only read has to
 // be turned away by the handler rather than by a missing tool.
 func TestMCPReadOnlyKeyGetsNotPermitted(t *testing.T) {

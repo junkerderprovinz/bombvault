@@ -253,19 +253,69 @@ func (h *Handler) toolStartBackupEverything(ctx context.Context, req *mcp.CallTo
 		return refusal, nil
 	}
 
+	guard, err := h.everythingRetentionHold(ctx, settings, domains, now)
+	if err != nil {
+		release()
+		h.logMCPCall(ctx, tool, "failed")
+		return mcpServiceError(err), nil
+	}
+	if guard.kept == 0 && guard.last != nil {
+		release()
+		h.logMCPCall(ctx, tool, "retention_guard")
+		return mcpToolError("retention_guard", guard.last.message, guard.last.detail), nil
+	}
+
 	rows := make([]mcpStartItem, 0, len(domains))
 	for _, domain := range domains {
 		rows = append(rows, mcpStartItem{ID: domain, Name: domain})
 	}
-	sctx := WithRunOrigin(ctx, RunOrigin{Via: "mcp", KeyID: caller.KeyID})
+	sctx := WithEverythingSkips(WithRunOrigin(ctx, RunOrigin{Via: "mcp", KeyID: caller.KeyID}), guard.skip)
 	started, err := h.svc.StartBackupEverything(sctx)
 	return h.mcpStartOutcome(ctx, tool, release, started, err, "a Backup Everything pass is already running", map[string]any{
 		"started":  true,
 		"domain":   "everything",
 		"items":    rows,
-		"skipped":  []mcpSkipped{},
+		"skipped":  guard.skipped,
 		"followUp": mcpEverythingFollowUp,
 	}), nil
+}
+
+// mcpEverythingHold is what the retention guard leaves of a Backup Everything
+// pass: the items it has to leave out, the rows the result names them under,
+// how many items still run and the last refusal, which is what the tool answers
+// when none do.
+type mcpEverythingHold struct {
+	skip    []string
+	skipped []mcpSkipped
+	kept    int
+	last    *mcpHeldBack
+}
+
+// everythingRetentionHold applies the retention guard to every item the pass
+// would touch. Without it the widest start tool would be the one way around a
+// guard the narrower two enforce.
+func (h *Handler) everythingRetentionHold(ctx context.Context, s store.Settings, domains []string, now time.Time) (mcpEverythingHold, error) {
+	out := mcpEverythingHold{skipped: []mcpSkipped{}}
+	for _, domain := range domains {
+		items, _, err := h.domainStartSelection(ctx, s, domain)
+		if err != nil {
+			return out, err
+		}
+		for _, item := range items {
+			hold, hErr := h.mcpRetentionHold(s, item, now)
+			if hErr != nil {
+				return out, hErr
+			}
+			if hold == nil {
+				out.kept++
+				continue
+			}
+			out.last = hold
+			out.skip = append(out.skip, item.ID)
+			out.skipped = append(out.skipped, mcpSkipped{ID: item.ID, Name: item.Name, Reason: "retention_guard"})
+		}
+	}
+	return out, nil
 }
 
 type cancelBackupInput struct {
