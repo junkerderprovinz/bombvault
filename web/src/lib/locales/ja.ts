@@ -1769,6 +1769,7 @@ const ja: Partial<Translations> = {
   "mcp.snippetShellHistory": "このコマンドにはキーが含まれており、シェルが履歴に残す場合があります。ドキュメントには履歴に残さない形が載っています。",
   "mcp.snippetDesktopHint": "この項目を claude_desktop_config.json の \"mcpServers\" の中に追加し（Claude Desktop では Settings、Developer、Edit Config）、Claude Desktop を再起動してください。デスクトップアプリとこのサーバーをつなぐのは mcp-remote なので、Node.js が必要です。",
   "mcp.snippetOtherHint": "Streamable HTTP を話すクライアントならどれでも使えます。キーは Authorization: Bearer か X-API-Key として送ってください。",
+  "mcp.snippetOtherCert": "クライアントには bombvault-cert.pem も信頼させる必要があります。エンドポイントの横のボタンでダウンロードしてください。",
   "mcp.copySnippet": "スニペットをコピー",
   "mcp.tlsHint": "Claude Code と Claude Desktop は信頼できる証明書でしか接続しません。BombVault 自身の証明書の場合は、このカードでこのアドレスを追加して証明書をダウンロードしてください。スニペットはそのファイルを Node.js に指し示します。信頼された証明書を持つリバースプロキシや Tailscale なら、この手順は不要です。HTTP_ONLY はウェブ画面全体を平文 HTTP に切り替え、コンテナ設定の変更を要し、キーを暗号化せずに送ります。証明書の検証は決して無効にしないでください。Claude 自身の設定で追加するコネクタは OAuth でサインインするため、BombVault のキーでは動きません。BombVault は OAuth を提供していません。",
   "mcp.privacyHint": "アシスタントが読む内容、たとえば項目名、実行履歴、エラーメッセージ、異常なバックアップは、その背後の AI 提供元に送られます。BombVault は何かが外に出る前に、ホストのパス、リポジトリの場所、認証情報を取り除きます。",

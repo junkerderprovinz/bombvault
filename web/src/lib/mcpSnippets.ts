@@ -67,15 +67,14 @@ export function claudeDesktopSnippet(i: McpSnippetInput): string {
     .join("\n");
 }
 
-/** genericSnippet describes the connection for any client that speaks
- *  Streamable HTTP and takes a header. */
+/** genericSnippet lists the fields any Streamable HTTP client asks for, with
+ *  both header forms; the card says in the reader's language that either one
+ *  works and what to do about the certificate. */
 export function genericSnippet(i: McpSnippetInput): string {
-  const lines = [
+  return [
     `URL: ${mcpUrl(i)}`,
     "Transport: Streamable HTTP",
-    `Header: Authorization: Bearer ${i.key}`,
-    `(or) X-API-Key: ${i.key}`,
-  ];
-  if (i.selfSigned) lines.push("Certificate: trust bombvault-cert.pem (download it in this card)");
-  return lines.join("\n");
+    `Authorization: Bearer ${i.key}`,
+    `X-API-Key: ${i.key}`,
+  ].join("\n");
 }

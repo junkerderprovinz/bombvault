@@ -251,6 +251,9 @@ describe("the certificate of this address", () => {
     expect(screen.getByText(en["mcp.certDownload"]).getAttribute("href")).toBe("/api/mcp/certificate");
     expect(cardText()).not.toContain(en["mcp.certNotForThisAddress"].replace("{host}", "192.168.1.10"));
     expect(cardText()).toContain("NODE_EXTRA_CA_CERTS");
+
+    fireEvent.click(screen.getByRole("tab", { name: en["mcp.snippetOther"] }));
+    await waitFor(() => expect(screen.getByText(en["mcp.snippetOtherCert"])).toBeTruthy());
   });
 
   it("matches an IPv6 address without its brackets", async () => {

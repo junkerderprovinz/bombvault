@@ -1769,6 +1769,7 @@ const ko: Partial<Translations> = {
   "mcp.snippetShellHistory": "이 명령에는 키가 들어 있고 셸이 기록에 남길 수 있습니다. 문서에는 그렇지 않은 형태가 나와 있습니다.",
   "mcp.snippetDesktopHint": "이 항목을 claude_desktop_config.json의 \"mcpServers\" 안에 추가한 뒤(Claude Desktop에서는 Settings, Developer, Edit Config) Claude Desktop을 다시 시작하세요. mcp-remote가 데스크톱 앱을 이 서버에 연결하므로 Node.js가 필요합니다.",
   "mcp.snippetOtherHint": "Streamable HTTP로 말하는 클라이언트면 무엇이든 됩니다. 키는 Authorization: Bearer 또는 X-API-Key로 보내세요.",
+  "mcp.snippetOtherCert": "클라이언트가 bombvault-cert.pem도 신뢰해야 합니다. 엔드포인트 옆의 버튼으로 내려받으세요.",
   "mcp.copySnippet": "스니펫 복사",
   "mcp.tlsHint": "Claude Code와 Claude Desktop은 신뢰하는 인증서로만 연결합니다. BombVault 자체 인증서라면 이 카드에서 이 주소를 추가하고 인증서를 내려받으세요. 그러면 스니펫이 Node.js를 그 파일로 향하게 합니다. 신뢰된 인증서를 쓰는 리버스 프록시나 Tailscale은 이 단계가 필요 없습니다. HTTP_ONLY는 웹 화면 전체를 일반 HTTP로 바꾸고, 컨테이너 설정 변경이 필요하며, 키를 암호화 없이 보냅니다. 인증서 검사는 절대 끄지 마세요. Claude 자체 설정에서 추가하는 커넥터는 OAuth로 로그인하기 때문에 BombVault 키로는 작동하지 않으며, BombVault는 OAuth를 제공하지 않습니다.",
   "mcp.privacyHint": "어시스턴트가 읽는 내용, 즉 항목 이름, 실행 기록, 오류 메시지, 이상한 백업은 그 뒤의 AI 제공자에게 전달됩니다. BombVault는 무엇이든 밖으로 나가기 전에 호스트 경로, 저장소 위치, 자격 증명을 제거합니다.",

@@ -84,15 +84,15 @@ describe("the client snippets", () => {
     expect(desktopEntry(trusted).args).not.toContain("--allow-http");
   });
 
-  it("builds the generic block", () => {
+  it("builds the generic block from literal fields only", () => {
     const block = genericSnippet(trusted);
     expect(block.split("\n")).toEqual([
       "URL: https://backup.example.com/mcp",
       "Transport: Streamable HTTP",
-      `Header: Authorization: Bearer ${KEY}`,
-      `(or) X-API-Key: ${KEY}`,
+      `Authorization: Bearer ${KEY}`,
+      `X-API-Key: ${KEY}`,
     ]);
-    expect(genericSnippet(own)).toContain("Certificate: trust bombvault-cert.pem");
+    expect(genericSnippet(own).split("\n").slice(1)).toEqual(block.split("\n").slice(1));
   });
 
   it("uses the placeholder verbatim", () => {
