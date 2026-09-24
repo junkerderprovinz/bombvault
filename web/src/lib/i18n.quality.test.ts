@@ -83,11 +83,8 @@ describe("translations are actually translated", () => {
 });
 
 describe("placement text is not left in English", () => {
-  // The placement selector and the surfaces it added (per-item placement
-  // codes, the timeline, off-site removal, off-premises) are the part of the
-  // app most likely to gain a string nobody localises before it merges. Every
-  // locale is checked here, not just the non-Latin ones above, because a
-  // Latin-script locale can copy English just as easily.
+  // Every locale is checked here, not just the non-Latin ones above, because
+  // a Latin-script locale can leave English text in place just as easily.
   const FAMILIES = ["placementCode.", "timeline.", "offsiteRemoval.", "placement.", "repos.offPremises"];
   const codes = Object.keys(locales).filter((c) => c !== "en");
 
