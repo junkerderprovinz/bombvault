@@ -12,8 +12,38 @@ Säilytä nopea paikallinen varmuuskopio ja lisää yksi tai useampi etäreplika
 - **Kaistanleveyden rajat** (Asetukset, Etä) rajoittavat resticin lähetys-/latausnopeutta, jotta replikointi ei tuki WAN-yhteyttäsi.
 - **Replikointiosoitin** näyttää, mikä toimialue replikoituu sen ollessa käynnissä (sen sivulla ja Kojelaudalla). Se on aktiivisuusosoitin, ei prosenttipalkki, koska `restic copy` ei paljasta koneluettavaa edistymistä.
 
-!!! note "Palautus suoraan etäsijainnista"
-    Jokaisessa varmuuskopioselaimessa on **Paikallinen / Etä** -kytkin, joten jos paikallinen repo katoaa tai vioittuu, voit listata ja palauttaa suoraan etäreplikasta. Poisto on lähdekohtainen: varmuuskopion poistaminen vaikuttaa vain katselemaasi kopioon.
+!!! note "Palautus mistä tahansa paikasta"
+    Jokainen kontti, VM, tiedostojoukko, flash ja sovelluksen asetukset listaavat varmuuskopionsa yhtenä aikajanana kaikkien paikkojen yli, joissa varmuuskopio sijaitsee. B2:een kopioitu varmuuskopio näkyy vain kerran, merkittynä jokaisella paikalla joka sen sisältää. Palautus ottaa ensimmäisen paikan, johon se pääsee, aloittaen arkistosta johon kohde on kirjoitettu, ja voit valita toisen paikan riviä kohden. Etäpaikat luetaan vasta, kun avaat ne. Poistaminen yhdessä paikassa tarkistaa ensin muut ja kertoo, oliko se viimeinen kopio.
+
+## Sijoittelu per kohde {#placement}
+
+Jokaisella kontti-, VM- ja tiedostojoukkokortilla on **Sijoittelu**-rivi kolmella segmentillä:
+
+- **Paikallinen** kirjoittaa kohteen arkistoon, joka näkyy kohdassa **Tallennuspaikka**, eikä kopioi sitä minnekään. Käytä tätä datalle, jolla on jo toinen kopio, esimerkiksi jaolle joka asuu NAS-laitteella.
+- **Paikallinen + etä** kirjoittaa sen myös sinne ja kopioi sen kohdassa **Kopiointikohteet** rastitettuihin kohteisiin, yksi chip per toimialueen etäkohde. Poista chipin rasti, niin kyseinen kohde ei saa mitään uutta tältä kohteelta.
+- **Vain etä** kirjoittaa kohteen suoraan kohdassa **Lähetyskohde** näkyvään paikkaan: suoraan arkistoon etäkohteen vieressä, tai etäarkistoon jonka olet perustanut kohdassa Asetukset, Tallennus, Arkistot.
+
+Sijainti on kiinteä kohteen ensimmäisestä varmuuskopiosta lähtien, koska BombVault ei koskaan siirrä varmuuskopioita arkistojen välillä. Kopiot voivat muuttua milloin tahansa. Kohde, joka ei enää saa uutta kohdetta, säilyttää olemassa olevat kopionsa ja typistää ne omaan säilytykseensä toimialueen seuraavalla etäajolla; **Poista kohteessa B2** kortilla poistaa ne heti. Kun osa noista kopioista ei ole olemassa missään muualla, vahvistus listaa ne päivämäärän mukaan ja pyytää kohteen nimeä. Vain lisäystä sallivista kohteista ei voi poistaa.
+
+Rivin alla kortti kertoo, minne kohde menee ja mitä siellä oikeasti on: kuinka monessa paikassa se on, milloin kukin kohde nähtiin viimeksi, ja täyttyykö 3-2-1. Paikka on alkuperäisen datan sisältävä palvelin, jokainen etäkohde ja jokainen **Rakennuksen ulkopuolella** merkitty arkisto. BombVault tarkistaa kopiot ja paikat; se ei tarkista 3-2-1:n "kaksi mediaa" -osaa.
+
+### Sijoittelun oletukset
+
+Asetukset, Tallennus, **Sijoittelun oletukset** sisältää yhden rivin per toimialue, samoilla kolmella segmentillä. Kopiot pätevät heti jokaiseen kohteeseen, jolla ei ole omaa valintaa, sekä Compose-pinojen projektikansioihin. Sijainti pätee uuteen kohteeseen sen ensimmäisessä varmuuskopiossa; sen muuttaminen ei siirrä yhtään varmuuskopiota. Ennen tallennusta rivi nimeää jokaisen kohteen, joka saa tai menettää kohteita, ja kuinka monta tilannevedosta se tarkoittaa. **Käytä kohteisiin ilman varmuuskopioita** palauttaa oletukseen jokaisen kohteen, jolla ei vielä ole varmuuskopiota.
+
+Uusi etäkohde saa jokaisen kohteen, jota ei ole asetettu Paikalliseksi. Sen lisäävä valintaikkuna kertoo kuinka monta kohdetta on kyseessä ja, jos tiedossa, kuinka paljon historiaa se on, ja tarjoutuu jättämään pois kohteet jotka on jo jätetty pois muista kohteista.
+
+### Suorat arkistot
+
+Kohteen suoran arkiston valitseminen kohdassa Vain etä avaa valintaikkunan, jossa on ehdotettu sijainti kohteen vieressä, esimerkiksi `b2:bucket:containers-direct`, ja yhteystesti joka ei luo mitään. **Luo ja käytä** luo arkiston ja osoittaa kohteen siihen. Suora arkisto ottaa kohteen avaimen, tallennusluokan, rajat, append-only-asetuksen ja säilytyksen, ja muuttuu niiden mukana; Arkistot-kortti näyttää sen vain luku -tilassa. Kun kohteen uusi avain ei avaa sitä, suora arkisto säilyttää avaimen joka sillä on, ja tallennus kertoo sen. Sen tilannevedokset kantavat tunnistetta `bv:direct`, ja jokainen muu säilytysajo säästää ne, joten suora arkisto joka on menettänyt yhteytensä kohteeseensa ei koskaan vanhene paikallisten sääntöjen mukaan.
+
+### Rakennuksen ulkopuolella
+
+Nimetty arkisto voidaan merkitä **Rakennuksen ulkopuolella** Arkistot-kortilla. Etäarkistot alkavat merkittyinä; kytke se pois rest-serveriltä samassa rakennuksessa. Merkintä laskee vain paikat ja 3-2-1:n korteilla. Se ei muuta yhtään kopiota.
+
+### Uudelleenrakennuksen jälkeen
+
+Kopiointivalinnat asuvat BombVaultin omissa asetuksissa. Uudelleenrakennuksen jälkeen Tunnista-toiminnolla ilman palautettua `/config`-kansiota ne ovat poissa, ja kaiken kopiointi lähettäisi B2:een uudelleen kohteet jotka olit jättänyt pois. Siksi jokaisen uudelleenrakennetun toimialueen etäreplikointi keskeytyy. Kojelauta näyttää sen keltaisena, ja Sijoittelun oletukset tarjoaa **Vahvista oletus** -toiminnon, jossa on esikatselu siitä mitä seuraava ajo kopioi ja nimet varmuuskopioissa joilla ei ole merkintää, jotka voit jättää pois siellä. Vain vahvistus lopettaa keskeytyksen; asetustiedoston tuonti tuo takaisin säännöt ja oletukset muttei lopeta sitä.
 
 ## Etäsijaintiset ensisijaiset arkistot {#remote-primary-repositories}
 
@@ -124,6 +154,9 @@ Erillinen **Palautus**-välilehti opastaa tuoreen tai uudelleenrakennetun asennu
 3. Antaa sinun **osoittaa olemassa olevaan repoosi** (paikallinen tai etä).
 4. **Tunnistaa** siihen tallennetut kontit, virtuaalikoneet ja tiedostojoukot.
 5. **Palauttaa ne kaikki** (jätettynä pysäytetyiksi, jotta käynnistät ne harkiten), palautuspakettisi yhden napsautuksen päässä.
+
+!!! note "Etäkopiot odottavat uudelleenrakennuksen jälkeen"
+    Kun vaihe 4 rakentaa merkinnät uudelleen ilman vanhoja asetuksia, näiden toimialueiden etäreplikointi keskeytyy, kunnes sijoittelun oletus vahvistetaan. Katso [Sijoittelu per kohde](#placement).
 
 !!! tip "Suunniteltu siirto vastaan katastrofi"
     Ohjattu palautus palauttaa BombVaultin omat asetukset varmuuskopiosta. *Suunniteltua* siirtoa uuteen laatikkoon varten voit sen sijaan kantaa kokoonpanosi mukanasi suoraan **Vie ja tuo asetukset** -kortilla (siirrettävä JSON-tiedosto). Katso [Asetukset](configuration.md#portable-settings-export-and-import).

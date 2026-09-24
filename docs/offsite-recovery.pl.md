@@ -12,8 +12,38 @@ Zachowaj szybką kopię lokalną i dodaj jedną lub więcej replik poza siedzib�
 - **Limity przepustowości** (Ustawienia, Poza siedzibą) ograniczają tempo wysyłania/pobierania restic, aby replikacja nie nasycała Twojego łącza WAN.
 - **Wskaźnik replikacji** pokazuje, która domena jest replikowana w trakcie działania (na jej stronie i na panelu). To wskaźnik aktywności, a nie pasek procentowy, ponieważ `restic copy` nie udostępnia postępu czytelnego maszynowo.
 
-!!! note "Przywracanie prosto z kopii poza siedzibą"
-    Każda przeglądarka kopii ma przełącznik **Lokalne / Poza siedzibą**, więc jeśli repozytorium lokalne zostanie utracone lub uszkodzone, możesz wylistować i przywrócić bezpośrednio z repliki poza siedzibą. Usuwanie działa per źródło: usunięcie kopii dotyczy tylko oglądanej właśnie kopii.
+!!! note "Przywróć z dowolnego miejsca"
+    Każdy kontener, VM, zestaw plików, flash i konfiguracja aplikacji wylistowują swoje kopie jako jedną oś czasu obejmującą wszystkie miejsca, w których leży kopia. Kopia skopiowana do B2 pojawia się raz, oznaczona każdym miejscem, które ją przechowuje. Przywracanie sięga po pierwsze osiągalne miejsce, zaczynając od repozytorium, do którego element jest zapisywany, a dla każdego wiersza możesz wybrać inne miejsce. Miejsca poza siedzibą są odczytywane dopiero, gdy je otworzysz. Usunięcie w jednym miejscu najpierw sprawdza pozostałe i mówi, czy była to ostatnia kopia.
+
+## Rozmieszczenie per element {#placement}
+
+Każda karta kontenera, VM i zestawu plików ma wiersz **Rozmieszczenie** z trzema segmentami:
+
+- **Lokalne** zapisuje element w repozytorium pokazanym pod **Zapisane na** i nigdzie go nie kopiuje. Użyj tego dla danych, które mają już drugą kopię, na przykład udziału, który leży na NAS.
+- **Lokalne + poza siedzibą** zapisuje go tam tak samo i kopiuje do celów zaznaczonych pod **Kopiuj do**, po jednym znaczniku na każdy cel poza siedzibą domeny. Odznacz znacznik, a ten cel nie dostanie od tego elementu nic nowego.
+- **Tylko poza siedzibą** zapisuje element wprost w miejscu pod **Wyślij do**: repozytorium bezpośrednim obok celu poza siedzibą albo zdalnym repozytorium skonfigurowanym w Ustawienia, Magazyn, Repozytoria.
+
+Lokalizacja jest ustalona od pierwszej kopii elementu, ponieważ BombVault nigdy nie przenosi kopii między repozytoriami. Kopie można zmieniać w dowolnym momencie. Cel, który przestaje otrzymywać element, zachowuje posiadane kopie i przycina je do własnego przechowywania przy następnym uruchomieniu poza siedzibą tej domeny; **Usuń w B2** na karcie usuwa je od razu. Gdy część tych kopii nie istnieje nigdzie indziej, potwierdzenie wylistowuje je według daty i prosi o nazwę elementu. Z celów tylko do dopisywania nie da się usuwać.
+
+Pod wierszem karta mówi, dokąd trafia element i co faktycznie tam jest: ile miejsc go przechowuje, kiedy każdy cel widziano ostatnio oraz czy spełnione jest 3-2-1. Miejscem jest serwer z danymi oryginalnymi, każdy cel poza siedzibą i każde repozytorium oznaczone **Poza obiektem**. BombVault sprawdza kopie i miejsca; nie sprawdza części „dwa nośniki” zasady 3-2-1.
+
+### Domyślne rozmieszczenie
+
+Ustawienia, Magazyn, **Domyślne rozmieszczenie** ma jeden wiersz na domenę z tymi samymi trzema segmentami. Kopie stosują się od razu do każdego elementu bez własnego wyboru oraz do folderów projektu stosów Compose. Lokalizacja stosuje się do nowego elementu przy jego pierwszej kopii; jej zmiana nie przenosi żadnych kopii. Przed zapisem wiersz wymienia każdy cel, który zyskuje lub traci elementy, i ile to znaczy migawek. **Zastosuj do elementów bez kopii zapasowych** przywraca do domyślnego każdy element, który nie ma jeszcze kopii.
+
+Nowy cel poza siedzibą otrzymuje każdy element, który nie jest ustawiony na Lokalne. Okno dialogowe, które go dodaje, mówi, ile to elementów i, gdzie to wiadome, ile historii to oznacza, oraz proponuje pominięcie elementów już wykluczonych z innych celów.
+
+### Repozytoria bezpośrednie
+
+Wybranie repozytorium bezpośredniego celu pod Tylko poza siedzibą otwiera okno dialogowe z proponowaną lokalizacją obok celu, na przykład `b2:bucket:containers-direct`, oraz testem połączenia, który niczego nie tworzy. **Utwórz i użyj** tworzy repozytorium i kieruje na nie element. Repozytorium bezpośrednie przejmuje klucz celu, klasę pamięci, limity, ustawienie append-only i przechowywanie, i zmienia się razem z nimi; karta Repozytoria pokazuje je jako tylko do odczytu. Gdy nowy klucz celu nie może go otworzyć, repozytorium bezpośrednie zachowuje klucz, który ma, a zapis o tym informuje. Jego migawki niosą tag `bv:direct`, a każde inne przejście przechowywania je zachowuje, więc repozytorium bezpośrednie, które straciło łączność ze swoim celem, nigdy nie starzeje się według reguł lokalnych.
+
+### Poza obiektem
+
+Nazwane repozytorium można oznaczyć jako **Poza obiektem** na karcie Repozytoria. Repozytoria zdalne zaczynają oznaczone; wyłącz to dla rest-servera w tym samym budynku. Oznaczenie liczy się tylko do miejsc i 3-2-1 na kartach. Nie zmienia żadnej kopii.
+
+### Po odbudowie
+
+Wybory kopiowania żyją we własnych ustawieniach BombVault. Po odbudowie przez Odkryj bez przywróconego `/config` znikają, a skopiowanie wszystkiego wysłałoby ponownie do B2 elementy, które pominąłeś. Replikacja poza siedzibą każdej odbudowanej domeny dlatego wstrzymuje się. Panel pokazuje to na bursztynowo, a Domyślne rozmieszczenie oferuje **Potwierdź domyślne** z podglądem tego, co skopiuje następne uruchomienie, oraz nazwami w kopiach, które nie mają wpisu, a które możesz tam pominąć. Tylko potwierdzenie kończy wstrzymanie; import pliku ustawień przywraca reguły i wartości domyślne, ale go nie kończy.
 
 ## Zdalne repozytoria podstawowe {#remote-primary-repositories}
 
@@ -124,6 +154,9 @@ Dedykowana zakładka **Odzyskiwanie** prowadzi świeżą lub odbudowaną instala
 3. Pozwala Ci **wskazać istniejące repozytorium** (lokalne lub poza siedzibą).
 4. **Odkrywa** kontenery, VM i zestawy plików w nim przechowywane.
 5. **Przywraca je wszystkie** (pozostawiając zatrzymanymi, więc uruchamiasz je świadomie), z Twoim zestawem odzyskiwania o jedno kliknięcie stąd.
+
+!!! note "Kopie poza siedzibą czekają po odbudowie"
+    Gdy krok 4 odbudowuje wpisy bez starych ustawień, replikacja poza siedzibą tych domen wstrzymuje się, dopóki domyślne rozmieszczenie nie zostanie potwierdzone. Zobacz [Rozmieszczenie per element](#placement).
 
 !!! tip "Zaplanowana migracja kontra awaria"
     Odzyskiwanie z przewodnikiem przywraca własne ustawienia BombVault z kopii zapasowej. Do *zaplanowanego* przejścia na nową maszynę możesz zamiast tego przenieść swoją konfigurację bezpośrednio za pomocą karty **Eksport i import ustawień** (przenośny plik JSON). Zobacz [Konfiguracja](configuration.md#portable-settings-export-and-import).

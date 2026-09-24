@@ -12,8 +12,38 @@ Mantenha o backup local rápido e adicione uma ou mais réplicas externas. Defin
 - **Os limites de largura de banda** (Definições, Externo) limitam a taxa de envio/receção do restic para que a replicação não sature a sua WAN.
 - Um **indicador de replicação** mostra qual o domínio que está a replicar enquanto corre (na sua página e no Painel). É um indicador ativo, não uma barra de percentagem, porque o `restic copy` não expõe nenhum progresso legível por máquina.
 
-!!! note "Restaurar diretamente do externo"
-    Cada navegador de backups tem um interruptor **Local / Externo**, por isso, se um repo local se perder ou corromper, pode listar e restaurar diretamente a partir da réplica externa. A eliminação é por origem: remover um backup afeta apenas a cópia que está a ver.
+!!! note "Restaurar de qualquer local"
+    Cada container, VM, conjunto de ficheiros, a flash e a configuração da aplicação listam os seus backups como uma única linha do tempo por todos os locais onde um backup se encontra. Um backup copiado para o B2 aparece uma vez, marcado com cada local que o guarda. Um restauro usa o primeiro local a que consegue chegar, começando pelo repositório onde o item é escrito, e pode escolher outro local por linha. Os locais externos só são lidos quando os abre. Eliminar num local verifica primeiro os outros e diz se era a última cópia.
+
+## Localização por item {#placement}
+
+Cada cartão de container, VM e conjunto de ficheiros tem uma linha **Localização** com três segmentos:
+
+- **Local** escreve o item no repositório mostrado em **Guardado em** e não o copia para lado nenhum. Use-o para dados que já têm uma segunda cópia, por exemplo uma partilha que vive num NAS.
+- **Local + externo** escreve-o lá também e copia-o para os destinos marcados em **Copiar para**, um chip por destino externo do domínio. Desmarque um chip e esse destino deixa de receber algo de novo deste item.
+- **Apenas externo** escreve o item diretamente no local em **Enviar para**: um repositório direto ao lado de um destino externo, ou um repositório remoto configurado em Definições, Armazenamento, Repositórios.
+
+A localização fica fixa desde o primeiro backup do item, porque o BombVault nunca move backups entre repositórios. As cópias podem mudar a qualquer momento. Um destino que deixa de receber um item mantém as cópias que tem e apara-as pela sua própria retenção na próxima execução externa do domínio; **Apagar em B2** no cartão remove-as de imediato. Quando algumas dessas cópias não existem em mais lado nenhum, a confirmação lista-as por data e pede o nome do item. De destinos append-only não se pode apagar.
+
+Sob a linha, o cartão diz para onde vai o item e o que está lá de facto: quantos locais o guardam, quando cada destino foi visto pela última vez, e se o 3-2-1 é cumprido. Um local é o servidor com os dados originais, cada destino externo e cada repositório marcado **Fora das instalações**. O BombVault verifica cópias e locais; não verifica a parte dos «dois suportes» do 3-2-1.
+
+### Localizações padrão
+
+Definições, Armazenamento, **Localizações padrão** tem uma linha por domínio com os mesmos três segmentos. As cópias aplicam-se de imediato a cada item sem escolha própria, e às pastas de projeto das stacks Compose. A localização aplica-se a um item novo no seu primeiro backup; alterá-la não move nenhum backup. Antes de guardar, a linha nomeia cada destino que ganha ou perde itens e quantos instantâneos isso significa. **Aplicar a itens sem backups** repõe no padrão todo o item que ainda não tem backup.
+
+Um destino externo novo recebe todo o item que não está definido como Local. O diálogo que o adiciona diz quantos itens e, quando conhecido, quanto histórico isso representa, e propõe deixar de fora os itens já excluídos de outros destinos.
+
+### Repositórios diretos
+
+Escolher o repositório direto de um destino em Apenas externo abre um diálogo com uma localização sugerida junto ao destino, por exemplo `b2:bucket:containers-direct`, e um teste de ligação que não cria nada. **Criar e usar** cria o repositório e aponta o item para ele. Um repositório direto assume a chave, a classe de armazenamento, os limites, a definição append-only e a retenção do destino, e muda com eles; o cartão Repositórios mostra-o só de leitura. Quando uma chave nova do destino não consegue abri-lo, o repositório direto mantém a chave que tem e a gravação diz-o. Os seus instantâneos levam a etiqueta `bv:direct`, e todas as outras passagens de retenção mantêm-nos, por isso um repositório direto que perdeu a ligação ao seu destino nunca envelhece pelas regras locais.
+
+### Fora das instalações
+
+Um repositório nomeado pode ser marcado **Fora das instalações** no cartão Repositórios. Os repositórios remotos começam marcados; desligue isto para um rest-server no mesmo edifício. A marca só conta para locais e para o 3-2-1 nos cartões. Não muda nenhuma cópia.
+
+### Depois de uma reconstrução
+
+As escolhas de cópia vivem nas próprias definições do BombVault. Depois de uma reconstrução através do Descobrir sem um `/config` restaurado, desaparecem, e copiar tudo voltaria a enviar para o B2 os itens que tinha deixado de fora. A replicação externa de cada domínio reconstruído entra por isso em pausa. O Painel mostra-o a âmbar, e as Localizações padrão oferecem **Confirmar padrão** com uma pré-visualização do que a próxima execução copia e os nomes nos backups que não têm entrada, que pode deixar de fora ali. Só a confirmação termina a pausa; importar um ficheiro de definições traz de volta regras e padrões mas não a termina.
 
 ## Repositórios primários remotos {#remote-primary-repositories}
 
@@ -124,6 +154,9 @@ Um separador **Recuperação** dedicado acompanha uma instalação de raiz ou re
 3. Deixa-o **apontar para o seu repo existente** (local ou externo).
 4. **Descobre** os containers, VMs e conjuntos de ficheiros nele armazenados.
 5. **Restaura-os todos** (deixados parados, para que os inicie deliberadamente), com o seu kit de recuperação a um clique de distância.
+
+!!! note "As cópias externas esperam depois de uma reconstrução"
+    Quando o passo 4 reconstrói entradas sem as definições antigas, a replicação externa desses domínios entra em pausa até a localização padrão ser confirmada. Consulte [Localização por item](#placement).
 
 !!! tip "Migração planeada versus desastre"
     A recuperação guiada restaura as próprias definições do BombVault a partir de um backup. Para uma mudança *planeada* para uma máquina nova, pode em vez disso levar a sua configuração consigo diretamente com o cartão **Exportar e importar definições** (um ficheiro JSON portátil). Consulte [Configuração](configuration.md#portable-settings-export-and-import).
