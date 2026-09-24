@@ -526,6 +526,7 @@ const sv: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "den senaste databasdumpen misslyckades",
   "coverage.reason.dbDumpOnlyCopyOff": "databasdumpen är av och ingen annan konsekvent kopia är känd",
   "coverage.reason.dbNotScheduled": "databas utan egen säkerhetskopia, så den dumpas aldrig",
+  "coverage.reason.zfsMemberSkipped": "en datauppsättning som den senaste säkerhetskopian av dess schemalagda ZFS-objekt inte kunde läsa",
   "diagnostics.heading": "Supportpaket",
   "diagnostics.hint": "En rensad ZIP för en felrapport: värdintegrationskontrollen, din konfiguration med alla hemligheter borttagna, senaste körningar, vad som står näst på schemat och den senaste loggen. Det är ingen säkerhetskopia av konfigurationen och går inte att återställa från. Kräver ett inloggningslösenord, eftersom den bär hela din konfiguration.",
   "diagnostics.button": "Ladda ner diagnostik",

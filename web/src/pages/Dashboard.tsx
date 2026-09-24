@@ -27,6 +27,9 @@ import { buildForecastLine, humanBytes, type ResolveForecast } from "../lib/fore
 import type { TranslationKey } from "../lib/i18n";
 import { Button } from "../components/Button";
 import { IconCheckCircle } from "../components/Sidebar";
+import { InfoBubble } from "../components/InfoBubble";
+import { tLtr } from "../lib/ltrFragments";
+import { zfsCodeSentence, zfsFixKey } from "../lib/zfsCodes";
 
 // Same cadence as ActivityLog's own runs polling (web/src/components/ActivityLog.tsx)
 // so the summary tier's "Last result" cell and the Activity Log never disagree
@@ -628,7 +631,13 @@ export function CoverageCard({
     "db-dump-failing": "coverage.reason.dbDumpFailing",
     "db-dump-only-copy-off": "coverage.reason.dbDumpOnlyCopyOff",
     "db-not-scheduled": "coverage.reason.dbNotScheduled",
+    "zfs-member-skipped": "coverage.reason.zfsMemberSkipped",
   };
+
+  function skippedTip(code: string): string {
+    const fix = zfsFixKey(code);
+    return fix ? `${zfsCodeSentence(t, code)} ${tLtr(t, fix)}` : zfsCodeSentence(t, code);
+  }
 
   const rows = (coverage?.domains ?? [])
     .filter((d) => d.enabled)
@@ -655,7 +664,10 @@ export function CoverageCard({
             {rows.map((r) => (
               <li key={r.domain + ":" + r.name} className="flex flex-wrap items-baseline gap-x-2">
                 <span className="text-sm text-carbon-text">{r.name}</span>
-                <span className="text-xs text-carbon-textSub">{t(reasonKey[r.reason] ?? "coverage.reason.noSchedule")}</span>
+                <span className="inline-flex items-center gap-1 text-xs text-carbon-textSub">
+                  {t(reasonKey[r.reason] ?? "coverage.reason.noSchedule")}
+                  {r.code && <InfoBubble tip={skippedTip(r.code)} />}
+                </span>
                 {r.neverBackedUp && (
                   <span className="text-xs text-statusWarn">{t("coverage.neverBackedUp")}</span>
                 )}

@@ -66,6 +66,9 @@ type CoverageItem struct {
 	Name string `json:"name"`
 	// Reason is one of the Coverage* constants.
 	Reason string `json:"reason"`
+	// Code is the ZFS member outcome that left the dataset out, set only with
+	// CoverageZFSMemberSkipped.
+	Code string `json:"code,omitempty"`
 	// NeverBackedUp distinguishes "unprotected and there is not even an old
 	// copy" from "unprotected, but a manual backup exists". The second is a gap;
 	// the first is a hole.
@@ -296,7 +299,7 @@ func (s *Service) coverFileSets(settings store.Settings) CoverageDomain {
 // coverZFSDatasets judges the items the user added, and names every member of
 // a scheduled item that the last run could not read. A green item whose child
 // dataset was skipped is the hole this domain can hide, so the member goes in
-// the list under its own name and reason code.
+// the list under its own name, with its outcome as the code.
 //
 // Datasets on the host that are in no item are not counted. An Unraid pool
 // carries system, Docker-layer, VM and share datasets that other domains cover
@@ -356,8 +359,9 @@ func (s *Service) zfsSkippedMembers(d store.ZFSDataset) []CoverageItem {
 			}
 		}
 		out = append(out, CoverageItem{
-			Name:   m.Dataset + " (" + m.Outcome + ")",
+			Name:   m.Dataset,
 			Reason: CoverageZFSMemberSkipped,
+			Code:   m.Outcome,
 		})
 	}
 	return out

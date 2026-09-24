@@ -524,6 +524,7 @@ const cs: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "poslední výpis databáze selhal",
   "coverage.reason.dbDumpOnlyCopyOff": "výpis databáze je vypnutý a jiná konzistentní kopie není známa",
   "coverage.reason.dbNotScheduled": "databáze bez vlastní zálohy, takže se nikdy nevypisuje",
+  "coverage.reason.zfsMemberSkipped": "datová sada, kterou poslední záloha její naplánované položky ZFS nedokázala přečíst",
   "diagnostics.heading": "Balíček podpory",
   "diagnostics.hint": "Očištěný ZIP pro hlášení chyby: kontrola integrace hostitele, vaše konfigurace se všemi odstraněnými tajnými údaji, nedávné běhy, co je naplánováno jako další a nedávný log. Není to záloha konfigurace a nelze z něj obnovovat. Vyžaduje přihlašovací heslo, protože obsahuje celou vaši konfiguraci.",
   "diagnostics.button": "Stáhnout diagnostiku",

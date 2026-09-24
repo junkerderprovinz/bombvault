@@ -4327,8 +4327,11 @@ export async function downloadDiagnostics(): Promise<string | null> {
 /** One item nothing backs up automatically. */
 export type CoverageItem = {
   name: string;
-  /** "not-set-up" | "not-included" | "override-off" | "no-schedule" */
+  /** "not-set-up" | "not-included" | "override-off" | "no-schedule" |
+   *  "zfs-member-skipped" and the database-dump reasons */
   reason: string;
+  /** With "zfs-member-skipped": the member outcome that left the dataset out. */
+  code?: string;
   neverBackedUp: boolean;
 };
 

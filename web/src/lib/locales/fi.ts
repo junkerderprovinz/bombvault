@@ -526,6 +526,7 @@ const fi: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "viimeisin tietokantavedos epäonnistui",
   "coverage.reason.dbDumpOnlyCopyOff": "tietokantavedos on pois päältä eikä muuta eheää kopiota tunneta",
   "coverage.reason.dbNotScheduled": "tietokanta ilman omaa varmuuskopiota, joten sitä ei koskaan vedosteta",
+  "coverage.reason.zfsMemberSkipped": "tietojoukko, jota sen ajastetun ZFS-kohteen viimeisin varmuuskopio ei voinut lukea",
   "diagnostics.heading": "Tukipaketti",
   "diagnostics.hint": "Siivottu ZIP vikailmoitusta varten: isäntäintegraation tarkistus, asetuksesi kaikki salaisuudet poistettuina, viimeisimmät ajot, mitä on seuraavaksi ajastettu, ja tuore loki. Se ei ole asetusten varmuuskopio eikä siitä voi palauttaa mitään. Vaatii kirjautumissalasanan, koska se sisältää koko kokoonpanosi.",
   "diagnostics.button": "Lataa diagnostiikka",

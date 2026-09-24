@@ -526,6 +526,7 @@ const it: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "l'ultimo dump del database è fallito",
   "coverage.reason.dbDumpOnlyCopyOff": "il dump è disattivato e non si conosce un'altra copia coerente",
   "coverage.reason.dbNotScheduled": "database senza backup proprio, quindi non viene mai dumpato",
+  "coverage.reason.zfsMemberSkipped": "un dataset che l'ultimo backup del suo elemento ZFS pianificato non è riuscito a leggere",
   "diagnostics.heading": "Pacchetto di supporto",
   "diagnostics.hint": "Uno ZIP oscurato per una segnalazione di bug: la verifica integrazione host, la tua configurazione senza alcun segreto, le esecuzioni recenti, cosa è pianificato dopo e il log recente. Non è un backup della configurazione e non consente di ripristinare nulla. Richiede la password di accesso, perché contiene tutta la tua configurazione.",
   "diagnostics.button": "Scarica la diagnostica",

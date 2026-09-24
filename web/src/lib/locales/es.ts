@@ -526,6 +526,7 @@ const es: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "el último volcado de la base de datos falló",
   "coverage.reason.dbDumpOnlyCopyOff": "el volcado está desactivado y no se conoce otra copia coherente",
   "coverage.reason.dbNotScheduled": "base de datos sin copia propia, así que nunca se vuelca",
+  "coverage.reason.zfsMemberSkipped": "un conjunto de datos que la última copia de su elemento ZFS programado no pudo leer",
   "diagnostics.heading": "Paquete de soporte",
   "diagnostics.hint": "Un ZIP depurado para un informe de error: la comprobación de integración con el host, tu configuración con todos los secretos eliminados, las ejecuciones recientes, lo que está programado a continuación y el registro reciente. No es una copia de seguridad de la configuración y no se puede restaurar a partir de él. Necesita una contraseña de acceso, porque lleva toda tu configuración.",
   "diagnostics.button": "Descargar diagnósticos",

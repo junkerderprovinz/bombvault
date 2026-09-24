@@ -466,6 +466,7 @@ const gl: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "o último volcado da base de datos fallou",
   "coverage.reason.dbDumpOnlyCopyOff": "o volcado está apagado e non se coñece outra copia coherente",
   "coverage.reason.dbNotScheduled": "base de datos sen copia propia, así que nunca se volca",
+  "coverage.reason.zfsMemberSkipped": "un conxunto de datos que a última copia do seu elemento ZFS programado non puido ler",
   "diagnostics.heading": "Paquete de asistencia",
   "diagnostics.hint": "Un ZIP depurado para un informe de erro: a comprobación de integración co host, a túa configuración con todos os segredos eliminados, as execucións recentes, o que está programado a continuación, e o rexistro recente. Non é unha copia de seguridade da configuración e non se pode restaurar a partir del. Precisa un contrasinal de acceso, porque leva toda a túa configuración.",
   "diagnostics.button": "Descargar diagnósticos",

@@ -466,6 +466,7 @@ const ms: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "dump pangkalan data terakhir gagal",
   "coverage.reason.dbDumpOnlyCopyOff": "dump pangkalan data dimatikan dan tiada salinan konsisten lain diketahui",
   "coverage.reason.dbNotScheduled": "pangkalan data tanpa sandaran sendiri, jadi tidak pernah di-dump",
+  "coverage.reason.zfsMemberSkipped": "set data yang tidak dapat dibaca oleh sandaran terakhir item ZFS berjadualnya",
   "diagnostics.heading": "Pakej sokongan",
   "diagnostics.hint": "Fail ZIP yang ditapis untuk laporan pepijat: semakan integrasi hos, konfigurasi anda dengan setiap rahsia dibuang, larian terkini, apa yang dijadualkan seterusnya, dan log terkini. Ia bukan sandaran konfigurasi dan tidak boleh dipulihkan daripadanya. Memerlukan kata laluan log masuk, kerana ia membawa keseluruhan konfigurasi anda.",
   "diagnostics.button": "Muat turun diagnostik",

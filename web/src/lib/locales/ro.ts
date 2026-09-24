@@ -523,6 +523,7 @@ const ro: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "ultima copie SQL a bazei a eșuat",
   "coverage.reason.dbDumpOnlyCopyOff": "copia SQL este oprită și nu se cunoaște altă copie coerentă",
   "coverage.reason.dbNotScheduled": "bază de date fără copie proprie, deci nu se copiază niciodată",
+  "coverage.reason.zfsMemberSkipped": "un set de date pe care ultima copie a elementului ZFS programat nu l-a putut citi",
   "diagnostics.heading": "Pachet de asistență",
   "diagnostics.hint": "O arhivă ZIP curățată pentru un raport de eroare: verificarea integrării cu gazda, configurația ta cu toate secretele eliminate, rulările recente, ce este programat în continuare și jurnalul recent. Nu este o copie de rezervă a configurației și nu se poate restaura nimic din ea. Necesită o parolă de autentificare, pentru că poartă întreaga ta configurație.",
   "diagnostics.button": "Descarcă diagnosticele",

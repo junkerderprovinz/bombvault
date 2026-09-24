@@ -526,6 +526,7 @@ const da: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "det seneste databasedump mislykkedes",
   "coverage.reason.dbDumpOnlyCopyOff": "databasedumpet er slået fra, og ingen anden sammenhængende kopi kendes",
   "coverage.reason.dbNotScheduled": "database uden egen backup, så den dumpes aldrig",
+  "coverage.reason.zfsMemberSkipped": "et datasæt, som den seneste backup af dets planlagte ZFS-element ikke kunne læse",
   "diagnostics.heading": "Supportpakke",
   "diagnostics.hint": "En renset ZIP til en fejlrapport: vært-integrationstjekket, din konfiguration med alle hemmeligheder fjernet, de seneste kørsler, hvad der er planlagt som det næste, og den seneste log. Det er ikke en sikkerhedskopi af konfigurationen, og der kan ikke gendannes fra den. Kræver en adgangskode til login, fordi den indeholder hele din konfiguration.",
   "diagnostics.button": "Download diagnostik",

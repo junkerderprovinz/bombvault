@@ -466,6 +466,7 @@ const ca: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "el darrer bolcat de la base de dades ha fallat",
   "coverage.reason.dbDumpOnlyCopyOff": "el bolcat està desactivat i no es coneix cap altra còpia coherent",
   "coverage.reason.dbNotScheduled": "base de dades sense còpia pròpia, així que mai no es bolca",
+  "coverage.reason.zfsMemberSkipped": "un conjunt de dades que l'última còpia del seu element ZFS programat no ha pogut llegir",
   "diagnostics.heading": "Paquet de suport",
   "diagnostics.hint": "Un ZIP depurat per a un informe d'error: la comprovació d'integració amb l'amfitrió, la teva configuració amb tots els secrets eliminats, les execucions recents, què hi ha programat a continuació i el registre recent. No és una còpia de seguretat de la configuració i no s'hi pot restaurar res. Cal una contrasenya d'accés, perquè conté tota la teva configuració.",
   "diagnostics.button": "Descarrega els diagnòstics",

@@ -466,6 +466,7 @@ const et: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "viimane andmebaasi tõmmis ebaõnnestus",
   "coverage.reason.dbDumpOnlyCopyOff": "andmebaasi tõmmis on väljas ja muud terviklikku koopiat ei teata",
   "coverage.reason.dbNotScheduled": "andmebaas ilma oma varunduseta, seega ei tõmmata seda kunagi",
+  "coverage.reason.zfsMemberSkipped": "andmestik, mida selle ajastatud ZFS-kirje viimane varundus ei saanud lugeda",
   "diagnostics.heading": "Tugipakett",
   "diagnostics.hint": "Puhastatud ZIP veateate jaoks: hosti integratsiooni kontroll, sinu seadistus, millest on kõik saladused eemaldatud, hiljutised käivitused, mis on järgmisena plaanis, ja hiljutine logi. See ei ole seadistuse varukoopia ja sellest ei saa taastada. Vajab sisselogimisparooli, sest see sisaldab kogu sinu seadistust.",
   "diagnostics.button": "Laadi diagnostika alla",

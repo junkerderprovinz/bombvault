@@ -523,6 +523,7 @@ const no: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "den siste databasedumpen mislyktes",
   "coverage.reason.dbDumpOnlyCopyOff": "databasedumpen er av, og ingen annen konsistent kopi er kjent",
   "coverage.reason.dbNotScheduled": "database uten egen sikkerhetskopi, så den dumpes aldri",
+  "coverage.reason.zfsMemberSkipped": "et datasett som den siste sikkerhetskopien av det planlagte ZFS-elementet ikke kunne lese",
   "diagnostics.heading": "Støttepakke",
   "diagnostics.hint": "En renset ZIP til en feilrapport: host-integrasjonssjekken, konfigurasjonen din med alle hemmeligheter fjernet, nylige kjøringer, hva som er planlagt neste gang, og den nyeste loggen. Den er ikke en sikkerhetskopi av konfigurasjonen, og ingenting kan gjenopprettes fra den. Krever et påloggingspassord, fordi den inneholder hele konfigurasjonen din.",
   "diagnostics.button": "Last ned diagnostikk",

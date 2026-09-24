@@ -526,6 +526,7 @@ const he: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "גיבוי ה־SQL האחרון נכשל",
   "coverage.reason.dbDumpOnlyCopyOff": "גיבוי ה־SQL כבוי ולא ידוע על עותק עקבי אחר",
   "coverage.reason.dbNotScheduled": "מסד נתונים בלי גיבוי משלו, ולכן לא נלקח ממנו גיבוי SQL",
+  "coverage.reason.zfsMemberSkipped": "מערך נתונים שהגיבוי האחרון של פריט ה-ZFS המתוזמן שלו לא הצליח לקרוא",
   "diagnostics.heading": "חבילת תמיכה",
   "diagnostics.hint": "קובץ ZIP מנוקה לדיווח על באג: בדיקת שילוב מארח, ההגדרות שלך כשכל הסודות הוסרו מהן, ההרצות האחרונות, מה מתוזמן בהמשך, והלוג האחרון. זה אינו גיבוי של ההגדרות ואי אפשר לשחזר ממנו. נדרשת סיסמת כניסה, כי הקובץ נושא את כל התצורה שלך.",
   "diagnostics.button": "הורד אבחון",

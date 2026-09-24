@@ -466,6 +466,7 @@ const eu: Partial<Translations> = {
   "coverage.reason.dbDumpFailing": "azken datu-base iraulketak huts egin du",
   "coverage.reason.dbDumpOnlyCopyOff": "iraulketa itzalita dago eta ez da beste kopia sendorik ezagutzen",
   "coverage.reason.dbNotScheduled": "bere babeskopiarik gabeko datu-basea, beraz inoiz ez da iraultzen",
+  "coverage.reason.zfsMemberSkipped": "programatutako ZFS elementuaren azken babeskopiak irakurri ezin izan zuen datu multzoa",
   "diagnostics.heading": "Laguntza-paketea",
   "diagnostics.hint": "Akats-txosten baterako ZIP garbitua: ostalariaren integrazio-egiaztapena, zure konfigurazioa sekretu guztiak kenduta, azken exekuzioak, hurrengo zer dagoen programatuta, eta azken erregistroa. Ez da konfigurazioaren babeskopia bat, eta ezin da hortik ezer berrezarri. Saioa hasteko pasahitza behar du, zure konfigurazio osoa daramalako.",
   "diagnostics.button": "Deskargatu diagnostikoak",
