@@ -57,7 +57,7 @@ describe("Sidebar nav rows carry a rainbow hue position", () => {
     expect(recoveryHue).toMatch(/^var\(--rb-[0-7]\)$/);
     expect(containersHue).toMatch(/^var\(--rb-[0-7]\)$/);
     // Three consecutive positions in an 8-colour palette are pairwise distinct.
-    expect(new Set([dashHue, recoveryHue, containersHue]).size).toBe(3);
+    expect(new Set([dashHue, containersHue, recoveryHue]).size).toBe(3);
   });
 
   it("the active destination carries glim-active and the accent fill, and keeps its --item-hue", () => {
@@ -97,20 +97,20 @@ describe("Sidebar nav rows carry a rainbow hue position", () => {
     } as unknown as Settings;
     const { unmount } = renderSidebar(["/"], allOn);
     const dashboardHueOn = screen.getByRole("link", { name: "Dashboard" }).style.getPropertyValue("--item-hue");
-    const recoveryHueOn = screen.getByRole("link", { name: "Recovery" }).style.getPropertyValue("--item-hue");
     const containersHueOn = screen.getByRole("link", { name: "Containers" }).style.getPropertyValue("--item-hue");
     const flashHueOn = screen.getByRole("link", { name: "Flash" }).style.getPropertyValue("--item-hue");
+    const recoveryHueOn = screen.getByRole("link", { name: "Recovery" }).style.getPropertyValue("--item-hue");
     unmount();
 
-    // Dashboard, Recovery and Containers come before VMs and keep their hue.
-    // Flash comes after it and moves up into the slot VMs held.
+    // Dashboard and Containers come before VMs and keep their hue. Flash and
+    // Recovery come after it and move up by one slot.
     const vmsOff = { ...allOn, vmsEnabled: false } as unknown as Settings;
     renderSidebar(["/"], vmsOff);
     expect(screen.getByRole("link", { name: "Dashboard" }).style.getPropertyValue("--item-hue")).toBe(dashboardHueOn);
-    expect(screen.getByRole("link", { name: "Recovery" }).style.getPropertyValue("--item-hue")).toBe(recoveryHueOn);
     expect(screen.getByRole("link", { name: "Containers" }).style.getPropertyValue("--item-hue")).toBe(containersHueOn);
     expect(screen.queryByRole("link", { name: "VMs" })).toBeNull();
     expect(screen.getByRole("link", { name: "Flash" }).style.getPropertyValue("--item-hue")).not.toBe(flashHueOn);
+    expect(screen.getByRole("link", { name: "Recovery" }).style.getPropertyValue("--item-hue")).not.toBe(recoveryHueOn);
   });
 });
 

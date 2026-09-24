@@ -498,13 +498,6 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
                   }}
                 />
               )}
-              {/* Always visible: disaster recovery is a core, non-expert flow. */}
-              <NavItem
-                to="/recovery"
-                label={t("nav.recovery")}
-                icon={<IconRecovery />}
-                hueIndex={nextHue()}
-              />
               <NavItem
                 to="/containers"
                 label={t("nav.containers")}
@@ -526,6 +519,14 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
               {configEnabled && (
                 <NavItem to="/config" label={t("nav.config")} icon={<IconConfig />} hueIndex={nextHue()} />
               )}
+              {/* Always visible: disaster recovery is a core, non-expert flow.
+                  It sits below the backup types because it restores them. */}
+              <NavItem
+                to="/recovery"
+                label={t("nav.recovery")}
+                icon={<IconRecovery />}
+                hueIndex={nextHue()}
+              />
               {/* Receiver, Fleet and Pull share one row. The Instances page
                   shows only the tabs whose setting is on. */}
               {(receiverEnabled || fleetEnabled || pullEnabled) && (
