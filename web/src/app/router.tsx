@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./Layout";
 import { Dashboard } from "../pages/Dashboard";
+import { Anomalies } from "../pages/Anomalies";
 import { Containers } from "../pages/Containers";
 import { VMs } from "../pages/VMs";
 import { Flash } from "../pages/Flash";
@@ -24,6 +25,7 @@ export function AppRouter() {
             <Route element={<Layout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/anomalies" element={<Anomalies />} />
               <Route path="/containers" element={<Containers />} />
               <Route path="/vms" element={<VMs />} />
               <Route path="/flash" element={<Flash />} />

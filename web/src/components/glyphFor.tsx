@@ -64,6 +64,9 @@ const RULES: Rule[] = [
 
   // Creation and editing.
   [/\.add|addSet|addPreset|addTarget|addTag|credSets\.add|registryAdd|passkeyAdd|passkeyCreate/i, () => <IconAdd />],
+  // A list that fetches its next page grows by the same plus as one that gains
+  // an entry.
+  [/loadMore/i, () => <IconAdd />],
   [/edit|rename|editSet/i, () => <IconPencil />],
   [/save|apply/i, () => <IconSave />],
 
