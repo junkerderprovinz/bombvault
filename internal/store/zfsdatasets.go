@@ -351,6 +351,9 @@ func (r *Repo) DeleteZFSDataset(id string) error {
 	if err := del("runs", `DELETE FROM runs WHERE target_id = ?`, id); err != nil {
 		return err
 	}
+	if err := deleteAnomalyState(tx, `= ?`, id); err != nil {
+		return fmt.Errorf("DeleteZFSDataset anomaly state: %w", err)
+	}
 	if err := del("item", `DELETE FROM zfs_datasets WHERE id = ?`, id); err != nil {
 		return err
 	}

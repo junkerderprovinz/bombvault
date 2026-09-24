@@ -408,6 +408,35 @@ func TestDeleteZFSDatasetRemovesRunsAndDetailRows(t *testing.T) {
 	}
 }
 
+func TestDeleteZFSDatasetRemovesAnomalyState(t *testing.T) {
+	_, r := zfsStore(t)
+	doomed := aZFSDataset(t, r, "tank/doomed")
+	kept := aZFSDataset(t, r, "tank/kept")
+	seedAnomalyState(t, r, doomed.ID, "zfs")
+	seedAnomalyState(t, r, kept.ID, "zfs")
+	seedDomainAnomaly(t, r)
+
+	if err := r.DeleteZFSDataset(doomed.ID); err != nil {
+		t.Fatalf("DeleteZFSDataset: %v", err)
+	}
+	assertAnomalyStateGone(t, r, doomed.ID)
+
+	rows, _, err := r.ListAnomalies(store.AnomalyFilter{TargetID: kept.ID})
+	if err != nil {
+		t.Fatalf("ListAnomalies: %v", err)
+	}
+	if len(rows) != 3 {
+		t.Fatalf("the other item kept %d of its findings", len(rows))
+	}
+	domainRows, _, err := r.ListAnomalies(store.AnomalyFilter{ScopeKind: "domain"})
+	if err != nil {
+		t.Fatalf("ListAnomalies domain: %v", err)
+	}
+	if len(domainRows) != 1 {
+		t.Fatal("the domain finding went with the item")
+	}
+}
+
 func TestLastSuccessfulZFSBackupScopedToDatasets(t *testing.T) {
 	_, r := zfsStore(t)
 	d := aZFSDataset(t, r, "cache/appdata")
