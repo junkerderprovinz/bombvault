@@ -3,7 +3,9 @@ package api
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -314,5 +316,31 @@ func TestMCPGetServerNilWithoutCaller(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("transport reached without the gate: status = %d, want 400", w.Code)
+	}
+}
+
+// The endpoint answers without a session once a key exists, so a caller that
+// never gets one must not be able to leave anything behind: one entry per
+// source address would otherwise be a way to grow the process until it is
+// killed.
+func TestMCPAuthFailureLogStaysBounded(t *testing.T) {
+	h, _, _, _ := newMCPGateHandler(t)
+	prev := log.Writer()
+	log.SetOutput(io.Discard)
+	t.Cleanup(func() { log.SetOutput(prev) })
+
+	base := time.Now()
+	h.mcp.now = func() time.Time { return base }
+	for i := range mcpAuthLogMax * 3 {
+		h.logMCPAuthFailure(fmt.Sprintf("2001:db8::%x", i), false)
+	}
+	if n := len(h.mcp.authLog); n > mcpAuthLogMax {
+		t.Fatalf("%d addresses are remembered, want at most %d", n, mcpAuthLogMax)
+	}
+
+	h.mcp.now = func() time.Time { return base.Add(2 * mcpAuthLogEvery) }
+	h.logMCPAuthFailure("2001:db8::ffff", false)
+	if n := len(h.mcp.authLog); n != 1 {
+		t.Fatalf("%d addresses outlived their quiet window, want only the one just refused", n)
 	}
 }
