@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { I18nProvider, en } from "../../lib/i18n";
+import { I18nProvider, countText, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import type { CopiesPreview, DomainRow, HomePreview, Place } from "../../lib/places";
 
@@ -423,5 +423,28 @@ describe("DomainsCard copies", () => {
     await tick("Flash", "NAS Keller");
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(copiesBodies).toEqual([{ placeId: "p-nas", on: true, expect: copies() }]);
+  });
+});
+
+describe("DomainsCard exceptions", () => {
+  it("lists the items that chose otherwise as links to their cards", async () => {
+    rows = [
+      row("containers", {
+        exceptions: [
+          { identity: "container:nginx", name: "nginx", link: "/containers?item=nginx" },
+          { identity: "container:plex", name: "plex", link: "/containers?item=plex" },
+        ],
+      }),
+    ];
+    await card();
+    expect(within(rowOf("Containers")).queryByRole("link", { name: "nginx" })).toBeNull();
+    fireEvent.click(within(rowOf("Containers")).getByRole("button", { name: countText(en["places.row.items"], "en", 2) }));
+    expect(within(rowOf("Containers")).getByRole("link", { name: "nginx" }).getAttribute("href")).toBe("/containers?item=nginx");
+    expect(within(rowOf("Containers")).getByRole("link", { name: "plex" }).getAttribute("href")).toBe("/containers?item=plex");
+  });
+
+  it("says none when every item follows the domain", async () => {
+    await card();
+    expect(within(rowOf("Containers")).getByText(en["storageDomains.exceptionsNone"])).toBeTruthy();
   });
 });
