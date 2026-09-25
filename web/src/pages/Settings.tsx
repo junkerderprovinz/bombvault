@@ -1048,23 +1048,15 @@ export function SettingsPage() {
     await save({ [key]: n } as Partial<Settings>, setOffRetSaveState, setOffRetSaveError);
   }
 
-  // toggleDomainEnabled (#142 — "Bei Domänen der Speichern-Button entfernen, es
-  // soll automatisch speichern"): each Domains-card row saves ITSELF the instant
-  // it's clicked, mirroring OffsiteWizard.tsx's toggleImmutable — the one other
-  // place in this app already does "flip a single boolean settings field the
-  // moment its switch is touched, no batching Save button": optimistic
-  // setSettings flip, then the shared save() helper above (which already
-  // merges onto the confirmed baseline, persists, dispatches
-  // "bv:settings-changed" so Layout/Sidebar re-fetch and the tab appears/
-  // disappears live, and pushes the toast) — never a new persistence path.
+  // toggleDomainEnabled saves a Domains-card row the moment it is clicked. The
+  // flip is optimistic and goes through the shared save() helper, whose
+  // "bv:settings-changed" event lets the sidebar show or hide the tab live.
   //
-  // A rejected save (e.g. enabling VMs with no working SSH connection to the
-  // libvirt host; handlePutSettings in internal/api/handlers_settings.go checks that
-  // OFF→ON transition specifically) rolls the optimistic flip back to
-  // whatever it was before this click and bumps this row's shake nonce so
-  // ToggleRow replays `.glim-shake` — generic by construction: it keys off
-  // `!ok`, not off which domain or why the backend refused, so ANY domain's
-  // enable failing for ANY reason gets the same revert + shake + toast.
+  // A rejected save (enabling VMs without a working SSH connection to the
+  // libvirt host, which handlePutSettings in internal/api/handlers_settings.go
+  // refuses) rolls the flip back and bumps the row's shake nonce so ToggleRow
+  // replays `.glim-shake`. The rollback keys off `!ok` alone, so every domain
+  // gets the same revert, shake and toast whatever the backend's reason.
   async function toggleDomainEnabled(key: DomainToggleKey, next: boolean) {
     const prev = settings?.[key];
     setSettings((s) => (s ? { ...s, [key]: next } : s));

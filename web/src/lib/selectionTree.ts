@@ -132,13 +132,13 @@ export function toFlatList(includes: ReadonlySet<string>, exclusions: ReadonlySe
  *  and standalone ones.
  *
  *  The server files a stored include as custom whenever it is not exactly a
- *  mount root (ContainerMounts in service_paths.go), so a sub-include of a reachable
- *  mount arrives as a custom row and would otherwise appear twice on screen.
- *  It stays in the (I, E) mirror, which already renders its mount mixed, and
- *  is left out of the custom rows. An exact mount root is the mount row itself,
- *  not a sub-include. Only reachable mounts absorb, so the caller passes their
- *  sources; an unreachable mount cannot be browsed and its sub-includes keep
- *  their own rows. */
+ *  mount root (ContainerMounts in service_paths.go), so a sub-include of a
+ *  reachable mount arrives as a custom row and would otherwise appear twice on
+ *  screen. It stays in the (I, E) mirror, which already renders its mount
+ *  mixed, and is left out of the custom rows. An exact mount root is the mount
+ *  row itself, not a sub-include. Only reachable mounts absorb, so the caller
+ *  passes their sources; an unreachable mount cannot be browsed and its
+ *  sub-includes keep their own rows. */
 export function partitionCustomPaths(
   customPaths: readonly string[],
   mountSources: readonly string[],
