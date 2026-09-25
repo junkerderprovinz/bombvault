@@ -85,29 +85,30 @@ func buildSettingsView(s store.Settings) settingsView {
 }
 
 // redactedLocationMarker replaces the "user:pass@" userinfo of a repo location on
-// the plain export path (scrubRepoLocation). The import recognises it, so a
-// location that arrives redacted can never overwrite a working one
-// (importedLocation).
+// the plain export path (scrubRepoLocation). The import recognises it and keeps
+// a working location here in its place where importedLocation or
+// restoredLocation says so.
 const redactedLocationMarker = "[redacted]@"
 
-// scrubRepoLocation strips a URL-embedded credential out of a restic repo
-// location, leaving the location itself — scheme, host, bucket, path — intact.
+// scrubRepoLocation takes the password out of a restic repo location and keeps
+// the rest, scheme included, so the location still names its destination. A
+// location is no secret, but rest:https://user:pass@host:8000/repo carries one,
+// and the plain export can be fetched by any host on the LAN in trusted-LAN
+// mode.
 //
-// It reuses credentialRe (handlers.go), the SAME userinfo pattern the error
-// scrubber matches on, rather than growing a second pattern that would drift
-// from it. What it deliberately does NOT reuse is scrubSecrets: that runs
-// absPathRe first, and a repo location IS a path-shaped string, so the whole
-// location would come out as "[path]" and the export would name no destination
-// at all. Only the credential half applies here.
-//
-// A location is not itself a secret — which bucket a box replicates to is the
-// portable part of a settings file — but it can CARRY one: restic accepts
-// rest:https://user:pass@host:8000/repo, and s3:, sftp: and b2: locations take
-// the same userinfo syntax (the generated recovery kit documents it in so many
-// words). Emitting one verbatim would have put a live password in a file that
-// any host on the LAN can fetch in trusted-LAN mode.
+// It matches with repoUserinfoRe, the pattern the error scrubber uses on repo
+// locations, and leaves a userinfo without a password alone: the sftp short
+// form sftp:user@host:/repo holds a login name, and redacting that would turn
+// a working location into one the operator has to retype.
 func scrubRepoLocation(loc string) string {
-	return credentialRe.ReplaceAllString(loc, redactedLocationMarker)
+	return repoUserinfoRe.ReplaceAllStringFunc(loc, func(match string) string {
+		m := repoUserinfoRe.FindStringSubmatch(match)
+		scheme := m[1] + ":" + m[2]
+		if !strings.Contains(match[len(scheme):], ":") {
+			return match
+		}
+		return scheme + redactedLocationMarker
+	})
 }
 
 // locationRedacted reports whether a repo location reached the import with its
@@ -418,52 +419,39 @@ func decodeExport(w http.ResponseWriter, r *http.Request) (settingsExport, bool)
 	return exp, true
 }
 
-// rejectImportCollisions is the half of the import validation that needs the
-// running service: whether two locations in the file name the SAME repository.
-// Returns a user-facing sentence, or "".
+// rejectImportCollisions refuses a file that would leave a named repository on
+// a domain path, an off-site destination, an off-site target or another named
+// repository, as the named-repository forms do. It returns a user-facing
+// sentence, or "". It sits apart from validateExport, a pure function over the
+// file, because it resolves locations through the running service.
 //
-// Kept apart from validateExport because that one is deliberately a pure
-// function over the file, while this has to resolve every location. What it
-// enforces is exactly what the two write paths enforce: a named repository may
-// not sit on a domain's own repository, on a domain's off-site destination, on
-// an off-site target row, or on another named repository.
+// The check runs on the state the apply leaves behind, which differs from the
+// file in four ways:
 //
-// Checked against the state the apply LEAVES BEHIND, not against the file's own
-// two halves. Those are not the same thing, and assuming they were left the hole
-// this guard was written to close. There are THREE shapes, and modelling only
-// the first two left a third of the hole open:
+//   - a file with no namedRepos block keeps every stored row, since applyImport
+//     calls replaceNamedRepos only for a non-empty block;
+//   - a file row that is in use here keeps its stored location, since the move
+//     goes through SetNamedRepoLocationIfUnused;
+//   - a stored row in use here that the file lacks survives, since the delete
+//     goes through DeleteNamedRepoIfUnused;
+//   - a redacted location in the file can leave this instance's own in place
+//     (importedLocation, restoredLocation).
 //
-//   - a file with no namedRepos block writes the settings and leaves the
-//     instance's existing rows in place (applyImport only calls
-//     replaceNamedRepos when the block is non-empty), so an imported domain path
-//     can land on a stored repository nobody checked it against;
-//   - a row the file DOES carry that is IN USE here keeps its current location,
-//     because the move goes through SetNamedRepoLocationIfUnused, so the
-//     location the file names is not the location that ends up stored;
-//   - a stored row the file does NOT carry that is in use here is KEPT, because
-//     the delete goes through DeleteNamedRepoIfUnused. It survives the apply
-//     just as much as the file's own rows do, and nothing was checking the
-//     file's five domain paths against it.
-//
-// An import used to be the one write path that could install a collision the
-// forms refuse, and it surfaced at that repository's first backup - or, worse,
-// quietly, as a repository whose append-only flag and credentials answered for a
-// domain that never set them.
+// A collision this misses shows at that repository's first backup, or not at
+// all: a repository whose append-only flag and credentials answer for a domain
+// that never set them.
 func (h *Handler) rejectImportCollisions(exp settingsExport) string {
-	// One repository that will exist after the apply, with the name to call it by
-	// in the refusal - the file's rows are numbered as the operator sees them,
-	// and a row that only exists here has no number in the file to give.
+	const unchecked = "could not check this file against the repositories already set up; try again"
+	// One repository that exists after the apply. A file row is named by its
+	// number in the file, a stored row the file lacks by its name.
 	type repoRow struct{ label, loc string }
-	// COPIED, never aliased. exp.NamedRepos is a slice of value structs, so
-	// writing through the slice header would edit the caller's export - and
-	// handleImportSettings hands that same export on to summarizeExport and
-	// applyImport, where a pinned location silently suppresses the apply's own
-	// "its location was NOT moved" notice. A validator must not rewrite the
-	// document it validates.
+	// The locations the apply keeps go into rows, never into exp:
+	// handleImportSettings passes exp on to the apply, where a pinned location
+	// would hide its notice that a move was refused.
 	rows := make([]repoRow, 0, len(exp.NamedRepos))
 	stored, sErr := h.store.ListNamedRepos()
 	if sErr != nil {
-		return "could not check this file against the repositories already set up; try again"
+		return unchecked
 	}
 	storedByID := make(map[string]store.OffsiteTarget, len(stored))
 	for _, r := range stored {
@@ -485,37 +473,30 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 				// one the file asks for would pass a check the stored state then fails.
 				n, cErr := h.store.ItemsUsingNamedRepo(id)
 				if cErr != nil {
-					// Refused rather than guessed. Pinning the location on a read error
-					// validates a location the apply may not write - it would move an
-					// unused row the guard had just decided to leave alone - and the
-					// response would still say applied.
-					return "could not check this file against the repositories already set up; try again"
+					// Refused rather than guessed: pinning the location on a read error
+					// would validate one the apply may not write, and the response
+					// would still say applied.
+					return unchecked
 				}
 				if n != 0 {
 					loc = cur.Repo
 				} else {
-					// An UNUSED row does move - but not necessarily to what the file
-					// says. A location that arrived REDACTED (a plain export from an
-					// instance whose location carried a credential) is not written over
-					// a working one; importedLocation keeps the stored value there, and
-					// the guard has to validate the same thing the apply will store.
-					// Otherwise this checks "rest:https://[redacted]@host/repo" for
-					// collisions while the instance keeps its real location, which is
-					// the one that could actually collide.
+					// An unused row moves, but a redacted location in the file leaves
+					// the stored one, and that is the one that can collide.
 					loc = importedLocation(cur.Repo, tv.Repo)
 				}
 			}
 			rows = append(rows, repoRow{fmt.Sprintf("repository #%d", i+1), loc})
 		}
-		// …and the rows the apply KEEPS because they are in use and the file does
-		// not carry them.
+		// The stored rows the apply keeps because they are in use and the file
+		// lacks them.
 		for _, r := range stored {
 			if inFile[r.ID] {
 				continue
 			}
 			n, cErr := h.store.ItemsUsingNamedRepo(r.ID)
 			if cErr != nil {
-				return "could not check this file against the repositories already set up; try again"
+				return unchecked
 			}
 			if n != 0 {
 				rows = append(rows, repoRow{fmt.Sprintf("the repository %q already set up here", scrubSafeName(r.Name)), r.Repo})
@@ -535,7 +516,11 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 	}
 	type place struct{ label, loc string }
 	var occupied []place
-	s := exp.Settings
+	here, gErr := h.store.GetSettings()
+	if gErr != nil {
+		return unchecked
+	}
+	s := mergeImportedSettings(here, exp.Settings)
 	for _, p := range []place{
 		{"the Containers path", s.ContainersPath}, {"the VMs path", s.VMsPath},
 		{"the Flash path", s.FlashPath}, {"the Config path", s.ConfigPath},
@@ -551,7 +536,15 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 		}
 	}
 	for _, tv := range exp.OffsiteTargets {
-		if loc, ok := resolve(tv.Repo); ok {
+		loc := tv.Repo
+		if locationRedacted(loc) {
+			target, _, err := h.store.GetOffsiteTarget(strings.TrimSpace(tv.ID))
+			if err != nil {
+				return unchecked
+			}
+			loc = importedLocation(target.Repo, loc)
+		}
+		if loc, ok := resolve(loc); ok {
 			occupied = append(occupied, place{"an off-site destination", loc})
 		}
 	}
@@ -758,34 +751,29 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 		return fmt.Errorf("the settings were not imported: %w", err)
 	}
 
-	// Map the imported view onto the CURRENT row, PRESERVING the per-instance
-	// fields the file intentionally omits (auth password, session epoch,
-	// recovery-kit ack, registry-auth blob) and the encrypted credential blobs
-	// (those are updated separately below, only when the file carries them).
-	// The merge runs inside MutateSettings' transaction so those preserved
-	// fields are read at write time: an import is a slow request (a 4 MiB body,
-	// a full validation pass), and a password change or credential save landing
-	// in that window must not be reverted by the row this writes back.
-	// A hook command in the file is not installed (see mergeImportedSettings for
-	// why a settings file may not hand this host a command to run). Say so, so an
-	// operator moving to a new box learns that the one part of their Backup
-	// Everything setup that did NOT travel is the hook, instead of discovering it
-	// the night the dead-man's-switch does not ping.
+	// A hook command in the file is not installed (see mergeImportedSettings).
+	// Saying so tells an operator moving to a new box that the hook is the one
+	// part of Backup Everything that did not travel, before the night the
+	// dead-man's-switch stays silent.
 	if strings.TrimSpace(exp.Settings.EverythingPreHook) != "" || strings.TrimSpace(exp.Settings.EverythingPostHook) != "" {
-		log.Print("api: settings import: the file carries Backup Everything pre/post-hook commands — NOT installed. " +
+		log.Print("api: settings import: the file carries Backup Everything pre/post-hook commands, which are not installed. " +
 			"A hook is a shell command this host runs, so it is set on the instance, never by an imported file. " +
 			"Enter it under Settings > Schedules > Backup Everything if you want it here.")
 	}
 
-	// Same deal for a location whose credential the exporting instance stripped:
-	// say so, because the operator is the only one who can put the password back.
+	// Likewise for a location whose credential the export stripped: only the
+	// operator can put the password back.
 	if slots := redactedLocations(exp); len(slots) > 0 {
-		log.Printf("api: settings import: these repo locations arrived with their embedded credential removed (%s) — "+
-			"a plain export never writes a password into a URL. Where this instance already has a location it is KEPT; "+
-			"anywhere else the location lands with the marker still in it. Re-enter the credential in the repo URL, "+
-			"or export again with credentials included.", strings.Join(slots, ", "))
+		log.Printf("api: settings import: these repo locations arrived with their embedded credential removed (%s); "+
+			"a plain export never writes a password into a URL. An off-site location or repository this instance already has is kept, "+
+			"and so is a domain path where the file names the same location; anywhere else the location lands with the marker in it. "+
+			"Re-enter the credential in the repo URL, or export again with credentials included.", strings.Join(slots, ", "))
 	}
 
+	// The merge keeps the per-instance fields the file omits (login password,
+	// session epoch, recovery-kit ack, registry auths, credential blobs). It runs
+	// inside the transaction so they are read at write time: a password change
+	// landing during a slow import must not be reverted by this write.
 	if _, err := h.store.MutateSettings(func(cur *store.Settings) error {
 		*cur = mergeImportedSettings(*cur, exp.Settings)
 		return nil

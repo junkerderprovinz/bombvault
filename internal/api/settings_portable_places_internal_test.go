@@ -145,7 +145,7 @@ func TestPlainExportRedactsPlaceBasesAndDomainPaths(t *testing.T) {
 
 	body, exp := doExport(t, src, "")
 	for _, secret := range []string{locRepoPass, locRepoUser} {
-		if bytes.Contains(body, []byte(secret)) {
+		if bytes.Contains(body, jsonText(t, secret)) {
 			t.Fatalf("the plain export leaked %q:\n%s", secret, body)
 		}
 	}
@@ -208,5 +208,32 @@ func TestImportOnFreshInstanceTakesTheRedactedDomainPath(t *testing.T) {
 	}
 	if !strings.Contains(got.VMsPath, redactedLocationMarker) || strings.Contains(got.VMsPath, locRepoPass) {
 		t.Fatalf("vmsPath = %q, want the redacted remote path, neither the local default nor the password", got.VMsPath)
+	}
+}
+
+func TestImportOnFreshInstanceTakesAStorageBoxPathWhole(t *testing.T) {
+	const box = "sftp:u123456@u123456.your-storagebox.de:/bv/vms"
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	s, err := srcStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.VMsPath = box
+	if err := srcStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	body, _ := doExport(t, src, "")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.VMsPath != box {
+		t.Fatalf("vmsPath = %q, want %q: it holds no password to strip", got.VMsPath, box)
 	}
 }
