@@ -1,9 +1,11 @@
 package api
 
 import (
+	"bytes"
 	"maps"
 	"net/http"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -114,5 +116,97 @@ func TestAnInstanceWithoutPlacesStillExportsBothBlocks(t *testing.T) {
 	}
 	if homes, ok := exp["storageDomainPlaces"].(map[string]any); !ok || len(homes) != 0 {
 		t.Errorf("storageDomainPlaces = %v, want an empty object", exp["storageDomainPlaces"])
+	}
+}
+
+// restPlaceBase holds its credential in the URL, a form restic accepts and
+// the migration keeps in a place's base.
+const restPlaceBase = "rest:https://backupuser:Tr0ub4dor&3@storage.example.com:8000" //nolint:gosec // G101: fake credential, the same one as locWithCreds
+
+// seedCredentialedPlace makes a rest-server place with that base the home of
+// the VMs.
+func seedCredentialedPlace(t *testing.T, st *store.Repo) {
+	t.Helper()
+	if _, err := st.WritePlace(store.PlaceWrite{
+		Place: store.Place{
+			ID: "place-rest", Name: "Rest server", Provider: "rest-server", Kind: "rest", Base: restPlaceBase,
+			Folders: map[string]string{"vms": "vms"}, OffPremises: true, Enabled: true,
+		},
+		HomeDomains: map[string]string{"vms": "place-rest"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestPlainExportRedactsPlaceBasesAndDomainPaths(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	seedCredentialedPlace(t, srcStore)
+
+	body, exp := doExport(t, src, "")
+	for _, secret := range []string{locRepoPass, locRepoUser} {
+		if bytes.Contains(body, []byte(secret)) {
+			t.Fatalf("the plain export leaked %q:\n%s", secret, body)
+		}
+	}
+	redacted := "rest:https://" + redactedLocationMarker + "storage.example.com:8000"
+	if len(exp.Places) != 1 || exp.Places[0].Base != redacted {
+		t.Fatalf("places = %+v, want the base with its credential replaced by the marker", exp.Places)
+	}
+	if exp.Settings.VMsPath != redacted+"/vms" {
+		t.Fatalf("vmsPath = %q, want it redacted like its place's base", exp.Settings.VMsPath)
+	}
+
+	_, full := doExport(t, src, "?includeCredentials=true")
+	if full.Places[0].Base != restPlaceBase || full.Settings.VMsPath != restPlaceBase+"/vms" {
+		t.Fatalf("the credentialed export must carry base and path whole: %q, %q", full.Places[0].Base, full.Settings.VMsPath)
+	}
+}
+
+func TestImportKeepsTheCredentialInAWorkingDomainPath(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	seedCredentialedPlace(t, srcStore)
+	body, _ := doExport(t, src, "")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	const working = "rest:https://backupuser:dst-pass@storage.example.com:8000/vms" //nolint:gosec // G101: fake credential
+	s, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.VMsPath = working
+	if err := dstStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.VMsPath != working {
+		t.Fatalf("vmsPath = %q, want this instance's working path kept", got.VMsPath)
+	}
+}
+
+func TestImportOnFreshInstanceTakesTheRedactedDomainPath(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	seedCredentialedPlace(t, srcStore)
+	body, _ := doExport(t, src, "")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(got.VMsPath, redactedLocationMarker) || strings.Contains(got.VMsPath, locRepoPass) {
+		t.Fatalf("vmsPath = %q, want the redacted remote path, neither the local default nor the password", got.VMsPath)
 	}
 }

@@ -117,19 +117,27 @@ func locationRedacted(loc string) bool {
 }
 
 // redactExportLocations strips URL-embedded credentials out of every repo
-// location the envelope carries: the five per-domain off-site locations in the
-// settings block and each off-site target's repo.
+// location the envelope carries: the domain paths and off-site locations in
+// the settings block, each place's base and each row's repo. A remote domain
+// path is its home place's base plus a folder, so redacting the base alone
+// would still hand the credential out.
 //
-// Applied to the PLAIN export only. The credentialed variant already hands out
+// Applied to the plain export only. The credentialed variant already hands out
 // every stored secret in the clear behind requireAuthForSecrets, so scrubbing
 // there would leave the one export that is meant to be a complete, portable copy
 // as the only one that is not.
 func redactExportLocations(exp *settingsExport) {
-	exp.Settings.ContainersOffsite = scrubRepoLocation(exp.Settings.ContainersOffsite)
-	exp.Settings.VMsOffsite = scrubRepoLocation(exp.Settings.VMsOffsite)
-	exp.Settings.FlashOffsite = scrubRepoLocation(exp.Settings.FlashOffsite)
-	exp.Settings.ConfigOffsite = scrubRepoLocation(exp.Settings.ConfigOffsite)
-	exp.Settings.FilesOffsite = scrubRepoLocation(exp.Settings.FilesOffsite)
+	for _, loc := range []*string{
+		&exp.Settings.ContainersPath, &exp.Settings.VMsPath, &exp.Settings.FlashPath,
+		&exp.Settings.ConfigPath, &exp.Settings.FilesPath,
+		&exp.Settings.ContainersOffsite, &exp.Settings.VMsOffsite, &exp.Settings.FlashOffsite,
+		&exp.Settings.ConfigOffsite, &exp.Settings.FilesOffsite,
+	} {
+		*loc = scrubRepoLocation(*loc)
+	}
+	for i := range exp.Places {
+		exp.Places[i].Base = scrubRepoLocation(exp.Places[i].Base)
+	}
 	for i := range exp.OffsiteTargets {
 		exp.OffsiteTargets[i].Repo = scrubRepoLocation(exp.OffsiteTargets[i].Repo)
 	}
@@ -143,6 +151,11 @@ func redactExportLocations(exp *settingsExport) {
 func redactedLocations(exp settingsExport) []string {
 	var out []string
 	for _, f := range []struct{ name, loc string }{
+		{"containersPath", exp.Settings.ContainersPath},
+		{"vmsPath", exp.Settings.VMsPath},
+		{"flashPath", exp.Settings.FlashPath},
+		{"configPath", exp.Settings.ConfigPath},
+		{"filesPath", exp.Settings.FilesPath},
 		{"containersOffsite", exp.Settings.ContainersOffsite},
 		{"vmsOffsite", exp.Settings.VMsOffsite},
 		{"flashOffsite", exp.Settings.FlashOffsite},
@@ -172,6 +185,11 @@ func redactedLocations(exp settingsExport) []string {
 			name = strings.TrimSpace(tv.ID)
 		}
 		out = append(out, "repository "+name)
+	}
+	for _, p := range exp.Places {
+		if locationRedacted(p.Base) {
+			out = append(out, "storage place "+strings.TrimSpace(p.Name))
+		}
 	}
 	return out
 }
@@ -1033,24 +1051,29 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 }
 
 // importedLocation picks the repo location an apply writes into one slot: the
-// file's, unless that one arrived redacted (a plain export from an instance whose
-// location carried a credential) AND this instance already has a location there —
-// then the working one stays.
+// file's, unless that one arrived redacted by a plain export and this instance
+// already has a location there. Writing "rest:https://[redacted]@host:8000/repo"
+// over a working location would quietly break the replication this instance
+// already runs, and nothing else in the file says a credential was removed;
+// applyImport logs which slots arrived redacted.
 //
-// Writing "rest:https://[redacted]@host:8000/repo" over a location that works
-// would turn importing a settings file into breaking the off-site replication the
-// target instance already had running, and it would do it quietly: nothing else in
-// the file says a credential was removed. Keeping what is there is the harmless
-// direction, the same one mergeImportedSettings takes for the hook commands and
-// the credential blobs; applyImport logs which slots it applied to.
-//
-// A slot this instance has NOTHING in keeps the redacted value instead of being
-// left empty. That is deliberate: the marker is visible in Settings and the next
-// run fails against a location an operator can repair by typing the password back
-// in, whereas a silently blank off-site location is a box that just stops
-// replicating and says nothing.
+// An empty slot takes the redacted value rather than staying empty: the marker
+// shows in Settings and the next run fails against a location the operator can
+// repair by typing the password back in, where a blank off-site location just
+// stops replicating without a word.
 func importedLocation(existing, imported string) string {
 	if locationRedacted(imported) && strings.TrimSpace(existing) != "" {
+		return existing
+	}
+	return imported
+}
+
+// restoredLocation is importedLocation for a slot that is never empty on this
+// instance, such as a domain path at its local default. It keeps existing
+// only when the redacted file names that same location, so a redacted remote
+// location lands visibly instead of losing to a default.
+func restoredLocation(existing, imported string) string {
+	if locationRedacted(imported) && scrubRepoLocation(existing) == imported {
 		return existing
 	}
 	return imported
@@ -1118,11 +1141,14 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.FlashEnabled = v.FlashEnabled
 	out.ConfigEnabled = v.ConfigEnabled
 	out.FilesEnabled = v.FilesEnabled
-	out.ContainersPath = v.ContainersPath
-	out.VMsPath = v.VMsPath
-	out.FlashPath = v.FlashPath
-	out.ConfigPath = v.ConfigPath
-	out.FilesPath = v.FilesPath
+	// Domain paths through restoredLocation: a plain export redacts a remote
+	// one, and the local default a fresh instance holds is no location to keep
+	// over it.
+	out.ContainersPath = restoredLocation(existing.ContainersPath, v.ContainersPath)
+	out.VMsPath = restoredLocation(existing.VMsPath, v.VMsPath)
+	out.FlashPath = restoredLocation(existing.FlashPath, v.FlashPath)
+	out.ConfigPath = restoredLocation(existing.ConfigPath, v.ConfigPath)
+	out.FilesPath = restoredLocation(existing.FilesPath, v.FilesPath)
 	out.RestoreFolder = v.RestoreFolder
 	// Off-site locations, via importedLocation: a location the plain export
 	// stripped a credential out of never overwrites a working one here.
