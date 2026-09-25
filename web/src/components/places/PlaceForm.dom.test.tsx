@@ -12,6 +12,9 @@ const probes: ProbeRequest[] = [];
 const creates: CreatePlaceBody[] = [];
 let probeAnswer: OkEnvelope & ProbeResult = { ok: true };
 let createAnswer: OkEnvelope & { place?: unknown; code?: string } = { ok: true };
+let copyWorks = true;
+
+vi.mock("../../lib/clipboard", () => ({ copyText: () => Promise.resolve(copyWorks) }));
 
 vi.mock("../../lib/places", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/places")>();
@@ -96,6 +99,7 @@ beforeEach(() => {
   creates.length = 0;
   probeAnswer = { ok: true, base: "s3:https://s3.eu-central-1.wasabisys.com/bv/bombvault", folders: { containers: "empty" } };
   createAnswer = { ok: true, place: { id: "p1", name: "Wasabi" } };
+  copyWorks = true;
 });
 afterEach(cleanup);
 
@@ -165,6 +169,17 @@ describe("PlaceForm fields", () => {
     await form(SFTP);
     expect(await screen.findByText("ssh-ed25519 AAAA bombvault")).toBeTruthy();
     expect(field(en["places.field.port"]).getAttribute("placeholder")).toBe("22");
+  });
+
+  it("says so and shakes the copy button when the public key cannot be copied", async () => {
+    copyWorks = false;
+    await form(SFTP);
+    await screen.findByText("ssh-ed25519 AAAA bombvault");
+    await act(async () => {
+      fireEvent.click(button("common.copy"));
+    });
+    expect(screen.getByText(en["vm.ssh.copyFailed"])).toBeTruthy();
+    expect(button("common.copy").className).toContain("glim-shake");
   });
 
   it("names each field the way its kind does", async () => {
