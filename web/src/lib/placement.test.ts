@@ -332,6 +332,11 @@ describe("observedLine", () => {
     ]);
   });
 
+  it("says when every copy stays on the premises", () => {
+    const lines = observedLine(tEn, placementObserved({ sites: 1, rule321: "no-off-site", tone: "warn" }));
+    expect(lines[lines.length - 1]).toEqual({ text: "3-2-1 not met: no copy off the premises", tone: "warn" });
+  });
+
   it("warns about a target that could not be reached", () => {
     const lines = observedLine(
       tEn,

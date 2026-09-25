@@ -369,6 +369,7 @@ export function planLines(
 const RULE_321: Record<PlacementObserved["rule321"], { key: TranslationKey; tone: StatusLine["tone"] }> = {
   met: { key: "placement.rule321Met", tone: "normal" },
   "one-copy": { key: "placement.rule321OneCopy", tone: "warn" },
+  "no-off-site": { key: "placement.rule321NoOffsite", tone: "warn" },
   unconfirmed: { key: "placement.rule321Unconfirmed", tone: "unconfirmed" },
 };
 

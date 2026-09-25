@@ -2226,7 +2226,7 @@ export interface PlacementObserved {
   places: ObservedPlace[];
   sites: number;
   tone: "ok" | "warn" | "unconfirmed";
-  rule321: "met" | "one-copy" | "unconfirmed";
+  rule321: "met" | "one-copy" | "no-off-site" | "unconfirmed";
   older: OlderCopies[];
 }
 
