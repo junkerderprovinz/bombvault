@@ -164,9 +164,9 @@ const ALLOWED_RULES: Record<string, string> = {
   ".glim-boom-fx::after": "the shockwave of the logo's easter egg, an effect ring and not a frame",
 };
 
-/** Files that still draw lines. The off-site wizard is the last one: it gives
- *  way to the add-place window rather than being restyled, so it comes off
- *  when it is deleted, and this list and its honesty test go with it. */
+/** Files that still draw lines, left out of the line checks below. The honesty
+ *  test fails once one of them stops drawing or disappears, so no entry
+ *  outlives its lines. */
 const PENDING = new Set<string>(["components/OffsiteWizard.tsx"]);
 
 type Line = { file: string; line: number; text: string };
