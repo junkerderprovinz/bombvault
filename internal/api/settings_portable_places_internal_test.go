@@ -653,3 +653,34 @@ func TestARedactedPlaceDoesNotTakeOverAWorkingDomainPath(t *testing.T) {
 		t.Errorf("no log line for the domain left off its place, got:\n%s", buf.String())
 	}
 }
+
+func TestAFilesPlacesDecideTheLocationsItsRowsDisagreeOn(t *testing.T) {
+	f := newPlacementFixture(t)
+	seed := seedPlaces(f)
+	res := importEdited(t, f, func(exp map[string]any) {
+		exp["settings"].(map[string]any)["containersPath"] = "elsewhere/containers"
+		exportedRow(t, exp, "offsiteTargets", seed.copies.ID)["repo"] = b2Base + "/somewhere-else"
+	})
+	if res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+
+	s, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.ContainersPath != "backups/containers" {
+		t.Errorf("containersPath = %q, want the home place's backups/containers", s.ContainersPath)
+	}
+	homes, err := f.st.DomainPlaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if homes["containers"] != seed.unraid.ID {
+		t.Errorf("containers is stored at %q, want %s", homes["containers"], seed.unraid.ID)
+	}
+	copies, ok, err := f.st.GetOffsiteTarget(seed.copies.ID)
+	if err != nil || !ok || copies.Repo != b2Base+"/vms-copies" || copies.PlaceID != seed.b2.ID {
+		t.Errorf("copy target = %+v (ok %v, err %v), want it at the place's vms-copies and on B2", copies, ok, err)
+	}
+}
