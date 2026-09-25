@@ -372,6 +372,25 @@ describe("PlaceForm rclone", () => {
     expect(probes[0]!.fields.remote).toBe("gdrive");
     expect(screen.getByLabelText(en["places.rclone.config"])).toBeTruthy();
   });
+
+  it("starts in the remote picker the stored remotes turn the field into", async () => {
+    await form(RCLONE);
+    expect(document.activeElement).toBe(screen.getByRole("combobox", { name: en["places.field.remote"] }));
+  });
+
+  it("wants a new test once a changed config is saved", async () => {
+    await form(RCLONE);
+    fireEvent.click(screen.getByRole("combobox", { name: en["places.field.remote"] }));
+    fireEvent.click(screen.getByRole("option", { name: "gdrive" }));
+    await testConnection();
+    fireEvent.click(screen.getByRole("tab", { name: en["places.form.away"] }));
+    expect(button("places.form.add")).toHaveProperty("disabled", false);
+    fireEvent.change(screen.getByLabelText(en["places.rclone.config"]), { target: { value: "[gdrive]\ntype = drive" } });
+    await act(async () => {
+      fireEvent.click(button("places.rclone.save"));
+    });
+    expect(button("places.form.add")).toHaveProperty("disabled", true);
+  });
 });
 
 const REST: CatalogProvider = {
