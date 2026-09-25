@@ -11,6 +11,8 @@ import type { CatalogProvider, PatchPlaceBody, Place } from "../../lib/places";
 
 const patches: Partial<PatchPlaceBody>[] = [];
 let answer: (body: Partial<PatchPlaceBody>) => { ok: boolean; code?: string; error?: string; place?: Place } = () => ({ ok: true });
+const tampered: string[] = [];
+let tamperAnswer: { ok: boolean; error?: string; testable?: boolean; protected?: boolean } = { ok: true };
 
 vi.mock("../../lib/places", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/places")>();
@@ -19,6 +21,17 @@ vi.mock("../../lib/places", async (importOriginal) => {
     patchPlace: (_id: string, body: Partial<PatchPlaceBody>) => {
       patches.push(body);
       return Promise.resolve(answer(body));
+    },
+  };
+});
+
+vi.mock("../../lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../lib/api")>();
+  return {
+    ...actual,
+    tamperTest: (domain: string) => {
+      tampered.push(domain);
+      return Promise.resolve(tamperAnswer);
     },
   };
 });
@@ -63,6 +76,8 @@ const B2: CatalogProvider = {
 
 beforeEach(() => {
   patches.length = 0;
+  tampered.length = 0;
+  tamperAnswer = { ok: true, testable: true, protected: true };
   answer = (body) => ({ ok: true, place: { ...place(), ...(body as Partial<Place>) } });
   vi.useFakeTimers();
 });
@@ -146,5 +161,90 @@ describe("PlaceDetails saving", () => {
     });
     expect(patches).toEqual([]);
     expect(input(en["places.details.keepLast"]).value).toBe("10");
+  });
+});
+
+describe("PlaceDetails sections", () => {
+  it("offers protection only at a remote place, and the tamper test at a rest-server", async () => {
+    details(place({ kind: "local", provider: "unraid-folder" }), undefined);
+    expect(screen.queryByRole("switch", { name: en["places.details.appendOnly"] })).toBeNull();
+    cleanup();
+
+    details(
+      place({
+        kind: "rest",
+        provider: "rest-server",
+        immutable: true,
+        usage: { homeDomains: [], defaults: [], copyDomains: ["containers"], items: 0, copies: 4 },
+        creds: { shared: false, fields: { user: "tower" }, set: ["password"] },
+      }),
+      undefined
+    );
+    expect(screen.getByRole("switch", { name: en["places.details.appendOnly"] }).getAttribute("aria-checked")).toBe("true");
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["places.details.tamperTest"] }));
+    });
+    expect(tampered).toEqual(["containers"]);
+    expect(screen.getByText(en["places.details.tamperProtected"])).toBeTruthy();
+  });
+
+  it("names the items that back up here before append-only goes off", async () => {
+    details(
+      place({
+        kind: "rest",
+        provider: "rest-server",
+        immutable: true,
+        usage: { homeDomains: ["vms"], defaults: [], copyDomains: [], items: 2, copies: 0 },
+        creds: { shared: false, fields: { user: "tower" }, set: ["password"] },
+      }),
+      undefined
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole("switch", { name: en["places.details.appendOnly"] }));
+    });
+    const ask = screen.getByRole("dialog");
+    expect(within(ask).getByText(countText(en["places.details.appendOnlyOffAsk"], "en", 2))).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(within(ask).getByRole("button", { name: en["common.cancel"] }));
+    });
+    expect(patches).toEqual([]);
+    expect(screen.getByRole("switch", { name: en["places.details.appendOnly"] }).getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("says in a toast when a domain's tamper test cannot run, and shakes the button", async () => {
+    tamperAnswer = { ok: false, error: "no off-site repository" };
+    details(
+      place({
+        kind: "rest",
+        provider: "rest-server",
+        immutable: true,
+        usage: { homeDomains: [], defaults: [], copyDomains: ["vms"], items: 0, copies: 0 },
+        creds: { shared: false, fields: { user: "tower" }, set: ["password"] },
+      }),
+      undefined
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["places.details.tamperTest"] }));
+    });
+    expect(tampered).toEqual(["vms"]);
+    expect(screen.getByText("VMs: no off-site repository")).toBeTruthy();
+    expect(screen.getByRole("button", { name: en["places.details.tamperTest"] }).className).toContain("glim-shake");
+  });
+
+  it("sends changed credentials together, never a blank secret", async () => {
+    details();
+    expect(input(en["places.field.secret"]).placeholder).toBe(en["places.details.secretKept"]);
+    expect(input(en["places.field.keyId"]).value).toBe("k1");
+    fireEvent.change(input(en["places.field.keyId"]), { target: { value: "k2" } });
+    await settle(400);
+    fireEvent.change(input(en["places.field.secret"]), { target: { value: "s2" } });
+    await settle(800);
+    expect(patches).toEqual([{ fields: { keyId: "k2", secret: "s2" } }]);
+    expect(input(en["places.field.secret"]).value).toBe("");
+  });
+
+  it("says a place on the shared credentials gets its own set on the first change", () => {
+    details(place({ creds: { shared: true, fields: { keyId: "shared" }, set: ["secret"] } }));
+    expect(screen.getByLabelText(en["places.details.sharedCreds"])).toBeTruthy();
   });
 });

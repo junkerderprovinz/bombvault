@@ -2365,6 +2365,19 @@ export const en = {
   "places.details.limitsHint": "0 means no limit.",
   "places.details.growthBudget": "Growth budget, GB",
   "places.details.growthBudgetHint": "Raises an alarm once a repository at this place grows past this many gigabytes. It never deletes anything. 0 switches it off.",
+  "places.details.protection": "Protection",
+  "places.details.appendOnly": "Append-only",
+  "places.details.appendOnlyHint": "Nothing on this server may delete or prune there. Pair it with a server that refuses deletes itself, such as rest-server with --append-only.",
+  "places.details.appendOnlyOffAsk": "one=Switch append-only off? {n} item backs up to this place, and its backups there can then be pruned and deleted from here.|other=Switch append-only off? {n} items back up to this place, and their backups there can then be pruned and deleted from here.",
+  "places.details.tamperTest": "Test append-only",
+  "places.details.tamperProtected": "deletes refused",
+  "places.details.tamperOpen": "deletes accepted",
+  "places.details.tamperUntestable": "cannot be tested at this kind of place",
+  "places.details.access": "Access",
+  "places.details.sharedCreds": "This place uses the shared credentials. The first change gives it a set of its own and leaves the shared ones alone.",
+  "places.details.secretKept": "stored, type to replace",
+  "places.details.storageClass": "Storage class",
+  "places.details.storageClassDefault": "Provider default",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4410,6 +4423,19 @@ export const de: Translations = {
   "places.details.limitsHint": "0 heißt keine Grenze.",
   "places.details.growthBudget": "Wachstumsbudget, GB",
   "places.details.growthBudgetHint": "Schlägt Alarm, sobald ein Repository an diesem Ort über so viele Gigabyte wächst. Es löscht nie etwas. 0 schaltet es aus.",
+  "places.details.protection": "Schutz",
+  "places.details.appendOnly": "Nur anhängen",
+  "places.details.appendOnlyHint": "Von diesem Server aus darf dort nichts gelöscht oder aufgeräumt werden. Am besten mit einem Server, der selbst Löschen verweigert, etwa rest-server mit --append-only.",
+  "places.details.appendOnlyOffAsk": "one=Nur anhängen ausschalten? {n} Eintrag sichert an diesen Ort, und seine Backups dort lassen sich dann von hier aus aufräumen und löschen.|other=Nur anhängen ausschalten? {n} Einträge sichern an diesen Ort, und ihre Backups dort lassen sich dann von hier aus aufräumen und löschen.",
+  "places.details.tamperTest": "Nur anhängen prüfen",
+  "places.details.tamperProtected": "Löschen verweigert",
+  "places.details.tamperOpen": "Löschen möglich",
+  "places.details.tamperUntestable": "bei dieser Art von Ort nicht prüfbar",
+  "places.details.access": "Zugang",
+  "places.details.sharedCreds": "Dieser Ort benutzt die gemeinsamen Zugangsdaten. Die erste Änderung gibt ihm einen eigenen Satz und lässt die gemeinsamen unverändert.",
+  "places.details.secretKept": "gespeichert, zum Ersetzen eingeben",
+  "places.details.storageClass": "Speicherklasse",
+  "places.details.storageClassDefault": "Standard des Anbieters",
 };
 
 // ---------------------------------------------------------------------------
