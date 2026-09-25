@@ -1847,6 +1847,31 @@ func (r Restic) RepoOpensErr(ctx context.Context, repo string, m Mode) error {
 	return err
 }
 
+// RepoID returns the id of the repository at repo, from the config `restic cat
+// config` decrypts with m. Two locations with one id are one repository, which
+// tells a repository moved by hand from a different one.
+func (r Restic) RepoID(ctx context.Context, repo string, m Mode) (string, error) {
+	out, err := r.run(ctx, CatConfigArgs(repo, m), m)
+	if err != nil {
+		return "", err
+	}
+	return ParseRepoID(out)
+}
+
+// ParseRepoID reads the id from the output of `restic cat config`.
+func ParseRepoID(out []byte) (string, error) {
+	var cfg struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(out, &cfg); err != nil {
+		return "", fmt.Errorf("read the repository config: %w", err)
+	}
+	if cfg.ID == "" {
+		return "", errors.New("the repository config names no id")
+	}
+	return cfg.ID, nil
+}
+
 // Backup backs up paths into the repo, tagging each snapshot with tags, and
 // returns the parsed backup summary.
 func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []string, m Mode, excludes ...string) (Summary, error) {

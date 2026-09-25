@@ -5540,6 +5540,15 @@ func (f *fakeResticEngine) RepoOpensErr(ctx context.Context, repo string, m rest
 	return errors.New("fake: repo did not open")
 }
 
+// RepoID names a repository that opens by its location, which keeps two
+// locations apart and one location the same.
+func (f *fakeResticEngine) RepoID(ctx context.Context, repo string, m restic.Mode) (string, error) {
+	if err := f.RepoOpensErr(ctx, repo, m); err != nil {
+		return "", err
+	}
+	return "fake-" + filepath.ToSlash(repo), nil
+}
+
 func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []string, m restic.Mode, excludes ...string) (restic.Summary, error) {
 	if f.backupPanic {
 		panic("boom during backup")
