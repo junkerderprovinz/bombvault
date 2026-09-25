@@ -45,6 +45,10 @@ export interface ProgressState {
   // A container backup whose restore point is written and that only starts
   // its containers again. A cancel can no longer undo it.
   committed?: boolean;
+  // The run has ended and the entry only lingers so the bar can reach its end.
+  // `active` stays true meanwhile, so this is how to tell there is nothing left
+  // to cancel.
+  finished?: boolean;
 }
 
 /** The steps that report bytes instead of a percentage. */
@@ -102,9 +106,9 @@ export function offsiteRunProgress(state: ProgressState | undefined): OffsiteRun
   };
 }
 
-// Shape of a single SSE payload. lastSeen is stamped locally in applyEvent, so
-// it is not part of the wire shape.
-type ProgressFrame = Omit<ProgressState, "lastSeen"> & { key: string };
+// Shape of a single SSE payload. lastSeen and finished are set locally in
+// applyEvent, so they are not part of the wire shape.
+type ProgressFrame = Omit<ProgressState, "lastSeen" | "finished"> & { key: string };
 
 // How long an inactive (completed) entry lingers so the bar can visibly reach
 // 100% before it fades out, then gets dropped from the map entirely.
@@ -150,6 +154,7 @@ function applyEvent(ev: ProgressFrame): void {
     stage: ev.stage,
     bytes: ev.bytes,
     committed: ev.committed,
+    finished: ev.active ? undefined : true,
   };
 
   current = { ...current, [ev.key]: entry };

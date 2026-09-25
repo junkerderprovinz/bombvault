@@ -9,8 +9,9 @@
 // A container backup that has written its restore point and only starts its
 // containers again cannot be cancelled, and the confirmation would promise a
 // run without a snapshot. The progress stream marks that phase and the button
-// hides. A dialog that is already open stays, and the server's answer then says
-// the cancel came too late.
+// hides, as it does while the bar of a finished run lingers. A dialog that is
+// already open stays, and the server's answer then says the cancel came too
+// late.
 
 import { useState } from "react";
 import { cancelBackup } from "../lib/api";
@@ -40,7 +41,8 @@ export function BackupCancelButton({
   const [cancelling, setCancelling] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
-  const committed = useProgress()[cancelKey]?.committed === true;
+  const entry = useProgress()[cancelKey];
+  const cancellable = !entry?.committed && !entry?.finished;
 
   async function handle() {
     const msg = t("backup.cancelConfirm").replace(/\{name\}/g, name);
@@ -66,7 +68,7 @@ export function BackupCancelButton({
 
   return (
     <>
-      {!committed && (
+      {cancellable && (
         <Button
           label={t("backup.cancel")}
           labelKey="backup.cancel"
