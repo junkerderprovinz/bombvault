@@ -101,6 +101,18 @@ export const ZFS_FIX_KEY: Partial<Record<ZFSReasonCode, TranslationKey>> = {
   "destination-not-mounted": "zfs.fix.destination-not-mounted",
 };
 
+/** Member codes whose sentence already says the dataset is skipped, so no
+ *  frame around them says it again. */
+export const ZFS_SKIP_SENTENCE_CODES: ReadonlySet<string> = new Set<ZFSReasonCode>([
+  "zvol",
+  "canmount-off",
+  "legacy-mount",
+  "no-mountpoint",
+  "not-mounted",
+  "key-not-loaded",
+  "snapdir-disabled",
+]);
+
 /** Member states that are not problems, plus the mark a first sighting adds. */
 export const ZFS_MEMBER_KEY = {
   "backed-up": "zfs.member.backed-up",

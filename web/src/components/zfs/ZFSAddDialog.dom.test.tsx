@@ -151,12 +151,18 @@ describe("ZFS add dialog", () => {
     expect(screen.getByText(en["zfs.add.system"])).toBeTruthy();
   });
 
-  it("marks a child the backup cannot read as skipped", async () => {
-    host = hostResult([POOL, APPDATA, entry({ dataset: "cache/appdata/enc", memberCode: "key-not-loaded" })]);
+  it("marks a child the backup cannot read as skipped, saying so once", async () => {
+    host = hostResult([
+      POOL,
+      APPDATA,
+      entry({ dataset: "cache/appdata/enc", memberCode: "key-not-loaded" }),
+      entry({ dataset: "cache/appdata/hidden", memberCode: "snapshot-loop" }),
+    ]);
     await openDialog();
     fireEvent.click(rootSwitch("cache/appdata"));
+    expect(screen.getByText(en["zfs.code.key-not-loaded"])).toBeTruthy();
     expect(
-      screen.getByText(en["zfs.add.willSkip"].replace("{reason}", en["zfs.code.key-not-loaded"])),
+      screen.getByText(en["zfs.add.willSkip"].replace("{reason}", en["zfs.code.snapshot-loop"])),
     ).toBeTruthy();
   });
 

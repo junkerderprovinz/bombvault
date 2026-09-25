@@ -3,7 +3,7 @@ import { Fragment, useRef, useState, type ReactNode } from "react";
 import type { ZFSHostDataset } from "../../lib/api";
 import { humanBytes } from "../../lib/forecast";
 import type { useT } from "../../lib/i18n";
-import { zfsCodeSentence } from "../../lib/zfsCodes";
+import { ZFS_SKIP_SENTENCE_CODES, zfsCodeSentence } from "../../lib/zfsCodes";
 import { Badge } from "../Badge";
 import { Toggle } from "../Toggle";
 
@@ -35,6 +35,12 @@ interface Row {
   posInSet: number;
   expandable: boolean;
   expanded: boolean;
+}
+
+/** Why a child will be skipped, framed only where its sentence does not say so. */
+function skipText(t: T, code: string, hostMountpoint: string): string {
+  const reason = zfsCodeSentence(t, code, { hostMountpoint });
+  return ZFS_SKIP_SENTENCE_CODES.has(code) ? reason : t("zfs.add.willSkip").replace("{reason}", reason);
 }
 
 function parentOf(dataset: string): string {
@@ -253,10 +259,7 @@ export function ZFSDatasetTree({
           {entry.system && <span className="text-caption text-carbon-textMuted">{t("zfs.add.system")}</span>}
           {entry.memberCode !== "" && (
             <span className="text-caption text-statusWarn">
-              {t("zfs.add.willSkip").replace(
-                "{reason}",
-                zfsCodeSentence(t, entry.memberCode, { hostMountpoint: entry.hostMountpoint }),
-              )}
+              {skipText(t, entry.memberCode, entry.hostMountpoint)}
             </span>
           )}
           <Toggle
