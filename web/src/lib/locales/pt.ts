@@ -497,17 +497,9 @@ const pt: Partial<Translations> = {
   "settings.retentionLocal": "Repo local",
   "settings.retentionOffsite": "Repo externo",
 
-  // Off-site (rclone)
-  "rclone.title": "Externo (rclone)",
-  "rclone.hint": "Cole uma configuração do rclone para fazer backup para a nuvem (Backblaze B2, S3, Google Drive, …). É guardada cifrada. SMB/NFS não precisam de rclone: monte a partilha no Unraid e defina-lhe um Caminho de backup.",
-  "rclone.configured": "Remotos configurados",
-  "rclone.pathHint": "Depois defina um Caminho de backup para «rclone:<remote>:<bucket>/path» para enviar esse domínio para fora do local.",
-  "cloud.title": "Credenciais de nuvem partilhadas (S3 / restic REST)",
-  "cloud.hint": "Credenciais para backends restic remotos, sem rclone. Após salvar, defina um caminho de backup para um repo remoto, ex. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo ou sftp:user@host:/repo. Os segredos são armazenados criptografados e não são exibidos novamente.",
   "cloud.secretSet": "salvo, deixe em branco para manter",
   "cloud.storageClass.label": "Classe de armazenamento off-site",
   "cloud.storageClass.default": "(padrão do provedor)",
-  "cloud.storageClass.hint": "Aplica-se apenas aos backends S3 nativos (repositórios que começam com s3:). Os níveis de arquivo profundo (Glacier Flexible Retrieval, Deep Archive) não são oferecidos de propósito porque quebram a restauração do restic.",
   "cloud.credSets.title": "Conjuntos de credenciais adicionais",
   "cloud.credSets.hint": "Atribua a um ou mais destinos externos as suas próprias credenciais S3 ou restic REST, em vez de partilhar as acima.",
   "cloud.credSets.add": "Adicionar conjunto de credenciais",
@@ -521,7 +513,6 @@ const pt: Partial<Translations> = {
   "export.encrypt.recipientsHint": "Um destinatário por linha. Use uma chave pública age (age1...) ou uma chave pública SSH. A chave privada correspondente é necessária para decifrar fora do servidor. Com a cifragem ativada e nenhum destinatário válido, a exportação falha em vez de gravar texto simples.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "Adicione pelo menos um destinatário age, caso contrário a exportação cifrada falhará.",
-  "rclone.save": "Guardar configuração",
 
   // Integrity (restic check)
   "integrity.title": "Integridade e manutenção",
@@ -742,8 +733,6 @@ const pt: Partial<Translations> = {
   "recovery.notReachable": "Ainda não foi possível alcançar os seus backups. Anexe a localização abaixo e verifique novamente.",
   "recovery.recheck": "Verificar",
   "recovery.step2": "Anexar os seus backups",
-  "recovery.cloudCreds": "Credenciais da nuvem (opcional)",
-  "recovery.cloudCredsHint": "Só são necessárias quando um caminho de cópia aponta para S3, um servidor restic REST ou um remoto rclone. Um caminho local ou uma partilha montada não precisam de nada aqui.",
   "recovery.attachHint": "Aponte o BombVault aos seus backups existentes: um caminho local dentro do mount do host, ou um repo externo (rest / S3 / B2 / sftp / rclone) com as respetivas credenciais. Depois ligue-se para confirmar.",
   "recovery.credsSaveHint": "As credenciais externas guardam-se com o botão Guardar de cada cartão. Guarde-as antes de ligar e pré-visualizar.",
   "recovery.connectPreview": "Ligar e pré-visualizar",

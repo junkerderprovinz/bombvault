@@ -498,17 +498,9 @@ const cs: Partial<Translations> = {
   "settings.retentionLocal": "Místní repo",
   "settings.retentionOffsite": "Vzdálené repo",
 
-  // Off-site (rclone)
-  "rclone.title": "Off-site (rclone)",
-  "rclone.hint": "Vložte konfiguraci rclone pro zálohování do cloudu (Backblaze B2, S3, Google Drive, …). Ukládá se zašifrovaně. SMB/NFS rclone nepotřebují: připojte sdílenou složku v Unraidu a nastavte na ni Zálohovací cestu.",
-  "rclone.configured": "Nakonfigurované vzdálené úložiště",
-  "rclone.pathHint": "Poté nastavte Zálohovací cestu na „rclone:<remote>:<bucket>/path“, aby se tato doména posílala off-site.",
-  "cloud.title": "Sdílené cloudové přihlašovací údaje (S3 / restic REST)",
-  "cloud.hint": "Údaje pro vzdálená restic úložiště, bez rclone. Po uložení nastav cestu zálohy na vzdálené repo, např. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo nebo sftp:user@host:/repo. Tajné údaje se ukládají šifrovaně a už se nezobrazí.",
   "cloud.secretSet": "uloženo, ponech prázdné pro zachování",
   "cloud.storageClass.label": "Třída úložiště off-site",
   "cloud.storageClass.default": "(výchozí poskytovatele)",
-  "cloud.storageClass.hint": "Platí pouze pro nativní backendy S3 (repozitáře začínající s3:). Úrovně hlubokého archivu (Glacier Flexible Retrieval, Deep Archive) se záměrně nenabízejí, protože rozbíjejí obnovu restic.",
   "cloud.credSets.title": "Další sady přihlašovacích údajů",
   "cloud.credSets.hint": "Dejte jednomu nebo více vzdáleným cílům vlastní přihlašovací údaje S3 nebo restic REST místo sdílení výše uvedených.",
   "cloud.credSets.add": "Přidat sadu přihlašovacích údajů",
@@ -522,7 +514,6 @@ const cs: Partial<Translations> = {
   "export.encrypt.recipientsHint": "Jeden příjemce na řádek. Použijte veřejný klíč age (age1...) nebo veřejný klíč SSH. K dešifrování mimo server je potřeba odpovídající soukromý klíč. Pokud je šifrování zapnuté a není platný příjemce, export selže místo zápisu prostého textu.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "Přidejte alespoň jednoho příjemce age, jinak šifrovaný export selže.",
-  "rclone.save": "Uložit konfiguraci",
 
   // Integrity (restic check)
   "integrity.title": "Integrita a údržba",
@@ -743,8 +734,6 @@ const cs: Partial<Translations> = {
   "recovery.notReachable": "Zálohy zatím nelze dosáhnout. Připojte umístění níže a poté proveďte opětovnou kontrolu.",
   "recovery.recheck": "Zkontrolovat",
   "recovery.step2": "Připojte své zálohy",
-  "recovery.cloudCreds": "Přihlašovací údaje cloudu (volitelné)",
-  "recovery.cloudCredsHint": "Potřebné jen tehdy, když cesta zálohy míří na S3, server restic REST nebo vzdálené úložiště rclone. Místní cesta ani připojené sdílení zde nic nepotřebují.",
   "recovery.attachHint": "Nasměrujte BombVault na své existující zálohy: místní cestu pod připojením hostitele nebo vzdálené repo (rest / S3 / B2 / sftp / rclone) s jeho přihlašovacími údaji. Poté se připojte pro potvrzení.",
   "recovery.credsSaveHint": "Vzdálené přihlašovací údaje se ukládají vlastním tlačítkem Uložit u každé karty. Uložte je před připojením a náhledem.",
   "recovery.connectPreview": "Připojit a zobrazit náhled",

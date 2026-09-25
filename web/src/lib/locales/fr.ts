@@ -500,17 +500,9 @@ const fr: Partial<Translations> = {
   "settings.retentionLocal": "Dépôt local",
   "settings.retentionOffsite": "Dépôt hors-site",
 
-  // Off-site (rclone)
-  "rclone.title": "Hors site (rclone)",
-  "rclone.hint": "Collez une configuration rclone pour sauvegarder dans le cloud (Backblaze B2, S3, Google Drive, …). Elle est stockée chiffrée. SMB/NFS n'ont pas besoin de rclone : montez le partage sur Unraid et pointez-y un chemin de sauvegarde.",
-  "rclone.configured": "Remotes configurés",
-  "rclone.pathHint": "Puis définissez un chemin de sauvegarde sur « rclone:<remote>:<bucket>/path » pour envoyer ce domaine hors site.",
-  "cloud.title": "Identifiants cloud partagés (S3 / restic REST)",
-  "cloud.hint": "Identifiants pour les backends restic distants, sans rclone. Après l'enregistrement, définissez un chemin de sauvegarde vers un dépôt distant, p. ex. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo ou sftp:user@host:/repo. Les secrets sont stockés chiffrés et ne sont plus affichés.",
   "cloud.secretSet": "enregistré, laisser vide pour conserver",
   "cloud.storageClass.label": "Classe de stockage off-site",
   "cloud.storageClass.default": "(par défaut du fournisseur)",
-  "cloud.storageClass.hint": "S'applique uniquement aux backends S3 natifs (dépôts commençant par s3:). Les niveaux d'archivage profond (Glacier Flexible Retrieval, Deep Archive) ne sont volontairement pas proposés car ils cassent la restauration restic.",
   "cloud.credSets.title": "Ensembles d'identifiants supplémentaires",
   "cloud.credSets.hint": "Donnez à une ou plusieurs destinations hors site leurs propres identifiants S3 ou restic REST, au lieu de partager ceux ci-dessus.",
   "cloud.credSets.add": "Ajouter un ensemble d'identifiants",
@@ -524,7 +516,6 @@ const fr: Partial<Translations> = {
   "export.encrypt.recipientsHint": "Un destinataire par ligne. Utilisez une clé publique age (age1...) ou une clé publique SSH. La clé privée correspondante est nécessaire pour déchiffrer hors du serveur. Avec le chiffrement activé et aucun destinataire valide, l'export échoue au lieu d'écrire du texte en clair.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "Ajoutez au moins un destinataire age, sinon l'export chiffré échouera.",
-  "rclone.save": "Enregistrer la config",
 
   // Integrity (restic check)
   "integrity.title": "Intégrité et maintenance",
@@ -745,8 +736,6 @@ const fr: Partial<Translations> = {
   "recovery.notReachable": "Impossible d'atteindre vos sauvegardes pour l'instant : attachez l'emplacement ci-dessous, puis relancez la vérification.",
   "recovery.recheck": "Vérifier",
   "recovery.step2": "Attacher vos sauvegardes",
-  "recovery.cloudCreds": "Identifiants cloud (facultatif)",
-  "recovery.cloudCredsHint": "Nécessaires uniquement lorsqu'un chemin de sauvegarde pointe vers S3, un serveur restic REST ou un distant rclone. Un chemin local ou un partage monté n'a besoin de rien ici.",
   "recovery.attachHint": "Pointez BombVault vers vos sauvegardes existantes : un chemin local sous le montage de l'hôte, ou un dépôt hors site (rest / S3 / B2 / sftp / rclone) avec ses identifiants. Puis connectez-vous pour confirmer.",
   "recovery.credsSaveHint": "Les identifiants hors site s'enregistrent avec le bouton Enregistrer propre à chaque carte : enregistrez-les avant de vous connecter et prévisualiser.",
   "recovery.connectPreview": "Connexion et aperçu",

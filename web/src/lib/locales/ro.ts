@@ -497,17 +497,9 @@ const ro: Partial<Translations> = {
   "settings.retentionLocal": "Repo local",
   "settings.retentionOffsite": "Repo off-site",
 
-  // Off-site (rclone)
-  "rclone.title": "În afara sitului (rclone)",
-  "rclone.hint": "Lipiți o configurație rclone pentru a face copii de rezervă în cloud (Backblaze B2, S3, Google Drive, …). Este stocată criptat. SMB/NFS nu necesită rclone: montați partajarea pe Unraid și setați o cale de copiere de rezervă către aceasta.",
-  "rclone.configured": "Destinații configurate",
-  "rclone.pathHint": "Apoi setați o cale de copiere de rezervă către „rclone:<remote>:<bucket>/path” pentru a trimite acel domeniu în afara sitului.",
-  "cloud.title": "Credențiale cloud partajate (S3 / restic REST)",
-  "cloud.hint": "Credențiale pentru backenduri restic la distanță, fără rclone. După salvare, setează o cale de backup către un repo la distanță, ex. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo sau sftp:user@host:/repo. Secretele se stochează criptat și nu se mai afișează.",
   "cloud.secretSet": "salvat, lasă gol pentru a păstra",
   "cloud.storageClass.label": "Clasă de stocare off-site",
   "cloud.storageClass.default": "(implicit al furnizorului)",
-  "cloud.storageClass.hint": "Se aplică doar backendurilor S3 native (depozite care încep cu s3:). Nivelurile de arhivă profundă (Glacier Flexible Retrieval, Deep Archive) nu sunt oferite în mod intenționat deoarece strică restaurarea restic.",
   "cloud.credSets.title": "Seturi suplimentare de credențiale",
   "cloud.credSets.hint": "Oferă unei sau mai multor destinații externe propriile credențiale S3 sau restic REST, în loc să le partajeze pe cele de mai sus.",
   "cloud.credSets.add": "Adaugă set de credențiale",
@@ -521,7 +513,6 @@ const ro: Partial<Translations> = {
   "export.encrypt.recipientsHint": "Un destinatar pe linie. Folosește o cheie publică age (age1...) sau o cheie publică SSH. Cheia privată corespunzătoare este necesară pentru decriptare în afara serverului. Cu criptarea activată și fără un destinatar valid, exportul eșuează în loc să scrie text în clar.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "Adaugă cel puțin un destinatar age, altfel exportul criptat va eșua.",
-  "rclone.save": "Salvează configurația",
 
   // Integrity (restic check)
   "integrity.title": "Integritate și întreținere",
@@ -721,8 +712,6 @@ const ro: Partial<Translations> = {
   "recovery.notReachable": "Copiile de rezervă nu au putut fi accesate încă. Atașează locația mai jos, apoi verifică din nou.",
   "recovery.recheck": "Verifică",
   "recovery.step2": "Atașează copiile de rezervă",
-  "recovery.cloudCreds": "Credențiale cloud (opțional)",
-  "recovery.cloudCredsHint": "Sunt necesare doar când o cale de backup indică spre S3, un server restic REST sau o destinație rclone. O cale locală sau un share montat nu au nevoie de nimic aici.",
   "recovery.attachHint": "Îndreaptă BombVault către copiile tale de rezervă existente: o cale locală sub montarea gazdei sau un repo extern (rest / S3 / B2 / sftp / rclone) cu credențialele sale. Apoi conectează-te pentru a confirma.",
   "recovery.credsSaveHint": "Credențialele externe se salvează cu butonul Salvează propriu al fiecărui card. Salvează-le înainte de a te conecta și previzualiza.",
   "recovery.connectPreview": "Conectează și previzualizează",

@@ -500,17 +500,9 @@ const el: Partial<Translations> = {
   "settings.retentionLocal": "Τοπικό repo",
   "settings.retentionOffsite": "Απομακρυσμένο repo",
 
-  // Off-site (rclone)
-  "rclone.title": "Εκτός τόπου (rclone)",
-  "rclone.hint": "Επικολλήστε μια διαμόρφωση rclone για αντίγραφα στο cloud (Backblaze B2, S3, Google Drive, …). Αποθηκεύεται κρυπτογραφημένη. SMB/NFS δεν χρειάζονται rclone: προσαρτήστε τον κοινόχρηστο πόρο στο Unraid και ορίστε μια διαδρομή αντιγράφων προς αυτόν.",
-  "rclone.configured": "Διαμορφωμένα remotes",
-  "rclone.pathHint": "Έπειτα ορίστε μια διαδρομή αντιγράφων σε «rclone:<remote>:<bucket>/path» για να στείλετε αυτόν τον τομέα εκτός τοποθεσίας.",
-  "cloud.title": "Κοινόχρηστα διαπιστευτήρια cloud (S3 / restic REST)",
-  "cloud.hint": "Διαπιστευτήρια για απομακρυσμένα backend του restic, χωρίς rclone. Μετά την αποθήκευση, ορίστε μια διαδρομή αντιγράφου σε απομακρυσμένο repo, π.χ. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo ή sftp:user@host:/repo. Τα μυστικά αποθηκεύονται κρυπτογραφημένα και δεν εμφανίζονται ξανά.",
   "cloud.secretSet": "αποθηκεύτηκε, αφήστε κενό για διατήρηση",
   "cloud.storageClass.label": "Κλάση αποθήκευσης off-site",
   "cloud.storageClass.default": "(προεπιλογή παρόχου)",
-  "cloud.storageClass.hint": "Ισχύει μόνο για εγγενή backend S3 (αποθετήρια που ξεκινούν με s3:). Τα επίπεδα βαθιάς αρχειοθέτησης (Glacier Flexible Retrieval, Deep Archive) σκόπιμα δεν προσφέρονται επειδή χαλούν την επαναφορά του restic.",
   "cloud.credSets.title": "Πρόσθετα σύνολα διαπιστευτηρίων",
   "cloud.credSets.hint": "Δώστε σε έναν ή περισσότερους εξωτερικούς προορισμούς τα δικά τους διαπιστευτήρια S3 ή restic REST, αντί να μοιράζονται τα παραπάνω.",
   "cloud.credSets.add": "Προσθήκη συνόλου διαπιστευτηρίων",
@@ -524,7 +516,6 @@ const el: Partial<Translations> = {
   "export.encrypt.recipientsHint": "Ένας παραλήπτης ανά γραμμή. Χρησιμοποιήστε ένα δημόσιο κλειδί age (age1...) ή ένα δημόσιο κλειδί SSH. Το αντίστοιχο ιδιωτικό κλειδί χρειάζεται για αποκρυπτογράφηση εκτός διακομιστή. Με την κρυπτογράφηση ενεργή και χωρίς έγκυρο παραλήπτη, η εξαγωγή αποτυγχάνει αντί να γράψει απλό κείμενο.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "Προσθέστε τουλάχιστον έναν παραλήπτη age, αλλιώς η κρυπτογραφημένη εξαγωγή θα αποτύχει.",
-  "rclone.save": "Αποθήκευση διαμόρφωσης",
 
   // Integrity (restic check)
   "integrity.title": "Ακεραιότητα και συντήρηση",
@@ -745,8 +736,6 @@ const el: Partial<Translations> = {
   "recovery.notReachable": "Δεν ήταν δυνατή η πρόσβαση στα αντίγραφά σας ακόμα. Επισυνάψτε την τοποθεσία παρακάτω και μετά ελέγξτε ξανά.",
   "recovery.recheck": "Έλεγχος",
   "recovery.step2": "Επισυνάψτε τα αντίγραφά σας",
-  "recovery.cloudCreds": "Διαπιστευτήρια cloud (προαιρετικό)",
-  "recovery.cloudCredsHint": "Χρειάζονται μόνο όταν μια διαδρομή αντιγράφου δείχνει σε S3, σε διακομιστή restic REST ή σε απομακρυσμένο rclone. Μια τοπική διαδρομή ή ένας προσαρτημένος κοινόχρηστος φάκελος δεν χρειάζονται τίποτα εδώ.",
   "recovery.attachHint": "Κατευθύνετε το BombVault στα υπάρχοντα αντίγραφά σας: μια τοπική διαδρομή εντός της προσάρτησης του host ή ένα απομακρυσμένο repo (rest / S3 / B2 / sftp / rclone) με τα διαπιστευτήριά του. Έπειτα συνδεθείτε για επιβεβαίωση.",
   "recovery.credsSaveHint": "Τα διαπιστευτήρια εκτός τόπου αποθηκεύονται με το δικό του κουμπί Αποθήκευση κάθε κάρτας. Αποθηκεύστε τα πριν συνδεθείτε και δείτε προεπισκόπηση.",
   "recovery.connectPreview": "Σύνδεση & προεπισκόπηση",

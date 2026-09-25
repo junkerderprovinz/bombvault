@@ -500,17 +500,9 @@ const he: Partial<Translations> = {
   "settings.retentionLocal": "מאגר מקומי",
   "settings.retentionOffsite": "מאגר מרוחק",
 
-  // Off-site (rclone)
-  "rclone.title": "מחוץ לאתר (rclone)",
-  "rclone.hint": "הדבק תצורת rclone כדי לגבות לענן (Backblaze B2, S3, Google Drive, …). נשמרת מוצפנת. SMB/NFS אינם צריכים rclone: עגן את השיתוף ב-Unraid והצבע אליו בנתיב גיבוי.",
-  "rclone.configured": "יעדים מרוחקים מוגדרים",
-  "rclone.pathHint": "ואז הגדר נתיב גיבוי אל „rclone:<remote>:<bucket>/path‟ כדי לשלוח דומיין זה מחוץ לאתר.",
-  "cloud.title": "פרטי גישה משותפים לענן (S3 / restic REST)",
-  "cloud.hint": "פרטי התחברות ל-backends מרוחקים של restic, ללא rclone. לאחר השמירה, הגדר נתיב גיבוי למאגר מרוחק, למשל s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo או sftp:user@host:/repo. הסודות נשמרים מוצפנים ואינם מוצגים שוב.",
   "cloud.secretSet": "נשמר, השאר ריק כדי לשמור",
   "cloud.storageClass.label": "מחלקת אחסון off-site",
   "cloud.storageClass.default": "(ברירת המחדל של הספק)",
-  "cloud.storageClass.hint": "חל רק על backends מסוג S3 מקוריים (מאגרים שמתחילים ב-s3:). שכבות ארכיון עמוק (Glacier Flexible Retrieval, Deep Archive) לא מוצעות במכוון כי הן שוברות את שחזור restic.",
   "cloud.credSets.title": "ערכות אישורים נוספות",
   "cloud.credSets.hint": "הענק ליעד חיצוני אחד או יותר אישורי S3 או restic REST משלו, במקום לשתף את אלה שלמעלה.",
   "cloud.credSets.add": "הוסף ערכת אישורים",
@@ -524,7 +516,6 @@ const he: Partial<Translations> = {
   "export.encrypt.recipientsHint": "נמען אחד בכל שורה. השתמש במפתח ציבורי age (age1...) או במפתח ציבורי SSH. כדי לפענח מחוץ לשרת נדרש המפתח הפרטי התואם. כשההצפנה מופעלת ואין נמען תקף, הייצוא נכשל במקום לכתוב טקסט גלוי.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "הוסף לפחות נמען age אחד, אחרת הייצוא המוצפן ייכשל.",
-  "rclone.save": "שמור תצורה",
 
   // Integrity (restic check)
   "integrity.title": "שלמות ותחזוקה",
@@ -745,8 +736,6 @@ const he: Partial<Translations> = {
   "recovery.notReachable": "לא ניתן היה להגיע לגיבויים שלך עדיין. צרף את המיקום למטה, ואז בדוק שוב.",
   "recovery.recheck": "בדוק",
   "recovery.step2": "צרף את הגיבויים שלך",
-  "recovery.cloudCreds": "פרטי התחברות לענן (אופציונלי)",
-  "recovery.cloudCredsHint": "נדרשים רק כאשר נתיב גיבוי מצביע על S3, על שרת restic REST או על יעד rclone מרוחק. נתיב מקומי או שיתוף מחובר אינם זקוקים לכלום כאן.",
   "recovery.attachHint": "הפנה את BombVault אל הגיבויים הקיימים שלך: נתיב מקומי תחת נקודת העיגון של המארח, או מאגר מחוץ לאתר (rest / S3 / B2 / sftp / rclone) עם פרטי ההתחברות שלו. ואז התחבר לאישור.",
   "recovery.credsSaveHint": "פרטי ההתחברות מחוץ לאתר נשמרים בעזרת כפתור השמירה של כל כרטיס. שמור אותם לפני שתתחבר ותציג תצוגה מקדימה.",
   "recovery.connectPreview": "התחבר והצג תצוגה מקדימה",

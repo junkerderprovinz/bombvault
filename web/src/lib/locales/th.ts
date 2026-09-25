@@ -500,17 +500,9 @@ const th: Partial<Translations> = {
   "settings.retentionLocal": "ที่เก็บในเครื่อง",
   "settings.retentionOffsite": "ที่เก็บนอกสถานที่",
 
-  // Off-site (rclone)
-  "rclone.title": "นอกสถานที่ (rclone)",
-  "rclone.hint": "วาง rclone config เพื่อสำรองข้อมูลไปยังคลาวด์ (Backblaze B2, S3, Google Drive, …) จัดเก็บแบบเข้ารหัส SMB/NFS ไม่ต้องใช้ rclone: เมานต์แชร์บน Unraid แล้วตั้งพาธการสำรองข้อมูลไปยังแชร์นั้น",
-  "rclone.configured": "รีโมตที่กำหนดค่าแล้ว",
-  "rclone.pathHint": "จากนั้นตั้งพาธการสำรองข้อมูลเป็น «rclone:<remote>:<bucket>/path» เพื่อส่งโดเมนนี้ไปนอกสถานที่",
-  "cloud.title": "ข้อมูลรับรองคลาวด์ที่ใช้ร่วมกัน (S3 / restic REST)",
-  "cloud.hint": "ข้อมูลรับรองสำหรับแบ็กเอนด์ restic ระยะไกล โดยไม่ใช้ rclone หลังบันทึก ให้ตั้งค่าเส้นทางสำรองข้อมูลไปยังที่เก็บระยะไกล เช่น s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo หรือ sftp:user@host:/repo ความลับจะถูกเก็บแบบเข้ารหัสและจะไม่แสดงอีก",
   "cloud.secretSet": "บันทึกแล้ว เว้นว่างเพื่อคงไว้",
   "cloud.storageClass.label": "คลาสพื้นที่จัดเก็บ off-site",
   "cloud.storageClass.default": "(ค่าเริ่มต้นของผู้ให้บริการ)",
-  "cloud.storageClass.hint": "ใช้ได้เฉพาะกับแบ็กเอนด์ S3 ดั้งเดิม (ที่เก็บที่ขึ้นต้นด้วย s3:) เท่านั้น ระดับการเก็บถาวรเชิงลึก (Glacier Flexible Retrieval, Deep Archive) ไม่ได้ถูกนำเสนอโดยเจตนาเพราะทำให้การกู้คืน restic เสียหาย",
   "cloud.credSets.title": "ชุดข้อมูลรับรองเพิ่มเติม",
   "cloud.credSets.hint": "กำหนดข้อมูลรับรอง S3 หรือ restic REST ของตัวเองให้กับปลายทางภายนอกหนึ่งแห่งขึ้นไป แทนที่จะใช้ร่วมกับข้อมูลด้านบน",
   "cloud.credSets.add": "เพิ่มชุดข้อมูลรับรอง",
@@ -524,7 +516,6 @@ const th: Partial<Translations> = {
   "export.encrypt.recipientsHint": "หนึ่งผู้รับต่อบรรทัด ใช้คีย์สาธารณะ age (age1...) หรือคีย์สาธารณะ SSH ต้องใช้คีย์ส่วนตัวที่ตรงกันเพื่อถอดรหัสนอกเซิร์ฟเวอร์ เมื่อเปิดการเข้ารหัสและไม่มีผู้รับที่ถูกต้อง การส่งออกจะล้มเหลวแทนที่จะเขียนข้อความธรรมดา",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "เพิ่มผู้รับ age อย่างน้อยหนึ่งราย มิฉะนั้นการส่งออกที่เข้ารหัสจะล้มเหลว",
-  "rclone.save": "บันทึกการตั้งค่า",
 
   // Integrity (restic check)
   "integrity.title": "ความสมบูรณ์และการบำรุงรักษา",
@@ -748,8 +739,6 @@ const th: Partial<Translations> = {
   "recovery.notReachable": "ยังเข้าถึงการสำรองข้อมูลของคุณไม่ได้ แนบตำแหน่งด้านล่าง แล้วตรวจสอบอีกครั้ง",
   "recovery.recheck": "ตรวจสอบ",
   "recovery.step2": "แนบการสำรองข้อมูลของคุณ",
-  "recovery.cloudCreds": "ข้อมูลรับรองคลาวด์ (ไม่บังคับ)",
-  "recovery.cloudCredsHint": "จำเป็นเฉพาะเมื่อเส้นทางสำรองข้อมูลชี้ไปที่ S3, เซิร์ฟเวอร์ restic REST หรือรีโมต rclone เท่านั้น เส้นทางในเครื่องหรือแชร์ที่เมาต์ไว้ไม่ต้องใช้อะไรตรงนี้",
   "recovery.attachHint": "ชี้ BombVault ไปยังการสำรองข้อมูลที่มีอยู่: พาธในเครื่องภายใต้จุดเมานต์ของโฮสต์ หรือรีพอสิทอรีนอกสถานที่ (rest / S3 / B2 / sftp / rclone) พร้อมข้อมูลรับรอง จากนั้นเชื่อมต่อเพื่อยืนยัน",
   "recovery.credsSaveHint": "ข้อมูลรับรองนอกสถานที่จะบันทึกด้วยปุ่มบันทึกของแต่ละการ์ดเอง บันทึกก่อนที่คุณจะเชื่อมต่อและดูตัวอย่าง",
   "recovery.connectPreview": "เชื่อมต่อและดูตัวอย่าง",

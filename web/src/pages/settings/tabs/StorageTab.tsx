@@ -388,7 +388,7 @@ export function StorageTab({
       {/* superseding that, "soll die flash zip export toggle nicht einfach     */}
       {/* in den flash tab? macht doch mehr sinn." It now lives on the Flash    */}
       {/* page itself (pages/Flash.tsx's own FlashZipExportCard, exported from  */}
-      {/* this file the same way AccentCard/ThemeCard/RcloneCard/CloudCard      */}
+      {/* this file the same way AccentCard and ThemeCard                       */}
       {/* already are for cross-page reuse, see that component's own header     */}
       {/* comment for the full move and why it's self-contained rather than     */}
       {/* threaded through SettingsPage's own save()/autoSaveField()). This     */}

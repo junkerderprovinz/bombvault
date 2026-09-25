@@ -1235,9 +1235,9 @@ export function SettingsPage() {
   // explicitly, and a setState after unmount is a no-op in React 18. Nothing was
   // being protected, and an edit was being lost.
   //
-  // Flushing also matches the four card-level debounce maps in this file
-  // (FlashZipExportCard, FleetSettingsCard, CloudCard, NotifyCard), none of
-  // which cancel on unmount — so those already complete their pending write.
+  // Flushing also matches the card-level debounce maps (FlashZipExportCard,
+  // FleetSettingsCard, NotifyCard), none of which cancel on unmount, so those
+  // already complete their pending write.
   // This page was the one place that did not.
   //
   // The flush itself is flushDebounces, captured into a local so the cleanup

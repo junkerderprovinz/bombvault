@@ -15,7 +15,6 @@ export function Card({
   hint,
   children,
   hueIndex,
-  nested,
 }: {
   /** Without a title but with a hint the heading badge still renders, so the
    *  card keeps its hue notch. A card with neither renders no heading. */
@@ -27,12 +26,6 @@ export function Card({
   /** Rainbow position of the heading notch among the cards on the active
    *  tab. Call sites take it from their tab's nextHue() counter. */
   hueIndex?: number;
-  /** Rendered inside another card that already provides the surface and the
-   *  padding, as CloudCard and RcloneCard are in Recovery's step 3, so both
-   *  are dropped and the content lines up with the parent's. pt-5 stays
-   *  because the heading notch straddles the top edge and would otherwise
-   *  sit on the first field. */
-  nested?: boolean;
 }) {
   return (
     // `relative` anchors the absolutely positioned heading badge; the hint
@@ -41,9 +34,9 @@ export function Card({
     // in index.css. `.glim-hue` sets --accent and --focus-ring once for the
     // whole card, so no control inside has to repeat its card's hue.
     <div
-      className={`relative glim-notch-card flex flex-col gap-4 ${
-        nested ? "pt-5" : "bg-carbon-surface rounded-card p-5"
-      }${hueIndex !== undefined ? " glim-hue" : ""}`}
+      className={`relative glim-notch-card flex flex-col gap-4 bg-carbon-surface rounded-card p-5${
+        hueIndex !== undefined ? " glim-hue" : ""
+      }`}
       style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >
       {/* The h2 is for screen readers; what shows is the badge

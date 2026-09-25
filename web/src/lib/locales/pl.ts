@@ -492,17 +492,9 @@ const pl: Partial<Translations> = {
   "settings.retentionLocal": "Repo lokalne",
   "settings.retentionOffsite": "Repo zdalne",
 
-  // Off-site (rclone)
-  "rclone.title": "Off-site (rclone)",
-  "rclone.hint": "Wklej konfigurację rclone, aby tworzyć kopie w chmurze (Backblaze B2, S3, Google Drive, …). Jest przechowywana zaszyfrowana. SMB/NFS nie wymagają rclone: zamontuj udział w Unraid i wskaż na niego Ścieżkę kopii zapasowych.",
-  "rclone.configured": "Skonfigurowane zdalne",
-  "rclone.pathHint": "Następnie ustaw Ścieżkę kopii zapasowych na „rclone:<remote>:<bucket>/path”, aby wysyłać tę domenę off-site.",
-  "cloud.title": "Współdzielone dane logowania do chmury (S3 / restic REST)",
-  "cloud.hint": "Poświadczenia dla zdalnych backendów restic, bez rclone. Po zapisaniu ustaw ścieżkę kopii na zdalne repo, np. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo lub sftp:user@host:/repo. Sekrety są zapisywane zaszyfrowane i nie są ponownie pokazywane.",
   "cloud.secretSet": "zapisano, zostaw puste, aby zachować",
   "cloud.storageClass.label": "Klasa pamięci off-site",
   "cloud.storageClass.default": "(domyślna dostawcy)",
-  "cloud.storageClass.hint": "Dotyczy tylko natywnych backendów S3 (repozytoriów zaczynających się od s3:). Poziomy głębokiego archiwum (Glacier Flexible Retrieval, Deep Archive) celowo nie są oferowane, ponieważ psują przywracanie restic.",
   "cloud.credSets.title": "Dodatkowe zestawy poświadczeń",
   "cloud.credSets.hint": "Nadaj jednemu lub kilku zdalnym celom własne poświadczenia S3 lub restic REST, zamiast współdzielić powyższe.",
   "cloud.credSets.add": "Dodaj zestaw poświadczeń",
@@ -516,7 +508,6 @@ const pl: Partial<Translations> = {
   "export.encrypt.recipientsHint": "Jeden odbiorca na wiersz. Użyj klucza publicznego age (age1...) lub klucza publicznego SSH. Do odszyfrowania poza serwerem potrzebny jest pasujący klucz prywatny. Przy włączonym szyfrowaniu i braku prawidłowego odbiorcy eksport kończy się błędem zamiast zapisać tekst jawny.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "Dodaj co najmniej jednego odbiorcę age, w przeciwnym razie zaszyfrowany eksport się nie powiedzie.",
-  "rclone.save": "Zapisz konfigurację",
 
   // Integrity (restic check)
   "integrity.title": "Integralność i konserwacja",
@@ -737,8 +728,6 @@ const pl: Partial<Translations> = {
   "recovery.notReachable": "Nie udało się jeszcze dotrzeć do kopii zapasowych. Podłącz lokalizację poniżej, a następnie sprawdź ponownie.",
   "recovery.recheck": "Sprawdź",
   "recovery.step2": "Podłącz swoje kopie zapasowe",
-  "recovery.cloudCreds": "Poświadczenia chmury (opcjonalnie)",
-  "recovery.cloudCredsHint": "Potrzebne tylko wtedy, gdy ścieżka kopii wskazuje na S3, serwer restic REST lub zdalne repozytorium rclone. Ścieżka lokalna ani zamontowany udział nie wymagają tu niczego.",
   "recovery.attachHint": "Wskaż BombVault swoje istniejące kopie zapasowe: lokalną ścieżkę w obrębie montowania hosta lub zdalne repo (rest / S3 / B2 / sftp / rclone) wraz z poświadczeniami. Następnie połącz się, aby potwierdzić.",
   "recovery.credsSaveHint": "Poświadczenia zdalne zapisuje się osobnym przyciskiem Zapisz każdej karty. Zapisz je przed połączeniem i podglądem.",
   "recovery.connectPreview": "Połącz i wyświetl podgląd",

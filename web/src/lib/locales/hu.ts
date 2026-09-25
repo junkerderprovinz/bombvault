@@ -500,17 +500,9 @@ const hu: Partial<Translations> = {
   "settings.retentionLocal": "Helyi repó",
   "settings.retentionOffsite": "Távoli repó",
 
-  // Off-site (rclone)
-  "rclone.title": "Külső helyszín (rclone)",
-  "rclone.hint": "Illesszen be egy rclone-konfigurációt a felhőbe mentéshez (Backblaze B2, S3, Google Drive, …). Titkosítva tárolódik. Az SMB/NFS nem igényel rclone-t: csatolja a megosztást az Unraidben, és állítson rá egy mentési útvonalat.",
-  "rclone.configured": "Beállított távoli helyek",
-  "rclone.pathHint": "Ezután állítson egy mentési útvonalat „rclone:<remote>:<bucket>/path” értékre, hogy az adott tartományt külső helyre küldje.",
-  "cloud.title": "Megosztott felhőbeli hitelesítő adatok (S3 / restic REST)",
-  "cloud.hint": "Hitelesítő adatok távoli restic backendekhez, rclone nélkül. Mentés után állíts be egy biztonsági mentési útvonalat egy távoli repóra, pl. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo vagy sftp:user@host:/repo. A titkok titkosítva tárolódnak és többé nem jelennek meg.",
   "cloud.secretSet": "elmentve, hagyd üresen a megtartáshoz",
   "cloud.storageClass.label": "Off-site tárolási osztály",
   "cloud.storageClass.default": "(szolgáltató alapértelmezése)",
-  "cloud.storageClass.hint": "Csak natív S3 háttértárakra vonatkozik (s3: kezdetű tárolók). A mély archív szinteket (Glacier Flexible Retrieval, Deep Archive) szándékosan nem kínáljuk fel, mert megtörik a restic visszaállítást.",
   "cloud.credSets.title": "További hitelesítő adatkészletek",
   "cloud.credSets.hint": "Adj egy vagy több külső célnak saját S3 vagy restic REST hitelesítő adatokat, ahelyett hogy a fentieket osztanák meg.",
   "cloud.credSets.add": "Hitelesítő adatkészlet hozzáadása",
@@ -524,7 +516,6 @@ const hu: Partial<Translations> = {
   "export.encrypt.recipientsHint": "Soronként egy címzett. Használj age nyilvános kulcsot (age1...) vagy SSH nyilvános kulcsot. A szerveren kívüli visszafejtéshez a hozzá tartozó privát kulcs szükséges. Ha a titkosítás be van kapcsolva és nincs érvényes címzett, az export hibával leáll ahelyett, hogy sima szöveget írna.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "Adj hozzá legalább egy age címzettet, különben a titkosított export meghiúsul.",
-  "rclone.save": "Konfiguráció mentése",
 
   // Integrity (restic check)
   "integrity.title": "Integritás és karbantartás",
@@ -748,8 +739,6 @@ const hu: Partial<Translations> = {
   "recovery.notReachable": "A mentéseid még nem érhetők el. Csatold a helyet alább, majd ellenőrizd újra.",
   "recovery.recheck": "Ellenőrzés",
   "recovery.step2": "Csatold a mentéseidet",
-  "recovery.cloudCreds": "Felhő hitelesítő adatok (opcionális)",
-  "recovery.cloudCredsHint": "Csak akkor kellenek, ha egy mentési útvonal S3-ra, restic REST kiszolgálóra vagy rclone távoli tárolóra mutat. Helyi útvonalhoz vagy csatolt megosztáshoz itt nem kell semmi.",
   "recovery.attachHint": "Irányítsd a BombVaultot a meglévő mentéseidre: egy helyi útvonal a gazdagép csatolása alatt, vagy egy telephelyen kívüli tároló (rest / S3 / B2 / sftp / rclone) a hitelesítő adataival. Majd csatlakozz a megerősítéshez.",
   "recovery.credsSaveHint": "A telephelyen kívüli hitelesítő adatok az egyes kártyák saját Mentés gombjával mentődnek. Mentsd el őket, mielőtt csatlakozol és előnézetet kérsz.",
   "recovery.connectPreview": "Csatlakozás és előnézet",
