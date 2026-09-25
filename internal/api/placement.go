@@ -289,7 +289,7 @@ const (
 )
 
 // copySource reports whether snapshots at a home of this kind are copied off
-// site: restic copy has the target's credentials and no others.
+// site: restic copy adds only the domain path's credentials to the target's.
 func (k homeKind) copySource() bool {
 	return k == homeDomain || k == homeDomainRemote || k == homeLocal
 }

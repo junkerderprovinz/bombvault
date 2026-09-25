@@ -277,8 +277,8 @@ func checkSkip(p placementRead, skip []string) error {
 }
 
 // checkCopies refuses a copy rule the item's home cannot carry: restic copy
-// has only the target's own credentials, so a remote or direct repository
-// gets none.
+// adds only the domain path's credentials to the target's, so a remote named
+// or direct repository is never a source.
 func (s *Service) checkCopies(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, repoID string, copies store.CopiesWrite) error {
 	if copies.Follow {
 		return nil
