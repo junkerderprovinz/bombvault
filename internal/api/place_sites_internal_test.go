@@ -122,3 +122,21 @@ func TestTwoCopiesInTheHouseAreNoOffsiteCopy(t *testing.T) {
 		t.Fatalf("with the NAS at another site = %+v, want two sites and 3-2-1 met", o)
 	}
 }
+
+func TestAPlanCopiedOnlyInTheHouseWarnsThatNothingLeaves(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
+	here := f.storePlace(nasKeller())
+	f.linkRow(nas.ID, here, "containers", "")
+	f.container("nginx", "")
+
+	if plan := f.cardOf("containers", "nginx", 0).Plan; len(plan.Targets) != 1 || !plan.NoCopy || !plan.Warn {
+		t.Fatalf("plan = %+v, want the NAS named and the warning that nothing leaves the premises", plan)
+	}
+
+	here.OffPremises = true
+	f.storePlace(here)
+	if plan := f.cardOf("containers", "nginx", 0).Plan; plan.NoCopy || plan.Warn {
+		t.Fatalf("with the NAS at another site = %+v, want no warning", plan)
+	}
+}
