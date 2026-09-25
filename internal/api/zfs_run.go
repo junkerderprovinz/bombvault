@@ -310,7 +310,7 @@ func zfsSelection(d store.ZFSDataset) itemSelection {
 
 // BackupZFSDataset backs up one item: its whole tree from a single recursive
 // snapshot, one restic run per readable member, then the snapshot is destroyed.
-func (s *Service) BackupZFSDataset(ctx context.Context, id string) (backup.Summary, error) {
+func (s *Service) BackupZFSDataset(ctx context.Context, id string) (_ backup.Summary, retErr error) {
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	defer s.lockDomain(zfsDomain)()
@@ -328,7 +328,7 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (backup.Summa
 	// publishes under, and the only one a Cancel button ever has in hand.
 	key := zfsDomain + ":" + d.Dataset
 	s.registerBackupCancel(key, cancel)
-	defer s.unregisterBackupCancel(key)
+	defer s.endBackupCancel(key, &retErr)
 
 	if s.zfs == nil {
 		return backup.Summary{}, s.recordZFSRefusal(ctx, d, &backup.ZFSRefusal{Code: "ssh-missing"})
@@ -509,7 +509,7 @@ func (s *Service) StartBackupZFSDataset(ctx context.Context, id string) (bool, e
 		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupZFSDataset(bctx, id); err != nil {
-			log.Printf("api: backup zfs dataset: %q failed: %v", id, err)
+			log.Printf("api: backup zfs dataset: %q %s: %v", id, backupEnding(err), err)
 		}
 	}()
 	return true, nil

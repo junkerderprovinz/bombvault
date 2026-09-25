@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -94,6 +96,27 @@ func TestUnregisterClearsTheCancellationMark(t *testing.T) {
 	s.registerBackupCancel("files:abc", func() {})
 	s.CancelBackupRun("files:abc", "")
 	s.unregisterBackupCancel("files:abc")
+	if s.backupWasCancelled("files:abc") {
+		t.Fatal("the mark outlived the run it belonged to")
+	}
+}
+
+func TestOnlyACancelledBackupEndsAsCancelled(t *testing.T) {
+	s := &Service{}
+	s.registerBackupCancel("files:abc", func() {})
+	err := errors.New("repository is locked")
+	s.endBackupCancel("files:abc", &err)
+	if backupEnding(err) != "failed" || err.Error() != "repository is locked" {
+		t.Fatalf("an uncancelled failure ended as %s: %v", backupEnding(err), err)
+	}
+
+	s.registerBackupCancel("files:abc", func() {})
+	s.CancelBackupRun("files:abc", "")
+	err = fmt.Errorf("backup: %w", context.Canceled)
+	s.endBackupCancel("files:abc", &err)
+	if backupEnding(err) != "cancelled" || !errors.Is(err, context.Canceled) {
+		t.Fatalf("a cancelled backup ended as %s: %v", backupEnding(err), err)
+	}
 	if s.backupWasCancelled("files:abc") {
 		t.Fatal("the mark outlived the run it belonged to")
 	}
@@ -228,7 +251,7 @@ func TestFilesCancelKeyMatchesTheProgressKey(t *testing.T) {
 
 	for _, want := range []string{
 		`s.registerBackupCancel("files:"+set.Name, cancel)`,
-		`defer s.unregisterBackupCancel("files:" + set.Name)`,
+		`defer s.endBackupCancel("files:"+set.Name, &retErr)`,
 		`key := "files:" + set.Name`,
 		`cancelKey: "files:" + set.Name`,
 	} {

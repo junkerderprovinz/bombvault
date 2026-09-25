@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 )
@@ -45,6 +46,34 @@ func (s *Service) unregisterBackupCancel(key string) {
 	delete(s.cancelledBackups, key)
 	delete(s.committedBackups, key)
 	s.cancelMu.Unlock()
+}
+
+// errBackupCancelled matches the error of a backup the user cancelled. The
+// cancellation mark ends with the run, so a caller that logs the error later
+// can only tell from the error itself.
+var errBackupCancelled = errors.New("backup cancelled by the user")
+
+type cancelledBackupError struct{ err error }
+
+func (e cancelledBackupError) Error() string   { return e.err.Error() }
+func (e cancelledBackupError) Unwrap() []error { return []error{e.err, errBackupCancelled} }
+
+// endBackupCancel is the deferred unregisterBackupCancel of a backup that
+// returns *err. A failure of a backup the user cancelled comes back matching
+// errBackupCancelled.
+func (s *Service) endBackupCancel(key string, err *error) {
+	if *err != nil && s.backupWasCancelled(key) {
+		*err = cancelledBackupError{*err}
+	}
+	s.unregisterBackupCancel(key)
+}
+
+// backupEnding is the word a log line uses for a backup that returned err.
+func backupEnding(err error) string {
+	if errors.Is(err, errBackupCancelled) {
+		return "cancelled"
+	}
+	return "failed"
 }
 
 // commitBackup marks the backup under key as past the point a cancel could

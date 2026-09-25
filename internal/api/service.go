@@ -5291,7 +5291,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// leaving must — otherwise the run is killed anyway, just without anyone
 	// writing down that it happened.
 	s.registerBackupCancel("container:"+name, cancel)
-	defer s.unregisterBackupCancel("container:" + name)
+	defer s.endBackupCancel("container:"+name, &retErr)
 	// Never back up our own container: stopping it mid-run is suicide.
 	if self := s.selfContainerName(ctx); self != "" && name == self {
 		return backup.Summary{}, ErrSelfBackup
@@ -5899,7 +5899,7 @@ func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
 			if errors.Is(err, backup.ErrContainerNotInstalled) {
 				log.Printf("api: backup: %q skipped — not installed (backups only)", name) //nolint:gosec // G706: name is %q-quoted
 			} else {
-				log.Printf("api: backup: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+				log.Printf("api: backup: %q %s: %v", name, backupEnding(err), err) //nolint:gosec // G706: name is %q-quoted
 			}
 		}
 	}()
@@ -5928,7 +5928,7 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupVM(bctx, name); err != nil {
-			log.Printf("api: backup vm: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+			log.Printf("api: backup vm: %q %s: %v", name, backupEnding(err), err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
 	return true, nil
@@ -5953,7 +5953,7 @@ func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
 		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupFlash(bctx); err != nil {
-			log.Printf("api: backup flash failed: %v", err)
+			log.Printf("api: backup flash %s: %v", backupEnding(err), err)
 		}
 	}()
 	return true, nil
@@ -5979,7 +5979,7 @@ func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
 		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupConfig(bctx); err != nil {
-			log.Printf("api: backup config failed: %v", err)
+			log.Printf("api: backup config %s: %v", backupEnding(err), err)
 		}
 	}()
 	return true, nil
@@ -6006,7 +6006,7 @@ func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, erro
 		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupFileSet(bctx, id); err != nil {
-			log.Printf("api: backup file set: %q failed: %v", id, err) //nolint:gosec // G706: id is %q-quoted
+			log.Printf("api: backup file set: %q %s: %v", id, backupEnding(err), err) //nolint:gosec // G706: id is %q-quoted
 		}
 	}()
 	return true, nil
@@ -11653,7 +11653,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	s.registerBackupCancel("vm:"+name, cancel) // reachable by shutdown ([375])
-	defer s.unregisterBackupCancel("vm:" + name)
+	defer s.endBackupCancel("vm:"+name, &retErr)
 	defer s.lockDomain("vms")() // serialise per repo; blocks maintenance ops meanwhile
 	// Whether this attempt succeeds or not: a backup that failed on a full disk
 	// is the reading the capacity rule most needs.
@@ -12872,7 +12872,7 @@ var _ backup.FlashRestic = (*resticAdapter)(nil)
 // BackupFlash backs up the whole Unraid USB flash (the mounted /boot) to the
 // flash repo via restic. Fails with a clear message if the flash directory is
 // not mounted (the /boot → /host/boot mount is required for this domain).
-func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
+func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
@@ -12880,7 +12880,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	// [375]: this is one of the two runs jdp's 31.08. log shows cut off within
 	// 30 seconds of the 04:00 schedule.
 	s.registerBackupCancel("flash", cancel)
-	defer s.unregisterBackupCancel("flash")
+	defer s.endBackupCancel("flash", &retErr)
 	defer s.lockDomain("flash")() // serialise per repo; blocks maintenance ops meanwhile
 	// Whether this attempt succeeds or not: a backup that failed on a full disk
 	// is the reading the capacity rule most needs.
@@ -13062,7 +13062,7 @@ var _ backup.FilesRestic = (*resticAdapter)(nil)
 // A source folder that does not exist under the host mount fails with a clear
 // error BEFORE any restic call, recording a failed run against the set's id so
 // a scheduled backup of a vanished folder surfaces in Run History.
-func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary, error) {
+func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summary, retErr error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
@@ -13097,7 +13097,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	// settings read and a row lookup, neither of which can hang, and neither of
 	// which is worth cancelling.
 	s.registerBackupCancel("files:"+set.Name, cancel)
-	defer s.unregisterBackupCancel("files:" + set.Name)
+	defer s.endBackupCancel("files:"+set.Name, &retErr)
 	// A set without a path cannot be backed up (Discover creates path-less,
 	// disabled sets from fileset: tags alone) — say so instead of letting
 	// paths.Resolve report a misleading traversal error for "".
@@ -14373,13 +14373,13 @@ var _ backup.ConfigRestic = (*resticAdapter)(nil)
 // snapshot (VACUUM-INTO of the WAL-mode DB + verbatim static files) and always
 // removes that snapshot afterwards, so a rebuilt Unraid box can recover BombVault
 // itself with no container stop.
-func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
+func (s *Service) BackupConfig(ctx context.Context) (_ backup.Summary, retErr error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	s.registerBackupCancel("config", cancel) // reachable by shutdown ([375])
-	defer s.unregisterBackupCancel("config")
+	defer s.endBackupCancel("config", &retErr)
 	defer s.lockDomain("config")() // serialise per repo; blocks maintenance ops meanwhile
 	// Whether this attempt succeeds or not: a backup that failed on a full disk
 	// is the reading the capacity rule most needs.
