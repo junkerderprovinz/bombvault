@@ -96,6 +96,9 @@ export type SettingsTabProps = {
   setRegistryRowIds: Setter<string[]>;
   shape: Shape;
   setShapeLocal: Setter<Shape>;
+  leafFound: boolean;
+  setLeafFound: Setter<boolean>;
+  leafClicks: RefObject<{ taps: number }>;
   motion: MotionIntensity;
   setMotionLocal: Setter<MotionIntensity>;
   stormFound: boolean;

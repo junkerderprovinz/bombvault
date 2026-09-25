@@ -4,9 +4,11 @@
 // since the next question after "which build" is "what changed".
 import { useEffect, useState } from "react";
 import { Button } from "../../components/Button";
+import { CoffeeDialog } from "../../components/CoffeeDialog";
 import { CryptoDonateDialog } from "../../components/CryptoDonateDialog";
 import { IconBitcoin, IconBuyMeACoffee, IconPayPal } from "../../components/donateMarks";
 import { IconGithub, IconMail } from "../../components/glyphs";
+import { PaypalDialog } from "../../components/PaypalDialog";
 import { getHealth } from "../../lib/api";
 import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
 import { useT } from "../../lib/i18n";
@@ -21,19 +23,6 @@ import { Card } from "./shared";
 export { GLIMSTONE_VERSION };
 const REPO = "https://github.com/junkerderprovinz/bombvault";
 const GLIMSTONE_REPO = "https://github.com/junkerderprovinz/glimstone";
-/** Same handle as .github/FUNDING.yml. */
-const COFFEE = "https://buymeacoffee.com/junkerderprovinz";
-/**
- * A hosted donate button, because PayPal refuses the open
- * `?business=<id>&item_name=<project>` address for this account
- * (`ppccNotConfirmed`). The same button serves every project; the donor picks
- * the project on PayPal's page and the link cannot preselect it.
- *
- * Declared as `string` so the empty check at the button still compiles; with
- * the literal type TypeScript rejects it as a comparison with no overlap.
- */
-const PAYPAL: string =
-  "https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS";
 /** Shared by every tool of the workshop; the mail subject names the product. */
 const MAIL = "hello@halleluja.design";
 
@@ -88,6 +77,8 @@ function brand(name: string): string {
 export function AboutCard({ hueIndex }: { hueIndex?: number }) {
   const { t } = useT();
   const [version, setVersion] = useState<string | null>(null);
+  const [coffeeOpen, setCoffeeOpen] = useState(false);
+  const [paypalOpen, setPaypalOpen] = useState(false);
   const [cryptoOpen, setCryptoOpen] = useState(false);
 
   useEffect(() => {
@@ -124,21 +115,19 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
           glyph={<IconBuyMeACoffee />}
           tone="neutral"
           className={brand("coffee")}
-          onClick={() => window.open(COFFEE, "_blank", "noopener,noreferrer")}
+          onClick={() => setCoffeeOpen(true)}
         />
         {/* Hosted pages first, the wallet last, as GlimStone orders them: the
             routes most people have an account for, then the one that needs
             none. */}
-        {PAYPAL !== "" && (
-          <Button
-            label={t("about.paypal")}
-            labelKey="about.paypal"
-            glyph={<IconPayPal />}
-            tone="neutral"
-            className={brand("paypal")}
-            onClick={() => window.open(PAYPAL, "_blank", "noopener,noreferrer")}
-          />
-        )}
+        <Button
+          label={t("about.paypal")}
+          labelKey="about.paypal"
+          glyph={<IconPayPal />}
+          tone="neutral"
+          className={brand("paypal")}
+          onClick={() => setPaypalOpen(true)}
+        />
         <Button
           label={t("about.crypto")}
           labelKey="about.crypto"
@@ -148,6 +137,10 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
           onClick={() => setCryptoOpen(true)}
         />
       </div>
+      {/* Mounted only while open, so nothing from BMAC or PayPal loads before
+          somebody asks for it. */}
+      {coffeeOpen && <CoffeeDialog onClose={() => setCoffeeOpen(false)} />}
+      {paypalOpen && <PaypalDialog onClose={() => setPaypalOpen(false)} />}
       {cryptoOpen && <CryptoDonateDialog onClose={() => setCryptoOpen(false)} />}
 
       {/* The extra space keeps the buttons above visually attached to their

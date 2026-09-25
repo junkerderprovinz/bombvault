@@ -120,7 +120,7 @@ const BOOM_PARTICLES = Array.from({ length: 14 }, (_, i) => {
 // animate too. Every transform is motion-safe, so reduced motion gets colour
 // feedback only.
 const navBase =
-  "glim-nav-row flex items-center gap-3 px-3.5 rounded-control text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[var(--motion-press-scale)]";
+  "glim-nav-row flex items-center gap-3 px-3.5 rounded-pill text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[var(--motion-press-scale)]";
 const navActive =
   "bg-accent text-accentContrast";
 // translate-x is physical, so the hover nudge would point away from the content

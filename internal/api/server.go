@@ -58,15 +58,25 @@ func NewServer(cfg config.Config, spaFS fs.FS, apiRouter http.Handler) *Server {
 // GET /widget is meant to be framed by other dashboards, so it gets its own CSP
 // with frame-ancestors * and no X-Frame-Options. Every other path, including
 // the widget's /api/widget/data feed, is sent with DENY.
+//
+// The About card's give windows are the one place the app reaches another
+// origin: Buy Me a Coffee's widget as a frame, and PayPal's SDK, which loads
+// its script, frames its buttons and card form, and calls home. The SDK draws
+// a placeholder of its buttons in a blank frame of this page, which inherits
+// this policy, so the two logos on it need img-src. Nothing loads before
+// somebody opens its window.
 func securityHeaders(next http.Handler) http.Handler {
+	const paypalHosts = "https://www.paypal.com https://*.paypal.com https://*.paypalobjects.com"
+
 	// TestThemeBootScriptCSPHashMatches fails when this hash does not match the
 	// inline script in web/index.html, whitespace included.
 	const csp = "default-src 'self'; " +
-		"script-src 'self' 'sha256-OyogNhfMmFOmnpKoxuucDcL3wuNp1ArXH1kHMlcPetY='; " +
+		"script-src 'self' 'sha256-OyogNhfMmFOmnpKoxuucDcL3wuNp1ArXH1kHMlcPetY=' " + paypalHosts + "; " +
 		"style-src 'self' 'unsafe-inline'; " +
-		"img-src 'self' data:; " +
+		"img-src 'self' data: https://www.paypalobjects.com; " +
 		"font-src 'self' data:; " +
-		"connect-src 'self'; " +
+		"connect-src 'self' " + paypalHosts + "; " +
+		"frame-src " + paypalHosts + " https://buymeacoffee.com; " +
 		"object-src 'none'; " +
 		"base-uri 'self'; " +
 		"frame-ancestors 'none'"

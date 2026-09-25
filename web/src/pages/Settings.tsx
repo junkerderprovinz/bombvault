@@ -548,6 +548,11 @@ export function SettingsPage() {
   // to/from localStorage via shape.ts, the same pattern the old accentHex
   // state used before its move.
   const [shape, setShapeLocal] = useState<Shape>(() => getShape());
+  // The hidden leaf follows the storm below: found and counted in this
+  // screen's state, never in storage, so it is offered only while chosen or
+  // until this page is left.
+  const [leafFound, setLeafFound] = useState(false);
+  const leafClicks = useRef({ taps: 0 });
 
   // Motion-intensity state (GlimStone motion-engine — the deliberate
   // reversal of design-language.md's own prior "kein fünfter Nutzer-
@@ -1613,6 +1618,9 @@ export function SettingsPage() {
     setRegistryRowIds,
     shape,
     setShapeLocal,
+    leafFound,
+    setLeafFound,
+    leafClicks,
     motion,
     setMotionLocal,
     stormFound,

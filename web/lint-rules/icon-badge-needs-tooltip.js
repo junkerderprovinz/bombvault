@@ -75,9 +75,9 @@ export default {
     schema: [],
     messages: {
       missing:
-        "This {{what}} renders a glyph and no text, so nothing on screen says what it does. Give it `tip={t(\"…\")}` — the same real .glim-bubble every other icon-only control uses (Badge routes `tip` through IconTipButton).{{hatch}}",
+        "This {{what}} renders a glyph and no text, so nothing on screen says what it does. Give it `tip={t(\"…\")}`, the .glim-bubble every other icon-only control uses (Badge routes `tip` through IconTipButton).{{hatch}}",
       nativeTitle:
-        "This {{what}} explains itself with the native `title` balloon. `title` never appears on keyboard focus and is the OS tooltip IconTipButton.tsx exists to replace — use `tip={t(\"…\")}` instead.{{hatch}}",
+        "This {{what}} explains itself with the native `title` balloon, which never appears on keyboard focus and is the OS tooltip IconTipButton.tsx exists to replace. Use `tip={t(\"…\")}` instead.{{hatch}}",
     },
   },
 
