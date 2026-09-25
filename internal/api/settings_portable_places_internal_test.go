@@ -753,3 +753,86 @@ func TestAFilesPlacesDecideTheLocationsItsRowsDisagreeOn(t *testing.T) {
 		t.Errorf("copy target = %+v (ok %v, err %v), want it at the place's vms-copies and on B2", copies, ok, err)
 	}
 }
+
+func TestAnOlderFileRebuildsThePlacesFromItsRows(t *testing.T) {
+	src := newPlacementFixture(t)
+	src.target("containers", "B2", b2Base+"/container")
+	exp := src.do(http.MethodGet, "/api/settings/export", nil)
+	delete(exp, "places")
+	delete(exp, "storageDomainPlaces")
+
+	dst := newPlacementFixture(t)
+	if err := dst.svc.MigrateToPlaces(); err != nil {
+		t.Fatal(err)
+	}
+	dst.storePlace(store.Place{
+		ID: "place-old-nas", Name: "Old NAS", Provider: "share", Kind: "local", Base: "remotes/nas",
+		Folders: map[string]string{"containers": "bv"}, Enabled: true,
+	})
+
+	preview := dst.do(http.MethodPost, "/api/settings/import", exp)
+	if summary, _ := preview["summary"].(map[string]any); summary["places"] != nil {
+		t.Errorf("preview = %v, want places null for a file without the block", preview)
+	}
+	if res := dst.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+
+	s, err := dst.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.PlacesMigrated == 0 {
+		t.Error("places_migrated is clear; the places were not rebuilt from the imported rows")
+	}
+	placesNow, err := dst.st.ListPlaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+	homes, err := dst.st.DomainPlaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+	targets, err := dst.st.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repos, err := dst.st.ListNamedRepos()
+	if err != nil {
+		t.Fatal(err)
+	}
+	used := map[string]bool{}
+	for _, id := range homes {
+		used[id] = true
+	}
+	for _, row := range slices.Concat(targets, repos) {
+		if row.PlaceID != "" {
+			used[row.PlaceID] = true
+		}
+	}
+	known := map[string]bool{}
+	onBackups := 0
+	for _, p := range placesNow {
+		known[p.ID] = true
+		if p.ID == "place-old-nas" {
+			t.Error("a place the imported file does not describe survived the import")
+		}
+		if !used[p.ID] {
+			t.Errorf("place %q is used by nothing", p.Name)
+		}
+		if p.Base == "backups" {
+			onBackups++
+		}
+	}
+	for id := range used {
+		if !known[id] {
+			t.Errorf("a row or domain names place %s, which does not exist", id)
+		}
+	}
+	if onBackups != 1 {
+		t.Errorf("%d places on backups, want one", onBackups)
+	}
+	if len(targets) != 1 || targets[0].PlaceID == "" {
+		t.Errorf("targets = %+v, want the imported B2 target on a place", targets)
+	}
+}

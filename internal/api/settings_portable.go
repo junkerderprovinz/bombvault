@@ -769,20 +769,19 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	if err != nil {
 		return fmt.Errorf("the settings were not imported: %w", err)
 	}
-	var prior []store.Place
-	if exp.Places != nil {
-		// Read before the drop: a place whose base arrives redacted keeps the
-		// base it has here under the same id.
-		if prior, err = h.store.ListPlaces(); err != nil {
-			return fmt.Errorf("the settings were not imported: %w", err)
-		}
-		// The steps below then write rows on no place, so none of the rules
-		// that guard a placed row gets in their way. The file's places come
-		// back after them; an apply that stops halfway leaves the next start
-		// to build places from the rows.
-		if err := h.store.DropPlaces(); err != nil {
-			return fmt.Errorf("the settings were not imported: %w", err)
-		}
+	// Read before the drop: a place whose base arrives redacted keeps the base
+	// it has here under the same id.
+	prior, err := h.store.ListPlaces()
+	if err != nil {
+		return fmt.Errorf("the settings were not imported: %w", err)
+	}
+	// The steps below then write rows on no place, so none of the rules that
+	// guard a placed row gets in their way. The places come back at the end,
+	// from the file or, for a file without them, from the startup migration
+	// over what it imported; an apply that stops halfway leaves the next
+	// start to build them.
+	if err := h.store.DropPlaces(); err != nil {
+		return fmt.Errorf("the settings were not imported: %w", err)
 	}
 
 	// A hook command in the file is not installed (see mergeImportedSettings).
@@ -870,6 +869,11 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	if h.scheduler != nil {
 		if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
 			return err
+		}
+	}
+	if exp.Places == nil {
+		if err := h.svc.MigrateToPlaces(); err != nil {
+			return fmt.Errorf("the settings were imported, but the storage places could not be built from them; the next start tries again: %w", err)
 		}
 	}
 	return nil
