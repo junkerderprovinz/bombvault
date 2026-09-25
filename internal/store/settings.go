@@ -392,6 +392,15 @@ func (r *Repo) MutateSettings(fn func(*Settings) error) (Settings, error) {
 	if fn == nil {
 		return Settings{}, fmt.Errorf("MutateSettings: nil mutation")
 	}
+	return r.mutateSettings(func(_ *sql.Tx, _ Settings, after *Settings) error {
+		return fn(after)
+	})
+}
+
+// mutateSettings is one serialized read-modify-write of the settings row. fn
+// gets the transaction for reads of other tables, the row as read and the row
+// to change; nothing is written when it changes nothing.
+func (r *Repo) mutateSettings(fn func(tx *sql.Tx, before Settings, after *Settings) error) (Settings, error) {
 	r.settingsMu.Lock()
 	defer r.settingsMu.Unlock()
 
@@ -408,7 +417,7 @@ func (r *Repo) MutateSettings(fn func(*Settings) error) (Settings, error) {
 		return Settings{}, err
 	}
 	after := before
-	if err := fn(&after); err != nil {
+	if err := fn(tx, before, &after); err != nil {
 		return Settings{}, err
 	}
 	if after != before {

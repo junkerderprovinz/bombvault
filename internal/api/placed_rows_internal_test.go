@@ -157,3 +157,93 @@ func TestAnImportLeavesPlacedTargetsAlone(t *testing.T) {
 		t.Fatalf("placed target = %+v, want %+v", got, row)
 	}
 }
+
+func TestAStaleSettingsSaveKeepsWhatAHomePlaceWrote(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(store.Place{Name: "Unraid", Provider: "unraid-folder", Kind: string(places.KindLocal), Base: "backups",
+		Folders: map[string]string{"containers": "containers", "vms": "vms", "files": "files"}, Enabled: true}, "containers")
+	b2 := f.storePlace(bucketAt("B2", "s3:https://s3.example.com/bucket"))
+	f.placedFieldRow("containers", b2)
+	stale, _ := f.do(http.MethodGet, "/api/settings", nil)["settings"].(map[string]any)
+
+	unraid.Folders["containers"] = "containers-2"
+	f.storePlace(unraid)
+	b2.Base, b2.Immutable = "s3:https://s3.example.com/bucket-2", true
+	f.storePlace(b2)
+	stale["vmsPath"] = "backups/vms-2"
+	if res := f.do(http.MethodPut, "/api/settings", stale); res["ok"] != true {
+		t.Fatalf("PUT /api/settings = %v", res)
+	}
+
+	got, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ContainersPath != "backups/containers-2" || got.ContainersOffsite != "s3:https://s3.example.com/bucket-2/container" || !got.ContainersOffsiteImmutable {
+		t.Fatalf("containers = %q, %q, %v, want what the places wrote", got.ContainersPath, got.ContainersOffsite, got.ContainersOffsiteImmutable)
+	}
+	if got.VMsPath != "backups/vms-2" {
+		t.Fatalf("vms path = %q, want the saved value for a domain without a home place", got.VMsPath)
+	}
+}
+
+func TestAStaleSettingsSaveIsNotRefusedOverLocationsItKeeps(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(store.Place{Name: "Unraid", Provider: "unraid-folder", Kind: string(places.KindLocal), Base: "backups",
+		Folders: map[string]string{"containers": "containers", "vms": "vms", "files": "files"}, Enabled: true}, "containers")
+	b2 := f.storePlace(bucketAt("B2", "s3:https://s3.example.com/bucket"))
+	f.placedFieldRow("containers", b2)
+	stale, _ := f.do(http.MethodGet, "/api/settings", nil)["settings"].(map[string]any)
+
+	unraid.Folders["containers"] = "containers-2"
+	f.storePlace(unraid)
+	b2.Base = "s3:https://s3.example.com/bucket-2"
+	f.storePlace(b2)
+	// The old path now holds a named repository and the old off-site field
+	// another target, so both stale values would clash if they were saved.
+	f.namedRepo("Old containers", "backups/containers")
+	f.target("vms", "Old bucket", "s3:https://s3.example.com/bucket/container/vms")
+	stale["defaultLanguage"] = "de"
+	if res := f.do(http.MethodPut, "/api/settings", stale); res["ok"] != true {
+		t.Fatalf("PUT /api/settings = %v, want the stale locations ignored", res)
+	}
+
+	got, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ContainersPath != "backups/containers-2" || got.ContainersOffsite != "s3:https://s3.example.com/bucket-2/container" || got.DefaultLanguage != "de" {
+		t.Fatalf("containers = %q, %q, language %q, want the places' locations and the language saved", got.ContainersPath, got.ContainersOffsite, got.DefaultLanguage)
+	}
+}
+
+func TestAFlashChipSwitchedOffStaysOffAfterAnUnrelatedSettingsSave(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(bucketAt("B2", "s3:https://s3.example.com/bucket"))
+	row := f.placedFieldRow("flash", b2)
+	stale, _ := f.do(http.MethodGet, "/api/settings", nil)["settings"].(map[string]any)
+
+	row.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(row); err != nil {
+		t.Fatal(err)
+	}
+	f.storePlace(b2)
+	stale["defaultLanguage"] = "de"
+	if res := f.do(http.MethodPut, "/api/settings", stale); res["ok"] != true {
+		t.Fatalf("PUT /api/settings = %v", res)
+	}
+
+	if got := f.storedTarget(row.ID); got.Enabled || got.PlaceID != b2.ID {
+		t.Fatalf("flash target = %+v, want it off at %s", got, b2.Name)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if settings.FlashOffsite != "" || settings.DefaultLanguage != "de" {
+		t.Fatalf("flash field = %q, language %q, want the field empty and the language saved", settings.FlashOffsite, settings.DefaultLanguage)
+	}
+	if targets := f.svc.offsiteReplicationTargets("flash", settings); len(targets) != 0 {
+		t.Fatalf("flash still copies to %+v", targets)
+	}
+}

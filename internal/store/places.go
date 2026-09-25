@@ -729,3 +729,67 @@ func detachMovedRowTx(tx *sql.Tx, id, role, repo string) error {
 		WHERE id = ? AND role = ? AND place_id <> '' AND repo <> ?`, id, role, repo)
 	return err
 }
+
+// PlaceOwned names the settings columns of a domain that its places write.
+// A home place writes the domain's path, off-site field and that field's
+// append-only flag; a field row at a place writes the field and the flag.
+type PlaceOwned struct {
+	Path    bool
+	Offsite bool
+}
+
+// PlaceOwnedSettings lists, for each domain with a column a place writes,
+// which of its columns those are.
+func (r *Repo) PlaceOwnedSettings() (map[string]PlaceOwned, error) {
+	owned, err := placeOwnedQ(r.db)
+	if err != nil {
+		return nil, fmt.Errorf("PlaceOwnedSettings: %w", err)
+	}
+	return owned, nil
+}
+
+func placeOwnedQ(q queryer) (map[string]PlaceOwned, error) {
+	homes, err := domainPlacesQ(q)
+	if err != nil {
+		return nil, err
+	}
+	owned := map[string]PlaceOwned{}
+	for _, domain := range places.Domains {
+		field, found, err := fieldRowQ(q, domain)
+		if err != nil {
+			return nil, err
+		}
+		home := homes[domain] != ""
+		if home || (found && field.PlaceID != "") {
+			owned[domain] = PlaceOwned{Path: home, Offsite: true}
+		}
+	}
+	return owned, nil
+}
+
+// MutateSettingsKeepingPlaces is MutateSettings for a writer that does not
+// own what places write into the settings row: those columns keep their
+// stored values whatever fn sets. The places are read in the same
+// transaction, so a place written in the meantime is kept too.
+func (r *Repo) MutateSettingsKeepingPlaces(fn func(*Settings) error) (Settings, error) {
+	return r.mutateSettings(func(tx *sql.Tx, before Settings, after *Settings) error {
+		if err := fn(after); err != nil {
+			return err
+		}
+		owned, err := placeOwnedQ(tx)
+		if err != nil {
+			return fmt.Errorf("MutateSettingsKeepingPlaces: %w", err)
+		}
+		for domain, o := range owned {
+			path, offsite, immutable := domainColumns(after, domain)
+			storedPath, storedOffsite, storedImmutable := domainColumns(&before, domain)
+			if o.Path {
+				*path = *storedPath
+			}
+			if o.Offsite {
+				*offsite, *immutable = *storedOffsite, *storedImmutable
+			}
+		}
+		return nil
+	})
+}
