@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"fmt"
 	"slices"
 	"strings"
@@ -155,10 +156,29 @@ func primaryTraits(kind places.Kind, s store.Settings, primary store.OffsiteTarg
 	return t
 }
 
+// rowTraits are a row's own settings, its keep-policy included, which is the
+// one a target and a direct repository age by.
+func rowTraits(kind places.Kind, row store.OffsiteTarget) placeTraits {
+	return placeTraits{
+		kind:           kind,
+		credsRef:       row.CredsRef,
+		storageClass:   row.StorageClass,
+		immutable:      row.Immutable,
+		keepLast:       row.RetentionKeepLast,
+		keepDaily:      row.RetentionKeepDaily,
+		keepWeekly:     row.RetentionKeepWeekly,
+		keepMonthly:    row.RetentionKeepMonthly,
+		limitUpload:    row.LimitUpload,
+		limitDownload:  row.LimitDownload,
+		growthBudgetGB: row.GrowthBudgetGB,
+	}
+}
+
 // placesMigrationInput is everything the plan reads, gathered first so that
 // the plan itself touches neither the store nor the key.
 type placesMigrationInput struct {
 	settings  store.Settings
+	targets   []store.OffsiteTarget          // role offsite
 	primaries map[string]store.OffsiteTarget // domain -> its remote-primary row
 	credSets  map[string]CloudCredSet        // by id, secrets included
 	existing  []store.Place                  // names and addresses the plan must not take
@@ -182,7 +202,8 @@ type placesPlan struct {
 type placesPlanner struct {
 	in       placesMigrationInput
 	planned  []*plannedPlace
-	names    map[string]bool // names taken, lower case
+	byTarget map[string]*plannedPlace // target id -> the place it went to
+	names    map[string]bool          // names taken, lower case
 	unplaced []string
 }
 
@@ -190,11 +211,12 @@ type placesPlanner struct {
 // into. A row goes onto a place only in a form the place spells back byte for
 // byte, and what already has a place stays as it is.
 func planPlaces(in placesMigrationInput) placesPlan {
-	p := &placesPlanner{in: in, names: map[string]bool{}}
+	p := &placesPlanner{in: in, byTarget: map[string]*plannedPlace{}, names: map[string]bool{}}
 	for _, e := range in.existing {
 		p.names[strings.ToLower(e.Name)] = true
 	}
 	p.planDomainPaths()
+	p.planTargets()
 	plan := placesPlan{unplaced: p.unplaced}
 	for _, pl := range p.planned {
 		plan.places = append(plan.places, pl.MigratedPlace)
@@ -230,6 +252,39 @@ func (p *placesPlanner) planDomainPaths() {
 		}
 		pl.Place.Folders[d] = sp.folder
 		pl.HomeDomains = append(pl.HomeDomains, d)
+	}
+}
+
+// planTargets puts the targets on places, oldest first, so the later of two
+// targets of one domain at one base gets a place of its own. A place is on
+// while any of its targets is; each row keeps its own switch.
+func (p *placesPlanner) planTargets() {
+	targets := slices.Clone(p.in.targets)
+	slices.SortStableFunc(targets, func(a, b store.OffsiteTarget) int {
+		return cmp.Or(cmp.Compare(a.CreatedAt, b.CreatedAt), strings.Compare(a.ID, b.ID))
+	})
+	for _, t := range targets {
+		if t.PlaceID != "" {
+			continue
+		}
+		sp, ok := splitPlaceAddress(t.Repo)
+		if !ok {
+			p.unplaced = append(p.unplaced, t.ID)
+			continue
+		}
+		traits := rowTraits(sp.kind, t)
+		pl := p.joinable(sp, traits, t.Domain)
+		if p.claimedElsewhere(t.Repo, pl) {
+			p.unplaced = append(p.unplaced, t.ID)
+			continue
+		}
+		if pl == nil {
+			pl = p.add(placementTargetName(t), sp, traits, false)
+		}
+		pl.Place.Folders[t.Domain] = sp.folder
+		pl.Place.Enabled = pl.Place.Enabled || t.Enabled
+		pl.Rows = append(pl.Rows, store.PlaceRowRef{RowID: t.ID, Domain: t.Domain, Repo: t.Repo})
+		p.byTarget[t.ID] = pl
 	}
 }
 

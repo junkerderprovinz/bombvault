@@ -192,3 +192,201 @@ func TestADomainThatAlreadyHasAHomePlaceIsLeftAlone(t *testing.T) {
 		t.Fatalf("places = %q, want one", placeNames(plan))
 	}
 }
+
+const b2Bucket = "s3:https://s3.us-west-004.backblazeb2.com/bv-bucket"
+
+// offsiteRow is an enabled target on keep-last 3.
+func offsiteRow(id, domain, name, repo string, created int64) store.OffsiteTarget {
+	return store.OffsiteTarget{
+		ID: id, Domain: domain, Name: name, Repo: repo, Role: store.RoleOffsite, Enabled: true, CreatedAt: created, RetentionKeepLast: 3,
+	}
+}
+
+// placeOfRow returns the place a row went to and how it sits there.
+func placeOfRow(plan placesPlan, rowID string) (store.MigratedPlace, store.PlaceRowRef, bool) {
+	for _, m := range plan.places {
+		for _, r := range m.Rows {
+			if r.RowID == rowID {
+				return m, r, true
+			}
+		}
+	}
+	return store.MigratedPlace{}, store.PlaceRowRef{}, false
+}
+
+func TestTargetsWithOneBaseAndTheSameSettingsShareAPlace(t *testing.T) {
+	in := migrationInput()
+	in.targets = []store.OffsiteTarget{
+		offsiteRow("t-vms", "vms", "B2 VMs", b2Bucket+"/vms", 2),
+		offsiteRow("t-cont", "containers", "B2", b2Bucket+"/containers", 1),
+	}
+	b2 := placeNamed(t, planPlaces(in), "B2")
+	p := b2.Place
+	if p.Base != b2Bucket || p.Folders["containers"] != "containers" || p.Folders["vms"] != "vms" || len(b2.Rows) != 2 ||
+		p.RetentionKeepLast != 3 || !p.OffPremises || !p.Enabled || p.Provider != "b2" || p.Kind != "s3" || p.CredsRef != "" {
+		t.Fatalf("B2 = %+v, want the shared credentials left as they are", b2)
+	}
+}
+
+func TestATargetAlreadyOnAPlaceIsLeftAlone(t *testing.T) {
+	placed := offsiteRow("placed", "containers", "B2", b2Bucket+"/containers", 1)
+	placed.PlaceID = "p1"
+	in := migrationInput()
+	in.targets = []store.OffsiteTarget{placed}
+	plan := planPlaces(in)
+	if _, _, ok := placeOfRow(plan, "placed"); ok || slices.Contains(plan.unplaced, "placed") {
+		t.Fatalf("a target that has a place was planned again: %+v", plan)
+	}
+}
+
+func TestTargetsThatDifferInAnySettingGetPlacesOfTheirOwn(t *testing.T) {
+	for name, change := range map[string]func(*store.OffsiteTarget){
+		"credentials":    func(r *store.OffsiteTarget) { r.CredsRef = "other" },
+		"storage class":  func(r *store.OffsiteTarget) { r.StorageClass = "STANDARD_IA" },
+		"append-only":    func(r *store.OffsiteTarget) { r.Immutable = true },
+		"keep daily":     func(r *store.OffsiteTarget) { r.RetentionKeepDaily = 7 },
+		"upload limit":   func(r *store.OffsiteTarget) { r.LimitUpload = 100 },
+		"download limit": func(r *store.OffsiteTarget) { r.LimitDownload = 100 },
+		"growth budget":  func(r *store.OffsiteTarget) { r.GrowthBudgetGB = 10 },
+	} {
+		t.Run(name, func(t *testing.T) {
+			other := offsiteRow("t2", "vms", "B2 VMs", b2Bucket+"/vms", 2)
+			change(&other)
+			in := migrationInput()
+			in.targets = []store.OffsiteTarget{offsiteRow("t1", "containers", "B2", b2Bucket+"/containers", 1), other}
+			if m, _, ok := placeOfRow(planPlaces(in), "t2"); !ok || m.Place.Name != "B2 VMs" || m.Place.Base != b2Bucket {
+				t.Fatalf("the differing target sits on %+v, want a place of its own at the same base", m.Place)
+			}
+		})
+	}
+}
+
+func TestTheLaterOfTwoTargetsOfOneDomainAtOnePlaceGetsItsOwn(t *testing.T) {
+	in := migrationInput()
+	in.targets = []store.OffsiteTarget{
+		offsiteRow("new", "containers", "B2 again", b2Bucket+"/containers-2", 2),
+		offsiteRow("old", "containers", "B2", b2Bucket+"/containers", 1),
+	}
+	plan := planPlaces(in)
+	if m, _, _ := placeOfRow(plan, "old"); m.Place.Name != "B2" {
+		t.Fatalf("the older target sits on %q, want B2", m.Place.Name)
+	}
+	if m, _, _ := placeOfRow(plan, "new"); m.Place.Name != "B2 again" || m.Place.Folders["containers"] != "containers-2" {
+		t.Fatalf("the later target sits on %+v, want B2 again", m.Place)
+	}
+}
+
+func TestATargetJoinsAHomePlaceOnlyWhereItsDomainIsFree(t *testing.T) {
+	in := migrationInput()
+	in.settings.FlashPath = "boot-backups/flash"
+	copyRow := func(id, domain, repo string) store.OffsiteTarget {
+		r := offsiteRow(id, domain, id, repo, 1)
+		r.RetentionKeepLast = 5
+		return r
+	}
+	in.targets = []store.OffsiteTarget{
+		copyRow("flash-copy", "flash", "user/bombvault/flash-copies"),
+		copyRow("containers-copy", "containers", "user/bombvault/container-copies"),
+	}
+	plan := planPlaces(in)
+	if m, _, _ := placeOfRow(plan, "flash-copy"); m.Place.Name != "Unraid" || m.Place.Folders["flash"] != "flash-copies" {
+		t.Fatalf("the flash copy sits on %+v, want Unraid, which has no flash folder", m.Place)
+	}
+	if m, _, _ := placeOfRow(plan, "containers-copy"); m.Place.Name != "containers-copy" || m.Place.Base != "user/bombvault" || m.Place.OffPremises {
+		t.Fatalf("the containers copy sits on %+v, want a local place of its own", m.Place)
+	}
+}
+
+func TestATargetAtABucketRootIsAPlaceThatIsItsOwnRepository(t *testing.T) {
+	in := migrationInput()
+	in.targets = []store.OffsiteTarget{offsiteRow("root", "containers", "Bucket", b2Bucket, 1)}
+	m := placeNamed(t, planPlaces(in), "Bucket")
+	if m.Place.Base != b2Bucket || !maps.Equal(m.Place.Folders, map[string]string{"containers": ""}) {
+		t.Fatalf("Bucket = %+v", m.Place)
+	}
+}
+
+func TestALocalTargetPlaceStandsOnThePremises(t *testing.T) {
+	in := migrationInput()
+	in.targets = []store.OffsiteTarget{offsiteRow("nas", "containers", "NAS copies", "remotes/nas/copies/containers", 1)}
+	if p := placeNamed(t, planPlaces(in), "NAS copies").Place; p.OffPremises || p.Provider != "share" || p.Kind != "local" {
+		t.Fatalf("NAS copies = %+v", p)
+	}
+}
+
+func TestAPlaceIsOnWhileAnyOfItsTargetsIs(t *testing.T) {
+	off := offsiteRow("off", "vms", "B2 VMs", b2Bucket+"/vms", 2)
+	off.Enabled = false
+	alone := offsiteRow("alone", "flash", "Old", "s3:https://s3.example.com/old/flash", 3)
+	alone.Enabled = false
+	in := migrationInput()
+	in.targets = []store.OffsiteTarget{offsiteRow("on", "containers", "B2", b2Bucket+"/containers", 1), off, alone}
+	plan := planPlaces(in)
+	if !placeNamed(t, plan, "B2").Place.Enabled {
+		t.Error("B2 is off although one of its targets is on")
+	}
+	if placeNamed(t, plan, "Old").Place.Enabled {
+		t.Error("a place whose only target is off is on")
+	}
+}
+
+func TestEveryPlaceProviderSpeaksThePlacesKind(t *testing.T) {
+	in := migrationInput()
+	in.credSets["mesh-1"] = CloudCredSet{ID: "mesh-1", Name: "mesh: tower", CloudCreds: CloudCreds{RESTUser: "bombvault-flash"}}
+	mesh := offsiteRow("mesh", "flash", "mesh: tower", "rest:http://tower:8000/bombvault-flash/flash", 4)
+	mesh.CredsRef = "mesh-1"
+	in.targets = []store.OffsiteTarget{
+		offsiteRow("b2", "containers", "B2", b2Bucket+"/containers", 1),
+		offsiteRow("wasabi", "files", "Wasabi", "s3:https://s3.eu-central-1.wasabisys.com/bv-files/files", 2),
+		offsiteRow("rest", "vms", "Tower", "rest:http://tower:8000/bombvault-vms/vms", 3),
+		mesh,
+		offsiteRow("sftp", "flash", "Pi", "sftp:pi:flash", 5),
+		offsiteRow("rclone", "config", "Drive", "rclone:r:config", 6),
+		offsiteRow("box", "files", "Box", "rest:https://u1.your-storagebox.de/bv/files", 7),
+	}
+	plan := planPlaces(in)
+	for name, provider := range map[string]string{
+		"B2": "b2", "Wasabi": "wasabi", "Tower": "rest-server", "mesh: tower": "bombvault", "Pi": "sftp", "Drive": "rclone",
+	} {
+		if got := placeNamed(t, plan, name).Place.Provider; got != provider {
+			t.Errorf("%s provider = %q, want %q", name, got, provider)
+		}
+	}
+	for _, m := range plan.places {
+		if found, ok := places.ProviderByID(m.Place.Provider); !ok || string(found.Kind) != m.Place.Kind {
+			t.Errorf("%s: provider %q does not speak %s", m.Place.Name, m.Place.Provider, m.Place.Kind)
+		}
+	}
+}
+
+func TestPlaceNamesStayUnique(t *testing.T) {
+	in := migrationInput()
+	in.settings.FlashPath = "boot-backups/flash"
+	in.targets = []store.OffsiteTarget{
+		offsiteRow("a", "containers", "Unraid", b2Bucket+"/containers", 1),
+		offsiteRow("b", "containers", "B2", "s3:https://s3.example.com/one/containers", 2),
+		offsiteRow("c", "vms", "b2", "s3:https://s3.example.com/two/vms", 3),
+	}
+	if got, want := placeNames(planPlaces(in)), []string{"Unraid", "Unraid 2", "Unraid 3", "B2", "b2 2"}; !slices.Equal(got, want) {
+		t.Fatalf("names = %q, want %q", got, want)
+	}
+}
+
+func TestTargetsWithoutAPlaceFormStayUnplaced(t *testing.T) {
+	in := migrationInput()
+	in.targets = []store.OffsiteTarget{
+		offsiteRow("native", "files", "B2 native", "b2:bucket:files", 1),
+		offsiteRow("slash", "vms", "Slash", "sftp:nas:/vms", 2),
+		offsiteRow("outer", "vms", "Outer", b2Bucket+"/bv", 3),
+		offsiteRow("nested", "containers", "Nested", b2Bucket+"/bv/containers", 4),
+	}
+	plan := planPlaces(in)
+	for _, id := range []string{"native", "slash", "nested"} {
+		if _, _, ok := placeOfRow(plan, id); ok || !slices.Contains(plan.unplaced, id) {
+			t.Errorf("%s was placed, want it without a place", id)
+		}
+	}
+	if _, _, ok := placeOfRow(plan, "outer"); !ok {
+		t.Error("the outer target lost its place to the one nested in it")
+	}
+}
