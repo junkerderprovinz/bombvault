@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -83,5 +84,43 @@ func TestCredentialWritersWaitWhileAPlaceWriteHoldsTheSets(t *testing.T) {
 		case <-time.After(5 * time.Second):
 			t.Fatal("a credential writer never finished")
 		}
+	}
+}
+
+func providerOf(t *testing.T, id string) places.Provider {
+	t.Helper()
+	p, ok := places.ProviderByID(id)
+	if !ok {
+		t.Fatalf("no provider %s", id)
+	}
+	return p
+}
+
+func TestAPlaceFormFillsACredentialSetTheWayItsKindReadsIt(t *testing.T) {
+	dav := withPlaceCreds(CloudCredSet{ID: "dav", Name: "Cloud", Kind: "webdav"}, places.CredsFromFields(providerOf(t, "nextcloud"),
+		map[string]string{"url": "https://cloud.example.com", "user": "anna", "password": "app-pass"}))
+	want := CloudCredSet{ID: "dav", Name: "Cloud", Kind: "webdav", WebDAVURL: "https://cloud.example.com/remote.php/dav/files/anna/",
+		WebDAVVendor: "nextcloud", WebDAVUser: "anna", WebDAVPass: "app-pass"}
+	if dav != want {
+		t.Fatalf("webdav set = %+v\nwant %+v", dav, want)
+	}
+	r2 := withPlaceCreds(CloudCredSet{ID: "r2"}, places.CredsFromFields(providerOf(t, "r2"),
+		map[string]string{"keyId": "K", "secret": "S", "account": "abc"}))
+	if r2.S3KeyID != "K" || r2.S3Secret != "S" || r2.S3Region != "auto" {
+		t.Fatalf("r2 set = %+v, want the key and the signing region auto", r2)
+	}
+}
+
+func TestAPlaceFormKeepsWhatItLeavesBlank(t *testing.T) {
+	stored := CloudCredSet{ID: "b2", Name: "B2", Kind: "s3",
+		CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1", S3Region: "us-west-004", S3StorageClass: "STANDARD"}}
+	typed := places.CredsFromFields(providerOf(t, "b2"), map[string]string{"keyId": "k2", "secret": ""})
+
+	got := withPlaceCreds(stored, overlayCreds(placeCredsOf(stored), typed))
+
+	want := stored
+	want.S3KeyID = "k2"
+	if got != want {
+		t.Fatalf("set = %+v\nwant %+v", got, want)
 	}
 }
