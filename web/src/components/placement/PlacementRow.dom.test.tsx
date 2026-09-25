@@ -293,3 +293,32 @@ describe("PlacementRow", () => {
     expect(screen.queryByRole("toolbar")).toBeNull();
   });
 });
+
+describe("PlacementRow reached from an exception link", () => {
+  const scrolled = vi.fn();
+  beforeEach(() => {
+    fake.reset();
+    scrolled.mockClear();
+    // jsdom lays nothing out, so it has no scrollIntoView of its own.
+    Element.prototype.scrollIntoView = scrolled;
+  });
+  afterEach(() => {
+    cleanup();
+    window.history.replaceState(null, "", "/");
+    delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+  });
+
+  it("brings its card into view when the address names its item", async () => {
+    window.history.replaceState(null, "", "/containers?item=nginx");
+    renderRow(placementView());
+    await segment("Local");
+    expect(scrolled).toHaveBeenCalledTimes(1);
+  });
+
+  it("stays where it is when the address names another item", async () => {
+    window.history.replaceState(null, "", "/containers?item=plex");
+    renderRow(placementView());
+    await segment("Local");
+    expect(scrolled).not.toHaveBeenCalled();
+  });
+});

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import {
@@ -78,6 +78,14 @@ export function PlacementRow({
   const { confirm, confirmDialog } = useConfirm();
   const [direct, setDirect] = useState<SendToOption | null>(null);
   const [asking, setAsking] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  // An exception on the Domains card links to its item's card with ?item=<key>.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("item") === item.key) {
+      rowRef.current?.scrollIntoView({ block: "center" });
+    }
+  }, [item.key]);
 
   async function uploadsAgreed(change: PlacementChange): Promise<boolean> {
     let res: OkEnvelope & { added?: UploadEstimate[] };
@@ -133,7 +141,7 @@ export function PlacementRow({
   const warn = options ? noCopyNow(shown, options) : [];
 
   return (
-    <div className="flex flex-col gap-2">
+    <div ref={rowRef} className="flex flex-col gap-2">
       <div className="flex items-start gap-2 flex-wrap">
         <span className="flex items-center gap-1 pt-1.5 text-xs text-carbon-textSub shrink-0">
           {t("placement.title")}
