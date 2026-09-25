@@ -611,3 +611,74 @@ func TestAnUnchangedHomePlaceWritesNothing(t *testing.T) {
 		t.Fatalf("saving unchanged places wrote %d rows", n)
 	}
 }
+
+// restPlace is a rest-server in another house with its own credentials, caps
+// and append-only flag.
+func restPlace() store.Place {
+	return store.Place{Name: "Tower", Provider: "rest-server", Kind: string(places.KindREST), Base: "rest:http://tower:8000/bv",
+		Folders: places.DefaultFolders(), CredsRef: "set-tower", Immutable: true, LimitUpload: 500, GrowthBudgetGB: 20,
+		OffPremises: true, Enabled: true}
+}
+
+func TestARemoteHomePlaceKeepsTheDomainsPrimaryRow(t *testing.T) {
+	r, db := placesRepo(t)
+	tower := mustWritePlace(t, r, store.PlaceWrite{Place: restPlace(), HomeDomains: map[string]string{"containers": ""}})
+
+	row, found, err := r.PrimaryRemoteTarget("containers")
+	if err != nil || !found {
+		t.Fatalf("PrimaryRemoteTarget = %v, %v, want a row", found, err)
+	}
+	if row.Repo != "rest:http://tower:8000/bv/container" || row.PlaceID != tower.ID || row.PlaceDomain != "containers" ||
+		!row.Enabled || !row.Immutable || row.LimitUpload != 500 || row.GrowthBudgetGB != 20 || row.CredsRef != "set-tower" {
+		t.Fatalf("primary row = %+v, want the place's address and safety settings", row)
+	}
+	if s := storedSettings(t, r); s.ContainersPath != row.Repo {
+		t.Fatalf("containers path = %q, want %q", s.ContainersPath, row.Repo)
+	}
+	changes := totalChanges(t, db)
+	mustWritePlace(t, r, store.PlaceWrite{Place: tower, HomeDomains: map[string]string{"containers": ""}})
+	if n := totalChanges(t, db) - changes; n != 0 {
+		t.Fatalf("saving an unchanged home place wrote %d rows", n)
+	}
+	checkPlacedAddresses(t, r)
+}
+
+func TestAnExistingPrimaryRowMovesOntoTheNewHomePlace(t *testing.T) {
+	r, _ := placesRepo(t)
+	old, err := r.UpsertPrimaryRemoteTarget("vms", store.OffsiteTarget{Repo: "rest:http://old:8000/vms", CredsRef: "set-old", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	tower := mustWritePlace(t, r, store.PlaceWrite{Place: restPlace(), HomeDomains: map[string]string{"vms": ""}})
+
+	row, _, err := r.PrimaryRemoteTarget("vms")
+	if err != nil || row.ID != old.ID || row.PlaceID != tower.ID || row.Repo != "rest:http://tower:8000/bv/vms" || row.CredsRef != "set-tower" {
+		t.Fatalf("primary row = %+v, %v, want row %s moved onto %s", row, err, old.ID, tower.Name)
+	}
+	checkPlacedAddresses(t, r)
+}
+
+func TestALocalHomePlaceSwitchesThePrimaryRowOff(t *testing.T) {
+	r, _ := placesRepo(t)
+	tower := mustWritePlace(t, r, store.PlaceWrite{Place: restPlace(), HomeDomains: map[string]string{"containers": ""}})
+	first, found, err := r.PrimaryRemoteTarget("containers")
+	if err != nil || !found || !first.Enabled {
+		t.Fatalf("primary row under a remote home = %+v, %v, %v, want one that is on", first, found, err)
+	}
+
+	disk := mustWritePlace(t, r, store.PlaceWrite{Place: diskPlace(), HomeDomains: map[string]string{"containers": ""}})
+	off, _, err := r.PrimaryRemoteTarget("containers")
+	if err != nil || off.ID != first.ID || off.Enabled || off.PlaceID != "" {
+		t.Fatalf("primary row under a local home = %+v, %v, want row %s off and at no place", off, err, first.ID)
+	}
+	if s := storedSettings(t, r); s.ContainersPath != addressAt(t, disk, "containers", "") {
+		t.Fatalf("containers path = %q, want the local place's", s.ContainersPath)
+	}
+
+	mustWritePlace(t, r, store.PlaceWrite{Place: tower, HomeDomains: map[string]string{"containers": ""}})
+	back, _, err := r.PrimaryRemoteTarget("containers")
+	if err != nil || back.ID != first.ID || !back.Enabled || back.PlaceID != tower.ID {
+		t.Fatalf("primary row back at a remote home = %+v, %v, want row %s on at %s", back, err, first.ID, tower.Name)
+	}
+	checkPlacedAddresses(t, r)
+}

@@ -856,20 +856,18 @@ func (r *Repo) DeleteOffsiteTargetIfUnused(id string) (TargetUse, error) {
 	return use, nil
 }
 
-// PrimaryRemoteTarget returns the domain's "primary" row (issue #152: the
-// remote-primary safety settings — bandwidth limits, append-only, growth
-// budget — for when Settings.<Domain>Path is itself a restic remote), if one
-// has been saved. The bool is false (with a zero OffsiteTarget) when the
-// domain has never had its remote-primary safety settings configured — that is
-// the common case (a local primary, or a remote primary nobody has opened the
-// safety dialog for yet), not an error. At most one such row exists per
-// domain (UpsertPrimaryRemoteTarget enforces it); this returns the first if
-// more than one somehow exists (defensive — should be unreachable).
+// PrimaryRemoteTarget returns the domain's primary row, which holds the
+// bandwidth limits, append-only flag and growth budget of a domain path that
+// is itself a restic remote. The bool is false when the domain has none, the
+// usual case for a local path.
 func (r *Repo) PrimaryRemoteTarget(domain string) (OffsiteTarget, bool, error) {
-	row := r.db.QueryRow(`
+	return primaryRowQ(r.db, domain)
+}
+
+func primaryRowQ(q queryer, domain string) (OffsiteTarget, bool, error) {
+	t, err := scanOffsiteTarget(q.QueryRow(`
 		SELECT `+offsiteTargetCols+`
-		FROM offsite_targets WHERE domain = ? AND role = ? ORDER BY created_at LIMIT 1`, domain, RolePrimary)
-	t, err := scanOffsiteTarget(row)
+		FROM offsite_targets WHERE domain = ? AND role = ? ORDER BY created_at LIMIT 1`, domain, RolePrimary))
 	if errors.Is(err, sql.ErrNoRows) {
 		return OffsiteTarget{}, false, nil
 	}
