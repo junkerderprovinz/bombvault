@@ -105,7 +105,7 @@ describe("AddPlaceDialog", () => {
     expect(within(dialog()).getByText(en["places.catalogLoading"])).toBeTruthy();
     expect(within(dialog()).queryByRole("listbox")).toBeNull();
     await act(async () => answer({ ok: false, error: "database is locked" }));
-    expect(within(dialog()).getByText(en["places.catalogFailed"])).toBeTruthy();
+    expect(within(dialog()).getByRole("alert").textContent).toBe(en["places.catalogFailed"]);
     expect(within(dialog()).queryByRole("listbox")).toBeNull();
     expect(screen.queryByText("database is locked")).toBeNull();
   });
