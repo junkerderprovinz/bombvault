@@ -257,6 +257,16 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errHomeUnreadable:          "home-unreadable",
 		errDomainBusy:              "domain-busy",
 		errSnapshotMissing:         "snapshot-missing",
+
+		errPlaceLocationEstablished:     "place-location-established",
+		store.ErrPlaceInUse:             "place-in-use",
+		store.ErrPlaceFolderMissing:     "place-in-use",
+		store.ErrPlaceNameTaken:         "place-name-taken",
+		errPlaceHomeDomain:              "place-home-domain",
+		errPlaceIsRepository:            "place-is-repository",
+		store.ErrPlaceDomainUnavailable: "place-domain-unavailable",
+		errPlaceAddressTaken:            "place-address-taken",
+		errPlaceOff:                     "place-off",
 	}
 	if len(placementCodes) != len(want) {
 		t.Fatalf("placementCodes has %d rows, want %d: a sentinel is missing its row or its test", len(placementCodes), len(want))
