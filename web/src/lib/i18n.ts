@@ -2461,6 +2461,8 @@ export const en = {
   "storageDomains.noCopyPlace": "No other place offers this domain.",
   "storageDomains.copiesOffAsk": "{place} gets no new copies of {domain}. The copies already there stay and are trimmed by the place's own rule.",
   "storageDomains.copiesOffOwnChoice": "Items with a choice of their own keep copying there.",
+  "storageDomains.exceptions": "Exceptions",
+  "storageDomains.exceptionsNone": "none",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4601,6 +4603,8 @@ export const de: Translations = {
   "storageDomains.noCopyPlace": "Kein anderer Ort bietet diese Domäne an.",
   "storageDomains.copiesOffAsk": "{place} bekommt keine neuen Kopien von {domain}. Die Kopien dort bleiben und werden nach der Regel des Ortes gekürzt.",
   "storageDomains.copiesOffOwnChoice": "Einträge mit eigener Wahl kopieren weiter dorthin.",
+  "storageDomains.exceptions": "Ausnahmen",
+  "storageDomains.exceptionsNone": "keine",
 };
 
 // ---------------------------------------------------------------------------

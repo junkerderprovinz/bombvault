@@ -1,4 +1,7 @@
 import { useState, type CSSProperties } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "../Button";
+import { IconEye } from "../glyphs";
 import { PlaceMark } from "../placeMarks";
 import { cadenceLabel } from "../ScheduleBadge";
 import type { SelectOption } from "../SelectField";
@@ -78,6 +81,7 @@ export function DomainRowView({
   const [pendingChips, setPendingChips] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
   const [shake, setShake] = useState({ home: 0, chips: 0 });
+  const [showExceptions, setShowExceptions] = useState(false);
   const domain = domainName(t, row.domain);
   const placeName = (id: string) => places.find((p) => p.id === id)?.name ?? id;
 
@@ -275,6 +279,32 @@ export function DomainRowView({
               </div>
             )}
           </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-carbon-textSub">{t("storageDomains.exceptions")}</span>
+            {row.exceptions.length === 0 ? (
+              <span className="text-carbon-textSub">{t("storageDomains.exceptionsNone")}</span>
+            ) : (
+              <Button
+                label={t("places.row.items", row.exceptions.length)}
+                labelKey="places.row.items"
+                glyph={<IconEye />}
+                keepLabel
+                tone="neutral"
+                onClick={() => setShowExceptions((open) => !open)}
+              />
+            )}
+          </div>
+          {showExceptions && row.exceptions.length > 0 && (
+            <ul className="flex flex-col gap-1 ps-2">
+              {row.exceptions.map((item) => (
+                <li key={item.identity}>
+                  <Link to={item.link} className="text-sm text-carbon-text hover:underline">
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       )}
     </section>
