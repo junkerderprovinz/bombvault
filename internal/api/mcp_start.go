@@ -247,7 +247,7 @@ func (h *Handler) toolStartBackupEverything(ctx context.Context, req *mcp.CallTo
 		h.logMCPCall(ctx, tool, "invalid_argument")
 		return mcpToolError("invalid_argument", err.Error(), nil), nil
 	}
-	settings, refusal := h.mcpStartAllowed(ctx, tool, caller, "")
+	settings, refusal := h.mcpMayStart(ctx, tool, caller)
 	if refusal != nil {
 		return refusal, nil
 	}
@@ -429,25 +429,35 @@ func mcpEnabledDomains(s store.Settings) []string {
 	return out
 }
 
-// mcpStartAllowed is what every start tool settles before it looks at an item:
-// whether the key may start anything and whether the domain is switched on at
-// all. An empty domain skips that last check, which is what the Backup
-// Everything pass needs.
-func (h *Handler) mcpStartAllowed(ctx context.Context, tool string, caller mcpCaller, domain string) (store.Settings, *mcp.CallToolResult) {
+// mcpMayStart is what every start tool settles before it looks at an item:
+// whether the key may start anything. It hands back the settings the start
+// works from.
+func (h *Handler) mcpMayStart(ctx context.Context, tool string, caller mcpCaller) (store.Settings, *mcp.CallToolResult) {
 	if !caller.CanStartBackups {
 		h.logMCPCall(ctx, tool, "not_permitted")
 		return store.Settings{}, mcpToolError("not_permitted", mcpReadOnlyKeyMessage, nil)
-	}
-	if domain != "" && !slices.Contains(mcpDomains, domain) {
-		h.logMCPCall(ctx, tool, "invalid_argument")
-		return store.Settings{}, mcpToolError("invalid_argument", "domain must be one of "+strings.Join(mcpDomains, ", "), nil)
 	}
 	settings, err := h.store.GetSettings()
 	if err != nil {
 		h.logMCPCall(ctx, tool, "unavailable")
 		return store.Settings{}, mcpToolError("unavailable", "settings could not be read", nil)
 	}
-	if domain != "" && !mcpDomainEnabled(settings, domain) {
+	return settings, nil
+}
+
+// mcpStartAllowed is mcpMayStart for a start within one domain, which has to
+// be one BombVault knows and switched on. A read-only key hears that it may not
+// start rather than what is wrong with its arguments.
+func (h *Handler) mcpStartAllowed(ctx context.Context, tool string, caller mcpCaller, domain string) (store.Settings, *mcp.CallToolResult) {
+	if caller.CanStartBackups && !slices.Contains(mcpDomains, domain) {
+		h.logMCPCall(ctx, tool, "invalid_argument")
+		return store.Settings{}, mcpToolError("invalid_argument", "domain must be one of "+strings.Join(mcpDomains, ", "), nil)
+	}
+	settings, refusal := h.mcpMayStart(ctx, tool, caller)
+	if refusal != nil {
+		return settings, refusal
+	}
+	if !mcpDomainEnabled(settings, domain) {
 		h.logMCPCall(ctx, tool, "domain_off")
 		return settings, mcpToolError("domain_off", "the "+domain+" domain is switched off in Settings", nil)
 	}

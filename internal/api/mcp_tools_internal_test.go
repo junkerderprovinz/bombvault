@@ -180,6 +180,33 @@ func TestMCPStartSwitchesRefuseAnUnknownDomain(t *testing.T) {
 	}
 }
 
+func TestMCPStartToolsRefuseAMissingOrUnknownDomainAsInvalid(t *testing.T) {
+	h, repo, _ := newMCPStartHandler(t)
+	ctx := mcpStartCaller("0b7e", true)
+
+	for _, c := range []struct {
+		tool string
+		run  func(context.Context, *mcp.CallToolRequest) (*mcp.CallToolResult, error)
+	}{
+		{"start_backup", h.toolStartBackup},
+		{"start_domain_backup", h.toolStartDomainBackup},
+	} {
+		for _, args := range []string{`{}`, `{"domain":""}`, `{"domain":null}`, `{"domain":"everything"}`} {
+			res, _ := c.run(ctx, &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{Name: c.tool, Arguments: json.RawMessage(args)}})
+			if code := mcpErrorCode(t, res); code != "invalid_argument" {
+				t.Errorf("%s %s answers %q, want invalid_argument", c.tool, args, code)
+			}
+		}
+	}
+	runs, err := repo.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 0 {
+		t.Fatalf("a call without a known domain started %d runs", len(runs))
+	}
+}
+
 // An item that is not there is counted and logged under the code the caller
 // got, so an alert on not_found sees a client probing names.
 func TestMCPItemLookupRecordsTheCodeItAnswers(t *testing.T) {
