@@ -321,3 +321,72 @@ func (h *Handler) placedImport(exp settingsExport, prior []store.Place) (store.P
 	link("repository", repos, exp.NamedRepos)
 	return in, nil
 }
+
+// placeFileLocations lets the file's places decide every location they own: a
+// home domain's path, each placed row's repo and the off-site field that named
+// that row. The collision checks and the apply then see what WritePlace would
+// store. The file has passed validateExport, so every place id it names is in
+// it.
+func placeFileLocations(exp settingsExport) settingsExport {
+	if len(exp.Places) == 0 {
+		return exp
+	}
+	byID := make(map[string]store.Place, len(exp.Places))
+	for _, fp := range exp.Places {
+		p := fp.toStorePlace()
+		byID[p.ID] = p
+	}
+	for domain, id := range exp.StorageDomainPlaces {
+		p := byID[strings.TrimSpace(id)]
+		path, _ := viewDomainColumns(&exp.Settings, domain)
+		if loc, ok := places.Address(p.Base, p.Folders, domain, ""); ok && path != nil {
+			*path = loc
+		}
+	}
+	exp.OffsiteTargets = slices.Clone(exp.OffsiteTargets)
+	for i, tv := range exp.OffsiteTargets {
+		loc, ok := rowPlaceAddress(byID, tv)
+		if !ok || loc == strings.TrimSpace(tv.Repo) {
+			continue
+		}
+		if _, field := viewDomainColumns(&exp.Settings, tv.Domain); field != nil && *field == tv.Repo {
+			*field = loc
+		}
+		exp.OffsiteTargets[i].Repo = loc
+	}
+	exp.NamedRepos = slices.Clone(exp.NamedRepos)
+	for i, tv := range exp.NamedRepos {
+		if loc, ok := rowPlaceAddress(byID, tv); ok {
+			exp.NamedRepos[i].Repo = loc
+		}
+	}
+	return exp
+}
+
+// rowPlaceAddress is where a row's place puts it, and false for a row on no
+// place of the file.
+func rowPlaceAddress(byID map[string]store.Place, tv offsiteTargetView) (string, bool) {
+	p, ok := byID[strings.TrimSpace(tv.PlaceID)]
+	if !ok {
+		return "", false
+	}
+	return places.Address(p.Base, p.Folders, tv.PlaceDomain, tv.PlaceSuffix)
+}
+
+// viewDomainColumns points at a domain's path and off-site field in a
+// settings view, and at nothing for a name that is not a domain.
+func viewDomainColumns(v *settingsView, domain string) (path, offsite *string) {
+	switch domain {
+	case "containers":
+		return &v.ContainersPath, &v.ContainersOffsite
+	case "vms":
+		return &v.VMsPath, &v.VMsOffsite
+	case "flash":
+		return &v.FlashPath, &v.FlashOffsite
+	case "config":
+		return &v.ConfigPath, &v.ConfigOffsite
+	case "files":
+		return &v.FilesPath, &v.FilesOffsite
+	}
+	return nil, nil
+}

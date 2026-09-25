@@ -352,17 +352,14 @@ type importCredsPresence struct {
 }
 
 // handleImportSettings validates a settings-export file and, with ?apply=true,
-// writes it. POST /api/settings/import (body = the export JSON).
-//
-//   - apply=false / ?preview (the default): VALIDATE the file and return a summary
-//     of what WOULD change, writing nothing.
-//   - apply=true: validate, RE-ENCRYPT any credentials with THIS instance's APP_KEY
-//     and write the settings + off-site targets + credentials.
+// writes it. POST /api/settings/import (body = the export JSON). Without apply
+// it returns a summary of what an apply would change and writes nothing; with
+// it, credentials are re-encrypted with this instance's APP_KEY and the
+// settings, rows, credentials and storage places are written.
 //
 // It never touches backup repositories, snapshots or run history. A missing
-// credentials block leaves the existing off-site secrets untouched (they are not
-// wiped). An unsupported schemaVersion or a malformed file is rejected with a clear
-// error.
+// credentials block leaves the stored secrets alone. An unsupported
+// schemaVersion or a malformed file is refused with a clear error.
 func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 	exp, ok := decodeExport(w, r)
 	if !ok {
@@ -372,6 +369,7 @@ func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
+	exp = placeFileLocations(exp)
 	if msg := h.rejectImportCollisions(exp); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
