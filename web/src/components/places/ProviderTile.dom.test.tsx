@@ -101,6 +101,18 @@ describe("ProviderGrid", () => {
     expect(tiles().filter((o) => o.tabIndex === 0)).toEqual([tiles()[0]]);
   });
 
+  it("leaves a key with Alt, Ctrl or Meta to the browser", () => {
+    layOut();
+    grid();
+    tiles()[1]!.focus();
+    for (const modifier of ["altKey", "ctrlKey", "metaKey"]) {
+      for (const key of ["ArrowLeft", "Home"]) {
+        expect(fireEvent.keyDown(tiles()[1]!, { key, [modifier]: true }), `${modifier} ${key}`).toBe(true);
+        expect(document.activeElement).toBe(tiles()[1]);
+      }
+    }
+  });
+
   it("picks a tile on a press only, and marks the one it came back from", () => {
     const onPick = grid();
     fireEvent.keyDown(tiles()[0]!, { key: "ArrowRight" });
