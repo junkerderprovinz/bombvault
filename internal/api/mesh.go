@@ -151,6 +151,17 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		writeJSON(w, http.StatusOK, failEnvelope(fmt.Errorf("decrypt offer credential: %w", err)))
 		return
 	}
+	// Sort order 0 is the primary, which a settings save rewrites or deletes,
+	// so the new target goes after every existing one.
+	existing, err := h.store.OffsiteTargetsForDomain(in.Domain)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	sortOrder := 1
+	for _, et := range existing {
+		sortOrder = max(sortOrder, et.SortOrder+1)
+	}
 
 	label := offer.From
 	if label == "" {
@@ -176,11 +187,12 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 	}
 
 	target := store.OffsiteTarget{
-		Domain:   in.Domain,
-		Name:     "mesh: " + label,
-		Repo:     offer.Repo,
-		CredsRef: setID,
-		Enabled:  true,
+		Domain:    in.Domain,
+		Name:      "mesh: " + label,
+		Repo:      offer.Repo,
+		CredsRef:  setID,
+		Enabled:   true,
+		SortOrder: sortOrder,
 	}
 	stored, err := h.store.UpsertOffsiteTarget(target)
 	if err != nil {

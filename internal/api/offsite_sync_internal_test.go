@@ -119,3 +119,58 @@ func TestSyncPrimaryOffsiteTargetDeletesWhenCleared(t *testing.T) {
 		t.Fatalf("primary flash target should be deleted, got %d", len(targets))
 	}
 }
+
+// An additional target the user added in the targets section is not the
+// primary, so saving settings with an empty off-site repo leaves it alone.
+func TestSyncPrimaryOffsiteTargetKeepsAdditionalTargetWhenRepoIsEmpty(t *testing.T) {
+	s, st := newSyncTestService(t)
+
+	extra, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "Second copy", Repo: "s3:containers-extra", Enabled: true, SortOrder: 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.syncPrimaryOffsiteTarget("containers", settings); err != nil {
+		t.Fatal(err)
+	}
+	targets := s.offsiteTargetsFor("containers")
+	if len(targets) != 1 || targets[0].ID != extra.ID || targets[0].Repo != "s3:containers-extra" {
+		t.Fatalf("additional target should survive a settings save, got %+v", targets)
+	}
+}
+
+// With only an additional target in place, setting the off-site repo adds a
+// primary next to it instead of pointing the additional target elsewhere.
+func TestSyncPrimaryOffsiteTargetAddsPrimaryBesideAdditionalTarget(t *testing.T) {
+	s, st := newSyncTestService(t)
+
+	extra, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "Second copy", Repo: "s3:containers-extra", Enabled: true, SortOrder: 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersOffsite = "s3:containers"
+	if err := s.syncPrimaryOffsiteTarget("containers", settings); err != nil {
+		t.Fatal(err)
+	}
+	targets := s.offsiteTargetsFor("containers")
+	if len(targets) != 2 {
+		t.Fatalf("want primary and additional target, got %+v", targets)
+	}
+	if targets[0].SortOrder != 0 || targets[0].Repo != "s3:containers" {
+		t.Fatalf("primary = %+v, want sort order 0 on s3:containers", targets[0])
+	}
+	if targets[1].ID != extra.ID || targets[1].Repo != "s3:containers-extra" {
+		t.Fatalf("additional target changed: %+v", targets[1])
+	}
+}

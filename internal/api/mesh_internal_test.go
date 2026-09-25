@@ -161,6 +161,47 @@ func TestAcceptMeshOffer(t *testing.T) {
 	}
 }
 
+// A target taken over from a mesh offer is an additional target, so a settings
+// save on a domain without an off-site repo of its own keeps it.
+func TestAcceptedMeshTargetSurvivesSettingsSave(t *testing.T) {
+	appKey := strings.Repeat("d", 64)
+	h, st := meshHandlerFixture(t, appKey)
+
+	enc, err := secret.Encrypt(appKey, []byte("peer-password"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	offer, err := st.CreateMeshOffer(store.MeshOffer{
+		From: "tower-a", SuggestedDomain: "containers",
+		Repo:     "rest:http://192.168.1.50:8000/bombvault-containers/containers",
+		RESTUser: "bombvault-containers", RESTPasswordEnc: enc,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := httptest.NewRecorder()
+	r := postJSONReq(t, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{"domain": "containers"})
+	r.SetPathValue("id", offer.ID)
+	h.handleAcceptMeshOffer(w, r)
+	if resp := decodeResp(t, w); resp["ok"] != true {
+		t.Fatalf("accept must succeed: %v", resp)
+	}
+
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	h.svc.syncAllPrimaryOffsiteTargets(settings)
+
+	targets, err := st.OffsiteTargetsForDomain("containers")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(targets) != 1 || targets[0].Repo != offer.Repo || targets[0].SortOrder == 0 {
+		t.Fatalf("mesh target should survive a settings save outside sort order 0, got %+v", targets)
+	}
+}
+
 func TestDeclineMeshOffer(t *testing.T) {
 	h, st := meshHandlerFixture(t, strings.Repeat("c", 64))
 	offer, err := st.CreateMeshOffer(store.MeshOffer{From: "tower-a", Repo: "rest:http://x:8000/y"})

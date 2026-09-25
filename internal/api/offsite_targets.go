@@ -19,14 +19,15 @@ func validOffsiteDomain(domain string) bool {
 	return false
 }
 
-// syncPrimaryOffsiteTarget brings a domain's primary off-site target, its
-// first row, in line with the off-site columns in settings. Replication reads
-// the target rows, while the Settings setters write those columns.
+// syncPrimaryOffsiteTarget brings a domain's primary off-site target, the row
+// with sort order 0, in line with the off-site columns in settings.
+// Replication reads the target rows, while the Settings setters write those
+// columns.
 //
-// An existing primary keeps its id, creation time, sort order and credential
-// set. Without one, a new row is created. When the domain's off-site repo is
-// cleared, the primary is deleted so offsiteRepoFor cannot return a stale
-// repo.
+// An existing primary keeps its id, creation time and credential set. Without
+// one, a new row is created. When the domain's off-site repo is cleared, the
+// primary is deleted so offsiteRepoFor cannot return a stale repo. Additional
+// targets sort after it and are never touched here.
 //
 // The storage class comes from the cloud credentials. If they cannot be
 // decoded it stays empty, which offsiteModeForTarget treats as the global
@@ -40,8 +41,11 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 		return err
 	}
 	var primary *store.OffsiteTarget
-	if len(targets) > 0 {
-		primary = &targets[0]
+	for i := range targets {
+		if targets[i].SortOrder == 0 {
+			primary = &targets[i]
+			break
+		}
 	}
 
 	repo := offsiteRepoFromSettings(domain, settings)
@@ -59,7 +63,6 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 	if primary != nil {
 		t.ID = primary.ID
 		t.CreatedAt = primary.CreatedAt
-		t.SortOrder = primary.SortOrder
 		t.CredsRef = primary.CredsRef
 	}
 	_, err = s.store.UpsertOffsiteTarget(t)
