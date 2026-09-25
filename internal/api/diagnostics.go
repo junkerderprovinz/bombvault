@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -405,11 +406,26 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 
 	// log.txt: the recent output, scrubbed like the run errors and capped so
 	// the bundle stays mailable.
-	logText := scrubSecrets(logring.Default.String())
+	logText := scrubLogLines(logring.Default.String())
 	if len(logText) > diagLogCap {
 		logText = "[…older output dropped…]\n" + logText[len(logText)-diagLogCap:]
 	}
 	files = append(files, diagFile{Name: "log.txt", Data: []byte(logText)})
 
 	return files, nil
+}
+
+// logDatePrefix is the date the standard logger starts every line with. Its
+// slashes read as a path to the scrubber.
+var logDatePrefix = regexp.MustCompile(`^\d{4}/\d{2}/\d{2} `)
+
+// scrubLogLines scrubs the log line by line and leaves each line's date as it
+// is, so lines of different days can still be told apart.
+func scrubLogLines(text string) string {
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		date := logDatePrefix.FindString(line)
+		lines[i] = date + scrubSecrets(line[len(date):])
+	}
+	return strings.Join(lines, "\n")
 }

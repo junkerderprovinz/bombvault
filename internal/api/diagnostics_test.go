@@ -172,6 +172,39 @@ func TestDiagnosticsScrubsTheLog(t *testing.T) {
 	}
 }
 
+// Every line the standard logger writes starts with a date whose slashes look
+// like a path. The scrubber must leave it alone, or lines of different days can
+// no longer be told apart, while a path later in the line is still hidden.
+func TestDiagnosticsLogKeepsTheDateOfEachLine(t *testing.T) {
+	h, _, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	cookie := loginCookie(t, h, "correct horse battery staple")
+
+	prev, prevFlags := log.Writer(), log.Flags()
+	log.SetOutput(logring.Default.Tee(io.Discard))
+	log.SetFlags(log.LstdFlags)
+	t.Cleanup(func() { log.SetOutput(prev); log.SetFlags(prevFlags) })
+
+	log.Print("api: dated line reading /mnt/user/secret/share")
+	today := time.Now().Format("2006/01/02")
+
+	w := getRaw(t, h, "/api/diagnostics", cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body = %s", w.Code, w.Body.String())
+	}
+	var line string
+	for _, l := range strings.Split(zipMembers(t, w.Body.Bytes())["log.txt"], "\n") {
+		if strings.Contains(l, "dated line reading") {
+			line = l
+		}
+	}
+	if !strings.HasPrefix(line, today+" ") {
+		t.Fatalf("the line lost its date: %q", line)
+	}
+	if strings.Contains(line, "/mnt/user/secret") {
+		t.Fatalf("the path after the date was not scrubbed: %q", line)
+	}
+}
+
 // TestDiagnosticsCarriesDBDumpState: a dump that keeps failing is what a
 // support thread opens with, so the bundle names every recognised database and
 // how its last dump went. The reason detail stays out: it is the dump tool's
