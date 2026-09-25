@@ -18,6 +18,8 @@ func TestJoinSpellsAddressesTheWayTheirBackendReadsThem(t *testing.T) {
 		{"rclone:r:", "config", "rclone:r:config"},
 		{"rclone:r:bucket", "config", "rclone:r:bucket/config"},
 		{"rclone:r:", "", "rclone:r:"},
+		{"/mnt/x/", "vms", "/mnt/x/vms"},
+		{"azure:c:/", "vms", "azure:c:/vms"},
 	} {
 		if got := places.Join(c.base, c.folder); got != c.want {
 			t.Errorf("Join(%q, %q) = %q, want %q", c.base, c.folder, got, c.want)
