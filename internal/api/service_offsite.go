@@ -117,6 +117,17 @@ func (s *Service) offsiteRepoFor(domain string, settings store.Settings) string 
 	return offsiteRepoFromSettings(domain, settings)
 }
 
+// offSiteConfigured reports whether a domain replicates to a site of its own:
+// an enabled target that offSiteTargets keeps or, while the domain has no
+// enabled target row, the location in its off-site settings field.
+func (s *Service) offSiteConfigured(domain string, settings store.Settings, sites store.PlaceSites) bool {
+	targets := s.offsiteTargetsFor(domain)
+	if len(targets) == 0 {
+		return offsiteRepoFromSettings(domain, settings) != ""
+	}
+	return len(offSiteTargets(targets, sites)) > 0
+}
+
 // offsiteRepoFromSettings reads the legacy single-repo off-site location straight
 // off the Settings columns (the fallback source for offsiteRepoFor).
 func offsiteRepoFromSettings(domain string, settings store.Settings) string {

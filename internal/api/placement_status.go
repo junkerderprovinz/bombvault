@@ -162,10 +162,22 @@ func homeOffPremises(kind homeKind, domain, repoID string, named map[string]stor
 	return false
 }
 
+// offSiteTargets keeps the targets that are a site of their own: those at a
+// place off the premises, and every target without a place.
+func offSiteTargets(targets []store.OffsiteTarget, sites store.PlaceSites) []store.OffsiteTarget {
+	out := []store.OffsiteTarget{}
+	for _, t := range targets {
+		if sites.Row(t.ID, true) {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
 // placementCoverage answers what placement adds to a domain's status: whether
-// anything is copied to an enabled target, and whether every item already lives
-// off the premises. Without copy rules the first answer is yes, as it was before
-// there were any.
+// anything is copied to an enabled target that is a site of its own, and
+// whether every item already lives off the premises. Without copy rules the
+// first answer is yes, as it was before there were any.
 func (s *Service) placementCoverage(settings store.Settings, domain string, sites store.PlaceSites) (copied, offPremises bool, err error) {
 	p, err := s.readPlacement(settings, domain)
 	if err != nil {
@@ -184,7 +196,7 @@ func (s *Service) placementCoverage(settings store.Settings, domain string, site
 	for identity, state := range homes {
 		repoID, _ := p.effectiveHome(state)
 		home := s.homeKindOf(settings, domain, repoID, named)
-		if home.copySource() && len(p.effectiveTargets(identity)) > 0 {
+		if home.copySource() && len(offSiteTargets(p.effectiveTargets(identity), sites)) > 0 {
 			copied = true
 		}
 		if !homeOffPremises(home, domain, repoID, named, sites) {
@@ -202,7 +214,7 @@ func (s *Service) placementCoverage(settings store.Settings, domain string, site
 		if _, isItem := homes[c.Identity]; isItem {
 			continue
 		}
-		if slices.ContainsFunc(p.effectiveTargets(c.Identity), func(t store.OffsiteTarget) bool { return t.ID == c.TargetID }) {
+		if slices.ContainsFunc(offSiteTargets(p.effectiveTargets(c.Identity), sites), func(t store.OffsiteTarget) bool { return t.ID == c.TargetID }) {
 			return true, offPremises, nil
 		}
 	}

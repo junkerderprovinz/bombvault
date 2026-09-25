@@ -526,7 +526,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		// Ransomware-protection scorecard facts. All reads are best-effort: a store
 		// error leaves the relevant fact at its zero value (a missing check), which
 		// the aggregate then treats conservatively rather than failing the query.
-		offsiteConfigured := s.offsiteRepoFor(d.name, settings) != ""
+		offsiteConfigured := s.offSiteConfigured(d.name, settings, sites)
 		var offPremisesCovered bool
 		if validPlacementDomain(d.name) {
 			copied, covered, cErr := s.placementCoverage(settings, d.name, sites)
