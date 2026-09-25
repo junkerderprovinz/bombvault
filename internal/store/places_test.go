@@ -3,8 +3,10 @@ package store_test
 import (
 	"database/sql"
 	"errors"
+	"reflect"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -177,5 +179,143 @@ func TestARowLeavesItsPlaceWithItsAddressAndSettings(t *testing.T) {
 	err = runTx(t, db, func(tx *sql.Tx) error { return store.AttachRowTx(tx, "nope", "p-b2", "containers", "") })
 	if !errors.Is(err, sql.ErrNoRows) {
 		t.Fatalf("attaching an unknown row = %v, want sql.ErrNoRows", err)
+	}
+}
+
+func mustWritePlace(t *testing.T, r *store.Repo, w store.PlaceWrite) store.Place {
+	t.Helper()
+	p, err := r.WritePlace(w)
+	if err != nil {
+		t.Fatalf("WritePlace %s: %v", w.Place.Name, err)
+	}
+	return p
+}
+
+func storedSettings(t *testing.T, r *store.Repo) store.Settings {
+	t.Helper()
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s
+}
+
+// diskPlace is a folder on this server offering every domain in its default folder.
+func diskPlace() store.Place {
+	return store.Place{Name: "Unraid", Provider: "unraid-folder", Kind: string(places.KindLocal), Base: "user/bombvault",
+		Folders: places.DefaultFolders(), Enabled: true}
+}
+
+// bucketPlace is an S3 bucket off the premises offering every domain in its default folder.
+func bucketPlace() store.Place {
+	return store.Place{Name: "B2", Provider: "b2", Kind: string(places.KindS3), Base: "s3:https://s3.example.com/bucket",
+		Folders: places.DefaultFolders(), CredsRef: "set-b2", StorageClass: "STANDARD", RetentionKeepDaily: 30,
+		LimitUpload: 1000, GrowthBudgetGB: 50, OffPremises: true, Enabled: true}
+}
+
+func TestANewPlaceReadsBackAsWritten(t *testing.T) {
+	r, _ := placesRepo(t)
+	p := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	if p.ID == "" || p.CreatedAt == 0 || p.UpdatedAt != p.CreatedAt {
+		t.Fatalf("new place = %+v, want an id and both timestamps", p)
+	}
+	got, err := r.GetPlace(p.ID)
+	if err != nil || !reflect.DeepEqual(got, p) {
+		t.Fatalf("GetPlace = %+v, %v, want %+v", got, err, p)
+	}
+	list, err := r.ListPlaces()
+	if err != nil || len(list) != 1 || !reflect.DeepEqual(list[0], p) {
+		t.Fatalf("ListPlaces = %+v, %v", list, err)
+	}
+	if _, err := r.GetPlace("nope"); !errors.Is(err, store.ErrPlaceNotFound) {
+		t.Fatalf("GetPlace(nope) = %v, want ErrPlaceNotFound", err)
+	}
+}
+
+func TestNewPlacesQueueBehindTheOthers(t *testing.T) {
+	r, _ := placesRepo(t)
+	first := mustWritePlace(t, r, store.PlaceWrite{Place: diskPlace()})
+	second := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	list, err := r.ListPlaces()
+	if err != nil || len(list) != 2 || list[0].ID != first.ID || list[1].ID != second.ID || second.SortOrder <= first.SortOrder {
+		t.Fatalf("ListPlaces = %+v, %v, want %s before %s", list, err, first.Name, second.Name)
+	}
+}
+
+func TestAPlaceNeedsAUniqueNameAndABase(t *testing.T) {
+	r, _ := placesRepo(t)
+	first := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	second := diskPlace()
+	second.Name = first.Name
+	if _, err := r.WritePlace(store.PlaceWrite{Place: second}); !errors.Is(err, store.ErrPlaceNameTaken) {
+		t.Fatalf("a second place named %q = %v, want ErrPlaceNameTaken", first.Name, err)
+	}
+	if _, err := r.WritePlace(store.PlaceWrite{Place: first}); err != nil {
+		t.Fatalf("saving a place under its own name: %v", err)
+	}
+	for _, bad := range []store.Place{{Name: " ", Base: "backups"}, {Name: "No base", Base: ""}} {
+		if _, err := r.WritePlace(store.PlaceWrite{Place: bad}); err == nil {
+			t.Errorf("WritePlace(%+v) wrote a place without a name or base", bad)
+		}
+	}
+}
+
+func TestSavingAnUnchangedPlaceKeepsItsUpdateTime(t *testing.T) {
+	r, db := placesRepo(t)
+	p := mustWritePlace(t, r, store.PlaceWrite{Place: diskPlace()})
+	if _, err := db.Exec(`UPDATE storage_places SET updated_at = 1 WHERE id = ?`, p.ID); err != nil {
+		t.Fatal(err)
+	}
+	p.UpdatedAt = 1
+	if same := mustWritePlace(t, r, store.PlaceWrite{Place: p}); same.UpdatedAt != 1 {
+		t.Fatalf("an unchanged save moved updated_at to %d", same.UpdatedAt)
+	}
+	p.Name = "Unraid 2"
+	if renamed := mustWritePlace(t, r, store.PlaceWrite{Place: p}); renamed.UpdatedAt <= 1 || renamed.Name != "Unraid 2" {
+		t.Fatalf("renamed = %+v, want the new name and a new updated_at", renamed)
+	}
+}
+
+func TestAPlaceWriteSetsHomePlacesAndTheCredentialBlob(t *testing.T) {
+	r, _ := placesRepo(t)
+	disk := mustWritePlace(t, r, store.PlaceWrite{Place: diskPlace(),
+		HomeDomains: map[string]string{"containers": "", "vms": ""}, CredSetsBlob: []byte("sealed")})
+	homes, err := r.DomainPlaces()
+	if err != nil || !reflect.DeepEqual(homes, map[string]string{"containers": disk.ID, "vms": disk.ID}) {
+		t.Fatalf("DomainPlaces = %v, %v, want containers and vms at %s", homes, err, disk.ID)
+	}
+	mustWritePlace(t, r, store.PlaceWrite{Place: disk})
+	if s := storedSettings(t, r); s.CloudCredSets != "sealed" {
+		t.Fatalf("cloud_cred_sets = %q, want the blob kept by a write without one", s.CloudCredSets)
+	}
+	other := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	if _, err := r.WritePlace(store.PlaceWrite{Place: disk, HomeDomains: map[string]string{"flash": other.ID}}); err == nil {
+		t.Fatal("a write of one place made another place a home place")
+	}
+	if homes, err := r.DomainPlaces(); err != nil || homes["flash"] != "" {
+		t.Fatalf("DomainPlaces = %v, %v, want no home for flash", homes, err)
+	}
+}
+
+func TestSetDomainPlaceTxTakesKnownDomainsAndPlacesOnly(t *testing.T) {
+	r, db := placesRepo(t)
+	disk := mustWritePlace(t, r, store.PlaceWrite{Place: diskPlace()})
+	set := func(domain, placeID string) error {
+		return runTx(t, db, func(tx *sql.Tx) error { return r.SetDomainPlaceTx(tx, domain, placeID) })
+	}
+	if err := set("containers", disk.ID); err != nil {
+		t.Fatal(err)
+	}
+	if err := set("music", disk.ID); err == nil {
+		t.Error("an unknown domain got a home place")
+	}
+	if err := set("vms", "nope"); !errors.Is(err, store.ErrPlaceNotFound) {
+		t.Errorf("an unknown place as home = %v, want ErrPlaceNotFound", err)
+	}
+	if err := set("containers", ""); err != nil {
+		t.Fatal(err)
+	}
+	if homes, err := r.DomainPlaces(); err != nil || len(homes) != 0 {
+		t.Fatalf("DomainPlaces = %v, %v, want none left", homes, err)
 	}
 }
