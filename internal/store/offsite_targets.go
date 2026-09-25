@@ -92,6 +92,12 @@ type OffsiteTarget struct {
 	// it a plain remote repository.
 	CompanionLost bool
 	OffPremises   bool // counts as a site of its own for sites and 3-2-1, never for replication
+	// PlaceID, PlaceDomain and PlaceSuffix put the row at a storage place:
+	// Repo is then the place's address for PlaceDomain plus PlaceSuffix, and
+	// WritePlace keeps it so. An empty PlaceDomain is the place's base.
+	PlaceID     string
+	PlaceDomain string
+	PlaceSuffix string
 }
 
 // remoteLocation is the SQL that asks of a location column what
@@ -143,6 +149,9 @@ const (
 // name, repo, schedule and enabled from t; its mirrored fields come from its
 // target instead. Saving a target mirrors its own fields, credentials aside,
 // into that companion in the same transaction.
+//
+// The place columns are written for a new row only. A stored row keeps its
+// place, which AttachRowTx and DetachRowTx set.
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
@@ -174,8 +183,8 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 			  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 			  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
-			  companion_of, companion_lost, off_premises)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			  companion_of, companion_lost, off_premises, place_id, place_domain, place_suffix)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT(id) DO UPDATE SET
 			  domain                 = excluded.domain,
 			  name                   = excluded.name,
@@ -198,6 +207,7 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 			t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder,
 			t.CompanionOf, boolInt(t.CompanionLost), boolInt(t.Role == RoleRepo && t.CompanionOf == "" && t.OffPremises),
+			t.PlaceID, t.PlaceDomain, t.PlaceSuffix,
 		)
 	}
 	if err != nil {
@@ -230,12 +240,14 @@ func (r *Repo) CreateOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	_, err = tx.Exec(`
 		INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 		  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
-		  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order)
-		SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(MAX(sort_order), 0) + 1
+		  limit_upload, limit_download, growth_budget_gb, enabled, created_at,
+		  place_id, place_domain, place_suffix, sort_order)
+		SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(MAX(sort_order), 0) + 1
 		  FROM offsite_targets WHERE role = ? AND domain = ?`,
 		t.ID, t.Domain, t.Name, t.Repo, RoleOffsite, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt,
+		t.PlaceID, t.PlaceDomain, t.PlaceSuffix,
 		RoleOffsite, t.Domain,
 	)
 	if err != nil {
@@ -352,7 +364,7 @@ func targetSlotsTx(tx *sql.Tx, domain string) ([]targetSlot, error) {
 const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 	retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
-	companion_of, companion_lost, off_premises`
+	companion_of, companion_lost, off_premises, place_id, place_domain, place_suffix`
 
 // ListOffsiteTargets returns all off-site REPLICATION DESTINATIONS (role =
 // 'offsite'; a domain's "primary" safety-config row, if any, is never among
@@ -909,7 +921,7 @@ func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 		&t.ID, &t.Domain, &t.Name, &t.Repo, &t.Role, &t.CredsRef, &t.StorageClass, &immutable, &t.Schedule,
 		&t.RetentionKeepLast, &t.RetentionKeepDaily, &t.RetentionKeepWeekly, &t.RetentionKeepMonthly,
 		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder,
-		&t.CompanionOf, &lost, &offPremises,
+		&t.CompanionOf, &lost, &offPremises, &t.PlaceID, &t.PlaceDomain, &t.PlaceSuffix,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("scanOffsiteTarget: %w", err)
