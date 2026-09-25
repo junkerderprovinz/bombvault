@@ -187,6 +187,14 @@ describe("AddPlaceDialog offers", () => {
     expect(within(dialog()).getByRole("button", { name: en["fleet.mesh.accept"] })).toBeTruthy();
   });
 
+  it("hands focus back to Accept when the accept question is declined", async () => {
+    await acceptOffer();
+    await act(async () => {
+      fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+    });
+    expect(document.activeElement).toBe(within(dialog()).getByRole("button", { name: en["fleet.mesh.accept"] }));
+  });
+
   it("closes once an offer is accepted, and says the place keeps its copies already", async () => {
     const changed = vi.fn();
     window.addEventListener(PLACES_CHANGED, changed);

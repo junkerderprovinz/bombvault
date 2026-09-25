@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { SelectField } from "./SelectField";
@@ -74,6 +75,7 @@ export function MeshOfferRow({
   const { ask, dialog } = useNewTargetQuestion();
   const [shakeAccept, setShakeAccept] = useState(0);
   const [shakeDecline, setShakeDecline] = useState(0);
+  const acceptRef = useRef<HTMLButtonElement>(null);
 
   async function handleAccept() {
     // The question does a round trip of its own before its dialog appears, and
@@ -88,7 +90,10 @@ export function MeshOfferRow({
       moved: false,
     });
     if (!answer.go) {
-      setBusy(false);
+      // Accept was locked while the question was open, so the question had
+      // nothing to hand focus back to.
+      flushSync(() => setBusy(false));
+      acceptRef.current?.focus();
       return;
     }
     try {
@@ -168,6 +173,7 @@ export function MeshOfferRow({
           />
           <Button
             key={`accept-${shakeAccept}`}
+            ref={acceptRef}
             label={t("fleet.mesh.accept")}
             labelKey="fleet.mesh.accept"
             tone="accent"
