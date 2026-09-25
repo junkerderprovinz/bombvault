@@ -248,6 +248,13 @@ func (e *anomalyEngine) MarkAllDirty() {
 	e.wake()
 }
 
+// settingsChanged puts everything up for the next pass and rebuilds the read
+// side at once, so the summary carries the saved switches before that pass.
+func (e *anomalyEngine) settingsChanged() {
+	e.MarkAllDirty()
+	e.refresh()
+}
+
 // MarkVolumeDirty puts the free-space rules up for the next pass, which is
 // what a fresh reading asks for.
 func (e *anomalyEngine) MarkVolumeDirty() {

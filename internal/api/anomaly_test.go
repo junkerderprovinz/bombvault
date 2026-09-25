@@ -332,6 +332,31 @@ func TestAnomalyRoutesRequireSession(t *testing.T) {
 	}
 }
 
+// The card and the sidebar read the summary right after a save. It has to say
+// what was saved, not what held until the next pass.
+func TestAnomalySummaryFollowsASettingsSaveAtOnce(t *testing.T) {
+	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	enabled := func() any {
+		t.Helper()
+		_, m := doJSON(t, h, http.MethodGet, "/api/anomalies/summary", "")
+		summary, _ := m["summary"].(map[string]any)
+		return summary["enabled"]
+	}
+
+	if _, m := doJSON(t, h, http.MethodPut, "/api/settings", `{"anomalySensitivity":"strict"}`); m["ok"] != true {
+		t.Fatalf("save: %v", m)
+	}
+	if got := enabled(); got != true {
+		t.Fatalf("enabled = %v after a save with detection on, want true", got)
+	}
+	if _, m := doJSON(t, h, http.MethodPut, "/api/settings", `{"anomalyEnabled":false}`); m["ok"] != true {
+		t.Fatalf("save: %v", m)
+	}
+	if got := enabled(); got != false {
+		t.Fatalf("enabled = %v right after switching detection off, want false", got)
+	}
+}
+
 // Every card on the Settings page posts the whole settings object, so a save
 // from a tab that predates detection must not switch it off on its way past.
 func TestSettingsSaveWithoutAnomalyKeysKeepsThem(t *testing.T) {

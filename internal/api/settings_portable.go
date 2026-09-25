@@ -796,7 +796,7 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 		return err
 	}
 	if anomalyChanged {
-		h.svc.anomalies.MarkAllDirty()
+		h.svc.anomalies.settingsChanged()
 	}
 
 	// Replace the off-site targets with the imported set (a clean, deterministic

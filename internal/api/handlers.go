@@ -3021,7 +3021,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// offsite_targets row so the replication path (which now reads those rows) sees
 	// the change. Settings stays authoritative for the fallback/rollback path.
 	if anomalyChanged {
-		h.svc.anomalies.MarkAllDirty()
+		h.svc.anomalies.settingsChanged()
 	}
 	h.svc.syncAllPrimaryOffsiteTargets(s)
 	// The CPU cap reaches restic through the process environment of the NEXT
