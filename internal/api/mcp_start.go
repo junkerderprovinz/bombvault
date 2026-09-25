@@ -396,7 +396,7 @@ func (h *Handler) toolCancelBackup(ctx context.Context, req *mcp.CallToolRequest
 		if h.svc.BackupCommitted(key, run.ID) {
 			out["cancelled"] = false
 			out["warning"] = "this backup already wrote its restore point and is starting its containers again, so a cancel cannot take it back"
-			h.logMCPRunCall(ctx, tool, "ok", run.ID)
+			h.logMCPRunCall(ctx, tool, "too_late", run.ID)
 			return mcpOK(out), nil
 		}
 		h.logMCPRunCall(ctx, tool, "not_running", run.ID)
@@ -404,11 +404,13 @@ func (h *Handler) toolCancelBackup(ctx context.Context, req *mcp.CallToolRequest
 	}
 	// restic writes the snapshot last, so a backup that was nearly done can
 	// finish before the cancellation reaches it.
+	outcome := "ok"
 	if after, aErr := h.store.GetRun(run.ID); aErr == nil && after.Status != "running" && after.Status != "cancelled" {
 		out["cancelled"] = false
 		out["warning"] = "this backup finished before the cancellation reached it"
+		outcome = "too_late"
 	}
-	h.logMCPRunCall(ctx, tool, "ok", run.ID)
+	h.logMCPRunCall(ctx, tool, outcome, run.ID)
 	return mcpOK(out), nil
 }
 

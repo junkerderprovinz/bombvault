@@ -670,6 +670,19 @@ func TestMCPCancelReportsARunThatEndedFirst(t *testing.T) {
 	if _, ok := out["warning"].(string); !ok {
 		t.Fatalf("the answer carries no warning: %v", out)
 	}
+	assertCancelLoggedTooLate(t, h)
+}
+
+// A cancel that stopped nothing must not show up as done in the key's log.
+func assertCancelLoggedTooLate(t *testing.T, h *Handler) {
+	t.Helper()
+	calls := h.mcp.toolCalls
+	if n := calls[mcpToolOutcome{tool: "cancel_backup", outcome: "ok"}]; n != 0 {
+		t.Fatalf("a cancel that stopped nothing was logged as ok %d times", n)
+	}
+	if n := calls[mcpToolOutcome{tool: "cancel_backup", outcome: "too_late"}]; n != 1 {
+		t.Fatalf("too_late logged %d times, want once", n)
+	}
 }
 
 // Once the restore point is written only the restart is left, and a cancel
@@ -707,6 +720,7 @@ func TestMCPCancelRefusesABackupThatWroteItsRestorePoint(t *testing.T) {
 	if w, _ := out["warning"].(string); !strings.Contains(w, "restore point") {
 		t.Fatalf("the warning does not say the restore point is written: %v", out)
 	}
+	assertCancelLoggedTooLate(t, h)
 }
 
 // seedBackup writes a finished backup of an item, which is the history the
