@@ -504,6 +504,12 @@ var pauseReasons = map[pauseReason]string{
 	reasonDiscover:     "Discover rebuilt its items in a database that never backed them up or replicated them, so the rules that kept items from being copied are gone",
 }
 
+// placementPausedMessage says why a domain's replication waits and where its
+// default is confirmed.
+func placementPausedMessage(domain string, why pauseReason) string {
+	return fmt.Sprintf("Nothing in %s is copied off site: %s. Confirm the default in the row of %s under Settings > Storage > Domains to resume.", domain, pauseReasons[why], domain)
+}
+
 // notifyPlacementPaused says that a domain's replication waits for its default
 // to be confirmed, and where. Same gate and fan-out as notifyReplicationFailed.
 func (s *Service) notifyPlacementPaused(ctx context.Context, domain string, why pauseReason) {
@@ -512,7 +518,7 @@ func (s *Service) notifyPlacementPaused(ctx context.Context, domain string, why 
 		return
 	}
 	subject := "Off-site replication paused for " + domain
-	msg := fmt.Sprintf("Nothing in %s is copied off site: %s. Confirm the placement default under Settings > Paths & Storage > Placement defaults to resume.", domain, pauseReasons[why])
+	msg := placementPausedMessage(domain, why)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + ": " + msg, OK: false})
 	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
