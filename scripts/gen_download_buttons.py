@@ -8,8 +8,8 @@ README.md.
 The rows are always the same three, in this order: the desktop apps, then the
 container, the source and the manual, then the phone apps and the browser
 extensions. What a repository does not ship is left out. Windows on ARM and the
-portable build are segments of the Windows button, so the desktop row keeps to
-the four places a row has and Linux stays in it.
+portable build are segments of the Windows button, and Linux on ARM one of the
+Linux button, so the desktop row keeps to the four places a row has.
 
 Height and corner radius are the Buy Me a Coffee button's (245.3 tall, rx 38.2),
 so both stand the same height at the same width. The width is 720 rather than
@@ -74,6 +74,7 @@ KINDS = {
     "macos":            (0, "apple", "#6e6e73", "#ffffff", "macOS", "Universal", "Download for macOS"),
     # Tux yellow, with dark ink for contrast.
     "linux":            (0, "linux", "#fcc624", "#1b1b1b", "Linux", "x64", "Download for Linux"),
+    "linux-arm":        (0, None, "#fcc624", "#1b1b1b", "Linux", "ARM64", "Download for Linux on ARM"),
     "linux-script":     (0, "linux", "#fcc624", "#1b1b1b", "Linux", "start script", "Download the Linux start script"),
     "docker":           (1, "docker", "#1d63ed", "#ffffff", "Docker", "Container", "Run it with Docker"),
     "compose":          (1, "docker", "#1d63ed", "#ffffff", "Docker", "compose file", "Download the docker-compose file"),
@@ -89,8 +90,8 @@ KINDS = {
     "chrome":           (2, "chrome", "#1a73e8", "#ffffff", "Chrome", "Edge, Brave", "Download the extension for Chrome, Edge, Brave and Opera"),
     "firefox":          (2, "firefox-browser", "#ff7139", "#1b1b1b", "Firefox", "Add-on", "Install the Firefox add-on"),
 }
-# Joined to the Windows button, in this order, rather than standing alone.
-SEGMENTS = ("windows-arm", "windows-portable")
+# Joined to the button they belong to, in this order, rather than standing alone.
+SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm",)}
 # A store listing that does not exist yet is drawn without a link.
 SOON = {
     "google-play": ("Google Play, soon", "On Google Play soon"),
@@ -207,7 +208,7 @@ GIVE_CLOSE = "<!-- /give-buttons -->"
 
 
 class Part:
-    """One image in a row: a whole button, or one piece of the Windows button."""
+    """One image in a row: a whole button, or one piece of a segmented one."""
 
     def __init__(self, kind, href, width, corners):
         self.kind, self.href, self.width, self.corners = kind, href, width, corners
@@ -219,7 +220,7 @@ class Part:
 
 def rows():
     """The configured buttons as rows of items, an item being the parts drawn
-    as one button: one part, or the Windows button and its segments."""
+    as one button: one part, or a button and its segments."""
     unknown = sorted(set(config.BUTTONS) - set(KINDS))
     if unknown:
         raise SystemExit("download_buttons.py names buttons this file cannot draw: %s" % ", ".join(unknown))
@@ -228,15 +229,18 @@ def rows():
             raise SystemExit("%s has no link" % kind)
         if href and "/%s/" % REPO not in href and not any(host in href for host in STORES):
             raise SystemExit("REPO is %r, but %s leads to %s" % (REPO, kind, href))
-    segments = [kind for kind in SEGMENTS if kind in config.BUTTONS]
-    if segments and "windows" not in config.BUTTONS:
-        raise SystemExit("%s needs the windows button to join" % segments[0])
+    joined = {s for group in SEGMENTS.values() for s in group}
+    for base, group in SEGMENTS.items():
+        present = [s for s in group if s in config.BUTTONS]
+        if present and base not in config.BUTTONS:
+            raise SystemExit("%s needs the %s button to join" % (present[0], base))
     out = [[], [], []]
     for kind, spec in KINDS.items():
-        if kind not in config.BUTTONS or kind in SEGMENTS:
+        if kind not in config.BUTTONS or kind in joined:
             continue
         href = config.BUTTONS[kind]
-        if kind == "windows" and segments:
+        segments = [s for s in SEGMENTS.get(kind, ()) if s in config.BUTTONS]
+        if segments:
             item = [Part(kind, href, W, "left")]
             item += [Part(s, config.BUTTONS[s], SEGMENT_W, "right" if s == segments[-1] else "none") for s in segments]
         else:
@@ -297,6 +301,8 @@ def button(part, delay, cycle):
     )
 
 
+SPRITE_GAP = 24
+
 # The names a button document defines, each prefixed per button in the sprite. A
 # name left without a prefix is refused, since it would hand one button's delay
 # or clip to all of them.
@@ -309,6 +315,10 @@ def sprite(parts):
     Every part keeps its own document as a nested <svg> at its own x, with its
     ids, class and keyframes prefixed, because the CSS inside one SVG document
     is shared: unprefixed, the last button's delay would win for all of them.
+    Parts start on whole units with SPRITE_GAP of nothing between them: a
+    browser scaling a cut-out by a fractional factor samples a pixel past its
+    edge, and with the neighbour right there that pixel shows as a coloured
+    line along the button.
     Returns the sprite and each part's x.
     """
     x, xs, body = 0.0, [], []
@@ -328,7 +338,7 @@ def sprite(parts):
             raise SystemExit("button %d still has an unprefixed name near %r" % (i, s[left.start():left.start() + 40]))
         xs.append(x)
         body.append(s.strip())
-        x = round(x + width, 3)
+        x = float(math.ceil(x + width + SPRITE_GAP))
     height = max(p[2] for p in parts)
     head = ('<?xml version="1.0" encoding="UTF-8"?>\n'
             '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
