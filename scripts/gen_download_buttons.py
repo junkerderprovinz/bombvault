@@ -141,12 +141,6 @@ PASS_PCT = PASS / CYCLE * 100.0
 # is fixed because those buttons are one asset shared by every repository and
 # cannot know what a README puts above them.
 BUTTONS = [
-    # "Docs" rather than "Documentation": 13 characters at font-size 82 need
-    # more than the 482 units left of the right edge. The yellow is the coffee
-    # button's #fd0, and white on yellow fails contrast, so the ink is dark.
-    ("docs", "book", "#fd0", "#0d0c23",
-     "Docs", "online manual", "Read the documentation",
-     "https://junkerderprovinz.github.io/bombvault/"),
     # A browser cannot download an image, so this opens the package page and
     # the second line says "ghcr.io image" rather than "download".
     ("docker-image", "docker", "#1d63ed", "#ffffff",
@@ -159,6 +153,12 @@ BUTTONS = [
     ("source-zip", "zip", "#4d5562", "#ffffff",
      "Source", "zip archive", "Download the source archive for this release",
      "https://github.com/junkerderprovinz/bombvault/releases/latest"),
+    # "Docs" rather than "Documentation": 13 characters at font-size 82 need
+    # more than the 482 units left of the right edge. The yellow is the coffee
+    # button's #fd0, and white on yellow fails contrast, so the ink is dark.
+    ("docs", "book", "#fd0", "#0d0c23",
+     "Docs", "online manual", "Read the documentation",
+     "https://junkerderprovinz.github.io/bombvault/"),
 ]
 
 # The README rows are written here too, between markers, so a button added to

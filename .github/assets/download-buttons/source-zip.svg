@@ -31,7 +31,7 @@
        only ever wrong while somebody is looking at the row for the first time.
        `backwards` holds the 0% state during the delay instead, and 0% is off
        the left edge. */
-    .band { animation: pass 7s linear 1.665s infinite backwards; }
+    .band { animation: pass 7s linear 0.833s infinite backwards; }
     @media (prefers-reduced-motion: reduce) {
       .band { animation: none; opacity: 0; }
     }
