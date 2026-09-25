@@ -402,6 +402,48 @@ describe("ZFS page", () => {
     expect(screen.getAllByText(/about to fail/)).toHaveLength(1);
   });
 
+  it("calls a cancelled run cancelled rather than failed", async () => {
+    items = [item({ lastRunStatus: "cancelled" })];
+    runs = [
+      {
+        id: "r5",
+        targetId: "z1",
+        kind: "backup",
+        status: "cancelled",
+        startedAt: 1_700_000_000,
+        finishedAt: 1_700_000_063,
+        snapshotId: "",
+        bytes: 0,
+        error: "cancelled by the user",
+        acknowledged: true,
+        target: "cache/appdata",
+        domain: "zfs",
+      },
+    ];
+    runDetail = {
+      ok: true,
+      windowSeconds: -1,
+      members: [
+        {
+          dataset: "cache/appdata",
+          outcome: "not-reached",
+          resticSnapshot: "",
+          isNew: false,
+          bytesAdded: 0,
+          filesNew: 0,
+          filesChanged: 0,
+          filesUnmodified: 0,
+          durationMs: 0,
+        },
+      ],
+    };
+    await renderWithItems();
+    await waitFor(() => expect(screen.getAllByText(en["run.statusCancelled"])).toHaveLength(2));
+    expect(screen.queryByText(en["run.statusFailed"])).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: /→/ }));
+    expect(await screen.findByText(en["runReason.cancelled"])).toBeTruthy();
+  });
+
   it("says how many safety snapshots a removed item left behind", async () => {
     items = [item({ safetyCount: 2 })];
     deleteResult = { ok: true, safetyRemaining: 2 };

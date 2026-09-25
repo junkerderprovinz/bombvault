@@ -105,6 +105,8 @@ export function RecentRunsList({
               )}
             </span>
             {dur && <span className="text-carbon-textMuted whitespace-nowrap">({dur})</span>}
+            {/* The grey dot alone reads as a failure. */}
+            {run.status === "cancelled" && <span className="text-carbon-textMuted">{t("run.statusCancelled")}</span>}
           </>
         );
         const badge = <RunAnomalyBadge findings={byRunId.get(run.id)} t={t} />;

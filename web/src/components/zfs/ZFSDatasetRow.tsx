@@ -773,6 +773,11 @@ export function ZFSDatasetRow({
                 {t("run.statusFailed")}
               </Badge>
             )}
+            {item.lastRunStatus === "cancelled" && (
+              <Badge tone="neutral" wrap>
+                {t("run.statusCancelled")}
+              </Badge>
+            )}
             {!runFailed && checkCode === "" && (
               <Badge tone="neutral" wrap>
                 {t("zfs.notChecked")}
