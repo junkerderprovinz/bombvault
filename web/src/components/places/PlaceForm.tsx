@@ -14,6 +14,7 @@ import {
   domainName,
   folderStateText,
   placeErrorText,
+  probeErrorText,
   probeFactText,
   probeFailureText,
   providerName,
@@ -387,7 +388,7 @@ export function PlaceForm({
               <span key={d} className="flex flex-wrap gap-x-2">
                 <span className="text-carbon-textSub">{domainName(t, d)}</span>
                 <span>{folderStateText(t, found.folders![d]!)}</span>
-                {found.errors?.[d] && <span className="text-statusFail">{found.errors[d]!.error}</span>}
+                {found.errors?.[d] && <span className="text-statusFail">{probeErrorText(t, lang, found.errors[d]!)}</span>}
               </span>
             ))}
           </div>
