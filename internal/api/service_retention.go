@@ -24,23 +24,8 @@ func (s *Service) retentionPolicy(settings store.Settings) restic.RetentionPolic
 	}
 }
 
-// offsiteRetentionPolicy is the separate keep-policy for the off-site repo,
-// so it can be kept longer (archive) than the local copy. All-zero (the
-// default) means no off-site pruning: the off-site repo keeps everything
-// until the user sets this policy.
-func (s *Service) offsiteRetentionPolicy(settings store.Settings) restic.RetentionPolicy {
-	return restic.RetentionPolicy{
-		KeepLast:    settings.OffsiteRetentionKeepLast,
-		KeepDaily:   settings.OffsiteRetentionKeepDaily,
-		KeepWeekly:  settings.OffsiteRetentionKeepWeekly,
-		KeepMonthly: settings.OffsiteRetentionKeepMonthly,
-	}
-}
-
-// targetOffsiteRetentionPolicy is the per-destination off-site keep-policy,
-// the plural successor to offsiteRetentionPolicy, which reads the single
-// global columns. All-zero means keep everything, as the global default does.
-// A backfilled N=1 target carries the global policy.
+// targetOffsiteRetentionPolicy is a row's own keep-policy: a target's, a direct
+// repository's or that of a row at a place. All zero keeps everything.
 func targetOffsiteRetentionPolicy(t store.OffsiteTarget) restic.RetentionPolicy {
 	return restic.RetentionPolicy{
 		KeepLast:    t.RetentionKeepLast,
@@ -48,16 +33,6 @@ func targetOffsiteRetentionPolicy(t store.OffsiteTarget) restic.RetentionPolicy 
 		KeepWeekly:  t.RetentionKeepWeekly,
 		KeepMonthly: t.RetentionKeepMonthly,
 	}
-}
-
-// retentionPolicyForSource returns the keep-policy for a repo source: the
-// off-site policy for any off-site source, the local policy otherwise. The
-// off-site policy here is the settings-level one.
-func (s *Service) retentionPolicyForSource(settings store.Settings, source string) restic.RetentionPolicy {
-	if isOffsiteSource(source) {
-		return s.offsiteRetentionPolicy(settings)
-	}
-	return s.retentionPolicy(settings)
 }
 
 // applyRetention prunes the just-backed-up item to the configured keep-policy.
@@ -513,9 +488,9 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	// space, the "apply retention now" users expect from a manual prune.
 	// Without a policy it stays a plain space reclaim; forget with no
 	// keep-flags would delete every snapshot, so that path is guarded by
-	// p.Any(). The policy is per source: pruning the off-site repo uses the
-	// off-site policy, not the local one, so an archive off-site isn't trimmed
-	// to the local rules. The batched post-bulk pass skips this
+	// p.Any(). An off-site source ages by its target's own rules, the ones its
+	// replication ages it by, so a manual prune never trims a target harder
+	// than its next run does. The batched post-bulk pass skips this
 	// (applyPolicy=false): its per-item forgets already ran inline, and
 	// re-running them would cost 44 more exclusive-lock round-trips for
 	// nothing.
@@ -526,7 +501,11 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		switch {
 		case !applyPolicy:
 		case isOffsiteSource(source):
-			policy = s.retentionPolicyForSource(settings, source)
+			target, tErr := s.offsiteTargetForSource(settings, domain, source)
+			if tErr != nil {
+				return tErr
+			}
+			policy = targetOffsiteRetentionPolicy(target)
 		default:
 			policy = s.retentionPolicyForRef(settings, domain, r)
 		}

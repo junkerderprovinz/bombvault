@@ -244,3 +244,96 @@ func TestADirectRepositoryAtAnAppendOnlyPlaceForgetsNothing(t *testing.T) {
 		t.Fatalf("forgets %+v, prunes %v; want only the domain path pruned and the direct repository left alone", f.eng.forgets, f.eng.prunes)
 	}
 }
+
+func TestAnOffsitePruneAgesByTheTargetsOwnRules(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.settings(func(s *store.Settings) { s.OffsiteRetentionKeepDaily = 30 })
+	b2 := f.target("containers", "B2", b2Containers)
+	b2.RetentionKeepLast = 4
+	if _, err := f.st.UpsertOffsiteTarget(b2); err != nil {
+		t.Fatal(err)
+	}
+	f.hold(b2Containers, snap("c1", 100, "container:nginx"))
+
+	if err := f.svc.PruneDomain(context.Background(), "containers", "offsite:"+b2.ID); err != nil {
+		t.Fatalf("PruneDomain: %v", err)
+	}
+	want := []forgetCall{{Repo: b2Containers, Tags: []string{"container:nginx"}, Policy: restic.RetentionPolicy{KeepLast: 4}}}
+	if !reflect.DeepEqual(f.eng.forgets, want) {
+		t.Fatalf("forgets = %+v, want %+v", f.eng.forgets, want)
+	}
+}
+
+func TestAnOffsitePruneAgesByItsPlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.settings(func(s *store.Settings) { s.OffsiteRetentionKeepDaily = 30 })
+	b2 := f.target("containers", "B2", b2Containers)
+	f.linkRow(b2.ID, f.storePlace(b2Place(6)), "containers", "")
+	f.hold(b2Containers, snap("c1", 100, "container:nginx"))
+
+	if err := f.svc.PruneDomain(context.Background(), "containers", "offsite"); err != nil {
+		t.Fatalf("PruneDomain: %v", err)
+	}
+	want := []forgetCall{{Repo: b2Containers, Tags: []string{"container:nginx"}, Policy: restic.RetentionPolicy{KeepLast: 6}}}
+	if !reflect.DeepEqual(f.eng.forgets, want) {
+		t.Fatalf("forgets = %+v, want %+v", f.eng.forgets, want)
+	}
+}
+
+func TestAnAppendOnlyPlaceRefusesTheOffsitePrune(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", b2Containers)
+	place := b2Place(6)
+	place.Immutable = true
+	f.linkRow(b2.ID, f.storePlace(place), "containers", "")
+	f.hold(b2Containers, snap("c1", 100, "container:nginx"))
+
+	if err := f.svc.PruneDomain(context.Background(), "containers", "offsite:"+b2.ID); !errors.Is(err, errAppendOnlyOffsiteTarget) {
+		t.Fatalf("PruneDomain = %v, want the append-only refusal", err)
+	}
+	if len(f.eng.forgets) != 0 || len(f.eng.prunes) != 0 {
+		t.Fatalf("forgets %+v, prunes %v; want none at an append-only place", f.eng.forgets, f.eng.prunes)
+	}
+}
+
+// photosAtAPlace is a file set on the NAS set to Local, with three older
+// copies at a B2 target whose place keeps one.
+func photosAtAPlace(t *testing.T, f *placementFixture, appendOnly bool) store.OffsiteTarget {
+	t.Helper()
+	b2 := f.target("files", "B2", "s3:https://s3.example.com/bv/files")
+	f.linkRow(b2.ID, f.storePlace(store.Place{
+		Name: "B2", Provider: "b2", Kind: "s3", Base: "s3:https://s3.example.com/bv",
+		Folders: map[string]string{"files": "files"}, OffPremises: true, Immutable: appendOnly, RetentionKeepLast: 1, Enabled: true,
+	}), "files", "")
+	nas := f.namedRepo("NAS", "nas")
+	f.fileSet("Photos", nas.ID)
+	f.rule("files", "fileset:Photos", store.SkipAll)
+	f.replicated("files")
+	f.hold(f.root+"/nas", snap("p1", 1000, "fileset:Photos"), snap("p2", 1100, "fileset:Photos"), snap("p3", 1200, "fileset:Photos"))
+	f.hold(b2.Repo, copied("c1", "p1", 1000, "fileset:Photos"), copied("c2", "p2", 1100, "fileset:Photos"), copied("c3", "p3", 1200, "fileset:Photos"))
+	return b2
+}
+
+func TestAReplicationAgesATargetByItsPlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := photosAtAPlace(t, f, false)
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "files"); err != nil {
+		t.Fatalf("ReplicateOffsite = %v, want a green pass", err)
+	}
+	if n := len(heldAt(t, f, b2.Repo)); n != 1 {
+		t.Fatalf("B2 holds %d, want the one its place keeps", n)
+	}
+}
+
+func TestAReplicationNeverAgesATargetAtAnAppendOnlyPlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := photosAtAPlace(t, f, true)
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "files"); err != nil {
+		t.Fatalf("ReplicateOffsite = %v, want a green pass", err)
+	}
+	if n := len(heldAt(t, f, b2.Repo)); n != 3 || len(f.eng.forgets) != 0 {
+		t.Fatalf("B2 at an append-only place holds %d after %+v, want all 3 and no forget", n, f.eng.forgets)
+	}
+}
