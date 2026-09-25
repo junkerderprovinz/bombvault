@@ -157,7 +157,7 @@ function SnapshotFileBrowser({
       />
 
       {count > 0 && (
-        <div className="border-t border-carbon-border pt-2 flex flex-col gap-2">
+        <div className="pt-2 flex flex-col gap-2">
           <div className="flex flex-col gap-1.5">
             <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
               <input
@@ -458,7 +458,7 @@ function CompareSnapshots({ containerName, t }: { containerName: string; t: T })
     "rounded-control bg-carbon-surface3 text-carbon-text text-xs px-2 py-1 glim-field-focus-well max-w-[16rem] truncate";
 
   return (
-    <div className="py-2 border-b border-carbon-border">
+    <div className="py-2">
       <Button
         label={t("snapshot.compare")}
         labelKey="snapshot.compare"
@@ -699,7 +699,7 @@ function SnapshotActions({
           </Advanced>
 
           {effectiveMode === "inPlace" && (
-            <div className="flex flex-col gap-2 border-t border-carbon-border pt-2">
+            <div className="flex flex-col gap-2 pt-2">
               <p className="text-caption text-carbon-textMuted">{t("restore.inPlaceHint")}</p>
               <RestoreAction
                 domain="container"
@@ -715,7 +715,7 @@ function SnapshotActions({
           )}
 
           {effectiveMode === "files" && (
-            <div className="border-t border-carbon-border pt-2">
+            <div className="pt-2">
               <SnapshotFileBrowser
                 containerName={containerName}
                 snapshotId={pick.snapshotId}
@@ -729,7 +729,7 @@ function SnapshotActions({
           )}
 
           {effectiveMode === "toFolder" && (
-            <div className="border-t border-carbon-border pt-2">
+            <div className="pt-2">
               <RestoreToFolder
                 containerName={containerName}
                 snapshotId={pick.snapshotId}

@@ -85,7 +85,7 @@ export function Timeline({
       {pending.map((p) => (
         <div
           key={p.place}
-          className="flex items-center gap-2 py-1.5 border-b border-carbon-border text-xs text-carbon-textMuted"
+          className="flex items-center gap-2 py-1.5 text-xs text-carbon-textMuted"
         >
           <span>
             {t(p.state === "unreadable" ? "timeline.unreadable" : "timeline.unchecked").replace(
@@ -116,7 +116,7 @@ export function Timeline({
           const place = mark ? places.find((p) => p.place === mark.place) : undefined;
           const marks = [...row.places].sort((a, b) => orderOf(a.place) - orderOf(b.place));
           return (
-            <div key={row.key} className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
+            <div key={row.key} className="flex flex-col gap-1 py-1.5">
               <div className="flex items-center gap-3 flex-wrap text-sm">
                 <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
                   {(mark ? newestId(mark) : row.key).slice(0, 8)}

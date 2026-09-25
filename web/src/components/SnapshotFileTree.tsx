@@ -54,7 +54,7 @@ function FileRow({
   onToggle: () => void;
 }) {
   return (
-    <label className="flex items-center gap-2 py-1 text-xs border-b border-carbon-border last:border-0 cursor-pointer">
+    <label className="flex items-center gap-2 py-1 text-xs cursor-pointer">
       <input
         type="checkbox"
         checked={selected}

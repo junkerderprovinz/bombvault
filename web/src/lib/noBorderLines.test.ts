@@ -118,14 +118,7 @@ const ALLOWED_RULES: Record<string, string> = {
  *  restyled, so it comes off when it is deleted. */
 const PENDING = new Set<string>([
   "components/ColorPickerPopover.tsx",
-  "components/ErrorDetailPanel.tsx",
   "components/OffsiteWizard.tsx",
-  "components/RecentRunsList.tsx",
-  "components/RestorePanel.tsx",
-  "components/SnapshotFileTree.tsx",
-  "components/SpikePanel.tsx",
-  "components/WhatsNewDialog.tsx",
-  "components/timeline/Timeline.tsx",
   "index.css",
   "pages/Dashboard.tsx",
   "pages/Files.tsx",
