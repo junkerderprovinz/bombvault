@@ -13,7 +13,15 @@ import { retentionLowered } from "../../lib/directRepo";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { pushSaveWarnings } from "../../lib/placementCodes";
 import { domainName, placeErrorText } from "../../lib/placeText";
-import { patchPlace, placesChanged, type CatalogProvider, type PatchPlaceBody, type Place } from "../../lib/places";
+import {
+  PLACE_DOMAINS,
+  patchPlace,
+  placesChanged,
+  type CatalogProvider,
+  type PatchPlaceBody,
+  type Place,
+  type PlaceDomain,
+} from "../../lib/places";
 import { STORAGE_CLASSES } from "../../lib/storageClasses";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
@@ -31,6 +39,14 @@ const CRED_KEYS: Partial<Record<Place["kind"], string[]>> = {
   rest: ["user", "password"],
   webdav: ["url", "user", "password"],
   azure: ["account", "secret"],
+};
+
+const DEFAULT_FOLDERS: Record<PlaceDomain, string> = {
+  containers: "container",
+  vms: "vms",
+  flash: "flash",
+  config: "config",
+  files: "files",
 };
 
 const RETENTION: { key: "retentionKeepLast" | "retentionKeepDaily" | "retentionKeepWeekly" | "retentionKeepMonthly"; label: TranslationKey }[] = [
@@ -208,6 +224,28 @@ export function PlaceDetails({
         setAccess((a) => Object.fromEntries(Object.entries(a).filter(([k]) => !secretKeys.has(k))));
       }
     });
+  }
+
+  function setOffered(domain: PlaceDomain, on: boolean) {
+    // This save carries a folder name still being typed, and the waiting one
+    // would otherwise follow it without this domain.
+    const typing = timers.current.get("folders");
+    if (typing) {
+      clearTimeout(typing.timer);
+      timers.current.delete("folders");
+    }
+    const before = place.folders;
+    const folders = { ...draft.folders };
+    if (on) folders[domain] = DEFAULT_FOLDERS[domain];
+    else delete folders[domain];
+    setDraft((d) => ({ ...d, folders }));
+    void save({ folders }, `offer-${domain}`, () => setDraft((d) => ({ ...d, folders: before })));
+  }
+
+  function editFolder(domain: PlaceDomain, value: string) {
+    const folders = { ...draft.folders, [domain]: value };
+    setDraft((d) => ({ ...d, folders }));
+    later("folders", () => void save({ folders }, "folders"));
   }
 
   // A verdict stays in the section, "deletes accepted" included, since the
@@ -417,6 +455,43 @@ export function PlaceDetails({
               />
             </div>
           ))}
+        </div>
+      </Section>
+
+      <Section
+        title={t("places.details.folders")}
+        hint={place.repository ? t("places.details.isRepository") : t("places.details.foldersHint")}
+        hueIndex={hueIndex}
+      >
+        <div key={shake.folders ?? 0} className={`flex flex-col gap-2 ${shaken("folders")}`}>
+          {PLACE_DOMAINS.map((d) => {
+            const offered = d in draft.folders;
+            const locked = place.repository || place.locked[d] === true;
+            return (
+              <div key={`${d}-${shake[`offer-${d}`] ?? 0}`} className={`flex flex-wrap items-center gap-3 ${shaken(`offer-${d}`)}`}>
+                <span className="w-28 text-sm text-carbon-text">{domainName(t, d)}</span>
+                <Toggle
+                  label={t("places.details.offered").replace("{domain}", domainName(t, d))}
+                  hideLabel
+                  checked={offered}
+                  disabled={locked}
+                  onChange={(v) => setOffered(d, v)}
+                />
+                <input
+                  type="text"
+                  dir="ltr"
+                  aria-label={t("places.details.folderOf").replace("{domain}", domainName(t, d))}
+                  value={draft.folders[d] ?? ""}
+                  disabled={!offered || locked}
+                  onChange={(e) => editFolder(d, e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                  className={`${FIELD_CLASS} min-w-0 flex-1 font-mono text-start disabled:opacity-50`}
+                />
+                {place.locked[d] && !place.repository && <InfoBubble tip={t("places.details.folderLocked")} />}
+              </div>
+            );
+          })}
         </div>
       </Section>
     </div>
