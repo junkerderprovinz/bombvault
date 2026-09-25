@@ -2350,6 +2350,21 @@ export const en = {
   "places.catalogLoading": "Reading the providers…",
   "places.form.nameFirst": "Give the place a name first.",
   "places.form.whereFirst": "Say where the device is first.",
+  "places.details.general": "General",
+  "places.details.enabled": "Switched on",
+  "places.details.retention": "Retention",
+  "places.details.retentionHint": "How many snapshots every repository at this place keeps. 0 in every field keeps everything.",
+  "places.details.keepLast": "Keep last",
+  "places.details.keepDaily": "Daily",
+  "places.details.keepWeekly": "Weekly",
+  "places.details.keepMonthly": "Monthly",
+  "places.details.retentionLowerAsk": "one={n} item backs up to this place. From its next run this place keeps fewer snapshots, and the older ones are pruned.|other={n} items back up to this place. From their next run this place keeps fewer snapshots, and the older ones are pruned.",
+  "places.details.limits": "Limits",
+  "places.details.limitUpload": "Upload, KiB/s",
+  "places.details.limitDownload": "Download, KiB/s",
+  "places.details.limitsHint": "0 means no limit.",
+  "places.details.growthBudget": "Growth budget, GB",
+  "places.details.growthBudgetHint": "Raises an alarm once a repository at this place grows past this many gigabytes. It never deletes anything. 0 switches it off.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4380,6 +4395,21 @@ export const de: Translations = {
   "places.catalogLoading": "Die Anbieter werden gelesen…",
   "places.form.nameFirst": "Gib dem Ort zuerst einen Namen.",
   "places.form.whereFirst": "Sag zuerst, wo das Gerät steht.",
+  "places.details.general": "Allgemein",
+  "places.details.enabled": "Eingeschaltet",
+  "places.details.retention": "Aufbewahrung",
+  "places.details.retentionHint": "Wie viele Snapshots jedes Repository an diesem Ort behält. 0 in allen Feldern behält alles.",
+  "places.details.keepLast": "Letzte behalten",
+  "places.details.keepDaily": "Täglich",
+  "places.details.keepWeekly": "Wöchentlich",
+  "places.details.keepMonthly": "Monatlich",
+  "places.details.retentionLowerAsk": "one={n} Eintrag sichert an diesen Ort. Ab seinem nächsten Lauf behält der Ort weniger Snapshots, die älteren werden aufgeräumt.|other={n} Einträge sichern an diesen Ort. Ab ihrem nächsten Lauf behält der Ort weniger Snapshots, die älteren werden aufgeräumt.",
+  "places.details.limits": "Grenzen",
+  "places.details.limitUpload": "Hochladen, KiB/s",
+  "places.details.limitDownload": "Herunterladen, KiB/s",
+  "places.details.limitsHint": "0 heißt keine Grenze.",
+  "places.details.growthBudget": "Wachstumsbudget, GB",
+  "places.details.growthBudgetHint": "Schlägt Alarm, sobald ein Repository an diesem Ort über so viele Gigabyte wächst. Es löscht nie etwas. 0 schaltet es aus.",
 };
 
 // ---------------------------------------------------------------------------

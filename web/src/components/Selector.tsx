@@ -123,6 +123,9 @@ export const HUE_OFFSET = {
   drillKind: 1,
   /** The three placement default rows, +3 per row: 1, 4 and 7. */
   placement: 1,
+  /** A place's "Where is the device?" on the Storage tab, a start no other
+   *  selector there takes. */
+  placeWhere: 3,
 } as const;
 
 export type SelectorProps =
