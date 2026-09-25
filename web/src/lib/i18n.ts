@@ -2378,6 +2378,12 @@ export const en = {
   "places.details.secretKept": "stored, type to replace",
   "places.details.storageClass": "Storage class",
   "places.details.storageClassDefault": "Provider default",
+  "places.details.folders": "Folders",
+  "places.details.foldersHint": "Each domain keeps its backups in a folder of its own here. A domain without a folder cannot choose this place.",
+  "places.details.isRepository": "This place is itself a repository: every domain offered here shares it, and it has no folders below it. To store more here, connect a second bucket or folder as a place of its own.",
+  "places.details.folderLocked": "Backups lie in this folder, so it stays as it is.",
+  "places.details.offered": "Offer {domain} here",
+  "places.details.folderOf": "Folder for {domain}",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4436,6 +4442,12 @@ export const de: Translations = {
   "places.details.secretKept": "gespeichert, zum Ersetzen eingeben",
   "places.details.storageClass": "Speicherklasse",
   "places.details.storageClassDefault": "Standard des Anbieters",
+  "places.details.folders": "Ordner",
+  "places.details.foldersHint": "Jede Domäne legt ihre Backups hier in einem eigenen Ordner ab. Eine Domäne ohne Ordner kann diesen Ort nicht wählen.",
+  "places.details.isRepository": "Dieser Ort ist selbst ein Repository: Alle Domänen, die er anbietet, teilen es, und er hat keine Ordner darunter. Wer hier mehr ablegen will, verbindet einen zweiten Bucket oder Ordner als eigenen Ort.",
+  "places.details.folderLocked": "In diesem Ordner liegen Backups, er bleibt deshalb, wie er ist.",
+  "places.details.offered": "{domain} hier anbieten",
+  "places.details.folderOf": "Ordner für {domain}",
 };
 
 // ---------------------------------------------------------------------------
