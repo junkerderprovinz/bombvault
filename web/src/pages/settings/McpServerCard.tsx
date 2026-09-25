@@ -516,7 +516,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <Toggle
                       key={shake[`start:${k.id}`] ?? 0}
-                      label={t("mcp.keyCanStart")}
+                      label={t("mcp.allowStart")}
                       checked={k.canStartBackups}
                       onChange={(v) => void setCanStart(k, v)}
                       disabled={busy}

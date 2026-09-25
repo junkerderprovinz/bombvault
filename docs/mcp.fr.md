@@ -155,7 +155,7 @@ Derrière un proxy, chaque requête porte l'adresse du proxy. Cinq mauvaises cl�
 
 - Sans clé active, `/mcp` répond `404`.
 - Aucune adresse n'est exemptée. Les requêtes venant de `localhost`, de l'hôte Unraid, d'un reverse proxy ou de `tailscale serve` ont besoin d'une clé comme toutes les autres, même quand l'interface web n'a pas de mot de passe de connexion.
-- Les clés ne sont stockées que sous forme d'empreinte, affichées une seule fois, et peuvent être renommées, remplacées et révoquées. Jusqu'à 10 clés actives, chacune avec son propre interrupteur **Peut lancer des sauvegardes**.
+- Les clés ne sont stockées que sous forme d'empreinte, affichées une seule fois, et peuvent être renommées, remplacées et révoquées. Jusqu'à 10 clés actives, chacune avec son propre interrupteur **Autoriser le lancement de sauvegardes**.
 - Chaque création, remplacement, changement de droits et révocation envoie une notification par vos canaux de notification, avec l'adresse d'où elle vient, sauf si les notifications sont désactivées.
 - 5 mauvaises clés par minute et par adresse, puis `429`. 120 requêtes par minute et 12 sauvegardes lancées par heure et par clé, plus le délai d'attente et la garde de rétention décrits plus haut.
 - Les requêtes d'une page de navigateur d'une autre origine sont refusées.
@@ -186,7 +186,7 @@ Tout ce qu'un assistant lit part chez le fournisseur d'IA qui se trouve derrièr
 | `cooldown` | Cet élément, ce domaine ou Backup Everything a été lancé par MCP il y a moins de 15 minutes. |
 | `retention_guard` | Une sauvegarde MCP de plus ne laisserait que des points de restauration venant de MCP dans une fenêtre « garder les N derniers ». La prochaine sauvegarde planifiée refait de la place, ou lancez-la depuis l'interface web. |
 | `rate_limited` | La clé a épuisé ses 12 lancements pour cette heure. |
-| `not_permitted` sur un lancement | La clé est en lecture seule. Activez **Peut lancer des sauvegardes** dans la carte ; aucune reconnexion n'est nécessaire. Sur une annulation, cela signifie que l'exécution n'a pas été lancée par cette clé. |
+| `not_permitted` sur un lancement | La clé est en lecture seule. Activez **Autoriser le lancement de sauvegardes** dans la carte ; aucune reconnexion n'est nécessaire. Sur une annulation, cela signifie que l'exécution n'a pas été lancée par cette clé. |
 | `domain_off` | Ce type de sauvegarde est désactivé dans les paramètres. |
 | `not_found` | BombVault ne protège pas cet élément. Ajoutez-le d'abord dans l'interface web ; MCP ne crée jamais de configuration. |
 

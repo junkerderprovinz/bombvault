@@ -155,7 +155,7 @@ Bag en proxy bærer hver forespørgsel proxyens adresse. Fem forkerte nøgler fr
 
 - Uden en aktiv nøgle svarer `/mcp` med `404`.
 - Ingen adresser er undtaget. Forespørgsler fra `localhost`, Unraid-værten, en reverse proxy eller `tailscale serve` kræver en nøgle som alle andre, også når webgrænsefladen ikke har en login-adgangskode.
-- Nøgler gemmes kun som fingeraftryk, vises én gang og kan omdøbes, udskiftes og tilbagekaldes. Op til 10 aktive nøgler, hver med sin egen kontakt **Må starte sikkerhedskopier**.
+- Nøgler gemmes kun som fingeraftryk, vises én gang og kan omdøbes, udskiftes og tilbagekaldes. Op til 10 aktive nøgler, hver med sin egen kontakt **Tillad at starte sikkerhedskopier**.
 - Hver oprettelse, udskiftning, ændring af rettigheder og tilbagekaldelse sender en notifikation via dine notifikationskanaler med den adresse, den kom fra, medmindre notifikationer er slået fra.
 - 5 forkerte nøgler pr. minut pr. adresse, derefter `429`. 120 forespørgsler pr. minut og 12 startede sikkerhedskopier pr. time pr. nøgle, plus ventetiden og opbevaringsværnet ovenfor.
 - Forespørgsler fra en browserside med en anden origin afvises.
@@ -186,7 +186,7 @@ Det, en assistent læser, går til AI-udbyderen bag den: navne på elementer, ti
 | `cooldown` | Dette element, dette domæne eller Backup Everything blev startet via MCP for mindre end 15 minutter siden. |
 | `retention_guard` | Endnu en MCP-sikkerhedskopi ville kun efterlade gendannelsespunkter fra MCP i et vindue med "behold de sidste N". Den næste planlagte sikkerhedskopi giver plads, eller start den i webgrænsefladen. |
 | `rate_limited` | Nøglen har brugt sine 12 starter for denne time. |
-| `not_permitted` ved en start | Nøglen må kun læse. Slå **Må starte sikkerhedskopier** til i kortet; ny forbindelse er ikke nødvendig. Ved en annullering betyder det, at denne nøgle ikke startede kørslen. |
+| `not_permitted` ved en start | Nøglen må kun læse. Slå **Tillad at starte sikkerhedskopier** til i kortet; ny forbindelse er ikke nødvendig. Ved en annullering betyder det, at denne nøgle ikke startede kørslen. |
 | `domain_off` | Den type sikkerhedskopi er slået fra i indstillingerne. |
 | `not_found` | BombVault beskytter ikke det element. Tilføj det først i webgrænsefladen; MCP opretter aldrig konfiguration. |
 

@@ -18,7 +18,7 @@ BombVault bringt einen Server für das Model Context Protocol (MCP) mit. Über d
 | `get_anomaly` | Einer dieser Befunde, mit der Notiz, die beim Bestätigen hinterlassen wurde | lesen |
 | `start_backup` | Sichert ein Element sofort | starten |
 | `start_domain_backup` | Sichert jedes geschützte Element einer Domäne | starten |
-| `start_backup_everything` | Startet den Durchlauf von Backup Everything | starten |
+| `start_backup_everything` | Startet ein Gesamt-Backup | starten |
 | `cancel_backup` | Bricht ein laufendes Backup ab, das dieser Schlüssel gestartet hat | abbrechen |
 
 Folgendes bleibt in der Web-Oberfläche: Wiederherstellungen jeder Art (auch das Herunterladen, Speichern und Importieren eines Datenbank-Dumps), das Löschen von Backups, Prune, Unlock, Prüfungen und Übungen, die Off-site-Replikation, Einstellungen, Zugangsdaten und MCP-Schlüssel sowie das Abbrechen eines Backups, das der Zeitplan, die Web-Oberfläche oder ein anderer Schlüssel gestartet hat. Dasselbe gilt für das Bestätigen einer Anomalie oder das Markieren als erwartet, das auf der Seite **Anomalien** geschieht. Der Grund: Die Antworten der Werkzeuge enthalten Namen und Fehlermeldungen von deinem Server, und in jedem davon kann Text stehen, der den Assistenten lenken soll. Ein Assistent, der darauf hereinfällt, kann im schlimmsten Fall ein Backup innerhalb der unten genannten Grenzen starten oder eines abbrechen, das er selbst gestartet hat.
@@ -32,11 +32,11 @@ Das Backup eines Assistenten ist dasselbe Backup, das die Web-Oberfläche starte
 Weil ein Backup Dinge anhält und alte Wiederherstellungspunkte verdrängt, sind Starts über MCP begrenzt:
 
 - 12 gestartete Backups pro Stunde und Schlüssel.
-- 15 Minuten zwischen zwei MCP-Starts desselben Elements, derselben Domäne oder von Backup Everything.
+- 15 Minuten zwischen zwei MCP-Starts desselben Elements, derselben Domäne oder des Gesamt-Backups.
 - Höchstens 4 MCP-Starts desselben Elements in 24 Stunden.
 - **Aufbewahrungsschutz.** Behält eine Domäne eine feste Anzahl Wiederherstellungspunkte (nur "die letzten N behalten", ohne tägliche, wöchentliche oder monatliche Regel, lokal oder auf einem Off-site-Ziel), schiebt jedes neue Backup den ältesten hinaus. BombVault lehnt dann einen MCP-Start eines Elements ab, dessen neueste N-1 erfolgreiche Backups alle über MCP gestartet wurden. So bleibt immer mindestens ein Wiederherstellungspunkt im behaltenen Satz, den der Zeitplan oder du angelegt hast. Bei "die letzten 1 behalten" kann ein Assistent dieses Element gar nicht sichern. Das nächste geplante Backup schafft wieder Platz.
 
-Ein Start einer Domäne oder von Backup Everything lässt die Elemente aus, die eine Grenze zurückhält, und nennt sie in der Antwort. Die Web-Oberfläche und der Zeitplan sind von alldem nicht betroffen. Das Stundenkontingent liegt im Speicher, ein Neustart von BombVault setzt es also zurück.
+Ein Start einer Domäne oder des Gesamt-Backups lässt die Elemente aus, die eine Grenze zurückhält, und nennt sie in der Antwort. Die Web-Oberfläche und der Zeitplan sind von alldem nicht betroffen. Das Stundenkontingent liegt im Speicher, ein Neustart von BombVault setzt es also zurück.
 
 ## Einschalten {#switch-on}
 
@@ -155,7 +155,7 @@ Hinter einem Proxy trägt jede Anfrage die Adresse des Proxys. Fünf falsche Sch
 
 - Ohne aktiven Schlüssel antwortet `/mcp` mit `404`.
 - Keine Ausnahmen für bestimmte Adressen. Anfragen von `localhost`, vom Unraid-Host, von einem Reverse Proxy oder von `tailscale serve` brauchen einen Schlüssel wie jede andere, auch wenn die Web-Oberfläche kein Login-Passwort hat.
-- Schlüssel werden nur als Fingerabdruck gespeichert, einmal angezeigt und lassen sich umbenennen, ersetzen und widerrufen. Bis zu 10 aktive Schlüssel, jeder mit eigenem Schalter **Darf Backups starten**.
+- Schlüssel werden nur als Fingerabdruck gespeichert, einmal angezeigt und lassen sich umbenennen, ersetzen und widerrufen. Bis zu 10 aktive Schlüssel, jeder mit eigenem Schalter **Backups starten erlauben**.
 - Jedes Anlegen, Ersetzen, jede Rechteänderung und jeder Widerruf schickt eine Benachrichtigung über deine Kanäle, mit der Adresse, von der es kam, außer die Benachrichtigungen sind ausgeschaltet.
 - 5 falsche Schlüssel pro Minute und Adresse, danach `429`. 120 Anfragen pro Minute und 12 gestartete Backups pro Stunde und Schlüssel, dazu die Wartezeit und der Aufbewahrungsschutz von oben.
 - Anfragen einer Browserseite von einem anderen Origin werden abgelehnt.
@@ -183,10 +183,10 @@ Was ein Assistent liest, geht an den KI-Anbieter dahinter: Namen von Elementen, 
 | `429` | Zu viele falsche Schlüssel von dieser Adresse, oder mehr als 120 Anfragen pro Minute mit einem Schlüssel. Warte eine Minute und prüf, ob der Assistent in einer Schleife hängt. |
 | Fehler mit "certificate", "self-signed" oder "unable to verify" | Der Client vertraut BombVaults Zertifikat nicht. Siehe [TLS und Zertifikate](#tls). |
 | `busy` | Ein anderes Backup oder eine Wartungsaufgabe belegt diese Domäne. Versuch es wieder, wenn sie fertig ist. |
-| `cooldown` | Dieses Element, diese Domäne oder Backup Everything wurde vor weniger als 15 Minuten über MCP gestartet. |
+| `cooldown` | Dieses Element, diese Domäne oder das Gesamt-Backup wurde vor weniger als 15 Minuten über MCP gestartet. |
 | `retention_guard` | Ein weiteres MCP-Backup ließe in einem "die letzten N behalten"-Fenster nur noch Wiederherstellungspunkte aus MCP übrig. Das nächste geplante Backup schafft Platz, oder du startest es in der Web-Oberfläche. |
 | `rate_limited` | Der Schlüssel hat seine 12 Starts für diese Stunde verbraucht. |
-| `not_permitted` bei einem Start | Der Schlüssel darf nur lesen. Schalte **Darf Backups starten** in der Karte ein; eine neue Verbindung ist nicht nötig. Bei einem Abbruch heißt es, dass dieser Schlüssel den Lauf nicht gestartet hat. |
+| `not_permitted` bei einem Start | Der Schlüssel darf nur lesen. Schalte **Backups starten erlauben** in der Karte ein; eine neue Verbindung ist nicht nötig. Bei einem Abbruch heißt es, dass dieser Schlüssel den Lauf nicht gestartet hat. |
 | `domain_off` | Diese Backup-Art ist in den Einstellungen ausgeschaltet. |
 | `not_found` | BombVault schützt dieses Element nicht. Nimm es zuerst in der Web-Oberfläche auf; MCP legt nie Konfiguration an. |
 

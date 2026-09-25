@@ -155,7 +155,7 @@ Za proxy każde żądanie niesie adres proxy. Pięć złych kluczy od jednego ź
 
 - Bez aktywnego klucza `/mcp` odpowiada `404`.
 - Żaden adres nie jest wyjątkiem. Żądania z `localhost`, z hosta Unraid, z reverse proxy albo z `tailscale serve` potrzebują klucza jak każde inne, także wtedy, gdy interfejs WWW nie ma hasła logowania.
-- Klucze są zapisywane tylko jako odciski, pokazywane raz i można je przemianować, wymienić i unieważnić. Do 10 aktywnych kluczy, każdy z własnym przełącznikiem **Może uruchamiać kopie**.
+- Klucze są zapisywane tylko jako odciski, pokazywane raz i można je przemianować, wymienić i unieważnić. Do 10 aktywnych kluczy, każdy z własnym przełącznikiem **Pozwól uruchamiać kopie**.
 - Każde utworzenie, wymiana, zmiana uprawnień i unieważnienie wysyła powiadomienie twoimi kanałami powiadomień, z adresem, z którego przyszło, chyba że powiadomienia są wyłączone.
 - 5 złych kluczy na minutę z jednego adresu, potem `429`. 120 żądań na minutę i 12 uruchomionych kopii na godzinę na klucz, do tego opisane wyżej odczekanie i ochrona przechowywania.
 - Żądania ze strony przeglądarki z innego originu są odrzucane.
@@ -186,7 +186,7 @@ Wszystko, co czyta asystent, trafia do dostawcy AI, który za nim stoi: nazwy el
 | `cooldown` | Ten element, ta domena albo Backup Everything został uruchomiony przez MCP mniej niż 15 minut temu. |
 | `retention_guard` | Kolejna kopia przez MCP zostawiłaby w oknie "zachowaj ostatnie N" tylko punkty przywracania z MCP. Miejsce zrobi następna zaplanowana kopia, albo uruchom ją w interfejsie WWW. |
 | `rate_limited` | Klucz zużył swoje 12 uruchomień na tę godzinę. |
-| `not_permitted` przy uruchomieniu | Klucz może tylko czytać. Włącz w karcie **Może uruchamiać kopie**; ponowne łączenie nie jest potrzebne. Przy anulowaniu oznacza to, że przebiegu nie uruchomił ten klucz. |
+| `not_permitted` przy uruchomieniu | Klucz może tylko czytać. Włącz w karcie **Pozwól uruchamiać kopie**; ponowne łączenie nie jest potrzebne. Przy anulowaniu oznacza to, że przebiegu nie uruchomił ten klucz. |
 | `domain_off` | Ten rodzaj kopii jest wyłączony w ustawieniach. |
 | `not_found` | BombVault nie chroni tego elementu. Najpierw dodaj go w interfejsie WWW; MCP nigdy nie tworzy konfiguracji. |
 

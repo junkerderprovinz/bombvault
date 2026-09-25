@@ -155,7 +155,7 @@ Detrás de un proxy, cada petición lleva la dirección del proxy. Cinco claves 
 
 - Sin una clave activa, `/mcp` responde `404`.
 - Ninguna dirección está exenta. Las peticiones desde `localhost`, desde el host Unraid, desde un proxy inverso o desde `tailscale serve` necesitan una clave como cualquier otra, también cuando la interfaz web no tiene contraseña de inicio de sesión.
-- Las claves solo se guardan como huella, se muestran una vez y se pueden renombrar, sustituir y revocar. Hasta 10 claves activas, cada una con su propio interruptor **Puede iniciar copias**.
+- Las claves solo se guardan como huella, se muestran una vez y se pueden renombrar, sustituir y revocar. Hasta 10 claves activas, cada una con su propio interruptor **Permitir iniciar copias**.
 - Cada creación, sustitución, cambio de permiso y revocación envía una notificación por tus canales de notificación, con la dirección de la que vino, salvo que las notificaciones estén desactivadas.
 - 5 claves erróneas por minuto y dirección, después `429`. 120 peticiones por minuto y 12 copias iniciadas por hora y clave, además de la espera y la protección de retención de arriba.
 - Se rechazan las peticiones de una página de navegador de otro origen.
@@ -186,7 +186,7 @@ Todo lo que lee un asistente va al proveedor de IA que tiene detrás: nombres de
 | `cooldown` | Este elemento, este dominio o Backup Everything se inició por MCP hace menos de 15 minutos. |
 | `retention_guard` | Una copia MCP más dejaría solo puntos de restauración de MCP en una ventana de "conservar los últimos N". La próxima copia programada hace sitio, o iníciala desde la interfaz web. |
 | `rate_limited` | La clave ha gastado sus 12 inicios de esta hora. |
-| `not_permitted` al iniciar | La clave es de solo lectura. Activa **Puede iniciar copias** en la tarjeta; no hace falta reconectar. Al cancelar significa que esta clave no inició la ejecución. |
+| `not_permitted` al iniciar | La clave es de solo lectura. Activa **Permitir iniciar copias** en la tarjeta; no hace falta reconectar. Al cancelar significa que esta clave no inició la ejecución. |
 | `domain_off` | Ese tipo de copia está desactivado en los ajustes. |
 | `not_found` | BombVault no protege ese elemento. Añádelo primero en la interfaz web; MCP nunca crea configuración. |
 

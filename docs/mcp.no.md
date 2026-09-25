@@ -155,7 +155,7 @@ Bak en proxy bærer hver forespørsel proxyens adresse. Fem feil nøkler fra én
 
 - Uten en aktiv nøkkel svarer `/mcp` med `404`.
 - Ingen adresser er unntatt. Forespørsler fra `localhost`, Unraid-verten, en omvendt proxy eller `tailscale serve` trenger en nøkkel som alle andre, også når webgrensesnittet ikke har påloggingspassord.
-- Nøkler lagres bare som fingeravtrykk, vises én gang og kan gis nytt navn, byttes og tilbakekalles. Opptil 10 aktive nøkler, hver med sin egen bryter **Kan starte sikkerhetskopier**.
+- Nøkler lagres bare som fingeravtrykk, vises én gang og kan gis nytt navn, byttes og tilbakekalles. Opptil 10 aktive nøkler, hver med sin egen bryter **Tillat å starte sikkerhetskopier**.
 - Hver oppretting, utskifting, endring av rettigheter og tilbakekalling sender et varsel via varslingskanalene dine, med adressen det kom fra, med mindre varsler er slått av.
 - 5 feil nøkler per minutt per adresse, deretter `429`. 120 forespørsler per minutt og 12 startede sikkerhetskopier per time per nøkkel, i tillegg til ventetiden og oppbevaringsvernet over.
 - Forespørsler fra en nettleserside med en annen origin avvises.
@@ -186,7 +186,7 @@ Det en assistent leser, går til AI-leverandøren bak den: navn på elementer, t
 | `cooldown` | Dette elementet, dette domenet eller Backup Everything ble startet via MCP for mindre enn 15 minutter siden. |
 | `retention_guard` | Én MCP-sikkerhetskopi til ville bare etterlate gjenopprettingspunkter fra MCP i et vindu med "behold de siste N". Neste planlagte sikkerhetskopi gir plass, eller start den i webgrensesnittet. |
 | `rate_limited` | Nøkkelen har brukt opp sine 12 starter for denne timen. |
-| `not_permitted` ved en start | Nøkkelen kan bare lese. Slå på **Kan starte sikkerhetskopier** i kortet; ny tilkobling trengs ikke. Ved en avbrytelse betyr det at denne nøkkelen ikke startet kjøringen. |
+| `not_permitted` ved en start | Nøkkelen kan bare lese. Slå på **Tillat å starte sikkerhetskopier** i kortet; ny tilkobling trengs ikke. Ved en avbrytelse betyr det at denne nøkkelen ikke startet kjøringen. |
 | `domain_off` | Den typen sikkerhetskopi er slått av i innstillingene. |
 | `not_found` | BombVault beskytter ikke det elementet. Legg det først til i webgrensesnittet; MCP lager aldri konfigurasjon. |
 

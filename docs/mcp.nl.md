@@ -155,7 +155,7 @@ Achter een proxy draagt elk verzoek het adres van de proxy. Vijf verkeerde sleut
 
 - Zonder actieve sleutel antwoordt `/mcp` met `404`.
 - Geen uitzonderingen voor adressen. Verzoeken van `localhost`, van de Unraid-host, van een reverse proxy of van `tailscale serve` hebben een sleutel nodig zoals elk ander, ook als de webinterface geen inlogwachtwoord heeft.
-- Sleutels worden alleen als vingerafdruk opgeslagen, één keer getoond, en kunnen worden hernoemd, vervangen en ingetrokken. Tot 10 actieve sleutels, elk met een eigen schakelaar **Mag back-ups starten**.
+- Sleutels worden alleen als vingerafdruk opgeslagen, één keer getoond, en kunnen worden hernoemd, vervangen en ingetrokken. Tot 10 actieve sleutels, elk met een eigen schakelaar **Back-ups laten starten**.
 - Elk aanmaken, vervangen, elke rechtenwijziging en elke intrekking stuurt een melding via je meldingskanalen, met het adres waar het vandaan kwam, tenzij meldingen uit staan.
 - 5 verkeerde sleutels per minuut per adres, daarna `429`. 120 verzoeken per minuut en 12 gestarte back-ups per uur per sleutel, plus de wachttijd en de bewaarbeveiliging van hierboven.
 - Verzoeken van een browserpagina met een andere origin worden geweigerd.
@@ -186,7 +186,7 @@ Wat een assistent leest, gaat naar de AI-aanbieder erachter: namen van items, pl
 | `cooldown` | Dit item, dit domein of Backup Everything is minder dan 15 minuten geleden via MCP gestart. |
 | `retention_guard` | Nog een MCP-back-up zou in een venster "laatste N bewaren" alleen herstelpunten uit MCP overlaten. De volgende geplande back-up maakt ruimte, of start hem in de webinterface. |
 | `rate_limited` | De sleutel heeft zijn 12 starts voor dit uur opgebruikt. |
-| `not_permitted` bij een start | De sleutel mag alleen lezen. Zet **Mag back-ups starten** aan in de kaart; een nieuwe verbinding is niet nodig. Bij een annulering betekent het dat deze sleutel de run niet heeft gestart. |
+| `not_permitted` bij een start | De sleutel mag alleen lezen. Zet **Back-ups laten starten** aan in de kaart; een nieuwe verbinding is niet nodig. Bij een annulering betekent het dat deze sleutel de run niet heeft gestart. |
 | `domain_off` | Dat soort back-up staat uit in de instellingen. |
 | `not_found` | BombVault beschermt dat item niet. Voeg het eerst toe in de webinterface; MCP maakt nooit configuratie aan. |
 

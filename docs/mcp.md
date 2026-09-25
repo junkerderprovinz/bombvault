@@ -155,7 +155,7 @@ Behind a proxy every request carries the proxy's address. Five wrong keys from o
 
 - Without an active key, `/mcp` answers `404`.
 - No exempt addresses. Requests from `localhost`, the Unraid host, a reverse proxy or `tailscale serve` need a key like any other, also when the web interface has no login password.
-- Keys are stored as fingerprints only, shown once, and can be renamed, replaced and revoked. Up to 10 active keys, each with its own **Can start backups** switch.
+- Keys are stored as fingerprints only, shown once, and can be renamed, replaced and revoked. Up to 10 active keys, each with its own **Allow starting backups** switch.
 - Every create, replace, permission change and revoke sends a notification through your notification channels, with the address it came from, unless notifications are switched off.
 - 5 wrong keys per minute per address, then `429`. 120 requests per minute and 12 started backups per hour per key, plus the cooldown and the retention guard above.
 - Requests from a browser page on another origin are refused.
@@ -186,7 +186,7 @@ Whatever an assistant reads goes to the AI provider behind it: item names, sched
 | `cooldown` | This item, domain or Backup Everything was started through MCP less than 15 minutes ago. |
 | `retention_guard` | One more MCP backup would leave only MCP-made restore points in a "keep last N" window. The next scheduled backup makes room, or start it in the web interface. |
 | `rate_limited` | The key has used its 12 starts for this hour. |
-| `not_permitted` on a start | The key is read-only. Switch **Can start backups** on in the card; no reconnect needed. On a cancel it means the run was not started by this key. |
+| `not_permitted` on a start | The key is read-only. Switch **Allow starting backups** on in the card; no reconnect needed. On a cancel it means the run was not started by this key. |
 | `domain_off` | That backup type is switched off in Settings. |
 | `not_found` | The item is not protected by BombVault. Add it in the web interface first; MCP never creates configuration. |
 

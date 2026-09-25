@@ -155,7 +155,7 @@ Proxy mögött minden kérés a proxy címét viseli. Egyetlen rosszul beállít
 
 - Aktív kulcs nélkül a `/mcp` `404`-gyel válaszol.
 - Nincs kivételezett cím. A `localhost`, az Unraid-gazdagép, egy fordított proxy vagy a `tailscale serve` felől érkező kérésekhez ugyanúgy kulcs kell, mint bármely máshoz, akkor is, ha a webes felületnek nincs bejelentkezési jelszava.
-- A kulcsokat csak ujjlenyomatként tárolja, egyszer jeleníti meg, és átnevezhetők, cserélhetők, visszavonhatók. Legfeljebb 10 aktív kulcs, mindegyik saját **Indíthat mentéseket** kapcsolóval.
+- A kulcsokat csak ujjlenyomatként tárolja, egyszer jeleníti meg, és átnevezhetők, cserélhetők, visszavonhatók. Legfeljebb 10 aktív kulcs, mindegyik saját **Mentések indításának engedélyezése** kapcsolóval.
 - Minden létrehozás, csere, jogosultság-módosítás és visszavonás értesítést küld az értesítési csatornáidon a címmel együtt, ahonnan érkezett, hacsak nincsenek kikapcsolva az értesítések.
 - Címenként percenként 5 hibás kulcs, utána `429`. Kulcsonként percenként 120 kérés és óránként 12 elindított mentés, ehhez jön a fent leírt várakozási idő és a megőrzésvédelem.
 - Egy másik originről érkező böngészőoldal kéréseit elutasítja.
@@ -186,7 +186,7 @@ Mindaz, amit egy asszisztens elolvas, a mögötte álló MI-szolgáltatóhoz ker
 | `cooldown` | Ezt az elemet, ezt a tartományt vagy a Backup Everythinget kevesebb mint 15 perce indították MCP-n keresztül. |
 | `retention_guard` | Még egy MCP-mentés után "az utolsó N megtartása" ablakban csak MCP-ből származó visszaállítási pontok maradnának. A következő ütemezett mentés helyet csinál, vagy indítsd a webes felületen. |
 | `rate_limited` | A kulcs elhasználta az erre az órára jutó 12 indítását. |
-| `not_permitted` indításnál | A kulcs csak olvashat. Kapcsold be az **Indíthat mentéseket** kapcsolót a kártyán; újracsatlakozás nem kell. Megszakításnál azt jelenti, hogy a futást nem ez a kulcs indította. |
+| `not_permitted` indításnál | A kulcs csak olvashat. Kapcsold be az **Mentések indításának engedélyezése** kapcsolót a kártyán; újracsatlakozás nem kell. Megszakításnál azt jelenti, hogy a futást nem ez a kulcs indította. |
 | `domain_off` | Ez a mentésfajta ki van kapcsolva a beállításokban. |
 | `not_found` | A BombVault nem védi ezt az elemet. Előbb vedd fel a webes felületen; az MCP soha nem hoz létre beállítást. |
 

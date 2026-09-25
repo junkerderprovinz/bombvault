@@ -155,7 +155,7 @@ Sau một proxy, mọi yêu cầu đều mang địa chỉ của proxy. Khi đó
 
 - Khi không có khóa đang hoạt động, `/mcp` trả lời `404`.
 - Không địa chỉ nào được miễn. Yêu cầu từ `localhost`, từ máy chủ Unraid, từ reverse proxy hay từ `tailscale serve` đều cần khóa như mọi yêu cầu khác, kể cả khi giao diện web không có mật khẩu đăng nhập.
-- Khóa chỉ được lưu dưới dạng dấu vân tay, chỉ hiện một lần, và có thể đổi tên, thay thế, thu hồi. Tối đa 10 khóa đang hoạt động, mỗi khóa có công tắc **Được phép bắt đầu sao lưu** riêng.
+- Khóa chỉ được lưu dưới dạng dấu vân tay, chỉ hiện một lần, và có thể đổi tên, thay thế, thu hồi. Tối đa 10 khóa đang hoạt động, mỗi khóa có công tắc **Cho phép bắt đầu sao lưu** riêng.
 - Mỗi lần tạo, thay, đổi quyền và thu hồi đều gửi một thông báo qua các kênh thông báo của bạn, kèm địa chỉ gửi yêu cầu, trừ khi thông báo đang tắt.
 - 5 khóa sai mỗi phút cho mỗi địa chỉ, sau đó là `429`. 120 yêu cầu mỗi phút và 12 lần bắt đầu sao lưu mỗi giờ cho mỗi khóa, cộng thêm thời gian chờ và bảo vệ lưu giữ nêu trên.
 - Yêu cầu từ trang trình duyệt có nguồn gốc (origin) khác bị từ chối.
@@ -186,7 +186,7 @@ Mọi thứ trợ lý đọc đều được gửi tới nhà cung cấp AI đ�
 | `cooldown` | Mục này, miền này hoặc Backup Everything đã được bắt đầu qua MCP chưa đầy 15 phút trước. |
 | `retention_guard` | Thêm một lần sao lưu qua MCP nữa sẽ khiến khoảng "giữ N bản gần nhất" chỉ còn các điểm khôi phục từ MCP. Lần sao lưu theo lịch tiếp theo sẽ tạo chỗ trống, hoặc hãy bắt đầu nó trong giao diện web. |
 | `rate_limited` | Khóa đã dùng hết 12 lần bắt đầu của giờ này. |
-| `not_permitted` khi bắt đầu | Khóa chỉ được đọc. Bật **Được phép bắt đầu sao lưu** trong thẻ; không cần kết nối lại. Khi hủy, nó có nghĩa là lần chạy đó không do khóa này bắt đầu. |
+| `not_permitted` khi bắt đầu | Khóa chỉ được đọc. Bật **Cho phép bắt đầu sao lưu** trong thẻ; không cần kết nối lại. Khi hủy, nó có nghĩa là lần chạy đó không do khóa này bắt đầu. |
 | `domain_off` | Loại sao lưu đó đang tắt trong cài đặt. |
 | `not_found` | BombVault không bảo vệ mục đó. Hãy thêm nó trong giao diện web trước; MCP không bao giờ tạo cấu hình. |
 

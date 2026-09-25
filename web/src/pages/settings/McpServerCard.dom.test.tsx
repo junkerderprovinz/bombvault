@@ -353,11 +353,16 @@ describe("a key list", () => {
     expect(screen.getByRole("button", { name: en["mcp.rotate"] })).toBeTruthy();
   });
 
+  it("labels the permission on a key row as it was labelled when the key was created", async () => {
+    await renderCard(payload({ keys: [key()] }));
+    await waitFor(() => expect(screen.getByRole("switch", { name: en["mcp.allowStart"] })).toBeTruthy());
+  });
+
   it("auto-saves the permission toggle and reverts on failure", async () => {
     await renderCard(payload({ keys: [key()] }));
     updateMcpKey.mockResolvedValue({ ok: true, item: key({ canStartBackups: false }) });
 
-    const toggle = () => screen.getByRole("switch", { name: en["mcp.keyCanStart"] });
+    const toggle = () => screen.getByRole("switch", { name: en["mcp.allowStart"] });
     await waitFor(() => expect(toggle().getAttribute("aria-checked")).toBe("true"));
     fireEvent.click(toggle());
 

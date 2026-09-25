@@ -155,7 +155,7 @@ Bakom en proxy bär varje förfrågan proxyns adress. Fem felaktiga nycklar frå
 
 - Utan en aktiv nyckel svarar `/mcp` med `404`.
 - Inga adresser är undantagna. Förfrågningar från `localhost`, Unraid-värden, en omvänd proxy eller `tailscale serve` behöver en nyckel som alla andra, även när webbgränssnittet saknar inloggningslösenord.
-- Nycklar sparas bara som fingeravtryck, visas en gång och kan döpas om, bytas och återkallas. Upp till 10 aktiva nycklar, var och en med sin egen brytare **Får starta säkerhetskopior**.
+- Nycklar sparas bara som fingeravtryck, visas en gång och kan döpas om, bytas och återkallas. Upp till 10 aktiva nycklar, var och en med sin egen brytare **Tillåt att starta säkerhetskopior**.
 - Varje skapande, byte, behörighetsändring och återkallelse skickar en avisering via dina aviseringskanaler, med adressen den kom ifrån, om inte aviseringar är avstängda.
 - 5 felaktiga nycklar per minut och adress, därefter `429`. 120 förfrågningar per minut och 12 startade säkerhetskopior per timme och nyckel, plus väntetiden och lagringsskyddet ovan.
 - Förfrågningar från en webbläsarsida med en annan origin nekas.
@@ -186,7 +186,7 @@ Det som en assistent läser går till AI-leverantören bakom den: objektnamn, sc
 | `cooldown` | Det här objektet, den här domänen eller Backup Everything startades via MCP för mindre än 15 minuter sedan. |
 | `retention_guard` | Ytterligare en MCP-säkerhetskopia skulle bara lämna återställningspunkter från MCP i ett fönster med "behåll de senaste N". Nästa schemalagda säkerhetskopia gör plats, eller starta den i webbgränssnittet. |
 | `rate_limited` | Nyckeln har använt sina 12 starter för den här timmen. |
-| `not_permitted` vid en start | Nyckeln får bara läsa. Slå på **Får starta säkerhetskopior** i kortet; ingen ny anslutning behövs. Vid ett avbrott betyder det att den här nyckeln inte startade körningen. |
+| `not_permitted` vid en start | Nyckeln får bara läsa. Slå på **Tillåt att starta säkerhetskopior** i kortet; ingen ny anslutning behövs. Vid ett avbrott betyder det att den här nyckeln inte startade körningen. |
 | `domain_off` | Den typen av säkerhetskopia är avstängd i inställningarna. |
 | `not_found` | BombVault skyddar inte det objektet. Lägg först till det i webbgränssnittet; MCP skapar aldrig konfiguration. |
 

@@ -155,7 +155,7 @@ Välityspalvelimen takana jokaisessa pyynnössä on välityspalvelimen osoite. V
 
 - Ilman aktiivista avainta `/mcp` vastaa `404`.
 - Mikään osoite ei ole poikkeus. Pyynnöt osoitteesta `localhost`, Unraid-isännältä, käänteiseltä välityspalvelimelta tai `tailscale serve`:ltä tarvitsevat avaimen kuten kaikki muutkin, myös silloin kun verkkokäyttöliittymällä ei ole kirjautumissalasanaa.
-- Avaimet tallennetaan vain sormenjälkinä, näytetään kerran, ja ne voi nimetä uudelleen, vaihtaa ja peruuttaa. Enintään 10 aktiivista avainta, kullakin oma kytkin **Saa käynnistää varmuuskopioita**.
+- Avaimet tallennetaan vain sormenjälkinä, näytetään kerran, ja ne voi nimetä uudelleen, vaihtaa ja peruuttaa. Enintään 10 aktiivista avainta, kullakin oma kytkin **Salli varmuuskopioiden käynnistys**.
 - Jokainen luonti, vaihto, oikeuksien muutos ja peruutus lähettää ilmoituksen ilmoituskanaviesi kautta osoitteen kera, josta se tuli, ellei ilmoituksia ole kytketty pois.
 - 5 väärää avainta minuutissa osoitetta kohden, sen jälkeen `429`. 120 pyyntöä minuutissa ja 12 käynnistettyä varmuuskopiota tunnissa avainta kohden, lisäksi yllä kuvattu odotusaika ja säilytyssuoja.
 - Toisesta originista tulevan selainsivun pyynnöt hylätään.
@@ -186,7 +186,7 @@ Kaikki, mitä avustaja lukee, menee sen takana olevalle tekoälypalvelun tarjoaj
 | `cooldown` | Tämä kohde, tämä toimialue tai Backup Everything käynnistettiin MCP:n kautta alle 15 minuuttia sitten. |
 | `retention_guard` | Vielä yksi MCP-varmuuskopio jättäisi "säilytä viimeiset N" -ikkunaan vain MCP:n tekemiä palautuspisteitä. Seuraava ajastettu varmuuskopio tekee tilaa, tai käynnistä se verkkokäyttöliittymästä. |
 | `rate_limited` | Avain on käyttänyt tämän tunnin 12 käynnistystään. |
-| `not_permitted` käynnistyksessä | Avain saa vain lukea. Kytke **Saa käynnistää varmuuskopioita** päälle kortissa; uutta yhteyttä ei tarvita. Peruutuksessa se tarkoittaa, että tämä avain ei käynnistänyt ajoa. |
+| `not_permitted` käynnistyksessä | Avain saa vain lukea. Kytke **Salli varmuuskopioiden käynnistys** päälle kortissa; uutta yhteyttä ei tarvita. Peruutuksessa se tarkoittaa, että tämä avain ei käynnistänyt ajoa. |
 | `domain_off` | Se varmuuskopiolaji on kytketty pois asetuksista. |
 | `not_found` | BombVault ei suojaa sitä kohdetta. Lisää se ensin verkkokäyttöliittymässä; MCP ei koskaan luo asetuksia. |
 

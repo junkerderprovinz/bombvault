@@ -155,7 +155,7 @@ Dietro un proxy ogni richiesta porta l'indirizzo del proxy. Cinque chiavi sbagli
 
 - Senza una chiave attiva, `/mcp` risponde `404`.
 - Nessun indirizzo è esente. Le richieste da `localhost`, dall'host Unraid, da un reverse proxy o da `tailscale serve` hanno bisogno di una chiave come tutte le altre, anche quando l'interfaccia web non ha una password di accesso.
-- Le chiavi sono salvate solo come impronta, mostrate una sola volta, e si possono rinominare, sostituire e revocare. Fino a 10 chiavi attive, ognuna con il proprio interruttore **Può avviare backup**.
+- Le chiavi sono salvate solo come impronta, mostrate una sola volta, e si possono rinominare, sostituire e revocare. Fino a 10 chiavi attive, ognuna con il proprio interruttore **Consenti di avviare backup**.
 - Ogni creazione, sostituzione, modifica dei permessi e revoca invia una notifica tramite i tuoi canali di notifica, con l'indirizzo da cui è arrivata, a meno che le notifiche siano disattivate.
 - 5 chiavi sbagliate al minuto per indirizzo, poi `429`. 120 richieste al minuto e 12 backup avviati all'ora per chiave, più l'attesa e la protezione della conservazione descritte sopra.
 - Le richieste da una pagina del browser di un'altra origine vengono rifiutate.
@@ -186,7 +186,7 @@ Tutto ciò che un assistente legge va al fornitore di IA che sta dietro: nomi de
 | `cooldown` | Questo elemento, questo dominio o Backup Everything è stato avviato tramite MCP meno di 15 minuti fa. |
 | `retention_guard` | Un altro backup MCP lascerebbe solo punti di ripristino MCP in una finestra "conserva gli ultimi N". Il prossimo backup pianificato fa spazio, oppure avvialo dall'interfaccia web. |
 | `rate_limited` | La chiave ha usato i suoi 12 avvii di quest'ora. |
-| `not_permitted` su un avvio | La chiave è di sola lettura. Attiva **Può avviare backup** nella scheda; non serve riconnettersi. Su un annullamento significa che l'esecuzione non è stata avviata da questa chiave. |
+| `not_permitted` su un avvio | La chiave è di sola lettura. Attiva **Consenti di avviare backup** nella scheda; non serve riconnettersi. Su un annullamento significa che l'esecuzione non è stata avviata da questa chiave. |
 | `domain_off` | Quel tipo di backup è disattivato nelle impostazioni. |
 | `not_found` | BombVault non protegge quell'elemento. Aggiungilo prima nell'interfaccia web; MCP non crea mai configurazione. |
 

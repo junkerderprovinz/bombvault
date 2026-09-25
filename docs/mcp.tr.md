@@ -155,7 +155,7 @@ Bir vekil sunucunun arkasında her istek vekil sunucunun adresini taşır. Yanl�
 
 - Etkin bir anahtar yokken `/mcp` `404` ile yanıt verir.
 - Hiçbir adres muaf değildir. `localhost`, Unraid ana makinesi, bir ters vekil sunucu ya da `tailscale serve` üzerinden gelen istekler de diğerleri gibi anahtar ister; web arayüzünün giriş parolası olmasa bile.
-- Anahtarlar yalnızca parmak izi olarak saklanır, bir kez gösterilir; yeniden adlandırılabilir, değiştirilebilir ve iptal edilebilir. En fazla 10 etkin anahtar, her birinin kendi **Yedekleme başlatabilir** anahtarıyla.
+- Anahtarlar yalnızca parmak izi olarak saklanır, bir kez gösterilir; yeniden adlandırılabilir, değiştirilebilir ve iptal edilebilir. En fazla 10 etkin anahtar, her birinin kendi **Yedekleme başlatmaya izin ver** anahtarıyla.
 - Her oluşturma, değiştirme, izin değişikliği ve iptal, bildirimler kapalı değilse, geldiği adresle birlikte bildirim kanallarınız üzerinden bir bildirim gönderir.
 - Adres başına dakikada 5 yanlış anahtar, ardından `429`. Anahtar başına dakikada 120 istek ve saatte 12 başlatılmış yedekleme; bunlara yukarıdaki bekleme süresi ve saklama koruması eklenir.
 - Başka bir kaynaktan (origin) gelen tarayıcı sayfasının istekleri reddedilir.
@@ -186,7 +186,7 @@ Bir asistanın okuduğu her şey arkasındaki yapay zekâ sağlayıcısına gide
 | `cooldown` | Bu öğe, bu alan ya da Backup Everything 15 dakikadan kısa süre önce MCP üzerinden başlatıldı. |
 | `retention_guard` | Bir MCP yedeği daha, "son N taneyi tut" penceresinde yalnızca MCP'den gelen geri yükleme noktaları bırakırdı. Bir sonraki zamanlanmış yedekleme yer açar ya da yedeklemeyi web arayüzünden başlatın. |
 | `rate_limited` | Anahtar bu saat için 12 başlatmasını kullandı. |
-| Başlatmada `not_permitted` | Anahtar yalnızca okuyabilir. Kartta **Yedekleme başlatabilir** seçeneğini açın; yeniden bağlanmak gerekmez. İptalde, çalıştırmanın bu anahtar tarafından başlatılmadığı anlamına gelir. |
+| Başlatmada `not_permitted` | Anahtar yalnızca okuyabilir. Kartta **Yedekleme başlatmaya izin ver** seçeneğini açın; yeniden bağlanmak gerekmez. İptalde, çalıştırmanın bu anahtar tarafından başlatılmadığı anlamına gelir. |
 | `domain_off` | O yedekleme türü ayarlarda kapalı. |
 | `not_found` | BombVault bu öğeyi korumuyor. Önce web arayüzünde ekleyin; MCP asla yapılandırma oluşturmaz. |
 

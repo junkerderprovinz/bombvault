@@ -92,14 +92,14 @@ const PERIOD_LABEL: Record<PeriodFilter, TranslationKey> = {
   all: "anomaly.filter.periodAll",
 };
 
-// A finding of an item carries the singular domain, one of a whole backup type
+// A finding of an item carries the singular domain, one of a whole domain
 // the plural, so each choice sends both spellings.
 const DOMAIN_FILTERS: { value: string; key: TranslationKey }[] = [
   { value: "container,containers", key: "dashboard.domainContainers" },
   { value: "vm,vms", key: "dashboard.domainVMs" },
+  { value: "flash", key: "dashboard.domainFlash" },
   { value: "files", key: "dashboard.domainFiles" },
   { value: "zfs", key: "dashboard.domainZFS" },
-  { value: "flash", key: "dashboard.domainFlash" },
   { value: "config", key: "dashboard.domainConfig" },
 ];
 
@@ -417,7 +417,7 @@ function FindingsTab({ t, byTarget }: { t: T; byTarget: Map<string, AnomalyItem>
           options={detectorOptions}
         />
         <LabelledSelect
-          label={t("anomaly.filter.domain")}
+          label={t("common.domain")}
           value={filters.domain}
           onChange={(domain: string) => change({ domain })}
           options={domainOptions}

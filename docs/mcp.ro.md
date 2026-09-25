@@ -155,7 +155,7 @@ location /mcp {
 
 - Fără o cheie activă, `/mcp` răspunde `404`.
 - Nicio adresă nu e scutită. Cererile de la `localhost`, de la gazda Unraid, de la un proxy invers sau de la `tailscale serve` au nevoie de o cheie ca oricare altele, chiar și când interfața web nu are parolă de autentificare.
-- Cheile sunt stocate doar ca amprente, arătate o singură dată și pot fi redenumite, înlocuite și revocate. Până la 10 chei active, fiecare cu propriul comutator **Poate porni copii**.
+- Cheile sunt stocate doar ca amprente, arătate o singură dată și pot fi redenumite, înlocuite și revocate. Până la 10 chei active, fiecare cu propriul comutator **Permite pornirea copiilor**.
 - Fiecare creare, înlocuire, schimbare de permisiune și revocare trimite o notificare pe canalele tale de notificare, cu adresa de la care a venit, în afară de cazul în care notificările sunt oprite.
 - 5 chei greșite pe minut de la aceeași adresă, apoi `429`. 120 de cereri pe minut și 12 copii pornite pe oră pentru fiecare cheie, plus așteptarea și protecția păstrării de mai sus.
 - Cererile de la o pagină de browser cu altă origine sunt refuzate.
@@ -186,7 +186,7 @@ Tot ce citește un asistent ajunge la furnizorul de IA din spatele lui: numele e
 | `cooldown` | Acest element, acest domeniu sau Backup Everything a fost pornit prin MCP acum mai puțin de 15 minute. |
 | `retention_guard` | Încă o copie MCP ar lăsa doar puncte de restaurare din MCP într-o fereastră "păstrează ultimele N". Următoarea copie programată face loc, sau pornește copia din interfața web. |
 | `rate_limited` | Cheia și-a consumat cele 12 porniri din această oră. |
-| `not_permitted` la o pornire | Cheia poate doar să citească. Pornește **Poate porni copii** în card; nu e nevoie de reconectare. La o anulare înseamnă că rularea nu a fost pornită de această cheie. |
+| `not_permitted` la o pornire | Cheia poate doar să citească. Pornește **Permite pornirea copiilor** în card; nu e nevoie de reconectare. La o anulare înseamnă că rularea nu a fost pornită de această cheie. |
 | `domain_off` | Acel tip de copie e oprit în setări. |
 | `not_found` | BombVault nu protejează acel element. Adaugă-l întâi în interfața web; MCP nu creează niciodată configurație. |
 

@@ -155,7 +155,7 @@ Za proxy nese každý požadavek adresu proxy. Pět špatných klíčů od jedin
 
 - Bez aktivního klíče odpovídá `/mcp` kódem `404`.
 - Žádná adresa nemá výjimku. Požadavky z `localhost`, z hostitele Unraid, z reverzní proxy nebo z `tailscale serve` potřebují klíč jako všechny ostatní, i když webové rozhraní nemá přihlašovací heslo.
-- Klíče se ukládají jen jako otisky, zobrazí se jednou a lze je přejmenovat, nahradit a odvolat. Až 10 aktivních klíčů, každý s vlastním přepínačem **Smí spouštět zálohy**.
+- Klíče se ukládají jen jako otisky, zobrazí se jednou a lze je přejmenovat, nahradit a odvolat. Až 10 aktivních klíčů, každý s vlastním přepínačem **Povolit spouštění záloh**.
 - Každé vytvoření, nahrazení, změna oprávnění a odvolání odešle oznámení vašimi kanály oznámení i s adresou, odkud přišlo, pokud oznámení nemáte vypnutá.
 - 5 špatných klíčů za minutu na adresu, pak `429`. 120 požadavků za minutu a 12 spuštěných záloh za hodinu na klíč, k tomu výše popsaná čekací doba a ochrana uchovávání.
 - Požadavky ze stránky prohlížeče s jiným originem se odmítají.
@@ -186,7 +186,7 @@ Vše, co asistent přečte, odchází k poskytovateli umělé inteligence za ní
 | `cooldown` | Tato položka, tato doména nebo Backup Everything byla přes MCP spuštěna před méně než 15 minutami. |
 | `retention_guard` | Další záloha přes MCP by v okně "ponechat posledních N" nechala jen body obnovy z MCP. Místo udělá další naplánovaná záloha, nebo ji spusťte ve webovém rozhraní. |
 | `rate_limited` | Klíč vyčerpal svých 12 spuštění pro tuto hodinu. |
-| `not_permitted` při spuštění | Klíč smí jen číst. Zapněte v kartě **Smí spouštět zálohy**; nové připojení není potřeba. U zrušení to znamená, že běh nespustil tento klíč. |
+| `not_permitted` při spuštění | Klíč smí jen číst. Zapněte v kartě **Povolit spouštění záloh**; nové připojení není potřeba. U zrušení to znamená, že běh nespustil tento klíč. |
 | `domain_off` | Tento druh zálohy je v nastavení vypnutý. |
 | `not_found` | BombVault tuto položku nechrání. Nejdřív ji přidejte ve webovém rozhraní; MCP nikdy nevytváří konfiguraci. |
 

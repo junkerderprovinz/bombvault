@@ -155,7 +155,7 @@ Atrás de um proxy, cada pedido traz o endereço do proxy. Cinco chaves erradas 
 
 - Sem uma chave ativa, `/mcp` responde `404`.
 - Nenhum endereço está isento. Pedidos vindos de `localhost`, do anfitrião Unraid, de um proxy inverso ou de `tailscale serve` precisam de uma chave como qualquer outro, também quando a interface web não tem palavra-passe de início de sessão.
-- As chaves só são guardadas como impressão digital, mostradas uma vez, e podem ser renomeadas, substituídas e revogadas. Até 10 chaves ativas, cada uma com o seu interruptor **Pode iniciar cópias**.
+- As chaves só são guardadas como impressão digital, mostradas uma vez, e podem ser renomeadas, substituídas e revogadas. Até 10 chaves ativas, cada uma com o seu interruptor **Permitir iniciar cópias**.
 - Cada criação, substituição, mudança de permissão e revogação envia uma notificação pelos seus canais de notificação, com o endereço de onde veio, a não ser que as notificações estejam desligadas.
 - 5 chaves erradas por minuto e por endereço, depois `429`. 120 pedidos por minuto e 12 cópias iniciadas por hora e por chave, mais a espera e a proteção da retenção descritas acima.
 - Pedidos de uma página de navegador de outra origem são recusados.
@@ -186,7 +186,7 @@ Tudo o que um assistente lê vai para o fornecedor de IA por trás dele: nomes d
 | `cooldown` | Este elemento, este domínio ou Backup Everything foi iniciado por MCP há menos de 15 minutos. |
 | `retention_guard` | Mais uma cópia MCP deixaria só pontos de restauro vindos de MCP numa janela "manter os últimos N". A próxima cópia agendada abre espaço, ou inicie-a na interface web. |
 | `rate_limited` | A chave gastou os seus 12 inícios desta hora. |
-| `not_permitted` num início | A chave é só de leitura. Ligue **Pode iniciar cópias** no cartão; não é preciso voltar a ligar. Num cancelamento significa que a execução não foi iniciada por esta chave. |
+| `not_permitted` num início | A chave é só de leitura. Ligue **Permitir iniciar cópias** no cartão; não é preciso voltar a ligar. Num cancelamento significa que a execução não foi iniciada por esta chave. |
 | `domain_off` | Esse tipo de cópia está desligado nas definições. |
 | `not_found` | O BombVault não protege esse elemento. Acrescente-o primeiro na interface web; o MCP nunca cria configuração. |
 

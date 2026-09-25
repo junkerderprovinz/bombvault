@@ -11,7 +11,7 @@ import { Card, ToggleRow } from "./shared";
 import { useRef, useState } from "react";
 
 const IMPORT_GROUP_KEYS: Record<string, TranslationKey> = {
-  domains: "settingsIO.group.domains",
+  domains: "settings.domains",
   schedules: "settingsIO.group.schedules",
   everything: "settingsIO.group.everything",
   retention: "settingsIO.group.retention",

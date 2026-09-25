@@ -215,8 +215,16 @@ describe("the findings tab's filters", () => {
 
   it("narrows to the findings about ZFS datasets", async () => {
     await renderPage();
-    await pick(en["anomaly.filter.domain"], en["dashboard.domainZFS"]);
+    await pick(en["common.domain"], en["dashboard.domainZFS"]);
     expect(getAnomalies.mock.calls.at(-1)![0]!.domain).toBe("zfs");
+  });
+
+  it("lists the domains in the sidebar's order", async () => {
+    await renderPage();
+    fireEvent.click(screen.getByRole("combobox", { name: en["common.domain"] }));
+    const options = screen.getAllByRole("option").map((o) => o.textContent);
+    const sidebar = ["nav.containers", "nav.vms", "nav.flash", "nav.files", "nav.zfs", "nav.config"] as const;
+    expect(options.filter((o) => sidebar.some((k) => en[k] === o))).toEqual(sidebar.map((k) => en[k]));
   });
 
   it("narrows to one item from the query string and lets that go again", async () => {
