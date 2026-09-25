@@ -949,7 +949,6 @@ const vi: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Kiểm tra kết nối",
-  "offsite.repoLocalHint": "Cũng chấp nhận một thư mục thường nằm dưới điểm gắn \"Host Data\": hãy nhập đường dẫn tương đối so với điểm gắn đó, không có /mnt ở đầu. Chia sẻ tại /mnt/remotes/nas/bombvault được nhập là remotes/nas/bombvault.",
   "offsite.tamperOk": "xóa bị từ chối, chế độ chỉ ghi thêm đang hoạt động",
   "offsite.tamperFail": "KHÔNG được bảo vệ",
   "offsite.tamperUnverifiable": "không thể xác minh với loại kho này",

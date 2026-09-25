@@ -322,7 +322,6 @@ const lv: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "Replicē… {percent}% kopā (momentuzņēmums {index} no {total}) · {duration}",
   "offsite.overallPercentHint": "Šīs replicēšanas kopējā gaita, skaitīta momentuzņēmumos: restic ziņo gaitu vienmēr tikai par vienu momentuzņēmumu, nekad par visu kopēšanu. Momentuzņēmumi atšķiras pēc lieluma, tāpēc uztver to kā aptuvenu vērtējumu.",
   "offsite.test": "Pārbaudīt savienojumu",
-  "offsite.repoLocalHint": "Pieņem arī parastu mapi zem „Host Data” piesaistes. Ievadiet to relatīvi šai piesaistei, bez sākuma /mnt: koplietojums /mnt/remotes/nas/bombvault tiek ievadīts kā remotes/nas/bombvault.",
   // Off-site setup wizard
   "offsite.tamperOk": "dzēšana noraidīta, tikai-pievienot ir aktīvs",
   "offsite.tamperFail": "NAV aizsargāts",

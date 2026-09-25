@@ -951,7 +951,6 @@ const uk: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Перевірити з'єднання",
-  "offsite.repoLocalHint": "Приймається також звичайна тека всередині монтування \"Host Data\": вкажіть її відносно цього монтування, без початкового /mnt. Спільний ресурс у /mnt/remotes/nas/bombvault вказується як remotes/nas/bombvault.",
   "offsite.tamperOk": "видалення відхилено — режим append-only активний",
   "offsite.tamperFail": "НЕ захищено",
   "offsite.tamperUnverifiable": "неможливо перевірити для цього типу репозиторію",

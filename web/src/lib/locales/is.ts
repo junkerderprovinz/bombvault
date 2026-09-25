@@ -322,7 +322,6 @@ const is: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "Fjarafrita… {percent}% alls (snapshot {index} af {total}) · {duration}",
   "offsite.overallPercentHint": "Heildarframvinda þessarar fjarafritunar, talin í tökum: restic tilkynnir framvindu alltaf aðeins fyrir eitt tak í einu, aldrei fyrir heila afritun. Tökin eru mismunandi stór, svo líttu á þetta sem áætlun.",
   "offsite.test": "Prófa tengingu",
-  "offsite.repoLocalHint": "Tekur einnig við venjulegri möppu undir „Host Data“ tengipunktinum. Sláðu hana inn miðað við þann tengipunkt, án upphafs /mnt: sameign á /mnt/remotes/nas/bombvault er slegin inn sem remotes/nas/bombvault.",
   // Off-site setup wizard
   "offsite.tamperOk": "eyðingu hafnað, aðeins-bæta-við virkt",
   "offsite.tamperFail": "EKKI varið",

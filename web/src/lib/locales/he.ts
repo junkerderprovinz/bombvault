@@ -937,7 +937,6 @@ const he: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "בדוק חיבור",
-  "offsite.repoLocalHint": "אפשר גם תיקייה רגילה מתחת לעיגון \"Host Data\": יש להזין אותה יחסית לעיגון הזה, בלי /mnt בהתחלה. שיתוף שנמצא ב-/mnt/remotes/nas/bombvault מוזן כ-remotes/nas/bombvault.",
   "offsite.tamperOk": "המחיקה נדחתה, מצב הוספה-בלבד פעיל",
   "offsite.tamperFail": "לא מוגן",
   "offsite.tamperUnverifiable": "לא ניתן לאימות עבור סוג מאגר זה",

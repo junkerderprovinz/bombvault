@@ -322,7 +322,6 @@ const lt: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "Replikuojama… {percent}% iš viso (momentinė kopija {index} iš {total}) · {duration}",
   "offsite.overallPercentHint": "Bendra šio replikavimo eiga, skaičiuojama momentinėmis kopijomis: restic praneša eigą visada tik apie vieną momentinę kopiją, niekada apie visą kopijavimą. Momentinės kopijos skiriasi dydžiu, tad laikyk tai apytiksliu įverčiu.",
   "offsite.test": "Tikrinti ryšį",
-  "offsite.repoLocalHint": "Taip pat priima paprastą aplanką po „Host Data“ prijungimu. Įveskite jį santykinai su tuo prijungimu, be pradinio /mnt: bendrinamas aplankas /mnt/remotes/nas/bombvault įvedamas kaip remotes/nas/bombvault.",
   // Off-site setup wizard
   "offsite.tamperOk": "trynimas atmestas, tik-pridėjimas aktyvus",
   "offsite.tamperFail": "NEAPSAUGOTA",

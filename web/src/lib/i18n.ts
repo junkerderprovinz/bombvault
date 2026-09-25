@@ -414,7 +414,6 @@ export const en = {
   // caveat belongs behind an info bubble, not as permanent prose on the line.
   "offsite.overallPercentHint": "Overall progress for this replication run, counted in snapshots: restic only ever reports progress for one snapshot at a time, never for a whole copy. Snapshots differ in size, so treat this as an estimate.",
   "offsite.test": "Test connection",
-  "offsite.repoLocalHint": "Also accepts a plain folder under the \"Host Data\" mount. Enter it relative to that mount, without the leading /mnt: a share at /mnt/remotes/nas/bombvault is entered as remotes/nas/bombvault.",
   // Tamper verdicts carry no ✓/✗ glyph: the integrity card renders it as its
   // own JSX node so RTL locales (ar/he) place it correctly.
   "offsite.tamperOk": "delete refused, append-only active",
@@ -2616,7 +2615,6 @@ export const de: Translations = {
   "offsite.replicatingSnapshotPercentWithDuration": "Repliziere… {percent} % gesamt (Snapshot {index} von {total}) · {duration}",
   "offsite.overallPercentHint": "Gesamtfortschritt dieses Replikationslaufs, gezählt in Snapshots: restic meldet Fortschritt immer nur für einen einzelnen Snapshot, nie für einen ganzen Kopiervorgang. Snapshots sind unterschiedlich groß, das hier ist also ein Schätzwert.",
   "offsite.test": "Verbindung testen",
-  "offsite.repoLocalHint": "Nimmt auch einen normalen Ordner unter dem \"Host Data\"-Mount. Relativ zu diesem Mount eintragen, ohne führendes /mnt: eine Freigabe unter /mnt/remotes/nas/bombvault wird als remotes/nas/bombvault eingetragen.",
   "offsite.tamperOk": "Löschen verweigert, Append-only aktiv",
   "offsite.tamperFail": "NICHT geschützt",
   "offsite.tamperUnverifiable": "für diesen Repository-Typ nicht überprüfbar",

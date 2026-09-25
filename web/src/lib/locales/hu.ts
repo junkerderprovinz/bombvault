@@ -940,7 +940,6 @@ const hu: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Kapcsolat tesztelése",
-  "offsite.repoLocalHint": "Egy egyszerű mappát is elfogad a \"Host Data\" csatolási ponton belül: adja meg ehhez a csatoláshoz képest, a kezdő /mnt nélkül. A /mnt/remotes/nas/bombvault megosztás megadása: remotes/nas/bombvault.",
   "offsite.tamperOk": "a törlés elutasítva: append-only aktív",
   "offsite.tamperFail": "NINCS védve",
   "offsite.tamperUnverifiable": "ennél a tárolótípusnál nem ellenőrizhető",

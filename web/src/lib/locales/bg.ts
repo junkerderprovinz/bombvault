@@ -322,7 +322,6 @@ const bg: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "Репликация… {percent}% общо (снапшот {index} от {total}) · {duration}",
   "offsite.overallPercentHint": "Общ напредък на този репликационен цикъл, отчетен в снапшоти: restic съобщава напредък винаги само за един снапшот, никога за цялото копиране. Снапшотите са с различен размер, затова приемай това като приблизителна оценка.",
   "offsite.test": "Провери връзката",
-  "offsite.repoLocalHint": "Приема също и обикновена папка под монтирането „Host Data“ — въведи я относително спрямо това монтиране, без водещо /mnt: споделяне на /mnt/remotes/nas/bombvault се въвежда като remotes/nas/bombvault.",
   // Off-site setup wizard
   "offsite.tamperOk": "изтриването е отказано — само-добавянето е активно",
   "offsite.tamperFail": "НЕ е защитено",

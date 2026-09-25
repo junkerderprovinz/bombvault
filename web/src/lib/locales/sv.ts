@@ -956,7 +956,6 @@ const sv: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Testa anslutning",
-  "offsite.repoLocalHint": "Godtar även en vanlig mapp under monteringen \"Host Data\": ange den relativt den monteringen, utan inledande /mnt. En utdelning i /mnt/remotes/nas/bombvault anges som remotes/nas/bombvault.",
   "offsite.tamperOk": "radering nekad, append-only aktivt",
   "offsite.tamperFail": "EJ skyddat",
   "offsite.tamperUnverifiable": "kan inte verifieras för denna repotyp",

@@ -322,7 +322,6 @@ const et: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "Replitseerimine… {percent}% kokku (hetktõmmis {index}/{total}) · {duration}",
   "offsite.overallPercentHint": "Selle replitseerimise üldine edenemine, loetuna hetktõmmistes: restic teatab edenemist alati ainult ühe hetktõmmise kohta, mitte kunagi kogu kopeerimise kohta. Hetktõmmised on eri suurusega, seega võta seda hinnanguna.",
   "offsite.test": "Testi ühendust",
-  "offsite.repoLocalHint": "Aktsepteerib ka tavalist kausta „Host Data” haakepunkti all. Sisesta see selle haakepunkti suhtes, ilma alguse /mnt-ta: jagatud kaust /mnt/remotes/nas/bombvault sisestatakse kui remotes/nas/bombvault.",
   // Off-site setup wizard
   "offsite.tamperOk": "kustutamine tagasi lükatud, ainult-lisamine aktiivne",
   "offsite.tamperFail": "EI ole kaitstud",

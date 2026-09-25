@@ -956,7 +956,6 @@ const tr: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Bağlantıyı test et",
-  "offsite.repoLocalHint": "\"Host Data\" bağlama noktası altındaki düz bir klasörü de kabul eder: bu bağlama noktasına göre, baştaki /mnt olmadan girin. /mnt/remotes/nas/bombvault konumundaki bir paylaşım remotes/nas/bombvault olarak girilir.",
   "offsite.tamperOk": "silme reddedildi, salt-ekleme etkin",
   "offsite.tamperFail": "KORUMASIZ",
   "offsite.tamperUnverifiable": "bu depo türü için doğrulanamaz",

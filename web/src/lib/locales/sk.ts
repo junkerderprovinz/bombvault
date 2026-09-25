@@ -322,7 +322,6 @@ const sk: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "Replikuje sa… {percent} % celkovo (snímka {index} z {total}) · {duration}",
   "offsite.overallPercentHint": "Celkový priebeh tejto replikácie, počítaný v snímkach: restic hlási priebeh vždy len pre jednu snímku, nikdy pre celé kopírovanie. Snímky majú rôznu veľkosť, ber to teda ako odhad.",
   "offsite.test": "Otestovať pripojenie",
-  "offsite.repoLocalHint": "Prijíma aj bežný priečinok pod pripojením „Host Data“. Zadajte ho relatívne k tomuto pripojeniu, bez úvodného /mnt: zdieľanie na /mnt/remotes/nas/bombvault sa zadá ako remotes/nas/bombvault.",
   // Off-site setup wizard
   "offsite.tamperOk": "odstránenie odmietnuté, len-na-pridávanie je aktívne",
   "offsite.tamperFail": "NIE je chránené",

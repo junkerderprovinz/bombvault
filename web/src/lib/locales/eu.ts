@@ -322,7 +322,6 @@ const eu: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "Errepikatzen… %{percent} guztira ({index}/{total} argazkia) · {duration}",
   "offsite.overallPercentHint": "Errepikapen honen aurrerapen orokorra, argazkitan zenbatuta: resticek argazki bakar baten aurrerapena jakinarazten du beti, inoiz ez kopia osoarena. Argazkiek tamaina desberdina dute, beraz hartu hau gutxi gorabeherako kalkulu gisa.",
   "offsite.test": "Probatu konexioa",
-  "offsite.repoLocalHint": "Baita karpeta arrunt bat ere onartzen du «Host Data» muntaketaren azpian. Sartu muntaketa horren erlatiboa, hasierako /mnt gabe: /mnt/remotes/nas/bombvault partekatzea remotes/nas/bombvault gisa sartzen da.",
   // Off-site setup wizard
   "offsite.tamperOk": "ezabatzea ukatuta, gehitu-soilik aktibo",
   "offsite.tamperFail": "EZ dago babestuta",

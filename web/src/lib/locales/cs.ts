@@ -954,7 +954,6 @@ const cs: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Otestovat připojení",
-  "offsite.repoLocalHint": "Přijímá i běžnou složku v připojení \"Host Data\": zadejte ji relativně k tomuto připojení, bez úvodního /mnt. Sdílení v /mnt/remotes/nas/bombvault se zadá jako remotes/nas/bombvault.",
   "offsite.tamperOk": "smazání odmítnuto, append-only aktivní",
   "offsite.tamperFail": "NENÍ chráněno",
   "offsite.tamperUnverifiable": "u tohoto typu repozitáře nelze ověřit",

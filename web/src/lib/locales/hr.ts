@@ -322,7 +322,6 @@ const hr: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "Repliciranje… {percent}% ukupno (snimka {index} od {total}) · {duration}",
   "offsite.overallPercentHint": "Ukupni napredak ovog repliciranja, brojen u snimkama: restic javlja napredak uvijek samo za jednu snimku, nikada za cijelo kopiranje. Snimke su različite veličine pa ovo shvati kao procjenu.",
   "offsite.test": "Testiraj vezu",
-  "offsite.repoLocalHint": "Prihvaća i običnu mapu ispod montiranja „Host Data”. Unesite je relativno na to montiranje, bez početnog /mnt: dijeljena mapa na /mnt/remotes/nas/bombvault unosi se kao remotes/nas/bombvault.",
   // Off-site setup wizard
   "offsite.tamperOk": "brisanje odbijeno: samo-dodavanje aktivno",
   "offsite.tamperFail": "NIJE zaštićeno",

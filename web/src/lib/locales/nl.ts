@@ -930,7 +930,6 @@ const nl: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Verbinding testen",
-  "offsite.repoLocalHint": "Accepteert ook een gewone map onder de \"Host Data\"-koppeling: geef die op relatief aan die koppeling, zonder de /mnt ervoor. Een share op /mnt/remotes/nas/bombvault geef je op als remotes/nas/bombvault.",
   "offsite.tamperOk": "verwijderen geweigerd, append-only actief",
   "offsite.tamperFail": "NIET beschermd",
   "offsite.tamperUnverifiable": "niet verifieerbaar voor dit type repository",

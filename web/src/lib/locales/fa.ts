@@ -322,7 +322,6 @@ const fa: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "در حال همانندسازی… {percent}٪ در کل (اسنپ‌شات {index} از {total}) · {duration}",
   "offsite.overallPercentHint": "پیشرفت کلی این همانندسازی، شمرده‌شده بر حسب اسنپ‌شات: restic همیشه فقط پیشرفت یک اسنپ‌شات را گزارش می‌کند، هرگز کل کپی را. اندازهٔ اسنپ‌شات‌ها متفاوت است، پس این را یک برآورد در نظر بگیر.",
   "offsite.test": "آزمایش اتصال",
-  "offsite.repoLocalHint": "همچنین یک پوشه معمولی زیر اتصال «Host Data» را می‌پذیرد. آن را نسبت به همین اتصال وارد کنید، بدون /mnt ابتدایی: یک اشتراک در /mnt/remotes/nas/bombvault به‌صورت remotes/nas/bombvault وارد می‌شود.",
   // Off-site setup wizard
   "offsite.tamperOk": "حذف رد شد، فقط-افزودنی فعال است",
   "offsite.tamperFail": "محافظت‌نشده",

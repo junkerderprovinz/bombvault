@@ -930,7 +930,6 @@ const ko: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "연결 테스트",
-  "offsite.repoLocalHint": "\"Host Data\" 마운트 아래의 일반 폴더도 사용할 수 있습니다. 앞의 /mnt 없이 해당 마운트를 기준으로 한 상대 경로로 입력하세요. /mnt/remotes/nas/bombvault 공유는 remotes/nas/bombvault로 입력합니다.",
   "offsite.tamperOk": "삭제가 거부됨, 추가 전용 활성",
   "offsite.tamperFail": "보호되지 않음",
   "offsite.tamperUnverifiable": "이 저장소 유형에서는 검증할 수 없음",

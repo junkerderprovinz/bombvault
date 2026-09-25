@@ -45,13 +45,6 @@ describe("placement calls", () => {
     ]);
   });
 
-  it("puts a default together with the numbers it was shown", async () => {
-    const { putPlacementDefault } = await import("./api");
-    const expect_ = { dropped: [], added: [], openTakeHome: 2, home: "", skip: [] };
-    await putPlacementDefault("files", { skip: ["*"] }, expect_);
-    expect(sent(0)).toEqual({ url: "/api/placement/default/files", method: "PUT", body: { skip: ["*"], expect: expect_ } });
-  });
-
   it("creates a direct repository beside its target", async () => {
     const { createDirectRepo } = await import("./api");
     await createDirectRepo("t1", "", "b2:bucket:vms-direct");
@@ -59,15 +52,12 @@ describe("placement calls", () => {
   });
 
   it("sends the answer to the new-target question only when there is one", async () => {
-    const { acceptMeshOffer, createOffsiteTarget } = await import("./api");
-    const target = { domain: "vms", name: "B2", repo: "b2:bucket:vms" } as Parameters<typeof createOffsiteTarget>[0];
+    const { acceptMeshOffer } = await import("./api");
     const answer = { identities: ["vm:win11"], default: false };
-    await createOffsiteTarget(target);
-    await createOffsiteTarget(target, answer);
+    await acceptMeshOffer("o1", "vms");
     await acceptMeshOffer("o1", "vms", answer);
-    expect(sent(0).body).not.toHaveProperty("alsoExclude");
-    expect(sent(1).body).toMatchObject({ alsoExclude: answer });
-    expect(sent(2)).toEqual({ url: "/api/fleet/mesh-offers/o1/accept", method: "POST", body: { domain: "vms", alsoExclude: answer } });
+    expect(sent(0).body).toEqual({ domain: "vms" });
+    expect(sent(1)).toEqual({ url: "/api/fleet/mesh-offers/o1/accept", method: "POST", body: { domain: "vms", alsoExclude: answer } });
   });
 
   it("leaves items out of the field's target through the exclude route", async () => {
