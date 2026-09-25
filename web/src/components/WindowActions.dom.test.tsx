@@ -7,7 +7,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { I18nProvider, countText, en, type TranslationKey, type useT } from "../lib/i18n";
 import type { FileSetView, FleetPeer } from "../lib/api";
@@ -266,5 +266,24 @@ describe.each(WINDOWS)("$name", (w) => {
 
     // The shared row, also where a part of the window renders it.
     expect(row.className, "the row is WindowActions").toBe(sharedRow());
+  });
+});
+
+describe("the folder picker inside the folder set window", () => {
+  // In place the picker has no window of its own, so its pair ends the panel
+  // in a row that wraps and spaces like WindowActions, without the window's
+  // padding.
+  it("ends its panel in a row laid out like WindowActions", async () => {
+    shown(<FileSetDialog initial={documents} presetSeed={null} hostMountRoot="/mnt/user" t={t} onClose={() => {}} onSaved={() => {}} />);
+    await act(async () => screen.getByRole("button", { name: en["folder.browseTitle"] }).click());
+
+    const use = screen.getByRole("button", { name: en["folder.use"] });
+    const row = use.closest<HTMLElement>(".justify-end")!;
+    const close = within(row).getByRole("button", { name: en["common.close"] });
+    expect(close.compareDocumentPosition(use) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(row.parentElement!.lastElementChild).toBe(row);
+
+    const layout = (cls: string) => cls.split(/\s+/).filter((c) => !/^(?:p[xy]?|shrink)-/.test(c)).sort();
+    expect(layout(row.className)).toEqual(layout(sharedRow()));
   });
 });
