@@ -238,8 +238,7 @@ func (s *Service) directLocation(settings store.Settings, location string) (stri
 }
 
 // probeDirectLocation is the create dialog's connection test. It opens location
-// with the target's credentials and writes nothing; a local path that does not
-// exist yet, or is empty, counts as reachable and empty.
+// with the target's credentials and writes nothing.
 func (s *Service) probeDirectLocation(ctx context.Context, target store.OffsiteTarget, location string) (reachable, initialized bool, err error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -249,13 +248,21 @@ func (s *Service) probeDirectLocation(ctx context.Context, target store.OffsiteT
 	if err != nil {
 		return false, false, err
 	}
+	return s.probeLocation(ctx, loc, s.offsiteModeForTarget(settings, target))
+}
+
+// probeLocation opens a resolved location read-only and writes nothing. A local
+// path that does not exist yet, or is empty, counts as reachable and empty
+// without running restic, and a key the backend turned away comes back as
+// errDirectAccessDenied.
+func (s *Service) probeLocation(ctx context.Context, loc string, mode restic.Mode) (reachable, initialized bool, err error) {
 	if !restic.IsRemoteRepo(loc) {
 		entries, rErr := os.ReadDir(loc)
 		if errors.Is(rErr, fs.ErrNotExist) || (rErr == nil && len(entries) == 0) {
 			return true, false, nil
 		}
 	}
-	reachable, initialized, err = s.probeOffsiteRepo(ctx, loc, s.offsiteModeForTarget(settings, target))
+	reachable, initialized, err = s.probeOffsiteRepo(ctx, loc, mode)
 	var pathUser *restPathUserErr
 	if err != nil && !errors.As(err, &pathUser) && isAccessDenied(err) {
 		err = fmt.Errorf("%w: %s", errDirectAccessDenied, err.Error())

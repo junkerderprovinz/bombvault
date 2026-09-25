@@ -16,11 +16,12 @@ type envEngine struct {
 	*placementEngine
 	envs   map[string][]string // by slash-spelled location
 	copies [][]string          // the environment of each Copy, in order
+	ids    map[string]string   // repository id by slash-spelled location
 }
 
 // newEnvEngine puts an envEngine in front of the fixture's engine.
 func newEnvEngine(f *placementFixture) *envEngine {
-	e := &envEngine{placementEngine: f.eng, envs: map[string][]string{}}
+	e := &envEngine{placementEngine: f.eng, envs: map[string][]string{}, ids: map[string]string{}}
 	f.svc.engine = e
 	return e
 }
