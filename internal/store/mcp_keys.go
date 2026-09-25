@@ -281,8 +281,14 @@ func (r *Repo) PurgeMCPKey(id string) error {
 	if used {
 		return ErrMCPKeyInUse
 	}
-	if _, err := tx.Exec(`DELETE FROM mcp_keys WHERE id = ?`, id); err != nil {
-		return fmt.Errorf("PurgeMCPKey: %w", err)
+	for _, q := range []string{
+		`DELETE FROM mcp_key_events WHERE key_id = ?`,
+		`DELETE FROM mcp_key_calls WHERE key_id = ?`,
+		`DELETE FROM mcp_keys WHERE id = ?`,
+	} {
+		if _, err := tx.Exec(q, id); err != nil {
+			return fmt.Errorf("PurgeMCPKey: %w", err)
+		}
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("PurgeMCPKey commit: %w", err)

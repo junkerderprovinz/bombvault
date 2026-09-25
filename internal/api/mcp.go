@@ -107,6 +107,9 @@ type mcpState struct {
 
 	touchMu sync.Mutex
 	touched map[string]int64
+	// refused is when each key's gate refusal of each kind last reached its
+	// log, under touchMu.
+	refused map[string]int64
 
 	authLogMu sync.Mutex
 	authLog   map[string]int64
@@ -132,6 +135,7 @@ func newMCPState() *mcpState {
 		starts:    newSlidingWindow(time.Hour, mcpStartsPerHour),
 		listSem:   make(chan struct{}, 1),
 		touched:   map[string]int64{},
+		refused:   map[string]int64{},
 		authLog:   map[string]int64{},
 		requests:  map[string]uint64{},
 		toolCalls: map[mcpToolOutcome]uint64{},
@@ -225,6 +229,7 @@ func (h *Handler) serveMCP(w http.ResponseWriter, r *http.Request) {
 	now := h.mcp.now()
 	if allowed, retry := h.mcp.calls.allow(k.ID, now); !allowed {
 		h.countMCPRequest("rate_limited")
+		h.recordMCPRefusal(k.ID, "rate_limited", now)
 		w.Header().Set("Retry-After", retryAfterSeconds(retry))
 		writeJSON(w, http.StatusTooManyRequests, map[string]any{"error": "too many requests for this key"})
 		return
@@ -236,6 +241,7 @@ func (h *Handler) serveMCP(w http.ResponseWriter, r *http.Request) {
 	if r.ContentLength <= mcpMaxBody {
 		if batch, _ := isBatchBody(r); batch {
 			h.countMCPRequest("batch_refused")
+			h.recordMCPRefusal(k.ID, "batch_refused", now)
 			writeMCPJSONRPCError(w, http.StatusBadRequest, mcpInvalidRequest, "batch requests are not accepted")
 			return
 		}
@@ -324,6 +330,30 @@ func (h *Handler) touchMCPKey(k store.MCPKey, addr string, now time.Time) {
 	}
 	if err := h.store.TouchMCPKey(k.ID, now.Unix(), addr); err != nil {
 		log.Printf("api: mcp: key %s ...%s: could not record its last use: %v", k.ID, k.Hint, err)
+	}
+}
+
+// recordMCPRefusal puts a request the gate turned away into the key's log, at
+// most once per mcpTouchEvery for each key and reason, so a client looping on a
+// refusal does not keep the database busy writing about it.
+func (h *Handler) recordMCPRefusal(keyID, outcome string, now time.Time) {
+	mark := keyID + "|" + outcome
+	h.mcp.touchMu.Lock()
+	recent := now.Unix()-h.mcp.refused[mark] < int64(mcpTouchEvery.Seconds())
+	if !recent {
+		h.mcp.refused[mark] = now.Unix()
+	}
+	h.mcp.touchMu.Unlock()
+	if !recent {
+		h.recordMCPEvent(keyID, store.MCPKeyEvent{At: now.Unix(), Outcome: outcome})
+	}
+}
+
+// recordMCPEvent writes one entry of a key's log. Like the last-use stamp it
+// must not fail the request, so an error is logged and nothing more.
+func (h *Handler) recordMCPEvent(keyID string, e store.MCPKeyEvent) {
+	if err := h.store.RecordMCPKeyEvent(keyID, e); err != nil {
+		log.Printf("api: mcp: key %s: could not record %q -> %s: %v", keyID, e.Tool, e.Outcome, err)
 	}
 }
 

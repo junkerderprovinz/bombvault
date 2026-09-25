@@ -40,15 +40,18 @@ type diagManifest struct {
 }
 
 // diagMCP is everything the bundle says about the MCP keys: how many there are,
-// how many may start backups, how many an APP_KEY change broke, and when a
-// client last used one. A key's name is the operator's own word for one of
-// their machines and the hint identifies the key itself, so neither belongs in
-// a file written to be attached to a bug report.
+// how many may start backups, how many an APP_KEY change broke, when a client
+// last used one, and how many calls and refusals their logs hold. A key's name
+// is the operator's own word for one of their machines and the hint identifies
+// the key itself, so neither belongs in a file written to be attached to a bug
+// report, and neither does the log itself.
 type diagMCP struct {
 	ActiveKeys         int   `json:"activeKeys"`
 	KeysAllowedToStart int   `json:"keysAllowedToStart"`
 	UnusableKeys       int   `json:"unusableKeys"`
 	LastUsedAt         int64 `json:"lastUsedAt"`
+	ActivityEvents     int   `json:"activityEvents"`
+	ActivityRefusals   int   `json:"activityRefusals"`
 }
 
 // mcpDiagnostics counts the keys for the manifest.
@@ -58,6 +61,10 @@ func (h *Handler) mcpDiagnostics() (diagMCP, error) {
 		return diagMCP{}, err
 	}
 	var d diagMCP
+	d.ActivityEvents, d.ActivityRefusals, err = h.store.MCPKeyEventTotals()
+	if err != nil {
+		return diagMCP{}, err
+	}
 	for _, k := range rows {
 		if k.LastUsedAt > d.LastUsedAt {
 			d.LastUsedAt = k.LastUsedAt
@@ -323,7 +330,7 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 			"registry authentications",
 			"the Backup Everything pre/post hook commands",
 			"passwords embedded in repository locations",
-			"MCP keys and their names (only counts are included)",
+			"MCP keys, their names and what each key did (only counts are included)",
 		},
 		MCP: mcpCounts,
 		Notes: []string{

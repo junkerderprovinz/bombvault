@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // mcpDomains is the domain vocabulary of every MCP input and output, so a value
@@ -394,13 +396,21 @@ func mcpNoCaller() *mcp.CallToolResult {
 	return mcpToolError("not_permitted", "no authenticated MCP key", nil)
 }
 
-// logMCPCall writes the one line an operator can follow a key by. Arguments are
-// not logged, and neither is the label: the log ring travels in the diagnostics
+// logMCPCall writes the one line an operator can follow a key by and the entry
+// the key's log on the settings card shows. Arguments are kept in neither, and
+// the label stays out of the line: the log ring travels in the diagnostics
 // bundle, and the card is where an id is read back as a name.
 func (h *Handler) logMCPCall(ctx context.Context, tool, outcome string) {
+	h.logMCPRunCall(ctx, tool, outcome, "")
+}
+
+// logMCPRunCall is logMCPCall for a call about one run, which the key's log
+// links to.
+func (h *Handler) logMCPRunCall(ctx context.Context, tool, outcome, runID string) {
 	h.countMCPToolCall(tool, outcome)
 	caller, _ := mcpCallerFrom(ctx)
 	log.Printf("api: mcp: key %s ...%s tool %s -> %s", caller.KeyID, caller.Hint, tool, outcome)
+	h.recordMCPEvent(caller.KeyID, store.MCPKeyEvent{At: h.mcp.now().Unix(), Tool: tool, Outcome: outcome, RunID: runID})
 }
 
 // mcpErrorCodeOf is the code of a tool error built further down, which is

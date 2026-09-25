@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -35,6 +36,7 @@ type mcpKeyView struct {
 	RevokedReason   string `json:"revokedReason"`
 	InUse           bool   `json:"inUse"`
 	Unusable        string `json:"unusable"`
+	CallsToday      int    `json:"callsToday"`
 }
 
 var (
@@ -159,7 +161,7 @@ func servedOwnCertificate(r *http.Request) bool {
 	return strings.EqualFold(r.TLS.ServerName, host)
 }
 
-func (h *Handler) mcpKeyViewOf(k store.MCPKey, inUse bool) mcpKeyView {
+func (h *Handler) mcpKeyViewOf(k store.MCPKey, inUse bool, callsToday int) mcpKeyView {
 	return mcpKeyView{
 		ID:              k.ID,
 		Label:           k.Label,
@@ -173,6 +175,7 @@ func (h *Handler) mcpKeyViewOf(k store.MCPKey, inUse bool) mcpKeyView {
 		RevokedReason:   k.RevokedReason,
 		InUse:           inUse,
 		Unusable:        h.mcpKeyUnusable(k),
+		CallsToday:      callsToday,
 	}
 }
 
@@ -188,12 +191,28 @@ func (h *Handler) mcpKeyUnusable(k store.MCPKey) string {
 }
 
 // mcpKeyItem builds the view of a single key for a mutation's response.
-func (h *Handler) mcpKeyItem(k store.MCPKey) mcpKeyView {
+func (h *Handler) mcpKeyItem(r *http.Request, k store.MCPKey) mcpKeyView {
 	inUse, err := h.store.MCPKeyIDsInUse()
 	if err != nil {
 		log.Printf("api: mcp: could not read which keys the run history names: %v", err)
 	}
-	return h.mcpKeyViewOf(k, inUse[k.ID])
+	calls, err := h.store.MCPKeyCallsSince(mcpCallsSince(r, h.mcp.now()))
+	if err != nil {
+		log.Printf("api: mcp: could not count the calls of key %s: %v", k.ID, err)
+	}
+	return h.mcpKeyViewOf(k, inUse[k.ID], calls[k.ID])
+}
+
+// mcpCallsSince is where a key's calls today start counting: at the midnight
+// the card sends as ?since=, which is the browser's, while the call slots still
+// cover it, and at the server's own midnight otherwise.
+func mcpCallsSince(r *http.Request, now time.Time) int64 {
+	if since, err := strconv.ParseInt(r.URL.Query().Get("since"), 10, 64); err == nil &&
+		since <= now.Unix() && now.Unix()-since < store.MCPKeyCallsCovered {
+		return since
+	}
+	y, m, d := now.Date()
+	return time.Date(y, m, d, 0, 0, 0, 0, now.Location()).Unix()
 }
 
 func (h *Handler) handleListMCPKeys(w http.ResponseWriter, r *http.Request) {
@@ -207,10 +226,15 @@ func (h *Handler) handleListMCPKeys(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	calls, err := h.store.MCPKeyCallsSince(mcpCallsSince(r, h.mcp.now()))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	// Empty rather than nil, so the card always gets two arrays to iterate.
 	active, revoked := []mcpKeyView{}, []mcpKeyView{}
 	for _, k := range rows {
-		v := h.mcpKeyViewOf(k, inUse[k.ID])
+		v := h.mcpKeyViewOf(k, inUse[k.ID], calls[k.ID])
 		if k.RevokedAt != 0 {
 			revoked = append(revoked, v)
 			continue
@@ -270,7 +294,7 @@ func (h *Handler) handleCreateMCPKey(w http.ResponseWriter, r *http.Request) {
 	}
 	h.recordMCPKeyChange(r, row, "created", "created")
 	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"key": key, "item": h.mcpKeyItem(row)}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"key": key, "item": h.mcpKeyItem(r, row)}))
 }
 
 func (h *Handler) handleUpdateMCPKey(w http.ResponseWriter, r *http.Request) {
@@ -307,7 +331,7 @@ func (h *Handler) handleUpdateMCPKey(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	h.recordMCPKeyChange(r, row, "updated", event)
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"item": h.mcpKeyItem(row)}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"item": h.mcpKeyItem(r, row)}))
 }
 
 func (h *Handler) handleRotateMCPKey(w http.ResponseWriter, r *http.Request) {
@@ -333,7 +357,7 @@ func (h *Handler) handleRotateMCPKey(w http.ResponseWriter, r *http.Request) {
 	}
 	h.recordMCPKeyChange(r, row, "rotated", "replaced")
 	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"key": key, "item": h.mcpKeyItem(row)}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"key": key, "item": h.mcpKeyItem(r, row)}))
 }
 
 func (h *Handler) handleRevokeMCPKey(w http.ResponseWriter, r *http.Request) {
@@ -370,6 +394,37 @@ func (h *Handler) handlePurgeMCPKey(w http.ResponseWriter, r *http.Request) {
 	}
 	h.recordMCPKeyChange(r, row, "purged", "")
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// mcpKeyRunsShown is how many of the backups a key started its log lists.
+const mcpKeyRunsShown = 20
+
+// handleMCPKeyActivity is a key's log for its tile on the settings card: the
+// calls and refusals kept for it and the newest runs it started, which the
+// card links to.
+func (h *Handler) handleMCPKeyActivity(w http.ResponseWriter, r *http.Request) {
+	id, ok := mcpKeyIDParam(w, r)
+	if !ok {
+		return
+	}
+	if _, err := h.store.GetMCPKey(id); err != nil {
+		writeMCPError(w, err)
+		return
+	}
+	events, err := h.store.MCPKeyEvents(id)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	runs, err := h.store.RunsStartedByMCPKey(id, mcpKeyRunsShown)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"events": events,
+		"runs":   h.runViews(runs),
+	}))
 }
 
 // handleMCPCertificate hands out the certificate the web interface serves, so

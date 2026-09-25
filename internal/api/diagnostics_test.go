@@ -451,6 +451,41 @@ func TestDiagnosticsCarriesOnlyMCPCounts(t *testing.T) {
 	}
 }
 
+func TestDiagnosticsCountsTheKeysLogsWithoutCarryingThem(t *testing.T) {
+	h, st, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	key, id := createMCPKey(t, h, "Laptop", false)
+	mcpCallTool(t, h, key, "get_health", "")
+	mcpCallTool(t, h, key, "start_backup", `{"domain":"containers","item":"plex"}`)
+	const marker = "feedfacefeedfacefeedfacefeedface"
+	if err := st.RecordMCPKeyEvent(id, store.MCPKeyEvent{At: time.Now().Unix(), Tool: "cancel_backup", Outcome: "not_running", RunID: marker}); err != nil {
+		t.Fatal(err)
+	}
+
+	cookie := loginCookie(t, h, "correct horse battery staple")
+	w := getRaw(t, h, "/api/diagnostics", cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body = %s", w.Code, w.Body.String())
+	}
+	members := zipMembers(t, w.Body.Bytes())
+	var manifest struct {
+		MCP struct {
+			ActivityEvents   int `json:"activityEvents"`
+			ActivityRefusals int `json:"activityRefusals"`
+		} `json:"mcp"`
+	}
+	if err := json.Unmarshal([]byte(members["manifest.json"]), &manifest); err != nil {
+		t.Fatalf("decode manifest.json: %v", err)
+	}
+	if manifest.MCP.ActivityEvents != 3 || manifest.MCP.ActivityRefusals != 2 {
+		t.Errorf("activity counts = %+v, want 3 events of which 2 were refused", manifest.MCP)
+	}
+	for name, body := range members {
+		if strings.Contains(body, marker) {
+			t.Errorf("%s carries an entry of a key's log", name)
+		}
+	}
+}
+
 // One bundle answers for all four of the database dumps, the ZFS domain,
 // anomaly detection and the MCP keys, so a report about any of them arrives
 // with its state and settings attached.

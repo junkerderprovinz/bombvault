@@ -695,8 +695,9 @@ func TestPreFeatureExportImportsAndKeepsDetectionOn(t *testing.T) {
 	}
 }
 
-// seedMCPKeys stores two keys the way the API does, with fixed material so an
-// export can be searched for every part of them.
+// seedMCPKeys stores two keys the way the API does, each with an entry in its
+// log, and with fixed material so an export can be searched for every part of
+// them.
 func seedMCPKeys(t *testing.T, st *store.Repo) []string {
 	t.Helper()
 	var traces []string
@@ -708,6 +709,11 @@ func seedMCPKeys(t *testing.T, st *store.Repo) []string {
 			t.Fatalf("seed key %s: %v", k.label, err)
 		}
 		traces = append(traces, k.label, k.digest, k.hint)
+		runID := strings.Repeat("c0de", 7) + k.id[:4]
+		if err := st.RecordMCPKeyEvent(k.id, store.MCPKeyEvent{At: 1789600100, Tool: "cancel_backup", Outcome: "ok", RunID: runID}); err != nil {
+			t.Fatalf("seed activity of %s: %v", k.label, err)
+		}
+		traces = append(traces, runID)
 	}
 	return traces
 }
@@ -727,7 +733,7 @@ func activeMCPKeyLabels(t *testing.T, st *store.Repo) []string {
 	return out
 }
 
-func TestExportNeverCarriesMCPKeys(t *testing.T) {
+func TestExportNeverCarriesMCPKeysOrTheirLogs(t *testing.T) {
 	src, srcStore := newPortableHandler(t, appKeyA)
 	seedSource(t, src, srcStore)
 	traces := append(seedMCPKeys(t, srcStore), secret.MCPKeyPrefix)

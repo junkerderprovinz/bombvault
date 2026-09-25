@@ -370,24 +370,24 @@ func (h *Handler) toolCancelBackup(ctx context.Context, req *mcp.CallToolRequest
 		return mcpServiceError(err), nil
 	}
 	if run.Kind != "backup" || run.Status != "running" {
-		h.logMCPCall(ctx, tool, "not_running")
+		h.logMCPRunCall(ctx, tool, "not_running", run.ID)
 		return mcpToolError("not_running", mcpNotRunningMessage, nil), nil
 	}
 	if run.StartedVia != "mcp" || run.StartedViaKey != caller.KeyID {
-		h.logMCPCall(ctx, tool, "not_permitted")
+		h.logMCPRunCall(ctx, tool, "not_permitted", run.ID)
 		return mcpToolError("not_permitted", "this run was not started by this key; cancel it in the web interface", nil), nil
 	}
 	if run.TargetID == store.EverythingTargetID {
-		h.logMCPCall(ctx, tool, "not_permitted")
+		h.logMCPRunCall(ctx, tool, "not_permitted", run.ID)
 		return mcpToolError("not_permitted", "a Backup Everything pass cannot be cancelled as a whole; cancel the item backup running inside it", nil), nil
 	}
 	key, item, ok := h.mcpCancelKey(run)
 	if !ok {
-		h.logMCPCall(ctx, tool, "not_found")
+		h.logMCPRunCall(ctx, tool, "not_found", run.ID)
 		return mcpToolError("not_found", "the item this run belongs to is not set up in BombVault any more", nil), nil
 	}
 	if !h.svc.CancelBackupRun(key, run.ID) {
-		h.logMCPCall(ctx, tool, "not_running")
+		h.logMCPRunCall(ctx, tool, "not_running", run.ID)
 		return mcpToolError("not_running", mcpNotRunningMessage, nil), nil
 	}
 
@@ -403,7 +403,7 @@ func (h *Handler) toolCancelBackup(ctx context.Context, req *mcp.CallToolRequest
 		out["cancelled"] = false
 		out["warning"] = "this backup finished before the cancellation reached it"
 	}
-	h.logMCPCall(ctx, tool, "ok")
+	h.logMCPRunCall(ctx, tool, "ok", run.ID)
 	return mcpOK(out), nil
 }
 

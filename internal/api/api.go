@@ -474,6 +474,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/mcp/keys/{id}/rotate", h.handleRotateMCPKey)
 	mux.HandleFunc("POST /api/mcp/keys/{id}/revoke", h.handleRevokeMCPKey)
 	mux.HandleFunc("DELETE /api/mcp/keys/{id}", h.handlePurgeMCPKey)
+	mux.HandleFunc("GET /api/mcp/keys/{id}/activity", h.handleMCPKeyActivity)
 	mux.HandleFunc("GET /api/mcp/certificate", h.handleMCPCertificate)
 	mux.HandleFunc("POST /api/mcp/certificate/names", h.handleAddMCPCertificateName)
 

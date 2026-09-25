@@ -2017,6 +2017,30 @@ WHERE zfs_schedule = 'off'
   AND files_schedule = containers_schedule;`,
 		alreadySatisfied: migrationRecorded("settings_zfs_schedule_joins_sync"),
 	},
+	{
+		// What each MCP key did, for its log on the settings card: the tool, the
+		// outcome and the run a cancel named, never the arguments. mcp_key_calls
+		// counts the calls per quarter hour, so a key's calls today stay exact
+		// after its events have been capped. Both are pruned as they are written.
+		version: mcpActivityMigration,
+		name:    "mcp_key_activity",
+		sql: `CREATE TABLE IF NOT EXISTS mcp_key_events (
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  key_id  TEXT    NOT NULL,
+  at      INTEGER NOT NULL,
+  tool    TEXT    NOT NULL DEFAULT '',
+  outcome TEXT    NOT NULL DEFAULT '',
+  run_id  TEXT    NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_mcp_key_events_key ON mcp_key_events(key_id, id);
+CREATE INDEX IF NOT EXISTS idx_mcp_key_events_at ON mcp_key_events(at);
+CREATE TABLE IF NOT EXISTS mcp_key_calls (
+  key_id TEXT    NOT NULL,
+  slot   INTEGER NOT NULL,
+  calls  INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (key_id, slot)
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2045,6 +2069,10 @@ const zfsMemberMetricsMigration = mcpMigrationBase + 2
 // branch build recorded its two as 146 and 147, and a database that ran it
 // would skip anything else numbered so.
 const zfsRecoveryMigration = zfsMemberMetricsMigration + 1
+
+// mcpActivityMigration numbers the per-key activity record. It skips the two
+// numbers zfsRecoveryMigration explains.
+const mcpActivityMigration = 148
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.
