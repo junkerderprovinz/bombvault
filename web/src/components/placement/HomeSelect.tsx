@@ -14,6 +14,7 @@ export function HomeSelect({
   options,
   locked,
   disabled,
+  well = false,
   onCommit,
 }: {
   label: string;
@@ -21,6 +22,8 @@ export function HomeSelect({
   options: SelectOption<string>[];
   locked: boolean;
   disabled?: boolean;
+  /** The field sits in a surface2 well, where a surface2 fill would vanish. */
+  well?: boolean;
   onCommit: (value: string) => void;
 }) {
   const { t } = useT();
@@ -49,7 +52,9 @@ export function HomeSelect({
         options={options}
         label={label}
         disabled={disabled}
-        className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus text-start"
+        className={`rounded-control text-carbon-text text-sm px-3 py-1.5 text-start ${
+          well ? "bg-carbon-surface3 glim-field-focus-well" : "bg-carbon-surface2 glim-field-focus"
+        }`}
       />
       {draft !== value && (
         <Button

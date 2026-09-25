@@ -2448,6 +2448,15 @@ export const en = {
   "places.offers.title": "Offers from other BombVaults",
   "places.offers.hint": "Another BombVault offered this one a rest-server for one domain. Accepting adds a place for that domain; the fields below connect one by hand.",
   "places.offerAccepted": "{name} was added and keeps copies of the offered domain.",
+  "storageDomains.title": "Domains",
+  "storageDomains.hint": "Where each domain is stored and where its backups are copied. An item that chose a place or copies of its own keeps its choice and is listed as an exception.",
+  "storageDomains.storedIn": "Stored in",
+  "storageDomains.loadFailed": "The domains could not be read.",
+  "storageDomains.homePlaceAsk": "Store {domain} at {place} from now on? There are no backups yet, so the backup path moves there.",
+  "storageDomains.homeMoveAsk": "Store {domain} at {place} from now on?",
+  "storageDomains.homeMoveStays": "one={n} snapshot stays at the old place. The timeline shows it only while that place stays connected.|other={n} snapshots stay at the old place. The timeline shows them only while that place stays connected.",
+  "storageDomains.createsRepository": "A repository for {domain} is made at {place}.",
+  "storageDomains.createsDirect": "A direct repository is made at {place}, beside the copies there.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4575,6 +4584,15 @@ export const de: Translations = {
   "places.offers.title": "Angebote anderer BombVaults",
   "places.offers.hint": "Ein anderes BombVault hat diesem einen rest-server für eine Domäne angeboten. Annehmen fügt einen Ort für diese Domäne hinzu; die Felder darunter verbinden einen von Hand.",
   "places.offerAccepted": "{name} wurde hinzugefügt und bewahrt Kopien der angebotenen Domäne auf.",
+  "storageDomains.title": "Domänen",
+  "storageDomains.hint": "Wo jede Domäne gespeichert wird und wohin ihre Sicherungen kopiert werden. Ein Eintrag mit eigenem Ort oder eigenen Kopien behält seine Wahl und steht unter den Ausnahmen.",
+  "storageDomains.storedIn": "Gespeichert in",
+  "storageDomains.loadFailed": "Die Domänen konnten nicht gelesen werden.",
+  "storageDomains.homePlaceAsk": "{domain} ab jetzt bei {place} speichern? Es gibt noch keine Sicherungen, der Backup-Pfad zieht also dorthin um.",
+  "storageDomains.homeMoveAsk": "{domain} ab jetzt bei {place} speichern?",
+  "storageDomains.homeMoveStays": "one={n} Snapshot bleibt am alten Ort. Die Zeitleiste zeigt ihn nur, solange dieser Ort verbunden bleibt.|other={n} Snapshots bleiben am alten Ort. Die Zeitleiste zeigt sie nur, solange dieser Ort verbunden bleibt.",
+  "storageDomains.createsRepository": "Bei {place} wird ein Repository für {domain} angelegt.",
+  "storageDomains.createsDirect": "Bei {place} wird neben den Kopien dort ein Direkt-Repository angelegt.",
 };
 
 // ---------------------------------------------------------------------------
