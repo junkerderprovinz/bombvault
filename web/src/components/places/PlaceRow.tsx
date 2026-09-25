@@ -16,11 +16,13 @@ export function PlaceRow({
   place,
   provider,
   hueIndex,
+  hostMountRoot,
   onSaved,
 }: {
   place: Place;
   provider?: CatalogProvider;
   hueIndex: number;
+  hostMountRoot: string;
   onSaved: (place: Place) => void;
 }) {
   const { t, lang } = useT();
@@ -136,7 +138,9 @@ export function PlaceRow({
           />
         </div>
       </div>
-      {open && <PlaceDetails place={place} provider={provider} hueIndex={hueIndex} onSaved={onSaved} />}
+      {open && (
+        <PlaceDetails place={place} provider={provider} hueIndex={hueIndex} hostMountRoot={hostMountRoot} onSaved={onSaved} />
+      )}
     </div>
   );
 }

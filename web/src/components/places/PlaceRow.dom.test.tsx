@@ -65,7 +65,7 @@ function row(p: Place = place()) {
   render(
     <I18nProvider>
       <ToastProvider>
-        <PlaceRow place={p} hueIndex={0} onSaved={vi.fn()} />
+        <PlaceRow place={p} hueIndex={0} hostMountRoot="/mnt" onSaved={vi.fn()} />
       </ToastProvider>
     </I18nProvider>
   );

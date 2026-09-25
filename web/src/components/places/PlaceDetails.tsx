@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
+import { FolderBrowser } from "../FolderBrowser";
 import { InfoBubble } from "../InfoBubble";
 import { NumberField } from "../NumberField";
 import { RevealInput } from "../RevealInput";
 import { SelectField } from "../SelectField";
 import { HUE_OFFSET, Selector } from "../Selector";
 import { Toggle } from "../Toggle";
-import { fieldLabelKey } from "./PlaceForm";
+import { fieldLabelKey, folderRoots } from "./PlaceForm";
 import { primaryRemoteTamperTest, tamperTest, type OffsiteDomain } from "../../lib/api";
 import { retentionLowered } from "../../lib/directRepo";
 import { useT, type TranslationKey } from "../../lib/i18n";
@@ -101,12 +102,14 @@ export function PlaceDetails({
   place,
   provider,
   hueIndex,
+  hostMountRoot,
   onSaved,
 }: {
   place: Place;
-  /** The catalog entry, for the field labels and whether to ask where it stands. */
+  /** The catalog entry, for the field labels, the folder roots and whether to ask where it stands. */
   provider?: CatalogProvider;
   hueIndex?: number;
+  hostMountRoot: string;
   onSaved: (place: Place) => void;
 }) {
   const { t, lang } = useT();
@@ -181,6 +184,16 @@ export function PlaceDetails({
     setDraft((d) => ({ ...d, name: value }));
     later("name", () => {
       if (value.trim() !== "") void save({ name: value.trim() }, "name");
+    });
+  }
+
+  // The server builds a new base from the provider's form, and a local
+  // provider's form is the folder alone.
+  function editBase(value: string) {
+    setDraft((d) => ({ ...d, base: value }));
+    later("base", () => {
+      const path = value.trim();
+      if (path !== "" && path !== place.base) void save({ address: { path } }, "base");
     });
   }
 
@@ -317,6 +330,28 @@ export function PlaceDetails({
             <Toggle label={t("places.details.enabled")} checked={draft.enabled} onChange={(v) => saveAtOnce("enabled", v)} />
           </span>
         </div>
+        {place.kind === "local" ? (
+          <div key={`base-${shake.base ?? 0}`} className={shaken("base")}>
+            <FolderBrowser
+              label={t("places.form.address")}
+              hint={t("places.details.baseHint")}
+              value={draft.base}
+              onChange={editBase}
+              hostMountRoot={hostMountRoot}
+              roots={provider ? folderRoots(provider) : undefined}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+              {t("places.form.address")}
+              <InfoBubble tip={t("places.details.baseRemoteHint")} />
+            </span>
+            <span dir="ltr" className="break-all text-start font-mono text-sm text-carbon-text">
+              {place.base}
+            </span>
+          </div>
+        )}
         {asks && (
           <div key={`offPremises-${shake.offPremises ?? 0}`} className={`flex flex-col gap-1.5 ${shaken("offPremises")}`}>
             <span className="flex items-center gap-1 text-xs text-carbon-textSub">

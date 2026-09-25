@@ -2428,6 +2428,8 @@ export const en = {
   "places.unplaced.allDomains": "All domains share it",
   "places.unplaced.link": "Assign to place",
   "places.unplaced.linked": "{name} now belongs to {place}.",
+  "places.details.baseHint": "Moved the backups to another disk by hand? Pick the folder they lie in now. The change goes through when the new folder is empty and nothing lies at the old one, or when both hold the same repository.",
+  "places.details.baseRemoteHint": "To back up to another address, connect it as a place of its own.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4536,6 +4538,8 @@ export const de: Translations = {
   "places.unplaced.allDomains": "Alle Domänen teilen es",
   "places.unplaced.link": "Einem Ort zuordnen",
   "places.unplaced.linked": "{name} gehört jetzt zu {place}.",
+  "places.details.baseHint": "Die Backups von Hand auf eine andere Platte umgezogen? Wähle den Ordner, in dem sie jetzt liegen. Die Änderung geht durch, wenn der neue Ordner leer ist und am alten nichts liegt, oder wenn an beiden dasselbe Repository liegt.",
+  "places.details.baseRemoteHint": "Für eine andere Adresse verbinde sie als eigenen Ort.",
 };
 
 // ---------------------------------------------------------------------------

@@ -7,10 +7,10 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { I18nProvider, countText, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import { HUE_OFFSET } from "../Selector";
-import type { CatalogProvider, PatchPlaceBody, Place } from "../../lib/places";
+import type { CatalogProvider, PatchPlaceBody, Place, PlaceRefusal } from "../../lib/places";
 
 const patches: Partial<PatchPlaceBody>[] = [];
-let answer: (body: Partial<PatchPlaceBody>) => { ok: boolean; code?: string; error?: string; place?: Place } = () => ({ ok: true });
+let answer: (body: Partial<PatchPlaceBody>) => PlaceRefusal & { place?: Place } = () => ({ ok: true });
 const tampered: string[] = [];
 const homeTampered: string[] = [];
 let tamperAnswer: { ok: boolean; error?: string; testable?: boolean; protected?: boolean } = { ok: true };
@@ -96,7 +96,7 @@ function details(p: Place = place(), provider: CatalogProvider | undefined = B2,
   const view = render(
     <I18nProvider>
       <ToastProvider>
-        <PlaceDetails place={p} provider={provider} onSaved={onSaved} />
+        <PlaceDetails place={p} provider={provider} hostMountRoot="/mnt" onSaved={onSaved} />
       </ToastProvider>
     </I18nProvider>
   );
@@ -339,5 +339,53 @@ describe("PlaceDetails sections", () => {
     expect(patches).toEqual([{ folders: { containers: "container", vms: "vms2", flash: "flash" } }]);
     expect(offer("Flash").getAttribute("aria-checked")).toBe("false");
     expect(folder("VMs").value).toBe("vms2");
+  });
+});
+
+describe("PlaceDetails address", () => {
+  const UNRAID: CatalogProvider = {
+    id: "unraid-folder",
+    group: "here",
+    kind: "local",
+    offPremises: false,
+    pickRoots: ["user", ""],
+    fields: [{ key: "path" }],
+  };
+  const local = () =>
+    place({ kind: "local", provider: "unraid-folder", base: "user/bombvault", offPremises: false, creds: { shared: false, fields: {}, set: [] } });
+
+  it("moves a local place to the folder typed, 800 ms after the last key", async () => {
+    details(local(), UNRAID);
+    fireEvent.change(screen.getByDisplayValue("user/bombvault"), { target: { value: "disk2/bombvault" } });
+    await settle(799);
+    expect(patches).toEqual([]);
+    await settle(1);
+    expect(patches).toEqual([{ address: { path: "disk2/bombvault" } }]);
+  });
+
+  it("keeps a new folder that is refused, and says why", async () => {
+    answer = () => ({ ok: false, code: "place-location-established", error: "moved", snapshots: 9, domains: ["containers"] });
+    details(local(), UNRAID);
+    fireEvent.change(screen.getByDisplayValue("user/bombvault"), { target: { value: "disk2/bombvault" } });
+    await settle(800);
+    expect(
+      screen.getByText("Backups lie at the old address (9 snapshots of Containers), and the new one does not hold the same repository.")
+    ).toBeTruthy();
+    expect(screen.getByDisplayValue("disk2/bombvault").closest(".glim-shake")).toBeTruthy();
+  });
+
+  it("sends nothing when the folder ends up where it was", async () => {
+    details(local(), UNRAID);
+    fireEvent.change(screen.getByDisplayValue("user/bombvault"), { target: { value: "user/bombvault2" } });
+    await settle(400);
+    fireEvent.change(screen.getByDisplayValue("user/bombvault2"), { target: { value: "user/bombvault" } });
+    await settle(800);
+    expect(patches).toEqual([]);
+  });
+
+  it("shows the address of a remote place without a field to change it", () => {
+    details();
+    expect(screen.getByText("s3:https://s3.example.com/bv")).toBeTruthy();
+    expect(screen.queryByDisplayValue("s3:https://s3.example.com/bv")).toBeNull();
   });
 });
