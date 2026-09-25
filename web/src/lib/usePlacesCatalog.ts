@@ -1,22 +1,24 @@
 import { useEffect, useState } from "react";
 import { getPlacesCatalog, type CatalogProvider } from "./places";
 
-/** usePlacesCatalog reads the providers once per mount. `failed` holds the
- *  reason when they could not be read, and `providers` stays empty. */
-export function usePlacesCatalog(): { providers: CatalogProvider[]; loaded: boolean; failed: string | null } {
-  const [state, setState] = useState<{ providers: CatalogProvider[]; loaded: boolean; failed: string | null }>({
-    providers: [],
-    loaded: false,
-    failed: null,
-  });
+interface Catalog {
+  providers: CatalogProvider[];
+  loaded: boolean;
+  /** The providers could not be read, and `providers` stays empty. */
+  failed: boolean;
+}
+
+/** usePlacesCatalog reads the providers once per mount. */
+export function usePlacesCatalog(): Catalog {
+  const [state, setState] = useState<Catalog>({ providers: [], loaded: false, failed: false });
   useEffect(() => {
     let live = true;
     getPlacesCatalog()
       .then((r) => {
-        if (live) setState({ providers: r.ok ? (r.providers ?? []) : [], loaded: true, failed: r.ok ? null : (r.error ?? "") });
+        if (live) setState({ providers: r.ok ? (r.providers ?? []) : [], loaded: true, failed: !r.ok });
       })
-      .catch((err: unknown) => {
-        if (live) setState({ providers: [], loaded: true, failed: err instanceof Error ? err.message : "" });
+      .catch(() => {
+        if (live) setState({ providers: [], loaded: true, failed: true });
       });
     return () => {
       live = false;
