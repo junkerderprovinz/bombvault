@@ -917,6 +917,37 @@ func TestASetARemoteDomainPathRunsOnIsForkedNotEdited(t *testing.T) {
 	}
 }
 
+func TestASetAnotherPlaceRunsOnIsForkedNotEdited(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {
+		t.Fatal(err)
+	}
+	first, second := s3Place("B2", "s3:https://s3.example.com/bucket"), s3Place("B2 later", "s3:https://s3.example.com/bucket-2")
+	first.CredsRef, second.CredsRef = "b2-set", "b2-set"
+	b2 := f.storePlace(first)
+	// The other place holds no row yet, so only the place itself names the set.
+	later := f.storePlace(second)
+	f.probeAnswers(places.ProbeResult{OK: true, Base: b2.Base})
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"fields": map[string]string{"keyId": "k2", "secret": ""}})
+
+	if stored, err := f.st.GetPlace(b2.ID); res["ok"] != true || err != nil || stored.CredsRef == "b2-set" {
+		t.Fatalf("PATCH = %v; place %+v, %v, want it on a set of its own", res, stored, err)
+	}
+	if other, err := f.st.GetPlace(later.ID); err != nil || other.CredsRef != "b2-set" {
+		t.Fatalf("the other place = %+v, %v, want it still on b2-set", other, err)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sets, err := f.svc.decodeCloudCredSets(settings)
+	shared := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == "b2-set" })
+	if err != nil || shared < 0 || sets[shared].S3KeyID != "k1" {
+		t.Fatalf("sets = %+v, %v, want b2-set untouched", sets, err)
+	}
+}
+
 func TestNewCredentialsThePlaceDoesNotOpenWithAreRefused(t *testing.T) {
 	f := newPlacementFixture(t)
 	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {
