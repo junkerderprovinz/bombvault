@@ -1045,3 +1045,132 @@ func TestADirectRepositoryThatNoLongerOpensKeepsItsOldCredentials(t *testing.T) 
 		t.Fatalf("the direct repository runs on %q in %+v, %v, want a set with the old key", row.CredsRef, sets, err)
 	}
 }
+
+func TestAHomePlaceIsNotRemovedAndTheAnswerSaysWhatHoldsIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(localPlace("Unraid", "backups"), "containers", "vms")
+
+	res := f.do(http.MethodDelete, "/api/places/"+unraid.ID, nil)
+
+	holders, _ := res["holders"].(map[string]any)
+	homes := rowsOfStrings(holders["homeDomains"])
+	slices.Sort(homes)
+	if res["ok"] != false || res["code"] != "place-in-use" || !slices.Equal(homes, []string{"containers", "vms"}) {
+		t.Fatalf("DELETE = %v, want place-in-use held by containers and vms", res)
+	}
+	for _, key := range []string{"defaults", "items", "directInUse"} {
+		if !reflect.DeepEqual(holders[key], []any{}) {
+			t.Errorf("holders %s = %v, want an empty list", key, holders[key])
+		}
+	}
+	if _, err := f.st.GetPlace(unraid.ID); err != nil {
+		t.Fatalf("the place is gone: %v", err)
+	}
+}
+
+func TestARemovalRefusalNamesTheDefaultsAndItemsOnThePlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.storePlace(store.Place{Name: "NAS", Provider: "share", Kind: string(places.KindLocal), Base: "nas",
+		Folders: map[string]string{}, Enabled: true})
+	repo := f.namedRepo("NAS", "nas")
+	f.linkRow(repo.ID, nas, "", "")
+	f.setDefault("containers", repo.ID)
+	f.container("nginx", repo.ID)
+
+	res := f.do(http.MethodDelete, "/api/places/"+nas.ID, nil)
+
+	holders, _ := res["holders"].(map[string]any)
+	if res["code"] != "place-in-use" || !reflect.DeepEqual(holders["defaults"], []any{"containers"}) ||
+		!reflect.DeepEqual(holders["items"], []any{map[string]any{"domain": "containers", "key": "nginx"}}) {
+		t.Fatalf("DELETE = %v, want place-in-use held by the containers default and nginx", res)
+	}
+}
+
+func TestAnUnusedPlaceGoesWithItsTargetsAndItsCredentialSet(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {
+		t.Fatal(err)
+	}
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.CredsRef = "b2-set"
+	b2 := f.storePlace(p)
+	target := f.placeTarget(b2, "vms", "")
+
+	res := f.do(http.MethodDelete, "/api/places/"+b2.ID, nil)
+
+	if res["ok"] != true || res["removedTargets"] != float64(1) {
+		t.Fatalf("DELETE = %v, want one target removed", res)
+	}
+	if _, err := f.st.GetPlace(b2.ID); !errors.Is(err, store.ErrPlaceNotFound) {
+		t.Fatalf("GetPlace = %v, want ErrPlaceNotFound", err)
+	}
+	if _, found, err := f.st.GetOffsiteTarget(target.ID); err != nil || found {
+		t.Fatalf("the target is still there: %v", err)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sets, err := f.svc.decodeCloudCredSets(settings); err != nil || len(sets) != 0 {
+		t.Fatalf("sets = %+v, %v, want the place's set gone", sets, err)
+	}
+}
+
+func TestACredentialSetAPullSourceUsesStaysWhenItsPlaceGoes(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.st.CreatePullSource(store.PullSource{Name: "Old box", Repo: "s3:https://s3.example.com/other", CredsRef: "b2-set", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.CredsRef = "b2-set"
+	b2 := f.storePlace(p)
+
+	if res := f.do(http.MethodDelete, "/api/places/"+b2.ID, nil); res["ok"] != true {
+		t.Fatalf("DELETE = %v", res)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sets, err := f.svc.decodeCloudCredSets(settings); err != nil || len(sets) != 1 || sets[0].ID != "b2-set" {
+		t.Fatalf("sets = %+v, %v, want the pull source's set kept", sets, err)
+	}
+}
+
+func TestAnUnknownPlaceCannotBeRemoved(t *testing.T) {
+	f := newPlacementFixture(t)
+	if code, res := f.doStatus(http.MethodDelete, "/api/places/nosuchplace", nil); code != http.StatusNotFound || res["ok"] != false {
+		t.Fatalf("DELETE an unknown place = %d %v, want 404", code, res)
+	}
+}
+
+func TestAPlaceRemovalWaitsForAnEditInProgress(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	f.svc.placeEditMu.Lock()
+	done := make(chan error, 1)
+	go func() {
+		_, err := f.svc.deletePlace(b2.ID)
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		t.Fatalf("a place was removed during an edit of it: %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+	f.svc.placeEditMu.Unlock()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the removal never finished")
+	}
+	if _, err := f.st.GetPlace(b2.ID); !errors.Is(err, store.ErrPlaceNotFound) {
+		t.Fatalf("GetPlace = %v, want the place removed once the edit let go", err)
+	}
+}

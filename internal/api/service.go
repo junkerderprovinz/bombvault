@@ -378,9 +378,10 @@ type Service struct {
 	// settings lock.
 	credSetsMu sync.Mutex
 
-	// placeEditMu holds an edit of a place from its read to its write. An
-	// address change probes in between, and a setting saved meanwhile would
-	// otherwise be written back to its old value. It is taken before credSetsMu.
+	// placeEditMu holds an edit or a removal of a place from its read to its
+	// write. An address change probes in between, and without it a setting
+	// saved meanwhile would be written back to its old value, or a place
+	// removed meanwhile written back whole. It is taken before credSetsMu.
 	placeEditMu sync.Mutex
 
 	// placeProber is the place probe seam: nil uses ProbePlace; tests inject a

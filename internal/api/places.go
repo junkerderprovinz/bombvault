@@ -962,3 +962,68 @@ func (h *Handler) handlePatchPlace(w http.ResponseWriter, r *http.Request) {
 		h.writePlaceAnswer(w, p.ID, map[string]any{"warnings": warnings})
 	}
 }
+
+// deletePlace removes an unused place with its targets, and its credential
+// set once nothing else names it.
+func (s *Service) deletePlace(id string) (int, error) {
+	s.placeEditMu.Lock()
+	defer s.placeEditMu.Unlock()
+	p, err := s.store.GetPlace(id)
+	if err != nil {
+		return 0, err
+	}
+	removed, err := s.store.DeletePlaceIfUnused(id)
+	if err != nil {
+		return 0, err
+	}
+	if p.CredsRef != "" {
+		s.dropUnusedCredSet(p.CredsRef)
+	}
+	return removed, nil
+}
+
+// dropUnusedCredSet removes a removed place's credential set when nothing
+// else names it. The place is gone either way, so a failure only leaves the
+// set behind and is logged.
+func (s *Service) dropUnusedCredSet(id string) {
+	named, err := s.credSetNamedElsewhere(id, "")
+	if err == nil && !named {
+		err = s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
+			return slices.DeleteFunc(sets, func(c CloudCredSet) bool { return c.ID == id })
+		})
+	}
+	if err != nil {
+		log.Printf("api: credential set %q: could not remove it with its place: %v", id, err)
+	}
+}
+
+// placeHoldersView is what keeps a place from being removed, as the refusal
+// names it.
+func placeHoldersView(h store.PlaceHolders) map[string]any {
+	items := make([]map[string]string, 0, len(h.Items))
+	for _, it := range h.Items {
+		items = append(items, map[string]string{"domain": it.Domain, "key": it.Key})
+	}
+	return map[string]any{"homeDomains": h.HomeDomains, "defaults": h.Defaults, "items": items, "directInUse": h.DirectInUse}
+}
+
+// handleDeletePlace serves DELETE /api/places/{id}.
+func (h *Handler) handleDeletePlace(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	removed, err := h.svc.deletePlace(id)
+	switch {
+	case errors.Is(err, store.ErrPlaceNotFound):
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such place"})
+	case errors.Is(err, store.ErrPlaceInUse):
+		holders, hErr := h.store.PlaceHolders(id)
+		if hErr != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(hErr))
+			return
+		}
+		placementFail(w, err, map[string]any{"holders": placeHoldersView(holders)})
+	case err != nil:
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+	default:
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"removedTargets": removed}))
+	}
+}
