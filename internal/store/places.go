@@ -17,16 +17,6 @@ import (
 // address for domain plus suffix; WritePlace keeps it so from then on. An
 // empty domain is the place's base itself.
 func AttachRowTx(tx *sql.Tx, rowID, placeID, domain, suffix string) error {
-	return setRowPlaceTx(tx, rowID, placeID, domain, suffix)
-}
-
-// DetachRowTx takes a row off its place. The row keeps its address and its
-// settings and goes on working as a row without a place.
-func DetachRowTx(tx *sql.Tx, rowID string) error {
-	return setRowPlaceTx(tx, rowID, "", "", "")
-}
-
-func setRowPlaceTx(tx *sql.Tx, rowID, placeID, domain, suffix string) error {
 	res, err := tx.Exec(`UPDATE offsite_targets SET place_id = ?, place_domain = ?, place_suffix = ? WHERE id = ?`,
 		placeID, domain, suffix, rowID)
 	if err != nil {
@@ -40,6 +30,12 @@ func setRowPlaceTx(tx *sql.Tx, rowID, placeID, domain, suffix string) error {
 		return fmt.Errorf("place of row %s: %w", rowID, sql.ErrNoRows)
 	}
 	return nil
+}
+
+// DetachRowTx takes a row off its place. The row keeps its address and its
+// settings and goes on working as a row without a place.
+func DetachRowTx(tx *sql.Tx, rowID string) error {
+	return AttachRowTx(tx, rowID, "", "", "")
 }
 
 // PlaceRows returns the offsite_targets rows at a place, any role.
