@@ -26,6 +26,7 @@ vi.mock("../lib/clipboard", () => ({
 afterEach(() => {
   copied.length = 0;
   cleanup();
+  vi.restoreAllMocks();
 });
 
 function open(onClose: () => void = () => {}) {
@@ -214,7 +215,7 @@ it("puts the tickers into the reactive label mode, and only there", () => {
 
 it("walks the coins with the arrow keys, Home and End, as one tab stop", () => {
   // jsdom lays nothing out, so the tiles are placed in rows of four here.
-  const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
     const i = Array.from(this.parentElement?.children ?? []).indexOf(this);
     return { top: Math.floor(i / 4) * 60, left: (i % 4) * 60, width: 56, height: 56 } as DOMRect;
   });
@@ -236,7 +237,6 @@ it("walks the coins with the arrow keys, Home and End, as one tab stop", () => {
   // The keys move focus only; the coin changes when the tile is pressed.
   fireEvent.keyDown(tiles()[0]!, { key: "ArrowRight" });
   expect(tiles()[0]!.getAttribute("aria-selected")).toBe("true");
-  rect.mockRestore();
 });
 
 it("leaves the focus ring on the tiles", () => {
