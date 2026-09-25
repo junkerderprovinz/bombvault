@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/places"
@@ -165,6 +166,8 @@ func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.Prob
 			err = probeB2(ctx, &pr, &res)
 		case pr.provider.Kind == places.KindS3:
 			err = probeS3(ctx, &pr, &res)
+		case pr.provider.Kind == places.KindAzure && strings.TrimSpace(pr.fields["container"]) == "":
+			err = probeAzure(ctx, &pr, &res)
 		}
 		if err == nil {
 			pr.base, err = places.Base(pr.provider, pr.fields, pr.placeID)
@@ -173,8 +176,9 @@ func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.Prob
 	res.Fields = publicFields(pr.provider, pr.fields)
 	var missing places.MissingField
 	switch {
-	case errors.As(err, &missing) && missing == "bucket" && pr.provider.Kind == places.KindS3:
-		// The bucket is chosen from what the probe listed, or typed.
+	case errors.As(err, &missing) && ((pr.provider.Kind == places.KindS3 && missing == "bucket") ||
+		(pr.provider.Kind == places.KindAzure && missing == "container")):
+		// The bucket or container is chosen from what the probe listed, or typed.
 		res.OK = true
 		return res, nil
 	case err != nil:
