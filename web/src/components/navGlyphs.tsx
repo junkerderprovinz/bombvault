@@ -387,7 +387,7 @@ export function IconTabIntegrity() {
   );
 }
 
-/** Paths and storage tab. */
+/** Storage tab. */
 export function IconTabStorage() {
   return (
     <svg
