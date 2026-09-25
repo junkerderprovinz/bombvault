@@ -66,3 +66,83 @@ func TestAMarkedNASWithoutATargetClaimsNoOffsiteCopyAndNoDrill(t *testing.T) {
 		t.Fatal("an item on the domain path is on the premises")
 	}
 }
+
+// nasKeller is a place in the house holding a folder for the containers.
+func nasKeller() store.Place {
+	return store.Place{
+		Name: "NAS Keller", Provider: "synology", Kind: "local", Base: "remotes/nas/bv",
+		Folders: map[string]string{"containers": "containers"}, Enabled: true,
+	}
+}
+
+func drillsOn(f *placementFixture) {
+	f.settings(func(s *store.Settings) {
+		s.ContainersEnabled = true
+		s.DrillsEnabled = true
+		s.OffsiteDrillsEnabled = true
+	})
+}
+
+func TestATargetOnThePremisesIsNoOffsiteCopy(t *testing.T) {
+	f := newPlacementFixture(t)
+	drillsOn(f)
+	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
+	f.linkRow(nas.ID, f.storePlace(nasKeller()), "containers", "")
+	f.container("nginx", "")
+
+	d := f.domainStatus("containers")
+	if d.OffsiteConfigured || d.OffsiteDrillScheduled || d.OffPremisesCovered {
+		t.Fatalf("configured %v, drill %v, covered %v; want all false, which shows No off-site copy",
+			d.OffsiteConfigured, d.OffsiteDrillScheduled, d.OffPremisesCovered)
+	}
+}
+
+func TestATargetAtAPlaceOffThePremisesIsAnOffsiteCopy(t *testing.T) {
+	f := newPlacementFixture(t)
+	drillsOn(f)
+	nas := f.target("containers", "NAS", "remotes/friend/bv/containers")
+	f.linkRow(nas.ID, f.storePlace(store.Place{
+		Name: "NAS at a friend's", Provider: "synology", Kind: "local", Base: "remotes/friend/bv",
+		Folders: map[string]string{"containers": "containers"}, OffPremises: true, Enabled: true,
+	}), "containers", "")
+	f.container("nginx", "")
+
+	if d := f.domainStatus("containers"); !d.OffsiteConfigured || !d.OffsiteDrillScheduled {
+		t.Fatalf("configured %v, drill %v; want both true", d.OffsiteConfigured, d.OffsiteDrillScheduled)
+	}
+}
+
+func TestOnlyCopiesToAnOffPremisesTargetMakeTheDomainConfigured(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
+	b2 := f.target("containers", "B2", b2Containers)
+	f.linkRow(nas.ID, f.storePlace(nasKeller()), "containers", "")
+	f.linkRow(b2.ID, f.storePlace(b2Place(0)), "containers", "")
+	f.container("nginx", "")
+	f.rule("containers", "container:nginx", b2.ID)
+
+	if f.domainStatus("containers").OffsiteConfigured {
+		t.Fatal("every item leaves B2 out and is copied only to the NAS in the house, so nothing is off site")
+	}
+}
+
+func TestAProjectFolderCopiedOnlyInTheHouseIsNoOffsiteCopy(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
+	here := f.storePlace(nasKeller())
+	f.linkRow(nas.ID, here, "containers", "")
+	f.container("nginx", "")
+	f.rule("containers", "container:nginx", store.SkipAll)
+	f.listing("containers", nas.ID, 1_758_000_000, copiesRow("stack:immich", 3, 1_757_900_000))
+
+	if f.domainStatus("containers").OffsiteConfigured {
+		t.Fatal("a project folder copied only to the NAS in the house makes nothing off site")
+	}
+
+	here.OffPremises = true
+	f.storePlace(here)
+	if !f.domainStatus("containers").OffsiteConfigured {
+		t.Fatal("with the NAS at another site, the project folder's copy there is off site")
+	}
+}

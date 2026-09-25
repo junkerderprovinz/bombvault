@@ -595,7 +595,7 @@ func retentionLowered(before, after restic.RetentionPolicy) bool {
 // the change means for items whose only copy is in its direct repository.
 func (s *Service) directSaveWarnings(before, after store.OffsiteTarget) ([]saveWarning, error) {
 	out := []saveWarning{}
-	lowered := retentionLowered(targetOffsiteRetentionPolicy(before), targetOffsiteRetentionPolicy(after))
+	lowered := retentionLowered(rowRetentionPolicy(before), rowRetentionPolicy(after))
 	appendOnlyOff := before.Immutable && !after.Immutable
 	if !lowered && !appendOnlyOff {
 		return out, nil

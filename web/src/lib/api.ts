@@ -422,8 +422,9 @@ export interface DomainStatus {
   lastOffsiteSubsetAt: number; // unix seconds; 0 = never
   lastOffsiteSubsetOK: boolean; // whether that check passed
   // Whether the scheduled off-site DR drill is active (DrillsEnabled &&
-  // OffsiteDrillsEnabled && offsiteConfigured). When false but offsiteConfigured,
-  // the dashboard shows a neutral "manual only" pill instead of a red failure.
+  // OffsiteDrillsEnabled && offsiteConfigured); a target in the house does not
+  // count. When false but offsiteConfigured, the dashboard shows a neutral
+  // "manual only" pill instead of a red failure.
   offsiteDrillScheduled: boolean;
   protection: string; // "" (disabled) | "red" | "amber" | "green"
   // Per-check states derived server-side from the SAME inputs as `protection`, so
@@ -2226,7 +2227,7 @@ export interface PlacementObserved {
   places: ObservedPlace[];
   sites: number;
   tone: "ok" | "warn" | "unconfirmed";
-  rule321: "met" | "one-copy" | "unconfirmed";
+  rule321: "met" | "one-copy" | "no-off-site" | "unconfirmed";
   older: OlderCopies[];
 }
 

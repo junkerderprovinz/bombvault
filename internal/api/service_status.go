@@ -124,11 +124,11 @@ type DomainStatusEntry struct {
 	// verified" badge (#63), independent of the DR fields above.
 	LastOffsiteSubsetAt int64 `json:"lastOffsiteSubsetAt"`
 	LastOffsiteSubsetOK bool  `json:"lastOffsiteSubsetOK"`
-	// OffsiteDrillScheduled is true only when the scheduler runs an off-site DR
-	// drill for this domain (DrillsEnabled and OffsiteDrillsEnabled set, and an
-	// off-site repo configured). When it is false but the domain has an off-site
-	// repo, the dashboard shows a muted "manual only" pill instead of a red
-	// drFailed (#37).
+	// OffsiteDrillScheduled is true when DrillsEnabled and OffsiteDrillsEnabled
+	// are set and the domain copies to a target off the premises. A drill
+	// against a target in the house is no off-site drill and does not count.
+	// When it is false but the domain has an off-site copy, the dashboard shows
+	// a muted "manual only" pill instead of a red drFailed (#37).
 	OffsiteDrillScheduled bool   `json:"offsiteDrillScheduled"`
 	Protection            string `json:"protection"` // "" (disabled) | "red" | "amber" | "green"
 
@@ -475,6 +475,10 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 // second full read of the same row.
 func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry, error) {
 	now := time.Now().Unix()
+	sites, err := s.store.PlaceSites()
+	if err != nil {
+		return nil, fmt.Errorf("read places: %w", err)
+	}
 
 	domains := []struct {
 		name     string
@@ -522,14 +526,14 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		// Ransomware-protection scorecard facts. All reads are best-effort: a store
 		// error leaves the relevant fact at its zero value (a missing check), which
 		// the aggregate then treats conservatively rather than failing the query.
-		offsiteConfigured := s.offsiteRepoFor(d.name, settings) != ""
+		copiesOffSite := s.offSiteConfigured(d.name, settings, sites)
 		var offPremisesCovered bool
 		if validPlacementDomain(d.name) {
-			copied, covered, cErr := s.placementCoverage(settings, d.name)
+			copied, covered, cErr := s.placementCoverage(settings, d.name, sites)
 			if cErr != nil {
 				log.Printf("api: status %s: placement could not be read, off-site stays as configured: %v", d.name, cErr) //nolint:gosec // G706: domain is a fixed literal
 			} else {
-				offsiteConfigured = offsiteConfigured && copied
+				copiesOffSite = copiesOffSite && copied
 				offPremisesCovered = covered
 			}
 		}
@@ -576,7 +580,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 
 		in := protInputs{
 			enabled:           d.enabled,
-			offsiteConfigured: offsiteConfigured,
+			offsiteConfigured: copiesOffSite,
 			offsiteImmutable:  offsiteImmutable,
 			hadTamper:         hadTamper,
 			lastTamperOK:      lastTamperOK,
@@ -620,7 +624,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			LastVerified:          lastVerified,
 			LastVerifiedOK:        lastVerifiedOK,
 			VerifiedDetail:        verifiedDetail,
-			OffsiteConfigured:     offsiteConfigured,
+			OffsiteConfigured:     copiesOffSite,
 			OffPremisesCovered:    offPremisesCovered,
 			OffsiteImmutable:      offsiteImmutable,
 			LastTamperAt:          lastTamperAt,
@@ -631,7 +635,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			LastDRDrillOK:         lastDRDrillOK,
 			LastOffsiteSubsetAt:   lastOffsiteSubsetAt,
 			LastOffsiteSubsetOK:   lastOffsiteSubsetOK,
-			OffsiteDrillScheduled: settings.DrillsEnabled && settings.OffsiteDrillsEnabled && offsiteConfigured,
+			OffsiteDrillScheduled: settings.DrillsEnabled && settings.OffsiteDrillsEnabled && copiesOffSite,
 			DrillDetail:           drDetail,
 			Protection:            protection,
 			TamperState:           checks.Tamper,
