@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/model"
@@ -29,6 +30,7 @@ func TestExcludesChangeRecordsANewFingerprint(t *testing.T) {
 		TotalBytesProcessed: 40 << 30,
 		TotalFilesProcessed: 900,
 		TotalDuration:       &secs,
+		Elapsed:             2500 * time.Millisecond,
 	}}}
 	h, st, svc, dir := newTestRouterSvcDir(t, d, eng)
 

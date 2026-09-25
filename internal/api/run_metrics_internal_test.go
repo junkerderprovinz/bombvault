@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -31,23 +32,24 @@ func TestBackupSummaryFromNeedsTheDuration(t *testing.T) {
 		}
 	})
 
-	t.Run("the duration is rounded to milliseconds", func(t *testing.T) {
-		got := backupSummaryFrom(restic.Summary{SnapshotID: "abc", TotalDuration: secs(2.0004)})
-		if !got.Measured {
+	// The backfill has only a snapshot's backup_start and backup_end, which span
+	// the whole restic run. total_duration leaves most of a second out, so a
+	// series mixing the two would jump at the upgrade.
+	t.Run("a live run and a backfilled one measure the same span", func(t *testing.T) {
+		start := time.Date(2026, 9, 24, 18, 38, 2, 995_000_000, time.UTC)
+		live := backupSummaryFrom(restic.Summary{
+			SnapshotID: "31047c9a", TotalDuration: secs(0.067), Elapsed: 774 * time.Millisecond,
+		})
+		if !live.Measured {
 			t.Fatal("a line with total_duration did not read as measured")
 		}
-		if got.ResticMS != 2000 {
-			t.Fatalf("restic_ms = %d, want 2000", got.ResticMS)
-		}
-		if got := backupSummaryFrom(restic.Summary{TotalDuration: secs(2.0006)}); got.ResticMS != 2001 {
-			t.Fatalf("restic_ms = %d, want 2001", got.ResticMS)
-		}
-	})
-
-	t.Run("a negative duration is clamped", func(t *testing.T) {
-		got := backupSummaryFrom(restic.Summary{TotalDuration: secs(-0.5)})
-		if got.ResticMS != 0 {
-			t.Fatalf("restic_ms = %d, want 0", got.ResticMS)
+		snap := restic.SnapshotMeta{ID: "31047c9a", Summary: &restic.SnapshotMetaSummary{
+			BackupStart: start, BackupEnd: start.Add(774 * time.Millisecond),
+		}}
+		matched, _ := matchSnapshotSummaries([]store.UnmeasuredRun{{ID: "r1", SnapshotID: "31047c9a"}}, []restic.SnapshotMeta{snap})
+		backfilled := matched["r1"].ResticMS
+		if live.ResticMS != 774 || live.ResticMS != backfilled {
+			t.Fatalf("live restic_ms = %d, backfilled %d, want both 774", live.ResticMS, backfilled)
 		}
 	})
 

@@ -41,6 +41,7 @@ func measuredSummary(sourceBytes uint64, added float64) restic.Summary {
 		TotalBytesProcessed: sourceBytes,
 		TotalFilesProcessed: 900,
 		TotalDuration:       &secs,
+		Elapsed:             time.Minute,
 	}
 }
 

@@ -634,6 +634,7 @@ func TestZFSBackupRecordsWhatResticReadOfEachDataset(t *testing.T) {
 	secs := 2.5
 	eng.sum = restic.Summary{
 		BytesAdded: 100, FilesNew: 3, TotalBytesProcessed: 8 << 20, TotalFilesProcessed: 40, TotalDuration: &secs,
+		Elapsed: 2500 * time.Millisecond,
 	}
 	d := zfsSeedItem(t, st, zfsRoot)
 

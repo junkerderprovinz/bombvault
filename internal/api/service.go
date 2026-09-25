@@ -19,7 +19,6 @@ import (
 	"io/fs"
 	"log"
 	"maps"
-	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -10966,10 +10965,9 @@ func backupSummaryFrom(sum restic.Summary) backup.Summary {
 	out.SourceBytes = int64(sum.TotalBytesProcessed) //nolint:gosec // G115: restic cannot have read more than 8 EiB
 	out.SourceFiles = int64(sum.TotalFilesProcessed) //nolint:gosec // G115: nor more than 2^63 files
 	out.FilesNew = int64(sum.FilesNew)
-	out.ResticMS = int64(math.Round(*sum.TotalDuration * 1000))
-	if out.ResticMS < 0 {
-		out.ResticMS = 0
-	}
+	// The span the backfill reads from backup_start and backup_end, so a
+	// series holds one measure on both sides of an upgrade.
+	out.ResticMS = sum.Elapsed.Milliseconds()
 	return out
 }
 

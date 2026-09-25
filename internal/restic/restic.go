@@ -219,6 +219,11 @@ type Summary struct {
 	// without them (an older binary, a truncated line) must not read as a
 	// source that shrank to nothing.
 	TotalDuration *float64 `json:"total_duration,omitempty"` // seconds
+	// Elapsed is how long restic ran, from its start to its end. It is the span
+	// a snapshot records as backup_start to backup_end, which is all a run read
+	// back from the repository has. total_duration covers only a part of that
+	// span, most of a second short on a small backup, so the two do not compare.
+	Elapsed time.Duration `json:"-"`
 }
 
 // SnapshotSummary is the counter set restic stores with a snapshot since 0.17.
@@ -2144,6 +2149,7 @@ func (r Restic) RepoOpensErr(ctx context.Context, repo string, m Mode) error {
 // Backup backs up paths into the repo, tagging each snapshot with tags, and
 // returns the parsed backup summary.
 func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []string, m Mode, excludes ...string) (Summary, error) {
+	start := time.Now()
 	out, err := r.run(ctx, BackupArgs(repo, paths, tags, m, excludes...), m)
 	if err != nil {
 		// restic exit 3 (a source file could not be read) still created the snapshot,
@@ -2151,13 +2157,13 @@ func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []
 		// logged in backupExit3Err. Un-parseable output means it was not a clean
 		// exit-3, so fall through to the real error.
 		if errors.Is(err, ErrBackupSourceUnreadable) {
-			if sum, perr := ParseBackupSummary(out); perr == nil {
+			if sum, perr := summarySince(out, start); perr == nil {
 				return sum, nil
 			}
 		}
 		return Summary{}, err
 	}
-	return ParseBackupSummary(out)
+	return summarySince(out, start)
 }
 
 // BackupDir backs up the contents of dir as the snapshot's own tree root,
@@ -2172,18 +2178,19 @@ func (r Restic) BackupDir(ctx context.Context, repo, dir string, tags []string, 
 		return Summary{}, fmt.Errorf("restic repository %q is not absolute", repo)
 	}
 	m = snapshotDirMode(m)
+	start := time.Now()
 	out, err := r.runIn(ctx, dir, BackupDirArgs(repo, tags, m, excludes...), m)
 	if err != nil {
 		// Exit 3 means a source file could not be read but the snapshot exists,
 		// the same as in Backup.
 		if errors.Is(err, ErrBackupSourceUnreadable) {
-			if sum, perr := ParseBackupSummary(out); perr == nil {
+			if sum, perr := summarySince(out, start); perr == nil {
 				return sum, nil
 			}
 		}
 		return Summary{}, err
 	}
-	return ParseBackupSummary(out)
+	return summarySince(out, start)
 }
 
 // snapshotDirMode keeps restic from storing each file's device number. Every
@@ -2242,6 +2249,7 @@ func (r Restic) BackupStdin(ctx context.Context, repo string, rd io.Reader, path
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; path/tags are internal values (a zvol dataset/snapshot identifier), never raw user input
 	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)
+	start := time.Now()
 	out, err := runWithStdin(cmd, args, rd)
 	err = ctxCancelErr(ctx, args, err)
 	if err != nil {
@@ -2249,13 +2257,13 @@ func (r Restic) BackupStdin(ctx context.Context, repo string, rd io.Reader, path
 		// be read") path in principle (e.g. a mid-stream read error surfaced that
 		// way) — handle it exactly like Backup does for consistency.
 		if errors.Is(err, ErrBackupSourceUnreadable) {
-			if sum, perr := ParseBackupSummary(out); perr == nil {
+			if sum, perr := summarySince(out, start); perr == nil {
 				return sum, nil
 			}
 		}
 		return Summary{}, err
 	}
-	return ParseBackupSummary(out)
+	return summarySince(out, start)
 }
 
 // CommandSnapshotPartialError reports a backup taken from a command that
@@ -2295,6 +2303,7 @@ func (r Restic) BackupFromCommand(ctx context.Context, repo, stdinPath string, t
 	// the stall guard needs those lines to see a dump that stopped moving.
 	cmd.Env = append(r.authEnv(m), "RESTIC_PROGRESS_FPS=3")
 
+	start := time.Now()
 	watch := WatcherFrom(ctx)
 	out, stderr, err := scanLinesStderr(cmd, args, func(line []byte) {
 		if watch == nil {
@@ -2312,7 +2321,7 @@ func (r Restic) BackupFromCommand(ctx context.Context, repo, stdinPath string, t
 		}
 		return Summary{}, lines, ctxCancelErr(ctx, args, err)
 	}
-	sum, err := ParseBackupSummary(out)
+	sum, err := summarySince(out, start)
 	return sum, lines, err
 }
 
@@ -2725,6 +2734,14 @@ func parseDiffStatistics(data []byte) (DiffResult, error) {
 		}
 	}
 	return DiffResult{}, fmt.Errorf("restic diff: no statistics line in output")
+}
+
+// summarySince parses a finished backup's summary and records how long restic
+// ran since start.
+func summarySince(out []byte, start time.Time) (Summary, error) {
+	sum, err := ParseBackupSummary(out)
+	sum.Elapsed = time.Since(start)
+	return sum, err
 }
 
 // ParseBackupSummary scans lines of restic --json backup output for the
