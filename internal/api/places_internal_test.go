@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"maps"
 	"net/http"
 	"reflect"
@@ -587,5 +589,140 @@ func TestARenameOntoAnotherPlacesNameIsRefused(t *testing.T) {
 	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
 	if res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"name": "Unraid"}); res["ok"] != false || res["code"] != "place-name-taken" {
 		t.Fatalf("PATCH = %v, want place-name-taken", res)
+	}
+}
+
+func TestRenamingAFolderWithNothingInItMovesTheDomainPath(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	folders := maps.Clone(unraid.Folders)
+	folders["vms"] = "virtual"
+
+	if res := f.do(http.MethodPatch, "/api/places/"+unraid.ID, map[string]any{"folders": folders}); res["ok"] != true {
+		t.Fatalf("PATCH = %v", res)
+	}
+	if settings, err := f.st.GetSettings(); err != nil || settings.VMsPath != "backups/virtual" {
+		t.Fatalf("vms path = %q, %v", settings.VMsPath, err)
+	}
+}
+
+func TestRenamingAFolderAwayFromBackupsIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nginx := f.container("nginx", "")
+	f.backupRun(nginx.ID, 100)
+	if err := f.st.AddRepoStat(store.RepoStat{Domain: "containers", Source: "local", At: 100, Snapshots: 9}); err != nil {
+		t.Fatal(err)
+	}
+	folders := maps.Clone(unraid.Folders)
+	folders["containers"] = "ct"
+
+	res := f.do(http.MethodPatch, "/api/places/"+unraid.ID, map[string]any{"folders": folders})
+
+	if res["ok"] != false || res["code"] != "place-location-established" || res["snapshots"] != float64(9) ||
+		!reflect.DeepEqual(res["domains"], []any{"containers"}) {
+		t.Fatalf("PATCH = %v, want place-location-established with 9 snapshots of containers", res)
+	}
+	if settings, err := f.st.GetSettings(); err != nil || settings.ContainersPath != "backups/containers" {
+		t.Fatalf("containers path = %q, %v, want it unmoved", settings.ContainersPath, err)
+	}
+}
+
+func TestAHandMadeMoveOfTheWholePlaceIsAccepted(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nginx := f.container("nginx", "")
+	f.backupRun(nginx.ID, 100)
+	f.eng.ids[f.domainPath("containers")] = "r1"
+	f.eng.ids[f.localRepo("moved/containers")] = "r1"
+
+	res := f.do(http.MethodPatch, "/api/places/"+unraid.ID, map[string]any{"address": map[string]string{"path": "moved"}})
+
+	if res["ok"] != true || res["place"].(map[string]any)["base"] != "moved" {
+		t.Fatalf("PATCH = %v", res)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil || settings.ContainersPath != "moved/containers" || settings.VMsPath != "moved/vms" {
+		t.Fatalf("paths = %q %q, %v", settings.ContainersPath, settings.VMsPath, err)
+	}
+}
+
+func TestAPlaceThatIsARepositoryTakesNoFolder(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := s3Place("B2 root", "s3:https://s3.example.com/bucket")
+	p.Folders = map[string]string{"containers": ""}
+	root := f.storePlace(p)
+	res := f.do(http.MethodPatch, "/api/places/"+root.ID, map[string]any{"folders": map[string]string{"containers": "container"}})
+	if res["ok"] != false || res["code"] != "place-is-repository" {
+		t.Fatalf("PATCH = %v, want place-is-repository", res)
+	}
+}
+
+func TestAFolderBesideTheBaseItselfIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	folders := maps.Clone(nas.Folders)
+	folders["vms"] = ""
+	if res := f.do(http.MethodPatch, "/api/places/"+nas.ID, map[string]any{"folders": folders}); res["ok"] != false || res["code"] != "place-is-repository" {
+		t.Fatalf("PATCH = %v, want place-is-repository", res)
+	}
+	if p, err := f.st.GetPlace(nas.ID); err != nil || p.Folders["vms"] != "vms" {
+		t.Fatalf("place = %+v, %v, want its folders unchanged", p, err)
+	}
+}
+
+func TestAnUnreachableNewAddressLeavesThePlaceAlone(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	f.placeTarget(b2, "containers", "")
+	moved := "s3:https://s3.example.com/other/container"
+	f.eng.opens[moved] = false
+	f.eng.openErr[moved] = errors.New("dial tcp 203.0.113.9:443: connect: connection refused")
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"address": map[string]string{"endpoint": "s3.example.com", "bucket": "other"}})
+
+	if res["ok"] != false || res["code"] != "place-probe-failed" {
+		t.Fatalf("PATCH = %v, want place-probe-failed", res)
+	}
+	if p, err := f.st.GetPlace(b2.ID); err != nil || p.Base != b2.Base {
+		t.Fatalf("place = %+v, %v, want its base unchanged", p, err)
+	}
+}
+
+func TestAnAddressFormMissingAFieldIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"address": map[string]string{"bucket": "other"}})
+	if res["ok"] != false || res["code"] != nil || res["error"] != "the field endpoint is required" {
+		t.Fatalf("PATCH = %v, want a plain refusal naming the missing endpoint", res)
+	}
+}
+
+func TestAPlaceEditWaitsForTheOneInProgress(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	f.svc.placeEditMu.Lock()
+	done := make(chan error, 1)
+	go func() {
+		keep := 5
+		_, _, err := f.svc.patchPlace(context.Background(), b2.ID, patchPlaceBody{RetentionKeepLast: &keep})
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		t.Fatalf("a place edit went ahead during another: %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+	f.svc.placeEditMu.Unlock()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the place edit never finished")
+	}
+	if p, err := f.st.GetPlace(b2.ID); err != nil || p.RetentionKeepLast != 5 {
+		t.Fatalf("place = %+v, %v, want the waiting edit saved", p, err)
 	}
 }

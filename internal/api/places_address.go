@@ -185,3 +185,14 @@ func (s *Service) checkMoves(ctx context.Context, moves []addressMove, newMode r
 	}
 	return nil
 }
+
+// placeMode is the mode the place's addresses open with.
+func (s *Service) placeMode(settings store.Settings, p store.Place) (restic.Mode, error) {
+	mode := s.ModeFor(settings)
+	env, err := s.placeEnv(p)
+	if err != nil {
+		return mode, err
+	}
+	mode.Env = env
+	return mode, nil
+}
