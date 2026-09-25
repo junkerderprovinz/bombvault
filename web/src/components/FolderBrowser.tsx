@@ -286,7 +286,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
       {open && (inDialog ? (
         <div className="mt-1 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
           {panel}
-          <div className="flex items-center justify-end gap-2">{actions}</div>
+          <div className="flex flex-wrap items-center justify-end gap-3">{actions}</div>
         </div>
       ) : createPortal(
         <div
