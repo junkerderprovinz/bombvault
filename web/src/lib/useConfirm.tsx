@@ -63,6 +63,9 @@ export function useConfirm() {
     if (trigger && document.contains(trigger)) trigger.focus();
   }, []);
 
+  // For a caller whose question stopped making sense while the dialog was open.
+  const dismiss = useCallback(() => settle(false), [settle]);
+
   useEffect(() => {
     if (!pending) return;
     function onKeyDown(e: KeyboardEvent) {
@@ -115,5 +118,5 @@ export function useConfirm() {
       )
     : null;
 
-  return { confirm, confirmDialog };
+  return { confirm, confirmDialog, dismiss };
 }

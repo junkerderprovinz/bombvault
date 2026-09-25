@@ -26,6 +26,7 @@ vi.mock("../lib/useConfirm", () => ({
   useConfirm: () => ({
     confirm: async () => answer,
     confirmDialog: null,
+    dismiss: () => {},
   }),
 }));
 

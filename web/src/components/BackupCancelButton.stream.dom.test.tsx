@@ -2,12 +2,18 @@
 // Runs the button through the real lib/progress.ts stream, so the frames the
 // backend sends decide whether a cancel is still offered. Only EventSource is
 // faked, because jsdom has none.
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const cancelBackup = vi.fn(async () => ({ ok: true, cancelled: true }));
 vi.mock("../lib/api", async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
-  cancelBackup: vi.fn(async () => ({ ok: true, cancelled: true })),
+  cancelBackup: () => cancelBackup(),
+}));
+
+const pushed: { message: string; severity?: string }[] = [];
+vi.mock("../lib/toast", () => ({
+  useToast: () => ({ push: (message: string, severity?: string) => pushed.push({ message, severity }) }),
 }));
 
 import { BackupCancelButton } from "./BackupCancelButton";
@@ -37,6 +43,8 @@ function cancelButton() {
 beforeEach(() => {
   vi.useFakeTimers();
   instances.length = 0;
+  pushed.length = 0;
+  cancelBackup.mockClear();
   globalThis.EventSource = FakeEventSource as unknown as typeof EventSource;
 });
 
@@ -62,5 +70,30 @@ describe("BackupCancelButton on the live progress stream", () => {
     expect(cancelButton()).not.toBeNull();
     send({ key: "files:docs", phase: "backup", percent: 100, active: false });
     expect(cancelButton()).toBeNull();
+  });
+
+  it.each([
+    ["the restore point is written", { percent: 100, active: true, committed: true }, "backup.cancelTooLate"],
+    ["the run ends", { percent: 100, active: false }, "backup.cancelNotRunning"],
+  ])("closes an open confirmation once %s and says why", async (_when, frame, message) => {
+    render(<BackupCancelButton cancelKey="container:plex" name="plex" t={t} />);
+    send({ key: "container:plex", phase: "backup", percent: 40, active: true });
+    await act(async () => {
+      fireEvent.click(cancelButton()!);
+    });
+    expect(screen.getByRole("dialog").textContent).toContain("backup.cancelConfirm");
+
+    send({ key: "container:plex", phase: "backup", ...frame });
+    await act(async () => {});
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(pushed).toEqual([{ message, severity: "warn" }]);
+    expect(cancelBackup).not.toHaveBeenCalled();
+  });
+
+  it("leaves the cancel alone when no confirmation is open", () => {
+    render(<BackupCancelButton cancelKey="container:plex" name="plex" t={t} />);
+    send({ key: "container:plex", phase: "backup", percent: 40, active: true });
+    send({ key: "container:plex", phase: "backup", percent: 100, active: true, committed: true });
+    expect(pushed).toEqual([]);
   });
 });

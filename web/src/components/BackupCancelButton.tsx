@@ -9,11 +9,10 @@
 // A container backup that has written its restore point and only starts its
 // containers again cannot be cancelled, and the confirmation would promise a
 // run without a snapshot. The progress stream marks that phase and the button
-// hides, as it does while the bar of a finished run lingers. A dialog that is
-// already open stays, and the server's answer then says the cancel came too
-// late.
+// hides, as it does while the bar of a finished run lingers. A confirmation
+// that is open at that moment closes with the answer the server would give.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cancelBackup } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { useToast } from "../lib/toast";
@@ -39,14 +38,26 @@ export function BackupCancelButton({
   onCancelled?: () => void;
 }) {
   const [cancelling, setCancelling] = useState(false);
-  const { confirm, confirmDialog } = useConfirm();
+  const asking = useRef(false);
+  const { confirm, confirmDialog, dismiss } = useConfirm();
   const { push } = useToast();
   const entry = useProgress()[cancelKey];
-  const cancellable = !entry?.committed && !entry?.finished;
+  const committed = entry?.committed === true;
+  const cancellable = !committed && !entry?.finished;
+
+  useEffect(() => {
+    if (cancellable || !asking.current) return;
+    asking.current = false;
+    dismiss();
+    push(t(committed ? "backup.cancelTooLate" : "backup.cancelNotRunning").replace(/\{name\}/g, name), "warn");
+  }, [cancellable, committed, dismiss, push, t, name]);
 
   async function handle() {
     const msg = t("backup.cancelConfirm").replace(/\{name\}/g, name);
-    if (!(await confirm(msg))) return;
+    asking.current = true;
+    const yes = await confirm(msg);
+    asking.current = false;
+    if (!yes) return;
     setCancelling(true);
     try {
       const res = await cancelBackup(cancelKey);
