@@ -727,8 +727,8 @@ func detachMovedRowTx(tx *sql.Tx, id, role, repo string) error {
 }
 
 // PlaceOwned names the settings columns of a domain that its places write.
-// A home place writes the domain's path, off-site field and that field's
-// append-only flag; a field row at a place writes the field and the flag.
+// A home place writes the domain's path; the place a field row stands at
+// writes the off-site field and that field's append-only flag.
 type PlaceOwned struct {
 	Path    bool
 	Offsite bool
