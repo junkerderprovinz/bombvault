@@ -9,7 +9,8 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { I18nProvider, en } from "../lib/i18n";
+import { I18nProvider, countText, en, type TranslationKey, type useT } from "../lib/i18n";
+import type { FileSetView } from "../lib/api";
 import { WindowActions } from "./WindowActions";
 
 vi.mock("../lib/api", async (importOriginal) => ({
@@ -18,6 +19,8 @@ vi.mock("../lib/api", async (importOriginal) => ({
   listRuns: async () => ({ ok: true, runs: [] }),
   ackRuns: async () => ({ ok: true }),
   browse: async () => ({ ok: true, dirs: [{ name: "appdata", path: "user/appdata" }] }),
+  listRepos: async () => ({ ok: true, repos: [] }),
+  getCloudCredSets: async () => ({ ok: true, sets: [] }),
 }));
 
 const { ConfirmDialog } = await import("./ConfirmDialog");
@@ -27,6 +30,9 @@ const { CryptoDonateDialog } = await import("./CryptoDonateDialog");
 const { WhatsNewDialog } = await import("./WhatsNewDialog");
 const { ErrorDetailPanel } = await import("./ErrorDetailPanel");
 const { FolderBrowser } = await import("./FolderBrowser");
+const { FileSetDialog } = await import("../pages/Files");
+const { PullDialog } = await import("../pages/Pull");
+const { ReceiverDialog } = await import("../pages/Receiver");
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -35,6 +41,18 @@ function sharedRow(): string {
   const { container } = render(<WindowActions>{null}</WindowActions>, { container: document.createElement("div") });
   return (container.firstElementChild as HTMLElement).className;
 }
+
+const t = ((key: TranslationKey, n?: number) => countText(en[key], "en", n)) as unknown as ReturnType<typeof useT>["t"];
+
+const documents: FileSetView = {
+  id: "set1",
+  name: "Documents",
+  path: "documents",
+  excludes: [],
+  enabled: true,
+  lastBackup: 0,
+  pathExists: true,
+};
 
 function shown(node: ReactNode) {
   render(<I18nProvider>{node}</I18nProvider>);
@@ -127,6 +145,27 @@ const WINDOWS: Shown[] = [
     },
     last: en["folder.use"],
   },
+  {
+    file: "pages/Files.tsx",
+    name: "the folder set window",
+    open: () =>
+      shown(
+        <FileSetDialog initial={documents} presetSeed={null} hostMountRoot="/mnt/user" t={t} onClose={() => {}} onSaved={() => {}} />,
+      ),
+    last: en["settings.save"],
+  },
+  {
+    file: "pages/Pull.tsx",
+    name: "the pull source window",
+    open: () => shown(<PullDialog initial={null} t={t} onClose={() => {}} onSaved={() => {}} />),
+    last: en["settings.save"],
+  },
+  {
+    file: "pages/Receiver.tsx",
+    name: "the received repository window",
+    open: () => shown(<ReceiverDialog initial={null} t={t} onClose={() => {}} onSaved={() => {}} />),
+    last: en["settings.save"],
+  },
 ];
 
 /** Windows that still keep their own footer, each taken off by the change that
@@ -136,10 +175,7 @@ const PENDING = new Set<string>([
   // the scan. It comes off once both of its steps end in WindowActions, and
   // this list and its honesty test go with it.
   "components/places/AddPlaceDialog.tsx",
-  "pages/Files.tsx",
   "pages/Fleet.tsx",
-  "pages/Pull.tsx",
-  "pages/Receiver.tsx",
 ]);
 
 function tsxFiles(dir: string): string[] {
