@@ -246,6 +246,21 @@ describe("PlaceForm connection test", () => {
     expect(screen.getByText("s3:https://s3.eu-central-1.wasabisys.com/beta")).toBeTruthy();
   });
 
+  it("keeps a typed bucket that the listing does not hold as the one chosen", async () => {
+    probeAnswer = {
+      ok: true,
+      base: "s3:https://s3.eu-central-1.wasabisys.com/fresh",
+      buckets: ["alpha", "beta"],
+      facts: [{ key: "places.probe.bucketNew", params: { bucket: "fresh" } }],
+    };
+    await form(WASABI);
+    type(en["places.field.bucket"], "fresh");
+    await testConnection();
+    fireEvent.click(screen.getByRole("combobox", { name: en["places.field.bucket"] }));
+    expect(screen.getByRole("option", { name: "fresh" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("option", { name: "alpha" })).toBeTruthy();
+  });
+
   it("shows no result while a bucket is still to be chosen", async () => {
     probeAnswer = { ok: true, buckets: ["alpha", "beta"] };
     await form(WASABI);
