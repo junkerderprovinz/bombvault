@@ -3,6 +3,7 @@ package api
 import (
 	"cmp"
 	"fmt"
+	"log"
 	"slices"
 	"strings"
 
@@ -595,4 +596,66 @@ func storeName(base string) string {
 		return name
 	}
 	return base
+}
+
+// MigrateToPlaces moves a database from before storage places onto places,
+// once. It runs at start rather than as a SQL migration because telling a mesh
+// target or a rest-server user apart needs the decrypted credential sets. A
+// run that fails writes nothing, and the next start tries again.
+func (s *Service) MigrateToPlaces() error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	if settings.PlacesMigrated != 0 {
+		return nil
+	}
+	in, err := s.placesMigrationInput(settings)
+	if err != nil {
+		return err
+	}
+	plan := planPlaces(in)
+	if err := s.store.ApplyPlacesMigration(plan.places); err != nil {
+		return fmt.Errorf("write the places: %w", err)
+	}
+	log.Printf("api: moved the storage settings onto %d places; %d rows or domain paths stay without a place", len(plan.places), len(plan.unplaced))
+	return nil
+}
+
+// placesMigrationInput reads what planPlaces needs, secrets included.
+func (s *Service) placesMigrationInput(settings store.Settings) (placesMigrationInput, error) {
+	in := placesMigrationInput{settings: settings, primaries: map[string]store.OffsiteTarget{}, credSets: map[string]CloudCredSet{}}
+	var err error
+	if in.targets, err = s.store.ListOffsiteTargets(); err != nil {
+		return in, fmt.Errorf("read the off-site targets: %w", err)
+	}
+	if in.named, err = s.store.ListNamedRepos(); err != nil {
+		return in, fmt.Errorf("read the repositories: %w", err)
+	}
+	for _, d := range places.Domains {
+		row, ok, err := s.store.PrimaryRemoteTarget(d)
+		if err != nil {
+			return in, fmt.Errorf("read the primary row of %s: %w", d, err)
+		}
+		if ok {
+			in.primaries[d] = row
+		}
+	}
+	sets, err := s.decodeCloudCredSets(settings)
+	if err != nil {
+		return in, fmt.Errorf("read the credential sets: %w", err)
+	}
+	for _, set := range sets {
+		in.credSets[set.ID] = set
+	}
+	if in.shared, err = s.decodeCloud(settings); err != nil {
+		return in, fmt.Errorf("read the shared credentials: %w", err)
+	}
+	if in.existing, err = s.store.ListPlaces(); err != nil {
+		return in, fmt.Errorf("read the places: %w", err)
+	}
+	if in.homes, err = s.store.DomainPlaces(); err != nil {
+		return in, fmt.Errorf("read the home places: %w", err)
+	}
+	return in, nil
 }
