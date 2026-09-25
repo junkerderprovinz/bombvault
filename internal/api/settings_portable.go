@@ -38,19 +38,13 @@ type exportCredentials struct {
 	Notify notify.Config `json:"notify"`
 }
 
-// settingsExport is the portable configuration envelope written by the export and
-// consumed by the import. Settings is the same user-facing view the SPA edits
-// (secrets blanked, auth/session/managed fields excluded); OffsiteTargets is the
-// non-secret off-site DESTINATION list; Credentials is present only when secrets
-// were requested. It intentionally carries NOTHING about backup repositories,
-// snapshots or run history — the import touches none of those.
-// NamedRepos is the per-item repository list (#204): the locations individual
-// containers, VMs and folder sets are pointed at instead of their domain's own.
-// They belong in the portable file for the same reason the off-site destinations
-// do - they are configuration, not backup data - and leaving them out was worse
-// than an omission: an item's own repo column holds the ID of one of these rows,
-// so a file that carried the items' choices but not the rows they name would
-// rebuild an instance whose items point at repositories that do not exist.
+// settingsExport is the portable configuration envelope written by the export
+// and read by the import. Settings is the view the SPA edits, with secrets
+// blanked and auth, session and managed fields left out; Credentials is present
+// only when secrets were requested. It carries nothing about snapshots or run
+// history, which the import never touches. NamedRepos travel with the file
+// because an item's repo column holds the id of one of them: without them the
+// import would rebuild items that point at repositories that do not exist.
 type settingsExport struct {
 	SchemaVersion  int                 `json:"schemaVersion"`
 	ExportedAt     string              `json:"exportedAt"`
@@ -64,7 +58,12 @@ type settingsExport struct {
 	// (replace it with nothing); see importedPlacement.
 	PlacementDefaults []placementDefaultExport `json:"placementDefaults"`
 	CopyRules         []copyRuleExport         `json:"copyRules"`
-	Credentials       *exportCredentials       `json:"credentials,omitempty"`
+	// Places and StorageDomainPlaces are always present too, so the import can
+	// tell a file from before storage places (no block) from one whose
+	// instance had none (an empty one).
+	Places              []placeExport      `json:"places"`
+	StorageDomainPlaces map[string]string  `json:"storageDomainPlaces"`
+	Credentials         *exportCredentials `json:"credentials,omitempty"`
 }
 
 // buildSettingsView returns the export's settings block: the user-facing view with
@@ -227,16 +226,28 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	placeRows, err := h.store.ListPlaces()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	homes, err := h.store.DomainPlaces()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 
 	exp := settingsExport{
-		SchemaVersion:     settingsExportSchema,
-		ExportedAt:        time.Now().UTC().Format(time.RFC3339),
-		AppVersion:        Version,
-		Settings:          buildSettingsView(s),
-		OffsiteTargets:    offsiteTargetsToViews(targets),
-		NamedRepos:        offsiteTargetsToViews(namedRepos),
-		PlacementDefaults: placementDefaultsToExport(defaults),
-		CopyRules:         copyRulesToExport(rules),
+		SchemaVersion:       settingsExportSchema,
+		ExportedAt:          time.Now().UTC().Format(time.RFC3339),
+		AppVersion:          Version,
+		Settings:            buildSettingsView(s),
+		OffsiteTargets:      offsiteTargetsToViews(targets),
+		NamedRepos:          offsiteTargetsToViews(namedRepos),
+		PlacementDefaults:   placementDefaultsToExport(defaults),
+		CopyRules:           copyRulesToExport(rules),
+		Places:              placesToExport(placeRows),
+		StorageDomainPlaces: homes,
 	}
 
 	if withCredentials {
