@@ -360,7 +360,8 @@ export function planLines(
     });
   } else if (noTargets) {
     lines.push({ text: t("placement.planNoTarget").replace("{domain}", () => domainLabel(t, domain)), tone });
-  } else if (plan.noCopy) {
+  }
+  if (plan.noCopy && !noTargets) {
     lines.push({ text: t("placement.planNoCopy"), tone: "warn" });
   }
   return lines;

@@ -309,15 +309,18 @@ func planFor(p placementRead, item placementItem, f *statusFacts, kind, repoID s
 		}
 	}
 	plan := &placementPlan{Kind: kind, Home: f.label(repoID), Targets: []string{}}
+	copiedOffSite := false
 	if home.copySource() {
 		if p.State.Paused() {
 			return &placementPlan{Kind: "paused", Home: plan.Home, Targets: []string{}, Warn: true}
 		}
-		for _, t := range p.effectiveTargets(item.Identity) {
+		targets := p.effectiveTargets(item.Identity)
+		for _, t := range targets {
 			plan.Targets = append(plan.Targets, placementTargetName(t))
 		}
+		copiedOffSite = len(offSiteTargets(targets, f.sites)) > 0
 	}
-	plan.NoCopy = kind != "decides-at-first-backup" && len(plan.Targets) == 0 && !homeOffPremises(home, p.Domain, repoID, f.named, f.sites)
+	plan.NoCopy = kind != "decides-at-first-backup" && !copiedOffSite && !homeOffPremises(home, p.Domain, repoID, f.named, f.sites)
 	plan.Warn = plan.NoCopy
 	return plan
 }
