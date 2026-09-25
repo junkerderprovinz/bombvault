@@ -92,7 +92,8 @@ export function AccentPresetSwatch({
 }) {
   const label = `${t("settings.accentPreset")} ${index + 1}`;
   // The disc is 32px, the size of every square icon badge, including the reset
-  // badge in this row. The ring is an outline, so it takes no room.
+  // badge in this row. The ring is an outline, so it takes no room, and it
+  // starts where the disc's focus ring ends, so a focused choice shows both.
   return (
     <span
       onClick={disabled ? undefined : () => onSelect(hex)}
@@ -101,7 +102,7 @@ export function AccentPresetSwatch({
       // picker opens from the disc itself, so blocking only this onClick
       // would still let it open and edit a preset nobody sees applied.
       className={`inline-flex rounded-pill transition-transform${
-        active ? " outline-solid outline-2 outline-offset-2 outline-carbon-text" : ""
+        active ? " outline-solid outline-2 outline-offset-4 outline-carbon-text" : ""
       }${disabled ? " pointer-events-none" : " hover:scale-110"}`}
     >
       <ColorPickerSwatch
