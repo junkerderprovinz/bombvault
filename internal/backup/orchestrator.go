@@ -540,7 +540,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 				return
 			}
 			if ctxErr := ctx.Err(); ctxErr != nil {
-				backupErr = fmt.Errorf("backup: stopped while stopping the container: %w", ctxErr)
+				backupErr = fmt.Errorf("backup: cancelled while stopping the container: %w", ctxErr)
 				return
 			}
 		}
@@ -559,7 +559,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 			}
 			stoppedDeps = append(stoppedDeps, dep)
 			if ctxErr := ctx.Err(); ctxErr != nil {
-				backupErr = fmt.Errorf("backup: stopped while stopping the dependencies: %w", ctxErr)
+				backupErr = fmt.Errorf("backup: cancelled while stopping its dependencies: %w", ctxErr)
 				return
 			}
 		}
