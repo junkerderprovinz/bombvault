@@ -144,7 +144,8 @@ const primaryRowName = "Primary (remote)"
 // into that companion in the same transaction.
 //
 // The place columns are written for a new row only. A stored row keeps its
-// place, which AttachRowTx and DetachRowTx set.
+// place, which AttachRowTx and DetachRowTx set, unless this write gives it
+// another address: then it leaves the place, which no longer spells it.
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
@@ -166,6 +167,9 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	var companionOf string
 	err = tx.QueryRow(`SELECT companion_of FROM offsite_targets WHERE id = ? AND role = ?`, t.ID, t.Role).Scan(&companionOf)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+	}
+	if err := detachMovedRowTx(tx, t.ID, t.Role, t.Repo); err != nil {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
 	}
 	if companionOf != "" {
@@ -697,7 +701,7 @@ func (r *Repo) DeleteNamedRepoIfUnused(id string) (NamedRepoUse, error) {
 	return use, nil
 }
 
-// SetNamedRepoLocationIfUnused moves a named repository's location ONLY while
+// SetNamedRepoLocationIfUnused moves a named repository's location only while
 // nothing points at it, in one transaction, for the same reason
 // DeleteNamedRepoIfUnused does it that way: everything already written stays
 // where it is, so a move under a live item, or under a default that homes open
@@ -707,6 +711,9 @@ func (r *Repo) DeleteNamedRepoIfUnused(id string) (NamedRepoUse, error) {
 // offPremises is written with the location, because it describes that location:
 // a mark left behind goes on counting a repository moved onto the array as a
 // site of its own, and every item there reads as having a copy off the premises.
+//
+// A repository at a place leaves it when it moves, as UpsertOffsiteTarget
+// takes any moved row off its place.
 func (r *Repo) SetNamedRepoLocationIfUnused(id, location string, offPremises bool) (NamedRepoUse, error) {
 	var use NamedRepoUse
 	tx, err := r.db.Begin()
@@ -723,6 +730,9 @@ func (r *Repo) SetNamedRepoLocationIfUnused(id, location string, offPremises boo
 	slices.Sort(use.DefaultDomains)
 	if use.InUse() {
 		return use, nil
+	}
+	if err := detachMovedRowTx(tx, id, RoleRepo, location); err != nil {
+		return use, fmt.Errorf("SetNamedRepoLocationIfUnused: %w", err)
 	}
 	if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ?, off_premises = ? WHERE id = ? AND role = ?`,
 		location, boolInt(offPremises), id, RoleRepo); err != nil {

@@ -808,3 +808,125 @@ func TestRemovingAnUnknownPlaceFindsNothing(t *testing.T) {
 		t.Fatalf("DeletePlaceIfUnused(nope) = %v, want ErrPlaceNotFound", err)
 	}
 }
+
+func TestEveryPlacedRowHoldsItsPlaceAddress(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	mustWritePlace(t, r, store.PlaceWrite{Place: restPlace(), HomeDomains: map[string]string{"vms": ""}})
+	nas := mustWritePlace(t, r, store.PlaceWrite{Place: store.Place{Name: "NAS", Provider: "share", Kind: string(places.KindLocal),
+		Base: "remotes/nas/bv", Folders: map[string]string{}, Enabled: true}})
+
+	target := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: addressAt(t, bucket, "containers", ""), Enabled: true})
+	attachRow(t, db, target.ID, bucket.ID, "containers", "")
+	direct, err := r.CreateCompanionRepo(target.ID, "B2 direct", addressAt(t, bucket, "containers", "-direct"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	attachRow(t, db, direct.ID, bucket.ID, "containers", "-direct")
+	copies, err := r.CreateOffsiteTarget(store.OffsiteTarget{Domain: "files", Name: "B2 copies", Repo: addressAt(t, bucket, "files", "-copies"), Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	attachRow(t, db, copies.ID, bucket.ID, "files", "-copies")
+	shared := upsertRow(t, r, store.OffsiteTarget{Role: store.RoleRepo, Name: "NAS", Repo: "remotes/nas/bv", Enabled: true})
+	attachRow(t, db, shared.ID, nas.ID, "", "")
+	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	checkPlacedAddresses(t, r)
+
+	writeBucket := func() error {
+		var err error
+		bucket, err = r.WritePlace(store.PlaceWrite{Place: bucket})
+		return err
+	}
+	for _, step := range []struct {
+		name string
+		do   func() error
+	}{
+		{"a new base", func() error {
+			bucket.Base = "s3:https://s3.example.com/bucket-2"
+			return writeBucket()
+		}},
+		{"a new folder", func() error {
+			bucket.Folders["containers"] = "ct"
+			return writeBucket()
+		}},
+		{"the root of an rclone remote", func() error {
+			bucket.Kind, bucket.Base = string(places.KindRclone), "rclone:r:"
+			return writeBucket()
+		}},
+		{"switched off and on", func() error {
+			bucket.Enabled = false
+			if err := writeBucket(); err != nil {
+				return err
+			}
+			bucket.Enabled = true
+			return writeBucket()
+		}},
+		{"the home place moved to this server", func() error {
+			_, err := r.WritePlace(store.PlaceWrite{Place: diskPlace(), HomeDomains: map[string]string{"vms": ""}})
+			return err
+		}},
+		{"a target moved through an old route", func() error {
+			row, _, err := r.GetOffsiteTarget(target.ID)
+			if err != nil {
+				return err
+			}
+			row.Repo = "s3:https://s3.example.com/elsewhere/container"
+			_, err = r.UpsertOffsiteTarget(row)
+			return err
+		}},
+		{"a repository moved through an old route", func() error {
+			_, err := r.SetNamedRepoLocationIfUnused(shared.ID, "remotes/nas2/bv", false)
+			return err
+		}},
+		{"the place written after a row left it", func() error {
+			bucket.Base = "rclone:r:bucket-3"
+			return writeBucket()
+		}},
+	} {
+		t.Run(step.name, func(t *testing.T) {
+			if err := step.do(); err != nil {
+				t.Fatal(err)
+			}
+			checkPlacedAddresses(t, r)
+		})
+	}
+}
+
+func TestAnAddressWrittenThroughAnOldRouteTakesTheRowOffItsPlace(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	target := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: addressAt(t, bucket, "containers", ""), Enabled: true})
+	attachRow(t, db, target.ID, bucket.ID, "containers", "")
+	named := upsertRow(t, r, store.OffsiteTarget{Role: store.RoleRepo, Name: "B2 files", Repo: addressAt(t, bucket, "files", ""), Enabled: true})
+	attachRow(t, db, named.ID, bucket.ID, "files", "")
+	used := upsertRow(t, r, store.OffsiteTarget{Role: store.RoleRepo, Name: "B2 vms", Repo: addressAt(t, bucket, "vms", ""), Enabled: true})
+	attachRow(t, db, used.ID, bucket.ID, "vms", "")
+	if _, err := r.WritePlacement(store.ItemRef{Domain: "vms", Key: "win11"}, &store.HomeWrite{Repo: used.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	upsertRow(t, r, store.OffsiteTarget{ID: target.ID, Domain: "containers", Name: "B2", Repo: target.Repo, Enabled: false})
+	if got, _, _ := r.GetOffsiteTarget(target.ID); got.PlaceID != bucket.ID {
+		t.Fatalf("a save that kept the address took the target off its place: %+v", got)
+	}
+	upsertRow(t, r, store.OffsiteTarget{ID: target.ID, Domain: "containers", Name: "B2", Repo: "s3:https://s3.example.com/elsewhere/container", Enabled: true})
+	if got, _, _ := r.GetOffsiteTarget(target.ID); got.PlaceID != "" || got.PlaceDomain != "" || got.Repo != "s3:https://s3.example.com/elsewhere/container" {
+		t.Fatalf("a moved target = %+v, want it at no place on its new address", got)
+	}
+
+	if _, err := r.SetNamedRepoLocationIfUnused(named.ID, "s3:https://s3.example.com/elsewhere/files", true); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := r.GetNamedRepo(named.ID); err != nil || got.PlaceID != "" || got.Repo != "s3:https://s3.example.com/elsewhere/files" {
+		t.Fatalf("a moved repository = %+v, %v, want it at no place on its new address", got, err)
+	}
+	use, err := r.SetNamedRepoLocationIfUnused(used.ID, "s3:https://s3.example.com/elsewhere/vms", true)
+	if err != nil || !use.InUse() {
+		t.Fatalf("moving a repository in use = %+v, %v, want it refused", use, err)
+	}
+	if got, err := r.GetNamedRepo(used.ID); err != nil || got.PlaceID != bucket.ID || got.Repo != addressAt(t, bucket, "vms", "") {
+		t.Fatalf("a repository in use = %+v, %v, want it still at its place", got, err)
+	}
+	checkPlacedAddresses(t, r)
+}
