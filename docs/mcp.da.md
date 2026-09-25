@@ -42,10 +42,18 @@ En start af et domæne eller af Backup Everything udelader de elementer, som en 
 
 1. Åbn **Indstillinger, System, MCP-server**, og klik på **Ny nøgle**.
 2. Giv nøglen et navn, der siger, hvor den bruges, for eksempel "Claude Code på den bærbare". Med én nøgle pr. klient kan du tilbagekalde én uden at røre de andre.
-3. Lad **Tillad at starte sikkerhedskopier** være slået til, eller slå det fra for en nøgle, der kun skal læse. Du kan ændre det senere i nøglens række, og ændringen gælder fra assistentens næste forespørgsel uden ny forbindelse.
+3. Lad **Tillad at starte sikkerhedskopier** være slået til, eller slå det fra for en nøgle, der kun skal læse. Du kan ændre det senere på nøglens felt, og ændringen gælder fra assistentens næste forespørgsel uden ny forbindelse.
 4. Klik på **Opret nøgle**. Nøglen vises én gang. BombVault gemmer kun et fingeraftryk af den og kan ikke vise den igen, så kopiér den nu, eller tag et af uddragene nedenunder, som så indeholder den rigtige nøgle.
 
 Uden en login-adgangskode er selve webgrænsefladen åben for alle på dit netværk, og alle, der kan åbne den, kan også oprette en nøgle. Kortet siger det. Åbner du BombVault under et navn, der ser offentligt ud (for eksempel `bombvault.example.com` bag en reverse proxy), og er der ingen login-adgangskode, kan der ikke oprettes eller udskiftes nøgler fra den adresse, så ingen webside på internettet kan få din browser til at oprette en. Sæt en login-adgangskode, eller åbn BombVault via dens IP-adresse eller et lokalt navn som `tower` eller `tower.local`.
+
+## Dine nøgler og deres log {#keys}
+
+Hver nøgle har sit eget felt på kortet. Det viser nøglens navn, om den må starte sikkerhedskopier eller kun læse, de sidste fire tegn af nøglen, hvornår den blev oprettet eller sidst udskiftet, hvornår en klient sidst brugte den, og hvor mange kald den har lavet i dag. På feltet omdøber du nøglen, ændrer dens tilladelse, udskifter den eller tilbagekalder den. En tilbagekaldt nøgle flytter til listen over tilbagekaldte nøgler, hvor du kan slette den for altid, når ingen kørsel i historikken nævner den længere.
+
+**Log** på et felt viser, hvad nøglen har gjort. Først kommer de sikkerhedskopier, den startede, hver med sin status og et link til kørslen i aktivitetsloggen på dashboardet. Under dem står dens kald, nyeste først, med værktøjet og hvad der blev af kaldet. En afvisning siger hvorfor: nøglen må kun læse, opbevaringsværnet holdt sikkerhedskopien tilbage, en anden sikkerhedskopi kørte allerede, elementet blev sikkerhedskopieret via MCP for få minutter siden, eller nøglen sendte for mange forespørgsler. En annullering linker til den kørsel, den handlede om.
+
+BombVault gemmer de nyeste 200 poster for hver nøgle i op til 30 dage. For hvert kald gemmer det værktøjet, resultatet og den kørsel, en annullering nævnte. Det gemmer aldrig, hvad assistenten sendte, og aldrig nøglen eller dens fingeraftryk. Diagnosepakken tæller kun posterne, og en eksport af indstillingerne udelader dem.
 
 ## Tilslut en klient {#clients}
 

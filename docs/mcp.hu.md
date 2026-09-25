@@ -42,10 +42,18 @@ Egy tartomány vagy a Backup Everything indítása kihagyja azokat az elemeket, 
 
 1. Nyisd meg a **Beállítások, Rendszer, MCP-kiszolgáló** részt, és kattints az **Új kulcs** gombra.
 2. Adj a kulcsnak olyan nevet, amely megmondja, hol használod, például "Claude Code a laptopon". Kliensenként egy kulccsal visszavonhatsz egyet anélkül, hogy a többihez hozzányúlnál.
-3. Hagyd bekapcsolva a **Mentések indításának engedélyezése** kapcsolót, vagy kapcsold ki egy olyan kulcsnál, amelynek csak olvasnia kell. Később a kulcs sorában módosíthatod, és a változás az asszisztens következő kérésétől él, újracsatlakozás nélkül.
+3. Hagyd bekapcsolva a **Mentések indításának engedélyezése** kapcsolót, vagy kapcsold ki egy olyan kulcsnál, amelynek csak olvasnia kell. Később a kulcs csempéjén módosíthatod, és a változás az asszisztens következő kérésétől él, újracsatlakozás nélkül.
 4. Kattints a **Kulcs létrehozása** gombra. A kulcs egyszer jelenik meg. A BombVault csak egy ujjlenyomatot őriz meg belőle, és nem tudja újra megmutatni, ezért másold ki most, vagy vedd az alatta lévő részletek egyikét, amely ekkor a valódi kulcsot tartalmazza.
 
 Bejelentkezési jelszó nélkül maga a webes felület is nyitva áll mindenki előtt a hálózatodon, és aki meg tudja nyitni, kulcsot is létrehozhat. A kártya ezt jelzi. Ha a BombVaultot nyilvánosnak tűnő néven nyitod meg (például `bombvault.example.com` egy fordított proxy mögött), és nincs bejelentkezési jelszó, arról a címről nem lehet kulcsot létrehozni vagy cserélni, így egyetlen internetes weboldal sem veheti rá a böngésződet, hogy létrehozzon egyet. Állíts be bejelentkezési jelszót, vagy nyisd meg a BombVaultot az IP-címén vagy egy helyi néven, például `tower` vagy `tower.local`.
+
+## A kulcsaid és a naplójuk {#keys}
+
+Minden kulcsnak saját csempéje van a kártyán. Mutatja a kulcs nevét, hogy indíthat-e mentést vagy csak olvas, a kulcs utolsó négy karakterét, mikor hozták létre vagy cserélték utoljára, mikor használta utoljára egy kliens, és hány hívást tett ma. A csempén átnevezed a kulcsot, módosítod a jogosultságát, lecseréled vagy visszavonod. A visszavont kulcs a visszavont kulcsok listájába kerül, ahol végleg törölheted, amint az előzményekben egyetlen futás sem hivatkozik rá.
+
+A csempe **Napló** gombja megnyitja, mit csinált a kulcs. Elöl az általa indított mentések állnak, mindegyik az állapotával és egy hivatkozással a futásra az irányítópult tevékenységnaplójában. Alattuk a hívásai, a legújabb elöl, az eszközzel és a hívás kimenetelével. Az elutasítás megmondja az okát: a kulcs csak olvashat, a megőrzésvédelem visszatartotta a mentést, már futott egy másik mentés, az elemet néhány perce mentették MCP-n keresztül, vagy a kulcs túl sok kérést küldött. A megszakítás arra a futásra hivatkozik, amelyről szólt.
+
+A BombVault kulcsonként a 200 legújabb bejegyzést őrzi legfeljebb 30 napig. Minden hívásnál az eszközt, a kimenetelt és a megszakítás által megnevezett futást tárolja. Soha nem tárolja, amit az asszisztens küldött, sem a kulcsot vagy az ujjlenyomatát. A diagnosztikai csomag csak megszámolja a bejegyzéseket, a beállítások exportja pedig kihagyja őket.
 
 ## Kliens csatlakoztatása {#clients}
 

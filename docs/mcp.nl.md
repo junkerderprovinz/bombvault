@@ -42,10 +42,18 @@ Een start van een domein of van Backup Everything laat de items weg die een gren
 
 1. Open **Instellingen, Systeem, MCP-server** en klik op **Nieuwe sleutel**.
 2. Geef de sleutel een naam die zegt waar hij wordt gebruikt, bijvoorbeeld "Claude Code op de laptop". Met één sleutel per client kun je er een intrekken zonder de andere aan te raken.
-3. Laat **Back-ups laten starten** aan, of zet het uit voor een sleutel die alleen mag lezen. Je kunt dit later in de rij van de sleutel wijzigen, en de wijziging geldt vanaf het volgende verzoek van de assistent, zonder nieuwe verbinding.
+3. Laat **Back-ups laten starten** aan, of zet het uit voor een sleutel die alleen mag lezen. Je kunt dit later op de tegel van de sleutel wijzigen, en de wijziging geldt vanaf het volgende verzoek van de assistent, zonder nieuwe verbinding.
 4. Klik op **Sleutel aanmaken**. De sleutel wordt één keer getoond. BombVault bewaart er alleen een vingerafdruk van en kan hem niet opnieuw tonen, dus kopieer hem meteen of neem een van de fragmenten eronder, die dan de echte sleutel bevatten.
 
 Zonder inlogwachtwoord staat de webinterface zelf open voor iedereen in je netwerk, en wie hem kan openen, kan ook een sleutel aanmaken. De kaart zegt dat. Open je BombVault onder een naam die er openbaar uitziet (bijvoorbeeld `bombvault.example.com` achter een reverse proxy) en is er geen inlogwachtwoord ingesteld, dan kunnen vanaf dat adres geen sleutels worden aangemaakt of vervangen, zodat geen webpagina op internet je browser er een kan laten aanmaken. Stel een inlogwachtwoord in, of open BombVault via zijn IP-adres of een lokale naam zoals `tower` of `tower.local`.
+
+## Je sleutels en hun logboek {#keys}
+
+Elke sleutel heeft een eigen tegel op de kaart. Die toont de naam van de sleutel, of hij back-ups mag starten of alleen leest, de laatste vier tekens van de sleutel, wanneer hij is aangemaakt of voor het laatst vervangen, wanneer een client hem voor het laatst gebruikte en hoeveel aanroepen hij vandaag deed. Op de tegel geef je de sleutel een andere naam, wijzig je zijn recht, vervang je hem of trek je hem in. Een ingetrokken sleutel verhuist naar de lijst met ingetrokken sleutels, waar je hem voorgoed kunt verwijderen zodra geen run in de geschiedenis hem nog noemt.
+
+**Logboek** op een tegel opent wat die sleutel deed. Eerst komen de back-ups die hij startte, elk met zijn stand en een link naar die run in het activiteitenlogboek op het dashboard. Daaronder staan zijn aanroepen, nieuwste eerst, met de tool en wat er van de aanroep werd. Een weigering zegt waarom: de sleutel mag alleen lezen, de bewaarbeveiliging hield de back-up tegen, er liep al een andere back-up, het item is een paar minuten geleden via MCP geback-upt, of de sleutel stuurde te veel verzoeken. Een annulering linkt naar de run waar het om ging.
+
+BombVault bewaart de nieuwste 200 regels van elke sleutel hooguit 30 dagen. Per aanroep bewaart het de tool, de uitkomst en de run die een annulering noemde. Wat de assistent stuurde bewaart het nooit, en de sleutel of zijn vingerafdruk evenmin. Het diagnosepakket telt de regels alleen, en een export van de instellingen laat ze weg.
 
 ## Een client koppelen {#clients}
 

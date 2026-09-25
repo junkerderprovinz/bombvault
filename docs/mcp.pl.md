@@ -42,10 +42,18 @@ Uruchomienie domeny lub Backup Everything pomija elementy zatrzymane przez któr
 
 1. Otwórz **Ustawienia, System, Serwer MCP** i kliknij **Nowy klucz**.
 2. Nadaj kluczowi nazwę, która mówi, gdzie jest używany, na przykład "Claude Code na laptopie". Z jednym kluczem na klienta możesz unieważnić jeden bez ruszania pozostałych.
-3. Zostaw włączone **Pozwól uruchamiać kopie** albo wyłącz je dla klucza, który ma tylko czytać. Możesz to później zmienić w wierszu klucza, a zmiana obowiązuje od następnego żądania asystenta, bez ponownego łączenia.
+3. Zostaw włączone **Pozwól uruchamiać kopie** albo wyłącz je dla klucza, który ma tylko czytać. Możesz to później zmienić na kafelku klucza, a zmiana obowiązuje od następnego żądania asystenta, bez ponownego łączenia.
 4. Kliknij **Utwórz klucz**. Klucz pokazuje się raz. BombVault zachowuje tylko jego odcisk i nie może go pokazać ponownie, więc skopiuj go od razu albo weź jeden z fragmentów poniżej, które wtedy zawierają prawdziwy klucz.
 
 Bez hasła logowania sam interfejs WWW jest otwarty dla wszystkich w twojej sieci, a kto może go otworzyć, może też utworzyć klucz. Karta o tym informuje. Jeśli otworzysz BombVault pod nazwą wyglądającą na publiczną (na przykład `bombvault.example.com` za reverse proxy), a hasło logowania nie jest ustawione, z tego adresu nie da się tworzyć ani wymieniać kluczy, żeby żadna strona w internecie nie mogła skłonić twojej przeglądarki do utworzenia klucza. Ustaw hasło logowania albo otwórz BombVault przez adres IP lub lokalną nazwę, taką jak `tower` czy `tower.local`.
+
+## Twoje klucze i ich dziennik {#keys}
+
+Każdy klucz ma na karcie własny kafelek. Pokazuje nazwę klucza, czy może uruchamiać kopie, czy tylko czyta, cztery ostatnie znaki klucza, kiedy go utworzono lub ostatnio zastąpiono, kiedy klient ostatnio go użył i ile wywołań wykonał dzisiaj. Na kafelku zmieniasz nazwę klucza, jego uprawnienie, zastępujesz go albo unieważniasz. Unieważniony klucz trafia na listę unieważnionych kluczy, gdzie możesz go usunąć na zawsze, gdy żadne uruchomienie w historii już go nie wymienia.
+
+**Dziennik** na kafelku otwiera to, co zrobił ten klucz. Najpierw są kopie, które uruchomił, każda ze stanem i linkiem do tego uruchomienia w dzienniku aktywności na pulpicie. Pod nimi są jego wywołania, od najnowszych, z narzędziem i wynikiem. Odmowa podaje powód: klucz może tylko czytać, ochrona przechowywania wstrzymała kopię, trwała już inna kopia, element skopiowano przez MCP kilka minut temu albo klucz wysłał zbyt wiele żądań. Anulowanie prowadzi do uruchomienia, którego dotyczyło.
+
+BombVault przechowuje 200 najnowszych wpisów każdego klucza przez najwyżej 30 dni. Przy każdym wywołaniu zapisuje narzędzie, wynik i uruchomienie wskazane przez anulowanie. Nigdy nie zapisuje tego, co wysłał asystent, ani klucza czy jego odcisku. Pakiet diagnostyczny tylko liczy wpisy, a eksport ustawień je pomija.
 
 ## Podłączanie klienta {#clients}
 

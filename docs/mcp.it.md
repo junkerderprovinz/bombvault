@@ -42,10 +42,18 @@ Un avvio di dominio o di Backup Everything lascia fuori gli elementi trattenuti 
 
 1. Apri **Impostazioni, Sistema, Server MCP** e fai clic su **Nuova chiave**.
 2. Dai alla chiave un nome che dica dove viene usata, per esempio "Claude Code sul portatile". Con una chiave per client puoi revocarne una senza toccare le altre.
-3. Lascia attivo **Consenti di avviare backup**, oppure disattivalo per una chiave che deve solo leggere. Puoi cambiarlo più tardi sulla riga della chiave, e la modifica vale dalla richiesta successiva dell'assistente, senza riconnessione.
+3. Lascia attivo **Consenti di avviare backup**, oppure disattivalo per una chiave che deve solo leggere. Puoi cambiarlo più tardi sulla scheda della chiave, e la modifica vale dalla richiesta successiva dell'assistente, senza riconnessione.
 4. Fai clic su **Crea chiave**. La chiave viene mostrata una sola volta. BombVault ne conserva solo un'impronta e non può mostrarla di nuovo, quindi copiala subito oppure prendi uno degli snippet sotto, che a quel punto contengono la chiave vera.
 
 Senza password di accesso l'interfaccia web stessa è aperta a tutta la tua rete, e chi può aprirla può anche creare una chiave. La scheda lo segnala. Se apri BombVault con un nome che sembra pubblico (per esempio `bombvault.example.com` dietro un reverse proxy) e non è impostata una password di accesso, da quell'indirizzo non si possono creare né sostituire chiavi, così nessuna pagina web su Internet può indurre il tuo browser a crearne una. Imposta una password di accesso, oppure apri BombVault dal suo indirizzo IP o da un nome locale come `tower` o `tower.local`.
+
+## Le tue chiavi e il loro registro {#keys}
+
+Ogni chiave ha una scheda sua nella card. Mostra il nome della chiave, se può avviare backup o solo leggere, gli ultimi quattro caratteri della chiave, quando è stata creata o sostituita l'ultima volta, quando un client l'ha usata l'ultima volta e quante chiamate ha fatto oggi. Dalla scheda rinomini la chiave, ne cambi il permesso, la sostituisci o la revochi. Una chiave revocata passa nell'elenco delle chiavi revocate, dove puoi eliminarla per sempre quando nessuna esecuzione nella cronologia la nomina più.
+
+**Registro** su una scheda apre ciò che ha fatto quella chiave. Prima vengono i backup che ha avviato, ognuno con il suo stato e un link a quell'esecuzione nel registro attività della dashboard. Sotto ci sono le sue chiamate, le più recenti prima, con lo strumento e l'esito. Un rifiuto dice il motivo: la chiave può solo leggere, la protezione della conservazione ha trattenuto il backup, era già in corso un altro backup, l'elemento è stato salvato tramite MCP pochi minuti fa, oppure la chiave ha inviato troppe richieste. Un annullamento rimanda all'esecuzione a cui si riferiva.
+
+BombVault conserva le 200 voci più recenti di ogni chiave per 30 giorni al massimo. Per ogni chiamata salva lo strumento, l'esito e l'esecuzione nominata da un annullamento. Non salva mai ciò che l'assistente ha inviato, né la chiave o la sua impronta. Il pacchetto di diagnostica conta soltanto le voci, e un'esportazione delle impostazioni le lascia fuori.
 
 ## Collegare un client {#clients}
 

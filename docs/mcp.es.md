@@ -42,10 +42,18 @@ Un inicio de dominio o de Backup Everything deja fuera los elementos que retiene
 
 1. Abre **Ajustes, Sistema, Servidor MCP** y haz clic en **Clave nueva**.
 2. Dale a la clave un nombre que diga dónde se usa, por ejemplo "Claude Code en el portátil". Con una clave por cliente puedes revocar una sin tocar las demás.
-3. Deja **Permitir iniciar copias** activado, o desactívalo para una clave que solo deba leer. Puedes cambiarlo más tarde en la fila de la clave, y el cambio vale desde la siguiente petición del asistente, sin reconectar.
+3. Deja **Permitir iniciar copias** activado, o desactívalo para una clave que solo deba leer. Puedes cambiarlo más tarde en la tarjeta de la clave, y el cambio vale desde la siguiente petición del asistente, sin reconectar.
 4. Haz clic en **Crear clave**. La clave se muestra una sola vez. BombVault solo guarda una huella de ella y no puede volver a mostrarla, así que cópiala ahora o toma uno de los fragmentos de debajo, que entonces llevan la clave real.
 
 Sin contraseña de inicio de sesión, la propia interfaz web está abierta a toda tu red, y quien pueda abrirla también puede crear una clave. La tarjeta lo avisa. Si abres BombVault con un nombre que parece público (por ejemplo `bombvault.example.com` detrás de un proxy inverso) y no hay contraseña de inicio de sesión, desde esa dirección no se pueden crear ni sustituir claves, para que ninguna página web de Internet pueda hacer que tu navegador cree una. Pon una contraseña de inicio de sesión, o abre BombVault por su dirección IP o por un nombre local como `tower` o `tower.local`.
+
+## Tus claves y su registro {#keys}
+
+Cada clave tiene su propia tarjeta. Muestra el nombre de la clave, si puede iniciar copias o solo leer, los cuatro últimos caracteres de la clave, cuándo se creó o se reemplazó por última vez, cuándo la usó un cliente por última vez y cuántas llamadas hizo hoy. En la tarjeta cambias el nombre de la clave, cambias su permiso, la reemplazas o la revocas. Una clave revocada pasa a la lista de claves revocadas, donde puedes borrarla para siempre cuando ninguna ejecución del historial la nombre.
+
+**Registro** en una tarjeta abre lo que hizo esa clave. Primero van las copias que inició, cada una con su estado y un enlace a esa ejecución en el registro de actividad del panel. Debajo están sus llamadas, las más recientes primero, con la herramienta y en qué quedó la llamada. Un rechazo dice por qué: la clave solo puede leer, la protección de retención frenó la copia, ya había otra copia en curso, el elemento se copió por MCP hace unos minutos o la clave envió demasiadas solicitudes. Una cancelación enlaza la ejecución a la que se refería.
+
+BombVault guarda las 200 entradas más recientes de cada clave durante 30 días como máximo. De cada llamada guarda la herramienta, el resultado y la ejecución que nombró una cancelación. Nunca guarda lo que envió el asistente, ni la clave ni su huella. El paquete de diagnóstico solo cuenta las entradas, y una exportación de ajustes las deja fuera.
 
 ## Conectar un cliente {#clients}
 

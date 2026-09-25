@@ -42,10 +42,18 @@ A domain or Backup Everything start leaves out the items a limit holds back and 
 
 1. Open **Settings, System, MCP server** and click **New key**.
 2. Give the key a name that says where it is used, for example "Claude Code on the laptop". One key per client lets you revoke one without touching the others.
-3. Leave **Allow starting backups** on, or switch it off for a key that should only read. You can change it later on the key's row, and the change applies to the assistant's next request without a reconnect.
+3. Leave **Allow starting backups** on, or switch it off for a key that should only read. You can change it later on the key's tile, and the change applies to the assistant's next request without a reconnect.
 4. Click **Create key**. The key is shown once. BombVault keeps only a fingerprint of it and cannot show it again, so copy it now or pick a snippet below it, which then carries the real key.
 
 Without a login password the web interface itself is open to everyone on your network, and anyone who can open it can also create a key. The card says so. If you open BombVault under a public-looking name (for example `bombvault.example.com` through a reverse proxy) and no login password is set, keys cannot be created or replaced from that address, so that no web page on the internet can make your browser create one. Set a login password, or open BombVault by its IP address or a local name such as `tower` or `tower.local`.
+
+## Your keys and their log {#keys}
+
+Each key has a tile of its own on the card. It shows the key's name, whether it may start backups or only read, the last four characters of the key, when it was created or last replaced, when a client last used it and how many calls it made today. On the tile you rename the key, change its permission, replace it or revoke it. A revoked key moves to the list of revoked keys, where you can delete it for good once no run in the history names it.
+
+**Log** on a tile opens what that key did. The backups it started come first, each with its state and a link to that run in the activity log on the dashboard. Below them are its calls, newest first, with the tool and what became of the call. A refusal says why: the key may only read, the retention guard held the backup back, another backup was already running, the item was backed up through MCP a few minutes ago, or the key sent too many requests. A cancel links to the run it was about.
+
+BombVault keeps the newest 200 entries of each key for up to 30 days. For each call it stores the tool, the outcome and the run a cancel named. It never stores what the assistant sent, and never the key or its fingerprint. The diagnostics bundle only counts the entries, and a settings export leaves them out.
 
 ## Connect a client {#clients}
 

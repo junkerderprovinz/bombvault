@@ -42,10 +42,18 @@ Spuštění domény nebo Backup Everything vynechá položky, které nějaký li
 
 1. Otevřete **Nastavení, Systém, Server MCP** a klikněte na **Nový klíč**.
 2. Dejte klíči název, který říká, kde se používá, například "Claude Code na notebooku". S jedním klíčem na klienta můžete jeden odvolat, aniž byste sahali na ostatní.
-3. Nechte zapnuté **Povolit spouštění záloh**, nebo ho vypněte u klíče, který má jen číst. Později to můžete změnit na řádku klíče a změna platí od příštího požadavku asistenta, bez nového připojení.
+3. Nechte zapnuté **Povolit spouštění záloh**, nebo ho vypněte u klíče, který má jen číst. Později to můžete změnit na dlaždici klíče a změna platí od příštího požadavku asistenta, bez nového připojení.
 4. Klikněte na **Vytvořit klíč**. Klíč se zobrazí jednou. BombVault si z něj uchová jen otisk a znovu ho ukázat nemůže, proto ho hned zkopírujte, nebo si vezměte některý z úryvků pod ním, které pak obsahují skutečný klíč.
 
 Bez přihlašovacího hesla je samotné webové rozhraní otevřené všem ve vaší síti a kdo ho otevře, může také vytvořit klíč. Karta na to upozorňuje. Pokud BombVault otevřete pod názvem, který vypadá veřejně (například `bombvault.example.com` za reverzní proxy), a přihlašovací heslo nastavené není, nelze z této adresy klíče vytvářet ani nahrazovat, aby žádná webová stránka na internetu nemohla přimět váš prohlížeč, aby nějaký vytvořil. Nastavte přihlašovací heslo, nebo otevřete BombVault přes jeho IP adresu či místní název jako `tower` nebo `tower.local`.
+
+## Vaše klíče a jejich protokol {#keys}
+
+Každý klíč má na kartě vlastní dlaždici. Ukazuje název klíče, zda smí spouštět zálohy, nebo jen čte, poslední čtyři znaky klíče, kdy byl vytvořen nebo naposledy nahrazen, kdy ho klient naposledy použil a kolik volání dnes udělal. Na dlaždici klíč přejmenujete, změníte jeho oprávnění, nahradíte ho nebo zneplatníte. Zneplatněný klíč se přesune do seznamu zneplatněných klíčů, kde ho můžete natrvalo smazat, jakmile ho už žádný běh v historii neuvádí.
+
+**Protokol** na dlaždici otevře, co tento klíč dělal. Nahoře jsou zálohy, které spustil, každá se svým stavem a odkazem na daný běh v protokolu aktivit na přehledu. Pod nimi jsou jeho volání, od nejnovějšího, s nástrojem a výsledkem. Odmítnutí uvádí důvod: klíč smí jen číst, ochrana uchovávání zálohu zadržela, už běžela jiná záloha, položka byla přes MCP zálohována před několika minutami, nebo klíč poslal příliš mnoho požadavků. Zrušení odkazuje na běh, o který šlo.
+
+BombVault uchovává nejnovějších 200 záznamů každého klíče nejvýše 30 dní. U každého volání ukládá nástroj, výsledek a u zrušení daný běh. Nikdy neukládá, co asistent poslal, ani klíč či jeho otisk. Diagnostický balíček záznamy jen počítá a export nastavení je vynechává.
 
 ## Připojení klienta {#clients}
 

@@ -42,10 +42,18 @@ Toimialueen tai Backup Everythingin käynnistys jättää pois kohteet, jotka jo
 
 1. Avaa **Asetukset, Järjestelmä, MCP-palvelin** ja napsauta **Uusi avain**.
 2. Anna avaimelle nimi, joka kertoo, missä sitä käytetään, esimerkiksi "Claude Code läppärillä". Kun jokaisella asiakkaalla on oma avaimensa, voit peruuttaa yhden koskematta muihin.
-3. Jätä **Salli varmuuskopioiden käynnistys** päälle, tai kytke se pois avaimelta, jonka pitää vain lukea. Voit muuttaa sitä myöhemmin avaimen rivillä, ja muutos koskee avustajan seuraavaa pyyntöä ilman uutta yhteyttä.
+3. Jätä **Salli varmuuskopioiden käynnistys** päälle, tai kytke se pois avaimelta, jonka pitää vain lukea. Voit muuttaa sitä myöhemmin avaimen ruudussa, ja muutos koskee avustajan seuraavaa pyyntöä ilman uutta yhteyttä.
 4. Napsauta **Luo avain**. Avain näytetään kerran. BombVault tallentaa siitä vain sormenjäljen eikä voi näyttää sitä uudelleen, joten kopioi se heti tai ota jokin alla olevista katkelmista, joissa on silloin oikea avain.
 
 Ilman kirjautumissalasanaa itse verkkokäyttöliittymä on auki kaikille verkossasi, ja kuka tahansa, joka voi avata sen, voi myös luoda avaimen. Kortti kertoo tämän. Jos avaat BombVaultin julkiselta näyttävällä nimellä (esimerkiksi `bombvault.example.com` käänteisen välityspalvelimen takana) eikä kirjautumissalasanaa ole asetettu, siitä osoitteesta ei voi luoda eikä vaihtaa avaimia, jotta mikään internetin verkkosivu ei voi saada selaintasi luomaan sellaista. Aseta kirjautumissalasana, tai avaa BombVault sen IP-osoitteella tai paikallisella nimellä, kuten `tower` tai `tower.local`.
+
+## Avaimesi ja niiden loki {#keys}
+
+Jokaisella avaimella on kortilla oma ruutunsa. Siinä näkyy avaimen nimi, saako se käynnistää varmuuskopioita vai vain lukea, avaimen neljä viimeistä merkkiä, milloin se luotiin tai korvattiin viimeksi, milloin asiakas viimeksi käytti sitä ja montako kutsua se on tehnyt tänään. Ruudussa nimeät avaimen uudelleen, muutat sen oikeutta, korvaat sen tai peruutat sen. Peruutettu avain siirtyy peruutettujen avainten luetteloon, josta voit poistaa sen lopullisesti, kun mikään historian ajo ei enää mainitse sitä.
+
+Ruudun **Loki** avaa sen, mitä avain on tehnyt. Ensin tulevat sen käynnistämät varmuuskopiot, kukin tilansa kanssa ja linkillä ajoon kojelaudan toimintalokissa. Niiden alla ovat sen kutsut uusin ensin, työkalu ja kutsun lopputulos. Hylkäys kertoo syyn: avain saa vain lukea, säilytyssuoja pidätti varmuuskopion, toinen varmuuskopiointi oli jo käynnissä, kohde varmuuskopioitiin MCP:n kautta muutama minuutti sitten, tai avain lähetti liian monta pyyntöä. Peruutus linkittää ajoon, jota se koski.
+
+BombVault säilyttää kunkin avaimen 200 uusinta merkintää enintään 30 päivää. Jokaisesta kutsusta se tallentaa työkalun, lopputuloksen ja peruutuksen nimeämän ajon. Se ei koskaan tallenna sitä, mitä avustaja lähetti, eikä avainta tai sen sormenjälkeä. Diagnostiikkapaketti vain laskee merkinnät, ja asetusten vienti jättää ne pois.
 
 ## Yhdistä asiakasohjelma {#clients}
 

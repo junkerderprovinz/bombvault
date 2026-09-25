@@ -42,10 +42,18 @@ Bir alanın ya da Backup Everything'in başlatılması, bir sınırın geri tutt
 
 1. **Ayarlar, Sistem, MCP sunucusu** bölümünü açın ve **Yeni anahtar** düğmesine tıklayın.
 2. Anahtara nerede kullanıldığını söyleyen bir ad verin, örneğin "Dizüstündeki Claude Code". İstemci başına bir anahtarla diğerlerine dokunmadan birini iptal edebilirsiniz.
-3. **Yedekleme başlatmaya izin ver** seçeneğini açık bırakın ya da yalnızca okuması gereken bir anahtar için kapatın. Bunu daha sonra anahtarın satırında değiştirebilirsiniz; değişiklik, yeniden bağlanmaya gerek kalmadan asistanın bir sonraki isteğinden itibaren geçerli olur.
+3. **Yedekleme başlatmaya izin ver** seçeneğini açık bırakın ya da yalnızca okuması gereken bir anahtar için kapatın. Bunu daha sonra anahtarın kutucuğunda değiştirebilirsiniz; değişiklik, yeniden bağlanmaya gerek kalmadan asistanın bir sonraki isteğinden itibaren geçerli olur.
 4. **Anahtar oluştur** düğmesine tıklayın. Anahtar bir kez gösterilir. BombVault yalnızca parmak izini saklar ve onu yeniden gösteremez; bu yüzden hemen kopyalayın ya da altındaki parçacıklardan birini alın, o zaman parçacık gerçek anahtarı içerir.
 
 Giriş parolası yokken web arayüzünün kendisi ağınızdaki herkese açıktır ve onu açabilen herkes bir anahtar da oluşturabilir. Kart bunu söyler. BombVault'u herkese açık görünen bir adla açarsanız (örneğin bir ters vekil sunucunun arkasında `bombvault.example.com`) ve giriş parolası ayarlanmamışsa, o adresten anahtar oluşturulamaz ve değiştirilemez; böylece internetteki hiçbir web sayfası tarayıcınıza anahtar oluşturtamaz. Bir giriş parolası ayarlayın ya da BombVault'u IP adresiyle veya `tower` ya da `tower.local` gibi yerel bir adla açın.
+
+## Anahtarlarınız ve günlükleri {#keys}
+
+Her anahtarın kartta kendi kutucuğu vardır. Kutucuk anahtarın adını, yedekleme başlatabildiğini ya da yalnızca okuduğunu, anahtarın son dört karakterini, ne zaman oluşturulduğunu ya da en son değiştirildiğini, bir istemcinin onu en son ne zaman kullandığını ve bugün kaç çağrı yaptığını gösterir. Kutucuktan anahtarı yeniden adlandırır, iznini değiştirir, yenisiyle değiştirir ya da iptal edersiniz. İptal edilen anahtar iptal edilmiş anahtarlar listesine taşınır; geçmişteki hiçbir çalıştırma onu anmadığında oradan kalıcı olarak silebilirsiniz.
+
+Kutucuktaki **Günlük**, o anahtarın yaptıklarını açar. Önce başlattığı yedeklemeler gelir; her biri durumuyla ve panodaki etkinlik günlüğünde o çalıştırmaya giden bir bağlantıyla. Altında çağrıları vardır, en yenisi önce, aracı ve çağrının sonucuyla. Bir ret nedenini söyler: anahtar yalnızca okuyabilir, saklama koruması yedeklemeyi durdurdu, başka bir yedekleme zaten çalışıyordu, öğe birkaç dakika önce MCP üzerinden yedeklendi ya da anahtar çok fazla istek gönderdi. Bir iptal, ilgili çalıştırmaya bağlantı verir.
+
+BombVault her anahtarın en yeni 200 kaydını en fazla 30 gün saklar. Her çağrı için aracı, sonucu ve bir iptalin andığı çalıştırmayı kaydeder. Asistanın gönderdiğini, anahtarı ya da parmak izini asla kaydetmez. Tanılama paketi kayıtları yalnızca sayar, ayar dışa aktarımı ise onları dışarıda bırakır.
 
 ## Bir istemci bağlamak {#clients}
 

@@ -42,10 +42,18 @@ O pornire de domeniu sau de Backup Everything lasă pe dinafară elementele reț
 
 1. Deschide **Setări, Sistem, Server MCP** și dă clic pe **Cheie nouă**.
 2. Dă cheii un nume care spune unde e folosită, de exemplu "Claude Code pe laptop". Cu o cheie pentru fiecare client poți revoca una fără să le atingi pe celelalte.
-3. Lasă pornit **Permite pornirea copiilor** sau oprește-l pentru o cheie care trebuie doar să citească. Poți schimba asta mai târziu pe rândul cheii, iar schimbarea se aplică de la următoarea cerere a asistentului, fără reconectare.
+3. Lasă pornit **Permite pornirea copiilor** sau oprește-l pentru o cheie care trebuie doar să citească. Poți schimba asta mai târziu pe dala cheii, iar schimbarea se aplică de la următoarea cerere a asistentului, fără reconectare.
 4. Dă clic pe **Creează cheia**. Cheia apare o singură dată. BombVault păstrează doar o amprentă a ei și nu o mai poate arăta, așa că copiaz-o acum sau ia unul dintre fragmentele de dedesubt, care conțin atunci cheia reală.
 
 Fără parolă de autentificare, interfața web însăși e deschisă pentru toată lumea din rețeaua ta, iar cine o poate deschide poate crea și o cheie. Cardul spune asta. Dacă deschizi BombVault sub un nume care pare public (de exemplu `bombvault.example.com` în spatele unui proxy invers) și nu e setată nicio parolă de autentificare, de la acea adresă nu se pot crea și nici înlocui chei, ca nicio pagină web de pe internet să nu-ți poată face browserul să creeze una. Setează o parolă de autentificare sau deschide BombVault prin adresa IP ori printr-un nume local precum `tower` sau `tower.local`.
+
+## Cheile tale și jurnalul lor {#keys}
+
+Fiecare cheie are propria dală pe card. Arată numele cheii, dacă poate porni copii sau doar citește, ultimele patru caractere ale cheii, când a fost creată sau înlocuită ultima dată, când a folosit-o ultima dată un client și câte apeluri a făcut azi. Pe dală redenumești cheia, îi schimbi permisiunea, o înlocuiești sau o revoci. O cheie revocată trece în lista cheilor revocate, unde o poți șterge definitiv când nicio rulare din istoric nu o mai numește.
+
+**Jurnal** pe o dală deschide ce a făcut acea cheie. Întâi vin copiile pe care le-a pornit, fiecare cu starea ei și un link către acea rulare în jurnalul de activitate de pe tabloul de bord. Dedesubt sunt apelurile ei, cele mai noi primele, cu instrumentul și rezultatul apelului. Un refuz spune de ce: cheia poate doar citi, protecția de păstrare a oprit copia, rula deja altă copie, elementul a fost copiat prin MCP acum câteva minute sau cheia a trimis prea multe cereri. O anulare trimite la rularea la care se referea.
+
+BombVault păstrează cele mai noi 200 de intrări ale fiecărei chei cel mult 30 de zile. Pentru fiecare apel salvează instrumentul, rezultatul și rularea numită de o anulare. Nu salvează niciodată ce a trimis asistentul, nici cheia sau amprenta ei. Pachetul de diagnostic doar numără intrările, iar un export al setărilor le lasă deoparte.
 
 ## Conectarea unui client {#clients}
 

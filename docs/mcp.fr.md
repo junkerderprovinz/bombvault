@@ -42,10 +42,18 @@ Un lancement de domaine ou de Backup Everything laisse de côté les éléments 
 
 1. Ouvrez **Paramètres, Système, Serveur MCP** et cliquez sur **Nouvelle clé**.
 2. Donnez à la clé un nom qui dit où elle sert, par exemple « Claude Code sur le portable ». Avec une clé par client, vous pouvez en révoquer une sans toucher aux autres.
-3. Laissez **Autoriser le lancement de sauvegardes** activé, ou désactivez-le pour une clé qui doit seulement lire. Vous pouvez le changer plus tard sur la ligne de la clé, et le changement s'applique dès la requête suivante de l'assistant, sans reconnexion.
+3. Laissez **Autoriser le lancement de sauvegardes** activé, ou désactivez-le pour une clé qui doit seulement lire. Vous pouvez le changer plus tard sur la tuile de la clé, et le changement s'applique dès la requête suivante de l'assistant, sans reconnexion.
 4. Cliquez sur **Créer la clé**. La clé s'affiche une seule fois. BombVault n'en garde qu'une empreinte et ne peut plus l'afficher, alors copiez-la tout de suite ou prenez l'un des extraits en dessous, qui contiennent alors la vraie clé.
 
 Sans mot de passe de connexion, l'interface web elle-même est ouverte à tout votre réseau, et quiconque peut l'ouvrir peut aussi créer une clé. La carte le signale. Si vous ouvrez BombVault sous un nom qui a l'air public (par exemple `bombvault.example.com` derrière un reverse proxy) et qu'aucun mot de passe de connexion n'est défini, aucune clé ne peut être créée ni remplacée depuis cette adresse, pour qu'aucune page web sur Internet ne puisse amener votre navigateur à en créer une. Définissez un mot de passe de connexion, ou ouvrez BombVault par son adresse IP ou par un nom local comme `tower` ou `tower.local`.
+
+## Vos clés et leur journal {#keys}
+
+Chaque clé a sa propre tuile sur la carte. Elle affiche le nom de la clé, si elle peut lancer des sauvegardes ou seulement lire, les quatre derniers caractères de la clé, quand elle a été créée ou remplacée pour la dernière fois, quand un client l'a utilisée pour la dernière fois et combien d'appels elle a faits aujourd'hui. Sur la tuile, vous renommez la clé, changez son autorisation, la remplacez ou la révoquez. Une clé révoquée passe dans la liste des clés révoquées, où vous pouvez la supprimer définitivement dès qu'aucune exécution de l'historique ne la nomme.
+
+**Journal** sur une tuile ouvre ce que cette clé a fait. D'abord les sauvegardes qu'elle a lancées, chacune avec son état et un lien vers cette exécution dans le journal d'activité du tableau de bord. En dessous, ses appels, les plus récents d'abord, avec l'outil et ce qu'est devenu l'appel. Un refus dit pourquoi : la clé peut seulement lire, la protection de rétention a retenu la sauvegarde, une autre sauvegarde était déjà en cours, l'élément a été sauvegardé via MCP il y a quelques minutes, ou la clé a envoyé trop de requêtes. Une annulation renvoie vers l'exécution concernée.
+
+BombVault garde les 200 entrées les plus récentes de chaque clé pendant 30 jours au plus. Pour chaque appel, il enregistre l'outil, le résultat et l'exécution nommée par une annulation. Il n'enregistre jamais ce que l'assistant a envoyé, ni la clé ou son empreinte. Le paquet de diagnostic ne fait que compter les entrées, et un export des réglages les laisse de côté.
 
 ## Connecter un client {#clients}
 

@@ -42,10 +42,18 @@ Khi bắt đầu một miền hoặc Backup Everything, các mục bị một gi
 
 1. Mở **Cài đặt, Hệ thống, Máy chủ MCP** và nhấn **Khóa mới**.
 2. Đặt cho khóa một tên cho biết nơi dùng nó, ví dụ "Claude Code trên laptop". Mỗi máy khách một khóa thì bạn có thể thu hồi một khóa mà không động đến các khóa khác.
-3. Để bật **Cho phép bắt đầu sao lưu**, hoặc tắt nó cho khóa chỉ cần đọc. Bạn có thể đổi sau ở dòng của khóa, và thay đổi có hiệu lực từ yêu cầu tiếp theo của trợ lý mà không cần kết nối lại.
+3. Để bật **Cho phép bắt đầu sao lưu**, hoặc tắt nó cho khóa chỉ cần đọc. Bạn có thể đổi sau ở ô của khóa, và thay đổi có hiệu lực từ yêu cầu tiếp theo của trợ lý mà không cần kết nối lại.
 4. Nhấn **Tạo khóa**. Khóa chỉ hiện một lần. BombVault chỉ giữ dấu vân tay của khóa và không thể hiện lại, nên hãy sao chép ngay hoặc dùng một trong các đoạn mã bên dưới, lúc đó chứa khóa thật.
 
 Khi không có mật khẩu đăng nhập, chính giao diện web đã mở cho mọi người trong mạng của bạn, và ai mở được nó cũng có thể tạo khóa. Thẻ sẽ báo điều này. Nếu bạn mở BombVault bằng một tên trông như công khai (ví dụ `bombvault.example.com` sau một reverse proxy) và chưa đặt mật khẩu đăng nhập, thì không thể tạo hay thay khóa từ địa chỉ đó, để không trang web nào trên Internet có thể khiến trình duyệt của bạn tạo khóa. Hãy đặt mật khẩu đăng nhập, hoặc mở BombVault bằng địa chỉ IP hay một tên cục bộ như `tower` hoặc `tower.local`.
+
+## Các khóa của bạn và nhật ký của chúng {#keys}
+
+Mỗi khóa có một ô riêng trên thẻ. Ô hiển thị tên khóa, khóa được phép bắt đầu sao lưu hay chỉ đọc, bốn ký tự cuối của khóa, thời điểm tạo hoặc thay thế gần nhất, lần gần nhất một ứng dụng khách dùng nó và số lượt gọi hôm nay. Trên ô, bạn đổi tên khóa, đổi quyền, thay thế hoặc thu hồi khóa. Khóa đã thu hồi chuyển sang danh sách khóa đã thu hồi, và bạn có thể xóa hẳn nó ở đó khi không còn lần chạy nào trong lịch sử nhắc đến nó.
+
+**Nhật ký** trên một ô mở ra những gì khóa đó đã làm. Đầu tiên là các bản sao lưu nó đã bắt đầu, mỗi bản kèm trạng thái và liên kết tới lần chạy đó trong nhật ký hoạt động trên bảng điều khiển. Bên dưới là các lượt gọi, mới nhất trước, kèm công cụ và kết quả. Một lần từ chối có ghi lý do: khóa chỉ được đọc, cơ chế bảo vệ lưu giữ đã giữ bản sao lưu lại, một bản sao lưu khác đang chạy, mục này vừa được sao lưu qua MCP vài phút trước, hoặc khóa gửi quá nhiều yêu cầu. Một lần hủy liên kết tới lần chạy liên quan.
+
+BombVault giữ 200 mục mới nhất của mỗi khóa tối đa 30 ngày. Với mỗi lượt gọi, nó lưu công cụ, kết quả và lần chạy mà lệnh hủy nêu tên. Nó không bao giờ lưu nội dung trợ lý đã gửi, cũng không lưu khóa hay dấu vân tay của khóa. Gói chẩn đoán chỉ đếm số mục, và bản xuất cài đặt không chứa chúng.
 
 ## Kết nối máy khách {#clients}
 

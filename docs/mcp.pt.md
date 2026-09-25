@@ -42,10 +42,18 @@ Um início de domínio ou de Backup Everything deixa de fora os elementos que um
 
 1. Abra **Definições, Sistema, Servidor MCP** e clique em **Chave nova**.
 2. Dê à chave um nome que diga onde é usada, por exemplo "Claude Code no portátil". Com uma chave por cliente pode revogar uma sem mexer nas outras.
-3. Deixe **Permitir iniciar cópias** ligado, ou desligue-o para uma chave que só deve ler. Pode mudar isto mais tarde na linha da chave, e a mudança vale a partir do pedido seguinte do assistente, sem nova ligação.
+3. Deixe **Permitir iniciar cópias** ligado, ou desligue-o para uma chave que só deve ler. Pode mudar isto mais tarde no mosaico da chave, e a mudança vale a partir do pedido seguinte do assistente, sem nova ligação.
 4. Clique em **Criar chave**. A chave aparece uma única vez. O BombVault guarda só uma impressão digital dela e não a pode mostrar de novo, por isso copie-a já ou use um dos excertos abaixo, que passam a conter a chave real.
 
 Sem palavra-passe de início de sessão, a própria interface web está aberta a toda a sua rede, e quem a conseguir abrir também pode criar uma chave. O cartão avisa disso. Se abrir o BombVault com um nome que parece público (por exemplo `bombvault.example.com` atrás de um proxy inverso) e não houver palavra-passe de início de sessão, a partir desse endereço não é possível criar nem substituir chaves, para que nenhuma página da Internet consiga levar o seu navegador a criar uma. Defina uma palavra-passe de início de sessão, ou abra o BombVault pelo endereço IP ou por um nome local como `tower` ou `tower.local`.
+
+## As suas chaves e o registo delas {#keys}
+
+Cada chave tem o seu próprio mosaico no cartão. Mostra o nome da chave, se pode iniciar cópias ou só ler, os quatro últimos caracteres da chave, quando foi criada ou substituída pela última vez, quando um cliente a usou pela última vez e quantas chamadas fez hoje. No mosaico muda o nome da chave, altera a permissão, substitui-a ou revoga-a. Uma chave revogada passa para a lista de chaves revogadas, onde a pode apagar de vez quando nenhuma execução do histórico a nomear.
+
+**Registo** num mosaico abre o que essa chave fez. Primeiro vêm as cópias que iniciou, cada uma com o seu estado e uma ligação a essa execução no registo de atividade do painel. Por baixo estão as chamadas, das mais recentes para as mais antigas, com a ferramenta e o que aconteceu à chamada. Uma recusa diz porquê: a chave só pode ler, a proteção de retenção travou a cópia, já havia outra cópia em curso, o item foi copiado por MCP há poucos minutos, ou a chave enviou demasiados pedidos. Um cancelamento liga à execução a que se referia.
+
+O BombVault guarda as 200 entradas mais recentes de cada chave durante 30 dias no máximo. De cada chamada guarda a ferramenta, o resultado e a execução indicada por um cancelamento. Nunca guarda o que o assistente enviou, nem a chave ou a sua impressão digital. O pacote de diagnóstico só conta as entradas, e uma exportação das definições deixa-as de fora.
 
 ## Ligar um cliente {#clients}
 

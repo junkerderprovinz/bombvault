@@ -42,10 +42,18 @@ Ein Start einer Domäne oder des Gesamt-Backups lässt die Elemente aus, die ein
 
 1. Öffne **Einstellungen, System, MCP-Server** und klick auf **Neuer Schlüssel**.
 2. Gib dem Schlüssel einen Namen, der sagt, wo er benutzt wird, zum Beispiel "Claude Code auf dem Laptop". Mit einem Schlüssel pro Client kannst du einen widerrufen, ohne die anderen anzufassen.
-3. Lass **Backups starten erlauben** an, oder schalte es für einen Schlüssel aus, der nur lesen soll. Du kannst das später in der Zeile des Schlüssels ändern, und die Änderung gilt ab der nächsten Anfrage des Assistenten, ohne neue Verbindung.
+3. Lass **Backups starten erlauben** an, oder schalte es für einen Schlüssel aus, der nur lesen soll. Du kannst das später auf der Kachel des Schlüssels ändern, und die Änderung gilt ab der nächsten Anfrage des Assistenten, ohne neue Verbindung.
 4. Klick auf **Schlüssel anlegen**. Der Schlüssel wird einmal angezeigt. BombVault behält nur einen Fingerabdruck davon und kann ihn nicht noch einmal zeigen, also kopiere ihn gleich oder nimm einen der Ausschnitte darunter, die dann den echten Schlüssel enthalten.
 
 Ohne Login-Passwort ist schon die Web-Oberfläche für alle in deinem Netz offen, und wer sie öffnen kann, kann auch einen Schlüssel anlegen. Die Karte sagt das. Öffnest du BombVault unter einem öffentlich aussehenden Namen (zum Beispiel `bombvault.example.com` über einen Reverse Proxy) und ist kein Login-Passwort gesetzt, lassen sich von dieser Adresse keine Schlüssel anlegen oder ersetzen. So kann keine Webseite im Internet deinen Browser dazu bringen, einen anzulegen. Setz ein Login-Passwort, oder öffne BombVault über seine IP-Adresse oder einen lokalen Namen wie `tower` oder `tower.local`.
+
+## Deine Schlüssel und ihr Protokoll {#keys}
+
+Jeder Schlüssel hat auf der Karte eine eigene Kachel. Sie zeigt den Namen, ob der Schlüssel Backups starten darf oder nur liest, die letzten vier Zeichen des Schlüssels, wann er angelegt oder zuletzt ersetzt wurde, wann ein Client ihn zuletzt benutzt hat und wie viele Aufrufe er heute gemacht hat. Auf der Kachel benennst du den Schlüssel um, änderst seine Berechtigung, ersetzt ihn oder widerrufst ihn. Ein widerrufener Schlüssel wandert in die Liste der widerrufenen Schlüssel. Dort kannst du ihn endgültig löschen, sobald kein Lauf im Verlauf ihn mehr nennt.
+
+**Protokoll** auf einer Kachel zeigt, was dieser Schlüssel getan hat. Oben stehen die Backups, die er gestartet hat, jeweils mit ihrem Stand und einem Link auf diesen Lauf im Aktivitätsprotokoll des Dashboards. Darunter stehen seine Aufrufe, die neuesten zuerst, mit dem Werkzeug und dem Ergebnis. Eine Ablehnung nennt den Grund: Der Schlüssel darf nur lesen, der Aufbewahrungsschutz hat das Backup zurückgehalten, es lief schon ein anderes Backup, das Element wurde vor wenigen Minuten über MCP gesichert, oder der Schlüssel hat zu viele Anfragen geschickt. Ein Abbruch verlinkt den Lauf, um den es ging.
+
+BombVault hebt die neuesten 200 Einträge jedes Schlüssels bis zu 30 Tage auf. Zu jedem Aufruf speichert es das Werkzeug, das Ergebnis und bei einem Abbruch den Lauf. Was der Assistent geschickt hat, speichert es nie, den Schlüssel und seinen Fingerabdruck auch nicht. Das Diagnosepaket zählt die Einträge nur, und ein Einstellungsexport lässt sie weg.
 
 ## Client verbinden {#clients}
 

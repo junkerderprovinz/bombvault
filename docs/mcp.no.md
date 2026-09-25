@@ -42,10 +42,18 @@ En start av et domene eller av Backup Everything utelater elementene som en gren
 
 1. Åpne **Innstillinger, System, MCP-server** og klikk på **Ny nøkkel**.
 2. Gi nøkkelen et navn som sier hvor den brukes, for eksempel "Claude Code på laptopen". Med én nøkkel per klient kan du tilbakekalle én uten å røre de andre.
-3. La **Tillat å starte sikkerhetskopier** stå på, eller slå det av for en nøkkel som bare skal lese. Du kan endre det senere i nøkkelens rad, og endringen gjelder fra assistentens neste forespørsel uten ny tilkobling.
+3. La **Tillat å starte sikkerhetskopier** stå på, eller slå det av for en nøkkel som bare skal lese. Du kan endre det senere på nøkkelens flis, og endringen gjelder fra assistentens neste forespørsel uten ny tilkobling.
 4. Klikk på **Lag nøkkel**. Nøkkelen vises én gang. BombVault lagrer bare et fingeravtrykk av den og kan ikke vise den igjen, så kopier den nå eller ta et av utdragene under, som da inneholder den ekte nøkkelen.
 
 Uten påloggingspassord er selve webgrensesnittet åpent for alle på nettverket ditt, og den som kan åpne det, kan også lage en nøkkel. Kortet sier det. Åpner du BombVault under et navn som ser offentlig ut (for eksempel `bombvault.example.com` bak en omvendt proxy), og det ikke er satt noe påloggingspassord, kan det ikke lages eller byttes nøkler fra den adressen, slik at ingen nettside på internett kan få nettleseren din til å lage en. Sett et påloggingspassord, eller åpne BombVault via IP-adressen eller et lokalt navn som `tower` eller `tower.local`.
+
+## Nøklene dine og loggen deres {#keys}
+
+Hver nøkkel har sin egen flis på kortet. Den viser navnet på nøkkelen, om den kan starte sikkerhetskopier eller bare lese, de fire siste tegnene i nøkkelen, når den ble opprettet eller sist byttet, når en klient sist brukte den og hvor mange kall den har gjort i dag. På flisen gir du nøkkelen nytt navn, endrer tillatelsen, bytter den eller tilbakekaller den. En tilbakekalt nøkkel flytter til listen over tilbakekalte nøkler, der du kan slette den for godt når ingen kjøring i historikken nevner den lenger.
+
+**Logg** på en flis åpner det nøkkelen har gjort. Først kommer sikkerhetskopiene den startet, hver med status og en lenke til kjøringen i aktivitetsloggen på dashbordet. Under dem står kallene, nyeste først, med verktøyet og hva som ble av kallet. En avvisning sier hvorfor: nøkkelen kan bare lese, oppbevaringsvernet holdt sikkerhetskopien tilbake, en annen sikkerhetskopi kjørte allerede, elementet ble sikkerhetskopiert via MCP for noen minutter siden, eller nøkkelen sendte for mange forespørsler. En avbrytelse lenker til kjøringen det gjaldt.
+
+BombVault tar vare på de 200 nyeste oppføringene for hver nøkkel i opptil 30 dager. For hvert kall lagrer det verktøyet, utfallet og kjøringen en avbrytelse nevnte. Det lagrer aldri det assistenten sendte, og aldri nøkkelen eller fingeravtrykket. Diagnosepakken teller bare oppføringene, og en eksport av innstillingene utelater dem.
 
 ## Koble til en klient {#clients}
 

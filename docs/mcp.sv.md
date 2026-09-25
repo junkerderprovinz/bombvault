@@ -42,10 +42,18 @@ En start av en domän eller av Backup Everything hoppar över de objekt som en g
 
 1. Öppna **Inställningar, System, MCP-server** och klicka på **Ny nyckel**.
 2. Ge nyckeln ett namn som säger var den används, till exempel "Claude Code på laptopen". Med en nyckel per klient kan du återkalla en utan att röra de andra.
-3. Låt **Tillåt att starta säkerhetskopior** vara på, eller stäng av det för en nyckel som bara ska läsa. Du kan ändra det senare på nyckelns rad, och ändringen gäller från assistentens nästa förfrågan utan ny anslutning.
+3. Låt **Tillåt att starta säkerhetskopior** vara på, eller stäng av det för en nyckel som bara ska läsa. Du kan ändra det senare på nyckelns ruta, och ändringen gäller från assistentens nästa förfrågan utan ny anslutning.
 4. Klicka på **Skapa nyckel**. Nyckeln visas en gång. BombVault sparar bara ett fingeravtryck av den och kan inte visa den igen, så kopiera den nu eller ta ett av utdragen nedanför, som då innehåller den riktiga nyckeln.
 
 Utan inloggningslösenord är själva webbgränssnittet öppet för alla i ditt nätverk, och den som kan öppna det kan också skapa en nyckel. Kortet säger det. Öppnar du BombVault under ett namn som ser offentligt ut (till exempel `bombvault.example.com` bakom en omvänd proxy) och inget inloggningslösenord är satt, går det inte att skapa eller byta nycklar från den adressen, så att ingen webbsida på internet kan få din webbläsare att skapa en. Sätt ett inloggningslösenord, eller öppna BombVault via dess IP-adress eller ett lokalt namn som `tower` eller `tower.local`.
+
+## Dina nycklar och deras logg {#keys}
+
+Varje nyckel har en egen ruta på kortet. Den visar nyckelns namn, om den får starta säkerhetskopior eller bara läser, nyckelns fyra sista tecken, när den skapades eller senast byttes, när en klient senast använde den och hur många anrop den har gjort i dag. I rutan byter du namn på nyckeln, ändrar dess behörighet, byter ut den eller återkallar den. En återkallad nyckel flyttas till listan med återkallade nycklar, där du kan ta bort den för gott när ingen körning i historiken längre nämner den.
+
+**Logg** i en ruta öppnar det nyckeln har gjort. Först kommer de säkerhetskopior den startade, var och en med sin status och en länk till körningen i aktivitetsloggen på instrumentpanelen. Under dem står dess anrop, nyaste först, med verktyget och vad som blev av anropet. Ett avvisande säger varför: nyckeln får bara läsa, lagringsskyddet höll tillbaka säkerhetskopian, en annan säkerhetskopiering pågick redan, objektet säkerhetskopierades via MCP för några minuter sedan, eller nyckeln skickade för många begäranden. En avbrytning länkar till körningen den gällde.
+
+BombVault sparar de 200 senaste posterna för varje nyckel i upp till 30 dagar. För varje anrop sparar det verktyget, utfallet och körningen som en avbrytning nämnde. Det sparar aldrig vad assistenten skickade, och aldrig nyckeln eller dess fingeravtryck. Diagnostikpaketet räknar bara posterna, och en export av inställningarna utelämnar dem.
 
 ## Anslut en klient {#clients}
 
