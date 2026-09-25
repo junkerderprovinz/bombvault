@@ -765,6 +765,11 @@ export function AnomaliesCard({
         </div>
       ) : (
         <div className="flex flex-col gap-2">
+          <p className="flex flex-wrap gap-x-3 text-xs text-carbon-textSub">
+            {summary.open.critical > 0 && <span>{t("anomaly.countCritical", summary.open.critical)}</span>}
+            {summary.open.warning > 0 && <span>{t("anomaly.countWarning", summary.open.warning)}</span>}
+            {summary.retentionHeld > 0 && <span>{t("anomaly.countHeld", summary.retentionHeld)}</span>}
+          </p>
           {[...criticals, ...warnings].map((a) => (
             <AnomalyRow
               key={a.id}

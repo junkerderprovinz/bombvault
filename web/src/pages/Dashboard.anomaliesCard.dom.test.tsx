@@ -186,6 +186,16 @@ describe("AnomaliesCard", () => {
     expect(screen.getByRole("link", { name: en["anomaly.showAll"] })).toBeTruthy();
   });
 
+  it("sums up the open findings and the held items in one line of figures", () => {
+    renderCard({
+      summary: summary({ open: { critical: 2, warning: 0, info: 1 }, retentionHeld: 2 }),
+      open: [finding({ retentionHeld: true }), finding({ retentionHeld: true })],
+    });
+    expect(screen.getByText(en["anomaly.countCritical"].replace("{n}", "2"))).toBeTruthy();
+    expect(screen.getByText(en["anomaly.countHeld"].replace("{n}", "2"))).toBeTruthy();
+    expect(screen.queryByText(en["anomaly.countWarning"].replace("{n}", "0"))).toBeNull();
+  });
+
   it("marks a critical whose cause has gone away", () => {
     renderCard({
       summary: summary({ open: { critical: 1, warning: 0, info: 0 }, recoveredCritical: 1 }),
