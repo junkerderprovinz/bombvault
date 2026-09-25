@@ -15,13 +15,13 @@ BombVault bringt einen Server für das Model Context Protocol (MCP) mit. Über d
 | `get_activity` | Was gerade läuft, mit Phase und Prozentangabe | lesen |
 | `get_storage_stats` | Größenverlauf des primären Repositorys einer Domäne und sein Wachstum pro Woche | lesen |
 | `list_anomalies` | Anomalien, die BombVault in den Backups bemerkt hat, filterbar nach Zustand, Schweregrad und Domäne, mit einer Übersicht über das, was offen ist | lesen |
-| `get_anomaly` | Einer dieser Befunde, mit der Notiz, die beim Bestätigen hinterlassen wurde | lesen |
+| `get_anomaly` | Einer dieser Funde, mit der Notiz, die beim Quittieren hinterlassen wurde | lesen |
 | `start_backup` | Sichert ein Element sofort | starten |
 | `start_domain_backup` | Sichert jedes geschützte Element einer Domäne | starten |
 | `start_backup_everything` | Startet ein Gesamt-Backup | starten |
 | `cancel_backup` | Bricht ein laufendes Backup ab, das dieser Schlüssel gestartet hat | abbrechen |
 
-Folgendes bleibt in der Web-Oberfläche: Wiederherstellungen jeder Art (auch das Herunterladen, Speichern und Importieren eines Datenbank-Dumps), das Löschen von Backups, Prune, Unlock, Prüfungen und Übungen, die Off-site-Replikation, Einstellungen, Zugangsdaten und MCP-Schlüssel sowie das Abbrechen eines Backups, das der Zeitplan, die Web-Oberfläche oder ein anderer Schlüssel gestartet hat. Dasselbe gilt für das Bestätigen einer Anomalie oder das Markieren als erwartet, das auf der Seite **Anomalien** geschieht. Der Grund: Die Antworten der Werkzeuge enthalten Namen und Fehlermeldungen von deinem Server, und in jedem davon kann Text stehen, der den Assistenten lenken soll. Ein Assistent, der darauf hereinfällt, kann im schlimmsten Fall ein Backup innerhalb der unten genannten Grenzen starten oder eines abbrechen, das er selbst gestartet hat.
+Folgendes bleibt in der Web-Oberfläche: Wiederherstellungen jeder Art (auch das Herunterladen, Speichern und Importieren eines Datenbank-Dumps), das Löschen von Backups, Prune, Unlock, Prüfungen und Übungen, die Off-site-Replikation, Einstellungen, Zugangsdaten und MCP-Schlüssel sowie das Abbrechen eines Backups, das der Zeitplan, die Web-Oberfläche oder ein anderer Schlüssel gestartet hat. Dasselbe gilt für das Quittieren einer Anomalie oder das Markieren als erwartet, das auf der Seite **Anomalien** geschieht. Der Grund: Die Antworten der Werkzeuge enthalten Namen und Fehlermeldungen von deinem Server, und in jedem davon kann Text stehen, der den Assistenten lenken soll. Ein Assistent, der darauf hereinfällt, kann im schlimmsten Fall ein Backup innerhalb der unten genannten Grenzen starten oder eines abbrechen, das er selbst gestartet hat.
 
 Liegt das primäre Repository eines Elements woanders (S3, REST, SFTP, rclone), fragt `list_restore_points` dort nach, und der Aufruf kann eine Weile dauern. Off-site-Kopien lassen sich über MCP nicht auflisten. Worauf die Anomalie-Prüfungen achten, steht unter [Funktionen](features.md), und wie ein ZFS-Element für jedes Dataset einen eigenen Snapshot anlegt, unter [ZFS-Datasets](zfs-datasets.md#contents).
 

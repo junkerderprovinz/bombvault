@@ -57,7 +57,7 @@ BombVault keeps the newest 200 entries of each key for up to 30 days. For each c
 
 ## Connect a client {#clients}
 
-The card shows ready-made snippets for the address you opened it at: pick your client and copy the snippet. What follows explains what the snippets do and gives the forms the card does not show.
+The card shows ready-made snippets for the address you opened it at: pick your client and copy the snippet. The sections below explain what the snippets do and give the forms the card leaves out.
 
 ### Claude Code {#claude-code}
 

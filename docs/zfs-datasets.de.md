@@ -42,7 +42,7 @@ Ein Dataset kann nur zu einem Element gehören. BombVault lehnt ein neues Elemen
 
 ## Container und Befehle rund um den Snapshot {#consistency}
 
-Ein Snapshot einer laufenden Datenbank ist wie ein plötzlicher Stromausfall: Die Datenbank erholt sich meistens, aber sie muss es tun. Jedes Element kann dagegen zwei Dinge tun, und beide gelten nur für den Augenblick des Snapshots, nicht für das ganze Backup.
+Ein Snapshot einer laufenden Datenbank ist wie ein plötzlicher Stromausfall: Die Datenbank erholt sich meistens davon, muss das aber erst einmal schaffen. Jedes Element kann dagegen zwei Dinge tun, und beide gelten nur für den Augenblick des Snapshots, nicht für das ganze Backup.
 
 - **Diese Container für den Snapshot stoppen.** BombVault stoppt die aufgeführten Container, legt den Snapshot an und startet sie sofort wieder. Container derselben Abhängigkeitsstufe stoppen parallel, abhängige zuerst, deshalb dauert das ganze Fenster meist ein paar Sekunden; der Lauf zeigt, wie lange es war. Das Backup liest danach den eingefrorenen Snapshot, während die Apps schon wieder laufen. Gestoppt werden nur Container, die liefen.
 - **Ein Befehl vor und nach dem Snapshot.** Er läuft in einem Container deiner Wahl, zum Beispiel um kurz vor dem Snapshot eine Datenbank in das Dataset zu dumpen, ohne etwas zu stoppen. Scheitert der Befehl vor dem Snapshot, schlägt das Backup fehl und es entsteht kein Snapshot. Ein scheiternder Befehl nach dem Snapshot wird am Lauf angezeigt, lässt das Backup aber nicht fehlschlagen.
