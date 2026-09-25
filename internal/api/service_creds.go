@@ -406,26 +406,7 @@ func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 				return fmt.Errorf("credential set %q: unsupported S3 storage class %q (allowed: %s)", next[i].Name, next[i].S3StorageClass, strings.Join(restic.AllowedStorageClasses, ", "))
 			}
 			if old, ok := prevByID[next[i].ID]; ok {
-				if next[i].S3Secret == "" {
-					next[i].S3Secret = old.S3Secret
-				}
-				if next[i].RESTPassword == "" {
-					next[i].RESTPassword = old.RESTPassword
-				}
-				if next[i].KeptFor == "" {
-					next[i].KeptFor = old.KeptFor
-				}
-				if next[i].Kind == "" {
-					next[i].Kind = old.Kind
-					next[i].WebDAVURL, next[i].WebDAVVendor, next[i].WebDAVUser = old.WebDAVURL, old.WebDAVVendor, old.WebDAVUser
-					next[i].AzureAccount = old.AzureAccount
-				}
-				if next[i].WebDAVPass == "" {
-					next[i].WebDAVPass = old.WebDAVPass
-				}
-				if next[i].AzureKey == "" {
-					next[i].AzureKey = old.AzureKey
-				}
+				next[i] = keepStoredValues(old, next[i])
 			}
 		}
 		enc, err := s.encodeCloudCredSets(next)
@@ -436,6 +417,34 @@ func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 		return nil
 	})
 	return err
+}
+
+// keepStoredValues fills what a save of in leaves blank from the stored set
+// old: each secret, KeptFor, and for a set without a kind the kind with its
+// WebDAV and Azure fields, which the Settings page never sends. The import
+// writes a set the same way, so a file that leaves a secret blank keeps it.
+func keepStoredValues(old, in CloudCredSet) CloudCredSet {
+	if in.S3Secret == "" {
+		in.S3Secret = old.S3Secret
+	}
+	if in.RESTPassword == "" {
+		in.RESTPassword = old.RESTPassword
+	}
+	if in.KeptFor == "" {
+		in.KeptFor = old.KeptFor
+	}
+	if in.Kind == "" {
+		in.Kind = old.Kind
+		in.WebDAVURL, in.WebDAVVendor, in.WebDAVUser = old.WebDAVURL, old.WebDAVVendor, old.WebDAVUser
+		in.AzureAccount = old.AzureAccount
+	}
+	if in.WebDAVPass == "" {
+		in.WebDAVPass = old.WebDAVPass
+	}
+	if in.AzureKey == "" {
+		in.AzureKey = old.AzureKey
+	}
+	return in
 }
 
 func (s *Service) encodeCloudCredSets(sets []CloudCredSet) (string, error) {

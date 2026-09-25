@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"encoding/json"
 	"maps"
 	"net/http"
 	"slices"
@@ -235,5 +236,147 @@ func TestImportOnFreshInstanceTakesAStorageBoxPathWhole(t *testing.T) {
 	}
 	if got.VMsPath != box {
 		t.Fatalf("vmsPath = %q, want %q: it holds no password to strip", got.VMsPath, box)
+	}
+}
+
+// seedCredentialSetPlace gives h a credential set and a B2 place that uses it.
+func seedCredentialSetPlace(t *testing.T, h *Handler, st *store.Repo) {
+	t.Helper()
+	if err := h.svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "set-b2", Name: "B2 key", CloudCreds: CloudCreds{S3KeyID: "K005", S3Secret: "b2secret"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.WritePlace(store.PlaceWrite{Place: store.Place{
+		ID: "place-b2", Name: "B2", Provider: "b2", Kind: "s3", Base: b2Base,
+		Folders: map[string]string{"containers": "container"}, CredsRef: "set-b2", OffPremises: true, Enabled: true,
+	}}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// storedCredSet reads one credential set of h with its secrets.
+func storedCredSet(t *testing.T, h *Handler, id string) (CloudCredSet, bool) {
+	t.Helper()
+	s, err := h.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sets, err := h.svc.decodeCloudCredSets(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, set := range sets {
+		if set.ID == id {
+			return set, true
+		}
+	}
+	return CloudCredSet{}, false
+}
+
+func TestTheCredentialedExportCarriesTheCredentialSets(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	seedCredentialSetPlace(t, src, srcStore)
+
+	_, full := doExport(t, src, "?includeCredentials=true")
+	if full.Credentials == nil || len(full.Credentials.CredSets) != 1 {
+		t.Fatalf("credentials = %+v, want the one credential set", full.Credentials)
+	}
+	if set := full.Credentials.CredSets[0]; set.ID != "set-b2" || set.S3KeyID != "K005" || set.S3Secret != "b2secret" {
+		t.Fatalf("credential set = %+v, want set-b2 with its secret", set)
+	}
+	if len(full.Places) != 1 || full.Places[0].CredsRef != "set-b2" {
+		t.Fatalf("places = %+v, want the B2 place naming set-b2", full.Places)
+	}
+
+	body, _ := doExport(t, src, "")
+	if bytes.Contains(body, []byte("b2secret")) {
+		t.Fatal("a credential set's secret leaked into the plain export")
+	}
+}
+
+func TestImportAddsTheFilesCredentialSetsAndKeepsTheOthers(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	seedCredentialSetPlace(t, src, srcStore)
+	body, _ := doExport(t, src, "?includeCredentials=true")
+
+	dst, _ := newPortableHandler(t, appKeyB)
+	if err := dst.svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "set-pull", Name: "Pull source", CloudCreds: CloudCreds{S3KeyID: "PULL", S3Secret: "pullsecret"}},
+		{ID: "set-b2", Name: "Stale", CloudCreds: CloudCreds{S3KeyID: "OLD", S3Secret: "oldsecret"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	preview := doImport(t, dst, body, "")
+	summary, _ := preview["summary"].(map[string]any)
+	if creds, _ := summary["credentials"].(map[string]any); creds["credSets"] != true {
+		t.Fatalf("preview = %v, want the credential sets reported", preview)
+	}
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+
+	if b2, ok := storedCredSet(t, dst, "set-b2"); !ok || b2.Name != "B2 key" || b2.S3KeyID != "K005" || b2.S3Secret != "b2secret" {
+		t.Errorf("set-b2 = %+v (found %v), want the file's set, readable with this instance's key", b2, ok)
+	}
+	if pull, ok := storedCredSet(t, dst, "set-pull"); !ok || pull.S3Secret != "pullsecret" {
+		t.Errorf("set-pull = %+v (found %v), want the set the file does not carry kept", pull, ok)
+	}
+}
+
+func TestImportKeepsAStoredSecretTheFileLeavesBlank(t *testing.T) {
+	dst, _ := newPortableHandler(t, appKeyB)
+	if err := dst.svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "set-b2", Name: "B2 key", CloudCreds: CloudCreds{S3KeyID: "K005", S3Secret: "keepme"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	_, exp := doExport(t, dst, "")
+	exp.Credentials = &exportCredentials{CredSets: []CloudCredSet{
+		{ID: "set-b2", Name: "B2 key", CloudCreds: CloudCreds{S3KeyID: "K006"}},
+	}}
+	body, err := json.Marshal(exp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+	if set, ok := storedCredSet(t, dst, "set-b2"); !ok || set.S3KeyID != "K006" || set.S3Secret != "keepme" {
+		t.Fatalf("set-b2 = %+v (found %v), want the file's key id and the stored secret", set, ok)
+	}
+}
+
+func TestImportRefusesCredentialSetsTheSaveWouldRefuse(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		sets []CloudCredSet
+		want string
+	}{
+		{"a set without a name", []CloudCredSet{{ID: "set-x"}}, "needs a name"},
+		{"a set without an id", []CloudCredSet{{Name: "B2 key"}}, "needs an id"},
+		{"two sets with one id", []CloudCredSet{{ID: "set-x", Name: "One"}, {ID: "set-x", Name: "Two"}}, "its id is used twice"},
+		{"an archival storage class", []CloudCredSet{{ID: "set-x", Name: "B2 key", CloudCreds: CloudCreds{S3StorageClass: "deep_archive"}}}, "unsupported S3 storage class DEEP_ARCHIVE"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dst, _ := newPortableHandler(t, appKeyB)
+			_, exp := doExport(t, dst, "")
+			exp.Credentials = &exportCredentials{CredSets: tc.sets}
+			body, err := json.Marshal(exp)
+			if err != nil {
+				t.Fatal(err)
+			}
+			env := doImport(t, dst, body, "?apply=true")
+			if msg, _ := env["error"].(string); env["ok"] != false || !strings.Contains(msg, tc.want) {
+				t.Fatalf("import = %v, want a refusal containing %q", env, tc.want)
+			}
+			if _, found := storedCredSet(t, dst, "set-x"); found {
+				t.Fatal("a refused file stored its credential set")
+			}
+		})
 	}
 }
