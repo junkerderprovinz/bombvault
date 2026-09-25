@@ -4,7 +4,7 @@
 # so the arm64 image is not built under QEMU.
 ARG BUILDPLATFORM
 
-FROM --platform=$BUILDPLATFORM node:24-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS web
+FROM --platform=$BUILDPLATFORM node:24-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS web
 WORKDIR /src
 COPY web/ ./web/
 RUN npm --prefix web ci --no-audit --no-fund
