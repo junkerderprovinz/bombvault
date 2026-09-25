@@ -56,10 +56,21 @@ type fakeDocker struct {
 	// the cancellation (the real SDK fails at once on a done context).
 	startCtxErrs []error
 	waitCtxErrs  []error
+
+	// onStop runs inside Stop before it answers, e.g. to cancel the run while
+	// Docker is still stopping the container. stopCtxErrs records ctx.Err()
+	// after it: the client gives up on a stop whose context ended, and the
+	// daemon carries that stop through anyway.
+	onStop      func()
+	stopCtxErrs []error
 }
 
-func (d *fakeDocker) Stop(_ context.Context, name string, _ time.Duration) error {
+func (d *fakeDocker) Stop(ctx context.Context, name string, _ time.Duration) error {
 	d.log = append(d.log, "stop:"+name)
+	if d.onStop != nil {
+		d.onStop()
+	}
+	d.stopCtxErrs = append(d.stopCtxErrs, ctx.Err())
 	return d.stopErr
 }
 

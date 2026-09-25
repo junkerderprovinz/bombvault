@@ -415,28 +415,40 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	var backupErr error
 	var summary Summary
 
+	// Not ctx: a cancelled or timed-out backup ends ctx, and a start on a done
+	// context is refused at once, which left the VM shut off.
+	restartCtx := context.WithoutCancel(ctx)
+	var shuttingDown bool
+
 	func() {
 		// ALWAYS restart the VM if it was running before — even on any error below.
 		defer func() {
 			if !wasRunning {
 				return
 			}
-			// Not ctx: a cancelled or timed-out backup ends ctx, and a start on a
-			// done context is refused at once, which left the VM shut off.
-			if startErr := d.VM.Start(context.WithoutCancel(ctx), d.Name); startErr != nil && backupErr == nil {
+			// The guest goes on shutting down after a cancel. Starting it while
+			// it is still up does nothing, and it would then stay off.
+			if shuttingDown {
+				if err := waitShutOff(restartCtx, d.VM, d.Name, d.ShutdownTimeout); err != nil {
+					log.Printf("vm backup: wait for %q to shut off before starting it again: %v", d.Name, err)
+				}
+			}
+			if startErr := d.VM.Start(restartCtx, d.Name); startErr != nil && backupErr == nil {
 				backupErr = fmt.Errorf("vm backup: restart vm: %w", startErr)
 			}
 		}()
 
 		// Graceful shutdown + poll until "shut off".
 		if wasRunning {
-			if backupErr = d.VM.Shutdown(ctx, d.Name); backupErr != nil {
+			if backupErr = d.VM.Shutdown(restartCtx, d.Name); backupErr != nil {
 				backupErr = fmt.Errorf("vm backup: shutdown: %w", backupErr)
 				return
 			}
+			shuttingDown = true
 			if backupErr = waitShutOff(ctx, d.VM, d.Name, d.ShutdownTimeout); backupErr != nil {
 				return
 			}
+			shuttingDown = false
 		}
 
 		// Build path list: disks + nvram + tpm (if present).

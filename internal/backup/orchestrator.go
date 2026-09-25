@@ -531,9 +531,16 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 
 		// Stop the target for its own backup (consistent appdata) when it was
 		// running. A stopped container is backed up in place and left as-is.
+		// The stops run on restartCtx: a cancel only aborts the request, the
+		// daemon still finishes the stop, and a restart issued before that
+		// finds the container running and leaves it to go down for good.
 		if d.WasRunning {
-			if backupErr = d.Docker.Stop(ctx, d.ContainerRef, stopTimeout); backupErr != nil {
+			if backupErr = d.Docker.Stop(restartCtx, d.ContainerRef, stopTimeout); backupErr != nil {
 				backupErr = fmt.Errorf("backup: stop container: %w", backupErr)
+				return
+			}
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				backupErr = fmt.Errorf("backup: stopped while stopping the container: %w", ctxErr)
 				return
 			}
 		}
@@ -546,11 +553,15 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 			if !dep.WasRunning {
 				continue // already stopped: leave it exactly as it was (#33)
 			}
-			if stopErr := d.Docker.Stop(ctx, dep.ref(), stopTimeout); stopErr != nil {
+			if stopErr := d.Docker.Stop(restartCtx, dep.ref(), stopTimeout); stopErr != nil {
 				log.Printf("backup: stop dependency %q failed (continuing): %v", dep.Name, stopErr)
 				continue
 			}
 			stoppedDeps = append(stoppedDeps, dep)
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				backupErr = fmt.Errorf("backup: stopped while stopping the dependencies: %w", ctxErr)
+				return
+			}
 		}
 
 		// A container with no existing source paths (a stateless app, or appdata

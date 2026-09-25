@@ -2,6 +2,7 @@ package backup_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -50,6 +51,74 @@ func TestCancelledContainerBackupStillRestartsTargetAndDependencies(t *testing.T
 		if err != nil {
 			t.Errorf("waitRunning #%d ran on a cancelled context (%v)", i, err)
 		}
+	}
+}
+
+// Docker finishes a stop the client gave up on. A cancel that lands while the
+// container is stopping must not start it again before it is down, or the
+// daemon stops it for good right after the restart.
+func TestCancelWhileStoppingStillLeavesTheContainerRunning(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	d := &fakeDocker{onStop: cancel}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+	runs := &fakeRuns{}
+
+	_, err := backup.BackupContainer(ctx, backup.BackupDeps{
+		ContainerRef:   "nextcloud",
+		ContainerName:  "Nextcloud",
+		RepoPath:       "/repo",
+		AppdataPaths:   []string{"/host/user/appdata/nextcloud"},
+		StopTimeout:    30 * time.Second,
+		TargetID:       "target-1",
+		WasRunning:     true,
+		StopContainers: []backup.StopContainer{{Name: "mariadb", WasRunning: true}},
+		Docker:         d,
+		Restic:         r,
+		Templates:      &fakeTemplates{},
+		Runs:           runs,
+	})
+
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("err = %v, want the cancel", err)
+	}
+	if len(r.log) != 0 {
+		t.Errorf("restic ran after the cancel: %v", r.log)
+	}
+	for i, err := range d.stopCtxErrs {
+		if err != nil {
+			t.Errorf("stop #%d was abandoned by the cancel (%v): the daemon would finish it after the restart", i, err)
+		}
+	}
+	if contains(d.log, "stop:mariadb") && !contains(d.log, "start:mariadb") {
+		t.Errorf("docker log = %v, the dependency was stopped and not started again", d.log)
+	}
+	if !contains(d.log, "start:nextcloud") {
+		t.Fatalf("docker log = %v, want the container started again", d.log)
+	}
+}
+
+// The guest keeps shutting down after the request was sent, so a cancel that
+// lands before it is off has to wait for it before starting it: a start on a
+// VM that is still up does nothing, and the shutdown then leaves it off.
+func TestCancelWhileShuttingDownStillLeavesTheVMRunning(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	vm := &fakeVM{active: true, stateSeq: []string{"running", "shut off"}, onShutdown: cancel}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+
+	_, err := backup.BackupVMGraceful(ctx, sampleVMBackupDeps(t, vm, r, &fakeRuns{}))
+
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("err = %v, want the cancel", err)
+	}
+	if len(r.log) != 0 {
+		t.Errorf("restic ran after the cancel: %v", r.log)
+	}
+	if len(vm.startStates) != 1 || vm.startStates[0] != "shut off" {
+		t.Fatalf("start saw the VM in %q (vm log %v), want it started once after it was off", vm.startStates, vm.log)
 	}
 }
 
