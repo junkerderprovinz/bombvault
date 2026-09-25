@@ -89,7 +89,7 @@ func (s *Service) retentionPolicyForSource(settings store.Settings, source strin
 // share, so this applies to a local path as readily as to a cloud bucket.
 // Anything with no append-only flag anywhere is unaffected.
 func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, id entryIdentity, domain string) {
-	p := s.retentionPolicyForRef(settings, s.refFor(settings, domain, repo))
+	p := s.retentionPolicyForRef(settings, domain, s.refFor(settings, domain, repo))
 	if !p.Any() {
 		return
 	}
@@ -528,7 +528,7 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		case isOffsiteSource(source):
 			policy = s.retentionPolicyForSource(settings, source)
 		default:
-			policy = s.retentionPolicyForRef(settings, r)
+			policy = s.retentionPolicyForRef(settings, domain, r)
 		}
 		if policy.Any() {
 			// Per identity: a tag-scoped, ungrouped forget per item and one prune,
