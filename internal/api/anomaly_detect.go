@@ -289,9 +289,10 @@ func detectNewData(in itemInput, p sensParams) ([]finding, int) {
 			continue
 		}
 		samples := newDataSamples(rows, isSample, i)
+		lastGood := lastBackupWithData(rows[:i])
 		switch {
-		case rewroteMostOfTheSource(run, ceiling):
-			found = append(found, rewriteFinding(run, lastBackupWithData(rows[:i]), len(samples)))
+		case rewroteMostOfTheSource(run, lastGood, ceiling):
+			found = append(found, rewriteFinding(run, lastGood, len(samples)))
 		case freshUpload(run) && allFilesNew(run):
 			found = append(found, fullUploadFinding(run, len(samples)))
 		default:
@@ -375,13 +376,20 @@ func newDataSpike(rows []store.SeriesRun, samples []int, i int, p sensParams, ce
 // failed parent probe cannot silence the rule. It judges a run against its own
 // figures, so it holds from the second backup on, where the rules that need a
 // baseline are still learning.
-func rewroteMostOfTheSource(run store.SeriesRun, ceiling float64) bool {
+//
+// What the source grew by since lastGood is left out: new data has to be
+// stored whatever happened to the rest, and a database writes a bulk import
+// twice, into its tables and its write-ahead log.
+func rewroteMostOfTheSource(run store.SeriesRun, lastGood *store.SeriesRun, ceiling float64) bool {
 	if freshUpload(run) || run.SourceBytes == nil {
 		return false
 	}
-	observed := float64(run.Bytes)
-	return observed >= rewriteShare*float64(*run.SourceBytes) &&
-		observed >= rewriteFloor && observed > ceiling
+	rewritten := float64(run.Bytes)
+	if lastGood != nil && lastGood.SourceBytes != nil {
+		rewritten -= float64(max(0, *run.SourceBytes-*lastGood.SourceBytes))
+	}
+	return rewritten >= rewriteShare*float64(*run.SourceBytes) &&
+		rewritten >= rewriteFloor && float64(run.Bytes) > ceiling
 }
 
 // lastBackupWithData is the newest of rows, oldest first, that a restore of the

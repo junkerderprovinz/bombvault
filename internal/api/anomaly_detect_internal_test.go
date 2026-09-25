@@ -331,6 +331,23 @@ func TestRewriteNamesTheLastBackupWithDataAsLastGood(t *testing.T) {
 	}
 }
 
+// A database writes a bulk import into its tables and into its write-ahead
+// log, so the backup stores well over the amount the source grew by. What the
+// source grew by is new data, not a rewrite of what was there.
+func TestSourceGrowthIsNotCountedAsARewrite(t *testing.T) {
+	before := mkRun("before", anomalyNow-anomalyDay, "success", 2<<20, withParent(true), withSource(141078911, 900), withSnapshot("s-before"))
+	bulkImport := mkRun("import", anomalyNow, "success", 150389040, withParent(true), withSource(211440393, 950), withSnapshot("s-import"))
+
+	found, _ := runNewData(newDataInput([]store.SeriesRun{bulkImport, before}, before.StartedAt))
+	noFindingFor(t, found, metricNewDataRewrite)
+
+	encrypted := mkRun("encrypted", anomalyNow, "success", 150389040, withParent(true), withSource(151078911, 900), withSnapshot("s-encrypted"))
+	found, _ = runNewData(newDataInput([]store.SeriesRun{encrypted, before}, before.StartedAt))
+	if got := findingFor(t, found, metricNewDataRewrite); got.LastGoodRunID != "before" {
+		t.Fatalf("finding = %+v, want a rewrite that names the backup before it", got)
+	}
+}
+
 func TestRewriteBelowTheNewDataFloor(t *testing.T) {
 	history := steadyRuns(3, anomalyNow-3*anomalyDay, 10<<20)
 
