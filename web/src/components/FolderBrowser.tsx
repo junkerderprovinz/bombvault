@@ -5,11 +5,11 @@ import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
 import { Button } from "./Button";
 import { Badge } from "./Badge";
-import { groupStage } from "../lib/controls";
 import { IconCheckCircle, IconFolder } from "./Sidebar";
 import { IconBack } from "./glyphs";
 import { useToast } from "../lib/toast";
 import { usePortalHue } from "../lib/portalHue";
+import { WindowActions } from "./WindowActions";
 
 export interface FolderBrowserProps {
   label: string;
@@ -31,9 +31,6 @@ export interface FolderBrowserProps {
 
 export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint, renderLabel = true, inDialog = false }: FolderBrowserProps) {
   const { t } = useT();
-  // "New folder" and "Use this folder" sit one above the other; one stage for
-  // both gives the column a straight edge in every language.
-  const folderActionStage = groupStage([t("folder.newFolder"), t("folder.use")]);
   const { push } = useToast();
   // Anchors usePortalHue, so the portalled dialog keeps the hue of the card it
   // was opened from instead of falling back to the global accent.
@@ -137,18 +134,9 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   // Rendered by both branches below, as a dialog or in place.
   const panel = (
     <>
-      <div className="flex items-center justify-between gap-2">
-        <span dir="ltr" className="text-xs font-mono text-carbon-textSub min-w-0 truncate text-start">
-          {hostMountRoot}/{browsePath || ""}
-        </span>
-        <Button
-          label={t("common.close")}
-          labelKey="common.close"
-          tone="neutral"
-          onClick={handleClose}
-          className="shrink-0"
-        />
-      </div>
+      <span dir="ltr" className="text-xs font-mono text-carbon-textSub min-w-0 truncate text-start">
+        {hostMountRoot}/{browsePath || ""}
+      </span>
 
       {browseError && (
         <p className="text-xs text-statusFail">{browseError}</p>
@@ -229,29 +217,26 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             disabled={creating || newName.trim() === ""}
             busy={creating}
             title={creating ? t("folder.creating") : undefined}
-            stage={folderActionStage}
-            className="shrink-0 justify-start"
+            className="shrink-0"
           />
         </div>
       )}
+    </>
+  );
 
+  // The picker's answers. Inside another window they end the panel instead,
+  // since the panel has no window of its own there.
+  const actions = (
+    <>
+      <Button label={t("common.close")} labelKey="common.close" tone="neutral" onClick={handleClose} />
       {!manualFallback && (
-        <div className="flex items-center gap-2 pt-1">
-          <span dir="ltr" className="text-xs text-carbon-textMuted font-mono min-w-0 flex-1 truncate text-start">
-            {browsePath || "(root)"}
-          </span>
-          {/* justify-start keeps the words from floating in the middle of the
-              wide pill. */}
-          <Button
-            label={t("folder.use")}
-            labelKey="folder.use"
-            glyph={<IconCheckCircle />}
-            tone="accent"
-            onClick={handleSelect}
-            stage={folderActionStage}
-            className="shrink-0 justify-start"
-          />
-        </div>
+        <Button
+          label={t("folder.use")}
+          labelKey="folder.use"
+          glyph={<IconCheckCircle />}
+          tone="accent"
+          onClick={handleSelect}
+        />
       )}
     </>
   );
@@ -301,6 +286,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
       {open && (inDialog ? (
         <div className="mt-1 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
           {panel}
+          <div className="flex items-center justify-end gap-2">{actions}</div>
         </div>
       ) : createPortal(
         <div
@@ -313,9 +299,9 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           {/* The shell is relative so the heading notch can straddle its edge,
               and it does not scroll, so the notch is not clipped. */}
           <div className="relative w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
-            {/* px-5 repeats the box's p-5: the notch takes its inset from the
-                padding around it, and this heading sits outside the scrolling
-                box, which would clip it. */}
+            {/* px-5 repeats the body's px-5: the notch takes its inset from
+                the padding around it, and this heading sits outside the
+                scrolling body, which would clip it. */}
             <h2 className="flex items-center px-5">
               <Badge tone="heading" size="heading" wrap>{label}</Badge>
             </h2>
@@ -323,9 +309,10 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               role="dialog"
               aria-modal="true"
               aria-label={label}
-              className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 shadow-2xl flex flex-col gap-2"
+              className="flex max-h-[90vh] w-full flex-col rounded-card bg-carbon-surface shadow-2xl"
             >
-              {panel}
+              <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-5 pt-5 pb-1">{panel}</div>
+              <WindowActions>{actions}</WindowActions>
             </div>
           </div>
         </div>,

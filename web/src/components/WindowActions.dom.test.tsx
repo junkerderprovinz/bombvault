@@ -7,7 +7,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { I18nProvider, en } from "../lib/i18n";
 import { WindowActions } from "./WindowActions";
@@ -17,6 +17,7 @@ vi.mock("../lib/api", async (importOriginal) => ({
   getDirectRepo: async () => ({ ok: true, repo: null, suggestion: null }),
   listRuns: async () => ({ ok: true, runs: [] }),
   ackRuns: async () => ({ ok: true }),
+  browse: async () => ({ ok: true, dirs: [{ name: "appdata", path: "user/appdata" }] }),
 }));
 
 const { ConfirmDialog } = await import("./ConfirmDialog");
@@ -25,6 +26,7 @@ const { useConfirm } = await import("../lib/useConfirm");
 const { CryptoDonateDialog } = await import("./CryptoDonateDialog");
 const { WhatsNewDialog } = await import("./WhatsNewDialog");
 const { ErrorDetailPanel } = await import("./ErrorDetailPanel");
+const { FolderBrowser } = await import("./FolderBrowser");
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -116,12 +118,20 @@ const WINDOWS: Shown[] = [
     open: () => shown(<ErrorDetailPanel onClose={() => {}} />),
     last: en["errorPanel.resolveAll"],
   },
+  {
+    file: "components/FolderBrowser.tsx",
+    name: "the folder picker",
+    open: async () => {
+      shown(<FolderBrowser label="Restore folder" value="user" hostMountRoot="/mnt" onChange={() => {}} />);
+      await act(async () => screen.getByRole("button", { name: en["folder.browseTitle"] }).click());
+    },
+    last: en["folder.use"],
+  },
 ];
 
 /** Windows that still keep their own footer, each taken off by the change that
  *  gives it the shared row. */
 const PENDING = new Set<string>([
-  "components/FolderBrowser.tsx",
   // Listed ahead of the add-place window itself, so its arrival does not trip
   // the scan. It comes off once both of its steps end in WindowActions, and
   // this list and its honesty test go with it.
