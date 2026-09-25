@@ -43,6 +43,9 @@ type ResticEngine interface {
 	// RepoOpensErr is RepoOpens but returns the probe's actual failure instead of
 	// discarding it, for TestOffsite, which needs to explain why a repo didn't open.
 	RepoOpensErr(ctx context.Context, repo string, mode restic.Mode) error
+	// RepoID reads the id of the repository at repo from its config, which
+	// the mode's password decrypts.
+	RepoID(ctx context.Context, repo string, mode restic.Mode) (string, error)
 	Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
 	// BackupStdin backs up all of rd as a single synthetic file recorded under
 	// path. The zvol VM disk backup pipes a `zfs send` stream through it straight
