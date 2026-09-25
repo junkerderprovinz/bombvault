@@ -797,3 +797,251 @@ func TestAPlaceEditWaitsForTheOneInProgress(t *testing.T) {
 		t.Fatalf("place = %+v, %v, want the waiting edit saved", p, err)
 	}
 }
+
+func TestAPlaceOnTheSharedCredentialsGetsASetOfItsOwnOnItsFirstChange(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCreds(CloudCreds{S3KeyID: "shared-id", S3Secret: "shared-secret"}); err != nil {
+		t.Fatal(err)
+	}
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(b2, "containers", "")
+	f.probeAnswers(places.ProbeResult{OK: true, Base: b2.Base})
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"fields": map[string]string{"keyId": "own-id", "secret": ""}})
+
+	p, err := f.st.GetPlace(b2.ID)
+	if res["ok"] != true || err != nil || p.CredsRef == "" {
+		t.Fatalf("PATCH = %v; place %+v, %v", res, p, err)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sets, err := f.svc.decodeCloudCredSets(settings)
+	if err != nil || len(sets) != 1 || sets[0].ID != p.CredsRef || sets[0].S3KeyID != "own-id" ||
+		sets[0].S3Secret != "shared-secret" || sets[0].Kind != "s3" {
+		t.Fatalf("sets = %+v, %v, want one set with the new key and the shared secret", sets, err)
+	}
+	if shared, err := f.svc.CloudConfig(); err != nil || shared.S3KeyID != "shared-id" {
+		t.Fatalf("shared credentials = %+v, %v, want them untouched", shared, err)
+	}
+	if row := f.storedTarget(target.ID); row.CredsRef != p.CredsRef {
+		t.Fatalf("target = %+v, want it on the place's new set", row)
+	}
+}
+
+func TestAPlaceWithASetOfItsOwnChangesItInPlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {
+		t.Fatal(err)
+	}
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.CredsRef = "b2-set"
+	b2 := f.storePlace(p)
+	f.placeTarget(b2, "containers", "")
+	f.probeAnswers(places.ProbeResult{OK: true, Base: b2.Base})
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"fields": map[string]string{"keyId": "k2", "secret": "s2"}})
+
+	stored, err := f.st.GetPlace(b2.ID)
+	if res["ok"] != true || err != nil || stored.CredsRef != "b2-set" {
+		t.Fatalf("PATCH = %v; place %+v, %v", res, stored, err)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sets, err := f.svc.decodeCloudCredSets(settings); err != nil || len(sets) != 1 || sets[0].S3KeyID != "k2" || sets[0].S3Secret != "s2" {
+		t.Fatalf("sets = %+v, %v, want b2-set changed in place", sets, err)
+	}
+}
+
+func TestASetSomethingElseNamesIsForkedNotEdited(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.st.CreatePullSource(store.PullSource{Name: "Old box", Repo: "s3:https://s3.example.com/other", CredsRef: "b2-set", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.CredsRef = "b2-set"
+	b2 := f.storePlace(p)
+	f.probeAnswers(places.ProbeResult{OK: true, Base: b2.Base})
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"fields": map[string]string{"keyId": "k2", "secret": ""}})
+
+	stored, err := f.st.GetPlace(b2.ID)
+	if res["ok"] != true || err != nil || stored.CredsRef == "b2-set" {
+		t.Fatalf("PATCH = %v; place %+v, %v, want it on a set of its own", res, stored, err)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sets, err := f.svc.decodeCloudCredSets(settings)
+	shared := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == "b2-set" })
+	own := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == stored.CredsRef })
+	if err != nil || shared < 0 || own < 0 || sets[shared].S3KeyID != "k1" || sets[own].S3KeyID != "k2" || sets[own].S3Secret != "s1" {
+		t.Fatalf("sets = %+v, %v, want the pull source's set untouched and a fork with the new key", sets, err)
+	}
+}
+
+func TestASetARemoteDomainPathRunsOnIsForkedNotEdited(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.st.UpsertPrimaryRemoteTarget("vms", store.OffsiteTarget{Repo: "s3:https://s3.example.com/other/vms", CredsRef: "b2-set", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.CredsRef = "b2-set"
+	b2 := f.storePlace(p)
+	f.probeAnswers(places.ProbeResult{OK: true, Base: b2.Base})
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"fields": map[string]string{"keyId": "k2", "secret": ""}})
+
+	stored, err := f.st.GetPlace(b2.ID)
+	if res["ok"] != true || err != nil || stored.CredsRef == "b2-set" {
+		t.Fatalf("PATCH = %v; place %+v, %v, want it on a set of its own", res, stored, err)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sets, err := f.svc.decodeCloudCredSets(settings)
+	shared := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == "b2-set" })
+	if err != nil || shared < 0 || sets[shared].S3KeyID != "k1" {
+		t.Fatalf("sets = %+v, %v, want the set of the vms path untouched", sets, err)
+	}
+}
+
+func TestNewCredentialsThePlaceDoesNotOpenWithAreRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {
+		t.Fatal(err)
+	}
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.CredsRef = "b2-set"
+	b2 := f.storePlace(p)
+	asked := f.probeAnswers(places.ProbeResult{Code: "direct-access-denied", Error: "the key cannot read this place"})
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"fields": map[string]string{"keyId": "k2", "secret": "s2"}})
+
+	if res["ok"] != false || res["code"] != "place-probe-failed" || len(*asked) != 1 || (*asked)[0].PlaceID != b2.ID {
+		t.Fatalf("PATCH = %v, probe asked %+v, want place-probe-failed from a probe of this place", res, *asked)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sets, err := f.svc.decodeCloudCredSets(settings); err != nil || len(sets) != 1 || sets[0].S3KeyID != "k1" {
+		t.Fatalf("sets = %+v, %v, want b2-set untouched", sets, err)
+	}
+}
+
+func TestNewCredentialsAreTriedWhenTheAddressFormKeepsTheBase(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {
+		t.Fatal(err)
+	}
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.CredsRef = "b2-set"
+	b2 := f.storePlace(p)
+	f.probeAnswers(places.ProbeResult{Code: "direct-access-denied", Error: "the key cannot read this place"})
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{
+		"address": map[string]string{"endpoint": "s3.example.com", "bucket": "bucket"},
+		"fields":  map[string]string{"keyId": "k2", "secret": "s2"},
+	})
+
+	if res["ok"] != false || res["code"] != "place-probe-failed" {
+		t.Fatalf("PATCH = %v, want place-probe-failed", res)
+	}
+}
+
+func TestAMovedAddressIsOpenedWithTheCredentialsTheEditBrings(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {
+		t.Fatal(err)
+	}
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.CredsRef = "b2-set"
+	b2 := f.storePlace(p)
+	target := f.placeTarget(b2, "containers", "")
+	moved := "s3:https://s3.example.com/other/container"
+	f.eng.ids[target.Repo], f.eng.ids[moved] = "r1", "r1"
+	f.eng.keys[moved] = "AWS_ACCESS_KEY_ID=k2"
+	f.eng.openErr[moved] = errors.New("Access Denied")
+	asked := f.probeAnswers(places.ProbeResult{Code: "direct-access-denied", Error: "the old bucket refuses the new key"})
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{
+		"address": map[string]string{"endpoint": "s3.example.com", "bucket": "other"},
+		"fields":  map[string]string{"keyId": "k2", "secret": "s2"},
+	})
+
+	if res["ok"] != true || len(*asked) != 0 {
+		t.Fatalf("PATCH = %v, probe asked %+v, want the move accepted without a probe of the old base", res, *asked)
+	}
+	if row := f.storedTarget(target.ID); row.Repo != moved {
+		t.Fatalf("target = %q, want it at %q", row.Repo, moved)
+	}
+}
+
+func TestCredentialsTheFormLeavesAsTheyWereAreNeitherTriedNorForked(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCreds(CloudCreds{S3KeyID: "shared-id", S3Secret: "shared-secret"}); err != nil {
+		t.Fatal(err)
+	}
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	asked := f.probeAnswers(places.ProbeResult{Code: "direct-access-denied", Error: "the key cannot read this place"})
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"fields": map[string]string{"keyId": "shared-id", "secret": ""}})
+
+	if res["ok"] != true || len(*asked) != 0 {
+		t.Fatalf("PATCH = %v, probe asked %+v, want it saved untried", res, *asked)
+	}
+	if p, err := f.st.GetPlace(b2.ID); err != nil || p.CredsRef != "" {
+		t.Fatalf("place = %+v, %v, want it still on the shared credentials", p, err)
+	}
+	if settings, err := f.st.GetSettings(); err != nil || settings.CloudCredSets != "" {
+		t.Fatalf("credential sets = %q, %v, want none", settings.CloudCredSets, err)
+	}
+}
+
+func TestADirectRepositoryThatNoLongerOpensKeepsItsOldCredentials(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {
+		t.Fatal(err)
+	}
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.CredsRef = "b2-set"
+	b2 := f.storePlace(p)
+	target := f.placeTarget(b2, "containers", "")
+	direct := f.direct(target)
+	f.linkRow(direct.ID, b2, "containers", "-direct")
+	f.container("nginx", direct.ID)
+	f.eng.keys[direct.Repo] = "AWS_ACCESS_KEY_ID=k1"
+	f.probeAnswers(places.ProbeResult{OK: true, Base: b2.Base})
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"fields": map[string]string{"keyId": "k2", "secret": "s2"}})
+
+	warnings := rowsOf(res["warnings"])
+	if res["ok"] != true || len(warnings) != 1 || warnings[0]["code"] != "direct-creds-kept" {
+		t.Fatalf("PATCH = %v, want one direct-creds-kept warning", res)
+	}
+	row, err := f.st.GetNamedRepo(direct.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sets, err := f.svc.decodeCloudCredSets(settings)
+	kept := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == row.CredsRef })
+	if err != nil || kept < 0 || sets[kept].S3KeyID != "k1" {
+		t.Fatalf("the direct repository runs on %q in %+v, %v, want a set with the old key", row.CredsRef, sets, err)
+	}
+}

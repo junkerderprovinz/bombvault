@@ -237,3 +237,13 @@ func (s *Service) placeMode(settings store.Settings, p store.Place) (restic.Mode
 	mode.Env = env
 	return mode, nil
 }
+
+// pendingMode is the mode the place opens with once change is written.
+func (s *Service) pendingMode(settings store.Settings, p store.Place, change *credsChange) (restic.Mode, error) {
+	if change == nil {
+		return s.placeMode(settings, p)
+	}
+	mode := s.ModeFor(settings)
+	mode.Env = credSetEnv(change.set, p.ID)
+	return mode, nil
+}
