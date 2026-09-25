@@ -239,6 +239,10 @@ type Settings struct {
 	// whatever the outcome, so it can feed a dead man's switch.
 	EverythingPreHook  string
 	EverythingPostHook string
+	// PlacesMigrated is the Unix time at which the storage places were built
+	// from the setup this database had before them. While it is 0 the startup
+	// step builds them.
+	PlacesMigrated int64
 }
 
 // settingsQuerier and settingsExecer are satisfied by both *sql.DB and *sql.Tx,
@@ -287,7 +291,8 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       fleet_enabled, pull_enabled, instance_name, fleet_token,
 		       everything_schedule, everything_pre_hook, everything_post_hook,
 		       backup_cores, display_prefs,
-		       totp_secret, totp_enabled, totp_recovery
+		       totp_secret, totp_enabled, totp_recovery,
+		       places_migrated
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -327,6 +332,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&s.EverythingSchedule, &s.EverythingPreHook, &s.EverythingPostHook,
 		&s.BackupCores, &s.DisplayPrefs,
 		&s.TOTPSecret, &totpEnabled, &s.TOTPRecovery,
+		&s.PlacesMigrated,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing: run Migrate first")
@@ -508,7 +514,8 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  display_prefs                = ?,
 		  totp_secret                  = ?,
 		  totp_enabled                 = ?,
-		  totp_recovery                = ?
+		  totp_recovery                = ?,
+		  places_migrated              = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -552,6 +559,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		s.TOTPSecret,
 		boolInt(s.TOTPEnabled),
 		s.TOTPRecovery,
+		s.PlacesMigrated,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)
