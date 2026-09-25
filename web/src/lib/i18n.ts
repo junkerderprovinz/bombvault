@@ -2463,6 +2463,10 @@ export const en = {
   "storageDomains.copiesOffOwnChoice": "Items with a choice of their own keep copying there.",
   "storageDomains.exceptions": "Exceptions",
   "storageDomains.exceptionsNone": "none",
+  "storageDomains.copyNow": "Copy now",
+  "storageDomains.copying": "Copying…",
+  "storageDomains.copyStarted": "Copying started. It runs in the background.",
+  "storageDomains.copyFailed": "Copying could not start.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4605,6 +4609,10 @@ export const de: Translations = {
   "storageDomains.copiesOffOwnChoice": "Einträge mit eigener Wahl kopieren weiter dorthin.",
   "storageDomains.exceptions": "Ausnahmen",
   "storageDomains.exceptionsNone": "keine",
+  "storageDomains.copyNow": "Jetzt kopieren",
+  "storageDomains.copying": "Kopiere…",
+  "storageDomains.copyStarted": "Kopieren gestartet. Es läuft im Hintergrund weiter.",
+  "storageDomains.copyFailed": "Kopieren konnte nicht starten.",
 };
 
 // ---------------------------------------------------------------------------

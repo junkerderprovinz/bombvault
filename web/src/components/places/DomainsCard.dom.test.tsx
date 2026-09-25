@@ -17,6 +17,9 @@ const homeBodies: unknown[] = [];
 const copiesPreviews: Answer[] = [];
 const copiesWrites: Answer[] = [];
 const copiesBodies: unknown[] = [];
+const confirmed: [string, string[]][] = [];
+const copyNow: string[] = [];
+let copyAnswer: Answer = { ok: true };
 
 vi.mock("../../lib/places", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/places")>();
@@ -39,6 +42,31 @@ vi.mock("../../lib/places", async (importOriginal) => {
     },
   };
 });
+
+vi.mock("../../lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/api")>()),
+  getConfirmPreview: () =>
+    Promise.resolve({
+      ok: true,
+      paused: true,
+      targets: [
+        {
+          targetId: "t-b2",
+          name: "B2",
+          preview: { items: 3, formerlyExcluded: [], defaultExcludes: false, snapshots: 12, bytes: null, unreadable: [] },
+        },
+      ],
+      unmatched: [{ identity: "container:old", snapshots: 2 }],
+    }),
+  confirmPlacementDefault: (domain: string, exclude: string[]) => {
+    confirmed.push([domain, exclude]);
+    return Promise.resolve({ ok: true });
+  },
+  replicateOffsite: (domain: string) => {
+    copyNow.push(domain);
+    return Promise.resolve(copyAnswer);
+  },
+}));
 
 vi.mock("../placeMarks", () => ({
   PlaceMark: ({ provider, onFill }: { provider: string; onFill?: boolean }) => (
@@ -103,6 +131,9 @@ beforeEach(() => {
   copiesPreviews.length = 0;
   copiesWrites.length = 0;
   copiesBodies.length = 0;
+  confirmed.length = 0;
+  copyNow.length = 0;
+  copyAnswer = { ok: true };
   places = [
     place("p-unraid", "Unraid", "unraid-folder"),
     place("p-nas", "NAS Keller", "synology"),
@@ -446,5 +477,60 @@ describe("DomainsCard exceptions", () => {
   it("says none when every item follows the domain", async () => {
     await card();
     expect(within(rowOf("Containers")).getByText(en["storageDomains.exceptionsNone"])).toBeTruthy();
+  });
+});
+
+describe("DomainsCard pause and copy now", () => {
+  it("confirms the default of a paused row with what the next run copies, and flash has none", async () => {
+    rows = [row("containers", { paused: true }), row("flash", { paused: true })];
+    await card();
+    expect(within(rowOf("Flash")).queryByRole("button", { name: en["placementDefaults.confirm"] })).toBeNull();
+    expect(within(rowOf("Containers")).getByText(en["placementDefaults.paused"])).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(within(rowOf("Containers")).getByRole("button", { name: en["placementDefaults.confirm"] }));
+    });
+    expect(within(dialog()).getByText(en["placementDefaults.confirmAsk"])).toBeTruthy();
+    expect(within(dialog()).getByText("B2")).toBeTruthy();
+    fireEvent.click(
+      within(dialog()).getByRole("switch", {
+        name: en["placementDefaults.unmatchedLine"].replace("{name}", "old").replace("{n}", "2"),
+      })
+    );
+    await answer(en["placementDefaults.confirm"]);
+    expect(confirmed).toEqual([["containers", ["container:old"]]]);
+    expect(screen.getByText(en["placementDefaults.confirmed"])).toBeTruthy();
+  });
+
+  it("copies a domain now while it has a target, ticked or not", async () => {
+    rows = [
+      row("containers", { chips: [{ placeId: "p-b2", targetId: "t-b2", on: false, disabled: false }] }),
+      row("vms", { chips: [{ placeId: "p-b2", on: false, disabled: false }] }),
+    ];
+    await card();
+    expect(within(rowOf("VMs")).queryByRole("button", { name: en["storageDomains.copyNow"] })).toBeNull();
+    await act(async () => {
+      fireEvent.click(within(rowOf("Containers")).getByRole("button", { name: en["storageDomains.copyNow"] }));
+    });
+    expect(copyNow).toEqual(["containers"]);
+    expect(screen.getByText(en["storageDomains.copyStarted"])).toBeTruthy();
+  });
+
+  it("offers no Copy now while the row waits for its default to be confirmed", async () => {
+    rows = [row("containers", { paused: true, chips: [{ placeId: "p-b2", targetId: "t-b2", on: true, disabled: false }] })];
+    await card();
+    expect(within(rowOf("Containers")).queryByRole("button", { name: en["storageDomains.copyNow"] })).toBeNull();
+  });
+
+  it("shakes Copy now and says why when the copy cannot start", async () => {
+    rows = [row("containers", { chips: [{ placeId: "p-b2", targetId: "t-b2", on: true, disabled: false }] })];
+    copyAnswer = { ok: false, error: "no target is switched on" };
+    await card();
+    await act(async () => {
+      fireEvent.click(within(rowOf("Containers")).getByRole("button", { name: en["storageDomains.copyNow"] }));
+    });
+    expect(screen.getByText("no target is switched on")).toBeTruthy();
+    expect(within(rowOf("Containers")).getByRole("button", { name: en["storageDomains.copyNow"] }).className).toContain(
+      "glim-shake"
+    );
   });
 });
