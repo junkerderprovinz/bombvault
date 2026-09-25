@@ -62,14 +62,20 @@ func TestAnUnmountedShareFailsTheProbe(t *testing.T) {
 	if err := os.MkdirAll(filepath.FromSlash(f.root+"/remotes/nas/bombvault"), 0o750); err != nil {
 		t.Fatal(err)
 	}
+	// The folder tile browses all of /mnt, so it can point into a share too.
+	providers := []string{"synology", "unraid-folder"}
 	writeMountFixture(t, "/")
-	if res := probeOf(t, f, "synology", map[string]string{"path": "remotes/nas/bombvault"}); res.OK || res.Code != "place-probe-failed" {
-		t.Fatalf("probe of an unmounted share = %+v", res)
+	for _, provider := range providers {
+		if res := probeOf(t, f, provider, map[string]string{"path": "remotes/nas/bombvault"}); res.OK || res.Code != "place-probe-failed" {
+			t.Fatalf("%s: probe of an unmounted share = %+v", provider, res)
+		}
 	}
 	// mountinfo escapes a space in a mount point as \040.
 	writeMountFixture(t, "/", strings.ReplaceAll(f.root+"/remotes/nas", " ", `\040`))
-	if res := probeOf(t, f, "synology", map[string]string{"path": "remotes/nas/bombvault"}); !res.OK {
-		t.Fatalf("probe of a mounted share = %+v", res)
+	for _, provider := range providers {
+		if res := probeOf(t, f, provider, map[string]string{"path": "remotes/nas/bombvault"}); !res.OK {
+			t.Fatalf("%s: probe of a mounted share = %+v", provider, res)
+		}
 	}
 }
 

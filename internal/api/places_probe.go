@@ -255,14 +255,16 @@ func (s *Service) probeMode(settings store.Settings, pr placeProbe) (restic.Mode
 }
 
 // localPlaceReady refuses a local place BombVault cannot write to, and a NAS
-// share with nothing mounted: its empty mount point takes a test write as
-// readily as a backup, and the backup would fill the container instead.
+// share with nothing mounted, whether a device tile or the address names it:
+// its empty mount point takes a test write as readily as a backup, and the
+// backup would never reach the NAS.
 func (s *Service) localPlaceReady(pr placeProbe) error {
 	loc, err := s.resolveRepo(pr.base)
 	if err != nil {
 		return err
 	}
-	if slices.Contains(pr.provider.PickRoots, "remotes") && !s.destinationMounted(loc) {
+	share := slices.Contains(pr.provider.PickRoots, "remotes") || places.UnderRemotes(pr.base)
+	if share && !s.destinationMounted(loc) {
 		return fmt.Errorf("%w: nothing is mounted at this share; mount it on the server first", errPlaceProbeFailed)
 	}
 	if err := writableDir(loc); err != nil {
