@@ -6,6 +6,7 @@ import { ToastProvider } from "../../lib/toast";
 import { placesChanged, type Place, type UnplacedRow } from "../../lib/places";
 
 let listed: { places: Place[]; unplaced: UnplacedRow[] } = { places: [], unplaced: [] };
+let listFails = false;
 let lists = 0;
 const adopted: [string, string, string][] = [];
 
@@ -15,7 +16,7 @@ vi.mock("../../lib/places", async (importOriginal) => {
     ...actual,
     listPlaces: () => {
       lists++;
-      return Promise.resolve({ ok: true, ...listed });
+      return Promise.resolve(listFails ? { ok: false, error: "database is locked" } : { ok: true, ...listed });
     },
     getPlacesCatalog: () => Promise.resolve({ ok: true, providers: [] }),
     adoptRow: (placeId: string, rowId: string, domain: string) => {
@@ -56,6 +57,7 @@ function place(id: string, name: string, provider: string): Place {
 
 beforeEach(() => {
   lists = 0;
+  listFails = false;
   adopted.length = 0;
   listed = { places: [place("p1", "Unraid", "unraid-folder"), place("p2", "B2", "b2")], unplaced: [] };
 });
@@ -91,6 +93,14 @@ describe("PlacesCard", () => {
     listed = { places: [], unplaced: [] };
     await card();
     expect(screen.getByText(en["places.empty"])).toBeTruthy();
+  });
+
+  it("says the places could not be read rather than that there are none", async () => {
+    listFails = true;
+    await card();
+    expect(screen.getByText(en["places.loadFailed"])).toBeTruthy();
+    expect(screen.queryByText("database is locked")).toBeNull();
+    expect(screen.queryByText(en["places.empty"])).toBeNull();
   });
 
   it("opens the add window from its key button", async () => {
@@ -138,5 +148,16 @@ describe("PlacesCard", () => {
       ["p2", "t9", ""],
       ["p2", "r3", "vms"],
     ]);
+  });
+
+  it("writes what each picker of a row without a place chooses beside it", async () => {
+    listed.unplaced = [{ rowId: "r3", domain: "", role: "repository", name: "Archive", repo: "remotes/archive" }];
+    await card();
+    const row = screen.getByText("remotes/archive").closest("div.rounded-card") as HTMLElement;
+    for (const key of ["places.unplaced.place", "places.unplaced.domain"] as const) {
+      const label = within(row).getByText(en[key]);
+      expect(label.tagName).toBe("LABEL");
+      expect(document.getElementById(label.getAttribute("for") ?? "")?.getAttribute("role")).toBe("combobox");
+    }
   });
 });

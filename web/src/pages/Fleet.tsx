@@ -22,11 +22,13 @@ import {
   proposeMeshOffer,
 } from "../lib/api";
 import { CopyBlock } from "../components/CopyBlock";
-import { MESH_DOMAINS, MeshOfferRow, domainLabelKey } from "../components/MeshOfferRow";
+import { MeshOfferRow } from "../components/MeshOfferRow";
 import { IconDisclosure } from "../components/IconDisclosure";
 import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL, PAGE_SHELL_TABBED } from "../lib/pageShell";
+import { domainName } from "../lib/placeText";
+import { PLACE_DOMAINS } from "../lib/places";
 import { SelectField } from "../components/SelectField";
 import { relativeTime } from "../lib/reltime";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
@@ -82,7 +84,7 @@ function PeerScorecard({ domains, t }: { domains: DomainStatus[]; t: T }) {
     <div className="mt-2 flex flex-col gap-1.5">
       {shown.map((d) => (
         <div key={d.domain} className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-carbon-textSub w-20 shrink-0">{t(domainLabelKey(d.domain))}</span>
+          <span className="text-xs text-carbon-textSub w-20 shrink-0">{domainName(t, d.domain)}</span>
           <Badge tone={protectionTone(d.protection)}>{t(protectionLabelKey(d.protection))}</Badge>
           {d.lastSuccess > 0 && (
             <span className="text-xs text-carbon-textMuted">
@@ -163,7 +165,7 @@ export function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T;
                   value={domain}
                   onChange={setDomain}
                   label={t("fleet.mesh.domain")}
-                  options={MESH_DOMAINS.map((d) => ({ value: d, label: t(domainLabelKey(d)) }))}
+                  options={PLACE_DOMAINS.map((d) => ({ value: d, label: domainName(t, d) }))}
                   className={inputCls}
                 />
               </div>

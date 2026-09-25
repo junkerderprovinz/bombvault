@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { AddPlaceDialog } from "./AddPlaceDialog";
 import { PlaceRow } from "./PlaceRow";
 import { Badge } from "../Badge";
@@ -41,6 +41,7 @@ function UnplacedRowView({ row, places }: { row: UnplacedRow; places: Place[] })
   const [domain, setDomain] = useState("");
   const [busy, setBusy] = useState(false);
   const [shake, setShake] = useState(0);
+  const id = useId();
   const title = row.name || domainName(t, row.domain);
   const role = t(ROLE_KEYS[row.role]).replace("{domain}", domainName(t, row.domain));
 
@@ -71,7 +72,7 @@ function UnplacedRowView({ row, places }: { row: UnplacedRow; places: Place[] })
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-card bg-carbon-surface2 px-3 py-2">
+    <div className="flex flex-wrap items-end gap-3 rounded-card bg-carbon-surface2 px-3 py-2">
       <div className="flex min-w-[12rem] flex-1 flex-col gap-0.5">
         <span className="text-sm font-semibold text-carbon-text">{title}</span>
         <span className="text-xs text-carbon-textSub">{role}</span>
@@ -79,27 +80,39 @@ function UnplacedRowView({ row, places }: { row: UnplacedRow; places: Place[] })
           {row.repo}
         </span>
       </div>
-      <SelectField
-        label={t("places.unplaced.place")}
-        value={placeId}
-        onChange={setPlaceId}
-        options={[
-          { value: "", label: t("places.unplaced.choose") },
-          ...places.map((p) => ({ value: p.id, label: p.name, glyph: <PlaceMark provider={p.provider} /> })),
-        ]}
-        className={PICK_CLASS}
-      />
-      {row.role === "repository" && (
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${id}-place`} className="text-xs text-carbon-textSub">
+          {t("places.unplaced.place")}
+        </label>
         <SelectField
-          label={t("places.unplaced.domain")}
-          value={domain}
-          onChange={setDomain}
+          id={`${id}-place`}
+          label={t("places.unplaced.place")}
+          value={placeId}
+          onChange={setPlaceId}
           options={[
-            { value: "", label: t("places.unplaced.allDomains") },
-            ...PLACE_DOMAINS.map((d) => ({ value: d, label: domainName(t, d) })),
+            { value: "", label: t("places.unplaced.choose") },
+            ...places.map((p) => ({ value: p.id, label: p.name, glyph: <PlaceMark provider={p.provider} /> })),
           ]}
           className={PICK_CLASS}
         />
+      </div>
+      {row.role === "repository" && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`${id}-domain`} className="text-xs text-carbon-textSub">
+            {t("places.unplaced.domain")}
+          </label>
+          <SelectField
+            id={`${id}-domain`}
+            label={t("places.unplaced.domain")}
+            value={domain}
+            onChange={setDomain}
+            options={[
+              { value: "", label: t("places.unplaced.allDomains") },
+              ...PLACE_DOMAINS.map((d) => ({ value: d, label: domainName(t, d) })),
+            ]}
+            className={PICK_CLASS}
+          />
+        </div>
       )}
       <Button
         key={shake}
@@ -124,20 +137,16 @@ export function PlacesCard({ hueIndex, hostMountRoot }: { hueIndex?: number; hos
   const [loaded, setLoaded] = useState(false);
   const [adding, setAdding] = useState(false);
 
+  // Only a list that was read can say there is no place yet.
   const load = useCallback(async () => {
-    try {
-      const res = await listPlaces();
-      if (res.ok) {
-        setPlaces(res.places ?? []);
-        setUnplaced(res.unplaced ?? []);
-      } else {
-        push(res.error ?? t("places.loadFailed"), "fail");
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("places.loadFailed"), "fail");
-    } finally {
-      setLoaded(true);
+    const res = await listPlaces().catch(() => null);
+    if (!res?.ok) {
+      push(t("places.loadFailed"), "fail");
+      return;
     }
+    setPlaces(res.places ?? []);
+    setUnplaced(res.unplaced ?? []);
+    setLoaded(true);
   }, [push, t]);
 
   useEffect(() => {

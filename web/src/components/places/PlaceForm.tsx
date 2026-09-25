@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../Button";
+import { CopyBlock } from "../CopyBlock";
 import { FolderBrowser } from "../FolderBrowser";
 import { InfoBubble } from "../InfoBubble";
 import { RevealInput } from "../RevealInput";
@@ -8,12 +9,12 @@ import { Selector } from "../Selector";
 import { WindowActions } from "../WindowActions";
 import { PlaceMark } from "../placeMarks";
 import { getVMSSH, type OkEnvelope } from "../../lib/api";
-import { copyText } from "../../lib/clipboard";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import {
   domainName,
   folderStateText,
   placeErrorText,
+  probeErrorText,
   probeFactText,
   probeFailureText,
   providerName,
@@ -25,6 +26,7 @@ import {
   type CatalogField,
   type CatalogProvider,
   type Place,
+  type PlaceKind,
   type ProbeResult,
 } from "../../lib/places";
 import { useToast } from "../../lib/toast";
@@ -54,11 +56,11 @@ const FIELD_KEYS: Record<string, TranslationKey> = {
   remote: "places.field.remote",
 };
 
-/** fieldLabelKey is a field's label, where a provider names it its own way. */
-export function fieldLabelKey(provider: CatalogProvider, key: string): TranslationKey {
-  if (provider.kind === "azure" && key === "account") return "places.field.storageAccount";
-  if (provider.kind === "azure" && key === "secret") return "places.field.accessKey";
-  if (provider.kind === "webdav" && key === "password") return "places.field.appPassword";
+/** fieldLabelKey is a field's label, where a kind of place names it its own way. */
+export function fieldLabelKey(kind: PlaceKind, key: string): TranslationKey {
+  if (kind === "azure" && key === "account") return "places.field.storageAccount";
+  if (kind === "azure" && key === "secret") return "places.field.accessKey";
+  if (kind === "webdav" && key === "password") return "places.field.appPassword";
   return FIELD_KEYS[key] ?? "places.field.path";
 }
 
@@ -142,7 +144,6 @@ function SecretField({ id, value, onChange }: { id: string; value: string; onCha
 /** The key an SFTP server needs, since BombVault signs in with it and no password. */
 function PublicKey() {
   const { t } = useT();
-  const { push } = useToast();
   const [key, setKey] = useState("");
   useEffect(() => {
     getVMSSH()
@@ -156,17 +157,7 @@ function PublicKey() {
         {t("places.form.publicKey")}
         <InfoBubble tip={t("places.form.publicKeyHint")} />
       </span>
-      <div className="flex items-start gap-2">
-        <code dir="ltr" className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
-          {key}
-        </code>
-        <Button
-          label={t("common.copy")}
-          labelKey="common.copy"
-          tone="neutral"
-          onClick={() => void copyText(key).then((ok) => push(ok ? t("common.copied") : t("vm.ssh.copyFailed"), ok ? "success" : "fail"))}
-        />
-      </div>
+      <CopyBlock text={key} t={t} />
     </div>
   );
 }
@@ -289,7 +280,7 @@ export function PlaceForm({
 
   function renderField(f: CatalogField) {
     const id = `place-field-${f.key}`;
-    const label = t(fieldLabelKey(provider, f.key));
+    const label = t(fieldLabelKey(provider.kind, f.key));
     if (f.key === "path" && provider.kind === "local") {
       return (
         <FolderBrowser
@@ -307,6 +298,10 @@ export function PlaceForm({
     // An Azure account's containers come back as buckets, as a key's buckets do.
     const listed =
       f.key === "bucket" || f.key === "container" ? (probe?.buckets ?? []) : f.key === "remote" ? remotes : [];
+    // A name typed before the list came, such as a bucket the server will
+    // create, stays a choice rather than a blank.
+    const value = fields[f.key] ?? "";
+    const choices = value !== "" && !listed.includes(value) ? [value, ...listed] : listed;
     return (
       <div key={f.key} className="flex flex-col gap-1.5">
         <label htmlFor={id} className="flex items-center gap-1 text-xs text-carbon-textSub">
@@ -317,22 +312,22 @@ export function PlaceForm({
           <SelectField
             id={id}
             label={label}
-            value={fields[f.key] ?? ""}
+            value={value}
             onChange={(v) => set(f.key, v)}
             options={[
               { value: "", label: t(CHOOSE_KEYS[f.key] ?? "places.form.chooseBucket") },
-              ...listed.map((b) => ({ value: b, label: b })),
+              ...choices.map((b) => ({ value: b, label: b })),
             ]}
             className={FIELD_CLASS}
           />
         ) : f.secret ? (
-          <SecretField id={id} value={fields[f.key] ?? ""} onChange={(v) => set(f.key, v)} />
+          <SecretField id={id} value={value} onChange={(v) => set(f.key, v)} />
         ) : (
           <input
             id={id}
             type="text"
             dir="ltr"
-            value={fields[f.key] ?? ""}
+            value={value}
             onChange={(e) => set(f.key, e.target.value)}
             placeholder={f.key === "port" && provider.defaultPort ? String(provider.defaultPort) : f.placeholder}
             inputMode={f.key === "port" ? "numeric" : undefined}
@@ -386,7 +381,7 @@ export function PlaceForm({
               <span key={d} className="flex flex-wrap gap-x-2">
                 <span className="text-carbon-textSub">{domainName(t, d)}</span>
                 <span>{folderStateText(t, found.folders![d]!)}</span>
-                {found.errors?.[d] && <span className="text-statusFail">{found.errors[d]!.error}</span>}
+                {found.errors?.[d] && <span className="text-statusFail">{probeErrorText(t, lang, found.errors[d]!)}</span>}
               </span>
             ))}
           </div>

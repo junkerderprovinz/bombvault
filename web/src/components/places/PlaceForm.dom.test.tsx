@@ -12,6 +12,9 @@ const probes: ProbeRequest[] = [];
 const creates: CreatePlaceBody[] = [];
 let probeAnswer: OkEnvelope & ProbeResult = { ok: true };
 let createAnswer: OkEnvelope & { place?: unknown; code?: string } = { ok: true };
+let copyWorks = true;
+
+vi.mock("../../lib/clipboard", () => ({ copyText: () => Promise.resolve(copyWorks) }));
 
 vi.mock("../../lib/places", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/places")>();
@@ -96,6 +99,7 @@ beforeEach(() => {
   creates.length = 0;
   probeAnswer = { ok: true, base: "s3:https://s3.eu-central-1.wasabisys.com/bv/bombvault", folders: { containers: "empty" } };
   createAnswer = { ok: true, place: { id: "p1", name: "Wasabi" } };
+  copyWorks = true;
 });
 afterEach(cleanup);
 
@@ -167,6 +171,17 @@ describe("PlaceForm fields", () => {
     expect(field(en["places.field.port"]).getAttribute("placeholder")).toBe("22");
   });
 
+  it("says so and shakes the copy button when the public key cannot be copied", async () => {
+    copyWorks = false;
+    await form(SFTP);
+    await screen.findByText("ssh-ed25519 AAAA bombvault");
+    await act(async () => {
+      fireEvent.click(button("common.copy"));
+    });
+    expect(screen.getByText(en["vm.ssh.copyFailed"])).toBeTruthy();
+    expect(button("common.copy").className).toContain("glim-shake");
+  });
+
   it("names each field the way its kind does", async () => {
     await form({
       id: "nextcloud",
@@ -205,6 +220,19 @@ describe("PlaceForm connection test", () => {
     expect(screen.getByText(en["places.folderState.repository"])).toBeTruthy();
   });
 
+  it("says in words why a domain's folder could not be read", async () => {
+    probeAnswer = {
+      ok: true,
+      base: "s3:https://s3.eu-central-1.wasabisys.com/bv",
+      folders: { vms: "error" },
+      errors: { vms: { code: "direct-access-denied", error: "403 Forbidden" } },
+    };
+    await form(WASABI);
+    await testConnection();
+    expect(screen.getByText(en["placementCode.directAccessDenied"])).toBeTruthy();
+    expect(screen.queryByText("403 Forbidden")).toBeNull();
+  });
+
   it("offers the buckets a key may see, and tests again with the one chosen", async () => {
     probeAnswer = { ok: true, buckets: ["alpha", "beta"] };
     await form(WASABI);
@@ -216,6 +244,21 @@ describe("PlaceForm connection test", () => {
     await testConnection();
     expect(probes[1]!.fields.bucket).toBe("beta");
     expect(screen.getByText("s3:https://s3.eu-central-1.wasabisys.com/beta")).toBeTruthy();
+  });
+
+  it("keeps a typed bucket that the listing does not hold as the one chosen", async () => {
+    probeAnswer = {
+      ok: true,
+      base: "s3:https://s3.eu-central-1.wasabisys.com/fresh",
+      buckets: ["alpha", "beta"],
+      facts: [{ key: "places.probe.bucketNew", params: { bucket: "fresh" } }],
+    };
+    await form(WASABI);
+    type(en["places.field.bucket"], "fresh");
+    await testConnection();
+    fireEvent.click(screen.getByRole("combobox", { name: en["places.field.bucket"] }));
+    expect(screen.getByRole("option", { name: "fresh" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("option", { name: "alpha" })).toBeTruthy();
   });
 
   it("shows no result while a bucket is still to be chosen", async () => {
