@@ -487,6 +487,31 @@ func TestMCPStartBackupEverything(t *testing.T) {
 	}
 }
 
+// The pass only backs up the containers in the schedule. With none there, an
+// answer naming the containers would tell the assistant they were backed up.
+func TestMCPStartBackupEverythingNamesOnlyDomainsWithWork(t *testing.T) {
+	rig := newMCPStartRig(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	s := mustSettings(t, rig.st)
+	s.FlashEnabled = true
+	s.FlashPath = "backups/flash"
+	if err := rig.st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	establishLocalRepo(t, rig.dir, s.FlashPath)
+	if _, err := rig.st.UpsertTarget(store.Target{ContainerName: "plex"}); err != nil {
+		t.Fatal(err)
+	}
+
+	res := mcpCallTool(t, rig.h, rig.key, "start_backup_everything", "")
+	if res.IsError {
+		t.Fatalf("start_backup_everything: %v", res.Structured)
+	}
+	if got := mcpStartedNames(t, res); !slices.Equal(got, []string{"flash"}) {
+		t.Fatalf("items = %v, want only the domain the pass has work in", got)
+	}
+	waitForEverythingDone(t, rig.svc)
+}
+
 // The widest start tool is held to the retention guard item by item: a
 // container whose kept window would end up MCP-made is left out of the pass and
 // named under skipped, and a pass with nothing left to run is refused.

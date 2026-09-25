@@ -278,8 +278,8 @@ func (h *Handler) toolStartBackupEverything(ctx context.Context, req *mcp.CallTo
 		return mcpToolError("retention_guard", guard.last.message, guard.last.detail), nil
 	}
 
-	rows := make([]mcpStartItem, 0, len(domains))
-	for _, domain := range domains {
+	rows := make([]mcpStartItem, 0, len(guard.domains))
+	for _, domain := range guard.domains {
 		rows = append(rows, mcpStartItem{ID: domain, Name: domain})
 	}
 	sctx := WithEverythingSkips(WithRunOrigin(ctx, RunOrigin{Via: "mcp", KeyID: caller.KeyID}), guard.skip)
@@ -302,6 +302,8 @@ type mcpEverythingHold struct {
 	skipped []mcpSkipped
 	kept    int
 	last    *mcpHeldBack
+	// domains are the ones with an item the pass still runs, in its order.
+	domains []string
 }
 
 // everythingRetentionHold applies the retention guard to every item the pass
@@ -321,6 +323,9 @@ func (h *Handler) everythingRetentionHold(ctx context.Context, s store.Settings,
 			}
 			if hold == nil {
 				out.kept++
+				if !slices.Contains(out.domains, domain) {
+					out.domains = append(out.domains, domain)
+				}
 				continue
 			}
 			out.last = hold
