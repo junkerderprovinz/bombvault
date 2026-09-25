@@ -484,6 +484,17 @@ const (
 	locRepoUser  = "backupuser"
 )
 
+// jsonText is s as it appears inside a JSON string, where the encoder writes
+// the "&" of locRepoPass as &.
+func jsonText(t *testing.T, s string) []byte {
+	t.Helper()
+	b, err := json.Marshal(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return b[1 : len(b)-1]
+}
+
 // seedCredentialInLocation puts a URL-embedded credential into the settings
 // off-site location and into both off-site target rows.
 func seedCredentialInLocation(t *testing.T, st *store.Repo) {
@@ -521,7 +532,7 @@ func TestPlainExportRedactsCredentialInsideRepoLocation(t *testing.T) {
 
 	body, exp := doExport(t, src, "")
 
-	if bytes.Contains(body, []byte(locRepoPass)) {
+	if bytes.Contains(body, jsonText(t, locRepoPass)) {
 		t.Fatalf("the plain export leaked the password embedded in a repo location:\n%s", body)
 	}
 	if bytes.Contains(body, []byte(locRepoUser)) {
@@ -628,9 +639,24 @@ func TestScrubRepoLocationLeavesCredentialFreeLocationsAlone(t *testing.T) {
 		"rclone:b2:ark-backups/containers",
 		"rest:http://192.168.1.2:8000/containers",
 		"backups/containers-offsite",
+		// A login name is no secret, and the Storage Box short form needs it.
+		"sftp:u123456@u123456.your-storagebox.de:/bv/vms",
+		"sftp://u123456@u123456.your-storagebox.de:23//bv/vms",
 	} {
 		if got := scrubRepoLocation(loc); got != loc {
 			t.Fatalf("scrubRepoLocation(%q) = %q, want it untouched", loc, got)
+		}
+	}
+}
+
+func TestScrubRepoLocationKeepsTheSchemeWhenItDropsThePassword(t *testing.T) {
+	for _, c := range []struct{ in, want string }{
+		{locWithCreds, "rest:https://[redacted]@storage.example.com:8000/containers"},
+		{"sftp://backupuser:hunter2@nas.local:23//srv/restic", "sftp://[redacted]@nas.local:23//srv/restic"},
+		{"rest:https://backupuser:wJalrXUtnFEMI/K7MDENG@host:8000/repo", "rest:https://[redacted]@host:8000/repo"},
+	} {
+		if got := scrubRepoLocation(c.in); got != c.want {
+			t.Errorf("scrubRepoLocation(%q) = %q, want %q", c.in, got, c.want)
 		}
 	}
 }

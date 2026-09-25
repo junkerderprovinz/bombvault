@@ -32,6 +32,19 @@ func seedNamedRepoInUse(t *testing.T, st *store.Repo, name, loc string) store.Of
 	return r
 }
 
+// setSettings edits the stored settings row in place.
+func setSettings(t *testing.T, st *store.Repo, edit func(*store.Settings)) {
+	t.Helper()
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	edit(&s)
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // TestAnImportIsCheckedAgainstTheRowsTheApplyKEEPS is the third of the three
 // shapes the doc block names, and the one that was not modelled.
 //
@@ -84,17 +97,12 @@ func TestTheImportGuardDoesNotRewriteTheFileItValidates(t *testing.T) {
 	}
 }
 
-// TestTheGuardValidatesTheLocationTheApplyWillActuallyStore closes the gap the
-// round-nine audit named and left below its floor.
-//
-// A location that arrived REDACTED is not written over a working one:
-// importedLocation keeps the stored value. The guard has to validate the same
-// thing, or it checks "rest:https://[redacted]@host/repo" for collisions while
-// the instance keeps its real location - and the real one is the only one that
-// could actually collide with a domain path.
+// A redacted location in the file does not overwrite a working one
+// (importedLocation), so the guard has to check the stored location: the
+// redacted string never collides with anything.
 func TestTheGuardValidatesTheLocationTheApplyWillActuallyStore(t *testing.T) {
 	h, st := newPortableHandler(t, appKeyA)
-	// An UNUSED row (no item points at it), so the apply is free to move it.
+	// An unused row (no item points at it), so the apply is free to move it.
 	r, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
 		Role: store.RoleRepo, Name: "Cold", Repo: "backups/cold", Enabled: true,
 	})
@@ -102,10 +110,9 @@ func TestTheGuardValidatesTheLocationTheApplyWillActuallyStore(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// The file carries the same row with its location REDACTED, which is what a
-	// plain export from an instance with a credentialed location looks like. The
-	// apply keeps "backups/cold"; so must the guard - and that collides with the
-	// Containers path below.
+	// The file carries the same row with its location redacted, as a plain
+	// export from an instance with a credentialed location does. The apply keeps
+	// "backups/cold", which collides with the Containers path below.
 	exp := settingsExport{
 		Settings: settingsView{ContainersPath: "backups/cold"},
 		NamedRepos: []offsiteTargetView{
@@ -115,7 +122,7 @@ func TestTheGuardValidatesTheLocationTheApplyWillActuallyStore(t *testing.T) {
 	msg := h.rejectImportCollisions(exp)
 	if msg == "" {
 		t.Fatal("the import was accepted although the Containers path lands on the location this\n" +
-			"repository KEEPS. The guard validated the redacted string from the file, which the\n" +
+			"repository keeps. The guard validated the redacted string from the file, which the\n" +
 			"apply never writes, so it checked a location that cannot collide with anything.")
 	}
 	if !strings.Contains(msg, "repository #1") {
@@ -123,13 +130,68 @@ func TestTheGuardValidatesTheLocationTheApplyWillActuallyStore(t *testing.T) {
 	}
 }
 
-// TestAnImportWithNoRepositoriesIsStillCheckedAgainstTheStoredOnes pins the
-// first of the three shapes, so a later simplification cannot drop it.
-//
-// The repository here is deliberately NOT in use: an empty namedRepos block
-// means applyImport never calls replaceNamedRepos at all, so EVERY stored row
-// survives, not only the ones a delete would have refused. That is what
-// separates this branch from the kept-rows half of the other one.
+// A redacted location in the file can leave this instance's own location in
+// place, and the guard has to check the one that stays.
+func TestTheGuardChecksTheLocationsARedactedFileLeavesInPlace(t *testing.T) {
+	const working = "rest:https://backupuser:dst-pass@storage.example.com:8000/vms" //nolint:gosec // G101: fake credential
+	redacted := scrubRepoLocation(working)
+	for _, c := range []struct {
+		name string
+		keep func(*testing.T, *store.Repo)
+		exp  settingsExport
+		want string
+	}{
+		{
+			name: "a domain path",
+			keep: func(t *testing.T, st *store.Repo) {
+				setSettings(t, st, func(s *store.Settings) { s.VMsPath = working })
+			},
+			exp: settingsExport{
+				Settings:   settingsView{VMsPath: redacted},
+				NamedRepos: []offsiteTargetView{{Name: "Cold", Repo: working, Enabled: true}},
+			},
+			want: "the VMs path",
+		},
+		{
+			name: "an off-site field",
+			keep: func(t *testing.T, st *store.Repo) {
+				setSettings(t, st, func(s *store.Settings) { s.VMsOffsite = "s3:offsite-vms" })
+			},
+			exp: settingsExport{
+				Settings:   settingsView{VMsOffsite: redacted},
+				NamedRepos: []offsiteTargetView{{Name: "Cold", Repo: "s3:offsite-vms", Enabled: true}},
+			},
+			want: "the VMs off-site destination",
+		},
+		{
+			name: "an off-site target",
+			keep: func(t *testing.T, st *store.Repo) {
+				if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+					ID: "tgt-1", Domain: "vms", Name: "Archive", Repo: "s3:offsite-archive", Enabled: true,
+				}); err != nil {
+					t.Fatal(err)
+				}
+			},
+			exp: settingsExport{
+				OffsiteTargets: []offsiteTargetView{{ID: "tgt-1", Domain: "vms", Name: "Archive", Repo: redacted, Enabled: true}},
+				NamedRepos:     []offsiteTargetView{{Name: "Cold", Repo: "s3:offsite-archive", Enabled: true}},
+			},
+			want: "an off-site destination",
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			h, st := newPortableHandler(t, appKeyA)
+			c.keep(t, st)
+			if msg := h.rejectImportCollisions(c.exp); !strings.Contains(msg, c.want) {
+				t.Fatalf("refusal = %q, want repository #1 refused at %s, the location the apply keeps", msg, c.want)
+			}
+		})
+	}
+}
+
+// The repository here is not in use: with no namedRepos block the apply never
+// calls replaceNamedRepos, so every stored row survives, not only the ones a
+// delete would refuse.
 func TestAnImportWithNoRepositoriesIsStillCheckedAgainstTheStoredOnes(t *testing.T) {
 	h, st := newPortableHandler(t, appKeyA)
 	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
