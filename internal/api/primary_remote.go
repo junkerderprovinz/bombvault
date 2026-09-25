@@ -103,6 +103,9 @@ func (s *Service) primaryModeFor(settings store.Settings, domain, repo string) r
 	if !ok {
 		return mode
 	}
+	// The row's own address is the path at its last save; the environment has
+	// to name the remote of the path in use.
+	t.Repo = repo
 	return s.applyTargetCreds(mode, settings, t)
 }
 
