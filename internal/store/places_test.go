@@ -930,3 +930,35 @@ func TestAnAddressWrittenThroughAnOldRouteTakesTheRowOffItsPlace(t *testing.T) {
 	}
 	checkPlacedAddresses(t, r)
 }
+
+func TestASettingsSaveKeepsWhatPlacesWrote(t *testing.T) {
+	r, db := placesRepo(t)
+	mustWritePlace(t, r, store.PlaceWrite{Place: diskPlace(), HomeDomains: map[string]string{"containers": ""}})
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	flash := fieldRowAt(t, r, db, bucket, "flash")
+	before := storedSettings(t, r)
+
+	after, err := r.MutateSettingsKeepingPlaces(func(s *store.Settings) error {
+		s.ContainersPath, s.ContainersOffsite, s.ContainersOffsiteImmutable = "stale/containers", "s3:stale/containers", true
+		s.FlashPath, s.FlashOffsite, s.FlashOffsiteImmutable = "elsewhere/flash", "s3:stale/flash", true
+		s.VMsPath, s.VMsOffsite = "elsewhere/vms", "s3:elsewhere/vms"
+		s.DefaultLanguage = "de"
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored := storedSettings(t, r); stored != after {
+		t.Fatalf("returned settings differ from the stored ones: %+v", after)
+	}
+	if after.ContainersPath != before.ContainersPath || after.ContainersOffsite != before.ContainersOffsite ||
+		after.ContainersOffsiteImmutable != before.ContainersOffsiteImmutable {
+		t.Errorf("containers = %q, %q, %v, want what its home place wrote", after.ContainersPath, after.ContainersOffsite, after.ContainersOffsiteImmutable)
+	}
+	if after.FlashOffsite != flash.Repo || after.FlashOffsiteImmutable != before.FlashOffsiteImmutable || after.FlashPath != "elsewhere/flash" {
+		t.Errorf("flash = %q, %q, %v, want the placed field kept and the path saved", after.FlashPath, after.FlashOffsite, after.FlashOffsiteImmutable)
+	}
+	if after.VMsPath != "elsewhere/vms" || after.VMsOffsite != "s3:elsewhere/vms" || after.DefaultLanguage != "de" {
+		t.Errorf("vms = %q, %q, language %q, want everything outside places saved", after.VMsPath, after.VMsOffsite, after.DefaultLanguage)
+	}
+}

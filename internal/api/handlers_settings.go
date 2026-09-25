@@ -373,6 +373,38 @@ func rejectEveryNSchedules(v settingsView) string {
 	return ""
 }
 
+// keepPlaceOwnedFields puts onto v the stored paths and off-site fields that
+// places own. The save keeps those whatever v says, so the location checks
+// judge what it writes and not stale values from a page loaded before a place
+// changed.
+func (h *Handler) keepPlaceOwnedFields(v *settingsView, cur store.Settings) error {
+	owned, err := h.store.PlaceOwnedSettings()
+	if err != nil {
+		return err
+	}
+	for _, d := range []struct {
+		domain                    string
+		path, offsite             *string
+		immutable                 *bool
+		storedPath, storedOffsite string
+		storedImmutable           bool
+	}{
+		{"containers", &v.ContainersPath, &v.ContainersOffsite, &v.ContainersOffsiteImmutable, cur.ContainersPath, cur.ContainersOffsite, cur.ContainersOffsiteImmutable},
+		{"vms", &v.VMsPath, &v.VMsOffsite, &v.VMsOffsiteImmutable, cur.VMsPath, cur.VMsOffsite, cur.VMsOffsiteImmutable},
+		{"flash", &v.FlashPath, &v.FlashOffsite, &v.FlashOffsiteImmutable, cur.FlashPath, cur.FlashOffsite, cur.FlashOffsiteImmutable},
+		{"config", &v.ConfigPath, &v.ConfigOffsite, &v.ConfigOffsiteImmutable, cur.ConfigPath, cur.ConfigOffsite, cur.ConfigOffsiteImmutable},
+		{"files", &v.FilesPath, &v.FilesOffsite, &v.FilesOffsiteImmutable, cur.FilesPath, cur.FilesOffsite, cur.FilesOffsiteImmutable},
+	} {
+		if owned[d.domain].Path {
+			*d.path = d.storedPath
+		}
+		if owned[d.domain].Offsite {
+			*d.offsite, *d.immutable = d.storedOffsite, d.storedImmutable
+		}
+	}
+	return nil
+}
+
 // rejectSettingsPathOnNamedRepo refuses a settings save that moves a domain's
 // own repository or an off-site destination onto a location a named repository
 // already occupies. It returns a user-facing sentence, or "".
@@ -541,6 +573,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(curErr))
 		return
 	}
+	if err := h.keepPlaceOwnedFields(&v, cur); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	if msg := h.rejectSettingsPathOnNamedRepo(v, cur); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
@@ -607,7 +643,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// does not own keeps its stored value, and the auth hash and session epoch
 	// come from the row as it is now rather than from the stale snapshot.
 	before := h.svc.fieldTargets()
-	s, err := h.store.MutateSettings(func(cur *store.Settings) error {
+	// A domain's path and off-site field are its place's once it has one, and
+	// the store keeps them whatever this form sends: a page loaded before the
+	// place changed would otherwise turn it back.
+	s, err := h.store.MutateSettingsKeepingPlaces(func(cur *store.Settings) error {
 		cur.EncryptionEnabled = v.EncryptionEnabled
 		cur.ContainersEnabled = v.ContainersEnabled
 		cur.VMsEnabled = v.VMsEnabled
