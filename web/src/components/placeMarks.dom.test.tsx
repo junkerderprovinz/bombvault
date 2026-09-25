@@ -92,6 +92,20 @@ describe("PlaceMark", () => {
     }
   });
 
+  it("paints no shape that a later one covers exactly", () => {
+    const shapes = new Set(["path", "ellipse", "circle", "rect", "polygon"]);
+    const paint = /^(fill|stroke|opacity|class|id|style)/i;
+    const geometry = (shape: Element) =>
+      [shape.tagName, ...[...shape.attributes].filter((a) => !paint.test(a.name)).map((a) => `${a.name}=${a.value}`)].join(" ");
+    for (const id of CATALOG) {
+      for (const group of draw(id).querySelectorAll("svg, svg g")) {
+        const drawn = [...group.children].filter((c) => shapes.has(c.tagName)).map(geometry);
+        expect(new Set(drawn).size, id).toBe(drawn.length);
+      }
+      cleanup();
+    }
+  });
+
   it("draws at the size it is given", () => {
     const svg = draw("b2", 48).querySelector("svg")!;
     expect([svg.getAttribute("width"), svg.getAttribute("height")]).toEqual(["48", "48"]);
@@ -142,6 +156,12 @@ describe("the mark colours", () => {
       expect(dark[name], name).toBeDefined();
       expect(light[name], name).toBeDefined();
       expect(hover[name], name).toBeDefined();
+    }
+  });
+
+  it("define no token that no mark draws in", () => {
+    for (const set of [dark, light, hover]) {
+      expect(Object.keys(set).filter((name) => !used.includes(name))).toEqual([]);
     }
   });
 
