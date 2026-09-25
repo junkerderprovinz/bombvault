@@ -78,6 +78,7 @@ export function PaypalDialog({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5">
+          <p className="text-sm text-carbon-text">{t("about.donateAppeal")}</p>
           <p className="text-sm text-carbon-textSub">{t("about.paypalIntro")}</p>
 
           <div className="flex flex-col gap-1.5">

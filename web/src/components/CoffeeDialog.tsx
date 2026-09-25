@@ -50,6 +50,7 @@ export function CoffeeDialog({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 px-5 pb-5">
+          <p className="text-sm text-carbon-text">{t("about.donateAppeal")}</p>
           <p className="text-sm text-carbon-textSub">{t("about.coffeeIntro")}</p>
           <div className="flex min-h-0 flex-1 rounded-card bg-carbon-surface2 p-2">
             {/* White behind the frame so the first paint is not a dark hole on

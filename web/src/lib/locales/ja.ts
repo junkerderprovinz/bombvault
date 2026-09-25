@@ -19,6 +19,7 @@ const ja: Partial<Translations> = {
   "about.crypto": "暗号資産",
   "about.paypal": "PayPal",
   "about.cryptoTitle": "暗号資産で寄付",
+  "about.donateAppeal": "騎士にコインを一枚。費用の一部をまかない、プロジェクトを生かし続けます。私が作るものはすべて無料で、広告もありません。",
   "about.cryptoIntro": "通貨とネットワークを選び、コードを読み取るかアドレスをコピーしてください。",
   "about.cryptoNetworks": "ネットワーク",
   "about.cryptoNoTag": "destination tag も memo も不要です。",
