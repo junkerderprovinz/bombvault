@@ -11,6 +11,7 @@ import { useT } from "../lib/i18n";
 import { useLabelMode } from "../lib/useLabelMode";
 import { useToast } from "../lib/toast";
 import { CRYPTO_COINS, type CryptoCoin, type CryptoNetwork } from "../lib/donate";
+import { useGridNav } from "../lib/gridNav";
 
 // The crypto donation window: pick a coin, then its chain, and get the address
 // as text and as a QR code. It works offline, sends nothing and shows no name.
@@ -27,6 +28,7 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
   const [coin, setCoin] = useState<CryptoCoin>(CRYPTO_COINS[0]!);
   const [network, setNetwork] = useState<CryptoNetwork>(CRYPTO_COINS[0]!.networks[0]!);
   const cardRef = useRef<HTMLDivElement>(null);
+  const grid = useGridNav(CRYPTO_COINS.length, CRYPTO_COINS.findIndex((c) => c.id === coin.id));
 
   // The label mode decides what a tile shows. In reactive mode the ticker is
   // collapsed at rest like any other label and the selected tile keeps it; the
@@ -142,10 +144,11 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
           {/* Each tile owns a rainbow position. `.glim-hue` only, not
               `.glim-hue-icon`, because the coin marks keep their brand
               colours. */}
-          <div className="grid grid-cols-4 gap-2" role="listbox" aria-label={t("about.cryptoTitle")}>
+          <div className="grid grid-cols-4 gap-2" role="listbox" aria-label={t("about.cryptoTitle")} onKeyDown={grid.onKeyDown}>
             {CRYPTO_COINS.map((c, i) => (
               <button
                 key={c.id}
+                {...grid.tileProps(i)}
                 type="button"
                 role="option"
                 aria-selected={c.id === coin.id}
