@@ -267,12 +267,12 @@ The closest thing to a direct counterpart is [**Vault**](https://github.com/ruaa
 <details>
 <summary><b>AI assistants (MCP)</b></summary>
 
-- **What an assistant can read:** backup status per domain, coverage, the protected items with their last backup and what a backup of them stops, run history, restore points including database dumps, current activity and repository growth.
+- **What an assistant can read:** backup status per domain, coverage, the protected items with their last backup and what a backup of them stops, run history, restore points including database dumps and ZFS datasets, current activity, repository growth and the open anomalies.
 - **What it can start:** a backup of one item, of one domain or Backup Everything, and it can cancel the backups its own key started. No other tool writes anything.
 - **Keys and limits:** one key per client, created under **Settings → System → MCP server**, shown once and stored as a fingerprint, with read-only keys for clients you trust less. 12 starts per hour per key, 15 minutes between starts of the same item, 4 per item a day, and a retention guard that keeps assistant backups from pushing your own restore points out of a "keep last N" policy.
 - **You see what it did:** every run it starts, and the prune and off-site copy that follow, reads "via MCP" with the key's name in the Activity log, the error panel and the backup notification. Every key change sends a notification too.
 - **Works on a plain Unraid install:** the default self-signed certificate names only `localhost`, so the MCP card adds the address you use to it with one click and hands you the certificate file for the client. A reverse proxy or Tailscale works as well.
-- **Stays in the web interface:** restores, deletions, prune, settings, credentials and keys. Tool output carries text from your server, and none of it can reach those. The setup for Claude Code, Claude Desktop and other clients is in [docs/mcp.md](docs/mcp.md).
+- **Stays in the web interface:** restores, deletions, prune, settings, credentials and keys. Tool output carries text from your server, and no such text can set off any of them. The setup for Claude Code, Claude Desktop and other clients is in [docs/mcp.md](docs/mcp.md).
 
 </details>
 
