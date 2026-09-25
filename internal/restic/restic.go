@@ -16,6 +16,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -2170,6 +2171,7 @@ func (r Restic) BackupDir(ctx context.Context, repo, dir string, tags []string, 
 	if !IsRemoteRepo(repo) && !filepath.IsAbs(repo) {
 		return Summary{}, fmt.Errorf("restic repository %q is not absolute", repo)
 	}
+	m = snapshotDirMode(m)
 	out, err := r.runIn(ctx, dir, BackupDirArgs(repo, tags, m, excludes...), m)
 	if err != nil {
 		// Exit 3 means a source file could not be read but the snapshot exists,
@@ -2182,6 +2184,15 @@ func (r Restic) BackupDir(ctx context.Context, repo, dir string, tags []string, 
 		return Summary{}, err
 	}
 	return ParseBackupSummary(out)
+}
+
+// snapshotDirMode keeps restic from storing each file's device number. Every
+// mount of a ZFS snapshot gets a new one, so an unchanged run would otherwise
+// write the whole metadata tree again. restic still stores it for hardlinks,
+// where it tells two links apart.
+func snapshotDirMode(m Mode) Mode {
+	m.Env = append(slices.Clone(m.Env), "RESTIC_FEATURES=device-id-for-hardlinks")
+	return m
 }
 
 // RestoreAll restores a whole snapshot into target, leaving out what the

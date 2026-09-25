@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
@@ -588,4 +589,24 @@ func TestBackupDirRefusesRelativeLocalRepo(t *testing.T) {
 			t.Fatalf("a remote repository was refused as a relative path: %v", err)
 		}
 	})
+}
+
+// A ZFS snapshot is mounted with a new device number on every run. A snapshot
+// directory run has to tell restic to leave it out, without writing into the
+// spare room of the caller's own environment.
+func TestSnapshotDirRunsLeaveDeviceNumbersOut(t *testing.T) {
+	backing := []string{"AWS_ACCESS_KEY_ID=x", ""}
+	m := Mode{Env: backing[:1]}
+
+	got := snapshotDirMode(m)
+
+	if !slices.Contains(got.Env, "RESTIC_FEATURES=device-id-for-hardlinks") {
+		t.Fatalf("env = %v, want the device-id-for-hardlinks feature", got.Env)
+	}
+	if !slices.Contains(got.Env, "AWS_ACCESS_KEY_ID=x") {
+		t.Fatalf("env = %v, the backend credentials were dropped", got.Env)
+	}
+	if backing[1] != "" {
+		t.Fatalf("the caller's environment was written into: %v", backing)
+	}
 }
