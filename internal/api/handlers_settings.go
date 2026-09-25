@@ -385,21 +385,20 @@ func (h *Handler) keepPlaceOwnedFields(v *settingsView, cur store.Settings) erro
 	for _, d := range []struct {
 		domain                    string
 		path, offsite             *string
-		immutable                 *bool
 		storedPath, storedOffsite string
-		storedImmutable           bool
 	}{
-		{"containers", &v.ContainersPath, &v.ContainersOffsite, &v.ContainersOffsiteImmutable, cur.ContainersPath, cur.ContainersOffsite, cur.ContainersOffsiteImmutable},
-		{"vms", &v.VMsPath, &v.VMsOffsite, &v.VMsOffsiteImmutable, cur.VMsPath, cur.VMsOffsite, cur.VMsOffsiteImmutable},
-		{"flash", &v.FlashPath, &v.FlashOffsite, &v.FlashOffsiteImmutable, cur.FlashPath, cur.FlashOffsite, cur.FlashOffsiteImmutable},
-		{"config", &v.ConfigPath, &v.ConfigOffsite, &v.ConfigOffsiteImmutable, cur.ConfigPath, cur.ConfigOffsite, cur.ConfigOffsiteImmutable},
-		{"files", &v.FilesPath, &v.FilesOffsite, &v.FilesOffsiteImmutable, cur.FilesPath, cur.FilesOffsite, cur.FilesOffsiteImmutable},
+		{"containers", &v.ContainersPath, &v.ContainersOffsite, cur.ContainersPath, cur.ContainersOffsite},
+		{"vms", &v.VMsPath, &v.VMsOffsite, cur.VMsPath, cur.VMsOffsite},
+		{"flash", &v.FlashPath, &v.FlashOffsite, cur.FlashPath, cur.FlashOffsite},
+		{"config", &v.ConfigPath, &v.ConfigOffsite, cur.ConfigPath, cur.ConfigOffsite},
+		{"files", &v.FilesPath, &v.FilesOffsite, cur.FilesPath, cur.FilesOffsite},
 	} {
-		if owned[d.domain].Path {
+		o, ok := owned[d.domain]
+		if o.Path {
 			*d.path = d.storedPath
 		}
-		if owned[d.domain].Offsite {
-			*d.offsite, *d.immutable = d.storedOffsite, d.storedImmutable
+		if ok {
+			*d.offsite = d.storedOffsite
 		}
 	}
 	return nil

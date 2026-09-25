@@ -727,11 +727,11 @@ func detachMovedRowTx(tx *sql.Tx, id, role, repo string) error {
 }
 
 // PlaceOwned names the settings columns of a domain that its places write.
-// A home place writes the domain's path; the place a field row stands at
-// writes the off-site field and that field's append-only flag.
+// A home place writes the domain's path, so Path reports that. Every domain
+// PlaceOwnedSettings lists also has its off-site field and that field's
+// append-only flag written by the place its field row stands at.
 type PlaceOwned struct {
-	Path    bool
-	Offsite bool
+	Path bool
 }
 
 // PlaceOwnedSettings lists, for each domain with a column a place writes,
@@ -757,7 +757,7 @@ func placeOwnedQ(q queryer) (map[string]PlaceOwned, error) {
 		}
 		home := homes[domain] != ""
 		if home || (found && field.PlaceID != "") {
-			owned[domain] = PlaceOwned{Path: home, Offsite: true}
+			owned[domain] = PlaceOwned{Path: home}
 		}
 	}
 	return owned, nil
@@ -782,9 +782,7 @@ func (r *Repo) MutateSettingsKeepingPlaces(fn func(*Settings) error) (Settings, 
 			if o.Path {
 				*path = *storedPath
 			}
-			if o.Offsite {
-				*offsite, *immutable = *storedOffsite, *storedImmutable
-			}
+			*offsite, *immutable = *storedOffsite, *storedImmutable
 		}
 		return nil
 	})
