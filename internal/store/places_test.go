@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/places"
@@ -681,4 +682,108 @@ func TestALocalHomePlaceSwitchesThePrimaryRowOff(t *testing.T) {
 		t.Fatalf("primary row back at a remote home = %+v, %v, want row %s on at %s", back, err, first.ID, tower.Name)
 	}
 	checkPlacedAddresses(t, r)
+}
+
+func TestAPlaceIsHeldByWhatUsesIt(t *testing.T) {
+	r, db := placesRepo(t)
+	disk := mustWritePlace(t, r, store.PlaceWrite{Place: diskPlace(), HomeDomains: map[string]string{"containers": ""}})
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	named := upsertRow(t, r, store.OffsiteTarget{Role: store.RoleRepo, Name: "B2 files", Repo: addressAt(t, bucket, "files", ""), Enabled: true})
+	attachRow(t, db, named.ID, bucket.ID, "files", "")
+	if _, err := r.WritePlacement(store.ItemRef{Domain: "containers", Key: "nginx"}, &store.HomeWrite{Repo: named.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.PutPlacementDefault("vms", named.ID, nil); err != nil {
+		t.Fatal(err)
+	}
+	target := upsertRow(t, r, store.OffsiteTarget{Domain: "vms", Name: "B2", Repo: addressAt(t, bucket, "vms", ""), Enabled: true})
+	attachRow(t, db, target.ID, bucket.ID, "vms", "")
+	direct, err := r.CreateCompanionRepo(target.ID, "B2 direct", "s3:https://s3.example.com/other/vms")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.WritePlacement(store.ItemRef{Domain: "vms", Key: "win11"}, &store.HomeWrite{Repo: direct.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	home, err := r.PlaceHolders(disk.ID)
+	if err != nil || !home.InUse() || !slices.Equal(home.HomeDomains, []string{"containers"}) {
+		t.Fatalf("holders of the home place = %+v, %v, want containers", home, err)
+	}
+	h, err := r.PlaceHolders(bucket.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(h.HomeDomains) != 0 || !slices.Equal(h.Defaults, []string{"vms"}) ||
+		!reflect.DeepEqual(h.Items, []store.ItemRef{{Domain: "containers", Key: "nginx"}}) || !slices.Equal(h.DirectInUse, []string{target.ID}) {
+		t.Fatalf("holders of the bucket = %+v", h)
+	}
+	if _, err := r.DeletePlaceIfUnused(bucket.ID); !errors.Is(err, store.ErrPlaceInUse) {
+		t.Fatalf("DeletePlaceIfUnused = %v, want ErrPlaceInUse", err)
+	}
+	if _, err := r.GetPlace(bucket.ID); err != nil {
+		t.Fatalf("a held place is gone: %v", err)
+	}
+	if _, err := r.GetNamedRepo(named.ID); err != nil {
+		t.Fatalf("a repository of a held place is gone: %v", err)
+	}
+}
+
+func TestAnUnusedPlaceGoesWithWhatWasDerivedFromIt(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	target := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: addressAt(t, bucket, "containers", ""), Enabled: true})
+	attachRow(t, db, target.ID, bucket.ID, "containers", "")
+	direct, err := r.CreateCompanionRepo(target.ID, "B2 direct", addressAt(t, bucket, "containers", "-direct"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	attachRow(t, db, direct.ID, bucket.ID, "containers", "-direct")
+	named := upsertRow(t, r, store.OffsiteTarget{Role: store.RoleRepo, Name: "B2 files", Repo: addressAt(t, bucket, "files", ""), Enabled: true})
+	attachRow(t, db, named.ID, bucket.ID, "files", "")
+	moved := upsertRow(t, r, store.OffsiteTarget{Domain: "vms", Name: "B2 vms", Repo: addressAt(t, bucket, "vms", ""), Enabled: true})
+	movedDirect, err := r.CreateCompanionRepo(moved.ID, "B2 vms direct", addressAt(t, bucket, "vms", "-direct"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	attachRow(t, db, movedDirect.ID, bucket.ID, "vms", "-direct")
+	primary, err := r.UpsertPrimaryRemoteTarget("flash", store.OffsiteTarget{Repo: addressAt(t, bucket, "flash", ""), Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	attachRow(t, db, primary.ID, bucket.ID, "flash", "")
+
+	removed, err := r.DeletePlaceIfUnused(bucket.ID)
+	if err != nil || removed != 1 {
+		t.Fatalf("DeletePlaceIfUnused = %d, %v, want one target removed", removed, err)
+	}
+	if _, err := r.GetPlace(bucket.ID); !errors.Is(err, store.ErrPlaceNotFound) {
+		t.Fatalf("GetPlace = %v, want ErrPlaceNotFound", err)
+	}
+	if _, found, _ := r.GetOffsiteTarget(target.ID); found {
+		t.Error("the place's target is still there")
+	}
+	if _, found, _ := r.CompanionFor(target.ID); found {
+		t.Error("the target's direct repository is still there")
+	}
+	if _, err := r.GetNamedRepo(named.ID); !errors.Is(err, sql.ErrNoRows) {
+		t.Errorf("the place's named repository = %v, want it gone", err)
+	}
+	if got, found, err := r.GetOffsiteTarget(moved.ID); err != nil || !found || got.PlaceID != "" {
+		t.Errorf("a target at no place = %+v, %v, %v, want it untouched", got, found, err)
+	}
+	if got, err := r.GetNamedRepo(movedDirect.ID); err != nil || got.PlaceID != "" {
+		t.Errorf("a direct repository whose target stands elsewhere = %+v, %v, want it kept at no place", got, err)
+	}
+	if got, found, err := r.PrimaryRemoteTarget("flash"); err != nil || !found || got.PlaceID != "" {
+		t.Errorf("the flash primary row = %+v, %v, %v, want it kept at no place", got, found, err)
+	}
+	checkPlacedAddresses(t, r)
+}
+
+func TestRemovingAnUnknownPlaceFindsNothing(t *testing.T) {
+	r, _ := placesRepo(t)
+	if _, err := r.DeletePlaceIfUnused("nope"); !errors.Is(err, store.ErrPlaceNotFound) {
+		t.Fatalf("DeletePlaceIfUnused(nope) = %v, want ErrPlaceNotFound", err)
+	}
 }

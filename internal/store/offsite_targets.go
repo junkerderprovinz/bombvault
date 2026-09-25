@@ -819,13 +819,26 @@ func (u TargetUse) InUse() bool { return u.Items > 0 || len(u.DefaultDomains) > 
 // it removes the target, its direct repository and the target's observations,
 // and writes nothing while an item or a default uses that repository.
 func (r *Repo) DeleteOffsiteTargetIfUnused(id string) (TargetUse, error) {
-	var use TargetUse
 	tx, err := r.db.Begin()
 	if err != nil {
-		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
+		return TargetUse{}, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
-	err = tx.QueryRow(`SELECT id FROM offsite_targets WHERE role = ? AND companion_of = ? AND companion_of <> ''`,
+	use, err := deleteOffsiteTargetIfUnusedTx(tx, id)
+	if err != nil || use.InUse() {
+		return use, err
+	}
+	if err := tx.Commit(); err != nil {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused commit: %w", err)
+	}
+	return use, nil
+}
+
+// deleteOffsiteTargetIfUnusedTx is DeleteOffsiteTargetIfUnused inside tx, for
+// a caller that removes more in the same transaction.
+func deleteOffsiteTargetIfUnusedTx(tx *sql.Tx, id string) (TargetUse, error) {
+	var use TargetUse
+	err := tx.QueryRow(`SELECT id FROM offsite_targets WHERE role = ? AND companion_of = ? AND companion_of <> ''`,
 		RoleRepo, id).Scan(&use.CompanionID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
@@ -849,9 +862,6 @@ func (r *Repo) DeleteOffsiteTargetIfUnused(id string) (TargetUse, error) {
 	}
 	if err := deleteTargetObservationsTx(tx, id); err != nil {
 		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
-	}
-	if err := tx.Commit(); err != nil {
-		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused commit: %w", err)
 	}
 	return use, nil
 }

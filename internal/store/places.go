@@ -542,3 +542,153 @@ func homePrimariesTx(tx *sql.Tx, p Place) error {
 	}
 	return nil
 }
+
+// PlaceHolders is what keeps a place from being removed.
+type PlaceHolders struct {
+	HomeDomains []string  // domains whose home place it is
+	Defaults    []string  // domains whose placement default homes items on a repository there
+	Items       []ItemRef // items that back up to a repository there
+	DirectInUse []string  // targets there whose direct repository an item or a default uses
+}
+
+// InUse reports whether anything holds the place.
+func (h PlaceHolders) InUse() bool {
+	return len(h.HomeDomains)+len(h.Defaults)+len(h.Items)+len(h.DirectInUse) > 0
+}
+
+// PlaceHolders lists what holds a place.
+func (r *Repo) PlaceHolders(id string) (PlaceHolders, error) {
+	h, err := placeHoldersQ(r.db, id)
+	if err != nil {
+		return PlaceHolders{}, fmt.Errorf("PlaceHolders: %w", err)
+	}
+	return h, nil
+}
+
+// DeletePlaceIfUnused removes a place that nothing holds, in one transaction
+// with what was derived from it: its targets, each with its direct repository
+// as DeleteOffsiteTargetIfUnused removes them, and its named repositories.
+// Rows the place does not own outright, a domain's primary row or a direct
+// repository whose target stands elsewhere, stay and leave the place. While
+// PlaceHolders names anything it returns ErrPlaceInUse and writes nothing.
+// The count is the number of targets removed.
+func (r *Repo) DeletePlaceIfUnused(id string) (int, error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("DeletePlaceIfUnused: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	_, found, err := placeQ(tx, id)
+	if err != nil {
+		return 0, fmt.Errorf("DeletePlaceIfUnused: %w", err)
+	}
+	if !found {
+		return 0, fmt.Errorf("DeletePlaceIfUnused %s: %w", id, ErrPlaceNotFound)
+	}
+	holders, err := placeHoldersQ(tx, id)
+	if err != nil {
+		return 0, fmt.Errorf("DeletePlaceIfUnused: %w", err)
+	}
+	if holders.InUse() {
+		return 0, ErrPlaceInUse
+	}
+	rows, err := placeRowsQ(tx, id)
+	if err != nil {
+		return 0, fmt.Errorf("DeletePlaceIfUnused: %w", err)
+	}
+	removed := 0
+	for _, row := range rows {
+		switch {
+		case row.Role == RoleOffsite:
+			// DirectInUse came back empty, so every target here goes.
+			if _, err := deleteOffsiteTargetIfUnusedTx(tx, row.ID); err != nil {
+				return 0, err
+			}
+			removed++
+		case row.Role == RoleRepo && row.CompanionOf == "":
+			if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, row.ID, RoleRepo); err != nil {
+				return 0, fmt.Errorf("DeletePlaceIfUnused: %w", err)
+			}
+		}
+	}
+	if _, err := tx.Exec(`UPDATE offsite_targets SET place_id = '', place_domain = '', place_suffix = '' WHERE place_id = ?`, id); err != nil {
+		return 0, fmt.Errorf("DeletePlaceIfUnused: %w", err)
+	}
+	if _, err := tx.Exec(`DELETE FROM storage_places WHERE id = ?`, id); err != nil {
+		return 0, fmt.Errorf("DeletePlaceIfUnused: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("DeletePlaceIfUnused commit: %w", err)
+	}
+	return removed, nil
+}
+
+// placeHoldersQ reads each list with a query of its own, closed before the
+// next one starts, because the store's database has a single connection.
+func placeHoldersQ(q queryer, id string) (PlaceHolders, error) {
+	var h PlaceHolders
+	var err error
+	if h.HomeDomains, err = stringsQ(q, `SELECT domain FROM storage_domain_places WHERE place_id = ? ORDER BY domain`, id); err != nil {
+		return h, err
+	}
+	if h.Defaults, err = stringsQ(q, `SELECT d.domain FROM placement_defaults d
+		JOIN offsite_targets t ON t.id = d.home AND t.role = ?
+		WHERE t.place_id = ? ORDER BY d.domain`, RoleRepo, id); err != nil {
+		return h, err
+	}
+	if h.Items, err = itemsAtPlaceQ(q, id); err != nil {
+		return h, err
+	}
+	h.DirectInUse, err = stringsQ(q, `SELECT t.id FROM offsite_targets t
+		JOIN offsite_targets c ON c.companion_of = t.id AND c.role = ?
+		WHERE t.place_id = ? AND t.role = ?
+		  AND (EXISTS (SELECT 1 FROM targets WHERE repo = c.id)
+		    OR EXISTS (SELECT 1 FROM vms WHERE repo = c.id)
+		    OR EXISTS (SELECT 1 FROM file_sets WHERE repo = c.id)
+		    OR EXISTS (SELECT 1 FROM placement_defaults WHERE home = c.id))
+		ORDER BY t.id`, RoleRepo, id, RoleOffsite)
+	return h, err
+}
+
+// itemsAtPlaceQ lists the containers, VMs and file sets whose repository is
+// a named or direct repository at the place.
+func itemsAtPlaceQ(q queryer, id string) ([]ItemRef, error) {
+	rows, err := q.Query(`
+		SELECT 'containers', container_name FROM targets   WHERE repo IN (SELECT id FROM offsite_targets WHERE place_id = ? AND role = ?)
+		UNION ALL
+		SELECT 'vms',        name           FROM vms       WHERE repo IN (SELECT id FROM offsite_targets WHERE place_id = ? AND role = ?)
+		UNION ALL
+		SELECT 'files',      id             FROM file_sets WHERE repo IN (SELECT id FROM offsite_targets WHERE place_id = ? AND role = ?)
+		ORDER BY 1, 2`, id, RoleRepo, id, RoleRepo, id, RoleRepo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	out := []ItemRef{}
+	for rows.Next() {
+		var it ItemRef
+		if err := rows.Scan(&it.Domain, &it.Key); err != nil {
+			return nil, err
+		}
+		out = append(out, it)
+	}
+	return out, rows.Err()
+}
+
+// stringsQ runs a query of one text column and returns its values, never nil.
+func stringsQ(q queryer, query string, args ...any) ([]string, error) {
+	rows, err := q.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	out := []string{}
+	for rows.Next() {
+		var s string
+		if err := rows.Scan(&s); err != nil {
+			return nil, err
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
