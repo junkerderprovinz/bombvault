@@ -2,6 +2,7 @@ package api
 
 import (
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -67,5 +68,57 @@ func TestADirectRepositoryAtAnInHousePlaceIsNoSiteOfItsOwn(t *testing.T) {
 	}
 	if f.domainStatus("containers").OffPremisesCovered {
 		t.Error("a direct repository in the house covers nothing off the premises")
+	}
+}
+
+func TestScoreCallsTwoCopiesOnThePremisesNoOffsiteCopy(t *testing.T) {
+	home := observedPlace{Place: "local", State: "counts", Counts: true}
+	nas := observedPlace{Place: "offsite:nas", State: "counts", Counts: true}
+	b2 := observedPlace{Place: "offsite:b2", State: "unknown", Stale: true}
+
+	o := &placementObserved{Places: []observedPlace{home, nas}}
+	o.score(map[string]string{"local": "host", "offsite:nas": "host"})
+	if o.Sites != 1 || o.Rule321 != "no-off-site" || o.Tone != "warn" {
+		t.Errorf("two copies in the house = %+v, want one site, no-off-site, warn", o)
+	}
+
+	o = &placementObserved{Places: []observedPlace{home, nas, b2}}
+	o.score(map[string]string{"local": "host", "offsite:nas": "host"})
+	if o.Rule321 != "unconfirmed" || o.Tone != "unconfirmed" {
+		t.Errorf("two copies in the house and an unconfirmed one off site = %+v, want unconfirmed", o)
+	}
+
+	o = &placementObserved{Places: []observedPlace{home, nas}}
+	o.score(map[string]string{"local": "host"})
+	if o.Sites != 2 || o.Rule321 != "met" {
+		t.Errorf("a target without a place = %+v, want a site of its own and 3-2-1 met", o)
+	}
+}
+
+func TestTwoCopiesInTheHouseAreNoOffsiteCopy(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainerBackups(f)
+	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
+	here := f.storePlace(store.Place{
+		Name: "NAS Keller", Provider: "synology", Kind: "local", Base: "remotes/nas/bv",
+		Folders: map[string]string{"containers": "containers"}, Enabled: true,
+	})
+	f.linkRow(nas.ID, here, "containers", "")
+	f.container("nginx", "")
+	now := time.Now().Unix()
+	f.listing("containers", nas.ID, now-hour, copiesRow("container:nginx", 20, now-2*hour))
+
+	o := f.cardOf("containers", "nginx", now-2*hour).Observed
+	if got := placeAt(o, "offsite:"+nas.ID); !got.Counts {
+		t.Fatalf("NAS = %+v, want its copy to count", got)
+	}
+	if o.Sites != 1 || o.Rule321 != "no-off-site" || o.Tone != "warn" {
+		t.Fatalf("observed = %+v, want one site and no copy off the premises", o)
+	}
+
+	here.OffPremises = true
+	f.storePlace(here)
+	if o := f.cardOf("containers", "nginx", now-2*hour).Observed; o.Sites != 2 || o.Rule321 != "met" {
+		t.Fatalf("with the NAS at another site = %+v, want two sites and 3-2-1 met", o)
 	}
 }
