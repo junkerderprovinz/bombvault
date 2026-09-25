@@ -234,12 +234,19 @@ export function PlaceDetails({
       clearTimeout(typing.timer);
       timers.current.delete("folders");
     }
-    const before = place.folders;
+    const was = draft.folders[domain];
     const folders = { ...draft.folders };
     if (on) folders[domain] = DEFAULT_FOLDERS[domain];
     else delete folders[domain];
     setDraft((d) => ({ ...d, folders }));
-    void save({ folders }, `offer-${domain}`, () => setDraft((d) => ({ ...d, folders: before })));
+    void save({ folders }, `offer-${domain}`, () =>
+      setDraft((d) => {
+        const back = { ...d.folders };
+        if (was === undefined) delete back[domain];
+        else back[domain] = was;
+        return { ...d, folders: back };
+      })
+    );
   }
 
   function editFolder(domain: PlaceDomain, value: string) {
@@ -293,7 +300,7 @@ export function PlaceDetails({
 
       <Section title={t("places.details.general")} hueIndex={hueIndex}>
         <div className="flex flex-wrap items-end gap-4">
-          <div key={shake.name ?? 0} className={`flex min-w-[12rem] flex-1 flex-col gap-1.5 ${shaken("name")}`}>
+          <div key={`name-${shake.name ?? 0}`} className={`flex min-w-[12rem] flex-1 flex-col gap-1.5 ${shaken("name")}`}>
             <label htmlFor={fieldId("name")} className="text-xs text-carbon-textSub">
               {t("places.form.name")}
             </label>
@@ -306,12 +313,12 @@ export function PlaceDetails({
               className={FIELD_CLASS}
             />
           </div>
-          <span key={shake.enabled ?? 0} className={shaken("enabled")}>
+          <span key={`enabled-${shake.enabled ?? 0}`} className={shaken("enabled")}>
             <Toggle label={t("places.details.enabled")} checked={draft.enabled} onChange={(v) => saveAtOnce("enabled", v)} />
           </span>
         </div>
         {asks && (
-          <div key={shake.offPremises ?? 0} className={`flex flex-col gap-1.5 ${shaken("offPremises")}`}>
+          <div key={`offPremises-${shake.offPremises ?? 0}`} className={`flex flex-col gap-1.5 ${shaken("offPremises")}`}>
             <span className="flex items-center gap-1 text-xs text-carbon-textSub">
               {t("places.form.where")}
               <InfoBubble tip={t("places.form.whereHint")} />
@@ -353,7 +360,7 @@ export function PlaceDetails({
       {place.kind !== "local" && (
         <Section title={t("places.details.protection")} hueIndex={hueIndex}>
           <div className="flex flex-wrap items-center gap-4">
-            <span key={shake.immutable ?? 0} className={`flex items-center gap-1.5 ${shaken("immutable")}`}>
+            <span key={`immutable-${shake.immutable ?? 0}`} className={`flex items-center gap-1.5 ${shaken("immutable")}`}>
               <Toggle label={t("places.details.appendOnly")} checked={draft.immutable} onChange={(v) => void setAppendOnly(v)} />
               <InfoBubble tip={t("places.details.appendOnlyHint")} />
             </span>
@@ -383,13 +390,13 @@ export function PlaceDetails({
         </Section>
       )}
 
-      {(credKeys.length > 0 || place.kind === "s3") && (
+      {credKeys.length > 0 && (
         <Section
           title={t("places.details.access")}
-          hint={place.creds.shared && credKeys.length > 0 ? t("places.details.sharedCreds") : undefined}
+          hint={place.creds.shared ? t("places.details.sharedCreds") : undefined}
           hueIndex={hueIndex}
         >
-          <div key={shake.access ?? 0} className={`grid gap-3 sm:grid-cols-2 ${shaken("access")}`}>
+          <div key={`access-${shake.access ?? 0}`} className={`grid gap-3 sm:grid-cols-2 ${shaken("access")}`}>
             {credKeys.map((key) => (
               <div key={key} className="flex flex-col gap-1.5">
                 <label htmlFor={fieldId(key)} className="text-xs text-carbon-textSub">
@@ -418,7 +425,7 @@ export function PlaceDetails({
             ))}
           </div>
           {place.kind === "s3" && (
-            <div key={shake.storageClass ?? 0} className={`flex max-w-xs flex-col gap-1.5 ${shaken("storageClass")}`}>
+            <div key={`storageClass-${shake.storageClass ?? 0}`} className={`flex max-w-xs flex-col gap-1.5 ${shaken("storageClass")}`}>
               <label htmlFor={fieldId("storageClass")} className="text-xs text-carbon-textSub">
                 {t("places.details.storageClass")}
               </label>
@@ -463,7 +470,7 @@ export function PlaceDetails({
         hint={place.repository ? t("places.details.isRepository") : t("places.details.foldersHint")}
         hueIndex={hueIndex}
       >
-        <div key={shake.folders ?? 0} className={`flex flex-col gap-2 ${shaken("folders")}`}>
+        <div key={`folders-${shake.folders ?? 0}`} className={`flex flex-col gap-2 ${shaken("folders")}`}>
           {PLACE_DOMAINS.map((d) => {
             const offered = d in draft.folders;
             const locked = place.repository || place.locked[d] === true;
