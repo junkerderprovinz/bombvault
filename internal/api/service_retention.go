@@ -393,6 +393,12 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	if err != nil {
 		return err
 	}
+	var target store.OffsiteTarget
+	if isOffsiteSource(source) {
+		if target, err = s.offsiteTargetForSource(settings, domain, source); err != nil {
+			return err
+		}
+	}
 	// An immutable repo is never pruned from this box (append-only is the
 	// point), and that is decided per repository:
 	//   - off-site: the flag of the target the source names.
@@ -411,11 +417,7 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	refusal := error(nil)
 	for _, r := range repos {
 		if isOffsiteSource(source) {
-			immutable, iErr := s.offsiteSourceImmutable(settings, domain, source)
-			if iErr != nil {
-				return iErr
-			}
-			if immutable {
+			if target.Immutable {
 				if refusal == nil {
 					refusal = errAppendOnlyOffsiteTarget
 				}
@@ -501,10 +503,6 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		switch {
 		case !applyPolicy:
 		case isOffsiteSource(source):
-			target, tErr := s.offsiteTargetForSource(settings, domain, source)
-			if tErr != nil {
-				return tErr
-			}
 			policy = targetOffsiteRetentionPolicy(target)
 		default:
 			policy = s.retentionPolicyForRef(settings, domain, r)
