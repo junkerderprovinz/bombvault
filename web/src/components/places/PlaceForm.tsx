@@ -1,0 +1,316 @@
+import { useEffect, useState } from "react";
+import { Button } from "../Button";
+import { FolderBrowser } from "../FolderBrowser";
+import { InfoBubble } from "../InfoBubble";
+import { RevealInput } from "../RevealInput";
+import { SelectField } from "../SelectField";
+import { WindowActions } from "../WindowActions";
+import { PlaceMark } from "../placeMarks";
+import { getVMSSH, type OkEnvelope } from "../../lib/api";
+import { copyText } from "../../lib/clipboard";
+import { useT, type TranslationKey } from "../../lib/i18n";
+import {
+  domainName,
+  folderStateText,
+  probeFactText,
+  probeFailureText,
+  providerName,
+} from "../../lib/placeText";
+import { PLACE_DOMAINS, probePlace, type CatalogField, type CatalogProvider, type ProbeResult } from "../../lib/places";
+import { useToast } from "../../lib/toast";
+import { useReveal } from "../../lib/useReveal";
+
+// The form after a tile: the provider's fields and a connection test that adds
+// nothing. Any edit after the test makes its result stale.
+
+const FIELD_KEYS: Record<string, TranslationKey> = {
+  keyId: "places.field.keyId",
+  secret: "places.field.secret",
+  region: "places.field.region",
+  account: "places.field.accountId",
+  endpoint: "places.field.endpoint",
+  bucket: "places.field.bucket",
+  path: "places.field.path",
+  container: "places.field.container",
+  url: "places.field.url",
+  user: "places.field.user",
+  password: "places.field.password",
+  host: "places.field.host",
+  port: "places.field.port",
+  remote: "places.field.remote",
+};
+
+/** fieldLabelKey is a field's label, where a provider names it its own way. */
+export function fieldLabelKey(provider: CatalogProvider, key: string): TranslationKey {
+  if (provider.kind === "azure" && key === "account") return "places.field.storageAccount";
+  if (provider.kind === "azure" && key === "secret") return "places.field.accessKey";
+  if (provider.kind === "webdav" && key === "password") return "places.field.appPassword";
+  return FIELD_KEYS[key] ?? "places.field.path";
+}
+
+const INTRO_KEYS: Record<string, TranslationKey> = {
+  b2: "places.intro.b2",
+  s3: "places.intro.s3Cloud",
+  r2: "places.intro.s3Cloud",
+  wasabi: "places.intro.s3Cloud",
+  "hetzner-os": "places.intro.s3Cloud",
+  storj: "places.intro.s3Cloud",
+  idrive: "places.intro.s3Cloud",
+  scaleway: "places.intro.s3Cloud",
+  ovh: "places.intro.s3Cloud",
+  digitalocean: "places.intro.s3Cloud",
+  ionos: "places.intro.s3Cloud",
+  contabo: "places.intro.s3Cloud",
+  exoscale: "places.intro.s3Cloud",
+  vultr: "places.intro.s3Cloud",
+  gcs: "places.intro.gcs",
+  azure: "places.intro.azure",
+  storagebox: "places.intro.storagebox",
+  minio: "places.intro.s3Self",
+  seaweedfs: "places.intro.s3Self",
+  garage: "places.intro.s3Self",
+  ceph: "places.intro.s3Self",
+  juicefs: "places.intro.s3Self",
+  rustfs: "places.intro.s3Self",
+  versitygw: "places.intro.s3Self",
+  "s3-other": "places.intro.s3Self",
+  nextcloud: "places.intro.webdav",
+  owncloud: "places.intro.webdav",
+  opencloud: "places.intro.webdav",
+  "rest-server": "places.intro.rest",
+  sftp: "places.intro.sftp",
+  bombvault: "places.intro.bombvault",
+  rclone: "places.intro.rclone",
+  synology: "places.intro.device",
+  qnap: "places.intro.device",
+  truenas: "places.intro.device",
+  "unraid-other": "places.intro.device",
+  share: "places.intro.device",
+  "unraid-folder": "places.intro.unraidFolder",
+};
+
+const ROOT_KEYS: Record<string, TranslationKey> = {
+  remotes: "places.root.remotes",
+  user: "places.root.shares",
+  "": "places.root.disks",
+};
+
+const FIELD_CLASS = "w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
+
+/** The empty first choice of a field that lists what the probe found. */
+const CHOOSE_KEYS: Record<string, TranslationKey> = {
+  bucket: "places.form.chooseBucket",
+  container: "places.form.chooseContainer",
+};
+
+function SecretField({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+  const reveal = useReveal();
+  return (
+    <RevealInput
+      {...reveal}
+      id={id}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      autoComplete="off"
+      spellCheck={false}
+      wrapperClassName="w-full"
+      className={`${FIELD_CLASS} font-mono`}
+    />
+  );
+}
+
+/** The key an SFTP server needs, since BombVault signs in with it and no password. */
+function PublicKey() {
+  const { t } = useT();
+  const { push } = useToast();
+  const [key, setKey] = useState("");
+  useEffect(() => {
+    getVMSSH()
+      .then((r) => setKey(r.ok ? (r.publicKey ?? "") : ""))
+      .catch(() => setKey(""));
+  }, []);
+  if (!key) return null;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+        {t("places.form.publicKey")}
+        <InfoBubble tip={t("places.form.publicKeyHint")} />
+      </span>
+      <div className="flex items-start gap-2">
+        <code dir="ltr" className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
+          {key}
+        </code>
+        <Button
+          label={t("common.copy")}
+          labelKey="common.copy"
+          tone="neutral"
+          onClick={() => void copyText(key).then((ok) => push(ok ? t("common.copied") : t("vm.ssh.copyFailed"), ok ? "success" : "fail"))}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function PlaceForm({
+  provider,
+  hostMountRoot,
+  onBack,
+  onCancel,
+}: {
+  provider: CatalogProvider;
+  hostMountRoot: string;
+  onBack: () => void;
+  onCancel: () => void;
+}) {
+  const { t, lang } = useT();
+  const { push } = useToast();
+  const [fields, setFields] = useState<Record<string, string>>(() =>
+    Object.fromEntries(provider.fields.map((f) => [f.key, ""]))
+  );
+  const [probe, setProbe] = useState<(OkEnvelope & ProbeResult) | null>(null);
+  const [probedWith, setProbedWith] = useState("");
+  const [probing, setProbing] = useState(false);
+  const [shake, setShake] = useState({ test: 0 });
+
+  const typed = JSON.stringify(fields);
+  const fresh = probe !== null && probedWith === typed ? probe : null;
+
+  function set(key: string, value: string) {
+    setFields((f) => ({ ...f, [key]: value }));
+  }
+
+  async function test() {
+    setProbing(true);
+    try {
+      const res = await probePlace({ provider: provider.id, fields });
+      setProbe(res);
+      setProbedWith(typed);
+      if (!res.ok) {
+        push(probeFailureText(t, lang, res), "fail");
+        setShake((s) => ({ ...s, test: s.test + 1 }));
+      }
+    } catch (err) {
+      setProbe(null);
+      push(err instanceof Error ? err.message : t("common.actionFailed"), "fail");
+      setShake((s) => ({ ...s, test: s.test + 1 }));
+    } finally {
+      setProbing(false);
+    }
+  }
+
+  function renderField(f: CatalogField) {
+    const id = `place-field-${f.key}`;
+    const label = t(fieldLabelKey(provider, f.key));
+    if (f.key === "path" && provider.kind === "local") {
+      return (
+        <FolderBrowser
+          key={f.key}
+          label={label}
+          value={fields.path ?? ""}
+          onChange={(v) => set("path", v)}
+          hostMountRoot={hostMountRoot}
+          placeholder={f.placeholder}
+          inDialog
+          roots={(provider.pickRoots ?? []).map((path) => ({ path, labelKey: ROOT_KEYS[path] ?? "places.root.disks" }))}
+        />
+      );
+    }
+    // An Azure account's containers come back as buckets, as a key's buckets do.
+    const listed = f.key === "bucket" || f.key === "container" ? (probe?.buckets ?? []) : [];
+    return (
+      <div key={f.key} className="flex flex-col gap-1.5">
+        <label htmlFor={id} className="flex items-center gap-1 text-xs text-carbon-textSub">
+          {label}
+          {f.optional && <span className="text-carbon-textMuted">{t("places.form.optional")}</span>}
+        </label>
+        {listed.length > 0 ? (
+          <SelectField
+            id={id}
+            label={label}
+            value={fields[f.key] ?? ""}
+            onChange={(v) => set(f.key, v)}
+            options={[
+              { value: "", label: t(CHOOSE_KEYS[f.key] ?? "places.form.chooseBucket") },
+              ...listed.map((b) => ({ value: b, label: b })),
+            ]}
+            className={FIELD_CLASS}
+          />
+        ) : f.secret ? (
+          <SecretField id={id} value={fields[f.key] ?? ""} onChange={(v) => set(f.key, v)} />
+        ) : (
+          <input
+            id={id}
+            type="text"
+            dir="ltr"
+            value={fields[f.key] ?? ""}
+            onChange={(e) => set(f.key, e.target.value)}
+            placeholder={f.key === "port" && provider.defaultPort ? String(provider.defaultPort) : f.placeholder}
+            inputMode={f.key === "port" ? "numeric" : undefined}
+            autoComplete="off"
+            spellCheck={false}
+            className={`${FIELD_CLASS} text-start`}
+          />
+        )}
+      </div>
+    );
+  }
+
+  const facts = (fresh?.facts ?? []).map((f) => probeFactText(t, f)).filter((s): s is string => s !== null);
+  const probed = PLACE_DOMAINS.filter((d) => fresh?.folders?.[d]);
+  // A key that may list its buckets answers with the list alone until one is
+  // chosen, and an empty panel would read as a result.
+  const found = fresh?.ok && (fresh.base || facts.length > 0 || probed.length > 0) ? fresh : null;
+
+  return (
+    <>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-4">
+        <div className="flex items-center gap-3">
+          <PlaceMark provider={provider.id} size={32} />
+          <span className="text-sm font-semibold text-carbon-text">{providerName(t, provider.id)}</span>
+          <InfoBubble tip={t(INTRO_KEYS[provider.id] ?? "places.intro.s3Self")} />
+        </div>
+
+        {provider.fields.map(renderField)}
+        {provider.kind === "sftp" && <PublicKey />}
+
+        {found && (
+          <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3 text-sm text-carbon-text" aria-live="polite">
+            {found.base && (
+              <span className="flex flex-wrap gap-x-2">
+                <span className="text-carbon-textSub">{t("places.form.address")}</span>
+                <span dir="ltr" className="break-all font-mono text-xs">
+                  {found.base}
+                </span>
+              </span>
+            )}
+            {facts.map((fact) => (
+              <span key={fact}>{fact}</span>
+            ))}
+            {probed.map((d) => (
+              <span key={d} className="flex flex-wrap gap-x-2">
+                <span className="text-carbon-textSub">{domainName(t, d)}</span>
+                <span>{folderStateText(t, found.folders![d]!)}</span>
+                {found.errors?.[d] && <span className="text-statusFail">{found.errors[d]!.error}</span>}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <WindowActions>
+        <Button label={t("places.form.back")} labelKey="places.form.back" tone="neutral" onClick={onBack} />
+        <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onCancel} />
+        <Button
+          key={`test-${shake.test}`}
+          label={t("places.form.test")}
+          labelKey="places.form.test"
+          tone="accent"
+          busy={probing}
+          disabled={probing}
+          onClick={() => void test()}
+          className={shake.test ? "glim-shake" : ""}
+        />
+      </WindowActions>
+    </>
+  );
+}
