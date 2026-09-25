@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -249,6 +250,46 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 		out.accounted++
 	}
 	return out
+}
+
+// copyNeeds is what a remote copy source adds to the destination's
+// environment: the variables its backend reads. restic copy runs one process
+// for both repositories, so ok is false when the destination's backend reads
+// one of them with another value.
+func copyNeeds(dest string, destEnv []string, src string, srcEnv []string) (need []string, ok bool) {
+	need = places.Needed(src, srcEnv)
+	return need, !places.Collides(places.Needed(dest, destEnv), need)
+}
+
+// withEnv sets each variable of add in mode's environment. A variable already
+// there keeps its place, so adding what the environment holds changes nothing.
+func withEnv(mode restic.Mode, add []string) restic.Mode {
+	env := slices.Clone(mode.Env)
+	for _, kv := range add {
+		key, _, _ := strings.Cut(kv, "=")
+		if i := slices.IndexFunc(env, func(e string) bool { return strings.HasPrefix(e, key+"=") }); i >= 0 {
+			env[i] = kv
+		} else {
+			env = append(env, kv)
+		}
+	}
+	mode.Env = env
+	return mode
+}
+
+// copyMode is the destination's mode plus what a remote domain path needs to
+// be read as a copy source. A source whose variables clash with the
+// destination's goes without them and fails, as the creds-differ hint warns.
+func (s *Service) copyMode(settings store.Settings, domain, dest string, mode restic.Mode, sources []domainRepoRef) restic.Mode {
+	for _, src := range sources {
+		if !src.Own || !restic.IsRemoteRepo(src.Loc) {
+			continue
+		}
+		if need, ok := copyNeeds(dest, mode.Env, src.Loc, s.primaryModeFor(settings, domain, src.Loc).Env); ok {
+			mode = withEnv(mode, need)
+		}
+	}
+	return mode
 }
 
 // planSource lists one source and decides what it sends to the target. held is

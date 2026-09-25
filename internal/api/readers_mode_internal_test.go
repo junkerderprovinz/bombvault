@@ -14,7 +14,8 @@ import (
 // with, and answers the rest as the fixture's engine does.
 type envEngine struct {
 	*placementEngine
-	envs map[string][]string // by slash-spelled location
+	envs   map[string][]string // by slash-spelled location
+	copies [][]string          // the environment of each Copy, in order
 }
 
 // newEnvEngine puts an envEngine in front of the fixture's engine.
@@ -44,6 +45,19 @@ func (e *envEngine) RepoOpensErr(ctx context.Context, repo string, m restic.Mode
 func (e *envEngine) Snapshots(ctx context.Context, repo string, m restic.Mode) ([]restic.Snapshot, error) {
 	e.note(repo, m)
 	return e.placementEngine.Snapshots(ctx, repo, m)
+}
+
+func (e *envEngine) Copy(ctx context.Context, dest, src string, ids []string, lim restic.Limits, m restic.Mode) error {
+	e.mu.Lock()
+	e.copies = append(e.copies, slices.Clone(m.Env))
+	e.mu.Unlock()
+	return e.placementEngine.Copy(ctx, dest, src, ids, lim, m)
+}
+
+func (e *envEngine) copyEnvs() [][]string {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return slices.Clone(e.copies)
 }
 
 // credsScene is a containers domain whose remote path and first target sit on
