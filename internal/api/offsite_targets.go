@@ -22,13 +22,14 @@ func validOffsiteDomain(domain string) bool {
 
 // syncPrimaryOffsiteTarget writes a domain's off-site settings field into the
 // target on sort_order 0. Clearing the field switches that row off, so filling
-// it again brings back the same target.
+// it again brings back the same target. A target at a place is left alone:
+// the place writes it, and the field only follows.
 func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Settings) error {
 	if s.store == nil {
 		return nil
 	}
 	primary, ok, err := s.store.FieldOffsiteTarget(domain)
-	if err != nil {
+	if err != nil || (ok && primary.PlaceID != "") {
 		return err
 	}
 	repo := offsiteRepoFromSettings(domain, settings)
