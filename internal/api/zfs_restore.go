@@ -327,7 +327,8 @@ func (s *Service) prepareRestoreZFS(ctx context.Context, id, source string, req 
 }
 
 // planZFSRestoreToFolder fills in a restore that writes beside the live data:
-// one member or the whole tree, each into its own place below the folder.
+// one member into the folder itself, or the whole tree with each member in its
+// own place below it.
 func (s *Service) planZFSRestoreToFolder(ctx context.Context, plan *zfsRestorePlan, point ZFSRestorePoint, req ZFSRestoreRequest, sub string) (ZFSRestoreAck, error) {
 	target, err := paths.Resolve(s.cfg.HostMountRoot, sub)
 	if err != nil {
@@ -338,7 +339,11 @@ func (s *Service) planZFSRestoreToFolder(ctx context.Context, plan *zfsRestorePl
 		return ZFSRestoreAck{}, err
 	}
 	for _, m := range members {
-		plan.steps = append(plan.steps, zfsRestoreStep{snapshotID: m.SnapshotID, target: zfsFolderTarget(target, m.RelPath)})
+		dest := target
+		if req.WholeTree {
+			dest = zfsFolderTarget(target, m.RelPath)
+		}
+		plan.steps = append(plan.steps, zfsRestoreStep{snapshotID: m.SnapshotID, target: dest})
 	}
 	plan.dataset = req.Dataset
 	plan.snapshotID = plan.steps[0].snapshotID
@@ -637,14 +642,14 @@ func (s *Service) restoreZFSStep(ctx context.Context, plan zfsRestorePlan, step 
 
 // restoreZFSFile puts one selected path back. In place it goes to its own place
 // inside the dataset; into a folder it lands directly as <target>/<name>, with
-// no tree in between, the way a folder set's file restore does it.
+// no tree in between, the way a folder set's file restore does it. A member
+// snapshot's root is the dataset root, so a path at the top of the dataset
+// already lands under its own name with a plain include; restic would refuse
+// a file as the root of a subtree restore.
 func (s *Service) restoreZFSFile(ctx context.Context, plan zfsRestorePlan, step zfsRestoreStep, sel string) error {
-	if plan.inPlace {
-		return s.engine.RestoreInclude(ctx, plan.repo, step.snapshotID, escapeGlobLiteral(sel), step.target, plan.mode)
-	}
 	parent, base := path.Dir(sel), path.Base(sel)
-	if parent == "/" || base == "/" {
-		return s.engine.RestoreSubtreeTo(ctx, plan.repo, step.snapshotID, sel, step.target, plan.mode)
+	if plan.inPlace || parent == "/" {
+		return s.engine.RestoreInclude(ctx, plan.repo, step.snapshotID, escapeGlobLiteral(sel), step.target, plan.mode)
 	}
 	// The subtree root travels as a selector and stays raw; the include is a
 	// glob and is escaped.

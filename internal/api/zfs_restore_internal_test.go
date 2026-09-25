@@ -421,6 +421,51 @@ func TestRestoreZFSToFolderWithoutHost(t *testing.T) {
 	}
 }
 
+// One dataset lands in the chosen folder itself. Only a whole tree needs a
+// subfolder per dataset.
+func TestRestoreZFSChildToFolderLandsInTheFolder(t *testing.T) {
+	s, st, _, eng := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	req := ZFSRestoreRequest{Stamp: zfsStamp, Dataset: zfsChild, TargetPath: zfsMountedSub + "/plex-copy"}
+	if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req); !started || err != nil {
+		t.Fatalf("started = %v, err = %v", started, err)
+	}
+	zfsAwaitRestore(t, st, d.ID)
+	want := "RestoreAll|" + zfsChildSnapID + "->" + s.cfg.HostMountRoot + "/" + zfsMountedSub + "/plex-copy"
+	if got := strings.Join(eng.readRestores(), " "); got != want {
+		t.Fatalf("restic calls = %q, want %q", got, want)
+	}
+}
+
+// A selected path lands in the folder under its own name, wherever it sits in
+// the dataset. A file or folder at the top of the dataset has the dataset root
+// as its parent, and restic takes no single file as the root of a restore.
+func TestRestoreZFSSelectedPathsToFolderKeepTheirNames(t *testing.T) {
+	s, st, _, eng := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	req := ZFSRestoreRequest{
+		Stamp: zfsStamp, Dataset: zfsChild, TargetPath: zfsMountedSub + "/files",
+		Paths: []string{"/a.bin", "/sub", "/sub/name.txt"},
+	}
+	if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req); !started || err != nil {
+		t.Fatalf("started = %v, err = %v", started, err)
+	}
+	if run := zfsAwaitRestore(t, st, d.ID); run.Status != "success" {
+		t.Fatalf("run = %s %q, want success", run.Status, run.Error)
+	}
+	folder := s.cfg.HostMountRoot + "/" + zfsMountedSub + "/files"
+	want := []string{
+		"RestoreInclude|" + zfsChildSnapID + "|/a.bin->" + folder,
+		"RestoreInclude|" + zfsChildSnapID + "|/sub->" + folder,
+		"RestoreSubtreeInclude|" + zfsChildSnapID + "|/sub|/name.txt->" + folder,
+	}
+	if got := strings.Join(eng.readRestores(), " "); got != strings.Join(want, " ") {
+		t.Fatalf("restic calls = %q, want %q", got, strings.Join(want, " "))
+	}
+}
+
 func TestRestoreZFSToFolderRefusesUnmountedDestination(t *testing.T) {
 	s, st, _, eng := zfsRestoreFixture(t)
 	d := zfsSeedItem(t, st, zfsRoot)
