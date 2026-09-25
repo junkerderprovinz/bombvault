@@ -80,7 +80,7 @@ func (s *Service) probeFolder(ctx context.Context, addr string, mode restic.Mode
 		case errors.Is(err, fs.ErrNotExist):
 			return folderProbe{state: places.FolderAbsent}
 		case err != nil:
-			return probeProblem(err)
+			return probeProblem(fmt.Errorf("%w: BombVault cannot read this folder: %v", errPlaceProbeFailed, err))
 		case len(entries) == 0:
 			return folderProbe{state: places.FolderEmpty}
 		}
@@ -142,12 +142,12 @@ type placeProbe struct {
 	folders  places.Folders
 }
 
-// ProbePlace tests a new or stored place and writes nothing. A stored place,
-// named by PlaceID, is probed at its own address with its stored secrets, each
-// replaced by a value the form holds, so a changed key can be tested before it
-// is saved. A place that cannot be reached is a result with OK false; the error
-// is for a request that names no known provider or place, or leaves a required
-// field empty.
+// ProbePlace tests a new or stored place: no repository is created and no row
+// is written. A stored place, named by PlaceID, is probed at its own address
+// with its stored secrets, each replaced by a value the form holds, so a
+// changed key can be tested before it is saved. A place that cannot be reached
+// is a result with OK false; the error is for a request that names no known
+// provider or place, or leaves a required field empty.
 func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.ProbeResult, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
