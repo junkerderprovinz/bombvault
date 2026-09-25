@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { browse, createFolder } from "../lib/api";
-import { useT } from "../lib/i18n";
+import { useT, type TranslationKey } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
 import { Button } from "./Button";
 import { Badge } from "./Badge";
+import { Selector } from "./Selector";
 import { IconCheckCircle, IconFolder } from "./Sidebar";
 import { IconBack } from "./glyphs";
 import { useToast } from "../lib/toast";
@@ -27,9 +28,24 @@ export interface FolderBrowserProps {
   /** Render in place instead of as a dialog, for call sites that are already
    *  inside one. */
   inDialog?: boolean;
+  /** Where browsing may start, relative to hostMountRoot ("" is the root
+   *  itself). With roots the browser opens in the first one unless the value
+   *  lies under one, offers them as a picker, and never climbs above the root
+   *  it is in. */
+  roots?: { path: string; labelKey: TranslationKey }[];
 }
 
-export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint, renderLabel = true, inDialog = false }: FolderBrowserProps) {
+/** rootOf is the most specific root that holds path, or -1. */
+function rootOf(roots: { path: string }[], path: string): number {
+  let best = -1;
+  roots.forEach((r, i) => {
+    const inside = r.path === "" || path === r.path || path.startsWith(r.path + "/");
+    if (inside && (best < 0 || r.path.length > roots[best]!.path.length)) best = i;
+  });
+  return best;
+}
+
+export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint, renderLabel = true, inDialog = false, roots }: FolderBrowserProps) {
   const { t } = useT();
   const { push } = useToast();
   // Anchors usePortalHue, so the portalled dialog keeps the hue of the card it
@@ -72,7 +88,9 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   function handleOpen() {
     setManualFallback(false);
     setOpen(true);
-    doFetch(value);
+    const start = value.trim();
+    const outside = roots && roots.length > 0 && (start === "" || rootOf(roots, start) < 0);
+    doFetch(outside ? roots[0]!.path : start);
   }
 
   function handleClose() {
@@ -81,7 +99,9 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   }
 
   // Bound only while open, so the many mounted browsers do not each keep a
-  // document listener for a dialog nobody opened.
+  // document listener for a dialog nobody opened. In the capture phase, so an
+  // open browser inside a window takes Escape before the window does and only
+  // the browser closes.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -90,8 +110,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         handleClose();
       }
     };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
   }, [open]);
 
   function handleUp() {
@@ -125,6 +145,9 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
       .finally(() => setCreating(false));
   }
 
+  const root = roots ? rootOf(roots, browsePath) : -1;
+  const atTop = browsePath === "" || (roots !== undefined && roots.some((r) => r.path === browsePath));
+
   const trimmed = value.trim();
   const resolved =
     trimmed && !trimmed.startsWith("/") && !trimmed.includes("..")
@@ -137,6 +160,17 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
       <span dir="ltr" className="text-xs font-mono text-carbon-textSub min-w-0 truncate text-start">
         {hostMountRoot}/{browsePath || ""}
       </span>
+
+      {roots && roots.length > 1 && !manualFallback && (
+        <Selector
+          label={t("folder.roots")}
+          size="sm"
+          activation="manual"
+          items={roots.map((r, i) => ({ id: String(i), label: t(r.labelKey) }))}
+          active={root >= 0 ? String(root) : null}
+          onChange={(id) => doFetch(roots[Number(id)]!.path)}
+        />
+      )}
 
       {browseError && (
         <p className="text-xs text-statusFail">{browseError}</p>
@@ -156,7 +190,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           !justify-start because .glim-btn centres with a higher specificity. */}
       {!loading && !manualFallback && (
         <div className="flex flex-col gap-0.5 h-[clamp(12rem,55vh,32rem)] overflow-y-auto">
-          {browsePath !== "" && (
+          {!atTop && (
             <Button
               // The file-manager convention, not a phrase to translate.
               label={".."}
