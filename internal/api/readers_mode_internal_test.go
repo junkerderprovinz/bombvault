@@ -17,11 +17,12 @@ type envEngine struct {
 	envs   map[string][]string // by slash-spelled location
 	copies [][]string          // the environment of each Copy, in order
 	ids    map[string]string   // repository id by slash-spelled location
+	opened map[string]int      // RepoOpensErr calls by slash-spelled location
 }
 
 // newEnvEngine puts an envEngine in front of the fixture's engine.
 func newEnvEngine(f *placementFixture) *envEngine {
-	e := &envEngine{placementEngine: f.eng, envs: map[string][]string{}, ids: map[string]string{}}
+	e := &envEngine{placementEngine: f.eng, envs: map[string][]string{}, ids: map[string]string{}, opened: map[string]int{}}
 	f.svc.engine = e
 	return e
 }
@@ -40,7 +41,16 @@ func (e *envEngine) env(repo string) []string {
 
 func (e *envEngine) RepoOpensErr(ctx context.Context, repo string, m restic.Mode) error {
 	e.note(repo, m)
+	e.mu.Lock()
+	e.opened[filepath.ToSlash(repo)]++
+	e.mu.Unlock()
 	return e.placementEngine.RepoOpensErr(ctx, repo, m)
+}
+
+func (e *envEngine) openCount(repo string) int {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.opened[repo]
 }
 
 func (e *envEngine) Snapshots(ctx context.Context, repo string, m restic.Mode) ([]restic.Snapshot, error) {
