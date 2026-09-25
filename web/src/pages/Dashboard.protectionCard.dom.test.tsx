@@ -62,6 +62,12 @@ describe("ProtectionCard, off-site", () => {
     expect(screen.getByText(/No off-site copy/)).toBeTruthy();
   });
 
+  it("explains that every copy stays on the premises", () => {
+    // The copies may sit on a NAS in the house, not only on this machine.
+    renderCard([domain()]);
+    expect(screen.getByTitle(/Every copy stays on the premises/)).toBeTruthy();
+  });
+
   it("stays quiet once an off-site repo exists", () => {
     // The badge answers whether a second copy exists, not whether it is
     // healthy; the other columns cover that.
