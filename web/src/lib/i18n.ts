@@ -924,6 +924,7 @@ export const en = {
   "settings.shape.round": "Round",
   "settings.shape.soft": "Soft",
   "settings.shape.square": "Square",
+  "settings.shape.leaf": "Leaf",
   // Motion intensity (GlimStone motion-engine) — a deliberate reversal of
   // design-language.md's own prior "OS-controlled only, no fifth user
   // switch" decision; see that doc's Motion Intensity section and
@@ -2770,8 +2771,9 @@ export const de: Translations = {
   "settings.shape": "Ecken",
   "settings.shapeHint": "Gilt für Karten, Knöpfe, Reiter, Eingabefelder und Abzeichen zugleich.",
   "settings.shape.round": "Rund",
-  "settings.shape.soft": "Leicht",
+  "settings.shape.soft": "Abgerundet",
   "settings.shape.square": "Eckig",
+  "settings.shape.leaf": "Blatt",
   "settings.motion": "Animationen",
   "settings.motionHint": "Wie stark sich alle Animationen der App bewegen: ein manueller Regler neben der Systemeinstellung für reduzierte Bewegung, der sie nie überschreibt.",
   "settings.labels": "Beschriftungen",

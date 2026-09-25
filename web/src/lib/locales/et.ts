@@ -731,6 +731,7 @@ const et: Partial<Translations> = {
   "settings.shape.round": "Ümarad",
   "settings.shape.soft": "Pehmed",
   "settings.shape.square": "Nurgelised",
+  "settings.shape.leaf": "Leht",
   "settings.motion": "Animatsioonid",
   "settings.motionHint": "Kui palju rakenduse animatsioonid liiguvad, käsitsi regulaator süsteemi vähendatud liikumise seade kõrval, mida see ei sea kunagi üle.",
   "settings.labels": "Sildid",

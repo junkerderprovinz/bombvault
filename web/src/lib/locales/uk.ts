@@ -276,6 +276,7 @@ const uk: Partial<Translations> = {
   "settings.shape.round": "Заокруглені",
   "settings.shape.soft": "М'які",
   "settings.shape.square": "Прямі",
+  "settings.shape.leaf": "Листок",
   "settings.motion": "Анімації",
   "settings.motionHint": "Визначає, наскільки сильно рухаються анімації в застосунку — ручне налаштування поруч із системним параметром зменшеного руху, яке ніколи його не скасовує.",
   "settings.labels": "Підписи",

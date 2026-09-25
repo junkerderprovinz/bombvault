@@ -1745,7 +1745,7 @@ function StopContainersEditor({
           {sortedSelected.map((n) => (
             <span
               key={`${n}-${rowShake[n] ?? 0}`}
-              className={`inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-0.5 text-xs text-carbon-textSub${rowShake[n] ? " glim-shake" : ""}`}
+              className={`inline-flex items-center gap-1.5 rounded-pill bg-carbon-surface2 px-2 py-0.5 text-xs text-carbon-textSub${rowShake[n] ? " glim-shake" : ""}`}
             >
               {n}
               <Button
@@ -2138,7 +2138,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                       // chip", the same broad "not a real state" bucket this
                       // chip belongs in, sitting next to its "large" sibling
                       // which keeps its own real warn meaning unchanged).
-                      className={`inline-flex items-center rounded-control px-2 py-0.5 text-xs font-medium ${
+                      className={`inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-medium ${
                         sg.reason === "large" ? "bg-statusWarnBgStrong text-statusWarn" : "bg-statusNeutralBg text-statusNeutral"
                       }`}
                     >
@@ -2199,7 +2199,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                 {currentLines.map((line) => (
                   <span
                     key={line}
-                    className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-0.5 text-xs font-mono text-carbon-textSub"
+                    className="inline-flex items-center gap-1.5 rounded-pill bg-carbon-surface2 px-2 py-0.5 text-xs font-mono text-carbon-textSub"
                   >
                     {line}
                     <Button
@@ -2642,7 +2642,7 @@ function ScheduleIncludeAllControl({
         tone="accent"
         onClick={() => void run(true)}
         disabled={busy}
-        className={`inline-flex items-center rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+        className={`inline-flex items-center rounded-pill bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
           shakeInclude ? " glim-shake" : ""
         }`}
       />
@@ -2653,7 +2653,7 @@ function ScheduleIncludeAllControl({
         tone="subtle"
         onClick={() => void run(false)}
         disabled={busy}
-        className={`inline-flex items-center rounded-control px-3 py-1 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
+        className={`inline-flex items-center rounded-pill px-3 py-1 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
           shakeExclude ? " glim-shake" : ""
         }`}
       />
@@ -2830,7 +2830,7 @@ function StackCard({
           tip={t("stack.restore")}
           onClick={() => setOpen((p) => !p)}
           ariaExpanded={open}
-          className="shrink-0 inline-flex items-center rounded-control p-1.5 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+          className="shrink-0 inline-flex items-center rounded-pill p-1.5 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
             <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
@@ -3223,7 +3223,7 @@ function BackupOrderPanel({
                     tip={t("backupOrder.moveUp")}
                     onClick={() => move(i, -1)}
                     disabled={i === 0 || saveState === "saving"}
-                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-pill p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path fill="currentColor" d="M1.3 8.7 6 3.3 10.7 8.7Z" />
@@ -3233,7 +3233,7 @@ function BackupOrderPanel({
                     tip={t("backupOrder.moveDown")}
                     onClick={() => move(i, 1)}
                     disabled={i === names.length - 1 || saveState === "saving"}
-                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-pill p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path fill="currentColor" d="M1.3 3.3 6 8.7 10.7 3.3Z" />
@@ -3250,7 +3250,7 @@ function BackupOrderPanel({
                 tone="subtle"
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
-                className={`inline-flex items-center rounded-control px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
+                className={`inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
                   shakeReset ? " glim-shake" : ""
                 }`}
               />
@@ -3802,7 +3802,7 @@ export function Containers() {
             tone="accent"
             onClick={() => void backupSelected()}
             disabled={bulkBusy || batchActive || running.active}
-            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            className={`inline-flex items-center rounded-pill bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
               shakeBackupSelected ? " glim-shake" : ""
             }`}
           />

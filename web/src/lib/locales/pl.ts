@@ -273,6 +273,7 @@ const pl: Partial<Translations> = {
   "settings.shape.round": "Zaokrąglone",
   "settings.shape.soft": "Łagodne",
   "settings.shape.square": "Kwadratowe",
+  "settings.shape.leaf": "Liść",
   "settings.motion": "Animacje",
   "settings.motionHint": "Określa, jak bardzo poruszają się animacje w aplikacji, ręczne ustawienie obok systemowego ustawienia ograniczonego ruchu, którego nigdy nie zastępuje.",
   "settings.labels": "Etykiety",

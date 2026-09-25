@@ -731,6 +731,7 @@ const ms: Partial<Translations> = {
   "settings.shape.round": "Bulat",
   "settings.shape.soft": "Lembut",
   "settings.shape.square": "Segi empat",
+  "settings.shape.leaf": "Daun",
   "settings.motion": "Animasi",
   "settings.motionHint": "Sejauh mana semua animasi dalam aplikasi bergerak, kawalan manual di sebelah tetapan sistem untuk gerakan berkurang, yang tidak sekali-kali menggantikannya.",
   "settings.labels": "Label",

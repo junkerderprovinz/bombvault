@@ -278,6 +278,7 @@ const vi: Partial<Translations> = {
   "settings.shape.round": "Bo tròn",
   "settings.shape.soft": "Bo nhẹ",
   "settings.shape.square": "Vuông",
+  "settings.shape.leaf": "Lá",
   "settings.motion": "Hoạt ảnh",
   "settings.motionHint": "Xác định mức độ chuyển động của mọi hiệu ứng động trong ứng dụng. Một tùy chỉnh thủ công song song với cài đặt giảm chuyển động của hệ thống, không bao giờ ghi đè lên nó.",
   "settings.labels": "Nhãn",

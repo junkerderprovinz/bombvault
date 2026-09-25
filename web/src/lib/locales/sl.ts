@@ -729,6 +729,7 @@ const sl: Partial<Translations> = {
   "settings.shape.round": "Okroglo",
   "settings.shape.soft": "Mehko",
   "settings.shape.square": "Kvadratno",
+  "settings.shape.leaf": "List",
   "settings.motion": "Animacije",
   "settings.motionHint": "Kako intenzivna je vsaka animacija v aplikaciji, ročno stikalo poleg sistemske nastavitve za omejeno gibanje, ki je nikoli ne prepiše.",
   "settings.labels": "Oznake",

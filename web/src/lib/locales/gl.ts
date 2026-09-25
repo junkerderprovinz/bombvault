@@ -731,6 +731,7 @@ const gl: Partial<Translations> = {
   "settings.shape.round": "Redondas",
   "settings.shape.soft": "Suaves",
   "settings.shape.square": "Angulares",
+  "settings.shape.leaf": "Folla",
   "settings.motion": "Animacións",
   "settings.motionHint": "Canto se moven todas as animacións da app, un control manual xunto ao axuste do sistema de movemento reducido, que nunca o sobrescribe.",
   "settings.labels": "Etiquetas",

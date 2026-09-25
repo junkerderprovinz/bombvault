@@ -481,7 +481,7 @@ export function Selector(props: SelectorProps) {
       className={[
         "flex items-center",
         well
-          ? "w-fit max-w-full flex-wrap gap-[0.2rem] rounded-control bg-carbon-surface3 p-[0.2rem]"
+          ? "w-fit max-w-full flex-wrap gap-[0.2rem] rounded-pill bg-carbon-surface3 p-[0.2rem]"
           : "flex-wrap gap-1",
         className,
       ]
@@ -496,8 +496,8 @@ export function Selector(props: SelectorProps) {
           // Well segments are rounded too, so the selected pill follows the
           // shape setting along with the groove.
           well
-            ? "rounded-control [transition:background-color_120ms_ease]"
-            : "rounded-control transition-colors",
+            ? "rounded-pill [transition:background-color_120ms_ease]"
+            : "rounded-pill transition-colors",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           // An iconOnly segment is all glyph, and on an icon-only badge only
           // the fill takes the colour (design-language.md), so it skips the

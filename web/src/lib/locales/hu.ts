@@ -278,6 +278,7 @@ const hu: Partial<Translations> = {
   "settings.shape.round": "Kerekített",
   "settings.shape.soft": "Enyhe",
   "settings.shape.square": "Szögletes",
+  "settings.shape.leaf": "Levél",
   "settings.motion": "Animációk",
   "settings.motionHint": "Meghatározza, mennyire mozognak az alkalmazás animációi: egy kézi beállítás a rendszer csökkentett mozgás beállítása mellett, amely azt soha nem írja felül.",
   "settings.labels": "Feliratok",

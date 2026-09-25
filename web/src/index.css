@@ -143,7 +143,7 @@
   gap: var(--btn-gap);
   height: var(--btn-h);
   padding-inline: var(--btn-pad-x);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-pill);
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1;
@@ -170,7 +170,7 @@
   width: 1.125rem;
   min-width: 0;
   padding-inline: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   opacity: 0.7;
   transition: opacity 120ms, background-color 120ms;
 }
@@ -430,11 +430,10 @@
 /* Shape and type scale do not change with the theme, so they are declared once
    on :root. A copy in each theme block would compete with a [data-shape]
    override of the same specificity on source order alone. These are the
-   "round" values: the default, and what lib/shape.ts falls back to when the
-   stored value is missing or invalid. */
+   "round" values; lib/shape.ts stamps "soft" when nothing valid is stored. */
 :root {
-  --radius-card:      1rem;
-  --radius-control:   0.625rem;
+  --radius-card:      1.25rem;
+  --radius-control:   0.75rem;
   --radius-pill:      9999px;
 
   /* The rail's width in glyph mode, GlimStone's `--rail-narrow`. A shared
@@ -452,8 +451,14 @@
 /* The shape axis. Every rounded corner reads --radius-card, --radius-control or
    --radius-pill, so switching the attribute reshapes cards, buttons, tabs,
    inputs, pills and badges together. The values are GlimStone's SHAPES, so
-   "soft" and "square" look the same in every app that uses them. lib/shape.ts
-   sets the attribute on <html>, validated and defaulting to "round". */
+   every shape looks the same in every app that uses them. lib/shape.ts sets
+   the attribute on <html>, validated and defaulting to "soft".
+
+   --radius-card is for cards, windows and menus, --radius-control for fields,
+   panels and tiles, and --radius-pill for everything somebody presses:
+   buttons, tabs, nav rows, badges, selector segments and switches. Only round
+   tells the last two apart, and there the pressable things are true pills
+   while a text field keeps a corner a paragraph can sit in. */
 :root[data-shape="soft"] {
   --radius-card:    0.5rem;
   --radius-control: 0.3125rem;
@@ -464,6 +469,24 @@
   --radius-card:    0;
   --radius-control: 0;
   --radius-pill:    0;
+}
+
+/* The hidden shape (leafTap in lib/shape.ts): two opposite corners rounded,
+   the other two sharp. The tokens stay single lengths, so a calc() on them
+   keeps working, and one rule takes the other diagonal away from every
+   element. It is physical rather than logical so the leaf leans the same way
+   in every language. */
+:root[data-shape="leaf"] {
+  --radius-card:    1.25rem;
+  --radius-control: 0.75rem;
+  --radius-pill:    1.125rem;
+}
+
+:root[data-shape="leaf"] *,
+:root[data-shape="leaf"] *::before,
+:root[data-shape="leaf"] *::after {
+  border-top-right-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
 }
 
 /* Tailwind v4 defaults borders to currentcolor; this keeps v3's gray-200 for

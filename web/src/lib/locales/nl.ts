@@ -273,6 +273,7 @@ const nl: Partial<Translations> = {
   "settings.shape.round": "Rond",
   "settings.shape.soft": "Zacht",
   "settings.shape.square": "Vierkant",
+  "settings.shape.leaf": "Blad",
   "settings.motion": "Animaties",
   "settings.motionHint": "Bepaalt hoeveel elke animatie in de app beweegt, een handmatige instelling naast de systeeminstelling voor verminderde beweging, die deze nooit overschrijft.",
   "settings.labels": "Labels",

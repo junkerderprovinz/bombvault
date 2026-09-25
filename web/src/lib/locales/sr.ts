@@ -729,6 +729,7 @@ const sr: Partial<Translations> = {
   "settings.shape.round": "Заобљено",
   "settings.shape.soft": "Меко",
   "settings.shape.square": "Квадратно",
+  "settings.shape.leaf": "Лист",
   "settings.motion": "Анимације",
   "settings.motionHint": "Колико се интензивно креће свака анимација у апликацији — ручни прекидач поред системског подешавања за смањен покрет, кога никада не преписује.",
   "settings.labels": "Ознаке",

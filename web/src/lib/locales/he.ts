@@ -278,6 +278,7 @@ const he: Partial<Translations> = {
   "settings.shape.round": "מעוגלות",
   "settings.shape.soft": "רכות",
   "settings.shape.square": "מרובעות",
+  "settings.shape.leaf": "עלה",
   "settings.motion": "אנימציות",
   "settings.motionHint": "קובע כמה כל אנימציה באפליקציה זזה, כוונון ידני שפועל לצד הגדרת הפחתת התנועה של המערכת, ולעולם אינו דורס אותה.",
   "settings.labels": "תוויות",

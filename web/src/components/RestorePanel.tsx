@@ -559,7 +559,7 @@ function SnapshotTags({
       {tags.map((tg) => (
         <span
           key={tg}
-          className="inline-flex items-center rounded-control bg-carbon-surface3 px-1.5 py-0.5 text-caption text-carbon-textSub"
+          className="inline-flex items-center rounded-pill bg-carbon-surface3 px-1.5 py-0.5 text-caption text-carbon-textSub"
         >
           {tg}
         </span>

@@ -278,6 +278,7 @@ const es: Partial<Translations> = {
   "settings.shape.round": "Redondas",
   "settings.shape.soft": "Suaves",
   "settings.shape.square": "Cuadradas",
+  "settings.shape.leaf": "Hoja",
   "settings.motion": "Animaciones",
   "settings.motionHint": "Determina cuánto se mueven las animaciones de la app, un ajuste manual que se suma al ajuste del sistema para el movimiento reducido, sin sustituirlo nunca.",
   "settings.labels": "Etiquetas",

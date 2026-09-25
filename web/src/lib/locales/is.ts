@@ -731,6 +731,7 @@ const is: Partial<Translations> = {
   "settings.shape.round": "Kringlótt",
   "settings.shape.soft": "Mjúk",
   "settings.shape.square": "Ferköntuð",
+  "settings.shape.leaf": "Laufblað",
   "settings.motion": "Hreyfimyndir",
   "settings.motionHint": "Hversu mikið allar hreyfimyndir í forritinu hreyfast, handvirkur stillanleiki við hlið kerfisstillingarinnar fyrir minnkaða hreyfingu, sem hann skrifar aldrei yfir.",
   "settings.labels": "Merkingar",

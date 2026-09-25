@@ -731,6 +731,7 @@ const eu: Partial<Translations> = {
   "settings.shape.round": "Biribilak",
   "settings.shape.soft": "Leunak",
   "settings.shape.square": "Angeluzuzenak",
+  "settings.shape.leaf": "Hostoa",
   "settings.motion": "Animazioak",
   "settings.motionHint": "Aplikazioko animazio guztiak zenbat mugitzen diren, mugimendu murriztuko sistema-ezarpenaren ondoko eskuzko kontrol bat, hura inoiz gainidazten ez duena.",
   "settings.labels": "Etiketak",
