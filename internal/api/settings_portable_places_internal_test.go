@@ -380,3 +380,102 @@ func TestImportRefusesCredentialSetsTheSaveWouldRefuse(t *testing.T) {
 		})
 	}
 }
+
+// validPlacesFile is a small file whose places pass every check.
+func validPlacesFile() settingsExport {
+	return settingsExport{
+		SchemaVersion: settingsExportSchema,
+		Settings:      settingsView{ContainersPath: "backups/containers", ContainersOffsite: b2Base + "/container"},
+		Places: []placeExport{
+			{
+				ID: "place-unraid", Name: "Unraid", Provider: "unraid-folder", Kind: "local", Base: "backups",
+				Folders: map[string]string{"containers": "containers"}, Enabled: true,
+			},
+			{
+				ID: "place-b2", Name: "B2", Provider: "b2", Kind: "s3", Base: b2Base,
+				Folders: map[string]string{"containers": "container"}, CredsRef: "set-b2", Enabled: true,
+			},
+		},
+		StorageDomainPlaces: map[string]string{"containers": "place-unraid"},
+		OffsiteTargets: []offsiteTargetView{{
+			ID: "tgt-b2", Domain: "containers", Name: "B2", Repo: b2Base + "/container", Enabled: true,
+			PlaceID: "place-b2", PlaceDomain: "containers",
+		}},
+	}
+}
+
+func TestAConsistentPlacesFilePassesTheChecks(t *testing.T) {
+	if msg := validateExport(validPlacesFile(), "/host/user"); msg != "" {
+		t.Fatalf("validateExport = %q, want no refusal", msg)
+	}
+}
+
+// An instance has to take back its own file. A row of any kind could name a
+// credential set before storage places, and the migration hands the set on to
+// the row's place, so a local or sftp place can carry one.
+func TestTheExportOfAMigratedSetupPassesThePlaceChecks(t *testing.T) {
+	f := newPlacementFixture(t)
+	s := seedV813(t, f)
+	for _, row := range []store.OffsiteTarget{s.pi, s.nas} {
+		row.CredsRef = "garage"
+		if _, err := f.st.UpsertOffsiteTarget(row); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := f.svc.MigrateToPlaces(); err != nil {
+		t.Fatalf("MigrateToPlaces: %v", err)
+	}
+
+	_, exp := doExport(t, f.h, "")
+	if len(exp.Places) == 0 {
+		t.Fatal("the migration left no places to export")
+	}
+	if msg := validateExport(exp, f.h.cfg.HostMountRoot); msg != "" {
+		t.Fatalf("validateExport = %q, want no refusal", msg)
+	}
+}
+
+func TestImportRefusesPlacesTheFormsWouldRefuse(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		want string
+		edit func(*settingsExport)
+	}{
+		{"a place without an id", "storage place #1: needs an id", func(e *settingsExport) { e.Places[0].ID = " " }},
+		{"a place without a name", "storage place #1: needs a name", func(e *settingsExport) { e.Places[0].Name = "" }},
+		{"two places with one id", "its id is used twice", func(e *settingsExport) { e.Places[1].ID = "place-unraid" }},
+		{"two places with one name", `the name "Unraid" is used twice`, func(e *settingsExport) { e.Places[1].Name = "Unraid" }},
+		{"an unknown provider", `unknown provider "dropbox"`, func(e *settingsExport) { e.Places[1].Provider = "dropbox" }},
+		{"a kind the provider does not have", `does not match provider "b2"`, func(e *settingsExport) { e.Places[1].Kind = "rest" }},
+		{"a local base outside the mount root", "relative subpaths under the mount root", func(e *settingsExport) { e.Places[0].Base = "/mnt/user/backups" }},
+		{"a local base that looks like a remote", "its base looks like a remote without a restic prefix", func(e *settingsExport) { e.Places[0].Base = "BackBlaze:bucket" }},
+		{"a folder that climbs out", "the folder for containers leaves the base", func(e *settingsExport) { e.Places[0].Folders["containers"] = "../../etc" }},
+		{"a folder for an unknown domain", `has a folder for an unknown domain "photos"`, func(e *settingsExport) { e.Places[0].Folders["photos"] = "photos" }},
+		{"a remote kind on a local path", "its base is not a remote location", func(e *settingsExport) { e.Places[1].Base = "backups/b2" }},
+		{"an archival storage class", "unsupported storage class GLACIER", func(e *settingsExport) { e.Places[1].StorageClass = "glacier" }},
+		{"a home of an unknown domain", `storageDomainPlaces names an unknown domain "photos"`, func(e *settingsExport) { e.StorageDomainPlaces["photos"] = "place-unraid" }},
+		{"a home the file does not carry", "the containers domain is stored at a place the file does not carry", func(e *settingsExport) { e.StorageDomainPlaces["containers"] = "place-gone" }},
+		{"a home without a folder", "the vms domain is stored at Unraid, which has no folder for it", func(e *settingsExport) { e.StorageDomainPlaces["vms"] = "place-unraid" }},
+		{"a home that is switched off", "which is switched off", func(e *settingsExport) { e.Places[0].Enabled = false }},
+		{"a row on a place the file does not carry", "off-site target #1: it sits on a storage place the file does not carry", func(e *settingsExport) { e.OffsiteTargets[0].PlaceID = "place-gone" }},
+		{"a row on a folder the place lacks", "has no folder for vms", func(e *settingsExport) { e.OffsiteTargets[0].PlaceDomain = "vms" }},
+		{"a target in the folder of another domain", "not for its own domain containers", func(e *settingsExport) {
+			e.Places[1].Folders["vms"] = "vms"
+			e.OffsiteTargets[0].PlaceDomain = "vms"
+		}},
+		{"a suffix holding a path", "its place suffix must not hold a path", func(e *settingsExport) { e.OffsiteTargets[0].PlaceSuffix = "-copies/x" }},
+		{"a placed row without an id", "a row on a storage place needs its id", func(e *settingsExport) { e.OffsiteTargets[0].ID = "" }},
+		{"a placed row in a file without places", "it sits on a storage place the file does not carry", func(e *settingsExport) {
+			e.Places = nil
+			e.StorageDomainPlaces = nil
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			exp := validPlacesFile()
+			tc.edit(&exp)
+			if msg := validateExport(exp, "/host/user"); !strings.Contains(msg, tc.want) {
+				t.Fatalf("validateExport = %q, want a refusal containing %q", msg, tc.want)
+			}
+		})
+	}
+}
