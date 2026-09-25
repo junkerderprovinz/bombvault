@@ -678,10 +678,7 @@ func (s *Service) keepDirectCreds(ctx context.Context, before store.Settings, di
 	if err != nil {
 		return false, err
 	}
-	oldEnv, err := credSetEnv(old, places.RemotePlace(direct.Repo))
-	if err != nil {
-		return false, err
-	}
+	oldEnv := credSetEnv(old, places.RemotePlace(direct.Repo))
 	mode := s.offsiteModeForTarget(settings, direct)
 	if slices.Equal(oldEnv, mode.Env) {
 		return true, nil

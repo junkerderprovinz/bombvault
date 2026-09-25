@@ -34,7 +34,7 @@ func TestAWebDAVDirectRepositoryKeepsThePasswordItOpenedWith(t *testing.T) {
 	d := f.direct(target)
 	f.container("web", d.ID)
 	// The last variable davEnv renders is the old password in rclone's form.
-	oldPass := davEnv(t, davPlace)[4]
+	oldPass := davEnv(davPlace)[4]
 	f.svc.engine = &envOpensEngine{placementEngine: f.eng, want: map[string]string{d.Repo: oldPass}}
 
 	drafts := f.credSetDrafts()

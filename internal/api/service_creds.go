@@ -54,12 +54,7 @@ func (s *Service) applyTargetCreds(mode restic.Mode, settings store.Settings, ta
 		log.Printf("api: target %s: cloud creds decode failed (ignoring, falling back to shared): %v", target.ID, err) //nolint:gosec // G706: target.ID is an opaque store-generated id
 		return mode
 	}
-	env, err := credSetEnv(set, places.RemotePlace(target.Repo))
-	if err != nil {
-		log.Printf("api: target %s: its credentials could not be rendered (falling back to shared): %v", target.ID, err) //nolint:gosec // G706: target.ID is an opaque store-generated id
-		return mode
-	}
-	mode.Env = env
+	mode.Env = credSetEnv(set, places.RemotePlace(target.Repo))
 	if set.S3StorageClass != "" {
 		mode.StorageClass = set.S3StorageClass
 	}

@@ -94,7 +94,7 @@ func TestAStoredNextcloudIsProbedThroughTheRemoteItsAddressNames(t *testing.T) {
 	if _, err := f.svc.ProbePlace(context.Background(), ProbeRequest{PlaceID: place.ID}); err != nil {
 		t.Fatal(err)
 	}
-	if env := eng.env(addr); !slices.Equal(env, davEnv(t, place.ID)) {
-		t.Fatalf("env = %v\nwant %v", env, davEnv(t, place.ID))
+	if env := eng.env(addr); !slices.Equal(env, davEnv(place.ID)) {
+		t.Fatalf("env = %v\nwant %v", env, davEnv(place.ID))
 	}
 }

@@ -10,9 +10,9 @@ import (
 // credSetEnv renders a credential set into restic's environment: by its kind
 // when it has one, through cloudEnv otherwise. placeID names the rclone remote
 // of a WebDAV place.
-func credSetEnv(set CloudCredSet, placeID string) ([]string, error) {
+func credSetEnv(set CloudCredSet, placeID string) []string {
 	if set.Kind == "" {
-		return cloudEnv(set.CloudCreds), nil
+		return cloudEnv(set.CloudCreds)
 	}
 	return places.Env(places.Kind(set.Kind), placeCredsOf(set), placeID)
 }
@@ -48,5 +48,5 @@ func (s *Service) placeEnv(p store.Place) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return credSetEnv(set, p.ID)
+	return credSetEnv(set, p.ID), nil
 }

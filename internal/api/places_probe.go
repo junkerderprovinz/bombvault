@@ -184,10 +184,7 @@ func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.Prob
 	case err != nil:
 		return failedProbe(res, err)
 	}
-	mode, err := s.probeMode(settings, pr)
-	if err != nil {
-		return res, err
-	}
+	mode := s.probeMode(settings, pr)
 	if pr.provider.Kind == places.KindLocal {
 		if err := s.localPlaceReady(pr); err != nil {
 			return failedProbe(res, err)
@@ -262,14 +259,10 @@ func overlayCreds(stored, typed places.Creds) places.Creds {
 
 // probeMode opens a probed place the way its rows will be opened: with this
 // instance's repository password and the environment of the place's kind.
-func (s *Service) probeMode(settings store.Settings, pr placeProbe) (restic.Mode, error) {
-	env, err := places.Env(pr.provider.Kind, pr.creds, pr.placeID)
-	if err != nil {
-		return restic.Mode{}, err
-	}
+func (s *Service) probeMode(settings store.Settings, pr placeProbe) restic.Mode {
 	mode := s.ModeFor(settings)
-	mode.Env = env
-	return mode, nil
+	mode.Env = places.Env(pr.provider.Kind, pr.creds, pr.placeID)
+	return mode
 }
 
 // localPlaceReady refuses a local place BombVault cannot write to, and a NAS

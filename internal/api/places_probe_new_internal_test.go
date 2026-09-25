@@ -127,16 +127,12 @@ func TestANextcloudIsProbedThroughARemoteFromTheEnvironment(t *testing.T) {
 	if res.Base != base {
 		t.Fatalf("base = %q, want %q", res.Base, base)
 	}
-	pass, err := places.Obscure("app-pass")
-	if err != nil {
-		t.Fatal(err)
-	}
 	want := []string{
 		"RCLONE_CONFIG_BVPPROBE_TYPE=webdav",
 		"RCLONE_CONFIG_BVPPROBE_URL=https://cloud.example.com/remote.php/dav/files/anna/",
 		"RCLONE_CONFIG_BVPPROBE_VENDOR=nextcloud",
 		"RCLONE_CONFIG_BVPPROBE_USER=anna",
-		"RCLONE_CONFIG_BVPPROBE_PASS=" + pass,
+		"RCLONE_CONFIG_BVPPROBE_PASS=" + places.Obscure("app-pass"),
 	}
 	if env := eng.env(base + "/container"); !slices.Equal(env, want) {
 		t.Fatalf("env = %v\nwant %v", env, want)
