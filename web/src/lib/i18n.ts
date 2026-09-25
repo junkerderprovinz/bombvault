@@ -133,6 +133,7 @@ export const en = {
   "spike.fail": "FAIL",
   "spike.info": "INFO",
   "spike.bestEffort": "optional",
+  "spike.required": "required",
   "spike.checkNow": "Check now",
   "spike.probeFailed": "probe failed (see server logs)",
 
@@ -2303,6 +2304,7 @@ export const de: Translations = {
   "spike.fail": "FEHLER",
   "spike.info": "Info",
   "spike.bestEffort": "optional",
+  "spike.required": "erforderlich",
   "spike.checkNow": "Jetzt prüfen",
   "spike.probeFailed": "Prüfung fehlgeschlagen (siehe Server-Logs)",
 

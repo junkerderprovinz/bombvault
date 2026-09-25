@@ -102,11 +102,9 @@ export function SpikePanel({ t, hueIndex }: SpikePanelProps) {
             >
               <span className="font-mono text-carbon-text text-xs">{c.Name}</span>
               <StatusChip ok={c.OK} bestEffort={c.BestEffort} t={t} />
-              <span className="text-carbon-textMuted text-xs wrap-break-word">
-                {c.Detail || "—"}
-              </span>
+              <span className="text-carbon-textMuted text-xs wrap-break-word">{c.Detail}</span>
               <span className="text-end text-xs text-carbon-textMuted">
-                {c.BestEffort ? "optional" : "required"}
+                {c.BestEffort ? t("spike.bestEffort") : t("spike.required")}
               </span>
             </div>
           ))}
