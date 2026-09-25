@@ -31,7 +31,7 @@ type targetOption struct {
 	Enabled    bool   `json:"enabled"`
 	Primary    bool   `json:"primary"` // sort_order 0
 	AppendOnly bool   `json:"appendOnly"`
-	Hint       string `json:"hint"` // "" | "creds-differ": the remote domain path carries other credentials
+	Hint       string `json:"hint"` // "" | "creds-differ": the remote domain path's credentials clash with the target's
 }
 
 type sendToOption struct {
@@ -102,17 +102,24 @@ func (s *Service) homeOptions(settings store.Settings, domain string, repos []st
 	return homes
 }
 
-// targetOptions lists every target row of the domain. restic copy runs with the
-// target's own credentials only, so a remote domain path whose credentials
-// differ makes that target's copy fail, and the chip says so beforehand.
+// targetOptions lists every target row of the domain. restic copy reads both
+// repositories from one environment, so a remote domain path whose variables
+// clash with a target's makes that target's copy fail, and the chip says so
+// beforehand. copyMode applies the same rule to the copy itself.
 func (s *Service) targetOptions(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget) []targetOption {
+	path := domainPathRaw(p.Domain, settings)
 	remote := s.homeKindOf(settings, p.Domain, "", named) == homeDomainRemote
-	primary, _ := s.primaryRemoteTarget(p.Domain)
+	var pathEnv []string
+	if remote {
+		pathEnv = s.primaryModeFor(settings, p.Domain, path).Env
+	}
 	out := make([]targetOption, 0, len(p.Targets))
 	for _, t := range p.Targets {
 		o := targetOption{ID: t.ID, Name: placementTargetName(t), Enabled: t.Enabled, Primary: t.SortOrder == 0, AppendOnly: t.Immutable}
-		if remote && t.CredsRef != primary.CredsRef {
-			o.Hint = "creds-differ"
+		if remote {
+			if _, ok := copyNeeds(t.Repo, s.offsiteModeForTarget(settings, t).Env, path, pathEnv); !ok {
+				o.Hint = "creds-differ"
+			}
 		}
 		out = append(out, o)
 	}
