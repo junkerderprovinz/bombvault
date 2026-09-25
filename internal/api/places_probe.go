@@ -5,12 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // errPlaceProbeFailed marks a probe that reached no verdict about a place or a
@@ -114,4 +117,152 @@ func (s *Service) repoIDIn(ctx context.Context, loc string, mode restic.Mode) (s
 		return id, nil
 	}
 	return "", err
+}
+
+// ProbeRequest is a connection test before a place is added or changed.
+type ProbeRequest struct {
+	Provider string            `json:"provider"`
+	Fields   map[string]string `json:"fields"`
+	PlaceID  string            `json:"placeId,omitempty"`
+}
+
+// probePlaceID names the rclone remote a WebDAV place is probed through before
+// it has an id of its own.
+const probePlaceID = "probe"
+
+// placeProbe is one probe on its way: the provider, the form as the probe
+// completes it, the credentials, and the address once it is known.
+type placeProbe struct {
+	provider places.Provider
+	fields   map[string]string
+	creds    places.Creds
+	placeID  string
+	base     string
+	folders  places.Folders
+}
+
+// ProbePlace tests a place before it is added and changes nothing: no
+// repository is created and no row is written. A place that cannot be reached
+// comes back as a result with OK false and a code; an error is left for a
+// request that names no known provider or leaves a required field empty.
+func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.ProbeResult, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return places.ProbeResult{}, fmt.Errorf("read settings: %w", err)
+	}
+	pr, err := s.newPlaceProbe(req)
+	if err != nil {
+		return places.ProbeResult{}, err
+	}
+	var res places.ProbeResult
+	pr.base, err = places.Base(pr.provider, pr.fields, pr.placeID)
+	res.Fields = publicFields(pr.provider, pr.fields)
+	if err != nil {
+		return failedProbe(res, err)
+	}
+	mode, err := s.probeMode(settings, pr)
+	if err != nil {
+		return res, err
+	}
+	if pr.provider.Kind == places.KindLocal {
+		if err := s.localPlaceReady(pr); err != nil {
+			return failedProbe(res, err)
+		}
+	}
+	found := s.probeFolders(ctx, pr.base, pr.folders, mode)
+	found.Fields, found.Buckets, found.Facts = res.Fields, res.Buckets, res.Facts
+	return found, nil
+}
+
+func (s *Service) newPlaceProbe(req ProbeRequest) (placeProbe, error) {
+	p, ok := places.ProviderByID(req.Provider)
+	if !ok {
+		return placeProbe{}, fmt.Errorf("unknown provider %q", req.Provider)
+	}
+	fields := maps.Clone(req.Fields)
+	if fields == nil {
+		fields = map[string]string{}
+	}
+	return placeProbe{
+		provider: p, fields: fields, creds: places.CredsFromFields(p, fields),
+		placeID: probePlaceID, folders: places.DefaultFolders(),
+	}, nil
+}
+
+// probeMode opens a probed place the way its rows will be opened: with this
+// instance's repository password and the environment of the place's kind.
+func (s *Service) probeMode(settings store.Settings, pr placeProbe) (restic.Mode, error) {
+	env, err := places.Env(pr.provider.Kind, pr.creds, pr.placeID)
+	if err != nil {
+		return restic.Mode{}, err
+	}
+	mode := s.ModeFor(settings)
+	mode.Env = env
+	return mode, nil
+}
+
+// localPlaceReady refuses a local place BombVault cannot write to, and a NAS
+// share with nothing mounted: its empty mount point takes a test write as
+// readily as a backup, and the backup would fill the container instead.
+func (s *Service) localPlaceReady(pr placeProbe) error {
+	loc, err := s.resolveRepo(pr.base)
+	if err != nil {
+		return err
+	}
+	if slices.Contains(pr.provider.PickRoots, "remotes") && !s.destinationMounted(loc) {
+		return fmt.Errorf("%w: nothing is mounted at this share; mount it on the server first", errPlaceProbeFailed)
+	}
+	if err := writableDir(loc); err != nil {
+		return fmt.Errorf("%w: BombVault cannot write here: %v", errPlaceProbeFailed, err)
+	}
+	return nil
+}
+
+// writableDir creates and removes a throwaway file in dir, or in its deepest
+// existing parent while dir is still to be created, which is where the first
+// backup has to write.
+func writableDir(dir string) error {
+	for {
+		if _, err := os.Stat(dir); err == nil {
+			break
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	f, err := os.CreateTemp(dir, ".bombvault-probe-*")
+	if err != nil {
+		return err
+	}
+	name := f.Name()
+	if err := f.Close(); err != nil {
+		_ = os.Remove(name)
+		return err
+	}
+	return os.Remove(name)
+}
+
+// publicFields is the form as the probe completed it, without its secrets, so
+// the add request can send back what the probe filled in.
+func publicFields(p places.Provider, fields map[string]string) map[string]string {
+	out := map[string]string{}
+	for key, value := range fields {
+		hidden := slices.ContainsFunc(p.Fields, func(f places.Field) bool { return f.Key == key && f.Secret })
+		if value != "" && !hidden {
+			out[key] = value
+		}
+	}
+	return out
+}
+
+// failedProbe turns a failure into the answer: a probe that reached no verdict
+// is a result with OK false, anything else stays the request's error.
+func failedProbe(res places.ProbeResult, err error) (places.ProbeResult, error) {
+	if !errors.Is(err, errPlaceProbeFailed) {
+		return res, err
+	}
+	res.OK, res.Code, res.Error = false, placementCode(err), scrubError(err)
+	return res, nil
 }
