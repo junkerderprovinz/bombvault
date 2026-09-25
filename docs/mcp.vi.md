@@ -136,7 +136,7 @@ Bất kỳ máy khách nào nói Streamable HTTP đều dùng được:
 
 BombVault phục vụ HTTPS bằng chứng chỉ tự cấp, và ban đầu chứng chỉ này chỉ ghi `localhost`, `127.0.0.1` và `::1`. Claude Code và `mcp-remote` từ chối nó trên một địa chỉ mạng LAN. Các cách xử lý, theo thứ tự phù hợp với phần lớn các bản cài Unraid:
 
-1. **Thêm địa chỉ trong thẻ MCP.** Khi mở thẻ qua HTTPS ở một địa chỉ mà chứng chỉ không ghi, thẻ sẽ báo và đề xuất **Thêm địa chỉ này vào chứng chỉ**. BombVault sẽ cấp lại chứng chỉ có kèm địa chỉ đó (trình duyệt sẽ cảnh báo thêm một lần, như lần đầu). Sau đó nhấn **Tải chứng chỉ**; các đoạn mã đặt `NODE_EXTRA_CA_CERTS` trỏ tới tệp đã tải, nên máy khách tin cậy đúng chứng chỉ đó.
+1. **Thêm địa chỉ trong thẻ MCP.** Khi mở thẻ qua HTTPS ở một địa chỉ mà chứng chỉ không ghi, thẻ sẽ báo và đề xuất **Thêm địa chỉ này vào chứng chỉ**. BombVault sẽ cấp lại chứng chỉ có kèm địa chỉ đó (trình duyệt sẽ cảnh báo thêm một lần, như lần đầu). Sau đó nhấn **Tải chứng chỉ**; các đoạn mã đặt `NODE_EXTRA_CA_CERTS` trỏ tới tệp đã tải, nên máy khách tin cậy đúng chứng chỉ đó. Điều đó cũng có nghĩa là mọi máy khách được thiết lập bằng tệp đã tải trước đó sẽ không kết nối được nữa ngay khi chứng chỉ được cấp lại, trên máy tính này cũng như mọi máy khác, cho đến khi nhận được tệp mới.
 2. **Một reverse proxy với chứng chỉ đáng tin cậy** (Nginx Proxy Manager, SWAG, Caddy, Traefik). Khi đó máy khách thấy chứng chỉ của proxy và không cần gì thêm, và thẻ cũng không cảnh báo về chứng chỉ của BombVault.
 3. **Tailscale.** `tailscale serve` đặt trước container, hoặc tích hợp Tailscale của Unraid, cho bạn một tên `ts.net` với chứng chỉ đáng tin cậy.
 4. **`HTTP_ONLY=true`**, chỉ dùng sau một proxy kết thúc TLS hoặc trong mạng bạn hoàn toàn tin cậy. Nó chuyển toàn bộ giao diện web sang HTTP thường, cần sửa cài đặt container và gửi khóa không mã hóa.
@@ -192,7 +192,7 @@ Mọi thứ trợ lý đọc đều được gửi tới nhà cung cấp AI đ�
 | Lỗi có "certificate", "self-signed" hoặc "unable to verify" | Máy khách không tin cậy chứng chỉ của BombVault. Xem [TLS và chứng chỉ](#tls). |
 | `busy` | Một lần sao lưu khác hoặc tác vụ bảo trì đang chiếm miền đó. Thử lại khi nó xong. |
 | `cooldown` | Mục này, miền này hoặc Backup Everything đã được bắt đầu qua MCP chưa đầy 15 phút trước. |
-| `retention_guard` | Thêm một lần sao lưu qua MCP nữa sẽ khiến khoảng "giữ N bản gần nhất" chỉ còn các điểm khôi phục từ MCP. Lần sao lưu theo lịch tiếp theo sẽ tạo chỗ trống, hoặc hãy bắt đầu nó trong giao diện web. |
+| `retention_guard` | Thêm một lần sao lưu qua MCP nữa sẽ khiến khoảng "giữ N bản gần nhất" chỉ còn các điểm khôi phục từ MCP, hoặc mục đó đã được sao lưu qua MCP 4 lần trong 24 giờ qua, tính cả các lần thất bại và bị hủy. Ở trường hợp đầu, lần sao lưu theo lịch tiếp theo sẽ tạo chỗ trống; ở trường hợp sau, mục đó được bắt đầu lại sau 24 giờ kể từ lần sao lưu cũ nhất trong số đó. Trong giao diện web, bạn có thể bắt đầu nó bất cứ lúc nào. |
 | `rate_limited` | Khóa đã dùng hết 12 lần bắt đầu của giờ này. |
 | `not_permitted` khi bắt đầu | Khóa chỉ được đọc. Bật **Cho phép bắt đầu sao lưu** trong thẻ; không cần kết nối lại. Khi hủy, nó có nghĩa là lần chạy đó không do khóa này bắt đầu. |
 | `domain_off` | Loại sao lưu đó đang tắt trong cài đặt. |

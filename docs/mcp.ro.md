@@ -136,7 +136,7 @@ Merge orice client care vorbește Streamable HTTP:
 
 BombVault servește HTTPS cu un certificat emis de el însuși, iar la început acest certificat numește doar `localhost`, `127.0.0.1` și `::1`. Claude Code și `mcp-remote` îl refuză pe o adresă din rețeaua locală. Căile de ocolire, în ordinea care se potrivește celor mai multe instalări Unraid:
 
-1. **Adaugă adresa în cardul MCP.** Când deschizi cardul prin HTTPS la o adresă pe care certificatul nu o numește, cardul spune asta și oferă **Adaugă această adresă la certificat**. BombVault emite atunci din nou certificatul, cu acea adresă inclusă (browserul te avertizează încă o dată, ca prima oară). Apoi dă clic pe **Descarcă certificatul**; fragmentele setează `NODE_EXTRA_CA_CERTS` pe fișierul descărcat, astfel încât clientul are încredere exact în acel certificat.
+1. **Adaugă adresa în cardul MCP.** Când deschizi cardul prin HTTPS la o adresă pe care certificatul nu o numește, cardul spune asta și oferă **Adaugă această adresă la certificat**. BombVault emite atunci din nou certificatul, cu acea adresă inclusă (browserul te avertizează încă o dată, ca prima oară). Apoi dă clic pe **Descarcă certificatul**; fragmentele setează `NODE_EXTRA_CA_CERTS` pe fișierul descărcat, astfel încât clientul are încredere exact în acel certificat. Asta înseamnă și că orice client configurat cu un fișier descărcat anterior nu se mai conectează din clipa în care certificatul e emis din nou, pe acest computer și pe oricare altul, până primește fișierul nou.
 2. **Un proxy invers cu un certificat de încredere** (Nginx Proxy Manager, SWAG, Caddy, Traefik). Clientul vede atunci certificatul proxy-ului și nu mai are nevoie de nimic, iar cardul nu avertizează despre cel al BombVault.
 3. **Tailscale.** `tailscale serve` în fața containerului sau integrarea Tailscale din Unraid îți dă un nume `ts.net` cu un certificat de încredere.
 4. **`HTTP_ONLY=true`**, doar în spatele unui proxy care termină TLS sau într-o rețea în care ai încredere deplină. Trece toată interfața web pe HTTP simplu, cere o modificare în setările containerului și trimite cheia necriptată.
@@ -192,7 +192,7 @@ Tot ce citește un asistent ajunge la furnizorul de IA din spatele lui: numele e
 | Erori cu "certificate", "self-signed" sau "unable to verify" | Clientul nu are încredere în certificatul BombVault. Vezi [TLS și certificate](#tls). |
 | `busy` | Altă copie sau o sarcină de întreținere ocupă acel domeniu. Încearcă din nou după ce se termină. |
 | `cooldown` | Acest element, acest domeniu sau Backup Everything a fost pornit prin MCP acum mai puțin de 15 minute. |
-| `retention_guard` | Încă o copie MCP ar lăsa doar puncte de restaurare din MCP într-o fereastră "păstrează ultimele N". Următoarea copie programată face loc, sau pornește copia din interfața web. |
+| `retention_guard` | Încă o copie MCP ar lăsa doar puncte de restaurare din MCP într-o fereastră "păstrează ultimele N", sau elementul a primit deja 4 copii prin MCP în ultimele 24 de ore, inclusiv cele eșuate și anulate. În primul caz următoarea copie programată face loc, în al doilea elementul e liber din nou la 24 de ore după cea mai veche dintre aceste copii. Din interfața web o poți porni oricând. |
 | `rate_limited` | Cheia și-a consumat cele 12 porniri din această oră. |
 | `not_permitted` la o pornire | Cheia poate doar să citească. Pornește **Permite pornirea copiilor** în card; nu e nevoie de reconectare. La o anulare înseamnă că rularea nu a fost pornită de această cheie. |
 | `domain_off` | Acel tip de copie e oprit în setări. |

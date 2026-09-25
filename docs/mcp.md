@@ -136,7 +136,7 @@ Any client that speaks Streamable HTTP works:
 
 BombVault serves HTTPS with a certificate it made itself, and at first that certificate names only `localhost`, `127.0.0.1` and `::1`. Claude Code and `mcp-remote` refuse it on a LAN address. The ways around that, in the order that suits most Unraid installs:
 
-1. **Add the address in the MCP card.** When the card is opened over HTTPS at an address the certificate does not name, it says so and offers **Add this address to the certificate**. BombVault issues its certificate again with that address added (your browser warns once more, as it did the first time). Then click **Download certificate**; the snippets set `NODE_EXTRA_CA_CERTS` to the downloaded file, so the client trusts exactly this certificate.
+1. **Add the address in the MCP card.** When the card is opened over HTTPS at an address the certificate does not name, it says so and offers **Add this address to the certificate**. BombVault issues its certificate again with that address added (your browser warns once more, as it did the first time). Then click **Download certificate**; the snippets set `NODE_EXTRA_CA_CERTS` to the downloaded file, so the client trusts exactly this certificate. That also means that every client set up with an earlier download stops connecting as soon as the certificate is issued again, on this computer and on every other one, until it gets the new file.
 2. **A reverse proxy with a trusted certificate** (Nginx Proxy Manager, SWAG, Caddy, Traefik). The client then sees the proxy's certificate and needs nothing extra, and the card does not warn about BombVault's own.
 3. **Tailscale.** `tailscale serve` in front of the container, or the Unraid Tailscale integration, gives you a `ts.net` name with a trusted certificate.
 4. **`HTTP_ONLY=true`**, only behind a proxy that ends TLS or on a network you fully trust. It switches the whole web interface to plain HTTP, needs a change to the container settings, and sends the key unencrypted.
@@ -192,7 +192,7 @@ Whatever an assistant reads goes to the AI provider behind it: item names, sched
 | "certificate", "self-signed" or "unable to verify" errors | The client does not trust BombVault's certificate. See [TLS and certificates](#tls). |
 | `busy` | Another backup or maintenance job holds that domain. Try again when it has finished. |
 | `cooldown` | This item, domain or Backup Everything was started through MCP less than 15 minutes ago. |
-| `retention_guard` | One more MCP backup would leave only MCP-made restore points in a "keep last N" window. The next scheduled backup makes room, or start it in the web interface. |
+| `retention_guard` | One more MCP backup would leave only MCP-made restore points in a "keep last N" window, or the item already got 4 backups through MCP in the last 24 hours, failed and cancelled ones included. In the first case the next scheduled backup makes room, in the second the item is free again 24 hours after the oldest of those backups. Either way you can start it in the web interface. |
 | `rate_limited` | The key has used its 12 starts for this hour. |
 | `not_permitted` on a start | The key is read-only. Switch **Allow starting backups** on in the card; no reconnect needed. On a cancel it means the run was not started by this key. |
 | `domain_off` | That backup type is switched off in Settings. |

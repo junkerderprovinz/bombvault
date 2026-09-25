@@ -136,7 +136,7 @@ Nada się każdy klient, który mówi w Streamable HTTP:
 
 BombVault udostępnia HTTPS z certyfikatem, który sam wystawił, a ten na początku wymienia tylko `localhost`, `127.0.0.1` i `::1`. Claude Code i `mcp-remote` odrzucają go na adresie w sieci lokalnej. Sposoby obejścia, w kolejności pasującej do większości instalacji Unraid:
 
-1. **Dodaj adres w karcie MCP.** Gdy kartę otworzysz przez HTTPS pod adresem, którego certyfikat nie wymienia, karta o tym powie i zaproponuje **Dodaj ten adres do certyfikatu**. BombVault wystawi wtedy certyfikat ponownie z tym adresem (przeglądarka ostrzeże jeszcze raz, jak za pierwszym razem). Potem kliknij **Pobierz certyfikat**; fragmenty ustawiają `NODE_EXTRA_CA_CERTS` na pobrany plik, więc klient ufa dokładnie temu certyfikatowi.
+1. **Dodaj adres w karcie MCP.** Gdy kartę otworzysz przez HTTPS pod adresem, którego certyfikat nie wymienia, karta o tym powie i zaproponuje **Dodaj ten adres do certyfikatu**. BombVault wystawi wtedy certyfikat ponownie z tym adresem (przeglądarka ostrzeże jeszcze raz, jak za pierwszym razem). Potem kliknij **Pobierz certyfikat**; fragmenty ustawiają `NODE_EXTRA_CA_CERTS` na pobrany plik, więc klient ufa dokładnie temu certyfikatowi. Oznacza to też, że każdy klient skonfigurowany z wcześniej pobranym plikiem przestaje się łączyć, gdy tylko certyfikat zostanie wystawiony ponownie, na tym komputerze i na każdym innym, dopóki nie dostanie nowego pliku.
 2. **Reverse proxy z zaufanym certyfikatem** (Nginx Proxy Manager, SWAG, Caddy, Traefik). Klient widzi wtedy certyfikat proxy i nie potrzebuje niczego więcej, a karta nie ostrzega przed certyfikatem BombVault.
 3. **Tailscale.** `tailscale serve` przed kontenerem albo integracja Tailscale w Unraid daje ci nazwę `ts.net` z zaufanym certyfikatem.
 4. **`HTTP_ONLY=true`**, tylko za proxy kończącym TLS albo w sieci, której w pełni ufasz. Przełącza cały interfejs WWW na zwykłe HTTP, wymaga zmiany ustawień kontenera i wysyła klucz bez szyfrowania.
@@ -192,7 +192,7 @@ Wszystko, co czyta asystent, trafia do dostawcy AI, który za nim stoi: nazwy el
 | Błędy z "certificate", "self-signed" albo "unable to verify" | Klient nie ufa certyfikatowi BombVault. Zobacz [TLS i certyfikaty](#tls). |
 | `busy` | Domenę zajmuje inna kopia albo zadanie konserwacji. Spróbuj ponownie, gdy się skończy. |
 | `cooldown` | Ten element, ta domena albo Backup Everything został uruchomiony przez MCP mniej niż 15 minut temu. |
-| `retention_guard` | Kolejna kopia przez MCP zostawiłaby w oknie "zachowaj ostatnie N" tylko punkty przywracania z MCP. Miejsce zrobi następna zaplanowana kopia, albo uruchom ją w interfejsie WWW. |
+| `retention_guard` | Kolejna kopia przez MCP zostawiłaby w oknie "zachowaj ostatnie N" tylko punkty przywracania z MCP albo element dostał już 4 kopie przez MCP w ciągu ostatnich 24 godzin, licząc nieudane i anulowane. W pierwszym przypadku miejsce zrobi następna zaplanowana kopia, w drugim element zwolni się 24 godziny po najstarszej z tych kopii. W interfejsie WWW możesz ją uruchomić w każdej chwili. |
 | `rate_limited` | Klucz zużył swoje 12 uruchomień na tę godzinę. |
 | `not_permitted` przy uruchomieniu | Klucz może tylko czytać. Włącz w karcie **Pozwól uruchamiać kopie**; ponowne łączenie nie jest potrzebne. Przy anulowaniu oznacza to, że przebiegu nie uruchomił ten klucz. |
 | `domain_off` | Ten rodzaj kopii jest wyłączony w ustawieniach. |

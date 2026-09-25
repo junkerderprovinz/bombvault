@@ -136,7 +136,7 @@ Streamable HTTP konuşan her istemci olur:
 
 BombVault HTTPS'i kendi düzenlediği bir sertifikayla sunar ve başlangıçta bu sertifika yalnızca `localhost`, `127.0.0.1` ve `::1` adlarını içerir. Claude Code ve `mcp-remote` onu yerel ağ adresinde reddeder. Çözüm yolları, çoğu Unraid kurulumuna uyan sırayla:
 
-1. **Adresi MCP kartına ekleyin.** Kartı sertifikanın içermediği bir adreste HTTPS ile açtığınızda kart bunu söyler ve **Bu adresi sertifikaya ekle** seçeneğini sunar. BombVault bunun üzerine sertifikasını o adresi de içerecek şekilde yeniden düzenler (tarayıcınız ilk seferdeki gibi bir kez daha uyarır). Ardından **Sertifikayı indir** düğmesine tıklayın; parçacıklar `NODE_EXTRA_CA_CERTS` değerini indirilen dosyaya ayarlar, böylece istemci tam olarak o sertifikaya güvenir.
+1. **Adresi MCP kartına ekleyin.** Kartı sertifikanın içermediği bir adreste HTTPS ile açtığınızda kart bunu söyler ve **Bu adresi sertifikaya ekle** seçeneğini sunar. BombVault bunun üzerine sertifikasını o adresi de içerecek şekilde yeniden düzenler (tarayıcınız ilk seferdeki gibi bir kez daha uyarır). Ardından **Sertifikayı indir** düğmesine tıklayın; parçacıklar `NODE_EXTRA_CA_CERTS` değerini indirilen dosyaya ayarlar, böylece istemci tam olarak o sertifikaya güvenir. Bu aynı zamanda, daha önce indirilen bir dosyayla kurulmuş her istemcinin, sertifika yeniden düzenlendiği anda bu bilgisayarda ve diğer tüm bilgisayarlarda bağlanamaz hale geldiği anlamına gelir; yeni dosyayı alana kadar böyle kalır.
 2. **Güvenilir sertifikalı bir ters vekil sunucu** (Nginx Proxy Manager, SWAG, Caddy, Traefik). İstemci bu durumda vekil sunucunun sertifikasını görür ve başka bir şeye ihtiyaç duymaz; kart da BombVault'un kendi sertifikası hakkında uyarmaz.
 3. **Tailscale.** Kapsayıcının önündeki `tailscale serve` ya da Unraid'in Tailscale entegrasyonu size güvenilir sertifikalı bir `ts.net` adı verir.
 4. **`HTTP_ONLY=true`**, yalnızca TLS'i sonlandıran bir vekil sunucunun arkasında ya da tamamen güvendiğiniz bir ağda. Tüm web arayüzünü düz HTTP'ye geçirir, kapsayıcı ayarlarında değişiklik gerektirir ve anahtarı şifrelemeden gönderir.
@@ -192,7 +192,7 @@ Bir asistanın okuduğu her şey arkasındaki yapay zekâ sağlayıcısına gide
 | "certificate", "self-signed" ya da "unable to verify" içeren hatalar | İstemci BombVault'un sertifikasına güvenmiyor. Bkz. [TLS ve sertifikalar](#tls). |
 | `busy` | O alanı başka bir yedekleme ya da bakım işi tutuyor. Bittiğinde yeniden deneyin. |
 | `cooldown` | Bu öğe, bu alan ya da Backup Everything 15 dakikadan kısa süre önce MCP üzerinden başlatıldı. |
-| `retention_guard` | Bir MCP yedeği daha, "son N taneyi tut" penceresinde yalnızca MCP'den gelen geri yükleme noktaları bırakırdı. Bir sonraki zamanlanmış yedekleme yer açar ya da yedeklemeyi web arayüzünden başlatın. |
+| `retention_guard` | Bir MCP yedeği daha, "son N taneyi tut" penceresinde yalnızca MCP'den gelen geri yükleme noktaları bırakırdı ya da öğe son 24 saatte MCP üzerinden zaten 4 yedek aldı; başarısız ve iptal edilenler de sayılır. İlk durumda bir sonraki zamanlanmış yedekleme yer açar, ikincisinde öğe bu yedeklerin en eskisinden 24 saat sonra yeniden serbest kalır. Web arayüzünden her zaman başlatabilirsiniz. |
 | `rate_limited` | Anahtar bu saat için 12 başlatmasını kullandı. |
 | Başlatmada `not_permitted` | Anahtar yalnızca okuyabilir. Kartta **Yedekleme başlatmaya izin ver** seçeneğini açın; yeniden bağlanmak gerekmez. İptalde, çalıştırmanın bu anahtar tarafından başlatılmadığı anlamına gelir. |
 | `domain_off` | O yedekleme türü ayarlarda kapalı. |

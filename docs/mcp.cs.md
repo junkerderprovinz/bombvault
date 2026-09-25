@@ -136,7 +136,7 @@ Funguje každý klient, který umí Streamable HTTP:
 
 BombVault poskytuje HTTPS s certifikátem, který si vydal sám, a ten zpočátku uvádí jen `localhost`, `127.0.0.1` a `::1`. Claude Code a `mcp-remote` ho na adrese v místní síti odmítnou. Cesty kolem toho, v pořadí, které vyhovuje většině instalací Unraid:
 
-1. **Přidat adresu v kartě MCP.** Když kartu otevřete přes HTTPS na adrese, kterou certifikát neuvádí, karta to řekne a nabídne **Přidat tuto adresu do certifikátu**. BombVault pak certifikát vydá znovu i s touto adresou (prohlížeč jednou znovu varuje, stejně jako poprvé). Potom klikněte na **Stáhnout certifikát**; úryvky nastaví `NODE_EXTRA_CA_CERTS` na stažený soubor, takže klient důvěřuje právě tomuto certifikátu.
+1. **Přidat adresu v kartě MCP.** Když kartu otevřete přes HTTPS na adrese, kterou certifikát neuvádí, karta to řekne a nabídne **Přidat tuto adresu do certifikátu**. BombVault pak certifikát vydá znovu i s touto adresou (prohlížeč jednou znovu varuje, stejně jako poprvé). Potom klikněte na **Stáhnout certifikát**; úryvky nastaví `NODE_EXTRA_CA_CERTS` na stažený soubor, takže klient důvěřuje právě tomuto certifikátu. Znamená to také, že každý klient nastavený s dříve staženým souborem se přestane připojovat, jakmile je certifikát vydán znovu, na tomto počítači i na všech ostatních, dokud nedostane nový soubor.
 2. **Reverzní proxy s důvěryhodným certifikátem** (Nginx Proxy Manager, SWAG, Caddy, Traefik). Klient pak vidí certifikát proxy a nic dalšího nepotřebuje a karta na certifikát BombVaultu neupozorňuje.
 3. **Tailscale.** `tailscale serve` před kontejnerem nebo integrace Tailscale v Unraidu vám dá název `ts.net` s důvěryhodným certifikátem.
 4. **`HTTP_ONLY=true`**, jen za proxy, která ukončuje TLS, nebo v síti, které plně důvěřujete. Přepne celé webové rozhraní na prosté HTTP, vyžaduje změnu nastavení kontejneru a posílá klíč nešifrovaně.
@@ -192,7 +192,7 @@ Vše, co asistent přečte, odchází k poskytovateli umělé inteligence za ní
 | Chyby s "certificate", "self-signed" nebo "unable to verify" | Klient nedůvěřuje certifikátu BombVaultu. Viz [TLS a certifikáty](#tls). |
 | `busy` | Doménu zabírá jiná záloha nebo úloha údržby. Zkuste to znovu, až skončí. |
 | `cooldown` | Tato položka, tato doména nebo Backup Everything byla přes MCP spuštěna před méně než 15 minutami. |
-| `retention_guard` | Další záloha přes MCP by v okně "ponechat posledních N" nechala jen body obnovy z MCP. Místo udělá další naplánovaná záloha, nebo ji spusťte ve webovém rozhraní. |
+| `retention_guard` | Další záloha přes MCP by v okně "ponechat posledních N" nechala jen body obnovy z MCP, nebo položka už za posledních 24 hodin dostala 4 zálohy přes MCP, včetně neúspěšných a zrušených. V prvním případě udělá místo další naplánovaná záloha, ve druhém je položka znovu volná 24 hodin po nejstarší z těchto záloh. Ve webovém rozhraní ji můžete spustit kdykoli. |
 | `rate_limited` | Klíč vyčerpal svých 12 spuštění pro tuto hodinu. |
 | `not_permitted` při spuštění | Klíč smí jen číst. Zapněte v kartě **Povolit spouštění záloh**; nové připojení není potřeba. U zrušení to znamená, že běh nespustil tento klíč. |
 | `domain_off` | Tento druh zálohy je v nastavení vypnutý. |

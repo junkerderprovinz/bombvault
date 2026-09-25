@@ -136,7 +136,7 @@ Serve qualquer cliente que fale Streamable HTTP:
 
 O BombVault serve HTTPS com um certificado emitido por ele próprio, e de início esse certificado só nomeia `localhost`, `127.0.0.1` e `::1`. O Claude Code e o `mcp-remote` recusam-no num endereço da rede local. As saídas, pela ordem que serve à maioria das instalações Unraid:
 
-1. **Acrescentar o endereço no cartão MCP.** Se abrir o cartão por HTTPS num endereço que o certificado não nomeia, ele avisa e oferece **Acrescentar este endereço ao certificado**. O BombVault emite de novo o certificado com esse endereço (o navegador avisa mais uma vez, como da primeira). Depois clique em **Descarregar certificado**; os excertos definem `NODE_EXTRA_CA_CERTS` para o ficheiro descarregado, e o cliente passa a confiar exatamente nesse certificado.
+1. **Acrescentar o endereço no cartão MCP.** Se abrir o cartão por HTTPS num endereço que o certificado não nomeia, ele avisa e oferece **Acrescentar este endereço ao certificado**. O BombVault emite de novo o certificado com esse endereço (o navegador avisa mais uma vez, como da primeira). Depois clique em **Descarregar certificado**; os excertos definem `NODE_EXTRA_CA_CERTS` para o ficheiro descarregado, e o cliente passa a confiar exatamente nesse certificado. Isto também significa que qualquer cliente configurado com um ficheiro descarregado antes deixa de se ligar assim que o certificado é emitido de novo, neste computador e em todos os outros, até receber o ficheiro novo.
 2. **Um proxy inverso com um certificado de confiança** (Nginx Proxy Manager, SWAG, Caddy, Traefik). O cliente vê então o certificado do proxy e não precisa de mais nada, e o cartão não avisa sobre o do BombVault.
 3. **Tailscale.** `tailscale serve` à frente do contentor, ou a integração Tailscale do Unraid, dá-lhe um nome `ts.net` com um certificado de confiança.
 4. **`HTTP_ONLY=true`**, só atrás de um proxy que termine o TLS ou numa rede em que confie totalmente. Passa toda a interface web para HTTP simples, exige uma alteração nas definições do contentor e envia a chave sem cifra.
@@ -192,7 +192,7 @@ Tudo o que um assistente lê vai para o fornecedor de IA por trás dele: nomes d
 | Erros com "certificate", "self-signed" ou "unable to verify" | O cliente não confia no certificado do BombVault. Ver [TLS e certificados](#tls). |
 | `busy` | Outra cópia ou uma tarefa de manutenção ocupa esse domínio. Tente de novo quando terminar. |
 | `cooldown` | Este elemento, este domínio ou Backup Everything foi iniciado por MCP há menos de 15 minutos. |
-| `retention_guard` | Mais uma cópia MCP deixaria só pontos de restauro vindos de MCP numa janela "manter os últimos N". A próxima cópia agendada abre espaço, ou inicie-a na interface web. |
+| `retention_guard` | Mais uma cópia MCP deixaria só pontos de restauro vindos de MCP numa janela "manter os últimos N", ou o elemento já recebeu 4 cópias por MCP nas últimas 24 horas, contando as que falharam e as canceladas. No primeiro caso a próxima cópia agendada abre espaço; no segundo o elemento fica livre outra vez 24 horas depois da mais antiga dessas cópias. Em qualquer dos casos pode iniciá-la na interface web. |
 | `rate_limited` | A chave gastou os seus 12 inícios desta hora. |
 | `not_permitted` num início | A chave é só de leitura. Ligue **Permitir iniciar cópias** no cartão; não é preciso voltar a ligar. Num cancelamento significa que a execução não foi iniciada por esta chave. |
 | `domain_off` | Esse tipo de cópia está desligado nas definições. |

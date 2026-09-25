@@ -136,7 +136,7 @@ Enhver klient, der taler Streamable HTTP, virker:
 
 BombVault leverer HTTPS med et certifikat, det selv har udstedt, og i starten nævner det certifikat kun `localhost`, `127.0.0.1` og `::1`. Claude Code og `mcp-remote` afviser det på en LAN-adresse. Vejene uden om, i den rækkefølge der passer til de fleste Unraid-installationer:
 
-1. **Tilføj adressen i MCP-kortet.** Åbner du kortet over HTTPS på en adresse, certifikatet ikke nævner, siger kortet det og tilbyder **Tilføj denne adresse til certifikatet**. BombVault udsteder så sit certifikat igen med den adresse (din browser advarer én gang til, ligesom første gang). Klik derefter på **Hent certifikat**; uddragene sætter `NODE_EXTRA_CA_CERTS` til den hentede fil, så klienten stoler på netop det certifikat.
+1. **Tilføj adressen i MCP-kortet.** Åbner du kortet over HTTPS på en adresse, certifikatet ikke nævner, siger kortet det og tilbyder **Tilføj denne adresse til certifikatet**. BombVault udsteder så sit certifikat igen med den adresse (din browser advarer én gang til, ligesom første gang). Klik derefter på **Hent certifikat**; uddragene sætter `NODE_EXTRA_CA_CERTS` til den hentede fil, så klienten stoler på netop det certifikat. Det betyder også, at enhver klient, der er sat op med en tidligere hentet fil, holder op med at forbinde, så snart certifikatet udstedes igen, på denne computer og på alle andre, indtil den får den nye fil.
 2. **En reverse proxy med et betroet certifikat** (Nginx Proxy Manager, SWAG, Caddy, Traefik). Klienten ser så proxyens certifikat og behøver intet ekstra, og kortet advarer ikke om BombVaults eget.
 3. **Tailscale.** `tailscale serve` foran containeren, eller Unraids Tailscale-integration, giver dig et `ts.net`-navn med et betroet certifikat.
 4. **`HTTP_ONLY=true`**, kun bag en proxy, der afslutter TLS, eller på et netværk, du stoler fuldt på. Det skifter hele webgrænsefladen til almindelig HTTP, kræver en ændring i containerindstillingerne og sender nøglen ukrypteret.
@@ -192,7 +192,7 @@ Det, en assistent læser, går til AI-udbyderen bag den: navne på elementer, ti
 | Fejl med "certificate", "self-signed" eller "unable to verify" | Klienten stoler ikke på BombVaults certifikat. Se [TLS og certifikater](#tls). |
 | `busy` | En anden sikkerhedskopi eller en vedligeholdelsesopgave optager domænet. Prøv igen, når den er færdig. |
 | `cooldown` | Dette element, dette domæne eller Backup Everything blev startet via MCP for mindre end 15 minutter siden. |
-| `retention_guard` | Endnu en MCP-sikkerhedskopi ville kun efterlade gendannelsespunkter fra MCP i et vindue med "behold de sidste N". Den næste planlagte sikkerhedskopi giver plads, eller start den i webgrænsefladen. |
+| `retention_guard` | Endnu en MCP-sikkerhedskopi ville kun efterlade gendannelsespunkter fra MCP i et vindue med "behold de sidste N", eller elementet har allerede fået 4 sikkerhedskopier via MCP inden for de sidste 24 timer, mislykkede og annullerede medregnet. I det første tilfælde giver den næste planlagte sikkerhedskopi plads, i det andet er elementet fri igen 24 timer efter den ældste af dem. Du kan altid starte den i webgrænsefladen. |
 | `rate_limited` | Nøglen har brugt sine 12 starter for denne time. |
 | `not_permitted` ved en start | Nøglen må kun læse. Slå **Tillad at starte sikkerhedskopier** til i kortet; ny forbindelse er ikke nødvendig. Ved en annullering betyder det, at denne nøgle ikke startede kørslen. |
 | `domain_off` | Den type sikkerhedskopi er slået fra i indstillingerne. |
