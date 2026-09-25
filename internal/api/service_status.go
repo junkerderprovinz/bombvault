@@ -475,6 +475,10 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 // second full read of the same row.
 func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry, error) {
 	now := time.Now().Unix()
+	sites, err := s.store.PlaceSites()
+	if err != nil {
+		return nil, fmt.Errorf("read places: %w", err)
+	}
 
 	domains := []struct {
 		name     string
@@ -525,7 +529,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		offsiteConfigured := s.offsiteRepoFor(d.name, settings) != ""
 		var offPremisesCovered bool
 		if validPlacementDomain(d.name) {
-			copied, covered, cErr := s.placementCoverage(settings, d.name)
+			copied, covered, cErr := s.placementCoverage(settings, d.name, sites)
 			if cErr != nil {
 				log.Printf("api: status %s: placement could not be read, off-site stays as configured: %v", d.name, cErr) //nolint:gosec // G706: domain is a fixed literal
 			} else {
