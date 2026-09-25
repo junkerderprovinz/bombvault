@@ -496,3 +496,95 @@ func TestHomeAndRepositoryPlacesGetNoDefaultFolders(t *testing.T) {
 		t.Errorf("Bucket folders = %v, want the root alone", got)
 	}
 }
+
+// directRow is target's direct repository at repo, with every mirrored field
+// the target has, the way CreateCompanionRepo writes it.
+func directRow(id, name, repo string, target store.OffsiteTarget) store.OffsiteTarget {
+	r := target
+	r.ID, r.Name, r.Repo, r.Role, r.Domain, r.CompanionOf = id, name, repo, store.RoleRepo, "", target.ID
+	return r
+}
+
+func TestADirectRepositoryBesideItsTargetJoinsTheTargetsPlace(t *testing.T) {
+	b2 := offsiteRow("b2", "containers", "B2", b2Bucket+"/containers", 1)
+	in := migrationInput()
+	in.targets = []store.OffsiteTarget{b2}
+	in.named = []store.OffsiteTarget{directRow("d", "B2 direct", b2.Repo+"-direct", b2)}
+	m, ref, ok := placeOfRow(planPlaces(in), "d")
+	if !ok || m.Place.Name != "B2" || ref.Domain != "containers" || ref.Suffix != "-direct" {
+		t.Fatalf("the direct repository sits on %q as %+v, %v, want B2 as containers-direct", m.Place.Name, ref, ok)
+	}
+}
+
+func TestADirectRepositoryThatIsOnKeepsItsPlaceOn(t *testing.T) {
+	b2 := offsiteRow("b2", "containers", "B2", b2Bucket+"/containers", 1)
+	b2.Enabled = false
+	direct := directRow("d", "B2 direct", b2.Repo+"-direct", b2)
+	direct.Enabled = true
+	in := migrationInput()
+	in.targets = []store.OffsiteTarget{b2}
+	in.named = []store.OffsiteTarget{direct}
+	if m, _, ok := placeOfRow(planPlaces(in), "d"); !ok || !m.Place.Enabled {
+		t.Fatalf("B2 = %+v, %v, want it on while items still back up to its direct repository", m.Place, ok)
+	}
+}
+
+func TestDirectRepositoriesAnywhereElseStayWithoutAPlace(t *testing.T) {
+	b2 := offsiteRow("b2", "containers", "B2", b2Bucket+"/containers", 1)
+	root := offsiteRow("root", "vms", "Root", "s3:https://s3.example.com/bucket", 2)
+	native := offsiteRow("native", "files", "Native", "b2:bucket:files", 3)
+	kept := directRow("d", "B2 direct", b2.Repo+"-direct", b2)
+	kept.CredsRef = "kept-set"
+	for name, c := range map[string]struct{ target, direct store.OffsiteTarget }{
+		"in another bucket":           {b2, directRow("d", "B2 direct", "s3:https://s3.us-west-004.backblazeb2.com/other/containers", b2)},
+		"beside a bucket root":        {root, directRow("d", "Root direct", root.Repo+"-direct", root)},
+		"of a target without a place": {native, directRow("d", "Native direct", native.Repo+"-direct", native)},
+		"on credentials it kept":      {b2, kept},
+	} {
+		t.Run(name, func(t *testing.T) {
+			in := migrationInput()
+			in.targets = []store.OffsiteTarget{c.target}
+			in.named = []store.OffsiteTarget{c.direct}
+			plan := planPlaces(in)
+			if m, _, ok := placeOfRow(plan, "d"); ok || !slices.Contains(plan.unplaced, "d") {
+				t.Fatalf("the direct repository sits on %q, want it without a place", m.Place.Name)
+			}
+		})
+	}
+}
+
+func TestEachNamedRepositoryIsAPlaceOfItsOwn(t *testing.T) {
+	off := namedRow("b", "NAS B", "remotes/nas/b")
+	off.Enabled = false
+	cold := namedRow("cold", "Cold", "s3:https://s3.example.com/bv-cold")
+	cold.OffPremises, cold.LimitUpload = true, 200
+	in := migrationInput()
+	in.named = []store.OffsiteTarget{namedRow("a", "NAS A", "remotes/nas/a"), off, cold}
+	plan := planPlaces(in)
+	every := map[string]string{"containers": "", "vms": "", "flash": "", "config": "", "files": ""}
+	for _, id := range []string{"a", "b", "cold"} {
+		m, ref, ok := placeOfRow(plan, id)
+		if !ok || ref.Domain != "" || ref.Suffix != "" || len(m.Rows) != 1 || m.Place.Base != ref.Repo ||
+			!maps.Equal(m.Place.Folders, every) || m.Place.RetentionKeepLast != 5 {
+			t.Errorf("%s sits on %+v as %+v, %v, want a place of its own on the global keep-last 5", id, m, ref, ok)
+		}
+	}
+	if p := placeNamed(t, plan, "NAS A").Place; p.Provider != "share" || p.OffPremises || !p.Enabled {
+		t.Errorf("NAS A = %+v", p)
+	}
+	if p := placeNamed(t, plan, "NAS B").Place; p.Enabled {
+		t.Errorf("NAS B = %+v, want it off like its row", p)
+	}
+	if p := placeNamed(t, plan, "Cold").Place; !p.OffPremises || p.LimitUpload != 200 || p.Provider != "s3-other" {
+		t.Errorf("Cold = %+v", p)
+	}
+}
+
+func TestANamedRepositoryWithoutAPlaceKindStaysUnplaced(t *testing.T) {
+	in := migrationInput()
+	in.named = []store.OffsiteTarget{namedRow("native", "Native", "b2:bucket:cold")}
+	plan := planPlaces(in)
+	if _, _, ok := placeOfRow(plan, "native"); ok || !slices.Contains(plan.unplaced, "native") {
+		t.Fatal("a b2: repository was put on a place")
+	}
+}

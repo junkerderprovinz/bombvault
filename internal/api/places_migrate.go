@@ -11,6 +11,10 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
+// directSuffix is the ending of a direct repository's address after its
+// target's folder at the same place.
+const directSuffix = "-direct"
+
 // placeKindsByScheme are the remote schemes a place can hold. b2:, gs:,
 // swift: and azure: addresses take their keys from the container's
 // environment, which no place knows about, so they stay without a place.
@@ -174,6 +178,15 @@ func rowTraits(kind places.Kind, row store.OffsiteTarget) placeTraits {
 	}
 }
 
+// namedTraits are a named repository's own settings with the global local
+// keep-policy, which a named repository without a place ages by.
+func namedTraits(kind places.Kind, s store.Settings, row store.OffsiteTarget) placeTraits {
+	t := rowTraits(kind, row)
+	local := globalLocalTraits(kind, s)
+	t.keepLast, t.keepDaily, t.keepWeekly, t.keepMonthly = local.keepLast, local.keepDaily, local.keepWeekly, local.keepMonthly
+	return t
+}
+
 // placesMigrationInput is everything the plan reads, gathered first so that
 // the plan itself touches neither the store nor the key.
 type placesMigrationInput struct {
@@ -222,6 +235,7 @@ func planPlaces(in placesMigrationInput) placesPlan {
 	p.planTargets()
 	p.markSingleDomainPlaces()
 	p.addDefaultFolders()
+	p.planNamedRepos()
 	plan := placesPlan{unplaced: p.unplaced}
 	for _, pl := range p.planned {
 		plan.places = append(plan.places, pl.MigratedPlace)
@@ -388,6 +402,56 @@ func (p *placesPlanner) knownAddresses() []string {
 		add(offsiteRepoFromSettings(d, p.in.settings))
 	}
 	return out
+}
+
+// planNamedRepos places the rows of role repo. A direct repository joins its
+// target's place or stays without one; every other named repository is a
+// place of its own, however close it sits to another.
+func (p *placesPlanner) planNamedRepos() {
+	targets := map[string]store.OffsiteTarget{}
+	for _, t := range p.in.targets {
+		targets[t.ID] = t
+	}
+	for _, r := range p.in.named {
+		switch {
+		case r.PlaceID != "":
+		case r.CompanionOf != "":
+			p.planDirect(r, targets[r.CompanionOf])
+		default:
+			p.planNamed(r)
+		}
+	}
+}
+
+// planDirect puts a direct repository on its target's place when it sits right
+// beside the target's folder and matches the target in every mirrored field,
+// credentials included: a save of the place would otherwise hand it the
+// target's keys. One that is on keeps its place on, since items back up to it.
+func (p *placesPlanner) planDirect(r, target store.OffsiteTarget) {
+	pl, ok := p.byTarget[target.ID]
+	if !ok || pl.repository || r.Repo != target.Repo+directSuffix || !target.MirroredEqual(r) {
+		p.unplaced = append(p.unplaced, r.ID)
+		return
+	}
+	pl.Place.Enabled = pl.Place.Enabled || r.Enabled
+	pl.Rows = append(pl.Rows, store.PlaceRowRef{RowID: r.ID, Domain: target.Domain, Suffix: directSuffix, Repo: r.Repo})
+}
+
+// planNamed makes a named repository a place that is itself one repository
+// for every domain, since items of any domain can pick it.
+func (p *placesPlanner) planNamed(r store.OffsiteTarget) {
+	kind, ok := placeKindOf(r.Repo)
+	if !ok || p.claimedElsewhere(r.Repo, nil) {
+		p.unplaced = append(p.unplaced, r.ID)
+		return
+	}
+	pl := p.add(placementTargetName(r), placeSplit{kind: kind, base: r.Repo}, namedTraits(kind, p.in.settings, r), false)
+	for _, d := range places.Domains {
+		pl.Place.Folders[d] = ""
+	}
+	pl.Place.OffPremises = r.OffPremises
+	pl.Place.Enabled = r.Enabled
+	pl.Rows = append(pl.Rows, store.PlaceRowRef{RowID: r.ID, Repo: r.Repo})
 }
 
 // joinable finds a place a row at sp can join: the same base, the same
