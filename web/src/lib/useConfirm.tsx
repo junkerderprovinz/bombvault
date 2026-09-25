@@ -60,7 +60,7 @@ export function useConfirm() {
 
   const confirm = useCallback((message: string, options?: ConfirmOptions) => {
     // Read before setPending: the re-render moves focus into the dialog. A
-    // question that waits its turn was asked from the one on screen, whose
+    // question that waits its turn finds focus in the one on screen, whose
     // buttons are gone by the time focus goes back.
     if (queue.current.length === 0) {
       const active = document.activeElement;
