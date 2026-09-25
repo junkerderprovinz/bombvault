@@ -5,11 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
-import type { CatalogProvider, ProbeRequest, ProbeResult } from "../../lib/places";
+import type { CatalogProvider, CreatePlaceBody, ProbeRequest, ProbeResult } from "../../lib/places";
 import type { OkEnvelope } from "../../lib/api";
 
 const probes: ProbeRequest[] = [];
+const creates: CreatePlaceBody[] = [];
 let probeAnswer: OkEnvelope & ProbeResult = { ok: true };
+let createAnswer: OkEnvelope & { place?: unknown; code?: string } = { ok: true };
 
 vi.mock("../../lib/places", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/places")>();
@@ -18,6 +20,10 @@ vi.mock("../../lib/places", async (importOriginal) => {
     probePlace: (req: ProbeRequest) => {
       probes.push(structuredClone(req));
       return Promise.resolve(probeAnswer);
+    },
+    createPlace: (body: CreatePlaceBody) => {
+      creates.push(structuredClone(body));
+      return Promise.resolve(createAnswer);
     },
   };
 });
@@ -53,6 +59,7 @@ const SYNOLOGY: CatalogProvider = {
   pickRoots: ["remotes"],
   fields: [{ key: "path", placeholder: "remotes/nas/bombvault" }],
 };
+const UNRAID: CatalogProvider = { ...SYNOLOGY, id: "unraid-folder", pickRoots: ["user", ""], offPremises: false };
 const SFTP: CatalogProvider = {
   id: "sftp",
   group: "self",
@@ -70,20 +77,23 @@ const AZURE: CatalogProvider = {
 
 beforeEach(() => {
   probes.length = 0;
+  creates.length = 0;
   probeAnswer = { ok: true, base: "s3:https://s3.eu-central-1.wasabisys.com/bv/bombvault", folders: { containers: "empty" } };
+  createAnswer = { ok: true, place: { id: "p1", name: "Wasabi" } };
 });
 afterEach(cleanup);
 
-async function form(provider: CatalogProvider) {
+async function form(provider: CatalogProvider, onAdded = vi.fn()) {
   await act(async () => {
     render(
       <I18nProvider>
         <ToastProvider>
-          <PlaceForm provider={provider} hostMountRoot="/mnt" onBack={vi.fn()} onCancel={vi.fn()} />
+          <PlaceForm provider={provider} hostMountRoot="/mnt" onBack={vi.fn()} onCancel={vi.fn()} onAdded={onAdded} />
         </ToastProvider>
       </I18nProvider>
     );
   });
+  return onAdded;
 }
 
 // An optional field's label carries the word "optional" after its name.
@@ -204,5 +214,89 @@ describe("PlaceForm connection test", () => {
     expect(await screen.findByText("The connection test failed: dial tcp: connection refused")).toBeTruthy();
     expect(screen.queryByText(en["places.form.address"])).toBeNull();
     expect(button("places.form.test").className).toContain("glim-shake");
+  });
+});
+
+describe("PlaceForm add", () => {
+  it("adds only what was tested", async () => {
+    await form(WASABI);
+    expect(button("places.form.add")).toHaveProperty("disabled", true);
+    expect(screen.queryByLabelText(en["places.form.name"])).toBeNull();
+    type(en["places.field.keyId"], "AKIA1");
+    await testConnection();
+    expect(button("places.form.add")).toHaveProperty("disabled", false);
+    type(en["places.field.keyId"], "AKIA2");
+    expect(button("places.form.add")).toHaveProperty("disabled", true);
+  });
+
+  it("names the place after its provider and sends what the probe completed", async () => {
+    probeAnswer = {
+      ok: true,
+      base: "s3:https://s3.eu-central-1.wasabisys.com/bv/bombvault",
+      fields: { keyId: "AKIA1", region: "eu-central-1", bucket: "bv", path: "bombvault" },
+    };
+    const onAdded = await form(WASABI);
+    type(en["places.field.keyId"], "AKIA1");
+    type(en["places.field.secret"], "s3cret");
+    await testConnection();
+    expect(field(en["places.form.name"])).toHaveProperty("value", "Wasabi");
+    // A cloud provider always stands at another site, so nothing asks.
+    expect(screen.queryByRole("tablist", { name: en["places.form.where"] })).toBeNull();
+    await act(async () => {
+      fireEvent.click(button("places.form.add"));
+    });
+    expect(creates).toEqual([
+      {
+        provider: "wasabi",
+        fields: { keyId: "AKIA1", secret: "s3cret", region: "eu-central-1", bucket: "bv", path: "bombvault" },
+        name: "Wasabi",
+      },
+    ]);
+    expect(onAdded).toHaveBeenCalledWith({ id: "p1", name: "Wasabi" });
+  });
+
+  it("asks a device where it stands before it can be added", async () => {
+    probeAnswer = { ok: true, base: "remotes/syno/bombvault" };
+    await form(SYNOLOGY);
+    fireEvent.change(screen.getByPlaceholderText("remotes/nas/bombvault"), { target: { value: "remotes/syno/bombvault" } });
+    await testConnection();
+    const where = screen.getByRole("tablist", { name: en["places.form.where"] });
+    expect(button("places.form.add")).toHaveProperty("disabled", true);
+    fireEvent.click(screen.getByRole("tab", { name: en["places.form.away"] }));
+    expect(where.querySelector('[aria-selected="true"]')?.textContent).toBe(en["places.form.away"]);
+    await act(async () => {
+      fireEvent.click(button("places.form.add"));
+    });
+    expect(creates[0]).toMatchObject({ provider: "synology", name: "Synology", offPremises: true });
+  });
+
+  it("does not ask about a folder on this server", async () => {
+    probeAnswer = { ok: true, base: "user/bombvault" };
+    await form(UNRAID);
+    await testConnection();
+    expect(screen.queryByRole("tablist", { name: en["places.form.where"] })).toBeNull();
+    expect(button("places.form.add")).toHaveProperty("disabled", false);
+  });
+
+  it("makes an address that already holds a repository a place that is one", async () => {
+    probeAnswer = { ok: true, base: "rest:https://nas:8000/tower", repoIds: { "": "r1" }, facts: [{ key: "places.probe.baseIsRepository" }] };
+    await form(WASABI);
+    await testConnection();
+    await act(async () => {
+      fireEvent.click(button("places.form.add"));
+    });
+    expect(creates[0]!.folders).toEqual({ containers: "", vms: "", flash: "", config: "", files: "" });
+  });
+
+  it("says why an add was refused and shakes the button", async () => {
+    createAnswer = { ok: false, code: "place-name-taken", error: "place name taken" };
+    const onAdded = await form(WASABI);
+    await testConnection();
+    await act(async () => {
+      fireEvent.click(button("places.form.add"));
+    });
+    expect(await screen.findByText(en["places.error.nameTaken"])).toBeTruthy();
+    expect(button("places.form.add").className).toContain("glim-shake");
+    expect(onAdded).not.toHaveBeenCalled();
   });
 });

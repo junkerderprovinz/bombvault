@@ -2337,6 +2337,13 @@ export const en = {
   "places.form.address": "Address",
   "places.form.back": "Back",
   "places.form.test": "Test connection",
+  "places.form.name": "Name",
+  "places.form.where": "Where is the device?",
+  "places.form.whereHint": "The 3-2-1 rule counts a copy as off-site only when it stands at another site. A second disk in the same server or the same house does not count.",
+  "places.form.here": "Here in the house",
+  "places.form.away": "At another site",
+  "places.form.add": "Add",
+  "places.form.testFirst": "Test the connection first.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4354,6 +4361,13 @@ export const de: Translations = {
   "places.form.address": "Adresse",
   "places.form.back": "Zurück",
   "places.form.test": "Verbindung testen",
+  "places.form.name": "Name",
+  "places.form.where": "Wo steht das Gerät?",
+  "places.form.whereHint": "Die 3-2-1-Regel zählt eine Kopie nur dann als außer Haus, wenn sie an einem anderen Ort steht. Eine zweite Platte im selben Server oder im selben Haus zählt nicht.",
+  "places.form.here": "Hier im Haus",
+  "places.form.away": "An einem anderen Ort",
+  "places.form.add": "Hinzufügen",
+  "places.form.testFirst": "Teste zuerst die Verbindung.",
 };
 
 // ---------------------------------------------------------------------------

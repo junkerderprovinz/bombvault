@@ -4,6 +4,7 @@ import { FolderBrowser } from "../FolderBrowser";
 import { InfoBubble } from "../InfoBubble";
 import { RevealInput } from "../RevealInput";
 import { SelectField } from "../SelectField";
+import { Selector } from "../Selector";
 import { WindowActions } from "../WindowActions";
 import { PlaceMark } from "../placeMarks";
 import { getVMSSH, type OkEnvelope } from "../../lib/api";
@@ -12,16 +13,26 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import {
   domainName,
   folderStateText,
+  placeErrorText,
   probeFactText,
   probeFailureText,
   providerName,
 } from "../../lib/placeText";
-import { PLACE_DOMAINS, probePlace, type CatalogField, type CatalogProvider, type ProbeResult } from "../../lib/places";
+import {
+  PLACE_DOMAINS,
+  createPlace,
+  probePlace,
+  type CatalogField,
+  type CatalogProvider,
+  type Place,
+  type ProbeResult,
+} from "../../lib/places";
 import { useToast } from "../../lib/toast";
 import { useReveal } from "../../lib/useReveal";
 
-// The form after a tile: the provider's fields and a connection test that adds
-// nothing. Any edit after the test makes its result stale.
+// The form after a tile: the provider's fields, a connection test that adds
+// nothing, and only then the name, the location question and Add. Any edit
+// after the test makes it stale, so what is added is always what was tested.
 
 const FIELD_KEYS: Record<string, TranslationKey> = {
   keyId: "places.field.keyId",
@@ -156,11 +167,13 @@ export function PlaceForm({
   hostMountRoot,
   onBack,
   onCancel,
+  onAdded,
 }: {
   provider: CatalogProvider;
   hostMountRoot: string;
   onBack: () => void;
   onCancel: () => void;
+  onAdded: (place: Place) => void;
 }) {
   const { t, lang } = useT();
   const { push } = useToast();
@@ -170,10 +183,16 @@ export function PlaceForm({
   const [probe, setProbe] = useState<(OkEnvelope & ProbeResult) | null>(null);
   const [probedWith, setProbedWith] = useState("");
   const [probing, setProbing] = useState(false);
-  const [shake, setShake] = useState({ test: 0 });
+  const [name, setName] = useState(() => providerName(t, provider.id));
+  const [where, setWhere] = useState<"here" | "away" | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [shake, setShake] = useState({ test: 0, add: 0 });
 
   const typed = JSON.stringify(fields);
   const fresh = probe !== null && probedWith === typed ? probe : null;
+  const ready = fresh?.ok === true && !!fresh.base;
+  const asks = provider.offPremises === undefined;
+  const canAdd = ready && name.trim() !== "" && (!asks || where !== null) && !adding;
 
   function set(key: string, value: string) {
     setFields((f) => ({ ...f, [key]: value }));
@@ -195,6 +214,35 @@ export function PlaceForm({
       setShake((s) => ({ ...s, test: s.test + 1 }));
     } finally {
       setProbing(false);
+    }
+  }
+
+  async function add() {
+    if (!fresh || !canAdd) return;
+    setAdding(true);
+    try {
+      // The probe hands back what it completed, such as B2's endpoint and
+      // bucket; the secrets stay the typed ones. An address that already
+      // holds a repository becomes a place that is itself that repository.
+      const res = await createPlace({
+        provider: provider.id,
+        fields: { ...fields, ...(fresh.fields ?? {}) },
+        name: name.trim(),
+        offPremises: asks ? where === "away" : undefined,
+        folders: fresh.repoIds?.[""] ? Object.fromEntries(PLACE_DOMAINS.map((d) => [d, ""])) : undefined,
+      });
+      if (res.ok && res.place) {
+        onAdded(res.place);
+        return;
+      }
+      if (res.code === "place-probe-failed") setProbe(null);
+      push(placeErrorText(t, lang, res, "common.actionFailed"), "fail");
+      setShake((s) => ({ ...s, add: s.add + 1 }));
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("common.actionFailed"), "fail");
+      setShake((s) => ({ ...s, add: s.add + 1 }));
+    } finally {
+      setAdding(false);
     }
   }
 
@@ -295,6 +343,41 @@ export function PlaceForm({
             ))}
           </div>
         )}
+
+        {ready && (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="place-name" className="text-xs text-carbon-textSub">
+              {t("places.form.name")}
+            </label>
+            <input
+              id="place-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="off"
+              className={FIELD_CLASS}
+            />
+          </div>
+        )}
+
+        {ready && asks && (
+          <div className="flex flex-col gap-1.5">
+            <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+              {t("places.form.where")}
+              <InfoBubble tip={t("places.form.whereHint")} />
+            </span>
+            <Selector
+              label={t("places.form.where")}
+              variant="well"
+              items={[
+                { id: "here", label: t("places.form.here") },
+                { id: "away", label: t("places.form.away") },
+              ]}
+              active={where}
+              onChange={(id) => setWhere(id === "away" ? "away" : "here")}
+            />
+          </div>
+        )}
       </div>
 
       <WindowActions>
@@ -304,11 +387,22 @@ export function PlaceForm({
           key={`test-${shake.test}`}
           label={t("places.form.test")}
           labelKey="places.form.test"
-          tone="accent"
+          tone={ready ? "neutral" : "accent"}
           busy={probing}
-          disabled={probing}
+          disabled={probing || adding}
           onClick={() => void test()}
           className={shake.test ? "glim-shake" : ""}
+        />
+        <Button
+          key={`add-${shake.add}`}
+          label={t("places.form.add")}
+          labelKey="places.form.add"
+          tone="accent"
+          busy={adding}
+          disabled={!canAdd}
+          title={ready ? undefined : t("places.form.testFirst")}
+          onClick={() => void add()}
+          className={shake.add ? "glim-shake" : ""}
         />
       </WindowActions>
     </>
