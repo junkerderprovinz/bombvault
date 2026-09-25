@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/places"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -25,6 +26,7 @@ var (
 	errPlaceNameMissing         = errors.New("a place needs a name")
 	errPlaceUnasked             = errors.New("say where the device stands: here or at another site")
 	errUnknownProvider          = errors.New("that is not a provider this server can connect")
+	errLocalAppendOnly          = errors.New("a folder on this server cannot be kept from deletion, so it takes no append-only switch")
 )
 
 // writePlace writes a place and, when edit is set and changes them, the
@@ -633,4 +635,132 @@ func (h *Handler) handleCreatePlace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.writePlaceAnswer(w, p.ID, nil)
+}
+
+// patchPlaceBody is an edit from a place's details. Pointers, so a field the
+// form did not send stays as stored.
+type patchPlaceBody struct {
+	Name                 *string `json:"name"`
+	OffPremises          *bool   `json:"offPremises"`
+	StorageClass         *string `json:"storageClass"`
+	Immutable            *bool   `json:"immutable"`
+	RetentionKeepLast    *int    `json:"retentionKeepLast"`
+	RetentionKeepDaily   *int    `json:"retentionKeepDaily"`
+	RetentionKeepWeekly  *int    `json:"retentionKeepWeekly"`
+	RetentionKeepMonthly *int    `json:"retentionKeepMonthly"`
+	LimitUpload          *int    `json:"limitUpload"`
+	LimitDownload        *int    `json:"limitDownload"`
+	GrowthBudgetGB       *int    `json:"growthBudgetGb"`
+	Enabled              *bool   `json:"enabled"`
+}
+
+// applyPlacePatch merges the sent settings onto a place. A home place stays
+// on, since the domains it holds would have nowhere to write.
+func applyPlacePatch(p store.Place, b patchPlaceBody, homes map[string]string) (store.Place, error) {
+	if b.Name != nil {
+		name := strings.TrimSpace(*b.Name)
+		if name == "" {
+			return p, errPlaceNameMissing
+		}
+		p.Name = name
+	}
+	if b.OffPremises != nil {
+		p.OffPremises = *b.OffPremises
+	}
+	if b.StorageClass != nil {
+		class := strings.ToUpper(strings.TrimSpace(*b.StorageClass))
+		if class != "" && !restic.StorageClassAllowed(class) {
+			return p, fmt.Errorf("unsupported storage class %s (allowed: %s)", class, strings.Join(restic.AllowedStorageClasses, ", "))
+		}
+		p.StorageClass = class
+	}
+	if b.Immutable != nil {
+		if *b.Immutable && p.Kind == string(places.KindLocal) {
+			return p, errLocalAppendOnly
+		}
+		p.Immutable = *b.Immutable
+	}
+	for _, f := range []struct{ dst, sent *int }{
+		{&p.RetentionKeepLast, b.RetentionKeepLast}, {&p.RetentionKeepDaily, b.RetentionKeepDaily},
+		{&p.RetentionKeepWeekly, b.RetentionKeepWeekly}, {&p.RetentionKeepMonthly, b.RetentionKeepMonthly},
+		{&p.LimitUpload, b.LimitUpload}, {&p.LimitDownload, b.LimitDownload}, {&p.GrowthBudgetGB, b.GrowthBudgetGB},
+	} {
+		if f.sent != nil {
+			*f.dst = max(0, *f.sent)
+		}
+	}
+	if b.Enabled != nil {
+		if !*b.Enabled && slices.Contains(slices.Collect(maps.Values(homes)), p.ID) {
+			return p, errPlaceHomeDomain
+		}
+		p.Enabled = *b.Enabled
+	}
+	return p, nil
+}
+
+// patchPlace applies an edit from the details and returns the warnings the
+// direct repositories of the place's targets get from it.
+func (s *Service) patchPlace(id string, body patchPlaceBody) (store.Place, []saveWarning, error) {
+	p, err := s.store.GetPlace(id)
+	if err != nil {
+		return store.Place{}, nil, err
+	}
+	homes, err := s.store.DomainPlaces()
+	if err != nil {
+		return store.Place{}, nil, err
+	}
+	before, err := s.store.PlaceRows(id)
+	if err != nil {
+		return store.Place{}, nil, err
+	}
+	next, err := applyPlacePatch(p, body, homes)
+	if err != nil {
+		return store.Place{}, nil, err
+	}
+	saved, err := s.writePlace(store.PlaceWrite{Place: next}, nil)
+	if err != nil {
+		return store.Place{}, nil, err
+	}
+	after, err := s.store.PlaceRows(id)
+	if err != nil {
+		return store.Place{}, nil, err
+	}
+	return saved, s.placeSaveWarnings(before, after), nil
+}
+
+// placeSaveWarnings compares each target of the place before and after a
+// save, as a target save does. The save stands either way, so a failed read
+// is logged, not returned.
+func (s *Service) placeSaveWarnings(before, after []store.OffsiteTarget) []saveWarning {
+	out := []saveWarning{}
+	for _, a := range after {
+		i := slices.IndexFunc(before, func(b store.OffsiteTarget) bool { return b.ID == a.ID })
+		if a.Role != store.RoleOffsite || i < 0 {
+			continue
+		}
+		w, err := s.directSaveWarnings(before[i], a)
+		if err != nil {
+			log.Printf("api: target %s: could not check its direct repository after a place save: %v", a.ID, err) //nolint:gosec // G706: the id is store-generated
+			continue
+		}
+		out = append(out, w...)
+	}
+	return out
+}
+
+// handlePatchPlace serves PATCH /api/places/{id}.
+func (h *Handler) handlePatchPlace(w http.ResponseWriter, r *http.Request) {
+	var body patchPlaceBody
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	p, warnings, err := h.svc.patchPlace(r.PathValue("id"), body)
+	switch {
+	case errors.Is(err, store.ErrPlaceNotFound):
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such place"})
+	case err != nil:
+		placeFail(w, err)
+	default:
+		h.writePlaceAnswer(w, p.ID, map[string]any{"warnings": warnings})
+	}
 }
