@@ -84,6 +84,25 @@ func applyThrough(t *testing.T, db *sql.DB, maxVersion int) {
 	}
 }
 
+// bootAs runs Migrate as a build whose newest migration is maxVersion
+// would, guards included. applyThrough runs every body unguarded, which fails
+// from v94 on, where a body is only correct behind its guard.
+func bootAs(t *testing.T, db *sql.DB, maxVersion int) {
+	t.Helper()
+	all := migrations
+	defer func() { migrations = all }()
+	var older []migration
+	for _, m := range all {
+		if m.version <= maxVersion {
+			older = append(older, m)
+		}
+	}
+	migrations = older
+	if err := Migrate(db); err != nil {
+		t.Fatalf("seed through v%d: %v", maxVersion, err)
+	}
+}
+
 // seedMainLatest builds the database of a user who installed :latest from the
 // CA template: 89 = settings_everything, 90 = runs_group_id, and no
 // schedule_job_runs table.
@@ -286,6 +305,10 @@ func TestUpgradeConvergesFromEveryShippedDatabase(t *testing.T) {
 			seed: seedMergedBranch,
 		},
 		{
+			name: "main before database dumps (tops out at v122)",
+			seed: func(t *testing.T, db *sql.DB) { bootAs(t, db, lastMainMigration) },
+		},
+		{
 			name: "fresh install",
 			seed: func(*testing.T, *sql.DB) {},
 		},
@@ -400,6 +423,94 @@ func TestUpgradeFromMainLatestKeepsUserData(t *testing.T) {
 	}
 	if after[92] != "renumbering_recovery" {
 		t.Fatalf("v92 = %q, want renumbering_recovery", after[92])
+	}
+}
+
+// lastMainMigration is the newest version main recorded before the dump, ZFS,
+// anomaly and MCP schemas joined it. Every body up to it is unchanged here, so
+// bootAs(db, lastMainMigration) gives the database a :latest user holds.
+const lastMainMigration = 122
+
+func TestUpgradeFromMainBeforeDumpsKeepsDataAndAddsTheNewSchemas(t *testing.T) {
+	db := OpenMem(t)
+	bootAs(t, db, lastMainMigration)
+	if applied := appliedVersions(t, db); applied[lastMainMigration] != "target_alias_prev_definition" {
+		t.Fatalf("seed tops out at %q, want target_alias_prev_definition", applied[lastMainMigration])
+	}
+
+	if _, err := db.Exec(`INSERT INTO targets (id, container_name, appdata_paths, created_at) VALUES ('t1', 'postgres', '[]', 1700000000)`); err != nil {
+		t.Fatalf("seed a target: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO runs (id, target_id, kind, status, started_at, group_id) VALUES ('r1', 't1', 'backup', 'success', 1700000000, 'grp-1')`); err != nil {
+		t.Fatalf("seed a run: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO target_aliases (id, domain, old_name, target_id, linked_at) VALUES ('a1', 'containers', 'pg', 't1', 1700000000)`); err != nil {
+		t.Fatalf("seed an alias: %v", err)
+	}
+	if _, err := db.Exec(`UPDATE settings SET containers_schedule = 'daily 03:00', vms_schedule = 'daily 03:00',
+		flash_schedule = 'daily 03:00', files_schedule = 'daily 03:00' WHERE id = 1`); err != nil {
+		t.Fatalf("seed the schedules: %v", err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("upgrade from a main database failed, so the container would not boot: %v", err)
+	}
+
+	var status, group string
+	if err := db.QueryRow(`SELECT status, group_id FROM runs WHERE id = 'r1'`).Scan(&status, &group); err != nil {
+		t.Fatalf("run lost in the upgrade: %v", err)
+	}
+	if status != "success" || group != "grp-1" {
+		t.Fatalf("run = %q/%q, want success/grp-1", status, group)
+	}
+	var sourceBytes sql.NullInt64
+	var startedVia string
+	if err := db.QueryRow(`SELECT source_bytes, started_via FROM runs WHERE id = 'r1'`).Scan(&sourceBytes, &startedVia); err != nil {
+		t.Fatalf("read the new run columns: %v", err)
+	}
+	if sourceBytes.Valid || startedVia != "" {
+		t.Fatalf("an old run reads source_bytes=%v started_via=%q, want no metrics and no MCP origin", sourceBytes, startedVia)
+	}
+
+	var dumpOff int
+	var engine string
+	if err := db.QueryRow(`SELECT db_dump_off, db_dump_engine FROM targets WHERE id = 't1'`).Scan(&dumpOff, &engine); err != nil {
+		t.Fatalf("target lost in the upgrade: %v", err)
+	}
+	if dumpOff != 0 || engine != "" {
+		t.Fatalf("db_dump_off = %d, db_dump_engine = %q; an existing container must keep the default dump", dumpOff, engine)
+	}
+	var aliasTarget string
+	if err := db.QueryRow(`SELECT target_id FROM target_aliases WHERE id = 'a1'`).Scan(&aliasTarget); err != nil || aliasTarget != "t1" {
+		t.Fatalf("alias lost in the upgrade: %q, %v", aliasTarget, err)
+	}
+
+	var dumps, zfsOn, anomalyOn int
+	var zfsSchedule string
+	if err := db.QueryRow(`SELECT db_dumps_enabled, zfs_enabled, zfs_schedule, anomaly_enabled FROM settings WHERE id = 1`).
+		Scan(&dumps, &zfsOn, &zfsSchedule, &anomalyOn); err != nil {
+		t.Fatalf("read the new settings: %v", err)
+	}
+	if dumps != 1 || zfsOn != 0 || anomalyOn != 1 {
+		t.Fatalf("db_dumps_enabled=%d zfs_enabled=%d anomaly_enabled=%d, want 1, 0, 1", dumps, zfsOn, anomalyOn)
+	}
+	if zfsSchedule != "daily 03:00" {
+		t.Fatalf("zfs_schedule = %q, want it joined to the shared schedule", zfsSchedule)
+	}
+	for _, table := range []string{"zfs_datasets", "zfs_members", "zfs_runs", "zfs_run_members", "zfs_safety_snapshots", "anomalies", "mcp_keys"} {
+		if !hasTable(t, db, table) {
+			t.Fatalf("%s missing after the upgrade", table)
+		}
+	}
+
+	applied := appliedVersions(t, db)
+	for _, m := range migrations {
+		if applied[m.version] != m.name {
+			t.Fatalf("v%d = %q, want %q recorded", m.version, applied[m.version], m.name)
+		}
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatalf("second migrate after the upgrade: %v", err)
 	}
 }
 
