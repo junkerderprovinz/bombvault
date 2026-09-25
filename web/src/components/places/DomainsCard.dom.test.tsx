@@ -4,12 +4,13 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, countText, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
-import type { CopiesPreview, DomainRow, HomePreview, Place } from "../../lib/places";
+import type { CopiesPreview, DomainRow, HomePreview, Place, UnplacedRow } from "../../lib/places";
 
 type Answer = Record<string, unknown>;
 
 let rows: DomainRow[] = [];
 let places: Place[] = [];
+let unplaced: UnplacedRow[] = [];
 let domainReads = 0;
 const homePreviews: Answer[] = [];
 const homeWrites: Answer[] = [];
@@ -29,7 +30,7 @@ vi.mock("../../lib/places", async (importOriginal) => {
       domainReads++;
       return Promise.resolve({ ok: true, domains: rows });
     },
-    listPlaces: () => Promise.resolve({ ok: true, places, unplaced: [] }),
+    listPlaces: () => Promise.resolve({ ok: true, places, unplaced }),
     previewDomainHome: () => Promise.resolve(homePreviews.shift() ?? { ok: false, error: "no preview queued" }),
     setDomainHome: (_d: string, body: unknown) => {
       homeBodies.push(body);
@@ -141,6 +142,7 @@ beforeEach(() => {
     place("p-old", "Old disk", "unraid-folder", { enabled: false }),
   ];
   rows = [row("containers"), row("flash", { schedule: "off" })];
+  unplaced = [];
 });
 afterEach(cleanup);
 
@@ -513,6 +515,34 @@ describe("DomainsCard pause and copy now", () => {
     });
     expect(copyNow).toEqual(["containers"]);
     expect(screen.getByText(en["storageDomains.copyStarted"])).toBeTruthy();
+  });
+
+  it("names the targets of a domain that fit no place and copies the domain now to them", async () => {
+    rows = [row("containers"), row("flash")];
+    unplaced = [
+      { rowId: "t-native", domain: "containers", role: "target", name: "B2 native", repo: "b2:bucket:containers" },
+      { rowId: "t-swift", domain: "containers", role: "target", name: "Swift", repo: "swift:box:containers" },
+      { rowId: "t-gs", domain: "vms", role: "target", name: "GCS", repo: "gs:bucket:vms" },
+      { rowId: "", domain: "flash", role: "path", name: "", repo: "b2:bucket:flash" },
+    ];
+    await card();
+    const containers = rowOf("Containers");
+    expect(within(containers).queryByText(en["storageDomains.noCopyPlace"])).toBeNull();
+    expect(within(containers).getByText(en["storageDomains.unplacedTargets"].replace("{list}", "B2 native and Swift"))).toBeTruthy();
+    expect(within(rowOf("Flash")).getByText(en["storageDomains.noCopyPlace"])).toBeTruthy();
+    expect(within(rowOf("Flash")).queryByRole("button", { name: en["storageDomains.copyNow"] })).toBeNull();
+    await act(async () => {
+      fireEvent.click(within(containers).getByRole("button", { name: en["storageDomains.copyNow"] }));
+    });
+    expect(copyNow).toEqual(["containers"]);
+  });
+
+  it("offers Copy now beside chips without a target when a target fits no place", async () => {
+    rows = [row("vms", { chips: [{ placeId: "p-b2", on: false, disabled: false }] })];
+    unplaced = [{ rowId: "t-gs", domain: "vms", role: "target", name: "GCS", repo: "gs:bucket:vms" }];
+    await card();
+    expect(chip("VMs", "B2").getAttribute("aria-pressed")).toBe("false");
+    expect(within(rowOf("VMs")).getByRole("button", { name: en["storageDomains.copyNow"] })).toBeTruthy();
   });
 
   it("offers no Copy now while the row waits for its default to be confirmed", async () => {
