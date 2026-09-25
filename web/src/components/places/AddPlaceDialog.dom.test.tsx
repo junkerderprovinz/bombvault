@@ -195,6 +195,16 @@ describe("AddPlaceDialog offers", () => {
     expect(document.activeElement).toBe(within(dialog()).getByRole("button", { name: en["fleet.mesh.accept"] }));
   });
 
+  it("leaves the one accent button to the form while an offer is open", async () => {
+    await open();
+    await click(tile(en["places.provider.bombvault"]));
+    await within(dialog()).findByRole("button", { name: en["fleet.mesh.accept"] });
+    const accented = within(dialog())
+      .getAllByRole("button")
+      .filter((b) => /\bbg-accent\b/.test(b.className));
+    expect(accented).toEqual([button("places.form.test")]);
+  });
+
   it("closes once an offer is accepted, and says the place keeps its copies already", async () => {
     const changed = vi.fn();
     window.addEventListener(PLACES_CHANGED, changed);

@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Badge } from "./Badge";
-import { Button } from "./Button";
+import { Button, type ButtonTone } from "./Button";
 import { SelectField } from "./SelectField";
 import { useNewTargetQuestion } from "./placement/NewTargetQuestion";
 import { acceptMeshOffer, declineMeshOffer, type MeshOffer, type OffsiteDomain } from "../lib/api";
@@ -63,11 +63,14 @@ export function MeshOfferRow({
   t,
   onChanged,
   onAccepted,
+  acceptTone = "accent",
 }: {
   offer: MeshOffer;
   t: T;
   onChanged: () => void;
   onAccepted?: (place: Place) => void;
+  /** Neutral inside a window whose own buttons carry the accent. */
+  acceptTone?: ButtonTone;
 }) {
   const [domain, setDomain] = useState<string>(offer.suggestedDomain || "containers");
   const [busy, setBusy] = useState(false);
@@ -176,10 +179,10 @@ export function MeshOfferRow({
             ref={acceptRef}
             label={t("fleet.mesh.accept")}
             labelKey="fleet.mesh.accept"
-            tone="accent"
+            tone={acceptTone}
             onClick={() => void handleAccept()}
             disabled={busy}
-            className={`inline-flex items-center rounded-pill bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            className={`inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-medium transition-opacity disabled:opacity-50${
               shakeAccept ? " glim-shake" : ""
             }`}
           />
