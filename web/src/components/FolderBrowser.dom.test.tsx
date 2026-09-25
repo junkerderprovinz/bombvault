@@ -81,6 +81,12 @@ describe("FolderBrowser roots", () => {
     expect(rows()).toContain("..");
   });
 
+  it("stands at the root for a root typed with a trailing slash", async () => {
+    await openBrowser("remotes/", [{ path: "remotes", labelKey: "places.root.remotes" }]);
+    expect(rows()).toContain("syno");
+    expect(rows()).not.toContain("..");
+  });
+
   it("offers the roots as a picker and never climbs above the root it is in", async () => {
     await openBrowser("", HERE);
     const picker = screen.getByRole("toolbar", { name: en["folder.roots"] });

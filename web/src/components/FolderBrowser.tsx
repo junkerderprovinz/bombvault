@@ -88,7 +88,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   function handleOpen() {
     setManualFallback(false);
     setOpen(true);
-    const start = value.trim();
+    // A typed "remotes/" is the root "remotes", and has no ".." above it.
+    const start = value.trim().replace(/\/+$/, "");
     const outside = roots && roots.length > 0 && (start === "" || rootOf(roots, start) < 0);
     doFetch(outside ? roots[0]!.path : start);
   }
