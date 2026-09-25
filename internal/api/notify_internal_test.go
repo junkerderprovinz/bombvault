@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -69,12 +70,12 @@ func TestNotifyBackupUnraidHonoursPolicy(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	s.notifyBackup(context.Background(), "container", "plex", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+	s.notifyBackup(context.Background(), "container", "plex", "", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
 	if len(ssh.runs) != 0 {
 		t.Fatalf("no Unraid notify expected on success (policy=failure), got %v", ssh.runs)
 	}
 
-	s.notifyBackup(context.Background(), "container", "plex", false, backup.Summary{}, errors.New("boom"))
+	s.notifyBackup(context.Background(), "container", "plex", "", false, backup.Summary{}, errors.New("boom"))
 	if len(ssh.runs) != 1 {
 		t.Fatalf("expected 1 Unraid notify on failure, got %d", len(ssh.runs))
 	}
@@ -87,12 +88,76 @@ func TestNotifyBackupUnraidHonoursPolicy(t *testing.T) {
 	}
 }
 
+func TestNotifyBackupReportsACancelAsNoFailure(t *testing.T) {
+	for _, on := range []string{"failure", "always"} {
+		t.Run(on, func(t *testing.T) {
+			var mu sync.Mutex
+			var hcPaths []string
+			var messages []string
+			hc := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+				mu.Lock()
+				hcPaths = append(hcPaths, r.URL.Path)
+				mu.Unlock()
+			}))
+			defer hc.Close()
+			wh := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+				body, _ := io.ReadAll(r.Body)
+				mu.Lock()
+				messages = append(messages, string(body))
+				mu.Unlock()
+			}))
+			defer wh.Close()
+
+			ssh := &fakeHostSSH{}
+			s := unraidNotifyService(t, ssh)
+			if err := s.SetNotifyConfig(notify.Config{
+				On: on, Unraid: true, HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic",
+			}); err != nil {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithCancel(context.Background())
+			s.registerBackupCancel("container:plex", cancel)
+			defer s.unregisterBackupCancel("container:plex")
+			if !s.CancelBackupRun("container:plex", "") {
+				t.Fatal("the backup could not be cancelled")
+			}
+
+			s.notifyBackup(ctx, "container", "plex", "container:plex", false, backup.Summary{},
+				fmt.Errorf("backup: cancelled while stopping the container: %w", ctx.Err()))
+
+			mu.Lock()
+			defer mu.Unlock()
+			if len(hcPaths) != 1 || hcPaths[0] != "/" {
+				t.Errorf("a cancel ended the Healthchecks run with %v, want the plain end ping", hcPaths)
+			}
+			if on == "failure" {
+				if len(messages) != 0 || len(ssh.runs) != 0 {
+					t.Fatalf("a cancel reached someone who only hears about failures: %v %v", messages, ssh.runs)
+				}
+				return
+			}
+			if len(messages) != 1 || !strings.Contains(messages[0], `Backup of container \"plex\" was cancelled.`) {
+				t.Fatalf("webhook messages = %v", messages)
+			}
+			if strings.Contains(messages[0], "FAILED") || strings.Contains(messages[0], "context canceled") {
+				t.Errorf("a cancel reads as a failure: %s", messages[0])
+			}
+			if len(ssh.runs) != 1 {
+				t.Fatalf("%d Unraid notifications, want one", len(ssh.runs))
+			}
+			if sent := strings.Join(ssh.runs[0], " "); strings.Contains(sent, "warning") || !strings.Contains(sent, "backup cancelled") {
+				t.Errorf("Unraid notification = %s", sent)
+			}
+		})
+	}
+}
+
 func TestNotifyBackupUnraidSkippedWithoutSSH(t *testing.T) {
 	s := unraidNotifyService(t, nil)
 	if err := s.SetNotifyConfig(notify.Config{On: "always", Unraid: true}); err != nil {
 		t.Fatal(err)
 	}
-	s.notifyBackup(context.Background(), "flash", "", true, backup.Summary{}, nil)
+	s.notifyBackup(context.Background(), "flash", "", "", true, backup.Summary{}, nil)
 }
 
 // The config domain has no item name, so a generic "%s %q" label would read
@@ -104,7 +169,7 @@ func TestNotifyBackupConfigLabel(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	s.notifyBackup(context.Background(), "config", "", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+	s.notifyBackup(context.Background(), "config", "", "", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
 	if len(ssh.runs) != 1 {
 		t.Fatalf("expected 1 Unraid notify for a config backup, got %d", len(ssh.runs))
 	}
@@ -243,7 +308,7 @@ func runScheduledContainers(s *Service, items []string, fail map[string]bool) {
 			failed++
 			berr = errors.New("boom")
 		}
-		s.notifyBackup(ictx, "container", name, ok, backup.Summary{SnapshotID: "deadbeef"}, berr)
+		s.notifyBackup(ictx, "container", name, "", ok, backup.Summary{SnapshotID: "deadbeef"}, berr)
 	}
 	s.ScheduledHealthchecksResult(context.Background(), "containers", attempted, failed)
 }
@@ -341,7 +406,7 @@ func TestManualSingleBackupStillPingsHealthchecksOnce(t *testing.T) {
 
 	ctx := context.Background()
 	s.notifyBackupStart(ctx, "container")
-	s.notifyBackup(ctx, "container", "plex", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+	s.notifyBackup(ctx, "container", "plex", "", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
 
 	mu.Lock()
 	defer mu.Unlock()

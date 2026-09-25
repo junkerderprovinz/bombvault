@@ -5376,7 +5376,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// the data a previous backup captured has disappeared from disk.
 	if s.emptyBackupIsUnreachable(name, effective) {
 		err := fmt.Errorf("backup %q: its backup folders are not reachable right now (is the appdata share mounted?). Refusing an empty backup that would look successful", name)
-		s.notifyBackup(ctx, "container", name, false, backup.Summary{}, err)
+		s.notifyBackup(ctx, "container", name, "", false, backup.Summary{}, err)
 		return backup.Summary{}, err
 	}
 
@@ -5511,7 +5511,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		OnDBDumpDone: func(o backup.DBDumpOutcome) { dumpOutcome = o },
 	})
 	s.progEnd(pkey, "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "container", name, err == nil, sum, err)
+	s.notifyBackup(ctx, "container", name, "container:"+name, err == nil, sum, err)
 	// After the backup's own outcome is known, so the dump's message can say
 	// whether the files around it made it.
 	s.notifyDBDumpFailed(ctx, tg.ID, name, dumpOutcome, err == nil)
@@ -11619,7 +11619,7 @@ func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
 			_ = s.store.FinishRun(runID, "failed", "", 0, msg)
 		}
 	}
-	s.notifyBackup(ctx, "VM", name, false, backup.Summary{}, cause)
+	s.notifyBackup(ctx, "VM", name, "", false, backup.Summary{}, cause)
 }
 
 // vmDiskContainerPaths is where restic reads the file disks of domain through
@@ -11925,7 +11925,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		sum, err = backup.BackupVMGraceful(bctx, deps)
 	}
 	s.progEnd(vkey, "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "VM", name, err == nil, sum, err)
+	s.notifyBackup(ctx, "VM", name, vkey, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -12910,7 +12910,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "flash"},
 	})
 	s.progEnd("flash", "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "flash", "", err == nil, sum, err)
+	s.notifyBackup(ctx, "flash", "", "flash", err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -13219,7 +13219,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		Runs:   runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "files:" + set.Name},
 	})
 	s.progEnd(key, "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "files", set.Name, err == nil, sum, err)
+	s.notifyBackup(ctx, "files", set.Name, "files:"+set.Name, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -14413,7 +14413,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "config"},
 	})
 	s.progEnd("config", "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "config", "", err == nil, sum, err)
+	s.notifyBackup(ctx, "config", "", "config", err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -17427,8 +17427,9 @@ func singletonItemName(domain string) string {
 
 // notifyBackup sends a best-effort notification for a completed backup. It reads
 // the stored config each call (cheap; backups are infrequent) and is a no-op when
-// notifications are off.
-func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool, sum backup.Summary, backupErr error) {
+// notifications are off. cancelKey is the key the backup registered its cancel
+// under, empty for a failure before it could be cancelled.
+func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey string, ok bool, sum backup.Summary, backupErr error) {
 	// A cancelled or stalled run is reported on the context that just ended.
 	ctx = context.WithoutCancel(ctx)
 	c, err := s.NotifyConfig()
@@ -17439,26 +17440,38 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 	if target == "" {
 		target = fmt.Sprintf("%s %q", domain, name)
 	}
+	// A cancel is what somebody asked for, so like the run row it is no
+	// failure, and only those who hear about every backup hear about it.
+	// Healthchecks still gets the end of the run it saw start, since a start
+	// left open turns the check red once its grace time is up.
+	cancelled := !ok && s.backupWasCancelled(cancelKey)
 	var msg string
-	if ok {
+	switch {
+	case ok:
 		msg = fmt.Sprintf("Backup of %s succeeded (snapshot %s, %s).", target, shortID(sum.SnapshotID), humanBytes(sum.Bytes))
-	} else {
+	case cancelled:
+		msg = fmt.Sprintf("Backup of %s was cancelled.", target)
+	default:
 		msg = fmt.Sprintf("Backup of %s FAILED: %s", target, scrubError(backupErr))
 	}
 	if o := runOriginFromContext(ctx); o.Via == "mcp" {
 		msg += " " + s.mcpOriginSentence(o.KeyID)
 	}
-	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok})
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok || cancelled})
 
 	// Unraid native notification (delivered over SSH; notify.Send is HTTP-only).
 	// Honour the same policy: notifyBackup already returned for "never", so send
 	// on "always" or on any failure. In scheduled summary mode, drop the per-item
 	// Unraid push too — ScheduledNotifyResult sends the one aggregate (#56).
-	if s.unraidGate(c.Unraid) && (c.On == "always" || !ok) &&
+	failed := !ok && !cancelled
+	if s.unraidGate(c.Unraid) && (c.On == "always" || failed) &&
 		(!notify.MessagesSuppressed(ctx) || !c.ScheduledSummary) {
 		level := "normal"
 		subject := "BombVault: backup OK"
-		if !ok {
+		switch {
+		case cancelled:
+			subject = "BombVault: backup cancelled"
+		case failed:
 			level = "warning"
 			subject = "BombVault: backup FAILED"
 		}

@@ -175,7 +175,7 @@ func (s *Service) recordZFSRefusal(ctx context.Context, d store.ZFSDataset, ref 
 	} else if fErr := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(err)); fErr != nil {
 		log.Printf("api: zfs: finishing the refused run of %s failed: %v", d.Dataset, fErr)
 	}
-	s.notifyBackup(ctx, zfsDomain, d.Dataset, false, backup.Summary{}, err)
+	s.notifyBackup(ctx, zfsDomain, d.Dataset, "", false, backup.Summary{}, err)
 	return err
 }
 
@@ -384,7 +384,7 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (backup.Summa
 		},
 	})
 	s.progEnd(key, "backup", runErr == nil, startedAt)
-	s.notifyBackup(ctx, zfsDomain, d.Dataset, runErr == nil, sum, runErr)
+	s.notifyBackup(ctx, zfsDomain, d.Dataset, key, runErr == nil, sum, runErr)
 	if changes := zfsMemberChanges(previous, members); len(changes) > 0 {
 		s.notifyZFSUnsuppressed(notify.Event{
 			Title:   "BombVault",
