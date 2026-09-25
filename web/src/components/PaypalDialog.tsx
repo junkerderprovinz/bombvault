@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Selector } from "./Selector";
 import { WindowActions } from "./WindowActions";
+import { hueVars } from "../lib/appearance";
 import { useT } from "../lib/i18n";
 import { PAYPAL, PAYPAL_AMOUNTS, PAYPAL_DEFAULT_AMOUNT, PAYPAL_DESCRIPTION } from "../lib/donate";
 import { parseAmount, type GiveFrequency } from "../lib/paypal";
@@ -127,8 +128,14 @@ export function PaypalDialog({ onClose }: { onClose: () => void }) {
                 aria-label={t("about.paypalOtherAmount")}
                 aria-invalid={typed !== "" && !typedAmount}
                 onChange={(e) => setTyped(e.target.value)}
-                className={`h-9 w-36 rounded-control border bg-carbon-surface2 px-3 text-sm text-carbon-text glim-field-focus ${
-                  typedAmount ? "border-accent" : "border-transparent"
+                // A counted amount is filled like a chosen segment and takes the
+                // palette position after the presets. Focus steps the fill back
+                // to the field's own, so the ink follows it while typing.
+                style={typedAmount ? (hueVars(FREQUENCIES.length + PAYPAL_AMOUNTS.length) as CSSProperties) : undefined}
+                className={`h-9 w-36 rounded-control px-3 text-sm glim-field-focus ${
+                  typedAmount
+                    ? "glim-hue glim-active bg-accent text-accentContrast focus:text-carbon-text"
+                    : "bg-carbon-surface2 text-carbon-text"
                 }`}
               />
             </div>

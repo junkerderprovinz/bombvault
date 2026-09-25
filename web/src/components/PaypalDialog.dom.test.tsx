@@ -146,14 +146,17 @@ it("lets a typed amount take the selection from the presets, and gives it back w
 
   expect(selected()).toEqual(["false", "true", "false"]);
 
+  // The field is filled like a chosen segment while its amount counts.
+  const chosen = () => /\bglim-active\b/.test(field.className) && /\bbg-accent\b/.test(field.className);
+
   fireEvent.change(field, { target: { value: "12,50" } });
   expect(selected()).toEqual(["false", "false", "false"]);
-  expect(field.className).toContain("border-accent");
+  expect(chosen()).toBe(true);
   expect(order().purchase_units[0]!.amount.value).toBe("12.50");
 
   fireEvent.change(field, { target: { value: "" } });
   expect(selected()).toEqual(["false", "true", "false"]);
-  expect(field.className).not.toContain("border-accent");
+  expect(chosen()).toBe(false);
 });
 
 it("keeps PayPal shut while the typed amount does not parse", async () => {
