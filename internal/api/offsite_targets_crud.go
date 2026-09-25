@@ -39,6 +39,12 @@ type offsiteTargetView struct {
 	// carries no meaning for it, so the export leaves the field off entirely
 	// rather than send a value that means nothing there.
 	OffPremises *bool `json:"offPremises,omitempty"`
+	// PlaceID, PlaceDomain and PlaceSuffix put the row on a storage place.
+	// Read-only like CompanionOf: toStoreTarget never maps them back, so no
+	// write through a row view can put a row on a place.
+	PlaceID     string `json:"placeId,omitempty"`
+	PlaceDomain string `json:"placeDomain,omitempty"`
+	PlaceSuffix string `json:"placeSuffix,omitempty"`
 }
 
 func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
@@ -62,6 +68,9 @@ func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
 		CreatedAt:            t.CreatedAt,
 		SortOrder:            t.SortOrder,
 		CompanionOf:          t.CompanionOf,
+		PlaceID:              t.PlaceID,
+		PlaceDomain:          t.PlaceDomain,
+		PlaceSuffix:          t.PlaceSuffix,
 	}
 	if t.Role == store.RoleRepo {
 		v.OffPremises = &t.OffPremises
