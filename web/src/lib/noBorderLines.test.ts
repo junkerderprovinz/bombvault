@@ -44,34 +44,85 @@ function lineAt(text: string, index: number): number {
   return lo + 1;
 }
 
-/** Comments quote the classes they warn against, so they are blanked, keeping
- *  line numbers. `//` after a colon or a quote is a URL or a string. */
+/** Blanks keep the line numbers of what is left. */
+const blank = (m: string) => m.replace(/[^\n]/g, " ");
+
+/** Comments quote the classes they warn against, so they are blanked. `//`
+ *  after a colon or a quote is a URL or a string. */
 function blankComments(source: string): string {
-  const blank = (m: string) => m.replace(/[^\n]/g, " ");
   return source
     .replace(/\/\*[\s\S]*?\*\//g, blank)
     .replace(/(^|[^:"'`\\])(\/\/.*)$/gm, (_m, before: string, comment: string) => before + blank(comment));
 }
 
 const QUOTED = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/g;
-const TEMPLATE = /`(?:[^`\\]|\\.)*`/g;
+
+type Template = { start: number; end: number; chunks: { text: string; at: number }[] };
+
+/** Every template literal in `code`, with the static chunks of the templates
+ *  nested in its `${…}` among its own. A regex would take the backtick that
+ *  opens a nested template for the one that closes the outer, and skip the
+ *  classes in between. */
+function templates(code: string): Template[] {
+  const quoted = new RegExp(QUOTED.source, "y");
+  let i = 0;
+  // Reads the template whose backtick is at i and leaves i past its closing one.
+  const read = (chunks: Template["chunks"]) => {
+    let from = ++i;
+    while (i < code.length && code[i] !== "`") {
+      if (code[i] === "\\") {
+        i += 2;
+      } else if (code.startsWith("${", i)) {
+        chunks.push({ text: code.slice(from, i), at: from });
+        i += 2;
+        for (let depth = 0; i < code.length && (depth > 0 || code[i] !== "}"); ) {
+          quoted.lastIndex = i;
+          if (code[i] === "`") read(chunks);
+          else if (quoted.test(code)) i = quoted.lastIndex;
+          else {
+            if (code[i] === "{") depth++;
+            else if (code[i] === "}") depth--;
+            i++;
+          }
+        }
+        from = ++i;
+      } else {
+        i++;
+      }
+    }
+    chunks.push({ text: code.slice(from, i), at: from });
+    i++;
+  };
+  const out: Template[] = [];
+  while ((i = code.indexOf("`", i)) !== -1) {
+    const start = i;
+    const chunks: Template["chunks"] = [];
+    read(chunks);
+    out.push({ start, end: i, chunks });
+  }
+  return out;
+}
 
 /** Every quoted string, and every static chunk of a template literal, with the
  *  line it starts on. QUOTED also finds the strings inside `${…}`. */
 function literals(source: string): { text: string; line: number }[] {
   const code = blankComments(source);
-  const out: { text: string; line: number }[] = [];
-  for (const m of code.matchAll(QUOTED)) out.push({ text: m[0].slice(1, -1), line: lineAt(code, m.index) });
-  for (const m of code.matchAll(TEMPLATE)) {
-    const body = m[0].slice(1, -1);
-    let cursor = 0;
-    for (const chunk of body.split(/\$\{[^}]*\}/)) {
-      const offset = body.indexOf(chunk, cursor);
-      cursor = offset + chunk.length;
-      out.push({ text: chunk, line: lineAt(code, m.index + 1 + offset) });
-    }
+  const out = [...code.matchAll(QUOTED)].map((m) => ({ text: m[0].slice(1, -1), line: lineAt(code, m.index) }));
+  for (const { chunks } of templates(code)) {
+    for (const { text, at } of chunks) out.push({ text, line: lineAt(code, at) });
   }
   return out;
+}
+
+/** `code` with its strings and template literals blanked, so what is left is code. */
+function blankStrings(code: string): string {
+  let out = "";
+  let last = 0;
+  for (const { start, end } of templates(code)) {
+    out += code.slice(last, start) + blank(code.slice(start, end));
+    last = end;
+  }
+  return (out + code.slice(last)).replace(QUOTED, blank);
 }
 
 /** The utility a class names once its variants (`hover:`, `md:`) and the
@@ -132,9 +183,7 @@ function sourceLines(): Line[] {
       if (!drawsLine(list) || ALLOWED_CLASS_LISTS.some((a) => a.match.test(list))) continue;
       out.push({ file: where(file), line, text: list.trim() });
     }
-    const code = blankComments(text)
-      .replace(QUOTED, (m) => m.replace(/[^\n]/g, " "))
-      .replace(TEMPLATE, (m) => m.replace(/[^\n]/g, " "));
+    const code = blankStrings(blankComments(text));
     for (const m of code.matchAll(STYLE_KEY)) out.push({ file: where(file), line: lineAt(code, m.index), text: m[0] });
     // An <hr> is a line by default; it keeps its meaning only as spacing.
     for (const m of blankComments(text).matchAll(/<hr\b[^>]*>/g)) {
@@ -152,7 +201,7 @@ const CSS_LINE =
 function stylesheetLines(): Line[] {
   const out: Line[] = [];
   for (const file of sourceFiles(SRC, /\.css$/)) {
-    const css = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "));
+    const css = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, blank);
     for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       const selector = rule[1].trim();
       if (selector in ALLOWED_RULES) continue;
@@ -180,11 +229,17 @@ describe("border lines", () => {
 
   it("reads class lists where they are, not in comments", () => {
     const found = literals(
-      'const a = "border-t";\n// "border-b"\n{/* `divide-y` */}\nconst u = "https://x"; const b = `p-2 ${on ? "border-2" : ""}`;',
+      'const a = "border-t";\n// "border-b"\n{/* `divide-y` */}\nconst u = "https://x"; const b = `p-2 ${on ? "border-2" : ""}`;\n' +
+        'const c = `p-2 ${on ? `border-x` : ""} divide-y`;\n' +
+        'const d = `${a ? `p-1 ${b ? `border-y` : ""} border-l` : ""}`;',
     );
-    expect(found.filter((l) => drawsLine(l.text)).map((l) => [l.text, l.line])).toEqual([
+    expect(found.filter((l) => drawsLine(l.text)).map((l) => [l.text.trim(), l.line])).toEqual([
       ["border-t", 1],
       ["border-2", 4],
+      ["border-x", 5],
+      ["divide-y", 5],
+      ["border-y", 6],
+      ["border-l", 6],
     ]);
   });
 
