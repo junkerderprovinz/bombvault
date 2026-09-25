@@ -512,10 +512,11 @@ export interface BrowseResponse {
   path?: string;
   dirs?: BrowseDirEntry[];
   error?: string;
-  /** Error KIND, not a message (handlers.go classifyReadDirError): "ok" on
-   *  success; "restricted" (fs.ErrPermission), "missing" (ErrNotExist) or
-   *  "error" (opaque bucket — an os.Root escape rejection deliberately lands
-   *  here so an escape attempt never announces itself on the wire). */
+  /** The kind of error, not a message (classifyReadDirError in
+   *  handlers_files.go): "ok" on success; "restricted" (fs.ErrPermission),
+   *  "missing" (ErrNotExist) or "error", an opaque bucket that also takes an
+   *  os.Root escape rejection so an escape attempt never announces itself on
+   *  the wire. */
   status?: "ok" | "restricted" | "missing" | "error";
   /** True when the listing hit the server-side cap (maxBrowseEntries = 500):
    *  the first lexical page was returned, the rest exist but are not shown. */
@@ -2832,22 +2833,20 @@ export function createFolder(path: string, name: string): Promise<MkdirResponse>
   });
 }
 
-// ---------------------------------------------------------------------------
-// VM API types — match VMView in internal/api/service.go exactly
-// ---------------------------------------------------------------------------
+// VM types match VMView in internal/api/service_vms.go.
 
 /** A VM row from GET /api/vms */
 export interface VM {
-  /** DISPLAY-ONLY. On TrueNAS this is the resolved friendly name, not the raw
-   *  libvirt domain name — never send this back on an action call (backup,
+  /** For display only. On TrueNAS this is the resolved friendly name, not the
+   *  raw libvirt domain name, so it never goes back on an action call (backup,
    *  restore, snapshots, forget, method, include, scheduleCadence,
    *  backup-order, DR-drill-target). Use libvirtName for all of those. */
   name: string;
-  /** The raw libvirt domain name — the ONLY identifier every /api/vms/{name}/...
-   *  route accepts (see vmNameParam, internal/api/handlers.go: it takes the
-   *  path segment literally, with zero resolution). Equal to `name` on every
-   *  platform except TrueNAS, where `name` is instead a display-only friendly
-   *  name. Every action call site must use this field, never `name`. */
+  /** The raw libvirt domain name, the one identifier every /api/vms/{name}/...
+   *  route accepts (vmNameParam in internal/api/handlers.go takes the path
+   *  segment literally, with no resolution). Equal to `name` on every
+   *  platform except TrueNAS, where `name` is a display-only friendly name.
+   *  Every action call site uses this field, never `name`. */
   libvirtName: string;
   state: string;
   /** Backup method — currently always "graceful". */
@@ -3042,10 +3041,7 @@ export function restoreConfig(
   });
 }
 
-// ---------------------------------------------------------------------------
-// Files API (file-set backup domain, #62) — matches FileSetView in
-// internal/api/service.go exactly
-// ---------------------------------------------------------------------------
+// File-set types match FileSetView in internal/api/service_files.go.
 
 /** A file-set row from GET /api/files. */
 export interface FileSetView {

@@ -1059,7 +1059,7 @@ export function SettingsPage() {
   // disappears live, and pushes the toast) — never a new persistence path.
   //
   // A rejected save (e.g. enabling VMs with no working SSH connection to the
-  // libvirt host — internal/api/handlers.go's handlePutSettings checks that
+  // libvirt host; handlePutSettings in internal/api/handlers_settings.go checks that
   // OFF→ON transition specifically) rolls the optimistic flip back to
   // whatever it was before this click and bumps this row's shake nonce so
   // ToggleRow replays `.glim-shake` — generic by construction: it keys off

@@ -376,7 +376,7 @@ export function IntegrityCard({
               label={t("drill.targetVM")}
               options={[
                 { value: "", label: t("drill.targetMostRecent") },
-                // The value is the raw libvirt name: pickDRSnapshot (service.go)
+                // The value is the raw libvirt name: pickDRSnapshot (service_verify.go)
                 // matches it against the "vm:"+name backup tag, never the
                 // display-only friendly name a TrueNAS VM shows here.
                 ...vms.map((vm) => ({ value: vm.libvirtName, label: vm.name })),

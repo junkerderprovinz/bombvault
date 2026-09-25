@@ -14,8 +14,8 @@ export const ALL_CADENCE_MODES: CadenceMode[] = ["off", "daily", "weekly", "ever
 /**
  * EXACT_CADENCE_MODES leaves out everyN, for schedules that have no last-run
  * record to count an interval from. The backend refuses everyN for them
- * (SetScheduleCadence and SetVMScheduleCadence in internal/api/service.go),
- * since it would fire daily.
+ * (SetScheduleCadence and SetVMScheduleCadence in
+ * internal/api/service_schedule.go), since it would fire daily.
  */
 export const EXACT_CADENCE_MODES: CadenceMode[] = ["off", "daily", "weekly", "cron"];
 

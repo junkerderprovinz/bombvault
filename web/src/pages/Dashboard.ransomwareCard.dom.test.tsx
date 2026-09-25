@@ -37,7 +37,7 @@ function domain(over: Partial<DomainStatus> = {}): DomainStatus {
     offsiteDrillScheduled: false,
     // Non-empty, or the card filters the domain out before any row renders.
     protection: "green",
-    // "" is what protectionChecks in internal/api/service.go reports when
+    // "" is what protectionChecks in internal/api/service_status.go reports when
     // append-only is off: nothing to prove, which differs from a failed proof.
     tamperState: "",
     replicationState: "",
