@@ -22,7 +22,7 @@ import {
 } from "../lib/anomalies";
 import { humanBytes } from "../lib/forecast";
 import { useT, type TranslationKey } from "../lib/i18n";
-import { formatDuration, formatTs, relativeTime } from "../lib/reltime";
+import { formatMillis, formatTs, relativeTime } from "../lib/reltime";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 
@@ -66,7 +66,7 @@ const DOMAIN_PATH: Record<string, string> = {
 
 /** A metric's numbers in the unit the detector measured them in. */
 function metricValue(a: AnomalyView, value: number, locale: string, t: TranslateAnomaly): string {
-  if (DURATION_METRICS.has(a.metric)) return formatDuration(value / 1000);
+  if (DURATION_METRICS.has(a.metric)) return formatMillis(value);
   if (COUNT_METRICS.has(a.metric)) return Math.round(value).toLocaleString();
   if (a.metric === "capacity_eta") return anomalyTimeSpan(value, t, locale);
   if (a.metric === "capacity_low") return `${Math.round(value * 100)}%`;

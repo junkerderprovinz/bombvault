@@ -17,7 +17,7 @@ import type { TranslationKey } from "./i18n";
 import type { BadgeTone } from "../components/Badge";
 import { dbDumpNameOf, isDbDumpIdentity } from "./dbdump";
 import { humanBytes } from "./forecast";
-import { formatDuration } from "./reltime";
+import { formatMillis } from "./reltime";
 
 /** Translates a key, and with a count picks the form that count needs. */
 export type TranslateAnomaly = (key: TranslationKey, n?: number) => string;
@@ -251,8 +251,8 @@ function countParams(a: AnomalyView): Record<string, string> {
 
 function durationParams(a: AnomalyView): Record<string, string> {
   return {
-    current: formatDuration(a.observed / 1000),
-    typical: formatDuration(a.expected / 1000),
+    current: formatMillis(a.observed),
+    typical: formatMillis(a.expected),
   };
 }
 

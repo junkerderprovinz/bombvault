@@ -51,6 +51,15 @@ export function formatDuration(seconds: number): string {
  * would otherwise render as the age of the Unix epoch; formatDuration only
  * rejects a start in the future.
  */
+/**
+ * formatMillis is formatDuration for a span measured in milliseconds. Under a
+ * second it keeps the milliseconds, which whole seconds would round to "0s".
+ */
+export function formatMillis(ms: number): string {
+  if (Number.isFinite(ms) && ms >= 0 && ms < 1000) return `${Math.round(ms)}ms`;
+  return formatDuration(ms / 1000);
+}
+
 export function elapsedSince(startedAt: number | undefined, nowMs: number): string {
   if (typeof startedAt !== "number" || !Number.isFinite(startedAt) || startedAt <= 0) return "";
   return formatDuration((nowMs - startedAt * 1000) / 1000);

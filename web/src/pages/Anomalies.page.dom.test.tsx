@@ -488,6 +488,30 @@ describe("the items tab", () => {
     ).toBeTruthy();
   });
 
+  it("gives a restic time under a second in milliseconds", async () => {
+    getAnomalyItems.mockResolvedValue({
+      ok: true,
+      items: [
+        item({
+          dump: {
+            part: "",
+            learning: { samples: 10, needed: 10 },
+            typical: { sourceBytes: 2 * 1024 ** 2, resticMs: 359 },
+            open: { critical: 0, warning: 0, info: 0 },
+            retentionHeld: false,
+          },
+        }),
+      ],
+    });
+    await renderPage();
+    await openItems();
+    expect(
+      screen.getByText(
+        en["anomaly.items.typicalSize"].replace("{size}", "2.0 MB").replace("{duration}", "359ms")
+      )
+    ).toBeTruthy();
+  });
+
   it("names the dataset or the dump an expectation belongs to", async () => {
     getAnomalyItems.mockResolvedValue({
       ok: true,
