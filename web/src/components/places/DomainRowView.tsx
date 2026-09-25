@@ -2,19 +2,30 @@ import { useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../Button";
 import { IconEye } from "../glyphs";
+import { InfoBubble } from "../InfoBubble";
+import { IconSync } from "../navGlyphs";
 import { PlaceMark } from "../placeMarks";
 import { cadenceLabel } from "../ScheduleBadge";
 import type { SelectOption } from "../SelectField";
 import { HUE_OFFSET, Selector, type SelectorItem } from "../Selector";
 import { HomeSelect } from "../placement/HomeSelect";
-import { NewTargetPreviewLines } from "../placement/NewTargetQuestion";
+import { itemName, NewTargetPreviewLines } from "../placement/NewTargetQuestion";
 import { ToggleRow } from "../../pages/settings/shared";
+import {
+  confirmPlacementDefault,
+  getConfirmPreview,
+  replicateOffsite,
+  type PlacementDomain,
+  type TargetPreviewRow,
+  type UnmatchedName,
+} from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
-import { useT } from "../../lib/i18n";
+import { useT, type TranslationKey } from "../../lib/i18n";
 import { formatList, isPlacementDomain } from "../../lib/placement";
 import { placementChanged } from "../../lib/placementEvents";
 import { domainName, placeErrorText } from "../../lib/placeText";
 import {
+  PLACE_DOMAINS,
   placesChanged,
   previewDomainCopies,
   previewDomainHome,
@@ -25,6 +36,7 @@ import {
   type DomainRow,
   type HomePreview,
   type Place,
+  type PlaceDomain,
   type PlaceRefusal,
 } from "../../lib/places";
 import { copiesExpect, homeExpect, impactLines } from "../../lib/storageDomains";
@@ -62,6 +74,51 @@ function ApplyToOpenSwitch({ onChange }: { onChange: (on: boolean) => void }) {
   );
 }
 
+// What the next run copies once a paused default is confirmed, with a switch to
+// leave out each name in the backups that has no item here.
+function ConfirmLines({
+  targets,
+  unmatched,
+  onExclude,
+}: {
+  targets: TargetPreviewRow[];
+  unmatched: UnmatchedName[];
+  onExclude: (identities: string[]) => void;
+}) {
+  const { t } = useT();
+  const [excluded, setExcluded] = useState<string[]>([]);
+  function toggle(identity: string, on: boolean) {
+    const next = on ? [...excluded, identity] : excluded.filter((x) => x !== identity);
+    setExcluded(next);
+    onExclude(next);
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      {targets.map((target) => (
+        <div key={target.targetId} className="flex flex-col gap-1">
+          <p className="text-sm text-carbon-text">{target.name}</p>
+          <NewTargetPreviewLines target={target.name} preview={target.preview} />
+        </div>
+      ))}
+      {unmatched.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-carbon-textSub">{t("placementDefaults.unmatched")}</p>
+          {unmatched.map((u) => (
+            <ToggleRow
+              key={u.identity}
+              label={t("placementDefaults.unmatchedLine")
+                .replace("{name}", () => itemName(u.identity))
+                .replace("{n}", String(u.snapshots))}
+              checked={excluded.includes(u.identity)}
+              onChange={(on) => toggle(u.identity, on)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function DomainRowView({
   row,
   places,
@@ -80,8 +137,9 @@ export function DomainRowView({
   const [pendingHome, setPendingHome] = useState<string | null>(null);
   const [pendingChips, setPendingChips] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
-  const [shake, setShake] = useState({ home: 0, chips: 0 });
+  const [shake, setShake] = useState({ home: 0, chips: 0, confirm: 0, copy: 0 });
   const [showExceptions, setShowExceptions] = useState(false);
+  const [copying, setCopying] = useState(false);
   const domain = domainName(t, row.domain);
   const placeName = (id: string) => places.find((p) => p.id === id)?.name ?? id;
 
@@ -114,8 +172,16 @@ export function DomainRowView({
     };
   });
 
-  function refused(res: PlaceRefusal, control: "home" | "chips") {
-    push(placeErrorText(t, lang, res, "settings.error"), "fail");
+  // Flash and self-backup have no default to confirm.
+  const pausedDomain = row.paused && isPlacementDomain(row.domain) ? row.domain : null;
+  // A paused domain copies nothing until its default is confirmed.
+  const copyDomain = row.paused ? undefined : PLACE_DOMAINS.find((d) => d === row.domain);
+  // An unticked chip with a target counts, since items with a choice of their
+  // own keep copying there.
+  const copiesSomewhere = row.chips.some((c) => c.targetId !== undefined && !c.disabled);
+
+  function refused(res: PlaceRefusal, control: keyof typeof shake, fallback: TranslationKey = "settings.error") {
+    push(placeErrorText(t, lang, res, fallback), "fail");
     setShake((s) => ({ ...s, [control]: s[control] + 1 }));
   }
 
@@ -232,6 +298,41 @@ export function DomainRowView({
     }
   }
 
+  async function confirmDefault(d: PlacementDomain) {
+    setBusy(true);
+    try {
+      const preview = await getConfirmPreview(d);
+      if (!preview.ok) return refused(preview, "confirm");
+      let excluded: string[] = [];
+      const extra = (
+        <ConfirmLines targets={preview.targets ?? []} unmatched={preview.unmatched ?? []} onExclude={(ids) => (excluded = ids)} />
+      );
+      if (!(await confirm(t("placementDefaults.confirmAsk"), { confirmKey: "placementDefaults.confirm", extra }))) return;
+      const res = await confirmPlacementDefault(d, excluded);
+      if (!res.ok) return refused(res, "confirm");
+      push(t("placementDefaults.confirmed"), "success");
+      placementChanged();
+      await onWritten();
+    } catch (err) {
+      refused({ ok: false, error: err instanceof Error ? err.message : undefined }, "confirm");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copyNow(d: PlaceDomain) {
+    setCopying(true);
+    try {
+      const res = await replicateOffsite(d);
+      if (res.ok) push(t("storageDomains.copyStarted"), "success");
+      else refused(res, "copy", "storageDomains.copyFailed");
+    } catch (err) {
+      refused({ ok: false, error: err instanceof Error ? err.message : undefined }, "copy", "storageDomains.copyFailed");
+    } finally {
+      setCopying(false);
+    }
+  }
+
   return (
     <section
       aria-label={domain}
@@ -249,6 +350,23 @@ export function DomainRowView({
         <p className="text-xs text-statusWarn">{t("placement.unreadable")}</p>
       ) : (
         <>
+          {pausedDomain && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1 text-xs text-statusWarn">
+                {t("placementDefaults.paused")}
+                <InfoBubble tip={t("placementDefaults.pausedHint").replace("{domain}", () => domain)} />
+              </span>
+              <Button
+                key={`confirm-${shake.confirm}`}
+                label={t("placementDefaults.confirm")}
+                labelKey="placementDefaults.confirm"
+                tone="accent"
+                disabled={busy}
+                onClick={() => void confirmDefault(pausedDomain)}
+                className={shake.confirm ? "glim-shake" : ""}
+              />
+            </div>
+          )}
           <div key={`home-${shake.home}`} className={shake.home ? "glim-shake" : undefined}>
             <HomeSelect
               label={t("storageDomains.storedIn")}
@@ -277,6 +395,20 @@ export function DomainRowView({
                   onChange={(id) => void toggleChip(id, !ticked.has(id))}
                 />
               </div>
+            )}
+            {copyDomain && copiesSomewhere && (
+              <Button
+                key={`copy-${shake.copy}`}
+                label={t("storageDomains.copyNow")}
+                labelKey="storageDomains.copyNow"
+                glyph={<IconSync />}
+                tone="neutral"
+                busy={copying}
+                disabled={copying}
+                title={copying ? t("storageDomains.copying") : undefined}
+                onClick={() => void copyNow(copyDomain)}
+                className={shake.copy ? "glim-shake" : ""}
+              />
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs">
