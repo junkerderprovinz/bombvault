@@ -76,7 +76,7 @@ export default {
     schema: [],
     messages: {
       hardcoded:
-        'Hardcoded user-facing string "{{text}}". Wrap it in t("…") and add the key to web/src/lib/i18n.ts and to every file in web/src/lib/locales/ — this app ships 42 languages, and an untranslated string on an error path is the one a user sees at the worst possible moment.{{hatch}}',
+        'Hardcoded user-facing string "{{text}}". Wrap it in t("…") and add the key to web/src/lib/i18n.ts and to every file in web/src/lib/locales/. An untranslated string on an error path is the one a user sees at the worst possible moment.{{hatch}}',
     },
   },
 

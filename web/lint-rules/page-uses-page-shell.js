@@ -73,9 +73,9 @@ export default {
     ],
     messages: {
       notShelled:
-        "The `{{component}}` page's root element does not use the shared page shell. Return `<div className={{{shell}}}>` from lib/pageShell.ts — one app-wide max-width and one Card gap, so this page cannot drift the way the original ten did.{{hatch}}",
+        "The `{{component}}` page's root element does not use the shared page shell. Return `<div className={{{shell}}}>` from lib/pageShell.ts, which holds the one app-wide max-width and Card gap, so this page cannot drift from the others.{{hatch}}",
       handRolled:
-        "This element hand-rolls the page shell in literal classes (`{{tokens}}`). Import PAGE_SHELL from lib/pageShell.ts instead — a second literal copy of the width and gap is exactly how five different page widths accumulated.{{hatch}}",
+        "This element hand-rolls the page shell in literal classes (`{{tokens}}`). Import PAGE_SHELL from lib/pageShell.ts instead; every literal copy of the width and gap is one more page width to drift.{{hatch}}",
     },
   },
 

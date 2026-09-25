@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -106,6 +107,53 @@ func TestSecurityHeadersWidgetFraming(t *testing.T) {
 		if csp := hh.Get("Content-Security-Policy"); !strings.Contains(csp, "frame-ancestors 'none'") {
 			t.Fatalf("%s CSP must keep frame-ancestors 'none', got %q", path, csp)
 		}
+	}
+}
+
+// TestCSPAllowsTheGiveWindows checks that the SPA's CSP lets the About card's
+// Buy Me a Coffee frame and PayPal's SDK load, and that PayPal reaches no
+// directive beyond scripts, frames, connections and the placeholder's logos.
+func TestCSPAllowsTheGiveWindows(t *testing.T) {
+	h := securityHeaders(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	directives := map[string][]string{}
+	for _, d := range strings.Split(w.Header().Get("Content-Security-Policy"), ";") {
+		fields := strings.Fields(d)
+		if len(fields) > 0 {
+			directives[fields[0]] = fields[1:]
+		}
+	}
+
+	paypal := []string{"https://www.paypal.com", "https://*.paypal.com", "https://*.paypalobjects.com"}
+	want := map[string][]string{
+		"script-src":  paypal,
+		"connect-src": paypal,
+		"frame-src":   append(slices.Clone(paypal), "https://buymeacoffee.com"),
+		"img-src":     {"https://www.paypalobjects.com"},
+	}
+	for name, sources := range want {
+		for _, s := range sources {
+			if !slices.Contains(directives[name], s) {
+				t.Errorf("%s lacks %s: %v", name, s, directives[name])
+			}
+		}
+	}
+	for name, sources := range directives {
+		if _, ok := want[name]; ok {
+			continue
+		}
+		for _, s := range sources {
+			if strings.Contains(s, "paypal") || strings.Contains(s, "buymeacoffee") {
+				t.Errorf("%s allows %s", name, s)
+			}
+		}
+	}
+	if got := directives["frame-ancestors"]; !slices.Equal(got, []string{"'none'"}) {
+		t.Errorf("frame-ancestors = %v, want 'none'", got)
 	}
 }
 

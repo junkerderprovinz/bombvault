@@ -77,10 +77,10 @@ jobs:
           pid1=$(docker exec bv-smoke cat /proc/1/comm)
           echo "PID 1 is: $pid1"
           if [ "$pid1" != "tini" ]; then
-            echo "✗ PID 1 is '$pid1', not tini — the zombie reaper is missing (#35 would regress)"
+            echo "✗ PID 1 is '$pid1', not tini: the zombie reaper is missing (#35)"
             exit 1
           fi
-          echo "✓ tini is PID 1 — orphaned rclone/ssh grandchildren get reaped"
+          echo "✓ tini is PID 1, so orphaned rclone/ssh grandchildren get reaped"
       # Reports to the Security tab without failing the build: most findings are
       # in the base image and cannot be fixed here.
       - name: Scan image for CVEs (Trivy)
@@ -217,7 +217,7 @@ jobs:
         env:
           PW: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          if [ -n "$PW" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; else echo "DOCKERHUB_TOKEN not set — skipping Docker Hub description sync"; echo "go=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -n "$PW" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; else echo "DOCKERHUB_TOKEN not set, skipping the Docker Hub description sync"; echo "go=false" >> "$GITHUB_OUTPUT"; fi
       - name: Sync README to Docker Hub
         if: ${{ steps.dhdesc.outputs.go == 'true' }}
         uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5

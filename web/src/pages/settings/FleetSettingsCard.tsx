@@ -161,7 +161,7 @@ export function FleetSettingsCard({
               onClick={() => void handleGenerate()}
               disabled={busy}
               // No text colour: the accent tone brings its own ink.
-              className={`shrink-0 rounded-control px-3 py-2 text-xs disabled:opacity-50${
+              className={`shrink-0 rounded-pill px-3 py-2 text-xs disabled:opacity-50${
                 shake.generate ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
               hueIndex={hueIndex}
@@ -177,7 +177,7 @@ export function FleetSettingsCard({
               onClick={() => void handleDisable()}
               disabled={busy}
               // No text colour: the danger tone brings its own ink.
-              className={`shrink-0 rounded-control px-3 py-2 text-xs disabled:opacity-50${
+              className={`shrink-0 rounded-pill px-3 py-2 text-xs disabled:opacity-50${
                 shake.disable ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
               hueIndex={hueIndex}
@@ -191,7 +191,7 @@ export function FleetSettingsCard({
           tone="accent"
           onClick={() => void handleGenerate()}
           disabled={busy}
-          className={`self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+          className={`self-start rounded-pill bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
             shake.generate ? " glim-shake" : ""
           }${hueOn ? " glim-hue" : ""}`}
           hueIndex={hueIndex}
@@ -213,7 +213,7 @@ export function FleetSettingsCard({
               labelKey="common.copy"
               tone="accent"
               onClick={() => void handleCopy()}
-              className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? " glim-hue" : ""}`}
+              className={`shrink-0 rounded-pill bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? " glim-hue" : ""}`}
               hueIndex={hueIndex}
             />
           </div>

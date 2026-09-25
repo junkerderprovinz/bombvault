@@ -198,16 +198,17 @@ describe("Badge shape", () => {
     expect(cls).not.toContain("min(");
   });
 
-  it("rounded (default) shape uses rounded-control", () => {
+  it("rounded (default) shape uses rounded-pill, so round draws a true pill", () => {
     const el = root(Badge({ children: "x" }));
     const cls = el.props!.className as string;
-    expect(cls).toContain("rounded-control");
+    expect(cls).toContain("rounded-pill");
+    expect(cls).not.toContain("rounded-control");
   });
 
-  it("square shape follows the shape engine's rounded-control radius, not a hard-coded 0", () => {
+  it("square shape follows the shape engine's rounded-pill radius, not a hard-coded 0", () => {
     const el = root(Badge({ children: "x", shape: "square" }));
     const cls = el.props!.className as string;
-    expect(cls).toContain("rounded-control");
+    expect(cls).toContain("rounded-pill");
     expect(cls).not.toContain("rounded-none");
   });
 

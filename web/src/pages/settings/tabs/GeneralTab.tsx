@@ -8,7 +8,7 @@ import { useT, type TranslationKey } from "../../../lib/i18n";
 import { tLtr } from "../../../lib/ltrFragments";
 import { ColorPickerSwatch } from "../../../components/ColorPickerPopover";
 import { RAINBOW } from "../../../lib/appearance";
-import { SHAPES, setShape, type Shape } from "../../../lib/shape";
+import { SHAPES, leafTap, setShape, type Shape } from "../../../lib/shape";
 import { MOTION_INTENSITIES, setMotionIntensity, stormTap, type MotionIntensity } from "../../../lib/motion";
 import { setDisco } from "../../../lib/disco";
 import { HUE_OFFSET, Selector } from "../../../components/Selector";
@@ -55,6 +55,9 @@ export function GeneralTab({
   settings,
   shape,
   setShapeLocal,
+  leafFound,
+  setLeafFound,
+  leafClicks,
   motion,
   setMotionLocal,
   stormFound,
@@ -305,7 +308,7 @@ export function GeneralTab({
             `align-items: stretch` without an extra element. See the Theme
             Card's own Selector above for the full note. */}
         <Selector
-          items={SHAPES.map((s) => ({
+          items={[...SHAPES, ...(leafFound || shape === "leaf" ? (["leaf"] as const) : [])].map((s) => ({
             id: s,
             label: t(`settings.shape.${s}` as TranslationKey),
           }))}
@@ -313,8 +316,11 @@ export function GeneralTab({
           select="one"
           active={shape}
           onChange={(id) => {
-            setShapeLocal(id as Shape);
-            setShape(id as Shape);
+            const leaf = leafTap(leafClicks.current, id, shape);
+            if (leaf) setLeafFound(true);
+            const next = (leaf ?? id) as Shape;
+            setShapeLocal(next);
+            setShape(next);
           }}
           size="lg"
           variant="well"
