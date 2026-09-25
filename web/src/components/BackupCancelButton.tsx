@@ -5,11 +5,18 @@
 // It posts the backup's progress key ("files:<name>", "container:<name>",
 // "vm:<name>", "flash", "config"). A key whose backup has finished answers
 // cancelled:false, so a stale tab cannot cause an error.
+//
+// A container backup that has written its restore point and only starts its
+// containers again cannot be cancelled, and the confirmation would promise a
+// run without a snapshot. The progress stream marks that phase and the button
+// hides. A dialog that is already open stays, and the server's answer then says
+// the cancel came too late.
 
 import { useState } from "react";
 import { cancelBackup } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { useToast } from "../lib/toast";
+import { useProgress } from "../lib/progress";
 import { useConfirm } from "../lib/useConfirm";
 import { Button } from "./Button";
 
@@ -33,6 +40,7 @@ export function BackupCancelButton({
   const [cancelling, setCancelling] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
+  const committed = useProgress()[cancelKey]?.committed === true;
 
   async function handle() {
     const msg = t("backup.cancelConfirm").replace(/\{name\}/g, name);
@@ -58,15 +66,17 @@ export function BackupCancelButton({
 
   return (
     <>
-      <Button
-        label={t("backup.cancel")}
-        labelKey="backup.cancel"
-        tone="neutral"
-        onClick={() => void handle()}
-        disabled={cancelling}
-        busy={cancelling}
-        title={cancelling ? t("restore.cancelling") : undefined}
-      />
+      {!committed && (
+        <Button
+          label={t("backup.cancel")}
+          labelKey="backup.cancel"
+          tone="neutral"
+          onClick={() => void handle()}
+          disabled={cancelling}
+          busy={cancelling}
+          title={cancelling ? t("restore.cancelling") : undefined}
+        />
+      )}
       {confirmDialog}
     </>
   );

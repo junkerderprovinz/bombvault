@@ -111,6 +111,11 @@ describe("parseProgressFrame", () => {
     expect(frame?.stage).toBeUndefined();
   });
 
+  it("carries the mark of a backup that only starts its containers again", () => {
+    expect(parseProgressFrame('{"key":"container:plex","phase":"backup","percent":100,"active":true,"committed":true}')?.committed).toBe(true);
+    expect(parseProgressFrame('{"key":"container:plex","phase":"backup","percent":40,"active":true}')?.committed).toBeUndefined();
+  });
+
   it("keeps rejecting a frame without a key", () => {
     expect(parseProgressFrame('{"phase":"backup","active":true}')).toBeNull();
     expect(parseProgressFrame("not json")).toBeNull();

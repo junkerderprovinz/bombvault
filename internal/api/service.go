@@ -5514,7 +5514,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		DBDump:       dumpPlan,
 		DBDumper:     dumper,
 		OnDBDumpDone: func(o backup.DBDumpOutcome) { dumpOutcome = o },
-		Committed:    func() { s.commitBackup(pkey) },
+		Committed:    func() { s.commitBackup(pkey, startedAt) },
 	})
 	s.progEnd(pkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "container", name, "container:"+name, err == nil, sum, err)

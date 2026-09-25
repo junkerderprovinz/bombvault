@@ -29,6 +29,12 @@ vi.mock("../lib/useConfirm", () => ({
   }),
 }));
 
+type Entry = { phase: string; percent: number; active: boolean; lastSeen: number; committed?: boolean };
+let progress: Record<string, Entry> = {};
+vi.mock("../lib/progress", () => ({
+  useProgress: () => progress,
+}));
+
 import { BackupCancelButton } from "./BackupCancelButton";
 
 const t = ((key: string) => key) as never;
@@ -41,6 +47,7 @@ beforeEach(() => {
   cancelBackup.mockClear();
   pushed.length = 0;
   answer = true;
+  progress = {};
 });
 afterEach(cleanup);
 
@@ -85,6 +92,20 @@ describe("BackupCancelButton", () => {
     });
     expect(onCancelled).not.toHaveBeenCalled();
     expect(pushed).toEqual([{ message, severity: "warn" }]);
+  });
+
+  it("stops offering a cancel once the backup has written its restore point", () => {
+    // The confirmation promises a run without a snapshot, which is no longer
+    // true while the containers start again.
+    progress = { "container:plex": { phase: "backup", percent: 100, active: true, lastSeen: 0, committed: true } };
+    render(<BackupCancelButton cancelKey="container:plex" name="plex" t={t} />);
+    expect(screen.queryByRole("button", { name: /backup.cancel/i })).toBeNull();
+  });
+
+  it("keeps the cancel for another item's committed backup", () => {
+    progress = { "container:db": { phase: "backup", percent: 100, active: true, lastSeen: 0, committed: true } };
+    render(<BackupCancelButton cancelKey="container:plex" name="plex" t={t} />);
+    expect(screen.getByRole("button", { name: /backup.cancel/i })).toBeTruthy();
   });
 
   it("does not report success when the POST fails, so the button stays usable", async () => {

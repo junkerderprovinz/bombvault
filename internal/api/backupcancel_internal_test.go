@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -68,7 +69,7 @@ func TestCancelBackupRunRefusesABackupThatWroteItsRestorePoint(t *testing.T) {
 		s.unregisterBackupCancel("container:plex")
 	})
 	s.bindBackupRun("container:plex", "run-1")
-	s.commitBackup("container:plex")
+	s.commitBackup("container:plex", 0)
 
 	if s.CancelBackupRun("container:plex", "run-1") || s.CancelBackupRun("container:plex", "") {
 		t.Fatal("a backup that wrote its restore point was reported as cancelled")
@@ -89,6 +90,25 @@ func TestCancelBackupRunRefusesABackupThatWroteItsRestorePoint(t *testing.T) {
 	}
 	if s.BackupCommitted("container:plex", "") {
 		t.Fatal("the commit outlived the run it belonged to")
+	}
+}
+
+// The cancel button takes itself away once the progress stream says the
+// restore point is written, so the stream has to say it, also to a tab that
+// connects during the restart.
+func TestACommittedBackupSaysSoOnTheProgressStream(t *testing.T) {
+	prog := progress.NewStore()
+	s := &Service{progress: prog}
+	s.registerBackupCancel("container:plex", func() {})
+	s.commitBackup("container:plex", 1700000000)
+
+	snap := prog.Snapshot()
+	if len(snap) != 1 {
+		t.Fatalf("progress holds %d entries, want 1", len(snap))
+	}
+	got := snap[0]
+	if got.Key != "container:plex" || got.Phase != "backup" || !got.Active || !got.Committed || got.StartedAt != 1700000000 {
+		t.Fatalf("progress after the commit = %+v", got)
 	}
 }
 
@@ -131,7 +151,7 @@ func TestBackupCancelEndpointSaysWhyNothingWasCancelled(t *testing.T) {
 	s := &Service{}
 	s.registerBackupCancel("files:docs", func() {})
 	s.registerBackupCancel("container:plex", func() {})
-	s.commitBackup("container:plex")
+	s.commitBackup("container:plex", 0)
 	h := &Handler{svc: s}
 
 	for key, want := range map[string]struct {

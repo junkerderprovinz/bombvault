@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 )
 
 // shutdownGrace bounds how long BeginShutdown waits for cancelled backups to
@@ -78,14 +80,18 @@ func backupEnding(err error) string {
 
 // commitBackup marks the backup under key as past the point a cancel could
 // undo: its restore point is written and only the restart is left. The user
-// can no longer cancel it; shutdown still reaches it.
-func (s *Service) commitBackup(key string) {
+// can no longer cancel it; shutdown still reaches it. The progress stream
+// carries the mark, so the web interface stops offering a cancel.
+func (s *Service) commitBackup(key string, startedAt int64) {
 	s.cancelMu.Lock()
 	if s.committedBackups == nil {
 		s.committedBackups = map[string]bool{}
 	}
 	s.committedBackups[key] = true
 	s.cancelMu.Unlock()
+	if s.progress != nil {
+		s.progress.Publish(progress.Event{Key: key, Phase: "backup", Percent: 100, Active: true, StartedAt: startedAt, Committed: true})
+	}
 }
 
 // BackupCommitted reports whether the backup under key has written its

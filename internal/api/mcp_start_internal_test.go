@@ -700,7 +700,7 @@ func TestMCPCancelRefusesABackupThatWroteItsRestorePoint(t *testing.T) {
 	cancelled := false
 	h.svc.registerBackupCancel("container:plex", func() { cancelled = true })
 	h.svc.bindBackupRun("container:plex", runID)
-	h.svc.commitBackup("container:plex")
+	h.svc.commitBackup("container:plex", 0)
 
 	req := &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
 		Name:      "cancel_backup",

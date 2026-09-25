@@ -87,6 +87,9 @@ type Event struct {
 	StartedAt     int64  `json:"startedAt,omitempty"`
 	SnapshotIndex int    `json:"snapshotIndex,omitempty"`
 	SnapshotTotal int    `json:"snapshotTotal,omitempty"`
+	// Committed marks a backup whose restore point is written and that only
+	// starts its containers again, so it can no longer be cancelled.
+	Committed bool `json:"committed,omitempty"`
 }
 
 // Store is an in-process fan-out of progress Events. It keeps the latest active

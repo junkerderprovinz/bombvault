@@ -42,6 +42,9 @@ export interface ProgressState {
   // and `percent` stays 0.
   stage?: ProgressStage;
   bytes?: number;
+  // A container backup whose restore point is written and that only starts
+  // its containers again. A cancel can no longer undo it.
+  committed?: boolean;
 }
 
 /** The steps that report bytes instead of a percentage. */
@@ -146,6 +149,7 @@ function applyEvent(ev: ProgressFrame): void {
     snapshotTotal: ev.snapshotTotal,
     stage: ev.stage,
     bytes: ev.bytes,
+    committed: ev.committed,
   };
 
   current = { ...current, [ev.key]: entry };
@@ -201,6 +205,7 @@ export function parseProgressFrame(data: string): ProgressFrame | null {
     snapshotTotal: typeof ev.snapshotTotal === "number" ? ev.snapshotTotal : undefined,
     stage: ev.stage && STAGES.includes(ev.stage) ? ev.stage : undefined,
     bytes: typeof ev.bytes === "number" ? ev.bytes : undefined,
+    committed: ev.committed === true ? true : undefined,
   };
 }
 
