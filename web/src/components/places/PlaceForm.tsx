@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../Button";
+import { CopyBlock } from "../CopyBlock";
 import { FolderBrowser } from "../FolderBrowser";
 import { InfoBubble } from "../InfoBubble";
 import { RevealInput } from "../RevealInput";
@@ -8,7 +9,6 @@ import { Selector } from "../Selector";
 import { WindowActions } from "../WindowActions";
 import { PlaceMark } from "../placeMarks";
 import { getVMSSH, type OkEnvelope } from "../../lib/api";
-import { copyText } from "../../lib/clipboard";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import {
   domainName,
@@ -144,7 +144,6 @@ function SecretField({ id, value, onChange }: { id: string; value: string; onCha
 /** The key an SFTP server needs, since BombVault signs in with it and no password. */
 function PublicKey() {
   const { t } = useT();
-  const { push } = useToast();
   const [key, setKey] = useState("");
   useEffect(() => {
     getVMSSH()
@@ -158,17 +157,7 @@ function PublicKey() {
         {t("places.form.publicKey")}
         <InfoBubble tip={t("places.form.publicKeyHint")} />
       </span>
-      <div className="flex items-start gap-2">
-        <code dir="ltr" className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
-          {key}
-        </code>
-        <Button
-          label={t("common.copy")}
-          labelKey="common.copy"
-          tone="neutral"
-          onClick={() => void copyText(key).then((ok) => push(ok ? t("common.copied") : t("vm.ssh.copyFailed"), ok ? "success" : "fail"))}
-        />
-      </div>
+      <CopyBlock text={key} t={t} />
     </div>
   );
 }
