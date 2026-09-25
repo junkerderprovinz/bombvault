@@ -1,37 +1,14 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen } from "@testing-library/react";
-import type { PlacementDomain, PlacementOptions, PlacementView } from "../../lib/api";
-import {
-  defaultRow,
-  placementOptions,
-  placementView,
-  renderWithProviders,
-  sendToOption,
-} from "../../lib/placement.testsupport";
+import type { PlacementOptions, PlacementView } from "../../lib/api";
+import { placementOptions, placementView, renderWithProviders, sendToOption } from "../../lib/placement.testsupport";
 import { PlacementBar } from "./PlacementBar";
 
-function renderBar(
-  view: PlacementView,
-  options: PlacementOptions = placementOptions(),
-  context: "item" | "default" = "item",
-  domain: PlacementDomain = "containers"
-) {
+function renderBar(view: PlacementView, options: PlacementOptions = placementOptions()) {
   const handlers = { onSegment: vi.fn(), onHome: vi.fn(), onSendTo: vi.fn(), onChip: vi.fn() };
-  renderWithProviders(
-    <PlacementBar domain={domain} context={context} view={view} options={options} host="Unraid" {...handlers} />
-  );
+  renderWithProviders(<PlacementBar view={view} options={options} host="Unraid" {...handlers} />);
   return handlers;
-}
-
-// A default sitting on its target's own repository, which is where the copy
-// line is shown.
-function offsiteDefault(): { view: PlacementView; options: PlacementOptions } {
-  const row = defaultRow({ home: "repo-direct", homeKind: "direct" });
-  return {
-    view: placementView({ segment: "offsite-only", repo: row.home, repoKind: "direct" }),
-    options: placementOptions({ sendTo: [sendToOption({ repoId: "repo-direct" })] }),
-  };
 }
 
 describe("PlacementBar", () => {
@@ -78,19 +55,6 @@ describe("PlacementBar", () => {
     fireEvent.click(screen.getByRole("option", { name: "Storagebox · remote" }));
     fireEvent.click(screen.getByRole("button", { name: "Set" }));
     expect(onSendTo).toHaveBeenCalledWith(box);
-  });
-
-  it("keeps a copy line under Off-site only for a default, worded for containers", () => {
-    const { view, options } = offsiteDefault();
-    renderBar(view, options, "default");
-    expect(screen.getByText("Project folders and items whose location is a copy source:")).toBeTruthy();
-    expect(screen.getByRole("group", { name: "Project folders and items whose location is a copy source:" })).toBeTruthy();
-  });
-
-  it("leaves the project folders out of that line for a domain that has none", () => {
-    const { view, options } = offsiteDefault();
-    renderBar(view, { ...options, domain: "vms" }, "default", "vms");
-    expect(screen.getByRole("group", { name: "Items whose location is a copy source:" })).toBeTruthy();
   });
 
   it("chooses nothing while the arrow keys move along it", () => {

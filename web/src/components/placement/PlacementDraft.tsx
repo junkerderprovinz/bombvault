@@ -91,8 +91,6 @@ export function PlacementDraft({
         <InfoBubble tip={t("placement.titleHint")} />
       </span>
       <PlacementBar
-        domain="files"
-        context="draft"
         view={view}
         options={options}
         host={host}

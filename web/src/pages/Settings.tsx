@@ -320,8 +320,8 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
 // marked "stored" so the field shows the kept-placeholder once the save lands.
 // Pulled out as a standalone, exported function (no React, no `save()` side
 // effect) so it's directly unit-testable without mounting SettingsPage — same
-// "extract the pure decision, test it without a renderer" shape as isRemotePath
-// (PathModeSwitch.tsx) and Selector.tsx's own nextFocusIndex/rovedIndex.
+// "extract the pure decision, test it without a renderer" shape as Selector.tsx's
+// own nextFocusIndex/rovedIndex.
 // `auths`/`rowIds` are always the SAME length and index-aligned by
 // construction (every mutation site keeps them in lockstep) — the caller
 // (saveRegistries below) passes the freshly computed pair rather than
@@ -655,11 +655,6 @@ export function SettingsPage() {
   // component rather than as separate IncludeToggle instances.
   const [domainToggleBusy, setDomainToggleBusy] = useState<Partial<Record<DomainToggleKey, boolean>>>({});
   const [domainToggleShake, setDomainToggleShake] = useState<Partial<Record<DomainToggleKey, number>>>({});
-
-  // Same "only the setters are needed" shape as pathSaveState above — this
-  // retention grid's own SaveBar is gone too (each cell debounce-auto-saves).
-  const [, setRetSaveState] = useState<SaveState>("idle");
-  const [, setRetSaveError] = useState<string | null>(null);
 
   // Image cleanup / Unraid update-status reconciliation / registries (#56,
   // #116, #106) — merged into one auto-save card (GlimStone follow-up round,
@@ -1648,8 +1643,6 @@ export function SettingsPage() {
     setOffsiteWizard,
     domainToggleBusy,
     domainToggleShake,
-    setRetSaveState,
-    setRetSaveError,
     setPruneSaveState,
     setPruneSaveError,
     setReconcileSaveState,

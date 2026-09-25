@@ -153,8 +153,6 @@ export function PlacementRow({
           options && (
             <div key={shake} className={`min-w-0 flex-1${shake ? " glim-shake" : ""}`}>
               <PlacementBar
-                domain={item.domain}
-                context="item"
                 view={shown}
                 options={options}
                 host={host}

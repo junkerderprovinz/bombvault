@@ -1,7 +1,6 @@
 import type { SelectorItem } from "../components/Selector";
 import {
   PLACEMENT_DOMAINS,
-  type DefaultChange,
   type DefaultRow,
   type HomeKind,
   type HomeOption,
@@ -303,22 +302,6 @@ export function followLine(view: PlacementView): FollowLine {
   if (view.homeFollows) return view.copiesFollow ? "follows" : "own-copies";
   if (!view.locked) return "home-set";
   return view.copiesFollow ? "copies-follow" : "own-copies";
-}
-
-export type DefaultStep = { kind: "change"; change: DefaultChange } | { kind: "direct"; target: SendToOption } | { kind: "none" };
-
-/** stepForDefaultSegment changes a default. Off-site only moves only its home;
- *  the copies it gives items on a copy source stay as they are. */
-export function stepForDefaultSegment(seg: SegmentId, row: DefaultRow, options: PlacementOptions): DefaultStep {
-  if (seg === defaultSegment(row, options)) return { kind: "none" };
-  if (seg === "offsite-only") {
-    const first = options.sendTo[0];
-    if (!first) return { kind: "none" };
-    return first.repoId ? { kind: "change", change: { home: first.repoId } } : { kind: "direct", target: first };
-  }
-  const change: DefaultChange = { skip: seg === "local" ? [ALL] : [] };
-  if (!copySource(row.homeKind)) change.home = "";
-  return { kind: "change", change };
 }
 
 export interface StatusLine {

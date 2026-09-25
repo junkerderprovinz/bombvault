@@ -2569,7 +2569,7 @@ export function Dashboard() {
             measured live on the deployed container: 32px, rounded-control,
             and `title` present, while every other icon-only trigger (every
             Badge `tip`, FolderBrowser's browse badge, Settings' registry and
-            copy badges, PathModeSwitch's and SourceToggle's segments) already
+            copy badges, SourceToggle's segments) already
             rendered the shared bubble. IconTipButton.tsx's own header is
             explicit that a stray native `title=` on an icon-only trigger is
             precisely the anti-pattern that file exists to replace, and
