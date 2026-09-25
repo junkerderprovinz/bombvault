@@ -1846,6 +1846,16 @@ const zh: Partial<Translations> = {
   "mcp.outcomeRateLimited": "已拒绝：请求过多",
   "mcp.outcomeStartLimit": "已拒绝：此密钥本小时的启动次数已用完",
   "mcp.outcomeBatch": "已拒绝：BombVault 不接受批量请求",
+  "mcp.outcomeInvalidArgument": "已拒绝：调用的参数无效",
+  "mcp.outcomeNotFound": "没有与调用所指内容匹配的项",
+  "mcp.outcomeAmbiguous": "已拒绝：该名称对应多个项目",
+  "mcp.outcomeDomainOff": "已拒绝：此类备份已关闭",
+  "mcp.outcomeNothingToBackUp": "没有需要备份的内容",
+  "mcp.outcomeNotRunning": "无可取消：备份并未在运行",
+  "mcp.outcomeTooLate": "为时已晚：备份已无法取消",
+  "mcp.outcomeUnavailable": "BombVault 无法读取其设置",
+  "mcp.outcomeTimeout": "BombVault 未能按时完成",
+  "mcp.outcomeFailed": "失败：BombVault 遇到错误",
   "mcp.outcomeOther": "以 {code} 结束",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

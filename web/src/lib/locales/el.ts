@@ -1854,6 +1854,16 @@ const el: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Απορρίφθηκε: πάρα πολλά αιτήματα",
   "mcp.outcomeStartLimit": "Απορρίφθηκε: αυτό το κλειδί εξάντλησε τις εκκινήσεις αυτής της ώρας",
   "mcp.outcomeBatch": "Απορρίφθηκε: το BombVault δεν δέχεται ομαδικά αιτήματα",
+  "mcp.outcomeInvalidArgument": "Απορρίφθηκε: τα ορίσματα της κλήσης δεν ήταν έγκυρα",
+  "mcp.outcomeNotFound": "Τίποτα δεν ταίριαξε με αυτό που ονόμασε η κλήση",
+  "mcp.outcomeAmbiguous": "Απορρίφθηκε: το όνομα ταιριάζει σε περισσότερα από ένα στοιχεία",
+  "mcp.outcomeDomainOff": "Απορρίφθηκε: αυτό το είδος αντιγράφου είναι απενεργοποιημένο",
+  "mcp.outcomeNothingToBackUp": "Τίποτα για αντίγραφο ασφαλείας",
+  "mcp.outcomeNotRunning": "Τίποτα για ακύρωση: το αντίγραφο δεν εκτελούνταν",
+  "mcp.outcomeTooLate": "Πολύ αργά: το αντίγραφο δεν μπορούσε πια να ακυρωθεί",
+  "mcp.outcomeUnavailable": "Το BombVault δεν μπόρεσε να διαβάσει τις ρυθμίσεις του",
+  "mcp.outcomeTimeout": "Το BombVault δεν τελείωσε εγκαίρως",
+  "mcp.outcomeFailed": "Απέτυχε: το BombVault συνάντησε σφάλμα",
   "mcp.outcomeOther": "Τελείωσε με {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

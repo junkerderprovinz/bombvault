@@ -1854,6 +1854,16 @@ const fi: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Hylätty: liian monta pyyntöä",
   "mcp.outcomeStartLimit": "Hylätty: tämä avain on käyttänyt tämän tunnin käynnistyksensä",
   "mcp.outcomeBatch": "Hylätty: BombVault ei ota vastaan eräpyyntöjä",
+  "mcp.outcomeInvalidArgument": "Hylätty: kutsun argumentit eivät olleet kelvollisia",
+  "mcp.outcomeNotFound": "Mikään ei vastannut kutsun nimeämää",
+  "mcp.outcomeAmbiguous": "Hylätty: nimi sopii useampaan kuin yhteen kohteeseen",
+  "mcp.outcomeDomainOff": "Hylätty: tämäntyyppinen varmuuskopiointi on pois päältä",
+  "mcp.outcomeNothingToBackUp": "Ei mitään varmuuskopioitavaa",
+  "mcp.outcomeNotRunning": "Ei mitään peruttavaa: varmuuskopiointi ei ollut käynnissä",
+  "mcp.outcomeTooLate": "Liian myöhään: varmuuskopiointia ei voinut enää perua",
+  "mcp.outcomeUnavailable": "BombVault ei voinut lukea asetuksiaan",
+  "mcp.outcomeTimeout": "BombVault ei valmistunut ajoissa",
+  "mcp.outcomeFailed": "Epäonnistui: BombVault kohtasi virheen",
   "mcp.outcomeOther": "Päättyi koodiin {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

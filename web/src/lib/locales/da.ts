@@ -1854,6 +1854,16 @@ const da: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Afvist: for mange forespørgsler",
   "mcp.outcomeStartLimit": "Afvist: denne nøgle har brugt sine starter for denne time",
   "mcp.outcomeBatch": "Afvist: BombVault tager ikke imod batchforespørgsler",
+  "mcp.outcomeInvalidArgument": "Afvist: kaldets argumenter var ugyldige",
+  "mcp.outcomeNotFound": "Intet passede til det, kaldet nævnte",
+  "mcp.outcomeAmbiguous": "Afvist: navnet passer på mere end ét element",
+  "mcp.outcomeDomainOff": "Afvist: denne slags sikkerhedskopi er slået fra",
+  "mcp.outcomeNothingToBackUp": "Intet at sikkerhedskopiere",
+  "mcp.outcomeNotRunning": "Intet at annullere: sikkerhedskopien kørte ikke",
+  "mcp.outcomeTooLate": "For sent: sikkerhedskopien kunne ikke længere annulleres",
+  "mcp.outcomeUnavailable": "BombVault kunne ikke læse sine indstillinger",
+  "mcp.outcomeTimeout": "BombVault blev ikke færdig i tide",
+  "mcp.outcomeFailed": "Mislykkedes: BombVault stødte på en fejl",
   "mcp.outcomeOther": "Endte med {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

@@ -2078,6 +2078,16 @@ const fa: Partial<Translations> = {
   "mcp.outcomeRateLimited": "رد شد: درخواست‌های بیش از حد",
   "mcp.outcomeStartLimit": "رد شد: این کلید آغازهای این ساعت را تمام کرده است",
   "mcp.outcomeBatch": "رد شد: BombVault درخواست‌های دسته‌ای را نمی‌پذیرد",
+  "mcp.outcomeInvalidArgument": "رد شد: آرگومان‌های فراخوانی معتبر نبودند",
+  "mcp.outcomeNotFound": "چیزی با آنچه فراخوانی نام برد مطابقت نداشت",
+  "mcp.outcomeAmbiguous": "رد شد: این نام با بیش از یک مورد مطابقت دارد",
+  "mcp.outcomeDomainOff": "رد شد: این نوع پشتیبان‌گیری خاموش است",
+  "mcp.outcomeNothingToBackUp": "چیزی برای پشتیبان‌گیری نیست",
+  "mcp.outcomeNotRunning": "چیزی برای لغو نیست: پشتیبان‌گیری در حال اجرا نبود",
+  "mcp.outcomeTooLate": "خیلی دیر: دیگر نمی‌شد پشتیبان‌گیری را لغو کرد",
+  "mcp.outcomeUnavailable": "BombVault نتوانست تنظیماتش را بخواند",
+  "mcp.outcomeTimeout": "BombVault به‌موقع تمام نشد",
+  "mcp.outcomeFailed": "ناموفق: BombVault با خطا روبه‌رو شد",
   "mcp.outcomeOther": "با {code} پایان یافت",
 
   // Export / import settings

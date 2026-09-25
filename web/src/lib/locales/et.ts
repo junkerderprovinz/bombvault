@@ -2078,6 +2078,16 @@ const et: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Keeldutud: liiga palju päringuid",
   "mcp.outcomeStartLimit": "Keeldutud: see võti on selle tunni käivitused ära kasutanud",
   "mcp.outcomeBatch": "Keeldutud: BombVault ei võta pakettpäringuid vastu",
+  "mcp.outcomeInvalidArgument": "Keeldutud: kutse argumendid polnud kehtivad",
+  "mcp.outcomeNotFound": "Miski ei vastanud sellele, mida kutse nimetas",
+  "mcp.outcomeAmbiguous": "Keeldutud: nimi sobib mitmele elemendile",
+  "mcp.outcomeDomainOff": "Keeldutud: seda liiki varundus on välja lülitatud",
+  "mcp.outcomeNothingToBackUp": "Pole midagi varundada",
+  "mcp.outcomeNotRunning": "Pole midagi tühistada: varundus ei käinud",
+  "mcp.outcomeTooLate": "Liiga hilja: varundust ei saanud enam tühistada",
+  "mcp.outcomeUnavailable": "BombVault ei saanud oma seadeid lugeda",
+  "mcp.outcomeTimeout": "BombVault ei jõudnud õigel ajal valmis",
+  "mcp.outcomeFailed": "Ebaõnnestus: BombVault tabas vea",
   "mcp.outcomeOther": "Lõppes koodiga {code}",
 
   // Export / import settings

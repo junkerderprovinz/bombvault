@@ -2078,6 +2078,16 @@ const hr: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Odbijeno: previše zahtjeva",
   "mcp.outcomeStartLimit": "Odbijeno: ovaj ključ je potrošio pokretanja za ovaj sat",
   "mcp.outcomeBatch": "Odbijeno: BombVault ne prima skupne zahtjeve",
+  "mcp.outcomeInvalidArgument": "Odbijeno: argumenti poziva nisu bili valjani",
+  "mcp.outcomeNotFound": "Ništa ne odgovara onome što je poziv naveo",
+  "mcp.outcomeAmbiguous": "Odbijeno: naziv odgovara više od jedne stavke",
+  "mcp.outcomeDomainOff": "Odbijeno: ova vrsta sigurnosne kopije je isključena",
+  "mcp.outcomeNothingToBackUp": "Nema ničega za kopiranje",
+  "mcp.outcomeNotRunning": "Nema ničega za otkazati: sigurnosna kopija nije bila u tijeku",
+  "mcp.outcomeTooLate": "Prekasno: sigurnosna kopija se više nije mogla otkazati",
+  "mcp.outcomeUnavailable": "BombVault nije mogao pročitati svoje postavke",
+  "mcp.outcomeTimeout": "BombVault nije završio na vrijeme",
+  "mcp.outcomeFailed": "Neuspjelo: BombVault je naišao na pogrešku",
   "mcp.outcomeOther": "Završeno s {code}",
 
   // Export / import settings

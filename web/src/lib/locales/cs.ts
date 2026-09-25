@@ -1852,6 +1852,16 @@ const cs: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Odmítnuto: příliš mnoho požadavků",
   "mcp.outcomeStartLimit": "Odmítnuto: tento klíč vyčerpal spuštění pro tuto hodinu",
   "mcp.outcomeBatch": "Odmítnuto: BombVault nepřijímá dávkové požadavky",
+  "mcp.outcomeInvalidArgument": "Odmítnuto: argumenty volání nebyly platné",
+  "mcp.outcomeNotFound": "Nic neodpovídalo tomu, co volání uvádělo",
+  "mcp.outcomeAmbiguous": "Odmítnuto: název odpovídá více než jedné položce",
+  "mcp.outcomeDomainOff": "Odmítnuto: tento druh zálohy je vypnutý",
+  "mcp.outcomeNothingToBackUp": "Není co zálohovat",
+  "mcp.outcomeNotRunning": "Není co rušit: záloha neběžela",
+  "mcp.outcomeTooLate": "Příliš pozdě: zálohu už nešlo zrušit",
+  "mcp.outcomeUnavailable": "BombVault nemohl načíst svá nastavení",
+  "mcp.outcomeTimeout": "BombVault nestihl skončit včas",
+  "mcp.outcomeFailed": "Selhalo: BombVault narazil na chybu",
   "mcp.outcomeOther": "Skončilo s {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

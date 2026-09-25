@@ -8,8 +8,8 @@ import { formatTs } from "../../lib/reltime";
 
 type T = ReturnType<typeof useT>["t"];
 
-/** The refusals the log names in a sentence of its own. Every other code is
- *  shown as it came. */
+/** A sentence for every outcome the server logs. A code it adds later that is
+ *  missing here is shown as it came. */
 const OUTCOME: Record<string, TranslationKey> = {
   ok: "mcp.outcomeOk",
   not_permitted: "mcp.outcomeNotPermitted",
@@ -17,6 +17,16 @@ const OUTCOME: Record<string, TranslationKey> = {
   busy: "mcp.outcomeBusy",
   cooldown: "mcp.outcomeCooldown",
   batch_refused: "mcp.outcomeBatch",
+  invalid_argument: "mcp.outcomeInvalidArgument",
+  not_found: "mcp.outcomeNotFound",
+  ambiguous: "mcp.outcomeAmbiguous",
+  domain_off: "mcp.outcomeDomainOff",
+  nothing_to_back_up: "mcp.outcomeNothingToBackUp",
+  not_running: "mcp.outcomeNotRunning",
+  too_late: "mcp.outcomeTooLate",
+  unavailable: "mcp.outcomeUnavailable",
+  timeout: "mcp.outcomeTimeout",
+  failed: "mcp.outcomeFailed",
 };
 
 const RUN_STATUS: Record<string, { key: TranslationKey; tone: BadgeTone }> = {

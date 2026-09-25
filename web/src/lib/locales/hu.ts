@@ -1857,6 +1857,16 @@ const hu: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Elutasítva: túl sok kérés",
   "mcp.outcomeStartLimit": "Elutasítva: ez a kulcs elhasználta az ebben az órában engedett indításait",
   "mcp.outcomeBatch": "Elutasítva: a BombVault nem fogad kötegelt kéréseket",
+  "mcp.outcomeInvalidArgument": "Elutasítva: a hívás argumentumai érvénytelenek voltak",
+  "mcp.outcomeNotFound": "Semmi sem felelt meg annak, amit a hívás megnevezett",
+  "mcp.outcomeAmbiguous": "Elutasítva: a név több elemre is illik",
+  "mcp.outcomeDomainOff": "Elutasítva: ez a fajta mentés ki van kapcsolva",
+  "mcp.outcomeNothingToBackUp": "Nincs mit menteni",
+  "mcp.outcomeNotRunning": "Nincs mit megszakítani: a mentés nem futott",
+  "mcp.outcomeTooLate": "Túl késő: a mentést már nem lehetett megszakítani",
+  "mcp.outcomeUnavailable": "A BombVault nem tudta beolvasni a beállításait",
+  "mcp.outcomeTimeout": "A BombVault nem végzett időben",
+  "mcp.outcomeFailed": "Sikertelen: a BombVault hibába ütközött",
   "mcp.outcomeOther": "Vége, kód: {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

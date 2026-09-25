@@ -2078,6 +2078,16 @@ const lt: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Atmesta: per daug užklausų",
   "mcp.outcomeStartLimit": "Atmesta: šis raktas išnaudojo šios valandos paleidimus",
   "mcp.outcomeBatch": "Atmesta: BombVault nepriima paketinių užklausų",
+  "mcp.outcomeInvalidArgument": "Atmesta: iškvietimo argumentai buvo netinkami",
+  "mcp.outcomeNotFound": "Niekas neatitiko to, ką nurodė iškvietimas",
+  "mcp.outcomeAmbiguous": "Atmesta: pavadinimas tinka daugiau nei vienam elementui",
+  "mcp.outcomeDomainOff": "Atmesta: ši atsarginių kopijų rūšis išjungta",
+  "mcp.outcomeNothingToBackUp": "Nėra ką kopijuoti",
+  "mcp.outcomeNotRunning": "Nėra ko atšaukti: atsarginė kopija nevyko",
+  "mcp.outcomeTooLate": "Per vėlu: atsarginės kopijos nebebuvo galima atšaukti",
+  "mcp.outcomeUnavailable": "BombVault nepavyko perskaityti savo nustatymų",
+  "mcp.outcomeTimeout": "BombVault nespėjo baigti laiku",
+  "mcp.outcomeFailed": "Nepavyko: BombVault susidūrė su klaida",
   "mcp.outcomeOther": "Baigėsi su {code}",
 
   // Export / import settings

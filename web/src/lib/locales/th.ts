@@ -1857,6 +1857,16 @@ const th: Partial<Translations> = {
   "mcp.outcomeRateLimited": "ถูกปฏิเสธ: คำขอมากเกินไป",
   "mcp.outcomeStartLimit": "ถูกปฏิเสธ: คีย์นี้ใช้สิทธิ์เริ่มของชั่วโมงนี้หมดแล้ว",
   "mcp.outcomeBatch": "ถูกปฏิเสธ: BombVault ไม่รับคำขอแบบกลุ่ม",
+  "mcp.outcomeInvalidArgument": "ถูกปฏิเสธ: อาร์กิวเมนต์ของการเรียกไม่ถูกต้อง",
+  "mcp.outcomeNotFound": "ไม่มีสิ่งใดตรงกับที่การเรียกระบุ",
+  "mcp.outcomeAmbiguous": "ถูกปฏิเสธ: ชื่อนี้ตรงกับรายการมากกว่าหนึ่งรายการ",
+  "mcp.outcomeDomainOff": "ถูกปฏิเสธ: ปิดการสำรองข้อมูลประเภทนี้อยู่",
+  "mcp.outcomeNothingToBackUp": "ไม่มีอะไรให้สำรองข้อมูล",
+  "mcp.outcomeNotRunning": "ไม่มีอะไรให้ยกเลิก: การสำรองข้อมูลไม่ได้ทำงานอยู่",
+  "mcp.outcomeTooLate": "สายเกินไป: ยกเลิกการสำรองข้อมูลไม่ได้แล้ว",
+  "mcp.outcomeUnavailable": "BombVault อ่านการตั้งค่าของตัวเองไม่ได้",
+  "mcp.outcomeTimeout": "BombVault ทำงานไม่เสร็จทันเวลา",
+  "mcp.outcomeFailed": "ล้มเหลว: BombVault พบข้อผิดพลาด",
   "mcp.outcomeOther": "จบด้วย {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

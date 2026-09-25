@@ -1854,6 +1854,16 @@ const he: Partial<Translations> = {
   "mcp.outcomeRateLimited": "נדחה: יותר מדי בקשות",
   "mcp.outcomeStartLimit": "נדחה: המפתח הזה ניצל את ההתחלות שלו לשעה הזו",
   "mcp.outcomeBatch": "נדחה: BombVault לא מקבל בקשות אצווה",
+  "mcp.outcomeInvalidArgument": "נדחה: הארגומנטים של הקריאה לא היו תקינים",
+  "mcp.outcomeNotFound": "שום דבר לא תאם את מה שהקריאה ציינה",
+  "mcp.outcomeAmbiguous": "נדחה: השם מתאים ליותר מפריט אחד",
+  "mcp.outcomeDomainOff": "נדחה: סוג הגיבוי הזה כבוי",
+  "mcp.outcomeNothingToBackUp": "אין מה לגבות",
+  "mcp.outcomeNotRunning": "אין מה לבטל: הגיבוי לא רץ",
+  "mcp.outcomeTooLate": "מאוחר מדי: כבר לא היה אפשר לבטל את הגיבוי",
+  "mcp.outcomeUnavailable": "BombVault לא הצליח לקרוא את ההגדרות שלו",
+  "mcp.outcomeTimeout": "BombVault לא סיים בזמן",
+  "mcp.outcomeFailed": "נכשל: BombVault נתקל בשגיאה",
   "mcp.outcomeOther": "הסתיים עם {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

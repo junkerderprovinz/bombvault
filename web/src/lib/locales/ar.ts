@@ -1857,6 +1857,16 @@ const ar: Partial<Translations> = {
   "mcp.outcomeRateLimited": "مرفوض: طلبات كثيرة جدًا",
   "mcp.outcomeStartLimit": "مرفوض: استنفد هذا المفتاح عمليات البدء المسموح بها لهذه الساعة",
   "mcp.outcomeBatch": "مرفوض: لا يقبل BombVault الطلبات المجمّعة",
+  "mcp.outcomeInvalidArgument": "مرفوض: وسائط الاستدعاء غير صالحة",
+  "mcp.outcomeNotFound": "لا شيء يطابق ما سمّاه الاستدعاء",
+  "mcp.outcomeAmbiguous": "مرفوض: الاسم يطابق أكثر من عنصر واحد",
+  "mcp.outcomeDomainOff": "مرفوض: هذا النوع من النسخ الاحتياطي متوقف",
+  "mcp.outcomeNothingToBackUp": "لا شيء للنسخ الاحتياطي",
+  "mcp.outcomeNotRunning": "لا شيء للإلغاء: النسخ الاحتياطي لم يكن قيد التشغيل",
+  "mcp.outcomeTooLate": "بعد فوات الأوان: لم يعد من الممكن إلغاء النسخ الاحتياطي",
+  "mcp.outcomeUnavailable": "تعذّر على BombVault قراءة إعداداته",
+  "mcp.outcomeTimeout": "لم ينتهِ BombVault في الوقت المحدد",
+  "mcp.outcomeFailed": "فشل: واجه BombVault خطأً",
   "mcp.outcomeOther": "انتهى بالرمز {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

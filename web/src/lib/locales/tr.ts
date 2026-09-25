@@ -1854,6 +1854,16 @@ const tr: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Reddedildi: çok fazla istek",
   "mcp.outcomeStartLimit": "Reddedildi: bu anahtar bu saatin başlatma hakkını doldurdu",
   "mcp.outcomeBatch": "Reddedildi: BombVault toplu istekleri kabul etmez",
+  "mcp.outcomeInvalidArgument": "Reddedildi: çağrının bağımsız değişkenleri geçersizdi",
+  "mcp.outcomeNotFound": "Çağrının belirttiği şeyle eşleşen bir şey yoktu",
+  "mcp.outcomeAmbiguous": "Reddedildi: ad birden fazla öğeye uyuyor",
+  "mcp.outcomeDomainOff": "Reddedildi: bu tür yedekleme kapalı",
+  "mcp.outcomeNothingToBackUp": "Yedeklenecek bir şey yok",
+  "mcp.outcomeNotRunning": "İptal edilecek bir şey yok: yedekleme çalışmıyordu",
+  "mcp.outcomeTooLate": "Çok geç: yedekleme artık iptal edilemiyordu",
+  "mcp.outcomeUnavailable": "BombVault ayarlarını okuyamadı",
+  "mcp.outcomeTimeout": "BombVault zamanında bitiremedi",
+  "mcp.outcomeFailed": "Başarısız: BombVault bir hatayla karşılaştı",
   "mcp.outcomeOther": "{code} ile bitti",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

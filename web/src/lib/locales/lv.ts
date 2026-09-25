@@ -2078,6 +2078,16 @@ const lv: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Noraidīts: pārāk daudz pieprasījumu",
   "mcp.outcomeStartLimit": "Noraidīts: šī atslēga ir izlietojusi šīs stundas palaišanas",
   "mcp.outcomeBatch": "Noraidīts: BombVault nepieņem pakešu pieprasījumus",
+  "mcp.outcomeInvalidArgument": "Noraidīts: izsaukuma argumenti nebija derīgi",
+  "mcp.outcomeNotFound": "Nekas neatbilda tam, ko izsaukums nosauca",
+  "mcp.outcomeAmbiguous": "Noraidīts: nosaukums atbilst vairāk nekā vienam vienumam",
+  "mcp.outcomeDomainOff": "Noraidīts: šis dublējumu veids ir izslēgts",
+  "mcp.outcomeNothingToBackUp": "Nav ko dublēt",
+  "mcp.outcomeNotRunning": "Nav ko atcelt: dublējums nenotika",
+  "mcp.outcomeTooLate": "Par vēlu: dublējumu vairs nevarēja atcelt",
+  "mcp.outcomeUnavailable": "BombVault nevarēja nolasīt savus iestatījumus",
+  "mcp.outcomeTimeout": "BombVault nepabeidza laikā",
+  "mcp.outcomeFailed": "Neizdevās: BombVault saskārās ar kļūdu",
   "mcp.outcomeOther": "Beidzās ar {code}",
 
   // Export / import settings

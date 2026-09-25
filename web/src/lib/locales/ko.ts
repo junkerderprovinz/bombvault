@@ -1846,6 +1846,16 @@ const ko: Partial<Translations> = {
   "mcp.outcomeRateLimited": "거부됨: 요청이 너무 많습니다",
   "mcp.outcomeStartLimit": "거부됨: 이 키는 이번 시간의 시작 횟수를 모두 썼습니다",
   "mcp.outcomeBatch": "거부됨: BombVault는 일괄 요청을 받지 않습니다",
+  "mcp.outcomeInvalidArgument": "거부됨: 호출 인수가 올바르지 않았습니다",
+  "mcp.outcomeNotFound": "호출이 지정한 것과 일치하는 항목이 없었습니다",
+  "mcp.outcomeAmbiguous": "거부됨: 이름이 둘 이상의 항목에 해당합니다",
+  "mcp.outcomeDomainOff": "거부됨: 이 종류의 백업은 꺼져 있습니다",
+  "mcp.outcomeNothingToBackUp": "백업할 것이 없습니다",
+  "mcp.outcomeNotRunning": "취소할 것 없음: 백업이 실행 중이 아니었습니다",
+  "mcp.outcomeTooLate": "너무 늦음: 백업을 더 이상 취소할 수 없었습니다",
+  "mcp.outcomeUnavailable": "BombVault가 설정을 읽지 못했습니다",
+  "mcp.outcomeTimeout": "BombVault가 제시간에 끝나지 않았습니다",
+  "mcp.outcomeFailed": "실패: BombVault에서 오류가 발생했습니다",
   "mcp.outcomeOther": "{code}(으)로 종료",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

@@ -1851,6 +1851,16 @@ const nl: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Geweigerd: te veel verzoeken",
   "mcp.outcomeStartLimit": "Geweigerd: deze sleutel heeft zijn starts voor dit uur opgebruikt",
   "mcp.outcomeBatch": "Geweigerd: BombVault neemt geen batchverzoeken aan",
+  "mcp.outcomeInvalidArgument": "Geweigerd: de argumenten van de aanroep waren ongeldig",
+  "mcp.outcomeNotFound": "Niets paste bij wat de aanroep noemde",
+  "mcp.outcomeAmbiguous": "Geweigerd: de naam past bij meer dan één item",
+  "mcp.outcomeDomainOff": "Geweigerd: dit soort back-up staat uit",
+  "mcp.outcomeNothingToBackUp": "Niets om te back-uppen",
+  "mcp.outcomeNotRunning": "Niets te annuleren: de back-up liep niet",
+  "mcp.outcomeTooLate": "Te laat: de back-up kon niet meer worden geannuleerd",
+  "mcp.outcomeUnavailable": "BombVault kon zijn instellingen niet lezen",
+  "mcp.outcomeTimeout": "BombVault was niet op tijd klaar",
+  "mcp.outcomeFailed": "Mislukt: BombVault liep tegen een fout aan",
   "mcp.outcomeOther": "Geëindigd met {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

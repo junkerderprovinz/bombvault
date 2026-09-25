@@ -1849,6 +1849,16 @@ const pl: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Odrzucono: zbyt wiele żądań",
   "mcp.outcomeStartLimit": "Odrzucono: ten klucz wykorzystał już uruchomienia na tę godzinę",
   "mcp.outcomeBatch": "Odrzucono: BombVault nie przyjmuje żądań zbiorczych",
+  "mcp.outcomeInvalidArgument": "Odrzucono: argumenty wywołania były nieprawidłowe",
+  "mcp.outcomeNotFound": "Nic nie pasowało do tego, co wskazało wywołanie",
+  "mcp.outcomeAmbiguous": "Odrzucono: nazwa pasuje do więcej niż jednego elementu",
+  "mcp.outcomeDomainOff": "Odrzucono: ten rodzaj kopii jest wyłączony",
+  "mcp.outcomeNothingToBackUp": "Nie ma czego kopiować",
+  "mcp.outcomeNotRunning": "Nie ma czego anulować: kopia nie była wykonywana",
+  "mcp.outcomeTooLate": "Za późno: kopii nie można już było anulować",
+  "mcp.outcomeUnavailable": "BombVault nie mógł odczytać swoich ustawień",
+  "mcp.outcomeTimeout": "BombVault nie skończył na czas",
+  "mcp.outcomeFailed": "Niepowodzenie: BombVault napotkał błąd",
   "mcp.outcomeOther": "Zakończono z {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

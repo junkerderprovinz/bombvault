@@ -2,9 +2,61 @@ package api
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 )
+
+// A key's log on the settings card names every outcome in a sentence of its
+// own, and a code the card does not know shows up raw. So every code the tools
+// and the gate can log has to be in McpKeyLog.tsx.
+func TestEveryLoggedMCPOutcomeHasASentenceOnTheCard(t *testing.T) {
+	logged := regexp.MustCompile(`(?:logMCP(?:Run)?Call\(ctx, [^,]+, |recordMCPRefusal\([^,]+, |mcpToolError\(|outcome :?= )"([a-z_]+)"`)
+	files, err := filepath.Glob("mcp*.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	codes := map[string]bool{}
+	for _, f := range files {
+		if strings.HasSuffix(f, "_test.go") {
+			continue
+		}
+		src, rErr := os.ReadFile(f) //nolint:gosec // G304: a file of this package found by the glob above
+		if rErr != nil {
+			t.Fatal(rErr)
+		}
+		for _, m := range logged.FindAllStringSubmatch(string(src), -1) {
+			codes[m[1]] = true
+		}
+	}
+	if len(codes) < 10 {
+		t.Fatalf("found only %d outcome codes, the pattern no longer matches the tools", len(codes))
+	}
+
+	path := filepath.Join("..", "..", "web", "src", "pages", "settings", "McpKeyLog.tsx")
+	card, err := os.ReadFile(path) //nolint:gosec // G304: fixed repo-relative path
+	if err != nil {
+		t.Fatal(err)
+	}
+	table := regexp.MustCompile(`(?s)const OUTCOME\b[^{]*\{(.*?)\n\};`).FindStringSubmatch(string(card))
+	if table == nil {
+		t.Fatal("McpKeyLog.tsx has no OUTCOME table")
+	}
+	var missing []string
+	for code := range codes {
+		if !strings.Contains(table[1], "\n  "+code+": ") && !strings.Contains(string(card), `e.outcome === "`+code+`"`) {
+			missing = append(missing, code)
+		}
+	}
+	sort.Strings(missing)
+	if len(missing) > 0 {
+		t.Fatalf("McpKeyLog.tsx shows these outcomes as raw codes: %v", missing)
+	}
+}
 
 // A client looping on a refusal would otherwise write a row per request, so a
 // refusal reaches the key's log once per minute and reason.

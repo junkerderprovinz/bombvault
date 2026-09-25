@@ -527,6 +527,8 @@ describe("a key's tile", () => {
         { at: 1_700_000_640, tool: "start_backup", outcome: "rate_limited", runId: "" },
         { at: 1_700_000_630, tool: "", outcome: "rate_limited", runId: "" },
         { at: 1_700_000_620, tool: "list_runs", outcome: "invalid_argument", runId: "" },
+        { at: 1_700_000_610, tool: "cancel_backup", outcome: "too_late", runId: "" },
+        { at: 1_700_000_600, tool: "start_backup", outcome: "domain_off", runId: "" },
       ],
     });
 
@@ -543,12 +545,15 @@ describe("a key's tile", () => {
       en["mcp.outcomeCooldown"],
       en["mcp.outcomeStartLimit"],
       en["mcp.outcomeRateLimited"],
-      en["mcp.outcomeOther"].replace("{code}", "invalid_argument"),
+      en["mcp.outcomeInvalidArgument"],
+      en["mcp.outcomeTooLate"],
+      en["mcp.outcomeDomainOff"],
       en["mcp.logRequest"],
-      "cancel_backup",
     ]) {
       expect(within(tile).getByText(text)).toBeTruthy();
     }
+    expect(within(tile).getAllByText("cancel_backup")).toHaveLength(2);
+    expect(tile.textContent).not.toContain(en["mcp.outcomeOther"].replace("{code}", "").trim());
 
     fireEvent.click(within(tile).getByRole("button", { name: en["mcp.log"] }));
     await waitFor(() => expect(within(tileOf("laptop")).queryByText("plex")).toBeNull());

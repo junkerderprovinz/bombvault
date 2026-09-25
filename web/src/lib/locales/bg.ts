@@ -2078,6 +2078,16 @@ const bg: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Отказано: твърде много заявки",
   "mcp.outcomeStartLimit": "Отказано: този ключ изчерпа стартиранията си за този час",
   "mcp.outcomeBatch": "Отказано: BombVault не приема пакетни заявки",
+  "mcp.outcomeInvalidArgument": "Отказано: аргументите на извикването бяха невалидни",
+  "mcp.outcomeNotFound": "Нищо не отговаря на посоченото в извикването",
+  "mcp.outcomeAmbiguous": "Отказано: името отговаря на повече от един елемент",
+  "mcp.outcomeDomainOff": "Отказано: този вид архивиране е изключен",
+  "mcp.outcomeNothingToBackUp": "Няма какво да се архивира",
+  "mcp.outcomeNotRunning": "Няма какво да се отмени: архивирането не течеше",
+  "mcp.outcomeTooLate": "Твърде късно: архивирането вече не можеше да се отмени",
+  "mcp.outcomeUnavailable": "BombVault не успя да прочете настройките си",
+  "mcp.outcomeTimeout": "BombVault не приключи навреме",
+  "mcp.outcomeFailed": "Неуспех: BombVault срещна грешка",
   "mcp.outcomeOther": "Завърши с {code}",
 
   // Export / import settings

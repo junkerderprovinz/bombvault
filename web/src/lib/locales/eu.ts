@@ -2078,6 +2078,16 @@ const eu: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Ukatuta: eskaera gehiegi",
   "mcp.outcomeStartLimit": "Ukatuta: gako honek ordu honetako abioak agortu ditu",
   "mcp.outcomeBatch": "Ukatuta: BombVault-ek ez ditu sorta-eskaerak onartzen",
+  "mcp.outcomeInvalidArgument": "Ukatuta: deiaren argumentuak ez ziren baliozkoak",
+  "mcp.outcomeNotFound": "Ezerk ez zuen bat egin deiak aipatutakoarekin",
+  "mcp.outcomeAmbiguous": "Ukatuta: izenak elementu bat baino gehiagorekin egiten du bat",
+  "mcp.outcomeDomainOff": "Ukatuta: babeskopia mota hau desaktibatuta dago",
+  "mcp.outcomeNothingToBackUp": "Ez dago ezer babesteko",
+  "mcp.outcomeNotRunning": "Ez dago ezer bertan behera uzteko: babeskopia ez zegoen martxan",
+  "mcp.outcomeTooLate": "Beranduegi: babeskopia ezin zen jada bertan behera utzi",
+  "mcp.outcomeUnavailable": "BombVault-ek ezin izan ditu bere ezarpenak irakurri",
+  "mcp.outcomeTimeout": "BombVault-ek ez du garaiz amaitu",
+  "mcp.outcomeFailed": "Huts egin du: BombVault-ek errore bat aurkitu du",
   "mcp.outcomeOther": "{code} kodearekin amaitu da",
 
   // Export / import settings

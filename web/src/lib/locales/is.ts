@@ -2078,6 +2078,16 @@ const is: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Hafnað: of margar beiðnir",
   "mcp.outcomeStartLimit": "Hafnað: þessi lykill hefur notað ræsingar sínar þessa klukkustund",
   "mcp.outcomeBatch": "Hafnað: BombVault tekur ekki við runubeiðnum",
+  "mcp.outcomeInvalidArgument": "Hafnað: færibreytur kallsins voru ógildar",
+  "mcp.outcomeNotFound": "Ekkert passaði við það sem kallið nefndi",
+  "mcp.outcomeAmbiguous": "Hafnað: nafnið passar við fleiri en eitt atriði",
+  "mcp.outcomeDomainOff": "Hafnað: slökkt er á þessari tegund afritunar",
+  "mcp.outcomeNothingToBackUp": "Ekkert til að afrita",
+  "mcp.outcomeNotRunning": "Ekkert til að hætta við: afritunin var ekki í gangi",
+  "mcp.outcomeTooLate": "Of seint: ekki var lengur hægt að hætta við afritunina",
+  "mcp.outcomeUnavailable": "BombVault gat ekki lesið stillingarnar sínar",
+  "mcp.outcomeTimeout": "BombVault lauk ekki í tæka tíð",
+  "mcp.outcomeFailed": "Mistókst: BombVault rakst á villu",
   "mcp.outcomeOther": "Lauk með {code}",
 
   // Export / import settings

@@ -2078,6 +2078,16 @@ const ms: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Ditolak: terlalu banyak permintaan",
   "mcp.outcomeStartLimit": "Ditolak: kunci ini sudah menggunakan semua mula untuk jam ini",
   "mcp.outcomeBatch": "Ditolak: BombVault tidak menerima permintaan kelompok",
+  "mcp.outcomeInvalidArgument": "Ditolak: argumen panggilan tidak sah",
+  "mcp.outcomeNotFound": "Tiada yang sepadan dengan apa yang dinamakan oleh panggilan",
+  "mcp.outcomeAmbiguous": "Ditolak: nama itu sepadan dengan lebih daripada satu item",
+  "mcp.outcomeDomainOff": "Ditolak: jenis sandaran ini dimatikan",
+  "mcp.outcomeNothingToBackUp": "Tiada apa-apa untuk disandarkan",
+  "mcp.outcomeNotRunning": "Tiada apa-apa untuk dibatalkan: sandaran tidak sedang berjalan",
+  "mcp.outcomeTooLate": "Terlambat: sandaran tidak boleh dibatalkan lagi",
+  "mcp.outcomeUnavailable": "BombVault tidak dapat membaca tetapannya",
+  "mcp.outcomeTimeout": "BombVault tidak selesai tepat pada masanya",
+  "mcp.outcomeFailed": "Gagal: BombVault menemui ralat",
   "mcp.outcomeOther": "Berakhir dengan {code}",
 
   // Export / import settings

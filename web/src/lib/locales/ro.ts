@@ -1857,6 +1857,16 @@ const ro: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Refuzat: prea multe cereri",
   "mcp.outcomeStartLimit": "Refuzat: această cheie și-a folosit pornirile pentru ora aceasta",
   "mcp.outcomeBatch": "Refuzat: BombVault nu acceptă cereri în lot",
+  "mcp.outcomeInvalidArgument": "Refuzat: argumentele apelului nu erau valide",
+  "mcp.outcomeNotFound": "Nimic nu s-a potrivit cu ce a indicat apelul",
+  "mcp.outcomeAmbiguous": "Refuzat: numele se potrivește cu mai multe elemente",
+  "mcp.outcomeDomainOff": "Refuzat: acest tip de copie este oprit",
+  "mcp.outcomeNothingToBackUp": "Nimic de copiat",
+  "mcp.outcomeNotRunning": "Nimic de anulat: copia nu rula",
+  "mcp.outcomeTooLate": "Prea târziu: copia nu mai putea fi anulată",
+  "mcp.outcomeUnavailable": "BombVault nu și-a putut citi setările",
+  "mcp.outcomeTimeout": "BombVault nu a terminat la timp",
+  "mcp.outcomeFailed": "Eșuat: BombVault a întâlnit o eroare",
   "mcp.outcomeOther": "S-a încheiat cu {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

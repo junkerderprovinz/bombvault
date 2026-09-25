@@ -2450,6 +2450,16 @@ export const en = {
   "mcp.outcomeRateLimited": "Refused: too many requests",
   "mcp.outcomeStartLimit": "Refused: this key has used up its starts for this hour",
   "mcp.outcomeBatch": "Refused: BombVault does not take batch requests",
+  "mcp.outcomeInvalidArgument": "Refused: the call's arguments were not valid",
+  "mcp.outcomeNotFound": "Nothing matched what the call named",
+  "mcp.outcomeAmbiguous": "Refused: the name fits more than one item",
+  "mcp.outcomeDomainOff": "Refused: this kind of backup is switched off",
+  "mcp.outcomeNothingToBackUp": "Nothing to back up",
+  "mcp.outcomeNotRunning": "Nothing to cancel: the backup was not running",
+  "mcp.outcomeTooLate": "Too late: the backup could no longer be cancelled",
+  "mcp.outcomeUnavailable": "BombVault could not read its settings",
+  "mcp.outcomeTimeout": "BombVault did not finish in time",
+  "mcp.outcomeFailed": "Failed: BombVault ran into an error",
   "mcp.outcomeOther": "Ended with {code}",
 
   // Export / import settings (portable config file)
@@ -4856,6 +4866,16 @@ export const de: Translations = {
   "mcp.outcomeRateLimited": "Abgelehnt: zu viele Anfragen",
   "mcp.outcomeStartLimit": "Abgelehnt: Dieser Schlüssel hat seine Starts für diese Stunde verbraucht",
   "mcp.outcomeBatch": "Abgelehnt: BombVault nimmt keine Stapelanfragen an",
+  "mcp.outcomeInvalidArgument": "Abgelehnt: Die Angaben im Aufruf waren ungültig",
+  "mcp.outcomeNotFound": "Nichts passte zu dem, was der Aufruf nannte",
+  "mcp.outcomeAmbiguous": "Abgelehnt: Der Name passt auf mehr als ein Element",
+  "mcp.outcomeDomainOff": "Abgelehnt: Diese Art von Backup ist ausgeschaltet",
+  "mcp.outcomeNothingToBackUp": "Nichts zu sichern",
+  "mcp.outcomeNotRunning": "Nichts abzubrechen: Das Backup lief nicht",
+  "mcp.outcomeTooLate": "Zu spät: Das Backup ließ sich nicht mehr abbrechen",
+  "mcp.outcomeUnavailable": "BombVault konnte seine Einstellungen nicht lesen",
+  "mcp.outcomeTimeout": "BombVault wurde nicht rechtzeitig fertig",
+  "mcp.outcomeFailed": "Fehlgeschlagen: BombVault ist auf einen Fehler gestoßen",
   "mcp.outcomeOther": "Endete mit {code}",
 
   // Einstellungen exportieren / importieren (portable Konfigurationsdatei)

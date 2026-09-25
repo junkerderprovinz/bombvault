@@ -2078,6 +2078,16 @@ const gl: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Rexeitado: demasiadas solicitudes",
   "mcp.outcomeStartLimit": "Rexeitado: esta chave esgotou os inicios desta hora",
   "mcp.outcomeBatch": "Rexeitado: BombVault non acepta solicitudes por lotes",
+  "mcp.outcomeInvalidArgument": "Rexeitado: os argumentos da chamada non eran válidos",
+  "mcp.outcomeNotFound": "Nada coincide co que indicaba a chamada",
+  "mcp.outcomeAmbiguous": "Rexeitado: o nome corresponde a máis dun elemento",
+  "mcp.outcomeDomainOff": "Rexeitado: este tipo de copia está desactivado",
+  "mcp.outcomeNothingToBackUp": "Non hai nada que copiar",
+  "mcp.outcomeNotRunning": "Nada que cancelar: a copia non estaba en curso",
+  "mcp.outcomeTooLate": "Demasiado tarde: a copia xa non se podía cancelar",
+  "mcp.outcomeUnavailable": "BombVault non puido ler a súa configuración",
+  "mcp.outcomeTimeout": "BombVault non rematou a tempo",
+  "mcp.outcomeFailed": "Erro: BombVault atopou un fallo",
   "mcp.outcomeOther": "Rematou con {code}",
 
   // Export / import settings

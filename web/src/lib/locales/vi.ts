@@ -1846,6 +1846,16 @@ const vi: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Bị từ chối: quá nhiều yêu cầu",
   "mcp.outcomeStartLimit": "Bị từ chối: khóa này đã dùng hết lượt bắt đầu của giờ này",
   "mcp.outcomeBatch": "Bị từ chối: BombVault không nhận yêu cầu theo lô",
+  "mcp.outcomeInvalidArgument": "Bị từ chối: đối số của lệnh gọi không hợp lệ",
+  "mcp.outcomeNotFound": "Không có gì khớp với thứ lệnh gọi nêu ra",
+  "mcp.outcomeAmbiguous": "Bị từ chối: tên này khớp với nhiều hơn một mục",
+  "mcp.outcomeDomainOff": "Bị từ chối: loại sao lưu này đang tắt",
+  "mcp.outcomeNothingToBackUp": "Không có gì để sao lưu",
+  "mcp.outcomeNotRunning": "Không có gì để hủy: bản sao lưu không chạy",
+  "mcp.outcomeTooLate": "Quá muộn: không thể hủy bản sao lưu nữa",
+  "mcp.outcomeUnavailable": "BombVault không đọc được cài đặt của nó",
+  "mcp.outcomeTimeout": "BombVault không xong kịp thời gian",
+  "mcp.outcomeFailed": "Thất bại: BombVault gặp lỗi",
   "mcp.outcomeOther": "Kết thúc với {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

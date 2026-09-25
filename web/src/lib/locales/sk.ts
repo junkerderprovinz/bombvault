@@ -2078,6 +2078,16 @@ const sk: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Odmietnuté: príliš veľa požiadaviek",
   "mcp.outcomeStartLimit": "Odmietnuté: tento kľúč vyčerpal spustenia na túto hodinu",
   "mcp.outcomeBatch": "Odmietnuté: BombVault neprijíma dávkové požiadavky",
+  "mcp.outcomeInvalidArgument": "Odmietnuté: argumenty volania neboli platné",
+  "mcp.outcomeNotFound": "Nič nezodpovedalo tomu, čo volanie uvádzalo",
+  "mcp.outcomeAmbiguous": "Odmietnuté: názov zodpovedá viac ako jednej položke",
+  "mcp.outcomeDomainOff": "Odmietnuté: tento druh zálohy je vypnutý",
+  "mcp.outcomeNothingToBackUp": "Nie je čo zálohovať",
+  "mcp.outcomeNotRunning": "Nie je čo zrušiť: záloha nebežala",
+  "mcp.outcomeTooLate": "Príliš neskoro: zálohu už nebolo možné zrušiť",
+  "mcp.outcomeUnavailable": "BombVault nemohol načítať svoje nastavenia",
+  "mcp.outcomeTimeout": "BombVault nestihol skončiť včas",
+  "mcp.outcomeFailed": "Zlyhalo: BombVault narazil na chybu",
   "mcp.outcomeOther": "Skončilo s {code}",
 
   // Export / import settings

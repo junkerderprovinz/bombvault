@@ -1852,6 +1852,16 @@ const es: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Rechazado: demasiadas solicitudes",
   "mcp.outcomeStartLimit": "Rechazado: esta clave agotó sus inicios de esta hora",
   "mcp.outcomeBatch": "Rechazado: BombVault no acepta solicitudes por lotes",
+  "mcp.outcomeInvalidArgument": "Rechazado: los argumentos de la llamada no eran válidos",
+  "mcp.outcomeNotFound": "Nada coincide con lo que indicaba la llamada",
+  "mcp.outcomeAmbiguous": "Rechazado: el nombre corresponde a más de un elemento",
+  "mcp.outcomeDomainOff": "Rechazado: este tipo de copia está desactivado",
+  "mcp.outcomeNothingToBackUp": "Nada que copiar",
+  "mcp.outcomeNotRunning": "Nada que cancelar: la copia no estaba en curso",
+  "mcp.outcomeTooLate": "Demasiado tarde: la copia ya no se podía cancelar",
+  "mcp.outcomeUnavailable": "BombVault no pudo leer su configuración",
+  "mcp.outcomeTimeout": "BombVault no terminó a tiempo",
+  "mcp.outcomeFailed": "Error: BombVault encontró un fallo",
   "mcp.outcomeOther": "Terminó con {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

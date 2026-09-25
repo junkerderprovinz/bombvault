@@ -1849,6 +1849,16 @@ const ru: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Отклонено: слишком много запросов",
   "mcp.outcomeStartLimit": "Отклонено: этот ключ исчерпал запуски на этот час",
   "mcp.outcomeBatch": "Отклонено: BombVault не принимает пакетные запросы",
+  "mcp.outcomeInvalidArgument": "Отклонено: аргументы вызова были недопустимы",
+  "mcp.outcomeNotFound": "Ничего не совпало с тем, что указал вызов",
+  "mcp.outcomeAmbiguous": "Отклонено: имя подходит больше чем к одному элементу",
+  "mcp.outcomeDomainOff": "Отклонено: этот вид резервного копирования выключен",
+  "mcp.outcomeNothingToBackUp": "Нечего копировать",
+  "mcp.outcomeNotRunning": "Нечего отменять: резервное копирование не выполнялось",
+  "mcp.outcomeTooLate": "Слишком поздно: резервное копирование уже нельзя было отменить",
+  "mcp.outcomeUnavailable": "BombVault не смог прочитать свои настройки",
+  "mcp.outcomeTimeout": "BombVault не успел закончить вовремя",
+  "mcp.outcomeFailed": "Ошибка: BombVault столкнулся с ошибкой",
   "mcp.outcomeOther": "Завершено с кодом {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

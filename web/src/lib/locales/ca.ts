@@ -2078,6 +2078,16 @@ const ca: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Rebutjat: massa peticions",
   "mcp.outcomeStartLimit": "Rebutjat: aquesta clau ha esgotat els inicis d'aquesta hora",
   "mcp.outcomeBatch": "Rebutjat: BombVault no accepta peticions per lots",
+  "mcp.outcomeInvalidArgument": "Rebutjat: els arguments de la crida no eren vàlids",
+  "mcp.outcomeNotFound": "Res no coincideix amb el que indicava la crida",
+  "mcp.outcomeAmbiguous": "Rebutjat: el nom correspon a més d'un element",
+  "mcp.outcomeDomainOff": "Rebutjat: aquest tipus de còpia està desactivat",
+  "mcp.outcomeNothingToBackUp": "No hi ha res a copiar",
+  "mcp.outcomeNotRunning": "Res a cancel·lar: la còpia no s'estava executant",
+  "mcp.outcomeTooLate": "Massa tard: la còpia ja no es podia cancel·lar",
+  "mcp.outcomeUnavailable": "BombVault no ha pogut llegir la seva configuració",
+  "mcp.outcomeTimeout": "BombVault no ha acabat a temps",
+  "mcp.outcomeFailed": "Error: BombVault ha trobat un error",
   "mcp.outcomeOther": "Ha acabat amb {code}",
 
   // Export / import settings

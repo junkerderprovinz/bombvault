@@ -1849,6 +1849,16 @@ const uk: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Відхилено: забагато запитів",
   "mcp.outcomeStartLimit": "Відхилено: цей ключ вичерпав запуски на цю годину",
   "mcp.outcomeBatch": "Відхилено: BombVault не приймає пакетні запити",
+  "mcp.outcomeInvalidArgument": "Відхилено: аргументи виклику були недійсні",
+  "mcp.outcomeNotFound": "Ніщо не збіглося з тим, що вказав виклик",
+  "mcp.outcomeAmbiguous": "Відхилено: назва підходить до кількох елементів",
+  "mcp.outcomeDomainOff": "Відхилено: цей вид резервного копіювання вимкнено",
+  "mcp.outcomeNothingToBackUp": "Немає що копіювати",
+  "mcp.outcomeNotRunning": "Немає що скасовувати: резервне копіювання не виконувалося",
+  "mcp.outcomeTooLate": "Запізно: резервне копіювання вже не можна було скасувати",
+  "mcp.outcomeUnavailable": "BombVault не зміг прочитати свої налаштування",
+  "mcp.outcomeTimeout": "BombVault не встиг завершити вчасно",
+  "mcp.outcomeFailed": "Невдача: BombVault натрапив на помилку",
   "mcp.outcomeOther": "Завершено з кодом {code}",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

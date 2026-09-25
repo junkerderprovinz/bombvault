@@ -2078,6 +2078,16 @@ const hi: Partial<Translations> = {
   "mcp.outcomeRateLimited": "अस्वीकृत: बहुत अधिक अनुरोध",
   "mcp.outcomeStartLimit": "अस्वीकृत: इस की ने इस घंटे की सभी शुरुआतें इस्तेमाल कर लीं",
   "mcp.outcomeBatch": "अस्वीकृत: BombVault बैच अनुरोध स्वीकार नहीं करता",
+  "mcp.outcomeInvalidArgument": "अस्वीकृत: कॉल के आर्ग्युमेंट मान्य नहीं थे",
+  "mcp.outcomeNotFound": "कॉल ने जो बताया, उससे कुछ मेल नहीं खाया",
+  "mcp.outcomeAmbiguous": "अस्वीकृत: यह नाम एक से ज़्यादा आइटम से मेल खाता है",
+  "mcp.outcomeDomainOff": "अस्वीकृत: इस तरह का बैकअप बंद है",
+  "mcp.outcomeNothingToBackUp": "बैकअप के लिए कुछ नहीं",
+  "mcp.outcomeNotRunning": "रद्द करने को कुछ नहीं: बैकअप चल नहीं रहा था",
+  "mcp.outcomeTooLate": "बहुत देर हो गई: बैकअप अब रद्द नहीं हो सकता था",
+  "mcp.outcomeUnavailable": "BombVault अपनी सेटिंग्स नहीं पढ़ सका",
+  "mcp.outcomeTimeout": "BombVault समय पर पूरा नहीं हुआ",
+  "mcp.outcomeFailed": "विफल: BombVault को एक त्रुटि मिली",
   "mcp.outcomeOther": "{code} के साथ समाप्त",
 
   // Export / import settings

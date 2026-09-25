@@ -1846,6 +1846,16 @@ const ja: Partial<Translations> = {
   "mcp.outcomeRateLimited": "拒否: リクエストが多すぎます",
   "mcp.outcomeStartLimit": "拒否: このキーはこの 1 時間の開始回数を使い切りました",
   "mcp.outcomeBatch": "拒否: BombVault はバッチリクエストを受け付けません",
+  "mcp.outcomeInvalidArgument": "拒否: 呼び出しの引数が無効でした",
+  "mcp.outcomeNotFound": "呼び出しが指定したものに一致するものがありませんでした",
+  "mcp.outcomeAmbiguous": "拒否: その名前は複数の項目に当てはまります",
+  "mcp.outcomeDomainOff": "拒否: この種類のバックアップはオフです",
+  "mcp.outcomeNothingToBackUp": "バックアップするものがありません",
+  "mcp.outcomeNotRunning": "中止するものなし: バックアップは実行されていませんでした",
+  "mcp.outcomeTooLate": "手遅れ: バックアップはもう中止できませんでした",
+  "mcp.outcomeUnavailable": "BombVault が設定を読み込めませんでした",
+  "mcp.outcomeTimeout": "BombVault が時間内に終わりませんでした",
+  "mcp.outcomeFailed": "失敗: BombVault でエラーが起きました",
   "mcp.outcomeOther": "{code} で終了",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

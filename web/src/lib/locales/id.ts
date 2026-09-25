@@ -2078,6 +2078,16 @@ const id: Partial<Translations> = {
   "mcp.outcomeRateLimited": "Ditolak: terlalu banyak permintaan",
   "mcp.outcomeStartLimit": "Ditolak: kunci ini sudah memakai jatah mulai untuk jam ini",
   "mcp.outcomeBatch": "Ditolak: BombVault tidak menerima permintaan batch",
+  "mcp.outcomeInvalidArgument": "Ditolak: argumen panggilan tidak valid",
+  "mcp.outcomeNotFound": "Tidak ada yang cocok dengan yang disebut panggilan",
+  "mcp.outcomeAmbiguous": "Ditolak: nama itu cocok dengan lebih dari satu item",
+  "mcp.outcomeDomainOff": "Ditolak: jenis pencadangan ini dimatikan",
+  "mcp.outcomeNothingToBackUp": "Tidak ada yang perlu dicadangkan",
+  "mcp.outcomeNotRunning": "Tidak ada yang dibatalkan: pencadangan tidak sedang berjalan",
+  "mcp.outcomeTooLate": "Terlambat: pencadangan tidak bisa dibatalkan lagi",
+  "mcp.outcomeUnavailable": "BombVault tidak bisa membaca pengaturannya",
+  "mcp.outcomeTimeout": "BombVault tidak selesai tepat waktu",
+  "mcp.outcomeFailed": "Gagal: BombVault mengalami galat",
   "mcp.outcomeOther": "Berakhir dengan {code}",
 
   // Export / import settings
