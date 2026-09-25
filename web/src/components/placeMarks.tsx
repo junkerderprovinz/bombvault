@@ -424,7 +424,7 @@ const GLYPHS: Record<Glyph, () => ReactNode> = {
  */
 export function PlaceMark({ provider, size = 16, onFill = false }: { provider: string; size?: number; onFill?: boolean }) {
   const scope = useId().replace(/[^\w-]/g, "");
-  const mark = MARK_OF[provider] ?? "server";
+  const mark = Object.hasOwn(MARK_OF, provider) ? MARK_OF[provider] : "server";
   const box = { width: size, height: size };
   if (mark === "bombvault") {
     // Our own logo, in the same two files as the sidebar's.

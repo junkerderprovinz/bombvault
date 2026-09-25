@@ -4,6 +4,12 @@ import type { FolderState, PlaceHolders, PlaceKind, PlaceRefusal, ProbeFact } fr
 
 type T = ReturnType<typeof useT>["t"];
 
+/** keyOf reads a table of keys without reaching Object.prototype, so an id
+ *  such as "constructor" counts as one this version does not know. */
+function keyOf(table: Record<string, TranslationKey>, id: string): TranslationKey | undefined {
+  return Object.hasOwn(table, id) ? table[id] : undefined;
+}
+
 const DOMAIN_KEYS: Record<string, TranslationKey> = {
   containers: "nav.containers",
   vms: "nav.vms",
@@ -18,7 +24,8 @@ export function domainNames(t: T, lang: string, domains: string[]): string {
 }
 
 export function domainName(t: T, domain: string): string {
-  return DOMAIN_KEYS[domain] ? t(DOMAIN_KEYS[domain]) : domain;
+  const key = keyOf(DOMAIN_KEYS, domain);
+  return key ? t(key) : domain;
 }
 
 const CODE_KEYS: Record<string, TranslationKey> = {
@@ -64,7 +71,7 @@ export function placeErrorText(t: T, lang: string, res: PlaceRefusal, fallback: 
     case "place-probe-failed":
       return probeFailureText(t, lang, res.probe ?? res);
   }
-  const key = res.code ? CODE_KEYS[res.code] : undefined;
+  const key = res.code ? keyOf(CODE_KEYS, res.code) : undefined;
   if (key) return t(key);
   return placementErrorText(t, lang, res, fallback);
 }
@@ -85,7 +92,7 @@ const FACT_KEYS: Record<string, TranslationKey> = {
 /** probeFactText is one finding of a probe as a sentence, or null for a key
  *  this version does not know, which the caller leaves out. */
 export function probeFactText(t: T, fact: ProbeFact): string | null {
-  const key = FACT_KEYS[fact.key];
+  const key = keyOf(FACT_KEYS, fact.key);
   if (!key) return null;
   let text = t(key);
   for (const [name, value] of Object.entries(fact.params ?? {})) text = text.replace(`{${name}}`, value);
@@ -147,7 +154,8 @@ const PROVIDER_KEYS: Record<string, TranslationKey> = {
 /** providerName is a provider's name on its tile, its own id for one this
  *  version does not know. */
 export function providerName(t: T, id: string): string {
-  return PROVIDER_KEYS[id] ? t(PROVIDER_KEYS[id]) : id;
+  const key = keyOf(PROVIDER_KEYS, id);
+  return key ? t(key) : id;
 }
 
 const KIND_KEYS: Record<PlaceKind, TranslationKey> = {
@@ -161,5 +169,5 @@ const KIND_KEYS: Record<PlaceKind, TranslationKey> = {
 };
 
 export function kindName(t: T, kind: PlaceKind): string {
-  return KIND_KEYS[kind] ? t(KIND_KEYS[kind]) : kind;
+  return t(KIND_KEYS[kind]);
 }
