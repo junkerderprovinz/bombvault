@@ -74,6 +74,7 @@ func newPlacementFixture(t *testing.T) *placementFixture {
 		openErr: map[string]error{},
 		ids:     map[string]string{},
 		opened:  map[string]int{},
+		keys:    map[string]string{},
 		lists:   map[string]int{},
 	}
 	dock := &placementDocker{installed: map[string]bool{}}
@@ -431,6 +432,7 @@ type placementEngine struct {
 	openErr map[string]error  // RepoOpensErr's message for a location in opens=false; default is a generic one
 	ids     map[string]string // RepoID: the id of the repository at a location
 	opened  map[string]int    // RepoOpens and RepoID calls per location
+	keys    map[string]string // a location that opens only when the mode's environment carries this entry
 	lists   map[string]int    // Snapshots calls per location
 	copies  []copyCall
 	forgets []forgetCall
@@ -466,11 +468,14 @@ func (e *placementEngine) Init(_ context.Context, repo string, _ restic.Mode) er
 	return nil
 }
 
-func (e *placementEngine) RepoOpens(_ context.Context, repo string, _ restic.Mode) bool {
+func (e *placementEngine) RepoOpens(_ context.Context, repo string, mode restic.Mode) bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	key := filepath.ToSlash(repo)
 	e.opened[key]++
+	if want, ok := e.keys[key]; ok {
+		return slices.Contains(mode.Env, want)
+	}
 	open, known := e.opens[key]
 	return open || !known
 }

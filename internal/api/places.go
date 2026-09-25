@@ -659,7 +659,102 @@ type patchPlaceBody struct {
 	Enabled              *bool   `json:"enabled"`
 	// Address is the provider's form the base is built from, secrets left out.
 	Address map[string]string `json:"address"`
+	// Fields is the provider's credential form; a secret left blank keeps
+	// the stored one.
+	Fields  map[string]string `json:"fields"`
 	Folders map[string]string `json:"folders"`
+}
+
+// credsChange is the credential set a details edit writes.
+type credsChange struct {
+	set  CloudCredSet                        // the place's set once written
+	fork bool                                // set is new, and the place moves onto it
+	edit func([]CloudCredSet) []CloudCredSet // writes the change into the stored sets
+}
+
+// placeCredsChange works out what an edit's credential fields change, nil for
+// nothing. A place on the shared credentials, on a set that is missing, or on
+// a set anything else names gets a set of its own, so the edit reaches this
+// place alone.
+func (s *Service) placeCredsChange(settings store.Settings, p store.Place, fields map[string]string) (*credsChange, error) {
+	provider, ok := places.ProviderByID(p.Provider)
+	if !ok || len(credFields[provider.Kind]) == 0 {
+		return nil, nil
+	}
+	cur, err := s.credSetFor(settings, p.CredsRef)
+	if err != nil {
+		return nil, err
+	}
+	typed := places.CredsFromFields(provider, fields)
+	next := withPlaceCreds(cur, overlayCreds(placeCredsOf(cur), typed))
+	if next == cur {
+		return nil, nil
+	}
+	fork := p.CredsRef == "" || cur.ID != p.CredsRef
+	if !fork {
+		if fork, err = s.credSetNamedElsewhere(p.CredsRef, p.ID); err != nil {
+			return nil, err
+		}
+	}
+	if !fork {
+		// Applied again to the stored set inside the write, so a change another
+		// writer made to it in between is kept.
+		return &credsChange{set: next, edit: func(sets []CloudCredSet) []CloudCredSet {
+			for i := range sets {
+				if sets[i].ID == p.CredsRef {
+					sets[i] = withPlaceCreds(sets[i], overlayCreds(placeCredsOf(sets[i]), typed))
+				}
+			}
+			return sets
+		}}, nil
+	}
+	next.ID, next.Name, next.KeptFor, next.Kind = newCredSetID(), p.Name, "", string(provider.Kind)
+	return &credsChange{set: next, fork: true, edit: func(sets []CloudCredSet) []CloudCredSet {
+		return append(sets, next)
+	}}, nil
+}
+
+// credSetNamedElsewhere reports whether anything but the rows of the place
+// except names the credential set: another place, a pull source, or a row
+// the place does not hold, a domain's primary row among them, since that one
+// carries the credentials of a remote domain path. With except empty every
+// row counts.
+func (s *Service) credSetNamedElsewhere(id, except string) (bool, error) {
+	all, err := s.store.ListPlaces()
+	if err != nil {
+		return false, err
+	}
+	if slices.ContainsFunc(all, func(p store.Place) bool { return p.ID != except && p.CredsRef == id }) {
+		return true, nil
+	}
+	sources, err := s.store.ListPullSources()
+	if err != nil {
+		return false, err
+	}
+	if slices.ContainsFunc(sources, func(src store.PullSource) bool { return src.CredsRef == id }) {
+		return true, nil
+	}
+	targets, err := s.store.ListOffsiteTargets()
+	if err != nil {
+		return false, err
+	}
+	repos, err := s.store.ListNamedRepos()
+	if err != nil {
+		return false, err
+	}
+	rows := slices.Concat(targets, repos)
+	for _, d := range places.Domains {
+		primary, found, err := s.store.PrimaryRemoteTarget(d)
+		if err != nil {
+			return false, err
+		}
+		if found {
+			rows = append(rows, primary)
+		}
+	}
+	return slices.ContainsFunc(rows, func(r store.OffsiteTarget) bool {
+		return r.CredsRef == id && (except == "" || r.PlaceID != except)
+	}), nil
 }
 
 // applyPlacePatch merges the sent settings onto a place. A home place stays
@@ -707,8 +802,9 @@ func applyPlacePatch(p store.Place, b patchPlaceBody, homes map[string]string) (
 }
 
 // patchPlace applies an edit from the details and returns the warnings the
-// direct repositories of the place's targets get from it. A new base or new
-// folders are held to the address rules first.
+// direct repositories of the place's targets get from it. New credentials are
+// tried before anything is written, and a new base or new folders are held to
+// the address rules, opened with the credentials the edit brings.
 func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody) (store.Place, []saveWarning, error) {
 	s.placeEditMu.Lock()
 	defer s.placeEditMu.Unlock()
@@ -732,6 +828,15 @@ func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody
 	if err != nil {
 		return store.Place{}, nil, err
 	}
+	var change *credsChange
+	if body.Fields != nil {
+		if change, err = s.placeCredsChange(settings, next, body.Fields); err != nil {
+			return store.Place{}, nil, err
+		}
+		if change != nil && change.fork {
+			next.CredsRef = change.set.ID
+		}
+	}
 	if body.Address != nil {
 		provider, ok := places.ProviderByID(p.Provider)
 		if !ok {
@@ -752,6 +857,17 @@ func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody
 		}
 		next.Folders = maps.Clone(body.Folders)
 	}
+	// On a new base checkMoves opens every moved address with the new
+	// credentials; otherwise the addresses the place has are tried here.
+	if change != nil && next.Base == p.Base {
+		probe, err := s.placeProbeFn()(ctx, ProbeRequest{PlaceID: p.ID, Fields: body.Fields})
+		if err != nil {
+			return store.Place{}, nil, err
+		}
+		if !probe.OK {
+			return store.Place{}, nil, &probeFailedErr{result: probe}
+		}
+	}
 	if next.Base != p.Base || !maps.Equal(next.Folders, p.Folders) {
 		moves, err := s.placeMoves(settings, p, next, rows, homes)
 		if err != nil {
@@ -760,7 +876,7 @@ func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody
 		if err := s.checkNesting(settings, moves); err != nil {
 			return store.Place{}, nil, err
 		}
-		mode, err := s.placeMode(settings, next)
+		mode, err := s.pendingMode(settings, next, change)
 		if err != nil {
 			return store.Place{}, nil, err
 		}
@@ -768,7 +884,11 @@ func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody
 			return store.Place{}, nil, err
 		}
 	}
-	saved, err := s.writePlace(store.PlaceWrite{Place: next}, nil)
+	var edit func([]CloudCredSet) []CloudCredSet
+	if change != nil {
+		edit = change.edit
+	}
+	saved, err := s.writePlace(store.PlaceWrite{Place: next}, edit)
 	if err != nil {
 		return store.Place{}, nil, err
 	}
@@ -776,7 +896,15 @@ func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody
 	if err != nil {
 		return store.Place{}, nil, err
 	}
-	return saved, s.placeSaveWarnings(rows, after), nil
+	warnings := s.placeSaveWarnings(rows, after)
+	if change != nil {
+		// settings is the row from before the write, so a direct repository the
+		// new values do not open can go back to the old ones.
+		warnings = append(warnings, s.directCredsWarnings(ctx, settings, func(_, target store.OffsiteTarget) bool {
+			return target.PlaceID == p.ID
+		})...)
+	}
+	return saved, warnings, nil
 }
 
 // checkFolderChange refuses folders a place cannot take: any folder below a
