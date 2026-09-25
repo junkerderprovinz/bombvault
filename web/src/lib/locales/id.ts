@@ -1987,6 +1987,7 @@ const id: Partial<Translations> = {
   "mcp.hint": "Memungkinkan asisten AI seperti Claude membaca status cadangan server ini, memulai pencadangan, dan membatalkan pencadangan yang mereka mulai sendiri, lewat Model Context Protocol. Pemulihan, penghapusan, dan pengaturan tetap di antarmuka web ini.",
   "mcp.statusOff": "Mati: tidak ada kunci",
   "mcp.statusOn": "Aktif, {n} kunci aktif",
+  "mcp.statusNoneWorks": "Mati: tidak ada kunci yang berfungsi",
   "mcp.noPasswordWarning": "Kata sandi masuk belum diatur, jadi antarmuka web ini terbuka untuk semua orang di jaringanmu, dan siapa pun yang bisa membukanya juga bisa membuat kunci.",
   "mcp.setPassword": "Atur kata sandi masuk",
   "mcp.needsPasswordForHost": "Halaman ini dibuka sebagai {host}. Tanpa kata sandi masuk, kunci hanya bisa dibuat dan diganti dari alamat IP atau nama lokal seperti tower atau tower.local, supaya tidak ada halaman web di internet yang bisa membuatnya. Mengatur kata sandi masuk menghapus batasan itu untuk alamat ini. Kamu juga bisa membuka BombVault lewat alamat lokalnya.",

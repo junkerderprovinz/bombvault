@@ -128,6 +128,9 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
   const secure = origin.toLowerCase().startsWith("https:");
 
   const keys = data?.keys ?? [];
+  // A key APP_KEY no longer matches is listed so it can be replaced, but it
+  // lets no assistant in.
+  const working = keys.filter((k) => !k.unusable).length;
   const revoked = data?.revoked ?? [];
   const limit = data?.limit ?? 0;
   const certificate = data?.certificate ?? null;
@@ -270,14 +273,16 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       {!failed && (
         <div className="flex items-center gap-2">
           <span
-            className={`inline-block h-2 w-2 rounded-full ${keys.length > 0 ? "bg-statusOkSolid" : "bg-carbon-textMuted"}`}
+            className={`inline-block h-2 w-2 rounded-full ${working > 0 ? "bg-statusOkSolid" : "bg-carbon-textMuted"}`}
           />
           <span className="text-sm text-carbon-text">
             {data === null
               ? t("folder.loading")
-              : keys.length > 0
-                ? t("mcp.statusOn", keys.length)
-                : t("mcp.statusOff")}
+              : working > 0
+                ? t("mcp.statusOn", working)
+                : keys.length > 0
+                  ? t("mcp.statusNoneWorks")
+                  : t("mcp.statusOff")}
           </span>
         </div>
       )}

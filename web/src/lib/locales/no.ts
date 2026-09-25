@@ -1763,6 +1763,7 @@ const no: Partial<Translations> = {
   "mcp.hint": "Lar KI-assistenter som Claude lese sikkerhetskopistatusen til denne serveren, starte sikkerhetskopier og avbryte dem de selv har startet, via Model Context Protocol. Gjenoppretting, sletting og innstillinger blir værende i dette webgrensesnittet.",
   "mcp.statusOff": "Av: det finnes ingen nøkkel",
   "mcp.statusOn": "one=På, {n} aktiv nøkkel|other=På, {n} aktive nøkler",
+  "mcp.statusNoneWorks": "Av: ingen av nøklene virker",
   "mcp.noPasswordWarning": "Det er ikke satt noe innloggingspassord, så dette webgrensesnittet er åpent for alle på nettverket ditt, og den som kan åpne det kan også lage en nøkkel.",
   "mcp.setPassword": "Sett et innloggingspassord",
   "mcp.needsPasswordForHost": "Denne siden ble åpnet som {host}. Uten innloggingspassord kan nøkler bare lages og byttes fra en IP-adresse eller et lokalt navn som tower eller tower.local, slik at ingen nettside på internett kan lage en. Et innloggingspassord fjerner den begrensningen for denne adressen. Du kan også åpne BombVault på den lokale adressen.",

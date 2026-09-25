@@ -1763,6 +1763,7 @@ const da: Partial<Translations> = {
   "mcp.hint": "Lader AI-assistenter som Claude læse sikkerhedskopieringsstatus for denne server, starte sikkerhedskopier og afbryde dem, de selv har startet, via Model Context Protocol. Gendannelser, sletninger og indstillinger bliver i denne brugerflade.",
   "mcp.statusOff": "Fra: der findes ingen nøgle",
   "mcp.statusOn": "one=Til, {n} aktiv nøgle|other=Til, {n} aktive nøgler",
+  "mcp.statusNoneWorks": "Fra: ingen af nøglerne virker",
   "mcp.noPasswordWarning": "Der er ikke sat en adgangskode, så denne brugerflade er åben for alle på dit netværk, og den, der kan åbne den, kan også oprette en nøgle.",
   "mcp.setPassword": "Sæt en adgangskode",
   "mcp.needsPasswordForHost": "Denne side blev åbnet som {host}. Uden en adgangskode kan nøgler kun oprettes og udskiftes fra en IP-adresse eller et lokalt navn som tower eller tower.local, så ingen side på internettet kan oprette en. En adgangskode fjerner den begrænsning for denne adresse. Du kan også åbne BombVault på dens lokale adresse.",

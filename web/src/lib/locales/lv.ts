@@ -1987,6 +1987,7 @@ const lv: Partial<Translations> = {
   "mcp.hint": "Ļauj mākslīgā intelekta palīgiem, piemēram, Claude, caur Model Context Protocol lasīt šī servera rezerves kopiju stāvokli, sākt kopēšanu un atcelt to, ko paši sākuši. Atjaunošana, dzēšana un iestatījumi paliek šajā tīmekļa saskarnē.",
   "mcp.statusOff": "Izslēgts: atslēgas nav",
   "mcp.statusOn": "zero=Ieslēgts, {n} aktīvu atslēgu|one=Ieslēgts, {n} aktīva atslēga|other=Ieslēgts, {n} aktīvas atslēgas",
+  "mcp.statusNoneWorks": "Izslēgts: neviena atslēga nedarbojas",
   "mcp.noPasswordWarning": "Pieteikšanās parole nav iestatīta, tāpēc šī tīmekļa saskarne ir atvērta visiem tavā tīklā, un kurš to var atvērt, var arī izveidot atslēgu.",
   "mcp.setPassword": "Iestati pieteikšanās paroli",
   "mcp.needsPasswordForHost": "Šī lapa atvērta kā {host}. Bez pieteikšanās paroles atslēgas var izveidot un nomainīt tikai no IP adreses vai vietēja nosaukuma, piemēram tower vai tower.local, lai neviena lapa internetā nevarētu izveidot atslēgu. Pieteikšanās parole šim ierobežojumam šai adresei liek zust. BombVault vari atvērt arī pa tā vietējo adresi.",

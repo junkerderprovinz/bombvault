@@ -1987,6 +1987,7 @@ const sk: Partial<Translations> = {
   "mcp.hint": "Umožňuje asistentom s umelou inteligenciou, ako je Claude, čítať stav záloh tohto servera, spúšťať zálohy a rušiť tie, ktoré sami spustili, cez Model Context Protocol. Obnovy, mazania a nastavenia zostávajú v tomto webovom rozhraní.",
   "mcp.statusOff": "Vypnuté: žiadny kľúč neexistuje",
   "mcp.statusOn": "one=Zapnuté, {n} aktívny kľúč|few=Zapnuté, {n} aktívne kľúče|many=Zapnuté, {n} aktívneho kľúča|other=Zapnuté, {n} aktívnych kľúčov",
+  "mcp.statusNoneWorks": "Vypnuté: žiadny kľúč nefunguje",
   "mcp.noPasswordWarning": "Prihlasovacie heslo nie je nastavené, takže toto webové rozhranie je otvorené všetkým v tvojej sieti a kto ho otvorí, môže aj vytvoriť kľúč.",
   "mcp.setPassword": "Nastaviť prihlasovacie heslo",
   "mcp.needsPasswordForHost": "Táto stránka bola otvorená ako {host}. Bez prihlasovacieho hesla sa kľúče dajú vytvárať a meniť len z IP adresy alebo z miestneho mena ako tower či tower.local, aby žiadna stránka z internetu nemohla kľúč vytvoriť. Prihlasovacie heslo toto obmedzenie pre túto adresu zruší. BombVault môžeš otvoriť aj cez jeho miestnu adresu.",

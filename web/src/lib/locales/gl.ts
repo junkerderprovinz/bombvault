@@ -1987,6 +1987,7 @@ const gl: Partial<Translations> = {
   "mcp.hint": "Permite que asistentes de IA como Claude lean o estado das copias deste servidor, inicien copias e cancelen as que eles mesmos iniciaron, mediante o Model Context Protocol. As restauracións, as eliminacións e a configuración quedan nesta interface web.",
   "mcp.statusOff": "Desactivado: non hai ningunha chave",
   "mcp.statusOn": "one=Activado, {n} chave activa|other=Activado, {n} chaves activas",
+  "mcp.statusNoneWorks": "Desactivado: ningunha chave funciona",
   "mcp.noPasswordWarning": "Non hai contrasinal de acceso, así que esta interface web está aberta a todos na túa rede, e quen a poida abrir tamén pode crear unha chave.",
   "mcp.setPassword": "Define un contrasinal de acceso",
   "mcp.needsPasswordForHost": "Esta páxina abriuse como {host}. Sen contrasinal de acceso, as chaves só se poden crear e substituír desde un enderezo IP ou un nome local como tower ou tower.local, para que ningunha páxina de internet poida crear unha. Definir un contrasinal de acceso levanta esa restrición para este enderezo. Tamén podes abrir BombVault polo seu enderezo local.",

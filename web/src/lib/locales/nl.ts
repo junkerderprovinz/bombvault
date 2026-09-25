@@ -1760,6 +1760,7 @@ const nl: Partial<Translations> = {
   "mcp.hint": "Laat AI-assistenten zoals Claude de back-upstatus van deze server lezen, back-ups starten en de back-ups die ze zelf gestart hebben afbreken, via het Model Context Protocol. Herstellen, verwijderen en instellingen blijven in deze webinterface.",
   "mcp.statusOff": "Uit: er is geen sleutel",
   "mcp.statusOn": "one=Aan, {n} actieve sleutel|other=Aan, {n} actieve sleutels",
+  "mcp.statusNoneWorks": "Uit: geen enkele sleutel werkt",
   "mcp.noPasswordWarning": "Er is geen inlogwachtwoord ingesteld, dus deze webinterface staat open voor iedereen op je netwerk, en wie hem kan openen kan ook een sleutel aanmaken.",
   "mcp.setPassword": "Stel een inlogwachtwoord in",
   "mcp.needsPasswordForHost": "Deze pagina is geopend als {host}. Zonder inlogwachtwoord kunnen sleutels alleen worden aangemaakt en vervangen vanaf een IP-adres of een lokale naam zoals tower of tower.local, zodat geen webpagina op internet er een kan aanmaken. Een inlogwachtwoord heft die beperking op voor dit adres. Je kunt BombVault ook op zijn lokale adres openen.",

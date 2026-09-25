@@ -1755,6 +1755,7 @@ const vi: Partial<Translations> = {
   "mcp.hint": "Cho phép các trợ lý AI như Claude đọc trạng thái sao lưu của máy chủ này, bắt đầu sao lưu và hủy những bản sao lưu do chính chúng bắt đầu, qua Model Context Protocol. Khôi phục, xóa và cài đặt vẫn nằm trong giao diện web này.",
   "mcp.statusOff": "Tắt: chưa có khóa nào",
   "mcp.statusOn": "Bật, {n} khóa đang hoạt động",
+  "mcp.statusNoneWorks": "Tắt: không khóa nào hoạt động",
   "mcp.noPasswordWarning": "Chưa đặt mật khẩu đăng nhập, nên giao diện web này mở cho mọi người trong mạng của bạn, và ai mở được nó cũng tạo được khóa.",
   "mcp.setPassword": "Đặt mật khẩu đăng nhập",
   "mcp.needsPasswordForHost": "Trang này được mở dưới tên {host}. Khi chưa có mật khẩu đăng nhập, khóa chỉ có thể được tạo và thay từ một địa chỉ IP hoặc một tên nội bộ như tower hay tower.local, để không trang web nào trên internet tạo được khóa. Đặt mật khẩu đăng nhập sẽ bỏ hạn chế đó cho địa chỉ này. Bạn cũng có thể mở BombVault bằng địa chỉ nội bộ của nó.",

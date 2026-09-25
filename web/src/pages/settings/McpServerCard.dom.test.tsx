@@ -353,6 +353,14 @@ describe("a key list", () => {
     expect(screen.getByRole("button", { name: en["mcp.rotate"] })).toBeTruthy();
   });
 
+  it("counts only the keys that still work as active", async () => {
+    await renderCard(
+      payload({ keys: [key({ id: "k1", unusable: "app-key-changed" }), key({ id: "k2", unusable: "app-key-changed" })] })
+    );
+    await waitFor(() => expect(screen.getByText(en["mcp.statusNoneWorks"])).toBeTruthy());
+    expect(screen.queryByText(/active key/)).toBeNull();
+  });
+
   it("labels the permission on a key row as it was labelled when the key was created", async () => {
     await renderCard(payload({ keys: [key()] }));
     await waitFor(() => expect(screen.getByRole("switch", { name: en["mcp.allowStart"] })).toBeTruthy());

@@ -1987,6 +1987,7 @@ const eu: Partial<Translations> = {
   "mcp.hint": "Claude bezalako AA laguntzaileei zerbitzari honen babeskopien egoera irakurtzen, babeskopiak abiarazten eta beraiek abiarazitakoak bertan behera uzten uzten die, Model Context Protocol bidez. Berreskuratzeak, ezabatzeak eta ezarpenak web interfaze honetan gelditzen dira.",
   "mcp.statusOff": "Itzalita: ez dago gakorik",
   "mcp.statusOn": "one=Piztuta, gako aktibo {n}|other=Piztuta, {n} gako aktibo",
+  "mcp.statusNoneWorks": "Itzalita: gakoetako batek ere ez du funtzionatzen",
   "mcp.noPasswordWarning": "Ez dago sarbide pasahitzik ezarrita, beraz web interfaze hau zure sareko guztientzat irekita dago, eta ireki dezakeenak gako bat ere sor dezake.",
   "mcp.setPassword": "Ezarri sarbide pasahitza",
   "mcp.needsPasswordForHost": "Orri hau {host} gisa ireki da. Sarbide pasahitzik gabe, gakoak IP helbide batetik edo tower edo tower.local bezalako izen lokal batetik baino ezin dira sortu eta ordeztu, interneteko webgune batek ere sor ez dezan. Sarbide pasahitzak muga hori kentzen du helbide honetarako. BombVault bere helbide lokaletik ere ireki dezakezu.",

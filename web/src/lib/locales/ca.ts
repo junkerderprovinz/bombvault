@@ -1987,6 +1987,7 @@ const ca: Partial<Translations> = {
   "mcp.hint": "Permet que assistents d'IA com el Claude llegeixin l'estat de les còpies d'aquest servidor, iniciïn còpies i cancel·lin les que han iniciat, mitjançant el Model Context Protocol. Les restauracions, les supressions i la configuració es queden en aquesta interfície web.",
   "mcp.statusOff": "Desactivat: no hi ha cap clau",
   "mcp.statusOn": "one=Activat, {n} clau activa|many=Activat, {n} de claus actives|other=Activat, {n} claus actives",
+  "mcp.statusNoneWorks": "Desactivat: cap clau no funciona",
   "mcp.noPasswordWarning": "No hi ha cap contrasenya d'accés, de manera que aquesta interfície web és oberta a tothom de la teva xarxa, i qui la pugui obrir també pot crear una clau.",
   "mcp.setPassword": "Defineix una contrasenya d'accés",
   "mcp.needsPasswordForHost": "Aquesta pàgina s'ha obert com a {host}. Sense contrasenya d'accés, les claus només es poden crear i substituir des d'una adreça IP o un nom local com tower o tower.local, perquè cap pàgina web d'internet en pugui crear cap. Definir una contrasenya d'accés aixeca aquesta restricció per a aquesta adreça. També pots obrir el BombVault per la seva adreça local.",

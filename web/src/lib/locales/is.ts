@@ -1987,6 +1987,7 @@ const is: Partial<Translations> = {
   "mcp.hint": "Leyfir gervigreindaraðstoðarmönnum eins og Claude að lesa afritunarstöðu þessa þjóns, ræsa afritanir og hætta við þær sem þeir ræstu sjálfir, um Model Context Protocol. Endurheimtir, eyðingar og stillingar verða áfram í þessu vefviðmóti.",
   "mcp.statusOff": "Slökkt: enginn lykill er til",
   "mcp.statusOn": "one=Kveikt, {n} virkur lykill|other=Kveikt, {n} virkir lyklar",
+  "mcp.statusNoneWorks": "Slökkt: enginn lyklanna virkar",
   "mcp.noPasswordWarning": "Ekkert innskráningarlykilorð er sett, svo þetta vefviðmót er opið öllum á netinu þínu, og sá sem getur opnað það getur líka búið til lykil.",
   "mcp.setPassword": "Settu innskráningarlykilorð",
   "mcp.needsPasswordForHost": "Þessi síða var opnuð sem {host}. Án innskráningarlykilorðs er aðeins hægt að búa til og skipta um lykla frá IP-tölu eða staðbundnu heiti eins og tower eða tower.local, svo engin vefsíða á netinu geti búið til lykil. Innskráningarlykilorð fjarlægir þá takmörkun fyrir þetta vistfang. Þú getur líka opnað BombVault á staðbundna vistfanginu.",

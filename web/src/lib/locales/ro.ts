@@ -1766,6 +1766,7 @@ const ro: Partial<Translations> = {
   "mcp.hint": "Le permite asistenților IA precum Claude să citească starea copiilor de siguranță ale acestui server, să pornească copii și să anuleze copiile pornite de ei, prin Model Context Protocol. Restaurările, ștergerile și setările rămân în această interfață web.",
   "mcp.statusOff": "Oprit: nu există nicio cheie",
   "mcp.statusOn": "one=Pornit, {n} cheie activă|few=Pornit, {n} chei active|other=Pornit, {n} de chei active",
+  "mcp.statusNoneWorks": "Oprit: nicio cheie nu funcționează",
   "mcp.noPasswordWarning": "Nu este setată nicio parolă de conectare, așa că această interfață web este deschisă tuturor din rețeaua ta, iar cine o poate deschide poate și crea o cheie.",
   "mcp.setPassword": "Setează o parolă de conectare",
   "mcp.needsPasswordForHost": "Pagina aceasta a fost deschisă ca {host}. Fără parolă de conectare, cheile pot fi create și înlocuite doar de la o adresă IP sau de la un nume local precum tower ori tower.local, pentru ca nicio pagină din internet să nu poată crea una. O parolă de conectare ridică restricția pentru această adresă. Poți deschide BombVault și prin adresa lui locală.",

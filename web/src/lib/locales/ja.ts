@@ -1755,6 +1755,7 @@ const ja: Partial<Translations> = {
   "mcp.hint": "Claude のような AI アシスタントが Model Context Protocol 経由でこのサーバーのバックアップ状況を読み、バックアップを開始し、自分が開始したバックアップを中止できるようにします。復元、削除、設定はこのウェブ画面に残ります。",
   "mcp.statusOff": "オフ: キーがありません",
   "mcp.statusOn": "オン、有効なキー {n} 個",
+  "mcp.statusNoneWorks": "オフ: 使えるキーがありません",
   "mcp.noPasswordWarning": "ログインパスワードが設定されていないため、このウェブ画面はネットワーク上の誰にでも開いており、開ける人はキーも作成できます。",
   "mcp.setPassword": "ログインパスワードを設定",
   "mcp.needsPasswordForHost": "このページは {host} として開かれました。ログインパスワードがない場合、キーの作成と交換は IP アドレスか tower、tower.local のようなローカル名からのみ行えます。インターネット上のどのページにもキーを作らせないためです。ログインパスワードを設定すると、このアドレスではその制限がなくなります。BombVault はローカルアドレスからも開けます。",

@@ -1987,6 +1987,7 @@ const et: Partial<Translations> = {
   "mcp.hint": "Lubab tehisintellekti abilistel nagu Claude lugeda selle serveri varunduse seisu, käivitada varundusi ja katkestada neid, mille nad ise käivitasid, Model Context Protocoli kaudu. Taastamised, kustutamised ja seaded jäävad sellesse veebiliidesesse.",
   "mcp.statusOff": "Väljas: võtit ei ole",
   "mcp.statusOn": "one=Sees, {n} aktiivne võti|other=Sees, {n} aktiivset võtit",
+  "mcp.statusNoneWorks": "Väljas: ükski võti ei tööta",
   "mcp.noPasswordWarning": "Sisselogimisparooli ei ole määratud, seega on see veebiliides avatud kõigile sinu võrgus, ja kes selle avada saab, saab ka võtme luua.",
   "mcp.setPassword": "Määra sisselogimisparool",
   "mcp.needsPasswordForHost": "See leht avati nimega {host}. Ilma sisselogimisparoolita saab võtmeid luua ja asendada ainult IP-aadressilt või kohalikult nimelt nagu tower või tower.local, et ükski veebileht internetis ei saaks võtit luua. Sisselogimisparool eemaldab selle piirangu selle aadressi jaoks. BombVaulti võid avada ka tema kohalikult aadressilt.",

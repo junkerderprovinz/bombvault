@@ -1758,6 +1758,7 @@ const pl: Partial<Translations> = {
   "mcp.hint": "Pozwala asystentom SI, takim jak Claude, odczytywać stan kopii zapasowych tego serwera, uruchamiać kopie i przerywać te, które sami uruchomili, przez Model Context Protocol. Przywracanie, usuwanie i ustawienia zostają w tym interfejsie.",
   "mcp.statusOff": "Wyłączone: nie ma żadnego klucza",
   "mcp.statusOn": "one=Włączone, {n} aktywny klucz|few=Włączone, {n} aktywne klucze|many=Włączone, {n} aktywnych kluczy|other=Włączone, {n} aktywnych kluczy",
+  "mcp.statusNoneWorks": "Wyłączone: żaden klucz nie działa",
   "mcp.noPasswordWarning": "Nie ustawiono hasła logowania, więc ten interfejs jest otwarty dla wszystkich w twojej sieci, a kto może go otworzyć, może też utworzyć klucz.",
   "mcp.setPassword": "Ustaw hasło logowania",
   "mcp.needsPasswordForHost": "Ta strona została otwarta jako {host}. Bez hasła logowania klucze można tworzyć i wymieniać tylko z adresu IP albo nazwy lokalnej, takiej jak tower czy tower.local, żeby żadna strona z internetu nie mogła utworzyć klucza. Hasło logowania znosi to ograniczenie dla tego adresu. BombVault możesz też otworzyć pod jego adresem lokalnym.",

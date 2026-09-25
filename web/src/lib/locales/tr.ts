@@ -1763,6 +1763,7 @@ const tr: Partial<Translations> = {
   "mcp.hint": "Claude gibi yapay zekâ asistanlarının Model Context Protocol üzerinden bu sunucunun yedekleme durumunu okumasına, yedekleme başlatmasına ve kendi başlattığı yedeklemeleri iptal etmesine izin verir. Geri yükleme, silme ve ayarlar bu web arayüzünde kalır.",
   "mcp.statusOff": "Kapalı: hiç anahtar yok",
   "mcp.statusOn": "one=Açık, {n} etkin anahtar|other=Açık, {n} etkin anahtar",
+  "mcp.statusNoneWorks": "Kapalı: hiçbir anahtar çalışmıyor",
   "mcp.noPasswordWarning": "Giriş parolası belirlenmemiş, bu yüzden bu web arayüzü ağındaki herkese açık ve açabilen herkes anahtar da oluşturabilir.",
   "mcp.setPassword": "Giriş parolası belirle",
   "mcp.needsPasswordForHost": "Bu sayfa {host} olarak açıldı. Giriş parolası olmadan anahtarlar yalnızca bir IP adresinden ya da tower veya tower.local gibi yerel bir addan oluşturulup değiştirilebilir; böylece internetteki hiçbir sayfa anahtar oluşturamaz. Giriş parolası bu adres için o kısıtlamayı kaldırır. BombVault'u yerel adresinden de açabilirsin.",

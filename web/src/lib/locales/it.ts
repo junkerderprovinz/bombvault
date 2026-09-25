@@ -1763,6 +1763,7 @@ const it: Partial<Translations> = {
   "mcp.hint": "Permette agli assistenti IA come Claude di leggere lo stato dei backup di questo server, di avviare backup e di annullare quelli che hanno avviato loro, tramite il Model Context Protocol. Ripristini, eliminazioni e impostazioni restano in questa interfaccia web.",
   "mcp.statusOff": "Spento: non esiste alcuna chiave",
   "mcp.statusOn": "one=Attivo, {n} chiave attiva|many=Attivo, {n} chiavi attive|other=Attivo, {n} chiavi attive",
+  "mcp.statusNoneWorks": "Spento: nessuna chiave funziona",
   "mcp.noPasswordWarning": "Non è impostata alcuna password di accesso, quindi questa interfaccia web è aperta a tutti sulla tua rete, e chi può aprirla può anche creare una chiave.",
   "mcp.setPassword": "Imposta una password di accesso",
   "mcp.needsPasswordForHost": "Questa pagina è stata aperta come {host}. Senza password di accesso, le chiavi si possono creare e sostituire solo da un indirizzo IP o da un nome locale come tower o tower.local, così nessuna pagina web su internet può crearne una. Impostare una password di accesso toglie questa restrizione per questo indirizzo. Puoi anche aprire BombVault dal suo indirizzo locale.",

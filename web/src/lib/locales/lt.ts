@@ -1987,6 +1987,7 @@ const lt: Partial<Translations> = {
   "mcp.hint": "Leidžia dirbtinio intelekto padėjėjams, tokiems kaip Claude, per Model Context Protocol skaityti šio serverio atsarginių kopijų būseną, paleisti kopijavimą ir nutraukti tą, kurį patys paleido. Atkūrimas, trynimas ir nustatymai lieka šioje saityno sąsajoje.",
   "mcp.statusOff": "Išjungta: rakto nėra",
   "mcp.statusOn": "one=Įjungta, {n} aktyvus raktas|few=Įjungta, {n} aktyvūs raktai|many=Įjungta, {n} aktyvaus rakto|other=Įjungta, {n} aktyvių raktų",
+  "mcp.statusNoneWorks": "Išjungta: neveikia nė vienas raktas",
   "mcp.noPasswordWarning": "Prisijungimo slaptažodis nenustatytas, tad ši saityno sąsaja atvira visiems tavo tinkle, o kas gali ją atverti, gali ir susikurti raktą.",
   "mcp.setPassword": "Nustatyk prisijungimo slaptažodį",
   "mcp.needsPasswordForHost": "Šis puslapis atvertas kaip {host}. Be prisijungimo slaptažodžio raktus kurti ir keisti galima tik iš IP adreso arba vietinio vardo, pavyzdžiui tower ar tower.local, kad joks internete esantis puslapis negalėtų sukurti rakto. Prisijungimo slaptažodis šį apribojimą šiam adresui panaikina. BombVault gali atverti ir jo vietiniu adresu.",

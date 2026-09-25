@@ -1987,6 +1987,7 @@ const ms: Partial<Translations> = {
   "mcp.hint": "Membenarkan pembantu AI seperti Claude membaca status sandaran pelayan ini, memulakan sandaran dan membatalkan sandaran yang mereka mulakan sendiri, melalui Model Context Protocol. Pemulihan, pemadaman dan tetapan kekal dalam antara muka web ini.",
   "mcp.statusOff": "Mati: tiada kunci",
   "mcp.statusOn": "Hidup, {n} kunci aktif",
+  "mcp.statusNoneWorks": "Mati: tiada kunci yang berfungsi",
   "mcp.noPasswordWarning": "Kata laluan log masuk belum ditetapkan, jadi antara muka web ini terbuka kepada semua orang dalam rangkaian kamu, dan sesiapa yang boleh membukanya juga boleh mencipta kunci.",
   "mcp.setPassword": "Tetapkan kata laluan log masuk",
   "mcp.needsPasswordForHost": "Halaman ini dibuka sebagai {host}. Tanpa kata laluan log masuk, kunci hanya boleh dicipta dan diganti dari alamat IP atau nama tempatan seperti tower atau tower.local, supaya tiada halaman web di internet boleh menciptanya. Menetapkan kata laluan log masuk menghapuskan sekatan itu untuk alamat ini. Kamu juga boleh membuka BombVault melalui alamat tempatannya.",

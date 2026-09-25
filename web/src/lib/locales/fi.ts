@@ -1763,6 +1763,7 @@ const fi: Partial<Translations> = {
   "mcp.hint": "Antaa tekoälyavustajien, kuten Clauden, lukea tämän palvelimen varmuuskopioiden tilan, käynnistää varmuuskopioita ja keskeyttää itse käynnistämänsä, Model Context Protocolin kautta. Palautukset, poistot ja asetukset pysyvät tässä käyttöliittymässä.",
   "mcp.statusOff": "Pois: avainta ei ole",
   "mcp.statusOn": "one=Päällä, {n} aktiivinen avain|other=Päällä, {n} aktiivista avainta",
+  "mcp.statusNoneWorks": "Pois: mikään avaimista ei toimi",
   "mcp.noPasswordWarning": "Kirjautumissalasanaa ei ole asetettu, joten tämä käyttöliittymä on auki kaikille verkossasi, ja se joka voi avata sen voi myös luoda avaimen.",
   "mcp.setPassword": "Aseta kirjautumissalasana",
   "mcp.needsPasswordForHost": "Tämä sivu avattiin nimellä {host}. Ilman kirjautumissalasanaa avaimia voi luoda ja vaihtaa vain IP-osoitteesta tai paikallisesta nimestä kuten tower tai tower.local, jotta mikään internetin sivu ei voi luoda avainta. Kirjautumissalasana poistaa rajoituksen tältä osoitteelta. Voit avata BombVaultin myös sen paikallisesta osoitteesta.",

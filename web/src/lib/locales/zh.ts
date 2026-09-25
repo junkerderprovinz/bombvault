@@ -1755,6 +1755,7 @@ const zh: Partial<Translations> = {
   "mcp.hint": "让 Claude 这类 AI 助手通过 Model Context Protocol 读取本服务器的备份状态、启动备份，并取消它们自己启动的备份。恢复、删除和设置仍留在这个网页界面里。",
   "mcp.statusOff": "关闭：还没有密钥",
   "mcp.statusOn": "开启，有 {n} 个可用密钥",
+  "mcp.statusNoneWorks": "关闭：没有可用的密钥",
   "mcp.noPasswordWarning": "没有设置登录密码，这个网页界面对你网络里的所有人都是敞开的，能打开它的人也能创建密钥。",
   "mcp.setPassword": "设置登录密码",
   "mcp.needsPasswordForHost": "本页面以 {host} 打开。没有登录密码时，只能从 IP 地址或 tower、tower.local 这类本地名称创建和更换密钥，这样互联网上的网页就无法创建密钥。设置登录密码后，这个地址就不再受此限制。你也可以用本地地址打开 BombVault。",

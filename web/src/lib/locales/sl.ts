@@ -1971,6 +1971,7 @@ const sl: Partial<Translations> = {
   "mcp.hint": "Pomočnikom z umetno inteligenco, kot je Claude, omogoča, da prek Model Context Protocol berejo stanje varnostnih kopij tega strežnika, zaganjajo kopiranja in prekinjajo tista, ki so jih sami zagnali. Obnovitve, brisanja in nastavitve ostanejo v tem spletnem vmesniku.",
   "mcp.statusOff": "Izklopljeno: ključa ni",
   "mcp.statusOn": "one=Vklopljeno, {n} aktiven ključ|two=Vklopljeno, {n} aktivna ključa|few=Vklopljeno, {n} aktivni ključi|other=Vklopljeno, {n} aktivnih ključev",
+  "mcp.statusNoneWorks": "Izklopljeno: noben ključ ne deluje",
   "mcp.noPasswordWarning": "Geslo za prijavo ni nastavljeno, zato je ta spletni vmesnik odprt vsem v tvojem omrežju, in kdor ga lahko odpre, lahko tudi ustvari ključ.",
   "mcp.setPassword": "Nastavi geslo za prijavo",
   "mcp.needsPasswordForHost": "Ta stran je bila odprta kot {host}. Brez gesla za prijavo je ključe mogoče ustvarjati in zamenjati samo z naslova IP ali krajevnega imena, kot je tower ali tower.local, da nobena spletna stran z interneta ne more ustvariti ključa. Geslo za prijavo to omejitev za ta naslov odpravi. BombVault lahko odpreš tudi prek njegovega krajevnega naslova.",

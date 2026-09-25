@@ -1766,6 +1766,7 @@ const hu: Partial<Translations> = {
   "mcp.hint": "Lehetővé teszi, hogy MI-asszisztensek, például a Claude, a Model Context Protocolon keresztül olvassák a kiszolgáló mentési állapotát, mentéseket indítsanak, és megszakítsák azokat, amelyeket ők indítottak. A visszaállítás, a törlés és a beállítások ebben a webes felületen maradnak.",
   "mcp.statusOff": "Ki: nincs kulcs",
   "mcp.statusOn": "one=Be, {n} aktív kulcs|other=Be, {n} aktív kulcs",
+  "mcp.statusNoneWorks": "Ki: egyik kulcs sem működik",
   "mcp.noPasswordWarning": "Nincs beállítva belépési jelszó, így ez a webes felület mindenki előtt nyitva áll a hálózatodon, és aki meg tudja nyitni, kulcsot is tud létrehozni.",
   "mcp.setPassword": "Állíts be belépési jelszót",
   "mcp.needsPasswordForHost": "Ez az oldal {host} néven nyílt meg. Belépési jelszó nélkül kulcsot csak IP-címről vagy helyi névről, például tower vagy tower.local, lehet létrehozni és cserélni, hogy az internetről egyetlen weboldal se hozhasson létre kulcsot. A belépési jelszó feloldja ezt a korlátozást erre a címre. A BombVaultot a helyi címén is megnyithatod.",

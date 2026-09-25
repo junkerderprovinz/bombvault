@@ -1755,6 +1755,7 @@ const ko: Partial<Translations> = {
   "mcp.hint": "Claude 같은 AI 어시스턴트가 Model Context Protocol을 통해 이 서버의 백업 상태를 읽고, 백업을 시작하고, 자신이 시작한 백업을 취소할 수 있게 합니다. 복원, 삭제, 설정은 이 웹 화면에 남습니다.",
   "mcp.statusOff": "꺼짐: 키가 없습니다",
   "mcp.statusOn": "켜짐, 활성 키 {n}개",
+  "mcp.statusNoneWorks": "꺼짐: 작동하는 키가 없습니다",
   "mcp.noPasswordWarning": "로그인 비밀번호가 설정되어 있지 않아 이 웹 화면은 네트워크의 모든 사람에게 열려 있고, 열 수 있는 사람은 키도 만들 수 있습니다.",
   "mcp.setPassword": "로그인 비밀번호 설정",
   "mcp.needsPasswordForHost": "이 페이지는 {host}(으)로 열렸습니다. 로그인 비밀번호가 없으면 키는 IP 주소나 tower, tower.local 같은 로컬 이름에서만 만들고 교체할 수 있습니다. 인터넷의 어떤 웹 페이지도 키를 만들지 못하게 하기 위해서입니다. 로그인 비밀번호를 설정하면 이 주소에 대한 제한이 풀립니다. BombVault는 로컬 주소로도 열 수 있습니다.",
