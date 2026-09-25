@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
+import { WindowActions } from "./WindowActions";
 import { useT } from "../lib/i18n";
 import { COFFEE_WIDGET } from "../lib/donate";
 
@@ -49,7 +50,7 @@ export function CoffeeDialog({ onClose }: { onClose: () => void }) {
           </h2>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 px-5 pb-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 px-5 pb-1">
           <p className="text-sm text-carbon-textSub">{t("about.coffeeIntro")}</p>
           <div className="flex min-h-0 flex-1 rounded-card bg-carbon-surface2 p-2">
             {/* White behind the frame so the first paint is not a dark hole on
@@ -63,9 +64,9 @@ export function CoffeeDialog({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 px-5 pb-5">
+        <WindowActions>
           <Button label={t("common.close")} labelKey="common.close" tone="neutral" onClick={onClose} />
-        </div>
+        </WindowActions>
       </div>
     </div>,
     document.body

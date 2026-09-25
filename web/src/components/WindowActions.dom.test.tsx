@@ -31,6 +31,8 @@ const { ConfirmDialog } = await import("./ConfirmDialog");
 const { DirectRepoDialog } = await import("./placement/DirectRepoDialog");
 const { useConfirm } = await import("../lib/useConfirm");
 const { CryptoDonateDialog } = await import("./CryptoDonateDialog");
+const { CoffeeDialog } = await import("./CoffeeDialog");
+const { PaypalDialog } = await import("./PaypalDialog");
 const { WhatsNewDialog } = await import("./WhatsNewDialog");
 const { ErrorDetailPanel } = await import("./ErrorDetailPanel");
 const { FolderBrowser } = await import("./FolderBrowser");
@@ -137,6 +139,18 @@ const WINDOWS: Shown[] = [
     file: "components/CryptoDonateDialog.tsx",
     name: "the crypto window",
     open: () => shown(<CryptoDonateDialog onClose={() => {}} />),
+    last: en["common.close"],
+  },
+  {
+    file: "components/CoffeeDialog.tsx",
+    name: "the coffee window",
+    open: () => shown(<CoffeeDialog onClose={() => {}} />),
+    last: en["common.close"],
+  },
+  {
+    file: "components/PaypalDialog.tsx",
+    name: "the PayPal window",
+    open: () => shown(<PaypalDialog onClose={() => {}} />),
     last: en["common.close"],
   },
   {
