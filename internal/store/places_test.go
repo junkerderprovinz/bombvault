@@ -781,6 +781,27 @@ func TestAnUnusedPlaceGoesWithWhatWasDerivedFromIt(t *testing.T) {
 	checkPlacedAddresses(t, r)
 }
 
+func TestRemovingAPlaceEmptiesTheOffsiteFieldsItFilled(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := bucketPlace()
+	bucket.Immutable = true
+	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	fieldRowAt(t, r, db, bucket, "containers")
+	tower := mustWritePlace(t, r, store.PlaceWrite{Place: restPlace()})
+	kept := fieldRowAt(t, r, db, tower, "vms")
+
+	if _, err := r.DeletePlaceIfUnused(bucket.ID); err != nil {
+		t.Fatal(err)
+	}
+	s := storedSettings(t, r)
+	if s.ContainersOffsite != "" || s.ContainersOffsiteImmutable {
+		t.Fatalf("containers field = %q, %v, want it empty with its row gone", s.ContainersOffsite, s.ContainersOffsiteImmutable)
+	}
+	if s.VMsOffsite != kept.Repo || !s.VMsOffsiteImmutable {
+		t.Fatalf("vms field = %q, %v, want the row at the other place", s.VMsOffsite, s.VMsOffsiteImmutable)
+	}
+}
+
 func TestRemovingAnUnknownPlaceFindsNothing(t *testing.T) {
 	r, _ := placesRepo(t)
 	if _, err := r.DeletePlaceIfUnused("nope"); !errors.Is(err, store.ErrPlaceNotFound) {

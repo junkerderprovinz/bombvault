@@ -221,7 +221,11 @@ func (r *Repo) WritePlace(w PlaceWrite) (Place, error) {
 			return Place{}, err
 		}
 	}
-	if err := homePrimariesTx(tx, p); err != nil {
+	homes, err := domainPlacesQ(tx)
+	if err != nil {
+		return Place{}, fmt.Errorf("WritePlace homes: %w", err)
+	}
+	if err := homePrimariesTx(tx, p, homes); err != nil {
 		return Place{}, err
 	}
 	if err := mirrorPlaceRowsTx(tx, p, existed && !before.Enabled && p.Enabled); err != nil {
@@ -235,7 +239,7 @@ func (r *Repo) WritePlace(w PlaceWrite) (Place, error) {
 	if w.CredSetsBlob != nil {
 		next.CloudCredSets = string(w.CredSetsBlob)
 	}
-	if err := mirrorPlaceSettingsTx(tx, p, &next); err != nil {
+	if err := mirrorPlaceSettingsTx(tx, p, homes, &next); err != nil {
 		return Place{}, err
 	}
 	if next != settings {
@@ -444,11 +448,7 @@ func placedChanges(p Place, row OffsiteTarget, addr string, turnedOn bool) ([]st
 // field row stands at p. The field holds the row's address only while the
 // row is on: left filled under a row that is off, it would have replication
 // fall back to the field and copy there anyway.
-func mirrorPlaceSettingsTx(tx *sql.Tx, p Place, s *Settings) error {
-	homes, err := domainPlacesQ(tx)
-	if err != nil {
-		return fmt.Errorf("WritePlace homes: %w", err)
-	}
+func mirrorPlaceSettingsTx(tx *sql.Tx, p Place, homes map[string]string, s *Settings) error {
 	for _, domain := range places.Domains {
 		path, offsite, immutable := domainColumns(s, domain)
 		if homes[domain] == p.ID {
@@ -496,11 +496,7 @@ func domainColumns(s *Settings, domain string) (path, offsite *string, immutable
 // onto p from wherever it was; the row mirror then writes p into it. At a
 // local place none of that applies, so the row leaves its place and is
 // switched off.
-func homePrimariesTx(tx *sql.Tx, p Place) error {
-	homes, err := domainPlacesQ(tx)
-	if err != nil {
-		return fmt.Errorf("WritePlace homes: %w", err)
-	}
+func homePrimariesTx(tx *sql.Tx, p Place, homes map[string]string) error {
 	for _, domain := range places.Domains {
 		if homes[domain] != p.ID {
 			continue
@@ -527,8 +523,8 @@ func homePrimariesTx(tx *sql.Tx, p Place) error {
 				return fmt.Errorf("%w: %s", ErrPlaceFolderMissing, domain)
 			}
 			if _, err := tx.Exec(`INSERT INTO offsite_targets (id, domain, name, repo, role, enabled, created_at, place_id, place_domain)
-				VALUES (?, ?, 'Primary (remote)', ?, ?, ?, ?, ?, ?)`,
-				newID(), domain, addr, RolePrimary, boolInt(p.Enabled), time.Now().Unix(), p.ID, domain); err != nil {
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+				newID(), domain, primaryRowName, addr, RolePrimary, boolInt(p.Enabled), time.Now().Unix(), p.ID, domain); err != nil {
 				return fmt.Errorf("WritePlace primary of %s: %w", domain, err)
 			}
 		case row.PlaceID != p.ID || row.PlaceDomain != domain || row.PlaceSuffix != "":
@@ -567,12 +563,15 @@ func (r *Repo) PlaceHolders(id string) (PlaceHolders, error) {
 
 // DeletePlaceIfUnused removes a place that nothing holds, in one transaction
 // with what was derived from it: its targets, each with its direct repository
-// as DeleteOffsiteTargetIfUnused removes them, and its named repositories.
-// Rows the place does not own outright, a domain's primary row or a direct
-// repository whose target stands elsewhere, stay and leave the place. While
-// PlaceHolders names anything it returns ErrPlaceInUse and writes nothing.
-// The count is the number of targets removed.
+// as DeleteOffsiteTargetIfUnused removes them, its named repositories, and
+// the off-site field of each domain whose field row stood there. Rows the
+// place does not own outright, a domain's primary row or a direct repository
+// whose target stands elsewhere, stay and leave the place. While PlaceHolders
+// names anything it returns ErrPlaceInUse and writes nothing. The count is
+// the number of targets removed.
 func (r *Repo) DeletePlaceIfUnused(id string) (int, error) {
+	r.settingsMu.Lock()
+	defer r.settingsMu.Unlock()
 	tx, err := r.db.Begin()
 	if err != nil {
 		return 0, fmt.Errorf("DeletePlaceIfUnused: %w", err)
@@ -591,6 +590,9 @@ func (r *Repo) DeletePlaceIfUnused(id string) (int, error) {
 	}
 	if holders.InUse() {
 		return 0, ErrPlaceInUse
+	}
+	if err := emptyPlaceFieldsTx(tx, id); err != nil {
+		return 0, fmt.Errorf("DeletePlaceIfUnused: %w", err)
 	}
 	rows, err := placeRowsQ(tx, id)
 	if err != nil {
@@ -621,6 +623,32 @@ func (r *Repo) DeletePlaceIfUnused(id string) (int, error) {
 		return 0, fmt.Errorf("DeletePlaceIfUnused commit: %w", err)
 	}
 	return removed, nil
+}
+
+// emptyPlaceFieldsTx empties the off-site field of every domain whose field
+// row stands at the place. Left filled after the row goes, the field would
+// keep replication copying there and bring the row back at the next settings
+// save.
+func emptyPlaceFieldsTx(tx *sql.Tx, placeID string) error {
+	settings, err := getSettings(tx)
+	if err != nil {
+		return err
+	}
+	next := settings
+	for _, domain := range places.Domains {
+		field, found, err := fieldRowQ(tx, domain)
+		if err != nil {
+			return fmt.Errorf("field of %s: %w", domain, err)
+		}
+		if found && field.PlaceID == placeID {
+			_, offsite, immutable := domainColumns(&next, domain)
+			*offsite, *immutable = "", false
+		}
+	}
+	if next == settings {
+		return nil
+	}
+	return updateSettings(tx, next)
 }
 
 // placeHoldersQ reads each list with a query of its own, closed before the

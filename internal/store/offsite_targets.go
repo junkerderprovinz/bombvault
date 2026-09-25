@@ -117,23 +117,16 @@ func remoteLocation(col string) string {
 const (
 	RoleOffsite = "offsite" // a replication destination (the default)
 	RolePrimary = "primary" // safety settings for a domain's own remote primary
-	// RoleRepo is a NAMED REPOSITORY (#204): a location written down once and
-	// then PICKED by individual containers, VMs and folder sets, instead of
-	// being typed into each of them.
-	//
-	// Same table for the same reason "primary" is here: the shape a named
-	// repository needs is exactly what this struct already carries - a location,
-	// a credential set, an S3 storage class, bandwidth limits, an enabled flag -
-	// and every existing consumer of those fields works on such a row unchanged.
-	// Every query in this file filters on an explicit role, so these rows are
-	// invisible to the replication loop and the off-site CRUD by construction.
-	//
-	// Domain is deliberately EMPTY on a repo row. A location is a place; which
-	// items send their backups there is the items' business, and scoping a
-	// repository to one domain would mean writing the same B2 bucket down three
-	// times to use it from a container, a VM and a folder set.
+	// RoleRepo is a named repository: a location written down once and picked
+	// by containers, VMs and folder sets. It lives in this table because it
+	// needs the same fields, and every query here filters on role, so
+	// replication never sees it. Its domain stays empty, since one bucket
+	// serves a container, a VM and a folder set alike.
 	RoleRepo = "repo"
 )
+
+// primaryRowName is what a primary row is called when no one names it.
+const primaryRowName = "Primary (remote)"
 
 // UpsertOffsiteTarget inserts t or updates the row with its id, keeping that
 // row's sort_order and companion link, and returns the row as stored. An
@@ -887,13 +880,9 @@ func primaryRowQ(q queryer, domain string) (OffsiteTarget, bool, error) {
 	return t, true, nil
 }
 
-// UpsertPrimaryRemoteTarget creates or updates the domain's "primary" row (see
-// PrimaryRemoteTarget). t.Domain and t.Role are stamped by this method (a
-// caller-supplied value in either field is ignored), so callers only need to
-// fill in Repo/CredsRef/StorageClass/Immutable/LimitUpload/LimitDownload/
-// GrowthBudgetGB/Enabled. When a row already exists for the domain, its
-// id/created_at are preserved (an update in place, exactly like
-// UpsertOffsiteTarget's id-keyed upsert) rather than creating a second row.
+// UpsertPrimaryRemoteTarget writes t as the domain's primary row. It sets
+// Domain and Role itself, and an existing row keeps its id and created_at, so
+// a domain never gets a second one.
 func (r *Repo) UpsertPrimaryRemoteTarget(domain string, t OffsiteTarget) (OffsiteTarget, error) {
 	existing, ok, err := r.PrimaryRemoteTarget(domain)
 	if err != nil {
@@ -909,15 +898,13 @@ func (r *Repo) UpsertPrimaryRemoteTarget(domain string, t OffsiteTarget) (Offsit
 		t.CreatedAt = 0
 	}
 	if t.Name == "" {
-		t.Name = "Primary (remote)"
+		t.Name = primaryRowName
 	}
 	return r.UpsertOffsiteTarget(t)
 }
 
-// DeletePrimaryRemoteTarget removes the domain's "primary" row, if any (a
-// no-op, no error, when none exists) — used when the operator clears a
-// domain's remote-primary safety settings (e.g. switching the path back to a
-// local folder).
+// DeletePrimaryRemoteTarget removes the domain's primary row. A domain without
+// one is not an error.
 func (r *Repo) DeletePrimaryRemoteTarget(domain string) error {
 	if _, err := r.db.Exec(`DELETE FROM offsite_targets WHERE domain = ? AND role = ?`, domain, RolePrimary); err != nil {
 		return fmt.Errorf("DeletePrimaryRemoteTarget: %w", err)
