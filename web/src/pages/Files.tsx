@@ -289,7 +289,7 @@ function FileSetFileBrowser({
 
       {/* Target folder and restore action, once something is ticked. */}
       {count > 0 && (
-        <div className="border-t border-carbon-border pt-2 flex flex-col gap-2">
+        <div className="pt-2 flex flex-col gap-2">
           <FolderBrowser
             label={t("restore.targetPath")}
             value={folder}
@@ -967,7 +967,7 @@ export function FileSetFoldersEditor({
   if (noPath) return null;
 
   return (
-    <div className="border-t border-carbon-border pt-3">
+    <div className="pt-3">
       <button
         type="button"
         aria-expanded={open}

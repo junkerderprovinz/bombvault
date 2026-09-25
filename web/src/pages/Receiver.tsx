@@ -97,7 +97,7 @@ function InventoryPanel({ repo, t }: { repo: ReceivedRepoStatus; t: T }) {
         </thead>
         <tbody>
           {inv.sources.map((s, i) => (
-            <tr key={`${s.host}/${s.item}/${i}`} className="border-t border-carbon-border">
+            <tr key={`${s.host}/${s.item}/${i}`}>
               <td className="py-1.5 pe-3 text-carbon-text">
                 <span className="font-medium">{s.item || "-"}</span>
                 {s.host && <span className="text-carbon-textMuted"> · {s.host}</span>}
@@ -109,7 +109,7 @@ function InventoryPanel({ repo, t }: { repo: ReceivedRepoStatus; t: T }) {
           ))}
         </tbody>
         <tfoot>
-          <tr className="border-t border-carbon-border text-carbon-text">
+          <tr className="text-carbon-text">
             <td className="py-1.5 pe-3 font-medium">{t("receiver.total")}</td>
             <td className="py-1.5 pe-3 text-end font-mono">{inv.snapshotCount}</td>
             <td className="py-1.5 pe-3 text-carbon-textSub">{fmtReceived(inv.lastReceived, t)}</td>

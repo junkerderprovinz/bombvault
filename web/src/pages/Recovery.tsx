@@ -74,6 +74,10 @@ function isKeyMismatch(err: string | undefined): boolean {
 const offsiteInput =
   "rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus";
 
+// The same field inside a surface2 well, one step up so it still reads as a field.
+const wellInput =
+  "rounded-control bg-carbon-surface3 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus-well";
+
 // RestoreRow restores one discovered container or VM in place through the
 // shared RestoreAction and leaves it stopped: recovery restores everything
 // first, and the user starts things from the Containers and VMs tabs.
@@ -105,7 +109,7 @@ function RestoreRow({
 
   return (
     <div
-      className="flex flex-col gap-1 py-2 border-b border-carbon-border last:border-0 glim-hue"
+      className="flex flex-col gap-1 py-2 glim-hue"
       style={hueVars(hueIndex) as CSSProperties}
     >
       {/* A confirm checkbox does not fit a one-line row, so confirmMessage
@@ -205,7 +209,7 @@ function FileSetRecoveryRow({
 
   return (
     <div
-      className="flex flex-col gap-2 py-2 border-b border-carbon-border last:border-0 glim-hue"
+      className="flex flex-col gap-2 py-2 glim-hue"
       style={hueVars(hueIndex) as CSSProperties}
     >
       {/* Built inline rather than with RestoreAction because this row drives
@@ -428,7 +432,7 @@ function ForeignItemRow({
 
   return (
     <div
-      className="flex flex-col gap-2 py-2 border-b border-carbon-border last:border-0 glim-hue"
+      className="flex flex-col gap-2 py-2 glim-hue"
       style={hueVars(hueIndex) as CSSProperties}
     >
       <div className="flex items-center gap-3 text-sm flex-wrap">
@@ -761,9 +765,7 @@ function ForeignRestoreCard({
       : [];
 
   return (
-    // pt-10 matches the parent's gap-10, so the divider sits centred in the
-    // break.
-    <div className="flex flex-col gap-10 border-t border-carbon-border pt-10">
+    <div className="flex flex-col gap-10">
       <div>
         {/* No padding wraps this h2, so it anchors the badge itself. */}
         <h2 className="relative flex items-center">
@@ -800,7 +802,7 @@ function ForeignRestoreCard({
         </div>
 
         {isRemoteLocation && (
-          <div className="flex flex-col gap-3 rounded-control border border-carbon-border/60 p-3">
+          <div className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
             <p className="text-xs text-carbon-textSub">{t("recovery.foreignCredsIntro")}</p>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -813,7 +815,7 @@ function ForeignRestoreCard({
                   spellCheck={false}
                   autoComplete="off"
                   onChange={(e) => setForeignS3KeyId(e.target.value)}
-                  className={offsiteInput}
+                  className={wellInput}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -825,7 +827,7 @@ function ForeignRestoreCard({
                   spellCheck={false}
                   autoComplete="off"
                   onChange={(e) => setForeignS3Region(e.target.value)}
-                  className={offsiteInput}
+                  className={wellInput}
                 />
               </div>
             </div>
@@ -841,7 +843,7 @@ function ForeignRestoreCard({
                 autoComplete="off"
                 onChange={(e) => setForeignS3Secret(e.target.value)}
                 wrapperClassName="w-full"
-                className={offsiteInput}
+                className={wellInput}
               />
             </div>
 
@@ -856,7 +858,7 @@ function ForeignRestoreCard({
                   spellCheck={false}
                   autoComplete="off"
                   onChange={(e) => setForeignRestUser(e.target.value)}
-                  className={offsiteInput}
+                  className={wellInput}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -870,7 +872,7 @@ function ForeignRestoreCard({
                   autoComplete="off"
                   onChange={(e) => setForeignRestPassword(e.target.value)}
                   wrapperClassName="w-full"
-                  className={offsiteInput}
+                  className={wellInput}
                 />
               </div>
             </div>
