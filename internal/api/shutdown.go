@@ -99,6 +99,14 @@ func (s *Service) inFlightBackups() int {
 // uses it to label aborts; it is not a health flag.
 func (s *Service) IsShuttingDown() bool { return s.shuttingDown.Load() }
 
+// EndDetachedWork cancels the stop context, which ends the work requests wait
+// on after their own context is detached. The server calls it before it waits
+// for those requests; BeginShutdown calls it again.
+func (s *Service) EndDetachedWork() {
+	s.stopOnce.Do(s.openStopContext)
+	s.stopCancel()
+}
+
 // StopContext returns a context that BeginShutdown cancels.
 func (s *Service) StopContext() context.Context {
 	s.stopOnce.Do(s.openStopContext)
@@ -119,8 +127,7 @@ func (s *Service) openStopContext() {
 // interrupted. BeginShutdown is safe to call more than once.
 func (s *Service) BeginShutdown() {
 	s.shuttingDown.Store(true)
-	s.stopOnce.Do(s.openStopContext)
-	s.stopCancel()
+	s.EndDetachedWork()
 
 	s.cancelMu.Lock()
 	cancels := make([]context.CancelFunc, 0, len(s.backupCancels))

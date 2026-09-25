@@ -38,6 +38,9 @@ const bindHost = "0.0.0.0"
 type Server struct {
 	cfg     config.Config
 	handler http.Handler
+	// BeforeShutdown runs when Run starts to stop, before it waits for the
+	// requests still open: work a request waits on has to end first.
+	BeforeShutdown func()
 }
 
 // NewServer returns a Server for the API router and the SPA in spaFS.
@@ -107,9 +110,9 @@ func securityHeaders(next http.Handler) http.Handler {
 }
 
 // httpShutdownGrace bounds how long Run waits for in-flight requests on
-// shutdown. Backups are handled by Service.BeginShutdown before this, and an
-// SSE progress stream never closes on its own, so a long grace would only
-// delay every stop.
+// shutdown. Backups are cancelled by Service.BeginShutdown once Run is back,
+// and an SSE progress stream never closes on its own, so a long grace would
+// only delay every stop.
 const httpShutdownGrace = 3 * time.Second
 
 // Run serves HTTPS with a self-signed certificate, or plain HTTP when
@@ -157,6 +160,9 @@ func (s *Server) Run(ctx context.Context) error {
 	case err := <-errCh:
 		return err
 	case <-ctx.Done():
+		if s.BeforeShutdown != nil {
+			s.BeforeShutdown()
+		}
 		shutCtx, cancel := context.WithTimeout(context.Background(), httpShutdownGrace)
 		defer cancel()
 		if err := srv.Shutdown(shutCtx); err != nil {

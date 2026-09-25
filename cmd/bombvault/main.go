@@ -576,6 +576,10 @@ func run() error {
 	svc.StartAnomalyEngine(ctx)
 
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
+	// An MCP listing of a repository that stopped answering holds its request
+	// open until the stop context ends; without this the server would wait out
+	// its grace for it and exit with an error.
+	server.BeforeShutdown = svc.EndDetachedWork
 	runErr := server.Run(ctx)
 
 	if ctx.Err() != nil {
