@@ -180,10 +180,11 @@ func (s *Service) recordZFSRefusal(ctx context.Context, d store.ZFSDataset, ref 
 }
 
 // notifyZFSUnsuppressed sends a message that has to reach the user although the
-// run it belongs to is part of a scheduled summary.
+// run it belongs to is part of a scheduled summary. notify.Send applies the
+// policy itself.
 func (s *Service) notifyZFSUnsuppressed(ev notify.Event) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil {
 		return
 	}
 	notify.Send(context.Background(), c, zfsDomain, ev)

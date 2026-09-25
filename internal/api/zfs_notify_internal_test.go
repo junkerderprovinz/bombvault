@@ -59,6 +59,29 @@ func TestZFSChangeAndLeftoverNotificationsSurviveScheduledSummary(t *testing.T) 
 	}
 }
 
+// A channel set up with the policy left unset reports failures, the way every
+// other failure message and the anomaly sender read that setting.
+func TestZFSLeftoverIsReportedWithThePolicyUnset(t *testing.T) {
+	s, st, host, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+	bodies := zfsCaptureNotifications(t, s)
+	c, err := s.NotifyConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.On = ""
+	if err := s.SetNotifyConfig(c); err != nil {
+		t.Fatal(err)
+	}
+	host.destroyErr = errors.New("dataset is busy")
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	_, _ = s.BackupZFSDataset(context.Background(), d.ID)
+
+	if sent := bodies(); !zfsAnyMessageContains(sent, "could not be removed") {
+		t.Fatalf("the leftover snapshot was not reported: %v", sent)
+	}
+}
+
 // A cancel ends the run's own context, and whatever follows the run on that
 // context fails at once: the message about the run went nowhere and the
 // off-site copy was recorded as a failed run of its own.
