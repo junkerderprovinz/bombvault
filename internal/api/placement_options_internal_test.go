@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -168,8 +169,14 @@ func TestOptionsOfferTheDomainPathThenMountedRepositories(t *testing.T) {
 	}
 }
 
-func TestATargetWithOtherCredentialsThanARemoteDomainPathSaysSo(t *testing.T) {
+func TestATargetWhoseCredentialsClashWithARemoteDomainPathSaysSo(t *testing.T) {
 	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCreds(CloudCreds{S3KeyID: "SHARED-KEY", S3Secret: "s"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "set-a", Name: "Account A", CloudCreds: CloudCreds{S3KeyID: "KEY-A", S3Secret: "a"}}}); err != nil {
+		t.Fatal(err)
+	}
 	settings, err := f.st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -181,12 +188,14 @@ func TestATargetWithOtherCredentialsThanARemoteDomainPathSaysSo(t *testing.T) {
 	if _, err := f.st.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: settings.ContainersPath, CredsRef: "set-a", Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
-	same := f.target("containers", "Same", "b2:bucket:same")
+	same := f.target("containers", "Same", "s3:https://s3.example.com/same")
 	same.CredsRef = "set-a"
 	if _, err := f.st.UpsertOffsiteTarget(same); err != nil {
 		t.Fatal(err)
 	}
-	f.target("containers", "Other", "b2:bucket:other")
+	f.target("containers", "Other", "s3:https://s3.example.com/other")
+	// A rest-server reads no AWS variable, so the path's key does not trouble it.
+	f.target("containers", "Rest", "rest:http://nas:8000/bv/containers")
 
 	opts := f.options("containers")
 	if home := rowsOf(opts["homes"])[0]; home["kind"] != "domain-remote" || home["scheme"] != "s3" {
@@ -196,8 +205,34 @@ func TestATargetWithOtherCredentialsThanARemoteDomainPathSaysSo(t *testing.T) {
 	for _, tg := range rowsOf(opts["targets"]) {
 		hints[tg["name"].(string)] = tg["hint"]
 	}
-	if !reflect.DeepEqual(hints, map[string]any{"Same": "", "Other": "creds-differ"}) {
+	if !reflect.DeepEqual(hints, map[string]any{"Same": "", "Other": "creds-differ", "Rest": ""}) {
 		t.Errorf("hints = %v", hints)
+	}
+}
+
+func TestAWebDAVDomainPathCopiesToAnS3TargetWithoutAHint(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCreds(CloudCreds{S3KeyID: "SHARED-KEY", S3Secret: "s"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{davSet()}); err != nil {
+		t.Fatal(err)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersPath = "rclone:" + places.RemoteName(davPlace) + ":bombvault/container"
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.st.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: settings.ContainersPath, CredsRef: "dav", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	f.target("containers", "S3", "s3:https://s3.example.com/containers")
+	targets := rowsOf(f.options("containers")["targets"])
+	if len(targets) != 1 || targets[0]["hint"] != "" {
+		t.Fatalf("targets = %v, want the S3 target without a hint", targets)
 	}
 }
 
