@@ -378,6 +378,30 @@ describe("ZFS page", () => {
     await waitFor(() => expect(screen.getAllByRole("button", { name: /→/ })).toHaveLength(2));
   });
 
+  it("says why a run failed before it read any dataset", async () => {
+    runs = [
+      {
+        id: "r4",
+        targetId: "z1",
+        kind: "backup",
+        status: "failed",
+        startedAt: 1_700_000_000,
+        finishedAt: 1_700_000_000,
+        snapshotId: "",
+        bytes: 0,
+        error: "pre-snapshot-failed: hook exited 1: about to fail",
+        acknowledged: false,
+        target: "cache/appdata",
+        domain: "zfs",
+      },
+    ];
+    runDetail = { ok: true, windowSeconds: -1, members: [], hookDetail: "hook exited 1: about to fail" };
+    await renderWithItems();
+    fireEvent.click(await screen.findByRole("button", { name: /→/ }));
+    expect(await screen.findByText(en["zfs.code.pre-snapshot-failed"])).toBeTruthy();
+    expect(screen.getAllByText(/about to fail/)).toHaveLength(1);
+  });
+
   it("says how many safety snapshots a removed item left behind", async () => {
     items = [item({ safetyCount: 2 })];
     deleteResult = { ok: true, safetyRemaining: 2 };

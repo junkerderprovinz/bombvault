@@ -7,7 +7,14 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { en } from "./i18n";
-import { ZFS_CODE_KEY, ZFS_CODE_VARS, ZFS_FIX_KEY, ZFS_MEMBER_KEY, zfsCodeSentence } from "./zfsCodes";
+import {
+  ZFS_CODE_KEY,
+  ZFS_CODE_VARS,
+  ZFS_FIX_KEY,
+  ZFS_MEMBER_KEY,
+  zfsCodeSentence,
+  zfsRunReasonCode,
+} from "./zfsCodes";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const CODES_GO = readFileSync(join(REPO, "internal", "zfs", "codes.go"), "utf8");
@@ -64,5 +71,27 @@ describe("every placeholder has a source", () => {
   it("names a code it does not know instead of dropping it", () => {
     const t = (key: string) => en[key as keyof typeof en];
     expect(zfsCodeSentence(t, "pool-on-fire", {})).toContain("pool-on-fire");
+  });
+});
+
+describe("a run's error", () => {
+  it("reads the code at the head of what the orchestrator wrote", () => {
+    expect(zfsRunReasonCode("pre-snapshot-failed: hook exited 1: about to fail")).toEqual({
+      code: "pre-snapshot-failed",
+      detail: "hook exited 1: about to fail",
+    });
+    expect(zfsRunReasonCode("snapshot-failed")).toEqual({ code: "snapshot-failed", detail: "" });
+  });
+
+  it("reads the code at the end of a refusal before the run began", () => {
+    expect(zfsRunReasonCode("zfs backup: tank/app: no dataset is readable [nothing-readable]")).toEqual({
+      code: "nothing-readable",
+      detail: "",
+    });
+  });
+
+  it("leaves an error without a code of its own to the run reasons", () => {
+    expect(zfsRunReasonCode("cancelled by the user")).toBeNull();
+    expect(zfsRunReasonCode("restic backup failed: Fatal: wrong password")).toBeNull();
   });
 });

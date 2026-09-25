@@ -155,3 +155,20 @@ export function zfsCodeSentence(t: Translate, code: string, vars: ZFSCodeVars = 
   }
   return text;
 }
+
+/**
+ * zfsRunReasonCode reads the reason code out of a ZFS run's error. The
+ * orchestrator writes "code: detail", a refusal before the run began ends in
+ * " [code]", and anything else is restic's own error or one of the shared run
+ * reasons.
+ */
+export function zfsRunReasonCode(raw: string): { code: ZFSReasonCode; detail: string } | null {
+  const tail = /\s\[([a-z-]+)\]$/.exec(raw);
+  if (tail) {
+    const code = tail[1];
+    return isReasonCode(code) ? { code, detail: "" } : null;
+  }
+  const at = raw.indexOf(": ");
+  const head = at < 0 ? raw : raw.slice(0, at);
+  return isReasonCode(head) ? { code: head, detail: at < 0 ? "" : raw.slice(at + 2) } : null;
+}

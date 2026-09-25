@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 import {
   backupZFSDataset,
@@ -37,7 +37,8 @@ import type { RestoreRequest } from "../../lib/restoreRequest";
 import { useConfirm } from "../../lib/useConfirm";
 import { useDebouncedSave } from "../../lib/useDebouncedSave";
 import { useToast } from "../../lib/toast";
-import { zfsCodeSentence, zfsFixKey, zfsMemberKey } from "../../lib/zfsCodes";
+import { RunReasonText } from "../../lib/runReason";
+import { ZFS_CODE_VARS, zfsCodeSentence, zfsFixKey, zfsMemberKey, zfsRunReasonCode } from "../../lib/zfsCodes";
 import { Badge } from "../Badge";
 import { BackupCancelButton } from "../BackupCancelButton";
 import { Button } from "../Button";
@@ -125,6 +126,20 @@ function failText(t: T, err: unknown): string {
   return err instanceof Error ? err.message : t("settings.error");
 }
 
+/** Why a run failed or stopped, in the reader's language where the code allows
+ *  it. A detail the command output below repeats is left out. */
+function zfsRunReason(t: T, raw: string, hookDetail: string): ReactNode {
+  const parsed = zfsRunReasonCode(raw);
+  if (!parsed || ZFS_CODE_VARS[parsed.code]) return <RunReasonText reason={raw} t={t} />;
+  const sentence = zfsCodeSentence(t, parsed.code);
+  if (!parsed.detail || parsed.detail === hookDetail) return sentence;
+  return (
+    <>
+      {sentence} <bdi dir="ltr">{parsed.detail}</bdi>
+    </>
+  );
+}
+
 function ZFSRunDetailView({ run, item, t }: { run: Run; item: ZFSDatasetView; t: T }) {
   const [detail, setDetail] = useState<ZFSRunDetail | null>(null);
   const runId = run.id;
@@ -143,8 +158,14 @@ function ZFSRunDetailView({ run, item, t }: { run: Run; item: ZFSDatasetView; t:
 
   if (!detail) return null;
   const window = detail.windowSeconds ?? -1;
+  const reason = run.status === "failed" || run.status === "cancelled" ? run.error : "";
   return (
     <div className="ps-4 flex flex-col gap-1">
+      {reason && (
+        <p className={`text-caption ${run.status === "failed" ? "text-statusFail" : "text-carbon-textMuted"}`}>
+          {zfsRunReason(t, reason, detail.hookDetail ?? "")}
+        </p>
+      )}
       {window >= 0 && (
         <p className="text-caption text-carbon-textMuted">
           {t("zfs.window").replace("{seconds}", String(window))}
