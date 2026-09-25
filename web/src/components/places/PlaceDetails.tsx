@@ -1,22 +1,37 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Badge } from "../Badge";
+import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import { NumberField } from "../NumberField";
+import { RevealInput } from "../RevealInput";
+import { SelectField } from "../SelectField";
 import { HUE_OFFSET, Selector } from "../Selector";
 import { Toggle } from "../Toggle";
+import { fieldLabelKey } from "./PlaceForm";
+import { primaryRemoteTamperTest, tamperTest, type OffsiteDomain } from "../../lib/api";
 import { retentionLowered } from "../../lib/directRepo";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { pushSaveWarnings } from "../../lib/placementCodes";
-import { placeErrorText } from "../../lib/placeText";
+import { domainName, placeErrorText } from "../../lib/placeText";
 import { patchPlace, placesChanged, type CatalogProvider, type PatchPlaceBody, type Place } from "../../lib/places";
+import { STORAGE_CLASSES } from "../../lib/storageClasses";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { useReveal } from "../../lib/useReveal";
 
 // A place's details save themselves: a switch or a choice at once, rolled back
 // with a shake when the server refuses, a typed field 800 ms after the last
 // key. A field that is still waiting when the details close is saved then.
 
 const DEBOUNCE_MS = 800;
+
+/** The credential fields a kind stores in its set; the others go by the address. */
+const CRED_KEYS: Partial<Record<Place["kind"], string[]>> = {
+  s3: ["keyId", "secret", "region"],
+  rest: ["user", "password"],
+  webdav: ["url", "user", "password"],
+  azure: ["account", "secret"],
+};
 
 const RETENTION: { key: "retentionKeepLast" | "retentionKeepDaily" | "retentionKeepWeekly" | "retentionKeepMonthly"; label: TranslationKey }[] = [
   { key: "retentionKeepLast", label: "places.details.keepLast" },
@@ -33,6 +48,8 @@ const LIMITS: { key: "limitUpload" | "limitDownload" | "growthBudgetGb"; label: 
 
 const FIELD_CLASS = "w-full rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 glim-field-focus-well";
 
+type Verdict = { domain: string; text: string };
+
 function Section({ title, hint, hueIndex, children }: { title: string; hint?: string; hueIndex?: number; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
@@ -44,6 +61,23 @@ function Section({ title, hint, hueIndex, children }: { title: string; hint?: st
       </h4>
       {children}
     </section>
+  );
+}
+
+function SecretInput({ id, value, placeholder, onChange }: { id: string; value: string; placeholder: string; onChange: (v: string) => void }) {
+  const reveal = useReveal();
+  return (
+    <RevealInput
+      {...reveal}
+      id={id}
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      autoComplete="off"
+      spellCheck={false}
+      wrapperClassName="w-full"
+      className={`${FIELD_CLASS} font-mono`}
+    />
   );
 }
 
@@ -63,7 +97,10 @@ export function PlaceDetails({
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [draft, setDraft] = useState<Place>(place);
+  const [access, setAccess] = useState<Record<string, string>>(() => ({ ...place.creds.fields }));
   const [shake, setShake] = useState<Record<string, number>>({});
+  const [verdicts, setVerdicts] = useState<Verdict[] | null>(null);
+  const [testing, setTesting] = useState(false);
   const timers = useRef(new Map<string, { timer: ReturnType<typeof setTimeout>; run: () => void }>());
 
   // A saved answer replaces the draft, except for the fields still waiting to
@@ -148,7 +185,68 @@ export function PlaceDetails({
     later(key, () => void save({ [key]: value }, key));
   }
 
+  async function setAppendOnly(on: boolean) {
+    const items = place.usage.items;
+    if (!on && items > 0 && !(await confirm(t("places.details.appendOnlyOffAsk", items)))) return;
+    saveAtOnce("immutable", on);
+  }
+
+  const credKeys = CRED_KEYS[place.kind] ?? [];
+  const secretKeys = new Set(provider?.fields.filter((f) => f.secret).map((f) => f.key) ?? ["secret", "password"]);
+
+  function editAccess(key: string, value: string) {
+    const next = { ...access, [key]: value };
+    setAccess(next);
+    later("access", async () => {
+      const fields: Record<string, string> = {};
+      for (const k of credKeys) {
+        const v = next[k] ?? "";
+        if (secretKeys.has(k) ? v !== "" : v !== (place.creds.fields[k] ?? "")) fields[k] = v;
+      }
+      if (Object.keys(fields).length === 0) return;
+      if (await save({ fields }, "access")) {
+        setAccess((a) => Object.fromEntries(Object.entries(a).filter(([k]) => !secretKeys.has(k))));
+      }
+    });
+  }
+
+  // A verdict stays in the section, "deletes accepted" included, since the
+  // test ran; a test that could not run is a toast and a shake.
+  async function runTamperTest() {
+    setTesting(true);
+    const found: Verdict[] = [];
+    let failed = false;
+    const domains = [
+      ...place.usage.copyDomains.map((d) => ({ domain: d, run: () => tamperTest(d as OffsiteDomain) })),
+      ...place.usage.homeDomains.map((d) => ({ domain: d, run: () => primaryRemoteTamperTest(d as OffsiteDomain) })),
+    ];
+    for (const { domain, run } of domains) {
+      try {
+        const r = await run();
+        if (!r.ok) {
+          push(`${domainName(t, domain)}: ${r.error ?? t("common.actionFailed")}`, "fail");
+          failed = true;
+          continue;
+        }
+        const text = !r.testable
+          ? t("places.details.tamperUntestable")
+          : r.protected
+            ? t("places.details.tamperProtected")
+            : `${t("places.details.tamperOpen")}${r.detail ? `: ${r.detail}` : ""}`;
+        found.push({ domain, text });
+      } catch (err) {
+        push(`${domainName(t, domain)}: ${err instanceof Error ? err.message : t("common.actionFailed")}`, "fail");
+        failed = true;
+      }
+    }
+    setVerdicts(found.length > 0 ? found : null);
+    if (failed) bump("tamper");
+    setTesting(false);
+  }
+
+  const labelsOf: CatalogProvider = provider ?? { id: place.provider, group: "cloud", kind: place.kind, fields: [] };
   const asks = provider !== undefined && provider.offPremises === undefined;
+  const tamperDomains = place.usage.copyDomains.length + place.usage.homeDomains.length;
   const fieldId = (key: string) => `place-${place.id}-${key}`;
 
   return (
@@ -213,6 +311,94 @@ export function PlaceDetails({
           ))}
         </div>
       </Section>
+
+      {place.kind !== "local" && (
+        <Section title={t("places.details.protection")} hueIndex={hueIndex}>
+          <div className="flex flex-wrap items-center gap-4">
+            <span key={shake.immutable ?? 0} className={`flex items-center gap-1.5 ${shaken("immutable")}`}>
+              <Toggle label={t("places.details.appendOnly")} checked={draft.immutable} onChange={(v) => void setAppendOnly(v)} />
+              <InfoBubble tip={t("places.details.appendOnlyHint")} />
+            </span>
+            {place.kind === "rest" && draft.immutable && tamperDomains > 0 && (
+              <Button
+                key={`tamper-${shake.tamper ?? 0}`}
+                label={t("places.details.tamperTest")}
+                labelKey="places.details.tamperTest"
+                tone="neutral"
+                busy={testing}
+                disabled={testing}
+                onClick={() => void runTamperTest()}
+                className={shaken("tamper")}
+              />
+            )}
+          </div>
+          {verdicts && (
+            <ul className="flex flex-col gap-1 text-sm text-carbon-text" aria-live="polite">
+              {verdicts.map((v) => (
+                <li key={v.domain} className="flex flex-wrap gap-x-2">
+                  <span className="text-carbon-textSub">{domainName(t, v.domain)}</span>
+                  <span>{v.text}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+      )}
+
+      {(credKeys.length > 0 || place.kind === "s3") && (
+        <Section
+          title={t("places.details.access")}
+          hint={place.creds.shared && credKeys.length > 0 ? t("places.details.sharedCreds") : undefined}
+          hueIndex={hueIndex}
+        >
+          <div key={shake.access ?? 0} className={`grid gap-3 sm:grid-cols-2 ${shaken("access")}`}>
+            {credKeys.map((key) => (
+              <div key={key} className="flex flex-col gap-1.5">
+                <label htmlFor={fieldId(key)} className="text-xs text-carbon-textSub">
+                  {t(fieldLabelKey(labelsOf, key))}
+                </label>
+                {secretKeys.has(key) ? (
+                  <SecretInput
+                    id={fieldId(key)}
+                    value={access[key] ?? ""}
+                    placeholder={place.creds.set.includes(key) ? t("places.details.secretKept") : ""}
+                    onChange={(v) => editAccess(key, v)}
+                  />
+                ) : (
+                  <input
+                    id={fieldId(key)}
+                    type="text"
+                    dir="ltr"
+                    value={access[key] ?? ""}
+                    onChange={(e) => editAccess(key, e.target.value)}
+                    autoComplete="off"
+                    spellCheck={false}
+                    className={`${FIELD_CLASS} text-start`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          {place.kind === "s3" && (
+            <div key={shake.storageClass ?? 0} className={`flex max-w-xs flex-col gap-1.5 ${shaken("storageClass")}`}>
+              <label htmlFor={fieldId("storageClass")} className="text-xs text-carbon-textSub">
+                {t("places.details.storageClass")}
+              </label>
+              <SelectField
+                id={fieldId("storageClass")}
+                label={t("places.details.storageClass")}
+                value={draft.storageClass}
+                onChange={(v) => saveAtOnce("storageClass", v)}
+                options={[
+                  { value: "", label: t("places.details.storageClassDefault") },
+                  ...STORAGE_CLASSES.map((sc) => ({ value: sc, label: sc })),
+                ]}
+                className={FIELD_CLASS}
+              />
+            </div>
+          )}
+        </Section>
+      )}
 
       <Section title={t("places.details.limits")} hueIndex={hueIndex}>
         <div className="grid gap-3 sm:grid-cols-3">
