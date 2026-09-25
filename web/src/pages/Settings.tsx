@@ -117,15 +117,15 @@ const TAB_ALIASES: Partial<Record<string, TabKey>> = { offsite: "storage" };
 // name Settings' own SECTIONS (domain toggles, storage paths, cadences,
 // off-site targets, alerts, integrity checks, system/SSH), which is a
 // different taxonomy than the sidebar's page destinations, and none of the
-// seven map onto an existing sidebar glyph without lying about what it is.
+// tabs map onto an existing sidebar glyph without lying about what it is.
 // ---------------------------------------------------------------------------
 // FILLED (design-language.md "Icon glyphs" — every icon glyph is a solid
-// shape, `fill="currentColor"`, never a stroked outline): all seven tab
+// shape, `fill="currentColor"`, never a stroked outline): the tab
 // glyphs below were the last stroke-only holdouts in the app (GlimStone
 // follow-up round, full-area sweep after IconFolder/IconCloud/the off-site
 // action badges were fixed) — each redrawn using this section's own
-// established techniques: a closed silhouette flips directly (rule 218,
-// IconTabOffsite's cloud), a line glyph becomes a filled polygon (rule 219,
+// established techniques: a closed silhouette flips directly (rule 218),
+// a line glyph becomes a filled polygon (rule 219,
 // the shield's checkmark), and a structural detail that has to stay thin
 // (a switch track, a clock's hand, a slider's track) becomes a thin filled
 // shape instead of a stroke (rule 220).
@@ -133,7 +133,7 @@ const TAB_ALIASES: Partial<Record<string, TabKey>> = { offsite: "storage" };
 // REGRESSION FIX (jdp, live review — "die Icons der Einstellungstabs sind,
 // wenn sie ausgewählt sind, bei manchen nicht mehr erkennbar"): that first
 // redraw pass gave the "knob"/"hand"/"checkmark" detail on four of these
-// seven (General, Schedules, Integrity, System) a SECOND colour —
+// (General, Schedules, Integrity, System) a second colour,
 // `fill="var(--carbon-surface, transparent)"` painted on top of the
 // silhouette, standing in for what used to be a stroke's own natural gap.
 // Verified live (Playwright, both themes, idle+selected, real running
@@ -1660,13 +1660,13 @@ export function SettingsPage() {
     // Every other page now renders at PAGE_SHELL's 1152px; this root keeps the
     // shared 40px rhythm but deliberately has NO max-width, and that is not an
     // oversight. Measured live before deciding: capping this root at 1152px
-    // caps the 7-tab Selector strip inside it too, and the strip — `size="lg"`
-    // + `equalWidth`, so 7x its widest segment, 1424px in de — no longer fits
-    // on one line there (strip height 32px → 68px, the 7 tabs falling onto 2
-    // rows). That two-row strip is a bug an earlier round already fixed once,
-    // and the panels below are capped to this strip's MEASURED width per a
-    // standing instruction ("Settings cards should match the tab row's
-    // width"), so capping the root would regress both at once.
+    // caps the tab Selector strip inside it too, and the strip (`size="lg"` +
+    // `equalWidth`, every segment as wide as the widest) no longer fits on one
+    // line there and falls onto two rows. That two-row strip is a bug an
+    // earlier round already fixed once, and the panels below are capped to
+    // this strip's measured width per a standing instruction ("Settings cards
+    // should match the tab row's width"), so capping the root would regress
+    // both at once.
     //   This is a genuine conflict between two of jdp's own asks rather than
     // something to resolve silently: the honest fix is to make the STRIP
     // narrower (drop `equalWidth`, whose natural hugged width is ~814px in de,
@@ -1698,11 +1698,12 @@ export function SettingsPage() {
       </div>
 
       {/* The tab strip. Each tab owns the rainbow position of its list index.
-          It sits outside the max-w-3xl column of the panels, because seven
-          segments need about 814px in German and a capped strip wraps a lone
-          tab onto a second line. equalWidth pins every segment to the widest
-          label, and the panels below take the strip's measured width, so both
-          line up. `title` shows a label that equalWidth truncates.
+          It sits outside the max-w-3xl column of the panels, because its
+          segments need more room in German than the column has and a capped
+          strip wraps a lone tab onto a second line. equalWidth pins every
+          segment to the widest label, and the panels below take the strip's
+          measured width, so both line up. `title` shows a label that
+          equalWidth truncates.
 
           self-start keeps the wrapper at the strip's own width: as a child of
           a flex column it would stretch to the column, and the measurement
@@ -1754,7 +1755,7 @@ export function SettingsPage() {
            gives it to every tab, so the strip is uniform by construction
            rather than by measurement. That also retires the failure this
            file's own header describes: the measured pin once grew to 1424px
-           in German and wrapped the seven tabs onto two rows. */
+           in German and wrapped the tabs onto two rows. */
         // The rail's own row width, via the shared token — "gleich groß wie die
         // tabs in der sidebar" is a promise, and a promise needs one number,
         // not two that happen to agree today. It also gives the longest label

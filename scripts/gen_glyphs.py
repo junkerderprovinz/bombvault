@@ -216,7 +216,6 @@ EXTRA_NAV = [
         # with no claim of endorsement or affiliation.
         '<path d="%s" />' % io.open("../scripts/docker-path.txt", encoding="utf-8").read().strip(),
     ),
-    ("IconTabOffsite", "Off-site tab", CLOUD_BOX, CLOUD),
     ("IconCloud", "Off-site or cloud", CLOUD_BOX, CLOUD),
     ("IconAdd", "Add", PLUS_BOX, PLUS),
     ("IconClose", CLOSE_NOTE, CROSS_BOX, CROSS),
@@ -239,7 +238,7 @@ EXTRA_NAV = [
              "0 0 24 24", (2.0, 1.9934, 20.0078, 20.0143), "verify"),
     imported("IconTabIntegrity", "Integrity tab", "0 0 24 24",
              (3.0, 1.0, 18.0, 22.0), "integrity"),
-    imported("IconTabStorage", "Paths and storage tab", "0 0 448 512",
+    imported("IconTabStorage", "Storage tab", "0 0 448 512",
              (0.0, 0.0, 448.0, 512.0), "storage"),
 ]
 
