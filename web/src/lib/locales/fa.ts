@@ -1049,6 +1049,7 @@ const fa: Partial<Translations> = {
   "cadence.fmtDaily": "روزانه ساعت {time}",
   "cadence.fmtWeekly": "هفتگی ({days}) ساعت {time}",
   "cadence.fmtEveryN": "one=هر روز ساعت {time}|other=هر {n} روز ساعت {time}",
+  "cadence.serverClock": "{when} (به وقت سرور، {zone})",
   // Cron cadence mode
   "cadence.cron": "Cron",
   "cadence.cronExpr": "عبارت",

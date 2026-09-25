@@ -1279,6 +1279,7 @@ export const en = {
   "cadence.fmtDaily": "daily at {time}",
   "cadence.fmtWeekly": "weekly ({days}) at {time}",
   "cadence.fmtEveryN": "one=every day at {time}|other=every {n} days at {time}",
+  "cadence.serverClock": "{when} (server time, {zone})",
   // Cron cadence mode (#107)
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Expression",
@@ -3750,6 +3751,7 @@ export const de: Translations = {
   "cadence.fmtDaily": "täglich um {time} Uhr",
   "cadence.fmtWeekly": "wöchentlich ({days}) um {time} Uhr",
   "cadence.fmtEveryN": "one=jeden Tag um {time} Uhr|other=jeden {n}. Tag um {time} Uhr",
+  "cadence.serverClock": "{when} (Serverzeit, {zone})",
   // Cron cadence mode (#107)
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Ausdruck",

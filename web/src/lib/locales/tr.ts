@@ -355,6 +355,7 @@ const tr: Partial<Translations> = {
   "cadence.fmtDaily": "her gün {time}",
   "cadence.fmtWeekly": "haftalık ({days}) {time}",
   "cadence.fmtEveryN": "one=her gün {time}|other=her {n} günde bir {time}",
+  "cadence.serverClock": "{when} (sunucu saati, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "İfade",
   "cadence.cronPlaceholder": "dakika saat gün ay haftanın-günü",

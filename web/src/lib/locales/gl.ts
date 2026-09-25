@@ -1049,6 +1049,7 @@ const gl: Partial<Translations> = {
   "cadence.fmtDaily": "a diario ás {time}",
   "cadence.fmtWeekly": "semanalmente ({days}) ás {time}",
   "cadence.fmtEveryN": "one=cada día ás {time}|other=cada {n} días ás {time}",
+  "cadence.serverClock": "{when} (hora do servidor, {zone})",
   // Cron cadence mode
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Expresión",

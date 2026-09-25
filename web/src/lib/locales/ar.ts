@@ -355,6 +355,7 @@ const ar: Partial<Translations> = {
   "cadence.fmtDaily": "يوميًا في {time}",
   "cadence.fmtWeekly": "أسبوعيًا ({days}) في {time}",
   "cadence.fmtEveryN": "zero=كل {n} يوم في {time}|one=كل يوم في {time}|two=كل يومين في {time}|few=كل {n} أيام في {time}|many=كل {n} يوماً في {time}|other=كل {n} يوم في {time}",
+  "cadence.serverClock": "{when} (بتوقيت الخادم، {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "التعبير",
   "cadence.cronPlaceholder": "دقيقة ساعة يوم شهر يوم-الأسبوع",

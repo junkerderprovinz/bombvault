@@ -382,6 +382,8 @@ export interface RegistryAuthEntry {
   tokenSet: boolean;
 }
 
+export type ScheduleZone = { name: string; offsetSeconds: number };
+
 export interface GetSettingsResponse {
   ok: boolean;
   settings: Settings;
@@ -393,6 +395,8 @@ export interface GetSettingsResponse {
    *  e.g. to gate the Files page's "Host system config" preset (offered only
    *  off Unraid, which already has the dedicated flash domain for this). */
   platform: string;
+  /** The clock the server reads every schedule on, and its offset from UTC. */
+  scheduleZone?: ScheduleZone;
   /** Present only on the graceful failure envelope ({ok:false} at HTTP 200). */
   error?: string;
 }

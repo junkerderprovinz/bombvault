@@ -355,6 +355,7 @@ const cs: Partial<Translations> = {
   "cadence.fmtDaily": "denně v {time}",
   "cadence.fmtWeekly": "týdně ({days}) v {time}",
   "cadence.fmtEveryN": "one=každý den v {time}|few=každé {n} dny v {time}|many=každých {n} dne v {time}|other=každých {n} dní v {time}",
+  "cadence.serverClock": "{when} (čas serveru, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Výraz",
   "cadence.cronPlaceholder": "minuta hodina den měsíc den-týdne",

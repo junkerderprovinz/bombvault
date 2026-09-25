@@ -1049,6 +1049,7 @@ const is: Partial<Translations> = {
   "cadence.fmtDaily": "daglega klukkan {time}",
   "cadence.fmtWeekly": "vikulega ({days}) klukkan {time}",
   "cadence.fmtEveryN": "one=á {n} dags fresti klukkan {time}|other=á {n} daga fresti klukkan {time}",
+  "cadence.serverClock": "{when} (tími þjónsins, {zone})",
   // Cron cadence mode
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Segð",

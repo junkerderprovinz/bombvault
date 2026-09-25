@@ -350,6 +350,7 @@ const nl: Partial<Translations> = {
   "cadence.fmtDaily": "dagelijks om {time}",
   "cadence.fmtWeekly": "wekelijks ({days}) om {time}",
   "cadence.fmtEveryN": "one=elke dag om {time}|other=elke {n} dagen om {time}",
+  "cadence.serverClock": "{when} (servertijd, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Expressie",
   "cadence.cronPlaceholder": "minuut uur dag maand weekdag",

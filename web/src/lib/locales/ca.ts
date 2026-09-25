@@ -1049,6 +1049,7 @@ const ca: Partial<Translations> = {
   "cadence.fmtDaily": "diàriament a les {time}",
   "cadence.fmtWeekly": "setmanalment ({days}) a les {time}",
   "cadence.fmtEveryN": "one=cada dia a les {time}|many=cada {n} de dies a les {time}|other=cada {n} dies a les {time}",
+  "cadence.serverClock": "{when} (hora del servidor, {zone})",
   // Cron cadence mode
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Expressió",

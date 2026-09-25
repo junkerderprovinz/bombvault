@@ -352,6 +352,7 @@ const pt: Partial<Translations> = {
   "cadence.fmtDaily": "diariamente às {time}",
   "cadence.fmtWeekly": "semanalmente ({days}) às {time}",
   "cadence.fmtEveryN": "one=todos os dias às {time}|many=a cada {n} de dias às {time}|other=a cada {n} dias às {time}",
+  "cadence.serverClock": "{when} (hora do servidor, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Expressão",
   "cadence.cronPlaceholder": "minuto hora dia mês dia-da-semana",

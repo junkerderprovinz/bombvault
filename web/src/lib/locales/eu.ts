@@ -1049,6 +1049,7 @@ const eu: Partial<Translations> = {
   "cadence.fmtDaily": "egunero {time} orduan",
   "cadence.fmtWeekly": "astero ({days}) {time} orduan",
   "cadence.fmtEveryN": "one=egunero {time} orduan|other={n} egunero {time} orduan",
+  "cadence.serverClock": "{when} (zerbitzariaren ordua, {zone})",
   // Cron cadence mode
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Adierazpena",

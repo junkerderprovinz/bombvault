@@ -2519,11 +2519,15 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 	// platform is the detected/overridden platform.Kind ("unraid"/"generic"/
 	// "truenas", see internal/platform) — read-only host-environment info, not a
 	// setting the UI can change.
+	// scheduleZone is the clock every schedule is read on, which the page names
+	// when the browser runs on a different one.
+	zone, offset := time.Now().Zone()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":            true,
 		"settings":      view,
 		"hostMountRoot": h.cfg.HostMountRoot,
 		"platform":      string(h.svc.platformFn().Kind()),
+		"scheduleZone":  map[string]any{"name": zone, "offsetSeconds": offset},
 	})
 }
 

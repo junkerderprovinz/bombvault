@@ -355,6 +355,7 @@ const sv: Partial<Translations> = {
   "cadence.fmtDaily": "dagligen kl. {time}",
   "cadence.fmtWeekly": "varje vecka ({days}) kl. {time}",
   "cadence.fmtEveryN": "one=varje dag kl. {time}|other=var {n}:e dag kl. {time}",
+  "cadence.serverClock": "{when} (serverns tid, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Uttryck",
   "cadence.cronPlaceholder": "minut timme dag månad veckodag",

@@ -352,6 +352,7 @@ const ro: Partial<Translations> = {
   "cadence.fmtDaily": "zilnic la {time}",
   "cadence.fmtWeekly": "săptămânal ({days}) la {time}",
   "cadence.fmtEveryN": "one=în fiecare zi la {time}|few=la fiecare {n} zile la {time}|other=la fiecare {n} de zile la {time}",
+  "cadence.serverClock": "{when} (ora serverului, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Expresie",
   "cadence.cronPlaceholder": "minut oră zi lună zi-din-săptămână",

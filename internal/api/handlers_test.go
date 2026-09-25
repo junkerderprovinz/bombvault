@@ -1008,6 +1008,20 @@ func TestSettingsGetPlatformField(t *testing.T) {
 	}
 }
 
+func TestSettingsGetNamesTheClockSchedulesRunOn(t *testing.T) {
+	h, _, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+
+	_, m := doJSON(t, h, http.MethodGet, "/api/settings", "")
+	zone, ok := m["scheduleZone"].(map[string]any)
+	if !ok {
+		t.Fatalf("scheduleZone = %v (%T), want an object", m["scheduleZone"], m["scheduleZone"])
+	}
+	name, offset := time.Now().Zone()
+	if zone["name"] != name || zone["offsetSeconds"] != float64(offset) {
+		t.Fatalf("scheduleZone = %v, want name %q and offsetSeconds %d", zone, name, offset)
+	}
+}
+
 func TestSettingsGetPut(t *testing.T) {
 	d := &fakeServiceDocker{}
 	h, _ := newTestRouter(t, d, &fakeResticEngine{})

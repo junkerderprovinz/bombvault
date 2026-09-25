@@ -355,6 +355,7 @@ const vi: Partial<Translations> = {
   "cadence.fmtDaily": "hằng ngày lúc {time}",
   "cadence.fmtWeekly": "hằng tuần ({days}) lúc {time}",
   "cadence.fmtEveryN": "mỗi {n} ngày lúc {time}",
+  "cadence.serverClock": "{when} (giờ máy chủ, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Biểu thức",
   "cadence.cronPlaceholder": "phút giờ ngày tháng thứ",

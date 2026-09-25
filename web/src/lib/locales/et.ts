@@ -1049,6 +1049,7 @@ const et: Partial<Translations> = {
   "cadence.fmtDaily": "iga päev kell {time}",
   "cadence.fmtWeekly": "iga nädal ({days}) kell {time}",
   "cadence.fmtEveryN": "one=iga päev kell {time}|other=iga {n} päeva järel kell {time}",
+  "cadence.serverClock": "{when} (serveri aeg, {zone})",
   // Cron cadence mode
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Avaldis",

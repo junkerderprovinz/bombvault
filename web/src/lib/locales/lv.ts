@@ -1049,6 +1049,7 @@ const lv: Partial<Translations> = {
   "cadence.fmtDaily": "katru dienu {time}",
   "cadence.fmtWeekly": "katru nedēļu ({days}) {time}",
   "cadence.fmtEveryN": "zero=ik pēc {n} dienām {time}|one=ik pēc {n} dienas {time}|other=ik pēc {n} dienām {time}",
+  "cadence.serverClock": "{when} (servera laiks, {zone})",
   // Cron cadence mode
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Izteiksme",

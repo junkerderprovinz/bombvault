@@ -355,6 +355,7 @@ const th: Partial<Translations> = {
   "cadence.fmtDaily": "ทุกวันเวลา {time}",
   "cadence.fmtWeekly": "ทุกสัปดาห์ ({days}) เวลา {time}",
   "cadence.fmtEveryN": "ทุก {n} วัน เวลา {time}",
+  "cadence.serverClock": "{when} (เวลาของเซิร์ฟเวอร์ {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "นิพจน์",
   "cadence.cronPlaceholder": "นาที ชั่วโมง วัน เดือน วันในสัปดาห์",

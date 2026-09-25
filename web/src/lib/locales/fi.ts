@@ -355,6 +355,7 @@ const fi: Partial<Translations> = {
   "cadence.fmtDaily": "päivittäin klo {time}",
   "cadence.fmtWeekly": "viikoittain ({days}) klo {time}",
   "cadence.fmtEveryN": "one=joka päivä klo {time}|other={n} päivän välein klo {time}",
+  "cadence.serverClock": "{when} (palvelimen aika, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Lauseke",
   "cadence.cronPlaceholder": "minuutti tunti päivä kuukausi viikonpäivä",

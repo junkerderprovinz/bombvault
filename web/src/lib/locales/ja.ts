@@ -355,6 +355,7 @@ const ja: Partial<Translations> = {
   "cadence.fmtDaily": "毎日 {time}",
   "cadence.fmtWeekly": "毎週（{days}）{time}",
   "cadence.fmtEveryN": "{n}日ごと {time}",
+  "cadence.serverClock": "{when}（サーバー時刻、{zone}）",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "式",
   "cadence.cronPlaceholder": "分 時 日 月 曜日",

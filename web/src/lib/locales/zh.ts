@@ -355,6 +355,7 @@ const zh: Partial<Translations> = {
   "cadence.fmtDaily": "每天 {time}",
   "cadence.fmtWeekly": "每周（{days}）{time}",
   "cadence.fmtEveryN": "每 {n} 天 {time}",
+  "cadence.serverClock": "{when}（服务器时间，{zone}）",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "表达式",
   "cadence.cronPlaceholder": "分 时 日 月 星期",

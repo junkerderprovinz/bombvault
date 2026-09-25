@@ -350,6 +350,7 @@ const ru: Partial<Translations> = {
   "cadence.fmtDaily": "ежедневно в {time}",
   "cadence.fmtWeekly": "еженедельно ({days}) в {time}",
   "cadence.fmtEveryN": "one=каждый день в {time}|few=каждые {n} дня в {time}|many=каждые {n} дней в {time}|other=каждые {n} дня в {time}",
+  "cadence.serverClock": "{when} (время сервера, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Выражение",
   "cadence.cronPlaceholder": "минута час день месяц день-недели",

@@ -1049,6 +1049,7 @@ const hr: Partial<Translations> = {
   "cadence.fmtDaily": "dnevno u {time}",
   "cadence.fmtWeekly": "tjedno ({days}) u {time}",
   "cadence.fmtEveryN": "one=svaki {n} dan u {time}|few=svaka {n} dana u {time}|other=svakih {n} dana u {time}",
+  "cadence.serverClock": "{when} (vrijeme poslužitelja, {zone})",
   // Cron cadence mode
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Izraz",

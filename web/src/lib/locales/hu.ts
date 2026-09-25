@@ -355,6 +355,7 @@ const hu: Partial<Translations> = {
   "cadence.fmtDaily": "naponta {time}-kor",
   "cadence.fmtWeekly": "hetente ({days}) {time}-kor",
   "cadence.fmtEveryN": "one=naponta {time}-kor|other={n} naponta {time}-kor",
+  "cadence.serverClock": "{when} (szerveridő, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Kifejezés",
   "cadence.cronPlaceholder": "perc óra nap hónap hét-napja",

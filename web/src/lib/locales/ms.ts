@@ -1049,6 +1049,7 @@ const ms: Partial<Translations> = {
   "cadence.fmtDaily": "harian pada {time}",
   "cadence.fmtWeekly": "mingguan ({days}) pada {time}",
   "cadence.fmtEveryN": "setiap {n} hari pada {time}",
+  "cadence.serverClock": "{when} (masa pelayan, {zone})",
   // Cron cadence mode
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Ungkapan",

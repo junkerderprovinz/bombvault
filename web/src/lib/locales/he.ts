@@ -355,6 +355,7 @@ const he: Partial<Translations> = {
   "cadence.fmtDaily": "מדי יום בשעה {time}",
   "cadence.fmtWeekly": "מדי שבוע ({days}) בשעה {time}",
   "cadence.fmtEveryN": "one=כל יום בשעה {time}|two=כל יומיים בשעה {time}|other=כל {n} ימים בשעה {time}",
+  "cadence.serverClock": "{when} (שעון השרת, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "ביטוי",
   "cadence.cronPlaceholder": "דקה שעה יום חודש יום-בשבוע",

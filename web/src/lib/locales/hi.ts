@@ -1049,6 +1049,7 @@ const hi: Partial<Translations> = {
   "cadence.fmtDaily": "रोज़ {time} बजे",
   "cadence.fmtWeekly": "हर हफ़्ते ({days}) {time} बजे",
   "cadence.fmtEveryN": "one=हर दिन {time} बजे|other=हर {n} दिन में {time} बजे",
+  "cadence.serverClock": "{when} (सर्वर का समय, {zone})",
   // Cron cadence mode
   "cadence.cron": "Cron",
   "cadence.cronExpr": "एक्सप्रेशन",

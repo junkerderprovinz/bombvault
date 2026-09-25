@@ -355,6 +355,7 @@ const ko: Partial<Translations> = {
   "cadence.fmtDaily": "매일 {time}",
   "cadence.fmtWeekly": "매주 ({days}) {time}",
   "cadence.fmtEveryN": "{n}일마다 {time}에",
+  "cadence.serverClock": "{when} (서버 시간, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "표현식",
   "cadence.cronPlaceholder": "분 시 일 월 요일",

@@ -353,6 +353,7 @@ const uk: Partial<Translations> = {
   "cadence.fmtDaily": "щодня о {time}",
   "cadence.fmtWeekly": "щотижня ({days}) о {time}",
   "cadence.fmtEveryN": "one=кожен {n} день о {time}|few=кожні {n} дні о {time}|many=кожні {n} днів о {time}|other=кожні {n} дня о {time}",
+  "cadence.serverClock": "{when} (час сервера, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Вираз",
   "cadence.cronPlaceholder": "хвилина година день місяць день-тижня",

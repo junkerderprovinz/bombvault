@@ -1047,6 +1047,7 @@ const sl: Partial<Translations> = {
   "cadence.fmtDaily": "dnevno ob {time}",
   "cadence.fmtWeekly": "tedensko ({days}) ob {time}",
   "cadence.fmtEveryN": "one=vsak dan ob {time}|two=vsaka {n} dni ob {time}|few=vsake {n} dni ob {time}|other=vsakih {n} dni ob {time}",
+  "cadence.serverClock": "{when} (čas strežnika, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Izraz",
   "cadence.cronPlaceholder": "minuta ura dan mesec dan v tednu",

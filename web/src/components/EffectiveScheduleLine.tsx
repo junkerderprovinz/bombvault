@@ -1,6 +1,7 @@
 import { useT, type TranslationKey } from "../lib/i18n";
 import { formatCadence } from "./CadenceBuilder";
 import type { EffectiveSchedule } from "../lib/api";
+import { useForeignScheduleZone, zoneLabel } from "../lib/scheduleZone";
 
 /**
  * EffectiveScheduleLine says in one sentence what happens to one item, since
@@ -17,10 +18,16 @@ export function EffectiveScheduleLine({
   domainLabelKey?: TranslationKey;
 }) {
   const { t, lang } = useT();
+  const zone = useForeignScheduleZone();
   if (!effective) return null;
 
-  const when = effective.spec ? formatCadence(effective.spec, t, lang) : "";
-  const alsoWhen = effective.alsoSpec ? formatCadence(effective.alsoSpec, t, lang) : "";
+  const cadence = (spec: string) => {
+    const text = spec ? formatCadence(spec, t, lang) : "";
+    if (!text || !zone) return text;
+    return t("cadence.serverClock").replace("{when}", text).replace("{zone}", zoneLabel(zone));
+  };
+  const when = cadence(effective.spec);
+  const alsoWhen = cadence(effective.alsoSpec);
 
   let text: string;
   let tone: string;

@@ -355,6 +355,7 @@ const el: Partial<Translations> = {
   "cadence.fmtDaily": "καθημερινά στις {time}",
   "cadence.fmtWeekly": "εβδομαδιαία ({days}) στις {time}",
   "cadence.fmtEveryN": "one=κάθε ημέρα στις {time}|other=κάθε {n} ημέρες στις {time}",
+  "cadence.serverClock": "{when} (ώρα διακομιστή, {zone})",
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Έκφραση",
   "cadence.cronPlaceholder": "λεπτό ώρα ημέρα μήνας ημέρα-εβδομάδας",

@@ -1049,6 +1049,7 @@ const lt: Partial<Translations> = {
   "cadence.fmtDaily": "kasdien {time}",
   "cadence.fmtWeekly": "kas savaitę ({days}) {time}",
   "cadence.fmtEveryN": "one=kas dieną {time}|few=kas {n} dienas {time}|many=kas {n} dienos {time}|other=kas {n} dienų {time}",
+  "cadence.serverClock": "{when} (serverio laikas, {zone})",
   // Cron cadence mode
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Išraiška",
