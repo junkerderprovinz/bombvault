@@ -566,7 +566,7 @@ function SpikeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?
       )}
 
       {checks && checks.length > 0 && (
-        <div className="divide-y divide-carbon-border">
+        <div>
           {checks.map((c) => (
             <div key={c.Name} className="flex items-center gap-3 py-2 text-sm">
               <Badge tone={statusTone(chipFor(c))}>{statusLabel(chipFor(c), t)}</Badge>
@@ -711,13 +711,13 @@ export function ProtectionCard({
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
       {!loading && domains.length > 0 && (
-        <div className="@container divide-y divide-carbon-border glim-content-fade">
+        <div className="@container glim-content-fade">
           {domains.map((d) => {
             const off = d.status === "off";
-            // Only containers, flash + files ever run an off-site DR drill
-            // (schedule.go drillTasks / runDRDrill). VMs + config can have an
-            // off-site repo but cannot be DR-drilled, so they must show NO DR
-            // pill or Run-DR button.
+            // Only containers, flash and files run an off-site DR drill
+            // (drillTasks in schedule.go, runDRDrill in service_verify.go). VMs
+            // and config can have an off-site repo but no drill, so they show
+            // neither the DR pill nor the Run DR button.
             const drCapable = d.domain === "containers" || d.domain === "flash" || d.domain === "files";
             // Off-site DR opt-out (#37): the scheduled DR drill is turned off for a
             // DR-capable domain that HAS an off-site repo. The pill then reads NEUTRAL
@@ -1115,7 +1115,7 @@ export function RansomwareCard({
           ];
 
           return (
-            <div key={d.domain} className="flex flex-col gap-1.5 py-2 border-b border-carbon-border last:border-0">
+            <div key={d.domain} className="flex flex-col gap-1.5 py-2">
               <div className="flex items-center gap-2">
                 <span className="font-medium text-carbon-text w-28 shrink-0 truncate">
                   {domainLabel(d.domain)}
@@ -1246,8 +1246,7 @@ function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?:
               className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text glim-field-focus"
             />
           </div>
-          {/* Scrollable list — all runs in the window (filtered by day) */}
-          <div className="divide-y divide-carbon-border max-h-128 overflow-y-auto pe-2">
+          <div className="max-h-128 overflow-y-auto pe-2">
             {shown.map((run) => {
               const dur = run.finishedAt != null ? formatDuration(run.finishedAt - run.startedAt) : "";
               return (
@@ -1343,11 +1342,10 @@ function LastBackupsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
       )}
 
       {withBackups.length > 0 && (
-        <div className="divide-y divide-carbon-border glim-content-fade">
+        <div className="glim-content-fade">
           {withBackups.map((c) => {
-            // Older data (or a run before the start time was recorded) has no
-            // lastBackupStarted — fall back to just the finish time, never a
-            // negative/broken duration.
+            // A run recorded without its start time has no lastBackupStarted,
+            // so it shows the finish time alone rather than a broken duration.
             const hasStart = c.lastBackupStarted != null && c.lastBackup != null;
             const duration = hasStart
               ? formatDuration((c.lastBackup as number) - (c.lastBackupStarted as number))
@@ -1377,18 +1375,13 @@ function LastBackupsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
       )}
 
       {noBackups.length > 0 && (
-        <div className="divide-y divide-carbon-border">
-          {/* "Never" said two different things at once ([379]). A container
-              nobody scheduled has never been backed up and that is the plan; a
-              container that IS scheduled and still shows "never" is a gap. Both
-              rendered the same word, so the list could not be read: on jdp's
-              box four rows said "Nie" and there was no way to tell, from the
-              dashboard, which of them were meant to.
-
-              includeInSchedule already carries the answer, and `self` carries
-              the one case that is not a choice at all: BombVault refuses to
-              back up its own container (stopping it mid-run is suicide), so
-              that row must not read as an omission somebody could correct. */}
+        <div>
+          {/* "Never" means two things: a container nobody scheduled has never
+              been backed up by plan, while a scheduled one that still shows it
+              is a gap. includeInSchedule tells them apart, and `self` marks the
+              one case that is not a choice at all: BombVault cannot back up its
+              own container without stopping itself mid-run, so that row must
+              not read as an omission somebody could correct. */}
           {noBackups.map((c) => {
             const deliberate = c.self || !c.includeInSchedule;
             return (
@@ -1757,16 +1750,15 @@ function StorageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueInde
         <p className="text-sm text-carbon-textMuted">{t("dashboard.noStats")}</p>
       )}
       {!loading && anyData && data && (
-        <div className="divide-y divide-carbon-border glim-content-fade">
+        <div className="glim-content-fade">
           {data.map((d) => {
             const has = d.latest != null;
             const dedup =
               d.latest && d.latest.restoreSize > 0 && d.latest.rawSize > 0
                 ? `${(d.latest.restoreSize / d.latest.rawSize).toFixed(1)}x`
                 : "—";
-            // Compact per-domain forecast line (growth/week + time-to-full +
-            // free space) from the same /api/stats response. Null when the
-            // backend could determine nothing — then no line renders at all.
+            // Growth per week, time to full and free space, from the same
+            // /api/stats response; null, and no line, when nothing is known.
             const forecastLine = buildForecastLine(d.forecast, resolveForecast);
             return (
               <div key={d.domain} className="flex flex-col gap-0.5 py-2.5 min-w-0">
@@ -2739,9 +2731,8 @@ export function Dashboard() {
         })()}
       </div>
 
-      {/* Hidden-cards tray — only while editing and something is hidden. */}
       {editing && hiddenBlocks.length > 0 && (
-        <div className="relative flex flex-col gap-3 rounded-card border border-dashed border-carbon-border p-4">
+        <div className="relative flex flex-col gap-3 rounded-card bg-carbon-surface p-4">
           <h2 className="flex items-center">
             <Badge tone="heading" size="heading" wrap>{t("dashboard.hiddenCards")}</Badge>
           </h2>

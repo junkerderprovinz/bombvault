@@ -120,7 +120,6 @@ const PENDING = new Set<string>([
   "components/ColorPickerPopover.tsx",
   "components/OffsiteWizard.tsx",
   "index.css",
-  "pages/Dashboard.tsx",
   "pages/Files.tsx",
   "pages/Receiver.tsx",
   "pages/Recovery.tsx",
