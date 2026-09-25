@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"path"
 	"regexp"
 	"slices"
 	"strconv"
@@ -405,6 +406,13 @@ var s3Hosts = []struct{ domain, id string }{
 	{"storage.googleapis.com", "gcs"},
 }
 
+// UnderRemotes reports whether a local address lies in /mnt/remotes, where
+// Unraid mounts the shares of other devices.
+func UnderRemotes(addr string) bool {
+	p := path.Clean(strings.TrimPrefix(strings.TrimPrefix(addr, "/mnt"), "/"))
+	return p == "remotes" || strings.HasPrefix(p, "remotes/")
+}
+
 // DetectProvider names the provider an existing address most likely belongs
 // to, for the places the migration builds from existing rows. A wrong guess
 // changes the mark and the form, never the address.
@@ -412,8 +420,7 @@ func DetectProvider(repo string) string {
 	repo = strings.TrimSpace(repo)
 	scheme, rest, remote := strings.Cut(repo, ":")
 	if !remote || strings.Contains(scheme, "/") {
-		p := strings.TrimPrefix(strings.TrimPrefix(repo, "/mnt"), "/")
-		if p == "remotes" || strings.HasPrefix(p, "remotes/") {
+		if UnderRemotes(repo) {
 			return "share"
 		}
 		return "unraid-folder"

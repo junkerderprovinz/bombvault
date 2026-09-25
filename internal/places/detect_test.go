@@ -40,3 +40,21 @@ func TestDetectProviderReadsTheAddress(t *testing.T) {
 		}
 	}
 }
+
+func TestUnderRemotesReadsTheCleanedAddress(t *testing.T) {
+	for addr, want := range map[string]bool{
+		"remotes":                 true,
+		"remotes/nas/bombvault":   true,
+		"/mnt/remotes/nas":        true,
+		"user/../remotes/nas":     true,
+		"./remotes//nas":          true,
+		"remotes2/nas":            false,
+		"user/remotes/nas":        false,
+		"remotes/../user/backups": false,
+		"mnt/remotes/nas":         false,
+	} {
+		if got := UnderRemotes(addr); got != want {
+			t.Errorf("UnderRemotes(%q) = %v, want %v", addr, got, want)
+		}
+	}
+}
