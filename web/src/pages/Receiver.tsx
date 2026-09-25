@@ -111,10 +111,10 @@ function InventoryPanel({ repo, t }: { repo: ReceivedRepoStatus; t: T }) {
         </tbody>
         <tfoot>
           <tr className="text-carbon-text">
-            <td className="py-1.5 pe-3 font-medium">{t("receiver.total")}</td>
-            <td className="py-1.5 pe-3 text-end font-mono">{inv.snapshotCount}</td>
-            <td className="py-1.5 pe-3 text-carbon-textSub">{fmtReceived(inv.lastReceived, t)}</td>
-            <td className="py-1.5 text-end font-mono">{humanBytes(inv.totalSize)}</td>
+            <td className="pt-3 pb-1.5 pe-3 font-medium">{t("receiver.total")}</td>
+            <td className="pt-3 pb-1.5 pe-3 text-end font-mono">{inv.snapshotCount}</td>
+            <td className="pt-3 pb-1.5 pe-3 text-carbon-textSub">{fmtReceived(inv.lastReceived, t)}</td>
+            <td className="pt-3 pb-1.5 text-end font-mono">{humanBytes(inv.totalSize)}</td>
           </tr>
         </tfoot>
       </table>
