@@ -4,12 +4,12 @@
 // reads as two icon libraries (GlimStone, "Icon glyphs"). The source is read,
 // the generated sets included, and the folder picker is rendered, since its
 // glyphs come from three files.
-import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
+import { blankComments, readSource, walkTsx } from "./sourceTree.testsupport";
 
 vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),
@@ -31,21 +31,6 @@ const STROKED: Record<string, { count: number; reason: string }> = {
     reason: "the storage trend line, a chart drawn at a hairline weight (GlimStone, Charts), not a glyph",
   },
 };
-
-function tsxFiles(dir: string): string[] {
-  return readdirSync(dir).flatMap((entry) => {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) return tsxFiles(full);
-    return /\.tsx$/.test(entry) && !entry.includes(".test.") ? [full] : [];
-  });
-}
-
-function blankComments(source: string): string {
-  const blank = (m: string) => m.replace(/[^\n]/g, " ");
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, blank)
-    .replace(/(^|[^:"'`\\])(\/\/.*)$/gm, (_m, before: string, comment: string) => before + blank(comment));
-}
 
 /** An attribute's value as written: `a="x"`, `a={"x"}` or the expression in `a={x}`. */
 function attr(attrs: string, name: string): string | undefined {
@@ -75,9 +60,9 @@ function strokes(svgAttrs: string, body: string): boolean {
  *  <G> block, which takes the fill of the one <svg> inside G. */
 function drawings(): { file: string; line: number; stroked: boolean }[] {
   const out: { file: string; line: number; stroked: boolean }[] = [];
-  for (const path of tsxFiles(SRC)) {
+  for (const path of walkTsx(SRC)) {
     const file = relative(SRC, path).replace(/\\/g, "/");
-    const src = blankComments(readFileSync(path, "utf8"));
+    const src = blankComments(readSource(path));
     const line = (i: number) => src.slice(0, i).split("\n").length;
     for (const m of src.matchAll(/<svg\b([^>]*)>([\s\S]*?)<\/svg>/g)) {
       out.push({ file, line: line(m.index), stroked: strokes(m[1], m[2]) });
