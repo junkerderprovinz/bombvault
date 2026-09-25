@@ -288,14 +288,16 @@ export function PlaceDetails({
     if (on) folders[domain] = DEFAULT_FOLDERS[domain];
     else delete folders[domain];
     setDraft((d) => ({ ...d, folders }));
-    void save({ folders }, `offer-${domain}`, () =>
+    void save({ folders }, `offer-${domain}`, () => {
       setDraft((d) => {
         const back = { ...d.folders };
         if (was === undefined) delete back[domain];
         else back[domain] = was;
         return { ...d, folders: back };
-      })
-    );
+      });
+      // The refused save took the typed name with it; a newer one waits on its own.
+      if (typing && !timers.current.has("folders")) later("folders", typing.run);
+    });
   }
 
   function editFolder(domain: PlaceDomain, value: string) {

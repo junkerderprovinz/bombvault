@@ -398,6 +398,25 @@ describe("PlaceDetails sections", () => {
     expect(offer("Flash").getAttribute("aria-checked")).toBe("false");
     expect(folder("VMs").value).toBe("vms2");
   });
+
+  it("still saves a folder name being typed when the offer that carried it is refused", async () => {
+    answer = (body) =>
+      body.folders && "flash" in body.folders
+        ? { ok: false, error: "no" }
+        : { ok: true, place: { ...place(), ...(body as Partial<Place>) } };
+    details();
+    fireEvent.change(screen.getByRole("textbox", { name: en["places.details.folderOf"].replace("{domain}", "VMs") }), {
+      target: { value: "vms2" },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("switch", { name: "Flash" }));
+    });
+    await settle(800);
+    expect(patches).toEqual([
+      { folders: { containers: "container", vms: "vms2", flash: "flash" } },
+      { folders: { containers: "container", vms: "vms2" } },
+    ]);
+  });
 });
 
 describe("PlaceDetails address", () => {
