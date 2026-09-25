@@ -1,3 +1,4 @@
+import { PlaceMark } from "../placeMarks";
 import { Selector } from "../Selector";
 import type { SelectOption } from "../SelectField";
 import type { PlacementOptions, PlacementView, SegmentId, SendToOption } from "../../lib/api";
@@ -44,8 +45,9 @@ export function PlacementBar({
   const { t } = useT();
   const home = viewHomeLabel(t, host, view, options);
   const segment = view.segment === "" ? null : view.segment;
-  const homes = options.homes.map((h) => ({ value: h.id, label: homeOptionLabel(t, host, h) }));
-  const sendTo = options.sendTo.map((s) => ({ value: sendToKey(s), label: sendToLabel(t, s) }));
+  const mark = (provider: string) => (provider ? <PlaceMark provider={provider} /> : undefined);
+  const homes = options.homes.map((h) => ({ value: h.id, label: homeOptionLabel(t, host, h), glyph: mark(h.provider) }));
+  const sendTo = options.sendTo.map((s) => ({ value: sendToKey(s), label: sendToLabel(t, s), glyph: mark(s.provider) }));
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <Selector

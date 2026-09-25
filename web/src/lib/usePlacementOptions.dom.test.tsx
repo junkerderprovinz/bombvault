@@ -13,6 +13,7 @@ const { usePlacementOptions } = await import("./usePlacementOptions");
 const { placementChanged } = await import("./placementEvents");
 const { reposChanged } = await import("./useNamedRepos");
 const { offsiteTargetsChanged } = await import("./useOffsiteTargets");
+const { placesChanged } = await import("./places");
 
 function Card({ id }: { id: string }) {
   const { options } = usePlacementOptions("vms");
@@ -42,6 +43,13 @@ describe("usePlacementOptions", () => {
     act(() => placementChanged());
     act(() => offsiteTargetsChanged());
     await waitFor(() => expect(fake.callsTo("getPlacementOptions")).toHaveLength(4));
+  });
+
+  it("reads again after a place write, which renames places and switches them off", async () => {
+    render(<Card id="a" />);
+    await waitFor(() => expect(screen.getByTestId("a").textContent).toBe("homes: 2"));
+    act(() => placesChanged());
+    await waitFor(() => expect(fake.callsTo("getPlacementOptions")).toHaveLength(2));
   });
 
   it("starts afresh once the last card of the domain is gone", async () => {

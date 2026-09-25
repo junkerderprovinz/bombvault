@@ -2465,6 +2465,10 @@ export interface HomeOption {
   location: string;
   kind: "domain" | "domain-remote" | "local";
   scheme: string;
+  /** The storage place it lies at, "" for an address that fits no place. */
+  placeId: string;
+  /** That place's provider, for its mark. */
+  provider: string;
 }
 
 export interface TargetOption {
@@ -2474,6 +2478,8 @@ export interface TargetOption {
   primary: boolean;
   appendOnly: boolean;
   hint: "" | "creds-differ";
+  placeId: string;
+  provider: string;
 }
 
 export interface SendToOption {
@@ -2483,6 +2489,8 @@ export interface SendToOption {
   targetId: string;
   name: string;
   location: string;
+  placeId: string;
+  provider: string;
 }
 
 export interface PlacementOptions {

@@ -47,15 +47,15 @@ export function placementView(over?: Partial<PlacementView>): PlacementView {
 }
 
 export function homeOption(over?: Partial<HomeOption>): HomeOption {
-  return { id: "", name: "", location: "backups/containers", kind: "domain", scheme: "", ...over };
+  return { id: "", name: "", location: "backups/containers", kind: "domain", scheme: "", placeId: "", provider: "", ...over };
 }
 
 export function targetOption(over?: Partial<TargetOption>): TargetOption {
-  return { id: "t-b2", name: "B2", enabled: true, primary: true, appendOnly: false, hint: "", ...over };
+  return { id: "t-b2", name: "B2", enabled: true, primary: true, appendOnly: false, hint: "", placeId: "", provider: "", ...over };
 }
 
 export function sendToOption(over?: Partial<SendToOption>): SendToOption {
-  return { kind: "direct", repoId: "", targetId: "t-b2", name: "B2", location: "", ...over };
+  return { kind: "direct", repoId: "", targetId: "t-b2", name: "B2", location: "", placeId: "", provider: "", ...over };
 }
 
 export function defaultRow(over?: Partial<DefaultRow>): DefaultRow {

@@ -53,6 +53,8 @@ export function formatList(lang: string, names: string[]): string {
 }
 
 export function homeOptionLabel(t: T, host: string, h: HomeOption): string {
+  // A place goes by its own name; an address without one says what it is.
+  if (h.placeId) return h.name;
   switch (h.kind) {
     case "domain":
       return withLtrIsolates(
@@ -67,6 +69,7 @@ export function homeOptionLabel(t: T, host: string, h: HomeOption): string {
 }
 
 export function sendToLabel(t: T, s: SendToOption): string {
+  if (s.placeId) return s.name;
   if (s.kind === "remote") return t("placement.homeRemote").replace("{name}", () => s.name);
   const label = t("placement.homeDirect").replace("{target}", () => s.name);
   return s.repoId ? label : `${label} · ${t("placement.directNotYet")}`;
