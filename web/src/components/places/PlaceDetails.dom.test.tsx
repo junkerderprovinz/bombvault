@@ -357,10 +357,18 @@ describe("PlaceDetails sections", () => {
     expect(screen.getByLabelText(en["places.details.isRepository"])).toBeTruthy();
   });
 
+  it("writes each domain's name on the switch that offers it", () => {
+    details();
+    for (const d of ["Containers", "VMs", "Flash"]) {
+      const offer = screen.getByRole("switch", { name: d });
+      expect(within(offer.parentElement!).getByText(d)).toBeTruthy();
+    }
+  });
+
   it("offers another domain with its default folder", async () => {
     details();
     await act(async () => {
-      fireEvent.click(screen.getByRole("switch", { name: en["places.details.offered"].replace("{domain}", "Flash") }));
+      fireEvent.click(screen.getByRole("switch", { name: "Flash" }));
     });
     expect(patches).toEqual([{ folders: { containers: "container", vms: "vms", flash: "flash" } }]);
   });
@@ -371,7 +379,7 @@ describe("PlaceDetails sections", () => {
       target: { value: "vms2" },
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole("switch", { name: en["places.details.offered"].replace("{domain}", "Flash") }));
+      fireEvent.click(screen.getByRole("switch", { name: "Flash" }));
     });
     await settle(800);
     expect(patches).toEqual([{ folders: { containers: "container", vms: "vms2", flash: "flash" } }]);
@@ -381,7 +389,7 @@ describe("PlaceDetails sections", () => {
     answer = () => ({ ok: false, error: "no" });
     details();
     const folder = (d: string) => screen.getByRole("textbox", { name: en["places.details.folderOf"].replace("{domain}", d) }) as HTMLInputElement;
-    const offer = (d: string) => screen.getByRole("switch", { name: en["places.details.offered"].replace("{domain}", d) });
+    const offer = (d: string) => screen.getByRole("switch", { name: d });
     fireEvent.change(folder("VMs"), { target: { value: "vms2" } });
     await act(async () => {
       fireEvent.click(offer("Flash"));
