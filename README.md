@@ -128,7 +128,7 @@ The closest thing to a direct counterpart is [**Vault**](https://github.com/ruaa
 | Native platform packaging | ✅ Unraid CA | ✅ Unraid plugin | ✅ Unraid CA | ❌ generic Docker template | ❌ generic Docker template | ❌ generic Docker template |
 | Web UI | ✅ | ✅ | ✅ | ✅ | ⚠️ separate project (KopiaUI) | ❌ CLI/config-file only |
 
-✅ yes · ❌ no · ⚠️ present but limited · ⏳ planned · ❓ undocumented
+✅ yes · ❌ no · ⚠️ present but limited · ❓ undocumented
 
 <br>
 

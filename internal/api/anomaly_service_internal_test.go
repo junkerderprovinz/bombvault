@@ -8,7 +8,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// The service API is what HTTP and, later, the MCP tools sit on: it turns the
+// The service API is what HTTP and the MCP tools sit on: it turns the
 // rows the engine wrote into sentences the frontend can build, and it is the
 // only way a user closes an episode or changes an item's settings.
 

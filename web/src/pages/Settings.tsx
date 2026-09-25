@@ -28,13 +28,11 @@ import { labelModeChanged } from "../lib/useLabelMode";
 import { InfoBubble } from "../components/InfoBubble";
 import { RetentionPreview } from "../components/RetentionPreview";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
-// No EXACT_CADENCE_MODES here any more (#166): every cadence PICKER on this page
-// edits a schedule that can now count an interval — the five domains and Backup
-// Everything from their LastSuccessful*Backup gates, and drills/tamper/digest
-// from schedule_job_runs (migration v89). The off-site cadences on this page are
-// raw text inputs, not pickers, so they have no mode list to restrict; their
-// everyN refusal is enforced server-side by rejectEveryNSchedules. The one
-// remaining consumer of the constant is ItemScheduleOverride.tsx.
+// Every cadence picker on this page edits a schedule that can count an
+// interval (#166): the six domains and Backup Everything from their last
+// successful backup, drills, tamper test and digest from schedule_job_runs.
+// The off-site cadences are raw text inputs; rejectEveryNSchedules refuses
+// everyN for them on the server.
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import { PAGE_SHELL_TABBED } from "../lib/pageShell";
 import { EffectiveScheduleLine } from "../components/EffectiveScheduleLine";
@@ -481,12 +479,8 @@ function FlashSection({
   const schedule = syncSchedules ? settings.containersSchedule : settings.flashSchedule;
 
   return (
-    // See ContainersSection's own comment above — `title` restored
-    // (jobs.flashScheduleHint's own text, added when the title was dropped,
-    // stays too: unlike Containers/VMs/Folders, Flash has no per-item member
-    // list, so the hint states what a Flash backup actually covers rather
-    // than explaining a list). Same Task 3 `hueIndex` threaded into
-    // CadenceBuilder below.
+    // jobs.flashScheduleHint says what a Flash backup covers: unlike
+    // Containers, VMs, Folders and ZFS, Flash has no per-item list to show it.
     <Card title={t("jobs.flashSection")} hint={tLtr(t, "jobs.flashScheduleHint")} hueIndex={hueIndex}>
       {/* Same synced-owner bubble as VMsSection above. */}
       <ScheduleRow schedule={schedule} hint={syncSchedules ? t("jobs.syncSchedulesHint") : undefined} />
@@ -802,9 +796,9 @@ export function EverythingSection({
   // badge so the CSS animation restarts on a repeat failure.
   const [shake, setShake] = useState(0);
 
-  // The overlap this card warns about is only real when THIS cadence is on
-  // AND at least one of the five domain cadences above is too — configSchedule
-  // included, since the pass ends with the self-backup.
+  // The overlap this card warns about is only real when this cadence is on
+  // and at least one domain cadence is too, the self-backup included, since
+  // the pass ends with it.
   const everythingOn = scheduleStatus(settings.everythingSchedule) !== "off";
   const anyDomainOn = [
     settings.containersSchedule,
@@ -1673,14 +1667,10 @@ export function SettingsPage() {
     // mount load lands in that promise's .catch — killing the whole Settings
     // page, not just this card (see lib/uuid.ts).
     setRegistryRowIds(s.registryAuths.map(() => randomId()));
-    // Detect whether the domain schedules are already in sync (Containers ==
-    // VMs == Flash == Folders, and not off), so the Schedules tab's sync
-    // toggle reflects the server state. Reproduced from the retired Plans
-    // page; filesSchedule is part of the comparison alongside Task 2's own
-    // extension of the toggle's live effect to cover Folders too — without it,
-    // a server state where Containers/VMs/Flash already matched but Folders
-    // didn't would show the toggle ON while Folders still quietly held its own
-    // independent value until the next edit.
+    // The sync toggle reads as on only when Containers, VMs, Flash, Folders
+    // and ZFS already share one cadence that is not off. A domain that differs
+    // keeps its own value until the next edit, so the toggle must not claim
+    // otherwise.
     setSyncSchedules(
       s.vmsSchedule === s.containersSchedule &&
         s.flashSchedule === s.containersSchedule &&
@@ -3243,21 +3233,10 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
       <Card title={t("settings.paths")} hint={t("settings.pathsHint").replace("{root}", hostMountRoot)} hueIndex={nextHue()}>
-        {/* Full-page Speichern-Button sweep (jdp, live review, emphatic:
-            "Die Speicher-Buttons sollen in allen Tabs weg. Überall soll es
-            automatisch speichern."): all six fields below used to batch into
-            one bottom SaveBar. Each now debounce-auto-saves itself instead —
-            the exact same `debouncedSave`-keyed-by-field-name shape the
-            Schedules tab's own `scheduleField` already established for
-            continuously-typed values (a path is typed/browsed the same way a
-            cron string is), just called directly here since these six PATCH
-            single independent fields rather than a whole cadence group.
-              `hueIndex={0..4}` below (GlimStone standing colour-engine rule,
-            closing the gap OffsiteWizard's own hueIndex doc comment already
-            named): these five PathModeSwitch rows are one related GROUP (own
-            local 0-based index per group, same rule as the Domains Card's
-            seven ToggleRows), separate from this Card's own heading
-            `nextHue()` call above. */}
+        {/* Each field saves itself, debounced per field name like the
+            Schedules tab's cadence fields. The six PathModeSwitch rows are
+            one group with their own 0-based hueIndex, separate from this
+            card's heading. */}
         <PathModeSwitch
           label={t("settings.containersPath")}
           domain="containers"
