@@ -79,10 +79,13 @@ func (s *Service) pullOpen(ctx context.Context, ps store.PullSource, settings st
 	// a source does not borrow the shared ones.
 	var env []string
 	if ref := strings.TrimSpace(ps.CredsRef); ref != "" {
-		if c, cErr := s.decodeCloudFor(settings, ref); cErr == nil {
-			env = cloudEnv(c)
-		} else {
-			log.Printf("api: pull source %s: credential set decode failed (continuing without it): %v", ps.ID, cErr) //nolint:gosec // G706: ps.ID is an opaque store-generated id
+		set, cErr := s.credSetFor(settings, ref)
+		if cErr == nil {
+			// rclone locations are refused above, so no set here needs a remote.
+			env, cErr = credSetEnv(set, "")
+		}
+		if cErr != nil {
+			log.Printf("api: pull source %s: its credential set could not be used (continuing without it): %v", ps.ID, cErr) //nolint:gosec // G706: ps.ID is an opaque store-generated id
 		}
 	}
 
