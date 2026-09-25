@@ -72,8 +72,9 @@ describe("PlaceMark", () => {
     expect(brand("storagebox")).toBe("hetzner");
     expect(brand("unraid-folder")).toBe("unraid");
     expect(brand("versitygw")).toBe("versity");
-    // Names that merely contain a brand get the plain glyph.
-    for (const id of ["nextcloud-hub", "b2-eu", "dropbox"]) {
+    // Names that merely contain a brand, or name a member every object has,
+    // get the plain glyph.
+    for (const id of ["nextcloud-hub", "b2-eu", "dropbox", "constructor", "toString"]) {
       const box = draw(id);
       expect(box.querySelector("[data-mark]"), id).toBeNull();
       expect(box.querySelector('[data-glyph="server"]'), id).toBeTruthy();

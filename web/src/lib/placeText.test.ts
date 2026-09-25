@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { countText, en, type TranslationKey } from "./i18n";
-import { folderStateText, placeErrorText, probeFactText, probeFailureText } from "./placeText";
+import { domainName, folderStateText, placeErrorText, probeFactText, probeFailureText, providerName } from "./placeText";
 
 const t = (key: TranslationKey, n?: number) => countText(en[key], "en", n);
 
@@ -85,11 +85,23 @@ describe("probe findings", () => {
 
   it("leaves out a finding this version does not know", () => {
     expect(probeFactText(t, { key: "places.probe.somethingNew" })).toBeNull();
+    expect(probeFactText(t, { key: "constructor" })).toBeNull();
   });
 
   it("has words for every folder state", () => {
     for (const state of ["empty", "repository", "absent", "error"] as const) {
       expect(folderStateText(t, state)).not.toBe("");
     }
+  });
+});
+
+describe("names", () => {
+  it("names a provider or domain it does not know by its id, even one every object has", () => {
+    for (const id of ["dropbox", "constructor", "toString"]) {
+      expect(providerName(t, id)).toBe(id);
+      expect(domainName(t, id)).toBe(id);
+    }
+    expect(providerName(t, "b2")).toBe("Backblaze B2");
+    expect(domainName(t, "vms")).toBe("VMs");
   });
 });
