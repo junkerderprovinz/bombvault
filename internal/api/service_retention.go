@@ -24,9 +24,10 @@ func (s *Service) retentionPolicy(settings store.Settings) restic.RetentionPolic
 	}
 }
 
-// targetOffsiteRetentionPolicy is a row's own keep-policy: a target's, a direct
-// repository's or that of a row at a place. All zero keeps everything.
-func targetOffsiteRetentionPolicy(t store.OffsiteTarget) restic.RetentionPolicy {
+// rowRetentionPolicy is the keep-policy in a row's own columns: a target's, a
+// direct repository's, or that of a named repository its place mirrors rules
+// onto. All zero keeps everything.
+func rowRetentionPolicy(t store.OffsiteTarget) restic.RetentionPolicy {
 	return restic.RetentionPolicy{
 		KeepLast:    t.RetentionKeepLast,
 		KeepDaily:   t.RetentionKeepDaily,
@@ -503,7 +504,7 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		switch {
 		case !applyPolicy:
 		case isOffsiteSource(source):
-			policy = targetOffsiteRetentionPolicy(target)
+			policy = rowRetentionPolicy(target)
 		default:
 			policy = s.retentionPolicyForRef(settings, domain, r)
 		}
