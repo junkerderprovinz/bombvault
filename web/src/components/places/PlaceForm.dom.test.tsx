@@ -44,6 +44,15 @@ vi.mock("../../lib/api", async (importOriginal) => {
   };
 });
 
+// The stub is built inside its factory, which vitest hoists above this file's imports.
+vi.mock("./MeshOffers", async () => {
+  const { createElement } = await import("react");
+  return {
+    MeshOffers: ({ onAccepted }: { onAccepted: (place: { id: string; name: string }) => void }) =>
+      createElement("button", { type: "button", onClick: () => onAccepted({ id: "p9", name: "mesh: tower" }) }, "accept an offer"),
+  };
+});
+
 const { PlaceForm } = await import("./PlaceForm");
 
 const WASABI: CatalogProvider = {
@@ -382,5 +391,21 @@ describe("PlaceForm rest-server", () => {
     type(en["places.field.url"], "http://nas:8000");
     await testConnection();
     expect(probes[0]!.fields).toMatchObject({ url: "http://nas:8000", user: "tower", password: "Xy12" });
+  });
+});
+
+const BOMBVAULT: CatalogProvider = { ...REST, id: "bombvault" };
+
+describe("PlaceForm Another BombVault", () => {
+  it("adds the place an accepted offer made", async () => {
+    const onAdded = await form(BOMBVAULT);
+    fireEvent.click(screen.getByRole("button", { name: "accept an offer" }));
+    expect(onAdded).toHaveBeenCalledWith({ id: "p9", name: "mesh: tower" });
+    expect(screen.queryByRole("button", { name: en["places.recipe.show"] })).toBeNull();
+  });
+
+  it("lists no offers under another provider", async () => {
+    await form(REST);
+    expect(screen.queryByRole("button", { name: "accept an offer" })).toBeNull();
   });
 });
