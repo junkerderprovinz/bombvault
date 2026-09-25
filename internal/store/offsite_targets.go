@@ -145,7 +145,8 @@ const primaryRowName = "Primary (remote)"
 //
 // The place columns are written for a new row only. A stored row keeps its
 // place, which AttachRowTx and DetachRowTx set, unless this write gives it
-// another address: then it leaves the place, which no longer spells it.
+// another address: then it leaves the place, which does not spell the new
+// address.
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo

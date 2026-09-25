@@ -718,8 +718,8 @@ func stringsQ(q queryer, query string, args ...any) ([]string, error) {
 }
 
 // detachMovedRowTx takes a row off its place when a write gives it another
-// address: the place no longer spells it, and the row goes on working from
-// the address it was given.
+// address: the place does not spell the new one, and the row goes on working
+// from the address it was given.
 func detachMovedRowTx(tx *sql.Tx, id, role, repo string) error {
 	_, err := tx.Exec(`UPDATE offsite_targets SET place_id = '', place_domain = '', place_suffix = ''
 		WHERE id = ? AND role = ? AND place_id <> '' AND repo <> ?`, id, role, repo)
