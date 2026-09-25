@@ -75,31 +75,36 @@ func nasKeller() store.Place {
 	}
 }
 
-func drillsOn(f *placementFixture) {
+func TestATargetOnThePremisesIsNoOffsiteCopy(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
+	f.linkRow(nas.ID, f.storePlace(nasKeller()), "containers", "")
+	f.container("nginx", "")
+
+	if d := f.domainStatus("containers"); d.OffsiteConfigured || d.OffPremisesCovered {
+		t.Fatalf("configured %v, covered %v; want both false, which shows No off-site copy", d.OffsiteConfigured, d.OffPremisesCovered)
+	}
+}
+
+func TestTheDrillOfAnOffsiteFieldInTheHouseStillReadsAsScheduled(t *testing.T) {
+	f := newPlacementFixture(t)
 	f.settings(func(s *store.Settings) {
 		s.ContainersEnabled = true
 		s.DrillsEnabled = true
 		s.OffsiteDrillsEnabled = true
 	})
-}
-
-func TestATargetOnThePremisesIsNoOffsiteCopy(t *testing.T) {
-	f := newPlacementFixture(t)
-	drillsOn(f)
-	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
+	nas := f.fieldTarget("containers", "remotes/nas/bv/containers")
 	f.linkRow(nas.ID, f.storePlace(nasKeller()), "containers", "")
 	f.container("nginx", "")
 
-	d := f.domainStatus("containers")
-	if d.OffsiteConfigured || d.OffsiteDrillScheduled || d.OffPremisesCovered {
-		t.Fatalf("configured %v, drill %v, covered %v; want all false, which shows No off-site copy",
-			d.OffsiteConfigured, d.OffsiteDrillScheduled, d.OffPremisesCovered)
+	if d := f.domainStatus("containers"); d.OffsiteConfigured || !d.OffsiteDrillScheduled {
+		t.Fatalf("configured %v, drill %v; want false and true, since the scheduler drills the off-site field wherever it stands",
+			d.OffsiteConfigured, d.OffsiteDrillScheduled)
 	}
 }
 
 func TestATargetAtAPlaceOffThePremisesIsAnOffsiteCopy(t *testing.T) {
 	f := newPlacementFixture(t)
-	drillsOn(f)
 	nas := f.target("containers", "NAS", "remotes/friend/bv/containers")
 	f.linkRow(nas.ID, f.storePlace(store.Place{
 		Name: "NAS at a friend's", Provider: "synology", Kind: "local", Base: "remotes/friend/bv",
@@ -107,8 +112,8 @@ func TestATargetAtAPlaceOffThePremisesIsAnOffsiteCopy(t *testing.T) {
 	}), "containers", "")
 	f.container("nginx", "")
 
-	if d := f.domainStatus("containers"); !d.OffsiteConfigured || !d.OffsiteDrillScheduled {
-		t.Fatalf("configured %v, drill %v; want both true", d.OffsiteConfigured, d.OffsiteDrillScheduled)
+	if !f.domainStatus("containers").OffsiteConfigured {
+		t.Fatal("a target at a place off the premises is an off-site copy")
 	}
 }
 
