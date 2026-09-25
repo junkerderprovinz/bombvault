@@ -323,8 +323,8 @@ export function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T;
     "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
   // Centred rather than top-anchored, which would push the heading notch
-  // against the viewport edge. The box is capped at 90vh, so it never clips,
-  // and the backdrop scrolls when the content grows.
+  // against the viewport edge. The window is capped at 90vh, so it never clips,
+  // and its fields scroll inside it when they outgrow it.
   return createPortal(
     <div className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4" onClick={onClose}>
       {/* The heading notch sits on a shell around the window, as in

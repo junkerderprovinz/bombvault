@@ -398,8 +398,8 @@ export function ReceiverDialog({
   const inputCls =
     "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
-  // Centring is safe: the box is capped at 90vh, so its top never goes
-  // negative, and the backdrop scrolls if the content grows.
+  // Centring is safe: the window is capped at 90vh, so its top never goes
+  // negative, and its fields scroll inside it when they outgrow it.
   return createPortal(
     <div
       className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
