@@ -523,13 +523,12 @@ export function PlaceDetails({
             const locked = place.repository || place.locked[d] === true;
             return (
               <div key={`${d}-${shake[`offer-${d}`] ?? 0}`} className={`flex flex-wrap items-center gap-3 ${shaken(`offer-${d}`)}`}>
-                <span className="w-28 text-sm text-carbon-text">{domainName(t, d)}</span>
                 <Toggle
-                  label={t("places.details.offered").replace("{domain}", domainName(t, d))}
-                  hideLabel
+                  label={domainName(t, d)}
                   checked={offered}
                   disabled={locked}
                   onChange={(v) => setOffered(d, v)}
+                  className="w-40 justify-between"
                 />
                 <input
                   type="text"
