@@ -3,7 +3,6 @@
 // with the action that goes ahead last (GlimStone rule 15). Each window is
 // rendered, because where the row lands is a fact about the finished tree, and
 // the source is read so that no window is left out.
-import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -12,6 +11,7 @@ import type { ReactNode } from "react";
 import { I18nProvider, countText, en, type TranslationKey, type useT } from "../lib/i18n";
 import type { FileSetView, FleetPeer } from "../lib/api";
 import { WindowActions } from "./WindowActions";
+import { readSource, walkTsx } from "./sourceTree.testsupport";
 
 vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),
@@ -215,19 +215,11 @@ const WINDOWS: Shown[] = [
   },
 ];
 
-function tsxFiles(dir: string): string[] {
-  return readdirSync(dir).flatMap((entry) => {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) return tsxFiles(full);
-    return /\.tsx$/.test(entry) && !entry.includes(".test.") ? [full] : [];
-  });
-}
-
 /** Every file that renders a modal window, with how many it renders. */
 function windowFiles(): Map<string, number> {
   const found = new Map<string, number>();
-  for (const file of tsxFiles(SRC)) {
-    const count = readFileSync(file, "utf8").split('aria-modal="true"').length - 1;
+  for (const file of walkTsx(SRC)) {
+    const count = readSource(file).split('aria-modal="true"').length - 1;
     if (count > 0) found.set(relative(SRC, file).replace(/\\/g, "/"), count);
   }
   return found;
@@ -250,7 +242,7 @@ describe("every window", () => {
 
   it("builds its row from WindowActions", () => {
     const own = [...windowFiles().keys()].filter(
-      (file) => !readFileSync(join(SRC, file), "utf8").includes("<WindowActions"),
+      (file) => !readSource(join(SRC, file)).includes("<WindowActions"),
     );
     expect(own, "These windows lay out their own button row.").toEqual([]);
   });

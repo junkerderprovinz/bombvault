@@ -3,21 +3,19 @@
 // window, and no rule between rows. A line looks deliberate where it is written
 // and only reads as clutter on the page, so this reads every class list and
 // every stylesheet rule instead of rendering a few pages.
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { blank, blankComments, readSource, walk } from "../components/sourceTree.testsupport";
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** Source files under `dir` whose names match `ext`, without tests and without
  *  the translations, where "border" is a word and not a class. */
 function sourceFiles(dir: string, ext: RegExp): string[] {
-  return readdirSync(dir).flatMap((entry) => {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) return entry === "locales" ? [] : sourceFiles(full, ext);
-    if (!ext.test(entry) || /\.test\.|\.testsupport\./.test(entry) || entry === "i18n.ts") return [];
-    return [full];
+  return walk(dir).filter((full) => {
+    const [name, ...dirs] = relative(dir, full).split(sep).reverse();
+    return ext.test(name) && !/\.test\.|\.testsupport\./.test(name) && name !== "i18n.ts" && !dirs.includes("locales");
   });
 }
 
@@ -42,17 +40,6 @@ function lineAt(text: string, index: number): number {
     else hi = mid - 1;
   }
   return lo + 1;
-}
-
-/** Blanks keep the line numbers of what is left. */
-const blank = (m: string) => m.replace(/[^\n]/g, " ");
-
-/** Comments quote the classes they warn against, so they are blanked. `//`
- *  after a colon or a quote is a URL or a string. */
-function blankComments(source: string): string {
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, blank)
-    .replace(/(^|[^:"'`\\])(\/\/.*)$/gm, (_m, before: string, comment: string) => before + blank(comment));
 }
 
 const QUOTED = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/g;
@@ -175,10 +162,17 @@ type Line = { file: string; line: number; text: string };
 // (`borderColor`, `borderTopColor`) draw nothing on their own.
 const STYLE_KEY = /\bborder(?:Top|Right|Bottom|Left|Inline|Block)?(?:Start|End)?(?:Width|Style)?\s*:/g;
 
-function sourceLines(): Line[] {
+/** `scan` run on the first call only: the line checks and the honesty test ask
+ *  for the same lines. */
+function once<T>(scan: () => T): () => T {
+  let result: T | undefined;
+  return () => (result ??= scan());
+}
+
+const sourceLines = once((): Line[] => {
   const out: Line[] = [];
   for (const file of sourceFiles(SRC, /\.tsx?$/)) {
-    const text = readFileSync(file, "utf8");
+    const text = readSource(file);
     for (const { text: list, line } of literals(text)) {
       if (!drawsLine(list) || ALLOWED_CLASS_LISTS.some((a) => a.match.test(list))) continue;
       out.push({ file: where(file), line, text: list.trim() });
@@ -191,17 +185,17 @@ function sourceLines(): Line[] {
     }
   }
   return out;
-}
+});
 
 // Only the properties that give a border its width or style; border-radius,
 // border-color and border-collapse draw nothing.
 const CSS_LINE =
   /(?:^|[;{\s])(border(?:-(?:top|right|bottom|left|inline|block)(?:-(?:start|end))?)?(?:-(?:width|style))?)\s*:\s*([^;}]*)/g;
 
-function stylesheetLines(): Line[] {
+const stylesheetLines = once((): Line[] => {
   const out: Line[] = [];
   for (const file of sourceFiles(SRC, /\.css$/)) {
-    const css = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, blank);
+    const css = readSource(file).replace(/\/\*[\s\S]*?\*\//g, blank);
     for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       const selector = rule[1].trim();
       if (selector in ALLOWED_RULES) continue;
@@ -213,7 +207,7 @@ function stylesheetLines(): Line[] {
     }
   }
   return out;
-}
+});
 
 const report = (lines: Line[]) => lines.map((l) => `  ${l.file}:${l.line}  ${l.text}`).join("\n");
 
@@ -282,7 +276,7 @@ describe("focus", () => {
     const lost: string[] = [];
     for (const file of sourceFiles(SRC, /\.tsx?$/)) {
       if (where(file) in ALLOWED_OUTLINE_NONE) continue;
-      for (const { text, line } of literals(readFileSync(file, "utf8"))) {
+      for (const { text, line } of literals(readSource(file))) {
         const noRing = text.split(/\s+/).some((t) => utility(t) === "outline-none");
         if (noRing && !FIELD_FOCUS.test(text)) lost.push(`${where(file)}:${line}`);
       }
@@ -291,7 +285,7 @@ describe("focus", () => {
   });
 
   it("drops the ring in the stylesheet only where a field steps its fill", () => {
-    const css = readFileSync(join(SRC, "index.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    const css = readSource(join(SRC, "index.css")).replace(/\/\*[\s\S]*?\*\//g, "");
     const lost: string[] = [];
     for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       if (!/(?:^|[;\s])outline\s*:\s*(?:none|0)\s*(?:;|$)/.test(rule[2])) continue;
@@ -302,7 +296,7 @@ describe("focus", () => {
   });
 
   it("steps a focused field's fill", () => {
-    const css = readFileSync(join(SRC, "index.css"), "utf8");
+    const css = readSource(join(SRC, "index.css"));
     for (const selector of [".glim-field-focus:focus", ".glim-field-focus-well:focus"]) {
       const body = new RegExp(`${selector.replace(/[.:-]/g, "\\$&")}\\s*\\{([^}]*)\\}`).exec(css)?.[1];
       expect(body, `${selector} is missing`).toBeDefined();
