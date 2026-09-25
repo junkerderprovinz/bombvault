@@ -10,11 +10,13 @@ import {
   followLine,
   formatList,
   homeOptionLabel,
+  homeKey,
   lastChipLocked,
   lockedSegments,
   lockHint,
   noCopyNow,
   observedLine,
+  placeSave,
   planLines,
   segmentItems,
   sendToLabel,
@@ -202,6 +204,52 @@ describe("steps", () => {
     expect(addsTargets(placementView(), { copies: { skip: ["*"] } })).toBe(false);
     expect(addsTargets(placementView(), { copies: { follow: true } })).toBe(true);
     expect(addsTargets(placementView(), { home: { repo: "repo-nas" } })).toBe(false);
+  });
+});
+
+describe("places without a repository", () => {
+  const nas = homeOption({ name: "NAS Keller", kind: "local", placeId: "p-nas" });
+
+  it("keeps a place apart from the domain path, which also has no id", () => {
+    expect(homeKey(homeOption())).toBe("");
+    expect(homeKey(nas)).toBe("place:p-nas");
+    expect(homeKey(homeOption({ id: "repo-nas", kind: "local", placeId: "p-nas" }))).toBe("repo-nas");
+  });
+
+  it("turns Stored on, Send to and Off-site only into a place step", () => {
+    const b2 = sendToOption({ kind: "remote", repoId: "", targetId: "", name: "B2", placeId: "p-b2" });
+    expect(stepForHome("place:p-nas", placementView(), placementOptions({ homes: [homeOption(), nas] }), t, "Unraid")).toEqual({
+      kind: "place",
+      placeId: "p-nas",
+      confirmHome: "NAS Keller",
+      name: "NAS Keller",
+      repoKind: "local",
+      offsiteOnly: false,
+    });
+    expect(stepForSendTo(b2, onBox, t)).toMatchObject({ kind: "place", placeId: "p-b2", repoKind: "remote", offsiteOnly: false });
+    expect(stepForSegment("offsite-only", placementView(), placementOptions({ sendTo: [b2] }), t, "Unraid")).toMatchObject({
+      kind: "place",
+      placeId: "p-b2",
+      offsiteOnly: true,
+    });
+    expect(stepForSendTo(sendToOption(), onBox, t)).toEqual({ kind: "direct", target: sendToOption() });
+  });
+
+  it("writes the repository the place stands for once it exists", () => {
+    const step = { kind: "place", placeId: "p-b2", confirmHome: "B2", name: "B2", repoKind: "remote", offsiteOnly: true } as const;
+    expect(placeSave(step, "repo-new")).toEqual({
+      change: { home: { repo: "repo-new" }, copies: { skip: ["*"] } },
+      optimistic: {
+        repo: "repo-new",
+        repoKind: "remote",
+        repoLabel: "B2",
+        homeFollows: false,
+        segment: "offsite-only",
+        skip: ["*"],
+        copiesFollow: false,
+      },
+    });
+    expect(placeSave({ ...step, repoKind: "local", offsiteOnly: false }, "repo-nas").change).toEqual({ home: { repo: "repo-nas" } });
   });
 });
 

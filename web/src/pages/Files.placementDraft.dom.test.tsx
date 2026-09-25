@@ -4,6 +4,7 @@ import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import type { FileSetView } from "../lib/api";
 import { useT } from "../lib/i18n";
 import {
+  homeOption,
   placementOptions,
   placementView,
   renderWithProviders,
@@ -19,6 +20,16 @@ vi.mock("../lib/api", async (importOriginal) => ({
   ...fake.api,
   patchFileSet,
   browse: () => Promise.resolve({ ok: true, status: "ok", truncated: false, dirs: [] }),
+}));
+
+const placeRepos = vi.hoisted(() => ({ calls: [] as [string, string][], answers: [] as unknown[] }));
+
+vi.mock("../lib/places", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/places")>()),
+  ensurePlaceRepo: (placeId: string, domain: string) => {
+    placeRepos.calls.push([placeId, domain]);
+    return Promise.resolve(placeRepos.answers.shift() ?? { ok: true, repoId: "repo-new" });
+  },
 }));
 
 const { FileSetDialog } = await import("./Files");
@@ -74,6 +85,18 @@ describe("adding a folder set", () => {
     expect(screen.queryByText(/from now on\?/)).toBeNull();
     fillAndSave();
     await waitFor(() => expect(fake.callsTo("createFileSet")).toEqual([[{ ...BASE, repo: "repo-nas" }]]));
+  });
+
+  it("makes a place's repository when the place is set, and sends it with the set", async () => {
+    placeRepos.calls.length = 0;
+    const nas = homeOption({ name: "NAS Keller", kind: "local", location: "nas/files", placeId: "p-nas", provider: "synology" });
+    fake.reply("getPlacementOptions", { ok: true, options: placementOptions({ domain: "files", homes: [homeOption(), nas] }) });
+    await openAdd();
+    wheel(screen.getByRole("combobox", { name: "Stored on" }), 1);
+    fireEvent.click(screen.getByRole("button", { name: "Set" }));
+    await waitFor(() => expect(placeRepos.calls).toEqual([["p-nas", "files"]]));
+    fillAndSave();
+    await waitFor(() => expect(fake.callsTo("createFileSet")).toEqual([[{ ...BASE, repo: "repo-new" }]]));
   });
 
   it("creates the remembered direct repository before the set", async () => {

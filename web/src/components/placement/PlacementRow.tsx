@@ -16,6 +16,7 @@ import {
   followLine,
   formatList,
   noCopyNow,
+  placeSave,
   stepForChip,
   stepForHome,
   stepForReset,
@@ -27,9 +28,13 @@ import {
 } from "../../lib/placement";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
+import { placeErrorText } from "../../lib/placeText";
+import { ensurePlaceRepo } from "../../lib/places";
+import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { useHostLabel } from "../../lib/useHostLabel";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
+import { reposChanged } from "../../lib/useNamedRepos";
 import { usePlacementSave } from "../../lib/usePlacementSave";
 import { DirectRepoDialog } from "./DirectRepoDialog";
 import { PlacementBar } from "./PlacementBar";
@@ -76,6 +81,8 @@ export function PlacementRow({
   const { options, error } = usePlacementOptions(item.domain);
   const { shown, shake, save } = usePlacementSave(item, view, onView);
   const { confirm, confirmDialog } = useConfirm();
+  const { push } = useToast();
+  const [placeShake, setPlaceShake] = useState(0);
   const [direct, setDirect] = useState<SendToOption | null>(null);
   const [asking, setAsking] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
@@ -120,6 +127,28 @@ export function PlacementRow({
     // The bar stays put until the question is answered: a second choice would
     // take the dialog over and leave the first one hanging.
     setAsking(true);
+    if (step.kind === "place") {
+      try {
+        const question = t("placement.confirmHome").replace("{name}", () => name).replace("{home}", () => step.confirmHome);
+        if (!(await confirm(question, { confirmLabel: t("placement.saveHome"), confirmLabelKey: "placement.saveHome" }))) return;
+        // The repository is made once the question is answered, not before.
+        const res = await ensurePlaceRepo(step.placeId, item.domain);
+        if (!res.ok || res.repoId === undefined) {
+          push(placeErrorText(t, lang, res, "settings.error"), "fail");
+          setPlaceShake((n) => n + 1);
+          return;
+        }
+        reposChanged();
+        const { change, optimistic } = placeSave(step, res.repoId);
+        save(change, optimistic);
+      } catch (err) {
+        push(err instanceof Error ? err.message : t("settings.error"), "fail");
+        setPlaceShake((n) => n + 1);
+      } finally {
+        setAsking(false);
+      }
+      return;
+    }
     try {
       const home = step.confirmHome;
       if (home !== null) {
@@ -151,7 +180,7 @@ export function PlacementRow({
           <span className="pt-1.5 text-xs text-statusWarn">{t("placement.unreadable")}</span>
         ) : (
           options && (
-            <div key={shake} className={`min-w-0 flex-1${shake ? " glim-shake" : ""}`}>
+            <div key={shake + placeShake} className={`min-w-0 flex-1${shake + placeShake ? " glim-shake" : ""}`}>
               <PlacementBar
                 view={shown}
                 options={options}

@@ -3,7 +3,7 @@ import { Selector } from "../Selector";
 import type { SelectOption } from "../SelectField";
 import type { PlacementOptions, PlacementView, SegmentId, SendToOption } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { homeOptionLabel, lockedSegments, segmentItems, sendToLabel, viewHomeLabel } from "../../lib/placement";
+import { homeKey, homeOptionLabel, lockedSegments, segmentItems, sendToLabel, viewHomeLabel } from "../../lib/placement";
 import { HomeSelect } from "./HomeSelect";
 import { TargetChips } from "./TargetChips";
 
@@ -19,10 +19,12 @@ export interface PlacementBarProps {
   onChip: (targetId: string, on: boolean) => void;
 }
 
-/** sendToKey tells a direct repository that does not exist yet apart from every
- *  repository id, so Send to can offer it as a value of its own. */
+/** sendToKey tells a repository that does not exist yet apart from every
+ *  repository id, so Send to can offer it as a value of its own: a place's by
+ *  the place, a direct one beside a target without a place by the target. */
 export function sendToKey(opt: SendToOption): string {
-  return opt.repoId || `direct:${opt.targetId}`;
+  if (opt.repoId) return opt.repoId;
+  return opt.placeId ? `place:${opt.placeId}` : `direct:${opt.targetId}`;
 }
 
 // withStored keeps a stored value that is switched off or unknown in the list,
@@ -46,7 +48,7 @@ export function PlacementBar({
   const home = viewHomeLabel(t, host, view, options);
   const segment = view.segment === "" ? null : view.segment;
   const mark = (provider: string) => (provider ? <PlaceMark provider={provider} /> : undefined);
-  const homes = options.homes.map((h) => ({ value: h.id, label: homeOptionLabel(t, host, h), glyph: mark(h.provider) }));
+  const homes = options.homes.map((h) => ({ value: homeKey(h), label: homeOptionLabel(t, host, h), glyph: mark(h.provider) }));
   const sendTo = options.sendTo.map((s) => ({ value: sendToKey(s), label: sendToLabel(t, s), glyph: mark(s.provider) }));
   return (
     <div className="flex min-w-0 flex-col gap-2">
