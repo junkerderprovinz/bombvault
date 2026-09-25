@@ -1,7 +1,9 @@
 package places
 
 import (
+	"cmp"
 	"fmt"
+	"net"
 	"net/url"
 	"regexp"
 	"slices"
@@ -180,6 +182,24 @@ func fill(tmpl string, fields map[string]string) (string, error) {
 	return out, nil
 }
 
+// withScheme gives an address typed without a scheme https.
+func withScheme(addr string) string {
+	if strings.Contains(addr, "://") {
+		return addr
+	}
+	return "https://" + addr
+}
+
+// hostOf is the lower-case host of an address, without its scheme, port or
+// path.
+func hostOf(addr string) string {
+	u, err := url.Parse(withScheme(strings.TrimSpace(addr)))
+	if err != nil {
+		return ""
+	}
+	return strings.ToLower(u.Hostname())
+}
+
 // Endpoint is the S3 endpoint of a provider: its template filled from the
 // form, or the endpoint field where it has none. An endpoint typed without a
 // scheme gets https.
@@ -194,10 +214,7 @@ func Endpoint(p Provider, fields map[string]string) (string, error) {
 	if endpoint == "" {
 		return "", MissingField("endpoint")
 	}
-	if !strings.Contains(endpoint, "://") {
-		endpoint = "https://" + endpoint
-	}
-	return strings.TrimRight(endpoint, "/"), nil
+	return strings.TrimRight(withScheme(endpoint), "/"), nil
 }
 
 // S3Region is the region a provider's S3 requests are signed for. R2 and GCS
@@ -215,8 +232,7 @@ func S3Region(p Provider, fields map[string]string) string {
 			return "de"
 		}
 	case "b2":
-		host := strings.TrimRight(strings.TrimPrefix(strings.TrimPrefix(fields["endpoint"], "https://"), "http://"), "/")
-		if rest, ok := strings.CutPrefix(host, "s3."); ok {
+		if rest, ok := strings.CutPrefix(hostOf(fields["endpoint"]), "s3."); ok {
 			if b2Region, ok := strings.CutSuffix(rest, ".backblazeb2.com"); ok {
 				return b2Region
 			}
@@ -237,9 +253,7 @@ func WebDAVURL(server, user string) string {
 	if server == "" {
 		return ""
 	}
-	if !strings.Contains(server, "://") {
-		server = "https://" + server
-	}
+	server = withScheme(server)
 	if strings.Contains(server, "/remote.php/") || strings.Contains(server, "/dav/") {
 		return server + "/"
 	}
@@ -251,8 +265,9 @@ func WebDAVURL(server, user string) string {
 // is reached through.
 func Base(p Provider, fields map[string]string, placeID string) (string, error) {
 	get := func(key string) string { return strings.TrimSpace(fields[key]) }
+	// A value of nothing but slashes names no bucket, server or remote.
 	need := func(key string) (string, error) {
-		if v := get(key); v != "" {
+		if v := strings.Trim(get(key), "/"); v != "" {
 			return v, nil
 		}
 		return "", MissingField(key)
@@ -279,24 +294,29 @@ func Base(p Provider, fields map[string]string, placeID string) (string, error) 
 		if err != nil {
 			return "", err
 		}
-		return under("s3:" + endpoint + "/" + strings.Trim(bucket, "/")), nil
+		return under("s3:" + endpoint + "/" + bucket), nil
 	case KindREST:
 		server, err := need("url")
+		if err != nil {
+			return "", err
+		}
+		user, err := need("user")
 		if err != nil {
 			return "", err
 		}
 		// rest-server with --private-repos serves each user only the tree under
 		// its own name, so the path starts with the user unless one is typed.
 		if sub == "" {
-			sub = get("user")
+			sub = user
 		}
-		return under("rest:" + strings.TrimRight(server, "/")), nil
+		return under("rest:" + withScheme(server)), nil
 	case KindSFTP:
 		user, err := need("user")
 		if err != nil {
 			return "", err
 		}
-		host := get("host")
+		// JoinHostPort puts an IPv6 host in brackets, so typed ones are dropped.
+		host := strings.TrimSuffix(strings.TrimPrefix(get("host"), "["), "]")
 		if host == "" && p.EndpointTemplate != "" {
 			if host, err = fill(p.EndpointTemplate, fields); err != nil {
 				return "", err
@@ -305,14 +325,30 @@ func Base(p Provider, fields map[string]string, placeID string) (string, error) 
 		if host == "" {
 			return "", MissingField("host")
 		}
-		port := get("port")
-		if port == "" {
-			port = strconv.Itoa(p.DefaultPort)
+		port := cmp.Or(get("port"), strconv.Itoa(p.DefaultPort))
+		if _, err := strconv.ParseUint(port, 10, 16); err != nil {
+			return "", fmt.Errorf("the port %q is not a port number", port)
 		}
-		return under("sftp://" + user + "@" + host + ":" + port), nil
+		// restic reads the path after the port as relative to the login's home
+		// directory, so an absolute one needs a second slash.
+		if strings.HasPrefix(get("path"), "/") {
+			sub = "/" + sub
+		}
+		return under("sftp://" + user + "@" + net.JoinHostPort(host, port)), nil
 	case KindWebDAV:
+		// The server and user reach the rclone remote rather than the address,
+		// and the place cannot be opened without them.
+		if _, err := need("url"); err != nil {
+			return "", err
+		}
+		if _, err := need("user"); err != nil {
+			return "", err
+		}
 		return "rclone:" + RemoteName(placeID) + ":" + sub, nil
 	case KindAzure:
+		if _, err := need("account"); err != nil {
+			return "", err
+		}
 		container, err := need("container")
 		if err != nil {
 			return "", err
@@ -376,7 +412,8 @@ func DetectProvider(repo string) string {
 	repo = strings.TrimSpace(repo)
 	scheme, rest, remote := strings.Cut(repo, ":")
 	if !remote || strings.Contains(scheme, "/") {
-		if p := strings.TrimPrefix(repo, "/"); p == "remotes" || strings.HasPrefix(p, "remotes/") {
+		p := strings.TrimPrefix(strings.TrimPrefix(repo, "/mnt"), "/")
+		if p == "remotes" || strings.HasPrefix(p, "remotes/") {
 			return "share"
 		}
 		return "unraid-folder"
@@ -394,8 +431,7 @@ func DetectProvider(repo string) string {
 	case "azure":
 		return "azure"
 	case "s3":
-		host, _, _ := strings.Cut(strings.TrimPrefix(strings.TrimPrefix(rest, "https://"), "http://"), "/")
-		host = strings.ToLower(host)
+		host := hostOf(rest)
 		// IDrive e2 endpoints carry the region in the domain itself.
 		if strings.Contains(host, ".idrivee2") {
 			return "idrive"
