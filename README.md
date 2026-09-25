@@ -101,9 +101,9 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 
 ### How it compares
 
-Most Unraid servers are backed up with [**Appdata.Backup**](https://github.com/Commifreak/unraid-appdata.backup), a CA plugin that archives appdata folders, or with a general engine such as [Duplicati](https://duplicati.com), [Kopia](https://kopia.io) or [BorgBackup](https://borgbackup.readthedocs.io). They save files well, but a restore gives you files back, not a running container or VM.
+On Unraid, backups usually run through [**Appdata.Backup**](https://github.com/Commifreak/unraid-appdata.backup), a CA plugin that archives appdata folders, or through a general engine such as [Duplicati](https://duplicati.com), [Kopia](https://kopia.io) or [BorgBackup](https://borgbackup.readthedocs.io). They save files well, but a restore gives you files back, not a running container or VM.
 
-The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by [@ruaan-deysel](https://github.com/ruaan-deysel), a native Unraid plugin built on the same idea: it recreates containers and re-defines VMs on restore. Vault is ahead on what it can back up and on watching backups over time, and an AI assistant can talk to it. BombVault is ahead on getting data back: restic reads its backups without BombVault, the off-site copy can be append-only, and restores are tested for real. Worth a look.
+The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by [@ruaan-deysel](https://github.com/ruaan-deysel), a native Unraid plugin built on the same idea: it recreates containers and re-defines VMs on restore. Vault is ahead on what it can back up and on watching backups over time, its web UI works on a phone, and an AI assistant can talk to it. BombVault is ahead on getting data back: restic reads its backups without BombVault, the off-site copy can be append-only, and restores are tested for real. Worth a look.
 
 | | **BombVault** | Vault (plugin) | Appdata.Backup (CA) | Duplicati | Kopia | BorgBackup |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
@@ -111,9 +111,9 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Restore re-defines a VM, not only its disks | ✅ | ✅ | ⚠️ XML only | ❌ | ❌ | ❌ |
 | Database dumps for recognised database containers | ❌ in progress | ✅ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
 | Installed Unraid plugins | ⚠️ in flash backup | ✅ | ⚠️ in flash backup | ❌ | ❌ | ❌ |
-| ZFS datasets as a source | ❌ in progress | ✅ | ❌ | ❌ | ⚠️ as folders | ⚠️ via Borgmatic |
+| ZFS datasets as a source | ❌ in progress | ✅ | ❌ | ❌ | ⚠️ via action scripts | ⚠️ via Borgmatic |
 | Deduplication | ✅ | ✅ opt-in | ❌ | ✅ fixed blocks | ✅ | ✅ |
-| Client-side encryption | ✅ | ✅ optional | ❌ | ✅ | ✅ | ✅ |
+| Client-side encryption | ✅ on by default | ✅ opt-in | ❌ | ✅ | ✅ | ✅ |
 | Backups readable with a standard open-source CLI | ✅ restic | ⚠️ not with dedup | ✅ tar | ⚠️ Python script | ✅ kopia | ✅ borg |
 | Append-only or immutable off-site copy | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Scheduled test restores, not only a checksum read | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
@@ -121,7 +121,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Pre/post-backup hooks | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ via Borgmatic |
 | Live progress and cancel, backup and restore | ✅ | ⚠️ no restore cancel | ⚠️ log, no percentage | ✅ | ⚠️ [no restore percentage](https://github.com/kopia/kopia/issues/3609) | ⚠️ CLI or Vorta |
 | Notifications | ✅ SMTP, Matrix, Apprise, more | ✅ Discord, Unraid | ✅ Unraid's agents | ✅ email, Telegram, HTTP | ✅ email, Pushover, webhook | ⚠️ via Borgmatic |
-| Anomaly detection (size, duration, shrink, mass rewrite) | ❌ in progress | ⚠️ no rewrite check | ❌ | ⚠️ paid Console | ❌ | ❌ |
+| Anomaly detection (size, duration, shrink) | ❌ in progress | ✅ | ❌ | ⚠️ paid Console | ❌ | ❌ |
 | AI assistant access (MCP) | ❌ in progress | ✅ | ❌ | ⚠️ third party | ❌ | ❌ |
 | Backs up desktops and laptops | ❌ | ❌ | ❌ | ✅ | ✅ | ⚠️ Windows experimental |
 | Runs outside Unraid | ✅ | ⚠️ replica only | ❌ | ✅ | ✅ | ✅ |
