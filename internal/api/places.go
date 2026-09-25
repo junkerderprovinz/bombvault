@@ -426,6 +426,10 @@ func placeFail(w http.ResponseWriter, err error) {
 	if errors.As(err, &probe) {
 		extra["probe"] = probe.result
 	}
+	var moved *placeEstablishedErr
+	if errors.As(err, &moved) {
+		extra["snapshots"], extra["domains"] = moved.snapshots, moved.domains
+	}
 	placementFail(w, err, extra)
 }
 
@@ -652,6 +656,9 @@ type patchPlaceBody struct {
 	LimitDownload        *int    `json:"limitDownload"`
 	GrowthBudgetGB       *int    `json:"growthBudgetGb"`
 	Enabled              *bool   `json:"enabled"`
+	// Address is the provider's form the base is built from, secrets left out.
+	Address map[string]string `json:"address"`
+	Folders map[string]string `json:"folders"`
 }
 
 // applyPlacePatch merges the sent settings onto a place. A home place stays
@@ -699,9 +706,16 @@ func applyPlacePatch(p store.Place, b patchPlaceBody, homes map[string]string) (
 }
 
 // patchPlace applies an edit from the details and returns the warnings the
-// direct repositories of the place's targets get from it.
-func (s *Service) patchPlace(id string, body patchPlaceBody) (store.Place, []saveWarning, error) {
+// direct repositories of the place's targets get from it. A new base or new
+// folders are held to the address rules first.
+func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody) (store.Place, []saveWarning, error) {
+	s.placeEditMu.Lock()
+	defer s.placeEditMu.Unlock()
 	p, err := s.store.GetPlace(id)
+	if err != nil {
+		return store.Place{}, nil, err
+	}
+	settings, err := s.store.GetSettings()
 	if err != nil {
 		return store.Place{}, nil, err
 	}
@@ -709,13 +723,41 @@ func (s *Service) patchPlace(id string, body patchPlaceBody) (store.Place, []sav
 	if err != nil {
 		return store.Place{}, nil, err
 	}
-	before, err := s.store.PlaceRows(id)
+	rows, err := s.store.PlaceRows(id)
 	if err != nil {
 		return store.Place{}, nil, err
 	}
 	next, err := applyPlacePatch(p, body, homes)
 	if err != nil {
 		return store.Place{}, nil, err
+	}
+	if body.Address != nil {
+		provider, ok := places.ProviderByID(p.Provider)
+		if !ok {
+			return store.Place{}, nil, errUnknownProvider
+		}
+		if next.Base, err = places.Base(provider, body.Address, p.ID); err != nil {
+			return store.Place{}, nil, err
+		}
+	}
+	if body.Folders != nil {
+		if err := checkFolderChange(p, rows, body.Folders); err != nil {
+			return store.Place{}, nil, err
+		}
+		next.Folders = maps.Clone(body.Folders)
+	}
+	if next.Base != p.Base || !maps.Equal(next.Folders, p.Folders) {
+		moves, err := s.placeMoves(settings, p, next, rows, homes)
+		if err != nil {
+			return store.Place{}, nil, err
+		}
+		mode, err := s.placeMode(settings, next)
+		if err != nil {
+			return store.Place{}, nil, err
+		}
+		if err := s.checkMoves(ctx, moves, mode); err != nil {
+			return store.Place{}, nil, err
+		}
 	}
 	saved, err := s.writePlace(store.PlaceWrite{Place: next}, nil)
 	if err != nil {
@@ -725,7 +767,24 @@ func (s *Service) patchPlace(id string, body patchPlaceBody) (store.Place, []sav
 	if err != nil {
 		return store.Place{}, nil, err
 	}
-	return saved, s.placeSaveWarnings(before, after), nil
+	return saved, s.placeSaveWarnings(rows, after), nil
+}
+
+// checkFolderChange refuses folders a place cannot take, among them any
+// folder below a place that is itself a repository.
+func checkFolderChange(p store.Place, rows []store.OffsiteTarget, folders map[string]string) error {
+	if err := checkFolders(folders); err != nil {
+		return err
+	}
+	if !placeIsRepository(p, rows) {
+		return nil
+	}
+	for _, f := range folders {
+		if f != "" {
+			return errPlaceIsRepository
+		}
+	}
+	return nil
 }
 
 // placeSaveWarnings compares each target of the place before and after a
@@ -754,7 +813,7 @@ func (h *Handler) handlePatchPlace(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	p, warnings, err := h.svc.patchPlace(r.PathValue("id"), body)
+	p, warnings, err := h.svc.patchPlace(r.Context(), r.PathValue("id"), body)
 	switch {
 	case errors.Is(err, store.ErrPlaceNotFound):
 		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such place"})
