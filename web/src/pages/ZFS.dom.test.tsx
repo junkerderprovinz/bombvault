@@ -353,6 +353,31 @@ describe("ZFS page", () => {
     expect(screen.queryByText(/Containers were stopped for/)).toBeNull();
   });
 
+  it("lists a run that finished after the card was drawn", async () => {
+    const run = (id: string, startedAt: number): Run => ({
+      id,
+      targetId: "z1",
+      kind: "backup",
+      status: "success",
+      startedAt,
+      finishedAt: startedAt + 60,
+      snapshotId: "abc",
+      bytes: 10,
+      error: "",
+      acknowledged: true,
+      target: "cache/appdata",
+      domain: "zfs",
+    });
+    runs = [run("r1", 1_700_000_000)];
+    await renderWithItems();
+    expect(await screen.findAllByRole("button", { name: /→/ })).toHaveLength(1);
+
+    runs = [run("r2", 1_700_000_500), run("r1", 1_700_000_000)];
+    items = [item({ lastBackup: 1_700_000_560 })];
+    fireEvent.click(screen.getByRole("switch", { name: en["zfs.enabled"] }));
+    await waitFor(() => expect(screen.getAllByRole("button", { name: /→/ })).toHaveLength(2));
+  });
+
   it("says how many safety snapshots a removed item left behind", async () => {
     items = [item({ safetyCount: 2 })];
     deleteResult = { ok: true, safetyRemaining: 2 };

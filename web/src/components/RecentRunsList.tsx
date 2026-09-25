@@ -35,20 +35,24 @@ function statusDotClass(status: string): string {
 
 /**
  * RecentRunsList shows one target's latest backup runs with their start and
- * end time and duration. It fetches the run log once and filters it by domain
- * and name. With `renderDetail` each row opens to what that run did, which is
- * where a domain with per-run detail of its own puts it.
+ * end time and duration. It fetches the run log when it mounts and again
+ * whenever `refreshKey` changes, and filters it by domain and name. With
+ * `renderDetail` each row opens to what that run did, which is where a domain
+ * with per-run detail of its own puts it.
  */
 export function RecentRunsList({
   name,
   domain,
   t,
   renderDetail,
+  refreshKey,
 }: {
   name: string;
   domain: "container" | "vm" | "files" | "zfs";
   t: T;
-  renderDetail?: (runId: string) => ReactNode;
+  renderDetail?: (run: Run) => ReactNode;
+  /** Changes when a run of this target starts or ends. */
+  refreshKey?: string;
 }) {
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +77,7 @@ export function RecentRunsList({
     return () => {
       alive = false;
     };
-  }, [name, domain]);
+  }, [name, domain, refreshKey]);
 
   if (loading) {
     return <p className="py-2 text-caption text-carbon-textMuted">{t("common.loadingBackups")}</p>;
@@ -127,7 +131,7 @@ export function RecentRunsList({
               </button>
               {badge}
             </div>
-            {open && renderDetail(run.id)}
+            {open && renderDetail(run)}
           </div>
         );
       })}

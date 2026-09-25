@@ -17,6 +17,7 @@ import type {
   AnomalyItem,
   AnomalySeriesInfo,
   Container,
+  Run,
   ZFSDatasetPatch,
   ZFSDatasetView,
   ZFSExcludePreviewRow,
@@ -124,8 +125,9 @@ function failText(t: T, err: unknown): string {
   return err instanceof Error ? err.message : t("settings.error");
 }
 
-function ZFSRunDetailView({ runId, item, t }: { runId: string; item: ZFSDatasetView; t: T }) {
+function ZFSRunDetailView({ run, item, t }: { run: Run; item: ZFSDatasetView; t: T }) {
   const [detail, setDetail] = useState<ZFSRunDetail | null>(null);
+  const runId = run.id;
 
   useEffect(() => {
     let alive = true;
@@ -900,7 +902,8 @@ export function ZFSDatasetRow({
         name={item.dataset}
         domain="zfs"
         t={t}
-        renderDetail={(runId) => <ZFSRunDetailView runId={runId} item={item} t={t} />}
+        renderDetail={(run) => <ZFSRunDetailView run={run} item={item} t={t} />}
+        refreshKey={`${item.lastBackup}:${item.lastRunStatus}:${progress?.active ? "running" : ""}`}
       />
 
       {progress && (
