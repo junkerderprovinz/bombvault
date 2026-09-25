@@ -50,6 +50,13 @@ const box = sendToOption({ kind: "remote", repoId: "repo-box", targetId: "", nam
 const onBox: PlacementView = placementView({ segment: "offsite-only", repo: "repo-box", repoLabel: "Storagebox", repoKind: "remote", skip: ["*"] });
 
 describe("labels", () => {
+  it("names an option at a place by the place alone", () => {
+    expect(homeOptionLabel(t, "Unraid", homeOption({ name: "Unraid", placeId: "p-unraid", provider: "unraid-folder" }))).toBe("Unraid");
+    expect(homeOptionLabel(t, "Unraid", homeOption({ id: "r1", name: "NAS Keller", kind: "local", placeId: "p-nas" }))).toBe("NAS Keller");
+    expect(sendToLabel(t, sendToOption({ kind: "remote", repoId: "", targetId: "", name: "B2", placeId: "p-b2" }))).toBe("B2");
+    expect(sendToLabel(t, sendToOption({ name: "Hetzner", placeId: "p-hz" }))).toBe("Hetzner");
+  });
+
   it("names the domain path with the host and keeps its path left to right", () => {
     expect(homeOptionLabel(t, "Unraid", homeOption())).toBe(`Unraid · domain repository · ${LRI}backups/containers${PDI}`);
     expect(homeOptionLabel(t, "Unraid", homeOption({ kind: "domain-remote", scheme: "s3", location: "s3:https://s3.example.com/c" }))).toBe(

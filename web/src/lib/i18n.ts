@@ -2293,6 +2293,7 @@ export const en = {
   "cloud.credSets.placeOwned": "The credentials of this storage place. Change them in its details under Settings, Storage.",
   "recovery.places": "Storage places (optional)",
   "recovery.placesHint": "Only needed when a backup lies in the cloud or on a server: connect that place here so its credentials are known. A local path or a mounted share needs nothing here.",
+  "placement.copyToHint": "A place that is not a copy target of this domain yet becomes one in the domain's row under Settings, Storage, Domains.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4289,6 +4290,7 @@ export const de: Translations = {
   "cloud.credSets.placeOwned": "Die Zugangsdaten dieses Speicherorts. Du änderst sie in seinen Details unter Einstellungen, Speicher.",
   "recovery.places": "Speicherorte (optional)",
   "recovery.placesHint": "Nur nötig, wenn ein Backup in der Cloud oder auf einem Server liegt: Verbinde diesen Ort hier, damit seine Zugangsdaten bekannt sind. Für einen lokalen Pfad oder eine eingebundene Freigabe brauchst du hier nichts.",
+  "placement.copyToHint": "Ein Ort, der noch kein Kopieziel dieser Domäne ist, wird es in der Zeile der Domäne unter Einstellungen, Speicher, Domänen.",
 };
 
 // ---------------------------------------------------------------------------

@@ -1,3 +1,5 @@
+import { InfoBubble } from "../InfoBubble";
+import { PlaceMark } from "../placeMarks";
 import { Selector, type SelectorItem } from "../Selector";
 import type { PlacementOptions, PlacementView, TargetOption } from "../../lib/api";
 import { useT } from "../../lib/i18n";
@@ -23,6 +25,7 @@ export function TargetChips({
   const { t } = useT();
   const known = new Set(targets.map((x) => x.id));
   const deleted = view.skip.filter((id) => id !== "*" && !known.has(id));
+  const active = new Set(targets.filter((x) => chipTicked(view, x.id)).map((x) => x.id));
   const items: SelectorItem[] = [
     ...targets.map((x) => {
       const last = lastChipLocked(view, options, x.id);
@@ -30,16 +33,19 @@ export function TargetChips({
       return {
         id: x.id,
         label: x.enabled ? x.name : t("placement.off").replace("{name}", () => x.name),
+        icon: x.provider ? <PlaceMark provider={x.provider} onFill={active.has(x.id)} /> : undefined,
         disabled: !x.enabled || last,
         title: tips.filter(Boolean).join(" ") || undefined,
       };
     }),
     ...deleted.map((id) => ({ id, label: t("placement.deleted"), disabled: true })),
   ];
-  const active = new Set(targets.filter((x) => chipTicked(view, x.id)).map((x) => x.id));
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-xs text-carbon-textSub">{label}</span>
+      <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+        {label}
+        <InfoBubble tip={t("placement.copyToHint")} />
+      </span>
       <Selector
         items={items}
         label={label}

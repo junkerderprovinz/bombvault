@@ -1,8 +1,16 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen } from "@testing-library/react";
+import { en } from "../../lib/i18n";
 import { placementOptions, placementView, renderWithProviders, targetOption } from "../../lib/placement.testsupport";
-import { TargetChips } from "./TargetChips";
+
+vi.mock("../placeMarks", () => ({
+  PlaceMark: ({ provider, onFill }: { provider: string; onFill?: boolean }) => (
+    <span data-testid="mark" data-provider={provider} data-on-fill={String(!!onFill)} />
+  ),
+}));
+
+const { TargetChips } = await import("./TargetChips");
 
 // A disabled button takes no pointer events, so its bubble answers on the wrapper.
 function bubbleOf(el: HTMLElement): string | null | undefined {
@@ -57,5 +65,28 @@ describe("TargetChips", () => {
     expect(bubbleOf(hz)).toBe(
       "The domain repository is remote and uses other credentials than this target. Copying to it fails until they match."
     );
+  });
+
+  it("carries each target's place mark, drawn in the chip's ink once ticked", () => {
+    const placed = placementOptions({
+      targets: [
+        targetOption({ placeId: "p-b2", provider: "b2" }),
+        targetOption({ id: "t-nas", name: "NAS Keller", primary: false, placeId: "p-nas", provider: "synology" }),
+      ],
+    });
+    renderWithProviders(
+      <TargetChips label="Copy to" targets={placed.targets} view={placementView({ skip: ["t-nas"] })} options={placed} onToggle={vi.fn()} />
+    );
+    const mark = (name: string) => screen.getByRole("button", { name }).querySelector('[data-testid="mark"]');
+    expect(mark("B2")?.getAttribute("data-provider")).toBe("b2");
+    expect(mark("B2")?.getAttribute("data-on-fill")).toBe("true");
+    expect(mark("NAS Keller")?.getAttribute("data-on-fill")).toBe("false");
+  });
+
+  it("says beside the chips where a place becomes a copy target", () => {
+    renderWithProviders(
+      <TargetChips label="Copy to" targets={two.targets} view={placementView()} options={two} onToggle={vi.fn()} />
+    );
+    expect(screen.getByLabelText(en["placement.copyToHint"])).toBeTruthy();
   });
 });

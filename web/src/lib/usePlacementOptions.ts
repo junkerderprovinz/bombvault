@@ -1,6 +1,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 import { getPlacementOptions, PLACEMENT_DOMAINS, type PlacementDomain, type PlacementOptions } from "./api";
 import { subscribePlacement } from "./placementEvents";
+import { subscribePlaces } from "./places";
 import { subscribeRepos } from "./useNamedRepos";
 import { subscribeOffsiteTargets } from "./useOffsiteTargets";
 
@@ -47,7 +48,7 @@ function subscribe(domain: PlacementDomain, onChange: () => void): () => void {
   let entry = entries.get(domain);
   if (!entry) {
     const reload = () => load(domain);
-    const offs = [subscribeOffsiteTargets(reload), subscribeRepos(reload), subscribePlacement(reload)];
+    const offs = [subscribeOffsiteTargets(reload), subscribeRepos(reload), subscribePlacement(reload), subscribePlaces(reload)];
     entry = { state: PENDING[domain], listeners: new Set(), seq: 0, stop: () => offs.forEach((off) => off()) };
     entries.set(domain, entry);
     load(domain);
