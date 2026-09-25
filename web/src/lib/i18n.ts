@@ -2457,6 +2457,10 @@ export const en = {
   "storageDomains.homeMoveStays": "one={n} snapshot stays at the old place. The timeline shows it only while that place stays connected.|other={n} snapshots stay at the old place. The timeline shows them only while that place stays connected.",
   "storageDomains.createsRepository": "A repository for {domain} is made at {place}.",
   "storageDomains.createsDirect": "A direct repository is made at {place}, beside the copies there.",
+  "storageDomains.copiedTo": "Copied to",
+  "storageDomains.noCopyPlace": "No other place offers this domain.",
+  "storageDomains.copiesOffAsk": "{place} gets no new copies of {domain}. The copies already there stay and are trimmed by the place's own rule.",
+  "storageDomains.copiesOffOwnChoice": "Items with a choice of their own keep copying there.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4593,6 +4597,10 @@ export const de: Translations = {
   "storageDomains.homeMoveStays": "one={n} Snapshot bleibt am alten Ort. Die Zeitleiste zeigt ihn nur, solange dieser Ort verbunden bleibt.|other={n} Snapshots bleiben am alten Ort. Die Zeitleiste zeigt sie nur, solange dieser Ort verbunden bleibt.",
   "storageDomains.createsRepository": "Bei {place} wird ein Repository für {domain} angelegt.",
   "storageDomains.createsDirect": "Bei {place} wird neben den Kopien dort ein Direkt-Repository angelegt.",
+  "storageDomains.copiedTo": "Kopiert nach",
+  "storageDomains.noCopyPlace": "Kein anderer Ort bietet diese Domäne an.",
+  "storageDomains.copiesOffAsk": "{place} bekommt keine neuen Kopien von {domain}. Die Kopien dort bleiben und werden nach der Regel des Ortes gekürzt.",
+  "storageDomains.copiesOffOwnChoice": "Einträge mit eigener Wahl kopieren weiter dorthin.",
 };
 
 // ---------------------------------------------------------------------------
