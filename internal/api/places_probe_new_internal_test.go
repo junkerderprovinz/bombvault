@@ -41,6 +41,26 @@ func TestAFolderOnThisServerIsProbedWhereTheFormPointsIt(t *testing.T) {
 	}
 }
 
+func TestAFolderThatDoesNotExistYetIsProbedWhereItWillBeCreated(t *testing.T) {
+	f := newPlacementFixture(t)
+	newEnvEngine(f)
+	user := filepath.FromSlash(f.root + "/user")
+	if err := os.MkdirAll(user, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	res := probeOf(t, f, "unraid-folder", map[string]string{"path": "user/new/bombvault"})
+	if !res.OK || res.Base != "user/new/bombvault" || res.Folders["containers"] != places.FolderAbsent {
+		t.Fatalf("probe = %+v", res)
+	}
+	entries, err := os.ReadDir(user)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 0 {
+		t.Fatalf("the probe left %v behind", entries)
+	}
+}
+
 func TestAFolderBombVaultCannotWriteToFailsTheProbe(t *testing.T) {
 	f := newPlacementFixture(t)
 	newEnvEngine(f)
