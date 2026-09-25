@@ -146,10 +146,14 @@ export function PlaceDetails({
   const [verdicts, setVerdicts] = useState<Verdict[] | null>(null);
   const [testing, setTesting] = useState(false);
   const timers = useRef<Waiting>(new Map());
+  // A waiting save compares with this rather than with the place of the render
+  // its key was typed in, since an earlier save may have answered meanwhile.
+  const saved = useRef(place);
 
   // A saved answer replaces the draft, except for the fields still waiting to
   // be saved, which keep what is being typed.
   useEffect(() => {
+    saved.current = place;
     setDraft((d) => {
       const next = { ...place } as Record<string, unknown>;
       const waiting = [...timers.current.keys()].flatMap((key) => (key === "retention" ? RETENTION_KEYS : [key]));
@@ -219,7 +223,7 @@ export function PlaceDetails({
     setDraft((d) => ({ ...d, base: value }));
     later("base", () => {
       const path = value.trim();
-      if (path !== "" && path !== place.base) void save({ address: { path } }, "base");
+      if (path !== "" && path !== saved.current.base) void save({ address: { path } }, "base");
     });
   }
 
@@ -228,13 +232,14 @@ export function PlaceDetails({
     const next = { ...draft, [key]: value };
     setDraft(next);
     later("retention", async () => {
+      const now = saved.current;
       const patch: Partial<PatchPlaceBody> = {};
-      for (const k of RETENTION_KEYS) if (next[k] !== place[k]) patch[k] = next[k];
+      for (const k of RETENTION_KEYS) if (next[k] !== now[k]) patch[k] = next[k];
       if (Object.keys(patch).length === 0) return;
-      if (retentionLowered(place, next) && place.usage.items > 0 && !(await confirm(t("places.details.retentionLowerAsk", place.usage.items)))) {
+      if (retentionLowered(now, next) && now.usage.items > 0 && !(await confirm(t("places.details.retentionLowerAsk", now.usage.items)))) {
         setDraft((d) => {
           const back = { ...d };
-          for (const k of RETENTION_KEYS) back[k] = place[k];
+          for (const k of RETENTION_KEYS) back[k] = now[k];
           return back;
         });
         return;
@@ -266,7 +271,7 @@ export function PlaceDetails({
       const fields: Record<string, string> = {};
       for (const k of credKeys) {
         const v = next[k] ?? "";
-        if (secretKeys.has(k) ? v !== "" : v !== (place.creds.fields[k] ?? "")) fields[k] = v;
+        if (secretKeys.has(k) ? v !== "" : v !== (saved.current.creds.fields[k] ?? "")) fields[k] = v;
       }
       if (Object.keys(fields).length === 0) return;
       void save({ fields }, "access").then((saved) => {
