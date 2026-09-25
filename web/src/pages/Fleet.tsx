@@ -4,8 +4,8 @@
 // protection data; it never starts a backup, restore or drill there. The
 // exception is Mesh off-site: the page can offer this instance's off-site
 // storage to a peer (connection details, never backup data) and review offers
-// peers sent here. Accepting one creates an ordinary credential set and
-// off-site target, since BombVault never hosts storage itself.
+// peers sent here. Accepting one makes a storage place for the offered
+// domain, since BombVault never hosts storage itself.
 //
 // Peers are polled by the daily sweep and by "Poll now", not by opening the
 // page, because each poll is a round trip to another site.
@@ -19,17 +19,12 @@ import {
   deleteFleetPeer,
   pollFleetPeer,
   listMeshOffers,
-  acceptMeshOffer,
-  declineMeshOffer,
   proposeMeshOffer,
 } from "../lib/api";
 import { CopyBlock } from "../components/CopyBlock";
+import { MESH_DOMAINS, MeshOfferRow, domainLabelKey } from "../components/MeshOfferRow";
 import { IconDisclosure } from "../components/IconDisclosure";
-import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData, OffsiteDomain } from "../lib/api";
-import { credSetsChanged } from "../lib/useCloudCredSets";
-import { offsiteTargetsChanged } from "../lib/useOffsiteTargets";
-import { placementChanged } from "../lib/placementEvents";
-import { useNewTargetQuestion } from "../components/placement/NewTargetQuestion";
+import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL, PAGE_SHELL_TABBED } from "../lib/pageShell";
 import { SelectField } from "../components/SelectField";
@@ -48,8 +43,6 @@ import { WindowActions } from "../components/WindowActions";
 import { ToggleRow } from "./settings/shared";
 type T = ReturnType<typeof useT>["t"];
 
-const MESH_DOMAINS = ["containers", "vms", "flash", "config", "files"] as const;
-
 // Same mapping as Dashboard's protectionChip, which is not exported.
 function protectionTone(level: string): "ok" | "fail" | "warn" | "neutral" {
   switch (level) {
@@ -66,20 +59,6 @@ function protectionTone(level: string): "ok" | "fail" | "warn" | "neutral" {
 
 // Whether peer cards show their scorecard, remembered per browser.
 const FLEET_DETAILS_OPEN_KEY = "bombvault.fleetDetailsOpen";
-
-// An explicit map rather than a template literal, so every lookup is a
-// checked TranslationKey.
-const DOMAIN_LABEL_KEYS: Record<string, TranslationKey> = {
-  containers: "settings.containersEnabled",
-  vms: "settings.vmsEnabled",
-  flash: "settings.flashEnabled",
-  files: "settings.filesEnabled",
-  config: "settings.configEnabled",
-};
-
-function domainLabelKey(domain: string): TranslationKey {
-  return DOMAIN_LABEL_KEYS[domain] ?? "settings.containersEnabled";
-}
 
 function protectionLabelKey(level: string): TranslationKey {
   switch (level) {
@@ -112,141 +91,6 @@ function PeerScorecard({ domains, t }: { domains: DomainStatus[]; t: T }) {
           )}
         </div>
       ))}
-    </div>
-  );
-}
-
-function meshStatusTone(status: string): "ok" | "fail" | "warn" | "neutral" {
-  switch (status) {
-    case "accepted":
-      return "ok";
-    case "declined":
-      return "fail";
-    default:
-      return "warn"; // pending
-  }
-}
-
-function meshStatusLabelKey(status: string): TranslationKey {
-  switch (status) {
-    case "accepted":
-      return "fleet.mesh.status.accepted";
-    case "declined":
-      return "fleet.mesh.status.declined";
-    default:
-      return "fleet.mesh.status.pending";
-  }
-}
-
-function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChanged: () => void }) {
-  const [domain, setDomain] = useState<string>(offer.suggestedDomain || "containers");
-  const [busy, setBusy] = useState(false);
-  const { push } = useToast();
-  const { ask, dialog } = useNewTargetQuestion();
-  const [shakeAccept, setShakeAccept] = useState(0);
-  const [shakeDecline, setShakeDecline] = useState(0);
-
-  async function handleAccept() {
-    // The question does a round trip of its own before its dialog appears, and
-    // a disabled button is all that keeps a second accept from minting a
-    // second target.
-    setBusy(true);
-    const answer = await ask({
-      // The select offers only MESH_DOMAINS, all of them off-site domains.
-      domain: domain as OffsiteDomain,
-      location: offer.repo,
-      name: offer.from || t("fleet.mesh.unknownPeer"),
-      moved: false,
-    });
-    if (!answer.go) {
-      setBusy(false);
-      return;
-    }
-    try {
-      const res = await acceptMeshOffer(offer.id, domain, answer.alsoExclude ?? undefined);
-      if (res.ok) {
-        // Accepting creates a credential set with the peer's REST login and
-        // an off-site target, so every mounted reader of either list reloads.
-        credSetsChanged();
-        offsiteTargetsChanged();
-        if (answer.alsoExclude) placementChanged();
-        onChanged();
-      } else {
-        push(res.error ?? t("fleet.mesh.saveError"), "fail");
-        setShakeAccept((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("fleet.mesh.saveError"), "fail");
-      setShakeAccept((n) => n + 1);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleDecline() {
-    setBusy(true);
-    try {
-      const res = await declineMeshOffer(offer.id);
-      if (res.ok) onChanged();
-      else {
-        push(res.error ?? t("fleet.mesh.saveError"), "fail");
-        setShakeDecline((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("fleet.mesh.saveError"), "fail");
-      setShakeDecline((n) => n + 1);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const pending = offer.status === "pending";
-
-  return (
-    <div className="rounded-card bg-carbon-surface2 p-3 flex flex-col gap-2">
-      {dialog}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="font-semibold text-carbon-text text-sm truncate">{offer.from || t("fleet.mesh.unknownPeer")}</span>
-        <Badge tone={meshStatusTone(offer.status)}>{t(meshStatusLabelKey(offer.status))}</Badge>
-        <span className="text-xs text-carbon-textMuted ms-auto">{relativeTime(t, offer.receivedAt)}</span>
-      </div>
-      <p dir="ltr" className="text-xs font-mono text-carbon-textMuted truncate text-start">{offer.repo}</p>
-      {pending && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-            {t("fleet.mesh.applyTo")}
-            <SelectField
-              value={domain}
-              onChange={setDomain}
-              label={t("fleet.mesh.applyTo")}
-              options={MESH_DOMAINS.map((d) => ({ value: d, label: t(domainLabelKey(d)) }))}
-              className="rounded-control bg-carbon-surface3 text-carbon-text text-xs px-2 py-1 glim-field-focus-well"
-            />
-          </label>
-          <Button
-            key={shakeDecline}
-            label={t("fleet.mesh.decline")}
-            labelKey="fleet.mesh.decline"
-            tone="neutral"
-            onClick={() => void handleDecline()}
-            disabled={busy}
-            className={`inline-flex items-center rounded-pill px-3 py-1.5 text-xs text-carbon-text disabled:opacity-50${
-              shakeDecline ? " glim-shake" : ""
-            }`}
-          />
-          <Button
-            key={shakeAccept}
-            label={t("fleet.mesh.accept")}
-            labelKey="fleet.mesh.accept"
-            tone="accent"
-            onClick={() => void handleAccept()}
-            disabled={busy}
-            className={`inline-flex items-center rounded-pill bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shakeAccept ? " glim-shake" : ""
-            }`}
-          />
-        </div>
-      )}
     </div>
   );
 }

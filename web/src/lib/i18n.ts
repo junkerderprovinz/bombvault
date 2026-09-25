@@ -1532,7 +1532,7 @@ export const en = {
   "fleet.urlRequired": "Enter a peer URL.",
   "fleet.saveError": "Could not save the fleet peer.",
   "fleet.mesh.offersTitle": "Off-site storage offers",
-  "fleet.mesh.offersHint": "A peer proposed its own off-site storage. Review and accept to turn it into a normal off-site target. Nothing is applied automatically.",
+  "fleet.mesh.offersHint": "A peer proposed its own off-site storage. Review and accept to add it as a storage place for the offered domain. Nothing is applied automatically.",
   "fleet.mesh.saveError": "Could not save this.",
   "fleet.mesh.unknownPeer": "Unknown peer",
   "fleet.mesh.applyTo": "Apply to:",
@@ -2441,6 +2441,8 @@ export const en = {
   "places.recipe.newPassword": "New password",
   "places.recipe.password": "Password, shown once",
   "places.recipe.unraid": "Unraid template",
+  "places.offers.title": "Offers from other BombVaults",
+  "places.offers.hint": "Another BombVault offered this one a rest-server for one domain. Accepting adds a place for that domain; the fields below connect one by hand.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -3690,7 +3692,7 @@ export const de: Translations = {
   "fleet.urlRequired": "Instanz-URL eingeben.",
   "fleet.saveError": "Die verbundene Instanz konnte nicht gespeichert werden.",
   "fleet.mesh.offersTitle": "Off-site-Speicher-Angebote",
-  "fleet.mesh.offersHint": "Eine Instanz hat ihren eigenen Off-site-Speicher angeboten. Prüfen und annehmen, um daraus ein normales Off-site-Ziel zu machen. Nichts wird automatisch übernommen.",
+  "fleet.mesh.offersHint": "Eine Instanz hat ihren eigenen Off-site-Speicher angeboten. Prüfen und annehmen, um ihn als Speicherort für die angebotene Domäne hinzuzufügen. Nichts wird automatisch übernommen.",
   "fleet.mesh.saveError": "Konnte nicht gespeichert werden.",
   "fleet.mesh.unknownPeer": "Unbekannte Instanz",
   "fleet.mesh.applyTo": "Anwenden auf:",
@@ -4562,6 +4564,8 @@ export const de: Translations = {
   "places.recipe.newPassword": "Neues Passwort",
   "places.recipe.password": "Passwort, nur einmal zu sehen",
   "places.recipe.unraid": "Unraid-Vorlage",
+  "places.offers.title": "Angebote anderer BombVaults",
+  "places.offers.hint": "Ein anderes BombVault hat diesem einen rest-server für eine Domäne angeboten. Annehmen fügt einen Ort für diese Domäne hinzu; die Felder darunter verbinden einen von Hand.",
 };
 
 // ---------------------------------------------------------------------------

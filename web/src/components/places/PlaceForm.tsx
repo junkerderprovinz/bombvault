@@ -29,6 +29,7 @@ import {
 } from "../../lib/places";
 import { useToast } from "../../lib/toast";
 import { useReveal } from "../../lib/useReveal";
+import { MeshOffers } from "./MeshOffers";
 import { RcloneConfig } from "./RcloneConfig";
 import { RestServerRecipe } from "./RestServerRecipe";
 
@@ -344,6 +345,7 @@ export function PlaceForm({
         {provider.id === "rest-server" && (
           <RestServerRecipe onLogin={(user, password) => setFields((f) => ({ ...f, user, password }))} />
         )}
+        {provider.id === "bombvault" && <MeshOffers onAccepted={onAdded} />}
 
         {provider.fields.map(renderField)}
         {provider.kind === "sftp" && <PublicKey />}
