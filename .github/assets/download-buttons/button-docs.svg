@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 245.3" width="720" height="245.3" role="img" aria-label="Read the documentation">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Read the documentation">
   <title>Read the documentation</title>
   <defs>
     <clipPath id="edge">
-      <path d="M38.2,0 H681.8 A38.2,38.2 0 0 1 720,38.2 V207.1 A38.2,38.2 0 0 1 681.8,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z"/>
+      <path d="M38.2,0 H803.7 A38.2,38.2 0 0 1 841.9,38.2 V207.1 A38.2,38.2 0 0 1 803.7,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z"/>
     </clipPath>
     <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0"    stop-color="#fff" stop-opacity="0"/>
@@ -14,24 +14,24 @@
   </defs>
   <style>
     @keyframes pass {
-      0%       { transform: translateX(-226.6px); }
-      18.16%   { transform: translateX(946.6px); }
-      100%     { transform: translateX(946.6px); }
+      0%       { transform: translateX(-278.4px); }
+      15.19%   { transform: translateX(1120.3px); }
+      100%     { transform: translateX(1120.3px); }
     }
-    .band { animation: pass 7s linear 1.665s infinite backwards; }
+    .band { animation: pass 7s linear 1.385s infinite backwards; }
     @media (prefers-reduced-motion: reduce) {
       .band { animation: none; opacity: 0; }
     }
   </style>
-  <path d="M38.2,0 H681.8 A38.2,38.2 0 0 1 720,38.2 V207.1 A38.2,38.2 0 0 1 681.8,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z" fill="#fd0"/>
-  <g transform="translate(85.0 66.65) scale(0.21875)" fill="#0d0c23">
+  <path d="M38.2,0 H803.7 A38.2,38.2 0 0 1 841.9,38.2 V207.1 A38.2,38.2 0 0 1 803.7,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z" fill="#fd0"/>
+  <g transform="translate(168.25 56.65) scale(0.25781)" fill="#0d0c23">
     <path d="M96 0C43 0 0 43 0 96L0 416c0 53 43 96 96 96l288 0 32 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l0-64c17.7 0 32-14.3 32-32l0-320c0-17.7-14.3-32-32-32L384 0 96 0zm0 384l256 0 0 64L96 448c-17.7 0-32-14.3-32-32s14.3-32 32-32zm32-240c0-8.8 7.2-16 16-16l192 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-192 0c-8.8 0-16-7.2-16-16zm16 48l192 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-192 0c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/>
   </g>
-  <text x="238" y="110" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="82" font-weight="700" fill="#0d0c23">Docs</text>
-  <text x="240" y="180" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="50" font-weight="400" fill="#0d0c23" fill-opacity="0.72">online manual</text>
+  <text x="332" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="82" font-weight="700" fill="#0d0c23">Docs</text>
+  <text x="334" y="186" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="64" font-weight="400" fill="#0d0c23" fill-opacity="0.9">online manual</text>
   <g clip-path="url(#edge)">
     <g class="band">
-      <rect x="0" y="-60" width="121.8" height="365.3"
+      <rect x="0" y="-60" width="173.6" height="365.3"
             fill="url(#sheen)" transform="skewX(-16)"/>
     </g>
   </g>

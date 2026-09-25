@@ -11,9 +11,8 @@ extensions. What a repository does not ship is left out. Windows on ARM and the
 portable build are segments of the Windows button, and Linux on ARM one of the
 Linux button, so the desktop row keeps to the four places a row has.
 
-Height and corner radius are the Buy Me a Coffee button's (245.3 tall, rx 38.2),
-so both stand the same height at the same width. The width is 720 rather than
-841.9, which left a third of the face empty beside the longest word.
+Size and corner radius are the Buy Me a Coffee button's (841.9 by 245.3, rx
+38.2), so every button on the page has the same shape.
 
 The logos are the platforms' own marks from Font Awesome Free (CC BY 4.0 for the
 icons; see scripts/brand-paths/). Each is a trademark of its owner, used
@@ -49,13 +48,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", ".github", "assets", "download-buttons")
 BRANDS = os.path.join(HERE, "brand-paths")
 
-W, H, R = 720.0, 245.3, 38.2
+W, H, R = 841.9, 245.3, 38.2
 
 # The mark is drawn into a square this tall, centred vertically, inset from the
 # left. Its own viewBox decides the horizontal centring, because the marks are
-# not equally wide: Apple's is 384 units against Windows' and Tux's 448.
-GLYPH = 112.0
-GX, GY = 78.0, (H - GLYPH) / 2
+# not equally wide: Apple's is 384 units against Windows' and Tux's 448. The
+# inset centres a mark with a line as wide as "Windows" beside it.
+GLYPH = 132.0
+GX, GY = 160.0, (H - GLYPH) / 2
 
 # A system stack, because an SVG loaded through <img> cannot fetch a webfont.
 # The layout leaves room for a face wider than the one it was measured with.
@@ -81,7 +81,7 @@ KINDS = {
     # Slate, since GitHub's black vanishes in the dark theme.
     "source":           (1, "zip", "#4d5562", "#ffffff", "Source", "zip archive", "Download the source archive"),
     # "Docs" rather than "Documentation": 13 characters at font-size 82 need
-    # more than the 482 units left of the right edge. The yellow is the coffee
+    # more than the 510 units left of the right edge. The yellow is the coffee
     # button's #fd0, and white on yellow fails contrast, so the ink is dark.
     "docs":             (1, "book", "#fd0", "#0d0c23", "Docs", "online manual", "Read the documentation"),
     # The heading is the platform, since "Google Play" is too wide for it.
@@ -94,28 +94,28 @@ KINDS = {
 SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm",)}
 # A store listing that does not exist yet is drawn without a link.
 SOON = {
-    "google-play": ("Google Play, soon", "On Google Play soon"),
-    "firefox": ("Add-on, soon", "The Firefox add-on, soon"),
+    "google-play": ("coming soon", "On Google Play soon"),
+    "firefox": ("coming soon", "The Firefox add-on, soon"),
 }
 # Links that may lead away from the repository.
 STORES = ("play.google.com", "chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com")
 
 # The sheen is a tilted white band, clipped to each button, that appears to
 # travel along the whole row, the same band as the donation row's. Its numbers
-# are in screen pixels, since the canvases (720 here, 841.9 for the donation row)
-# and their rendered widths differ.
+# are in screen pixels, where the gap between buttons is measured.
 #
-# The row is `<img width="195">` separated by a newline, two spaces and a
+# The row is `<img width="160">` separated by a newline, two spaces and a
 # `&nbsp;`, which HTML collapses to 13.16px at GitHub's 16px body text. A
 # `&nbsp;` glued to `</a>` measures 8.77px, so the separator is part of the rule.
 # The parts of the Windows button are glued with nothing between them.
 BAND_PX = 33.0     # the band's width on screen
 SPEED = 250.0      # screen pixels per second
 GAP_PX = 13.16     # measured, see above
-RENDER_PX = 195.0  # the width the README asks for
+# The donation buttons' width, so every button on the page is the same size.
+RENDER_PX = 160.0
 # Two segments and the gap they replace make one button's place. Whole pixels,
 # so no browser rounds a hairline into the seams.
-SEGMENT_PX = 104.0
+SEGMENT_PX = 87.0
 
 SCALE = W / RENDER_PX              # canvas units per screen pixel
 SEGMENT_W = SEGMENT_PX * SCALE
@@ -170,14 +170,14 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 FULL_FACE = """  <g transform="translate({gx} {gy}) scale({scale})" fill="{ink}">
     <path d="{path}"/>
   </g>
-  <text x="238" y="110" font-family="{font}" font-size="82" font-weight="700" fill="{ink}">{head}</text>
-  <text x="240" y="180" font-family="{font}" font-size="50" font-weight="400" fill="{ink}" fill-opacity="0.72">{sub_text}</text>"""
+  <text x="332" y="108" font-family="{font}" font-size="82" font-weight="700" fill="{ink}">{head}</text>
+  <text x="334" y="186" font-family="{font}" font-size="64" font-weight="400" fill="{ink}" fill-opacity="0.9">{sub_text}</text>"""
 
 # A segment has no mark, and its left edge is a darker line against the part
 # before it. The baselines are the full button's, so the lines read across.
 SEGMENT_FACE = """  <rect width="{divider}" height="{h}" fill="#000" fill-opacity="0.28"/>
-  <text x="{mid}" y="110" text-anchor="middle" font-family="{font}" font-size="66" font-weight="700" fill="{ink}">{head}</text>
-  <text x="{mid}" y="180" text-anchor="middle" font-family="{font}" font-size="50" font-weight="400" fill="{ink}" fill-opacity="0.72">{sub_text}</text>"""
+  <text x="{mid}" y="108" text-anchor="middle" font-family="{font}" font-size="72" font-weight="700" fill="{ink}">{head}</text>
+  <text x="{mid}" y="186" text-anchor="middle" font-family="{font}" font-size="64" font-weight="400" fill="{ink}" fill-opacity="0.9">{sub_text}</text>"""
 
 # Every button on the page shows one file, buttons.svg, through its own
 # #svgView fragment. The shine's clock starts when an <img> gets its file, and
@@ -203,6 +203,9 @@ GIVE = [
 README = os.path.join(HERE, "..", "README.md")
 ROW_OPEN = "<!-- download-buttons: written by scripts/gen_download_buttons.py -->"
 ROW_CLOSE = "<!-- /download-buttons -->"
+# Inside the last download row's paragraph, so it sits right under the buttons
+# rather than a paragraph margin away.
+CAPTION = "Always downloads the latest build"
 GIVE_OPEN = "<!-- give-buttons: written by scripts/gen_download_buttons.py -->"
 GIVE_CLOSE = "<!-- /give-buttons -->"
 
@@ -407,7 +410,7 @@ def read_readme():
     return text
 
 
-def row(items, nl):
+def row(items, nl, caption=None):
     """One centred row: a link per image, the separator on its own line, two
     spaces in, because that is the gap GAP_PX was measured on. The parts of one
     button share a line with nothing between them."""
@@ -421,6 +424,8 @@ def row(items, nl):
                    % (SPRITE_URL, num(x), num(width), num(height), escape(alt), num(render), num(render * height / width)))
             imgs.append('<a href="%s">%s</a>' % (escape(href), img) if href else img)
         lines.append("  " + "".join(imgs))
+    if caption:
+        lines.append("  <br><sub>%s</sub>" % caption)
     lines.append("</p>")
     return nl.join(lines) + nl
 
@@ -431,10 +436,11 @@ def write_readme(text, downloads, donations):
     Both width and height are set, because the image's own proportions are the
     whole sprite's, not the button's.
     """
-    for opener, closer, table in ((ROW_OPEN, ROW_CLOSE, downloads), (GIVE_OPEN, GIVE_CLOSE, donations)):
+    for opener, closer, table, caption in ((ROW_OPEN, ROW_CLOSE, downloads, CAPTION), (GIVE_OPEN, GIVE_CLOSE, donations, None)):
         for start, end in reversed(blocks(text, opener, closer)):
             nl = "\r\n" if text[start:].split("\n", 1)[0].endswith("\r") else "\n"
-            body = "".join(row(items, nl) for items in table)
+            last = len(table) - 1
+            body = "".join(row(items, nl, caption if i == last else None) for i, items in enumerate(table))
             text = text[:start] + opener + nl + body + text[end:]
     io.open(README, "w", encoding="utf-8", newline="").write(text)
     print("README.md  download rows of %s, donation rows of %d"
