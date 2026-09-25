@@ -278,16 +278,24 @@ func withEnv(mode restic.Mode, add []string) restic.Mode {
 }
 
 // copyMode is the destination's mode plus what a remote domain path needs to
-// be read as a copy source. A source whose variables clash with the
-// destination's goes without them and fails, as the creds-differ hint warns.
+// be read as a copy source. A variable only the source's backend reads comes
+// from the source's set alone, so one that set leaves unset stays unset. A
+// source whose variables clash with the destination's goes without them and
+// fails, as the creds-differ hint warns.
 func (s *Service) copyMode(settings store.Settings, domain, dest string, mode restic.Mode, sources []domainRepoRef) restic.Mode {
 	for _, src := range sources {
 		if !src.Own || !restic.IsRemoteRepo(src.Loc) {
 			continue
 		}
-		if need, ok := copyNeeds(dest, mode.Env, src.Loc, s.primaryModeFor(settings, domain, src.Loc).Env); ok {
-			mode = withEnv(mode, need)
+		need, ok := copyNeeds(dest, mode.Env, src.Loc, s.primaryModeFor(settings, domain, src.Loc).Env)
+		if !ok {
+			continue
 		}
+		destReads, srcReads := places.Needed(dest, mode.Env), places.Needed(src.Loc, mode.Env)
+		mode.Env = slices.DeleteFunc(slices.Clone(mode.Env), func(kv string) bool {
+			return slices.Contains(srcReads, kv) && !slices.Contains(destReads, kv)
+		})
+		mode = withEnv(mode, need)
 	}
 	return mode
 }
