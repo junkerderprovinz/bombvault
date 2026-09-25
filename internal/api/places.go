@@ -1,12 +1,16 @@
 package api
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
 	"maps"
 	"net/http"
 	"slices"
+	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -18,6 +22,9 @@ var (
 	errPlaceIsRepository        = errors.New("this place is itself a repository, so it takes no second role and no folder below it")
 	errPlaceAddressTaken        = errors.New("a repository of this domain already lies at that address")
 	errPlaceOff                 = errors.New("this place is switched off")
+	errPlaceNameMissing         = errors.New("a place needs a name")
+	errPlaceUnasked             = errors.New("say where the device stands: here or at another site")
+	errUnknownProvider          = errors.New("that is not a provider this server can connect")
 )
 
 // writePlace writes a place and, when edit is set and changes them, the
@@ -388,4 +395,242 @@ func (h *Handler) handleListPlaces(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"places": views, "unplaced": unplaced}))
+}
+
+// placeProbeFn is the probe behind the add window and a credentials edit.
+func (s *Service) placeProbeFn() func(context.Context, ProbeRequest) (places.ProbeResult, error) {
+	if s.placeProber != nil {
+		return s.placeProber
+	}
+	return s.ProbePlace
+}
+
+// probeFailedErr is a place-probe-failed refusal carrying what the probe said.
+type probeFailedErr struct{ result places.ProbeResult }
+
+func (e *probeFailedErr) Error() string {
+	if e.result.Error == "" {
+		return errPlaceProbeFailed.Error()
+	}
+	return errPlaceProbeFailed.Error() + ": " + e.result.Error
+}
+
+func (e *probeFailedErr) Is(target error) bool { return target == errPlaceProbeFailed }
+
+// placeFail answers a refused place write with what its error carries.
+func placeFail(w http.ResponseWriter, err error) {
+	extra := map[string]any{}
+	var probe *probeFailedErr
+	if errors.As(err, &probe) {
+		extra["probe"] = probe.result
+	}
+	placementFail(w, err, extra)
+}
+
+// createPlaceBody is the add window's submit: what it tested, and the answers
+// it asked for after the test.
+type createPlaceBody struct {
+	ProbeRequest
+	Name        string            `json:"name"`
+	OffPremises *bool             `json:"offPremises"`
+	Folders     map[string]string `json:"folders"`
+}
+
+// createPlace probes the form once more, since no secret is kept between the
+// test and the submit, and writes the place with a credential set of its own
+// when its kind has one.
+func (s *Service) createPlace(ctx context.Context, body createPlaceBody) (store.Place, error) {
+	provider, ok := places.ProviderByID(body.Provider)
+	if !ok || body.PlaceID != "" {
+		return store.Place{}, errUnknownProvider
+	}
+	name := strings.TrimSpace(body.Name)
+	if name == "" {
+		return store.Place{}, errPlaceNameMissing
+	}
+	if body.Folders != nil {
+		if err := checkFolders(body.Folders); err != nil {
+			return store.Place{}, err
+		}
+	}
+	off, err := offPremisesFor(provider, body.OffPremises)
+	if err != nil {
+		return store.Place{}, err
+	}
+	probe, err := s.placeProbeFn()(ctx, body.ProbeRequest)
+	if err != nil {
+		return store.Place{}, err
+	}
+	if !probe.OK {
+		return store.Place{}, &probeFailedErr{result: probe}
+	}
+	folders, err := newPlaceFolders(body.Folders, probe)
+	if err != nil {
+		return store.Place{}, err
+	}
+	// The probe hands the form back completed and without its secrets, which
+	// come from what was typed.
+	fields := map[string]string{}
+	maps.Copy(fields, body.Fields)
+	maps.Copy(fields, probe.Fields)
+	// The probe's base names a WebDAV remote after a throwaway id, so the base
+	// is built again for the id the place gets.
+	id := newPlaceID()
+	base, err := places.Base(provider, fields, id)
+	if err != nil {
+		return store.Place{}, err
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return store.Place{}, err
+	}
+	p := newPlace(settings, provider, name, base, folders, off)
+	p.ID = id
+	if len(credFields[provider.Kind]) == 0 {
+		return s.writePlace(store.PlaceWrite{Place: p}, nil)
+	}
+	set := withPlaceCreds(CloudCredSet{ID: newCredSetID(), Name: name, Kind: string(provider.Kind)}, places.CredsFromFields(provider, fields))
+	p.CredsRef = set.ID
+	return s.writePlace(store.PlaceWrite{Place: p}, func(sets []CloudCredSet) []CloudCredSet {
+		return append(sets, set)
+	})
+}
+
+// newPlaceID mints a place's id before its first write, in the form the store
+// gives every row, since a WebDAV place's base names its rclone remote after it.
+func newPlaceID() string {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		panic(fmt.Sprintf("newPlaceID: %v", err))
+	}
+	return hex.EncodeToString(b)
+}
+
+// newPlaceFolders are a new place's folders: the ones the window sent, or the
+// usual ones. An address that already holds a repository becomes a place that
+// is itself that repository, every domain at its base, since a folder below it
+// would be a repository inside one.
+func newPlaceFolders(sent map[string]string, probe places.ProbeResult) (map[string]string, error) {
+	_, isRepository := probe.RepoIDs[""]
+	switch {
+	case !isRepository && sent == nil:
+		return places.DefaultFolders(), nil
+	case !isRepository:
+		return sent, nil
+	case sent == nil:
+		all := map[string]string{}
+		for _, d := range places.Domains {
+			all[d] = ""
+		}
+		return all, nil
+	}
+	for _, f := range sent {
+		if f != "" {
+			return nil, errPlaceIsRepository
+		}
+	}
+	return sent, nil
+}
+
+// checkFolders refuses a folder map the address rules cannot hold: a domain
+// BombVault does not know, a folder that is not one plain name, or a folder
+// beside a domain kept at the base itself, which would put one repository
+// inside another.
+func checkFolders(folders map[string]string) error {
+	for d, f := range folders {
+		if !slices.Contains(places.Domains, d) {
+			return fmt.Errorf("%q is not a domain", d)
+		}
+		if f != strings.TrimSpace(f) || f == "." || f == ".." || strings.ContainsAny(f, `/\:`) || len(f) > 255 {
+			return fmt.Errorf("the folder %q is not one plain name", f)
+		}
+	}
+	values := slices.Collect(maps.Values(folders))
+	if slices.Contains(values, "") && slices.ContainsFunc(values, func(f string) bool { return f != "" }) {
+		return errPlaceIsRepository
+	}
+	return nil
+}
+
+// offPremisesFor is where a new place stands: fixed by the provider for a
+// cloud or this server, the answer to the window's question for a device.
+func offPremisesFor(provider places.Provider, answer *bool) (bool, error) {
+	switch {
+	case provider.OffPremises != nil:
+		return *provider.OffPremises, nil
+	case answer == nil:
+		return false, errPlaceUnasked
+	}
+	return *answer, nil
+}
+
+// newPlace is a place before its first write, with the global rules as its
+// template: the local retention for a folder place, the off-site retention,
+// limits and budget for a remote one.
+func newPlace(settings store.Settings, provider places.Provider, name, base string, folders map[string]string, off bool) store.Place {
+	p := store.Place{Name: name, Provider: provider.ID, Kind: string(provider.Kind), Base: base, Folders: folders, OffPremises: off, Enabled: true}
+	if provider.Kind == places.KindLocal {
+		p.RetentionKeepLast, p.RetentionKeepDaily = settings.RetentionKeepLast, settings.RetentionKeepDaily
+		p.RetentionKeepWeekly, p.RetentionKeepMonthly = settings.RetentionKeepWeekly, settings.RetentionKeepMonthly
+		return p
+	}
+	p.RetentionKeepLast, p.RetentionKeepDaily = settings.OffsiteRetentionKeepLast, settings.OffsiteRetentionKeepDaily
+	p.RetentionKeepWeekly, p.RetentionKeepMonthly = settings.OffsiteRetentionKeepWeekly, settings.OffsiteRetentionKeepMonthly
+	p.LimitUpload, p.LimitDownload, p.GrowthBudgetGB = settings.OffsiteLimitUpload, settings.OffsiteLimitDownload, settings.OffsiteGrowthBudgetGB
+	return p
+}
+
+// placeViewByID is one place as the list shows it.
+func (s *Service) placeViewByID(id string) (PlaceView, error) {
+	d, err := s.readPlaceData()
+	if err != nil {
+		return PlaceView{}, err
+	}
+	i := slices.IndexFunc(d.places, func(p store.Place) bool { return p.ID == id })
+	if i < 0 {
+		return PlaceView{}, store.ErrPlaceNotFound
+	}
+	return s.placeView(d, d.places[i])
+}
+
+// writePlaceAnswer answers a place write with the place as the list shows it.
+func (h *Handler) writePlaceAnswer(w http.ResponseWriter, id string, extra map[string]any) {
+	view, err := h.svc.placeViewByID(id)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	out := map[string]any{"place": view}
+	maps.Copy(out, extra)
+	writeJSON(w, http.StatusOK, okEnvelope(out))
+}
+
+// handleProbePlace serves POST /api/places/probe. The probe's result is the
+// answer, ok false when it reached no verdict; a request the probe cannot run
+// is refused.
+func (h *Handler) handleProbePlace(w http.ResponseWriter, r *http.Request) {
+	var req ProbeRequest
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	res, err := h.svc.placeProbeFn()(r.Context(), req)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+// handleCreatePlace serves POST /api/places.
+func (h *Handler) handleCreatePlace(w http.ResponseWriter, r *http.Request) {
+	var body createPlaceBody
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	p, err := h.svc.createPlace(r.Context(), body)
+	if err != nil {
+		placeFail(w, err)
+		return
+	}
+	h.writePlaceAnswer(w, p.ID, nil)
 }

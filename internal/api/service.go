@@ -23,6 +23,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -376,6 +377,10 @@ type Service struct {
 	// another writer stored in between. It is always taken before the store's
 	// settings lock.
 	credSetsMu sync.Mutex
+
+	// placeProber is the place probe seam: nil uses ProbePlace; tests inject a
+	// fake that reaches no bucket. Accessed via placeProbeFn.
+	placeProber func(ctx context.Context, req ProbeRequest) (places.ProbeResult, error)
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock

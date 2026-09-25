@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/places"
@@ -47,4 +48,14 @@ func placeByName(t *testing.T, res map[string]any, name string) map[string]any {
 	}
 	t.Fatalf("no place %q in %v", name, res["places"])
 	return nil
+}
+
+// probeAnswers makes every place probe answer res and records what it was asked.
+func (f *placementFixture) probeAnswers(res places.ProbeResult) *[]ProbeRequest {
+	var asked []ProbeRequest
+	f.svc.placeProber = func(_ context.Context, req ProbeRequest) (places.ProbeResult, error) {
+		asked = append(asked, req)
+		return res, nil
+	}
+	return &asked
 }
