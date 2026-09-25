@@ -31,7 +31,13 @@ type folderProbe struct {
 }
 
 func probeProblem(err error) folderProbe {
-	return folderProbe{state: places.FolderFailed, problem: &places.ProbeError{Code: placementCode(err), Message: scrubError(err)}}
+	return folderProbe{state: places.FolderFailed, problem: &places.ProbeError{Code: placementCode(err), Message: probeReason(err)}}
+}
+
+// probeReason is why a probe failed, without the words of errPlaceProbeFailed,
+// which the code and every sentence shown around the reason already say.
+func probeReason(err error) string {
+	return strings.TrimPrefix(scrubError(err), errPlaceProbeFailed.Error()+": ")
 }
 
 // probeFolders opens the address of every folder of a place read-only and
@@ -329,6 +335,16 @@ func failedProbe(res places.ProbeResult, err error) (places.ProbeResult, error) 
 	if !errors.Is(err, errPlaceProbeFailed) {
 		return res, err
 	}
-	res.OK, res.Code, res.Error = false, placementCode(err), scrubError(err)
+	res.OK, res.Code, res.Error = false, placementCode(err), probeReason(err)
 	return res, nil
+}
+
+// probeRefusal is a failed probe as the place-probe-failed refusal carrying
+// it; any other error stays as it is.
+func probeRefusal(err error) error {
+	res, err := failedProbe(places.ProbeResult{}, err)
+	if err != nil {
+		return err
+	}
+	return &probeFailedErr{result: res}
 }

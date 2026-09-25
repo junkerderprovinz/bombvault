@@ -6,6 +6,8 @@ import (
 	"errors"
 	"maps"
 	"net/http"
+	"os"
+	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
@@ -685,6 +687,75 @@ func TestAnUnreachableNewAddressLeavesThePlaceAlone(t *testing.T) {
 		t.Fatalf("PATCH = %v, want place-probe-failed", res)
 	}
 	if p, err := f.st.GetPlace(b2.ID); err != nil || p.Base != b2.Base {
+		t.Fatalf("place = %+v, %v, want its base unchanged", p, err)
+	}
+}
+
+func TestAFolderCannotTurnAPlaceIntoARepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.Folders = map[string]string{"containers": "container"}
+	b2 := f.storePlace(p)
+	target := f.placeTarget(b2, "containers", "")
+	// The bucket root is empty, so only the folder rule can refuse.
+	f.eng.opens["s3:https://s3.example.com/bucket"] = false
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"folders": map[string]string{"containers": ""}})
+
+	if res["ok"] != false || res["code"] != nil || res["error"] != errPlaceFolderBlank.Error() {
+		t.Fatalf("PATCH = %v, want a plain refusal of the blank folder", res)
+	}
+	if row := f.storedTarget(target.ID); row.Repo != target.Repo {
+		t.Fatalf("target = %q, want it at %q", row.Repo, target.Repo)
+	}
+}
+
+func TestAPlaceCannotMoveIntoAnotherRepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(localPlace("Unraid", "backups"), "vms")
+	f.namedRepo("NAS", "nas/containers")
+
+	res := f.do(http.MethodPatch, "/api/places/"+unraid.ID, map[string]any{"address": map[string]string{"path": "nas/containers"}})
+
+	if res["ok"] != false || res["code"] != "nested-location" {
+		t.Fatalf("PATCH = %v, want nested-location", res)
+	}
+	if settings, err := f.st.GetSettings(); err != nil || settings.VMsPath != "backups/vms" {
+		t.Fatalf("vms path = %q, %v, want it unmoved", settings.VMsPath, err)
+	}
+}
+
+func TestAPlaceCannotMoveItsTargetsIntoAnotherRepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	usb := f.storePlace(localPlace("USB", "usb"))
+	target := f.placeTarget(usb, "flash", "")
+	f.namedRepo("NAS", "nas")
+
+	res := f.do(http.MethodPatch, "/api/places/"+usb.ID, map[string]any{"address": map[string]string{"path": "nas/usb"}})
+
+	if res["ok"] != false || res["code"] != "nested-location" {
+		t.Fatalf("PATCH = %v, want nested-location", res)
+	}
+	if row := f.storedTarget(target.ID); row.Repo != "usb/flash" {
+		t.Fatalf("target = %q, want it unmoved", row.Repo)
+	}
+}
+
+func TestAPlaceCannotMoveOntoAShareWithNothingMounted(t *testing.T) {
+	f := newPlacementFixture(t)
+	usb := f.storePlace(localPlace("USB", "usb"))
+	if err := os.MkdirAll(filepath.FromSlash(f.root+"/remotes/nas/bombvault"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	writeMountFixture(t, "/")
+
+	res := f.do(http.MethodPatch, "/api/places/"+usb.ID, map[string]any{"address": map[string]string{"path": "remotes/nas/bombvault"}})
+
+	probe, _ := res["probe"].(map[string]any)
+	if res["ok"] != false || res["code"] != "place-probe-failed" || probe["error"] != "nothing is mounted at this share; mount it on the server first" {
+		t.Fatalf("PATCH = %v, want place-probe-failed naming the missing mount once", res)
+	}
+	if p, err := f.st.GetPlace(usb.ID); err != nil || p.Base != "usb" {
 		t.Fatalf("place = %+v, %v, want its base unchanged", p, err)
 	}
 }

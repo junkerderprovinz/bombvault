@@ -88,7 +88,8 @@ type addressMove struct {
 	Domain  string
 	Old     string
 	New     string
-	OldMode restic.Mode // opens the old address
+	OldMode restic.Mode  // opens the old address
+	Self    locationSelf // what the address stands for, so locationClash does not hold it against itself
 	Facts   addressFacts
 }
 
@@ -123,7 +124,11 @@ func (s *Service) placeMoves(settings store.Settings, before, after store.Place,
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, addressMove{Domain: r.PlaceDomain, Old: r.Repo, New: addr, OldMode: s.rowMode(settings, r), Facts: facts})
+		self, err := s.rowSelf(r)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, addressMove{Domain: r.PlaceDomain, Old: r.Repo, New: addr, OldMode: s.rowMode(settings, r), Self: self, Facts: facts})
 	}
 	for _, d := range places.Domains {
 		if homes[d] != before.ID {
@@ -145,9 +150,43 @@ func (s *Service) placeMoves(settings store.Settings, before, after store.Place,
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, addressMove{Domain: d, Old: old, New: addr, OldMode: s.primaryModeFor(settings, d, loc), Facts: facts})
+		out = append(out, addressMove{Domain: d, Old: old, New: addr, OldMode: s.primaryModeFor(settings, d, loc), Self: locationSelf{own: d}, Facts: facts})
 	}
 	return out, nil
+}
+
+// rowSelf is what a row's address stands for, as the target and repository
+// routes hold it when they check a new location.
+func (s *Service) rowSelf(r store.OffsiteTarget) (locationSelf, error) {
+	self := locationSelf{ids: []string{r.ID}}
+	if r.Role != store.RoleOffsite {
+		return self, nil
+	}
+	self.target = true
+	field, ok, err := s.store.FieldOffsiteTarget(r.Domain)
+	if err != nil {
+		return self, err
+	}
+	if ok && field.ID == r.ID {
+		self.field = r.Domain
+	}
+	return self, nil
+}
+
+// checkNesting refuses a move whose new address lies inside or around another
+// repository or target. The other addresses of the place count where they are
+// now, since whatever lies there stays when the place moves away.
+func (s *Service) checkNesting(settings store.Settings, moves []addressMove) error {
+	for _, m := range moves {
+		loc, err := s.resolveRepo(m.New)
+		if err != nil {
+			return err
+		}
+		if err := s.locationClash(settings, loc, m.Self); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // rowMode is the mode a row's own repository opens with.
@@ -163,6 +202,7 @@ func (s *Service) rowMode(settings store.Settings, r store.OffsiteTarget) restic
 // which is a repository moved by hand. newMode opens the new addresses.
 func (s *Service) checkMoves(ctx context.Context, moves []addressMove, newMode restic.Mode) error {
 	refused := &placeEstablishedErr{domains: []string{}}
+	blocked := false
 	for _, m := range moves {
 		at := s.probeFolder(ctx, m.New, newMode)
 		if at.problem != nil {
@@ -175,12 +215,13 @@ func (s *Service) checkMoves(ctx context.Context, moves []addressMove, newMode r
 		if held && s.probeFolder(ctx, m.Old, m.OldMode).repoID == at.repoID {
 			continue
 		}
+		blocked = true
 		refused.snapshots += m.Facts.Snapshots
-		if !slices.Contains(refused.domains, m.Domain) {
+		if m.Domain != "" && !slices.Contains(refused.domains, m.Domain) {
 			refused.domains = append(refused.domains, m.Domain)
 		}
 	}
-	if len(refused.domains) > 0 {
+	if blocked {
 		return refused
 	}
 	return nil

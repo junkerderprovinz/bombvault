@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -202,6 +203,39 @@ func TestANewFolderHoldingOtherFilesIsAProbeFailure(t *testing.T) {
 	move := addressMove{Domain: "vms", Old: "old/vms", New: "new/vms"}
 	if err := f.svc.checkMoves(context.Background(), []addressMove{move}, restic.Mode{}); placementCode(err) != "place-probe-failed" {
 		t.Fatalf("checkMoves = %v, want place-probe-failed", err)
+	}
+}
+
+func TestAProbeFailureSaysOnceThatTheTestFailed(t *testing.T) {
+	f := newPlacementFixture(t)
+	dir := filepath.Join(filepath.FromSlash(f.root), "new", "vms")
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "notes.txt"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	move := addressMove{Domain: "vms", Old: "old/vms", New: "new/vms"}
+
+	err := f.svc.checkMoves(context.Background(), []addressMove{move}, restic.Mode{})
+
+	var failed *probeFailedErr
+	if !errors.As(err, &failed) || failed.result.Error != "this folder holds other files and no restic repository" ||
+		strings.Count(err.Error(), errPlaceProbeFailed.Error()) != 1 {
+		t.Fatalf("checkMoves = %v, want the reason once behind the failed test", err)
+	}
+}
+
+func TestARefusedMoveNamesOnlyTheDomainsItConcerns(t *testing.T) {
+	f := newPlacementFixture(t)
+	// The repository a place is itself belongs to no domain.
+	move := addressMove{Old: "old", New: "new", Facts: addressFacts{Established: true, Items: 1}}
+
+	err := f.svc.checkMoves(context.Background(), []addressMove{move}, restic.Mode{})
+
+	var refused *placeEstablishedErr
+	if !errors.As(err, &refused) || len(refused.domains) != 0 {
+		t.Fatalf("checkMoves = %#v, want place-location-established naming no domain", err)
 	}
 }
 
