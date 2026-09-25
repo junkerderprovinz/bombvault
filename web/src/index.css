@@ -1788,10 +1788,11 @@ body {
   to   { opacity: 1; transform: none; }
 }
 
-/* A drawn checkmark. `pathLength="1"` on the path (components/CheckDraw.tsx)
-   lets a 1-to-0 dashoffset draw the whole glyph without measuring it. */
+/* A checkmark wiping in from its foot to its tip. The mark is a filled shape
+   (components/CheckDraw.tsx), so the draw is a clip rather than a dash. */
 @keyframes glim-check-draw {
-  to { stroke-dashoffset: 0; }
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
 }
 
 /* Content replacing its loading placeholder fades in. The two are different
@@ -1890,11 +1891,6 @@ body {
   transform: translate(-50%, -50%);
   opacity: 0;
 }
-
-/* The checkmark fully drawn, outside the motion block, so a reduced-motion
-   viewer sees it complete. The motion block starts it undrawn and animates
-   it. */
-.glim-check-draw { stroke-dasharray: 1; stroke-dashoffset: 0; }
 
 /* The scrim is painted whatever the motion settings: darkening the page is
    what puts a window in front, not motion. Only its fade is gated. */
@@ -2029,10 +2025,9 @@ body {
       stroke var(--motion-wipe-dur, 320ms) var(--motion-wipe-ease, ease);
   }
 
-  /* Starts undrawn and draws itself. */
+  /* Starts hidden and wipes in; without motion it is simply there. */
   .glim-check-draw {
-    stroke-dashoffset: 1;
-    animation: glim-check-draw var(--motion-check-dur, 360ms) ease forwards;
+    animation: glim-check-draw var(--motion-check-dur, 360ms) ease both;
   }
 
   .glim-content-fade { animation: glim-content-fade-in var(--motion-content-dur, 220ms) ease both; }
