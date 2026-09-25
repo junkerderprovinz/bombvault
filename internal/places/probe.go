@@ -56,3 +56,10 @@ const (
 	// on the first backup. Params: bucket.
 	FactBucketNew = "places.probe.bucketNew"
 )
+
+const (
+	// FactB2Bucket names the one bucket a B2 key is limited to. Params: bucket.
+	FactB2Bucket = "places.probe.b2Bucket"
+	// FactB2Prefix names the folder a B2 key is limited to. Params: prefix.
+	FactB2Prefix = "places.probe.b2Prefix"
+)

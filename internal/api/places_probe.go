@@ -160,7 +160,10 @@ func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.Prob
 	fresh := pr.base == ""
 	var res places.ProbeResult
 	if fresh {
-		if pr.provider.Kind == places.KindS3 {
+		switch {
+		case pr.provider.ID == "b2":
+			err = probeB2(ctx, &pr, &res)
+		case pr.provider.Kind == places.KindS3:
 			err = probeS3(ctx, &pr, &res)
 		}
 		if err == nil {
