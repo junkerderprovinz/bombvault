@@ -327,7 +327,7 @@ export const en = {
   "update.afterBackup": "Update after successful backup",
   "update.afterBackupHint": "Pull the image and recreate this container right after a successful backup, so you always have a fresh restore point first. It runs at the backup's time (backups run one after another), not a fixed clock time. For updates on a set schedule instead, version-gated, see ShipLog.",
   "update.afterBackupOrphans":
-    "Docker keeps the image the container ran on before, now untagged, which Unraid lists as an orphan image. That is the normal residue of a SUCCESSFUL update, not the sign of a failed one, and it is what a quick rollback to the previous image needs. If you would rather not keep it, Settings → Paths & Storage → Image Cleanup & Update Status has a switch that deletes the superseded image right after the update.",
+    "Docker keeps the image the container ran on before, now untagged, which Unraid lists as an orphan image. That is the normal residue of a successful update, not the sign of a failed one, and it is what a quick rollback to the previous image needs. If you would rather not keep it, Settings → Storage → Image Cleanup & Update Status has a switch that deletes the superseded image right after the update.",
   "run.statusRunning": "Running",
   "run.statusSuccess": "Success",
   "run.statusFailed": "Failed",
@@ -1364,8 +1364,8 @@ export const en = {
   "config.schedule": "Schedule",
   "config.scheduleHint": "Backs up BombVault's own settings, targets and credentials at the scheduled time.",
   "config.offsiteSchedule": "Off-site schedule",
-  "config.offsiteMoved": "The off-site copy of the self-backup is set up under Settings, Off-site, in the same card every other domain has.",
-  "config.pathMoved": "The backup location is set under Settings, Paths and storage, where it can be a local folder or a remote repository with its own credentials.",
+  "config.offsiteMoved": "Where it is copied to is chosen under Settings, Storage too, in the same row, as for every other domain.",
+  "config.pathMoved": "Where the self-backup is stored is chosen under Settings, Storage, in its row of the Domains card.",
   "config.backupTitle": "Back up settings now",
   "config.backupHint": "Captures BombVault's own /config: the settings database, off-site credentials (rclone.conf) and SSH keypair.",
   "config.backupNow": "Back up settings now",
@@ -1650,7 +1650,7 @@ export const en = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "General",
-  "settings.tab.storage": "Paths & Storage",
+  "settings.tab.storage": "Storage",
   "settings.tab.schedules": "Schedules",
   "settings.tab.offsite": "Off-site",
   "settings.tab.notifications": "Notifications",
@@ -1661,7 +1661,7 @@ export const en = {
   "settings.schedulesSelfBackup": "Self-backup schedule",
   "settings.schedulesChecks": "Restore-check schedule",
   "settings.tamperTestSchedule": "Tamper-test schedule",
-  "settings.tamperScheduleInactive": "Inactive: no off-site repo is marked append-only, so this schedule never runs. Mark an off-site repo as append-only in its off-site settings to enable it.",
+  "settings.tamperScheduleInactive": "Inactive: no copy target is append-only, so this schedule never runs. Switch on append-only in the details of a place under Settings, Storage to enable it.",
   // Backup Everything (a 6th, independent pass over all five domains above)
   "settings.everythingTitle": "Backup Everything",
   "settings.everythingHint": "Runs every domain once, in order (containers, VMs, flash, folders, then the self-backup) so a single ping afterward (via the post-command below) confirms the whole server is protected. Off by default, and independent of each domain's own schedule above.",
@@ -2683,7 +2683,7 @@ export const de: Translations = {
   "update.afterBackup": "Nach erfolgreichem Backup updaten",
   "update.afterBackupHint": "Zieht das Image und baut diesen Container direkt nach einem erfolgreichen Backup neu, du hast also immer zuerst einen frischen Wiederherstellungspunkt. Läuft zur Backup-Zeit (Backups laufen nacheinander), nicht zu einer festen Uhrzeit. Für Updates nach festem Zeitplan (nach Version gestaffelt) gibt es ShipLog.",
   "update.afterBackupOrphans":
-    "Docker behält das Image, auf dem der Container vorher lief, jetzt ohne Tag, und Unraid führt es als verwaistes Image. Das ist der normale Rest eines ERFOLGREICHEN Updates und nicht die Spur eines fehlgeschlagenen; es ist genau das, was ein schnelles Zurückrollen auf das vorherige Image braucht. Wenn du es nicht behalten willst: Einstellungen → Pfade & Speicher → Image-Bereinigung & Update-Status hat einen Schalter, der das abgelöste Image direkt nach dem Update löscht.",
+    "Docker behält das Image, auf dem der Container vorher lief, jetzt ohne Tag, und Unraid führt es als verwaistes Image. Das ist der normale Rest eines erfolgreichen Updates und nicht die Spur eines fehlgeschlagenen; es ist genau das, was ein schnelles Zurückrollen auf das vorherige Image braucht. Wenn du es nicht behalten willst: Einstellungen → Speicher → Image-Bereinigung & Update-Status hat einen Schalter, der das abgelöste Image direkt nach dem Update löscht.",
   "run.statusRunning": "Läuft",
   "run.statusSuccess": "Erfolgreich",
   "run.statusFailed": "Fehlgeschlagen",
@@ -3511,8 +3511,8 @@ export const de: Translations = {
   "config.schedule": "Zeitplan",
   "config.scheduleHint": "Sichert BombVaults eigene Einstellungen, Ziele und Zugangsdaten zur geplanten Zeit.",
   "config.offsiteSchedule": "Offsite-Zeitplan",
-  "config.offsiteMoved": "Die Off-site-Kopie des Selbst-Backups richtest du unter Einstellungen, Off-site ein, in derselben Karte wie jede andere Domäne.",
-  "config.pathMoved": "Den Backup-Ort stellst du unter Einstellungen, Pfade und Speicher ein, dort kann er ein lokaler Ordner oder ein Remote-Repository mit eigenen Zugangsdaten sein.",
+  "config.offsiteMoved": "Wohin es kopiert wird, wählst du ebenfalls unter Einstellungen, Speicher, in derselben Zeile, wie bei jeder anderen Domäne.",
+  "config.pathMoved": "Wo das Selbst-Backup gespeichert wird, wählst du unter Einstellungen, Speicher, in seiner Zeile der Karte Domänen.",
   "config.backupTitle": "Einstellungen jetzt sichern",
   "config.backupHint": "Erfasst BombVaults eigenes /config: die Einstellungsdatenbank, Offsite-Zugangsdaten (rclone.conf) und das SSH-Schlüsselpaar.",
   "config.backupNow": "Einstellungen jetzt sichern",
@@ -3781,7 +3781,7 @@ export const de: Translations = {
 
   // Einstellungen — Bereichs-Tabs + Zeitplan-Überschriften + Untertitel (v5-Redesign)
   "settings.tab.general": "Allgemein",
-  "settings.tab.storage": "Pfade & Speicher",
+  "settings.tab.storage": "Speicher",
   "settings.tab.schedules": "Zeitpläne",
   "settings.tab.offsite": "Off-site",
   "settings.tab.notifications": "Benachrichtigungen",
@@ -3792,7 +3792,7 @@ export const de: Translations = {
   "settings.schedulesSelfBackup": "Selbst-Backup-Zeitplan",
   "settings.schedulesChecks": "Wiederherstellungs-Prüfplan",
   "settings.tamperTestSchedule": "Tamper-Test-Zeitplan",
-  "settings.tamperScheduleInactive": "Inaktiv: kein Off-site-Repo ist als append-only markiert, daher läuft dieser Zeitplan nie. Markiere ein Off-site-Repo in dessen Off-site-Einstellungen als append-only, um ihn zu aktivieren.",
+  "settings.tamperScheduleInactive": "Inaktiv: kein Kopieziel ist append-only, daher läuft dieser Zeitplan nie. Schalte append-only in den Details eines Ortes unter Einstellungen, Speicher ein, um ihn zu aktivieren.",
   // Gesamt-Backup (ein 6., unabhängiger Durchlauf über alle fünf Bereiche oben)
   "settings.everythingTitle": "Gesamt-Backup",
   "settings.everythingHint": "Sichert einmal nacheinander jeden Bereich (Container, VMs, Flash, Ordner und zuletzt das Selbst-Backup), sodass ein einzelner Ping danach (über den Post-Befehl unten) bestätigt, dass der ganze Server geschützt ist. Standardmäßig aus und unabhängig vom eigenen Zeitplan jedes Bereichs oben.",
