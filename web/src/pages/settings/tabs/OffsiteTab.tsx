@@ -16,7 +16,6 @@ import { useToast } from "../../../lib/toast";
 import { REPO_LOCAL_HINT_LTR_FRAGMENTS, withLtrFragments } from "../../../lib/ltrFragments";
 import { IconCheckCircle, IconSync, IconGear, IconClose } from "../../../components/Sidebar";
 import { Card } from "../shared";
-import { CloudCredSetsCard } from "../CloudCredSetsCard";
 import type { SettingsTabProps } from "./types";
 
 function ReplicateNowButton({
@@ -407,7 +406,6 @@ export function OffsiteTab({
       <RcloneCard t={t} hueIndex={nextHue()} />
 
       <CloudCard t={t} hueIndex={nextHue()} />
-      <CloudCredSetsCard t={t} hueIndex={nextHue()} />
     </>
   );
 }

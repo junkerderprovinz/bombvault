@@ -633,11 +633,11 @@ export const en = {
   "cloud.storageClass.label": "Off-site storage class",
   "cloud.storageClass.default": "(provider default)",
   "cloud.storageClass.hint": "Applies to native S3 backends only (repositories that start with s3:). Deep-archive tiers (Glacier Flexible Retrieval, Deep Archive) are intentionally not offered because they break restic restore.",
-  "cloud.credSets.title": "Additional credential sets",
-  "cloud.credSets.hint": "Give one or more off-site targets their own S3 or restic REST credentials, instead of sharing the ones above.",
+  "cloud.credSets.title": "Credential sets",
+  "cloud.credSets.hint": "Logins for the storage a pull source lies on. A pull never uses this server's own credentials, so a source that needs a login takes one of these sets.",
   "cloud.credSets.add": "Add credential set",
   "cloud.credSets.name": "Name",
-  "cloud.credSets.none": "No additional credential sets yet.",
+  "cloud.credSets.none": "No credential sets yet.",
   "rclone.save": "Save config",
   "notify.title": "Notifications",
   "notify.hint": "Get notified when a backup finishes, and choose which events trigger it below. Unraid notifications work here in Simple mode; more delivery channels (webhook, Matrix, Healthchecks, email) live under Advanced.",
@@ -2409,6 +2409,7 @@ export const en = {
   "storageDomains.copying": "Copying…",
   "storageDomains.copyStarted": "Copying started. It runs in the background.",
   "storageDomains.copyFailed": "Copying could not start.",
+  "cloud.credSets.placeOwned": "The credentials of this storage place. Change them in its details under Settings, Storage.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -2937,11 +2938,11 @@ export const de: Translations = {
   "cloud.storageClass.label": "Off-site-Speicherklasse",
   "cloud.storageClass.default": "(Standard des Anbieters)",
   "cloud.storageClass.hint": "Gilt nur für native S3-Backends (Repositories, die mit s3: beginnen). Deep-Archive-Stufen (Glacier Flexible Retrieval, Deep Archive) werden absichtlich nicht angeboten, weil sie die restic-Wiederherstellung brechen.",
-  "cloud.credSets.title": "Zusätzliche Zugangsdaten-Sätze",
-  "cloud.credSets.hint": "Gib einem oder mehreren Off-site-Zielen eigene S3- oder restic-REST-Zugangsdaten, statt sich die oben geteilten zu teilen.",
+  "cloud.credSets.title": "Zugangsdaten-Sätze",
+  "cloud.credSets.hint": "Anmeldungen für den Speicher, auf dem eine Abhol-Quelle liegt. Ein Abholen nimmt nie die Zugangsdaten dieses Servers, eine Quelle mit Anmeldung braucht also einen dieser Sätze.",
   "cloud.credSets.add": "Zugangsdaten-Satz hinzufügen",
   "cloud.credSets.name": "Name",
-  "cloud.credSets.none": "Noch keine zusätzlichen Zugangsdaten-Sätze.",
+  "cloud.credSets.none": "Noch keine Zugangsdaten-Sätze.",
   "rclone.save": "Konfig speichern",
   "notify.title": "Benachrichtigungen",
   "notify.hint": "Lass dich benachrichtigen, wenn ein Backup fertig ist, und lege unten fest, bei welchen Ereignissen. Unraid-Benachrichtigungen funktionieren bereits im einfachen Modus; weitere Versandkanäle (Webhook, Matrix, Healthchecks, E-Mail) findest du unter Erweitert.",
@@ -4505,6 +4506,7 @@ export const de: Translations = {
   "storageDomains.copying": "Kopiere…",
   "storageDomains.copyStarted": "Kopieren gestartet. Es läuft im Hintergrund weiter.",
   "storageDomains.copyFailed": "Kopieren konnte nicht starten.",
+  "cloud.credSets.placeOwned": "Die Zugangsdaten dieses Speicherorts. Du änderst sie in seinen Details unter Einstellungen, Speicher.",
 };
 
 // ---------------------------------------------------------------------------

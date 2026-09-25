@@ -14,9 +14,9 @@ export function credSetsChanged(): void {
 
 /**
  * The stored credential sets, kept current across components. The list is
- * edited in Settings' CloudCredSetsCard and read by each OffsiteTargetsSection
- * picker on the same page, so a per-component copy would hide a newly created
- * set until a reload.
+ * edited in the Pull page's CloudCredSetsCard and read by the pull source
+ * window's picker on the same page, so a per-component copy would hide a newly
+ * created set until a reload.
  *
  * Readers refetch on a broadcast instead of receiving the new list because the
  * POST response blanks the secrets. A failed fetch keeps the previous list, since

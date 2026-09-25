@@ -84,6 +84,8 @@ export interface Place {
   growthBudgetGb: number;
   enabled: boolean;
   sortOrder: number;
+  /** The credential set the place keeps its secrets in, "" for the shared credentials. */
+  credsRef: string;
   usage: PlaceUsage;
   /** Domain to whether an address there already holds backups. */
   locked: Record<string, boolean>;
