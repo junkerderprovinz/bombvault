@@ -390,3 +390,109 @@ func TestTargetsWithoutAPlaceFormStayUnplaced(t *testing.T) {
 		t.Error("the outer target lost its place to the one nested in it")
 	}
 }
+
+// namedRow is an enabled named repository with its own keep columns at zero.
+func namedRow(id, name, repo string) store.OffsiteTarget {
+	return store.OffsiteTarget{ID: id, Role: store.RoleRepo, Name: name, Repo: repo, Enabled: true}
+}
+
+func TestATargetPlaceOffersEveryDomainUnderTheUsualFolders(t *testing.T) {
+	in := migrationInput()
+	in.targets = []store.OffsiteTarget{offsiteRow("b2", "containers", "B2", b2Bucket+"/containers", 1)}
+	want := map[string]string{"containers": "containers", "vms": "vms", "flash": "flash", "config": "config", "files": "files"}
+	if got := placeNamed(t, planPlaces(in), "B2").Place.Folders; !maps.Equal(got, want) {
+		t.Fatalf("B2 folders = %v, want %v", got, want)
+	}
+}
+
+func TestADefaultFolderThatMeetsAnAddressInUseIsLeftOut(t *testing.T) {
+	in := migrationInput()
+	in.settings.VMsPath = b2Bucket + "/vms"
+	in.named = []store.OffsiteTarget{namedRow("cold", "Cold", b2Bucket+"/flash")}
+	in.targets = []store.OffsiteTarget{offsiteRow("b2", "containers", "B2", b2Bucket+"/containers", 1)}
+	folders := placeNamed(t, planPlaces(in), "B2").Place.Folders
+	for _, d := range []string{"vms", "flash"} {
+		if f, ok := folders[d]; ok {
+			t.Errorf("B2 offers %s at %q, where something already lives", d, f)
+		}
+	}
+	if folders["config"] != "config" || folders["files"] != "files" {
+		t.Errorf("B2 folders = %v, want config and files still offered", folders)
+	}
+}
+
+func TestPlacesWhoseCredentialsBelongToOneDomainOfferOnlyThatDomain(t *testing.T) {
+	withCreds := func(row store.OffsiteTarget, ref string) store.OffsiteTarget {
+		row.CredsRef = ref
+		return row
+	}
+	for name, c := range map[string]struct {
+		sets    []CloudCredSet
+		targets []store.OffsiteTarget
+		want    map[string]map[string]string // place -> folders
+	}{
+		"an accepted mesh offer": {
+			sets:    []CloudCredSet{{ID: "m", Name: "mesh: tower", CloudCreds: CloudCreds{RESTUser: "peer"}}},
+			targets: []store.OffsiteTarget{withCreds(offsiteRow("mesh", "flash", "mesh: tower", "rest:http://tower:8000/peer/flash", 1), "m")},
+			want:    map[string]map[string]string{"mesh: tower": {"flash": "flash"}},
+		},
+		"a rest-server user named after the domain": {
+			sets:    []CloudCredSet{{ID: "u", Name: "Tower", CloudCreds: CloudCreds{RESTUser: "bombvault-containers"}}},
+			targets: []store.OffsiteTarget{withCreds(offsiteRow("tower", "containers", "Tower", "rest:http://tower:8000/bombvault-containers/containers", 1), "u")},
+			want:    map[string]map[string]string{"Tower": {"containers": "containers"}},
+		},
+		"places split by nothing but their credentials": {
+			sets: []CloudCredSet{{ID: "a", Name: "A", CloudCreds: CloudCreds{RESTUser: "x"}}, {ID: "b", Name: "B", CloudCreds: CloudCreds{RESTUser: "y"}}},
+			targets: []store.OffsiteTarget{
+				withCreds(offsiteRow("c", "containers", "Tower", "rest:http://tower:8000/containers", 1), "a"),
+				withCreds(offsiteRow("v", "vms", "Tower VMs", "rest:http://tower:8000/vms", 2), "b"),
+			},
+			want: map[string]map[string]string{"Tower": {"containers": "containers"}, "Tower VMs": {"vms": "vms"}},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			in := migrationInput()
+			for _, set := range c.sets {
+				in.credSets[set.ID] = set
+			}
+			in.targets = c.targets
+			plan := planPlaces(in)
+			for place, folders := range c.want {
+				if got := placeNamed(t, plan, place).Place.Folders; !maps.Equal(got, folders) {
+					t.Errorf("%s folders = %v, want %v", place, got, folders)
+				}
+			}
+		})
+	}
+}
+
+func TestPlacesThatDifferInMoreThanCredentialsStillOfferFreeDomains(t *testing.T) {
+	c := offsiteRow("c", "containers", "Tower", "rest:http://tower:8000/containers", 1)
+	c.CredsRef = "a"
+	v := offsiteRow("v", "vms", "Tower VMs", "rest:http://tower:8000/vms", 2)
+	v.CredsRef, v.RetentionKeepLast = "b", 9
+	in := migrationInput()
+	in.targets = []store.OffsiteTarget{c, v}
+	plan := planPlaces(in)
+	if got := placeNamed(t, plan, "Tower").Place.Folders; !maps.Equal(got, map[string]string{"containers": "containers", "flash": "flash", "config": "config", "files": "files"}) {
+		t.Errorf("Tower folders = %v, want its own and the free domains", got)
+	}
+	// Tower took flash, config and files first; the containers default,
+	// "container", meets nothing, since Tower's own folder is "containers".
+	if got := placeNamed(t, plan, "Tower VMs").Place.Folders; !maps.Equal(got, map[string]string{"vms": "vms", "containers": "container"}) {
+		t.Errorf("Tower VMs folders = %v, want its own and the one default Tower left free", got)
+	}
+}
+
+func TestHomeAndRepositoryPlacesGetNoDefaultFolders(t *testing.T) {
+	in := migrationInput()
+	in.settings.VMsPath, in.settings.FlashPath, in.settings.ConfigPath, in.settings.FilesPath = "b2:x:vms", "b2:x:flash", "b2:x:config", "b2:x:files"
+	in.targets = []store.OffsiteTarget{offsiteRow("root", "containers", "Bucket", "s3:https://s3.example.com/bucket", 1)}
+	plan := planPlaces(in)
+	if got := placeNamed(t, plan, "Unraid").Place.Folders; !maps.Equal(got, map[string]string{"containers": "container"}) {
+		t.Errorf("Unraid folders = %v, want the domain path alone", got)
+	}
+	if got := placeNamed(t, plan, "Bucket").Place.Folders; !maps.Equal(got, map[string]string{"containers": ""}) {
+		t.Errorf("Bucket folders = %v, want the root alone", got)
+	}
+}

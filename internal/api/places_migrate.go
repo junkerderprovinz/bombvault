@@ -179,8 +179,10 @@ func rowTraits(kind places.Kind, row store.OffsiteTarget) placeTraits {
 type placesMigrationInput struct {
 	settings  store.Settings
 	targets   []store.OffsiteTarget          // role offsite
+	named     []store.OffsiteTarget          // role repo, direct repositories included
 	primaries map[string]store.OffsiteTarget // domain -> its remote-primary row
 	credSets  map[string]CloudCredSet        // by id, secrets included
+	shared    CloudCreds                     // what a row without a set logs in with
 	existing  []store.Place                  // names and addresses the plan must not take
 	homes     map[string]string              // domains that have a home place already
 }
@@ -188,9 +190,10 @@ type placesMigrationInput struct {
 // plannedPlace is one place as the plan builds it up.
 type plannedPlace struct {
 	store.MigratedPlace
-	traits     placeTraits
-	home       bool // made for domain paths, which take no default folders
-	repository bool // one repository by itself, so nothing goes under it
+	traits       placeTraits
+	home         bool // made for domain paths, which take no default folders
+	repository   bool // one repository by itself, so nothing goes under it
+	singleDomain bool // its credentials belong to one domain
 }
 
 // placesPlan is what the migration writes and what it leaves without a place.
@@ -217,6 +220,8 @@ func planPlaces(in placesMigrationInput) placesPlan {
 	}
 	p.planDomainPaths()
 	p.planTargets()
+	p.markSingleDomainPlaces()
+	p.addDefaultFolders()
 	plan := placesPlan{unplaced: p.unplaced}
 	for _, pl := range p.planned {
 		plan.places = append(plan.places, pl.MigratedPlace)
@@ -286,6 +291,103 @@ func (p *placesPlanner) planTargets() {
 		pl.Rows = append(pl.Rows, store.PlaceRowRef{RowID: t.ID, Domain: t.Domain, Repo: t.Repo})
 		p.byTarget[t.ID] = pl
 	}
+}
+
+// markSingleDomainPlaces finds the target places whose credentials belong to
+// one domain: an accepted mesh offer, a rest-server user named after the
+// domain the way deploy.go names it, and places split from another at the
+// same base by nothing but their credentials. They offer their own domain
+// only.
+func (p *placesPlanner) markSingleDomainPlaces() {
+	var targets []*plannedPlace
+	for _, pl := range p.planned {
+		if !pl.home && !pl.repository {
+			targets = append(targets, pl)
+		}
+	}
+	for i, a := range targets {
+		if p.meshCreds(a.traits.credsRef) || p.domainUser(a) {
+			a.singleDomain = true
+		}
+		for _, b := range targets[i+1:] {
+			if a.Place.Base != b.Place.Base || a.traits.credsRef == b.traits.credsRef {
+				continue
+			}
+			other := b.traits
+			other.credsRef = a.traits.credsRef
+			if other == a.traits {
+				a.singleDomain, b.singleDomain = true, true
+			}
+		}
+	}
+}
+
+// domainUser reports whether a place's rows are all of one domain and log in
+// as that domain's own rest-server user.
+func (p *placesPlanner) domainUser(pl *plannedPlace) bool {
+	if pl.traits.kind != places.KindREST || len(pl.Rows) == 0 {
+		return false
+	}
+	domain := pl.Rows[0].Domain
+	for _, r := range pl.Rows {
+		if r.Domain != domain {
+			return false
+		}
+	}
+	return p.credsFor(pl.traits.credsRef).RESTUser == "bombvault-"+domain
+}
+
+// credsFor resolves a credential selector the way decodeCloudFor does: an
+// empty or unknown one means the shared credentials.
+func (p *placesPlanner) credsFor(ref string) CloudCreds {
+	if set, ok := p.in.credSets[ref]; ok {
+		return set.CloudCreds
+	}
+	return p.in.shared
+}
+
+// addDefaultFolders lets a target place offer the domains it has no folder for
+// yet, under the usual folder names, so flash can be copied into the same
+// bucket with one click. A folder whose address would meet one in use is left
+// out, and home places, repository places and single-domain places get none.
+func (p *placesPlanner) addDefaultFolders() {
+	inUse := p.knownAddresses()
+	defaults := places.DefaultFolders()
+	for _, pl := range p.planned {
+		if pl.home || pl.repository || pl.singleDomain {
+			continue
+		}
+		for _, d := range places.Domains {
+			if _, ok := pl.Place.Folders[d]; ok {
+				continue
+			}
+			addr := places.Join(pl.Place.Base, defaults[d])
+			meets := func(a string) bool { return repoLocationsOverlap(a, addr) }
+			if slices.ContainsFunc(inUse, meets) || p.claimedElsewhere(addr, nil) {
+				continue
+			}
+			pl.Place.Folders[d] = defaults[d]
+		}
+	}
+}
+
+// knownAddresses are the locations the database names, placed or not: every
+// row, every domain path and every off-site field.
+func (p *placesPlanner) knownAddresses() []string {
+	var out []string
+	add := func(loc string) {
+		if loc != "" {
+			out = append(out, loc)
+		}
+	}
+	for _, r := range slices.Concat(p.in.targets, p.in.named) {
+		add(r.Repo)
+	}
+	for _, d := range places.Domains {
+		add(domainPathRaw(d, p.in.settings))
+		add(offsiteRepoFromSettings(d, p.in.settings))
+	}
+	return out
 }
 
 // joinable finds a place a row at sp can join: the same base, the same
