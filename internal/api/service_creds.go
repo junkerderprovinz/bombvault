@@ -306,6 +306,16 @@ type CloudCredSet struct {
 	// KeptFor is the id of the direct repository this set holds the values
 	// of, from before a save changed them to ones that do not open it.
 	KeptFor string `json:"keptFor,omitempty"`
+	// Kind is the connection kind of the place the set was made for, which
+	// decides the variables it renders into. A set without one renders the S3
+	// and REST variables through cloudEnv.
+	Kind         string `json:"kind,omitempty"`
+	WebDAVURL    string `json:"webdavUrl,omitempty"`
+	WebDAVVendor string `json:"webdavVendor,omitempty"`
+	WebDAVUser   string `json:"webdavUser,omitempty"`
+	WebDAVPass   string `json:"webdavPass,omitempty"`
+	AzureAccount string `json:"azureAccount,omitempty"`
+	AzureKey     string `json:"azureKey,omitempty"`
 	CloudCreds
 }
 
@@ -348,6 +358,8 @@ func (s *Service) CloudCredSets() ([]CloudCredSet, error) {
 		out[i] = set
 		out[i].S3Secret = ""
 		out[i].RESTPassword = ""
+		out[i].WebDAVPass = ""
+		out[i].AzureKey = ""
 	}
 	return out, nil
 }
@@ -356,9 +368,10 @@ func (s *Service) CloudCredSets() ([]CloudCredSet, error) {
 // sets. Each set's secret fields follow the same keep-prior-if-blank rule as
 // SetCloudCreds (matched by ID against the previously stored set), so the UI
 // can rename a set or edit its non-secret fields without re-entering keys.
-// KeptFor is carried over the same way, since the Settings page never sends
-// it. A set with a blank Name or a duplicate ID is rejected: both would make
-// CredsRef resolution ambiguous or the set unreachable from the UI.
+// KeptFor, the kind and the WebDAV and Azure fields are carried over the same
+// way, since the Settings page never sends them. A set with a blank Name or a
+// duplicate ID is rejected: both would make CredsRef resolution ambiguous or
+// the set unreachable from the UI.
 func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 	// Same reasoning as SetCloudCreds: the keep-prior-if-blank merge reads the
 	// sets stored right now, so it belongs in the same transaction as the write.
@@ -399,6 +412,17 @@ func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 				}
 				if next[i].KeptFor == "" {
 					next[i].KeptFor = old.KeptFor
+				}
+				if next[i].Kind == "" {
+					next[i].Kind = old.Kind
+					next[i].WebDAVURL, next[i].WebDAVVendor, next[i].WebDAVUser = old.WebDAVURL, old.WebDAVVendor, old.WebDAVUser
+					next[i].AzureAccount = old.AzureAccount
+				}
+				if next[i].WebDAVPass == "" {
+					next[i].WebDAVPass = old.WebDAVPass
+				}
+				if next[i].AzureKey == "" {
+					next[i].AzureKey = old.AzureKey
 				}
 			}
 		}
