@@ -5,6 +5,7 @@
 // certificate that does not cover this address) and the ones where a wrong
 // sentence would send the operator to the wrong fix.
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { countText, en } from "../../lib/i18n";
 import type { McpKeyView, McpKeysResponse } from "../../lib/api";
@@ -16,6 +17,7 @@ const rotateMcpKey = vi.fn();
 const revokeMcpKey = vi.fn();
 const purgeMcpKey = vi.fn();
 const addMcpCertificateName = vi.fn();
+const getMcpKeyActivity = vi.fn();
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -28,6 +30,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     revokeMcpKey: (...a: unknown[]) => revokeMcpKey(...a),
     purgeMcpKey: (...a: unknown[]) => purgeMcpKey(...a),
     addMcpCertificateName: (...a: unknown[]) => addMcpCertificateName(...a),
+    getMcpKeyActivity: (...a: unknown[]) => getMcpKeyActivity(...a),
   };
 });
 
@@ -52,6 +55,7 @@ function key(over: Partial<McpKeyView> = {}): McpKeyView {
     revokedReason: "",
     inUse: false,
     unusable: "",
+    callsToday: 0,
     ...over,
   };
 }
@@ -78,7 +82,7 @@ async function renderCard(...answers: McpKeysResponse[]) {
   listMcpKeys.mockReset();
   for (const a of answers) listMcpKeys.mockResolvedValueOnce(a);
   listMcpKeys.mockResolvedValue(answers[answers.length - 1]);
-  const view = render(<McpServerCard hueIndex={0} />);
+  const view = render(<McpServerCard hueIndex={0} />, { wrapper: MemoryRouter });
   await waitFor(() => expect(listMcpKeys).toHaveBeenCalled());
   return view;
 }
@@ -89,7 +93,7 @@ function cardText(): string {
 
 beforeEach(() => {
   pushed.length = 0;
-  for (const m of [createMcpKey, updateMcpKey, rotateMcpKey, revokeMcpKey, purgeMcpKey, addMcpCertificateName]) {
+  for (const m of [createMcpKey, updateMcpKey, rotateMcpKey, revokeMcpKey, purgeMcpKey, addMcpCertificateName, getMcpKeyActivity]) {
     m.mockReset();
   }
 });
@@ -127,7 +131,7 @@ describe("the MCP card without a key", () => {
     vi.stubGlobal("location", new URL("https://backup.example.com/settings"));
     listMcpKeys.mockReset();
     listMcpKeys.mockResolvedValue(payload({ authEnabled: false, hostAllowsKeys: false }));
-    const view = render(<McpServerCard hueIndex={0} passwordSet={false} />);
+    const view = render(<McpServerCard hueIndex={0} passwordSet={false} />, { wrapper: MemoryRouter });
     await waitFor(() => expect(screen.getByText(en["mcp.noPasswordWarning"])).toBeTruthy());
 
     listMcpKeys.mockResolvedValue(payload());
@@ -467,6 +471,115 @@ describe("a key list", () => {
   });
 });
 
+describe("a key's tile", () => {
+  function tileOf(label: string): HTMLElement {
+    const tile = screen.getAllByRole("listitem").find((li) => li.textContent?.includes(label));
+    if (!tile) throw new Error(`no tile for ${label}`);
+    return tile;
+  }
+
+  it("shows the permission, the hint and today's calls", async () => {
+    await renderCard(
+      payload({
+        keys: [
+          key({ id: "k1", label: "laptop", callsToday: 3 }),
+          key({ id: "k2", label: "desktop", canStartBackups: false, callsToday: 1, hint: "77aa" }),
+        ],
+      })
+    );
+
+    await waitFor(() => expect(tileOf("laptop")).toBeTruthy());
+    const laptop = tileOf("laptop");
+    expect(within(laptop).getByText(en["mcp.canStart"])).toBeTruthy();
+    expect(within(laptop).getByText(countText(en["mcp.callsToday"], "en", 3))).toBeTruthy();
+    const desktop = tileOf("desktop");
+    expect(within(desktop).getByText(en["mcp.readOnly"])).toBeTruthy();
+    expect(within(desktop).getByText(countText(en["mcp.callsToday"], "en", 1))).toBeTruthy();
+    expect(desktop.textContent).toContain(en["mcp.keyHint"].replace("{hint}", "77aa"));
+    expect(within(desktop).getByRole("button", { name: en["mcp.revoke"] })).toBeTruthy();
+    expect(within(desktop).getByRole("button", { name: en["mcp.rotate"] })).toBeTruthy();
+    expect(getMcpKeyActivity).not.toHaveBeenCalled();
+  });
+
+  it("opens the key's log with its runs, calls and refusals", async () => {
+    await renderCard(payload({ keys: [key({ id: "k1", label: "laptop" })] }));
+    getMcpKeyActivity.mockResolvedValue({
+      ok: true,
+      runs: [
+        {
+          id: "run1",
+          targetId: "t1",
+          kind: "backup",
+          status: "cancelled",
+          startedAt: 1_700_000_500,
+          finishedAt: 1_700_000_600,
+          snapshotId: "",
+          bytes: 0,
+          error: "",
+          acknowledged: false,
+          target: "plex",
+          domain: "container",
+        },
+      ],
+      events: [
+        { at: 1_700_000_700, tool: "cancel_backup", outcome: "ok", runId: "run1" },
+        { at: 1_700_000_650, tool: "start_backup", outcome: "cooldown", runId: "" },
+        { at: 1_700_000_640, tool: "start_backup", outcome: "rate_limited", runId: "" },
+        { at: 1_700_000_630, tool: "", outcome: "rate_limited", runId: "" },
+        { at: 1_700_000_620, tool: "list_runs", outcome: "invalid_argument", runId: "" },
+      ],
+    });
+
+    fireEvent.click(within(await waitFor(() => tileOf("laptop"))).getByRole("button", { name: en["mcp.log"] }));
+
+    await waitFor(() => expect(getMcpKeyActivity).toHaveBeenCalledWith("k1"));
+    const tile = tileOf("laptop");
+    await waitFor(() => expect(within(tile).getByText("plex")).toBeTruthy());
+    expect(within(tile).getByText(en["run.statusCancelled"])).toBeTruthy();
+    const links = within(tile).getAllByRole("link", { name: en["mcp.logShowRun"] });
+    expect(links.map((a) => a.getAttribute("href"))).toEqual(["/dashboard?run=run1", "/dashboard?run=run1"]);
+    for (const text of [
+      en["mcp.outcomeOk"],
+      en["mcp.outcomeCooldown"],
+      en["mcp.outcomeStartLimit"],
+      en["mcp.outcomeRateLimited"],
+      en["mcp.outcomeOther"].replace("{code}", "invalid_argument"),
+      en["mcp.logRequest"],
+      "cancel_backup",
+    ]) {
+      expect(within(tile).getByText(text)).toBeTruthy();
+    }
+
+    fireEvent.click(within(tile).getByRole("button", { name: en["mcp.log"] }));
+    await waitFor(() => expect(within(tileOf("laptop")).queryByText("plex")).toBeNull());
+  });
+
+  it("says when a key has no log yet or it cannot be read", async () => {
+    await renderCard(payload({ keys: [key({ id: "k1", label: "laptop" }), key({ id: "k2", label: "desktop" })] }));
+    getMcpKeyActivity.mockImplementation((id: string) =>
+      id === "k1" ? Promise.resolve({ ok: true, runs: [], events: [] }) : Promise.reject(new Error("offline"))
+    );
+
+    await waitFor(() => expect(tileOf("laptop")).toBeTruthy());
+    fireEvent.click(within(tileOf("laptop")).getByRole("button", { name: en["mcp.log"] }));
+    fireEvent.click(within(tileOf("desktop")).getByRole("button", { name: en["mcp.log"] }));
+
+    await waitFor(() => expect(within(tileOf("laptop")).getByText(en["mcp.logEmpty"])).toBeTruthy());
+    await waitFor(() => expect(within(tileOf("desktop")).getByText(en["mcp.logFailed"])).toBeTruthy());
+  });
+
+  it("gives a revoked key a log of its own", async () => {
+    await renderCard(
+      payload({ revoked: [key({ id: "r1", label: "old laptop", revokedAt: 1_700_100_000, revokedReason: "user" })] })
+    );
+    getMcpKeyActivity.mockResolvedValue({ ok: true, runs: [], events: [] });
+
+    fireEvent.click(await screen.findByText(countText(en["mcp.revokedList"], "en", 1)));
+    fireEvent.click(within(tileOf("old laptop")).getByRole("button", { name: en["mcp.log"] }));
+    await waitFor(() => expect(getMcpKeyActivity).toHaveBeenCalledWith("r1"));
+  });
+});
+
 describe("a refusal from the server", () => {
   async function createWith(answer: Record<string, unknown>) {
     await renderCard(payload());
@@ -548,7 +661,7 @@ describe("a refusal from the server", () => {
   it("says when the list cannot be loaded", async () => {
     listMcpKeys.mockReset();
     listMcpKeys.mockRejectedValue(new Error("offline"));
-    render(<McpServerCard hueIndex={0} />);
+    render(<McpServerCard hueIndex={0} />, { wrapper: MemoryRouter });
 
     await waitFor(() => expect(screen.getByText(en["mcp.loadFailed"])).toBeTruthy());
     expect(screen.queryByRole("button", { name: en["mcp.newKey"] })).toBeNull();

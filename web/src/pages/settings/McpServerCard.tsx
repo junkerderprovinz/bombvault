@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Badge, type BadgeSize } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { IconDisclosure } from "../../components/IconDisclosure";
@@ -32,6 +33,7 @@ import {
 } from "../../lib/mcpSnippets";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
+import { McpKeyLog } from "./McpKeyLog";
 import { Card, LOGIN_PASSWORD_FIELD, ToggleRow } from "./shared";
 
 // McpServerCard is where an MCP key comes from, and the only place it is ever
@@ -72,6 +74,17 @@ type Pending =
   | { kind: "rotate" | "revoke" | "purge"; item: McpKeyView }
   | { kind: "certificate" };
 
+// Each key is a tile laid out like an off-site target in OffsiteTargetsSection,
+// with its chips at the size those use. The log opens inside the tile the way a
+// fleet peer opens its details.
+const TILE_BADGE_SIZE: BadgeSize = "medium";
+
+function LogButton({ open, onClick, t }: { open: boolean; onClick: () => void; t: (key: TranslationKey) => string }) {
+  return (
+    <Button label={t("mcp.log")} labelKey="mcp.log" tone="neutral" onClick={onClick} glyph={<IconDisclosure open={open} />} />
+  );
+}
+
 /** A key handed out by create or rotate, with the row it belongs to. */
 interface FreshKey {
   key: string;
@@ -96,8 +109,15 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
   const [revokedOpen, setRevokedOpen] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
   const [shake, setShake] = useState<Record<string, number>>({});
+  const [logOpen, setLogOpen] = useState<ReadonlySet<string>>(new Set());
 
   const bumpShake = (id: string) => setShake((s) => ({ ...s, [id]: (s[id] ?? 0) + 1 }));
+  const toggleLog = (id: string) =>
+    setLogOpen((open) => {
+      const next = new Set(open);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
 
   const reload = useCallback(async () => {
     try {
@@ -455,79 +475,80 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
           )}
 
           {keys.length > 0 && (
-            <ul className="flex flex-col gap-2">
+            <ul className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
               {keys.map((k) => (
-                <li
-                  key={k.id}
-                  className="flex flex-col gap-2 rounded-control bg-carbon-surface2 px-3 py-2"
-                >
-                  <div className="flex items-center gap-2">
-                    {renaming === k.id ? (
-                      <input
-                        autoFocus
-                        value={draft}
-                        maxLength={64}
-                        aria-label={t("mcp.labelLabel")}
-                        onChange={(e) => setDraft(e.target.value)}
-                        onBlur={() => {
-                          if (!busy) void rename(k);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") void rename(k);
-                          if (e.key === "Escape") setRenaming("");
-                        }}
-                        className={`w-64 rounded-control bg-carbon-surface px-3 py-1 text-sm text-carbon-text glim-field-focus${
-                          shake[`rename:${k.id}`] ? " glim-shake" : ""
-                        }`}
-                      />
-                    ) : (
-                      <>
-                        <span className="truncate text-sm text-carbon-text">{k.label}</span>
-                        <Button
-                          label={t("common.edit")}
-                          labelKey="common.edit"
-                          variant="icon"
-                          tone="subtle"
-                          onClick={() => {
-                            setDraft(k.label);
-                            setRenaming(k.id);
-                          }}
-                          hueIndex={hueIndex}
-                        />
-                      </>
-                    )}
-                  </div>
-
-                  {k.unusable === "app-key-changed" ? (
-                    <span className="text-xs text-statusWarn">{t("mcp.keyUnusable")}</span>
-                  ) : (
-                    <span className="text-xs text-carbon-textSub">
-                      {t("mcp.keyHint").replace("{hint}", k.hint)}
-                      {" · "}
-                      {k.rotatedAt > 0
-                        ? t("mcp.keyRotated").replace("{date}", formatTs(k.rotatedAt))
-                        : t("mcp.keyCreated").replace("{date}", formatTs(k.createdAt))}
-                      {" · "}
-                      {k.lastUsedAt === 0
-                        ? t("mcp.keyNeverUsed")
-                        : k.lastUsedFrom === ""
-                          ? t("mcp.keyLastUsedNoAddr").replace("{when}", relativeTime(t, k.lastUsedAt))
-                          : t("mcp.keyLastUsed")
-                              .replace("{when}", relativeTime(t, k.lastUsedAt))
-                              .replace("{addr}", k.lastUsedFrom)}
-                    </span>
-                  )}
-
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <Toggle
-                      key={shake[`start:${k.id}`] ?? 0}
-                      label={t("mcp.allowStart")}
-                      checked={k.canStartBackups}
-                      onChange={(v) => void setCanStart(k, v)}
-                      disabled={busy}
-                      className={shake[`start:${k.id}`] ? "glim-shake" : ""}
-                    />
-                    <div className="flex items-center gap-2">
+                <li key={k.id} className="flex flex-col gap-3 rounded-card bg-carbon-surface p-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <div className="flex min-w-0 items-center gap-2">
+                        {renaming === k.id ? (
+                          <input
+                            autoFocus
+                            value={draft}
+                            maxLength={64}
+                            aria-label={t("mcp.labelLabel")}
+                            onChange={(e) => setDraft(e.target.value)}
+                            onBlur={() => {
+                              if (!busy) void rename(k);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") void rename(k);
+                              if (e.key === "Escape") setRenaming("");
+                            }}
+                            className={`w-64 rounded-control bg-carbon-surface2 px-3 py-1 text-sm text-carbon-text glim-field-focus${
+                              shake[`rename:${k.id}`] ? " glim-shake" : ""
+                            }`}
+                          />
+                        ) : (
+                          <>
+                            <span className="truncate text-sm text-carbon-text">{k.label}</span>
+                            <Button
+                              label={t("common.edit")}
+                              labelKey="common.edit"
+                              variant="icon"
+                              tone="subtle"
+                              onClick={() => {
+                                setDraft(k.label);
+                                setRenaming(k.id);
+                              }}
+                              hueIndex={hueIndex}
+                            />
+                          </>
+                        )}
+                      </div>
+                      {k.unusable === "app-key-changed" ? (
+                        <span className="text-xs text-statusWarn">{t("mcp.keyUnusable")}</span>
+                      ) : (
+                        <>
+                          <span className="text-xs text-carbon-textMuted">
+                            {t("mcp.keyHint").replace("{hint}", k.hint)}
+                            {" · "}
+                            {k.rotatedAt > 0
+                              ? t("mcp.keyRotated").replace("{date}", formatTs(k.rotatedAt))
+                              : t("mcp.keyCreated").replace("{date}", formatTs(k.createdAt))}
+                          </span>
+                          <span className="text-xs text-carbon-textMuted">
+                            {k.lastUsedAt === 0
+                              ? t("mcp.keyNeverUsed")
+                              : k.lastUsedFrom === ""
+                                ? t("mcp.keyLastUsedNoAddr").replace("{when}", relativeTime(t, k.lastUsedAt))
+                                : t("mcp.keyLastUsed")
+                                    .replace("{when}", relativeTime(t, k.lastUsedAt))
+                                    .replace("{addr}", k.lastUsedFrom)}
+                          </span>
+                        </>
+                      )}
+                      <span className="flex flex-wrap gap-2">
+                        <Badge tone="neutral" size={TILE_BADGE_SIZE} wrap>
+                          {k.canStartBackups ? t("mcp.canStart") : t("mcp.readOnly")}
+                        </Badge>
+                        <Badge tone="neutral" size={TILE_BADGE_SIZE} wrap>
+                          <span className="glim-num">{t("mcp.callsToday", k.callsToday)}</span>
+                        </Badge>
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap items-start gap-2">
+                      <LogButton open={logOpen.has(k.id)} onClick={() => toggleLog(k.id)} t={t} />
                       <Button
                         label={t("mcp.revoke")}
                         labelKey="mcp.revoke"
@@ -550,6 +571,17 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                       )}
                     </div>
                   </div>
+
+                  <Toggle
+                    key={shake[`start:${k.id}`] ?? 0}
+                    label={t("mcp.allowStart")}
+                    checked={k.canStartBackups}
+                    onChange={(v) => void setCanStart(k, v)}
+                    disabled={busy}
+                    className={shake[`start:${k.id}`] ? "glim-shake" : ""}
+                  />
+
+                  {logOpen.has(k.id) && <McpKeyLog keyId={k.id} t={t} />}
                 </li>
               ))}
             </ul>
@@ -634,34 +666,44 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                 {t("mcp.revokedList", revoked.length)}
               </button>
               {revokedOpen && (
-                <ul className="flex flex-col gap-2">
+                <ul className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
                   {revoked.map((k) => (
-                    <li
-                      key={k.id}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-control bg-carbon-surface2 px-3 py-2"
-                    >
-                      <div className="flex min-w-0 flex-col">
-                        <span className="truncate text-sm text-carbon-text">{k.label}</span>
-                        <span className="text-xs text-carbon-textSub">
-                          {(k.revokedReason === "config-restore"
-                            ? t("mcp.revokedByRestore")
-                            : t("mcp.revokedAt")
-                          ).replace("{date}", formatTs(k.revokedAt))}
-                        </span>
+                    <li key={k.id} className="flex flex-col gap-3 rounded-card bg-carbon-surface p-3">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="flex min-w-0 flex-col gap-1">
+                          <span className="truncate text-sm text-carbon-text">{k.label}</span>
+                          <span className="text-xs text-carbon-textMuted">
+                            {(k.revokedReason === "config-restore"
+                              ? t("mcp.revokedByRestore")
+                              : t("mcp.revokedAt")
+                            ).replace("{date}", formatTs(k.revokedAt))}
+                          </span>
+                          <span className="text-xs text-carbon-textMuted">
+                            {t("mcp.keyCreated").replace("{date}", formatTs(k.createdAt))}
+                            {" · "}
+                            {k.lastUsedAt === 0
+                              ? t("mcp.keyNeverUsed")
+                              : t("mcp.keyLastUsedNoAddr").replace("{when}", relativeTime(t, k.lastUsedAt))}
+                          </span>
+                        </div>
+                        <div className="flex shrink-0 flex-wrap items-center gap-2">
+                          <LogButton open={logOpen.has(k.id)} onClick={() => toggleLog(k.id)} t={t} />
+                          {/* A disabled button shows no tooltip, so the reason sits beside it. */}
+                          <span className="flex items-center gap-1.5">
+                            {k.inUse && <InfoBubble tip={t("mcp.inUseTip")} />}
+                            <Button
+                              label={t("common.delete")}
+                              labelKey="common.delete"
+                              tone="neutral"
+                              onClick={() => setPending({ kind: "purge", item: k })}
+                              disabled={busy || k.inUse}
+                              className={shake[`purge:${k.id}`] ? "glim-shake" : ""}
+                              hueIndex={hueIndex}
+                            />
+                          </span>
+                        </div>
                       </div>
-                      {/* A disabled button shows no tooltip, so the reason sits beside it. */}
-                      <span className="flex items-center gap-1.5">
-                        {k.inUse && <InfoBubble tip={t("mcp.inUseTip")} />}
-                        <Button
-                          label={t("common.delete")}
-                          labelKey="common.delete"
-                          tone="neutral"
-                          onClick={() => setPending({ kind: "purge", item: k })}
-                          disabled={busy || k.inUse}
-                          className={shake[`purge:${k.id}`] ? "glim-shake" : ""}
-                          hueIndex={hueIndex}
-                        />
-                      </span>
+                      {logOpen.has(k.id) && <McpKeyLog keyId={k.id} t={t} />}
                     </li>
                   ))}
                 </ul>

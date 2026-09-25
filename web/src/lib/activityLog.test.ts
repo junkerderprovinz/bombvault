@@ -523,6 +523,27 @@ describe("filterLogLines day filter", () => {
   });
 });
 
+describe("filterLogLines run filter", () => {
+  const at = new Date(2026, 6, 23, 9, 0, 0).getTime();
+  const lines: LogLine[] = [
+    { id: "run:a", runId: "a", atMs: at, status: "success", text: "Backed up plex", domain: "containers", kind: "backup", live: false },
+    { id: "run:b", runId: "b", atMs: at, status: "failed", text: "Backup of win11 failed", domain: "vms", kind: "backup", live: false },
+    { id: "live", atMs: at, status: "running", text: "Backing up sonarr", domain: "containers", kind: "backup", live: true },
+    { id: "idle", atMs: at, status: "info", text: "next up", domain: "", kind: "", live: false, idle: true },
+  ];
+
+  it("keeps the linked run and the idle line", () => {
+    expect(filterLogLines(lines, { domain: "all", kind: "all", text: "", runId: "b" }).map((l) => l.id)).toEqual([
+      "run:b",
+      "idle",
+    ]);
+  });
+
+  it("is off when no run is linked", () => {
+    expect(filterLogLines(lines, { domain: "all", kind: "all", text: "" })).toHaveLength(lines.length);
+  });
+});
+
 // Without a locale the date follows the engine's default, like every other
 // date in the app, rather than navigator.language, which can disagree with it
 // (a macOS "en-US" UI language with a Portuguese region).

@@ -4701,6 +4701,8 @@ export interface McpKeyView {
   /** The run history still names this key, so purging it would orphan those rows. */
   inUse: boolean;
   unusable: "" | "app-key-changed";
+  /** Tool calls since the midnight listMcpKeys sent. */
+  callsToday: number;
 }
 
 /** The certificate the web interface serves, from GET /api/mcp/keys. */
@@ -4734,7 +4736,32 @@ export interface McpKeySecretResponse extends OkEnvelope {
 export const MCP_CERTIFICATE_URL = "/api/mcp/certificate";
 
 export function listMcpKeys(): Promise<McpKeysResponse> {
-  return fetchJSON("/api/mcp/keys");
+  // The server counts a key's calls today from this browser's midnight, which
+  // is the day the operator reading the card means.
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  return fetchJSON(`/api/mcp/keys?since=${Math.floor(midnight.getTime() / 1000)}`);
+}
+
+/** One entry of a key's log: a tool call, or a request the endpoint refused
+ *  before any tool ran, which leaves `tool` empty. `outcome` is "ok" or the
+ *  refusal code; `runId` names the run a cancel was about. */
+export interface McpKeyEvent {
+  at: number;
+  tool: string;
+  outcome: string;
+  runId: string;
+}
+
+/** GET /api/mcp/keys/{id}/activity: what the key did, newest first, and the
+ *  newest backups it started. */
+export interface McpKeyActivity extends OkEnvelope {
+  events: McpKeyEvent[];
+  runs: Run[];
+}
+
+export function getMcpKeyActivity(id: string): Promise<McpKeyActivity> {
+  return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}/activity`);
 }
 
 export function createMcpKey(label: string, canStartBackups: boolean): Promise<McpKeySecretResponse> {

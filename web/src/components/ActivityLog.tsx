@@ -80,6 +80,8 @@ function glyphLabelKey(status: LogStatus): TranslationKey {
 export function ActivityLog({
   dayFilter = null,
   onClearDayFilter,
+  runFilter = null,
+  onClearRunFilter,
   hueIndex,
 }: {
   /** Local calendar day (YYYY-MM-DD) picked in the Dashboard heatmap, or null.
@@ -87,6 +89,9 @@ export function ActivityLog({
   dayFilter?: string | null;
   /** Called by the day chip's clear button; the Dashboard owns the state. */
   onClearDayFilter?: () => void;
+  /** One run, linked from a key's log on the MCP card, or null. */
+  runFilter?: string | null;
+  onClearRunFilter?: () => void;
   /** Rainbow position of the heading, from Dashboard's nextHue() counter.
    *  Omit for the plain accent. */
   hueIndex?: number;
@@ -186,8 +191,9 @@ export function ActivityLog({
         kind: filterType,
         text: filterText,
         day: dayFilter ?? undefined,
+        runId: runFilter ?? undefined,
       }),
-    [lines, filterDomain, filterType, filterText, dayFilter]
+    [lines, filterDomain, filterType, filterText, dayFilter, runFilter]
   );
 
   // Stay at the bottom as lines arrive, until the user scrolls up.
@@ -261,6 +267,17 @@ export function ActivityLog({
               labelKey="activityLog.clearDayFilter"
               variant="chip"
               onClick={onClearDayFilter}
+            />
+          </span>
+        )}
+        {runFilter && (
+          <span className="inline-flex items-center gap-1 rounded-pill bg-accent text-accentContrast ps-2.5 pe-1 py-0.5 text-xs font-medium">
+            {t("activityLog.runFilterChip")}
+            <Button
+              label={t("activityLog.clearRunFilter")}
+              labelKey="activityLog.clearRunFilter"
+              variant="chip"
+              onClick={onClearRunFilter}
             />
           </span>
         )}

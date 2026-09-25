@@ -708,13 +708,16 @@ export interface LogFilter {
    *  quick filters, it never hides the idle line, the one that says what runs
    *  next. */
   day?: string;
+  /** One run, set by a link from a key's log on the MCP card. The idle line
+   *  stays, as it does for the day. */
+  runId?: string;
 }
 
 /**
  * filterLogLines narrows `lines` by the domain and type quick filters, the
- * heatmap day and the free-text search. The search also matches the line's
- * date, in ISO form and in the short form the UI shows, so typing a date
- * narrows the log too.
+ * heatmap day, a linked run and the free-text search. The search also matches
+ * the line's date, in ISO form and in the short form the UI shows, so typing a
+ * date narrows the log too.
  */
 export function filterLogLines(lines: LogLine[], filter: LogFilter): LogLine[] {
   const q = filter.text.trim().toLowerCase();
@@ -726,6 +729,7 @@ export function filterLogLines(lines: LogLine[], filter: LogFilter): LogLine[] {
       if (filter.domain !== "all" && l.domain !== filter.domain) return false;
       if (filter.kind !== "all" && l.kind !== filter.kind) return false;
       if (filter.day && isoDateOf(l.atMs) !== filter.day) return false;
+      if (filter.runId && l.runId !== filter.runId) return false;
     }
     if (q) {
       const haystack = `${l.text} ${isoDateOf(l.atMs)} ${formatLogDate(l.atMs, lang)}`.toLowerCase();

@@ -2591,6 +2591,23 @@ export function Dashboard() {
     el.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
   };
 
+  // A key's log on the MCP card links a run here as ?run=<id>. The log narrows
+  // to it and comes into view once, for the link that opened the page; clearing
+  // it drops the parameter, so a reload shows the whole log again.
+  const [logRunFilter, setLogRunFilter] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get("run") || null
+  );
+  useEffect(() => {
+    if (logRunFilter) activityLogBlockRef.current?.scrollIntoView?.({ block: "start" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const clearLogRun = () => {
+    setLogRunFilter(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("run");
+    window.history.replaceState(window.history.state, "", url);
+  };
+
   // Customizable dashboard (#46) — everything below the heading + banners is a
   // reorderable / hideable block, persisted per-browser via useDashboardLayout.
   const [editing, setEditing] = useState(false);
@@ -2660,6 +2677,8 @@ export function Dashboard() {
           <ActivityLog
             dayFilter={logDayFilter}
             onClearDayFilter={() => setLogDayFilter(null)}
+            runFilter={logRunFilter}
+            onClearRunFilter={clearLogRun}
             hueIndex={nextHue()}
           />
         </div>
