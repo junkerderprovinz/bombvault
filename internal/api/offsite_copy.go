@@ -385,7 +385,7 @@ func (c ownerContext) itemCopies(snaps []restic.Snapshot) []store.ItemCopies {
 // what it holds afterwards. held is its listing before the copy and landed what
 // the copy added; without a listing the policy lists by itself.
 func (s *Service) ageTarget(ctx context.Context, domain, dest string, mode restic.Mode, target store.OffsiteTarget, v targetVisit, held []restic.Snapshot, heldErr error, landed []restic.Snapshot) bool {
-	op := targetOffsiteRetentionPolicy(target)
+	op := rowRetentionPolicy(target)
 	if !op.Any() {
 		return false
 	}

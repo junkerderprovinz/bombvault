@@ -43,7 +43,7 @@ type placementObserved struct {
 	Places   []observedPlace `json:"places"`
 	Sites    int             `json:"sites"`
 	Tone     string          `json:"tone"`    // "ok" | "warn" | "unconfirmed"
-	Rule321  string          `json:"rule321"` // "met" | "one-copy" | "unconfirmed"
+	Rule321  string          `json:"rule321"` // "met" | "one-copy" | "no-off-site" | "unconfirmed"
 	Older    []olderCopies   `json:"older"`
 }
 
@@ -59,6 +59,7 @@ type statusFacts struct {
 	now        int64
 	grace      int64 // how far a listing or a copy may lag before a target stops counting, 0 for the strict reading
 	named      map[string]store.OffsiteTarget
+	sites      store.PlaceSites                   // where the places put the rows and the domain path
 	copies     map[string][]store.ItemCopies      // by identity
 	observed   map[string]store.TargetObservation // by target id
 	failedAt   map[string]int64                   // first failed run after the last listing, by target id
@@ -87,6 +88,9 @@ func (s *Service) statusFactsFor(ctx context.Context, settings store.Settings, p
 		f.copies[c.Identity] = append(f.copies[c.Identity], c)
 	}
 	if f.observed, err = s.store.TargetObservationsForDomain(p.Domain); err != nil {
+		return nil, err
+	}
+	if f.sites, err = s.store.PlaceSites(); err != nil {
 		return nil, err
 	}
 	for _, t := range p.Targets {
@@ -140,24 +144,41 @@ func (s *Service) domainPathTags(ctx context.Context, settings store.Settings, d
 	return tags, nil
 }
 
-// homeOffPremises reports whether a home is a site of its own: a remote
-// domain path, a direct repository at its target, or a repository marked off
-// the premises.
-func homeOffPremises(kind homeKind, repoID string, named map[string]store.OffsiteTarget) bool {
+// homeOffPremises reports whether a home is a site of its own. A home at a
+// place stands where its place says. Without one, a remote domain path and a
+// direct repository at its target count as off the premises, and a named
+// repository by its own mark.
+func homeOffPremises(kind homeKind, domain, repoID string, named map[string]store.OffsiteTarget, sites store.PlaceSites) bool {
 	switch kind {
-	case homeDomainRemote, homeDirect:
-		return true
+	case homeDomain:
+		return sites.Domain(domain, false)
+	case homeDomainRemote:
+		return sites.Domain(domain, true)
+	case homeDirect:
+		return sites.Row(repoID, true)
 	case homeLocal, homeRemote:
-		return named[repoID].OffPremises
+		return sites.Row(repoID, named[repoID].OffPremises)
 	}
 	return false
 }
 
+// offSiteTargets keeps the targets that are a site of their own: those at a
+// place off the premises, and every target without a place.
+func offSiteTargets(targets []store.OffsiteTarget, sites store.PlaceSites) []store.OffsiteTarget {
+	out := []store.OffsiteTarget{}
+	for _, t := range targets {
+		if sites.Row(t.ID, true) {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
 // placementCoverage answers what placement adds to a domain's status: whether
-// anything is copied to an enabled target, and whether every item already lives
-// off the premises. Without copy rules the first answer is yes, as it was before
-// there were any.
-func (s *Service) placementCoverage(settings store.Settings, domain string) (copied, offPremises bool, err error) {
+// anything is copied to an enabled target that is a site of its own, and
+// whether every item already lives off the premises. Without copy rules the
+// first answer is yes, as it was before there were any.
+func (s *Service) placementCoverage(settings store.Settings, domain string, sites store.PlaceSites) (copied, offPremises bool, err error) {
 	p, err := s.readPlacement(settings, domain)
 	if err != nil {
 		return false, false, err
@@ -175,10 +196,10 @@ func (s *Service) placementCoverage(settings store.Settings, domain string) (cop
 	for identity, state := range homes {
 		repoID, _ := p.effectiveHome(state)
 		home := s.homeKindOf(settings, domain, repoID, named)
-		if home.copySource() && len(p.effectiveTargets(identity)) > 0 {
+		if home.copySource() && len(offSiteTargets(p.effectiveTargets(identity), sites)) > 0 {
 			copied = true
 		}
-		if !homeOffPremises(home, repoID, named) {
+		if !homeOffPremises(home, domain, repoID, named, sites) {
 			offPremises = false
 		}
 	}
@@ -193,7 +214,7 @@ func (s *Service) placementCoverage(settings store.Settings, domain string) (cop
 		if _, isItem := homes[c.Identity]; isItem {
 			continue
 		}
-		if slices.ContainsFunc(p.effectiveTargets(c.Identity), func(t store.OffsiteTarget) bool { return t.ID == c.TargetID }) {
+		if slices.ContainsFunc(offSiteTargets(p.effectiveTargets(c.Identity), sites), func(t store.OffsiteTarget) bool { return t.ID == c.TargetID }) {
 			return true, offPremises, nil
 		}
 	}
@@ -288,15 +309,18 @@ func planFor(p placementRead, item placementItem, f *statusFacts, kind, repoID s
 		}
 	}
 	plan := &placementPlan{Kind: kind, Home: f.label(repoID), Targets: []string{}}
+	copiedOffSite := false
 	if home.copySource() {
 		if p.State.Paused() {
 			return &placementPlan{Kind: "paused", Home: plan.Home, Targets: []string{}, Warn: true}
 		}
-		for _, t := range p.effectiveTargets(item.Identity) {
+		targets := p.effectiveTargets(item.Identity)
+		for _, t := range targets {
 			plan.Targets = append(plan.Targets, placementTargetName(t))
 		}
+		copiedOffSite = len(offSiteTargets(targets, f.sites)) > 0
 	}
-	plan.NoCopy = kind != "decides-at-first-backup" && len(plan.Targets) == 0 && !homeOffPremises(home, repoID, f.named)
+	plan.NoCopy = kind != "decides-at-first-backup" && !copiedOffSite && !homeOffPremises(home, p.Domain, repoID, f.named, f.sites)
 	plan.Warn = plan.NoCopy
 	return plan
 }
@@ -348,14 +372,19 @@ func observedState(p placementRead, item placementItem, f *statusFacts, repoID s
 		}
 	}
 
-	homeSite := "host"
-	switch {
-	case home == homeDirect:
-		homeSite = offsiteSourcePrefix + f.named[repoID].CompanionOf
-	case homeOffPremises(home, repoID, f.named):
-		homeSite = "home"
+	siteOf := map[string]string{"local": "host"}
+	if homeOffPremises(home, p.Domain, repoID, f.named, f.sites) {
+		siteOf["local"] = "home"
+		if home == homeDirect {
+			siteOf["local"] = offsiteSourcePrefix + f.named[repoID].CompanionOf
+		}
 	}
-	o.score(homeSite)
+	for _, t := range p.Targets {
+		if !f.sites.Row(t.ID, true) {
+			siteOf[offsiteSourcePrefix+t.ID] = "host"
+		}
+	}
+	o.score(siteOf)
 	return o
 }
 
@@ -403,17 +432,16 @@ func (f *statusFacts) targetPlace(t store.OffsiteTarget, c store.ItemCopies, hol
 }
 
 // score fills in sites, 3-2-1 and tone. The server holding the original data is
-// always a site; a counting place off the premises adds its own. Every target is
-// a site of its own, so a second counting place is always one: there is no
-// verdict for two copies that both stay on the premises.
-func (o *placementObserved) score(homeSite string) {
+// always a site. siteOf names the site of the home and of each target on the
+// premises; every other counting place is a site of its own.
+func (o *placementObserved) score(siteOf map[string]string) {
 	sites := map[string]bool{"host": true}
 	counting, stale := 0, 0
 	offSite, staleOffSite, unreachable := false, false, false
 	for _, pl := range o.Places {
-		site := pl.Place
-		if pl.Place == "local" {
-			site = homeSite
+		site, ok := siteOf[pl.Place]
+		if !ok {
+			site = pl.Place
 		}
 		switch {
 		case pl.Counts:
@@ -433,11 +461,13 @@ func (o *placementObserved) score(homeSite string) {
 		o.Rule321 = "met"
 	case counting+stale >= 2 && (offSite || staleOffSite):
 		o.Rule321 = "unconfirmed"
+	case counting >= 2:
+		o.Rule321 = "no-off-site"
 	default:
 		o.Rule321 = "one-copy"
 	}
 	switch {
-	case unreachable || o.Rule321 == "one-copy":
+	case unreachable || o.Rule321 == "one-copy" || o.Rule321 == "no-off-site":
 		o.Tone = "warn"
 	case o.Rule321 == "unconfirmed":
 		o.Tone = "unconfirmed"

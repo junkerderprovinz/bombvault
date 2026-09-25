@@ -339,14 +339,53 @@ func (s *Service) itemIdentity(item store.ItemRef) (string, error) {
 
 // retentionPolicyForRef is the keep-policy a repository ages by. A direct
 // repository takes its target's rules as mirrored onto its row, word for word,
-// so all zero keeps everything; every other repository takes the local policy.
-func (s *Service) retentionPolicyForRef(settings store.Settings, ref domainRepoRef) restic.RetentionPolicy {
-	if ref.Named.CompanionOf != "" {
-		p := targetOffsiteRetentionPolicy(ref.Named)
+// so all zero keeps everything. A row at a place takes its own rules, which
+// the place mirrors onto it, and the domain path takes those of its home
+// place. Everything else takes the local policy: a row that never had a place,
+// or lost it, carries zeros that were never meant as keep everything.
+func (s *Service) retentionPolicyForRef(settings store.Settings, domain string, ref domainRepoRef) restic.RetentionPolicy {
+	switch {
+	case ref.Named.CompanionOf != "":
+		p := rowRetentionPolicy(ref.Named)
 		p.Direct = true
 		return p
+	case ref.Named.PlaceID != "":
+		return rowRetentionPolicy(ref.Named)
+	case ref.Own:
+		place, ok, err := s.domainHomePlace(domain)
+		if err != nil {
+			// The local policy may keep less than the place, so it is no fallback.
+			log.Printf("api: %s: the home place could not be read, so the domain path forgets nothing this time: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+			return restic.RetentionPolicy{}
+		}
+		if ok {
+			return restic.RetentionPolicy{
+				KeepLast:    place.RetentionKeepLast,
+				KeepDaily:   place.RetentionKeepDaily,
+				KeepWeekly:  place.RetentionKeepWeekly,
+				KeepMonthly: place.RetentionKeepMonthly,
+			}
+		}
 	}
 	return s.retentionPolicy(settings)
+}
+
+// domainHomePlace is the place a domain path lies at, and false for a domain
+// without one.
+func (s *Service) domainHomePlace(domain string) (store.Place, bool, error) {
+	ids, err := s.store.DomainPlaces()
+	if err != nil {
+		return store.Place{}, false, err
+	}
+	id, ok := ids[domain]
+	if !ok {
+		return store.Place{}, false, nil
+	}
+	place, err := s.store.GetPlace(id)
+	if err != nil {
+		return store.Place{}, false, err
+	}
+	return place, true, nil
 }
 
 // domainHasRetention reports whether any repository of the domain ages by a
@@ -356,7 +395,7 @@ func (s *Service) domainHasRetention(settings store.Settings, domain string) boo
 	if err != nil {
 		return s.retentionPolicy(settings).Any()
 	}
-	return slices.ContainsFunc(repos, func(r domainRepoRef) bool { return s.retentionPolicyForRef(settings, r).Any() })
+	return slices.ContainsFunc(repos, func(r domainRepoRef) bool { return s.retentionPolicyForRef(settings, domain, r).Any() })
 }
 
 // placementTargetName is a target as the interface names it: its name, or its
