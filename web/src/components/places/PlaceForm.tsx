@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
 import { InfoBubble } from "../InfoBubble";
@@ -187,12 +187,25 @@ export function PlaceForm({
   const [where, setWhere] = useState<"here" | "away" | null>(null);
   const [adding, setAdding] = useState(false);
   const [shake, setShake] = useState({ test: 0, add: 0 });
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   const typed = JSON.stringify(fields);
   const fresh = probe !== null && probedWith === typed ? probe : null;
   const ready = fresh?.ok === true && !!fresh.base;
   const asks = provider.offPremises === undefined;
-  const canAdd = ready && name.trim() !== "" && (!asks || where !== null) && !adding;
+  const waitsFor: TranslationKey | null = !ready
+    ? "places.form.testFirst"
+    : name.trim() === ""
+      ? "places.form.nameFirst"
+      : asks && where === null
+        ? "places.form.whereFirst"
+        : null;
+  const canAdd = waitsFor === null && !adding;
+
+  // The tile that opened the form is gone, and focus with it.
+  useEffect(() => {
+    bodyRef.current?.querySelector("input")?.focus();
+  }, []);
 
   function set(key: string, value: string) {
     setFields((f) => ({ ...f, [key]: value }));
@@ -311,7 +324,7 @@ export function PlaceForm({
 
   return (
     <>
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-4">
+      <div ref={bodyRef} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-4">
         <div className="flex items-center gap-3">
           <PlaceMark provider={provider.id} size={32} />
           <span className="text-sm font-semibold text-carbon-text">{providerName(t, provider.id)}</span>
@@ -397,10 +410,10 @@ export function PlaceForm({
           key={`add-${shake.add}`}
           label={t("places.form.add")}
           labelKey="places.form.add"
-          tone="accent"
+          tone={ready ? "accent" : "neutral"}
           busy={adding}
           disabled={!canAdd}
-          title={ready ? undefined : t("places.form.testFirst")}
+          title={waitsFor ? t(waitsFor) : undefined}
           onClick={() => void add()}
           className={shake.add ? "glim-shake" : ""}
         />

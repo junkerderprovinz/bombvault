@@ -29,7 +29,7 @@ export function AddPlaceDialog({
   const { push } = useToast();
   const titleId = useId();
   const cardRef = useRef<HTMLDivElement>(null);
-  const { providers, failed } = usePlacesCatalog();
+  const { providers, loaded, failed } = usePlacesCatalog();
   const [chosen, setChosen] = useState<CatalogProvider | null>(null);
   const [lastPicked, setLastPicked] = useState<string | null>(null);
 
@@ -39,11 +39,8 @@ export function AddPlaceDialog({
     cardRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    if (failed !== null) push(failed || t("places.catalogFailed"), "fail");
-  }, [failed, push, t]);
-
-  // Back returns to the tile the form came from.
+  // Back unmounts the form and the focus in it, so the tile it came from
+  // takes the focus.
   useEffect(() => {
     if (chosen || !lastPicked) return;
     cardRef.current?.querySelector<HTMLElement>('[role="option"][aria-selected="true"]')?.focus();
@@ -55,7 +52,9 @@ export function AddPlaceDialog({
   }
 
   function added(place: Place) {
-    push(t("places.added").replace("{name}", place.name), "success");
+    // A warning, because the new place holds nothing until it is chosen, and
+    // quiet mode would drop a success.
+    push(t("places.added").replace("{name}", () => place.name), "warn");
     placesChanged();
     onAdded?.(place);
     onClose();
@@ -96,7 +95,13 @@ export function AddPlaceDialog({
         ) : (
           <>
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2">
-              <ProviderGrid providers={providers} selected={lastPicked} onPick={pick} />
+              {failed !== null ? (
+                <p className="text-sm text-statusFail">{t("places.catalogFailed")}</p>
+              ) : loaded ? (
+                <ProviderGrid providers={providers} selected={lastPicked} onPick={pick} />
+              ) : (
+                <p className="text-sm text-carbon-textMuted">{t("places.catalogLoading")}</p>
+              )}
             </div>
             <WindowActions>
               <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onClose} />

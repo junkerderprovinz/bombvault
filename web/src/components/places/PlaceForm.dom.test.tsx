@@ -105,8 +105,24 @@ async function testConnection() {
     fireEvent.click(button("places.form.test"));
   });
 }
+// A disabled button takes no hover, so its tip opens on the box around it.
+function tipOf(el: HTMLElement): string | null | undefined {
+  const target = (el as HTMLButtonElement).disabled ? el.parentElement! : el;
+  fireEvent.mouseEnter(target);
+  const text = document.querySelector(".glim-bubble")?.textContent;
+  fireEvent.mouseLeave(target);
+  return text;
+}
 
 describe("PlaceForm fields", () => {
+  it("starts in the first field", async () => {
+    await form(WASABI);
+    expect(document.activeElement).toBe(screen.getByLabelText(en["places.field.keyId"]));
+    cleanup();
+    await form(SYNOLOGY);
+    expect(document.activeElement).toBe(screen.getByPlaceholderText("remotes/nas/bombvault"));
+  });
+
   it("asks for every field of the provider, with secrets behind the eye", async () => {
     await form(WASABI);
     expect(screen.getByLabelText(en["places.field.keyId"])).toHaveProperty("type", "text");
@@ -227,6 +243,28 @@ describe("PlaceForm add", () => {
     expect(button("places.form.add")).toHaveProperty("disabled", false);
     type(en["places.field.keyId"], "AKIA2");
     expect(button("places.form.add")).toHaveProperty("disabled", true);
+  });
+
+  it("gives the accent to Test until it passes, then to Add", async () => {
+    await form(WASABI);
+    expect(button("places.form.test").className).toContain("bg-accent");
+    expect(button("places.form.add").className).not.toContain("bg-accent");
+    await testConnection();
+    expect(button("places.form.test").className).not.toContain("bg-accent");
+    expect(button("places.form.add").className).toContain("bg-accent");
+  });
+
+  it("says what Add still waits for", async () => {
+    probeAnswer = { ok: true, base: "remotes/syno/bombvault" };
+    await form(SYNOLOGY);
+    expect(tipOf(button("places.form.add"))).toBe(en["places.form.testFirst"]);
+    await testConnection();
+    expect(tipOf(button("places.form.add"))).toBe(en["places.form.whereFirst"]);
+    fireEvent.click(screen.getByRole("tab", { name: en["places.form.here"] }));
+    type(en["places.form.name"], " ");
+    expect(tipOf(button("places.form.add"))).toBe(en["places.form.nameFirst"]);
+    type(en["places.form.name"], "NAS");
+    expect(button("places.form.add")).toHaveProperty("disabled", false);
   });
 
   it("names the place after its provider and sends what the probe completed", async () => {
