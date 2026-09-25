@@ -115,7 +115,7 @@ const cs: Partial<Translations> = {
   "containers.notInstalledHint": "Tyto kontejnery již nejsou nainstalovány, ale stále mají zálohy. Obnovte je nebo odstraňte jejich zálohy pro uvolnění místa.",
   "containers.notInstalledSkipped": "Položky, které jsou tu stále naplánované, zaznamenají při každém běhu přeskočení. Vypněte na kartě „Zahrnout do plánu“, aby to přestalo.",
   "containers.deleteBackups": "Smazat všechny zálohy",
-  "containers.deleteBackupsConfirm": "Smazat VŠECHNY zálohy tohoto kontejneru? Snímky budou trvale odstraněny z repozitáře a tuto akci nelze vrátit zpět. Výpisy jeho databáze se smažou také.",
+  "containers.deleteBackupsConfirm": "Smazat všechny zálohy tohoto kontejneru? Snímky budou trvale odstraněny z repozitáře a tuto akci nelze vrátit zpět. Výpisy jeho databáze se smažou také.",
   "containers.removeEntryConfirm": "Odebrat položku tohoto kontejneru ze seznamu? Případné zálohy se nesmažou.",
 
   // Taking over a renamed entry
@@ -466,7 +466,7 @@ const cs: Partial<Translations> = {
   "vms.notInstalledHint": "Tyto VM již nejsou definovány na hostiteli, ale stále mají zálohy. Obnovte je nebo procházejte jejich snímky v panelu Zálohy.",
   "vms.removeEntry": "Odebrat položku",
   "vms.removeEntryConfirm": "Odebrat položku tohoto VM ze seznamu? Případné zálohy se nesmažou.",
-  "vms.deleteBackupsConfirm": "Smazat VŠECHNY zálohy tohoto VM? Snímky budou trvale odstraněny z repozitáře a tuto akci nelze vrátit zpět.",
+  "vms.deleteBackupsConfirm": "Smazat všechny zálohy tohoto VM? Snímky budou trvale odstraněny z repozitáře a tuto akci nelze vrátit zpět.",
   "vms.discoverHint": "Virtuální stroj smazaný z Unraidu (nebo ztracený po přeinstalaci)? Znovu sestavte jeho zálohovací záznam z úložiště, abyste jej mohli obnovit.",
 
   // Container / VM state badge labels
@@ -509,7 +509,7 @@ const cs: Partial<Translations> = {
   "excludes.advisoryImmichDb": "Immich ukládá alba, tváře a data pořízení ke každé fotce do databáze PostgreSQL, která běží ve vlastním, odděleném kontejneru, takže tato záloha ji neobsahuje. Obnova odsud vrátí obrázky, ale bez toho všeho. BombVault dumpuje kontejner té databáze automaticky, jakmile se zálohuje, takže ověřte, že je ve vašem plánu.",
   "excludes.advisoryNextcloudDb": "Nextcloud ukládá účty, sdílení a štítky do databáze, která obvykle běží v odděleném kontejneru, takže tato záloha ji neobsahuje. Soubory se vrátí, sdílení ne. BombVault dumpuje kontejner té databáze automaticky, jakmile se zálohuje, takže ověřte, že je ve vašem plánu.",
   "rcloneRemote.heading": "Přidat cíl SMB nebo WebDAV",
-  "rcloneRemote.hint": "Zpřístupní sdílenou složku Windows nebo Samba nebo server WebDAV, jako je Nextcloud, a to BEZ připojování na hostiteli. Nejde jen o pohodlí: restic nedoporučuje mít repozitář na připojené sdílené složce CIFS a tento způsob se připojení úplně vyhne. Heslo se předá rclone, který si ho uloží ve vlastním formátu, a nikdy se neuchovává v otevřené podobě. NFS se zde nenabízí, protože ho neumí ani restic, ani rclone: pro NFS připojte export v Unraidu a nastavte na něj Zálohovací cestu.",
+  "rcloneRemote.hint": "Zpřístupní sdílenou složku Windows nebo Samba nebo server WebDAV, jako je Nextcloud, a to bez připojování na hostiteli. restic nedoporučuje mít repozitář na připojené sdílené složce CIFS a tento způsob se připojení úplně vyhne. Heslo se předá rclone, který si ho uloží ve vlastním formátu, a nikdy se neuchovává v otevřené podobě. NFS se zde nenabízí, protože ho neumí ani restic, ani rclone: pro NFS připojte export v Unraidu a nastavte na něj Zálohovací cestu.",
   "rcloneRemote.type": "Typ",
   "rcloneRemote.typeSmb": "Sdílená složka SMB",
   "rcloneRemote.typeWebdav": "WebDAV",
@@ -525,7 +525,7 @@ const cs: Partial<Translations> = {
   "rcloneRemote.useThisPath": "Použijte jako Zálohovací cestu:",
   "rcloneRemote.failed": "Cíl se nepodařilo přidat.",
   "coverage.title": "Nezálohováno",
-  "coverage.hint": "Vše na tomto serveru, co nepokrývá žádná automatická záloha. Karta ochrany nahoře říká, jestli plánované zálohy proběhly včas, a tady stojí, co není naplánováno vůbec, což je mezera, která všude jinde zůstane neviditelná. Vypnutý druh zálohy je rozhodnutí a nepočítá se sem. Datové sady ZFS, které jste nepřidali, se sem také nepočítají; vypisuje je stránka ZFS.",
+  "coverage.hint": "Vše na tomto serveru, co nepokrývá žádná automatická záloha. Karta ochrany nahoře říká, jestli plánované zálohy proběhly včas, a tato karta ukazuje, co není naplánováno vůbec, což žádná jiná stránka neukáže. Druh zálohy, který jste vypnuli, se sem nepočítá. Datové sady ZFS, které jste nepřidali, se sem také nepočítají; vypisuje je stránka ZFS.",
   "coverage.ratio": "{protected} z {total} chráněno",
   "coverage.allProtected": "Vše, co jste zapnuli, pokrývá nějaký plán.",
   "coverage.neverBackedUp": "nikdy nezálohováno",
@@ -542,7 +542,7 @@ const cs: Partial<Translations> = {
   "diagnostics.button": "Stáhnout diagnostiku",
   "diagnostics.busy": "Sbírám…",
   "retentionPreview.title": "Co by odstranilo příští spuštění",
-  "retentionPreview.hint": "Uchovávání říká, co zůstane. Tohle ukazuje, co se chystá smazat, ještě než se to stane. Nic se nemění a žádný repozitář se nezamyká, takže odpoví i během běžící zálohy.",
+  "retentionPreview.hint": "Ukazuje, co příští běh uchovávání smaže, ještě než se to stane. Nic se nemění a žádný repozitář se nezamyká, takže to funguje i během běžící zálohy.",
   "common.domain": "Doména",
   "retentionPreview.show": "Zobrazit, co by se odstranilo",
   "retentionPreview.off": "Uchovávání je vypnuté, takže by se nic neodstranilo.",
@@ -780,7 +780,7 @@ const cs: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Smazat všechny zálohy",
-  "snapshots.deleteAllConfirm": "Smazat VŠECHNY zálohy tohoto VM z vybraného zdroje (místní nebo mimo lokalitu)? Snímky budou trvale odstraněny a repozitář bude vyčištěn. Tuto akci nelze vrátit zpět.",
+  "snapshots.deleteAllConfirm": "Smazat všechny zálohy tohoto VM z vybraného zdroje (místní nebo mimo lokalitu)? Snímky budou trvale odstraněny a repozitář bude vyčištěn. Tuto akci nelze vrátit zpět.",
   "snapshots.deletingAll": "Mazání…",
 
   // Snapshot tags + compare (diff)
@@ -1409,7 +1409,7 @@ const cs: Partial<Translations> = {
   "files.noPathHint": "Obnoveno ze záloh bez složky. Nastavte složku, aby se sada znovu zálohovala. Obnova do složky funguje už teď.",
   "files.deleteSet": "Smazat sadu složek",
   "files.deleteSetConfirm": "Odebrat tuto sadu složek ze seznamu? Její zálohy se nesmažou a lze je později znovu objevit.",
-  "files.deleteBackupsConfirm": "Smazat VŠECHNY zálohy této sady složek? Snímky budou trvale odstraněny, repozitář vyčištěn a sada zapomenuta. Nelze vrátit zpět.",
+  "files.deleteBackupsConfirm": "Smazat všechny zálohy této sady složek? Snímky budou trvale odstraněny, repozitář vyčištěn a sada zapomenuta. Nelze vrátit zpět.",
   "files.restoreOriginal": "Obnovit na původní místo",
   "files.restoreOriginalConfirm": "Obnovit tuto zálohu přes složku sady? Stávající soubory budou přepsány.",
   "files.restoreToFolder": "Obnovit do složky",
@@ -1589,7 +1589,7 @@ const cs: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Smazat bezpečnostní snímek {name} datové sady {dataset}? Stav před tou obnovou už pak nepůjde získat zpět.",
   "zfs.deleteRowConfirm": "Odebrat tuto položku ze seznamu? Její zálohy zůstanou a dají se později znovu najít.",
   "zfs.deleteSafetyToo": "Smazat i její bezpečnostní snímky na serveru",
-  "zfs.deleteBackupsConfirm": "Smazat VŠECHNY zálohy této položky a jejích datových sad? Snímky nenávratně zmizí, repozitář se pročistí a položka zmizí ze seznamu. Tohle nejde vrátit.",
+  "zfs.deleteBackupsConfirm": "Smazat všechny zálohy této položky a jejích datových sad? Snímky nenávratně zmizí, repozitář se pročistí a položka zmizí ze seznamu. Tohle nejde vrátit.",
   "zfs.deleteKeptSafety": "Bezpečnostní snímky zbylé na serveru: {n}",
   // ZFS add dialog and restore panel
   "zfs.addDatasets": "Přidat datové sady",
@@ -1641,7 +1641,7 @@ const cs: Partial<Translations> = {
   "zfs.restore.missingDataset": "Tato datová sada teď na serveru není dostupná. Obnov ji místo toho do složky.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Obnovit z jiného repozitáře BombVault",
-  "recovery.foreignIntro": "Vytáhněte jednotlivé kontejnery, VM, sady složek nebo datové sady ZFS ze záloh JINÉ instance BombVault: připojte se jen pro čtení, projděte obsah a obnovte, co si vyberete. Druhý repozitář se pouze čte, nic se tam nemění a vaše vlastní nastavení zálohování zůstává nedotčeno.",
+  "recovery.foreignIntro": "Vytáhněte jednotlivé kontejnery, VM, sady složek nebo datové sady ZFS ze záloh jiné instance BombVault: připojte se jen pro čtení, projděte obsah a obnovte, co si vyberete. Druhý repozitář se pouze čte, nic se tam nemění a vaše vlastní nastavení zálohování zůstává nedotčeno.",
   "recovery.foreignStepConnect": "Připojit se k jinému repozitáři",
   "recovery.foreignStepBrowse": "Procházet a obnovit",
   "recovery.foreignLocation": "Umístění repozitáře",

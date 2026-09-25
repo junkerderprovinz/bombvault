@@ -114,7 +114,7 @@ const ro: Partial<Translations> = {
   "containers.notInstalledHint": "Aceste containere nu mai sunt instalate, dar încă au copii de rezervă. Restaurați-le sau ștergeți copiile de rezervă pentru a elibera spațiu.",
   "containers.notInstalledSkipped": "Intrările încă programate aici înregistrează o omitere la fiecare rulare. Dezactivați „Includeți în programare” pe card pentru a opri asta.",
   "containers.deleteBackups": "Șterge toate copiile de rezervă",
-  "containers.deleteBackupsConfirm": "Ștergeți TOATE copiile de rezervă ale acestui container? Instantaneele sunt eliminate permanent din depozit și nu pot fi anulate. Dumpurile bazei lui de date sunt șterse și ele.",
+  "containers.deleteBackupsConfirm": "Ștergeți toate copiile de rezervă ale acestui container? Instantaneele sunt eliminate permanent din depozit și nu pot fi anulate. Dumpurile bazei lui de date sunt șterse și ele.",
   "containers.removeEntryConfirm": "Elimini intrarea acestui container din listă? Eventualele backupuri nu sunt șterse.",
 
   // Taking over a renamed entry
@@ -463,7 +463,7 @@ const ro: Partial<Translations> = {
   "vms.notInstalledHint": "Aceste VM-uri nu mai sunt definite pe gazdă, dar încă au copii de rezervă. Restaurați-le sau navigați în panoul Copii de rezervă pentru a vedea instantaneele.",
   "vms.removeEntry": "Elimină intrarea",
   "vms.removeEntryConfirm": "Elimini intrarea acestei VM din listă? Eventualele backupuri nu sunt șterse.",
-  "vms.deleteBackupsConfirm": "Ștergeți TOATE copiile de rezervă ale acestei VM? Instantaneele sunt eliminate permanent din depozit și nu pot fi anulate.",
+  "vms.deleteBackupsConfirm": "Ștergeți toate copiile de rezervă ale acestei VM? Instantaneele sunt eliminate permanent din depozit și nu pot fi anulate.",
   "vms.discoverHint": "VM ștearsă din Unraid (sau pierdută după o reinstalare)? Reconstruiește intrarea ei de backup din stocare pentru a o putea restaura.",
 
   // Container / VM state badge labels
@@ -508,7 +508,7 @@ const ro: Partial<Translations> = {
   "excludes.advisoryImmichDb": "Immich ține albumele, fețele și data fiecărei fotografii într-o bază de date PostgreSQL care rulează în alt container, nu în acesta, așa că acest backup nu o conține. O restaurare de aici aduce pozele înapoi, dar fără toate acestea. BombVault face singur dump containerului acelei baze de date când îi face backup, așa că verifică dacă este în programul tău.",
   "excludes.advisoryNextcloudDb": "Nextcloud ține conturile, partajările și etichetele într-o bază de date care de obicei rulează în alt container, așa că acest backup nu o conține. Fișierele revin, partajările nu. BombVault face singur dump containerului acelei baze de date când îi face backup, așa că verifică dacă este în programul tău.",
   "rcloneRemote.heading": "Adaugă o destinație SMB sau WebDAV",
-  "rcloneRemote.hint": "Ajunge la o partajare Windows sau Samba, ori la un server WebDAV precum Nextcloud, FĂRĂ montare pe gazdă. Contează mai mult decât comoditatea: restic nu recomandă păstrarea unui depozit pe o partajare CIFS montată, iar această variantă evită complet montarea. Parola este predată lui rclone, care o stochează în propriul format, și nu este niciodată păstrată în clar. NFS nu este oferit aici, pentru că nici restic, nici rclone nu îl suportă: pentru NFS, montează exportul pe Unraid și setează o cale de copiere de rezervă către el.",
+  "rcloneRemote.hint": "Ajunge la o partajare Windows sau Samba, ori la un server WebDAV precum Nextcloud, fără montare pe gazdă. restic nu recomandă păstrarea unui depozit pe o partajare CIFS montată, iar această variantă evită complet montarea. Parola este predată lui rclone, care o stochează în propriul format, și nu este niciodată păstrată în clar. NFS nu este oferit aici, pentru că nici restic, nici rclone nu îl suportă: pentru NFS, montează exportul pe Unraid și setează o cale de copiere de rezervă către el.",
   "rcloneRemote.type": "Tip",
   "rcloneRemote.typeSmb": "Partajare SMB",
   "rcloneRemote.typeWebdav": "WebDAV",
@@ -524,7 +524,7 @@ const ro: Partial<Translations> = {
   "rcloneRemote.useThisPath": "Folosește asta drept cale de copiere de rezervă:",
   "rcloneRemote.failed": "Destinația nu a putut fi adăugată.",
   "coverage.title": "Fără backup",
-  "coverage.hint": "Tot ce se află pe acest server și nu este acoperit de niciun backup automat. Cardul de protecție de mai sus spune dacă backupurile programate au rulat la timp; aici scrie ce nu este programat deloc, adică exact golul care în rest rămâne invizibil. Un tip de backup oprit este o decizie și nu se numără aici. Nici seturile de date ZFS pe care nu le-ați adăugat nu sunt numărate; pagina ZFS le enumeră.",
+  "coverage.hint": "Tot ce se află pe acest server și nu este acoperit de niciun backup automat. Cardul de protecție de mai sus spune dacă backupurile programate au rulat la timp; acest card arată ce nu este programat deloc, lucru pe care nicio altă pagină nu îl arată. Un tip de backup pe care l-ați oprit nu se numără aici. Nici seturile de date ZFS pe care nu le-ați adăugat nu sunt numărate; pagina ZFS le enumeră.",
   "coverage.ratio": "{protected} din {total} protejate",
   "coverage.allProtected": "Tot ce ai activat este acoperit de o programare.",
   "coverage.neverBackedUp": "nu a avut niciodată backup",
@@ -541,7 +541,7 @@ const ro: Partial<Translations> = {
   "diagnostics.button": "Descarcă diagnosticele",
   "diagnostics.busy": "Se colectează…",
   "retentionPreview.title": "Ce ar șterge următoarea rulare",
-  "retentionPreview.hint": "Retenția îți spune ce păstrează. Aici vezi ce urmează să șteargă, înainte să se întâmple. Nu se modifică nimic și niciun depozit nu este blocat, așa că răspunde chiar și în timp ce rulează o copie de rezervă.",
+  "retentionPreview.hint": "Arată ce va șterge următoarea rulare a retenției, înainte să se întâmple. Nu se modifică nimic și niciun depozit nu este blocat, așa că funcționează chiar și în timp ce rulează o copie de rezervă.",
   "common.domain": "Domeniu",
   "retentionPreview.show": "Arată ce ar fi șters",
   "retentionPreview.off": "Retenția este oprită, deci nu s-ar șterge nimic.",
@@ -849,7 +849,7 @@ const ro: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Șterge toate copiile de rezervă",
-  "snapshots.deleteAllConfirm": "Ștergeți TOATE copiile de rezervă ale acestei VM din sursa selectată (locală sau externă)? Instantaneele sunt eliminate permanent și depozitul este curățat. Nu poate fi anulat.",
+  "snapshots.deleteAllConfirm": "Ștergeți toate copiile de rezervă ale acestei VM din sursa selectată (locală sau externă)? Instantaneele sunt eliminate permanent și depozitul este curățat. Nu poate fi anulat.",
   "snapshots.deletingAll": "Se șterge…",
 
   // Snapshot tags + compare (diff)
@@ -1414,7 +1414,7 @@ const ro: Partial<Translations> = {
   "files.noPathHint": "Reconstruit din copiile de rezervă fără folder. Setați un folder pentru a-l copia din nou. Restaurarea într-un folder funcționează deja.",
   "files.deleteSet": "Șterge setul de foldere",
   "files.deleteSetConfirm": "Eliminați acest set de foldere din listă? Copiile sale de rezervă nu sunt șterse și pot fi redescoperite mai târziu.",
-  "files.deleteBackupsConfirm": "Ștergeți TOATE copiile de rezervă ale acestui set de foldere? Instantaneele sunt eliminate permanent, depozitul este curățat, iar setul este uitat. Nu poate fi anulat.",
+  "files.deleteBackupsConfirm": "Ștergeți toate copiile de rezervă ale acestui set de foldere? Instantaneele sunt eliminate permanent, depozitul este curățat, iar setul este uitat. Nu poate fi anulat.",
   "files.restoreOriginal": "Restaurare în locația originală",
   "files.restoreOriginalConfirm": "Restaurați această copie peste folderul setului? Fișierele existente vor fi suprascrise.",
   "files.restoreToFolder": "Restaurare într-un folder",
@@ -1594,7 +1594,7 @@ const ro: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Ștergi instantaneul de siguranță {name} al {dataset}? Starea dinaintea acelei restaurări nu va mai putea fi recuperată.",
   "zfs.deleteRowConfirm": "Scoți acest element din listă? Copiile lui rămân și pot fi regăsite mai târziu.",
   "zfs.deleteSafetyToo": "Șterge și instantaneele lui de siguranță de pe server",
-  "zfs.deleteBackupsConfirm": "Ștergi TOATE copiile acestui element și ale seturilor lui de date? Instantaneele dispar definitiv, depozitul este curățat, iar elementul iese din listă. Asta nu se poate anula.",
+  "zfs.deleteBackupsConfirm": "Ștergi toate copiile acestui element și ale seturilor lui de date? Instantaneele dispar definitiv, depozitul este curățat, iar elementul iese din listă. Asta nu se poate anula.",
   "zfs.deleteKeptSafety": "Instantanee de siguranță rămase pe server: {n}",
   // ZFS add dialog and restore panel
   "zfs.addDatasets": "Adaugă seturi de date",
@@ -1646,7 +1646,7 @@ const ro: Partial<Translations> = {
   "zfs.restore.missingDataset": "Acest set de date nu este disponibil pe gazdă chiar acum. Restaurează într-un dosar.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Restaurare dintr-un alt repo BombVault",
-  "recovery.foreignIntro": "Extrageți containere, VM-uri, seturi de foldere sau seturi de date ZFS individuale din copiile de rezervă ale UNEI ALTE instanțe BombVault: conectați-vă doar în citire, răsfoiți conținutul și restaurați ce alegeți. Celălalt repo este doar citit, nimic nu se schimbă acolo, iar propriile dvs. setări de backup rămân neatinse.",
+  "recovery.foreignIntro": "Extrageți containere, VM-uri, seturi de foldere sau seturi de date ZFS individuale din copiile de rezervă ale unei alte instanțe BombVault: conectați-vă doar în citire, răsfoiți conținutul și restaurați ce alegeți. Celălalt repo este doar citit, nimic nu se schimbă acolo, iar propriile dvs. setări de backup rămân neatinse.",
   "recovery.foreignStepConnect": "Conectare la celălalt repo",
   "recovery.foreignStepBrowse": "Răsfoire și restaurare",
   "recovery.foreignLocation": "Locația repo-ului",

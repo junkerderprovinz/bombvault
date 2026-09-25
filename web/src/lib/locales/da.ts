@@ -115,7 +115,7 @@ const da: Partial<Translations> = {
   "containers.notInstalledHint": "Disse containers er ikke længere installeret, men har stadig sikkerhedskopier. Gendan dem, eller slet deres sikkerhedskopier for at frigøre plads.",
   "containers.notInstalledSkipped": "Poster, der stadig er planlagt her, registrerer en oversprunget kørsel hver gang. Slå »Inkluder i tidsplan« fra på kortet for at stoppe det.",
   "containers.deleteBackups": "Slet alle sikkerhedskopier",
-  "containers.deleteBackupsConfirm": "Slet ALLE sikkerhedskopier af denne container? Øjebliksbillederne fjernes permanent fra arkivet og kan ikke fortrydes. Containerens databasedumps slettes også.",
+  "containers.deleteBackupsConfirm": "Slet alle sikkerhedskopier af denne container? Øjebliksbillederne fjernes permanent fra arkivet og kan ikke fortrydes. Containerens databasedumps slettes også.",
   "containers.removeEntryConfirm": "Fjern denne containers post fra listen? Eventuelle sikkerhedskopier slettes ikke.",
 
   // Taking over a renamed entry
@@ -466,7 +466,7 @@ const da: Partial<Translations> = {
   "vms.notInstalledHint": "Disse VMs er ikke længere defineret på værten, men har stadig sikkerhedskopier. Gendan dem, eller gennemse deres øjebliksbilleder i panelet Sikkerhedskopier.",
   "vms.removeEntry": "Fjern post",
   "vms.removeEntryConfirm": "Fjern denne VM's post fra listen? Eventuelle sikkerhedskopier slettes ikke.",
-  "vms.deleteBackupsConfirm": "Slet ALLE sikkerhedskopier af denne VM? Øjebliksbillederne fjernes permanent fra arkivet og kan ikke fortrydes.",
+  "vms.deleteBackupsConfirm": "Slet alle sikkerhedskopier af denne VM? Øjebliksbillederne fjernes permanent fra arkivet og kan ikke fortrydes.",
   "vms.discoverHint": "VM slettet fra Unraid (eller mistet efter geninstallation)? Genopbyg dens sikkerhedskopipost fra lageret, så du kan gendanne den.",
 
   // Container / VM state badge labels
@@ -511,7 +511,7 @@ const da: Partial<Translations> = {
   "excludes.advisoryImmichDb": "Immich gemmer hvert billedes album, ansigter og datoer i en PostgreSQL-database, der kører i sin egen, separate container, så denne sikkerhedskopi indeholder den ikke. En gendannelse herfra henter billederne tilbage uden alt det. BombVault dumper den databasecontainer automatisk, når den bliver sikkerhedskopieret, så tjek at den er med i din plan.",
   "excludes.advisoryNextcloudDb": "Nextcloud gemmer konti, delinger og tags i en database, der som regel kører i en separat container, så denne sikkerhedskopi indeholder den ikke. Filerne kommer tilbage, delingerne gør ikke. BombVault dumper den databasecontainer automatisk, når den bliver sikkerhedskopieret, så tjek at den er med i din plan.",
   "rcloneRemote.heading": "Tilføj en SMB- eller WebDAV-destination",
-  "rcloneRemote.hint": "Giver adgang til en Windows- eller Samba-deling eller en WebDAV-server som Nextcloud, UDEN at den monteres på hosten. Det betyder mere end bekvemmelighed: restic fraråder at have et repository på en monteret CIFS-deling, og denne vej undgår monteringen helt. Adgangskoden gives til rclone, som gemmer den i sit eget format, og den opbevares aldrig i klartekst. NFS tilbydes ikke her, fordi hverken restic eller rclone understøtter det: til NFS skal du montere eksporten på Unraid og sætte en sikkerhedskopisti til den.",
+  "rcloneRemote.hint": "Giver adgang til en Windows- eller Samba-deling eller en WebDAV-server som Nextcloud, uden at den monteres på hosten. restic fraråder at have et repository på en monteret CIFS-deling, og denne vej undgår monteringen helt. Adgangskoden gives til rclone, som gemmer den i sit eget format, og den opbevares aldrig i klartekst. NFS tilbydes ikke her, fordi hverken restic eller rclone understøtter det: til NFS skal du montere eksporten på Unraid og sætte en sikkerhedskopisti til den.",
   "rcloneRemote.type": "Type",
   "rcloneRemote.typeSmb": "SMB-deling",
   "rcloneRemote.typeWebdav": "WebDAV",
@@ -527,7 +527,7 @@ const da: Partial<Translations> = {
   "rcloneRemote.useThisPath": "Brug dette som sikkerhedskopisti:",
   "rcloneRemote.failed": "Destinationen kunne ikke tilføjes.",
   "coverage.title": "Ikke sikkerhedskopieret",
-  "coverage.hint": "Alt på denne server, som ingen automatisk sikkerhedskopi dækker. Beskyttelseskortet ovenfor siger, om de planlagte sikkerhedskopier kørte til tiden, og her står, hvad der slet ikke er planlagt, og netop det forbliver usynligt alle andre steder. En slukket sikkerhedskopitype er en beslutning og tælles ikke med her. ZFS-datasæt, du ikke har tilføjet, tælles heller ikke med; ZFS-siden viser dem.",
+  "coverage.hint": "Alt på denne server, som ingen automatisk sikkerhedskopi dækker. Beskyttelseskortet ovenfor siger, om de planlagte sikkerhedskopier kørte til tiden, og dette kort viser, hvad der slet ikke er planlagt, hvilket ingen anden side viser. En sikkerhedskopitype, du har slået fra, tælles ikke med her. ZFS-datasæt, du ikke har tilføjet, tælles heller ikke med; ZFS-siden viser dem.",
   "coverage.ratio": "{protected} af {total} beskyttet",
   "coverage.allProtected": "Alt, du har slået til, er dækket af en tidsplan.",
   "coverage.neverBackedUp": "aldrig sikkerhedskopieret",
@@ -544,7 +544,7 @@ const da: Partial<Translations> = {
   "diagnostics.button": "Download diagnostik",
   "diagnostics.busy": "Indsamler…",
   "retentionPreview.title": "Hvad den næste kørsel ville fjerne",
-  "retentionPreview.hint": "Opbevaring fortæller dig, hvad der beholdes. Her ser du, hvad der er ved at blive slettet, før det sker. Intet ændres, og intet arkiv låses, så den svarer også mens en sikkerhedskopiering kører.",
+  "retentionPreview.hint": "Viser, hvad den næste opbevaringskørsel vil slette, før det sker. Intet ændres, og intet arkiv låses, så det virker også mens en sikkerhedskopiering kører.",
   "common.domain": "Domæne",
   "retentionPreview.show": "Vis hvad der ville blive fjernet",
   "retentionPreview.off": "Opbevaring er slået fra, så intet ville blive fjernet.",
@@ -782,7 +782,7 @@ const da: Partial<Translations> = {
 
   // Backups extra (delete all + diff)
   "snapshots.deleteAll": "Slet alle sikkerhedskopier",
-  "snapshots.deleteAllConfirm": "Slet ALLE sikkerhedskopier af denne VM fra den valgte kilde (lokal eller off-site)? Øjebliksbillederne fjernes permanent og repositoriet beskæres. Kan ikke fortrydes.",
+  "snapshots.deleteAllConfirm": "Slet alle sikkerhedskopier af denne VM fra den valgte kilde (lokal eller off-site)? Øjebliksbillederne fjernes permanent og repositoriet beskæres. Kan ikke fortrydes.",
   "snapshots.deletingAll": "Sletter…",
 
   // Snapshot tags + compare (diff)
@@ -1411,7 +1411,7 @@ const da: Partial<Translations> = {
   "files.noPathHint": "Genopbygget fra sikkerhedskopier uden mappe. Angiv en mappe for at sikkerhedskopiere igen. Gendannelse til en mappe virker allerede.",
   "files.deleteSet": "Slet mappesæt",
   "files.deleteSetConfirm": "Fjerne dette mappesæt fra listen? Dets sikkerhedskopier slettes ikke og kan genopdages senere.",
-  "files.deleteBackupsConfirm": "Slet ALLE sikkerhedskopier af dette mappesæt? Øjebliksbillederne fjernes permanent, repositoriet beskæres, og sættet glemmes. Kan ikke fortrydes.",
+  "files.deleteBackupsConfirm": "Slet alle sikkerhedskopier af dette mappesæt? Øjebliksbillederne fjernes permanent, repositoriet beskæres, og sættet glemmes. Kan ikke fortrydes.",
   "files.restoreOriginal": "Gendan på oprindelig placering",
   "files.restoreOriginalConfirm": "Gendanne denne sikkerhedskopi oven i sættets mappe? Eksisterende filer overskrives.",
   "files.restoreToFolder": "Gendan til en mappe",
@@ -1591,7 +1591,7 @@ const da: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Slet sikkerhedssnapshottet {name} af {dataset}? Tilstanden før den gendannelse kan ikke hentes tilbage bagefter.",
   "zfs.deleteRowConfirm": "Fjern dette element fra listen? Dets sikkerhedskopier bliver og kan findes igen senere.",
   "zfs.deleteSafetyToo": "Slet også dets sikkerhedssnapshots på serveren",
-  "zfs.deleteBackupsConfirm": "Slet ALLE sikkerhedskopier af dette element og dets datasæt? Snapshottene fjernes permanent, depotet ryddes op, og elementet fjernes fra listen. Det kan ikke fortrydes.",
+  "zfs.deleteBackupsConfirm": "Slet alle sikkerhedskopier af dette element og dets datasæt? Snapshottene fjernes permanent, depotet ryddes op, og elementet fjernes fra listen. Det kan ikke fortrydes.",
   "zfs.deleteKeptSafety": "Sikkerhedssnapshots tilbage på serveren: {n}",
   // ZFS add dialog and restore panel
   "zfs.addDatasets": "Tilføj datasæt",
@@ -1643,7 +1643,7 @@ const da: Partial<Translations> = {
   "zfs.restore.missingDataset": "Dette datasæt er ikke tilgængeligt på serveren lige nu. Gendan til en mappe i stedet.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Gendan fra et andet BombVault-repo",
-  "recovery.foreignIntro": "Hent enkelte containere, VM'er, mappesæt eller ZFS-datasæt ud af sikkerhedskopierne fra en ANDEN BombVault-instans: forbind skrivebeskyttet, gennemse indholdet og gendan det, du vælger. Det andet repo læses kun, intet ændres der, og dine egne backup-indstillinger forbliver urørte.",
+  "recovery.foreignIntro": "Hent enkelte containere, VM'er, mappesæt eller ZFS-datasæt ud af sikkerhedskopierne fra en anden BombVault-instans: forbind skrivebeskyttet, gennemse indholdet og gendan det, du vælger. Det andet repo læses kun, intet ændres der, og dine egne backup-indstillinger forbliver urørte.",
   "recovery.foreignStepConnect": "Forbind til det andet repo",
   "recovery.foreignStepBrowse": "Gennemse & gendan",
   "recovery.foreignLocation": "Repoets placering",

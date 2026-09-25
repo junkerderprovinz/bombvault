@@ -115,7 +115,7 @@ const it: Partial<Translations> = {
   "containers.notInstalledHint": "Questi container non sono più installati ma hanno ancora dei backup. Ripristinali o elimina i loro backup per liberare spazio.",
   "containers.notInstalledSkipped": "Le voci ancora pianificate registrano un salto a ogni esecuzione. Disattiva «Includi nel calendario» nella scheda per interromperlo.",
   "containers.deleteBackups": "Elimina tutti i backup",
-  "containers.deleteBackupsConfirm": "Eliminare TUTTI i backup di questo container? Gli snapshot verranno rimossi definitivamente dal repository e l'operazione non è reversibile. Vengono eliminati anche i dump del suo database.",
+  "containers.deleteBackupsConfirm": "Eliminare tutti i backup di questo container? Gli snapshot verranno rimossi definitivamente dal repository e l'operazione non è reversibile. Vengono eliminati anche i dump del suo database.",
   "containers.removeEntryConfirm": "Rimuovere la voce di questo container dall'elenco? Gli eventuali backup non vengono eliminati.",
 
   // Taking over a renamed entry
@@ -466,7 +466,7 @@ const it: Partial<Translations> = {
   "vms.notInstalledHint": "Queste VM non sono più definite sull'host ma hanno ancora dei backup. Ripristinale per recuperarle, o usa il pannello Backup per sfogliare i loro snapshot.",
   "vms.removeEntry": "Rimuovi voce",
   "vms.removeEntryConfirm": "Rimuovere la voce di questa VM dall'elenco? Gli eventuali backup non vengono eliminati.",
-  "vms.deleteBackupsConfirm": "Eliminare TUTTI i backup di questa VM? Gli snapshot verranno rimossi definitivamente dal repository e l'operazione non è reversibile.",
+  "vms.deleteBackupsConfirm": "Eliminare tutti i backup di questa VM? Gli snapshot verranno rimossi definitivamente dal repository e l'operazione non è reversibile.",
   "vms.discoverHint": "VM eliminata da Unraid (o persa dopo una reinstallazione)? Ricostruisci la sua voce di backup dallo storage per poterla ripristinare.",
 
   // Container / VM state badge labels
@@ -511,7 +511,7 @@ const it: Partial<Translations> = {
   "excludes.advisoryImmichDb": "Immich tiene gli album, i volti e le date di ogni foto in un database PostgreSQL che gira in un container del tutto separato, quindi questo backup non lo contiene. Un ripristino da qui riporta le immagini, ma senza niente di tutto questo. BombVault dumpa da solo il container di quel database quando ne fa il backup, quindi controlla che sia nella tua pianificazione.",
   "excludes.advisoryNextcloudDb": "Nextcloud tiene account, condivisioni e tag in un database che di solito gira in un container separato, quindi questo backup non lo contiene. I file tornano, le condivisioni no. BombVault dumpa da solo il container di quel database quando ne fa il backup, quindi controlla che sia nella tua pianificazione.",
   "rcloneRemote.heading": "Aggiungi una destinazione SMB o WebDAV",
-  "rcloneRemote.hint": "Raggiunge una condivisione Windows o Samba, oppure un server WebDAV come Nextcloud, SENZA montare nulla sull'host. Non è solo una questione di comodità: restic sconsiglia di tenere un repository su una condivisione CIFS montata, e questa via evita del tutto il mount. La password viene passata a rclone, che la memorizza nel proprio formato, e non viene mai conservata in chiaro. NFS non è disponibile qui perché né restic né rclone lo supportano: per NFS, monta l'export su Unraid e impostavi un percorso di backup.",
+  "rcloneRemote.hint": "Raggiunge una condivisione Windows o Samba, oppure un server WebDAV come Nextcloud, senza montare nulla sull'host. restic sconsiglia di tenere un repository su una condivisione CIFS montata, e questa via evita del tutto il mount. La password viene passata a rclone, che la memorizza nel proprio formato, e non viene mai conservata in chiaro. NFS non è disponibile qui perché né restic né rclone lo supportano: per NFS, monta l'export su Unraid e impostavi un percorso di backup.",
   "rcloneRemote.type": "Tipo",
   "rcloneRemote.typeSmb": "Condivisione SMB",
   "rcloneRemote.typeWebdav": "WebDAV",
@@ -527,7 +527,7 @@ const it: Partial<Translations> = {
   "rcloneRemote.useThisPath": "Usa questo come percorso di backup:",
   "rcloneRemote.failed": "Impossibile aggiungere la destinazione.",
   "coverage.title": "Senza backup",
-  "coverage.hint": "Tutto ciò che su questo server non è coperto da alcun backup automatico. La scheda di protezione qui sopra dice se i backup pianificati sono stati eseguiti in orario; questa dice che cosa non è affatto pianificato, ed è la lacuna che resta invisibile ovunque altrove. Un dominio di backup disattivato è una scelta e qui non viene conteggiato. Anche i dataset ZFS che non hai aggiunto non vengono conteggiati; la pagina ZFS li elenca.",
+  "coverage.hint": "Tutto ciò che su questo server non è coperto da alcun backup automatico. La scheda di protezione qui sopra dice se i backup pianificati sono stati eseguiti in orario; questa scheda mostra che cosa non è affatto pianificato, cosa che nessun'altra pagina mostra. Un dominio di backup che hai disattivato qui non viene conteggiato. Anche i dataset ZFS che non hai aggiunto non vengono conteggiati; la pagina ZFS li elenca.",
   "coverage.ratio": "{protected} di {total} protetti",
   "coverage.allProtected": "Tutto ciò che hai attivato è coperto da un calendario.",
   "coverage.neverBackedUp": "mai sottoposto a backup",
@@ -544,7 +544,7 @@ const it: Partial<Translations> = {
   "diagnostics.button": "Scarica la diagnostica",
   "diagnostics.busy": "Raccolta in corso…",
   "retentionPreview.title": "Cosa rimuoverebbe la prossima esecuzione",
-  "retentionPreview.hint": "La conservazione ti dice cosa mantiene. Questo mostra cosa sta per eliminare, prima che accada. Non cambia nulla e non blocca alcun repository, quindi risponde anche mentre un backup è in corso.",
+  "retentionPreview.hint": "Mostra cosa eliminerà la prossima esecuzione della conservazione, prima che accada. Non cambia nulla e non blocca alcun repository, quindi funziona anche mentre un backup è in corso.",
   "common.domain": "Dominio",
   "retentionPreview.show": "Mostra cosa verrebbe rimosso",
   "retentionPreview.off": "La conservazione è disattivata, quindi non verrebbe rimosso nulla.",
@@ -782,7 +782,7 @@ const it: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Elimina tutti i backup",
-  "snapshots.deleteAllConfirm": "Eliminare TUTTI i backup di questa VM dalla sorgente selezionata (locale o off-site)? Gli snapshot vengono rimossi definitivamente e il repository viene potato. Operazione irreversibile.",
+  "snapshots.deleteAllConfirm": "Eliminare tutti i backup di questa VM dalla sorgente selezionata (locale o off-site)? Gli snapshot vengono rimossi definitivamente e il repository viene potato. Operazione irreversibile.",
   "snapshots.deletingAll": "Eliminazione…",
 
   // Snapshot tags + compare (diff)
@@ -1411,7 +1411,7 @@ const it: Partial<Translations> = {
   "files.noPathHint": "Ricostruito dai backup senza cartella. Imposta una cartella per eseguirne di nuovo il backup. Il ripristino in una cartella funziona già.",
   "files.deleteSet": "Elimina set di cartelle",
   "files.deleteSetConfirm": "Rimuovere questo set di cartelle dall'elenco? I suoi backup non vengono eliminati e potranno essere riscoperti in seguito.",
-  "files.deleteBackupsConfirm": "Eliminare TUTTI i backup di questo set di cartelle? Gli snapshot vengono rimossi definitivamente, il repository viene potato e il set viene dimenticato. Operazione irreversibile.",
+  "files.deleteBackupsConfirm": "Eliminare tutti i backup di questo set di cartelle? Gli snapshot vengono rimossi definitivamente, il repository viene potato e il set viene dimenticato. Operazione irreversibile.",
   "files.restoreOriginal": "Ripristina nella posizione originale",
   "files.restoreOriginalConfirm": "Ripristinare questo backup sopra la cartella del set? I file esistenti verranno sovrascritti.",
   "files.restoreToFolder": "Ripristina in una cartella",
@@ -1591,7 +1591,7 @@ const it: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Eliminare lo snapshot di sicurezza {name} di {dataset}? Lo stato precedente a quel ripristino non sarà più recuperabile.",
   "zfs.deleteRowConfirm": "Togliere questo elemento dall'elenco? I suoi backup restano e si possono ritrovare più avanti.",
   "zfs.deleteSafetyToo": "Elimina anche i suoi snapshot di sicurezza sul server",
-  "zfs.deleteBackupsConfirm": "Eliminare TUTTI i backup di questo elemento e dei suoi dataset? Gli snapshot spariscono definitivamente, il repository viene ripulito e l'elemento esce dall'elenco. Non si può annullare.",
+  "zfs.deleteBackupsConfirm": "Eliminare tutti i backup di questo elemento e dei suoi dataset? Gli snapshot spariscono definitivamente, il repository viene ripulito e l'elemento esce dall'elenco. Non si può annullare.",
   "zfs.deleteKeptSafety": "Snapshot di sicurezza rimasti sul server: {n}",
   // ZFS add dialog and restore panel
   "zfs.addDatasets": "Aggiungi dataset",
@@ -1643,7 +1643,7 @@ const it: Partial<Translations> = {
   "zfs.restore.missingDataset": "Questo dataset in questo momento non è disponibile sul server. Ripristina in una cartella.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Ripristina da un altro repo BombVault",
-  "recovery.foreignIntro": "Recupera singoli container, VM, set di cartelle o dataset ZFS dai backup di UN'ALTRA istanza BombVault: connettiti in sola lettura, sfoglia il contenuto, ripristina ciò che scegli. L'altro repository viene solo letto, lì non cambia nulla, e le tue impostazioni di backup restano intatte.",
+  "recovery.foreignIntro": "Recupera singoli container, VM, set di cartelle o dataset ZFS dai backup di un'altra istanza BombVault: connettiti in sola lettura, sfoglia il contenuto, ripristina ciò che scegli. L'altro repository viene solo letto, lì non cambia nulla, e le tue impostazioni di backup restano intatte.",
   "recovery.foreignStepConnect": "Connettiti all'altro repository",
   "recovery.foreignStepBrowse": "Sfoglia e ripristina",
   "recovery.foreignLocation": "Posizione del repository",

@@ -115,7 +115,7 @@ const fr: Partial<Translations> = {
   "containers.notInstalledHint": "Ces conteneurs ne sont plus installés mais ont encore des sauvegardes. Restaurez-les ou supprimez leurs sauvegardes pour libérer de l'espace.",
   "containers.notInstalledSkipped": "Les entrées encore planifiées enregistrent un saut à chaque exécution. Désactivez « Inclure dans le planning » sur la carte pour y mettre fin.",
   "containers.deleteBackups": "Supprimer toutes les sauvegardes",
-  "containers.deleteBackupsConfirm": "Supprimer TOUTES les sauvegardes de ce conteneur ? Les instantanés sont supprimés définitivement du dépôt et cette action est irréversible. Ses dumps de base de données sont également supprimés.",
+  "containers.deleteBackupsConfirm": "Supprimer toutes les sauvegardes de ce conteneur ? Les instantanés sont supprimés définitivement du dépôt et cette action est irréversible. Ses dumps de base de données sont également supprimés.",
   "containers.removeEntryConfirm": "Retirer l'entrée de ce conteneur de la liste ? Ses sauvegardes éventuelles ne sont pas supprimées.",
 
   // Taking over a renamed entry
@@ -466,7 +466,7 @@ const fr: Partial<Translations> = {
   "vms.notInstalledHint": "Ces VMs ne sont plus définies sur l'hôte mais ont encore des sauvegardes. Restaurez-les pour les récupérer, ou utilisez le panneau Sauvegardes pour parcourir leurs instantanés.",
   "vms.removeEntry": "Supprimer l'entrée",
   "vms.removeEntryConfirm": "Retirer l'entrée de cette VM de la liste ? Ses sauvegardes éventuelles ne sont pas supprimées.",
-  "vms.deleteBackupsConfirm": "Supprimer TOUTES les sauvegardes de cette VM ? Les instantanés sont supprimés définitivement du dépôt et cette action est irréversible.",
+  "vms.deleteBackupsConfirm": "Supprimer toutes les sauvegardes de cette VM ? Les instantanés sont supprimés définitivement du dépôt et cette action est irréversible.",
   "vms.discoverHint": "VM supprimée d'Unraid (ou perdue après une réinstallation) ? Reconstruisez son entrée de sauvegarde depuis le stockage pour pouvoir la restaurer.",
 
   // Container / VM state badge labels
@@ -511,7 +511,7 @@ const fr: Partial<Translations> = {
   "excludes.advisoryImmichDb": "Immich conserve les albums, les visages et les dates de chaque photo dans une base de données PostgreSQL qui tourne dans un tout autre conteneur, donc cette sauvegarde ne la contient pas. Une restauration depuis ici ramène les photos, mais sans rien de tout cela. BombVault vidange ce conteneur de base de données automatiquement quand il est sauvegardé, alors vérifiez qu'il figure dans votre planification.",
   "excludes.advisoryNextcloudDb": "Nextcloud conserve ses comptes, ses partages et ses tags dans une base de données qui tourne en général dans un conteneur distinct, donc cette sauvegarde ne la contient pas. Les fichiers reviennent, pas les partages. BombVault vidange ce conteneur de base de données automatiquement quand il est sauvegardé, alors vérifiez qu'il figure dans votre planification.",
   "rcloneRemote.heading": "Ajouter une destination SMB ou WebDAV",
-  "rcloneRemote.hint": "Accède à un partage Windows ou Samba, ou à un serveur WebDAV comme Nextcloud, SANS le monter sur l'hôte. L'intérêt va au-delà du confort : restic déconseille de garder un dépôt sur un partage CIFS monté, et cette voie évite complètement le montage. Le mot de passe est transmis à rclone, qui le stocke sous sa propre forme, et n'est jamais conservé en clair. NFS n'est pas proposé ici, car ni restic ni rclone ne le prennent en charge : pour NFS, montez l'export sur Unraid et pointez-y un chemin de sauvegarde.",
+  "rcloneRemote.hint": "Accède à un partage Windows ou Samba, ou à un serveur WebDAV comme Nextcloud, sans le monter sur l'hôte. restic déconseille de garder un dépôt sur un partage CIFS monté, et cette voie évite complètement le montage. Le mot de passe est transmis à rclone, qui le stocke sous sa propre forme, et n'est jamais conservé en clair. NFS n'est pas proposé ici, car ni restic ni rclone ne le prennent en charge : pour NFS, montez l'export sur Unraid et pointez-y un chemin de sauvegarde.",
   "rcloneRemote.type": "Type",
   "rcloneRemote.typeSmb": "Partage SMB",
   "rcloneRemote.typeWebdav": "WebDAV",
@@ -527,7 +527,7 @@ const fr: Partial<Translations> = {
   "rcloneRemote.useThisPath": "Utilisez ceci comme chemin de sauvegarde :",
   "rcloneRemote.failed": "Impossible d'ajouter la destination.",
   "coverage.title": "Non sauvegardé",
-  "coverage.hint": "Tout ce qui, sur ce serveur, n'est couvert par aucune sauvegarde automatique. La carte de protection ci-dessus indique si les sauvegardes planifiées se sont exécutées à l'heure ; ici figure ce qui n'est pas planifié du tout, la lacune qui reste invisible partout ailleurs. Un type de sauvegarde désactivé est une décision et n'est pas compté ici. Les jeux de données ZFS que vous n'avez pas ajoutés ne sont pas comptés non plus ; la page ZFS les liste.",
+  "coverage.hint": "Tout ce qui, sur ce serveur, n'est couvert par aucune sauvegarde automatique. La carte de protection ci-dessus indique si les sauvegardes planifiées se sont exécutées à l'heure ; cette carte montre ce qui n'est pas planifié du tout, ce qu'aucune autre page n'affiche. Un type de sauvegarde que vous avez désactivé n'est pas compté ici. Les jeux de données ZFS que vous n'avez pas ajoutés ne sont pas comptés non plus ; la page ZFS les liste.",
   "coverage.ratio": "{protected} sur {total} protégés",
   "coverage.allProtected": "Tout ce que vous avez activé est couvert par un planning.",
   "coverage.neverBackedUp": "jamais sauvegardé",
@@ -544,7 +544,7 @@ const fr: Partial<Translations> = {
   "diagnostics.button": "Télécharger les diagnostics",
   "diagnostics.busy": "Collecte…",
   "retentionPreview.title": "Ce que la prochaine exécution supprimerait",
-  "retentionPreview.hint": "La rétention indique ce qu'elle conserve. Ceci montre ce qu'elle s'apprête à supprimer, avant que cela n'arrive. Rien n'est modifié et aucun dépôt n'est verrouillé, la réponse arrive donc même pendant une sauvegarde en cours.",
+  "retentionPreview.hint": "Montre ce que la prochaine exécution de la rétention va supprimer, avant que cela n'arrive. Rien n'est modifié et aucun dépôt n'est verrouillé, cela fonctionne donc même pendant une sauvegarde en cours.",
   "common.domain": "Domaine",
   "retentionPreview.show": "Montrer ce qui serait supprimé",
   "retentionPreview.off": "La rétention est désactivée, rien ne serait supprimé.",
@@ -782,7 +782,7 @@ const fr: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Supprimer toutes les sauvegardes",
-  "snapshots.deleteAllConfirm": "Supprimer TOUTES les sauvegardes de cette VM depuis la source sélectionnée (locale ou hors site) ? Les instantanés sont supprimés définitivement et le dépôt est élagué. Cette action est irréversible.",
+  "snapshots.deleteAllConfirm": "Supprimer toutes les sauvegardes de cette VM depuis la source sélectionnée (locale ou hors site) ? Les instantanés sont supprimés définitivement et le dépôt est élagué. Cette action est irréversible.",
   "snapshots.deletingAll": "Suppression…",
 
   // Snapshot tags + compare (diff)
@@ -1411,7 +1411,7 @@ const fr: Partial<Translations> = {
   "files.noPathHint": "Reconstruit depuis les sauvegardes sans dossier. Définissez un dossier pour le sauvegarder à nouveau. La restauration dans un dossier fonctionne déjà.",
   "files.deleteSet": "Supprimer le jeu de dossiers",
   "files.deleteSetConfirm": "Retirer ce jeu de dossiers de la liste ? Ses sauvegardes ne sont pas supprimées et pourront être redécouvertes plus tard.",
-  "files.deleteBackupsConfirm": "Supprimer TOUTES les sauvegardes de ce jeu de dossiers ? Les instantanés sont définitivement supprimés, le dépôt est élagué et le jeu est oublié. Irréversible.",
+  "files.deleteBackupsConfirm": "Supprimer toutes les sauvegardes de ce jeu de dossiers ? Les instantanés sont définitivement supprimés, le dépôt est élagué et le jeu est oublié. Irréversible.",
   "files.restoreOriginal": "Restaurer à l'emplacement d'origine",
   "files.restoreOriginalConfirm": "Restaurer cette sauvegarde par-dessus le dossier du jeu ? Les fichiers existants seront écrasés.",
   "files.restoreToFolder": "Restaurer dans un dossier",
@@ -1591,7 +1591,7 @@ const fr: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Supprimer l'instantané de sécurité {name} de {dataset} ? L'état d'avant cette restauration ne sera plus récupérable.",
   "zfs.deleteRowConfirm": "Retirer cet élément de la liste ? Ses sauvegardes sont conservées et peuvent être retrouvées plus tard.",
   "zfs.deleteSafetyToo": "Supprimer aussi ses instantanés de sécurité sur le serveur",
-  "zfs.deleteBackupsConfirm": "Supprimer TOUTES les sauvegardes de cet élément et de ses jeux de données ? Les instantanés sont retirés définitivement, le dépôt est nettoyé et l'élément est retiré de la liste. C'est irréversible.",
+  "zfs.deleteBackupsConfirm": "Supprimer toutes les sauvegardes de cet élément et de ses jeux de données ? Les instantanés sont retirés définitivement, le dépôt est nettoyé et l'élément est retiré de la liste. C'est irréversible.",
   "zfs.deleteKeptSafety": "Instantanés de sécurité restés sur le serveur : {n}",
   // ZFS add dialog and restore panel
   "zfs.addDatasets": "Ajouter des jeux de données",
@@ -1643,7 +1643,7 @@ const fr: Partial<Translations> = {
   "zfs.restore.missingDataset": "Ce jeu de données n'est pas disponible sur le serveur en ce moment. Restaurez plutôt dans un dossier.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Restaurer depuis un autre dépôt BombVault",
-  "recovery.foreignIntro": "Récupérez des conteneurs, VMs, jeux de dossiers ou jeux de données ZFS individuels depuis les sauvegardes d'une AUTRE instance BombVault : connexion en lecture seule, parcours du contenu, restauration de votre sélection. L'autre dépôt est seulement lu, rien n'y change, et vos propres réglages de sauvegarde restent intacts.",
+  "recovery.foreignIntro": "Récupérez des conteneurs, VMs, jeux de dossiers ou jeux de données ZFS individuels depuis les sauvegardes d'une autre instance BombVault : connexion en lecture seule, parcours du contenu, restauration de votre sélection. L'autre dépôt est seulement lu, rien n'y change, et vos propres réglages de sauvegarde restent intacts.",
   "recovery.foreignStepConnect": "Se connecter à l'autre dépôt",
   "recovery.foreignStepBrowse": "Parcourir & restaurer",
   "recovery.foreignLocation": "Emplacement du dépôt",

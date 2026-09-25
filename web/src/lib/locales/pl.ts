@@ -114,7 +114,7 @@ const pl: Partial<Translations> = {
   "containers.notInstalledHint": "Te containers nie są już zainstalowane, ale nadal mają kopie zapasowe. Przywróć je lub usuń ich kopie zapasowe, aby zwolnić miejsce.",
   "containers.notInstalledSkipped": "Wpisy, które są tu nadal zaplanowane, zapisują pominięcie przy każdym uruchomieniu. Wyłącz na karcie „Uwzględnij w harmonogramie”, aby to zatrzymać.",
   "containers.deleteBackups": "Usuń wszystkie kopie zapasowe",
-  "containers.deleteBackupsConfirm": "Usunąć WSZYSTKIE kopie zapasowe tego kontenera? Migawki zostaną trwale usunięte z repozytorium i nie można tego cofnąć. Zrzuty jego bazy danych też zostaną usunięte.",
+  "containers.deleteBackupsConfirm": "Usunąć wszystkie kopie zapasowe tego kontenera? Migawki zostaną trwale usunięte z repozytorium i nie można tego cofnąć. Zrzuty jego bazy danych też zostaną usunięte.",
   "containers.removeEntryConfirm": "Usunąć wpis tego kontenera z listy? Ewentualne kopie nie zostaną usunięte.",
 
   // Taking over a renamed entry
@@ -460,7 +460,7 @@ const pl: Partial<Translations> = {
   "vms.notInstalledHint": "Te maszyny wirtualne nie są już zdefiniowane na hoście, ale nadal mają kopie zapasowe. Przywróć je lub użyj panelu Kopie zapasowe, aby przeglądać migawki.",
   "vms.removeEntry": "Usuń wpis",
   "vms.removeEntryConfirm": "Usunąć wpis tej maszyny z listy? Ewentualne kopie nie zostaną usunięte.",
-  "vms.deleteBackupsConfirm": "Usunąć WSZYSTKIE kopie zapasowe tej maszyny? Migawki zostaną trwale usunięte z repozytorium i nie można tego cofnąć.",
+  "vms.deleteBackupsConfirm": "Usunąć wszystkie kopie zapasowe tej maszyny? Migawki zostaną trwale usunięte z repozytorium i nie można tego cofnąć.",
   "vms.discoverHint": "Maszyna wirtualna usunięta z Unraida (lub utracona po ponownej instalacji)? Odbuduj jej wpis kopii zapasowej z magazynu, aby ją przywrócić.",
 
   // Container / VM state badge labels
@@ -503,7 +503,7 @@ const pl: Partial<Translations> = {
   "excludes.advisoryImmichDb": "Immich trzyma albumy, twarze i daty każdego zdjęcia w bazie danych PostgreSQL, która działa w osobnym kontenerze, nie w tym, więc ta kopia zapasowa jej nie zawiera. Odtworzenie stąd przywróci zdjęcia, ale bez albumów, twarzy i dat. BombVault sam zrzuca kontener tej bazy danych, gdy robi jego kopię, więc sprawdź, czy jest w twoim harmonogramie.",
   "excludes.advisoryNextcloudDb": "Nextcloud trzyma konta, udostępnienia i tagi w bazie danych, która zwykle działa w osobnym kontenerze, więc ta kopia zapasowa jej nie zawiera. Pliki wrócą, udostępnienia nie. BombVault sam zrzuca kontener tej bazy danych, gdy robi jego kopię, więc sprawdź, czy jest w twoim harmonogramie.",
   "rcloneRemote.heading": "Dodaj cel SMB lub WebDAV",
-  "rcloneRemote.hint": "Łączy się z udziałem Windows lub Samba albo z serwerem WebDAV, takim jak Nextcloud, BEZ montowania go na hoście. Chodzi o coś więcej niż wygodę: restic odradza trzymanie repozytorium na zamontowanym udziale CIFS, a ta droga całkowicie omija montowanie. Hasło trafia do rclone, który zapisuje je we własnej postaci, i nigdy nie jest przechowywane otwartym tekstem. NFS nie jest tu dostępny, bo ani restic, ani rclone go nie obsługują: w przypadku NFS zamontuj eksport w Unraid i wskaż na niego ścieżkę kopii zapasowych.",
+  "rcloneRemote.hint": "Łączy się z udziałem Windows lub Samba albo z serwerem WebDAV, takim jak Nextcloud, bez montowania go na hoście. restic odradza trzymanie repozytorium na zamontowanym udziale CIFS, a ta droga całkowicie omija montowanie. Hasło trafia do rclone, który zapisuje je we własnej postaci, i nigdy nie jest przechowywane otwartym tekstem. NFS nie jest tu dostępny, bo ani restic, ani rclone go nie obsługują: w przypadku NFS zamontuj eksport w Unraid i wskaż na niego ścieżkę kopii zapasowych.",
   "rcloneRemote.type": "Rodzaj",
   "rcloneRemote.typeSmb": "Udział SMB",
   "rcloneRemote.typeWebdav": "WebDAV",
@@ -519,7 +519,7 @@ const pl: Partial<Translations> = {
   "rcloneRemote.useThisPath": "Użyj jako ścieżki kopii zapasowych:",
   "rcloneRemote.failed": "Nie udało się dodać celu.",
   "coverage.title": "Bez kopii zapasowej",
-  "coverage.hint": "Wszystko na tym serwerze, czego nie obejmuje żadna automatyczna kopia zapasowa. Karta ochrony powyżej mówi, czy zaplanowane kopie wykonały się na czas; tutaj widać, co w ogóle nie jest zaplanowane, a właśnie ta luka wszędzie indziej pozostaje niewidoczna. Wyłączony rodzaj kopii to decyzja i nie jest tu liczony. Zbiory danych ZFS, których nie dodałeś, również nie są tu liczone; wypisuje je strona ZFS.",
+  "coverage.hint": "Wszystko na tym serwerze, czego nie obejmuje żadna automatyczna kopia zapasowa. Karta ochrony powyżej mówi, czy zaplanowane kopie wykonały się na czas; ta karta pokazuje, co w ogóle nie jest zaplanowane, a tego nie pokazuje żadna inna strona. Rodzaj kopii, który wyłączyłeś, nie jest tu liczony. Zbiory danych ZFS, których nie dodałeś, również nie są tu liczone; wypisuje je strona ZFS.",
   "coverage.ratio": "{protected} z {total} chronionych",
   "coverage.allProtected": "Wszystko, co jest włączone, jest objęte harmonogramem.",
   "coverage.neverBackedUp": "nigdy nie kopiowane",
@@ -536,7 +536,7 @@ const pl: Partial<Translations> = {
   "diagnostics.button": "Pobierz diagnostykę",
   "diagnostics.busy": "Zbieranie…",
   "retentionPreview.title": "Co usunęłoby następne uruchomienie",
-  "retentionPreview.hint": "Retencja mówi, co zostaje zachowane. To pokazuje, co zaraz zostanie usunięte, zanim to nastąpi. Nic nie jest zmieniane i żadne repozytorium nie jest blokowane, więc odpowiada nawet w trakcie trwającej kopii zapasowej.",
+  "retentionPreview.hint": "Pokazuje, co usunie następne uruchomienie retencji, zanim to nastąpi. Nic nie jest zmieniane i żadne repozytorium nie jest blokowane, więc działa nawet w trakcie trwającej kopii zapasowej.",
   "common.domain": "Domena",
   "retentionPreview.show": "Pokaż, co zostałoby usunięte",
   "retentionPreview.off": "Retencja jest wyłączona, więc nic nie zostałoby usunięte.",
@@ -774,7 +774,7 @@ const pl: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Usuń wszystkie kopie zapasowe",
-  "snapshots.deleteAllConfirm": "Usunąć WSZYSTKIE kopie zapasowe tej maszyny wirtualnej z wybranego źródła (lokalnego lub poza siedzibą)? Migawki zostaną trwale usunięte, a repozytorium przycięte. Nie można cofnąć.",
+  "snapshots.deleteAllConfirm": "Usunąć wszystkie kopie zapasowe tej maszyny wirtualnej z wybranego źródła (lokalnego lub poza siedzibą)? Migawki zostaną trwale usunięte, a repozytorium przycięte. Nie można cofnąć.",
   "snapshots.deletingAll": "Usuwanie…",
 
   // Snapshot tags + compare (diff)
@@ -1406,7 +1406,7 @@ const pl: Partial<Translations> = {
   "files.noPathHint": "Odbudowany z kopii zapasowych bez folderu. Ustaw folder, aby znów tworzyć kopie. Przywracanie do folderu działa już teraz.",
   "files.deleteSet": "Usuń zestaw folderów",
   "files.deleteSetConfirm": "Usunąć ten zestaw folderów z listy? Jego kopie zapasowe nie zostaną usunięte i można je później odkryć ponownie.",
-  "files.deleteBackupsConfirm": "Usunąć WSZYSTKIE kopie zapasowe tego zestawu folderów? Migawki zostaną trwale usunięte, repozytorium przycięte, a zestaw zapomniany. Nie można cofnąć.",
+  "files.deleteBackupsConfirm": "Usunąć wszystkie kopie zapasowe tego zestawu folderów? Migawki zostaną trwale usunięte, repozytorium przycięte, a zestaw zapomniany. Nie można cofnąć.",
   "files.restoreOriginal": "Przywróć do oryginalnej lokalizacji",
   "files.restoreOriginalConfirm": "Przywrócić tę kopię na folder zestawu? Istniejące pliki zostaną nadpisane.",
   "files.restoreToFolder": "Przywróć do folderu",
@@ -1586,7 +1586,7 @@ const pl: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Skasować migawkę zabezpieczającą {name} zbioru {dataset}? Stanu sprzed tamtego odtwarzania nie da się już potem odzyskać.",
   "zfs.deleteRowConfirm": "Usunąć tę pozycję z listy? Jej kopie zostają i można je później znaleźć na nowo.",
   "zfs.deleteSafetyToo": "Skasuj też jej migawki zabezpieczające na serwerze",
-  "zfs.deleteBackupsConfirm": "Skasować WSZYSTKIE kopie tej pozycji i jej zbiorów danych? Migawki znikną na dobre, repozytorium zostanie oczyszczone, a pozycja zniknie z listy. Tego nie da się cofnąć.",
+  "zfs.deleteBackupsConfirm": "Skasować wszystkie kopie tej pozycji i jej zbiorów danych? Migawki znikną na dobre, repozytorium zostanie oczyszczone, a pozycja zniknie z listy. Tego nie da się cofnąć.",
   "zfs.deleteKeptSafety": "Migawki zabezpieczające pozostałe na serwerze: {n}",
   // ZFS add dialog and restore panel
   "zfs.addDatasets": "Dodaj zbiory danych",
@@ -1638,7 +1638,7 @@ const pl: Partial<Translations> = {
   "zfs.restore.missingDataset": "Tego zbioru danych teraz nie ma na hoście. Przywróć go zamiast tego do folderu.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Przywracanie z innego repo BombVault",
-  "recovery.foreignIntro": "Wyciągnij pojedyncze kontenery, maszyny wirtualne, zestawy folderów lub zbiory danych ZFS z kopii INNEJ instancji BombVault: połącz się w trybie tylko do odczytu, przejrzyj zawartość i przywróć, co wybierzesz. Drugie repozytorium jest tylko odczytywane, nic się tam nie zmienia, a Twoje własne ustawienia kopii zapasowych pozostają nietknięte.",
+  "recovery.foreignIntro": "Wyciągnij pojedyncze kontenery, maszyny wirtualne, zestawy folderów lub zbiory danych ZFS z kopii innej instancji BombVault: połącz się w trybie tylko do odczytu, przejrzyj zawartość i przywróć, co wybierzesz. Drugie repozytorium jest tylko odczytywane, nic się tam nie zmienia, a Twoje własne ustawienia kopii zapasowych pozostają nietknięte.",
   "recovery.foreignStepConnect": "Połącz z innym repozytorium",
   "recovery.foreignStepBrowse": "Przeglądaj i przywracaj",
   "recovery.foreignLocation": "Lokalizacja repozytorium",

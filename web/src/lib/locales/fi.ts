@@ -115,7 +115,7 @@ const fi: Partial<Translations> = {
   "containers.notInstalledHint": "Näitä kontteja ei enää ole asennettu, mutta niillä on edelleen varmuuskopioita. Palauta ne tai poista niiden varmuuskopiot vapauttaaksesi tilaa.",
   "containers.notInstalledSkipped": "Täällä yhä ajastetut kohteet kirjaavat ohituksen jokaisella ajolla. Poista kortilta „Sisällytä aikatauluun” käytöstä, niin se loppuu.",
   "containers.deleteBackups": "Poista kaikki varmuuskopiot",
-  "containers.deleteBackupsConfirm": "Poistetaanko KAIKKI tämän kontin varmuuskopiot? Tilannekuvat poistetaan pysyvästi arkistosta, eikä toimintoa voi peruuttaa. Myös sen tietokantavedokset poistetaan.",
+  "containers.deleteBackupsConfirm": "Poistetaanko kaikki tämän kontin varmuuskopiot? Tilannekuvat poistetaan pysyvästi arkistosta, eikä toimintoa voi peruuttaa. Myös sen tietokantavedokset poistetaan.",
   "containers.removeEntryConfirm": "Poistetaanko tämän kontin merkintä listalta? Mahdollisia varmuuskopioita ei poisteta.",
 
   // Taking over a renamed entry
@@ -466,7 +466,7 @@ const fi: Partial<Translations> = {
   "vms.notInstalledHint": "Näitä VM:iä ei enää ole määritetty isännällä, mutta niillä on edelleen varmuuskopioita. Palauta ne tai selaa niiden tilannekuvia Varmuuskopiot-paneelissa.",
   "vms.removeEntry": "Poista merkintä",
   "vms.removeEntryConfirm": "Poistetaanko tämän VM:n merkintä listalta? Mahdollisia varmuuskopioita ei poisteta.",
-  "vms.deleteBackupsConfirm": "Poistetaanko KAIKKI tämän VM:n varmuuskopiot? Tilannekuvat poistetaan pysyvästi arkistosta, eikä toimintoa voi peruuttaa.",
+  "vms.deleteBackupsConfirm": "Poistetaanko kaikki tämän VM:n varmuuskopiot? Tilannekuvat poistetaan pysyvästi arkistosta, eikä toimintoa voi peruuttaa.",
   "vms.discoverHint": "Poistettiinko virtuaalikone Unraidista (tai katosiko se uudelleenasennuksessa)? Rakenna sen varmuuskopiomerkintä uudelleen tallennustilasta palauttaaksesi sen.",
 
   // Container / VM state badge labels
@@ -511,7 +511,7 @@ const fi: Partial<Translations> = {
   "excludes.advisoryImmichDb": "Immich säilyttää jokaisen kuvan albumit, kasvot ja päivämäärät PostgreSQL-tietokannassa, joka pyörii omassa erillisessä kontissaan, joten tämä varmuuskopio ei sisällä sitä. Täältä palauttaminen tuo kuvat takaisin ilman niitä. BombVault ottaa sen tietokantakontin vedoksen itsestään, kun kontti varmuuskopioidaan, joten tarkista, että se on aikataulussasi.",
   "excludes.advisoryNextcloudDb": "Nextcloud säilyttää tilinsä, jakonsa ja tunnisteensa tietokannassa, joka pyörii yleensä erillisessä kontissa, joten tämä varmuuskopio ei sisällä sitä. Tiedostot palaavat, jaot eivät. BombVault ottaa sen tietokantakontin vedoksen itsestään, kun kontti varmuuskopioidaan, joten tarkista, että se on aikataulussasi.",
   "rcloneRemote.heading": "Lisää SMB- tai WebDAV-kohde",
-  "rcloneRemote.hint": "Tavoittaa Windows- tai Samba-jaon tai WebDAV-palvelimen, kuten Nextcloudin, ILMAN että sitä liitetään isäntään. Kyse ei ole pelkästä mukavuudesta: restic ei suosittele arkiston säilyttämistä liitetyllä CIFS-jaolla, ja tämä reitti välttää liitoksen kokonaan. Salasana annetaan rclonelle, joka tallentaa sen omassa muodossaan, eikä sitä koskaan säilytetä selväkielisenä. NFS:ää ei tarjota tässä, koska restic ja rclone eivät kumpikaan tue sitä: liitä NFS-jako Unraidiin ja osoita varmuuskopiopolku siihen.",
+  "rcloneRemote.hint": "Tavoittaa Windows- tai Samba-jaon tai WebDAV-palvelimen, kuten Nextcloudin, ilman että sitä liitetään isäntään. restic ei suosittele arkiston säilyttämistä liitetyllä CIFS-jaolla, ja tämä reitti välttää liitoksen kokonaan. Salasana annetaan rclonelle, joka tallentaa sen omassa muodossaan, eikä sitä koskaan säilytetä selväkielisenä. NFS:ää ei tarjota tässä, koska restic ja rclone eivät kumpikaan tue sitä: liitä NFS-jako Unraidiin ja osoita varmuuskopiopolku siihen.",
   "rcloneRemote.type": "Tyyppi",
   "rcloneRemote.typeSmb": "SMB-jako",
   "rcloneRemote.typeWebdav": "WebDAV",
@@ -527,7 +527,7 @@ const fi: Partial<Translations> = {
   "rcloneRemote.useThisPath": "Käytä tätä varmuuskopiopolkuna:",
   "rcloneRemote.failed": "Kohdetta ei voitu lisätä.",
   "coverage.title": "Ei varmuuskopioitu",
-  "coverage.hint": "Kaikki tällä palvelimella, mitä mikään automaattinen varmuuskopio ei kata. Yllä oleva suojauskortti kertoo, suoritettiinko aikataulutetut varmuuskopiot ajallaan; tässä lukee, mitä ei ole lainkaan aikataulutettu, ja juuri se aukko jää muualla näkymättömiin. Pois kytketty varmuuskopion laji on päätös, eikä sitä lasketa tähän. ZFS-tietojoukkoja, joita et ole lisännyt, ei lasketa tähänkään; ZFS-sivu luettelee ne.",
+  "coverage.hint": "Kaikki tällä palvelimella, mitä mikään automaattinen varmuuskopio ei kata. Yllä oleva suojauskortti kertoo, suoritettiinko aikataulutetut varmuuskopiot ajallaan; tämä kortti näyttää, mitä ei ole lainkaan aikataulutettu, eikä mikään muu sivu näytä sitä. Varmuuskopion lajia, jonka olet kytkenyt pois, ei lasketa tähän. ZFS-tietojoukkoja, joita et ole lisännyt, ei lasketa tähänkään; ZFS-sivu luettelee ne.",
   "coverage.ratio": "{protected} / {total} suojattu",
   "coverage.allProtected": "Kaikki, minkä olet kytkenyt päälle, kuuluu johonkin aikatauluun.",
   "coverage.neverBackedUp": "ei koskaan varmuuskopioitu",
@@ -544,7 +544,7 @@ const fi: Partial<Translations> = {
   "diagnostics.button": "Lataa diagnostiikka",
   "diagnostics.busy": "Kerätään…",
   "retentionPreview.title": "Mitä seuraava ajo poistaisi",
-  "retentionPreview.hint": "Säilytys kertoo, mitä se säilyttää. Tämä näyttää, mitä se on poistamassa, ennen kuin se tapahtuu. Mitään ei muuteta eikä yhtään repositoriota lukita, joten vastaus tulee myös varmuuskopioinnin ollessa käynnissä.",
+  "retentionPreview.hint": "Näyttää, mitä seuraava säilytysajo poistaa, ennen kuin se tapahtuu. Mitään ei muuteta eikä yhtään repositoriota lukita, joten tämä toimii myös varmuuskopioinnin ollessa käynnissä.",
   "common.domain": "Toimialue",
   "retentionPreview.show": "Näytä, mitä poistettaisiin",
   "retentionPreview.off": "Säilytys on pois päältä, joten mitään ei poistettaisi.",
@@ -782,7 +782,7 @@ const fi: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Poista kaikki varmuuskopiot",
-  "snapshots.deleteAllConfirm": "Poistetaanko KAIKKI tämän VM:n varmuuskopiot valitusta lähteestä (paikallinen tai etä)? Tilannevedokset poistetaan pysyvästi ja repositorio karsitaan. Tätä ei voi peruuttaa.",
+  "snapshots.deleteAllConfirm": "Poistetaanko kaikki tämän VM:n varmuuskopiot valitusta lähteestä (paikallinen tai etä)? Tilannevedokset poistetaan pysyvästi ja repositorio karsitaan. Tätä ei voi peruuttaa.",
   "snapshots.deletingAll": "Poistetaan…",
 
   // Snapshot tags + compare (diff)
@@ -1411,7 +1411,7 @@ const fi: Partial<Translations> = {
   "files.noPathHint": "Rakennettu uudelleen varmuuskopioista ilman kansiota. Aseta kansio, jotta varmuuskopiointi onnistuu taas. Palautus kansioon toimii jo nyt.",
   "files.deleteSet": "Poista kansiojoukko",
   "files.deleteSetConfirm": "Poistetaanko tämä kansiojoukko luettelosta? Sen varmuuskopioita ei poisteta, ja ne voi löytää myöhemmin uudelleen.",
-  "files.deleteBackupsConfirm": "Poistetaanko KAIKKI tämän kansiojoukon varmuuskopiot? Tilannevedokset poistetaan pysyvästi, repositorio karsitaan ja joukko unohdetaan. Tätä ei voi peruuttaa.",
+  "files.deleteBackupsConfirm": "Poistetaanko kaikki tämän kansiojoukon varmuuskopiot? Tilannevedokset poistetaan pysyvästi, repositorio karsitaan ja joukko unohdetaan. Tätä ei voi peruuttaa.",
   "files.restoreOriginal": "Palauta alkuperäiseen sijaintiin",
   "files.restoreOriginalConfirm": "Palautetaanko tämä varmuuskopio joukon kansion päälle? Olemassa olevat tiedostot korvataan.",
   "files.restoreToFolder": "Palauta kansioon",
@@ -1591,7 +1591,7 @@ const fi: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Poistetaanko turvatilannevedos {name} tietojoukosta {dataset}? Sitä palautusta edeltävää tilaa ei saa enää takaisin.",
   "zfs.deleteRowConfirm": "Poistetaanko tämä kohde listalta? Sen varmuuskopiot säilyvät ja ne voi löytää myöhemmin uudelleen.",
   "zfs.deleteSafetyToo": "Poista myös sen turvatilannevedokset palvelimelta",
-  "zfs.deleteBackupsConfirm": "Poistetaanko KAIKKI tämän kohteen ja sen tietojoukkojen varmuuskopiot? Tilannevedokset poistetaan lopullisesti, säilö siivotaan ja kohde häviää listalta. Tätä ei voi perua.",
+  "zfs.deleteBackupsConfirm": "Poistetaanko kaikki tämän kohteen ja sen tietojoukkojen varmuuskopiot? Tilannevedokset poistetaan lopullisesti, säilö siivotaan ja kohde häviää listalta. Tätä ei voi perua.",
   "zfs.deleteKeptSafety": "Palvelimelle jääneet turvatilannevedokset: {n}",
   // ZFS add dialog and restore panel
   "zfs.addDatasets": "Lisää tietojoukkoja",
@@ -1643,7 +1643,7 @@ const fi: Partial<Translations> = {
   "zfs.restore.missingDataset": "Tätä tietojoukkoa ei juuri nyt ole palvelimella. Palauta sen sijaan kansioon.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Palauta toisesta BombVault-reposta",
-  "recovery.foreignIntro": "Poimi yksittäisiä kontteja, virtuaalikoneita, kansiojoukkoja tai ZFS-tietojoukkoja TOISEN BombVault-instanssin varmuuskopioista: yhdistä vain luku -tilassa, selaa sisältöä ja palauta valitsemasi. Toista repoa vain luetaan, siellä ei muutu mikään, ja omat varmuuskopiointiasetuksesi pysyvät koskemattomina.",
+  "recovery.foreignIntro": "Poimi yksittäisiä kontteja, virtuaalikoneita, kansiojoukkoja tai ZFS-tietojoukkoja toisen BombVault-instanssin varmuuskopioista: yhdistä vain luku -tilassa, selaa sisältöä ja palauta valitsemasi. Toista repoa vain luetaan, siellä ei muutu mikään, ja omat varmuuskopiointiasetuksesi pysyvät koskemattomina.",
   "recovery.foreignStepConnect": "Yhdistä toiseen repoon",
   "recovery.foreignStepBrowse": "Selaa ja palauta",
   "recovery.foreignLocation": "Repon sijainti",

@@ -114,7 +114,7 @@ const nl: Partial<Translations> = {
   "containers.notInstalledHint": "Deze containers zijn niet meer geïnstalleerd, maar hebben nog back-ups. Herstel ze of verwijder hun back-ups om ruimte vrij te maken.",
   "containers.notInstalledSkipped": "Vermeldingen die hier nog ingepland staan, leggen bij elke uitvoering een overslag vast. Zet „Opnemen in planning” op de kaart uit om dat te stoppen.",
   "containers.deleteBackups": "Alle back-ups verwijderen",
-  "containers.deleteBackupsConfirm": "ALLE back-ups van deze container verwijderen? De snapshots worden permanent uit de repository verwijderd en kunnen niet ongedaan worden gemaakt. De databasedumps ervan worden ook verwijderd.",
+  "containers.deleteBackupsConfirm": "Alle back-ups van deze container verwijderen? De snapshots worden permanent uit de repository verwijderd en kunnen niet ongedaan worden gemaakt. De databasedumps ervan worden ook verwijderd.",
   "containers.removeEntryConfirm": "De vermelding van deze container uit de lijst verwijderen? Eventuele back-ups worden niet verwijderd.",
 
   // Taking over a renamed entry
@@ -460,7 +460,7 @@ const nl: Partial<Translations> = {
   "vms.notInstalledHint": "Deze VM's zijn niet meer gedefinieerd op de host, maar hebben nog back-ups. Herstel ze of gebruik het back-uppaneel om hun snapshots te bekijken.",
   "vms.removeEntry": "Vermelding verwijderen",
   "vms.removeEntryConfirm": "De vermelding van deze VM uit de lijst verwijderen? Eventuele back-ups worden niet verwijderd.",
-  "vms.deleteBackupsConfirm": "ALLE back-ups van deze VM verwijderen? De snapshots worden permanent uit de repository verwijderd en kunnen niet ongedaan worden gemaakt.",
+  "vms.deleteBackupsConfirm": "Alle back-ups van deze VM verwijderen? De snapshots worden permanent uit de repository verwijderd en kunnen niet ongedaan worden gemaakt.",
   "vms.discoverHint": "VM verwijderd uit Unraid (of kwijt na een herinstallatie)? Bouw de back-upvermelding opnieuw op vanuit de opslag om hem te kunnen herstellen.",
 
   // Container / VM state badge labels
@@ -505,7 +505,7 @@ const nl: Partial<Translations> = {
   "excludes.advisoryImmichDb": "Immich bewaart de albums, gezichten en datums van elke foto in een PostgreSQL-database die in een andere container draait dan deze, dus deze back-up bevat die niet. Herstellen vanaf hier brengt de foto's terug, maar zonder albums, gezichten en datums. BombVault dumpt die databasecontainer vanzelf zodra er een back-up van wordt gemaakt, dus controleer of hij in je planning staat.",
   "excludes.advisoryNextcloudDb": "Nextcloud bewaart accounts, gedeelde items en tags in een database die meestal in een aparte container draait, dus deze back-up bevat die niet. De bestanden komen terug, het delen niet. BombVault dumpt die databasecontainer vanzelf zodra er een back-up van wordt gemaakt, dus controleer of hij in je planning staat.",
   "rcloneRemote.heading": "SMB- of WebDAV-bestemming toevoegen",
-  "rcloneRemote.hint": "Bereikt een gedeelde Windows- of Samba-map, of een WebDAV-server zoals Nextcloud, ZONDER die op de host te mounten. Dat is meer dan gemak: restic raadt af een repository in een gemounte gedeelde CIFS-map te bewaren, en deze route vermijdt de mount helemaal. Het wachtwoord gaat naar rclone, dat het in een eigen vorm opslaat, en wordt nooit in leesbare tekst bewaard. NFS wordt hier niet aangeboden omdat restic en rclone het geen van beide ondersteunen: mount voor NFS de export op Unraid en stel er een back-uppad op in.",
+  "rcloneRemote.hint": "Bereikt een gedeelde Windows- of Samba-map, of een WebDAV-server zoals Nextcloud, zonder die op de host te mounten. restic raadt af een repository in een gemounte gedeelde CIFS-map te bewaren, en deze route vermijdt de mount helemaal. Het wachtwoord gaat naar rclone, dat het in een eigen vorm opslaat, en wordt nooit in leesbare tekst bewaard. NFS wordt hier niet aangeboden omdat restic en rclone het geen van beide ondersteunen: mount voor NFS de export op Unraid en stel er een back-uppad op in.",
   "rcloneRemote.type": "Soort",
   "rcloneRemote.typeSmb": "Gedeelde SMB-map",
   "rcloneRemote.typeWebdav": "WebDAV",
@@ -521,7 +521,7 @@ const nl: Partial<Translations> = {
   "rcloneRemote.useThisPath": "Gebruik dit als back-uppad:",
   "rcloneRemote.failed": "De bestemming kon niet worden toegevoegd.",
   "coverage.title": "Zonder back-up",
-  "coverage.hint": "Alles op deze server waar geen enkele automatische back-up over gaat. De beschermingskaart hierboven zegt of de geplande back-ups op tijd liepen; hier staat wat helemaal niet gepland is, en juist dat gat blijft overal elders onzichtbaar. Een uitgeschakeld back-uptype is een keuze en telt hier niet mee. ZFS-datasets die u niet hebt toegevoegd tellen hier evenmin mee; de ZFS-pagina toont ze.",
+  "coverage.hint": "Alles op deze server waar geen enkele automatische back-up over gaat. De beschermingskaart hierboven zegt of de geplande back-ups op tijd liepen; deze kaart toont wat helemaal niet gepland is, iets wat geen andere pagina laat zien. Een back-uptype dat u hebt uitgeschakeld telt hier niet mee. ZFS-datasets die u niet hebt toegevoegd tellen hier evenmin mee; de ZFS-pagina toont ze.",
   "coverage.ratio": "{protected} van {total} beschermd",
   "coverage.allProtected": "Alles wat je hebt ingeschakeld valt onder een planning.",
   "coverage.neverBackedUp": "nooit geback-upt",
@@ -538,7 +538,7 @@ const nl: Partial<Translations> = {
   "diagnostics.button": "Diagnostiek downloaden",
   "diagnostics.busy": "Verzamelen…",
   "retentionPreview.title": "Wat de volgende uitvoering zou verwijderen",
-  "retentionPreview.hint": "Het bewaarbeleid vertelt je wat het bewaart. Dit toont wat het gaat verwijderen, voordat het gebeurt. Er wordt niets gewijzigd en geen enkele repository wordt vergrendeld, dus het geeft ook antwoord terwijl er een back-up loopt.",
+  "retentionPreview.hint": "Toont wat de volgende bewaarronde gaat verwijderen, voordat het gebeurt. Er wordt niets gewijzigd en geen enkele repository wordt vergrendeld, dus het werkt ook terwijl er een back-up loopt.",
   "common.domain": "Domein",
   "retentionPreview.show": "Tonen wat er verwijderd zou worden",
   "retentionPreview.off": "Het bewaarbeleid staat uit, dus er zou niets worden verwijderd.",
@@ -856,7 +856,7 @@ const nl: Partial<Translations> = {
 
   // Backups (delete all)
   "snapshots.deleteAll": "Alle back-ups verwijderen",
-  "snapshots.deleteAllConfirm": "ALLE back-ups van deze VM uit de geselecteerde bron (lokaal of off-site) verwijderen? De snapshots worden permanent verwijderd en de repository wordt opgeschoond. Kan niet ongedaan worden gemaakt.",
+  "snapshots.deleteAllConfirm": "Alle back-ups van deze VM uit de geselecteerde bron (lokaal of off-site) verwijderen? De snapshots worden permanent verwijderd en de repository wordt opgeschoond. Kan niet ongedaan worden gemaakt.",
   "snapshots.deletingAll": "Verwijderen…",
 
   // Restore to folder
@@ -1408,7 +1408,7 @@ const nl: Partial<Translations> = {
   "files.noPathHint": "Opnieuw opgebouwd uit back-ups zonder map. Stel een map in om weer te back-uppen. Herstellen naar een map werkt nu al.",
   "files.deleteSet": "Mappenset verwijderen",
   "files.deleteSetConfirm": "Deze mappenset uit de lijst verwijderen? De back-ups worden niet verwijderd en kunnen later opnieuw worden ontdekt.",
-  "files.deleteBackupsConfirm": "ALLE back-ups van deze mappenset verwijderen? De snapshots worden permanent verwijderd, de repository wordt opgeschoond en de set wordt vergeten. Kan niet ongedaan worden gemaakt.",
+  "files.deleteBackupsConfirm": "Alle back-ups van deze mappenset verwijderen? De snapshots worden permanent verwijderd, de repository wordt opgeschoond en de set wordt vergeten. Kan niet ongedaan worden gemaakt.",
   "files.restoreOriginal": "Herstellen op oorspronkelijke locatie",
   "files.restoreOriginalConfirm": "Deze back-up over de map van de set herstellen? Bestaande bestanden worden overschreven.",
   "files.restoreToFolder": "Herstellen naar een map",
@@ -1588,7 +1588,7 @@ const nl: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Veiligheidssnapshot {name} van {dataset} verwijderen? De toestand van voor dat terugzetten is daarna niet meer terug te halen.",
   "zfs.deleteRowConfirm": "Dit item uit de lijst halen? De back-ups blijven bestaan en zijn later terug te vinden.",
   "zfs.deleteSafetyToo": "Ook de veiligheidssnapshots op de server verwijderen",
-  "zfs.deleteBackupsConfirm": "ALLE back-ups van dit item en zijn datasets verwijderen? De snapshots gaan definitief weg, de repository wordt opgeruimd en het item verdwijnt uit de lijst. Dit kan niet ongedaan worden gemaakt.",
+  "zfs.deleteBackupsConfirm": "Alle back-ups van dit item en zijn datasets verwijderen? De snapshots gaan definitief weg, de repository wordt opgeruimd en het item verdwijnt uit de lijst. Dit kan niet ongedaan worden gemaakt.",
   "zfs.deleteKeptSafety": "Veiligheidssnapshots die op de server bleven: {n}",
   // ZFS add dialog and restore panel
   "zfs.addDatasets": "Datasets toevoegen",
@@ -1640,7 +1640,7 @@ const nl: Partial<Translations> = {
   "zfs.restore.missingDataset": "Deze dataset is op dit moment niet op de host beschikbaar. Zet hem in plaats daarvan naar een map terug.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Herstellen vanuit een andere BombVault-repo",
-  "recovery.foreignIntro": "Haal losse containers, VM's, mappensets of ZFS-datasets uit de back-ups van een ANDERE BombVault-instantie: verbind alleen-lezen, blader door de inhoud en herstel wat u kiest. De andere repository wordt alleen gelezen, daar verandert niets, en uw eigen back-upinstellingen blijven onaangetast.",
+  "recovery.foreignIntro": "Haal losse containers, VM's, mappensets of ZFS-datasets uit de back-ups van een andere BombVault-instantie: verbind alleen-lezen, blader door de inhoud en herstel wat u kiest. De andere repository wordt alleen gelezen, daar verandert niets, en uw eigen back-upinstellingen blijven onaangetast.",
   "recovery.foreignStepConnect": "Verbinden met de andere repository",
   "recovery.foreignStepBrowse": "Bladeren & herstellen",
   "recovery.foreignLocation": "Locatie van de repository",

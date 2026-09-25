@@ -115,7 +115,7 @@ const es: Partial<Translations> = {
   "containers.notInstalledHint": "Estos contenedores ya no están instalados pero aún tienen copias. Restáuralos o elimina sus copias para liberar espacio.",
   "containers.notInstalledSkipped": "Las entradas que siguen programadas registran una omisión en cada ejecución. Desactiva «Incluir en el calendario» en la tarjeta para evitarlo.",
   "containers.deleteBackups": "Eliminar todas las copias",
-  "containers.deleteBackupsConfirm": "¿Eliminar TODAS las copias de este contenedor? Las instantáneas se eliminan permanentemente del repositorio y no se puede deshacer. También se borran sus volcados de base de datos.",
+  "containers.deleteBackupsConfirm": "¿Eliminar todas las copias de este contenedor? Las instantáneas se eliminan permanentemente del repositorio y no se puede deshacer. También se borran sus volcados de base de datos.",
   "containers.removeEntryConfirm": "¿Quitar la entrada de este contenedor de la lista? Sus copias, si las hay, no se eliminan.",
 
   // Taking over a renamed entry
@@ -466,7 +466,7 @@ const es: Partial<Translations> = {
   "vms.notInstalledHint": "Estas VMs ya no están definidas en el host pero aún tienen copias. Restáuralas para recuperarlas, o usa el panel de Copias para ver sus instantáneas.",
   "vms.removeEntry": "Eliminar entrada",
   "vms.removeEntryConfirm": "¿Quitar la entrada de esta VM de la lista? Sus copias, si las hay, no se eliminan.",
-  "vms.deleteBackupsConfirm": "¿Eliminar TODAS las copias de esta VM? Las instantáneas se eliminan permanentemente del repositorio y no se puede deshacer.",
+  "vms.deleteBackupsConfirm": "¿Eliminar todas las copias de esta VM? Las instantáneas se eliminan permanentemente del repositorio y no se puede deshacer.",
   "vms.discoverHint": "¿Eliminaste la VM de Unraid (o se perdió tras reinstalar)? Reconstruye su entrada de copia desde el almacenamiento para poder restaurarla.",
 
   // Container / VM state badge labels
@@ -511,7 +511,7 @@ const es: Partial<Translations> = {
   "excludes.advisoryImmichDb": "Immich guarda los álbumes, las caras y las fechas de cada foto en una base de datos PostgreSQL que se ejecuta en un contenedor propio, aparte, así que esta copia de seguridad no la contiene. Restaurar desde aquí devuelve las fotos, pero sin nada de eso. BombVault vuelca ese contenedor de base de datos automáticamente cuando se le hace la copia, así que comprueba que esté en tu programación.",
   "excludes.advisoryNextcloudDb": "Nextcloud guarda sus cuentas, sus recursos compartidos y sus etiquetas en una base de datos que normalmente se ejecuta en un contenedor aparte, así que esta copia de seguridad no la contiene. Los archivos vuelven, lo compartido no. BombVault vuelca ese contenedor de base de datos automáticamente cuando se le hace la copia, así que comprueba que esté en tu programación.",
   "rcloneRemote.heading": "Añadir un destino SMB o WebDAV",
-  "rcloneRemote.hint": "Accede a un recurso compartido de Windows o Samba, o a un servidor WebDAV como Nextcloud, SIN montarlo en el host. Eso importa más allá de la comodidad: restic desaconseja guardar un repositorio en un recurso compartido CIFS montado, y esta vía evita el montaje por completo. La contraseña se entrega a rclone, que la almacena en su propio formato, y nunca se conserva en texto claro. NFS no se ofrece aquí porque ni restic ni rclone son compatibles con él: para NFS, monta la exportación en Unraid y asígnale una ruta de copia.",
+  "rcloneRemote.hint": "Accede a un recurso compartido de Windows o Samba, o a un servidor WebDAV como Nextcloud, sin montarlo en el host. restic desaconseja guardar un repositorio en un recurso compartido CIFS montado, y esta vía evita el montaje por completo. La contraseña se entrega a rclone, que la almacena en su propio formato, y nunca se conserva en texto claro. NFS no se ofrece aquí porque ni restic ni rclone son compatibles con él: para NFS, monta la exportación en Unraid y asígnale una ruta de copia.",
   "rcloneRemote.type": "Tipo",
   "rcloneRemote.typeSmb": "Recurso compartido SMB",
   "rcloneRemote.typeWebdav": "WebDAV",
@@ -527,7 +527,7 @@ const es: Partial<Translations> = {
   "rcloneRemote.useThisPath": "Usa esto como ruta de copia:",
   "rcloneRemote.failed": "No se pudo añadir el destino.",
   "coverage.title": "Sin copia de seguridad",
-  "coverage.hint": "Todo lo que hay en este servidor y que ninguna copia automática cubre. La tarjeta de protección de arriba dice si las copias programadas se hicieron a tiempo, y esto dice qué no está programado en absoluto, que es el hueco que en todas partes queda invisible. Un tipo de copia desactivado es una decisión y aquí no se cuenta. Los conjuntos de datos ZFS que no has añadido tampoco se cuentan; la página ZFS los lista.",
+  "coverage.hint": "Todo lo que hay en este servidor y que ninguna copia automática cubre. La tarjeta de protección de arriba dice si las copias programadas se hicieron a tiempo, y esta tarjeta muestra qué no está programado en absoluto, algo que ninguna otra página muestra. Un tipo de copia que has desactivado no se cuenta aquí. Los conjuntos de datos ZFS que no has añadido tampoco se cuentan; la página ZFS los lista.",
   "coverage.ratio": "{protected} de {total} protegidos",
   "coverage.allProtected": "Todo lo que has activado está cubierto por una programación.",
   "coverage.neverBackedUp": "nunca copiado",
@@ -544,7 +544,7 @@ const es: Partial<Translations> = {
   "diagnostics.button": "Descargar diagnósticos",
   "diagnostics.busy": "Recopilando…",
   "retentionPreview.title": "Lo que eliminaría la próxima ejecución",
-  "retentionPreview.hint": "La retención te dice lo que conserva. Esto muestra lo que está a punto de borrar, antes de que ocurra. No se cambia nada ni se bloquea ningún repositorio, así que responde incluso mientras se ejecuta una copia.",
+  "retentionPreview.hint": "Muestra lo que borrará la próxima ejecución de la retención, antes de que ocurra. No se cambia nada ni se bloquea ningún repositorio, así que funciona incluso mientras se ejecuta una copia.",
   "common.domain": "Dominio",
   "retentionPreview.show": "Mostrar lo que se eliminaría",
   "retentionPreview.off": "La retención está desactivada, así que no se eliminaría nada.",
@@ -790,7 +790,7 @@ const es: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Eliminar todas las copias",
-  "snapshots.deleteAllConfirm": "¿Eliminar TODAS las copias de esta VM de la fuente seleccionada (local o externa)? Las instantáneas se eliminan permanentemente y el repositorio se poda. No se puede deshacer.",
+  "snapshots.deleteAllConfirm": "¿Eliminar todas las copias de esta VM de la fuente seleccionada (local o externa)? Las instantáneas se eliminan permanentemente y el repositorio se poda. No se puede deshacer.",
   "snapshots.deletingAll": "Eliminando…",
 
   // Snapshot tags + compare (diff)
@@ -1409,7 +1409,7 @@ const es: Partial<Translations> = {
   "files.noPathHint": "Reconstruido desde las copias sin carpeta. Define una carpeta para volver a copiarlo. Restaurar en una carpeta ya funciona.",
   "files.deleteSet": "Eliminar conjunto de carpetas",
   "files.deleteSetConfirm": "¿Quitar este conjunto de carpetas de la lista? Sus copias no se eliminan y podrán redescubrirse más tarde.",
-  "files.deleteBackupsConfirm": "¿Eliminar TODAS las copias de este conjunto de carpetas? Las instantáneas se eliminan permanentemente, el repositorio se poda y el conjunto se olvida. No se puede deshacer.",
+  "files.deleteBackupsConfirm": "¿Eliminar todas las copias de este conjunto de carpetas? Las instantáneas se eliminan permanentemente, el repositorio se poda y el conjunto se olvida. No se puede deshacer.",
   "files.restoreOriginal": "Restaurar en la ubicación original",
   "files.restoreOriginalConfirm": "¿Restaurar esta copia sobre la carpeta del conjunto? Los archivos existentes se sobrescribirán.",
   "files.restoreToFolder": "Restaurar en una carpeta",
@@ -1589,7 +1589,7 @@ const es: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "¿Borrar la instantánea de seguridad {name} de {dataset}? Después ya no se podrá recuperar el estado previo a esa restauración.",
   "zfs.deleteRowConfirm": "¿Quitar este elemento de la lista? Sus copias se conservan y se pueden volver a encontrar más adelante.",
   "zfs.deleteSafetyToo": "Borrar también sus instantáneas de seguridad en el servidor",
-  "zfs.deleteBackupsConfirm": "¿Borrar TODAS las copias de este elemento y de sus conjuntos de datos? Las instantáneas se eliminan de forma permanente, el repositorio se limpia y el elemento sale de la lista. Esto no se puede deshacer.",
+  "zfs.deleteBackupsConfirm": "¿Borrar todas las copias de este elemento y de sus conjuntos de datos? Las instantáneas se eliminan de forma permanente, el repositorio se limpia y el elemento sale de la lista. Esto no se puede deshacer.",
   "zfs.deleteKeptSafety": "Instantáneas de seguridad que quedaron en el servidor: {n}",
   // ZFS add dialog and restore panel
   "zfs.addDatasets": "Añadir conjuntos de datos",
@@ -1641,7 +1641,7 @@ const es: Partial<Translations> = {
   "zfs.restore.missingDataset": "Este conjunto de datos no está disponible en el servidor ahora mismo. Restaura en una carpeta.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Restaurar desde otro repo de BombVault",
-  "recovery.foreignIntro": "Extrae contenedores, VMs, conjuntos de carpetas o conjuntos de datos ZFS individuales de las copias de OTRA instancia de BombVault: conéctate en solo lectura, explora el contenido y restaura lo que elijas. El otro repositorio solo se lee, allí no cambia nada, y tus propios ajustes de copia de seguridad quedan intactos.",
+  "recovery.foreignIntro": "Extrae contenedores, VMs, conjuntos de carpetas o conjuntos de datos ZFS individuales de las copias de otra instancia de BombVault: conéctate en solo lectura, explora el contenido y restaura lo que elijas. El otro repositorio solo se lee, allí no cambia nada, y tus propios ajustes de copia de seguridad quedan intactos.",
   "recovery.foreignStepConnect": "Conectar con el otro repositorio",
   "recovery.foreignStepBrowse": "Explorar y restaurar",
   "recovery.foreignLocation": "Ubicación del repositorio",

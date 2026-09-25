@@ -115,7 +115,7 @@ const vi: Partial<Translations> = {
   "containers.notInstalledHint": "Các containers này không còn được cài đặt nhưng vẫn còn bản sao lưu. Hãy khôi phục hoặc xóa bản sao lưu để giải phóng dung lượng.",
   "containers.notInstalledSkipped": "Các mục vẫn còn trong lịch sẽ ghi lại một lần bỏ qua ở mỗi lần chạy. Tắt \"Đưa vào lịch trình\" trên thẻ để dừng việc này.",
   "containers.deleteBackups": "Xóa tất cả bản sao lưu",
-  "containers.deleteBackupsConfirm": "Xóa TẤT CẢ bản sao lưu của container này? Các snapshot sẽ bị xóa vĩnh viễn khỏi kho và không thể hoàn tác. Các bản kết xuất cơ sở dữ liệu của nó cũng bị xoá.",
+  "containers.deleteBackupsConfirm": "Xóa tất cả bản sao lưu của container này? Các snapshot sẽ bị xóa vĩnh viễn khỏi kho và không thể hoàn tác. Các bản kết xuất cơ sở dữ liệu của nó cũng bị xoá.",
   "containers.removeEntryConfirm": "Xóa mục của container này khỏi danh sách? Mọi bản sao lưu hiện có sẽ không bị xóa.",
 
   // Taking over a renamed entry
@@ -466,7 +466,7 @@ const vi: Partial<Translations> = {
   "vms.notInstalledHint": "Các VMs này không còn được định nghĩa trên máy chủ nhưng vẫn còn bản sao lưu. Khôi phục hoặc duyệt snapshot trong bảng Bản sao lưu.",
   "vms.removeEntry": "Xóa mục",
   "vms.removeEntryConfirm": "Xóa mục của VM này khỏi danh sách? Mọi bản sao lưu hiện có sẽ không bị xóa.",
-  "vms.deleteBackupsConfirm": "Xóa TẤT CẢ bản sao lưu của VM này? Các snapshot sẽ bị xóa vĩnh viễn khỏi kho và không thể hoàn tác.",
+  "vms.deleteBackupsConfirm": "Xóa tất cả bản sao lưu của VM này? Các snapshot sẽ bị xóa vĩnh viễn khỏi kho và không thể hoàn tác.",
   "vms.discoverHint": "Đã xóa máy ảo khỏi Unraid (hoặc mất sau khi cài lại)? Dựng lại mục sao lưu của nó từ bộ lưu trữ để có thể khôi phục.",
 
   // Container / VM state badge labels
@@ -508,7 +508,7 @@ const vi: Partial<Translations> = {
   "excludes.advisoryImmichDb": "Immich lưu album, khuôn mặt và ngày tháng của từng ảnh trong một cơ sở dữ liệu PostgreSQL chạy trong một container riêng, không phải container này, nên bản sao lưu này không chứa nó. Khôi phục từ đây sẽ đưa ảnh trở lại nhưng không có những thứ đó. BombVault tự kết xuất container cơ sở dữ liệu đó khi sao lưu nó, nên hãy kiểm tra xem container ấy có trong lịch của bạn không.",
   "excludes.advisoryNextcloudDb": "Nextcloud lưu tài khoản, chia sẻ và thẻ trong một cơ sở dữ liệu thường chạy trong một container riêng, nên bản sao lưu này không chứa nó. Tập tin sẽ trở lại, còn chia sẻ thì không. BombVault tự kết xuất container cơ sở dữ liệu đó khi sao lưu nó, nên hãy kiểm tra xem container ấy có trong lịch của bạn không.",
   "rcloneRemote.heading": "Thêm đích SMB hoặc WebDAV",
-  "rcloneRemote.hint": "Kết nối tới một chia sẻ Windows hoặc Samba, hay một máy chủ WebDAV như Nextcloud, mà KHÔNG cần gắn kết nó vào host. Điều này quan trọng không chỉ vì tiện lợi: restic khuyên không nên đặt kho lưu trữ trên một chia sẻ CIFS đã gắn kết, và cách này hoàn toàn không cần gắn kết. Mật khẩu được chuyển cho rclone để lưu theo định dạng riêng của nó và không bao giờ được lưu dưới dạng văn bản thuần. NFS không có ở đây vì cả restic lẫn rclone đều không hỗ trợ giao thức này: với NFS, hãy gắn kết chia sẻ NFS trên Unraid và đặt Đường dẫn sao lưu trỏ tới đó.",
+  "rcloneRemote.hint": "Kết nối tới một chia sẻ Windows hoặc Samba, hay một máy chủ WebDAV như Nextcloud, mà không cần gắn kết nó vào host. restic khuyên không nên đặt kho lưu trữ trên một chia sẻ CIFS đã gắn kết, và cách này hoàn toàn không cần gắn kết. Mật khẩu được chuyển cho rclone để lưu theo định dạng riêng của nó và không bao giờ được lưu dưới dạng văn bản thuần. NFS không có ở đây vì cả restic lẫn rclone đều không hỗ trợ giao thức này: với NFS, hãy gắn kết chia sẻ NFS trên Unraid và đặt Đường dẫn sao lưu trỏ tới đó.",
   "rcloneRemote.type": "Loại",
   "rcloneRemote.typeSmb": "Chia sẻ SMB",
   "rcloneRemote.typeWebdav": "WebDAV",
@@ -524,7 +524,7 @@ const vi: Partial<Translations> = {
   "rcloneRemote.useThisPath": "Dùng giá trị này làm Đường dẫn sao lưu:",
   "rcloneRemote.failed": "Không thể thêm đích.",
   "coverage.title": "Chưa được sao lưu",
-  "coverage.hint": "Mọi thứ trên máy chủ này mà không có bản sao lưu tự động nào bao phủ. Thẻ bảo vệ ở trên cho biết các bản sao lưu theo lịch có chạy đúng giờ hay không; phần này cho biết những gì hoàn toàn không được lên lịch, và đó chính là lỗ hổng vẫn vô hình ở mọi nơi khác. Một loại sao lưu đã tắt là một quyết định và không được tính ở đây. Các tập dữ liệu ZFS bạn chưa thêm cũng không được tính ở đây; trang ZFS liệt kê chúng.",
+  "coverage.hint": "Mọi thứ trên máy chủ này mà không có bản sao lưu tự động nào bao phủ. Thẻ bảo vệ ở trên cho biết các bản sao lưu theo lịch có chạy đúng giờ hay không; thẻ này cho biết những gì hoàn toàn không được lên lịch, điều mà không trang nào khác hiển thị. Một loại sao lưu mà bạn đã tắt không được tính ở đây. Các tập dữ liệu ZFS bạn chưa thêm cũng không được tính ở đây; trang ZFS liệt kê chúng.",
   "coverage.ratio": "{protected} trên {total} được bảo vệ",
   "coverage.allProtected": "Mọi thứ bạn đã bật đều được một lịch trình bao phủ.",
   "coverage.neverBackedUp": "chưa bao giờ được sao lưu",
@@ -541,7 +541,7 @@ const vi: Partial<Translations> = {
   "diagnostics.button": "Tải chẩn đoán",
   "diagnostics.busy": "Đang thu thập…",
   "retentionPreview.title": "Những gì lần chạy tới sẽ xóa",
-  "retentionPreview.hint": "Lưu giữ cho bạn biết nó giữ lại những gì. Phần này cho thấy nó sắp xóa những gì, trước khi điều đó xảy ra. Không có gì bị thay đổi và không kho lưu trữ nào bị khóa, nên nó vẫn trả lời được ngay cả khi một bản sao lưu đang chạy.",
+  "retentionPreview.hint": "Cho thấy lần chạy lưu giữ tiếp theo sẽ xóa những gì, trước khi điều đó xảy ra. Không có gì bị thay đổi và không kho lưu trữ nào bị khóa, nên nó vẫn dùng được ngay cả khi một bản sao lưu đang chạy.",
   "common.domain": "Miền",
   "retentionPreview.show": "Hiện những gì sẽ bị xóa",
   "retentionPreview.off": "Lưu giữ đang tắt, nên sẽ không có gì bị xóa.",
@@ -774,7 +774,7 @@ const vi: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Xóa tất cả bản sao lưu",
-  "snapshots.deleteAllConfirm": "Xóa TẤT CẢ bản sao lưu của VM này từ nguồn đã chọn (cục bộ hoặc off-site)? Các snapshot bị xóa vĩnh viễn và kho được dọn bớt. Không thể hoàn tác.",
+  "snapshots.deleteAllConfirm": "Xóa tất cả bản sao lưu của VM này từ nguồn đã chọn (cục bộ hoặc off-site)? Các snapshot bị xóa vĩnh viễn và kho được dọn bớt. Không thể hoàn tác.",
   "snapshots.deletingAll": "Đang xóa…",
 
   // Snapshot tags + compare (diff)
@@ -1403,7 +1403,7 @@ const vi: Partial<Translations> = {
   "files.noPathHint": "Được dựng lại từ các bản sao lưu mà không có thư mục. Đặt một thư mục để sao lưu lại. Khôi phục vào thư mục đã hoạt động ngay.",
   "files.deleteSet": "Xóa bộ thư mục",
   "files.deleteSetConfirm": "Gỡ bộ thư mục này khỏi danh sách? Các bản sao lưu của nó không bị xóa và có thể được phát hiện lại sau.",
-  "files.deleteBackupsConfirm": "Xóa TẤT CẢ bản sao lưu của bộ thư mục này? Các snapshot bị xóa vĩnh viễn, kho được dọn bớt và bộ sẽ bị quên. Không thể hoàn tác.",
+  "files.deleteBackupsConfirm": "Xóa tất cả bản sao lưu của bộ thư mục này? Các snapshot bị xóa vĩnh viễn, kho được dọn bớt và bộ sẽ bị quên. Không thể hoàn tác.",
   "files.restoreOriginal": "Khôi phục về vị trí gốc",
   "files.restoreOriginalConfirm": "Khôi phục bản sao lưu này đè lên thư mục của bộ? Các tập tin hiện có sẽ bị ghi đè.",
   "files.restoreToFolder": "Khôi phục vào một thư mục",
@@ -1583,7 +1583,7 @@ const vi: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Xóa ảnh chụp an toàn {name} của {dataset}? Trạng thái trước lần khôi phục đó sau này không lấy lại được.",
   "zfs.deleteRowConfirm": "Bỏ mục này khỏi danh sách? Các bản sao của nó vẫn còn và có thể tìm lại sau.",
   "zfs.deleteSafetyToo": "Xóa cả các ảnh chụp an toàn của nó trên máy chủ",
-  "zfs.deleteBackupsConfirm": "Xóa TẤT CẢ bản sao của mục này và các tập dữ liệu của nó? Ảnh chụp mất hẳn, kho được dọn sạch, và mục biến khỏi danh sách. Việc này không hoàn tác được.",
+  "zfs.deleteBackupsConfirm": "Xóa tất cả bản sao của mục này và các tập dữ liệu của nó? Ảnh chụp mất hẳn, kho được dọn sạch, và mục biến khỏi danh sách. Việc này không hoàn tác được.",
   "zfs.deleteKeptSafety": "Ảnh chụp an toàn còn lại trên máy chủ: {n}",
   // ZFS add dialog and restore panel
   "zfs.addDatasets": "Thêm tập dữ liệu",
@@ -1635,7 +1635,7 @@ const vi: Partial<Translations> = {
   "zfs.restore.missingDataset": "Tập dữ liệu này hiện không có trên máy chủ. Hãy khôi phục vào một thư mục.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Khôi phục từ một kho BombVault khác",
-  "recovery.foreignIntro": "Lấy từng container, máy ảo, bộ thư mục hoặc tập dữ liệu ZFS từ bản sao lưu của một phiên bản BombVault KHÁC: kết nối chỉ đọc, duyệt nội dung và khôi phục những gì bạn chọn. Kho bên kia chỉ được đọc, không có gì thay đổi ở đó, và cài đặt sao lưu của riêng bạn vẫn nguyên vẹn.",
+  "recovery.foreignIntro": "Lấy từng container, máy ảo, bộ thư mục hoặc tập dữ liệu ZFS từ bản sao lưu của một phiên bản BombVault khác: kết nối chỉ đọc, duyệt nội dung và khôi phục những gì bạn chọn. Kho bên kia chỉ được đọc, không có gì thay đổi ở đó, và cài đặt sao lưu của riêng bạn vẫn nguyên vẹn.",
   "recovery.foreignStepConnect": "Kết nối với kho bên kia",
   "recovery.foreignStepBrowse": "Duyệt & khôi phục",
   "recovery.foreignLocation": "Vị trí kho",

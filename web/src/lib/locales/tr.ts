@@ -115,7 +115,7 @@ const tr: Partial<Translations> = {
   "containers.notInstalledHint": "Bu konteynerler artık kurulu değil ancak yedekleri mevcut. Geri yükleyin veya alan açmak için yedeklerini silin.",
   "containers.notInstalledSkipped": "Burada hâlâ zamanlanmış olan girişler her çalışmada bir atlama kaydeder. Bunu durdurmak için karttaki “Zamanlamaya ekle” seçeneğini kapatın.",
   "containers.deleteBackups": "Tüm yedekleri sil",
-  "containers.deleteBackupsConfirm": "Bu konteynerin TÜM yedekleri silinsin mi? Anlık görüntüler depodan kalıcı olarak kaldırılır ve geri alınamaz. Veritabanı dökümleri de silinir.",
+  "containers.deleteBackupsConfirm": "Bu konteynerin tüm yedekleri silinsin mi? Anlık görüntüler depodan kalıcı olarak kaldırılır ve geri alınamaz. Veritabanı dökümleri de silinir.",
   "containers.removeEntryConfirm": "Bu konteynerin girişi listeden kaldırılsın mı? Varsa yedekleri silinmez.",
 
   // Taking over a renamed entry
@@ -466,7 +466,7 @@ const tr: Partial<Translations> = {
   "vms.notInstalledHint": "Bu VM'ler artık hostta tanımlı değil ancak yedekleri mevcut. Geri yükleyin veya anlık görüntülerini Yedekler panelinden inceleyin.",
   "vms.removeEntry": "Girişi kaldır",
   "vms.removeEntryConfirm": "Bu VM'nin girişi listeden kaldırılsın mı? Varsa yedekleri silinmez.",
-  "vms.deleteBackupsConfirm": "Bu VM'nin TÜM yedekleri silinsin mi? Anlık görüntüler depodan kalıcı olarak kaldırılır ve geri alınamaz.",
+  "vms.deleteBackupsConfirm": "Bu VM'nin tüm yedekleri silinsin mi? Anlık görüntüler depodan kalıcı olarak kaldırılır ve geri alınamaz.",
   "vms.discoverHint": "VM Unraid'den silindi mi (ya da yeniden kurulumdan sonra kayboldu mu)? Geri yükleyebilmek için yedek kaydını depolamadan yeniden oluşturun.",
 
   // Container / VM state badge labels
@@ -511,7 +511,7 @@ const tr: Partial<Translations> = {
   "excludes.advisoryImmichDb": "Immich her fotoğrafın albümlerini, yüzlerini ve tarihlerini kendi ayrı konteynerinde çalışan bir PostgreSQL veritabanında tutar, bu yüzden bu yedek onu içermez. Buradan geri yükleme resimleri bunlar olmadan geri getirir. BombVault o veritabanı konteynerini yedeklerken dökümünü kendiliğinden alır, bu yüzden onun programınızda olduğundan emin olun.",
   "excludes.advisoryNextcloudDb": "Nextcloud hesapları, paylaşımları ve etiketleri genellikle ayrı bir konteynerde çalışan bir veritabanında tutar, bu yüzden bu yedek onu içermez. Dosyalar geri gelir, paylaşımlar gelmez. BombVault o veritabanı konteynerini yedeklerken dökümünü kendiliğinden alır, bu yüzden onun programınızda olduğundan emin olun.",
   "rcloneRemote.heading": "SMB veya WebDAV hedefi ekle",
-  "rcloneRemote.hint": "Bir Windows veya Samba paylaşımına ya da Nextcloud gibi bir WebDAV sunucusuna, onu Host'a BAĞLAMADAN erişir. Bu, kolaylıktan öte bir önem taşır: restic, bir deponun bağlanmış bir CIFS paylaşımında tutulmasını önermez ve bu yol bağlamaya hiç gerek bırakmaz. Parola, kendi biçiminde saklaması için rclone'a verilir ve hiçbir zaman açık metin olarak tutulmaz. NFS burada sunulmaz, çünkü ne restic ne de rclone NFS ile çalışabilir: NFS için paylaşımı Unraid'e bağlayın ve bir Yedekleme Yolunu oraya yönlendirin.",
+  "rcloneRemote.hint": "Bir Windows veya Samba paylaşımına ya da Nextcloud gibi bir WebDAV sunucusuna, onu Host'a bağlamadan erişir. restic, bir deponun bağlanmış bir CIFS paylaşımında tutulmasını önermez ve bu yol bağlamaya hiç gerek bırakmaz. Parola, kendi biçiminde saklaması için rclone'a verilir ve hiçbir zaman açık metin olarak tutulmaz. NFS burada sunulmaz, çünkü ne restic ne de rclone NFS ile çalışabilir: NFS için paylaşımı Unraid'e bağlayın ve bir Yedekleme Yolunu oraya yönlendirin.",
   "rcloneRemote.type": "Tür",
   "rcloneRemote.typeSmb": "SMB paylaşımı",
   "rcloneRemote.typeWebdav": "WebDAV",
@@ -527,7 +527,7 @@ const tr: Partial<Translations> = {
   "rcloneRemote.useThisPath": "Bunu Yedekleme Yolu olarak kullanın:",
   "rcloneRemote.failed": "Hedef eklenemedi.",
   "coverage.title": "Yedeklenmedi",
-  "coverage.hint": "Bu sunucuda hiçbir otomatik yedeklemenin kapsamadığı her şey. Yukarıdaki koruma kartı, zamanlanmış yedeklemelerin zamanında çalışıp çalışmadığını söyler; burada ise hiç zamanlanmamış olanlar yazılıdır, başka hiçbir yerde görünmeyen boşluk da budur. Kapatılmış bir yedekleme türü bir karardır ve burada sayılmaz. Eklemediğiniz ZFS veri kümeleri de burada sayılmaz; ZFS sayfası onları listeler.",
+  "coverage.hint": "Bu sunucuda hiçbir otomatik yedeklemenin kapsamadığı her şey. Yukarıdaki koruma kartı, zamanlanmış yedeklemelerin zamanında çalışıp çalışmadığını söyler; bu kart ise hiç zamanlanmamış olanları gösterir ve bunu başka hiçbir sayfa göstermez. Kapattığınız bir yedekleme türü burada sayılmaz. Eklemediğiniz ZFS veri kümeleri de burada sayılmaz; ZFS sayfası onları listeler.",
   "coverage.ratio": "{total} öğeden {protected} tanesi korumalı",
   "coverage.allProtected": "Açtığın her şey bir zamanlama kapsamında.",
   "coverage.neverBackedUp": "hiç yedeklenmedi",
@@ -544,7 +544,7 @@ const tr: Partial<Translations> = {
   "diagnostics.button": "Tanılamayı indir",
   "diagnostics.busy": "Toplanıyor…",
   "retentionPreview.title": "Sonraki çalışmanın kaldıracakları",
-  "retentionPreview.hint": "Saklama sana neyi tuttuğunu söyler. Bu panel ise neyi silmek üzere olduğunu, daha olmadan gösterir. Hiçbir şey değiştirilmez ve hiçbir depo kilitlenmez, bu yüzden bir yedekleme çalışırken bile yanıt verir.",
+  "retentionPreview.hint": "Bir sonraki saklama çalışmasının neyi sileceğini, daha olmadan gösterir. Hiçbir şey değiştirilmez ve hiçbir depo kilitlenmez, bu yüzden bir yedekleme çalışırken bile işe yarar.",
   "common.domain": "Etki Alanı",
   "retentionPreview.show": "Neyin kaldırılacağını göster",
   "retentionPreview.off": "Saklama kapalı, bu yüzden hiçbir şey kaldırılmaz.",
@@ -782,7 +782,7 @@ const tr: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Tüm yedekleri sil",
-  "snapshots.deleteAllConfirm": "Bu VM'nin seçili kaynaktaki (yerel veya site dışı) TÜM yedekleri silinsin mi? Anlık görüntüler kalıcı olarak kaldırılır ve depo budanır. Bu işlem geri alınamaz.",
+  "snapshots.deleteAllConfirm": "Bu VM'nin seçili kaynaktaki (yerel veya site dışı) tüm yedekleri silinsin mi? Anlık görüntüler kalıcı olarak kaldırılır ve depo budanır. Bu işlem geri alınamaz.",
   "snapshots.deletingAll": "Siliniyor…",
 
   // Snapshot tags + compare (diff)
@@ -1411,7 +1411,7 @@ const tr: Partial<Translations> = {
   "files.noPathHint": "Klasör olmadan yedeklerden yeniden oluşturuldu. Yeniden yedeklemek için bir klasör ayarlayın. Bir klasöre geri yükleme şimdiden çalışıyor.",
   "files.deleteSet": "Klasör setini sil",
   "files.deleteSetConfirm": "Bu klasör seti listeden kaldırılsın mı? Yedekleri silinmez ve daha sonra yeniden keşfedilebilir.",
-  "files.deleteBackupsConfirm": "Bu klasör setinin TÜM yedekleri silinsin mi? Anlık görüntüler kalıcı olarak kaldırılır, depo budanır ve set unutulur. Geri alınamaz.",
+  "files.deleteBackupsConfirm": "Bu klasör setinin tüm yedekleri silinsin mi? Anlık görüntüler kalıcı olarak kaldırılır, depo budanır ve set unutulur. Geri alınamaz.",
   "files.restoreOriginal": "Orijinal konuma geri yükle",
   "files.restoreOriginalConfirm": "Bu yedek, setin klasörünün üzerine geri yüklensin mi? Mevcut dosyaların üzerine yazılır.",
   "files.restoreToFolder": "Bir klasöre geri yükle",
@@ -1591,7 +1591,7 @@ const tr: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "{dataset} kümesinin {name} güvenlik anlık görüntüsü silinsin mi? O geri yüklemeden önceki durum sonrasında geri getirilemez.",
   "zfs.deleteRowConfirm": "Bu kayıt listeden çıkarılsın mı? Yedekleri kalır ve sonra yeniden bulunabilir.",
   "zfs.deleteSafetyToo": "Sunucudaki güvenlik anlık görüntülerini de sil",
-  "zfs.deleteBackupsConfirm": "Bu kaydın ve veri kümelerinin BÜTÜN yedekleri silinsin mi? Anlık görüntüler kalıcı olarak gider, depo temizlenir ve kayıt listeden çıkar. Bu geri alınamaz.",
+  "zfs.deleteBackupsConfirm": "Bu kaydın ve veri kümelerinin bütün yedekleri silinsin mi? Anlık görüntüler kalıcı olarak gider, depo temizlenir ve kayıt listeden çıkar. Bu geri alınamaz.",
   "zfs.deleteKeptSafety": "Sunucuda kalan güvenlik anlık görüntüleri: {n}",
   // ZFS add dialog and restore panel
   "zfs.addDatasets": "Veri kümesi ekle",
@@ -1643,7 +1643,7 @@ const tr: Partial<Translations> = {
   "zfs.restore.missingDataset": "Bu veri kümesi şu anda sunucuda yok. Onun yerine bir klasöre geri yükle.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Başka bir BombVault deposundan geri yükle",
-  "recovery.foreignIntro": "BAŞKA bir BombVault örneğinin yedeklerinden tek tek kapsayıcıları, sanal makineleri, klasör setlerini veya ZFS veri kümelerini alın: salt okunur bağlanın, içeriğe göz atın ve seçtiklerinizi geri yükleyin. Diğer depo yalnızca okunur, orada hiçbir şey değişmez ve kendi yedekleme ayarlarınız olduğu gibi kalır.",
+  "recovery.foreignIntro": "Başka bir BombVault örneğinin yedeklerinden tek tek kapsayıcıları, sanal makineleri, klasör setlerini veya ZFS veri kümelerini alın: salt okunur bağlanın, içeriğe göz atın ve seçtiklerinizi geri yükleyin. Diğer depo yalnızca okunur, orada hiçbir şey değişmez ve kendi yedekleme ayarlarınız olduğu gibi kalır.",
   "recovery.foreignStepConnect": "Diğer depoya bağlan",
   "recovery.foreignStepBrowse": "Göz at ve geri yükle",
   "recovery.foreignLocation": "Depo konumu",

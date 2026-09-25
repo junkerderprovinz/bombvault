@@ -115,7 +115,7 @@ const hu: Partial<Translations> = {
   "containers.notInstalledHint": "Ezek a konténerek már nincsenek telepítve, de még vannak biztonsági mentéseik. Állítsa vissza őket, vagy törölje a mentéseket a hely felszabadításához.",
   "containers.notInstalledSkipped": "Az itt még ütemezett bejegyzések minden futáskor kihagyást rögzítenek. Kapcsold ki a kártyán az „Ütemezésbe foglalás“ opciót, hogy ez megszűnjön.",
   "containers.deleteBackups": "Összes mentés törlése",
-  "containers.deleteBackupsConfirm": "Törli a konténer ÖSSZES biztonsági mentését? A pillanatképek véglegesen eltávolításra kerülnek a tárolóból, és nem lehet visszavonni. Az adatbázismentései is törlődnek.",
+  "containers.deleteBackupsConfirm": "Törli a konténer összes biztonsági mentését? A pillanatképek véglegesen eltávolításra kerülnek a tárolóból, és nem lehet visszavonni. Az adatbázismentései is törlődnek.",
   "containers.removeEntryConfirm": "Eltávolítod ennek a konténernek a bejegyzését a listából? A meglévő mentések nem törlődnek.",
 
   // Taking over a renamed entry
@@ -466,7 +466,7 @@ const hu: Partial<Translations> = {
   "vms.notInstalledHint": "Ezek a VM-ek már nincsenek definiálva a hoszton, de még vannak biztonsági mentéseik. Állítsa vissza őket, vagy tekintse meg pillanatképeiket a Mentések panelen.",
   "vms.removeEntry": "Bejegyzés eltávolítása",
   "vms.removeEntryConfirm": "Eltávolítod ennek a VM-nek a bejegyzését a listából? A meglévő mentések nem törlődnek.",
-  "vms.deleteBackupsConfirm": "Törli a VM ÖSSZES biztonsági mentését? A pillanatképek véglegesen eltávolításra kerülnek a tárolóból, és nem lehet visszavonni.",
+  "vms.deleteBackupsConfirm": "Törli a VM összes biztonsági mentését? A pillanatképek véglegesen eltávolításra kerülnek a tárolóból, és nem lehet visszavonni.",
   "vms.discoverHint": "Törölted a VM-et az Unraidből (vagy elveszett egy újratelepítés után)? Építsd újra a biztonsági mentési bejegyzését a tárhelyről, hogy visszaállíthasd.",
 
   // Container / VM state badge labels
@@ -511,7 +511,7 @@ const hu: Partial<Translations> = {
   "excludes.advisoryImmichDb": "Az Immich minden fénykép albumait, arcait és dátumait egy PostgreSQL adatbázisban tartja, amely egy teljesen külön konténerben fut, így ez a mentés nem tartalmazza. Az innen való visszaállítás visszahozza a képeket, csak mindezek nélkül. A BombVault annak az adatbázisnak a konténeréről magától készít dumpot, amikor azt menti, ezért ellenőrizd, hogy benne van-e az ütemezésedben.",
   "excludes.advisoryNextcloudDb": "A Nextcloud a fiókjait, megosztásait és címkéit egy adatbázisban tartja, amely általában külön konténerben fut, így ez a mentés nem tartalmazza. A fájlok visszajönnek, a megosztások nem. A BombVault annak az adatbázisnak a konténeréről magától készít dumpot, amikor azt menti, ezért ellenőrizd, hogy benne van-e az ütemezésedben.",
   "rcloneRemote.heading": "SMB- vagy WebDAV-cél hozzáadása",
-  "rcloneRemote.hint": "Windows- vagy Samba-megosztást, illetve WebDAV-kiszolgálót, például Nextcloudot ér el, ANÉLKÜL, hogy bármit csatolni kellene a gazdagépen. Ez több puszta kényelmi kérdésnél: a restic nem javasolja, hogy a tároló csatolt CIFS-megosztáson legyen, ez az út pedig teljesen elkerüli a csatolást. A jelszót az rclone kapja meg, amely a saját formájában tárolja, így nyílt szövegként soha nem marad meg. Az NFS itt nem választható, mert sem a restic, sem az rclone nem kezeli: NFS esetén csatold az exportot az Unraidben, és állíts rá egy mentési útvonalat.",
+  "rcloneRemote.hint": "Windows- vagy Samba-megosztást, illetve WebDAV-kiszolgálót, például Nextcloudot ér el anélkül, hogy bármit csatolni kellene a gazdagépen. A restic nem javasolja, hogy a tároló csatolt CIFS-megosztáson legyen, ez az út pedig teljesen elkerüli a csatolást. A jelszót az rclone kapja meg, amely a saját formájában tárolja, így nyílt szövegként soha nem marad meg. Az NFS itt nem választható, mert sem a restic, sem az rclone nem kezeli: NFS esetén csatold az exportot az Unraidben, és állíts rá egy mentési útvonalat.",
   "rcloneRemote.type": "Típus",
   "rcloneRemote.typeSmb": "SMB-megosztás",
   "rcloneRemote.typeWebdav": "WebDAV",
@@ -527,7 +527,7 @@ const hu: Partial<Translations> = {
   "rcloneRemote.useThisPath": "Használd ezt mentési útvonalként:",
   "rcloneRemote.failed": "A célt nem sikerült hozzáadni.",
   "coverage.title": "Nincs mentve",
-  "coverage.hint": "Minden ezen a szerveren, amire nem terjed ki automatikus mentés. A fenti védelmi kártya azt mutatja, hogy az ütemezett mentések időben lefutottak-e; ez pedig azt, ami egyáltalán nincs ütemezve, vagyis azt a hiányt, ami máshol mindenhol láthatatlan marad. A kikapcsolt mentési tartomány döntés, ezért itt nem számít bele. A hozzá nem adott ZFS-adatkészletek sem számítanak ide; a ZFS oldal felsorolja őket.",
+  "coverage.hint": "Minden ezen a szerveren, amire nem terjed ki automatikus mentés. A fenti védelmi kártya azt mutatja, hogy az ütemezett mentések időben lefutottak-e; ez a kártya pedig azt, ami egyáltalán nincs ütemezve, és ezt más oldal nem mutatja. A mentési tartomány, amelyet kikapcsoltál, itt nem számít bele. A hozzá nem adott ZFS-adatkészletek sem számítanak ide; a ZFS oldal felsorolja őket.",
   "coverage.ratio": "{total} elemből {protected} védett",
   "coverage.allProtected": "Mindenre, amit bekapcsoltál, kiterjed egy ütemezés.",
   "coverage.neverBackedUp": "soha nem volt mentve",
@@ -544,7 +544,7 @@ const hu: Partial<Translations> = {
   "diagnostics.button": "Diagnosztika letöltése",
   "diagnostics.busy": "Gyűjtés…",
   "retentionPreview.title": "Mit törölne a következő futás",
-  "retentionPreview.hint": "A megőrzés azt mondja meg, mi marad meg. Ez azt mutatja, mit fog törölni, még mielőtt megtenné. Semmi nem változik, és egyetlen tároló sem záródik le, így futó mentés közben is válaszol.",
+  "retentionPreview.hint": "Megmutatja, mit fog törölni a megőrzés következő futása, még mielőtt megtörténne. Semmi nem változik, és egyetlen tároló sem záródik le, így futó mentés közben is működik.",
   "common.domain": "Tartomány",
   "retentionPreview.show": "Mutasd, mi törlődne",
   "retentionPreview.off": "A megőrzés ki van kapcsolva, így semmi nem törlődne.",
@@ -782,7 +782,7 @@ const hu: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Összes mentés törlése",
-  "snapshots.deleteAllConfirm": "Törli ennek a VM-nek az ÖSSZES mentését a kiválasztott forrásból (helyi vagy telephelyen kívüli)? A pillanatképek véglegesen eltávolításra kerülnek, és a tároló megnyesésre kerül. Ez nem vonható vissza.",
+  "snapshots.deleteAllConfirm": "Törli ennek a VM-nek az összes mentését a kiválasztott forrásból (helyi vagy telephelyen kívüli)? A pillanatképek véglegesen eltávolításra kerülnek, és a tároló megnyesésre kerül. Ez nem vonható vissza.",
   "snapshots.deletingAll": "Törlés…",
 
   // Snapshot tags + compare (diff)
@@ -1414,7 +1414,7 @@ const hu: Partial<Translations> = {
   "files.noPathHint": "Mappa nélkül, mentésekből újjáépítve. Állíts be egy mappát az újbóli mentéshez. A mappába való visszaállítás már most működik.",
   "files.deleteSet": "Mappakészlet törlése",
   "files.deleteSetConfirm": "Eltávolítod ezt a mappakészletet a listáról? A mentései nem törlődnek, és később újra felfedezhetők.",
-  "files.deleteBackupsConfirm": "Törlöd ennek a mappakészletnek az ÖSSZES mentését? A pillanatképek véglegesen eltávolításra kerülnek, a tároló megnyesésre kerül, és a készlet elfelejtődik. Nem vonható vissza.",
+  "files.deleteBackupsConfirm": "Törlöd ennek a mappakészletnek az összes mentését? A pillanatképek véglegesen eltávolításra kerülnek, a tároló megnyesésre kerül, és a készlet elfelejtődik. Nem vonható vissza.",
   "files.restoreOriginal": "Visszaállítás az eredeti helyre",
   "files.restoreOriginalConfirm": "Visszaállítod ezt a mentést a készlet mappájára? A meglévő fájlok felülíródnak.",
   "files.restoreToFolder": "Visszaállítás mappába",
@@ -1594,7 +1594,7 @@ const hu: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Törlöd a(z) {dataset} készlet {name} biztonsági pillanatképét? Az azt a visszaállítást megelőző állapot ezután nem nyerhető vissza.",
   "zfs.deleteRowConfirm": "Kiveszed ezt a tételt a listából? A mentései megmaradnak, és később újra megtalálhatók.",
   "zfs.deleteSafetyToo": "Töröld a kiszolgálón a biztonsági pillanatképeit is",
-  "zfs.deleteBackupsConfirm": "Törlöd ennek a tételnek és adatkészleteinek MINDEN mentését? A pillanatképek véglegesen eltűnnek, a tároló kitakarítódik, a tétel pedig lekerül a listáról. Ezt nem lehet visszavonni.",
+  "zfs.deleteBackupsConfirm": "Törlöd ennek a tételnek és adatkészleteinek minden mentését? A pillanatképek véglegesen eltűnnek, a tároló kitakarítódik, a tétel pedig lekerül a listáról. Ezt nem lehet visszavonni.",
   "zfs.deleteKeptSafety": "A kiszolgálón maradt biztonsági pillanatképek: {n}",
   // ZFS add dialog and restore panel
   "zfs.addDatasets": "Adatkészletek hozzáadása",
@@ -1646,7 +1646,7 @@ const hu: Partial<Translations> = {
   "zfs.restore.missingDataset": "Ez az adatkészlet most nem érhető el a gépen. Állítsd vissza inkább egy mappába.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Visszaállítás másik BombVault repóból",
-  "recovery.foreignIntro": "Emeljen ki egyes konténereket, VM-eket, mappakészleteket vagy ZFS-adatkészleteket egy MÁSIK BombVault-példány mentéseiből: csatlakozzon csak olvasásra, böngéssze a tartalmat, és állítsa vissza, amit kiválaszt. A másik repót csak olvassuk, ott semmi sem változik, és az Ön saját mentési beállításai érintetlenek maradnak.",
+  "recovery.foreignIntro": "Emeljen ki egyes konténereket, VM-eket, mappakészleteket vagy ZFS-adatkészleteket egy másik BombVault-példány mentéseiből: csatlakozzon csak olvasásra, böngéssze a tartalmat, és állítsa vissza, amit kiválaszt. A másik repót csak olvassuk, ott semmi sem változik, és az Ön saját mentési beállításai érintetlenek maradnak.",
   "recovery.foreignStepConnect": "Csatlakozás a másik repóhoz",
   "recovery.foreignStepBrowse": "Böngészés és visszaállítás",
   "recovery.foreignLocation": "A repó helye",

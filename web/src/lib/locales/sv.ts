@@ -115,7 +115,7 @@ const sv: Partial<Translations> = {
   "containers.notInstalledHint": "Dessa containers är inte längre installerade men har fortfarande säkerhetskopior. Återställ dem eller ta bort deras säkerhetskopior för att frigöra utrymme.",
   "containers.notInstalledSkipped": "Poster som fortfarande är schemalagda här registrerar ett överhopp vid varje körning. Stäng av ”Inkludera i schema” på kortet för att stoppa det.",
   "containers.deleteBackups": "Ta bort alla säkerhetskopior",
-  "containers.deleteBackupsConfirm": "Ta bort ALLA säkerhetskopior för den här containern? Ögonblicksbilderna tas bort permanent från arkivet och kan inte ångras. Containerns databasdumpar raderas också.",
+  "containers.deleteBackupsConfirm": "Ta bort alla säkerhetskopior för den här containern? Ögonblicksbilderna tas bort permanent från arkivet och kan inte ångras. Containerns databasdumpar raderas också.",
   "containers.removeEntryConfirm": "Ta bort den här containerns post från listan? Eventuella säkerhetskopior raderas inte.",
 
   // Taking over a renamed entry
@@ -466,7 +466,7 @@ const sv: Partial<Translations> = {
   "vms.notInstalledHint": "Dessa VMs är inte längre definierade på värden men har fortfarande säkerhetskopior. Återställ dem eller bläddra bland deras ögonblicksbilder i panelen Säkerhetskopior.",
   "vms.removeEntry": "Ta bort post",
   "vms.removeEntryConfirm": "Ta bort den här VM:ens post från listan? Eventuella säkerhetskopior raderas inte.",
-  "vms.deleteBackupsConfirm": "Ta bort ALLA säkerhetskopior för den här VM:en? Ögonblicksbilderna tas bort permanent från arkivet och kan inte ångras.",
+  "vms.deleteBackupsConfirm": "Ta bort alla säkerhetskopior för den här VM:en? Ögonblicksbilderna tas bort permanent från arkivet och kan inte ångras.",
   "vms.discoverHint": "VM borttagen från Unraid (eller förlorad efter en ominstallation)? Bygg om dess säkerhetskopiepost från lagringen så att du kan återställa den.",
 
   // Container / VM state badge labels
@@ -511,7 +511,7 @@ const sv: Partial<Translations> = {
   "excludes.advisoryImmichDb": "Immich sparar varje fotos album, ansikten och datum i en PostgreSQL-databas som körs i en egen, separat container, så den här säkerhetskopian innehåller den inte. En återställning härifrån ger tillbaka bilderna utan allt det. BombVault dumpar den databascontainern av sig själv när den säkerhetskopieras, så kontrollera att den finns i ditt schema.",
   "excludes.advisoryNextcloudDb": "Nextcloud sparar konton, delningar och taggar i en databas som oftast körs i en separat container, så den här säkerhetskopian innehåller den inte. Filerna kommer tillbaka, delningarna gör det inte. BombVault dumpar den databascontainern av sig själv när den säkerhetskopieras, så kontrollera att den finns i ditt schema.",
   "rcloneRemote.heading": "Lägg till ett SMB- eller WebDAV-mål",
-  "rcloneRemote.hint": "Når en Windows- eller Samba-utdelning, eller en WebDAV-server som Nextcloud, UTAN att montera den på värden. Det handlar om mer än bekvämlighet: restic avråder från att ha ett repo på en monterad CIFS-utdelning, och den här vägen undviker monteringen helt. Lösenordet lämnas över till rclone, som lagrar det i sin egen form, och det sparas aldrig i klartext. NFS erbjuds inte här eftersom varken restic eller rclone kan hantera det: för NFS, montera exporten på Unraid och peka en säkerhetskopiesökväg mot den.",
+  "rcloneRemote.hint": "Når en Windows- eller Samba-utdelning, eller en WebDAV-server som Nextcloud, utan att montera den på värden. restic avråder från att ha ett repo på en monterad CIFS-utdelning, och den här vägen undviker monteringen helt. Lösenordet lämnas över till rclone, som lagrar det i sin egen form, och det sparas aldrig i klartext. NFS erbjuds inte här eftersom varken restic eller rclone kan hantera det: för NFS, montera exporten på Unraid och peka en säkerhetskopiesökväg mot den.",
   "rcloneRemote.type": "Typ",
   "rcloneRemote.typeSmb": "SMB-utdelning",
   "rcloneRemote.typeWebdav": "WebDAV",
@@ -527,7 +527,7 @@ const sv: Partial<Translations> = {
   "rcloneRemote.useThisPath": "Använd detta som säkerhetskopiesökväg:",
   "rcloneRemote.failed": "Målet kunde inte läggas till.",
   "coverage.title": "Inte säkerhetskopierat",
-  "coverage.hint": "Allt på den här servern som ingen automatisk säkerhetskopiering täcker. Skyddskortet ovan säger om de schemalagda säkerhetskopiorna kördes i tid; det här säger vad som inte är schemalagt alls, och det är luckan som förblir osynlig överallt annars. En avstängd typ av säkerhetskopiering är ett beslut och räknas inte här. ZFS-datauppsättningar som du inte har lagt till räknas inte heller här; ZFS-sidan listar dem.",
+  "coverage.hint": "Allt på den här servern som ingen automatisk säkerhetskopiering täcker. Skyddskortet ovan säger om de schemalagda säkerhetskopiorna kördes i tid; det här kortet visar vad som inte är schemalagt alls, något som ingen annan sida visar. En typ av säkerhetskopiering som du har stängt av räknas inte här. ZFS-datauppsättningar som du inte har lagt till räknas inte heller här; ZFS-sidan listar dem.",
   "coverage.ratio": "{protected} av {total} skyddade",
   "coverage.allProtected": "Allt du har slagit på täcks av ett schema.",
   "coverage.neverBackedUp": "aldrig säkerhetskopierad",
@@ -544,7 +544,7 @@ const sv: Partial<Translations> = {
   "diagnostics.button": "Ladda ner diagnostik",
   "diagnostics.busy": "Samlar in…",
   "retentionPreview.title": "Vad nästa körning skulle ta bort",
-  "retentionPreview.hint": "Lagringspolicyn talar om vad som behålls. Det här visar vad den är på väg att ta bort, innan det sker. Inget ändras och inget arkiv låses, så den svarar även medan en säkerhetskopiering pågår.",
+  "retentionPreview.hint": "Visar vad nästa lagringskörning kommer att ta bort, innan det sker. Inget ändras och inget arkiv låses, så det fungerar även medan en säkerhetskopiering pågår.",
   "common.domain": "Domän",
   "retentionPreview.show": "Visa vad som skulle tas bort",
   "retentionPreview.off": "Lagringspolicyn är av, så inget skulle tas bort.",
@@ -782,7 +782,7 @@ const sv: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Ta bort alla säkerhetskopior",
-  "snapshots.deleteAllConfirm": "Ta bort ALLA säkerhetskopior av denna VM från den valda källan (lokal eller off-site)? Ögonblicksbilderna tas bort permanent och arkivet rensas. Detta kan inte ångras.",
+  "snapshots.deleteAllConfirm": "Ta bort alla säkerhetskopior av denna VM från den valda källan (lokal eller off-site)? Ögonblicksbilderna tas bort permanent och arkivet rensas. Detta kan inte ångras.",
   "snapshots.deletingAll": "Tar bort…",
 
   // Snapshot tags + compare (diff)
@@ -1411,7 +1411,7 @@ const sv: Partial<Translations> = {
   "files.noPathHint": "Återuppbyggd från säkerhetskopior utan mapp. Ange en mapp för att säkerhetskopiera igen. Återställning till en mapp fungerar redan.",
   "files.deleteSet": "Ta bort mappuppsättning",
   "files.deleteSetConfirm": "Ta bort denna mappuppsättning från listan? Dess säkerhetskopior tas inte bort och kan återupptäckas senare.",
-  "files.deleteBackupsConfirm": "Ta bort ALLA säkerhetskopior av denna mappuppsättning? Ögonblicksbilderna tas bort permanent, repositoriet rensas och uppsättningen glöms. Detta kan inte ångras.",
+  "files.deleteBackupsConfirm": "Ta bort alla säkerhetskopior av denna mappuppsättning? Ögonblicksbilderna tas bort permanent, repositoriet rensas och uppsättningen glöms. Detta kan inte ångras.",
   "files.restoreOriginal": "Återställ till ursprunglig plats",
   "files.restoreOriginalConfirm": "Återställa denna säkerhetskopia över uppsättningens mapp? Befintliga filer skrivs över.",
   "files.restoreToFolder": "Återställ till en mapp",
@@ -1591,7 +1591,7 @@ const sv: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Ta bort säkerhetsögonblicksbilden {name} av {dataset}? Läget före den återställningen går inte att få tillbaka efteråt.",
   "zfs.deleteRowConfirm": "Ta bort den här posten från listan? Säkerhetskopiorna finns kvar och går att hitta igen senare.",
   "zfs.deleteSafetyToo": "Ta även bort dess säkerhetsögonblicksbilder på servern",
-  "zfs.deleteBackupsConfirm": "Ta bort ALLA säkerhetskopior av den här posten och dess datauppsättningar? Ögonblicksbilderna försvinner för gott, förrådet rensas och posten tas bort från listan. Det går inte att ångra.",
+  "zfs.deleteBackupsConfirm": "Ta bort alla säkerhetskopior av den här posten och dess datauppsättningar? Ögonblicksbilderna försvinner för gott, förrådet rensas och posten tas bort från listan. Det går inte att ångra.",
   "zfs.deleteKeptSafety": "Säkerhetsögonblicksbilder kvar på servern: {n}",
   // ZFS add dialog and restore panel
   "zfs.addDatasets": "Lägg till datauppsättningar",
@@ -1643,7 +1643,7 @@ const sv: Partial<Translations> = {
   "zfs.restore.missingDataset": "Den här datauppsättningen finns inte på värden just nu. Återställ till en mapp i stället.",
   // Restore from another BombVault repo — Recovery page (#61 task 11)
   "recovery.foreignTitle": "Återställ från ett annat BombVault-repo",
-  "recovery.foreignIntro": "Hämta enskilda containrar, VM:ar, mappuppsättningar eller ZFS-datauppsättningar ur säkerhetskopiorna från en ANNAN BombVault-instans: anslut skrivskyddat, bläddra i innehållet och återställ det du väljer. Det andra repot läses bara, inget ändras där, och dina egna säkerhetskopieringsinställningar förblir orörda.",
+  "recovery.foreignIntro": "Hämta enskilda containrar, VM:ar, mappuppsättningar eller ZFS-datauppsättningar ur säkerhetskopiorna från en annan BombVault-instans: anslut skrivskyddat, bläddra i innehållet och återställ det du väljer. Det andra repot läses bara, inget ändras där, och dina egna säkerhetskopieringsinställningar förblir orörda.",
   "recovery.foreignStepConnect": "Anslut till det andra repot",
   "recovery.foreignStepBrowse": "Bläddra & återställ",
   "recovery.foreignLocation": "Repots plats",
