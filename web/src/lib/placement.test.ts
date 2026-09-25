@@ -281,6 +281,14 @@ describe("planLines", () => {
     ]);
   });
 
+  it("warns when every target it is copied to stays on the premises", () => {
+    expect(planLines(tEn, "en", "Unraid", "vms", placementPlan({ targets: ["NAS"], warn: true, noCopy: true }), false)).toEqual([
+      { text: "On Unraid.", tone: "warn" },
+      { text: "Copied to NAS.", tone: "normal" },
+      { text: "No copy off the premises.", tone: "warn" },
+    ]);
+  });
+
   it("says when the domain has no off-site copy set up at all", () => {
     const lines = planLines(tEn, "en", "Unraid", "vms", placementPlan({ targets: [], warn: true, noCopy: true }), true);
     expect(lines[1]).toEqual({ text: "No off-site copy is set up for VMs.", tone: "warn" });
@@ -330,6 +338,11 @@ describe("observedLine", () => {
       { text: "At one site", tone: "normal" },
       { text: "3-2-1 not met: one backup", tone: "warn" },
     ]);
+  });
+
+  it("says when every copy stays on the premises", () => {
+    const lines = observedLine(tEn, placementObserved({ sites: 1, rule321: "no-off-site", tone: "warn" }));
+    expect(lines[lines.length - 1]).toEqual({ text: "3-2-1 not met: no copy off the premises", tone: "warn" });
   });
 
   it("warns about a target that could not be reached", () => {

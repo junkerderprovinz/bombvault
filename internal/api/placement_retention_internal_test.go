@@ -24,12 +24,12 @@ func localKeepLast(t *testing.T, f *placementFixture, keepLast int) store.Settin
 	return settings
 }
 
-func TestEveryRepositoryAgesByTheLocalPolicy(t *testing.T) {
+func TestARepositoryWithoutAPlaceAgesByTheLocalPolicy(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS", "nas")
 	settings := localKeepLast(t, f, 3)
 	for _, ref := range []domainRepoRef{ownRef(f.domainPath("containers")), namedRef(f.root+"/nas", nas)} {
-		if got := f.svc.retentionPolicyForRef(settings, ref); got != (restic.RetentionPolicy{KeepLast: 3}) {
+		if got := f.svc.retentionPolicyForRef(settings, "containers", ref); got != (restic.RetentionPolicy{KeepLast: 3}) {
 			t.Errorf("retentionPolicyForRef(%s) = %+v, want the local keep-last 3", ref.Loc, got)
 		}
 	}
