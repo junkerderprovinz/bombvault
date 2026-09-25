@@ -626,12 +626,12 @@ func anomalyFamilyKnown(family string) bool {
 }
 
 func anomalyDetails(raw string) map[string]any {
-	if raw == "" {
-		return nil
-	}
 	var out map[string]any
-	if err := json.Unmarshal([]byte(raw), &out); err != nil {
-		return nil
+	if raw != "" {
+		_ = json.Unmarshal([]byte(raw), &out)
+	}
+	if out == nil {
+		return map[string]any{}
 	}
 	return out
 }

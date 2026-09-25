@@ -104,7 +104,7 @@ func (s *Service) ZFSConnectionTest(ctx context.Context) ZFSConnectionResult {
 	top, nested := zfs.Propagation(zfsMountRecords(), s.cfg.HostMountRoot)
 	if !top || len(nested) > 0 {
 		res.Propagation = "propagation-missing"
-		res.Unpropagated = nested
+		res.Unpropagated = orEmptyList(nested)
 	}
 	if s.zfs == nil {
 		res.Code = "ssh-missing"

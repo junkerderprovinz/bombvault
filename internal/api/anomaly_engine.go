@@ -373,23 +373,21 @@ func (e *anomalyEngine) refresh() {
 }
 
 func (e *anomalyEngine) summary() AnomalySummary {
-	if e == nil {
-		return AnomalySummary{}
+	if e != nil {
+		if c := e.cache.Load(); c != nil {
+			return c.Summary
+		}
 	}
-	if c := e.cache.Load(); c != nil {
-		return c.Summary
-	}
-	return AnomalySummary{}
+	return AnomalySummary{UnmeasuredVolumes: []string{}}
 }
 
 func (e *anomalyEngine) itemViews() []AnomalyItem {
-	if e == nil {
-		return nil
+	if e != nil {
+		if c := e.cache.Load(); c != nil {
+			return c.Items
+		}
 	}
-	if c := e.cache.Load(); c != nil {
-		return c.Items
-	}
-	return nil
+	return []AnomalyItem{}
 }
 
 // anomalyPass is what one pass reads once and every scope of it then shares.
@@ -1260,7 +1258,7 @@ func (e *anomalyEngine) rebuildCache() error {
 	unmeasured := unmeasuredNames(e.unmeasured)
 	e.mu.Unlock()
 
-	next := &anomalyCache{Ready: ready}
+	next := &anomalyCache{Ready: ready, Items: []AnomalyItem{}}
 	next.Summary = AnomalySummary{
 		Enabled: settings.AnomalyEnabled, Ready: ready,
 		EvalErrors: errs, Backfill: backfillSummary(backfill),
@@ -1571,7 +1569,7 @@ func scopeCounts(open []store.Anomaly, sc anomalyScope) AnomalyOpenCounts {
 // unmeasuredNames is every repository no backend can measure, each named once
 // however many domains write to it.
 func unmeasuredNames(byDomain map[string][]string) []string {
-	var out []string
+	out := []string{}
 	for _, names := range byDomain {
 		for _, name := range names {
 			if !slices.Contains(out, name) {

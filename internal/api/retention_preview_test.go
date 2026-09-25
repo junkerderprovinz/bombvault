@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -207,5 +208,23 @@ func TestRetentionPreviewMarksPausedItem(t *testing.T) {
 	}
 	if seen != 1 {
 		t.Fatalf("want the held item in the preview once, got %d: %+v", seen, preview.Repos)
+	}
+}
+
+// The panel sums every repository's items, so a repository with nothing to
+// report still has to arrive with an empty list.
+func TestRetentionPreviewServesAnEmptyItemListPerRepository(t *testing.T) {
+	svc, _, _, _ := twoRepoDomain(t, &fakeResticEngine{})
+
+	got, err := svc.PreviewRetention(context.Background(), "containers", "local")
+	if err != nil {
+		t.Fatalf("PreviewRetention: %v", err)
+	}
+	raw, err := json.Marshal(got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Repos) == 0 || strings.Contains(string(raw), `"items":null`) {
+		t.Fatalf("want every repository with an items array, got %s", raw)
 	}
 }

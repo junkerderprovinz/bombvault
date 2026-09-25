@@ -301,7 +301,9 @@ func (s *Service) ZFSRunDetail(_ context.Context, runID string) (ZFSRunDetail, e
 	if err != nil {
 		return out, err
 	}
-	out.Members = members
+	if members != nil {
+		out.Members = members
+	}
 	return out, nil
 }
 

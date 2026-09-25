@@ -99,7 +99,7 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 		KeepDaily:   policy.KeepDaily,
 		KeepWeekly:  policy.KeepWeekly,
 		KeepMonthly: policy.KeepMonthly,
-	}}
+	}, Repos: []RetentionPreviewRepo{}}
 
 	// Append-only repositories are classified exactly as pruneDomain classifies
 	// them, and then REPORTED instead of refused. pruneDomain has to refuse,
@@ -115,7 +115,7 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 			immutable = s.refAppendOnly(domain, r) != appendOnlyNone
 		}
 		if immutable {
-			out.Repos = append(out.Repos, RetentionPreviewRepo{Name: s.refName(r), AppendOnly: true})
+			out.Repos = append(out.Repos, RetentionPreviewRepo{Name: s.refName(r), AppendOnly: true, Items: []RetentionPreviewItem{}})
 			continue
 		}
 		previewable = append(previewable, r)
@@ -133,13 +133,13 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 		// say "these exist, and nothing would be removed from any of them"
 		// rather than showing an empty box that reads like a failure.
 		for _, r := range existing {
-			out.Repos = append(out.Repos, RetentionPreviewRepo{Name: s.refName(r)})
+			out.Repos = append(out.Repos, RetentionPreviewRepo{Name: s.refName(r), Items: []RetentionPreviewItem{}})
 		}
 		return out, nil
 	}
 
 	for _, r := range existing {
-		row := RetentionPreviewRepo{Name: s.refName(r)}
+		row := RetentionPreviewRepo{Name: s.refName(r), Items: []RetentionPreviewItem{}}
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)
 
 		rCtx, cancel := context.WithTimeout(ctx, previewPerRepoTimeout)
