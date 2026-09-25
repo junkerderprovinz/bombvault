@@ -241,6 +241,8 @@ const sr: Partial<Translations> = {
   "restore.mode.files": "Појединачне датотеке",
   "restore.mode.toFolder": "У фасциклу",
   "restore.inPlaceHint": "Поново направи овај контејнер потпуно исти какав је био.",
+  "restore.missingPoint": "Копија од {date} више не постоји.",
+  "restore.nearestPoint": "Најближа је од {date}.",
   "restore.leaveStopped": "После враћања остави заустављено (не покрећи)",
   "restore.bgHint": "Извршава се у позадини — овај панел можеш затворити; исход се приказује у историји извршавања.",
   "restore.completeContainer": "Враћање завршено — контејнер се поново прави.",

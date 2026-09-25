@@ -241,6 +241,8 @@ const hi: Partial<Translations> = {
   "restore.mode.files": "अलग-अलग फ़ाइलें",
   "restore.mode.toFolder": "किसी फ़ोल्डर में",
   "restore.inPlaceHint": "इस कंटेनर को बिल्कुल पहले जैसा फिर से बनाएँ।",
+  "restore.missingPoint": "{date} का बैकअप अब मौजूद नहीं है।",
+  "restore.nearestPoint": "सबसे नज़दीकी बैकअप {date} का है।",
   "restore.leaveStopped": "रीस्टोर के बाद रुका रहने दें (शुरू न करें)",
   "restore.bgHint": "यह बैकग्राउंड में चलता है। आप यह पैनल बंद कर सकते हैं; परिणाम रन इतिहास में दिखेगा।",
   "restore.completeContainer": "रीस्टोर पूरा हुआ। कंटेनर फिर से बनाया जा रहा है।",

@@ -1140,6 +1140,8 @@ const uk: Partial<Translations> = {
   "restore.mode.files": "Окремі файли",
   "restore.mode.toFolder": "До папки",
   "restore.inPlaceHint": "Відтворити цей контейнер точно таким, яким він був.",
+  "restore.missingPoint": "Копії від {date} більше немає.",
+  "restore.nearestPoint": "Найближча зроблена {date}.",
   "restore.leaveStopped": "Залишити зупиненим після відновлення (не запускати)",
   "restore.bgHint": "Виконується у фоновому режимі — цю панель можна закрити; результат з'явиться в історії запусків.",
   "stack.title": "Стеки",

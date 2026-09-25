@@ -241,6 +241,8 @@ const lv: Partial<Translations> = {
   "restore.mode.files": "Atsevišķi faili",
   "restore.mode.toFolder": "Mapē",
   "restore.inPlaceHint": "Izveidojiet šo konteineru no jauna tieši tādu, kāds tas bija.",
+  "restore.missingPoint": "Dublējuma no {date} vairs nav.",
+  "restore.nearestPoint": "Tuvākais ir no {date}.",
   "restore.leaveStopped": "Atstāt apturētu pēc atjaunošanas (nepalaist)",
   "restore.bgHint": "Darbojas fonā. Jūs varat aizvērt šo paneli; rezultāts parādīsies izpildījumu vēsturē.",
   "restore.completeContainer": "Atjaunošana pabeigta, konteiners tiek izveidots no jauna.",

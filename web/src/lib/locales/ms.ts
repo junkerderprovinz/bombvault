@@ -241,6 +241,8 @@ const ms: Partial<Translations> = {
   "restore.mode.files": "Fail individu",
   "restore.mode.toFolder": "Ke folder",
   "restore.inPlaceHint": "Cipta semula bekas ini tepat seperti sebelumnya.",
+  "restore.missingPoint": "Sandaran dari {date} sudah tiada.",
+  "restore.nearestPoint": "Yang terdekat adalah dari {date}.",
   "restore.leaveStopped": "Biarkan berhenti selepas pemulihan (jangan mulakan)",
   "restore.bgHint": "Berjalan di latar belakang. Anda boleh tutup panel ini; keputusan akan muncul dalam sejarah larian.",
   "restore.completeContainer": "Pemulihan selesai, bekas sedang dicipta semula.",

@@ -351,7 +351,7 @@ describe("a finding's own lines", () => {
     const link = screen.getByRole("link", {
       name: en["anomaly.action.restoreLastGood"].replace("{date}", new Date(1700000000 * 1000).toLocaleString()),
     });
-    expect(link.getAttribute("href")).toBe("/containers?restore=snap-9&item=plex");
+    expect(link.getAttribute("href")).toBe("/containers?restore=snap-9&at=1700000000&item=plex");
   });
 
   it("links a dataset's last good backup at its ZFS item, naming the dataset", async () => {
@@ -371,7 +371,7 @@ describe("a finding's own lines", () => {
     const link = screen.getByRole("link", {
       name: en["anomaly.action.restoreLastGood"].replace("{date}", new Date(1700000000 * 1000).toLocaleString()),
     });
-    expect(link.getAttribute("href")).toBe("/zfs?restore=snap-9&item=tank%2Fmedia&dataset=tank%2Fmedia%2Fphotos");
+    expect(link.getAttribute("href")).toBe("/zfs?restore=snap-9&at=1700000000&item=tank%2Fmedia&dataset=tank%2Fmedia%2Fphotos");
   });
 
   // The detector measures a rate per second; the row has to say per hour.

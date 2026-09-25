@@ -241,6 +241,8 @@ const bg: Partial<Translations> = {
   "restore.mode.files": "Отделни файлове",
   "restore.mode.toFolder": "В папка",
   "restore.inPlaceHint": "Пресъздай този контейнер точно такъв, какъвто беше.",
+  "restore.missingPoint": "Копието от {date} вече не съществува.",
+  "restore.nearestPoint": "Най-близкото е от {date}.",
   "restore.leaveStopped": "Остави спрян след възстановяването (не го стартирай)",
   "restore.bgHint": "Изпълнява се във фонов режим — можеш да затвориш този панел; резултатът се появява в историята на изпълненията.",
   "restore.completeContainer": "Възстановяването завърши — контейнерът се пресъздава.",

@@ -241,6 +241,8 @@ const is: Partial<Translations> = {
   "restore.mode.files": "Stakar skrár",
   "restore.mode.toFolder": "Í möppu",
   "restore.inPlaceHint": "Endurgerðu þennan gám nákvæmlega eins og hann var.",
+  "restore.missingPoint": "Afritið frá {date} er ekki lengur til.",
+  "restore.nearestPoint": "Næsta afrit er frá {date}.",
   "restore.leaveStopped": "Skilja eftir stöðvaðan eftir endurheimt (ekki ræsa)",
   "restore.bgHint": "Keyrir í bakgrunni. Þú getur lokað þessum glugga; niðurstaðan birtist í keyrslusögunni.",
   "restore.completeContainer": "Endurheimt lokið. Gámurinn er í endurgerð.",

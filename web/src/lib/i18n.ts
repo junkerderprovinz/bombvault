@@ -296,6 +296,8 @@ export const en = {
   "restore.mode.files": "Individual files",
   "restore.mode.toFolder": "To a folder",
   "restore.inPlaceHint": "Recreate this container exactly as it was.",
+  "restore.missingPoint": "The backup from {date} no longer exists.",
+  "restore.nearestPoint": "The nearest one is from {date}.",
   "restore.leaveStopped": "Leave stopped after restore (don't start it)",
   "restore.bgHint":
     "Running in the background. You can close this panel; the outcome appears in the run history.",
@@ -2927,6 +2929,8 @@ export const de: Translations = {
   "restore.mode.files": "Einzelne Dateien",
   "restore.mode.toFolder": "In einen Ordner",
   "restore.inPlaceHint": "Diesen Container exakt wie zuvor neu erstellen.",
+  "restore.missingPoint": "Das Backup vom {date} gibt es nicht mehr.",
+  "restore.nearestPoint": "Das zeitlich nächste ist vom {date}.",
   "restore.leaveStopped": "Nach dem Restore gestoppt lassen (nicht starten)",
   "restore.bgHint":
     "Läuft im Hintergrund. Du kannst dieses Panel schließen; das Ergebnis erscheint im Ausführungsverlauf.",

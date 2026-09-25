@@ -241,6 +241,8 @@ const eu: Partial<Translations> = {
   "restore.mode.files": "Fitxategi solteak",
   "restore.mode.toFolder": "Karpeta batean",
   "restore.inPlaceHint": "Sortu edukiontzi hau berriz zegoen bezala-bezala.",
+  "restore.missingPoint": "{date} datako babeskopia ez dago jada.",
+  "restore.nearestPoint": "Hurbilena {date} datakoa da.",
   "restore.leaveStopped": "Utzi geldituta berrezarri ondoren (ez abiarazi)",
   "restore.bgHint": "Atzeko planoan exekutatzen ari da, panel hau itxi dezakezu; emaitza exekuzioen historian agertuko da.",
   "restore.completeContainer": "Berrezarpena osatuta: edukiontzia berriz sortzen ari da.",

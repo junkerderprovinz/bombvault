@@ -1145,6 +1145,8 @@ const el: Partial<Translations> = {
   "restore.mode.files": "Μεμονωμένα αρχεία",
   "restore.mode.toFolder": "Σε φάκελο",
   "restore.inPlaceHint": "Αναδημιουργήστε αυτό το container ακριβώς όπως ήταν.",
+  "restore.missingPoint": "Το αντίγραφο της {date} δεν υπάρχει πλέον.",
+  "restore.nearestPoint": "Το πλησιέστερο είναι της {date}.",
   "restore.leaveStopped": "Άφησέ το σταματημένο μετά την επαναφορά (μην το ξεκινήσεις)",
   "restore.bgHint": "Εκτελείται στο παρασκήνιο. Μπορείτε να κλείσετε αυτόν τον πίνακα. Το αποτέλεσμα θα εμφανιστεί στο ιστορικό εκτελέσεων.",
   "stack.title": "Stacks",

@@ -1145,6 +1145,8 @@ const sv: Partial<Translations> = {
   "restore.mode.files": "Enskilda filer",
   "restore.mode.toFolder": "Till en mapp",
   "restore.inPlaceHint": "Återskapa den här containern precis som den var.",
+  "restore.missingPoint": "Säkerhetskopian från {date} finns inte längre.",
+  "restore.nearestPoint": "Den närmaste är från {date}.",
   "restore.leaveStopped": "Lämna stoppad efter återställning (starta den inte)",
   "restore.bgHint": "Körs i bakgrunden. Du kan stänga den här panelen; resultatet visas i körningshistoriken.",
   "stack.title": "Stackar",

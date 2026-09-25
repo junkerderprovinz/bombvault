@@ -30,6 +30,7 @@ import { FolderBrowser } from "../FolderBrowser";
 import { InfoBubble } from "../InfoBubble";
 import { SelectField } from "../SelectField";
 import { IconDatabase, IconDownload, IconRestore, IconTrash } from "../navGlyphs";
+import { MissingRestorePoint, restorePointOf } from "./MissingRestorePoint";
 import { RestoreProgress } from "./RestoreProgress";
 
 type T = ReturnType<typeof useT>["t"];
@@ -393,6 +394,7 @@ export function DatabaseDumpList({
   reloadTick,
   onDumps,
   preselect = "",
+  preselectAt = 0,
   t,
 }: {
   containerName: string;
@@ -413,6 +415,8 @@ export function DatabaseDumpList({
   onDumps?: (dumps: DBDumpView[]) => void;
   /** The dump a finding's restore link asked for. */
   preselect?: string;
+  /** When that dump was taken, in Unix seconds. */
+  preselectAt?: number;
   t: T;
 }) {
   const [dumps, setDumps] = useState<DBDumpView[]>([]);
@@ -472,6 +476,14 @@ export function DatabaseDumpList({
         <InfoBubble tip={t("dbdump.listHint")} />
       </div>
       {failed && <p className="text-xs text-statusFail">{t("dbdump.loadFailed")}</p>}
+      {!failed && (
+        <MissingRestorePoint
+          requested={preselect}
+          requestedAt={preselectAt}
+          points={dumps.map(restorePointOf)}
+          t={t}
+        />
+      )}
       {!failed && dumps.length === 0 && (
         <p className="text-xs text-carbon-textMuted">{t("dbdump.none")}</p>
       )}

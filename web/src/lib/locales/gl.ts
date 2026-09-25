@@ -241,6 +241,8 @@ const gl: Partial<Translations> = {
   "restore.mode.files": "Ficheiros individuais",
   "restore.mode.toFolder": "Nun cartafol",
   "restore.inPlaceHint": "Recrear este contedor exactamente como era.",
+  "restore.missingPoint": "A copia do {date} xa non existe.",
+  "restore.nearestPoint": "A máis próxima é do {date}.",
   "restore.leaveStopped": "Deixar detido despois de restaurar (non o inicies)",
   "restore.bgHint": "Execútase en segundo plano, podes pechar este panel; o resultado aparece no historial de execucións.",
   "restore.completeContainer": "Restauración completa, o contedor estase a recrear.",

@@ -241,6 +241,8 @@ const sl: Partial<Translations> = {
   "restore.mode.files": "Posamezne datoteke",
   "restore.mode.toFolder": "V mapo",
   "restore.inPlaceHint": "Ponovno ustvari ta vsebnik natanko takšnega, kot je bil.",
+  "restore.missingPoint": "Kopija z dne {date} ne obstaja več.",
+  "restore.nearestPoint": "Najbližja je z dne {date}.",
   "restore.leaveStopped": "Po obnovitvi pusti ustavljeno (ne zaženi)",
   "restore.bgHint": "Teče v ozadju. To okno lahko zapreš; izid se prikaže v zgodovini zagonov.",
   "restore.completeContainer": "Obnovitev končana, vsebnik se ponovno ustvarja.",

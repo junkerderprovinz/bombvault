@@ -1121,6 +1121,8 @@ const no: Partial<Translations> = {
   "restore.mode.files": "Enkeltfiler",
   "restore.mode.toFolder": "Til en mappe",
   "restore.inPlaceHint": "Gjenopprett denne kontaineren nøyaktig slik den var.",
+  "restore.missingPoint": "Sikkerhetskopien fra {date} finnes ikke lenger.",
+  "restore.nearestPoint": "Den nærmeste er fra {date}.",
   "restore.leaveStopped": "La den være stoppet etter gjenoppretting (ikke start den)",
   "restore.bgHint": "Kjører i bakgrunnen. Du kan lukke dette panelet; resultatet vises i kjørehistorikken.",
   "stack.title": "Stacker",

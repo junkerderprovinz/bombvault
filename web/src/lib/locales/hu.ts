@@ -1128,6 +1128,8 @@ const hu: Partial<Translations> = {
   "restore.mode.files": "Egyes fájlok",
   "restore.mode.toFolder": "Egy mappába",
   "restore.inPlaceHint": "Hozza létre újra ezt a konténert pontosan úgy, ahogy volt.",
+  "restore.missingPoint": "A(z) {date} időpontú mentés már nem létezik.",
+  "restore.nearestPoint": "A legközelebbi {date} időpontú.",
   "restore.leaveStopped": "Visszaállítás után hagyja leállítva (ne indítsa el)",
   "restore.bgHint": "A háttérben fut. Bezárhatod ezt a panelt; az eredmény megjelenik a futási előzményekben.",
   "stack.title": "Stackek",

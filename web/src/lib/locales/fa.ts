@@ -241,6 +241,8 @@ const fa: Partial<Translations> = {
   "restore.mode.files": "فایل‌های جداگانه",
   "restore.mode.toFolder": "در یک پوشه",
   "restore.inPlaceHint": "این کانتینر را دقیقاً مانند قبل بازسازی کنید.",
+  "restore.missingPoint": "پشتیبان {date} دیگر وجود ندارد.",
+  "restore.nearestPoint": "نزدیک‌ترین پشتیبان مربوط به {date} است.",
   "restore.leaveStopped": "پس از بازیابی متوقف بماند (اجرا نشود)",
   "restore.bgHint": "در پس‌زمینه اجرا می‌شود، می‌توانید این پنل را ببندید؛ نتیجه در تاریخچه اجراها ظاهر می‌شود.",
   "restore.completeContainer": "بازیابی کامل شد: کانتینر در حال بازسازی است.",

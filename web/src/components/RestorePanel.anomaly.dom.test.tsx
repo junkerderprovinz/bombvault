@@ -146,3 +146,38 @@ it("marks the flagged dump and singles out the one a dump finding links to", asy
   // A dump link opens no snapshot's restore choices.
   expect(screen.queryByText(en["restore.inPlaceHint"])).toBeNull();
 });
+
+// 2026-09-01T12:00:00Z, closer to the good snapshot than to the bad one.
+const GONE_AT = 1788264000;
+
+it("says that a linked backup is gone and names the nearest one", async () => {
+  await renderPanel({ preselect: "gone0000cc", preselectAt: GONE_AT });
+  await screen.findByText("bad00000");
+  const notice = screen.getByRole("status");
+  expect(notice.textContent).toContain(
+    en["restore.missingPoint"].replace("{date}", new Date(GONE_AT * 1000).toLocaleString())
+  );
+  expect(notice.textContent).toContain(
+    en["restore.nearestPoint"].replace("{date}", new Date("2026-09-01T02:00:00Z").toLocaleString())
+  );
+  expect(screen.queryByText(en["restore.inPlaceHint"])).toBeNull();
+});
+
+it("says nothing about a linked backup that is still there", async () => {
+  await renderPanel({ preselect: "good000000aa", preselectAt: GONE_AT });
+  await screen.findByText("bad00000");
+  expect(screen.queryByRole("status")).toBeNull();
+});
+
+it("says that a linked dump is gone and names the nearest one", async () => {
+  dumpsOnServer = [dump("dumpbad00002", "2026-09-02T02:00:00Z"), dump("dumpgood0001", "2026-09-01T02:00:00Z")];
+  await renderPanel({ preselectDump: "dumpgone0003", preselectAt: GONE_AT });
+  await screen.findByText("dumpbad0");
+  const notice = screen.getByRole("status");
+  expect(notice.textContent).toContain(
+    en["restore.missingPoint"].replace("{date}", new Date(GONE_AT * 1000).toLocaleString())
+  );
+  expect(notice.textContent).toContain(
+    en["restore.nearestPoint"].replace("{date}", new Date("2026-09-01T02:00:00Z").toLocaleString())
+  );
+});

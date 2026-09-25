@@ -1148,6 +1148,8 @@ const th: Partial<Translations> = {
   "restore.mode.files": "ไฟล์แต่ละไฟล์",
   "restore.mode.toFolder": "ไปยังโฟลเดอร์",
   "restore.inPlaceHint": "สร้างคอนเทนเนอร์นี้ใหม่ให้เหมือนเดิมทุกประการ",
+  "restore.missingPoint": "ข้อมูลสำรองจาก {date} ไม่มีอยู่แล้ว",
+  "restore.nearestPoint": "รายการที่ใกล้ที่สุดคือจาก {date}",
   "restore.leaveStopped": "ปล่อยให้หยุดอยู่หลังกู้คืน (ไม่ต้องเริ่มทำงาน)",
   "restore.bgHint": "กำลังทำงานอยู่เบื้องหลัง คุณปิดแผงนี้ได้ ผลลัพธ์จะแสดงในประวัติการทำงาน",
   "stack.title": "สแตก",

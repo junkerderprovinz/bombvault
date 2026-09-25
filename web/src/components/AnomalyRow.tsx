@@ -124,7 +124,7 @@ export function AnomalyRow({
   if (itemPath && a.lastGood) {
     // The item names the row on a page that lists many; flash and config
     // have no name and need none.
-    const params = new URLSearchParams({ restore: a.lastGood.snapshotId });
+    const params = new URLSearchParams({ restore: a.lastGood.snapshotId, at: String(a.lastGood.at) });
     if (a.name) params.set("item", a.name);
     if (a.scopeKind === "zfsds") params.set("dataset", a.part);
     if (a.scopeKind === "dump") params.set("dump", "1");

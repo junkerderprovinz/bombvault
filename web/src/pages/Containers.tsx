@@ -2610,6 +2610,7 @@ export function ContainerRow({
           name={container.name}
           preselect={restoreRequest && !restoreRequest.dump ? restoreRequest.snapshot : ""}
           preselectDump={restoreRequest?.dump ? restoreRequest.snapshot : ""}
+          preselectAt={restoreRequest?.at}
           aliases={aliases}
           t={t}
           installed={installed}

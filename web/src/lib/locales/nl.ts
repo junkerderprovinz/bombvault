@@ -1118,6 +1118,8 @@ const nl: Partial<Translations> = {
   "restore.mode.files": "Losse bestanden",
   "restore.mode.toFolder": "Naar een map",
   "restore.inPlaceHint": "Deze container exact herstellen zoals hij was.",
+  "restore.missingPoint": "De back-up van {date} bestaat niet meer.",
+  "restore.nearestPoint": "De dichtstbijzijnde is van {date}.",
   "restore.leaveStopped": "Na herstel gestopt laten (niet starten)",
   "restore.bgHint": "Draait op de achtergrond. Je kunt dit paneel sluiten; het resultaat verschijnt in de uitvoeringsgeschiedenis.",
   "stack.title": "Stacks",

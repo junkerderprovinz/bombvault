@@ -1137,6 +1137,8 @@ const zh: Partial<Translations> = {
   "restore.mode.files": "单个文件",
   "restore.mode.toFolder": "还原到文件夹",
   "restore.inPlaceHint": "将此容器完全按原样重新创建。",
+  "restore.missingPoint": "{date} 的备份已不存在。",
+  "restore.nearestPoint": "最接近的是 {date} 的备份。",
   "restore.leaveStopped": "还原后保持停止状态（不启动）",
   "restore.bgHint": "正在后台运行，你可以关闭此面板；结果会显示在运行历史中。",
   "stack.title": "堆栈",

@@ -1143,6 +1143,8 @@ const es: Partial<Translations> = {
   "restore.mode.files": "Archivos individuales",
   "restore.mode.toFolder": "En una carpeta",
   "restore.inPlaceHint": "Recrear este contenedor exactamente como estaba.",
+  "restore.missingPoint": "La copia del {date} ya no existe.",
+  "restore.nearestPoint": "La más cercana es del {date}.",
   "restore.leaveStopped": "Dejar detenido tras la restauración (no iniciarlo)",
   "restore.bgHint": "Se ejecuta en segundo plano: puedes cerrar este panel; el resultado aparecerá en el historial de ejecuciones.",
   "stack.title": "Stacks",

@@ -1145,6 +1145,8 @@ const fi: Partial<Translations> = {
   "restore.mode.files": "Yksittäiset tiedostot",
   "restore.mode.toFolder": "Kansioon",
   "restore.inPlaceHint": "Luo tämä kontti uudelleen täsmälleen entisellään.",
+  "restore.missingPoint": "Varmuuskopiota ajalta {date} ei ole enää.",
+  "restore.nearestPoint": "Lähin on ajalta {date}.",
   "restore.leaveStopped": "Jätä pysäytetyksi palautuksen jälkeen (älä käynnistä)",
   "restore.bgHint": "Suoritetaan taustalla. Voit sulkea tämän paneelin; tulos näkyy ajohistoriassa.",
   "stack.title": "Stackit",

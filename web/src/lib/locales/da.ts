@@ -1145,6 +1145,8 @@ const da: Partial<Translations> = {
   "restore.mode.files": "Enkelte filer",
   "restore.mode.toFolder": "Til en mappe",
   "restore.inPlaceHint": "Genskab denne container præcis som den var.",
+  "restore.missingPoint": "Sikkerhedskopien fra {date} findes ikke længere.",
+  "restore.nearestPoint": "Den nærmeste er fra {date}.",
   "restore.leaveStopped": "Lad den være stoppet efter gendannelse (start den ikke)",
   "restore.bgHint": "Kører i baggrunden. Du kan lukke dette panel; resultatet vises i kørselsoversigten.",
   "stack.title": "Stakke",

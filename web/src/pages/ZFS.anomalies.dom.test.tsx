@@ -204,4 +204,21 @@ describe("ZFS page anomalies", () => {
     fireEvent.click(await screen.findByRole("option", { name: new RegExp(new Date(1_789_086_400 * 1000).toLocaleString().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) }));
     expect(await within(panel).findByText(en["anomaly.snapshotFlagged"])).toBeTruthy();
   });
+  it("says that a dataset's linked backup is gone and opens on the nearest one", async () => {
+    await renderPage(
+      `?restore=child-pruned&at=1788990000&item=${encodeURIComponent(ROOT)}&dataset=${encodeURIComponent(CHILD)}`
+    );
+
+    const panel = await screen.findByRole("group", { name: en["zfs.restore.title"].replace("{dataset}", ROOT) });
+    const pointField = await within(panel).findByRole("combobox", { name: en["zfs.restore.point"] });
+    expect(pointField.textContent).toContain(new Date(1_789_000_000 * 1000).toLocaleString());
+    expect(within(panel).getByRole("combobox", { name: en["zfs.restore.dataset"] }).textContent).toContain(CHILD);
+    const notice = within(panel).getByRole("status");
+    expect(notice.textContent).toContain(
+      en["restore.missingPoint"].replace("{date}", new Date(1_788_990_000 * 1000).toLocaleString())
+    );
+    expect(notice.textContent).toContain(
+      en["restore.nearestPoint"].replace("{date}", new Date(1_789_000_000 * 1000).toLocaleString())
+    );
+  });
 });

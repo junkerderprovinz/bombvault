@@ -37,6 +37,7 @@ import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { RecentRunsList } from "../components/RecentRunsList";
+import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
 import { RestoreProgress } from "../components/restore/RestoreProgress";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconBackupNow, IconFiles, IconPencil, IconTrash } from "../components/Sidebar";
@@ -581,6 +582,7 @@ function FileSetRestorePanel({
   onSetsChanged,
   trailing,
   preselect = "",
+  preselectAt = 0,
 }: {
   set: FileSetView;
   hostMountRoot: string;
@@ -590,6 +592,8 @@ function FileSetRestorePanel({
   onSetsChanged: () => void;
   /** The snapshot a finding's restore link asked for; the list starts open. */
   preselect?: string;
+  /** When that snapshot was taken, in Unix seconds. */
+  preselectAt?: number;
   /** A summary at the far end of the disclosure's row, always visible, as the
    *  container card shows its last backup there. */
   trailing?: ReactNode;
@@ -714,6 +718,14 @@ function FileSetRestorePanel({
             <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}
           {error && <p className="py-3 text-xs text-statusFail">{error}</p>}
+          {!loading && !error && (
+            <MissingRestorePoint
+              requested={preselect}
+              requestedAt={preselectAt}
+              points={snapshots.map(restorePointOf)}
+              t={t}
+            />
+          )}
           {!loading && !error && snapshots.length === 0 && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
           )}
@@ -1333,6 +1345,7 @@ export function FileSetRow({
         t={t}
         onSetsChanged={onRefresh}
         preselect={restoreRequest?.snapshot}
+        preselectAt={restoreRequest?.at}
         trailing={
           // A column, so the note that something else is running sits above
           // the date it qualifies. At rest only the date shows.

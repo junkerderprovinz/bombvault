@@ -1124,6 +1124,8 @@ const ro: Partial<Translations> = {
   "restore.mode.files": "Fișiere individuale",
   "restore.mode.toFolder": "Într-un folder",
   "restore.inPlaceHint": "Recreează acest container exact așa cum era.",
+  "restore.missingPoint": "Copia din {date} nu mai există.",
+  "restore.nearestPoint": "Cea mai apropiată este din {date}.",
   "restore.leaveStopped": "Lasă oprit după restaurare (nu îl porni)",
   "restore.bgHint": "Rulează în fundal. Poți închide acest panou; rezultatul va apărea în istoricul rulărilor.",
   "stack.title": "Stack-uri",

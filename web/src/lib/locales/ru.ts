@@ -1116,6 +1116,8 @@ const ru: Partial<Translations> = {
   "restore.mode.files": "Отдельные файлы",
   "restore.mode.toFolder": "В папку",
   "restore.inPlaceHint": "Пересоздать этот контейнер точно таким, каким он был.",
+  "restore.missingPoint": "Копии от {date} больше нет.",
+  "restore.nearestPoint": "Ближайшая сделана {date}.",
   "restore.leaveStopped": "Оставить остановленным после восстановления (не запускать)",
   "restore.bgHint": "Выполняется в фоновом режиме — эту панель можно закрыть; результат появится в истории запусков.",
   "stack.title": "Стеки",

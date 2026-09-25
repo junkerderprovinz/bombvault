@@ -1125,6 +1125,8 @@ const it: Partial<Translations> = {
   "restore.mode.files": "File singoli",
   "restore.mode.toFolder": "In una cartella",
   "restore.inPlaceHint": "Ricrea questo container esattamente com'era.",
+  "restore.missingPoint": "Il backup del {date} non esiste più.",
+  "restore.nearestPoint": "Il più vicino è del {date}.",
   "restore.leaveStopped": "Lascia fermo dopo il ripristino (non avviarlo)",
   "restore.bgHint": "Gira in background: puoi chiudere questo pannello; il risultato apparirà nella cronologia delle esecuzioni.",
   "stack.title": "Stack",

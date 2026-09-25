@@ -14,6 +14,7 @@ import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { RecentRunsList } from "../components/RecentRunsList";
+import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconVM, IconRestore, IconTrash, IconBackupNow, IconDownload, IconPower, IconLive } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
@@ -484,6 +485,7 @@ function VMRestorePanel({
   t,
   open,
   preselect = "",
+  preselectAt = 0,
 }: {
   /** Raw libvirt name. Every call in this panel uses it, never displayName. */
   name: string;
@@ -496,6 +498,8 @@ function VMRestorePanel({
   open: boolean;
   /** The snapshot a finding's restore link asked for. */
   preselect?: string;
+  /** When that snapshot was taken, in Unix seconds. */
+  preselectAt?: number;
 }) {
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
@@ -601,6 +605,14 @@ function VMRestorePanel({
           )}
           {error && (
             <p className="py-3 text-xs text-statusFail">{error}</p>
+          )}
+          {!loading && !error && (
+            <MissingRestorePoint
+              requested={preselect}
+              requestedAt={preselectAt}
+              points={snapshots.map(restorePointOf)}
+              t={t}
+            />
           )}
           {!loading && !error && snapshots.length === 0 && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
@@ -854,6 +866,7 @@ export function VMRow({
           t={t}
           open={openSections.has("backups")}
           preselect={restoreRequest?.snapshot}
+          preselectAt={restoreRequest?.at}
         />
       </div>
 

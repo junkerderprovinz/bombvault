@@ -1148,6 +1148,8 @@ const ar: Partial<Translations> = {
   "restore.mode.files": "ملفات فردية",
   "restore.mode.toFolder": "إلى مجلد",
   "restore.inPlaceHint": "إعادة إنشاء هذا الـ container تماماً كما كان.",
+  "restore.missingPoint": "النسخة الاحتياطية من {date} لم تعد موجودة.",
+  "restore.nearestPoint": "أقرب نسخة إليها من {date}.",
   "restore.leaveStopped": "تركه متوقفاً بعد الاستعادة (عدم تشغيله)",
   "restore.bgHint": "تعمل في الخلفية. يمكنك إغلاق هذه اللوحة؛ ستظهر النتيجة في سجل التشغيلات.",
   "stack.title": "الـ Stacks",

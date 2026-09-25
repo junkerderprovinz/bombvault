@@ -18,6 +18,7 @@ import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
 import { IconDisclosure } from "../IconDisclosure";
 import { InfoBubble } from "../InfoBubble";
+import { MissingRestorePoint, nearestRestorePoint } from "../restore/MissingRestorePoint";
 import { RestoreProgress } from "../restore/RestoreProgress";
 import { Selector, type SelectorItem } from "../Selector";
 import { SelectField } from "../SelectField";
@@ -99,6 +100,8 @@ export function ZFSRestorePanel({
         }
         const list = res.points ?? [];
         setPoints(list);
+        let first: ZFSRestorePoint | undefined = list[0];
+        let wanted = item.dataset;
         if (preselect && !preselected.current) {
           preselected.current = true;
           for (const p of list) {
@@ -111,11 +114,17 @@ export function ZFSRestorePanel({
               return;
             }
           }
+          // The asked-for backup is gone, and the one closest to it is what
+          // the notice names.
+          const near = nearestRestorePoint(list.map((p) => ({ id: p.stamp, at: p.time })), preselect.at);
+          first = list.find((p) => p.stamp === near?.id);
+          if (preselect.dataset) wanted = preselect.dataset;
         }
-        const first = list[0];
         if (!first) return;
         setStamp(first.stamp);
-        const root = first.members.find((m) => m.dataset === item.dataset && m.snapshotId !== "");
+        const root =
+          first.members.find((m) => m.dataset === wanted && m.snapshotId !== "") ??
+          first.members.find((m) => m.dataset === item.dataset && m.snapshotId !== "");
         setDataset((root ?? first.members.find((m) => m.snapshotId !== ""))?.dataset ?? item.dataset);
       })
       .catch(() => {
@@ -300,6 +309,14 @@ export function ZFSRestorePanel({
 
           {loading && <p className="text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>}
           {error && <p className="text-xs text-statusFail">{error}</p>}
+          {!loading && !error && preselect && (
+            <MissingRestorePoint
+              requested={preselect.snapshot}
+              requestedAt={preselect.at}
+              points={points.flatMap((p) => p.members.map((m) => ({ id: m.snapshotId, at: p.time })))}
+              t={t}
+            />
+          )}
           {!loading && !error && points.length === 0 && (
             <p className="text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
           )}

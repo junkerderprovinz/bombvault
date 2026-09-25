@@ -1145,6 +1145,8 @@ const tr: Partial<Translations> = {
   "restore.mode.files": "Tekil dosyalar",
   "restore.mode.toFolder": "Bir klasöre",
   "restore.inPlaceHint": "Bu konteyneri tam olarak eski haliyle yeniden oluştur.",
+  "restore.missingPoint": "{date} tarihli yedek artık yok.",
+  "restore.nearestPoint": "En yakını {date} tarihli.",
   "restore.leaveStopped": "Geri yükledikten sonra durdurulmuş bırak (başlatma)",
   "restore.bgHint": "Arka planda çalışıyor. Bu paneli kapatabilirsiniz; sonuç çalışma geçmişinde görünecek.",
   "stack.title": "Stack'ler",

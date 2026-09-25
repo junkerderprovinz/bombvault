@@ -1125,6 +1125,8 @@ const he: Partial<Translations> = {
   "restore.mode.files": "קבצים בודדים",
   "restore.mode.toFolder": "לתיקייה",
   "restore.inPlaceHint": "צור מחדש את ה-container הזה בדיוק כפי שהיה.",
+  "restore.missingPoint": "הגיבוי מ-{date} כבר לא קיים.",
+  "restore.nearestPoint": "הקרוב ביותר הוא מ-{date}.",
   "restore.leaveStopped": "השאר עצור לאחר השחזור (אל תפעיל)",
   "restore.bgHint": "פועל ברקע, אפשר לסגור את הלוח הזה; התוצאה תופיע בהיסטוריית ההרצות.",
   "stack.title": "Stacks",

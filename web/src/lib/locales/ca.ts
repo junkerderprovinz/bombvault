@@ -241,6 +241,8 @@ const ca: Partial<Translations> = {
   "restore.mode.files": "Fitxers individuals",
   "restore.mode.toFolder": "A una carpeta",
   "restore.inPlaceHint": "Recrea aquest contenidor exactament com era.",
+  "restore.missingPoint": "La còpia del {date} ja no existeix.",
+  "restore.nearestPoint": "La més propera és del {date}.",
   "restore.leaveStopped": "Deixa'l aturat després de restaurar (no l'engeguis)",
   "restore.bgHint": "S'executa en segon pla. Pots tancar aquest tauler; el resultat apareix a l'historial d'execucions.",
   "restore.completeContainer": "Restauració completa. El contenidor s'està recreant.",

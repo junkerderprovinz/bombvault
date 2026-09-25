@@ -8,6 +8,7 @@ import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { RestoreProgress } from "./restore/RestoreProgress";
 import { RestoreAction } from "./restore/RestoreAction";
 import { DatabaseDumpList } from "./restore/DatabaseDumpList";
+import { MissingRestorePoint, restorePointOf } from "./restore/MissingRestorePoint";
 import { pairsWith } from "../lib/dbdump";
 import { Badge } from "./Badge";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
@@ -241,6 +242,8 @@ interface RestorePanelProps {
   preselect?: string;
   /** The same for a finding about the container's database dump. */
   preselectDump?: string;
+  /** When the asked-for snapshot or dump was taken, in Unix seconds. */
+  preselectAt?: number;
   /** The entry's former names, whose ownership tags are hidden like its own. */
   aliases?: string[];
   t: T;
@@ -851,6 +854,7 @@ export function RestorePanel({
   name,
   preselect = "",
   preselectDump = "",
+  preselectAt = 0,
   aliases = [],
   t,
   installed = true,
@@ -947,6 +951,14 @@ export function RestorePanel({
           )}
         </div>
       )}
+      {!loading && !error && (
+        <MissingRestorePoint
+          requested={preselect}
+          requestedAt={preselectAt}
+          points={snapshots.map(restorePointOf)}
+          t={t}
+        />
+      )}
       <Advanced when={!loading && !error && snapshots.length >= 2}>
         <CompareSnapshots snapshots={snapshots} containerName={name} source={source} t={t} />
       </Advanced>
@@ -979,6 +991,7 @@ export function RestorePanel({
         reloadTick={reloadTick}
         onDumps={setDumps}
         preselect={preselectDump}
+        preselectAt={preselectAt}
         t={t}
       />
     </div>

@@ -241,6 +241,8 @@ const id: Partial<Translations> = {
   "restore.mode.files": "File individual",
   "restore.mode.toFolder": "Ke folder",
   "restore.inPlaceHint": "Buat ulang container ini persis seperti sebelumnya.",
+  "restore.missingPoint": "Cadangan dari {date} sudah tidak ada.",
+  "restore.nearestPoint": "Yang terdekat dari {date}.",
   "restore.leaveStopped": "Biarkan berhenti setelah pemulihan (jangan jalankan)",
   "restore.bgHint": "Berjalan di latar belakang. Anda bisa menutup panel ini; hasilnya muncul di riwayat eksekusi.",
   "restore.completeContainer": "Pemulihan selesai. Container sedang dibuat ulang.",

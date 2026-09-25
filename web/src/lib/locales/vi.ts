@@ -1137,6 +1137,8 @@ const vi: Partial<Translations> = {
   "restore.mode.files": "Từng tập tin",
   "restore.mode.toFolder": "Vào một thư mục",
   "restore.inPlaceHint": "Tạo lại container này y hệt như trước.",
+  "restore.missingPoint": "Bản sao lưu từ {date} không còn nữa.",
+  "restore.nearestPoint": "Bản gần nhất là từ {date}.",
   "restore.leaveStopped": "Để nguyên trạng thái dừng sau khi khôi phục (không khởi động)",
   "restore.bgHint": "Đang chạy trong nền. Bạn có thể đóng bảng này; kết quả sẽ hiển thị trong lịch sử chạy.",
   "stack.title": "Stack",

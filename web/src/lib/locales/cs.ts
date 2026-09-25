@@ -1143,6 +1143,8 @@ const cs: Partial<Translations> = {
   "restore.mode.files": "Jednotlivé soubory",
   "restore.mode.toFolder": "Do složky",
   "restore.inPlaceHint": "Znovu vytvořit tento kontejner přesně tak, jak byl.",
+  "restore.missingPoint": "Záloha z {date} už neexistuje.",
+  "restore.nearestPoint": "Nejbližší je z {date}.",
   "restore.leaveStopped": "Po obnovení nechat zastavené (nespouštět)",
   "restore.bgHint": "Běží na pozadí. Tento panel můžete zavřít; výsledek se objeví v historii běhů.",
   "stack.title": "Stacky",

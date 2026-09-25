@@ -1116,6 +1116,8 @@ const pl: Partial<Translations> = {
   "restore.mode.files": "Pojedyncze pliki",
   "restore.mode.toFolder": "Do folderu",
   "restore.inPlaceHint": "Odtwórz ten kontener dokładnie tak, jak był.",
+  "restore.missingPoint": "Kopia z {date} już nie istnieje.",
+  "restore.nearestPoint": "Najbliższa jest z {date}.",
   "restore.leaveStopped": "Pozostaw zatrzymane po przywróceniu (nie uruchamiaj)",
   "restore.bgHint": "Działa w tle. Możesz zamknąć ten panel; wynik pojawi się w historii uruchomień.",
   "stack.title": "Stacki",

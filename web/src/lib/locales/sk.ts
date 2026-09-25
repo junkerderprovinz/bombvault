@@ -241,6 +241,8 @@ const sk: Partial<Translations> = {
   "restore.mode.files": "Jednotlivé súbory",
   "restore.mode.toFolder": "Do priečinka",
   "restore.inPlaceHint": "Znova vytvorte tento kontajner presne taký, aký bol.",
+  "restore.missingPoint": "Záloha z {date} už neexistuje.",
+  "restore.nearestPoint": "Najbližšia je z {date}.",
   "restore.leaveStopped": "Po obnovení nechať zastavený (nespúšťať)",
   "restore.bgHint": "Beží na pozadí. Tento panel môžete zatvoriť; výsledok sa zobrazí v histórii behov.",
   "restore.completeContainer": "Obnovenie dokončené, kontajner sa znova vytvára.",

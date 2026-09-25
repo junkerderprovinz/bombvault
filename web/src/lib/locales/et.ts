@@ -241,6 +241,8 @@ const et: Partial<Translations> = {
   "restore.mode.files": "Üksikud failid",
   "restore.mode.toFolder": "Kausta",
   "restore.inPlaceHint": "Loo see konteiner täpselt endisel kujul uuesti.",
+  "restore.missingPoint": "Varukoopiat ajast {date} enam ei ole.",
+  "restore.nearestPoint": "Lähim on ajast {date}.",
   "restore.leaveStopped": "Jäta pärast taastamist peatatuks (ära käivita)",
   "restore.bgHint": "Töötab taustal, võid selle paneeli sulgeda; tulemus ilmub käivituste ajaloos.",
   "restore.completeContainer": "Taastamine lõpetatud: konteinerit luuakse uuesti.",

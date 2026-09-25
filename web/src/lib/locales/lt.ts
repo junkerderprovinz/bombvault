@@ -241,6 +241,8 @@ const lt: Partial<Translations> = {
   "restore.mode.files": "Pavieniai failai",
   "restore.mode.toFolder": "Į aplanką",
   "restore.inPlaceHint": "Iš naujo sukurkite šį konteinerį lygiai tokį, koks jis buvo.",
+  "restore.missingPoint": "Kopijos iš {date} nebėra.",
+  "restore.nearestPoint": "Artimiausia yra iš {date}.",
   "restore.leaveStopped": "Palikti sustabdytą po atkūrimo (nepaleisti)",
   "restore.bgHint": "Vykdoma fone. Galite uždaryti šį skydelį; rezultatas bus rodomas vykdymo istorijoje.",
   "restore.completeContainer": "Atkūrimas baigtas, konteineris kuriamas iš naujo.",

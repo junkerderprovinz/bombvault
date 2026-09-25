@@ -1117,6 +1117,8 @@ const ko: Partial<Translations> = {
   "restore.mode.files": "개별 파일",
   "restore.mode.toFolder": "폴더로",
   "restore.inPlaceHint": "이 컨테이너를 이전과 정확히 동일하게 다시 만듭니다.",
+  "restore.missingPoint": "{date}의 백업은 더 이상 없습니다.",
+  "restore.nearestPoint": "가장 가까운 백업은 {date}의 백업입니다.",
   "restore.leaveStopped": "복원 후 중지된 상태로 두기 (시작하지 않음)",
   "restore.bgHint": "백그라운드에서 실행 중입니다. 이 패널을 닫아도 됩니다. 결과는 실행 기록에 표시됩니다.",
   "stack.title": "스택",

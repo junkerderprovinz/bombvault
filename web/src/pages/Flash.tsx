@@ -20,6 +20,7 @@ import { IconBackupNow, IconDownload, IconTrash } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
+import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
 import { findingSnapshotId } from "../lib/anomalies";
 import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
 import { useRestoreRequest } from "../lib/restoreRequest";
@@ -334,6 +335,14 @@ export function Flash() {
 
         {loading && <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>}
         {error && <p className="text-xs text-statusFail">{error}</p>}
+        {!loading && !error && (
+          <MissingRestorePoint
+            requested={restoreRequest.snapshot}
+            requestedAt={restoreRequest.at}
+            points={snapshots.map(restorePointOf)}
+            t={t}
+          />
+        )}
         {!loading && !error && snapshots.length === 0 && (
           <p className="text-xs text-carbon-textMuted">{t("flash.none")}</p>
         )}
