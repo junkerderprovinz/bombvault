@@ -322,7 +322,6 @@ const sr: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "Дуплирање… {percent}% укупно (снимак {index} од {total}) · {duration}",
   "offsite.overallPercentHint": "Укупни напредак овог дуплирања, бројан у снимцима: restic јавља напредак увек само за један снимак, никада за цело копирање. Снимци су различите величине, па ово схвати као процену.",
   "offsite.test": "Тестирај везу",
-  "offsite.repoLocalHint": "Прихвата и обичну фасциклу под тачком монтирања \"Подаци хоста\" — унеси је релативно на ту тачку монтирања, без водеће /mnt: дељени ресурс на /mnt/remotes/nas/bombvault се уноси као remotes/nas/bombvault.",
   "offsite.tamperOk": "брисање одбијено — само додавање активно",
   "offsite.tamperFail": "НИЈЕ заштићено",
   "offsite.tamperUnverifiable": "није проверљиво за ову врсту репозиторијума",

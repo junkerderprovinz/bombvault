@@ -322,7 +322,6 @@ const gl: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "Replicando… {percent}% en total (instantánea {index} de {total}) · {duration}",
   "offsite.overallPercentHint": "Progreso global desta replicación, contado en instantáneas: restic só informa do progreso dunha instantánea de cada vez, nunca dunha copia enteira. As instantáneas teñen tamaños distintos, así que tómao como unha estimación.",
   "offsite.test": "Probar conexión",
-  "offsite.repoLocalHint": "Tamén acepta un cartafol normal baixo a montaxe «Host Data». Introdúceo relativo a esa montaxe, sen o /mnt inicial: unha comparticón en /mnt/remotes/nas/bombvault introdúcese como remotes/nas/bombvault.",
   // Off-site setup wizard
   "offsite.tamperOk": "borrado rexeitado, só-engadir activo",
   "offsite.tamperFail": "NON protexido",

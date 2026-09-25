@@ -322,7 +322,6 @@ const hi: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "रेप्लिकेट हो रहा है… कुल {percent}% (स्नैपशॉट {index}/{total}) · {duration}",
   "offsite.overallPercentHint": "इस रेप्लिकेशन की कुल प्रगति, स्नैपशॉट में गिनी गई: restic हमेशा एक समय में केवल एक स्नैपशॉट की प्रगति बताता है, कभी पूरी कॉपी की नहीं। स्नैपशॉट अलग-अलग आकार के होते हैं, इसलिए इसे एक अनुमान मानें।",
   "offsite.test": "कनेक्शन जाँचें",
-  "offsite.repoLocalHint": "\"Host Data\" माउंट के अंतर्गत एक सामान्य फ़ोल्डर भी स्वीकार करता है। इसे उस माउंट के सापेक्ष दर्ज करें, आगे /mnt लगाए बिना: /mnt/remotes/nas/bombvault पर एक शेयर को remotes/nas/bombvault के रूप में दर्ज किया जाता है।",
   // Off-site setup wizard
   "offsite.tamperOk": "हटाना अस्वीकार हुआ: अपेंड-ओनली सक्रिय है",
   "offsite.tamperFail": "सुरक्षित नहीं",

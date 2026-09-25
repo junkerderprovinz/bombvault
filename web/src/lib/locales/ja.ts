@@ -930,7 +930,6 @@ const ja: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "接続をテスト",
-  "offsite.repoLocalHint": "「Host Data」マウント配下の通常のフォルダーも指定できます。先頭の /mnt を付けず、そのマウントからの相対パスで入力してください。/mnt/remotes/nas/bombvault の共有は remotes/nas/bombvault と入力します。",
   "offsite.tamperOk": "削除は拒否されました。追記専用が有効",
   "offsite.tamperFail": "保護されていません",
   "offsite.tamperUnverifiable": "このリポジトリ種別では検証できません",

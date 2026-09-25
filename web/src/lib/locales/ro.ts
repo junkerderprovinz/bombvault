@@ -936,7 +936,6 @@ const ro: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Testează conexiunea",
-  "offsite.repoLocalHint": "Acceptă și un simplu folder din montarea \"Host Data\": indică-l relativ la această montare, fără /mnt la început. O partajare din /mnt/remotes/nas/bombvault se indică drept remotes/nas/bombvault.",
   "offsite.tamperOk": "ștergerea a fost refuzată, append-only activ",
   "offsite.tamperFail": "NU este protejat",
   "offsite.tamperUnverifiable": "nu poate fi verificat pentru acest tip de depozit",

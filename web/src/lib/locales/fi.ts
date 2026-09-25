@@ -956,7 +956,6 @@ const fi: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Testaa yhteys",
-  "offsite.repoLocalHint": "Hyväksyy myös tavallisen kansion \"Host Data\" -liitoksen alla: anna se suhteessa kyseiseen liitokseen, ilman alun /mnt-osaa. Jako polussa /mnt/remotes/nas/bombvault annetaan muodossa remotes/nas/bombvault.",
   "offsite.tamperOk": "poisto estetty, append-only käytössä",
   "offsite.tamperFail": "EI suojattu",
   "offsite.tamperUnverifiable": "ei todennettavissa tälle repotyypille",

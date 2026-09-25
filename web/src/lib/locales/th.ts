@@ -959,7 +959,6 @@ const th: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "ทดสอบการเชื่อมต่อ",
-  "offsite.repoLocalHint": "รองรับโฟลเดอร์ธรรมดาภายใต้จุดเมานต์ \"Host Data\" ด้วย โดยระบุเป็นพาธที่สัมพันธ์กับจุดเมานต์นั้น ไม่ต้องมี /mnt นำหน้า เช่น แชร์ที่ /mnt/remotes/nas/bombvault ให้ระบุเป็น remotes/nas/bombvault",
   "offsite.tamperOk": "การลบถูกปฏิเสธ โหมดเขียนต่อท้ายเท่านั้นทำงานอยู่",
   "offsite.tamperFail": "ไม่ได้รับการป้องกัน",
   "offsite.tamperUnverifiable": "ไม่สามารถตรวจสอบได้สำหรับรีพอสิทอรีประเภทนี้",

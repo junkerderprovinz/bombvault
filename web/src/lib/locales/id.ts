@@ -322,7 +322,6 @@ const id: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "Mereplikasi… {percent}% keseluruhan (snapshot {index} dari {total}) · {duration}",
   "offsite.overallPercentHint": "Progres keseluruhan replikasi ini, dihitung dalam snapshot: restic selalu hanya melaporkan progres satu snapshot, tidak pernah untuk seluruh proses penyalinan. Ukuran snapshot berbeda-beda, jadi anggap ini sebagai perkiraan.",
   "offsite.test": "Uji koneksi",
-  "offsite.repoLocalHint": "Juga menerima folder biasa di bawah mount \"Host Data\". Masukkan relatif terhadap mount tersebut, tanpa /mnt di depan: share di /mnt/remotes/nas/bombvault dimasukkan sebagai remotes/nas/bombvault.",
   // Off-site setup wizard
   "offsite.tamperOk": "penghapusan ditolak: append-only aktif",
   "offsite.tamperFail": "TIDAK terlindungi",

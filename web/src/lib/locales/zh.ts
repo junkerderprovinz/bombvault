@@ -949,7 +949,6 @@ const zh: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "测试连接",
-  "offsite.repoLocalHint": "也接受“Host Data”挂载下的普通文件夹：请填写相对该挂载的路径，不要带开头的 /mnt。挂载在 /mnt/remotes/nas/bombvault 的共享填写为 remotes/nas/bombvault。",
   "offsite.tamperOk": "删除被拒绝，仅追加模式已生效",
   "offsite.tamperFail": "未受保护",
   "offsite.tamperUnverifiable": "此仓库类型无法验证",

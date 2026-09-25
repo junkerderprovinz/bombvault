@@ -956,7 +956,6 @@ const el: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Δοκιμή σύνδεσης",
-  "offsite.repoLocalHint": "Δέχεται και έναν απλό φάκελο μέσα στην προσάρτηση \"Host Data\": δηλώστε τον σχετικά με αυτήν την προσάρτηση, χωρίς το αρχικό /mnt. Ένας κοινόχρηστος φάκελος στο /mnt/remotes/nas/bombvault δηλώνεται ως remotes/nas/bombvault.",
   "offsite.tamperOk": "η διαγραφή απορρίφθηκε, append-only ενεργό",
   "offsite.tamperFail": "ΔΕΝ προστατεύεται",
   "offsite.tamperUnverifiable": "μη επαληθεύσιμο για αυτόν τον τύπο αποθετηρίου",

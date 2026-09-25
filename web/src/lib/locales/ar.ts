@@ -959,7 +959,6 @@ const ar: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "اختبار الاتصال",
-  "offsite.repoLocalHint": "يقبل أيضًا مجلدًا عاديًا داخل نقطة الوصل \"Host Data\": أدخله بالنسبة إلى نقطة الوصل هذه، بدون /mnt في البداية. المشاركة الموجودة في /mnt/remotes/nas/bombvault تُدخل هكذا: remotes/nas/bombvault.",
   "offsite.tamperOk": "رُفض الحذف: وضع الإلحاق فقط نشط",
   "offsite.tamperFail": "غير محمي",
   "offsite.tamperUnverifiable": "غير قابل للتحقق لهذا النوع من المستودعات",

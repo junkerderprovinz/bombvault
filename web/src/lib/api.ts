@@ -1966,30 +1966,6 @@ export function listOffsiteTargets(
   return fetchJSON(`/api/offsite/targets${qs}`);
 }
 
-/** POST /api/offsite/targets: create a target. `alsoExclude` is the answer to
- *  the new-target question and goes along only when there is one. */
-export function createOffsiteTarget(
-  target: Omit<OffsiteTarget, "id" | "createdAt">,
-  alsoExclude?: NewTargetExclusion
-): Promise<OkEnvelope & { target?: OffsiteTarget }> {
-  return fetchJSON("/api/offsite/targets", {
-    method: "POST",
-    body: JSON.stringify(alsoExclude ? { ...target, alsoExclude } : target),
-  });
-}
-
-/** PUT /api/offsite/targets/{id} — replace a target (createdAt is preserved; unknown id → 404). */
-export function updateOffsiteTarget(
-  id: string,
-  target: OffsiteTarget,
-  alsoExclude?: NewTargetExclusion
-): Promise<OkEnvelope & { target?: OffsiteTarget; warnings?: SaveWarning[] }> {
-  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    body: JSON.stringify(alsoExclude ? { ...target, alsoExclude } : target),
-  });
-}
-
 /** Placement: which domains have it, and what the direct repository routes answer. */
 export type PlacementDomain = "containers" | "vms" | "files";
 
@@ -2225,61 +2201,14 @@ export interface DefaultImpact {
   skip: string[];
 }
 
-export interface DefaultChange {
-  home?: string;
-  skip?: string[];
-}
-
 function defaultPath(domain: PlacementDomain, rest = ""): string {
   return `/api/placement/default/${encodeURIComponent(domain)}${rest}`;
-}
-
-export function listPlacementDefaults(): Promise<OkEnvelope & { defaults?: DefaultRow[] }> {
-  return fetchJSON("/api/placement/defaults");
-}
-
-export function previewPlacementDefault(
-  domain: PlacementDomain,
-  change: DefaultChange
-): Promise<OkEnvelope & { impact?: DefaultImpact }> {
-  return fetchJSON(defaultPath(domain, "/preview"), { method: "POST", body: JSON.stringify(change) });
-}
-
-/** Writes a default. `expect` is the impact the question showed; code "stale"
- *  answers with the new one. */
-export function putPlacementDefault(
-  domain: PlacementDomain,
-  change: DefaultChange,
-  expect: DefaultImpact
-): Promise<OkEnvelope & { default?: DefaultRow; impact?: DefaultImpact }> {
-  return fetchJSON(defaultPath(domain), { method: "PUT", body: JSON.stringify({ ...change, expect }) });
-}
-
-export interface ApplyCandidate {
-  key: string;
-  label: string;
-  losesHome: boolean;
-  losesRule: boolean;
-  uploads: UploadEstimate[];
 }
 
 export interface KeptItem {
   key: string;
   label: string;
   reason: "has-backups" | "unreadable" | "changed";
-}
-
-export function getApplyDefaultPreview(
-  domain: PlacementDomain
-): Promise<OkEnvelope & { reset?: ApplyCandidate[]; kept?: KeptItem[] }> {
-  return fetchJSON(defaultPath(domain, "/apply"));
-}
-
-export function applyPlacementDefault(
-  domain: PlacementDomain,
-  keys: string[]
-): Promise<OkEnvelope & { reset?: string[]; kept?: KeptItem[] }> {
-  return fetchJSON(defaultPath(domain, "/apply"), { method: "POST", body: JSON.stringify({ keys }) });
 }
 
 export interface ExcludedItem {

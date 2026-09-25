@@ -322,7 +322,6 @@ const ca: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "Replicant… {percent}% en total (instantani {index} de {total}) · {duration}",
   "offsite.overallPercentHint": "Progrés global d'aquesta replicació, comptat en instantànies: restic només informa del progrés d'una instantània alhora, mai d'una còpia sencera. Les instantànies tenen mides diferents, així que pren-t'ho com una estimació.",
   "offsite.test": "Prova la connexió",
-  "offsite.repoLocalHint": "També accepta una carpeta normal sota el muntatge «Host Data». Introdueix-la relativa a aquest muntatge, sense el /mnt inicial: una compartició a /mnt/remotes/nas/bombvault s'introdueix com remotes/nas/bombvault.",
   // Off-site setup wizard
   "offsite.tamperOk": "esborrat rebutjat, només-afegir actiu",
   "offsite.tamperFail": "NO protegit",

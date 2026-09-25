@@ -322,7 +322,6 @@ const sl: Partial<Translations> = {
   "offsite.replicatingSnapshotPercentWithDuration": "Podvajanje… {percent} % skupno (posnetek {index} od {total}) · {duration}",
   "offsite.overallPercentHint": "Skupni napredek tega podvajanja, štet v posnetkih: restic javlja napredek vedno le za en posnetek, nikoli za celotno kopiranje. Posnetki so različno veliki, zato to jemlji kot oceno.",
   "offsite.test": "Preizkusi povezavo",
-  "offsite.repoLocalHint": "Sprejme tudi navadno mapo pod priklopno točko \"Podatki gostitelja\". Vnesi jo relativno na to priklopno točko, brez vodilnega /mnt: souporaba na /mnt/remotes/nas/bombvault se vnese kot remotes/nas/bombvault.",
   "offsite.tamperOk": "brisanje zavrnjeno, samo-dodajanje aktivno",
   "offsite.tamperFail": "NI zaščiteno",
   "offsite.tamperUnverifiable": "za to vrsto repozitorija ni mogoče preveriti",

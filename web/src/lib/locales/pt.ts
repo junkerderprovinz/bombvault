@@ -933,7 +933,6 @@ const pt: Partial<Translations> = {
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Testar ligação",
-  "offsite.repoLocalHint": "Também aceita uma pasta simples dentro da montagem \"Host Data\": indique-a relativa a essa montagem, sem o /mnt inicial. Uma partilha em /mnt/remotes/nas/bombvault indica-se como remotes/nas/bombvault.",
   "offsite.tamperOk": "eliminação recusada, append-only ativo",
   "offsite.tamperFail": "NÃO protegido",
   "offsite.tamperUnverifiable": "não verificável para este tipo de repositório",
