@@ -335,6 +335,7 @@ type importSummary struct {
 	NamedRepos        int                 `json:"namedRepos"`
 	PlacementDefaults *int                `json:"placementDefaults"`
 	CopyRules         *int                `json:"copyRules"`
+	Places            *int                `json:"places"`
 	NewTargets        []newTargetRow      `json:"newTargets"`
 	Credentials       importCredsPresence `json:"credentials"`
 	SettingsGroups    []string            `json:"settingsGroups"`
@@ -712,6 +713,7 @@ func summarizeExport(exp settingsExport) importSummary {
 		NamedRepos:        len(exp.NamedRepos),
 		PlacementDefaults: countIfPresent(exp.PlacementDefaults),
 		CopyRules:         countIfPresent(exp.CopyRules),
+		Places:            countIfPresent(exp.Places),
 		NewTargets:        []newTargetRow{},
 		Credentials:       credsPresence(exp.Credentials),
 		SettingsGroups:    settingsGroups(exp.Settings),
@@ -762,12 +764,27 @@ func settingsGroups(v settingsView) []string {
 }
 
 // applyImport writes a validated export: the settings row, a full replace of the
-// off-site targets, and any credentials (re-encrypted with the local APP_KEY). It
-// never touches repos, snapshots or run history.
+// off-site targets, any credentials (re-encrypted with the local APP_KEY) and the
+// storage places. It never touches repos, snapshots or run history.
 func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	installed, err := h.installedForImport(ctx, exp)
 	if err != nil {
 		return fmt.Errorf("the settings were not imported: %w", err)
+	}
+	var prior []store.Place
+	if exp.Places != nil {
+		// Read before the drop: a place whose base arrives redacted keeps the
+		// base it has here under the same id.
+		if prior, err = h.store.ListPlaces(); err != nil {
+			return fmt.Errorf("the settings were not imported: %w", err)
+		}
+		// The steps below then write rows on no place, so none of the rules
+		// that guard a placed row gets in their way. The file's places come
+		// back after them; an apply that stops halfway leaves the next start
+		// to build places from the rows.
+		if err := h.store.DropPlaces(); err != nil {
+			return fmt.Errorf("the settings were not imported: %w", err)
+		}
 	}
 
 	// A hook command in the file is not installed (see mergeImportedSettings).
@@ -827,18 +844,26 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 		}
 	}
 
-	// Credentials: present block → re-encrypt each NON-EMPTY kind with the local
-	// key. An empty kind (or a missing block) leaves the existing secret untouched
-	// — import is additive, it never wipes secrets.
+	// Each credential kind the file fills is re-encrypted with the local key. An
+	// empty kind or a missing block leaves the stored secret alone: the import
+	// adds secrets and never wipes one.
 	if exp.Credentials != nil {
 		if err := h.applyImportedCredentials(*exp.Credentials); err != nil {
 			return err
 		}
 	}
 
+	// Last among the writes, so a place claims only what the steps above
+	// stored; see placedImport.
+	if exp.Places != nil {
+		if err := h.replacePlaces(exp, prior); err != nil {
+			return err
+		}
+	}
+
 	// Mirror the imported off-site config into the primary off-site target rows and
 	// re-arm the scheduler, exactly like a settings save, so the imported schedules
-	// take effect. The scheduler may be absent in a stripped test wiring — guard it.
+	// take effect. A test wiring may have no scheduler.
 	s, err := h.store.GetSettings()
 	if err != nil {
 		return err
