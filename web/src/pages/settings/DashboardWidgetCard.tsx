@@ -106,7 +106,7 @@ export function UnraidTileSection({
   }
 
   return (
-    <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
+    <div className="flex flex-col gap-3">
       <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
         {t("settings.dashTile")}
         <InfoBubble tip={t("settings.dashTileHint")} />
