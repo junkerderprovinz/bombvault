@@ -50,6 +50,18 @@ func placeByName(t *testing.T, res map[string]any, name string) map[string]any {
 	return nil
 }
 
+// rowsOfStrings is a JSON array of strings from an answer.
+func rowsOfStrings(v any) []string {
+	arr, _ := v.([]any)
+	out := make([]string, 0, len(arr))
+	for _, e := range arr {
+		if s, ok := e.(string); ok {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
 // probeAnswers makes every place probe answer res and records what it was asked.
 func (f *placementFixture) probeAnswers(res places.ProbeResult) *[]ProbeRequest {
 	var asked []ProbeRequest
