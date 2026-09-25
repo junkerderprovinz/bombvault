@@ -174,3 +174,40 @@ func TestSyncPrimaryOffsiteTargetAddsPrimaryBesideAdditionalTarget(t *testing.T)
 		t.Fatalf("additional target changed: %+v", targets[1])
 	}
 }
+
+// Without a primary, an additional target already on the repo the settings
+// name becomes the primary, so the domain does not replicate there twice.
+func TestSyncPrimaryOffsiteTargetAdoptsAdditionalTargetOnTheSameRepo(t *testing.T) {
+	s, st := newSyncTestService(t)
+
+	same, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "Primary", Repo: "s3:containers", CredsRef: "set-a", Enabled: true, SortOrder: 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	other, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "Second copy", Repo: "s3:containers-extra", Enabled: true, SortOrder: 2,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersOffsite = "s3:containers"
+	if err := s.syncPrimaryOffsiteTarget("containers", settings); err != nil {
+		t.Fatal(err)
+	}
+	targets := s.offsiteTargetsFor("containers")
+	if len(targets) != 2 {
+		t.Fatalf("want the existing row as primary and no duplicate, got %+v", targets)
+	}
+	if targets[0].ID != same.ID || targets[0].SortOrder != 0 || targets[0].CredsRef != "set-a" {
+		t.Fatalf("primary = %+v, want row %s at sort order 0 with its credential set", targets[0], same.ID)
+	}
+	if targets[1].ID != other.ID || targets[1].SortOrder != 2 {
+		t.Fatalf("other additional target changed: %+v", targets[1])
+	}
+}

@@ -25,9 +25,11 @@ func validOffsiteDomain(domain string) bool {
 // columns.
 //
 // An existing primary keeps its id, creation time and credential set. Without
-// one, a new row is created. When the domain's off-site repo is cleared, the
-// primary is deleted so offsiteRepoFor cannot return a stale repo. Additional
-// targets sort after it and are never touched here.
+// one, an additional target already on the repo becomes the primary, so the
+// domain does not replicate there twice, and failing that a new row is created.
+// When the domain's off-site repo is cleared, the primary is deleted so
+// offsiteRepoFor cannot return a stale repo. Other additional targets sort after
+// it and are never touched here.
 //
 // The storage class comes from the cloud credentials. If they cannot be
 // decoded it stays empty, which offsiteModeForTarget treats as the global
@@ -54,6 +56,14 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 			return s.store.DeleteOffsiteTarget(primary.ID)
 		}
 		return nil
+	}
+	if primary == nil {
+		for i := range targets {
+			if targets[i].Repo == repo {
+				primary = &targets[i]
+				break
+			}
+		}
 	}
 
 	t := settingsOffsiteTarget(domain, settings, repo)
