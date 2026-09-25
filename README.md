@@ -101,29 +101,36 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 
 ### How it compares
 
-Unraid's usual backup answer is [**Appdata.Backup**](https://github.com/Commifreak/unraid-appdata.backup) (the community-maintained successor to the old Appdata Backup/Restore plugin) — a native CA plugin, but a file-level one: it archives the appdata folder (and optionally VM disks + Unraid flash), with no awareness of what a Docker container or a libvirt VM *is*, so a restore is copying files back, not the container reappearing in the Docker tab on its own. The other well-known route is a generic dedup/encrypted engine — [Duplicati](https://duplicati.com), [Kopia](https://kopia.io), [Duplicacy](https://duplicacy.com) or [BorgBackup](https://borgbackup.readthedocs.io) — run by hand or via a community Docker template; all are solid, actively developed engines (restic's own closest siblings, in Kopia's, Duplicacy's and Borg's case), but none of them know what a container or a VM is either, and none ship as a native Unraid plugin.
+Most Unraid servers are backed up with [**Appdata.Backup**](https://github.com/Commifreak/unraid-appdata.backup), a CA plugin that archives appdata folders, or with a general engine such as [Duplicati](https://duplicati.com), [Kopia](https://kopia.io) or [BorgBackup](https://borgbackup.readthedocs.io). They save files well, but a restore gives you files back, not a running container or VM.
 
-The closest thing to a direct counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by [@ruaan-deysel](https://github.com/ruaan-deysel), a native Unraid plugin that shares the core idea: it, too, recreates containers through the Docker API and re-defines VMs through libvirt on restore. It reaches further in places BombVault does not cover yet — ZFS datasets and installed Unraid plugins as backup sources, statistical anomaly detection, automatic database dumps for recognised database containers. It stops short in others: it runs a backup engine of its own rather than an established one, so a backup is readable only by Vault itself; it has no append-only off-site mode; and it verifies a restore point by reading the data back and re-hashing it rather than by actually restoring it. Worth a look, and the honest comparison is below.
+The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by [@ruaan-deysel](https://github.com/ruaan-deysel), a native Unraid plugin built on the same idea: it recreates containers and re-defines VMs on restore. Vault is ahead on what it can back up and on watching backups over time, and an AI assistant can talk to it. BombVault is ahead on getting data back: restic reads its backups without BombVault, the off-site copy can be append-only, and restores are tested for real. Worth a look.
 
 | | **BombVault** | Vault (plugin) | Appdata.Backup (CA) | Duplicati | Kopia | BorgBackup |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
-| Docker restore reinstalls the container (image, env, ports, labels) | ✅ | ✅ | ❌ files only | ❌ | ❌ | ❌ |
-| VM/guest restore re-defines it (not just a disk copy) | ✅ via libvirt | ✅ via libvirt | ⚠️ backs up disk+XML, restore is file-level | ❌ | ❌ | ❌ |
-| Deduplication | ✅ content-defined | ✅ content-defined | ❓ undocumented | ⚠️ fixed-block only | ✅ content-defined | ✅ content-defined |
-| Client-side encryption | ✅ | ✅ | ❓ undocumented | ✅ | ✅ | ✅ |
-| Restorable without this app, with a standard CLI tool | ✅ restic | ❌ Vault only | ✅ tar | ✅ | ✅ | ✅ |
-| Immutable / append-only off-site | ✅ + an active tamper test proves it | ❌ | ❌ | ⚠️ depends on backend config | ✅ Object Lock | ✅ append-only SSH mode |
-| Automated restore-verification drills | ✅ local + off-site sandbox restore | ⚠️ read-back + re-hash, no test restore | ❌ | ⚠️ sample-file check only | ✅ opt-in full test-restore | ❌ manual convention only |
-| Multiple off-site targets, independent credentials | ✅ | ✅ | ❌ | ✅ | ⚠️ mirrors to N, one active repo | ❌ needs manual scripting |
-| Native pre/post-backup hooks | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ core has none — Borgmatic adds it |
-| Live restore progress + cancel | ✅ | ✅ | ❓ | ✅ | ❌ [confirmed gap](https://github.com/kopia/kopia/issues/3609) | ⚠️ CLI progress, no true cancel |
-| Notification channels | ✅ 6+ incl. SMTP, Matrix, Apprise | ⚠️ Discord + Unraid | ⚠️ Unraid only | ✅ | ❌ | ❌ |
-| Statistical anomaly detection (size/duration drift, capacity ETA) | ⏳ planned | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Runs outside Unraid too | ✅ Docker host, TrueNAS Scale | ❌ Unraid 7 only | ❌ | ✅ | ✅ | ✅ |
-| Native platform packaging | ✅ Unraid CA | ✅ Unraid plugin | ✅ Unraid CA | ❌ generic Docker template | ❌ generic Docker template | ❌ generic Docker template |
-| Web UI | ✅ | ✅ | ✅ | ✅ | ⚠️ separate project (KopiaUI) | ❌ CLI/config-file only |
+| Restore brings a container back whole (image, env, ports, labels) | ✅ | ✅ | ⚠️ files and XML | ❌ | ❌ | ❌ |
+| Restore re-defines a VM, not only its disks | ✅ | ✅ | ⚠️ XML only | ❌ | ❌ | ❌ |
+| Database dumps for recognised database containers | ❌ in progress | ✅ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
+| Installed Unraid plugins | ⚠️ in flash backup | ✅ | ⚠️ in flash backup | ❌ | ❌ | ❌ |
+| ZFS datasets as a source | ❌ in progress | ✅ | ❌ | ❌ | ⚠️ as folders | ⚠️ via Borgmatic |
+| Deduplication | ✅ | ✅ opt-in | ❌ | ✅ fixed blocks | ✅ | ✅ |
+| Client-side encryption | ✅ | ✅ optional | ❌ | ✅ | ✅ | ✅ |
+| Backups readable with a standard open-source CLI | ✅ restic | ⚠️ not with dedup | ✅ tar | ⚠️ Python script | ✅ kopia | ✅ borg |
+| Append-only or immutable off-site copy | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Scheduled test restores, not only a checksum read | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
+| Several off-site targets, each with its own credentials | ✅ | ⚠️ one per job | ❌ | ✅ | ⚠️ CLI sync | ⚠️ via Borgmatic |
+| Pre/post-backup hooks | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ via Borgmatic |
+| Live progress and cancel, backup and restore | ✅ | ⚠️ no restore cancel | ⚠️ log, no percentage | ✅ | ⚠️ [no restore percentage](https://github.com/kopia/kopia/issues/3609) | ⚠️ CLI or Vorta |
+| Notifications | ✅ SMTP, Matrix, Apprise, more | ✅ Discord, Unraid | ✅ Unraid's agents | ✅ email, Telegram, HTTP | ✅ email, Pushover, webhook | ⚠️ via Borgmatic |
+| Anomaly detection (size, duration, shrink, mass rewrite) | ❌ in progress | ⚠️ no rewrite check | ❌ | ⚠️ paid Console | ❌ | ❌ |
+| AI assistant access (MCP) | ❌ in progress | ✅ | ❌ | ⚠️ third party | ❌ | ❌ |
+| Backs up desktops and laptops | ❌ | ❌ | ❌ | ✅ | ✅ | ⚠️ Windows experimental |
+| Runs outside Unraid | ✅ | ⚠️ replica only | ❌ | ✅ | ✅ | ✅ |
+| In Unraid Community Applications | ✅ | ✅ | ✅ | ✅ community template | ✅ community template | ✅ community template |
+| Web UI | ✅ | ✅ | ✅ in Unraid's UI | ✅ | ✅ | ⚠️ third party |
+| Web UI usable on a phone | ❌ in progress | ✅ per its README | ❓ | ✅ | ❓ | ❓ |
+| Track record | ⚠️ since 2026, one maintainer | ⚠️ since 2026, one maintainer | ⚠️ since 2023, feature-frozen | ✅ since 2008 | ✅ since 2019 | ✅ since 2015 |
 
-✅ yes · ❌ no · ⚠️ present but limited · ⏳ planned · ❓ undocumented
+✅ yes · ⚠️ partly · ❌ no · ❓ not found in code or docs. "In progress" means the work is under way but not in a release yet. Checked on 25 September 2026 against BombVault v8.12.1 and the current code and docs of the others.
 
 <br>
 
