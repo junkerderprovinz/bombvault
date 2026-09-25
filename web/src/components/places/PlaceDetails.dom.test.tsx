@@ -12,6 +12,7 @@ import type { CatalogProvider, PatchPlaceBody, Place } from "../../lib/places";
 const patches: Partial<PatchPlaceBody>[] = [];
 let answer: (body: Partial<PatchPlaceBody>) => { ok: boolean; code?: string; error?: string; place?: Place } = () => ({ ok: true });
 const tampered: string[] = [];
+const homeTampered: string[] = [];
 let tamperAnswer: { ok: boolean; error?: string; testable?: boolean; protected?: boolean } = { ok: true };
 
 vi.mock("../../lib/places", async (importOriginal) => {
@@ -31,6 +32,10 @@ vi.mock("../../lib/api", async (importOriginal) => {
     ...actual,
     tamperTest: (domain: string) => {
       tampered.push(domain);
+      return Promise.resolve(tamperAnswer);
+    },
+    primaryRemoteTamperTest: (domain: string) => {
+      homeTampered.push(domain);
       return Promise.resolve(tamperAnswer);
     },
   };
@@ -77,6 +82,7 @@ const B2: CatalogProvider = {
 beforeEach(() => {
   patches.length = 0;
   tampered.length = 0;
+  homeTampered.length = 0;
   tamperAnswer = { ok: true, testable: true, protected: true };
   answer = (body) => ({ ok: true, place: { ...place(), ...(body as Partial<Place>) } });
   vi.useFakeTimers();
@@ -140,6 +146,18 @@ describe("PlaceDetails saving", () => {
     await settle(1);
     expect(patches).toEqual([{ name: "B2 EU" }]);
     expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ name: "B2 EU" }));
+  });
+
+  it("keeps a refused name as typed, in one field, with a shake", async () => {
+    answer = () => ({ ok: false, code: "place-name-taken", error: "taken" });
+    details();
+    fireEvent.change(input(en["places.form.name"]), { target: { value: "B2 EU" } });
+    await settle(800);
+    expect(screen.getByText(en["places.error.nameTaken"])).toBeTruthy();
+    expect(screen.getAllByDisplayValue("B2 EU")).toHaveLength(1);
+    expect(input(en["places.form.name"]).closest(".glim-shake")).toBeTruthy();
+    fireEvent.change(input(en["places.form.name"]), { target: { value: "B2 EUR" } });
+    expect(screen.queryByDisplayValue("B2 EU")).toBeNull();
   });
 
   it("saves a field that is still waiting when the details close", async () => {
@@ -231,6 +249,24 @@ describe("PlaceDetails sections", () => {
     expect(screen.getByRole("button", { name: en["places.details.tamperTest"] }).className).toContain("glim-shake");
   });
 
+  it("tests a domain that backs up here on its home repository and a copying domain on its copy", async () => {
+    details(
+      place({
+        kind: "rest",
+        provider: "rest-server",
+        immutable: true,
+        usage: { homeDomains: ["vms"], defaults: [], copyDomains: ["containers"], items: 1, copies: 1 },
+        creds: { shared: false, fields: { user: "tower" }, set: ["password"] },
+      }),
+      undefined
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["places.details.tamperTest"] }));
+    });
+    expect(tampered).toEqual(["containers"]);
+    expect(homeTampered).toEqual(["vms"]);
+  });
+
   it("sends changed credentials together, never a blank secret", async () => {
     details();
     expect(input(en["places.field.secret"]).placeholder).toBe(en["places.details.secretKept"]);
@@ -241,6 +277,16 @@ describe("PlaceDetails sections", () => {
     await settle(800);
     expect(patches).toEqual([{ fields: { keyId: "k2", secret: "s2" } }]);
     expect(input(en["places.field.secret"]).value).toBe("");
+  });
+
+  it("keeps refused credentials as typed, in one set of fields", async () => {
+    answer = () => ({ ok: false, error: "bad key" });
+    details();
+    fireEvent.change(input(en["places.field.keyId"]), { target: { value: "k2" } });
+    await settle(800);
+    expect(patches).toEqual([{ fields: { keyId: "k2" } }]);
+    expect(screen.getAllByDisplayValue("k2")).toHaveLength(1);
+    expect(input(en["places.field.keyId"]).closest(".glim-shake")).toBeTruthy();
   });
 
   it("says a place on the shared credentials gets its own set on the first change", () => {
@@ -279,5 +325,19 @@ describe("PlaceDetails sections", () => {
     });
     await settle(800);
     expect(patches).toEqual([{ folders: { containers: "container", vms: "vms2", flash: "flash" } }]);
+  });
+
+  it("takes back only the refused domain and keeps a folder name being typed", async () => {
+    answer = () => ({ ok: false, error: "no" });
+    details();
+    const folder = (d: string) => screen.getByRole("textbox", { name: en["places.details.folderOf"].replace("{domain}", d) }) as HTMLInputElement;
+    const offer = (d: string) => screen.getByRole("switch", { name: en["places.details.offered"].replace("{domain}", d) });
+    fireEvent.change(folder("VMs"), { target: { value: "vms2" } });
+    await act(async () => {
+      fireEvent.click(offer("Flash"));
+    });
+    expect(patches).toEqual([{ folders: { containers: "container", vms: "vms2", flash: "flash" } }]);
+    expect(offer("Flash").getAttribute("aria-checked")).toBe("false");
+    expect(folder("VMs").value).toBe("vms2");
   });
 });
