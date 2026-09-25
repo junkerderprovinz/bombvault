@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
 import { InfoBubble } from "../InfoBubble";
@@ -217,6 +217,21 @@ export function PlaceForm({
     bodyRef.current?.querySelector("input")?.focus();
   }, []);
 
+  // The stored remotes turn the remote field into a picker, and the text
+  // field it replaces takes the focus along.
+  useEffect(() => {
+    if (remotes.length > 0 && document.activeElement === document.body) {
+      bodyRef.current?.querySelector<HTMLElement>("#place-field-remote")?.focus();
+    }
+  }, [remotes]);
+
+  // A saved config can change what the tested remote points at, so it wants a
+  // new test the way an edited field does.
+  const rcloneRemotes = useCallback((list: string[]) => {
+    setRemotes(list);
+    setProbe(null);
+  }, []);
+
   function set(key: string, value: string) {
     setFields((f) => ({ ...f, [key]: value }));
   }
@@ -349,7 +364,7 @@ export function PlaceForm({
 
         {provider.fields.map(renderField)}
         {provider.kind === "sftp" && <PublicKey />}
-        {provider.kind === "rclone" && <RcloneConfig onRemotes={setRemotes} />}
+        {provider.kind === "rclone" && <RcloneConfig onRemotes={rcloneRemotes} />}
 
         {found && (
           <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3 text-sm text-carbon-text" aria-live="polite">
