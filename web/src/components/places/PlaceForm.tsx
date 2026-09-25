@@ -25,6 +25,7 @@ import {
   type CatalogField,
   type CatalogProvider,
   type Place,
+  type PlaceKind,
   type ProbeResult,
 } from "../../lib/places";
 import { useToast } from "../../lib/toast";
@@ -54,11 +55,11 @@ const FIELD_KEYS: Record<string, TranslationKey> = {
   remote: "places.field.remote",
 };
 
-/** fieldLabelKey is a field's label, where a provider names it its own way. */
-export function fieldLabelKey(provider: CatalogProvider, key: string): TranslationKey {
-  if (provider.kind === "azure" && key === "account") return "places.field.storageAccount";
-  if (provider.kind === "azure" && key === "secret") return "places.field.accessKey";
-  if (provider.kind === "webdav" && key === "password") return "places.field.appPassword";
+/** fieldLabelKey is a field's label, where a kind of place names it its own way. */
+export function fieldLabelKey(kind: PlaceKind, key: string): TranslationKey {
+  if (kind === "azure" && key === "account") return "places.field.storageAccount";
+  if (kind === "azure" && key === "secret") return "places.field.accessKey";
+  if (kind === "webdav" && key === "password") return "places.field.appPassword";
   return FIELD_KEYS[key] ?? "places.field.path";
 }
 
@@ -289,7 +290,7 @@ export function PlaceForm({
 
   function renderField(f: CatalogField) {
     const id = `place-field-${f.key}`;
-    const label = t(fieldLabelKey(provider, f.key));
+    const label = t(fieldLabelKey(provider.kind, f.key));
     if (f.key === "path" && provider.kind === "local") {
       return (
         <FolderBrowser

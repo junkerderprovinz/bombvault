@@ -345,7 +345,6 @@ export function PlaceDetails({
     setTesting(false);
   }
 
-  const labelsOf: CatalogProvider = provider ?? { id: place.provider, group: "cloud", kind: place.kind, fields: [] };
   const asks = provider !== undefined && provider.offPremises === undefined;
   const tamperDomains = place.usage.copyDomains.length + place.usage.homeDomains.length;
   const fieldId = (key: string) => `place-${place.id}-${key}`;
@@ -478,7 +477,7 @@ export function PlaceDetails({
             {credKeys.map((key) => (
               <div key={key} className="flex flex-col gap-1.5">
                 <label htmlFor={fieldId(key)} className="text-xs text-carbon-textSub">
-                  {t(fieldLabelKey(labelsOf, key))}
+                  {t(fieldLabelKey(place.kind, key))}
                 </label>
                 {secretKeys.has(key) ? (
                   <SecretInput
