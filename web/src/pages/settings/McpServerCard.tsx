@@ -644,16 +644,19 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                           ).replace("{date}", formatTs(k.revokedAt))}
                         </span>
                       </div>
-                      <Button
-                        label={t("common.delete")}
-                        labelKey="common.delete"
-                        tone="neutral"
-                        onClick={() => setPending({ kind: "purge", item: k })}
-                        disabled={busy || k.inUse}
-                        title={k.inUse ? t("mcp.inUseTip") : undefined}
-                        className={shake[`purge:${k.id}`] ? "glim-shake" : ""}
-                        hueIndex={hueIndex}
-                      />
+                      {/* A disabled button shows no tooltip, so the reason sits beside it. */}
+                      <span className="flex items-center gap-1.5">
+                        {k.inUse && <InfoBubble tip={t("mcp.inUseTip")} />}
+                        <Button
+                          label={t("common.delete")}
+                          labelKey="common.delete"
+                          tone="neutral"
+                          onClick={() => setPending({ kind: "purge", item: k })}
+                          disabled={busy || k.inUse}
+                          className={shake[`purge:${k.id}`] ? "glim-shake" : ""}
+                          hueIndex={hueIndex}
+                        />
+                      </span>
                     </li>
                   ))}
                 </ul>

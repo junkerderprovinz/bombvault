@@ -399,7 +399,7 @@ describe("a key list", () => {
     );
   });
 
-  it("purge is disabled for keys still named in history", async () => {
+  it("purge is disabled for keys still named in history, and says why", async () => {
     await renderCard(
       payload({
         revoked: [
@@ -415,6 +415,8 @@ describe("a key list", () => {
     const inUse = rows.find((r) => r.textContent?.includes("old laptop"))!;
     const free = rows.find((r) => r.textContent?.includes("old desktop"))!;
     expect(within(inUse).getByRole("button", { name: en["common.delete"] }).hasAttribute("disabled")).toBe(true);
+    expect(within(inUse).getByLabelText(en["mcp.inUseTip"])).toBeTruthy();
+    expect(within(free).queryByLabelText(en["mcp.inUseTip"])).toBeNull();
 
     fireEvent.click(within(free).getByRole("button", { name: en["common.delete"] }));
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["common.delete"] }));
