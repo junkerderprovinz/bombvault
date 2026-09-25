@@ -186,9 +186,11 @@ func (r *Repo) SetDomainPlaceTx(tx *sql.Tx, domain, placeID string) error {
 	return nil
 }
 
-// WritePlace inserts or updates the place, makes it the home place of the
-// domains w names, writes the credential blob and mirrors the place onto
-// every row at it, all in one transaction. Only what differs is written, so
+// WritePlace inserts or updates the place and mirrors it, all in one
+// transaction: onto every row at it, into the path of each domain whose home
+// place it is, and into the off-site field of each domain whose field row
+// stands there. It also makes the place the home place of the domains w
+// names and writes the credential blob. Only what differs is written, so
 // saving an unchanged place leaves every row as it was. A place with an
 // empty or unknown ID is new and goes behind the others.
 func (r *Repo) WritePlace(w PlaceWrite) (Place, error) {
@@ -228,6 +230,9 @@ func (r *Repo) WritePlace(w PlaceWrite) (Place, error) {
 	next := settings
 	if w.CredSetsBlob != nil {
 		next.CloudCredSets = string(w.CredSetsBlob)
+	}
+	if err := mirrorPlaceSettingsTx(tx, p, &next); err != nil {
+		return Place{}, err
 	}
 	if next != settings {
 		if err := updateSettings(tx, next); err != nil {
@@ -428,4 +433,55 @@ func placedChanges(p Place, row OffsiteTarget, addr string, turnedOn bool) ([]st
 	}
 	add("enabled", row.Enabled != on, boolInt(on))
 	return set, vals
+}
+
+// mirrorPlaceSettingsTx writes p into the settings row s: the path of every
+// domain whose home place p is, and the off-site field of every domain whose
+// field row stands at p. The field holds the row's address only while the
+// row is on: left filled under a row that is off, it would have replication
+// fall back to the field and copy there anyway.
+func mirrorPlaceSettingsTx(tx *sql.Tx, p Place, s *Settings) error {
+	homes, err := domainPlacesQ(tx)
+	if err != nil {
+		return fmt.Errorf("WritePlace homes: %w", err)
+	}
+	for _, domain := range places.Domains {
+		path, offsite, immutable := domainColumns(s, domain)
+		if homes[domain] == p.ID {
+			addr, ok := places.Address(p.Base, p.Folders, domain, "")
+			if !ok {
+				return fmt.Errorf("%w: %s", ErrPlaceFolderMissing, domain)
+			}
+			*path = addr
+		}
+		field, found, err := fieldRowQ(tx, domain)
+		if err != nil {
+			return fmt.Errorf("WritePlace field of %s: %w", domain, err)
+		}
+		if found && field.PlaceID == p.ID {
+			*offsite, *immutable = "", false
+			if field.Enabled {
+				*offsite, *immutable = field.Repo, field.Immutable
+			}
+		}
+	}
+	return nil
+}
+
+// domainColumns points at the settings fields a place writes for domain:
+// its path, its off-site field and that field's append-only flag.
+func domainColumns(s *Settings, domain string) (path, offsite *string, immutable *bool) {
+	switch domain {
+	case "containers":
+		return &s.ContainersPath, &s.ContainersOffsite, &s.ContainersOffsiteImmutable
+	case "vms":
+		return &s.VMsPath, &s.VMsOffsite, &s.VMsOffsiteImmutable
+	case "flash":
+		return &s.FlashPath, &s.FlashOffsite, &s.FlashOffsiteImmutable
+	case "config":
+		return &s.ConfigPath, &s.ConfigOffsite, &s.ConfigOffsiteImmutable
+	case "files":
+		return &s.FilesPath, &s.FilesOffsite, &s.FilesOffsiteImmutable
+	}
+	return nil, nil, nil
 }
