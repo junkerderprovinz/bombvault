@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 // The Anomalies card is reached from the dashboard and from the Notifications
-// tab through /settings#anomalies, and it sits below two other cards, so the
-// link has to bring it into view. Each control saves on its own, and a refused
-// save must leave the control showing what the server still holds.
+// tab through /settings#anomalies, and it is the last card on the Integrity
+// tab, so the link has to bring it into view. Each control saves on its own,
+// and a refused save must leave the control showing what the server still
+// holds.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -122,6 +123,14 @@ describe("the Anomalies card on the Integrity tab", () => {
   it("is where #anomalies lands, scrolled into view", async () => {
     await renderAt("#anomalies");
     await waitFor(() => expect(scrolled.map((el) => el.id)).toContain("anomalies"));
+  });
+
+  it("comes after the restore-check schedule, so the checks and their schedule stay together", async () => {
+    await renderAt("#integrity");
+    const schedule = screen.getByRole("heading", { name: en["settings.schedulesChecks"] });
+    const anomalies = document.getElementById("anomalies");
+    expect(anomalies).not.toBeNull();
+    expect(schedule.compareDocumentPosition(anomalies!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("saves the switch on its own", async () => {

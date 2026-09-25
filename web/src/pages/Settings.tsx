@@ -4603,21 +4603,6 @@ export function SettingsPage() {
           hueIndex={nextHue()}
         />
 
-        {/* The target of /settings#anomalies. The margin keeps the heading
-            badge, which straddles the card's top edge, in view. */}
-        <div id="anomalies" className="scroll-mt-6">
-          <AnomalyCard
-            t={t}
-            settings={settings}
-            summary={anomalySummary}
-            save={(key, next) => void autoSaveToggle(key, next, setAnomalySaveState, setAnomalySaveError)}
-            busy={fieldBusy}
-            shake={fieldShake}
-            pulse={fieldPulse}
-            hueIndex={nextHue()}
-          />
-        </div>
-
         {/* Restore-check schedule (schedulesChecks): the scheduled off-site
             append-only tamper test — moved from the Schedules tab (see that
             tab's own comment at its old call site).
@@ -4671,6 +4656,22 @@ export function SettingsPage() {
             </Card>
           );
         })()}
+
+        {/* Last, so the restore checks and their schedule stay next to each
+            other. The target of /settings#anomalies; the margin keeps the
+            heading badge, which straddles the card's top edge, in view. */}
+        <div id="anomalies" className="scroll-mt-6">
+          <AnomalyCard
+            t={t}
+            settings={settings}
+            summary={anomalySummary}
+            save={(key, next) => void autoSaveToggle(key, next, setAnomalySaveState, setAnomalySaveError)}
+            busy={fieldBusy}
+            shake={fieldShake}
+            pulse={fieldPulse}
+            hueIndex={nextHue()}
+          />
+        </div>
       </>
       )}
 
