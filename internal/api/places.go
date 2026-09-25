@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -40,4 +41,14 @@ func (s *Service) writePlace(w store.PlaceWrite, edit func([]CloudCredSet) []Clo
 		}
 	}
 	return s.store.WritePlace(w)
+}
+
+// withPlaceCreds returns set with the credentials c written onto it, the
+// inverse of placeCredsOf.
+func withPlaceCreds(set CloudCredSet, c places.Creds) CloudCredSet {
+	set.S3KeyID, set.S3Secret, set.S3Region, set.S3StorageClass = c.S3KeyID, c.S3Secret, c.S3Region, c.S3StorageClass
+	set.RESTUser, set.RESTPassword = c.RESTUser, c.RESTPassword
+	set.WebDAVURL, set.WebDAVVendor, set.WebDAVUser, set.WebDAVPass = c.WebDAVURL, c.WebDAVVendor, c.WebDAVUser, c.WebDAVPass
+	set.AzureAccount, set.AzureKey = c.AzureAccount, c.AzureKey
+	return set
 }
