@@ -122,6 +122,17 @@ describe("DropdownListbox interaction across the portal", () => {
     expect(screen.queryByRole("listbox")).toBeNull();
   });
 
+  it("takes Escape before the window around it", () => {
+    const aroundIt = vi.fn();
+    document.addEventListener("keydown", aroundIt);
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Trigger" }));
+    fireEvent.keyDown(screen.getByRole("option", { name: "alpha" }), { key: "Escape" });
+    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(aroundIt).not.toHaveBeenCalled();
+    document.removeEventListener("keydown", aroundIt);
+  });
+
   it("leaves a mousedown on the trigger to the trigger's own toggle", () => {
     render(<Harness />);
     const trigger = screen.getByRole("button", { name: "Trigger" });
