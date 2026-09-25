@@ -50,6 +50,23 @@ func TestTheSetListHidesWebDAVAndAzureSecrets(t *testing.T) {
 	}
 }
 
+func TestABlankAzureKeyKeepsTheStoredOne(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	if err := s.SetCloudCredSets([]CloudCredSet{blobSet()}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SetCloudCredSets([]CloudCredSet{{ID: "blob", Name: "Azure"}}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.decodeCloudCredSets(settingsOf(t, s))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(got, []CloudCredSet{blobSet()}) {
+		t.Fatalf("sets = %+v", got)
+	}
+}
+
 func TestACardThatKnowsNoKindKeepsTheSetsKind(t *testing.T) {
 	s := unraidNotifyService(t, nil)
 	if err := s.SetCloudCredSets([]CloudCredSet{davSet(), blobSet()}); err != nil {
