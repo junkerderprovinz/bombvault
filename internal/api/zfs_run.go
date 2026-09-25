@@ -262,7 +262,7 @@ type zfsRunRecorder struct {
 
 func (r zfsRunRecorder) RecordRun(runID, snap string, window time.Duration, hookDetail string) error {
 	seconds := int64(-1)
-	if r.stops {
+	if r.stops && window >= 0 {
 		seconds = int64(window / time.Second)
 	}
 	return r.st.RecordZFSRun(runID, r.itemID, snap, seconds, hookDetail)

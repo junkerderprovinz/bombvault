@@ -346,6 +346,15 @@ func TestZFSHooksPreFailureFailsRun(t *testing.T) {
 	if run.Status != "failed" || !strings.Contains(run.Error, "pre-snapshot-failed") {
 		t.Fatalf("run = %q / %q, want a failure coded pre-snapshot-failed", run.Status, run.Error)
 	}
+	// The run's detail is where the page looks for why it failed, and the
+	// containers were never stopped, so there is no window to report.
+	detail, err := s.ZFSRunDetail(context.Background(), run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(detail.HookDetail, "access denied") || detail.WindowSeconds != -1 {
+		t.Fatalf("detail = %+v, want the command's output and no window", detail)
+	}
 }
 
 func TestZFSHooksPostFailureIsRecordedOnTheRun(t *testing.T) {

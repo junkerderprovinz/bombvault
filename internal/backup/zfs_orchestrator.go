@@ -113,7 +113,7 @@ type ZFSMemberResult struct {
 }
 
 // ZFSRunRecorder stores the run's snapshot, its consistency window and the
-// outcome of every member.
+// outcome of every member. A negative window means none was held.
 type ZFSRunRecorder interface {
 	RecordRun(runID, snap string, window time.Duration, hookDetail string) error
 	AddMember(runID string, m ZFSMemberResult) error
@@ -179,6 +179,11 @@ func BackupZFSItem(ctx context.Context, d ZFSBackupDeps) (Summary, error) {
 
 	if d.Hooks != nil {
 		if hookErr := d.Hooks.Pre(ctx); hookErr != nil {
+			// The run's detail is where the page shows what the command said.
+			// Nothing was stopped, so there is no window.
+			if recErr := d.Recorder.RecordRun(runID, "", -1, truncateErr(hookErr)); recErr != nil {
+				log.Printf("zfs backup: record run for %s: %v", d.Root, recErr)
+			}
 			return Summary{}, d.failRun(runID, &ZFSRefusal{Code: "pre-snapshot-failed", Detail: truncateErr(hookErr)})
 		}
 	}
