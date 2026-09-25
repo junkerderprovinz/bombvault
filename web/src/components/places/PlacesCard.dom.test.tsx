@@ -149,4 +149,15 @@ describe("PlacesCard", () => {
       ["p2", "r3", "vms"],
     ]);
   });
+
+  it("writes what each picker of a row without a place chooses beside it", async () => {
+    listed.unplaced = [{ rowId: "r3", domain: "", role: "repository", name: "Archive", repo: "remotes/archive" }];
+    await card();
+    const row = screen.getByText("remotes/archive").closest("div.rounded-card") as HTMLElement;
+    for (const key of ["places.unplaced.place", "places.unplaced.domain"] as const) {
+      const label = within(row).getByText(en[key]);
+      expect(label.tagName).toBe("LABEL");
+      expect(document.getElementById(label.getAttribute("for") ?? "")?.getAttribute("role")).toBe("combobox");
+    }
+  });
 });
