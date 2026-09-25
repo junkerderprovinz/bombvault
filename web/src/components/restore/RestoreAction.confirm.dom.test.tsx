@@ -108,3 +108,12 @@ describe("row-action restore confirmation", () => {
     await waitFor(() => expect(restore).toHaveBeenCalledTimes(1));
   });
 });
+
+describe("the form restore button", () => {
+  it("reads as the action it starts until a restore runs", () => {
+    renderAction({ iconBadge: false, requireConfirm: true });
+    const button = screen.getByRole("button", { name: en["snapshots.restore"] });
+    expect(button.hasAttribute("disabled")).toBe(true);
+    expect(screen.queryByText(en["common.restoring"])).toBeNull();
+  });
+});

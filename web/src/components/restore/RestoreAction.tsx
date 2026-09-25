@@ -53,7 +53,7 @@ interface RestoreActionProps {
   showBusyHint?: boolean;
   /** Passed to RestoreProgress. Default true. */
   showStartedHint?: boolean;
-  /** Tooltip and accessible name of the icon badge trigger. Defaults to
+  /** The trigger's label, and the tooltip of the icon badge. Defaults to
    *  t("snapshots.restore"). */
   label?: string;
   /** Renders the trigger as a square icon badge at the row's far edge instead
@@ -137,12 +137,13 @@ export function RestoreAction({
     />
   ) : (
     <Button
-      label={t("common.restoring")}
-      labelKey="common.restoring"
+      label={label ?? t("snapshots.restore")}
+      labelKey="snapshots.restore"
       tone="accent"
       onClick={() => void handleRestore()}
       disabled={triggerDisabled}
       busy={isPending}
+      title={isPending ? t("common.restoring") : undefined}
       className="shrink-0"
     />
   );
