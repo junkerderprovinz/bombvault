@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Selector } from "./Selector";
+import { WindowActions } from "./WindowActions";
 import { useT } from "../lib/i18n";
 import { PAYPAL, PAYPAL_AMOUNTS, PAYPAL_DEFAULT_AMOUNT, PAYPAL_DESCRIPTION } from "../lib/donate";
 import { parseAmount, type GiveFrequency } from "../lib/paypal";
@@ -77,7 +78,7 @@ export function PaypalDialog({ onClose }: { onClose: () => void }) {
           </h2>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-1">
           <p className="text-sm text-carbon-textSub">{t("about.paypalIntro")}</p>
 
           <div className="flex flex-col gap-1.5">
@@ -144,9 +145,9 @@ export function PaypalDialog({ onClose }: { onClose: () => void }) {
           {status === "failed" && <p className="text-sm text-statusFail">{t("about.paypalFailed")}</p>}
         </div>
 
-        <div className="flex justify-end gap-2 px-5 pb-5">
+        <WindowActions>
           <Button label={t("common.close")} labelKey="common.close" tone="neutral" onClick={onClose} />
-        </div>
+        </WindowActions>
       </div>
     </div>,
     document.body
