@@ -447,7 +447,7 @@ func (h *Handler) rejectSettingsPathOnNamedRepo(v settingsView, cur store.Settin
 			if oErr != nil || !repoLocationsOverlap(other, loc) {
 				continue
 			}
-			return fmt.Sprintf("the %s path is, holds or lies inside the repository %q at one of the places under Settings, Storage; pick a different folder, or remove that repository first", f.label, r.Name)
+			return fmt.Sprintf("the %s path is, holds or lies inside the repository %q, which Settings, Storage lists at its place or under Without a place; pick a different folder", f.label, r.Name)
 		}
 	}
 	return ""

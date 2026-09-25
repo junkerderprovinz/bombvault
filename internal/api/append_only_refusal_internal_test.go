@@ -45,6 +45,24 @@ func TestEveryAppendOnlyFlagGetsItsOwnSentence(t *testing.T) {
 	}
 }
 
+// A row whose address fits no place has no details of its own; it takes the
+// switch of the place it is assigned to.
+func TestAnAppendOnlyRefusalSaysWhereARowWithoutAPlaceGetsItsSwitch(t *testing.T) {
+	for _, c := range []struct {
+		err  error
+		what string
+	}{
+		{errOffsiteAppendOnly, "A repository"},
+		{errAppendOnlyOffsiteTarget, "A destination"},
+		{errAppendOnlyPrimaryRemote, "A path"},
+	} {
+		want := c.what + " listed under Without a place takes that switch from the place it is assigned to"
+		if !strings.Contains(c.err.Error(), want) {
+			t.Errorf("refusal %q does not say %q", c.err.Error(), want)
+		}
+	}
+}
+
 // TestNoAppendOnlyRefusalCarriesASlash: scrubError redacts any token that
 // starts with a slash, so a remedy containing a path would arrive as "[path]".
 func TestNoAppendOnlyRefusalCarriesASlash(t *testing.T) {

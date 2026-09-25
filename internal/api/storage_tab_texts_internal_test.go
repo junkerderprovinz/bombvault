@@ -23,7 +23,7 @@ func TestAPathOntoANamedRepositoryIsRefusedWithWhereItIsSetUp(t *testing.T) {
 	}
 	v := toView(cur)
 	v.ContainersPath = "oldnas"
-	if msg := f.h.rejectSettingsPathOnNamedRepo(v, cur); !strings.Contains(msg, `"Old NAS" at one of the places under Settings, Storage`) {
+	if msg := f.h.rejectSettingsPathOnNamedRepo(v, cur); !strings.Contains(msg, `"Old NAS", which Settings, Storage lists at its place or under Without a place`) {
 		t.Fatalf("refusal = %q", msg)
 	}
 }
