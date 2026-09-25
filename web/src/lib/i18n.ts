@@ -2231,6 +2231,9 @@ export const en = {
   // its own cached update status so the Docker tab's stale banner clears.
   "settings.reconcileUnraidStatus": "Refresh Unraid's update status after updating a container",
   "settings.reconcileUnraidStatusHint": "Clear Unraid's update banner after BombVault updates a container in the post-backup update step.",
+
+  // Storage places, Settings, Storage tab: the places card, the add window
+  // and each place's details.
   "places.error.inUse": "This place is still in use: {holders}. Change that first.",
   "places.error.folderInUse": "A domain still backs up or copies to this folder, so it stays. Change that first.",
   "places.error.nameTaken": "Another place already has this name.",
@@ -4355,6 +4358,8 @@ export const de: Translations = {
   // Reconcile Unraid update status (#116)
   "settings.reconcileUnraidStatus": "Unraids Update-Status nach dem Aktualisieren eines Containers auffrischen",
   "settings.reconcileUnraidStatusHint": "Unraids Update-Banner zurücksetzen, nachdem BombVault im Update-Schritt nach dem Backup einen Container aktualisiert hat.",
+
+  // Storage places
   "places.error.inUse": "Dieser Ort wird noch benutzt: {holders}. Ändere das zuerst.",
   "places.error.folderInUse": "Eine Domäne sichert oder kopiert noch in diesen Ordner, deshalb bleibt er. Ändere das zuerst.",
   "places.error.nameTaken": "Ein anderer Ort trägt diesen Namen schon.",
