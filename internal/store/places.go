@@ -188,11 +188,12 @@ func (r *Repo) SetDomainPlaceTx(tx *sql.Tx, domain, placeID string) error {
 
 // WritePlace inserts or updates the place and mirrors it, all in one
 // transaction: onto every row at it, into the path of each domain whose home
-// place it is, and into the off-site field of each domain whose field row
-// stands there. It also makes the place the home place of the domains w
-// names and writes the credential blob. Only what differs is written, so
-// saving an unchanged place leaves every row as it was. A place with an
-// empty or unknown ID is new and goes behind the others.
+// place it is and, at a remote place, that domain's primary row, and into
+// the off-site field of each domain whose field row stands there. It also
+// makes the place the home place of the domains w names and writes the
+// credential blob. Only what differs is written, so saving an unchanged
+// place leaves every row as it was. A place with an empty or unknown ID is
+// new and goes behind the others.
 func (r *Repo) WritePlace(w PlaceWrite) (Place, error) {
 	p := w.Place
 	if strings.TrimSpace(p.Name) == "" || strings.TrimSpace(p.Base) == "" {
@@ -219,6 +220,9 @@ func (r *Repo) WritePlace(w PlaceWrite) (Place, error) {
 		if err := r.SetDomainPlaceTx(tx, domain, p.ID); err != nil {
 			return Place{}, err
 		}
+	}
+	if err := homePrimariesTx(tx, p); err != nil {
+		return Place{}, err
 	}
 	if err := mirrorPlaceRowsTx(tx, p, existed && !before.Enabled && p.Enabled); err != nil {
 		return Place{}, err
@@ -484,4 +488,57 @@ func domainColumns(s *Settings, domain string) (path, offsite *string, immutable
 		return &s.FilesPath, &s.FilesOffsite, &s.FilesOffsiteImmutable
 	}
 	return nil, nil, nil
+}
+
+// homePrimariesTx keeps the primary row of every domain whose home place p
+// is. At a remote place that row carries the domain path's credentials,
+// caps, append-only flag and budget, so it is created when missing and moved
+// onto p from wherever it was; the row mirror then writes p into it. At a
+// local place none of that applies, so the row leaves its place and is
+// switched off.
+func homePrimariesTx(tx *sql.Tx, p Place) error {
+	homes, err := domainPlacesQ(tx)
+	if err != nil {
+		return fmt.Errorf("WritePlace homes: %w", err)
+	}
+	for _, domain := range places.Domains {
+		if homes[domain] != p.ID {
+			continue
+		}
+		row, found, err := primaryRowQ(tx, domain)
+		if err != nil {
+			return fmt.Errorf("WritePlace primary of %s: %w", domain, err)
+		}
+		switch {
+		case p.Kind == string(places.KindLocal):
+			if found && row.PlaceID != "" {
+				if err := DetachRowTx(tx, row.ID); err != nil {
+					return err
+				}
+			}
+			if found && row.Enabled {
+				if _, err := tx.Exec(`UPDATE offsite_targets SET enabled = 0 WHERE id = ?`, row.ID); err != nil {
+					return fmt.Errorf("WritePlace primary of %s: %w", domain, err)
+				}
+			}
+		case !found:
+			addr, ok := places.Address(p.Base, p.Folders, domain, "")
+			if !ok {
+				return fmt.Errorf("%w: %s", ErrPlaceFolderMissing, domain)
+			}
+			if _, err := tx.Exec(`INSERT INTO offsite_targets (id, domain, name, repo, role, enabled, created_at, place_id, place_domain)
+				VALUES (?, ?, 'Primary (remote)', ?, ?, ?, ?, ?, ?)`,
+				newID(), domain, addr, RolePrimary, boolInt(p.Enabled), time.Now().Unix(), p.ID, domain); err != nil {
+				return fmt.Errorf("WritePlace primary of %s: %w", domain, err)
+			}
+		case row.PlaceID != p.ID || row.PlaceDomain != domain || row.PlaceSuffix != "":
+			if err := AttachRowTx(tx, row.ID, p.ID, domain, ""); err != nil {
+				return err
+			}
+			if _, err := tx.Exec(`UPDATE offsite_targets SET enabled = ? WHERE id = ?`, boolInt(p.Enabled), row.ID); err != nil {
+				return fmt.Errorf("WritePlace primary of %s: %w", domain, err)
+			}
+		}
+	}
+	return nil
 }
