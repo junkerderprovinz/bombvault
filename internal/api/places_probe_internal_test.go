@@ -56,6 +56,22 @@ func TestLocalFoldersAreProbedByWhatLiesInThem(t *testing.T) {
 	}
 }
 
+func TestALocalFolderThatCannotBeOpenedIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	newEnvEngine(f)
+	if err := os.MkdirAll(filepath.FromSlash(f.root+"/user/bombvault"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	// No file system takes a name this long, so opening it fails everywhere the
+	// way a folder without read permission fails on the server.
+	folders := places.Folders{"files": strings.Repeat("x", 300)}
+
+	res := f.svc.probeFolders(context.Background(), "user/bombvault", folders, f.svc.ModeFor(settingsOf(t, f.svc)))
+	if res.OK || res.Folders["files"] != places.FolderFailed || res.Errors["files"].Code != "place-probe-failed" {
+		t.Fatalf("files = %s, %+v; want the folder refused", res.Folders["files"], res.Errors["files"])
+	}
+}
+
 func TestRemoteFoldersAreOpenedWithThePlacesEnvironment(t *testing.T) {
 	f := newPlacementFixture(t)
 	eng := newEnvEngine(f)
