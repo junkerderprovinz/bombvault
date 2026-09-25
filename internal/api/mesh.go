@@ -151,16 +151,10 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		writeJSON(w, http.StatusOK, failEnvelope(fmt.Errorf("decrypt offer credential: %w", err)))
 		return
 	}
-	// Sort order 0 is the primary, which a settings save rewrites or deletes,
-	// so the new target goes after every existing one.
-	existing, err := h.store.OffsiteTargetsForDomain(in.Domain)
+	sortOrder, err := h.svc.nextOffsiteSortOrder(in.Domain)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
-	}
-	sortOrder := 1
-	for _, et := range existing {
-		sortOrder = max(sortOrder, et.SortOrder+1)
 	}
 
 	label := offer.From
