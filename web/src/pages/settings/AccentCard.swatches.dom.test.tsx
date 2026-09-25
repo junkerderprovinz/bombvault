@@ -2,6 +2,9 @@
 // The accent row keeps one footprint: every preset disc and the reset badge are
 // 32px with no rim, and the chosen preset carries a ring that takes no room, so
 // the reset badge never looks bigger than the colours beside it.
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AccentCard } from "./AccentCard";
@@ -33,5 +36,18 @@ describe("the accent row", () => {
     const { container } = render(<AccentCard t={t} />);
     const ringed = discs(container).filter((d) => /\boutline-2\b/.test(d.parentElement!.className));
     expect(ringed.map((d) => d.getAttribute("aria-label"))).toEqual(["settings.accentPreset 1"]);
+  });
+
+  it("draws the chosen ring outside the focus ring, so a focused choice keeps both", () => {
+    // The chosen ring sits on the wrapper, which is exactly the disc's box, so
+    // it has to start where the disc's focus ring ends.
+    const css = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../index.css"), "utf8");
+    const focus = /(?:^|\n):focus-visible\s*\{([^}]*)\}/.exec(css)![1];
+    const focusEnd = Number(/outline-offset:\s*(\d+)px/.exec(focus)![1]) + Number(/outline:\s*(\d+)px/.exec(focus)![1]);
+
+    const { container } = render(<AccentCard t={t} />);
+    const chosen = discs(container).find((d) => /\boutline-2\b/.test(d.parentElement!.className))!.parentElement!;
+    const offset = Number(/\boutline-offset-(\d+)\b/.exec(chosen.className)?.[1]);
+    expect(offset).toBeGreaterThanOrEqual(focusEnd);
   });
 });
