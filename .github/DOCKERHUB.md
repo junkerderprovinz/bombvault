@@ -13,7 +13,7 @@
 
 <p align="center">
 Your Unraid data, <b>sealed in a vault</b>. Drop a backup. Detonate a restore.<br>
-BombVault backs up Docker containers, KVM VMs, appdata, the Unraid flash config — and even itself —
+BombVault backs up Docker containers, KVM VMs, appdata, ZFS datasets, the Unraid flash config — and even itself —
 and restores everything with a single click. Containers <b>automatically reappear in the
 Docker tab</b>, VMs <b>automatically in the VM tab</b> — no manual reinstall, no
 reconfiguration, no drama.<br>
@@ -26,9 +26,11 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 
 BombVault is a self-hosted, **Unraid-native** web app for **backup and full disaster recovery**. One container, a modern web UI that follows your system's light/dark preference, and the whole lifecycle:
 
-- **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), the whole Unraid flash (`/boot`), any folders you point it at (named **file sets** with per-set excludes), ZFS datasets with their child datasets (read from one snapshot), and its own `/config`.
+- **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), the whole Unraid flash (`/boot`), any folders you point it at (named **file sets** with per-set excludes), ZFS datasets with their child datasets (read from one snapshot), and its own `/config`. Recognised PostgreSQL, MySQL and MariaDB containers are **dumped before each backup**, as a restore point of their own.
 - **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before; VMs are re-defined in the VM Manager with their disks + NVRAM reattached.
 - **Schedules** incremental backups per domain from one place, with one-click *"include all in schedule"*.
+- **Notices when a backup looks wrong.** Each backup is compared with the item's own history: much more new data than usual, most of the data stored again, a source or database dump that shrank sharply, a much slower run, repeated failures, a restore check that stopped passing, a disk about to fill up. When a source shrinks sharply, the old backups of that item are kept until you acknowledge it. A ZFS item is checked dataset by dataset.
+- **Answers your AI assistant.** The built-in MCP server lets Claude Code, Claude Desktop or another MCP client read backup status, restore points and the open anomalies and, with a key that allows it, start a backup. Every client gets a key of its own; restores, deletions and settings stay in the web interface.
 - **Optionally updates a container right after its backup** (advanced, off by default) — a fresh restore point always exists first, so a bad update is one restore away; it can notify per updated container and clean up the superseded image.
 
 <p align="center">
@@ -40,8 +42,8 @@ BombVault is a self-hosted, **Unraid-native** web app for **backup and full disa
 
 **Simple by default** — the UI shows only the essentials; a Simple/Advanced switch reveals the expert controls.
 
-- **One-click full restore** of containers, VMs, flash, config and file sets — individually (keeping each item's run-state) or all at once via guided recovery (left stopped, so you start things deliberately), from **local or off-site**.
-- **Guided disaster recovery** — a dedicated Recovery tab restores BombVault's own settings first, discovers everything stored in your repos and restores it onto a fresh install; plus a one-time, read-only **restore from another BombVault instance's repo**.
+- **One-click full restore** of containers, VMs, flash, config, file sets and ZFS datasets, one at a time (keeping each item's run-state), or all containers and VMs at once via guided recovery (left stopped, so you start things deliberately), from **local or off-site**.
+- **Guided disaster recovery** — a dedicated Recovery tab restores BombVault's own settings first, discovers everything stored in your repos, restores the containers and VMs onto a fresh install in one go and lists file sets and ZFS items to restore one by one; plus a one-time, read-only **restore from another BombVault instance's repo**.
 - **Flash restore as a `.zip` download** (the live `/boot` is never touched) and a **scheduled flash zip export** so a bootable-USB copy leaves the server automatically.
 - **File-level restore** — tick any files/folders inside a snapshot and restore them in place or into a folder; **stack restore** rebuilds a Docker Compose project, then starts its members in `depends_on` order.
 - **Storage anywhere** — local path, SMB/NFS, native restic backends (`s3:` / `rest:` / `b2:` / `sftp:`) or any **rclone** remote; **off-site replication** (`restic copy`) with its own schedule and bandwidth caps; **per-source retention** pruned automatically.

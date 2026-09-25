@@ -68,8 +68,8 @@ Malen monterer også Docker-socketen, flashen (`/boot`) og **Host Data**-roten (
 *Panelet etter en første sikkerhetskopi: hva som er beskyttet, hva som kjører neste gang, og en levende logg.*
 
 1. Åpne webgrensesnittet på `https://<your-unraid-ip>:3443` (selvsignert sertifikat rett ut av boksen).
-2. I **Innstillinger**, aktiver sikkerhetskopidomenene du vil ha (Containere, VM-er, Flash, Config, Filer) og velg en aksentfarge.
-3. På **Containere**-fanen, velg en container og klikk **Sikkerhetskopier** for å lage ditt første gjenopprettingspunkt. Repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files}` og opprettes ved den første sikkerhetskopieringen.
+2. I **Innstillinger**, aktiver sikkerhetskopidomenene du vil ha (Containere, VM-er, Flash, Config, Filer, ZFS-datasett) og velg en aksentfarge.
+3. På **Containere**-fanen, velg en container og klikk **Sikkerhetskopier** for å lage ditt første gjenopprettingspunkt. Repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` og opprettes ved den første sikkerhetskopieringen.
 4. Sett opp planlegging fra **Innstillinger, Tidsplaner**. Det finnes en ett-klikks *inkluder alle i tidsplan* for containere og VM-er.
 
 !!! tip "Valgfritt: velg en sikkerhetskopieringsrekkefølge"

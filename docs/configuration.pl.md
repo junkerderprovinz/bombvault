@@ -29,7 +29,7 @@ Zamontuj gniazdo Docker, flash (`/boot`) oraz katalog główny **Host Data** (`/
 
 Kopie zbiorów danych ZFS też potrzebują tego trybu: host montuje migawkę zbioru dopiero po starcie kontenera. Zobacz [Zbiory danych ZFS](zfs-datasets.md).
 
-Ścieżki repozytoriów kopii domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files}`, tworzone przy pierwszej kopii. Zmień lokalizację w dowolnym momencie w **Ustawienia, Ścieżki kopii**.
+Ścieżki repozytoriów kopii domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, tworzone przy pierwszej kopii. Zmień lokalizację w dowolnym momencie w **Ustawienia, Ścieżki kopii**.
 
 !!! note "Kontrola integracji z hostem"
     Otwórz `/spike` w interfejsie webowym po uruchomieniu kontenera. Sonduje ono każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy.

@@ -6,7 +6,7 @@ Lokale Backups schützen dich vor einem verlorenen Container oder einem schlecht
 
 Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken hinzu. Setze ein Repo pro Bereich im Tab **Einstellungen, Off-site**. BombVault repliziert neue Snapshots dorthin mit `restic copy` auf Best-Effort-Basis, sodass ein Off-site-Aussetzer das lokale Backup nie fehlschlagen lässt. Das lokale Repo bleibt primär.
 
-- **Mehrere Off-site-Ziele pro Bereich.** Jeder Bereich (Container, VMs, Flash, Config und Dateisätze) kann gleichzeitig an mehrere Off-site-Ziele replizieren, nicht nur eines, sodass du zum Beispiel einen rest-server auf der Box eines Freundes und einen S3-Bucket parallel behalten kannst. Füge zusätzliche Ziele unter Einstellungen, Off-site hinzu, jedes mit eigenem Repository, S3-Speicherklasse, Append-only-Flag, Aufbewahrung und Wachstumsbudget. Eine bestehende einzelne Off-site-Einrichtung wird unangetastet als erstes Ziel übernommen, und jedes Ziel eines Bereichs repliziert nach dem Off-site-Zeitplan dieses Bereichs.
+- **Mehrere Off-site-Ziele pro Bereich.** Jeder Bereich (Container, VMs, Flash, Config, Dateisätze und ZFS-Datasets) kann gleichzeitig an mehrere Off-site-Ziele replizieren, nicht nur eines, sodass du zum Beispiel einen rest-server auf der Box eines Freundes und einen S3-Bucket parallel behalten kannst. Füge zusätzliche Ziele unter Einstellungen, Off-site hinzu, jedes mit eigenem Repository, S3-Speicherklasse, Append-only-Flag, Aufbewahrung und Wachstumsbudget. Eine bestehende einzelne Off-site-Einrichtung wird unangetastet als erstes Ziel übernommen, und jedes Ziel eines Bereichs repliziert nach dem Off-site-Zeitplan dieses Bereichs.
 - **Off-site-Zeitplan pro Bereich** (neben jedem anderen Zeitplan unter Einstellungen, Zeitpläne bearbeitet): lasse ihn leer, um nach jedem lokalen Backup zu replizieren, oder setze eine Taktung (zum Beispiel `weekly Sun 03:00`), um seltener ins Off-site zu liefern, als du lokal sicherst. Ein Button **Jetzt replizieren** deckt Läufe auf Abruf ab.
 - **Off-site-Aufbewahrung** liegt unter Einstellungen, Off-site, sodass du Off-site-Kopien länger als Archiv behalten kannst. Lasse die Richtlinie ganz auf null, um Off-site-Snapshots nie automatisch zu kürzen.
 - **Bandbreitenlimits** (Einstellungen, Off-site) begrenzen die restic-Upload-/Download-Rate, sodass die Replikation dein WAN nicht auslastet.
@@ -19,7 +19,7 @@ Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken
 
 Der Sicherungspfad einer Domäne (Einstellungen, Pfade & Speicher) ist nicht auf einen lokalen Ordner beschränkt: richte ihn direkt auf ein restic-Remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/pfad`), und BombVault sichert unmittelbar dorthin, ohne getrennte lokale Kopie und ohne Replikationsschritt. Das ist eine wirklich andere Form als die Off-site-Replikation weiter oben: dort ist das lokale Repo primär und das Off-site-Repo ein Archiv davon nach bestem Bemühen; hier **ist** das entfernte Repo das primäre und die einzige Kopie, solange du für diese Domäne nicht zusätzlich eine Off-site-Replikation (oder ein zweites Remote) einrichtest.
 
-Jedes der fünf Pfadfelder (Container, VMs, Flash, Konfiguration, Dateien) hat direkt daneben einen Schalter **Lokal / Entfernt**:
+Jedes der sechs Pfadfelder (Container, VMs, Flash, Konfiguration, Dateien, ZFS-Datasets) hat direkt daneben einen Schalter **Lokal / Entfernt**:
 
 - **Lokal** zeigt den gewohnten Ordner-Browser.
 - **Entfernt** tauscht ihn gegen ein einfaches URL-Feld, dazu eine Schaltfläche, die denselben Dialog für Verbindungstest und Zugangsdaten öffnet, den auch Off-site-Ziele verwenden, nur eben für dieses primäre Repo. Von dort bekommst du:
@@ -122,8 +122,8 @@ Ein eigener **Recovery**-Tab führt eine frische oder neu aufgebaute Installatio
 1. **Stellt zuerst BombVaults eigene Einstellungen wieder her**, sodass die Backup-Pfade, Off-site-Ziele und Zugangsdaten, die der Rest des Ablaufs braucht, vorausgefüllt sind (angewendet per Selbst-Neustart über den Docker-Socket, sodass die laufende Einstellungsdatenbank nie unter einem offenen Handle überschrieben wird).
 2. **Prüft, dass BombVault deine Backups lesen kann** (der Verschlüsselungsschlüssel-Fallstrick vorab).
 3. Lässt dich **auf dein bestehendes Repo verweisen** (lokal oder Off-site).
-4. **Entdeckt** die darin gespeicherten Container, VMs und Dateisätze.
-5. **Stellt sie alle wieder her** (gestoppt belassen, sodass du sie bewusst startest), mit deinem Recovery-Kit einen Klick entfernt.
+4. **Entdeckt** die darin gespeicherten Container, VMs, Dateisätze und ZFS-Datasets.
+5. **Stellt Container und VMs in einem Rutsch wieder her** (gestoppt belassen, sodass du sie bewusst startest) und listet Dateisätze und ZFS-Elemente auf, die du einzeln wiederherstellst; ZFS-Elemente kommen ausgeschaltet zurück. Dein Recovery-Kit ist einen Klick entfernt.
 
 !!! tip "Geplante Migration versus Katastrophe"
     Die geführte Wiederherstellung stellt BombVaults eigene Einstellungen aus einem Backup wieder her. Für einen *geplanten* Umzug auf eine neue Box kannst du deine Konfiguration stattdessen direkt mit der Karte **Einstellungen exportieren und importieren** (eine portable JSON-Datei) mitnehmen. Siehe [Konfiguration](configuration.md#portable-settings-export-and-import).

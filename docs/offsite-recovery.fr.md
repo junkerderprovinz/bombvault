@@ -6,7 +6,7 @@ Les sauvegardes locales vous protègent d'un conteneur perdu ou d'une mauvaise m
 
 Conservez la sauvegarde locale rapide et ajoutez un ou plusieurs réplicas hors site. Définissez un dépôt par domaine dans l'onglet **Paramètres, Hors site**. BombVault y réplique les nouveaux instantanés avec `restic copy` au mieux, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Le dépôt local reste principal.
 
-- **Plusieurs cibles hors site par domaine.** Chaque domaine (conteneurs, VMs, flash, config et jeux de fichiers) peut répliquer vers plusieurs destinations hors site à la fois, pas seulement une, de sorte que vous pouvez garder, par exemple, un rest-server sur la machine d'un ami et un bucket S3 en parallèle. Ajoutez des cibles supplémentaires dans Paramètres, Hors site, chacune avec son propre dépôt, sa classe de stockage S3, son indicateur append-only, sa rétention et son budget de croissance. Une configuration hors site unique existante est reprise intacte comme première cible, et chaque cible d'un domaine réplique selon le planning hors site de ce domaine.
+- **Plusieurs cibles hors site par domaine.** Chaque domaine (conteneurs, VMs, flash, config, jeux de fichiers et jeux de données ZFS) peut répliquer vers plusieurs destinations hors site à la fois, pas seulement une, de sorte que vous pouvez garder, par exemple, un rest-server sur la machine d'un ami et un bucket S3 en parallèle. Ajoutez des cibles supplémentaires dans Paramètres, Hors site, chacune avec son propre dépôt, sa classe de stockage S3, son indicateur append-only, sa rétention et son budget de croissance. Une configuration hors site unique existante est reprise intacte comme première cible, et chaque cible d'un domaine réplique selon le planning hors site de ce domaine.
 - **Planning hors site par domaine** (édité aux côtés de tous les autres plannings dans Paramètres, Plannings) : laissez-le vide pour répliquer après chaque sauvegarde locale, ou définissez une cadence (par exemple `weekly Sun 03:00`) pour expédier hors site moins souvent que vous ne sauvegardez localement. Un bouton **Répliquer maintenant** couvre les exécutions à la demande.
 - **La rétention hors site** vit dans Paramètres, Hors site afin que vous puissiez garder les copies hors site plus longtemps comme archive. Laissez la politique entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site.
 - **Les limites de bande passante** (Paramètres, Hors site) plafonnent le débit d'envoi/de téléchargement de restic afin que la réplication ne sature pas votre WAN.
@@ -19,7 +19,7 @@ Conservez la sauvegarde locale rapide et ajoutez un ou plusieurs réplicas hors 
 
 Le chemin de sauvegarde d'un domaine (Paramètres, Chemins et stockage) ne se limite pas à un dossier local : pointez-le directement vers un dépôt restic distant (`s3:...`, `rest:http://hôte:8000/depot`, `b2:...`, `sftp:utilisateur@hôte:/depot`, `rclone:remote:bucket/chemin`) et BombVault y sauvegarde directement, sans copie locale séparée ni étape de réplication. C'est une forme vraiment différente de la réplication hors site vue plus haut : là, le dépôt local est primaire et le dépôt hors site en est une archive au mieux ; ici, le dépôt distant **est** le primaire, et c'est la seule copie tant que vous n'ajoutez pas aussi une réplication hors site (ou un second dépôt distant) pour ce domaine.
 
-Chacun des cinq champs de chemin (Conteneurs, VM, Flash, Configuration, Fichiers) porte juste à côté un commutateur **Local / Distant** :
+Chacun des six champs de chemin (Conteneurs, VM, Flash, Configuration, Fichiers, Jeux de données ZFS) porte juste à côté un commutateur **Local / Distant** :
 
 - **Local** affiche l'explorateur de dossiers habituel.
 - **Distant** le remplace par un simple champ d'URL, plus un bouton qui ouvre la même boîte de dialogue de test de connexion et d'identifiants que les destinations hors site, mais configurée pour ce dépôt primaire. Vous y trouvez :
@@ -122,8 +122,8 @@ Un onglet **Récupération** dédié accompagne une installation neuve ou recons
 1. **Restaure d'abord les propres réglages de BombVault**, afin que les chemins de sauvegarde, les cibles hors site et les identifiants dont le reste du flux a besoin soient pré-remplis (appliqué via un auto-redémarrage sur le socket Docker, de sorte que la base de réglages active n'est jamais écrasée sous un handle ouvert).
 2. **Vérifie que BombVault peut lire vos sauvegardes** (le piège de la clé de chiffrement en amont).
 3. Vous laisse **pointer vers votre dépôt existant** (local ou hors site).
-4. **Découvre** les conteneurs, VMs et jeux de fichiers qui y sont stockés.
-5. **Les restaure tous** (laissés arrêtés, afin que vous les démarriez délibérément), avec votre kit de récupération à un clic.
+4. **Découvre** les conteneurs, VMs, jeux de fichiers et jeux de données ZFS qui y sont stockés.
+5. **Restaure les conteneurs et les VMs en une fois** (laissés arrêtés, afin que vous les démarriez délibérément) et liste les jeux de fichiers et les éléments ZFS à restaurer un par un ; les éléments ZFS reviennent désactivés. Votre kit de récupération est à un clic.
 
 !!! tip "Migration planifiée versus sinistre"
     La récupération guidée restaure les propres réglages de BombVault depuis une sauvegarde. Pour un déplacement *planifié* vers une nouvelle machine, vous pouvez plutôt emporter votre configuration directement avec la carte **Exporter et importer les réglages** (un fichier JSON portable). Voir [Configuration](configuration.md#portable-settings-export-and-import).

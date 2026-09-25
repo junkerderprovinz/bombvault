@@ -29,7 +29,7 @@
 
 ZFS 数据集备份同样需要这种模式：主机要在容器启动之后才挂载数据集的快照。参见 [ZFS 数据集](zfs-datasets.md)。
 
-备份仓库路径默认为 `/mnt/user/bombvault/{container,vms,flash,config,files}`，在首次备份时创建。可随时在**设置，备份路径**中更改位置。
+备份仓库路径默认为 `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`，在首次备份时创建。可随时在**设置，备份路径**中更改位置。
 
 !!! note "主机集成检查"
     容器启动后在 Web 界面打开 `/spike`。它会探测每个挂载和 CLI（Docker 套接字、libvirt、restic、qemu-img、rclone）并报告任何缺失的部分。

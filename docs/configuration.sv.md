@@ -29,7 +29,7 @@ Montera Docker-socketen, flashen (`/boot`) och **Host Data**-roten (`/mnt`) som 
 
 Säkerhetskopior av ZFS-datauppsättningar behöver också det här läget: värden monterar en uppsättnings ögonblicksbild först efter att containern har startat. Se [ZFS-datauppsättningar](zfs-datasets.md).
 
-Säkerhetskopieringens repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files}`, skapade vid den första säkerhetskopieringen. Ändra platsen när som helst i **Inställningar, Säkerhetskopiesökvägar**.
+Säkerhetskopieringens repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, skapade vid den första säkerhetskopieringen. Ändra platsen när som helst i **Inställningar, Säkerhetskopiesökvägar**.
 
 !!! note "Värdintegrationskontroll"
     Öppna `/spike` i webbgränssnittet efter att containern startat. Den sonderar varje montering och CLI (Docker-socket, libvirt, restic, qemu-img, rclone) och rapporterar eventuella saknade delar.

@@ -29,7 +29,7 @@ Montează socket-ul Docker, flash-ul (`/boot`) și rădăcina **Host Data** (`/m
 
 Backup-urile seturilor de date ZFS au și ele nevoie de acest mod: gazda montează instantaneul unui set de date abia după ce containerul a pornit. Vezi [Seturi de date ZFS](zfs-datasets.md).
 
-Căile depozitelor de backup sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files}`, create la primul backup. Schimbă locația oricând în **Setări, Căi de backup**.
+Căile depozitelor de backup sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, create la primul backup. Schimbă locația oricând în **Setări, Căi de backup**.
 
 !!! note "Verificarea integrării cu gazda"
     Deschide `/spike` în interfața web după ce containerul pornește. Sondează fiecare montare și CLI (socket Docker, libvirt, restic, qemu-img, rclone) și raportează orice element lipsă.

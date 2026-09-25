@@ -68,8 +68,8 @@ openssl rand -hex 32
 *最初のバックアップ後のダッシュボード。何が守られ、次に何が動き、いま何が起きているか。*
 
 1. Web UI を `https://<your-unraid-ip>:3443` で開きます（デフォルトで自己署名証明書）。
-2. **Settings** で、使いたいバックアップドメイン（コンテナ、VM、フラッシュ、Config、ファイル）を有効にし、アクセントカラーを選びます。
-3. **Containers** タブでコンテナを選び、**Back up** をクリックして最初の復元ポイントを作成します。リポジトリパスはデフォルトで `/mnt/user/bombvault/{container,vms,flash,config,files}` になり、初回バックアップ時に作成されます。
+2. **Settings** で、使いたいバックアップドメイン（コンテナ、VM、フラッシュ、Config、ファイル、ZFS データセット）を有効にし、アクセントカラーを選びます。
+3. **Containers** タブでコンテナを選び、**Back up** をクリックして最初の復元ポイントを作成します。リポジトリパスはデフォルトで `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` になり、初回バックアップ時に作成されます。
 4. **Settings, Schedules** からスケジュールを設定します。コンテナと VM には*すべてをスケジュールに含める*ワンクリック操作があります。
 
 !!! tip "Optional: pick a backup order"

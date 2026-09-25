@@ -6,7 +6,7 @@ Backupurile locale te protejează de un container pierdut sau o actualizare defe
 
 Păstrează backupul local rapid și adaugă una sau mai multe replici off-site. Setează un depozit per domeniu în fila **Setări, Off-site**. BombVault replică acolo instantaneele noi cu `restic copy` pe bază de best-effort, astfel încât o problemă off-site nu eșuează niciodată backupul local. Depozitul local rămâne principal.
 
-- **Mai multe ținte off-site per domeniu.** Fiecare domeniu (containere, VM-uri, flash, config și seturi de fișiere) poate replica către mai multe destinații off-site simultan, nu doar una, așa că poți păstra, de exemplu, un rest-server pe stația unui prieten și un bucket S3 în paralel. Adaugă ținte suplimentare în Setări, Off-site, fiecare cu propriul depozit, clasă de stocare S3, indicator append-only, retenție și buget de creștere. O configurare off-site unică existentă este preluată neatinsă ca prima țintă, iar fiecare țintă a unui domeniu replică conform programării off-site a acelui domeniu.
+- **Mai multe ținte off-site per domeniu.** Fiecare domeniu (containere, VM-uri, flash, config, seturi de fișiere și seturi de date ZFS) poate replica către mai multe destinații off-site simultan, nu doar una, așa că poți păstra, de exemplu, un rest-server pe stația unui prieten și un bucket S3 în paralel. Adaugă ținte suplimentare în Setări, Off-site, fiecare cu propriul depozit, clasă de stocare S3, indicator append-only, retenție și buget de creștere. O configurare off-site unică existentă este preluată neatinsă ca prima țintă, iar fiecare țintă a unui domeniu replică conform programării off-site a acelui domeniu.
 - **Programare off-site per domeniu** (editată alături de fiecare altă programare în Setări, Programări): las-o goală pentru a replica după fiecare backup local, sau setează o cadență (de exemplu `weekly Sun 03:00`) pentru a trimite off-site mai rar decât faci backup local. Un buton **Replicate now** acoperă rulările la cerere.
 - **Retenția off-site** se află în Setări, Off-site astfel încât să poți păstra copiile off-site mai mult timp ca arhivă. Las-o politica toată zero pentru a nu tăia niciodată automat instantaneele off-site.
 - **Limitele de lățime de bandă** (Setări, Off-site) limitează rata de upload/download restic astfel încât replicarea să nu satureze WAN-ul tău.
@@ -19,7 +19,7 @@ Păstrează backupul local rapid și adaugă una sau mai multe replici off-site.
 
 Calea de copiere a unui domeniu (Setări, Căi și stocare) nu se limitează la un dosar local: îndreapt-o direct către un depozit restic la distanță (`s3:...`, `rest:http://gazda:8000/depozit`, `b2:...`, `sftp:utilizator@gazda:/depozit`, `rclone:remote:bucket/cale`) și BombVault salvează direct acolo, fără copie locală separată și fără pas de replicare. Este o formă cu adevărat diferită de replicarea în afara sediului de mai sus: acolo depozitul local este cel primar, iar cel din afara sediului este o arhivă a lui, pe cât posibil; aici depozitul la distanță **este** cel primar și este singura copie, atâta timp cât nu configurezi și o replicare în afara sediului (sau un al doilea depozit la distanță) pentru acel domeniu.
 
-Fiecare dintre cele cinci câmpuri de cale (Containere, Mașini virtuale, Flash, Configurație, Fișiere) are chiar alături un comutator **Local / La distanță**:
+Fiecare dintre cele șase câmpuri de cale (Containere, Mașini virtuale, Flash, Configurație, Fișiere, Seturi de date ZFS) are chiar alături un comutator **Local / La distanță**:
 
 - **Local** arată exploratorul de dosare obișnuit.
 - **La distanță** îl schimbă cu un simplu câmp de URL, plus un buton care deschide același dialog de test al conexiunii și de acreditări folosit de destinațiile din afara sediului, configurat însă pentru acest depozit primar. De acolo obții:
@@ -122,8 +122,8 @@ O filă dedicată **Recuperare** conduce o instalare nouă sau reconstruită pri
 1. **Restaurează mai întâi propriile setări ale BombVault**, astfel încât căile de backup, țintele off-site și credențialele de care restul fluxului are nevoie să fie precompletate (aplicate printr-o auto-repornire peste socket-ul Docker, astfel încât baza de date de setări în execuție să nu fie niciodată suprascrisă sub un handle deschis).
 2. **Verifică dacă BombVault poate citi backupurile tale** (capcana cheii de criptare, în față).
 3. Îți permite să **îndrepți către depozitul tău existent** (local sau off-site).
-4. **Descoperă** containerele, VM-urile și seturile de fișiere stocate în el.
-5. **Le restaurează pe toate** (lăsate oprite, ca să le pornești deliberat), cu kitul tău de recuperare la un clic distanță.
+4. **Descoperă** containerele, VM-urile, seturile de fișiere și seturile de date ZFS stocate în el.
+5. **Restaurează containerele și VM-urile dintr-odată** (lăsate oprite, ca să le pornești deliberat) și listează seturile de fișiere și elementele ZFS de restaurat unul câte unul; elementele ZFS revin dezactivate. Kitul tău de recuperare e la un clic distanță.
 
 !!! tip "Migrare planificată versus dezastru"
     Recuperarea ghidată restaurează propriile setări ale BombVault dintr-un backup. Pentru o mutare *planificată* pe o stație nouă, poți în schimb să-ți muți configurația direct cu cardul **Export și import setări** (un fișier JSON portabil). Vezi [Configurare](configuration.md#portable-settings-export-and-import).

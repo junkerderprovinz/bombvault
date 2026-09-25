@@ -29,7 +29,7 @@ Montér Docker-socket'en, flashen (`/boot`) og **Host Data**-roden (`/mnt`) som 
 
 Sikkerhedskopi af ZFS-datasæt kræver også denne tilstand: værten monterer et datasæts snapshot først, efter at containeren er startet. Se [ZFS-datasæt](zfs-datasets.md).
 
-Repository-stier for sikkerhedskopier defaulter til `/mnt/user/bombvault/{container,vms,flash,config,files}`, oprettet ved den første sikkerhedskopi. Skift placeringen når som helst i **Indstillinger, Sikkerhedskopistier**.
+Repository-stier for sikkerhedskopier defaulter til `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, oprettet ved den første sikkerhedskopi. Skift placeringen når som helst i **Indstillinger, Sikkerhedskopistier**.
 
 !!! note "Vært-integrationstjek"
     Åbn `/spike` i web-UI'en, når containeren er startet. Den prober hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer eventuelle manglende dele.

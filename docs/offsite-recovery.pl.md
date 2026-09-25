@@ -6,7 +6,7 @@ Kopie lokalne chronią Cię przed utraconym kontenerem lub złą aktualizacją. 
 
 Zachowaj szybką kopię lokalną i dodaj jedną lub więcej replik poza siedzibą. Ustaw repozytorium per domena w zakładce **Ustawienia, Poza siedzibą**. BombVault replikuje tam nowe migawki poleceniem `restic copy` w trybie best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Repozytorium lokalne pozostaje główne.
 
-- **Wiele celów poza siedzibą na domenę.** Każda domena (kontenery, VM, flash, config i zestawy plików) może replikować do kilku celów poza siedzibą naraz, nie tylko jednego, więc możesz utrzymywać na przykład rest-server na maszynie znajomego oraz bucket S3 równolegle. Dodaj dodatkowe cele w Ustawienia, Poza siedzibą, każdy z własnym repozytorium, klasą pamięci S3, flagą append-only, przechowywaniem i budżetem wzrostu. Istniejąca pojedyncza konfiguracja poza siedzibą jest przenoszona nietknięta jako pierwszy cel, a każdy cel domeny replikuje zgodnie z harmonogramem poza siedzibą tej domeny.
+- **Wiele celów poza siedzibą na domenę.** Każda domena (kontenery, VM, flash, config, zestawy plików i zbiory danych ZFS) może replikować do kilku celów poza siedzibą naraz, nie tylko jednego, więc możesz utrzymywać na przykład rest-server na maszynie znajomego oraz bucket S3 równolegle. Dodaj dodatkowe cele w Ustawienia, Poza siedzibą, każdy z własnym repozytorium, klasą pamięci S3, flagą append-only, przechowywaniem i budżetem wzrostu. Istniejąca pojedyncza konfiguracja poza siedzibą jest przenoszona nietknięta jako pierwszy cel, a każdy cel domeny replikuje zgodnie z harmonogramem poza siedzibą tej domeny.
 - **Harmonogram poza siedzibą per domena** (edytowany obok każdego innego harmonogramu w Ustawienia, Harmonogramy): pozostaw pusty, aby replikować po każdej kopii lokalnej, lub ustaw kadencję (na przykład `weekly Sun 03:00`), aby wysyłać poza siedzibę rzadziej, niż tworzysz kopie lokalne. Przycisk **Replikuj teraz** obsługuje uruchomienia na żądanie.
 - **Przechowywanie poza siedzibą** znajduje się w Ustawienia, Poza siedzibą, więc możesz trzymać kopie poza siedzibą dłużej jako archiwum. Pozostaw politykę całą na zero, aby nigdy nie przycinać automatycznie migawek poza siedzibą.
 - **Limity przepustowości** (Ustawienia, Poza siedzibą) ograniczają tempo wysyłania/pobierania restic, aby replikacja nie nasycała Twojego łącza WAN.
@@ -19,7 +19,7 @@ Zachowaj szybką kopię lokalną i dodaj jedną lub więcej replik poza siedzib�
 
 Ścieżka kopii domeny (Ustawienia, Ścieżki i magazyn) nie ogranicza się do lokalnego katalogu: skieruj ją wprost na zdalne repozytorium restica (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:użytkownik@host:/repo`, `rclone:remote:bucket/ścieżka`), a BombVault będzie archiwizował prosto tam, bez osobnej kopii lokalnej i bez kroku replikacji. To naprawdę inny układ niż replikacja poza siedzibę powyżej: tam repozytorium lokalne jest podstawowe, a zewnętrzne jest jego archiwum w miarę możliwości; tutaj repozytorium zdalne **jest** podstawowe i jest jedyną kopią, dopóki nie skonfigurujesz dla tej domeny również replikacji poza siedzibę (albo drugiego repozytorium zdalnego).
 
-Każde z pięciu pól ścieżki (Kontenery, Maszyny wirtualne, Flash, Konfiguracja, Pliki) ma tuż obok przełącznik **Lokalne / Zdalne**:
+Każde z sześciu pól ścieżki (Kontenery, Maszyny wirtualne, Flash, Konfiguracja, Pliki, Zbiory danych ZFS) ma tuż obok przełącznik **Lokalne / Zdalne**:
 
 - **Lokalne** pokazuje znaną przeglądarkę katalogów.
 - **Zdalne** zamienia ją na zwykłe pole URL oraz przycisk otwierający to samo okno testu połączenia i danych logowania, którego używają cele poza siedzibą, tyle że skonfigurowane dla tego repozytorium podstawowego. Dostajesz stamtąd:
@@ -122,8 +122,8 @@ Dedykowana zakładka **Odzyskiwanie** prowadzi świeżą lub odbudowaną instala
 1. **Najpierw przywraca własne ustawienia BombVault**, więc ścieżki kopii, cele poza siedzibą i poświadczenia, których potrzebuje reszta przepływu, są wstępnie wypełnione (stosowane przez samodzielny restart przez gniazdo Docker, więc działająca baza ustawień nigdy nie jest nadpisywana pod otwartym uchwytem).
 2. **Sprawdza, czy BombVault może odczytać Twoje kopie** (pułapka klucza szyfrowania od razu na wstępie).
 3. Pozwala Ci **wskazać istniejące repozytorium** (lokalne lub poza siedzibą).
-4. **Odkrywa** kontenery, VM i zestawy plików w nim przechowywane.
-5. **Przywraca je wszystkie** (pozostawiając zatrzymanymi, więc uruchamiasz je świadomie), z Twoim zestawem odzyskiwania o jedno kliknięcie stąd.
+4. **Odkrywa** kontenery, VM, zestawy plików i zbiory danych ZFS w nim przechowywane.
+5. **Przywraca kontenery i VM za jednym razem** (pozostawiając zatrzymanymi, więc uruchamiasz je świadomie) i wypisuje zestawy plików oraz elementy ZFS do przywrócenia po kolei; elementy ZFS wracają wyłączone. Twój zestaw odzyskiwania jest o jedno kliknięcie stąd.
 
 !!! tip "Zaplanowana migracja kontra awaria"
     Odzyskiwanie z przewodnikiem przywraca własne ustawienia BombVault z kopii zapasowej. Do *zaplanowanego* przejścia na nową maszynę możesz zamiast tego przenieść swoją konfigurację bezpośrednio za pomocą karty **Eksport i import ustawień** (przenośny plik JSON). Zobacz [Konfiguracja](configuration.md#portable-settings-export-and-import).

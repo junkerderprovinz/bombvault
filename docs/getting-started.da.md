@@ -68,8 +68,8 @@ Skabelonen monterer også Docker-socket'en, flashen (`/boot`) og **Host Data**-r
 *Instrumentpanelet efter en første sikkerhedskopi: hvad der er beskyttet, hvad der kører nu, og en levende log.*
 
 1. Åbn web-UI'en på `https://<your-unraid-ip>:3443` (selvsigneret certifikat fra start).
-2. Aktivér i **Indstillinger** de sikkerhedskopidomæner, du vil have (Containers, VMs, Flash, Config, Files), og vælg en accentfarve.
-3. Vælg en container på fanen **Containers**, og klik på **Sikkerhedskopier** for at oprette dit første gendannelsespunkt. Repository-stier defaulter til `/mnt/user/bombvault/{container,vms,flash,config,files}` og oprettes ved den første sikkerhedskopi.
+2. Aktivér i **Indstillinger** de sikkerhedskopidomæner, du vil have (Containers, VMs, Flash, Config, Files, ZFS datasets), og vælg en accentfarve.
+3. Vælg en container på fanen **Containers**, og klik på **Sikkerhedskopier** for at oprette dit første gendannelsespunkt. Repository-stier defaulter til `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` og oprettes ved den første sikkerhedskopi.
 4. Opsæt planlægning fra **Indstillinger, Tidsplaner**. Der er en ét-klik *inkludér alle i tidsplan* for containere og VM'er.
 
 !!! tip "Valgfrit: vælg en sikkerhedskopi-rækkefølge"

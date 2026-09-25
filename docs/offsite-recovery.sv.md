@@ -6,7 +6,7 @@ Lokala säkerhetskopior skyddar dig mot en förlorad container eller en dålig u
 
 Behåll den snabba lokala säkerhetskopian och lägg till en eller flera off-site-repliker. Ange ett repo per domän på fliken **Inställningar, Off-site**. BombVault replikerar nya ögonblicksbilder dit med `restic copy` på best-effort-basis, så att en off-site-hicka aldrig misslyckar den lokala säkerhetskopian. Det lokala repot förblir primärt.
 
-- **Flera off-site-mål per domän.** Varje domän (containrar, VM:ar, flash, config och filuppsättningar) kan replikera till flera off-site-mål samtidigt, inte bara ett, så att du kan hålla, till exempel, en rest-server på en väns box och en S3-bucket parallellt. Lägg till extra mål under Inställningar, Off-site, var och en med sitt eget repository, S3-lagringsklass, append-only-flagga, retention och tillväxtbudget. En befintlig enskild off-site-uppsättning förs över orörd som det första målet, och varje mål i en domän replikeras enligt den domänens off-site-schema.
+- **Flera off-site-mål per domän.** Varje domän (containrar, VM:ar, flash, config, filuppsättningar och ZFS-datauppsättningar) kan replikera till flera off-site-mål samtidigt, inte bara ett, så att du kan hålla, till exempel, en rest-server på en väns box och en S3-bucket parallellt. Lägg till extra mål under Inställningar, Off-site, var och en med sitt eget repository, S3-lagringsklass, append-only-flagga, retention och tillväxtbudget. En befintlig enskild off-site-uppsättning förs över orörd som det första målet, och varje mål i en domän replikeras enligt den domänens off-site-schema.
 - **Off-site-schema per domän** (redigerat tillsammans med alla andra scheman under Inställningar, Scheman): lämna det tomt för att replikera efter varje lokal säkerhetskopiering, eller sätt en kadens (till exempel `weekly Sun 03:00`) för att skicka off-site mer sällan än du säkerhetskopierar lokalt. En **Replikera nu**-knapp täcker körningar på begäran.
 - **Off-site-retention** finns under Inställningar, Off-site så att du kan behålla off-site-kopior längre som ett arkiv. Lämna policyn helt-noll för att aldrig autotrimma off-site-ögonblicksbilder.
 - **Bandbreddsgränser** (Inställningar, Off-site) begränsar restics uppladdnings-/nedladdningshastighet så att replikering inte mättar din WAN.
@@ -19,7 +19,7 @@ Behåll den snabba lokala säkerhetskopian och lägg till en eller flera off-sit
 
 En domäns säkerhetskopieringssökväg (Inställningar, Sökvägar och lagring) är inte begränsad till en lokal mapp: rikta den direkt mot ett restic-fjärrarkiv (`s3:...`, `rest:http://värd:8000/arkiv`, `b2:...`, `sftp:användare@värd:/arkiv`, `rclone:fjärr:bucket/sökväg`) så säkerhetskopierar BombVault dit direkt, utan separat lokal kopia och utan replikeringssteg. Det är en verkligt annan form än off-site-replikeringen ovan: där är det lokala arkivet primärt och off-site-arkivet ett arkiv av det efter bästa förmåga; här **är** fjärrarkivet det primära, och det är den enda kopian så länge du inte också ställer in off-site-replikering (eller ett andra fjärrarkiv) för den domänen.
 
-Vart och ett av de fem sökvägsfälten (Containrar, Virtuella maskiner, Flash, Konfiguration, Filer) har en omkopplare **Lokal / Fjärr** alldeles intill:
+Vart och ett av de sex sökvägsfälten (Containrar, Virtuella maskiner, Flash, Konfiguration, Filer, ZFS-datauppsättningar) har en omkopplare **Lokal / Fjärr** alldeles intill:
 
 - **Lokal** visar den vanliga mappbläddraren.
 - **Fjärr** byter ut den mot ett enkelt URL-fält, plus en knapp som öppnar samma dialog för anslutningstest och inloggningsuppgifter som off-site-destinationer använder, fast inställd för det här primära arkivet. Därifrån får du:
@@ -122,8 +122,8 @@ En dedikerad **Återställning**-flik lotsar en ny eller ombyggd installation ge
 1. **Återställer BombVaults egna inställningar först**, så att säkerhetskopiesökvägarna, off-site-målen och uppgifterna som resten av flödet behöver kommer förifyllda (tillämpade via en självomstart över Docker-socketen, så att den körande inställningsdatabasen aldrig skrivs över under ett öppet handtag).
 2. **Kontrollerar att BombVault kan läsa dina säkerhetskopior** (krypteringsnyckel-fällan direkt).
 3. Låter dig **peka mot ditt befintliga repo** (lokalt eller off-site).
-4. **Identifierar** containrarna, VM:arna och filuppsättningarna lagrade i det.
-5. **Återställer dem alla** (lämnade stoppade, så att du startar dem medvetet), med ditt återställningskit ett klick bort.
+4. **Identifierar** containrarna, VM:arna, filuppsättningarna och ZFS-datauppsättningarna lagrade i det.
+5. **Återställer containrarna och VM:arna i ett svep** (lämnade stoppade, så att du startar dem medvetet) och listar filuppsättningarna och ZFS-objekten som du återställer ett i taget; ZFS-objekt kommer tillbaka avstängda. Ditt återställningskit är ett klick bort.
 
 !!! tip "Planerad migrering kontra katastrof"
     Guidad återställning återställer BombVaults egna inställningar från en säkerhetskopia. För en *planerad* flytt till en ny box kan du istället ta med din konfiguration direkt med kortet **Exportera och importera inställningar** (en portabel JSON-fil). Se [Konfiguration](configuration.md#portable-settings-export-and-import).

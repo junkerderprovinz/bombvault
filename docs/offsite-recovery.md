@@ -6,7 +6,7 @@ Local backups protect you from a lost container or a bad update. Off-site replic
 
 Keep the fast local backup and add one or more off-site replicas. Set a repo per domain on the **Settings, Off-site** tab. BombVault replicates new snapshots there with `restic copy` on a best-effort basis, so an off-site hiccup never fails the local backup. In this shape the local repo stays primary and the off-site repo is a replica — but a domain's primary repo does not have to be local at all; see [Remote primary repositories](#remote-primary-repositories) below for backing up straight to S3/rest-server/etc. instead of replicating to it.
 
-- **Multiple off-site targets per domain.** Each domain (containers, VMs, flash, config and file sets) can replicate to several off-site destinations at once, not just one, so you can keep, for example, a rest-server on a friend's box and an S3 bucket in parallel. Add extra targets on Settings, Off-site, each with its own repository, S3 storage class, append-only flag, retention and growth budget. An existing single off-site setup is carried over untouched as the first target, and every target of a domain replicates on that domain's off-site schedule.
+- **Multiple off-site targets per domain.** Each domain (containers, VMs, flash, config, file sets and ZFS datasets) can replicate to several off-site destinations at once, not just one, so you can keep, for example, a rest-server on a friend's box and an S3 bucket in parallel. Add extra targets on Settings, Off-site, each with its own repository, S3 storage class, append-only flag, retention and growth budget. An existing single off-site setup is carried over untouched as the first target, and every target of a domain replicates on that domain's off-site schedule.
 - **Per-domain off-site schedule** (edited alongside every other schedule on Settings, Schedules): leave it blank to replicate after every local backup, or set a cadence (for example `weekly Sun 03:00`) to ship off-site less often than you back up locally. A **Replicate now** button covers on-demand runs.
 - **Off-site retention** lives on Settings, Off-site so you can keep off-site copies longer as an archive. Leave the policy all-zero to never auto-trim off-site snapshots.
 - **Bandwidth limits** (Settings, Off-site) cap the restic upload/download rate so replication does not saturate your WAN.
@@ -19,7 +19,7 @@ Keep the fast local backup and add one or more off-site replicas. Set a repo per
 
 A domain's Backup Path (Settings, Paths & Storage) is not limited to a local folder — point it straight at a restic remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) and BombVault backs up to it directly, with no separate local copy and no replication step. This is a genuinely different shape from off-site replication above: there the local repo is primary and the off-site repo is a best-effort archive of it; here the remote repo **is** the primary, and it is the only copy unless you also configure off-site replication (or a second remote) for that domain.
 
-Each of the five path fields (Containers, VMs, Flash, Config, Files) has an inline **Local / Remote** switch right next to it:
+Each of the six path fields (Containers, VMs, Flash, Config, Files, ZFS datasets) has an inline **Local / Remote** switch right next to it:
 
 - **Local** shows the familiar folder browser.
 - **Remote** swaps it for a plain URL field, plus a button that opens the same connection-test/credentials dialog off-site destinations use, configured for this primary instead. From there you get:
@@ -130,8 +130,8 @@ A dedicated **Recovery** tab walks a fresh or rebuilt install through the disast
 1. **Restores BombVault's own settings first**, so the backup paths, off-site targets and credentials the rest of the flow needs come pre-filled (applied via a self-restart over the Docker socket, so the live settings database is never overwritten under an open handle).
 2. **Checks BombVault can read your backups** (the encryption-key gotcha up front).
 3. Lets you **point at your existing repo** (local or off-site).
-4. **Discovers** the containers, VMs and file sets stored in it.
-5. **Restores them all** (left stopped, so you start them deliberately), with your recovery kit one click away.
+4. **Discovers** the containers, VMs, file sets and ZFS datasets stored in it.
+5. **Restores the containers and VMs in one go** (left stopped, so you start them deliberately) and lists the file sets and ZFS items to restore one by one; ZFS items come back switched off. Your recovery kit is one click away.
 
 !!! tip "Planned migration versus disaster"
     Guided recovery restores BombVault's own settings from a backup. For a *planned* move to a new box, you can instead carry your configuration over directly with the **Export and import settings** card (a portable JSON file). See [Configuration](configuration.md#portable-settings-export-and-import).

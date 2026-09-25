@@ -29,7 +29,7 @@ Připojte Docker socket, flash (`/boot`) a kořen **Host Data** (`/mnt`), jak je
 
 Zálohy datových sad ZFS tento režim potřebují také: snímek datové sady hostitel připojí až poté, co kontejner nastartoval. Viz [Datové sady ZFS](zfs-datasets.md).
 
-Cesty repozitářů záloh mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files}`, vytvořené při první záloze. Umístění změňte kdykoli v **Nastavení, Zálohovací cesty**.
+Cesty repozitářů záloh mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, vytvořené při první záloze. Umístění změňte kdykoli v **Nastavení, Zálohovací cesty**.
 
 !!! note "Kontrola integrace hostitele"
     Po spuštění kontejneru otevřete `/spike` ve webovém rozhraní. Prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části.

@@ -68,8 +68,8 @@ Szablon montuje też za Ciebie gniazdo Docker, flash (`/boot`) oraz katalog gł�
 *Pulpit po pierwszej kopii: co jest chronione, co uruchomi się dalej i dziennik na żywo.*
 
 1. Otwórz interfejs webowy pod adresem `https://<your-unraid-ip>:3443` (certyfikat samopodpisany od razu po instalacji).
-2. W **Ustawieniach** włącz domeny kopii zapasowych, których chcesz używać (Kontenery, VM, Flash, Config, Pliki) i wybierz kolor akcentu.
-3. W zakładce **Kontenery** wybierz kontener i kliknij **Utwórz kopię**, aby stworzyć swój pierwszy punkt przywracania. Ścieżki repozytoriów domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files}` i są tworzone przy pierwszej kopii.
+2. W **Ustawieniach** włącz domeny kopii zapasowych, których chcesz używać (Kontenery, VM, Flash, Config, Pliki, Zbiory danych ZFS) i wybierz kolor akcentu.
+3. W zakładce **Kontenery** wybierz kontener i kliknij **Utwórz kopię**, aby stworzyć swój pierwszy punkt przywracania. Ścieżki repozytoriów domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` i są tworzone przy pierwszej kopii.
 4. Skonfiguruj harmonogramowanie w **Ustawienia, Harmonogramy**. Dostępna jest funkcja *uwzględnij wszystkie w harmonogramie* za jednym kliknięciem dla kontenerów i VM.
 
 !!! tip "Opcjonalnie: wybierz kolejność kopii zapasowych"

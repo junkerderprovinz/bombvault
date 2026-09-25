@@ -29,7 +29,7 @@ Docker soketini, flash'ı (`/boot`) ve **Host Data** kökünü (`/mnt`) CA şabl
 
 ZFS veri kümesi yedeklerinin de bu moda ihtiyacı vardır: ana makine bir veri kümesinin anlık görüntüsünü ancak konteyner başladıktan sonra bağlar. Bkz. [ZFS veri kümeleri](zfs-datasets.md).
 
-Yedekleme depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files}` şeklindedir, ilk yedeklemede oluşturulur. Konumu istediğiniz zaman **Ayarlar, Yedekleme yolları**'nda değiştirin.
+Yedekleme depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` şeklindedir, ilk yedeklemede oluşturulur. Konumu istediğiniz zaman **Ayarlar, Yedekleme yolları**'nda değiştirin.
 
 !!! note "Host entegrasyon denetimi"
     Konteyner başladıktan sonra web arayüzünde `/spike`'ı açın. Her bağlamayı ve CLI'ı (Docker soketi, libvirt, restic, qemu-img, rclone) yoklar ve eksik parçaları bildirir.

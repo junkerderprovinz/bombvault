@@ -29,7 +29,7 @@ Mount de Docker-socket, de flash (`/boot`) en de root **Host Data** (`/mnt`) zoa
 
 Back-ups van ZFS-datasets hebben deze modus ook nodig: de host koppelt de snapshot van een dataset pas aan nadat de container is gestart. Zie [ZFS-datasets](zfs-datasets.md).
 
-Back-uprepository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files}`, aangemaakt bij de eerste back-up. Wijzig de locatie op elk moment in **Instellingen, Back-uppaden**.
+Back-uprepository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, aangemaakt bij de eerste back-up. Wijzig de locatie op elk moment in **Instellingen, Back-uppaden**.
 
 !!! note "Controle van hostintegratie"
     Open `/spike` in de web-UI nadat de container is gestart. Het test elke mount en CLI (Docker-socket, libvirt, restic, qemu-img, rclone) en meldt eventuele ontbrekende onderdelen.

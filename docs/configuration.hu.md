@@ -29,7 +29,7 @@ Csatold a Docker socketet, a flasht (`/boot`) és a **Host Data** gyökeret (`/m
 
 A ZFS-adatkészletek mentéséhez is ez a mód kell: egy adatkészlet pillanatképét a hoszt csak a konténer indulása után csatolja. Lásd: [ZFS-adatkészletek](zfs-datasets.md).
 
-A mentési tároló-útvonalak alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files}` útvonalra mutatnak, és az első mentéskor jönnek létre. A helyet bármikor megváltoztathatod a **Beállítások, Mentési útvonalak** alatt.
+A mentési tároló-útvonalak alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` útvonalra mutatnak, és az első mentéskor jönnek létre. A helyet bármikor megváltoztathatod a **Beállítások, Mentési útvonalak** alatt.
 
 !!! note "Hosztintegráció-ellenőrzés"
     A konténer elindulása után nyisd meg a `/spike` oldalt a webes felületen. Ez minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat.

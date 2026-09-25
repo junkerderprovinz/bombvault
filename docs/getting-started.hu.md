@@ -68,8 +68,8 @@ A sablon ezen felül csatolja a Docker socketet, a flasht (`/boot`) és a **Host
 *A műszerfal az első mentés után: mi védett, mi fut legközelebb, és egy élő napló.*
 
 1. Nyisd meg a webes felületet a `https://<your-unraid-ip>:3443` címen (alapból önaláírt tanúsítvánnyal).
-2. A **Beállításokban** engedélyezd a kívánt mentési tartományokat (Konténerek, VM-ek, Flash, Config, Fájlok), és válassz egy kiemelőszínt.
-3. A **Konténerek** fülön válassz egy konténert, és kattints a **Mentés** gombra az első visszaállítási pont létrehozásához. A tároló útvonalai alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files}` útvonalra mutatnak, és az első mentéskor jönnek létre.
+2. A **Beállításokban** engedélyezd a kívánt mentési tartományokat (Konténerek, VM-ek, Flash, Config, Fájlok, ZFS-adatkészletek), és válassz egy kiemelőszínt.
+3. A **Konténerek** fülön válassz egy konténert, és kattints a **Mentés** gombra az első visszaállítási pont létrehozásához. A tároló útvonalai alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` útvonalra mutatnak, és az első mentéskor jönnek létre.
 4. Állítsd be az ütemezést a **Beállítások, Ütemezések** alatt. A konténerekhez és VM-ekhez van egykattintásos *összes felvétele az ütemezésbe* lehetőség.
 
 !!! tip "Opcionális: válassz mentési sorrendet"

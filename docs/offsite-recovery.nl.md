@@ -6,7 +6,7 @@ Lokale back-ups beschermen je tegen een verloren container of een slechte update
 
 Houd de snelle lokale back-up en voeg een of meer off-site replica's toe. Stel een repo per domein in op het tabblad **Instellingen, Off-site**. BombVault repliceert nieuwe snapshots daarheen met `restic copy` op best-effort-basis, zodat een off-site hapering de lokale back-up nooit laat mislukken. De lokale repo blijft primair.
 
-- **Meerdere off-site doelen per domein.** Elk domein (containers, VM's, flash, config en bestandssets) kan tegelijk naar meerdere off-site bestemmingen repliceren, niet slechts één, zodat je bijvoorbeeld een rest-server op de machine van een vriend en een S3-bucket parallel kunt houden. Voeg extra doelen toe op Instellingen, Off-site, elk met zijn eigen repository, S3-opslagklasse, append-only-vlag, retentie en groeibudget. Een bestaande enkele off-site setup wordt onaangeroerd overgenomen als het eerste doel, en elk doel van een domein repliceert op de off-site planning van dat domein.
+- **Meerdere off-site doelen per domein.** Elk domein (containers, VM's, flash, config, bestandssets en ZFS-datasets) kan tegelijk naar meerdere off-site bestemmingen repliceren, niet slechts één, zodat je bijvoorbeeld een rest-server op de machine van een vriend en een S3-bucket parallel kunt houden. Voeg extra doelen toe op Instellingen, Off-site, elk met zijn eigen repository, S3-opslagklasse, append-only-vlag, retentie en groeibudget. Een bestaande enkele off-site setup wordt onaangeroerd overgenomen als het eerste doel, en elk doel van een domein repliceert op de off-site planning van dat domein.
 - **Off-site planning per domein** (bewerkt naast elke andere planning op Instellingen, Planningen): laat het leeg om na elke lokale back-up te repliceren, of stel een cadans in (bijvoorbeeld `weekly Sun 03:00`) om minder vaak off-site te sturen dan je lokaal back-upt. Een knop **Nu repliceren** dekt runs op aanvraag.
 - **Off-site retentie** staat op Instellingen, Off-site zodat je off-site kopieën langer als archief kunt bewaren. Laat het beleid geheel op nul om off-site snapshots nooit automatisch te trimmen.
 - **Bandbreedtelimieten** (Instellingen, Off-site) begrenzen de restic-upload/downloadsnelheid zodat replicatie je WAN niet verzadigt.
@@ -19,7 +19,7 @@ Houd de snelle lokale back-up en voeg een of meer off-site replica's toe. Stel e
 
 Het back-uppad van een domein (Instellingen, Paden en opslag) is niet beperkt tot een lokale map: richt het rechtstreeks op een restic-remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:gebruiker@host:/repo`, `rclone:remote:bucket/pad`) en BombVault back-upt daar direct naartoe, zonder aparte lokale kopie en zonder replicatiestap. Dat is een werkelijk andere vorm dan de off-sitereplicatie hierboven: daar is het lokale repository primair en is het off-site-repository er een archief van naar beste vermogen; hier **is** het externe repository het primaire, en is het de enige kopie zolang je voor dat domein niet ook off-sitereplicatie (of een tweede remote) instelt.
 
-Elk van de vijf padvelden (Containers, Virtuele machines, Flash, Configuratie, Bestanden) heeft er direct naast een schakelaar **Lokaal / Extern**:
+Elk van de zes padvelden (Containers, Virtuele machines, Flash, Configuratie, Bestanden, ZFS-datasets) heeft er direct naast een schakelaar **Lokaal / Extern**:
 
 - **Lokaal** toont de vertrouwde mappenbrowser.
 - **Extern** vervangt hem door een eenvoudig URL-veld, plus een knop die hetzelfde venster voor verbindingstest en inloggegevens opent dat off-sitebestemmingen gebruiken, maar dan ingesteld voor dit primaire repository. Daar krijg je:
@@ -122,8 +122,8 @@ Een speciaal tabblad **Herstel** leidt een verse of herbouwde installatie op é�
 1. **Herstelt eerst BombVaults eigen instellingen**, zodat de back-uppaden, off-site doelen en inloggegevens die de rest van de flow nodig heeft al zijn ingevuld (toegepast via een self-restart over de Docker-socket, zodat de live instellingendatabase nooit onder een open handle wordt overschreven).
 2. **Controleert of BombVault je back-ups kan lezen** (het encryptiesleutel-addertje vooraf).
 3. Laat je **wijzen naar je bestaande repo** (lokaal of off-site).
-4. **Ontdekt** de containers, VM's en bestandssets die erin zijn opgeslagen.
-5. **Herstelt ze allemaal** (gestopt gelaten, zodat je ze bewust start), met je herstelkit één klik weg.
+4. **Ontdekt** de containers, VM's, bestandssets en ZFS-datasets die erin zijn opgeslagen.
+5. **Herstelt de containers en VM's in één keer** (gestopt gelaten, zodat je ze bewust start) en toont de bestandssets en ZFS-items om een voor een te herstellen; ZFS-items komen uitgeschakeld terug. Je herstelkit is één klik weg.
 
 !!! tip "Geplande migratie versus noodgeval"
     Begeleid herstel herstelt BombVaults eigen instellingen vanuit een back-up. Voor een *geplande* verhuizing naar een nieuwe machine kun je in plaats daarvan je configuratie rechtstreeks meenemen met de kaart **Instellingen exporteren en importeren** (een portable JSON-bestand). Zie [Configuratie](configuration.md#portable-settings-export-and-import).

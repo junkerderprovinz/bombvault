@@ -6,7 +6,7 @@ Os backups locais protegem-no de um container perdido ou de uma atualização m�
 
 Mantenha o backup local rápido e adicione uma ou mais réplicas externas. Defina um repo por domínio no separador **Definições, Externo**. O BombVault replica novos instantâneos para lá com `restic copy` numa base de melhor esforço, por isso um percalço externo nunca faz o backup local falhar. O repo local mantém-se primário.
 
-- **Vários destinos externos por domínio.** Cada domínio (containers, VMs, flash, config e conjuntos de ficheiros) pode replicar para vários destinos externos de uma só vez, não apenas um, para que possa manter, por exemplo, um rest-server na máquina de um amigo e um bucket S3 em paralelo. Adicione destinos extra em Definições, Externo, cada um com o seu próprio repositório, classe de armazenamento S3, flag append-only, retenção e orçamento de crescimento. Uma configuração externa única existente é transferida intacta como o primeiro destino, e cada destino de um domínio replica no agendamento externo desse domínio.
+- **Vários destinos externos por domínio.** Cada domínio (containers, VMs, flash, config, conjuntos de ficheiros e conjuntos de dados ZFS) pode replicar para vários destinos externos de uma só vez, não apenas um, para que possa manter, por exemplo, um rest-server na máquina de um amigo e um bucket S3 em paralelo. Adicione destinos extra em Definições, Externo, cada um com o seu próprio repositório, classe de armazenamento S3, flag append-only, retenção e orçamento de crescimento. Uma configuração externa única existente é transferida intacta como o primeiro destino, e cada destino de um domínio replica no agendamento externo desse domínio.
 - **Agendamento externo por domínio** (editado ao lado de todos os outros agendamentos em Definições, Agendamentos): deixe-o em branco para replicar após cada backup local, ou defina uma cadência (por exemplo `weekly Sun 03:00`) para enviar para o externo com menos frequência do que faz backup localmente. Um botão **Replicar agora** cobre as execuções a pedido.
 - **A retenção externa** vive em Definições, Externo para que possa manter as cópias externas por mais tempo como arquivo. Deixe a política toda a zero para nunca aparar automaticamente os instantâneos externos.
 - **Os limites de largura de banda** (Definições, Externo) limitam a taxa de envio/receção do restic para que a replicação não sature a sua WAN.
@@ -19,7 +19,7 @@ Mantenha o backup local rápido e adicione uma ou mais réplicas externas. Defin
 
 O caminho de cópia de um domínio (Definições, Caminhos e armazenamento) não se limita a uma pasta local: aponta-o diretamente para um remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utilizador@host:/repo`, `rclone:remoto:bucket/caminho`) e o BombVault copia diretamente para lá, sem cópia local separada e sem passo de replicação. É uma forma verdadeiramente diferente da replicação fora do local acima: ali o repositório local é o primário e o de fora do local é um arquivo dele na medida do possível; aqui o repositório remoto **é** o primário, e é a única cópia enquanto não configurares também uma replicação fora do local (ou um segundo remoto) para esse domínio.
 
-Cada um dos cinco campos de caminho (Contentores, Máquinas virtuais, Flash, Configuração, Ficheiros) tem mesmo ao lado um interruptor **Local / Remoto**:
+Cada um dos seis campos de caminho (Contentores, Máquinas virtuais, Flash, Configuração, Ficheiros, Conjuntos de dados ZFS) tem mesmo ao lado um interruptor **Local / Remoto**:
 
 - **Local** mostra o explorador de pastas do costume.
 - **Remoto** troca-o por um simples campo de URL, mais um botão que abre a mesma janela de teste de ligação e credenciais que os destinos fora do local usam, configurada para este primário. A partir daí obténs:
@@ -122,8 +122,8 @@ Um separador **Recuperação** dedicado acompanha uma instalação de raiz ou re
 1. **Restaura primeiro as próprias definições do BombVault**, para que os caminhos de backup, os destinos externos e as credenciais de que o resto do fluxo precisa venham pré-preenchidos (aplicado através de um reinício automático sobre o socket Docker, para que a base de dados de definições em execução nunca seja sobrescrita sob um handle aberto).
 2. **Verifica que o BombVault consegue ler os seus backups** (o senão da chave de encriptação logo à partida).
 3. Deixa-o **apontar para o seu repo existente** (local ou externo).
-4. **Descobre** os containers, VMs e conjuntos de ficheiros nele armazenados.
-5. **Restaura-os todos** (deixados parados, para que os inicie deliberadamente), com o seu kit de recuperação a um clique de distância.
+4. **Descobre** os containers, VMs, conjuntos de ficheiros e conjuntos de dados ZFS nele armazenados.
+5. **Restaura os containers e as VMs de uma só vez** (deixados parados, para que os inicie deliberadamente) e lista os conjuntos de ficheiros e os elementos ZFS para restaurar um a um; os elementos ZFS voltam desativados. O seu kit de recuperação está a um clique de distância.
 
 !!! tip "Migração planeada versus desastre"
     A recuperação guiada restaura as próprias definições do BombVault a partir de um backup. Para uma mudança *planeada* para uma máquina nova, pode em vez disso levar a sua configuração consigo diretamente com o cartão **Exportar e importar definições** (um ficheiro JSON portátil). Consulte [Configuração](configuration.md#portable-settings-export-and-import).

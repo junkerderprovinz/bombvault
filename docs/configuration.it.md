@@ -29,7 +29,7 @@ Monta il socket Docker, il flash (`/boot`) e la radice **Host Data** (`/mnt`) co
 
 Anche i backup dei dataset ZFS hanno bisogno di questa modalità: l'host monta lo snapshot di un dataset solo dopo l'avvio del container. Vedi [Dataset ZFS](zfs-datasets.md).
 
-I percorsi dei repository di backup hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files}`, creati al primo backup. Cambia la posizione in qualsiasi momento in **Impostazioni, Percorsi di backup**.
+I percorsi dei repository di backup hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, creati al primo backup. Cambia la posizione in qualsiasi momento in **Impostazioni, Percorsi di backup**.
 
 !!! note "Verifica dell'integrazione host"
     Apri `/spike` nell'interfaccia web dopo l'avvio del container. Sonda ogni mount e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e segnala eventuali pezzi mancanti.

@@ -29,7 +29,7 @@ Montez le socket Docker, la flash (`/boot`) et la racine **Host Data** (`/mnt`) 
 
 Les sauvegardes de jeux de données ZFS ont aussi besoin de ce mode : l'hôte ne monte l'instantané d'un jeu de données qu'après le démarrage du conteneur. Voir [Jeux de données ZFS](zfs-datasets.md).
 
-Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files}`, créés à la première sauvegarde. Changez l'emplacement à tout moment dans **Paramètres, Chemins de sauvegarde**.
+Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, créés à la première sauvegarde. Changez l'emplacement à tout moment dans **Paramètres, Chemins de sauvegarde**.
 
 !!! note "Vérification de l'intégration hôte"
     Ouvrez `/spike` dans l'interface web après le démarrage du conteneur. Il sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante.

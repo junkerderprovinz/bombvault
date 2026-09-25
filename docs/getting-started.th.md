@@ -68,8 +68,8 @@ openssl rand -hex 32
 *แดชบอร์ดหลังการสำรองครั้งแรก: อะไรได้รับการปกป้อง อะไรจะรันต่อ และบันทึกที่เดินอยู่*
 
 1. เปิดเว็บ UI ที่ `https://<your-unraid-ip>:3443` (ใบรับรองแบบ self-signed มาให้พร้อมใช้งาน)
-2. ใน **Settings** เปิดใช้งานโดเมนการสำรองข้อมูลที่คุณต้องการ (Containers, VMs, Flash, Config, Files) แล้วเลือกสีเน้น
-3. บนแท็บ **Containers** เลือก container แล้วคลิก **Back up** เพื่อสร้างจุดกู้คืนแรกของคุณ พาธของรีพอสิทอรีตั้งค่าเริ่มต้นเป็น `/mnt/user/bombvault/{container,vms,flash,config,files}` และจะถูกสร้างขึ้นในการสำรองข้อมูลครั้งแรก
+2. ใน **Settings** เปิดใช้งานโดเมนการสำรองข้อมูลที่คุณต้องการ (Containers, VMs, Flash, Config, Files, ZFS datasets) แล้วเลือกสีเน้น
+3. บนแท็บ **Containers** เลือก container แล้วคลิก **Back up** เพื่อสร้างจุดกู้คืนแรกของคุณ พาธของรีพอสิทอรีตั้งค่าเริ่มต้นเป็น `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` และจะถูกสร้างขึ้นในการสำรองข้อมูลครั้งแรก
 4. ตั้งค่าตารางเวลาจาก **Settings, Schedules** มีปุ่ม *include all in schedule* แบบคลิกเดียวสำหรับ containers และ VMs
 
 !!! tip "ทางเลือก: เลือกลำดับการสำรองข้อมูล"

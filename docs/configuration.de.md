@@ -29,7 +29,7 @@ Hänge den Docker-Socket, den Flash (`/boot`) und das Wurzelverzeichnis **Host D
 
 ZFS-Dataset-Backups brauchen diesen Modus ebenfalls: Den Snapshot eines Datasets hängt der Host erst ein, nachdem der Container gestartet ist. Siehe [ZFS-Datasets](zfs-datasets.md).
 
-Backup-Repository-Pfade sind standardmäßig `/mnt/user/bombvault/{container,vms,flash,config,files}`, angelegt beim ersten Backup. Ändere den Ort jederzeit unter **Einstellungen, Backup-Pfade**.
+Backup-Repository-Pfade sind standardmäßig `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, angelegt beim ersten Backup. Ändere den Ort jederzeit unter **Einstellungen, Backup-Pfade**.
 
 !!! note "Prüfung der Host-Integration"
     Öffne `/spike` in der Web-Oberfläche, nachdem der Container gestartet ist. Es prüft jeden Mount und jedes CLI (Docker-Socket, libvirt, restic, qemu-img, rclone) und meldet fehlende Teile.

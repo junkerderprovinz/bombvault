@@ -68,8 +68,8 @@ Mallen monterar också Docker-socketen, flashen (`/boot`) och **Host Data**-rote
 *Instrumentpanelen efter en första säkerhetskopia: vad som skyddas, vad som kör härnäst och en levande logg.*
 
 1. Öppna webbgränssnittet på `https://<din-unraid-ip>:3443` (självsignerat certifikat direkt ur lådan).
-2. I **Inställningar**, aktivera de säkerhetskopieringsdomäner du vill ha (Containers, VMs, Flash, Config, Files) och välj en accentfärg.
-3. På fliken **Containers**, välj en container och klicka på **Säkerhetskopiera** för att skapa din första återställningspunkt. Repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files}` och skapas vid den första säkerhetskopieringen.
+2. I **Inställningar**, aktivera de säkerhetskopieringsdomäner du vill ha (Containers, VMs, Flash, Config, Files, ZFS datasets) och välj en accentfärg.
+3. På fliken **Containers**, välj en container och klicka på **Säkerhetskopiera** för att skapa din första återställningspunkt. Repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` och skapas vid den första säkerhetskopieringen.
 4. Sätt upp schemaläggning från **Inställningar, Scheman**. Det finns en *inkludera alla i schema* med ett klick för containrar och VM:ar.
 
 !!! tip "Valfritt: välj en säkerhetskopieringsordning"

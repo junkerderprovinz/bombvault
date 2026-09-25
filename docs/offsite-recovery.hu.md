@@ -6,7 +6,7 @@ A helyi mentések megvédenek egy elveszett konténertől vagy egy rossz frissí
 
 Tartsd meg a gyors helyi mentést, és adj hozzá egy vagy több telephelyen kívüli replikát. Állíts be egy tárolót tartományonként a **Beállítások, Telephelyen kívüli** fülön. A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint replikálja oda, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. A helyi tároló marad az elsődleges.
 
-- **Több telephelyen kívüli cél tartományonként.** Minden tartomány (konténerek, VM-ek, flash, config és fájlkészletek) egyszerre több telephelyen kívüli célra is replikálhat, nem csak egyre, így párhuzamosan tarthatsz például egy rest-servert egy barátod gépén és egy S3-bucketet is. Adj hozzá további célokat a Beállítások, Telephelyen kívüli alatt, mindegyiket saját tárolóval, S3-tárolási osztállyal, append-only jelzővel, megőrzéssel és növekedési kerettel. Egy meglévő egyetlen telephelyen kívüli beállítás érintetlenül, az első célként öröklődik át, és egy tartomány minden célja az adott tartomány telephelyen kívüli ütemezése szerint replikál.
+- **Több telephelyen kívüli cél tartományonként.** Minden tartomány (konténerek, VM-ek, flash, config, fájlkészletek és ZFS-adatkészletek) egyszerre több telephelyen kívüli célra is replikálhat, nem csak egyre, így párhuzamosan tarthatsz például egy rest-servert egy barátod gépén és egy S3-bucketet is. Adj hozzá további célokat a Beállítások, Telephelyen kívüli alatt, mindegyiket saját tárolóval, S3-tárolási osztállyal, append-only jelzővel, megőrzéssel és növekedési kerettel. Egy meglévő egyetlen telephelyen kívüli beállítás érintetlenül, az első célként öröklődik át, és egy tartomány minden célja az adott tartomány telephelyen kívüli ütemezése szerint replikál.
 - **Tartományonkénti telephelyen kívüli ütemezés** (minden más ütemezés mellett a Beállítások, Ütemezések alatt szerkesztve): hagyd üresen, hogy minden helyi mentés után replikáljon, vagy állíts be egy ütemet (például `weekly Sun 03:00`), hogy ritkábban szállítson telephelyen kívülre, mint amilyen gyakran helyben mentesz. Egy **Replikálás most** gomb fedi le az igény szerinti futásokat.
 - **A telephelyen kívüli megőrzés** a Beállítások, Telephelyen kívüli alatt él, így a telephelyen kívüli másolatokat archívumként tovább megtarthatod. Hagyd a szabályt mind nullán, hogy soha ne nyesse automatikusan a telephelyen kívüli pillanatképeket.
 - **A sávszélesség-korlátok** (Beállítások, Telephelyen kívüli) korlátozzák a restic fel- és letöltési sebességét, hogy a replikáció ne telítse a WAN-odat.
@@ -19,7 +19,7 @@ Tartsd meg a gyors helyi mentést, és adj hozzá egy vagy több telephelyen kí
 
 Egy tartomány mentési útvonala (Beállítások, Útvonalak és tárolás) nem korlátozódik helyi mappára: irányítsd egyenesen egy restic távoli tárolóra (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:felhasznalo@host:/repo`, `rclone:remote:bucket/utvonal`), és a BombVault közvetlenül oda ment, külön helyi másolat és replikációs lépés nélkül. Ez valóban más alak, mint a fenti külső telephelyi replikáció: ott a helyi tároló az elsődleges, a külső pedig annak legjobb tudás szerinti archívuma; itt a távoli tároló **maga** az elsődleges, és ez az egyetlen példány, amíg az adott tartományhoz nem állítasz be külső telephelyi replikációt is (vagy egy második távoli tárolót).
 
-Az öt útvonalmező (Konténerek, Virtuális gépek, Flash, Konfiguráció, Fájlok) mindegyike mellett közvetlenül ott áll egy **Helyi / Távoli** kapcsoló:
+A hat útvonalmező (Konténerek, Virtuális gépek, Flash, Konfiguráció, Fájlok, ZFS-adatkészletek) mindegyike mellett közvetlenül ott áll egy **Helyi / Távoli** kapcsoló:
 
 - **Helyi** a megszokott mappaböngészőt mutatja.
 - **Távoli** ezt egy egyszerű URL-mezőre cseréli, plusz egy gombra, amely ugyanazt a kapcsolatteszt és hitelesítőadat párbeszédet nyitja meg, amit a külső telephelyi célok használnak, csak épp ehhez az elsődleges tárolóhoz beállítva. Onnan a következőket kapod:
@@ -122,8 +122,8 @@ Egy dedikált **Helyreállítás** fül egy helyen végigvezet egy friss vagy ú
 1. **Először visszaállítja a BombVault saját beállításait**, így a mentési útvonalak, telephelyen kívüli célok és hitelesítő adatok, amelyekre a folyamat többi része szüksége van, előre kitöltve jelennek meg (a Docker socketen keresztüli önújraindítással alkalmazva, így az élő beállítás-adatbázis soha nem íródik felül nyitott handle alatt).
 2. **Ellenőrzi, hogy a BombVault olvasni tudja-e a mentéseidet** (a titkosításikulcs-buktató előre).
 3. Lehetővé teszi, hogy **rámutass a meglévő tárolódra** (helyi vagy telephelyen kívüli).
-4. **Felfedezi** a benne tárolt konténereket, VM-eket és fájlkészleteket.
-5. **Mindet visszaállítja** (leállítva hagyva, így te indítod el őket szándékosan), a helyreállítási csomagoddal egy kattintásnyira.
+4. **Felfedezi** a benne tárolt konténereket, VM-eket, fájlkészleteket és ZFS-adatkészleteket.
+5. **A konténereket és a VM-eket egyszerre visszaállítja** (leállítva hagyva, így te indítod el őket szándékosan), a fájlkészleteket és a ZFS-elemeket pedig felsorolja, hogy egyenként állítsd vissza őket; a ZFS-elemek kikapcsolva térnek vissza. A helyreállítási csomagod egy kattintásnyira van.
 
 !!! tip "Tervezett migráció versus katasztrófa"
     A vezetett helyreállítás egy mentésből állítja vissza a BombVault saját beállításait. Egy *tervezett* átköltözéshez egy új gépre ehelyett közvetlenül átviheted a konfigurációdat az **Exportálás és importálás beállítások** kártyával (egy hordozható JSON-fájl). Lásd: [Konfiguráció](configuration.md#portable-settings-export-and-import).

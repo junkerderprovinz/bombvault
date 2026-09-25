@@ -29,7 +29,7 @@ CA テンプレートに示されているとおり、Docker ソケット、フ�
 
 ZFS データセットのバックアップにもこのモードが必要です。ホストはコンテナの起動後にデータセットのスナップショットをマウントするためです。[ZFS データセット](zfs-datasets.md)を参照してください。
 
-バックアップのリポジトリパスはデフォルトで `/mnt/user/bombvault/{container,vms,flash,config,files}` になり、初回バックアップ時に作成されます。場所はいつでも **Settings, Backup paths** で変更できます。
+バックアップのリポジトリパスはデフォルトで `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` になり、初回バックアップ時に作成されます。場所はいつでも **Settings, Backup paths** で変更できます。
 
 !!! note "Host integration check"
     コンテナが起動したあと、Web UI で `/spike` を開いてください。これはすべてのマウントと CLI（Docker ソケット、libvirt、restic、qemu-img、rclone）をプローブし、欠けている部分を報告します。

@@ -68,8 +68,8 @@ Výsledek vložte do pole `APP_KEY` v šabloně.
 *Přehled po první záloze: co je chráněno, co poběží dál a živý protokol.*
 
 1. Otevřete webové rozhraní na `https://<your-unraid-ip>:3443` (samopodepsaný certifikát rovnou z krabice).
-2. V **Nastavení** povolte zálohovací domény, které chcete (Kontejnery, VM, Flash, Config, Soubory), a vyberte barvu zvýraznění.
-3. V záložce **Kontejnery** vyberte kontejner a klikněte na **Zálohovat** pro vytvoření svého prvního bodu obnovení. Cesty repozitářů mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files}` a vytvoří se při první záloze.
+2. V **Nastavení** povolte zálohovací domény, které chcete (Kontejnery, VM, Flash, Config, Soubory, Datové sady ZFS), a vyberte barvu zvýraznění.
+3. V záložce **Kontejnery** vyberte kontejner a klikněte na **Zálohovat** pro vytvoření svého prvního bodu obnovení. Cesty repozitářů mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` a vytvoří se při první záloze.
 4. Nastavte plánování v **Nastavení, Plány**. Pro kontejnery a VM je k dispozici *zahrnout vše do plánu* na jedno kliknutí.
 
 !!! tip "Volitelné: zvolte pořadí zálohování"

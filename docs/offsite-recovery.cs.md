@@ -6,7 +6,7 @@ Místní zálohy vás chrání před ztraceným kontejnerem nebo špatnou aktual
 
 Ponechte rychlou místní zálohu a přidejte jednu nebo více replik mimo lokalitu. Nastavte repozitář na doménu v záložce **Nastavení, Mimo lokalitu**. BombVault tam replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Místní repozitář zůstává primární.
 
-- **Více cílů mimo lokalitu na doménu.** Každá doména (kontejnery, VM, flash, config a sady souborů) může replikovat na několik cílů mimo lokalitu najednou, ne jen na jeden, takže můžete držet například rest-server na stroji kamaráda a S3 bucket paralelně. Přidejte další cíle v Nastavení, Mimo lokalitu, každý s vlastním repozitářem, třídou úložiště S3, příznakem append-only, uchováváním a rozpočtem růstu. Stávající jednotlivé nastavení mimo lokalitu se nedotčeno přenese jako první cíl a každý cíl domény replikuje podle plánu mimo lokalitu dané domény.
+- **Více cílů mimo lokalitu na doménu.** Každá doména (kontejnery, VM, flash, config, sady souborů a datové sady ZFS) může replikovat na několik cílů mimo lokalitu najednou, ne jen na jeden, takže můžete držet například rest-server na stroji kamaráda a S3 bucket paralelně. Přidejte další cíle v Nastavení, Mimo lokalitu, každý s vlastním repozitářem, třídou úložiště S3, příznakem append-only, uchováváním a rozpočtem růstu. Stávající jednotlivé nastavení mimo lokalitu se nedotčeno přenese jako první cíl a každý cíl domény replikuje podle plánu mimo lokalitu dané domény.
 - **Plán mimo lokalitu na doménu** (upravovaný spolu s každým dalším plánem v Nastavení, Plány): ponechte prázdný pro replikaci po každé místní záloze, nebo nastavte kadenci (například `weekly Sun 03:00`) pro odesílání mimo lokalitu méně často, než zálohujete místně. Tlačítko **Replikovat nyní** pokrývá běhy na vyžádání.
 - **Uchovávání mimo lokalitu** žije v Nastavení, Mimo lokalitu, takže můžete kopie mimo lokalitu držet déle jako archiv. Ponechte zásadu celou na nule, aby se snímky mimo lokalitu nikdy automaticky neprořezávaly.
 - **Limity šířky pásma** (Nastavení, Mimo lokalitu) omezují rychlost nahrávání/stahování restic, aby replikace nezasytila vaše WAN.
@@ -19,7 +19,7 @@ Ponechte rychlou místní zálohu a přidejte jednu nebo více replik mimo lokal
 
 Cesta zálohy domény (Nastavení, Cesty a úložiště) se neomezuje na místní složku: nasměrujte ji rovnou na vzdálený repozitář resticu (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:uživatel@host:/repo`, `rclone:remote:bucket/cesta`) a BombVault zálohuje přímo tam, bez samostatné místní kopie a bez kroku replikace. Je to opravdu jiný tvar než replikace mimo lokalitu výše: tam je primární místní repozitář a ten mimo lokalitu je jeho archivem podle možností; zde **je** primární ten vzdálený a je jedinou kopií, dokud pro tuto doménu nenastavíte i replikaci mimo lokalitu (nebo druhý vzdálený repozitář).
 
-Každé z pěti polí cesty (Kontejnery, Virtuální stroje, Flash, Konfigurace, Soubory) má hned vedle přepínač **Místní / Vzdálené**:
+Každé ze šesti polí cesty (Kontejnery, Virtuální stroje, Flash, Konfigurace, Soubory, Datové sady ZFS) má hned vedle přepínač **Místní / Vzdálené**:
 
 - **Místní** zobrazí známý prohlížeč složek.
 - **Vzdálené** jej vymění za prosté pole URL a tlačítko, které otevře stejné okno testu připojení a přihlašovacích údajů, jaké používají cíle mimo lokalitu, jen nastavené pro tento primární repozitář. Odtud získáte:
@@ -122,8 +122,8 @@ Vyhrazená záložka **Obnova** provede čistou nebo znovu sestavenou instalaci 
 1. **Nejprve obnoví vlastní nastavení BombVaultu**, takže zálohovací cesty, cíle mimo lokalitu a přihlašovací údaje, které zbytek postupu potřebuje, přijdou předvyplněné (aplikováno přes sebe-restart přes Docker socket, takže se živá databáze nastavení nikdy nepřepisuje pod otevřeným handlem).
 2. **Zkontroluje, že BombVault umí číst vaše zálohy** (zádrhel se šifrovacím klíčem hned zkraje).
 3. Nechá vás **nasměrovat na váš existující repozitář** (místní nebo mimo lokalitu).
-4. **Objeví** kontejnery, VM a sady souborů v něm uložené.
-5. **Obnoví je všechny** (ponechané zastavené, takže je spustíte záměrně), s vaší sadou pro obnovu na jedno kliknutí.
+4. **Objeví** kontejnery, VM, sady souborů a datové sady ZFS v něm uložené.
+5. **Obnoví najednou kontejnery a VM** (ponechané zastavené, takže je spustíte záměrně) a vypíše sady souborů a položky ZFS k obnovení jednu po druhé; položky ZFS se vrátí vypnuté. Sada pro obnovu je na jedno kliknutí.
 
 !!! tip "Plánovaná migrace versus havárie"
     Řízená obnova obnovuje vlastní nastavení BombVaultu ze zálohy. Pro *plánovaný* přesun na nový stroj můžete místo toho přenést konfiguraci přímo pomocí karty **Export a import nastavení** (přenosný soubor JSON). Viz [Konfigurace](configuration.md#portable-settings-export-and-import).

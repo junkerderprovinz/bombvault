@@ -68,8 +68,8 @@ La plantilla también monta por ti el socket de Docker, el flash (`/boot`) y la 
 *El panel tras una primera copia: qué está protegido, qué toca a continuación y un registro en vivo.*
 
 1. Abre la interfaz web en `https://<your-unraid-ip>:3443` (certificado autofirmado de fábrica).
-2. En **Ajustes**, habilita los dominios de copia que quieras (Contenedores, VMs, Flash, Config, Archivos) y elige un color de acento.
-3. En la pestaña **Contenedores**, elige un contenedor y haz clic en **Copiar** para crear tu primer punto de restauración. Las rutas de repositorio predeterminadas son `/mnt/user/bombvault/{container,vms,flash,config,files}` y se crean en la primera copia.
+2. En **Ajustes**, habilita los dominios de copia que quieras (Contenedores, VMs, Flash, Config, Archivos, Conjuntos de datos ZFS) y elige un color de acento.
+3. En la pestaña **Contenedores**, elige un contenedor y haz clic en **Copiar** para crear tu primer punto de restauración. Las rutas de repositorio predeterminadas son `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` y se crean en la primera copia.
 4. Configura la programación desde **Ajustes, Calendarios**. Hay un *incluir todo en el calendario* de un clic para contenedores y VMs.
 
 !!! tip "Opcional: elige un orden de copia"

@@ -29,7 +29,7 @@ CA 템플릿에 표시된 대로 Docker 소켓, 플래시(`/boot`), **Host Data*
 
 ZFS 데이터세트 백업에도 이 모드가 필요합니다. 호스트는 컨테이너가 시작된 뒤에야 데이터세트의 스냅샷을 마운트하기 때문입니다. [ZFS 데이터세트](zfs-datasets.md)를 참고하세요.
 
-백업 저장소 경로는 기본적으로 `/mnt/user/bombvault/{container,vms,flash,config,files}`이며 첫 백업 시 생성됩니다. **설정, 백업 경로**에서 언제든지 위치를 변경할 수 있습니다.
+백업 저장소 경로는 기본적으로 `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`이며 첫 백업 시 생성됩니다. **설정, 백업 경로**에서 언제든지 위치를 변경할 수 있습니다.
 
 !!! note "호스트 통합 확인"
     컨테이너가 시작된 후 웹 UI에서 `/spike`를 엽니다. 모든 마운트와 CLI(Docker 소켓, libvirt, restic, qemu-img, rclone)를 검사하고 누락된 부분을 보고합니다.

@@ -29,7 +29,7 @@ Monte o socket Docker, o flash (`/boot`) e a raiz **Host Data** (`/mnt`) como mo
 
 As cópias de conjuntos de dados ZFS também precisam deste modo: o host só monta o instantâneo de um conjunto depois de o container ter arrancado. Veja [Conjuntos de dados ZFS](zfs-datasets.md).
 
-Os caminhos de repositório de backup assumem por predefinição `/mnt/user/bombvault/{container,vms,flash,config,files}`, criados no primeiro backup. Altere a localização a qualquer momento em **Definições, Caminhos de backup**.
+Os caminhos de repositório de backup assumem por predefinição `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, criados no primeiro backup. Altere a localização a qualquer momento em **Definições, Caminhos de backup**.
 
 !!! note "Verificação de integração com o host"
     Abra `/spike` na interface web depois de o container arrancar. Sonda cada montagem e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e reporta quaisquer peças em falta.
