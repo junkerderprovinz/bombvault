@@ -18,7 +18,7 @@ Az `APP_KEY` származtatja a restic tároló jelszavát. Nélküle (és a titkos
 
 A VM-mentés SSH-n keresztül kommunikál a libvirttel, soha nem egy csatoláson.
 
-- Ellenőrizd, hogy az SSH engedélyezve van-e a hoszton, és a BombVault nyilvános kulcsa engedélyezve van-e a `/root/.ssh/authorized_keys` fájlban (a Beállítások, Rendszer, VM-mentés SSH-n keresztül mutatja a kulcsot és egy **Kapcsolat tesztelése** gombot).
+- Ellenőrizd, hogy az SSH engedélyezve van-e a hoszton, és a BombVault nyilvános kulcsa engedélyezve van-e a `/root/.ssh/authorized_keys` fájlban (a Beállítások, Rendszer, Gazdagép SSH mutatja a kulcsot és egy **Kapcsolat tesztelése** gombot).
 - Egy egyéni `br0.x` hálózaton állítsd a `LIBVIRT_HOST`-ot az Unraid LAN IP-jére (a konténer ott nem éri el a hosztot a `host.docker.internal`-on keresztül). Engedélyezd a **Beállítások, Docker, Host access to custom networks** opciót.
 - Ha megváltoztattad az Unraid SSH-portját, állítsd be a `LIBVIRT_SSH_PORT`-ot, hogy egyezzen.
 - A teljes, lépésről lépésre diagnózis (elérhetőségi teszt, VLAN-útválasztás, `Permission denied (publickey)`, `Host key verification failed`) a [VM-mentés SSH-n keresztül útmutatóban](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) található.

@@ -18,7 +18,7 @@ BombVault serve HTTPS pronto all'uso sulla porta `3443` (certificato autofirmato
 
 Il backup delle VM comunica con libvirt via SSH, mai un mount.
 
-- Conferma che SSH sia abilitato sull'host e che la chiave pubblica di BombVault sia autorizzata in `/root/.ssh/authorized_keys` (Impostazioni, Sistema, Backup VM via SSH mostra la chiave e un pulsante **Prova connessione**).
+- Conferma che SSH sia abilitato sull'host e che la chiave pubblica di BombVault sia autorizzata in `/root/.ssh/authorized_keys` (Impostazioni, Sistema, SSH dell'host mostra la chiave e un pulsante **Prova connessione**).
 - Su una rete `br0.x` personalizzata, imposta `LIBVIRT_HOST` sull'IP LAN del tuo Unraid (lì il container non può raggiungere l'host tramite `host.docker.internal`). Abilita **Impostazioni, Docker, Host access to custom networks**.
 - Se hai cambiato la porta SSH di Unraid, imposta `LIBVIRT_SSH_PORT` di conseguenza.
 - La diagnosi completa passo passo (test di raggiungibilità, routing VLAN, `Permission denied (publickey)`, `Host key verification failed`) è nella [guida al backup delle VM via SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).

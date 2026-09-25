@@ -2653,8 +2653,9 @@ export function getVMSSH(): Promise<
   return fetchJSON("/api/vm/ssh");
 }
 
-/** POST /api/vm/ssh/test — check libvirt is reachable over SSH. */
-export function testVMSSH(): Promise<OkEnvelope> {
+/** POST /api/vm/ssh/test: checks the host SSH link. ok with libvirt false
+ *  means SSH works and only VM backups are blocked. */
+export function testVMSSH(): Promise<OkEnvelope & { libvirt?: boolean; libvirtError?: string }> {
   return fetchJSON("/api/vm/ssh/test", { method: "POST" });
 }
 

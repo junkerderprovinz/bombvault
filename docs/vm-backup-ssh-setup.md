@@ -23,7 +23,7 @@ the ZFS page connects too; nothing else needs setting up for it. See
 | `Host SSH: Address` (`LIBVIRT_HOST`) | template var | `host.docker.internal` | Unraid host address reached over SSH |
 | `Host SSH: Port` (`LIBVIRT_SSH_PORT`) | template var | `22` | Unraid's SSH port |
 | `Host SSH: User` (`LIBVIRT_SSH_USER`) | template var | `root` | SSH user on the host |
-| Public key | Settings → VM Backup over SSH | (auto-generated) | Authorize on the host |
+| Public key | Settings → System → Host SSH | (auto-generated) | Authorize on the host |
 
 The SSH keypair is generated automatically on first start at
 `/config/ssh/id_ed25519` (persisted in appdata). The host key is pinned in
@@ -94,7 +94,7 @@ docker exec BombVault timeout 6 bash -c 'echo > /dev/tcp/192.168.x.x/<port>' && 
 1. **Docker → BombVault → Edit** → set `Host SSH: Address` (+ `Host SSH: Port` if not 22)
    → **Apply**. *(If the variables don't appear, re-import the template — Unraid
    keeps an existing container's saved config.)*
-2. **Settings → VM Backup over SSH → Test connection** → green.
+2. **Settings → System → Host SSH → Test connection** → green.
    Or from the terminal (the exact call BombVault makes):
    ```sh
    docker exec BombVault virsh -c "qemu+ssh://root@192.168.x.x:<port>/system?keyfile=/config/ssh/id_ed25519&known_hosts=/config/ssh/known_hosts&known_hosts_verify=auto" list --all

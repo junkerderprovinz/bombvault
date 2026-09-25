@@ -2821,7 +2821,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		if tErr := h.svc.VMSSHTest(r.Context()); tErr != nil {
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok":    false,
-				"error": "Can't enable VM backup yet: " + scrubError(tErr) + ". Set up the SSH key under “VM Backup over SSH” and click Test connection first.",
+				"error": "Can't enable VM backup yet: " + scrubError(tErr) + ". Set up the SSH key under “Host SSH” and click Test connection first.",
 			})
 			return
 		}
@@ -5329,11 +5329,16 @@ func (h *Handler) handleVMSSHInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleVMSSHTest(w http.ResponseWriter, r *http.Request) {
-	if err := h.svc.VMSSHTest(r.Context()); err != nil {
+	libvirtErr, err := h.svc.HostSSHTest(r.Context())
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	body := map[string]any{"libvirt": libvirtErr == nil}
+	if libvirtErr != nil {
+		body["libvirtError"] = scrubError(libvirtErr)
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(body))
 }
 
 // classifyReadDirError maps a browse read failure to the additive per-listing

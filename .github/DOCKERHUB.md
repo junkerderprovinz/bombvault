@@ -73,7 +73,7 @@ https://github.com/junkerderprovinz/unraid-apps
 | `BOMBVAULT_SELF_CONTAINER` | No | The name of the BombVault container itself, so it never backs up (and thus stops) itself (default `BombVault`). |
 | `TZ` | No | Timezone for the scheduler (e.g. `Europe/Berlin`). |
 
-Mount the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`, mounted with slave propagation so late-mounting remote shares appear without a restart) as shown in the CA template. **Backup repository paths are configured in the app** (Settings → Backup paths), not via env. **VM backup needs no libvirt mount** — it runs `virsh` on the host over SSH (`qemu+ssh://`): copy the key shown under *Settings → System → VM Backup over SSH* into the host's `authorized_keys` and click *Test connection*. After the first start, open `/spike` in the web UI — it probes every mount and CLI and reports any missing pieces.
+Mount the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`, mounted with slave propagation so late-mounting remote shares appear without a restart) as shown in the CA template. **Backup repository paths are configured in the app** (Settings → Backup paths), not via env. **VM backup needs no libvirt mount** — it runs `virsh` on the host over SSH (`qemu+ssh://`): copy the key shown under *Settings → System → Host SSH* into the host's `authorized_keys` and click *Test connection*. After the first start, open `/spike` in the web UI — it probes every mount and CLI and reports any missing pieces.
 
 ## Security
 

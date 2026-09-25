@@ -69,7 +69,7 @@ BombVault sikkerhetskopierer KVM/libvirt-VM-er **uten å montere noen libvirt-st
 
 Rask oppsett:
 
-1. **Innstillinger, System, VM Backup over SSH:** kopier den viste offentlige nøkkelen.
+1. **Innstillinger, System, Verts-SSH:** kopier den viste offentlige nøkkelen.
 2. Legg den til i Unraids `/root/.ssh/authorized_keys` (også lagret til flashen så den overlever omstarter).
 3. Klikk **Test tilkobling**.
 
@@ -84,7 +84,7 @@ Sett opp en ekstern replika på **Innstillinger, Ekstern**-fanen. Se [Ekstern la
 
 - **Backender:** SMB/CIFS og NFS (monter delingen og pek en sikkerhetskopisti mot den), native restic-backender uten rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
 - **Sky-legitimasjon** lagres kryptert under Innstillinger, Ekstern, Sky-legitimasjon.
-- **SSH-mål trenger ingenting installert på den andre siden.** `sftp:` trenger bare en SSH-server. Legg til den offentlige nøkkelen fra **Innstillinger, System, VM Backup over SSH** (også på `/config/ssh/id_ed25519.pub`) til målbrukerens `~/.ssh/authorized_keys`.
+- **SSH-mål trenger ingenting installert på den andre siden.** `sftp:` trenger bare en SSH-server. Legg til den offentlige nøkkelen fra **Innstillinger, System, Verts-SSH** (også på `/config/ssh/id_ed25519.pub`) til målbrukerens `~/.ssh/authorized_keys`.
 - **Ekstern kopi:** BombVault replikerer nye øyeblikksbilder med `restic copy` på best-effort-basis. Det lokale repoet forblir primært. Hvert domene har sin egen eksterne tidsplan, pluss en **Replikér nå**-knapp.
 - **Flere eksterne mål per domene:** hvert domene kan replikere til flere eksterne destinasjoner samtidig. Legg til ekstra mål på Innstillinger, Ekstern, hvert med sitt eget repository, sin S3-lagringsklasse, append-only-flagg, oppbevaring og vekstbudsjett; de replikerer alle på det domenets eksterne tidsplan. Et eksisterende enkelt ekstern-oppsett overføres som det første målet.
 - **Oppbevaring per kilde:** den lokale policyen ligger på Innstillinger, Stier og lagring; den eksterne policyen på Innstillinger, Ekstern (la den stå helt på null for aldri å auto-trimme eksterne øyeblikksbilder).

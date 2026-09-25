@@ -19,9 +19,11 @@ import (
 
 // fakeHostSSH records Run calls. runOut and runErr are what Run returns.
 type fakeHostSSH struct {
-	runs   [][]string
-	runOut string
-	runErr error
+	runs         [][]string
+	runOut       string
+	runErr       error
+	testErr      error
+	knownHostErr error
 }
 
 var _ HostSSH = (*fakeHostSSH)(nil)
@@ -29,8 +31,8 @@ var _ HostSSH = (*fakeHostSSH)(nil)
 func (f *fakeHostSSH) ReadFile(context.Context, string) ([]byte, error) { return nil, nil }
 func (f *fakeHostSSH) WriteFile(context.Context, string, []byte) error  { return nil }
 func (f *fakeHostSSH) PublicKey() (string, error)                       { return "", nil }
-func (f *fakeHostSSH) Test(context.Context) error                       { return nil }
-func (f *fakeHostSSH) EnsureKnownHost(context.Context) error            { return nil }
+func (f *fakeHostSSH) Test(context.Context) error                       { return f.testErr }
+func (f *fakeHostSSH) EnsureKnownHost(context.Context) error            { return f.knownHostErr }
 func (f *fakeHostSSH) Run(_ context.Context, args ...string) (string, error) {
 	f.runs = append(f.runs, args)
 	return f.runOut, f.runErr

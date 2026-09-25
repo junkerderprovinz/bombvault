@@ -69,7 +69,7 @@ BombVault sikkerhedskopierer KVM/libvirt-VM'er **uden at montere nogen libvirt-s
 
 Hurtig opsætning:
 
-1. **Indstillinger, System, VM Backup over SSH:** kopiér den viste offentlige nøgle.
+1. **Indstillinger, System, Værts-SSH:** kopiér den viste offentlige nøgle.
 2. Tilføj den til Unraids `/root/.ssh/authorized_keys` (også persisteret til flashen, så den overlever genstarter).
 3. Klik på **Test connection**.
 
@@ -84,7 +84,7 @@ Opsæt en off-site-replika på fanen **Indstillinger, Off-site**. Se [Off-site o
 
 - **Backends:** SMB/CIFS og NFS (montér share'en, og peg en Backup Path mod den), native restic-backends uden rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
 - **Cloud-legitimationsoplysninger** gemmes krypteret under Indstillinger, Off-site, Cloud credentials.
-- **SSH-destinationer kræver intet installeret på den anden side.** `sftp:` kræver kun en SSH-server. Tilføj den offentlige nøgle fra **Indstillinger, System, VM Backup over SSH** (også på `/config/ssh/id_ed25519.pub`) til destinationsbrugerens `~/.ssh/authorized_keys`.
+- **SSH-destinationer kræver intet installeret på den anden side.** `sftp:` kræver kun en SSH-server. Tilføj den offentlige nøgle fra **Indstillinger, System, Værts-SSH** (også på `/config/ssh/id_ed25519.pub`) til destinationsbrugerens `~/.ssh/authorized_keys`.
 - **Off-site-kopi:** BombVault replikerer nye øjebliksbilleder med `restic copy` på et best-effort-grundlag. Det lokale repo forbliver primært. Hvert domæne har sin egen off-site-tidsplan plus en **Replikér nu**-knap.
 - **Flere off-site-destinationer pr. domæne:** hvert domæne kan replikere til flere off-site-destinationer på én gang. Tilføj ekstra destinationer på Indstillinger, Off-site, hver med sit eget repository, sin S3-lagringsklasse, sit append-only-flag, sin opbevaring og sit vækstbudget; de replikerer alle på det domænes off-site-tidsplan. En eksisterende enkelt off-site-opsætning overføres som den første destination.
 - **Opbevaring pr. kilde:** den lokale politik lever på Indstillinger, Stier og lagring; off-site-politikken på Indstillinger, Off-site (lad den stå helt-nul for aldrig at auto-trimme off-site-øjebliksbilleder).

@@ -18,7 +18,7 @@
 
 Το αντίγραφο VM επικοινωνεί με το libvirt μέσω SSH, ποτέ μέσω προσάρτησης.
 
-- Επιβεβαιώστε ότι το SSH είναι ενεργοποιημένο στον host και ότι το δημόσιο κλειδί του BombVault είναι εξουσιοδοτημένο στο `/root/.ssh/authorized_keys` (Ρυθμίσεις, Σύστημα, VM Backup over SSH δείχνει το κλειδί και ένα κουμπί **Test connection**).
+- Επιβεβαιώστε ότι το SSH είναι ενεργοποιημένο στον host και ότι το δημόσιο κλειδί του BombVault είναι εξουσιοδοτημένο στο `/root/.ssh/authorized_keys` (Ρυθμίσεις, Σύστημα, SSH κεντρικού συστήματος δείχνει το κλειδί και ένα κουμπί **Test connection**).
 - Σε ένα προσαρμοσμένο δίκτυο `br0.x`, ορίστε το `LIBVIRT_HOST` στη LAN IP του Unraid σας (το container δεν μπορεί να φτάσει τον host μέσω `host.docker.internal` εκεί). Ενεργοποιήστε το **Ρυθμίσεις, Docker, Host access to custom networks**.
 - Αν αλλάξατε τη θύρα SSH του Unraid, ορίστε το `LIBVIRT_SSH_PORT` αναλόγως.
 - Η πλήρης βήμα-προς-βήμα διάγνωση (δοκιμή προσβασιμότητας, δρομολόγηση VLAN, `Permission denied (publickey)`, `Host key verification failed`) βρίσκεται στον [οδηγό αντιγράφου VM μέσω SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).

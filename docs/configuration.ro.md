@@ -69,7 +69,7 @@ BombVault face backup VM-urilor KVM/libvirt **fără a monta vreo cale libvirt**
 
 Configurare rapidă:
 
-1. **Setări, Sistem, VM Backup over SSH:** copiază cheia publică afișată.
+1. **Setări, Sistem, SSH al gazdei:** copiază cheia publică afișată.
 2. Adaug-o la `/root/.ssh/authorized_keys` al Unraid (persistată de asemenea în flash astfel încât să supraviețuiască reporniri).
 3. Apasă **Test connection**.
 
@@ -84,7 +84,7 @@ Configurează o replică off-site în fila **Setări, Off-site**. Vezi [Off-site
 
 - **Backenduri:** SMB/CIFS și NFS (montează partajarea și îndreaptă o cale de backup către ea), backenduri restic native fără rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) sau orice remote rclone (`rclone:<remote>:<bucket>/path`).
 - **Credențialele cloud** sunt stocate criptat sub Setări, Off-site, Credențiale cloud.
-- **Țintele SSH nu necesită nimic instalat pe partea îndepărtată.** `sftp:` necesită doar un server SSH. Adaugă cheia publică din **Setări, Sistem, VM Backup over SSH** (de asemenea la `/config/ssh/id_ed25519.pub`) la `~/.ssh/authorized_keys` al utilizatorului țintă.
+- **Țintele SSH nu necesită nimic instalat pe partea îndepărtată.** `sftp:` necesită doar un server SSH. Adaugă cheia publică din **Setări, Sistem, SSH al gazdei** (de asemenea la `/config/ssh/id_ed25519.pub`) la `~/.ssh/authorized_keys` al utilizatorului țintă.
 - **Copie off-site:** BombVault replică instantaneele noi cu `restic copy` pe bază de best-effort. Depozitul local rămâne principal. Fiecare domeniu are propria programare off-site, plus un buton **Replicate now**.
 - **Mai multe ținte off-site per domeniu:** fiecare domeniu poate replica către mai multe destinații off-site simultan. Adaugă ținte suplimentare în Setări, Off-site, fiecare cu propriul depozit, clasă de stocare S3, indicator append-only, retenție și buget de creștere; toate replică conform programării off-site a acelui domeniu. O configurare off-site unică existentă este preluată ca prima țintă.
 - **Retenție per sursă:** politica locală se află în Setări, Căi și Stocare; politica off-site în Setări, Off-site (las-o toată zero pentru a nu tăia niciodată automat instantaneele off-site).

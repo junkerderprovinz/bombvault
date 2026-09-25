@@ -69,7 +69,7 @@ BombVault sauvegarde les VMs KVM/libvirt **sans monter aucun chemin libvirt**. I
 
 Configuration rapide :
 
-1. **Paramètres, Système, Sauvegarde de VM via SSH :** copiez la clé publique affichée.
+1. **Paramètres, Système, SSH de l'hôte :** copiez la clé publique affichée.
 2. Ajoutez-la à l'`/root/.ssh/authorized_keys` d'Unraid (également persistée sur la flash afin qu'elle survive aux redémarrages).
 3. Cliquez sur **Tester la connexion**.
 
@@ -84,7 +84,7 @@ Configurez un réplica hors site dans l'onglet **Paramètres, Hors site**. Voir 
 
 - **Backends :** SMB/CIFS et NFS (montez le partage et pointez-y un Chemin de sauvegarde), backends restic natifs sans rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), ou n'importe quel remote rclone (`rclone:<remote>:<bucket>/path`).
 - **Les identifiants cloud** sont stockés chiffrés sous Paramètres, Hors site, Identifiants cloud.
-- **Les cibles SSH ne nécessitent rien d'installé côté distant.** `sftp:` requiert seulement un serveur SSH. Ajoutez la clé publique de **Paramètres, Système, Sauvegarde de VM via SSH** (aussi disponible à `/config/ssh/id_ed25519.pub`) à l'`~/.ssh/authorized_keys` de l'utilisateur cible.
+- **Les cibles SSH ne nécessitent rien d'installé côté distant.** `sftp:` requiert seulement un serveur SSH. Ajoutez la clé publique de **Paramètres, Système, SSH de l'hôte** (aussi disponible à `/config/ssh/id_ed25519.pub`) à l'`~/.ssh/authorized_keys` de l'utilisateur cible.
 - **Copie hors site :** BombVault réplique les nouveaux instantanés avec `restic copy` au mieux. Le dépôt local reste principal. Chaque domaine a son propre planning hors site, plus un bouton **Répliquer maintenant**.
 - **Plusieurs cibles hors site par domaine :** chaque domaine peut répliquer vers plusieurs destinations hors site à la fois. Ajoutez des cibles supplémentaires dans Paramètres, Hors site, chacune avec son propre dépôt, sa classe de stockage S3, son indicateur append-only, sa rétention et son budget de croissance ; elles répliquent toutes selon le planning hors site de ce domaine. Une configuration hors site unique existante est reprise comme première cible.
 - **Rétention par source :** la politique locale vit dans Paramètres, Chemins et stockage ; la politique hors site dans Paramètres, Hors site (laissez-la entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site).

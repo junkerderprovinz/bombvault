@@ -18,7 +18,7 @@ BombVault はデフォルトでポート `3443`（自己署名証明書）で HT
 
 VM バックアップは、マウントではなく SSH 経由で libvirt と通信します。
 
-- ホストで SSH が有効になっていること、そして BombVault の公開鍵が `/root/.ssh/authorized_keys` で承認されていることを確認してください（Settings, System, VM Backup over SSH に鍵と **Test connection** ボタンが表示されます）。
+- ホストで SSH が有効になっていること、そして BombVault の公開鍵が `/root/.ssh/authorized_keys` で承認されていることを確認してください（Settings, System, Host SSH に鍵と **Test connection** ボタンが表示されます）。
 - カスタムの `br0.x` ネットワークでは、`LIBVIRT_HOST` を Unraid の LAN IP に設定してください（そこではコンテナは `host.docker.internal` 経由でホストに到達できません）。**Settings, Docker, Host access to custom networks** を有効にしてください。
 - Unraid の SSH ポートを変更した場合は、`LIBVIRT_SSH_PORT` を一致させてください。
 - 完全なステップバイステップの診断（到達性テスト、VLAN のルーティング、`Permission denied (publickey)`、`Host key verification failed`）は、[SSH 経由の VM バックアップガイド](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)にあります。

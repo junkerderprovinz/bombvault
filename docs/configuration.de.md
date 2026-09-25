@@ -69,7 +69,7 @@ BombVault sichert KVM/libvirt-VMs, **ohne irgendeinen libvirt-Pfad einzuhängen*
 
 Schnelleinrichtung:
 
-1. **Einstellungen, System, VM-Backup über SSH:** kopiere den angezeigten öffentlichen Schlüssel.
+1. **Einstellungen, System, Host-SSH:** kopiere den angezeigten öffentlichen Schlüssel.
 2. Hänge ihn an Unraids `/root/.ssh/authorized_keys` an (auch auf dem Flash gespeichert, damit er Neustarts überdauert).
 3. Klicke auf **Verbindung testen**.
 
@@ -84,7 +84,7 @@ Richte eine Off-site-Replik im Tab **Einstellungen, Off-site** ein. Siehe [Off-s
 
 - **Backends:** SMB/CIFS und NFS (Freigabe einhängen und einen Backup-Pfad darauf richten), native restic-Backends ohne rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) oder jedes rclone-Remote (`rclone:<remote>:<bucket>/path`).
 - **Cloud-Zugangsdaten** werden verschlüsselt gespeichert unter Einstellungen, Off-site, Cloud-Zugangsdaten.
-- **SSH-Ziele brauchen auf der Gegenseite nichts installiert.** `sftp:` benötigt nur einen SSH-Server. Füge den öffentlichen Schlüssel aus **Einstellungen, System, VM-Backup über SSH** (auch unter `/config/ssh/id_ed25519.pub`) den `~/.ssh/authorized_keys` des Zielbenutzers hinzu.
+- **SSH-Ziele brauchen auf der Gegenseite nichts installiert.** `sftp:` benötigt nur einen SSH-Server. Füge den öffentlichen Schlüssel aus **Einstellungen, System, Host-SSH** (auch unter `/config/ssh/id_ed25519.pub`) den `~/.ssh/authorized_keys` des Zielbenutzers hinzu.
 - **Off-site-Kopie:** BombVault repliziert neue Snapshots mit `restic copy` auf Best-Effort-Basis. Das lokale Repo bleibt primär. Jeder Bereich hat seinen eigenen Off-site-Zeitplan, plus einen Button **Jetzt replizieren**.
 - **Mehrere Off-site-Ziele pro Bereich:** jeder Bereich kann gleichzeitig an mehrere Off-site-Ziele replizieren. Füge zusätzliche Ziele unter Einstellungen, Off-site hinzu, jedes mit eigenem Repository, S3-Speicherklasse, Append-only-Flag, Aufbewahrung und Wachstumsbudget; sie alle replizieren nach dem Off-site-Zeitplan dieses Bereichs. Eine bestehende einzelne Off-site-Einrichtung wird als erstes Ziel übernommen.
 - **Aufbewahrung pro Quelle:** die lokale Richtlinie liegt unter Einstellungen, Pfade & Speicher; die Off-site-Richtlinie unter Einstellungen, Off-site (lasse sie ganz auf null, um Off-site-Snapshots nie automatisch zu kürzen).

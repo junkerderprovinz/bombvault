@@ -69,7 +69,7 @@ BombVault zálohuje KVM/libvirt VM **bez připojení jakékoli libvirt cesty**. 
 
 Rychlé nastavení:
 
-1. **Nastavení, Systém, Záloha VM přes SSH:** zkopírujte zobrazený veřejný klíč.
+1. **Nastavení, Systém, SSH k hostiteli:** zkopírujte zobrazený veřejný klíč.
 2. Připojte jej do `/root/.ssh/authorized_keys` Unraidu (také persistováno na flash, aby přežilo restarty).
 3. Klikněte na **Otestovat připojení**.
 
@@ -84,7 +84,7 @@ Nastavte repliku mimo lokalitu v záložce **Nastavení, Mimo lokalitu**. Komple
 
 - **Backendy:** SMB/CIFS a NFS (připojte sdílenou složku a nasměrujte na ni Zálohovací cestu), nativní restic backendy bez rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) nebo libovolný rclone remote (`rclone:<remote>:<bucket>/path`).
 - **Přihlašovací údaje cloudu** se ukládají šifrovaně pod Nastavení, Mimo lokalitu, Přihlašovací údaje cloudu.
-- **SSH cíle nevyžadují nic nainstalovaného na druhé straně.** `sftp:` potřebuje jen SSH server. Přidejte veřejný klíč z **Nastavení, Systém, Záloha VM přes SSH** (také na `/config/ssh/id_ed25519.pub`) do `~/.ssh/authorized_keys` cílového uživatele.
+- **SSH cíle nevyžadují nic nainstalovaného na druhé straně.** `sftp:` potřebuje jen SSH server. Přidejte veřejný klíč z **Nastavení, Systém, SSH k hostiteli** (také na `/config/ssh/id_ed25519.pub`) do `~/.ssh/authorized_keys` cílového uživatele.
 - **Kopie mimo lokalitu:** BombVault replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy. Místní repozitář zůstává primární. Každá doména má vlastní plán mimo lokalitu, plus tlačítko **Replikovat nyní**.
 - **Více cílů mimo lokalitu na doménu:** každá doména může replikovat na několik cílů mimo lokalitu najednou. Přidejte další cíle v Nastavení, Mimo lokalitu, každý s vlastním repozitářem, třídou úložiště S3, příznakem append-only, uchováváním a rozpočtem růstu; všechny replikují podle plánu mimo lokalitu dané domény. Stávající jednotlivé nastavení mimo lokalitu se přenese jako první cíl.
 - **Uchovávání na zdroj:** místní zásada žije v Nastavení, Cesty a úložiště; zásada mimo lokalitu v Nastavení, Mimo lokalitu (ponechte vše na nule, aby se snímky mimo lokalitu nikdy automaticky neprořezávaly).

@@ -69,7 +69,7 @@ O BombVault faz backup de VMs KVM/libvirt **sem montar qualquer caminho de libvi
 
 Configuração rápida:
 
-1. **Definições, Sistema, Backup de VM por SSH:** copie a chave pública mostrada.
+1. **Definições, Sistema, SSH do anfitrião:** copie a chave pública mostrada.
 2. Adicione-a ao `/root/.ssh/authorized_keys` do Unraid (também persistida no flash para sobreviver a reinícios).
 3. Clique em **Testar ligação**.
 
@@ -84,7 +84,7 @@ Configure uma réplica externa no separador **Definições, Externo**. Consulte 
 
 - **Backends:** SMB/CIFS e NFS (monte a partilha e aponte-lhe um Caminho de backup), backends restic nativos sem rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), ou qualquer remoto rclone (`rclone:<remote>:<bucket>/path`).
 - **As credenciais de nuvem** são guardadas encriptadas em Definições, Externo, Credenciais da nuvem.
-- **Os destinos SSH não precisam de nada instalado do outro lado.** O `sftp:` só precisa de um servidor SSH. Adicione a chave pública de **Definições, Sistema, Backup de VM por SSH** (também em `/config/ssh/id_ed25519.pub`) ao `~/.ssh/authorized_keys` do utilizador de destino.
+- **Os destinos SSH não precisam de nada instalado do outro lado.** O `sftp:` só precisa de um servidor SSH. Adicione a chave pública de **Definições, Sistema, SSH do anfitrião** (também em `/config/ssh/id_ed25519.pub`) ao `~/.ssh/authorized_keys` do utilizador de destino.
 - **Cópia externa:** o BombVault replica novos instantâneos com `restic copy` numa base de melhor esforço. O repo local mantém-se primário. Cada domínio tem o seu próprio agendamento externo, mais um botão **Replicar agora**.
 - **Vários destinos externos por domínio:** cada domínio pode replicar para vários destinos externos de uma só vez. Adicione destinos extra em Definições, Externo, cada um com o seu próprio repositório, classe de armazenamento S3, flag append-only, retenção e orçamento de crescimento; todos replicam no agendamento externo desse domínio. Uma configuração externa única existente é transferida como o primeiro destino.
 - **Retenção por origem:** a política local vive em Definições, Caminhos e Armazenamento; a política externa em Definições, Externo (deixe-a toda a zero para nunca aparar automaticamente os instantâneos externos).

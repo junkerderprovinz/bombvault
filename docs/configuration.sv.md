@@ -69,7 +69,7 @@ BombVault säkerhetskopierar KVM/libvirt-VM:ar **utan att montera någon libvirt
 
 Snabbuppsättning:
 
-1. **Inställningar, System, VM Backup over SSH:** kopiera den visade publika nyckeln.
+1. **Inställningar, System, Värd-SSH:** kopiera den visade publika nyckeln.
 2. Lägg till den i Unraids `/root/.ssh/authorized_keys` (även bevarad till flashen så att den överlever omstarter).
 3. Klicka på **Testa anslutning**.
 
@@ -84,7 +84,7 @@ Sätt upp en off-site-replik på fliken **Inställningar, Off-site**. Se [Off-si
 
 - **Backender:** SMB/CIFS och NFS (montera resursen och peka en säkerhetskopiesökväg mot den), native restic-backender utan rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), eller valfri rclone-fjärr (`rclone:<remote>:<bucket>/path`).
 - **Molnuppgifter** lagras krypterade under Inställningar, Off-site, Molnuppgifter.
-- **SSH-mål kräver inget installerat på den bortre sidan.** `sftp:` behöver bara en SSH-server. Lägg till den publika nyckeln från **Inställningar, System, VM Backup over SSH** (även på `/config/ssh/id_ed25519.pub`) i målanvändarens `~/.ssh/authorized_keys`.
+- **SSH-mål kräver inget installerat på den bortre sidan.** `sftp:` behöver bara en SSH-server. Lägg till den publika nyckeln från **Inställningar, System, Värd-SSH** (även på `/config/ssh/id_ed25519.pub`) i målanvändarens `~/.ssh/authorized_keys`.
 - **Off-site-kopia:** BombVault replikerar nya ögonblicksbilder med `restic copy` på best-effort-basis. Det lokala repot förblir primärt. Varje domän har sitt eget off-site-schema, plus en **Replikera nu**-knapp.
 - **Flera off-site-mål per domän:** varje domän kan replikera till flera off-site-mål samtidigt. Lägg till extra mål under Inställningar, Off-site, var och en med sitt eget repository, S3-lagringsklass, append-only-flagga, retention och tillväxtbudget; de replikerar alla enligt den domänens off-site-schema. En befintlig enskild off-site-uppsättning förs över som det första målet.
 - **Retention per källa:** den lokala policyn finns under Inställningar, Sökvägar och lagring; off-site-policyn under Inställningar, Off-site (lämna den helt-noll för att aldrig autotrimma off-site-ögonblicksbilder).

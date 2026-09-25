@@ -69,7 +69,7 @@ BombVault esegue il backup delle VM KVM/libvirt **senza montare alcun percorso l
 
 Configurazione rapida:
 
-1. **Impostazioni, Sistema, Backup VM via SSH:** copia la chiave pubblica mostrata.
+1. **Impostazioni, Sistema, SSH dell'host:** copia la chiave pubblica mostrata.
 2. Aggiungila a `/root/.ssh/authorized_keys` di Unraid (anche persistita sul flash così sopravvive ai riavvii).
 3. Clicca **Prova connessione**.
 
@@ -84,7 +84,7 @@ Configura una replica off-site nella scheda **Impostazioni, Off-site**. Vedi [Of
 
 - **Backend:** SMB/CIFS e NFS (monta la condivisione e puntaci un Percorso di backup), backend restic nativi senza rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), o qualsiasi remote rclone (`rclone:<remote>:<bucket>/path`).
 - **Le credenziali cloud** vengono memorizzate cifrate sotto Impostazioni, Off-site, Credenziali cloud.
-- **Le destinazioni SSH non richiedono nulla di installato sull'altro lato.** `sftp:` necessita solo di un server SSH. Aggiungi la chiave pubblica da **Impostazioni, Sistema, Backup VM via SSH** (anche in `/config/ssh/id_ed25519.pub`) al file `~/.ssh/authorized_keys` dell'utente di destinazione.
+- **Le destinazioni SSH non richiedono nulla di installato sull'altro lato.** `sftp:` necessita solo di un server SSH. Aggiungi la chiave pubblica da **Impostazioni, Sistema, SSH dell'host** (anche in `/config/ssh/id_ed25519.pub`) al file `~/.ssh/authorized_keys` dell'utente di destinazione.
 - **Copia off-site:** BombVault replica i nuovi snapshot con `restic copy` su base best-effort. Il repo locale resta primario. Ogni dominio ha il proprio calendario off-site, più un pulsante **Replica ora**.
 - **Più destinazioni off-site per dominio:** ogni dominio può replicare verso più destinazioni off-site contemporaneamente. Aggiungi destinazioni extra in Impostazioni, Off-site, ciascuna con il proprio repository, classe di archiviazione S3, flag append-only, conservazione e budget di crescita; replicano tutte secondo il calendario off-site di quel dominio. Una configurazione off-site singola esistente viene riportata come prima destinazione.
 - **Conservazione per sorgente:** la policy locale risiede su Impostazioni, Percorsi e Archiviazione; la policy off-site su Impostazioni, Off-site (lasciala tutta a zero per non tagliare mai automaticamente gli snapshot off-site).

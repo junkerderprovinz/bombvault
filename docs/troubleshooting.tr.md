@@ -18,7 +18,7 @@ BombVault, kutudan çıktığı gibi `3443` portunda HTTPS sunar (kendinden imza
 
 VM yedeklemesi, bir bağlamayla değil, SSH üzerinden libvirt ile konuşur.
 
-- Host'ta SSH'nin etkin olduğunu ve BombVault'un genel anahtarının `/root/.ssh/authorized_keys` içinde yetkilendirildiğini onaylayın (Ayarlar, Sistem, SSH üzerinden VM Yedeği anahtarı ve bir **Bağlantıyı test et** düğmesi gösterir).
+- Host'ta SSH'nin etkin olduğunu ve BombVault'un genel anahtarının `/root/.ssh/authorized_keys` içinde yetkilendirildiğini onaylayın (Ayarlar, Sistem, Ana makine SSH anahtarı ve bir **Bağlantıyı test et** düğmesi gösterir).
 - Özel bir `br0.x` ağında, `LIBVIRT_HOST`'u Unraid LAN IP'nize ayarlayın (konteyner orada host'a `host.docker.internal` üzerinden ulaşamaz). **Ayarlar, Docker, Özel ağlara host erişimi**'ni etkinleştirin.
 - Unraid'in SSH portunu değiştirdiyseniz, eşleşmesi için `LIBVIRT_SSH_PORT`'u ayarlayın.
 - Tam adım adım tanılama (ulaşılabilirlik testi, VLAN yönlendirme, `Permission denied (publickey)`, `Host key verification failed`) [SSH üzerinden VM yedekleme kılavuzu](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)'nda yer alır.

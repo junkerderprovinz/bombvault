@@ -18,7 +18,7 @@ A `APP_KEY` deriva a palavra-passe do repositório restic. Sem ela (e sem o kit 
 
 O backup de VM comunica com o libvirt por SSH, nunca por uma montagem.
 
-- Confirme que o SSH está ativado no host e que a chave pública do BombVault está autorizada em `/root/.ssh/authorized_keys` (Definições, Sistema, Backup de VM por SSH mostra a chave e um botão **Testar ligação**).
+- Confirme que o SSH está ativado no host e que a chave pública do BombVault está autorizada em `/root/.ssh/authorized_keys` (Definições, Sistema, SSH do anfitrião mostra a chave e um botão **Testar ligação**).
 - Numa rede `br0.x` personalizada, defina `LIBVIRT_HOST` para o IP LAN do seu Unraid (o container não consegue alcançar o host via `host.docker.internal` aí). Ative **Definições, Docker, Host access to custom networks**.
 - Se alterou a porta SSH do Unraid, defina `LIBVIRT_SSH_PORT` para corresponder.
 - O diagnóstico completo passo a passo (teste de alcance, encaminhamento de VLAN, `Permission denied (publickey)`, `Host key verification failed`) está no [guia de backup de VM por SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).

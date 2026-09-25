@@ -18,7 +18,7 @@ BombVault obsluhuje HTTPS rovnou z krabice na portu `3443` (samopodepsaný certi
 
 Záloha VM komunikuje s libvirt přes SSH, nikdy přes připojení.
 
-- Potvrďte, že SSH je povoleno na hostiteli a veřejný klíč BombVaultu je autorizovaný v `/root/.ssh/authorized_keys` (Nastavení, Systém, Záloha VM přes SSH zobrazuje klíč a tlačítko **Otestovat připojení**).
+- Potvrďte, že SSH je povoleno na hostiteli a veřejný klíč BombVaultu je autorizovaný v `/root/.ssh/authorized_keys` (Nastavení, Systém, SSH k hostiteli zobrazuje klíč a tlačítko **Otestovat připojení**).
 - Na vlastní síti `br0.x` nastavte `LIBVIRT_HOST` na svou LAN IP Unraidu (kontejner tam nemůže dosáhnout na hostitele přes `host.docker.internal`). Povolte **Nastavení, Docker, Host access to custom networks**.
 - Pokud jste změnili SSH port Unraidu, nastavte `LIBVIRT_SSH_PORT`, aby odpovídal.
 - Kompletní krok za krokem diagnóza (test dosažitelnosti, směrování VLAN, `Permission denied (publickey)`, `Host key verification failed`) je v [průvodci Záloha VM přes SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).

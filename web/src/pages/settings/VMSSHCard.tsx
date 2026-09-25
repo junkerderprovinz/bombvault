@@ -11,13 +11,13 @@ import { Card } from "./shared";
 import { useEffect, useState } from "react";
 
 // VMSSHCard shows BombVault's SSH public key (to authorize on the Unraid host)
-// and a connection test. It fetches its own data so SettingsPage does not
-// need extra state.
+// and a connection test for the link VM and ZFS backups share. It fetches its
+// own data so SettingsPage does not need extra state.
 export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { push } = useToast();
   const [host, setHost] = useState("");
   const [pub, setPub] = useState("");
-  const [testState, setTestState] = useState<"idle" | "testing" | "ok" | "fail">("idle");
+  const [testState, setTestState] = useState<"idle" | "testing" | "ok" | "noLibvirt" | "fail">("idle");
   // Bumped on a failed test; the Test button is keyed on it, so each bump
   // replays its shake.
   const [shake, setShake] = useState(0);
@@ -40,7 +40,7 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
     try {
       const r = await testVMSSH();
       if (r.ok) {
-        setTestState("ok");
+        setTestState(r.libvirt === false ? "noLibvirt" : "ok");
       } else {
         setTestState("fail");
         push(r.error ?? t("vm.ssh.testFail"), "fail");
@@ -150,6 +150,9 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
           />
           {testState === "ok" && (
             <span className="text-sm text-statusOk">{t("vm.ssh.testOk")}</span>
+          )}
+          {testState === "noLibvirt" && (
+            <span className="text-sm text-statusWarn">{t("vm.ssh.testNoLibvirt")}</span>
           )}
           {/* The error itself went to the toast; this only marks the state. */}
           {testState === "fail" && (

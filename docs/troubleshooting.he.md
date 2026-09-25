@@ -18,7 +18,7 @@ BombVault מגישה HTTPS מהקופסה בפורט `3443` (אישור בחתי
 
 גיבוי VM מדבר עם libvirt דרך SSH, לעולם לא עיגון.
 
-- ודא ש-SSH מופעל במארח ושהמפתח הציבורי של BombVault מורשה ב-`/root/.ssh/authorized_keys` (הגדרות, מערכת, גיבוי VM דרך SSH מציג את המפתח וכפתור **בדוק חיבור**).
+- ודא ש-SSH מופעל במארח ושהמפתח הציבורי של BombVault מורשה ב-`/root/.ssh/authorized_keys` (הגדרות, מערכת, SSH למארח מציג את המפתח וכפתור **בדוק חיבור**).
 - ברשת `br0.x` מותאמת אישית, קבע את `LIBVIRT_HOST` לכתובת ה-LAN IP של Unraid שלך (ה-container אינו יכול להגיע למארח דרך `host.docker.internal` שם). הפעל **הגדרות, Docker, Host access to custom networks**.
 - אם שינית את פורט ה-SSH של Unraid, קבע את `LIBVIRT_SSH_PORT` בהתאמה.
 - אבחון מלא שלב-אחר-שלב (בדיקת נגישות, ניתוב VLAN, `Permission denied (publickey)`, `Host key verification failed`) נמצא ב[מדריך גיבוי VM דרך SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).

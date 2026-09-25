@@ -69,7 +69,7 @@ BombVault copia las VMs KVM/libvirt **sin montar ninguna ruta de libvirt**. Ejec
 
 Configuración rápida:
 
-1. **Ajustes, Sistema, Copia de VM por SSH:** copia la clave pública mostrada.
+1. **Ajustes, Sistema, SSH del host:** copia la clave pública mostrada.
 2. Añádela al `/root/.ssh/authorized_keys` de Unraid (también persistido al flash para que sobreviva a los reinicios).
 3. Haz clic en **Probar conexión**.
 
@@ -84,7 +84,7 @@ Configura una réplica externa en la pestaña **Ajustes, Externo**. Consulta [Co
 
 - **Backends:** SMB/CIFS y NFS (monta el recurso compartido y apunta una Ruta de copia a él), backends nativos de restic sin rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), o cualquier remoto de rclone (`rclone:<remote>:<bucket>/path`).
 - Las **credenciales de la nube** se almacenan cifradas en Ajustes, Externo, Credenciales de la nube.
-- **Los destinos SSH no requieren nada instalado en el otro extremo.** `sftp:` solo necesita un servidor SSH. Añade la clave pública de **Ajustes, Sistema, Copia de VM por SSH** (también en `/config/ssh/id_ed25519.pub`) al `~/.ssh/authorized_keys` del usuario de destino.
+- **Los destinos SSH no requieren nada instalado en el otro extremo.** `sftp:` solo necesita un servidor SSH. Añade la clave pública de **Ajustes, Sistema, SSH del host** (también en `/config/ssh/id_ed25519.pub`) al `~/.ssh/authorized_keys` del usuario de destino.
 - **Copia externa:** BombVault replica las nuevas instantáneas con `restic copy` en modo de mejor esfuerzo. El repo local sigue siendo el principal. Cada dominio tiene su propio calendario externo, más un botón **Replicar ahora**.
 - **Varios destinos externos por dominio:** cada dominio puede replicarse a varios destinos externos a la vez. Añade destinos adicionales en Ajustes, Externo, cada uno con su propio repositorio, clase de almacenamiento S3, marca append-only, retención y presupuesto de crecimiento; todos se replican según el calendario externo de ese dominio. Una configuración externa única existente se traslada como el primer destino.
 - **Retención por fuente:** la política local vive en Ajustes, Rutas y Almacenamiento; la política externa en Ajustes, Externo (déjala toda a cero para no recortar nunca automáticamente las instantáneas externas).

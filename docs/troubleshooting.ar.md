@@ -18,7 +18,7 @@
 
 يتحدث نسخ الـ VM الاحتياطي إلى libvirt عبر SSH، وليس عبر نقطة تركيب أبداً.
 
-- تأكد من تفعيل SSH على المضيف ومن تفويض مفتاح BombVault العام في `/root/.ssh/authorized_keys` (الإعدادات، النظام، VM Backup over SSH يُظهر المفتاح وزر **Test connection**).
+- تأكد من تفعيل SSH على المضيف ومن تفويض مفتاح BombVault العام في `/root/.ssh/authorized_keys` (الإعدادات، النظام، SSH المضيف يُظهر المفتاح وزر **Test connection**).
 - على شبكة `br0.x` مخصصة، اضبط `LIBVIRT_HOST` على عنوان LAN IP الخاص بـ Unraid (لا تستطيع الحاوية الوصول إلى المضيف عبر `host.docker.internal` هناك). فعّل **Settings, Docker, Host access to custom networks**.
 - إذا غيّرت منفذ SSH في Unraid، اضبط `LIBVIRT_SSH_PORT` ليطابقه.
 - التشخيص الكامل خطوة بخطوة (اختبار قابلية الوصول، توجيه VLAN، `Permission denied (publickey)`، `Host key verification failed`) موجود في [دليل نسخ الـ VM الاحتياطي عبر SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).

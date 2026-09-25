@@ -69,7 +69,7 @@ BombVault tworzy kopie maszyn wirtualnych KVM/libvirt **bez montowania jakiejkol
 
 Szybka konfiguracja:
 
-1. **Ustawienia, System, Kopia VM przez SSH:** skopiuj pokazany klucz publiczny.
+1. **Ustawienia, System, SSH hosta:** skopiuj pokazany klucz publiczny.
 2. Dopisz go do pliku Unraid `/root/.ssh/authorized_keys` (utrwalanego też na flash, aby przetrwał restarty).
 3. Kliknij **Test połączenia**.
 
@@ -84,7 +84,7 @@ Skonfiguruj replikę poza siedzibą w zakładce **Ustawienia, Poza siedzibą**. 
 
 - **Backendy:** SMB/CIFS i NFS (zamontuj udział i skieruj na niego Ścieżkę kopii), natywne backendy restic bez rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) lub dowolny zdalny rclone (`rclone:<remote>:<bucket>/path`).
 - **Poświadczenia chmurowe** są przechowywane zaszyfrowane w Ustawienia, Poza siedzibą, Poświadczenia chmurowe.
-- **Cele SSH nie wymagają niczego zainstalowanego po drugiej stronie.** `sftp:` wymaga jedynie serwera SSH. Dodaj klucz publiczny z **Ustawienia, System, Kopia VM przez SSH** (dostępny też pod `/config/ssh/id_ed25519.pub`) do pliku `~/.ssh/authorized_keys` użytkownika docelowego.
+- **Cele SSH nie wymagają niczego zainstalowanego po drugiej stronie.** `sftp:` wymaga jedynie serwera SSH. Dodaj klucz publiczny z **Ustawienia, System, SSH hosta** (dostępny też pod `/config/ssh/id_ed25519.pub`) do pliku `~/.ssh/authorized_keys` użytkownika docelowego.
 - **Kopia poza siedzibą:** BombVault replikuje nowe migawki poleceniem `restic copy` w trybie best-effort. Repozytorium lokalne pozostaje główne. Każda domena ma własny harmonogram poza siedzibą oraz przycisk **Replikuj teraz**.
 - **Wiele celów poza siedzibą na domenę:** każda domena może replikować do kilku celów poza siedzibą naraz. Dodaj dodatkowe cele w Ustawienia, Poza siedzibą, każdy z własnym repozytorium, klasą pamięci S3, flagą append-only, przechowywaniem i budżetem wzrostu; wszystkie replikują zgodnie z harmonogramem poza siedzibą tej domeny. Istniejąca pojedyncza konfiguracja poza siedzibą jest przenoszona jako pierwszy cel.
 - **Przechowywanie per źródło:** polityka lokalna znajduje się w Ustawienia, Ścieżki i Magazyn; polityka poza siedzibą w Ustawienia, Poza siedzibą (pozostaw ją całą na zero, aby nigdy nie przycinać automatycznie migawek poza siedzibą).

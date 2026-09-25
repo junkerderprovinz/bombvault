@@ -12784,7 +12784,7 @@ func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source s
 // wired (no key yet).
 func (s *Service) VMSSHInfo() (host, publicKey string, err error) {
 	if s.ssh == nil {
-		return "", "", errors.New("vm backup over SSH is not configured")
+		return "", "", errors.New("host SSH is not configured")
 	}
 	pub, err := s.ssh.PublicKey()
 	if err != nil {
@@ -12793,24 +12793,32 @@ func (s *Service) VMSSHInfo() (host, publicKey string, err error) {
 	return s.cfg.LibvirtHost, pub, nil
 }
 
-// VMSSHTest checks that libvirt is reachable over SSH (used by the Settings
-// "Test connection" button). Bounded by a timeout so an unreachable host
-// (e.g. a macvlan container with no route) fails fast instead of hanging.
-func (s *Service) VMSSHTest(ctx context.Context) error {
+// HostSSHTest checks the SSH link VM backups, ZFS backups and Unraid
+// notifications share. Only VM backups need libvirt, so a missing libvirt
+// comes back as libvirtErr and leaves the link itself passing (#53). The
+// timeout makes a host with no route fail fast instead of hanging.
+func (s *Service) HostSSHTest(ctx context.Context) (libvirtErr, err error) {
 	if s.ssh == nil {
-		return errors.New("vm backup over SSH is not configured")
+		return nil, errors.New("host SSH is not configured")
 	}
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
+	// Checked first because an SSH or auth failure explains more than the
+	// libvirt error it would also cause.
 	if err := s.ssh.EnsureKnownHost(ctx); err != nil {
-		return err // SSH/auth/reachability problem — clearer than libvirt's error
+		return nil, err
 	}
-	if err := s.ssh.Test(ctx); err != nil {
-		// EnsureKnownHost passed, so SSH auth + reachability are fine — only
-		// libvirt is missing. Say so, so a notifications-only user (who needs the
-		// SSH connection but not libvirt) isn't misled into thinking their SSH is
-		// broken (#53).
-		return fmt.Errorf("%w. The SSH connection itself is working, and libvirt is only needed for VM backups, not for Unraid notifications", err)
+	return s.ssh.Test(ctx), nil
+}
+
+// VMSSHTest is HostSSHTest for VM backups, which fail without libvirt.
+func (s *Service) VMSSHTest(ctx context.Context) error {
+	libvirtErr, err := s.HostSSHTest(ctx)
+	if err != nil {
+		return err
+	}
+	if libvirtErr != nil {
+		return fmt.Errorf("%w. The SSH connection itself is working; libvirt is only needed for VM backups", libvirtErr)
 	}
 	return nil
 }
@@ -12820,7 +12828,7 @@ func (s *Service) VMSSHTest(ctx context.Context) error {
 // a hung SSH attempt can't stall the spike.
 func (s *Service) LibvirtReachable() error {
 	if s.ssh == nil {
-		return errors.New("vm backup over SSH is not configured")
+		return errors.New("host SSH is not configured")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 12*time.Second)
 	defer cancel()
@@ -17675,7 +17683,7 @@ func formatItemFailures(failures []schedule.ItemFailure) string {
 // host's notify script over SSH. level is "normal" | "warning" | "alert".
 func (s *Service) sendUnraidNotify(ctx context.Context, subject, desc, level string) error {
 	if s.ssh == nil {
-		return errors.New("no SSH connection for Unraid notifications (set it up in Settings → VM Backup over SSH)")
+		return errors.New("no SSH connection for Unraid notifications (set it up in Settings, System, Host SSH)")
 	}
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()

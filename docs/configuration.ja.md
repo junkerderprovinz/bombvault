@@ -69,7 +69,7 @@ BombVault は **libvirt のパスを一切マウントすることなく** KVM/l
 
 クイックセットアップ:
 
-1. **Settings, System, VM Backup over SSH:** 表示された公開鍵をコピーします。
+1. **Settings, System, Host SSH:** 表示された公開鍵をコピーします。
 2. それを Unraid の `/root/.ssh/authorized_keys` に追記します（再起動後も維持されるようフラッシュにも保存されます）。
 3. **Test connection** をクリックします。
 
@@ -84,7 +84,7 @@ BombVault は **libvirt のパスを一切マウントすることなく** KVM/l
 
 - **バックエンド:** SMB/CIFS と NFS（共有をマウントして Backup Path をそこに向ける）、rclone なしのネイティブ restic バックエンド（`s3:...`、`rest:http://host:8000/repo`、`b2:...`、`sftp:user@host:/repo`）、または任意の rclone リモート（`rclone:<remote>:<bucket>/path`）。
 - **クラウド認証情報**は、Settings, Off-site, Cloud credentials で暗号化して保存されます。
-- **SSH ターゲットは相手側に何もインストールする必要がありません。** `sftp:` は SSH サーバーだけを必要とします。**Settings, System, VM Backup over SSH** の公開鍵（`/config/ssh/id_ed25519.pub` にもあります）を、ターゲットユーザーの `~/.ssh/authorized_keys` に追加します。
+- **SSH ターゲットは相手側に何もインストールする必要がありません。** `sftp:` は SSH サーバーだけを必要とします。**Settings, System, Host SSH** の公開鍵（`/config/ssh/id_ed25519.pub` にもあります）を、ターゲットユーザーの `~/.ssh/authorized_keys` に追加します。
 - **オフサイトコピー:** BombVault はベストエフォート方式で `restic copy` により新しいスナップショットを複製します。ローカルリポジトリが主のままです。各ドメインには独自のオフサイトスケジュールがあり、**今すぐ複製**ボタンも備わっています。
 - **ドメインごとに複数のオフサイトターゲット:** 各ドメインは複数のオフサイトデスティネーションへ同時に複製できます。Settings, Off-site で追加のターゲットを加え、それぞれに独自のリポジトリ、S3 ストレージクラス、追記専用フラグ、保持、成長予算を設定します。それらはすべてそのドメインのオフサイトスケジュールで複製されます。既存の単一オフサイトセットアップは最初のターゲットとして引き継がれます。
 - **ソースごとの保持:** ローカルのポリシーは Settings, Paths & Storage にあり、オフサイトのポリシーは Settings, Off-site にあります（すべてをゼロのままにするとオフサイトのスナップショットを自動整理しません）。

@@ -18,7 +18,7 @@ BombVault 开箱即用地在端口 `3443` 上提供 HTTPS（自签名证书）�
 
 虚拟机备份通过 SSH 与 libvirt 通信，绝不是通过挂载。
 
-- 确认主机上已启用 SSH，且 BombVault 的公钥已在 `/root/.ssh/authorized_keys` 中获得授权（设置，系统，通过 SSH 备份虚拟机会显示该密钥和一个**测试连接**按钮）。
+- 确认主机上已启用 SSH，且 BombVault 的公钥已在 `/root/.ssh/authorized_keys` 中获得授权（设置，系统，主机 SSH 会显示该密钥和一个**测试连接**按钮）。
 - 在自定义 `br0.x` 网络上，将 `LIBVIRT_HOST` 设置为您的 Unraid LAN IP（在那里容器无法通过 `host.docker.internal` 访问主机）。启用**设置，Docker，主机访问自定义网络**。
 - 如果您更改了 Unraid 的 SSH 端口，请相应设置 `LIBVIRT_SSH_PORT`。
 - 完整的逐步诊断（可达性测试、VLAN 路由、`Permission denied (publickey)`、`Host key verification failed`）位于[通过 SSH 备份虚拟机指南](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)。

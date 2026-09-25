@@ -18,7 +18,7 @@ BombVault ให้บริการ HTTPS พร้อมใช้งานท
 
 การสำรองข้อมูล VM ติดต่อ libvirt ผ่าน SSH ไม่เคยผ่านการเมานต์
 
-- ยืนยันว่า SSH ถูกเปิดใช้งานบนโฮสต์และคีย์สาธารณะของ BombVault ได้รับอนุญาตใน `/root/.ssh/authorized_keys` (Settings, System, VM Backup over SSH แสดงคีย์และปุ่ม **Test connection**)
+- ยืนยันว่า SSH ถูกเปิดใช้งานบนโฮสต์และคีย์สาธารณะของ BombVault ได้รับอนุญาตใน `/root/.ssh/authorized_keys` (Settings, System, Host SSH แสดงคีย์และปุ่ม **Test connection**)
 - บนเครือข่าย `br0.x` ที่กำหนดเอง ให้ตั้ง `LIBVIRT_HOST` เป็น LAN IP ของ Unraid ของคุณ (container ไม่สามารถเข้าถึงโฮสต์ผ่าน `host.docker.internal` ที่นั่นได้) เปิดใช้งาน **Settings, Docker, Host access to custom networks**
 - หากคุณเปลี่ยนพอร์ต SSH ของ Unraid ให้ตั้ง `LIBVIRT_SSH_PORT` ให้ตรง
 - การวินิจฉัยทีละขั้นตอนฉบับเต็ม (การทดสอบการเข้าถึง, การกำหนดเส้นทาง VLAN, `Permission denied (publickey)`, `Host key verification failed`) อยู่ใน [คู่มือการสำรองข้อมูล VM ผ่าน SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)

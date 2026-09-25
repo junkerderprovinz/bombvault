@@ -69,7 +69,7 @@ BombVault, KVM/libvirt VM'lerini **herhangi bir libvirt yolunu bağlamadan** yed
 
 Hızlı kurulum:
 
-1. **Ayarlar, Sistem, SSH üzerinden VM Yedeği:** gösterilen genel anahtarı kopyalayın.
+1. **Ayarlar, Sistem, Ana makine SSH:** gösterilen genel anahtarı kopyalayın.
 2. Onu Unraid'in `/root/.ssh/authorized_keys` dosyasına ekleyin (yeniden başlatmalarda kalıcı olması için flash'a da yazılır).
 3. **Bağlantıyı test et**'e tıklayın.
 
@@ -84,7 +84,7 @@ Hızlı kurulum:
 
 - **Arka uçlar:** SMB/CIFS ve NFS (paylaşımı bağlayın ve ona bir Yedekleme Yolu ayarlayın), rclone olmadan yerel restic arka uçları (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) ya da herhangi bir rclone uzak konumu (`rclone:<remote>:<bucket>/path`).
 - **Bulut kimlik bilgileri** Ayarlar, Site dışı, Bulut kimlik bilgileri altında şifreli saklanır.
-- **SSH hedefleri karşı tarafta hiçbir şey kurmayı gerektirmez.** `sftp:` yalnızca bir SSH sunucusu gerektirir. **Ayarlar, Sistem, SSH üzerinden VM Yedeği** bölümündeki genel anahtarı (ayrıca `/config/ssh/id_ed25519.pub` konumunda) hedef kullanıcının `~/.ssh/authorized_keys` dosyasına ekleyin.
+- **SSH hedefleri karşı tarafta hiçbir şey kurmayı gerektirmez.** `sftp:` yalnızca bir SSH sunucusu gerektirir. **Ayarlar, Sistem, Ana makine SSH** bölümündeki genel anahtarı (ayrıca `/config/ssh/id_ed25519.pub` konumunda) hedef kullanıcının `~/.ssh/authorized_keys` dosyasına ekleyin.
 - **Site dışı kopya:** BombVault yeni anlık görüntüleri en iyi çaba temelinde `restic copy` ile çoğaltır. Yerel depo birincil kalır. Her etki alanının kendi site dışı zamanlaması ve ayrıca bir **Şimdi çoğalt** düğmesi vardır.
 - **Etki alanı başına birden fazla site dışı hedef:** her etki alanı aynı anda birkaç site dışı hedefe çoğaltabilir. Ayarlar, Site dışı'nda her biri kendi deposu, S3 depolama sınıfı, yalnızca ekleme bayrağı, saklama ve büyüme bütçesiyle ek hedefler ekleyin; hepsi o etki alanının site dışı zamanlamasında çoğaltılır. Mevcut tek bir site dışı kurulum ilk hedef olarak taşınır.
 - **Kaynak başına saklama:** yerel ilke Ayarlar, Yollar ve Depolama'da yer alır; site dışı ilke Ayarlar, Site dışı'nda (site dışı anlık görüntüleri asla otomatik kırpmamak için tümünü sıfır bırakın).

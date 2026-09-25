@@ -18,7 +18,7 @@ BombVault는 기본으로 포트 `3443`에서 HTTPS를 제공하므로(자체 �
 
 VM 백업은 마운트가 아니라 SSH를 통해 libvirt와 통신합니다.
 
-- 호스트에서 SSH가 활성화되어 있고 BombVault의 공개 키가 `/root/.ssh/authorized_keys`에 승인되어 있는지 확인하세요(설정, 시스템, SSH를 통한 VM 백업에 키와 **연결 테스트** 버튼이 표시됨).
+- 호스트에서 SSH가 활성화되어 있고 BombVault의 공개 키가 `/root/.ssh/authorized_keys`에 승인되어 있는지 확인하세요(설정, 시스템, 호스트 SSH에 키와 **연결 테스트** 버튼이 표시됨).
 - 사용자 지정 `br0.x` 네트워크에서는 `LIBVIRT_HOST`를 Unraid LAN IP로 설정하세요(거기서는 컨테이너가 `host.docker.internal`을 통해 호스트에 도달할 수 없음). **설정, Docker, 사용자 지정 네트워크에 대한 호스트 접근**을 활성화하세요.
 - Unraid의 SSH 포트를 변경했다면 `LIBVIRT_SSH_PORT`를 일치하도록 설정하세요.
 - 전체 단계별 진단(도달 가능성 테스트, VLAN 라우팅, `Permission denied (publickey)`, `Host key verification failed`)은 [SSH를 통한 VM 백업 가이드](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)에 있습니다.

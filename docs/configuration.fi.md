@@ -69,7 +69,7 @@ BombVault varmuuskopioi KVM/libvirt-virtuaalikoneet **liittämättä yhtäkään
 
 Pikamääritys:
 
-1. **Asetukset, Järjestelmä, VM Backup over SSH:** kopioi näytetty julkinen avain.
+1. **Asetukset, Järjestelmä, Palvelimen SSH:** kopioi näytetty julkinen avain.
 2. Lisää se Unraidin tiedostoon `/root/.ssh/authorized_keys` (myös flashiin tallennettuna, jotta se säilyy uudelleenkäynnistysten yli).
 3. Napsauta **Test connection**.
 
@@ -84,7 +84,7 @@ Määritä etäreplika **Asetukset, Etä** -välilehdellä. Katso [Etäsijainti 
 
 - **Taustajärjestelmät:** SMB/CIFS ja NFS (liitä jako ja osoita varmuuskopiopolku siihen), natiivit restic-taustajärjestelmät ilman rclonea (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) tai mikä tahansa rclone-etäsijainti (`rclone:<remote>:<bucket>/path`).
 - **Pilvitunnukset** tallennetaan salattuina kohdassa Asetukset, Etä, Pilvitunnukset.
-- **SSH-kohteet eivät vaadi mitään asennettavaksi vastapuolelle.** `sftp:` tarvitsee vain SSH-palvelimen. Lisää julkinen avain kohdasta **Asetukset, Järjestelmä, VM Backup over SSH** (myös tiedostossa `/config/ssh/id_ed25519.pub`) kohdekäyttäjän tiedostoon `~/.ssh/authorized_keys`.
+- **SSH-kohteet eivät vaadi mitään asennettavaksi vastapuolelle.** `sftp:` tarvitsee vain SSH-palvelimen. Lisää julkinen avain kohdasta **Asetukset, Järjestelmä, Palvelimen SSH** (myös tiedostossa `/config/ssh/id_ed25519.pub`) kohdekäyttäjän tiedostoon `~/.ssh/authorized_keys`.
 - **Etäkopio:** BombVault replikoi uudet tilannevedokset `restic copy` -komennolla parhaan yrityksen periaatteella. Paikallinen repo pysyy ensisijaisena. Jokaisella toimialueella on oma etäaikataulunsa sekä **Replikoi nyt** -painike.
 - **Useita etäkohteita per toimialue:** jokainen toimialue voi replikoitua useaan etäkohteeseen kerralla. Lisää lisäkohteita kohtaan Asetukset, Etä, kukin omalla repositoriollaan, S3-tallennusluokallaan, append-only-lipullaan, säilytyksellään ja kasvubudjetillaan; ne kaikki replikoituvat kyseisen toimialueen etäaikataulun mukaan. Olemassa oleva yksittäinen etämääritys siirretään ensimmäiseksi kohteeksi.
 - **Säilytys lähdekohtaisesti:** paikallinen käytäntö asuu kohdassa Asetukset, Polut ja tallennus; etäkäytäntö kohdassa Asetukset, Etä (jätä se pelkiksi nolliksi, jotta etätilannevedoksia ei koskaan karsita automaattisesti).

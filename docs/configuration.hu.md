@@ -69,7 +69,7 @@ A BombVault a KVM/libvirt VM-eket **bármely libvirt-útvonal csatolása nélkü
 
 Gyors beállítás:
 
-1. **Beállítások, Rendszer, VM-mentés SSH-n keresztül:** másold ki a megjelenített nyilvános kulcsot.
+1. **Beállítások, Rendszer, Gazdagép SSH:** másold ki a megjelenített nyilvános kulcsot.
 2. Fűzd hozzá az Unraid `/root/.ssh/authorized_keys` fájljához (a flashre is mentve, így túléli az újraindításokat).
 3. Kattints a **Kapcsolat tesztelése** gombra.
 
@@ -84,7 +84,7 @@ A sablon hozzáadja a `--add-host=host.docker.internal:host-gateway` opciót, ho
 
 - **Backendek:** SMB/CIFS és NFS (csatold a megosztást, és irányíts rá egy Mentési útvonalat), natív restic backendek rclone nélkül (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), vagy bármely rclone remote (`rclone:<remote>:<bucket>/path`).
 - **A felhő hitelesítő adatai** titkosítva tárolódnak a Beállítások, Telephelyen kívüli, Felhő hitelesítő adatok alatt.
-- **Az SSH-célokhoz semmit sem kell telepíteni a túloldalon.** Az `sftp:` csak egy SSH-szervert igényel. Add hozzá a nyilvános kulcsot a **Beállítások, Rendszer, VM-mentés SSH-n keresztül** alól (a `/config/ssh/id_ed25519.pub` alatt is) a célfelhasználó `~/.ssh/authorized_keys` fájljához.
+- **Az SSH-célokhoz semmit sem kell telepíteni a túloldalon.** Az `sftp:` csak egy SSH-szervert igényel. Add hozzá a nyilvános kulcsot a **Beállítások, Rendszer, Gazdagép SSH** alól (a `/config/ssh/id_ed25519.pub` alatt is) a célfelhasználó `~/.ssh/authorized_keys` fájljához.
 - **Telephelyen kívüli másolat:** A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint replikálja. A helyi tároló marad az elsődleges. Minden tartománynak saját telephelyen kívüli ütemezése van, plusz egy **Replikálás most** gomb.
 - **Több telephelyen kívüli cél tartományonként:** minden tartomány egyszerre több telephelyen kívüli célra is replikálhat. Adj hozzá további célokat a Beállítások, Telephelyen kívüli alatt, mindegyiket saját tárolóval, S3-tárolási osztállyal, append-only jelzővel, megőrzéssel és növekedési kerettel; mindegyik az adott tartomány telephelyen kívüli ütemezése szerint replikál. Egy meglévő egyetlen telephelyen kívüli beállítás az első célként öröklődik át.
 - **Megőrzés forrásonként:** a helyi szabály a Beállítások, Útvonalak és tárolás alatt él; a telephelyen kívüli szabály a Beállítások, Telephelyen kívüli alatt (hagyd mind nullán, hogy soha ne nyesse automatikusan a telephelyen kívüli pillanatképeket).
