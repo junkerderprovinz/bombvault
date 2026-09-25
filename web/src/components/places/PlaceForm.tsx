@@ -298,6 +298,10 @@ export function PlaceForm({
     // An Azure account's containers come back as buckets, as a key's buckets do.
     const listed =
       f.key === "bucket" || f.key === "container" ? (probe?.buckets ?? []) : f.key === "remote" ? remotes : [];
+    // A name typed before the list came, such as a bucket the server will
+    // create, stays a choice rather than a blank.
+    const value = fields[f.key] ?? "";
+    const choices = value !== "" && !listed.includes(value) ? [value, ...listed] : listed;
     return (
       <div key={f.key} className="flex flex-col gap-1.5">
         <label htmlFor={id} className="flex items-center gap-1 text-xs text-carbon-textSub">
@@ -308,22 +312,22 @@ export function PlaceForm({
           <SelectField
             id={id}
             label={label}
-            value={fields[f.key] ?? ""}
+            value={value}
             onChange={(v) => set(f.key, v)}
             options={[
               { value: "", label: t(CHOOSE_KEYS[f.key] ?? "places.form.chooseBucket") },
-              ...listed.map((b) => ({ value: b, label: b })),
+              ...choices.map((b) => ({ value: b, label: b })),
             ]}
             className={FIELD_CLASS}
           />
         ) : f.secret ? (
-          <SecretField id={id} value={fields[f.key] ?? ""} onChange={(v) => set(f.key, v)} />
+          <SecretField id={id} value={value} onChange={(v) => set(f.key, v)} />
         ) : (
           <input
             id={id}
             type="text"
             dir="ltr"
-            value={fields[f.key] ?? ""}
+            value={value}
             onChange={(e) => set(f.key, e.target.value)}
             placeholder={f.key === "port" && provider.defaultPort ? String(provider.defaultPort) : f.placeholder}
             inputMode={f.key === "port" ? "numeric" : undefined}
