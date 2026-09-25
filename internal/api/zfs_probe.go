@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 
@@ -581,16 +582,23 @@ func zfsErrCode(err error) string {
 	return "zfs-error"
 }
 
+// zfsPathRe finds the paths in host output. Only a slash that starts a token
+// begins one, since the slash inside a word belongs to a dataset name such as
+// cache/appdata, which the operator needs to see.
+var zfsPathRe = regexp.MustCompile(`(^|[\s'"=(,])(?:/[^\s:"']+)+`)
+
 // zfsDetail prepares host output for a details block and a refusal, which the
 // scrubber lets through: control characters and paths out, cut to what one is
 // worth reading.
 func zfsDetail(text string) string {
-	clean := scrubSecrets(strings.Map(func(r rune) rune {
+	clean := strings.Map(func(r rune) rune {
 		if r == '\n' || r == '\t' || r >= 0x20 {
 			return r
 		}
 		return -1
-	}, text))
+	}, text)
+	clean = zfsPathRe.ReplaceAllString(clean, "${1}[path]")
+	clean = credentialRe.ReplaceAllString(clean, "[redacted]@")
 	if len(clean) > zfsDetailLimit {
 		clean = clean[:zfsDetailLimit]
 	}

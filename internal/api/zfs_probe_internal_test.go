@@ -379,6 +379,22 @@ func TestCheckZFSDatasetRefusesWhatCannotBeAnItem(t *testing.T) {
 	}
 }
 
+func TestCheckZFSDatasetDetailKeepsDatasetNamesAndHidesPaths(t *testing.T) {
+	s, _, host := zfsProbeFixture(t, config.Config{})
+	host.treeErr = &zfs.CmdError{
+		Code:   "not-found",
+		Stderr: "cannot open 'cache/gone/deeper': dataset does not exist\ncannot mount '/mnt/cache/gone': directory is not empty",
+	}
+
+	got := s.CheckZFSDataset(context.Background(), "cache/gone/deeper", nil)
+	if !strings.Contains(got.Detail, "'cache/gone/deeper'") {
+		t.Errorf("detail %q lost the dataset name", got.Detail)
+	}
+	if strings.Contains(got.Detail, "/mnt/cache") || !strings.Contains(got.Detail, "'[path]'") {
+		t.Errorf("detail %q still shows the host path", got.Detail)
+	}
+}
+
 func TestProbeZFSSnapshotAccessCreatesVerifiesDestroysTree(t *testing.T) {
 	s, st, host, _ := zfsRunFixture(t, zfsTwoDatasetTree())
 	d := zfsSeedItem(t, st, zfsRoot)
