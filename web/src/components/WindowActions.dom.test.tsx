@@ -7,7 +7,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { I18nProvider, countText, en, type TranslationKey, type useT } from "../lib/i18n";
 import type { FileSetView, FleetPeer } from "../lib/api";
@@ -21,6 +21,10 @@ vi.mock("../lib/api", async (importOriginal) => ({
   browse: async () => ({ ok: true, dirs: [{ name: "appdata", path: "user/appdata" }] }),
   listRepos: async () => ({ ok: true, repos: [] }),
   getCloudCredSets: async () => ({ ok: true, sets: [] }),
+  proposeMeshOffer: async () => ({
+    ok: true,
+    snippet: { user: "u", password: "p", htpasswd: "", dockerRun: "docker run", compose: "services:", unraid: "", repo: "rest:" },
+  }),
 }));
 
 const { ConfirmDialog } = await import("./ConfirmDialog");
@@ -194,6 +198,20 @@ const WINDOWS: Shown[] = [
     name: "the mesh proposal window",
     open: () => shown(<ProposeMeshDialog peer={tower} t={t} onClose={() => {}} />),
     last: en["fleet.mesh.send"],
+  },
+  {
+    file: "pages/Fleet.tsx",
+    name: "the mesh proposal window once it has sent",
+    open: async () => {
+      shown(<ProposeMeshDialog peer={tower} t={t} onClose={() => {}} />);
+      fireEvent.change(screen.getByPlaceholderText("http://192.168.1.50:8000"), {
+        target: { value: "http://192.168.1.50:8000" },
+      });
+      await act(async () => screen.getByRole("button", { name: en["fleet.mesh.send"] }).click());
+      // The row now holds Close alone, so it has to be the one that answered.
+      expect(screen.queryByRole("button", { name: en["fleet.mesh.send"] })).toBeNull();
+    },
+    last: en["common.close"],
   },
 ];
 
