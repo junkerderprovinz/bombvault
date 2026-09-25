@@ -32,6 +32,7 @@ import { useReveal } from "../lib/useReveal";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
+import { WindowActions } from "../components/WindowActions";
 import { Toggle } from "../components/Toggle";
 import { ToggleRow } from "./settings/shared";
 import { IconDisclosure } from "../components/IconDisclosure";
@@ -317,7 +318,8 @@ function ReceivedRepoCard({
   );
 }
 
-function ReceiverDialog({
+// Exported for components/WindowActions.dom.test.tsx.
+export function ReceiverDialog({
   initial,
   t,
   onClose,
@@ -403,10 +405,10 @@ function ReceiverDialog({
       className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
       onClick={onClose}
     >
-      {/* The box scrolls and would clip the heading badge that pokes above
-          its top edge, so a non-clipping shell carries the badge. */}
+      {/* The heading badge pokes above the window's top edge, so a shell
+          that clips nothing carries it rather than the scrolling body. */}
       <div className="relative w-full max-w-lg">
-        {/* px-5 matches the box's p-5, so the notch sits where a Card's does. */}
+        {/* px-5 matches the body's px-5, so the notch sits where a Card's does. */}
         <h2 className="flex items-center px-5">
           <Badge tone="heading" size="heading" wrap>{editing ? t("receiver.editTitle") : t("receiver.addTitle")}</Badge>
         </h2>
@@ -415,97 +417,99 @@ function ReceiverDialog({
           aria-modal="true"
           aria-label={editing ? t("receiver.editTitle") : t("receiver.addTitle")}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
+          className="flex max-h-[90vh] w-full flex-col rounded-card bg-carbon-surface shadow-2xl"
         >
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("receiver.name")}</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder="tower off-site"
-              className={inputCls}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("receiver.repoLocation")}</label>
-            <input
-              type="text"
-              value={repo}
-              onChange={(e) => setRepo(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder="rest:http://192.168.x.x:8000/tower-containers"
-              dir="ltr"
-              className={`${inputCls} font-mono text-start`}
-            />
-            <p className="text-caption text-carbon-textMuted">{t("receiver.repoLocationHint")}</p>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("receiver.appKey")}</label>
-            <RevealInput
-              {...revealAppKey}
-              value={appKey}
-              onChange={(e) => setAppKey(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder={editing ? t("receiver.appKeyKeep") : "0123456789abcdef…"}
-              wrapperClassName="w-full"
-              className={`${inputCls} font-mono`}
-            />
-            <p className="text-caption text-carbon-textMuted">{t("receiver.appKeyHint")}</p>
-            {appKey !== "" && !APP_KEY_RE.test(appKey) && (
-              <p className="text-caption text-statusFail">{t("receiver.appKeyInvalid")}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-5 pb-1">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-carbon-textSub">{t("receiver.deadManHours")}</label>
-              <NumberField
-                min={1}
-                value={deadManHours}
-                onChange={(e) => setDeadManHours(parseInt(e.target.value, 10))}
+              <label className="text-xs text-carbon-textSub">{t("receiver.name")}</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+                placeholder="tower off-site"
                 className={inputCls}
               />
             </div>
+
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-carbon-textSub">{t("receiver.readDataPercent")}</label>
-              <NumberField
-                min={0}
-                max={100}
-                value={readDataPercent}
-                onChange={(e) => setReadDataPercent(parseInt(e.target.value, 10))}
-                className={inputCls}
+              <label className="text-xs text-carbon-textSub">{t("receiver.repoLocation")}</label>
+              <input
+                type="text"
+                value={repo}
+                onChange={(e) => setRepo(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+                placeholder="rest:http://192.168.x.x:8000/tower-containers"
+                dir="ltr"
+                className={`${inputCls} font-mono text-start`}
               />
+              <p className="text-caption text-carbon-textMuted">{t("receiver.repoLocationHint")}</p>
             </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-carbon-textSub">{t("receiver.appKey")}</label>
+              <RevealInput
+                {...revealAppKey}
+                value={appKey}
+                onChange={(e) => setAppKey(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+                placeholder={editing ? t("receiver.appKeyKeep") : "0123456789abcdef…"}
+                wrapperClassName="w-full"
+                className={`${inputCls} font-mono`}
+              />
+              <p className="text-caption text-carbon-textMuted">{t("receiver.appKeyHint")}</p>
+              {appKey !== "" && !APP_KEY_RE.test(appKey) && (
+                <p className="text-caption text-statusFail">{t("receiver.appKeyInvalid")}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-carbon-textSub">{t("receiver.deadManHours")}</label>
+                <NumberField
+                  min={1}
+                  value={deadManHours}
+                  onChange={(e) => setDeadManHours(parseInt(e.target.value, 10))}
+                  className={inputCls}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-carbon-textSub">{t("receiver.readDataPercent")}</label>
+                <NumberField
+                  min={0}
+                  max={100}
+                  value={readDataPercent}
+                  onChange={(e) => setReadDataPercent(parseInt(e.target.value, 10))}
+                  className={inputCls}
+                />
+              </div>
+            </div>
+            <p className="text-caption text-carbon-textMuted -mt-2">{t("receiver.deadManHoursHint")}</p>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-carbon-textSub">{t("receiver.checkCadence")}</label>
+              <input
+                type="text"
+                value={checkCadence}
+                onChange={(e) => setCheckCadence(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+                placeholder={t("receiver.checkCadencePlaceholder")}
+                dir="ltr"
+                className={`${inputCls} font-mono text-start`}
+              />
+              <p className="text-caption text-carbon-textMuted">{t("receiver.checkCadenceHint")}</p>
+            </div>
+
+            {/* ToggleRow puts the label at the start and the switch at the end,
+                like every other settings row. */}
+            <ToggleRow checked={enabled} onChange={setEnabled} label={t("receiver.enabledLabel")} />
           </div>
-          <p className="text-caption text-carbon-textMuted -mt-2">{t("receiver.deadManHoursHint")}</p>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("receiver.checkCadence")}</label>
-            <input
-              type="text"
-              value={checkCadence}
-              onChange={(e) => setCheckCadence(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder={t("receiver.checkCadencePlaceholder")}
-              dir="ltr"
-              className={`${inputCls} font-mono text-start`}
-            />
-            <p className="text-caption text-carbon-textMuted">{t("receiver.checkCadenceHint")}</p>
-          </div>
-
-          {/* ToggleRow puts the label at the start and the switch at the end,
-              like every other settings row. */}
-          <ToggleRow checked={enabled} onChange={setEnabled} label={t("receiver.enabledLabel")} />
-
-          <div className="flex items-center justify-end gap-2 pt-1">
+          <WindowActions>
             <Button
               label={t("files.cancel")}
               labelKey="files.cancel"
@@ -524,7 +528,7 @@ function ReceiverDialog({
               title={saving ? t("common.saving") : undefined}
               className={shake ? "glim-shake" : ""}
             />
-          </div>
+          </WindowActions>
         </div>
       </div>
     </div>,
