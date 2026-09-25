@@ -266,13 +266,42 @@ func TestTheLaterOfTwoTargetsOfOneDomainAtOnePlaceGetsItsOwn(t *testing.T) {
 	in.targets = []store.OffsiteTarget{
 		offsiteRow("new", "containers", "B2 again", b2Bucket+"/containers-2", 2),
 		offsiteRow("old", "containers", "B2", b2Bucket+"/containers", 1),
+		offsiteRow("vms", "vms", "B2 VMs", b2Bucket+"/vms", 3),
 	}
 	plan := planPlaces(in)
 	if m, _, _ := placeOfRow(plan, "old"); m.Place.Name != "B2" {
 		t.Fatalf("the older target sits on %q, want B2", m.Place.Name)
 	}
-	if m, _, _ := placeOfRow(plan, "new"); m.Place.Name != "B2 again" || m.Place.Folders["containers"] != "containers-2" {
-		t.Fatalf("the later target sits on %+v, want B2 again", m.Place)
+	if m, _, _ := placeOfRow(plan, "new"); m.Place.Name != "B2 again" || m.Place.Folders["containers"] != "containers-2" || len(m.Rows) != 1 {
+		t.Fatalf("the later target sits on %+v, want B2 again to itself", m)
+	}
+	if m, _, _ := placeOfRow(plan, "vms"); m.Place.Name != "B2" {
+		t.Fatalf("the vms target sits on %q, want B2, the place of the older containers target", m.Place.Name)
+	}
+}
+
+func TestATargetAtABucketRootNeverSharesAPlaceWithOneInsideIt(t *testing.T) {
+	for name, c := range map[string]struct {
+		rootCreated, innerCreated int64
+		older, later              string
+	}{
+		"root first":   {1, 2, "root", "inner"},
+		"folder first": {2, 1, "inner", "root"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			in := migrationInput()
+			in.targets = []store.OffsiteTarget{
+				offsiteRow("root", "containers", "Bucket", b2Bucket, c.rootCreated),
+				offsiteRow("inner", "vms", "Bucket VMs", b2Bucket+"/vms", c.innerCreated),
+			}
+			plan := planPlaces(in)
+			if _, _, ok := placeOfRow(plan, c.older); !ok {
+				t.Fatalf("the older target %s has no place: %+v", c.older, plan)
+			}
+			if m, _, ok := placeOfRow(plan, c.later); ok || !slices.Contains(plan.unplaced, c.later) {
+				t.Fatalf("the later target %s sits on %+v, want it without a place", c.later, m)
+			}
+		})
 	}
 }
 
@@ -577,6 +606,20 @@ func TestEachNamedRepositoryIsAPlaceOfItsOwn(t *testing.T) {
 	}
 	if p := placeNamed(t, plan, "Cold").Place; !p.OffPremises || p.LimitUpload != 200 || p.Provider != "s3-other" {
 		t.Errorf("Cold = %+v", p)
+	}
+}
+
+func TestANamedRepositorysPlaceStandsWhereItsRowSays(t *testing.T) {
+	away := namedRow("away", "Parents' NAS", "remotes/parents/bv")
+	away.OffPremises = true
+	in := migrationInput()
+	in.named = []store.OffsiteTarget{away, namedRow("house", "MinIO", "s3:https://minio.lan:9000/bv")}
+	plan := planPlaces(in)
+	if p := placeNamed(t, plan, "Parents' NAS").Place; !p.OffPremises {
+		t.Errorf("Parents' NAS = %+v, want it off the premises like its row", p)
+	}
+	if p := placeNamed(t, plan, "MinIO").Place; p.OffPremises {
+		t.Errorf("MinIO = %+v, want it on the premises like its row", p)
 	}
 }
 
