@@ -661,35 +661,35 @@ describe("FileSetFoldersEditor exclusions list", () => {
 });
 
 describe("FileSetDialog path-change hint", () => {
-  it("always says under the folder picker that a new path clears the selection", async () => {
+  const CLEARS = "Changing the folder clears the ticked sub-folder selection.";
+  const GENERIC = "The folder to back up, a relative subpath under the host mount root.";
+
+  /** What the info bubble on the folder picker's label says. */
+  function folderTip(): string {
+    const label = screen.getByText("Folder", { selector: "label" });
+    return label.querySelector("[aria-label]")!.getAttribute("aria-label")!;
+  }
+
+  it("always says on the folder picker that a new path clears the selection", async () => {
     render(
       <Providers>
         <DialogHarness initial={setView()} />
       </Providers>,
     );
     await act(async () => {});
-    const hint = screen.getByText("Changing the folder clears the ticked sub-folder selection.");
-    // The caption follows the path input inside the same field block.
-    const pathInput = screen.getByPlaceholderText("user/appdata");
-    expect(pathInput.compareDocumentPosition(hint) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // It shows even though this fixture stores no selection, next to the
-    // generic path hint.
-    expect(
-      screen.getByText("The folder to back up, a relative subpath under the host mount root."),
-    ).toBeTruthy();
+    // This fixture stores no selection, and the bubble says it anyway, after
+    // the generic path hint.
+    expect(folderTip()).toBe(`${GENERIC} ${CLEARS}`);
   });
 
-  it("shows both captions for a set without a path", async () => {
+  it("says both for a set without a path", async () => {
     render(
       <Providers>
         <DialogHarness initial={setView({ path: "", selectedPaths: undefined })} />
       </Providers>,
     );
     await act(async () => {});
-    expect(screen.getByText("Changing the folder clears the ticked sub-folder selection.")).toBeTruthy();
-    expect(
-      screen.getByText("The folder to back up, a relative subpath under the host mount root."),
-    ).toBeTruthy();
+    expect(folderTip()).toBe(`${GENERIC} ${CLEARS}`);
   });
 });
 
