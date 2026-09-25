@@ -269,14 +269,17 @@ func (r zfsRunRecorder) RecordRun(runID, snap string, window time.Duration, hook
 }
 
 // AddMember records the member on the run and on the item's tree, which is what
-// the coverage card and the row read.
+// the coverage card and the row read. A dataset the run never got to keeps what
+// the tree knew of it: a cancelled run says nothing about the dataset itself.
 func (r zfsRunRecorder) AddMember(runID string, m backup.ZFSMemberResult) error {
 	var backedUpAt int64
 	if m.Outcome == outcomeBackedUp || m.Outcome == "empty" {
 		backedUpAt = time.Now().Unix()
 	}
-	if err := r.st.SetZFSMemberOutcome(r.itemID, m.Dataset, m.Outcome, backedUpAt); err != nil {
-		log.Printf("api: zfs: recording the outcome of %s on its tree failed: %v", m.Dataset, err)
+	if m.Outcome != "not-reached" {
+		if err := r.st.SetZFSMemberOutcome(r.itemID, m.Dataset, m.Outcome, backedUpAt); err != nil {
+			log.Printf("api: zfs: recording the outcome of %s on its tree failed: %v", m.Dataset, err)
+		}
 	}
 	row := store.ZFSRunMember{
 		RunID:           runID,

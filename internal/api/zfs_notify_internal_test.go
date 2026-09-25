@@ -118,6 +118,37 @@ func TestCancelledZFSRunNotifiesAndCopiesNothingOffSite(t *testing.T) {
 	}
 }
 
+// A cancel is no fault of the dataset restic was reading. The run says the
+// dataset was not reached, and the item's tree, which the row counts skipped
+// datasets from, keeps what the preflight found.
+func TestCancelledZFSRunMarksNoDatasetAsFailed(t *testing.T) {
+	s, st, _, eng := zfsRunFixture(t, zfsTwoDatasetTree())
+	d := zfsSeedItem(t, st, zfsRoot)
+	eng.onBackup = func() { s.CancelBackupRun(zfsDomain+":"+zfsRoot, "") }
+
+	_, _ = s.BackupZFSDataset(context.Background(), d.ID)
+
+	run := zfsLastRun(t, st, d.ID)
+	members, err := st.ListZFSRunMembers(run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range members {
+		if m.Outcome != "not-reached" {
+			t.Fatalf("run member %s = %q, want not-reached", m.Dataset, m.Outcome)
+		}
+	}
+	tree, err := st.ListZFSMembers(d.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range tree {
+		if m.Outcome != "" {
+			t.Fatalf("tree member %s = %q, want the preflight's verdict kept", m.Dataset, m.Outcome)
+		}
+	}
+}
+
 func TestZFSRestartRecoveryNotificationSurvivesScheduledSummary(t *testing.T) {
 	s, st, _, _ := zfsRunFixture(t, zfsTwoDatasetTree())
 	s.docker = newZFSFakeDocker("plex")

@@ -352,6 +352,10 @@ func (d ZFSBackupDeps) backupMember(ctx context.Context, m ZFSMemberPlan, snap s
 	if err != nil {
 		log.Printf("zfs backup: reading %s failed: %v", m.Dataset, err)
 		res.Outcome = codeBackupFailed
+		// A cancel or the stall guard ended the run, not a fault of this dataset.
+		if ctx.Err() != nil {
+			res.Outcome = codeNotReached
+		}
 		return res, Summary{}
 	}
 	res.Outcome = outcomeBackedUp
