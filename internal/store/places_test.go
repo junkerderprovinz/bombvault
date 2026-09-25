@@ -523,3 +523,91 @@ func TestSavingAnUnchangedPlaceWritesNothing(t *testing.T) {
 		t.Fatalf("saving an unchanged place wrote %d rows", n)
 	}
 }
+
+// fieldRowAt is the domain's off-site field row, at p and written from it.
+func fieldRowAt(t *testing.T, r *store.Repo, db *sql.DB, p store.Place, domain string) store.OffsiteTarget {
+	t.Helper()
+	row := upsertRow(t, r, store.OffsiteTarget{Domain: domain, Name: p.Name, Repo: addressAt(t, p, domain, ""), Enabled: true})
+	attachRow(t, db, row.ID, p.ID, domain, "")
+	mustWritePlace(t, r, store.PlaceWrite{Place: p})
+	got, _, err := r.GetOffsiteTarget(row.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return got
+}
+
+func TestAHomePlaceWritesTheDomainPaths(t *testing.T) {
+	r, _ := placesRepo(t)
+	disk := diskPlace()
+	disk.Base = "backups"
+	disk = mustWritePlace(t, r, store.PlaceWrite{Place: disk, HomeDomains: map[string]string{"containers": "", "flash": ""}})
+	s := storedSettings(t, r)
+	if s.ContainersPath != "backups/container" || s.FlashPath != "backups/flash" || s.VMsPath != "user/bombvault/vms" {
+		t.Fatalf("paths = %q, %q, %q, want the home place's for containers and flash and vms untouched", s.ContainersPath, s.FlashPath, s.VMsPath)
+	}
+	disk.Folders["flash"] = "usb"
+	mustWritePlace(t, r, store.PlaceWrite{Place: disk})
+	if s := storedSettings(t, r); s.FlashPath != "backups/usb" {
+		t.Fatalf("flash path = %q, want the new folder", s.FlashPath)
+	}
+	checkPlacedAddresses(t, r)
+}
+
+func TestAHomePlaceNeedsTheDomainsFolder(t *testing.T) {
+	r, _ := placesRepo(t)
+	disk := diskPlace()
+	disk.Folders = map[string]string{"containers": "container"}
+	if _, err := r.WritePlace(store.PlaceWrite{Place: disk, HomeDomains: map[string]string{"vms": ""}}); !errors.Is(err, store.ErrPlaceFolderMissing) {
+		t.Fatalf("a home place without the domain's folder = %v, want ErrPlaceFolderMissing", err)
+	}
+	if list, err := r.ListPlaces(); err != nil || len(list) != 0 {
+		t.Fatalf("ListPlaces = %+v, %v, want the refused write gone", list, err)
+	}
+}
+
+func TestTheFieldRowAtAPlaceWritesTheOffsiteField(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	field := fieldRowAt(t, r, db, bucket, "containers")
+	if s := storedSettings(t, r); s.ContainersOffsite != field.Repo || s.ContainersOffsiteImmutable {
+		t.Fatalf("field = %q, %v, want the row's address", s.ContainersOffsite, s.ContainersOffsiteImmutable)
+	}
+	copies, err := r.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "B2 copies",
+		Repo: addressAt(t, bucket, "containers", "-copies"), Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	attachRow(t, db, copies.ID, bucket.ID, "containers", "-copies")
+
+	bucket.Base, bucket.Immutable = "s3:https://s3.example.com/bucket-2", true
+	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	if s := storedSettings(t, r); s.ContainersOffsite != "s3:https://s3.example.com/bucket-2/container" || !s.ContainersOffsiteImmutable {
+		t.Fatalf("field = %q, %v, want the field row's new address, append-only", s.ContainersOffsite, s.ContainersOffsiteImmutable)
+	}
+
+	off, _, err := r.GetOffsiteTarget(field.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	off.Enabled = false
+	upsertRow(t, r, off)
+	mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	if s := storedSettings(t, r); s.ContainersOffsite != "" || s.ContainersOffsiteImmutable {
+		t.Fatalf("field = %q, %v, want it empty under a row that is off", s.ContainersOffsite, s.ContainersOffsiteImmutable)
+	}
+}
+
+func TestAnUnchangedHomePlaceWritesNothing(t *testing.T) {
+	r, db := placesRepo(t)
+	disk := mustWritePlace(t, r, store.PlaceWrite{Place: diskPlace(), HomeDomains: map[string]string{"containers": "", "vms": ""}})
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	fieldRowAt(t, r, db, bucket, "flash")
+
+	changes := totalChanges(t, db)
+	mustWritePlace(t, r, store.PlaceWrite{Place: disk, HomeDomains: map[string]string{"containers": ""}})
+	mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	if n := totalChanges(t, db) - changes; n != 0 {
+		t.Fatalf("saving unchanged places wrote %d rows", n)
+	}
+}

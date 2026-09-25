@@ -271,10 +271,13 @@ func commitStoredTargetTx(tx *sql.Tx, id string) (OffsiteTarget, error) {
 // FieldOffsiteTarget returns the row the domain's off-site settings field edits:
 // role offsite, sort_order 0, enabled or not.
 func (r *Repo) FieldOffsiteTarget(domain string) (OffsiteTarget, bool, error) {
-	row := r.db.QueryRow(`SELECT `+offsiteTargetCols+`
+	return fieldRowQ(r.db, domain)
+}
+
+func fieldRowQ(q queryer, domain string) (OffsiteTarget, bool, error) {
+	t, err := scanOffsiteTarget(q.QueryRow(`SELECT `+offsiteTargetCols+`
 		FROM offsite_targets WHERE domain = ? AND role = ? AND sort_order = 0
-		ORDER BY created_at, id LIMIT 1`, domain, RoleOffsite)
-	t, err := scanOffsiteTarget(row)
+		ORDER BY created_at, id LIMIT 1`, domain, RoleOffsite))
 	if errors.Is(err, sql.ErrNoRows) {
 		return OffsiteTarget{}, false, nil
 	}
