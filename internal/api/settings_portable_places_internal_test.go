@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"maps"
 	"net/http"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -477,5 +478,178 @@ func TestImportRefusesPlacesTheFormsWouldRefuse(t *testing.T) {
 				t.Fatalf("validateExport = %q, want a refusal containing %q", msg, tc.want)
 			}
 		})
+	}
+}
+
+func TestPlacesSurviveARoundTrip(t *testing.T) {
+	src := newPlacementFixture(t)
+	seedPlaces(src)
+	exp := src.do(http.MethodGet, "/api/settings/export", nil)
+
+	dst := newPlacementFixture(t)
+	preview := dst.do(http.MethodPost, "/api/settings/import", exp)
+	if summary, _ := preview["summary"].(map[string]any); summary["places"] != float64(2) {
+		t.Fatalf("preview = %v, want two places counted", preview)
+	}
+	if res := dst.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+
+	back := dst.do(http.MethodGet, "/api/settings/export", nil)
+	for _, block := range []string{"places", "storageDomainPlaces", "offsiteTargets", "namedRepos"} {
+		if !reflect.DeepEqual(back[block], exp[block]) {
+			t.Errorf("%s:\n got %v\nwant %v", block, back[block], exp[block])
+		}
+	}
+	got, want := back["settings"].(map[string]any), exp["settings"].(map[string]any)
+	for _, key := range []string{"containersPath", "vmsPath", "filesPath", "containersOffsite", "containersOffsiteImmutable"} {
+		if got[key] != want[key] {
+			t.Errorf("settings.%s = %v, want %v", key, got[key], want[key])
+		}
+	}
+}
+
+func TestAnImportLeavesPlacedRowsToTheirPlace(t *testing.T) {
+	src := newPlacementFixture(t)
+	s, err := src.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.OffsiteRetentionKeepDaily = 7
+	if err := src.st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	seed := seedPlaces(src)
+	exp := src.do(http.MethodGet, "/api/settings/export", nil)
+
+	dst := newPlacementFixture(t)
+	if res := dst.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	field, ok, err := dst.st.GetOffsiteTarget(seed.field.ID)
+	if err != nil || !ok || field.PlaceID != seed.b2.ID || field.RetentionKeepDaily != 30 {
+		t.Fatalf("field target = %+v (ok %v, err %v), want it on B2 with the place's 30 daily, not the settings' 7", field, ok, err)
+	}
+}
+
+func TestAnEmptyPlacesBlockLeavesNoPlaces(t *testing.T) {
+	f := newPlacementFixture(t)
+	seedPlaces(f)
+	res := importEdited(t, f, func(exp map[string]any) {
+		exp["places"] = []any{}
+		exp["storageDomainPlaces"] = map[string]any{}
+		for _, block := range []string{"offsiteTargets", "namedRepos"} {
+			rows, _ := exp[block].([]any)
+			for _, row := range rows {
+				m := row.(map[string]any)
+				delete(m, "placeId")
+				delete(m, "placeDomain")
+				delete(m, "placeSuffix")
+			}
+		}
+	})
+	if res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+
+	if got, err := f.st.ListPlaces(); err != nil || len(got) != 0 {
+		t.Errorf("places = %+v (err %v), want none", got, err)
+	}
+	if homes, err := f.st.DomainPlaces(); err != nil || len(homes) != 0 {
+		t.Errorf("home places = %v (err %v), want none", homes, err)
+	}
+	targets, err := f.st.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repos, err := f.st.ListNamedRepos()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range slices.Concat(targets, repos) {
+		if row.PlaceID != "" {
+			t.Errorf("row %s is still on place %s", row.ID, row.PlaceID)
+		}
+	}
+	if s, err := f.st.GetSettings(); err != nil || s.PlacesMigrated == 0 {
+		t.Errorf("places_migrated = %d (err %v), want it set so the next start does not build places the file said are not there", s.PlacesMigrated, err)
+	}
+}
+
+func TestAnImportDoesNotMoveARepositoryInUseOntoItsPlace(t *testing.T) {
+	src := newPlacementFixture(t)
+	seed := seedPlaces(src)
+	exp := src.do(http.MethodGet, "/api/settings/export", nil)
+
+	dst := newPlacementFixture(t)
+	const kept = "s3:https://s3.example.com/other/vms"
+	repo, err := dst.st.UpsertOffsiteTarget(store.OffsiteTarget{
+		ID: seed.repo.ID, Role: store.RoleRepo, Name: "B2 VMs", Repo: kept, Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	dst.vm("win11", repo.ID)
+	buf := captureLog(t)
+
+	if res := dst.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	back, err := dst.st.GetNamedRepo(repo.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if back.Repo != kept || back.PlaceID != "" {
+		t.Fatalf("repository = %+v, want it at %s and on no place", back, kept)
+	}
+	if !strings.Contains(buf.String(), `repository "B2 VMs" keeps the location it has here`) {
+		t.Errorf("no log line for the repository left off its place, got:\n%s", buf.String())
+	}
+}
+
+func TestARedactedPlaceDoesNotTakeOverAWorkingDomainPath(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	seedCredentialedPlace(t, srcStore)
+	body, _ := doExport(t, src, "")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	const working = "rest:https://backupuser:dst-pass@storage.example.com:8000/vms" //nolint:gosec // G101: fake credential
+	s, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.VMsPath = working
+	if err := dstStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	buf := captureLog(t)
+
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.VMsPath != working {
+		t.Fatalf("vmsPath = %q, want the working path kept", got.VMsPath)
+	}
+	homes, err := dstStore.DomainPlaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if id, placed := homes["vms"]; placed {
+		t.Fatalf("vms is stored at %s; a place with a redacted base would write that base over the working path", id)
+	}
+	placesNow, err := dstStore.ListPlaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(placesNow) != 1 || !strings.Contains(placesNow[0].Base, redactedLocationMarker) {
+		t.Fatalf("places = %+v, want the file's place with its redacted base", placesNow)
+	}
+	if !strings.Contains(buf.String(), "the vms path keeps the location it has here") {
+		t.Errorf("no log line for the domain left off its place, got:\n%s", buf.String())
 	}
 }

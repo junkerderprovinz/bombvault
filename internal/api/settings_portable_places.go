@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"log"
 	"maps"
 	"slices"
 	"strings"
@@ -237,4 +238,86 @@ func placeLocations(p store.Place) []string {
 		out = append(out, places.Join(p.Base, p.Folders[domain]))
 	}
 	return out
+}
+
+// replacePlaces installs the file's places, then has WritePlace write every
+// location and mirrored field they decide, the way a change to a place does.
+func (h *Handler) replacePlaces(exp settingsExport, prior []store.Place) error {
+	in, err := h.placedImport(exp, prior)
+	if err != nil {
+		return err
+	}
+	if err := h.store.ReplacePlaces(in); err != nil {
+		return err
+	}
+	for _, p := range in.Places {
+		if _, err := h.store.WritePlace(store.PlaceWrite{Place: p}); err != nil {
+			return fmt.Errorf("storage place %q: %w", p.Name, err)
+		}
+	}
+	return nil
+}
+
+// placedImport is the file's places as this instance will store them. A place
+// whose base arrived redacted keeps the base it has here under the same id. A
+// home domain or row joins its place only where the location stored after the
+// rest of the import is the one the place builds. A location the import kept
+// instead of the file's (a redacted file, a repository in use, a direct
+// repository, a row of the other role) stays where it is and on no place,
+// because WritePlace would move it.
+func (h *Handler) placedImport(exp settingsExport, prior []store.Place) (store.PlacesImport, error) {
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		return store.PlacesImport{}, err
+	}
+	targets, err := h.store.ListOffsiteTargets()
+	if err != nil {
+		return store.PlacesImport{}, err
+	}
+	repos, err := h.store.ListNamedRepos()
+	if err != nil {
+		return store.PlacesImport{}, err
+	}
+	priorBase := make(map[string]string, len(prior))
+	for _, p := range prior {
+		priorBase[p.ID] = p.Base
+	}
+
+	in := store.PlacesImport{HomeDomains: map[string]string{}}
+	byID := make(map[string]store.Place, len(exp.Places))
+	for _, fp := range exp.Places {
+		p := fp.toStorePlace()
+		p.Base = restoredLocation(priorBase[p.ID], p.Base)
+		in.Places = append(in.Places, p)
+		byID[p.ID] = p
+	}
+	for _, domain := range slices.Sorted(maps.Keys(exp.StorageDomainPlaces)) {
+		p := byID[strings.TrimSpace(exp.StorageDomainPlaces[domain])]
+		if loc, _ := places.Address(p.Base, p.Folders, domain, ""); loc != domainPathRaw(domain, settings) {
+			log.Printf("api: settings import: the %s path keeps the location it has here, so it is not stored at %q", domain, p.Name) //nolint:gosec // G706: the domain is one of five checked names and the place name is %q-quoted
+			continue
+		}
+		in.HomeDomains[domain] = p.ID
+	}
+	link := func(what string, stored []store.OffsiteTarget, views []offsiteTargetView) {
+		byRow := make(map[string]store.OffsiteTarget, len(stored))
+		for _, r := range stored {
+			byRow[r.ID] = r
+		}
+		for _, tv := range views {
+			p, placed := byID[strings.TrimSpace(tv.PlaceID)]
+			if !placed {
+				continue
+			}
+			row, ok := byRow[strings.TrimSpace(tv.ID)]
+			if loc, _ := places.Address(p.Base, p.Folders, tv.PlaceDomain, tv.PlaceSuffix); !ok || row.Repo != loc {
+				log.Printf("api: settings import: %s %q keeps the location it has here, so it is not put on %q", what, tv.Name, p.Name) //nolint:gosec // G706: what is fixed text and both names are %q-quoted
+				continue
+			}
+			in.Links = append(in.Links, store.PlaceLink{RowID: row.ID, PlaceID: p.ID, Domain: tv.PlaceDomain, Suffix: tv.PlaceSuffix})
+		}
+	}
+	link("off-site target", targets, exp.OffsiteTargets)
+	link("repository", repos, exp.NamedRepos)
+	return in, nil
 }
