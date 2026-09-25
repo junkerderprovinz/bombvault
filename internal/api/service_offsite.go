@@ -1095,7 +1095,7 @@ func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, in
 	if err != nil {
 		return false, false, err
 	}
-	return s.probeOffsiteRepo(ctx, repo, s.ModeFor(settings))
+	return s.probeOffsiteRepo(ctx, repo, s.repoModeFor(settings, domain, "offsite", repo))
 }
 
 // TestOffsiteTarget runs TestOffsite's probe against one off-site

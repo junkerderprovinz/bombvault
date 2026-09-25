@@ -742,11 +742,11 @@ func suggestExcludesKey(repo, snapshotID string, roots, resolved []string) strin
 	return repo + "|" + snapshotID + "|" + hex.EncodeToString(h.Sum(nil)[:8])
 }
 
-// newestSnapshotFor returns the newest LOCAL snapshot of one container, and
-// whether there is one at all. Local only, on purpose: pulling a remote repo's
-// index and tree packs to fill a UI panel would drag ~51 MB over B2 for a large
-// tree. An off-site-only repo (or an unmounted share) reports "none" and the
-// caller falls back to the live walk.
+// newestSnapshotFor returns the newest snapshot of one container in the domain
+// path, and whether there is one at all. Off-site copies are never read:
+// pulling a remote repo's index and tree packs to fill a UI panel would drag
+// ~51 MB over B2 for a large tree. An off-site-only repo (or an unmounted
+// share) reports "none" and the caller falls back to the live walk.
 func (s *Service) newestSnapshotFor(ctx context.Context, name string) (restic.Snapshot, string, restic.Mode, bool) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -756,7 +756,7 @@ func (s *Service) newestSnapshotFor(ctx context.Context, name string) (restic.Sn
 	if err != nil || localRepoMissing(repo) {
 		return restic.Snapshot{}, "", restic.Mode{}, false
 	}
-	mode := s.ModeFor(settings)
+	mode := s.repoModeFor(settings, "containers", "local", repo)
 	snaps, err := s.snapshotsForTag(ctx, repo, mode, "container:"+name)
 	if err != nil || len(snaps) == 0 {
 		return restic.Snapshot{}, "", restic.Mode{}, false
