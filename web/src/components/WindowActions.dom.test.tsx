@@ -27,6 +27,15 @@ vi.mock("../lib/api", async (importOriginal) => ({
   }),
 }));
 
+// One provider is enough to open the form step of the add-place window.
+vi.mock("../lib/places", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/places")>()),
+  getPlacesCatalog: async () => ({
+    ok: true,
+    providers: [{ id: "b2", group: "cloud", kind: "s3", offPremises: true, fields: [{ key: "keyId" }, { key: "secret", secret: true }] }],
+  }),
+}));
+
 const { ConfirmDialog } = await import("./ConfirmDialog");
 const { DirectRepoDialog } = await import("./placement/DirectRepoDialog");
 const { useConfirm } = await import("../lib/useConfirm");
@@ -40,6 +49,7 @@ const { FileSetDialog } = await import("../pages/Files");
 const { PullDialog } = await import("../pages/Pull");
 const { ReceiverDialog } = await import("../pages/Receiver");
 const { FleetDialog, ProposeMeshDialog } = await import("../pages/Fleet");
+const { AddPlaceDialog } = await import("./places/AddPlaceDialog");
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -226,6 +236,22 @@ const WINDOWS: Shown[] = [
       expect(screen.queryByRole("button", { name: en["fleet.mesh.send"] })).toBeNull();
     },
     last: en["common.close"],
+  },
+  {
+    file: "components/places/AddPlaceDialog.tsx",
+    name: "the add-place window",
+    open: () => shown(<AddPlaceDialog hostMountRoot="/mnt" onClose={() => {}} />),
+    last: en["common.cancel"],
+  },
+  {
+    file: "components/places/AddPlaceDialog.tsx",
+    name: "the add-place form",
+    open: async () => {
+      shown(<AddPlaceDialog hostMountRoot="/mnt" onClose={() => {}} />);
+      await act(async () => {});
+      await act(async () => screen.getByRole("option", { name: en["places.provider.b2"] }).click());
+    },
+    last: en["places.form.add"],
   },
 ];
 

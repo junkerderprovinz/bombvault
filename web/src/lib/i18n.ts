@@ -2344,6 +2344,9 @@ export const en = {
   "places.form.away": "At another site",
   "places.form.add": "Add",
   "places.form.testFirst": "Test the connection first.",
+  "places.addTitle": "Add a place",
+  "places.added": "{name} is added. Choose it under Domains for a whole domain, or on an item's card for that item alone.",
+  "places.catalogFailed": "The list of providers could not be read.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4368,6 +4371,9 @@ export const de: Translations = {
   "places.form.away": "An einem anderen Ort",
   "places.form.add": "Hinzufügen",
   "places.form.testFirst": "Teste zuerst die Verbindung.",
+  "places.addTitle": "Ort hinzufügen",
+  "places.added": "{name} ist hinzugefügt. Wähle den Ort unter Domänen für eine ganze Domäne oder auf der Karte eines Eintrags für diesen allein.",
+  "places.catalogFailed": "Die Liste der Anbieter konnte nicht gelesen werden.",
 };
 
 // ---------------------------------------------------------------------------
