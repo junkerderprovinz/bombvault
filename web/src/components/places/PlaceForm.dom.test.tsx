@@ -205,6 +205,19 @@ describe("PlaceForm connection test", () => {
     expect(screen.getByText(en["places.folderState.repository"])).toBeTruthy();
   });
 
+  it("says in words why a domain's folder could not be read", async () => {
+    probeAnswer = {
+      ok: true,
+      base: "s3:https://s3.eu-central-1.wasabisys.com/bv",
+      folders: { vms: "error" },
+      errors: { vms: { code: "direct-access-denied", error: "403 Forbidden" } },
+    };
+    await form(WASABI);
+    await testConnection();
+    expect(screen.getByText(en["placementCode.directAccessDenied"])).toBeTruthy();
+    expect(screen.queryByText("403 Forbidden")).toBeNull();
+  });
+
   it("offers the buckets a key may see, and tests again with the one chosen", async () => {
     probeAnswer = { ok: true, buckets: ["alpha", "beta"] };
     await form(WASABI);
