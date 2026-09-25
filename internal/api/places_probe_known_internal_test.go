@@ -77,3 +77,24 @@ func TestAStoredPlaceIsProbedWithItsSecretsUnlessTheFormHoldsNewOnes(t *testing.
 		t.Fatalf("env = %v, want the typed password and the stored user", env)
 	}
 }
+
+func TestAStoredNextcloudIsProbedThroughTheRemoteItsAddressNames(t *testing.T) {
+	f := newPlacementFixture(t)
+	eng := newEnvEngine(f)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{davSet()}); err != nil {
+		t.Fatal(err)
+	}
+	place := f.storePlace(store.Place{
+		ID: davPlace, Name: "Cloud", Provider: "nextcloud", Kind: "webdav", Base: "rclone:" + places.RemoteName(davPlace) + ":bombvault",
+		Folders: map[string]string{"containers": "container"}, CredsRef: "dav", Enabled: true,
+	})
+	addr := place.Base + "/container"
+	f.eng.opens[addr] = false
+
+	if _, err := f.svc.ProbePlace(context.Background(), ProbeRequest{PlaceID: place.ID}); err != nil {
+		t.Fatal(err)
+	}
+	if env := eng.env(addr); !slices.Equal(env, davEnv(t, place.ID)) {
+		t.Fatalf("env = %v\nwant %v", env, davEnv(t, place.ID))
+	}
+}
