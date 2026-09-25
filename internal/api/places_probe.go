@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -141,10 +142,12 @@ type placeProbe struct {
 	folders  places.Folders
 }
 
-// ProbePlace tests a place before it is added and changes nothing: no
-// repository is created and no row is written. A place that cannot be reached
-// comes back as a result with OK false and a code; an error is left for a
-// request that names no known provider or leaves a required field empty.
+// ProbePlace tests a new or stored place and writes nothing. A stored place,
+// named by PlaceID, is probed at its own address with its stored secrets, each
+// replaced by a value the form holds, so a changed key can be tested before it
+// is saved. A place that cannot be reached is a result with OK false; the error
+// is for a request that names no known provider or place, or leaves a required
+// field empty.
 func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.ProbeResult, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -154,8 +157,11 @@ func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.Prob
 	if err != nil {
 		return places.ProbeResult{}, err
 	}
+	fresh := pr.base == ""
 	var res places.ProbeResult
-	pr.base, err = places.Base(pr.provider, pr.fields, pr.placeID)
+	if fresh {
+		pr.base, err = places.Base(pr.provider, pr.fields, pr.placeID)
+	}
 	res.Fields = publicFields(pr.provider, pr.fields)
 	if err != nil {
 		return failedProbe(res, err)
@@ -169,24 +175,71 @@ func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.Prob
 			return failedProbe(res, err)
 		}
 	}
+	// Folders below a repository would be repositories inside it, so a new
+	// place whose address holds one already is offered as that repository.
+	if fresh {
+		if at := s.probeFolder(ctx, pr.base, mode); at.state == places.FolderRepository {
+			res.OK, res.Base = true, pr.base
+			res.RepoIDs = map[string]string{"": at.repoID}
+			res.Facts = append(res.Facts, places.ProbeFact{Key: places.FactBaseIsRepository})
+			return res, nil
+		}
+	}
 	found := s.probeFolders(ctx, pr.base, pr.folders, mode)
 	found.Fields, found.Buckets, found.Facts = res.Fields, res.Buckets, res.Facts
 	return found, nil
 }
 
 func (s *Service) newPlaceProbe(req ProbeRequest) (placeProbe, error) {
-	p, ok := places.ProviderByID(req.Provider)
+	providerID := req.Provider
+	var place store.Place
+	if req.PlaceID != "" {
+		var err error
+		if place, err = s.store.GetPlace(req.PlaceID); err != nil {
+			return placeProbe{}, err
+		}
+		providerID = place.Provider
+	}
+	p, ok := places.ProviderByID(providerID)
 	if !ok {
-		return placeProbe{}, fmt.Errorf("unknown provider %q", req.Provider)
+		return placeProbe{}, fmt.Errorf("unknown provider %q", providerID)
 	}
 	fields := maps.Clone(req.Fields)
 	if fields == nil {
 		fields = map[string]string{}
 	}
-	return placeProbe{
+	pr := placeProbe{
 		provider: p, fields: fields, creds: places.CredsFromFields(p, fields),
 		placeID: probePlaceID, folders: places.DefaultFolders(),
-	}, nil
+	}
+	if req.PlaceID == "" {
+		return pr, nil
+	}
+	stored, err := s.placeCreds(place)
+	if err != nil {
+		return placeProbe{}, err
+	}
+	pr.creds = overlayCreds(stored, pr.creds)
+	pr.placeID, pr.base, pr.folders = place.ID, place.Base, places.Folders(place.Folders)
+	return pr, nil
+}
+
+// overlayCreds takes each value typed into the form over the stored one.
+func overlayCreds(stored, typed places.Creds) places.Creds {
+	return places.Creds{
+		S3KeyID:        cmp.Or(typed.S3KeyID, stored.S3KeyID),
+		S3Secret:       cmp.Or(typed.S3Secret, stored.S3Secret),
+		S3Region:       cmp.Or(typed.S3Region, stored.S3Region),
+		S3StorageClass: cmp.Or(typed.S3StorageClass, stored.S3StorageClass),
+		RESTUser:       cmp.Or(typed.RESTUser, stored.RESTUser),
+		RESTPassword:   cmp.Or(typed.RESTPassword, stored.RESTPassword),
+		WebDAVURL:      cmp.Or(typed.WebDAVURL, stored.WebDAVURL),
+		WebDAVVendor:   cmp.Or(typed.WebDAVVendor, stored.WebDAVVendor),
+		WebDAVUser:     cmp.Or(typed.WebDAVUser, stored.WebDAVUser),
+		WebDAVPass:     cmp.Or(typed.WebDAVPass, stored.WebDAVPass),
+		AzureAccount:   cmp.Or(typed.AzureAccount, stored.AzureAccount),
+		AzureKey:       cmp.Or(typed.AzureKey, stored.AzureKey),
+	}
 }
 
 // probeMode opens a probed place the way its rows will be opened: with this
