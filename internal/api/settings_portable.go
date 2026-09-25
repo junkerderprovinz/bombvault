@@ -652,6 +652,9 @@ func validateExport(exp settingsExport, mountRoot string) string {
 			return msg
 		}
 	}
+	if msg := rejectInvalidPlaces(exp, mountRoot); msg != "" {
+		return msg
+	}
 	// Every schedule cadence in the imported settings must parse (same grammar the
 	// settings save enforces), so an apply cannot install an un-runnable schedule.
 	for _, cad := range exportCadences(exp.Settings) {
