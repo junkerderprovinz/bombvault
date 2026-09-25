@@ -50,7 +50,7 @@ func RemotePlace(repo string) string {
 // leaving out every unset value. local and sftp places need none, since sftp
 // signs in with the container's SSH key, and an rclone place's remote comes
 // from RCLONE_CONFIG.
-func Env(kind Kind, c Creds, placeID string) ([]string, error) {
+func Env(kind Kind, c Creds, placeID string) []string {
 	var env []string
 	add := func(key, value string) {
 		if value != "" {
@@ -72,17 +72,13 @@ func Env(kind Kind, c Creds, placeID string) ([]string, error) {
 		add(prefix+"VENDOR", c.WebDAVVendor)
 		add(prefix+"USER", c.WebDAVUser)
 		if c.WebDAVPass != "" {
-			pass, err := Obscure(c.WebDAVPass)
-			if err != nil {
-				return nil, err
-			}
-			add(prefix+"PASS", pass)
+			add(prefix+"PASS", Obscure(c.WebDAVPass))
 		}
 	case KindAzure:
 		add("AZURE_ACCOUNT_NAME", c.AzureAccount)
 		add("AZURE_ACCOUNT_KEY", c.AzureKey)
 	}
-	return env, nil
+	return env
 }
 
 // Collides reports whether two environments set one variable to different
@@ -142,18 +138,18 @@ var rcloneObscureKey = []byte{
 // base64 URL encoding without padding. The IV comes from the password rather
 // than from chance, so one password always renders the same environment and
 // two renderings of one place never look like a clash.
-func Obscure(plain string) (string, error) {
+func Obscure(plain string) string {
 	sum := sha256.Sum256([]byte(plain))
 	return obscure(plain, sum[:aes.BlockSize])
 }
 
-func obscure(plain string, iv []byte) (string, error) {
+func obscure(plain string, iv []byte) string {
 	block, err := aes.NewCipher(rcloneObscureKey)
 	if err != nil {
-		return "", err
+		panic(err) // AES takes any 32-byte key
 	}
 	out := make([]byte, aes.BlockSize+len(plain))
 	copy(out, iv)
 	cipher.NewCTR(block, iv).XORKeyStream(out[aes.BlockSize:], []byte(plain))
-	return base64.RawURLEncoding.EncodeToString(out), nil
+	return base64.RawURLEncoding.EncodeToString(out)
 }

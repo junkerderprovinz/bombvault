@@ -45,12 +45,12 @@ func TestACopyFromAWebDAVPathCarriesBothEnvironments(t *testing.T) {
 	if len(copies) != 1 {
 		t.Fatalf("copies = %v, want one", copies)
 	}
-	for _, want := range append(davEnv(t, davPlace), "AWS_ACCESS_KEY_ID=SHARED-KEY") {
+	for _, want := range append(davEnv(davPlace), "AWS_ACCESS_KEY_ID=SHARED-KEY") {
 		if !slices.Contains(copies[0], want) {
 			t.Errorf("the copy runs without %s: %v", want, copies[0])
 		}
 	}
-	if listed := eng.env(path); !slices.Contains(listed, davEnv(t, davPlace)[0]) {
+	if listed := eng.env(path); !slices.Contains(listed, davEnv(davPlace)[0]) {
 		t.Errorf("the source was listed with %v", listed)
 	}
 }

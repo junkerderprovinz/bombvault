@@ -13,19 +13,14 @@ import (
 const davPlace = "0a1b"
 
 // davEnv is what davSet renders into for the remote of placeID.
-func davEnv(t *testing.T, placeID string) []string {
-	t.Helper()
-	pass, err := places.Obscure("app-pass")
-	if err != nil {
-		t.Fatal(err)
-	}
+func davEnv(placeID string) []string {
 	prefix := "RCLONE_CONFIG_" + strings.ToUpper(places.RemoteName(placeID)) + "_"
 	return []string{
 		prefix + "TYPE=webdav",
 		prefix + "URL=https://cloud.example.com/remote.php/dav/files/anna/",
 		prefix + "VENDOR=nextcloud",
 		prefix + "USER=anna",
-		prefix + "PASS=" + pass,
+		prefix + "PASS=" + places.Obscure("app-pass"),
 	}
 }
 
@@ -45,8 +40,8 @@ func kindService(t *testing.T) *Service {
 func TestAWebDAVRowRunsWithTheRemoteItsAddressNames(t *testing.T) {
 	s := kindService(t)
 	target := store.OffsiteTarget{Domain: "containers", Repo: "rclone:" + places.RemoteName(davPlace) + ":bombvault/containers", Enabled: true, CredsRef: "dav"}
-	if got := s.offsiteModeForTarget(settingsOf(t, s), target).Env; !slices.Equal(got, davEnv(t, davPlace)) {
-		t.Fatalf("env = %v\nwant %v", got, davEnv(t, davPlace))
+	if got := s.offsiteModeForTarget(settingsOf(t, s), target).Env; !slices.Equal(got, davEnv(davPlace)) {
+		t.Fatalf("env = %v\nwant %v", got, davEnv(davPlace))
 	}
 }
 
@@ -71,8 +66,8 @@ func TestAWebDAVDomainPathBacksUpThroughTheRemoteOfItsPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := s.primaryModeFor(settingsOf(t, s), "containers", settings.ContainersPath).Env
-	if !slices.Equal(got, davEnv(t, davPlace)) {
-		t.Fatalf("env = %v\nwant %v", got, davEnv(t, davPlace))
+	if !slices.Equal(got, davEnv(davPlace)) {
+		t.Fatalf("env = %v\nwant %v", got, davEnv(davPlace))
 	}
 }
 
@@ -80,7 +75,7 @@ func TestAPlaceRunsWithTheEnvironmentOfItsRows(t *testing.T) {
 	s := kindService(t)
 	dav := store.Place{ID: davPlace, Kind: "webdav", CredsRef: "dav"}
 	env, err := s.placeEnv(dav)
-	if err != nil || !slices.Equal(env, davEnv(t, davPlace)) {
+	if err != nil || !slices.Equal(env, davEnv(davPlace)) {
 		t.Fatalf("placeEnv = %v, %v", env, err)
 	}
 	creds, err := s.placeCreds(dav)

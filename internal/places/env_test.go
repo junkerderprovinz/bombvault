@@ -23,10 +23,6 @@ func TestRemoteNameKeepsToWhatAnEnvironmentVariableAllows(t *testing.T) {
 }
 
 func TestEnvRendersEachKind(t *testing.T) {
-	pass, err := Obscure("app-pass")
-	if err != nil {
-		t.Fatal(err)
-	}
 	c := Creds{
 		S3KeyID: "K", S3Secret: "S", S3Region: "auto", RESTUser: "u", RESTPassword: "p",
 		WebDAVURL: "https://cloud.example.com/remote.php/dav/files/anna/", WebDAVVendor: "nextcloud", WebDAVUser: "anna", WebDAVPass: "app-pass",
@@ -43,17 +39,16 @@ func TestEnvRendersEachKind(t *testing.T) {
 			"RCLONE_CONFIG_BVP0A1B_URL=https://cloud.example.com/remote.php/dav/files/anna/",
 			"RCLONE_CONFIG_BVP0A1B_VENDOR=nextcloud",
 			"RCLONE_CONFIG_BVP0A1B_USER=anna",
-			"RCLONE_CONFIG_BVP0A1B_PASS=" + pass,
+			"RCLONE_CONFIG_BVP0A1B_PASS=" + Obscure("app-pass"),
 		}},
 		{KindAzure, []string{"AZURE_ACCOUNT_NAME=acct", "AZURE_ACCOUNT_KEY=key"}},
 		{KindLocal, nil}, {KindSFTP, nil}, {KindRclone, nil},
 	} {
-		got, err := Env(tc.kind, c, "0a1b")
-		if err != nil || !slices.Equal(got, tc.want) {
-			t.Errorf("Env(%s) = %v, %v\nwant %v", tc.kind, got, err, tc.want)
+		if got := Env(tc.kind, c, "0a1b"); !slices.Equal(got, tc.want) {
+			t.Errorf("Env(%s) = %v\nwant %v", tc.kind, got, tc.want)
 		}
 	}
-	if got, _ := Env(KindS3, Creds{S3KeyID: "K"}, ""); !slices.Equal(got, []string{"AWS_ACCESS_KEY_ID=K"}) {
+	if got := Env(KindS3, Creds{S3KeyID: "K"}, ""); !slices.Equal(got, []string{"AWS_ACCESS_KEY_ID=K"}) {
 		t.Errorf("an unset value became a variable: %v", got)
 	}
 }

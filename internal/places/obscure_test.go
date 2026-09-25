@@ -32,20 +32,14 @@ func TestObscureMatchesRclonesOwnVectors(t *testing.T) {
 		{"potato", "aaaaaaaaaaaaaaaa", "YWFhYWFhYWFhYWFhYWFhYXMaGgIlEQ"},
 		{"potato", "bbbbbbbbbbbbbbbb", "YmJiYmJiYmJiYmJiYmJiYp3gcEWbAw"},
 	} {
-		got, err := obscure(c.plain, []byte(c.iv))
-		if err != nil || got != c.want {
-			t.Errorf("obscure(%q) = %q, %v; want %q", c.plain, got, err, c.want)
+		if got := obscure(c.plain, []byte(c.iv)); got != c.want {
+			t.Errorf("obscure(%q) = %q, want %q", c.plain, got, c.want)
 		}
 	}
 }
 
 func TestObscureGivesOnePasswordOneForm(t *testing.T) {
-	a, err := Obscure("app-pass")
-	if err != nil {
-		t.Fatal(err)
-	}
-	b, _ := Obscure("app-pass")
-	c, _ := Obscure("other-pass")
+	a, b, c := Obscure("app-pass"), Obscure("app-pass"), Obscure("other-pass")
 	if a != b {
 		t.Fatalf("one password rendered twice as %q and %q", a, b)
 	}
@@ -62,11 +56,7 @@ func TestRcloneRevealsWhatObscureWrote(t *testing.T) {
 	if err != nil {
 		t.Skip("no rclone")
 	}
-	obscured, err := Obscure("app pass with spaces")
-	if err != nil {
-		t.Fatal(err)
-	}
-	out, err := exec.Command(bin, "reveal", obscured).Output() //nolint:gosec // G204: the binary comes from LookPath and the argument from Obscure
+	out, err := exec.Command(bin, "reveal", Obscure("app pass with spaces")).Output() //nolint:gosec // G204: the binary comes from LookPath and the argument from Obscure
 	if err != nil {
 		t.Fatal(err)
 	}
