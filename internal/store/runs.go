@@ -291,6 +291,39 @@ func (r *Repo) LastSuccessfulConfigBackup() (time.Time, error) {
 	return scanLastBackupTime(row, "LastSuccessfulConfigBackup")
 }
 
+// DomainPathBackedUp reports whether a backup ever succeeded into a domain's
+// own path: one of an item without a repository of its own, or of flash or
+// config, which have no other place. An item cannot change its repository
+// once it has backups, so its repo column says where its runs went.
+func (r *Repo) DomainPathBackedUp(domain string) (bool, error) {
+	var q string
+	var args []any
+	switch domain {
+	case "containers":
+		q = `SELECT EXISTS (SELECT 1 FROM runs r JOIN targets t ON t.id = r.target_id
+			WHERE r.kind = 'backup' AND r.status = 'success' AND t.repo = '')`
+	case "vms":
+		q = `SELECT EXISTS (SELECT 1 FROM runs r JOIN vms v ON v.id = r.target_id
+			WHERE r.kind = 'backup' AND r.status = 'success' AND v.repo = '')`
+	case "files":
+		q = `SELECT EXISTS (SELECT 1 FROM runs r JOIN file_sets f ON f.id = r.target_id
+			WHERE r.kind = 'backup' AND r.status = 'success' AND f.repo = '')`
+	case "flash", "config":
+		q = `SELECT EXISTS (SELECT 1 FROM runs WHERE kind = 'backup' AND status = 'success' AND target_id = ?)`
+		args = []any{FlashTargetID}
+		if domain == "config" {
+			args = []any{ConfigTargetID}
+		}
+	default:
+		return false, fmt.Errorf("DomainPathBackedUp: unknown domain %q", domain)
+	}
+	var backed bool
+	if err := r.db.QueryRow(q, args...).Scan(&backed); err != nil {
+		return false, fmt.Errorf("DomainPathBackedUp: %w", err)
+	}
+	return backed, nil
+}
+
 // EverythingTargetID is the reserved runs.target_id for the singleton
 // "Backup Everything" pass, which runs every domain in sequence.
 const EverythingTargetID = "everything"
