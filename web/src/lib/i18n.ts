@@ -453,10 +453,9 @@ export const en = {
   "settings.notLoadedNoSave": "The current configuration could not be loaded, so nothing is saved. Reload the page and try again.",
 
   // Retention
-  // Merged card (GlimStone follow-up round, Paths & Storage tab rework, merge
-  // A) — image cleanup, Unraid's own update-status reconciliation, and
-  // private registry credentials all sit under one roof: everything the
-  // post-backup container update pull touches.
+  // One card for everything the post-backup container update touches: image
+  // cleanup, Unraid's own update-status reconciliation and private registry
+  // credentials.
   "settings.imageMaintenanceTitle": "Image Cleanup & Update Status",
   "settings.imageMaintenanceHint": "Housekeeping for the post-backup container update: prune the superseded image and refresh Unraid's own cached update status.",
   "settings.pruneImageAfterUpdate": "Remove the old image after an update",
@@ -1201,10 +1200,9 @@ export const en = {
   "flash.backingUp": "Backing up…",
   "flash.download": "Download (.zip)",
   "flash.restoreNote": "Restore downloads a ZIP of the snapshot. The running /boot is never touched. Drop the .zip straight into the Unraid USB creator, or unzip it onto a fresh USB to rebuild your flash.",
-  // Merged card (GlimStone follow-up round, Paths & Storage tab rework, merge
-  // B) — the flash zip export, plain-export encryption, and the restic
-  // repositories' own encryption all sit under one roof: how backup exports
-  // and repositories are protected.
+  // One card for how backup exports and repositories are protected: the flash
+  // zip export, plain-export encryption and the restic repositories' own
+  // encryption.
   "settings.exportsEncryptionTitle": "Export & Repository Encryption",
   "settings.exportsEncryptionHint": "Controls for encrypting plain export artifacts and the restic repositories' own encryption.",
   // Scheduled flash zip export (#28): a plain .zip written to a folder after each flash backup.
@@ -1221,19 +1219,10 @@ export const en = {
   "flash.zipExport.latestNote": "A single flash-latest.zip is overwritten after every backup.",
   "flash.zipExport.plaintextWarn": "The exported .zip is not encrypted, even if your flash repository is. Only sync it somewhere you trust.",
   "flash.zipExport.pathRequired": "Choose an export folder to turn this on.",
-  // GlimStone follow-up round, Paths & Storage tab rework, merge B: "(age)"
-  // dropped from the visible title — design-language.md's own "explanations
-  // live in a bubble" rule, same as every other Card title in this file. What
-  // age IS moved to export.encrypt.ageInfo below, an InfoBubble on the
-  // merged card's sub-heading, so the information wasn't lost, just relocated.
-  //   `export.encrypt.title` itself ("Encrypt plain exports"/"Plain-Exporte
-  // verschlüsseln") is RETIRED (jdp, live-review, GlimStone follow-up round:
-  // "Export und Verschlüsselung: Texte normal formatieren, es sind keine
-  // Überschriften mehr") — the standalone <h3> it used to head is gone;
-  // ToggleRow's own `export.encrypt.enable` label is now this sub-section's
-  // only visible caption (Settings.tsx's own comment on that ToggleRow has
-  // the full writeup), so a second, now-unused heading string would just be
-  // dead weight.
+  // What age is sits in export.encrypt.ageInfo, a bubble on the card's
+  // sub-heading, since card titles carry no explanations. The sub-section has
+  // no heading of its own: the export.encrypt.enable toggle's label is its
+  // caption.
   "export.encrypt.hint": "The restic repositories are already encrypted. This optionally seals the plain export artifacts (container and VM tar.gz plus their xml sidecars, and the flash zip) with age, so they are safe to store or move off the box.",
   "export.encrypt.ageInfo": "age (age-encryption.org) is a small, modern file-encryption tool, a simpler alternative to GPG for sealing a file to one or more recipients.",
   "export.encrypt.enable": "Encrypt exports with age",

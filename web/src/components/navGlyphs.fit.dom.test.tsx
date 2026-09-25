@@ -16,7 +16,6 @@ import {
   IconCopy,
   IconLocal,
   IconTabIntegrity,
-  IconTabOffsite,
   IconTabStorage,
 } from "./navGlyphs";
 import { IconSave } from "./glyphs";
@@ -68,10 +67,6 @@ it.each(GLYPHS)("crops %s to a box recomputed from its measured ink", (name, ui)
 it.each(GLYPHS)("gives %s a square box, so its aspect ratio survives", (name, ui) => {
   const [, , w, h] = viewBoxOf(ui);
   expect(w, `${name} is not square`).toBeCloseTo(h, 5);
-});
-
-it("emits the same cloud for the off-site tab and the off-site control", () => {
-  expect(viewBoxOf(<IconTabOffsite />)).toEqual(viewBoxOf(<IconCloud />));
 });
 
 it("centres each crop on the ink, so nothing sits off to one side", () => {
