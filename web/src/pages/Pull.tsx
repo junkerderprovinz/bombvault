@@ -24,13 +24,16 @@ import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
 import { RevealInput } from "../components/RevealInput";
 import { SelectField } from "../components/SelectField";
+import { PlaceMark } from "../components/placeMarks";
 import { useReveal } from "../lib/useReveal";
 import { useCloudCredSets } from "../lib/useCloudCredSets";
+import { usePlaces } from "../lib/usePlaces";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
 import { WindowActions } from "../components/WindowActions";
 import { ToggleRow } from "./settings/shared";
+import { CloudCredSetsCard } from "./pull/CloudCredSetsCard";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -212,6 +215,7 @@ export function PullDialog({
   // one the refusal misleadingly names the APP_KEY.
   const [credsRef, setCredsRef] = useState(initial?.credsRef ?? "");
   const credSets = useCloudCredSets();
+  const places = usePlaces();
   const [limitDownload, setLimitDownload] = useState(initial?.limitDownload ?? 0);
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
@@ -339,7 +343,10 @@ export function PullDialog({
                   // Unlike on an off-site target, "" is not the shared default: a
                   // pull never falls back to this box's credentials.
                   { value: "", label: t("pull.credsNone") },
-                  ...credSets.map((c) => ({ value: c.id, label: c.name })),
+                  ...credSets.map((c) => {
+                    const owner = places.find((p) => p.credsRef === c.id);
+                    return { value: c.id, label: owner?.name ?? c.name, glyph: owner ? <PlaceMark provider={owner.provider} /> : undefined };
+                  }),
                 ]}
                 className={inputCls}
               />
@@ -500,6 +507,9 @@ export function Pull({ embedded = false }: { embedded?: boolean } = {}) {
           ))}
         </div>
       )}
+
+      {/* The next hue after the source cards, which take 0 to n-1, or after the empty card's 0. */}
+      <CloudCredSetsCard t={t} hueIndex={Math.max(sources.length, 1)} />
 
       {dialog !== null && (
         <PullDialog

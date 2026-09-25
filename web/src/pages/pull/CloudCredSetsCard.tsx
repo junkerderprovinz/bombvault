@@ -1,4 +1,6 @@
 import { Button } from "../../components/Button";
+import { InfoBubble } from "../../components/InfoBubble";
+import { PlaceMark } from "../../components/placeMarks";
 import { SelectField } from "../../components/SelectField";
 import { STORAGE_CLASSES } from "../../lib/storageClasses";
 import { RevealInput } from "../../components/RevealInput";
@@ -7,9 +9,10 @@ import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import { pushSaveWarnings } from "../../lib/placementCodes";
 import { credSetsChanged, useCloudCredSets } from "../../lib/useCloudCredSets";
+import { usePlaces } from "../../lib/usePlaces";
 import { useReveal } from "../../lib/useReveal";
 import { randomId } from "../../lib/uuid";
-import { Card, type SaveState } from "./shared";
+import { Card, type SaveState } from "../settings/shared";
 import { useState } from "react";
 
 // toDraft blanks the secrets of a stored set. The backend keeps a stored
@@ -19,20 +22,22 @@ function toDraft(s: CloudCredSetInfo): CloudCredSet {
   return { id: s.id, name: s.name, s3KeyId: s.s3KeyId, s3Secret: "", s3Region: s.s3Region, restUser: s.restUser, restPassword: "", s3StorageClass: s.s3StorageClass };
 }
 
-// CloudCredSetsCard manages additional named credential sets, so an off-site
-// target can use its own S3 or REST credentials instead of the shared set from
-// CloudCard, for example two S3 endpoints that need different keys. The list
-// is saved as a whole, which is why every save resends every set.
+// CloudCredSetsCard manages the named credential sets pull sources log in
+// with. A set that belongs to a storage place is listed under the place's name
+// and changed in the place's details, which test it against the place's
+// repositories first. The list is saved as a whole, which is why every save
+// resends every set.
 //
-// Unlike the rest of the settings page the editor has a Save button: it holds
-// a draft that Close discards, and saving on every keystroke would list a
-// half-filled set as soon as the first letter of its name was typed.
+// Unlike the settings cards the editor has a Save button: it holds a draft
+// that Close discards, and saving on every keystroke would list a half-filled
+// set as soon as the first letter of its name was typed.
 export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { push } = useToast();
-  // Shared with every off-site target's credential picker. This card is the
-  // only editor, so it announces changes and reads them back through the same
-  // hook, which keeps its rows and the pickers in agreement.
+  // Shared with the pull source window's picker. This card is the only editor,
+  // so it announces changes and reads them back through the same hook, which
+  // keeps its rows and the picker in agreement.
   const sets = useCloudCredSets();
+  const places = usePlaces();
   const [editing, setEditing] = useState<CloudCredSet | null>(null);
   const [state, setState] = useState<SaveState>("idle");
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
@@ -43,6 +48,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
   function bumpShake(key: string) {
     setShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
   }
+  const ownerOf = (s: CloudCredSetInfo) => places.find((p) => p.credsRef === s.id);
   const revealS3Secret = useReveal();
   const revealRestPassword = useReveal();
 
@@ -119,7 +125,19 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
         <span className="text-xs text-carbon-textMuted">{t("cloud.credSets.none")}</span>
       )}
 
-      {sets.map((s) => (
+      {sets.map((s) => {
+        const owner = ownerOf(s);
+        if (!owner) return null;
+        return (
+          <div key={s.id} className="flex items-center gap-1.5 rounded-card bg-carbon-surface2 p-3 text-sm text-carbon-text">
+            <PlaceMark provider={owner.provider} />
+            <span className="truncate">{owner.name}</span>
+            <InfoBubble tip={t("cloud.credSets.placeOwned")} />
+          </div>
+        );
+      })}
+
+      {sets.filter((s) => !ownerOf(s)).map((s) => (
         <div key={s.id} className="flex items-start justify-between gap-3 rounded-card bg-carbon-surface2 p-3">
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{s.name}</span>
