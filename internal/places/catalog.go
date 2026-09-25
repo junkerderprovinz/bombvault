@@ -350,3 +350,61 @@ func CredsFromFields(p Provider, fields map[string]string) Creds {
 	}
 	return Creds{}
 }
+
+// s3Hosts names the provider behind an S3 endpoint by its domain.
+var s3Hosts = []struct{ domain, id string }{
+	{"backblazeb2.com", "b2"},
+	{"r2.cloudflarestorage.com", "r2"},
+	{"wasabisys.com", "wasabi"},
+	{"your-objectstorage.com", "hetzner-os"},
+	{"amazonaws.com", "s3"},
+	{"storjshare.io", "storj"},
+	{"scw.cloud", "scaleway"},
+	{"cloud.ovh.net", "ovh"},
+	{"digitaloceanspaces.com", "digitalocean"},
+	{"ionoscloud.com", "ionos"},
+	{"contabostorage.com", "contabo"},
+	{"exo.io", "exoscale"},
+	{"vultrobjects.com", "vultr"},
+	{"storage.googleapis.com", "gcs"},
+}
+
+// DetectProvider names the provider an existing address most likely belongs
+// to, for the places the migration builds from existing rows. A wrong guess
+// changes the mark and the form, never the address.
+func DetectProvider(repo string) string {
+	repo = strings.TrimSpace(repo)
+	scheme, rest, remote := strings.Cut(repo, ":")
+	if !remote || strings.Contains(scheme, "/") {
+		if p := strings.TrimPrefix(repo, "/"); p == "remotes" || strings.HasPrefix(p, "remotes/") {
+			return "share"
+		}
+		return "unraid-folder"
+	}
+	switch scheme {
+	case "rest":
+		return "rest-server"
+	case "sftp":
+		if strings.Contains(rest, ".your-storagebox.de") {
+			return "storagebox"
+		}
+		return "sftp"
+	case "rclone":
+		return "rclone"
+	case "azure":
+		return "azure"
+	case "s3":
+		host, _, _ := strings.Cut(strings.TrimPrefix(strings.TrimPrefix(rest, "https://"), "http://"), "/")
+		host = strings.ToLower(host)
+		// IDrive e2 endpoints carry the region in the domain itself.
+		if strings.Contains(host, ".idrivee2") {
+			return "idrive"
+		}
+		for _, h := range s3Hosts {
+			if host == h.domain || strings.HasSuffix(host, "."+h.domain) {
+				return h.id
+			}
+		}
+	}
+	return "s3-other"
+}
