@@ -350,6 +350,11 @@ type Service struct {
 	// is known yet. Same guard, same lifetime.
 	backupRuns map[string]string
 
+	// committedBackups marks the keys whose backup has written its restore
+	// point (commitBackup), which CancelBackupRun then refuses. Same guard,
+	// same lifetime.
+	committedBackups map[string]bool
+
 	// shuttingDown is set once, by BeginShutdown, and never cleared: the process
 	// is on its way out. runsAdapter.Finish reads it to tell a run we ABORTED
 	// from a run that FAILED, which is the difference between a red row nobody
@@ -5509,6 +5514,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		DBDump:       dumpPlan,
 		DBDumper:     dumper,
 		OnDBDumpDone: func(o backup.DBDumpOutcome) { dumpOutcome = o },
+		Committed:    func() { s.commitBackup(pkey) },
 	})
 	s.progEnd(pkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "container", name, "container:"+name, err == nil, sum, err)

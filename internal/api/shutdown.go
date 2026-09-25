@@ -43,7 +43,31 @@ func (s *Service) unregisterBackupCancel(key string) {
 	delete(s.backupCancels, key)
 	delete(s.backupRuns, key)
 	delete(s.cancelledBackups, key)
+	delete(s.committedBackups, key)
 	s.cancelMu.Unlock()
+}
+
+// commitBackup marks the backup under key as past the point a cancel could
+// undo: its restore point is written and only the restart is left. The user
+// can no longer cancel it; shutdown still reaches it.
+func (s *Service) commitBackup(key string) {
+	s.cancelMu.Lock()
+	if s.committedBackups == nil {
+		s.committedBackups = map[string]bool{}
+	}
+	s.committedBackups[key] = true
+	s.cancelMu.Unlock()
+}
+
+// BackupCommitted reports whether the backup under key has written its
+// restore point, and with a runID, whether that backup writes that run.
+func (s *Service) BackupCommitted(key, runID string) bool {
+	s.cancelMu.Lock()
+	defer s.cancelMu.Unlock()
+	if runID != "" && s.backupRuns[key] != runID {
+		return false
+	}
+	return s.committedBackups[key]
 }
 
 // CancelBackupRun cancels the in-flight backup under a progress key and reports
@@ -58,10 +82,13 @@ func (s *Service) unregisterBackupCancel(key string) {
 // run, checked under the same lock as the cancel itself, so a caller that
 // looked the run up a moment earlier cannot reach the next backup of the item.
 // The web interface's button passes none: it means whatever runs there now.
+//
+// A committed backup is refused: its restore point is written, and a cancel
+// could only claim to stop it.
 func (s *Service) CancelBackupRun(key, runID string) bool {
 	s.cancelMu.Lock()
 	cancel, ok := s.backupCancels[key]
-	if runID != "" && s.backupRuns[key] != runID {
+	if (runID != "" && s.backupRuns[key] != runID) || s.committedBackups[key] {
 		ok = false
 	}
 	if ok {

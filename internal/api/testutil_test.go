@@ -75,7 +75,10 @@ type fakeServiceDocker struct {
 	execErr    error
 	execFed    string // what ExecStdin was fed
 
-	started      bool
+	started bool
+	// onStart runs inside Start, e.g. to cancel a backup while it starts the
+	// containers again.
+	onStart      func(name string)
 	createdIn    model.Inspect
 	createdStart bool
 	calls        []string
@@ -107,6 +110,9 @@ func (f *fakeServiceDocker) Stop(_ context.Context, name string, _ time.Duration
 func (f *fakeServiceDocker) Start(_ context.Context, name string) error {
 	f.calls = append(f.calls, "start:"+name)
 	f.started = true
+	if f.onStart != nil {
+		f.onStart(name)
+	}
 	return f.startErr
 }
 

@@ -2306,6 +2306,46 @@ func drainTwoEvents(t *testing.T, ch <-chan progress.Event) (begin, term progres
 // TestBackupRefusesSelf pins the forum fix: BombVault must never back up its own
 // container (stopping it mid-backup is suicide). With the self-container known,
 // Backup returns ErrSelfBackup and never touches Docker's lifecycle.
+func TestBackupCannotBeCancelledWhileItStartsTheContainerAgain(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(root+"/appdata/plex", 0o750); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/plex", Image: "plex:latest", Running: true}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	var accepted []bool
+	d.onStart = func(string) { accepted = append(accepted, svc.CancelBackupRun("container:plex", "")) }
+
+	sum, err := svc.Backup(context.Background(), "plex")
+	if err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	if len(accepted) == 0 {
+		t.Fatal("the container was never started again")
+	}
+	for _, ok := range accepted {
+		if ok {
+			t.Fatal("a cancel was accepted after the restore point was written")
+		}
+	}
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 1 || runs[0].Status != "success" || runs[0].SnapshotID != sum.SnapshotID {
+		t.Fatalf("runs = %+v, want the one backup recorded as the success it is", runs)
+	}
+}
+
 func TestBackupRefusesSelf(t *testing.T) {
 	t.Setenv("BOMBVAULT_SELF_CONTAINER", "BombVault")
 	svc, d, eng, _ := backupTestService(t)

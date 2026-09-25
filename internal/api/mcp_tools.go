@@ -214,6 +214,7 @@ func (h *Handler) mcpToolDefs() []mcpToolDef {
 				"Cancels a running backup that this key started, named by the run id list_runs and get_activity report. "+
 					"Backups the schedule or the web interface started cannot be cancelled here. "+
 					"A cancelled backup leaves no half-written restore point behind, and the containers it stopped are started again. "+
+					"Once a backup has written its restore point and only starts its containers again, it can no longer be cancelled, and the answer says cancelled false. "+
 					"One item of a domain backup can be cancelled on its own; the rest of the domain goes on.",
 				objectSchema(map[string]any{
 					"runId": strProp("The id of the running backup to cancel."),

@@ -55,6 +55,38 @@ func TestCancelBackupRunIsIdempotentOnAnUnknownKey(t *testing.T) {
 	}
 }
 
+func TestCancelBackupRunRefusesABackupThatWroteItsRestorePoint(t *testing.T) {
+	s := &Service{}
+	cancelled := false
+	s.registerBackupCancel("container:plex", func() {
+		cancelled = true
+		s.unregisterBackupCancel("container:plex")
+	})
+	s.bindBackupRun("container:plex", "run-1")
+	s.commitBackup("container:plex")
+
+	if s.CancelBackupRun("container:plex", "run-1") || s.CancelBackupRun("container:plex", "") {
+		t.Fatal("a backup that wrote its restore point was reported as cancelled")
+	}
+	if cancelled || s.backupWasCancelled("container:plex") {
+		t.Fatal("the cancel reached a backup that only starts its containers again")
+	}
+	if !s.BackupCommitted("container:plex", "run-1") {
+		t.Fatal("the committed run does not say so")
+	}
+	if s.BackupCommitted("container:plex", "run-0") {
+		t.Fatal("another run of the same item reads as committed")
+	}
+
+	s.BeginShutdown()
+	if !cancelled {
+		t.Fatal("shutdown has to reach a committed backup too")
+	}
+	if s.BackupCommitted("container:plex", "") {
+		t.Fatal("the commit outlived the run it belonged to")
+	}
+}
+
 func TestUnregisterClearsTheCancellationMark(t *testing.T) {
 	// Otherwise the next backup under the same key would report its own
 	// failure as a cancellation.

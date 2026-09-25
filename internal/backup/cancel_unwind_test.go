@@ -54,6 +54,55 @@ func TestCancelledContainerBackupStillRestartsTargetAndDependencies(t *testing.T
 	}
 }
 
+// Once restic has written the snapshot the backup is kept, so the service has
+// to learn that before the restart begins: a cancel in the restart could only
+// claim to stop a backup that is already done.
+func TestContainerBackupCommitsBetweenTheSnapshotAndTheRestart(t *testing.T) {
+	for _, c := range []struct {
+		name      string
+		backupErr error
+		want      int
+	}{
+		{"snapshot written", nil, 1},
+		{"restic failed", errors.New("restic: repository locked"), 0},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			d := &fakeDocker{}
+			r := &fakeRestic{backupErr: c.backupErr, summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+			commits := 0
+			var dockerAtCommit []string
+
+			_, _ = backup.BackupContainer(t.Context(), backup.BackupDeps{
+				ContainerRef:   "nextcloud",
+				ContainerName:  "Nextcloud",
+				RepoPath:       "/repo",
+				AppdataPaths:   []string{"/host/user/appdata/nextcloud"},
+				TargetID:       "target-1",
+				WasRunning:     true,
+				StopContainers: []backup.StopContainer{{Name: "mariadb", WasRunning: true}},
+				Docker:         d,
+				Restic:         r,
+				Templates:      &fakeTemplates{},
+				Runs:           &fakeRuns{},
+				Committed: func() {
+					commits++
+					dockerAtCommit = append([]string(nil), d.log...)
+				},
+			})
+
+			if commits != c.want {
+				t.Fatalf("committed %d times, want %d", commits, c.want)
+			}
+			if c.want == 0 {
+				return
+			}
+			if !contains(dockerAtCommit, "stop:mariadb") || contains(dockerAtCommit, "start:nextcloud") || contains(dockerAtCommit, "start:mariadb") {
+				t.Fatalf("docker log at the commit = %v, want everything stopped and nothing started yet", dockerAtCommit)
+			}
+		})
+	}
+}
+
 // Docker finishes a stop the client gave up on. A cancel that lands while the
 // container is stopping must not start it again before it is down, or the
 // daemon stops it for good right after the restart.

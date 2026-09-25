@@ -386,16 +386,21 @@ func (h *Handler) toolCancelBackup(ctx context.Context, req *mcp.CallToolRequest
 		h.logMCPRunCall(ctx, tool, "not_found", run.ID)
 		return mcpToolError("not_found", "the item this run belongs to is not set up in BombVault any more", nil), nil
 	}
-	if !h.svc.CancelBackupRun(key, run.ID) {
-		h.logMCPRunCall(ctx, tool, "not_running", run.ID)
-		return mcpToolError("not_running", mcpNotRunningMessage, nil), nil
-	}
-
 	out := map[string]any{
 		"cancelled": true,
 		"runId":     run.ID,
 		"domain":    item.Domain,
 		"item":      mcpStartItem{ID: item.ID, Name: item.Name},
+	}
+	if !h.svc.CancelBackupRun(key, run.ID) {
+		if h.svc.BackupCommitted(key, run.ID) {
+			out["cancelled"] = false
+			out["warning"] = "this backup already wrote its restore point and is starting its containers again, so a cancel cannot take it back"
+			h.logMCPRunCall(ctx, tool, "ok", run.ID)
+			return mcpOK(out), nil
+		}
+		h.logMCPRunCall(ctx, tool, "not_running", run.ID)
+		return mcpToolError("not_running", mcpNotRunningMessage, nil), nil
 	}
 	// restic writes the snapshot last, so a backup that was nearly done can
 	// finish before the cancellation reaches it.

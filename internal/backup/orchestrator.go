@@ -244,6 +244,10 @@ type BackupDeps struct {
 	// OnDBDumpDone hands the dump's recorded outcome to the caller, which sends
 	// the notification once the backup's own result is known.
 	OnDBDumpDone func(DBDumpOutcome)
+	// Committed is called once the backup has written what it keeps, before the
+	// containers are started again. A cancel from there on could not undo the
+	// backup, so the caller stops offering one.
+	Committed func()
 	// StopContainers are OTHER containers to stop for the duration of this
 	// backup (e.g. a database) and restart afterwards. Each carries its own
 	// WasRunning: a dependency that was already stopped is left untouched
@@ -597,6 +601,9 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 					return
 				}
 			}
+		}
+		if d.Committed != nil {
+			d.Committed()
 		}
 	}()
 

@@ -672,6 +672,43 @@ func TestMCPCancelReportsARunThatEndedFirst(t *testing.T) {
 	}
 }
 
+// Once the restore point is written only the restart is left, and a cancel
+// cannot take the backup back. The answer has to say so.
+func TestMCPCancelRefusesABackupThatWroteItsRestorePoint(t *testing.T) {
+	h, repo, _ := newMCPStartHandler(t)
+	target, err := repo.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	runID, err := repo.StartRunWith(target.ID, "backup", store.RunMeta{StartedVia: "mcp", StartedViaKey: "0b7e"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cancelled := false
+	h.svc.registerBackupCancel("container:plex", func() { cancelled = true })
+	h.svc.bindBackupRun("container:plex", runID)
+	h.svc.commitBackup("container:plex")
+
+	req := &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
+		Name:      "cancel_backup",
+		Arguments: json.RawMessage(fmt.Sprintf(`{"runId":%q}`, runID)),
+	}}
+	res, _ := h.toolCancelBackup(mcpStartCaller("0b7e", true), req)
+	if res.IsError {
+		t.Fatalf("cancel_backup: %v", res.StructuredContent)
+	}
+	if cancelled {
+		t.Fatal("the cancel reached a backup that only starts its containers again")
+	}
+	out, _ := res.StructuredContent.(map[string]any)
+	if out["cancelled"] != false {
+		t.Fatalf("the answer claims %v, want cancelled false", out["cancelled"])
+	}
+	if w, _ := out["warning"].(string); !strings.Contains(w, "restore point") {
+		t.Fatalf("the warning does not say the restore point is written: %v", out)
+	}
+}
+
 // seedBackup writes a finished backup of an item, which is the history the
 // cooldown and the retention guard read. An empty origin is a backup the
 // schedule or the operator made.
