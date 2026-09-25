@@ -453,8 +453,3 @@ export function PlaceMark({ provider, size = 16, onFill = false }: { provider: s
     </svg>
   );
 }
-
-/** placeMark is PlaceMark as a value, for a glyph slot such as SelectField's. */
-export function placeMark(provider: string, size?: number, onFill?: boolean): ReactNode {
-  return <PlaceMark provider={provider} size={size} onFill={onFill} />;
-}
