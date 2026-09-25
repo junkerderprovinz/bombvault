@@ -1,8 +1,8 @@
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { PlaceMark } from "../placeMarks";
-import { PlaceDetails } from "./PlaceDetails";
+import { PlaceDetails, type PlaceDetailsHandle } from "./PlaceDetails";
 import { hueVars } from "../../lib/appearance";
 import { useT } from "../../lib/i18n";
 import { domainNames, kindName, placeErrorText, probeFailureText, providerName } from "../../lib/placeText";
@@ -32,6 +32,7 @@ export function PlaceRow({
   const [testing, setTesting] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [shake, setShake] = useState({ test: 0, remove: 0 });
+  const details = useRef<PlaceDetailsHandle>(null);
 
   const usage = [
     place.usage.homeDomains.length > 0 && t("places.row.stores").replace("{domains}", domainNames(t, lang, place.usage.homeDomains)),
@@ -47,6 +48,12 @@ export function PlaceRow({
         ? t(last.ok ? "places.row.testedOk" : "places.row.testedFail")
         : t(last.ok ? "places.row.runOk" : "places.row.runFail")
       ).replace("{when}", relativeTime(t, last.at));
+
+  // A question about what was just typed needs the details on screen.
+  async function closeDetails() {
+    await details.current?.flush();
+    setOpen(false);
+  }
 
   async function test() {
     setTesting(true);
@@ -114,7 +121,7 @@ export function PlaceRow({
             label={t(open ? "places.row.closeDetails" : "places.row.showDetails")}
             labelKey={open ? "places.row.closeDetails" : "places.row.showDetails"}
             tone="neutral"
-            onClick={() => setOpen((v) => !v)}
+            onClick={() => (open ? void closeDetails() : setOpen(true))}
           />
           <Button
             key={`test-${shake.test}`}
@@ -139,7 +146,14 @@ export function PlaceRow({
         </div>
       </div>
       {open && (
-        <PlaceDetails place={place} provider={provider} hueIndex={hueIndex} hostMountRoot={hostMountRoot} onSaved={onSaved} />
+        <PlaceDetails
+          ref={details}
+          place={place}
+          provider={provider}
+          hueIndex={hueIndex}
+          hostMountRoot={hostMountRoot}
+          onSaved={onSaved}
+        />
       )}
     </div>
   );

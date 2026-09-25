@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from "react";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
@@ -30,9 +30,29 @@ import { useReveal } from "../../lib/useReveal";
 
 // A place's details save themselves: a switch or a choice at once, rolled back
 // with a shake when the server refuses, a typed field 800 ms after the last
-// key. A field that is still waiting when the details close is saved then.
+// key. A field still waiting when the details close is saved first, and a
+// lower retention asks its question before they go.
 
 const DEBOUNCE_MS = 800;
+
+type Waiting = Map<string, { timer: ReturnType<typeof setTimeout>; run: () => void | Promise<void> }>;
+
+/** runWaiting saves every field still waiting for its timer. It resolves once
+ *  each save is past the question it may ask. */
+function runWaiting(waiting: Waiting): Promise<unknown> {
+  const runs = [...waiting.values()].map(({ timer, run }) => {
+    clearTimeout(timer);
+    return run();
+  });
+  waiting.clear();
+  return Promise.all(runs);
+}
+
+export interface PlaceDetailsHandle {
+  /** flush saves what is still being typed. The details stay open until it
+   *  resolves, since a lower retention asks before it is saved. */
+  flush: () => Promise<void>;
+}
 
 /** The credential fields a kind stores in its set; the others go by the address. */
 const CRED_KEYS: Partial<Record<Place["kind"], string[]>> = {
@@ -107,6 +127,7 @@ export function PlaceDetails({
   hueIndex,
   hostMountRoot,
   onSaved,
+  ref,
 }: {
   place: Place;
   /** The catalog entry, for the field labels, the folder roots and whether to ask where it stands. */
@@ -114,6 +135,7 @@ export function PlaceDetails({
   hueIndex?: number;
   hostMountRoot: string;
   onSaved: (place: Place) => void;
+  ref?: Ref<PlaceDetailsHandle>;
 }) {
   const { t, lang } = useT();
   const { push } = useToast();
@@ -123,7 +145,7 @@ export function PlaceDetails({
   const [shake, setShake] = useState<Record<string, number>>({});
   const [verdicts, setVerdicts] = useState<Verdict[] | null>(null);
   const [testing, setTesting] = useState(false);
-  const timers = useRef(new Map<string, { timer: ReturnType<typeof setTimeout>; run: () => void }>());
+  const timers = useRef<Waiting>(new Map());
 
   // A saved answer replaces the draft, except for the fields still waiting to
   // be saved, which keep what is being typed.
@@ -136,15 +158,15 @@ export function PlaceDetails({
     });
   }, [place]);
 
+  useImperativeHandle(ref, () => ({
+    flush: async () => {
+      await runWaiting(timers.current);
+    },
+  }));
+
   useEffect(() => {
-    const pending = timers.current;
-    return () => {
-      for (const { timer, run } of pending.values()) {
-        clearTimeout(timer);
-        run();
-      }
-      pending.clear();
-    };
+    const waiting = timers.current;
+    return () => void runWaiting(waiting);
   }, []);
 
   const bump = (key: string) => setShake((s) => ({ ...s, [key]: (s[key] ?? 0) + 1 }));
@@ -168,7 +190,7 @@ export function PlaceDetails({
     return false;
   }
 
-  function later(key: string, run: () => void) {
+  function later(key: string, run: () => void | Promise<void>) {
     const waiting = timers.current.get(key);
     if (waiting) clearTimeout(waiting.timer);
     const timer = setTimeout(() => {
@@ -238,16 +260,18 @@ export function PlaceDetails({
   function editAccess(key: string, value: string) {
     const next = { ...access, [key]: value };
     setAccess(next);
-    later("access", async () => {
+    // Closing waits for this run, so it hands the probe's answer to a callback
+    // rather than holding the details open for it.
+    later("access", () => {
       const fields: Record<string, string> = {};
       for (const k of credKeys) {
         const v = next[k] ?? "";
         if (secretKeys.has(k) ? v !== "" : v !== (place.creds.fields[k] ?? "")) fields[k] = v;
       }
       if (Object.keys(fields).length === 0) return;
-      if (await save({ fields }, "access")) {
-        setAccess((a) => Object.fromEntries(Object.entries(a).filter(([k]) => !secretKeys.has(k))));
-      }
+      void save({ fields }, "access").then((saved) => {
+        if (saved) setAccess((a) => Object.fromEntries(Object.entries(a).filter(([k]) => !secretKeys.has(k))));
+      });
     });
   }
 

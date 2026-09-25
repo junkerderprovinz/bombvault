@@ -21,6 +21,10 @@ vi.mock("../../lib/places", async (importOriginal) => {
       calls.push(`delete ${id}`);
       return Promise.resolve(deleteAnswer);
     },
+    patchPlace: (id: string, body: Partial<Place>) => {
+      calls.push(`patch ${id} ${JSON.stringify(body)}`);
+      return Promise.resolve({ ok: true, place: { ...place(), ...body } });
+    },
   };
 });
 
@@ -91,12 +95,37 @@ describe("PlaceRow", () => {
     expect(screen.queryByText(en["places.row.otherSite"])).toBeNull();
   });
 
-  it("folds its details out and in", () => {
+  it("folds its details out and in", async () => {
     row();
     expect(screen.queryByText(en["places.details.retention"])).toBeNull();
     fireEvent.click(button("places.row.showDetails"));
     expect(screen.getByText(en["places.details.retention"])).toBeTruthy();
-    fireEvent.click(button("places.row.closeDetails"));
+    await act(async () => {
+      fireEvent.click(button("places.row.closeDetails"));
+    });
+    expect(screen.queryByText(en["places.details.retention"])).toBeNull();
+  });
+
+  it.each([
+    ["saves it", "common.confirm", ['patch p1 {"retentionKeepDaily":3}']],
+    ["puts it back", "common.cancel", []],
+  ] as const)("asks about lower retention typed just before closing, then %s and closes", async (_, answer, sent) => {
+    row();
+    fireEvent.click(button("places.row.showDetails"));
+    fireEvent.change(screen.getByLabelText(en["places.details.keepDaily"]), { target: { value: "3" } });
+    await act(async () => {
+      fireEvent.click(button("places.row.closeDetails"));
+    });
+    const ask = screen.getByRole("dialog");
+    expect(within(ask).getByText(countText(en["places.details.retentionLowerAsk"], "en", 2))).toBeTruthy();
+    expect(screen.getByText(en["places.details.retention"])).toBeTruthy();
+    expect(calls).toEqual([]);
+
+    await act(async () => {
+      fireEvent.click(within(ask).getByRole("button", { name: en[answer] }));
+    });
+    expect(calls).toEqual(sent);
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.queryByText(en["places.details.retention"])).toBeNull();
   });
 
