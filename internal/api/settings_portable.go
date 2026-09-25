@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -36,6 +37,10 @@ type exportCredentials struct {
 	// Notify is the notification config in cleartext (SMTP password / Matrix token
 	// included).
 	Notify notify.Config `json:"notify"`
+	// CredSets is every named credential set with its secrets. Places and rows
+	// name them by id, so a file without them would leave a restored instance
+	// pointing at sets it does not have.
+	CredSets []CloudCredSet `json:"credSets,omitempty"`
 }
 
 // settingsExport is the portable configuration envelope written by the export
@@ -314,7 +319,11 @@ func (h *Handler) collectCredentials(s store.Settings) (*exportCredentials, erro
 	if err != nil {
 		return nil, fmt.Errorf("read notification config: %w", err)
 	}
-	return &exportCredentials{Cloud: cloud, Rclone: rclone, Notify: notifyConf}, nil
+	sets, err := h.svc.decodeCloudCredSets(s)
+	if err != nil {
+		return nil, fmt.Errorf("read credential sets: %w", err)
+	}
+	return &exportCredentials{Cloud: cloud, Rclone: rclone, Notify: notifyConf, CredSets: sets}, nil
 }
 
 // importSummary is the preview payload: what an apply WOULD change, without writing.
@@ -334,10 +343,11 @@ type importSummary struct {
 // importCredsPresence reports which credential kinds the file carries (never the
 // values). All false when the file has no credentials block.
 type importCredsPresence struct {
-	Present bool `json:"present"`
-	Cloud   bool `json:"cloud"`
-	Rclone  bool `json:"rclone"`
-	Notify  bool `json:"notify"`
+	Present  bool `json:"present"`
+	Cloud    bool `json:"cloud"`
+	Rclone   bool `json:"rclone"`
+	Notify   bool `json:"notify"`
+	CredSets bool `json:"credSets"`
 }
 
 // handleImportSettings validates a settings-export file and, with ?apply=true,
@@ -637,6 +647,11 @@ func validateExport(exp settingsExport, mountRoot string) string {
 			return fmt.Sprintf("repository #%d (%s): %s", i+1, tv.Name, msg)
 		}
 	}
+	if exp.Credentials != nil {
+		if msg := rejectInvalidCredSets(exp.Credentials.CredSets); msg != "" {
+			return msg
+		}
+	}
 	// Every schedule cadence in the imported settings must parse (same grammar the
 	// settings save enforces), so an apply cannot install an un-runnable schedule.
 	for _, cad := range exportCadences(exp.Settings) {
@@ -706,10 +721,11 @@ func credsPresence(c *exportCredentials) importCredsPresence {
 		return importCredsPresence{}
 	}
 	return importCredsPresence{
-		Present: true,
-		Cloud:   cloudCredsMeaningful(c.Cloud),
-		Rclone:  strings.TrimSpace(c.Rclone) != "",
-		Notify:  notifyMeaningful(c.Notify),
+		Present:  true,
+		Cloud:    cloudCredsMeaningful(c.Cloud),
+		Rclone:   strings.TrimSpace(c.Rclone) != "",
+		Notify:   notifyMeaningful(c.Notify),
+		CredSets: len(c.CredSets) > 0,
 	}
 }
 
@@ -1085,7 +1101,54 @@ func (h *Handler) applyImportedCredentials(c exportCredentials) error {
 			return fmt.Errorf("store notification config: %w", err)
 		}
 	}
+	if len(c.CredSets) > 0 {
+		if err := h.svc.importCredSets(c.CredSets); err != nil {
+			return fmt.Errorf("store credential sets: %w", err)
+		}
+	}
 	return nil
+}
+
+// importCredSets adds the file's credential sets to the stored ones, a set
+// with a stored id taking its place the way a save of that set would. Sets the
+// file does not carry stay: pull sources name sets a settings file knows
+// nothing about.
+func (s *Service) importCredSets(sets []CloudCredSet) error {
+	return s.editCloudCredSets(func(stored []CloudCredSet) []CloudCredSet {
+		for _, in := range sets {
+			in.Name = strings.TrimSpace(in.Name)
+			in.S3StorageClass = strings.ToUpper(strings.TrimSpace(in.S3StorageClass))
+			i := slices.IndexFunc(stored, func(c CloudCredSet) bool { return c.ID == in.ID })
+			if i < 0 {
+				stored = append(stored, in)
+				continue
+			}
+			stored[i] = keepStoredValues(stored[i], in)
+		}
+		return stored
+	})
+}
+
+// rejectInvalidCredSets applies the refusals SetCloudCredSets applies to a
+// save. It returns a user-facing sentence, or "".
+func rejectInvalidCredSets(sets []CloudCredSet) string {
+	seen := make(map[string]bool, len(sets))
+	for i, set := range sets {
+		name := strings.TrimSpace(set.Name)
+		switch {
+		case name == "":
+			return fmt.Sprintf("credential set #%d: needs a name", i+1)
+		case set.ID == "":
+			return fmt.Sprintf("credential set #%d (%s): needs an id", i+1, name)
+		case seen[set.ID]:
+			return fmt.Sprintf("credential set #%d (%s): its id is used twice", i+1, name)
+		}
+		seen[set.ID] = true
+		if class := strings.ToUpper(strings.TrimSpace(set.S3StorageClass)); class != "" && !restic.StorageClassAllowed(class) {
+			return fmt.Sprintf("credential set #%d (%s): unsupported S3 storage class %s (allowed: %s)", i+1, name, class, strings.Join(restic.AllowedStorageClasses, ", "))
+		}
+	}
+	return ""
 }
 
 // mergeImportedSettings maps the imported view onto a Settings row, keeping the
