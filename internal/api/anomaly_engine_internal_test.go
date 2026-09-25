@@ -165,6 +165,31 @@ func TestEngineRaisesAfterFinishRun(t *testing.T) {
 	}
 }
 
+// The last good backup is the one before the loss. A later bad run that keeps
+// the finding open must not move it onto the first bad run, which a message
+// sent after that pass would then recommend.
+func TestLastGoodBackupStaysWhereTheFindingOpened(t *testing.T) {
+	f := newEngineFixture(t)
+	id := f.container(t, "nextcloud")
+	f.steadySeries(t, id, "backup", 11, 40*gib)
+	good := f.run(t, id, "backup", f.now-86400/2, 40*gib)
+	f.run(t, id, "backup", f.now-3600, 20*mib)
+	f.pass(t)
+	goodAt := f.now - 86400/2
+
+	f.run(t, id, "backup", f.now-60, 20*mib)
+	f.pass(t)
+
+	row := onlyRow(t, f.openRows(t))
+	if row.LastGoodRunID != good {
+		t.Fatalf("last good run = %q, want %q", row.LastGoodRunID, good)
+	}
+	view := anomalyViewOf(row, nil, nil, nil, store.Settings{})
+	if got := anomalyDetailInt(view, "lastGoodAt"); got != goodAt {
+		t.Fatalf("details.lastGoodAt = %d, want the good backup at %d", got, goodAt)
+	}
+}
+
 // An item backed up once a week has ten backups behind it after three months,
 // so the new-data rule judges it instead of learning forever.
 func TestWeeklySeriesIsJudgedByTheNewDataRule(t *testing.T) {

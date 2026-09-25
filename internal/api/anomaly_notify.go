@@ -58,7 +58,11 @@ func anomalyMessageLine(v AnomalyView) string {
 		parts = append(parts, "Deleting old backups of "+anomalyNotifyName(v)+
 			" is paused until you acknowledge this or mark it as expected.")
 	}
-	if at := anomalyDetailInt(v, "lastGoodAt"); at > 0 {
+	at := anomalyDetailInt(v, "lastGoodAt")
+	if v.LastGood != nil && v.LastGood.At > 0 {
+		at = v.LastGood.At
+	}
+	if at > 0 {
 		parts = append(parts, "Last good backup: "+time.Unix(at, 0).Format("2006-01-02 15:04")+".")
 	}
 	return strings.Join(parts, " ")

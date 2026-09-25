@@ -59,7 +59,7 @@ func applyFindings(sc scopeRef, found []finding, absent []absence, st store.Scop
 				ch.Refresh = append(ch.Refresh, store.AnomalyRefresh{
 					ID: open.ID, Observed: newest.Observed, Severity: newest.Severity,
 					LastSeenAt: now, LastRunID: newest.RunID, LastRunAt: newest.RunAt,
-					OccurrencesDelta: len(group), Details: detailsJSON(newest.Details),
+					OccurrencesDelta: len(group), Details: detailsJSON(keepLastGood(newest.Details, open.Details)),
 				})
 			}
 			written[fp] = true
@@ -161,6 +161,24 @@ func raisedSince(group []finding, lastRunAt int64) []finding {
 			out = append(out, f)
 		}
 	}
+	return out
+}
+
+// keepLastGood carries the open row's last good backup into its refreshed
+// figures. The detectors name the run before the one they judge, which after
+// the first bad run is a bad one itself; the last good backup was fixed when
+// the episode opened, like the row's last_good_run_id.
+func keepLastGood(fresh map[string]any, stored string) map[string]any {
+	var old map[string]any
+	if len(fresh) == 0 || json.Unmarshal([]byte(stored), &old) != nil {
+		return fresh
+	}
+	at, ok := old["lastGoodAt"]
+	if !ok {
+		return fresh
+	}
+	out := maps.Clone(fresh)
+	out["lastGoodAt"] = at
 	return out
 }
 

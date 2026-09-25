@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -50,6 +51,20 @@ func TestAnomalyNotifyTextSingleAndGrouped(t *testing.T) {
 	}
 	if !strings.HasSuffix(body, "and 2 more") {
 		t.Fatalf("body has to count the rest, got %q", body)
+	}
+}
+
+// The message names the backup the page links to as the last good one.
+func TestAnomalyMessageNamesTheLinkedLastGoodBackup(t *testing.T) {
+	good := time.Date(2026, 9, 24, 18, 45, 0, 0, time.Local)
+	v := AnomalyView{
+		Metric: metricSourceBytesShrink, Severity: "critical", ScopeKind: anomalyScopeItem,
+		Domain: "container", Name: "nextcloud", Observed: 0, Expected: 40 << 30,
+		Details:  map[string]any{"collapse": true, "lastGoodAt": float64(good.Unix() + 3600)},
+		LastGood: &RestorePointRef{RunID: "r1", SnapshotID: "s1", At: good.Unix()},
+	}
+	if line := anomalyMessageLine(v); !strings.Contains(line, "Last good backup: 2026-09-24 18:45.") {
+		t.Fatalf("line = %q, want the linked backup's time", line)
 	}
 }
 
