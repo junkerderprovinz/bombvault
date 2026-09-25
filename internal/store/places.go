@@ -187,9 +187,10 @@ func (r *Repo) SetDomainPlaceTx(tx *sql.Tx, domain, placeID string) error {
 }
 
 // WritePlace inserts or updates the place, makes it the home place of the
-// domains w names and writes the credential blob, all in one transaction. A
-// place with an empty or unknown ID is new and goes behind the others; an
-// unchanged place is not written.
+// domains w names, writes the credential blob and mirrors the place onto
+// every row at it, all in one transaction. Only what differs is written, so
+// saving an unchanged place leaves every row as it was. A place with an
+// empty or unknown ID is new and goes behind the others.
 func (r *Repo) WritePlace(w PlaceWrite) (Place, error) {
 	p := w.Place
 	if strings.TrimSpace(p.Name) == "" || strings.TrimSpace(p.Base) == "" {
@@ -216,6 +217,9 @@ func (r *Repo) WritePlace(w PlaceWrite) (Place, error) {
 		if err := r.SetDomainPlaceTx(tx, domain, p.ID); err != nil {
 			return Place{}, err
 		}
+	}
+	if err := mirrorPlaceRowsTx(tx, p, existed && !before.Enabled && p.Enabled); err != nil {
+		return Place{}, err
 	}
 	settings, err := getSettings(tx)
 	if err != nil {
@@ -340,4 +344,88 @@ func domainPlacesQ(q queryer) (map[string]string, error) {
 		homes[domain] = id
 	}
 	return homes, rows.Err()
+}
+
+// ErrPlaceFolderMissing refuses a place write that would leave a row at the
+// place, or a domain whose home place it is, without a folder there.
+var ErrPlaceFolderMissing = errors.New("the place has no folder for a domain that uses it")
+
+// mirrorPlaceRowsTx writes p onto every row at it, only the columns that
+// differ, and then carries each target's fields on to its direct repository
+// as a target save does. A direct repository takes its address and switch
+// from p and the rest from its target, credentials excepted: new ones reach
+// it only once they open it.
+func mirrorPlaceRowsTx(tx *sql.Tx, p Place, turnedOn bool) error {
+	rows, err := placeRowsQ(tx, p.ID)
+	if err != nil {
+		return fmt.Errorf("WritePlace rows: %w", err)
+	}
+	for _, row := range rows {
+		addr, ok := places.Address(p.Base, p.Folders, row.PlaceDomain, row.PlaceSuffix)
+		if !ok {
+			return fmt.Errorf("%w: %s", ErrPlaceFolderMissing, row.PlaceDomain)
+		}
+		set, vals := placedChanges(p, row, addr, turnedOn)
+		if len(set) == 0 {
+			continue
+		}
+		//nolint:gosec // G202: set holds fixed column names from placedChanges, never user text; every value travels in vals.
+		if _, err := tx.Exec(`UPDATE offsite_targets SET `+strings.Join(set, ", ")+` WHERE id = ?`, append(vals, row.ID)...); err != nil {
+			return fmt.Errorf("WritePlace row %s: %w", row.ID, err)
+		}
+	}
+	for _, row := range rows {
+		if row.Role != RoleOffsite {
+			continue
+		}
+		target, err := offsiteTargetTx(tx, row.ID)
+		if err != nil {
+			return err
+		}
+		if err := mirrorTx(tx, target, false); err != nil {
+			return fmt.Errorf("WritePlace direct repository of %s: %w", row.ID, err)
+		}
+	}
+	return nil
+}
+
+// placedChanges lists the columns of row that differ from what p says, with
+// their new values. The place's switch reaches its rows one way: a place
+// that is off holds every row off, a place switched on in this write turns
+// every row on, and otherwise each row keeps its own, so a target switched
+// off by itself stays off through any other edit of the place.
+func placedChanges(p Place, row OffsiteTarget, addr string, turnedOn bool) ([]string, []any) {
+	var set []string
+	var vals []any
+	add := func(col string, differs bool, v any) {
+		if differs {
+			set = append(set, col+" = ?")
+			vals = append(vals, v)
+		}
+	}
+	add("repo", row.Repo != addr, addr)
+	if row.CompanionOf == "" {
+		add("creds_ref", row.CredsRef != p.CredsRef, p.CredsRef)
+		add("storage_class", row.StorageClass != p.StorageClass, p.StorageClass)
+		add("immutable", row.Immutable != p.Immutable, boolInt(p.Immutable))
+		add("retention_keep_last", row.RetentionKeepLast != p.RetentionKeepLast, p.RetentionKeepLast)
+		add("retention_keep_daily", row.RetentionKeepDaily != p.RetentionKeepDaily, p.RetentionKeepDaily)
+		add("retention_keep_weekly", row.RetentionKeepWeekly != p.RetentionKeepWeekly, p.RetentionKeepWeekly)
+		add("retention_keep_monthly", row.RetentionKeepMonthly != p.RetentionKeepMonthly, p.RetentionKeepMonthly)
+		add("limit_upload", row.LimitUpload != p.LimitUpload, p.LimitUpload)
+		add("limit_download", row.LimitDownload != p.LimitDownload, p.LimitDownload)
+		add("growth_budget_gb", row.GrowthBudgetGB != p.GrowthBudgetGB, p.GrowthBudgetGB)
+		if row.Role == RoleRepo {
+			add("off_premises", row.OffPremises != p.OffPremises, boolInt(p.OffPremises))
+		}
+	}
+	on := row.Enabled
+	switch {
+	case !p.Enabled:
+		on = false
+	case turnedOn:
+		on = true
+	}
+	add("enabled", row.Enabled != on, boolInt(on))
+	return set, vals
 }
