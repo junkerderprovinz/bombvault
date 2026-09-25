@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"maps"
 	"net/http"
 	"reflect"
 	"slices"
@@ -281,5 +282,204 @@ func TestTheCatalogRouteServesEveryProviderInTileOrder(t *testing.T) {
 	b2 := providers[slices.IndexFunc(places.Catalog, func(p places.Provider) bool { return p.ID == "b2" })]
 	if !slices.ContainsFunc(rowsOf(b2["fields"]), func(field map[string]any) bool { return field["secret"] == true }) {
 		t.Fatalf("B2 fields = %v, want its key marked secret", b2["fields"])
+	}
+}
+
+func TestAddingAFolderPlaceWritesItWithoutCredentials(t *testing.T) {
+	f := newPlacementFixture(t)
+	asked := f.probeAnswers(places.ProbeResult{OK: true, Base: "nas"})
+
+	res := f.do(http.MethodPost, "/api/places", map[string]any{
+		"provider": "unraid-folder", "fields": map[string]string{"path": "nas"}, "name": "NAS",
+	})
+
+	if res["ok"] != true {
+		t.Fatalf("POST /api/places = %v", res)
+	}
+	if len(*asked) != 1 || (*asked)[0].Fields["path"] != "nas" {
+		t.Fatalf("the probe was asked %+v", *asked)
+	}
+	all, err := f.st.ListPlaces()
+	if err != nil || len(all) != 1 {
+		t.Fatalf("places = %+v, %v", all, err)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := all[0]
+	if p.Base != "nas" || p.Kind != "local" || p.CredsRef != "" || p.OffPremises ||
+		p.RetentionKeepDaily != settings.RetentionKeepDaily || !maps.Equal(p.Folders, places.DefaultFolders()) {
+		t.Fatalf("place = %+v", p)
+	}
+	if view := res["place"].(map[string]any); view["id"] != p.ID || view["name"] != "NAS" {
+		t.Fatalf("answer = %v", view)
+	}
+}
+
+func TestAddingACloudPlaceKeepsItsKeysInASetOfItsOwn(t *testing.T) {
+	f := newPlacementFixture(t)
+	base := "s3:https://s3.eu-central-1.wasabisys.com/bv"
+	f.probeAnswers(places.ProbeResult{OK: true, Base: base})
+
+	res := f.do(http.MethodPost, "/api/places", map[string]any{
+		"provider": "wasabi", "name": "Wasabi",
+		"fields": map[string]string{"keyId": "AKIA1", "secret": "s3cret", "region": "eu-central-1", "bucket": "bv"},
+	})
+
+	all, err := f.st.ListPlaces()
+	if res["ok"] != true || err != nil || len(all) != 1 {
+		t.Fatalf("POST /api/places = %v; places %+v, %v", res, all, err)
+	}
+	p := all[0]
+	if p.Base != base || !p.OffPremises || p.CredsRef == "" {
+		t.Fatalf("place = %+v", p)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sets, err := f.svc.decodeCloudCredSets(settings)
+	i := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == p.CredsRef })
+	if err != nil || i < 0 || sets[i].S3KeyID != "AKIA1" || sets[i].S3Secret != "s3cret" ||
+		sets[i].S3Region != "eu-central-1" || sets[i].Kind != "s3" || sets[i].Name != "Wasabi" {
+		t.Fatalf("sets = %+v, %v", sets, err)
+	}
+	creds := res["place"].(map[string]any)["creds"].(map[string]any)
+	if creds["shared"] != false || !reflect.DeepEqual(creds["set"], []any{"secret"}) || creds["fields"].(map[string]any)["keyId"] != "AKIA1" {
+		t.Fatalf("creds = %v, want the key id and no secret", creds)
+	}
+}
+
+func TestANextcloudPlaceIsReachedThroughARemoteNamedAfterIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.probeAnswers(places.ProbeResult{OK: true, Base: "rclone:" + places.RemoteName("probe") + ":bombvault"})
+
+	res := f.do(http.MethodPost, "/api/places", map[string]any{
+		"provider": "nextcloud", "name": "Cloud", "offPremises": true,
+		"fields": map[string]string{"url": "https://cloud.example.com", "user": "anna", "password": "app-pass", "path": "bombvault"},
+	})
+
+	all, err := f.st.ListPlaces()
+	if res["ok"] != true || err != nil || len(all) != 1 {
+		t.Fatalf("POST /api/places = %v; places %+v, %v", res, all, err)
+	}
+	p := all[0]
+	if want := "rclone:" + places.RemoteName(p.ID) + ":bombvault"; p.Base != want {
+		t.Fatalf("base = %q, want %q", p.Base, want)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sets, err := f.svc.decodeCloudCredSets(settings)
+	i := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == p.CredsRef })
+	if err != nil || i < 0 || sets[i].Kind != "webdav" || sets[i].WebDAVURL != "https://cloud.example.com/remote.php/dav/files/anna/" ||
+		sets[i].WebDAVVendor != "nextcloud" || sets[i].WebDAVUser != "anna" || sets[i].WebDAVPass != "app-pass" {
+		t.Fatalf("sets = %+v, %v", sets, err)
+	}
+}
+
+func TestAnAddressThatHoldsARepositoryBecomesAPlaceThatIsOne(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.probeAnswers(places.ProbeResult{OK: true, Base: "rest:https://nas:8000/tower", RepoIDs: map[string]string{"": "id-tower"}})
+	body := map[string]any{
+		"provider": "rest-server", "name": "Tower", "offPremises": false,
+		"fields": map[string]string{"url": "https://nas:8000", "user": "tower", "password": "pw"},
+	}
+
+	res := f.do(http.MethodPost, "/api/places", body)
+
+	view, _ := res["place"].(map[string]any)
+	if res["ok"] != true || view["repository"] != true || view["base"] != "rest:https://nas:8000/tower" {
+		t.Fatalf("POST /api/places = %v, want a place that is itself a repository", res)
+	}
+	folders, _ := view["folders"].(map[string]any)
+	for _, d := range places.Domains {
+		if folder, ok := folders[d]; !ok || folder != "" {
+			t.Fatalf("folders = %v, want every domain at the base", folders)
+		}
+	}
+	body["name"], body["folders"] = "Tower 2", map[string]string{"containers": "container"}
+	if res := f.do(http.MethodPost, "/api/places", body); res["ok"] != false || res["code"] != "place-is-repository" {
+		t.Fatalf("POST with a folder below the repository = %v, want place-is-repository", res)
+	}
+}
+
+func TestANewPlaceTakesNoFolderBesideItsBase(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.probeAnswers(places.ProbeResult{OK: true, Base: "nas"})
+	res := f.do(http.MethodPost, "/api/places", map[string]any{
+		"provider": "unraid-folder", "fields": map[string]string{"path": "nas"}, "name": "NAS",
+		"folders": map[string]string{"containers": "", "vms": "vms"},
+	})
+	if res["ok"] != false || res["code"] != "place-is-repository" {
+		t.Fatalf("POST /api/places = %v, want place-is-repository", res)
+	}
+	if all, err := f.st.ListPlaces(); err != nil || len(all) != 0 {
+		t.Fatalf("places = %+v, %v, want none", all, err)
+	}
+}
+
+func TestAPlaceNameIsTakenOnce(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.probeAnswers(places.ProbeResult{OK: true, Base: "nas"})
+	body := map[string]any{"provider": "unraid-folder", "fields": map[string]string{"path": "nas"}, "name": "NAS"}
+	f.do(http.MethodPost, "/api/places", body)
+	if res := f.do(http.MethodPost, "/api/places", body); res["ok"] != false || res["code"] != "place-name-taken" {
+		t.Fatalf("second POST = %v, want place-name-taken", res)
+	}
+}
+
+func TestAFailedProbeAddsNothing(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.probeAnswers(places.ProbeResult{Code: "direct-access-denied", Error: "the key cannot read this place"})
+
+	res := f.do(http.MethodPost, "/api/places", map[string]any{
+		"provider": "wasabi", "name": "Wasabi", "fields": map[string]string{"keyId": "AKIA1", "secret": "s3cret"},
+	})
+
+	if res["ok"] != false || res["code"] != "place-probe-failed" || res["probe"].(map[string]any)["code"] != "direct-access-denied" {
+		t.Fatalf("POST /api/places = %v", res)
+	}
+	all, err := f.st.ListPlaces()
+	if err != nil || len(all) != 0 {
+		t.Fatalf("places = %+v, %v, want none", all, err)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil || settings.CloudCredSets != "" {
+		t.Fatalf("a failed add wrote credentials: %q, %v", settings.CloudCredSets, err)
+	}
+}
+
+func TestADeviceHasToBeToldWhereItStands(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.probeAnswers(places.ProbeResult{OK: true, Base: "remotes/syno/bombvault"})
+	body := map[string]any{"provider": "synology", "name": "Synology", "fields": map[string]string{"path": "remotes/syno/bombvault"}}
+	if res := f.do(http.MethodPost, "/api/places", body); res["ok"] != false || res["code"] != nil {
+		t.Fatalf("POST without the answer = %v, want a plain refusal", res)
+	}
+	body["offPremises"] = true
+	if res := f.do(http.MethodPost, "/api/places", body); res["ok"] != true || res["place"].(map[string]any)["offPremises"] != true {
+		t.Fatalf("POST with the answer = %v", res)
+	}
+}
+
+func TestTheProbeRouteAnswersWithTheProbe(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.probeAnswers(places.ProbeResult{OK: true, Base: "nas", Folders: map[string]places.FolderState{"containers": places.FolderEmpty}})
+	res := f.do(http.MethodPost, "/api/places/probe", map[string]any{"provider": "unraid-folder", "fields": map[string]string{"path": "nas"}})
+	if res["ok"] != true || res["base"] != "nas" || res["folders"].(map[string]any)["containers"] != "empty" {
+		t.Fatalf("POST /api/places/probe = %v", res)
+	}
+}
+
+func TestAProbeOfAnUnknownProviderIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	if res := f.do(http.MethodPost, "/api/places/probe", map[string]any{"provider": "dropbox"}); res["ok"] != false || res["error"] == nil {
+		t.Fatalf("POST /api/places/probe = %v, want a refusal", res)
+	}
+	if len(f.eng.opened) != 0 {
+		t.Fatalf("a refused probe opened %v", f.eng.opened)
 	}
 }
