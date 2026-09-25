@@ -120,12 +120,9 @@ func TestATargetAtAPlaceOffThePremisesIsAnOffsiteCopy(t *testing.T) {
 func TestOnlyCopiesToAnOffPremisesTargetMakeTheDomainConfigured(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
-	b2 := f.target("containers", "B2", "s3:https://s3.example.com/bv/containers")
+	b2 := f.target("containers", "B2", b2Containers)
 	f.linkRow(nas.ID, f.storePlace(nasKeller()), "containers", "")
-	f.linkRow(b2.ID, f.storePlace(store.Place{
-		Name: "B2", Provider: "b2", Kind: "s3", Base: "s3:https://s3.example.com/bv",
-		Folders: map[string]string{"containers": "containers"}, OffPremises: true, Enabled: true,
-	}), "containers", "")
+	f.linkRow(b2.ID, f.storePlace(b2Place(0)), "containers", "")
 	f.container("nginx", "")
 	f.rule("containers", "container:nginx", b2.ID)
 

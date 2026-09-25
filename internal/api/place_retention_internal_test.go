@@ -29,22 +29,6 @@ func b2Place(keepLast int) store.Place {
 	}
 }
 
-// unlinkRow takes a row off its place, as a changed address does.
-func (f *placementFixture) unlinkRow(rowID string) {
-	f.t.Helper()
-	tx, err := f.db.Begin()
-	if err != nil {
-		f.t.Fatal(err)
-	}
-	if err := store.DetachRowTx(tx, rowID); err != nil {
-		_ = tx.Rollback()
-		f.t.Fatalf("detach %s: %v", rowID, err)
-	}
-	if err := tx.Commit(); err != nil {
-		f.t.Fatal(err)
-	}
-}
-
 func TestARowAtAPlaceAgesByTheRulesItsPlaceMirrors(t *testing.T) {
 	f := newPlacementFixture(t)
 	settings := localKeepLast(t, f, 3)

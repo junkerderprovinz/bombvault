@@ -46,6 +46,22 @@ func (f *placementFixture) linkRow(rowID string, p store.Place, domain, suffix s
 	f.storePlace(p)
 }
 
+// unlinkRow takes a row off its place, as a changed address does.
+func (f *placementFixture) unlinkRow(rowID string) {
+	f.t.Helper()
+	tx, err := f.db.Begin()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	if err := store.DetachRowTx(tx, rowID); err != nil {
+		_ = tx.Rollback()
+		f.t.Fatalf("detach %s: %v", rowID, err)
+	}
+	if err := tx.Commit(); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
 // storedTarget reads an off-site target back from the store.
 func (f *placementFixture) storedTarget(id string) store.OffsiteTarget {
 	f.t.Helper()

@@ -99,10 +99,7 @@ func TestTwoCopiesInTheHouseAreNoOffsiteCopy(t *testing.T) {
 	f := newPlacementFixture(t)
 	dailyContainerBackups(f)
 	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
-	here := f.storePlace(store.Place{
-		Name: "NAS Keller", Provider: "synology", Kind: "local", Base: "remotes/nas/bv",
-		Folders: map[string]string{"containers": "containers"}, Enabled: true,
-	})
+	here := f.storePlace(nasKeller())
 	f.linkRow(nas.ID, here, "containers", "")
 	f.container("nginx", "")
 	now := time.Now().Unix()

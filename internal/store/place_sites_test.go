@@ -1,51 +1,30 @@
 package store_test
 
 import (
+	"database/sql"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-func writeSitePlace(t *testing.T, r *store.Repo, p store.Place) store.Place {
-	t.Helper()
-	p.Enabled = true
-	saved, err := r.WritePlace(store.PlaceWrite{Place: p})
-	if err != nil {
-		t.Fatalf("WritePlace %s: %v", p.Name, err)
-	}
-	return saved
-}
-
 func TestPlaceSitesAnswerByThePlaceAndNotByTheRow(t *testing.T) {
 	r, db := placesRepo(t)
-	away := writeSitePlace(t, r, store.Place{
+	away := mustWritePlace(t, r, store.PlaceWrite{Place: store.Place{
 		Name: "B2", Provider: "b2", Kind: "s3", Base: "s3:https://s3.example.com/bv",
-		Folders: map[string]string{"containers": "containers"}, OffPremises: true,
-	})
-	here := writeSitePlace(t, r, store.Place{
+		Folders: map[string]string{"containers": "containers"}, OffPremises: true, Enabled: true,
+	}})
+	here := mustWritePlace(t, r, store.PlaceWrite{Place: store.Place{
 		Name: "NAS Keller", Provider: "synology", Kind: "local", Base: "remotes/nas/bv",
-		Folders: map[string]string{"vms": "vms"},
-	})
+		Folders: map[string]string{"vms": "vms"}, Enabled: true,
+	}})
 	b2 := store.SeedOffsiteTarget(t, r, "containers", "s3:https://s3.example.com/bv/containers")
 	// The NAS is the home of vms and holds its copies too, beside the domain path.
 	nas := store.SeedOffsiteTarget(t, r, "vms", "remotes/nas/bv/vms-copies")
 	loose := store.SeedOffsiteTarget(t, r, "files", "b2:bucket:files")
 
-	tx, err := db.Begin()
-	if err != nil {
-		t.Fatal(err)
-	}
-	must := func(err error) {
-		t.Helper()
-		if err != nil {
-			_ = tx.Rollback()
-			t.Fatal(err)
-		}
-	}
-	must(store.AttachRowTx(tx, b2.ID, away.ID, "containers", ""))
-	must(store.AttachRowTx(tx, nas.ID, here.ID, "vms", "-copies"))
-	must(r.SetDomainPlaceTx(tx, "vms", here.ID))
-	if err := tx.Commit(); err != nil {
+	attachRow(t, db, b2.ID, away.ID, "containers", "")
+	attachRow(t, db, nas.ID, here.ID, "vms", "-copies")
+	if err := runTx(t, db, func(tx *sql.Tx) error { return r.SetDomainPlaceTx(tx, "vms", here.ID) }); err != nil {
 		t.Fatal(err)
 	}
 
@@ -73,9 +52,7 @@ func TestPlaceSitesAnswerByThePlaceAndNotByTheRow(t *testing.T) {
 	}
 
 	here.OffPremises = true
-	if _, err := r.WritePlace(store.PlaceWrite{Place: here}); err != nil {
-		t.Fatal(err)
-	}
+	mustWritePlace(t, r, store.PlaceWrite{Place: here})
 	if sites, err = r.PlaceSites(); err != nil || !sites.Row(nas.ID, false) || !sites.Domain("vms", false) {
 		t.Fatalf("after the answer changed at the place: %+v, %v", sites, err)
 	}
