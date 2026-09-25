@@ -53,6 +53,9 @@ export interface CryptoCoin {
   name: string;
   /** Never empty, and every entry carries an address. */
   networks: CryptoNetwork[];
+  /** The coin's own colour, which its tile fills with under the pointer, and
+   *  the ink on it: white where white reaches 2:1, #161616 below that. */
+  tile: { color: string; ink: string };
 }
 
 // Each wallet is defined once, so the networks that share it cannot drift apart.
@@ -74,12 +77,14 @@ export const CRYPTO_COINS: CryptoCoin[] = [
     id: "btc",
     symbol: "BTC",
     name: "Bitcoin",
+    tile: { color: "#f7931a", ink: "#ffffff" }, // 2.3:1
     networks: [{ id: "bitcoin", name: "Bitcoin", address: BTC }],
   },
   {
     id: "eth",
     symbol: "ETH",
     name: "Ethereum",
+    tile: { color: "#627eea", ink: "#ffffff" }, // 3.7:1
     // Native ETH only. ETH on BNB Smart Chain is a bridged token, and offering
     // it beside the real thing invites sending the wrong one.
     networks: [ETHEREUM, BASE, OPTIMISM],
@@ -88,36 +93,42 @@ export const CRYPTO_COINS: CryptoCoin[] = [
     id: "usdt",
     symbol: "USDT",
     name: "Tether",
+    tile: { color: "#26a17b", ink: "#ffffff" }, // 3.3:1
     networks: [ETHEREUM, BSC, SOLANA],
   },
   {
     id: "usdc",
     symbol: "USDC",
     name: "USD Coin",
+    tile: { color: "#2775ca", ink: "#ffffff" }, // 4.7:1
     networks: [ETHEREUM, BASE, SOLANA],
   },
   {
     id: "bnb",
     symbol: "BNB",
     name: "BNB",
+    tile: { color: "#f0b90b", ink: "#161616" }, // 10.0:1
     networks: [BSC],
   },
   {
     id: "sol",
     symbol: "SOL",
     name: "Solana",
+    tile: { color: "#9945ff", ink: "#ffffff" }, // 4.5:1
     networks: [SOLANA],
   },
   {
     id: "sui",
     symbol: "SUI",
     name: "Sui",
+    tile: { color: "#4da2ff", ink: "#ffffff" }, // 2.7:1
     networks: [{ id: "sui", name: "Sui", address: SUI }],
   },
   {
     id: "xrp",
     symbol: "XRP",
     name: "XRP",
+    tile: { color: "#23292f", ink: "#ffffff" }, // 14.7:1
     networks: [
       {
         id: "xrpl",
