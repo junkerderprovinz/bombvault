@@ -2430,6 +2430,11 @@ export const en = {
   "places.unplaced.linked": "{name} now belongs to {place}.",
   "places.details.baseHint": "Moved the backups to another disk by hand? Pick the folder they lie in now. The change goes through when the new folder is empty and nothing lies at the old one, or when both hold the same repository.",
   "places.details.baseRemoteHint": "To back up to another address, connect it as a place of its own.",
+  "places.rclone.config": "rclone config",
+  "places.rclone.configHint": "Paste a whole rclone.conf. Saving replaces the config BombVault keeps for every rclone place, at once, whether or not this window adds a place.",
+  "places.rclone.save": "Save config",
+  "places.rclone.saved": "The rclone config is saved.",
+  "places.form.chooseRemote": "Choose a remote",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4540,6 +4545,11 @@ export const de: Translations = {
   "places.unplaced.linked": "{name} gehört jetzt zu {place}.",
   "places.details.baseHint": "Die Backups von Hand auf eine andere Platte umgezogen? Wähle den Ordner, in dem sie jetzt liegen. Die Änderung geht durch, wenn der neue Ordner leer ist und am alten nichts liegt, oder wenn an beiden dasselbe Repository liegt.",
   "places.details.baseRemoteHint": "Für eine andere Adresse verbinde sie als eigenen Ort.",
+  "places.rclone.config": "rclone-Konfiguration",
+  "places.rclone.configHint": "Füge eine ganze rclone.conf ein. Speichern ersetzt sofort die Konfiguration, die BombVault für jeden rclone-Ort hält, ob dieses Fenster einen Ort hinzufügt oder nicht.",
+  "places.rclone.save": "Konfiguration speichern",
+  "places.rclone.saved": "Die rclone-Konfiguration ist gespeichert.",
+  "places.form.chooseRemote": "Remote wählen",
 };
 
 // ---------------------------------------------------------------------------

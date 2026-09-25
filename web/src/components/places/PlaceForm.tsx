@@ -29,6 +29,7 @@ import {
 } from "../../lib/places";
 import { useToast } from "../../lib/toast";
 import { useReveal } from "../../lib/useReveal";
+import { RcloneConfig } from "./RcloneConfig";
 
 // The form after a tile: the provider's fields, a connection test that adds
 // nothing, and only then the name, the location question and Add. Any edit
@@ -117,6 +118,7 @@ const FIELD_CLASS = "w-full rounded-control bg-carbon-surface2 text-carbon-text 
 const CHOOSE_KEYS: Record<string, TranslationKey> = {
   bucket: "places.form.chooseBucket",
   container: "places.form.chooseContainer",
+  remote: "places.form.chooseRemote",
 };
 
 function SecretField({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
@@ -192,6 +194,7 @@ export function PlaceForm({
   const [where, setWhere] = useState<"here" | "away" | null>(null);
   const [adding, setAdding] = useState(false);
   const [shake, setShake] = useState({ test: 0, add: 0 });
+  const [remotes, setRemotes] = useState<string[]>([]);
   const bodyRef = useRef<HTMLDivElement>(null);
 
   const typed = JSON.stringify(fields);
@@ -282,7 +285,8 @@ export function PlaceForm({
       );
     }
     // An Azure account's containers come back as buckets, as a key's buckets do.
-    const listed = f.key === "bucket" || f.key === "container" ? (probe?.buckets ?? []) : [];
+    const listed =
+      f.key === "bucket" || f.key === "container" ? (probe?.buckets ?? []) : f.key === "remote" ? remotes : [];
     return (
       <div key={f.key} className="flex flex-col gap-1.5">
         <label htmlFor={id} className="flex items-center gap-1 text-xs text-carbon-textSub">
@@ -338,6 +342,7 @@ export function PlaceForm({
 
         {provider.fields.map(renderField)}
         {provider.kind === "sftp" && <PublicKey />}
+        {provider.kind === "rclone" && <RcloneConfig onRemotes={setRemotes} />}
 
         {found && (
           <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3 text-sm text-carbon-text" aria-live="polite">

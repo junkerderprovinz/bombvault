@@ -34,6 +34,8 @@ vi.mock("../../lib/api", async (importOriginal) => {
     ...actual,
     getVMSSH: () => Promise.resolve({ ok: true, publicKey: "ssh-ed25519 AAAA bombvault" }),
     browse: (path = "") => Promise.resolve({ ok: true, path, dirs: [] }),
+    getRclone: () => Promise.resolve({ ok: true, remotes: ["b2", "gdrive"] }),
+    setRclone: () => Promise.resolve({ ok: true }),
   };
 });
 
@@ -336,5 +338,24 @@ describe("PlaceForm add", () => {
     expect(await screen.findByText(en["places.error.nameTaken"])).toBeTruthy();
     expect(button("places.form.add").className).toContain("glim-shake");
     expect(onAdded).not.toHaveBeenCalled();
+  });
+});
+
+const RCLONE: CatalogProvider = {
+  id: "rclone",
+  group: "self",
+  kind: "rclone",
+  fields: [{ key: "remote" }, { key: "path", optional: true, placeholder: "bombvault" }],
+};
+
+describe("PlaceForm rclone", () => {
+  it("offers the remotes of BombVault's rclone config", async () => {
+    await form(RCLONE);
+    fireEvent.click(screen.getByRole("combobox", { name: en["places.field.remote"] }));
+    expect(screen.getByRole("option", { name: en["places.form.chooseRemote"] })).toBeTruthy();
+    fireEvent.click(screen.getByRole("option", { name: "gdrive" }));
+    await testConnection();
+    expect(probes[0]!.fields.remote).toBe("gdrive");
+    expect(screen.getByLabelText(en["places.rclone.config"])).toBeTruthy();
   });
 });
