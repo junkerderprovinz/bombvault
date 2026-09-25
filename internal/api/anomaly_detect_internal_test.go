@@ -273,6 +273,7 @@ func TestNewDataRateNormalisesLongGap(t *testing.T) {
 
 func TestNewDataRewriteIsCritical(t *testing.T) {
 	history := steadyRuns(12, anomalyNow-12*anomalyDay, 100<<20)
+	withSnapshot("s-last")(&history[0])
 	rewrite := mkRun("rewrite", anomalyNow, "success", 30<<30, withParent(true), withSource(40<<30, 20000))
 
 	found, _ := runNewData(newDataInput(after(rewrite, history), history[0].StartedAt))
@@ -292,7 +293,7 @@ func TestNewDataRewriteIsCritical(t *testing.T) {
 // that stored most of the source again is the rule's own case, whatever the
 // spike rule still needs to know about the item.
 func TestRewriteIsRaisedOnTheSecondBackup(t *testing.T) {
-	first := mkRun("first", anomalyNow-anomalyDay, "success", 40<<30, withParent(false))
+	first := mkRun("first", anomalyNow-anomalyDay, "success", 40<<30, withParent(false), withSnapshot("s-first"))
 	second := mkRun("second", anomalyNow, "success", 30<<30, withParent(true), withSource(40<<30, 900))
 
 	found, _ := runNewData(newDataInput(after(second, []store.SeriesRun{first}), first.StartedAt-1))
@@ -305,6 +306,28 @@ func TestRewriteIsRaisedOnTheSecondBackup(t *testing.T) {
 	}
 	if got.Samples != 0 {
 		t.Fatalf("samples = %d, want none: the rule judged one run against its parent", got.Samples)
+	}
+}
+
+// The last good backup is the one to restore from, so a backup of an emptied
+// source, or one that wrote no snapshot, cannot be it.
+func TestRewriteNamesTheLastBackupWithDataAsLastGood(t *testing.T) {
+	good := mkRun("good", anomalyNow-3*anomalyDay, "success", 1<<20, withParent(true), withSource(40<<30, 900), withSnapshot("s-good"))
+	empty := mkRun("empty", anomalyNow-2*anomalyDay, "success", 0, withParent(true), withSource(0, 0), withSnapshot("s-empty"))
+	unsaved := mkRun("unsaved", anomalyNow-anomalyDay, "success", 0, withParent(true))
+	rewrite := mkRun("rewrite", anomalyNow, "success", 30<<30, withParent(true), withSource(40<<30, 900), withSnapshot("s-rewrite"))
+
+	rows := []store.SeriesRun{rewrite, unsaved, empty, good}
+	found, _ := runNewData(newDataInput(rows, unsaved.StartedAt))
+	got := findingFor(t, found, metricNewDataRewrite)
+	if got.LastGoodRunID != "good" || got.Details["lastGoodAt"] != good.StartedAt {
+		t.Fatalf("last good = %q at %v, want the backup that still held the data", got.LastGoodRunID, got.Details["lastGoodAt"])
+	}
+
+	found, _ = runNewData(newDataInput(rows[:3], unsaved.StartedAt))
+	got = findingFor(t, found, metricNewDataRewrite)
+	if _, named := got.Details["lastGoodAt"]; got.LastGoodRunID != "" || named {
+		t.Fatalf("last good = %q, details %v, want none when no backup held the data", got.LastGoodRunID, got.Details)
 	}
 }
 

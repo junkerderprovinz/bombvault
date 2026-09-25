@@ -291,7 +291,7 @@ func detectNewData(in itemInput, p sensParams) ([]finding, int) {
 		samples := newDataSamples(rows, isSample, i)
 		switch {
 		case rewroteMostOfTheSource(run, ceiling):
-			found = append(found, rewriteFinding(run, rows[i-1], len(samples)))
+			found = append(found, rewriteFinding(run, lastBackupWithData(rows[:i]), len(samples)))
 		case freshUpload(run) && allFilesNew(run):
 			found = append(found, fullUploadFinding(run, len(samples)))
 		default:
@@ -384,13 +384,30 @@ func rewroteMostOfTheSource(run store.SeriesRun, ceiling float64) bool {
 		observed >= rewriteFloor && observed > ceiling
 }
 
-func rewriteFinding(run, previous store.SeriesRun, samples int) finding {
+// lastBackupWithData is the newest of rows, oldest first, that a restore of the
+// rewritten data could start from. A run that wrote no snapshot, or backed up
+// an emptied source, holds nothing of it. Nil when none of rows does.
+func lastBackupWithData(rows []store.SeriesRun) *store.SeriesRun {
+	for i := len(rows) - 1; i >= 0; i-- {
+		run := rows[i]
+		if run.SnapshotID != "" && (run.SourceBytes == nil || *run.SourceBytes > 0) {
+			return &run
+		}
+	}
+	return nil
+}
+
+func rewriteFinding(run store.SeriesRun, lastGood *store.SeriesRun, samples int) finding {
 	source := float64(*run.SourceBytes)
 	observed := float64(run.Bytes)
 	details := map[string]any{
 		"sourceBytes": source,
 		"ratio":       observed / source,
-		"lastGoodAt":  previous.StartedAt,
+	}
+	var lastGoodID string
+	if lastGood != nil {
+		lastGoodID = lastGood.ID
+		details["lastGoodAt"] = lastGood.StartedAt
 	}
 	if allFilesNew(run) {
 		details["allFilesNew"] = true
@@ -400,7 +417,7 @@ func rewriteFinding(run, previous store.SeriesRun, samples int) finding {
 	}
 	return finding{
 		Metric: metricNewDataRewrite, Severity: "critical",
-		RunID: run.ID, LastGoodRunID: previous.ID, RunAt: run.StartedAt,
+		RunID: run.ID, LastGoodRunID: lastGoodID, RunAt: run.StartedAt,
 		Observed: observed, Expected: source, Threshold: rewriteShare * source,
 		Samples: samples, Event: true, Details: finiteDetails(details),
 	}

@@ -60,6 +60,22 @@ func TestZFSMissingDatasetIsAMeasuredZero(t *testing.T) {
 	noFindingFor(t, res.Findings, metricSourceBytesShrink)
 }
 
+func TestZFSRewriteAfterAnEmptyRunLinksTheLastBackupWithData(t *testing.T) {
+	start := anomalyNow - 2*anomalyDay
+	members := memberRows(start, 40<<30, "backed-up", "empty", "backed-up")
+	for i := range members {
+		if members[i].ID == "run2" {
+			members[i].Bytes = 40 << 30
+		}
+	}
+
+	res := evaluateItem(datasetInput(datasetRuns(members, itemRuns(start, "fp", "fp", "fp"))))
+	got := findingFor(t, res.Findings, metricNewDataRewrite)
+	if got.RunID != "run2" || got.LastGoodRunID != "run0" {
+		t.Fatalf("finding = %+v, want the rewrite to name the backup before the empty run", got)
+	}
+}
+
 func TestZFSSkippedDatasetCollapsesLikeAMissingOne(t *testing.T) {
 	start := anomalyNow - 4*anomalyDay
 	for _, code := range []string{"key-not-loaded", "not-mounted", "canmount-off"} {

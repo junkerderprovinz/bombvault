@@ -894,11 +894,12 @@ func (r *Repo) ItemSeries(targetID, kind string, cutoff int64, limit int) ([]Ser
 // NewDataWindow returns the eligible runs of targetID and kind started within
 // [from, cutoff], newest first and at most limit of them. The rows carry what
 // the new-data detector reads over a month of runs: the data added, the
-// selection fingerprint, and the source figures that tell a fresh upload and an
-// unmeasured row apart from a measured one.
+// selection fingerprint, the source figures that tell a fresh upload and an
+// unmeasured row apart from a measured one, and the snapshot a finding can
+// name as the last good backup.
 func (r *Repo) NewDataWindow(targetID, kind string, from, cutoff int64, limit int) ([]SeriesRun, error) {
 	rows, err := r.db.Query(`
-		SELECT id, started_at, bytes, source_bytes, source_files, files_new, has_parent, selection_fp
+		SELECT id, COALESCE(snapshot_id, ''), started_at, bytes, source_bytes, source_files, files_new, has_parent, selection_fp
 		FROM runs
 		WHERE target_id = ? AND kind = ? AND started_at BETWEEN ? AND ?
 			AND `+eligibleRun+`
@@ -914,7 +915,7 @@ func (r *Repo) NewDataWindow(targetID, kind string, from, cutoff int64, limit in
 		var run SeriesRun
 		var bytes, sourceBytes, sourceFiles, filesNew, hasParent sql.NullInt64
 		var fp sql.NullString
-		err := rows.Scan(&run.ID, &run.StartedAt, &bytes,
+		err := rows.Scan(&run.ID, &run.SnapshotID, &run.StartedAt, &bytes,
 			&sourceBytes, &sourceFiles, &filesNew, &hasParent, &fp)
 		if err != nil {
 			return nil, fmt.Errorf("NewDataWindow: %w", err)
