@@ -36,9 +36,9 @@ saying ransomware is welcome to knock.
 
 <!-- download-buttons: written by scripts/gen_download_buttons.py -->
 <p align="center">
-  <a href="https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(0,0,720,245.3))" alt="The container image on ghcr.io" width="195" height="66.435"></a>
+  <a href="https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(0,0,720,245.3))" alt="Run it with Docker" width="195" height="66.435"></a>
   &nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault/releases/latest"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(720,0,720,245.3))" alt="Download the source archive for this release" width="195" height="66.435"></a>
+  <a href="https://github.com/junkerderprovinz/bombvault/releases/latest"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(720,0,720,245.3))" alt="Download the source archive" width="195" height="66.435"></a>
   &nbsp;
   <a href="https://junkerderprovinz.github.io/bombvault/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(1440,0,720,245.3))" alt="Read the documentation" width="195" height="66.435"></a>
 </p>
