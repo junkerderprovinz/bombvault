@@ -261,10 +261,11 @@ func (h *Handler) replacePlaces(exp settingsExport, prior []store.Place) error {
 // placedImport is the file's places as this instance will store them. A place
 // whose base arrived redacted keeps the base it has here under the same id. A
 // home domain or row joins its place only where the location stored after the
-// rest of the import is the one the place builds. A location the import kept
-// instead of the file's (a redacted file, a repository in use, a direct
-// repository, a row of the other role) stays where it is and on no place,
-// because WritePlace would move it.
+// rest of the import is the one the place builds, and a field row only where
+// its off-site field is too. A location the import kept instead of the file's
+// (a redacted file, a repository in use, a direct repository, a row of the
+// other role) stays where it is and on no place, because WritePlace would
+// move it.
 func (h *Handler) placedImport(exp settingsExport, prior []store.Place) (store.PlacesImport, error) {
 	settings, err := h.store.GetSettings()
 	if err != nil {
@@ -299,6 +300,29 @@ func (h *Handler) placedImport(exp settingsExport, prior []store.Place) (store.P
 		}
 		in.HomeDomains[domain] = p.ID
 	}
+	fieldDomain := make(map[string]string, len(places.Domains))
+	for _, domain := range places.Domains {
+		field, ok, err := h.store.FieldOffsiteTarget(domain)
+		if err != nil {
+			return store.PlacesImport{}, err
+		}
+		if ok {
+			fieldDomain[field.ID] = domain
+		}
+	}
+	// WritePlace writes a field row into its domain's off-site field, empty
+	// while the row is off.
+	keepsField := func(row store.OffsiteTarget) bool {
+		domain, isField := fieldDomain[row.ID]
+		if !isField {
+			return true
+		}
+		mirrored := ""
+		if row.Enabled {
+			mirrored = row.Repo
+		}
+		return offsiteRepoFromSettings(domain, settings) == mirrored
+	}
 	link := func(what string, stored []store.OffsiteTarget, views []offsiteTargetView) {
 		byRow := make(map[string]store.OffsiteTarget, len(stored))
 		for _, r := range stored {
@@ -310,7 +334,7 @@ func (h *Handler) placedImport(exp settingsExport, prior []store.Place) (store.P
 				continue
 			}
 			row, ok := byRow[strings.TrimSpace(tv.ID)]
-			if loc, _ := places.Address(p.Base, p.Folders, tv.PlaceDomain, tv.PlaceSuffix); !ok || row.Repo != loc {
+			if loc, _ := places.Address(p.Base, p.Folders, tv.PlaceDomain, tv.PlaceSuffix); !ok || row.Repo != loc || !keepsField(row) {
 				log.Printf("api: settings import: %s %q keeps the location it has here, so it is not put on %q", what, tv.Name, p.Name) //nolint:gosec // G706: what is fixed text and both names are %q-quoted
 				continue
 			}
@@ -346,10 +370,11 @@ func placeFileLocations(exp settingsExport) settingsExport {
 	exp.OffsiteTargets = slices.Clone(exp.OffsiteTargets)
 	for i, tv := range exp.OffsiteTargets {
 		loc, ok := rowPlaceAddress(byID, tv)
-		if !ok || loc == strings.TrimSpace(tv.Repo) {
+		repo := strings.TrimSpace(tv.Repo)
+		if !ok || loc == repo {
 			continue
 		}
-		if _, field := viewDomainColumns(&exp.Settings, tv.Domain); field != nil && *field == tv.Repo {
+		if _, field := viewDomainColumns(&exp.Settings, tv.Domain); field != nil && strings.TrimSpace(*field) == repo {
 			*field = loc
 		}
 		exp.OffsiteTargets[i].Repo = loc

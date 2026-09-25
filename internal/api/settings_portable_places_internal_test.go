@@ -654,6 +654,75 @@ func TestARedactedPlaceDoesNotTakeOverAWorkingDomainPath(t *testing.T) {
 	}
 }
 
+// Place and row ids differ between two instances, so the file's field row
+// arrives under an id this instance has no location for.
+func TestARedactedPlaceDoesNotTakeOverAWorkingOffsiteField(t *testing.T) {
+	src := newPlacementFixture(t)
+	rest := src.storePlace(store.Place{
+		ID: "place-rest", Name: "Rest server", Provider: "rest-server", Kind: "rest", Base: restPlaceBase,
+		Folders: map[string]string{"containers": "containers"}, OffPremises: true, Enabled: true,
+	})
+	field := src.fieldTarget("containers", locWithCreds)
+	src.linkRow(field.ID, rest, "containers", "")
+	exp := src.do(http.MethodGet, "/api/settings/export", nil)
+
+	dst := newPlacementFixture(t)
+	const working = "rest:https://backupuser:dst-pass@storage.example.com:8000/containers" //nolint:gosec // G101: fake credential
+	dst.fieldTarget("containers", working)
+	buf := captureLog(t)
+
+	if res := dst.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	s, err := dst.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.ContainersOffsite != working {
+		t.Fatalf("containersOffsite = %q, want the working location kept", s.ContainersOffsite)
+	}
+	row, ok, err := dst.st.FieldOffsiteTarget("containers")
+	if err != nil || !ok || row.Repo != working || row.PlaceID != "" {
+		t.Fatalf("field row = %+v (ok %v, err %v), want it at the working location and on no place", row, ok, err)
+	}
+	if !strings.Contains(buf.String(), "keeps the location it has here, so it is not put on") {
+		t.Errorf("no log line for the field row left off its place, got:\n%s", buf.String())
+	}
+}
+
+func TestASwitchedOffFieldRowStaysOnItsPlaceThroughAnImport(t *testing.T) {
+	src := newPlacementFixture(t)
+	b2 := src.storePlace(bucketAt("B2", "s3:https://s3.example.com/bucket"))
+	row := src.placedFieldRow("containers", b2)
+	row.Enabled = false
+	if _, err := src.st.UpsertOffsiteTarget(row); err != nil {
+		t.Fatal(err)
+	}
+	src.storePlace(b2)
+	exp := src.do(http.MethodGet, "/api/settings/export", nil)
+
+	dst := newPlacementFixture(t)
+	if res := dst.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	got, ok, err := dst.st.GetOffsiteTarget(row.ID)
+	if err != nil || !ok || got.Enabled || got.PlaceID != b2.ID {
+		t.Fatalf("field row = %+v (ok %v, err %v), want it off and on %s", got, ok, err, b2.ID)
+	}
+}
+
+func TestAPlaceMovesTheFieldWithItsRowWhenTheRepoHasSpacesAround(t *testing.T) {
+	exp := validPlacesFile()
+	exp.Places[1].Folders["containers"] = "bv"
+	exp.OffsiteTargets[0].Repo += " "
+
+	got := placeFileLocations(exp)
+	want := b2Base + "/bv"
+	if got.Settings.ContainersOffsite != want || got.OffsiteTargets[0].Repo != want {
+		t.Fatalf("field %q, row %q, want both at %q", got.Settings.ContainersOffsite, got.OffsiteTargets[0].Repo, want)
+	}
+}
+
 func TestAFilesPlacesDecideTheLocationsItsRowsDisagreeOn(t *testing.T) {
 	f := newPlacementFixture(t)
 	seed := seedPlaces(f)
