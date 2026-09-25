@@ -17,6 +17,7 @@ import type { TranslationKey } from "./i18n";
 import type { BadgeTone } from "../components/Badge";
 import { dbDumpNameOf, isDbDumpIdentity } from "./dbdump";
 import { humanBytes } from "./forecast";
+import { isolateLtr } from "./ltrFragments";
 import { formatMillis } from "./reltime";
 
 /** Translates a key, and with a count picks the form that count needs. */
@@ -238,21 +239,27 @@ function fill(text: string, params: Record<string, string>): string {
   return out;
 }
 
+// A figure goes into the sentence isolated, or right-to-left prose reorders it.
+function bytes(n: number): string {
+  return isolateLtr(humanBytes(n));
+}
+
+function count(n: number): string {
+  return isolateLtr(Math.round(n).toLocaleString());
+}
+
 function levelParams(a: AnomalyView): Record<string, string> {
-  return { current: humanBytes(a.observed), typical: humanBytes(a.expected) };
+  return { current: bytes(a.observed), typical: bytes(a.expected) };
 }
 
 function countParams(a: AnomalyView): Record<string, string> {
-  return {
-    current: Math.round(a.observed).toLocaleString(),
-    typical: Math.round(a.expected).toLocaleString(),
-  };
+  return { current: count(a.observed), typical: count(a.expected) };
 }
 
 function durationParams(a: AnomalyView): Record<string, string> {
   return {
-    current: formatMillis(a.observed),
-    typical: formatMillis(a.expected),
+    current: isolateLtr(formatMillis(a.observed)),
+    typical: isolateLtr(formatMillis(a.expected)),
   };
 }
 
@@ -276,17 +283,17 @@ export function anomalySentence(a: AnomalyView, t: TranslateAnomaly, locale = "e
     case "new_data":
       return fill(t("anomaly.sentence.newData"), {
         name,
-        bytes: humanBytes(a.observed),
-        typical: humanBytes(numberOf(d, "refBytes")),
+        bytes: bytes(a.observed),
+        typical: bytes(numberOf(d, "refBytes")),
       });
     case "new_data_rewrite":
       return fill(t(d.allFilesNew ? "anomaly.sentence.newDataRenamed" : "anomaly.sentence.newDataRewrite"), {
         name,
-        bytes: humanBytes(a.observed),
-        source: humanBytes(numberOf(d, "sourceBytes")),
+        bytes: bytes(a.observed),
+        source: bytes(numberOf(d, "sourceBytes")),
       });
     case "new_data_full":
-      return fill(t("anomaly.sentence.newDataFull"), { name, bytes: humanBytes(a.observed) });
+      return fill(t("anomaly.sentence.newDataFull"), { name, bytes: bytes(a.observed) });
     case "source_bytes_shrink":
       return fill(
         t(shrinkKey(d, "anomaly.sentence.sourceCollapse", "anomaly.sentence.sourceDrain",
@@ -313,19 +320,19 @@ export function anomalySentence(a: AnomalyView, t: TranslateAnomaly, locale = "e
     case "dump_duration_slower":
       return fill(t("anomaly.sentence.dumpDuration"), { name: a.name, ...durationParams(a) });
     case "failure_streak":
-      return fill(t("anomaly.sentence.failureStreak"), { name, count: String(Math.round(a.observed)) });
+      return fill(t("anomaly.sentence.failureStreak"), { name, count: count(a.observed) });
     case "dump_failure_streak":
       return fill(t("anomaly.sentence.dumpFailureStreak"), {
         name: a.name,
-        count: String(Math.round(a.observed)),
+        count: count(a.observed),
       });
     case "flaky":
     case "dump_flaky": {
       const key = a.metric === "flaky" ? "anomaly.sentence.flaky" : "anomaly.sentence.dumpFlaky";
       return fill(t(key), {
         name: a.metric === "flaky" ? name : a.name,
-        failed: String(numberOf(d, "failed")),
-        total: String(numberOf(d, "total")),
+        failed: count(numberOf(d, "failed")),
+        total: count(numberOf(d, "total")),
       });
     }
     case "drill_subset":
@@ -353,8 +360,8 @@ export function anomalySentence(a: AnomalyView, t: TranslateAnomaly, locale = "e
     case "capacity_low":
       return fill(t("anomaly.sentence.capacityLow"), {
         domains: anomalyDomainsLabel(a.domain, t),
-        free: humanBytes(numberOf(d, "freeBytes")),
-        percent: String(Math.round(a.observed * 100)),
+        free: bytes(numberOf(d, "freeBytes")),
+        percent: count(a.observed * 100),
       });
     default:
       return fill(t("anomaly.sentence.unknown"), { name });

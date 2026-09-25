@@ -22,6 +22,7 @@ import {
 } from "../lib/anomalies";
 import { humanBytes } from "../lib/forecast";
 import { useT, type TranslationKey } from "../lib/i18n";
+import { isolateLtr } from "../lib/ltrFragments";
 import { formatMillis, formatTs, relativeTime } from "../lib/reltime";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
@@ -64,13 +65,18 @@ const DOMAIN_PATH: Record<string, string> = {
   config: "/config",
 };
 
-/** A metric's numbers in the unit the detector measured them in. */
+/** A metric's numbers in the unit the detector measured them in. Figures are
+ *  isolated, so right-to-left prose keeps "4.0 GB" in one piece. */
 function metricValue(a: AnomalyView, value: number, locale: string, t: TranslateAnomaly): string {
-  if (DURATION_METRICS.has(a.metric)) return formatMillis(value);
-  if (COUNT_METRICS.has(a.metric)) return Math.round(value).toLocaleString();
   if (a.metric === "capacity_eta") return anomalyTimeSpan(value, t, locale);
-  if (a.metric === "capacity_low") return `${Math.round(value * 100)}%`;
-  return humanBytes(value);
+  if (DURATION_METRICS.has(a.metric)) return isolateLtr(formatMillis(value));
+  if (COUNT_METRICS.has(a.metric)) return isolateLtr(Math.round(value).toLocaleString());
+  if (a.metric === "capacity_low") return isolateLtr(`${Math.round(value * 100)}%`);
+  return isolateLtr(humanBytes(value));
+}
+
+function when(unix: number): string {
+  return isolateLtr(formatTs(unix));
 }
 
 export function AnomalyRow({
@@ -147,16 +153,16 @@ export function AnomalyRow({
   }
   const sensitivity = ANOMALY_SENSITIVITY_LABEL[a.sensitivity];
   if (sensitivity) details.push([t("anomaly.detail.sensitivity"), t(sensitivity)]);
-  details.push([t("anomaly.detail.firstSeen"), formatTs(a.firstSeenAt)]);
-  details.push([t("anomaly.detail.lastSeen"), formatTs(a.lastSeenAt)]);
+  details.push([t("anomaly.detail.firstSeen"), when(a.firstSeenAt)]);
+  details.push([t("anomaly.detail.lastSeen"), when(a.lastSeenAt)]);
   for (const [key, labelKey] of DETAIL_LABEL) {
     const value = a.details[key];
     if (typeof value !== "number") continue;
     if (key === "z") details.push([t(labelKey), value.toFixed(1)]);
     // The detector measures a rate per second; an hour is the span a reader
     // can picture for a backup.
-    else if (key === "refRate") details.push([t(labelKey), humanBytes(value * 3600)]);
-    else if (key === "refBytes" || key === "slopePerDay") details.push([t(labelKey), humanBytes(value)]);
+    else if (key === "refRate") details.push([t(labelKey), isolateLtr(humanBytes(value * 3600))]);
+    else if (key === "refBytes" || key === "slopePerDay") details.push([t(labelKey), isolateLtr(humanBytes(value))]);
     else details.push([t(labelKey), metricValue(a, value, lang, t)]);
   }
 
@@ -188,7 +194,7 @@ export function AnomalyRow({
           {a.severity === "critical" && a.recoveredAt > 0 && (
             <span className="inline-flex items-center gap-1">
               <Badge tone="muted" size="small">{t("anomaly.recovered")}</Badge>
-              <InfoBubble tip={t("anomaly.recoveredHint").replace("{date}", formatTs(a.recoveredAt))} />
+              <InfoBubble tip={t("anomaly.recoveredHint").replace("{date}", when(a.recoveredAt))} />
             </span>
           )}
         </div>
@@ -197,10 +203,10 @@ export function AnomalyRow({
 
         {a.lastGood && (
           <p className="flex flex-wrap items-baseline gap-x-2 text-xs text-carbon-textSub">
-            <span>{t("anomaly.lastGood").replace("{date}", formatTs(a.lastGood.at))}</span>
+            <span>{t("anomaly.lastGood").replace("{date}", when(a.lastGood.at))}</span>
             {restorePath && (
               <Link to={restorePath} className="text-accentText hover:underline">
-                {t("anomaly.action.restoreLastGood").replace("{date}", formatTs(a.lastGood.at))}
+                {t("anomaly.action.restoreLastGood").replace("{date}", when(a.lastGood.at))}
               </Link>
             )}
           </p>
@@ -210,7 +216,7 @@ export function AnomalyRow({
           <p className="flex flex-wrap items-baseline gap-x-2 text-xs text-carbon-textSub">
             <span>{t(ANOMALY_STATE_LABEL[a.state])}</span>
             {settled && a.ackedAt > 0 && (
-              <span>{t("anomaly.closedAt").replace("{date}", formatTs(a.ackedAt))}</span>
+              <span>{t("anomaly.closedAt").replace("{date}", when(a.ackedAt))}</span>
             )}
             {settled && a.ackNote && (
               <span>

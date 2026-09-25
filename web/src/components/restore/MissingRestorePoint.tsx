@@ -1,4 +1,5 @@
 import type { useT } from "../../lib/i18n";
+import { isolateLtr } from "../../lib/ltrFragments";
 import { formatTs } from "../../lib/reltime";
 
 type T = ReturnType<typeof useT>["t"];
@@ -41,11 +42,11 @@ export function MissingRestorePoint({
 }) {
   if (!requested || points.some((p) => p.id === requested)) return null;
   const nearest = nearestRestorePoint(points, requestedAt);
-  const when = requestedAt > 0 ? formatTs(requestedAt) : requested.slice(0, 8);
+  const when = isolateLtr(requestedAt > 0 ? formatTs(requestedAt) : requested.slice(0, 8));
   return (
     <p role="status" className="py-2 text-xs text-statusWarn">
       {t("restore.missingPoint").replace("{date}", when)}
-      {nearest && ` ${t("restore.nearestPoint").replace("{date}", formatTs(nearest.at))}`}
+      {nearest && ` ${t("restore.nearestPoint").replace("{date}", isolateLtr(formatTs(nearest.at)))}`}
     </p>
   );
 }

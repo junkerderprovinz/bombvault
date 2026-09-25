@@ -13,6 +13,7 @@ import {
   worstSeverity,
 } from "./anomalies";
 import { en } from "./i18n";
+import { isolateLtr } from "./ltrFragments";
 import type { TranslationKey } from "./i18n";
 import type { AnomalyView } from "./api";
 
@@ -338,9 +339,19 @@ describe("anomalySentence", () => {
     expect(anomalySentence(dump, t, "en")).toBe(
       en["anomaly.sentence.dumpShrink"]
         .replace("{name}", "plex")
-        .replace("{current}", "1.0 KB")
-        .replace("{typical}", "1.0 GB")
+        .replace("{current}", isolateLtr("1.0 KB"))
+        .replace("{typical}", isolateLtr("1.0 GB"))
     );
+  });
+
+  // In Arabic or Hebrew prose "4.0 GB" would otherwise show as "GB 4.0".
+  it("keeps each figure in one piece inside right-to-left prose", () => {
+    const shrink = view({ metric: "source_bytes_shrink", observed: 1024, expected: 1024 ** 3 });
+    const sentence = anomalySentence(shrink, t, "en");
+    expect(sentence).toContain(isolateLtr("1.0 KB"));
+    expect(sentence).toContain(isolateLtr("1.0 GB"));
+    const files = view({ metric: "source_files_shrink", observed: 0, expected: 2057 });
+    expect(anomalySentence(files, t, "en")).toContain(isolateLtr((2057).toLocaleString()));
   });
 
   it("names the dataset of a ZFS row, not the pool item", () => {

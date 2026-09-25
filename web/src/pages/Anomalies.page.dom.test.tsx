@@ -12,6 +12,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { MemoryRouter } from "react-router-dom";
 
 import { I18nProvider, en } from "../lib/i18n";
+import { isolateLtr } from "../lib/ltrFragments";
 import { ToastProvider } from "../lib/toast";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { ANOMALY_CHANGED_EVENT } from "../lib/anomalies";
@@ -349,7 +350,7 @@ describe("a finding's own lines", () => {
     );
     await renderPage();
     const link = screen.getByRole("link", {
-      name: en["anomaly.action.restoreLastGood"].replace("{date}", new Date(1700000000 * 1000).toLocaleString()),
+      name: en["anomaly.action.restoreLastGood"].replace("{date}", isolateLtr(new Date(1700000000 * 1000).toLocaleString())),
     });
     expect(link.getAttribute("href")).toBe("/containers?restore=snap-9&at=1700000000&item=plex");
   });
@@ -369,7 +370,7 @@ describe("a finding's own lines", () => {
     );
     await renderPage();
     const link = screen.getByRole("link", {
-      name: en["anomaly.action.restoreLastGood"].replace("{date}", new Date(1700000000 * 1000).toLocaleString()),
+      name: en["anomaly.action.restoreLastGood"].replace("{date}", isolateLtr(new Date(1700000000 * 1000).toLocaleString())),
     });
     expect(link.getAttribute("href")).toBe("/zfs?restore=snap-9&at=1700000000&item=tank%2Fmedia&dataset=tank%2Fmedia%2Fphotos");
   });
@@ -382,7 +383,7 @@ describe("a finding's own lines", () => {
     await renderPage();
     fireEvent.click(screen.getByRole("button", { name: en["anomaly.action.details"] }));
     const term = screen.getByText(en["anomaly.detail.refRate"]);
-    expect(term.nextElementSibling?.textContent).toBe("3.5 MB");
+    expect(term.nextElementSibling?.textContent).toBe(isolateLtr("3.5 MB"));
   });
 
   // The two projections are independent: one is what BombVault itself writes,
@@ -404,7 +405,7 @@ describe("a finding's own lines", () => {
     const value = (label: string) => screen.getByText(label).nextElementSibling?.textContent;
     expect(value(en["anomaly.detail.etaGrowth"])).toBe("12 days");
     expect(value(en["anomaly.detail.etaFree"])).toBe("6 days");
-    expect(value(en["anomaly.detail.slope"])).toBe("2.0 GB");
+    expect(value(en["anomaly.detail.slope"])).toBe(isolateLtr("2.0 GB"));
   });
 });
 
@@ -483,7 +484,7 @@ describe("the items tab", () => {
     for (const line of sized) expect(line.textContent).not.toContain("{");
     expect(
       screen.getByText(
-        en["anomaly.items.typicalSize"].replace("{size}", "2.0 MB").replace("{duration}", "4s")
+        en["anomaly.items.typicalSize"].replace("{size}", isolateLtr("2.0 MB")).replace("{duration}", isolateLtr("4s"))
       )
     ).toBeTruthy();
   });
@@ -507,7 +508,9 @@ describe("the items tab", () => {
     await openItems();
     expect(
       screen.getByText(
-        en["anomaly.items.typicalSize"].replace("{size}", "2.0 MB").replace("{duration}", "359ms")
+        en["anomaly.items.typicalSize"]
+          .replace("{size}", isolateLtr("2.0 MB"))
+          .replace("{duration}", isolateLtr("359ms"))
       )
     ).toBeTruthy();
   });

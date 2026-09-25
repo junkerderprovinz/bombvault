@@ -70,6 +70,6 @@ describe("RunAnomalyBadge", () => {
     const badge = screen.getByText(en["anomaly.runBadge"]);
     expect(badge.className).toContain("statusFail");
     expect(badge.getAttribute("title")).toBeNull();
-    expect(screen.getByLabelText(/Backing up plex took 10m/)).toBeTruthy();
+    expect(screen.getByLabelText(/Backing up plex took \u206610m/)).toBeTruthy();
   });
 });

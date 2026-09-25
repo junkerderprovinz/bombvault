@@ -6,6 +6,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, en } from "../lib/i18n";
+import { isolateLtr } from "../lib/ltrFragments";
 import { ToastProvider } from "../lib/toast";
 import type { AnomalySummary, AnomalyView } from "../lib/api";
 
@@ -155,10 +156,10 @@ it("says that a linked backup is gone and names the nearest one", async () => {
   await screen.findByText("bad00000");
   const notice = screen.getByRole("status");
   expect(notice.textContent).toContain(
-    en["restore.missingPoint"].replace("{date}", new Date(GONE_AT * 1000).toLocaleString())
+    en["restore.missingPoint"].replace("{date}", isolateLtr(new Date(GONE_AT * 1000).toLocaleString()))
   );
   expect(notice.textContent).toContain(
-    en["restore.nearestPoint"].replace("{date}", new Date("2026-09-01T02:00:00Z").toLocaleString())
+    en["restore.nearestPoint"].replace("{date}", isolateLtr(new Date("2026-09-01T02:00:00Z").toLocaleString()))
   );
   expect(screen.queryByText(en["restore.inPlaceHint"])).toBeNull();
 });
@@ -175,9 +176,9 @@ it("says that a linked dump is gone and names the nearest one", async () => {
   await screen.findByText("dumpbad0");
   const notice = screen.getByRole("status");
   expect(notice.textContent).toContain(
-    en["restore.missingPoint"].replace("{date}", new Date(GONE_AT * 1000).toLocaleString())
+    en["restore.missingPoint"].replace("{date}", isolateLtr(new Date(GONE_AT * 1000).toLocaleString()))
   );
   expect(notice.textContent).toContain(
-    en["restore.nearestPoint"].replace("{date}", new Date("2026-09-01T02:00:00Z").toLocaleString())
+    en["restore.nearestPoint"].replace("{date}", isolateLtr(new Date("2026-09-01T02:00:00Z").toLocaleString()))
   );
 });

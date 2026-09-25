@@ -8,6 +8,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { MemoryRouter } from "react-router-dom";
 import { AdvancedProvider } from "../lib/advanced";
 import { I18nProvider, en } from "../lib/i18n";
+import { isolateLtr } from "../lib/ltrFragments";
 import { ToastProvider } from "../lib/toast";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import type {
@@ -215,10 +216,10 @@ describe("ZFS page anomalies", () => {
     expect(within(panel).getByRole("combobox", { name: en["zfs.restore.dataset"] }).textContent).toContain(CHILD);
     const notice = within(panel).getByRole("status");
     expect(notice.textContent).toContain(
-      en["restore.missingPoint"].replace("{date}", new Date(1_788_990_000 * 1000).toLocaleString())
+      en["restore.missingPoint"].replace("{date}", isolateLtr(new Date(1_788_990_000 * 1000).toLocaleString()))
     );
     expect(notice.textContent).toContain(
-      en["restore.nearestPoint"].replace("{date}", new Date(1_789_000_000 * 1000).toLocaleString())
+      en["restore.nearestPoint"].replace("{date}", isolateLtr(new Date(1_789_000_000 * 1000).toLocaleString()))
     );
   });
 });

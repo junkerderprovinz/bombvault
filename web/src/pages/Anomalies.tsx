@@ -44,6 +44,7 @@ import { humanBytes } from "../lib/forecast";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { formatMillis, formatTs } from "../lib/reltime";
+import { isolateLtr } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
 import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
 import { useConfirm } from "../lib/useConfirm";
@@ -545,8 +546,8 @@ function SeriesLine({ t, label, series }: { t: T; label: string; series: Anomaly
       {series.typical.sourceBytes !== null && series.typical.resticMs !== null && (
         <span>
           {t("anomaly.items.typicalSize")
-            .replace("{size}", humanBytes(series.typical.sourceBytes))
-            .replace("{duration}", formatMillis(series.typical.resticMs))}
+            .replace("{size}", isolateLtr(humanBytes(series.typical.sourceBytes)))
+            .replace("{duration}", isolateLtr(formatMillis(series.typical.resticMs)))}
         </span>
       )}
       {series.retentionHeld && <span className="text-statusWarn">{t("anomaly.retentionPaused")}</span>}
@@ -676,12 +677,12 @@ function ItemRow({
           <span className="text-xs text-carbon-textSub">
             {typical.newDataBytes !== null
               ? t("anomaly.items.typical")
-                  .replace("{size}", humanBytes(typical.sourceBytes))
-                  .replace("{newData}", humanBytes(typical.newDataBytes))
-                  .replace("{duration}", formatMillis(typical.resticMs))
+                  .replace("{size}", isolateLtr(humanBytes(typical.sourceBytes)))
+                  .replace("{newData}", isolateLtr(humanBytes(typical.newDataBytes)))
+                  .replace("{duration}", isolateLtr(formatMillis(typical.resticMs)))
               : t("anomaly.items.typicalSize")
-                  .replace("{size}", humanBytes(typical.sourceBytes))
-                  .replace("{duration}", formatMillis(typical.resticMs))}
+                  .replace("{size}", isolateLtr(humanBytes(typical.sourceBytes)))
+                  .replace("{duration}", isolateLtr(formatMillis(typical.resticMs)))}
           </span>
         )}
         {openCount > 0 && worst && (

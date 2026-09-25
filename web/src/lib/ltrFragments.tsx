@@ -70,10 +70,6 @@ export function withLtrPlaceholder(text: string, token: string, value: string): 
  * guard in ltrFragments.test.ts, with withLtrFragments.
  */
 export function withLtrIsolates(text: string, fragments: readonly string[]): string {
-  // Escapes, because a literal zero-width character is invisible in an editor
-  // and easy to delete by accident.
-  const LRI = "\u2066";
-  const PDI = "\u2069";
   // Same precedence as withLtrFragments: wrapped text is not matched again.
   let parts: { text: string; wrapped: boolean }[] = [{ text, wrapped: false }];
   for (const frag of fragments) {
@@ -89,7 +85,19 @@ export function withLtrIsolates(text: string, fragments: readonly string[]): str
       return out;
     });
   }
-  return parts.map((p) => (p.wrapped ? `${LRI}${p.text}${PDI}` : p.text)).join("");
+  return parts.map((p) => (p.wrapped ? isolateLtr(p.text) : p.text)).join("");
+}
+
+/**
+ * isolateLtr keeps a value put into a sentence, such as "4.0 GB" or a date, in
+ * one left-to-right piece. Digits and the spaces and commas between them are
+ * weak or neutral in the bidi algorithm, so in Arabic or Hebrew prose "4.0 GB"
+ * shows as "GB 4.0".
+ */
+export function isolateLtr(value: string): string {
+  // Escapes, because a literal zero-width character is invisible in an editor
+  // and easy to delete by accident.
+  return `\u2066${value}\u2069`;
 }
 
 /** offsite.repoLocalHint's standalone `/mnt` and its full example path. The
