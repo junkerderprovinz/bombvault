@@ -44,3 +44,7 @@ type ProbeResult struct {
 	RepoIDs map[string]string      `json:"repoIds,omitempty"`
 	Errors  map[string]ProbeError  `json:"errors,omitempty"`
 }
+
+// FactBaseIsRepository says the address of a new place holds a repository
+// already, so the place is offered as that repository.
+const FactBaseIsRepository = "places.probe.baseIsRepository"
