@@ -15,8 +15,8 @@ func NewSPAHandler(spaFS fs.FS, apiRouter http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// The API router answers unknown /api/ paths with a 404 itself, and it
-		// registers the exact /mcp only, so /mcp/x gets its 404 rather than the
-		// shell.
+		// registers the exact /mcp only, so /mcp/x never gets the shell: its
+		// answer is a 404, or a 401 while a login password is set.
 		if r.URL.Path == "/api" || strings.HasPrefix(r.URL.Path, "/api/") ||
 			r.URL.Path == "/metrics" || r.URL.Path == "/widget" ||
 			r.URL.Path == mcpEndpointPath || strings.HasPrefix(r.URL.Path, mcpEndpointPath+"/") {
