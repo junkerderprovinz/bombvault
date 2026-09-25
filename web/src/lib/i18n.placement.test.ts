@@ -22,9 +22,6 @@ const PREFIXES = [
 ];
 
 const SINGLE_KEYS = new Set<string>([
-  "offsite.alsoDirect",
-  "offsite.directRetentionAsk",
-  "offsite.directAppendOnlyAsk",
   "ransomware.replicationPaused",
   "settingsIO.previewCopyRules",
   "settingsIO.previewNotInFile",

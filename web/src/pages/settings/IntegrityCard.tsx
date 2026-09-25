@@ -508,8 +508,7 @@ export function IntegrityCard({
                           {tRes.protected ? <CheckDraw /> : "✗"}&nbsp;
                         </span>
                       )}
-                      {/* The server's own words rather than a fixed sentence,
-                          as in OffsiteWizard.tsx. */}
+                      {/* The server's own words rather than a fixed sentence. */}
                       {!tRes.testable
                         ? t("offsite.tamperUnverifiable")
                         : tRes.protected

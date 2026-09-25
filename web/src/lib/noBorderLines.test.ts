@@ -151,25 +151,13 @@ const ALLOWED_RULES: Record<string, string> = {
   ".glim-boom-fx::after": "the shockwave of the logo's easter egg, an effect ring and not a frame",
 };
 
-/** Files that still draw lines, left out of the line checks below. The honesty
- *  test fails once one of them stops drawing or disappears, so no entry
- *  outlives its lines. */
-const PENDING = new Set<string>(["components/OffsiteWizard.tsx"]);
-
 type Line = { file: string; line: number; text: string };
 
 // A style object draws a line through the same properties; the colour keys
 // (`borderColor`, `borderTopColor`) draw nothing on their own.
 const STYLE_KEY = /\bborder(?:Top|Right|Bottom|Left|Inline|Block)?(?:Start|End)?(?:Width|Style)?\s*:/g;
 
-/** `scan` run on the first call only: the line checks and the honesty test ask
- *  for the same lines. */
-function once<T>(scan: () => T): () => T {
-  let result: T | undefined;
-  return () => (result ??= scan());
-}
-
-const sourceLines = once((): Line[] => {
+function sourceLines(): Line[] {
   const out: Line[] = [];
   for (const file of sourceFiles(SRC, /\.tsx?$/)) {
     const text = readSource(file);
@@ -185,14 +173,14 @@ const sourceLines = once((): Line[] => {
     }
   }
   return out;
-});
+}
 
 // Only the properties that give a border its width or style; border-radius,
 // border-color and border-collapse draw nothing.
 const CSS_LINE =
   /(?:^|[;{\s])(border(?:-(?:top|right|bottom|left|inline|block)(?:-(?:start|end))?)?(?:-(?:width|style))?)\s*:\s*([^;}]*)/g;
 
-const stylesheetLines = once((): Line[] => {
+function stylesheetLines(): Line[] {
   const out: Line[] = [];
   for (const file of sourceFiles(SRC, /\.css$/)) {
     const css = readSource(file).replace(/\/\*[\s\S]*?\*\//g, blank);
@@ -207,7 +195,7 @@ const stylesheetLines = once((): Line[] => {
     }
   }
   return out;
-});
+}
 
 const report = (lines: Line[]) => lines.map((l) => `  ${l.file}:${l.line}  ${l.text}`).join("\n");
 
@@ -244,7 +232,7 @@ describe("border lines", () => {
   });
 
   it("draws no line on a field, a button, a select, a window or between rows", () => {
-    const lines = sourceLines().filter((l) => !PENDING.has(l.file));
+    const lines = sourceLines();
     expect(
       lines,
       `These draw a line:\n\n${report(lines)}\n\n` +
@@ -254,13 +242,8 @@ describe("border lines", () => {
   });
 
   it("draws no line in the stylesheet", () => {
-    const lines = stylesheetLines().filter((l) => !PENDING.has(l.file));
+    const lines = stylesheetLines();
     expect(lines, `These rules draw a line:\n\n${report(lines)}`).toEqual([]);
-  });
-
-  it("keeps the pending list honest", () => {
-    const drawing = new Set([...sourceLines(), ...stylesheetLines()].map((l) => l.file));
-    expect([...PENDING].filter((f) => !drawing.has(f)), "cleared, so take them off PENDING").toEqual([]);
   });
 });
 
