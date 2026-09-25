@@ -1,4 +1,12 @@
-import { fetchJSON, type DefaultImpact, type KeptItem, type OkEnvelope, type SaveWarning, type TargetPreview } from "./api";
+import {
+  fetchJSON,
+  type DefaultImpact,
+  type DeploySnippetData,
+  type KeptItem,
+  type OkEnvelope,
+  type SaveWarning,
+  type TargetPreview,
+} from "./api";
 
 // Storage places and the domain rows built on them. Every write here answers
 // with the usual envelope; a caller that saw ok announces the change with
@@ -275,6 +283,12 @@ export function adoptRow(placeId: string, rowId: string, domain: string): Promis
 /** The repository the place stands for in a domain, made when it is missing; "" is the domain path. */
 export function ensurePlaceRepo(placeId: string, domain: string): Promise<PlaceRefusal & { repoId?: string }> {
   return post(placePath(placeId, "/repo"), { domain });
+}
+
+/** A one-time recipe for an append-only rest-server with one user for this
+ *  BombVault. The password lives only in this answer. */
+export function restServerRecipe(): Promise<OkEnvelope & { snippet?: DeploySnippetData }> {
+  return fetchJSON("/api/places/rest-server-recipe");
 }
 
 export function getStorageDomains(): Promise<OkEnvelope & { domains?: DomainRow[] }> {

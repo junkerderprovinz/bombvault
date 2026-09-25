@@ -2435,6 +2435,12 @@ export const en = {
   "places.rclone.save": "Save config",
   "places.rclone.saved": "The rclone config is saved.",
   "places.form.chooseRemote": "Choose a remote",
+  "places.recipe.title": "Append-only rest-server",
+  "places.recipe.hint": "A restic rest-server started with --append-only refuses to delete, so nothing here can remove a backup there. The recipe makes one user for this BombVault and puts its name and password into the fields here.",
+  "places.recipe.show": "Show recipe",
+  "places.recipe.newPassword": "New password",
+  "places.recipe.password": "Password, shown once",
+  "places.recipe.unraid": "Unraid template",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4550,6 +4556,12 @@ export const de: Translations = {
   "places.rclone.save": "Konfiguration speichern",
   "places.rclone.saved": "Die rclone-Konfiguration ist gespeichert.",
   "places.form.chooseRemote": "Remote wählen",
+  "places.recipe.title": "Rest-server mit append-only",
+  "places.recipe.hint": "Ein restic rest-server, der mit --append-only läuft, löscht nichts, also kann von hier aus kein Backup dort entfernt werden. Das Rezept legt einen Benutzer für dieses BombVault an und trägt Name und Passwort hier in die Felder ein.",
+  "places.recipe.show": "Rezept zeigen",
+  "places.recipe.newPassword": "Neues Passwort",
+  "places.recipe.password": "Passwort, nur einmal zu sehen",
+  "places.recipe.unraid": "Unraid-Vorlage",
 };
 
 // ---------------------------------------------------------------------------

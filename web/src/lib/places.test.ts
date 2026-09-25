@@ -14,6 +14,7 @@ import {
   previewDomainCopies,
   previewDomainHome,
   probePlace,
+  restServerRecipe,
   setDomainCopies,
   setDomainHome,
   subscribePlaces,
@@ -84,6 +85,12 @@ describe("the places client", () => {
       { url: "/api/storage/domains/vms/copies/preview", method: "POST", body: { placeId: "p1", on: true } },
       { url: "/api/storage/domains/vms/copies", method: "PUT", body: { placeId: "p1", on: true, expect: copies } },
     ]);
+  });
+
+  it("asks for a rest-server recipe", async () => {
+    const calls = recordFetch();
+    await restServerRecipe();
+    expect(calls).toEqual([{ url: "/api/places/rest-server-recipe", method: "GET", body: undefined }]);
   });
 });
 

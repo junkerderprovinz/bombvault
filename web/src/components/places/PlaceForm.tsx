@@ -30,6 +30,7 @@ import {
 import { useToast } from "../../lib/toast";
 import { useReveal } from "../../lib/useReveal";
 import { RcloneConfig } from "./RcloneConfig";
+import { RestServerRecipe } from "./RestServerRecipe";
 
 // The form after a tile: the provider's fields, a connection test that adds
 // nothing, and only then the name, the location question and Add. Any edit
@@ -339,6 +340,10 @@ export function PlaceForm({
           <span className="text-sm font-semibold text-carbon-text">{providerName(t, provider.id)}</span>
           <InfoBubble tip={t(INTRO_KEYS[provider.id] ?? "places.intro.s3Self")} />
         </div>
+
+        {provider.id === "rest-server" && (
+          <RestServerRecipe onLogin={(user, password) => setFields((f) => ({ ...f, user, password }))} />
+        )}
 
         {provider.fields.map(renderField)}
         {provider.kind === "sftp" && <PublicKey />}
