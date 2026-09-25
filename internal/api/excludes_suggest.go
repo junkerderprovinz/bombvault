@@ -743,10 +743,10 @@ func suggestExcludesKey(repo, snapshotID string, roots, resolved []string) strin
 }
 
 // newestSnapshotFor returns the newest snapshot of one container in the domain
-// path, and whether there is one at all. Off-site copies are never read:
-// pulling a remote repo's index and tree packs to fill a UI panel would drag
-// ~51 MB over B2 for a large tree. An off-site-only repo (or an unmounted
-// share) reports "none" and the caller falls back to the live walk.
+// path, and whether there is one at all. Off-site copies are left alone: the
+// domain path is what backups write, so a copy is at best as new. Without a
+// snapshot there, or with the share unmounted, the caller falls back to the
+// live walk.
 func (s *Service) newestSnapshotFor(ctx context.Context, name string) (restic.Snapshot, string, restic.Mode, bool) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -789,21 +789,16 @@ func snapshotRoots(snapPaths, effective []string) []string {
 	return roots
 }
 
-// suggestSnapshotAggregate produces the candidate list from the newest local
-// snapshot, or reports why it could not. ok=false with a nil error means "no
-// snapshot to read" (a container that has never been backed up, an off-site-only
-// repo, an unmounted share) and the caller falls back to the live walk; a
-// non-nil error is errSuggestIndexRead and is NOT a fallback — the UI offers the
-// live scan as an explicit second request instead of chaining 70s onto one GET.
+// suggestSnapshotAggregate produces the candidate list from the newest snapshot
+// in the domain path, or reports why it could not. ok=false with a nil error
+// means "no snapshot to read" (a container that has never been backed up, an
+// unmounted share) and the caller falls back to the live walk. A non-nil error
+// is errSuggestIndexRead and no fallback: the UI offers the live scan as an
+// explicit second request instead of chaining 70s onto one GET.
 func (s *Service) suggestSnapshotAggregate(ctx context.Context, name string, roots, resolved []string, o suggestOpts) (cands []suggestCandidate, snapTime string, ok bool, why string, err error) {
-	// The budget starts HERE, not at the `ls`. suggestSnapshotTimeout's own
-	// comment justifies its value against the 60s proxy timeout in front of a
-	// typical Unraid install — but it used to wrap only the listing, while
-	// newestSnapshotFor ahead of it (GetSettings, repoFor, and a snapshots
-	// listing that itself retries after unlocking a stale lock) ran on the naked
-	// request context with no bound at all. On a cold-starting array that prelude
-	// alone can outlast the proxy, so the promise the constant makes was not one
-	// the code kept.
+	// The budget covers newestSnapshotFor as well as the ls: on a cold-starting
+	// array its snapshot listing, which retries after unlocking a stale lock,
+	// can outlast the 60s proxy timeout suggestSnapshotTimeout is sized against.
 	ctx, cancelBudget := context.WithTimeout(ctx, suggestSnapshotTimeout)
 	defer cancelBudget()
 
