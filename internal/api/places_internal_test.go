@@ -1,6 +1,11 @@
 package api
 
 import (
+	"encoding/json"
+	"net/http"
+	"reflect"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -122,5 +127,159 @@ func TestAPlaceFormKeepsWhatItLeavesBlank(t *testing.T) {
 	want.S3KeyID = "k2"
 	if got != want {
 		t.Fatalf("set = %+v\nwant %+v", got, want)
+	}
+}
+
+func TestThePlacesListShowsWhatEachPlaceIsUsedForFromTheDatabaseAlone(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(b2, "containers", "")
+	f.listing("containers", target.ID, 100, copiesRow("container:nginx", 4, 90))
+	nginx := f.container("nginx", "")
+	f.backupRun(nginx.ID, 100)
+
+	res := f.do(http.MethodGet, "/api/places", nil)
+
+	unraid := placeByName(t, res, "Unraid")
+	usage := unraid["usage"].(map[string]any)
+	if !reflect.DeepEqual(usage["homeDomains"], []any{"containers", "vms", "files"}) {
+		t.Errorf("Unraid homeDomains = %v", usage["homeDomains"])
+	}
+	if locked := unraid["locked"].(map[string]any); locked["containers"] != true || locked["vms"] != false {
+		t.Errorf("Unraid locked = %v, want containers only", locked)
+	}
+	cloud := placeByName(t, res, "B2")
+	usage = cloud["usage"].(map[string]any)
+	if !reflect.DeepEqual(usage["copyDomains"], []any{"containers"}) || usage["copies"] != float64(4) {
+		t.Errorf("B2 usage = %v, want copies of containers, 4 snapshots", usage)
+	}
+	if locked := cloud["locked"].(map[string]any); locked["containers"] != true || locked["vms"] != false {
+		t.Errorf("B2 locked = %v", locked)
+	}
+	if cloud["repository"] != false || cloud["kind"] != "s3" || cloud["offPremises"] != true {
+		t.Errorf("B2 = %v", cloud)
+	}
+	if len(f.eng.lists) != 0 || len(f.eng.opened) != 0 {
+		t.Fatalf("listing places reached restic: lists %v, opened %v", f.eng.lists, f.eng.opened)
+	}
+}
+
+func TestAPlaceThatIsARepositoryListsTheDefaultsAndItemsOnIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.storePlace(store.Place{Name: "NAS", Provider: "share", Kind: string(places.KindLocal), Base: "nas",
+		Folders: map[string]string{}, Enabled: true})
+	repo := f.namedRepo("NAS", "nas")
+	f.linkRow(repo.ID, nas, "", "")
+	f.setDefault("containers", repo.ID)
+	f.container("nginx", repo.ID)
+
+	got := placeByName(t, f.do(http.MethodGet, "/api/places", nil), "NAS")
+
+	usage := got["usage"].(map[string]any)
+	if got["repository"] != true || !reflect.DeepEqual(usage["defaults"], []any{"containers"}) || usage["items"] != float64(1) {
+		t.Fatalf("NAS = %v, want a repository holding the containers default and one item", got)
+	}
+}
+
+func TestThePlacesListShowsCredentialsWithoutTheirSecrets(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCreds(CloudCreds{S3KeyID: "shared-key", S3Secret: "shared-secret"}); err != nil {
+		t.Fatal(err)
+	}
+	own := CloudCredSet{ID: "set-b2", Name: "B2", Kind: "s3",
+		CloudCreds: CloudCreds{S3KeyID: "own-key", S3Secret: "own-secret", S3Region: "eu-central-003"}}
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{own}); err != nil {
+		t.Fatal(err)
+	}
+	b2 := s3Place("B2", "s3:https://s3.example.com/bucket")
+	b2.CredsRef = own.ID
+	f.storePlace(b2)
+	f.storePlace(s3Place("MinIO", "s3:http://minio.lan:9000/backups"))
+	f.storePlace(localPlace("Unraid", "backups"))
+
+	res := f.do(http.MethodGet, "/api/places", nil)
+
+	want := map[string]any{
+		"B2":     map[string]any{"shared": false, "fields": map[string]any{"keyId": "own-key", "region": "eu-central-003"}, "set": []any{"secret"}},
+		"MinIO":  map[string]any{"shared": true, "fields": map[string]any{"keyId": "shared-key"}, "set": []any{"secret"}},
+		"Unraid": map[string]any{"shared": false, "fields": map[string]any{}, "set": []any{}},
+	}
+	for name, creds := range want {
+		if got := placeByName(t, res, name)["creds"]; !reflect.DeepEqual(got, creds) {
+			t.Errorf("%s creds = %v, want %v", name, got, creds)
+		}
+	}
+	body, err := json.Marshal(res)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(body), "own-secret") || strings.Contains(string(body), "shared-secret") {
+		t.Fatalf("the places list gave away a secret: %s", body)
+	}
+}
+
+func TestAFailedCopyRunToAPlaceOutranksAnEarlierSuccess(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(b2, "vms", "")
+	lastTest := func() any { return placeByName(t, f.do(http.MethodGet, "/api/places", nil), "B2")["lastTest"] }
+	run := func(at int64, ok bool) {
+		t.Helper()
+		id, err := f.st.RecordOffsiteRunForTarget("vms", target.ID, at)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := f.st.FinishOffsiteRun(id, ok, ""); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if got := lastTest(); got != nil {
+		t.Fatalf("lastTest before any run = %v", got)
+	}
+	run(100, true)
+	if got := lastTest(); !reflect.DeepEqual(got, map[string]any{"at": float64(100), "ok": true, "source": "run"}) {
+		t.Fatalf("lastTest after a success = %v", got)
+	}
+	run(200, false)
+	if got := lastTest(); !reflect.DeepEqual(got, map[string]any{"at": float64(200), "ok": false, "source": "run"}) {
+		t.Fatalf("lastTest after a failure = %v", got)
+	}
+}
+
+func TestRowsWithoutAPlaceWaitInTheirOwnGroup(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	loose := f.target("vms", "Old NAS", "remotes/oldnas/vms")
+	nas := f.namedRepo("NAS", "nas")
+
+	rows := rowsOf(f.do(http.MethodGet, "/api/places", nil)["unplaced"])
+
+	want := []map[string]any{
+		{"rowId": "", "domain": "flash", "role": "path", "name": "", "repo": "user/bombvault/flash"},
+		{"rowId": "", "domain": "config", "role": "path", "name": "", "repo": "user/bombvault/config"},
+		{"rowId": loose.ID, "domain": "vms", "role": "target", "name": "Old NAS", "repo": "remotes/oldnas/vms"},
+		{"rowId": nas.ID, "domain": "", "role": "repository", "name": "NAS", "repo": "nas"},
+	}
+	if !reflect.DeepEqual(rows, want) {
+		t.Fatalf("unplaced = %v, want %v", rows, want)
+	}
+}
+
+func TestTheCatalogRouteServesEveryProviderInTileOrder(t *testing.T) {
+	f := newPlacementFixture(t)
+	providers := rowsOf(f.do(http.MethodGet, "/api/places/catalog", nil)["providers"])
+	if len(providers) != len(places.Catalog) {
+		t.Fatalf("%d providers, want %d", len(providers), len(places.Catalog))
+	}
+	for i, p := range places.Catalog {
+		if providers[i]["id"] != p.ID || providers[i]["kind"] != string(p.Kind) || providers[i]["group"] != string(p.Group) {
+			t.Errorf("provider %d = %v, want %s", i, providers[i], p.ID)
+		}
+	}
+	b2 := providers[slices.IndexFunc(places.Catalog, func(p places.Provider) bool { return p.ID == "b2" })]
+	if !slices.ContainsFunc(rowsOf(b2["fields"]), func(field map[string]any) bool { return field["secret"] == true }) {
+		t.Fatalf("B2 fields = %v, want its key marked secret", b2["fields"])
 	}
 }

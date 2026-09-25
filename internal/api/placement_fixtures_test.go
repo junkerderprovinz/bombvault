@@ -72,6 +72,8 @@ func newPlacementFixture(t *testing.T) *placementFixture {
 		listErr: map[string]error{},
 		opens:   map[string]bool{},
 		openErr: map[string]error{},
+		ids:     map[string]string{},
+		opened:  map[string]int{},
 		lists:   map[string]int{},
 	}
 	dock := &placementDocker{installed: map[string]bool{}}
@@ -371,6 +373,16 @@ func (f *placementFixture) hold(location string, snaps ...restic.Snapshot) {
 // but 200 fails the test.
 func (f *placementFixture) do(method, path string, body any) map[string]any {
 	f.t.Helper()
+	code, out := f.doStatus(method, path, body)
+	if code != http.StatusOK {
+		f.t.Fatalf("%s %s = %d: %v", method, path, code, out)
+	}
+	return out
+}
+
+// doStatus is do for an answer that need not be 200.
+func (f *placementFixture) doStatus(method, path string, body any) (int, map[string]any) {
+	f.t.Helper()
 	var rd io.Reader
 	if body != nil {
 		b, err := json.Marshal(body)
@@ -381,14 +393,11 @@ func (f *placementFixture) do(method, path string, body any) map[string]any {
 	}
 	rec := httptest.NewRecorder()
 	f.h.Router().ServeHTTP(rec, jsonReq(method, path, rd))
-	if rec.Code != http.StatusOK {
-		f.t.Fatalf("%s %s = %d: %s", method, path, rec.Code, rec.Body.String())
-	}
 	var out map[string]any
 	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
-		f.t.Fatalf("%s %s: %v", method, path, err)
+		f.t.Fatalf("%s %s = %d: %s", method, path, rec.Code, rec.Body.String())
 	}
-	return out
+	return rec.Code, out
 }
 
 func snap(id string, at int64, tags ...string) restic.Snapshot {
@@ -418,9 +427,11 @@ type placementEngine struct {
 	mu      sync.Mutex
 	snaps   map[string][]restic.Snapshot // by slash-spelled location
 	listErr map[string]error
-	opens   map[string]bool  // RepoOpens; a missing entry is true
-	openErr map[string]error // RepoOpensErr's message for a location in opens=false; default is a generic one
-	lists   map[string]int   // Snapshots calls per location
+	opens   map[string]bool   // RepoOpens; a missing entry is true
+	openErr map[string]error  // RepoOpensErr's message for a location in opens=false; default is a generic one
+	ids     map[string]string // RepoID: the id of the repository at a location
+	opened  map[string]int    // RepoOpens and RepoID calls per location
+	lists   map[string]int    // Snapshots calls per location
 	copies  []copyCall
 	forgets []forgetCall
 	deletes []forgetIDsCall
@@ -458,8 +469,23 @@ func (e *placementEngine) Init(_ context.Context, repo string, _ restic.Mode) er
 func (e *placementEngine) RepoOpens(_ context.Context, repo string, _ restic.Mode) bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	open, known := e.opens[filepath.ToSlash(repo)]
+	key := filepath.ToSlash(repo)
+	e.opened[key]++
+	open, known := e.opens[key]
 	return open || !known
+}
+
+// RepoID answers the id set for a location, and fails as restic does where
+// no repository is.
+func (e *placementEngine) RepoID(_ context.Context, repo string, _ restic.Mode) (string, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	key := filepath.ToSlash(repo)
+	e.opened[key]++
+	if id, ok := e.ids[key]; ok {
+		return id, nil
+	}
+	return "", errors.New("repository does not exist: unable to open config file")
 }
 
 func (e *placementEngine) RepoOpensErr(ctx context.Context, repo string, mode restic.Mode) error {
