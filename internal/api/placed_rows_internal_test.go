@@ -100,3 +100,60 @@ func TestMovingAPlacedRepositoryThroughTheRepositoryRouteTakesItOffItsPlace(t *t
 		t.Fatalf("a moved repository = %+v, %v, want it at no place on its new address", got, err)
 	}
 }
+
+// placedFieldRow is the domain's off-site field row, at p.
+func (f *placementFixture) placedFieldRow(domain string, p store.Place) store.OffsiteTarget {
+	f.t.Helper()
+	addr, ok := places.Address(p.Base, p.Folders, domain, "")
+	if !ok {
+		f.t.Fatalf("%s has no folder for %s", p.Name, domain)
+	}
+	row, err := f.st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: domain, Name: p.Name, Repo: addr, Enabled: true})
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	f.linkRow(row.ID, p, domain, "")
+	return f.storedTarget(row.ID)
+}
+
+func TestTheOffsiteFieldLeavesAPlacedTargetAlone(t *testing.T) {
+	f := newPlacementFixture(t)
+	row := f.placedFieldRow("containers", f.storePlace(bucketAt("B2", "s3:https://s3.example.com/bucket")))
+	for _, field := range []string{"s3:https://s3.example.com/elsewhere/container", ""} {
+		settings, err := f.st.GetSettings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		settings.ContainersOffsite = field
+		if err := f.svc.syncPrimaryOffsiteTarget("containers", settings); err != nil {
+			t.Fatal(err)
+		}
+		if got := f.storedTarget(row.ID); got != row {
+			t.Fatalf("with the field at %q the placed target became %+v, want %+v", field, got, row)
+		}
+	}
+}
+
+func TestSavingTheSharedCredentialsLeavesPlacedTargetsAlone(t *testing.T) {
+	f := newPlacementFixture(t)
+	row := f.placedFieldRow("containers", f.storePlace(bucketAt("B2", "s3:https://s3.example.com/bucket")))
+	body := map[string]any{"s3KeyId": "key", "s3Secret": "secret", "s3StorageClass": "STANDARD_IA"}
+	if res := f.do(http.MethodPost, "/api/cloud", body); res["ok"] != true {
+		t.Fatalf("POST /api/cloud = %v", res)
+	}
+	if got := f.storedTarget(row.ID); got != row {
+		t.Fatalf("placed target = %+v, want %+v", got, row)
+	}
+}
+
+func TestAnImportLeavesPlacedTargetsAlone(t *testing.T) {
+	f := newPlacementFixture(t)
+	row := f.placedFieldRow("containers", f.storePlace(bucketAt("B2", "s3:https://s3.example.com/bucket")))
+	file := f.do(http.MethodGet, "/api/settings/export", nil)
+	if res := f.do(http.MethodPost, "/api/settings/import?apply=true", file); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	if got := f.storedTarget(row.ID); got != row {
+		t.Fatalf("placed target = %+v, want %+v", got, row)
+	}
+}
