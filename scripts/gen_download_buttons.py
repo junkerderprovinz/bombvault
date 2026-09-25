@@ -92,7 +92,10 @@ KINDS = {
 # Joined to the Windows button, in this order, rather than standing alone.
 SEGMENTS = ("windows-arm", "windows-portable")
 # A store listing that does not exist yet is drawn without a link.
-SOON = {"google-play": ("Google Play, soon", "On Google Play soon")}
+SOON = {
+    "google-play": ("Google Play, soon", "On Google Play soon"),
+    "firefox": ("Add-on, soon", "The Firefox add-on, soon"),
+}
 # Links that may lead away from the repository.
 STORES = ("play.google.com", "chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com")
 
