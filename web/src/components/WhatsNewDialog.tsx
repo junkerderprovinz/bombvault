@@ -93,7 +93,7 @@ function renderMarkdown(md: string): ReactNode[] {
     // Horizontal rule: --- *** ___
     if (/^([-*_])\1{2,}$/.test(line)) {
       flushList();
-      blocks.push(<hr key={`hr${key++}`} className="my-4 border-carbon-border" />);
+      blocks.push(<hr key={`hr${key++}`} className="my-6 border-0" />);
       continue;
     }
     // # and ## render large, deeper headings small.
