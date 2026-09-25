@@ -359,7 +359,10 @@ export function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T;
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-carbon-textSub">{t("fleet.mesh.baseUrl")}</label>
+                <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+                  {t("fleet.mesh.baseUrl")}
+                  <InfoBubble tip={t("fleet.mesh.baseUrlHint")} />
+                </label>
                 <input
                   type="text"
                   value={baseUrl}
@@ -370,7 +373,6 @@ export function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T;
                   dir="ltr"
                   className={`${inputCls} font-mono text-start`}
                 />
-                <p className="text-caption text-carbon-textMuted">{t("fleet.mesh.baseUrlHint")}</p>
               </div>
             </>
           ) : (
@@ -713,7 +715,10 @@ export function FleetDialog({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("fleet.url")}</label>
+            <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+              {t("fleet.url")}
+              <InfoBubble tip={t("fleet.urlHint")} />
+            </label>
             <input
               type="text"
               value={url}
@@ -724,11 +729,13 @@ export function FleetDialog({
               dir="ltr"
               className={`${inputCls} font-mono text-start`}
             />
-            <p className="text-caption text-carbon-textMuted">{t("fleet.urlHint")}</p>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("fleet.token")}</label>
+            <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+              {t("fleet.token")}
+              <InfoBubble tip={t("fleet.tokenHint")} />
+            </label>
             <RevealInput
               {...revealToken}
               value={token}
@@ -739,7 +746,6 @@ export function FleetDialog({
               wrapperClassName="w-full"
               className={`${inputCls} font-mono`}
             />
-            <p className="text-caption text-carbon-textMuted">{t("fleet.tokenHint")}</p>
           </div>
 
           {/* ToggleRow puts the words at the start and the switch at the end,

@@ -434,7 +434,10 @@ export function ReceiverDialog({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-carbon-textSub">{t("receiver.repoLocation")}</label>
+              <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+                {t("receiver.repoLocation")}
+                <InfoBubble tip={t("receiver.repoLocationHint")} />
+              </label>
               <input
                 type="text"
                 value={repo}
@@ -445,11 +448,13 @@ export function ReceiverDialog({
                 dir="ltr"
                 className={`${inputCls} font-mono text-start`}
               />
-              <p className="text-caption text-carbon-textMuted">{t("receiver.repoLocationHint")}</p>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-carbon-textSub">{t("receiver.appKey")}</label>
+              <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+                {t("receiver.appKey")}
+                <InfoBubble tip={t("receiver.appKeyHint")} />
+              </label>
               <RevealInput
                 {...revealAppKey}
                 value={appKey}
@@ -460,7 +465,6 @@ export function ReceiverDialog({
                 wrapperClassName="w-full"
                 className={`${inputCls} font-mono`}
               />
-              <p className="text-caption text-carbon-textMuted">{t("receiver.appKeyHint")}</p>
               {appKey !== "" && !APP_KEY_RE.test(appKey) && (
                 <p className="text-caption text-statusFail">{t("receiver.appKeyInvalid")}</p>
               )}
@@ -468,7 +472,10 @@ export function ReceiverDialog({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-carbon-textSub">{t("receiver.deadManHours")}</label>
+                <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+                  {t("receiver.deadManHours")}
+                  <InfoBubble tip={t("receiver.deadManHoursHint")} />
+                </label>
                 <NumberField
                   min={1}
                   value={deadManHours}
@@ -487,10 +494,12 @@ export function ReceiverDialog({
                 />
               </div>
             </div>
-            <p className="text-caption text-carbon-textMuted -mt-2">{t("receiver.deadManHoursHint")}</p>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-carbon-textSub">{t("receiver.checkCadence")}</label>
+              <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+                {t("receiver.checkCadence")}
+                <InfoBubble tip={t("receiver.checkCadenceHint")} />
+              </label>
               <input
                 type="text"
                 value={checkCadence}
@@ -501,7 +510,6 @@ export function ReceiverDialog({
                 dir="ltr"
                 className={`${inputCls} font-mono text-start`}
               />
-              <p className="text-caption text-carbon-textMuted">{t("receiver.checkCadenceHint")}</p>
             </div>
 
             {/* ToggleRow puts the label at the start and the switch at the end,
