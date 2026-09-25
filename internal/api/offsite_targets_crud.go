@@ -155,10 +155,16 @@ func (h *Handler) handleListOffsiteTargets(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"targets": offsiteTargetsToViews(targets)}))
 }
 
-// handleCreateOffsiteTarget adds an off-site target. An id or createdAt in the
-// body is ignored.
+// handleCreateOffsiteTarget adds an additional off-site target. An id or
+// createdAt in the body is ignored, and without a sortOrder the target goes
+// after the domain's existing ones.
 func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Request) {
-	var v offsiteTargetView
+	// The pointer shadows the view's sortOrder so a missing one can be told
+	// apart from 0.
+	var v struct {
+		offsiteTargetView
+		SortOrder *int `json:"sortOrder"`
+	}
 	if !decodeBody(w, r, &v) {
 		return
 	}
@@ -167,9 +173,25 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
+	// Sort order 0 is the primary. A row created there would be deleted or
+	// rewritten by the next settings save.
+	if v.SortOrder != nil && *v.SortOrder < 1 {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "sortOrder must be 1 or higher: 0 is the primary target, and the off-site setting in Settings manages it"})
+		return
+	}
 	if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
+	}
+	if v.SortOrder != nil {
+		t.SortOrder = *v.SortOrder
+	} else {
+		next, err := h.svc.nextOffsiteSortOrder(t.Domain)
+		if err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+		t.SortOrder = next
 	}
 	stored, err := h.store.UpsertOffsiteTarget(t)
 	if err != nil {

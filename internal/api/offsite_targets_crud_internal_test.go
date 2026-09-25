@@ -107,6 +107,52 @@ func TestOffsiteTargetCreateValidation(t *testing.T) {
 	}
 }
 
+// A target created without a sort order goes after the domain's existing
+// targets, so it cannot take the primary's place.
+func TestCreateOffsiteTargetWithoutSortOrderGoesLast(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	for _, existing := range []store.OffsiteTarget{
+		{Domain: "containers", Name: "Primary", Repo: "s3:c", Enabled: true, SortOrder: 0},
+		{Domain: "containers", Name: "Second", Repo: "s3:c2", Enabled: true, SortOrder: 3},
+	} {
+		if _, err := st.UpsertOffsiteTarget(existing); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	body := []byte(`{"domain":"containers","name":"Third","repo":"s3:c3","enabled":true}`)
+	rec := httptest.NewRecorder()
+	h.handleCreateOffsiteTarget(rec, jsonReq(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
+	env := decodeEnvelope(t, rec)
+	if env["ok"] != true {
+		t.Fatalf("create not ok: %v", env)
+	}
+	if got := env["target"].(map[string]any)["sortOrder"]; got != float64(4) {
+		t.Fatalf("sortOrder = %v, want 4", got)
+	}
+}
+
+// Sort order 0 is the primary, which the off-site setting in Settings manages,
+// so the create route refuses it and anything below it.
+func TestCreateOffsiteTargetRefusesPrimarySortOrder(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	for _, order := range []int{0, -1} {
+		body, _ := json.Marshal(offsiteTargetView{Domain: "containers", Name: "Second", Repo: "s3:c2", Enabled: true, SortOrder: order})
+		rec := httptest.NewRecorder()
+		h.handleCreateOffsiteTarget(rec, jsonReq(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
+		if env := decodeEnvelope(t, rec); env["ok"] == true {
+			t.Fatalf("sortOrder %d: want a refusal, got %v", order, env)
+		}
+	}
+	all, err := st.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(all) != 0 {
+		t.Fatalf("a refused create stored targets: %+v", all)
+	}
+}
+
 func TestUpdateOffsiteTargetMissing(t *testing.T) {
 	h, _ := newCRUDHandler(t)
 	body, _ := json.Marshal(offsiteTargetView{Domain: "containers", Repo: "s3:x"})
