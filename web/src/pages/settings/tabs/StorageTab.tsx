@@ -2,6 +2,7 @@ import { downloadRecoveryKit } from "../../../lib/api";
 import { FolderBrowser } from "../../../components/FolderBrowser";
 import { ReposCard } from "../ReposCard";
 import { PlacementDefaultsCard } from "../PlacementDefaultsCard";
+import { PlacesCard } from "../../../components/places/PlacesCard";
 import { NumberField } from "../../../components/NumberField";
 import { PathModeSwitch } from "../../../components/PathModeSwitch";
 import { InfoBubble } from "../../../components/InfoBubble";
@@ -56,6 +57,8 @@ export function StorageTab({
 
   return (
     <>
+      <PlacesCard hueIndex={nextHue()} hostMountRoot={hostMountRoot} />
+
       {/* ------------------------------------------------------------------ */}
       {/* STORAGE: Named repositories (#204)                                 */}
       {/* ------------------------------------------------------------------ */}
