@@ -279,12 +279,6 @@ func run() error {
 	if err := svc.WriteRcloneConfFile(); err != nil {
 		log.Printf("rclone: write config: %v", err) // non-fatal: off-site stays unavailable until fixed
 	}
-	// Before the scheduler and the server, so no run and no request meets a
-	// half-placed database. A failure leaves every row as it was; backups run on
-	// the old settings and the next start tries again.
-	if err := svc.MigrateToPlaces(); err != nil {
-		log.Printf("places: could not move the storage settings onto places, keeping them as they are until the next start: %v", err)
-	}
 
 	// Per-domain scheduler; the containers job calls the service's Backup, the
 	// VMs job calls BackupVM (wired via SetVMJob below). Each scheduled item runs
