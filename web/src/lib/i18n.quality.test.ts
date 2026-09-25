@@ -85,7 +85,7 @@ describe("translations are actually translated", () => {
 describe("placement text is not left in English", () => {
   // Every locale is checked here, not just the non-Latin ones above, because
   // a Latin-script locale can leave English text in place just as easily.
-  const FAMILIES = ["placementCode.", "timeline.", "offsiteRemoval.", "placement.", "repos.offPremises"];
+  const FAMILIES = ["placementCode.", "timeline.", "offsiteRemoval.", "placement."];
   const codes = Object.keys(locales).filter((c) => c !== "en");
 
   it.each(codes)("%s translates its placement text", (code) => {

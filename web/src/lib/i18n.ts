@@ -371,25 +371,11 @@ export const en = {
     "With encryption on, losing your APP_KEY means losing your backups. Download the recovery kit and store it somewhere safe and offline.",
   "recovery.stored": "I've stored it safely",
 
-  "settings.paths": "Backup Paths",
-  "settings.pathsHint": "Relative subpaths under the host mount root ({root}). Click Browse to navigate directories or type a path directly.",
   "settings.containersPath": "Containers path",
   "settings.vmsPath": "VMs path",
   "settings.flashPath": "Flash path",
-  "settings.configPath": "Self-Backup path",
   "settings.restoreFolder": "Default restore folder",
   "settings.restoreFolderHint": "Where 'restore to a folder' extracts snapshots by default.",
-  // Inline Local/Remote mode switch on each backup path field (issue #152): a
-  // path already accepts a restic remote URL directly, so switching to Remote
-  // opens the connection-test/safety-settings dialog instead of the folder browser.
-  "settings.pathMode.local": "Local",
-  "settings.pathMode.remote": "Remote",
-  // Hover/focus explanation for the icon-only Local/Remote segments above
-  // (GlimStone follow-up round, point 2) — removing the text label loses the
-  // meaning, so each glyph gets a fuller InfoBubble-style tooltip instead.
-  "settings.pathMode.localTip": "Local path on this host",
-  "settings.pathMode.remoteTip": "Remote restic repository",
-  "settings.primaryRemote.title": "Remote primary safety settings",
   "settings.primaryRemote.hint": "This backup path is a remote restic repository. It IS the primary copy, not a replica. Configure bandwidth limits, append-only protection and a growth-budget alarm for it here, the same protections an off-site copy gets.",
   "settings.primaryRemote.budgetHint": "Alarm when this repository grows past a byte budget (0 = off).",
   "settings.offsiteTitle": "Off-site copy (optional)",
@@ -397,10 +383,8 @@ export const en = {
   "source.label": "Source:",
   "source.local": "Local",
   "source.offsite": "Off-site",
-  // Hover/focus explanation for SourceToggle's icon-only Local/Off-site
-  // segments (jdp, live-review, icon-badge standing rule) — same reasoning
-  // as settings.pathMode.localTip/remoteTip above: losing the visible text
-  // label needs a fuller tooltip to carry the same meaning.
+  // SourceToggle's segments show only a glyph, so the tooltip carries what
+  // the visible label would have said.
   "source.localTip": "Local repository on this host",
   "source.offsiteTip": "Off-site replica",
   // Only rendered when a domain has 2+ off-site targets: the picker choosing
@@ -553,8 +537,6 @@ export const en = {
   "settings.notLoadedNoSave": "The current configuration could not be loaded, so nothing is saved. Reload the page and try again.",
 
   // Retention
-  "settings.retentionTitle": "Snapshot retention",
-  "settings.retentionHint": "How many backups to keep per item. After each backup, restic prunes older snapshots to this policy. All zero = keep everything (off).",
   // Merged card (GlimStone follow-up round, Paths & Storage tab rework, merge
   // A) — image cleanup, Unraid's own update-status reconciliation, and
   // private registry credentials all sit under one roof: everything the
@@ -1739,32 +1721,9 @@ export const en = {
   "files.excludesHint": "One pattern per line, passed to restic as --exclude (e.g. *.tmp, cache/).",
   "files.nameLocked": "The name cannot change once the set has backups, because they are filed under it. Create a new set for a new name.",
   // Named repositories
-  "repos.title": "Repositories",
-  "repos.intro": "Places backups can be written to. Set one up here, then pick it on an individual container, VM or folder set instead of using that domain's own repository.",
   "repos.name": "Name",
-  "repos.namePlaceholder": "Cold storage",
   "repos.location": "Location",
-  "repos.locationPlaceholder": "backups/cold or s3:s3.eu-central-003.backblazeb2.com/bucket/path",
-  "repos.locationHint": "A folder under the host mount, or a restic remote such as s3:..., sftp:..., rest:... or rclone:... - a remote is written to directly, with no local copy in between.",
-  "repos.locationLocked": "The location cannot be moved while something backs up here: everything written so far stays where it is, so the next backup would succeed into an empty repository. Add a second repository and point the items at that instead.",
-  "repos.enabled": "Available",
-  "repos.immutable": "Append-only",
-  "repos.immutableHint": "Nothing on this box may delete from this repository: prune and snapshot delete refuse instead of repacking it. Use it for an archive you mean to keep, and enforce it on the far side too where the provider offers object lock.",
-  "repos.inUse": "{n} in use",
-  "repos.unused": "not in use",
-  "repos.inUseUnknown": "in use: unknown",
-  "repos.disableWarn": "Items backing up to this repository: {n}. Switching it off does not move them: their next backup fails with a clear message instead of landing somewhere else. Switch it off?",
   "repos.deleteBlocked": "Still in use. Point those items somewhere else first.",
-  "repos.deleteBlockedUnknown": "The server could not read whether anything still uses this repository, so it was not deleted. Try again in a moment.",
-  "repos.disableWarnUnknown": "The server could not read how many items back up to this repository. Switching it off does not move them: their next backup fails with a clear message instead of landing somewhere else. Switch it off?",
-  "repos.add": "Add repository",
-  "repos.empty": "No repositories yet. Everything uses its own domain's repository.",
-  "repos.directOf": "belongs to {target} · items: {n}",
-  "repos.companionLost": "next to a deleted target",
-  "repos.mirroredLocked": "Taken over from {target}. Change it there.",
-  "repos.removeWithTarget": "Goes with {target}. Remove that target to remove this repository.",
-  "repos.offPremises": "Off the premises",
-  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "The placement rules could not be read, so nothing is copied until they can.",
@@ -1885,18 +1844,7 @@ export const en = {
   "directRepo.draftNote": "Created together with the folder set.",
 
   // Defaults
-  "placementDefaults.copyLine": "Items whose location is a copy source:",
-  "placementDefaults.copyLineContainers": "Project folders and items whose location is a copy source:",
   "placementDefaults.title": "Placement defaults",
-  "placementDefaults.hint":
-    "New items take the location at their first backup. Changing it moves no backups. The copies apply at once to every item without its own choice.",
-  "placementDefaults.countFollow": "Following the default: {n}",
-  "placementDefaults.countOwn": "Own choice: {n}",
-  "placementDefaults.countOpen": "No location yet: {n}",
-  "placementDefaults.countChosenNoRun": "Location set, no backup: {n}",
-  "placementDefaults.homeOff":
-    "{home} is switched off. Items without a location are not backed up until it is on again or the default changes.",
-  "placementDefaults.homeMissing": "The default points at a repository that no longer exists. Items without a location are not backed up.",
   "placementDefaults.confirmHome": "New items in {domain} take {home} at their first backup. Items with a location keep it.",
   "placementDefaults.dropAsk": "Items and project folders that {target} no longer gets: {n}. Copies that stay there: {copies}.",
   "placementDefaults.dropAskUnknown":
@@ -1905,13 +1853,7 @@ export const en = {
     "Items and project folders that {target} gets from now on: {n}. Snapshots uploaded at the next run: at most {snapshots}.",
   "placementDefaults.openTakeHome": "Items without a location that take {home} at their first backup: {n}.",
   "placementDefaults.apply": "Apply to items without backups",
-  "placementDefaults.applyAsk": "Location and copies go back to the default for these items: {n}.",
-  "placementDefaults.applyLoses": "Losing their own choice: {list}",
-  "placementDefaults.applyKeptBackups": "Stay as they are, they have backups: {list}",
-  "placementDefaults.applyKeptUnreadable": "Stay as they are, their location could not be read: {list}",
   "placementDefaults.applyKeptChanged": "Changed in the meantime and left alone: {list}",
-  "placementDefaults.applyNone": "No item without backups differs from the default.",
-  "placementDefaults.applyBusy": "A backup is running. Apply again once it has finished.",
   "placementDefaults.paused": "Off-site paused after a rebuild",
   "placementDefaults.pausedHint":
     "Rules and defaults were lost with the old configuration. Nothing from {domain} is copied off-site until this default is confirmed. Items with a card can be set to Local first.",
@@ -2777,19 +2719,11 @@ export const de: Translations = {
     "Mit aktivierter Verschlüsselung bedeutet ein verlorener APP_KEY verlorene Backups. Lade das Recovery-Kit herunter und bewahre es sicher und offline auf.",
   "recovery.stored": "Sicher aufbewahrt",
 
-  "settings.paths": "Backup-Pfade",
-  "settings.pathsHint": "Relative Unterpfade unter dem Host-Mount-Root ({root}). Auf Durchsuchen klicken, um Verzeichnisse zu navigieren, oder direkt einen Pfad eingeben.",
   "settings.containersPath": "Container-Pfad",
   "settings.vmsPath": "VMs-Pfad",
   "settings.flashPath": "Flash-Pfad",
-  "settings.configPath": "Self-Backup-Pfad",
   "settings.restoreFolder": "Standard-Restore-Ordner",
   "settings.restoreFolderHint": "Wohin 'in einen Ordner wiederherstellen' Snapshots standardmäßig entpackt.",
-  "settings.pathMode.local": "Lokal",
-  "settings.pathMode.remote": "Remote",
-  "settings.pathMode.localTip": "Lokaler Pfad auf diesem Host",
-  "settings.pathMode.remoteTip": "Remote-restic-Repository",
-  "settings.primaryRemote.title": "Sicherheitseinstellungen für Remote-Primärrepo",
   "settings.primaryRemote.hint": "Dieser Backup-Pfad ist ein Remote-restic-Repository. Er IST die primäre Kopie, keine Replik. Bandbreitenlimits, Append-only-Schutz und einen Wachstumsbudget-Alarm dafür hier konfigurieren, denselben Schutz, den eine Offsite-Kopie erhält.",
   "settings.primaryRemote.budgetHint": "Alarm auslösen, wenn dieses Repository ein Byte-Budget überschreitet (0 = aus).",
   "settings.offsiteTitle": "Offsite-Kopie (optional)",
@@ -2911,8 +2845,6 @@ export const de: Translations = {
   "settings.notLoadedNoSave": "Die aktuelle Konfiguration konnte nicht geladen werden, daher wird nichts gespeichert. Lade die Seite neu und versuche es noch einmal.",
 
   // Retention
-  "settings.retentionTitle": "Snapshot-Aufbewahrung",
-  "settings.retentionHint": "Wie viele Backups pro Objekt behalten werden. Nach jedem Backup räumt restic ältere Snapshots gemäß dieser Regel auf. Alles 0 = alles behalten (aus).",
   "settings.imageMaintenanceTitle": "Image-Bereinigung & Update-Status",
   "settings.imageMaintenanceHint": "Wartung rund um das Container-Update nach dem Backup: das abgelöste Image aufräumen und Unraids eigenen Update-Status zurücksetzen.",
   "settings.pruneImageAfterUpdate": "Altes Image nach Update entfernen",
@@ -3915,32 +3847,9 @@ export const de: Translations = {
   "files.excludes": "Ausschlussmuster",
   "files.excludesHint": "Ein Muster pro Zeile, wird als --exclude an restic übergeben (z. B. *.tmp, cache/).",
   "files.nameLocked": "Der Name lässt sich nicht mehr ändern, sobald der Satz Sicherungen hat, denn sie sind unter diesem Namen abgelegt. Für einen neuen Namen lege einen neuen Satz an.",
-  "repos.title": "Repositories",
-  "repos.intro": "Orte, an die Sicherungen geschrieben werden können. Lege hier einen an und wähle ihn dann bei einem einzelnen Container, einer VM oder einem Ordner-Satz aus, statt das Repository der Domäne zu nutzen.",
   "repos.name": "Name",
-  "repos.namePlaceholder": "Kalte Ablage",
   "repos.location": "Ort",
-  "repos.locationPlaceholder": "backups/kalt oder s3:s3.eu-central-003.backblazeb2.com/bucket/pfad",
-  "repos.locationHint": "Ein Ordner unter dem Host-Mount oder ein restic-Ziel wie s3:..., sftp:..., rest:... oder rclone:... - auf ein entferntes Ziel wird direkt geschrieben, ohne lokale Zwischenkopie.",
-  "repos.locationLocked": "Der Ort lässt sich nicht verschieben, solange hierher gesichert wird: alles bisher Geschriebene bleibt liegen, die nächste Sicherung liefe also erfolgreich in ein leeres Repository. Lege ein zweites an und zeige mit den Einträgen dorthin.",
-  "repos.enabled": "Verfügbar",
-  "repos.immutable": "Nur anhängen",
-  "repos.immutableHint": "Von diesem Rechner darf nichts aus diesem Repository gelöscht werden: Aufräumen und Snapshot-Löschen verweigern, statt es umzuschreiben. Für ein Archiv gedacht, das bleiben soll, und wenn der Anbieter Object Lock kann, dort ebenfalls setzen.",
-  "repos.inUse": "{n}× in Verwendung",
-  "repos.unused": "nicht in Verwendung",
-  "repos.inUseUnknown": "in Verwendung: unbekannt",
-  "repos.disableWarn": "Einträge, die hierher sichern: {n}. Ausschalten holt sie nicht weg: ihre nächste Sicherung schlägt mit einer klaren Meldung fehl, statt woanders zu landen. Ausschalten?",
   "repos.deleteBlocked": "Wird noch verwendet. Zeig mit diesen Einträgen zuerst woandershin.",
-  "repos.deleteBlockedUnknown": "Der Server konnte nicht lesen, ob dieses Repository noch benutzt wird, deshalb wurde es nicht gelöscht. Versuch es gleich noch einmal.",
-  "repos.disableWarnUnknown": "Der Server konnte nicht lesen, wie viele Einträge hierher sichern. Ausschalten holt sie nicht weg: ihre nächste Sicherung schlägt mit einer klaren Meldung fehl, statt woanders zu landen. Ausschalten?",
-  "repos.add": "Repository hinzufügen",
-  "repos.empty": "Noch keine Repositories. Alles nutzt das Repository seiner eigenen Domäne.",
-  "repos.directOf": "gehört zu {target} · Einträge: {n}",
-  "repos.companionLost": "neben einem gelöschten Ziel",
-  "repos.mirroredLocked": "Von {target} übernommen. Dort ändern.",
-  "repos.removeWithTarget": "Gehört zu {target}. Zum Entfernen dieses Repositorys das Ziel entfernen.",
-  "repos.offPremises": "Außer Haus",
-  "repos.offPremisesHint": "Zählt auf den Karten als eigener Standort für Standorte und 3-2-1. An den Kopien ändert das nichts. Ein rest-server im selben Haus sollte das aus haben.",
 
   // Refusals
   "placementCode.unreadable": "Die Ablage-Regeln ließen sich nicht lesen. Bis das wieder geht, wird nichts kopiert.",
@@ -4062,18 +3971,7 @@ export const de: Translations = {
   "directRepo.draftNote": "Entsteht zusammen mit dem Ordner-Set.",
 
   // Defaults
-  "placementDefaults.copyLine": "Einträge, deren Ort Kopierquelle ist:",
-  "placementDefaults.copyLineContainers": "Projektordner und Einträge, deren Ort Kopierquelle ist:",
   "placementDefaults.title": "Ablage-Vorgaben",
-  "placementDefaults.hint":
-    "Neue Einträge übernehmen den Ort beim ersten Backup. Eine Änderung verschiebt keine Backups. Die Kopien gelten sofort für jeden Eintrag ohne eigene Wahl.",
-  "placementDefaults.countFollow": "Folgen der Vorgabe: {n}",
-  "placementDefaults.countOwn": "Eigene Wahl: {n}",
-  "placementDefaults.countOpen": "Noch ohne Ort: {n}",
-  "placementDefaults.countChosenNoRun": "Ort eingetragen, ohne Backup: {n}",
-  "placementDefaults.homeOff":
-    "{home} ist ausgeschaltet. Einträge ohne Ort werden nicht gesichert, bis es wieder an ist oder die Vorgabe sich ändert.",
-  "placementDefaults.homeMissing": "Die Vorgabe zeigt auf ein Repository, das es nicht mehr gibt. Einträge ohne Ort werden nicht gesichert.",
   "placementDefaults.confirmHome": "Neue Einträge unter {domain} übernehmen {home} bei ihrem ersten Backup. Einträge mit eingetragenem Ort behalten ihn.",
   "placementDefaults.dropAsk": "Einträge und Projektordner, die {target} nicht mehr bekommt: {n}. Kopien, die dort bleiben: {copies}.",
   "placementDefaults.dropAskUnknown":
@@ -4082,13 +3980,7 @@ export const de: Translations = {
     "Einträge und Projektordner, die {target} ab jetzt bekommt: {n}. Beim nächsten Lauf hochgeladene Snapshots: höchstens {snapshots}.",
   "placementDefaults.openTakeHome": "Einträge ohne Ort, die bei ihrem ersten Backup {home} übernehmen: {n}.",
   "placementDefaults.apply": "Auf Einträge ohne Backups anwenden",
-  "placementDefaults.applyAsk": "Ort und Kopien gehen bei diesen Einträgen auf die Vorgabe zurück: {n}.",
-  "placementDefaults.applyLoses": "Verlieren dabei ihre eigene Wahl: {list}",
-  "placementDefaults.applyKeptBackups": "Bleiben, wie sie sind, weil sie Backups haben: {list}",
-  "placementDefaults.applyKeptUnreadable": "Bleiben, wie sie sind, weil ihr Ort nicht lesbar war: {list}",
   "placementDefaults.applyKeptChanged": "Inzwischen geändert und nicht angefasst: {list}",
-  "placementDefaults.applyNone": "Kein Eintrag ohne Backups weicht von der Vorgabe ab.",
-  "placementDefaults.applyBusy": "Ein Backup läuft. Danach erneut anwenden.",
   "placementDefaults.paused": "Off-site pausiert nach Neuaufbau",
   "placementDefaults.pausedHint":
     "Regeln und Vorgaben gingen mit der alten Konfiguration verloren. Aus {domain} wird nichts off-site kopiert, bis diese Vorgabe bestätigt ist. Einträge mit Karte lassen sich vorher auf Lokal stellen.",

@@ -126,8 +126,6 @@ export type SettingsTabProps = {
   setOffsiteWizard: Setter<OffsiteDomain | null>;
   domainToggleBusy: Partial<Record<DomainToggleKey, boolean>>;
   domainToggleShake: Partial<Record<DomainToggleKey, number>>;
-  setRetSaveState: SetSaveState;
-  setRetSaveError: SetSaveError;
   setPruneSaveState: SetSaveState;
   setPruneSaveError: SetSaveError;
   setReconcileSaveState: SetSaveState;

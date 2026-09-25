@@ -1,14 +1,12 @@
 import { Selector } from "../Selector";
 import type { SelectOption } from "../SelectField";
-import type { PlacementDomain, PlacementOptions, PlacementView, SegmentId, SendToOption } from "../../lib/api";
+import type { PlacementOptions, PlacementView, SegmentId, SendToOption } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { homeOptionLabel, lockedSegments, segmentItems, sendToLabel, viewHomeLabel } from "../../lib/placement";
 import { HomeSelect } from "./HomeSelect";
 import { TargetChips } from "./TargetChips";
 
 export interface PlacementBarProps {
-  domain: PlacementDomain;
-  context: "item" | "default" | "draft";
   view: PlacementView;
   options: PlacementOptions;
   host: string;
@@ -33,8 +31,6 @@ function withStored(list: SelectOption<string>[], value: string, label: string):
 }
 
 export function PlacementBar({
-  domain,
-  context,
   view,
   options,
   host,
@@ -50,17 +46,6 @@ export function PlacementBar({
   const segment = view.segment === "" ? null : view.segment;
   const homes = options.homes.map((h) => ({ value: h.id, label: homeOptionLabel(t, host, h) }));
   const sendTo = options.sendTo.map((s) => ({ value: sendToKey(s), label: sendToLabel(t, s) }));
-  const chips = (label: string) => (
-    <TargetChips
-      label={label}
-      targets={options.targets}
-      view={view}
-      options={options}
-      disabled={disabled}
-      hueOffset={hueOffset}
-      onToggle={onChip}
-    />
-  );
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <Selector
@@ -83,7 +68,17 @@ export function PlacementBar({
           onCommit={onHome}
         />
       )}
-      {segment === "local-offsite" && chips(t("placement.copyTo"))}
+      {segment === "local-offsite" && (
+        <TargetChips
+          label={t("placement.copyTo")}
+          targets={options.targets}
+          view={view}
+          options={options}
+          disabled={disabled}
+          hueOffset={hueOffset}
+          onToggle={onChip}
+        />
+      )}
       {segment === "offsite-only" && (
         <HomeSelect
           label={t("placement.sendTo")}
@@ -97,9 +92,6 @@ export function PlacementBar({
           }}
         />
       )}
-      {context === "default" &&
-        segment === "offsite-only" &&
-        chips(domain === "containers" ? t("placementDefaults.copyLineContainers") : t("placementDefaults.copyLine"))}
     </div>
   );
 }

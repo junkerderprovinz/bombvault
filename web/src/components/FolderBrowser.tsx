@@ -22,8 +22,8 @@ export interface FolderBrowserProps {
   placeholder?: string;
   /** One-line explanation of the field, shown as an (i) beside the label. */
   hint?: string;
-  /** False when the caller renders the label itself, as PathModeSwitch does on
-   *  the row it shares with its Local/Remote selector. */
+  /** False when the caller shows the label itself, as the restore folder's
+   *  card does in its title; the field then takes it as its accessible name. */
   renderLabel?: boolean;
   /** Render in place instead of as a dialog, for call sites that are already
    *  inside one. */
@@ -292,6 +292,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          aria-label={renderLabel ? undefined : label}
           spellCheck={false}
           placeholder={placeholder ?? "user/appdata"}
           dir="ltr"

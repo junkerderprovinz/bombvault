@@ -20,7 +20,6 @@ import {
   sendToLabel,
   stackNoteText,
   stepForChip,
-  stepForDefaultSegment,
   stepForHome,
   stepForReset,
   stepForSegment,
@@ -149,7 +148,6 @@ describe("steps", () => {
     expect(lockedSegments(placementView(), empty)).toEqual({ "offsite-only": "no-target" });
     expect(lockedSegments(placementView(), opts)).toEqual({});
     expect(stepForSegment("offsite-only", placementView(), empty, t, "Unraid")).toEqual({ kind: "none" });
-    expect(stepForDefaultSegment("offsite-only", defaultRow(), empty)).toEqual({ kind: "none" });
   });
 
   it("Stored on asks with the new home, and a chosen home picked again sends nothing", () => {
@@ -230,30 +228,6 @@ describe("defaults", () => {
     const none = placementOptions({ targets: [], sendTo: [] });
     expect(defaultSegment(defaultRow(), none)).toBe("local");
     expect(defaultView(defaultRow(), none).segment).toBe("local");
-    expect(stepForDefaultSegment("local", defaultRow(), none)).toEqual({ kind: "none" });
-  });
-
-  it("changes only the home of a default for Off-site only", () => {
-    expect(stepForDefaultSegment("offsite-only", defaultRow({ skip: ["t-b2"] }), placementOptions({ sendTo: [box] }))).toEqual({
-      kind: "change",
-      change: { home: "repo-box" },
-    });
-    expect(stepForDefaultSegment("offsite-only", defaultRow(), opts)).toEqual({ kind: "direct", target: sendToOption() });
-  });
-
-  it("sets the skip for Local and Local + off-site and brings a remote home back", () => {
-    expect(stepForDefaultSegment("local", defaultRow(), opts)).toEqual({ kind: "change", change: { skip: ["*"] } });
-    expect(stepForDefaultSegment("local-offsite", defaultRow({ home: "repo-box", homeKind: "remote", skip: ["*"] }), opts)).toEqual({
-      kind: "change",
-      change: { skip: [], home: "" },
-    });
-  });
-
-  it("also brings back a home that points at a deleted repository, not only a remote or direct one", () => {
-    expect(stepForDefaultSegment("local", defaultRow({ home: "repo-gone", homeKind: "missing" }), opts)).toEqual({
-      kind: "change",
-      change: { skip: ["*"], home: "" },
-    });
   });
 
   it("starts a draft at the default, following both axes", () => {

@@ -102,6 +102,14 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
+// The Storage tab opens with the places and domains cards, which read their own routes.
+vi.mock("../lib/places", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/places")>()),
+  listPlaces: () => Promise.resolve({ ok: true, places: [], unplaced: [] }),
+  getPlacesCatalog: () => Promise.resolve({ ok: true, providers: [] }),
+  getStorageDomains: () => Promise.resolve({ ok: true, domains: [] }),
+}));
+
 // Imported after vi.mock so the page picks up the mocked client.
 const { SettingsPage } = await import("./Settings");
 

@@ -1,14 +1,12 @@
 import { downloadRecoveryKit } from "../../../lib/api";
 import { FolderBrowser } from "../../../components/FolderBrowser";
-import { ReposCard } from "../ReposCard";
-import { PlacementDefaultsCard } from "../PlacementDefaultsCard";
+import { DomainsCard } from "../../../components/places/DomainsCard";
 import { PlacesCard } from "../../../components/places/PlacesCard";
 import { NumberField } from "../../../components/NumberField";
-import { PathModeSwitch } from "../../../components/PathModeSwitch";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { Button } from "../../../components/Button";
 import { RevealInput } from "../../../components/RevealInput";
-import type { Settings, RegistryAuthEntry } from "../../../lib/api";
+import type { RegistryAuthEntry } from "../../../lib/api";
 import { tLtr } from "../../../lib/ltrFragments";
 import { randomId } from "../../../lib/uuid";
 import { IconAdd, IconDownload, IconTrash } from "../../../components/Sidebar";
@@ -33,8 +31,6 @@ export function StorageTab({
   setPathSaveError,
   setExportEncSaveState,
   setExportEncSaveError,
-  setRetSaveState,
-  setRetSaveError,
   setPruneSaveState,
   setPruneSaveError,
   setReconcileSaveState,
@@ -58,200 +54,21 @@ export function StorageTab({
   return (
     <>
       <PlacesCard hueIndex={nextHue()} hostMountRoot={hostMountRoot} />
+      <DomainsCard hueIndex={nextHue()} />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE: Named repositories (#204)                                 */}
-      {/* ------------------------------------------------------------------ */}
-      {/* Above the domain paths on purpose: these are the places an INDIVIDUAL
-          container, VM or folder set can be pointed at instead of the domain
-          path below, so the more specific answer is read first. */}
-      <ReposCard hueIndex={nextHue()} />
-      <PlacementDefaultsCard hueIndex={nextHue()} />
-
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE: Backup paths                                              */}
-      {/* ------------------------------------------------------------------ */}
-      <Card title={t("settings.paths")} hint={t("settings.pathsHint").replace("{root}", hostMountRoot)} hueIndex={nextHue()}>
-        {/* Full-page Speichern-Button sweep (jdp, live review, emphatic:
-            "Die Speicher-Buttons sollen in allen Tabs weg. Überall soll es
-            automatisch speichern."): all six fields below used to batch into
-            one bottom SaveBar. Each now debounce-auto-saves itself instead,
-            the exact same `debouncedSave`-keyed-by-field-name shape the
-            Schedules tab's own `scheduleField` already established for
-            continuously-typed values (a path is typed/browsed the same way a
-            cron string is), just called directly here since these six PATCH
-            single independent fields rather than a whole cadence group.
-              `hueIndex={0..4}` below (GlimStone standing colour-engine rule,
-            closing the gap OffsiteWizard's own hueIndex doc comment already
-            named): these five PathModeSwitch rows are one related GROUP (own
-            local 0-based index per group, same rule as the Domains Card's
-            seven ToggleRows), separate from this Card's own heading
-            `nextHue()` call above. */}
-        <PathModeSwitch
-          label={t("settings.containersPath")}
-          domain="containers"
-          value={settings.containersPath}
-          hostMountRoot={hostMountRoot}
-          onChange={(v) => {
-            setSettings((prev) => prev ? { ...prev, containersPath: v } : prev);
-            debouncedSave("containersPath", () =>
-              void save({ containersPath: v }, setPathSaveState, setPathSaveError)
-            );
-          }}
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          hueIndex={0}
-        />
-        <PathModeSwitch
-          label={t("settings.vmsPath")}
-          domain="vms"
-          value={settings.vmsPath}
-          hostMountRoot={hostMountRoot}
-          onChange={(v) => {
-            setSettings((prev) => prev ? { ...prev, vmsPath: v } : prev);
-            debouncedSave("vmsPath", () =>
-              void save({ vmsPath: v }, setPathSaveState, setPathSaveError)
-            );
-          }}
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          hueIndex={1}
-        />
-        <PathModeSwitch
-          label={t("settings.flashPath")}
-          domain="flash"
-          value={settings.flashPath}
-          hostMountRoot={hostMountRoot}
-          onChange={(v) => {
-            setSettings((prev) => prev ? { ...prev, flashPath: v } : prev);
-            debouncedSave("flashPath", () =>
-              void save({ flashPath: v }, setPathSaveState, setPathSaveError)
-            );
-          }}
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          hueIndex={2}
-        />
-        <PathModeSwitch
-          label={t("settings.configPath")}
-          domain="config"
-          value={settings.configPath}
-          hostMountRoot={hostMountRoot}
-          onChange={(v) => {
-            setSettings((prev) => prev ? { ...prev, configPath: v } : prev);
-            debouncedSave("configPath", () =>
-              void save({ configPath: v }, setPathSaveState, setPathSaveError)
-            );
-          }}
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          hueIndex={3}
-        />
-        <PathModeSwitch
-          label={t("settings.filesPath")}
-          domain="files"
-          value={settings.filesPath}
-          hostMountRoot={hostMountRoot}
-          onChange={(v) => {
-            setSettings((prev) => prev ? { ...prev, filesPath: v } : prev);
-            debouncedSave("filesPath", () =>
-              void save({ filesPath: v }, setPathSaveState, setPathSaveError)
-            );
-          }}
-          settings={settings}
-          setSettings={setSettings}
-          save={save}
-          hueIndex={4}
-        />
+      <Card title={t("settings.restoreFolder")} hint={t("settings.restoreFolderHint")} hueIndex={nextHue()}>
         <FolderBrowser
           label={t("settings.restoreFolder")}
           value={settings.restoreFolder}
           hostMountRoot={hostMountRoot}
-          hint={t("settings.restoreFolderHint")}
+          renderLabel={false}
           onChange={(v) => {
-            setSettings((prev) => prev ? { ...prev, restoreFolder: v } : prev);
-            debouncedSave("restoreFolder", () =>
-              void save({ restoreFolder: v }, setPathSaveState, setPathSaveError)
-            );
+            setSettings((prev) => (prev ? { ...prev, restoreFolder: v } : prev));
+            debouncedSave("restoreFolder", () => void save({ restoreFolder: v }, setPathSaveState, setPathSaveError));
           }}
         />
       </Card>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE: Local snapshot retention (#51, moved here from Off-site,    */}
-      {/* so it sits with the local backup paths it prunes).                   */}
-      {/* ------------------------------------------------------------------ */}
-      <Card
-        title={t("settings.retentionTitle")}
-        // Live-review round 3, point 4 sweep: this Card's own intro used to
-        // sit as a permanent visible <p> below the title instead of going
-        // through the Card `hint` mechanism every OTHER Card-level intro in
-        // this file already uses, a plain miss, not a documented exception
-        // (compare settings.offsiteHint further down, which stayed visible
-        // on purpose with its own comment explaining why). retentionHint
-        // (what this Card does) and retentionCombineInfo (the OR-combination
-        // rule, a "why wasn't this pruned" answer someone re-checks, same
-        // category as notify.healthchecksLifecycle's carve-out) both fold
-        // into the one title-level bubble rather than leaving the second as
-        // an orphaned bare icon once the wrapping <p> it lived in is gone.
-        hint={`${t("settings.retentionHint")} ${t("settings.retentionCombineInfo")}`}
-        hueIndex={nextHue()}
-      >
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {([
-            ["retentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
-            ["retentionKeepDaily", "settings.retentionDaily", "settings.retentionDailyInfo"],
-            ["retentionKeepWeekly", "settings.retentionWeekly", "settings.retentionWeeklyInfo"],
-            ["retentionKeepMonthly", "settings.retentionMonthly", "settings.retentionMonthlyInfo"],
-          ] as const).map(([key, label, info]) => (
-            <label key={key} className="flex flex-col gap-1">
-              <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                {t(label)}
-                <InfoBubble tip={t(info)} />
-              </span>
-              <NumberField
-                min={0}
-                value={settings[key]}
-                onChange={(e) => {
-                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
-                  setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
-                  // Full-page Speichern-Button sweep: this whole grid used to
-                  // batch into one bottom SaveBar, each cell now debounce-
-                  // auto-saves itself, keyed by its own field name so typing
-                  // in one cell never resets another cell's pending timer.
-                  debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setRetSaveState, setRetSaveError));
-                }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-              />
-            </label>
-          ))}
-        </div>
-      </Card>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE: Image cleanup and Unraid's own update-status                */}
-      {/* reconciliation (GlimStone follow-up round, merge A): both feed the   */}
-      {/* SAME post-backup container-update pipeline (#56, #116). Every field  */}
-      {/* here auto-saves instead of batching into a Speichern button,         */}
-      {/* mirrors the Domains card's own auto-save mechanism (#142): both      */}
-      {/* toggles use the exact optimistic-flip + persist + revert-on-failure  */}
-      {/* shape toggleDomainEnabled established (see autoSaveField below).     */}
-      {/*   Private container registries (#106) USED to be a third             */}
-      {/* sub-section merged into this same card. SPLIT BACK OUT into its own  */}
-      {/* standalone Card below (jdp, live-review: "Registries: wir machen     */}
-      {/* eine eigene Card daraus"), a registry credential is consulted BY     */}
-      {/* the update-pull, but isn't itself image cleanup or Unraid's own      */}
-      {/* status reconciliation, so the merge was really "three things on the  */}
-      {/* same Storage tab," not three parts of one coherent decision; this    */}
-      {/* undoes exactly that, not a mechanical revert of merge A as a whole.  */}
-      {/* This card's own title/hint (settings.imageMaintenanceTitle/-Hint,    */}
-      {/* same keys, retitled values) dropped every registries mention         */}
-      {/* accordingly.                                                        */}
-      {/* ------------------------------------------------------------------ */}
       <Card title={t("settings.imageMaintenanceTitle")} hint={t("settings.imageMaintenanceHint")} hueIndex={nextHue()}>
         <ToggleRow
           label={t("settings.pruneImageAfterUpdate")}
@@ -273,20 +90,6 @@ export function StorageTab({
         />
       </Card>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE: private container registries (#106), its own standalone     */}
-      {/* Card again, see the Image Cleanup card's own comment above for why   */}
-      {/* it split out. `hint` now carries what used to be a separate          */}
-      {/* <h3>+InfoBubble pair right inside the merged card                    */}
-      {/* (settings.registriesTitle/-Hint, unchanged keys/values, just         */}
-      {/* promoted to the Card's own title/hint slot), the exact same          */}
-      {/* content, through the ONE heading+bubble mechanism every other Card   */}
-      {/* on this page already uses instead of a second, bespoke one. No       */}
-      {/* `border-t` divider carried over either, that only ever separated     */}
-      {/* this sub-section from its two former siblings; a standalone Card     */}
-      {/* already has its own surface/edge doing that job, same as every       */}
-      {/* other single-purpose Card in this file.                              */}
-      {/* ------------------------------------------------------------------ */}
       <Card title={t("settings.registriesTitle")} hint={t("settings.registriesHint")} hueIndex={nextHue()}>
         <div className="flex flex-col gap-3">
           {settings.registryAuths.length === 0 && (
