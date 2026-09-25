@@ -1482,7 +1482,7 @@ export const en = {
   // Step 3 — attach your backups
   "recovery.step2": "Attach your backups",
   "recovery.attachHint": "Point BombVault at your existing backups: a local path under the host mount, or an off-site repo (rest / S3 / B2 / sftp / rclone) with its credentials. Then connect to confirm.",
-  "recovery.credsSaveHint": "A place added in the window is saved at once. Add the place your backups lie on before you connect & preview.",
+  "recovery.credsSaveHint": "A path that belongs to a storage place is not changed here. To read backups from another place, add it below, choose it as Stored in under Settings, Storage, then connect & preview.",
   "recovery.connectPreview": "Connect & preview",
   // Encryption mode — DETECTED, not asserted. The repositories themselves say
   // whether they need the APP_KEY-derived password, so the common path (attach
@@ -2281,10 +2281,11 @@ export const en = {
   "storageDomains.copyFailed": "Copying could not start.",
   "cloud.credSets.placeOwned": "The credentials of this storage place. Change them in its details under Settings, Storage.",
   "recovery.places": "Storage places (optional)",
-  "recovery.placesHint": "Only needed when a backup lies in the cloud or on a server: connect that place here so its credentials are known. A local path or a mounted share needs nothing here.",
+  "recovery.placesHint": "Connect the place your backups lie on, here or in the cloud. It is saved at once, and a domain reads its backups there once you choose the place as Stored in under Settings, Storage.",
   "placement.copyToHint": "A place that is not a copy target of this domain yet becomes one in the domain's row under Settings, Storage, Domains.",
   "storageDomains.unplacedTargets": "{list}, without a place",
   "storageDomains.unplacedTargetsHint": "The address of these targets fits no place, and they keep copying as before. Assign one to a place under Without a place to switch it here.",
+  "recovery.placeKept": "An address that belongs to a storage place stayed as it was. To read backups from another place, choose it as Stored in under Settings, Storage.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -3518,7 +3519,7 @@ export const de: Translations = {
   // Schritt 3 — Backups anhängen
   "recovery.step2": "Backups anhängen",
   "recovery.attachHint": "Richte BombVault auf deine vorhandenen Backups aus: einen lokalen Pfad unter dem Host-Mount oder ein Off-site-Repo (rest / S3 / B2 / sftp / rclone) mit den zugehörigen Zugangsdaten. Verbinde dich dann, um es zu bestätigen.",
-  "recovery.credsSaveHint": "Ein im Fenster hinzugefügter Ort ist sofort gespeichert. Füge den Ort, auf dem deine Backups liegen, hinzu, bevor du „Verbinden & prüfen“ klickst.",
+  "recovery.credsSaveHint": "Ein Pfad, der zu einem Speicherort gehört, wird hier nicht geändert. Um Backups von einem anderen Ort zu lesen, füge ihn unten hinzu, wähle ihn unter Einstellungen, Speicher als „Gespeichert in“ und klicke dann „Verbinden & prüfen“.",
   "recovery.connectPreview": "Verbinden & prüfen",
   // Verschlüsselungsmodus — ERKANNT, nicht behauptet. Die Repositories sagen
   // selbst, ob sie das aus dem APP_KEY abgeleitete Passwort brauchen. Der
@@ -4280,10 +4281,11 @@ export const de: Translations = {
   "storageDomains.copyFailed": "Kopieren konnte nicht starten.",
   "cloud.credSets.placeOwned": "Die Zugangsdaten dieses Speicherorts. Du änderst sie in seinen Details unter Einstellungen, Speicher.",
   "recovery.places": "Speicherorte (optional)",
-  "recovery.placesHint": "Nur nötig, wenn ein Backup in der Cloud oder auf einem Server liegt: Verbinde diesen Ort hier, damit seine Zugangsdaten bekannt sind. Für einen lokalen Pfad oder eine eingebundene Freigabe brauchst du hier nichts.",
+  "recovery.placesHint": "Verbinde den Ort, an dem deine Backups liegen, hier im Haus oder in der Cloud. Er ist sofort gespeichert, und eine Domäne liest ihre Backups dort, sobald du den Ort unter Einstellungen, Speicher als „Gespeichert in“ wählst.",
   "placement.copyToHint": "Ein Ort, der noch kein Kopieziel dieser Domäne ist, wird es in der Zeile der Domäne unter Einstellungen, Speicher, Domänen.",
   "storageDomains.unplacedTargets": "{list}, ohne Ort",
   "storageDomains.unplacedTargetsHint": "Die Adresse dieser Ziele passt zu keinem Ort, und sie kopieren weiter wie bisher. Ordne eines unter „Ohne Ort“ einem Ort zu, um es hier zu schalten.",
+  "recovery.placeKept": "Eine Adresse, die zu einem Speicherort gehört, ist geblieben, wie sie war. Um Backups von einem anderen Ort zu lesen, wähle ihn unter Einstellungen, Speicher als „Gespeichert in“.",
 };
 
 // ---------------------------------------------------------------------------

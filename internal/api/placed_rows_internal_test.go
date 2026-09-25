@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"reflect"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/places"
@@ -230,6 +231,43 @@ func TestAStaleSettingsSaveIsNotRefusedOverLocationsItKeeps(t *testing.T) {
 	}
 	if got.ContainersPath != "backups/containers-2" || got.ContainersOffsite != "s3:https://s3.example.com/bucket-2/container" || got.DefaultLanguage != "de" {
 		t.Fatalf("containers = %q, %q, language %q, want the places' locations and the language saved", got.ContainersPath, got.ContainersOffsite, got.DefaultLanguage)
+	}
+}
+
+func TestASettingsSaveNamesTheLocationsItKeptForTheirPlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(store.Place{Name: "Unraid", Provider: "unraid-folder", Kind: string(places.KindLocal), Base: "backups",
+		Folders: map[string]string{"containers": "containers", "vms": "vms", "files": "files"}, Enabled: true}, "containers")
+	nasBase := "rest:http://u:p@nas.lan:8000/bv" //nolint:gosec // G101: a test-fixture literal, not a real credential
+	nas := f.storePlace(store.Place{Name: "NAS", Provider: "rest-server", Kind: string(places.KindREST),
+		Base: nasBase, Folders: places.DefaultFolders(), Enabled: true})
+	f.placedFieldRow("vms", nas)
+	read := func() map[string]any {
+		settings, _ := f.do(http.MethodGet, "/api/settings", nil)["settings"].(map[string]any)
+		return settings
+	}
+	kept := func(res map[string]any) []any {
+		t.Helper()
+		if res["ok"] != true {
+			t.Fatalf("PUT /api/settings = %v", res)
+		}
+		k, _ := res["kept"].([]any)
+		return k
+	}
+
+	asRead := read()
+	if asRead["vmsOffsite"] != "rest:http://[redacted]@nas.lan:8000/bv/vms" {
+		t.Fatalf("vms off-site field as read = %v, want it redacted", asRead["vmsOffsite"])
+	}
+	if got := kept(f.do(http.MethodPut, "/api/settings", asRead)); len(got) != 0 {
+		t.Fatalf("a save of the settings as read kept %v, want nothing", got)
+	}
+	typed := read()
+	typed["containersPath"] = "backups/old"
+	typed["vmsOffsite"] = "rest:http://u:p@old.lan:8000/bv/vms"
+	typed["filesPath"] = "backups/files-2"
+	if got := kept(f.do(http.MethodPut, "/api/settings", typed)); !reflect.DeepEqual(got, []any{"containersPath", "vmsOffsite"}) {
+		t.Fatalf("kept = %v, want the path and the off-site field their places own", got)
 	}
 }
 
