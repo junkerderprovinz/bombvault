@@ -133,3 +133,24 @@ func TestOnlyCopiesToAnOffPremisesTargetMakeTheDomainConfigured(t *testing.T) {
 		t.Fatal("every item leaves B2 out and is copied only to the NAS in the house, so nothing is off site")
 	}
 }
+
+func TestAProjectFolderCopiedOnlyInTheHouseIsNoOffsiteCopy(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
+	here := f.storePlace(nasKeller())
+	f.linkRow(nas.ID, here, "containers", "")
+	f.container("nginx", "")
+	f.rule("containers", "container:nginx", store.SkipAll)
+	f.listing("containers", nas.ID, 1_758_000_000, copiesRow("stack:immich", 3, 1_757_900_000))
+
+	if f.domainStatus("containers").OffsiteConfigured {
+		t.Fatal("a project folder copied only to the NAS in the house makes nothing off site")
+	}
+
+	here.OffPremises = true
+	f.storePlace(here)
+	if !f.domainStatus("containers").OffsiteConfigured {
+		t.Fatal("with the NAS at another site, the project folder's copy there is off site")
+	}
+}
