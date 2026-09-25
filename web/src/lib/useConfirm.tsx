@@ -144,7 +144,7 @@ export function useConfirm() {
 
 /** useDialogKeys gives an open dialog Escape from anywhere and a Tab trap over
  *  its own controls, so focus never reaches the page it covers. The card must
- *  be marked aria-modal: a window opened on top of it, such as a question
+ *  carry aria-modal="true": a window opened on top of it, such as a question
  *  asked from inside it, is the last such card in the document and takes the
  *  keys. */
 export function useDialogKeys(open: boolean, dialogRef: RefObject<HTMLDivElement | null>, onCancel: () => void): void {
@@ -155,7 +155,7 @@ export function useDialogKeys(open: boolean, dialogRef: RefObject<HTMLDivElement
       // listener runs, which would leave this one looking like the top.
       if (e.defaultPrevented) return;
       const card = dialogRef.current;
-      const windows = document.querySelectorAll("[aria-modal]");
+      const windows = document.querySelectorAll('[aria-modal="true"]');
       if (!card || windows[windows.length - 1] !== card) return;
       if (e.key === "Escape") {
         e.preventDefault();
