@@ -48,3 +48,11 @@ type ProbeResult struct {
 // FactBaseIsRepository says the address of a new place holds a repository
 // already, so the place is offered as that repository.
 const FactBaseIsRepository = "places.probe.baseIsRepository"
+
+const (
+	// FactBucketsHidden says the key may not list buckets, so the bucket is typed.
+	FactBucketsHidden = "places.probe.bucketsHidden"
+	// FactBucketNew names a typed bucket the key does not see; restic creates it
+	// on the first backup. Params: bucket.
+	FactBucketNew = "places.probe.bucketNew"
+)
