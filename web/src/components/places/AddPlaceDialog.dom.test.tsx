@@ -17,6 +17,7 @@ const CATALOG: CatalogProvider[] = [
   },
   { id: "minio", group: "self", kind: "s3", fields: [{ key: "endpoint" }, { key: "keyId" }, { key: "secret", secret: true }] },
   { id: "unraid-folder", group: "here", kind: "local", offPremises: false, pickRoots: ["user", ""], fields: [{ key: "path" }] },
+  { id: "bombvault", group: "self", kind: "rest", fields: [{ key: "url" }, { key: "user" }, { key: "password", secret: true }] },
 ];
 const creates: CreatePlaceBody[] = [];
 let catalog: () => Promise<OkEnvelope & { providers?: CatalogProvider[] }>;
@@ -34,6 +35,23 @@ vi.mock("../../lib/places", async (importOriginal) => {
     },
   };
 });
+
+vi.mock("../../lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/api")>()),
+  listMeshOffers: () =>
+    Promise.resolve({
+      ok: true,
+      offers: [
+        { id: "o1", from: "DXP480T", suggestedDomain: "vms", repo: "rest:http://192.0.2.5:8000/bv/vms", restUser: "bv", status: "pending", receivedAt: 1_758_170_400 },
+      ],
+    }),
+  getNewTargetPreview: () =>
+    Promise.resolve({
+      ok: true,
+      preview: { items: 4, formerlyExcluded: [{ identity: "vm:win11", skip: [] }], defaultExcludes: true, snapshots: 30, bytes: null, unreadable: [] },
+    }),
+  acceptMeshOffer: () => Promise.resolve({ ok: true, target: { id: "t9" }, place: { id: "p9", name: "mesh: DXP480T" } }),
+}));
 
 const { AddPlaceDialog } = await import("./AddPlaceDialog");
 
@@ -148,5 +166,37 @@ describe("AddPlaceDialog", () => {
     fireEvent.change(within(dialog()).getByLabelText(en["places.form.name"]), { target: { value: "B2 $& $' co" } });
     await click(button("places.form.add"));
     expect(screen.getByText(en["places.added"].replace("{name}", () => "B2 $& $' co"))).toBeTruthy();
+  });
+});
+
+describe("AddPlaceDialog offers", () => {
+  async function acceptOffer() {
+    const opened = await open();
+    await click(tile(en["places.provider.bombvault"]));
+    await click(await within(dialog()).findByRole("button", { name: en["fleet.mesh.accept"] }));
+    return { ...opened, question: screen.getByRole("dialog", { name: en["confirmDialog.title"] }) };
+  }
+
+  it("answers Escape in the accept question and keeps the window", async () => {
+    const { onClose } = await acceptOffer();
+    await act(async () => {
+      fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+    });
+    expect(screen.queryByRole("dialog", { name: en["confirmDialog.title"] })).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(within(dialog()).getByRole("button", { name: en["fleet.mesh.accept"] })).toBeTruthy();
+  });
+
+  it("closes once an offer is accepted, and says the place keeps its copies already", async () => {
+    const changed = vi.fn();
+    window.addEventListener(PLACES_CHANGED, changed);
+    const { onClose, onAdded, question } = await acceptOffer();
+    await click(within(question).getByRole("button", { name: en["common.confirm"] }));
+    expect(onAdded).toHaveBeenCalledWith({ id: "p9", name: "mesh: DXP480T" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(changed).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(en["places.offerAccepted"].replace("{name}", "mesh: DXP480T"))).toBeTruthy();
+    expect(screen.queryByText(en["places.added"].replace("{name}", "mesh: DXP480T"))).toBeNull();
+    window.removeEventListener(PLACES_CHANGED, changed);
   });
 });

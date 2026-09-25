@@ -24,13 +24,23 @@ const { MeshOffers } = await import("./MeshOffers");
 
 describe("MeshOffers", () => {
   beforeEach(() => fake.reset());
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
 
   it("lists the open offers only", async () => {
     renderWithProviders(<MeshOffers onAccepted={vi.fn()} />);
     expect(await screen.findByText("DXP480T")).toBeTruthy();
     expect(screen.queryByText("Old box")).toBeNull();
     expect(screen.getByText(en["places.offers.title"])).toBeTruthy();
+  });
+
+  it("renders an offer without a warning from React", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    renderWithProviders(<MeshOffers onAccepted={vi.fn()} />);
+    await screen.findByText("DXP480T");
+    expect(error).not.toHaveBeenCalled();
   });
 
   it("hands the place an accepted offer made to the window", async () => {

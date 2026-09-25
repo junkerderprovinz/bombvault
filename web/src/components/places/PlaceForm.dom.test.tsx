@@ -99,12 +99,19 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-async function form(provider: CatalogProvider, onAdded = vi.fn()) {
+async function form(provider: CatalogProvider, onAdded = vi.fn(), onAccepted = vi.fn()) {
   await act(async () => {
     render(
       <I18nProvider>
         <ToastProvider>
-          <PlaceForm provider={provider} hostMountRoot="/mnt" onBack={vi.fn()} onCancel={vi.fn()} onAdded={onAdded} />
+          <PlaceForm
+            provider={provider}
+            hostMountRoot="/mnt"
+            onBack={vi.fn()}
+            onCancel={vi.fn()}
+            onAdded={onAdded}
+            onAccepted={onAccepted}
+          />
         </ToastProvider>
       </I18nProvider>
     );
@@ -416,10 +423,12 @@ describe("PlaceForm rest-server", () => {
 const BOMBVAULT: CatalogProvider = { ...REST, id: "bombvault" };
 
 describe("PlaceForm Another BombVault", () => {
-  it("adds the place an accepted offer made", async () => {
-    const onAdded = await form(BOMBVAULT);
+  it("hands the place an accepted offer made to onAccepted, not onAdded", async () => {
+    const onAccepted = vi.fn();
+    const onAdded = await form(BOMBVAULT, vi.fn(), onAccepted);
     fireEvent.click(screen.getByRole("button", { name: "accept an offer" }));
-    expect(onAdded).toHaveBeenCalledWith({ id: "p9", name: "mesh: tower" });
+    expect(onAccepted).toHaveBeenCalledWith({ id: "p9", name: "mesh: tower" });
+    expect(onAdded).not.toHaveBeenCalled();
     expect(screen.queryByRole("button", { name: en["places.recipe.show"] })).toBeNull();
   });
 

@@ -3,7 +3,7 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { SelectField } from "./SelectField";
 import { useNewTargetQuestion } from "./placement/NewTargetQuestion";
-import { acceptMeshOffer, declineMeshOffer, type MeshOffer, type OffsiteDomain, type OkEnvelope } from "../lib/api";
+import { acceptMeshOffer, declineMeshOffer, type MeshOffer, type OffsiteDomain } from "../lib/api";
 import type { TranslationKey, useT } from "../lib/i18n";
 import { placementChanged } from "../lib/placementEvents";
 import { placesChanged, type Place } from "../lib/places";
@@ -92,11 +92,7 @@ export function MeshOfferRow({
       return;
     }
     try {
-      const res: OkEnvelope & { place?: Place } = await acceptMeshOffer(
-        offer.id,
-        domain,
-        answer.alsoExclude ?? undefined
-      );
+      const res = await acceptMeshOffer(offer.id, domain, answer.alsoExclude ?? undefined);
       if (res.ok) {
         // Accepting makes a place with the peer's REST login as its
         // credential set and the domain's target there, so every mounted
@@ -160,7 +156,7 @@ export function MeshOfferRow({
             />
           </label>
           <Button
-            key={shakeDecline}
+            key={`decline-${shakeDecline}`}
             label={t("fleet.mesh.decline")}
             labelKey="fleet.mesh.decline"
             tone="neutral"
@@ -171,7 +167,7 @@ export function MeshOfferRow({
             }`}
           />
           <Button
-            key={shakeAccept}
+            key={`accept-${shakeAccept}`}
             label={t("fleet.mesh.accept")}
             labelKey="fleet.mesh.accept"
             tone="accent"

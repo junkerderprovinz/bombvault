@@ -1,3 +1,5 @@
+import type { Place } from "./places";
+
 // ---------------------------------------------------------------------------
 // API types — match the Go JSON shapes exactly
 // ---------------------------------------------------------------------------
@@ -3813,11 +3815,10 @@ export function disableFleetToken(): Promise<OkEnvelope> {
 }
 
 // ---------------------------------------------------------------------------
-// Mesh off-site API — a fleet peer OFFERING its own off-site storage (a
+// Mesh off-site API: a fleet peer offering its own off-site storage (a
 // rest-server it deploys itself), so the two admins don't have to exchange a
-// URL and password out of band. BombVault never hosts storage itself; accept
-// only ever creates a normal named credential set + off-site target, both
-// pre-existing mechanisms.
+// URL and password out of band. BombVault never hosts storage itself;
+// accepting makes an ordinary storage place for the offered domain.
 // ---------------------------------------------------------------------------
 
 export interface MeshOffer {
@@ -3840,17 +3841,16 @@ export function listMeshOffers(): Promise<OkEnvelope & { offers?: MeshOffer[] }>
 }
 
 /**
- * POST /api/fleet/mesh-offers/{id}/accept — turns a pending offer into a real
- * off-site target for the given domain (a new named credential set holding
- * the peer's REST credentials, plus an off-site target pointing at the
- * offer's repo). Neither is probed for reachability before creation — use
- * the existing Test button on the created target for that.
+ * POST /api/fleet/mesh-offers/{id}/accept makes a place for the given domain
+ * out of a pending offer: the peer's REST login is its credential set, and
+ * the domain's target sits at the offer's repo. Nothing is probed first; the
+ * place's own test does that.
  */
 export function acceptMeshOffer(
   id: string,
   domain: string,
   alsoExclude?: NewTargetExclusion
-): Promise<OkEnvelope & { target?: OffsiteTarget }> {
+): Promise<OkEnvelope & { target?: OffsiteTarget; place?: Place }> {
   return fetchJSON(`/api/fleet/mesh-offers/${encodeURIComponent(id)}/accept`, {
     method: "POST",
     body: JSON.stringify(alsoExclude ? { domain, alsoExclude } : { domain }),
