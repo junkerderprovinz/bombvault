@@ -159,6 +159,7 @@ export function PlacesCard({ hueIndex, hostMountRoot }: { hueIndex?: number; hos
             place={p}
             provider={providers.find((c) => c.id === p.provider)}
             hueIndex={i}
+            hostMountRoot={hostMountRoot}
             onSaved={saved}
           />
         ))}

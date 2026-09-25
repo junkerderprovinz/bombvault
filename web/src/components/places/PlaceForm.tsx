@@ -106,6 +106,11 @@ const ROOT_KEYS: Record<string, TranslationKey> = {
   "": "places.root.disks",
 };
 
+/** folderRoots are the folder browser's roots for a local provider, as its catalog entry names them. */
+export function folderRoots(provider: CatalogProvider): { path: string; labelKey: TranslationKey }[] {
+  return (provider.pickRoots ?? []).map((path) => ({ path, labelKey: ROOT_KEYS[path] ?? "places.root.disks" }));
+}
+
 const FIELD_CLASS = "w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
 /** The empty first choice of a field that lists what the probe found. */
@@ -272,7 +277,7 @@ export function PlaceForm({
           hostMountRoot={hostMountRoot}
           placeholder={f.placeholder}
           inDialog
-          roots={(provider.pickRoots ?? []).map((path) => ({ path, labelKey: ROOT_KEYS[path] ?? "places.root.disks" }))}
+          roots={folderRoots(provider)}
         />
       );
     }
