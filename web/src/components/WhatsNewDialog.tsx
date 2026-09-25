@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useT } from "../lib/i18n";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
+import { WindowActions } from "./WindowActions";
 
 const REPO = "junkerderprovinz/bombvault";
 const RELEASES_PAGE = `https://github.com/${REPO}/releases`;
@@ -257,7 +258,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
         </div>
 
         {/* size="large" gives the link the same weight as the Close button. */}
-        <div className="flex items-center justify-between gap-3 px-5 py-4">
+        <WindowActions>
           <Badge
             as="a"
             href={fullUrl}
@@ -275,7 +276,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
             tone="neutral"
             onClick={onClose}
           />
-        </div>
+        </WindowActions>
       </div>
     </div>
   );

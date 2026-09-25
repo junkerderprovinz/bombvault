@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
+import { WindowActions } from "./WindowActions";
 import { CoinMark } from "./donateMarks";
 import { QRCode } from "./QRCode";
 import { hueVars } from "../lib/appearance";
@@ -81,7 +82,7 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
           </h2>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-1">
           <p className="text-sm text-carbon-textSub">{t("about.cryptoIntro")}</p>
 
           <div className="flex flex-col items-center gap-3 rounded-card bg-carbon-surface2 p-4">
@@ -182,9 +183,9 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
 
         </div>
 
-        <div className="flex justify-end gap-2 px-5 pb-5">
+        <WindowActions>
           <Button label={t("common.close")} labelKey="common.close" tone="neutral" onClick={onClose} />
-        </div>
+        </WindowActions>
       </div>
     </div>,
     document.body

@@ -20,6 +20,8 @@ vi.mock("../lib/api", async (importOriginal) => ({
 const { ConfirmDialog } = await import("./ConfirmDialog");
 const { DirectRepoDialog } = await import("./placement/DirectRepoDialog");
 const { useConfirm } = await import("../lib/useConfirm");
+const { CryptoDonateDialog } = await import("./CryptoDonateDialog");
+const { WhatsNewDialog } = await import("./WhatsNewDialog");
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -87,15 +89,31 @@ const WINDOWS: Shown[] = [
     open: () => shown(<DirectRepoDialog target={{ id: "t1", name: "B2" }} mode="create" onDone={() => {}} onClose={() => {}} />),
     last: en["directRepo.addAndUse"],
   },
+  {
+    file: "components/CryptoDonateDialog.tsx",
+    name: "the crypto window",
+    open: () => shown(<CryptoDonateDialog onClose={() => {}} />),
+    last: en["common.close"],
+  },
+  {
+    file: "components/WhatsNewDialog.tsx",
+    name: "the release notes",
+    open: () => {
+      vi.stubGlobal("fetch", async () => ({
+        ok: true,
+        json: async () => ({ ok: true, body: "## Fixed\n\n- a thing", htmlUrl: "https://example.org" }),
+      }));
+      shown(<WhatsNewDialog version="v9.0.0" onClose={() => {}} />);
+    },
+    last: en["whatsnew.close"],
+  },
 ];
 
 /** Windows that still keep their own footer, each taken off by the change that
  *  gives it the shared row. */
 const PENDING = new Set<string>([
-  "components/CryptoDonateDialog.tsx",
   "components/ErrorDetailPanel.tsx",
   "components/FolderBrowser.tsx",
-  "components/WhatsNewDialog.tsx",
   // Listed ahead of the add-place window itself, so its arrival does not trip
   // the scan. It comes off once both of its steps end in WindowActions, and
   // this list and its honesty test go with it.
@@ -124,7 +142,10 @@ function windowFiles(): Map<string, number> {
   return found;
 }
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("every window", () => {
   it("is rendered below, unless it waits its turn", () => {
