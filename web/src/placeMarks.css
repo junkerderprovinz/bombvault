@@ -1,0 +1,239 @@
+/* The storage place marks in their brand colours (components/placeMarks.tsx).
+   Each mark draws in --place-* tokens: the dark set for a dark ground, the
+   light set for a light one. A mark drawn in navy or black keeps its hue and
+   saturation and is lightened on the dark ground, one in near-white is
+   darkened on the light ground, until it reads at 2:1 or better. */
+
+:root,
+[data-theme="dark"] {
+  --place-b2-0: #e21e29;
+  --place-aws-0: #ffffff;
+  --place-aws-1: #ff9900;
+  --place-cloudflare-0: #f38020;
+  --place-wasabi-0: #01cd3e;
+  --place-hetzner-0: #d50c2d;
+  --place-storj-0: #0052ff;
+  --place-idrive-0: #1372ba;
+  --place-idrive-1: #ef4441;
+  --place-scaleway-0: #c48dfb;
+  --place-ovh-0: #6eaae7;
+  --place-digitalocean-0: #0080ff;
+  --place-ionos-0: #66a7ff;
+  --place-contabo-0: #00aaeb;
+  --place-exoscale-0: #da291c;
+  --place-vultr-0: #007bfc;
+  --place-googlecloud-0: #4285f4;
+  --place-azure-0: #0072c6;
+  --place-minio-0: #c72e49;
+  --place-seaweedfs-0: #23b5e6;
+  --place-seaweedfs-1: #138bcf;
+  --place-seaweedfs-2: #057ffe;
+  --place-seaweedfs-3: #9fecf6;
+  --place-seaweedfs-4: #62dff2;
+  --place-seaweedfs-5: #0a6cb7;
+  --place-seaweedfs-6: #c9f9fd;
+  --place-seaweedfs-7: #9fe7f6;
+  --place-seaweedfs-8: #36bbe5;
+  --place-seaweedfs-9: #2ab6e3;
+  --place-seaweedfs-10: #43cbee;
+  --place-seaweedfs-11: #29a1d6;
+  --place-seaweedfs-12: #0184f1;
+  --place-seaweedfs-13: #ffffff;
+  --place-garage-0: #828282;
+  --place-garage-1: #45c8ff;
+  --place-garage-2: #ff9329;
+  --place-garage-3: #828282;
+  --place-ceph-0: #f0424d;
+  --place-rustfs-0: #0196d0;
+  --place-versity-0: #c3c7dc;
+  --place-nextcloud-0: #0082c9;
+  --place-owncloud-0: #6da7f6;
+  --place-opencloud-0: #ffffff;
+  --place-rclone-0: #3f79ad;
+  --place-synology-0: #b5b5b6;
+  --place-qnap-0: #4f7def;
+  --place-truenas-0: #0095d5;
+  --place-unraid-0: #f15a2c;
+}
+
+[data-theme="light"] {
+  --place-b2-0: #c81a23;
+  --place-aws-0: #252f3e;
+  --place-aws-1: #bf7300;
+  --place-cloudflare-0: #a45009;
+  --place-wasabi-0: #017222;
+  --place-hetzner-0: #d50c2d;
+  --place-storj-0: #0052ff;
+  --place-idrive-0: #1372ba;
+  --place-idrive-1: #ef4441;
+  --place-scaleway-0: #4f0599;
+  --place-ovh-0: #123f6d;
+  --place-digitalocean-0: #0066cc;
+  --place-ionos-0: #003d8f;
+  --place-contabo-0: #00aaeb;
+  --place-exoscale-0: #da291c;
+  --place-vultr-0: #007bfc;
+  --place-googlecloud-0: #0d5de1;
+  --place-azure-0: #0072c6;
+  --place-minio-0: #c72e49;
+  --place-seaweedfs-0: #158eb7;
+  --place-seaweedfs-1: #138bcf;
+  --place-seaweedfs-2: #0158b3;
+  --place-seaweedfs-3: #0f92a3;
+  --place-seaweedfs-4: #0e92a6;
+  --place-seaweedfs-5: #0a6cb7;
+  --place-seaweedfs-6: #06929d;
+  --place-seaweedfs-7: #1091ac;
+  --place-seaweedfs-8: #178fb5;
+  --place-seaweedfs-9: #188fb5;
+  --place-seaweedfs-10: #1090b1;
+  --place-seaweedfs-11: #29a1d6;
+  --place-seaweedfs-12: #0161b2;
+  --place-seaweedfs-13: #858585;
+  --place-garage-0: #000000;
+  --place-garage-1: #008cc7;
+  --place-garage-2: #d16800;
+  --place-garage-3: #4e4e4e;
+  --place-ceph-0: #d0101d;
+  --place-rustfs-0: #0196d0;
+  --place-versity-0: #191b2a;
+  --place-nextcloud-0: #0068a0;
+  --place-owncloud-0: #041e42;
+  --place-opencloud-0: #000000;
+  --place-rclone-0: #3f79ad;
+  --place-synology-0: #68686a;
+  --place-qnap-0: #0c2e82;
+  --place-truenas-0: #0095d5;
+  --place-unraid-0: #f15a2c;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --place-b2-0: #c81a23;
+    --place-aws-0: #252f3e;
+    --place-aws-1: #bf7300;
+    --place-cloudflare-0: #a45009;
+    --place-wasabi-0: #017222;
+    --place-hetzner-0: #d50c2d;
+    --place-storj-0: #0052ff;
+    --place-idrive-0: #1372ba;
+    --place-idrive-1: #ef4441;
+    --place-scaleway-0: #4f0599;
+    --place-ovh-0: #123f6d;
+    --place-digitalocean-0: #0066cc;
+    --place-ionos-0: #003d8f;
+    --place-contabo-0: #00aaeb;
+    --place-exoscale-0: #da291c;
+    --place-vultr-0: #007bfc;
+    --place-googlecloud-0: #0d5de1;
+    --place-azure-0: #0072c6;
+    --place-minio-0: #c72e49;
+    --place-seaweedfs-0: #158eb7;
+    --place-seaweedfs-1: #138bcf;
+    --place-seaweedfs-2: #0158b3;
+    --place-seaweedfs-3: #0f92a3;
+    --place-seaweedfs-4: #0e92a6;
+    --place-seaweedfs-5: #0a6cb7;
+    --place-seaweedfs-6: #06929d;
+    --place-seaweedfs-7: #1091ac;
+    --place-seaweedfs-8: #178fb5;
+    --place-seaweedfs-9: #188fb5;
+    --place-seaweedfs-10: #1090b1;
+    --place-seaweedfs-11: #29a1d6;
+    --place-seaweedfs-12: #0161b2;
+    --place-seaweedfs-13: #858585;
+    --place-garage-0: #000000;
+    --place-garage-1: #008cc7;
+    --place-garage-2: #d16800;
+    --place-garage-3: #4e4e4e;
+    --place-ceph-0: #d0101d;
+    --place-rustfs-0: #0196d0;
+    --place-versity-0: #191b2a;
+    --place-nextcloud-0: #0068a0;
+    --place-owncloud-0: #041e42;
+    --place-opencloud-0: #000000;
+    --place-rclone-0: #3f79ad;
+    --place-synology-0: #68686a;
+    --place-qnap-0: #0c2e82;
+    --place-truenas-0: #0095d5;
+    --place-unraid-0: #f15a2c;
+  }
+}
+
+/* A hovered tile turns --carbon-tile-hover, a light grey in both themes, so
+   every mark takes a deeper value of its own hue that keeps 2.5:1 on it, as
+   the coin marks do in index.css. */
+.glim-coin-tile:not(.glim-active):hover {
+  --place-b2-0: #c31922;
+  --place-aws-0: #252f3e;
+  --place-aws-1: #8f5600;
+  --place-cloudflare-0: #9d4c09;
+  --place-wasabi-0: #017222;
+  --place-hetzner-0: #c70b2a;
+  --place-storj-0: #0050fa;
+  --place-idrive-0: #1167a7;
+  --place-idrive-1: #c61411;
+  --place-scaleway-0: #4f0599;
+  --place-ovh-0: #123f6d;
+  --place-digitalocean-0: #0061c2;
+  --place-ionos-0: #003d8f;
+  --place-contabo-0: #006b94;
+  --place-exoscale-0: #bf2419;
+  --place-vultr-0: #0061c6;
+  --place-googlecloud-0: #0d5ada;
+  --place-azure-0: #0065af;
+  --place-minio-0: #b92b44;
+  --place-seaweedfs-0: #106a89;
+  --place-seaweedfs-1: #0e689c;
+  --place-seaweedfs-2: #0158b3;
+  --place-seaweedfs-3: #0b6e7b;
+  --place-seaweedfs-4: #0a6d7c;
+  --place-seaweedfs-5: #0966ad;
+  --place-seaweedfs-6: #046d76;
+  --place-seaweedfs-7: #0c6c80;
+  --place-seaweedfs-8: #116b88;
+  --place-seaweedfs-9: #126b88;
+  --place-seaweedfs-10: #0c6c85;
+  --place-seaweedfs-11: #1b6a8d;
+  --place-seaweedfs-12: #0161b2;
+  --place-seaweedfs-13: #636363;
+  --place-garage-0: #000000;
+  --place-garage-1: #006a97;
+  --place-garage-2: #9b4d00;
+  --place-garage-3: #4e4e4e;
+  --place-ceph-0: #c70f1c;
+  --place-rustfs-0: #016a93;
+  --place-versity-0: #191b2a;
+  --place-nextcloud-0: #0068a0;
+  --place-owncloud-0: #041e42;
+  --place-opencloud-0: #000000;
+  --place-rclone-0: #356793;
+  --place-synology-0: #636365;
+  --place-qnap-0: #0c2e82;
+  --place-truenas-0: #006a98;
+  --place-unraid-0: #b5340c;
+}
+
+/* Our own logo is a picture with no tokens to deepen. The hovered tile is
+   light grey in both themes, so the dark theme swaps to the drawing for a
+   light ground there, whose grey body stays visible. */
+[data-theme="dark"] .glim-coin-tile:not(.glim-active):hover .glim-place-logo > img:first-child {
+  display: block;
+}
+[data-theme="dark"] .glim-coin-tile:not(.glim-active):hover .glim-place-logo > img:last-child {
+  display: none;
+}
+
+/* On an accent fill a brand colour is an unpredictable contrast, so every part
+   of the mark takes the fill ink: the selected tile, a hovered tile in
+   reactive rainbow mode, and a mark drawn with onFill. CSS beats the fill
+   attributes the marks write on their parts. */
+.glim-mark-on-fill,
+.glim-mark-on-fill *,
+.glim-coin-tile.glim-active .glim-place-mark,
+.glim-coin-tile.glim-active .glim-place-mark *,
+[data-rainbow="reactive"] .glim-coin-tile:hover .glim-place-mark,
+[data-rainbow="reactive"] .glim-coin-tile:hover .glim-place-mark * {
+  fill: currentColor;
+  stop-color: currentColor;
+}
