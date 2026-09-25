@@ -233,9 +233,15 @@ func (h *Handler) mcpMetrics() string {
 		log.Printf("api: mcp: could not count the active keys for /metrics: %v", err)
 		return b.String()
 	}
+	usable := 0
+	for _, k := range keys {
+		if h.mcpKeyUnusable(k) == "" {
+			usable++
+		}
+	}
 	b.WriteString("# HELP bombvault_mcp_active_keys Number of MCP keys that can currently authenticate.\n")
 	b.WriteString("# TYPE bombvault_mcp_active_keys gauge\n")
-	fmt.Fprintf(&b, "bombvault_mcp_active_keys %d\n", len(keys))
+	fmt.Fprintf(&b, "bombvault_mcp_active_keys %d\n", usable)
 	return b.String()
 }
 

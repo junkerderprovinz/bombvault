@@ -273,6 +273,34 @@ func TestMCPMetricsCountOutcomes(t *testing.T) {
 	}
 }
 
+func TestMCPMetricsLeaveOutKeysFromAnotherAppKey(t *testing.T) {
+	h, router, repo, _ := newMCPGateHandler(t)
+	settings, err := repo.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.MetricsEnabled = true
+	if err := repo.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	seedMCPKey(t, h, repo, "Laptop")
+	current := h.cfg.AppKey
+	h.cfg.AppKey = "an-earlier-app-key-of-this-install"
+	seedMCPKey(t, h, repo, "Desktop")
+	seedMCPKey(t, h, repo, "Server")
+	h.cfg.AppKey = current
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("metrics: status = %d", w.Code)
+	}
+	if body := w.Body.String(); !strings.Contains(body, "bombvault_mcp_active_keys 1\n") {
+		t.Fatalf("only the key made under the current APP_KEY can authenticate:\n%s", body)
+	}
+}
+
 // A bump changes the protocol surface and the SDK's own security defaults, so
 // it goes in on its own, after somebody has re-run the interop checks. The
 // version is read from go.mod because a test binary carries no dependency list
