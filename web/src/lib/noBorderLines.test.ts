@@ -113,17 +113,10 @@ const ALLOWED_RULES: Record<string, string> = {
   ".glim-boom-fx::after": "the shockwave of the logo's easter egg, an effect ring and not a frame",
 };
 
-/** Files that still draw lines, each taken off by the change that clears it.
- *  The off-site wizard gives way to the add-place window rather than being
- *  restyled, so it comes off when it is deleted. */
-const PENDING = new Set<string>([
-  "components/ColorPickerPopover.tsx",
-  "components/OffsiteWizard.tsx",
-  "index.css",
-  "pages/settings/AccentCard.tsx",
-  "pages/settings/shared.tsx",
-  "pages/settings/tabs/GeneralTab.tsx",
-]);
+/** Files that still draw lines. The off-site wizard is the last one: it gives
+ *  way to the add-place window rather than being restyled, so it comes off
+ *  when it is deleted, and this list and its honesty test go with it. */
+const PENDING = new Set<string>(["components/OffsiteWizard.tsx"]);
 
 type Line = { file: string; line: number; text: string };
 

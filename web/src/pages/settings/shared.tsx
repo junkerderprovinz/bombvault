@@ -65,8 +65,8 @@ export function Card({
 // it as the live accent and opens its editor, and edits in the open popover
 // keep updating the accent. ColorPickerSwatch's button owns the click and
 // opens the popover; the wrapping span sees the same click as it bubbles up
-// and selects. The active ring sits on the wrapper because ColorPickerSwatch
-// draws its own border.
+// and selects. The ring marking the chosen preset sits on the wrapper, because
+// the button needs its own outline for the focus ring.
 export function AccentPresetSwatch({
   hex,
   index,
@@ -91,8 +91,8 @@ export function AccentPresetSwatch({
   t: ReturnType<typeof useT>["t"];
 }) {
   const label = `${t("settings.accentPreset")} ${index + 1}`;
-  // A 28px disc inside the 2px ring makes a 32px box, the size of every square
-  // icon badge, including the reset badge in this row.
+  // The disc is 32px, the size of every square icon badge, including the reset
+  // badge in this row. The ring is an outline, so it takes no room.
   return (
     <span
       onClick={disabled ? undefined : () => onSelect(hex)}
@@ -100,10 +100,9 @@ export function AccentPresetSwatch({
       // pointer-events-none also reaches the ColorPickerSwatch inside. The
       // picker opens from the disc itself, so blocking only this onClick
       // would still let it open and edit a preset nobody sees applied.
-      className={`inline-flex rounded-pill border-2 transition-transform ${
-        disabled ? "pointer-events-none" : "hover:scale-110"
-      }`}
-      style={{ borderColor: active ? "var(--carbon-text)" : "var(--carbon-border)" }}
+      className={`inline-flex rounded-pill transition-transform${
+        active ? " outline-solid outline-2 outline-offset-2 outline-carbon-text" : ""
+      }${disabled ? " pointer-events-none" : " hover:scale-110"}`}
     >
       <ColorPickerSwatch
         value={hex}
@@ -112,7 +111,7 @@ export function AccentPresetSwatch({
           onSelect(v);
         }}
         label={label}
-        className="w-7 h-7 rounded-pill"
+        className="w-8 h-8 rounded-pill"
       />
     </span>
   );
