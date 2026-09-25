@@ -4,7 +4,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
-import type { DomainRow, HomePreview, Place } from "../../lib/places";
+import type { CopiesPreview, DomainRow, HomePreview, Place } from "../../lib/places";
 
 type Answer = Record<string, unknown>;
 
@@ -14,6 +14,9 @@ let domainReads = 0;
 const homePreviews: Answer[] = [];
 const homeWrites: Answer[] = [];
 const homeBodies: unknown[] = [];
+const copiesPreviews: Answer[] = [];
+const copiesWrites: Answer[] = [];
+const copiesBodies: unknown[] = [];
 
 vi.mock("../../lib/places", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/places")>();
@@ -28,6 +31,11 @@ vi.mock("../../lib/places", async (importOriginal) => {
     setDomainHome: (_d: string, body: unknown) => {
       homeBodies.push(body);
       return Promise.resolve(homeWrites.shift() ?? { ok: true, reset: [], kept: [] });
+    },
+    previewDomainCopies: () => Promise.resolve(copiesPreviews.shift() ?? { ok: false, error: "no preview queued" }),
+    setDomainCopies: (_d: string, body: unknown) => {
+      copiesBodies.push(body);
+      return Promise.resolve(copiesWrites.shift() ?? { ok: true });
     },
   };
 });
@@ -92,6 +100,9 @@ beforeEach(() => {
   homePreviews.length = 0;
   homeWrites.length = 0;
   homeBodies.length = 0;
+  copiesPreviews.length = 0;
+  copiesWrites.length = 0;
+  copiesBodies.length = 0;
   places = [
     place("p-unraid", "Unraid", "unraid-folder"),
     place("p-nas", "NAS Keller", "synology"),
@@ -167,7 +178,7 @@ describe("DomainsCard", () => {
 
   it("sets its field off the row's own surface", async () => {
     await card();
-    expect(storedIn("Containers").className).toContain("bg-carbon-surface3");
+    expect(storedIn("Containers").classList.contains("bg-carbon-surface3")).toBe(true);
   });
 
   it("says a row it cannot read instead of offering places", async () => {
@@ -270,5 +281,147 @@ describe("DomainsCard", () => {
     expect(shown("Containers")).toBe("Unraid");
     expect(storedIn("Containers").closest(".glim-shake")).toBeTruthy();
     expect(screen.getByText(en["places.error.off"])).toBeTruthy();
+  });
+});
+
+function copies(over: Partial<CopiesPreview> = {}): CopiesPreview {
+  return { placeId: "p-nas", on: true, skip: [], enabled: false, ...over };
+}
+
+const chip = (rowName: string, name: string) => within(rowOf(rowName)).getByRole("button", { name });
+
+async function tick(rowName: string, name: string) {
+  await act(async () => {
+    fireEvent.click(chip(rowName, name));
+  });
+}
+
+describe("DomainsCard copies", () => {
+  beforeEach(() => {
+    rows = [
+      row("containers", {
+        chips: [
+          { placeId: "p-b2", targetId: "t-b2", on: true, disabled: false },
+          { placeId: "p-nas", on: false, disabled: false },
+          { placeId: "p-old", targetId: "t-old", on: true, disabled: true, reason: "off" },
+        ],
+      }),
+      row("flash", { chips: [{ placeId: "p-nas", on: false, disabled: false }] }),
+      row("config", { chips: [] }),
+    ];
+  });
+
+  it("shows a chip per place with its mark, in the chip's ink once ticked, and a switched-off place dimmed", async () => {
+    await card();
+    expect(chip("Containers", "B2").getAttribute("aria-pressed")).toBe("true");
+    expect(chip("Containers", "B2").querySelector('[data-testid="mark"]')?.getAttribute("data-on-fill")).toBe("true");
+    expect(chip("Containers", "NAS Keller").getAttribute("aria-pressed")).toBe("false");
+    expect(chip("Containers", "NAS Keller").querySelector('[data-testid="mark"]')?.getAttribute("data-on-fill")).toBe("false");
+    const off = chip("Containers", en["placement.off"].replace("{name}", "Old disk"));
+    expect((off as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("sets an idle chip off the row's own surface", async () => {
+    await card();
+    expect(chip("Containers", "NAS Keller").classList.contains("bg-carbon-surface3")).toBe(true);
+  });
+
+  it("says so when no other place offers the domain", async () => {
+    await card();
+    expect(within(rowOf("Self-Backup")).getByText(en["storageDomains.noCopyPlace"])).toBeTruthy();
+  });
+
+  it("asks what a new target receives, and shows the tick while it asks", async () => {
+    await card();
+    const newTarget = { items: 7, formerlyExcluded: [], defaultExcludes: false, snapshots: 120, bytes: null, unreadable: [] };
+    copiesPreviews.push({ ok: true, ...copies({ newTarget }) });
+    await tick("Containers", "NAS Keller");
+    expect(within(dialog()).getByText(en["newTarget.intro"].replace("{target}", "NAS Keller"))).toBeTruthy();
+    expect(within(dialog()).getByText(en["newTarget.items"].replace("{n}", "7"))).toBeTruthy();
+    expect(chip("Containers", "NAS Keller").getAttribute("aria-pressed")).toBe("true");
+    await answer(en["common.confirm"]);
+    expect(copiesBodies).toEqual([{ placeId: "p-nas", on: true, expect: copies({ newTarget }) }]);
+  });
+
+  it("says what stays when a chip is switched off", async () => {
+    await card();
+    const impact = {
+      dropped: [{ targetId: "t-b2", name: "B2", items: 4, snapshots: 30, unknown: false, uncheckable: [] }],
+      added: [],
+      openTakeHome: 0,
+      home: "",
+      skip: ["t-b2"],
+    };
+    copiesPreviews.push({
+      ok: true,
+      ...copies({ placeId: "p-b2", on: false, targetId: "t-b2", skip: ["t-b2"], enabled: true, impact }),
+    });
+    await tick("Containers", "B2");
+    expect(
+      within(dialog()).getByText(en["storageDomains.copiesOffAsk"].replace("{place}", "B2").replace("{domain}", "Containers"))
+    ).toBeTruthy();
+    expect(
+      within(dialog()).getByText(
+        en["placementDefaults.dropAsk"].replace("{target}", "B2").replace("{n}", "4").replace("{copies}", "30")
+      )
+    ).toBeTruthy();
+    expect(within(dialog()).getByText(en["storageDomains.copiesOffOwnChoice"])).toBeTruthy();
+  });
+
+  it("asks again with the preview of a stale answer", async () => {
+    await card();
+    const added = (n: number) => ({
+      dropped: [],
+      added: [{ targetId: "t-nas", name: "NAS Keller", items: n, snapshots: 9, unknown: false, uncheckable: [] }],
+      openTakeHome: 0,
+      home: "",
+      skip: [],
+    });
+    copiesPreviews.push({ ok: true, ...copies({ targetId: "t-nas", impact: added(2) }) });
+    copiesWrites.push({ ok: false, code: "stale", error: "stale", preview: copies({ targetId: "t-nas", impact: added(6) }) });
+    await tick("Containers", "NAS Keller");
+    await answer(en["common.confirm"]);
+    expect(within(dialog()).getByText(/gets from now on: 6\./)).toBeTruthy();
+    await answer(en["common.confirm"]);
+    expect(copiesBodies).toHaveLength(2);
+    expect((copiesBodies[1] as { expect: CopiesPreview }).expect.impact?.added[0]?.items).toBe(6);
+  });
+
+  it("keeps the tick through a list read until the write is through", async () => {
+    await card();
+    copiesPreviews.push({
+      ok: true,
+      ...copies({ newTarget: { items: 1, formerlyExcluded: [], defaultExcludes: false, snapshots: 1, bytes: null, unreadable: [] } }),
+    });
+    await tick("Containers", "NAS Keller");
+    await act(async () => {
+      placesChanged();
+    });
+    expect(chip("Containers", "NAS Keller").getAttribute("aria-pressed")).toBe("true");
+    rows = [row("containers", { chips: [{ placeId: "p-nas", targetId: "t-nas", on: true, disabled: false }] })];
+    await answer(en["common.confirm"]);
+    expect(chip("Containers", "NAS Keller").getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("takes the tick back and shakes when the write is refused", async () => {
+    await card();
+    copiesPreviews.push({
+      ok: true,
+      ...copies({ newTarget: { items: 1, formerlyExcluded: [], defaultExcludes: false, snapshots: 1, bytes: null, unreadable: [] } }),
+    });
+    copiesWrites.push({ ok: false, code: "place-off", error: "place is switched off" });
+    await tick("Containers", "NAS Keller");
+    await answer(en["common.confirm"]);
+    expect(chip("Containers", "NAS Keller").getAttribute("aria-pressed")).toBe("false");
+    expect(chip("Containers", "NAS Keller").closest(".glim-shake")).toBeTruthy();
+    expect(screen.getByText(en["places.error.off"])).toBeTruthy();
+  });
+
+  it("switches a flash chip without a question", async () => {
+    await card();
+    copiesPreviews.push({ ok: true, ...copies() });
+    await tick("Flash", "NAS Keller");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(copiesBodies).toEqual([{ placeId: "p-nas", on: true, expect: copies() }]);
   });
 });

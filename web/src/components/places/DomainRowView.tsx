@@ -2,25 +2,32 @@ import { useState, type CSSProperties } from "react";
 import { PlaceMark } from "../placeMarks";
 import { cadenceLabel } from "../ScheduleBadge";
 import type { SelectOption } from "../SelectField";
+import { HUE_OFFSET, Selector, type SelectorItem } from "../Selector";
 import { HomeSelect } from "../placement/HomeSelect";
+import { NewTargetPreviewLines } from "../placement/NewTargetQuestion";
 import { ToggleRow } from "../../pages/settings/shared";
 import { hueVars } from "../../lib/appearance";
 import { useT } from "../../lib/i18n";
-import { formatList } from "../../lib/placement";
+import { formatList, isPlacementDomain } from "../../lib/placement";
 import { placementChanged } from "../../lib/placementEvents";
 import { domainName, placeErrorText } from "../../lib/placeText";
 import {
   placesChanged,
+  previewDomainCopies,
   previewDomainHome,
+  setDomainCopies,
   setDomainHome,
+  type CopiesPreview,
+  type DomainChip,
   type DomainRow,
   type HomePreview,
   type Place,
   type PlaceRefusal,
 } from "../../lib/places";
-import { homeExpect, impactLines } from "../../lib/storageDomains";
+import { copiesExpect, homeExpect, impactLines } from "../../lib/storageDomains";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { offsiteTargetsChanged } from "../../lib/useOffsiteTargets";
 
 // A choice shows at once and stays through its question and its write,
 // whatever list read lands meanwhile; the first read after the write replaces
@@ -68,8 +75,9 @@ export function DomainRowView({
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [pendingHome, setPendingHome] = useState<string | null>(null);
+  const [pendingChips, setPendingChips] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
-  const [homeShake, setHomeShake] = useState(0);
+  const [shake, setShake] = useState({ home: 0, chips: 0 });
   const domain = domainName(t, row.domain);
   const placeName = (id: string) => places.find((p) => p.id === id)?.name ?? id;
 
@@ -88,9 +96,23 @@ export function DomainRowView({
     });
   }
 
-  function refused(res: PlaceRefusal) {
+  const chipOn = (c: DomainChip) => pendingChips[c.placeId] ?? c.on;
+  const ticked = new Set(row.chips.filter(chipOn).map((c) => c.placeId));
+  const chipItems: SelectorItem[] = row.chips.map((c) => {
+    const place = places.find((p) => p.id === c.placeId);
+    const name = place?.name ?? c.placeId;
+    return {
+      id: c.placeId,
+      label: c.reason === "off" ? t("placement.off").replace("{name}", () => name) : name,
+      icon: place ? <PlaceMark provider={place.provider} onFill={chipOn(c)} /> : undefined,
+      disabled: c.disabled,
+      title: c.reason === "creds-differ" ? t("placement.credsDiffer") : undefined,
+    };
+  });
+
+  function refused(res: PlaceRefusal, control: "home" | "chips") {
     push(placeErrorText(t, lang, res, "settings.error"), "fail");
-    setHomeShake((n) => n + 1);
+    setShake((s) => ({ ...s, [control]: s[control] + 1 }));
   }
 
   async function askHome(p: HomePreview): Promise<{ applyToOpen: boolean } | null> {
@@ -131,7 +153,7 @@ export function DomainRowView({
     try {
       let preview = await previewDomainHome(row.domain, placeId);
       for (;;) {
-        if (!preview.ok) return refused(preview);
+        if (!preview.ok) return refused(preview, "home");
         const answer = await askHome(preview);
         if (!answer) return;
         const res = await setDomainHome(row.domain, { placeId, expect: homeExpect(preview), applyToOpen: answer.applyToOpen });
@@ -145,13 +167,63 @@ export function DomainRowView({
           await onWritten();
           return;
         }
-        if (res.code !== "stale" || !res.preview) return refused(res);
+        if (res.code !== "stale" || !res.preview) return refused(res, "home");
         preview = { ok: true, ...res.preview };
       }
     } catch (err) {
-      refused({ ok: false, error: err instanceof Error ? err.message : undefined });
+      refused({ ok: false, error: err instanceof Error ? err.message : undefined }, "home");
     } finally {
       setPendingHome(null);
+      setBusy(false);
+    }
+  }
+
+  // A chip without a new target or an impact (flash, self-backup) asks nothing.
+  async function askChip(p: CopiesPreview): Promise<boolean> {
+    const place = placeName(p.placeId);
+    const lines = p.impact ? impactLines(t, lang, p.impact, place) : [];
+    const extra = () => (lines.length > 0 ? <Lines lines={lines} /> : undefined);
+    if (p.on) {
+      if (p.newTarget) {
+        return confirm(t("newTarget.intro").replace("{target}", () => place), {
+          extra: <NewTargetPreviewLines target={place} preview={p.newTarget} />,
+        });
+      }
+      const lead = lines.shift();
+      return lead === undefined ? true : confirm(lead, { extra: extra() });
+    }
+    if (isPlacementDomain(row.domain)) lines.push(t("storageDomains.copiesOffOwnChoice"));
+    const question = t("storageDomains.copiesOffAsk").replace("{place}", () => place).replace("{domain}", () => domain);
+    return confirm(question, { extra: extra() });
+  }
+
+  async function toggleChip(placeId: string, on: boolean) {
+    setPendingChips((prev) => ({ ...prev, [placeId]: on }));
+    setBusy(true);
+    try {
+      let preview = await previewDomainCopies(row.domain, placeId, on);
+      for (;;) {
+        if (!preview.ok) return refused(preview, "chips");
+        if (!(await askChip(preview))) return;
+        const res = await setDomainCopies(row.domain, { placeId, on, expect: copiesExpect(preview) });
+        if (res.ok) {
+          placesChanged();
+          placementChanged();
+          offsiteTargetsChanged();
+          await onWritten();
+          return;
+        }
+        if (res.code !== "stale" || !res.preview) return refused(res, "chips");
+        preview = { ok: true, ...res.preview };
+      }
+    } catch (err) {
+      refused({ ok: false, error: err instanceof Error ? err.message : undefined }, "chips");
+    } finally {
+      setPendingChips((prev) => {
+        const next = { ...prev };
+        delete next[placeId];
+        return next;
+      });
       setBusy(false);
     }
   }
@@ -172,17 +244,38 @@ export function DomainRowView({
       {row.unreadable ? (
         <p className="text-xs text-statusWarn">{t("placement.unreadable")}</p>
       ) : (
-        <div key={homeShake} className={homeShake ? "glim-shake" : undefined}>
-          <HomeSelect
-            label={t("storageDomains.storedIn")}
-            value={storedIn}
-            options={homeOptions}
-            locked={false}
-            disabled={busy}
-            well
-            onCommit={(id) => void chooseHome(id)}
-          />
-        </div>
+        <>
+          <div key={`home-${shake.home}`} className={shake.home ? "glim-shake" : undefined}>
+            <HomeSelect
+              label={t("storageDomains.storedIn")}
+              value={storedIn}
+              options={homeOptions}
+              locked={false}
+              disabled={busy}
+              well
+              onCommit={(id) => void chooseHome(id)}
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-carbon-textSub">{t("storageDomains.copiedTo")}</span>
+            {row.chips.length === 0 ? (
+              <span className="text-carbon-textSub">{t("storageDomains.noCopyPlace")}</span>
+            ) : (
+              <div key={`chips-${shake.chips}`} className={shake.chips ? "glim-shake" : undefined}>
+                <Selector
+                  items={chipItems}
+                  label={t("storageDomains.copiedTo")}
+                  select="many"
+                  active={ticked}
+                  hueOffset={HUE_OFFSET.placement + 3 * index}
+                  raised
+                  disabled={busy}
+                  onChange={(id) => void toggleChip(id, !ticked.has(id))}
+                />
+              </div>
+            )}
+          </div>
+        </>
       )}
     </section>
   );
