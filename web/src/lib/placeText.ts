@@ -1,6 +1,6 @@
 import type { TranslationKey, useT } from "./i18n";
 import { placementErrorText } from "./placementCodes";
-import type { FolderState, PlaceHolders, PlaceRefusal, ProbeFact } from "./places";
+import type { FolderState, PlaceHolders, PlaceKind, PlaceRefusal, ProbeFact } from "./places";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -146,4 +146,18 @@ const PROVIDER_KEYS: Record<string, TranslationKey> = {
  *  version does not know. */
 export function providerName(t: T, id: string): string {
   return PROVIDER_KEYS[id] ? t(PROVIDER_KEYS[id]) : id;
+}
+
+const KIND_KEYS: Record<PlaceKind, TranslationKey> = {
+  local: "places.kind.local",
+  s3: "places.kind.s3",
+  rest: "places.kind.rest",
+  sftp: "places.kind.sftp",
+  webdav: "places.kind.webdav",
+  azure: "places.kind.azure",
+  rclone: "places.kind.rclone",
+};
+
+export function kindName(t: T, kind: PlaceKind): string {
+  return KIND_KEYS[kind] ? t(KIND_KEYS[kind]) : kind;
 }
