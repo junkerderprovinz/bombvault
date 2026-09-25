@@ -419,10 +419,10 @@ export interface DomainStatus {
   // the only off-site drill VMs can run. Drives the "off-site verified" badge (#63).
   lastOffsiteSubsetAt: number; // unix seconds; 0 = never
   lastOffsiteSubsetOK: boolean; // whether that check passed
-  // Whether the scheduler runs the off-site DR drill for this domain (drills and
-  // off-site drills on, the domain on and its off-site field filled), wherever
-  // that target stands. When false but offsiteConfigured, the dashboard shows a
-  // neutral "manual only" pill instead of a red failure.
+  // Whether the scheduled off-site DR drill is active (DrillsEnabled &&
+  // OffsiteDrillsEnabled && offsiteConfigured); a target in the house does not
+  // count. When false but offsiteConfigured, the dashboard shows a neutral
+  // "manual only" pill instead of a red failure.
   offsiteDrillScheduled: boolean;
   protection: string; // "" (disabled) | "red" | "amber" | "green"
   // Per-check states derived server-side from the SAME inputs as `protection`, so

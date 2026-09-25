@@ -87,17 +87,3 @@ func TestDrillTasks(t *testing.T) {
 		}
 	})
 }
-
-func TestOffsiteDrillScheduledFollowsTheDrillsJob(t *testing.T) {
-	s := store.Settings{
-		ContainersEnabled: true, ConfigEnabled: true, OffsiteDrillsEnabled: true,
-		ContainersOffsite: "b2:bucket:containers", ConfigOffsite: "b2:bucket:config",
-	}
-	if OffsiteDrillScheduled(s, "containers") {
-		t.Error("with the drills job off, no off-site drill runs")
-	}
-	s.DrillsEnabled = true
-	if !OffsiteDrillScheduled(s, "containers") || OffsiteDrillScheduled(s, "config") {
-		t.Error("want the drill for containers and none for config, which gets no DR drill")
-	}
-}

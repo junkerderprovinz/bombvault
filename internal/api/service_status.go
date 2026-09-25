@@ -124,10 +124,11 @@ type DomainStatusEntry struct {
 	// verified" badge (#63), independent of the DR fields above.
 	LastOffsiteSubsetAt int64 `json:"lastOffsiteSubsetAt"`
 	LastOffsiteSubsetOK bool  `json:"lastOffsiteSubsetOK"`
-	// OffsiteDrillScheduled is true when the scheduler runs an off-site DR drill
-	// for this domain (see schedule.OffsiteDrillScheduled), wherever the target
-	// stands. When it is false but the domain has an off-site copy, the dashboard
-	// shows a muted "manual only" pill instead of a red drFailed (#37).
+	// OffsiteDrillScheduled is true when DrillsEnabled and OffsiteDrillsEnabled
+	// are set and the domain copies to a target off the premises. A drill
+	// against a target in the house is no off-site drill and does not count.
+	// When it is false but the domain has an off-site copy, the dashboard shows
+	// a muted "manual only" pill instead of a red drFailed (#37).
 	OffsiteDrillScheduled bool   `json:"offsiteDrillScheduled"`
 	Protection            string `json:"protection"` // "" (disabled) | "red" | "amber" | "green"
 
@@ -634,7 +635,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			LastDRDrillOK:         lastDRDrillOK,
 			LastOffsiteSubsetAt:   lastOffsiteSubsetAt,
 			LastOffsiteSubsetOK:   lastOffsiteSubsetOK,
-			OffsiteDrillScheduled: schedule.OffsiteDrillScheduled(settings, d.name),
+			OffsiteDrillScheduled: settings.DrillsEnabled && settings.OffsiteDrillsEnabled && copiesOffSite,
 			DrillDetail:           drDetail,
 			Protection:            protection,
 			TamperState:           checks.Tamper,
