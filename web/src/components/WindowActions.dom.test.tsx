@@ -15,6 +15,8 @@ import { WindowActions } from "./WindowActions";
 vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),
   getDirectRepo: async () => ({ ok: true, repo: null, suggestion: null }),
+  listRuns: async () => ({ ok: true, runs: [] }),
+  ackRuns: async () => ({ ok: true }),
 }));
 
 const { ConfirmDialog } = await import("./ConfirmDialog");
@@ -22,6 +24,7 @@ const { DirectRepoDialog } = await import("./placement/DirectRepoDialog");
 const { useConfirm } = await import("../lib/useConfirm");
 const { CryptoDonateDialog } = await import("./CryptoDonateDialog");
 const { WhatsNewDialog } = await import("./WhatsNewDialog");
+const { ErrorDetailPanel } = await import("./ErrorDetailPanel");
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -107,12 +110,17 @@ const WINDOWS: Shown[] = [
     },
     last: en["whatsnew.close"],
   },
+  {
+    file: "components/ErrorDetailPanel.tsx",
+    name: "the error panel",
+    open: () => shown(<ErrorDetailPanel onClose={() => {}} />),
+    last: en["errorPanel.resolveAll"],
+  },
 ];
 
 /** Windows that still keep their own footer, each taken off by the change that
  *  gives it the shared row. */
 const PENDING = new Set<string>([
-  "components/ErrorDetailPanel.tsx",
   "components/FolderBrowser.tsx",
   // Listed ahead of the add-place window itself, so its arrival does not trip
   // the scan. It comes off once both of its steps end in WindowActions, and
