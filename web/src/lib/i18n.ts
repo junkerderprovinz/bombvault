@@ -2295,6 +2295,10 @@ export const en = {
   "places.provider.share": "Other share",
   "places.provider.unraid-folder": "Folder on this Unraid",
   "places.pick": "Providers",
+  "folder.roots": "Where to look",
+  "places.root.remotes": "Mounted shares",
+  "places.root.shares": "User shares",
+  "places.root.disks": "Disks and pools",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4270,6 +4274,10 @@ export const de: Translations = {
   "places.provider.share": "Andere Freigabe",
   "places.provider.unraid-folder": "Ordner auf diesem Unraid",
   "places.pick": "Anbieter",
+  "folder.roots": "Wo suchen",
+  "places.root.remotes": "Gemountete Freigaben",
+  "places.root.shares": "Freigaben",
+  "places.root.disks": "Platten und Pools",
 };
 
 // ---------------------------------------------------------------------------
