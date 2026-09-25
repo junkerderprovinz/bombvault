@@ -2347,6 +2347,9 @@ export const en = {
   "places.addTitle": "Add a place",
   "places.added": "{name} is added. Choose it under Domains for a whole domain, or on an item's card for that item alone.",
   "places.catalogFailed": "The list of providers could not be read.",
+  "places.catalogLoading": "Reading the providers…",
+  "places.form.nameFirst": "Give the place a name first.",
+  "places.form.whereFirst": "Say where the device is first.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4374,6 +4377,9 @@ export const de: Translations = {
   "places.addTitle": "Ort hinzufügen",
   "places.added": "{name} ist hinzugefügt. Wähle den Ort unter Domänen für eine ganze Domäne oder auf der Karte eines Eintrags für diesen allein.",
   "places.catalogFailed": "Die Liste der Anbieter konnte nicht gelesen werden.",
+  "places.catalogLoading": "Die Anbieter werden gelesen…",
+  "places.form.nameFirst": "Gib dem Ort zuerst einen Namen.",
+  "places.form.whereFirst": "Sag zuerst, wo das Gerät steht.",
 };
 
 // ---------------------------------------------------------------------------
