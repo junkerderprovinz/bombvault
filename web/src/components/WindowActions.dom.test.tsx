@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { I18nProvider, countText, en, type TranslationKey, type useT } from "../lib/i18n";
-import type { FileSetView } from "../lib/api";
+import type { FileSetView, FleetPeer } from "../lib/api";
 import { WindowActions } from "./WindowActions";
 
 vi.mock("../lib/api", async (importOriginal) => ({
@@ -33,6 +33,7 @@ const { FolderBrowser } = await import("./FolderBrowser");
 const { FileSetDialog } = await import("../pages/Files");
 const { PullDialog } = await import("../pages/Pull");
 const { ReceiverDialog } = await import("../pages/Receiver");
+const { FleetDialog, ProposeMeshDialog } = await import("../pages/Fleet");
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -52,6 +53,22 @@ const documents: FileSetView = {
   enabled: true,
   lastBackup: 0,
   pathExists: true,
+};
+
+const tower: FleetPeer = {
+  id: "p1",
+  name: "tower",
+  url: "https://192.168.1.50:3443",
+  enabled: true,
+  lastPollAt: 0,
+  lastPollOk: null,
+  lastPollError: "",
+  lastPollInstanceName: "",
+  lastPollVersion: "",
+  lastPollDomains: [],
+  createdAt: 0,
+  sortOrder: 0,
+  hasToken: true,
 };
 
 function shown(node: ReactNode) {
@@ -166,6 +183,18 @@ const WINDOWS: Shown[] = [
     open: () => shown(<ReceiverDialog initial={null} t={t} onClose={() => {}} onSaved={() => {}} />),
     last: en["settings.save"],
   },
+  {
+    file: "pages/Fleet.tsx",
+    name: "the fleet peer window",
+    open: () => shown(<FleetDialog initial={null} t={t} onClose={() => {}} onSaved={() => {}} />),
+    last: en["settings.save"],
+  },
+  {
+    file: "pages/Fleet.tsx",
+    name: "the mesh proposal window",
+    open: () => shown(<ProposeMeshDialog peer={tower} t={t} onClose={() => {}} />),
+    last: en["fleet.mesh.send"],
+  },
 ];
 
 /** Windows that still keep their own footer, each taken off by the change that
@@ -175,7 +204,6 @@ const PENDING = new Set<string>([
   // the scan. It comes off once both of its steps end in WindowActions, and
   // this list and its honesty test go with it.
   "components/places/AddPlaceDialog.tsx",
-  "pages/Fleet.tsx",
 ]);
 
 function tsxFiles(dir: string): string[] {

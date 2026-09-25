@@ -43,6 +43,7 @@ import { copyText } from "../lib/clipboard";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
+import { WindowActions } from "../components/WindowActions";
 
 import { ToggleRow } from "./settings/shared";
 type T = ReturnType<typeof useT>["t"];
@@ -285,7 +286,8 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
   );
 }
 
-function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClose: () => void }) {
+// Exported for components/WindowActions.dom.test.tsx.
+export function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClose: () => void }) {
   const [domain, setDomain] = useState<string>("containers");
   const [baseUrl, setBaseUrl] = useState("");
   const [sending, setSending] = useState(false);
@@ -325,11 +327,12 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
   // and the backdrop scrolls when the content grows.
   return createPortal(
     <div className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4" onClick={onClose}>
-      {/* The heading notch sits on a non-scrolling shell around the
-          scrollable box, as in Receiver.tsx's ReceiverDialog. */}
+      {/* The heading notch sits on a shell around the window, as in
+          Receiver.tsx's ReceiverDialog. */}
       <div className="relative w-full max-w-lg">
-      {/* px-5 matches the box's p-5 so the notch lands where a Card's does;
-          FolderBrowser.tsx explains why the notch has no offset of its own. */}
+      {/* px-5 matches the body's padding so the notch lands where a Card's
+          does; FolderBrowser.tsx explains why the notch has no offset of its
+          own. */}
       <h2 className="flex items-center px-5">
         <Badge tone="heading" size="heading" wrap>{t("fleet.mesh.proposeTitle")}</Badge>
       </h2>
@@ -338,37 +341,57 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
         aria-modal="true"
         aria-label={t("fleet.mesh.proposeTitle")}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
+        className="flex max-h-[90vh] w-full flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
-        <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.proposeHint").replace("{peer}", peer.name)}</p>
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-5 pb-1">
+          <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.proposeHint").replace("{peer}", peer.name)}</p>
 
-        {!snippet ? (
-          <>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-carbon-textSub">{t("fleet.mesh.domain")}</label>
-              <SelectField
-                value={domain}
-                onChange={setDomain}
-                label={t("fleet.mesh.domain")}
-                options={MESH_DOMAINS.map((d) => ({ value: d, label: t(domainLabelKey(d)) }))}
-                className={inputCls}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-carbon-textSub">{t("fleet.mesh.baseUrl")}</label>
-              <input
-                type="text"
-                value={baseUrl}
-                onChange={(e) => setBaseUrl(e.target.value)}
-                spellCheck={false}
-                autoComplete="off"
-                placeholder="http://192.168.1.50:8000"
-                dir="ltr"
-                className={`${inputCls} font-mono text-start`}
-              />
-              <p className="text-caption text-carbon-textMuted">{t("fleet.mesh.baseUrlHint")}</p>
-            </div>
-            <div className="flex items-center justify-end gap-2 pt-1">
+          {!snippet ? (
+            <>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-carbon-textSub">{t("fleet.mesh.domain")}</label>
+                <SelectField
+                  value={domain}
+                  onChange={setDomain}
+                  label={t("fleet.mesh.domain")}
+                  options={MESH_DOMAINS.map((d) => ({ value: d, label: t(domainLabelKey(d)) }))}
+                  className={inputCls}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-carbon-textSub">{t("fleet.mesh.baseUrl")}</label>
+                <input
+                  type="text"
+                  value={baseUrl}
+                  onChange={(e) => setBaseUrl(e.target.value)}
+                  spellCheck={false}
+                  autoComplete="off"
+                  placeholder="http://192.168.1.50:8000"
+                  dir="ltr"
+                  className={`${inputCls} font-mono text-start`}
+                />
+                <p className="text-caption text-carbon-textMuted">{t("fleet.mesh.baseUrlHint")}</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-statusOk">{t("fleet.mesh.sent").replace("{peer}", peer.name)}</p>
+              <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.deployNow")}</p>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-carbon-textSub">{t("fleet.mesh.dockerRun")}</span>
+                <CopyBlock text={snippet.dockerRun} t={t} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-carbon-textSub">{t("fleet.mesh.compose")}</span>
+                <CopyBlock text={snippet.compose} t={t} />
+              </div>
+            </>
+          )}
+        </div>
+
+        <WindowActions>
+          {!snippet ? (
+            <>
               <Button
                 label={t("files.cancel")}
                 labelKey="files.cancel"
@@ -387,30 +410,11 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
                 title={sending ? t("fleet.mesh.sending") : undefined}
                 className={shake ? "glim-shake" : ""}
               />
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-xs text-statusOk">{t("fleet.mesh.sent").replace("{peer}", peer.name)}</p>
-            <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.deployNow")}</p>
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t("fleet.mesh.dockerRun")}</span>
-              <CopyBlock text={snippet.dockerRun} t={t} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t("fleet.mesh.compose")}</span>
-              <CopyBlock text={snippet.compose} t={t} />
-            </div>
-            <div className="flex items-center justify-end pt-1">
-              <Button
-                label={t("common.close")}
-                labelKey="common.close"
-                tone="accent"
-                onClick={onClose}
-              />
-            </div>
-          </>
-        )}
+            </>
+          ) : (
+            <Button label={t("common.close")} labelKey="common.close" tone="accent" onClick={onClose} />
+          )}
+        </WindowActions>
       </div>
       </div>
     </div>,
@@ -612,7 +616,8 @@ function FleetPeerCard({
   );
 }
 
-function FleetDialog({
+// Exported for components/WindowActions.dom.test.tsx.
+export function FleetDialog({
   initial,
   t,
   onClose,
@@ -676,7 +681,7 @@ function FleetDialog({
   const inputCls =
     "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
-  // Centred and split into shell and scrolling box like ProposeMeshDialog.
+  // Centred and split into shell and window like ProposeMeshDialog.
   return createPortal(
     <div
       className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
@@ -691,56 +696,58 @@ function FleetDialog({
         aria-modal="true"
         aria-label={editing ? t("fleet.editTitle") : t("fleet.addTitle")}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
+        className="flex max-h-[90vh] w-full flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("fleet.name")}</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder="tower"
-            className={inputCls}
-          />
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-5 pb-1">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-carbon-textSub">{t("fleet.name")}</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              placeholder="tower"
+              className={inputCls}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-carbon-textSub">{t("fleet.url")}</label>
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              placeholder="https://192.168.1.50:3443"
+              dir="ltr"
+              className={`${inputCls} font-mono text-start`}
+            />
+            <p className="text-caption text-carbon-textMuted">{t("fleet.urlHint")}</p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-carbon-textSub">{t("fleet.token")}</label>
+            <RevealInput
+              {...revealToken}
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              placeholder={editing ? t("fleet.tokenKeep") : "a1b2c3…"}
+              wrapperClassName="w-full"
+              className={`${inputCls} font-mono`}
+            />
+            <p className="text-caption text-carbon-textMuted">{t("fleet.tokenHint")}</p>
+          </div>
+
+          {/* ToggleRow puts the words at the start and the switch at the end,
+              like every setting row. */}
+          <ToggleRow checked={enabled} onChange={setEnabled} label={t("fleet.enabledLabel")} />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("fleet.url")}</label>
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder="https://192.168.1.50:3443"
-            dir="ltr"
-            className={`${inputCls} font-mono text-start`}
-          />
-          <p className="text-caption text-carbon-textMuted">{t("fleet.urlHint")}</p>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("fleet.token")}</label>
-          <RevealInput
-            {...revealToken}
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder={editing ? t("fleet.tokenKeep") : "a1b2c3…"}
-            wrapperClassName="w-full"
-            className={`${inputCls} font-mono`}
-          />
-          <p className="text-caption text-carbon-textMuted">{t("fleet.tokenHint")}</p>
-        </div>
-
-        {/* ToggleRow puts the words at the start and the switch at the end,
-            like every setting row. */}
-        <ToggleRow checked={enabled} onChange={setEnabled} label={t("fleet.enabledLabel")} />
-
-        <div className="flex items-center justify-end gap-2 pt-1">
+        <WindowActions>
           <Button
             label={t("files.cancel")}
             labelKey="files.cancel"
@@ -759,7 +766,7 @@ function FleetDialog({
             title={saving ? t("common.saving") : undefined}
             className={shake ? "glim-shake" : ""}
           />
-        </div>
+        </WindowActions>
       </div>
       </div>
     </div>,
