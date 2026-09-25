@@ -47,6 +47,17 @@ var placementCodes = []struct {
 	// Above the codes of the error it wraps: which half of the save went
 	// through is what the answer has to say first.
 	{errExclusionUnsaved, "exclusion-unsaved"},
+
+	{errPlaceLocationEstablished, "place-location-established"},
+	{store.ErrPlaceInUse, "place-in-use"},
+	{store.ErrPlaceFolderMissing, "place-in-use"},
+	{store.ErrPlaceNameTaken, "place-name-taken"},
+	{errPlaceHomeDomain, "place-home-domain"},
+	{errPlaceIsRepository, "place-is-repository"},
+	{store.ErrPlaceDomainUnavailable, "place-domain-unavailable"},
+	{errPlaceAddressTaken, "place-address-taken"},
+	{errPlaceOff, "place-off"},
+
 	{errPlacementUnreadable, "placement-unreadable"},
 	{errInvalidPlacement, "invalid-placement"},
 	{store.ErrRuleDomain, "invalid-placement"},
