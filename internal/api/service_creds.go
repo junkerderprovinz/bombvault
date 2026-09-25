@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -38,7 +39,8 @@ func (s *Service) offsiteModeForTarget(settings store.Settings, target store.Off
 
 // applyTargetCreds overrides mode's Env (and storage class) with the
 // credential set a target names; a target with an empty CredsRef is returned
-// untouched.
+// untouched. A set with a kind renders that kind's variables, a WebDAV one for
+// the rclone remote the target's address names.
 //
 // The off-site path (offsiteModeForTarget) and the primary path
 // (primaryModeFor) share it because both ask the same row type the same
@@ -47,14 +49,19 @@ func (s *Service) applyTargetCreds(mode restic.Mode, settings store.Settings, ta
 	if strings.TrimSpace(target.CredsRef) == "" {
 		return mode
 	}
-	c, err := s.decodeCloudFor(settings, target.CredsRef)
+	set, err := s.credSetFor(settings, target.CredsRef)
 	if err != nil {
 		log.Printf("api: target %s: cloud creds decode failed (ignoring, falling back to shared): %v", target.ID, err) //nolint:gosec // G706: target.ID is an opaque store-generated id
 		return mode
 	}
-	mode.Env = cloudEnv(c)
-	if c.S3StorageClass != "" {
-		mode.StorageClass = c.S3StorageClass
+	env, err := credSetEnv(set, places.RemotePlace(target.Repo))
+	if err != nil {
+		log.Printf("api: target %s: its credentials could not be rendered (falling back to shared): %v", target.ID, err) //nolint:gosec // G706: target.ID is an opaque store-generated id
+		return mode
+	}
+	mode.Env = env
+	if set.S3StorageClass != "" {
+		mode.StorageClass = set.S3StorageClass
 	}
 	return mode
 }
@@ -343,7 +350,7 @@ func (s *Service) decodeCloudCredSets(settings store.Settings) ([]CloudCredSet, 
 // CloudCredSets returns the additional named credential sets with every
 // secret field blanked, for serving the list to the UI (the same
 // blank-secrets contract as handleGetCloud). Callers that need the real
-// secrets, such as restic env building, go through decodeCloudFor.
+// secrets, such as restic env building, go through credSetFor.
 func (s *Service) CloudCredSets() ([]CloudCredSet, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -474,28 +481,33 @@ func (s *Service) editCloudCredSets(edit func([]CloudCredSet) []CloudCredSet) er
 	return err
 }
 
-// decodeCloudFor resolves the credentials an off-site target should use:
-// the shared CloudCreds when credsRef is empty, or the matching named
-// CloudCredSet otherwise. A credsRef that no longer resolves (the set was
-// deleted, or storage drifted) falls back to the shared creds rather than
-// failing the caller outright; restic then fails loudly on auth if that
-// fallback has no usable credentials for this target's endpoint, which is
-// a clearer signal than an opaque config error.
-func (s *Service) decodeCloudFor(settings store.Settings, credsRef string) (CloudCreds, error) {
-	if strings.TrimSpace(credsRef) == "" {
-		return s.decodeCloud(settings)
-	}
-	sets, err := s.decodeCloudCredSets(settings)
-	if err != nil {
-		return CloudCreds{}, err
-	}
-	for _, set := range sets {
-		if set.ID == credsRef {
-			return set.CloudCreds, nil
+// credSetFor resolves the credential set a row names: the named set, or the
+// shared credentials as a set without a kind when credsRef is empty. A
+// credsRef that no longer resolves falls back to the shared credentials rather
+// than failing the caller, since restic then fails on the sign-in, which says
+// more than a configuration error deep in replication.
+func (s *Service) credSetFor(settings store.Settings, credsRef string) (CloudCredSet, error) {
+	if strings.TrimSpace(credsRef) != "" {
+		sets, err := s.decodeCloudCredSets(settings)
+		if err != nil {
+			return CloudCredSet{}, err
 		}
+		for _, set := range sets {
+			if set.ID == credsRef {
+				return set, nil
+			}
+		}
+		log.Printf("api: off-site target references unknown credential set %q, falling back to shared credentials", credsRef)
 	}
-	log.Printf("api: off-site target references unknown credential set %q, falling back to shared credentials", credsRef)
-	return s.decodeCloud(settings)
+	c, err := s.decodeCloud(settings)
+	return CloudCredSet{CloudCreds: c}, err
+}
+
+// decodeCloudFor is credSetFor for callers that read only the S3 and REST
+// fields.
+func (s *Service) decodeCloudFor(settings store.Settings, credsRef string) (CloudCreds, error) {
+	set, err := s.credSetFor(settings, credsRef)
+	return set.CloudCreds, err
 }
 
 // namedRepoItemNames lists the containers, VMs and folder sets pointed at one
