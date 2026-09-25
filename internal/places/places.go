@@ -31,13 +31,13 @@ func DefaultFolders() Folders {
 }
 
 // Join builds the address of folder under base. After a trailing ':' (the
-// root of an rclone remote or an sftp host) the folder follows without a
-// slash. An empty folder returns base unchanged.
+// root of an rclone remote or an sftp host) or a trailing '/' the folder
+// follows without another slash. An empty folder returns base unchanged.
 func Join(base, folder string) string {
 	switch {
 	case folder == "":
 		return base
-	case strings.HasSuffix(base, ":"):
+	case strings.HasSuffix(base, ":"), strings.HasSuffix(base, "/"):
 		return base + folder
 	}
 	return base + "/" + folder
