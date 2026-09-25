@@ -50,12 +50,15 @@ const DEFAULT_FOLDERS: Record<PlaceDomain, string> = {
   files: "files",
 };
 
-const RETENTION: { key: "retentionKeepLast" | "retentionKeepDaily" | "retentionKeepWeekly" | "retentionKeepMonthly"; label: TranslationKey }[] = [
+type RetentionKey = "retentionKeepLast" | "retentionKeepDaily" | "retentionKeepWeekly" | "retentionKeepMonthly";
+
+const RETENTION: { key: RetentionKey; label: TranslationKey }[] = [
   { key: "retentionKeepLast", label: "places.details.keepLast" },
   { key: "retentionKeepDaily", label: "places.details.keepDaily" },
   { key: "retentionKeepWeekly", label: "places.details.keepWeekly" },
   { key: "retentionKeepMonthly", label: "places.details.keepMonthly" },
 ];
+const RETENTION_KEYS = RETENTION.map((r) => r.key);
 
 const LIMITS: { key: "limitUpload" | "limitDownload" | "growthBudgetGb"; label: TranslationKey; hint: TranslationKey }[] = [
   { key: "limitUpload", label: "places.details.limitUpload", hint: "places.details.limitsHint" },
@@ -127,7 +130,8 @@ export function PlaceDetails({
   useEffect(() => {
     setDraft((d) => {
       const next = { ...place } as Record<string, unknown>;
-      for (const key of timers.current.keys()) if (key in d) next[key] = (d as unknown as Record<string, unknown>)[key];
+      const waiting = [...timers.current.keys()].flatMap((key) => (key === "retention" ? RETENTION_KEYS : [key]));
+      for (const key of waiting) if (key in d) next[key] = (d as unknown as Record<string, unknown>)[key];
       return next as unknown as Place;
     });
   }, [place]);
@@ -197,15 +201,23 @@ export function PlaceDetails({
     });
   }
 
-  function editRetention(key: (typeof RETENTION)[number]["key"], value: number) {
+  // The four numbers make one rule, so they wait, ask and save together.
+  function editRetention(key: RetentionKey, value: number) {
     const next = { ...draft, [key]: value };
     setDraft(next);
-    later(key, async () => {
+    later("retention", async () => {
+      const patch: Partial<PatchPlaceBody> = {};
+      for (const k of RETENTION_KEYS) if (next[k] !== place[k]) patch[k] = next[k];
+      if (Object.keys(patch).length === 0) return;
       if (retentionLowered(place, next) && place.usage.items > 0 && !(await confirm(t("places.details.retentionLowerAsk", place.usage.items)))) {
-        setDraft((d) => ({ ...d, [key]: place[key] }));
+        setDraft((d) => {
+          const back = { ...d };
+          for (const k of RETENTION_KEYS) back[k] = place[k];
+          return back;
+        });
         return;
       }
-      void save({ [key]: value }, key);
+      void save(patch, "retention");
     });
   }
 
@@ -374,9 +386,9 @@ export function PlaceDetails({
       </Section>
 
       <Section title={t("places.details.retention")} hint={t("places.details.retentionHint")} hueIndex={hueIndex}>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div key={`retention-${shake.retention ?? 0}`} className={`grid grid-cols-2 gap-3 sm:grid-cols-4 ${shaken("retention")}`}>
           {RETENTION.map((r) => (
-            <div key={`${r.key}-${shake[r.key] ?? 0}`} className={`flex flex-col gap-1.5 ${shaken(r.key)}`}>
+            <div key={r.key} className="flex flex-col gap-1.5">
               <label htmlFor={fieldId(r.key)} className="text-xs text-carbon-textSub">
                 {t(r.label)}
               </label>

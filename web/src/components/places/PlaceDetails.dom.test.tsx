@@ -93,14 +93,15 @@ afterEach(() => {
 });
 
 function details(p: Place = place(), provider: CatalogProvider | undefined = B2, onSaved = vi.fn()) {
-  const view = render(
+  const tree = (shown: Place) => (
     <I18nProvider>
       <ToastProvider>
-        <PlaceDetails place={p} provider={provider} hostMountRoot="/mnt" onSaved={onSaved} />
+        <PlaceDetails place={shown} provider={provider} hostMountRoot="/mnt" onSaved={onSaved} />
       </ToastProvider>
     </I18nProvider>
   );
-  return { ...view, onSaved };
+  const view = render(tree(p));
+  return { ...view, onSaved, update: (next: Place) => view.rerender(tree(next)) };
 }
 
 async function settle(ms = 0) {
@@ -179,6 +180,55 @@ describe("PlaceDetails saving", () => {
     });
     expect(patches).toEqual([]);
     expect(input(en["places.details.keepLast"]).value).toBe("10");
+  });
+
+  it("asks once for retention changed in several fields and saves them together", async () => {
+    details(place({ usage: { homeDomains: [], defaults: [], copyDomains: [], items: 3, copies: 0 } }));
+    fireEvent.change(input(en["places.details.keepLast"]), { target: { value: "3" } });
+    await settle(300);
+    fireEvent.change(input(en["places.details.keepDaily"]), { target: { value: "5" } });
+    await settle(800);
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["common.confirm"] }));
+    });
+    expect(patches).toEqual([{ retentionKeepLast: 3, retentionKeepDaily: 5 }]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("takes back every retention field when the question is declined", async () => {
+    details(place({ usage: { homeDomains: [], defaults: [], copyDomains: [], items: 3, copies: 0 } }));
+    fireEvent.change(input(en["places.details.keepLast"]), { target: { value: "3" } });
+    await settle(300);
+    fireEvent.change(input(en["places.details.keepDaily"]), { target: { value: "9" } });
+    await settle(800);
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["common.cancel"] }));
+    });
+    expect(patches).toEqual([]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(input(en["places.details.keepLast"]).value).toBe("10");
+    expect(input(en["places.details.keepDaily"]).value).toBe("7");
+  });
+
+  it("keeps refused retention as typed and shakes the retention fields", async () => {
+    answer = () => ({ ok: false, error: "no" });
+    details();
+    fireEvent.change(input(en["places.details.keepWeekly"]), { target: { value: "8" } });
+    await settle(800);
+    expect(patches).toEqual([{ retentionKeepWeekly: 8 }]);
+    expect(input(en["places.details.keepWeekly"]).value).toBe("8");
+    expect(input(en["places.details.keepMonthly"]).closest(".glim-shake")).toBeTruthy();
+  });
+
+  it("keeps retention still being typed when another field's save comes back", async () => {
+    const { update } = details();
+    fireEvent.change(input(en["places.details.keepLast"]), { target: { value: "12" } });
+    fireEvent.change(input(en["places.details.keepDaily"]), { target: { value: "9" } });
+    update(place({ name: "B2 EU" }));
+    expect(input(en["places.details.keepLast"]).value).toBe("12");
+    expect(input(en["places.details.keepDaily"]).value).toBe("9");
+    await settle(800);
+    expect(patches).toEqual([{ retentionKeepLast: 12, retentionKeepDaily: 9 }]);
   });
 });
 
