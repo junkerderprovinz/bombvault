@@ -500,17 +500,9 @@ const tr: Partial<Translations> = {
   "settings.retentionLocal": "Yerel repo",
   "settings.retentionOffsite": "Uzak repo",
 
-  // Off-site (rclone)
-  "rclone.title": "Dış konum (rclone)",
-  "rclone.hint": "Buluta yedeklemek için bir rclone yapılandırması yapıştırın (Backblaze B2, S3, Google Drive, …). Şifreli olarak saklanır. SMB/NFS rclone gerektirmez: paylaşımı Unraid'e bağlayın ve buna bir Yedekleme Yolu ayarlayın.",
-  "rclone.configured": "Yapılandırılmış uzak konumlar",
-  "rclone.pathHint": "Ardından o etki alanını dış konuma göndermek için bir Yedekleme Yolunu “rclone:<remote>:<bucket>/path” olarak ayarlayın.",
-  "cloud.title": "Paylaşılan bulut kimlik bilgileri (S3 / restic REST)",
-  "cloud.hint": "rclone olmadan uzak restic arka uçları için kimlik bilgileri. Kaydettikten sonra bir yedek yolunu uzak bir depoya ayarlayın, ör. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo veya sftp:user@host:/repo. Gizli bilgiler şifreli saklanır ve bir daha gösterilmez.",
   "cloud.secretSet": "kaydedildi, korumak için boş bırakın",
   "cloud.storageClass.label": "Off-site depolama sınıfı",
   "cloud.storageClass.default": "(sağlayıcı varsayılanı)",
-  "cloud.storageClass.hint": "Yalnızca yerel S3 arka uçları için geçerlidir (s3: ile başlayan depolar). Derin arşiv katmanları (Glacier Flexible Retrieval, Deep Archive) restic geri yüklemesini bozdukları için bilerek sunulmaz.",
   "cloud.credSets.title": "Ek kimlik bilgisi kümeleri",
   "cloud.credSets.hint": "Bir veya daha fazla harici hedefe, yukarıdakileri paylaşmak yerine kendi S3 veya restic REST kimlik bilgilerini verin.",
   "cloud.credSets.add": "Kimlik bilgisi kümesi ekle",
@@ -524,7 +516,6 @@ const tr: Partial<Translations> = {
   "export.encrypt.recipientsHint": "Her satıra bir alıcı. Bir age genel anahtarı (age1...) veya bir SSH genel anahtarı kullanın. Sunucu dışında şifre çözmek için eşleşen özel anahtar gerekir. Şifreleme açıkken ve geçerli alıcı yoksa, dışa aktarma düz metin yazmak yerine başarısız olur.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "En az bir age alıcısı ekleyin, aksi halde şifreli dışa aktarma başarısız olur.",
-  "rclone.save": "Yapılandırmayı kaydet",
 
   // Integrity (restic check)
   "integrity.title": "Bütünlük ve bakım",
@@ -745,8 +736,6 @@ const tr: Partial<Translations> = {
   "recovery.notReachable": "Yedeklerinize henüz ulaşılamadı. Aşağıdaki konumu ekleyin, ardından yeniden denetleyin.",
   "recovery.recheck": "Denetle",
   "recovery.step2": "Yedeklerinizi ekleyin",
-  "recovery.cloudCreds": "Bulut kimlik bilgileri (isteğe bağlı)",
-  "recovery.cloudCredsHint": "Yalnızca bir yedek yolu S3'e, bir restic REST sunucusuna veya bir rclone uzak konumuna işaret ettiğinde gerekir. Yerel bir yol veya bağlanmış bir paylaşım için burada hiçbir şey gerekmez.",
   "recovery.attachHint": "BombVault'u mevcut yedeklerinize yönlendirin: host bağlama noktası altında yerel bir yol ya da kimlik bilgileriyle bir site dışı depo (rest / S3 / B2 / sftp / rclone). Ardından onaylamak için bağlanın.",
   "recovery.credsSaveHint": "Site dışı kimlik bilgileri her kartın kendi Kaydet düğmesiyle kaydedilir. Bağlanıp önizlemeden önce onları kaydedin.",
   "recovery.connectPreview": "Bağlan ve önizle",

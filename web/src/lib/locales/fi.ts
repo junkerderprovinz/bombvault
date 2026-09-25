@@ -500,17 +500,9 @@ const fi: Partial<Translations> = {
   "settings.retentionLocal": "Paikallinen repo",
   "settings.retentionOffsite": "Etärepo",
 
-  // Off-site (rclone)
-  "rclone.title": "Etäsijainti (rclone)",
-  "rclone.hint": "Liitä rclone-määritys varmuuskopioidaksesi pilveen (Backblaze B2, S3, Google Drive, …). Se tallennetaan salattuna. SMB/NFS eivät tarvitse rclonea: liitä jako Unraidiin ja osoita varmuuskopiopolku siihen.",
-  "rclone.configured": "Määritetyt etäsijainnit",
-  "rclone.pathHint": "Aseta sitten varmuuskopiopolku muotoon „rclone:<remote>:<bucket>/path” lähettääksesi kyseisen toimialueen etäsijaintiin.",
-  "cloud.title": "Jaetut pilvitunnistetiedot (S3 / restic REST)",
-  "cloud.hint": "Tunnukset etä-restic-taustajärjestelmille, ilman rclonea. Aseta tallennuksen jälkeen varmuuskopiopolku etärepoon, esim. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo tai sftp:user@host:/repo. Salaisuudet tallennetaan salattuina eikä niitä näytetä uudelleen.",
   "cloud.secretSet": "tallennettu, jätä tyhjäksi säilyttääksesi",
   "cloud.storageClass.label": "Off-site-tallennusluokka",
   "cloud.storageClass.default": "(palveluntarjoajan oletus)",
-  "cloud.storageClass.hint": "Koskee vain natiiveja S3-taustajärjestelmiä (arkistot, jotka alkavat s3:). Syväarkistotasoja (Glacier Flexible Retrieval, Deep Archive) ei tarjota tarkoituksella, koska ne rikkovat restic-palautuksen.",
   "cloud.credSets.title": "Lisäkirjautumistietojoukot",
   "cloud.credSets.hint": "Anna yhdelle tai useammalle etäkohteelle omat S3- tai restic REST -kirjautumistiedot yllä olevien jakamisen sijaan.",
   "cloud.credSets.add": "Lisää kirjautumistietojoukko",
@@ -524,7 +516,6 @@ const fi: Partial<Translations> = {
   "export.encrypt.recipientsHint": "Yksi vastaanottaja riviä kohti. Käytä age-julkista avainta (age1...) tai SSH-julkista avainta. Vastaava yksityinen avain tarvitaan salauksen purkuun palvelimen ulkopuolella. Jos salaus on päällä eikä kelvollista vastaanottajaa ole, vienti epäonnistuu selkokielisen tekstin kirjoittamisen sijaan.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "Lisää vähintään yksi age-vastaanottaja, muuten salattu vienti epäonnistuu.",
-  "rclone.save": "Tallenna määritys",
 
   // Integrity (restic check)
   "integrity.title": "Eheys ja ylläpito",
@@ -745,8 +736,6 @@ const fi: Partial<Translations> = {
   "recovery.notReachable": "Varmuuskopioihisi ei vielä saatu yhteyttä. Liitä sijainti alla ja tarkista sitten uudelleen.",
   "recovery.recheck": "Tarkista",
   "recovery.step2": "Liitä varmuuskopiosi",
-  "recovery.cloudCreds": "Pilvitunnukset (valinnainen)",
-  "recovery.cloudCredsHint": "Tarvitaan vain, kun varmuuskopion polku osoittaa S3:een, restic REST -palvelimeen tai rclone-etäkohteeseen. Paikallinen polku tai liitetty jako ei tarvitse tässä mitään.",
   "recovery.attachHint": "Osoita BombVault olemassa oleviin varmuuskopioihisi: paikallinen polku host-liitoksen alla tai etärepo (rest / S3 / B2 / sftp / rclone) tunnuksineen. Yhdistä sitten vahvistaaksesi.",
   "recovery.credsSaveHint": "Etätunnukset tallennetaan kunkin kortin omalla Tallenna-painikkeella. Tallenna ne ennen yhdistämistä ja esikatselua.",
   "recovery.connectPreview": "Yhdistä ja esikatsele",

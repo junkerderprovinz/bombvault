@@ -57,24 +57,9 @@ export function SystemTab({
           the Storage tab's cacheTitle Card above. */}
       {advanced && (
       <Card title={t("settings.metrics")} hueIndex={nextHue()}>
-        {/* GlimStone follow-up round (jdp, live review: "Prometheus-Metriken
-            unter /metrics ... in eine InfoBubble", design-language.md rule 8,
-            "explanations live in a bubble, not on the page"): this used to be
-            a permanent `<p>` under the Card title, reasoned at the time as an
-            "exact syntax to copy correctly" carve-out (the same one RcloneCard's/
-            CloudCard's own hints still use). jdp's live review overruled that
-            specifically for this text, unlike rclone.pathHint's own
-            "rclone:<remote>:<bucket>/path" syntax (which someone fills into a
-            DIFFERENT tab's Backup Path field from memory, so it needs to stay
-            findable without already hovering an icon here), this hint is
-            self-contained: /metrics and the Bearer-token syntax are both used
-            right here, on the same toggle, so a hover bubble is not hiding
-            anything a reader would need on a different screen. Moved onto the
-            ToggleRow's own `hint` prop below (the same "(i) beside the label"
-            mechanism as every other bubbled explanation in this file), no
-            `description` here for the same "the Card's own hint already
-            covers it" reasoning this row's OLD comment gave, just now living
-            on the toggle's `hint` instead of a Card-level paragraph. */}
+        {/* The metrics syntax sits in the toggle's bubble: /metrics and the
+            Bearer token are used right at this toggle, so the bubble hides
+            nothing a reader needs on another screen. */}
         <ToggleRow
           label={tLtr(t, "settings.metricsEnable")}
           hint={tLtr(t, "settings.metricsHint")}

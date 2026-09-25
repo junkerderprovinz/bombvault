@@ -495,17 +495,9 @@ const uk: Partial<Translations> = {
   "settings.retentionLocal": "Локальний репо",
   "settings.retentionOffsite": "Віддалений репо",
 
-  // Off-site (rclone)
-  "rclone.title": "Зовнішнє (rclone)",
-  "rclone.hint": "Вставте конфігурацію rclone для резервного копіювання в хмару (Backblaze B2, S3, Google Drive, …). Зберігається у зашифрованому вигляді. SMB/NFS не потребують rclone: змонтуйте спільний ресурс в Unraid і вкажіть на нього Шлях резервних копій.",
-  "rclone.configured": "Налаштовані віддалені сховища",
-  "rclone.pathHint": "Потім встановіть Шлях резервних копій на «rclone:<remote>:<bucket>/path», щоб надсилати цей домен off-site.",
-  "cloud.title": "Спільні хмарні облікові дані (S3 / restic REST)",
-  "cloud.hint": "Облікові дані для віддалених бекендів restic, без rclone. Після збереження вкажіть шлях резервної копії на віддалене сховище, напр. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo або sftp:user@host:/repo. Секрети зберігаються зашифрованими й більше не показуються.",
   "cloud.secretSet": "збережено — залиште порожнім, щоб зберегти",
   "cloud.storageClass.label": "Клас сховища off-site",
   "cloud.storageClass.default": "(за замовчуванням провайдера)",
-  "cloud.storageClass.hint": "Застосовується лише до нативних бекендів S3 (репозиторіїв, що починаються з s3:). Рівні глибокого архіву (Glacier Flexible Retrieval, Deep Archive) навмисно не пропонуються, бо вони ламають відновлення restic.",
   "cloud.credSets.title": "Додаткові набори облікових даних",
   "cloud.credSets.hint": "Надайте одній або кільком зовнішнім цілям власні облікові дані S3 або restic REST, замість спільного використання наведених вище.",
   "cloud.credSets.add": "Додати набір облікових даних",
@@ -519,7 +511,6 @@ const uk: Partial<Translations> = {
   "export.encrypt.recipientsHint": "По одному отримувачу в рядку. Використовуйте публічний ключ age (age1...) або публічний ключ SSH. Для розшифрування поза сервером потрібен відповідний приватний ключ. Якщо шифрування увімкнено, але немає дійсного отримувача, експорт завершується помилкою замість запису відкритого тексту.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "Додайте принаймні одного отримувача age, інакше зашифрований експорт не вдасться.",
-  "rclone.save": "Зберегти конфігурацію",
 
   // Integrity (restic check)
   "integrity.title": "Цілісність та обслуговування",
@@ -740,8 +731,6 @@ const uk: Partial<Translations> = {
   "recovery.notReachable": "Поки що не вдалося дістатися до ваших резервних копій — під'єднайте розташування нижче й перевірте знову.",
   "recovery.recheck": "Перевірити",
   "recovery.step2": "Під'єднайте свої резервні копії",
-  "recovery.cloudCreds": "Облікові дані хмари (необов'язково)",
-  "recovery.cloudCredsHint": "Потрібні лише тоді, коли шлях резервної копії вказує на S3, сервер restic REST або віддалене сховище rclone. Локальний шлях чи змонтована спільна папка тут нічого не потребують.",
   "recovery.attachHint": "Спрямуйте BombVault на наявні резервні копії: локальний шлях у межах монтування хоста або зовнішній репозиторій (rest / S3 / B2 / sftp / rclone) з його обліковими даними. Потім з'єднайтеся для підтвердження.",
   "recovery.credsSaveHint": "Зовнішні облікові дані зберігаються власною кнопкою Зберегти на кожній картці — збережіть їх перед з'єднанням і переглядом.",
   "recovery.connectPreview": "З'єднатися й переглянути",

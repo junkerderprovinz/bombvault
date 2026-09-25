@@ -500,17 +500,9 @@ const ar: Partial<Translations> = {
   "settings.retentionLocal": "المستودع المحلي",
   "settings.retentionOffsite": "المستودع الخارجي",
 
-  // Off-site (rclone)
-  "rclone.title": "خارج الموقع (rclone)",
-  "rclone.hint": "ألصق إعداد rclone للنسخ الاحتياطي إلى السحابة (Backblaze B2 وS3 وGoogle Drive …). يُخزَّن مشفَّراً. لا يحتاج SMB/NFS إلى rclone: ركِّب المشاركة على Unraid واضبط مسار نسخ احتياطي عليها.",
-  "rclone.configured": "الوجهات البعيدة المُعدَّة",
-  "rclone.pathHint": "ثم اضبط مسار نسخ احتياطي على «rclone:<remote>:<bucket>/path» لإرسال هذا النطاق خارج الموقع.",
-  "cloud.title": "بيانات اعتماد السحابة المشتركة (S3 / restic REST)",
-  "cloud.hint": "بيانات اعتماد لخلفيات restic عن بُعد، بدون rclone. بعد الحفظ، عيّن مسار النسخ الاحتياطي إلى مستودع بعيد، مثل s3:s3.amazonaws.com/bucket/path أو rest:http://host:8000/repo أو sftp:user@host:/repo. تُخزَّن الأسرار مشفّرة ولا تُعرض مرة أخرى.",
   "cloud.secretSet": "محفوظ، اتركه فارغًا للإبقاء عليه",
   "cloud.storageClass.label": "فئة التخزين خارج الموقع",
   "cloud.storageClass.default": "(الافتراضي للمزود)",
-  "cloud.storageClass.hint": "ينطبق فقط على خلفيات S3 الأصلية (المستودعات التي تبدأ بـ s3:). لا يتم تقديم مستويات الأرشفة العميقة (Glacier Flexible Retrieval وDeep Archive) عمدًا لأنها تُعطّل استعادة restic.",
   "cloud.credSets.title": "مجموعات بيانات اعتماد إضافية",
   "cloud.credSets.hint": "امنح وجهة خارجية واحدة أو أكثر بيانات اعتماد S3 أو restic REST الخاصة بها، بدلاً من مشاركة البيانات أعلاه.",
   "cloud.credSets.add": "إضافة مجموعة بيانات اعتماد",
@@ -524,7 +516,6 @@ const ar: Partial<Translations> = {
   "export.encrypt.recipientsHint": "مستلم واحد لكل سطر. استخدم مفتاح age العام (age1...) أو مفتاح SSH العام. المفتاح الخاص المطابق مطلوب لفك التشفير خارج الخادم. مع تفعيل التشفير وعدم وجود مستلم صالح، يفشل التصدير بدلًا من كتابة نص عادي.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "أضِف مستلم age واحدًا على الأقل، وإلا سيفشل التصدير المشفّر.",
-  "rclone.save": "حفظ الإعداد",
 
   // Integrity (restic check)
   "integrity.title": "السلامة والصيانة",
@@ -748,8 +739,6 @@ const ar: Partial<Translations> = {
   "recovery.notReachable": "تعذّر الوصول إلى نسخك الاحتياطية بعد. أرفق الموقع أدناه، ثم أعد الفحص.",
   "recovery.recheck": "فحص",
   "recovery.step2": "أرفق نسخك الاحتياطية",
-  "recovery.cloudCreds": "بيانات اعتماد السحابة (اختياري)",
-  "recovery.cloudCredsHint": "مطلوبة فقط عندما يشير مسار النسخ الاحتياطي إلى S3 أو خادم restic REST أو وحدة rclone بعيدة. المسار المحلي أو المشاركة المُركّبة لا يحتاجان إلى شيء هنا.",
   "recovery.attachHint": "وجّه BombVault إلى نسخك الاحتياطية الموجودة: مسار محلي ضمن نقطة تركيب المضيف، أو مستودع خارج الموقع (rest / S3 / B2 / sftp / rclone) مع بيانات اعتماده. ثم اتصل للتأكيد.",
   "recovery.credsSaveHint": "تُحفَظ بيانات الاعتماد خارج الموقع بزر الحفظ الخاص بكل بطاقة. احفظها قبل الاتصال والمعاينة.",
   "recovery.connectPreview": "اتصال ومعاينة",

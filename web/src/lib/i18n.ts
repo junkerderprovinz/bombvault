@@ -521,23 +521,14 @@ export const en = {
   "settings.dashTileRemoving": "Removing…",
   "settings.dashTileRemoveOk": "Plugin removed. It no longer appears on the Unraid Dashboard.",
 
-  // Off-site (rclone)
-  "rclone.title": "Off-site (rclone)",
-  "rclone.hint": "Paste an rclone config to back up to the cloud (Backblaze B2, S3, Google Drive, …). It is stored encrypted. SMB/NFS need no rclone: mount the share on Unraid and set a Backup Path to it.",
-  "rclone.configured": "Configured remotes",
-  "rclone.pathHint": "Then set a Backup Path to \"rclone:<remote>:<bucket>/path\" to send that domain off-site.",
-  "cloud.title": "Shared cloud credentials (S3 / restic REST)",
-  "cloud.hint": "Credentials for off-site restic backends, without rclone. After saving, set a Backup Path to a remote repo, e.g. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo or sftp:user@host:/repo. Secrets are stored encrypted and never shown again.",
   "cloud.secretSet": "saved (leave blank to keep)",
   "cloud.storageClass.label": "Off-site storage class",
   "cloud.storageClass.default": "(provider default)",
-  "cloud.storageClass.hint": "Applies to native S3 backends only (repositories that start with s3:). Deep-archive tiers (Glacier Flexible Retrieval, Deep Archive) are intentionally not offered because they break restic restore.",
   "cloud.credSets.title": "Credential sets",
   "cloud.credSets.hint": "Logins for the storage a pull source lies on. A pull never uses this server's own credentials, so a source that needs a login takes one of these sets.",
   "cloud.credSets.add": "Add credential set",
   "cloud.credSets.name": "Name",
   "cloud.credSets.none": "No credential sets yet.",
-  "rclone.save": "Save config",
   "notify.title": "Notifications",
   "notify.hint": "Get notified when a backup finishes, and choose which events trigger it below. Unraid notifications work here in Simple mode; more delivery channels (webhook, Matrix, Healthchecks, email) live under Advanced.",
   "notify.on": "Notify",
@@ -1501,10 +1492,8 @@ export const en = {
   "recovery.configSkipped": "Skipped. Attach your backups manually below.",
   // Step 3 — attach your backups
   "recovery.step2": "Attach your backups",
-  "recovery.cloudCreds": "Cloud credentials (optional)",
-  "recovery.cloudCredsHint": "Only needed when a backup path points at S3, a restic REST server or an rclone remote. A local path or a mounted share needs nothing here.",
   "recovery.attachHint": "Point BombVault at your existing backups: a local path under the host mount, or an off-site repo (rest / S3 / B2 / sftp / rclone) with its credentials. Then connect to confirm.",
-  "recovery.credsSaveHint": "Off-site credentials save with each card's own Save button. Save them before you connect & preview.",
+  "recovery.credsSaveHint": "A place added in the window is saved at once. Add the place your backups lie on before you connect & preview.",
   "recovery.connectPreview": "Connect & preview",
   // Encryption mode — DETECTED, not asserted. The repositories themselves say
   // whether they need the APP_KEY-derived password, so the common path (attach
@@ -2302,6 +2291,8 @@ export const en = {
   "storageDomains.copyStarted": "Copying started. It runs in the background.",
   "storageDomains.copyFailed": "Copying could not start.",
   "cloud.credSets.placeOwned": "The credentials of this storage place. Change them in its details under Settings, Storage.",
+  "recovery.places": "Storage places (optional)",
+  "recovery.placesHint": "Only needed when a backup lies in the cloud or on a server: connect that place here so its credentials are known. A local path or a mounted share needs nothing here.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -2733,23 +2724,14 @@ export const de: Translations = {
   "settings.dashTileRemoving": "Wird entfernt…",
   "settings.dashTileRemoveOk": "Plugin entfernt. Es erscheint nicht mehr auf dem Unraid-Dashboard.",
 
-  // Off-site (rclone)
-  "rclone.title": "Off-site (rclone)",
-  "rclone.hint": "rclone-Konfiguration einfügen, um in die Cloud zu sichern (Backblaze B2, S3, Google Drive, …). Wird verschlüsselt gespeichert. SMB/NFS brauchen kein rclone: Freigabe in Unraid mounten und einen Backup-Pfad daraufzeigen.",
-  "rclone.configured": "Konfigurierte Remotes",
-  "rclone.pathHint": "Dann einen Backup-Pfad auf \"rclone:<remote>:<bucket>/pfad\" setzen, um diese Domäne off-site zu senden.",
-  "cloud.title": "Geteilte Cloud-Zugangsdaten (S3 / restic REST)",
-  "cloud.hint": "Zugangsdaten für off-site restic-Backends, ohne rclone. Nach dem Speichern einen Backup-Pfad auf ein Remote-Repo setzen, z.B. s3:s3.amazonaws.com/bucket/pfad, rest:http://host:8000/repo oder sftp:user@host:/repo. Secrets werden verschlüsselt gespeichert und nie wieder angezeigt.",
   "cloud.secretSet": "gespeichert (leer lassen zum Beibehalten)",
   "cloud.storageClass.label": "Off-site-Speicherklasse",
   "cloud.storageClass.default": "(Standard des Anbieters)",
-  "cloud.storageClass.hint": "Gilt nur für native S3-Backends (Repositories, die mit s3: beginnen). Deep-Archive-Stufen (Glacier Flexible Retrieval, Deep Archive) werden absichtlich nicht angeboten, weil sie die restic-Wiederherstellung brechen.",
   "cloud.credSets.title": "Zugangsdaten-Sätze",
   "cloud.credSets.hint": "Anmeldungen für den Speicher, auf dem eine Abhol-Quelle liegt. Ein Abholen nimmt nie die Zugangsdaten dieses Servers, eine Quelle mit Anmeldung braucht also einen dieser Sätze.",
   "cloud.credSets.add": "Zugangsdaten-Satz hinzufügen",
   "cloud.credSets.name": "Name",
   "cloud.credSets.none": "Noch keine Zugangsdaten-Sätze.",
-  "rclone.save": "Konfig speichern",
   "notify.title": "Benachrichtigungen",
   "notify.hint": "Lass dich benachrichtigen, wenn ein Backup fertig ist, und lege unten fest, bei welchen Ereignissen. Unraid-Benachrichtigungen funktionieren bereits im einfachen Modus; weitere Versandkanäle (Webhook, Matrix, Healthchecks, E-Mail) findest du unter Erweitert.",
   "notify.on": "Benachrichtigen",
@@ -3543,10 +3525,8 @@ export const de: Translations = {
   "recovery.configSkipped": "Übersprungen. Hänge deine Backups unten manuell an.",
   // Schritt 3 — Backups anhängen
   "recovery.step2": "Backups anhängen",
-  "recovery.cloudCreds": "Cloud-Zugangsdaten (optional)",
-  "recovery.cloudCredsHint": "Nur nötig, wenn ein Backup-Pfad auf S3, einen restic-REST-Server oder ein rclone-Remote zeigt. Für einen lokalen Pfad oder eine eingebundene Freigabe brauchst du hier nichts.",
   "recovery.attachHint": "Richte BombVault auf deine vorhandenen Backups aus: einen lokalen Pfad unter dem Host-Mount oder ein Off-site-Repo (rest / S3 / B2 / sftp / rclone) mit den zugehörigen Zugangsdaten. Verbinde dich dann, um es zu bestätigen.",
-  "recovery.credsSaveHint": "Off-site-Zugangsdaten werden über den eigenen Speichern-Button der jeweiligen Karte gespeichert. Speichere sie, bevor du „Verbinden & prüfen“ klickst.",
+  "recovery.credsSaveHint": "Ein im Fenster hinzugefügter Ort ist sofort gespeichert. Füge den Ort, auf dem deine Backups liegen, hinzu, bevor du „Verbinden & prüfen“ klickst.",
   "recovery.connectPreview": "Verbinden & prüfen",
   // Verschlüsselungsmodus — ERKANNT, nicht behauptet. Die Repositories sagen
   // selbst, ob sie das aus dem APP_KEY abgeleitete Passwort brauchen. Der
@@ -4307,6 +4287,8 @@ export const de: Translations = {
   "storageDomains.copyStarted": "Kopieren gestartet. Es läuft im Hintergrund weiter.",
   "storageDomains.copyFailed": "Kopieren konnte nicht starten.",
   "cloud.credSets.placeOwned": "Die Zugangsdaten dieses Speicherorts. Du änderst sie in seinen Details unter Einstellungen, Speicher.",
+  "recovery.places": "Speicherorte (optional)",
+  "recovery.placesHint": "Nur nötig, wenn ein Backup in der Cloud oder auf einem Server liegt: Verbinde diesen Ort hier, damit seine Zugangsdaten bekannt sind. Für einen lokalen Pfad oder eine eingebundene Freigabe brauchst du hier nichts.",
 };
 
 // ---------------------------------------------------------------------------

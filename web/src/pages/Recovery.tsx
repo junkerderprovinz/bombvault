@@ -14,8 +14,8 @@ import { IconRestore } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
-import { CloudCard } from "./settings/CloudCard";
-import { RcloneCard } from "./settings/RcloneCard";
+import { AddPlaceDialog } from "../components/places/AddPlaceDialog";
+import { PlaceMark } from "../components/placeMarks";
 import { ToggleRow } from "./settings/shared";
 import { Selector } from "../components/Selector";
 import { RestoreAction } from "../components/restore/RestoreAction";
@@ -62,6 +62,7 @@ import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 import { DiscoverFindings } from "../components/placement/DiscoverFindings";
 import { placementChanged } from "../lib/placementEvents";
+import { usePlaces } from "../lib/usePlaces";
 import { Toggle } from "../components/Toggle";
 
 type DiscoverResult = Awaited<ReturnType<typeof discover>>;
@@ -974,12 +975,11 @@ function ForeignRestoreCard({
 }
 
 // StepDisclosure is the expander for step 3's two optional sections, the
-// off-site repo URLs and the cloud and rclone credentials. A repo on a local
-// path or on a share mounted on Unraid needs neither: the credentials only
-// become env vars for restic, and the rclone config is read only for an
-// `rclone:` repo. The trigger is a one-item Selector in "many" mode, the same
-// disclosure mechanism as the per-container section chips, and both start
-// closed on every load.
+// off-site repo URLs and the storage places. A repo on a local path or on a
+// share mounted on Unraid needs neither: a place only brings the credentials
+// restic reads for a remote repo. The trigger is a one-item Selector in "many"
+// mode, the same disclosure mechanism as the per-container section chips, and
+// both start closed on every load.
 function StepDisclosure({
   label,
   tip,
@@ -1020,25 +1020,31 @@ const DISCLOSURE_ID = "sec";
 const OPEN_SECTION: ReadonlySet<string> = new Set([DISCLOSURE_ID]);
 const NO_SECTION: ReadonlySet<string> = new Set<string>();
 
-// CloudCredsDisclosure is step 3's credential cards inside a StepDisclosure,
-// taking its hues as props so the caller's nextHue() calls stay unconditional.
-function CloudCredsDisclosure({
-  t,
-  cloudHue,
-  rcloneHue,
-}: {
-  t: ReturnType<typeof useT>["t"];
-  /** nextHue() is a running counter; called inside the collapsible branch it
-   *  would renumber every later heading whenever the section closes. */
-  cloudHue: number;
-  rcloneHue: number;
-}) {
+// PlacesDisclosure is step 3's storage places inside a StepDisclosure: the
+// places connected so far, and the window that connects another.
+export function PlacesDisclosure({ t, hostMountRoot }: { t: ReturnType<typeof useT>["t"]; hostMountRoot: string }) {
+  const places = usePlaces();
+  const [adding, setAdding] = useState(false);
   return (
-    <StepDisclosure label={t("recovery.cloudCreds")} tip={t("recovery.cloudCredsHint")}>
-      {/* `nested` drops the card surface and horizontal padding, so the
-          cards line up with the step's content edge. */}
-      <CloudCard t={t} hueIndex={cloudHue} nested />
-      <RcloneCard t={t} hueIndex={rcloneHue} nested />
+    <StepDisclosure label={t("recovery.places")} tip={t("recovery.placesHint")} gap="gap-2">
+      {places.length > 0 && (
+        <ul className="flex flex-wrap gap-2">
+          {places.map((p) => (
+            <li key={p.id} className="flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2.5 py-1 text-sm text-carbon-text">
+              <PlaceMark provider={p.provider} />
+              {p.name}
+            </li>
+          ))}
+        </ul>
+      )}
+      <Button
+        label={t("places.add")}
+        labelKey="places.add"
+        tone="accent"
+        onClick={() => setAdding(true)}
+        className="glim-btn-key self-start"
+      />
+      {adding && <AddPlaceDialog hostMountRoot={hostMountRoot} onClose={() => setAdding(false)} />}
     </StepDisclosure>
   );
 }
@@ -1192,7 +1198,7 @@ export default function Recovery() {
   const [checking, setChecking] = useState(false);
 
   // Step 2 keeps its own copy of the settings and saves through the same calls
-  // as the Settings page; CloudCard and RcloneCard save themselves.
+  // as the Settings page; a place is saved by the window that adds it.
   const [settings, setSettings] = useState<Settings | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
   const [attachState, setAttachState] = useState<"idle" | "saving">("idle");
@@ -1821,8 +1827,7 @@ export default function Recovery() {
               ))}
             </StepDisclosure>
 
-            {/* The Settings page's own cards, which save themselves. */}
-            <CloudCredsDisclosure t={t} cloudHue={nextHue()} rcloneHue={nextHue()} />
+            <PlacesDisclosure t={t} hostMountRoot={hostMountRoot} />
 
             <div className="flex items-center gap-3 pt-1">
               <Button

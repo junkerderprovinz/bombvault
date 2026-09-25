@@ -494,17 +494,9 @@ const nl: Partial<Translations> = {
   "settings.retentionLocal": "Lokale repo",
   "settings.retentionOffsite": "Off-site repo",
 
-  // Off-site (rclone)
-  "rclone.title": "Off-site (rclone)",
-  "rclone.hint": "Plak een rclone-configuratie om naar de cloud te back-uppen (Backblaze B2, S3, Google Drive, …). Deze wordt versleuteld opgeslagen. SMB/NFS hebben geen rclone nodig: mount de share op Unraid en stel er een back-uppad op in.",
-  "rclone.configured": "Geconfigureerde remotes",
-  "rclone.pathHint": "Stel daarna een back-uppad in op „rclone:<remote>:<bucket>/path” om dat domein off-site te sturen.",
-  "cloud.title": "Gedeelde cloud-inloggegevens (S3 / restic REST)",
-  "cloud.hint": "Inloggegevens voor externe restic-backends, zonder rclone. Stel na opslaan een back-uppad in naar een externe repo, bijv. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo of sftp:user@host:/repo. Geheimen worden versleuteld opgeslagen en niet meer getoond.",
   "cloud.secretSet": "opgeslagen, laat leeg om te behouden",
   "cloud.storageClass.label": "Off-site opslagklasse",
   "cloud.storageClass.default": "(standaard van provider)",
-  "cloud.storageClass.hint": "Geldt alleen voor native S3-backends (repositories die met s3: beginnen). Deep-archive-niveaus (Glacier Flexible Retrieval, Deep Archive) worden bewust niet aangeboden omdat ze het restic-herstel breken.",
   "cloud.credSets.title": "Extra referentiesets",
   "cloud.credSets.hint": "Geef een of meer externe bestemmingen hun eigen S3- of restic REST-inloggegevens, in plaats van de bovenstaande te delen.",
   "cloud.credSets.add": "Referentieset toevoegen",
@@ -518,7 +510,6 @@ const nl: Partial<Translations> = {
   "export.encrypt.recipientsHint": "Eén ontvanger per regel. Gebruik een age-publieke sleutel (age1...) of een SSH-publieke sleutel. De bijbehorende privésleutel is nodig om buiten de server te ontsleutelen. Met versleuteling aan en geen geldige ontvanger mislukt de export in plaats van platte tekst te schrijven.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "Voeg minstens één age-ontvanger toe, anders mislukt de versleutelde export.",
-  "rclone.save": "Configuratie opslaan",
 
   // Integrity (restic check)
   "integrity.title": "Integriteit en onderhoud",
@@ -716,8 +707,6 @@ const nl: Partial<Translations> = {
   "recovery.notReachable": "Je back-ups zijn nog niet bereikbaar. Koppel de locatie hieronder en controleer opnieuw.",
   "recovery.recheck": "Controleren",
   "recovery.step2": "Koppel je back-ups",
-  "recovery.cloudCreds": "Cloud-inloggegevens (optioneel)",
-  "recovery.cloudCredsHint": "Alleen nodig wanneer een back-uppad naar S3, een restic REST-server of een rclone-remote wijst. Een lokaal pad of een gekoppelde share heeft hier niets nodig.",
   "recovery.attachHint": "Wijs BombVault naar je bestaande back-ups: een lokaal pad onder de host-mount, of een off-site repo (rest / S3 / B2 / sftp / rclone) met inloggegevens. Maak daarna verbinding om te bevestigen.",
   "recovery.credsSaveHint": "Off-site inloggegevens worden opgeslagen met de eigen Opslaan-knop van elke kaart. Sla ze op voordat je verbindt & een voorbeeld bekijkt.",
   "recovery.connectPreview": "Verbinden & voorbeeld",

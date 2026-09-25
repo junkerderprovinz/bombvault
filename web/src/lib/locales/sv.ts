@@ -500,17 +500,9 @@ const sv: Partial<Translations> = {
   "settings.retentionLocal": "Lokalt repo",
   "settings.retentionOffsite": "Off-site-repo",
 
-  // Off-site (rclone)
-  "rclone.title": "Off-site (rclone)",
-  "rclone.hint": "Klistra in en rclone-konfiguration för att säkerhetskopiera till molnet (Backblaze B2, S3, Google Drive, …). Den lagras krypterad. SMB/NFS behöver ingen rclone: montera resursen på Unraid och peka en säkerhetskopiesökväg mot den.",
-  "rclone.configured": "Konfigurerade fjärrlager",
-  "rclone.pathHint": "Ange sedan en säkerhetskopiesökväg till ”rclone:<remote>:<bucket>/path” för att skicka den domänen off-site.",
-  "cloud.title": "Delade molnautentiseringsuppgifter (S3 / restic REST)",
-  "cloud.hint": "Uppgifter för fjärrbaserade restic-backender, utan rclone. Ange efter sparande en backup-sökväg till ett fjärrrepo, t.ex. s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo eller sftp:user@host:/repo. Hemligheter lagras krypterade och visas inte igen.",
   "cloud.secretSet": "sparat, lämna tomt för att behålla",
   "cloud.storageClass.label": "Off-site-lagringsklass",
   "cloud.storageClass.default": "(leverantörens standard)",
-  "cloud.storageClass.hint": "Gäller endast native S3-backends (repositorier som börjar med s3:). Djuparkivnivåer (Glacier Flexible Retrieval, Deep Archive) erbjuds avsiktligt inte eftersom de bryter restic-återställning.",
   "cloud.credSets.title": "Ytterligare autentiseringsuppsättningar",
   "cloud.credSets.hint": "Ge ett eller flera off-site-mål egna S3- eller restic REST-uppgifter, istället för att dela de ovan.",
   "cloud.credSets.add": "Lägg till autentiseringsuppsättning",
@@ -524,7 +516,6 @@ const sv: Partial<Translations> = {
   "export.encrypt.recipientsHint": "En mottagare per rad. Använd en age-publik nyckel (age1...) eller en SSH-publik nyckel. Motsvarande privat nyckel behövs för att dekryptera utanför servern. Med kryptering på och ingen giltig mottagare misslyckas exporten istället för att skriva klartext.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "Lägg till minst en age-mottagare, annars misslyckas den krypterade exporten.",
-  "rclone.save": "Spara konfiguration",
 
   // Integrity (restic check)
   "integrity.title": "Integritet och underhåll",
@@ -745,8 +736,6 @@ const sv: Partial<Translations> = {
   "recovery.notReachable": "Kunde inte nå dina säkerhetskopior än. Anslut platsen nedan och kontrollera sedan igen.",
   "recovery.recheck": "Kontrollera",
   "recovery.step2": "Anslut dina säkerhetskopior",
-  "recovery.cloudCreds": "Molnuppgifter (valfritt)",
-  "recovery.cloudCredsHint": "Behövs bara när en säkerhetskopieringssökväg pekar mot S3, en restic REST-server eller en rclone-fjärrplats. En lokal sökväg eller en monterad utdelning behöver inget här.",
   "recovery.attachHint": "Peka BombVault mot dina befintliga säkerhetskopior: en lokal sökväg under host-monteringen, eller ett off-site-arkiv (rest / S3 / B2 / sftp / rclone) med dess uppgifter. Anslut sedan för att bekräfta.",
   "recovery.credsSaveHint": "Off-site-uppgifter sparas med varje korts egen Spara-knapp. Spara dem innan du ansluter och förhandsgranskar.",
   "recovery.connectPreview": "Anslut och förhandsgranska",

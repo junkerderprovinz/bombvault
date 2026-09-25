@@ -500,17 +500,9 @@ const da: Partial<Translations> = {
   "settings.retentionLocal": "Lokalt repo",
   "settings.retentionOffsite": "Off-site-repo",
 
-  // Off-site (rclone)
-  "rclone.title": "Off-site (rclone)",
-  "rclone.hint": "Indsæt en rclone-konfiguration for at sikkerhedskopiere til skyen (Backblaze B2, S3, Google Drive, …). Den gemmes krypteret. SMB/NFS behøver ingen rclone: monter delingen på Unraid og sæt en sikkerhedskopisti til den.",
-  "rclone.configured": "Konfigurerede remotes",
-  "rclone.pathHint": "Sæt derefter en sikkerhedskopisti til »rclone:<remote>:<bucket>/path« for at sende det domæne off-site.",
-  "cloud.title": "Delte cloud-legitimationsoplysninger (S3 / restic REST)",
-  "cloud.hint": "Legitimationsoplysninger til eksterne restic-backends, uden rclone. Efter lagring sættes en backup-sti til et fjernlager, fx s3:s3.amazonaws.com/bucket/path, rest:http://host:8000/repo eller sftp:user@host:/repo. Hemmeligheder gemmes krypteret og vises ikke igen.",
   "cloud.secretSet": "gemt, lad stå tomt for at beholde",
   "cloud.storageClass.label": "Off-site-lagringsklasse",
   "cloud.storageClass.default": "(udbyderens standard)",
-  "cloud.storageClass.hint": "Gælder kun native S3-backends (repositorier der starter med s3:). Dybarkivniveauer (Glacier Flexible Retrieval, Deep Archive) tilbydes bevidst ikke, fordi de ødelægger restic-gendannelse.",
   "cloud.credSets.title": "Ekstra legitimationssæt",
   "cloud.credSets.hint": "Giv et eller flere off-site-mål deres egne S3- eller restic REST-legitimationsoplysninger i stedet for at dele dem ovenfor.",
   "cloud.credSets.add": "Tilføj legitimationssæt",
@@ -524,7 +516,6 @@ const da: Partial<Translations> = {
   "export.encrypt.recipientsHint": "Én modtager pr. linje. Brug en age-offentlig nøgle (age1...) eller en SSH-offentlig nøgle. Den tilhørende private nøgle er nødvendig for at dekryptere væk fra serveren. Med kryptering slået til og ingen gyldig modtager fejler eksporten i stedet for at skrive klartekst.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
   "export.encrypt.recipientsRequired": "Tilføj mindst én age-modtager, ellers fejler den krypterede eksport.",
-  "rclone.save": "Gem konfiguration",
 
   // Integrity (restic check)
   "integrity.title": "Integritet og vedligeholdelse",
@@ -745,8 +736,6 @@ const da: Partial<Translations> = {
   "recovery.notReachable": "Kunne ikke nå dine sikkerhedskopier endnu. Tilknyt placeringen nedenfor, og tjek så igen.",
   "recovery.recheck": "Tjek",
   "recovery.step2": "Tilknyt dine sikkerhedskopier",
-  "recovery.cloudCreds": "Cloud-legitimationsoplysninger (valgfrit)",
-  "recovery.cloudCredsHint": "Kun nødvendige, når en backup-sti peger på S3, en restic REST-server eller en rclone-fjernplacering. En lokal sti eller et monteret share kræver intet her.",
   "recovery.attachHint": "Peg BombVault mod dine eksisterende sikkerhedskopier: en lokal sti under host-monteringen eller et off-site-repo (rest / S3 / B2 / sftp / rclone) med dets legitimationsoplysninger. Opret så forbindelse for at bekræfte.",
   "recovery.credsSaveHint": "Off-site-legitimationsoplysninger gemmes med hvert korts egen Gem-knap. Gem dem, før du opretter forbindelse og forhåndsviser.",
   "recovery.connectPreview": "Opret forbindelse & forhåndsvis",
