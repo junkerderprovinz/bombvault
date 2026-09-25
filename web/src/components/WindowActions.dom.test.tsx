@@ -197,15 +197,6 @@ const WINDOWS: Shown[] = [
   },
 ];
 
-/** Windows that still keep their own footer, each taken off by the change that
- *  gives it the shared row. */
-const PENDING = new Set<string>([
-  // Listed ahead of the add-place window itself, so its arrival does not trip
-  // the scan. It comes off once both of its steps end in WindowActions, and
-  // this list and its honesty test go with it.
-  "components/places/AddPlaceDialog.tsx",
-]);
-
 function tsxFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((entry) => {
     const full = join(dir, entry);
@@ -230,10 +221,9 @@ afterEach(() => {
 });
 
 describe("every window", () => {
-  it("is rendered below, unless it waits its turn", () => {
+  it("is rendered below", () => {
     const missing: string[] = [];
     for (const [file, count] of windowFiles()) {
-      if (PENDING.has(file)) continue;
       const rendered = WINDOWS.filter((w) => w.file === file).length;
       if (rendered < count) missing.push(`${file}: ${count} windows, ${rendered} rendered here`);
     }
@@ -242,17 +232,9 @@ describe("every window", () => {
 
   it("builds its row from WindowActions", () => {
     const own = [...windowFiles().keys()].filter(
-      (file) => !PENDING.has(file) && !readFileSync(join(SRC, file), "utf8").includes("<WindowActions"),
+      (file) => !readFileSync(join(SRC, file), "utf8").includes("<WindowActions"),
     );
     expect(own, "These windows lay out their own button row.").toEqual([]);
-  });
-
-  it("keeps the pending list honest", () => {
-    const files = windowFiles();
-    const done = [...PENDING].filter(
-      (file) => files.has(file) && readFileSync(join(SRC, file), "utf8").includes("<WindowActions"),
-    );
-    expect(done, "converted, so take them off PENDING").toEqual([]);
   });
 });
 
