@@ -105,3 +105,12 @@ describe("RansomwareCard, paused replication", () => {
     expect(row.className).toContain("text-statusWarn");
   });
 });
+
+describe("RansomwareCard, no off-site copy", () => {
+  afterEach(cleanup);
+
+  it("sends the reader to the Storage tab, where copies are chosen", () => {
+    renderCard([domain({ offsiteConfigured: false, protection: "red" })]);
+    expect(screen.getByRole("link", { name: en["ransomware.configured"] }).getAttribute("href")).toBe("/settings#storage");
+  });
+});

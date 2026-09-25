@@ -1162,7 +1162,7 @@ export function RansomwareCard({
                           // colour + hover underline already signals both
                           // "this is wrong" and "this is clickable" without
                           // breaking row alignment.
-                          <Link to="/settings#offsite" className="text-statusFail hover:underline flex-1 truncate min-w-0">
+                          <Link to="/settings#storage" className="text-statusFail hover:underline flex-1 truncate min-w-0">
                             {row.label}
                           </Link>
                         ) : (

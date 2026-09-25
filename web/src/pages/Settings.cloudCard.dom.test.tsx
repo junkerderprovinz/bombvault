@@ -138,8 +138,7 @@ describe("CloudCard secret entry", () => {
   });
 
   // setCloud replaces the whole config, so an edit on a card that failed to
-  // load would post its empty fields over the stored ones. OffsiteWizard
-  // guards the same way with cloudLoaded.
+  // load would post its empty fields over the stored ones.
   it("saves nothing when the current config could not be loaded, and says so", async () => {
     cloudLoadFails = true;
     await renderCard();

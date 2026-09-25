@@ -151,8 +151,7 @@ describe("RevealInput", () => {
     });
     const btn = findOne(tree, "button");
     const cls = btn.props.className as string;
-    // end-2 follows the nearest dir ancestor, which can disagree with the page
-    // (OffsiteWizard nests the field in a dir="ltr" label).
+    // end-2 follows the nearest dir ancestor, which can disagree with the page.
     expect(cls).toContain("right-2");
     expect(cls).toContain("rtl:right-auto!");
     expect(cls).toContain("rtl:left-2");

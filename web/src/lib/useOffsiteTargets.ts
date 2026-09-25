@@ -18,7 +18,7 @@ export function offsiteTargetsChanged(): void {
 /**
  * Subscribes to offsiteTargetsChanged and returns the unsubscribe function.
  * For readers that keep their own view of the list and cannot use the hook,
- * such as OffsiteTargetsSection.
+ * such as the Domains card.
  */
 export function subscribeOffsiteTargets(onChange: () => void): () => void {
   window.addEventListener(OFFSITE_TARGETS_CHANGED, onChange);
@@ -34,8 +34,8 @@ export function subscribeOffsiteTargets(onChange: () => void): () => void {
  * the legacy Settings columns. Callers treat fewer than two targets as no
  * choice to offer, so a failed fetch falls back to the plain local/off-site UI.
  *
- * Refetches on offsiteTargetsChanged because the editor and readers such as
- * TestConnectionButton ("Test primary") are mounted on the same page.
+ * Refetches on offsiteTargetsChanged, which the Domains card sends when a
+ * chip creates or switches a target, and an accepted mesh offer when it adds one.
  */
 export function useOffsiteTargets(domain?: OffsiteDomain): OffsiteTarget[] {
   const [targets, setTargets] = useState<OffsiteTarget[]>([]);
