@@ -38,6 +38,7 @@ import {
   type Place,
   type PlaceDomain,
   type PlaceRefusal,
+  type UnplacedRow,
 } from "../../lib/places";
 import { copiesExpect, homeExpect, impactLines } from "../../lib/storageDomains";
 import { useToast } from "../../lib/toast";
@@ -122,11 +123,14 @@ function ConfirmLines({
 export function DomainRowView({
   row,
   places,
+  unplacedTargets,
   index,
   onWritten,
 }: {
   row: DomainRow;
   places: Place[];
+  /** The domain's targets whose address fits no place, so no chip stands for them. */
+  unplacedTargets: UnplacedRow[];
   index: number;
   /** Reads the rows again and resolves once that read has landed. */
   onWritten: () => Promise<void>;
@@ -178,7 +182,8 @@ export function DomainRowView({
   const copyDomain = row.paused ? undefined : PLACE_DOMAINS.find((d) => d === row.domain);
   // An unticked chip with a target counts, since items with a choice of their
   // own keep copying there.
-  const copiesSomewhere = row.chips.some((c) => c.targetId !== undefined && !c.disabled);
+  const copiesSomewhere =
+    unplacedTargets.length > 0 || row.chips.some((c) => c.targetId !== undefined && !c.disabled);
 
   function refused(res: PlaceRefusal, control: keyof typeof shake, fallback: TranslationKey = "settings.error") {
     push(placeErrorText(t, lang, res, fallback), "fail");
@@ -380,9 +385,10 @@ export function DomainRowView({
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="text-carbon-textSub">{t("storageDomains.copiedTo")}</span>
-            {row.chips.length === 0 ? (
+            {row.chips.length === 0 && unplacedTargets.length === 0 && (
               <span className="text-carbon-textSub">{t("storageDomains.noCopyPlace")}</span>
-            ) : (
+            )}
+            {row.chips.length > 0 && (
               <div key={`chips-${shake.chips}`} className={shake.chips ? "glim-shake" : undefined}>
                 <Selector
                   items={chipItems}
@@ -395,6 +401,14 @@ export function DomainRowView({
                   onChange={(id) => void toggleChip(id, !ticked.has(id))}
                 />
               </div>
+            )}
+            {unplacedTargets.length > 0 && (
+              <span className="flex items-center gap-1 text-carbon-text">
+                {t("storageDomains.unplacedTargets").replace("{list}", () =>
+                  formatList(lang, unplacedTargets.map((u) => u.name))
+                )}
+                <InfoBubble tip={t("storageDomains.unplacedTargetsHint")} />
+              </span>
             )}
             {copyDomain && copiesSomewhere && (
               <Button
