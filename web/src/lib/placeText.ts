@@ -100,3 +100,50 @@ const FOLDER_STATE_KEYS: Record<FolderState, TranslationKey> = {
 export function folderStateText(t: T, state: FolderState): string {
   return t(FOLDER_STATE_KEYS[state]);
 }
+
+const PROVIDER_KEYS: Record<string, TranslationKey> = {
+  b2: "places.provider.b2",
+  s3: "places.provider.s3",
+  r2: "places.provider.r2",
+  wasabi: "places.provider.wasabi",
+  "hetzner-os": "places.provider.hetzner-os",
+  storj: "places.provider.storj",
+  idrive: "places.provider.idrive",
+  scaleway: "places.provider.scaleway",
+  ovh: "places.provider.ovh",
+  digitalocean: "places.provider.digitalocean",
+  ionos: "places.provider.ionos",
+  contabo: "places.provider.contabo",
+  exoscale: "places.provider.exoscale",
+  vultr: "places.provider.vultr",
+  gcs: "places.provider.gcs",
+  azure: "places.provider.azure",
+  storagebox: "places.provider.storagebox",
+  minio: "places.provider.minio",
+  seaweedfs: "places.provider.seaweedfs",
+  garage: "places.provider.garage",
+  ceph: "places.provider.ceph",
+  juicefs: "places.provider.juicefs",
+  rustfs: "places.provider.rustfs",
+  versitygw: "places.provider.versitygw",
+  "s3-other": "places.provider.s3-other",
+  nextcloud: "places.provider.nextcloud",
+  owncloud: "places.provider.owncloud",
+  opencloud: "places.provider.opencloud",
+  "rest-server": "places.provider.rest-server",
+  sftp: "places.provider.sftp",
+  bombvault: "places.provider.bombvault",
+  rclone: "places.provider.rclone",
+  synology: "places.provider.synology",
+  qnap: "places.provider.qnap",
+  truenas: "places.provider.truenas",
+  "unraid-other": "places.provider.unraid-other",
+  share: "places.provider.share",
+  "unraid-folder": "places.provider.unraid-folder",
+};
+
+/** providerName is a provider's name on its tile, its own id for one this
+ *  version does not know. */
+export function providerName(t: T, id: string): string {
+  return PROVIDER_KEYS[id] ? t(PROVIDER_KEYS[id]) : id;
+}
