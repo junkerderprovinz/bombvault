@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 // Which cadence modes the picker offers. A picker without `modes` offers all of
 // them, Every N days included. The per-item overrides pass EXACT_CADENCE_MODES,
-// because SetScheduleCadence and SetVMScheduleCadence in internal/api/service.go
-// refuse everyN: a per-item entry has no last-run row to measure the interval
+// because SetScheduleCadence and SetVMScheduleCadence in
+// internal/api/service_schedule.go refuse everyN: a per-item entry has no last-run row to measure the interval
 // from. The tests assert the rendered pills, since those are what a user can
 // click.
 import { useState } from "react";

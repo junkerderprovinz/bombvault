@@ -517,7 +517,7 @@ export function VMRow({
   const installed = vm.state !== "not-installed";
   const progressMap = useProgress();
   // The server keys progress by the raw libvirt name ("vm:"+name in
-  // internal/api/service.go), not by the display name.
+  // internal/api/service_vms.go), not by the display name.
   const progress = progressMap[`vm:${vm.libvirtName}`];
   // Whether anything is running in any domain; the button handles its own
   // backup through isPending.

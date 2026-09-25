@@ -95,7 +95,7 @@ export function ItemScheduleOverride({
             value={value}
             // A per-item override has no last-run gate of its own, so the
             // backend refuses everyN here (SetScheduleCadence and
-            // SetVMScheduleCadence in internal/api/service.go).
+            // SetVMScheduleCadence in internal/api/service_schedule.go).
             modes={EXACT_CADENCE_MODES}
             onChange={handleChange}
           />
