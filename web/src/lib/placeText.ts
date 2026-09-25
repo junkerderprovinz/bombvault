@@ -51,9 +51,11 @@ function probeReason(t: T, lang: string, res: { code?: string; error?: string })
  *  table does not know go to the placement table, then to the server's text. */
 export function placeErrorText(t: T, lang: string, res: PlaceRefusal, fallback: TranslationKey): string {
   switch (res.code) {
+    // Only a removal names what holds the place. Any other write refused this
+    // way would have left a domain without its folder there.
     case "place-in-use":
       if (res.holders) return t("places.error.inUse").replace("{holders}", holdersText(t, lang, res.holders));
-      break;
+      return t("places.error.folderInUse");
     case "place-location-established":
       return t("places.error.locationEstablished", res.snapshots ?? 0).replace(
         "{domains}",
