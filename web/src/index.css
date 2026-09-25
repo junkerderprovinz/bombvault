@@ -1462,7 +1462,7 @@ body {
      pulse    glow and scale of the save-success pulse
      stagger  per-row entrance delay, its cap, and the row's own duration
      wipe     page-wide colour transition when data-rainbow changes
-     check    stroke draw of a checkmark
+     check    clip wipe of a filled checkmark
      content  fade-in of content replacing its loading placeholder
      tab      slide of a Settings tab change */
   --motion-shape-dur: 260ms;
