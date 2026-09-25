@@ -9,8 +9,10 @@ import { ToastProvider } from "../../lib/toast";
 import { HUE_OFFSET } from "../Selector";
 import type { CatalogProvider, PatchPlaceBody, Place, PlaceRefusal } from "../../lib/places";
 
+type Answer = PlaceRefusal & { place?: Place };
+
 const patches: Partial<PatchPlaceBody>[] = [];
-let answer: (body: Partial<PatchPlaceBody>) => PlaceRefusal & { place?: Place } = () => ({ ok: true });
+let answer: (body: Partial<PatchPlaceBody>) => Answer | Promise<Answer> = () => ({ ok: true });
 const tampered: string[] = [];
 const homeTampered: string[] = [];
 let tamperAnswer: { ok: boolean; error?: string; testable?: boolean; protected?: boolean } = { ok: true };
@@ -108,6 +110,25 @@ async function settle(ms = 0) {
   await act(async () => {
     vi.advanceTimersByTime(ms);
   });
+}
+
+/** Details whose saved answers come back as the new place, the way the card
+ *  hands them down, and whose first answer waits for release(). */
+function savingDetails(p: Place, provider: CatalogProvider | undefined, saved: (body: Partial<PatchPlaceBody>) => Place) {
+  let release = () => {};
+  answer = (body) => {
+    answer = (next) => ({ ok: true, place: saved(next) });
+    return new Promise((resolve) => {
+      release = () => resolve({ ok: true, place: saved(body) });
+    });
+  };
+  const view = details(p, provider, vi.fn((next: Place) => view.update(next)));
+  return {
+    release: () =>
+      act(async () => {
+        release();
+      }),
+  };
 }
 
 const input = (label: string) => screen.getByLabelText(label) as HTMLInputElement;
@@ -230,6 +251,16 @@ describe("PlaceDetails saving", () => {
     await settle(800);
     expect(patches).toEqual([{ retentionKeepLast: 12, retentionKeepDaily: 9 }]);
   });
+
+  it("saves retention typed back while the change before it is still answering", async () => {
+    const { release } = savingDetails(place(), B2, (body) => ({ ...place(), ...(body as Partial<Place>) }));
+    fireEvent.change(input(en["places.details.keepLast"]), { target: { value: "12" } });
+    await settle(800);
+    fireEvent.change(input(en["places.details.keepLast"]), { target: { value: "10" } });
+    await release();
+    await settle(800);
+    expect(patches).toEqual([{ retentionKeepLast: 12 }, { retentionKeepLast: 10 }]);
+  });
 });
 
 describe("PlaceDetails sections", () => {
@@ -339,6 +370,19 @@ describe("PlaceDetails sections", () => {
     expect(input(en["places.field.keyId"]).closest(".glim-shake")).toBeTruthy();
   });
 
+  it("saves a credential typed back while the change before it is still answering", async () => {
+    const { release } = savingDetails(place(), B2, (body) => {
+      const p = place();
+      return { ...p, creds: { ...p.creds, fields: { ...p.creds.fields, ...body.fields } } };
+    });
+    fireEvent.change(input(en["places.field.keyId"]), { target: { value: "k2" } });
+    await settle(800);
+    fireEvent.change(input(en["places.field.keyId"]), { target: { value: "k1" } });
+    await release();
+    await settle(800);
+    expect(patches).toEqual([{ fields: { keyId: "k2" } }, { fields: { keyId: "k1" } }]);
+  });
+
   it("says a place on the shared credentials gets its own set on the first change", () => {
     details(place({ creds: { shared: true, fields: { keyId: "shared" }, set: ["secret"] } }));
     expect(screen.getByLabelText(en["places.details.sharedCreds"])).toBeTruthy();
@@ -398,6 +442,25 @@ describe("PlaceDetails sections", () => {
     expect(offer("Flash").getAttribute("aria-checked")).toBe("false");
     expect(folder("VMs").value).toBe("vms2");
   });
+
+  it("still saves a folder name being typed when the offer that carried it is refused", async () => {
+    answer = (body) =>
+      body.folders && "flash" in body.folders
+        ? { ok: false, error: "no" }
+        : { ok: true, place: { ...place(), ...(body as Partial<Place>) } };
+    details();
+    fireEvent.change(screen.getByRole("textbox", { name: en["places.details.folderOf"].replace("{domain}", "VMs") }), {
+      target: { value: "vms2" },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("switch", { name: "Flash" }));
+    });
+    await settle(800);
+    expect(patches).toEqual([
+      { folders: { containers: "container", vms: "vms2", flash: "flash" } },
+      { folders: { containers: "container", vms: "vms2" } },
+    ]);
+  });
 });
 
 describe("PlaceDetails address", () => {
@@ -439,6 +502,16 @@ describe("PlaceDetails address", () => {
     fireEvent.change(screen.getByDisplayValue("user/bombvault2"), { target: { value: "user/bombvault" } });
     await settle(800);
     expect(patches).toEqual([]);
+  });
+
+  it("moves back to the folder it came from while the move away is still answering", async () => {
+    const { release } = savingDetails(local(), UNRAID, (body) => ({ ...local(), base: body.address!.path! }));
+    fireEvent.change(screen.getByDisplayValue("user/bombvault"), { target: { value: "disk2/bombvault" } });
+    await settle(800);
+    fireEvent.change(screen.getByDisplayValue("disk2/bombvault"), { target: { value: "user/bombvault" } });
+    await release();
+    await settle(800);
+    expect(patches).toEqual([{ address: { path: "disk2/bombvault" } }, { address: { path: "user/bombvault" } }]);
   });
 
   it("shows the address of a remote place without a field to change it", () => {

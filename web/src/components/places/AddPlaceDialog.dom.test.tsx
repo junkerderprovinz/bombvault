@@ -105,7 +105,7 @@ describe("AddPlaceDialog", () => {
     expect(within(dialog()).getByText(en["places.catalogLoading"])).toBeTruthy();
     expect(within(dialog()).queryByRole("listbox")).toBeNull();
     await act(async () => answer({ ok: false, error: "database is locked" }));
-    expect(within(dialog()).getByText(en["places.catalogFailed"])).toBeTruthy();
+    expect(within(dialog()).getByRole("alert").textContent).toBe(en["places.catalogFailed"]);
     expect(within(dialog()).queryByRole("listbox")).toBeNull();
     expect(screen.queryByText("database is locked")).toBeNull();
   });
@@ -185,6 +185,24 @@ describe("AddPlaceDialog offers", () => {
     expect(screen.queryByRole("dialog", { name: en["confirmDialog.title"] })).toBeNull();
     expect(onClose).not.toHaveBeenCalled();
     expect(within(dialog()).getByRole("button", { name: en["fleet.mesh.accept"] })).toBeTruthy();
+  });
+
+  it("hands focus back to Accept when the accept question is declined", async () => {
+    await acceptOffer();
+    await act(async () => {
+      fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+    });
+    expect(document.activeElement).toBe(within(dialog()).getByRole("button", { name: en["fleet.mesh.accept"] }));
+  });
+
+  it("leaves the one accent button to the form while an offer is open", async () => {
+    await open();
+    await click(tile(en["places.provider.bombvault"]));
+    await within(dialog()).findByRole("button", { name: en["fleet.mesh.accept"] });
+    const accented = within(dialog())
+      .getAllByRole("button")
+      .filter((b) => /\bbg-accent\b/.test(b.className));
+    expect(accented).toEqual([button("places.form.test")]);
   });
 
   it("closes once an offer is accepted, and says the place keeps its copies already", async () => {

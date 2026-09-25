@@ -46,10 +46,11 @@ function holdersText(t: T, lang: string, h: PlaceHolders): string {
   return new Intl.ListFormat(lang, { type: "conjunction" }).format(parts);
 }
 
-/** probeReason is why a probe failed, in words: the translated code where the
- *  placement table knows it (direct-access-denied), the server's message
- *  otherwise. place-probe-failed itself only says that it failed. */
-function probeReason(t: T, lang: string, res: { code?: string; error?: string }): string {
+/** probeErrorText is why a probe or one of its folders failed, in words: the
+ *  translated code where the placement table knows it (direct-access-denied),
+ *  the server's message otherwise. place-probe-failed itself only says that it
+ *  failed. */
+export function probeErrorText(t: T, lang: string, res: { code?: string; error?: string }): string {
   const code = res.code === "place-probe-failed" ? undefined : res.code;
   return placementErrorText(t, lang, { ok: false, code, error: res.error }, "common.actionFailed");
 }
@@ -78,7 +79,7 @@ export function placeErrorText(t: T, lang: string, res: PlaceRefusal, fallback: 
 
 /** probeFailureText is the sentence for a probe or test answer with ok false. */
 export function probeFailureText(t: T, lang: string, res: { code?: string; error?: string }): string {
-  return t("places.error.probeFailed").replace("{reason}", probeReason(t, lang, res));
+  return t("places.error.probeFailed").replace("{reason}", probeErrorText(t, lang, res));
 }
 
 const FACT_KEYS: Record<string, TranslationKey> = {

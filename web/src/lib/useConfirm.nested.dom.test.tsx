@@ -78,6 +78,36 @@ describe("a question over a window", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it("takes the keys past a card that says it is not modal", async () => {
+    const { onAnswer } = await ask();
+    const panel = document.createElement("div");
+    panel.setAttribute("aria-modal", "false");
+    document.body.append(panel);
+    try {
+      await act(async () => {
+        fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+      });
+      expect(onAnswer).toHaveBeenCalledWith(false);
+    } finally {
+      panel.remove();
+    }
+  });
+
+  it("leaves alone an Escape that a window above it has answered", async () => {
+    const { onAnswer } = await ask();
+    const above = (e: KeyboardEvent) => e.preventDefault();
+    document.addEventListener("keydown", above, true);
+    try {
+      await act(async () => {
+        fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+      });
+      expect(onAnswer).not.toHaveBeenCalled();
+      expect(screen.getByRole("dialog", { name: en["confirmDialog.title"] })).toBeTruthy();
+    } finally {
+      document.removeEventListener("keydown", above, true);
+    }
+  });
+
   it.each([
     ["without switches", undefined],
     ["with two switches", SWITCHES],

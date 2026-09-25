@@ -11,7 +11,7 @@ import type { ReactNode } from "react";
 import { I18nProvider, countText, en, type TranslationKey, type useT } from "../lib/i18n";
 import type { FileSetView, FleetPeer } from "../lib/api";
 import { WindowActions } from "./WindowActions";
-import { readSource, walkTsx } from "./sourceTree.testsupport";
+import { blankComments, readSource, walkTsx } from "./sourceTree.testsupport";
 
 vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),
@@ -255,11 +255,12 @@ const WINDOWS: Shown[] = [
   },
 ];
 
-/** Every file that renders a modal window, with how many it renders. */
+/** Every file that renders a modal window, with how many it renders. A
+ *  selector that looks for windows, such as useDialogKeys', renders none. */
 function windowFiles(): Map<string, number> {
   const found = new Map<string, number>();
   for (const file of walkTsx(SRC)) {
-    const count = readSource(file).split('aria-modal="true"').length - 1;
+    const count = blankComments(readSource(file)).match(/\saria-modal="true"/g)?.length ?? 0;
     if (count > 0) found.set(relative(SRC, file).replace(/\\/g, "/"), count);
   }
   return found;

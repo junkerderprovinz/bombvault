@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
-// The Storage tab opens with the places card, and the card lists its places
-// against the host mount root the page read.
+// The Storage tab opens with the places card.
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";

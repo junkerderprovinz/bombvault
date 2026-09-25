@@ -31,8 +31,9 @@ export function MeshOffers({ onAccepted }: { onAccepted: (place: Place) => void 
         {t("places.offers.title")}
         <InfoBubble tip={t("places.offers.hint")} />
       </span>
+      {/* The form's Test or Add is the window's one accent button. */}
       {offers.map((o) => (
-        <MeshOfferRow key={o.id} offer={o} t={t} onChanged={() => void load()} onAccepted={onAccepted} />
+        <MeshOfferRow key={o.id} offer={o} t={t} onChanged={() => void load()} onAccepted={onAccepted} acceptTone="neutral" />
       ))}
     </div>
   );

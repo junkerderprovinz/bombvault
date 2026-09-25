@@ -104,8 +104,10 @@ export function AddPlaceDialog({
         ) : (
           <>
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2">
-              {failed !== null ? (
-                <p className="text-sm text-statusFail">{t("places.catalogFailed")}</p>
+              {failed ? (
+                <p role="alert" className="text-sm text-statusFail">
+                  {t("places.catalogFailed")}
+                </p>
               ) : loaded ? (
                 <ProviderGrid providers={providers} selected={lastPicked} onPick={pick} />
               ) : (
