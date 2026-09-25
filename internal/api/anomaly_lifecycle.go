@@ -56,10 +56,13 @@ func applyFindings(sc scopeRef, found []finding, absent []absence, st store.Scop
 				ch.Resolve = append(ch.Resolve, open.ID)
 				ch.Insert = append(ch.Insert, newRow(sc, fp, newest, len(group), now))
 			} else {
+				// A run is judged by more than one pass, and each backup that
+				// shows the condition counts once.
 				ch.Refresh = append(ch.Refresh, store.AnomalyRefresh{
 					ID: open.ID, Observed: newest.Observed, Severity: newest.Severity,
 					LastSeenAt: now, LastRunID: newest.RunID, LastRunAt: newest.RunAt,
-					OccurrencesDelta: len(group), Details: detailsJSON(keepLastGood(newest.Details, open.Details)),
+					OccurrencesDelta: len(raisedSince(group, open.LastRunAt)),
+					Details:          detailsJSON(keepLastGood(newest.Details, open.Details)),
 				})
 			}
 			written[fp] = true

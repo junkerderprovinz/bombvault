@@ -190,6 +190,35 @@ func TestLastGoodBackupStaysWhereTheFindingOpened(t *testing.T) {
 	}
 }
 
+// "Times seen" counts the backups that showed the finding. A run is judged by
+// more than one pass, the retention check right after it and the pass that
+// follows, and neither may count it twice.
+func TestTimesSeenCountsBackupsNotPasses(t *testing.T) {
+	f := newEngineFixture(t)
+	id := f.container(t, "nextcloud")
+	f.steadySeries(t, id, "backup", 11, 40*gib)
+	item := anomalyScope{Kind: anomalyScopeItem, ID: id}
+	f.run(t, id, "backup", f.now-3600, 20*mib)
+	if err := f.e.EvaluateNow(context.Background(), item); err != nil {
+		t.Fatal(err)
+	}
+	f.pass(t)
+
+	if row := onlyRow(t, f.openRows(t)); row.Occurrences != 1 {
+		t.Fatalf("times seen = %d after one backup, want 1", row.Occurrences)
+	}
+
+	f.run(t, id, "backup", f.now-60, 20*mib)
+	if err := f.e.EvaluateNow(context.Background(), item); err != nil {
+		t.Fatal(err)
+	}
+	f.pass(t)
+
+	if row := onlyRow(t, f.openRows(t)); row.Occurrences != 2 {
+		t.Fatalf("times seen = %d after two backups, want 2", row.Occurrences)
+	}
+}
+
 // An item backed up once a week has ten backups behind it after three months,
 // so the new-data rule judges it instead of learning forever.
 func TestWeeklySeriesIsJudgedByTheNewDataRule(t *testing.T) {
