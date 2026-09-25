@@ -9,6 +9,9 @@ func TestDetectProviderReadsTheAddress(t *testing.T) {
 		"s3:https://s3.eu-central-1.wasabisys.com/bv":                 "wasabi",
 		"s3:https://fsn1.your-objectstorage.com/bv":                   "hetzner-os",
 		"s3:https://s3.eu-central-1.amazonaws.com/bv":                 "s3",
+		"s3:https://s3.eu-central-1.amazonaws.com:443/bv":             "s3",
+		"s3:HTTPS://fra1.digitaloceanspaces.com/bv":                   "digitalocean",
+		"s3:s3.fr-par.scw.cloud/bv":                                   "scaleway",
 		"s3:https://gateway.storjshare.io/bv":                         "storj",
 		"s3:https://s3.eu-central-2.idrivee2.com/bv":                  "idrive",
 		"s3:https://x1y2.fra.idrivee2-12.com/bv":                      "idrive",
@@ -29,6 +32,8 @@ func TestDetectProviderReadsTheAddress(t *testing.T) {
 		"b2:bucket:containers":                                        "s3-other",
 		"user/bombvault/containers":                                   "unraid-folder",
 		"remotes/NAS/bombvault":                                       "share",
+		"/mnt/remotes/NAS/bombvault":                                  "share",
+		"/mnt/user/bombvault":                                         "unraid-folder",
 	} {
 		if got := DetectProvider(repo); got != want {
 			t.Errorf("DetectProvider(%q) = %q, want %q", repo, got, want)

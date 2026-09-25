@@ -39,9 +39,13 @@ func TestBaseBuildsTheAddressOfEachKind(t *testing.T) {
 		{"minio", map[string]string{"endpoint": "http://192.168.1.10:9000/", "bucket": "bv"}, "s3:http://192.168.1.10:9000/bv"},
 		{"rest-server", map[string]string{"url": "https://nas:8000/", "user": "tower"}, "rest:https://nas:8000/tower"},
 		{"rest-server", map[string]string{"url": "https://nas:8000", "user": "tower", "path": "tower/bv"}, "rest:https://nas:8000/tower/bv"},
+		{"rest-server", map[string]string{"url": "nas:8000", "user": "tower"}, "rest:https://nas:8000/tower"},
 		{"storagebox", map[string]string{"user": "u123456"}, "sftp://u123456@u123456.your-storagebox.de:23"},
 		{"storagebox", map[string]string{"user": "u123456-sub1", "host": "u123456.your-storagebox.de", "path": "bombvault"}, "sftp://u123456-sub1@u123456.your-storagebox.de:23/bombvault"},
 		{"sftp", map[string]string{"host": "backup.lan", "user": "bv"}, "sftp://bv@backup.lan:22"},
+		{"sftp", map[string]string{"host": "nas", "user": "bv", "path": "/volume1/backups/"}, "sftp://bv@nas:22//volume1/backups"},
+		{"sftp", map[string]string{"host": "::1", "user": "bv"}, "sftp://bv@[::1]:22"},
+		{"sftp", map[string]string{"host": "[fd00::2]", "port": "2222", "user": "bv"}, "sftp://bv@[fd00::2]:2222"},
 		{"nextcloud", map[string]string{"url": "https://cloud.example.com", "user": "anna", "path": "bombvault"}, "rclone:bvp0a1b:bombvault"},
 		{"azure", map[string]string{"account": "acct", "container": "backups"}, "azure:backups:"},
 		{"azure", map[string]string{"account": "acct", "container": "backups", "path": "tower"}, "azure:backups:/tower"},
@@ -65,16 +69,29 @@ func TestBaseNamesTheFieldItMisses(t *testing.T) {
 		{"minio", map[string]string{"bucket": "bv"}, "endpoint"},
 		{"b2", map[string]string{"bucket": "bv"}, "endpoint"},
 		{"s3", map[string]string{"region": "eu-central-1"}, "bucket"},
+		{"s3", map[string]string{"region": "eu-central-1", "bucket": "/"}, "bucket"},
 		{"unraid-folder", map[string]string{}, "path"},
 		{"rest-server", map[string]string{"user": "bv"}, "url"},
+		{"rest-server", map[string]string{"url": "https://nas:8000"}, "user"},
 		{"sftp", map[string]string{"user": "bv"}, "host"},
+		{"nextcloud", map[string]string{"user": "anna"}, "url"},
+		{"nextcloud", map[string]string{"url": "https://cloud.example.com"}, "user"},
+		{"azure", map[string]string{"container": "backups"}, "account"},
 		{"azure", map[string]string{"account": "a"}, "container"},
 		{"rclone", map[string]string{}, "remote"},
 	} {
 		_, err := Base(mustProvider(t, c.provider), c.fields, "0a1b")
 		var missing MissingField
 		if !errors.As(err, &missing) || missing != c.want {
-			t.Errorf("Base(%s, %v) = %v, want the field %s named", c.provider, c.fields, err, c.want)
+			t.Errorf("Base(%s, %v) = %v, want the field %s named", c.provider, c.fields, err, string(c.want))
+		}
+	}
+}
+
+func TestBaseRefusesAPortThatIsNoPort(t *testing.T) {
+	for _, port := range []string{"ssh", "-1", "70000"} {
+		if got, err := Base(mustProvider(t, "sftp"), map[string]string{"host": "nas", "user": "bv", "port": port}, "0a1b"); err == nil {
+			t.Errorf("port %q gave %q", port, got)
 		}
 	}
 }
@@ -89,6 +106,7 @@ func TestS3RegionIsTheOneRequestsAreSignedFor(t *testing.T) {
 		{"r2", map[string]string{"account": "abc"}, "auto"},
 		{"gcs", nil, "auto"},
 		{"b2", map[string]string{"endpoint": "https://s3.us-west-004.backblazeb2.com"}, "us-west-004"},
+		{"b2", map[string]string{"endpoint": " HTTPS://s3.eu-central-003.backblazeb2.com/ "}, "eu-central-003"},
 		{"b2", map[string]string{"endpoint": "https://127.0.0.1:9000"}, ""},
 		{"digitalocean", map[string]string{"region": "fra1"}, ""},
 		{"ionos", map[string]string{"region": "eu-central-1"}, "de"},
