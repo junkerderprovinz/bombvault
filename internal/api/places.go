@@ -21,6 +21,7 @@ var (
 	errPlaceLocationEstablished = errors.New("backups lie at the old address, and the new one does not hold the same repository")
 	errPlaceHomeDomain          = errors.New("a domain keeps its backups at this place")
 	errPlaceIsRepository        = errors.New("this place is itself a repository, so it takes no second role and no folder below it")
+	errPlaceFolderBlank         = errors.New("a folder needs a name, since only a place that is itself a repository keeps a domain at its base")
 	errPlaceAddressTaken        = errors.New("a repository of this domain already lies at that address")
 	errPlaceOff                 = errors.New("this place is switched off")
 	errPlaceNameMissing         = errors.New("a place needs a name")
@@ -739,6 +740,11 @@ func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody
 		if next.Base, err = places.Base(provider, body.Address, p.ID); err != nil {
 			return store.Place{}, nil, err
 		}
+		if next.Base != p.Base && provider.Kind == places.KindLocal {
+			if err := s.localPlaceReady(placeProbe{provider: provider, base: next.Base}); err != nil {
+				return store.Place{}, nil, probeRefusal(err)
+			}
+		}
 	}
 	if body.Folders != nil {
 		if err := checkFolderChange(p, rows, body.Folders); err != nil {
@@ -749,6 +755,9 @@ func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody
 	if next.Base != p.Base || !maps.Equal(next.Folders, p.Folders) {
 		moves, err := s.placeMoves(settings, p, next, rows, homes)
 		if err != nil {
+			return store.Place{}, nil, err
+		}
+		if err := s.checkNesting(settings, moves); err != nil {
 			return store.Place{}, nil, err
 		}
 		mode, err := s.placeMode(settings, next)
@@ -770,18 +779,20 @@ func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody
 	return saved, s.placeSaveWarnings(rows, after), nil
 }
 
-// checkFolderChange refuses folders a place cannot take, among them any
-// folder below a place that is itself a repository.
+// checkFolderChange refuses folders a place cannot take: any folder below a
+// place that is itself a repository, and a blank one anywhere else, which
+// would make the place one and move its rows onto the base.
 func checkFolderChange(p store.Place, rows []store.OffsiteTarget, folders map[string]string) error {
 	if err := checkFolders(folders); err != nil {
 		return err
 	}
-	if !placeIsRepository(p, rows) {
-		return nil
-	}
+	repository := placeIsRepository(p, rows)
 	for _, f := range folders {
-		if f != "" {
+		switch {
+		case repository && f != "":
 			return errPlaceIsRepository
+		case !repository && f == "":
+			return errPlaceFolderBlank
 		}
 	}
 	return nil
