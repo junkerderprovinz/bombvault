@@ -2443,6 +2443,7 @@ export const en = {
   "places.recipe.unraid": "Unraid template",
   "places.offers.title": "Offers from other BombVaults",
   "places.offers.hint": "Another BombVault offered this one a rest-server for one domain. Accepting adds a place for that domain; the fields below connect one by hand.",
+  "places.offerAccepted": "{name} is added and keeps copies of the offered domain.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -4566,6 +4567,7 @@ export const de: Translations = {
   "places.recipe.unraid": "Unraid-Vorlage",
   "places.offers.title": "Angebote anderer BombVaults",
   "places.offers.hint": "Ein anderes BombVault hat diesem einen rest-server für eine Domäne angeboten. Annehmen fügt einen Ort für diese Domäne hinzu; die Felder darunter verbinden einen von Hand.",
+  "places.offerAccepted": "{name} ist hinzugefügt und bewahrt Kopien der angebotenen Domäne auf.",
 };
 
 // ---------------------------------------------------------------------------

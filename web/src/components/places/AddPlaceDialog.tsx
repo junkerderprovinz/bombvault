@@ -60,6 +60,14 @@ export function AddPlaceDialog({
     onClose();
   }
 
+  // The offer row has announced the new place already, and the place takes the
+  // offered domain's copies without a choice, so a success says enough.
+  function accepted(place: Place) {
+    push(t("places.offerAccepted").replace("{name}", () => place.name), "success");
+    onAdded?.(place);
+    onClose();
+  }
+
   return createPortal(
     <div
       className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -91,6 +99,7 @@ export function AddPlaceDialog({
             onBack={() => setChosen(null)}
             onCancel={onClose}
             onAdded={added}
+            onAccepted={accepted}
           />
         ) : (
           <>

@@ -177,12 +177,15 @@ export function PlaceForm({
   onBack,
   onCancel,
   onAdded,
+  onAccepted,
 }: {
   provider: CatalogProvider;
   hostMountRoot: string;
   onBack: () => void;
   onCancel: () => void;
   onAdded: (place: Place) => void;
+  /** Gets the place an accepted offer made, which already takes its domain's copies. */
+  onAccepted: (place: Place) => void;
 }) {
   const { t, lang } = useT();
   const { push } = useToast();
@@ -360,7 +363,7 @@ export function PlaceForm({
         {provider.id === "rest-server" && (
           <RestServerRecipe onLogin={(user, password) => setFields((f) => ({ ...f, user, password }))} />
         )}
-        {provider.id === "bombvault" && <MeshOffers onAccepted={onAdded} />}
+        {provider.id === "bombvault" && <MeshOffers onAccepted={onAccepted} />}
 
         {provider.fields.map(renderField)}
         {provider.kind === "sftp" && <PublicKey />}
