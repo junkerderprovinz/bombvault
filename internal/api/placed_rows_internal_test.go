@@ -199,7 +199,7 @@ func TestAStaleSettingsSaveIsNotRefusedOverLocationsItKeeps(t *testing.T) {
 	f.storePlace(unraid)
 	b2.Base = "s3:https://s3.example.com/bucket-2"
 	f.storePlace(b2)
-	// The old path now holds a named repository and the old off-site field
+	// The old path holds a named repository and the old off-site field
 	// another target, so both stale values would clash if they were saved.
 	f.namedRepo("Old containers", "backups/containers")
 	f.target("vms", "Old bucket", "s3:https://s3.example.com/bucket/container/vms")
