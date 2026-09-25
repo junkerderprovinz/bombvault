@@ -121,11 +121,8 @@ const PENDING = new Set<string>([
   "components/OffsiteWizard.tsx",
   "index.css",
   "pages/settings/AccentCard.tsx",
-  "pages/settings/DashboardWidgetCard.tsx",
-  "pages/settings/SettingsPortabilityCard.tsx",
   "pages/settings/shared.tsx",
   "pages/settings/tabs/GeneralTab.tsx",
-  "pages/settings/tabs/SchedulesTab.tsx",
 ]);
 
 type Line = { file: string; line: number; text: string };
