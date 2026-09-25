@@ -53,7 +53,7 @@ Fiecare cheie are propria dală pe card. Arată numele cheii, dacă poate porni 
 
 **Jurnal** pe o dală deschide ce a făcut acea cheie. Întâi vin copiile pe care le-a pornit, fiecare cu starea ei și un link către acea rulare în jurnalul de activitate de pe tabloul de bord. Dedesubt sunt apelurile ei, cele mai noi primele, cu instrumentul și rezultatul apelului. Un refuz spune de ce: cheia poate doar citi, protecția de păstrare a oprit copia, rula deja altă copie, elementul a fost copiat prin MCP acum câteva minute sau cheia a trimis prea multe cereri. O anulare trimite la rularea la care se referea.
 
-BombVault păstrează cele mai noi 200 de intrări ale fiecărei chei cel mult 30 de zile. Pentru fiecare apel salvează instrumentul, rezultatul și rularea numită de o anulare. Nu salvează niciodată ce a trimis asistentul, nici cheia sau amprenta ei. Pachetul de diagnostic doar numără intrările, iar un export al setărilor le lasă deoparte.
+BombVault păstrează intrările fiecărei chei cel mult 30 de zile: cele mai noi 500 de porniri, anulări, refuzuri și erori și, alături de ele, cele mai noi 200 de citiri reușite, astfel încât un asistent care interoghează mereu o copie în curs nu poate împinge pornirea ei afară din jurnal. Pentru fiecare apel salvează instrumentul, rezultatul și rularea numită de o anulare. Nu salvează niciodată ce a trimis asistentul, nici cheia sau amprenta ei. Pachetul de diagnostic doar numără intrările, iar un export al setărilor le lasă deoparte.
 
 ## Conectarea unui client {#clients}
 

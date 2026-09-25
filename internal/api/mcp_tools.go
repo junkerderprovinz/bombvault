@@ -411,7 +411,25 @@ func (h *Handler) logMCPRunCall(ctx context.Context, tool, outcome, runID string
 	h.countMCPToolCall(tool, outcome)
 	caller, _ := mcpCallerFrom(ctx)
 	log.Printf("api: mcp: key %s ...%s tool %s -> %s", caller.KeyID, caller.Hint, tool, outcome)
-	h.recordMCPEvent(caller.KeyID, store.MCPKeyEvent{At: h.mcp.now().Unix(), Tool: tool, Outcome: outcome, RunID: runID})
+	h.recordMCPEvent(caller.KeyID, store.MCPKeyEvent{
+		At: h.mcp.now().Unix(), Tool: tool, Outcome: outcome, RunID: runID,
+		Routine: mcpRoutineCall(tool, outcome),
+	})
+}
+
+// mcpActingTools are the tools that set work going or stop it. The migration
+// mcp_key_events_routine names them too.
+var mcpActingTools = map[string]bool{
+	"start_backup":            true,
+	"start_domain_backup":     true,
+	"start_backup_everything": true,
+	"cancel_backup":           true,
+}
+
+// mcpRoutineCall reports whether a call is a read that went through, which a
+// key's log keeps under a smaller cap of its own.
+func mcpRoutineCall(tool, outcome string) bool {
+	return outcome == "ok" && !mcpActingTools[tool]
 }
 
 // mcpErrorCodeOf is the code of a tool error built further down, which is

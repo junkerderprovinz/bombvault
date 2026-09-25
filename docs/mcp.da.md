@@ -53,7 +53,7 @@ Hver nøgle har sit eget felt på kortet. Det viser nøglens navn, om den må st
 
 **Log** på et felt viser, hvad nøglen har gjort. Først kommer de sikkerhedskopier, den startede, hver med sin status og et link til kørslen i aktivitetsloggen på dashboardet. Under dem står dens kald, nyeste først, med værktøjet og hvad der blev af kaldet. En afvisning siger hvorfor: nøglen må kun læse, opbevaringsværnet holdt sikkerhedskopien tilbage, en anden sikkerhedskopi kørte allerede, elementet blev sikkerhedskopieret via MCP for få minutter siden, eller nøglen sendte for mange forespørgsler. En annullering linker til den kørsel, den handlede om.
 
-BombVault gemmer de nyeste 200 poster for hver nøgle i op til 30 dage. For hvert kald gemmer det værktøjet, resultatet og den kørsel, en annullering nævnte. Det gemmer aldrig, hvad assistenten sendte, og aldrig nøglen eller dens fingeraftryk. Diagnosepakken tæller kun posterne, og en eksport af indstillingerne udelader dem.
+BombVault gemmer hver nøgles poster i op til 30 dage: de nyeste 500 starter, annulleringer, afvisninger og fejl og ved siden af dem de nyeste 200 vellykkede læsninger, så en assistent, der gentagne gange spørger til en kørende sikkerhedskopi, ikke kan skubbe dens start ud af loggen. For hvert kald gemmer det værktøjet, resultatet og den kørsel, en annullering nævnte. Det gemmer aldrig, hvad assistenten sendte, og aldrig nøglen eller dens fingeraftryk. Diagnosepakken tæller kun posterne, og en eksport af indstillingerne udelader dem.
 
 ## Tilslut en klient {#clients}
 

@@ -6,21 +6,26 @@ import (
 
 // MCPKeyEvent is one tool call a key made, or one of its requests the endpoint
 // refused before any tool ran, which leaves Tool empty. Outcome is "ok" or the
-// refusal code, and RunID the run a cancel named. The arguments of a call are
-// never kept, and neither is anything about the key but its id.
+// refusal code, and RunID the run a cancel named. Routine marks a read that
+// went through, which is kept under a cap of its own. The arguments of a call
+// are never kept, and neither is anything about the key but its id.
 type MCPKeyEvent struct {
 	At      int64  `json:"at"`
 	Tool    string `json:"tool"`
 	Outcome string `json:"outcome"`
 	RunID   string `json:"runId"`
+	Routine bool   `json:"-"`
 }
 
-// How much of a key's activity is kept: the newest MCPKeyEventsKept events of
-// each key, none older than MCPKeyEventsMaxAge seconds. Enough to follow what an
-// assistant has been doing, small enough that a looping client costs a fixed
-// number of rows.
+// How much of a key's activity is kept: the newest MCPKeyReadsKept routine
+// reads and the newest MCPKeyEventsKept other events of each key, none older
+// than MCPKeyEventsMaxAge seconds. An assistant polling a running backup makes
+// hundreds of reads, and a cap they shared would push the backup's start and
+// cancel out within minutes. Both stay small enough that a looping client costs
+// a fixed number of rows.
 const (
-	MCPKeyEventsKept   = 200
+	MCPKeyEventsKept   = 500
+	MCPKeyReadsKept    = 200
 	MCPKeyEventsMaxAge = 30 * 24 * 60 * 60
 )
 
@@ -34,7 +39,8 @@ const (
 )
 
 // RecordMCPKeyEvent stores one event and prunes in the same step: the key's
-// events beyond the cap, and everyone's events and call slots past their age.
+// events of the same kind beyond their cap, and everyone's events and call
+// slots past their age.
 func (r *Repo) RecordMCPKeyEvent(keyID string, e MCPKeyEvent) error {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -42,8 +48,12 @@ func (r *Repo) RecordMCPKeyEvent(keyID string, e MCPKeyEvent) error {
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
 
-	if _, err := tx.Exec(`INSERT INTO mcp_key_events (key_id, at, tool, outcome, run_id) VALUES (?, ?, ?, ?, ?)`,
-		keyID, e.At, e.Tool, e.Outcome, e.RunID); err != nil {
+	kept := MCPKeyEventsKept
+	if e.Routine {
+		kept = MCPKeyReadsKept
+	}
+	if _, err := tx.Exec(`INSERT INTO mcp_key_events (key_id, at, tool, outcome, run_id, routine) VALUES (?, ?, ?, ?, ?, ?)`,
+		keyID, e.At, e.Tool, e.Outcome, e.RunID, e.Routine); err != nil {
 		return fmt.Errorf("RecordMCPKeyEvent: %w", err)
 	}
 	if e.Tool != "" {
@@ -53,9 +63,9 @@ func (r *Repo) RecordMCPKeyEvent(keyID string, e MCPKeyEvent) error {
 			return fmt.Errorf("RecordMCPKeyEvent calls: %w", err)
 		}
 	}
-	if _, err := tx.Exec(`DELETE FROM mcp_key_events WHERE key_id = ? AND id NOT IN (
-			SELECT id FROM mcp_key_events WHERE key_id = ? ORDER BY id DESC LIMIT ?)`,
-		keyID, keyID, MCPKeyEventsKept); err != nil {
+	if _, err := tx.Exec(`DELETE FROM mcp_key_events WHERE key_id = ? AND routine = ? AND id NOT IN (
+			SELECT id FROM mcp_key_events WHERE key_id = ? AND routine = ? ORDER BY id DESC LIMIT ?)`,
+		keyID, e.Routine, keyID, e.Routine, kept); err != nil {
 		return fmt.Errorf("RecordMCPKeyEvent cap: %w", err)
 	}
 	if _, err := tx.Exec(`DELETE FROM mcp_key_events WHERE at < ?`, e.At-MCPKeyEventsMaxAge); err != nil {

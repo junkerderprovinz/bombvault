@@ -53,7 +53,7 @@ Cada clave tiene su propia tarjeta. Muestra el nombre de la clave, si puede inic
 
 **Registro** en una tarjeta abre lo que hizo esa clave. Primero van las copias que inició, cada una con su estado y un enlace a esa ejecución en el registro de actividad del panel. Debajo están sus llamadas, las más recientes primero, con la herramienta y en qué quedó la llamada. Un rechazo dice por qué: la clave solo puede leer, la protección de retención frenó la copia, ya había otra copia en curso, el elemento se copió por MCP hace unos minutos o la clave envió demasiadas solicitudes. Una cancelación enlaza la ejecución a la que se refería.
 
-BombVault guarda las 200 entradas más recientes de cada clave durante 30 días como máximo. De cada llamada guarda la herramienta, el resultado y la ejecución que nombró una cancelación. Nunca guarda lo que envió el asistente, ni la clave ni su huella. El paquete de diagnóstico solo cuenta las entradas, y una exportación de ajustes las deja fuera.
+BombVault guarda las entradas de cada clave durante 30 días como máximo: los 500 inicios, cancelaciones, rechazos y errores más recientes y, junto a ellos, las 200 lecturas correctas más recientes. Así un asistente que consulta una y otra vez una copia en curso no puede sacar su inicio del registro. De cada llamada guarda la herramienta, el resultado y la ejecución que nombró una cancelación. Nunca guarda lo que envió el asistente, ni la clave ni su huella. El paquete de diagnóstico solo cuenta las entradas, y una exportación de ajustes las deja fuera.
 
 ## Conectar un cliente {#clients}
 

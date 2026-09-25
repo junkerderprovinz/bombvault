@@ -53,7 +53,7 @@ Varje nyckel har en egen ruta på kortet. Den visar nyckelns namn, om den får s
 
 **Logg** i en ruta öppnar det nyckeln har gjort. Först kommer de säkerhetskopior den startade, var och en med sin status och en länk till körningen i aktivitetsloggen på instrumentpanelen. Under dem står dess anrop, nyaste först, med verktyget och vad som blev av anropet. Ett avvisande säger varför: nyckeln får bara läsa, lagringsskyddet höll tillbaka säkerhetskopian, en annan säkerhetskopiering pågick redan, objektet säkerhetskopierades via MCP för några minuter sedan, eller nyckeln skickade för många begäranden. En avbrytning länkar till körningen den gällde.
 
-BombVault sparar de 200 senaste posterna för varje nyckel i upp till 30 dagar. För varje anrop sparar det verktyget, utfallet och körningen som en avbrytning nämnde. Det sparar aldrig vad assistenten skickade, och aldrig nyckeln eller dess fingeravtryck. Diagnostikpaketet räknar bara posterna, och en export av inställningarna utelämnar dem.
+BombVault sparar varje nyckels poster i upp till 30 dagar: de senaste 500 starterna, avbrotten, avvisningarna och felen och vid sidan av dem de senaste 200 lyckade läsningarna, så en assistent som frågar efter en pågående säkerhetskopiering om och om igen inte kan tränga ut dess start ur loggen. För varje anrop sparar det verktyget, utfallet och körningen som en avbrytning nämnde. Det sparar aldrig vad assistenten skickade, och aldrig nyckeln eller dess fingeravtryck. Diagnostikpaketet räknar bara posterna, och en export av inställningarna utelämnar dem.
 
 ## Anslut en klient {#clients}
 

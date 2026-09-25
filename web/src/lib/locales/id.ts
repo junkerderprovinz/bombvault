@@ -2066,7 +2066,7 @@ const id: Partial<Translations> = {
   "mcp.logFailed": "BombVault tidak dapat memuat log kunci ini.",
   "mcp.logEmpty": "Kunci ini belum memanggil BombVault.",
   "mcp.logCalls": "Panggilan",
-  "mcp.logKeptHint": "BombVault menyimpan panggilan setiap kunci hingga satu bulan. Isi kiriman asisten dan kuncinya sendiri tidak pernah disimpan.",
+  "mcp.logKeptHint": "BombVault menyimpan panggilan setiap kunci hingga satu bulan: 500 mulai, pembatalan, penolakan, dan galat terbaru, serta 200 pembacaan berhasil terbaru. Isi kiriman asisten dan kuncinya sendiri tidak pernah disimpan.",
   "mcp.logRuns": "Pencadangan yang dimulainya",
   "mcp.logShowRun": "Tampilkan di log aktivitas",
   "mcp.logRequest": "Permintaan",

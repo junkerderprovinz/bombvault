@@ -53,7 +53,7 @@ Hver nøkkel har sin egen flis på kortet. Den viser navnet på nøkkelen, om de
 
 **Logg** på en flis åpner det nøkkelen har gjort. Først kommer sikkerhetskopiene den startet, hver med status og en lenke til kjøringen i aktivitetsloggen på dashbordet. Under dem står kallene, nyeste først, med verktøyet og hva som ble av kallet. En avvisning sier hvorfor: nøkkelen kan bare lese, oppbevaringsvernet holdt sikkerhetskopien tilbake, en annen sikkerhetskopi kjørte allerede, elementet ble sikkerhetskopiert via MCP for noen minutter siden, eller nøkkelen sendte for mange forespørsler. En avbrytelse lenker til kjøringen det gjaldt.
 
-BombVault tar vare på de 200 nyeste oppføringene for hver nøkkel i opptil 30 dager. For hvert kall lagrer det verktøyet, utfallet og kjøringen en avbrytelse nevnte. Det lagrer aldri det assistenten sendte, og aldri nøkkelen eller fingeravtrykket. Diagnosepakken teller bare oppføringene, og en eksport av innstillingene utelater dem.
+BombVault tar vare på oppføringene til hver nøkkel i opptil 30 dager: de nyeste 500 startene, avbrytelsene, avvisningene og feilene og ved siden av dem de nyeste 200 vellykkede lesingene, så en assistent som spør om en pågående sikkerhetskopi igjen og igjen, ikke kan skyve starten ut av loggen. For hvert kall lagrer det verktøyet, utfallet og kjøringen en avbrytelse nevnte. Det lagrer aldri det assistenten sendte, og aldri nøkkelen eller fingeravtrykket. Diagnosepakken teller bare oppføringene, og en eksport av innstillingene utelater dem.
 
 ## Koble til en klient {#clients}
 

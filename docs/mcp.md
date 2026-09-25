@@ -53,7 +53,7 @@ Each key has a tile of its own on the card. It shows the key's name, whether it 
 
 **Log** on a tile opens what that key did. The backups it started come first, each with its state and a link to that run in the activity log on the dashboard. Below them are its calls, newest first, with the tool and what became of the call. A refusal says why: the key may only read, the retention guard held the backup back, another backup was already running, the item was backed up through MCP a few minutes ago, or the key sent too many requests. A cancel links to the run it was about.
 
-BombVault keeps the newest 200 entries of each key for up to 30 days. For each call it stores the tool, the outcome and the run a cancel named. It never stores what the assistant sent, and never the key or its fingerprint. The diagnostics bundle only counts the entries, and a settings export leaves them out.
+BombVault keeps each key's entries for up to 30 days: the newest 500 starts, cancels, refusals and errors, and next to them the newest 200 successful reads, so an assistant polling a running backup cannot push the start of that backup out of the log. For each call it stores the tool, the outcome and the run a cancel named. It never stores what the assistant sent, and never the key or its fingerprint. The diagnostics bundle only counts the entries, and a settings export leaves them out.
 
 ## Connect a client {#clients}
 

@@ -53,7 +53,7 @@ Každý klíč má na kartě vlastní dlaždici. Ukazuje název klíče, zda sm�
 
 **Protokol** na dlaždici otevře, co tento klíč dělal. Nahoře jsou zálohy, které spustil, každá se svým stavem a odkazem na daný běh v protokolu aktivit na přehledu. Pod nimi jsou jeho volání, od nejnovějšího, s nástrojem a výsledkem. Odmítnutí uvádí důvod: klíč smí jen číst, ochrana uchovávání zálohu zadržela, už běžela jiná záloha, položka byla přes MCP zálohována před několika minutami, nebo klíč poslal příliš mnoho požadavků. Zrušení odkazuje na běh, o který šlo.
 
-BombVault uchovává nejnovějších 200 záznamů každého klíče nejvýše 30 dní. U každého volání ukládá nástroj, výsledek a u zrušení daný běh. Nikdy neukládá, co asistent poslal, ani klíč či jeho otisk. Diagnostický balíček záznamy jen počítá a export nastavení je vynechává.
+BombVault uchovává záznamy každého klíče nejvýše 30 dní: nejnovějších 500 spuštění, zrušení, odmítnutí a chyb a vedle nich nejnovějších 200 úspěšných čtení, takže asistent, který se opakovaně ptá na běžící zálohu, nemůže z protokolu vytlačit její spuštění. U každého volání ukládá nástroj, výsledek a u zrušení daný běh. Nikdy neukládá, co asistent poslal, ani klíč či jeho otisk. Diagnostický balíček záznamy jen počítá a export nastavení je vynechává.
 
 ## Připojení klienta {#clients}
 

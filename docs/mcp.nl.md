@@ -53,7 +53,7 @@ Elke sleutel heeft een eigen tegel op de kaart. Die toont de naam van de sleutel
 
 **Logboek** op een tegel opent wat die sleutel deed. Eerst komen de back-ups die hij startte, elk met zijn stand en een link naar die run in het activiteitenlogboek op het dashboard. Daaronder staan zijn aanroepen, nieuwste eerst, met de tool en wat er van de aanroep werd. Een weigering zegt waarom: de sleutel mag alleen lezen, de bewaarbeveiliging hield de back-up tegen, er liep al een andere back-up, het item is een paar minuten geleden via MCP geback-upt, of de sleutel stuurde te veel verzoeken. Een annulering linkt naar de run waar het om ging.
 
-BombVault bewaart de nieuwste 200 regels van elke sleutel hooguit 30 dagen. Per aanroep bewaart het de tool, de uitkomst en de run die een annulering noemde. Wat de assistent stuurde bewaart het nooit, en de sleutel of zijn vingerafdruk evenmin. Het diagnosepakket telt de regels alleen, en een export van de instellingen laat ze weg.
+BombVault bewaart de regels van elke sleutel hooguit 30 dagen: de nieuwste 500 starts, annuleringen, weigeringen en fouten en daarnaast de nieuwste 200 geslaagde leesacties, zodat een assistent die een lopende back-up steeds opnieuw opvraagt de start ervan niet uit het logboek kan drukken. Per aanroep bewaart het de tool, de uitkomst en de run die een annulering noemde. Wat de assistent stuurde bewaart het nooit, en de sleutel of zijn vingerafdruk evenmin. Het diagnosepakket telt de regels alleen, en een export van de instellingen laat ze weg.
 
 ## Een client koppelen {#clients}
 

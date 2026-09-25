@@ -1842,7 +1842,7 @@ const da: Partial<Translations> = {
   "mcp.logFailed": "BombVault kunne ikke hente denne nøgles log.",
   "mcp.logEmpty": "Denne nøgle har ikke kaldt BombVault endnu.",
   "mcp.logCalls": "Kald",
-  "mcp.logKeptHint": "BombVault gemmer hver nøgles kald i op til en måned. Det gemmer aldrig, hvad assistenten sendte, eller selve nøglen.",
+  "mcp.logKeptHint": "BombVault gemmer hver nøgles kald i op til en måned: de nyeste 500 starter, annulleringer, afvisninger og fejl og de nyeste 200 vellykkede læsninger. Det gemmer aldrig, hvad assistenten sendte, eller selve nøglen.",
   "mcp.logRuns": "Sikkerhedskopier, den startede",
   "mcp.logShowRun": "Vis i aktivitetsloggen",
   "mcp.logRequest": "Forespørgsel",

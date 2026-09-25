@@ -2066,7 +2066,7 @@ const is: Partial<Translations> = {
   "mcp.logFailed": "BombVault gat ekki sótt annál þessa lykils.",
   "mcp.logEmpty": "Þessi lykill hefur ekki kallað á BombVault enn.",
   "mcp.logCalls": "Köll",
-  "mcp.logKeptHint": "BombVault geymir köll hvers lykils í allt að mánuð. Það geymir aldrei það sem aðstoðarmaðurinn sendi, né lykilinn sjálfan.",
+  "mcp.logKeptHint": "BombVault geymir köll hvers lykils í allt að mánuð: nýjustu 500 ræsingar, afturkallanir, synjanir og villur og nýjustu 200 lestrar sem tókust. Það geymir aldrei það sem aðstoðarmaðurinn sendi, né lykilinn sjálfan.",
   "mcp.logRuns": "Afritanir sem hann ræsti",
   "mcp.logShowRun": "Sýna í virknidagbók",
   "mcp.logRequest": "Beiðni",

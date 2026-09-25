@@ -2066,7 +2066,7 @@ const lt: Partial<Translations> = {
   "mcp.logFailed": "BombVault nepavyko įkelti šio rakto žurnalo.",
   "mcp.logEmpty": "Šis raktas dar nekvietė BombVault.",
   "mcp.logCalls": "Kvietimai",
-  "mcp.logKeptHint": "BombVault saugo kiekvieno rakto kvietimus iki mėnesio. Niekada nesaugo to, ką atsiuntė asistentas, nei paties rakto.",
+  "mcp.logKeptHint": "BombVault saugo kiekvieno rakto kvietimus iki mėnesio: naujausius 500 paleidimų, atšaukimų, atmetimų ir klaidų bei naujausius 200 sėkmingų skaitymų. Niekada nesaugo to, ką atsiuntė asistentas, nei paties rakto.",
   "mcp.logRuns": "Jo paleistos kopijos",
   "mcp.logShowRun": "Rodyti veiklos žurnale",
   "mcp.logRequest": "Užklausa",

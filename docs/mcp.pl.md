@@ -53,7 +53,7 @@ Każdy klucz ma na karcie własny kafelek. Pokazuje nazwę klucza, czy może uru
 
 **Dziennik** na kafelku otwiera to, co zrobił ten klucz. Najpierw są kopie, które uruchomił, każda ze stanem i linkiem do tego uruchomienia w dzienniku aktywności na pulpicie. Pod nimi są jego wywołania, od najnowszych, z narzędziem i wynikiem. Odmowa podaje powód: klucz może tylko czytać, ochrona przechowywania wstrzymała kopię, trwała już inna kopia, element skopiowano przez MCP kilka minut temu albo klucz wysłał zbyt wiele żądań. Anulowanie prowadzi do uruchomienia, którego dotyczyło.
 
-BombVault przechowuje 200 najnowszych wpisów każdego klucza przez najwyżej 30 dni. Przy każdym wywołaniu zapisuje narzędzie, wynik i uruchomienie wskazane przez anulowanie. Nigdy nie zapisuje tego, co wysłał asystent, ani klucza czy jego odcisku. Pakiet diagnostyczny tylko liczy wpisy, a eksport ustawień je pomija.
+BombVault przechowuje wpisy każdego klucza przez najwyżej 30 dni: 500 najnowszych uruchomień, anulowań, odmów i błędów, a obok nich 200 najnowszych udanych odczytów, więc asystent, który raz po raz odpytuje trwającą kopię, nie wypchnie z dziennika jej uruchomienia. Przy każdym wywołaniu zapisuje narzędzie, wynik i uruchomienie wskazane przez anulowanie. Nigdy nie zapisuje tego, co wysłał asystent, ani klucza czy jego odcisku. Pakiet diagnostyczny tylko liczy wpisy, a eksport ustawień je pomija.
 
 ## Podłączanie klienta {#clients}
 

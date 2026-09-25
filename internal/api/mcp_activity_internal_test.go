@@ -9,7 +9,49 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
+
+// The key's log keeps reads that went through under a cap of their own, so an
+// assistant polling get_activity cannot push out the start it is polling for.
+func TestAKeysPollsDoNotPushItsStartOutOfTheLog(t *testing.T) {
+	h, _, repo, _ := newMCPGateHandler(t)
+	_, id := seedMCPKey(t, h, repo, "Laptop")
+	ctx := mcpStartCaller(id, true)
+
+	h.logMCPCall(ctx, "start_backup", "ok")
+	h.logMCPCall(ctx, "list_runs", "invalid_argument")
+	for range store.MCPKeyEventsKept {
+		h.logMCPCall(ctx, "get_activity", "ok")
+	}
+
+	events, err := repo.MCPKeyEvents(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != store.MCPKeyReadsKept+2 {
+		t.Fatalf("%d events kept, want %d reads and the two others", len(events), store.MCPKeyReadsKept)
+	}
+	if last := events[len(events)-1]; last.Tool != "start_backup" {
+		t.Fatalf("the oldest event kept is %+v, want the start", last)
+	}
+}
+
+// Every tool that is not a read acts on the server, and its calls are what the
+// log is for.
+func TestOnlyAReadThatWentThroughIsRoutine(t *testing.T) {
+	h, _, _, _ := newMCPGateHandler(t)
+	for _, def := range h.mcpToolDefs() {
+		read := def.tool.Annotations.ReadOnlyHint
+		if got := mcpRoutineCall(def.tool.Name, "ok"); got != read {
+			t.Errorf("%s ok: routine = %v, want %v", def.tool.Name, got, read)
+		}
+		if mcpRoutineCall(def.tool.Name, "invalid_argument") {
+			t.Errorf("%s: a refused call counts as routine", def.tool.Name)
+		}
+	}
+}
 
 // A key's log on the settings card names every outcome in a sentence of its
 // own, and a code the card does not know shows up raw. So every code the tools

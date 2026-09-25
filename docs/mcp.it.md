@@ -53,7 +53,7 @@ Ogni chiave ha una scheda sua nella card. Mostra il nome della chiave, se può a
 
 **Registro** su una scheda apre ciò che ha fatto quella chiave. Prima vengono i backup che ha avviato, ognuno con il suo stato e un link a quell'esecuzione nel registro attività della dashboard. Sotto ci sono le sue chiamate, le più recenti prima, con lo strumento e l'esito. Un rifiuto dice il motivo: la chiave può solo leggere, la protezione della conservazione ha trattenuto il backup, era già in corso un altro backup, l'elemento è stato salvato tramite MCP pochi minuti fa, oppure la chiave ha inviato troppe richieste. Un annullamento rimanda all'esecuzione a cui si riferiva.
 
-BombVault conserva le 200 voci più recenti di ogni chiave per 30 giorni al massimo. Per ogni chiamata salva lo strumento, l'esito e l'esecuzione nominata da un annullamento. Non salva mai ciò che l'assistente ha inviato, né la chiave o la sua impronta. Il pacchetto di diagnostica conta soltanto le voci, e un'esportazione delle impostazioni le lascia fuori.
+BombVault conserva le voci di ogni chiave per 30 giorni al massimo: gli ultimi 500 avvii, annullamenti, rifiuti ed errori e, accanto a questi, le ultime 200 letture riuscite. Così un assistente che interroga di continuo un backup in corso non può spingere il suo avvio fuori dal registro. Per ogni chiamata salva lo strumento, l'esito e l'esecuzione nominata da un annullamento. Non salva mai ciò che l'assistente ha inviato, né la chiave o la sua impronta. Il pacchetto di diagnostica conta soltanto le voci, e un'esportazione delle impostazioni le lascia fuori.
 
 ## Collegare un client {#clients}
 

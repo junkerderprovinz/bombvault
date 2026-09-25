@@ -53,7 +53,7 @@ Minden kulcsnak saját csempéje van a kártyán. Mutatja a kulcs nevét, hogy i
 
 A csempe **Napló** gombja megnyitja, mit csinált a kulcs. Elöl az általa indított mentések állnak, mindegyik az állapotával és egy hivatkozással a futásra az irányítópult tevékenységnaplójában. Alattuk a hívásai, a legújabb elöl, az eszközzel és a hívás kimenetelével. Az elutasítás megmondja az okát: a kulcs csak olvashat, a megőrzésvédelem visszatartotta a mentést, már futott egy másik mentés, az elemet néhány perce mentették MCP-n keresztül, vagy a kulcs túl sok kérést küldött. A megszakítás arra a futásra hivatkozik, amelyről szólt.
 
-A BombVault kulcsonként a 200 legújabb bejegyzést őrzi legfeljebb 30 napig. Minden hívásnál az eszközt, a kimenetelt és a megszakítás által megnevezett futást tárolja. Soha nem tárolja, amit az asszisztens küldött, sem a kulcsot vagy az ujjlenyomatát. A diagnosztikai csomag csak megszámolja a bejegyzéseket, a beállítások exportja pedig kihagyja őket.
+A BombVault kulcsonként legfeljebb 30 napig őrzi a bejegyzéseket: a legújabb 500 indítást, megszakítást, elutasítást és hibát, mellettük pedig a legújabb 200 sikeres olvasást, így egy futó mentést újra és újra lekérdező asszisztens nem tudja kiszorítani a naplóból a mentés indítását. Minden hívásnál az eszközt, a kimenetelt és a megszakítás által megnevezett futást tárolja. Soha nem tárolja, amit az asszisztens küldött, sem a kulcsot vagy az ujjlenyomatát. A diagnosztikai csomag csak megszámolja a bejegyzéseket, a beállítások exportja pedig kihagyja őket.
 
 ## Kliens csatlakoztatása {#clients}
 

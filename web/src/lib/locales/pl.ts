@@ -1837,7 +1837,7 @@ const pl: Partial<Translations> = {
   "mcp.logFailed": "BombVault nie mógł wczytać dziennika tego klucza.",
   "mcp.logEmpty": "Ten klucz jeszcze nie wywołał BombVault.",
   "mcp.logCalls": "Wywołania",
-  "mcp.logKeptHint": "BombVault przechowuje wywołania każdego klucza do miesiąca. Nigdy nie zapisuje tego, co wysłał asystent, ani samego klucza.",
+  "mcp.logKeptHint": "BombVault przechowuje wywołania każdego klucza do miesiąca: 500 najnowszych uruchomień, anulowań, odmów i błędów oraz 200 najnowszych udanych odczytów. Nigdy nie zapisuje tego, co wysłał asystent, ani samego klucza.",
   "mcp.logRuns": "Uruchomione przez niego kopie",
   "mcp.logShowRun": "Pokaż w dzienniku aktywności",
   "mcp.logRequest": "Żądanie",

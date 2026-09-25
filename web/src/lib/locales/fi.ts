@@ -1842,7 +1842,7 @@ const fi: Partial<Translations> = {
   "mcp.logFailed": "BombVault ei voinut ladata tämän avaimen lokia.",
   "mcp.logEmpty": "Tämä avain ei ole vielä kutsunut BombVaultia.",
   "mcp.logCalls": "Kutsut",
-  "mcp.logKeptHint": "BombVault säilyttää kunkin avaimen kutsut enintään kuukauden. Se ei koskaan tallenna sitä, mitä avustaja lähetti, eikä itse avainta.",
+  "mcp.logKeptHint": "BombVault säilyttää kunkin avaimen kutsut enintään kuukauden: 500 uusinta käynnistystä, peruutusta, hylkäystä ja virhettä sekä 200 uusinta onnistunutta lukua. Se ei koskaan tallenna sitä, mitä avustaja lähetti, eikä itse avainta.",
   "mcp.logRuns": "Sen käynnistämät varmuuskopiot",
   "mcp.logShowRun": "Näytä toimintalokissa",
   "mcp.logRequest": "Pyyntö",

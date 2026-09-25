@@ -1840,7 +1840,7 @@ const es: Partial<Translations> = {
   "mcp.logFailed": "BombVault no pudo cargar el registro de esta clave.",
   "mcp.logEmpty": "Esta clave todavía no ha llamado a BombVault.",
   "mcp.logCalls": "Llamadas",
-  "mcp.logKeptHint": "BombVault guarda las llamadas de cada clave hasta un mes. Nunca guarda lo que envió el asistente ni la propia clave.",
+  "mcp.logKeptHint": "BombVault guarda las llamadas de cada clave hasta un mes: los 500 inicios, cancelaciones, rechazos y errores más recientes, y las 200 lecturas correctas más recientes. Nunca guarda lo que envió el asistente ni la propia clave.",
   "mcp.logRuns": "Copias que inició",
   "mcp.logShowRun": "Ver en el registro de actividad",
   "mcp.logRequest": "Solicitud",

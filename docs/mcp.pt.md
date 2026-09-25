@@ -53,7 +53,7 @@ Cada chave tem o seu próprio mosaico no cartão. Mostra o nome da chave, se pod
 
 **Registo** num mosaico abre o que essa chave fez. Primeiro vêm as cópias que iniciou, cada uma com o seu estado e uma ligação a essa execução no registo de atividade do painel. Por baixo estão as chamadas, das mais recentes para as mais antigas, com a ferramenta e o que aconteceu à chamada. Uma recusa diz porquê: a chave só pode ler, a proteção de retenção travou a cópia, já havia outra cópia em curso, o item foi copiado por MCP há poucos minutos, ou a chave enviou demasiados pedidos. Um cancelamento liga à execução a que se referia.
 
-O BombVault guarda as 200 entradas mais recentes de cada chave durante 30 dias no máximo. De cada chamada guarda a ferramenta, o resultado e a execução indicada por um cancelamento. Nunca guarda o que o assistente enviou, nem a chave ou a sua impressão digital. O pacote de diagnóstico só conta as entradas, e uma exportação das definições deixa-as de fora.
+O BombVault guarda as entradas de cada chave durante 30 dias no máximo: os 500 inícios, cancelamentos, recusas e erros mais recentes e, ao lado deles, as 200 leituras bem-sucedidas mais recentes. Assim, um assistente que consulta repetidamente uma cópia em curso não consegue empurrar o seu início para fora do registo. De cada chamada guarda a ferramenta, o resultado e a execução indicada por um cancelamento. Nunca guarda o que o assistente enviou, nem a chave ou a sua impressão digital. O pacote de diagnóstico só conta as entradas, e uma exportação das definições deixa-as de fora.
 
 ## Ligar um cliente {#clients}
 

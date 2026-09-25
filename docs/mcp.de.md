@@ -53,7 +53,7 @@ Jeder Schlüssel hat auf der Karte eine eigene Kachel. Sie zeigt den Namen, ob d
 
 **Protokoll** auf einer Kachel zeigt, was dieser Schlüssel getan hat. Oben stehen die Backups, die er gestartet hat, jeweils mit ihrem Stand und einem Link auf diesen Lauf im Aktivitätsprotokoll des Dashboards. Darunter stehen seine Aufrufe, die neuesten zuerst, mit dem Werkzeug und dem Ergebnis. Eine Ablehnung nennt den Grund: Der Schlüssel darf nur lesen, der Aufbewahrungsschutz hat das Backup zurückgehalten, es lief schon ein anderes Backup, das Element wurde vor wenigen Minuten über MCP gesichert, oder der Schlüssel hat zu viele Anfragen geschickt. Ein Abbruch verlinkt den Lauf, um den es ging.
 
-BombVault hebt die neuesten 200 Einträge jedes Schlüssels bis zu 30 Tage auf. Zu jedem Aufruf speichert es das Werkzeug, das Ergebnis und bei einem Abbruch den Lauf. Was der Assistent geschickt hat, speichert es nie, den Schlüssel und seinen Fingerabdruck auch nicht. Das Diagnosepaket zählt die Einträge nur, und ein Einstellungsexport lässt sie weg.
+BombVault hebt die Einträge jedes Schlüssels bis zu 30 Tage auf: die neuesten 500 Starts, Abbrüche, Ablehnungen und Fehler und daneben die neuesten 200 erfolgreichen Lesezugriffe. Ein Assistent, der ein laufendes Backup immer wieder abfragt, kann so dessen Start nicht aus dem Protokoll drängen. Zu jedem Aufruf speichert es das Werkzeug, das Ergebnis und bei einem Abbruch den Lauf. Was der Assistent geschickt hat, speichert es nie, den Schlüssel und seinen Fingerabdruck auch nicht. Das Diagnosepaket zählt die Einträge nur, und ein Einstellungsexport lässt sie weg.
 
 ## Client verbinden {#clients}
 

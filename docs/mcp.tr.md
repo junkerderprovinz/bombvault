@@ -53,7 +53,7 @@ Her anahtarın kartta kendi kutucuğu vardır. Kutucuk anahtarın adını, yedek
 
 Kutucuktaki **Günlük**, o anahtarın yaptıklarını açar. Önce başlattığı yedeklemeler gelir; her biri durumuyla ve panodaki etkinlik günlüğünde o çalıştırmaya giden bir bağlantıyla. Altında çağrıları vardır, en yenisi önce, aracı ve çağrının sonucuyla. Bir ret nedenini söyler: anahtar yalnızca okuyabilir, saklama koruması yedeklemeyi durdurdu, başka bir yedekleme zaten çalışıyordu, öğe birkaç dakika önce MCP üzerinden yedeklendi ya da anahtar çok fazla istek gönderdi. Bir iptal, ilgili çalıştırmaya bağlantı verir.
 
-BombVault her anahtarın en yeni 200 kaydını en fazla 30 gün saklar. Her çağrı için aracı, sonucu ve bir iptalin andığı çalıştırmayı kaydeder. Asistanın gönderdiğini, anahtarı ya da parmak izini asla kaydetmez. Tanılama paketi kayıtları yalnızca sayar, ayar dışa aktarımı ise onları dışarıda bırakır.
+BombVault her anahtarın kayıtlarını en fazla 30 gün saklar: en yeni 500 başlatma, iptal, ret ve hatayı, bunların yanında da en yeni 200 başarılı okumayı. Böylece süren bir yedeklemeyi tekrar tekrar sorgulayan bir asistan, o yedeklemenin başlatılmasını günlükten dışarı itemez. Her çağrı için aracı, sonucu ve bir iptalin andığı çalıştırmayı kaydeder. Asistanın gönderdiğini, anahtarı ya da parmak izini asla kaydetmez. Tanılama paketi kayıtları yalnızca sayar, ayar dışa aktarımı ise onları dışarıda bırakır.
 
 ## Bir istemci bağlamak {#clients}
 

@@ -53,7 +53,7 @@ Chaque clé a sa propre tuile sur la carte. Elle affiche le nom de la clé, si e
 
 **Journal** sur une tuile ouvre ce que cette clé a fait. D'abord les sauvegardes qu'elle a lancées, chacune avec son état et un lien vers cette exécution dans le journal d'activité du tableau de bord. En dessous, ses appels, les plus récents d'abord, avec l'outil et ce qu'est devenu l'appel. Un refus dit pourquoi : la clé peut seulement lire, la protection de rétention a retenu la sauvegarde, une autre sauvegarde était déjà en cours, l'élément a été sauvegardé via MCP il y a quelques minutes, ou la clé a envoyé trop de requêtes. Une annulation renvoie vers l'exécution concernée.
 
-BombVault garde les 200 entrées les plus récentes de chaque clé pendant 30 jours au plus. Pour chaque appel, il enregistre l'outil, le résultat et l'exécution nommée par une annulation. Il n'enregistre jamais ce que l'assistant a envoyé, ni la clé ou son empreinte. Le paquet de diagnostic ne fait que compter les entrées, et un export des réglages les laisse de côté.
+BombVault garde les entrées de chaque clé pendant 30 jours au plus : les 500 lancements, annulations, refus et erreurs les plus récents et, à côté, les 200 lectures réussies les plus récentes. Un assistant qui interroge sans cesse une sauvegarde en cours ne peut donc pas faire sortir son lancement du journal. Pour chaque appel, il enregistre l'outil, le résultat et l'exécution nommée par une annulation. Il n'enregistre jamais ce que l'assistant a envoyé, ni la clé ou son empreinte. Le paquet de diagnostic ne fait que compter les entrées, et un export des réglages les laisse de côté.
 
 ## Connecter un client {#clients}
 

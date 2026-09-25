@@ -53,7 +53,7 @@ Jokaisella avaimella on kortilla oma ruutunsa. Siinä näkyy avaimen nimi, saako
 
 Ruudun **Loki** avaa sen, mitä avain on tehnyt. Ensin tulevat sen käynnistämät varmuuskopiot, kukin tilansa kanssa ja linkillä ajoon kojelaudan toimintalokissa. Niiden alla ovat sen kutsut uusin ensin, työkalu ja kutsun lopputulos. Hylkäys kertoo syyn: avain saa vain lukea, säilytyssuoja pidätti varmuuskopion, toinen varmuuskopiointi oli jo käynnissä, kohde varmuuskopioitiin MCP:n kautta muutama minuutti sitten, tai avain lähetti liian monta pyyntöä. Peruutus linkittää ajoon, jota se koski.
 
-BombVault säilyttää kunkin avaimen 200 uusinta merkintää enintään 30 päivää. Jokaisesta kutsusta se tallentaa työkalun, lopputuloksen ja peruutuksen nimeämän ajon. Se ei koskaan tallenna sitä, mitä avustaja lähetti, eikä avainta tai sen sormenjälkeä. Diagnostiikkapaketti vain laskee merkinnät, ja asetusten vienti jättää ne pois.
+BombVault säilyttää kunkin avaimen merkinnät enintään 30 päivää: 500 uusinta käynnistystä, peruutusta, hylkäystä ja virhettä sekä niiden rinnalla 200 uusinta onnistunutta lukua, joten avustaja, joka kyselee käynnissä olevaa varmuuskopiointia yhä uudelleen, ei voi työntää sen käynnistystä pois lokista. Jokaisesta kutsusta se tallentaa työkalun, lopputuloksen ja peruutuksen nimeämän ajon. Se ei koskaan tallenna sitä, mitä avustaja lähetti, eikä avainta tai sen sormenjälkeä. Diagnostiikkapaketti vain laskee merkinnät, ja asetusten vienti jättää ne pois.
 
 ## Yhdistä asiakasohjelma {#clients}
 
