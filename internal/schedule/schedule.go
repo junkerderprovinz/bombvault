@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -1717,6 +1718,12 @@ func drillTasks(settings store.Settings) []drillTask {
 		}
 	}
 	return out
+}
+
+// OffsiteDrillScheduled reports whether the drills job runs an off-site DR
+// drill for domain, so a status can say what the scheduler does.
+func OffsiteDrillScheduled(settings store.Settings, domain string) bool {
+	return settings.DrillsEnabled && slices.Contains(drillTasks(settings), drillTask{domain: domain, source: "offsite", kind: "dr"})
 }
 
 // enabledDrillDomains returns each domain switched on in Settings. A disabled
