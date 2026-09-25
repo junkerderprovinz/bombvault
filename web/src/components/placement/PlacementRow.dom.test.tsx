@@ -8,6 +8,7 @@ import {
   placementPlan,
   placementView,
   renderWithProviders,
+  sendToOption,
   targetOption,
   uploadEstimate,
   wheel,
@@ -18,6 +19,16 @@ const fake = await vi.hoisted(async () => (await import("../../lib/placement.tes
 vi.mock("../../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../lib/api")>()),
   ...fake.api,
+}));
+
+const placeRepos = vi.hoisted(() => ({ calls: [] as [string, string][], answers: [] as unknown[] }));
+
+vi.mock("../../lib/places", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/places")>()),
+  ensurePlaceRepo: (placeId: string, domain: string) => {
+    placeRepos.calls.push([placeId, domain]);
+    return Promise.resolve(placeRepos.answers.shift() ?? { ok: true, repoId: "repo-new" });
+  },
 }));
 
 const { PlacementRow } = await import("./PlacementRow");
@@ -320,5 +331,81 @@ describe("PlacementRow reached from an exception link", () => {
     renderRow(placementView());
     await segment("Local");
     expect(scrolled).not.toHaveBeenCalled();
+  });
+});
+
+describe("PlacementRow with places that hold no repository yet", () => {
+  const nas = homeOption({ name: "NAS Keller", kind: "local", location: "nas/containers", placeId: "p-nas", provider: "synology" });
+  const garage = homeOption({ name: "Garage", kind: "local", location: "garage/containers", placeId: "p-garage", provider: "garage" });
+  const withPlaces = placementOptions({ homes: [homeOption({ name: "Unraid", placeId: "p-unraid" }), nas, garage] });
+
+  beforeEach(() => {
+    fake.reset();
+    placeRepos.calls.length = 0;
+    placeRepos.answers.length = 0;
+  });
+  afterEach(cleanup);
+
+  async function setHome(name: string) {
+    fireEvent.click(await screen.findByRole("combobox", { name: "Stored on" }));
+    fireEvent.click(screen.getByRole("option", { name }));
+    fireEvent.click(screen.getByRole("button", { name: "Set" }));
+    return screen.findByRole("dialog");
+  }
+
+  it("offers two places without a repository as two choices", async () => {
+    fake.reply("getPlacementOptions", { ok: true, options: withPlaces });
+    renderRow(placementView());
+    const field = await screen.findByRole("combobox", { name: "Stored on" });
+    fireEvent.click(field);
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Unraid", "NAS Keller", "Garage"]);
+    fireEvent.click(screen.getByRole("option", { name: "Garage" }));
+    expect(field.querySelector('span[aria-hidden="false"]')?.textContent).toBe("Garage");
+  });
+
+  it("makes a place's repository only once the question is answered, and sets it", async () => {
+    fake.reply("getPlacementOptions", { ok: true, options: withPlaces });
+    renderRow(placementView());
+    const dialog = await setHome("NAS Keller");
+    expect(dialog.textContent).toContain("Back up nginx to NAS Keller from now on?");
+    expect(placeRepos.calls).toEqual([]);
+    fireEvent.click(within(dialog).getByRole("button", { name: "Set" }));
+    await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, { home: { repo: "repo-new" } }]]));
+    expect(placeRepos.calls).toEqual([["p-nas", "containers"]]);
+  });
+
+  it("makes nothing when the question for a place is cancelled", async () => {
+    fake.reply("getPlacementOptions", { ok: true, options: withPlaces });
+    renderRow(placementView());
+    const dialog = await setHome("Garage");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(placeRepos.calls).toEqual([]);
+    expect(fake.callsTo("setItemPlacement")).toEqual([]);
+  });
+
+  it("sends Off-site only to a remote place's new repository", async () => {
+    const b2 = sendToOption({ kind: "remote", repoId: "", targetId: "", name: "B2", placeId: "p-b2", provider: "b2" });
+    fake.reply("getPlacementOptions", { ok: true, options: placementOptions({ sendTo: [b2] }) });
+    renderRow(placementView());
+    fireEvent.click(await segment("Off-site only"));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain("Back up nginx to B2 from now on?");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Set" }));
+    await waitFor(() =>
+      expect(fake.callsTo("setItemPlacement")).toEqual([[item, { home: { repo: "repo-new" }, copies: { skip: ["*"] } }]])
+    );
+    expect(placeRepos.calls).toEqual([["p-b2", "containers"]]);
+  });
+
+  it("says why a place's repository could not be made, and shakes", async () => {
+    fake.reply("getPlacementOptions", { ok: true, options: withPlaces });
+    placeRepos.answers.push({ ok: false, code: "place-off", error: "place is switched off" });
+    renderRow(placementView());
+    const dialog = await setHome("NAS Keller");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Set" }));
+    expect(await screen.findByText("This place is switched off.")).toBeTruthy();
+    expect(fake.callsTo("setItemPlacement")).toEqual([]);
+    expect(screen.getByRole("toolbar", { name: "Placement" }).closest(".glim-shake")).not.toBeNull();
   });
 });
