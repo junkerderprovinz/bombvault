@@ -1473,6 +1473,14 @@ body {
   --motion-shake-scale: 1;                /* multiplies glim-shake's translateX steps */
   --motion-shake-dur: 360ms;
 
+  /* How far each sidebar row is thrown and tipped when the logo goes off, and
+     how long the blast takes to reach the next row down. Step times eleven
+     rows plus the duration has to stay under Sidebar.tsx's 1400ms boom. */
+  --motion-quake-dist: 10px;
+  --motion-quake-tilt: 1.6deg;
+  --motion-quake-dur: 560ms;
+  --motion-quake-step: 70ms;
+
   /* The other animations, each described where it is defined:
      shape    border-radius transition when data-shape changes
      pulse    glow and scale of the save-success pulse
@@ -1527,6 +1535,11 @@ body {
   --motion-shake-scale: 1.9;
   --motion-shake-dur: 520ms;
 
+  --motion-quake-dist: 16px;
+  --motion-quake-tilt: 2.6deg;
+  --motion-quake-dur: 640ms;
+  --motion-quake-step: 65ms;
+
   --motion-shape-dur: 460ms;
   --motion-shape-ease: cubic-bezier(.22, 1.94, .45, 1);
 
@@ -1571,6 +1584,11 @@ body {
 
   --motion-shake-scale: .5;
   --motion-shake-dur: 220ms;
+
+  --motion-quake-dist: 5px;
+  --motion-quake-tilt: .8deg;
+  --motion-quake-dur: 400ms;
+  --motion-quake-step: 50ms;
 
   --motion-shape-dur: 140ms;
 
@@ -1618,6 +1636,11 @@ body {
 
   --motion-shake-scale: 0;
   --motion-shake-dur: 300ms;
+
+  --motion-quake-dist: 0px;
+  --motion-quake-tilt: 0deg;
+  --motion-quake-dur: 0ms;
+  --motion-quake-step: 0ms;
 
   /* Durations collapse to zero, so each end state paints at once, and a zero
      stagger step and cap make every row delay zero. */
@@ -1672,6 +1695,25 @@ body {
   45%      { transform: translate(-2px, 1px) rotate(-6deg); }
   60%      { transform: translate(2px, -1px) rotate(6deg); }
   80%      { transform: translate(-1px, 0) rotate(-4deg); }
+}
+
+/* The blast running down the sidebar: each row is thrown on its own, one after
+   the next from the top, and --rail-dir sends neighbours opposite ways first so
+   the rows never move as one block. Two axes and a tilt, because a shake on
+   one axis reads as a slide. */
+@keyframes glim-egg-quake {
+  0%   { transform: none; }
+  12%  { transform: translate(calc(var(--rail-dir, 1) * var(--motion-quake-dist, 10px)), calc(.5 * var(--motion-quake-dist, 10px)))
+                    rotate(calc(var(--rail-dir, 1) * var(--motion-quake-tilt, 1.6deg))); }
+  28%  { transform: translate(calc(var(--rail-dir, 1) * -.75 * var(--motion-quake-dist, 10px)), calc(-.25 * var(--motion-quake-dist, 10px)))
+                    rotate(calc(var(--rail-dir, 1) * -.75 * var(--motion-quake-tilt, 1.6deg))); }
+  44%  { transform: translate(calc(var(--rail-dir, 1) * .5 * var(--motion-quake-dist, 10px)), calc(.15 * var(--motion-quake-dist, 10px)))
+                    rotate(calc(var(--rail-dir, 1) * .5 * var(--motion-quake-tilt, 1.6deg))); }
+  60%  { transform: translate(calc(var(--rail-dir, 1) * -.3 * var(--motion-quake-dist, 10px)), 0)
+                    rotate(calc(var(--rail-dir, 1) * -.3 * var(--motion-quake-tilt, 1.6deg))); }
+  78%  { transform: translate(calc(var(--rail-dir, 1) * .15 * var(--motion-quake-dist, 10px)), 0)
+                    rotate(calc(var(--rail-dir, 1) * .1 * var(--motion-quake-tilt, 1.6deg))); }
+  100% { transform: none; }
 }
 
 /* Each fragment flies from rest to its per-tile (--dx,--dy) with spin, a downward
@@ -1982,6 +2024,12 @@ body {
     animation: glim-spark-fly 820ms cubic-bezier(.2, .6, .3, 1) forwards;
     animation-delay: var(--delay, 0ms);
   }
+  /* --rail-i is the row's position in the rail, footer included, and
+     --rail-dir alternates with it (Sidebar.tsx's railVars). */
+  .glim-egg-quake .glim-nav-row {
+    animation: glim-egg-quake var(--motion-quake-dur, 560ms) ease-out;
+    animation-delay: calc(var(--rail-i, 0) * var(--motion-quake-step, 70ms));
+  }
 
   .glim-page-enter {
     animation:
@@ -2108,6 +2156,10 @@ body {
   :root[data-motion="storm"] .glim-particle {
     animation: glim-spark-fly 820ms cubic-bezier(.2, .6, .3, 1) forwards;
     animation-delay: var(--delay, 0ms);
+  }
+  :root[data-motion="storm"] .glim-egg-quake .glim-nav-row {
+    animation: glim-egg-quake var(--motion-quake-dur, 560ms) ease-out;
+    animation-delay: calc(var(--rail-i, 0) * var(--motion-quake-step, 70ms));
   }
   :root[data-motion="storm"] .glim-page-enter {
     animation:
