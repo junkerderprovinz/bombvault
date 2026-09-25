@@ -36,6 +36,16 @@ describe("placeErrorText", () => {
     );
   });
 
+  it("says a domain still uses its folder when a place in use names no holders", () => {
+    const text = placeErrorText(
+      t,
+      "en",
+      { ok: false, code: "place-in-use", error: "the place has no folder for a domain that uses it: vms" },
+      "settings.error"
+    );
+    expect(text).toBe(en["places.error.folderInUse"]);
+  });
+
   it("counts the snapshots at an address that already holds backups", () => {
     const text = placeErrorText(
       t,
