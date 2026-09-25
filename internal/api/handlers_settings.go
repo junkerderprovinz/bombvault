@@ -564,10 +564,6 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	// validateNamedRepo keeps a named repository off a domain's own path; this
-	// is the other direction, a domain path moved onto a named repository,
-	// which would leave a row answering for the domain with its own empty
-	// credentials and an append-only flag the domain never set.
 	cur, curErr := h.store.GetSettings()
 	if curErr != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(curErr))
@@ -577,6 +573,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	// validateNamedRepo keeps a named repository off a domain's own path; this
+	// is the other direction, a domain path moved onto a named repository,
+	// which would leave a row answering for the domain with its own empty
+	// credentials and an append-only flag the domain never set.
 	if msg := h.rejectSettingsPathOnNamedRepo(v, cur); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
