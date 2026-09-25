@@ -483,3 +483,109 @@ func TestAProbeOfAnUnknownProviderIsRefused(t *testing.T) {
 		t.Fatalf("a refused probe opened %v", f.eng.opened)
 	}
 }
+
+func TestEditingAPlaceMirrorsIntoTheRowsItHolds(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(b2, "containers", "")
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"name": "B2 EU", "retentionKeepLast": 5, "limitUpload": 800,
+		"storageClass": "standard_ia", "growthBudgetGb": 50, "offPremises": false})
+
+	view, _ := res["place"].(map[string]any)
+	if res["ok"] != true || view["name"] != "B2 EU" || view["offPremises"] != false || view["storageClass"] != "STANDARD_IA" {
+		t.Fatalf("PATCH = %v", res)
+	}
+	row := f.storedTarget(target.ID)
+	if row.RetentionKeepLast != 5 || row.LimitUpload != 800 || row.StorageClass != "STANDARD_IA" || row.GrowthBudgetGB != 50 {
+		t.Fatalf("target = %+v, want the place's retention, limit, class and budget", row)
+	}
+}
+
+func TestAStorageClassARestoreCannotReadIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	if res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"storageClass": "DEEP_ARCHIVE"}); res["ok"] != false || res["code"] != nil {
+		t.Fatalf("PATCH = %v, want a plain refusal", res)
+	}
+	if p, err := f.st.GetPlace(b2.ID); err != nil || p.StorageClass != "" {
+		t.Fatalf("place = %+v, %v, want its class unchanged", p, err)
+	}
+}
+
+func TestAnUnknownPlaceIsNotFound(t *testing.T) {
+	f := newPlacementFixture(t)
+	if code, res := f.doStatus(http.MethodPatch, "/api/places/nosuchplace", map[string]any{"name": "x"}); code != http.StatusNotFound || res["ok"] != false {
+		t.Fatalf("PATCH an unknown place = %d %v, want 404", code, res)
+	}
+}
+
+func TestAHomePlaceStaysSwitchedOn(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(localPlace("Unraid", "backups"), "containers")
+	if res := f.do(http.MethodPatch, "/api/places/"+unraid.ID, map[string]any{"enabled": false}); res["ok"] != false || res["code"] != "place-home-domain" {
+		t.Fatalf("switching a home place off = %v", res)
+	}
+	if p, err := f.st.GetPlace(unraid.ID); err != nil || !p.Enabled {
+		t.Fatalf("place = %+v, %v, want it still on", p, err)
+	}
+}
+
+func TestOnlyARemotePlaceTakesTheAppendOnlySwitch(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(localPlace("Unraid", "backups"))
+	if res := f.do(http.MethodPatch, "/api/places/"+unraid.ID, map[string]any{"immutable": true}); res["ok"] != false || res["code"] != nil {
+		t.Fatalf("append-only on a local place = %v, want a plain refusal", res)
+	}
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(b2, "containers", "")
+	if res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"immutable": true}); res["ok"] != true {
+		t.Fatalf("append-only on a remote place = %v", res)
+	}
+	if row := f.storedTarget(target.ID); !row.Immutable {
+		t.Fatalf("target = %+v, want it append-only", row)
+	}
+}
+
+func TestLoweringTheRetentionOfAPlaceWarnsForADirectRepositoryInUse(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.RetentionKeepLast = 10
+	b2 := f.storePlace(p)
+	target := f.placeTarget(b2, "containers", "")
+	direct := f.direct(target)
+	f.container("nginx", direct.ID)
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"retentionKeepLast": 3})
+
+	warnings := rowsOf(res["warnings"])
+	if res["ok"] != true || len(warnings) != 1 || warnings[0]["code"] != "direct-retention-lowered" || warnings[0]["items"] != float64(1) {
+		t.Fatalf("PATCH = %v, want one direct-retention-lowered warning for one item", res)
+	}
+}
+
+func TestSwitchingAppendOnlyOffWarnsForADirectRepositoryInUse(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.Immutable = true
+	b2 := f.storePlace(p)
+	target := f.placeTarget(b2, "containers", "")
+	direct := f.direct(target)
+	f.container("nginx", direct.ID)
+
+	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"immutable": false})
+
+	warnings := rowsOf(res["warnings"])
+	if res["ok"] != true || len(warnings) != 1 || warnings[0]["code"] != "direct-append-only-off" || warnings[0]["targetId"] != target.ID {
+		t.Fatalf("PATCH = %v, want one direct-append-only-off warning for the target", res)
+	}
+}
+
+func TestARenameOntoAnotherPlacesNameIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"))
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	if res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"name": "Unraid"}); res["ok"] != false || res["code"] != "place-name-taken" {
+		t.Fatalf("PATCH = %v, want place-name-taken", res)
+	}
+}
