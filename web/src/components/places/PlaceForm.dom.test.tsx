@@ -25,6 +25,11 @@ vi.mock("../../lib/places", async (importOriginal) => {
       creates.push(structuredClone(body));
       return Promise.resolve(createAnswer);
     },
+    restServerRecipe: () =>
+      Promise.resolve({
+        ok: true,
+        snippet: { user: "tower", password: "Xy12", htpasswd: "tower:$2a$12$h", dockerRun: "docker run", compose: "services:", unraid: "<Container/>" },
+      }),
   };
 });
 
@@ -357,5 +362,25 @@ describe("PlaceForm rclone", () => {
     await testConnection();
     expect(probes[0]!.fields.remote).toBe("gdrive");
     expect(screen.getByLabelText(en["places.rclone.config"])).toBeTruthy();
+  });
+});
+
+const REST: CatalogProvider = {
+  id: "rest-server",
+  group: "self",
+  kind: "rest",
+  fields: [{ key: "url" }, { key: "user" }, { key: "password", secret: true }, { key: "path", optional: true }],
+};
+
+describe("PlaceForm rest-server", () => {
+  it("fills in the login of the recipe it shows, and tests it like a typed one", async () => {
+    await form(REST);
+    await act(async () => {
+      fireEvent.click(button("places.recipe.show"));
+    });
+    expect(field(en["places.field.user"])).toHaveProperty("value", "tower");
+    type(en["places.field.url"], "http://nas:8000");
+    await testConnection();
+    expect(probes[0]!.fields).toMatchObject({ url: "http://nas:8000", user: "tower", password: "Xy12" });
   });
 });
