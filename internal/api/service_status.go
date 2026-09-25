@@ -525,14 +525,14 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		// Ransomware-protection scorecard facts. All reads are best-effort: a store
 		// error leaves the relevant fact at its zero value (a missing check), which
 		// the aggregate then treats conservatively rather than failing the query.
-		offsiteConfigured := s.offSiteConfigured(d.name, settings, sites)
+		copiesOffSite := s.offSiteConfigured(d.name, settings, sites)
 		var offPremisesCovered bool
 		if validPlacementDomain(d.name) {
 			copied, covered, cErr := s.placementCoverage(settings, d.name, sites)
 			if cErr != nil {
 				log.Printf("api: status %s: placement could not be read, off-site stays as configured: %v", d.name, cErr) //nolint:gosec // G706: domain is a fixed literal
 			} else {
-				offsiteConfigured = offsiteConfigured && copied
+				copiesOffSite = copiesOffSite && copied
 				offPremisesCovered = covered
 			}
 		}
@@ -579,7 +579,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 
 		in := protInputs{
 			enabled:           d.enabled,
-			offsiteConfigured: offsiteConfigured,
+			offsiteConfigured: copiesOffSite,
 			offsiteImmutable:  offsiteImmutable,
 			hadTamper:         hadTamper,
 			lastTamperOK:      lastTamperOK,
@@ -623,7 +623,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			LastVerified:          lastVerified,
 			LastVerifiedOK:        lastVerifiedOK,
 			VerifiedDetail:        verifiedDetail,
-			OffsiteConfigured:     offsiteConfigured,
+			OffsiteConfigured:     copiesOffSite,
 			OffPremisesCovered:    offPremisesCovered,
 			OffsiteImmutable:      offsiteImmutable,
 			LastTamperAt:          lastTamperAt,
