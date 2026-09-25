@@ -346,11 +346,11 @@ func (s *Service) itemIdentity(item store.ItemRef) (string, error) {
 func (s *Service) retentionPolicyForRef(settings store.Settings, domain string, ref domainRepoRef) restic.RetentionPolicy {
 	switch {
 	case ref.Named.CompanionOf != "":
-		p := targetOffsiteRetentionPolicy(ref.Named)
+		p := rowRetentionPolicy(ref.Named)
 		p.Direct = true
 		return p
 	case ref.Named.PlaceID != "":
-		return targetOffsiteRetentionPolicy(ref.Named)
+		return rowRetentionPolicy(ref.Named)
 	case ref.Own:
 		place, ok, err := s.domainHomePlace(domain)
 		if err != nil {

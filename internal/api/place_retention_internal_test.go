@@ -115,7 +115,7 @@ func TestAPlacedRowWithoutRulesKeepsEverythingUntilItIsDetached(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if detached.PlaceID != "" || targetOffsiteRetentionPolicy(detached).Any() {
+	if detached.PlaceID != "" || rowRetentionPolicy(detached).Any() {
 		t.Fatalf("detached row = %+v, want no place and no rules of its own", detached)
 	}
 	if got := f.svc.retentionPolicyForRef(settings, "containers", namedRef(f.root+"/nas", detached)); got != (restic.RetentionPolicy{KeepLast: 3}) {
