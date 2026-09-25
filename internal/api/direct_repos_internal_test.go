@@ -138,7 +138,7 @@ func TestALocationInsideOrAroundAnotherIsRefused(t *testing.T) {
 	v := toView(settings)
 	v.ContainersPath = "backups/nas/containers"
 	res = f.do("PUT", "/api/settings", v)
-	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, "Repositories") {
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, "at one of the places under Settings, Storage") {
 		t.Errorf("domain path inside a named repository: %v", res)
 	}
 }

@@ -209,21 +209,20 @@ func offsiteImmutableFor(domain string, s store.Settings) bool {
 // append-only: credentials on this box must not be able to delete history,
 // so BombVault does not even try.
 //
-// There are three toggles on three different cards plus the case where the
-// flag cannot be read, so each refusal names the way out for its own card.
-// None says "far side": a named repository (#204) can be a plain folder on a
-// share, with no far side and no maintenance window to wait for.
+// Each refusal names the place whose details hold the toggle, which depends on
+// the kind of repository; the last covers a flag that cannot be read. None
+// says "far side": a named repository (#204) can be a plain folder on a share,
+// with no far side and no maintenance window to wait for.
 //
 // None contains a slash: every error leaving the API goes through
 // scrubError, whose absolute-path regex redacts any slash-led token.
 var (
-	// A named repository (#204). Its toggle is on the Repositories card.
-	errOffsiteAppendOnly = errors.New("this repository is append-only, so nothing here may delete from it. Turn Append-only off for it under Settings, Repositories, delete what you meant to delete, and switch it back on")
-	// An off-site destination. Its toggle is on the off-site destinations card.
-	errAppendOnlyOffsiteTarget = errors.New("this off-site destination is append-only, so nothing here may delete from it. Turn Append-only off for it under Settings, Off-site, delete what you meant to delete, and switch it back on")
-	// A domain's own remote primary. Its toggle is in the Remote safety dialog
-	// beside that domain's backup path.
-	errAppendOnlyPrimaryRemote = errors.New("this repository is append-only, so nothing here may delete from it. Turn Append-only off in the Remote safety settings beside this domain's backup path, delete what you meant to delete, and switch it back on")
+	// A named repository (#204): the place it lies at.
+	errOffsiteAppendOnly = errors.New("this repository is append-only, so nothing here may delete from it. Turn Append-only off in the details of the place it lies at, under Settings, Storage, delete what you meant to delete, and switch it back on")
+	// An off-site destination: the place it copies to.
+	errAppendOnlyOffsiteTarget = errors.New("this off-site destination is append-only, so nothing here may delete from it. Turn Append-only off in the details of the place it copies to, under Settings, Storage, delete what you meant to delete, and switch it back on")
+	// A domain's own remote primary: the place the domain is stored in.
+	errAppendOnlyPrimaryRemote = errors.New("this repository is append-only, so nothing here may delete from it. Turn Append-only off in the details of the place this domain is stored in, under Settings, Storage, delete what you meant to delete, and switch it back on")
 	// Nobody's toggle: the store could not be read. primaryIsImmutable answers
 	// yes then, and sending the operator to a card to switch off a flag that may
 	// not exist anywhere wastes a diagnosis on a transient failure.
