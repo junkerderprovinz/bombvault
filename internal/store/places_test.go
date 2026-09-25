@@ -319,3 +319,207 @@ func TestSetDomainPlaceTxTakesKnownDomainsAndPlacesOnly(t *testing.T) {
 		t.Fatalf("DomainPlaces = %v, %v, want none left", homes, err)
 	}
 }
+
+// addressAt is p's address for domain plus suffix.
+func addressAt(t *testing.T, p store.Place, domain, suffix string) string {
+	t.Helper()
+	addr, ok := places.Address(p.Base, p.Folders, domain, suffix)
+	if !ok {
+		t.Fatalf("%s has no folder for %s", p.Name, domain)
+	}
+	return addr
+}
+
+// totalChanges counts the rows the store's one connection has written so far.
+func totalChanges(t *testing.T, db *sql.DB) int64 {
+	t.Helper()
+	var n int64
+	if err := db.QueryRow(`SELECT total_changes()`).Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+	return n
+}
+
+// checkPlacedAddresses fails t unless every row at a place holds the address
+// its place spells for it, and every domain with a home place has that
+// place's address as its path.
+func checkPlacedAddresses(t *testing.T, r *store.Repo) {
+	t.Helper()
+	list, err := r.ListPlaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+	byID := map[string]store.Place{}
+	for _, p := range list {
+		byID[p.ID] = p
+	}
+	rows, err := r.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	named, err := r.ListNamedRepos()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows = append(rows, named...)
+	for _, d := range places.Domains {
+		primary, found, err := r.PrimaryRemoteTarget(d)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if found {
+			rows = append(rows, primary)
+		}
+	}
+	for _, row := range rows {
+		if row.PlaceID == "" {
+			continue
+		}
+		p, ok := byID[row.PlaceID]
+		if !ok {
+			t.Errorf("row %s (%s) sits at %s, which is no place", row.ID, row.Name, row.PlaceID)
+			continue
+		}
+		if want, offered := places.Address(p.Base, p.Folders, row.PlaceDomain, row.PlaceSuffix); !offered || row.Repo != want {
+			t.Errorf("row %s (%s) holds %q, place %s spells %q (offered %v)", row.ID, row.Name, row.Repo, p.Name, want, offered)
+		}
+	}
+	homes, err := r.DomainPlaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := storedSettings(t, r)
+	paths := map[string]string{"containers": s.ContainersPath, "vms": s.VMsPath, "flash": s.FlashPath, "config": s.ConfigPath, "files": s.FilesPath}
+	for domain, id := range homes {
+		p := byID[id]
+		if want, _ := places.Address(p.Base, p.Folders, domain, ""); paths[domain] != want {
+			t.Errorf("the %s path is %q, its home place %s spells %q", domain, paths[domain], p.Name, want)
+		}
+	}
+}
+
+func TestAPlaceWritesItselfOntoEveryRowAtIt(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	target := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: addressAt(t, bucket, "containers", ""), Enabled: true})
+	named := upsertRow(t, r, store.OffsiteTarget{Role: store.RoleRepo, Name: "B2 files", Repo: addressAt(t, bucket, "files", ""), Enabled: true})
+	attachRow(t, db, target.ID, bucket.ID, "containers", "")
+	attachRow(t, db, named.ID, bucket.ID, "files", "")
+
+	bucket.Base = "s3:https://s3.example.com/bucket-2"
+	bucket.CredsRef, bucket.StorageClass, bucket.Immutable = "set-b2-new", "STANDARD_IA", true
+	bucket.RetentionKeepLast, bucket.RetentionKeepDaily, bucket.RetentionKeepWeekly, bucket.RetentionKeepMonthly = 3, 14, 8, 12
+	bucket.LimitUpload, bucket.LimitDownload, bucket.GrowthBudgetGB = 2000, 4000, 90
+	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+
+	want := target
+	want.Repo = "s3:https://s3.example.com/bucket-2/container"
+	want.CredsRef, want.StorageClass, want.Immutable = "set-b2-new", "STANDARD_IA", true
+	want.RetentionKeepLast, want.RetentionKeepDaily, want.RetentionKeepWeekly, want.RetentionKeepMonthly = 3, 14, 8, 12
+	want.LimitUpload, want.LimitDownload, want.GrowthBudgetGB = 2000, 4000, 90
+	want.PlaceID, want.PlaceDomain = bucket.ID, "containers"
+	if got, _, err := r.GetOffsiteTarget(target.ID); err != nil || got != want {
+		t.Fatalf("target = %+v, %v, want %+v", got, err, want)
+	}
+	repo, err := r.GetNamedRepo(named.ID)
+	if err != nil || repo.Repo != "s3:https://s3.example.com/bucket-2/files" || repo.CredsRef != "set-b2-new" || !repo.OffPremises || repo.Name != "B2 files" {
+		t.Fatalf("named repository = %+v, %v, want the place's address, credentials and site under its own name", repo, err)
+	}
+	checkPlacedAddresses(t, r)
+}
+
+func TestADirectRepositoryFollowsItsPlaceAndKeepsItsCredentials(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	target := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: addressAt(t, bucket, "containers", ""),
+		CredsRef: "set-b2", Enabled: true})
+	direct, err := r.CreateCompanionRepo(target.ID, "B2 direct", addressAt(t, bucket, "containers", "-direct"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	attachRow(t, db, target.ID, bucket.ID, "containers", "")
+	attachRow(t, db, direct.ID, bucket.ID, "containers", "-direct")
+
+	bucket.Base, bucket.CredsRef, bucket.RetentionKeepDaily = "s3:https://s3.example.com/bucket-2", "set-b2-new", 60
+	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+
+	got, found, err := r.CompanionFor(target.ID)
+	if err != nil || !found {
+		t.Fatalf("CompanionFor = %v, %v", found, err)
+	}
+	if got.Repo != "s3:https://s3.example.com/bucket-2/container-direct" || got.RetentionKeepDaily != 60 ||
+		got.StorageClass != bucket.StorageClass || got.CredsRef != "set-b2" {
+		t.Fatalf("direct repository = %+v, want the new address and retention on its old credentials", got)
+	}
+	checkPlacedAddresses(t, r)
+}
+
+func TestASwitchedOffRowStaysOffWhileItsPlaceStaysOn(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	containers := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: addressAt(t, bucket, "containers", ""), Enabled: true})
+	flash := upsertRow(t, r, store.OffsiteTarget{Domain: "flash", Name: "B2", Repo: addressAt(t, bucket, "flash", ""), Enabled: false})
+	attachRow(t, db, containers.ID, bucket.ID, "containers", "")
+	attachRow(t, db, flash.ID, bucket.ID, "flash", "")
+	enabled := func(id string) bool {
+		t.Helper()
+		row, _, err := r.GetOffsiteTarget(id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return row.Enabled
+	}
+
+	bucket.RetentionKeepDaily = 90
+	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	if !enabled(containers.ID) || enabled(flash.ID) {
+		t.Fatal("an edit of the place switched a row on or off")
+	}
+	bucket.Enabled = false
+	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	if enabled(containers.ID) || enabled(flash.ID) {
+		t.Fatal("a place switched off left a row on")
+	}
+	bucket.Enabled = true
+	mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	if !enabled(containers.ID) || !enabled(flash.ID) {
+		t.Fatal("a place switched back on left a row off")
+	}
+}
+
+func TestAPlaceKeepsTheFolderOfEveryRowAtIt(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	row := upsertRow(t, r, store.OffsiteTarget{Domain: "vms", Name: "B2", Repo: addressAt(t, bucket, "vms", ""), Enabled: true})
+	attachRow(t, db, row.ID, bucket.ID, "vms", "")
+
+	bucket.Folders = map[string]string{"containers": "container"}
+	if _, err := r.WritePlace(store.PlaceWrite{Place: bucket}); !errors.Is(err, store.ErrPlaceFolderMissing) {
+		t.Fatalf("dropping the folder of a row = %v, want ErrPlaceFolderMissing", err)
+	}
+	stored, err := r.GetPlace(bucket.ID)
+	if err != nil || stored.Folders["vms"] != "vms" {
+		t.Fatalf("place = %+v, %v, want its folders unchanged", stored, err)
+	}
+}
+
+func TestSavingAnUnchangedPlaceWritesNothing(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	target := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: addressAt(t, bucket, "containers", ""), Enabled: true})
+	direct, err := r.CreateCompanionRepo(target.ID, "B2 direct", addressAt(t, bucket, "containers", "-direct"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	named := upsertRow(t, r, store.OffsiteTarget{Role: store.RoleRepo, Name: "B2 files", Repo: addressAt(t, bucket, "files", ""), Enabled: true})
+	attachRow(t, db, target.ID, bucket.ID, "containers", "")
+	attachRow(t, db, direct.ID, bucket.ID, "containers", "-direct")
+	attachRow(t, db, named.ID, bucket.ID, "files", "")
+	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+
+	changes := totalChanges(t, db)
+	mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	if n := totalChanges(t, db) - changes; n != 0 {
+		t.Fatalf("saving an unchanged place wrote %d rows", n)
+	}
+}
