@@ -82,13 +82,13 @@ it("gives the report sentence the extra line above it, and only that one", () =>
   expect(coffee.className).not.toContain("mt-2");
 });
 
-it("puts both ways to give under the sentence that asks, and none of them elsewhere", () => {
+it("puts every way to give under the sentence that asks, and none of them elsewhere", () => {
   renderCard();
-  // Both answer the same sentence; a second row further down would read as a
+  // All answer the same sentence; a second row further down would read as a
   // separate offer.
   const coffee = positionOf(en["about.coffee"]);
   const report = positionOf(en["about.report"]);
-  for (const key of ["about.coffeeButton", "about.crypto"] as const) {
+  for (const key of ["about.coffeeButton", "about.paypal", "about.crypto"] as const) {
     const button = positionOfButton(en[key]);
     expect(button, key).toBeGreaterThan(coffee);
     expect(button, key).toBeLessThan(report);
@@ -103,6 +103,27 @@ it("opens the crypto window on the button, closed until then", () => {
   fireEvent.click(screen.getByRole("button", { name: new RegExp(en["about.crypto"], "i") }));
   const dialog = screen.getByRole("dialog");
   expect(dialog.textContent).toContain(en["about.cryptoTitle"]);
+});
+
+it("loads nothing from BMAC or PayPal until their windows open", () => {
+  renderCard();
+  // The app promises no telemetry, so a payment provider is not contacted
+  // just because somebody looked at Settings.
+  const external = () => ({
+    frames: document.querySelectorAll("iframe").length,
+    scripts: [...document.querySelectorAll("script")].filter((s) => s.src.includes("paypal.com")).length,
+  });
+  expect(external()).toEqual({ frames: 0, scripts: 0 });
+
+  fireEvent.click(screen.getByRole("button", { name: new RegExp(en["about.coffeeButton"], "i") }));
+  expect(screen.getByRole("dialog").textContent).toContain(en["about.coffeeIntro"]);
+  expect(external()).toEqual({ frames: 1, scripts: 0 });
+  fireEvent.click(screen.getByRole("button", { name: new RegExp(en["common.close"], "i") }));
+  expect(screen.queryByRole("dialog")).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: new RegExp(en["about.paypal"], "i") }));
+  expect(screen.getByRole("dialog").textContent).toContain(en["about.paypalIntro"]);
+  expect(external()).toEqual({ frames: 0, scripts: 1 });
 });
 
 it("names no route without a control, and offers no control the sentence does not name", () => {
