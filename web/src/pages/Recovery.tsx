@@ -1352,7 +1352,11 @@ export default function Recovery() {
     try {
       const res = await putSettings(updated);
       if (res.ok) {
-        setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
+        // A field a place owns keeps the stored value, which base holds.
+        const kept = res.kept ?? [];
+        const stored: Partial<Settings> = Object.fromEntries(kept.map((key) => [key, base[key]]));
+        setSettings((prev) => ({ ...(prev ?? updated), ...patch, ...stored }));
+        if (kept.length > 0) push(t("recovery.placeKept"), "warn");
         window.dispatchEvent(new Event("bv:settings-changed"));
         setPreviewed(true);
         // A new repo invalidates the discovered targets, so the restore step

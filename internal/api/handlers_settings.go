@@ -376,12 +376,14 @@ func rejectEveryNSchedules(v settingsView) string {
 // keepPlaceOwnedFields puts onto v the stored paths and off-site fields that
 // places own. The save keeps those whatever v says, so the location checks
 // judge what it writes and not stale values from a page loaded before a place
-// changed.
-func (h *Handler) keepPlaceOwnedFields(v *settingsView, cur store.Settings) error {
+// changed. It returns the JSON names of the fields v tried to change, so a
+// page can say why its value did not stick.
+func (h *Handler) keepPlaceOwnedFields(v *settingsView, cur store.Settings) ([]string, error) {
 	owned, err := h.store.PlaceOwnedSettings()
 	if err != nil {
-		return err
+		return nil, err
 	}
+	kept := []string{}
 	for _, d := range []struct {
 		domain                    string
 		path, offsite             *string
@@ -395,13 +397,21 @@ func (h *Handler) keepPlaceOwnedFields(v *settingsView, cur store.Settings) erro
 	} {
 		o, ok := owned[d.domain]
 		if o.Path {
+			if !sameRepoLocation(strings.TrimSpace(*d.path), d.storedPath) {
+				kept = append(kept, d.domain+"Path")
+			}
 			*d.path = d.storedPath
 		}
 		if ok {
+			// GET /api/settings sends an off-site address with its credential
+			// redacted, and a page saving it back has not changed it.
+			if !locationRedacted(*d.offsite) && !sameRepoLocation(strings.TrimSpace(*d.offsite), d.storedOffsite) {
+				kept = append(kept, d.domain+"Offsite")
+			}
 			*d.offsite = d.storedOffsite
 		}
 	}
-	return nil
+	return kept, nil
 }
 
 // rejectSettingsPathOnNamedRepo refuses a settings save that moves a domain's
@@ -568,7 +578,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(curErr))
 		return
 	}
-	if err := h.keepPlaceOwnedFields(&v, cur); err != nil {
+	kept, err := h.keepPlaceOwnedFields(&v, cur)
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -820,7 +831,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			warnings = append(warnings, h.svc.targetSaveWarnings(r.Context(), b, a)...)
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings, "notes": notes}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings, "notes": notes, "kept": kept}))
 }
 
 // handleRecoveryKit streams the encryption-key recovery kit as a download.

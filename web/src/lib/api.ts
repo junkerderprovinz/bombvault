@@ -1487,7 +1487,14 @@ export function getSettings(): Promise<GetSettingsResponse> {
  */
 export function putSettings(
   settings: Settings
-): Promise<OkEnvelope & { warnings?: SaveWarning[]; notes?: string[] }> {
+): Promise<
+  OkEnvelope & {
+    warnings?: SaveWarning[];
+    notes?: string[];
+    /** The paths and off-site fields this save tried to change and a storage place kept. */
+    kept?: (keyof Settings)[];
+  }
+> {
   return fetchJSON("/api/settings", {
     method: "PUT",
     body: JSON.stringify(settings),
