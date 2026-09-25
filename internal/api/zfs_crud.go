@@ -142,6 +142,9 @@ func (s *Service) createZFSDataset(ctx context.Context, item ZFSCreateItem, rows
 	if err := s.validateItemRepoID(item.Repo); err != nil {
 		return store.ZFSDataset{}, err
 	}
+	if err := s.zfsCreateRefusal(ctx, item.Dataset); err != nil {
+		return store.ZFSDataset{}, err
+	}
 	enabled := item.Enabled == nil || *item.Enabled
 	return s.store.CreateZFSDataset(store.ZFSDataset{
 		Dataset:          item.Dataset,
@@ -151,6 +154,29 @@ func (s *Service) createZFSDataset(ctx context.Context, item ZFSCreateItem, rows
 		StopContainers:   item.StopContainers,
 		Repo:             item.Repo,
 	})
+}
+
+// zfsCreateRefusal lists the tree the way the add dialog's check does, so a
+// client other than the dialog cannot store an item every run of which fails
+// in its preflight. A host that cannot answer right now proves nothing, and the
+// first run's preflight still asks it.
+func (s *Service) zfsCreateRefusal(ctx context.Context, root string) error {
+	if s.zfs == nil {
+		return nil
+	}
+	lctx, cancel := context.WithTimeout(ctx, zfsListTimeout)
+	defer cancel()
+	tree, err := s.zfs.Tree(lctx, root)
+	if err != nil {
+		if zfs.IsNotFound(err) {
+			return zfsRefuse(zfsErrCode(err), root)
+		}
+		return nil
+	}
+	if ref := zfsTreeRefusal(root, tree); ref != nil {
+		return ref
+	}
+	return nil
 }
 
 // PatchZFSDataset changes one item's settings. Everything is validated before

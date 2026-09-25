@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -114,6 +115,43 @@ func TestCreateZFSDatasetsRefusesOverlap(t *testing.T) {
 	if len(rows) != 2 {
 		t.Fatalf("stored rows = %d, want the seeded item plus the one that does not overlap", len(rows))
 	}
+}
+
+// The add dialog's check refuses a dataset that is not on the host and Docker's
+// layer storage. A client other than the dialog gets the same answer, instead
+// of an item every run of which fails.
+func TestCreateZFSDatasetsRefusesWhatTheCheckRefuses(t *testing.T) {
+	t.Run("a dataset the host does not have", func(t *testing.T) {
+		s, st, host, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+		host.treeErr = &zfs.CmdError{Code: "not-found", Stderr: "cannot open 'tank/nonexistent': dataset does not exist"}
+		want := s.CheckZFSDataset(context.Background(), "tank/nonexistent", nil).Code
+
+		results := s.CreateZFSDatasets(context.Background(), []ZFSCreateItem{{Dataset: "tank/nonexistent"}})
+
+		if len(results) != 1 || results[0].Code != want || want != "not-found" {
+			t.Fatalf("results = %+v, want the check's code %q", results, want)
+		}
+		if rows, _ := st.ListZFSDatasets(); len(rows) != 0 {
+			t.Fatalf("stored rows = %v, want none", rows)
+		}
+	})
+	t.Run("docker's layer storage", func(t *testing.T) {
+		tree := []zfs.ListEntry{zfsEntry("tank/docker", "/mnt/tank/docker")}
+		for i := range zfsMaxLegacyFilesystems + 1 {
+			tree = append(tree, zfsEntry(fmt.Sprintf("tank/docker/%064x", i), "legacy"))
+		}
+		s, st, _, _ := zfsRunFixture(t, tree)
+		want := s.CheckZFSDataset(context.Background(), "tank/docker", nil).Code
+
+		results := s.CreateZFSDatasets(context.Background(), []ZFSCreateItem{{Dataset: "tank/docker"}})
+
+		if len(results) != 1 || results[0].Code != want || want != "docker-storage" {
+			t.Fatalf("results = %+v, want the check's code %q", results, want)
+		}
+		if rows, _ := st.ListZFSDatasets(); len(rows) != 0 {
+			t.Fatalf("stored rows = %v, want none", rows)
+		}
+	})
 }
 
 func TestCreateZFSDatasetsRefusesMoreThanTheCap(t *testing.T) {
