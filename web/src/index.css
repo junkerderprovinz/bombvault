@@ -906,7 +906,6 @@ body {
   position: relative;
   height: 7rem;
   border-radius: var(--radius-control);
-  border: 1px solid var(--carbon-border);
   cursor: crosshair;
 }
 .glim-picker-dot {
