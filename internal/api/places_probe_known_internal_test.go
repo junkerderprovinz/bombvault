@@ -23,6 +23,27 @@ func TestANewPlaceWhoseAddressIsARepositoryIsOfferedAsOne(t *testing.T) {
 	}
 }
 
+func TestAStoredPlaceWhoseAddressIsARepositoryIsProbedByItsFolders(t *testing.T) {
+	f := newPlacementFixture(t)
+	eng := newEnvEngine(f)
+	place := f.storePlace(store.Place{
+		Name: "NAS", Provider: "rest-server", Kind: "rest", Base: "rest:https://nas:8000/tower",
+		Folders: map[string]string{"containers": "", "vms": ""}, Enabled: true,
+	})
+	eng.ids[place.Base] = "id-tower"
+
+	res, err := f.svc.ProbePlace(context.Background(), ProbeRequest{PlaceID: place.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !maps.Equal(res.RepoIDs, map[string]string{"containers": "id-tower", "vms": "id-tower"}) {
+		t.Fatalf("repository ids = %v, want each folder the place offers", res.RepoIDs)
+	}
+	if len(res.Facts) != 0 {
+		t.Errorf("facts = %v, want the stored place taken as it is", res.Facts)
+	}
+}
+
 func TestAStoredPlaceIsProbedWithItsSecretsUnlessTheFormHoldsNewOnes(t *testing.T) {
 	f := newPlacementFixture(t)
 	eng := newEnvEngine(f)

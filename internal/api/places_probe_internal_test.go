@@ -111,6 +111,36 @@ func TestDomainsSharingThePlaceItselfShareItsRepository(t *testing.T) {
 	if _, probed := res.Folders["flash"]; probed {
 		t.Errorf("folders = %v, want only the domains the place offers", res.Folders)
 	}
+	if n := eng.openCount(base); n != 1 {
+		t.Errorf("the shared address was opened %d times, want once", n)
+	}
+}
+
+// oneModeIDs reads a repository's id only under one encryption setting.
+type oneModeIDs struct {
+	*envEngine
+	encrypted bool
+}
+
+func (e oneModeIDs) RepoID(ctx context.Context, repo string, m restic.Mode) (string, error) {
+	if m.Encrypted != e.encrypted {
+		return "", errors.New("wrong password or no key found")
+	}
+	return e.envEngine.RepoID(ctx, repo, m)
+}
+
+func TestARepositoryUnderTheOtherEncryptionSettingStillGivesItsID(t *testing.T) {
+	f := newPlacementFixture(t)
+	eng := newEnvEngine(f)
+	base := "rest:http://nas:8000/bv"
+	eng.ids[base+"/container"] = "id-container"
+	mode := f.svc.ModeFor(settingsOf(t, f.svc))
+	f.svc.engine = oneModeIDs{envEngine: eng, encrypted: !mode.Encrypted}
+
+	res := f.svc.probeFolders(context.Background(), base, places.Folders{"containers": "container"}, mode)
+	if res.Folders["containers"] != places.FolderRepository || res.RepoIDs["containers"] != "id-container" {
+		t.Fatalf("probe = %+v, want the repository and its id", res)
+	}
 }
 
 func TestARestFolderUnderAnotherUsersNameSaysWhichNameIsWrong(t *testing.T) {
