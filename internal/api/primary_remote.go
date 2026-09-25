@@ -103,6 +103,9 @@ func (s *Service) primaryModeFor(settings store.Settings, domain, repo string) r
 	if !ok {
 		return mode
 	}
+	// The row's own address is the path at its last save; the environment has
+	// to name the remote of the path in use.
+	t.Repo = repo
 	return s.applyTargetCreds(mode, settings, t)
 }
 
@@ -212,8 +215,9 @@ func (s *Service) PrimaryRemoteConfig(domain string) (store.OffsiteTarget, bool,
 
 // SetPrimaryRemoteConfig saves a domain's remote-primary safety settings. It
 // refuses when the current backup path is not remote, where the settings would
-// do nothing, and takes Repo from the live path. Enabled is always set: this is
-// the only writer of a primary row, and the UI has no disabled state for it.
+// do nothing, and takes Repo from the live path. Enabled is always set, since
+// the path is remote and in use; a primary row goes off only through its
+// domain's home place.
 func (s *Service) SetPrimaryRemoteConfig(domain string, cfg store.OffsiteTarget) (store.OffsiteTarget, error) {
 	if !validOffsiteDomain(domain) {
 		return store.OffsiteTarget{}, fmt.Errorf("unknown domain %q", domain)

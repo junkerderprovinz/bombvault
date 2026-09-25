@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -666,12 +667,16 @@ func (s *Service) keepDirectCreds(ctx context.Context, before store.Settings, di
 	if err != nil {
 		return false, fmt.Errorf("read settings: %w", err)
 	}
-	old, err := s.decodeCloudFor(before, direct.CredsRef)
+	old, err := s.credSetFor(before, direct.CredsRef)
+	if err != nil {
+		return false, err
+	}
+	oldEnv, err := credSetEnv(old, places.RemotePlace(direct.Repo))
 	if err != nil {
 		return false, err
 	}
 	mode := s.offsiteModeForTarget(settings, direct)
-	if slices.Equal(cloudEnv(old), mode.Env) {
+	if slices.Equal(oldEnv, mode.Env) {
 		return true, nil
 	}
 	loc, err := s.resolveRepo(direct.Repo)
@@ -681,11 +686,13 @@ func (s *Service) keepDirectCreds(ctx context.Context, before store.Settings, di
 	if !slices.Equal(mode.Env, s.offsiteModeForTarget(settings, target).Env) && s.opensWith(ctx, loc, mode) {
 		return false, nil
 	}
-	mode.Env = cloudEnv(old)
+	mode.Env = oldEnv
 	if !s.opensWith(ctx, loc, mode) {
 		return false, nil
 	}
-	kept := CloudCredSet{ID: newCredSetID(), Name: direct.Name + " (kept credentials)", KeptFor: direct.ID, CloudCreds: old}
+	// The whole set is kept, so a WebDAV or Azure set keeps its kind.
+	kept := old
+	kept.ID, kept.Name, kept.KeptFor = newCredSetID(), direct.Name+" (kept credentials)", direct.ID
 	if err := s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet { return append(sets, kept) }); err != nil {
 		return false, err
 	}

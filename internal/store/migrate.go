@@ -1835,6 +1835,69 @@ CREATE INDEX IF NOT EXISTS idx_target_aliases_target ON target_aliases(domain, t
 		sql:              `ALTER TABLE target_aliases ADD COLUMN prev_definition TEXT NOT NULL DEFAULT '';`,
 		alreadySatisfied: columnPresent("target_aliases", "prev_definition"),
 	},
+	{
+		// A storage place is one connected location, written down once with
+		// its credentials, retention, protection and the folder of each
+		// domain. Runs read the target rows and domain paths; a place writes
+		// them.
+		version: 123,
+		name:    "storage_places",
+		sql: `
+CREATE TABLE IF NOT EXISTS storage_places (
+  id                     TEXT    PRIMARY KEY,
+  name                   TEXT    NOT NULL UNIQUE,
+  provider               TEXT    NOT NULL,
+  kind                   TEXT    NOT NULL,
+  base                   TEXT    NOT NULL,
+  folders                TEXT    NOT NULL DEFAULT '{}',
+  creds_ref              TEXT    NOT NULL DEFAULT '',
+  off_premises           INTEGER NOT NULL DEFAULT 0,
+  storage_class          TEXT    NOT NULL DEFAULT '',
+  immutable              INTEGER NOT NULL DEFAULT 0,
+  retention_keep_last    INTEGER NOT NULL DEFAULT 0,
+  retention_keep_daily   INTEGER NOT NULL DEFAULT 0,
+  retention_keep_weekly  INTEGER NOT NULL DEFAULT 0,
+  retention_keep_monthly INTEGER NOT NULL DEFAULT 0,
+  limit_upload           INTEGER NOT NULL DEFAULT 0,
+  limit_download         INTEGER NOT NULL DEFAULT 0,
+  growth_budget_gb       INTEGER NOT NULL DEFAULT 0,
+  enabled                INTEGER NOT NULL DEFAULT 1,
+  sort_order             INTEGER NOT NULL DEFAULT 0,
+  created_at             INTEGER NOT NULL DEFAULT 0,
+  updated_at             INTEGER NOT NULL DEFAULT 0
+);`,
+		alreadySatisfied: tablePresent("storage_places"),
+	},
+	{
+		// The home place of a domain: the place its path lies at.
+		version: 124,
+		name:    "storage_domain_places",
+		sql: `
+CREATE TABLE IF NOT EXISTS storage_domain_places (
+  domain   TEXT PRIMARY KEY,
+  place_id TEXT NOT NULL
+);`,
+		alreadySatisfied: tablePresent("storage_domain_places"),
+	},
+	{
+		// A row at a place holds the place's address for place_domain plus
+		// place_suffix in repo. Existing rows start at no place.
+		version:          125,
+		name:             "offsite_targets_place",
+		alreadySatisfied: columnPresent("offsite_targets", "place_id"),
+		sql: `
+ALTER TABLE offsite_targets ADD COLUMN place_id     TEXT NOT NULL DEFAULT '';
+ALTER TABLE offsite_targets ADD COLUMN place_domain TEXT NOT NULL DEFAULT '';
+ALTER TABLE offsite_targets ADD COLUMN place_suffix TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// Building the places from an existing setup needs the decrypted
+		// credentials, so it runs in Go at startup and marks its end here.
+		version:          126,
+		name:             "settings_places_migrated",
+		sql:              `ALTER TABLE settings ADD COLUMN places_migrated INTEGER NOT NULL DEFAULT 0;`,
+		alreadySatisfied: columnPresent("settings", "places_migrated"),
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

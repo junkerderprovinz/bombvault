@@ -92,6 +92,12 @@ type OffsiteTarget struct {
 	// it a plain remote repository.
 	CompanionLost bool
 	OffPremises   bool // counts as a site of its own for sites and 3-2-1, never for replication
+	// PlaceID, PlaceDomain and PlaceSuffix put the row at a storage place:
+	// Repo is then the place's address for PlaceDomain plus PlaceSuffix, and
+	// WritePlace keeps it so. An empty PlaceDomain is the place's base.
+	PlaceID     string
+	PlaceDomain string
+	PlaceSuffix string
 }
 
 // remoteLocation is the SQL that asks of a location column what
@@ -111,23 +117,16 @@ func remoteLocation(col string) string {
 const (
 	RoleOffsite = "offsite" // a replication destination (the default)
 	RolePrimary = "primary" // safety settings for a domain's own remote primary
-	// RoleRepo is a NAMED REPOSITORY (#204): a location written down once and
-	// then PICKED by individual containers, VMs and folder sets, instead of
-	// being typed into each of them.
-	//
-	// Same table for the same reason "primary" is here: the shape a named
-	// repository needs is exactly what this struct already carries - a location,
-	// a credential set, an S3 storage class, bandwidth limits, an enabled flag -
-	// and every existing consumer of those fields works on such a row unchanged.
-	// Every query in this file filters on an explicit role, so these rows are
-	// invisible to the replication loop and the off-site CRUD by construction.
-	//
-	// Domain is deliberately EMPTY on a repo row. A location is a place; which
-	// items send their backups there is the items' business, and scoping a
-	// repository to one domain would mean writing the same B2 bucket down three
-	// times to use it from a container, a VM and a folder set.
+	// RoleRepo is a named repository: a location written down once and picked
+	// by containers, VMs and folder sets. It lives in this table because it
+	// needs the same fields, and every query here filters on role, so
+	// replication never sees it. Its domain stays empty, since one bucket
+	// serves a container, a VM and a folder set alike.
 	RoleRepo = "repo"
 )
+
+// primaryRowName is what a primary row is called when no one names it.
+const primaryRowName = "Primary (remote)"
 
 // UpsertOffsiteTarget inserts t or updates the row with its id, keeping that
 // row's sort_order and companion link, and returns the row as stored. An
@@ -143,6 +142,11 @@ const (
 // name, repo, schedule and enabled from t; its mirrored fields come from its
 // target instead. Saving a target mirrors its own fields, credentials aside,
 // into that companion in the same transaction.
+//
+// The place columns are written for a new row only. A stored row keeps its
+// place, which AttachRowTx and DetachRowTx set, unless this write gives it
+// another address: then it leaves the place, which does not spell the new
+// address.
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
@@ -166,6 +170,9 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
 	}
+	if err := detachMovedRowTx(tx, t.ID, t.Role, t.Repo); err != nil {
+		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+	}
 	if companionOf != "" {
 		_, err = tx.Exec(`UPDATE offsite_targets SET name = ?, repo = ?, schedule = ?, enabled = ? WHERE id = ? AND role = ?`,
 			t.Name, t.Repo, t.Schedule, boolInt(t.Enabled), t.ID, t.Role)
@@ -174,8 +181,8 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 			  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 			  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
-			  companion_of, companion_lost, off_premises)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			  companion_of, companion_lost, off_premises, place_id, place_domain, place_suffix)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT(id) DO UPDATE SET
 			  domain                 = excluded.domain,
 			  name                   = excluded.name,
@@ -198,6 +205,7 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 			t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder,
 			t.CompanionOf, boolInt(t.CompanionLost), boolInt(t.Role == RoleRepo && t.CompanionOf == "" && t.OffPremises),
+			t.PlaceID, t.PlaceDomain, t.PlaceSuffix,
 		)
 	}
 	if err != nil {
@@ -230,12 +238,14 @@ func (r *Repo) CreateOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	_, err = tx.Exec(`
 		INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 		  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
-		  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order)
-		SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(MAX(sort_order), 0) + 1
+		  limit_upload, limit_download, growth_budget_gb, enabled, created_at,
+		  place_id, place_domain, place_suffix, sort_order)
+		SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(MAX(sort_order), 0) + 1
 		  FROM offsite_targets WHERE role = ? AND domain = ?`,
 		t.ID, t.Domain, t.Name, t.Repo, RoleOffsite, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt,
+		t.PlaceID, t.PlaceDomain, t.PlaceSuffix,
 		RoleOffsite, t.Domain,
 	)
 	if err != nil {
@@ -259,10 +269,13 @@ func commitStoredTargetTx(tx *sql.Tx, id string) (OffsiteTarget, error) {
 // FieldOffsiteTarget returns the row the domain's off-site settings field edits:
 // role offsite, sort_order 0, enabled or not.
 func (r *Repo) FieldOffsiteTarget(domain string) (OffsiteTarget, bool, error) {
-	row := r.db.QueryRow(`SELECT `+offsiteTargetCols+`
+	return fieldRowQ(r.db, domain)
+}
+
+func fieldRowQ(q queryer, domain string) (OffsiteTarget, bool, error) {
+	t, err := scanOffsiteTarget(q.QueryRow(`SELECT `+offsiteTargetCols+`
 		FROM offsite_targets WHERE domain = ? AND role = ? AND sort_order = 0
-		ORDER BY created_at, id LIMIT 1`, domain, RoleOffsite)
-	t, err := scanOffsiteTarget(row)
+		ORDER BY created_at, id LIMIT 1`, domain, RoleOffsite))
 	if errors.Is(err, sql.ErrNoRows) {
 		return OffsiteTarget{}, false, nil
 	}
@@ -352,7 +365,7 @@ func targetSlotsTx(tx *sql.Tx, domain string) ([]targetSlot, error) {
 const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 	retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
-	companion_of, companion_lost, off_premises`
+	companion_of, companion_lost, off_premises, place_id, place_domain, place_suffix`
 
 // ListOffsiteTargets returns all off-site REPLICATION DESTINATIONS (role =
 // 'offsite'; a domain's "primary" safety-config row, if any, is never among
@@ -689,7 +702,7 @@ func (r *Repo) DeleteNamedRepoIfUnused(id string) (NamedRepoUse, error) {
 	return use, nil
 }
 
-// SetNamedRepoLocationIfUnused moves a named repository's location ONLY while
+// SetNamedRepoLocationIfUnused moves a named repository's location only while
 // nothing points at it, in one transaction, for the same reason
 // DeleteNamedRepoIfUnused does it that way: everything already written stays
 // where it is, so a move under a live item, or under a default that homes open
@@ -699,6 +712,9 @@ func (r *Repo) DeleteNamedRepoIfUnused(id string) (NamedRepoUse, error) {
 // offPremises is written with the location, because it describes that location:
 // a mark left behind goes on counting a repository moved onto the array as a
 // site of its own, and every item there reads as having a copy off the premises.
+//
+// A repository at a place leaves it when it moves, as UpsertOffsiteTarget
+// takes any moved row off its place.
 func (r *Repo) SetNamedRepoLocationIfUnused(id, location string, offPremises bool) (NamedRepoUse, error) {
 	var use NamedRepoUse
 	tx, err := r.db.Begin()
@@ -715,6 +731,9 @@ func (r *Repo) SetNamedRepoLocationIfUnused(id, location string, offPremises boo
 	slices.Sort(use.DefaultDomains)
 	if use.InUse() {
 		return use, nil
+	}
+	if err := detachMovedRowTx(tx, id, RoleRepo, location); err != nil {
+		return use, fmt.Errorf("SetNamedRepoLocationIfUnused: %w", err)
 	}
 	if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ?, off_premises = ? WHERE id = ? AND role = ?`,
 		location, boolInt(offPremises), id, RoleRepo); err != nil {
@@ -804,13 +823,26 @@ func (u TargetUse) InUse() bool { return u.Items > 0 || len(u.DefaultDomains) > 
 // it removes the target, its direct repository and the target's observations,
 // and writes nothing while an item or a default uses that repository.
 func (r *Repo) DeleteOffsiteTargetIfUnused(id string) (TargetUse, error) {
-	var use TargetUse
 	tx, err := r.db.Begin()
 	if err != nil {
-		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
+		return TargetUse{}, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
-	err = tx.QueryRow(`SELECT id FROM offsite_targets WHERE role = ? AND companion_of = ? AND companion_of <> ''`,
+	use, err := deleteOffsiteTargetIfUnusedTx(tx, id)
+	if err != nil || use.InUse() {
+		return use, err
+	}
+	if err := tx.Commit(); err != nil {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused commit: %w", err)
+	}
+	return use, nil
+}
+
+// deleteOffsiteTargetIfUnusedTx is DeleteOffsiteTargetIfUnused inside tx, for
+// a caller that removes more in the same transaction.
+func deleteOffsiteTargetIfUnusedTx(tx *sql.Tx, id string) (TargetUse, error) {
+	var use TargetUse
+	err := tx.QueryRow(`SELECT id FROM offsite_targets WHERE role = ? AND companion_of = ? AND companion_of <> ''`,
 		RoleRepo, id).Scan(&use.CompanionID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
@@ -835,26 +867,21 @@ func (r *Repo) DeleteOffsiteTargetIfUnused(id string) (TargetUse, error) {
 	if err := deleteTargetObservationsTx(tx, id); err != nil {
 		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
 	}
-	if err := tx.Commit(); err != nil {
-		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused commit: %w", err)
-	}
 	return use, nil
 }
 
-// PrimaryRemoteTarget returns the domain's "primary" row (issue #152: the
-// remote-primary safety settings — bandwidth limits, append-only, growth
-// budget — for when Settings.<Domain>Path is itself a restic remote), if one
-// has been saved. The bool is false (with a zero OffsiteTarget) when the
-// domain has never had its remote-primary safety settings configured — that is
-// the common case (a local primary, or a remote primary nobody has opened the
-// safety dialog for yet), not an error. At most one such row exists per
-// domain (UpsertPrimaryRemoteTarget enforces it); this returns the first if
-// more than one somehow exists (defensive — should be unreachable).
+// PrimaryRemoteTarget returns the domain's primary row, which holds the
+// bandwidth limits, append-only flag and growth budget of a domain path that
+// is itself a restic remote. The bool is false when the domain has none, the
+// usual case for a local path.
 func (r *Repo) PrimaryRemoteTarget(domain string) (OffsiteTarget, bool, error) {
-	row := r.db.QueryRow(`
+	return primaryRowQ(r.db, domain)
+}
+
+func primaryRowQ(q queryer, domain string) (OffsiteTarget, bool, error) {
+	t, err := scanOffsiteTarget(q.QueryRow(`
 		SELECT `+offsiteTargetCols+`
-		FROM offsite_targets WHERE domain = ? AND role = ? ORDER BY created_at LIMIT 1`, domain, RolePrimary)
-	t, err := scanOffsiteTarget(row)
+		FROM offsite_targets WHERE domain = ? AND role = ? ORDER BY created_at LIMIT 1`, domain, RolePrimary))
 	if errors.Is(err, sql.ErrNoRows) {
 		return OffsiteTarget{}, false, nil
 	}
@@ -864,13 +891,9 @@ func (r *Repo) PrimaryRemoteTarget(domain string) (OffsiteTarget, bool, error) {
 	return t, true, nil
 }
 
-// UpsertPrimaryRemoteTarget creates or updates the domain's "primary" row (see
-// PrimaryRemoteTarget). t.Domain and t.Role are stamped by this method (a
-// caller-supplied value in either field is ignored), so callers only need to
-// fill in Repo/CredsRef/StorageClass/Immutable/LimitUpload/LimitDownload/
-// GrowthBudgetGB/Enabled. When a row already exists for the domain, its
-// id/created_at are preserved (an update in place, exactly like
-// UpsertOffsiteTarget's id-keyed upsert) rather than creating a second row.
+// UpsertPrimaryRemoteTarget writes t as the domain's primary row. It sets
+// Domain and Role itself, and an existing row keeps its id and created_at, so
+// a domain never gets a second one.
 func (r *Repo) UpsertPrimaryRemoteTarget(domain string, t OffsiteTarget) (OffsiteTarget, error) {
 	existing, ok, err := r.PrimaryRemoteTarget(domain)
 	if err != nil {
@@ -886,15 +909,13 @@ func (r *Repo) UpsertPrimaryRemoteTarget(domain string, t OffsiteTarget) (Offsit
 		t.CreatedAt = 0
 	}
 	if t.Name == "" {
-		t.Name = "Primary (remote)"
+		t.Name = primaryRowName
 	}
 	return r.UpsertOffsiteTarget(t)
 }
 
-// DeletePrimaryRemoteTarget removes the domain's "primary" row, if any (a
-// no-op, no error, when none exists) — used when the operator clears a
-// domain's remote-primary safety settings (e.g. switching the path back to a
-// local folder).
+// DeletePrimaryRemoteTarget removes the domain's primary row. A domain without
+// one is not an error.
 func (r *Repo) DeletePrimaryRemoteTarget(domain string) error {
 	if _, err := r.db.Exec(`DELETE FROM offsite_targets WHERE domain = ? AND role = ?`, domain, RolePrimary); err != nil {
 		return fmt.Errorf("DeletePrimaryRemoteTarget: %w", err)
@@ -909,7 +930,7 @@ func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 		&t.ID, &t.Domain, &t.Name, &t.Repo, &t.Role, &t.CredsRef, &t.StorageClass, &immutable, &t.Schedule,
 		&t.RetentionKeepLast, &t.RetentionKeepDaily, &t.RetentionKeepWeekly, &t.RetentionKeepMonthly,
 		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder,
-		&t.CompanionOf, &lost, &offPremises,
+		&t.CompanionOf, &lost, &offPremises, &t.PlaceID, &t.PlaceDomain, &t.PlaceSuffix,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("scanOffsiteTarget: %w", err)

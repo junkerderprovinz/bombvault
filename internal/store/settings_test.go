@@ -440,3 +440,34 @@ func TestSettingsAuthPasswordHashRoundtrip(t *testing.T) {
 		t.Fatalf("auth_password_hash not cleared: %q", s3.AuthPasswordHash)
 	}
 }
+
+// TestSettingsPlacesMigratedRoundTrip expects the marker to start at 0, to
+// round-trip, and to survive a mutation of another field.
+func TestSettingsPlacesMigratedRoundTrip(t *testing.T) {
+	r := newRepo(t)
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.PlacesMigrated != 0 {
+		t.Fatalf("a new database has places_migrated %d, want 0", s.PlacesMigrated)
+	}
+	s.PlacesMigrated = 1727136000
+	if err := r.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.MutateSettings(func(s *store.Settings) error {
+		s.DefaultLanguage = "de"
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	back, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.PlacesMigrated != 1727136000 || back.PlacesMigrated != 1727136000 {
+		t.Fatalf("places_migrated = %d as returned, %d as stored, want 1727136000", got.PlacesMigrated, back.PlacesMigrated)
+	}
+}

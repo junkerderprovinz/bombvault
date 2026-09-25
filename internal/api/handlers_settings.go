@@ -373,6 +373,37 @@ func rejectEveryNSchedules(v settingsView) string {
 	return ""
 }
 
+// keepPlaceOwnedFields puts onto v the stored paths and off-site fields that
+// places own. The save keeps those whatever v says, so the location checks
+// judge what it writes and not stale values from a page loaded before a place
+// changed.
+func (h *Handler) keepPlaceOwnedFields(v *settingsView, cur store.Settings) error {
+	owned, err := h.store.PlaceOwnedSettings()
+	if err != nil {
+		return err
+	}
+	for _, d := range []struct {
+		domain                    string
+		path, offsite             *string
+		storedPath, storedOffsite string
+	}{
+		{"containers", &v.ContainersPath, &v.ContainersOffsite, cur.ContainersPath, cur.ContainersOffsite},
+		{"vms", &v.VMsPath, &v.VMsOffsite, cur.VMsPath, cur.VMsOffsite},
+		{"flash", &v.FlashPath, &v.FlashOffsite, cur.FlashPath, cur.FlashOffsite},
+		{"config", &v.ConfigPath, &v.ConfigOffsite, cur.ConfigPath, cur.ConfigOffsite},
+		{"files", &v.FilesPath, &v.FilesOffsite, cur.FilesPath, cur.FilesOffsite},
+	} {
+		o, ok := owned[d.domain]
+		if o.Path {
+			*d.path = d.storedPath
+		}
+		if ok {
+			*d.offsite = d.storedOffsite
+		}
+	}
+	return nil
+}
+
 // rejectSettingsPathOnNamedRepo refuses a settings save that moves a domain's
 // own repository or an off-site destination onto a location a named repository
 // already occupies. It returns a user-facing sentence, or "".
@@ -532,15 +563,19 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	// validateNamedRepo keeps a named repository off a domain's own path; this
-	// is the other direction, a domain path moved onto a named repository,
-	// which would leave a row answering for the domain with its own empty
-	// credentials and an append-only flag the domain never set.
 	cur, curErr := h.store.GetSettings()
 	if curErr != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(curErr))
 		return
 	}
+	if err := h.keepPlaceOwnedFields(&v, cur); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	// validateNamedRepo keeps a named repository off a domain's own path; this
+	// is the other direction, a domain path moved onto a named repository,
+	// which would leave a row answering for the domain with its own empty
+	// credentials and an append-only flag the domain never set.
 	if msg := h.rejectSettingsPathOnNamedRepo(v, cur); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
@@ -607,7 +642,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// does not own keeps its stored value, and the auth hash and session epoch
 	// come from the row as it is now rather than from the stale snapshot.
 	before := h.svc.fieldTargets()
-	s, err := h.store.MutateSettings(func(cur *store.Settings) error {
+	// A domain's path and off-site field are its place's once it has one, and
+	// the store keeps them whatever this form sends: a page loaded before the
+	// place changed would otherwise turn it back.
+	s, err := h.store.MutateSettingsKeepingPlaces(func(cur *store.Settings) error {
 		cur.EncryptionEnabled = v.EncryptionEnabled
 		cur.ContainersEnabled = v.ContainersEnabled
 		cur.VMsEnabled = v.VMsEnabled
