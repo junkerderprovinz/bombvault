@@ -178,6 +178,8 @@ const nl: Partial<Translations> = {
   "restore.cancel": "Herstel annuleren",
   "backup.cancel": "Back-up annuleren",
   "backup.cancelConfirm": "Back-up van {name} annuleren? De run stopt zonder momentopname, en niets wat al is opgeslagen gaat verloren.",
+  "backup.cancelTooLate": "De back-up van {name} heeft zijn herstelpunt al geschreven en start de containers weer. Annuleren kan niet meer.",
+  "backup.cancelNotRunning": "De back-up van {name} was al klaar. Er viel niets te annuleren.",
   "runReason.cancelled": "Geannuleerd door de gebruiker",
   "restore.cancelConfirmSafe": "Herstel annuleren? De gedeeltelijk geschreven doelmap blijft ongewijzigd.",
   "restore.cancelConfirmInPlace": "{name} wordt momenteel hersteld. Annuleren laat dit herstel onvolledig achter. Je moet het mogelijk opnieuw uitvoeren. Toch annuleren?",

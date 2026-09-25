@@ -224,6 +224,8 @@ const sk: Partial<Translations> = {
   "restore.cancel": "Zrušiť obnovenie",
   "backup.cancel": "Zrušiť zálohu",
   "backup.cancelConfirm": "Zrušiť zálohu {name}? Beh sa zastaví bez zapísania snímky a nič už uložené sa nestratí.",
+  "backup.cancelTooLate": "Záloha {name} už zapísala svoj bod obnovenia a znova spúšťa kontajnery. Už ju nemožno zrušiť.",
+  "backup.cancelNotRunning": "Záloha {name} už bola hotová. Nebolo čo zrušiť.",
   "runReason.cancelled": "Zrušené používateľom",
   "restore.cancelConfirmSafe": "Zrušiť obnovenie? Čiastočne zapísaný výstupný priečinok zostane bez zmeny.",
   "restore.cancelConfirmInPlace": "{name} sa práve obnovuje. Zrušením zostane toto obnovenie nedokončené. Možno ho budete musieť spustiť znova. Napriek tomu zrušiť?",

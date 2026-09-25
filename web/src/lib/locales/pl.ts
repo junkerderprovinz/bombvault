@@ -178,6 +178,8 @@ const pl: Partial<Translations> = {
   "restore.cancel": "Anuluj przywracanie",
   "backup.cancel": "Anuluj kopię",
   "backup.cancelConfirm": "Anulować kopię {name}? Przebieg zatrzyma się bez zapisania migawki, a nic z już zapisanych danych nie zostanie utracone.",
+  "backup.cancelTooLate": "Kopia {name} zapisała już swój punkt przywracania i ponownie uruchamia kontenery. Nie można jej już anulować.",
+  "backup.cancelNotRunning": "Kopia {name} była już zakończona. Nie było czego anulować.",
   "runReason.cancelled": "Anulowane przez użytkownika",
   "restore.cancelConfirmSafe": "Anulować przywracanie? Częściowo zapisany folder docelowy pozostanie bez zmian.",
   "restore.cancelConfirmInPlace": "{name} jest w trakcie przywracania. Anulowanie pozostawi to przywracanie niedokończone. Być może trzeba będzie je uruchomić ponownie. Anulować mimo to?",

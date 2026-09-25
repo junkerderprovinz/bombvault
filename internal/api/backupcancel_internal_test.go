@@ -2,8 +2,11 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -119,6 +122,41 @@ func TestOnlyACancelledBackupEndsAsCancelled(t *testing.T) {
 	}
 	if s.backupWasCancelled("files:abc") {
 		t.Fatal("the mark outlived the run it belonged to")
+	}
+}
+
+// The web button has to tell a stale tab from a backup that is only starting
+// its containers again, and the endpoint is where it learns which one it was.
+func TestBackupCancelEndpointSaysWhyNothingWasCancelled(t *testing.T) {
+	s := &Service{}
+	s.registerBackupCancel("files:docs", func() {})
+	s.registerBackupCancel("container:plex", func() {})
+	s.commitBackup("container:plex")
+	h := &Handler{svc: s}
+
+	for key, want := range map[string]struct {
+		cancelled bool
+		reason    string
+	}{
+		"files:docs":     {cancelled: true},
+		"container:plex": {reason: "committed"},
+		"files:gone":     {reason: "not_running"},
+	} {
+		req := httptest.NewRequest(http.MethodPost, "/api/backup/cancel", strings.NewReader(`{"key":"`+key+`"}`))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		h.handleBackupCancel(w, req)
+
+		var got struct {
+			Cancelled bool   `json:"cancelled"`
+			Reason    string `json:"reason"`
+		}
+		if err := json.NewDecoder(w.Body).Decode(&got); err != nil {
+			t.Fatalf("%s: decode: %v", key, err)
+		}
+		if got.Cancelled != want.cancelled || got.Reason != want.reason {
+			t.Errorf("%s: cancelled %v, reason %q; want %v, %q", key, got.Cancelled, got.Reason, want.cancelled, want.reason)
+		}
 	}
 }
 

@@ -224,6 +224,8 @@ const ca: Partial<Translations> = {
   "restore.cancel": "Cancel·la la restauració",
   "backup.cancel": "Cancel·la la còpia",
   "backup.cancelConfirm": "Voleu cancel·lar la còpia de {name}? L'execució s'atura sense escriure cap instantània i no es perd res del que ja s'ha desat.",
+  "backup.cancelTooLate": "La còpia de {name} ja ha escrit el seu punt de restauració i torna a iniciar els contenidors. Ja no es pot cancel·lar.",
+  "backup.cancelNotRunning": "La còpia de {name} ja havia acabat. No hi havia res a cancel·lar.",
   "runReason.cancelled": "Cancel·lat per l'usuari",
   "restore.cancelConfirmSafe": "Vols cancel·lar la restauració? La carpeta de sortida parcial es deixa tal com està.",
   "restore.cancelConfirmInPlace": "{name} s'està restaurant. Cancel·lar deixarà aquesta restauració a mig fer. Potser hauràs de tornar-la a fer. Vols cancel·lar igualment?",

@@ -9,6 +9,7 @@
 import { useState } from "react";
 import { cancelBackup } from "../lib/api";
 import type { useT } from "../lib/i18n";
+import { useToast } from "../lib/toast";
 import { useConfirm } from "../lib/useConfirm";
 import { Button } from "./Button";
 
@@ -31,14 +32,22 @@ export function BackupCancelButton({
 }) {
   const [cancelling, setCancelling] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
+  const { push } = useToast();
 
   async function handle() {
     const msg = t("backup.cancelConfirm").replace(/\{name\}/g, name);
     if (!(await confirm(msg))) return;
     setCancelling(true);
     try {
-      await cancelBackup(cancelKey);
-      onCancelled?.();
+      const res = await cancelBackup(cancelKey);
+      if (res.cancelled) {
+        onCancelled?.();
+      } else {
+        // The button stays on screen until the next poll, so without a word
+        // the click would look ignored.
+        const key = res.reason === "committed" ? "backup.cancelTooLate" : "backup.cancelNotRunning";
+        push(t(key).replace(/\{name\}/g, name), "warn");
+      }
     } catch {
       // The backup keeps running and the button stays usable; the run row
       // shows what happened.

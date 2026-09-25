@@ -179,6 +179,8 @@ const ro: Partial<Translations> = {
   "restore.cancel": "Anulează restaurarea",
   "backup.cancel": "Anulează copia",
   "backup.cancelConfirm": "Anulați copia pentru {name}? Rularea se oprește fără a scrie un instantaneu și nu se pierde nimic din ce este deja salvat.",
+  "backup.cancelTooLate": "Copia pentru {name} și-a scris deja punctul de restaurare și pornește din nou containerele. Nu mai poate fi anulată.",
+  "backup.cancelNotRunning": "Copia pentru {name} se terminase deja. Nu era nimic de anulat.",
   "runReason.cancelled": "Anulat de utilizator",
   "restore.cancelConfirmSafe": "Anulați restaurarea? Folderul de ieșire parțial este lăsat așa cum este.",
   "restore.cancelConfirmInPlace": "{name} este în curs de restaurare. Anularea lasă această restaurare incompletă. S-ar putea să fie nevoie să o executați din nou. Anulați oricum?",

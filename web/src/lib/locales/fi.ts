@@ -180,6 +180,8 @@ const fi: Partial<Translations> = {
   "restore.cancel": "Peruuta palautus",
   "backup.cancel": "Peruuta varmuuskopiointi",
   "backup.cancelConfirm": "Peruutetaanko kohteen {name} varmuuskopiointi? Ajo pysähtyy kirjoittamatta tilannevedosta, eikä mitään jo tallennettua menetetä.",
+  "backup.cancelTooLate": "Kohteen {name} varmuuskopio on jo kirjoittanut palautuspisteensä ja käynnistää kontit uudelleen. Sitä ei voi enää peruuttaa.",
+  "backup.cancelNotRunning": "Kohteen {name} varmuuskopiointi oli jo päättynyt. Peruutettavaa ei ollut.",
   "runReason.cancelled": "Käyttäjä peruutti",
   "restore.cancelConfirmSafe": "Peruutetaanko palautus? Osittain kirjoitettu kohdekansio jätetään ennalleen.",
   "restore.cancelConfirmInPlace": "{name} on kesken palautuksen. Peruutus jättää tämän palautuksen keskeneräiseksi. Se on ehkä suoritettava uudelleen. Peruutetaanko silti?",

@@ -224,6 +224,8 @@ const eu: Partial<Translations> = {
   "restore.cancel": "Utzi berrezarpena",
   "backup.cancel": "Utzi babeskopia",
   "backup.cancelConfirm": "{name}(r)en babeskopia bertan behera utzi? Exekuzioa argazkirik idatzi gabe gelditzen da, eta ez da galtzen jada gordetakoa.",
+  "backup.cancelTooLate": "{name}(r)en babeskopiak berrezarpen-puntua idatzi du jada eta edukiontziak berriz abiarazten ari da. Ezin da jada bertan behera utzi.",
+  "backup.cancelNotRunning": "{name}(r)en babeskopia amaituta zegoen jada. Ez zegoen ezer bertan behera uzteko.",
   "runReason.cancelled": "Erabiltzaileak bertan behera utzia",
   "restore.cancelConfirmSafe": "Berrezarpena utzi nahi duzu? Erdi idatzitako irteera-karpeta dagoen bezala geratzen da.",
   "restore.cancelConfirmInPlace": "{name} berrezartzen ari da une honetan. Uzteak berrezarpen hau erdizka utziko du. Beharbada berriz exekutatu beharko duzu. Utzi dena den?",

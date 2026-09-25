@@ -180,6 +180,8 @@ const cs: Partial<Translations> = {
   "restore.cancel": "Zrušit obnovu",
   "backup.cancel": "Zrušit zálohu",
   "backup.cancelConfirm": "Zrušit zálohu {name}? Běh se zastaví bez zapsání snímku a nic již uloženého se neztratí.",
+  "backup.cancelTooLate": "Záloha {name} už zapsala svůj bod obnovení a znovu spouští kontejnery. Už ji nelze zrušit.",
+  "backup.cancelNotRunning": "Záloha {name} už byla hotová. Nebylo co rušit.",
   "runReason.cancelled": "Zrušeno uživatelem",
   "restore.cancelConfirmSafe": "Zrušit obnovu? Částečně zapsaná cílová složka zůstane beze změny.",
   "restore.cancelConfirmInPlace": "{name} se právě obnovuje. Zrušení ponechá tuto obnovu neúplnou. Možná ji bude nutné spustit znovu. Přesto zrušit?",

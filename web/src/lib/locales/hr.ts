@@ -224,6 +224,8 @@ const hr: Partial<Translations> = {
   "restore.cancel": "Otkaži vraćanje",
   "backup.cancel": "Otkaži sigurnosnu kopiju",
   "backup.cancelConfirm": "Otkazati sigurnosnu kopiju za {name}? Izvođenje se zaustavlja bez zapisivanja snimke i ništa već spremljeno nije izgubljeno.",
+  "backup.cancelTooLate": "Sigurnosna kopija za {name} već je zapisala svoju točku vraćanja i ponovno pokreće kontejnere. Više se ne može otkazati.",
+  "backup.cancelNotRunning": "Sigurnosna kopija za {name} već je bila gotova. Nije bilo ničega za otkazati.",
   "runReason.cancelled": "Otkazao korisnik",
   "restore.cancelConfirmSafe": "Otkazati vraćanje? Djelomično zapisana izlazna mapa ostaje nepromijenjena.",
   "restore.cancelConfirmInPlace": "{name} se trenutačno vraća. Otkazivanje će ostaviti ovo vraćanje nedovršenim. Možda ćete ga morati ponovno pokrenuti. Ipak otkazati?",

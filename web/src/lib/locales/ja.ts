@@ -180,6 +180,8 @@ const ja: Partial<Translations> = {
   "restore.cancel": "復元をキャンセル",
   "backup.cancel": "バックアップを中止",
   "backup.cancelConfirm": "{name} のバックアップを中止しますか。スナップショットを書かずに終了し、すでに保存された内容は失われません。",
+  "backup.cancelTooLate": "{name} のバックアップはすでに復元ポイントを書き込み、コンテナを再起動しています。もう中止できません。",
+  "backup.cancelNotRunning": "{name} のバックアップはすでに終わっていました。中止するものはありませんでした。",
   "runReason.cancelled": "ユーザーが中止しました",
   "restore.cancelConfirmSafe": "復元をキャンセルしますか？途中まで書き込まれた出力フォルダーはそのまま残ります。",
   "restore.cancelConfirmInPlace": "{name} は復元の途中です。キャンセルするとこの復元は不完全なまま残ります。もう一度実行が必要になる場合があります。それでもキャンセルしますか？",

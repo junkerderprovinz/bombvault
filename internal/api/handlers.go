@@ -1402,7 +1402,8 @@ func (h *Handler) handleRestoreCancel(w http.ResponseWriter, r *http.Request) {
 //
 // Cancelling a key that is not running is an idempotent success
 // (cancelled:false): a browser tab that still shows the button for a backup
-// that finished a second ago must not produce an error.
+// that finished a second ago must not produce an error. The reason tells that
+// case apart from a backup that already wrote its restore point.
 func (h *Handler) handleBackupCancel(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Key string `json:"key"`
@@ -1410,8 +1411,15 @@ func (h *Handler) handleBackupCancel(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	cancelled := h.svc.CancelBackupRun(body.Key, "")
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": cancelled})
+	if h.svc.CancelBackupRun(body.Key, "") {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": true})
+		return
+	}
+	reason := "not_running"
+	if h.svc.BackupCommitted(body.Key, "") {
+		reason = "committed"
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": false, "reason": reason})
 }
 
 // handleRestoreStack restores every backed-up member of a compose stack STOPPED,

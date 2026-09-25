@@ -224,6 +224,8 @@ const sl: Partial<Translations> = {
   "restore.cancel": "Prekliči obnovitev",
   "backup.cancel": "Prekliči varnostno kopijo",
   "backup.cancelConfirm": "Prekličem varnostno kopijo za {name}? Zagon se ustavi brez zapisa posnetka in nič že shranjenega ni izgubljeno.",
+  "backup.cancelTooLate": "Varnostna kopija za {name} je točko za obnovitev že zapisala in znova zaganja vsebnike. Preklicati je ni več mogoče.",
+  "backup.cancelNotRunning": "Varnostna kopija za {name} je bila že končana. Ni bilo česa preklicati.",
   "runReason.cancelled": "Preklical uporabnik",
   "restore.cancelConfirmSafe": "Prekličem obnovitev? Delna izhodna mapa ostane nespremenjena.",
   "restore.cancelConfirmInPlace": "{name} je sredi obnovitve. Preklic pusti to obnovitev nedokončano. Morda jo boš moral znova zagnati. Vseeno prekličem?",

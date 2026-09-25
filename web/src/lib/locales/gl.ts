@@ -224,6 +224,8 @@ const gl: Partial<Translations> = {
   "restore.cancel": "Cancelar restauración",
   "backup.cancel": "Cancelar a copia",
   "backup.cancelConfirm": "Cancelar a copia de {name}? A execución detense sen escribir unha instantánea e non se perde nada do xa gardado.",
+  "backup.cancelTooLate": "A copia de {name} xa escribiu o seu punto de restauración e está a iniciar de novo os contedores. Xa non se pode cancelar.",
+  "backup.cancelNotRunning": "A copia de {name} xa rematara. Non había nada que cancelar.",
   "runReason.cancelled": "Cancelado pola persoa usuaria",
   "restore.cancelConfirmSafe": "Cancelar a restauración? O cartafol de saída parcial déixase tal cal.",
   "restore.cancelConfirmInPlace": "{name} está a restaurarse. Cancelar deixará esta restauración a medias, quizais teñas que executala de novo. Cancelar de todos os xeitos?",

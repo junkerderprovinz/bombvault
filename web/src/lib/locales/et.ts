@@ -224,6 +224,8 @@ const et: Partial<Translations> = {
   "restore.cancel": "Tühista taastamine",
   "backup.cancel": "Tühista varundus",
   "backup.cancelConfirm": "Kas tühistada {name} varundus? Käivitus peatub hetktõmmist kirjutamata ja midagi juba salvestatust ei kao.",
+  "backup.cancelTooLate": "{name} varundus on oma taastamispunkti juba kirjutanud ja käivitab konteinereid uuesti. Seda ei saa enam tühistada.",
+  "backup.cancelNotRunning": "{name} varundus oli juba lõppenud. Polnud midagi tühistada.",
   "runReason.cancelled": "Kasutaja tühistas",
   "restore.cancelConfirmSafe": "Kas tühistada taastamine? Osaliselt kirjutatud väljundkaust jääb muutmata kujule.",
   "restore.cancelConfirmInPlace": "{name} on parasjagu taastamisel. Tühistamine jätab selle taastamise pooleli. Võib olla vaja seda uuesti käivitada. Kas tühistada ikkagi?",

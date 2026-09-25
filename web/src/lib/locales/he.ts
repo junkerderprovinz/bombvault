@@ -180,6 +180,8 @@ const he: Partial<Translations> = {
   "restore.cancel": "ביטול השחזור",
   "backup.cancel": "ביטול הגיבוי",
   "backup.cancelConfirm": "לבטל את הגיבוי של {name}? ההרצה נעצרת בלי לכתוב תמונת מצב, ודבר ממה שכבר נשמר לא הולך לאיבוד.",
+  "backup.cancelTooLate": "הגיבוי של {name} כבר כתב את נקודת השחזור שלו ומפעיל מחדש את הקונטיינרים. כבר אי אפשר לבטל אותו.",
+  "backup.cancelNotRunning": "הגיבוי של {name} כבר הסתיים. לא היה מה לבטל.",
   "runReason.cancelled": "בוטל על ידי המשתמש",
   "restore.cancelConfirmSafe": "לבטל את השחזור? תיקיית הפלט החלקית תישאר כפי שהיא.",
   "restore.cancelConfirmInPlace": "{name} נמצא באמצע שחזור. ביטול ישאיר את השחזור הזה חלקי, ייתכן שיהיה צורך להריץ אותו שוב. לבטל בכל זאת?",

@@ -7,10 +7,17 @@
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const cancelBackup = vi.fn(async () => ({ ok: true, cancelled: true }));
+const cancelBackup = vi.fn(
+  async (): Promise<{ ok: boolean; cancelled: boolean; reason?: string }> => ({ ok: true, cancelled: true })
+);
 vi.mock("../lib/api", async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
   cancelBackup: (key: string) => cancelBackup(key),
+}));
+
+const pushed: { message: string; severity?: string }[] = [];
+vi.mock("../lib/toast", () => ({
+  useToast: () => ({ push: (message: string, severity?: string) => pushed.push({ message, severity }) }),
 }));
 
 // Answers the confirmation without rendering the dialog.
@@ -32,6 +39,7 @@ function draw(key = "files:My_Backups", name = "My_Backups") {
 
 beforeEach(() => {
   cancelBackup.mockClear();
+  pushed.length = 0;
   answer = true;
 });
 afterEach(cleanup);
@@ -62,6 +70,21 @@ describe("BackupCancelButton", () => {
       fireEvent.click(screen.getByRole("button", { name: /backup.cancel/i }));
     });
     expect(onCancelled).toHaveBeenCalledTimes(1);
+    expect(pushed).toEqual([]);
+  });
+
+  it.each([
+    ["committed", "backup.cancelTooLate"],
+    ["not_running", "backup.cancelNotRunning"],
+  ])("says why nothing was cancelled when the server answers %s", async (reason, message) => {
+    const onCancelled = vi.fn();
+    cancelBackup.mockResolvedValueOnce({ ok: true, cancelled: false, reason });
+    render(<BackupCancelButton cancelKey="container:plex" name="plex" t={t} onCancelled={onCancelled} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /backup.cancel/i }));
+    });
+    expect(onCancelled).not.toHaveBeenCalled();
+    expect(pushed).toEqual([{ message, severity: "warn" }]);
   });
 
   it("does not report success when the POST fails, so the button stays usable", async () => {

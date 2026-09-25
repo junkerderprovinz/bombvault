@@ -277,6 +277,8 @@ export const en = {
   "restore.cancel": "Cancel restore",
   "backup.cancel": "Cancel backup",
   "backup.cancelConfirm": "Cancel the backup of {name}? The run stops without writing a snapshot, and nothing already stored is lost.",
+  "backup.cancelTooLate": "The backup of {name} has already written its restore point and is starting its containers again. It can no longer be cancelled.",
+  "backup.cancelNotRunning": "The backup of {name} had already finished. There was nothing to cancel.",
   "runReason.cancelled": "Cancelled by the user",
   "restore.cancelConfirmSafe": "Cancel the restore? The partial output folder is left as-is.",
   "restore.cancelConfirmInPlace":
@@ -2937,6 +2939,8 @@ export const de: Translations = {
   "restore.cancel": "Wiederherstellung abbrechen",
   "backup.cancel": "Sicherung abbrechen",
   "backup.cancelConfirm": "Sicherung von {name} abbrechen? Der Lauf endet ohne Schnappschuss, und nichts bereits Gesichertes geht verloren.",
+  "backup.cancelTooLate": "Das Backup von {name} hat seinen Wiederherstellungspunkt schon geschrieben und startet die Container wieder. Abbrechen geht jetzt nicht mehr.",
+  "backup.cancelNotRunning": "Das Backup von {name} war schon fertig. Es gab nichts abzubrechen.",
   "runReason.cancelled": "Von der Benutzerin abgebrochen",
   "restore.cancelConfirmSafe": "Wiederherstellung abbrechen? Der bereits geschriebene Zielordner bleibt unverändert erhalten.",
   "restore.cancelConfirmInPlace":

@@ -179,6 +179,8 @@ const no: Partial<Translations> = {
   "restore.cancel": "Avbryt gjenoppretting",
   "backup.cancel": "Avbryt sikkerhetskopi",
   "backup.cancelConfirm": "Avbryte sikkerhetskopien av {name}? Kjøringen stopper uten øyeblikksbilde, og ingenting som allerede er lagret går tapt.",
+  "backup.cancelTooLate": "Sikkerhetskopien av {name} har allerede skrevet gjenopprettingspunktet sitt og starter containerne igjen. Den kan ikke lenger avbrytes.",
+  "backup.cancelNotRunning": "Sikkerhetskopien av {name} var allerede ferdig. Det var ingenting å avbryte.",
   "runReason.cancelled": "Avbrutt av brukeren",
   "restore.cancelConfirmSafe": "Avbryte gjenopprettingen? Den delvis skrevne målmappen beholdes som den er.",
   "restore.cancelConfirmInPlace": "{name} er midt i en gjenoppretting. Å avbryte etterlater denne gjenopprettingen ufullstendig. Du må kanskje kjøre den på nytt. Avbryte likevel?",

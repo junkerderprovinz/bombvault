@@ -224,6 +224,8 @@ const lt: Partial<Translations> = {
   "restore.cancel": "Atšaukti atkūrimą",
   "backup.cancel": "Atšaukti atsarginę kopiją",
   "backup.cancelConfirm": "Atšaukti {name} atsarginę kopiją? Vykdymas sustos neįrašęs momentinės kopijos, o niekas jau išsaugoto nedings.",
+  "backup.cancelTooLate": "{name} atsarginė kopija jau įrašė savo atkūrimo tašką ir vėl paleidžia konteinerius. Jos nebegalima atšaukti.",
+  "backup.cancelNotRunning": "{name} atsarginė kopija jau buvo baigta. Nebuvo ko atšaukti.",
   "runReason.cancelled": "Atšaukė naudotojas",
   "restore.cancelConfirmSafe": "Atšaukti atkūrimą? Iš dalies įrašytas išvesties aplankas paliekamas nepakeistas.",
   "restore.cancelConfirmInPlace": "{name} šiuo metu atkuriamas. Atšaukus, šis atkūrimas liks nebaigtas. Gali tekti jį paleisti dar kartą. Vis tiek atšaukti?",

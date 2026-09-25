@@ -224,6 +224,8 @@ const ms: Partial<Translations> = {
   "restore.cancel": "Batalkan pemulihan",
   "backup.cancel": "Batalkan sandaran",
   "backup.cancelConfirm": "Batalkan sandaran {name}? Larian berhenti tanpa menulis syot kilat, dan tiada yang telah disimpan hilang.",
+  "backup.cancelTooLate": "Sandaran {name} sudah menulis titik pemulihannya dan sedang memulakan semula bekasnya. Ia tidak boleh dibatalkan lagi.",
+  "backup.cancelNotRunning": "Sandaran {name} sudah selesai. Tiada apa-apa untuk dibatalkan.",
   "runReason.cancelled": "Dibatalkan oleh pengguna",
   "restore.cancelConfirmSafe": "Batalkan pemulihan? Folder output yang separuh siap dibiarkan seadanya.",
   "restore.cancelConfirmInPlace": "{name} sedang dipulihkan. Membatalkan akan meninggalkan pemulihan ini tidak lengkap. Anda mungkin perlu menjalankannya semula. Tetap batalkan?",

@@ -180,6 +180,8 @@ const zh: Partial<Translations> = {
   "restore.cancel": "取消还原",
   "backup.cancel": "取消备份",
   "backup.cancelConfirm": "要取消 {name} 的备份吗？本次运行将不写入快照即结束，已保存的内容不会丢失。",
+  "backup.cancelTooLate": "{name} 的备份已写入其恢复点，正在重新启动容器，已无法取消。",
+  "backup.cancelNotRunning": "{name} 的备份已经结束，没有可取消的内容。",
   "runReason.cancelled": "已由用户取消",
   "restore.cancelConfirmSafe": "取消还原？部分已写入的输出文件夹将保持原样。",
   "restore.cancelConfirmInPlace": "{name} 正在还原中。取消会使本次还原处于未完成状态，可能需要再次运行。仍要取消吗？",

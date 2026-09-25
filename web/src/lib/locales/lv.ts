@@ -224,6 +224,8 @@ const lv: Partial<Translations> = {
   "restore.cancel": "Atcelt atjaunošanu",
   "backup.cancel": "Atcelt dublējumu",
   "backup.cancelConfirm": "Atcelt {name} dublējumu? Izpilde apstāsies, neierakstot momentuzņēmumu, un nekas jau saglabātais netiks zaudēts.",
+  "backup.cancelTooLate": "{name} dublējums jau ir ierakstījis savu atjaunošanas punktu un atkal palaiž konteinerus. To vairs nevar atcelt.",
+  "backup.cancelNotRunning": "{name} dublējums jau bija beidzies. Nebija ko atcelt.",
   "runReason.cancelled": "Atcēla lietotājs",
   "restore.cancelConfirmSafe": "Atcelt atjaunošanu? Daļēji ierakstītā izvades mape tiek atstāta nemainīta.",
   "restore.cancelConfirmInPlace": "{name} pašlaik tiek atjaunots. Atceļot, šī atjaunošana paliks nepabeigta. Iespējams, būs jāizpilda vēlreiz. Vai tik un tā atcelt?",

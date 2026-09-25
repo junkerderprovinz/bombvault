@@ -224,6 +224,8 @@ const is: Partial<Translations> = {
   "restore.cancel": "Hætta við endurheimt",
   "backup.cancel": "Hætta við afritun",
   "backup.cancelConfirm": "Hætta við afritun á {name}? Keyrslan stöðvast án skyndimyndar og ekkert sem þegar er vistað tapast.",
+  "backup.cancelTooLate": "Afritun á {name} hefur þegar skrifað endurheimtarpunktinn sinn og ræsir gámana aftur. Ekki er lengur hægt að hætta við hana.",
+  "backup.cancelNotRunning": "Afritun á {name} var þegar lokið. Það var ekkert til að hætta við.",
   "runReason.cancelled": "Hætt við af notanda",
   "restore.cancelConfirmSafe": "Hætta við endurheimtina? Hálfkláruð úttaksmappan er skilin eftir óbreytt.",
   "restore.cancelConfirmInPlace": "{name} er í miðri endurheimt. Ef hætt er við skilst endurheimtin eftir hálfkláruð. Þú gætir þurft að keyra hana aftur. Hætta samt við?",
