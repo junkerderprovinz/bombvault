@@ -249,6 +249,7 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errTargetInUse:             "target-in-use",
 		store.ErrDirectRepo:        "direct-repo",
 		errDirectAccessDenied:      "direct-access-denied",
+		errPlaceProbeFailed:        "place-probe-failed",
 		errExclusionUnsaved:        "exclusion-unsaved",
 		errAppendOnlyOffsiteTarget: "append-only",
 		errRemovalGrown:            "removal-grown",

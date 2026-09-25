@@ -71,6 +71,7 @@ var placementCodes = []struct {
 	{errTargetInUse, "target-in-use"},
 	{store.ErrDirectRepo, "direct-repo"},
 	{errDirectAccessDenied, "direct-access-denied"},
+	{errPlaceProbeFailed, "place-probe-failed"},
 	{errAppendOnlyOffsiteTarget, "append-only"},
 	{errRemovalGrown, "removal-grown"},
 	{errNameMismatch, "name-mismatch"},
