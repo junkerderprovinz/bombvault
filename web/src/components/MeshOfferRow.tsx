@@ -7,7 +7,8 @@ import { useNewTargetQuestion } from "./placement/NewTargetQuestion";
 import { acceptMeshOffer, declineMeshOffer, type MeshOffer, type OffsiteDomain } from "../lib/api";
 import type { TranslationKey, useT } from "../lib/i18n";
 import { placementChanged } from "../lib/placementEvents";
-import { placesChanged, type Place } from "../lib/places";
+import { domainName } from "../lib/placeText";
+import { PLACE_DOMAINS, placesChanged, type Place } from "../lib/places";
 import { relativeTime } from "../lib/reltime";
 import { useToast } from "../lib/toast";
 import { credSetsChanged } from "../lib/useCloudCredSets";
@@ -17,22 +18,6 @@ import { offsiteTargetsChanged } from "../lib/useOffsiteTargets";
 // domain. The Fleet page lists every offer, the add window the open ones.
 
 type T = ReturnType<typeof useT>["t"];
-
-export const MESH_DOMAINS = ["containers", "vms", "flash", "config", "files"] as const;
-
-// An explicit map rather than a template literal, so every lookup is a
-// checked TranslationKey.
-const DOMAIN_LABEL_KEYS: Record<string, TranslationKey> = {
-  containers: "settings.containersEnabled",
-  vms: "settings.vmsEnabled",
-  flash: "settings.flashEnabled",
-  files: "settings.filesEnabled",
-  config: "settings.configEnabled",
-};
-
-export function domainLabelKey(domain: string): TranslationKey {
-  return DOMAIN_LABEL_KEYS[domain] ?? "settings.containersEnabled";
-}
 
 function meshStatusTone(status: string): "ok" | "fail" | "warn" | "neutral" {
   switch (status) {
@@ -86,7 +71,7 @@ export function MeshOfferRow({
     // second target.
     setBusy(true);
     const answer = await ask({
-      // The select offers only MESH_DOMAINS, all of them off-site domains.
+      // The select offers only PLACE_DOMAINS, all of them off-site domains.
       domain: domain as OffsiteDomain,
       location: offer.repo,
       name: offer.from || t("fleet.mesh.unknownPeer"),
@@ -159,7 +144,7 @@ export function MeshOfferRow({
               value={domain}
               onChange={setDomain}
               label={t("fleet.mesh.applyTo")}
-              options={MESH_DOMAINS.map((d) => ({ value: d, label: t(domainLabelKey(d)) }))}
+              options={PLACE_DOMAINS.map((d) => ({ value: d, label: domainName(t, d) }))}
               className="rounded-control bg-carbon-surface3 text-carbon-text text-xs px-2 py-1 glim-field-focus-well"
             />
           </label>
