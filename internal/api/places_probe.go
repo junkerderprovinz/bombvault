@@ -160,10 +160,21 @@ func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.Prob
 	fresh := pr.base == ""
 	var res places.ProbeResult
 	if fresh {
-		pr.base, err = places.Base(pr.provider, pr.fields, pr.placeID)
+		if pr.provider.Kind == places.KindS3 {
+			err = probeS3(ctx, &pr, &res)
+		}
+		if err == nil {
+			pr.base, err = places.Base(pr.provider, pr.fields, pr.placeID)
+		}
 	}
 	res.Fields = publicFields(pr.provider, pr.fields)
-	if err != nil {
+	var missing places.MissingField
+	switch {
+	case errors.As(err, &missing) && missing == "bucket" && pr.provider.Kind == places.KindS3:
+		// The bucket is chosen from what the probe listed, or typed.
+		res.OK = true
+		return res, nil
+	case err != nil:
 		return failedProbe(res, err)
 	}
 	mode, err := s.probeMode(settings, pr)
