@@ -67,7 +67,8 @@ export function useGridNav(count: number, selected: number) {
   const stop = focused >= 0 && focused < count ? focused : selected >= 0 && selected < count ? selected : 0;
 
   function onKeyDown(e: KeyboardEvent<HTMLElement>) {
-    if (!GRID_KEYS.includes(e.key)) return;
+    // Alt with an arrow is the browser's back and forward.
+    if (!GRID_KEYS.includes(e.key) || e.altKey || e.ctrlKey || e.metaKey) return;
     const nodes = tiles.current.slice(0, count);
     const boxes = nodes.map((node) => {
       const r = node?.getBoundingClientRect();
