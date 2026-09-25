@@ -2019,6 +2019,8 @@ export interface OffsiteTarget {
   createdAt: number;
   /** Ordering within a domain; the primary is 0, additional targets are > 0. */
   sortOrder: number;
+  /** The storage place the target lies at; absent for a row without one. */
+  placeId?: string;
 }
 
 /** A named repository (#204): a location written down once in Settings and then
