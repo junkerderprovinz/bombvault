@@ -67,6 +67,7 @@ vi.mock("../lib/api", async (importOriginal) => {
 });
 
 const { SettingsPage } = await import("./Settings");
+const { AnomalyProvider } = await import("../lib/useAnomalies");
 
 function stubBrowser() {
   window.matchMedia = ((query: string) => ({
@@ -102,6 +103,48 @@ async function renderAt(hash: string) {
   await screen.findByRole("switch", { name: en["anomaly.settings.toggle"] });
 }
 
+function stubSummary(over: Record<string, unknown>) {
+  const summary = {
+    enabled: true,
+    ready: true,
+    generation: 1,
+    open: { critical: 0, warning: 0, info: 0 },
+    recoveredCritical: 0,
+    learningItems: 0,
+    retentionHeld: 0,
+    evalErrors: 0,
+    notifyMuted: false,
+    backfill: { slots: 0, done: 0, failed: 0, filled: 0, withoutSummary: 0 },
+    ...over,
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (path: string) => {
+      if (path !== "/api/anomalies/summary") throw new Error(`unexpected request ${path}`);
+      return new Response(JSON.stringify({ ok: true, summary }), { status: 200 });
+    })
+  );
+}
+
+async function renderWithSummary() {
+  await act(async () => {
+    window.location.hash = "#integrity";
+    render(
+      <MemoryRouter>
+        <I18nProvider>
+          <ToastProvider>
+            <AnomalyProvider>
+              <SettingsPage />
+            </AnomalyProvider>
+          </ToastProvider>
+        </I18nProvider>
+      </MemoryRouter>
+    );
+  });
+  await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/anomalies/summary", expect.anything()));
+  await act(async () => {});
+}
+
 let scrolled: Element[] = [];
 
 beforeEach(() => {
@@ -116,6 +159,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
   window.location.hash = "";
 });
 
@@ -155,6 +199,28 @@ describe("the Anomalies card on the Integrity tab", () => {
         screen.getByRole("switch", { name: en["anomaly.settings.toggle"] }).getAttribute("aria-checked")
       ).toBe("true")
     );
+  });
+
+  it("opens with a summary that sends null for its list of unmeasured repositories", async () => {
+    stubSummary({ unmeasuredVolumes: null });
+    await renderWithSummary();
+    expect(screen.getByRole("switch", { name: en["anomaly.settings.toggle"] })).toBeTruthy();
+    expect(screen.queryByText(/Repositories without a free-space figure/)).toBeNull();
+  });
+
+  it("opens with a summary from a server that leaves the list out", async () => {
+    stubSummary({ unmeasuredVolumes: undefined });
+    await renderWithSummary();
+    expect(screen.getByRole("switch", { name: en["anomaly.settings.toggle"] })).toBeTruthy();
+  });
+
+  it("still shows the unmeasured repositories and failed checks a summary reports", async () => {
+    stubSummary({ unmeasuredVolumes: ["rest remote"], evalErrors: 2 });
+    await renderWithSummary();
+    expect(
+      await screen.findByText(en["anomaly.settings.unmeasured"].replace("{names}", "rest remote"))
+    ).toBeTruthy();
+    expect(screen.getByText(en["anomaly.settings.evalErrors"].replace("{n}", "2"))).toBeTruthy();
   });
 
   it("puts a refused sensitivity back and says why", async () => {

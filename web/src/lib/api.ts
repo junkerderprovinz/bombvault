@@ -4589,11 +4589,17 @@ export function getAnomalies(
   return fetchJSON(`/api/anomalies${suffix ? `?${suffix}` : ""}`);
 }
 
-/** GET /api/anomalies/summary is served from memory and polled by the layout. */
-export function getAnomalySummary(): Promise<
+/**
+ * GET /api/anomalies/summary is served from memory and polled by the layout.
+ * Go sends an empty list as null unless every path that builds it allocates
+ * one, and every reader takes the list's length.
+ */
+export async function getAnomalySummary(): Promise<
   OkEnvelope & { summary: AnomalySummary }
 > {
-  return fetchJSON("/api/anomalies/summary");
+  const res = await fetchJSON<OkEnvelope & { summary: AnomalySummary }>("/api/anomalies/summary");
+  if (!res.ok || !res.summary) return res;
+  return { ...res, summary: { ...res.summary, unmeasuredVolumes: res.summary.unmeasuredVolumes ?? [] } };
 }
 
 /** GET /api/anomalies/{id} */
