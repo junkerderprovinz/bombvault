@@ -236,6 +236,7 @@ func planPlaces(in placesMigrationInput) placesPlan {
 	p.markSingleDomainPlaces()
 	p.addDefaultFolders()
 	p.planNamedRepos()
+	p.checkInvariant()
 	plan := placesPlan{unplaced: p.unplaced}
 	for _, pl := range p.planned {
 		plan.places = append(plan.places, pl.MigratedPlace)
@@ -452,6 +453,28 @@ func (p *placesPlanner) planNamed(r store.OffsiteTarget) {
 	pl.Place.OffPremises = r.OffPremises
 	pl.Place.Enabled = r.Enabled
 	pl.Rows = append(pl.Rows, store.PlaceRowRef{RowID: r.ID, Repo: r.Repo})
+}
+
+// checkInvariant drops every row and domain path whose place does not spell
+// its address back byte for byte, the rule every later write to a place keeps.
+// What it drops stays without a place and runs as it did.
+func (p *placesPlanner) checkInvariant() {
+	for _, pl := range p.planned {
+		pl.Rows = slices.DeleteFunc(pl.Rows, func(r store.PlaceRowRef) bool {
+			if addr, ok := places.Address(pl.Place.Base, pl.Place.Folders, r.Domain, r.Suffix); ok && addr == r.Repo {
+				return false
+			}
+			p.unplaced = append(p.unplaced, r.RowID)
+			return true
+		})
+		pl.HomeDomains = slices.DeleteFunc(pl.HomeDomains, func(d string) bool {
+			if addr, ok := places.Address(pl.Place.Base, pl.Place.Folders, d, ""); ok && addr == domainPathRaw(d, p.in.settings) {
+				return false
+			}
+			p.unplaced = append(p.unplaced, d+" path")
+			return true
+		})
+	}
 }
 
 // joinable finds a place a row at sp can join: the same base, the same

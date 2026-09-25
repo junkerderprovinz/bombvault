@@ -588,3 +588,32 @@ func TestANamedRepositoryWithoutAPlaceKindStaysUnplaced(t *testing.T) {
 		t.Fatal("a b2: repository was put on a place")
 	}
 }
+
+func TestARowItsPlaceCannotSpellStaysWithoutAPlace(t *testing.T) {
+	p := &placesPlanner{in: migrationInput()}
+	pl := &plannedPlace{}
+	pl.Place = store.Place{Name: "B2", Base: b2Bucket, Folders: map[string]string{"containers": "containers"}}
+	pl.Rows = []store.PlaceRowRef{
+		{RowID: "fits", Domain: "containers", Repo: b2Bucket + "/containers"},
+		{RowID: "direct", Domain: "containers", Suffix: "-direct", Repo: b2Bucket + "/containers-direct"},
+		{RowID: "whole", Repo: b2Bucket},
+		{RowID: "elsewhere", Domain: "containers", Repo: b2Bucket + "/elsewhere"},
+		{RowID: "absent", Domain: "vms", Repo: b2Bucket + "/vms"},
+	}
+	pl.HomeDomains = []string{"containers"}
+	p.planned = []*plannedPlace{pl}
+	p.checkInvariant()
+	var kept []string
+	for _, r := range pl.Rows {
+		kept = append(kept, r.RowID)
+	}
+	if !slices.Equal(kept, []string{"fits", "direct", "whole"}) {
+		t.Errorf("rows kept = %v, want the three the place spells", kept)
+	}
+	if want := []string{"elsewhere", "absent", "containers path"}; !slices.Equal(p.unplaced, want) {
+		t.Errorf("unplaced = %v, want %v", p.unplaced, want)
+	}
+	if len(pl.HomeDomains) != 0 {
+		t.Errorf("home domains = %v, want none: the containers path is user/bombvault/container", pl.HomeDomains)
+	}
+}
