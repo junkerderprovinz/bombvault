@@ -734,6 +734,43 @@ func (s *Service) RecoveryKit() (string, error) {
 		}
 	}
 
+	// A place on a credential set of its own, and every WebDAV or Azure place,
+	// can be reached only with the variables listed here: the section above
+	// holds the shared credentials and the rclone config and nothing else.
+	if all, pErr := s.store.ListPlaces(); pErr == nil && len(all) > 0 {
+		w("## Storage places\n\n")
+		w("Each place keeps its repositories at its base address, one folder per domain\n")
+		w("below it. Export the variables listed under a place before running restic\n")
+		w("against an address there. A WebDAV place is reached through rclone, so restic\n")
+		w("needs rclone installed; its RCLONE_CONFIG_ lines define the remote the address names.\n\n")
+		for _, p := range all {
+			loc := p.Base
+			if resolved, rErr := s.resolveRepo(p.Base); rErr == nil {
+				loc = resolved
+			}
+			w("- %s: %s\n", p.Name, loc)
+			switch {
+			case p.Kind == string(places.KindLocal):
+			case p.Kind == string(places.KindSFTP):
+				w("  signs in with BombVault's SSH key, %s\n", filepath.Join(s.cfg.DataDir, "ssh", "id_ed25519"))
+			case p.Kind == string(places.KindRclone):
+				w("  uses the rclone config above\n")
+			case p.CredsRef == "":
+				w("  uses the shared credentials above\n")
+			default:
+				env, eErr := s.placeEnv(p)
+				if eErr != nil {
+					w("  (its credentials could not be read: %v)\n", eErr)
+					continue
+				}
+				for _, kv := range env {
+					w("      %s\n", kv)
+				}
+			}
+		}
+		w("\n")
+	}
+
 	w("## Manual restore without BombVault\n\n")
 	w("You can restore directly with the restic CLI, no BombVault container required.\n\n")
 	w("1. Install restic (https://restic.net) on any machine that can reach the repository.\n")
