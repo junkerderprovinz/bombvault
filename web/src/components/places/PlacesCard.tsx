@@ -124,20 +124,16 @@ export function PlacesCard({ hueIndex, hostMountRoot }: { hueIndex?: number; hos
   const [loaded, setLoaded] = useState(false);
   const [adding, setAdding] = useState(false);
 
+  // Only a list that was read can say there is no place yet.
   const load = useCallback(async () => {
-    try {
-      const res = await listPlaces();
-      if (res.ok) {
-        setPlaces(res.places ?? []);
-        setUnplaced(res.unplaced ?? []);
-      } else {
-        push(res.error ?? t("places.loadFailed"), "fail");
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("places.loadFailed"), "fail");
-    } finally {
-      setLoaded(true);
+    const res = await listPlaces().catch(() => null);
+    if (!res?.ok) {
+      push(t("places.loadFailed"), "fail");
+      return;
     }
+    setPlaces(res.places ?? []);
+    setUnplaced(res.unplaced ?? []);
+    setLoaded(true);
   }, [push, t]);
 
   useEffect(() => {
