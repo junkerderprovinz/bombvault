@@ -43,7 +43,7 @@ type placementObserved struct {
 	Places   []observedPlace `json:"places"`
 	Sites    int             `json:"sites"`
 	Tone     string          `json:"tone"`    // "ok" | "warn" | "unconfirmed"
-	Rule321  string          `json:"rule321"` // "met" | "one-copy" | "unconfirmed"
+	Rule321  string          `json:"rule321"` // "met" | "one-copy" | "no-off-site" | "unconfirmed"
 	Older    []olderCopies   `json:"older"`
 }
 
@@ -357,14 +357,19 @@ func observedState(p placementRead, item placementItem, f *statusFacts, repoID s
 		}
 	}
 
-	homeSite := "host"
+	siteOf := map[string]string{"local": "host"}
 	if homeOffPremises(home, p.Domain, repoID, f.named, f.sites) {
-		homeSite = "home"
+		siteOf["local"] = "home"
 		if home == homeDirect {
-			homeSite = offsiteSourcePrefix + f.named[repoID].CompanionOf
+			siteOf["local"] = offsiteSourcePrefix + f.named[repoID].CompanionOf
 		}
 	}
-	o.score(homeSite)
+	for _, t := range p.Targets {
+		if !f.sites.Row(t.ID, true) {
+			siteOf[offsiteSourcePrefix+t.ID] = "host"
+		}
+	}
+	o.score(siteOf)
 	return o
 }
 
@@ -412,17 +417,16 @@ func (f *statusFacts) targetPlace(t store.OffsiteTarget, c store.ItemCopies, hol
 }
 
 // score fills in sites, 3-2-1 and tone. The server holding the original data is
-// always a site; a counting place off the premises adds its own. Every target is
-// a site of its own, so a second counting place is always one: there is no
-// verdict for two copies that both stay on the premises.
-func (o *placementObserved) score(homeSite string) {
+// always a site. siteOf names the site of the home and of each target on the
+// premises; every other counting place is a site of its own.
+func (o *placementObserved) score(siteOf map[string]string) {
 	sites := map[string]bool{"host": true}
 	counting, stale := 0, 0
 	offSite, staleOffSite, unreachable := false, false, false
 	for _, pl := range o.Places {
-		site := pl.Place
-		if pl.Place == "local" {
-			site = homeSite
+		site, ok := siteOf[pl.Place]
+		if !ok {
+			site = pl.Place
 		}
 		switch {
 		case pl.Counts:
@@ -442,11 +446,13 @@ func (o *placementObserved) score(homeSite string) {
 		o.Rule321 = "met"
 	case counting+stale >= 2 && (offSite || staleOffSite):
 		o.Rule321 = "unconfirmed"
+	case counting >= 2:
+		o.Rule321 = "no-off-site"
 	default:
 		o.Rule321 = "one-copy"
 	}
 	switch {
-	case unreachable || o.Rule321 == "one-copy":
+	case unreachable || o.Rule321 == "one-copy" || o.Rule321 == "no-off-site":
 		o.Tone = "warn"
 	case o.Rule321 == "unconfirmed":
 		o.Tone = "unconfirmed"
