@@ -15,8 +15,9 @@ import { useT, type TranslationKey } from "./i18n";
 // listener (an onKeyDown on the dialog stops firing once focus falls to
 // <body>), a Tab trap, and returning focus to the trigger on every close path.
 //
-// One pending request per instance is enough: the dialog is modal, so a second
-// confirm() cannot be triggered while one is open.
+// A click cannot reach the page behind an open question, but a timer can: a
+// question asked while another is open waits its turn instead of taking the
+// first one's place, so every caller gets its own answer.
 export interface ConfirmOptions {
   /** The key of the button that asked, so the answer repeats its words and
    *  glyph ("Delete") rather than a bare "Confirm". */
@@ -36,7 +37,9 @@ export interface ConfirmOptions {
 }
 
 interface PendingConfirm extends ConfirmOptions {
+  id: number;
   message: string;
+  resolve: (value: boolean) => void;
 }
 
 const FOCUSABLE_SELECTOR =
@@ -50,25 +53,35 @@ export function useConfirm() {
   const { t } = useT();
   const [pending, setPending] = useState<PendingConfirm | null>(null);
   const [typed, setTyped] = useState("");
-  const resolveRef = useRef<((value: boolean) => void) | null>(null);
+  const queue = useRef<PendingConfirm[]>([]);
+  const nextId = useRef(0);
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
 
   const confirm = useCallback((message: string, options?: ConfirmOptions) => {
-    // Read before setPending: the re-render moves focus into the dialog.
-    const active = document.activeElement;
-    triggerRef.current = active instanceof HTMLElement && active !== document.body ? active : null;
-    setTyped("");
+    // Read before setPending: the re-render moves focus into the dialog. A
+    // question that waits its turn was asked from the one on screen, whose
+    // buttons are gone by the time focus goes back.
+    if (queue.current.length === 0) {
+      const active = document.activeElement;
+      triggerRef.current = active instanceof HTMLElement && active !== document.body ? active : null;
+    }
     return new Promise<boolean>((resolve) => {
-      resolveRef.current = resolve;
-      setPending({ message, ...options });
+      const question = { ...options, id: nextId.current++, message, resolve };
+      queue.current.push(question);
+      if (queue.current.length > 1) return;
+      setTyped("");
+      setPending(question);
     });
   }, []);
 
   const settle = useCallback((result: boolean) => {
-    resolveRef.current?.(result);
-    resolveRef.current = null;
-    setPending(null);
+    const [answered, ...waiting] = queue.current;
+    queue.current = waiting;
+    answered?.resolve(result);
+    setTyped("");
+    setPending(waiting[0] ?? null);
+    if (waiting.length > 0) return;
     const trigger = triggerRef.current;
     triggerRef.current = null;
     if (trigger && document.contains(trigger)) trigger.focus();
@@ -105,9 +118,12 @@ export function useConfirm() {
 
   // An ancestor with a CSS transform (e.g. .glim-page-enter) would confine a
   // position: fixed backdrop to its own box, so the dialog goes to <body>.
+  // Each question mounts afresh, so the next one starts on Cancel rather than
+  // on the button that answered the last.
   const confirmDialog = pending
     ? createPortal(
         <ConfirmDialog
+          key={pending.id}
           ref={dialogRef}
           title={t("confirmDialog.title")}
           message={pending.message}
