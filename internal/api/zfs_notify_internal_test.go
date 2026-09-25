@@ -59,6 +59,42 @@ func TestZFSChangeAndLeftoverNotificationsSurviveScheduledSummary(t *testing.T) 
 	}
 }
 
+// A cancel ends the run's own context, and whatever follows the run on that
+// context fails at once: the message about the run went nowhere and the
+// off-site copy was recorded as a failed run of its own.
+func TestCancelledZFSRunNotifiesAndCopiesNothingOffSite(t *testing.T) {
+	s, st, _, eng := zfsRunFixture(t, zfsTwoDatasetTree())
+	bodies := zfsCaptureNotifications(t, s)
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "zfs", Repo: "b2:bucket/offsite", Enabled: true,
+	}); err != nil {
+		t.Fatalf("create off-site target: %v", err)
+	}
+	d := zfsSeedItem(t, st, zfsRoot)
+	eng.onBackup = func() { s.CancelBackupRun(zfsDomain+":"+zfsRoot, "") }
+
+	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err == nil {
+		t.Fatal("a cancelled run must not report success")
+	}
+
+	if run := zfsLastRun(t, st, d.ID); run.Status != "cancelled" {
+		t.Fatalf("run status = %q, want cancelled", run.Status)
+	}
+	if sent := bodies(); !zfsAnyMessageContains(sent, "Backup of zfs") {
+		t.Fatalf("the cancelled run was not reported: %v", sent)
+	}
+	if len(eng.copies) != 0 {
+		t.Fatalf("a cancelled run was copied off site: %v", eng.copies)
+	}
+	offsite, err := st.RecentRunsOfKind(domainRunTargetID(zfsDomain), "offsite", 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(offsite) != 0 {
+		t.Fatalf("a cancelled run recorded off-site runs: %+v", offsite)
+	}
+}
+
 func TestZFSRestartRecoveryNotificationSurvivesScheduledSummary(t *testing.T) {
 	s, st, _, _ := zfsRunFixture(t, zfsTwoDatasetTree())
 	s.docker = newZFSFakeDocker("plex")

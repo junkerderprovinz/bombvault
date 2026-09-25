@@ -804,6 +804,8 @@ func (s *Service) notifyDBDumpFailed(ctx context.Context, targetID, name string,
 	if o.Status != "failed" || dbDumpReasonHead(o.Reason) == store.ReasonCancelled {
 		return
 	}
+	// The backup after the dump may have been cancelled, which ends ctx.
+	ctx = context.WithoutCancel(ctx)
 	c, err := s.NotifyConfig()
 	if err != nil || (c.On != "always" && c.On != "failure") {
 		return

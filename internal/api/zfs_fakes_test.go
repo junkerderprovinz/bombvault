@@ -185,6 +185,8 @@ type zfsFakeEngine struct {
 	// snapsByRepo answers for one location instead of snaps, so a test can put
 	// an item's history in a named repository.
 	snapsByRepo map[string][]restic.Snapshot
+	// onBackup runs as restic starts reading, e.g. to cancel the run there.
+	onBackup func()
 }
 
 func (e *zfsFakeEngine) RepoOpens(context.Context, string, restic.Mode) bool { return true }
@@ -208,13 +210,19 @@ func (e *zfsFakeEngine) Forget(_ context.Context, _ string, ids []string, _ bool
 	return nil
 }
 
-func (e *zfsFakeEngine) BackupDir(_ context.Context, repo, dir string, tags []string, _ restic.Mode, excludes ...string) (restic.Summary, error) {
+func (e *zfsFakeEngine) BackupDir(ctx context.Context, repo, dir string, tags []string, _ restic.Mode, excludes ...string) (restic.Summary, error) {
+	if e.onBackup != nil {
+		e.onBackup()
+	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.backupRepos = append(e.backupRepos, repo)
 	e.backupDirs = append(e.backupDirs, dir)
 	e.backupTags = append(e.backupTags, tags)
 	e.backupExcludes = append(e.backupExcludes, excludes)
+	if err := ctx.Err(); err != nil {
+		return restic.Summary{}, err
+	}
 	if err := e.backupErr[dir]; err != nil {
 		return restic.Summary{}, err
 	}

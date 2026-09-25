@@ -4197,6 +4197,11 @@ func (s *Service) ReplicateOffsiteAfterBulk(ctx context.Context, domain string) 
 // it is already off site, and one restic process cannot hold two clouds'
 // credentials at once.
 func (s *Service) replicateOffsite(ctx context.Context, domain string, settings store.Settings, mode restic.Mode, localRepo string) {
+	// A cancelled or stalled run copies nothing: the copy would fail at once
+	// and be recorded as a failed off-site run of its own.
+	if ctx.Err() != nil {
+		return
+	}
 	if bulkReplicateSuppressed(ctx) {
 		return // scheduled multi-item run: replicated once after the whole loop (#95)
 	}
@@ -17426,6 +17431,8 @@ func singletonItemName(domain string) string {
 // the stored config each call (cheap; backups are infrequent) and is a no-op when
 // notifications are off.
 func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool, sum backup.Summary, backupErr error) {
+	// A cancelled or stalled run is reported on the context that just ended.
+	ctx = context.WithoutCancel(ctx)
 	c, err := s.NotifyConfig()
 	if err != nil || c.On == "" || c.On == "never" {
 		return

@@ -390,12 +390,16 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (backup.Summa
 	}
 
 	// Retention runs whether or not a member failed: the members that were read
-	// wrote real snapshots, and their history ages under the same policy.
-	s.applyRetentionTags(ctx, repo, settings, mode, tags, zfsDomain)
-	makeRepoReadable(repo, s.cfg.DataDir)
-	s.replicateOffsite(ctx, zfsDomain, settings, mode, repo)
-	s.collectStatsAfterItem(ctx, zfsDomain)
-	s.checkPrimaryRemoteBudget(ctx, zfsDomain, repo, settings)
+	// wrote real snapshots, and their history ages under the same policy. A
+	// cancelled or stalled run skips the aftercare, which would only fail on
+	// its ended context.
+	if ctx.Err() == nil {
+		s.applyRetentionTags(ctx, repo, settings, mode, tags, zfsDomain)
+		makeRepoReadable(repo, s.cfg.DataDir)
+		s.replicateOffsite(ctx, zfsDomain, settings, mode, repo)
+		s.collectStatsAfterItem(ctx, zfsDomain)
+		s.checkPrimaryRemoteBudget(ctx, zfsDomain, repo, settings)
+	}
 	if runErr != nil {
 		return backup.Summary{}, runErr
 	}
