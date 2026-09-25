@@ -370,6 +370,12 @@ type Service struct {
 	// background, so a second request for the same pair does not list it twice.
 	listingMu sync.Mutex
 	listing   map[string]bool
+
+	// credSetsMu is held by every writer of the credential sets from its read
+	// to its write, so a place write that carries the sets cannot drop what
+	// another writer stored in between. It is always taken before the store's
+	// settings lock.
+	credSetsMu sync.Mutex
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock

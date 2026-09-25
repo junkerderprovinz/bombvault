@@ -375,6 +375,9 @@ func (s *Service) CloudCredSets() ([]CloudCredSet, error) {
 // duplicate ID is rejected: both would make CredsRef resolution ambiguous or
 // the set unreachable from the UI.
 func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
+	s.credSetsMu.Lock()
+	defer s.credSetsMu.Unlock()
+
 	// Same reasoning as SetCloudCreds: the keep-prior-if-blank merge reads the
 	// sets stored right now, so it belongs in the same transaction as the write.
 	// The incoming slice is copied rather than normalized in place, because the
@@ -457,6 +460,8 @@ func (s *Service) encodeCloudCredSets(sets []CloudCredSet) (string, error) {
 // included, inside one settings mutation. A list that comes back unchanged is
 // not written, since encrypting it again would still change the row.
 func (s *Service) editCloudCredSets(edit func([]CloudCredSet) []CloudCredSet) error {
+	s.credSetsMu.Lock()
+	defer s.credSetsMu.Unlock()
 	_, err := s.store.MutateSettings(func(settings *store.Settings) error {
 		sets, err := s.decodeCloudCredSets(*settings)
 		if err != nil {
