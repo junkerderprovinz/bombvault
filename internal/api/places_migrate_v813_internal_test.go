@@ -168,7 +168,7 @@ func retentionByRepo(t *testing.T, f *placementFixture) map[string]restic.Retent
 		if err != nil {
 			t.Fatal(err)
 		}
-		out[d+" path"] = f.svc.retentionPolicyForRef(settings, ownRef(loc))
+		out[d+" path"] = f.svc.retentionPolicyForRef(settings, d, ownRef(loc))
 	}
 	for id, row := range storedRows(t, f) {
 		switch row.Role {
@@ -177,9 +177,9 @@ func retentionByRepo(t *testing.T, f *placementFixture) map[string]restic.Retent
 			if err != nil {
 				t.Fatal(err)
 			}
-			out[id] = f.svc.retentionPolicyForRef(settings, namedRef(loc, row))
+			out[id] = f.svc.retentionPolicyForRef(settings, "", namedRef(loc, row))
 		case store.RoleOffsite:
-			out[id] = targetOffsiteRetentionPolicy(row)
+			out[id] = rowRetentionPolicy(row)
 		}
 	}
 	return out
