@@ -188,3 +188,16 @@ func TestMoveOffsiteTargetBehindPutsItAfterTheDomainsLastTarget(t *testing.T) {
 		t.Fatalf("another domain's target moved to sort_order %d", got)
 	}
 }
+
+func TestMakeFieldOffsiteTargetPutsTheRowOnZero(t *testing.T) {
+	r := newRepo(t)
+	store.SeedOffsiteTarget(t, r, "containers", "s3:first")
+	second := store.SeedOffsiteTarget(t, r, "containers", "s3:second")
+
+	if err := r.MakeFieldOffsiteTarget(second.ID); err != nil {
+		t.Fatalf("MakeFieldOffsiteTarget: %v", err)
+	}
+	if got, ok, err := r.FieldOffsiteTarget("containers"); err != nil || !ok || got.ID != second.ID {
+		t.Fatalf("FieldOffsiteTarget = %q ok=%v err=%v, want %s", got.ID, ok, err, second.ID)
+	}
+}

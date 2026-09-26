@@ -285,6 +285,15 @@ func fieldRowQ(q queryer, domain string) (OffsiteTarget, bool, error) {
 	return t, true, nil
 }
 
+// MakeFieldOffsiteTarget puts a replication destination on sort_order 0, which
+// makes it the row its domain's off-site field edits.
+func (r *Repo) MakeFieldOffsiteTarget(id string) error {
+	if _, err := r.db.Exec(`UPDATE offsite_targets SET sort_order = 0 WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
+		return fmt.Errorf("MakeFieldOffsiteTarget: %w", err)
+	}
+	return nil
+}
+
 // MoveOffsiteTargetBehind puts a replication destination behind the last one
 // of its domain.
 func (r *Repo) MoveOffsiteTargetBehind(id string) error {
