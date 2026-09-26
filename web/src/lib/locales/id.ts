@@ -1985,6 +1985,7 @@ const id: Partial<Translations> = {
   "activityLog.clearDayFilter": "Hapus filter hari",
   "activityLog.runFilterChip": "Menampilkan satu run",
   "activityLog.clearRunFilter": "Hapus filter run",
+  "activityLog.runGone": "Run ini sudah tidak ada di riwayat.",
   "activityLog.viaMcp": "{line} (melalui MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (melalui MCP, {key}, dicabut)",
   "activityLog.viaMcpUnknownKey": "{line} (melalui MCP)",

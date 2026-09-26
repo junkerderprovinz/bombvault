@@ -1985,6 +1985,7 @@ const gl: Partial<Translations> = {
   "activityLog.clearDayFilter": "Limpar filtro do día",
   "activityLog.runFilterChip": "Mostrando unha execución",
   "activityLog.clearRunFilter": "Limpar filtro de execución",
+  "activityLog.runGone": "Esta execución xa non está no historial.",
   "activityLog.viaMcp": "{line} (mediante MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (mediante MCP, {key}, revogada)",
   "activityLog.viaMcpUnknownKey": "{line} (mediante MCP)",

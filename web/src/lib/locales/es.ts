@@ -1759,6 +1759,7 @@ const es: Partial<Translations> = {
   "activityLog.clearDayFilter": "Quitar el filtro de día",
   "activityLog.runFilterChip": "Mostrando una ejecución",
   "activityLog.clearRunFilter": "Quitar el filtro de ejecución",
+  "activityLog.runGone": "Esta ejecución ya no está en el historial.",
   "activityLog.viaMcp": "{line} (mediante MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (mediante MCP, {key}, revocada)",
   "activityLog.viaMcpUnknownKey": "{line} (mediante MCP)",

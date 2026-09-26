@@ -1761,6 +1761,7 @@ const he: Partial<Translations> = {
   "activityLog.clearDayFilter": "ניקוי סינון היום",
   "activityLog.runFilterChip": "מציג הרצה אחת",
   "activityLog.clearRunFilter": "ניקוי סינון ההרצה",
+  "activityLog.runGone": "ההרצה הזו כבר לא נמצאת בהיסטוריה.",
   "activityLog.viaMcp": "{line} (דרך MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (דרך MCP, {key}, בוטל)",
   "activityLog.viaMcpUnknownKey": "{line} (דרך MCP)",

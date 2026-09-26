@@ -1753,6 +1753,7 @@ const vi: Partial<Translations> = {
   "activityLog.clearDayFilter": "Xóa bộ lọc ngày",
   "activityLog.runFilterChip": "Đang hiển thị một lần chạy",
   "activityLog.clearRunFilter": "Xóa bộ lọc lần chạy",
+  "activityLog.runGone": "Lần chạy này không còn trong lịch sử.",
   "activityLog.viaMcp": "{line} (qua MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (qua MCP, {key}, đã thu hồi)",
   "activityLog.viaMcpUnknownKey": "{line} (qua MCP)",

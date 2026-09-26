@@ -2396,8 +2396,9 @@ export function getSpike(): Promise<SpikeResponse> {
   return fetchJSON("/api/spike");
 }
 
-export function listRuns(): Promise<ListRunsResponse> {
-  return fetchJSON("/api/runs");
+/** The newest runs. `run` adds that one run when it is older than the rest. */
+export function listRuns(run?: string): Promise<ListRunsResponse> {
+  return fetchJSON(run ? `/api/runs?run=${encodeURIComponent(run)}` : "/api/runs");
 }
 
 /**

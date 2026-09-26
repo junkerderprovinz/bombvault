@@ -1753,6 +1753,7 @@ const ja: Partial<Translations> = {
   "activityLog.clearDayFilter": "日付フィルターを解除",
   "activityLog.runFilterChip": "1 件の実行を表示中",
   "activityLog.clearRunFilter": "実行フィルターを解除",
+  "activityLog.runGone": "この実行は履歴に残っていません。",
   "activityLog.viaMcp": "{line}（MCP 経由、{key}）",
   "activityLog.viaMcpRevoked": "{line}（MCP 経由、{key}、失効済み）",
   "activityLog.viaMcpUnknownKey": "{line}（MCP 経由）",

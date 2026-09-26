@@ -1761,6 +1761,7 @@ const el: Partial<Translations> = {
   "activityLog.clearDayFilter": "Καθαρισμός φίλτρου ημέρας",
   "activityLog.runFilterChip": "Εμφάνιση μίας εκτέλεσης",
   "activityLog.clearRunFilter": "Καθαρισμός φίλτρου εκτέλεσης",
+  "activityLog.runGone": "Αυτή η εκτέλεση δεν υπάρχει πια στο ιστορικό.",
   "activityLog.viaMcp": "{line} (μέσω MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (μέσω MCP, {key}, ανακλήθηκε)",
   "activityLog.viaMcpUnknownKey": "{line} (μέσω MCP)",

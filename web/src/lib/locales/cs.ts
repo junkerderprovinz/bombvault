@@ -1759,6 +1759,7 @@ const cs: Partial<Translations> = {
   "activityLog.clearDayFilter": "Zrušit filtr dne",
   "activityLog.runFilterChip": "Zobrazen jeden běh",
   "activityLog.clearRunFilter": "Zrušit filtr běhu",
+  "activityLog.runGone": "Tento běh už v historii není.",
   "activityLog.viaMcp": "{line} (přes MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (přes MCP, {key}, odvolaný)",
   "activityLog.viaMcpUnknownKey": "{line} (přes MCP)",

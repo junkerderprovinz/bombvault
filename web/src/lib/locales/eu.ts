@@ -1985,6 +1985,7 @@ const eu: Partial<Translations> = {
   "activityLog.clearDayFilter": "Garbitu eguneko iragazkia",
   "activityLog.runFilterChip": "Exekuzio bat erakusten",
   "activityLog.clearRunFilter": "Garbitu exekuzioaren iragazkia",
+  "activityLog.runGone": "Exekuzio hau jada ez dago historian.",
   "activityLog.viaMcp": "{line} (MCP bidez, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP bidez, {key}, baliogabetua)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP bidez)",

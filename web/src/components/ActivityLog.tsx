@@ -98,6 +98,7 @@ export function ActivityLog({
 } = {}) {
   const { t } = useT();
   const [runs, setRuns] = useState<Run[]>([]);
+  const [runsLoaded, setRunsLoaded] = useState(false);
   const [scheduleNext, setScheduleNext] = useState<ScheduleNext[]>([]);
   const [now, setNow] = useState<number>(() => Date.now());
   const progressMap = useProgress();
@@ -114,9 +115,11 @@ export function ActivityLog({
   useEffect(() => {
     let alive = true;
     const load = () => {
-      listRuns()
+      listRuns(runFilter ?? undefined)
         .then((res) => {
-          if (alive && res.ok) setRuns(res.runs ?? []);
+          if (!alive || !res.ok) return;
+          setRuns(res.runs ?? []);
+          setRunsLoaded(true);
         })
         .catch(() => {
           /* keep showing the last known runs */
@@ -128,7 +131,7 @@ export function ActivityLog({
       alive = false;
       clearInterval(id);
     };
-  }, []);
+  }, [runFilter]);
 
   // The next scheduled run, for the idle line at the end.
   useEffect(() => {
@@ -195,6 +198,8 @@ export function ActivityLog({
       }),
     [lines, filterDomain, filterType, filterText, dayFilter, runFilter]
   );
+
+  const runGone = runFilter !== null && runsLoaded && !runs.some((r) => r.id === runFilter);
 
   // Stay at the bottom as lines arrive, until the user scrolls up.
   useEffect(() => {
@@ -289,6 +294,7 @@ export function ActivityLog({
           onScroll={handleScroll}
           className="max-h-96 overflow-y-auto rounded-card bg-black/20 font-mono text-xs leading-relaxed px-3 py-2 flex flex-col gap-0.5"
         >
+          {runGone && <p className="text-carbon-textMuted">{t("activityLog.runGone")}</p>}
           {filteredLines.map((l) => (
             <div key={l.id} className="flex items-start gap-2">
               <span className="text-carbon-textMuted shrink-0 tabular-nums">

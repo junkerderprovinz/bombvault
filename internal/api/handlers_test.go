@@ -1584,6 +1584,63 @@ func TestRunsAttributesFileSetRuns(t *testing.T) {
 	}
 }
 
+// A link to one run opens the dashboard log on it, so /api/runs?run= has to
+// include that run even when it is older than the window the log loads.
+func TestRunsIncludeALinkedRunOutsideTheWindow(t *testing.T) {
+	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	fs, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	all := map[string]bool{}
+	for range 501 {
+		id, sErr := st.StartRun(fs.ID, "backup")
+		if sErr != nil {
+			t.Fatal(sErr)
+		}
+		if fErr := st.FinishRun(id, "success", "", 0, ""); fErr != nil {
+			t.Fatal(fErr)
+		}
+		all[id] = true
+	}
+
+	listed := func(query string) map[string]bool {
+		t.Helper()
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/runs"+query, nil))
+		var resp struct {
+			Runs []struct {
+				ID string `json:"id"`
+			} `json:"runs"`
+		}
+		if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("decode: %v (%s)", err, w.Body.String())
+		}
+		ids := map[string]bool{}
+		for _, r := range resp.Runs {
+			ids[r.ID] = true
+		}
+		return ids
+	}
+
+	window := listed("")
+	if len(window) != 500 {
+		t.Fatalf("the log window holds %d runs, want 500", len(window))
+	}
+	var outside string
+	for id := range all {
+		if !window[id] {
+			outside = id
+		}
+	}
+	if got := listed("?run=" + outside); len(got) != 501 || !got[outside] {
+		t.Fatalf("with ?run the list holds %d runs and the linked one: %v", len(got), got[outside])
+	}
+	if got := listed("?run=nosuchrun"); len(got) != 500 {
+		t.Fatalf("an unknown run changed the list to %d runs", len(got))
+	}
+}
+
 // TestSettingsPruneImageAfterUpdateRoundTrip guards the /api/settings wire boundary
 // for the #56 image-prune toggle: the strict decoder rejects unknown fields, so the
 // field must be in settingsView (PUT) and mapped by toView (GET). Regression test for

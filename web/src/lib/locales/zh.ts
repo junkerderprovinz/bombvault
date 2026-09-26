@@ -1753,6 +1753,7 @@ const zh: Partial<Translations> = {
   "activityLog.clearDayFilter": "清除日期筛选",
   "activityLog.runFilterChip": "正在显示一次运行",
   "activityLog.clearRunFilter": "清除运行筛选",
+  "activityLog.runGone": "此运行已不在历史记录中。",
   "activityLog.viaMcp": "{line}（通过 MCP，{key}）",
   "activityLog.viaMcpRevoked": "{line}（通过 MCP，{key}，已吊销）",
   "activityLog.viaMcpUnknownKey": "{line}（通过 MCP）",

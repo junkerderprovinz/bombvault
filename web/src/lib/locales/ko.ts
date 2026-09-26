@@ -1753,6 +1753,7 @@ const ko: Partial<Translations> = {
   "activityLog.clearDayFilter": "날짜 필터 지우기",
   "activityLog.runFilterChip": "실행 하나 표시 중",
   "activityLog.clearRunFilter": "실행 필터 지우기",
+  "activityLog.runGone": "이 실행은 더 이상 기록에 없습니다.",
   "activityLog.viaMcp": "{line} (MCP 경유, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP 경유, {key}, 해지됨)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP 경유)",

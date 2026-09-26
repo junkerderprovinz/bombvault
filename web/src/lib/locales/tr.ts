@@ -1761,6 +1761,7 @@ const tr: Partial<Translations> = {
   "activityLog.clearDayFilter": "Gün filtresini temizle",
   "activityLog.runFilterChip": "Tek bir çalıştırma gösteriliyor",
   "activityLog.clearRunFilter": "Çalıştırma filtresini temizle",
+  "activityLog.runGone": "Bu çalıştırma artık geçmişte yok.",
   "activityLog.viaMcp": "{line} (MCP üzerinden, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP üzerinden, {key}, iptal edildi)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP üzerinden)",

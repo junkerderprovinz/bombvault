@@ -1764,6 +1764,7 @@ const hu: Partial<Translations> = {
   "activityLog.clearDayFilter": "Napszűrő törlése",
   "activityLog.runFilterChip": "Egy futás látható",
   "activityLog.clearRunFilter": "Futásszűrő törlése",
+  "activityLog.runGone": "Ez a futás már nincs az előzmények között.",
   "activityLog.viaMcp": "{line} (MCP-n keresztül, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP-n keresztül, {key}, visszavonva)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP-n keresztül)",

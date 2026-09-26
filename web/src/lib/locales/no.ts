@@ -1761,6 +1761,7 @@ const no: Partial<Translations> = {
   "activityLog.clearDayFilter": "Fjern dagsfilteret",
   "activityLog.runFilterChip": "Viser én kjøring",
   "activityLog.clearRunFilter": "Fjern kjøringsfilteret",
+  "activityLog.runGone": "Denne kjøringen er ikke lenger i historikken.",
   "activityLog.viaMcp": "{line} (via MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (via MCP, {key}, tilbakekalt)",
   "activityLog.viaMcpUnknownKey": "{line} (via MCP)",

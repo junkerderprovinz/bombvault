@@ -1985,6 +1985,7 @@ const is: Partial<Translations> = {
   "activityLog.clearDayFilter": "Hreinsa dagssíu",
   "activityLog.runFilterChip": "Sýni eina keyrslu",
   "activityLog.clearRunFilter": "Hreinsa keyrslusíu",
+  "activityLog.runGone": "Þessi keyrsla er ekki lengur í sögunni.",
   "activityLog.viaMcp": "{line} (um MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (um MCP, {key}, afturkallaður)",
   "activityLog.viaMcpUnknownKey": "{line} (um MCP)",

@@ -1985,6 +1985,7 @@ const sk: Partial<Translations> = {
   "activityLog.clearDayFilter": "Vymazať filter dňa",
   "activityLog.runFilterChip": "Zobrazuje sa jeden beh",
   "activityLog.clearRunFilter": "Vymazať filter behu",
+  "activityLog.runGone": "Tento beh už v histórii nie je.",
   "activityLog.viaMcp": "{line} (cez MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (cez MCP, {key}, zrušený)",
   "activityLog.viaMcpUnknownKey": "{line} (cez MCP)",

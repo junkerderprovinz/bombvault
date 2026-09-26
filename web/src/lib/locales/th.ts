@@ -1764,6 +1764,7 @@ const th: Partial<Translations> = {
   "activityLog.clearDayFilter": "ล้างตัวกรองวัน",
   "activityLog.runFilterChip": "กำลังแสดงการรันหนึ่งครั้ง",
   "activityLog.clearRunFilter": "ล้างตัวกรองการรัน",
+  "activityLog.runGone": "การรันนี้ไม่อยู่ในประวัติแล้ว",
   "activityLog.viaMcp": "{line} (ผ่าน MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (ผ่าน MCP, {key}, เพิกถอนแล้ว)",
   "activityLog.viaMcpUnknownKey": "{line} (ผ่าน MCP)",

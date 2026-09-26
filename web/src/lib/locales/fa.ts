@@ -1985,6 +1985,7 @@ const fa: Partial<Translations> = {
   "activityLog.clearDayFilter": "پاک کردن فیلتر روز",
   "activityLog.runFilterChip": "نمایش یک اجرا",
   "activityLog.clearRunFilter": "پاک کردن فیلتر اجرا",
+  "activityLog.runGone": "این اجرا دیگر در تاریخچه نیست.",
   "activityLog.viaMcp": "{line} (از طریق MCP، {key})",
   "activityLog.viaMcpRevoked": "{line} (از طریق MCP، {key}، باطل‌شده)",
   "activityLog.viaMcpUnknownKey": "{line} (از طریق MCP)",

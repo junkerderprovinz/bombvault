@@ -1764,6 +1764,7 @@ const ro: Partial<Translations> = {
   "activityLog.clearDayFilter": "Șterge filtrul de zi",
   "activityLog.runFilterChip": "Se afișează o rulare",
   "activityLog.clearRunFilter": "Șterge filtrul de rulare",
+  "activityLog.runGone": "Această rulare nu mai este în istoric.",
   "activityLog.viaMcp": "{line} (prin MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (prin MCP, {key}, revocată)",
   "activityLog.viaMcpUnknownKey": "{line} (prin MCP)",

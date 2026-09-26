@@ -1985,6 +1985,7 @@ const lv: Partial<Translations> = {
   "activityLog.clearDayFilter": "Notīrīt dienas filtru",
   "activityLog.runFilterChip": "Rāda vienu izpildi",
   "activityLog.clearRunFilter": "Notīrīt izpildes filtru",
+  "activityLog.runGone": "Šīs izpildes vairs nav vēsturē.",
   "activityLog.viaMcp": "{line} (caur MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (caur MCP, {key}, atsaukta)",
   "activityLog.viaMcpUnknownKey": "{line} (caur MCP)",

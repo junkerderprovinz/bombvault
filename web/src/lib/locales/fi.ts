@@ -1761,6 +1761,7 @@ const fi: Partial<Translations> = {
   "activityLog.clearDayFilter": "Poista päiväsuodatin",
   "activityLog.runFilterChip": "Näytetään yksi ajo",
   "activityLog.clearRunFilter": "Poista ajosuodatin",
+  "activityLog.runGone": "Tätä ajoa ei ole enää historiassa.",
   "activityLog.viaMcp": "{line} (MCP:n kautta, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP:n kautta, {key}, kumottu)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP:n kautta)",

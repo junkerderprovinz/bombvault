@@ -1756,6 +1756,7 @@ const ru: Partial<Translations> = {
   "activityLog.clearDayFilter": "Сбросить фильтр по дню",
   "activityLog.runFilterChip": "Показан один запуск",
   "activityLog.clearRunFilter": "Сбросить фильтр запуска",
+  "activityLog.runGone": "Этого запуска больше нет в истории.",
   "activityLog.viaMcp": "{line} (через MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (через MCP, {key}, отозван)",
   "activityLog.viaMcpUnknownKey": "{line} (через MCP)",

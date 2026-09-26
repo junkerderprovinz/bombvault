@@ -1969,6 +1969,7 @@ const sr: Partial<Translations> = {
   "activityLog.clearDayFilter": "Очисти филтер дана",
   "activityLog.runFilterChip": "Приказано једно покретање",
   "activityLog.clearRunFilter": "Очисти филтер покретања",
+  "activityLog.runGone": "Овог покретања више нема у историји.",
   "activityLog.viaMcp": "{line} (преко MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (преко MCP, {key}, опозван)",
   "activityLog.viaMcpUnknownKey": "{line} (преко MCP)",

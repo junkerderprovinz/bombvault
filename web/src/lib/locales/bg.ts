@@ -1985,6 +1985,7 @@ const bg: Partial<Translations> = {
   "activityLog.clearDayFilter": "Изчисти филтъра за деня",
   "activityLog.runFilterChip": "Показва се едно изпълнение",
   "activityLog.clearRunFilter": "Изчисти филтъра за изпълнение",
+  "activityLog.runGone": "Това изпълнение вече не е в историята.",
   "activityLog.viaMcp": "{line} (през MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (през MCP, {key}, отменен)",
   "activityLog.viaMcpUnknownKey": "{line} (през MCP)",

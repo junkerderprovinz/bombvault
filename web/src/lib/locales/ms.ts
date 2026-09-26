@@ -1985,6 +1985,7 @@ const ms: Partial<Translations> = {
   "activityLog.clearDayFilter": "Kosongkan penapis hari",
   "activityLog.runFilterChip": "Menunjukkan satu larian",
   "activityLog.clearRunFilter": "Kosongkan penapis larian",
+  "activityLog.runGone": "Larian ini tiada lagi dalam sejarah.",
   "activityLog.viaMcp": "{line} (melalui MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (melalui MCP, {key}, dibatalkan)",
   "activityLog.viaMcpUnknownKey": "{line} (melalui MCP)",
