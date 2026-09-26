@@ -2,7 +2,9 @@
    Each mark draws in --place-* tokens: the dark set for a dark ground, the
    light set for a light one. A mark drawn in navy or black keeps its hue and
    saturation and is lightened on the dark ground, one in near-white is
-   darkened on the light ground, until it reads at 2:1 or better. */
+   darkened on the light ground, until it reads at 2:1 or better. On a lit
+   provider tile the mark takes the tile's ink (.glim-brand-tile in index.css),
+   so the tokens need no values for it. */
 
 :root,
 [data-theme="dark"] {
@@ -155,69 +157,6 @@
     --place-truenas-0: #0095d5;
     --place-unraid-0: #f15a2c;
   }
-}
-
-/* A hovered tile turns --carbon-tile-hover, a light grey in both themes, so
-   every mark takes a deeper value of its own hue that keeps 2.5:1 on it, as
-   the coin marks do in index.css. */
-.glim-coin-tile:not(.glim-active):hover {
-  --place-b2-0: #c31922;
-  --place-aws-0: #252f3e;
-  --place-aws-1: #8f5600;
-  --place-cloudflare-0: #9d4c09;
-  --place-wasabi-0: #017222;
-  --place-hetzner-0: #c70b2a;
-  --place-storj-0: #0050fa;
-  --place-idrive-0: #1167a7;
-  --place-idrive-1: #c61411;
-  --place-scaleway-0: #4f0599;
-  --place-ovh-0: #123f6d;
-  --place-digitalocean-0: #0061c2;
-  --place-ionos-0: #003d8f;
-  --place-contabo-0: #006b94;
-  --place-exoscale-0: #bf2419;
-  --place-vultr-0: #0061c6;
-  --place-googlecloud-0: #0d5ada;
-  --place-azure-0: #0065af;
-  --place-minio-0: #b92b44;
-  --place-seaweedfs-0: #106a89;
-  --place-seaweedfs-1: #0e689c;
-  --place-seaweedfs-2: #0158b3;
-  --place-seaweedfs-3: #0b6e7b;
-  --place-seaweedfs-4: #0a6d7c;
-  --place-seaweedfs-5: #0966ad;
-  --place-seaweedfs-6: #046d76;
-  --place-seaweedfs-7: #0c6c80;
-  --place-seaweedfs-8: #116b88;
-  --place-seaweedfs-9: #126b88;
-  --place-seaweedfs-10: #0c6c85;
-  --place-seaweedfs-11: #1b6a8d;
-  --place-seaweedfs-12: #0161b2;
-  --place-seaweedfs-13: #636363;
-  --place-garage-0: #000000;
-  --place-garage-1: #9b4d00;
-  --place-garage-2: #4e4e4e;
-  --place-ceph-0: #c70f1c;
-  --place-rustfs-0: #016a93;
-  --place-versity-0: #191b2a;
-  --place-nextcloud-0: #0068a0;
-  --place-owncloud-0: #041e42;
-  --place-opencloud-0: #000000;
-  --place-rclone-0: #356793;
-  --place-synology-0: #636365;
-  --place-qnap-0: #0c2e82;
-  --place-truenas-0: #006a98;
-  --place-unraid-0: #b5340c;
-}
-
-/* Our own logo is a picture with no tokens to deepen. The hovered tile is
-   light grey in both themes, so the dark theme swaps to the drawing for a
-   light ground there, whose grey body stays visible. */
-[data-theme="dark"] .glim-coin-tile:not(.glim-active):hover .glim-place-logo > img:first-child {
-  display: block;
-}
-[data-theme="dark"] .glim-coin-tile:not(.glim-active):hover .glim-place-logo > img:last-child {
-  display: none;
 }
 
 /* On an accent fill a brand colour is an unpredictable contrast, so every part

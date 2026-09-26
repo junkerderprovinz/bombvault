@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { ProviderGrid } from "./ProviderTile";
+import { placeTile } from "../placeMarks";
 import { I18nProvider, en } from "../../lib/i18n";
 import { setLabelMode } from "../../lib/controls";
 import type { CatalogProvider } from "../../lib/places";
@@ -74,13 +75,39 @@ describe("ProviderGrid", () => {
     expect(tiles()[2]!.querySelector("svg")?.getAttribute("width")).toBe("48");
   });
 
-  it("is the coin tile, with its grey hover", () => {
+  it("is the coin tile, lit in its brand's colour under the pointer", () => {
     grid();
-    for (const tile of tiles()) {
+    // The tiles in group order, as the first test reads them.
+    const ids = ["b2", "s3", "hetzner-os", "wasabi", "minio", "versitygw", "synology"];
+    for (const [i, tile] of tiles().entries()) {
+      const lit = placeTile(ids[i]!)!;
       expect(tile.className).toContain("glim-coin-tile");
-      expect(tile.className).toContain("hover:bg-carbon-tileHover");
+      expect(tile.className).toContain("glim-brand-tile");
+      expect(tile.className).not.toMatch(/transition|hover:bg-/);
+      expect(tile.style.getPropertyValue("--tile")).toBe(lit.color);
+      expect(tile.style.getPropertyValue("--tile-ink")).toBe(lit.ink);
       expect(tile.className).not.toMatch(/outline-none|outline-0/);
     }
+  });
+
+  it("gives a provider without a brand mark the hover one step up the ramp", () => {
+    render(
+      <I18nProvider>
+        <ProviderGrid providers={[p("s3-other", "self"), p("bombvault", "self")]} selected={null} onPick={vi.fn()} />
+      </I18nProvider>
+    );
+    for (const tile of tiles()) {
+      expect(tile.className).toContain("hover:bg-carbon-surface3");
+      expect(tile.className).not.toContain("glim-brand-tile");
+      expect(tile.style.getPropertyValue("--tile")).toBe("");
+    }
+  });
+
+  it("keeps the accent on the tile it came back from", () => {
+    grid(vi.fn(), "wasabi");
+    const picked = tiles()[3]!;
+    expect(picked.className).toContain("glim-active");
+    expect(picked.className).not.toContain("glim-brand-tile");
   });
 
   it("walks the tiles with the arrow keys, Home and End, across the groups", () => {
