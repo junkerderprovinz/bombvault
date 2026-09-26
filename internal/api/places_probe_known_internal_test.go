@@ -82,13 +82,7 @@ func TestAStoredPlaceIsProbedWithItsSecretsUnlessTheFormHoldsNewOnes(t *testing.
 func TestAStoredNextcloudIsProbedThroughTheRemoteItsAddressNames(t *testing.T) {
 	f := newPlacementFixture(t)
 	eng := newEnvEngine(f)
-	if err := f.svc.SetCloudCredSets([]CloudCredSet{davSet()}); err != nil {
-		t.Fatal(err)
-	}
-	place := f.storePlace(store.Place{
-		ID: davPlace, Name: "Cloud", Provider: "nextcloud", Kind: "webdav", Base: "rclone:" + places.RemoteName(davPlace) + ":bombvault",
-		Folders: map[string]string{"containers": "container"}, CredsRef: "dav", Enabled: true,
-	})
+	place := f.storeDavPlace()
 	addr := place.Base + "/container"
 	f.eng.opens[addr] = false
 
@@ -103,13 +97,7 @@ func TestAStoredNextcloudIsProbedThroughTheRemoteItsAddressNames(t *testing.T) {
 func TestAStoredNextcloudGivenANewUserIsProbedAtTheirFiles(t *testing.T) {
 	f := newPlacementFixture(t)
 	eng := newEnvEngine(f)
-	if err := f.svc.SetCloudCredSets([]CloudCredSet{davSet()}); err != nil {
-		t.Fatal(err)
-	}
-	place := f.storePlace(store.Place{
-		ID: davPlace, Name: "Cloud", Provider: "nextcloud", Kind: "webdav", Base: "rclone:" + places.RemoteName(davPlace) + ":bombvault",
-		Folders: map[string]string{"containers": "container"}, CredsRef: "dav", Enabled: true,
-	})
+	place := f.storeDavPlace()
 	addr := place.Base + "/container"
 	f.eng.opens[addr] = false
 

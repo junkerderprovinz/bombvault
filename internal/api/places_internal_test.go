@@ -858,13 +858,7 @@ func TestAPlaceWithASetOfItsOwnChangesItInPlace(t *testing.T) {
 
 func TestANextcloudPlaceGivenANewUserPointsAtTheirFiles(t *testing.T) {
 	f := newPlacementFixture(t)
-	if err := f.svc.SetCloudCredSets([]CloudCredSet{davSet()}); err != nil {
-		t.Fatal(err)
-	}
-	dav := f.storePlace(store.Place{
-		ID: davPlace, Name: "Cloud", Provider: "nextcloud", Kind: "webdav", Base: "rclone:" + places.RemoteName(davPlace) + ":bombvault",
-		Folders: map[string]string{"containers": "container"}, CredsRef: "dav", Enabled: true,
-	})
+	dav := f.storeDavPlace()
 	f.probeAnswers(places.ProbeResult{OK: true, Base: dav.Base})
 
 	res := f.do(http.MethodPatch, "/api/places/"+dav.ID, map[string]any{"fields": map[string]string{"user": "ben"}})
