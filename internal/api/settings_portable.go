@@ -778,16 +778,23 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 		return fmt.Errorf("the settings were not imported: %w", err)
 	}
 	// Read before the drop: a place whose base arrives redacted keeps the base
-	// it has here under the same id.
+	// it has here under the same id. A file without places rebuilds them only
+	// on an instance that was on places, since moving an instance onto places
+	// is the start's job.
 	prior, err := h.store.ListPlaces()
 	if err != nil {
 		return fmt.Errorf("the settings were not imported: %w", err)
 	}
+	here, err := h.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("the settings were not imported: %w", err)
+	}
+	rebuild := exp.Places == nil && (len(prior) > 0 || here.PlacesMigrated != 0)
 	// The steps below then write rows on no place, so none of the rules that
 	// guard a placed row gets in their way. The places come back at the end,
-	// from the file or, for a file without them, from the startup migration
-	// over what it imported; an apply that stops halfway leaves the next
-	// start to build them.
+	// from the file or from the migration over what it imported. An apply that
+	// stops before then leaves the instance on no places with the migration
+	// mark clear, running from its settings and rows as they are.
 	if err := h.store.DropPlaces(); err != nil {
 		return fmt.Errorf("the settings were not imported: %w", err)
 	}
@@ -879,9 +886,9 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 			return err
 		}
 	}
-	if exp.Places == nil {
+	if rebuild {
 		if err := h.svc.MigrateToPlaces(); err != nil {
-			return fmt.Errorf("the settings were imported, but the storage places could not be built from them; the next start tries again: %w", err)
+			return fmt.Errorf("the settings were imported, but the storage places could not be built from them, so this instance runs without places: %w", err)
 		}
 	}
 	return nil

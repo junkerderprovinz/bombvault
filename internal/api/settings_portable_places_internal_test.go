@@ -572,7 +572,7 @@ func TestAnEmptyPlacesBlockLeavesNoPlaces(t *testing.T) {
 		}
 	}
 	if s, err := f.st.GetSettings(); err != nil || s.PlacesMigrated == 0 {
-		t.Errorf("places_migrated = %d (err %v), want it set so the next start does not build places the file said are not there", s.PlacesMigrated, err)
+		t.Errorf("places_migrated = %d (err %v), want it set so the places migration does not build places the file said are not there", s.PlacesMigrated, err)
 	}
 }
 
@@ -834,5 +834,34 @@ func TestAnOlderFileRebuildsThePlacesFromItsRows(t *testing.T) {
 	}
 	if len(targets) != 1 || targets[0].PlaceID == "" {
 		t.Errorf("targets = %+v, want the imported B2 target on a place", targets)
+	}
+}
+
+// Moving an instance onto places is the start's job, so an older file leaves
+// an instance that has none as it found it.
+func TestAnOlderFileLeavesAnInstanceWithoutPlacesWithoutThem(t *testing.T) {
+	src := newPlacementFixture(t)
+	src.target("containers", "B2", b2Base+"/container")
+	exp := src.do(http.MethodGet, "/api/settings/export", nil)
+	delete(exp, "places")
+	delete(exp, "storageDomainPlaces")
+
+	dst := newPlacementFixture(t)
+	if res := dst.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+
+	if got, err := dst.st.ListPlaces(); err != nil || len(got) != 0 {
+		t.Errorf("places = %+v (err %v), want none", got, err)
+	}
+	if s, err := dst.st.GetSettings(); err != nil || s.PlacesMigrated != 0 {
+		t.Errorf("places_migrated = %d (err %v), want it clear", s.PlacesMigrated, err)
+	}
+	targets, err := dst.st.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(targets) != 1 || targets[0].PlaceID != "" {
+		t.Errorf("targets = %+v, want the imported B2 target on no place", targets)
 	}
 }

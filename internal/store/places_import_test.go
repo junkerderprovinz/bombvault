@@ -108,6 +108,6 @@ func TestDropPlacesClearsEveryPlaceAndTheMigrationMark(t *testing.T) {
 		t.Fatalf("row-1 = %+v (err %v), want it on no place", row, err)
 	}
 	if s, err := r.GetSettings(); err != nil || s.PlacesMigrated != 0 {
-		t.Fatalf("places_migrated = %d (err %v), want it clear so the next start builds places again", s.PlacesMigrated, err)
+		t.Fatalf("places_migrated = %d (err %v), want it clear so the places migration can build them again", s.PlacesMigrated, err)
 	}
 }
