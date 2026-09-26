@@ -387,6 +387,11 @@ type Service struct {
 	// placeProber is the place probe seam: nil uses ProbePlace; tests inject a
 	// fake that reaches no bucket. Accessed via placeProbeFn.
 	placeProber func(ctx context.Context, req ProbeRequest) (places.ProbeResult, error)
+
+	// placeTestMu guards placeTests, the outcome of each place's last test in
+	// this process, which the places list shows.
+	placeTestMu sync.Mutex
+	placeTests  map[string]PlaceTestStatus
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock

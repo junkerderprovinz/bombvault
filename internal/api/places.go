@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -283,7 +284,7 @@ func (s *Service) placeView(d placeData, p store.Place) (PlaceView, error) {
 			v.Usage.CopyDomains = append(v.Usage.CopyDomains, dom)
 		}
 	}
-	last, err := s.placeLastRun(rows)
+	last, err := s.placeLastTest(p.ID, rows)
 	v.LastTest = last
 	return v, err
 }
@@ -325,6 +326,22 @@ func (s *Service) placeLastRun(rows []store.OffsiteTarget) (*PlaceTestStatus, er
 		}
 	}
 	return last, nil
+}
+
+// placeLastTest is the newer of the place's last test in this process and
+// what the copy runs to its targets last said.
+func (s *Service) placeLastTest(id string, rows []store.OffsiteTarget) (*PlaceTestStatus, error) {
+	run, err := s.placeLastRun(rows)
+	if err != nil {
+		return nil, err
+	}
+	s.placeTestMu.Lock()
+	test, tested := s.placeTests[id]
+	s.placeTestMu.Unlock()
+	if tested && (run == nil || test.At >= run.At) {
+		return &test, nil
+	}
+	return run, nil
 }
 
 // placeCredsView shows the credentials the place's rows run with: its own
@@ -1025,5 +1042,89 @@ func (h *Handler) handleDeletePlace(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 	default:
 		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"removedTargets": removed}))
+	}
+}
+
+// testPlace probes every address the place stands for: each domain's folder,
+// and every row it holds under another ending. A local place is also held to
+// what the add window checks, since the folders of a share with nothing
+// mounted only look absent. The outcome is kept for the places list.
+func (s *Service) testPlace(ctx context.Context, id string) (places.ProbeResult, error) {
+	p, err := s.store.GetPlace(id)
+	if err != nil {
+		return places.ProbeResult{}, err
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return places.ProbeResult{}, err
+	}
+	rows, err := s.store.PlaceRows(id)
+	if err != nil {
+		return places.ProbeResult{}, err
+	}
+	mode, err := s.placeMode(settings, p)
+	if err != nil {
+		return places.ProbeResult{}, err
+	}
+	res := s.probeFolders(ctx, p.Base, p.Folders, mode)
+	reason := ""
+	fail := func(msg string) {
+		res.OK = false
+		if reason == "" {
+			reason = msg
+		}
+	}
+	if p.Kind == string(places.KindLocal) {
+		provider, _ := places.ProviderByID(p.Provider)
+		if err := s.localPlaceReady(placeProbe{provider: provider, base: p.Base}); err != nil {
+			fail(probeReason(err))
+		}
+	}
+	probed := map[string]bool{}
+	for _, d := range places.Domains {
+		if problem, failed := res.Errors[d]; failed {
+			fail(problem.Message)
+		}
+		if addr, ok := store.PlaceAddress(p, d, ""); ok {
+			probed[addr] = true
+		}
+	}
+	for _, r := range rows {
+		// A domain's primary row lies at the domain's folder, probed above.
+		if r.Role == store.RolePrimary || probed[r.Repo] {
+			continue
+		}
+		probed[r.Repo] = true
+		if at := s.probeFolder(ctx, r.Repo, mode); at.problem != nil {
+			fail(at.problem.Message)
+		}
+	}
+	if !res.OK {
+		res.Code, res.Error = placementCode(errPlaceProbeFailed), reason
+	}
+	s.recordPlaceTest(id, res)
+	return res, nil
+}
+
+func (s *Service) recordPlaceTest(id string, res places.ProbeResult) {
+	s.placeTestMu.Lock()
+	defer s.placeTestMu.Unlock()
+	if s.placeTests == nil {
+		s.placeTests = map[string]PlaceTestStatus{}
+	}
+	s.placeTests[id] = PlaceTestStatus{At: time.Now().Unix(), OK: res.OK, Error: res.Error, Source: "test"}
+}
+
+// handleTestPlace serves POST /api/places/{id}/test. The probe's result is the
+// answer.
+func (h *Handler) handleTestPlace(w http.ResponseWriter, r *http.Request) {
+	res, err := h.svc.testPlace(r.Context(), r.PathValue("id"))
+	switch {
+	case errors.Is(err, store.ErrPlaceNotFound):
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such place"})
+	case err != nil:
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+	default:
+		writeJSON(w, http.StatusOK, res)
 	}
 }

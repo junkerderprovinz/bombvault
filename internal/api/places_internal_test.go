@@ -1205,3 +1205,95 @@ func TestAPlaceRemovalWaitsForAnEditInProgress(t *testing.T) {
 		t.Fatalf("GetPlace = %v, want the place removed once the edit let go", err)
 	}
 }
+
+func TestTestingAPlaceProbesEveryAddressItStandsFor(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.Folders = map[string]string{"containers": "container", "vms": "vms", "flash": "flash"}
+	b2 := f.storePlace(p)
+	f.eng.ids["s3:https://s3.example.com/bucket/container"] = "r-ct"
+	f.eng.opens["s3:https://s3.example.com/bucket/vms"] = false
+	flash := "s3:https://s3.example.com/bucket/flash"
+	f.eng.opens[flash] = false
+	f.eng.openErr[flash] = errors.New("dial tcp 203.0.113.9:443: connect: connection refused")
+
+	res := f.do(http.MethodPost, "/api/places/"+b2.ID+"/test", nil)
+
+	folders := res["folders"].(map[string]any)
+	if res["ok"] != false || res["code"] != "place-probe-failed" || folders["containers"] != "repository" ||
+		folders["vms"] != "empty" || folders["flash"] != "error" || res["repoIds"].(map[string]any)["containers"] != "r-ct" {
+		t.Fatalf("POST test = %v", res)
+	}
+	last := placeByName(t, f.do(http.MethodGet, "/api/places", nil), "B2")["lastTest"].(map[string]any)
+	if last["source"] != "test" || last["ok"] != false || last["error"] != res["error"] {
+		t.Fatalf("lastTest = %v, want the failed test", last)
+	}
+}
+
+func TestTestingAPlaceOpensARowUnderAnotherEnding(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.Folders = map[string]string{"containers": "container"}
+	b2 := f.storePlace(p)
+	f.placeTarget(b2, "containers", "-copies")
+	f.eng.ids["s3:https://s3.example.com/bucket/container"] = "r-ct"
+	copies := "s3:https://s3.example.com/bucket/container-copies"
+	f.eng.opens[copies] = false
+	f.eng.openErr[copies] = errors.New("dial tcp 203.0.113.9:443: connect: connection refused")
+
+	res := f.do(http.MethodPost, "/api/places/"+b2.ID+"/test", nil)
+
+	if res["ok"] != false || res["code"] != "place-probe-failed" || res["folders"].(map[string]any)["containers"] != "repository" ||
+		!strings.Contains(res["error"].(string), "connection refused") {
+		t.Fatalf("POST test = %v, want the -copies target's failure", res)
+	}
+	if f.eng.opened[copies] == 0 {
+		t.Fatalf("the -copies target was never opened: %v", f.eng.opened)
+	}
+}
+
+func TestAPassedTestOutranksAnOlderFailedRun(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.Folders = map[string]string{"vms": "vms"}
+	b2 := f.storePlace(p)
+	target := f.placeTarget(b2, "vms", "")
+	f.eng.ids[target.Repo] = "r-vms"
+	id, err := f.st.RecordOffsiteRunForTarget("vms", target.ID, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.st.FinishOffsiteRun(id, false, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	if res := f.do(http.MethodPost, "/api/places/"+b2.ID+"/test", nil); res["ok"] != true || res["code"] != nil {
+		t.Fatalf("POST test = %v, want a passed test", res)
+	}
+	last := placeByName(t, f.do(http.MethodGet, "/api/places", nil), "B2")["lastTest"].(map[string]any)
+	if last["source"] != "test" || last["ok"] != true {
+		t.Fatalf("lastTest = %v, want the passed test over the run at 100", last)
+	}
+}
+
+func TestTestingAShareWithNothingMountedFails(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.storePlace(localPlace("NAS", "remotes/nas/bombvault"))
+	if err := os.MkdirAll(filepath.FromSlash(f.root+"/remotes/nas/bombvault"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	writeMountFixture(t, "/")
+
+	res := f.do(http.MethodPost, "/api/places/"+nas.ID+"/test", nil)
+
+	if res["ok"] != false || res["code"] != "place-probe-failed" || res["error"] != "nothing is mounted at this share; mount it on the server first" {
+		t.Fatalf("POST test = %v, want place-probe-failed naming the missing mount", res)
+	}
+}
+
+func TestAnUnknownPlaceCannotBeTested(t *testing.T) {
+	f := newPlacementFixture(t)
+	if code, res := f.doStatus(http.MethodPost, "/api/places/nosuchplace/test", nil); code != http.StatusNotFound || res["ok"] != false {
+		t.Fatalf("POST test of an unknown place = %d %v, want 404", code, res)
+	}
+}
