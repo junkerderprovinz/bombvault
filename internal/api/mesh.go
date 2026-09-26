@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -134,13 +135,14 @@ func (h *Handler) dropCredSet(id string) error {
 	return h.svc.SetCloudCredSets(slices.DeleteFunc(sets, func(s CloudCredSet) bool { return s.ID == id }))
 }
 
-// undoAcceptedOffer takes back the target and the credential set an accepted
-// offer wrote, once a later write of the same accept failed, and returns the
-// error to answer with. The credentials go only with the target, since a
-// target that stays behind would otherwise point at a set that is gone.
-func (h *Handler) undoAcceptedOffer(targetID, setID string, cause error) error {
-	if err := h.store.DeleteOffsiteTarget(targetID); err != nil {
-		return fmt.Errorf("%w; the target and its credentials are still there: %v", cause, err)
+// undoAcceptedOffer takes back the place, its target and the credential set
+// an accepted offer wrote, once a later write of the same accept failed, and
+// returns the error to answer with. The credentials go only with the place,
+// since a target that stays behind would otherwise point at a set that is
+// gone. Removing the place also empties the off-site field its target filled.
+func (h *Handler) undoAcceptedOffer(placeID, setID string, cause error) error {
+	if _, err := h.store.DeletePlaceIfUnused(placeID); err != nil {
+		return fmt.Errorf("%w; the target and its credentials are still there, and so is their place: %v", cause, err)
 	}
 	if err := h.dropCredSet(setID); err != nil {
 		return fmt.Errorf("%w; the credential set is still there: %v", cause, err)
@@ -148,10 +150,10 @@ func (h *Handler) undoAcceptedOffer(targetID, setID string, cause error) error {
 	return cause
 }
 
-// handleAcceptMeshOffer turns a pending offer into a credential set holding
-// the peer's REST credentials and an off-site target for the chosen domain
-// that uses it. Neither is probed first, just as when an admin creates them
-// by hand.
+// handleAcceptMeshOffer turns a pending offer into a place for the chosen
+// domain, with the peer's REST credentials as its credential set, and that
+// domain's target there. Nothing is probed first, just as when an admin
+// creates them by hand.
 func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) {
 	offer, ok, err := h.store.GetMeshOffer(r.PathValue("id"))
 	if err != nil {
@@ -186,52 +188,27 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	label := offer.From
-	if label == "" {
-		label = "mesh peer"
-	}
-	setID := newCredSetID()
-	sets, err := h.svc.CloudCredSets()
+	p, err := h.svc.offerPlace(offer, in.Domain, string(password))
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		placeFail(w, err)
 		return
 	}
-	sets = append(sets, CloudCredSet{
-		ID:   setID,
-		Name: "mesh: " + label,
-		CloudCreds: CloudCreds{
-			RESTUser:     offer.RESTUser,
-			RESTPassword: string(password),
-		},
-	})
-	if err := h.svc.SetCloudCredSets(sets); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-
-	target := store.OffsiteTarget{
-		Domain:   in.Domain,
-		Name:     "mesh: " + label,
-		Repo:     offer.Repo,
-		CredsRef: setID,
-		Enabled:  true,
-	}
-	stored, err := h.store.CreateOffsiteTarget(target)
+	stored, err := h.store.WriteDomainCopies(store.DomainCopiesWrite{Domain: in.Domain, PlaceID: p.ID})
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		writeJSON(w, http.StatusOK, failEnvelope(h.undoAcceptedOffer(p.ID, p.CredsRef, err)))
 		return
 	}
 	if in.AlsoExclude != nil {
 		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *in.AlsoExclude); err != nil {
-			placementFail(w, h.undoAcceptedOffer(stored.ID, setID, err), nil)
+			placementFail(w, h.undoAcceptedOffer(p.ID, p.CredsRef, err), nil)
 			return
 		}
 	}
 	if err := h.store.UpdateMeshOfferStatus(offer.ID, "accepted"); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(h.undoAcceptedOffer(stored.ID, setID, err)))
+		writeJSON(w, http.StatusOK, failEnvelope(h.undoAcceptedOffer(p.ID, p.CredsRef, err)))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
+	h.writePlaceAnswer(w, p.ID, map[string]any{"target": offsiteTargetToView(stored)})
 }
 
 // handleDeclineMeshOffer marks an offer declined. An unknown id answers 404.
@@ -350,4 +327,48 @@ func postMeshOffer(ctx context.Context, peerURL, token string, offer meshOfferRe
 		return errors.New("peer refused the offer (check its fleet token)")
 	}
 	return nil
+}
+
+// errOfferAddress refuses an offer whose repository no rest-server place can
+// spell, such as one written with a trailing slash.
+var errOfferAddress = errors.New("the offer's address is not one a rest-server place can hold")
+
+// offerPlace writes the place an accepted offer brings, with the peer's
+// rest-server login as its credential set, in one transaction. The place
+// serves only the offered domain, since the offer carries a user for that one
+// domain. It keeps every snapshot and has no caps: the peer's rest-server
+// usually runs append-only, where a forget fails.
+func (s *Service) offerPlace(offer store.MeshOffer, domain, password string) (store.Place, error) {
+	sp, ok := splitPlaceAddress(offer.Repo)
+	if !ok || sp.kind != places.KindREST {
+		return store.Place{}, errOfferAddress
+	}
+	all, err := s.store.ListPlaces()
+	if err != nil {
+		return store.Place{}, err
+	}
+	label := offer.From
+	if label == "" {
+		label = "mesh peer"
+	}
+	set := CloudCredSet{ID: newCredSetID(), Name: "mesh: " + label, Kind: string(places.KindREST),
+		CloudCreds: CloudCreds{RESTUser: offer.RESTUser, RESTPassword: password}}
+	p := store.Place{ID: newPlaceID(), Name: freePlaceName(all, set.Name), Provider: "bombvault", Kind: string(places.KindREST),
+		Base: sp.base, Folders: map[string]string{domain: sp.folder}, CredsRef: set.ID, OffPremises: true, Enabled: true}
+	return s.writePlace(store.PlaceWrite{Place: p}, func(sets []CloudCredSet) []CloudCredSet {
+		return append(sets, set)
+	})
+}
+
+// freePlaceName is want, or want with the first number that makes it a name
+// no place has.
+func freePlaceName(all []store.Place, want string) string {
+	taken := func(name string) bool {
+		return slices.ContainsFunc(all, func(p store.Place) bool { return strings.EqualFold(p.Name, name) })
+	}
+	name := want
+	for n := 2; taken(name); n++ {
+		name = fmt.Sprintf("%s %d", want, n)
+	}
+	return name
 }
