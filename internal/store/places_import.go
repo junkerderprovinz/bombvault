@@ -59,7 +59,7 @@ func (r *Repo) ReplacePlaces(in PlacesImport) error {
 }
 
 // DropPlaces removes every storage place with its home domains and row links
-// and clears places_migrated, so the startup migration builds places again
+// and clears places_migrated, so the places migration can build them again
 // from the rows as they are.
 func (r *Repo) DropPlaces() error {
 	r.settingsMu.Lock()
