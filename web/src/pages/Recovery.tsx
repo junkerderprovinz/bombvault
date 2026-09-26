@@ -61,6 +61,7 @@ import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 import { DiscoverFindings } from "../components/placement/DiscoverFindings";
 import { placementChanged } from "../lib/placementEvents";
+import { subscribePlaces } from "../lib/places";
 import { Toggle } from "../components/Toggle";
 
 type DiscoverResult = Awaited<ReturnType<typeof discover>>;
@@ -1285,13 +1286,6 @@ export default function Recovery() {
       if (res.ok) {
         window.dispatchEvent(new Event("bv:settings-changed"));
         setPreviewed(true);
-        // The rows may have moved a domain since the last discover, so the
-        // restore step cannot offer what was found at the old location.
-        setContainers([]);
-        setVMs([]);
-        setFileSets([]);
-        setDiscovered(null);
-        setRestoreAllResult(null);
         // For a new, empty location encryption is the user's choice, which the
         // save carries. Where the mode is detectable, this run overwrites it
         // and writes the result back.
@@ -1462,6 +1456,32 @@ export default function Recovery() {
   // Inline rather than a toast: it drives the step's pill, and the counts say
   // whether rows need a retry.
   const [restoreAllResult, setRestoreAllResult] = useState<{ ok: number; fail: number } | null>(null);
+
+  // A write to a place or a domain row can move where the backups lie. What
+  // Discover found at the old location goes, step 3 waits for another
+  // Connect & preview, and step 2 takes the config location the Self-Backup
+  // row points at; the newest read wins.
+  const locationRead = useRef(0);
+  useEffect(
+    () =>
+      subscribePlaces(() => {
+        setContainers([]);
+        setVMs([]);
+        setFileSets([]);
+        setDiscovered(null);
+        setRestoreAllResult(null);
+        setPreviewed(false);
+        const mine = ++locationRead.current;
+        getSettings()
+          .then((res) => {
+            if (!res.ok || mine !== locationRead.current) return;
+            const { configPath, configOffsite } = res.settings;
+            setSettings((prev) => (prev ? { ...prev, configPath, configOffsite } : prev));
+          })
+          .catch(() => undefined);
+      }),
+    []
+  );
 
   // A refused kit download, such as the 403 while no login password is set.
   const [kitError, setKitError] = useState<string | null>(null);
