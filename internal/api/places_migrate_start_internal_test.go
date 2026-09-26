@@ -102,3 +102,25 @@ func TestUnreadableCredentialsStopTheMoveBeforeAnythingIsWritten(t *testing.T) {
 		t.Fatal("the database was marked as moved")
 	}
 }
+
+// A start moves a mesh target off sort order 0 before anything else reads the
+// rows, so the move onto places does the same and a mesh place never owns the
+// domain's off-site field.
+func TestTheMoveOntoPlacesTakesAMeshTargetOffSortOrderZeroFirst(t *testing.T) {
+	f := newPlacementFixture(t)
+	mesh, err := f.st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "mesh: tower", Repo: "rest:http://tower:8000/bv/containers"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.acceptedOffer(mesh.Repo)
+
+	if err := f.svc.MigrateToPlaces(); err != nil {
+		t.Fatalf("MigrateToPlaces: %v", err)
+	}
+	if got := f.storedTarget(mesh.ID); got.PlaceID == "" || got.SortOrder == 0 {
+		t.Fatalf("mesh target = %+v, want it on a place behind sort order 0", got)
+	}
+	if field, ok, err := f.st.FieldOffsiteTarget("containers"); err != nil || ok {
+		t.Fatalf("containers field row = %+v, %v, want none", field, err)
+	}
+}
