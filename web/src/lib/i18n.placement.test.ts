@@ -19,6 +19,8 @@ const PREFIXES = [
   "saveWarning.",
   "timeline.",
   "discover.",
+  "places.",
+  "storageDomains.",
 ];
 
 const SINGLE_KEYS = new Set<string>([
@@ -30,6 +32,7 @@ const SINGLE_KEYS = new Set<string>([
 const RULE_321: Key[] = [
   "placement.rule321Met",
   "placement.rule321OneCopy",
+  "placement.rule321NoOffsite",
   "placement.rule321Unconfirmed",
 ];
 
