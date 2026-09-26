@@ -901,7 +901,7 @@ func TestAnOlderFileLeavesAnInstanceWithoutPlacesWithoutThem(t *testing.T) {
 	}
 }
 
-func TestAnImportThatCannotRebuildThePlacesLeavesThemToTheNextStart(t *testing.T) {
+func TestAnImportThatCannotRebuildThePlacesLeavesTheInstanceWithoutThem(t *testing.T) {
 	src := newPlacementFixture(t)
 	src.target("containers", "B2", b2Base+"/container")
 	exp := src.do(http.MethodGet, "/api/settings/export", nil)
@@ -920,21 +920,26 @@ func TestAnImportThatCannotRebuildThePlacesLeavesThemToTheNextStart(t *testing.T
 	}
 
 	res := dst.do(http.MethodPost, "/api/settings/import?apply=true", exp)
-	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, "until the next start builds them") {
-		t.Fatalf("import = %v, want a failure that leaves the places to the next start", res)
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, "so this instance runs without places: ") {
+		t.Fatalf("import = %v, want a failure that says the instance runs without places", res)
+	}
+	all, err := dst.st.ListPlaces()
+	if err != nil || len(all) != 0 {
+		t.Fatalf("places = %+v, %v, want none", all, err)
 	}
 
+	// The migration mark stays clear, so a later move still builds them.
 	if _, err := dst.db.Exec(`DROP TRIGGER fail_attach`); err != nil {
 		t.Fatal(err)
 	}
 	if err := dst.svc.MigrateToPlaces(); err != nil {
-		t.Fatalf("the next start: %v", err)
+		t.Fatalf("a later move: %v", err)
 	}
 	targets, err := dst.st.ListOffsiteTargets()
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(targets) != 1 || targets[0].PlaceID == "" {
-		t.Errorf("targets = %+v, want the imported B2 target on a place after the next start", targets)
+		t.Errorf("targets = %+v, want the imported B2 target on a place after a later move", targets)
 	}
 }
