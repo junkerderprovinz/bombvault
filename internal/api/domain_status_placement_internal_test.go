@@ -112,6 +112,37 @@ func TestATargetAtAPlaceOffThePremisesIsAnOffsiteCopy(t *testing.T) {
 	}
 }
 
+func TestTargetsInTheHouseAndOffItMakeAScheduledOffsiteDrill(t *testing.T) {
+	f := newPlacementFixture(t)
+	drillsOn(f)
+	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
+	f.linkRow(nas.ID, f.storePlace(nasKeller()), "containers", "")
+	f.target("containers", "B2", b2Containers)
+	f.container("nginx", "")
+
+	if d := f.domainStatus("containers"); !d.OffsiteDrillScheduled {
+		t.Fatal("B2 stands off the premises and takes its turn in the drill, so the off-site drill is scheduled")
+	}
+}
+
+func TestOnlyADomainTheDrillsJobCoversClaimsAScheduledOffsiteDrill(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.settings(func(s *store.Settings) {
+		s.ConfigEnabled = true
+		s.FilesEnabled = false
+		s.DrillsEnabled = true
+		s.OffsiteDrillsEnabled = true
+	})
+	f.target("config", "B2", "b2:bucket:config")
+	f.target("files", "B2", "b2:bucket:files")
+
+	for _, domain := range []string{"config", "files"} {
+		if d := f.domainStatus(domain); !d.OffsiteConfigured || d.OffsiteDrillScheduled {
+			t.Errorf("%s: configured %v, drill %v; want an off-site copy and no scheduled drill", domain, d.OffsiteConfigured, d.OffsiteDrillScheduled)
+		}
+	}
+}
+
 func TestOnlyCopiesToAnOffPremisesTargetMakeTheDomainConfigured(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
