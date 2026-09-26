@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { SelectField } from "../components/SelectField";
@@ -15,9 +15,8 @@ import { InfoBubble } from "../components/InfoBubble";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { AddPlaceDialog } from "../components/places/AddPlaceDialog";
-import { PlaceMark } from "../components/placeMarks";
+import { DomainRows } from "../components/places/DomainsCard";
 import { ToggleRow } from "./settings/shared";
-import { Selector } from "../components/Selector";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { fireAndWaitRun } from "../lib/backupWatch";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
@@ -62,7 +61,6 @@ import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 import { DiscoverFindings } from "../components/placement/DiscoverFindings";
 import { placementChanged } from "../lib/placementEvents";
-import { usePlaces } from "../lib/usePlaces";
 import { Toggle } from "../components/Toggle";
 
 type DiscoverResult = Awaited<ReturnType<typeof discover>>;
@@ -974,69 +972,12 @@ function ForeignRestoreCard({
   );
 }
 
-// StepDisclosure is the expander for step 3's two optional sections, the
-// off-site repo URLs and the storage places. A repo on a local path or on a
-// share mounted on Unraid needs neither: a place only brings the credentials
-// restic reads for a remote repo. The trigger is a one-item Selector in "many"
-// mode, the same disclosure mechanism as the per-container section chips, and
-// both start closed on every load.
-function StepDisclosure({
-  label,
-  tip,
-  gap = "gap-8",
-  children,
-}: {
-  label: string;
-  tip: string;
-  /** Gap between the chip and what it reveals. The default clears a Card's
-   *  heading notch, which sits centred on the card's top edge; plain fields
-   *  pass the step body's gap-2. */
-  gap?: string;
-  children: ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    // pt-3 on top of the step body's gap-2, so the chip clears what sits above.
-    <div className={`pt-3 flex flex-col ${gap}`}>
-      <Selector
-        items={[{ id: DISCLOSURE_ID, label, tip }]}
-        label={label}
-        select="many"
-        size="lg"
-        /* A rainbow hue encodes a position in a list, and a lone chip has
-           none, so it takes the StepCard's accent instead. */
-        hue={false}
-        active={open ? OPEN_SECTION : NO_SECTION}
-        onChange={() => setOpen((o) => !o)}
-      />
-      {open && children}
-    </div>
-  );
-}
-
-// Each chip is alone in its Selector, so one id and two shared sets serve
-// every StepDisclosure.
-const DISCLOSURE_ID = "sec";
-const OPEN_SECTION: ReadonlySet<string> = new Set([DISCLOSURE_ID]);
-const NO_SECTION: ReadonlySet<string> = new Set<string>();
-
-// PlacesDisclosure is step 3's storage places inside a StepDisclosure: the
-// places connected so far, and the window that connects another.
-export function PlacesDisclosure({ t, hostMountRoot }: { t: ReturnType<typeof useT>["t"]; hostMountRoot: string }) {
-  const places = usePlaces();
+// AddPlaceButton opens the Storage tab's add window, which connects the place a
+// domain's backups lie on when no row offers it yet.
+function AddPlaceButton({ t, hostMountRoot }: { t: ReturnType<typeof useT>["t"]; hostMountRoot: string }) {
   const [adding, setAdding] = useState(false);
   return (
-    <StepDisclosure label={t("recovery.places")} tip={t("recovery.placesHint")} gap="gap-2">
-      {places.length > 0 && (
-        <ul className="flex flex-wrap gap-2">
-          {places.map((p) => (
-            <li key={p.id} className="flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2.5 py-1 text-sm text-carbon-text">
-              <PlaceMark provider={p.provider} />
-              {p.name}
-            </li>
-          ))}
-        </ul>
-      )}
+    <>
       <Button
         label={t("places.add")}
         labelKey="places.add"
@@ -1045,7 +986,7 @@ export function PlacesDisclosure({ t, hostMountRoot }: { t: ReturnType<typeof us
         className="glim-btn-key self-start"
       />
       {adding && <AddPlaceDialog hostMountRoot={hostMountRoot} onClose={() => setAdding(false)} />}
-    </StepDisclosure>
+    </>
   );
 }
 
@@ -1197,8 +1138,9 @@ export default function Recovery() {
   const [readNote, setReadNote] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
 
-  // Step 2 keeps its own copy of the settings and saves through the same calls
-  // as the Settings page; a place is saved by the window that adds it.
+  // The page keeps its own copy of the settings for the config location of
+  // step 2 and the encryption choice of step 3, and saves through the same
+  // calls as the Settings page. Places and domain rows save themselves.
   const [settings, setSettings] = useState<Settings | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
   const [attachState, setAttachState] = useState<"idle" | "saving">("idle");
@@ -1320,8 +1262,9 @@ export default function Recovery() {
     // language switch without a remount.
   }, [t]);
 
-  // connectPreview saves the attach fields and re-runs checkReadable for step
-  // 1's pill. The success toast waits for that check to come back ok, since
+  // connectPreview saves the encryption choice and re-runs checkReadable for
+  // step 1's pill. Where the backups lie is up to the domain rows, which save
+  // themselves. The success toast waits for the check to come back ok, since
   // attaching an unreadable repo is no success.
   const connectPreview = useCallback(async () => {
     if (!settings) return;
@@ -1336,40 +1279,22 @@ export default function Recovery() {
       push(latest.error ?? t("config.loadSettingsFailed"), "fail");
       return;
     }
-    const base = latest.settings;
-    const patch: Partial<Settings> = {
-      containersPath: settings.containersPath,
-      vmsPath: settings.vmsPath,
-      flashPath: settings.flashPath,
-      filesPath: settings.filesPath,
-      containersOffsite: settings.containersOffsite,
-      vmsOffsite: settings.vmsOffsite,
-      flashOffsite: settings.flashOffsite,
-      filesOffsite: settings.filesOffsite,
-      encryptionEnabled: settings.encryptionEnabled,
-    };
-    const updated: Settings = { ...base, ...patch };
+    const updated: Settings = { ...latest.settings, encryptionEnabled: settings.encryptionEnabled };
     try {
       const res = await putSettings(updated);
       if (res.ok) {
-        // A field a place owns keeps the stored value, which base holds.
-        const kept = res.kept ?? [];
-        const stored: Partial<Settings> = Object.fromEntries(kept.map((key) => [key, base[key]]));
-        setSettings((prev) => ({ ...(prev ?? updated), ...patch, ...stored }));
-        if (kept.length > 0) push(t("recovery.placeKept"), "warn");
         window.dispatchEvent(new Event("bv:settings-changed"));
         setPreviewed(true);
-        // A new repo invalidates the discovered targets, so the restore step
-        // cannot offer the old repo's data.
+        // The rows may have moved a domain since the last discover, so the
+        // restore step cannot offer what was found at the old location.
         setContainers([]);
         setVMs([]);
         setFileSets([]);
         setDiscovered(null);
         setRestoreAllResult(null);
-        // Detection probes the configured locations, so it runs once the new
-        // paths are saved. The patch still carries encryptionEnabled because
-        // for a new, empty location it is the user's choice; where the mode is
-        // detectable, this run overwrites it and writes the result back.
+        // For a new, empty location encryption is the user's choice, which the
+        // save carries. Where the mode is detectable, this run overwrites it
+        // and writes the result back.
         await runEncryptionDetect();
         const state = await checkReadable();
         if (state === "ok") push(t("recovery.readable"), "success");
@@ -1776,8 +1701,8 @@ export default function Recovery() {
         {settings ? (
           <>
             {/* First in the card because it is the step's outcome: it turns
-                into the detected verdict once Connect & preview saves the
-                paths below. */}
+                into the detected verdict once Connect & preview checks the
+                places the rows below point at. */}
             <EncryptionStatus
               t={t}
               detection={encDetection}
@@ -1788,58 +1713,11 @@ export default function Recovery() {
               }
             />
 
-            <FolderBrowser
-              label={t("settings.containersPath")}
-              value={settings.containersPath}
-              hostMountRoot={hostMountRoot}
-              onChange={(v) => setSettings((prev) => (prev ? { ...prev, containersPath: v } : prev))}
-            />
-            <FolderBrowser
-              label={t("settings.vmsPath")}
-              value={settings.vmsPath}
-              hostMountRoot={hostMountRoot}
-              onChange={(v) => setSettings((prev) => (prev ? { ...prev, vmsPath: v } : prev))}
-            />
-            <FolderBrowser
-              label={t("settings.flashPath")}
-              value={settings.flashPath}
-              hostMountRoot={hostMountRoot}
-              onChange={(v) => setSettings((prev) => (prev ? { ...prev, flashPath: v } : prev))}
-            />
-            <FolderBrowser
-              label={t("settings.filesPath")}
-              value={settings.filesPath}
-              hostMountRoot={hostMountRoot}
-              onChange={(v) => setSettings((prev) => (prev ? { ...prev, filesPath: v } : prev))}
-            />
-
-            {/* gap-2 because plain fields have no notch to clear. */}
-            <StepDisclosure
-              label={t("settings.offsiteTitle")}
-              tip={t("settings.offsiteHint")}
-              gap="gap-2"
-            >
-              {([
-                ["containersOffsite", "nav.containers"],
-                ["vmsOffsite", "nav.vms"],
-                ["flashOffsite", "nav.flash"],
-                ["filesOffsite", "nav.files"],
-              ] as const).map(([key, label]) => (
-                <div key={key} className="flex flex-col gap-1">
-                  <label className="text-xs text-carbon-textSub">{t(label)}</label>
-                  <input
-                    value={settings[key]}
-                    spellCheck={false}
-                    onChange={(e) => setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))}
-                    placeholder="rest:http://host:8000/repo"
-                    dir="ltr"
-                    className={`${offsiteInput} text-start`}
-                  />
-                </div>
-              ))}
-            </StepDisclosure>
-
-            <PlacesDisclosure t={t} hostMountRoot={hostMountRoot} />
+            {/* The Storage tab's rows and add window, because a domain reads
+                its backups from the place chosen as Stored in and the server
+                keeps every path a place owns. */}
+            <DomainRows />
+            <AddPlaceButton t={t} hostMountRoot={hostMountRoot} />
 
             <div className="flex items-center gap-3 pt-1">
               <Button

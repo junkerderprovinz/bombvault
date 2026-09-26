@@ -372,13 +372,8 @@ export const en = {
     "With encryption on, losing your APP_KEY means losing your backups. Download the recovery kit and store it somewhere safe and offline.",
   "recovery.stored": "I've stored it safely",
 
-  "settings.containersPath": "Containers path",
-  "settings.vmsPath": "VMs path",
-  "settings.flashPath": "Flash path",
   "settings.restoreFolder": "Default restore folder",
   "settings.restoreFolderHint": "Where 'restore to a folder' extracts snapshots by default.",
-  "settings.offsiteTitle": "Off-site copy (optional)",
-  "settings.offsiteHint": "After each successful local backup, also replicate it to a second repo with restic copy. Enter a remote (rest:http://host:8000/repo, s3:…) or a local subpath; leave blank to disable. The local backup stays primary.",
   "source.label": "Source:",
   "source.local": "Local",
   "source.offsite": "Off-site",
@@ -1481,8 +1476,8 @@ export const en = {
   "recovery.configSkipped": "Skipped. Attach your backups manually below.",
   // Step 3 — attach your backups
   "recovery.step2": "Attach your backups",
-  "recovery.attachHint": "Point BombVault at your existing backups: a local path under the host mount, or an off-site repo (rest / S3 / B2 / sftp / rclone) with its credentials. Then connect to confirm.",
-  "recovery.credsSaveHint": "A path that belongs to a storage place is not changed here. To read backups from another place, add it below, choose it as Stored in under Settings, Storage, then connect & preview.",
+  "recovery.attachHint": "Point BombVault at your existing backups. On each domain's row, choose the place its backups lie on as Stored in, and the places that hold its copies under Copied to. A place no row offers yet, such as a share, a server or a cloud bucket, is connected with Add place.",
+  "recovery.credsSaveHint": "Adding a place and choosing on a row save at once. Connect & preview then checks that the backups can be read.",
   "recovery.connectPreview": "Connect & preview",
   // Encryption mode — DETECTED, not asserted. The repositories themselves say
   // whether they need the APP_KEY-derived password, so the common path (attach
@@ -1833,7 +1828,6 @@ export const en = {
   // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
   "settings.filesEnabled": "Folders",
   "settings.filesEnabledHint": "Back up arbitrary folders under your mounts as file sets, independent of the other domains.",
-  "settings.filesPath": "Folders path",
   "jobs.filesSection": "Folders",
   "jobs.filesIncludeHint": "Backs up every folder set with “include in schedule” enabled. Toggle each set below or on the Folders tab. With per-item schedules on, a set can carry its own cadence instead, which also takes it out of Backup Everything.",
   "jobs.noFileSetsIncluded": "No folder sets yet. Add them on the Folders tab.",
@@ -2280,12 +2274,10 @@ export const en = {
   "storageDomains.copyStarted": "Copying started. It runs in the background.",
   "storageDomains.copyFailed": "Copying could not start.",
   "cloud.credSets.placeOwned": "The credentials of this storage place. Change them in its details under Settings, Storage.",
-  "recovery.places": "Storage places (optional)",
-  "recovery.placesHint": "Connect the place your backups lie on, here or in the cloud. It is saved at once, and a domain reads its backups there once you choose the place as Stored in under Settings, Storage.",
   "placement.copyToHint": "A place that is not a copy target of this domain yet becomes one in the domain's row under Settings, Storage, Domains.",
   "storageDomains.unplacedTargets": "{list}, without a place",
   "storageDomains.unplacedTargetsHint": "The address of these targets fits no place, and they keep copying as before. Assign one to a place under Without a place to switch it here.",
-  "recovery.placeKept": "An address that belongs to a storage place stayed as it was. To read backups from another place, choose it as Stored in under Settings, Storage.",
+  "recovery.placeKept": "The location of the Self-Backup belongs to a storage place and stayed as it was. To restore from another place, choose it as Stored in on the Self-Backup row in step 3.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -2597,13 +2589,8 @@ export const de: Translations = {
     "Mit aktivierter Verschlüsselung bedeutet ein verlorener APP_KEY verlorene Backups. Lade das Recovery-Kit herunter und bewahre es sicher und offline auf.",
   "recovery.stored": "Sicher aufbewahrt",
 
-  "settings.containersPath": "Container-Pfad",
-  "settings.vmsPath": "VMs-Pfad",
-  "settings.flashPath": "Flash-Pfad",
   "settings.restoreFolder": "Standard-Restore-Ordner",
   "settings.restoreFolderHint": "Wohin 'in einen Ordner wiederherstellen' Snapshots standardmäßig entpackt.",
-  "settings.offsiteTitle": "Offsite-Kopie (optional)",
-  "settings.offsiteHint": "Nach jedem erfolgreichen lokalen Backup wird es zusätzlich per restic copy in ein zweites Repo repliziert. Ein Remote (rest:http://host:8000/repo, s3:…) oder einen lokalen Unterpfad angeben; leer lassen zum Deaktivieren. Das lokale Backup bleibt primär.",
   "source.label": "Quelle:",
   "source.local": "Lokal",
   "source.offsite": "Offsite",
@@ -3518,8 +3505,8 @@ export const de: Translations = {
   "recovery.configSkipped": "Übersprungen. Hänge deine Backups unten manuell an.",
   // Schritt 3 — Backups anhängen
   "recovery.step2": "Backups anhängen",
-  "recovery.attachHint": "Richte BombVault auf deine vorhandenen Backups aus: einen lokalen Pfad unter dem Host-Mount oder ein Off-site-Repo (rest / S3 / B2 / sftp / rclone) mit den zugehörigen Zugangsdaten. Verbinde dich dann, um es zu bestätigen.",
-  "recovery.credsSaveHint": "Ein Pfad, der zu einem Speicherort gehört, wird hier nicht geändert. Um Backups von einem anderen Ort zu lesen, füge ihn unten hinzu, wähle ihn unter Einstellungen, Speicher als „Gespeichert in“ und klicke dann „Verbinden & prüfen“.",
+  "recovery.attachHint": "Richte BombVault auf deine vorhandenen Backups aus. Wähle in der Zeile jeder Domäne den Ort, an dem ihre Backups liegen, als „Gespeichert in“ und unter „Kopiert nach“ die Orte mit ihren Kopien. Einen Ort, den noch keine Zeile anbietet, etwa eine Freigabe, einen Server oder einen Cloud-Bucket, verbindest du mit „Ort hinzufügen“.",
+  "recovery.credsSaveHint": "Ein hinzugefügter Ort und eine Wahl in einer Zeile sind sofort gespeichert. „Verbinden & prüfen“ testet danach, ob sich die Backups lesen lassen.",
   "recovery.connectPreview": "Verbinden & prüfen",
   // Verschlüsselungsmodus — ERKANNT, nicht behauptet. Die Repositories sagen
   // selbst, ob sie das aus dem APP_KEY abgeleitete Passwort brauchen. Der
@@ -3855,7 +3842,6 @@ export const de: Translations = {
   // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
   "settings.filesEnabled": "Ordner",
   "settings.filesEnabledHint": "Beliebige Ordner unter deinen Mounts als Datei-Sets sichern, unabhängig von den anderen Domänen.",
-  "settings.filesPath": "Ordner-Pfad",
   "jobs.filesSection": "Ordner",
   "jobs.filesIncludeHint": "Sichert jedes Ordner-Set mit aktiviertem „Im Zeitplan einschließen“, pro Set unten oder im Ordner-Tab umschaltbar. Mit Zeitplänen pro Element kann ein Set stattdessen einen eigenen Rhythmus tragen, der es auch aus „Alles sichern“ herausnimmt.",
   "jobs.noFileSetsIncluded": "Noch keine Ordner-Sets. Füge sie im Ordner-Tab hinzu.",
@@ -4280,12 +4266,10 @@ export const de: Translations = {
   "storageDomains.copyStarted": "Kopieren gestartet. Es läuft im Hintergrund weiter.",
   "storageDomains.copyFailed": "Kopieren konnte nicht starten.",
   "cloud.credSets.placeOwned": "Die Zugangsdaten dieses Speicherorts. Du änderst sie in seinen Details unter Einstellungen, Speicher.",
-  "recovery.places": "Speicherorte (optional)",
-  "recovery.placesHint": "Verbinde den Ort, an dem deine Backups liegen, hier im Haus oder in der Cloud. Er ist sofort gespeichert, und eine Domäne liest ihre Backups dort, sobald du den Ort unter Einstellungen, Speicher als „Gespeichert in“ wählst.",
   "placement.copyToHint": "Ein Ort, der noch kein Kopieziel dieser Domäne ist, wird es in der Zeile der Domäne unter Einstellungen, Speicher, Domänen.",
   "storageDomains.unplacedTargets": "{list}, ohne Ort",
   "storageDomains.unplacedTargetsHint": "Die Adresse dieser Ziele passt zu keinem Ort, und sie kopieren weiter wie bisher. Ordne eines unter „Ohne Ort“ einem Ort zu, um es hier zu schalten.",
-  "recovery.placeKept": "Eine Adresse, die zu einem Speicherort gehört, ist geblieben, wie sie war. Um Backups von einem anderen Ort zu lesen, wähle ihn unter Einstellungen, Speicher als „Gespeichert in“.",
+  "recovery.placeKept": "Der Ort des Selbst-Backups gehört zu einem Speicherort und ist geblieben, wie er war. Um von einem anderen Ort wiederherzustellen, wähle ihn in Schritt 3 in der Zeile „Selbst-Backup“ als „Gespeichert in“.",
 };
 
 // ---------------------------------------------------------------------------
