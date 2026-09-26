@@ -202,7 +202,7 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 }
 
 // handleUpdateOffsiteTarget replaces the target named in the path, keeping its
-// id and creation time.
+// id and creation time, and its sort order when the body has none.
 func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	existing, ok, err := h.store.GetOffsiteTarget(id)
@@ -214,13 +214,26 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such off-site target"})
 		return
 	}
-	var v offsiteTargetView
+	var v struct {
+		offsiteTargetView
+		SortOrder *int `json:"sortOrder"`
+	}
 	if !decodeBody(w, r, &v) {
 		return
 	}
 	t := v.toStoreTarget()
+	t.SortOrder = existing.SortOrder
+	if v.SortOrder != nil {
+		t.SortOrder = *v.SortOrder
+	}
 	if msg := validateOffsiteTargetInput(t); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	// The primary keeps its 0; any other target moved there would leave two
+	// rows at 0, and the settings sync could rewrite the wrong one.
+	if t.SortOrder < 1 && t.SortOrder != existing.SortOrder {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "sortOrder must be 1 or higher: 0 is the primary target, and the off-site setting in Settings manages it"})
 		return
 	}
 	// Checked only when the request moves the target, as in

@@ -153,6 +153,74 @@ func TestCreateOffsiteTargetRefusesPrimarySortOrder(t *testing.T) {
 	}
 }
 
+// putOffsiteTarget sends body to the update route for id and returns the
+// envelope.
+func putOffsiteTarget(t *testing.T, h *Handler, id, body string) map[string]any {
+	t.Helper()
+	req := jsonReq(http.MethodPut, "/api/offsite/targets/"+id, bytes.NewReader([]byte(body)))
+	req.SetPathValue("id", id)
+	rec := httptest.NewRecorder()
+	h.handleUpdateOffsiteTarget(rec, req)
+	return decodeEnvelope(t, rec)
+}
+
+// An additional target moved onto sort order 0 would sit next to the primary,
+// and the next settings save could take it for the primary and rewrite it.
+func TestUpdateOffsiteTargetRefusesMovingOntoPrimarySortOrder(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	extra, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Second", Repo: "s3:c2", Enabled: true, SortOrder: 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, order := range []string{"0", "-1"} {
+		env := putOffsiteTarget(t, h, extra.ID, `{"domain":"containers","name":"Second","repo":"s3:c2","enabled":true,"sortOrder":`+order+`}`)
+		if env["ok"] == true {
+			t.Fatalf("sortOrder %s: want a refusal, got %v", order, env)
+		}
+	}
+	got, _, err := st.GetOffsiteTarget(extra.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.SortOrder != 2 {
+		t.Fatalf("a refused update moved the target to sort order %d", got.SortOrder)
+	}
+}
+
+// The off-site wizard stores the credential set on the primary through this
+// route and sends the row back with its sort order 0.
+func TestUpdateOffsiteTargetKeepsEditingThePrimary(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	primary, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Primary", Repo: "s3:c", Enabled: true, SortOrder: 0})
+	if err != nil {
+		t.Fatal(err)
+	}
+	env := putOffsiteTarget(t, h, primary.ID, `{"domain":"containers","name":"Primary","repo":"s3:c","credsRef":"cs1","enabled":true,"sortOrder":0}`)
+	if env["ok"] != true {
+		t.Fatalf("editing the primary was refused: %v", env)
+	}
+	if got := env["target"].(map[string]any); got["credsRef"] != "cs1" || got["sortOrder"] != float64(0) {
+		t.Fatalf("the primary did not keep its edit and its place: %v", got)
+	}
+}
+
+// A body without a sort order leaves the target where it is instead of moving
+// it onto the primary's 0.
+func TestUpdateOffsiteTargetWithoutSortOrderKeepsItsPlace(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	extra, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Second", Repo: "s3:c2", Enabled: true, SortOrder: 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	env := putOffsiteTarget(t, h, extra.ID, `{"domain":"containers","name":"Renamed","repo":"s3:c2","enabled":true}`)
+	if env["ok"] != true {
+		t.Fatalf("update not ok: %v", env)
+	}
+	if got := env["target"].(map[string]any); got["name"] != "Renamed" || got["sortOrder"] != float64(2) {
+		t.Fatalf("want the new name at sort order 2, got %v", got)
+	}
+}
+
 func TestUpdateOffsiteTargetMissing(t *testing.T) {
 	h, _ := newCRUDHandler(t)
 	body, _ := json.Marshal(offsiteTargetView{Domain: "containers", Repo: "s3:x"})
