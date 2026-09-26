@@ -4,6 +4,7 @@ import (
 	"context"
 	"maps"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/places"
@@ -96,5 +97,28 @@ func TestAStoredNextcloudIsProbedThroughTheRemoteItsAddressNames(t *testing.T) {
 	}
 	if env := eng.env(addr); !slices.Equal(env, davEnv(place.ID)) {
 		t.Fatalf("env = %v\nwant %v", env, davEnv(place.ID))
+	}
+}
+
+func TestAStoredNextcloudGivenANewUserIsProbedAtTheirFiles(t *testing.T) {
+	f := newPlacementFixture(t)
+	eng := newEnvEngine(f)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{davSet()}); err != nil {
+		t.Fatal(err)
+	}
+	place := f.storePlace(store.Place{
+		ID: davPlace, Name: "Cloud", Provider: "nextcloud", Kind: "webdav", Base: "rclone:" + places.RemoteName(davPlace) + ":bombvault",
+		Folders: map[string]string{"containers": "container"}, CredsRef: "dav", Enabled: true,
+	})
+	addr := place.Base + "/container"
+	f.eng.opens[addr] = false
+
+	if _, err := f.svc.ProbePlace(context.Background(), ProbeRequest{PlaceID: place.ID, Fields: map[string]string{"user": "ben"}}); err != nil {
+		t.Fatal(err)
+	}
+	prefix := "RCLONE_CONFIG_" + strings.ToUpper(places.RemoteName(place.ID)) + "_"
+	env := eng.env(addr)
+	if !slices.Contains(env, prefix+"URL=https://cloud.example.com/remote.php/dav/files/ben/") || !slices.Contains(env, prefix+"USER=ben") {
+		t.Fatalf("env = %v, want ben and his files", env)
 	}
 }

@@ -245,7 +245,8 @@ func (s *Service) newPlaceProbe(req ProbeRequest) (placeProbe, error) {
 	return pr, nil
 }
 
-// overlayCreds takes each value typed into the form over the stored one.
+// overlayCreds takes each value typed into the form over the stored one. A
+// new WebDAV user without a new URL gets the stored URL moved to their files.
 func overlayCreds(stored, typed places.Creds) places.Creds {
 	return places.Creds{
 		S3KeyID:        cmp.Or(typed.S3KeyID, stored.S3KeyID),
@@ -254,7 +255,7 @@ func overlayCreds(stored, typed places.Creds) places.Creds {
 		S3StorageClass: cmp.Or(typed.S3StorageClass, stored.S3StorageClass),
 		RESTUser:       cmp.Or(typed.RESTUser, stored.RESTUser),
 		RESTPassword:   cmp.Or(typed.RESTPassword, stored.RESTPassword),
-		WebDAVURL:      cmp.Or(typed.WebDAVURL, stored.WebDAVURL),
+		WebDAVURL:      cmp.Or(typed.WebDAVURL, places.WebDAVURLForUser(stored.WebDAVURL, stored.WebDAVUser, typed.WebDAVUser)),
 		WebDAVVendor:   cmp.Or(typed.WebDAVVendor, stored.WebDAVVendor),
 		WebDAVUser:     cmp.Or(typed.WebDAVUser, stored.WebDAVUser),
 		WebDAVPass:     cmp.Or(typed.WebDAVPass, stored.WebDAVPass),
