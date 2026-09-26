@@ -2,6 +2,7 @@ package schedule
 
 import (
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -113,15 +114,17 @@ func TestConfigJobScheduledAndExcludedFromDrills(t *testing.T) {
 	drillCfg := store.Settings{
 		ConfigEnabled:        true,
 		ConfigSchedule:       "daily 03:30",
-		ConfigOffsite:        "rclone:remote:bombvault-config",
 		VMsEnabled:           true,
-		VMsOffsite:           "rclone:remote:bombvault-vms",
 		DrillsEnabled:        true,
 		DrillsSchedule:       "weekly Sun 05:00",
 		OffsiteDrillsEnabled: true,
 	}
+	drills := drillScheduler(targetRows{
+		"config": {offsiteTarget("config", "k1", true)},
+		"vms":    {offsiteTarget("vms", "v1", true)},
+	}, nil, nil)
 	var haveVMDr bool
-	for _, tk := range drillTasks(drillCfg) {
+	for _, tk := range drills.drillTasks(drillCfg) {
 		if tk.kind == "dr" && tk.domain == "config" {
 			t.Fatal("config must be excluded from DR drills")
 		}
@@ -130,7 +133,7 @@ func TestConfigJobScheduledAndExcludedFromDrills(t *testing.T) {
 		}
 	}
 	if !haveVMDr {
-		t.Fatal("expected a {vms, offsite, dr} task under this settings shape; config's exclusion should not depend on vms also being excluded")
+		t.Fatal("expected a vms dr task under this settings shape; config's exclusion should not depend on vms also being excluded")
 	}
 
 	var haveConfigSubset bool
@@ -229,44 +232,33 @@ func TestFilesJobScheduledWithOffsiteEntry(t *testing.T) {
 }
 
 // TestFilesDrillTasksLocalSubsetAndOffsiteDR checks that an enabled files domain
-// gets the local subset check, plus a dr drill once an off-site repo is set and
+// gets the local subset check, plus a dr drill once it has an off-site target and
 // off-site drills are on.
 func TestFilesDrillTasksLocalSubsetAndOffsiteDR(t *testing.T) {
-	has := func(tasks []drillTask, want drillTask) bool {
-		for _, tk := range tasks {
-			if tk == want {
-				return true
-			}
-		}
-		return false
-	}
-
 	base := store.Settings{
 		FilesEnabled:   true,
 		FilesSchedule:  "daily 03:00",
 		DrillsEnabled:  true,
 		DrillsSchedule: "weekly Sun 05:00",
 	}
+	subset := drillTask{domain: "files", source: "local", kind: "subset"}
+	dr := drillTask{domain: "files", source: "offsite:d1", kind: "dr", targetID: "d1"}
 
-	tasks := drillTasks(base)
-	if !has(tasks, drillTask{domain: "files", source: "local", kind: "subset"}) {
-		t.Fatalf("expected {files, local, subset} drill task, got %v", tasks)
+	tasks := drillScheduler(targetRows{}, nil, nil).drillTasks(base)
+	if !slices.Contains(tasks, subset) {
+		t.Fatalf("expected %v, got %v", subset, tasks)
 	}
 	for _, tk := range tasks {
 		if tk.domain == "files" && tk.kind == "dr" {
-			t.Fatalf("files must not get a DR task without an off-site repo: %v", tasks)
+			t.Fatalf("files must not get a DR task without an off-site target: %v", tasks)
 		}
 	}
 
 	withOff := base
-	withOff.FilesOffsite = "rclone:remote:bombvault-files"
 	withOff.OffsiteDrillsEnabled = true
-	tasks = drillTasks(withOff)
-	if !has(tasks, drillTask{domain: "files", source: "local", kind: "subset"}) {
-		t.Fatalf("expected {files, local, subset} drill task, got %v", tasks)
-	}
-	if !has(tasks, drillTask{domain: "files", source: "offsite", kind: "dr"}) {
-		t.Fatalf("expected {files, offsite, dr} drill task with FilesOffsite set, got %v", tasks)
+	tasks = drillScheduler(targetRows{"files": {offsiteTarget("files", "d1", true)}}, nil, nil).drillTasks(withOff)
+	if !slices.Contains(tasks, subset) || !slices.Contains(tasks, dr) {
+		t.Fatalf("expected %v and %v, got %v", subset, dr, tasks)
 	}
 }
 

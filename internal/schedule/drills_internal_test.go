@@ -1,89 +1,235 @@
 package schedule
 
 import (
+	"errors"
+	"slices"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestDrillTasks checks the scheduled drills: a local "subset" integrity check
-// per enabled domain, plus an off-site "dr" drill for containers, VMs and flash
-// when off-site is configured.
-func TestDrillTasks(t *testing.T) {
-	base := store.Settings{
+// drillSettings switches on every domain and both kinds of drill, the way a
+// box that drills everything is set up.
+func drillSettings() store.Settings {
+	return store.Settings{
 		ContainersEnabled:    true,
 		VMsEnabled:           true,
 		FlashEnabled:         true,
-		OffsiteDrillsEnabled: true, // the default
+		ConfigEnabled:        true,
+		FilesEnabled:         true,
+		DrillsEnabled:        true,
+		OffsiteDrillsEnabled: true,
+		DrillsSchedule:       "daily 03:00",
+	}
+}
+
+func offsiteTarget(domain, id string, enabled bool) store.OffsiteTarget {
+	return store.OffsiteTarget{ID: id, Domain: domain, Name: id, Repo: "s3:" + id, Enabled: enabled}
+}
+
+// targetRows answers the drills job's target listing from a fixed table.
+type targetRows map[string][]store.OffsiteTarget
+
+func (r targetRows) list(domain string) ([]store.OffsiteTarget, error) {
+	return r[domain], nil
+}
+
+func drillScheduler(rows targetRows, jobRuns JobRunStore, drillFn func(domain, source, kind string) error) *Scheduler {
+	sc := New(func(string) error { return nil }, func() ([]store.Target, error) { return nil, nil })
+	if jobRuns != nil {
+		sc.SetJobRunStore(jobRuns)
+	}
+	sc.SetDrillJob(drillFn, rows.list)
+	return sc
+}
+
+// drillPass registers the drills entry from settings, fires it once the way
+// cron does, and returns the sources of the DR drills it ran.
+func drillPass(t *testing.T, sc *Scheduler, settings store.Settings, drilled *[]string) []string {
+	t.Helper()
+	if err := sc.Reload(settings); err != nil {
+		t.Fatalf("Reload: %v", err)
+	}
+	before := len(*drilled)
+	for _, e := range sc.entries {
+		if e.job == "drill" {
+			sc.c.Entry(e.id).WrappedJob.Run()
+		}
+	}
+	return (*drilled)[before:]
+}
+
+// age moves every stored time back by d. Turns are stamped to the second, and
+// passes a test runs back to back would otherwise share one.
+func (f *fakeJobRuns) age(d time.Duration) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for job, at := range f.at {
+		f.at[job] = at.Add(-d)
+	}
+}
+
+func recordDR(drilled *[]string, err error) func(domain, source, kind string) error {
+	return func(_, source, kind string) error {
+		if kind == "dr" {
+			*drilled = append(*drilled, source)
+		}
+		return err
+	}
+}
+
+func TestDrillTargetsAreTheDomainsSwitchedOnTargets(t *testing.T) {
+	b2 := offsiteTarget("containers", "b2", true)
+	nas := offsiteTarget("containers", "nas", false)
+	hetzner := offsiteTarget("containers", "hetzner", true)
+	rows := []store.OffsiteTarget{b2, nas, hetzner}
+
+	got := DrillTargets(drillSettings(), "containers", rows)
+	if len(got) != 2 || got[0].ID != "b2" || got[1].ID != "hetzner" {
+		t.Fatalf("drill targets %+v, want b2 and hetzner in their order", got)
 	}
 
-	t.Run("subset per enabled domain, no dr without off-site", func(t *testing.T) {
-		got := drillTasks(base)
-		subset := map[string]bool{}
-		for _, tk := range got {
-			if tk.kind == "dr" {
-				t.Fatalf("no dr task expected without an off-site repo, got %+v", tk)
-			}
+	for name, change := range map[string]func(*store.Settings){
+		"drills off":         func(s *store.Settings) { s.DrillsEnabled = false },
+		"off-site drill off": func(s *store.Settings) { s.OffsiteDrillsEnabled = false },
+		"domain off":         func(s *store.Settings) { s.ContainersEnabled = false },
+	} {
+		s := drillSettings()
+		change(&s)
+		if got := DrillTargets(s, "containers", rows); len(got) != 0 {
+			t.Errorf("%s: drill targets %+v, want none", name, got)
+		}
+	}
+	if got := DrillTargets(drillSettings(), "config", []store.OffsiteTarget{offsiteTarget("config", "b2", true)}); len(got) != 0 {
+		t.Errorf("config drill targets %+v, want none", got)
+	}
+}
+
+func TestDrillTasks(t *testing.T) {
+	rows := targetRows{
+		"containers": {offsiteTarget("containers", "c1", true)},
+		"vms":        {offsiteTarget("vms", "v1", true)},
+		"flash":      {offsiteTarget("flash", "f1", true)},
+		"files":      {offsiteTarget("files", "d1", true)},
+		"config":     {offsiteTarget("config", "k1", true)},
+	}
+	sc := drillScheduler(rows, nil, nil)
+
+	t.Run("a local subset check per enabled domain", func(t *testing.T) {
+		var subset []string
+		for _, tk := range sc.drillTasks(drillSettings()) {
 			if tk.kind == "subset" && tk.source == "local" {
-				subset[tk.domain] = true
+				subset = append(subset, tk.domain)
 			}
 		}
-		for _, d := range []string{"containers", "vms", "flash"} {
-			if !subset[d] {
-				t.Fatalf("expected a local subset drill for %q, got %+v", d, got)
+		if !slices.Equal(subset, []string{"containers", "vms", "flash", "config", "files"}) {
+			t.Fatalf("subset drills for %v, want every enabled domain", subset)
+		}
+	})
+
+	t.Run("one DR drill per domain with a target, though its off-site field is empty", func(t *testing.T) {
+		var dr []string
+		for _, tk := range sc.drillTasks(drillSettings()) {
+			if tk.kind == "dr" {
+				dr = append(dr, tk.domain+" "+tk.source)
+			}
+		}
+		want := []string{"containers offsite:c1", "vms offsite:v1", "flash offsite:f1", "files offsite:d1"}
+		if !slices.Equal(dr, want) {
+			t.Fatalf("DR drills %v, want %v", dr, want)
+		}
+	})
+
+	t.Run("no DR drill without a switched-on target", func(t *testing.T) {
+		sc := drillScheduler(targetRows{"flash": {offsiteTarget("flash", "f1", false)}}, nil, nil)
+		for _, tk := range sc.drillTasks(drillSettings()) {
+			if tk.kind == "dr" {
+				t.Fatalf("unexpected DR drill %+v", tk)
 			}
 		}
 	})
 
-	t.Run("off-site dr for containers + vms + flash", func(t *testing.T) {
-		s := base
-		s.ContainersOffsite = "rest:http://192.168.20.9:8000/containers"
-		s.FlashOffsite = "rest:http://192.168.20.9:8000/flash"
-		s.VMsOffsite = "rest:http://192.168.20.9:8000/vms"
-		dr := map[string]bool{}
-		for _, tk := range drillTasks(s) {
-			if tk.kind != "dr" {
-				continue
-			}
-			if tk.source != "offsite" {
-				t.Fatalf("a dr task must be off-site, got %+v", tk)
-			}
-			dr[tk.domain] = true
-		}
-		if !dr["containers"] || !dr["flash"] || !dr["vms"] {
-			t.Fatalf("containers + flash + vms must each get an off-site dr drill, got %+v", dr)
-		}
-	})
-
-	t.Run("a disabled domain gets neither subset nor dr", func(t *testing.T) {
-		s := base
+	t.Run("a switched-off domain gets no drill at all", func(t *testing.T) {
+		s := drillSettings()
 		s.ContainersEnabled = false
-		s.ContainersOffsite = "rest:http://192.168.20.9:8000/containers" // off-site set but domain off
-		for _, tk := range drillTasks(s) {
+		for _, tk := range sc.drillTasks(s) {
 			if tk.domain == "containers" {
-				t.Fatalf("a disabled domain must yield no drill task, got %+v", tk)
+				t.Fatalf("a switched-off domain must yield no drill task, got %+v", tk)
 			}
 		}
 	})
 
-	t.Run("OffsiteDrillsEnabled false omits dr tasks but keeps local subset", func(t *testing.T) {
-		s := base
+	t.Run("the off-site drill switch leaves the local checks", func(t *testing.T) {
+		s := drillSettings()
 		s.OffsiteDrillsEnabled = false
-		s.ContainersOffsite = "rest:http://192.168.20.9:8000/containers"
-		s.FlashOffsite = "rest:http://192.168.20.9:8000/flash"
-		subset := map[string]bool{}
-		for _, tk := range drillTasks(s) {
+		tasks := sc.drillTasks(s)
+		for _, tk := range tasks {
 			if tk.kind == "dr" {
-				t.Fatalf("no off-site dr task expected when OffsiteDrillsEnabled is false, got %+v", tk)
-			}
-			if tk.kind == "subset" && tk.source == "local" {
-				subset[tk.domain] = true
+				t.Fatalf("no DR drill expected with off-site drills off, got %+v", tk)
 			}
 		}
-		for _, d := range []string{"containers", "vms", "flash"} {
-			if !subset[d] {
-				t.Fatalf("local subset drill for %q must remain when off-site DR is opted out", d)
-			}
+		if len(tasks) != 5 {
+			t.Fatalf("tasks %+v, want the five local subset checks", tasks)
 		}
 	})
+}
+
+func TestTheDrillsJobTakesADomainsTargetsInTurn(t *testing.T) {
+	rows := targetRows{"flash": {
+		offsiteTarget("flash", "b2", true),
+		offsiteTarget("flash", "nas", false),
+		offsiteTarget("flash", "hetzner", true),
+	}}
+	jr := newFakeJobRuns()
+	var drilled []string
+	sc := drillScheduler(rows, jr, recordDR(&drilled, nil))
+
+	for i, want := range []string{"offsite:b2", "offsite:hetzner", "offsite:b2"} {
+		got := drillPass(t, sc, drillSettings(), &drilled)
+		if !slices.Equal(got, []string{want}) {
+			t.Fatalf("pass %d drilled %v, want only %s", i+1, got, want)
+		}
+		jr.age(time.Minute)
+	}
+
+	rows["flash"] = append(rows["flash"], offsiteTarget("flash", "wasabi", true))
+	if got := drillPass(t, sc, drillSettings(), &drilled); !slices.Equal(got, []string{"offsite:wasabi"}) {
+		t.Fatalf("a new target drilled %v, want wasabi before the others come round again", got)
+	}
+}
+
+func TestTheTurnOfTheDrillTargetsSurvivesARestart(t *testing.T) {
+	rows := targetRows{"containers": {offsiteTarget("containers", "b2", true), offsiteTarget("containers", "hetzner", true)}}
+	jr := newFakeJobRuns()
+	jr.set(store.ScheduleJobDrillTarget("b2"), time.Now().Add(-24*time.Hour))
+	var drilled []string
+
+	sc := drillScheduler(rows, jr, recordDR(&drilled, nil))
+	if got := drillPass(t, sc, drillSettings(), &drilled); !slices.Equal(got, []string{"offsite:hetzner"}) {
+		t.Fatalf("drilled %v after b2 took the last turn, want hetzner", got)
+	}
+}
+
+func TestAFailedDrillStillPassesTheTurn(t *testing.T) {
+	rows := targetRows{"files": {offsiteTarget("files", "b2", true), offsiteTarget("files", "hetzner", true)}}
+	jr := newFakeJobRuns()
+	var drilled []string
+	sc := drillScheduler(rows, jr, recordDR(&drilled, errors.New("repository unreachable")))
+
+	drillPass(t, sc, drillSettings(), &drilled)
+	if got := drillPass(t, sc, drillSettings(), &drilled); !slices.Equal(got, []string{"offsite:hetzner"}) {
+		t.Fatalf("drilled %v after b2 failed, want hetzner", got)
+	}
+}
+
+func TestADomainWithOneTargetDrillsItEveryPass(t *testing.T) {
+	rows := targetRows{"containers": {offsiteTarget("containers", "b2", true)}}
+	var drilled []string
+	sc := drillScheduler(rows, newFakeJobRuns(), recordDR(&drilled, nil))
+	for range 2 {
+		if got := drillPass(t, sc, drillSettings(), &drilled); !slices.Equal(got, []string{"offsite:b2"}) {
+			t.Fatalf("drilled %v, want b2", got)
+		}
+	}
 }

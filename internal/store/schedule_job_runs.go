@@ -20,6 +20,12 @@ const (
 	ScheduleJobDigest = "digest"
 )
 
+// ScheduleJobDrillTarget is the job under which the drills pass records when
+// its off-site DR drill last took a target, so the next pass takes another.
+func ScheduleJobDrillTarget(targetID string) string {
+	return "drill-target:" + targetID
+}
+
 // RecordScheduleJobRun stores at as job's last run. The scheduler decides what
 // counts as done: the expensive drill and tamper passes record even when some
 // tasks failed, so a broken repo is not re-drilled every night, while the
