@@ -1708,7 +1708,7 @@ const ru: Partial<Translations> = {
   "places.unplaced.choose": "Выберите место",
   "places.unplaced.domain": "Домен",
   "places.unplaced.allDomains": "Общий для всех доменов",
-  "places.unplaced.link": "Назначить месту",
+  "places.unplaced.link": "Привязать к месту",
   "places.unplaced.linked": "{name} теперь относится к месту {place}.",
   "places.details.baseHint": "Перенесли резервные копии на другой диск вручную? Выберите папку, в которой они лежат теперь. Изменение пройдёт, если новая папка пуста, а в старой ничего нет, или если в обеих лежит один и тот же репозиторий.",
   "places.details.baseRemoteHint": "Чтобы сохранять резервные копии по другому адресу, подключите его как отдельное место.",
