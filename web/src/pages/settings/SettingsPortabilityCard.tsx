@@ -278,7 +278,7 @@ export function SettingsPortabilityCard({
                 tone="neutral"
                 onClick={resetImport}
                 disabled={busy}
-                className={`rounded-control px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
+                className={`rounded-pill px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
                 hueIndex={hueIndex}
               />
               <Button

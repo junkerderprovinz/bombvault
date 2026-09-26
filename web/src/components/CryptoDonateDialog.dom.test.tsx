@@ -127,8 +127,8 @@ it("closes on Escape and on the button", () => {
 });
 
 // The coin marks must stay visible on their tiles. Bitcoin's #F7931A on the
-// default accent #FCC419 is 1.45:1 and on the grey tile hover 1.04:1; both are
-// guarded by a rule in index.css.
+// default accent #FCC419 is 1.45:1, which a rule in index.css guards; on its
+// own colour under the pointer the mark takes the tile's ink.
 
 /** index.css as text, since jsdom does not compute these rules. */
 const indexCss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../index.css"), "utf8");
@@ -161,29 +161,36 @@ function contrast(a: string, b: string): number {
   return (hi! + 0.05) / (lo! + 0.05);
 }
 
-/** The custom properties one rule of index.css sets, by name. */
-function declarations(selector: string): Record<string, string> {
-  const start = indexCss.indexOf(`${selector} {`);
-  if (start < 0) throw new Error(`no rule for ${selector}`);
-  const body = indexCss.slice(start, indexCss.indexOf("}", start));
-  return Object.fromEntries([...body.matchAll(/(--[\w-]+):\s*(#[0-9a-fA-F]{6})/g)].map((m) => [m[1], m[2]]));
-}
+it("gives every coin tile its coin's colour, with white on it where white reaches 2:1", () => {
+  for (const coin of CRYPTO_COINS) {
+    const ink = contrast(coin.tile.color, "#ffffff") >= 2 ? "#ffffff" : "#161616";
+    expect(coin.tile.ink, coin.id).toBe(ink);
+    expect(contrast(coin.tile.color, coin.tile.ink), coin.id).toBeGreaterThanOrEqual(2);
+  }
+});
 
-it("keeps every coin mark at 2:1 or more on the grey tile hover", () => {
-  // The mark is drawn in its token, so the hover rule's values are what shows.
+it("lights every coin tile but the picked one up in its coin's colour", () => {
   open();
-  const hover = declarations(".glim-coin-tile:not(.glim-active):hover");
-  const grey = declarations(':root,\n[data-theme="dark"]')["--carbon-tile-hover"];
-  expect(grey).toBe("#a8a8a8");
   for (const [i, coin] of CRYPTO_COINS.entries()) {
     const tile = coinTiles().getAllByRole("option")[i]!;
-    // The first coin opens selected and wears the accent instead.
-    if (i > 0) expect(tile.className, coin.id).toContain("hover:bg-carbon-tileHover");
-    expect(tile.querySelector("svg")?.getAttribute("fill"), coin.id).toBe(`var(--coin-${coin.id})`);
-    const value = hover[`--coin-${coin.id}`];
-    expect(value, coin.id).toBeDefined();
-    expect(contrast(value!, grey!), coin.id).toBeGreaterThanOrEqual(2);
+    expect(tile.style.getPropertyValue("--tile"), coin.id).toBe(coin.tile.color);
+    expect(tile.style.getPropertyValue("--tile-ink"), coin.id).toBe(coin.tile.ink);
+    // The first coin opens picked and keeps the accent.
+    expect(tile.classList.contains("glim-brand-tile"), coin.id).toBe(i > 0);
+    if (i > 0) expect(tile.className, coin.id).not.toMatch(/transition/);
+    expect(tile.querySelector("svg")?.getAttribute("fill"), coin.id).toBe(
+      `var(--mark-ink, var(--coin-${coin.id}))`
+    );
   }
+});
+
+it("fills a lit brand tile with its colour and paints its mark in the tile's ink", () => {
+  const rule = /\.glim-brand-tile:hover\s*\{([^}]*)\}/.exec(indexCss)?.[1] ?? "";
+  expect(rule).toMatch(/background-color:\s*var\(--tile\)/);
+  expect(rule).toMatch(/color:\s*var\(--tile-ink\)/);
+  expect(rule).toMatch(/--mark-ink:\s*var\(--tile-ink\)/);
+  expect(rule).toMatch(/--mark-cut:\s*var\(--tile\)/);
+  expect(indexCss).not.toMatch(/--carbon-tile-hover/);
 });
 
 it("keeps the tiles square", () => {

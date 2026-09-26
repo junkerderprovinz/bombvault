@@ -258,7 +258,7 @@ function ColumnsIcon() {
 }
 
 const iconBtn =
-  "rounded-control p-1 text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover " +
+  "rounded-pill p-1 text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover " +
   "disabled:opacity-40 disabled:pointer-events-none motion-safe:transition-colors";
 
 export interface CustomizableBlockProps {

@@ -74,7 +74,8 @@ export const en = {
   "about.crypto": "Crypto",
   "about.paypal": "PayPal",
   "about.cryptoTitle": "Donate with crypto",
-  "about.cryptoIntro": "Pick a coin and a network, then scan the code or copy the address.",
+  "about.donateAppeal": "Toss a coin to your knight: it covers part of the costs and keeps the project alive. Everything I build costs nothing and shows no ads.",
+  "about.cryptoIntro": "Pick a currency and a network, then scan the code or copy the address.",
   "about.cryptoNetworks": "Networks",
   "about.cryptoNoTag": "No destination tag and no memo needed.",
   "about.coffeeIntro": "The payment runs through Buy Me a Coffee. You do not need an account.",
@@ -974,6 +975,7 @@ export const en = {
   "settings.shape.round": "Round",
   "settings.shape.soft": "Soft",
   "settings.shape.square": "Square",
+  "settings.shape.leaf": "Leaf",
   // Motion intensity (GlimStone motion-engine) — a deliberate reversal of
   // design-language.md's own prior "OS-controlled only, no fifth user
   // switch" decision; see that doc's Motion Intensity section and
@@ -2754,6 +2756,7 @@ export const de: Translations = {
   "about.crypto": "Krypto",
   "about.paypal": "PayPal",
   "about.cryptoTitle": "Mit Krypto spenden",
+  "about.donateAppeal": "Wirf deinem Ritter eine Münze zu: Sie deckt einen Teil der Kosten und hält das Projekt am Leben. Alles, was ich baue, kostet nichts und zeigt keine Werbung.",
   "about.cryptoIntro": "Wähle eine Währung und ein Netzwerk, dann scanne den Code oder kopiere die Adresse.",
   "about.cryptoNetworks": "Netzwerke",
   "about.cryptoNoTag": "Kein Destination Tag und kein Memo nötig.",
@@ -3522,8 +3525,9 @@ export const de: Translations = {
   "settings.shape": "Ecken",
   "settings.shapeHint": "Gilt für Karten, Knöpfe, Reiter, Eingabefelder und Abzeichen zugleich.",
   "settings.shape.round": "Rund",
-  "settings.shape.soft": "Leicht",
+  "settings.shape.soft": "Abgerundet",
   "settings.shape.square": "Eckig",
+  "settings.shape.leaf": "Blatt",
   "settings.motion": "Animationen",
   "settings.motionHint": "Wie stark sich alle Animationen der App bewegen: ein manueller Regler neben der Systemeinstellung für reduzierte Bewegung, der sie nie überschreibt.",
   "settings.labels": "Beschriftungen",

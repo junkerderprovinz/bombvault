@@ -126,7 +126,7 @@ func TestSyncPrimaryOffsiteTargetKeepsAdditionalTargetWhenRepoIsEmpty(t *testing
 	s, st := newSyncTestService(t)
 
 	extra, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
-		Domain: "zfs", Name: "Second copy", Repo: "s3:zfs-extra", Enabled: true, SortOrder: 1,
+		Domain: "containers", Name: "Second copy", Repo: "s3:containers-extra", Enabled: true, SortOrder: 1,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -135,11 +135,11 @@ func TestSyncPrimaryOffsiteTargetKeepsAdditionalTargetWhenRepoIsEmpty(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.syncPrimaryOffsiteTarget("zfs", settings); err != nil {
+	if err := s.syncPrimaryOffsiteTarget("containers", settings); err != nil {
 		t.Fatal(err)
 	}
-	targets := s.offsiteTargetsFor("zfs")
-	if len(targets) != 1 || targets[0].ID != extra.ID || targets[0].Repo != "s3:zfs-extra" {
+	targets := s.offsiteTargetsFor("containers")
+	if len(targets) != 1 || targets[0].ID != extra.ID || targets[0].Repo != "s3:containers-extra" {
 		t.Fatalf("additional target should survive a settings save, got %+v", targets)
 	}
 }
@@ -150,7 +150,7 @@ func TestSyncPrimaryOffsiteTargetAddsPrimaryBesideAdditionalTarget(t *testing.T)
 	s, st := newSyncTestService(t)
 
 	extra, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
-		Domain: "zfs", Name: "Second copy", Repo: "s3:zfs-extra", Enabled: true, SortOrder: 1,
+		Domain: "containers", Name: "Second copy", Repo: "s3:containers-extra", Enabled: true, SortOrder: 1,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -159,18 +159,85 @@ func TestSyncPrimaryOffsiteTargetAddsPrimaryBesideAdditionalTarget(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	settings.ZFSOffsite = "s3:zfs"
-	if err := s.syncPrimaryOffsiteTarget("zfs", settings); err != nil {
+	settings.ContainersOffsite = "s3:containers"
+	if err := s.syncPrimaryOffsiteTarget("containers", settings); err != nil {
 		t.Fatal(err)
 	}
-	targets := s.offsiteTargetsFor("zfs")
+	targets := s.offsiteTargetsFor("containers")
 	if len(targets) != 2 {
 		t.Fatalf("want primary and additional target, got %+v", targets)
 	}
-	if targets[0].SortOrder != 0 || targets[0].Repo != "s3:zfs" {
-		t.Fatalf("primary = %+v, want sort order 0 on s3:zfs", targets[0])
+	if targets[0].SortOrder != 0 || targets[0].Repo != "s3:containers" {
+		t.Fatalf("primary = %+v, want sort order 0 on s3:containers", targets[0])
 	}
-	if targets[1].ID != extra.ID || targets[1].Repo != "s3:zfs-extra" {
+	if targets[1].ID != extra.ID || targets[1].Repo != "s3:containers-extra" {
 		t.Fatalf("additional target changed: %+v", targets[1])
+	}
+}
+
+// Without a primary, an additional target already on the repo the settings
+// name becomes the primary, so the domain does not replicate there twice.
+func TestSyncPrimaryOffsiteTargetAdoptsAdditionalTargetOnTheSameRepo(t *testing.T) {
+	s, st := newSyncTestService(t)
+
+	same, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "Primary", Repo: "s3:containers", CredsRef: "set-a", Enabled: true, SortOrder: 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	other, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "Second copy", Repo: "s3:containers-extra", Enabled: true, SortOrder: 2,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersOffsite = "s3:containers"
+	if err := s.syncPrimaryOffsiteTarget("containers", settings); err != nil {
+		t.Fatal(err)
+	}
+	targets := s.offsiteTargetsFor("containers")
+	if len(targets) != 2 {
+		t.Fatalf("want the existing row as primary and no duplicate, got %+v", targets)
+	}
+	if targets[0].ID != same.ID || targets[0].SortOrder != 0 || targets[0].CredsRef != "set-a" {
+		t.Fatalf("primary = %+v, want row %s at sort order 0 with its credential set", targets[0], same.ID)
+	}
+	if targets[1].ID != other.ID || targets[1].SortOrder != 2 {
+		t.Fatalf("other additional target changed: %+v", targets[1])
+	}
+}
+
+// A settings save syncs the ZFS domain like the others: its additional target
+// survives while the domain has no off-site repo, and becomes the primary once
+// the settings name its repo.
+func TestSettingsSaveKeepsThenAdoptsZFSAdditionalTarget(t *testing.T) {
+	s, st := newSyncTestService(t)
+
+	extra, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: zfsDomain, Name: "Second copy", Repo: "s3:zfs", CredsRef: "set-z", Enabled: true, SortOrder: 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.syncAllPrimaryOffsiteTargets(settings)
+	targets := s.offsiteTargetsFor(zfsDomain)
+	if len(targets) != 1 || targets[0].ID != extra.ID || targets[0].SortOrder != 1 {
+		t.Fatalf("additional zfs target should survive a settings save, got %+v", targets)
+	}
+
+	settings.ZFSOffsite = "s3:zfs"
+	s.syncAllPrimaryOffsiteTargets(settings)
+	targets = s.offsiteTargetsFor(zfsDomain)
+	if len(targets) != 1 || targets[0].ID != extra.ID || targets[0].SortOrder != 0 || targets[0].CredsRef != "set-z" {
+		t.Fatalf("want the existing zfs row as primary and no duplicate, got %+v", targets)
 	}
 }

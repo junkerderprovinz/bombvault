@@ -129,7 +129,7 @@ const BOOM_PARTICLES = Array.from({ length: 14 }, (_, i) => {
 // animate too. Every transform is motion-safe, so reduced motion gets colour
 // feedback only.
 const navBase =
-  "glim-nav-row flex items-center gap-3 px-3.5 rounded-control text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[var(--motion-press-scale)]";
+  "glim-nav-row flex items-center gap-3 px-3.5 rounded-pill text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[var(--motion-press-scale)]";
 const navActive =
   "bg-accent text-accentContrast";
 // translate-x is physical, so the hover nudge would point away from the content
@@ -137,6 +137,12 @@ const navActive =
 // rule whatever order Tailwind emits them in.
 const navInactive =
   "text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5 motion-safe:hover:rtl:-translate-x-0.5!";
+
+// railVars places a row in the rail: its rainbow hue, and its turn and first
+// direction in the logo's blast (glim-egg-quake in index.css).
+function railVars(i: number): CSSProperties {
+  return { ...hueVars(i), "--rail-i": i, "--rail-dir": i % 2 ? -1 : 1 } as CSSProperties;
+}
 
 // NavItem is one destination row. On the current route glim-active switches the
 // icon tint off, because the filled badge already shows the hue.
@@ -164,7 +170,7 @@ function NavItem({ to, label, icon, hueIndex, count }: NavItem) {
         }
         style={
           {
-            ...(hueVars(hueIndex) as CSSProperties),
+            ...railVars(hueIndex),
             ...(reactive ? { "--reactive-chars": labelWidth(label) } : {}),
           } as CSSProperties
         }
@@ -214,7 +220,7 @@ function SidebarSignOut({ hueIndex }: { hueIndex: number }) {
         className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon glim-nav-idle ${navInactive} w-full`}
         style={
           {
-            ...(hueVars(hueIndex) as CSSProperties),
+            ...railVars(hueIndex),
             ...(reactive ? { "--reactive-chars": labelWidth(label) } : {}),
           } as CSSProperties
         }
@@ -260,7 +266,7 @@ function SidebarControls({ hueIndex }: { hueIndex: number }) {
         className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon glim-nav-idle ${navInactive} w-full`}
         style={
           {
-            ...(hueVars(hueIndex) as CSSProperties),
+            ...railVars(hueIndex),
             ...(reactive ? { "--reactive-chars": labelWidth(view) } : {}),
           } as CSSProperties
         }
@@ -361,7 +367,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
     // would clip. A window shorter than the rows scrolls the rail rather than
     // cutting off the bottom group with Settings.
     <aside
-      className={`flex flex-col ${railNarrow ? "w-(--rail-narrow)" : "w-56"} shrink-0 h-full overflow-x-hidden overflow-y-auto rounded-card bg-carbon-sidebar`}
+      className={`flex flex-col ${railNarrow ? "w-(--rail-narrow)" : "w-56"} shrink-0 h-full overflow-x-hidden overflow-y-auto rounded-card bg-carbon-sidebar${eggState === "boom" ? " glim-egg-quake" : ""}`}
       style={{ scrollbarWidth: "thin", scrollbarColor: "var(--carbon-border) transparent" }}
     >
       {/* A button rather than a link, so a click and a long press can be told

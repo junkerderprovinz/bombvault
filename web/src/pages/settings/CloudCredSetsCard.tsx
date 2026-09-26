@@ -153,7 +153,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
                 labelKey="offsite.targets.remove"
                 tone="subtle"
                 onClick={() => setConfirmRemove(s.id)}
-                className={`rounded-control px-2.5 py-1 text-xs text-carbon-text${
+                className={`rounded-pill px-2.5 py-1 text-xs text-carbon-text${
                   shake[`remove:${s.id}`] ? " glim-shake" : ""
                 }`}
               />

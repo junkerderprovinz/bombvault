@@ -53,7 +53,7 @@ import { useAdvanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { ColorPickerSwatch } from "../components/ColorPickerPopover";
 import { RAINBOW, getRainbow, setRainbow, type RainbowState } from "../lib/appearance";
-import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
+import { SHAPES, getShape, leafTap, setShape, type Shape } from "../lib/shape";
 import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, stormTap, type MotionIntensity } from "../lib/motion";
 import { applyStoredDisco, discoTap, getDisco, setDisco } from "../lib/disco";
 import { HUE_OFFSET, Selector } from "../components/Selector";
@@ -1411,6 +1411,11 @@ export function SettingsPage() {
   // to/from localStorage via shape.ts, the same pattern the old accentHex
   // state used before its move.
   const [shape, setShapeLocal] = useState<Shape>(() => getShape());
+  // The hidden leaf follows the storm below: found and counted in this
+  // screen's state, never in storage, so it is offered only while chosen or
+  // until this page is left.
+  const [leafFound, setLeafFound] = useState(false);
+  const leafClicks = useRef({ taps: 0 });
 
   // Motion-intensity state (GlimStone motion-engine — the deliberate
   // reversal of design-language.md's own prior "kein fünfter Nutzer-
@@ -4904,7 +4909,7 @@ export function SettingsPage() {
             `align-items: stretch` without an extra element. See the Theme
             Card's own Selector above for the full note. */}
         <Selector
-          items={SHAPES.map((s) => ({
+          items={[...SHAPES, ...(leafFound || shape === "leaf" ? (["leaf"] as const) : [])].map((s) => ({
             id: s,
             label: t(`settings.shape.${s}` as TranslationKey),
           }))}
@@ -4912,8 +4917,11 @@ export function SettingsPage() {
           select="one"
           active={shape}
           onChange={(id) => {
-            setShapeLocal(id as Shape);
-            setShape(id as Shape);
+            const leaf = leafTap(leafClicks.current, id, shape);
+            if (leaf) setLeafFound(true);
+            const next = (leaf ?? id) as Shape;
+            setShapeLocal(next);
+            setShape(next);
           }}
           size="lg"
           variant="well"
@@ -5237,8 +5245,8 @@ export function SettingsPage() {
                 mismatched afterthought.
                   SQUARE (jdp, live-review: "Die Zurücksetzen-Option soll ein
                 quadratischer Badge mit Glyph sein") — `shape="square"` still
-                resolves through `rounded-control`, the shape engine's own
-                live token, so this genuinely tracks round/soft/square (under
+                resolves through `rounded-pill`, the shape engine's own
+                live token, so this tracks every shape (under
                 "Rund" it renders as a full circle, same as every other
                 square badge in the app).
                   NEUTRAL now, not hue-tinted (jdp, re-reporting: "Der

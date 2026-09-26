@@ -36,11 +36,12 @@ saying ransomware is welcome to knock.
 
 <!-- download-buttons: written by scripts/gen_download_buttons.py -->
 <p align="center">
-  <a href="https://junkerderprovinz.github.io/bombvault/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(0,0,720,245.3))" alt="Read the documentation" width="195" height="66.435"></a>
+  <a href="https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(0,0,841.9,245.3))" alt="Run it with Docker" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(720,0,720,245.3))" alt="The container image on ghcr.io" width="195" height="66.435"></a>
+  <a href="https://github.com/junkerderprovinz/bombvault/releases/latest"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(866,0,841.9,245.3))" alt="Download the source archive" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault/releases/latest"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(1440,0,720,245.3))" alt="Download the source archive for this release" width="195" height="66.435"></a>
+  <a href="https://junkerderprovinz.github.io/bombvault/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(1732,0,841.9,245.3))" alt="Read the documentation" width="160" height="46.618"></a>
+  <br><sub>Always downloads the latest build</sub>
 </p>
 <!-- /download-buttons -->
 
@@ -58,11 +59,11 @@ If it has earned a place on your server or computer, toss a coin to your knight:
 
 <!-- give-buttons: written by scripts/gen_download_buttons.py -->
 <p align="center">
-  <a href="https://buymeacoffee.com/junkerderprovinz"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(2160,0,841.9,245.3))" alt="Buy me a coffee" width="160" height="46.618"></a>
+  <a href="https://buymeacoffee.com/junkerderprovinz"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(2598,0,841.9,245.3))" alt="Buy me a coffee" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(3001.9,0,841.9,245.3))" alt="PayPal" width="160" height="46.618"></a>
+  <a href="https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(3464,0,841.9,245.3))" alt="PayPal" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://junkerderprovinz.github.io/junkerderprovinz/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(3843.8,0,841.9,245.3))" alt="Donate with crypto" width="160" height="46.618"></a>
+  <a href="https://junkerderprovinz.github.io/junkerderprovinz/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(4330,0,841.9,245.3))" alt="Donate with crypto" width="160" height="46.618"></a>
 </p>
 <!-- /give-buttons -->
 
@@ -103,32 +104,36 @@ The core idea — one-click backup *and* automatic re-install of Docker containe
 
 ### How it compares
 
-Unraid's usual backup answer is [**Appdata.Backup**](https://github.com/Commifreak/unraid-appdata.backup) (the community-maintained successor to the old Appdata Backup/Restore plugin) — a native CA plugin, but a file-level one: it archives the appdata folder (and optionally VM disks + Unraid flash), with no awareness of what a Docker container or a libvirt VM *is*, so a restore is copying files back, not the container reappearing in the Docker tab on its own. The other well-known route is a generic dedup/encrypted engine — [Duplicati](https://duplicati.com), [Kopia](https://kopia.io), [Duplicacy](https://duplicacy.com) or [BorgBackup](https://borgbackup.readthedocs.io) — run by hand or via a community Docker template; all are solid, actively developed engines (restic's own closest siblings, in Kopia's, Duplicacy's and Borg's case), but none of them know what a container or a VM is either, and none ship as a native Unraid plugin.
+On Unraid, backups usually run through [**Appdata.Backup**](https://github.com/Commifreak/unraid-appdata.backup), a CA plugin that archives appdata folders, or through a general engine such as [Duplicati](https://duplicati.com), [Kopia](https://kopia.io) or [BorgBackup](https://borgbackup.readthedocs.io). They save files well, but a restore gives you files back, not a running container or VM.
 
-The closest thing to a direct counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by [@ruaan-deysel](https://github.com/ruaan-deysel), a native Unraid plugin that shares the core idea: it, too, recreates containers through the Docker API and re-defines VMs through libvirt on restore. It reaches further in places BombVault does not cover yet: installed Unraid plugins as a backup source and volumes that no VM uses. It stops short in others: it runs a backup engine of its own rather than an established one, so a backup is readable only by Vault itself; it has no append-only off-site mode; and it verifies a restore point by reading the data back and re-hashing it rather than by actually restoring it. Both dump databases, back up ZFS datasets and flag backups that look wrong, and the table shows where they differ: BombVault dumps by default and never lets a failed dump fail the backup, reads a whole dataset tree from one snapshot into restic instead of sending a `zfs send` stream, and also watches each database dump and each ZFS dataset for anomalies. Both have an MCP server for AI assistants; BombVault's asks every client for a key of its own and keeps restores and deletions in the web interface. Worth a look, and the honest comparison is below.
+The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by [@ruaan-deysel](https://github.com/ruaan-deysel), a native Unraid plugin built on the same idea: it recreates containers and re-defines VMs on restore. Vault still backs up installed Unraid plugins, which BombVault only catches inside the flash backup, and its web UI works on a phone. BombVault is ahead on getting data back: restic reads its backups without BombVault, the off-site copy can be append-only, and restores are tested for real. Worth a look.
 
 | | **BombVault** | Vault (plugin) | Appdata.Backup (CA) | Duplicati | Kopia | BorgBackup |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
-| Docker restore reinstalls the container (image, env, ports, labels) | ✅ | ✅ | ❌ files only | ❌ | ❌ | ❌ |
-| VM/guest restore re-defines it (not just a disk copy) | ✅ via libvirt | ✅ via libvirt | ⚠️ backs up disk+XML, restore is file-level | ❌ | ❌ | ❌ |
-| Deduplication | ✅ content-defined | ✅ content-defined | ❓ undocumented | ⚠️ fixed-block only | ✅ content-defined | ✅ content-defined |
-| Client-side encryption | ✅ | ✅ | ❓ undocumented | ✅ | ✅ | ✅ |
-| Restorable without this app, with a standard CLI tool | ✅ restic | ❌ Vault only | ✅ tar | ✅ | ✅ | ✅ |
-| Immutable / append-only off-site | ✅ + an active tamper test proves it | ❌ | ❌ | ⚠️ depends on backend config | ✅ Object Lock | ✅ append-only SSH mode |
-| Automated restore-verification drills | ✅ local + off-site sandbox restore | ⚠️ read-back + re-hash, no test restore | ❌ | ⚠️ sample-file check only | ✅ opt-in full test-restore | ❌ manual convention only |
-| Multiple off-site targets, independent credentials | ✅ | ✅ | ❌ | ✅ | ⚠️ mirrors to N, one active repo | ❌ needs manual scripting |
-| Native pre/post-backup hooks | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ core has none — Borgmatic adds it |
-| Automatic database dumps (PostgreSQL, MySQL, MariaDB) | ✅ on by default, streamed into its own restore point, a failed dump never fails the backup; one-click import into a fresh database | ⚠️ opt-in per item, staged to disk, a failed dump fails the backup; reloads the dump automatically when volumes were captured live | ❌ | ❌ | ❌ | ❌ |
-| ZFS datasets with their child datasets | ✅ one recursive snapshot, stored as files: deduplicated, browsable, single-file restore, never rolls a dataset back | ⚠️ one dataset per snapshot without its children, `zfs send` stream, restore overwrites the dataset | ❌ | ❌ | ❌ | ❌ |
-| Live restore progress + cancel | ✅ | ✅ | ❓ | ✅ | ❌ [confirmed gap](https://github.com/kopia/kopia/issues/3609) | ⚠️ CLI progress, no true cancel |
-| Notification channels | ✅ 6+ incl. SMTP, Matrix, Apprise | ⚠️ Discord + Unraid | ⚠️ Unraid only | ✅ | ❌ | ❌ |
-| Anomaly detection (new data, rewrites, source and dump shrink and growth, file count, restic duration, failures, restore-check regressions, disk-full ETA) | ✅ per item, per database dump and per ZFS dataset; keeps old backups when a source shrinks sharply or is rewritten | ✅ per job | ❌ | ❌ | ❌ | ❌ |
-| MCP server for AI assistants | ✅ a key per client, reads and starts backups, restores stay in the UI | ⚠️ 27 tools incl. restore and delete, open without an API key | ❌ | ❌ none built in | ❌ | ❌ |
-| Runs outside Unraid too | ✅ Docker host, TrueNAS Scale | ❌ Unraid 7 only | ❌ | ✅ | ✅ | ✅ |
-| Native platform packaging | ✅ Unraid CA | ✅ Unraid plugin | ✅ Unraid CA | ❌ generic Docker template | ❌ generic Docker template | ❌ generic Docker template |
-| Web UI | ✅ | ✅ | ✅ | ✅ | ⚠️ separate project (KopiaUI) | ❌ CLI/config-file only |
+| Restore brings a container back whole (image, env, ports, labels) | ✅ | ✅ | ⚠️ files and XML | ❌ | ❌ | ❌ |
+| Restore re-defines a VM, not only its disks | ✅ | ✅ | ⚠️ XML only | ❌ | ❌ | ❌ |
+| Database dumps for recognised database containers | ✅ | ✅ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
+| Installed Unraid plugins | ⚠️ in flash backup | ✅ | ⚠️ in flash backup | ❌ | ❌ | ❌ |
+| ZFS datasets as a source | ✅ | ✅ | ❌ | ❌ | ⚠️ via action scripts | ⚠️ via Borgmatic |
+| Deduplication | ✅ | ✅ opt-in | ❌ | ✅ fixed blocks | ✅ | ✅ |
+| Client-side encryption | ✅ on by default | ✅ opt-in | ❌ | ✅ | ✅ | ✅ |
+| Backups readable with a standard open-source CLI | ✅ restic | ⚠️ not with dedup | ✅ tar | ⚠️ Python script | ✅ kopia | ✅ borg |
+| Append-only or immutable off-site copy | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Scheduled test restores, not only a checksum read | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
+| Several off-site targets, each with its own credentials | ✅ | ⚠️ one per job | ❌ | ✅ | ⚠️ CLI sync | ⚠️ via Borgmatic |
+| Pre/post-backup hooks | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ via Borgmatic |
+| Live progress and cancel, backup and restore | ✅ | ⚠️ no restore cancel | ⚠️ log, no percentage | ✅ | ⚠️ [no restore percentage](https://github.com/kopia/kopia/issues/3609) | ⚠️ CLI or Vorta |
+| Notifications | ✅ SMTP, Matrix, Apprise, more | ✅ Discord, Unraid | ✅ Unraid's agents | ✅ email, Telegram, HTTP | ✅ email, Pushover, webhook | ⚠️ via Borgmatic |
+| Anomaly detection (size, duration, shrink) | ✅ | ✅ | ❌ | ⚠️ paid Console | ❌ | ❌ |
+| AI assistant access (MCP) | ✅ | ✅ | ❌ | ⚠️ third party | ❌ | ❌ |
+| Backs up desktops and laptops | ❌ | ❌ | ❌ | ✅ | ✅ | ⚠️ Windows experimental |
+| Runs outside Unraid | ✅ | ⚠️ replica only | ❌ | ✅ | ✅ | ✅ |
+| In Unraid Community Applications | ✅ | ✅ | ✅ | ✅ community template | ✅ community template | ✅ community template |
+| Web UI | ✅ | ✅ | ✅ in Unraid's UI | ✅ | ✅ | ⚠️ third party |
+| Web UI usable on a phone | ❌ in progress | ✅ per its README | ❓ | ✅ | ❓ | ❓ |
+| Track record | ⚠️ since 2026, one maintainer | ⚠️ since 2026, one maintainer | ⚠️ since 2023, feature-frozen | ✅ since 2008 | ✅ since 2019 | ✅ since 2015 |
 
-✅ yes · ❌ no · ⚠️ present but limited · ❓ undocumented
+✅ yes · ⚠️ partly · ❌ no · ❓ not found in code or docs. "In progress" means the work is under way but not in a release yet. Checked on 25 September 2026 against BombVault v8.13.0 and the current code and docs of the others.
 
 <br>
 
@@ -513,10 +518,10 @@ If it has earned a place on your server or computer, toss a coin to your knight:
 
 <!-- give-buttons: written by scripts/gen_download_buttons.py -->
 <p align="center">
-  <a href="https://buymeacoffee.com/junkerderprovinz"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(2160,0,841.9,245.3))" alt="Buy me a coffee" width="160" height="46.618"></a>
+  <a href="https://buymeacoffee.com/junkerderprovinz"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(2598,0,841.9,245.3))" alt="Buy me a coffee" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(3001.9,0,841.9,245.3))" alt="PayPal" width="160" height="46.618"></a>
+  <a href="https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(3464,0,841.9,245.3))" alt="PayPal" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://junkerderprovinz.github.io/junkerderprovinz/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(3843.8,0,841.9,245.3))" alt="Donate with crypto" width="160" height="46.618"></a>
+  <a href="https://junkerderprovinz.github.io/junkerderprovinz/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg#svgView(viewBox(4330,0,841.9,245.3))" alt="Donate with crypto" width="160" height="46.618"></a>
 </p>
 <!-- /give-buttons -->

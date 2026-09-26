@@ -151,6 +151,11 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		writeJSON(w, http.StatusOK, failEnvelope(fmt.Errorf("decrypt offer credential: %w", err)))
 		return
 	}
+	sortOrder, err := h.svc.nextOffsiteSortOrder(in.Domain)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 
 	label := offer.From
 	if label == "" {
@@ -176,11 +181,12 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 	}
 
 	target := store.OffsiteTarget{
-		Domain:   in.Domain,
-		Name:     "mesh: " + label,
-		Repo:     offer.Repo,
-		CredsRef: setID,
-		Enabled:  true,
+		Domain:    in.Domain,
+		Name:      "mesh: " + label,
+		Repo:      offer.Repo,
+		CredsRef:  setID,
+		Enabled:   true,
+		SortOrder: sortOrder,
 	}
 	stored, err := h.store.UpsertOffsiteTarget(target)
 	if err != nil {

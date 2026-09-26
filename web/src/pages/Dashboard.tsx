@@ -2133,7 +2133,7 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
         <button
           type="button"
           onClick={() => void downloadRecoveryKit().then(setKitError)}
-          className="rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+          className="rounded-pill bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
         >
           {t("recovery.download")}
         </button>
@@ -2189,7 +2189,7 @@ function FreshInstallNudge({
             with the raw accent colour and no fill at all. This card's own one
             call-to-action functions as a primary action (rule 3 allows
             exactly one solid-accent primary action per page/card), so it
-            takes the SAME filled rounded-control/bg-accent/text-accentContrast
+            takes the SAME filled rounded-pill/bg-accent/text-accentContrast
             treatment every other primary button in this app already uses
             (e.g. Config.tsx's Save button) — matching an established idiom
             rather than routing through Badge's tone system, which has no
@@ -2197,7 +2197,7 @@ function FreshInstallNudge({
             one for a single call site. */}
         <Link
           to="/recovery"
-          className="self-start inline-flex items-center gap-1 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity"
+          className="self-start inline-flex items-center gap-1 rounded-pill bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity"
         >
           {t("recovery.freshNudgeCta")} <span className="inline-block rtl:-scale-x-100">→</span>
         </Link>
@@ -2840,7 +2840,7 @@ export function Dashboard() {
           top-right corner toggles the customize/edit mode.
             That pencil is `h-8 w-8` + centring, not the `p-2` it used to size
           itself with. It is a square icon-only badge by every other measure
-          (the same rounded-control tile, the same bg-carbon-surface2/hover
+          (the same rounded-pill tile, the same bg-carbon-surface2/hover
           recipe as Settings' Registry add/remove and FolderBrowser's browse
           badge), but it derived its own footprint from padding around an 18px
           glyph and landed on 34px — measured live — where every other square
@@ -2884,14 +2884,13 @@ export function Dashboard() {
             — only the tooltip mechanism changes. `aria-pressed` is threaded
             through IconTipButton's new optional prop so the toggle state is
             not lost in the swap (this is a toggle, not a one-shot action).
-              32px and `rounded-control` are unchanged, so it still matches
-            every other square icon control app-wide and still tracks the
-            shape engine. */}
+              32px and `rounded-pill` keep it matched to every other square
+            icon control app-wide and tracking the shape engine. */}
         <IconTipButton
           onClick={() => setEditing((v) => !v)}
           tip={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
           ariaPressed={editing}
-          className={`shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-control motion-safe:transition-colors ${
+          className={`shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-pill motion-safe:transition-colors ${
             editing
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text"
@@ -3042,7 +3041,7 @@ export function Dashboard() {
             {hiddenBlocks.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2.5 py-1.5"
+                className="flex items-center gap-2 rounded-pill bg-carbon-surface2 px-2.5 py-1.5"
               >
                 <span className="max-w-48 truncate text-xs text-carbon-textSub">
                   {b.label}

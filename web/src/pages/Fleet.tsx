@@ -72,7 +72,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
         labelKey="common.copy"
         tone="neutral"
         onClick={() => void copy()}
-        className={`shrink-0 rounded-control px-3 py-2 text-xs text-carbon-text${
+        className={`shrink-0 rounded-pill px-3 py-2 text-xs text-carbon-text${
           shake ? " glim-shake" : ""
         }`}
       />
@@ -246,7 +246,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
             tone="neutral"
             onClick={() => void handleDecline()}
             disabled={busy}
-            className={`inline-flex items-center rounded-control px-3 py-1.5 text-xs text-carbon-text disabled:opacity-50${
+            className={`inline-flex items-center rounded-pill px-3 py-1.5 text-xs text-carbon-text disabled:opacity-50${
               shakeDecline ? " glim-shake" : ""
             }`}
           />
@@ -257,7 +257,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
             tone="accent"
             onClick={() => void handleAccept()}
             disabled={busy}
-            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            className={`inline-flex items-center rounded-pill bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
               shakeAccept ? " glim-shake" : ""
             }`}
           />
@@ -532,7 +532,7 @@ function FleetPeerCard({
           onClick={() => void handlePoll()}
           disabled={polling}
           busy={polling}
-          className={`inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+          className={`inline-flex items-center gap-1.5 rounded-pill bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
             shakePoll ? " glim-shake" : ""
           }`}
         />

@@ -24,10 +24,12 @@ func validOffsiteDomain(domain string) bool {
 // Replication reads the target rows, while the Settings setters write those
 // columns.
 //
-// An existing primary keeps its id, creation time and credential set. Without one, a new row is created. When the domain's off-site repo is
-// cleared, the primary is deleted so offsiteRepoFor cannot return a stale
-// repo. Additional targets from the targets section sort after it and are
-// never touched here.
+// An existing primary keeps its id, creation time and credential set. Without
+// one, an additional target already on the repo becomes the primary, so the
+// domain does not replicate there twice, and failing that a new row is created.
+// When the domain's off-site repo is cleared, the primary is deleted so
+// offsiteRepoFor cannot return a stale repo. Other additional targets sort after
+// it and are never touched here.
 //
 // The storage class comes from the cloud credentials. If they cannot be
 // decoded it stays empty, which offsiteModeForTarget treats as the global
@@ -55,6 +57,14 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 		}
 		return nil
 	}
+	if primary == nil {
+		for i := range targets {
+			if targets[i].Repo == repo {
+				primary = &targets[i]
+				break
+			}
+		}
+	}
 
 	t := settingsOffsiteTarget(domain, settings, repo)
 	if c, cErr := s.decodeCloud(settings); cErr == nil {
@@ -67,6 +77,61 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 	}
 	_, err = s.store.UpsertOffsiteTarget(t)
 	return err
+}
+
+// nextOffsiteSortOrder returns a sort order after every target of domain, so a
+// new or moved target stays off the primary's 0.
+func (s *Service) nextOffsiteSortOrder(domain string) (int, error) {
+	targets, err := s.store.OffsiteTargetsForDomain(domain)
+	if err != nil {
+		return 0, err
+	}
+	next := 1
+	for _, t := range targets {
+		next = max(next, t.SortOrder+1)
+	}
+	return next, nil
+}
+
+// MoveMeshTargetsOffPrimarySlot moves every target accepted from a mesh offer
+// off sort order 0, which a settings save treats as the primary, and returns how
+// many it moved. One on the repo the domain's off-site setting names is that
+// primary and stays.
+func (s *Service) MoveMeshTargetsOffPrimarySlot() (int, error) {
+	offers, err := s.store.ListMeshOffers()
+	if err != nil {
+		return 0, err
+	}
+	accepted := make(map[string]bool, len(offers))
+	for _, o := range offers {
+		if o.Status == "accepted" {
+			accepted[o.Repo] = true
+		}
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return 0, err
+	}
+	moved := 0
+	for _, d := range offsiteConfigDomains {
+		targets, err := s.store.OffsiteTargetsForDomain(d)
+		if err != nil {
+			return moved, err
+		}
+		for _, t := range targets {
+			if t.SortOrder != 0 || !accepted[t.Repo] || t.Repo == offsiteRepoFromSettings(d, settings) {
+				continue
+			}
+			if t.SortOrder, err = s.nextOffsiteSortOrder(d); err != nil {
+				return moved, err
+			}
+			if _, err := s.store.UpsertOffsiteTarget(t); err != nil {
+				return moved, err
+			}
+			moved++
+		}
+	}
+	return moved, nil
 }
 
 // syncAllPrimaryOffsiteTargets runs syncPrimaryOffsiteTarget for every domain
