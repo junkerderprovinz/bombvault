@@ -1765,6 +1765,7 @@ const th: Partial<Translations> = {
   "activityLog.runFilterChip": "กำลังแสดงการรันหนึ่งครั้ง",
   "activityLog.clearRunFilter": "ล้างตัวกรองการรัน",
   "activityLog.runGone": "การรันนี้ไม่อยู่ในประวัติแล้ว",
+  "activityLog.runStillGoing": "การรันนี้ยังทำงานอยู่ บรรทัดของมันจะแสดงที่นี่ทันทีที่รายงานความคืบหน้า",
   "activityLog.viaMcp": "{line} (ผ่าน MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (ผ่าน MCP, {key}, เพิกถอนแล้ว)",
   "activityLog.viaMcpUnknownKey": "{line} (ผ่าน MCP)",

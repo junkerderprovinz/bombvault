@@ -63,6 +63,16 @@ describe("buildLogLines", () => {
     expect(live.text).toContain("percent=41"); // clamped + rounded
   });
 
+  it("gives a live line the id of the run it shows, so a link to that run finds it", () => {
+    const progress: ProgressMap = {
+      "container:plex": { phase: "backup", percent: 12, active: true, lastSeen: 5_000_000 },
+    };
+    const running = makeRun({ id: "r-live", status: "running", finishedAt: null });
+    const lines = buildLogLines([running], progress, [], resolveName, 5_000_000);
+    const shown = filterLogLines(lines, { domain: "all", kind: "all", text: "", runId: "r-live" });
+    expect(shown.map((l) => l.id)).toEqual(["live:container:plex"]);
+  });
+
   it("appends the idle next-up line only when nothing is active", () => {
     const next: ScheduleNext[] = [
       { job: "backup", domain: "containers", next: new Date(7_200_000).toISOString() },

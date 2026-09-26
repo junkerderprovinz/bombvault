@@ -1754,6 +1754,7 @@ const ja: Partial<Translations> = {
   "activityLog.runFilterChip": "1 件の実行を表示中",
   "activityLog.clearRunFilter": "実行フィルターを解除",
   "activityLog.runGone": "この実行は履歴に残っていません。",
+  "activityLog.runStillGoing": "この実行はまだ続いています。進捗が届くとここに行が表示されます。",
   "activityLog.viaMcp": "{line}（MCP 経由、{key}）",
   "activityLog.viaMcpRevoked": "{line}（MCP 経由、{key}、失効済み）",
   "activityLog.viaMcpUnknownKey": "{line}（MCP 経由）",

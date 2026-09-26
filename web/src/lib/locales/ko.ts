@@ -1754,6 +1754,7 @@ const ko: Partial<Translations> = {
   "activityLog.runFilterChip": "실행 하나 표시 중",
   "activityLog.clearRunFilter": "실행 필터 지우기",
   "activityLog.runGone": "이 실행은 더 이상 기록에 없습니다.",
+  "activityLog.runStillGoing": "이 실행은 아직 진행 중입니다. 진행 상황을 보고하면 여기에 줄이 표시됩니다.",
   "activityLog.viaMcp": "{line} (MCP 경유, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP 경유, {key}, 해지됨)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP 경유)",

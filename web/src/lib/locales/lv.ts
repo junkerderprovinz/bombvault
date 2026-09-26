@@ -1986,6 +1986,7 @@ const lv: Partial<Translations> = {
   "activityLog.runFilterChip": "Rāda vienu izpildi",
   "activityLog.clearRunFilter": "Notīrīt izpildes filtru",
   "activityLog.runGone": "Šīs izpildes vairs nav vēsturē.",
+  "activityLog.runStillGoing": "Šī izpilde vēl notiek. Tās rinda šeit parādīsies, tiklīdz tā ziņos par progresu.",
   "activityLog.viaMcp": "{line} (caur MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (caur MCP, {key}, atsaukta)",
   "activityLog.viaMcpUnknownKey": "{line} (caur MCP)",

@@ -1762,6 +1762,7 @@ const el: Partial<Translations> = {
   "activityLog.runFilterChip": "Εμφάνιση μίας εκτέλεσης",
   "activityLog.clearRunFilter": "Καθαρισμός φίλτρου εκτέλεσης",
   "activityLog.runGone": "Αυτή η εκτέλεση δεν υπάρχει πια στο ιστορικό.",
+  "activityLog.runStillGoing": "Αυτή η εκτέλεση είναι ακόμη σε εξέλιξη. Η γραμμή της θα εμφανιστεί εδώ μόλις αναφέρει πρόοδο.",
   "activityLog.viaMcp": "{line} (μέσω MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (μέσω MCP, {key}, ανακλήθηκε)",
   "activityLog.viaMcpUnknownKey": "{line} (μέσω MCP)",

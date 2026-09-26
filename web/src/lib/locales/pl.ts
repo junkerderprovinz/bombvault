@@ -1757,6 +1757,7 @@ const pl: Partial<Translations> = {
   "activityLog.runFilterChip": "Wyświetlanie jednego uruchomienia",
   "activityLog.clearRunFilter": "Usuń filtr uruchomienia",
   "activityLog.runGone": "Tego uruchomienia nie ma już w historii.",
+  "activityLog.runStillGoing": "To uruchomienie wciąż trwa. Jego wiersz pojawi się tutaj, gdy tylko zgłosi postęp.",
   "activityLog.viaMcp": "{line} (przez MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (przez MCP, {key}, unieważniony)",
   "activityLog.viaMcpUnknownKey": "{line} (przez MCP)",

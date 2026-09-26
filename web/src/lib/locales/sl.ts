@@ -1970,6 +1970,7 @@ const sl: Partial<Translations> = {
   "activityLog.runFilterChip": "Prikazujem en zagon",
   "activityLog.clearRunFilter": "Počisti filter zagona",
   "activityLog.runGone": "Tega zagona ni več v zgodovini.",
+  "activityLog.runStillGoing": "Ta zagon še poteka. Njegova vrstica se bo prikazala tukaj, ko bo sporočil napredek.",
   "activityLog.viaMcp": "{line} (prek MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (prek MCP, {key}, preklican)",
   "activityLog.viaMcpUnknownKey": "{line} (prek MCP)",

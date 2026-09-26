@@ -199,7 +199,11 @@ export function ActivityLog({
     [lines, filterDomain, filterType, filterText, dayFilter, runFilter]
   );
 
-  const runGone = runFilter !== null && runsLoaded && !runs.some((r) => r.id === runFilter);
+  const linkedRun = runFilter === null ? undefined : runs.find((r) => r.id === runFilter);
+  const runGone = runFilter !== null && runsLoaded && !linkedRun;
+  // A running run shows through its live line, which only exists once progress
+  // has arrived.
+  const runPending = linkedRun?.status === "running" && !lines.some((l) => l.runId === runFilter);
 
   // Stay at the bottom as lines arrive, until the user scrolls up.
   useEffect(() => {
@@ -295,6 +299,7 @@ export function ActivityLog({
           className="max-h-96 overflow-y-auto rounded-card bg-black/20 font-mono text-xs leading-relaxed px-3 py-2 flex flex-col gap-0.5"
         >
           {runGone && <p className="text-carbon-textMuted">{t("activityLog.runGone")}</p>}
+          {runPending && <p className="text-carbon-textMuted">{t("activityLog.runStillGoing")}</p>}
           {filteredLines.map((l) => (
             <div key={l.id} className="flex items-start gap-2">
               <span className="text-carbon-textMuted shrink-0 tabular-nums">

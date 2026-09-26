@@ -1986,6 +1986,7 @@ const fa: Partial<Translations> = {
   "activityLog.runFilterChip": "نمایش یک اجرا",
   "activityLog.clearRunFilter": "پاک کردن فیلتر اجرا",
   "activityLog.runGone": "این اجرا دیگر در تاریخچه نیست.",
+  "activityLog.runStillGoing": "این اجرا هنوز در جریان است. سطر آن به محض گزارش پیشرفت اینجا نمایش داده می‌شود.",
   "activityLog.viaMcp": "{line} (از طریق MCP، {key})",
   "activityLog.viaMcpRevoked": "{line} (از طریق MCP، {key}، باطل‌شده)",
   "activityLog.viaMcpUnknownKey": "{line} (از طریق MCP)",

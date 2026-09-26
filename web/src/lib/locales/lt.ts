@@ -1986,6 +1986,7 @@ const lt: Partial<Translations> = {
   "activityLog.runFilterChip": "Rodomas vienas vykdymas",
   "activityLog.clearRunFilter": "Išvalyti vykdymo filtrą",
   "activityLog.runGone": "Šio vykdymo istorijoje nebėra.",
+  "activityLog.runStillGoing": "Šis vykdymas dar vyksta. Jo eilutė atsiras čia, kai tik jis praneš apie eigą.",
   "activityLog.viaMcp": "{line} (per MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (per MCP, {key}, atšauktas)",
   "activityLog.viaMcpUnknownKey": "{line} (per MCP)",

@@ -1762,6 +1762,7 @@ const sv: Partial<Translations> = {
   "activityLog.runFilterChip": "Visar en körning",
   "activityLog.clearRunFilter": "Rensa körningsfiltret",
   "activityLog.runGone": "Den här körningen finns inte längre i historiken.",
+  "activityLog.runStillGoing": "Den här körningen pågår fortfarande. Raden visas här så snart den rapporterar förlopp.",
   "activityLog.viaMcp": "{line} (via MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (via MCP, {key}, återkallad)",
   "activityLog.viaMcpUnknownKey": "{line} (via MCP)",

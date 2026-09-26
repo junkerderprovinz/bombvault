@@ -1765,6 +1765,7 @@ const ro: Partial<Translations> = {
   "activityLog.runFilterChip": "Se afișează o rulare",
   "activityLog.clearRunFilter": "Șterge filtrul de rulare",
   "activityLog.runGone": "Această rulare nu mai este în istoric.",
+  "activityLog.runStillGoing": "Această rulare este încă în desfășurare. Rândul ei apare aici imediat ce raportează progresul.",
   "activityLog.viaMcp": "{line} (prin MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (prin MCP, {key}, revocată)",
   "activityLog.viaMcpUnknownKey": "{line} (prin MCP)",

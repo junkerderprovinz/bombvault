@@ -1986,6 +1986,7 @@ const gl: Partial<Translations> = {
   "activityLog.runFilterChip": "Mostrando unha execución",
   "activityLog.clearRunFilter": "Limpar filtro de execución",
   "activityLog.runGone": "Esta execución xa non está no historial.",
+  "activityLog.runStillGoing": "Esta execución segue en curso. A súa liña aparecerá aquí en canto informe do progreso.",
   "activityLog.viaMcp": "{line} (mediante MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (mediante MCP, {key}, revogada)",
   "activityLog.viaMcpUnknownKey": "{line} (mediante MCP)",

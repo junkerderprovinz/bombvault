@@ -1762,6 +1762,7 @@ const da: Partial<Translations> = {
   "activityLog.runFilterChip": "Viser én kørsel",
   "activityLog.clearRunFilter": "Ryd kørselsfilteret",
   "activityLog.runGone": "Denne kørsel er ikke længere i historikken.",
+  "activityLog.runStillGoing": "Denne kørsel er stadig i gang. Dens linje dukker op her, så snart den melder fremskridt.",
   "activityLog.viaMcp": "{line} (via MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (via MCP, {key}, tilbagekaldt)",
   "activityLog.viaMcpUnknownKey": "{line} (via MCP)",

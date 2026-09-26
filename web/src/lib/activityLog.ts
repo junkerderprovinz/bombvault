@@ -47,8 +47,8 @@ export interface LogLine {
   /** A run that succeeded with a note worth acting on, coloured like the run
    *  history colours that note. */
   warn?: boolean;
-  /** The finished run behind the line, for the marks an open finding puts on
-   *  it. */
+  /** The run behind the line, finished or still going, for the marks an open
+   *  finding puts on it and for a link that opens the log on one run. */
   runId?: string;
 }
 
@@ -271,7 +271,7 @@ function buildLiveLines(
   resolveName: ResolveName,
   now: number,
   liveNow: number = now,
-  stillRunning: ReadonlySet<string> = new Set()
+  stillRunning: ReadonlyMap<string, string> = new Map()
 ): LiveResult {
   const lines: LogLine[] = [];
   const signatures = new Set<string>();
@@ -310,7 +310,7 @@ function buildLiveLines(
       const sig = itemSignature(runKind, domain, name);
       if (!keep(sig)) continue;
       signatures.add(sig);
-      lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind: asLogKind(runKind), live: true });
+      lines.push({ id: `live:${key}`, runId: stillRunning.get(sig), atMs: state.lastSeen, status: "running", text, domain, kind: asLogKind(runKind), live: true });
       continue;
     }
 
@@ -338,7 +338,7 @@ function buildLiveLines(
       const offsiteSig = domainOpSignature("offsite", domain);
       if (!keep(offsiteSig)) continue;
       signatures.add(offsiteSig);
-      lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "offsite", text, domain, kind: "offsite", live: true });
+      lines.push({ id: `live:${key}`, runId: stillRunning.get(offsiteSig), atMs: state.lastSeen, status: "offsite", text, domain, kind: "offsite", live: true });
       continue;
     }
 
@@ -349,7 +349,7 @@ function buildLiveLines(
     const opSig = domainOpSignature(parsed.scope, domain);
     if (!keep(opSig)) continue;
     signatures.add(opSig);
-    lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind: parsed.scope, live: true });
+    lines.push({ id: `live:${key}`, runId: stillRunning.get(opSig), atMs: state.lastSeen, status: "running", text, domain, kind: parsed.scope, live: true });
   }
 
   return { lines, signatures };
@@ -605,14 +605,15 @@ export function buildLogLines(
 ): LogLine[] {
   // The runs the backend still reports as running, keyed with the same
   // signatures buildHistoryLines uses, so a stale live line can ask whether
-  // its run is still going.
-  const stillRunning = new Set<string>();
+  // its run is still going and a live line carries its run's id.
+  const stillRunning = new Map<string, string>();
   for (const run of runs) {
     if (run.status !== "running") continue;
     const isDomainOp = isDomainOpKind(run.kind);
     const domain: LogDomain = isDomainOp ? normalizeDomain(run.targetId) : normalizeDomain(run.domain);
-    stillRunning.add(
-      isDomainOp ? domainOpSignature(run.kind, domain) : itemSignature(run.kind, domain, run.target)
+    stillRunning.set(
+      isDomainOp ? domainOpSignature(run.kind, domain) : itemSignature(run.kind, domain, run.target),
+      run.id
     );
   }
 

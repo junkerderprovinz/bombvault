@@ -1986,6 +1986,7 @@ const id: Partial<Translations> = {
   "activityLog.runFilterChip": "Menampilkan satu run",
   "activityLog.clearRunFilter": "Hapus filter run",
   "activityLog.runGone": "Run ini sudah tidak ada di riwayat.",
+  "activityLog.runStillGoing": "Run ini masih berjalan. Barisnya muncul di sini begitu melaporkan kemajuan.",
   "activityLog.viaMcp": "{line} (melalui MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (melalui MCP, {key}, dicabut)",
   "activityLog.viaMcpUnknownKey": "{line} (melalui MCP)",

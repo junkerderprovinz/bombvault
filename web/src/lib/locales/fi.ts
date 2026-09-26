@@ -1762,6 +1762,7 @@ const fi: Partial<Translations> = {
   "activityLog.runFilterChip": "Näytetään yksi ajo",
   "activityLog.clearRunFilter": "Poista ajosuodatin",
   "activityLog.runGone": "Tätä ajoa ei ole enää historiassa.",
+  "activityLog.runStillGoing": "Tämä ajo on yhä käynnissä. Sen rivi näkyy tässä heti, kun se raportoi edistymisestä.",
   "activityLog.viaMcp": "{line} (MCP:n kautta, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP:n kautta, {key}, kumottu)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP:n kautta)",

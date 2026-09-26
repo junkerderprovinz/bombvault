@@ -1986,6 +1986,7 @@ const ms: Partial<Translations> = {
   "activityLog.runFilterChip": "Menunjukkan satu larian",
   "activityLog.clearRunFilter": "Kosongkan penapis larian",
   "activityLog.runGone": "Larian ini tiada lagi dalam sejarah.",
+  "activityLog.runStillGoing": "Larian ini masih berjalan. Barisnya akan muncul di sini sebaik sahaja ia melaporkan kemajuan.",
   "activityLog.viaMcp": "{line} (melalui MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (melalui MCP, {key}, dibatalkan)",
   "activityLog.viaMcpUnknownKey": "{line} (melalui MCP)",

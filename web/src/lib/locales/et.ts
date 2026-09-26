@@ -1986,6 +1986,7 @@ const et: Partial<Translations> = {
   "activityLog.runFilterChip": "Näidatakse üht käivitust",
   "activityLog.clearRunFilter": "Tühjenda käivituse filter",
   "activityLog.runGone": "Seda käivitust pole enam ajaloos.",
+  "activityLog.runStillGoing": "See käivitus alles käib. Selle rida ilmub siia, kui see edenemisest teatab.",
   "activityLog.viaMcp": "{line} (MCP kaudu, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP kaudu, {key}, tühistatud)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP kaudu)",

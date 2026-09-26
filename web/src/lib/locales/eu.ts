@@ -1986,6 +1986,7 @@ const eu: Partial<Translations> = {
   "activityLog.runFilterChip": "Exekuzio bat erakusten",
   "activityLog.clearRunFilter": "Garbitu exekuzioaren iragazkia",
   "activityLog.runGone": "Exekuzio hau jada ez dago historian.",
+  "activityLog.runStillGoing": "Exekuzio hau oraindik martxan dago. Bere lerroa hemen agertuko da aurrerapena jakinarazten duenean.",
   "activityLog.viaMcp": "{line} (MCP bidez, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP bidez, {key}, baliogabetua)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP bidez)",

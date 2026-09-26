@@ -1754,6 +1754,7 @@ const vi: Partial<Translations> = {
   "activityLog.runFilterChip": "Đang hiển thị một lần chạy",
   "activityLog.clearRunFilter": "Xóa bộ lọc lần chạy",
   "activityLog.runGone": "Lần chạy này không còn trong lịch sử.",
+  "activityLog.runStillGoing": "Lần chạy này vẫn đang diễn ra. Dòng của nó sẽ hiện ở đây ngay khi báo tiến độ.",
   "activityLog.viaMcp": "{line} (qua MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (qua MCP, {key}, đã thu hồi)",
   "activityLog.viaMcpUnknownKey": "{line} (qua MCP)",

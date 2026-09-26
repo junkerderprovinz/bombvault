@@ -1986,6 +1986,7 @@ const sk: Partial<Translations> = {
   "activityLog.runFilterChip": "Zobrazuje sa jeden beh",
   "activityLog.clearRunFilter": "Vymazať filter behu",
   "activityLog.runGone": "Tento beh už v histórii nie je.",
+  "activityLog.runStillGoing": "Tento beh ešte prebieha. Jeho riadok sa tu zobrazí, hneď ako ohlási priebeh.",
   "activityLog.viaMcp": "{line} (cez MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (cez MCP, {key}, zrušený)",
   "activityLog.viaMcpUnknownKey": "{line} (cez MCP)",

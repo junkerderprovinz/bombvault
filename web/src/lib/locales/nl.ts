@@ -1759,6 +1759,7 @@ const nl: Partial<Translations> = {
   "activityLog.runFilterChip": "Toont één run",
   "activityLog.clearRunFilter": "Runfilter wissen",
   "activityLog.runGone": "Deze run staat niet meer in de geschiedenis.",
+  "activityLog.runStillGoing": "Deze run loopt nog. De regel verschijnt hier zodra de run voortgang meldt.",
   "activityLog.viaMcp": "{line} (via MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (via MCP, {key}, ingetrokken)",
   "activityLog.viaMcpUnknownKey": "{line} (via MCP)",

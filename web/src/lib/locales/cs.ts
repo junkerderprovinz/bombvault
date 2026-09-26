@@ -1760,6 +1760,7 @@ const cs: Partial<Translations> = {
   "activityLog.runFilterChip": "Zobrazen jeden běh",
   "activityLog.clearRunFilter": "Zrušit filtr běhu",
   "activityLog.runGone": "Tento běh už v historii není.",
+  "activityLog.runStillGoing": "Tento běh ještě probíhá. Jeho řádek se tu objeví, jakmile ohlásí průběh.",
   "activityLog.viaMcp": "{line} (přes MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (přes MCP, {key}, odvolaný)",
   "activityLog.viaMcpUnknownKey": "{line} (přes MCP)",

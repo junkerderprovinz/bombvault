@@ -1757,6 +1757,7 @@ const uk: Partial<Translations> = {
   "activityLog.runFilterChip": "Показано один запуск",
   "activityLog.clearRunFilter": "Скинути фільтр запуску",
   "activityLog.runGone": "Цього запуску більше немає в історії.",
+  "activityLog.runStillGoing": "Цей запуск ще триває. Його рядок з'явиться тут, щойно він повідомить про перебіг.",
   "activityLog.viaMcp": "{line} (через MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (через MCP, {key}, відкликано)",
   "activityLog.viaMcpUnknownKey": "{line} (через MCP)",

@@ -1986,6 +1986,7 @@ const ca: Partial<Translations> = {
   "activityLog.runFilterChip": "Mostrant una execució",
   "activityLog.clearRunFilter": "Neteja el filtre d'execució",
   "activityLog.runGone": "Aquesta execució ja no és a l'historial.",
+  "activityLog.runStillGoing": "Aquesta execució encara està en curs. La seva línia apareixerà aquí quan informi del progrés.",
   "activityLog.viaMcp": "{line} (mitjançant MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (mitjançant MCP, {key}, revocada)",
   "activityLog.viaMcpUnknownKey": "{line} (mitjançant MCP)",

@@ -1986,6 +1986,7 @@ const bg: Partial<Translations> = {
   "activityLog.runFilterChip": "Показва се едно изпълнение",
   "activityLog.clearRunFilter": "Изчисти филтъра за изпълнение",
   "activityLog.runGone": "Това изпълнение вече не е в историята.",
+  "activityLog.runStillGoing": "Това изпълнение още тече. Редът му ще се появи тук, щом отчете напредък.",
   "activityLog.viaMcp": "{line} (през MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (през MCP, {key}, отменен)",
   "activityLog.viaMcpUnknownKey": "{line} (през MCP)",

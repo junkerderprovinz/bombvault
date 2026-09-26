@@ -89,3 +89,11 @@ it("says nothing about a missing run before the history has loaded", async () =>
 
   expect(screen.queryByText(en["activityLog.runGone"])).toBeNull();
 });
+
+it("says a linked run is still going while it has no line yet", async () => {
+  listRuns.mockResolvedValue({ ok: true, runs: [run({ id: "live1", status: "running", finishedAt: null })] });
+  await renderLog("live1");
+
+  expect(await screen.findByText(en["activityLog.runStillGoing"])).toBeTruthy();
+  expect(screen.queryByText(en["activityLog.runGone"])).toBeNull();
+});

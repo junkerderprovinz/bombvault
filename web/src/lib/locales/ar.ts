@@ -1765,6 +1765,7 @@ const ar: Partial<Translations> = {
   "activityLog.runFilterChip": "عرض تشغيل واحد",
   "activityLog.clearRunFilter": "مسح تصفية التشغيل",
   "activityLog.runGone": "لم يعد هذا التشغيل موجودًا في السجل.",
+  "activityLog.runStillGoing": "هذا التشغيل ما زال جاريًا. سيظهر سطره هنا بمجرد أن يبلغ عن تقدمه.",
   "activityLog.viaMcp": "{line} (عبر MCP، {key})",
   "activityLog.viaMcpRevoked": "{line} (عبر MCP، {key}، مُبطَل)",
   "activityLog.viaMcpUnknownKey": "{line} (عبر MCP)",

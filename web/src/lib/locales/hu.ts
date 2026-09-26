@@ -1765,6 +1765,7 @@ const hu: Partial<Translations> = {
   "activityLog.runFilterChip": "Egy futás látható",
   "activityLog.clearRunFilter": "Futásszűrő törlése",
   "activityLog.runGone": "Ez a futás már nincs az előzmények között.",
+  "activityLog.runStillGoing": "Ez a futás még tart. A sora itt jelenik meg, amint jelenti a haladását.",
   "activityLog.viaMcp": "{line} (MCP-n keresztül, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP-n keresztül, {key}, visszavonva)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP-n keresztül)",

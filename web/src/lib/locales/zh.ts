@@ -1754,6 +1754,7 @@ const zh: Partial<Translations> = {
   "activityLog.runFilterChip": "正在显示一次运行",
   "activityLog.clearRunFilter": "清除运行筛选",
   "activityLog.runGone": "此运行已不在历史记录中。",
+  "activityLog.runStillGoing": "此运行仍在进行中。一旦报告进度，它的行就会显示在这里。",
   "activityLog.viaMcp": "{line}（通过 MCP，{key}）",
   "activityLog.viaMcpRevoked": "{line}（通过 MCP，{key}，已吊销）",
   "activityLog.viaMcpUnknownKey": "{line}（通过 MCP）",

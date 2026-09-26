@@ -1986,6 +1986,7 @@ const hi: Partial<Translations> = {
   "activityLog.runFilterChip": "एक रन दिखाया जा रहा है",
   "activityLog.clearRunFilter": "रन फ़िल्टर हटाएँ",
   "activityLog.runGone": "यह रन अब इतिहास में नहीं है।",
+  "activityLog.runStillGoing": "यह रन अभी चल रहा है। प्रगति बताते ही इसकी पंक्ति यहाँ दिखेगी।",
   "activityLog.viaMcp": "{line} (MCP के ज़रिए, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP के ज़रिए, {key}, निरस्त)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP के ज़रिए)",

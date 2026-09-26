@@ -2766,8 +2766,11 @@ export function Dashboard() {
     .filter(
       (b): b is (typeof blocks)[number] => !!b && (advanced || !b.advancedOnly)
     );
-  const visibleBlocks = orderedAvailable.filter((b) => !hidden.has(b.id));
-  const hiddenBlocks = orderedAvailable.filter((b) => hidden.has(b.id));
+  // A link to one run shows the activity log even where the layout hides it,
+  // or the link would land on a page without the log it points to.
+  const shown = (id: string) => !hidden.has(id) || (id === "activityLog" && logRunFilter !== null);
+  const visibleBlocks = orderedAvailable.filter((b) => shown(b.id));
+  const hiddenBlocks = orderedAvailable.filter((b) => !shown(b.id));
 
   // Native HTML5 drag-and-drop — the dragged id lives in a ref (no re-render
   // mid-drag); onDrop reorders relative to the drop-target block. The move

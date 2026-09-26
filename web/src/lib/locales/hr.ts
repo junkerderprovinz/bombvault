@@ -1986,6 +1986,7 @@ const hr: Partial<Translations> = {
   "activityLog.runFilterChip": "Prikazuje se jedno pokretanje",
   "activityLog.clearRunFilter": "Ukloni filtar pokretanja",
   "activityLog.runGone": "Ovo pokretanje više nije u povijesti.",
+  "activityLog.runStillGoing": "Ovo pokretanje još traje. Njegov redak pojavit će se ovdje čim javi napredak.",
   "activityLog.viaMcp": "{line} (putem MCP-a, {key})",
   "activityLog.viaMcpRevoked": "{line} (putem MCP-a, {key}, opozvan)",
   "activityLog.viaMcpUnknownKey": "{line} (putem MCP-a)",

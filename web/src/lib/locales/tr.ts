@@ -1762,6 +1762,7 @@ const tr: Partial<Translations> = {
   "activityLog.runFilterChip": "Tek bir çalıştırma gösteriliyor",
   "activityLog.clearRunFilter": "Çalıştırma filtresini temizle",
   "activityLog.runGone": "Bu çalıştırma artık geçmişte yok.",
+  "activityLog.runStillGoing": "Bu çalıştırma hâlâ sürüyor. İlerleme bildirdiği anda satırı burada görünür.",
   "activityLog.viaMcp": "{line} (MCP üzerinden, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP üzerinden, {key}, iptal edildi)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP üzerinden)",

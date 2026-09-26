@@ -1760,6 +1760,7 @@ const es: Partial<Translations> = {
   "activityLog.runFilterChip": "Mostrando una ejecución",
   "activityLog.clearRunFilter": "Quitar el filtro de ejecución",
   "activityLog.runGone": "Esta ejecución ya no está en el historial.",
+  "activityLog.runStillGoing": "Esta ejecución sigue en curso. Su línea aparecerá aquí en cuanto informe de su progreso.",
   "activityLog.viaMcp": "{line} (mediante MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (mediante MCP, {key}, revocada)",
   "activityLog.viaMcpUnknownKey": "{line} (mediante MCP)",

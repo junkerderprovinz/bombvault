@@ -1762,6 +1762,7 @@ const he: Partial<Translations> = {
   "activityLog.runFilterChip": "מציג הרצה אחת",
   "activityLog.clearRunFilter": "ניקוי סינון ההרצה",
   "activityLog.runGone": "ההרצה הזו כבר לא נמצאת בהיסטוריה.",
+  "activityLog.runStillGoing": "ההרצה הזו עדיין פועלת. השורה שלה תופיע כאן ברגע שתדווח על התקדמות.",
   "activityLog.viaMcp": "{line} (דרך MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (דרך MCP, {key}, בוטל)",
   "activityLog.viaMcpUnknownKey": "{line} (דרך MCP)",
