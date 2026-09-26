@@ -168,3 +168,23 @@ func TestNormalizeOffsiteSortOrderWithAnEmptyFieldMovesAnEnabledRowOffZero(t *te
 		t.Fatal("an empty field with no switched-off row on zero must leave nothing on it")
 	}
 }
+
+func TestMoveOffsiteTargetBehindPutsItAfterTheDomainsLastTarget(t *testing.T) {
+	r := newRepo(t)
+	mesh := store.SeedFieldTarget(t, r, "containers", "rest:http://peer/containers")
+	store.SeedOffsiteTarget(t, r, "containers", "s3:second")
+	vms := store.SeedOffsiteTarget(t, r, "vms", "s3:vms")
+
+	if err := r.MoveOffsiteTargetBehind(mesh.ID); err != nil {
+		t.Fatalf("MoveOffsiteTargetBehind: %v", err)
+	}
+	if got := sortOrderOf(t, r, mesh.ID); got != 2 {
+		t.Fatalf("moved row got sort_order %d, want 2", got)
+	}
+	if _, ok, _ := r.FieldOffsiteTarget("containers"); ok {
+		t.Fatal("the domain still has a row on sort_order 0")
+	}
+	if got := sortOrderOf(t, r, vms.ID); got != 1 {
+		t.Fatalf("another domain's target moved to sort_order %d", got)
+	}
+}

@@ -285,6 +285,19 @@ func fieldRowQ(q queryer, domain string) (OffsiteTarget, bool, error) {
 	return t, true, nil
 }
 
+// MoveOffsiteTargetBehind puts a replication destination behind the last one
+// of its domain.
+func (r *Repo) MoveOffsiteTargetBehind(id string) error {
+	_, err := r.db.Exec(`UPDATE offsite_targets SET sort_order = (
+		  SELECT MAX(o.sort_order) + 1 FROM offsite_targets o
+		   WHERE o.role = offsite_targets.role AND o.domain = offsite_targets.domain)
+		WHERE id = ? AND role = ?`, id, RoleOffsite)
+	if err != nil {
+		return fmt.Errorf("MoveOffsiteTargetBehind: %w", err)
+	}
+	return nil
+}
+
 // NormalizeOffsiteSortOrder applies the rule of the offsite_targets_primary_slot
 // migration to one domain: the oldest target whose location is field takes
 // sort_order 0, and every other target on 0 moves behind the domain's last one,
