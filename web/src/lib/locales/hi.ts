@@ -2079,7 +2079,7 @@ const hi: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "अस्वीकृत: यह की ऐसा नहीं कर सकती",
   "mcp.outcomeRetentionGuard": "रिटेंशन गार्ड ने अस्वीकार किया",
   "mcp.outcomeBusy": "अस्वीकृत: एक बैकअप पहले से चल रहा था",
-  "mcp.outcomeCooldown": "अस्वीकृत: इस आइटम का बैकअप कुछ मिनट पहले MCP से हुआ था",
+  "mcp.outcomeCooldown": "अस्वीकृत: इसे या इसके किसी हिस्से को कुछ मिनट पहले MCP से शुरू किया गया था",
   "mcp.outcomeRateLimited": "अस्वीकृत: बहुत अधिक अनुरोध",
   "mcp.outcomeStartLimit": "अस्वीकृत: इस की ने इस घंटे की सभी शुरुआतें इस्तेमाल कर लीं",
   "mcp.outcomeBatch": "अस्वीकृत: BombVault बैच अनुरोध स्वीकार नहीं करता",

@@ -2079,7 +2079,7 @@ const hr: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Odbijeno: ovaj ključ to ne smije",
   "mcp.outcomeRetentionGuard": "Odbijeno zaštitom zadržavanja",
   "mcp.outcomeBusy": "Odbijeno: kopiranje je već bilo u tijeku",
-  "mcp.outcomeCooldown": "Odbijeno: stavka je kopirana preko MCP-a prije nekoliko minuta",
+  "mcp.outcomeCooldown": "Odbijeno: ovo ili dio toga pokrenut je preko MCP-a prije nekoliko minuta",
   "mcp.outcomeRateLimited": "Odbijeno: previše zahtjeva",
   "mcp.outcomeStartLimit": "Odbijeno: ovaj ključ je potrošio pokretanja za ovaj sat",
   "mcp.outcomeBatch": "Odbijeno: BombVault ne prima skupne zahtjeve",

@@ -1858,7 +1858,7 @@ const th: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "ถูกปฏิเสธ: คีย์นี้ไม่ได้รับอนุญาตให้ทำเช่นนั้น",
   "mcp.outcomeRetentionGuard": "ถูกปฏิเสธโดยตัวป้องกันการเก็บรักษา",
   "mcp.outcomeBusy": "ถูกปฏิเสธ: มีการสำรองข้อมูลทำงานอยู่แล้ว",
-  "mcp.outcomeCooldown": "ถูกปฏิเสธ: รายการนี้เพิ่งสำรองผ่าน MCP เมื่อไม่กี่นาทีก่อน",
+  "mcp.outcomeCooldown": "ถูกปฏิเสธ: รายการนี้หรือบางส่วนของมันเพิ่งเริ่มผ่าน MCP เมื่อไม่กี่นาทีก่อน",
   "mcp.outcomeRateLimited": "ถูกปฏิเสธ: คำขอมากเกินไป",
   "mcp.outcomeStartLimit": "ถูกปฏิเสธ: คีย์นี้ใช้สิทธิ์เริ่มของชั่วโมงนี้หมดแล้ว",
   "mcp.outcomeBatch": "ถูกปฏิเสธ: BombVault ไม่รับคำขอแบบกลุ่ม",

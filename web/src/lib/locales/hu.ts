@@ -1858,7 +1858,7 @@ const hu: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Elutasítva: ez a kulcs ezt nem teheti meg",
   "mcp.outcomeRetentionGuard": "A megőrzésvédelem elutasította",
   "mcp.outcomeBusy": "Elutasítva: már futott egy mentés",
-  "mcp.outcomeCooldown": "Elutasítva: az elemet néhány perce mentették MCP-n keresztül",
+  "mcp.outcomeCooldown": "Elutasítva: ezt vagy egy részét néhány perce indították MCP-n keresztül",
   "mcp.outcomeRateLimited": "Elutasítva: túl sok kérés",
   "mcp.outcomeStartLimit": "Elutasítva: ez a kulcs elhasználta az ebben az órában engedett indításait",
   "mcp.outcomeBatch": "Elutasítva: a BombVault nem fogad kötegelt kéréseket",

@@ -2079,7 +2079,7 @@ const lt: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Atmesta: šiam raktui to daryti negalima",
   "mcp.outcomeRetentionGuard": "Atmetė saugojimo apsauga",
   "mcp.outcomeBusy": "Atmesta: kopijavimas jau vyko",
-  "mcp.outcomeCooldown": "Atmesta: elementas buvo nukopijuotas per MCP prieš kelias minutes",
+  "mcp.outcomeCooldown": "Atmesta: tai ar jo dalis buvo paleista per MCP prieš kelias minutes",
   "mcp.outcomeRateLimited": "Atmesta: per daug užklausų",
   "mcp.outcomeStartLimit": "Atmesta: šis raktas išnaudojo šios valandos paleidimus",
   "mcp.outcomeBatch": "Atmesta: BombVault nepriima paketinių užklausų",

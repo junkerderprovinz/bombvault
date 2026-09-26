@@ -1850,7 +1850,7 @@ const pl: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Odrzucono: ten klucz nie może tego zrobić",
   "mcp.outcomeRetentionGuard": "Odrzucone przez ochronę przechowywania",
   "mcp.outcomeBusy": "Odrzucono: kopia już trwała",
-  "mcp.outcomeCooldown": "Odrzucono: element skopiowano przez MCP kilka minut temu",
+  "mcp.outcomeCooldown": "Odrzucono: to lub jego część uruchomiono przez MCP kilka minut temu",
   "mcp.outcomeRateLimited": "Odrzucono: zbyt wiele żądań",
   "mcp.outcomeStartLimit": "Odrzucono: ten klucz wykorzystał już uruchomienia na tę godzinę",
   "mcp.outcomeBatch": "Odrzucono: BombVault nie przyjmuje żądań zbiorczych",

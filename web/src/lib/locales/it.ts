@@ -1855,7 +1855,7 @@ const it: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Rifiutato: questa chiave non può farlo",
   "mcp.outcomeRetentionGuard": "Rifiutato dalla protezione della conservazione",
   "mcp.outcomeBusy": "Rifiutato: un backup era già in corso",
-  "mcp.outcomeCooldown": "Rifiutato: l'elemento è stato salvato tramite MCP pochi minuti fa",
+  "mcp.outcomeCooldown": "Rifiutato: questo o una sua parte è stato avviato tramite MCP pochi minuti fa",
   "mcp.outcomeRateLimited": "Rifiutato: troppe richieste",
   "mcp.outcomeStartLimit": "Rifiutato: questa chiave ha esaurito gli avvii di quest'ora",
   "mcp.outcomeBatch": "Rifiutato: BombVault non accetta richieste in batch",

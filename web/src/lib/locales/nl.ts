@@ -1852,7 +1852,7 @@ const nl: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Geweigerd: deze sleutel mag dat niet",
   "mcp.outcomeRetentionGuard": "Geweigerd door de bewaarbeveiliging",
   "mcp.outcomeBusy": "Geweigerd: er liep al een back-up",
-  "mcp.outcomeCooldown": "Geweigerd: het item is een paar minuten geleden via MCP geback-upt",
+  "mcp.outcomeCooldown": "Geweigerd: dit of een deel ervan is een paar minuten geleden via MCP gestart",
   "mcp.outcomeRateLimited": "Geweigerd: te veel verzoeken",
   "mcp.outcomeStartLimit": "Geweigerd: deze sleutel heeft zijn starts voor dit uur opgebruikt",
   "mcp.outcomeBatch": "Geweigerd: BombVault neemt geen batchverzoeken aan",

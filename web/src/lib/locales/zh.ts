@@ -1847,7 +1847,7 @@ const zh: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "已拒绝：此密钥无权执行该操作",
   "mcp.outcomeRetentionGuard": "被保留保护拒绝",
   "mcp.outcomeBusy": "已拒绝：已有备份在运行",
-  "mcp.outcomeCooldown": "已拒绝：该项目几分钟前刚通过 MCP 备份过",
+  "mcp.outcomeCooldown": "已拒绝：此项或其中一部分几分钟前刚通过 MCP 启动过",
   "mcp.outcomeRateLimited": "已拒绝：请求过多",
   "mcp.outcomeStartLimit": "已拒绝：此密钥本小时的启动次数已用完",
   "mcp.outcomeBatch": "已拒绝：BombVault 不接受批量请求",

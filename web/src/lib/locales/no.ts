@@ -1855,7 +1855,7 @@ const no: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Avvist: denne nøkkelen har ikke lov til det",
   "mcp.outcomeRetentionGuard": "Avvist av oppbevaringsvernet",
   "mcp.outcomeBusy": "Avvist: en sikkerhetskopi kjørte allerede",
-  "mcp.outcomeCooldown": "Avvist: elementet ble sikkerhetskopiert via MCP for noen minutter siden",
+  "mcp.outcomeCooldown": "Avvist: dette eller en del av det ble startet via MCP for noen minutter siden",
   "mcp.outcomeRateLimited": "Avvist: for mange forespørsler",
   "mcp.outcomeStartLimit": "Avvist: denne nøkkelen har brukt opp startene sine for denne timen",
   "mcp.outcomeBatch": "Avvist: BombVault tar ikke imot batchforespørsler",

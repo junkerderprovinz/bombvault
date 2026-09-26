@@ -2079,7 +2079,7 @@ const et: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Keeldutud: see võti ei tohi seda teha",
   "mcp.outcomeRetentionGuard": "Säilitamiskaitse keeldus",
   "mcp.outcomeBusy": "Keeldutud: üks varundus juba käis",
-  "mcp.outcomeCooldown": "Keeldutud: üksus varundati MCP kaudu mõni minut tagasi",
+  "mcp.outcomeCooldown": "Keeldutud: see või osa sellest käivitati MCP kaudu mõni minut tagasi",
   "mcp.outcomeRateLimited": "Keeldutud: liiga palju päringuid",
   "mcp.outcomeStartLimit": "Keeldutud: see võti on selle tunni käivitused ära kasutanud",
   "mcp.outcomeBatch": "Keeldutud: BombVault ei võta pakettpäringuid vastu",

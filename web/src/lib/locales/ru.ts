@@ -1850,7 +1850,7 @@ const ru: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Отклонено: этому ключу это не разрешено",
   "mcp.outcomeRetentionGuard": "Отклонено защитой хранения",
   "mcp.outcomeBusy": "Отклонено: копирование уже шло",
-  "mcp.outcomeCooldown": "Отклонено: элемент был скопирован через MCP несколько минут назад",
+  "mcp.outcomeCooldown": "Отклонено: это или его часть запущено через MCP несколько минут назад",
   "mcp.outcomeRateLimited": "Отклонено: слишком много запросов",
   "mcp.outcomeStartLimit": "Отклонено: этот ключ исчерпал запуски на этот час",
   "mcp.outcomeBatch": "Отклонено: BombVault не принимает пакетные запросы",

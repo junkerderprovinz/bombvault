@@ -1855,7 +1855,7 @@ const sv: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Avvisat: den här nyckeln får inte göra det",
   "mcp.outcomeRetentionGuard": "Avvisat av lagringsskyddet",
   "mcp.outcomeBusy": "Avvisat: en säkerhetskopiering pågick redan",
-  "mcp.outcomeCooldown": "Avvisat: objektet säkerhetskopierades via MCP för några minuter sedan",
+  "mcp.outcomeCooldown": "Avvisat: detta eller en del av det startades via MCP för några minuter sedan",
   "mcp.outcomeRateLimited": "Avvisat: för många begäranden",
   "mcp.outcomeStartLimit": "Avvisat: nyckeln har använt sina starter för den här timmen",
   "mcp.outcomeBatch": "Avvisat: BombVault tar inte emot batchbegäranden",

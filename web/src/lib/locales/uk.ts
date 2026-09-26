@@ -1850,7 +1850,7 @@ const uk: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Відхилено: цьому ключу це не дозволено",
   "mcp.outcomeRetentionGuard": "Відхилено захистом зберігання",
   "mcp.outcomeBusy": "Відхилено: копіювання вже тривало",
-  "mcp.outcomeCooldown": "Відхилено: елемент скопійовано через MCP кілька хвилин тому",
+  "mcp.outcomeCooldown": "Відхилено: це або його частину запущено через MCP кілька хвилин тому",
   "mcp.outcomeRateLimited": "Відхилено: забагато запитів",
   "mcp.outcomeStartLimit": "Відхилено: цей ключ вичерпав запуски на цю годину",
   "mcp.outcomeBatch": "Відхилено: BombVault не приймає пакетні запити",

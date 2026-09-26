@@ -2079,7 +2079,7 @@ const is: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Hafnað: þessi lykill má ekki gera þetta",
   "mcp.outcomeRetentionGuard": "Hafnað af varðveisluvörn",
   "mcp.outcomeBusy": "Hafnað: afritun var þegar í gangi",
-  "mcp.outcomeCooldown": "Hafnað: atriðið var afritað gegnum MCP fyrir fáeinum mínútum",
+  "mcp.outcomeCooldown": "Hafnað: þetta eða hluti þess var ræst gegnum MCP fyrir fáeinum mínútum",
   "mcp.outcomeRateLimited": "Hafnað: of margar beiðnir",
   "mcp.outcomeStartLimit": "Hafnað: þessi lykill hefur notað ræsingar sínar þessa klukkustund",
   "mcp.outcomeBatch": "Hafnað: BombVault tekur ekki við runubeiðnum",

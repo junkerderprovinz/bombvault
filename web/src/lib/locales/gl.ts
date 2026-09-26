@@ -2079,7 +2079,7 @@ const gl: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Rexeitado: esta chave non pode facer iso",
   "mcp.outcomeRetentionGuard": "Rexeitado pola protección de retención",
   "mcp.outcomeBusy": "Rexeitado: xa había unha copia en curso",
-  "mcp.outcomeCooldown": "Rexeitado: o elemento copiouse por MCP hai uns minutos",
+  "mcp.outcomeCooldown": "Rexeitado: isto ou unha parte iniciouse por MCP hai uns minutos",
   "mcp.outcomeRateLimited": "Rexeitado: demasiadas solicitudes",
   "mcp.outcomeStartLimit": "Rexeitado: esta chave esgotou os inicios desta hora",
   "mcp.outcomeBatch": "Rexeitado: BombVault non acepta solicitudes por lotes",

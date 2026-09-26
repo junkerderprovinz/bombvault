@@ -1,6 +1,9 @@
 package api
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -9,6 +12,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -149,5 +154,38 @@ func TestMCPGateRefusalsReachTheKeysLogOncePerMinute(t *testing.T) {
 	}
 	if calls[id] != 0 {
 		t.Fatalf("refused requests counted as %d calls", calls[id])
+	}
+}
+
+// The key's log records the code the assistant received, so a read that ran out
+// of time or a start that failed does not read as something else on the card.
+func TestAKeysLogRecordsTheCodeTheAssistantGot(t *testing.T) {
+	h, _, repo, _ := newMCPGateHandler(t)
+	_, id := seedMCPKey(t, h, repo, "Laptop")
+	ctx := mcpStartCaller(id, true)
+	release := func() {}
+
+	results := []*mcp.CallToolResult{
+		h.mcpFailure(ctx, "get_coverage", fmt.Errorf("coverage: %w", context.DeadlineExceeded)),
+		h.mcpFailure(ctx, "get_status", errors.New("disk I/O error")),
+		h.mcpStartOutcome(ctx, "start_backup", release, false, errors.New("disk I/O error"), "a backup is already running", nil),
+		h.mcpStartOutcome(ctx, "start_backup", release, false, domainBusyError{op: "prune", domain: "files"}, "a backup is already running", nil),
+		h.mcpStartOutcome(ctx, "start_backup", release, false, nil, "a backup is already running", nil),
+		h.mcpStartOutcome(ctx, "start_backup_everything", release, false, errMCPBackupRunning, "a Backup Everything pass is already running", nil),
+	}
+	want := []string{"timeout", "failed", "failed", "busy", "busy", "busy"}
+
+	events, err := repo.MCPKeyEvents(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != len(want) {
+		t.Fatalf("%d events, want %d", len(events), len(want))
+	}
+	for i, res := range results {
+		logged := events[len(events)-1-i].Outcome
+		if sent := mcpErrorCodeOf(res); sent != want[i] || logged != want[i] {
+			t.Errorf("call %d: sent %q, logged %q, want %q for both", i, sent, logged, want[i])
+		}
 	}
 }

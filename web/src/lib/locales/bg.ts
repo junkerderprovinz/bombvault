@@ -2079,7 +2079,7 @@ const bg: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Отказано: този ключ няма право на това",
   "mcp.outcomeRetentionGuard": "Отказано от защитата на съхранението",
   "mcp.outcomeBusy": "Отказано: вече вървеше архивиране",
-  "mcp.outcomeCooldown": "Отказано: елементът беше архивиран през MCP преди няколко минути",
+  "mcp.outcomeCooldown": "Отказано: това или част от него беше стартирано през MCP преди няколко минути",
   "mcp.outcomeRateLimited": "Отказано: твърде много заявки",
   "mcp.outcomeStartLimit": "Отказано: този ключ изчерпа стартиранията си за този час",
   "mcp.outcomeBatch": "Отказано: BombVault не приема пакетни заявки",

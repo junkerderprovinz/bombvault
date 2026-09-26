@@ -147,8 +147,7 @@ func (h *Handler) toolListAnomalies(ctx context.Context, req *mcp.CallToolReques
 	defer cancel()
 	page, err := h.svc.ListAnomalies(ctx, filter)
 	if err != nil {
-		h.logMCPCall(ctx, tool, "failed")
-		return mcpServiceError(err), nil
+		return h.mcpFailure(ctx, tool, err), nil
 	}
 	views := page.Anomalies
 	truncated := len(views) > limit
@@ -208,8 +207,7 @@ func (h *Handler) toolGetAnomaly(ctx context.Context, req *mcp.CallToolRequest) 
 	defer cancel()
 	view, found, err := h.svc.GetAnomaly(ctx, in.ID)
 	if err != nil {
-		h.logMCPCall(ctx, tool, "failed")
-		return mcpServiceError(err), nil
+		return h.mcpFailure(ctx, tool, err), nil
 	}
 	if !found {
 		h.logMCPCall(ctx, tool, "not_found")

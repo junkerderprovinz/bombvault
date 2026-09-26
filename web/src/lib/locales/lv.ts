@@ -2079,7 +2079,7 @@ const lv: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Noraidīts: šai atslēgai to darīt nav atļauts",
   "mcp.outcomeRetentionGuard": "Noraidīja glabāšanas aizsardzība",
   "mcp.outcomeBusy": "Noraidīts: kopēšana jau notika",
-  "mcp.outcomeCooldown": "Noraidīts: vienums pirms dažām minūtēm tika kopēts caur MCP",
+  "mcp.outcomeCooldown": "Noraidīts: tas vai tā daļa tika palaista caur MCP pirms dažām minūtēm",
   "mcp.outcomeRateLimited": "Noraidīts: pārāk daudz pieprasījumu",
   "mcp.outcomeStartLimit": "Noraidīts: šī atslēga ir izlietojusi šīs stundas palaišanas",
   "mcp.outcomeBatch": "Noraidīts: BombVault nepieņem pakešu pieprasījumus",

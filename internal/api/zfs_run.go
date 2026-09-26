@@ -500,7 +500,7 @@ func (s *Service) StartBackupZFSDataset(ctx context.Context, id string) (bool, e
 	}
 	if op, busy := s.domainBusy(zfsDomain); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on zfs", op)
+		return false, domainBusyError{op: op, domain: "zfs"}
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -523,7 +523,7 @@ func (s *Service) StartBackupZFSAll(ctx context.Context, ids []string) (bool, er
 	}
 	if op, busy := s.domainBusy(zfsDomain); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on zfs", op)
+		return false, domainBusyError{op: op, domain: "zfs"}
 	}
 	bctx := WithBulkReplicateSuppressed(context.WithoutCancel(ctx))
 	go func() {

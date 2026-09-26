@@ -1855,7 +1855,7 @@ const da: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Afvist: denne nøgle må ikke gøre det",
   "mcp.outcomeRetentionGuard": "Afvist af opbevaringsværnet",
   "mcp.outcomeBusy": "Afvist: en sikkerhedskopi kørte allerede",
-  "mcp.outcomeCooldown": "Afvist: elementet blev sikkerhedskopieret via MCP for få minutter siden",
+  "mcp.outcomeCooldown": "Afvist: dette eller en del af det blev startet via MCP for få minutter siden",
   "mcp.outcomeRateLimited": "Afvist: for mange forespørgsler",
   "mcp.outcomeStartLimit": "Afvist: denne nøgle har brugt sine starter for denne time",
   "mcp.outcomeBatch": "Afvist: BombVault tager ikke imod batchforespørgsler",

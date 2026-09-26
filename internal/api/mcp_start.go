@@ -83,8 +83,7 @@ func (h *Handler) toolStartBackup(ctx context.Context, req *mcp.CallToolRequest)
 	hold, err := h.mcpRetentionHold(settings, item, now)
 	if err != nil {
 		release()
-		h.logMCPCall(ctx, tool, "failed")
-		return mcpServiceError(err), nil
+		return h.mcpFailure(ctx, tool, err), nil
 	}
 	if hold != nil {
 		release()
@@ -95,8 +94,7 @@ func (h *Handler) toolStartBackup(ctx context.Context, req *mcp.CallToolRequest)
 	rows, err := h.mcpStartRows(ctx, in.Domain, []mcpItem{item})
 	if err != nil {
 		release()
-		h.logMCPCall(ctx, tool, "failed")
-		return mcpServiceError(err), nil
+		return h.mcpFailure(ctx, tool, err), nil
 	}
 
 	sctx := WithRunOrigin(ctx, RunOrigin{Via: "mcp", KeyID: caller.KeyID})
@@ -161,8 +159,7 @@ func (h *Handler) toolStartDomainBackup(ctx context.Context, req *mcp.CallToolRe
 
 	items, skipped, err := h.domainStartSelection(ctx, settings, in.Domain, false)
 	if err != nil {
-		h.logMCPCall(ctx, tool, "failed")
-		return mcpServiceError(err), nil
+		return h.mcpFailure(ctx, tool, err), nil
 	}
 	if len(items) == 0 {
 		h.logMCPCall(ctx, tool, "nothing_to_back_up")
@@ -182,8 +179,7 @@ func (h *Handler) toolStartDomainBackup(ctx context.Context, req *mcp.CallToolRe
 		hold, hErr := h.mcpRetentionHold(settings, item, now)
 		if hErr != nil {
 			release()
-			h.logMCPCall(ctx, tool, "failed")
-			return mcpServiceError(hErr), nil
+			return h.mcpFailure(ctx, tool, hErr), nil
 		}
 		if hold != nil {
 			lastHold = hold
@@ -201,8 +197,7 @@ func (h *Handler) toolStartDomainBackup(ctx context.Context, req *mcp.CallToolRe
 	rows, err := h.mcpStartRows(ctx, in.Domain, kept)
 	if err != nil {
 		release()
-		h.logMCPCall(ctx, tool, "failed")
-		return mcpServiceError(err), nil
+		return h.mcpFailure(ctx, tool, err), nil
 	}
 
 	sctx := WithRunOrigin(ctx, RunOrigin{Via: "mcp", KeyID: caller.KeyID})
@@ -269,8 +264,7 @@ func (h *Handler) toolStartBackupEverything(ctx context.Context, req *mcp.CallTo
 	guard, err := h.everythingRetentionHold(ctx, settings, domains, now)
 	if err != nil {
 		release()
-		h.logMCPCall(ctx, tool, "failed")
-		return mcpServiceError(err), nil
+		return h.mcpFailure(ctx, tool, err), nil
 	}
 	if guard.kept == 0 && guard.last != nil {
 		release()
@@ -366,8 +360,7 @@ func (h *Handler) toolCancelBackup(ctx context.Context, req *mcp.CallToolRequest
 		return mcpToolError("not_found", "no run with this id", nil), nil
 	}
 	if err != nil {
-		h.logMCPCall(ctx, tool, "failed")
-		return mcpServiceError(err), nil
+		return h.mcpFailure(ctx, tool, err), nil
 	}
 	if run.Kind != "backup" || run.Status != "running" {
 		h.logMCPRunCall(ctx, tool, "not_running", run.ID)
@@ -478,8 +471,7 @@ func (h *Handler) mcpStartAllowed(ctx context.Context, tool string, caller mcpCa
 func (h *Handler) mcpStartPreflight(ctx context.Context, tool, keyID, what string, targetIDs []string, now time.Time) (func(), *mcp.CallToolResult) {
 	last, err := h.store.LatestMCPStartAt(targetIDs, now.Add(-mcpStartCooldown).Unix())
 	if err != nil {
-		h.logMCPCall(ctx, tool, "failed")
-		return nil, mcpServiceError(err)
+		return nil, h.mcpFailure(ctx, tool, err)
 	}
 	if last > 0 {
 		since := now.Sub(time.Unix(last, 0))
@@ -531,6 +523,13 @@ func (h *Handler) mcpStartEverythingAlone(ctx context.Context) (bool, error) {
 	return h.svc.StartBackupEverything(ctx)
 }
 
+// mcpStartBusy reports whether a start was refused because something else is
+// running, as opposed to failing.
+func mcpStartBusy(err error) bool {
+	var busy domainBusyError
+	return errors.As(err, &busy) || errors.Is(err, errMCPEverythingRunning) || errors.Is(err, errMCPBackupRunning)
+}
+
 // mcpStartOutcome maps what a Start function answered onto the tool result and
 // gives the reserved budget slot back unless something started.
 func (h *Handler) mcpStartOutcome(ctx context.Context, tool string, release func(), started bool, err error, busyMsg string, out map[string]any) *mcp.CallToolResult {
@@ -539,6 +538,9 @@ func (h *Handler) mcpStartOutcome(ctx context.Context, tool string, release func
 		return mcpOK(out)
 	}
 	release()
+	if err != nil && !mcpStartBusy(err) {
+		return h.mcpFailure(ctx, tool, err)
+	}
 	h.logMCPCall(ctx, tool, "busy")
 	if err != nil {
 		return mcpToolError("busy", mcpScrubText(scrubError(err)), nil)

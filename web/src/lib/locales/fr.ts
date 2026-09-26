@@ -1855,7 +1855,7 @@ const fr: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Refusé : cette clé n'a pas le droit de faire cela",
   "mcp.outcomeRetentionGuard": "Refusé par la protection de rétention",
   "mcp.outcomeBusy": "Refusé : une sauvegarde était déjà en cours",
-  "mcp.outcomeCooldown": "Refusé : l'élément a été sauvegardé via MCP il y a quelques minutes",
+  "mcp.outcomeCooldown": "Refusé : ceci ou une partie a été lancé via MCP il y a quelques minutes",
   "mcp.outcomeRateLimited": "Refusé : trop de requêtes",
   "mcp.outcomeStartLimit": "Refusé : cette clé a épuisé ses lancements pour cette heure",
   "mcp.outcomeBatch": "Refusé : BombVault n'accepte pas les requêtes groupées",

@@ -2063,7 +2063,7 @@ const sl: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Zavrnjeno: ta ključ tega ne sme",
   "mcp.outcomeRetentionGuard": "Zavrnila zaščita hrambe",
   "mcp.outcomeBusy": "Zavrnjeno: kopiranje je že teklo",
-  "mcp.outcomeCooldown": "Zavrnjeno: element je bil pred nekaj minutami kopiran prek MCP",
+  "mcp.outcomeCooldown": "Zavrnjeno: to ali del tega je bil pred nekaj minutami zagnan prek MCP",
   "mcp.outcomeRateLimited": "Zavrnjeno: preveč zahtev",
   "mcp.outcomeStartLimit": "Zavrnjeno: ta ključ je porabil zagone za to uro",
   "mcp.outcomeBatch": "Zavrnjeno: BombVault ne sprejema paketnih zahtev",

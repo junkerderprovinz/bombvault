@@ -391,6 +391,14 @@ func mcpServiceError(err error) *mcp.CallToolResult {
 	return mcpToolError("failed", mcpScrubText(scrubError(err)), nil)
 }
 
+// mcpFailure answers a service failure and logs the call under the code the
+// assistant receives, which is timeout when the call ran out of time.
+func (h *Handler) mcpFailure(ctx context.Context, tool string, err error) *mcp.CallToolResult {
+	res := mcpServiceError(err)
+	h.logMCPCall(ctx, tool, mcpErrorCodeOf(res))
+	return res
+}
+
 // mcpNoCaller is the fail-closed answer for a handler that was reached without
 // the gate's caller, which only a wiring mistake can produce.
 func mcpNoCaller() *mcp.CallToolResult {

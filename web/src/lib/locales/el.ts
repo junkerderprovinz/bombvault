@@ -1855,7 +1855,7 @@ const el: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Απορρίφθηκε: αυτό το κλειδί δεν επιτρέπεται να το κάνει",
   "mcp.outcomeRetentionGuard": "Απορρίφθηκε από τη φύλαξη διατήρησης",
   "mcp.outcomeBusy": "Απορρίφθηκε: ήδη εκτελούνταν αντίγραφο",
-  "mcp.outcomeCooldown": "Απορρίφθηκε: το στοιχείο αντιγράφηκε μέσω MCP πριν από λίγα λεπτά",
+  "mcp.outcomeCooldown": "Απορρίφθηκε: αυτό ή μέρος του ξεκίνησε μέσω MCP πριν από λίγα λεπτά",
   "mcp.outcomeRateLimited": "Απορρίφθηκε: πάρα πολλά αιτήματα",
   "mcp.outcomeStartLimit": "Απορρίφθηκε: αυτό το κλειδί εξάντλησε τις εκκινήσεις αυτής της ώρας",
   "mcp.outcomeBatch": "Απορρίφθηκε: το BombVault δεν δέχεται ομαδικά αιτήματα",

@@ -1847,7 +1847,7 @@ const ko: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "거부됨: 이 키는 그 작업을 할 수 없습니다",
   "mcp.outcomeRetentionGuard": "보존 보호에 의해 거부됨",
   "mcp.outcomeBusy": "거부됨: 이미 백업이 실행 중이었습니다",
-  "mcp.outcomeCooldown": "거부됨: 이 항목은 몇 분 전에 MCP로 백업되었습니다",
+  "mcp.outcomeCooldown": "거부됨: 이 항목 또는 그 일부가 몇 분 전에 MCP로 시작되었습니다",
   "mcp.outcomeRateLimited": "거부됨: 요청이 너무 많습니다",
   "mcp.outcomeStartLimit": "거부됨: 이 키는 이번 시간의 시작 횟수를 모두 썼습니다",
   "mcp.outcomeBatch": "거부됨: BombVault는 일괄 요청을 받지 않습니다",

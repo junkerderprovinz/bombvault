@@ -2079,7 +2079,7 @@ const fa: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "رد شد: این کلید اجازهٔ این کار را ندارد",
   "mcp.outcomeRetentionGuard": "رد شده توسط محافظ نگهداری",
   "mcp.outcomeBusy": "رد شد: یک پشتیبان‌گیری از قبل در حال اجرا بود",
-  "mcp.outcomeCooldown": "رد شد: این مورد چند دقیقه پیش از طریق MCP پشتیبان‌گیری شد",
+  "mcp.outcomeCooldown": "رد شد: این یا بخشی از آن چند دقیقه پیش از طریق MCP آغاز شد",
   "mcp.outcomeRateLimited": "رد شد: درخواست‌های بیش از حد",
   "mcp.outcomeStartLimit": "رد شد: این کلید آغازهای این ساعت را تمام کرده است",
   "mcp.outcomeBatch": "رد شد: BombVault درخواست‌های دسته‌ای را نمی‌پذیرد",

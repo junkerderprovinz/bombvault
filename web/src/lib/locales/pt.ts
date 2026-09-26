@@ -1855,7 +1855,7 @@ const pt: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Recusado: esta chave não pode fazer isso",
   "mcp.outcomeRetentionGuard": "Recusado pela proteção de retenção",
   "mcp.outcomeBusy": "Recusado: já havia uma cópia em curso",
-  "mcp.outcomeCooldown": "Recusado: o item foi copiado por MCP há poucos minutos",
+  "mcp.outcomeCooldown": "Recusado: isto ou uma parte foi iniciado por MCP há poucos minutos",
   "mcp.outcomeRateLimited": "Recusado: demasiados pedidos",
   "mcp.outcomeStartLimit": "Recusado: esta chave esgotou os inícios desta hora",
   "mcp.outcomeBatch": "Recusado: o BombVault não aceita pedidos em lote",

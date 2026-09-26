@@ -1855,7 +1855,7 @@ const fi: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Hylätty: tämä avain ei saa tehdä sitä",
   "mcp.outcomeRetentionGuard": "Säilytyssuoja hylkäsi",
   "mcp.outcomeBusy": "Hylätty: varmuuskopiointi oli jo käynnissä",
-  "mcp.outcomeCooldown": "Hylätty: kohde varmuuskopioitiin MCP:n kautta muutama minuutti sitten",
+  "mcp.outcomeCooldown": "Hylätty: tämä tai osa siitä käynnistettiin MCP:n kautta muutama minuutti sitten",
   "mcp.outcomeRateLimited": "Hylätty: liian monta pyyntöä",
   "mcp.outcomeStartLimit": "Hylätty: tämä avain on käyttänyt tämän tunnin käynnistyksensä",
   "mcp.outcomeBatch": "Hylätty: BombVault ei ota vastaan eräpyyntöjä",

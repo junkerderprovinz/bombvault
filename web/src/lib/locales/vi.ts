@@ -1847,7 +1847,7 @@ const vi: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Bị từ chối: khóa này không được phép làm điều đó",
   "mcp.outcomeRetentionGuard": "Bị từ chối bởi cơ chế bảo vệ lưu giữ",
   "mcp.outcomeBusy": "Bị từ chối: đã có một bản sao lưu đang chạy",
-  "mcp.outcomeCooldown": "Bị từ chối: mục này vừa được sao lưu qua MCP vài phút trước",
+  "mcp.outcomeCooldown": "Bị từ chối: mục này hoặc một phần của nó vừa được bắt đầu qua MCP vài phút trước",
   "mcp.outcomeRateLimited": "Bị từ chối: quá nhiều yêu cầu",
   "mcp.outcomeStartLimit": "Bị từ chối: khóa này đã dùng hết lượt bắt đầu của giờ này",
   "mcp.outcomeBatch": "Bị từ chối: BombVault không nhận yêu cầu theo lô",

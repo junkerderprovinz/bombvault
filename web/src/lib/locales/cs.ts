@@ -1853,7 +1853,7 @@ const cs: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Odmítnuto: tento klíč to nesmí",
   "mcp.outcomeRetentionGuard": "Odmítnuto ochranou uchovávání",
   "mcp.outcomeBusy": "Odmítnuto: už běžela záloha",
-  "mcp.outcomeCooldown": "Odmítnuto: položka byla přes MCP zálohována před několika minutami",
+  "mcp.outcomeCooldown": "Odmítnuto: toto nebo jeho část bylo přes MCP spuštěno před několika minutami",
   "mcp.outcomeRateLimited": "Odmítnuto: příliš mnoho požadavků",
   "mcp.outcomeStartLimit": "Odmítnuto: tento klíč vyčerpal spuštění pro tuto hodinu",
   "mcp.outcomeBatch": "Odmítnuto: BombVault nepřijímá dávkové požadavky",

@@ -557,6 +557,12 @@ func (s *Service) clearDomainActivity(domain string) {
 	s.activityMu.Unlock()
 }
 
+// domainBusyError is a start refused because another operation holds the
+// domain, which a caller answers as busy rather than as a failure.
+type domainBusyError struct{ op, domain string }
+
+func (e domainBusyError) Error() string { return e.op + " is running on " + e.domain }
+
 // domainBusy reports the activity label of a domain whose repo lock is currently
 // held, and whether it is held at all. It lets a backup starter refuse a busy
 // domain up front instead of launching a goroutine that then blocks silently on
@@ -5779,7 +5785,7 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 	}
 	if op, busy := s.domainBusy("containers"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on containers", op)
+		return false, domainBusyError{op: op, domain: "containers"}
 	}
 	// Detach immediately so the run — and the self-detection it depends on — is
 	// independent of the request that started it (which is canceled the moment the
@@ -5908,7 +5914,7 @@ func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
 	}
 	if op, busy := s.domainBusy("containers"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on containers", op)
+		return false, domainBusyError{op: op, domain: "containers"}
 	}
 	// Detach so the run is independent of the request that started it (canceled
 	// the moment the handler returns); Backup applies its own hard timeout.
@@ -5942,7 +5948,7 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 	}
 	if op, busy := s.domainBusy("vms"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on vms", op)
+		return false, domainBusyError{op: op, domain: "vms"}
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -5969,7 +5975,7 @@ func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
 	}
 	if op, busy := s.domainBusy("flash"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on flash", op)
+		return false, domainBusyError{op: op, domain: "flash"}
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -5995,7 +6001,7 @@ func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
 	}
 	if op, busy := s.domainBusy("config"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on config", op)
+		return false, domainBusyError{op: op, domain: "config"}
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -6022,7 +6028,7 @@ func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, erro
 	}
 	if op, busy := s.domainBusy("files"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on files", op)
+		return false, domainBusyError{op: op, domain: "files"}
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -6051,7 +6057,7 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 	}
 	if op, busy := s.domainBusy("files"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on files", op)
+		return false, domainBusyError{op: op, domain: "files"}
 	}
 	// Detach immediately so the batch is independent of the request that started
 	// it (canceled the moment the handler returns). Each per-set BackupFileSet
@@ -6163,7 +6169,7 @@ func (s *Service) StartBackupVMsAll(ctx context.Context, names []string) (bool, 
 	}
 	if op, busy := s.domainBusy("vms"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on vms", op)
+		return false, domainBusyError{op: op, domain: "vms"}
 	}
 	// Detach immediately so the batch is independent of the request that started
 	// it (canceled the moment the handler returns). Each per-VM BackupVM applies
@@ -14782,7 +14788,7 @@ func (s *Service) StartRestoreConfig(ctx context.Context, snapshotID, source str
 	}
 	if op, busy := s.domainBusy("config"); busy {
 		s.batchActive.Store(false)
-		return false, false, fmt.Errorf("%s is running on config", op)
+		return false, false, domainBusyError{op: op, domain: "config"}
 	}
 	// On a recovered panic the guard must ALSO be released here: unlike the
 	// success path below, nothing else is left running that would release it, and

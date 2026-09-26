@@ -81,8 +81,7 @@ func (h *Handler) toolGetStatus(ctx context.Context, _ *mcp.CallToolRequest) (*m
 	}
 	domains, err := h.svc.domainStatusFrom(settings)
 	if err != nil {
-		h.logMCPCall(ctx, "get_status", "failed")
-		return mcpServiceError(err), nil
+		return h.mcpFailure(ctx, "get_status", err), nil
 	}
 	for i := range domains {
 		domains[i].VerifiedDetail = mcpScrubText(domains[i].VerifiedDetail)
@@ -112,8 +111,7 @@ func (h *Handler) toolGetCoverage(ctx context.Context, _ *mcp.CallToolRequest) (
 
 	report, err := h.svc.Coverage(ctx)
 	if err != nil {
-		h.logMCPCall(ctx, "get_coverage", "failed")
-		return mcpServiceError(err), nil
+		return h.mcpFailure(ctx, "get_coverage", err), nil
 	}
 	h.logMCPCall(ctx, "get_coverage", "ok")
 	return mcpOK(report), nil
@@ -220,8 +218,7 @@ func (h *Handler) toolGetStorageStats(ctx context.Context, req *mcp.CallToolRequ
 
 	stats, err := h.svc.RepoStats(in.Domain, "local", limit)
 	if err != nil {
-		h.logMCPCall(ctx, "get_storage_stats", "failed")
-		return mcpServiceError(err), nil
+		return h.mcpFailure(ctx, "get_storage_stats", err), nil
 	}
 
 	var growth any
@@ -324,8 +321,7 @@ func (h *Handler) toolListItems(ctx context.Context, req *mcp.CallToolRequest) (
 	}
 	items, known, err := h.mcpItems(ctx, settings, in.Domain)
 	if err != nil {
-		h.logMCPCall(ctx, "list_items", "failed")
-		return mcpServiceError(err), nil
+		return h.mcpFailure(ctx, "list_items", err), nil
 	}
 
 	domains := make([]map[string]any, 0, len(mcpDomains))
@@ -779,16 +775,14 @@ func (h *Handler) toolListRuns(ctx context.Context, req *mcp.CallToolRequest) (*
 	case in.Domain != "":
 		ids, err := h.mcpDomainTargetIDs(in.Domain)
 		if err != nil {
-			h.logMCPCall(ctx, "list_runs", "failed")
-			return mcpServiceError(err), nil
+			return h.mcpFailure(ctx, "list_runs", err), nil
 		}
 		filter.TargetIDs = ids
 	}
 
 	runs, err := h.store.ListRunsFiltered(filter)
 	if err != nil {
-		h.logMCPCall(ctx, "list_runs", "failed")
-		return mcpServiceError(err), nil
+		return h.mcpFailure(ctx, "list_runs", err), nil
 	}
 	truncated := len(runs) > limit
 	if truncated {
@@ -1006,8 +1000,7 @@ func (h *Handler) mcpListingFailed(ctx context.Context, err error) *mcp.CallTool
 		h.logMCPCall(ctx, "list_restore_points", "timeout")
 		return mcpToolError("timeout", "BombVault did not finish reading the repository in time", nil)
 	}
-	h.logMCPCall(ctx, "list_restore_points", "failed")
-	return mcpServiceError(err)
+	return h.mcpFailure(ctx, "list_restore_points", err)
 }
 
 // mcpRestorePointsOf slims restic's snapshots down to what an assistant may

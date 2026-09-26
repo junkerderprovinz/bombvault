@@ -2079,7 +2079,7 @@ const ca: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Rebutjat: aquesta clau no pot fer això",
   "mcp.outcomeRetentionGuard": "Rebutjat per la protecció de retenció",
   "mcp.outcomeBusy": "Rebutjat: ja hi havia una còpia en curs",
-  "mcp.outcomeCooldown": "Rebutjat: l'element s'ha copiat per MCP fa pocs minuts",
+  "mcp.outcomeCooldown": "Rebutjat: això o una part es va iniciar per MCP fa pocs minuts",
   "mcp.outcomeRateLimited": "Rebutjat: massa peticions",
   "mcp.outcomeStartLimit": "Rebutjat: aquesta clau ha esgotat els inicis d'aquesta hora",
   "mcp.outcomeBatch": "Rebutjat: BombVault no accepta peticions per lots",

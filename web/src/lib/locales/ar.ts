@@ -1858,7 +1858,7 @@ const ar: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "مرفوض: لا يُسمح لهذا المفتاح بذلك",
   "mcp.outcomeRetentionGuard": "رفضه حارس الاحتفاظ",
   "mcp.outcomeBusy": "مرفوض: كانت هناك نسخة احتياطية قيد التشغيل",
-  "mcp.outcomeCooldown": "مرفوض: نُسخ هذا العنصر احتياطيًا عبر MCP قبل دقائق",
+  "mcp.outcomeCooldown": "مرفوض: بدأ هذا أو جزء منه عبر MCP قبل دقائق",
   "mcp.outcomeRateLimited": "مرفوض: طلبات كثيرة جدًا",
   "mcp.outcomeStartLimit": "مرفوض: استنفد هذا المفتاح عمليات البدء المسموح بها لهذه الساعة",
   "mcp.outcomeBatch": "مرفوض: لا يقبل BombVault الطلبات المجمّعة",

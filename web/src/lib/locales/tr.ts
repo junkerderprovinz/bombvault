@@ -1855,7 +1855,7 @@ const tr: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Reddedildi: bu anahtar bunu yapamaz",
   "mcp.outcomeRetentionGuard": "Saklama koruması reddetti",
   "mcp.outcomeBusy": "Reddedildi: zaten bir yedekleme çalışıyordu",
-  "mcp.outcomeCooldown": "Reddedildi: öğe birkaç dakika önce MCP üzerinden yedeklendi",
+  "mcp.outcomeCooldown": "Reddedildi: bu veya bir kısmı birkaç dakika önce MCP üzerinden başlatıldı",
   "mcp.outcomeRateLimited": "Reddedildi: çok fazla istek",
   "mcp.outcomeStartLimit": "Reddedildi: bu anahtar bu saatin başlatma hakkını doldurdu",
   "mcp.outcomeBatch": "Reddedildi: BombVault toplu istekleri kabul etmez",

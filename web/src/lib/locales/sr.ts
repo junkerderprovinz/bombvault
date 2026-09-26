@@ -2063,7 +2063,7 @@ const sr: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Одбијено: овај кључ то не сме",
   "mcp.outcomeRetentionGuard": "Одбила заштита чувања",
   "mcp.outcomeBusy": "Одбијено: копирање је већ било у току",
-  "mcp.outcomeCooldown": "Одбијено: ставка је копирана преко MCP-а пре неколико минута",
+  "mcp.outcomeCooldown": "Одбијено: ово или део тога покренут је преко MCP-а пре неколико минута",
   "mcp.outcomeRateLimited": "Одбијено: превише захтева",
   "mcp.outcomeStartLimit": "Одбијено: овај кључ је потрошио покретања за овај сат",
   "mcp.outcomeBatch": "Одбијено: BombVault не прима групне захтеве",

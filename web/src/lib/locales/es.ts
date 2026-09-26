@@ -1853,7 +1853,7 @@ const es: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Rechazado: esta clave no puede hacer eso",
   "mcp.outcomeRetentionGuard": "Rechazado por la protección de retención",
   "mcp.outcomeBusy": "Rechazado: ya había una copia en curso",
-  "mcp.outcomeCooldown": "Rechazado: el elemento se copió por MCP hace unos minutos",
+  "mcp.outcomeCooldown": "Rechazado: esto o una parte se inició por MCP hace unos minutos",
   "mcp.outcomeRateLimited": "Rechazado: demasiadas solicitudes",
   "mcp.outcomeStartLimit": "Rechazado: esta clave agotó sus inicios de esta hora",
   "mcp.outcomeBatch": "Rechazado: BombVault no acepta solicitudes por lotes",

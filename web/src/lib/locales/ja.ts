@@ -1847,7 +1847,7 @@ const ja: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "拒否: このキーにはその操作が許可されていません",
   "mcp.outcomeRetentionGuard": "保持ガードにより拒否",
   "mcp.outcomeBusy": "拒否: すでにバックアップが実行中でした",
-  "mcp.outcomeCooldown": "拒否: この項目は数分前に MCP 経由でバックアップされました",
+  "mcp.outcomeCooldown": "拒否: これまたはその一部が数分前に MCP 経由で開始されました",
   "mcp.outcomeRateLimited": "拒否: リクエストが多すぎます",
   "mcp.outcomeStartLimit": "拒否: このキーはこの 1 時間の開始回数を使い切りました",
   "mcp.outcomeBatch": "拒否: BombVault はバッチリクエストを受け付けません",

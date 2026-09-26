@@ -1855,7 +1855,7 @@ const he: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "נדחה: למפתח הזה אסור לעשות את זה",
   "mcp.outcomeRetentionGuard": "נדחה על ידי שומר השמירה",
   "mcp.outcomeBusy": "נדחה: כבר רץ גיבוי",
-  "mcp.outcomeCooldown": "נדחה: הפריט גובה דרך MCP לפני כמה דקות",
+  "mcp.outcomeCooldown": "נדחה: זה או חלק ממנו הופעל דרך MCP לפני כמה דקות",
   "mcp.outcomeRateLimited": "נדחה: יותר מדי בקשות",
   "mcp.outcomeStartLimit": "נדחה: המפתח הזה ניצל את ההתחלות שלו לשעה הזו",
   "mcp.outcomeBatch": "נדחה: BombVault לא מקבל בקשות אצווה",

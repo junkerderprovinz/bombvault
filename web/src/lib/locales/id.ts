@@ -2079,7 +2079,7 @@ const id: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Ditolak: kunci ini tidak boleh melakukannya",
   "mcp.outcomeRetentionGuard": "Ditolak oleh penjaga retensi",
   "mcp.outcomeBusy": "Ditolak: pencadangan lain sudah berjalan",
-  "mcp.outcomeCooldown": "Ditolak: item ini dicadangkan lewat MCP beberapa menit lalu",
+  "mcp.outcomeCooldown": "Ditolak: ini atau sebagiannya dimulai lewat MCP beberapa menit lalu",
   "mcp.outcomeRateLimited": "Ditolak: terlalu banyak permintaan",
   "mcp.outcomeStartLimit": "Ditolak: kunci ini sudah memakai jatah mulai untuk jam ini",
   "mcp.outcomeBatch": "Ditolak: BombVault tidak menerima permintaan batch",

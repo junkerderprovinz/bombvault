@@ -1858,7 +1858,7 @@ const ro: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Refuzat: această cheie nu are voie să facă asta",
   "mcp.outcomeRetentionGuard": "Refuzat de protecția de păstrare",
   "mcp.outcomeBusy": "Refuzat: o copie rula deja",
-  "mcp.outcomeCooldown": "Refuzat: elementul a fost copiat prin MCP acum câteva minute",
+  "mcp.outcomeCooldown": "Refuzat: acesta sau o parte din el a fost pornit prin MCP acum câteva minute",
   "mcp.outcomeRateLimited": "Refuzat: prea multe cereri",
   "mcp.outcomeStartLimit": "Refuzat: această cheie și-a folosit pornirile pentru ora aceasta",
   "mcp.outcomeBatch": "Refuzat: BombVault nu acceptă cereri în lot",

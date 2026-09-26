@@ -2079,7 +2079,7 @@ const eu: Partial<Translations> = {
   "mcp.outcomeNotPermitted": "Ukatuta: gako honek ezin du hori egin",
   "mcp.outcomeRetentionGuard": "Atxikipen-babesak ukatuta",
   "mcp.outcomeBusy": "Ukatuta: babeskopia bat exekutatzen ari zen jada",
-  "mcp.outcomeCooldown": "Ukatuta: elementuaren babeskopia MCP bidez egin zen duela minutu gutxi",
+  "mcp.outcomeCooldown": "Ukatuta: hau edo haren zati bat MCP bidez abiarazi zen duela minutu gutxi",
   "mcp.outcomeRateLimited": "Ukatuta: eskaera gehiegi",
   "mcp.outcomeStartLimit": "Ukatuta: gako honek ordu honetako abioak agortu ditu",
   "mcp.outcomeBatch": "Ukatuta: BombVault-ek ez ditu sorta-eskaerak onartzen",
