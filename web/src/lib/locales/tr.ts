@@ -19,6 +19,7 @@ const tr: Partial<Translations> = {
   "about.crypto": "Kripto",
   "about.paypal": "PayPal",
   "about.cryptoTitle": "Kripto ile bağış",
+  "about.donateAppeal": "Şövalyene bir sikke at: masrafların bir kısmını karşılar ve projeyi ayakta tutar. Yaptığım her şey ücretsiz ve reklamsız.",
   "about.cryptoIntro": "Bir kripto para ve ağ seç, sonra kodu tara veya adresi kopyala.",
   "about.cryptoNetworks": "Ağlar",
   "about.cryptoNoTag": "Destination tag da memo da gerekmiyor.",

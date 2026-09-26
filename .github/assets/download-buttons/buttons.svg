@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 4685.7 245.3">
-<svg x="0" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720.0 245.3" width="720.0" height="245.3" role="img" aria-label="Read the documentation">
-  <title>Read the documentation</title>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 5196 245.3">
+<svg x="0" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Run it with Docker">
+  <title>Run it with Docker</title>
   <defs>
     <clipPath id="b0-edge">
-      <rect x="0" y="0" width="720.0" height="245.3" rx="38.2" ry="38.2"/>
+      <path d="M38.2,0 H803.7 A38.2,38.2 0 0 1 841.9,38.2 V207.1 A38.2,38.2 0 0 1 803.7,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z"/>
     </clipPath>
     <linearGradient id="b0-sheen" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0"    stop-color="#fff" stop-opacity="0"/>
@@ -15,46 +15,33 @@
   </defs>
   <style>
     @keyframes b0-pass {
-      0%       { transform: translateX(-226.6px); }
-      18.16%   { transform: translateX(946.6px); }
-      100%     { transform: translateX(946.6px); }
+      0%       { transform: translateX(-278.4px); }
+      15.19%   { transform: translateX(1120.3px); }
+      100%     { transform: translateX(1120.3px); }
     }
-    /* linear, not eased: an eased pass hands off at the wrong moment and the
-       row stops reading as one band crossing both buttons.
-
-       `backwards` is not decoration, it is the second half of the delay. An
-       animation that has not started yet leaves its element wherever the
-       document put it, which for this band is x=0 - INSIDE the button, against
-       its left edge. So the stagger that makes the row read as one band was
-       also parking a motionless band on every button but the first, for as long
-       as that button's delay, every single time the page loaded. It came right
-       on its own from the second cycle onwards, which is why it survived: it is
-       only ever wrong while somebody is looking at the row for the first time.
-       `backwards` holds the 0% state during the delay instead, and 0% is off
-       the left edge. */
     .b0-band { animation: b0-pass 7s linear 0.000s infinite backwards; }
     @media (prefers-reduced-motion: reduce) {
       .b0-band { animation: none; opacity: 0; }
     }
   </style>
-  <rect width="720.0" height="245.3" rx="38.2" ry="38.2" fill="#fd0"/>
-  <g transform="translate(85.0 66.65) scale(0.21875)" fill="#0d0c23">
-    <path d="M96 0C43 0 0 43 0 96L0 416c0 53 43 96 96 96l288 0 32 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l0-64c17.7 0 32-14.3 32-32l0-320c0-17.7-14.3-32-32-32L384 0 96 0zm0 384l256 0 0 64L96 448c-17.7 0-32-14.3-32-32s14.3-32 32-32zm32-240c0-8.8 7.2-16 16-16l192 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-192 0c-8.8 0-16-7.2-16-16zm16 48l192 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-192 0c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/>
+  <path d="M38.2,0 H803.7 A38.2,38.2 0 0 1 841.9,38.2 V207.1 A38.2,38.2 0 0 1 803.7,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z" fill="#1d63ed"/>
+  <g transform="translate(143.5 56.65) scale(0.25781)" fill="#ffffff">
+    <path d="M349.9 236.3h-66.1v-59.4h66.1v59.4zm0-204.3h-66.1v60.7h66.1V32zm78.2 144.8H362v59.4h66.1v-59.4zm-156.3-72.1h-66.1v60.1h66.1v-60.1zm78.1 0h-66.1v60.1h66.1v-60.1zm276.8 100c-14.4-9.7-47.6-13.2-73.1-8.4-3.3-24-16.7-44.9-41.1-63.7l-14-9.3-9.3 14c-18.4 27.8-23.4 73.6-3.7 103.8-8.7 4.7-25.8 11.1-48.4 10.7H2.4c-8.7 50.8 5.8 116.8 44 162.1 37.1 43.9 92.7 66.2 165.4 66.2 157.4 0 273.9-72.5 328.4-204.2 21.4.4 67.6.1 91.3-45.2 1.5-2.5 6.6-13.2 8.5-17.1l-13.3-8.9zm-511.1-27.9h-66v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1v-59.4zm-78.1-72.1h-66.1v60.1h66.1v-60.1z"/>
   </g>
-  <text x="238" y="110" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="82" font-weight="700" fill="#0d0c23">Docs</text>
-  <text x="240" y="180" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="50" font-weight="400" fill="#0d0c23" fill-opacity="0.72">online manual</text>
+  <text x="332" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="82" font-weight="700" fill="#ffffff">Docker</text>
+  <text x="334" y="186" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="64" font-weight="400" fill="#ffffff" fill-opacity="0.9">Container</text>
   <g clip-path="url(#b0-edge)">
     <g class="b0-band">
-      <rect x="0" y="-60" width="121.8" height="365.3"
+      <rect x="0" y="-60" width="173.6" height="365.3"
             fill="url(#b0-sheen)" transform="skewX(-16)"/>
     </g>
   </g>
 </svg>
-<svg x="720" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720.0 245.3" width="720.0" height="245.3" role="img" aria-label="The container image on ghcr.io">
-  <title>The container image on ghcr.io</title>
+<svg x="866" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Download the source archive">
+  <title>Download the source archive</title>
   <defs>
     <clipPath id="b1-edge">
-      <rect x="0" y="0" width="720.0" height="245.3" rx="38.2" ry="38.2"/>
+      <path d="M38.2,0 H803.7 A38.2,38.2 0 0 1 841.9,38.2 V207.1 A38.2,38.2 0 0 1 803.7,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z"/>
     </clipPath>
     <linearGradient id="b1-sheen" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0"    stop-color="#fff" stop-opacity="0"/>
@@ -65,46 +52,33 @@
   </defs>
   <style>
     @keyframes b1-pass {
-      0%       { transform: translateX(-226.6px); }
-      18.16%   { transform: translateX(946.6px); }
-      100%     { transform: translateX(946.6px); }
+      0%       { transform: translateX(-278.4px); }
+      15.19%   { transform: translateX(1120.3px); }
+      100%     { transform: translateX(1120.3px); }
     }
-    /* linear, not eased: an eased pass hands off at the wrong moment and the
-       row stops reading as one band crossing both buttons.
-
-       `backwards` is not decoration, it is the second half of the delay. An
-       animation that has not started yet leaves its element wherever the
-       document put it, which for this band is x=0 - INSIDE the button, against
-       its left edge. So the stagger that makes the row read as one band was
-       also parking a motionless band on every button but the first, for as long
-       as that button's delay, every single time the page loaded. It came right
-       on its own from the second cycle onwards, which is why it survived: it is
-       only ever wrong while somebody is looking at the row for the first time.
-       `backwards` holds the 0% state during the delay instead, and 0% is off
-       the left edge. */
-    .b1-band { animation: b1-pass 7s linear 0.833s infinite backwards; }
+    .b1-band { animation: b1-pass 7s linear 0.693s infinite backwards; }
     @media (prefers-reduced-motion: reduce) {
       .b1-band { animation: none; opacity: 0; }
     }
   </style>
-  <rect width="720.0" height="245.3" rx="38.2" ry="38.2" fill="#1d63ed"/>
-  <g transform="translate(78.0 77.85000000000001) scale(0.175)" fill="#ffffff">
-    <path d="M349.9 236.3h-66.1v-59.4h66.1v59.4zm0-204.3h-66.1v60.7h66.1V32zm78.2 144.8H362v59.4h66.1v-59.4zm-156.3-72.1h-66.1v60.1h66.1v-60.1zm78.1 0h-66.1v60.1h66.1v-60.1zm276.8 100c-14.4-9.7-47.6-13.2-73.1-8.4-3.3-24-16.7-44.9-41.1-63.7l-14-9.3-9.3 14c-18.4 27.8-23.4 73.6-3.7 103.8-8.7 4.7-25.8 11.1-48.4 10.7H2.4c-8.7 50.8 5.8 116.8 44 162.1 37.1 43.9 92.7 66.2 165.4 66.2 157.4 0 273.9-72.5 328.4-204.2 21.4.4 67.6.1 91.3-45.2 1.5-2.5 6.6-13.2 8.5-17.1l-13.3-8.9zm-511.1-27.9h-66v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1v-59.4zm-78.1-72.1h-66.1v60.1h66.1v-60.1z"/>
+  <path d="M38.2,0 H803.7 A38.2,38.2 0 0 1 841.9,38.2 V207.1 A38.2,38.2 0 0 1 803.7,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z" fill="#4d5562"/>
+  <g transform="translate(176.5 56.65) scale(0.25781)" fill="#ffffff">
+    <path d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM96 48c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16zm0 64c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16zm0 64c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16zm-6.3 71.8c3.7-14 16.4-23.8 30.9-23.8l14.8 0c14.5 0 27.2 9.7 30.9 23.8l23.5 88.2c1.4 5.4 2.1 10.9 2.1 16.4c0 35.2-28.8 63.7-64 63.7s-64-28.5-64-63.7c0-5.5 .7-11.1 2.1-16.4l23.5-88.2zM112 336c-8.8 0-16 7.2-16 16s7.2 16 16 16l32 0c8.8 0 16-7.2 16-16s-7.2-16-16-16l-32 0z"/>
   </g>
-  <text x="238" y="110" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="82" font-weight="700" fill="#ffffff">Docker</text>
-  <text x="240" y="180" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="50" font-weight="400" fill="#ffffff" fill-opacity="0.72">ghcr.io image</text>
+  <text x="332" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="82" font-weight="700" fill="#ffffff">Source</text>
+  <text x="334" y="186" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="64" font-weight="400" fill="#ffffff" fill-opacity="0.9">zip archive</text>
   <g clip-path="url(#b1-edge)">
     <g class="b1-band">
-      <rect x="0" y="-60" width="121.8" height="365.3"
+      <rect x="0" y="-60" width="173.6" height="365.3"
             fill="url(#b1-sheen)" transform="skewX(-16)"/>
     </g>
   </g>
 </svg>
-<svg x="1440" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720.0 245.3" width="720.0" height="245.3" role="img" aria-label="Download the source archive for this release">
-  <title>Download the source archive for this release</title>
+<svg x="1732" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Read the documentation">
+  <title>Read the documentation</title>
   <defs>
     <clipPath id="b2-edge">
-      <rect x="0" y="0" width="720.0" height="245.3" rx="38.2" ry="38.2"/>
+      <path d="M38.2,0 H803.7 A38.2,38.2 0 0 1 841.9,38.2 V207.1 A38.2,38.2 0 0 1 803.7,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z"/>
     </clipPath>
     <linearGradient id="b2-sheen" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0"    stop-color="#fff" stop-opacity="0"/>
@@ -115,42 +89,29 @@
   </defs>
   <style>
     @keyframes b2-pass {
-      0%       { transform: translateX(-226.6px); }
-      18.16%   { transform: translateX(946.6px); }
-      100%     { transform: translateX(946.6px); }
+      0%       { transform: translateX(-278.4px); }
+      15.19%   { transform: translateX(1120.3px); }
+      100%     { transform: translateX(1120.3px); }
     }
-    /* linear, not eased: an eased pass hands off at the wrong moment and the
-       row stops reading as one band crossing both buttons.
-
-       `backwards` is not decoration, it is the second half of the delay. An
-       animation that has not started yet leaves its element wherever the
-       document put it, which for this band is x=0 - INSIDE the button, against
-       its left edge. So the stagger that makes the row read as one band was
-       also parking a motionless band on every button but the first, for as long
-       as that button's delay, every single time the page loaded. It came right
-       on its own from the second cycle onwards, which is why it survived: it is
-       only ever wrong while somebody is looking at the row for the first time.
-       `backwards` holds the 0% state during the delay instead, and 0% is off
-       the left edge. */
-    .b2-band { animation: b2-pass 7s linear 1.665s infinite backwards; }
+    .b2-band { animation: b2-pass 7s linear 1.385s infinite backwards; }
     @media (prefers-reduced-motion: reduce) {
       .b2-band { animation: none; opacity: 0; }
     }
   </style>
-  <rect width="720.0" height="245.3" rx="38.2" ry="38.2" fill="#4d5562"/>
-  <g transform="translate(92.0 66.65) scale(0.21875)" fill="#ffffff">
-    <path d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM96 48c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16zm0 64c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16zm0 64c0-8.8 7.2-16 16-16l32 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16zm-6.3 71.8c3.7-14 16.4-23.8 30.9-23.8l14.8 0c14.5 0 27.2 9.7 30.9 23.8l23.5 88.2c1.4 5.4 2.1 10.9 2.1 16.4c0 35.2-28.8 63.7-64 63.7s-64-28.5-64-63.7c0-5.5 .7-11.1 2.1-16.4l23.5-88.2zM112 336c-8.8 0-16 7.2-16 16s7.2 16 16 16l32 0c8.8 0 16-7.2 16-16s-7.2-16-16-16l-32 0z"/>
+  <path d="M38.2,0 H803.7 A38.2,38.2 0 0 1 841.9,38.2 V207.1 A38.2,38.2 0 0 1 803.7,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z" fill="#fd0"/>
+  <g transform="translate(168.25 56.65) scale(0.25781)" fill="#0d0c23">
+    <path d="M96 0C43 0 0 43 0 96L0 416c0 53 43 96 96 96l288 0 32 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l0-64c17.7 0 32-14.3 32-32l0-320c0-17.7-14.3-32-32-32L384 0 96 0zm0 384l256 0 0 64L96 448c-17.7 0-32-14.3-32-32s14.3-32 32-32zm32-240c0-8.8 7.2-16 16-16l192 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-192 0c-8.8 0-16-7.2-16-16zm16 48l192 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-192 0c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/>
   </g>
-  <text x="238" y="110" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="82" font-weight="700" fill="#ffffff">Source</text>
-  <text x="240" y="180" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="50" font-weight="400" fill="#ffffff" fill-opacity="0.72">zip archive</text>
+  <text x="332" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="82" font-weight="700" fill="#0d0c23">Docs</text>
+  <text x="334" y="186" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="64" font-weight="400" fill="#0d0c23" fill-opacity="0.9">online manual</text>
   <g clip-path="url(#b2-edge)">
     <g class="b2-band">
-      <rect x="0" y="-60" width="121.8" height="365.3"
+      <rect x="0" y="-60" width="173.6" height="365.3"
             fill="url(#b2-sheen)" transform="skewX(-16)"/>
     </g>
   </g>
 </svg>
-<svg x="2160" y="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+<svg x="2598" y="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
      version="1.1" viewBox="0 0 841.9 245.3" width="841.9" height="245.3">
   <defs>
     <clipPath id="b3-edge">
@@ -169,20 +130,11 @@
       15.19%   { transform: translateX(1120.3px); }
       100%           { transform: translateX(1120.3px); }
     }
-    /* linear, not eased: see the header. An eased pass hands off at the wrong
-       moment and the row stops reading as one band.
-
-       The fill mode is not decoration, it is the second half of the delay. An
-       animation that has not started yet leaves its element wherever the
-       document put it, which for this band is x=0 - INSIDE the button, against
-       its left edge. So the whole stagger that makes the row read as one band
-       was also parking a motionless band on every button but the first, for as
-       long as that button's delay, every single time the page loaded. It came
-       right on its own from the second cycle onwards, which is why it survived:
-       it is only ever wrong while somebody is looking at the row for the first
-       time. Holding the 0% state during the delay fixes it, and 0% is off the
-       left edge. */
-    .b3-band { animation: b3-pass 7s linear 3.800s infinite backwards; }
+    /* Linear, so the hand-off from one button to the next stays on time. The
+       backwards fill mode holds the 0% state, off the left edge, during the
+       delay; without it the band would wait motionless at x=0, inside the
+       button, until the first pass starts. */
+    .b3-band { animation: b3-pass 7s linear 2.078s infinite backwards; }
     @media (prefers-reduced-motion: reduce) {
       .b3-band { animation: none; opacity: 0; }
     }
@@ -195,7 +147,7 @@
     </g>
   </g>
 </svg>
-<svg x="3001.9" y="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+<svg x="3464" y="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
      version="1.1" viewBox="0 0 841.9 245.3" width="841.9" height="245.3">
   <defs>
     <clipPath id="b4-edge">
@@ -214,20 +166,11 @@
       15.19%   { transform: translateX(1120.3px); }
       100%           { transform: translateX(1120.3px); }
     }
-    /* linear, not eased: see the header. An eased pass hands off at the wrong
-       moment and the row stops reading as one band.
-
-       The fill mode is not decoration, it is the second half of the delay. An
-       animation that has not started yet leaves its element wherever the
-       document put it, which for this band is x=0 - INSIDE the button, against
-       its left edge. So the whole stagger that makes the row read as one band
-       was also parking a motionless band on every button but the first, for as
-       long as that button's delay, every single time the page loaded. It came
-       right on its own from the second cycle onwards, which is why it survived:
-       it is only ever wrong while somebody is looking at the row for the first
-       time. Holding the 0% state during the delay fixes it, and 0% is off the
-       left edge. */
-    .b4-band { animation: b4-pass 7s linear 4.493s infinite backwards; }
+    /* Linear, so the hand-off from one button to the next stays on time. The
+       backwards fill mode holds the 0% state, off the left edge, during the
+       delay; without it the band would wait motionless at x=0, inside the
+       button, until the first pass starts. */
+    .b4-band { animation: b4-pass 7s linear 2.771s infinite backwards; }
     @media (prefers-reduced-motion: reduce) {
       .b4-band { animation: none; opacity: 0; }
     }
@@ -240,7 +183,7 @@
     </g>
   </g>
 </svg>
-<svg x="3843.8" y="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+<svg x="4330" y="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
      version="1.1" viewBox="0 0 841.9 245.3" width="841.9" height="245.3">
   <defs>
     <clipPath id="b5-edge">
@@ -259,20 +202,11 @@
       15.19%   { transform: translateX(1120.3px); }
       100%           { transform: translateX(1120.3px); }
     }
-    /* linear, not eased: see the header. An eased pass hands off at the wrong
-       moment and the row stops reading as one band.
-
-       The fill mode is not decoration, it is the second half of the delay. An
-       animation that has not started yet leaves its element wherever the
-       document put it, which for this band is x=0 - INSIDE the button, against
-       its left edge. So the whole stagger that makes the row read as one band
-       was also parking a motionless band on every button but the first, for as
-       long as that button's delay, every single time the page loaded. It came
-       right on its own from the second cycle onwards, which is why it survived:
-       it is only ever wrong while somebody is looking at the row for the first
-       time. Holding the 0% state during the delay fixes it, and 0% is off the
-       left edge. */
-    .b5-band { animation: b5-pass 7s linear 5.185s infinite backwards; }
+    /* Linear, so the hand-off from one button to the next stays on time. The
+       backwards fill mode holds the 0% state, off the left edge, during the
+       delay; without it the band would wait motionless at x=0, inside the
+       button, until the first pass starts. */
+    .b5-band { animation: b5-pass 7s linear 3.463s infinite backwards; }
     @media (prefers-reduced-motion: reduce) {
       .b5-band { animation: none; opacity: 0; }
     }

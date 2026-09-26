@@ -166,6 +166,59 @@ func TestUpdateOffsiteTargetRefusesADomainChange(t *testing.T) {
 	}
 }
 
+// A target created without a sort order goes after the domain's existing
+// targets, so it cannot take the primary's place.
+func TestCreateOffsiteTargetWithoutSortOrderGoesLast(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	for _, existing := range []store.OffsiteTarget{
+		{Domain: "containers", Name: "Primary", Repo: "s3:c", Enabled: true, SortOrder: 0},
+		{Domain: "containers", Name: "Second", Repo: "s3:c2", Enabled: true, SortOrder: 3},
+	} {
+		if _, err := st.UpsertOffsiteTarget(existing); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	body := []byte(`{"domain":"containers","name":"Third","repo":"s3:c3","enabled":true}`)
+	rec := httptest.NewRecorder()
+	h.handleCreateOffsiteTarget(rec, jsonReq(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
+	env := decodeEnvelope(t, rec)
+	if env["ok"] != true {
+		t.Fatalf("create not ok: %v", env)
+	}
+	if got := env["target"].(map[string]any)["sortOrder"]; got != float64(4) {
+		t.Fatalf("sortOrder = %v, want 4", got)
+	}
+}
+
+// A create never takes sort order 0, whatever the body asks for: that slot is
+// the row the domain's off-site field edits.
+func TestCreateOffsiteTargetWithSortOrderZeroStillGoesLast(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	field, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Primary", Repo: "s3:c", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, c := range []struct {
+		order int
+		repo  string
+	}{{0, "s3:c2"}, {-1, "s3:c3"}} {
+		body, _ := json.Marshal(offsiteTargetView{Domain: "containers", Name: c.repo, Repo: c.repo, Enabled: true, SortOrder: c.order})
+		rec := httptest.NewRecorder()
+		h.handleCreateOffsiteTarget(rec, jsonReq(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
+		env := decodeEnvelope(t, rec)
+		if env["ok"] != true {
+			t.Fatalf("sortOrder %d: create not ok: %v", c.order, env)
+		}
+		if got := env["target"].(map[string]any)["sortOrder"]; got != float64(i+1) {
+			t.Fatalf("sortOrder %d: stored at %v, want %d", c.order, got, i+1)
+		}
+	}
+	if got, _, _ := st.FieldOffsiteTarget("containers"); got.ID != field.ID {
+		t.Fatalf("field row = %s, want %s", got.ID, field.ID)
+	}
+}
+
 func TestUpdateOffsiteTargetMissing(t *testing.T) {
 	h, _ := newCRUDHandler(t)
 	body, _ := json.Marshal(offsiteTargetView{Domain: "containers", Repo: "s3:x"})
