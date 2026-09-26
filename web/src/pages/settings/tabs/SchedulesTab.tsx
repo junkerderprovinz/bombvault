@@ -76,7 +76,7 @@ function ContainersSection({
       {included.length === 0 ? (
         <p className="text-sm text-carbon-textMuted">{t("jobs.noContainersIncluded")}</p>
       ) : (
-        <div className="flex flex-col gap-1 divide-y divide-carbon-border">
+        <div className="flex flex-col gap-1">
           {included.map((c) => (
             <div key={c.name} className="flex flex-col gap-2 py-2 text-sm">
               <div className="flex items-center gap-3">
@@ -158,7 +158,7 @@ function VMsSection({
         included.length === 0 ? (
           <p className="text-sm text-carbon-textMuted">{t("jobs.noVMsIncluded")}</p>
         ) : (
-          <div className="flex flex-col gap-1 divide-y divide-carbon-border">
+          <div className="flex flex-col gap-1">
             {included.map((v) => (
               <div key={v.libvirtName} className="flex flex-col gap-2 py-2 text-sm">
                 <div className="flex items-center gap-3">
@@ -336,7 +336,7 @@ function FilesSection({
       {fileSets.length === 0 ? (
         <p className="text-sm text-carbon-textMuted">{t("jobs.noFileSetsIncluded")}</p>
       ) : (
-        <div className="flex flex-col gap-1 divide-y divide-carbon-border">
+        <div className="flex flex-col gap-1">
           {fileSets.map((s) => (
             // #199 gave a folder set its own cadence, so the row grew a second
             // line the way the container rows already had one. The layout

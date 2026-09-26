@@ -33,7 +33,7 @@ Dette er vanligvis en foreldreløs restic-lås etterlatt da containeren ble oppd
 
 ## Min eksterne kopi skjedde ikke etter en sikkerhetskopi
 
-Ekstern replikering er best-effort av design, så en ekstern hikke feiler aldri den lokale sikkerhetskopien. Sjekk den eksterne tidsplanen for det domenet (Innstillinger, Tidsplaner): en tom tidsplan replikerer etter hver lokale sikkerhetskopi, mens en kadens sender sjeldnere. Bruk **Replikér nå** på Ekstern-fanen for en på-forespørsel-kjøring, og følg med på replikeringsindikatoren på Dashboardet.
+Ekstern replikering er best-effort av design, så en ekstern hikke feiler aldri den lokale sikkerhetskopien. Sjekk den eksterne tidsplanen for det domenet (Innstillinger, Tidsplaner): en tom tidsplan replikerer etter hver lokale sikkerhetskopi, mens en kadens sender sjeldnere. Bruk **Kopier nå** på raden til domenet under Innstillinger, Lagring for en på-forespørsel-kjøring, og følg med på replikeringsindikatoren på Dashboardet.
 
 ## En gjenoppretting avbrøt før den startet
 

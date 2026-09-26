@@ -168,8 +168,7 @@ export function SettingsPortabilityCard({
 
   return (
     <Card title={t("settingsIO.title")} hint={t("settingsIO.desc")} hueIndex={hueIndex}>
-      {/* EXPORT ---------------------------------------------------------- */}
-      <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
+      <div className="flex flex-col gap-3">
         <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("settingsIO.exportHeading")}
         </h3>
@@ -214,8 +213,7 @@ export function SettingsPortabilityCard({
         />
       </div>
 
-      {/* IMPORT ---------------------------------------------------------- */}
-      <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
+      <div className="flex flex-col gap-3">
         <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("settingsIO.importHeading")}
           <InfoBubble tip={t("settingsIO.importHint")} />
@@ -317,7 +315,7 @@ export function SettingsPortabilityCard({
                 tone="neutral"
                 onClick={resetImport}
                 disabled={busy}
-                className={`rounded-control px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
+                className={`rounded-pill px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
                 hueIndex={hueIndex}
               />
               <Button

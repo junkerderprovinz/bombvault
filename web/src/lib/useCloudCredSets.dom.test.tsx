@@ -33,7 +33,7 @@ describe("credential-set invalidation", () => {
   it("re-reads every mounted reader when a write announces a change", async () => {
     getCloudCredSets.mockResolvedValue({ ok: true, sets: [{ id: "a", name: "Hetzner" }] });
 
-    // The editor card and a target's credential picker, both on the Off-site tab.
+    // The editor card and the pull source window's picker, both on the Pull page.
     render(
       <>
         <Reader tag="editor" />

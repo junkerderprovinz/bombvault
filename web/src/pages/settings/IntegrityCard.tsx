@@ -376,9 +376,9 @@ export function IntegrityCard({
               label={t("drill.targetVM")}
               options={[
                 { value: "", label: t("drill.targetMostRecent") },
-                // The value is the raw libvirt name: pickDRSnapshot (service.go)
-                // matches it against the "vm:"+name backup tag, never the
-                // display-only friendly name a TrueNAS VM shows here.
+                // The value is the raw libvirt name: pickDRSnapshot
+                // (service_verify.go) matches it against the "vm:"+name backup
+                // tag, never against the friendly name a TrueNAS VM shows here.
                 ...vms.map((vm) => ({ value: vm.libvirtName, label: vm.name })),
               ]}
               className={selectCls}
@@ -508,8 +508,7 @@ export function IntegrityCard({
                           {tRes.protected ? <CheckDraw /> : "✗"}&nbsp;
                         </span>
                       )}
-                      {/* The server's own words rather than a fixed sentence,
-                          as in OffsiteWizard.tsx. */}
+                      {/* The server's own words rather than a fixed sentence. */}
                       {!tRes.testable
                         ? t("offsite.tamperUnverifiable")
                         : tRes.protected

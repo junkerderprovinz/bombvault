@@ -12,6 +12,7 @@ import type { ReactNode, Ref } from "react";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { IconCancel } from "./glyphs";
+import { WindowActions } from "./WindowActions";
 
 export interface ConfirmDialogProps {
   /** A generic title such as t("confirmDialog.title"); the question itself
@@ -84,7 +85,7 @@ export function ConfirmDialog({
           {extra !== undefined && <div className="mt-4">{extra}</div>}
         </div>
 
-        <div className="flex items-center justify-end gap-3 px-5 py-4">
+        <WindowActions>
           <Button
             label={cancelLabel}
             labelKey="common.cancel"
@@ -105,7 +106,7 @@ export function ConfirmDialog({
             disabled={confirmDisabled}
             onClick={onConfirm}
           />
-        </div>
+        </WindowActions>
       </div>
     </div>
   );

@@ -145,8 +145,7 @@ type ParsedKey =
 /**
  * parseProgressKey decodes a live SSE progress key; progress.ts documents the
  * shapes. An item key's suffix is already the display name the backend
- * published (internal/api/service.go), so no id lookup is needed. Returns
- * null for a shape it does not know.
+ * published, so no id lookup is needed. Returns null for an unknown shape.
  */
 function parseProgressKey(key: string): ParsedKey | null {
   if (key === "flash") return { scope: "item", domain: "flash", name: "flash" };

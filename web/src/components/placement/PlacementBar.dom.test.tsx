@@ -1,37 +1,21 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen } from "@testing-library/react";
-import type { PlacementDomain, PlacementOptions, PlacementView } from "../../lib/api";
-import {
-  defaultRow,
-  placementOptions,
-  placementView,
-  renderWithProviders,
-  sendToOption,
-} from "../../lib/placement.testsupport";
-import { PlacementBar } from "./PlacementBar";
+import type { PlacementOptions, PlacementView } from "../../lib/api";
+import { homeOption, placementOptions, placementView, renderWithProviders, sendToOption } from "../../lib/placement.testsupport";
 
-function renderBar(
-  view: PlacementView,
-  options: PlacementOptions = placementOptions(),
-  context: "item" | "default" = "item",
-  domain: PlacementDomain = "containers"
-) {
+vi.mock("../placeMarks", () => ({
+  PlaceMark: ({ provider, onFill }: { provider: string; onFill?: boolean }) => (
+    <span data-testid="mark" data-provider={provider} data-on-fill={String(!!onFill)} />
+  ),
+}));
+
+const { PlacementBar } = await import("./PlacementBar");
+
+function renderBar(view: PlacementView, options: PlacementOptions = placementOptions()) {
   const handlers = { onSegment: vi.fn(), onHome: vi.fn(), onSendTo: vi.fn(), onChip: vi.fn() };
-  renderWithProviders(
-    <PlacementBar domain={domain} context={context} view={view} options={options} host="Unraid" {...handlers} />
-  );
+  renderWithProviders(<PlacementBar view={view} options={options} host="Unraid" {...handlers} />);
   return handlers;
-}
-
-// A default sitting on its target's own repository, which is where the copy
-// line is shown.
-function offsiteDefault(): { view: PlacementView; options: PlacementOptions } {
-  const row = defaultRow({ home: "repo-direct", homeKind: "direct" });
-  return {
-    view: placementView({ segment: "offsite-only", repo: row.home, repoKind: "direct" }),
-    options: placementOptions({ sendTo: [sendToOption({ repoId: "repo-direct" })] }),
-  };
 }
 
 describe("PlacementBar", () => {
@@ -80,24 +64,46 @@ describe("PlacementBar", () => {
     expect(onSendTo).toHaveBeenCalledWith(box);
   });
 
-  it("keeps a copy line under Off-site only for a default, worded for containers", () => {
-    const { view, options } = offsiteDefault();
-    renderBar(view, options, "default");
-    expect(screen.getByText("Project folders and items whose location is a copy source:")).toBeTruthy();
-    expect(screen.getByRole("group", { name: "Project folders and items whose location is a copy source:" })).toBeTruthy();
-  });
-
-  it("leaves the project folders out of that line for a domain that has none", () => {
-    const { view, options } = offsiteDefault();
-    renderBar(view, { ...options, domain: "vms" }, "default", "vms");
-    expect(screen.getByRole("group", { name: "Items whose location is a copy source:" })).toBeTruthy();
-  });
-
   it("chooses nothing while the arrow keys move along it", () => {
     const { onSegment } = renderBar(placementView());
     screen.getByRole("button", { name: "Local" }).focus();
     fireEvent.keyDown(screen.getByRole("toolbar"), { key: "ArrowRight" });
     fireEvent.keyDown(screen.getByRole("toolbar"), { key: "End" });
     expect(onSegment).not.toHaveBeenCalled();
+  });
+
+  it("names each place by its name alone, with its mark beside it", () => {
+    const opts = placementOptions({
+      homes: [
+        homeOption({ name: "Unraid", placeId: "p-unraid", provider: "unraid-folder" }),
+        homeOption({ id: "repo-nas", name: "NAS Keller", location: "nas/containers", kind: "local", placeId: "p-nas", provider: "synology" }),
+      ],
+    });
+    renderBar(placementView(), opts);
+    fireEvent.click(screen.getByRole("combobox", { name: "Stored on" }));
+    const options = screen.getAllByRole("option");
+    expect(options.map((o) => o.textContent)).toEqual(["Unraid", "NAS Keller"]);
+    expect(options.map((o) => o.querySelector('[data-testid="mark"]')?.getAttribute("data-provider"))).toEqual([
+      "unraid-folder",
+      "synology",
+    ]);
+  });
+
+  it("keeps the wording of a repository without a place, and gives it no mark", () => {
+    renderBar(placementView());
+    fireEvent.click(screen.getByRole("combobox", { name: "Stored on" }));
+    expect(screen.getByRole("option", { name: "NAS Keller · mounted" }).querySelector('[data-testid="mark"]')).toBeNull();
+  });
+
+  it("sends to a place by its name and mark", () => {
+    const b2 = sendToOption({ kind: "remote", repoId: "repo-b2", targetId: "", name: "B2", placeId: "p-b2", provider: "b2" });
+    const box = sendToOption({ kind: "remote", repoId: "repo-box", targetId: "", name: "Storagebox" });
+    renderBar(
+      placementView({ segment: "offsite-only", repo: "repo-b2", repoKind: "remote", skip: ["*"] }),
+      placementOptions({ sendTo: [b2, box] })
+    );
+    fireEvent.click(screen.getByRole("combobox", { name: "Send to" }));
+    const option = screen.getByRole("option", { name: "B2" });
+    expect(option.querySelector('[data-testid="mark"]')?.getAttribute("data-provider")).toBe("b2");
   });
 });

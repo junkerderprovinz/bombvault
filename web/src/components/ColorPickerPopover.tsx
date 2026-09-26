@@ -99,7 +99,7 @@ export function ColorPickerSwatch({
   /** The swatch's accessible name and hover title, and the popover's label. */
   label: string;
   disabled?: boolean;
-  /** Size, shape and border of the swatch, so each call site can match its
+  /** Size and shape of the swatch, so each call site can match its
    *  neighbours. */
   className?: string;
 }) {
@@ -340,7 +340,7 @@ export function ColorPickerSwatch({
         style={{ backgroundColor: value }}
         className={
           className ??
-          "w-6 h-6 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
+          "w-6 h-6 rounded-pill transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
         }
       />
       {open &&

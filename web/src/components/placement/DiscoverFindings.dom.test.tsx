@@ -37,7 +37,7 @@ describe("DiscoverFindings", () => {
     renderWithProviders(<DiscoverFindings paused={["containers", "files"]} leftOpen={[]} directRepos={[]} />);
     expect(
       screen.getByText(
-        "Off-site copies for Containers and Folders are paused until the default is confirmed under Settings > Paths & Storage > Placement defaults."
+        "Off-site copies for Containers and Folders are paused until the default is confirmed under Settings > Storage > Domains."
       )
     ).toBeTruthy();
   });

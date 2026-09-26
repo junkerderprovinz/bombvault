@@ -1,6 +1,6 @@
 # Konfigurasjon
 
-Denne siden dekker containerens miljøvariabler, monteringene malen tilbyr, VM-sikkerhetskopiering over SSH og oppsettet for ekstern lagring. Sikkerhetskopi-**repository-stier** konfigureres inne i appen (Innstillinger, Sikkerhetskopistier), ikke via miljøvariabler.
+Denne siden dekker containerens miljøvariabler, monteringene malen tilbyr, VM-sikkerhetskopiering over SSH og oppsettet for ekstern lagring. Hvor sikkerhetskopiene havner, bestemmer du inne i appen, på **Innstillinger, Lagring**, ikke via miljøvariabler.
 
 ## Miljøvariabler
 
@@ -26,7 +26,7 @@ Denne siden dekker containerens miljøvariabler, monteringene malen tilbyr, VM-s
 
 Monter Docker-socketen, flashen (`/boot`) og **Host Data**-roten (`/mnt`) som vist i CA-malen. Sikkerhetskopi-*kilder* og -*destinasjoner* ligger begge under Host Data, og den er montert **slave** så en fjerndeling som monteres etter at containeren starter (for eksempel under `/mnt/remotes`) blir synlig uten en omstart.
 
-Sikkerhetskopi-repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files}`, opprettet ved den første sikkerhetskopieringen. Endre plasseringen når som helst i **Innstillinger, Sikkerhetskopistier**.
+En ny installasjon lagrer hvert domene på lagringsstedet **Unraid**, under `/mnt/user/bombvault` med én mappe per domene (`container`, `vms`, `flash`, `config`, `files`), opprettet ved den første sikkerhetskopieringen. Flere lagringssteder, lokale eller eksterne, legger du til på **Innstillinger, Lagring**; se [Lagringssteder](storage-places.md).
 
 !!! note "Sjekk av host-integrasjon"
     Åpne `/spike` i webgrensesnittet etter at containeren har startet. Den sonderer hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer manglende deler.
@@ -71,20 +71,20 @@ Malen legger til `--add-host=host.docker.internal:host-gateway` så containeren 
 
 ## Oppsett for ekstern lagring
 
-Sett opp en ekstern replika på **Innstillinger, Ekstern**-fanen. Se [Ekstern lagring og gjenoppretting](offsite-recovery.md) for hele arbeidsflyten (uforanderlig/append-only, tamper-testing og DR-øvelser). I korthet:
+Eksterne kopier går til lagringssteder. Legg til lagringsstedet på **Innstillinger, Lagring** med **Legg til lagringssted**, og huk det deretter av under **Kopiert til** på raden til domenet. [Lagringssteder](storage-places.md) dekker alle tilkoblingstyper, og [Ekstern lagring og gjenoppretting](offsite-recovery.md) dekker append-only, tamper-testing og DR-øvelser. I korthet:
 
-- **Backender:** SMB/CIFS og NFS (monter delingen og pek en sikkerhetskopisti mot den), native restic-backender uten rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), eller en hvilken som helst rclone-remote (`rclone:<remote>:<bucket>/path`).
-- **Sky-legitimasjon** lagres kryptert under Innstillinger, Ekstern, Sky-legitimasjon.
-- **SSH-mål trenger ingenting installert på den andre siden.** `sftp:` trenger bare en SSH-server. Legg til den offentlige nøkkelen fra **Innstillinger, System, VM Backup over SSH** (også på `/config/ssh/id_ed25519.pub`) til målbrukerens `~/.ssh/authorized_keys`.
-- **Ekstern kopi:** BombVault replikerer nye øyeblikksbilder med `restic copy` på best-effort-basis. Det lokale repoet forblir primært. Hvert domene har sin egen eksterne tidsplan, pluss en **Replikér nå**-knapp.
-- **Flere eksterne mål per domene:** hvert domene kan replikere til flere eksterne destinasjoner samtidig. Legg til ekstra mål på Innstillinger, Ekstern, hvert med sitt eget repository, sin S3-lagringsklasse, append-only-flagg, oppbevaring og vekstbudsjett; de replikerer alle på det domenets eksterne tidsplan. Et eksisterende enkelt ekstern-oppsett overføres som det første målet.
-- **Oppbevaring per kilde:** den lokale policyen ligger på Innstillinger, Stier og lagring; den eksterne policyen på Innstillinger, Ekstern (la den stå helt på null for aldri å auto-trimme eksterne øyeblikksbilder).
-- **Båndbreddegrenser:** begrens resticts opplastings-/nedlastingshastighet under Innstillinger, Ekstern.
-- **Kald og arkiv-lagringsklasse (S3):** for et native S3-eksternt repo, velg et gjenopprettingslesbart nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remoter setter klassen sin i rclone-konfigurasjonen.
+- **Tilkoblingstyper:** en mappe på denne Unraid-serveren eller en NAS-deling montert under `/mnt/remotes`, S3-lagring (Backblaze B2 og de andre skyleverandørene, eller en selvhostet tjeneste som MinIO eller Garage), rest-server, SFTP inkludert en Hetzner Storage Box, WebDAV for Nextcloud, ownCloud og OpenCloud, Azure Blob og en hvilken som helst rclone-remote. Backblaze B2 trenger bare nøkkelen: BombVault leser bucketen og S3-endepunktet ut fra den.
+- **Legitimasjon** lagres kryptert sammen med lagringsstedet den hører til. Legitimasjonssettene som hentekilder bruker, ligger på fanen **Henting** på Instanser-siden.
+- **SSH-mål trenger ingenting installert på den andre siden.** Et SFTP-lagringssted trenger bare en SSH-server. Legg til den offentlige nøkkelen som vises i SFTP-skjemaet (også under **Innstillinger, System, VM-sikkerhetskopi over SSH** og på `/config/ssh/id_ed25519.pub`) i målbrukerens `~/.ssh/authorized_keys`.
+- **Ekstern kopi:** BombVault kopierer nye øyeblikksbilder med `restic copy` på best-effort-basis, i tillegg til lagringsstedet domenet er lagret på. Hvert domene har sin egen kopitidsplan på Innstillinger, Tidsplaner, pluss **Kopier nå** på raden sin.
+- **Flere lagringssteder for kopier per domene:** huk av så mange lagringssteder du vil under **Kopiert til**; hvert av dem kopierer etter domenets tidsplan.
+- **Oppbevaring, grenser, lagringsklasse og vekstbudsjett hører til lagringsstedet** og settes i detaljene til det. Oppbevaringen til et lagringssted gjelder for hvert depot på det, så et eksternt lagringssted kan beholde kopier lenger som et arkiv; et lagringssted der hver regel står på null, trimmer aldri.
+- **Kald og arkiv-lagringsklasse (S3):** for et S3-lagringssted, velg et gjenopprettingslesbart nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remoter setter klassen sin i rclone-konfigurasjonen.
+- **Et domene lagret på et eksternt lagringssted:** se [Et domene lagret på et eksternt lagringssted](offsite-recovery.md#remote-primary-repositories).
 
 ## Portable innstillinger (eksporter og importer) {#portable-settings-export-and-import}
 
-Kortet **Eksporter og importer innstillinger** på Innstillinger-siden skriver hele BombVault-konfigurasjonen din (domeneinnstillinger, eksterne mål, tidsplaner, oppbevaring, varsler) til en portabel JSON-fil du kan importere på en annen instans, så å flytte til en ny boks eller klone et oppsett ikke betyr å taste inn alt på nytt for hånd. Import viser en forhåndsvisning og ber om bekreftelse, og den rører aldri sikkerhetskopidataene eller -historikken din.
+Kortet **Eksporter og importer innstillinger** på Innstillinger-siden skriver hele BombVault-konfigurasjonen din (domeneinnstillinger, lagringssteder, tidsplaner, varsler) til en portabel JSON-fil du kan importere på en annen instans, så å flytte til en ny boks eller klone et oppsett ikke betyr å taste inn alt på nytt for hånd. Import viser en forhåndsvisning og ber om bekreftelse, og den rører aldri sikkerhetskopidataene eller -historikken din.
 
 !!! warning "Eksporten kan inneholde legitimasjon"
-    Du velger om du vil inkludere ekstern- og varslingslegitimasjonen i filen. Med legitimasjon inkludert er eksporten like sensitiv som gjenopprettingssettet ditt, så oppbevar den et trygt sted. Uten dem inneholder filen kun ikke-hemmelige innstillinger.
+    Du velger om du vil inkludere legitimasjonen til lagringsstedene og varslene dine i filen. Med legitimasjon inkludert er eksporten like sensitiv som gjenopprettingssettet ditt, så oppbevar den et trygt sted. Uten dem inneholder filen kun ikke-hemmelige innstillinger.

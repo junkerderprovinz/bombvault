@@ -4,13 +4,13 @@ Lokale sikkerhedskopier beskytter dig mod en tabt container eller en dårlig opd
 
 ## Off-site-replikering
 
-Behold den hurtige lokale sikkerhedskopi, og tilføj en eller flere off-site-replikaer. Sæt et repo pr. domæne på fanen **Indstillinger, Off-site**. BombVault replikerer nye øjebliksbilleder dertil med `restic copy` på et best-effort-grundlag, så et off-site-hikke aldrig får den lokale sikkerhedskopi til at fejle. Det lokale repo forbliver primært.
+Behold den hurtige lokale sikkerhedskopi, og kopiér den til et eller flere andre steder. Hvilke steder et domæne kopieres til, vælger du på kortet **Domæner** under **Indstillinger, Lagring**, én chip pr. sted (se [Lagringssteder](storage-places.md#domains)). BombVault kopierer nye øjebliksbilleder dertil med `restic copy` på et best-effort-grundlag, så en mislykket kopi aldrig får den lokale sikkerhedskopi til at fejle. Det sted, et domæne gemmes på, behøver ikke at være lokalt; se [Et domæne gemt på et fjernt sted](#remote-primary-repositories).
 
-- **Flere off-site-destinationer pr. domæne.** Hvert domæne (containere, VM'er, flash, config og filsæt) kan replikere til flere off-site-destinationer på én gang, ikke kun én, så du kan beholde for eksempel en rest-server på en vens boks og en S3-bucket parallelt. Tilføj ekstra destinationer på Indstillinger, Off-site, hver med sit eget repository, sin S3-lagringsklasse, sit append-only-flag, sin opbevaring og sit vækstbudget. En eksisterende enkelt off-site-opsætning overføres urørt som den første destination, og hver destination i et domæne replikerer på det domænes off-site-tidsplan.
-- **Off-site-tidsplan pr. domæne** (redigeret sammen med alle andre tidsplaner på Indstillinger, Tidsplaner): lad den stå tom for at replikere efter hver lokal sikkerhedskopi, eller sæt en kadence (for eksempel `weekly Sun 03:00`) for at sende off-site sjældnere, end du sikkerhedskopierer lokalt. En **Replikér nu**-knap dækker on-demand-kørsler.
-- **Off-site-opbevaring** lever på Indstillinger, Off-site, så du kan beholde off-site-kopier længere som et arkiv. Lad politikken stå helt-nul for aldrig at auto-trimme off-site-øjebliksbilleder.
-- **Båndbreddegrænser** (Indstillinger, Off-site) begrænser restic-upload/download-hastigheden, så replikering ikke mætter dit WAN.
-- En **replikeringsindikator** viser, hvilket domæne der replikerer, mens det kører (på dets side og på Oversigten). Det er en aktiv indikator, ikke en procentbjælke, fordi `restic copy` ikke eksponerer nogen maskinlæsbar fremdrift.
+- **Flere kopisteder pr. domæne.** Et domæne kan kopieres til flere steder på én gang, for eksempel en rest-server hos en ven og en B2-bucket. Opbevaring, lagringsklasse, append-only, grænser og vækstbudget hører til stedet, så hver kopi følger reglerne for det sted, den lander på.
+- **Kopitidsplan pr. domæne** (redigeret sammen med alle andre tidsplaner på Indstillinger, Tidsplaner): lad den stå tom for at kopiere efter hver lokal sikkerhedskopi, eller sæt en kadence (for eksempel `weekly Sun 03:00`) for at kopiere sjældnere, end du sikkerhedskopierer. **Kopiér nu** i domænets række kører den efter behov.
+- **Opbevaring pr. sted.** Hvert sted har sine egne regler, så et off-site-sted kan beholde kopier længere som et arkiv. Et sted, hvor alle regler står på nul, beskærer aldrig noget.
+- **Båndbreddegrænser** pr. sted begrænser restics upload- og downloadhastighed, så kopiering ikke mætter dit WAN.
+- En **replikeringsindikator** viser, hvilket domæne der kopierer, mens det kører (på dets side og på Oversigten). Det er en aktiv indikator, ikke en procentbjælke, fordi `restic copy` ikke eksponerer nogen maskinlæsbar fremdrift.
 
 !!! note "Gendan fra ethvert sted"
     Hver container, VM, mappesæt, flashen og appkonfigurationen lister deres sikkerhedskopier som én tidslinje på tværs af alle steder, en sikkerhedskopi ligger. En sikkerhedskopi kopieret til B2 vises én gang, markeret med hvert sted, der holder den. En gendannelse tager det første sted, den kan nå, startende med det arkiv, elementet skrives til, og du kan vælge et andet sted pr. række. Eksterne steder læses kun, når du åbner dem. At slette ét sted tjekker først de andre og siger, om det var den sidste kopi.
@@ -21,53 +21,49 @@ Hvert container-, VM- og mappesæt-kort har en række **Placering** med tre segm
 
 - **Lokal** skriver elementet til det arkiv, der vises under **Gemt på**, og kopierer det ingen steder. Brug det til data, der allerede har en anden kopi, for eksempel en deling, der ligger på et NAS.
 - **Lokal + ekstern** skriver det også dertil og kopierer det til de destinationer, der er markeret under **Kopiér til**, én chip pr. off-site-destination i domænet. Fjern et flueben, og den destination får ikke længere noget nyt fra dette element.
-- **Kun ekstern** skriver elementet direkte til stedet under **Send til**: et direkte arkiv ved siden af en off-site-destination, eller et fjernarkiv, du sætter op under Indstillinger, Stier og lagring, Depoter.
+- **Kun ekstern** skriver elementet direkte til stedet under **Send til**, et hvilket som helst andet sted end domænets hjemsted. Kopieres domænet allerede til det sted, får elementet et direkte arkiv ved siden af kopierne; ellers opretter BombVault et arkiv til domænet der.
 
 Placeringen er fast fra elementets første sikkerhedskopi, fordi BombVault aldrig flytter sikkerhedskopier mellem arkiver. Kopierne kan ændres når som helst. En destination, der ikke længere får et element, beholder de kopier, den har, og beskærer dem til sin egen opbevaring ved domænets næste off-site-kørsel; **Slet i B2** på kortet fjerner dem med det samme. Findes nogle af de kopier ingen andre steder, lister bekræftelsen dem efter dato og spørger om elementets navn. Der kan ikke slettes fra append-only-destinationer.
 
-Under rækken viser kortet, hvor elementet går hen, og hvad der faktisk er der: hvor mange lokationer det holdes på, hvornår hver destination sidst blev set, og om 3-2-1 er opfyldt. En lokation er serveren med de originale data, hver off-site-destination og hvert arkiv markeret **Uden for bygningen**. BombVault tjekker kopier og lokationer; det tjekker ikke "to medier"-delen af 3-2-1.
+Under rækken viser kortet, hvor elementet går hen, og hvad der faktisk er der: hvor mange lokationer det holdes på, hvornår hver destination sidst blev set, og om 3-2-1 er opfyldt. En lokation er serveren med de originale data og hvert sted på en anden lokation (se [Uden for bygningen](#off-the-premises-mark)). BombVault tjekker kopier og lokationer; det tjekker ikke "to medier"-delen af 3-2-1.
 
-### Standardplaceringer
+### Standarder pr. domæne
 
-Indstillinger, Stier og lagring, **Standardplaceringer** har en række pr. domæne med de samme tre segmenter. Kopierne gælder med det samme for hvert element uden eget valg, og for projektmapperne i Compose-stacks. Placeringen gælder for et nyt element ved dets første sikkerhedskopi; at ændre den flytter ingen sikkerhedskopier. Før den gemmes, navngiver rækken hver destination, der vinder eller mister elementer, og hvor mange øjebliksbilleder det betyder. **Anvend på elementer uden sikkerhedskopier** sætter hvert element uden nogen sikkerhedskopi endnu tilbage på standarden.
+Kortet **Domæner** under Indstillinger, Lagring har én række pr. domæne. **Kopieret til** gælder med det samme for hvert element uden eget valg og for projektmapperne i Compose-stacks. Når et domæne har sikkerhedskopier, gælder **Gemt på** for et nyt element ved dets første sikkerhedskopi, og at ændre det flytter ingen sikkerhedskopier. Før ændringen gemmes, nævner rækken hvert sted, der vinder eller mister elementer, og hvor mange øjebliksbilleder det betyder, og spørgsmålet har kontakten **Anvend på elementer uden sikkerhedskopier**, som også sætter hvert element uden sikkerhedskopi endnu på den nye standard. **Undtagelser** lister elementerne med deres eget valg.
 
-En ny off-site-destination modtager hvert element, der ikke er sat til Lokal. Dialogen, der tilføjer den, angiver, hvor mange elementer det er, og hvor det er kendt, hvor meget historik det udgør, og tilbyder at udelade de elementer, der allerede er udelukket fra andre destinationer.
+Sætter du flueben ved et nyt sted under **Kopieret til**, modtager det hvert element, der ikke er sat til Lokal. Bekræftelsen angiver, hvor mange elementer det er, og hvor det er kendt, hvor meget historik det udgør.
 
 ### Direkte arkiver
 
-At vælge en destinations direkte arkiv under Kun ekstern åbner en dialog med en foreslået placering ved siden af destinationen, for eksempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, og en forbindelsestest, der ikke opretter noget. **Opret og brug** opretter arkivet og peger elementet på det. Et direkte arkiv overtager destinationens nøgle, lagringsklasse, grænser, append-only-indstilling og opbevaring og ændrer sig med dem; Depoter-kortet viser det skrivebeskyttet. Kan en ny nøgle til destinationen ikke åbne det, beholder det direkte arkiv den nøgle, det har, og det noteres ved gemning. Dets øjebliksbilleder bærer mærket `bv:direct`, og alle andre opbevaringskørsler lader dem stå, så et direkte arkiv, der har mistet forbindelsen til sin destination, aldrig ældes efter de lokale regler. B2 nås via dets S3-endpoint, hvor nøgle-id'et og applikationsnøglen angives som S3-legitimationsoplysningerne; en nøgle, der er begrænset til destinationens egen mappe, kan ikke nå mappen ved siden af den, så begræns i stedet nøglen til mappen over destinationen.
+Vælger du under Kun ekstern et sted, som domænet allerede kopieres til, spørger BombVault én gang og opretter derefter et direkte arkiv ved siden af kopierne, for eksempel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/container-direct`, og peger elementet på det. For et kopimål uden sted åbner valget en dialog med en foreslået adresse og en forbindelsestest, der ikke opretter noget, og **Opret og brug** opretter arkivet. Et direkte arkiv overtager stedets nøgle, lagringsklasse, grænser, append-only-indstilling og opbevaring og ændrer sig med dem. Kan en ny nøgle til stedet ikke åbne det, beholder det direkte arkiv den nøgle, det har, og det noteres ved gemning. Dets øjebliksbilleder bærer mærket `bv:direct`, og alle andre opbevaringskørsler lader dem stå, så et direkte arkiv, der har mistet forbindelsen til sit sted, aldrig ældes efter de lokale regler. En B2-nøgle, der er begrænset til én mappe, skal dække stedets adresse og ikke kun domænets mappe, ellers kan den ikke nå mappen ved siden af.
 
-### Uden for bygningen
+### Uden for bygningen {#off-the-premises-mark}
 
-Et navngivet arkiv kan markeres **Uden for bygningen** på Depoter-kortet. Fjernarkiver starter markeret; slå det fra for en rest-server i samme bygning. Markeringen tæller kun med i lokationer og 3-2-1 på kortene. Den ændrer ingen kopi.
+En kopi tæller kun som en lokation for sig, når dens sted er på en anden lokation. Et cloudsted tæller altid, og en mappe på denne Unraid gør det aldrig; for et NAS, en rest-server eller en SFTP-server besvarer du **Hvor står enheden?** i stedets detaljer med **Her i huset** eller **På en anden lokation**. Svaret tæller kun med i lokationer og 3-2-1 på kortene og på Oversigten. Det ændrer ingen kopi.
 
 ### Efter en genopbygning
 
-Kopivalg lever i BombVaults egne indstillinger. Efter en genopbygning via Opdag sikkerhedskopier uden et gendannet `/config` er de væk, og at kopiere alt ville sende de elementer, du havde udeladt, til B2 igen. Off-site-replikeringen af hvert genopbygget domæne sættes derfor på pause. Oversigten viser det i gult, og Standardplaceringer tilbyder **Bekræft standard** med en forhåndsvisning af, hvad næste kørsel kopierer, og navnene i de sikkerhedskopier, der ikke har noget element, som du kan udelade der. Kun bekræftelsen afslutter pausen; at importere en indstillingsfil bringer regler og standarder tilbage, men afslutter ikke pausen.
+Kopivalg lever i BombVaults egne indstillinger. Efter en genopbygning via Opdag sikkerhedskopier uden et gendannet `/config` er de væk, og at kopiere alt ville sende de elementer, du havde udeladt, til B2 igen. Off-site-replikeringen af hvert genopbygget domæne sættes derfor på pause. Oversigten viser det i gult, og domænets række på kortet Domæner tilbyder **Bekræft standard** med en forhåndsvisning af, hvad næste kørsel kopierer, og navnene i de sikkerhedskopier, der ikke har noget element, som du kan udelade der. Kun bekræftelsen afslutter pausen; at importere en indstillingsfil bringer regler og standarder tilbage, men afslutter ikke pausen.
 
-## Fjernbetjente primære arkiver {#remote-primary-repositories}
+## Et domæne gemt på et fjernt sted {#remote-primary-repositories}
 
-Et domænes sti til sikkerhedskopi (Indstillinger, Stier og lager) er ikke begrænset til en lokal mappe: peg den direkte på et restic-fjernarkiv (`s3:...`, `rest:http://vært:8000/arkiv`, `sftp:bruger@vært:/arkiv`, `rclone:fjern:bucket/sti`), så sikkerhedskopierer BombVault direkte dertil, uden separat lokal kopi og uden replikeringstrin. Det er en virkelig anden form end off-site-replikeringen ovenfor: dér er det lokale arkiv det primære, og off-site-arkivet er et arkiv af det efter bedste evne; her **er** fjernarkivet det primære, og det er den eneste kopi, så længe du ikke også opsætter off-site-replikering (eller et andet fjernarkiv) for det domæne.
+Et domæne behøver ikke at blive gemt lokalt. Så længe dets sikkerhedskopisti ikke rummer nogen sikkerhedskopier, kan du vælge et fjernt sted under **Gemt på** på kortet Domæner, og domænet sikkerhedskopierer så direkte dertil, uden lokal kopi og uden kopitrin. Fjernarkivet er da den eneste kopi, medmindre domænet også kopieres til et andet sted. Hvert fjernt sted har de samme sikkerhedsforanstaltninger:
 
-Hvert af de fem stifelter (Containere, Virtuelle maskiner, Flash, Konfiguration, Filer) har en kontakt **Lokal / Fjern** lige ved siden af:
+- **En forbindelsestest**, før der skrives noget.
+- **Båndbreddegrænser** for selve sikkerhedskopien, de samme flag `--limit-upload` og `--limit-download`, som en kopi bruger.
+- **Append-only-beskyttelse**, efterprøvet med den samme aktive manipulationstest. Er den slået til, beskærer BombVault aldrig arkivet, fordi legitimationsoplysningerne på denne maskine ikke må kunne slette sikkerhedskopiens eneste kopi.
+- **Et vækstbudget**, taget fra den samme udvikling i størrelse, som Lagerkortet følger.
 
-- **Lokal** viser den velkendte mappebrowser.
-- **Fjern** bytter den ud med et almindeligt URL-felt plus en knap, der åbner den samme dialog til forbindelsestest og adgangsoplysninger, som off-site-destinationer bruger, blot indstillet til dette primære arkiv. Derfra får du:
-    - **En forbindelsestest** mod den rigtige sti, før du forlader dig på den.
-    - **Båndbreddegrænser** (upload og download), så en planlagt sikkerhedskopi til et fjernprimært arkiv ikke mætter din WAN-forbindelse: de samme restic-flag `--limit-upload` og `--limit-download`, som off-site-replikeringen bruger, nu anvendt på selve sikkerhedskopien.
-    - **Append-only-beskyttelse (uforanderlighed)**, efterprøvet med den samme aktive manipulationstest (en rigtig DELETE-sonde mod den anden ende), som off-site-destinationer får. Er den slået til, nægter BombVault selv at beskære arkivet: da der ikke står en separat lokal kopi bag, må adgangsoplysningerne på denne maskine ikke kunne slette sikkerhedskopiens eneste kopi.
-    - **En alarm for vækstbudgettet**, taget fra den samme udvikling i arkivets størrelse, som Lagerkortet allerede følger.
+Et domæne gemt på et fjernt sted er kilden til sine kopier ligesom et lokalt; se [Kopier mellem steder med forskellige legitimationsoplysninger](storage-places.md#different-credentials).
 
-Intet af dette er påkrævet: en håndskrevet fjernsti uden gemte sikkerhedsindstillinger sikkerhedskopierer nøjagtig som før (ubegrænset båndbredde, kan beskæres, ingen budgetalarm). Sikkerhedsdialogen er der til, når du vil have den samme beskyttelse, som en off-site-kopi får, uden at skulle oprette en off-site-destination alene af den grund.
-
-!!! note "Sky- og REST-adgangsoplysninger deles"
-    Et fjernprimært arkiv godkendes med de samme S3-/REST-adgangsoplysninger, der er sat op under Indstillinger, Off-site, Skyadgangsoplysninger. Der findes ikke et separat sted til adgangsoplysninger for primære arkiver.
+!!! note "Legitimationsoplysninger hører til stedet"
+    Et fjernt sted har sine egne legitimationsoplysninger. Et sted, der er sat op med de fælles cloud-legitimationsoplysninger, bliver ved med at bruge dem, indtil dets adgang ændres i dets detaljer.
 
 ## Uforanderlig (append-only) off-site
 
 Flag et off-site-repo append-only, så ransomware eller en kompromitteret vært ikke kan slette eller omskrive dine sikkerhedskopier. Den anden side (en `restic/rest-server`, der kører i `--append-only`-tilstand) **håndhæver** det. BombVault **verificerer** det kun altid og viser aldrig grønt alene på en konfigurationspåstand.
 
-Guiden til **guidet off-site-opsætning** fører dig fra backend-valg (rest-server / rclone / S3) gennem et klar-til-indsæt rest-server-deploy-snippet, en forbindelsestest, uforanderligheds-omskifteren (som kører manipulationstesten med det samme) og en opbevaringsstrategi, så append-only off-site er tilgængelig uden manuel redigering af configs.
+Vinduet **Tilføj sted** har en opskrift, klar til at indsætte, på en rest-server i append-only-tilstand med én bruger til denne BombVault. På et rest-server-sted med **Append-only** slået til kører **Test append-only-beskyttelse** i stedets detaljer manipulationstesten for hvert domæne, stedet gemmer eller kopierer, så append-only off-site er tilgængelig uden manuel redigering af configs.
 
 !!! note "En vellykket sletning under `/locks/` er forventet"
     Append-only betyder ikke, at intet længere kan slettes. restic skal tage og frigive sine egne låse, så `/locks/` forbliver bevidst skrivbar og sletbar. Snapshots og dataene bag dem, altså præcis det ransomware ville gå efter, kan ikke fjernes. Tester du selv modparten, er en sletning der lykkes under `/locks/` korrekt adfærd og ikke et hul i beskyttelsen.
@@ -118,28 +114,28 @@ Ovenfor beskrives delene. Her er én komplet opsætning med rigtige værdier, fo
 
 To maskiner: **TOWER** kører containerne og sender sikkerhedskopierne, **VAULT** modtager dem og håndhæver uforanderligheden. Udskift med dine egne navne, adresser og delingsstier.
 
-**1. Rejs append-only-serveren på VAULT.** I BombVault på TOWER: gå til *Indstillinger → Eksternt → guidet opsætning*, vælg **rest-server** og generér opskriften. Kopiér fanen **Unraid-skabelon (XML)**, gem den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, og vælg derefter *Docker → Add Container* og **rest-server** fra skabelonlisten. Skriv den viste `htpasswd`-linje ind i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT, før du starter den. Engangsadgangskoden vises én gang og gemmes aldrig, så kopiér den nu. Den linje bærer den samme adgangskode, allerede bcrypt-hashet for dig: klarteksten hører til i REST-legitimationsoplysningerne på TOWER, den hashede linje i `.htpasswd` på VAULT. Du skal ikke hashe noget selv.
+**1. Rejs append-only-serveren på VAULT.** I BombVault på TOWER: åbn *Indstillinger → Lagring*, klik på **Tilføj sted**, vælg **rest-server**, og klik på **Vis opskrift**. Kopiér blokken **Unraid-skabelon**, gem den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, og vælg derefter *Docker → Add Container* og **rest-server** fra skabelonlisten. Skriv den viste `htpasswd`-linje ind i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT, før du starter den. Adgangskoden vises én gang og gemmes aldrig; opskriften har allerede sat den og brugeren ind i formularen på TOWER, så lad det vindue stå åbent. `htpasswd`-linjen bærer den samme adgangskode, allerede bcrypt-hashet for dig, så du skal ikke hashe noget selv.
 
-    Lad `--append-only` blive stående i OPTIONS-feltet. Det er hele pointen: uden det er VAULT en almindelig deling igen.
+    Lad `--append-only` blive stående i OPTIONS-feltet. Uden det er VAULT bare en almindelig deling igen.
 
-**2. Peg det eksterne arkiv derhen på TOWER.** Arkivets adresse følger mønstret, som opskriften skriver ud:
+**2. Tilføj stedet på TOWER.** Indtast VAULTs adresse, `http://VAULT:8000`, ved siden af den bruger og adgangskode, opskriften har udfyldt, og klik derefter på **Test forbindelse**. BombVault bygger adressen ud fra dem:
 
-    rest:http://VAULT:8000/bombvault-containers/containers
+    rest:http://VAULT:8000/tower
 
-Første led i stien er htpasswd-brugeren, det andet er arkivet. Indtast den genererede bruger og adgangskode som destinationens REST-legitimation, og kør **forbindelsestesten**.
+Første led i stien er htpasswd-brugeren, her `tower`, og hvert domæne får sin mappe under den, for eksempel `rest:http://VAULT:8000/tower/container`. Besvar **Hvor står enheden?** med **På en anden lokation**, klik på **Tilføj**, og sæt flueben ved stedet under **Kopieret til** for de domæner, der skal derhen.
 
-**3. Slå ”Uforanderlig” til på TOWER.** Manipulationstesten kører med det samme og skal sige *beskyttet*. Hvad svarene betyder:
+**3. Slå Append-only til på TOWER** under **Beskyttelse** i stedets detaljer, og klik derefter på **Test append-only-beskyttelse**. Testen kører for hvert domæne, stedet gemmer eller kopierer, og hvert domæne skal vise *sletninger afvist*. Hvad svarene betyder:
 
 | Resultat | Hvad der skete |
 | --- | --- |
-| **beskyttet** | VAULT afviste sletningen. Det er den eneste beståede tilstand. |
-| **IKKE beskyttet** | VAULT accepterede en sletning. `--append-only` mangler eller er fjernet. |
-| **ikke entydigt** | Hverken eller. Som regel er adressen ikke den, restic selv bruger, eller legitimationen er ændret. Intet registreres, og ingen advarsel udløses. |
+| **sletninger afvist** | VAULT afviste sletningen. Det er den eneste beståede tilstand. |
+| **sletninger accepteret** | VAULT accepterede en sletning. `--append-only` mangler eller er fjernet. |
+| en besked i stedet for et resultat | Testen kunne ikke køre. Som regel er adressen ikke den, restic selv bruger, eller legitimationen er ændret. Intet registreres, og ingen advarsel udløses. |
 
 **4. Se på VAULT, hvad der kommer ind.** Slå *Indstillinger → Modtager* til, åbn fanen **Modtager**, og registrér arkivet skrivebeskyttet.
 
 !!! warning "Placeringen er en sti **inde i** containeren, skrevet relativt til værtsmonteringen"
-    Indtast `user/appdata/rest-server/bombvault-containers/containers`, **ikke** `/mnt/user/appdata/…`. BombVault kører i en container, hvor værtens `/mnt` er monteret et andet sted; en absolut værtssti findes ikke derinde. Indsætter du en, fortæller BombVault dig nu den relative sti, du skal bruge i stedet.
+    Indtast `user/appdata/rest-server/tower/container`, **ikke** `/mnt/user/appdata/…`. BombVault kører i en container, hvor værtens `/mnt` er monteret et andet sted; en absolut værtssti findes ikke derinde. Indsætter du en, fortæller BombVault dig den relative sti, du skal bruge i stedet.
 
     **Afsendende APP_KEY** er TOWERs nøgle, ikke VAULTs. Du finder den på TOWER under *Indstillinger → System*.
 
@@ -151,7 +147,7 @@ En dedikeret **Recovery**-fane fører en frisk eller genopbygget installation ge
 
 1. **Gendanner BombVaults egne indstillinger først**, så de sikkerhedskopi-stier, off-site-destinationer og legitimationsoplysninger, resten af forløbet har brug for, er forudfyldte (anvendt via en selv-genstart over Docker-socket'en, så den kørende indstillingsdatabase aldrig overskrives under et åbent handle).
 2. **Tjekker, at BombVault kan læse dine sikkerhedskopier** (krypteringsnøgle-faldgruben på forkant).
-3. Lader dig **pege mod dit eksisterende repo** (lokalt eller off-site).
+3. Lader dig **pege mod dit eksisterende repo**: en lokal mappe eller et fjernt sted, der er forbundet via det samme vindue **Tilføj sted** som på Indstillinger, Lagring.
 4. **Opdager** de containere, VM'er og filsæt, der er gemt i det.
 5. **Gendanner dem alle** (efterladt stoppet, så du starter dem bevidst), med dit gendannelseskit et klik væk.
 

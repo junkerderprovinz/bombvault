@@ -4,13 +4,13 @@ Kopie lokalne chronią Cię przed utraconym kontenerem lub złą aktualizacją. 
 
 ## Replikacja poza siedzibą
 
-Zachowaj szybką kopię lokalną i dodaj jedną lub więcej replik poza siedzibą. Ustaw repozytorium per domena w zakładce **Ustawienia, Poza siedzibą**. BombVault replikuje tam nowe migawki poleceniem `restic copy` w trybie best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Repozytorium lokalne pozostaje główne.
+Zachowaj szybką kopię lokalną i kopiuj ją do jednego lub więcej innych miejsc. Miejsca, do których kopiowana jest domena, wybierasz na karcie **Domeny** w **Ustawienia, Magazyn**, po jednym znaczniku na miejsce (zobacz [Miejsca przechowywania](storage-places.md#domains)). BombVault kopiuje tam nowe migawki poleceniem `restic copy` w trybie best-effort, więc nieudana kopia nigdy nie powoduje niepowodzenia kopii lokalnej. Miejsce, w którym domena jest przechowywana, nie musi być lokalne; zobacz [Domena przechowywana w miejscu zdalnym](#remote-primary-repositories).
 
-- **Wiele celów poza siedzibą na domenę.** Każda domena (kontenery, VM, flash, config i zestawy plików) może replikować do kilku celów poza siedzibą naraz, nie tylko jednego, więc możesz utrzymywać na przykład rest-server na maszynie znajomego oraz bucket S3 równolegle. Dodaj dodatkowe cele w Ustawienia, Poza siedzibą, każdy z własnym repozytorium, klasą pamięci S3, flagą append-only, przechowywaniem i budżetem wzrostu. Istniejąca pojedyncza konfiguracja poza siedzibą jest przenoszona nietknięta jako pierwszy cel, a każdy cel domeny replikuje zgodnie z harmonogramem poza siedzibą tej domeny.
-- **Harmonogram poza siedzibą per domena** (edytowany obok każdego innego harmonogramu w Ustawienia, Harmonogramy): pozostaw pusty, aby replikować po każdej kopii lokalnej, lub ustaw kadencję (na przykład `weekly Sun 03:00`), aby wysyłać poza siedzibę rzadziej, niż tworzysz kopie lokalne. Przycisk **Replikuj teraz** obsługuje uruchomienia na żądanie.
-- **Przechowywanie poza siedzibą** znajduje się w Ustawienia, Poza siedzibą, więc możesz trzymać kopie poza siedzibą dłużej jako archiwum. Pozostaw politykę całą na zero, aby nigdy nie przycinać automatycznie migawek poza siedzibą.
-- **Limity przepustowości** (Ustawienia, Poza siedzibą) ograniczają tempo wysyłania/pobierania restic, aby replikacja nie nasycała Twojego łącza WAN.
-- **Wskaźnik replikacji** pokazuje, która domena jest replikowana w trakcie działania (na jej stronie i na panelu). To wskaźnik aktywności, a nie pasek procentowy, ponieważ `restic copy` nie udostępnia postępu czytelnego maszynowo.
+- **Kilka miejsc kopii na domenę.** Domenę można kopiować do kilku miejsc naraz, na przykład do rest-servera u znajomego i do zasobnika B2. Przechowywanie, klasa pamięci, append-only, limity i budżet wzrostu należą do miejsca, więc każda kopia podlega zasadom miejsca, w którym ląduje.
+- **Harmonogram kopiowania per domena** (edytowany obok każdego innego harmonogramu w Ustawienia, Harmonogramy): pozostaw pusty, aby kopiować po każdej kopii lokalnej, lub ustaw kadencję (na przykład `weekly Sun 03:00`), aby kopiować rzadziej, niż tworzysz kopie. **Kopiuj teraz** w wierszu domeny uruchamia kopiowanie na żądanie.
+- **Przechowywanie per miejsce.** Każde miejsce ma własne zasady, więc miejsce poza siedzibą może trzymać kopie dłużej jako archiwum. Miejsce ze wszystkimi regułami na zero nigdy niczego nie przycina.
+- **Limity przepustowości** per miejsce ograniczają tempo wysyłania i pobierania restic, aby kopiowanie nie nasycało Twojego łącza WAN.
+- **Wskaźnik replikacji** pokazuje, która domena jest kopiowana w trakcie działania (na jej stronie i na panelu). To wskaźnik aktywności, a nie pasek procentowy, ponieważ `restic copy` nie udostępnia postępu czytelnego maszynowo.
 
 !!! note "Przywróć z dowolnego miejsca"
     Każdy kontener, VM, zestaw plików, flash i konfiguracja aplikacji wylistowują swoje kopie jako jedną oś czasu obejmującą wszystkie miejsca, w których leży kopia. Kopia skopiowana do B2 pojawia się raz, oznaczona każdym miejscem, które ją przechowuje. Przywracanie sięga po pierwsze osiągalne miejsce, zaczynając od repozytorium, do którego element jest zapisywany, a dla każdego wiersza możesz wybrać inne miejsce. Miejsca poza siedzibą są odczytywane dopiero, gdy je otworzysz. Usunięcie w jednym miejscu najpierw sprawdza pozostałe i mówi, czy była to ostatnia kopia.
@@ -21,53 +21,49 @@ Każda karta kontenera, VM i zestawu plików ma wiersz **Rozmieszczenie** z trze
 
 - **Lokalne** zapisuje element w repozytorium pokazanym pod **Zapisane na** i nigdzie go nie kopiuje. Użyj tego dla danych, które mają już drugą kopię, na przykład udziału, który leży na NAS.
 - **Lokalne + poza siedzibą** zapisuje go tam tak samo i kopiuje do celów zaznaczonych pod **Kopiuj do**, po jednym znaczniku na każdy cel poza siedzibą domeny. Odznacz znacznik, a ten cel nie dostanie od tego elementu nic nowego.
-- **Tylko poza siedzibą** zapisuje element wprost w miejscu pod **Wyślij do**: repozytorium bezpośrednim obok celu poza siedzibą albo zdalnym repozytorium skonfigurowanym w Ustawienia, Ścieżki i pamięć, Repozytoria.
+- **Tylko poza siedzibą** zapisuje element wprost w miejscu pod **Wyślij do**, dowolnym innym niż to, w którym przechowywana jest domena. Gdy domena jest już kopiowana do tego miejsca, element dostaje repozytorium bezpośrednie obok kopii; w przeciwnym razie BombVault tworzy tam repozytorium dla domeny.
 
 Lokalizacja jest ustalona od pierwszej kopii elementu, ponieważ BombVault nigdy nie przenosi kopii między repozytoriami. Kopie można zmieniać w dowolnym momencie. Cel, który przestaje otrzymywać element, zachowuje posiadane kopie i przycina je do własnego przechowywania przy następnym uruchomieniu poza siedzibą tej domeny; **Usuń w B2** na karcie usuwa je od razu. Gdy część tych kopii nie istnieje nigdzie indziej, potwierdzenie wylistowuje je według daty i prosi o nazwę elementu. Z celów tylko do dopisywania nie da się usuwać.
 
-Pod wierszem karta mówi, dokąd trafia element i co faktycznie tam jest: ile miejsc go przechowuje, kiedy każdy cel widziano ostatnio oraz czy spełnione jest 3-2-1. Miejscem jest serwer z danymi oryginalnymi, każdy cel poza siedzibą i każde repozytorium oznaczone **Poza obiektem**. BombVault sprawdza kopie i miejsca; nie sprawdza części „dwa nośniki” zasady 3-2-1.
+Pod wierszem karta mówi, dokąd trafia element i co faktycznie tam jest: w ilu lokalizacjach się znajduje, kiedy każdy cel widziano ostatnio oraz czy spełnione jest 3-2-1. Lokalizacją jest serwer z danymi oryginalnymi oraz każde miejsce w innej lokalizacji (zobacz [Poza obiektem](#off-the-premises-mark)). BombVault sprawdza kopie i lokalizacje; nie sprawdza części „dwa nośniki” zasady 3-2-1.
 
-### Domyślne rozmieszczenie
+### Wartości domyślne domeny
 
-Ustawienia, Ścieżki i pamięć, **Domyślne rozmieszczenie** ma jeden wiersz na domenę z tymi samymi trzema segmentami. Kopie stosują się od razu do każdego elementu bez własnego wyboru oraz do folderów projektu stosów Compose. Lokalizacja stosuje się do nowego elementu przy jego pierwszej kopii; jej zmiana nie przenosi żadnych kopii. Przed zapisem wiersz wymienia każdy cel, który zyskuje lub traci elementy, i ile to znaczy migawek. **Zastosuj do elementów bez kopii zapasowych** przywraca do domyślnego każdy element, który nie ma jeszcze kopii.
+Karta **Domeny** w Ustawienia, Magazyn ma jeden wiersz na domenę. **Kopiowane do** obowiązuje od razu dla każdego elementu bez własnego wyboru oraz dla folderów projektu stosów Compose. Gdy domena ma już kopie zapasowe, **Przechowywane w** obowiązuje dla nowego elementu od jego pierwszej kopii, a zmiana tego ustawienia nie przenosi żadnych kopii. Przed zapisem wiersz wymienia każde miejsce, które zyskuje lub traci elementy, i ile to znaczy migawek, a pytanie zawiera przełącznik **Zastosuj do elementów bez kopii zapasowych**, który dodatkowo ustawia nową wartość domyślną każdemu elementowi, który nie ma jeszcze kopii. **Wyjątki** wymieniają elementy z własnym wyborem.
 
-Nowy cel poza siedzibą otrzymuje każdy element, który nie jest ustawiony na Lokalne. Okno dialogowe, które go dodaje, mówi, ile to elementów i, gdzie to wiadome, ile historii to oznacza, oraz proponuje pominięcie elementów już wykluczonych z innych celów.
+Zaznaczenie nowego miejsca pod **Kopiowane do** sprawia, że otrzymuje ono każdy element, który nie jest ustawiony na Lokalne. Potwierdzenie mówi, ile to elementów i, gdzie to wiadome, ile historii to oznacza.
 
 ### Repozytoria bezpośrednie
 
-Wybranie repozytorium bezpośredniego celu pod Tylko poza siedzibą otwiera okno dialogowe z proponowaną lokalizacją obok celu, na przykład `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, oraz testem połączenia, który niczego nie tworzy. **Utwórz i użyj** tworzy repozytorium i kieruje na nie element. Repozytorium bezpośrednie przejmuje klucz celu, klasę pamięci, limity, ustawienie append-only i przechowywanie, i zmienia się razem z nimi; karta Repozytoria pokazuje je jako tylko do odczytu. Gdy nowy klucz celu nie może go otworzyć, repozytorium bezpośrednie zachowuje klucz, który ma, a zapis o tym informuje. Jego migawki niosą tag `bv:direct`, a każde inne przejście przechowywania je zachowuje, więc repozytorium bezpośrednie, które straciło łączność ze swoim celem, nigdy nie starzeje się według reguł lokalnych. Do B2 uzyskuje się dostęp przez jego punkt końcowy S3, podając identyfikator klucza i klucz aplikacji jako dane uwierzytelniające S3; klucz ograniczony do własnego katalogu celu nie sięga do katalogu obok niego, więc ogranicz klucz zamiast tego do katalogu nad celem.
+Wybranie pod Tylko poza siedzibą miejsca, do którego domena jest już kopiowana, raz pyta o zgodę, a potem tworzy repozytorium bezpośrednie obok kopii, na przykład `s3:https://s3.eu-central-003.backblazeb2.com/bucket/container-direct`, i kieruje na nie element. Dla celu kopii bez miejsca wybór otwiera okno dialogowe z proponowanym adresem i testem połączenia, który niczego nie tworzy, a **Utwórz i użyj** tworzy repozytorium. Repozytorium bezpośrednie przejmuje klucz miejsca, klasę pamięci, limity, ustawienie append-only i przechowywanie, i zmienia się razem z nimi. Gdy nowy klucz miejsca nie może go otworzyć, repozytorium bezpośrednie zachowuje klucz, który ma, a zapis o tym informuje. Jego migawki niosą tag `bv:direct`, a każde inne przejście przechowywania je zachowuje, więc repozytorium bezpośrednie, które straciło powiązanie ze swoim miejscem, nigdy nie starzeje się według reguł lokalnych. Klucz B2 ograniczony do jednego folderu musi obejmować adres miejsca, a nie tylko folder domeny, inaczej folder obok pozostaje poza zasięgiem.
 
-### Poza obiektem
+### Poza obiektem {#off-the-premises-mark}
 
-Nazwane repozytorium można oznaczyć jako **Poza obiektem** na karcie Repozytoria. Repozytoria zdalne zaczynają oznaczone; wyłącz to dla rest-servera w tym samym budynku. Oznaczenie liczy się tylko do miejsc i 3-2-1 na kartach. Nie zmienia żadnej kopii.
+Kopia liczy się jako osobna lokalizacja tylko wtedy, gdy jej miejsce znajduje się w innej lokalizacji. Miejsce w chmurze liczy się zawsze, a folder na tym serwerze Unraid nigdy; dla NAS, rest-servera lub serwera SFTP odpowiedz w szczegółach miejsca na pytanie **Gdzie stoi urządzenie?**, wybierając **Tutaj, w tym budynku** albo **W innej lokalizacji**. Odpowiedź liczy się tylko do lokalizacji i 3-2-1 na kartach i na panelu. Nie zmienia żadnej kopii.
 
 ### Po odbudowie
 
-Wybory kopiowania żyją we własnych ustawieniach BombVault. Po odbudowie przez Odkryj bez przywróconego `/config` znikają, a skopiowanie wszystkiego wysłałoby ponownie do B2 elementy, które pominąłeś. Replikacja poza siedzibą każdej odbudowanej domeny dlatego wstrzymuje się. Panel pokazuje to na bursztynowo, a Domyślne rozmieszczenie oferuje **Potwierdź domyślne** z podglądem tego, co skopiuje następne uruchomienie, oraz nazwami w kopiach, które nie mają wpisu, a które możesz tam pominąć. Tylko potwierdzenie kończy wstrzymanie; import pliku ustawień przywraca reguły i wartości domyślne, ale go nie kończy.
+Wybory kopiowania żyją we własnych ustawieniach BombVault. Po odbudowie przez Odkryj bez przywróconego `/config` znikają, a skopiowanie wszystkiego wysłałoby ponownie do B2 elementy, które pominąłeś. Replikacja poza siedzibą każdej odbudowanej domeny dlatego wstrzymuje się. Panel pokazuje to na bursztynowo, a wiersz domeny na karcie Domeny oferuje **Potwierdź domyślne** z podglądem tego, co skopiuje następne uruchomienie, oraz nazwami w kopiach, które nie mają wpisu, a które możesz tam pominąć. Tylko potwierdzenie kończy wstrzymanie; import pliku ustawień przywraca reguły i wartości domyślne, ale go nie kończy.
 
-## Zdalne repozytoria podstawowe {#remote-primary-repositories}
+## Domena przechowywana w miejscu zdalnym {#remote-primary-repositories}
 
-Ścieżka kopii domeny (Ustawienia, Ścieżki i magazyn) nie ogranicza się do lokalnego katalogu: skieruj ją wprost na zdalne repozytorium restica (`s3:...`, `rest:http://host:8000/repo`, `sftp:użytkownik@host:/repo`, `rclone:remote:bucket/ścieżka`), a BombVault będzie archiwizował prosto tam, bez osobnej kopii lokalnej i bez kroku replikacji. To naprawdę inny układ niż replikacja poza siedzibę powyżej: tam repozytorium lokalne jest podstawowe, a zewnętrzne jest jego archiwum w miarę możliwości; tutaj repozytorium zdalne **jest** podstawowe i jest jedyną kopią, dopóki nie skonfigurujesz dla tej domeny również replikacji poza siedzibę (albo drugiego repozytorium zdalnego).
+Domena nie musi być przechowywana lokalnie. Dopóki w lokalizacji kopii zapasowych domeny nie ma żadnych kopii, wybierz miejsce zdalne pod **Przechowywane w** na karcie Domeny, a domena będzie tworzyć kopie zapasowe prosto tam, bez kopii lokalnej i bez kroku kopiowania. Repozytorium zdalne jest wtedy jedyną kopią, chyba że domena jest też kopiowana do innego miejsca. Każde miejsce zdalne ma te same zabezpieczenia:
 
-Każde z pięciu pól ścieżki (Kontenery, Maszyny wirtualne, Flash, Konfiguracja, Pliki) ma tuż obok przełącznik **Lokalne / Zdalne**:
+- **Test połączenia**, zanim cokolwiek zostanie zapisane.
+- **Limity przepustowości** dla samej kopii zapasowej: te same flagi `--limit-upload` i `--limit-download`, których używa kopiowanie.
+- **Ochrona append-only**, sprawdzana tym samym aktywnym tamper testem. Gdy jest włączona, BombVault nigdy nie przycina repozytorium, ponieważ poświadczenia na tej maszynie nie mogą być w stanie usunąć jedynej kopii zapasowej.
+- **Budżet wzrostu**, wyliczany z tego samego trendu rozmiaru, który śledzi karta Magazyn.
 
-- **Lokalne** pokazuje znaną przeglądarkę katalogów.
-- **Zdalne** zamienia ją na zwykłe pole URL oraz przycisk otwierający to samo okno testu połączenia i danych logowania, którego używają cele poza siedzibą, tyle że skonfigurowane dla tego repozytorium podstawowego. Dostajesz stamtąd:
-    - **Test połączenia** z rzeczywistą ścieżką, zanim na niej polegniesz.
-    - **Ograniczenia pasma** (wysyłanie i pobieranie), żeby zaplanowana kopia do zdalnego repozytorium podstawowego nie zapchała łącza WAN: te same przełączniki restica `--limit-upload` i `--limit-download`, których używa replikacja poza siedzibę, zastosowane do samej kopii.
-    - **Ochronę append-only (niezmienność)**, sprawdzaną tym samym aktywnym testem manipulacji (prawdziwa próba DELETE po drugiej stronie), który dostają cele poza siedzibą. Gdy jest włączona, BombVault odmawia przycinania repozytorium: skoro nie stoi za nim osobna kopia lokalna, dane logowania na tej maszynie nie mogą być w stanie usunąć jedynej kopii zapasowej.
-    - **Alarm budżetu wzrostu**, wyliczany z tego samego trendu rozmiaru repozytorium, który karta Magazyn i tak już śledzi.
+Domena przechowywana w miejscu zdalnym jest źródłem swoich kopii tak samo jak lokalna; zobacz [Kopie między miejscami z różnymi poświadczeniami](storage-places.md#different-credentials).
 
-Nic z tego nie jest obowiązkowe: wpisana ręcznie ścieżka zdalna bez zapisanych ustawień bezpieczeństwa archiwizuje dokładnie tak jak dotąd (nieograniczone pasmo, możliwe przycinanie, brak alarmu budżetu). Okno bezpieczeństwa jest na wypadek, gdy chcesz te same zabezpieczenia, jakie dostaje kopia poza siedzibą, bez zakładania osobnego celu zewnętrznego tylko po to.
-
-!!! note "Dane logowania do chmury i REST są wspólne"
-    Zdalne repozytorium podstawowe uwierzytelnia się tymi samymi danymi S3/REST, które są ustawione w Ustawienia, Poza siedzibą, Dane logowania do chmury. Osobnego magazynu danych logowania dla repozytoriów podstawowych nie ma.
+!!! note "Poświadczenia należą do miejsca"
+    Miejsce zdalne ma własne poświadczenia. Miejsce skonfigurowane ze wspólnymi poświadczeniami chmury używa ich dalej, dopóki jego dostęp nie zostanie zmieniony w szczegółach miejsca.
 
 ## Niezmienna (append-only) kopia poza siedzibą
 
 Oznacz repozytorium poza siedzibą jako append-only, aby ransomware lub skompromitowany host nie mogły usunąć ani nadpisać Twoich kopii. Druga strona (`restic/rest-server` działający w trybie `--append-only`) **wymusza** to. BombVault jedynie to **weryfikuje** i nigdy nie pokazuje zielonego na podstawie samej deklaracji konfiguracji.
 
-Kreator **konfiguracji poza siedzibą z przewodnikiem** prowadzi Cię od wyboru backendu (rest-server / rclone / S3) przez gotowy do wklejenia fragment wdrożenia rest-server, test połączenia, przełącznik niezmienności (który natychmiast uruchamia tamper test) i strategię przechowywania, więc kopia poza siedzibą w trybie append-only jest osiągalna bez ręcznej edycji konfiguracji.
+Okno **Dodaj miejsce** zawiera gotowy do wklejenia przepis na rest-server w trybie append-only, z jednym użytkownikiem dla tego BombVault. W miejscu typu rest-server z włączonym **Append-only** przycisk **Sprawdź append-only** w szczegółach miejsca uruchamia tamper test dla każdej domeny, którą miejsce przechowuje lub kopiuje, więc kopia poza siedzibą w trybie append-only jest osiągalna bez ręcznej edycji konfiguracji.
 
 !!! note "Udane usunięcie w `/locks/` jest oczekiwane"
     Append-only nie oznacza, że nic już nie da się usunąć. restic musi zakładać i zwalniać własne blokady, więc `/locks/` celowo pozostaje zapisywalny i usuwalny. Migawki i stojące za nimi dane, czyli dokładnie to, na co celowałoby ransomware, nie dają się usunąć. Jeśli sam sprawdzisz zdalną stronę, udane usunięcie w `/locks/` jest poprawnym zachowaniem, a nie luką.
@@ -118,28 +114,28 @@ Powyżej opisano części. To jest jedna kompletna konfiguracja z prawdziwymi wa
 
 Dwie maszyny: **TOWER** uruchamia kontenery i wysyła kopie, **VAULT** je przyjmuje i wymusza niezmienność. Podstaw własne nazwy, adresy i ścieżki udziałów.
 
-**1. Na VAULT postaw serwer append-only.** W BombVault na TOWER przejdź do *Ustawienia → Poza siedzibą → kreator*, wybierz **rest-server** i wygeneruj przepis. Skopiuj zakładkę **Szablon Unraid (XML)**, zapisz ją na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, następnie *Docker → Add Container* i wybierz **rest-server** z listy szablonów. Przed uruchomieniem wpisz pokazaną linię `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorazowe hasło pokazywane jest raz i nigdy nie jest zapisywane: skopiuj je teraz. Ta linia niesie to samo hasło, już zahaszowane bcryptem: jawny tekst trafia do danych REST na TOWER, zahaszowana linia do `.htpasswd` na VAULT. Sam nie musisz niczego haszować.
+**1. Na VAULT postaw serwer append-only.** W BombVault na TOWER otwórz *Ustawienia → Magazyn*, kliknij **Dodaj miejsce**, wybierz **rest-server** i kliknij **Pokaż przepis**. Skopiuj blok **Szablon Unraid**, zapisz go na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, następnie *Docker → Add Container* i wybierz **rest-server** z listy szablonów. Przed uruchomieniem wpisz pokazaną linię `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Hasło jest pokazywane raz i nigdy nie jest zapisywane; przepis wpisał już je i użytkownika do formularza na TOWER, więc nie zamykaj tego okna. Linia `htpasswd` niesie to samo hasło, już zahaszowane bcryptem, więc sam nie musisz niczego haszować.
 
-    Zostaw `--append-only` w polu OPTIONS. O to właśnie chodzi: bez tego VAULT znów jest zwykłym udziałem.
+    Zostaw `--append-only` w polu OPTIONS. Bez tego VAULT jest znów zwykłym udziałem.
 
-**2. Na TOWER skieruj repozytorium zdalne na niego.** Adres repozytorium ma wzorzec, który wypisuje przepis:
+**2. Na TOWER dodaj miejsce.** Wpisz adres VAULT, `http://VAULT:8000`, obok użytkownika i hasła, które wypełnił przepis, a potem kliknij **Testuj połączenie**. BombVault buduje z nich adres:
 
-    rest:http://VAULT:8000/bombvault-containers/containers
+    rest:http://VAULT:8000/tower
 
-Pierwszy segment ścieżki to użytkownik htpasswd, drugi to repozytorium. Wpisz wygenerowanego użytkownika i hasło jako dane REST celu, a potem uruchom **test połączenia**.
+Pierwszy segment ścieżki to użytkownik htpasswd, tutaj `tower`, a każda domena dostaje pod nim swój folder, na przykład `rest:http://VAULT:8000/tower/container`. Na pytanie **Gdzie stoi urządzenie?** odpowiedz **W innej lokalizacji**, kliknij **Dodaj** i zaznacz miejsce pod **Kopiowane do** dla domen, które mają tam trafiać.
 
-**3. Na TOWER włącz «Niezmienne».** Test naruszenia uruchamia się od razu i musi zgłosić *chronione*. Co znaczą odpowiedzi:
+**3. Na TOWER włącz Append-only** w sekcji **Ochrona** w szczegółach miejsca, a potem kliknij **Sprawdź append-only**. Test uruchamia się dla każdej domeny, którą miejsce przechowuje lub kopiuje, i każda musi zgłosić *usuwanie odrzucane*. Co znaczą odpowiedzi:
 
 | Wynik | Co się stało |
 | --- | --- |
-| **chronione** | VAULT odmówił usunięcia. To jedyny stan zaliczony. |
-| **NIE chronione** | VAULT przyjął usunięcie. Brakuje `--append-only` albo je usunięto. |
-| **nierozstrzygnięte** | Ani jedno, ani drugie. Zwykle adres nie jest tym, którego używa sam restic, albo zmieniły się dane logowania. Nic nie jest zapisywane i nie uruchamia się alarm. |
+| **usuwanie odrzucane** | VAULT odmówił usunięcia. To jedyny stan zaliczony. |
+| **usuwanie dozwolone** | VAULT przyjął usunięcie. Brakuje `--append-only` albo je usunięto. |
+| komunikat zamiast wyniku | Test nie mógł się wykonać. Zwykle adres nie jest tym, którego używa sam restic, albo zmieniły się dane logowania. Nic nie jest zapisywane i nie uruchamia się alarm. |
 
 **4. Na VAULT patrz, co przychodzi.** Włącz *Ustawienia → Odbiornik*, otwórz zakładkę **Odbiornik** i zarejestruj repozytorium tylko do odczytu.
 
 !!! warning "Lokalizacja to ścieżka **wewnątrz** kontenera, zapisana względem montowania hosta"
-    Wpisz `user/appdata/rest-server/bombvault-containers/containers`, a **nie** `/mnt/user/appdata/…`. BombVault działa w kontenerze, w którym `/mnt` hosta jest zamontowane gdzie indziej; bezwzględna ścieżka hosta tam nie istnieje. Jeśli ją wkleisz, BombVault poda ci teraz ścieżkę względną, której należy użyć.
+    Wpisz `user/appdata/rest-server/tower/container`, a **nie** `/mnt/user/appdata/…`. BombVault działa w kontenerze, w którym `/mnt` hosta jest zamontowane gdzie indziej; bezwzględna ścieżka hosta tam nie istnieje. Jeśli ją wkleisz, BombVault poda ci ścieżkę względną, której należy użyć.
 
     **Wysyłający APP_KEY** to klucz TOWER, a nie VAULT. Znajdziesz go na TOWER w *Ustawienia → System*.
 
@@ -151,7 +147,7 @@ Dedykowana zakładka **Odzyskiwanie** prowadzi świeżą lub odbudowaną instala
 
 1. **Najpierw przywraca własne ustawienia BombVault**, więc ścieżki kopii, cele poza siedzibą i poświadczenia, których potrzebuje reszta przepływu, są wstępnie wypełnione (stosowane przez samodzielny restart przez gniazdo Docker, więc działająca baza ustawień nigdy nie jest nadpisywana pod otwartym uchwytem).
 2. **Sprawdza, czy BombVault może odczytać Twoje kopie** (pułapka klucza szyfrowania od razu na wstępie).
-3. Pozwala Ci **wskazać istniejące repozytorium** (lokalne lub poza siedzibą).
+3. Pozwala Ci **wskazać istniejące repozytorium**: lokalny folder albo miejsce zdalne podłączone przez to samo okno **Dodaj miejsce** co w Ustawienia, Magazyn.
 4. **Odkrywa** kontenery, VM i zestawy plików w nim przechowywane.
 5. **Przywraca je wszystkie** (pozostawiając zatrzymanymi, więc uruchamiasz je świadomie), z Twoim zestawem odzyskiwania o jedno kliknięcie stąd.
 

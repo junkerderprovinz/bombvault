@@ -30,9 +30,10 @@ import { IconTipButton } from "./IconTipButton";
 
 export type BadgeTone = "ok" | "fail" | "warn" | "active" | "neutral" | "heading" | "muted";
 export type BadgeSize = "small" | "medium" | "large" | "heading" | "icon";
-// `square` resolves to the same radius as `rounded` and exists so an icon
-// tile reads as one at the call site. `circle` is a pill locked to a 1:1
-// aspect. The pill radius is a length, not `50%`, because a percentage radius
+// All four read --radius-pill, since a badge is pressed or read at a glance and
+// in round that makes it a true pill or circle. The names say what the caller
+// means and set the aspect: `square` is an icon tile, `circle` a pill locked
+// to 1:1. The pill radius is a length, not `50%`, because a percentage radius
 // resolves per axis into an ellipse.
 export type BadgeShape = "pill" | "rounded" | "square" | "circle";
 
@@ -70,8 +71,8 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
 
 const RADIUS_CLASSES: Record<BadgeShape, string> = {
   pill: "rounded-pill",
-  square: "rounded-control",
-  rounded: "rounded-control",
+  square: "rounded-pill",
+  rounded: "rounded-pill",
   circle: "rounded-pill",
 };
 

@@ -98,15 +98,13 @@ export function SpikePanel({ t, hueIndex }: SpikePanelProps) {
           {checks.map((c) => (
             <div
               key={c.Name}
-              className="grid grid-cols-[8rem_5rem_1fr_5rem] gap-x-3 items-center px-3 py-2.5 border-t border-carbon-border text-sm"
+              className="grid grid-cols-[8rem_5rem_1fr_5rem] gap-x-3 items-center px-3 py-2.5 text-sm"
             >
               <span className="font-mono text-carbon-text text-xs">{c.Name}</span>
               <StatusChip ok={c.OK} bestEffort={c.BestEffort} t={t} />
-              <span className="text-carbon-textMuted text-xs wrap-break-word">
-                {c.Detail || "—"}
-              </span>
+              <span className="text-carbon-textMuted text-xs wrap-break-word">{c.Detail}</span>
               <span className="text-end text-xs text-carbon-textMuted">
-                {c.BestEffort ? "optional" : "required"}
+                {c.BestEffort ? t("spike.bestEffort") : t("spike.required")}
               </span>
             </div>
           ))}

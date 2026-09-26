@@ -106,7 +106,7 @@ export function UnraidTileSection({
   }
 
   return (
-    <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
+    <div className="flex flex-col gap-3">
       <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
         {t("settings.dashTile")}
         <InfoBubble tip={t("settings.dashTileHint")} />
@@ -128,7 +128,7 @@ export function UnraidTileSection({
               labelKey="common.copy"
               tone="accent"
               onClick={() => void handleCopyUrl()}
-              className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? " glim-hue" : ""}`}
+              className={`shrink-0 rounded-pill bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? " glim-hue" : ""}`}
             />
           </div>
           <p className="text-xs text-carbon-textMuted">{t("settings.dashTileCa")}</p>
@@ -215,7 +215,7 @@ export function UnraidTileSection({
               setStatus({ kind: "loading" });
               refresh();
             }}
-            className={`self-start rounded-control px-3 py-2 text-xs text-carbon-text${hueOn ? " glim-hue" : ""}`}
+            className={`self-start rounded-pill px-3 py-2 text-xs text-carbon-text${hueOn ? " glim-hue" : ""}`}
           />
         </div>
       )}
@@ -327,7 +327,7 @@ export function DashboardWidgetCard({
               tone="neutral"
               onClick={() => void handleGenerate()}
               disabled={busy}
-              className={`shrink-0 rounded-control px-3 py-2 text-xs text-carbon-text disabled:opacity-50${
+              className={`shrink-0 rounded-pill px-3 py-2 text-xs text-carbon-text disabled:opacity-50${
                 shake.generate ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
             />
@@ -337,7 +337,7 @@ export function DashboardWidgetCard({
               tone="neutral"
               onClick={() => void handleDisable()}
               disabled={busy}
-              className={`shrink-0 rounded-control px-3 py-2 text-xs text-carbon-text disabled:opacity-50${
+              className={`shrink-0 rounded-pill px-3 py-2 text-xs text-carbon-text disabled:opacity-50${
                 shake.disable ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
             />
@@ -350,7 +350,7 @@ export function DashboardWidgetCard({
           tone="accent"
           onClick={() => void handleGenerate()}
           disabled={busy}
-          className={`self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+          className={`self-start rounded-pill bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
             shake.generate ? " glim-shake" : ""
           }${hueOn ? " glim-hue" : ""}`}
         />
@@ -373,7 +373,7 @@ export function DashboardWidgetCard({
               <IconTipButton
                 onClick={() => void handleCopy()}
                 tip={t("common.copy")}
-                className={`shrink-0 inline-flex items-center justify-center rounded-control bg-accent h-8 w-8 text-accentContrast hover:opacity-90 transition-opacity${hueOn ? " glim-hue" : ""}`}
+                className={`shrink-0 inline-flex items-center justify-center rounded-pill bg-accent h-8 w-8 text-accentContrast hover:opacity-90 transition-opacity${hueOn ? " glim-hue" : ""}`}
                 style={hueStyle}
               >
                 <IconCopy />

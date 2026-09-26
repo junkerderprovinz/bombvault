@@ -33,7 +33,7 @@ Isto é geralmente um bloqueio restic órfão deixado para trás quando o contai
 
 ## A minha cópia externa não aconteceu após um backup
 
-A replicação externa é de melhor esforço por conceção, por isso um percalço externo nunca faz o backup local falhar. Verifique o agendamento externo para esse domínio (Definições, Agendamentos): um agendamento em branco replica após cada backup local, enquanto uma cadência envia com menos frequência. Use **Replicar agora** no separador Externo para uma execução a pedido, e observe o indicador de replicação no Painel.
+A replicação externa é de melhor esforço por conceção, por isso um percalço externo nunca faz o backup local falhar. Verifique o agendamento externo para esse domínio (Definições, Agendamentos): um agendamento em branco replica após cada backup local, enquanto uma cadência envia com menos frequência. Use **Copiar agora** na linha do domínio em Definições, Armazenamento para uma execução a pedido, e observe o indicador de replicação no Painel.
 
 ## Um restauro abortou antes de começar
 

@@ -1,7 +1,6 @@
 import type { SelectorItem } from "../components/Selector";
 import {
   PLACEMENT_DOMAINS,
-  type DefaultChange,
   type DefaultRow,
   type HomeKind,
   type HomeOption,
@@ -54,6 +53,8 @@ export function formatList(lang: string, names: string[]): string {
 }
 
 export function homeOptionLabel(t: T, host: string, h: HomeOption): string {
+  // A place goes by its own name; an address without one says what it is.
+  if (h.placeId) return h.name;
   switch (h.kind) {
     case "domain":
       return withLtrIsolates(
@@ -67,7 +68,14 @@ export function homeOptionLabel(t: T, host: string, h: HomeOption): string {
   }
 }
 
+/** homeKey tells a place whose repository is still to be made apart from the
+ *  domain path, since both have the id "", so Stored on offers each. */
+export function homeKey(h: HomeOption): string {
+  return h.id || (h.kind === "local" && h.placeId ? `place:${h.placeId}` : "");
+}
+
 export function sendToLabel(t: T, s: SendToOption): string {
+  if (s.placeId) return s.name;
   if (s.kind === "remote") return t("placement.homeRemote").replace("{name}", () => s.name);
   const label = t("placement.homeDirect").replace("{target}", () => s.name);
   return s.repoId ? label : `${label} · ${t("placement.directNotYet")}`;
@@ -93,13 +101,6 @@ export function viewHomeLabel(t: T, host: string, view: PlacementView, options: 
   if (view.repoOff) return t("placement.off").replace("{name}", () => name);
   if (view.repoKind === "direct") return name;
   return t("placement.unknown").replace("{name}", () => name);
-}
-
-/** The bracketed "off" word alone, the same one viewHomeLabel and TargetChips
- *  append to a switched-off target's name, for a badge that carries only that
- *  word next to the name rather than folded into it. */
-export function offQualifier(t: T): string {
-  return t("placement.off").replace("{name}", () => "").trim();
 }
 
 const LOCK_KEYS: Record<SegmentLockReason, TranslationKey> = {
@@ -173,9 +174,21 @@ export function draftView(options: PlacementOptions): PlacementView {
   return { ...defaultView(options.default, options), homeFollows: true, copiesFollow: true, paused: false };
 }
 
+/** PlaceStep is a choice of a place whose repository is made once the question
+ *  is answered; placeSave is what it writes then. */
+export type PlaceStep = {
+  kind: "place";
+  placeId: string;
+  confirmHome: string;
+  name: string;
+  repoKind: HomeKind;
+  offsiteOnly: boolean;
+};
+
 export type PlacementStep =
   | { kind: "save"; change: PlacementChange; confirmHome: string | null; optimistic: Partial<PlacementView> }
   | { kind: "direct"; target: SendToOption }
+  | PlaceStep
   | { kind: "none" };
 
 const NONE: PlacementStep = { kind: "none" };
@@ -200,6 +213,20 @@ function homeBack(view: PlacementView, options: PlacementOptions, t: T, host: st
   };
 }
 
+function sendToPlace(s: SendToOption, t: T, offsiteOnly: boolean): PlaceStep {
+  return { kind: "place", placeId: s.placeId, confirmHome: sendToLabel(t, s), name: s.name, repoKind: s.kind, offsiteOnly };
+}
+
+export function placeSave(step: PlaceStep, repoId: string): { change: PlacementChange; optimistic: Partial<PlacementView> } {
+  const home = { repo: repoId };
+  const optimistic: Partial<PlacementView> = { repo: repoId, repoKind: step.repoKind, repoLabel: step.name, homeFollows: false };
+  if (!step.offsiteOnly) return { change: { home }, optimistic };
+  return {
+    change: { home, copies: { skip: [ALL] } },
+    optimistic: { ...optimistic, segment: "offsite-only", skip: [ALL], copiesFollow: false },
+  };
+}
+
 export function stepForSegment(seg: SegmentId, view: PlacementView, options: PlacementOptions, t: T, host: string): PlacementStep {
   if (seg === view.segment) return NONE;
   if (seg === "offsite-only") {
@@ -207,6 +234,7 @@ export function stepForSegment(seg: SegmentId, view: PlacementView, options: Pla
     // come from a list that emptied after it was drawn.
     const first = options.sendTo[0];
     if (!first) return NONE;
+    if (!first.repoId && first.placeId) return sendToPlace(first, t, true);
     if (!first.repoId) return { kind: "direct", target: first };
     return {
       kind: "save",
@@ -235,7 +263,11 @@ export function stepForSegment(seg: SegmentId, view: PlacementView, options: Pla
 
 export function stepForHome(repoId: string, view: PlacementView, options: PlacementOptions, t: T, host: string): PlacementStep {
   if (repoId === view.repo && !view.homeFollows) return NONE;
-  const home = options.homes.find((h) => h.id === repoId);
+  const home = options.homes.find((h) => homeKey(h) === repoId);
+  if (home && !home.id && home.placeId) {
+    const label = homeOptionLabel(t, host, home);
+    return { kind: "place", placeId: home.placeId, confirmHome: label, name: home.name, repoKind: "local", offsiteOnly: false };
+  }
   return {
     kind: "save",
     change: { home: { repo: repoId } },
@@ -245,6 +277,7 @@ export function stepForHome(repoId: string, view: PlacementView, options: Placem
 }
 
 export function stepForSendTo(opt: SendToOption, view: PlacementView, t: T): PlacementStep {
+  if (!opt.repoId && opt.placeId) return sendToPlace(opt, t, false);
   if (!opt.repoId) return { kind: "direct", target: opt };
   if (opt.repoId === view.repo && !view.homeFollows) return NONE;
   return {
@@ -303,22 +336,6 @@ export function followLine(view: PlacementView): FollowLine {
   if (view.homeFollows) return view.copiesFollow ? "follows" : "own-copies";
   if (!view.locked) return "home-set";
   return view.copiesFollow ? "copies-follow" : "own-copies";
-}
-
-export type DefaultStep = { kind: "change"; change: DefaultChange } | { kind: "direct"; target: SendToOption } | { kind: "none" };
-
-/** stepForDefaultSegment changes a default. Off-site only moves only its home;
- *  the copies it gives items on a copy source stay as they are. */
-export function stepForDefaultSegment(seg: SegmentId, row: DefaultRow, options: PlacementOptions): DefaultStep {
-  if (seg === defaultSegment(row, options)) return { kind: "none" };
-  if (seg === "offsite-only") {
-    const first = options.sendTo[0];
-    if (!first) return { kind: "none" };
-    return first.repoId ? { kind: "change", change: { home: first.repoId } } : { kind: "direct", target: first };
-  }
-  const change: DefaultChange = { skip: seg === "local" ? [ALL] : [] };
-  if (!copySource(row.homeKind)) change.home = "";
-  return { kind: "change", change };
 }
 
 export interface StatusLine {

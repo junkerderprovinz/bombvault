@@ -108,8 +108,8 @@ interface SelectorCommon {
  *
  * The palette has eight colours and the tree twelve selectors, so some starts
  * are shared, always between selectors on different tabs: `drillKind`
- * (Integrity) and the placement rows (Paths & Storage) reuse starts of the
- * Appearance tab.
+ * (Integrity) and the domain rows (Storage) reuse starts of the Appearance
+ * tab.
  */
 export const HUE_OFFSET = {
   tabs: 0,
@@ -121,8 +121,11 @@ export const HUE_OFFSET = {
   theme: 6,
   notifyOn: 7,
   drillKind: 1,
-  /** The three placement default rows, +3 per row: 1, 4 and 7. */
+  /** The chips of the domain rows on the Storage tab, +3 per row. */
   placement: 1,
+  /** A place's "Where is the device?" on the Storage tab, a start no other
+   *  selector there takes. */
+  placeWhere: 3,
 } as const;
 
 export type SelectorProps =
@@ -269,8 +272,8 @@ function SelectorTab({
 
   const nameHidden = !!item.iconOnly || (hidesLabel(labelMode) && !!item.icon);
   // Reactive mode brings the label back on hover. Not for `iconOnly`: that
-  // segment sits in a strip with no room for words (PathModeSwitch in a path
-  // row), and a label mode must not override the call site.
+  // segment sits in a strip with no room for words, and a label mode must not
+  // override the call site.
   const reactive = labelMode === "reactive" && !!item.icon && !item.iconOnly;
 
   // A `tip` is written as the fuller version of the label, so it stands in for
@@ -503,7 +506,7 @@ export function Selector(props: SelectorProps) {
       className={[
         "flex items-center",
         well
-          ? "w-fit max-w-full flex-wrap gap-[0.2rem] rounded-control bg-carbon-surface3 p-[0.2rem]"
+          ? "w-fit max-w-full flex-wrap gap-[0.2rem] rounded-pill bg-carbon-surface3 p-[0.2rem]"
           : "flex-wrap gap-1",
         className,
       ]
@@ -518,8 +521,8 @@ export function Selector(props: SelectorProps) {
           // Well segments are rounded too, so the selected pill follows the
           // shape setting along with the groove.
           well
-            ? "rounded-control [transition:background-color_120ms_ease]"
-            : "rounded-control transition-colors",
+            ? "rounded-pill [transition:background-color_120ms_ease]"
+            : "rounded-pill transition-colors",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           // An iconOnly segment is all glyph, and on an icon-only badge only
           // the fill takes the colour (design-language.md), so it skips the

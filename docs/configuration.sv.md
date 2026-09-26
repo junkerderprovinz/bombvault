@@ -1,6 +1,6 @@
 # Konfiguration
 
-Den här sidan täcker containerns miljövariabler, monteringarna som mallen tillhandahåller, VM-säkerhetskopiering över SSH och off-site-uppsättningen. Säkerhetskopieringens **repository-sökvägar** konfigureras inuti appen (Inställningar, Säkerhetskopiesökvägar), inte via miljövariabler.
+Den här sidan täcker containerns miljövariabler, monteringarna som mallen tillhandahåller, VM-säkerhetskopiering över SSH och off-site-uppsättningen. Var säkerhetskopiorna hamnar ställer du in inuti appen, under **Inställningar, Lagring**, inte via miljövariabler.
 
 ## Miljövariabler
 
@@ -26,7 +26,7 @@ Den här sidan täcker containerns miljövariabler, monteringarna som mallen til
 
 Montera Docker-socketen, flashen (`/boot`) och **Host Data**-roten (`/mnt`) som visas i CA-mallen. Både säkerhetskopieringens *källor* och *mål* ligger under Host Data, och den monteras **slave** så att en fjärresurs som monteras efter att containern startat (till exempel under `/mnt/remotes`) blir synlig utan en omstart.
 
-Säkerhetskopieringens repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files}`, skapade vid den första säkerhetskopieringen. Ändra platsen när som helst i **Inställningar, Säkerhetskopiesökvägar**.
+En ny installation sparar varje domän på lagringsplatsen **Unraid**, under `/mnt/user/bombvault` med en mapp per domän (`container`, `vms`, `flash`, `config`, `files`), som skapas vid den första säkerhetskopieringen. Fler lagringsplatser, lokala eller fjärranslutna, lägger du till under **Inställningar, Lagring**; se [Lagringsplatser](storage-places.md).
 
 !!! note "Värdintegrationskontroll"
     Öppna `/spike` i webbgränssnittet efter att containern startat. Den sonderar varje montering och CLI (Docker-socket, libvirt, restic, qemu-img, rclone) och rapporterar eventuella saknade delar.
@@ -71,20 +71,20 @@ Mallen lägger till `--add-host=host.docker.internal:host-gateway` så att conta
 
 ## Off-site-uppsättning
 
-Sätt upp en off-site-replik på fliken **Inställningar, Off-site**. Se [Off-site och återställning](offsite-recovery.md) för hela arbetsflödet (oföränderligt/append-only, manipulationstest och DR-övningar). I korthet:
+Off-site-kopior går till lagringsplatser. Lägg till lagringsplatsen under **Inställningar, Lagring** med **Lägg till lagringsplats**, och kryssa sedan i den under **Kopierad till** på domänens rad. [Lagringsplatser](storage-places.md) täcker alla anslutningstyper, och [Off-site och återställning](offsite-recovery.md) täcker append-only, manipulationstest och DR-övningar. I korthet:
 
-- **Backender:** SMB/CIFS och NFS (montera resursen och peka en säkerhetskopiesökväg mot den), native restic-backender utan rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), eller valfri rclone-fjärr (`rclone:<remote>:<bucket>/path`).
-- **Molnuppgifter** lagras krypterade under Inställningar, Off-site, Molnuppgifter.
-- **SSH-mål kräver inget installerat på den bortre sidan.** `sftp:` behöver bara en SSH-server. Lägg till den publika nyckeln från **Inställningar, System, VM Backup over SSH** (även på `/config/ssh/id_ed25519.pub`) i målanvändarens `~/.ssh/authorized_keys`.
-- **Off-site-kopia:** BombVault replikerar nya ögonblicksbilder med `restic copy` på best-effort-basis. Det lokala repot förblir primärt. Varje domän har sitt eget off-site-schema, plus en **Replikera nu**-knapp.
-- **Flera off-site-mål per domän:** varje domän kan replikera till flera off-site-mål samtidigt. Lägg till extra mål under Inställningar, Off-site, var och en med sitt eget repository, S3-lagringsklass, append-only-flagga, retention och tillväxtbudget; de replikerar alla enligt den domänens off-site-schema. En befintlig enskild off-site-uppsättning förs över som det första målet.
-- **Retention per källa:** den lokala policyn finns under Inställningar, Sökvägar och lagring; off-site-policyn under Inställningar, Off-site (lämna den helt-noll för att aldrig autotrimma off-site-ögonblicksbilder).
-- **Bandbreddsgränser:** begränsa restics uppladdnings-/nedladdningshastighet under Inställningar, Off-site.
-- **Kall och arkivlagringsklass (S3):** för ett native S3-off-site-repo, välj en återställningsläsbar nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-fjärrar ställer in sin klass i rclone-konfigurationen.
+- **Anslutningstyper:** en mapp på den här Unraid-servern eller en NAS-utdelning monterad under `/mnt/remotes`, S3-lagring (Backblaze B2 och de andra molnleverantörerna, eller en självhostad tjänst som MinIO eller Garage), rest-server, SFTP inklusive en Hetzner Storage Box, WebDAV för Nextcloud, ownCloud och OpenCloud, Azure Blob och valfri rclone-fjärr. Backblaze B2 behöver bara nyckeln: BombVault läser av bucketen och S3-slutpunkten ur den.
+- **Inloggningsuppgifter** lagras krypterade tillsammans med lagringsplatsen de hör till. De uppsättningar av inloggningsuppgifter som hämtningskällor använder finns på fliken **Hämtning** på sidan Instanser.
+- **SSH-mål kräver inget installerat på den bortre sidan.** En SFTP-lagringsplats behöver bara en SSH-server. Lägg till den publika nyckeln som visas i SFTP-formuläret (även under **Inställningar, System, VM-säkerhetskopia över SSH** och på `/config/ssh/id_ed25519.pub`) i målanvändarens `~/.ssh/authorized_keys`.
+- **Off-site-kopia:** BombVault kopierar nya ögonblicksbilder med `restic copy` på best-effort-basis, utöver lagringsplatsen som domänen sparas på. Varje domän har sitt eget kopieringsschema under Inställningar, Scheman, plus **Kopiera nu** på sin rad.
+- **Flera kopieringsplatser per domän:** kryssa i så många lagringsplatser du vill under **Kopierad till**; var och en kopierar enligt domänens schema.
+- **Retention, gränser, lagringsklass och tillväxtbudget hör till lagringsplatsen** och ställs in i dess detaljer. Retentionen för en lagringsplats gäller för varje arkiv på den, så en off-site-lagringsplats kan behålla kopior längre som ett arkiv; en lagringsplats där varje regel står på noll trimmar aldrig.
+- **Kall och arkivlagringsklass (S3):** för en S3-lagringsplats, välj en återställningsläsbar nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-fjärrar ställer in sin klass i rclone-konfigurationen.
+- **En domän sparad på en fjärransluten lagringsplats:** se [En domän sparad på en fjärransluten lagringsplats](offsite-recovery.md#remote-primary-repositories).
 
 ## Portabla inställningar (exportera och importera) {#portable-settings-export-and-import}
 
-Kortet **Exportera och importera inställningar** på Inställningar-sidan skriver hela din BombVault-konfiguration (domäninställningar, off-site-mål, scheman, retention, aviseringar) till en portabel JSON-fil som du kan importera på en annan instans, så att en flytt till en ny box eller kloning av en uppsättning inte innebär att allt måste matas in på nytt för hand. Import visar en förhandsgranskning och ber om bekräftelse, och den rör aldrig dina säkerhetskopieringsdata eller historik.
+Kortet **Exportera och importera inställningar** på Inställningar-sidan skriver hela din BombVault-konfiguration (domäninställningar, lagringsplatser, scheman, aviseringar) till en portabel JSON-fil som du kan importera på en annan instans, så att en flytt till en ny box eller kloning av en uppsättning inte innebär att allt måste matas in på nytt för hand. Import visar en förhandsgranskning och ber om bekräftelse, och den rör aldrig dina säkerhetskopieringsdata eller historik.
 
 !!! warning "Exporten kan innehålla uppgifter"
-    Du väljer om off-site- och aviseringsuppgifterna ska inkluderas i filen. Med uppgifter inkluderade är exporten lika känslig som ditt återställningskit, så förvara den på en säker plats. Utan dem innehåller filen endast icke-hemliga inställningar.
+    Du väljer om inloggningsuppgifterna för dina lagringsplatser och aviseringar ska inkluderas i filen. Med uppgifter inkluderade är exporten lika känslig som ditt återställningskit, så förvara den på en säker plats. Utan dem innehåller filen endast icke-hemliga inställningar.

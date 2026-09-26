@@ -67,10 +67,9 @@ export function AccentCard({
           />
         ))}
         {/* A neutral square badge rather than a colour-engine Button: it has
-            the same box and border as the swatches beside it, and an accent
-            fill would make it read as one more colour to pick when it throws
-            the picked colour away. The border also keeps its fill the size of
-            a swatch's disc. The rainbow-palette reset mirrors it. */}
+            the same 32px box as the swatches beside it, and an accent fill
+            would make it read as one more colour to pick when it throws the
+            picked colour away. The rainbow-palette reset mirrors it. */}
         <Badge
           as="button"
           shape="square"
@@ -82,7 +81,6 @@ export function AccentCard({
             setPresets(setAccentPresets(DEFAULT_ACCENT_PRESETS));
           }}
           disabled={nothingToReset || rainbowOn}
-          className="border-2 border-carbon-border"
         >
           <IconResetArrow />
         </Badge>

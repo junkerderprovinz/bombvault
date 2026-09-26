@@ -45,6 +45,21 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
 
   // "direct" reads the same in fr, nl and ro as in English.
   "placement.homeDirect",
+
+  // Provider names on the tiles of the add-place window and the kind on a
+  // place's row, written the way the provider writes them in every language.
+  // One-word names need no entry.
+  "places.provider.b2",
+  "places.provider.s3",
+  "places.provider.r2",
+  "places.provider.hetzner-os",
+  "places.provider.idrive",
+  "places.provider.digitalocean",
+  "places.provider.gcs",
+  "places.provider.azure",
+  "places.provider.storagebox",
+  "places.provider.versitygw",
+  "places.kind.azure",
 ]);
 
 /** A value nobody would translate: a unit, a number, a protocol, a symbol. */
@@ -85,7 +100,7 @@ describe("translations are actually translated", () => {
 describe("placement text is not left in English", () => {
   // Every locale is checked here, not just the non-Latin ones above, because
   // a Latin-script locale can leave English text in place just as easily.
-  const FAMILIES = ["placementCode.", "timeline.", "offsiteRemoval.", "placement.", "repos.offPremises"];
+  const FAMILIES = ["placementCode.", "timeline.", "offsiteRemoval.", "placement.", "places.", "storageDomains."];
   const codes = Object.keys(locales).filter((c) => c !== "en");
 
   it.each(codes)("%s translates its placement text", (code) => {

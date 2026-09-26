@@ -37,7 +37,7 @@ function domain(over: Partial<DomainStatus> = {}): DomainStatus {
     offsiteDrillScheduled: false,
     // Non-empty, or the card filters the domain out before any row renders.
     protection: "green",
-    // "" is what protectionChecks in internal/api/service.go reports when
+    // "" is what protectionChecks in internal/api/service_status.go reports when
     // append-only is off: nothing to prove, which differs from a failed proof.
     tamperState: "",
     replicationState: "",
@@ -103,5 +103,14 @@ describe("RansomwareCard, paused replication", () => {
     renderCard([domain({ replicationState: "paused", protection: "amber" })]);
     const row = screen.getByText(en["ransomware.replicationPaused"]);
     expect(row.className).toContain("text-statusWarn");
+  });
+});
+
+describe("RansomwareCard, no off-site copy", () => {
+  afterEach(cleanup);
+
+  it("sends the reader to the Storage tab, where copies are chosen", () => {
+    renderCard([domain({ offsiteConfigured: false, protection: "red" })]);
+    expect(screen.getByRole("link", { name: en["ransomware.configured"] }).getAttribute("href")).toBe("/settings#storage");
   });
 });

@@ -1,3 +1,5 @@
+import type { Place } from "./places";
+
 // ---------------------------------------------------------------------------
 // API types — match the Go JSON shapes exactly
 // ---------------------------------------------------------------------------
@@ -513,10 +515,11 @@ export interface BrowseResponse {
   path?: string;
   dirs?: BrowseDirEntry[];
   error?: string;
-  /** Error KIND, not a message (handlers.go classifyReadDirError): "ok" on
-   *  success; "restricted" (fs.ErrPermission), "missing" (ErrNotExist) or
-   *  "error" (opaque bucket — an os.Root escape rejection deliberately lands
-   *  here so an escape attempt never announces itself on the wire). */
+  /** The kind of error, not a message (classifyReadDirError in
+   *  handlers_files.go): "ok" on success; "restricted" (fs.ErrPermission),
+   *  "missing" (ErrNotExist) or "error", an opaque bucket that also takes an
+   *  os.Root escape rejection so an escape attempt never announces itself on
+   *  the wire. */
   status?: "ok" | "restricted" | "missing" | "error";
   /** True when the listing hit the server-side cap (maxBrowseEntries = 500):
    *  the first lexical page was returned, the rest exist but are not shown. */
@@ -589,16 +592,13 @@ export class ApiError extends Error {
   }
 }
 
-async function fetchJSON<T>(
+export async function fetchJSON<T>(
   path: string,
   options?: RequestInit
 ): Promise<T> {
-  // headers AFTER ...options, not before. Spread the other way round, a caller
-  // passing any headers of its own replaced this object wholesale and silently
-  // dropped the Content-Type — which the server now refuses a body without, so
-  // the next such caller would have got a 415 for a reason nothing on screen
-  // could explain. No caller passes headers today; this keeps it that way by
-  // construction rather than by everyone remembering.
+  // headers comes after ...options, so a caller's own headers merge with the
+  // Content-Type instead of replacing it; the server answers a body without
+  // one with 415.
   const res = await fetch(path, {
     ...options,
     headers: {
@@ -1030,22 +1030,7 @@ export function setNotify(cfg: NotifyConfig): Promise<OkEnvelope> {
   return fetchJSON("/api/notify", { method: "POST", body: JSON.stringify(cfg) });
 }
 
-/** GET /api/cloud — cloud-backend credential summary (no secrets returned). */
-export interface CloudInfo extends OkEnvelope {
-  s3KeyId?: string;
-  s3Region?: string;
-  restUser?: string;
-  s3SecretSet?: boolean;
-  restPasswordSet?: boolean;
-  /** Off-site S3 storage class for native s3: repos ("" = provider default).
-   *  Not a secret, so unlike the credentials it IS returned by the GET. */
-  s3StorageClass?: string;
-}
-export function getCloud(): Promise<CloudInfo> {
-  return fetchJSON("/api/cloud");
-}
-
-/** POST /api/cloud — store cloud-backend credentials (encrypted). Blank secret = keep. */
+/** Credentials for an S3 or rest-server repository. */
 export interface CloudCreds {
   s3KeyId: string;
   s3Secret: string;
@@ -1056,9 +1041,6 @@ export interface CloudCreds {
    *  Restricted server-side to restore-readable tiers (STANDARD, STANDARD_IA,
    *  ONEZONE_IA, INTELLIGENT_TIERING, GLACIER_IR). */
   s3StorageClass: string;
-}
-export function setCloud(c: CloudCreds): Promise<OkEnvelope & { warnings?: SaveWarning[] }> {
-  return fetchJSON("/api/cloud", { method: "POST", body: JSON.stringify(c) });
 }
 
 /** One additional, named credential set (#141 stage 2) — same shape as
@@ -1074,7 +1056,7 @@ export interface CloudCredSet {
   restPassword: string;
   s3StorageClass: string;
 }
-/** GET response shape: secrets replaced with is-set flags, same contract as CloudInfo. */
+/** GET response shape: secrets replaced with is-set flags. */
 export interface CloudCredSetInfo {
   id: string;
   name: string;
@@ -1505,7 +1487,14 @@ export function getSettings(): Promise<GetSettingsResponse> {
  */
 export function putSettings(
   settings: Settings
-): Promise<OkEnvelope & { warnings?: SaveWarning[]; notes?: string[] }> {
+): Promise<
+  OkEnvelope & {
+    warnings?: SaveWarning[];
+    notes?: string[];
+    /** The paths and off-site fields this save tried to change and a storage place kept. */
+    kept?: (keyof Settings)[];
+  }
+> {
   return fetchJSON("/api/settings", {
     method: "PUT",
     body: JSON.stringify(settings),
@@ -1833,29 +1822,6 @@ export function replicateOffsite(
 }
 
 /**
- * POST /api/offsite/{domain}/test — probe the domain's PRIMARY off-site repo
- * without modifying it: whether it is reachable and whether it is an initialised
- * restic repository. It says nothing about a domain's ADDITIONAL targets — use
- * testOffsiteTarget for those (issue #138).
- */
-export function testOffsite(
-  domain: OffsiteDomain
-): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
-  return fetchJSON(`/api/offsite/${domain}/test`, { method: "POST" });
-}
-
-/**
- * POST /api/offsite/targets/{id}/test — the same probe as testOffsite, against
- * ONE off-site target. An unknown id answers {ok:false} rather than falling back
- * to the primary, so a green verdict always belongs to the target you clicked.
- */
-export function testOffsiteTarget(
-  id: string
-): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
-  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}/test`, { method: "POST" });
-}
-
-/**
  * A one-time rest-server deployment recipe for a domain's append-only off-site
  * repo. The plaintext `password` is shown ONCE and never persisted server-side;
  * `htpasswd` is its bcrypt line for the far-side .htpasswd file. `dockerRun` and
@@ -1870,18 +1836,6 @@ export interface DeploySnippetData {
   /** The same recipe as an Unraid container template (XML), so the far side is
    *  something the Docker tab can EDIT rather than an orphan container ([601]). */
   unraid: string;
-}
-
-/**
- * GET /api/offsite/{domain}/deploy-snippet — generate a fresh rest-server
- * deployment recipe (docker run + compose + generated htpasswd credentials).
- * Nothing is stored server-side; the plaintext password lives only in this
- * response, so it must be saved by the user right away.
- */
-export function deploySnippet(
-  domain: OffsiteDomain
-): Promise<OkEnvelope & { snippet?: DeploySnippetData }> {
-  return fetchJSON(`/api/offsite/${domain}/deploy-snippet`);
 }
 
 /**
@@ -1900,15 +1854,9 @@ export function tamperTest(
 // ---------------------------------------------------------------------------
 // Remote primary repositories (issue #152)
 //
-// A domain's primary Backup Path (Settings.*Path, edited on the Storage tab
-// via FolderBrowser) already accepts a raw restic remote URL and backs up to
-// it directly — the mode switch next to each path field is purely a UI framing
-// (Local shows the folder browser; Remote shows a URL field + this safety
-// dialog) over the SAME `*Path` setting. What lives here is ONLY the safety
-// settings a replication destination already gets (bandwidth limits, append-
-// only/tamper-test protection, a growth-budget alarm), for when that path
-// happens to be remote. Matches primaryRemoteView in
-// internal/api/primary_remote.go exactly.
+// A domain path can be a restic remote URL, and then it carries the safety
+// settings a replication target has, append-only with its tamper test among
+// them.
 // ---------------------------------------------------------------------------
 
 /** Domains whose primary backup path can be a remote repository. Identical to
@@ -1917,61 +1865,9 @@ export function tamperTest(
  *  up missing from some copies and present in others (#176/#182). */
 export type PrimaryRemoteDomain = OffsiteDomain;
 
-export interface PrimaryRemoteConfig {
-  /** Whether safety settings have ever been saved for this domain — false is
-   *  the common/default case (a local primary, or a remote one nobody has
-   *  opened the dialog for yet), not an error. */
-  configured: boolean;
-  /** The backup path AT THE TIME the settings were last saved (informational
-   *  only — the live value is always Settings.*Path, never this field). */
-  repo: string;
-  immutable: boolean;
-  limitUpload: number;
-  limitDownload: number;
-  growthBudgetGb: number;
-  /** Which named credential set this path uses; "" means the shared ones.
-   *  #182: an S3 primary path with its own keys had no way to say so, and
-   *  primaryModeFor applies this to real backups, not only to the test. */
-  credsRef: string;
-}
-
-/** GET /api/settings/primary-remote/{domain} */
-export function getPrimaryRemote(
-  domain: PrimaryRemoteDomain
-): Promise<OkEnvelope & { config?: PrimaryRemoteConfig }> {
-  return fetchJSON(`/api/settings/primary-remote/${domain}`);
-}
-
-/**
- * PUT /api/settings/primary-remote/{domain} — save a domain's remote-primary
- * safety settings. Rejected (ok:false, with a reason) when the domain's
- * CURRENT backup path is not actually a remote repository — set the path
- * field to a remote URL first.
- */
-export function setPrimaryRemote(
-  domain: PrimaryRemoteDomain,
-  patch: { immutable: boolean; limitUpload: number; limitDownload: number; growthBudgetGb: number; credsRef: string }
-): Promise<OkEnvelope & { config?: PrimaryRemoteConfig }> {
-  return fetchJSON(`/api/settings/primary-remote/${domain}`, {
-    method: "PUT",
-    body: JSON.stringify(patch),
-  });
-}
-
 /** DELETE /api/settings/primary-remote/{domain} — clear the saved safety settings. */
 export function deletePrimaryRemote(domain: PrimaryRemoteDomain): Promise<OkEnvelope> {
   return fetchJSON(`/api/settings/primary-remote/${domain}`, { method: "DELETE" });
-}
-
-/**
- * POST /api/settings/primary-remote/{domain}/test — probe the domain's
- * CURRENT (live) backup path: reachable / initialised, exactly like
- * testOffsite but for the primary path instead of an off-site destination.
- */
-export function testPrimaryRemote(
-  domain: PrimaryRemoteDomain
-): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
-  return fetchJSON(`/api/settings/primary-remote/${domain}/test`, { method: "POST" });
 }
 
 /**
@@ -2019,6 +1915,8 @@ export interface OffsiteTarget {
   createdAt: number;
   /** Ordering within a domain; the primary is 0, additional targets are > 0. */
   sortOrder: number;
+  /** The storage place the target lies at; absent for a row without one. */
+  placeId?: string;
 }
 
 /** A named repository (#204): a location written down once in Settings and then
@@ -2056,38 +1954,6 @@ export function listRepos(): Promise<OkEnvelope & { repos?: NamedRepo[] }> {
   return fetchJSON("/api/repos");
 }
 
-/** POST /api/repos — create one (the id is minted server-side). */
-export function createRepo(
-  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionLost">>
-): Promise<OkEnvelope & { repo?: NamedRepo }> {
-  return fetchJSON("/api/repos", { method: "POST", body: JSON.stringify(body) });
-}
-
-/** PATCH /api/repos/{id} — change one. Only the fields sent are applied.
- *
- *  The LOCATION of a repository that is in use is refused: the backups already
- *  written stay where they are, so the next one would succeed into an empty
- *  repository, which looks exactly like a working backup. Name, limits and the
- *  on/off switch stay editable, because none of those move any data. The
- *  refusal carries the same `items`/`defaultDomains` the delete refusal below
- *  does, so the caller can name what is still pointed at this repository. */
-export function updateRepo(
-  id: string,
-  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionOf" | "companionLost">>
-): Promise<OkEnvelope & { repo?: NamedRepo; items?: number; defaultDomains?: PlacementDomain[] }> {
-  return fetchJSON(`/api/repos/${encodeURIComponent(id)}`, {
-    method: "PATCH",
-    body: JSON.stringify(body),
-  });
-}
-
-/** DELETE /api/repos/{id}: refused while anything still points here. */
-export function deleteRepo(
-  id: string
-): Promise<OkEnvelope & { items?: number; defaultDomains?: PlacementDomain[]; target?: RefusalTarget }> {
-  return fetchJSON(`/api/repos/${encodeURIComponent(id)}`, { method: "DELETE" });
-}
-
 /*
  * GET /api/offsite/targets?domain=<d> — the off-site targets for one domain in a
  * stable order (sortOrder, then createdAt). Omit `domain` to list every target.
@@ -2098,37 +1964,6 @@ export function listOffsiteTargets(
 ): Promise<OkEnvelope & { targets?: OffsiteTarget[] }> {
   const qs = domain ? `?domain=${encodeURIComponent(domain)}` : "";
   return fetchJSON(`/api/offsite/targets${qs}`);
-}
-
-/** POST /api/offsite/targets: create a target. `alsoExclude` is the answer to
- *  the new-target question and goes along only when there is one. */
-export function createOffsiteTarget(
-  target: Omit<OffsiteTarget, "id" | "createdAt">,
-  alsoExclude?: NewTargetExclusion
-): Promise<OkEnvelope & { target?: OffsiteTarget }> {
-  return fetchJSON("/api/offsite/targets", {
-    method: "POST",
-    body: JSON.stringify(alsoExclude ? { ...target, alsoExclude } : target),
-  });
-}
-
-/** PUT /api/offsite/targets/{id} — replace a target (createdAt is preserved; unknown id → 404). */
-export function updateOffsiteTarget(
-  id: string,
-  target: OffsiteTarget,
-  alsoExclude?: NewTargetExclusion
-): Promise<OkEnvelope & { target?: OffsiteTarget; warnings?: SaveWarning[] }> {
-  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    body: JSON.stringify(alsoExclude ? { ...target, alsoExclude } : target),
-  });
-}
-
-/** DELETE /api/offsite/targets/{id}: refused while its direct repository is in use. */
-export function deleteOffsiteTarget(id: string): Promise<OkEnvelope & { use?: TargetUse }> {
-  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
 }
 
 /** Placement: which domains have it, and what the direct repository routes answer. */
@@ -2366,61 +2201,14 @@ export interface DefaultImpact {
   skip: string[];
 }
 
-export interface DefaultChange {
-  home?: string;
-  skip?: string[];
-}
-
 function defaultPath(domain: PlacementDomain, rest = ""): string {
   return `/api/placement/default/${encodeURIComponent(domain)}${rest}`;
-}
-
-export function listPlacementDefaults(): Promise<OkEnvelope & { defaults?: DefaultRow[] }> {
-  return fetchJSON("/api/placement/defaults");
-}
-
-export function previewPlacementDefault(
-  domain: PlacementDomain,
-  change: DefaultChange
-): Promise<OkEnvelope & { impact?: DefaultImpact }> {
-  return fetchJSON(defaultPath(domain, "/preview"), { method: "POST", body: JSON.stringify(change) });
-}
-
-/** Writes a default. `expect` is the impact the question showed; code "stale"
- *  answers with the new one. */
-export function putPlacementDefault(
-  domain: PlacementDomain,
-  change: DefaultChange,
-  expect: DefaultImpact
-): Promise<OkEnvelope & { default?: DefaultRow; impact?: DefaultImpact }> {
-  return fetchJSON(defaultPath(domain), { method: "PUT", body: JSON.stringify({ ...change, expect }) });
-}
-
-export interface ApplyCandidate {
-  key: string;
-  label: string;
-  losesHome: boolean;
-  losesRule: boolean;
-  uploads: UploadEstimate[];
 }
 
 export interface KeptItem {
   key: string;
   label: string;
   reason: "has-backups" | "unreadable" | "changed";
-}
-
-export function getApplyDefaultPreview(
-  domain: PlacementDomain
-): Promise<OkEnvelope & { reset?: ApplyCandidate[]; kept?: KeptItem[] }> {
-  return fetchJSON(defaultPath(domain, "/apply"));
-}
-
-export function applyPlacementDefault(
-  domain: PlacementDomain,
-  keys: string[]
-): Promise<OkEnvelope & { reset?: string[]; kept?: KeptItem[] }> {
-  return fetchJSON(defaultPath(domain, "/apply"), { method: "POST", body: JSON.stringify({ keys }) });
 }
 
 export interface ExcludedItem {
@@ -2465,6 +2253,10 @@ export interface HomeOption {
   location: string;
   kind: "domain" | "domain-remote" | "local";
   scheme: string;
+  /** The storage place it lies at, "" for an address that fits no place. */
+  placeId: string;
+  /** That place's provider, for its mark. */
+  provider: string;
 }
 
 export interface TargetOption {
@@ -2474,6 +2266,8 @@ export interface TargetOption {
   primary: boolean;
   appendOnly: boolean;
   hint: "" | "creds-differ";
+  placeId: string;
+  provider: string;
 }
 
 export interface SendToOption {
@@ -2483,6 +2277,8 @@ export interface SendToOption {
   targetId: string;
   name: string;
   location: string;
+  placeId: string;
+  provider: string;
 }
 
 export interface PlacementOptions {
@@ -2833,22 +2629,20 @@ export function createFolder(path: string, name: string): Promise<MkdirResponse>
   });
 }
 
-// ---------------------------------------------------------------------------
-// VM API types — match VMView in internal/api/service.go exactly
-// ---------------------------------------------------------------------------
+// VM types match VMView in internal/api/service_vms.go.
 
 /** A VM row from GET /api/vms */
 export interface VM {
-  /** DISPLAY-ONLY. On TrueNAS this is the resolved friendly name, not the raw
-   *  libvirt domain name — never send this back on an action call (backup,
+  /** For display only. On TrueNAS this is the resolved friendly name, not the
+   *  raw libvirt domain name, so it never goes back on an action call (backup,
    *  restore, snapshots, forget, method, include, scheduleCadence,
    *  backup-order, DR-drill-target). Use libvirtName for all of those. */
   name: string;
-  /** The raw libvirt domain name — the ONLY identifier every /api/vms/{name}/...
-   *  route accepts (see vmNameParam, internal/api/handlers.go: it takes the
-   *  path segment literally, with zero resolution). Equal to `name` on every
-   *  platform except TrueNAS, where `name` is instead a display-only friendly
-   *  name. Every action call site must use this field, never `name`. */
+  /** The raw libvirt domain name, the one identifier every /api/vms/{name}/...
+   *  route accepts (vmNameParam in internal/api/handlers.go takes the path
+   *  segment literally, with no resolution). Equal to `name` on every
+   *  platform except TrueNAS, where `name` is a display-only friendly name.
+   *  Every action call site uses this field, never `name`. */
   libvirtName: string;
   state: string;
   /** Backup method — currently always "graceful". */
@@ -3043,10 +2837,7 @@ export function restoreConfig(
   });
 }
 
-// ---------------------------------------------------------------------------
-// Files API (file-set backup domain, #62) — matches FileSetView in
-// internal/api/service.go exactly
-// ---------------------------------------------------------------------------
+// File-set types match FileSetView in internal/api/service_files.go.
 
 /** A file-set row from GET /api/files. */
 export interface FileSetView {
@@ -3821,11 +3612,10 @@ export function disableFleetToken(): Promise<OkEnvelope> {
 }
 
 // ---------------------------------------------------------------------------
-// Mesh off-site API — a fleet peer OFFERING its own off-site storage (a
+// Mesh off-site API: a fleet peer offering its own off-site storage (a
 // rest-server it deploys itself), so the two admins don't have to exchange a
-// URL and password out of band. BombVault never hosts storage itself; accept
-// only ever creates a normal named credential set + off-site target, both
-// pre-existing mechanisms.
+// URL and password out of band. BombVault never hosts storage itself;
+// accepting makes an ordinary storage place for the offered domain.
 // ---------------------------------------------------------------------------
 
 export interface MeshOffer {
@@ -3848,17 +3638,16 @@ export function listMeshOffers(): Promise<OkEnvelope & { offers?: MeshOffer[] }>
 }
 
 /**
- * POST /api/fleet/mesh-offers/{id}/accept — turns a pending offer into a real
- * off-site target for the given domain (a new named credential set holding
- * the peer's REST credentials, plus an off-site target pointing at the
- * offer's repo). Neither is probed for reachability before creation — use
- * the existing Test button on the created target for that.
+ * POST /api/fleet/mesh-offers/{id}/accept makes a place for the given domain
+ * out of a pending offer: the peer's REST login is its credential set, and
+ * the domain's target sits at the offer's repo. Nothing is probed first; the
+ * place's own test does that.
  */
 export function acceptMeshOffer(
   id: string,
   domain: string,
   alsoExclude?: NewTargetExclusion
-): Promise<OkEnvelope & { target?: OffsiteTarget }> {
+): Promise<OkEnvelope & { target?: OffsiteTarget; place?: Place }> {
   return fetchJSON(`/api/fleet/mesh-offers/${encodeURIComponent(id)}/accept`, {
     method: "POST",
     body: JSON.stringify(alsoExclude ? { domain, alsoExclude } : { domain }),

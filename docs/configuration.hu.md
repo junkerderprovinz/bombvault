@@ -1,6 +1,6 @@
 # Konfiguráció
 
-Ez az oldal a konténer környezeti változóit, a sablon által biztosított csatolásokat, a VM-mentést SSH-n keresztül, valamint a telephelyen kívüli beállítást ismerteti. A mentési **tároló-útvonalak** az alkalmazáson belül konfigurálhatók (Beállítások, Mentési útvonalak), nem környezeti változókon keresztül.
+Ez az oldal a konténer környezeti változóit, a sablon által biztosított csatolásokat, a VM-mentést SSH-n keresztül, valamint a telephelyen kívüli beállítást ismerteti. Azt, hogy hová kerülnek a mentések, az alkalmazáson belül állítod be, a **Beállítások, Tárolás** alatt, nem környezeti változókon keresztül.
 
 ## Környezeti változók
 
@@ -26,7 +26,7 @@ Ez az oldal a konténer környezeti változóit, a sablon által biztosított cs
 
 Csatold a Docker socketet, a flasht (`/boot`) és a **Host Data** gyökeret (`/mnt`), ahogy a CA-sablonban látható. A mentési *források* és *célok* egyaránt a Host Data alatt találhatók, és az **slave** módban van csatolva, így egy távoli megosztás, amely a konténer indulása után csatolódik (például a `/mnt/remotes` alatt), újraindítás nélkül válik láthatóvá.
 
-A mentési tároló-útvonalak alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files}` útvonalra mutatnak, és az első mentéskor jönnek létre. A helyet bármikor megváltoztathatod a **Beállítások, Mentési útvonalak** alatt.
+Egy friss telepítés minden tartományt az **Unraid** nevű tárhelyen tárol, a `/mnt/user/bombvault` alatt, tartományonként egy mappával (`container`, `vms`, `flash`, `config`, `files`), amelyek az első mentéskor jönnek létre. További tárhelyeket, helyieket vagy távoliakat, a **Beállítások, Tárolás** alatt adhatsz hozzá; lásd: [Tárhelyek](storage-places.md).
 
 !!! note "Hosztintegráció-ellenőrzés"
     A konténer elindulása után nyisd meg a `/spike` oldalt a webes felületen. Ez minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat.
@@ -71,20 +71,20 @@ A sablon hozzáadja a `--add-host=host.docker.internal:host-gateway` opciót, ho
 
 ## Telephelyen kívüli beállítás
 
-Állíts be egy telephelyen kívüli replikát a **Beállítások, Telephelyen kívüli** fülön. A teljes munkafolyamathoz (módosíthatatlan/append-only, manipulációs tesztelés és DR-próbák) lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md). Röviden:
+A telephelyen kívüli másolatok tárhelyekre kerülnek. Add hozzá a tárhelyet a **Beállítások, Tárolás** alatt a **Tárhely hozzáadása** gombbal, majd pipáld be a **Másolva ide** alatt a tartomány sorában. A [Tárhelyek](storage-places.md) oldal minden kapcsolattípust ismertet, a [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md) pedig az append-only módot, a manipulációs tesztelést és a DR-próbákat. Röviden:
 
-- **Backendek:** SMB/CIFS és NFS (csatold a megosztást, és irányíts rá egy Mentési útvonalat), natív restic backendek rclone nélkül (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), vagy bármely rclone remote (`rclone:<remote>:<bucket>/path`).
-- **A felhő hitelesítő adatai** titkosítva tárolódnak a Beállítások, Telephelyen kívüli, Felhő hitelesítő adatok alatt.
-- **Az SSH-célokhoz semmit sem kell telepíteni a túloldalon.** Az `sftp:` csak egy SSH-szervert igényel. Add hozzá a nyilvános kulcsot a **Beállítások, Rendszer, VM-mentés SSH-n keresztül** alól (a `/config/ssh/id_ed25519.pub` alatt is) a célfelhasználó `~/.ssh/authorized_keys` fájljához.
-- **Telephelyen kívüli másolat:** A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint replikálja. A helyi tároló marad az elsődleges. Minden tartománynak saját telephelyen kívüli ütemezése van, plusz egy **Replikálás most** gomb.
-- **Több telephelyen kívüli cél tartományonként:** minden tartomány egyszerre több telephelyen kívüli célra is replikálhat. Adj hozzá további célokat a Beállítások, Telephelyen kívüli alatt, mindegyiket saját tárolóval, S3-tárolási osztállyal, append-only jelzővel, megőrzéssel és növekedési kerettel; mindegyik az adott tartomány telephelyen kívüli ütemezése szerint replikál. Egy meglévő egyetlen telephelyen kívüli beállítás az első célként öröklődik át.
-- **Megőrzés forrásonként:** a helyi szabály a Beállítások, Útvonalak és tárolás alatt él; a telephelyen kívüli szabály a Beállítások, Telephelyen kívüli alatt (hagyd mind nullán, hogy soha ne nyesse automatikusan a telephelyen kívüli pillanatképeket).
-- **Sávszélesség-korlátok:** korlátozd a restic fel- és letöltési sebességét a Beállítások, Telephelyen kívüli alatt.
-- **Hideg és archív tárolási osztály (S3):** egy natív S3 telephelyen kívüli tárolóhoz válassz egy visszaállításra olvasható szintet (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Az rclone remote-ok a saját osztályukat az rclone konfigban állítják be.
+- **Kapcsolattípusok:** egy mappa ezen az Unraidon vagy egy `/mnt/remotes` alá csatolt NAS-megosztás, S3-tárolás (a Backblaze B2 és a többi felhőszolgáltató, vagy egy saját üzemeltetésű szolgáltatás, például a MinIO vagy a Garage), rest-server, SFTP a Hetzner Storage Boxszal együtt, WebDAV a Nextcloudhoz, az ownCloudhoz és az OpenCloudhoz, Azure Blob, valamint bármely rclone remote. A Backblaze B2-höz csak a kulcs kell: a BombVault ebből olvassa ki a bucketet és az S3-végpontot.
+- **A hitelesítő adatok** titkosítva tárolódnak, azzal a tárhellyel együtt, amelyhez tartoznak. A lehívási források által használt hitelesítőadat-készletek a Példányok oldal **Lehívás** fülén vannak.
+- **Az SSH-célokhoz semmit sem kell telepíteni a túloldalon.** Egy SFTP-tárhelynek csak egy SSH-szerverre van szüksége. Add hozzá az SFTP-űrlapon megjelenített nyilvános kulcsot (a **Beállítások, Rendszer, VM-mentés SSH-n keresztül** alatt és a `/config/ssh/id_ed25519.pub` fájlban is megtalálod) a célfelhasználó `~/.ssh/authorized_keys` fájljához.
+- **Telephelyen kívüli másolat:** A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint másolja, azon a tárhelyen felül, amelyen a tartomány tárolódik. Minden tartománynak saját másolási ütemezése van a Beállítások, Ütemezések alatt, plusz egy **Másolás most** gomb a sorában.
+- **Több másolási tárhely tartományonként:** pipálj be annyi tárhelyet a **Másolva ide** alatt, amennyit csak szeretnél; mindegyik a tartomány ütemezése szerint másol.
+- **A megőrzés, a korlátok, a tárolási osztály és a növekedési keret a tárhelyhez tartozik**, és a részleteiben állíthatók be. Egy tárhely megőrzése minden rajta lévő tárolóra vonatkozik, így egy telephelyen kívüli tárhely archívumként tovább megtarthatja a másolatokat; az a tárhely, amelynek minden szabálya nulla, soha nem vág vissza semmit.
+- **Hideg és archív tárolási osztály (S3):** egy S3-tárhelyhez válassz egy visszaállításra olvasható szintet (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Az rclone remote-ok a saját osztályukat az rclone konfigban állítják be.
+- **Távoli tárhelyen tárolt tartomány:** lásd: [Távoli tárhelyen tárolt tartomány](offsite-recovery.md#remote-primary-repositories).
 
 ## Hordozható beállítások (exportálás és importálás) {#portable-settings-export-and-import}
 
-Az **Exportálás és importálás beállítások** kártya a Beállítások oldalon a teljes BombVault-konfigurációdat (tartománybeállítások, telephelyen kívüli célok, ütemezések, megőrzés, értesítések) egy hordozható JSON-fájlba írja, amelyet egy másik példányon importálhatsz, így egy új gépre költözés vagy egy beállítás klónozása nem jelenti azt, hogy mindent kézzel kell újra beírni. Az importálás előnézetet mutat és megerősítést kér, és soha nem érinti a mentési adataidat vagy előzményeidet.
+Az **Exportálás és importálás beállítások** kártya a Beállítások oldalon a teljes BombVault-konfigurációdat (tartománybeállítások, tárhelyek, ütemezések, értesítések) egy hordozható JSON-fájlba írja, amelyet egy másik példányon importálhatsz, így egy új gépre költözés vagy egy beállítás klónozása nem jelenti azt, hogy mindent kézzel kell újra beírni. Az importálás előnézetet mutat és megerősítést kér, és soha nem érinti a mentési adataidat vagy előzményeidet.
 
 !!! warning "Az export hitelesítő adatokat tartalmazhat"
-    Te választod meg, hogy belefoglalod-e a telephelyen kívüli és értesítési hitelesítő adatokat a fájlba. A hitelesítő adatokkal együtt az export olyan érzékeny, mint a helyreállítási csomagod, ezért tárold biztonságos helyen. Nélkülük a fájl csak nem-titkos beállításokat tartalmaz.
+    Te választod meg, hogy belefoglalod-e a fájlba a tárhelyeid és az értesítéseid hitelesítő adatait. A hitelesítő adatokkal együtt az export olyan érzékeny, mint a helyreállítási csomagod, ezért tárold biztonságos helyen. Nélkülük a fájl csak nem-titkos beállításokat tartalmaz.

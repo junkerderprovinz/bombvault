@@ -4,13 +4,13 @@ Místní zálohy vás chrání před ztraceným kontejnerem nebo špatnou aktual
 
 ## Replikace mimo lokalitu
 
-Ponechte rychlou místní zálohu a přidejte jednu nebo více replik mimo lokalitu. Nastavte repozitář na doménu v záložce **Nastavení, Mimo lokalitu**. BombVault tam replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Místní repozitář zůstává primární.
+Ponechte rychlou místní zálohu a kopírujte ji na jedno nebo více dalších míst. Místa, na která se doména kopíruje, zvolíte na kartě **Domény** v **Nastavení, Úložiště**, jeden čip na místo (viz [Úložná místa](storage-places.md#domains)). BombVault tam kopíruje nové snímky pomocí `restic copy` na základě nejlepší snahy, takže nepovedená kopie nikdy nezhatí místní zálohu. Místo, na kterém je doména uložena, nemusí být místní; viz [Doména uložená na vzdáleném místě](#remote-primary-repositories).
 
-- **Více cílů mimo lokalitu na doménu.** Každá doména (kontejnery, VM, flash, config a sady souborů) může replikovat na několik cílů mimo lokalitu najednou, ne jen na jeden, takže můžete držet například rest-server na stroji kamaráda a S3 bucket paralelně. Přidejte další cíle v Nastavení, Mimo lokalitu, každý s vlastním repozitářem, třídou úložiště S3, příznakem append-only, uchováváním a rozpočtem růstu. Stávající jednotlivé nastavení mimo lokalitu se nedotčeno přenese jako první cíl a každý cíl domény replikuje podle plánu mimo lokalitu dané domény.
-- **Plán mimo lokalitu na doménu** (upravovaný spolu s každým dalším plánem v Nastavení, Plány): ponechte prázdný pro replikaci po každé místní záloze, nebo nastavte kadenci (například `weekly Sun 03:00`) pro odesílání mimo lokalitu méně často, než zálohujete místně. Tlačítko **Replikovat nyní** pokrývá běhy na vyžádání.
-- **Uchovávání mimo lokalitu** žije v Nastavení, Mimo lokalitu, takže můžete kopie mimo lokalitu držet déle jako archiv. Ponechte zásadu celou na nule, aby se snímky mimo lokalitu nikdy automaticky neprořezávaly.
-- **Limity šířky pásma** (Nastavení, Mimo lokalitu) omezují rychlost nahrávání/stahování restic, aby replikace nezasytila vaše WAN.
-- **Indikátor replikace** zobrazuje, která doména právě replikuje, zatímco běží (na její stránce a na Přehledu). Je to aktivní indikátor, nikoli procentuální panel, protože `restic copy` nezpřístupňuje žádný strojově čitelný průběh.
+- **Několik míst pro kopie na doménu.** Doménu lze kopírovat na několik míst najednou, například na rest-server u kamaráda doma a do bucketu B2. Uchovávání, třída úložiště, append-only, limity a rozpočet růstu patří místu, takže každá kopie se řídí pravidly místa, kam dorazí.
+- **Plán kopírování na doménu** (upravovaný spolu s každým dalším plánem v Nastavení, Plány): ponechte prázdný pro kopírování po každé místní záloze, nebo nastavte kadenci (například `weekly Sun 03:00`) pro kopírování méně často, než zálohujete. **Kopírovat nyní** na řádku domény ho spustí na vyžádání.
+- **Uchovávání pro každé místo.** Každé místo má vlastní pravidla, takže místo mimo lokalitu může uchovávat kopie déle jako archiv. Místo se všemi pravidly na nule nikdy nic neprořezává.
+- **Limity šířky pásma** pro každé místo omezují rychlost nahrávání a stahování restic, aby kopírování nezasytilo vaše WAN.
+- **Indikátor replikace** zobrazuje, která doména právě kopíruje, zatímco běží (na její stránce a na Přehledu). Je to aktivní indikátor, nikoli procentuální panel, protože `restic copy` nezpřístupňuje žádný strojově čitelný průběh.
 
 !!! note "Obnova z libovolného místa"
     Každý kontejner, VM, sada složek, flash i konfigurace aplikace vypisují své zálohy jako jednu časovou osu napříč všemi místy, kde záloha leží. Záloha zkopírovaná do B2 se objeví jednou, označená každým místem, které ji drží. Obnova vezme první dosažitelné místo, počínaje repozitářem, do kterého se položka zapisuje, a u každého řádku můžete zvolit jiné místo. Místa mimo lokalitu se čtou, jen když je otevřete. Mazání na jednom místě nejdřív zkontroluje ostatní a řekne, jestli to byla poslední kopie.
@@ -21,53 +21,49 @@ Každá karta kontejneru, VM a sady složek má řádek **Umístění** se třem
 
 - **Místní** zapíše položku do repozitáře zobrazeného pod **Uloženo na** a nikam ji nekopíruje. Použijte to pro data, která už mají druhou kopii, například sdílenou složku, jež žije na NAS.
 - **Místní + mimo lokalitu** ji zapíše i tam a zkopíruje ji do cílů zaškrtnutých pod **Kopírovat do**, jeden čip na každý cíl domény mimo lokalitu. Odškrtněte čip a ten cíl už od této položky nedostane nic nového.
-- **Jen mimo lokalitu** zapíše položku přímo na místo pod **Odeslat do**: přímý repozitář vedle cíle mimo lokalitu, nebo vzdálený repozitář, který si nastavíte v Nastavení, Cesty a úložiště, Repozitáře.
+- **Jen mimo lokalitu** zapíše položku přímo na místo pod **Odeslat do**, tedy na kterékoli místo kromě místa uložení domény. Pokud se doména na toto místo už kopíruje, dostane položka přímý repozitář vedle kopií; jinak tam BombVault pro doménu vytvoří repozitář.
 
 Umístění je pevné od první zálohy položky, protože BombVault nikdy nepřesouvá zálohy mezi repozitáři. Kopie se mohou kdykoli změnit. Cíl, který už položku nedostává, si ponechá kopie, které má, a při dalším běhu mimo lokalitu dané domény je zkrátí podle vlastního uchovávání; **Smazat v B2** na kartě je odstraní okamžitě. Pokud některé z těchto kopií neexistují nikde jinde, potvrzení je vypíše podle data a požádá o název položky. Z cílů append-only mazat nelze.
 
-Pod řádkem karta ukazuje, kam položka směřuje a co tam skutečně je: na kolika lokalitách leží, kdy byl každý cíl naposledy viděn a jestli je splněno 3-2-1. Lokalita je server s původními daty, každý cíl mimo lokalitu a každý repozitář označený **Mimo objekt**. BombVault kontroluje kopie a lokality; část 3-2-1 o "dvou médiích" nekontroluje.
+Pod řádkem karta ukazuje, kam položka směřuje a co tam skutečně je: na kolika lokalitách leží, kdy byl každý cíl naposledy viděn a jestli je splněno 3-2-1. Lokalita je server s původními daty a každé místo v jiné lokalitě (viz [Mimo objekt](#off-the-premises-mark)). BombVault kontroluje kopie a lokality; část 3-2-1 o "dvou médiích" nekontroluje.
 
-### Výchozí umístění
+### Výchozí nastavení pro doménu
 
-Nastavení, Cesty a úložiště, **Výchozí umístění** má jeden řádek na doménu se stejnými třemi segmenty. Kopie platí okamžitě pro každou položku bez vlastní volby a pro projektové složky Compose stacků. Umístění platí pro novou položku při její první záloze; jeho změna žádné zálohy nepřesune. Před uložením řádek jmenuje každý cíl, který získává nebo ztrácí položky, a kolik snímků to znamená. **Použít na položky bez záloh** vrátí každou položku bez dosavadní zálohy na výchozí nastavení.
+Karta **Domény** v Nastavení, Úložiště má jeden řádek na doménu. **Kopírováno do** platí okamžitě pro každou položku bez vlastní volby a pro projektové složky Compose stacků. Jakmile má doména zálohy, platí **Uloženo v** pro novou položku při její první záloze a jeho změna žádné zálohy nepřesune. Před uložením řádek jmenuje každé místo, které získává nebo ztrácí položky, a kolik snímků to znamená, a otázka nese přepínač **Použít na položky bez záloh**, který na nové výchozí nastavení převede i každou položku, jež zatím nemá zálohu. **Výjimky** vypisují položky s vlastní volbou.
 
-Nový cíl mimo lokalitu dostane každou položku, která není nastavena na Místní. Dialog, který jej přidává, uvádí počet položek a, je-li známa, kolik historie to představuje, a nabízí vynechat položky, které jsou už vyloučené u jiných cílů.
+Místo, které nově zaškrtnete pod **Kopírováno do**, dostane každou položku, která není nastavena na Místní. Potvrzení uvádí počet položek a, je-li známa, kolik historie to představuje.
 
 ### Přímé repozitáře
 
-Volba přímého repozitáře cíle pod Jen mimo lokalitu otevře dialog s navrhovaným umístěním vedle cíle, například `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, a testem připojení, který nic nezaloží. **Vytvořit a použít** vytvoří repozitář a nasměruje na něj položku. Přímý repozitář přebírá klíč cíle, třídu úložiště, limity, nastavení append-only a uchovávání a mění se s nimi; karta Repozitáře jej zobrazuje jako jen pro čtení. Když nový klíč cíle repozitář neotevře, přímý repozitář si ponechá klíč, který má, a uložení to oznámí. Jeho snímky nesou značku `bv:direct` a každý další běh uchovávání je ponechá, takže přímý repozitář, který ztratil spojení se svým cílem, nikdy nestárne podle místních pravidel. K B2 se přistupuje přes její S3 endpoint, kde jako přihlašovací údaje S3 zadáte ID klíče a aplikační klíč; klíč omezený na vlastní složku cíle se nedostane do složky vedle ní, proto klíč omezte místo toho na složku nad cílem.
+Volba místa pod Jen mimo lokalitu, na které se doména už kopíruje, se jednou zeptá, pak vedle kopií vytvoří přímý repozitář, například `s3:https://s3.eu-central-003.backblazeb2.com/bucket/container-direct`, a nasměruje na něj položku. U cíle kopií bez místa otevře volba dialog s navrhovanou adresou a testem připojení, který nic nezaloží, a **Vytvořit a použít** repozitář vytvoří. Přímý repozitář přebírá klíč místa, třídu úložiště, limity, nastavení append-only a uchovávání a mění se s nimi. Když nový klíč místa repozitář neotevře, přímý repozitář si ponechá klíč, který má, a uložení to oznámí. Jeho snímky nesou značku `bv:direct` a každý další běh uchovávání je ponechá, takže přímý repozitář, který ztratil spojení se svým místem, nikdy nestárne podle místních pravidel. Klíč B2 omezený na jednu složku musí pokrývat adresu místa, nejen složku domény, jinak je složka vedle mimo dosah.
 
-### Mimo objekt
+### Mimo objekt {#off-the-premises-mark}
 
-Pojmenovaný repozitář lze na kartě Repozitáře označit jako **Mimo objekt**. Vzdálené repozitáře začínají označené; vypněte to pro rest-server ve stejné budově. Označení se na kartách počítá jen do lokalit a 3-2-1. Žádnou kopii nemění.
+Kopie se počítá jako samostatná lokalita, jen když je její místo v jiné lokalitě. Cloudové místo se počítá vždy a složka na tomto Unraidu nikdy; u NAS, rest-serveru nebo serveru SFTP odpovězte v podrobnostech místa na **Kde je zařízení?** volbou **Tady v domě** nebo **V jiné lokalitě**. Odpověď se počítá jen do lokalit a 3-2-1 na kartách a na Přehledu. Žádnou kopii nemění.
 
 ### Po opětovném sestavení
 
-Volby kopírování žijí ve vlastním nastavení BombVaultu. Po opětovném sestavení přes Objevit zálohy bez obnoveného `/config` jsou pryč a kopírování všeho by znovu poslalo do B2 položky, které jste dřív vynechali. Replikace mimo lokalitu každé znovu sestavené domény se proto pozastaví. Přehled to zobrazí oranžově a Výchozí umístění nabídne **Potvrdit výchozí nastavení** s náhledem toho, co příští běh zkopíruje, a jmény v zálohách, které nemají žádnou položku, jež tam můžete vynechat. Pozastavení ukončí jen potvrzení; import souboru nastavení vrátí pravidla a výchozí hodnoty, ale pozastavení neukončí.
+Volby kopírování žijí ve vlastním nastavení BombVaultu. Po opětovném sestavení přes Objevit zálohy bez obnoveného `/config` jsou pryč a kopírování všeho by znovu poslalo do B2 položky, které jste dřív vynechali. Replikace mimo lokalitu každé znovu sestavené domény se proto pozastaví. Přehled to zobrazí oranžově a řádek domény na kartě Domény nabídne **Potvrdit výchozí nastavení** s náhledem toho, co příští běh zkopíruje, a jmény v zálohách, které nemají žádnou položku, jež tam můžete vynechat. Pozastavení ukončí jen potvrzení; import souboru nastavení vrátí pravidla a výchozí hodnoty, ale pozastavení neukončí.
 
-## Vzdálené primární repozitáře {#remote-primary-repositories}
+## Doména uložená na vzdáleném místě {#remote-primary-repositories}
 
-Cesta zálohy domény (Nastavení, Cesty a úložiště) se neomezuje na místní složku: nasměrujte ji rovnou na vzdálený repozitář resticu (`s3:...`, `rest:http://host:8000/repo`, `sftp:uživatel@host:/repo`, `rclone:remote:bucket/cesta`) a BombVault zálohuje přímo tam, bez samostatné místní kopie a bez kroku replikace. Je to opravdu jiný tvar než replikace mimo lokalitu výše: tam je primární místní repozitář a ten mimo lokalitu je jeho archivem podle možností; zde **je** primární ten vzdálený a je jedinou kopií, dokud pro tuto doménu nenastavíte i replikaci mimo lokalitu (nebo druhý vzdálený repozitář).
+Doména nemusí být uložena místně. Dokud její umístění záloh neobsahuje žádné zálohy, zvolte vzdálené místo pod **Uloženo v** na kartě Domény a doména bude zálohovat rovnou tam, bez místní kopie a bez kroku kopírování. Vzdálený repozitář je pak jedinou kopií, pokud se doména nekopíruje ještě na jiné místo. Každé vzdálené místo má stejné pojistky:
 
-Každé z pěti polí cesty (Kontejnery, Virtuální stroje, Flash, Konfigurace, Soubory) má hned vedle přepínač **Místní / Vzdálené**:
+- **Test připojení** dřív, než se cokoli zapíše.
+- **Limity šířky pásma** pro samotnou zálohu, tytéž přepínače `--limit-upload` a `--limit-download`, které používá kopie.
+- **Ochrana append-only**, ověřená stejným aktivním testem odolnosti. Když je zapnutá, BombVault repozitář nikdy neprořezává, protože přihlašovací údaje na tomto stroji nesmějí být schopné smazat jedinou kopii zálohy.
+- **Rozpočet růstu**, odvozený ze stejného trendu velikosti, který sleduje karta Úložiště.
 
-- **Místní** zobrazí známý prohlížeč složek.
-- **Vzdálené** jej vymění za prosté pole URL a tlačítko, které otevře stejné okno testu připojení a přihlašovacích údajů, jaké používají cíle mimo lokalitu, jen nastavené pro tento primární repozitář. Odtud získáte:
-    - **Test připojení** proti skutečné cestě, dřív než se na ni spolehnete.
-    - **Omezení šířky pásma** (odesílání a stahování), aby plánovaná záloha do vzdáleného primárního repozitáře nezahltila vaši linku WAN: tytéž přepínače resticu `--limit-upload` a `--limit-download`, které používá replikace mimo lokalitu, uplatněné na zálohu samotnou.
-    - **Ochranu append-only (neměnnost)**, ověřenou stejným aktivním testem manipulace (skutečná sonda DELETE proti druhé straně), jaký dostávají cíle mimo lokalitu. Když je zapnutá, BombVault odmítne repozitář prořezávat: protože za ním není samostatná místní kopie, přihlašovací údaje na tomto stroji nesmějí být schopné smazat jedinou kopii zálohy.
-    - **Výstrahu rozpočtu růstu**, odvozenou ze stejného trendu velikosti repozitáře, který karta Úložiště už sleduje.
+Doména uložená na vzdáleném místě je zdrojem svých kopií stejně jako místní; viz [Kopie mezi místy s různými přihlašovacími údaji](storage-places.md#different-credentials).
 
-Nic z toho není povinné: ručně zadaná vzdálená cesta bez uložených bezpečnostních nastavení zálohuje přesně jako dosud (neomezená šířka pásma, lze prořezávat, žádná výstraha rozpočtu). Bezpečnostní okno je tu pro chvíli, kdy chcete stejnou ochranu, jakou dostává kopie mimo lokalitu, aniž byste kvůli tomu museli zakládat samostatný cíl mimo lokalitu.
-
-!!! note "Přihlašovací údaje ke cloudu a REST jsou sdílené"
-    Vzdálený primární repozitář se ověřuje stejnými údaji S3/REST, které jsou nastavené v Nastavení, Mimo lokalitu, Přihlašovací údaje ke cloudu. Samostatné úložiště údajů pro primární repozitáře neexistuje.
+!!! note "Přihlašovací údaje patří místu"
+    Vzdálené místo má vlastní přihlašovací údaje. Místo nastavené se sdílenými přihlašovacími údaji ke cloudu je používá dál, dokud se jeho přístup nezmění v jeho podrobnostech.
 
 ## Neměnné (append-only) mimo lokalitu
 
 Označte repozitář mimo lokalitu jako append-only, aby ransomware nebo kompromitovaný hostitel nemohl smazat nebo přepsat vaše zálohy. Druhá strana (`restic/rest-server` běžící v režimu `--append-only`) to **vynucuje**. BombVault to pouze **ověřuje** a nikdy nezobrazí zelenou jen na základě konfiguračního tvrzení.
 
-Průvodce **řízeného nastavení mimo lokalitu** vás provede od volby backendu (rest-server / rclone / S3) přes připravený úryvek pro nasazení rest-serveru, test připojení, přepínač neměnnosti (který spustí test odolnosti okamžitě) a strategii uchovávání, takže append-only mimo lokalitu je dosažitelné bez ručního editování konfigurací.
+Okno **Přidat místo** obsahuje recept připravený ke vložení pro rest-server v režimu append-only s jedním uživatelem pro tento BombVault. Na místě typu rest-server se zapnutým **Append-only** spustí **Otestovat append-only** v podrobnostech místa test odolnosti pro každou doménu, kterou místo ukládá nebo kopíruje, takže append-only mimo lokalitu je dosažitelné bez ručního editování konfigurací.
 
 !!! note "Úspěšné smazání v `/locks/` je očekávané"
     Append-only neznamená, že už nelze nic smazat. restic musí zakládat a uvolňovat vlastní zámky, proto `/locks/` záměrně zůstává zapisovatelný a smazatelný. Snapshoty a data za nimi, tedy přesně to, na co by mířil ransomware, odstranit nelze. Pokud si vzdálenou stranu ověříš sám, úspěšné smazání v `/locks/` je správné chování, ne díra v ochraně.
@@ -118,28 +114,28 @@ Výše jsou popsány jednotlivé díly. Tohle je jedno úplné nastavení se sku
 
 Dva stroje: **TOWER** provozuje kontejnery a posílá zálohy, **VAULT** je přijímá a vynucuje neměnnost. Dosaďte vlastní názvy, adresy a cesty ke sdílení.
 
-**1. Na VAULT postavte server v režimu append-only.** V BombVaultu na TOWER jděte do *Nastavení → Mimo pracoviště → průvodce*, zvolte **rest-server** a vygenerujte recept. Zkopírujte kartu **Šablona Unraid (XML)**, uložte ji na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, pak *Docker → Add Container* a vyberte **rest-server** ze seznamu šablon. Před spuštěním zapište zobrazený řádek `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorázové heslo se zobrazí jen jednou a nikdy se neukládá: zkopírujte si ho teď. Ten řádek nese stejné heslo, už zahašované bcryptem: otevřený text patří do REST přihlašovacích údajů na TOWER, zahašovaný řádek do `.htpasswd` na VAULT. Sám nic hašovat nemusíš.
+**1. Na VAULT postavte server v režimu append-only.** V BombVaultu na TOWER otevřete *Nastavení → Úložiště*, klikněte na **Přidat místo**, zvolte **rest-server** a klikněte na **Zobrazit recept**. Zkopírujte blok **Šablona pro Unraid**, uložte ho na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, pak *Docker → Add Container* a vyberte **rest-server** ze seznamu šablon. Před spuštěním zapište zobrazený řádek `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Heslo se zobrazí jen jednou a nikdy se neukládá; recept ho i s uživatelem už vložil do formuláře na TOWER, takže to okno nechte otevřené. Řádek `htpasswd` nese stejné heslo, už zahašované bcryptem, takže sami nic hašovat nemusíte.
 
-    Nechte `--append-only` v poli OPTIONS. O to tu celou dobu jde: bez toho je VAULT zase obyčejné sdílení.
+    Nechte `--append-only` v poli OPTIONS. Bez něj je VAULT zase jen obyčejné sdílení.
 
-**2. Na TOWER na něj nasměrujte vzdálený repozitář.** URL repozitáře má tvar, který recept vypíše:
+**2. Na TOWER přidejte místo.** Zadejte adresu VAULT, `http://VAULT:8000`, k uživateli a heslu, které vyplnil recept, a klikněte na **Otestovat připojení**. BombVault z nich sestaví adresu:
 
-    rest:http://VAULT:8000/bombvault-containers/containers
+    rest:http://VAULT:8000/tower
 
-První část cesty je uživatel htpasswd, druhá je repozitář. Zadejte vygenerovaného uživatele a heslo jako přihlašovací údaje REST pro cíl a spusťte **test připojení**.
+První část cesty je uživatel htpasswd, zde `tower`, a každá doména pod ním dostane svou složku, například `rest:http://VAULT:8000/tower/container`. Na **Kde je zařízení?** odpovězte **V jiné lokalitě**, klikněte na **Přidat** a zaškrtněte místo pod **Kopírováno do** u domén, které tam mají jít.
 
-**3. Na TOWER zapněte «Neměnné».** Test manipulace proběhne hned a musí hlásit *chráněno*. Co odpovědi znamenají:
+**3. Na TOWER zapněte Append-only** v části **Ochrana** v podrobnostech místa a pak klikněte na **Otestovat append-only**. Test proběhne pro každou doménu, kterou místo ukládá nebo kopíruje, a každá musí hlásit *mazání odmítnuto*. Co odpovědi znamenají:
 
 | Výsledek | Co se stalo |
 | --- | --- |
-| **chráněno** | VAULT smazání odmítl. To je jediný vyhovující stav. |
-| **NENÍ chráněno** | VAULT smazání přijal. Chybí `--append-only`, nebo byl odebrán. |
-| **neprůkazné** | Ani jedno. Obvykle URL není ta, kterou používá sám restic, nebo se změnily přihlašovací údaje. Nic se nezaznamená a nespustí se žádné upozornění. |
+| **mazání odmítnuto** | VAULT smazání odmítl. To je jediný vyhovující stav. |
+| **mazání přijato** | VAULT smazání přijal. Chybí `--append-only`, nebo byl odebrán. |
+| zpráva místo výsledku | Test nemohl proběhnout. Obvykle adresa není ta, kterou používá sám restic, nebo se změnily přihlašovací údaje. Nic se nezaznamená a nespustí se žádné upozornění. |
 
 **4. Na VAULT sledujte, co přichází.** Zapněte *Nastavení → Příjemce*, otevřete kartu **Příjemce** a zaregistrujte repozitář jen pro čtení.
 
 !!! warning "Umístění je cesta **uvnitř** kontejneru, zapsaná relativně k připojení hostitele"
-    Zadejte `user/appdata/rest-server/bombvault-containers/containers`, **ne** `/mnt/user/appdata/…`. BombVault běží v kontejneru, kde je `/mnt` hostitele připojeno jinde; absolutní cesta hostitele tam neexistuje. Když ji vložíte, BombVault vám nyní sdělí relativní cestu, kterou máte použít.
+    Zadejte `user/appdata/rest-server/tower/container`, **ne** `/mnt/user/appdata/…`. BombVault běží v kontejneru, kde je `/mnt` hostitele připojeno jinde; absolutní cesta hostitele tam neexistuje. Když ji vložíte, BombVault vám sdělí relativní cestu, kterou máte použít.
 
     **Odesílající APP_KEY** je klíč stroje TOWER, ne VAULT. Najdete jej na TOWER v *Nastavení → Systém*.
 
@@ -151,7 +147,7 @@ Vyhrazená záložka **Obnova** provede čistou nebo znovu sestavenou instalaci 
 
 1. **Nejprve obnoví vlastní nastavení BombVaultu**, takže zálohovací cesty, cíle mimo lokalitu a přihlašovací údaje, které zbytek postupu potřebuje, přijdou předvyplněné (aplikováno přes sebe-restart přes Docker socket, takže se živá databáze nastavení nikdy nepřepisuje pod otevřeným handlem).
 2. **Zkontroluje, že BombVault umí číst vaše zálohy** (zádrhel se šifrovacím klíčem hned zkraje).
-3. Nechá vás **nasměrovat na váš existující repozitář** (místní nebo mimo lokalitu).
+3. Nechá vás **nasměrovat na váš existující repozitář**: místní složku, nebo vzdálené místo připojené přes stejné okno **Přidat místo** jako v Nastavení, Úložiště.
 4. **Objeví** kontejnery, VM a sady souborů v něm uložené.
 5. **Obnoví je všechny** (ponechané zastavené, takže je spustíte záměrně), s vaší sadou pro obnovu na jedno kliknutí.
 

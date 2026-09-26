@@ -24,12 +24,16 @@ import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
 import { RevealInput } from "../components/RevealInput";
 import { SelectField } from "../components/SelectField";
+import { PlaceMark } from "../components/placeMarks";
 import { useReveal } from "../lib/useReveal";
 import { useCloudCredSets } from "../lib/useCloudCredSets";
+import { usePlaces } from "../lib/usePlaces";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
+import { WindowActions } from "../components/WindowActions";
 import { ToggleRow } from "./settings/shared";
+import { CloudCredSetsCard } from "./pull/CloudCredSetsCard";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -185,7 +189,8 @@ function PullSourceCard({
   );
 }
 
-function PullDialog({
+// Exported for components/WindowActions.dom.test.tsx.
+export function PullDialog({
   initial,
   t,
   onClose,
@@ -210,6 +215,7 @@ function PullDialog({
   // one the refusal misleadingly names the APP_KEY.
   const [credsRef, setCredsRef] = useState(initial?.credsRef ?? "");
   const credSets = useCloudCredSets();
+  const places = usePlaces();
   const [limitDownload, setLimitDownload] = useState(initial?.limitDownload ?? 0);
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
@@ -273,122 +279,127 @@ function PullDialog({
           aria-modal="true"
           aria-label={title}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
+          className="flex max-h-[90vh] w-full flex-col rounded-card bg-carbon-surface shadow-2xl"
         >
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("pull.name")}</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder="tower next door"
-              className={inputCls}
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-5 pb-1">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-carbon-textSub">{t("pull.name")}</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+                placeholder="tower next door"
+                className={inputCls}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+                {t("pull.repoLocation")}
+                <InfoBubble tip={t("pull.repoLocationHint")} />
+              </span>
+              <input
+                type="text"
+                value={repo}
+                onChange={(e) => setRepo(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+                dir="ltr"
+                placeholder="rest:http://192.168.1.9:8000/their-containers"
+                className={inputCls}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+                {t("pull.appKey")}
+                <InfoBubble tip={t("pull.appKeyHint")} />
+              </span>
+              <RevealInput
+                {...revealAppKey}
+                value={appKey}
+                onChange={(e) => setAppKey(e.target.value.trim())}
+                spellCheck={false}
+                autoComplete="off"
+                dir="ltr"
+                placeholder={editing ? "••••••••" : "64 hex"}
+                wrapperClassName="w-full"
+                className={inputCls}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+                {t("offsite.targets.credsLabel")}
+                <InfoBubble tip={t("pull.credsHint")} />
+              </span>
+              <SelectField
+                value={credsRef}
+                onChange={setCredsRef}
+                label={t("offsite.targets.credsLabel")}
+                options={[
+                  // Unlike on an off-site target, "" is not the shared default: a
+                  // pull never falls back to this box's credentials.
+                  { value: "", label: t("pull.credsNone") },
+                  ...credSets.map((c) => {
+                    const owner = places.find((p) => p.credsRef === c.id);
+                    return { value: c.id, label: owner?.name ?? c.name, glyph: owner ? <PlaceMark provider={owner.provider} /> : undefined };
+                  }),
+                ]}
+                className={inputCls}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+                {t("pull.domain")}
+                <InfoBubble tip={t("pull.domainHint")} />
+              </span>
+              <SelectField
+                value={domain}
+                onChange={setDomain}
+                label={t("pull.domain")}
+                options={DOMAINS.map((d) => ({ value: d, label: t(`nav.${d}` as never) }))}
+                className={inputCls}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+                {t("pull.cadence")}
+                <InfoBubble tip={t("pull.cadenceHint")} />
+              </span>
+              <input
+                type="text"
+                value={cadence}
+                onChange={(e) => setCadence(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+                placeholder="daily 04:00"
+                className={inputCls}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5 max-w-48">
+              <label className="text-xs text-carbon-textSub">{t("pull.limitDownload")}</label>
+              <NumberField
+                min={0}
+                value={limitDownload}
+                onChange={(e) => setLimitDownload(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                className={inputCls}
+              />
+            </div>
+
+            <ToggleRow
+              label={t("pull.pullFrom")}
+              checked={enabled}
+              onChange={setEnabled}
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("pull.repoLocation")}
-              <InfoBubble tip={t("pull.repoLocationHint")} />
-            </span>
-            <input
-              type="text"
-              value={repo}
-              onChange={(e) => setRepo(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              dir="ltr"
-              placeholder="rest:http://192.168.1.9:8000/their-containers"
-              className={inputCls}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("pull.appKey")}
-              <InfoBubble tip={t("pull.appKeyHint")} />
-            </span>
-            <RevealInput
-              {...revealAppKey}
-              value={appKey}
-              onChange={(e) => setAppKey(e.target.value.trim())}
-              spellCheck={false}
-              autoComplete="off"
-              dir="ltr"
-              placeholder={editing ? "••••••••" : "64 hex"}
-              wrapperClassName="w-full"
-              className={inputCls}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("offsite.targets.credsLabel")}
-              <InfoBubble tip={t("pull.credsHint")} />
-            </span>
-            <SelectField
-              value={credsRef}
-              onChange={setCredsRef}
-              label={t("offsite.targets.credsLabel")}
-              options={[
-                // Unlike on an off-site target, "" is not the shared default: a
-                // pull never falls back to this box's credentials.
-                { value: "", label: t("pull.credsNone") },
-                ...credSets.map((c) => ({ value: c.id, label: c.name })),
-              ]}
-              className={inputCls}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("pull.domain")}
-              <InfoBubble tip={t("pull.domainHint")} />
-            </span>
-            <SelectField
-              value={domain}
-              onChange={setDomain}
-              label={t("pull.domain")}
-              options={DOMAINS.map((d) => ({ value: d, label: t(`nav.${d}` as never) }))}
-              className={inputCls}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("pull.cadence")}
-              <InfoBubble tip={t("pull.cadenceHint")} />
-            </span>
-            <input
-              type="text"
-              value={cadence}
-              onChange={(e) => setCadence(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder="daily 04:00"
-              className={inputCls}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5 max-w-48">
-            <label className="text-xs text-carbon-textSub">{t("pull.limitDownload")}</label>
-            <NumberField
-              min={0}
-              value={limitDownload}
-              onChange={(e) => setLimitDownload(Math.max(0, parseInt(e.target.value, 10) || 0))}
-              className={inputCls}
-            />
-          </div>
-
-          <ToggleRow
-            label={t("pull.pullFrom")}
-            checked={enabled}
-            onChange={setEnabled}
-          />
-
-          <div className="flex items-center justify-end gap-2 pt-1">
+          <WindowActions>
             <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onClose} />
             <Button
               key={shake || 0}
@@ -400,7 +411,7 @@ function PullDialog({
               busy={saving}
               className={shake ? "glim-shake" : ""}
             />
-          </div>
+          </WindowActions>
         </div>
       </div>
     </div>,
@@ -496,6 +507,9 @@ export function Pull({ embedded = false }: { embedded?: boolean } = {}) {
           ))}
         </div>
       )}
+
+      {/* The next hue after the source cards, which take 0 to n-1, or after the empty card's 0. */}
+      <CloudCredSetsCard t={t} hueIndex={Math.max(sources.length, 1)} />
 
       {dialog !== null && (
         <PullDialog

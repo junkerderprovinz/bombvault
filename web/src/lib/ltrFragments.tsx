@@ -92,11 +92,6 @@ export function withLtrIsolates(text: string, fragments: readonly string[]): str
   return parts.map((p) => (p.wrapped ? `${LRI}${p.text}${PDI}` : p.text)).join("");
 }
 
-/** offsite.repoLocalHint's standalone `/mnt` and its full example path. The
- *  relative "remotes/nas/bombvault" starts with a letter and needs no
- *  wrapping. */
-export const REPO_LOCAL_HINT_LTR_FRAGMENTS = ["/mnt/remotes/nas/bombvault", "/mnt"] as const;
-
 /** excludes.hint's leading-`/` example path. `.git` and `{a,b}` elsewhere in
  *  the same sentence start with a non-`/` character and already render
  *  correctly untouched. */
@@ -143,7 +138,6 @@ export const CRON_EXAMPLE_LTR_FRAGMENTS = ["0 */6 * * *"] as const;
  * and derives from en which keys need an entry.
  */
 export const LTR_FRAGMENTS_BY_KEY = {
-  "offsite.repoLocalHint": REPO_LOCAL_HINT_LTR_FRAGMENTS,
   "excludes.hint": EXCLUDES_HINT_LTR_FRAGMENTS,
   "recovery.foreignAppdataDestHint": FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS,
   "config.backupHint": CONFIG_VOLUME_LTR_FRAGMENTS,

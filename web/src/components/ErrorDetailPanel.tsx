@@ -17,6 +17,7 @@ import { formatTs, relativeTime } from "../lib/reltime";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { IconClose } from "./Sidebar";
+import { WindowActions } from "./WindowActions";
 
 // The domain filter uses the Activity Log's plural values (containers, vms),
 // while a Run carries the singular tag (container, vm). flash, config, files
@@ -166,32 +167,14 @@ export function ErrorDetailPanel({
         aria-labelledby="errorpanel-title"
         className="glim-modal-card relative flex max-h-[85vh] w-full max-w-3xl flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-carbon-border px-5 py-4">
+        <div className="flex items-start px-5 py-4">
           <h2 id="errorpanel-title" className="flex items-center">
             <Badge tone="heading" size="heading" wrap>{t("errorPanel.title")}</Badge>
           </h2>
-          <div className="flex items-center gap-2">
-            <Button
-              label={t("errorPanel.resolveAll")}
-              labelKey="errorPanel.resolveAll"
-              tone="neutral"
-              onClick={() => acknowledge({ all: true })}
-              disabled={busy || groups.length === 0}
-            />
-            <Button
-              ref={closeRef}
-              label={t("common.close")}
-              labelKey="common.close"
-              glyph={<IconClose />}
-              tone="neutral"
-              onClick={onClose}
-              className="shrink-0"
-            />
-          </div>
         </div>
 
         {/* The same text, domain and type filters as the Activity Log. */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-carbon-border px-5 py-3">
+        <div className="flex flex-wrap items-center gap-2 px-5 py-3">
           <input
             type="text"
             value={filterText}
@@ -223,7 +206,7 @@ export function ErrorDetailPanel({
             <p className="text-sm text-carbon-textMuted">{t("errorPanel.empty")}</p>
           )}
           {!loading && groups.length > 0 && (
-            <div className="divide-y divide-carbon-border">
+            <div>
               {groups.map((g) => (
                 <div key={g.key || "(none)"} className="flex flex-col gap-1.5 py-3">
                   <div className="flex items-start justify-between gap-3">
@@ -261,6 +244,24 @@ export function ErrorDetailPanel({
             </div>
           )}
         </div>
+
+        <WindowActions>
+          <Button
+            ref={closeRef}
+            label={t("common.close")}
+            labelKey="common.close"
+            glyph={<IconClose />}
+            tone="neutral"
+            onClick={onClose}
+          />
+          <Button
+            label={t("errorPanel.resolveAll")}
+            labelKey="errorPanel.resolveAll"
+            tone="neutral"
+            onClick={() => acknowledge({ all: true })}
+            disabled={busy || groups.length === 0}
+          />
+        </WindowActions>
       </div>
     </div>,
     document.body

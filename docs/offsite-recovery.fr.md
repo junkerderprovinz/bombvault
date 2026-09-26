@@ -4,13 +4,13 @@ Les sauvegardes locales vous protègent d'un conteneur perdu ou d'une mauvaise m
 
 ## Réplication hors site
 
-Conservez la sauvegarde locale rapide et ajoutez un ou plusieurs réplicas hors site. Définissez un dépôt par domaine dans l'onglet **Paramètres, Hors site**. BombVault y réplique les nouveaux instantanés avec `restic copy` au mieux, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Le dépôt local reste principal.
+Conservez la sauvegarde locale rapide et copiez-la vers un ou plusieurs autres lieux. Vous choisissez les lieux vers lesquels un domaine est copié sur la carte **Domaines** sous **Paramètres, Stockage**, un chip par lieu (voir [Lieux de stockage](storage-places.md#domains)). BombVault y copie les nouveaux instantanés avec `restic copy` au mieux, de sorte qu'une copie échouée ne fait jamais échouer la sauvegarde locale. Le lieu où un domaine est stocké n'a pas besoin d'être local ; voir [Un domaine stocké dans un lieu distant](#remote-primary-repositories).
 
-- **Plusieurs cibles hors site par domaine.** Chaque domaine (conteneurs, VMs, flash, config et jeux de fichiers) peut répliquer vers plusieurs destinations hors site à la fois, pas seulement une, de sorte que vous pouvez garder, par exemple, un rest-server sur la machine d'un ami et un bucket S3 en parallèle. Ajoutez des cibles supplémentaires dans Paramètres, Hors site, chacune avec son propre dépôt, sa classe de stockage S3, son indicateur append-only, sa rétention et son budget de croissance. Une configuration hors site unique existante est reprise intacte comme première cible, et chaque cible d'un domaine réplique selon le planning hors site de ce domaine.
-- **Planning hors site par domaine** (édité aux côtés de tous les autres plannings dans Paramètres, Plannings) : laissez-le vide pour répliquer après chaque sauvegarde locale, ou définissez une cadence (par exemple `weekly Sun 03:00`) pour expédier hors site moins souvent que vous ne sauvegardez localement. Un bouton **Répliquer maintenant** couvre les exécutions à la demande.
-- **La rétention hors site** vit dans Paramètres, Hors site afin que vous puissiez garder les copies hors site plus longtemps comme archive. Laissez la politique entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site.
-- **Les limites de bande passante** (Paramètres, Hors site) plafonnent le débit d'envoi/de téléchargement de restic afin que la réplication ne sature pas votre WAN.
-- Un **indicateur de réplication** montre quel domaine réplique pendant qu'elle s'exécute (sur sa page et le tableau de bord). C'est un indicateur d'activité, pas une barre de pourcentage, car `restic copy` n'expose aucune progression lisible par machine.
+- **Plusieurs lieux de copie par domaine.** Un domaine peut être copié vers plusieurs lieux à la fois, par exemple un rest-server chez un ami et un bucket B2. La rétention, la classe de stockage, l'append-only, les limites et le budget de croissance appartiennent au lieu, de sorte que chaque copie suit les règles du lieu où elle arrive.
+- **Planning de copie par domaine** (édité aux côtés de tous les autres plannings dans Paramètres, Plannings) : laissez-le vide pour copier après chaque sauvegarde locale, ou définissez une cadence (par exemple `weekly Sun 03:00`) pour copier moins souvent que vous ne sauvegardez. **Copier maintenant** sur la ligne du domaine le lance à la demande.
+- **Rétention par lieu.** Chaque lieu garde ses propres règles, de sorte qu'un lieu hors site peut garder les copies plus longtemps comme archive. Un lieu dont toutes les règles sont à zéro ne rogne jamais.
+- **Les limites de bande passante** par lieu plafonnent le débit d'envoi et de téléchargement de restic afin que la copie ne sature pas votre WAN.
+- Un **indicateur de réplication** montre quel domaine copie pendant que la copie s'exécute (sur sa page et le tableau de bord). C'est un indicateur d'activité, pas une barre de pourcentage, car `restic copy` n'expose aucune progression lisible par machine.
 
 !!! note "Restaurer depuis n'importe quel endroit"
     Chaque conteneur, VM, jeu de fichiers, le flash et la configuration de l'application listent leurs sauvegardes comme une seule chronologie à travers tous les endroits où se trouve une sauvegarde. Une sauvegarde copiée vers B2 apparaît une fois, marquée avec chaque endroit qui la détient. Une restauration prend le premier endroit qu'elle peut atteindre, en commençant par le dépôt où l'élément est écrit, et vous pouvez choisir un autre endroit par ligne. Les endroits hors site ne sont lus que lorsque vous les ouvrez. Supprimer à un endroit vérifie d'abord les autres et dit si c'était la dernière copie.
@@ -21,53 +21,49 @@ Chaque carte de conteneur, VM et jeu de fichiers a une ligne **Emplacement** ave
 
 - **Local** écrit l'élément dans le dépôt indiqué sous **Stocké sur** et ne le copie nulle part. Utilisez-le pour des données qui ont déjà une seconde copie, par exemple un partage qui vit sur un NAS.
 - **Local + hors site** l'écrit là aussi et le copie vers les cibles cochées sous **Copier vers**, un chip par cible hors site du domaine. Décochez un chip et cette cible ne reçoit plus rien de nouveau de cet élément.
-- **Hors site uniquement** écrit l'élément directement à l'endroit indiqué sous **Envoyer vers** : un dépôt direct à côté d'une cible hors site, ou un dépôt distant que vous avez configuré sous Paramètres, Chemins et stockage, Dépôts.
+- **Hors site uniquement** écrit l'élément directement dans le lieu indiqué sous **Envoyer vers**, n'importe quel lieu autre que le lieu principal du domaine. Si le domaine est déjà copié vers ce lieu, l'élément reçoit un dépôt direct à côté des copies ; sinon, BombVault y crée un dépôt pour le domaine.
 
 L'emplacement est fixé dès la première sauvegarde de l'élément, parce que BombVault ne déplace jamais les sauvegardes entre dépôts. Les copies peuvent changer à tout moment. Une cible qui ne reçoit plus un élément conserve les copies qu'elle a et les ramène à sa propre rétention à la prochaine exécution hors site du domaine ; **Supprimer dans B2** sur la carte les supprime aussitôt. Quand certaines de ces copies n'existent nulle part ailleurs, la confirmation les liste par date et demande le nom de l'élément. On ne peut rien supprimer des cibles en ajout seul.
 
-Sous la ligne, la carte dit où va l'élément et ce qui s'y trouve réellement : combien de sites le détiennent, quand chaque cible a été vue pour la dernière fois, et si 3-2-1 est respectée. Un site est le serveur avec les données d'origine, chaque cible hors site et chaque dépôt marqué **Hors des locaux**. BombVault vérifie les copies et les sites ; il ne vérifie pas la partie « deux supports » de 3-2-1.
+Sous la ligne, la carte dit où va l'élément et ce qui s'y trouve réellement : combien de sites le détiennent, quand chaque cible a été vue pour la dernière fois, et si 3-2-1 est respectée. Un site est le serveur avec les données d'origine et chaque lieu situé sur un autre site (voir [Hors des locaux](#off-the-premises-mark)). BombVault vérifie les copies et les sites ; il ne vérifie pas la partie « deux supports » de 3-2-1.
 
-### Emplacements par défaut
+### Valeurs par défaut par domaine
 
-Paramètres, Chemins et stockage, **Emplacements par défaut** a une ligne par domaine avec les mêmes trois segments. Les copies s'appliquent aussitôt à chaque élément sans choix propre, et aux dossiers de projet des piles Compose. L'emplacement s'applique à un nouvel élément à sa première sauvegarde ; le changer ne déplace aucune sauvegarde. Avant d'enregistrer, la ligne nomme chaque cible qui gagne ou perd des éléments et combien d'instantanés cela représente. **Appliquer aux éléments sans sauvegarde** remet au défaut chaque élément qui n'a pas encore de sauvegarde.
+La carte **Domaines** sous Paramètres, Stockage a une ligne par domaine. **Copié vers** s'applique aussitôt à chaque élément sans choix propre, et aux dossiers de projet des piles Compose. Dès qu'un domaine a des sauvegardes, **Stocké dans** s'applique à un nouvel élément à sa première sauvegarde, et le changer ne déplace aucune sauvegarde. Avant d'enregistrer, la ligne nomme chaque lieu qui gagne ou perd des éléments et combien d'instantanés cela représente, et la question porte l'interrupteur **Appliquer aux éléments sans sauvegarde**, qui remet aussi sur la nouvelle valeur par défaut chaque élément qui n'a pas encore de sauvegarde. **Exceptions** liste les éléments qui ont fait leur propre choix.
 
-Une nouvelle cible hors site reçoit chaque élément qui n'est pas réglé sur Local. La boîte de dialogue qui l'ajoute dit combien d'éléments et, quand c'est connu, combien d'historique cela représente, et propose de laisser de côté les éléments déjà exclus des autres cibles.
+Cocher un nouveau lieu sous **Copié vers** lui fait recevoir chaque élément qui n'est pas réglé sur Local. La confirmation dit combien d'éléments et, quand c'est connu, combien d'historique cela représente.
 
 ### Dépôts directs
 
-Choisir le dépôt direct d'une cible sous Hors site uniquement ouvre une boîte de dialogue avec un emplacement suggéré à côté de la cible, par exemple `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, et un test de connexion qui ne crée rien. **Créer et utiliser** crée le dépôt et y pointe l'élément. Un dépôt direct reprend la clé, la classe de stockage, les limites, le réglage append-only et la rétention de la cible, et change avec eux ; la carte Dépôts l'affiche en lecture seule. Quand une nouvelle clé de la cible ne peut pas l'ouvrir, le dépôt direct conserve la clé qu'il a et l'enregistrement le signale. Ses instantanés portent le tag `bv:direct`, et chaque autre passage de rétention les conserve, si bien qu'un dépôt direct qui a perdu son lien avec sa cible ne vieillit jamais selon les règles locales. B2 se joint via son point de terminaison S3, avec l'ID de clé et la clé d'application saisis comme identifiants S3 ; une clé limitée au dossier propre de la cible ne peut pas atteindre le dossier voisin, limitez donc plutôt la clé au dossier au-dessus de la cible.
+Choisir sous Hors site uniquement un lieu vers lequel le domaine est déjà copié demande une confirmation, puis crée un dépôt direct à côté des copies, par exemple `s3:https://s3.eu-central-003.backblazeb2.com/bucket/container-direct`, et y pointe l'élément. Pour une cible de copie sans lieu, ce choix ouvre une boîte de dialogue avec une adresse suggérée et un test de connexion qui ne crée rien, et **Créer et utiliser** crée le dépôt. Un dépôt direct reprend la clé, la classe de stockage, les limites, le réglage append-only et la rétention du lieu, et change avec eux. Quand une nouvelle clé du lieu ne peut pas l'ouvrir, le dépôt direct conserve la clé qu'il a et l'enregistrement le signale. Ses instantanés portent le tag `bv:direct`, et chaque autre passage de rétention les conserve, si bien qu'un dépôt direct qui a perdu son lien avec son lieu ne vieillit jamais selon les règles locales. Une clé B2 limitée à un dossier doit couvrir l'adresse du lieu, pas seulement le dossier du domaine, sinon le dossier voisin reste hors de portée.
 
-### Hors des locaux
+### Hors des locaux {#off-the-premises-mark}
 
-Un dépôt nommé peut être marqué **Hors des locaux** sur la carte Dépôts. Les dépôts distants démarrent marqués ; désactivez-le pour un rest-server dans le même bâtiment. La marque compte seulement pour les sites et le 3-2-1 sur les cartes. Elle ne change aucune copie.
+Une copie compte comme un site à part entière seulement quand son lieu se trouve sur un autre site. Un lieu cloud compte toujours et un dossier sur cet Unraid jamais ; pour un NAS, un rest-server ou un serveur SFTP, répondez à **Où se trouve l'appareil ?** dans les détails du lieu par **Ici, dans les locaux** ou **Sur un autre site**. La réponse compte seulement pour les sites et le 3-2-1 sur les cartes et le tableau de bord. Elle ne change aucune copie.
 
 ### Après une reconstruction
 
-Les choix de copie vivent dans les propres réglages de BombVault. Après une reconstruction via Découvrir sans un `/config` restauré, ils ont disparu, et tout copier renverrait vers B2 les éléments que vous aviez laissés de côté. La réplication hors site de chaque domaine reconstruit se met donc en pause. Le tableau de bord le montre en orange, et Emplacements par défaut propose **Confirmer la valeur par défaut** avec un aperçu de ce que copie la prochaine exécution et les noms dans les sauvegardes qui n'ont pas d'entrée, que vous pouvez laisser de côté à cet endroit. Seule la confirmation met fin à la pause ; importer un fichier de réglages ramène les règles et les valeurs par défaut mais n'y met pas fin.
+Les choix de copie vivent dans les propres réglages de BombVault. Après une reconstruction via Découvrir sans un `/config` restauré, ils ont disparu, et tout copier renverrait vers B2 les éléments que vous aviez laissés de côté. La réplication hors site de chaque domaine reconstruit se met donc en pause. Le tableau de bord le montre en orange, et la ligne du domaine sur la carte Domaines propose **Confirmer la valeur par défaut** avec un aperçu de ce que copie la prochaine exécution et les noms dans les sauvegardes qui n'ont pas d'entrée, que vous pouvez laisser de côté à cet endroit. Seule la confirmation met fin à la pause ; importer un fichier de réglages ramène les règles et les valeurs par défaut mais n'y met pas fin.
 
-## Dépôts primaires distants {#remote-primary-repositories}
+## Un domaine stocké dans un lieu distant {#remote-primary-repositories}
 
-Le chemin de sauvegarde d'un domaine (Paramètres, Chemins et stockage) ne se limite pas à un dossier local : pointez-le directement vers un dépôt restic distant (`s3:...`, `rest:http://hôte:8000/depot`, `sftp:utilisateur@hôte:/depot`, `rclone:remote:bucket/chemin`) et BombVault y sauvegarde directement, sans copie locale séparée ni étape de réplication. C'est une forme vraiment différente de la réplication hors site vue plus haut : là, le dépôt local est primaire et le dépôt hors site en est une archive au mieux ; ici, le dépôt distant **est** le primaire, et c'est la seule copie tant que vous n'ajoutez pas aussi une réplication hors site (ou un second dépôt distant) pour ce domaine.
+Un domaine n'a pas besoin d'être stocké localement. Tant que son emplacement de sauvegarde ne contient aucune sauvegarde, choisissez un lieu distant sous **Stocké dans** sur la carte Domaines, et le domaine sauvegarde directement vers ce lieu, sans copie locale ni étape de copie. Le dépôt distant est alors la seule copie, sauf si le domaine est aussi copié vers un autre lieu. Chaque lieu distant offre les mêmes garde-fous :
 
-Chacun des cinq champs de chemin (Conteneurs, VM, Flash, Configuration, Fichiers) porte juste à côté un commutateur **Local / Distant** :
+- **Un test de connexion** avant que quoi que ce soit ne soit écrit.
+- **Des limites de bande passante** pour la sauvegarde elle-même, les mêmes options `--limit-upload` et `--limit-download` qu'utilise une copie.
+- **Une protection append-only**, vérifiée par le même test de sabotage actif. Quand elle est activée, BombVault n'élague jamais le dépôt, car les identifiants de cette machine ne doivent pas pouvoir supprimer l'unique copie de la sauvegarde.
+- **Un budget de croissance**, tiré de la même tendance de taille que suit la carte Stockage.
 
-- **Local** affiche l'explorateur de dossiers habituel.
-- **Distant** le remplace par un simple champ d'URL, plus un bouton qui ouvre la même boîte de dialogue de test de connexion et d'identifiants que les destinations hors site, mais configurée pour ce dépôt primaire. Vous y trouvez :
-    - **Un test de connexion** contre le chemin réel, avant de vous y fier.
-    - **Des limites de bande passante** (envoi et réception) pour qu'une sauvegarde planifiée vers un primaire distant ne sature pas votre liaison WAN : les mêmes options restic `--limit-upload` et `--limit-download` qu'utilise la réplication hors site, appliquées cette fois à la sauvegarde elle-même.
-    - **Une protection append-only (immuabilité)**, vérifiée par le même test d'altération actif (une véritable sonde DELETE contre l'autre bout) dont bénéficient les destinations hors site. Activée, elle interdit à BombVault d'élaguer le dépôt lui-même : comme aucune copie locale séparée ne se trouve derrière, les identifiants de cette machine ne doivent pas pouvoir supprimer l'unique copie de la sauvegarde.
-    - **Une alerte de budget de croissance**, tirée de la même tendance de taille du dépôt que suit déjà la carte Stockage.
+Un domaine stocké dans un lieu distant est la source de ses copies, comme un domaine local ; voir [Copies entre lieux aux identifiants différents](storage-places.md#different-credentials).
 
-Rien de tout cela n'est obligatoire : un chemin distant saisi à la main, sans réglages de sécurité enregistrés, sauvegarde exactement comme avant (bande passante illimitée, élagage possible, pas d'alerte de budget). La boîte de dialogue de sécurité est là pour le jour où vous voulez les mêmes protections qu'une copie hors site, sans devoir créer une destination hors site rien que pour cela.
-
-!!! note "Les identifiants cloud et REST sont partagés"
-    Un dépôt primaire distant s'authentifie avec les mêmes identifiants S3/REST configurés sous Paramètres, Hors site, Identifiants cloud. Il n'existe pas de magasin d'identifiants distinct pour les dépôts primaires.
+!!! note "Les identifiants appartiennent au lieu"
+    Un lieu distant garde ses propres identifiants. Un lieu configuré avec les identifiants cloud partagés continue de les utiliser jusqu'à ce que son accès soit modifié dans ses détails.
 
 ## Hors site immuable (append-only)
 
 Marquez un dépôt hors site en append-only afin qu'un rançongiciel, ou un hôte compromis, ne puisse ni supprimer ni réécrire vos sauvegardes. Le côté distant (un `restic/rest-server` s'exécutant en mode `--append-only`) l'**impose**. BombVault ne fait que le **vérifier** et n'affiche jamais du vert sur la seule foi d'une déclaration de configuration.
 
-L'assistant de **configuration hors site guidée** vous accompagne du choix du backend (rest-server / rclone / S3) jusqu'à un extrait de déploiement rest-server prêt à coller, un test de connexion, la bascule d'immuabilité (qui lance le test de sabotage immédiatement) et une stratégie de rétention, de sorte que le hors site append-only soit accessible sans édition manuelle des configs.
+La fenêtre **Ajouter un lieu** contient une recette prête à coller pour un rest-server en mode append-only, avec un utilisateur pour ce BombVault. Sur un lieu rest-server avec **Append-only** activé, **Tester append-only** dans les détails du lieu lance le test de sabotage pour chaque domaine que le lieu stocke ou copie, de sorte que le hors site append-only soit accessible sans édition manuelle des configs.
 
 !!! note "Une suppression réussie sous `/locks/` est attendue"
     Append-only ne signifie pas que plus rien ne peut être supprimé. restic doit poser et relâcher ses propres verrous, `/locks/` reste donc volontairement accessible en écriture et en suppression. Les snapshots et les données derrière eux, précisément ce que viserait un rançongiciel, ne peuvent pas être supprimés. Si vous sondez vous-même le serveur distant, une suppression qui réussit sous `/locks/` est le comportement correct et non une faille.
@@ -118,28 +114,28 @@ Ce qui précède décrit les pièces. Voici une installation complète avec de v
 
 Deux machines : **TOWER** fait tourner les conteneurs et envoie les sauvegardes, **VAULT** les reçoit et impose l'immuabilité. Remplacez par vos propres noms, adresses et chemins de partage.
 
-**1. Sur VAULT, mettez en place le serveur append-only.** Dans BombVault sur TOWER, allez dans *Paramètres → Hors site → configuration guidée*, choisissez **rest-server** et générez la recette. Copiez l'onglet **Modèle Unraid (XML)**, enregistrez-le sur VAULT sous `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, puis *Docker → Add Container* et choisissez **rest-server** dans la liste des modèles. Avant de le démarrer, écrivez la ligne `htpasswd` affichée dans `/mnt/user/appdata/rest-server/.htpasswd` sur VAULT. Le mot de passe à usage unique n'est affiché qu'une fois et n'est jamais conservé : copiez-le maintenant. Cette ligne porte le même mot de passe, déjà haché en bcrypt pour vous : le texte en clair va dans les identifiants REST sur TOWER, la ligne hachée dans le `.htpasswd` sur VAULT. Vous n'avez rien à hacher vous-même.
+**1. Sur VAULT, mettez en place le serveur append-only.** Dans BombVault sur TOWER, ouvrez *Paramètres → Stockage*, cliquez sur **Ajouter un lieu**, choisissez **rest-server** et cliquez sur **Afficher la recette**. Copiez le bloc **Modèle Unraid**, enregistrez-le sur VAULT sous `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, puis *Docker → Add Container* et choisissez **rest-server** dans la liste des modèles. Avant de le démarrer, écrivez la ligne `htpasswd` affichée dans `/mnt/user/appdata/rest-server/.htpasswd` sur VAULT. Le mot de passe n'est affiché qu'une fois et n'est jamais conservé ; la recette l'a déjà reporté, avec l'utilisateur, dans le formulaire sur TOWER, laissez donc cette fenêtre ouverte. La ligne `htpasswd` porte le même mot de passe, déjà haché en bcrypt pour vous, vous n'avez donc rien à hacher vous-même.
 
-    Laissez `--append-only` dans le champ OPTIONS. C'est tout l'intérêt : sans lui, VAULT redevient un partage ordinaire.
+    Laissez `--append-only` dans le champ OPTIONS. Sans lui, VAULT n'est plus qu'un partage ordinaire.
 
-**2. Sur TOWER, pointez le dépôt hors site dessus.** L'URL du dépôt suit le modèle imprimé par la recette :
+**2. Sur TOWER, ajoutez le lieu.** Saisissez l'adresse de VAULT, `http://VAULT:8000`, à côté de l'utilisateur et du mot de passe que la recette a remplis, puis cliquez sur **Tester la connexion**. BombVault construit l'adresse à partir de ces informations :
 
-    rest:http://VAULT:8000/bombvault-containers/containers
+    rest:http://VAULT:8000/tower
 
-Le premier segment du chemin est l'utilisateur htpasswd, le second le dépôt. Saisissez l'utilisateur et le mot de passe générés comme identifiants REST de la destination, puis lancez le **test de connexion**.
+Le premier segment du chemin est l'utilisateur htpasswd, ici `tower`, et chaque domaine reçoit son dossier en dessous, par exemple `rest:http://VAULT:8000/tower/container`. Répondez à **Où se trouve l'appareil ?** par **Sur un autre site**, cliquez sur **Ajouter**, et cochez le lieu sous **Copié vers** pour les domaines qui doivent y aller.
 
-**3. Sur TOWER, activez « Immuable ».** Le test d'altération s'exécute immédiatement et doit indiquer *protégé*. Ce que signifient les réponses :
+**3. Sur TOWER, activez Append-only** sous **Protection** dans les détails du lieu, puis cliquez sur **Tester append-only**. Le test s'exécute pour chaque domaine que le lieu stocke ou copie, et chacun doit indiquer *suppressions refusées*. Ce que signifient les réponses :
 
 | Résultat | Ce qui s'est passé |
 | --- | --- |
-| **protégé** | VAULT a refusé la suppression. C'est le seul état qui passe. |
-| **NON protégé** | VAULT a accepté une suppression. `--append-only` manque ou a été retiré. |
-| **non concluant** | Ni l'un ni l'autre. En général, l'URL n'est pas celle qu'utilise restic lui-même, ou les identifiants ont changé. Rien n'est enregistré et aucune alerte n'est déclenchée. |
+| **suppressions refusées** | VAULT a refusé la suppression. C'est le seul état qui passe. |
+| **suppressions acceptées** | VAULT a accepté une suppression. `--append-only` manque ou a été retiré. |
+| un message au lieu d'un résultat | Le test n'a pas pu s'exécuter. En général, l'adresse n'est pas celle qu'utilise restic lui-même, ou les identifiants ont changé. Rien n'est enregistré et aucune alerte n'est déclenchée. |
 
 **4. Sur VAULT, regardez ce qui arrive.** Activez *Paramètres → Récepteur*, ouvrez l'onglet **Récepteur** et enregistrez le dépôt en lecture seule.
 
 !!! warning "L'emplacement est un chemin **à l'intérieur** du conteneur, écrit relativement au montage hôte"
-    Saisissez `user/appdata/rest-server/bombvault-containers/containers`, et **non** `/mnt/user/appdata/…`. BombVault s'exécute dans un conteneur où le `/mnt` de l'hôte est monté ailleurs ; un chemin hôte absolu n'y existe pas. Si vous en collez un, BombVault vous indique désormais le chemin relatif à utiliser.
+    Saisissez `user/appdata/rest-server/tower/container`, et **non** `/mnt/user/appdata/…`. BombVault s'exécute dans un conteneur où le `/mnt` de l'hôte est monté ailleurs ; un chemin hôte absolu n'y existe pas. Si vous en collez un, BombVault vous indique le chemin relatif à utiliser.
 
     L'**APP_KEY d'envoi** est la clé de TOWER, pas celle de VAULT. Vous la trouvez sur TOWER sous *Paramètres → Système*.
 
@@ -151,7 +147,7 @@ Un onglet **Récupération** dédié accompagne une installation neuve ou recons
 
 1. **Restaure d'abord les propres réglages de BombVault**, afin que les chemins de sauvegarde, les cibles hors site et les identifiants dont le reste du flux a besoin soient pré-remplis (appliqué via un auto-redémarrage sur le socket Docker, de sorte que la base de réglages active n'est jamais écrasée sous un handle ouvert).
 2. **Vérifie que BombVault peut lire vos sauvegardes** (le piège de la clé de chiffrement en amont).
-3. Vous laisse **pointer vers votre dépôt existant** (local ou hors site).
+3. Vous laisse **pointer vers votre dépôt existant** : un dossier local, ou un lieu distant connecté via la même fenêtre **Ajouter un lieu** que dans Paramètres, Stockage.
 4. **Découvre** les conteneurs, VMs et jeux de fichiers qui y sont stockés.
 5. **Les restaure tous** (laissés arrêtés, afin que vous les démarriez délibérément), avec votre kit de récupération à un clic.
 

@@ -5,7 +5,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { buttonTags, walkTsx } from "./buttonTags.testsupport";
+import { buttonTags } from "./buttonTags.testsupport";
+import { walkTsx } from "./sourceTree.testsupport";
 
 const SRC = join(__dirname, "..");
 

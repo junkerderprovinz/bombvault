@@ -10,17 +10,18 @@ import {
   followLine,
   formatList,
   homeOptionLabel,
+  homeKey,
   lastChipLocked,
   lockedSegments,
   lockHint,
   noCopyNow,
   observedLine,
+  placeSave,
   planLines,
   segmentItems,
   sendToLabel,
   stackNoteText,
   stepForChip,
-  stepForDefaultSegment,
   stepForHome,
   stepForReset,
   stepForSegment,
@@ -51,6 +52,13 @@ const box = sendToOption({ kind: "remote", repoId: "repo-box", targetId: "", nam
 const onBox: PlacementView = placementView({ segment: "offsite-only", repo: "repo-box", repoLabel: "Storagebox", repoKind: "remote", skip: ["*"] });
 
 describe("labels", () => {
+  it("names an option at a place by the place alone", () => {
+    expect(homeOptionLabel(t, "Unraid", homeOption({ name: "Unraid", placeId: "p-unraid", provider: "unraid-folder" }))).toBe("Unraid");
+    expect(homeOptionLabel(t, "Unraid", homeOption({ id: "r1", name: "NAS Keller", kind: "local", placeId: "p-nas" }))).toBe("NAS Keller");
+    expect(sendToLabel(t, sendToOption({ kind: "remote", repoId: "", targetId: "", name: "B2", placeId: "p-b2" }))).toBe("B2");
+    expect(sendToLabel(t, sendToOption({ name: "Hetzner", placeId: "p-hz" }))).toBe("Hetzner");
+  });
+
   it("names the domain path with the host and keeps its path left to right", () => {
     expect(homeOptionLabel(t, "Unraid", homeOption())).toBe(`Unraid · domain repository · ${LRI}backups/containers${PDI}`);
     expect(homeOptionLabel(t, "Unraid", homeOption({ kind: "domain-remote", scheme: "s3", location: "s3:https://s3.example.com/c" }))).toBe(
@@ -149,7 +157,6 @@ describe("steps", () => {
     expect(lockedSegments(placementView(), empty)).toEqual({ "offsite-only": "no-target" });
     expect(lockedSegments(placementView(), opts)).toEqual({});
     expect(stepForSegment("offsite-only", placementView(), empty, t, "Unraid")).toEqual({ kind: "none" });
-    expect(stepForDefaultSegment("offsite-only", defaultRow(), empty)).toEqual({ kind: "none" });
   });
 
   it("Stored on asks with the new home, and a chosen home picked again sends nothing", () => {
@@ -200,6 +207,52 @@ describe("steps", () => {
   });
 });
 
+describe("places without a repository", () => {
+  const nas = homeOption({ name: "NAS Keller", kind: "local", placeId: "p-nas" });
+
+  it("keeps a place apart from the domain path, which also has no id", () => {
+    expect(homeKey(homeOption())).toBe("");
+    expect(homeKey(nas)).toBe("place:p-nas");
+    expect(homeKey(homeOption({ id: "repo-nas", kind: "local", placeId: "p-nas" }))).toBe("repo-nas");
+  });
+
+  it("turns Stored on, Send to and Off-site only into a place step", () => {
+    const b2 = sendToOption({ kind: "remote", repoId: "", targetId: "", name: "B2", placeId: "p-b2" });
+    expect(stepForHome("place:p-nas", placementView(), placementOptions({ homes: [homeOption(), nas] }), t, "Unraid")).toEqual({
+      kind: "place",
+      placeId: "p-nas",
+      confirmHome: "NAS Keller",
+      name: "NAS Keller",
+      repoKind: "local",
+      offsiteOnly: false,
+    });
+    expect(stepForSendTo(b2, onBox, t)).toMatchObject({ kind: "place", placeId: "p-b2", repoKind: "remote", offsiteOnly: false });
+    expect(stepForSegment("offsite-only", placementView(), placementOptions({ sendTo: [b2] }), t, "Unraid")).toMatchObject({
+      kind: "place",
+      placeId: "p-b2",
+      offsiteOnly: true,
+    });
+    expect(stepForSendTo(sendToOption(), onBox, t)).toEqual({ kind: "direct", target: sendToOption() });
+  });
+
+  it("writes the repository the place stands for once it exists", () => {
+    const step = { kind: "place", placeId: "p-b2", confirmHome: "B2", name: "B2", repoKind: "remote", offsiteOnly: true } as const;
+    expect(placeSave(step, "repo-new")).toEqual({
+      change: { home: { repo: "repo-new" }, copies: { skip: ["*"] } },
+      optimistic: {
+        repo: "repo-new",
+        repoKind: "remote",
+        repoLabel: "B2",
+        homeFollows: false,
+        segment: "offsite-only",
+        skip: ["*"],
+        copiesFollow: false,
+      },
+    });
+    expect(placeSave({ ...step, repoKind: "local", offsiteOnly: false }, "repo-nas").change).toEqual({ home: { repo: "repo-nas" } });
+  });
+});
+
 describe("chips and lines", () => {
   it("shows a switched-off target with its stored tick and warns when nothing is copied", () => {
     const off = placementOptions({ targets: [targetOption({ enabled: false })] });
@@ -230,30 +283,6 @@ describe("defaults", () => {
     const none = placementOptions({ targets: [], sendTo: [] });
     expect(defaultSegment(defaultRow(), none)).toBe("local");
     expect(defaultView(defaultRow(), none).segment).toBe("local");
-    expect(stepForDefaultSegment("local", defaultRow(), none)).toEqual({ kind: "none" });
-  });
-
-  it("changes only the home of a default for Off-site only", () => {
-    expect(stepForDefaultSegment("offsite-only", defaultRow({ skip: ["t-b2"] }), placementOptions({ sendTo: [box] }))).toEqual({
-      kind: "change",
-      change: { home: "repo-box" },
-    });
-    expect(stepForDefaultSegment("offsite-only", defaultRow(), opts)).toEqual({ kind: "direct", target: sendToOption() });
-  });
-
-  it("sets the skip for Local and Local + off-site and brings a remote home back", () => {
-    expect(stepForDefaultSegment("local", defaultRow(), opts)).toEqual({ kind: "change", change: { skip: ["*"] } });
-    expect(stepForDefaultSegment("local-offsite", defaultRow({ home: "repo-box", homeKind: "remote", skip: ["*"] }), opts)).toEqual({
-      kind: "change",
-      change: { skip: [], home: "" },
-    });
-  });
-
-  it("also brings back a home that points at a deleted repository, not only a remote or direct one", () => {
-    expect(stepForDefaultSegment("local", defaultRow({ home: "repo-gone", homeKind: "missing" }), opts)).toEqual({
-      kind: "change",
-      change: { skip: ["*"], home: "" },
-    });
   });
 
   it("starts a draft at the default, following both axes", () => {

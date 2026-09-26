@@ -1,7 +1,6 @@
 import { createElement, type ReactElement } from "react";
 import { fireEvent, render, type RenderResult } from "@testing-library/react";
 import type {
-  DefaultImpact,
   DefaultRow,
   DroppedTarget,
   HomeOption,
@@ -16,7 +15,6 @@ import type {
   RemovalPreview,
   SendToOption,
   StackNote,
-  TargetImpact,
   TargetOption,
   TargetPreview,
   TimelineMark,
@@ -47,15 +45,15 @@ export function placementView(over?: Partial<PlacementView>): PlacementView {
 }
 
 export function homeOption(over?: Partial<HomeOption>): HomeOption {
-  return { id: "", name: "", location: "backups/containers", kind: "domain", scheme: "", ...over };
+  return { id: "", name: "", location: "backups/containers", kind: "domain", scheme: "", placeId: "", provider: "", ...over };
 }
 
 export function targetOption(over?: Partial<TargetOption>): TargetOption {
-  return { id: "t-b2", name: "B2", enabled: true, primary: true, appendOnly: false, hint: "", ...over };
+  return { id: "t-b2", name: "B2", enabled: true, primary: true, appendOnly: false, hint: "", placeId: "", provider: "", ...over };
 }
 
 export function sendToOption(over?: Partial<SendToOption>): SendToOption {
-  return { kind: "direct", repoId: "", targetId: "t-b2", name: "B2", location: "", ...over };
+  return { kind: "direct", repoId: "", targetId: "t-b2", name: "B2", location: "", placeId: "", provider: "", ...over };
 }
 
 export function defaultRow(over?: Partial<DefaultRow>): DefaultRow {
@@ -86,14 +84,6 @@ export function placementOptions(over?: Partial<PlacementOptions>): PlacementOpt
     default: defaultRow(),
     ...over,
   };
-}
-
-export function targetImpact(over?: Partial<TargetImpact>): TargetImpact {
-  return { targetId: "t-b2", name: "B2", items: 15, snapshots: 210, unknown: false, uncheckable: [], ...over };
-}
-
-export function defaultImpact(over?: Partial<DefaultImpact>): DefaultImpact {
-  return { dropped: [], added: [], openTakeHome: 0, home: "", skip: [], ...over };
 }
 
 export function targetPreview(over?: Partial<TargetPreview>): TargetPreview {
@@ -237,14 +227,6 @@ type Reply = (...args: unknown[]) => unknown;
 // What every call answers when a test queued nothing for it.
 const DEFAULTS: Record<string, Reply> = {
   getPlacementOptions: () => ({ ok: true, options: placementOptions() }),
-  listPlacementDefaults: () => ({
-    ok: true,
-    defaults: [defaultRow(), defaultRow({ domain: "vms" }), defaultRow({ domain: "files" })],
-  }),
-  previewPlacementDefault: () => ({ ok: true, impact: defaultImpact() }),
-  putPlacementDefault: () => ({ ok: true, default: defaultRow() }),
-  getApplyDefaultPreview: () => ({ ok: true, reset: [], kept: [] }),
-  applyPlacementDefault: () => ({ ok: true, reset: [], kept: [] }),
   getConfirmPreview: () => ({ ok: true, paused: true, targets: [], unmatched: [] }),
   confirmPlacementDefault: () => ({ ok: true }),
   setItemPlacement: (...args) => ({ ok: true, dropped: [], placement: applied(args[1] as PlacementChange) }),
@@ -269,8 +251,6 @@ const DEFAULTS: Record<string, Reply> = {
   getOffsiteRemoval: () => ({ ok: true, ...removalPreview() }),
   deleteAtTarget: () => ({ ok: true, deleted: 14 }),
   createFileSet: () => ({ ok: true, id: "set-new" }),
-  createOffsiteTarget: (...args) => ({ ok: true, target: { ...(args[0] as object), id: "t-new", createdAt: 1 } }),
-  updateOffsiteTarget: (...args) => ({ ok: true, target: args[1], warnings: [] }),
   acceptMeshOffer: () => ({ ok: true }),
   getSettings: () => ({ ok: true, platform: "unraid", hostMountRoot: "/host/user" }),
   getTimeline: () => ({ ok: true, places: [timelinePlace()], rows: [] }),

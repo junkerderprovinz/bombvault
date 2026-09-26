@@ -1,6 +1,6 @@
 # Configuration
 
-Cette page couvre les variables d'environnement du conteneur, les montages fournis par le modèle, la sauvegarde de VM via SSH et la configuration hors site. Les **chemins de dépôt** de sauvegarde se configurent dans l'application (Paramètres, Chemins de sauvegarde), pas via des variables d'environnement.
+Cette page couvre les variables d'environnement du conteneur, les montages fournis par le modèle, la sauvegarde de VM via SSH et la configuration hors site. Vous définissez où vont les sauvegardes dans l'application, dans **Paramètres, Stockage**, pas via des variables d'environnement.
 
 ## Variables d'environnement
 
@@ -26,7 +26,7 @@ Cette page couvre les variables d'environnement du conteneur, les montages fourn
 
 Montez le socket Docker, la flash (`/boot`) et la racine **Host Data** (`/mnt`) comme indiqué dans le modèle CA. Les *sources* et les *destinations* de sauvegarde vivent toutes deux sous Host Data, et elle est montée en **slave** afin qu'un partage distant qui se monte après le démarrage du conteneur (par exemple sous `/mnt/remotes`) devienne visible sans redémarrage.
 
-Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files}`, créés à la première sauvegarde. Changez l'emplacement à tout moment dans **Paramètres, Chemins de sauvegarde**.
+Une installation neuve stocke chaque domaine dans le lieu **Unraid**, à `/mnt/user/bombvault` avec un dossier par domaine (`container`, `vms`, `flash`, `config`, `files`), créé à la première sauvegarde. Vous ajoutez d'autres lieux, locaux ou distants, dans **Paramètres, Stockage** ; voir [Lieux de stockage](storage-places.md).
 
 !!! note "Vérification de l'intégration hôte"
     Ouvrez `/spike` dans l'interface web après le démarrage du conteneur. Il sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante.
@@ -71,20 +71,20 @@ Le modèle ajoute `--add-host=host.docker.internal:host-gateway` afin que le con
 
 ## Configuration hors site
 
-Configurez un réplica hors site dans l'onglet **Paramètres, Hors site**. Voir [Sauvegarde hors site et récupération](offsite-recovery.md) pour le flux de travail complet (immuable/append-only, test de sabotage et essais de reprise après sinistre). En bref :
+Les copies hors site vont vers des lieux de stockage. Ajoutez le lieu dans **Paramètres, Stockage** avec **Ajouter un lieu**, puis cochez-le sous **Copié vers** sur la ligne du domaine. [Lieux de stockage](storage-places.md) couvre chaque type de connexion, et [Sauvegarde hors site et récupération](offsite-recovery.md) couvre l'append-only, le test de sabotage et les essais de reprise après sinistre. En bref :
 
-- **Backends :** SMB/CIFS et NFS (montez le partage et pointez-y un Chemin de sauvegarde), backends restic natifs sans rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), ou n'importe quel remote rclone (`rclone:<remote>:<bucket>/path`).
-- **Les identifiants cloud** sont stockés chiffrés sous Paramètres, Hors site, Identifiants cloud.
-- **Les cibles SSH ne nécessitent rien d'installé côté distant.** `sftp:` requiert seulement un serveur SSH. Ajoutez la clé publique de **Paramètres, Système, Sauvegarde de VM via SSH** (aussi disponible à `/config/ssh/id_ed25519.pub`) à l'`~/.ssh/authorized_keys` de l'utilisateur cible.
-- **Copie hors site :** BombVault réplique les nouveaux instantanés avec `restic copy` au mieux. Le dépôt local reste principal. Chaque domaine a son propre planning hors site, plus un bouton **Répliquer maintenant**.
-- **Plusieurs cibles hors site par domaine :** chaque domaine peut répliquer vers plusieurs destinations hors site à la fois. Ajoutez des cibles supplémentaires dans Paramètres, Hors site, chacune avec son propre dépôt, sa classe de stockage S3, son indicateur append-only, sa rétention et son budget de croissance ; elles répliquent toutes selon le planning hors site de ce domaine. Une configuration hors site unique existante est reprise comme première cible.
-- **Rétention par source :** la politique locale vit dans Paramètres, Chemins et stockage ; la politique hors site dans Paramètres, Hors site (laissez-la entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site).
-- **Limites de bande passante :** plafonnez le débit d'envoi/de téléchargement de restic sous Paramètres, Hors site.
-- **Classe de stockage froid et archivage (S3) :** pour un dépôt hors site S3 natif, choisissez un niveau lisible à la restauration (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Les remotes rclone définissent leur classe dans la config rclone.
+- **Types de connexion :** un dossier sur cet Unraid ou un partage NAS monté sous `/mnt/remotes`, du stockage S3 (Backblaze B2 et les autres fournisseurs cloud, ou un service auto-hébergé comme MinIO ou Garage), rest-server, SFTP y compris une Hetzner Storage Box, WebDAV pour Nextcloud, ownCloud et OpenCloud, Azure Blob, et n'importe quel remote rclone. Backblaze B2 n'a besoin que de la clé : BombVault en déduit le bucket et le point de terminaison S3.
+- **Les identifiants** sont stockés chiffrés avec le lieu auquel ils appartiennent. Les ensembles d'identifiants qu'utilisent les sources de rapatriement se trouvent dans l'onglet **Rapatriement** de la page Instances.
+- **Les cibles SSH ne nécessitent rien d'installé côté distant.** Un lieu SFTP requiert seulement un serveur SSH. Ajoutez la clé publique affichée dans le formulaire SFTP (aussi sous **Paramètres, Système, Sauvegarde de VM via SSH** et à `/config/ssh/id_ed25519.pub`) à l'`~/.ssh/authorized_keys` de l'utilisateur cible.
+- **Copie hors site :** BombVault copie les nouveaux instantanés avec `restic copy` au mieux, en plus du lieu où un domaine est stocké. Chaque domaine a son propre planning de copie dans Paramètres, Plannings, plus **Copier maintenant** sur sa ligne.
+- **Plusieurs lieux de copie par domaine :** cochez autant de lieux que vous voulez sous **Copié vers** ; chacun copie selon le planning du domaine.
+- **La rétention, les limites, la classe de stockage et le budget de croissance appartiennent au lieu** et se règlent dans ses détails. La rétention d'un lieu s'applique à chaque dépôt qui s'y trouve, de sorte qu'un lieu hors site peut garder les copies plus longtemps comme archive ; un lieu dont toutes les règles sont à zéro ne rogne jamais.
+- **Classe de stockage froid et archivage (S3) :** pour un lieu S3, choisissez un niveau lisible à la restauration (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Les remotes rclone définissent leur classe dans la config rclone.
+- **Un domaine stocké dans un lieu distant :** voir [Un domaine stocké dans un lieu distant](offsite-recovery.md#remote-primary-repositories).
 
 ## Réglages portables (exporter et importer) {#portable-settings-export-and-import}
 
-La carte **Exporter et importer les réglages** sur la page Paramètres écrit toute votre configuration BombVault (réglages de domaine, cibles hors site, plannings, rétention, notifications) dans un fichier JSON portable que vous pouvez importer sur une autre instance, de sorte que migrer vers une nouvelle machine ou cloner une configuration ne signifie pas tout ressaisir à la main. L'import affiche un aperçu et demande confirmation, et ne touche jamais à vos données ou votre historique de sauvegarde.
+La carte **Exporter et importer les réglages** sur la page Paramètres écrit toute votre configuration BombVault (réglages de domaine, lieux de stockage, plannings, notifications) dans un fichier JSON portable que vous pouvez importer sur une autre instance, de sorte que migrer vers une nouvelle machine ou cloner une configuration ne signifie pas tout ressaisir à la main. L'import affiche un aperçu et demande confirmation, et ne touche jamais à vos données ou votre historique de sauvegarde.
 
 !!! warning "L'export peut contenir des identifiants"
-    Vous choisissez d'inclure ou non les identifiants hors site et de notification dans le fichier. Avec les identifiants inclus, l'export est aussi sensible que votre kit de récupération, conservez-le donc en lieu sûr. Sans eux, le fichier ne contient que des réglages non secrets.
+    Vous choisissez d'inclure ou non dans le fichier les identifiants de vos lieux et des notifications. Avec les identifiants inclus, l'export est aussi sensible que votre kit de récupération, conservez-le donc en lieu sûr. Sans eux, le fichier ne contient que des réglages non secrets.

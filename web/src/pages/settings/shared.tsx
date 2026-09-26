@@ -15,7 +15,6 @@ export function Card({
   hint,
   children,
   hueIndex,
-  nested,
 }: {
   /** Without a title but with a hint the heading badge still renders, so the
    *  card keeps its hue notch. A card with neither renders no heading. */
@@ -27,12 +26,6 @@ export function Card({
   /** Rainbow position of the heading notch among the cards on the active
    *  tab. Call sites take it from their tab's nextHue() counter. */
   hueIndex?: number;
-  /** Rendered inside another card that already provides the surface and the
-   *  padding, as CloudCard and RcloneCard are in Recovery's step 3, so both
-   *  are dropped and the content lines up with the parent's. pt-5 stays
-   *  because the heading notch straddles the top edge and would otherwise
-   *  sit on the first field. */
-  nested?: boolean;
 }) {
   return (
     // `relative` anchors the absolutely positioned heading badge; the hint
@@ -41,9 +34,9 @@ export function Card({
     // in index.css. `.glim-hue` sets --accent and --focus-ring once for the
     // whole card, so no control inside has to repeat its card's hue.
     <div
-      className={`relative glim-notch-card flex flex-col gap-4 ${
-        nested ? "pt-5" : "bg-carbon-surface rounded-card p-5"
-      }${hueIndex !== undefined ? " glim-hue" : ""}`}
+      className={`relative glim-notch-card flex flex-col gap-4 bg-carbon-surface rounded-card p-5${
+        hueIndex !== undefined ? " glim-hue" : ""
+      }`}
       style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >
       {/* The h2 is for screen readers; what shows is the badge
@@ -65,8 +58,8 @@ export function Card({
 // it as the live accent and opens its editor, and edits in the open popover
 // keep updating the accent. ColorPickerSwatch's button owns the click and
 // opens the popover; the wrapping span sees the same click as it bubbles up
-// and selects. The active ring sits on the wrapper because ColorPickerSwatch
-// draws its own border.
+// and selects. The ring marking the chosen preset sits on the wrapper, because
+// the button needs its own outline for the focus ring.
 export function AccentPresetSwatch({
   hex,
   index,
@@ -91,8 +84,9 @@ export function AccentPresetSwatch({
   t: ReturnType<typeof useT>["t"];
 }) {
   const label = `${t("settings.accentPreset")} ${index + 1}`;
-  // A 28px disc inside the 2px ring makes a 32px box, the size of every square
-  // icon badge, including the reset badge in this row.
+  // The disc is 32px, the size of every square icon badge, including the reset
+  // badge in this row. The ring is an outline, so it takes no room, and it
+  // starts where the disc's focus ring ends, so a focused choice shows both.
   return (
     <span
       onClick={disabled ? undefined : () => onSelect(hex)}
@@ -100,10 +94,9 @@ export function AccentPresetSwatch({
       // pointer-events-none also reaches the ColorPickerSwatch inside. The
       // picker opens from the disc itself, so blocking only this onClick
       // would still let it open and edit a preset nobody sees applied.
-      className={`inline-flex rounded-pill border-2 transition-transform ${
-        disabled ? "pointer-events-none" : "hover:scale-110"
-      }`}
-      style={{ borderColor: active ? "var(--carbon-text)" : "var(--carbon-border)" }}
+      className={`inline-flex rounded-pill transition-transform${
+        active ? " outline-solid outline-2 outline-offset-4 outline-carbon-text" : ""
+      }${disabled ? " pointer-events-none" : " hover:scale-110"}`}
     >
       <ColorPickerSwatch
         value={hex}
@@ -112,7 +105,7 @@ export function AccentPresetSwatch({
           onSelect(v);
         }}
         label={label}
-        className="w-7 h-7 rounded-pill"
+        className="w-8 h-8 rounded-pill"
       />
     </span>
   );

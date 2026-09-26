@@ -143,7 +143,7 @@
   gap: var(--btn-gap);
   height: var(--btn-h);
   padding-inline: var(--btn-pad-x);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-pill);
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1;
@@ -178,7 +178,7 @@
   width: 1.125rem;
   min-width: 0;
   padding-inline: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   opacity: 0.7;
   transition: opacity 120ms, background-color 120ms;
 }
@@ -438,11 +438,10 @@
 /* Shape and type scale do not change with the theme, so they are declared once
    on :root. A copy in each theme block would compete with a [data-shape]
    override of the same specificity on source order alone. These are the
-   "round" values: the default, and what lib/shape.ts falls back to when the
-   stored value is missing or invalid. */
+   "round" values; lib/shape.ts stamps "soft" when nothing valid is stored. */
 :root {
-  --radius-card:      1rem;
-  --radius-control:   0.625rem;
+  --radius-card:      1.25rem;
+  --radius-control:   0.75rem;
   --radius-pill:      9999px;
 
   /* The rail's width in glyph mode, GlimStone's `--rail-narrow`. A shared
@@ -460,8 +459,14 @@
 /* The shape axis. Every rounded corner reads --radius-card, --radius-control or
    --radius-pill, so switching the attribute reshapes cards, buttons, tabs,
    inputs, pills and badges together. The values are GlimStone's SHAPES, so
-   "soft" and "square" look the same in every app that uses them. lib/shape.ts
-   sets the attribute on <html>, validated and defaulting to "round". */
+   every shape looks the same in every app that uses them. lib/shape.ts sets
+   the attribute on <html>, validated and defaulting to "soft".
+
+   --radius-card is for cards, windows and menus, --radius-control for fields,
+   panels and tiles, and --radius-pill for everything somebody presses:
+   buttons, tabs, nav rows, badges, selector segments and switches. Only round
+   tells the last two apart, and there the pressable things are true pills
+   while a text field keeps a corner a paragraph can sit in. */
 :root[data-shape="soft"] {
   --radius-card:    0.5rem;
   --radius-control: 0.3125rem;
@@ -472,6 +477,24 @@
   --radius-card:    0;
   --radius-control: 0;
   --radius-pill:    0;
+}
+
+/* The hidden shape (leafTap in lib/shape.ts): two opposite corners rounded,
+   the other two sharp. The tokens stay single lengths, so a calc() on them
+   keeps working, and one rule takes the other diagonal away from every
+   element. It is physical rather than logical so the leaf leans the same way
+   in every language. */
+:root[data-shape="leaf"] {
+  --radius-card:    1.25rem;
+  --radius-control: 0.75rem;
+  --radius-pill:    1.125rem;
+}
+
+:root[data-shape="leaf"] *,
+:root[data-shape="leaf"] *::before,
+:root[data-shape="leaf"] *::after {
+  border-top-right-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
 }
 
 /* Tailwind v4 defaults borders to currentcolor; this keeps v3's gray-200 for
@@ -906,7 +929,6 @@ body {
   position: relative;
   height: 7rem;
   border-radius: var(--radius-control);
-  border: 1px solid var(--carbon-border);
   cursor: crosshair;
 }
 .glim-picker-dot {
@@ -1463,7 +1485,7 @@ body {
      pulse    glow and scale of the save-success pulse
      stagger  per-row entrance delay, its cap, and the row's own duration
      wipe     page-wide colour transition when data-rainbow changes
-     check    stroke draw of a checkmark
+     check    clip wipe of a filled checkmark
      content  fade-in of content replacing its loading placeholder
      tab      slide of a Settings tab change */
   --motion-shape-dur: 260ms;
@@ -1789,10 +1811,11 @@ body {
   to   { opacity: 1; transform: none; }
 }
 
-/* A drawn checkmark. `pathLength="1"` on the path (components/CheckDraw.tsx)
-   lets a 1-to-0 dashoffset draw the whole glyph without measuring it. */
+/* A checkmark wiping in from its foot to its tip. The mark is a filled shape
+   (components/CheckDraw.tsx), so the draw is a clip rather than a dash. */
 @keyframes glim-check-draw {
-  to { stroke-dashoffset: 0; }
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
 }
 
 /* Content replacing its loading placeholder fades in. The two are different
@@ -1891,11 +1914,6 @@ body {
   transform: translate(-50%, -50%);
   opacity: 0;
 }
-
-/* The checkmark fully drawn, outside the motion block, so a reduced-motion
-   viewer sees it complete. The motion block starts it undrawn and animates
-   it. */
-.glim-check-draw { stroke-dasharray: 1; stroke-dashoffset: 0; }
 
 /* The scrim is painted whatever the motion settings: darkening the page is
    what puts a window in front, not motion. Only its fade is gated. */
@@ -2030,10 +2048,9 @@ body {
       stroke var(--motion-wipe-dur, 320ms) var(--motion-wipe-ease, ease);
   }
 
-  /* Starts undrawn and draws itself. */
+  /* Starts hidden and wipes in; without motion it is simply there. */
   .glim-check-draw {
-    stroke-dashoffset: 1;
-    animation: glim-check-draw var(--motion-check-dur, 360ms) ease forwards;
+    animation: glim-check-draw var(--motion-check-dur, 360ms) ease both;
   }
 
   .glim-content-fade { animation: glim-content-fade-in var(--motion-content-dur, 220ms) ease both; }

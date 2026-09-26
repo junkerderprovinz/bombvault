@@ -33,7 +33,7 @@ This is usually an orphaned restic lock left behind when the container was updat
 
 ## My off-site copy did not happen after a backup
 
-Off-site replication is best-effort by design, so an off-site hiccup never fails the local backup. Check the off-site schedule for that domain (Settings, Schedules): a blank schedule replicates after every local backup, while a cadence ships less often. Use **Replicate now** on the Off-site tab for an on-demand run, and watch the replication indicator on the Dashboard.
+Off-site replication is best-effort by design, so an off-site hiccup never fails the local backup. Check the off-site schedule for that domain (Settings, Schedules): a blank schedule replicates after every local backup, while a cadence ships less often. Use **Copy now** on the domain's row under Settings, Storage for an on-demand run, and watch the replication indicator on the Dashboard.
 
 ## A restore aborted before it started
 

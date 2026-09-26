@@ -4,8 +4,8 @@
 // protection data; it never starts a backup, restore or drill there. The
 // exception is Mesh off-site: the page can offer this instance's off-site
 // storage to a peer (connection details, never backup data) and review offers
-// peers sent here. Accepting one creates an ordinary credential set and
-// off-site target, since BombVault never hosts storage itself.
+// peers sent here. Accepting one makes a storage place for the offered
+// domain, since BombVault never hosts storage itself.
 //
 // Peers are polled by the daily sweep and by "Poll now", not by opening the
 // page, because each poll is a round trip to another site.
@@ -19,18 +19,16 @@ import {
   deleteFleetPeer,
   pollFleetPeer,
   listMeshOffers,
-  acceptMeshOffer,
-  declineMeshOffer,
   proposeMeshOffer,
 } from "../lib/api";
+import { CopyBlock } from "../components/CopyBlock";
+import { MeshOfferRow } from "../components/MeshOfferRow";
 import { IconDisclosure } from "../components/IconDisclosure";
-import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData, OffsiteDomain } from "../lib/api";
-import { credSetsChanged } from "../lib/useCloudCredSets";
-import { offsiteTargetsChanged } from "../lib/useOffsiteTargets";
-import { placementChanged } from "../lib/placementEvents";
-import { useNewTargetQuestion } from "../components/placement/NewTargetQuestion";
+import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL, PAGE_SHELL_TABBED } from "../lib/pageShell";
+import { domainName } from "../lib/placeText";
+import { PLACE_DOMAINS } from "../lib/places";
 import { SelectField } from "../components/SelectField";
 import { relativeTime } from "../lib/reltime";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
@@ -39,50 +37,13 @@ import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
-import { copyText } from "../lib/clipboard";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
+import { WindowActions } from "../components/WindowActions";
 
 import { ToggleRow } from "./settings/shared";
 type T = ReturnType<typeof useT>["t"];
-
-// CopyBlock is a monospace <pre> with a copy button, like OffsiteWizard's.
-// copyText() is used because the Clipboard API alone silently does nothing on
-// a plain HTTP origin.
-function CopyBlock({ text, t }: { text: string; t: T }) {
-  const { push } = useToast();
-  const [shake, setShake] = useState(0);
-  async function copy() {
-    if (await copyText(text)) {
-      push(t("common.copied"), "success");
-    } else {
-      // Both the Clipboard API and the execCommand fallback failed, which is
-      // worth telling even in quiet mode.
-      push(t("vm.ssh.copyFailed"), "fail");
-      setShake((n) => n + 1);
-    }
-  }
-  return (
-    <div className="flex items-start gap-2">
-      <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">
-        {text}
-      </pre>
-      <Button
-        key={shake}
-        label={t("common.copy")}
-        labelKey="common.copy"
-        tone="neutral"
-        onClick={() => void copy()}
-        className={`shrink-0 rounded-control px-3 py-2 text-xs text-carbon-text${
-          shake ? " glim-shake" : ""
-        }`}
-      />
-    </div>
-  );
-}
-
-const MESH_DOMAINS = ["containers", "vms", "flash", "config", "files"] as const;
 
 // Same mapping as Dashboard's protectionChip, which is not exported.
 function protectionTone(level: string): "ok" | "fail" | "warn" | "neutral" {
@@ -100,20 +61,6 @@ function protectionTone(level: string): "ok" | "fail" | "warn" | "neutral" {
 
 // Whether peer cards show their scorecard, remembered per browser.
 const FLEET_DETAILS_OPEN_KEY = "bombvault.fleetDetailsOpen";
-
-// An explicit map rather than a template literal, so every lookup is a
-// checked TranslationKey.
-const DOMAIN_LABEL_KEYS: Record<string, TranslationKey> = {
-  containers: "settings.containersEnabled",
-  vms: "settings.vmsEnabled",
-  flash: "settings.flashEnabled",
-  files: "settings.filesEnabled",
-  config: "settings.configEnabled",
-};
-
-function domainLabelKey(domain: string): TranslationKey {
-  return DOMAIN_LABEL_KEYS[domain] ?? "settings.containersEnabled";
-}
 
 function protectionLabelKey(level: string): TranslationKey {
   switch (level) {
@@ -137,7 +84,7 @@ function PeerScorecard({ domains, t }: { domains: DomainStatus[]; t: T }) {
     <div className="mt-2 flex flex-col gap-1.5">
       {shown.map((d) => (
         <div key={d.domain} className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-carbon-textSub w-20 shrink-0">{t(domainLabelKey(d.domain))}</span>
+          <span className="text-xs text-carbon-textSub w-20 shrink-0">{domainName(t, d.domain)}</span>
           <Badge tone={protectionTone(d.protection)}>{t(protectionLabelKey(d.protection))}</Badge>
           {d.lastSuccess > 0 && (
             <span className="text-xs text-carbon-textMuted">
@@ -150,142 +97,8 @@ function PeerScorecard({ domains, t }: { domains: DomainStatus[]; t: T }) {
   );
 }
 
-function meshStatusTone(status: string): "ok" | "fail" | "warn" | "neutral" {
-  switch (status) {
-    case "accepted":
-      return "ok";
-    case "declined":
-      return "fail";
-    default:
-      return "warn"; // pending
-  }
-}
-
-function meshStatusLabelKey(status: string): TranslationKey {
-  switch (status) {
-    case "accepted":
-      return "fleet.mesh.status.accepted";
-    case "declined":
-      return "fleet.mesh.status.declined";
-    default:
-      return "fleet.mesh.status.pending";
-  }
-}
-
-function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChanged: () => void }) {
-  const [domain, setDomain] = useState<string>(offer.suggestedDomain || "containers");
-  const [busy, setBusy] = useState(false);
-  const { push } = useToast();
-  const { ask, dialog } = useNewTargetQuestion();
-  const [shakeAccept, setShakeAccept] = useState(0);
-  const [shakeDecline, setShakeDecline] = useState(0);
-
-  async function handleAccept() {
-    // The question does a round trip of its own before its dialog appears, and
-    // a disabled button is all that keeps a second accept from minting a
-    // second target.
-    setBusy(true);
-    const answer = await ask({
-      // The select offers only MESH_DOMAINS, all of them off-site domains.
-      domain: domain as OffsiteDomain,
-      location: offer.repo,
-      name: offer.from || t("fleet.mesh.unknownPeer"),
-      moved: false,
-    });
-    if (!answer.go) {
-      setBusy(false);
-      return;
-    }
-    try {
-      const res = await acceptMeshOffer(offer.id, domain, answer.alsoExclude ?? undefined);
-      if (res.ok) {
-        // Accepting creates a credential set with the peer's REST login and
-        // an off-site target, so every mounted reader of either list reloads.
-        credSetsChanged();
-        offsiteTargetsChanged();
-        if (answer.alsoExclude) placementChanged();
-        onChanged();
-      } else {
-        push(res.error ?? t("fleet.mesh.saveError"), "fail");
-        setShakeAccept((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("fleet.mesh.saveError"), "fail");
-      setShakeAccept((n) => n + 1);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleDecline() {
-    setBusy(true);
-    try {
-      const res = await declineMeshOffer(offer.id);
-      if (res.ok) onChanged();
-      else {
-        push(res.error ?? t("fleet.mesh.saveError"), "fail");
-        setShakeDecline((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("fleet.mesh.saveError"), "fail");
-      setShakeDecline((n) => n + 1);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const pending = offer.status === "pending";
-
-  return (
-    <div className="rounded-card bg-carbon-surface2 p-3 flex flex-col gap-2">
-      {dialog}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="font-semibold text-carbon-text text-sm truncate">{offer.from || t("fleet.mesh.unknownPeer")}</span>
-        <Badge tone={meshStatusTone(offer.status)}>{t(meshStatusLabelKey(offer.status))}</Badge>
-        <span className="text-xs text-carbon-textMuted ms-auto">{relativeTime(t, offer.receivedAt)}</span>
-      </div>
-      <p dir="ltr" className="text-xs font-mono text-carbon-textMuted truncate text-start">{offer.repo}</p>
-      {pending && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-            {t("fleet.mesh.applyTo")}
-            <SelectField
-              value={domain}
-              onChange={setDomain}
-              label={t("fleet.mesh.applyTo")}
-              options={MESH_DOMAINS.map((d) => ({ value: d, label: t(domainLabelKey(d)) }))}
-              className="rounded-control bg-carbon-surface3 text-carbon-text text-xs px-2 py-1 glim-field-focus-well"
-            />
-          </label>
-          <Button
-            key={shakeDecline}
-            label={t("fleet.mesh.decline")}
-            labelKey="fleet.mesh.decline"
-            tone="neutral"
-            onClick={() => void handleDecline()}
-            disabled={busy}
-            className={`inline-flex items-center rounded-control px-3 py-1.5 text-xs text-carbon-text disabled:opacity-50${
-              shakeDecline ? " glim-shake" : ""
-            }`}
-          />
-          <Button
-            key={shakeAccept}
-            label={t("fleet.mesh.accept")}
-            labelKey="fleet.mesh.accept"
-            tone="accent"
-            onClick={() => void handleAccept()}
-            disabled={busy}
-            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shakeAccept ? " glim-shake" : ""
-            }`}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClose: () => void }) {
+// Exported for components/WindowActions.dom.test.tsx.
+export function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClose: () => void }) {
   const [domain, setDomain] = useState<string>("containers");
   const [baseUrl, setBaseUrl] = useState("");
   const [sending, setSending] = useState(false);
@@ -321,15 +134,16 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
     "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
   // Centred rather than top-anchored, which would push the heading notch
-  // against the viewport edge. The box is capped at 90vh, so it never clips,
-  // and the backdrop scrolls when the content grows.
+  // against the viewport edge. The window is capped at 90vh, so it never clips,
+  // and its fields scroll inside it when they outgrow it.
   return createPortal(
     <div className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4" onClick={onClose}>
-      {/* The heading notch sits on a non-scrolling shell around the
-          scrollable box, as in Receiver.tsx's ReceiverDialog. */}
+      {/* The heading notch sits on a shell around the window, as in
+          Receiver.tsx's ReceiverDialog. */}
       <div className="relative w-full max-w-lg">
-      {/* px-5 matches the box's p-5 so the notch lands where a Card's does;
-          FolderBrowser.tsx explains why the notch has no offset of its own. */}
+      {/* px-5 matches the body's padding so the notch lands where a Card's
+          does; FolderBrowser.tsx explains why the notch has no offset of its
+          own. */}
       <h2 className="flex items-center px-5">
         <Badge tone="heading" size="heading" wrap>{t("fleet.mesh.proposeTitle")}</Badge>
       </h2>
@@ -338,37 +152,59 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
         aria-modal="true"
         aria-label={t("fleet.mesh.proposeTitle")}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
+        className="flex max-h-[90vh] w-full flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
-        <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.proposeHint").replace("{peer}", peer.name)}</p>
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-5 pb-1">
+          <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.proposeHint").replace("{peer}", peer.name)}</p>
 
-        {!snippet ? (
-          <>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-carbon-textSub">{t("fleet.mesh.domain")}</label>
-              <SelectField
-                value={domain}
-                onChange={setDomain}
-                label={t("fleet.mesh.domain")}
-                options={MESH_DOMAINS.map((d) => ({ value: d, label: t(domainLabelKey(d)) }))}
-                className={inputCls}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-carbon-textSub">{t("fleet.mesh.baseUrl")}</label>
-              <input
-                type="text"
-                value={baseUrl}
-                onChange={(e) => setBaseUrl(e.target.value)}
-                spellCheck={false}
-                autoComplete="off"
-                placeholder="http://192.168.1.50:8000"
-                dir="ltr"
-                className={`${inputCls} font-mono text-start`}
-              />
-              <p className="text-caption text-carbon-textMuted">{t("fleet.mesh.baseUrlHint")}</p>
-            </div>
-            <div className="flex items-center justify-end gap-2 pt-1">
+          {!snippet ? (
+            <>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-carbon-textSub">{t("fleet.mesh.domain")}</label>
+                <SelectField
+                  value={domain}
+                  onChange={setDomain}
+                  label={t("fleet.mesh.domain")}
+                  options={PLACE_DOMAINS.map((d) => ({ value: d, label: domainName(t, d) }))}
+                  className={inputCls}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+                  {t("fleet.mesh.baseUrl")}
+                  <InfoBubble tip={t("fleet.mesh.baseUrlHint")} />
+                </label>
+                <input
+                  type="text"
+                  value={baseUrl}
+                  onChange={(e) => setBaseUrl(e.target.value)}
+                  spellCheck={false}
+                  autoComplete="off"
+                  placeholder="http://192.168.1.50:8000"
+                  dir="ltr"
+                  className={`${inputCls} font-mono text-start`}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-statusOk">{t("fleet.mesh.sent").replace("{peer}", peer.name)}</p>
+              <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.deployNow")}</p>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-carbon-textSub">{t("fleet.mesh.dockerRun")}</span>
+                <CopyBlock text={snippet.dockerRun} t={t} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-carbon-textSub">{t("fleet.mesh.compose")}</span>
+                <CopyBlock text={snippet.compose} t={t} />
+              </div>
+            </>
+          )}
+        </div>
+
+        <WindowActions>
+          {!snippet ? (
+            <>
               <Button
                 label={t("files.cancel")}
                 labelKey="files.cancel"
@@ -387,30 +223,11 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
                 title={sending ? t("fleet.mesh.sending") : undefined}
                 className={shake ? "glim-shake" : ""}
               />
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-xs text-statusOk">{t("fleet.mesh.sent").replace("{peer}", peer.name)}</p>
-            <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.deployNow")}</p>
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t("fleet.mesh.dockerRun")}</span>
-              <CopyBlock text={snippet.dockerRun} t={t} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t("fleet.mesh.compose")}</span>
-              <CopyBlock text={snippet.compose} t={t} />
-            </div>
-            <div className="flex items-center justify-end pt-1">
-              <Button
-                label={t("common.close")}
-                labelKey="common.close"
-                tone="accent"
-                onClick={onClose}
-              />
-            </div>
-          </>
-        )}
+            </>
+          ) : (
+            <Button label={t("common.close")} labelKey="common.close" tone="accent" onClick={onClose} />
+          )}
+        </WindowActions>
       </div>
       </div>
     </div>,
@@ -550,7 +367,7 @@ function FleetPeerCard({
           onClick={() => void handlePoll()}
           disabled={polling}
           busy={polling}
-          className={`inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+          className={`inline-flex items-center gap-1.5 rounded-pill bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
             shakePoll ? " glim-shake" : ""
           }`}
         />
@@ -612,7 +429,8 @@ function FleetPeerCard({
   );
 }
 
-function FleetDialog({
+// Exported for components/WindowActions.dom.test.tsx.
+export function FleetDialog({
   initial,
   t,
   onClose,
@@ -676,7 +494,7 @@ function FleetDialog({
   const inputCls =
     "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
-  // Centred and split into shell and scrolling box like ProposeMeshDialog.
+  // Centred and split into shell and window like ProposeMeshDialog.
   return createPortal(
     <div
       className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
@@ -691,56 +509,62 @@ function FleetDialog({
         aria-modal="true"
         aria-label={editing ? t("fleet.editTitle") : t("fleet.addTitle")}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
+        className="flex max-h-[90vh] w-full flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("fleet.name")}</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder="tower"
-            className={inputCls}
-          />
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-5 pb-1">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-carbon-textSub">{t("fleet.name")}</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              placeholder="tower"
+              className={inputCls}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+              {t("fleet.url")}
+              <InfoBubble tip={t("fleet.urlHint")} />
+            </label>
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              placeholder="https://192.168.1.50:3443"
+              dir="ltr"
+              className={`${inputCls} font-mono text-start`}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+              {t("fleet.token")}
+              <InfoBubble tip={t("fleet.tokenHint")} />
+            </label>
+            <RevealInput
+              {...revealToken}
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              placeholder={editing ? t("fleet.tokenKeep") : "a1b2c3…"}
+              wrapperClassName="w-full"
+              className={`${inputCls} font-mono`}
+            />
+          </div>
+
+          {/* ToggleRow puts the words at the start and the switch at the end,
+              like every setting row. */}
+          <ToggleRow checked={enabled} onChange={setEnabled} label={t("fleet.enabledLabel")} />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("fleet.url")}</label>
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder="https://192.168.1.50:3443"
-            dir="ltr"
-            className={`${inputCls} font-mono text-start`}
-          />
-          <p className="text-caption text-carbon-textMuted">{t("fleet.urlHint")}</p>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("fleet.token")}</label>
-          <RevealInput
-            {...revealToken}
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder={editing ? t("fleet.tokenKeep") : "a1b2c3…"}
-            wrapperClassName="w-full"
-            className={`${inputCls} font-mono`}
-          />
-          <p className="text-caption text-carbon-textMuted">{t("fleet.tokenHint")}</p>
-        </div>
-
-        {/* ToggleRow puts the words at the start and the switch at the end,
-            like every setting row. */}
-        <ToggleRow checked={enabled} onChange={setEnabled} label={t("fleet.enabledLabel")} />
-
-        <div className="flex items-center justify-end gap-2 pt-1">
+        <WindowActions>
           <Button
             label={t("files.cancel")}
             labelKey="files.cancel"
@@ -759,7 +583,7 @@ function FleetDialog({
             title={saving ? t("common.saving") : undefined}
             className={shake ? "glim-shake" : ""}
           />
-        </div>
+        </WindowActions>
       </div>
       </div>
     </div>,

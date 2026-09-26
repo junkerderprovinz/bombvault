@@ -33,7 +33,7 @@ Snapshot trực tiếp cần qemu guest agent được cài đặt trong VM và 
 
 ## Bản sao off-site của tôi đã không diễn ra sau một lần sao lưu
 
-Nhân bản off-site theo thiết kế là nỗ lực tối đa, nên một trục trặc off-site không bao giờ làm thất bại bản sao lưu cục bộ. Kiểm tra lịch trình off-site cho miền đó (Settings, Schedules): một lịch trình trống sẽ nhân bản sau mỗi lần sao lưu cục bộ, trong khi một nhịp độ sẽ gửi ít thường xuyên hơn. Dùng **Replicate now** trên tab Off-site cho một lần chạy theo yêu cầu, và theo dõi chỉ báo nhân bản trên bảng điều khiển.
+Nhân bản off-site theo thiết kế là nỗ lực tối đa, nên một trục trặc off-site không bao giờ làm thất bại bản sao lưu cục bộ. Kiểm tra lịch trình off-site cho miền đó (Settings, Schedules): một lịch trình trống sẽ nhân bản sau mỗi lần sao lưu cục bộ, trong khi một nhịp độ sẽ gửi ít thường xuyên hơn. Dùng **Sao chép ngay** trên hàng của miền dưới Cài đặt, Lưu trữ cho một lần chạy theo yêu cầu, và theo dõi chỉ báo nhân bản trên bảng điều khiển.
 
 ## Một lần khôi phục đã hủy trước khi nó bắt đầu
 

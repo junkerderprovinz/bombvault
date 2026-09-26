@@ -33,7 +33,7 @@ Dette er som regel en forældreløs restic-lås efterladt, da containeren blev o
 
 ## Min off-site-kopi skete ikke efter en sikkerhedskopi
 
-Off-site-replikering er best-effort af design, så et off-site-hikke aldrig får den lokale sikkerhedskopi til at fejle. Tjek off-site-tidsplanen for det domæne (Indstillinger, Tidsplaner): en tom tidsplan replikerer efter hver lokal sikkerhedskopi, mens en kadence sender sjældnere. Brug **Replikér nu** på Off-site-fanen for en on-demand-kørsel, og hold øje med replikeringsindikatoren på Oversigten.
+Off-site-replikering er best-effort af design, så et off-site-hikke aldrig får den lokale sikkerhedskopi til at fejle. Tjek off-site-tidsplanen for det domæne (Indstillinger, Tidsplaner): en tom tidsplan replikerer efter hver lokal sikkerhedskopi, mens en kadence sender sjældnere. Brug **Kopiér nu** i domænets række under Indstillinger, Lagring for en on-demand-kørsel, og hold øje med replikeringsindikatoren på Oversigten.
 
 ## En gendannelse blev afbrudt, før den startede
 

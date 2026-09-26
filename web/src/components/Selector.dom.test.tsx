@@ -375,7 +375,7 @@ describe("Selector variant=\"well\" at both scales", () => {
       const list = screen.getByRole("tablist");
       expect(list.className).toContain("bg-carbon-surface3");
       expect(list.className).not.toContain("bg-carbon-surface2");
-      expect(list.className).toContain("rounded-control");
+      expect(list.className).toContain("rounded-pill");
       // The standard groove ring; a thinner one does not read as an enclosure.
       expect(list.className).toContain("gap-[0.2rem]");
       expect(list.className).toContain("p-[0.2rem]");
@@ -413,9 +413,9 @@ describe("Selector variant=\"well\" at both scales", () => {
       expect(idle.className).not.toContain("bg-carbon-surface ");
       expect(idle.className).not.toContain("bg-carbon-surface2");
       expect(idle.className).not.toContain("bg-carbon-surface3");
-      // Segments follow the shape setting like the groove does.
-      expect(active.className).toContain("rounded-control");
-      expect(idle.className).toContain("rounded-control");
+      // In round the groove is a pill with a pill inside it.
+      expect(active.className).toContain("rounded-pill");
+      expect(idle.className).toContain("rounded-pill");
       // A background crossfade, with no sliding thumb element.
       expect(active.className).toContain("[transition:background-color_120ms_ease]");
       expect(screen.getByRole("tablist").querySelectorAll("[data-sel-id]").length).toBe(ITEMS.length);

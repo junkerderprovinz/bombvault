@@ -33,7 +33,7 @@ Dit is meestal een verweesde restic-lock die achterblijft wanneer de container w
 
 ## Mijn off-site kopie is niet gemaakt na een back-up
 
-Off-site replicatie is opzettelijk best-effort, dus een off-site hapering laat de lokale back-up nooit mislukken. Controleer de off-site planning voor dat domein (Instellingen, Planningen): een lege planning repliceert na elke lokale back-up, terwijl een cadans minder vaak stuurt. Gebruik **Nu repliceren** op het tabblad Off-site voor een run op aanvraag, en let op de replicatie-indicator op het Dashboard.
+Off-site replicatie is opzettelijk best-effort, dus een off-site hapering laat de lokale back-up nooit mislukken. Controleer de off-site planning voor dat domein (Instellingen, Planningen): een lege planning repliceert na elke lokale back-up, terwijl een cadans minder vaak stuurt. Gebruik **Nu kopiëren** op de rij van het domein onder Instellingen, Opslag voor een run op aanvraag, en let op de replicatie-indicator op het Dashboard.
 
 ## Een herstel brak af voordat het begon
 

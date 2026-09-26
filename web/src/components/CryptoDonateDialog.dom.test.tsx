@@ -26,6 +26,7 @@ vi.mock("../lib/clipboard", () => ({
 afterEach(() => {
   copied.length = 0;
   cleanup();
+  vi.restoreAllMocks();
 });
 
 function open(onClose: () => void = () => {}) {
@@ -210,4 +211,40 @@ it("puts the tickers into the reactive label mode, and only there", () => {
   open();
   expect(grid().querySelectorAll(".glim-label-reactive").length).toBe(0);
   expect(coinTiles().getAllByRole("option")[0]!.className).not.toContain("glim-reactive");
+});
+
+it("walks the coins with the arrow keys, Home and End, as one tab stop", () => {
+  // jsdom lays nothing out, so the tiles are placed in rows of four here.
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+    const i = Array.from(this.parentElement?.children ?? []).indexOf(this);
+    return { top: Math.floor(i / 4) * 60, left: (i % 4) * 60, width: 56, height: 56 } as DOMRect;
+  });
+  open();
+  const tiles = () => coinTiles().getAllByRole("option");
+  expect(tiles().map((o) => o.tabIndex)).toEqual(CRYPTO_COINS.map((_, i) => (i === 0 ? 0 : -1)));
+
+  tiles()[0]!.focus();
+  fireEvent.keyDown(tiles()[0]!, { key: "ArrowRight" });
+  expect(document.activeElement).toBe(tiles()[1]);
+  fireEvent.keyDown(tiles()[1]!, { key: "ArrowDown" });
+  expect(document.activeElement).toBe(tiles()[5]);
+  fireEvent.keyDown(tiles()[5]!, { key: "End" });
+  expect(document.activeElement).toBe(tiles()[CRYPTO_COINS.length - 1]);
+  fireEvent.keyDown(tiles()[CRYPTO_COINS.length - 1]!, { key: "Home" });
+  expect(document.activeElement).toBe(tiles()[0]);
+  expect(tiles().filter((o) => o.tabIndex === 0)).toEqual([tiles()[0]]);
+
+  // The keys move focus only; the coin changes when the tile is pressed.
+  fireEvent.keyDown(tiles()[0]!, { key: "ArrowRight" });
+  expect(tiles()[0]!.getAttribute("aria-selected")).toBe("true");
+});
+
+it("leaves the focus ring on the tiles", () => {
+  // The ring is index.css's :focus-visible rule, so a tile must not switch
+  // the outline off.
+  expect(indexCss).toMatch(/:focus-visible\s*\{\s*outline:\s*2px solid var\(--focus-ring\)/);
+  open();
+  for (const option of coinTiles().getAllByRole("option")) {
+    expect(option.className).not.toMatch(/outline-none|outline-0/);
+  }
 });

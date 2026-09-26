@@ -57,24 +57,9 @@ export function SystemTab({
           the Storage tab's cacheTitle Card above. */}
       {advanced && (
       <Card title={t("settings.metrics")} hueIndex={nextHue()}>
-        {/* GlimStone follow-up round (jdp, live review: "Prometheus-Metriken
-            unter /metrics ... in eine InfoBubble", design-language.md rule 8,
-            "explanations live in a bubble, not on the page"): this used to be
-            a permanent `<p>` under the Card title, reasoned at the time as an
-            "exact syntax to copy correctly" carve-out (the same one RcloneCard's/
-            CloudCard's own hints still use). jdp's live review overruled that
-            specifically for this text, unlike rclone.pathHint's own
-            "rclone:<remote>:<bucket>/path" syntax (which someone fills into a
-            DIFFERENT tab's Backup Path field from memory, so it needs to stay
-            findable without already hovering an icon here), this hint is
-            self-contained: /metrics and the Bearer-token syntax are both used
-            right here, on the same toggle, so a hover bubble is not hiding
-            anything a reader would need on a different screen. Moved onto the
-            ToggleRow's own `hint` prop below (the same "(i) beside the label"
-            mechanism as every other bubbled explanation in this file), no
-            `description` here for the same "the Card's own hint already
-            covers it" reasoning this row's OLD comment gave, just now living
-            on the toggle's `hint` instead of a Card-level paragraph. */}
+        {/* The metrics syntax sits in the toggle's bubble: /metrics and the
+            Bearer token are used right at this toggle, so the bubble hides
+            nothing a reader needs on another screen. */}
         <ToggleRow
           label={tLtr(t, "settings.metricsEnable")}
           hint={tLtr(t, "settings.metricsHint")}
@@ -266,26 +251,18 @@ export function SystemTab({
               className={pwSaveShake ? "glim-shake" : ""}
               hueIndex={hueIdx}
             />
-            {/* Only the pre-flight mismatch validation error renders here now
-                (GlimStone form-engine Task 9), the post-save success/failure
-                notice is a toast instead; see handleSetPassword's own comment. */}
+            {/* Only the mismatch check shows here; the result of the save is a
+                toast (see handleSetPassword). */}
             {pwSaveState === "error" && pwSaveMsg && (
               <span className="text-sm text-statusFail">{pwSaveMsg}</span>
             )}
           </div>
         </div>
 
-        {/* No sign-out here, and no "sign out everywhere" either (GlimStone
-            2.1.0, rule 22: a settings card CONFIGURES, the shell OPERATES).
-            Both used to sit along this card's bottom edge, which put the two
-            controls that throw a half-filled password form away directly under
-            the field somebody was typing in - and the plain one duplicated the
-            sidebar's own sign-out, where everybody looks for it anyway.
-              Removing a button must not remove what it could do, so the
-            "everywhere" half moved into the action that already implies it:
-            handleSetPassword rotates the session epoch now, which ends every
-            other session exactly when somebody changes a password because they
-            fear it leaked. See its comment in internal/api/handlers.go. */}
+        {/* No sign-out here (GlimStone rule 22: a settings card configures,
+            the shell operates). The sidebar signs out, and a password change
+            ends every other session, because the server's handleSetPassword
+            (internal/api/handlers_auth.go) rotates the session epoch. */}
       </Card>
         );
       })()}
