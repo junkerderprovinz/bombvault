@@ -347,7 +347,9 @@ export function DomainRowView({
       {confirmDialog}
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span className="text-sm font-semibold text-carbon-text">{domain}</span>
-        <a href="#schedules" className="text-xs text-carbon-textSub hover:underline">
+        {/* A plain anchor rather than a router Link: on Settings itself only
+            a hashchange switches the tab, and a router push fires none. */}
+        <a href="/settings#schedules" className="text-xs text-carbon-textSub hover:underline">
           {cadenceLabel(row.schedule, t)}
         </a>
       </div>

@@ -184,7 +184,7 @@ describe("DomainsCard", () => {
     await card();
     expect(screen.getByRole("heading", { name: new RegExp(`^${en["storageDomains.title"]}`) })).toBeTruthy();
     const link = within(rowOf("Containers")).getByRole("link", { name: "Daily at 02:00" });
-    expect(link.getAttribute("href")).toBe("#schedules");
+    expect(link.getAttribute("href")).toBe("/settings#schedules");
     expect(within(rowOf("Flash")).getByRole("link", { name: en["jobs.notScheduled"] })).toBeTruthy();
   });
 
