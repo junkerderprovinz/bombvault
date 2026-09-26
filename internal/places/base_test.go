@@ -133,6 +133,21 @@ func TestWebDAVURLPointsAtTheUsersFiles(t *testing.T) {
 	}
 }
 
+func TestWebDAVURLForUserFollowsTheUserWhoseFilesItPointsAt(t *testing.T) {
+	const anna = "https://cloud.example.com/remote.php/dav/files/anna%20maria/"
+	for _, c := range []struct{ url, from, to, want string }{
+		{anna, "anna maria", "ben", "https://cloud.example.com/remote.php/dav/files/ben/"},
+		{anna, "anna maria", "anna maria", anna},
+		{anna, "anna maria", "", anna},
+		{anna, "ben", "carl", anna},
+		{"https://cloud.example.com/remote.php/dav/spaces/1234$5678/", "anna", "ben", "https://cloud.example.com/remote.php/dav/spaces/1234$5678/"},
+	} {
+		if got := WebDAVURLForUser(c.url, c.from, c.to); got != c.want {
+			t.Errorf("WebDAVURLForUser(%q, %q, %q) = %q, want %q", c.url, c.from, c.to, got, c.want)
+		}
+	}
+}
+
 func TestCredsFromFieldsTakesWhatEachKindNeeds(t *testing.T) {
 	for _, c := range []struct {
 		provider string

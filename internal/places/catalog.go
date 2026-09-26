@@ -261,6 +261,18 @@ func WebDAVURL(server, user string) string {
 	return server + "/remote.php/dav/files/" + url.PathEscape(strings.TrimSpace(user)) + "/"
 }
 
+// WebDAVURLForUser points u at the files of user to when it points at those
+// of user from, and returns any other URL as it is.
+func WebDAVURLForUser(u, from, to string) string {
+	files := func(user string) string {
+		return "/remote.php/dav/files/" + url.PathEscape(strings.TrimSpace(user)) + "/"
+	}
+	if strings.TrimSpace(to) == "" || !strings.HasSuffix(u, files(from)) {
+		return u
+	}
+	return strings.TrimSuffix(u, files(from)) + files(to)
+}
+
 // Base builds a place's address from its provider and form, in restic's
 // spelling and without a folder. placeID names the rclone remote a WebDAV place
 // is reached through.
