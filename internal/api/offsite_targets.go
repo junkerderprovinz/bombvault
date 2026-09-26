@@ -22,12 +22,13 @@ func validOffsiteDomain(domain string) bool {
 }
 
 // syncPrimaryOffsiteTarget writes a domain's off-site settings field into the
-// target on sort_order 0. Without one, a target already on the field's
-// location moves onto that slot, so the domain does not copy there twice, and
-// failing that a new row is made. Clearing the field switches that row off,
-// so filling it again brings back the same target. A target at a place is
-// not written, on the slot or on the field's location: it only moves onto
-// the slot, and from then on its place writes the field.
+// target on sort_order 0. A target already on the field's location takes that
+// slot, so the domain does not copy there twice, and the row it takes over
+// from is switched off behind the others. Otherwise the row on the slot
+// follows the field, or failing that a new row is made. Clearing the field
+// switches that row off, so filling it again brings back the same target. A
+// target at a place is not written, on the slot or on the field's location:
+// it only moves onto the slot, and from then on its place writes the field.
 func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Settings) error {
 	if s.store == nil {
 		return nil
@@ -45,20 +46,35 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 		_, err := s.store.UpsertOffsiteTarget(primary)
 		return err
 	}
-	if !ok {
+	if !ok || primary.Repo != repo {
 		targets, err := s.store.OffsiteTargetsForDomain(domain)
 		if err != nil {
 			return err
 		}
 		onRepo := func(t store.OffsiteTarget) bool { return t.Repo == repo }
 		unplaced := func(t store.OffsiteTarget) bool { return onRepo(t) && t.PlaceID == "" }
-		if i := slices.IndexFunc(targets, unplaced); i >= 0 {
+		i := slices.IndexFunc(targets, unplaced)
+		if i < 0 {
+			i = slices.IndexFunc(targets, onRepo)
+		}
+		if i >= 0 {
+			if ok {
+				// The field leaves this row's location, so it stops copying there.
+				primary.Enabled = false
+				if _, err := s.store.UpsertOffsiteTarget(primary); err != nil {
+					return err
+				}
+				if err := s.store.MoveOffsiteTargetBehind(primary.ID); err != nil {
+					return err
+				}
+			}
 			if err := s.store.MakeFieldOffsiteTarget(targets[i].ID); err != nil {
 				return err
 			}
+			if targets[i].PlaceID != "" {
+				return nil
+			}
 			primary, ok = targets[i], true
-		} else if i := slices.IndexFunc(targets, onRepo); i >= 0 {
-			return s.store.MakeFieldOffsiteTarget(targets[i].ID)
 		}
 	}
 	t := settingsOffsiteTarget(domain, settings, repo)
