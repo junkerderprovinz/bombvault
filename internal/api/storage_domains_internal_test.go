@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -549,5 +550,308 @@ func TestAStoredInChangeToAnUnknownPlaceIsNotFound(t *testing.T) {
 		map[string]any{"placeId": "nope", "expect": map[string]any{"mode": "home-place", "placeId": "nope"}, "applyToOpen": false})
 	if code != http.StatusNotFound || res["ok"] != false {
 		t.Fatalf("PUT = %d %v, want 404", code, res)
+	}
+}
+
+// copiesPreview asks a chip's preview and returns it ready to send back as expect.
+func (f *placementFixture) copiesPreview(domain, placeID string, on bool) map[string]any {
+	f.t.Helper()
+	res := f.do(http.MethodPost, "/api/storage/domains/"+domain+"/copies/preview", map[string]any{"placeId": placeID, "on": on})
+	if res["ok"] != true {
+		f.t.Fatalf("copies preview = %v", res)
+	}
+	delete(res, "ok")
+	return res
+}
+
+func (f *placementFixture) putCopies(domain, placeID string, on bool, expect map[string]any) map[string]any {
+	f.t.Helper()
+	return f.do(http.MethodPut, "/api/storage/domains/"+domain+"/copies", map[string]any{"placeId": placeID, "on": on, "expect": expect})
+}
+
+func (f *placementFixture) defaultSkip(domain string) []string {
+	f.t.Helper()
+	d, _, err := f.st.PlacementDefaultFor(domain)
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	return d.Skip
+}
+
+func TestAChipOnWithoutATargetCreatesItAtThePlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	f.container("nginx", "")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+
+	pv := f.copiesPreview("containers", b2.ID, true)
+	if pv["targetId"] != nil || pv["newTarget"].(map[string]any)["items"] != float64(1) {
+		t.Fatalf("preview = %v, want a new target that nginx goes to", pv)
+	}
+	if res := f.putCopies("containers", b2.ID, true, pv); res["ok"] != true {
+		t.Fatalf("PUT = %v", res)
+	}
+	targets, err := f.st.OffsiteTargetsForDomain("containers")
+	if err != nil || len(targets) != 1 || targets[0].PlaceID != b2.ID || targets[0].Repo != "s3:https://s3.example.com/bucket/container" || !targets[0].Enabled {
+		t.Fatalf("targets = %+v, %v", targets, err)
+	}
+	if chip := chipOf(f.domainRow("containers"), b2.ID); chip["on"] != true || chip["targetId"] != targets[0].ID {
+		t.Fatalf("chip = %v, want it on with its new target", chip)
+	}
+}
+
+func TestAChipOnUnderSkipAllLeavesOutEveryOtherEnabledTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	hz := f.target("containers", "Hetzner", "sftp:u1@hz.example:/bv")
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	f.placeTarget(b2, "containers", "")
+	f.setDefault("containers", "", store.SkipAll)
+
+	pv := f.copiesPreview("containers", b2.ID, true)
+	if !reflect.DeepEqual(pv["skip"], []any{hz.ID}) {
+		t.Fatalf("skip = %v, want only Hetzner left out", pv["skip"])
+	}
+	if res := f.putCopies("containers", b2.ID, true, pv); res["ok"] != true {
+		t.Fatalf("PUT = %v", res)
+	}
+	if skip := f.defaultSkip("containers"); !slices.Equal(skip, []string{hz.ID}) {
+		t.Fatalf("default skip = %v", skip)
+	}
+}
+
+func TestTheLastChipOffSkipsEverything(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	hz := f.target("containers", "Hetzner", "sftp:u1@hz.example:/bv")
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(b2, "containers", "")
+	f.setDefault("containers", "", hz.ID)
+
+	pv := f.copiesPreview("containers", b2.ID, false)
+	if !reflect.DeepEqual(pv["skip"], []any{store.SkipAll}) {
+		t.Fatalf("skip = %v, want everything left out", pv["skip"])
+	}
+	if res := f.putCopies("containers", b2.ID, false, pv); res["ok"] != true {
+		t.Fatalf("PUT = %v", res)
+	}
+	if skip := f.defaultSkip("containers"); !slices.Equal(skip, []string{store.SkipAll}) {
+		t.Fatalf("default skip = %v", skip)
+	}
+	if row, _, err := f.st.GetOffsiteTarget(target.ID); err != nil || !row.Enabled {
+		t.Fatalf("target = %+v, %v, want it kept and on", row, err)
+	}
+}
+
+func TestAChipOffLeavesTheOtherTargetsIn(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	f.target("containers", "Hetzner", "sftp:u1@hz.example:/bv")
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(b2, "containers", "")
+
+	pv := f.copiesPreview("containers", b2.ID, false)
+	if !reflect.DeepEqual(pv["skip"], []any{target.ID}) || pv["impact"] == nil {
+		t.Fatalf("preview = %v, want only B2 left out, with what that drops", pv)
+	}
+	if res := f.putCopies("containers", b2.ID, false, pv); res["ok"] != true {
+		t.Fatalf("PUT = %v", res)
+	}
+	if skip := f.defaultSkip("containers"); !slices.Equal(skip, []string{target.ID}) {
+		t.Fatalf("default skip = %v", skip)
+	}
+}
+
+func TestAStaleChipIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	f.placeTarget(b2, "containers", "")
+	pv := f.copiesPreview("containers", b2.ID, false)
+	pv["skip"] = []string{}
+	if res := f.putCopies("containers", b2.ID, false, pv); res["ok"] != false || res["code"] != "stale" || res["preview"] == nil {
+		t.Fatalf("PUT = %v, want stale with the preview", res)
+	}
+	if _, found, err := f.st.PlacementDefaultFor("containers"); err != nil || found {
+		t.Fatalf("a stale chip wrote the default: %v, %v", found, err)
+	}
+}
+
+func TestAChipBesideTheDomainsRepositoryGetsTheCopiesEnding(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	if _, err := f.st.CreatePlaceRepo(nas.ID, "containers", ""); err != nil {
+		t.Fatal(err)
+	}
+
+	pv := f.copiesPreview("containers", nas.ID, true)
+	if pv["suffix"] != "-copies" {
+		t.Fatalf("preview = %v, want the -copies ending", pv)
+	}
+	if res := f.putCopies("containers", nas.ID, true, pv); res["ok"] != true {
+		t.Fatalf("PUT = %v", res)
+	}
+	targets, err := f.st.OffsiteTargetsForDomain("containers")
+	if err != nil || len(targets) != 1 || targets[0].Repo != "nas/containers-copies" || targets[0].PlaceSuffix != "-copies" {
+		t.Fatalf("targets = %+v, %v", targets, err)
+	}
+}
+
+func (f *placementFixture) chipRefusal(domain, placeID string, on bool) any {
+	f.t.Helper()
+	res := f.do(http.MethodPost, "/api/storage/domains/"+domain+"/copies/preview", map[string]any{"placeId": placeID, "on": on})
+	if res["ok"] != false {
+		f.t.Fatalf("copies preview = %v, want a refusal", res)
+	}
+	return res["code"]
+}
+
+func TestTheHomePlaceTakesNoChip(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	if code := f.chipRefusal("containers", unraid.ID, true); code != "place-home-domain" {
+		t.Fatalf("code = %v, want place-home-domain", code)
+	}
+}
+
+func TestTheDefaultsPlaceTakesNoChip(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	named, err := f.st.CreatePlaceRepo(nas.ID, "containers", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.setDefault("containers", named.ID)
+	if code := f.chipRefusal("containers", nas.ID, true); code != "place-home-domain" {
+		t.Fatalf("code = %v, want place-home-domain", code)
+	}
+}
+
+func TestASwitchedOffPlaceTakesNoNewChip(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.Enabled = false
+	b2 := f.storePlace(p)
+	if code := f.chipRefusal("containers", b2.ID, true); code != "place-off" {
+		t.Fatalf("code = %v, want place-off", code)
+	}
+}
+
+func TestAPlaceWithoutTheDomainsFolderTakesNoChip(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.Folders = map[string]string{"vms": "vms"}
+	b2 := f.storePlace(p)
+	if code := f.chipRefusal("containers", b2.ID, true); code != "place-domain-unavailable" {
+		t.Fatalf("code = %v, want place-domain-unavailable", code)
+	}
+}
+
+func TestAPlaceThatIsARepositoryTakesNoTargetBesideIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := s3Place("B2 root", "s3:https://s3.example.com/bucket")
+	p.Folders = map[string]string{"containers": ""}
+	root := f.storePlace(p)
+	if _, err := f.st.CreatePlaceRepo(root.ID, "containers", ""); err != nil {
+		t.Fatal(err)
+	}
+	if code := f.chipRefusal("containers", root.ID, true); code != "place-is-repository" {
+		t.Fatalf("code = %v, want place-is-repository", code)
+	}
+}
+
+func TestAChipOnSwitchesItsStoppedTargetBackOn(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(b2, "containers", "")
+	target.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(target); err != nil {
+		t.Fatal(err)
+	}
+	if chip := chipOf(f.domainRow("containers"), b2.ID); chip["on"] != false {
+		t.Fatalf("chip = %v, want it off while its target is stopped", chip)
+	}
+	pv := f.copiesPreview("containers", b2.ID, true)
+	if pv["newTarget"] == nil {
+		t.Fatalf("preview = %v, want what the target receives once it runs again", pv)
+	}
+	if res := f.putCopies("containers", b2.ID, true, pv); res["ok"] != true {
+		t.Fatalf("PUT = %v", res)
+	}
+	if row, _, err := f.st.GetOffsiteTarget(target.ID); err != nil || !row.Enabled {
+		t.Fatalf("target = %+v, %v, want it switched on", row, err)
+	}
+	if chip := chipOf(f.domainRow("containers"), b2.ID); chip["on"] != true {
+		t.Fatalf("chip = %v, want it on", chip)
+	}
+}
+
+func TestAFlashChipSwitchesItsTargetRow(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(b2, "flash", "")
+
+	if res := f.putCopies("flash", b2.ID, false, f.copiesPreview("flash", b2.ID, false)); res["ok"] != true {
+		t.Fatalf("PUT off = %v", res)
+	}
+	if row, _, err := f.st.GetOffsiteTarget(target.ID); err != nil || row.Enabled {
+		t.Fatalf("target = %+v, %v, want it off", row, err)
+	}
+	if res := f.putCopies("flash", b2.ID, true, f.copiesPreview("flash", b2.ID, true)); res["ok"] != true {
+		t.Fatalf("PUT on = %v", res)
+	}
+	if row, _, err := f.st.GetOffsiteTarget(target.ID); err != nil || !row.Enabled {
+		t.Fatalf("target = %+v, %v, want it on", row, err)
+	}
+}
+
+func TestANewFlashTargetTakesTheFieldSlot(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	if res := f.putCopies("flash", b2.ID, true, f.copiesPreview("flash", b2.ID, true)); res["ok"] != true {
+		t.Fatalf("PUT = %v", res)
+	}
+	targets, err := f.st.OffsiteTargetsForDomain("flash")
+	if err != nil || len(targets) != 1 || targets[0].SortOrder != 0 {
+		t.Fatalf("targets = %+v, %v", targets, err)
+	}
+	if settings, err := f.st.GetSettings(); err != nil || settings.FlashOffsite != targets[0].Repo {
+		t.Fatalf("flash field = %q, %v, want the new target", settings.FlashOffsite, err)
+	}
+}
+
+func TestAFlashChipSwitchedOffStaysOffWhenThePlaceIsEdited(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(b2, "flash", "")
+	if res := f.putCopies("flash", b2.ID, false, f.copiesPreview("flash", b2.ID, false)); res["ok"] != true {
+		t.Fatalf("PUT off = %v", res)
+	}
+	if res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"name": "B2 EU"}); res["ok"] != true {
+		t.Fatalf("PATCH = %v", res)
+	}
+	if row, _, err := f.st.GetOffsiteTarget(target.ID); err != nil || row.Enabled {
+		t.Fatalf("target = %+v, %v, want it still off after an edit of its place", row, err)
+	}
+}
+
+func TestAChipOfAnUnknownPlaceIsNotFound(t *testing.T) {
+	f := newPlacementFixture(t)
+	if code, res := f.doStatus(http.MethodPost, "/api/storage/domains/containers/copies/preview",
+		map[string]any{"placeId": "nope", "on": true}); code != http.StatusNotFound || res["ok"] != false {
+		t.Fatalf("preview = %d %v, want 404", code, res)
+	}
+	if code, res := f.doStatus(http.MethodPut, "/api/storage/domains/containers/copies",
+		map[string]any{"placeId": "nope", "on": true, "expect": map[string]any{"placeId": "nope", "on": true}}); code != http.StatusNotFound || res["ok"] != false {
+		t.Fatalf("PUT = %d %v, want 404", code, res)
+	}
+	if code, _ := f.doStatus(http.MethodPost, "/api/storage/domains/nope/copies/preview", map[string]any{"placeId": "x", "on": true}); code != http.StatusBadRequest {
+		t.Fatalf("unknown domain = %d, want 400", code)
 	}
 }
