@@ -409,26 +409,7 @@ func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 				return fmt.Errorf("credential set %q: unsupported S3 storage class %q (allowed: %s)", next[i].Name, next[i].S3StorageClass, strings.Join(restic.AllowedStorageClasses, ", "))
 			}
 			if old, ok := prevByID[next[i].ID]; ok {
-				if next[i].S3Secret == "" {
-					next[i].S3Secret = old.S3Secret
-				}
-				if next[i].RESTPassword == "" {
-					next[i].RESTPassword = old.RESTPassword
-				}
-				if next[i].KeptFor == "" {
-					next[i].KeptFor = old.KeptFor
-				}
-				if next[i].Kind == "" {
-					next[i].Kind = old.Kind
-					next[i].WebDAVURL, next[i].WebDAVVendor, next[i].WebDAVUser = old.WebDAVURL, old.WebDAVVendor, old.WebDAVUser
-					next[i].AzureAccount = old.AzureAccount
-				}
-				if next[i].WebDAVPass == "" {
-					next[i].WebDAVPass = old.WebDAVPass
-				}
-				if next[i].AzureKey == "" {
-					next[i].AzureKey = old.AzureKey
-				}
+				next[i] = keepStoredValues(old, next[i])
 			}
 		}
 		enc, err := s.encodeCloudCredSets(next)
@@ -439,6 +420,34 @@ func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 		return nil
 	})
 	return err
+}
+
+// keepStoredValues fills what a save of in leaves blank from the stored set
+// old: each secret, KeptFor, and for a set without a kind the kind with its
+// WebDAV and Azure fields, which the Settings page never sends. The import
+// writes a set the same way, so a file that leaves a secret blank keeps it.
+func keepStoredValues(old, in CloudCredSet) CloudCredSet {
+	if in.S3Secret == "" {
+		in.S3Secret = old.S3Secret
+	}
+	if in.RESTPassword == "" {
+		in.RESTPassword = old.RESTPassword
+	}
+	if in.KeptFor == "" {
+		in.KeptFor = old.KeptFor
+	}
+	if in.Kind == "" {
+		in.Kind = old.Kind
+		in.WebDAVURL, in.WebDAVVendor, in.WebDAVUser = old.WebDAVURL, old.WebDAVVendor, old.WebDAVUser
+		in.AzureAccount = old.AzureAccount
+	}
+	if in.WebDAVPass == "" {
+		in.WebDAVPass = old.WebDAVPass
+	}
+	if in.AzureKey == "" {
+		in.AzureKey = old.AzureKey
+	}
+	return in
 }
 
 func (s *Service) encodeCloudCredSets(sets []CloudCredSet) (string, error) {
@@ -728,6 +737,43 @@ func (s *Service) RecoveryKit() (string, error) {
 			w("~/.config/rclone/rclone.conf, then use the repo as rclone:<remote>:<path>:\n\n")
 			w("```\n%s\n```\n\n", strings.TrimRight(rcloneConf, "\n"))
 		}
+	}
+
+	// A place on a credential set of its own, and every WebDAV or Azure place,
+	// can be reached only with the variables listed here: the section above
+	// holds the shared credentials and the rclone config and nothing else.
+	if all, pErr := s.store.ListPlaces(); pErr == nil && len(all) > 0 {
+		w("## Storage places\n\n")
+		w("Each place keeps its repositories at its base address, one folder per domain\n")
+		w("below it. Export the variables listed under a place before running restic\n")
+		w("against an address there. A WebDAV place is reached through rclone, so restic\n")
+		w("needs rclone installed; its RCLONE_CONFIG_ lines define the remote the address names.\n\n")
+		for _, p := range all {
+			loc := p.Base
+			if resolved, rErr := s.resolveRepo(p.Base); rErr == nil {
+				loc = resolved
+			}
+			w("- %s: %s\n", p.Name, loc)
+			switch {
+			case p.Kind == string(places.KindLocal):
+			case p.Kind == string(places.KindSFTP):
+				w("  signs in with BombVault's SSH key, %s\n", filepath.Join(s.cfg.DataDir, "ssh", "id_ed25519"))
+			case p.Kind == string(places.KindRclone):
+				w("  uses the rclone config above\n")
+			case p.CredsRef == "":
+				w("  uses the shared credentials above\n")
+			default:
+				env, eErr := s.placeEnv(p)
+				if eErr != nil {
+					w("  (its credentials could not be read: %v)\n", eErr)
+					continue
+				}
+				for _, kv := range env {
+					w("      %s\n", kv)
+				}
+			}
+		}
+		w("\n")
 	}
 
 	w("## Manual restore without BombVault\n\n")

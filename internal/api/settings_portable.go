@@ -8,6 +8,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -22,12 +24,12 @@ import (
 // breaking change lands in the exported shape.
 const settingsExportSchema = 1
 
-// exportCredentials carries the DECRYPTED off-site backend secrets so the export
-// file is portable to an instance with a DIFFERENT APP_KEY. It is present only
-// when the export was requested with ?includeCredentials=true, and the import
-// RE-ENCRYPTS each value with the local key before storing. It never carries the
-// APP_KEY itself, the derived restic repo passwords, the login password hash, or
-// the session epoch — those are instance-local and are always preserved on import.
+// exportCredentials carries the decrypted off-site backend secrets, so the file
+// works on an instance with another APP_KEY. It is present only on an export
+// with ?includeCredentials=true, and the import encrypts each value again with
+// its own key. It never carries the APP_KEY, the derived restic repository
+// passwords, the login password hash or the session epoch: those belong to the
+// instance, and an import keeps them.
 type exportCredentials struct {
 	// Cloud is the S3 / restic-REST backend credentials in cleartext.
 	Cloud CloudCreds `json:"cloud"`
@@ -36,21 +38,19 @@ type exportCredentials struct {
 	// Notify is the notification config in cleartext (SMTP password / Matrix token
 	// included).
 	Notify notify.Config `json:"notify"`
+	// CredSets is every named credential set with its secrets. Places and rows
+	// name them by id, so a file without them would leave a restored instance
+	// pointing at sets it does not have.
+	CredSets []CloudCredSet `json:"credSets,omitempty"`
 }
 
-// settingsExport is the portable configuration envelope written by the export and
-// consumed by the import. Settings is the same user-facing view the SPA edits
-// (secrets blanked, auth/session/managed fields excluded); OffsiteTargets is the
-// non-secret off-site DESTINATION list; Credentials is present only when secrets
-// were requested. It intentionally carries NOTHING about backup repositories,
-// snapshots or run history — the import touches none of those.
-// NamedRepos is the per-item repository list (#204): the locations individual
-// containers, VMs and folder sets are pointed at instead of their domain's own.
-// They belong in the portable file for the same reason the off-site destinations
-// do - they are configuration, not backup data - and leaving them out was worse
-// than an omission: an item's own repo column holds the ID of one of these rows,
-// so a file that carried the items' choices but not the rows they name would
-// rebuild an instance whose items point at repositories that do not exist.
+// settingsExport is the portable configuration envelope written by the export
+// and read by the import. Settings is the view the SPA edits, with secrets
+// blanked and auth, session and managed fields left out; Credentials is present
+// only when secrets were requested. It carries nothing about snapshots or run
+// history, which the import never touches. NamedRepos travel with the file
+// because an item's repo column holds the id of one of them: without them the
+// import would rebuild items that point at repositories that do not exist.
 type settingsExport struct {
 	SchemaVersion  int                 `json:"schemaVersion"`
 	ExportedAt     string              `json:"exportedAt"`
@@ -64,7 +64,12 @@ type settingsExport struct {
 	// (replace it with nothing); see importedPlacement.
 	PlacementDefaults []placementDefaultExport `json:"placementDefaults"`
 	CopyRules         []copyRuleExport         `json:"copyRules"`
-	Credentials       *exportCredentials       `json:"credentials,omitempty"`
+	// Places and StorageDomainPlaces are always present too, so the import can
+	// tell a file from before storage places (no block) from one whose
+	// instance had none (an empty one).
+	Places              []placeExport      `json:"places"`
+	StorageDomainPlaces map[string]string  `json:"storageDomainPlaces"`
+	Credentials         *exportCredentials `json:"credentials,omitempty"`
 }
 
 // buildSettingsView returns the export's settings block: the user-facing view with
@@ -86,30 +91,38 @@ func buildSettingsView(s store.Settings) settingsView {
 }
 
 // redactedLocationMarker replaces the "user:pass@" userinfo of a repo location on
-// the plain export path (scrubRepoLocation). The import recognises it, so a
-// location that arrives redacted can never overwrite a working one
-// (importedLocation).
+// the plain export path (scrubRepoLocation). The import recognises it and keeps
+// a working location here in its place where importedLocation or
+// restoredLocation says so.
 const redactedLocationMarker = "[redacted]@"
 
-// scrubRepoLocation strips a URL-embedded credential out of a restic repo
-// location, leaving the location itself — scheme, host, bucket, path — intact.
+// scrubRepoLocation takes the password out of a restic repo location and keeps
+// the rest, scheme included, so the location still names its destination. A
+// location is no secret, but rest:https://user:pass@host:8000/repo carries one,
+// and the plain export can be fetched by any host on the LAN in trusted-LAN
+// mode.
 //
-// It reuses credentialRe (handlers.go), the SAME userinfo pattern the error
-// scrubber matches on, rather than growing a second pattern that would drift
-// from it. What it deliberately does NOT reuse is scrubSecrets: that runs
-// absPathRe first, and a repo location IS a path-shaped string, so the whole
-// location would come out as "[path]" and the export would name no destination
-// at all. Only the credential half applies here.
-//
-// A location is not itself a secret — which bucket a box replicates to is the
-// portable part of a settings file — but it can CARRY one: restic accepts
-// rest:https://user:pass@host:8000/repo, and s3:, sftp: and b2: locations take
-// the same userinfo syntax (the generated recovery kit documents it in so many
-// words). Emitting one verbatim would have put a live password in a file that
-// any host on the LAN can fetch in trusted-LAN mode.
+// It matches with repoUserinfoRe, the pattern the error scrubber uses on repo
+// locations, and leaves a userinfo without a password alone: the sftp short
+// form sftp:user@host:/repo holds a login name, and redacting that would turn
+// a working location into one the operator has to retype. urlPasswordRe then
+// reaches the URLs repoUserinfoRe stops short of.
 func scrubRepoLocation(loc string) string {
-	return credentialRe.ReplaceAllString(loc, redactedLocationMarker)
+	loc = repoUserinfoRe.ReplaceAllStringFunc(loc, func(match string) string {
+		m := repoUserinfoRe.FindStringSubmatch(match)
+		scheme := m[1] + ":" + m[2]
+		if !strings.Contains(match[len(scheme):], ":") {
+			return match
+		}
+		return scheme + redactedLocationMarker
+	})
+	return urlPasswordRe.ReplaceAllString(loc, "//"+redactedLocationMarker)
 }
+
+// urlPasswordRe matches the "user:password@" of a URL anywhere in a location,
+// such as the quoted url of an rclone connection string, where repoUserinfoRe
+// stops at the quote. Like repoUserinfoRe, it lets the password hold "/".
+var urlPasswordRe = regexp.MustCompile(`//[^@\s"'/]*:[^@\s"']*@`)
 
 // locationRedacted reports whether a repo location reached the import with its
 // embedded credential already stripped by a plain export.
@@ -118,19 +131,27 @@ func locationRedacted(loc string) bool {
 }
 
 // redactExportLocations strips URL-embedded credentials out of every repo
-// location the envelope carries: the five per-domain off-site locations in the
-// settings block and each off-site target's repo.
+// location the envelope carries: the domain paths and off-site locations in
+// the settings block, each place's base and each row's repo. A remote domain
+// path is its home place's base plus a folder, so redacting the base alone
+// would still hand the credential out.
 //
-// Applied to the PLAIN export only. The credentialed variant already hands out
+// Applied to the plain export only. The credentialed variant already hands out
 // every stored secret in the clear behind requireAuthForSecrets, so scrubbing
 // there would leave the one export that is meant to be a complete, portable copy
 // as the only one that is not.
 func redactExportLocations(exp *settingsExport) {
-	exp.Settings.ContainersOffsite = scrubRepoLocation(exp.Settings.ContainersOffsite)
-	exp.Settings.VMsOffsite = scrubRepoLocation(exp.Settings.VMsOffsite)
-	exp.Settings.FlashOffsite = scrubRepoLocation(exp.Settings.FlashOffsite)
-	exp.Settings.ConfigOffsite = scrubRepoLocation(exp.Settings.ConfigOffsite)
-	exp.Settings.FilesOffsite = scrubRepoLocation(exp.Settings.FilesOffsite)
+	for _, loc := range []*string{
+		&exp.Settings.ContainersPath, &exp.Settings.VMsPath, &exp.Settings.FlashPath,
+		&exp.Settings.ConfigPath, &exp.Settings.FilesPath,
+		&exp.Settings.ContainersOffsite, &exp.Settings.VMsOffsite, &exp.Settings.FlashOffsite,
+		&exp.Settings.ConfigOffsite, &exp.Settings.FilesOffsite,
+	} {
+		*loc = scrubRepoLocation(*loc)
+	}
+	for i := range exp.Places {
+		exp.Places[i].Base = scrubRepoLocation(exp.Places[i].Base)
+	}
 	for i := range exp.OffsiteTargets {
 		exp.OffsiteTargets[i].Repo = scrubRepoLocation(exp.OffsiteTargets[i].Repo)
 	}
@@ -144,6 +165,11 @@ func redactExportLocations(exp *settingsExport) {
 func redactedLocations(exp settingsExport) []string {
 	var out []string
 	for _, f := range []struct{ name, loc string }{
+		{"containersPath", exp.Settings.ContainersPath},
+		{"vmsPath", exp.Settings.VMsPath},
+		{"flashPath", exp.Settings.FlashPath},
+		{"configPath", exp.Settings.ConfigPath},
+		{"filesPath", exp.Settings.FilesPath},
 		{"containersOffsite", exp.Settings.ContainersOffsite},
 		{"vmsOffsite", exp.Settings.VMsOffsite},
 		{"flashOffsite", exp.Settings.FlashOffsite},
@@ -174,28 +200,30 @@ func redactedLocations(exp settingsExport) []string {
 		}
 		out = append(out, "repository "+name)
 	}
+	for _, p := range exp.Places {
+		if locationRedacted(p.Base) {
+			out = append(out, "storage place "+strings.TrimSpace(p.Name))
+		}
+	}
 	return out
 }
 
-// handleExportSettings streams the portable settings/off-site/credentials envelope
-// as a downloadable JSON attachment. GET /api/settings/export?includeCredentials=
-// true|false (default false). The body is never logged.
+// handleExportSettings streams the portable settings file as a JSON download.
+// GET /api/settings/export?includeCredentials=true|false (default false). The
+// body is never logged.
 //
-// The plain export carries no secret: toView blanks the metrics/widget tokens,
-// buildSettingsView drops the registry-auth list and the hook commands, and
-// redactExportLocations strips the "user:pass@" a repo location can carry inside
-// its own URL. That last one is the reason this comment used to be wrong — a
-// location was emitted verbatim, and a rest:/s3:/sftp:/b2: location is allowed to
-// hold a live password. With all three closed the plain file is served behind the
-// session authGate like every other /api route.
+// The plain export carries no secret: toView blanks the metrics and widget
+// tokens, buildSettingsView drops the registry-auth list and the hook commands,
+// and redactExportLocations strips the password a repo location can carry in
+// its own URL. It is served behind the session authGate like every other /api
+// route.
 //
-// The CREDENTIALED export is a different animal: it hands out the decrypted S3
-// keys, the restic-REST password, the WHOLE rclone config, the SMTP password and
-// the Matrix access token. That is the recovery kit's class of payload, so it
-// takes the recovery kit's second gate — auth must actually be ENABLED. Without
-// it, the trusted-LAN mode (no login password → authGate is a pass-through) let
-// any host on the LAN fetch every backend credential this instance holds with a
-// single unauthenticated GET.
+// The credentialed export hands out the decrypted S3 keys, the restic-REST
+// password, the whole rclone config, the SMTP password and the Matrix access
+// token, the recovery kit's class of payload. So it takes the recovery kit's
+// second gate as well: auth has to be enabled. In trusted-LAN mode authGate
+// lets every request through, and any host on the LAN could fetch every
+// backend credential this instance holds with one GET.
 func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 	withCredentials := truthy(r.URL.Query().Get("includeCredentials"))
 	if withCredentials && !h.requireAuthForSecrets(w, "exporting settings with credentials") {
@@ -227,16 +255,28 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	placeRows, err := h.store.ListPlaces()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	homes, err := h.store.DomainPlaces()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 
 	exp := settingsExport{
-		SchemaVersion:     settingsExportSchema,
-		ExportedAt:        time.Now().UTC().Format(time.RFC3339),
-		AppVersion:        Version,
-		Settings:          buildSettingsView(s),
-		OffsiteTargets:    offsiteTargetsToViews(targets),
-		NamedRepos:        offsiteTargetsToViews(namedRepos),
-		PlacementDefaults: placementDefaultsToExport(defaults),
-		CopyRules:         copyRulesToExport(rules),
+		SchemaVersion:       settingsExportSchema,
+		ExportedAt:          time.Now().UTC().Format(time.RFC3339),
+		AppVersion:          Version,
+		Settings:            buildSettingsView(s),
+		OffsiteTargets:      offsiteTargetsToViews(targets),
+		NamedRepos:          offsiteTargetsToViews(namedRepos),
+		PlacementDefaults:   placementDefaultsToExport(defaults),
+		CopyRules:           copyRulesToExport(rules),
+		Places:              placesToExport(placeRows),
+		StorageDomainPlaces: homes,
 	}
 
 	if withCredentials {
@@ -247,7 +287,7 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		}
 		exp.Credentials = creds
 	} else {
-		// No credentials block — so the file must not smuggle one out inside a
+		// Without a credentials block the file must not carry one out inside a
 		// repo URL either.
 		redactExportLocations(&exp)
 	}
@@ -263,7 +303,7 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
 	w.WriteHeader(http.StatusOK)
 	if _, wErr := w.Write(body); wErr != nil {
-		// Log only the failure, never the body — with credentials it holds the
+		// Log only the failure, never the body: with credentials it holds the
 		// decrypted off-site secrets.
 		log.Printf("api: settings export: write failed: %v", wErr)
 	}
@@ -284,10 +324,14 @@ func (h *Handler) collectCredentials(s store.Settings) (*exportCredentials, erro
 	if err != nil {
 		return nil, fmt.Errorf("read notification config: %w", err)
 	}
-	return &exportCredentials{Cloud: cloud, Rclone: rclone, Notify: notifyConf}, nil
+	sets, err := h.svc.decodeCloudCredSets(s)
+	if err != nil {
+		return nil, fmt.Errorf("read credential sets: %w", err)
+	}
+	return &exportCredentials{Cloud: cloud, Rclone: rclone, Notify: notifyConf, CredSets: sets}, nil
 }
 
-// importSummary is the preview payload: what an apply WOULD change, without writing.
+// importSummary is the preview payload: what an apply would change.
 type importSummary struct {
 	SchemaVersion     int                 `json:"schemaVersion"`
 	ExportedAt        string              `json:"exportedAt"`
@@ -296,6 +340,7 @@ type importSummary struct {
 	NamedRepos        int                 `json:"namedRepos"`
 	PlacementDefaults *int                `json:"placementDefaults"`
 	CopyRules         *int                `json:"copyRules"`
+	Places            *int                `json:"places"`
 	NewTargets        []newTargetRow      `json:"newTargets"`
 	Credentials       importCredsPresence `json:"credentials"`
 	SettingsGroups    []string            `json:"settingsGroups"`
@@ -304,24 +349,22 @@ type importSummary struct {
 // importCredsPresence reports which credential kinds the file carries (never the
 // values). All false when the file has no credentials block.
 type importCredsPresence struct {
-	Present bool `json:"present"`
-	Cloud   bool `json:"cloud"`
-	Rclone  bool `json:"rclone"`
-	Notify  bool `json:"notify"`
+	Present  bool `json:"present"`
+	Cloud    bool `json:"cloud"`
+	Rclone   bool `json:"rclone"`
+	Notify   bool `json:"notify"`
+	CredSets bool `json:"credSets"`
 }
 
 // handleImportSettings validates a settings-export file and, with ?apply=true,
-// writes it. POST /api/settings/import (body = the export JSON).
-//
-//   - apply=false / ?preview (the default): VALIDATE the file and return a summary
-//     of what WOULD change, writing nothing.
-//   - apply=true: validate, RE-ENCRYPT any credentials with THIS instance's APP_KEY
-//     and write the settings + off-site targets + credentials.
+// writes it. POST /api/settings/import (body = the export JSON). Without apply
+// it returns a summary of what an apply would change and writes nothing; with
+// it, credentials are re-encrypted with this instance's APP_KEY and the
+// settings, rows, credentials and storage places are written.
 //
 // It never touches backup repositories, snapshots or run history. A missing
-// credentials block leaves the existing off-site secrets untouched (they are not
-// wiped). An unsupported schemaVersion or a malformed file is rejected with a clear
-// error.
+// credentials block leaves the stored secrets alone. An unsupported
+// schemaVersion or a malformed file is refused with a clear error.
 func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 	exp, ok := decodeExport(w, r)
 	if !ok {
@@ -331,6 +374,7 @@ func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
+	exp = placeFileLocations(exp)
 	if msg := h.rejectImportCollisions(exp); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
@@ -389,52 +433,39 @@ func decodeExport(w http.ResponseWriter, r *http.Request) (settingsExport, bool)
 	return exp, true
 }
 
-// rejectImportCollisions is the half of the import validation that needs the
-// running service: whether two locations in the file name the SAME repository.
-// Returns a user-facing sentence, or "".
+// rejectImportCollisions refuses a file that would leave a named repository on
+// a domain path, an off-site destination, an off-site target or another named
+// repository, as the named-repository forms do. It returns a user-facing
+// sentence, or "". It sits apart from validateExport, a pure function over the
+// file, because it resolves locations through the running service.
 //
-// Kept apart from validateExport because that one is deliberately a pure
-// function over the file, while this has to resolve every location. What it
-// enforces is exactly what the two write paths enforce: a named repository may
-// not sit on a domain's own repository, on a domain's off-site destination, on
-// an off-site target row, or on another named repository.
+// The check runs on the state the apply leaves behind, which differs from the
+// file in four ways:
 //
-// Checked against the state the apply LEAVES BEHIND, not against the file's own
-// two halves. Those are not the same thing, and assuming they were left the hole
-// this guard was written to close. There are THREE shapes, and modelling only
-// the first two left a third of the hole open:
+//   - a file with no namedRepos block keeps every stored row, since applyImport
+//     calls replaceNamedRepos only for a non-empty block;
+//   - a file row that is in use here keeps its stored location, since the move
+//     goes through SetNamedRepoLocationIfUnused;
+//   - a stored row in use here that the file lacks survives, since the delete
+//     goes through DeleteNamedRepoIfUnused;
+//   - a redacted location in the file can leave this instance's own in place
+//     (importedLocation, restoredLocation).
 //
-//   - a file with no namedRepos block writes the settings and leaves the
-//     instance's existing rows in place (applyImport only calls
-//     replaceNamedRepos when the block is non-empty), so an imported domain path
-//     can land on a stored repository nobody checked it against;
-//   - a row the file DOES carry that is IN USE here keeps its current location,
-//     because the move goes through SetNamedRepoLocationIfUnused, so the
-//     location the file names is not the location that ends up stored;
-//   - a stored row the file does NOT carry that is in use here is KEPT, because
-//     the delete goes through DeleteNamedRepoIfUnused. It survives the apply
-//     just as much as the file's own rows do, and nothing was checking the
-//     file's five domain paths against it.
-//
-// An import used to be the one write path that could install a collision the
-// forms refuse, and it surfaced at that repository's first backup - or, worse,
-// quietly, as a repository whose append-only flag and credentials answered for a
-// domain that never set them.
+// A collision this misses shows at that repository's first backup, or not at
+// all: a repository whose append-only flag and credentials answer for a domain
+// that never set them.
 func (h *Handler) rejectImportCollisions(exp settingsExport) string {
-	// One repository that will exist after the apply, with the name to call it by
-	// in the refusal - the file's rows are numbered as the operator sees them,
-	// and a row that only exists here has no number in the file to give.
+	const unchecked = "could not check this file against the repositories already set up; try again"
+	// One repository that exists after the apply. A file row is named by its
+	// number in the file, a stored row the file lacks by its name.
 	type repoRow struct{ label, loc string }
-	// COPIED, never aliased. exp.NamedRepos is a slice of value structs, so
-	// writing through the slice header would edit the caller's export - and
-	// handleImportSettings hands that same export on to summarizeExport and
-	// applyImport, where a pinned location silently suppresses the apply's own
-	// "its location was NOT moved" notice. A validator must not rewrite the
-	// document it validates.
+	// The locations the apply keeps go into rows, never into exp:
+	// handleImportSettings passes exp on to the apply, where a pinned location
+	// would hide its notice that a move was refused.
 	rows := make([]repoRow, 0, len(exp.NamedRepos))
 	stored, sErr := h.store.ListNamedRepos()
 	if sErr != nil {
-		return "could not check this file against the repositories already set up; try again"
+		return unchecked
 	}
 	storedByID := make(map[string]store.OffsiteTarget, len(stored))
 	for _, r := range stored {
@@ -456,37 +487,30 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 				// one the file asks for would pass a check the stored state then fails.
 				n, cErr := h.store.ItemsUsingNamedRepo(id)
 				if cErr != nil {
-					// Refused rather than guessed. Pinning the location on a read error
-					// validates a location the apply may not write - it would move an
-					// unused row the guard had just decided to leave alone - and the
-					// response would still say applied.
-					return "could not check this file against the repositories already set up; try again"
+					// Refused rather than guessed: pinning the location on a read error
+					// would validate one the apply may not write, and the response
+					// would still say applied.
+					return unchecked
 				}
 				if n != 0 {
 					loc = cur.Repo
 				} else {
-					// An UNUSED row does move - but not necessarily to what the file
-					// says. A location that arrived REDACTED (a plain export from an
-					// instance whose location carried a credential) is not written over
-					// a working one; importedLocation keeps the stored value there, and
-					// the guard has to validate the same thing the apply will store.
-					// Otherwise this checks "rest:https://[redacted]@host/repo" for
-					// collisions while the instance keeps its real location, which is
-					// the one that could actually collide.
+					// An unused row moves, but a redacted location in the file leaves
+					// the stored one, and that is the one that can collide.
 					loc = importedLocation(cur.Repo, tv.Repo)
 				}
 			}
 			rows = append(rows, repoRow{fmt.Sprintf("repository #%d", i+1), loc})
 		}
-		// …and the rows the apply KEEPS because they are in use and the file does
-		// not carry them.
+		// The stored rows the apply keeps because they are in use and the file
+		// lacks them.
 		for _, r := range stored {
 			if inFile[r.ID] {
 				continue
 			}
 			n, cErr := h.store.ItemsUsingNamedRepo(r.ID)
 			if cErr != nil {
-				return "could not check this file against the repositories already set up; try again"
+				return unchecked
 			}
 			if n != 0 {
 				rows = append(rows, repoRow{fmt.Sprintf("the repository %q already set up here", scrubSafeName(r.Name)), r.Repo})
@@ -506,7 +530,11 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 	}
 	type place struct{ label, loc string }
 	var occupied []place
-	s := exp.Settings
+	here, gErr := h.store.GetSettings()
+	if gErr != nil {
+		return unchecked
+	}
+	s := mergeImportedSettings(here, exp.Settings)
 	for _, p := range []place{
 		{"the Containers path", s.ContainersPath}, {"the VMs path", s.VMsPath},
 		{"the Flash path", s.FlashPath}, {"the Config path", s.ConfigPath},
@@ -522,7 +550,15 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 		}
 	}
 	for _, tv := range exp.OffsiteTargets {
-		if loc, ok := resolve(tv.Repo); ok {
+		loc := tv.Repo
+		if locationRedacted(loc) {
+			target, _, err := h.store.GetOffsiteTarget(strings.TrimSpace(tv.ID))
+			if err != nil {
+				return unchecked
+			}
+			loc = importedLocation(target.Repo, loc)
+		}
+		if loc, ok := resolve(loc); ok {
 			occupied = append(occupied, place{"an off-site destination", loc})
 		}
 	}
@@ -563,17 +599,15 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 	return ""
 }
 
-// validateExport checks the envelope is a supported, structurally-sane export.
-// Returns a user-facing error string, or "" when valid.
+// validateExport checks that the file is a supported, well-formed export. It
+// returns a user-facing error, or "" when the file is valid.
 //
-// Every check here is one the SETTINGS SAVE also enforces, and that is the whole
-// contract: an import must not be able to persist a row the UI's own save path
-// then refuses. The SPA always PUTs the full settings object, so a single field
-// this let through but handlePutSettings rejects blocks EVERY later save from
-// EVERY card — including the card that would fix it. The everyN guard below was
-// the first field to be shared for that reason; the path and DR-target guards
-// are now shared the same way, through the same functions handlePutSettings
-// calls, so extending one cannot leave the other behind.
+// Every check here is one the settings save enforces as well: an import must
+// not store what the save then refuses. The SPA always PUTs the whole settings
+// object, so one field this lets through and handlePutSettings rejects blocks
+// every later save from every card, the card that would fix it included. The
+// everyN, path and DR-target checks are the functions handlePutSettings calls,
+// so extending one extends both.
 func validateExport(exp settingsExport, mountRoot string) string {
 	if exp.SchemaVersion != settingsExportSchema {
 		return fmt.Sprintf("unsupported schemaVersion %d (this build reads version %d)", exp.SchemaVersion, settingsExportSchema)
@@ -586,19 +620,16 @@ func validateExport(exp settingsExport, mountRoot string) string {
 			return fmt.Sprintf("off-site target #%d: %s", i+1, msg)
 		}
 	}
-	// Named repositories (#204) carry NO domain - that is the point of them, an
-	// item picks one regardless of its domain - so they are checked against their
-	// own requirements rather than the off-site contract.
+	// Named repositories carry no domain, since an item picks one whatever its
+	// domain, so they are checked against their own rules rather than the
+	// off-site contract: a name, and every refusal in staticNamedRepoRefusals (a
+	// location, no unprefixed rclone remote, a local path inside the mount
+	// root). Those need nothing but the string and are the create form's own.
 	//
-	// What this loop enforces: a name, and every refusal in
-	// staticNamedRepoRefusals (non-empty location, no unprefixed rclone remote, a
-	// local path inside the mount root). Those need nothing but the string, so
-	// they are shared verbatim with the create form and cannot drift from it.
-	//
-	// The collision refusals, which need the running service to resolve every
-	// location, are next door in rejectImportCollisions and run on the same
-	// request. They are separate because this function is pure over the file and
-	// those are not, not because the import is allowed to skip them.
+	// The collision refusals need the running service to resolve every
+	// location, so they live in rejectImportCollisions and run on the same
+	// request. They sit apart because this function is pure over the file, not
+	// because the import may skip them.
 	for i, tv := range exp.NamedRepos {
 		if strings.TrimSpace(tv.Name) == "" {
 			return fmt.Sprintf("repository #%d: needs a name", i+1)
@@ -607,44 +638,43 @@ func validateExport(exp settingsExport, mountRoot string) string {
 		if loc == "" {
 			return fmt.Sprintf("repository #%d: needs a location", i+1)
 		}
-		// The SAME refusals the create form applies, not a hand-copied subset.
-		// Mirroring two of four here is how the import became the one write path
-		// that accepted what the form rejects; the shared check below cannot drift
-		// from the form because it IS the form's.
 		if msg := staticNamedRepoRefusals(loc, mountRoot); msg != "" {
 			return fmt.Sprintf("repository #%d (%s): %s", i+1, tv.Name, msg)
 		}
 	}
-	// Every schedule cadence in the imported settings must parse (same grammar the
-	// settings save enforces), so an apply cannot install an un-runnable schedule.
+	if exp.Credentials != nil {
+		if msg := rejectInvalidCredSets(exp.Credentials.CredSets); msg != "" {
+			return msg
+		}
+	}
+	if msg := rejectInvalidPlaces(exp, mountRoot); msg != "" {
+		return msg
+	}
+	// Every schedule cadence in the imported settings must parse, with the
+	// grammar the settings save uses, so an apply cannot install a schedule
+	// that never runs.
 	for _, cad := range exportCadences(exp.Settings) {
 		if _, err := schedule.ParseCadence(cad); err != nil {
 			return "invalid schedule in settings: " + scrubError(err)
 		}
 	}
-	// …and must respect the SAME everyN restriction the settings save enforces
-	// (#166). Without this, an imported "containersOffsiteSchedule": "everyN 3
-	// 04:00" would persist happily and then make EVERY later settings save fail
-	// from any card: the UI always PUTs the full settings object, so one poisoned
-	// field blocks the whole Schedules tab. One guard, both write paths — which
-	// also means the drills/tamper-test/digest cadences that everyN now genuinely
-	// supports import exactly where a UI-set one is accepted, with no second list
-	// left to drift out of step.
+	// The everyN restriction of the settings save. An imported
+	// "containersOffsiteSchedule": "everyN 3 04:00" would otherwise be stored
+	// and then fail every later save of the whole Schedules tab. Sharing the
+	// check also lets the drill, tamper-test and digest cadences that take
+	// everyN import exactly where a UI-set one is accepted.
 	if msg := rejectEveryNSchedules(exp.Settings); msg != "" {
 		return "invalid schedule in settings: " + msg
 	}
-	// Repo locations. Without this an imported `containersPath` of
-	// "/mnt/user/backups" — absolute rather than the required relative subpath,
-	// which is exactly what a file produced on a box with a different mount root
-	// carries — persisted happily and then made every later settings save fail
-	// with "invalid backup path: must be a relative subpath under the mount root".
-	// The user could not change ANY setting, including the path itself, without
+	// Repo locations. A file from a box with another mount root can carry an
+	// absolute containersPath such as "/mnt/user/backups". Stored, it would fail
+	// every later settings save with "must be a relative subpath under the mount
+	// root", and no setting, the path included, could be changed without
 	// editing the database.
 	if msg := rejectInvalidSettingsPaths(exp.Settings, mountRoot); msg != "" {
 		return "invalid path in settings: " + msg
 	}
-	// The DR-drill targets, which had the same asymmetry: validated on PUT,
-	// unchecked on import.
+	// The DR-drill targets, checked as the save checks them.
 	if msg := rejectInvalidSettingsNames(exp.Settings); msg != "" {
 		return "invalid settings: " + msg
 	}
@@ -672,6 +702,7 @@ func summarizeExport(exp settingsExport) importSummary {
 		NamedRepos:        len(exp.NamedRepos),
 		PlacementDefaults: countIfPresent(exp.PlacementDefaults),
 		CopyRules:         countIfPresent(exp.CopyRules),
+		Places:            countIfPresent(exp.Places),
 		NewTargets:        []newTargetRow{},
 		Credentials:       credsPresence(exp.Credentials),
 		SettingsGroups:    settingsGroups(exp.Settings),
@@ -684,10 +715,11 @@ func credsPresence(c *exportCredentials) importCredsPresence {
 		return importCredsPresence{}
 	}
 	return importCredsPresence{
-		Present: true,
-		Cloud:   cloudCredsMeaningful(c.Cloud),
-		Rclone:  strings.TrimSpace(c.Rclone) != "",
-		Notify:  notifyMeaningful(c.Notify),
+		Present:  true,
+		Cloud:    cloudCredsMeaningful(c.Cloud),
+		Rclone:   strings.TrimSpace(c.Rclone) != "",
+		Notify:   notifyMeaningful(c.Notify),
+		CredSets: len(c.CredSets) > 0,
 	}
 }
 
@@ -721,42 +753,58 @@ func settingsGroups(v settingsView) []string {
 }
 
 // applyImport writes a validated export: the settings row, a full replace of the
-// off-site targets, and any credentials (re-encrypted with the local APP_KEY). It
-// never touches repos, snapshots or run history.
+// off-site targets, any credentials (re-encrypted with the local APP_KEY) and the
+// storage places. It never touches repos, snapshots or run history.
 func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	installed, err := h.installedForImport(ctx, exp)
 	if err != nil {
 		return fmt.Errorf("the settings were not imported: %w", err)
 	}
+	// Read before the drop: a place whose base arrives redacted keeps the base
+	// it has here under the same id. A file without places rebuilds them only
+	// on an instance that was on places, since moving an instance onto places
+	// is the start's job.
+	prior, err := h.store.ListPlaces()
+	if err != nil {
+		return fmt.Errorf("the settings were not imported: %w", err)
+	}
+	here, err := h.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("the settings were not imported: %w", err)
+	}
+	rebuild := exp.Places == nil && (len(prior) > 0 || here.PlacesMigrated != 0)
+	// The steps below then write rows on no place, so none of the rules that
+	// guard a placed row gets in their way. The places come back at the end,
+	// from the file or from the migration over what it imported. An apply that
+	// stops before then leaves the instance on no places with the migration
+	// mark clear, running from its settings and rows as they are.
+	if err := h.store.DropPlaces(); err != nil {
+		return fmt.Errorf("the settings were not imported: %w", err)
+	}
 
-	// Map the imported view onto the CURRENT row, PRESERVING the per-instance
-	// fields the file intentionally omits (auth password, session epoch,
-	// recovery-kit ack, registry-auth blob) and the encrypted credential blobs
-	// (those are updated separately below, only when the file carries them).
-	// The merge runs inside MutateSettings' transaction so those preserved
-	// fields are read at write time: an import is a slow request (a 4 MiB body,
-	// a full validation pass), and a password change or credential save landing
-	// in that window must not be reverted by the row this writes back.
-	// A hook command in the file is not installed (see mergeImportedSettings for
-	// why a settings file may not hand this host a command to run). Say so, so an
-	// operator moving to a new box learns that the one part of their Backup
-	// Everything setup that did NOT travel is the hook, instead of discovering it
-	// the night the dead-man's-switch does not ping.
+	// A hook command in the file is not installed (see mergeImportedSettings).
+	// Saying so tells an operator moving to a new box that the hook is the one
+	// part of Backup Everything that did not travel, before the night the
+	// dead-man's-switch stays silent.
 	if strings.TrimSpace(exp.Settings.EverythingPreHook) != "" || strings.TrimSpace(exp.Settings.EverythingPostHook) != "" {
-		log.Print("api: settings import: the file carries Backup Everything pre/post-hook commands — NOT installed. " +
+		log.Print("api: settings import: the file carries Backup Everything pre/post-hook commands, which are not installed. " +
 			"A hook is a shell command this host runs, so it is set on the instance, never by an imported file. " +
 			"Enter it under Settings > Schedules > Backup Everything if you want it here.")
 	}
 
-	// Same deal for a location whose credential the exporting instance stripped:
-	// say so, because the operator is the only one who can put the password back.
+	// Likewise for a location whose credential the export stripped: only the
+	// operator can put the password back.
 	if slots := redactedLocations(exp); len(slots) > 0 {
-		log.Printf("api: settings import: these repo locations arrived with their embedded credential removed (%s) — "+
-			"a plain export never writes a password into a URL. Where this instance already has a location it is KEPT; "+
-			"anywhere else the location lands with the marker still in it. Re-enter the credential in the repo URL, "+
-			"or export again with credentials included.", strings.Join(slots, ", "))
+		log.Printf("api: settings import: these repo locations arrived with their embedded credential removed (%s); "+
+			"a plain export never writes a password into a URL. An off-site location or repository this instance already has is kept, "+
+			"and so is a domain path where the file names the same location; anywhere else the location lands with the marker in it. "+
+			"Re-enter the credential in the repo URL, or export again with credentials included.", strings.Join(slots, ", "))
 	}
 
+	// The merge keeps the per-instance fields the file omits (login password,
+	// session epoch, recovery-kit ack, registry auths, credential blobs). It runs
+	// inside the transaction so they are read at write time: a password change
+	// landing during a slow import must not be reverted by this write.
 	if _, err := h.store.MutateSettings(func(cur *store.Settings) error {
 		*cur = mergeImportedSettings(*cur, exp.Settings)
 		return nil
@@ -781,28 +829,36 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 		return err
 	}
 
-	// The named repositories (#204) the same way, but ONLY when the file carries
-	// them. An older file has no namedRepos block at all, and reading that as "the
-	// source had none" would delete the repositories this instance is using and
-	// leave every item pointing at an id that no longer exists.
+	// The named repositories the same way, but only when the file carries them.
+	// An older file has no namedRepos block, and reading that as "the source had
+	// none" would delete the repositories this instance uses and leave every
+	// item pointing at an id that no longer exists.
 	if len(exp.NamedRepos) > 0 {
 		if err := h.replaceNamedRepos(exp.NamedRepos); err != nil {
 			return err
 		}
 	}
 
-	// Credentials: present block → re-encrypt each NON-EMPTY kind with the local
-	// key. An empty kind (or a missing block) leaves the existing secret untouched
-	// — import is additive, it never wipes secrets.
+	// Each credential kind the file fills is re-encrypted with the local key. An
+	// empty kind or a missing block leaves the stored secret alone: the import
+	// adds secrets and never wipes one.
 	if exp.Credentials != nil {
 		if err := h.applyImportedCredentials(*exp.Credentials); err != nil {
 			return err
 		}
 	}
 
+	// Last among the writes, so a place claims only what the steps above
+	// stored; see placedImport.
+	if exp.Places != nil {
+		if err := h.replacePlaces(exp, prior); err != nil {
+			return err
+		}
+	}
+
 	// Mirror the imported off-site config into the primary off-site target rows and
 	// re-arm the scheduler, exactly like a settings save, so the imported schedules
-	// take effect. The scheduler may be absent in a stripped test wiring — guard it.
+	// take effect. A test wiring may have no scheduler.
 	s, err := h.store.GetSettings()
 	if err != nil {
 		return err
@@ -811,6 +867,11 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	if h.scheduler != nil {
 		if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
 			return err
+		}
+	}
+	if rebuild {
+		if err := h.svc.MigrateToPlaces(); err != nil {
+			return fmt.Errorf("the settings were imported, but the storage places could not be built from them, so this instance runs without places: %w", err)
 		}
 	}
 	return nil
@@ -1022,24 +1083,29 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 }
 
 // importedLocation picks the repo location an apply writes into one slot: the
-// file's, unless that one arrived redacted (a plain export from an instance whose
-// location carried a credential) AND this instance already has a location there —
-// then the working one stays.
+// file's, unless that one arrived redacted by a plain export and this instance
+// already has a location there. Writing "rest:https://[redacted]@host:8000/repo"
+// over a working location would quietly break the replication this instance
+// already runs, and nothing else in the file says a credential was removed;
+// applyImport logs which slots arrived redacted.
 //
-// Writing "rest:https://[redacted]@host:8000/repo" over a location that works
-// would turn importing a settings file into breaking the off-site replication the
-// target instance already had running, and it would do it quietly: nothing else in
-// the file says a credential was removed. Keeping what is there is the harmless
-// direction, the same one mergeImportedSettings takes for the hook commands and
-// the credential blobs; applyImport logs which slots it applied to.
-//
-// A slot this instance has NOTHING in keeps the redacted value instead of being
-// left empty. That is deliberate: the marker is visible in Settings and the next
-// run fails against a location an operator can repair by typing the password back
-// in, whereas a silently blank off-site location is a box that just stops
-// replicating and says nothing.
+// An empty slot takes the redacted value rather than staying empty: the marker
+// shows in Settings and the next run fails against a location the operator can
+// repair by typing the password back in, where a blank off-site location just
+// stops replicating without a word.
 func importedLocation(existing, imported string) string {
 	if locationRedacted(imported) && strings.TrimSpace(existing) != "" {
+		return existing
+	}
+	return imported
+}
+
+// restoredLocation is importedLocation for a slot that is never empty on this
+// instance, such as a domain path at its local default. It keeps existing
+// only when the redacted file names that same location, so a redacted remote
+// location lands visibly instead of losing to a default.
+func restoredLocation(existing, imported string) string {
+	if locationRedacted(imported) && scrubRepoLocation(existing) == imported {
 		return existing
 	}
 	return imported
@@ -1063,43 +1129,82 @@ func (h *Handler) applyImportedCredentials(c exportCredentials) error {
 			return fmt.Errorf("store notification config: %w", err)
 		}
 	}
+	if len(c.CredSets) > 0 {
+		if err := h.svc.importCredSets(c.CredSets); err != nil {
+			return fmt.Errorf("store credential sets: %w", err)
+		}
+	}
 	return nil
 }
 
+// importCredSets adds the file's credential sets to the stored ones, a set
+// with a stored id taking its place the way a save of that set would. Sets the
+// file does not carry stay: pull sources name sets a settings file knows
+// nothing about.
+func (s *Service) importCredSets(sets []CloudCredSet) error {
+	return s.editCloudCredSets(func(stored []CloudCredSet) []CloudCredSet {
+		for _, in := range sets {
+			in.Name = strings.TrimSpace(in.Name)
+			in.S3StorageClass = strings.ToUpper(strings.TrimSpace(in.S3StorageClass))
+			i := slices.IndexFunc(stored, func(c CloudCredSet) bool { return c.ID == in.ID })
+			if i < 0 {
+				stored = append(stored, in)
+				continue
+			}
+			stored[i] = keepStoredValues(stored[i], in)
+		}
+		return stored
+	})
+}
+
+// rejectInvalidCredSets applies the refusals SetCloudCredSets applies to a
+// save. It returns a user-facing sentence, or "".
+func rejectInvalidCredSets(sets []CloudCredSet) string {
+	seen := make(map[string]bool, len(sets))
+	for i, set := range sets {
+		name := strings.TrimSpace(set.Name)
+		switch {
+		case name == "":
+			return fmt.Sprintf("credential set #%d: needs a name", i+1)
+		case set.ID == "":
+			return fmt.Sprintf("credential set #%d (%s): needs an id", i+1, name)
+		case seen[set.ID]:
+			return fmt.Sprintf("credential set #%d (%s): its id is used twice", i+1, name)
+		}
+		seen[set.ID] = true
+		if class := strings.ToUpper(strings.TrimSpace(set.S3StorageClass)); class != "" && !restic.StorageClassAllowed(class) {
+			return fmt.Sprintf("credential set #%d (%s): unsupported S3 storage class %s (allowed: %s)", i+1, name, class, strings.Join(restic.AllowedStorageClasses, ", "))
+		}
+	}
+	return ""
+}
+
 // mergeImportedSettings maps the imported view onto a Settings row, keeping the
-// per-instance fields the export omits and clamping numeric fields the same way
-// the settings save does. Secret tokens (metrics/widget) blanked in the view are
-// preserved from the existing row — import never wipes them.
+// per-instance fields the export leaves out and clamping numbers the way the
+// settings save does. The metrics and widget tokens arrive blank in the view
+// and keep their stored value: an import never wipes them.
 //
-// It starts from the EXISTING row and overwrites the portable fields, and that
-// direction is the point. It used to build a fresh store.Settings composite
-// literal, which silently wrote a zero value into every column nobody had
-// remembered to list: applying an import cleared everythingSchedule (the
-// whole-server pass, switched off), everythingPostHook (the dead-man's-switch
-// ping that proves the pass completed, deleted), the fleet fields and the
-// instance name — with no error, and nothing in the preview to hint at it. A
-// literal makes forgetting a field a WIPE; starting from the row makes
-// forgetting a field a no-op, which is the harmless direction and the only one
-// that stays safe as columns are added.
+// It starts from the existing row and overwrites the portable fields, so a
+// column nobody lists here keeps its value. A fresh store.Settings would write
+// a zero into every unlisted column instead, switching off Backup Everything or
+// clearing the instance name without an error or a hint in the preview.
 //
-// EverythingPreHook / EverythingPostHook are deliberately NOT taken from the
-// file. They are shell commands this host executes (HostShell, via `sh -c`), so
-// importing them would let a settings file — a thing users mail each other and
-// download from forum threads — install an arbitrary command on the box. They
-// get the treatment the credential fields get: kept from the instance being
-// imported into, never installed by the file. applyImport logs when a file
-// carried them so the operator is not left guessing why a hook did not travel.
+// EverythingPreHook and EverythingPostHook are never taken from the file. They
+// are shell commands this host runs (HostShell, via `sh -c`), and a settings
+// file is something people mail each other and download from forum threads,
+// so importing them would let it install any command on the box. They are kept
+// from this instance like the credential fields; applyImport logs when a file
+// carried them.
 func mergeImportedSettings(existing store.Settings, v settingsView) store.Settings {
 	out := existing
 
-	// Kept from the target instance, and kept by CONSTRUCTION rather than by a
-	// line someone has to remember: the login password hash, the session epoch,
-	// the recovery-kit acknowledgement, the registry-auth blob, the metrics and
-	// widget tokens (the view blanks them, and blank means keep), the fleet
-	// token / fleet switch / instance name, the encrypted credential blobs
-	// (applyImportedCredentials updates those, and only when the file carries
-	// them), and the two Backup Everything hook commands. Every assignment below
-	// is a field the file is allowed to set.
+	// Kept from this instance because out starts as its row: the login password
+	// hash, the session epoch, the recovery-kit acknowledgement, the
+	// registry-auth blob, the metrics and widget tokens, the fleet token, fleet
+	// switch and instance name, the encrypted credential blobs
+	// (applyImportedCredentials writes those when the file carries them) and
+	// the two Backup Everything hook commands. Every assignment below is a
+	// field the file may set.
 
 	out.EncryptionEnabled = v.EncryptionEnabled
 	out.ContainersEnabled = v.ContainersEnabled
@@ -1107,11 +1212,14 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.FlashEnabled = v.FlashEnabled
 	out.ConfigEnabled = v.ConfigEnabled
 	out.FilesEnabled = v.FilesEnabled
-	out.ContainersPath = v.ContainersPath
-	out.VMsPath = v.VMsPath
-	out.FlashPath = v.FlashPath
-	out.ConfigPath = v.ConfigPath
-	out.FilesPath = v.FilesPath
+	// Domain paths through restoredLocation: a plain export redacts a remote
+	// one, and the local default a fresh instance holds is no location to keep
+	// over it.
+	out.ContainersPath = restoredLocation(existing.ContainersPath, v.ContainersPath)
+	out.VMsPath = restoredLocation(existing.VMsPath, v.VMsPath)
+	out.FlashPath = restoredLocation(existing.FlashPath, v.FlashPath)
+	out.ConfigPath = restoredLocation(existing.ConfigPath, v.ConfigPath)
+	out.FilesPath = restoredLocation(existing.FilesPath, v.FilesPath)
 	out.RestoreFolder = v.RestoreFolder
 	// Off-site locations, via importedLocation: a location the plain export
 	// stripped a credential out of never overwrites a working one here.
@@ -1130,8 +1238,6 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.FlashSchedule = v.FlashSchedule
 	out.ConfigSchedule = v.ConfigSchedule
 	out.FilesSchedule = v.FilesSchedule
-	// The whole-server pass's cadence. Missing here until now, so an import
-	// switched Backup Everything off on the instance it was applied to.
 	out.EverythingSchedule = v.EverythingSchedule
 	out.FlashZipExportEnabled = v.FlashZipExportEnabled
 	out.FlashZipExportPath = v.FlashZipExportPath
