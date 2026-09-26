@@ -1297,3 +1297,23 @@ func TestAnUnknownPlaceCannotBeTested(t *testing.T) {
 		t.Fatalf("POST test of an unknown place = %d %v, want 404", code, res)
 	}
 }
+
+func TestAPlaceNamesTheCredentialSetItKeepsItsCredentialsIn(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "set-b2", Name: "B2", Kind: "s3", CloudCreds: CloudCreds{S3KeyID: "k", S3Secret: "s"}}}); err != nil {
+		t.Fatal(err)
+	}
+	own := s3Place("B2", "s3:https://s3.example.com/bucket")
+	own.CredsRef = "set-b2"
+	f.storePlace(own)
+	f.storePlace(s3Place("Shared", "s3:https://s3.example.com/other"))
+
+	res := f.do(http.MethodGet, "/api/places", nil)
+
+	if got := placeByName(t, res, "B2")["credsRef"]; got != "set-b2" {
+		t.Errorf("B2 credsRef = %v, want set-b2", got)
+	}
+	if got := placeByName(t, res, "Shared")["credsRef"]; got != "" {
+		t.Errorf("Shared credsRef = %v, want the empty name of the shared credentials", got)
+	}
+}

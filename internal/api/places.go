@@ -114,11 +114,14 @@ type PlaceView struct {
 	GrowthBudgetGB       int               `json:"growthBudgetGb"`
 	Enabled              bool              `json:"enabled"`
 	SortOrder            int               `json:"sortOrder"`
-	Usage                PlaceUsage        `json:"usage"`
-	Locked               map[string]bool   `json:"locked"`
-	Repository           bool              `json:"repository"`
-	LastTest             *PlaceTestStatus  `json:"lastTest,omitempty"`
-	Creds                PlaceCredsView    `json:"creds"`
+	// CredsRef names the credential set the place keeps its credentials in,
+	// "" for the shared ones. The values themselves stay in Creds, masked.
+	CredsRef   string           `json:"credsRef"`
+	Usage      PlaceUsage       `json:"usage"`
+	Locked     map[string]bool  `json:"locked"`
+	Repository bool             `json:"repository"`
+	LastTest   *PlaceTestStatus `json:"lastTest,omitempty"`
+	Creds      PlaceCredsView   `json:"creds"`
 }
 
 // UnplacedRow is a repository or domain path whose address fits no place. It
@@ -221,7 +224,7 @@ func (s *Service) placeView(d placeData, p store.Place) (PlaceView, error) {
 		RetentionKeepLast: p.RetentionKeepLast, RetentionKeepDaily: p.RetentionKeepDaily,
 		RetentionKeepWeekly: p.RetentionKeepWeekly, RetentionKeepMonthly: p.RetentionKeepMonthly,
 		LimitUpload: p.LimitUpload, LimitDownload: p.LimitDownload, GrowthBudgetGB: p.GrowthBudgetGB,
-		Enabled: p.Enabled, SortOrder: p.SortOrder,
+		Enabled: p.Enabled, SortOrder: p.SortOrder, CredsRef: p.CredsRef,
 		Usage:      PlaceUsage{HomeDomains: []string{}, Defaults: []string{}, CopyDomains: []string{}},
 		Locked:     map[string]bool{},
 		Repository: placeIsRepository(p, rows),
