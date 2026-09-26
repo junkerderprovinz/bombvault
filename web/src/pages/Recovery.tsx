@@ -1404,10 +1404,8 @@ export default function Recovery() {
       return;
     }
     const base = latest.settings;
-    const patch: Partial<Settings> =
-      configSource === "offsite"
-        ? { configOffsite: settings.configOffsite }
-        : { configPath: settings.configPath };
+    const field = configSource === "offsite" ? "configOffsite" : "configPath";
+    const patch: Partial<Settings> = { [field]: settings[field] };
     const updated: Settings = { ...base, ...patch };
     try {
       const saveRes = await putSettings(updated);
@@ -1416,6 +1414,16 @@ export default function Recovery() {
         setConfigError(message);
         setConfigPhase("error");
         push(message, "fail");
+        setConfigShake((n) => n + 1);
+        return;
+      }
+      // Staging now would read the stored location, not the one typed here.
+      if (saveRes.kept?.includes(field)) {
+        const message = t("recovery.placeKept");
+        setSettings((prev) => (prev ? { ...prev, [field]: base[field] } : base));
+        setConfigError(message);
+        setConfigPhase("error");
+        push(message, "warn");
         setConfigShake((n) => n + 1);
         return;
       }
