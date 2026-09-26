@@ -21,6 +21,19 @@ func s3Place(name, base string) store.Place {
 		Folders: places.DefaultFolders(), OffPremises: true}
 }
 
+// storeDavPlace stores davSet and a Nextcloud place on it that offers the
+// containers domain.
+func (f *placementFixture) storeDavPlace() store.Place {
+	f.t.Helper()
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{davSet()}); err != nil {
+		f.t.Fatal(err)
+	}
+	return f.storePlace(store.Place{
+		ID: davPlace, Name: "Cloud", Provider: "nextcloud", Kind: "webdav", Base: "rclone:" + places.RemoteName(davPlace) + ":bombvault",
+		Folders: map[string]string{"containers": "container"}, CredsRef: "dav", Enabled: true,
+	})
+}
+
 // placeTarget adds an enabled target of the domain at the place as stored,
 // and mirrors the place onto it.
 func (f *placementFixture) placeTarget(p store.Place, domain, suffix string) store.OffsiteTarget {
