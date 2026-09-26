@@ -1,6 +1,6 @@
 # Konfiguracja
 
-Ta strona omawia zmienne środowiskowe kontenera, montaże udostępniane przez szablon, kopię VM przez SSH oraz konfigurację poza siedzibą. **Ścieżki repozytoriów** kopii są konfigurowane wewnątrz aplikacji (Ustawienia, Ścieżki kopii), a nie przez zmienne środowiskowe.
+Ta strona omawia zmienne środowiskowe kontenera, montaże udostępniane przez szablon, kopię VM przez SSH oraz konfigurację poza siedzibą. To, dokąd trafiają kopie zapasowe, ustawiasz wewnątrz aplikacji, w **Ustawienia, Magazyn**, a nie przez zmienne środowiskowe.
 
 ## Zmienne środowiskowe
 
@@ -26,7 +26,7 @@ Ta strona omawia zmienne środowiskowe kontenera, montaże udostępniane przez s
 
 Zamontuj gniazdo Docker, flash (`/boot`) oraz katalog główny **Host Data** (`/mnt`), jak pokazano w szablonie CA. Zarówno *źródła*, jak i *cele* kopii zapasowych znajdują się pod Host Data i jest on montowany jako **slave**, więc zdalny udział, który montuje się po uruchomieniu kontenera (na przykład pod `/mnt/remotes`), staje się widoczny bez restartu.
 
-Ścieżki repozytoriów kopii domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files}`, tworzone przy pierwszej kopii. Zmień lokalizację w dowolnym momencie w **Ustawienia, Ścieżki kopii**.
+Świeża instalacja przechowuje każdą domenę w miejscu **Unraid**, pod `/mnt/user/bombvault`, z jednym folderem na domenę (`container`, `vms`, `flash`, `config`, `files`), tworzonym przy pierwszej kopii. Kolejne miejsca, lokalne lub zdalne, dodajesz w **Ustawienia, Magazyn**; zobacz [Miejsca przechowywania](storage-places.md).
 
 !!! note "Kontrola integracji z hostem"
     Otwórz `/spike` w interfejsie webowym po uruchomieniu kontenera. Sonduje ono każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy.
@@ -71,20 +71,20 @@ Szablon dodaje `--add-host=host.docker.internal:host-gateway`, aby kontener móg
 
 ## Konfiguracja poza siedzibą
 
-Skonfiguruj replikę poza siedzibą w zakładce **Ustawienia, Poza siedzibą**. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md), aby poznać pełny przepływ pracy (niezmienne/append-only, tamper testy i próby DR). W skrócie:
+Kopie poza siedzibą trafiają do miejsc przechowywania. Dodaj miejsce w **Ustawienia, Magazyn** przyciskiem **Dodaj miejsce**, a potem zaznacz je pod **Kopiowane do** w wierszu domeny. [Miejsca przechowywania](storage-places.md) opisują każdy rodzaj połączenia, a [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md) opisują append-only, tamper testy i próby DR. W skrócie:
 
-- **Backendy:** SMB/CIFS i NFS (zamontuj udział i skieruj na niego Ścieżkę kopii), natywne backendy restic bez rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) lub dowolny zdalny rclone (`rclone:<remote>:<bucket>/path`).
-- **Poświadczenia chmurowe** są przechowywane zaszyfrowane w Ustawienia, Poza siedzibą, Poświadczenia chmurowe.
-- **Cele SSH nie wymagają niczego zainstalowanego po drugiej stronie.** `sftp:` wymaga jedynie serwera SSH. Dodaj klucz publiczny z **Ustawienia, System, Kopia VM przez SSH** (dostępny też pod `/config/ssh/id_ed25519.pub`) do pliku `~/.ssh/authorized_keys` użytkownika docelowego.
-- **Kopia poza siedzibą:** BombVault replikuje nowe migawki poleceniem `restic copy` w trybie best-effort. Repozytorium lokalne pozostaje główne. Każda domena ma własny harmonogram poza siedzibą oraz przycisk **Replikuj teraz**.
-- **Wiele celów poza siedzibą na domenę:** każda domena może replikować do kilku celów poza siedzibą naraz. Dodaj dodatkowe cele w Ustawienia, Poza siedzibą, każdy z własnym repozytorium, klasą pamięci S3, flagą append-only, przechowywaniem i budżetem wzrostu; wszystkie replikują zgodnie z harmonogramem poza siedzibą tej domeny. Istniejąca pojedyncza konfiguracja poza siedzibą jest przenoszona jako pierwszy cel.
-- **Przechowywanie per źródło:** polityka lokalna znajduje się w Ustawienia, Ścieżki i Magazyn; polityka poza siedzibą w Ustawienia, Poza siedzibą (pozostaw ją całą na zero, aby nigdy nie przycinać automatycznie migawek poza siedzibą).
-- **Limity przepustowości:** ogranicz tempo wysyłania/pobierania restic w Ustawienia, Poza siedzibą.
-- **Zimna i archiwalna klasa pamięci (S3):** dla natywnego repozytorium S3 poza siedzibą wybierz warstwę czytelną przy przywracaniu (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Zdalne rclone ustawiają swoją klasę w konfiguracji rclone.
+- **Rodzaje połączeń:** folder na tym serwerze Unraid albo udział NAS zamontowany pod `/mnt/remotes`, magazyn S3 (Backblaze B2 i inni dostawcy chmury albo usługa na własnym hostingu, taka jak MinIO lub Garage), rest-server, SFTP, w tym Hetzner Storage Box, WebDAV dla Nextcloud, ownCloud i OpenCloud, Azure Blob oraz dowolny zasób zdalny rclone. Backblaze B2 potrzebuje tylko klucza: BombVault odczytuje z niego zasobnik i punkt końcowy S3.
+- **Poświadczenia** są przechowywane zaszyfrowane razem z miejscem, do którego należą. Zestawy poświadczeń, których używają źródła pobierania, znajdują się w zakładce **Pobieranie** na stronie Instancje.
+- **Cele SSH nie wymagają niczego zainstalowanego po drugiej stronie.** Miejsce SFTP wymaga jedynie serwera SSH. Dodaj klucz publiczny pokazany w formularzu SFTP (dostępny też w **Ustawienia, System, Kopia VM przez SSH** i pod `/config/ssh/id_ed25519.pub`) do pliku `~/.ssh/authorized_keys` użytkownika docelowego.
+- **Kopia poza siedzibą:** BombVault kopiuje nowe migawki poleceniem `restic copy` w trybie best-effort, jako dodatek do miejsca, w którym domena jest przechowywana. Każda domena ma własny harmonogram kopiowania w Ustawienia, Harmonogramy oraz **Kopiuj teraz** w swoim wierszu.
+- **Kilka miejsc kopii na domenę:** zaznacz pod **Kopiowane do** tyle miejsc, ile chcesz; każde kopiuje zgodnie z harmonogramem domeny.
+- **Przechowywanie, limity, klasa pamięci i budżet wzrostu należą do miejsca** i ustawia się je w jego szczegółach. Przechowywanie miejsca obowiązuje dla każdego repozytorium w nim, więc miejsce poza siedzibą może trzymać kopie dłużej jako archiwum; miejsce ze wszystkimi regułami na zero nigdy niczego nie przycina.
+- **Zimna i archiwalna klasa pamięci (S3):** dla miejsca S3 wybierz warstwę czytelną przy przywracaniu (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Zdalne rclone ustawiają swoją klasę w konfiguracji rclone.
+- **Domena przechowywana w miejscu zdalnym:** zobacz [Domena przechowywana w miejscu zdalnym](offsite-recovery.md#remote-primary-repositories).
 
 ## Przenośne ustawienia (eksport i import) {#portable-settings-export-and-import}
 
-Karta **Eksport i import ustawień** na stronie Ustawienia zapisuje całą Twoją konfigurację BombVault (ustawienia domen, cele poza siedzibą, harmonogramy, przechowywanie, powiadomienia) do przenośnego pliku JSON, który możesz zaimportować na innej instancji, więc przeniesienie na nową maszynę lub sklonowanie konfiguracji nie oznacza ponownego wpisywania wszystkiego ręcznie. Import pokazuje podgląd i prosi o potwierdzenie oraz nigdy nie narusza Twoich danych ani historii kopii.
+Karta **Eksport i import ustawień** na stronie Ustawienia zapisuje całą Twoją konfigurację BombVault (ustawienia domen, miejsca przechowywania, harmonogramy, powiadomienia) do przenośnego pliku JSON, który możesz zaimportować na innej instancji, więc przeniesienie na nową maszynę lub sklonowanie konfiguracji nie oznacza ponownego wpisywania wszystkiego ręcznie. Import pokazuje podgląd i prosi o potwierdzenie oraz nigdy nie narusza Twoich danych ani historii kopii.
 
 !!! warning "Eksport może zawierać poświadczenia"
-    Sam decydujesz, czy dołączyć do pliku poświadczenia poza siedzibą i powiadomień. Z dołączonymi poświadczeniami eksport jest tak samo wrażliwy jak Twój zestaw odzyskiwania, więc przechowuj go w bezpiecznym miejscu. Bez nich plik zawiera tylko niesekretne ustawienia.
+    Sam decydujesz, czy dołączyć do pliku poświadczenia swoich miejsc i powiadomień. Z dołączonymi poświadczeniami eksport jest tak samo wrażliwy jak Twój zestaw odzyskiwania, więc przechowuj go w bezpiecznym miejscu. Bez nich plik zawiera tylko niesekretne ustawienia.

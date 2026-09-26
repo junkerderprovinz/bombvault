@@ -1,6 +1,6 @@
 # Konfigurace
 
-Tato stránka pokrývá proměnné prostředí kontejneru, připojení, která šablona poskytuje, zálohu VM přes SSH a nastavení mimo lokalitu. **Cesty repozitářů** záloh se konfigurují uvnitř aplikace (Nastavení, Zálohovací cesty), nikoli přes proměnné prostředí.
+Tato stránka pokrývá proměnné prostředí kontejneru, připojení, která šablona poskytuje, zálohu VM přes SSH a nastavení mimo lokalitu. Kam zálohy míří, nastavíte uvnitř aplikace v **Nastavení, Úložiště**, nikoli přes proměnné prostředí.
 
 ## Proměnné prostředí
 
@@ -26,7 +26,7 @@ Tato stránka pokrývá proměnné prostředí kontejneru, připojení, která �
 
 Připojte Docker socket, flash (`/boot`) a kořen **Host Data** (`/mnt`), jak je zobrazeno v CA šabloně. *Zdroje* i *cíle* záloh žijí pod Host Data, a to je připojeno jako **slave**, takže vzdálená sdílená složka, která se připojí až po spuštění kontejneru (například pod `/mnt/remotes`), se stane viditelnou bez restartu.
 
-Cesty repozitářů záloh mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files}`, vytvořené při první záloze. Umístění změňte kdykoli v **Nastavení, Zálohovací cesty**.
+Čerstvá instalace ukládá každou doménu na místo **Unraid**, do `/mnt/user/bombvault` s jednou složkou na doménu (`container`, `vms`, `flash`, `config`, `files`), která se vytvoří při první záloze. Další místa, místní i vzdálená, přidáte v **Nastavení, Úložiště**; viz [Úložná místa](storage-places.md).
 
 !!! note "Kontrola integrace hostitele"
     Po spuštění kontejneru otevřete `/spike` ve webovém rozhraní. Prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části.
@@ -71,20 +71,20 @@ Rychlé nastavení:
 
 ## Nastavení mimo lokalitu
 
-Nastavte repliku mimo lokalitu v záložce **Nastavení, Mimo lokalitu**. Kompletní postup (neměnné/append-only, testování odolnosti a cvičné obnovy po havárii) najdete v [Mimo lokalitu a obnova](offsite-recovery.md). Ve zkratce:
+Kopie mimo lokalitu míří na úložná místa. Místo přidejte v **Nastavení, Úložiště** tlačítkem **Přidat místo** a pak ho zaškrtněte pod **Kopírováno do** na řádku domény. [Úložná místa](storage-places.md) popisují každý druh připojení a [Mimo lokalitu a obnova](offsite-recovery.md) popisuje append-only, testování odolnosti a cvičné obnovy po havárii. Ve zkratce:
 
-- **Backendy:** SMB/CIFS a NFS (připojte sdílenou složku a nasměrujte na ni Zálohovací cestu), nativní restic backendy bez rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) nebo libovolný rclone remote (`rclone:<remote>:<bucket>/path`).
-- **Přihlašovací údaje cloudu** se ukládají šifrovaně pod Nastavení, Mimo lokalitu, Přihlašovací údaje cloudu.
-- **SSH cíle nevyžadují nic nainstalovaného na druhé straně.** `sftp:` potřebuje jen SSH server. Přidejte veřejný klíč z **Nastavení, Systém, Záloha VM přes SSH** (také na `/config/ssh/id_ed25519.pub`) do `~/.ssh/authorized_keys` cílového uživatele.
-- **Kopie mimo lokalitu:** BombVault replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy. Místní repozitář zůstává primární. Každá doména má vlastní plán mimo lokalitu, plus tlačítko **Replikovat nyní**.
-- **Více cílů mimo lokalitu na doménu:** každá doména může replikovat na několik cílů mimo lokalitu najednou. Přidejte další cíle v Nastavení, Mimo lokalitu, každý s vlastním repozitářem, třídou úložiště S3, příznakem append-only, uchováváním a rozpočtem růstu; všechny replikují podle plánu mimo lokalitu dané domény. Stávající jednotlivé nastavení mimo lokalitu se přenese jako první cíl.
-- **Uchovávání na zdroj:** místní zásada žije v Nastavení, Cesty a úložiště; zásada mimo lokalitu v Nastavení, Mimo lokalitu (ponechte vše na nule, aby se snímky mimo lokalitu nikdy automaticky neprořezávaly).
-- **Limity šířky pásma:** omezte rychlost nahrávání/stahování restic pod Nastavení, Mimo lokalitu.
-- **Studená a archivní třída úložiště (S3):** pro nativní S3 repozitář mimo lokalitu vyberte úroveň čitelnou pro obnovu (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone remotes nastavují svou třídu v konfiguraci rclone.
+- **Druhy připojení:** složka na tomto Unraidu nebo sdílená složka NAS připojená pod `/mnt/remotes`, úložiště S3 (Backblaze B2 a další cloudoví poskytovatelé, nebo služba na vlastním hostingu jako MinIO nebo Garage), rest-server, SFTP včetně Hetzner Storage Box, WebDAV pro Nextcloud, ownCloud a OpenCloud, Azure Blob a libovolný rclone remote. Backblaze B2 potřebuje jen klíč: BombVault z něj zjistí bucket i S3 endpoint.
+- **Přihlašovací údaje** se ukládají šifrovaně spolu s místem, ke kterému patří. Sady přihlašovacích údajů, které používají zdroje stahování, jsou v záložce **Stažení** na stránce Instance.
+- **SSH cíle nevyžadují nic nainstalovaného na druhé straně.** Místo SFTP potřebuje jen SSH server. Přidejte veřejný klíč zobrazený ve formuláři SFTP (také v **Nastavení, Systém, Záloha VM přes SSH** a na `/config/ssh/id_ed25519.pub`) do `~/.ssh/authorized_keys` cílového uživatele.
+- **Kopie mimo lokalitu:** BombVault kopíruje nové snímky pomocí `restic copy` na základě nejlepší snahy, navíc k místu, na kterém je doména uložena. Každá doména má vlastní plán kopírování v Nastavení, Plány, plus **Kopírovat nyní** na svém řádku.
+- **Několik míst pro kopie na doménu:** pod **Kopírováno do** zaškrtněte tolik míst, kolik chcete; každé kopíruje podle plánu domény.
+- **Uchovávání, limity, třída úložiště a rozpočet růstu patří místu** a nastavují se v jeho podrobnostech. Uchovávání místa platí pro každý repozitář na něm, takže místo mimo lokalitu může uchovávat kopie déle jako archiv; místo se všemi pravidly na nule nikdy nic neprořezává.
+- **Studená a archivní třída úložiště (S3):** pro místo S3 vyberte úroveň čitelnou pro obnovu (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone remotes nastavují svou třídu v konfiguraci rclone.
+- **Doména uložená na vzdáleném místě:** viz [Doména uložená na vzdáleném místě](offsite-recovery.md#remote-primary-repositories).
 
 ## Přenositelná nastavení (export a import) {#portable-settings-export-and-import}
 
-Karta **Export a import nastavení** na stránce Nastavení zapíše celou vaši konfiguraci BombVaultu (nastavení domén, cíle mimo lokalitu, plány, uchovávání, oznámení) do přenosného souboru JSON, který můžete importovat na jiné instanci, takže přechod na nový stroj nebo klonování sestavy neznamená znovu vše zadávat ručně. Import zobrazí náhled a požádá o potvrzení a nikdy se nedotkne vašich zálohovaných dat ani historie.
+Karta **Export a import nastavení** na stránce Nastavení zapíše celou vaši konfiguraci BombVaultu (nastavení domén, úložná místa, plány, oznámení) do přenosného souboru JSON, který můžete importovat na jiné instanci, takže přechod na nový stroj nebo klonování sestavy neznamená znovu vše zadávat ručně. Import zobrazí náhled a požádá o potvrzení a nikdy se nedotkne vašich zálohovaných dat ani historie.
 
 !!! warning "Export může obsahovat přihlašovací údaje"
-    Vy zvolíte, zda do souboru zahrnout přihlašovací údaje mimo lokalitu a oznámení. Se zahrnutými přihlašovacími údaji je export stejně citlivý jako vaše sada pro obnovu, takže jej uložte na bezpečné místo. Bez nich soubor obsahuje jen netajná nastavení.
+    Vy zvolíte, zda do souboru zahrnout přihlašovací údaje vašich míst a oznámení. Se zahrnutými přihlašovacími údaji je export stejně citlivý jako vaše sada pro obnovu, takže jej uložte na bezpečné místo. Bez nich soubor obsahuje jen netajná nastavení.

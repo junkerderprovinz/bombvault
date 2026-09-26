@@ -1,6 +1,6 @@
 # Konfiguration
 
-Diese Seite behandelt die Umgebungsvariablen des Containers, die vom Template bereitgestellten Mounts, das VM-Backup über SSH und die Off-site-Einrichtung. Backup-**Repository-Pfade** werden in der App konfiguriert (Einstellungen, Backup-Pfade), nicht über Umgebungsvariablen.
+Diese Seite behandelt die Umgebungsvariablen des Containers, die vom Template bereitgestellten Mounts, das VM-Backup über SSH und die Off-site-Einrichtung. Wohin die Backups gehen, stellst du in der App unter **Einstellungen, Speicher** ein, nicht über Umgebungsvariablen.
 
 ## Umgebungsvariablen
 
@@ -26,7 +26,7 @@ Diese Seite behandelt die Umgebungsvariablen des Containers, die vom Template be
 
 Hänge den Docker-Socket, den Flash (`/boot`) und das Wurzelverzeichnis **Host Data** (`/mnt`) ein, wie im CA-Template gezeigt. Backup-*Quellen* und -*Ziele* liegen beide unter Host Data, und es ist **slave** eingehängt, sodass eine Remote-Freigabe, die nach dem Containerstart eingehängt wird (zum Beispiel unter `/mnt/remotes`), ohne Neustart sichtbar wird.
 
-Backup-Repository-Pfade sind standardmäßig `/mnt/user/bombvault/{container,vms,flash,config,files}`, angelegt beim ersten Backup. Ändere den Ort jederzeit unter **Einstellungen, Backup-Pfade**.
+Eine frische Installation speichert jeden Bereich am Ort **Unraid**, unter `/mnt/user/bombvault` mit einem Ordner pro Bereich (`container`, `vms`, `flash`, `config`, `files`), angelegt beim ersten Backup. Weitere Orte, lokal oder entfernt, fügst du unter **Einstellungen, Speicher** hinzu; siehe [Speicherorte](storage-places.md).
 
 !!! note "Prüfung der Host-Integration"
     Öffne `/spike` in der Web-Oberfläche, nachdem der Container gestartet ist. Es prüft jeden Mount und jedes CLI (Docker-Socket, libvirt, restic, qemu-img, rclone) und meldet fehlende Teile.
@@ -71,20 +71,20 @@ Das Template fügt `--add-host=host.docker.internal:host-gateway` hinzu, damit d
 
 ## Off-site-Einrichtung
 
-Richte eine Off-site-Replik im Tab **Einstellungen, Off-site** ein. Siehe [Off-site & Wiederherstellung](offsite-recovery.md) für den vollständigen Ablauf (unveränderlich/append-only, Manipulationstest und DR-Übungen). Kurz gefasst:
+Off-site-Kopien gehen an Speicherorte. Leg den Ort unter **Einstellungen, Speicher** mit **Ort hinzufügen** an und hak ihn dann in der Zeile des Bereichs unter **Kopiert nach** an. [Speicherorte](storage-places.md) beschreibt jede Verbindungsart, und [Off-site & Wiederherstellung](offsite-recovery.md) behandelt Append-only, den Manipulationstest und DR-Übungen. Kurz gefasst:
 
-- **Backends:** SMB/CIFS und NFS (Freigabe einhängen und einen Backup-Pfad darauf richten), native restic-Backends ohne rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) oder jedes rclone-Remote (`rclone:<remote>:<bucket>/path`).
-- **Cloud-Zugangsdaten** werden verschlüsselt gespeichert unter Einstellungen, Off-site, Cloud-Zugangsdaten.
-- **SSH-Ziele brauchen auf der Gegenseite nichts installiert.** `sftp:` benötigt nur einen SSH-Server. Füge den öffentlichen Schlüssel aus **Einstellungen, System, VM-Backup über SSH** (auch unter `/config/ssh/id_ed25519.pub`) den `~/.ssh/authorized_keys` des Zielbenutzers hinzu.
-- **Off-site-Kopie:** BombVault repliziert neue Snapshots mit `restic copy` auf Best-Effort-Basis. Das lokale Repo bleibt primär. Jeder Bereich hat seinen eigenen Off-site-Zeitplan, plus einen Button **Jetzt replizieren**.
-- **Mehrere Off-site-Ziele pro Bereich:** jeder Bereich kann gleichzeitig an mehrere Off-site-Ziele replizieren. Füge zusätzliche Ziele unter Einstellungen, Off-site hinzu, jedes mit eigenem Repository, S3-Speicherklasse, Append-only-Flag, Aufbewahrung und Wachstumsbudget; sie alle replizieren nach dem Off-site-Zeitplan dieses Bereichs. Eine bestehende einzelne Off-site-Einrichtung wird als erstes Ziel übernommen.
-- **Aufbewahrung pro Quelle:** die lokale Richtlinie liegt unter Einstellungen, Pfade & Speicher; die Off-site-Richtlinie unter Einstellungen, Off-site (lasse sie ganz auf null, um Off-site-Snapshots nie automatisch zu kürzen).
-- **Bandbreitenlimits:** begrenze die restic-Upload-/Download-Rate unter Einstellungen, Off-site.
-- **Kalt- und Archiv-Speicherklasse (S3):** wähle für ein natives S3-Off-site-Repo eine wiederherstellungslesbare Stufe (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-Remotes setzen ihre Klasse in der rclone-Konfiguration.
+- **Verbindungsarten:** ein Ordner auf diesem Unraid oder eine unter `/mnt/remotes` eingehängte NAS-Freigabe, S3-Speicher (Backblaze B2 und die anderen Cloud-Anbieter oder ein selbst betriebener Dienst wie MinIO oder Garage), rest-server, SFTP einschließlich Hetzner Storage Box, WebDAV für Nextcloud, ownCloud und OpenCloud, Azure Blob und jedes rclone-Remote. Backblaze B2 braucht nur den Schlüssel: BombVault liest den Bucket und den S3-Endpunkt daraus ab.
+- **Zugangsdaten** werden verschlüsselt bei dem Ort gespeichert, zu dem sie gehören. Die Zugangsdaten-Sätze, die Abhol-Quellen benutzen, liegen im Tab **Holen** der Seite Instanzen.
+- **SSH-Ziele brauchen auf der Gegenseite nichts installiert.** Ein SFTP-Ort braucht nur einen SSH-Server. Füge den öffentlichen Schlüssel, den das SFTP-Formular zeigt (auch unter **Einstellungen, System, VM-Backup über SSH** und in `/config/ssh/id_ed25519.pub`), den `~/.ssh/authorized_keys` des Zielbenutzers hinzu.
+- **Off-site-Kopie:** BombVault kopiert neue Snapshots mit `restic copy` auf Best-Effort-Basis, zusätzlich zu dem Ort, an dem ein Bereich gespeichert ist. Jeder Bereich hat seinen eigenen Kopier-Zeitplan unter Einstellungen, Zeitpläne, dazu **Jetzt kopieren** in seiner Zeile.
+- **Mehrere Kopie-Orte pro Bereich:** hak unter **Kopiert nach** so viele Orte an, wie du willst; jeder kopiert nach dem Zeitplan des Bereichs.
+- **Aufbewahrung, Grenzen, Speicherklasse und Wachstumsbudget gehören zum Ort** und werden in seinen Details eingestellt. Die Aufbewahrung eines Ortes gilt für jedes Repository an ihm, so kann ein Off-site-Ort Kopien länger als Archiv behalten; ein Ort, bei dem jede Regel auf null steht, kürzt nie.
+- **Kalt- und Archiv-Speicherklasse (S3):** wähle für einen S3-Ort eine wiederherstellungslesbare Stufe (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-Remotes setzen ihre Klasse in der rclone-Konfiguration.
+- **Ein Bereich an einem entfernten Ort:** siehe [Ein Bereich an einem entfernten Ort](offsite-recovery.md#remote-primary-repositories).
 
 ## Portable Einstellungen (Export und Import) {#portable-settings-export-and-import}
 
-Die Karte **Einstellungen exportieren und importieren** auf der Einstellungsseite schreibt deine gesamte BombVault-Konfiguration (Bereichseinstellungen, Off-site-Ziele, Zeitpläne, Aufbewahrung, Benachrichtigungen) in eine portable JSON-Datei, die du auf einer anderen Instanz importieren kannst, sodass ein Umzug auf eine neue Box oder das Klonen eines Setups nicht bedeutet, alles von Hand neu einzugeben. Der Import zeigt eine Vorschau und fragt nach Bestätigung und rührt niemals deine Backup-Daten oder -Historie an.
+Die Karte **Einstellungen exportieren und importieren** auf der Einstellungsseite schreibt deine gesamte BombVault-Konfiguration (Bereichseinstellungen, Speicherorte, Zeitpläne, Benachrichtigungen) in eine portable JSON-Datei, die du auf einer anderen Instanz importieren kannst, sodass ein Umzug auf eine neue Box oder das Klonen eines Setups nicht bedeutet, alles von Hand neu einzugeben. Der Import zeigt eine Vorschau und fragt nach Bestätigung und rührt niemals deine Backup-Daten oder -Historie an.
 
 !!! warning "Der Export kann Zugangsdaten enthalten"
-    Du wählst, ob die Off-site- und Benachrichtigungs-Zugangsdaten in der Datei enthalten sein sollen. Mit enthaltenen Zugangsdaten ist der Export so sensibel wie dein Recovery-Kit, also bewahre ihn an einem sicheren Ort auf. Ohne sie hält die Datei nur nicht-geheime Einstellungen.
+    Du wählst, ob die Zugangsdaten deiner Orte und Benachrichtigungen in der Datei enthalten sein sollen. Mit enthaltenen Zugangsdaten ist der Export so sensibel wie dein Recovery-Kit, also bewahre ihn an einem sicheren Ort auf. Ohne sie hält die Datei nur nicht-geheime Einstellungen.

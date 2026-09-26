@@ -33,7 +33,7 @@ C'est généralement un verrou restic orphelin laissé lorsque le conteneur a é
 
 ## Ma copie hors site n'a pas eu lieu après une sauvegarde
 
-La réplication hors site est au mieux par conception, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Vérifiez le planning hors site de ce domaine (Paramètres, Plannings) : un planning vide réplique après chaque sauvegarde locale, tandis qu'une cadence expédie moins souvent. Utilisez **Répliquer maintenant** dans l'onglet Hors site pour une exécution à la demande, et surveillez l'indicateur de réplication sur le tableau de bord.
+La réplication hors site est au mieux par conception, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Vérifiez le planning hors site de ce domaine (Paramètres, Plannings) : un planning vide réplique après chaque sauvegarde locale, tandis qu'une cadence expédie moins souvent. Utilisez **Copier maintenant** sur la ligne du domaine sous Paramètres, Stockage pour une exécution à la demande, et surveillez l'indicateur de réplication sur le tableau de bord.
 
 ## Une restauration s'est interrompue avant de démarrer
 
