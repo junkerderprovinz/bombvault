@@ -127,9 +127,9 @@ type DomainStatusEntry struct {
 	// verified" badge (#63), independent of the DR fields above.
 	LastOffsiteSubsetAt int64 `json:"lastOffsiteSubsetAt"`
 	LastOffsiteSubsetOK bool  `json:"lastOffsiteSubsetOK"`
-	// OffsiteDrillScheduled is true when DrillsEnabled and OffsiteDrillsEnabled
-	// are set and the domain copies to a target off the premises. A drill
-	// against a target in the house is no off-site drill and does not count.
+	// OffsiteDrillScheduled is true when the domain copies off the premises and
+	// the targets its scheduled DR drill takes in turn include one off the
+	// premises. A drill against a target in the house is no off-site drill.
 	// When it is false but the domain has an off-site copy, the dashboard shows
 	// a muted "manual only" pill instead of a red drFailed (#37).
 	OffsiteDrillScheduled bool   `json:"offsiteDrillScheduled"`
@@ -610,6 +610,9 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		protection := protectionLevel(now, in)
 		checks := protectionChecks(now, in)
 
+		drillsOffSite := copiesOffSite &&
+			len(offSiteTargets(schedule.DrillTargets(settings, d.name, s.offsiteTargetsFor(d.name)), sites)) > 0
+
 		// An off-site retention strategy is "configured" when the far side prunes
 		// (immutable), a growth budget is set, or an off-site keep policy is set.
 		pruneStrategySet := offsiteImmutable ||
@@ -641,7 +644,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			LastDRDrillOK:         lastDRDrillOK,
 			LastOffsiteSubsetAt:   lastOffsiteSubsetAt,
 			LastOffsiteSubsetOK:   lastOffsiteSubsetOK,
-			OffsiteDrillScheduled: settings.DrillsEnabled && settings.OffsiteDrillsEnabled && copiesOffSite,
+			OffsiteDrillScheduled: drillsOffSite,
 			DrillDetail:           drDetail,
 			DrillTarget:           drTarget,
 			Protection:            protection,
