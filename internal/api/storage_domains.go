@@ -1,6 +1,9 @@
 package api
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -217,4 +220,190 @@ func (h *Handler) handleStorageDomains(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"domains": rows}))
+}
+
+// HomePreview is what choosing a place under "Stored in" does.
+type HomePreview struct {
+	Mode           string         `json:"mode"`
+	PlaceID        string         `json:"placeId"`
+	HomePlace      string         `json:"homePlace"` // the domain's home place as read
+	HomeHasBackups bool           `json:"homeHasBackups"`
+	RepoID         string         `json:"repoId,omitempty"`  // default: the repository the place stands for
+	Creates        string         `json:"creates,omitempty"` // default: "direct" or "repository" when this choice makes it
+	Impact         *defaultImpact `json:"impact,omitempty"`  // default: what the defaults card asked for the same change
+	Backups        int            `json:"backups"`           // home-move: snapshots that stay at the old home place
+}
+
+// The three things "Stored in" can do.
+const (
+	homeModePlace   = "home-place" // the domain path holds no backups: the place becomes the home place
+	homeModeDefault = "default"    // containers, VMs and folder sets with backups: the place becomes the default
+	homeModeMove    = "home-move"  // flash and config with backups: the home place moves, the backups stay
+)
+
+// homePreviewAnswer is a preview in the ok envelope.
+type homePreviewAnswer struct {
+	OK bool `json:"ok"`
+	HomePreview
+}
+
+// domainHomePreview decides by the domain path, which it lists: without
+// backups the place becomes the home place; with backups containers, VMs and
+// folder sets set their default there, flash and config move their home.
+func (s *Service) domainHomePreview(ctx context.Context, domain, placeID string) (HomePreview, error) {
+	pv := HomePreview{PlaceID: placeID}
+	p, err := s.store.GetPlace(placeID)
+	if err != nil {
+		return pv, err
+	}
+	if !p.Enabled {
+		return pv, errPlaceOff
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return pv, err
+	}
+	homes, err := s.store.DomainPlaces()
+	if err != nil {
+		return pv, err
+	}
+	pv.HomePlace = homes[domain]
+	if pv.HomeHasBackups, err = s.domainPathHasBackups(ctx, settings, domain); err != nil {
+		return pv, err
+	}
+	switch {
+	case !pv.HomeHasBackups:
+		pv.Mode = homeModePlace
+		return pv, s.checkHomeAddress(settings, p, domain)
+	case validPlacementDomain(domain):
+		pv.Mode = homeModeDefault
+		return pv, s.previewDefaultHome(ctx, settings, p, domain, &pv)
+	}
+	pv.Mode = homeModeMove
+	if err := s.checkHomeAddress(settings, p, domain); err != nil {
+		return pv, err
+	}
+	facts, err := s.domainPathFacts(settings, domain)
+	pv.Backups = facts.Snapshots
+	return pv, err
+}
+
+// domainPathHasBackups lists the domain's path: a local one only when it was
+// ever created, a remote one always. A path that cannot be read keeps its
+// home, as an item's home does.
+func (s *Service) domainPathHasBackups(ctx context.Context, settings store.Settings, domain string) (bool, error) {
+	loc, err := s.repoFor(settings, domain, "local")
+	if err != nil {
+		return false, err
+	}
+	if localRepoMissing(loc) {
+		switch s.repoEstablishmentOf(loc) {
+		case repoNeverEstablished:
+			return false, nil
+		case repoWasEstablished:
+			return false, fmt.Errorf("%w: %w", errHomeUncheckable, ErrBackupPathNotMounted)
+		}
+		return false, fmt.Errorf("%w: whether the path was ever created could not be read", errHomeUncheckable)
+	}
+	snaps, err := s.listSnapshots(ctx, loc, s.primaryModeFor(settings, domain, loc))
+	if err != nil {
+		return false, fmt.Errorf("%w: %w", errHomeUncheckable, err)
+	}
+	return len(snaps) > 0, nil
+}
+
+// checkHomeAddress refuses a place as a domain's home when the domain has no
+// folder there, when a target of the domain lies at that address, which would
+// then be its own copy source, or when the address nests in another
+// repository.
+func (s *Service) checkHomeAddress(settings store.Settings, p store.Place, domain string) error {
+	addr, ok := store.PlaceAddress(p, domain, "")
+	if !ok {
+		return store.ErrPlaceDomainUnavailable
+	}
+	loc, err := s.resolveRepo(addr)
+	if err != nil {
+		return err
+	}
+	targets, err := s.store.OffsiteTargetsForDomain(domain)
+	if err != nil {
+		return err
+	}
+	for _, t := range targets {
+		if tLoc, ok := s.clashCandidate("off-site destination", t.Name, t.Repo); ok && sameRepoLocation(tLoc, loc) {
+			return errPlaceAddressTaken
+		}
+	}
+	return s.locationClash(settings, loc, locationSelf{own: domain})
+}
+
+// previewDefaultHome is the default half of the preview: the repository the
+// place stands for and the question the defaults card asked for it.
+func (s *Service) previewDefaultHome(ctx context.Context, settings store.Settings, p store.Place, domain string, pv *HomePreview) error {
+	id, creates, err := s.placeRepoFor(ctx, p, domain, false)
+	if err != nil {
+		return err
+	}
+	pv.RepoID, pv.Creates = id, creates
+	var impact defaultImpact
+	if creates == "" {
+		impact, err = s.defaultImpactFor(ctx, domain, defaultChange{Home: &id})
+	} else {
+		impact, err = s.newHomeImpact(ctx, settings, domain)
+	}
+	pv.Impact = &impact
+	return err
+}
+
+// newHomeImpact is defaultImpactFor for a home this choice makes, which no
+// validation can see yet: it moves no copies, and every open item without
+// backups on the domain path takes it.
+func (s *Service) newHomeImpact(ctx context.Context, settings store.Settings, domain string) (defaultImpact, error) {
+	impact := defaultImpact{Dropped: []targetImpact{}, Added: []targetImpact{}, Skip: []string{}}
+	p, err := s.readPlacement(settings, domain)
+	if err != nil {
+		return impact, err
+	}
+	impact.Home = p.State.Default.Home
+	impact.Skip = append(impact.Skip, p.State.Default.Skip...)
+	items, err := s.domainItems(domain)
+	if err != nil {
+		return impact, err
+	}
+	impact.OpenTakeHome, err = s.openTakers(ctx, settings, domain, items)
+	return impact, err
+}
+
+// storageDomainParam reads {d} of a /api/storage/domains route and writes the
+// 400 itself.
+func storageDomainParam(w http.ResponseWriter, r *http.Request) (string, bool) {
+	domain := r.PathValue("d")
+	if !validOffsiteDomain(domain) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return "", false
+	}
+	return domain, true
+}
+
+// handleDomainHomePreview serves POST /api/storage/domains/{d}/home/preview.
+func (h *Handler) handleDomainHomePreview(w http.ResponseWriter, r *http.Request) {
+	domain, ok := storageDomainParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		PlaceID string `json:"placeId"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	pv, err := h.svc.domainHomePreview(r.Context(), domain, body.PlaceID)
+	switch {
+	case errors.Is(err, store.ErrPlaceNotFound):
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such place"})
+	case err != nil:
+		placeFail(w, err)
+	default:
+		writeJSON(w, http.StatusOK, homePreviewAnswer{OK: true, HomePreview: pv})
+	}
 }

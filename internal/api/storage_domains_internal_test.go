@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"reflect"
 	"testing"
@@ -217,5 +218,129 @@ func TestADomainRowWithoutPlacesAnswersEmptyListsAndNoBackupVerdict(t *testing.T
 	}
 	if _, set := row["homeHasBackups"]; set || row["homePlace"] != "" || row["storedIn"] != "" || row["unreadable"] != false {
 		t.Fatalf("config row = %v", row)
+	}
+}
+
+// homePreview asks the "Stored in" preview and returns it ready to send back
+// as expect.
+func (f *placementFixture) homePreview(domain, placeID string) map[string]any {
+	f.t.Helper()
+	res := f.do(http.MethodPost, "/api/storage/domains/"+domain+"/home/preview", map[string]any{"placeId": placeID})
+	if res["ok"] != true {
+		f.t.Fatalf("home preview = %v", res)
+	}
+	delete(res, "ok")
+	return res
+}
+
+func (f *placementFixture) homeRefusal(domain, placeID string) any {
+	f.t.Helper()
+	res := f.do(http.MethodPost, "/api/storage/domains/"+domain+"/home/preview", map[string]any{"placeId": placeID})
+	if res["ok"] != false {
+		f.t.Fatalf("home preview = %v, want a refusal", res)
+	}
+	return res["code"]
+}
+
+func TestADomainWithoutBackupsMovesItsHomePlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	if pv := f.homePreview("containers", nas.ID); pv["mode"] != "home-place" || pv["homePlace"] != unraid.ID || pv["homeHasBackups"] != false {
+		t.Fatalf("preview = %v", pv)
+	}
+}
+
+func TestADomainWithBackupsSetsItsDefaultInstead(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	f.container("nginx", "")
+	f.openContainer("plex")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+
+	pv := f.homePreview("containers", nas.ID)
+
+	impact, _ := pv["impact"].(map[string]any)
+	if pv["mode"] != "default" || pv["creates"] != "repository" || pv["homeHasBackups"] != true || impact["openTakeHome"] != float64(1) {
+		t.Fatalf("preview = %v, want the default, a repository made on the choice, plex taking it", pv)
+	}
+	if rows, err := f.st.PlaceRows(nas.ID); err != nil || len(rows) != 0 {
+		t.Fatalf("rows at NAS = %v, %v, want none: a preview makes nothing", rows, err)
+	}
+}
+
+func TestADomainWithBackupsStoresBesideItsTargetAtThePlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	f.placeTarget(b2, "containers", "")
+	f.container("nginx", "")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+
+	if pv := f.homePreview("containers", b2.ID); pv["mode"] != "default" || pv["creates"] != "direct" {
+		t.Fatalf("preview = %v, want the direct repository beside the B2 target", pv)
+	}
+}
+
+func TestFlashWithBackupsMovesItsHomeAndCountsWhatStays(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	f.hold(f.singletonRepo("flash"), snap("f1", 100, "flash"))
+	if err := f.st.AddRepoStat(store.RepoStat{Domain: "flash", Source: "local", At: 100, Snapshots: 3}); err != nil {
+		t.Fatal(err)
+	}
+	if pv := f.homePreview("flash", nas.ID); pv["mode"] != "home-move" || pv["backups"] != float64(3) {
+		t.Fatalf("preview = %v, want a home move leaving 3 snapshots", pv)
+	}
+}
+
+func TestAHomeWhereATargetOfTheDomainLiesIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	f.placeTarget(nas, "flash", "")
+	if code := f.homeRefusal("flash", nas.ID); code != "place-address-taken" {
+		t.Fatalf("code = %v, want place-address-taken", code)
+	}
+}
+
+func TestAPlaceWithoutTheDomainsFolderCannotBeItsHome(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := localPlace("NAS", "nas")
+	p.Folders = map[string]string{"vms": "vms"}
+	nas := f.storePlace(p)
+	if code := f.homeRefusal("containers", nas.ID); code != "place-domain-unavailable" {
+		t.Fatalf("code = %v, want place-domain-unavailable", code)
+	}
+}
+
+func TestASwitchedOffPlaceCannotBeAHome(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := localPlace("NAS", "nas")
+	p.Enabled = false
+	nas := f.storePlace(p)
+	if code := f.homeRefusal("containers", nas.ID); code != "place-off" {
+		t.Fatalf("code = %v, want place-off", code)
+	}
+}
+
+func TestAnUnreadableDomainPathKeepsItsHome(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	f.eng.listErr[f.domainPath("containers")] = errors.New("share not mounted")
+	if code := f.homeRefusal("containers", nas.ID); code != "home-uncheckable" {
+		t.Fatalf("code = %v, want home-uncheckable", code)
+	}
+}
+
+func TestAHomePreviewOfAnUnknownPlaceIsNotFound(t *testing.T) {
+	f := newPlacementFixture(t)
+	code, res := f.doStatus(http.MethodPost, "/api/storage/domains/containers/home/preview", map[string]any{"placeId": "nope"})
+	if code != http.StatusNotFound || res["ok"] != false {
+		t.Fatalf("preview = %d %v, want 404", code, res)
+	}
+	if code, _ := f.doStatus(http.MethodPost, "/api/storage/domains/nope/home/preview", map[string]any{"placeId": "x"}); code != http.StatusBadRequest {
+		t.Fatalf("unknown domain = %d, want 400", code)
 	}
 }
