@@ -2069,6 +2069,7 @@ const eu: Partial<Translations> = {
   "mcp.log": "Erregistroa",
   "mcp.logFailed": "BombVault-ek ezin izan du gako honen erregistroa kargatu.",
   "mcp.logEmpty": "Gako honek ez du oraindik BombVault deitu.",
+  "mcp.logEmptyUsed": "Azken hilabetean ez da deirik erregistratu.",
   "mcp.logCalls": "Deiak",
   "mcp.logKeptHint": "BombVault-ek gako bakoitzaren deiak hilabete arte gordetzen ditu: azken 500 abiarazte, bertan behera utzitako, ukatze eta errore, eta arrakastaz egindako azken 200 irakurketak. Ez du inoiz gordetzen laguntzaileak bidalitakoa, ezta gakoa bera ere.",
   "mcp.logRuns": "Abiarazi dituen babeskopiak",

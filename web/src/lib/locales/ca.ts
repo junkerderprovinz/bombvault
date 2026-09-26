@@ -2069,6 +2069,7 @@ const ca: Partial<Translations> = {
   "mcp.log": "Registre",
   "mcp.logFailed": "BombVault no ha pogut carregar el registre d'aquesta clau.",
   "mcp.logEmpty": "Aquesta clau encara no ha cridat BombVault.",
+  "mcp.logEmptyUsed": "No hi ha cap crida registrada en l'últim mes.",
   "mcp.logCalls": "Crides",
   "mcp.logKeptHint": "BombVault conserva les crides de cada clau fins a un mes: els 500 inicis, cancel·lacions, rebuigs i errors més recents, i les 200 lectures correctes més recents. No desa mai el que ha enviat l'assistent ni la clau mateixa.",
   "mcp.logRuns": "Còpies que ha iniciat",

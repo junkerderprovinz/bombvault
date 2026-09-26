@@ -1845,6 +1845,7 @@ const no: Partial<Translations> = {
   "mcp.log": "Logg",
   "mcp.logFailed": "BombVault kunne ikke laste inn loggen til denne nøkkelen.",
   "mcp.logEmpty": "Denne nøkkelen har ikke kalt BombVault ennå.",
+  "mcp.logEmptyUsed": "Ingen kall registrert den siste måneden.",
   "mcp.logCalls": "Kall",
   "mcp.logKeptHint": "BombVault tar vare på kallene til hver nøkkel i opptil en måned: de nyeste 500 startene, avbrytelsene, avvisningene og feilene, og de nyeste 200 vellykkede lesingene. Det lagrer aldri det assistenten sendte, eller selve nøkkelen.",
   "mcp.logRuns": "Sikkerhetskopier den startet",

@@ -1848,6 +1848,7 @@ const ro: Partial<Translations> = {
   "mcp.log": "Jurnal",
   "mcp.logFailed": "BombVault nu a putut încărca jurnalul acestei chei.",
   "mcp.logEmpty": "Această cheie nu a apelat încă BombVault.",
+  "mcp.logEmptyUsed": "Niciun apel înregistrat în ultima lună.",
   "mcp.logCalls": "Apeluri",
   "mcp.logKeptHint": "BombVault păstrează apelurile fiecărei chei până la o lună: cele mai noi 500 de porniri, anulări, refuzuri și erori și cele mai noi 200 de citiri reușite. Nu salvează niciodată ce a trimis asistentul și nici cheia în sine.",
   "mcp.logRuns": "Copii pornite de ea",

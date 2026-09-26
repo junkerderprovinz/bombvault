@@ -1848,6 +1848,7 @@ const hu: Partial<Translations> = {
   "mcp.log": "Napló",
   "mcp.logFailed": "A BombVault nem tudta betölteni ennek a kulcsnak a naplóját.",
   "mcp.logEmpty": "Ez a kulcs még nem hívta a BombVaultot.",
+  "mcp.logEmptyUsed": "Az elmúlt hónapban nincs rögzített hívás.",
   "mcp.logCalls": "Hívások",
   "mcp.logKeptHint": "A BombVault minden kulcs hívásait legfeljebb egy hónapig őrzi: a legutóbbi 500 indítást, megszakítást, elutasítást és hibát, valamint a legutóbbi 200 sikeres olvasást. Soha nem tárolja, amit az asszisztens küldött, és magát a kulcsot sem.",
   "mcp.logRuns": "Általa indított mentések",

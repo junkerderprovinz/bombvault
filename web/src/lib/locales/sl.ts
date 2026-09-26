@@ -2053,6 +2053,7 @@ const sl: Partial<Translations> = {
   "mcp.log": "Dnevnik",
   "mcp.logFailed": "BombVault ni mogel naložiti dnevnika tega ključa.",
   "mcp.logEmpty": "Ta ključ še ni poklical BombVaulta.",
+  "mcp.logEmptyUsed": "V zadnjem mesecu ni zabeleženih klicev.",
   "mcp.logCalls": "Klici",
   "mcp.logKeptHint": "BombVault hrani klice vsakega ključa do en mesec: najnovejših 500 zagonov, preklicev, zavrnitev in napak ter najnovejših 200 uspešnih branj. Nikoli ne shrani tega, kar je poslal pomočnik, niti samega ključa.",
   "mcp.logRuns": "Kopiranja, ki jih je zagnal",

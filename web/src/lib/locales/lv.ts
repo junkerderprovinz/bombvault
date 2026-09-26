@@ -2069,6 +2069,7 @@ const lv: Partial<Translations> = {
   "mcp.log": "Žurnāls",
   "mcp.logFailed": "BombVault neizdevās ielādēt šīs atslēgas žurnālu.",
   "mcp.logEmpty": "Šī atslēga vēl nav izsaukusi BombVault.",
+  "mcp.logEmptyUsed": "Pēdējā mēneša laikā nav reģistrēts neviens izsaukums.",
   "mcp.logCalls": "Izsaukumi",
   "mcp.logKeptHint": "BombVault glabā katras atslēgas izsaukumus līdz mēnesim: jaunākās 500 palaišanas, atcelšanas, noraidījumus un kļūdas un jaunākās 200 sekmīgās nolasīšanas. Tas nekad neglabā to, ko nosūtīja asistents, ne arī pašu atslēgu.",
   "mcp.logRuns": "Tās sāktās kopijas",

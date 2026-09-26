@@ -1842,6 +1842,7 @@ const nl: Partial<Translations> = {
   "mcp.log": "Logboek",
   "mcp.logFailed": "BombVault kon het logboek van deze sleutel niet laden.",
   "mcp.logEmpty": "Deze sleutel heeft BombVault nog niet aangeroepen.",
+  "mcp.logEmptyUsed": "Geen aanroepen vastgelegd in de afgelopen maand.",
   "mcp.logCalls": "Aanroepen",
   "mcp.logKeptHint": "BombVault bewaart de aanroepen van elke sleutel tot een maand: de nieuwste 500 starts, annuleringen, weigeringen en fouten, en de nieuwste 200 geslaagde leesacties. Wat de assistent stuurde en de sleutel zelf worden nooit opgeslagen.",
   "mcp.logRuns": "Gestarte back-ups",

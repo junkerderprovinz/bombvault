@@ -1837,6 +1837,7 @@ const ja: Partial<Translations> = {
   "mcp.log": "ログ",
   "mcp.logFailed": "このキーのログを BombVault が読み込めませんでした。",
   "mcp.logEmpty": "このキーはまだ BombVault を呼び出していません。",
+  "mcp.logEmptyUsed": "過去 1 か月に記録された呼び出しはありません。",
   "mcp.logCalls": "呼び出し",
   "mcp.logKeptHint": "BombVault は各キーの呼び出しを最大 1 か月保持します。開始、中止、拒否、エラーは最新 500 件、成功した読み取りは最新 200 件までです。アシスタントが送った内容とキーそのものは保存しません。",
   "mcp.logRuns": "開始したバックアップ",

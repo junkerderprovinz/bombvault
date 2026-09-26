@@ -1837,6 +1837,7 @@ const zh: Partial<Translations> = {
   "mcp.log": "日志",
   "mcp.logFailed": "BombVault 无法加载此密钥的日志。",
   "mcp.logEmpty": "此密钥尚未调用过 BombVault。",
+  "mcp.logEmptyUsed": "过去一个月没有记录到调用。",
   "mcp.logCalls": "调用",
   "mcp.logKeptHint": "BombVault 最多保留每个密钥一个月的调用记录：最新的 500 次启动、取消、拒绝和错误，以及最新的 200 次成功读取。它从不保存助手发送的内容，也不保存密钥本身。",
   "mcp.logRuns": "它启动的备份",

@@ -2069,6 +2069,7 @@ const et: Partial<Translations> = {
   "mcp.log": "Logi",
   "mcp.logFailed": "BombVault ei saanud selle võtme logi laadida.",
   "mcp.logEmpty": "See võti pole BombVaulti veel kutsunud.",
+  "mcp.logEmptyUsed": "Viimase kuu jooksul pole ühtegi kutset salvestatud.",
   "mcp.logCalls": "Kutsed",
   "mcp.logKeptHint": "BombVault hoiab iga võtme kutseid kuni kuu aega: viimased 500 käivitust, tühistust, keeldumist ja viga ning viimased 200 õnnestunud lugemist. Ta ei salvesta kunagi seda, mida assistent saatis, ega võtit ennast.",
   "mcp.logRuns": "Tema käivitatud varundused",

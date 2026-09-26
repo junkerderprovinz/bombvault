@@ -1845,6 +1845,7 @@ const sv: Partial<Translations> = {
   "mcp.log": "Logg",
   "mcp.logFailed": "BombVault kunde inte läsa in nyckelns logg.",
   "mcp.logEmpty": "Den här nyckeln har inte anropat BombVault än.",
+  "mcp.logEmptyUsed": "Inga anrop registrerade den senaste månaden.",
   "mcp.logCalls": "Anrop",
   "mcp.logKeptHint": "BombVault sparar varje nyckels anrop i upp till en månad: de senaste 500 starterna, avbrotten, avvisningarna och felen och de senaste 200 lyckade läsningarna. Det sparar aldrig vad assistenten skickade, eller själva nyckeln.",
   "mcp.logRuns": "Säkerhetskopior den startade",

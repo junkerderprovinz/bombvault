@@ -2069,6 +2069,7 @@ const gl: Partial<Translations> = {
   "mcp.log": "Rexistro",
   "mcp.logFailed": "BombVault non puido cargar o rexistro desta chave.",
   "mcp.logEmpty": "Esta chave aínda non chamou a BombVault.",
+  "mcp.logEmptyUsed": "Non hai chamadas rexistradas no último mes.",
   "mcp.logCalls": "Chamadas",
   "mcp.logKeptHint": "BombVault garda as chamadas de cada chave ata un mes: os 500 inicios, cancelacións, rexeitamentos e erros máis recentes, e as 200 lecturas correctas máis recentes. Nunca garda o que enviou o asistente nin a propia chave.",
   "mcp.logRuns": "Copias que iniciou",

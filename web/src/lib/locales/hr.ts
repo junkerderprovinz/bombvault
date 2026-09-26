@@ -2069,6 +2069,7 @@ const hr: Partial<Translations> = {
   "mcp.log": "Zapisnik",
   "mcp.logFailed": "BombVault nije mogao učitati zapisnik ovog ključa.",
   "mcp.logEmpty": "Ovaj ključ još nije pozvao BombVault.",
+  "mcp.logEmptyUsed": "U posljednjih mjesec dana nije zabilježen nijedan poziv.",
   "mcp.logCalls": "Pozivi",
   "mcp.logKeptHint": "BombVault čuva pozive svakog ključa do mjesec dana: najnovijih 500 pokretanja, otkazivanja, odbijanja i pogrešaka te najnovijih 200 uspješnih čitanja. Nikad ne sprema ono što je asistent poslao, niti sam ključ.",
   "mcp.logRuns": "Kopiranja koja je pokrenuo",

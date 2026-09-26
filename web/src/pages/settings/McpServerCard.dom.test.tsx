@@ -573,6 +573,16 @@ describe("a key's tile", () => {
     await waitFor(() => expect(within(tileOf("desktop")).getByText(en["mcp.logFailed"])).toBeTruthy());
   });
 
+  it("does not claim a used key never called when its log is empty", async () => {
+    await renderCard(payload({ keys: [key({ id: "k1", label: "laptop", lastUsedAt: Math.floor(Date.now() / 1000) - 7200 })] }));
+    getMcpKeyActivity.mockResolvedValue({ ok: true, runs: [], events: [] });
+
+    fireEvent.click(within(await waitFor(() => tileOf("laptop"))).getByRole("button", { name: en["mcp.log"] }));
+
+    await waitFor(() => expect(within(tileOf("laptop")).getByText(en["mcp.logEmptyUsed"])).toBeTruthy());
+    expect(within(tileOf("laptop")).queryByText(en["mcp.logEmpty"])).toBeNull();
+  });
+
   it("announces whether the log is open and which panel it opened", async () => {
     await renderCard(payload({ keys: [key({ id: "k1", label: "laptop" })] }));
     getMcpKeyActivity.mockResolvedValue({ ok: true, runs: [], events: [] });

@@ -1845,6 +1845,7 @@ const fr: Partial<Translations> = {
   "mcp.log": "Journal",
   "mcp.logFailed": "BombVault n'a pas pu charger le journal de cette clé.",
   "mcp.logEmpty": "Cette clé n'a pas encore appelé BombVault.",
+  "mcp.logEmptyUsed": "Aucun appel enregistré au cours du dernier mois.",
   "mcp.logCalls": "Appels",
   "mcp.logKeptHint": "BombVault garde les appels de chaque clé pendant un mois au plus : les 500 lancements, annulations, refus et erreurs les plus récents, et les 200 lectures réussies les plus récentes. Il n'enregistre jamais ce que l'assistant a envoyé, ni la clé elle-même.",
   "mcp.logRuns": "Sauvegardes lancées",

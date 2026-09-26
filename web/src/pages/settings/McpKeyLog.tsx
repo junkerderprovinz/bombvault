@@ -65,9 +65,11 @@ export function keyLogId(keyId: string): string {
 /**
  * McpKeyLog is what one key did, for its tile on the MCP card: the backups it
  * started, each linked to its line in the activity log, and its calls and
- * refusals, newest first. It loads when the tile opens it.
+ * refusals, newest first. It loads when the tile opens it. `used` says whether
+ * the key ever connected: a used key can still have an empty log, because its
+ * calls age out after a month and connecting alone records none.
  */
-export function McpKeyLog({ keyId, t }: { keyId: string; t: T }) {
+export function McpKeyLog({ keyId, used, t }: { keyId: string; used: boolean; t: T }) {
   const [data, setData] = useState<McpKeyActivity | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -120,7 +122,7 @@ export function McpKeyLog({ keyId, t }: { keyId: string; t: T }) {
             <InfoBubble tip={t("mcp.logKeptHint")} />
           </p>
           {data.events.length === 0 ? (
-            <p className="text-xs text-carbon-textMuted">{t("mcp.logEmpty")}</p>
+            <p className="text-xs text-carbon-textMuted">{t(used ? "mcp.logEmptyUsed" : "mcp.logEmpty")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {data.events.map((e, i) => (

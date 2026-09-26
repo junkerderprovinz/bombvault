@@ -599,7 +599,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                     className={shake[`start:${k.id}`] ? "glim-shake" : ""}
                   />
 
-                  {logOpen.has(k.id) && <McpKeyLog keyId={k.id} t={t} />}
+                  {logOpen.has(k.id) && <McpKeyLog keyId={k.id} used={k.lastUsedAt > 0} t={t} />}
                 </li>
               ))}
             </ul>
@@ -721,7 +721,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                           </span>
                         </div>
                       </div>
-                      {logOpen.has(k.id) && <McpKeyLog keyId={k.id} t={t} />}
+                      {logOpen.has(k.id) && <McpKeyLog keyId={k.id} used={k.lastUsedAt > 0} t={t} />}
                     </li>
                   ))}
                 </ul>

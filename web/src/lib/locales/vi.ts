@@ -1837,6 +1837,7 @@ const vi: Partial<Translations> = {
   "mcp.log": "Nhật ký",
   "mcp.logFailed": "BombVault không tải được nhật ký của khóa này.",
   "mcp.logEmpty": "Khóa này chưa gọi BombVault lần nào.",
+  "mcp.logEmptyUsed": "Không có lượt gọi nào được ghi lại trong tháng qua.",
   "mcp.logCalls": "Lượt gọi",
   "mcp.logKeptHint": "BombVault giữ các lượt gọi của mỗi khóa tối đa một tháng: 500 lần khởi chạy, hủy, từ chối và lỗi gần nhất, cùng 200 lần đọc thành công gần nhất. Nó không bao giờ lưu nội dung trợ lý đã gửi, cũng không lưu chính khóa.",
   "mcp.logRuns": "Bản sao lưu nó đã bắt đầu",

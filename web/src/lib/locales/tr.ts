@@ -1845,6 +1845,7 @@ const tr: Partial<Translations> = {
   "mcp.log": "Günlük",
   "mcp.logFailed": "BombVault bu anahtarın günlüğünü yükleyemedi.",
   "mcp.logEmpty": "Bu anahtar henüz BombVault'u çağırmadı.",
+  "mcp.logEmptyUsed": "Son bir ayda kaydedilmiş çağrı yok.",
   "mcp.logCalls": "Çağrılar",
   "mcp.logKeptHint": "BombVault her anahtarın çağrılarını en fazla bir ay saklar: en yeni 500 başlatma, iptal, ret ve hatayı ve en yeni 200 başarılı okumayı. Asistanın gönderdiğini ve anahtarın kendisini asla saklamaz.",
   "mcp.logRuns": "Başlattığı yedeklemeler",
