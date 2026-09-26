@@ -90,6 +90,21 @@ describe("BackupCancelButton on the live progress stream", () => {
     expect(cancelBackup).not.toHaveBeenCalled();
   });
 
+  it("keeps keyboard focus in place when the cancel goes away under an open confirmation", async () => {
+    const { container } = render(<BackupCancelButton cancelKey="container:plex" name="plex" t={t} />);
+    send({ key: "container:plex", phase: "backup", percent: 40, active: true });
+    cancelButton()!.focus();
+    await act(async () => {
+      fireEvent.click(cancelButton()!);
+    });
+
+    send({ key: "container:plex", phase: "backup", percent: 100, active: true, committed: true });
+    await act(async () => {});
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).not.toBe(document.body);
+    expect(container.contains(document.activeElement)).toBe(true);
+  });
+
   it("leaves the cancel alone when no confirmation is open", () => {
     render(<BackupCancelButton cancelKey="container:plex" name="plex" t={t} />);
     send({ key: "container:plex", phase: "backup", percent: 40, active: true });

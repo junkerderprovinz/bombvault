@@ -39,6 +39,7 @@ export function BackupCancelButton({
 }) {
   const [cancelling, setCancelling] = useState(false);
   const asking = useRef(false);
+  const holder = useRef<HTMLSpanElement>(null);
   const { confirm, confirmDialog, dismiss } = useConfirm();
   const { push } = useToast();
   const entry = useProgress()[cancelKey];
@@ -49,6 +50,9 @@ export function BackupCancelButton({
     if (cancellable || !asking.current) return;
     asking.current = false;
     dismiss();
+    // The button that opened the dialog is gone, so focus would fall back to the
+    // top of the page.
+    holder.current?.focus();
     push(t(committed ? "backup.cancelTooLate" : "backup.cancelNotRunning").replace(/\{name\}/g, name), "warn");
   }, [cancellable, committed, dismiss, push, t, name]);
 
@@ -78,7 +82,7 @@ export function BackupCancelButton({
   }
 
   return (
-    <>
+    <span ref={holder} tabIndex={-1} className="inline-flex focus:outline-none">
       {cancellable && (
         <Button
           label={t("backup.cancel")}
@@ -91,6 +95,6 @@ export function BackupCancelButton({
         />
       )}
       {confirmDialog}
-    </>
+    </span>
   );
 }
