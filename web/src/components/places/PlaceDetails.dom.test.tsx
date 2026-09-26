@@ -7,15 +7,15 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { I18nProvider, countText, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import { HUE_OFFSET } from "../Selector";
-import type { CatalogProvider, PatchPlaceBody, Place, PlaceRefusal } from "../../lib/places";
+import type { CatalogProvider, PatchPlaceBody, Place, PlaceRefusal, TamperVerdict } from "../../lib/places";
 
 type Answer = PlaceRefusal & { place?: Place };
+type TamperAnswer = PlaceRefusal & TamperVerdict;
 
 const patches: Partial<PatchPlaceBody>[] = [];
 let answer: (body: Partial<PatchPlaceBody>) => Answer | Promise<Answer> = () => ({ ok: true });
-const tampered: string[] = [];
-const homeTampered: string[] = [];
-let tamperAnswer: { ok: boolean; error?: string; testable?: boolean; protected?: boolean } = { ok: true };
+const tamperTested: string[] = [];
+let tamperAnswer: TamperAnswer = { ok: true };
 
 vi.mock("../../lib/places", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/places")>();
@@ -25,19 +25,8 @@ vi.mock("../../lib/places", async (importOriginal) => {
       patches.push(body);
       return Promise.resolve(answer(body));
     },
-  };
-});
-
-vi.mock("../../lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../lib/api")>();
-  return {
-    ...actual,
-    tamperTest: (domain: string) => {
-      tampered.push(domain);
-      return Promise.resolve(tamperAnswer);
-    },
-    primaryRemoteTamperTest: (domain: string) => {
-      homeTampered.push(domain);
+    tamperTestPlace: (id: string) => {
+      tamperTested.push(id);
       return Promise.resolve(tamperAnswer);
     },
   };
@@ -83,8 +72,7 @@ const B2: CatalogProvider = {
 
 beforeEach(() => {
   patches.length = 0;
-  tampered.length = 0;
-  homeTampered.length = 0;
+  tamperTested.length = 0;
   tamperAnswer = { ok: true, testable: true, protected: true };
   answer = (body) => ({ ok: true, place: { ...place(), ...(body as Partial<Place>) } });
   vi.useFakeTimers();
@@ -283,7 +271,7 @@ describe("PlaceDetails sections", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: en["places.details.tamperTest"] }));
     });
-    expect(tampered).toEqual(["containers"]);
+    expect(tamperTested).toEqual(["p1"]);
     expect(screen.getByText(en["places.details.tamperProtected"])).toBeTruthy();
   });
 
@@ -310,8 +298,7 @@ describe("PlaceDetails sections", () => {
     expect(screen.getByRole("switch", { name: en["places.details.appendOnly"] }).getAttribute("aria-checked")).toBe("true");
   });
 
-  it("says in a toast when a domain's tamper test cannot run, and shakes the button", async () => {
-    tamperAnswer = { ok: false, error: "no off-site repository" };
+  it("says in a toast when the tamper test cannot run, shakes the button and drops the last verdict", async () => {
     details(
       place({
         kind: "rest",
@@ -322,15 +309,21 @@ describe("PlaceDetails sections", () => {
       }),
       undefined
     );
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: en["places.details.tamperTest"] }));
-    });
-    expect(tampered).toEqual(["vms"]);
-    expect(screen.getByText("VMs: no off-site repository")).toBeTruthy();
+    const test = () =>
+      act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: en["places.details.tamperTest"] }));
+      });
+    await test();
+    expect(screen.getByText(en["places.details.tamperProtected"])).toBeTruthy();
+    tamperAnswer = { ok: false, code: "place-off", error: "this place is switched off" };
+    await test();
+    expect(screen.getByText(en["places.error.off"])).toBeTruthy();
     expect(screen.getByRole("button", { name: en["places.details.tamperTest"] }).className).toContain("glim-shake");
+    expect(screen.queryByText(en["places.details.tamperProtected"])).toBeNull();
   });
 
-  it("tests a domain that backs up here on its home repository and a copying domain on its copy", async () => {
+  it("tests the place once and shows one verdict, whatever domains back up or copy to it", async () => {
+    tamperAnswer = { ok: true, testable: true, protected: false, detail: "the server accepted a delete (HTTP 200)" };
     details(
       place({
         kind: "rest",
@@ -344,8 +337,8 @@ describe("PlaceDetails sections", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: en["places.details.tamperTest"] }));
     });
-    expect(tampered).toEqual(["containers"]);
-    expect(homeTampered).toEqual(["vms"]);
+    expect(tamperTested).toEqual(["p1"]);
+    expect(screen.getAllByText(`${en["places.details.tamperOpen"]}: the server accepted a delete (HTTP 200)`)).toHaveLength(1);
   });
 
   it("sends changed credentials together, never a blank secret", async () => {

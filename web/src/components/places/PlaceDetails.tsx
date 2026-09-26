@@ -9,7 +9,6 @@ import { SelectField } from "../SelectField";
 import { HUE_OFFSET, Selector } from "../Selector";
 import { Toggle } from "../Toggle";
 import { fieldLabelKey, folderRoots } from "./PlaceForm";
-import { primaryRemoteTamperTest, tamperTest, type OffsiteDomain } from "../../lib/api";
 import { retentionLowered } from "../../lib/directRepo";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { pushSaveWarnings } from "../../lib/placementCodes";
@@ -18,6 +17,7 @@ import {
   PLACE_DOMAINS,
   patchPlace,
   placesChanged,
+  tamperTestPlace,
   type CatalogProvider,
   type PatchPlaceBody,
   type Place,
@@ -88,8 +88,6 @@ const LIMITS: { key: "limitUpload" | "limitDownload" | "growthBudgetGb"; label: 
 
 const FIELD_CLASS = "w-full rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 glim-field-focus-well";
 
-type Verdict = { domain: string; text: string };
-
 function Section({ title, hint, hueIndex, children }: { title: string; hint?: string; hueIndex?: number; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
@@ -143,7 +141,7 @@ export function PlaceDetails({
   const [draft, setDraft] = useState<Place>(place);
   const [access, setAccess] = useState<Record<string, string>>(() => ({ ...place.creds.fields }));
   const [shake, setShake] = useState<Record<string, number>>({});
-  const [verdicts, setVerdicts] = useState<Verdict[] | null>(null);
+  const [verdict, setVerdict] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
   const timers = useRef<Waiting>(new Map());
   // A waiting save compares with this rather than with the place of the render
@@ -315,33 +313,18 @@ export function PlaceDetails({
   // test ran; a test that could not run is a toast and a shake.
   async function runTamperTest() {
     setTesting(true);
-    const found: Verdict[] = [];
-    let failed = false;
-    const domains = [
-      ...place.usage.copyDomains.map((d) => ({ domain: d, run: () => tamperTest(d as OffsiteDomain) })),
-      ...place.usage.homeDomains.map((d) => ({ domain: d, run: () => primaryRemoteTamperTest(d as OffsiteDomain) })),
-    ];
-    for (const { domain, run } of domains) {
-      try {
-        const r = await run();
-        if (!r.ok) {
-          push(`${domainName(t, domain)}: ${r.error ?? t("common.actionFailed")}`, "fail");
-          failed = true;
-          continue;
-        }
-        const text = !r.testable
-          ? t("places.details.tamperUntestable")
-          : r.protected
-            ? t("places.details.tamperProtected")
-            : `${t("places.details.tamperOpen")}${r.detail ? `: ${r.detail}` : ""}`;
-        found.push({ domain, text });
-      } catch (err) {
-        push(`${domainName(t, domain)}: ${err instanceof Error ? err.message : t("common.actionFailed")}`, "fail");
-        failed = true;
-      }
+    let text: string | null = null;
+    try {
+      const r = await tamperTestPlace(place.id);
+      if (!r.ok) push(placeErrorText(t, lang, r, "common.actionFailed"), "fail");
+      else if (!r.testable) text = t("places.details.tamperUntestable");
+      else if (r.protected) text = t("places.details.tamperProtected");
+      else text = `${t("places.details.tamperOpen")}${r.detail ? `: ${r.detail}` : ""}`;
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("common.actionFailed"), "fail");
     }
-    setVerdicts(found.length > 0 ? found : null);
-    if (failed) bump("tamper");
+    setVerdict(text);
+    if (text === null) bump("tamper");
     setTesting(false);
   }
 
@@ -454,15 +437,10 @@ export function PlaceDetails({
               />
             )}
           </div>
-          {verdicts && (
-            <ul className="flex flex-col gap-1 text-sm text-carbon-text" aria-live="polite">
-              {verdicts.map((v) => (
-                <li key={v.domain} className="flex flex-wrap gap-x-2">
-                  <span className="text-carbon-textSub">{domainName(t, v.domain)}</span>
-                  <span>{v.text}</span>
-                </li>
-              ))}
-            </ul>
+          {verdict && (
+            <p className="text-sm text-carbon-text" aria-live="polite">
+              {verdict}
+            </p>
           )}
         </Section>
       )}

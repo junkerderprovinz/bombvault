@@ -183,6 +183,16 @@ export type PlaceRefusal = OkEnvelope & {
   probe?: OkEnvelope & ProbeResult;
 };
 
+/** One append-only verdict for every repository at a place. */
+export interface TamperVerdict {
+  /** False where the kind cannot be probed; only a rest-server can. */
+  testable?: boolean;
+  /** Every repository there refused the delete. */
+  protected?: boolean;
+  /** What the server accepted, when it did. */
+  detail?: string;
+}
+
 export interface DomainChip {
   placeId: string;
   targetId?: string;
@@ -275,6 +285,12 @@ export function deletePlace(id: string): Promise<PlaceRefusal & { removedTargets
 /** Probes every address the place stands for. The result is the whole answer. */
 export function testPlace(id: string): Promise<OkEnvelope & ProbeResult> {
   return post(placePath(id, "/test"));
+}
+
+/** Sends a harmless delete to every repository at the place. A folder on this
+ *  server is refused, since nothing can keep it from deletion. */
+export function tamperTestPlace(id: string): Promise<PlaceRefusal & TamperVerdict> {
+  return post(placePath(id, "/tamper-test"));
 }
 
 /** Puts a row without a place at this place. An empty rowId is the domain's own path. */
