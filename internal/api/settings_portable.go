@@ -777,7 +777,8 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	// guard a placed row gets in their way. The places come back at the end,
 	// from the file or from the migration over what it imported. An apply that
 	// stops before then leaves the instance on no places with the migration
-	// mark clear, running from its settings and rows as they are.
+	// mark clear, running from its settings and rows as they are until the
+	// next start moves it onto places.
 	if err := h.store.DropPlaces(); err != nil {
 		return fmt.Errorf("the settings were not imported: %w", err)
 	}
@@ -871,7 +872,7 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	}
 	if rebuild {
 		if err := h.svc.MigrateToPlaces(); err != nil {
-			return fmt.Errorf("the settings were imported, but the storage places could not be built from them, so this instance runs without places: %w", err)
+			return fmt.Errorf("the settings were imported, but the storage places could not be built from them, so this instance runs without places until the next start builds them: %w", err)
 		}
 	}
 	return nil
