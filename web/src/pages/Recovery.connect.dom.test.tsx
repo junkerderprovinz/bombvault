@@ -7,7 +7,7 @@ import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
-import type { DomainRow, Place } from "../lib/places";
+import { placesChanged, type DomainRow, type Place } from "../lib/places";
 import { stubEventSource } from "../lib/placement.testsupport";
 
 const stored = {
@@ -37,6 +37,20 @@ vi.mock("../lib/api", async (importOriginal) => ({
   discoverVMs: () => Promise.resolve({ ok: true, discovered: 0 }),
   discoverFiles: () => Promise.resolve({ ok: true, discovered: 0 }),
   getVMSSH: () => Promise.resolve({ ok: false }),
+  discoverAll: () =>
+    Promise.resolve({
+      containers: 1,
+      vms: 0,
+      files: 0,
+      skipped: [],
+      skippedNeedsAction: false,
+      paused: [],
+      leftOpen: [],
+      directRepos: [],
+    }),
+  listContainers: () => Promise.resolve({ ok: true, containers: [{ name: "plex", lastBackup: 1_700_000_000 }] }),
+  listVMs: () => Promise.resolve({ ok: true, vms: [] }),
+  listFileSets: () => Promise.resolve({ ok: true, fileSets: [] }),
 }));
 
 const unraid = {
@@ -118,5 +132,18 @@ describe("Recovery's attach step", () => {
       fireEvent.click(screen.getByRole("button", { name: en["recovery.connectPreview"] }));
     });
     expect(puts).toEqual([{ ...stored, encryptionEnabled: false }]);
+  });
+
+  it("forgets what Discover found once a row moves where the backups lie", async () => {
+    await renderPage();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["recovery.discover"] }));
+    });
+    expect(screen.getByText("plex")).toBeTruthy();
+    await act(async () => {
+      placesChanged();
+    });
+    expect(screen.queryByText("plex")).toBeNull();
+    expect(screen.getByText(en["recovery.noneDiscovered"])).toBeTruthy();
   });
 });
