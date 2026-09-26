@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/places"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -182,6 +183,44 @@ func TestAPlaceThatAcceptsDeletesSaysSoOnce(t *testing.T) {
 
 	if res["ok"] != true || res["testable"] != true || res["protected"] != false || res["detail"] != "the server accepted a delete (HTTP 200)" {
 		t.Fatalf("answer = %v, want deletes accepted, said once", res)
+	}
+}
+
+func TestAPlaceTamperTestLogsEachDomainItProbes(t *testing.T) {
+	server := httptest.NewServer(deleteRecorder(http.StatusOK, new([]string)))
+	defer server.Close()
+	f := newPlacementFixture(t)
+	friend := f.storePlace(restPlace("Friend", server.URL), "vms")
+	f.placeTarget(friend, "containers", "")
+	prog := progress.NewStore()
+	f.svc.SetProgress(prog)
+	events, cancel := prog.Subscribe()
+	defer cancel()
+
+	f.tamperTestPlace(friend.ID)
+
+	ended := map[string]bool{}
+	for len(events) > 0 {
+		if e := <-events; !e.Active {
+			ended[e.Key] = true
+		}
+	}
+	if want := map[string]bool{"tamper:containers": true, "tamper:vms": true}; !maps.Equal(ended, want) {
+		t.Fatalf("finished progress lines = %v, want %v", ended, want)
+	}
+	runs, err := f.st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logged := map[string]string{}
+	for _, r := range runs {
+		if r.Kind == "tamper" {
+			logged[r.TargetID] = r.Status + ": " + r.Error
+		}
+	}
+	accepted := "failed: the server accepted a delete (HTTP 200)"
+	if want := map[string]string{"containers": accepted, "vms": accepted}; !maps.Equal(logged, want) {
+		t.Fatalf("tamper runs = %v, want %v", logged, want)
 	}
 }
 
