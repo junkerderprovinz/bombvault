@@ -140,6 +140,35 @@ func TestClearingTheOffsiteFieldSwitchesItsTargetOff(t *testing.T) {
 	}
 }
 
+func TestTheOffsiteFieldMovedOntoATargetsLocationTakesThatTarget(t *testing.T) {
+	for name, cleared := range map[string]bool{"after clearing it": true, "from another location": false} {
+		t.Run(name, func(t *testing.T) {
+			s, st := newSyncTestService(t)
+			setContainersField(t, s, st, "s3:x")
+			old := fieldTarget(t, st)
+			extra, err := st.CreateOffsiteTarget(store.OffsiteTarget{
+				Domain: "containers", Name: "Second copy", Repo: "s3:y", CredsRef: "set-y", Enabled: true,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if cleared {
+				setContainersField(t, s, st, "")
+			}
+
+			settings := setContainersField(t, s, st, "s3:y")
+
+			targets := s.offsiteReplicationTargets("containers", settings)
+			if len(targets) != 1 || targets[0].ID != extra.ID || targets[0].SortOrder != 0 || targets[0].CredsRef != "set-y" {
+				t.Fatalf("containers copies to %+v, want only %s, on sort order 0 with its credential set", targets, extra.ID)
+			}
+			if got, _, _ := st.GetOffsiteTarget(old.ID); got.Enabled || got.SortOrder == 0 || got.Repo != "s3:x" {
+				t.Fatalf("former field target = %+v, want it switched off behind the others on s3:x", got)
+			}
+		})
+	}
+}
+
 func TestTheOffsiteFieldLeavesAMeshTargetOnZeroAlone(t *testing.T) {
 	s, st := newSyncTestService(t)
 	setContainersField(t, s, st, "s3:b2")
