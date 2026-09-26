@@ -873,6 +873,28 @@ func TestANextcloudPlaceGivenANewUserPointsAtTheirFiles(t *testing.T) {
 	}
 }
 
+func TestASetListThatLeavesOutTheSetOfAPlaceKeepsIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storeDavPlace()
+	oldBox := CloudCredSet{ID: "old-box", Name: "Old box", CloudCreds: CloudCreds{S3KeyID: "k", S3Secret: "s"}}
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{davSet(), oldBox}); err != nil {
+		t.Fatal(err)
+	}
+
+	// A Pull page loaded before the place was made removes Old box.
+	if err := f.svc.SetCloudCredSets(nil); err != nil {
+		t.Fatal(err)
+	}
+
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sets, err := f.svc.decodeCloudCredSets(settings); err != nil || !slices.Equal(sets, []CloudCredSet{davSet()}) {
+		t.Fatalf("sets = %+v, %v, want the place's set kept whole and Old box gone", sets, err)
+	}
+}
+
 func TestASetSomethingElseNamesIsForkedNotEdited(t *testing.T) {
 	f := newPlacementFixture(t)
 	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {

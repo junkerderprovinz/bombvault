@@ -373,16 +373,28 @@ func (s *Service) CloudCredSets() ([]CloudCredSet, error) {
 // KeptFor, the kind and the WebDAV and Azure fields are carried over the same
 // way, since the Settings page never sends them. A set with a blank Name or a
 // duplicate ID is rejected: both would make CredsRef resolution ambiguous or
-// the set unreachable from the UI.
+// the set unreachable from the UI. A stored set that a place names stays when
+// the list leaves it out, because a list read before the place was made would
+// otherwise move the place onto the shared credentials without a word.
 func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 	s.credSetsMu.Lock()
 	defer s.credSetsMu.Unlock()
+
+	// Read under credSetsMu, which a place write holds too.
+	all, err := s.store.ListPlaces()
+	if err != nil {
+		return err
+	}
+	named := make(map[string]bool, len(all))
+	for _, p := range all {
+		named[p.CredsRef] = true
+	}
 
 	// Same reasoning as SetCloudCreds: the keep-prior-if-blank merge reads the
 	// sets stored right now, so it belongs in the same transaction as the write.
 	// The incoming slice is copied rather than normalized in place, because the
 	// caller's value is theirs and the merged one carries real secrets.
-	_, err := s.store.MutateSettings(func(settings *store.Settings) error {
+	_, err = s.store.MutateSettings(func(settings *store.Settings) error {
 		next := make([]CloudCredSet, len(sets))
 		copy(next, sets)
 
@@ -410,6 +422,11 @@ func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 			}
 			if old, ok := prevByID[next[i].ID]; ok {
 				next[i] = keepStoredValues(old, next[i])
+			}
+		}
+		for _, p := range prev {
+			if named[p.ID] && !seen[p.ID] {
+				next = append(next, p)
 			}
 		}
 		enc, err := s.encodeCloudCredSets(next)
