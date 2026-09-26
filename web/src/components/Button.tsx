@@ -66,6 +66,8 @@ export function Button({
   hueIndex,
   busy = false,
   autoFocus = false,
+  ariaExpanded,
+  ariaControls,
   stage: stageOverride,
   keepLabel = false,
   ref,
@@ -105,6 +107,10 @@ export function Button({
   /** Shows a spinner in place of the glyph. Independent of `disabled`. */
   busy?: boolean;
   autoFocus?: boolean;
+  /** For a disclosure: whether the panel it opens is showing. */
+  ariaExpanded?: boolean;
+  /** The id of the panel a disclosure opens. */
+  ariaControls?: string;
   /** Forces a width stage instead of deriving one from the label, for two
    *  buttons that must match but live in different components. Pass
    *  `groupStage([labelA, labelB])` to both so they agree in every language.
@@ -186,6 +192,8 @@ export function Button({
           onClick={onClick}
           disabled={disabled}
           autoFocus={autoFocus}
+          aria-expanded={ariaExpanded}
+          aria-controls={ariaControls}
           aria-describedby={tooltip.describedBy}
           {...tooltip.handlers}
           style={Object.keys(hueStyle).length ? hueStyle : undefined}

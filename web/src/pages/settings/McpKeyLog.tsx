@@ -57,6 +57,11 @@ function runName(t: T, run: Run): string {
   return run.domain === "everything" ? t("activityLog.domainEverything") : run.target;
 }
 
+/** keyLogId is the id of a key's log panel, which its Log button controls. */
+export function keyLogId(keyId: string): string {
+  return `mcp-key-log-${keyId}`;
+}
+
 /**
  * McpKeyLog is what one key did, for its tile on the MCP card: the backups it
  * started, each linked to its line in the activity log, and its calls and
@@ -83,7 +88,7 @@ export function McpKeyLog({ keyId, t }: { keyId: string; t: T }) {
   }, [keyId]);
 
   return (
-    <div className="flex flex-col gap-3 rounded-card bg-carbon-background px-3 py-2">
+    <div id={keyLogId(keyId)} className="flex flex-col gap-3 rounded-card bg-carbon-background px-3 py-2">
       {failed && <p className="text-xs text-statusWarn">{t("mcp.logFailed")}</p>}
       {!failed && data === null && <p className="text-xs text-carbon-textMuted">{t("folder.loading")}</p>}
 

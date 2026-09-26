@@ -573,6 +573,23 @@ describe("a key's tile", () => {
     await waitFor(() => expect(within(tileOf("desktop")).getByText(en["mcp.logFailed"])).toBeTruthy());
   });
 
+  it("announces whether the log is open and which panel it opened", async () => {
+    await renderCard(payload({ keys: [key({ id: "k1", label: "laptop" })] }));
+    getMcpKeyActivity.mockResolvedValue({ ok: true, runs: [], events: [] });
+
+    const button = within(await waitFor(() => tileOf("laptop"))).getByRole("button", { name: en["mcp.log"] });
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(button);
+
+    await waitFor(() => expect(button.getAttribute("aria-expanded")).toBe("true"));
+    const panel = document.getElementById(button.getAttribute("aria-controls") ?? "");
+    expect(panel).not.toBeNull();
+    await waitFor(() => expect(within(panel as HTMLElement).getByText(en["mcp.logCalls"])).toBeTruthy());
+
+    fireEvent.click(button);
+    await waitFor(() => expect(button.getAttribute("aria-expanded")).toBe("false"));
+  });
+
   it("gives a revoked key a log of its own", async () => {
     await renderCard(
       payload({ revoked: [key({ id: "r1", label: "old laptop", revokedAt: 1_700_100_000, revokedReason: "user" })] })

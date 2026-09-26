@@ -33,7 +33,7 @@ import {
 } from "../../lib/mcpSnippets";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
-import { McpKeyLog } from "./McpKeyLog";
+import { keyLogId, McpKeyLog } from "./McpKeyLog";
 import { Card, LOGIN_PASSWORD_FIELD, ToggleRow } from "./shared";
 
 // McpServerCard is where an MCP key comes from, and the only place it is ever
@@ -79,9 +79,27 @@ type Pending =
 // fleet peer opens its details.
 const TILE_BADGE_SIZE: BadgeSize = "medium";
 
-function LogButton({ open, onClick, t }: { open: boolean; onClick: () => void; t: (key: TranslationKey) => string }) {
+function LogButton({
+  keyId,
+  open,
+  onClick,
+  t,
+}: {
+  keyId: string;
+  open: boolean;
+  onClick: () => void;
+  t: (key: TranslationKey) => string;
+}) {
   return (
-    <Button label={t("mcp.log")} labelKey="mcp.log" tone="neutral" onClick={onClick} glyph={<IconDisclosure open={open} />} />
+    <Button
+      label={t("mcp.log")}
+      labelKey="mcp.log"
+      tone="neutral"
+      onClick={onClick}
+      glyph={<IconDisclosure open={open} />}
+      ariaExpanded={open}
+      ariaControls={open ? keyLogId(keyId) : undefined}
+    />
   );
 }
 
@@ -548,7 +566,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                       </span>
                     </div>
                     <div className="flex shrink-0 flex-wrap items-start gap-2">
-                      <LogButton open={logOpen.has(k.id)} onClick={() => toggleLog(k.id)} t={t} />
+                      <LogButton keyId={k.id} open={logOpen.has(k.id)} onClick={() => toggleLog(k.id)} t={t} />
                       <Button
                         label={t("mcp.revoke")}
                         labelKey="mcp.revoke"
@@ -687,7 +705,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                           </span>
                         </div>
                         <div className="flex shrink-0 flex-wrap items-center gap-2">
-                          <LogButton open={logOpen.has(k.id)} onClick={() => toggleLog(k.id)} t={t} />
+                          <LogButton keyId={k.id} open={logOpen.has(k.id)} onClick={() => toggleLog(k.id)} t={t} />
                           {/* A disabled button shows no tooltip, so the reason sits beside it. */}
                           <span className="flex items-center gap-1.5">
                             {k.inUse && <InfoBubble tip={t("mcp.inUseTip")} />}
