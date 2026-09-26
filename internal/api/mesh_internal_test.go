@@ -313,6 +313,38 @@ func TestMeshTargetAtSortOrderZeroMovesBehindThePrimary(t *testing.T) {
 	}
 }
 
+func TestAMeshTargetOnTheOffsiteFieldsLocationStaysOnSortOrderZero(t *testing.T) {
+	h, st := meshHandlerFixture(t, strings.Repeat("f", 64))
+	repo := "rest:http://tower-a:8000/containers"
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersOffsite = repo
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	h.svc.syncAllPrimaryOffsiteTargets(settings)
+	field, ok, err := st.FieldOffsiteTarget("containers")
+	if err != nil || !ok {
+		t.Fatalf("field target: ok=%v err=%v", ok, err)
+	}
+	offer, err := st.CreateMeshOffer(store.MeshOffer{From: "tower-a", Repo: repo})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.UpdateMeshOfferStatus(offer.ID, "accepted"); err != nil {
+		t.Fatal(err)
+	}
+
+	if moved, err := h.svc.MoveMeshTargetsOffPrimarySlot(); err != nil || moved != 0 {
+		t.Fatalf("moved %d (err %v), want 0", moved, err)
+	}
+	if got, _, _ := st.FieldOffsiteTarget("containers"); got.ID != field.ID {
+		t.Fatalf("field target = %+v, want %s still on sort order 0", got, field.ID)
+	}
+}
+
 func TestDeclineMeshOffer(t *testing.T) {
 	h, st := meshHandlerFixture(t, strings.Repeat("c", 64))
 	offer, err := st.CreateMeshOffer(store.MeshOffer{From: "tower-a", Repo: "rest:http://x:8000/y"})
