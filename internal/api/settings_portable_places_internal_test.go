@@ -900,3 +900,41 @@ func TestAnOlderFileLeavesAnInstanceWithoutPlacesWithoutThem(t *testing.T) {
 		t.Errorf("targets = %+v, want the imported B2 target on no place", targets)
 	}
 }
+
+func TestAnImportThatCannotRebuildThePlacesLeavesThemToTheNextStart(t *testing.T) {
+	src := newPlacementFixture(t)
+	src.target("containers", "B2", b2Base+"/container")
+	exp := src.do(http.MethodGet, "/api/settings/export", nil)
+	delete(exp, "places")
+	delete(exp, "storageDomainPlaces")
+
+	dst := newPlacementFixture(t)
+	if err := dst.svc.MigrateToPlaces(); err != nil {
+		t.Fatal(err)
+	}
+	// Stands in for a write that fails while the migration attaches a row.
+	if _, err := dst.db.Exec(`CREATE TRIGGER fail_attach BEFORE UPDATE ON offsite_targets
+		WHEN NEW.place_id <> ''
+		BEGIN SELECT RAISE(ABORT, 'disk I/O error'); END`); err != nil {
+		t.Fatal(err)
+	}
+
+	res := dst.do(http.MethodPost, "/api/settings/import?apply=true", exp)
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, "until the next start builds them") {
+		t.Fatalf("import = %v, want a failure that leaves the places to the next start", res)
+	}
+
+	if _, err := dst.db.Exec(`DROP TRIGGER fail_attach`); err != nil {
+		t.Fatal(err)
+	}
+	if err := dst.svc.MigrateToPlaces(); err != nil {
+		t.Fatalf("the next start: %v", err)
+	}
+	targets, err := dst.st.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(targets) != 1 || targets[0].PlaceID == "" {
+		t.Errorf("targets = %+v, want the imported B2 target on a place after the next start", targets)
+	}
+}
