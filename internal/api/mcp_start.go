@@ -464,7 +464,7 @@ func (h *Handler) mcpStartAllowed(ctx context.Context, tool string, caller mcpCa
 	if refusal != nil {
 		return settings, refusal
 	}
-	if !mcpDomainEnabled(settings, domain) {
+	if !domainEnabled(settings, domain) {
 		h.logMCPCall(ctx, tool, "domain_off")
 		return settings, mcpToolError("domain_off", "the "+domain+" domain is switched off in Settings", nil)
 	}

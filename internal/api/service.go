@@ -3184,6 +3184,11 @@ func (s *Service) MaybeCollectStatsAfterBulk(ctx context.Context, domain string)
 // scheduled backup). Best-effort; errors are only logged. domain/source are always
 // from a fixed whitelist (handler-validated or literal).
 func (s *Service) CollectStatsAsync(domain, source string) {
+	// A switched-off domain has no repository, and the Storage card asks for
+	// every domain whether it is on or not.
+	if settings, err := s.store.GetSettings(); err != nil || !domainEnabled(settings, domain) {
+		return
+	}
 	source = collectStatsSource(source)
 	if latest, found, err := s.store.LatestRepoStat(domain, source); err == nil && found &&
 		time.Since(time.Unix(latest.At, 0)) < repoStatsMinInterval {
@@ -3201,6 +3206,25 @@ func (s *Service) CollectStatsAsync(domain, source string) {
 			log.Printf("api: stats: %s/%s: async collect failed: %v", domain, source, err) //nolint:gosec // G706: domain/source are fixed-whitelist values
 		}
 	}()
+}
+
+// domainEnabled reports whether domain is switched on in s.
+func domainEnabled(s store.Settings, domain string) bool {
+	switch domain {
+	case "containers":
+		return s.ContainersEnabled
+	case "vms":
+		return s.VMsEnabled
+	case "files":
+		return s.FilesEnabled
+	case zfsDomain:
+		return s.ZFSEnabled
+	case "flash":
+		return s.FlashEnabled
+	case "config":
+		return s.ConfigEnabled
+	}
+	return false
 }
 
 // collectStatsSource normalises a stats source: any off-site source — bare

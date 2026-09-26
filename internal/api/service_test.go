@@ -1014,6 +1014,7 @@ func offsiteReplTestService(t *testing.T, eng *fakeResticEngine) (*api.Service, 
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
 	st := newMemStore(t)
 	s := mustSettings(t, st)
+	s.FlashEnabled = true
 	s.FlashPath = "backups/flash"
 	s.FlashOffsite = "rest:http://192.168.1.2:8000/flash"
 	if err := st.UpdateSettings(s); err != nil {

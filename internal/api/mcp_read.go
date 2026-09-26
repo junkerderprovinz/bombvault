@@ -340,7 +340,7 @@ func (h *Handler) toolListItems(ctx context.Context, req *mcp.CallToolRequest) (
 		}
 		row := map[string]any{
 			"domain":    domain,
-			"enabled":   mcpDomainEnabled(settings, domain),
+			"enabled":   domainEnabled(settings, domain),
 			"truncated": truncated,
 			"items":     rows,
 		}
@@ -609,24 +609,6 @@ func domainScheduleKind(own, everything string) string {
 	default:
 		return schedule.EffectiveNone
 	}
-}
-
-func mcpDomainEnabled(s store.Settings, domain string) bool {
-	switch domain {
-	case "containers":
-		return s.ContainersEnabled
-	case "vms":
-		return s.VMsEnabled
-	case "files":
-		return s.FilesEnabled
-	case zfsDomain:
-		return s.ZFSEnabled
-	case "flash":
-		return s.FlashEnabled
-	case "config":
-		return s.ConfigEnabled
-	}
-	return false
 }
 
 // mcpItem is one resolved thing a tool was asked about.

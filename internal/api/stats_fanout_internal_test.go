@@ -179,6 +179,42 @@ func TestStatsSampleRetriesAfterFailure(t *testing.T) {
 	}
 }
 
+// A domain that is switched off has no repository to measure, and a sample of
+// it would only write a failure into the log.
+func TestStatsSampleSkipsASwitchedOffDomain(t *testing.T) {
+	eng := &statsFakeEngine{entered: make(chan struct{}, 4)}
+	svc, st := statsTestService(t, eng)
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersEnabled = false
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	svc.CollectStatsAsync("containers", "local")
+
+	select {
+	case <-eng.entered:
+		t.Fatal("a switched-off domain was sampled")
+	case <-time.After(300 * time.Millisecond):
+	}
+}
+
+func TestStatsSampleRunsForASwitchedOnDomain(t *testing.T) {
+	eng := &statsFakeEngine{entered: make(chan struct{}, 4)}
+	svc, _ := statsTestService(t, eng)
+
+	svc.CollectStatsAsync("containers", "local")
+
+	select {
+	case <-eng.entered:
+	case <-time.After(10 * time.Second):
+		t.Fatal("a switched-on domain without a sample was never sampled")
+	}
+}
+
 type failingStatsEngine struct {
 	ResticEngine
 	tries int
