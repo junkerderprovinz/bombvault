@@ -166,8 +166,8 @@ func TestARepositoryPlaceHasNothingToTamperTest(t *testing.T) {
 	vault := f.storePlace(p)
 	f.linkRow(f.namedRepo("Vault", vault.Base).ID, vault, "", "")
 
-	if res := f.tamperTestPlace(vault.ID); res["ok"] != false || len(seen) != 0 {
-		t.Fatalf("answer = %v, probes %v, want a refusal without a probe", res, seen)
+	if res := f.tamperTestPlace(vault.ID); res["ok"] != false || res["code"] != "place-nothing-to-test" || len(seen) != 0 {
+		t.Fatalf("answer = %v, probes %v, want place-nothing-to-test without a probe", res, seen)
 	}
 }
 
@@ -265,8 +265,8 @@ func TestAnUnusedPlaceHasNothingToTamperTest(t *testing.T) {
 	f := newPlacementFixture(t)
 	garage := f.storePlace(restPlace("Garage", server.URL))
 
-	if res := f.tamperTestPlace(garage.ID); res["ok"] != false || res["error"] == "" || len(seen) != 0 {
-		t.Fatalf("answer = %v, probes %v, want a refusal without a probe", res, seen)
+	if res := f.tamperTestPlace(garage.ID); res["ok"] != false || res["code"] != "place-nothing-to-test" || len(seen) != 0 {
+		t.Fatalf("answer = %v, probes %v, want place-nothing-to-test without a probe", res, seen)
 	}
 }
 

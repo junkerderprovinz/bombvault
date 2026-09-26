@@ -58,6 +58,7 @@ var placementCodes = []struct {
 	{errPlaceAddressTaken, "place-address-taken"},
 	{errPlaceOff, "place-off"},
 	{errLocalAppendOnly, "place-no-append-only"},
+	{errPlaceNothingToTest, "place-nothing-to-test"},
 
 	{errPlacementUnreadable, "placement-unreadable"},
 	{errInvalidPlacement, "invalid-placement"},
