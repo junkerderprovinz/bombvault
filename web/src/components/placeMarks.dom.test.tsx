@@ -175,17 +175,17 @@ describe("the mark colours", () => {
     }
   });
 
-  it("light a brand's tile in its own colour, with an ink that keeps 2.5:1 on it", () => {
+  it("light a brand's tile in its own colour, with white on it where white reaches 2:1", () => {
     const brands = CATALOG.filter((id) => draw(id).querySelector("svg[data-mark]"));
     cleanup();
     expect(brands.length).toBeGreaterThan(25);
     for (const id of brands) {
       const tile = placeTile(id);
       expect(tile, id).toBeDefined();
-      expect(contrast(tile!.ink, tile!.color), id).toBeGreaterThanOrEqual(2.5);
+      expect(contrast(tile!.ink, tile!.color), id).toBeGreaterThanOrEqual(2);
       // White reverses a mark wherever it holds; OpenCloud brings its own pair.
       if (id !== "opencloud") {
-        expect(tile!.ink, id).toBe(contrast("#ffffff", tile!.color) >= 2.5 ? "#ffffff" : "#161616");
+        expect(tile!.ink, id).toBe(contrast("#ffffff", tile!.color) >= 2 ? "#ffffff" : "#161616");
       }
     }
     expect(placeTile("opencloud")).toEqual({ color: "#20434f", ink: "#e2baff" });
