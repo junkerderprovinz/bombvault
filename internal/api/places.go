@@ -29,6 +29,7 @@ var (
 	errPlaceUnasked             = errors.New("say where the device stands: here or at another site")
 	errUnknownProvider          = errors.New("that is not a provider this server can connect")
 	errLocalAppendOnly          = errors.New("a folder on this server cannot be kept from deletion, so it takes no append-only switch")
+	errPlaceNothingToTest       = errors.New("no domain backs up or copies to this place, so there is nothing to test")
 )
 
 // writePlace writes a place and, when edit is set and changes them, the

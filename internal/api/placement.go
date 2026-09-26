@@ -57,6 +57,7 @@ var placementCodes = []struct {
 	{store.ErrPlaceDomainUnavailable, "place-domain-unavailable"},
 	{errPlaceAddressTaken, "place-address-taken"},
 	{errPlaceOff, "place-off"},
+	{errLocalAppendOnly, "place-no-append-only"},
 
 	{errPlacementUnreadable, "placement-unreadable"},
 	{errInvalidPlacement, "invalid-placement"},

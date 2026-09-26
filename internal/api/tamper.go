@@ -9,10 +9,12 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -104,49 +106,96 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 		}
 	}()
 
-	// Testable if any destination is, protected only if every testable one
-	// refused the delete. An inconclusive probe contributes its error instead of
-	// a verdict.
-	var (
-		anyTestable  bool
-		allProtected = true
-		details      []string
-		errs         []error
-	)
+	var fold tamperFold
 	for _, t := range targets {
 		// A target may use its own named credential set, so credentials are
 		// resolved per target. Wrong or missing credentials get a 401, which is
 		// inconclusive.
 		creds, _ := s.decodeCloudFor(settings, t.CredsRef)
-		v, perr := s.runTamperTestForTarget(ctx, domain, t, creds)
-		if perr != nil {
-			errs = append(errs, perr)
-			continue
-		}
-		if !v.Testable {
-			continue
-		}
-		anyTestable = true
+		fold.add(s.runTamperTestForTarget(ctx, domain, t, creds))
+	}
+	// An error leaves no verdict; the deferred finish records a skipped run.
+	return fold.verdict()
+}
+
+// tamperFold folds tamper verdicts worst-of: testable if any repository is,
+// protected only if every testable one refused the delete. An inconclusive
+// probe contributes its error instead of a verdict, and any error leaves the
+// fold without one.
+type tamperFold struct {
+	testable bool
+	open     bool
+	details  []string
+	errs     []error
+}
+
+func (f *tamperFold) add(v TamperVerdict, err error) {
+	switch {
+	case err != nil:
+		f.errs = append(f.errs, err)
+	case v.Testable:
+		f.testable = true
 		if !v.Protected {
-			allProtected = false
-			if v.Detail != "" {
-				details = append(details, v.Detail)
+			f.open = true
+			if v.Detail != "" && !slices.Contains(f.details, v.Detail) {
+				f.details = append(f.details, v.Detail)
 			}
 		}
 	}
-	if len(errs) > 0 {
-		// No verdict; the deferred finish records a skipped run.
-		return TamperVerdict{}, errors.Join(errs...)
-	}
-	if !anyTestable {
-		// No destination could be probed this way (e.g. all non-REST backends).
+}
+
+func (f *tamperFold) verdict() (TamperVerdict, error) {
+	switch {
+	case len(f.errs) > 0:
+		return TamperVerdict{}, errors.Join(f.errs...)
+	case !f.testable:
 		return TamperVerdict{Testable: false, Detail: "only REST repos are verifiable"}, nil
 	}
-	verdict = TamperVerdict{Testable: true, Protected: allProtected}
-	if !allProtected {
-		verdict.Detail = strings.Join(details, "; ")
+	return TamperVerdict{Testable: true, Protected: !f.open, Detail: strings.Join(f.details, "; ")}, nil
+}
+
+// RunPlaceTamperTest folds the verdicts of the repositories at one place: the
+// path of each domain it is home to and each enabled copy it holds. Copies at
+// other places play no part, so a second server without append-only does not
+// speak for this one.
+func (s *Service) RunPlaceTamperTest(ctx context.Context, id string) (TamperVerdict, error) {
+	p, err := s.store.GetPlace(id)
+	if err != nil {
+		return TamperVerdict{}, err
 	}
-	return verdict, nil
+	switch {
+	case p.Kind == string(places.KindLocal):
+		return TamperVerdict{}, errLocalAppendOnly
+	case !p.Enabled:
+		return TamperVerdict{}, errPlaceOff
+	}
+	rows, err := s.store.PlaceRows(id)
+	if err != nil {
+		return TamperVerdict{}, err
+	}
+	rows = slices.DeleteFunc(rows, func(r store.OffsiteTarget) bool {
+		return r.Role == store.RoleRepo || !r.Enabled
+	})
+	if len(rows) == 0 {
+		return TamperVerdict{}, errPlaceNothingToTest
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return TamperVerdict{}, fmt.Errorf("read settings: %w", err)
+	}
+	var fold tamperFold
+	for _, r := range rows {
+		fold.add(s.tamperTestRow(ctx, settings, r))
+	}
+	return fold.verdict()
+}
+
+// tamperTestRow probes one row with its own credentials under its domain's
+// lock, so a place test and a domain test cannot both alert on one flip.
+func (s *Service) tamperTestRow(ctx context.Context, settings store.Settings, row store.OffsiteTarget) (TamperVerdict, error) {
+	defer s.lockTamper(row.Domain)()
+	creds, _ := s.decodeCloudFor(settings, row.CredsRef)
+	return s.runTamperTestForTarget(ctx, row.Domain, row, creds)
 }
 
 // runTamperTestForTarget probes one off-site destination's delete path. A
@@ -197,7 +246,7 @@ func (s *Service) runTamperTestForTarget(ctx context.Context, domain string, tar
 		if !p {
 			protected = false
 		}
-		if detail != "" {
+		if detail != "" && !slices.Contains(details, detail) {
 			details = append(details, detail)
 		}
 	}
@@ -313,4 +362,22 @@ func (h *Handler) handleTamperTest(w http.ResponseWriter, r *http.Request) {
 		"protected": verdict.Protected,
 		"detail":    verdict.Detail,
 	}))
+}
+
+// handlePlaceTamperTest serves POST /api/places/{id}/tamper-test, one verdict
+// for the repositories at the place.
+func (h *Handler) handlePlaceTamperTest(w http.ResponseWriter, r *http.Request) {
+	verdict, err := h.svc.RunPlaceTamperTest(r.Context(), r.PathValue("id"))
+	switch {
+	case errors.Is(err, store.ErrPlaceNotFound):
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such place"})
+	case err != nil:
+		placementFail(w, err, nil)
+	default:
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+			"testable":  verdict.Testable,
+			"protected": verdict.Protected,
+			"detail":    verdict.Detail,
+		}))
+	}
 }
