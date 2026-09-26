@@ -14,8 +14,8 @@ export const ALL_CADENCE_MODES: CadenceMode[] = ["off", "daily", "weekly", "ever
 /**
  * EXACT_CADENCE_MODES leaves out everyN, for schedules that have no last-run
  * record to count an interval from. The backend refuses everyN for them
- * (SetScheduleCadence and SetVMScheduleCadence in internal/api/service.go),
- * since it would fire daily.
+ * (SetScheduleCadence and SetVMScheduleCadence in
+ * internal/api/service_schedule.go), since it would fire daily.
  */
 export const EXACT_CADENCE_MODES: CadenceMode[] = ["off", "daily", "weekly", "cron"];
 
@@ -407,7 +407,7 @@ function CronEditor({
           <button
             key={ex.expr}
             onClick={() => onChange(ex.expr)}
-            className="self-start rounded-control px-1.5 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+            className="self-start rounded-pill px-1.5 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
             <code dir="ltr" className="font-mono text-carbon-text text-start">{ex.expr}</code>
             <span className="ms-2">{t(ex.key)}</span>

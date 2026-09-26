@@ -33,7 +33,7 @@ Ez általában egy árva restic zárolás, amely akkor maradt hátra, amikor a k
 
 ## A telephelyen kívüli másolatom nem történt meg egy mentés után
 
-A telephelyen kívüli replikáció szándékosan legjobb szándék szerinti, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. Ellenőrizd az adott tartomány telephelyen kívüli ütemezését (Beállítások, Ütemezések): egy üres ütemezés minden helyi mentés után replikál, míg egy ütem ritkábban szállít. Használd a **Replikálás most** gombot a Telephelyen kívüli fülön egy igény szerinti futáshoz, és figyeld a replikációs jelzőt az irányítópulton.
+A telephelyen kívüli replikáció szándékosan legjobb szándék szerinti, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. Ellenőrizd az adott tartomány telephelyen kívüli ütemezését (Beállítások, Ütemezések): egy üres ütemezés minden helyi mentés után replikál, míg egy ütem ritkábban szállít. Használd a **Másolás most** gombot a tartomány sorában a Beállítások, Tárolás alatt egy igény szerinti futáshoz, és figyeld a replikációs jelzőt az irányítópulton.
 
 ## Egy visszaállítás megszakadt, mielőtt elindult volna
 

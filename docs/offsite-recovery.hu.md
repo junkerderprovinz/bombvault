@@ -4,13 +4,13 @@ A helyi mentések megvédenek egy elveszett konténertől vagy egy rossz frissí
 
 ## Telephelyen kívüli replikáció
 
-Tartsd meg a gyors helyi mentést, és adj hozzá egy vagy több telephelyen kívüli replikát. Állíts be egy tárolót tartományonként a **Beállítások, Telephelyen kívüli** fülön. A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint replikálja oda, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. A helyi tároló marad az elsődleges.
+Tartsd meg a gyors helyi mentést, és másold egy vagy több másik tárhelyre. Azt, hogy egy tartomány mely tárhelyekre másolódik, a **Beállítások, Tárolás** alatti **Tartományok** kártyán választod ki, tárhelyenként egy chippel (lásd: [Tárhelyek](storage-places.md#domains)). A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint másolja oda, így egy sikertelen másolás soha nem hiúsítja meg a helyi mentést. Annak a tárhelynek, amelyen egy tartomány tárolódik, nem kell helyinek lennie; lásd: [Távoli tárhelyen tárolt tartomány](#remote-primary-repositories).
 
-- **Több telephelyen kívüli cél tartományonként.** Minden tartomány (konténerek, VM-ek, flash, config és fájlkészletek) egyszerre több telephelyen kívüli célra is replikálhat, nem csak egyre, így párhuzamosan tarthatsz például egy rest-servert egy barátod gépén és egy S3-bucketet is. Adj hozzá további célokat a Beállítások, Telephelyen kívüli alatt, mindegyiket saját tárolóval, S3-tárolási osztállyal, append-only jelzővel, megőrzéssel és növekedési kerettel. Egy meglévő egyetlen telephelyen kívüli beállítás érintetlenül, az első célként öröklődik át, és egy tartomány minden célja az adott tartomány telephelyen kívüli ütemezése szerint replikál.
-- **Tartományonkénti telephelyen kívüli ütemezés** (minden más ütemezés mellett a Beállítások, Ütemezések alatt szerkesztve): hagyd üresen, hogy minden helyi mentés után replikáljon, vagy állíts be egy ütemet (például `weekly Sun 03:00`), hogy ritkábban szállítson telephelyen kívülre, mint amilyen gyakran helyben mentesz. Egy **Replikálás most** gomb fedi le az igény szerinti futásokat.
-- **A telephelyen kívüli megőrzés** a Beállítások, Telephelyen kívüli alatt él, így a telephelyen kívüli másolatokat archívumként tovább megtarthatod. Hagyd a szabályt mind nullán, hogy soha ne nyesse automatikusan a telephelyen kívüli pillanatképeket.
-- **A sávszélesség-korlátok** (Beállítások, Telephelyen kívüli) korlátozzák a restic fel- és letöltési sebességét, hogy a replikáció ne telítse a WAN-odat.
-- Egy **replikációs jelző** mutatja, melyik tartomány replikál éppen, amíg fut (a saját oldalán és az irányítópulton). Ez egy aktív jelző, nem egy százalékos sáv, mert a `restic copy` nem tesz közzé géppel olvasható folyamatjelzést.
+- **Több másolási tárhely tartományonként.** Egy tartomány egyszerre több tárhelyre is másolható, például egy rest-serverre egy barátod házában és egy B2-bucketbe. A megőrzés, a tárolási osztály, az append-only, a korlátok és a növekedési keret a tárhelyhez tartozik, így minden másolat annak a tárhelynek a szabályait követi, ahová kerül.
+- **Tartományonkénti másolási ütemezés** (minden más ütemezés mellett a Beállítások, Ütemezések alatt szerkesztve): hagyd üresen, hogy minden helyi mentés után másoljon, vagy állíts be egy ütemet (például `weekly Sun 03:00`), hogy ritkábban másoljon, mint amilyen gyakran mentesz. A tartomány sorában lévő **Másolás most** igény szerint lefuttatja.
+- **Megőrzés tárhelyenként.** Minden tárhelynek saját szabályai vannak, így egy telephelyen kívüli tárhely archívumként tovább megtarthatja a másolatokat. Az a tárhely, amelynek minden szabálya nulla, soha nem vág vissza semmit.
+- **A sávszélesség-korlátok** tárhelyenként korlátozzák a restic fel- és letöltési sebességét, hogy a másolás ne telítse a WAN-odat.
+- Egy **replikációs jelző** mutatja, melyik tartomány másol éppen, amíg fut (a saját oldalán és az irányítópulton). Ez egy aktív jelző, nem egy százalékos sáv, mert a `restic copy` nem tesz közzé géppel olvasható folyamatjelzést.
 
 !!! note "Visszaállítás bármely helyről"
     Minden konténer, VM, fájlkészlet, a flash és az alkalmazás-konfiguráció egyetlen idővonalként sorolja fel a mentéseit minden hely között, ahol egy mentés fekszik. Egy B2-be másolt mentés egyszer jelenik meg, minden azt tartalmazó hellyel megjelölve. A visszaállítás az első elérhető helyet veszi, a tárolóval kezdve, ahova az elem íródik, és soronként másik helyet is választhatsz. A telephelyen kívüli helyek csak akkor olvasódnak, amikor megnyitod őket. Az egy helyen történő törlés előbb a többit ellenőrzi, és megmondja, hogy az volt-e az utolsó másolat.
@@ -21,53 +21,49 @@ Minden konténer-, VM- és fájlkészlet-kártyának van egy **Elhelyezés** sor
 
 - **Helyi** a **Tárolva itt** alatt látható tárolóba írja az elemet, és sehova nem másolja. Olyan adathoz használd, amelynek már van egy második másolata, például egy NAS-on élő megosztáshoz.
 - **Helyi + telephelyen kívüli** ott is megírja, és a **Másolás ide** alatt kipipált célokra másolja, egy chip a tartomány minden telephelyen kívüli céljára. Vedd ki egy chip pipáját, és az a cél semmi újat nem kap ettől az elemtől.
-- **Csak telephelyen kívüli** egyenesen a **Küldés ide** alatti helyre írja az elemet: egy közvetlen tárolóba egy telephelyen kívüli cél mellett, vagy egy távoli tárolóba, amelyet a Beállítások, Útvonalak és tárolás, Tárolók alatt állítottál be.
+- **Csak telephelyen kívüli** egyenesen a **Küldés ide** alatti tárhelyre írja az elemet, amely a tartomány otthonán kívül bármely tárhely lehet. Ahol a tartomány már másolódik arra a tárhelyre, az elem egy közvetlen tárolót kap a másolatok mellett; különben a BombVault létrehoz ott egy tárolót a tartomány számára.
 
 A hely az elem első biztonsági mentésétől fogva rögzített, mert a BombVault soha nem mozgat mentéseket tárolók között. A másolatok bármikor változhatnak. Az a cél, amely már nem kap egy elemet, megtartja a meglévő másolatait, és a tartomány következő telephelyen kívüli futásakor a saját megőrzésére vágja őket vissza; a kártyán a **Törlés itt: B2** azonnal eltávolítja őket. Ha ezek közül a másolatok közül néhány sehol máshol nem létezik, a megerősítés dátum szerint felsorolja őket, és kéri az elem nevét. A csak hozzáfűzésre szolgáló célokból nem lehet törölni.
 
-A sor alatt a kártya megmondja, hova kerül az elem, és mi van ott ténylegesen: hány helyszín tartja, mikor látták utoljára az egyes célokat, és teljesül-e a 3-2-1. Egy helyszín az eredeti adatokat tartalmazó szerver, minden telephelyen kívüli cél és minden **Az épületen kívül** jelölt tároló. A BombVault a másolatokat és a helyszíneket ellenőrzi; a 3-2-1 "két adathordozó" részét nem ellenőrzi.
+A sor alatt a kártya megmondja, hova kerül az elem, és mi van ott ténylegesen: hány helyszín tartja, mikor látták utoljára az egyes célokat, és teljesül-e a 3-2-1. Egy helyszín az eredeti adatokat tartalmazó szerver és minden másik helyszínen lévő tárhely (lásd: [Az épületen kívül](#off-the-premises-mark)). A BombVault a másolatokat és a helyszíneket ellenőrzi; a 3-2-1 "két adathordozó" részét nem ellenőrzi.
 
-### Elhelyezési alapértelmezések
+### Alapértelmezések tartományonként
 
-A Beállítások, Útvonalak és tárolás, **Elhelyezési alapértelmezések** alatt tartományonként egy sor van, ugyanazzal a három szegmenssel. A másolatok azonnal érvényesek minden saját választás nélküli elemre, és a Compose-stackek projektmappáira is. A hely egy új elemre az első mentésekor válik érvényessé; a megváltoztatása egyetlen mentést sem mozgat. Mentés előtt a sor megnevez minden célt, amely elemeket nyer vagy veszít, és hogy ez hány pillanatképet jelent. Az **Alkalmazás a biztonsági mentés nélküli elemekre** minden még mentés nélküli elemet visszaállít az alapértelmezésre.
+A Beállítások, Tárolás alatti **Tartományok** kártyán tartományonként egy sor van. A **Másolva ide** azonnal érvényes minden saját választás nélküli elemre, és a Compose-stackek projektmappáira is. Ha egy tartománynak már vannak mentései, a **Tárolva itt** egy új elemre az első mentésekor válik érvényessé, és a megváltoztatása egyetlen mentést sem mozgat. Mentés előtt a sor megnevez minden tárhelyet, amely elemeket nyer vagy veszít, és hogy ez hány pillanatképet jelent, a kérdésben pedig ott van az **Alkalmazás a biztonsági mentés nélküli elemekre** kapcsoló, amely minden még mentés nélküli elemet is az új alapértelmezésre állít. A **Kivételek** a saját választással rendelkező elemeket sorolja fel.
 
-Egy új telephelyen kívüli cél megkap minden elemet, amely nincs Helyire állítva. Az azt hozzáadó párbeszédablak megmondja, hány elemről van szó, és ahol ismert, mennyi előzményt jelent ez, és felajánlja, hogy kihagyja azokat az elemeket, amelyeket más céloknál is kihagytak.
+Ha egy új tárhelyet bepipálsz a **Másolva ide** alatt, az megkap minden elemet, amely nincs Helyire állítva. A megerősítés megmondja, hány elemről van szó, és ahol ismert, mennyi előzményt jelent ez.
 
 ### Közvetlen tárolók
 
-Egy cél közvetlen tárolójának kiválasztása Csak telephelyen kívüli alatt egy párbeszédablakot nyit meg egy javasolt hellyel a cél mellett, például `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, és egy kapcsolatteszttel, amely semmit nem hoz létre. A **Létrehozás és használat** létrehozza a tárolót, és odairányítja az elemet. A közvetlen tároló átveszi a cél kulcsát, tárolási osztályát, korlátait, append-only beállítását és megőrzését, és velük együtt változik; a Tárolók kártya csak olvashatóként mutatja. Ha a cél új kulcsa nem tudja megnyitni, a közvetlen tároló megtartja azt a kulcsot, amije van, és a mentés ezt jelzi. A pillanatképei a `bv:direct` címkét viselik, és minden más megőrzési kör megtartja őket, így egy közvetlen tároló, amely elvesztette a kapcsolatát a céljával, soha nem öregszik a helyi szabályok szerint. A B2-t az S3-végpontján keresztül érjük el, ahol a kulcsazonosítót és az alkalmazáskulcsot kell megadni S3-hitelesítő adatként; a cél saját mappájára korlátozott kulcs nem éri el a mellette lévő mappát, ezért korlátozd inkább a kulcsot a cél feletti mappára.
+Ha a Csak telephelyen kívüli alatt olyan tárhelyet választasz, ahová a tartomány már másolódik, a BombVault egyszer rákérdez, majd létrehoz egy közvetlen tárolót a másolatok mellett, például `s3:https://s3.eu-central-003.backblazeb2.com/bucket/container-direct`, és odairányítja az elemet. Tárhely nélküli másolási célnál a választás egy párbeszédablakot nyit meg egy javasolt címmel és egy kapcsolatteszttel, amely semmit nem hoz létre, és a **Létrehozás és használat** létrehozza a tárolót. A közvetlen tároló átveszi a tárhely kulcsát, tárolási osztályát, korlátait, append-only beállítását és megőrzését, és velük együtt változik. Ha a tárhely új kulcsa nem tudja megnyitni, a közvetlen tároló megtartja azt a kulcsot, amije van, és a mentés ezt jelzi. A pillanatképei a `bv:direct` címkét viselik, és minden más megőrzési kör megtartja őket, így egy közvetlen tároló, amely elvesztette a kapcsolatát a tárhelyével, soha nem öregszik a helyi szabályok szerint. Egy egyetlen mappára korlátozott B2-kulcsnak a tárhely címét kell lefednie, nem csak a tartomány mappáját, különben a mellette lévő mappa elérhetetlen.
 
-### Az épületen kívül
+### Az épületen kívül {#off-the-premises-mark}
 
-Egy nevesített tároló megjelölhető **Az épületen kívül**-ként a Tárolók kártyán. A távoli tárolók megjelölve indulnak; kapcsold ki egy ugyanabban az épületben lévő rest-servernél. A jelölés csak a helyszíneket és a 3-2-1-et számolja a kártyákon. Egyetlen másolatot sem változtat meg.
+Egy másolat csak akkor számít külön helyszínnek, ha a tárhelye másik helyszínen van. Egy felhőtárhely mindig számít, egy mappa ezen az Unraidon soha; NAS-nál, rest-servernél vagy SFTP-szervernél a tárhely részleteiben válaszolj a **Hol van az eszköz?** kérdésre az **Itt, az épületben** vagy a **Másik helyszínen** lehetőséggel. A válasz csak a helyszíneket és a 3-2-1-et számolja a kártyákon és az irányítópulton. Egyetlen másolatot sem változtat meg.
 
 ### Újraépítés után
 
-A másolási választások a BombVault saját beállításaiban élnek. Egy Felfedezésen keresztüli újraépítés után, visszaállított `/config` nélkül, ezek eltűnnek, és minden másolása újra elküldené a B2-be azokat az elemeket, amelyeket kihagytál. Ezért minden újraépített tartomány telephelyen kívüli replikációja szünetel. Az irányítópult sárgán mutatja, és az Elhelyezési alapértelmezések felajánlja az **Alapértelmezés megerősítése** lehetőséget, egy előnézettel arról, mit másol a következő futás, és azokkal a nevekkel a mentésekben, amelyeknek nincs bejegyzésük, amelyeket ott kihagyhatsz. Csak a megerősítés zárja le a szünetet; egy beállításfájl importálása visszahozza a szabályokat és az alapértelmezéseket, de nem zárja le.
+A másolási választások a BombVault saját beállításaiban élnek. Egy Felfedezésen keresztüli újraépítés után, visszaállított `/config` nélkül, ezek eltűnnek, és minden másolása újra elküldené a B2-be azokat az elemeket, amelyeket kihagytál. Ezért minden újraépített tartomány telephelyen kívüli replikációja szünetel. Az irányítópult sárgán mutatja, és a tartomány sora a Tartományok kártyán felajánlja az **Alapértelmezés megerősítése** lehetőséget, egy előnézettel arról, mit másol a következő futás, és azokkal a nevekkel a mentésekben, amelyeknek nincs bejegyzésük, amelyeket ott kihagyhatsz. Csak a megerősítés zárja le a szünetet; egy beállításfájl importálása visszahozza a szabályokat és az alapértelmezéseket, de nem zárja le.
 
-## Távoli elsődleges tárolók {#remote-primary-repositories}
+## Távoli tárhelyen tárolt tartomány {#remote-primary-repositories}
 
-Egy tartomány mentési útvonala (Beállítások, Útvonalak és tárolás) nem korlátozódik helyi mappára: irányítsd egyenesen egy restic távoli tárolóra (`s3:...`, `rest:http://host:8000/repo`, `sftp:felhasznalo@host:/repo`, `rclone:remote:bucket/utvonal`), és a BombVault közvetlenül oda ment, külön helyi másolat és replikációs lépés nélkül. Ez valóban más alak, mint a fenti külső telephelyi replikáció: ott a helyi tároló az elsődleges, a külső pedig annak legjobb tudás szerinti archívuma; itt a távoli tároló **maga** az elsődleges, és ez az egyetlen példány, amíg az adott tartományhoz nem állítasz be külső telephelyi replikációt is (vagy egy második távoli tárolót).
+Egy tartományt nem kell helyben tárolni. Amíg a mentési helyén nincs mentés, válassz egy távoli tárhelyet a **Tárolva itt** alatt a Tartományok kártyán, és a tartomány egyenesen oda ment, helyi másolat és másolási lépés nélkül. A távoli tároló ekkor az egyetlen példány, hacsak a tartomány nem másolódik egy másik tárhelyre is. Minden távoli tárhely ugyanazokkal a biztosítékokkal jár:
 
-Az öt útvonalmező (Konténerek, Virtuális gépek, Flash, Konfiguráció, Fájlok) mindegyike mellett közvetlenül ott áll egy **Helyi / Távoli** kapcsoló:
+- **Kapcsolatteszt**, mielőtt bármi íródna.
+- **Sávszélesség-korlátok** magára a mentésre, ugyanazokkal a `--limit-upload` és `--limit-download` kapcsolókkal, amelyeket egy másolás használ.
+- **Append-only védelem**, ugyanazzal az aktív manipulációs teszttel ellenőrizve. Bekapcsolva a BombVault soha nem nyesi a tárolót, mert az ezen a gépen lévő hitelesítő adatok nem lehetnek képesek törölni a mentés egyetlen példányát.
+- **Növekedési keret**, ugyanabból a méret-trendből mintavételezve, amelyet a Tárolás kártya követ.
 
-- **Helyi** a megszokott mappaböngészőt mutatja.
-- **Távoli** ezt egy egyszerű URL-mezőre cseréli, plusz egy gombra, amely ugyanazt a kapcsolatteszt és hitelesítőadat párbeszédet nyitja meg, amit a külső telephelyi célok használnak, csak épp ehhez az elsődleges tárolóhoz beállítva. Onnan a következőket kapod:
-    - **Kapcsolattesztet** a valódi útvonal ellen, mielőtt rábíznád magad.
-    - **Sávszélesség-korlátokat** (fel- és letöltés), hogy egy ütemezett mentés a távoli elsődleges tárolóba ne telítse a WAN-vonaladat: ugyanazok a restic kapcsolók, `--limit-upload` és `--limit-download`, amiket a külső telephelyi replikáció használ, most magára a mentésre alkalmazva.
-    - **Append-only védelmet (változtathatatlanság)**, ugyanazzal az aktív manipulációs teszttel ellenőrizve (valódi DELETE próba a túloldal ellen), amit a külső telephelyi célok kapnak. Bekapcsolva a BombVault megtagadja a tároló saját nyesését: mivel mögötte nincs külön helyi másolat, az ezen a gépen lévő hitelesítő adatok nem lehetnek képesek törölni a mentés egyetlen példányát.
-    - **Növekedési keret riasztást**, ugyanabból a tárolóméret-trendből számolva, amit a Tárolás kártya amúgy is követ.
+Egy távoli tárhelyen tárolt tartomány ugyanúgy a másolatainak forrása, mint egy helyi; lásd: [Másolatok eltérő hitelesítő adatú tárhelyek között](storage-places.md#different-credentials).
 
-Ezek közül semmi sem kötelező: egy kézzel beírt távoli útvonal mentett biztonsági beállítások nélkül pontosan úgy ment, ahogy eddig (korlátlan sávszélesség, nyesehető, nincs keretriasztás). A biztonsági párbeszéd arra az esetre van, amikor ugyanazt a védelmet szeretnéd, amit egy külső telephelyi másolat kap, anélkül hogy pusztán ezért külön külső célt kellene létrehoznod.
-
-!!! note "A felhő- és REST-hitelesítő adatok közösek"
-    Egy távoli elsődleges tároló ugyanazokkal az S3/REST hitelesítő adatokkal azonosít, amelyek a Beállítások, Külső telephely, Felhő hitelesítő adatok alatt vannak beállítva. Az elsődleges tárolóknak nincs külön hitelesítőadat-tárolójuk.
+!!! note "A hitelesítő adatok a tárhelyhez tartoznak"
+    Egy távoli tárhely saját hitelesítő adatokat tart. Az a tárhely, amelyet a közös felhő-hitelesítő adatokkal állítottak be, addig használja azokat, amíg a hozzáférését meg nem változtatod a részleteiben.
 
 ## Módosíthatatlan (append-only) telephelyen kívüli
 
 Jelölj egy telephelyen kívüli tárolót append-only-ként, hogy a zsarolóvírus vagy egy feltört hoszt ne tudja törölni vagy átírni a mentéseidet. A túloldal (egy `restic/rest-server` `--append-only` módban futva) **érvényesíti**. A BombVault csak **ellenőrzi**, és soha nem mutat zöldet pusztán egy konfigurációs állítás alapján.
 
-A **vezetett telephelyen kívüli beállítás** varázsló végigvezet a backend választásától (rest-server / rclone / S3) egészen egy beilleszthető rest-server telepítési kódrészletig, egy kapcsolattesztig, a módosíthatatlan kapcsolóig (amely azonnal lefuttatja a manipulációs tesztet) és egy megőrzési stratégiáig, így az append-only telephelyen kívüli mentés elérhető a konfigok kézi szerkesztése nélkül.
+A **Tárhely hozzáadása** ablak egy beilleszthető receptet tartalmaz egy append-only módú rest-serverhez, egy felhasználóval ennek a BombVaultnak. Egy rest-server tárhelyen, amelyen az **Append-only** be van kapcsolva, a tárhely részleteiben az **Append-only tesztelése** lefuttatja a manipulációs tesztet minden tartományra, amelyet a tárhely tárol vagy másol, így az append-only telephelyen kívüli mentés elérhető a konfigok kézi szerkesztése nélkül.
 
 !!! note "A `/locks/` alatti sikeres törlés várt viselkedés"
     Az append-only nem azt jelenti, hogy semmit sem lehet többé törölni. A resticnek fel kell vennie és el kell engednie a saját zárait, ezért a `/locks/` szándékosan írható és törölhető marad. A pillanatfelvételek és a mögöttük lévő adatok, vagyis pontosan az, amit egy zsarolóvírus célba venne, nem távolíthatók el. Ha magad próbálod ki a túloldalt, a `/locks/` alatt sikeres törlés helyes viselkedés, nem rés a védelemben.
@@ -118,28 +114,28 @@ Fent az alkatrészek szerepelnek. Itt egy teljes összeállítás valódi érté
 
 Két gép: a **TOWER** futtatja a konténereket és küldi a mentéseket, a **VAULT** fogadja őket és kikényszeríti a változtathatatlanságot. Cseréld a saját neveidre, címeidre és megosztási útvonalaidra.
 
-**1. A VAULT gépen állítsd fel az append-only kiszolgálót.** A TOWER BombVaultjában menj a *Beállítások → Külső telephely → vezetett beállítás* pontra, válaszd a **rest-server** lehetőséget, és készítsd el a receptet. Másold ki az **Unraid sablon (XML)** fület, mentsd a VAULT gépen `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` néven, majd *Docker → Add Container*, és válaszd a **rest-server** elemet a sablonlistából. Indítás előtt írd be a megjelenített `htpasswd` sort a VAULT gépen a `/mnt/user/appdata/rest-server/.htpasswd` fájlba. Az egyszer használatos jelszó egyszer jelenik meg és sosem kerül tárolásra, másold ki most. Az a sor ugyanazt a jelszót hordozza, már bcrypttel kivonatolva: a nyílt szöveg a TOWER REST-hitelesítő adataiba kerül, a kivonatolt sor a VAULT `.htpasswd` fájljába. Neked semmit sem kell kivonatolnod.
+**1. A VAULT gépen állítsd fel az append-only kiszolgálót.** A TOWER BombVaultjában nyisd meg a *Beállítások → Tárolás* oldalt, kattints a **Tárhely hozzáadása** gombra, válaszd a **rest-server** lehetőséget, és kattints a **Recept megjelenítése** gombra. Másold ki az **Unraid-sablon** blokkot, mentsd a VAULT gépen `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` néven, majd *Docker → Add Container*, és válaszd a **rest-server** elemet a sablonlistából. Indítás előtt írd be a megjelenített `htpasswd` sort a VAULT gépen a `/mnt/user/appdata/rest-server/.htpasswd` fájlba. A jelszó csak egyszer jelenik meg, és sosem kerül tárolásra; a recept már beírta a jelszót és a felhasználót az űrlapba a TOWER gépen, ezért hagyd nyitva azt az ablakot. A `htpasswd` sor ugyanazt a jelszót hordozza, már bcrypttel kivonatolva, így neked semmit sem kell kivonatolnod.
 
-    Hagyd bent a `--append-only` kapcsolót az OPTIONS mezőben. Ez az egésznek a lényege: nélküle a VAULT megint csak egy hétköznapi megosztás.
+    Hagyd bent a `--append-only` kapcsolót az OPTIONS mezőben. Nélküle a VAULT megint csak egy hétköznapi megosztás.
 
-**2. A TOWER gépen irányítsd oda a külső tárolót.** A tároló címe azt a mintát követi, amit a recept kiír:
+**2. A TOWER gépen add hozzá a tárhelyet.** Írd be a VAULT címét, `http://VAULT:8000`, a recept által kitöltött felhasználó és jelszó mellé, majd kattints a **Kapcsolat tesztelése** gombra. A BombVault ezekből állítja össze a címet:
 
-    rest:http://VAULT:8000/bombvault-containers/containers
+    rest:http://VAULT:8000/tower
 
-Az útvonal első szakasza a htpasswd felhasználó, a második a tároló. Add meg a generált felhasználót és jelszót a cél REST hitelesítő adataiként, majd futtasd a **kapcsolatellenőrzést**.
+Az útvonal első szakasza a htpasswd felhasználó, itt `tower`, és minden tartomány alatta kapja a saját mappáját, például `rest:http://VAULT:8000/tower/container`. A **Hol van az eszköz?** kérdésre válaszolj a **Másik helyszínen** lehetőséggel, kattints a **Hozzáadás** gombra, és pipáld be a tárhelyet a **Másolva ide** alatt azoknál a tartományoknál, amelyeknek oda kell kerülniük.
 
-**3. A TOWER gépen kapcsold be a „Változtathatatlan” beállítást.** A manipulációs teszt azonnal lefut, és *védett* eredményt kell adnia. Mit jelentenek a válaszok:
+**3. A TOWER gépen kapcsold be az Append-only módot** a tárhely részleteiben a **Védelem** alatt, majd kattints az **Append-only tesztelése** gombra. A teszt minden tartományra lefut, amelyet a tárhely tárol vagy másol, és mindegyiknek *törlések elutasítva* eredményt kell adnia. Mit jelentenek a válaszok:
 
 | Eredmény | Mi történt |
 | --- | --- |
-| **védett** | A VAULT elutasította a törlést. Ez az egyetlen megfelelő állapot. |
-| **NEM védett** | A VAULT elfogadott egy törlést. Hiányzik a `--append-only`, vagy eltávolították. |
-| **nem egyértelmű** | Egyik sem. Általában a cím nem az, amit maga a restic használ, vagy megváltoztak a hitelesítő adatok. Semmi nem kerül rögzítésre, és nem indul riasztás. |
+| **törlések elutasítva** | A VAULT elutasította a törlést. Ez az egyetlen megfelelő állapot. |
+| **törlések elfogadva** | A VAULT elfogadott egy törlést. Hiányzik a `--append-only`, vagy eltávolították. |
+| eredmény helyett egy üzenet | A teszt nem tudott lefutni. Általában a cím nem az, amit maga a restic használ, vagy megváltoztak a hitelesítő adatok. Semmi nem kerül rögzítésre, és nem indul riasztás. |
 
 **4. A VAULT gépen nézd meg, mi érkezik.** Kapcsold be a *Beállítások → Fogadó* pontot, nyisd meg a **Fogadó** fület, és regisztráld a tárolót csak olvasható módon.
 
 !!! warning "A hely a konténeren **belüli** útvonal, a gazdagép csatolási pontjához képest megadva"
-    Ezt add meg: `user/appdata/rest-server/bombvault-containers/containers`, és **ne** ezt: `/mnt/user/appdata/…`. A BombVault konténerben fut, ahol a gazdagép `/mnt` könyvtára máshová van csatolva; abszolút gazdagép-útvonal ott nem létezik. Ha mégis beilleszted, a BombVault mostantól megmondja a helyette használandó relatív útvonalat.
+    Ezt add meg: `user/appdata/rest-server/tower/container`, és **ne** ezt: `/mnt/user/appdata/…`. A BombVault konténerben fut, ahol a gazdagép `/mnt` könyvtára máshová van csatolva; abszolút gazdagép-útvonal ott nem létezik. Ha mégis beilleszted, a BombVault megmondja a helyette használandó relatív útvonalat.
 
     A **küldő APP_KEY** a TOWER kulcsa, nem a VAULT-é. A TOWER gépen a *Beállítások → Rendszer* alatt találod.
 
@@ -151,7 +147,7 @@ Egy dedikált **Helyreállítás** fül egy helyen végigvezet egy friss vagy ú
 
 1. **Először visszaállítja a BombVault saját beállításait**, így a mentési útvonalak, telephelyen kívüli célok és hitelesítő adatok, amelyekre a folyamat többi része szüksége van, előre kitöltve jelennek meg (a Docker socketen keresztüli önújraindítással alkalmazva, így az élő beállítás-adatbázis soha nem íródik felül nyitott handle alatt).
 2. **Ellenőrzi, hogy a BombVault olvasni tudja-e a mentéseidet** (a titkosításikulcs-buktató előre).
-3. Lehetővé teszi, hogy **rámutass a meglévő tárolódra** (helyi vagy telephelyen kívüli).
+3. Lehetővé teszi, hogy **rámutass a meglévő tárolódra**: egy helyi mappára, vagy egy távoli tárhelyre, amelyet ugyanazzal a **Tárhely hozzáadása** ablakkal csatlakoztatsz, mint a Beállítások, Tárolás alatt.
 4. **Felfedezi** a benne tárolt konténereket, VM-eket és fájlkészleteket.
 5. **Mindet visszaállítja** (leállítva hagyva, így te indítod el őket szándékosan), a helyreállítási csomagoddal egy kattintásnyira.
 

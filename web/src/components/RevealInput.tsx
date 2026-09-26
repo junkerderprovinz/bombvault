@@ -10,8 +10,7 @@ import type { InputHTMLAttributes } from "react";
 // The eye and the padding reserved for it both use physical properties behind
 // the rtl: variant. A logical pe-8 would resolve against the input's own
 // forced ltr, and end-2 against the nearest dir ancestor, which is not always
-// the page (OffsiteWizard puts this field inside a dir="ltr" label). rtl:
-// matches on the page, so both halves land on the same side.
+// the page. rtl: matches on the page, so both halves land on the same side.
 //
 // The padding utilities carry ! because callers pass shared class strings with
 // their own px-*, and Tailwind's output order, not the class order, decides

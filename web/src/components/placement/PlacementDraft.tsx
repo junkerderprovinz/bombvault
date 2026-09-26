@@ -2,8 +2,11 @@ import { useState } from "react";
 import { InfoBubble } from "../InfoBubble";
 import type { CopiesChoice, PlacementChange, PlacementOptions, PlacementView, SendToOption } from "../../lib/api";
 import { useT } from "../../lib/i18n";
+import { placeErrorText } from "../../lib/placeText";
+import { ensurePlaceRepo } from "../../lib/places";
 import {
   draftView,
+  placeSave,
   stepForChip,
   stepForHome,
   stepForSegment,
@@ -12,6 +15,8 @@ import {
   type PlacementStep,
 } from "../../lib/placement";
 import { useHostLabel } from "../../lib/useHostLabel";
+import { reposChanged } from "../../lib/useNamedRepos";
+import { useToast } from "../../lib/toast";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { DirectRepoDialog } from "./DirectRepoDialog";
 import { PlacementBar } from "./PlacementBar";
@@ -70,7 +75,8 @@ export function PlacementDraft({
   value: PlacementDraftValue;
   onChange: (next: PlacementDraftValue) => void;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
+  const { push } = useToast();
   const host = useHostLabel();
   const { options } = usePlacementOptions("files");
   const [direct, setDirect] = useState<SendToOption | null>(null);
@@ -79,9 +85,24 @@ export function PlacementDraft({
   if (options.unreadable) return <p className="text-xs text-statusWarn">{t("placement.unreadable")}</p>;
   const view = valueView(value, options);
 
-  function run(step: PlacementStep) {
+  async function run(step: PlacementStep) {
     if (step.kind === "direct") setDirect(step.target);
     else if (step.kind === "save") onChange(withChange(value, step.change));
+    else if (step.kind === "place") {
+      // The set does not exist yet, so the place's repository is made on the
+      // choice and the set is created pointing at it.
+      try {
+        const res = await ensurePlaceRepo(step.placeId, "files");
+        if (!res.ok || res.repoId === undefined) {
+          push(placeErrorText(t, lang, res, "settings.error"), "fail");
+          return;
+        }
+        reposChanged();
+        onChange(withChange(value, placeSave(step, res.repoId).change));
+      } catch (err) {
+        push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      }
+    }
   }
 
   return (
@@ -91,15 +112,13 @@ export function PlacementDraft({
         <InfoBubble tip={t("placement.titleHint")} />
       </span>
       <PlacementBar
-        domain="files"
-        context="draft"
         view={view}
         options={options}
         host={host}
-        onSegment={(seg) => run(stepForSegment(seg, view, options, t, host))}
-        onHome={(id) => run(stepForHome(id, view, options, t, host))}
-        onSendTo={(opt) => run(stepForSendTo(opt, view, t))}
-        onChip={(id, on) => run(stepForChip(id, on, view, options))}
+        onSegment={(seg) => void run(stepForSegment(seg, view, options, t, host))}
+        onHome={(id) => void run(stepForHome(id, view, options, t, host))}
+        onSendTo={(opt) => void run(stepForSendTo(opt, view, t))}
+        onChip={(id, on) => void run(stepForChip(id, on, view, options))}
       />
       {direct && (
         <DirectRepoDialog

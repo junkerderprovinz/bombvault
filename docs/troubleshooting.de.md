@@ -33,7 +33,7 @@ Das ist meist ein verwaister restic-Lock, der zurückblieb, als der Container mi
 
 ## Meine Off-site-Kopie erfolgte nicht nach einem Backup
 
-Off-site-Replikation ist per Design Best-Effort, sodass ein Off-site-Aussetzer das lokale Backup nie fehlschlagen lässt. Prüfe den Off-site-Zeitplan für diesen Bereich (Einstellungen, Zeitpläne): ein leerer Zeitplan repliziert nach jedem lokalen Backup, während eine Taktung seltener liefert. Nutze **Jetzt replizieren** im Off-site-Tab für einen Lauf auf Abruf, und beobachte die Replikationsanzeige im Dashboard.
+Off-site-Replikation ist per Design Best-Effort, sodass ein Off-site-Aussetzer das lokale Backup nie fehlschlagen lässt. Prüfe den Off-site-Zeitplan für diesen Bereich (Einstellungen, Zeitpläne): ein leerer Zeitplan repliziert nach jedem lokalen Backup, während eine Taktung seltener liefert. Nutze **Jetzt kopieren** in der Zeile des Bereichs unter Einstellungen, Speicher für einen Lauf auf Abruf, und beobachte die Replikationsanzeige im Dashboard.
 
 ## Eine Wiederherstellung brach ab, bevor sie startete
 

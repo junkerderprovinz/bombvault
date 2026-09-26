@@ -33,7 +33,7 @@ To zwykle osierocona blokada restic pozostawiona, gdy kontener został zaktualiz
 
 ## Moja kopia poza siedzibą nie zdarzyła się po kopii
 
-Replikacja poza siedzibą jest z założenia best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Sprawdź harmonogram poza siedzibą dla tej domeny (Ustawienia, Harmonogramy): pusty harmonogram replikuje po każdej kopii lokalnej, podczas gdy kadencja wysyła rzadziej. Użyj **Replikuj teraz** w zakładce Poza siedzibą do uruchomienia na żądanie i obserwuj wskaźnik replikacji na panelu.
+Replikacja poza siedzibą jest z założenia best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Sprawdź harmonogram poza siedzibą dla tej domeny (Ustawienia, Harmonogramy): pusty harmonogram replikuje po każdej kopii lokalnej, podczas gdy kadencja wysyła rzadziej. Użyj **Kopiuj teraz** w wierszu domeny w Ustawienia, Magazyn do uruchomienia na żądanie i obserwuj wskaźnik replikacji na panelu.
 
 ## Przywracanie przerwane, zanim się zaczęło
 

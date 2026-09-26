@@ -25,7 +25,6 @@ const FORWARD =
 // right and still miss: `\bcreate$` does not match `auth.passkeyCreate`, since
 // there is no word boundary between "y" and "C".
 const MUST_BE_FORWARD = [
-  "offsite.targets.save",
   "settings.save",
   "auth.passkeyCreate",
   "auth.twoFactorConfirm",
@@ -37,7 +36,6 @@ const MUST_BE_FORWARD = [
   "recovery.configRestore",
 ];
 const MUST_BE_HOLD = [
-  "offsite.targets.cancel",
   "common.close",
   "common.cancel",
   "settingsIO.cancel",

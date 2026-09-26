@@ -1,6 +1,6 @@
 # Configuratie
 
-Deze pagina behandelt de omgevingsvariabelen van de container, de mounts die de template levert, VM-back-up via SSH en de off-site setup. Back-up**repository-paden** worden binnen de app geconfigureerd (Instellingen, Back-uppaden), niet via omgevingsvariabelen.
+Deze pagina behandelt de omgevingsvariabelen van de container, de mounts die de template levert, VM-back-up via SSH en de off-site setup. Waar back-ups naartoe gaan, stel je binnen de app in, op **Instellingen, Opslag**, niet via omgevingsvariabelen.
 
 ## Omgevingsvariabelen
 
@@ -26,7 +26,7 @@ Deze pagina behandelt de omgevingsvariabelen van de container, de mounts die de 
 
 Mount de Docker-socket, de flash (`/boot`) en de root **Host Data** (`/mnt`) zoals getoond in de CA-template. Back-up*bronnen* en *bestemmingen* leven allebei onder Host Data, en het wordt **slave** gemount zodat een remote share die na de start van de container mount (bijvoorbeeld onder `/mnt/remotes`) zichtbaar wordt zonder herstart.
 
-Back-uprepository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files}`, aangemaakt bij de eerste back-up. Wijzig de locatie op elk moment in **Instellingen, Back-uppaden**.
+Een nieuwe installatie slaat elk domein op in de plek **Unraid**, op `/mnt/user/bombvault` met één map per domein (`container`, `vms`, `flash`, `config`, `files`), aangemaakt bij de eerste back-up. Meer plekken, lokaal of extern, voeg je toe op **Instellingen, Opslag**; zie [Opslagplekken](storage-places.md).
 
 !!! note "Controle van hostintegratie"
     Open `/spike` in de web-UI nadat de container is gestart. Het test elke mount en CLI (Docker-socket, libvirt, restic, qemu-img, rclone) en meldt eventuele ontbrekende onderdelen.
@@ -71,20 +71,20 @@ De template voegt `--add-host=host.docker.internal:host-gateway` toe zodat de co
 
 ## Off-site setup
 
-Stel een off-site replica in op het tabblad **Instellingen, Off-site**. Zie [Off-site en herstel](offsite-recovery.md) voor de volledige workflow (onveranderlijk/append-only, tamper-testen en DR-oefeningen). Kort samengevat:
+Off-site kopieën gaan naar opslagplekken. Voeg de plek toe op **Instellingen, Opslag** met **Plek toevoegen** en vink de plek daarna aan onder **Gekopieerd naar** op de rij van het domein. [Opslagplekken](storage-places.md) behandelt elke verbindingssoort, en [Off-site en herstel](offsite-recovery.md) behandelt append-only, tamper-testen en DR-oefeningen. Kort samengevat:
 
-- **Backends:** SMB/CIFS en NFS (mount de share en wijs er een Backup Path naar), native restic-backends zonder rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), of elke rclone-remote (`rclone:<remote>:<bucket>/path`).
-- **Cloud-inloggegevens** worden versleuteld opgeslagen onder Instellingen, Off-site, Cloud-inloggegevens.
-- **SSH-doelen hebben niets geïnstalleerd nodig aan de andere kant.** `sftp:` heeft alleen een SSH-server nodig. Voeg de publieke sleutel uit **Instellingen, Systeem, VM-back-up via SSH** (ook op `/config/ssh/id_ed25519.pub`) toe aan de `~/.ssh/authorized_keys` van de doelgebruiker.
-- **Off-site kopie:** BombVault repliceert nieuwe snapshots met `restic copy` op best-effort-basis. De lokale repo blijft primair. Elk domein heeft zijn eigen off-site planning, plus een knop **Nu repliceren**.
-- **Meerdere off-site doelen per domein:** elk domein kan tegelijk naar meerdere off-site bestemmingen repliceren. Voeg extra doelen toe op Instellingen, Off-site, elk met zijn eigen repository, S3-opslagklasse, append-only-vlag, retentie en groeibudget; ze repliceren allemaal op de off-site planning van dat domein. Een bestaande enkele off-site setup wordt overgenomen als het eerste doel.
-- **Retentie per bron:** het lokale beleid staat op Instellingen, Paden en Opslag; het off-site beleid op Instellingen, Off-site (laat het geheel op nul om off-site snapshots nooit automatisch te trimmen).
-- **Bandbreedtelimieten:** begrens de restic-upload/downloadsnelheid onder Instellingen, Off-site.
-- **Koude en archiefopslagklasse (S3):** kies voor een native S3 off-site repo een herstel-leesbare tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remotes stellen hun klasse in de rclone-config in.
+- **Verbindingssoorten:** een map op deze Unraid of een NAS-share die onder `/mnt/remotes` is gemount, S3-opslag (Backblaze B2 en de andere cloudproviders, of een zelf gehoste dienst zoals MinIO of Garage), rest-server, SFTP inclusief een Hetzner Storage Box, WebDAV voor Nextcloud, ownCloud en OpenCloud, Azure Blob, en elke rclone-remote. Backblaze B2 heeft alleen de sleutel nodig: BombVault leest de bucket en het S3-eindpunt daaruit af.
+- **Inloggegevens** worden versleuteld opgeslagen bij de plek waartoe ze behoren. De sets inloggegevens die ophaalbronnen gebruiken, staan op het tabblad **Ophalen** van de pagina Instanties.
+- **SSH-doelen hebben niets geïnstalleerd nodig aan de andere kant.** Een SFTP-plek heeft alleen een SSH-server nodig. Voeg de publieke sleutel die het SFTP-formulier toont (ook te vinden onder **Instellingen, Systeem, VM-back-up via SSH** en op `/config/ssh/id_ed25519.pub`) toe aan de `~/.ssh/authorized_keys` van de doelgebruiker.
+- **Off-site kopie:** BombVault kopieert nieuwe snapshots met `restic copy` op best-effort-basis, bovenop de plek waarin een domein is opgeslagen. Elk domein heeft zijn eigen kopieerplanning op Instellingen, Planningen, plus **Nu kopiëren** op zijn rij.
+- **Meerdere kopieerplekken per domein:** vink onder **Gekopieerd naar** zoveel plekken aan als je wilt; elke plek kopieert volgens de planning van het domein.
+- **Retentie, limieten, opslagklasse en groeibudget horen bij de plek** en worden in de details ervan ingesteld. De retentie van een plek geldt voor elke repository op die plek, zodat een off-site plek kopieën langer als archief kan bewaren; een plek waar elke regel op nul staat, trimt nooit.
+- **Koude en archiefopslagklasse (S3):** kies voor een S3-plek een herstel-leesbare tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remotes stellen hun klasse in de rclone-config in.
+- **Een domein op een externe plek:** zie [Een domein op een externe plek](offsite-recovery.md#remote-primary-repositories).
 
 ## Portable instellingen (exporteren en importeren) {#portable-settings-export-and-import}
 
-De kaart **Instellingen exporteren en importeren** op de Instellingen-pagina schrijft je hele BombVault-configuratie (domeininstellingen, off-site doelen, planningen, retentie, meldingen) naar een portable JSON-bestand dat je op een andere instantie kunt importeren, zodat verhuizen naar een nieuwe machine of een setup klonen niet betekent dat je alles met de hand opnieuw invoert. Import toont een voorbeeld en vraagt om bevestiging, en raakt nooit je back-updata of historie aan.
+De kaart **Instellingen exporteren en importeren** op de Instellingen-pagina schrijft je hele BombVault-configuratie (domeininstellingen, opslagplekken, planningen, meldingen) naar een portable JSON-bestand dat je op een andere instantie kunt importeren, zodat verhuizen naar een nieuwe machine of een setup klonen niet betekent dat je alles met de hand opnieuw invoert. Import toont een voorbeeld en vraagt om bevestiging, en raakt nooit je back-updata of historie aan.
 
 !!! warning "De export kan inloggegevens bevatten"
-    Je kiest of je de off-site en meldingsinloggegevens in het bestand meeneemt. Met inloggegevens erbij is de export net zo gevoelig als je herstelkit, dus bewaar hem ergens veilig. Zonder die bevat het bestand alleen niet-geheime instellingen.
+    Je kiest of je de inloggegevens van je plekken en meldingen in het bestand meeneemt. Met inloggegevens erbij is de export net zo gevoelig als je herstelkit, dus bewaar hem ergens veilig. Zonder die bevat het bestand alleen niet-geheime instellingen.

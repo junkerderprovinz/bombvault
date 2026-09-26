@@ -28,7 +28,7 @@ export function DiscoverFindings({
   const [connected, setConnected] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [enabledTargets, setEnabledTargets] = useState<Set<string> | null>(null);
-  const where = [t("nav.settings"), t("settings.tab.storage"), t("placementDefaults.title")].join(" > ");
+  const where = [t("nav.settings"), t("settings.tab.storage"), t("storageDomains.title")].join(" > ");
 
   useEffect(() => {
     let active = true;

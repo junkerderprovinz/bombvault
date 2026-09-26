@@ -1,10 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listOffsiteTargets, listVMs, putSettings, setAuthPassword, type OffsiteTarget } from "../lib/api";
-import { subscribeOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
-import { useNamedRepos } from "../lib/useNamedRepos";
-import { useConfirm } from "../lib/useConfirm";
+import { getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listVMs, putSettings, setAuthPassword } from "../lib/api";
 import { pushSaveWarnings } from "../lib/placementCodes";
-import { directAsk, primaryDirects, retentionLowered } from "../lib/directRepo";
 import { getLabelMode, type ControlAxis, type LabelMode } from "../lib/controls";
 import { PAGE_SHELL_TABBED } from "../lib/pageShell";
 import { Button } from "../components/Button";
@@ -23,9 +19,8 @@ import { HUE_OFFSET, Selector } from "../components/Selector";
 // rather than the nav one, same split IconUpload already crosses.
 // The two tab glyphs that are generated rather than drawn below. Aliased so the
 // wrappers further down keep their own names and TAB_ICON reads the same for
-// all seven, generated and hand-drawn alike.
+// every tab, generated and hand-drawn alike.
 import {
-  IconTabOffsite as IconTabOffsiteGlyph,
   IconTabSystem as IconTabSystemGlyph,
   IconTabIntegrity as IconTabIntegrityGlyph,
   IconTabStorage as IconTabStorageGlyph,
@@ -38,14 +33,12 @@ import type { SaveState } from "./settings/shared";
 import { GeneralTab } from "./settings/tabs/GeneralTab";
 import { StorageTab } from "./settings/tabs/StorageTab";
 import { SchedulesTab } from "./settings/tabs/SchedulesTab";
-import { OffsiteTab } from "./settings/tabs/OffsiteTab";
 import { NotificationsTab } from "./settings/tabs/NotificationsTab";
 import { IntegrityTab } from "./settings/tabs/IntegrityTab";
 import { SystemTab } from "./settings/tabs/SystemTab";
 import type {
   DomainToggleKey,
   MergedAutoSaveKey,
-  OffsiteRetentionKey,
   ScheduleBoolKey,
   SettingsTabProps,
 } from "./settings/tabs/types";
@@ -86,14 +79,13 @@ export function SaveBar({
 // half.
 
 
-// TabKey enumerates the 7 Settings tabs. The active tab is the single source of
+// TabKey enumerates the Settings tabs. The active tab is the single source of
 // truth for which card group renders; SettingsPage owns all shared state so every
 // tab shares one `settings`/`save()` instance regardless of which tab is visible.
 type TabKey =
   | "general"
   | "storage"
   | "schedules"
-  | "offsite"
   | "notifications"
   | "integrity"
   | "system";
@@ -102,16 +94,18 @@ type TabKey =
  *  "later" vs "earlier" that both the deep-link hashchange effect (below)
  *  and the tab-slide direction (GlimStone motion-engine animation 7, its own
  *  call site further down) read, instead of each keeping its own duplicate
- *  literal list of the same seven keys. */
+ *  literal list of the same keys. */
 const TAB_ORDER: TabKey[] = [
   "general",
   "storage",
   "schedules",
-  "offsite",
   "notifications",
   "integrity",
   "system",
 ];
+
+// Links and bookmarks that name the Off-site tab open Storage, which holds its settings.
+const TAB_ALIASES: Partial<Record<string, TabKey>> = { offsite: "storage" };
 
 // ---------------------------------------------------------------------------
 // Settings tab icons (GlimStone form-engine Phase 2, Task 3 — design-language
@@ -123,15 +117,15 @@ const TAB_ORDER: TabKey[] = [
 // name Settings' own SECTIONS (domain toggles, storage paths, cadences,
 // off-site targets, alerts, integrity checks, system/SSH), which is a
 // different taxonomy than the sidebar's page destinations, and none of the
-// seven map onto an existing sidebar glyph without lying about what it is.
+// tabs map onto an existing sidebar glyph without lying about what it is.
 // ---------------------------------------------------------------------------
 // FILLED (design-language.md "Icon glyphs" — every icon glyph is a solid
-// shape, `fill="currentColor"`, never a stroked outline): all seven tab
+// shape, `fill="currentColor"`, never a stroked outline): the tab
 // glyphs below were the last stroke-only holdouts in the app (GlimStone
 // follow-up round, full-area sweep after IconFolder/IconCloud/the off-site
 // action badges were fixed) — each redrawn using this section's own
-// established techniques: a closed silhouette flips directly (rule 218,
-// IconTabOffsite's cloud), a line glyph becomes a filled polygon (rule 219,
+// established techniques: a closed silhouette flips directly (rule 218),
+// a line glyph becomes a filled polygon (rule 219,
 // the shield's checkmark), and a structural detail that has to stay thin
 // (a switch track, a clock's hand, a slider's track) becomes a thin filled
 // shape instead of a stroke (rule 220).
@@ -139,7 +133,7 @@ const TAB_ORDER: TabKey[] = [
 // REGRESSION FIX (jdp, live review — "die Icons der Einstellungstabs sind,
 // wenn sie ausgewählt sind, bei manchen nicht mehr erkennbar"): that first
 // redraw pass gave the "knob"/"hand"/"checkmark" detail on four of these
-// seven (General, Schedules, Integrity, System) a SECOND colour —
+// (General, Schedules, Integrity, System) a second colour,
 // `fill="var(--carbon-surface, transparent)"` painted on top of the
 // silhouette, standing in for what used to be a stroke's own natural gap.
 // Verified live (Playwright, both themes, idle+selected, real running
@@ -230,14 +224,6 @@ function IconTabSchedules() {
   );
 }
 
-function IconTabOffsite() {
-  // Was a hand-drawn cloud silhouette; jdp asked for a nicer one. Now the
-  // generated `cloud-data-transfer`, which is both a better-shaped cloud AND
-  // says what this tab is: a cloud something is copied TO and FROM, not just
-  // weather. See scripts/gen_glyphs.py.
-  return <IconTabOffsiteGlyph />;
-}
-
 function IconTabNotifications() {
   // A bell — alerts. The bell body was already a closed silhouette (rule
   // 218 — direct flip). The clapper "ring" beneath it was a short open
@@ -309,7 +295,6 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
   general: <IconTabGeneral />,
   storage: <IconTabStorage />,
   schedules: <IconTabSchedules />,
-  offsite: <IconTabOffsite />,
   notifications: <IconTabNotifications />,
   integrity: <IconTabIntegrity />,
   system: <IconTabSystem />,
@@ -320,8 +305,8 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
 // marked "stored" so the field shows the kept-placeholder once the save lands.
 // Pulled out as a standalone, exported function (no React, no `save()` side
 // effect) so it's directly unit-testable without mounting SettingsPage — same
-// "extract the pure decision, test it without a renderer" shape as isRemotePath
-// (PathModeSwitch.tsx) and Selector.tsx's own nextFocusIndex/rovedIndex.
+// "extract the pure decision, test it without a renderer" shape as Selector.tsx's
+// own nextFocusIndex/rovedIndex.
 // `auths`/`rowIds` are always the SAME length and index-aligned by
 // construction (every mutation site keeps them in lockstep) — the caller
 // (saveRegistries below) passes the freshly computed pair rather than
@@ -337,34 +322,10 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
 // up. A blank row is worth nothing to the server and everything to the person
 // typing into it.
 
-function offsiteRetentionOf(s: Settings) {
-  return {
-    retentionKeepLast: s.offsiteRetentionKeepLast,
-    retentionKeepDaily: s.offsiteRetentionKeepDaily,
-    retentionKeepWeekly: s.offsiteRetentionKeepWeekly,
-    retentionKeepMonthly: s.offsiteRetentionKeepMonthly,
-  };
-}
-
 export function SettingsPage() {
-  const { t, lang } = useT();
+  const { t } = useT();
   const { advanced } = useAdvanced();
   const { push, quiet, setQuiet } = useToast();
-  const { confirm, confirmDialog } = useConfirm();
-  const namedRepos = useNamedRepos();
-  const [allTargets, setAllTargets] = useState<OffsiteTarget[]>([]);
-  useEffect(() => {
-    const load = () => {
-      listOffsiteTargets()
-        .then((r) => {
-          if (r.ok) setAllTargets(r.targets ?? []);
-        })
-        .catch(() => undefined);
-    };
-    load();
-    return subscribeOffsiteTargets(load);
-  }, []);
-  const fieldDirects = primaryDirects(allTargets, namedRepos);
 
   const [tab, setTab] = useState<TabKey>("general");
   // Settings tab slide (GlimStone motion-engine animation 7) — 1 = the tab
@@ -548,6 +509,11 @@ export function SettingsPage() {
   // to/from localStorage via shape.ts, the same pattern the old accentHex
   // state used before its move.
   const [shape, setShapeLocal] = useState<Shape>(() => getShape());
+  // The hidden leaf follows the storm below: found and counted in this
+  // screen's state, never in storage, so it is offered only while chosen or
+  // until this page is left.
+  const [leafFound, setLeafFound] = useState(false);
+  const leafClicks = useRef({ taps: 0 });
 
   // Motion-intensity state (GlimStone motion-engine — the deliberate
   // reversal of design-language.md's own prior "kein fünfter Nutzer-
@@ -616,20 +582,12 @@ export function SettingsPage() {
   // answer when auth is off) — surfaced next to the download button.
   const [kitError, setKitError] = useState<string | null>(null);
 
-  // Paths & off-site repo URLs — full-page Speichern-Button sweep: each field
-  // now debounce-auto-saves itself (see the Paths/Off-site copy Cards' own
-  // onChange handlers), so no SaveBar reads these anymore — only the setters
-  // survive, as debouncedSave/save's own callback params still require. Same
-  // "only the setters are needed" shape as setDomSaveState/setDomSaveError
-  // above.
+  // The restore folder and the export recipients save themselves 800 ms after
+  // the last key, so only the setters are needed, as save() takes them.
   const [, setPathSaveState] = useState<SaveState>("idle");
   const [, setPathSaveError] = useState<string | null>(null);
   const [, setExportEncSaveState] = useState<SaveState>("idle");
   const [, setExportEncSaveError] = useState<string | null>(null);
-  const [, setOffsiteSaveState] = useState<SaveState>("idle");
-  const [, setOffsiteSaveError] = useState<string | null>(null);
-  // Which domain's guided off-site setup wizard is expanded (null = none).
-  const [offsiteWizard, setOffsiteWizard] = useState<OffsiteDomain | null>(null);
 
   // Domains card (#142 — auto-save, no Speichern button): each row now saves
   // itself the instant it's clicked instead of batching into one SaveBar, so
@@ -651,11 +609,6 @@ export function SettingsPage() {
   const [domainToggleBusy, setDomainToggleBusy] = useState<Partial<Record<DomainToggleKey, boolean>>>({});
   const [domainToggleShake, setDomainToggleShake] = useState<Partial<Record<DomainToggleKey, number>>>({});
 
-  // Same "only the setters are needed" shape as pathSaveState above — this
-  // retention grid's own SaveBar is gone too (each cell debounce-auto-saves).
-  const [, setRetSaveState] = useState<SaveState>("idle");
-  const [, setRetSaveError] = useState<string | null>(null);
-
   // Image cleanup / Unraid update-status reconciliation / registries (#56,
   // #116, #106) — merged into one auto-save card (GlimStone follow-up round,
   // merge A): no SaveBar reads these anymore, so only the setters survive, as
@@ -676,12 +629,6 @@ export function SettingsPage() {
   const [, setCacheSaveError] = useState<string | null>(null);
   const [, setCoresSaveState] = useState<SaveState>("idle");
   const [, setCoresSaveError] = useState<string | null>(null);
-
-  const [, setOffRetSaveState] = useState<SaveState>("idle");
-  const [, setOffRetSaveError] = useState<string | null>(null);
-
-  const [, setLimSaveState] = useState<SaveState>("idle");
-  const [, setLimSaveError] = useState<string | null>(null);
 
   const [, setMetricsSaveState] = useState<SaveState>("idle");
   const [, setMetricsSaveError] = useState<string | null>(null);
@@ -857,14 +804,23 @@ export function SettingsPage() {
       });
   }
 
-  // Deep-link support: /settings#offsite (and every other tab hash) selects the
+  // Deep-link support: /settings#storage (and every other tab hash) selects the
   // matching tab instead of scrolling. Read once on mount, and also listen for
-  // hashchange so an in-app "#offsite" link fired while already on /settings
-  // switches the tab (no remount happens in that case). The Dashboard's
-  // "Link to /settings#offsite" therefore lands on the Off-site tab.
+  // hashchange so an in-app link fired while already on /settings switches the
+  // tab (no remount happens in that case). An alias is rewritten in the
+  // address too, so a reload opens the tab the page shows.
   useEffect(() => {
     const applyHash = () => {
-      const h = window.location.hash.replace(/^#/, "");
+      const raw = window.location.hash.replace(/^#/, "");
+      const alias = Object.hasOwn(TAB_ALIASES, raw) ? TAB_ALIASES[raw] : undefined;
+      if (alias) {
+        try {
+          window.history.replaceState(null, "", `#${alias}`);
+        } catch {
+          /* history unavailable, the tab still switches */
+        }
+      }
+      const h = alias ?? raw;
       if ((TAB_ORDER as string[]).includes(h)) {
         // Direction (motion-engine animation 7): computed the same way the
         // tab strip's own onChange below does, just reading the CURRENT tab
@@ -1032,39 +988,15 @@ export function SettingsPage() {
     }
   }
 
-  // The global off-site retention is copied onto every domain's field target, so
-  // a lowered value reaches each of their direct repositories at once.
-  async function saveOffsiteRetention(key: OffsiteRetentionKey, n: number) {
-    const before = savedBaseline.current;
-    if (
-      before &&
-      fieldDirects.length > 0 &&
-      retentionLowered(offsiteRetentionOf(before), offsiteRetentionOf({ ...before, [key]: n } as Settings)) &&
-      !(await confirm(directAsk(t, lang, "offsite.directRetentionAsk", fieldDirects)))
-    ) {
-      setSettings((prev) => (prev ? { ...prev, [key]: before[key] } : prev));
-      return;
-    }
-    await save({ [key]: n } as Partial<Settings>, setOffRetSaveState, setOffRetSaveError);
-  }
-
-  // toggleDomainEnabled (#142 — "Bei Domänen der Speichern-Button entfernen, es
-  // soll automatisch speichern"): each Domains-card row saves ITSELF the instant
-  // it's clicked, mirroring OffsiteWizard.tsx's toggleImmutable — the one other
-  // place in this app already does "flip a single boolean settings field the
-  // moment its switch is touched, no batching Save button": optimistic
-  // setSettings flip, then the shared save() helper above (which already
-  // merges onto the confirmed baseline, persists, dispatches
-  // "bv:settings-changed" so Layout/Sidebar re-fetch and the tab appears/
-  // disappears live, and pushes the toast) — never a new persistence path.
+  // toggleDomainEnabled saves a Domains-card row the moment it is clicked. The
+  // flip is optimistic and goes through the shared save() helper, whose
+  // "bv:settings-changed" event lets the sidebar show or hide the tab live.
   //
-  // A rejected save (e.g. enabling VMs with no working SSH connection to the
-  // libvirt host — internal/api/handlers.go's handlePutSettings checks that
-  // OFF→ON transition specifically) rolls the optimistic flip back to
-  // whatever it was before this click and bumps this row's shake nonce so
-  // ToggleRow replays `.glim-shake` — generic by construction: it keys off
-  // `!ok`, not off which domain or why the backend refused, so ANY domain's
-  // enable failing for ANY reason gets the same revert + shake + toast.
+  // A rejected save (enabling VMs without a working SSH connection to the
+  // libvirt host, which handlePutSettings in internal/api/handlers_settings.go
+  // refuses) rolls the flip back and bumps the row's shake nonce so ToggleRow
+  // replays `.glim-shake`. The rollback keys off `!ok` alone, so every domain
+  // gets the same revert, shake and toast whatever the backend's reason.
   async function toggleDomainEnabled(key: DomainToggleKey, next: boolean) {
     const prev = settings?.[key];
     setSettings((s) => (s ? { ...s, [key]: next } : s));
@@ -1303,9 +1235,9 @@ export function SettingsPage() {
   // explicitly, and a setState after unmount is a no-op in React 18. Nothing was
   // being protected, and an edit was being lost.
   //
-  // Flushing also matches the four card-level debounce maps in this file
-  // (FlashZipExportCard, FleetSettingsCard, CloudCard, NotifyCard), none of
-  // which cancel on unmount — so those already complete their pending write.
+  // Flushing also matches the card-level debounce maps (FlashZipExportCard,
+  // FleetSettingsCard, NotifyCard), none of which cancel on unmount, so those
+  // already complete their pending write.
   // This page was the one place that did not.
   //
   // The flush itself is flushDebounces, captured into a local so the cleanup
@@ -1592,8 +1524,6 @@ export function SettingsPage() {
     advanced,
     quiet,
     setQuiet,
-    allTargets,
-    fieldDirects,
     settings,
     setSettings,
     savedBaseline,
@@ -1621,6 +1551,9 @@ export function SettingsPage() {
     setRegistryRowIds,
     shape,
     setShapeLocal,
+    leafFound,
+    setLeafFound,
+    leafClicks,
     motion,
     setMotionLocal,
     stormFound,
@@ -1642,14 +1575,8 @@ export function SettingsPage() {
     setPathSaveError,
     setExportEncSaveState,
     setExportEncSaveError,
-    setOffsiteSaveState,
-    setOffsiteSaveError,
-    offsiteWizard,
-    setOffsiteWizard,
     domainToggleBusy,
     domainToggleShake,
-    setRetSaveState,
-    setRetSaveError,
     setPruneSaveState,
     setPruneSaveError,
     setReconcileSaveState,
@@ -1658,8 +1585,6 @@ export function SettingsPage() {
     setCacheSaveError,
     setCoresSaveState,
     setCoresSaveError,
-    setLimSaveState,
-    setLimSaveError,
     setMetricsSaveState,
     setMetricsSaveError,
     setDigestSaveState,
@@ -1679,7 +1604,6 @@ export function SettingsPage() {
     loadFileSets,
     fieldPulse,
     save,
-    saveOffsiteRetention,
     toggleDomainEnabled,
     mergedFieldBusy,
     mergedFieldShake,
@@ -1736,13 +1660,13 @@ export function SettingsPage() {
     // Every other page now renders at PAGE_SHELL's 1152px; this root keeps the
     // shared 40px rhythm but deliberately has NO max-width, and that is not an
     // oversight. Measured live before deciding: capping this root at 1152px
-    // caps the 7-tab Selector strip inside it too, and the strip — `size="lg"`
-    // + `equalWidth`, so 7x its widest segment, 1424px in de — no longer fits
-    // on one line there (strip height 32px → 68px, the 7 tabs falling onto 2
-    // rows). That two-row strip is a bug an earlier round already fixed once,
-    // and the panels below are capped to this strip's MEASURED width per a
-    // standing instruction ("Settings cards should match the tab row's
-    // width"), so capping the root would regress both at once.
+    // caps the tab Selector strip inside it too, and the strip (`size="lg"` +
+    // `equalWidth`, every segment as wide as the widest) no longer fits on one
+    // line there and falls onto two rows. That two-row strip is a bug an
+    // earlier round already fixed once, and the panels below are capped to
+    // this strip's measured width per a standing instruction ("Settings cards
+    // should match the tab row's width"), so capping the root would regress
+    // both at once.
     //   This is a genuine conflict between two of jdp's own asks rather than
     // something to resolve silently: the honest fix is to make the STRIP
     // narrower (drop `equalWidth`, whose natural hugged width is ~814px in de,
@@ -1750,7 +1674,6 @@ export function SettingsPage() {
     // shared cap. That is a change to a deliberate prior decision, so it is
     // flagged for jdp rather than taken here. See lib/pageShell.ts.
     <div className={PAGE_SHELL_TABBED}>
-      {confirmDialog}
       {/* Heading + tab strip, grouped in their own gap-6 column (GlimStone
           follow-up pass, live-review round — the width-mismatch fix below
           needed a wrapper here to isolate this pair's own 24px gap from the
@@ -1775,11 +1698,12 @@ export function SettingsPage() {
       </div>
 
       {/* The tab strip. Each tab owns the rainbow position of its list index.
-          It sits outside the max-w-3xl column of the panels, because seven
-          segments need about 814px in German and a capped strip wraps a lone
-          tab onto a second line. equalWidth pins every segment to the widest
-          label, and the panels below take the strip's measured width, so both
-          line up. `title` shows a label that equalWidth truncates.
+          It sits outside the max-w-3xl column of the panels, because its
+          segments need more room in German than the column has and a capped
+          strip wraps a lone tab onto a second line. equalWidth pins every
+          segment to the widest label, and the panels below take the strip's
+          measured width, so both line up. `title` shows a label that
+          equalWidth truncates.
 
           self-start keeps the wrapper at the strip's own width: as a child of
           a flex column it would stretch to the column, and the measurement
@@ -1790,7 +1714,6 @@ export function SettingsPage() {
           ["general", t("settings.tab.general")],
           ["storage", t("settings.tab.storage")],
           ["schedules", t("settings.tab.schedules")],
-          ["offsite", t("settings.tab.offsite")],
           ["notifications", t("settings.tab.notifications")],
           ["integrity", t("settings.tab.integrity")],
           ["system", t("settings.tab.system")],
@@ -1832,7 +1755,7 @@ export function SettingsPage() {
            gives it to every tab, so the strip is uniform by construction
            rather than by measurement. That also retires the failure this
            file's own header describes: the measured pin once grew to 1424px
-           in German and wrapped the seven tabs onto two rows. */
+           in German and wrapped the tabs onto two rows. */
         // The rail's own row width, via the shared token — "gleich groß wie die
         // tabs in der sidebar" is a promise, and a promise needs one number,
         // not two that happen to agree today. It also gives the longest label
@@ -1922,7 +1845,6 @@ export function SettingsPage() {
       {tab === "general" && <GeneralTab {...tabProps} />}
       {tab === "storage" && <StorageTab {...tabProps} />}
       {tab === "schedules" && <SchedulesTab {...tabProps} />}
-      {tab === "offsite" && <OffsiteTab {...tabProps} />}
       {tab === "notifications" && <NotificationsTab {...tabProps} />}
       {tab === "integrity" && <IntegrityTab {...tabProps} />}
       {tab === "system" && <SystemTab {...tabProps} />}

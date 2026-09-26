@@ -1,6 +1,6 @@
 # Configuración
 
-Esta página cubre las variables de entorno del contenedor, los montajes que provee la plantilla, la copia de VMs por SSH y la configuración externa. Las **rutas de repositorio** de copia se configuran dentro de la app (Ajustes, Rutas de copia), no mediante variables de entorno.
+Esta página cubre las variables de entorno del contenedor, los montajes que provee la plantilla, la copia de VMs por SSH y la configuración externa. Adónde van las copias de seguridad lo defines dentro de la app, en **Ajustes, Almacenamiento**, no mediante variables de entorno.
 
 ## Variables de entorno
 
@@ -26,7 +26,7 @@ Esta página cubre las variables de entorno del contenedor, los montajes que pro
 
 Monta el socket de Docker, el flash (`/boot`) y la raíz de **Host Data** (`/mnt`) como se muestra en la plantilla de CA. Tanto los *orígenes* como los *destinos* de las copias viven bajo Host Data, y se monta como **slave** para que un recurso compartido remoto que se monte después de que arranque el contenedor (por ejemplo bajo `/mnt/remotes`) se vuelva visible sin reiniciar.
 
-Las rutas de repositorio de copia son por defecto `/mnt/user/bombvault/{container,vms,flash,config,files}`, creadas en la primera copia. Cambia la ubicación en cualquier momento en **Ajustes, Rutas de copia**.
+Una instalación nueva almacena cada dominio en el lugar **Unraid**, en `/mnt/user/bombvault` con una carpeta por dominio (`container`, `vms`, `flash`, `config`, `files`), creada en la primera copia. Añade más lugares, locales o remotos, en **Ajustes, Almacenamiento**; consulta [Lugares de almacenamiento](storage-places.md).
 
 !!! note "Comprobación de integración con el host"
     Abre `/spike` en la interfaz web después de que arranque el contenedor. Sondea cada montaje y CLI (socket de Docker, libvirt, restic, qemu-img, rclone) e informa de cualquier pieza que falte.
@@ -71,20 +71,20 @@ La plantilla añade `--add-host=host.docker.internal:host-gateway` para que el c
 
 ## Configuración externa
 
-Configura una réplica externa en la pestaña **Ajustes, Externo**. Consulta [Copia externa y recuperación](offsite-recovery.md) para el flujo completo (inmutable/append-only, prueba de manipulación y ensayos de DR). En resumen:
+Las copias externas van a lugares de almacenamiento. Añade el lugar en **Ajustes, Almacenamiento** con **Añadir lugar** y luego márcalo en **Copiado a** en la fila del dominio. [Lugares de almacenamiento](storage-places.md) explica cada tipo de conexión, y [Copia externa y recuperación](offsite-recovery.md) cubre append-only, la prueba de manipulación y los ensayos de DR. En resumen:
 
-- **Backends:** SMB/CIFS y NFS (monta el recurso compartido y apunta una Ruta de copia a él), backends nativos de restic sin rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), o cualquier remoto de rclone (`rclone:<remote>:<bucket>/path`).
-- Las **credenciales de la nube** se almacenan cifradas en Ajustes, Externo, Credenciales de la nube.
-- **Los destinos SSH no requieren nada instalado en el otro extremo.** `sftp:` solo necesita un servidor SSH. Añade la clave pública de **Ajustes, Sistema, Copia de VM por SSH** (también en `/config/ssh/id_ed25519.pub`) al `~/.ssh/authorized_keys` del usuario de destino.
-- **Copia externa:** BombVault replica las nuevas instantáneas con `restic copy` en modo de mejor esfuerzo. El repo local sigue siendo el principal. Cada dominio tiene su propio calendario externo, más un botón **Replicar ahora**.
-- **Varios destinos externos por dominio:** cada dominio puede replicarse a varios destinos externos a la vez. Añade destinos adicionales en Ajustes, Externo, cada uno con su propio repositorio, clase de almacenamiento S3, marca append-only, retención y presupuesto de crecimiento; todos se replican según el calendario externo de ese dominio. Una configuración externa única existente se traslada como el primer destino.
-- **Retención por fuente:** la política local vive en Ajustes, Rutas y Almacenamiento; la política externa en Ajustes, Externo (déjala toda a cero para no recortar nunca automáticamente las instantáneas externas).
-- **Límites de ancho de banda:** limita la velocidad de subida/bajada de restic en Ajustes, Externo.
-- **Clase de almacenamiento en frío y de archivo (S3):** para un repo externo S3 nativo, elige un nivel legible para restauración (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Los remotos de rclone establecen su clase en la configuración de rclone.
+- **Tipos de conexión:** una carpeta en este Unraid o un recurso compartido de un NAS montado bajo `/mnt/remotes`, almacenamiento S3 (Backblaze B2 y los demás proveedores de nube, o un servicio autoalojado como MinIO o Garage), rest-server, SFTP incluida una Hetzner Storage Box, WebDAV para Nextcloud, ownCloud y OpenCloud, Azure Blob y cualquier remoto de rclone. Backblaze B2 solo necesita la clave: BombVault lee de ella el bucket y el endpoint S3.
+- Las **credenciales** se almacenan cifradas junto al lugar al que pertenecen. Los conjuntos de credenciales que usan las fuentes de recogida están en la pestaña **Recogida** de la página Instancias.
+- **Los destinos SSH no requieren nada instalado en el otro extremo.** Un lugar SFTP solo necesita un servidor SSH. Añade la clave pública que muestra el formulario SFTP (también en **Ajustes, Sistema, Copia de VM por SSH** y en `/config/ssh/id_ed25519.pub`) al `~/.ssh/authorized_keys` del usuario de destino.
+- **Copia externa:** BombVault copia las nuevas instantáneas con `restic copy` en modo de mejor esfuerzo, además del lugar donde se almacena un dominio. Cada dominio tiene su propio calendario de copia en Ajustes, Calendarios, más **Copiar ahora** en su fila.
+- **Varios lugares de copia por dominio:** marca en **Copiado a** tantos lugares como quieras; cada uno copia según el calendario del dominio.
+- **La retención, los límites, la clase de almacenamiento y el presupuesto de crecimiento pertenecen al lugar** y se definen en sus detalles. La retención de un lugar se aplica a cada repositorio que hay en él, así que un lugar externo puede conservar las copias más tiempo como archivo; un lugar con todas las reglas a cero nunca recorta.
+- **Clase de almacenamiento en frío y de archivo (S3):** para un lugar S3, elige un nivel legible para restauración (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Los remotos de rclone establecen su clase en la configuración de rclone.
+- **Un dominio almacenado en un lugar remoto:** consulta [Un dominio almacenado en un lugar remoto](offsite-recovery.md#remote-primary-repositories).
 
 ## Ajustes portátiles (exportar e importar) {#portable-settings-export-and-import}
 
-La tarjeta **Exportar e importar ajustes** en la página de Ajustes escribe toda tu configuración de BombVault (ajustes de dominio, destinos externos, calendarios, retención, notificaciones) en un archivo JSON portátil que puedes importar en otra instancia, para que cambiar de máquina o clonar una instalación no signifique volver a introducirlo todo a mano. La importación muestra una vista previa y pide confirmación, y nunca toca tus datos de copia ni tu historial.
+La tarjeta **Exportar e importar ajustes** en la página de Ajustes escribe toda tu configuración de BombVault (ajustes de dominio, lugares de almacenamiento, calendarios, notificaciones) en un archivo JSON portátil que puedes importar en otra instancia, para que cambiar de máquina o clonar una instalación no signifique volver a introducirlo todo a mano. La importación muestra una vista previa y pide confirmación, y nunca toca tus datos de copia ni tu historial.
 
 !!! warning "La exportación puede contener credenciales"
-    Tú eliges si incluir las credenciales externas y de notificación en el archivo. Con las credenciales incluidas, la exportación es tan sensible como tu kit de recuperación, así que guárdala en un lugar seguro. Sin ellas, el archivo contiene solo ajustes no secretos.
+    Tú eliges si incluir en el archivo las credenciales de tus lugares y de las notificaciones. Con las credenciales incluidas, la exportación es tan sensible como tu kit de recuperación, así que guárdala en un lugar seguro. Sin ellas, el archivo contiene solo ajustes no secretos.

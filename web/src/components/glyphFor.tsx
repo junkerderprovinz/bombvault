@@ -111,9 +111,8 @@ const RULES: Rule[] = [
   [/power|shutdown|reboot/i, () => <IconPower />],
 
   // Local storage, as opposed to off-site. Below the probing rules so
-  // drill.checkLocal keeps its check mark, above the places rule so
-  // settings.pathMode.local does not take the folder, and anchored to the end
-  // so only the switches match.
+  // drill.checkLocal keeps its check mark, and anchored to the end so only the
+  // switches match.
   [/\.local$|Local$/i, () => <IconLocal />],
 
   // Nouns rather than verbs, for the generic cases: a plain cup for a donation

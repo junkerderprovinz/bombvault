@@ -74,7 +74,7 @@ export function RecentRunsList({
   if (runs.length === 0) return null;
 
   return (
-    <div className="py-2 border-b border-carbon-border flex flex-col gap-1">
+    <div className="py-2 flex flex-col gap-1">
       <p className="text-caption uppercase tracking-wide text-carbon-textMuted">
         {t("run.recentTitle")}
       </p>

@@ -33,7 +33,7 @@ Toto je obvykle osiřelý restic zámek zanechaný, když byl kontejner aktualiz
 
 ## Moje kopie mimo lokalitu neproběhla po záloze
 
-Replikace mimo lokalitu je na základě nejlepší snahy záměrně, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Zkontrolujte plán mimo lokalitu pro danou doménu (Nastavení, Plány): prázdný plán replikuje po každé místní záloze, zatímco kadence odesílá méně často. Použijte **Replikovat nyní** v záložce Mimo lokalitu pro běh na vyžádání a sledujte indikátor replikace na Přehledu.
+Replikace mimo lokalitu je na základě nejlepší snahy záměrně, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Zkontrolujte plán mimo lokalitu pro danou doménu (Nastavení, Plány): prázdný plán replikuje po každé místní záloze, zatímco kadence odesílá méně často. Použijte **Kopírovat nyní** na řádku domény v Nastavení, Úložiště pro běh na vyžádání a sledujte indikátor replikace na Přehledu.
 
 ## Obnova se přerušila dříve, než začala
 

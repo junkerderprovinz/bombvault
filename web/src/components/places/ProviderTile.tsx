@@ -1,0 +1,135 @@
+import { useId, type CSSProperties } from "react";
+import { Badge } from "../Badge";
+import { PlaceMark } from "../placeMarks";
+import { hueVars } from "../../lib/appearance";
+import { useGridNav } from "../../lib/gridNav";
+import { useT, type TranslationKey } from "../../lib/i18n";
+import { mergeRefs } from "../../lib/mergeRefs";
+import { providerName } from "../../lib/placeText";
+import type { CatalogProvider, PlaceGroup } from "../../lib/places";
+import { useLabelMode } from "../../lib/useLabelMode";
+import { useTipBubble } from "../../lib/useTipBubble";
+
+// The provider tiles of the add window. A tile is the crypto window's coin
+// tile (.glim-coin-tile), with a fixed size in place of aspect-square because
+// provider names run longer than tickers: every tile is the same 7rem square,
+// the mark is 48px and the name takes at most two lines of 12px.
+
+const GROUPS: { id: PlaceGroup; key: TranslationKey }[] = [
+  { id: "cloud", key: "places.group.cloud" },
+  { id: "self", key: "places.group.self" },
+  { id: "here", key: "places.group.here" },
+];
+
+export function ProviderTile({
+  provider,
+  hueIndex,
+  selected,
+  onPick,
+  nav,
+}: {
+  provider: CatalogProvider;
+  hueIndex: number;
+  /** The tile the form was opened from, marked when the window comes back to the tiles. */
+  selected: boolean;
+  onPick: () => void;
+  /** The grid's roving tab stop, from useGridNav's tileProps. */
+  nav: { ref: (node: HTMLElement | null) => void; tabIndex: number; onFocus: () => void };
+}) {
+  const { t } = useT();
+  // Reactive mode shows mark and name at rest: someone looking for a
+  // provider should not have to hover every tile to read it.
+  const mode = useLabelMode("buttons");
+  const showMark = mode !== "text";
+  const showName = mode !== "glyph";
+  const name = providerName(t, provider.id);
+  const tip = useTipBubble(showName ? undefined : name);
+
+  return (
+    <>
+      <button
+        ref={mergeRefs(nav.ref, tip.ref)}
+        type="button"
+        role="option"
+        aria-selected={selected}
+        aria-label={name}
+        aria-describedby={tip.describedBy}
+        tabIndex={nav.tabIndex}
+        onClick={onPick}
+        onFocus={() => {
+          nav.onFocus();
+          tip.handlers.onFocus();
+        }}
+        onBlur={tip.handlers.onBlur}
+        onMouseEnter={tip.handlers.onMouseEnter}
+        onMouseLeave={tip.handlers.onMouseLeave}
+        style={hueVars(hueIndex) as CSSProperties}
+        className={`glim-coin-tile glim-hue flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-2 rounded-control px-2 transition-colors ${
+          selected
+            ? "glim-active bg-accent text-accentContrast"
+            : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-tileHover hover:text-carbon-tileHoverInk"
+        }`}
+      >
+        {showMark && <PlaceMark provider={provider.id} size={48} />}
+        {showName && <span className="line-clamp-2 text-center text-xs font-medium leading-tight">{name}</span>}
+      </button>
+      {tip.bubble}
+    </>
+  );
+}
+
+/**
+ * ProviderGrid is every provider in its group, in catalog order, as one
+ * listbox with one tab stop. The arrow keys cross from one group into the next.
+ */
+export function ProviderGrid({
+  providers,
+  selected,
+  onPick,
+}: {
+  providers: CatalogProvider[];
+  selected: string | null;
+  onPick: (provider: CatalogProvider) => void;
+}) {
+  const { t } = useT();
+  const headingBase = useId();
+  const ordered = GROUPS.flatMap((g) => providers.filter((p) => p.group === g.id));
+  const nav = useGridNav(
+    ordered.length,
+    ordered.findIndex((p) => p.id === selected)
+  );
+
+  return (
+    <div role="listbox" aria-label={t("places.pick")} onKeyDown={nav.onKeyDown} className="flex flex-col gap-6">
+      {GROUPS.map((group, gi) => {
+        const members = ordered.filter((p) => p.group === group.id);
+        if (members.length === 0) return null;
+        const headingId = `${headingBase}-${group.id}`;
+        return (
+          <div key={group.id} role="group" aria-labelledby={headingId} className="flex flex-col gap-3">
+            <h3 id={headingId} className="flex items-center">
+              <Badge tone="heading" size="heading" inFlow hueIndex={gi}>
+                {t(group.key)}
+              </Badge>
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {members.map((p) => {
+                const i = ordered.indexOf(p);
+                return (
+                  <ProviderTile
+                    key={p.id}
+                    provider={p}
+                    hueIndex={i}
+                    selected={p.id === selected}
+                    onPick={() => onPick(p)}
+                    nav={nav.tileProps(i)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

@@ -1,15 +1,16 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { browse, createFolder } from "../lib/api";
-import { useT } from "../lib/i18n";
+import { useT, type TranslationKey } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
 import { Button } from "./Button";
 import { Badge } from "./Badge";
-import { groupStage } from "../lib/controls";
+import { Selector } from "./Selector";
 import { IconCheckCircle, IconFolder } from "./Sidebar";
 import { IconBack } from "./glyphs";
 import { useToast } from "../lib/toast";
 import { usePortalHue } from "../lib/portalHue";
+import { WindowActions } from "./WindowActions";
 
 export interface FolderBrowserProps {
   label: string;
@@ -21,19 +22,31 @@ export interface FolderBrowserProps {
   placeholder?: string;
   /** One-line explanation of the field, shown as an (i) beside the label. */
   hint?: string;
-  /** False when the caller renders the label itself, as PathModeSwitch does on
-   *  the row it shares with its Local/Remote selector. */
+  /** False when the caller shows the label itself, as the restore folder's
+   *  card does in its title; the field then takes it as its accessible name. */
   renderLabel?: boolean;
   /** Render in place instead of as a dialog, for call sites that are already
    *  inside one. */
   inDialog?: boolean;
+  /** Where browsing may start, relative to hostMountRoot ("" is the root
+   *  itself). With roots the browser opens in the first one unless the value
+   *  lies under one, offers them as a picker, and never climbs above the root
+   *  it is in. */
+  roots?: { path: string; labelKey: TranslationKey }[];
 }
 
-export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint, renderLabel = true, inDialog = false }: FolderBrowserProps) {
+/** rootOf is the most specific root that holds path, or -1. */
+function rootOf(roots: { path: string }[], path: string): number {
+  let best = -1;
+  roots.forEach((r, i) => {
+    const inside = r.path === "" || path === r.path || path.startsWith(r.path + "/");
+    if (inside && (best < 0 || r.path.length > roots[best]!.path.length)) best = i;
+  });
+  return best;
+}
+
+export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint, renderLabel = true, inDialog = false, roots }: FolderBrowserProps) {
   const { t } = useT();
-  // "New folder" and "Use this folder" sit one above the other; one stage for
-  // both gives the column a straight edge in every language.
-  const folderActionStage = groupStage([t("folder.newFolder"), t("folder.use")]);
   const { push } = useToast();
   // Anchors usePortalHue, so the portalled dialog keeps the hue of the card it
   // was opened from instead of falling back to the global accent.
@@ -75,7 +88,10 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   function handleOpen() {
     setManualFallback(false);
     setOpen(true);
-    doFetch(value);
+    // A typed "remotes/" is the root "remotes", and has no ".." above it.
+    const start = value.trim().replace(/\/+$/, "");
+    const outside = roots && roots.length > 0 && (start === "" || rootOf(roots, start) < 0);
+    doFetch(outside ? roots[0]!.path : start);
   }
 
   function handleClose() {
@@ -84,7 +100,9 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   }
 
   // Bound only while open, so the many mounted browsers do not each keep a
-  // document listener for a dialog nobody opened.
+  // document listener for a dialog nobody opened. In the capture phase, so an
+  // open browser inside a window takes Escape before the window does and only
+  // the browser closes.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -93,8 +111,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         handleClose();
       }
     };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
   }, [open]);
 
   function handleUp() {
@@ -128,6 +146,9 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
       .finally(() => setCreating(false));
   }
 
+  const root = roots ? rootOf(roots, browsePath) : -1;
+  const atTop = browsePath === "" || (roots !== undefined && roots.some((r) => r.path === browsePath));
+
   const trimmed = value.trim();
   const resolved =
     trimmed && !trimmed.startsWith("/") && !trimmed.includes("..")
@@ -137,18 +158,20 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   // Rendered by both branches below, as a dialog or in place.
   const panel = (
     <>
-      <div className="flex items-center justify-between gap-2">
-        <span dir="ltr" className="text-xs font-mono text-carbon-textSub min-w-0 truncate text-start">
-          {hostMountRoot}/{browsePath || ""}
-        </span>
-        <Button
-          label={t("common.close")}
-          labelKey="common.close"
-          tone="neutral"
-          onClick={handleClose}
-          className="shrink-0"
+      <span dir="ltr" className="text-xs font-mono text-carbon-textSub min-w-0 truncate text-start">
+        {hostMountRoot}/{browsePath || ""}
+      </span>
+
+      {roots && roots.length > 1 && !manualFallback && (
+        <Selector
+          label={t("folder.roots")}
+          size="sm"
+          activation="manual"
+          items={roots.map((r, i) => ({ id: String(i), label: t(r.labelKey) }))}
+          active={root >= 0 ? String(root) : null}
+          onChange={(id) => doFetch(roots[Number(id)]!.path)}
         />
-      </div>
+      )}
 
       {browseError && (
         <p className="text-xs text-statusFail">{browseError}</p>
@@ -168,7 +191,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           !justify-start because .glim-btn centres with a higher specificity. */}
       {!loading && !manualFallback && (
         <div className="flex flex-col gap-0.5 h-[clamp(12rem,55vh,32rem)] overflow-y-auto">
-          {browsePath !== "" && (
+          {!atTop && (
             <Button
               // The file-manager convention, not a phrase to translate.
               label={".."}
@@ -229,29 +252,26 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             disabled={creating || newName.trim() === ""}
             busy={creating}
             title={creating ? t("folder.creating") : undefined}
-            stage={folderActionStage}
-            className="shrink-0 justify-start"
+            className="shrink-0"
           />
         </div>
       )}
+    </>
+  );
 
+  // The picker's answers. Inside another window they end the panel instead,
+  // since the panel has no window of its own there.
+  const actions = (
+    <>
+      <Button label={t("common.close")} labelKey="common.close" tone="neutral" onClick={handleClose} />
       {!manualFallback && (
-        <div className="flex items-center gap-2 pt-1">
-          <span dir="ltr" className="text-xs text-carbon-textMuted font-mono min-w-0 flex-1 truncate text-start">
-            {browsePath || "(root)"}
-          </span>
-          {/* justify-start keeps the words from floating in the middle of the
-              wide pill. */}
-          <Button
-            label={t("folder.use")}
-            labelKey="folder.use"
-            glyph={<IconCheckCircle />}
-            tone="accent"
-            onClick={handleSelect}
-            stage={folderActionStage}
-            className="shrink-0 justify-start"
-          />
-        </div>
+        <Button
+          label={t("folder.use")}
+          labelKey="folder.use"
+          glyph={<IconCheckCircle />}
+          tone="accent"
+          onClick={handleSelect}
+        />
       )}
     </>
   );
@@ -272,6 +292,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          aria-label={renderLabel ? undefined : label}
           spellCheck={false}
           placeholder={placeholder ?? "user/appdata"}
           dir="ltr"
@@ -301,6 +322,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
       {open && (inDialog ? (
         <div className="mt-1 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
           {panel}
+          <div className="flex flex-wrap items-center justify-end gap-3">{actions}</div>
         </div>
       ) : createPortal(
         <div
@@ -313,9 +335,9 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           {/* The shell is relative so the heading notch can straddle its edge,
               and it does not scroll, so the notch is not clipped. */}
           <div className="relative w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
-            {/* px-5 repeats the box's p-5: the notch takes its inset from the
-                padding around it, and this heading sits outside the scrolling
-                box, which would clip it. */}
+            {/* px-5 repeats the body's px-5: the notch takes its inset from
+                the padding around it, and this heading sits outside the
+                scrolling body, which would clip it. */}
             <h2 className="flex items-center px-5">
               <Badge tone="heading" size="heading" wrap>{label}</Badge>
             </h2>
@@ -323,9 +345,10 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               role="dialog"
               aria-modal="true"
               aria-label={label}
-              className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 shadow-2xl flex flex-col gap-2"
+              className="flex max-h-[90vh] w-full flex-col rounded-card bg-carbon-surface shadow-2xl"
             >
-              {panel}
+              <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-5 pt-5 pb-1">{panel}</div>
+              <WindowActions>{actions}</WindowActions>
             </div>
           </div>
         </div>,

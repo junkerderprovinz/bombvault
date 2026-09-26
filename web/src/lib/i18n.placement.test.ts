@@ -19,17 +19,11 @@ const PREFIXES = [
   "saveWarning.",
   "timeline.",
   "discover.",
+  "places.",
+  "storageDomains.",
 ];
 
 const SINGLE_KEYS = new Set<string>([
-  "repos.offPremises",
-  "repos.offPremisesHint",
-  "repos.directOf",
-  "repos.companionLost",
-  "repos.mirroredLocked",
-  "offsite.alsoDirect",
-  "offsite.directRetentionAsk",
-  "offsite.directAppendOnlyAsk",
   "ransomware.replicationPaused",
   "settingsIO.previewCopyRules",
   "settingsIO.previewNotInFile",
@@ -38,6 +32,7 @@ const SINGLE_KEYS = new Set<string>([
 const RULE_321: Key[] = [
   "placement.rule321Met",
   "placement.rule321OneCopy",
+  "placement.rule321NoOffsite",
   "placement.rule321Unconfirmed",
 ];
 

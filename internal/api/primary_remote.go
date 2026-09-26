@@ -146,12 +146,12 @@ func (s *Service) primaryIsImmutable(domain, repo string) bool {
 }
 
 // appendOnlyFlag says which toggle protects a repository, so the refusal can
-// send the operator to the card that toggle lives on.
+// send the operator to the place that toggle lives at.
 type appendOnlyFlag int
 
 const (
 	appendOnlyNone appendOnlyFlag = iota
-	// The flag is on the named repository's own row (Settings, Repositories).
+	// The flag is on the named repository's own row.
 	appendOnlyNamedRepo
 	// The flag is on the domain's remote-primary safety row.
 	appendOnlyPrimaryRemote

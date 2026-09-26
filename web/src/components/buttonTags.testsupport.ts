@@ -2,8 +2,7 @@
 // and raw props, for the guards that check call sites. It scans source text
 // rather than an AST, because the guards ask about the code at every call site
 // and a regex answers that without a parser dependency.
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { readSource, walkTsx } from "./sourceTree.testsupport";
 
 export type ButtonTag = {
   file: string;
@@ -17,20 +16,10 @@ export type ButtonTag = {
   source: string;
 };
 
-/** Every non-test .tsx under `dir`, recursively. */
-export function walkTsx(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walkTsx(full, out);
-    else if (/\.tsx$/.test(entry) && !/\.test\.tsx$/.test(entry)) out.push(full);
-  }
-  return out;
-}
-
 export function buttonTags(src: string): ButtonTag[] {
   const out: ButtonTag[] = [];
   for (const file of walkTsx(src)) {
-    const s = readFileSync(file, "utf8");
+    const s = readSource(file);
     const re = /<Button\b/g;
     let m: RegExpExecArray | null;
     while ((m = re.exec(s))) {

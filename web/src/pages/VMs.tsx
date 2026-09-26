@@ -517,7 +517,7 @@ export function VMRow({
   const installed = vm.state !== "not-installed";
   const progressMap = useProgress();
   // The server keys progress by the raw libvirt name ("vm:"+name in
-  // internal/api/service.go), not by the display name.
+  // internal/api/service_vms.go), not by the display name.
   const progress = progressMap[`vm:${vm.libvirtName}`];
   // Whether anything is running in any domain; the button handles its own
   // backup through isPending.
@@ -749,7 +749,7 @@ function ScheduleIncludeAllControl({
         tone="accent"
         onClick={() => void run(true)}
         disabled={busy}
-        className={`inline-flex items-center rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+        className={`inline-flex items-center rounded-pill bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
           shakeInclude ? " glim-shake" : ""
         }`}
       />
@@ -760,7 +760,7 @@ function ScheduleIncludeAllControl({
         tone="subtle"
         onClick={() => void run(false)}
         disabled={busy}
-        className={`inline-flex items-center rounded-control px-3 py-1 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
+        className={`inline-flex items-center rounded-pill px-3 py-1 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
           shakeExclude ? " glim-shake" : ""
         }`}
       />
@@ -995,7 +995,7 @@ function VMBackupOrderPanel({
                     tip={t("backupOrder.moveUp")}
                     onClick={() => move(i, -1)}
                     disabled={i === 0 || saveState === "saving"}
-                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-pill p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path fill="currentColor" d="M1.3 8.7 6 3.3 10.7 8.7Z" />
@@ -1005,7 +1005,7 @@ function VMBackupOrderPanel({
                     tip={t("backupOrder.moveDown")}
                     onClick={() => move(i, 1)}
                     disabled={i === names.length - 1 || saveState === "saving"}
-                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-pill p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path fill="currentColor" d="M1.3 3.3 6 8.7 10.7 3.3Z" />
@@ -1022,7 +1022,7 @@ function VMBackupOrderPanel({
                 tone="subtle"
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
-                className={`inline-flex items-center rounded-control px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
+                className={`inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
                   shakeReset ? " glim-shake" : ""
                 }`}
               />

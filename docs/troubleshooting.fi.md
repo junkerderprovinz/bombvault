@@ -33,7 +33,7 @@ Tämä on yleensä orpo restic-lukko, joka jäi jälkeen kun kontti päivitettii
 
 ## Etäkopiotani ei tapahtunut varmuuskopion jälkeen
 
-Etäreplikointi on suunnitellusti parhaan yrityksen mukaista, joten etäsijainnin nikottelu ei koskaan kaada paikallista varmuuskopiota. Tarkista kyseisen toimialueen etäaikataulu (Asetukset, Aikataulut): tyhjä aikataulu replikoi jokaisen paikallisen varmuuskopion jälkeen, kun taas tahti lähettää harvemmin. Käytä **Replikoi nyt** Etä-välilehdellä pyydettäessä tehtävään ajoon, ja tarkkaile replikointiosoitinta Kojelaudalla.
+Etäreplikointi on suunnitellusti parhaan yrityksen mukaista, joten etäsijainnin nikottelu ei koskaan kaada paikallista varmuuskopiota. Tarkista kyseisen toimialueen etäaikataulu (Asetukset, Aikataulut): tyhjä aikataulu replikoi jokaisen paikallisen varmuuskopion jälkeen, kun taas tahti lähettää harvemmin. Käytä **Kopioi nyt** -painiketta toimialueen rivillä kohdassa Asetukset, Tallennustila pyydettäessä tehtävään ajoon, ja tarkkaile replikointiosoitinta Kojelaudalla.
 
 ## Palautus keskeytyi ennen kuin se alkoi
 

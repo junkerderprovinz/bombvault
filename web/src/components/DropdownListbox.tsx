@@ -132,7 +132,8 @@ export function DropdownListbox({
   // outside check, or a mousedown would unmount an option before its click
   // arrived. Scroll is captured on window because the page scroller is `main`,
   // not the document; a scroll inside the panel is its own list moving and
-  // leaves it open.
+  // leaves it open. Escape is captured and stopped, so a list inside a window
+  // closes alone and the window keeps what was typed into it.
   useEffect(() => {
     if (!open) return;
     function onPointerDown(e: MouseEvent) {
@@ -142,7 +143,9 @@ export function DropdownListbox({
       onCloseRef.current();
     }
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onCloseRef.current();
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      onCloseRef.current();
     }
     function onScroll(e: Event) {
       const target = e.target;
@@ -153,12 +156,12 @@ export function DropdownListbox({
       onCloseRef.current();
     }
     document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("scroll", onScroll, true);
     window.addEventListener("resize", onResize);
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("keydown", onKeyDown, true);
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onResize);
     };

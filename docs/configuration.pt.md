@@ -1,6 +1,6 @@
 # Configuração
 
-Esta página cobre as variáveis de ambiente do container, as montagens que o template fornece, o backup de VMs por SSH e a configuração do externo. Os **caminhos de repositório** de backup são configurados dentro da aplicação (Definições, Caminhos de backup), não através de variáveis de ambiente.
+Esta página cobre as variáveis de ambiente do container, as montagens que o template fornece, o backup de VMs por SSH e a configuração do externo. O destino dos backups define-se dentro da aplicação, em **Definições, Armazenamento**, não através de variáveis de ambiente.
 
 ## Variáveis de ambiente
 
@@ -26,7 +26,7 @@ Esta página cobre as variáveis de ambiente do container, as montagens que o te
 
 Monte o socket Docker, o flash (`/boot`) e a raiz **Host Data** (`/mnt`) como mostrado no template CA. As *origens* e os *destinos* de backup vivem ambos sob Host Data, e é montada em **slave** para que uma partilha remota que monte depois de o container arrancar (por exemplo sob `/mnt/remotes`) fique visível sem um reinício.
 
-Os caminhos de repositório de backup assumem por predefinição `/mnt/user/bombvault/{container,vms,flash,config,files}`, criados no primeiro backup. Altere a localização a qualquer momento em **Definições, Caminhos de backup**.
+Uma instalação nova guarda cada domínio no lugar **Unraid**, em `/mnt/user/bombvault` com uma pasta por domínio (`container`, `vms`, `flash`, `config`, `files`), criada no primeiro backup. Adicione mais lugares, locais ou remotos, em **Definições, Armazenamento**; consulte [Lugares de armazenamento](storage-places.md).
 
 !!! note "Verificação de integração com o host"
     Abra `/spike` na interface web depois de o container arrancar. Sonda cada montagem e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e reporta quaisquer peças em falta.
@@ -71,20 +71,20 @@ O template adiciona `--add-host=host.docker.internal:host-gateway` para que o co
 
 ## Configuração do externo
 
-Configure uma réplica externa no separador **Definições, Externo**. Consulte [Externo e recuperação](offsite-recovery.md) para o fluxo de trabalho completo (imutável/append-only, teste de adulteração e ensaios de DR). Em resumo:
+As cópias externas vão para lugares de armazenamento. Adicione o lugar em **Definições, Armazenamento** com **Adicionar lugar** e depois marque-o em **Copiado para** na linha do domínio. [Lugares de armazenamento](storage-places.md) cobre todos os tipos de ligação, e [Externo e recuperação](offsite-recovery.md) cobre append-only, o teste de adulteração e os ensaios de DR. Em resumo:
 
-- **Backends:** SMB/CIFS e NFS (monte a partilha e aponte-lhe um Caminho de backup), backends restic nativos sem rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), ou qualquer remoto rclone (`rclone:<remote>:<bucket>/path`).
-- **As credenciais de nuvem** são guardadas encriptadas em Definições, Externo, Credenciais da nuvem.
-- **Os destinos SSH não precisam de nada instalado do outro lado.** O `sftp:` só precisa de um servidor SSH. Adicione a chave pública de **Definições, Sistema, Backup de VM por SSH** (também em `/config/ssh/id_ed25519.pub`) ao `~/.ssh/authorized_keys` do utilizador de destino.
-- **Cópia externa:** o BombVault replica novos instantâneos com `restic copy` numa base de melhor esforço. O repo local mantém-se primário. Cada domínio tem o seu próprio agendamento externo, mais um botão **Replicar agora**.
-- **Vários destinos externos por domínio:** cada domínio pode replicar para vários destinos externos de uma só vez. Adicione destinos extra em Definições, Externo, cada um com o seu próprio repositório, classe de armazenamento S3, flag append-only, retenção e orçamento de crescimento; todos replicam no agendamento externo desse domínio. Uma configuração externa única existente é transferida como o primeiro destino.
-- **Retenção por origem:** a política local vive em Definições, Caminhos e Armazenamento; a política externa em Definições, Externo (deixe-a toda a zero para nunca aparar automaticamente os instantâneos externos).
-- **Limites de largura de banda:** limite a taxa de envio/receção do restic em Definições, Externo.
-- **Classe de armazenamento fria e de arquivo (S3):** para um repo externo S3 nativo, escolha um nível legível para restauro (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Os remotos rclone definem a sua classe na configuração do rclone.
+- **Tipos de ligação:** uma pasta neste Unraid ou uma partilha de um NAS montada sob `/mnt/remotes`, armazenamento S3 (o Backblaze B2 e os outros provedores de nuvem, ou um serviço de alojamento próprio como MinIO ou Garage), rest-server, SFTP incluindo uma Hetzner Storage Box, WebDAV para Nextcloud, ownCloud e OpenCloud, Azure Blob e qualquer remoto rclone. O Backblaze B2 só precisa da chave: o BombVault lê a partir dela o bucket e o endpoint S3.
+- **As credenciais** são guardadas encriptadas junto do lugar a que pertencem. Os conjuntos de credenciais que as origens de recolha usam estão no separador **Recolha** da página Instâncias.
+- **Os destinos SSH não precisam de nada instalado do outro lado.** Um lugar SFTP só precisa de um servidor SSH. Adicione a chave pública mostrada no formulário SFTP (também em **Definições, Sistema, Backup de VM por SSH** e em `/config/ssh/id_ed25519.pub`) ao `~/.ssh/authorized_keys` do utilizador de destino.
+- **Cópia externa:** o BombVault copia novos instantâneos com `restic copy` numa base de melhor esforço, além do lugar onde um domínio está guardado. Cada domínio tem o seu próprio agendamento de cópia em Definições, Agendamentos, mais **Copiar agora** na sua linha.
+- **Vários lugares de cópia por domínio:** marque em **Copiado para** tantos lugares quantos quiser; cada um copia no agendamento do domínio.
+- **A retenção, os limites, a classe de armazenamento e o orçamento de crescimento pertencem ao lugar** e definem-se nos seus detalhes. A retenção de um lugar aplica-se a todos os repositórios nele, por isso um lugar externo pode manter as cópias por mais tempo como arquivo; um lugar com todas as regras a zero nunca apara.
+- **Classe de armazenamento fria e de arquivo (S3):** para um lugar S3, escolha um nível legível para restauro (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Os remotos rclone definem a sua classe na configuração do rclone.
+- **Um domínio guardado num lugar remoto:** consulte [Um domínio guardado num lugar remoto](offsite-recovery.md#remote-primary-repositories).
 
 ## Definições portáteis (exportar e importar) {#portable-settings-export-and-import}
 
-O cartão **Exportar e importar definições** na página Definições escreve toda a sua configuração BombVault (definições de domínio, destinos externos, agendamentos, retenção, notificações) para um ficheiro JSON portátil que pode importar noutra instância, para que mudar para uma máquina nova ou clonar uma configuração não signifique reintroduzir tudo à mão. A importação mostra uma pré-visualização e pede confirmação, e nunca toca nos seus dados ou histórico de backup.
+O cartão **Exportar e importar definições** na página Definições escreve toda a sua configuração BombVault (definições de domínio, lugares de armazenamento, agendamentos, notificações) para um ficheiro JSON portátil que pode importar noutra instância, para que mudar para uma máquina nova ou clonar uma configuração não signifique reintroduzir tudo à mão. A importação mostra uma pré-visualização e pede confirmação, e nunca toca nos seus dados ou histórico de backup.
 
 !!! warning "A exportação pode conter credenciais"
-    Escolhe se inclui as credenciais externas e de notificação no ficheiro. Com as credenciais incluídas, a exportação é tão sensível como o seu kit de recuperação, por isso guarde-a num local seguro. Sem elas, o ficheiro contém apenas definições não secretas.
+    Escolhe se inclui no ficheiro as credenciais dos seus lugares e das notificações. Com as credenciais incluídas, a exportação é tão sensível como o seu kit de recuperação, por isso guarde-a num local seguro. Sem elas, o ficheiro contém apenas definições não secretas.

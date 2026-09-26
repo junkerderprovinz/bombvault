@@ -10,7 +10,6 @@ import {
   withLtrFragments,
   withLtrIsolates,
   LTR_FRAGMENTS_BY_KEY,
-  REPO_LOCAL_HINT_LTR_FRAGMENTS,
   EXCLUDES_HINT_LTR_FRAGMENTS,
   FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS,
 } from "./ltrFragments";
@@ -72,28 +71,6 @@ describe("withLtrFragments", () => {
     const { text, ltrPieces } = flattenAndCheckSpans(out);
     expect(text).toBe("no /mnt here, but /mnt/x there");
     expect(ltrPieces).toEqual(["/mnt", "/mnt/x"]);
-  });
-
-  describe("offsite.repoLocalHint", () => {
-    const EN =
-      'Also accepts a plain folder under the "Host Data" mount — enter it relative to that mount, without the leading /mnt: a share at /mnt/remotes/nas/bombvault is entered as remotes/nas/bombvault.';
-    const AR =
-      'يقبل أيضًا مجلدًا عاديًا داخل نقطة الوصل "Host Data": أدخله بالنسبة إلى نقطة الوصل هذه، بدون /mnt في البداية. المشاركة الموجودة في /mnt/remotes/nas/bombvault تُدخل هكذا: remotes/nas/bombvault.';
-    const HE =
-      'אפשר גם תיקייה רגילה מתחת לעיגון "Host Data": יש להזין אותה יחסית לעיגון הזה, בלי /mnt בהתחלה. שיתוף שנמצא ב-/mnt/remotes/nas/bombvault מוזן כ-remotes/nas/bombvault.';
-
-    it.each([
-      ["en", EN],
-      ["ar", AR],
-      ["he", HE],
-    ])("isolates both leading-/ fragments and round-trips to the exact %s source string", (_locale, source) => {
-      const out = withLtrFragments(source, REPO_LOCAL_HINT_LTR_FRAGMENTS);
-      const { text, ltrPieces } = flattenAndCheckSpans(out);
-      expect(text).toBe(source);
-      // The relative "remotes/nas/bombvault" starts with a letter and stays
-      // unwrapped.
-      expect(ltrPieces).toEqual(["/mnt", "/mnt/remotes/nas/bombvault"]);
-    });
   });
 
   describe("excludes.hint", () => {
@@ -265,7 +242,6 @@ const PATH_IN_PROSE = /(?<![A-Za-z0-9:/])\/[A-Za-z0-9._*{}<>-]+(?:\/[A-Za-z0-9._
 const NOT_A_PATH: Record<string, string> = {
   "dashboard.forecastGrowth": "a unit, not a path: {bytes}/week, and 'week' is translated per locale",
   "dashboard.forecastShrink": "same unit as forecastGrowth",
-  "rclone.pathHint": "the example is rclone:<remote>:<bucket>/path. It begins with letters, a strong LTR class that anchors the whole run; only a leading `/` misrenders",
   "recovery.foreignVMDestHint": "the run is <destination>/<vm-name>/ and BOTH placeholder words are translated (sl 'ime-vm', sr 'naziv-vm'), so no literal fragment can match in every locale; the leading character is `<`, not `/`",
   "folders.customPlaceholder": "orphaned key, rendered nowhere (see i18n.orphans.test.ts's ratchet)",
 };
@@ -278,7 +254,7 @@ describe("coverage: every en string that embeds a path is accounted for", () => 
   it("finds the path-bearing strings", () => {
     expect(withPaths.length).toBeGreaterThan(15);
     expect(withPaths).toContain("flash.backupHint");
-    expect(withPaths).toContain("offsite.repoLocalHint");
+    expect(withPaths).toContain("excludes.hint");
   });
 
   it("leaves no path-bearing string unregistered and unexplained", () => {

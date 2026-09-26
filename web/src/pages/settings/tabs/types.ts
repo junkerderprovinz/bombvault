@@ -3,18 +3,15 @@ import type {
   Container,
   FileSetView,
   ImportSettingsResponse,
-  OffsiteTarget,
   RegistryAuthEntry,
   Settings,
   VM,
 } from "../../../lib/api";
 import type { RainbowState } from "../../../lib/appearance";
 import type { ControlAxis, LabelMode } from "../../../lib/controls";
-import type { DirectUse } from "../../../lib/directRepo";
 import type { useT } from "../../../lib/i18n";
 import type { MotionIntensity } from "../../../lib/motion";
 import type { Shape } from "../../../lib/shape";
-import type { OffsiteDomain } from "../../../lib/useOffsiteTargets";
 import type { useReveal } from "../../../lib/useReveal";
 import type { SaveState } from "../shared";
 
@@ -41,12 +38,6 @@ export type MergedAutoSaveKey =
   | "exportEncryptEnabled"
   | "encryptionEnabled";
 
-export type OffsiteRetentionKey =
-  | "offsiteRetentionKeepLast"
-  | "offsiteRetentionKeepDaily"
-  | "offsiteRetentionKeepWeekly"
-  | "offsiteRetentionKeepMonthly";
-
 type Setter<T> = Dispatch<SetStateAction<T>>;
 type SetSaveState = (s: SaveState) => void;
 type SetSaveError = (e: string | null) => void;
@@ -67,8 +58,6 @@ export type SettingsTabProps = {
   advanced: boolean;
   quiet: boolean;
   setQuiet: (next: boolean) => void;
-  allTargets: OffsiteTarget[];
-  fieldDirects: DirectUse[];
   settings: Settings;
   setSettings: Setter<Settings | null>;
   savedBaseline: RefObject<Settings | null>;
@@ -96,6 +85,9 @@ export type SettingsTabProps = {
   setRegistryRowIds: Setter<string[]>;
   shape: Shape;
   setShapeLocal: Setter<Shape>;
+  leafFound: boolean;
+  setLeafFound: Setter<boolean>;
+  leafClicks: RefObject<{ taps: number }>;
   motion: MotionIntensity;
   setMotionLocal: Setter<MotionIntensity>;
   stormFound: boolean;
@@ -117,14 +109,8 @@ export type SettingsTabProps = {
   setPathSaveError: SetSaveError;
   setExportEncSaveState: SetSaveState;
   setExportEncSaveError: SetSaveError;
-  setOffsiteSaveState: SetSaveState;
-  setOffsiteSaveError: SetSaveError;
-  offsiteWizard: OffsiteDomain | null;
-  setOffsiteWizard: Setter<OffsiteDomain | null>;
   domainToggleBusy: Partial<Record<DomainToggleKey, boolean>>;
   domainToggleShake: Partial<Record<DomainToggleKey, number>>;
-  setRetSaveState: SetSaveState;
-  setRetSaveError: SetSaveError;
   setPruneSaveState: SetSaveState;
   setPruneSaveError: SetSaveError;
   setReconcileSaveState: SetSaveState;
@@ -133,8 +119,6 @@ export type SettingsTabProps = {
   setCacheSaveError: SetSaveError;
   setCoresSaveState: SetSaveState;
   setCoresSaveError: SetSaveError;
-  setLimSaveState: SetSaveState;
-  setLimSaveError: SetSaveError;
   setMetricsSaveState: SetSaveState;
   setMetricsSaveError: SetSaveError;
   setDigestSaveState: SetSaveState;
@@ -154,7 +138,6 @@ export type SettingsTabProps = {
   loadFileSets: () => void;
   fieldPulse: Partial<Record<keyof Settings, number>>;
   save: SaveSettings;
-  saveOffsiteRetention: (key: OffsiteRetentionKey, n: number) => Promise<void>;
   toggleDomainEnabled: (key: DomainToggleKey, next: boolean) => Promise<void>;
   mergedFieldBusy: Partial<Record<MergedAutoSaveKey, boolean>>;
   mergedFieldShake: Partial<Record<MergedAutoSaveKey, number>>;

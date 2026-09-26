@@ -1,17 +1,13 @@
 {% extends "base.html" %}
 
 {#
-  BombVault docs — sidebar footer controls.
+  Overrides Material's `site_nav` block to pin the app's sidebar controls
+  (language picker and dark/light toggle) to the bottom of the primary nav
+  rail. Styling is in docs/stylesheets/extra.css, behaviour in
+  docs/javascripts/bv-sidebar-controls.js.
 
-  Overrides only Material's `site_nav` block to inject the app-style controls
-  (language picker + dark/light toggle) as a pinned footer inside the primary
-  navigation rail (.md-sidebar--primary), directly reproducing the app's
-  SidebarControls (web/src/components/Sidebar.tsx). Everything else is stock
-  Material. Styling lives in docs/stylesheets/extra.css (SIDEBAR FOOTER CONTROLS
-  section); behaviour in docs/javascripts/bv-sidebar-controls.js.
-
-  The block body is copied verbatim from the pinned Material base.html (>=9.5,<10)
-  with a single added line: the bv-sidebar-controls partial include.
+  The block is copied from the pinned Material base.html (>=9.5,<10) with one
+  added line, the bv-sidebar-controls include.
 #}
 {% block site_nav %}
   {% if nav %}

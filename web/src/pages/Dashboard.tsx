@@ -566,7 +566,7 @@ function SpikeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?
       )}
 
       {checks && checks.length > 0 && (
-        <div className="divide-y divide-carbon-border">
+        <div>
           {checks.map((c) => (
             <div key={c.Name} className="flex items-center gap-3 py-2 text-sm">
               <Badge tone={statusTone(chipFor(c))}>{statusLabel(chipFor(c), t)}</Badge>
@@ -711,13 +711,13 @@ export function ProtectionCard({
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
       {!loading && domains.length > 0 && (
-        <div className="@container divide-y divide-carbon-border glim-content-fade">
+        <div className="@container glim-content-fade">
           {domains.map((d) => {
             const off = d.status === "off";
-            // Only containers, flash + files ever run an off-site DR drill
-            // (schedule.go drillTasks / runDRDrill). VMs + config can have an
-            // off-site repo but cannot be DR-drilled, so they must show NO DR
-            // pill or Run-DR button.
+            // Only containers, flash and files run an off-site DR drill
+            // (drillTasks in schedule.go, runDRDrill in service_verify.go). VMs
+            // and config can have an off-site repo but no drill, so they show
+            // neither the DR pill nor the Run DR button.
             const drCapable = d.domain === "containers" || d.domain === "flash" || d.domain === "files";
             // Off-site DR opt-out (#37): the scheduled DR drill is turned off for a
             // DR-capable domain that HAS an off-site repo. The pill then reads NEUTRAL
@@ -1115,7 +1115,7 @@ export function RansomwareCard({
           ];
 
           return (
-            <div key={d.domain} className="flex flex-col gap-1.5 py-2 border-b border-carbon-border last:border-0">
+            <div key={d.domain} className="flex flex-col gap-1.5 py-2">
               <div className="flex items-center gap-2">
                 <span className="font-medium text-carbon-text w-28 shrink-0 truncate">
                   {domainLabel(d.domain)}
@@ -1162,7 +1162,7 @@ export function RansomwareCard({
                           // colour + hover underline already signals both
                           // "this is wrong" and "this is clickable" without
                           // breaking row alignment.
-                          <Link to="/settings#offsite" className="text-statusFail hover:underline flex-1 truncate min-w-0">
+                          <Link to="/settings#storage" className="text-statusFail hover:underline flex-1 truncate min-w-0">
                             {row.label}
                           </Link>
                         ) : (
@@ -1246,8 +1246,7 @@ function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?:
               className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text glim-field-focus"
             />
           </div>
-          {/* Scrollable list — all runs in the window (filtered by day) */}
-          <div className="divide-y divide-carbon-border max-h-128 overflow-y-auto pe-2">
+          <div className="max-h-128 overflow-y-auto pe-2">
             {shown.map((run) => {
               const dur = run.finishedAt != null ? formatDuration(run.finishedAt - run.startedAt) : "";
               return (
@@ -1343,11 +1342,10 @@ function LastBackupsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
       )}
 
       {withBackups.length > 0 && (
-        <div className="divide-y divide-carbon-border glim-content-fade">
+        <div className="glim-content-fade">
           {withBackups.map((c) => {
-            // Older data (or a run before the start time was recorded) has no
-            // lastBackupStarted — fall back to just the finish time, never a
-            // negative/broken duration.
+            // A run recorded without its start time has no lastBackupStarted,
+            // so it shows the finish time alone rather than a broken duration.
             const hasStart = c.lastBackupStarted != null && c.lastBackup != null;
             const duration = hasStart
               ? formatDuration((c.lastBackup as number) - (c.lastBackupStarted as number))
@@ -1377,18 +1375,13 @@ function LastBackupsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
       )}
 
       {noBackups.length > 0 && (
-        <div className="divide-y divide-carbon-border">
-          {/* "Never" said two different things at once ([379]). A container
-              nobody scheduled has never been backed up and that is the plan; a
-              container that IS scheduled and still shows "never" is a gap. Both
-              rendered the same word, so the list could not be read: on jdp's
-              box four rows said "Nie" and there was no way to tell, from the
-              dashboard, which of them were meant to.
-
-              includeInSchedule already carries the answer, and `self` carries
-              the one case that is not a choice at all: BombVault refuses to
-              back up its own container (stopping it mid-run is suicide), so
-              that row must not read as an omission somebody could correct. */}
+        <div>
+          {/* "Never" means two things: a container nobody scheduled has never
+              been backed up by plan, while a scheduled one that still shows it
+              is a gap. includeInSchedule tells them apart, and `self` marks the
+              one case that is not a choice at all: BombVault cannot back up its
+              own container without stopping itself mid-run, so that row must
+              not read as an omission somebody could correct. */}
           {noBackups.map((c) => {
             const deliberate = c.self || !c.includeInSchedule;
             return (
@@ -1757,16 +1750,15 @@ function StorageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueInde
         <p className="text-sm text-carbon-textMuted">{t("dashboard.noStats")}</p>
       )}
       {!loading && anyData && data && (
-        <div className="divide-y divide-carbon-border glim-content-fade">
+        <div className="glim-content-fade">
           {data.map((d) => {
             const has = d.latest != null;
             const dedup =
               d.latest && d.latest.restoreSize > 0 && d.latest.rawSize > 0
                 ? `${(d.latest.restoreSize / d.latest.rawSize).toFixed(1)}x`
                 : "—";
-            // Compact per-domain forecast line (growth/week + time-to-full +
-            // free space) from the same /api/stats response. Null when the
-            // backend could determine nothing — then no line renders at all.
+            // Growth per week, time to full and free space, from the same
+            // /api/stats response; null, and no line, when nothing is known.
             const forecastLine = buildForecastLine(d.forecast, resolveForecast);
             return (
               <div key={d.domain} className="flex flex-col gap-0.5 py-2.5 min-w-0">
@@ -1891,7 +1883,7 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
         <button
           type="button"
           onClick={() => void downloadRecoveryKit().then(setKitError)}
-          className="rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+          className="rounded-pill bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
         >
           {t("recovery.download")}
         </button>
@@ -1947,7 +1939,7 @@ function FreshInstallNudge({
             with the raw accent colour and no fill at all. This card's own one
             call-to-action functions as a primary action (rule 3 allows
             exactly one solid-accent primary action per page/card), so it
-            takes the SAME filled rounded-control/bg-accent/text-accentContrast
+            takes the SAME filled rounded-pill/bg-accent/text-accentContrast
             treatment every other primary button in this app already uses
             (e.g. Config.tsx's Save button) — matching an established idiom
             rather than routing through Badge's tone system, which has no
@@ -1955,7 +1947,7 @@ function FreshInstallNudge({
             one for a single call site. */}
         <Link
           to="/recovery"
-          className="self-start inline-flex items-center gap-1 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity"
+          className="self-start inline-flex items-center gap-1 rounded-pill bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity"
         >
           {t("recovery.freshNudgeCta")} <span className="inline-block rtl:-scale-x-100">→</span>
         </Link>
@@ -2548,7 +2540,7 @@ export function Dashboard() {
           top-right corner toggles the customize/edit mode.
             That pencil is `h-8 w-8` + centring, not the `p-2` it used to size
           itself with. It is a square icon-only badge by every other measure
-          (the same rounded-control tile, the same bg-carbon-surface2/hover
+          (the same rounded-pill tile, the same bg-carbon-surface2/hover
           recipe as Settings' Registry add/remove and FolderBrowser's browse
           badge), but it derived its own footprint from padding around an 18px
           glyph and landed on 34px — measured live — where every other square
@@ -2577,7 +2569,7 @@ export function Dashboard() {
             measured live on the deployed container: 32px, rounded-control,
             and `title` present, while every other icon-only trigger (every
             Badge `tip`, FolderBrowser's browse badge, Settings' registry and
-            copy badges, PathModeSwitch's and SourceToggle's segments) already
+            copy badges, SourceToggle's segments) already
             rendered the shared bubble. IconTipButton.tsx's own header is
             explicit that a stray native `title=` on an icon-only trigger is
             precisely the anti-pattern that file exists to replace, and
@@ -2591,14 +2583,13 @@ export function Dashboard() {
             — only the tooltip mechanism changes. `aria-pressed` is threaded
             through IconTipButton's new optional prop so the toggle state is
             not lost in the swap (this is a toggle, not a one-shot action).
-              32px and `rounded-control` are unchanged, so it still matches
-            every other square icon control app-wide and still tracks the
-            shape engine. */}
+              32px and `rounded-pill` keep it matched to every other square
+            icon control app-wide and tracking the shape engine. */}
         <IconTipButton
           onClick={() => setEditing((v) => !v)}
           tip={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
           ariaPressed={editing}
-          className={`shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-control motion-safe:transition-colors ${
+          className={`shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-pill motion-safe:transition-colors ${
             editing
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text"
@@ -2739,9 +2730,8 @@ export function Dashboard() {
         })()}
       </div>
 
-      {/* Hidden-cards tray — only while editing and something is hidden. */}
       {editing && hiddenBlocks.length > 0 && (
-        <div className="relative flex flex-col gap-3 rounded-card border border-dashed border-carbon-border p-4">
+        <div className="relative flex flex-col gap-3 rounded-card bg-carbon-surface p-4">
           <h2 className="flex items-center">
             <Badge tone="heading" size="heading" wrap>{t("dashboard.hiddenCards")}</Badge>
           </h2>
@@ -2749,7 +2739,7 @@ export function Dashboard() {
             {hiddenBlocks.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2.5 py-1.5"
+                className="flex items-center gap-2 rounded-pill bg-carbon-surface2 px-2.5 py-1.5"
               >
                 <span className="max-w-48 truncate text-xs text-carbon-textSub">
                   {b.label}
