@@ -126,6 +126,25 @@ func TestOnlyCopiesToAnOffPremisesTargetMakeTheDomainConfigured(t *testing.T) {
 	}
 }
 
+func TestTheStatusNamesTheTargetOfTheLastDRDrill(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("flash", "B2", "s3:b2/flash")
+	hetzner := f.target("flash", "Hetzner", "sftp:u1@hetzner:/flash")
+	if err := f.st.AddRestoreDrill(store.RestoreDrill{Domain: "flash", Source: "offsite", Kind: "dr", At: 100, OK: true, TargetID: hetzner.ID}); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.domainStatus("flash").DrillTarget; got != "Hetzner" {
+		t.Fatalf("drill target %q, want Hetzner", got)
+	}
+
+	if _, err := f.st.DeleteOffsiteTargetIfUnused(hetzner.ID); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.domainStatus("flash").DrillTarget; got != "" {
+		t.Fatalf("drill target %q after the target was removed, want none", got)
+	}
+}
+
 func TestAProjectFolderCopiedOnlyInTheHouseIsNoOffsiteCopy(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.target("containers", "B2", "b2:bucket:containers")
