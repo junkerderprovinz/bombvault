@@ -117,6 +117,12 @@ describe("Recovery's attach step", () => {
     expect(within(attach).queryAllByRole("textbox")).toEqual([]);
   });
 
+  it("links a row's schedule to the schedules in Settings", async () => {
+    await renderPage();
+    const containers = within(step(en["recovery.step2"])).getByRole("region", { name: en["nav.containers"] });
+    expect(within(containers).getByRole("link", { name: "Daily at 02:00" }).getAttribute("href")).toBe("/settings#schedules");
+  });
+
   it("connects a place no row offers yet through the add window", async () => {
     await renderPage();
     await act(async () => {
