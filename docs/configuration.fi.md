@@ -1,6 +1,6 @@
 # Asetukset
 
-Tämä sivu käsittelee kontin ympäristömuuttujat, mallin tarjoamat liitokset, VM-varmuuskopioinnin SSH:n yli ja etäsijainnin määrityksen. Varmuuskopioinnin **repopolut** määritetään sovelluksen sisällä (Asetukset, Varmuuskopiopolut), ei ympäristömuuttujilla.
+Tämä sivu käsittelee kontin ympäristömuuttujat, mallin tarjoamat liitokset, VM-varmuuskopioinnin SSH:n yli ja etäsijainnin määrityksen. Sen, minne varmuuskopiot menevät, asetat sovelluksen sisällä kohdassa **Asetukset, Tallennustila**, ei ympäristömuuttujilla.
 
 ## Ympäristömuuttujat
 
@@ -26,7 +26,7 @@ Tämä sivu käsittelee kontin ympäristömuuttujat, mallin tarjoamat liitokset,
 
 Liitä Docker-soketti, flash (`/boot`) ja **Host Data** -juuri (`/mnt`) kuten CA-mallissa on näytetty. Varmuuskopioinnin *lähteet* ja *kohteet* asuvat molemmat Host Datan alla, ja se liitetään **slave**-tilassa, joten etäjako, joka liittyy kontin käynnistymisen jälkeen (esimerkiksi kohtaan `/mnt/remotes`), tulee näkyviin ilman uudelleenkäynnistystä.
 
-Varmuuskopioinnin repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files}`, luotuina ensimmäisen varmuuskopion yhteydessä. Vaihda sijaintia milloin tahansa kohdassa **Asetukset, Varmuuskopiopolut**.
+Uusi asennus tallentaa jokaisen toimialueen paikkaan **Unraid** polkuun `/mnt/user/bombvault`, yksi kansio kutakin toimialuetta kohden (`container`, `vms`, `flash`, `config`, `files`), ja kansiot luodaan ensimmäisen varmuuskopion yhteydessä. Muita paikkoja, paikallisia tai etäpaikkoja, lisäät kohdassa **Asetukset, Tallennustila**; katso [Tallennuspaikat](storage-places.md).
 
 !!! note "Isäntäintegraation tarkistus"
     Avaa `/spike` verkkokäyttöliittymässä kontin käynnistyttyä. Se koettaa jokaista liitosta ja komentorivityökalua (Docker-soketti, libvirt, restic, qemu-img, rclone) ja raportoi puuttuvat palaset.
@@ -71,20 +71,20 @@ Malli lisää `--add-host=host.docker.internal:host-gateway`, jotta kontti tavoi
 
 ## Etäsijainnin määritys
 
-Määritä etäreplika **Asetukset, Etä** -välilehdellä. Katso [Etäsijainti ja palautus](offsite-recovery.md) koko työnkulkua varten (muuttumaton/append-only, peukalointitestaus ja DR-harjoitukset). Lyhyesti:
+Etäkopiot menevät tallennuspaikkoihin. Lisää paikka kohdassa **Asetukset, Tallennustila** painikkeella **Lisää paikka** ja rastita se sitten toimialueen rivillä kohdassa **Kopiointikohteet**. [Tallennuspaikat](storage-places.md) käsittelee jokaisen yhteystyypin, ja [Etäsijainti ja palautus](offsite-recovery.md) käsittelee append-only-tilan, peukalointitestauksen ja DR-harjoitukset. Lyhyesti:
 
-- **Taustajärjestelmät:** SMB/CIFS ja NFS (liitä jako ja osoita varmuuskopiopolku siihen), natiivit restic-taustajärjestelmät ilman rclonea (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) tai mikä tahansa rclone-etäsijainti (`rclone:<remote>:<bucket>/path`).
-- **Pilvitunnukset** tallennetaan salattuina kohdassa Asetukset, Etä, Pilvitunnukset.
-- **SSH-kohteet eivät vaadi mitään asennettavaksi vastapuolelle.** `sftp:` tarvitsee vain SSH-palvelimen. Lisää julkinen avain kohdasta **Asetukset, Järjestelmä, VM Backup over SSH** (myös tiedostossa `/config/ssh/id_ed25519.pub`) kohdekäyttäjän tiedostoon `~/.ssh/authorized_keys`.
-- **Etäkopio:** BombVault replikoi uudet tilannevedokset `restic copy` -komennolla parhaan yrityksen periaatteella. Paikallinen repo pysyy ensisijaisena. Jokaisella toimialueella on oma etäaikataulunsa sekä **Replikoi nyt** -painike.
-- **Useita etäkohteita per toimialue:** jokainen toimialue voi replikoitua useaan etäkohteeseen kerralla. Lisää lisäkohteita kohtaan Asetukset, Etä, kukin omalla repositoriollaan, S3-tallennusluokallaan, append-only-lipullaan, säilytyksellään ja kasvubudjetillaan; ne kaikki replikoituvat kyseisen toimialueen etäaikataulun mukaan. Olemassa oleva yksittäinen etämääritys siirretään ensimmäiseksi kohteeksi.
-- **Säilytys lähdekohtaisesti:** paikallinen käytäntö asuu kohdassa Asetukset, Polut ja tallennus; etäkäytäntö kohdassa Asetukset, Etä (jätä se pelkiksi nolliksi, jotta etätilannevedoksia ei koskaan karsita automaattisesti).
-- **Kaistanleveyden rajat:** rajoita resticin lähetys-/latausnopeutta kohdassa Asetukset, Etä.
-- **Kylmä- ja arkistotallennusluokka (S3):** natiiville S3-etärepolle valitse palautuksesta luettava taso (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-etäsijainnit asettavat luokkansa rclone-määrityksessä.
+- **Yhteystyypit:** kansio tässä Unraidissa tai hakemistoon `/mnt/remotes` liitetty NAS-jako, S3-tallennus (Backblaze B2 ja muut pilvipalvelut tai itse ylläpidetty palvelu, kuten MinIO tai Garage), rest-server, SFTP Hetzner Storage Box mukaan lukien, WebDAV Nextcloudille, ownCloudille ja OpenCloudille, Azure Blob sekä mikä tahansa rclone-etäsijainti. Backblaze B2 tarvitsee vain avaimen: BombVault lukee siitä bucketin ja S3-päätepisteen.
+- **Tunnukset** tallennetaan salattuina sen paikan yhteyteen, jolle ne kuuluvat. Noutolähteiden käyttämät kirjautumistietojoukot ovat Ilmentymät-sivun **Nouto**-välilehdellä.
+- **SSH-kohteet eivät vaadi mitään asennettavaksi vastapuolelle.** SFTP-paikka tarvitsee vain SSH-palvelimen. Lisää SFTP-lomakkeessa näkyvä julkinen avain (myös kohdassa **Asetukset, Järjestelmä, VM-varmuuskopio SSH:n kautta** ja tiedostossa `/config/ssh/id_ed25519.pub`) kohdekäyttäjän tiedostoon `~/.ssh/authorized_keys`.
+- **Etäkopio:** BombVault kopioi uudet tilannevedokset `restic copy` -komennolla parhaan yrityksen periaatteella sen paikan lisäksi, johon toimialue tallennetaan. Jokaisella toimialueella on oma kopiointiaikataulunsa kohdassa Asetukset, Aikataulut sekä rivillään **Kopioi nyt** -painike.
+- **Useita kopiointipaikkoja per toimialue:** rastita kohdassa **Kopiointikohteet** niin monta paikkaa kuin haluat; kukin kopioi toimialueen aikataulun mukaan.
+- **Säilytys, rajoitukset, tallennusluokka ja kasvubudjetti kuuluvat paikalle**, ja ne asetetaan paikan tiedoissa. Paikan säilytys koskee jokaista sen arkistoa, joten etäpaikka voi säilyttää kopioita pidempään arkistona; paikka, jonka jokainen sääntö on nolla, ei koskaan karsi mitään.
+- **Kylmä- ja arkistotallennusluokka (S3):** valitse S3-paikalle palautuksesta luettava taso (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-etäsijainnit asettavat luokkansa rclone-määrityksessä.
+- **Etäpaikkaan tallennettu toimialue:** katso [Etäpaikkaan tallennettu toimialue](offsite-recovery.md#remote-primary-repositories).
 
 ## Siirrettävät asetukset (vienti ja tuonti) {#portable-settings-export-and-import}
 
-**Vie ja tuo asetukset** -kortti Asetukset-sivulla kirjoittaa koko BombVault-kokoonpanosi (toimialueasetukset, etäkohteet, aikataulut, säilytys, ilmoitukset) siirrettävään JSON-tiedostoon, jonka voit tuoda toiseen instanssiin, joten uuteen laatikkoon siirtyminen tai kokoonpanon kloonaus ei tarkoita kaiken syöttämistä uudelleen käsin. Tuonti näyttää esikatselun ja pyytää vahvistusta, eikä se koskaan kosketa varmuuskopiodataasi tai historiaasi.
+**Vie ja tuo asetukset** -kortti Asetukset-sivulla kirjoittaa koko BombVault-kokoonpanosi (toimialueasetukset, tallennuspaikat, aikataulut, ilmoitukset) siirrettävään JSON-tiedostoon, jonka voit tuoda toiseen instanssiin, joten uuteen laatikkoon siirtyminen tai kokoonpanon kloonaus ei tarkoita kaiken syöttämistä uudelleen käsin. Tuonti näyttää esikatselun ja pyytää vahvistusta, eikä se koskaan kosketa varmuuskopiodataasi tai historiaasi.
 
 !!! warning "Vienti voi sisältää tunnuksia"
-    Valitset itse, sisällytetäänkö etä- ja ilmoitustunnukset tiedostoon. Tunnusten kanssa vienti on yhtä arkaluontoinen kuin palautuspakettisi, joten säilytä se turvallisessa paikassa. Ilman niitä tiedosto sisältää vain salaamattomat asetukset.
+    Valitset itse, sisällytetäänkö paikkojesi ja ilmoitustesi tunnukset tiedostoon. Tunnusten kanssa vienti on yhtä arkaluontoinen kuin palautuspakettisi, joten säilytä se turvallisessa paikassa. Ilman niitä tiedosto sisältää vain salaamattomat asetukset.

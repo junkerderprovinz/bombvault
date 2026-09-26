@@ -33,7 +33,7 @@ Detta är oftast ett övergivet restic-lås som lämnats kvar när containern up
 
 ## Min off-site-kopia hände inte efter en säkerhetskopiering
 
-Off-site-replikering är best-effort by design, så att en off-site-hicka aldrig misslyckar den lokala säkerhetskopian. Kontrollera off-site-schemat för den domänen (Inställningar, Scheman): ett tomt schema replikerar efter varje lokal säkerhetskopiering, medan en kadens skickar mer sällan. Använd **Replikera nu** på Off-site-fliken för en körning på begäran, och håll koll på replikeringsindikatorn på Översikten.
+Off-site-replikering är best-effort by design, så att en off-site-hicka aldrig misslyckar den lokala säkerhetskopian. Kontrollera off-site-schemat för den domänen (Inställningar, Scheman): ett tomt schema replikerar efter varje lokal säkerhetskopiering, medan en kadens skickar mer sällan. Använd **Kopiera nu** på domänens rad under Inställningar, Lagring för en körning på begäran, och håll koll på replikeringsindikatorn på Översikten.
 
 ## En återställning avbröts innan den startade
 

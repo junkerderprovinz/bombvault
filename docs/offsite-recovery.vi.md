@@ -4,13 +4,13 @@ Các bản sao lưu cục bộ bảo vệ bạn khỏi một container bị mấ
 
 ## Nhân bản off-site
 
-Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao off-site. Đặt một kho cho mỗi miền trên tab **Settings, Off-site**. BombVault nhân bản các snapshot mới tới đó bằng `restic copy` theo kiểu nỗ lực tối đa, nên một trục trặc off-site không bao giờ làm thất bại bản sao lưu cục bộ. Kho cục bộ vẫn là chính.
+Giữ bản sao lưu cục bộ nhanh và sao chép nó đến một hoặc nhiều điểm lưu trữ khác. Bạn chọn các điểm lưu trữ mà một miền được sao chép đến trên thẻ **Miền** dưới **Cài đặt, Lưu trữ**, mỗi chip ứng với một điểm lưu trữ (xem [Điểm lưu trữ](storage-places.md#domains)). BombVault sao chép các snapshot mới tới đó bằng `restic copy` theo kiểu nỗ lực tối đa, nên một lần sao chép thất bại không bao giờ làm thất bại bản sao lưu cục bộ. Điểm lưu trữ nơi một miền được lưu không nhất thiết phải là cục bộ; xem [Một miền được lưu ở điểm lưu trữ từ xa](#remote-primary-repositories).
 
-- **Nhiều đích off-site cho mỗi miền.** Mỗi miền (container, VM, flash, config và bộ tập tin) có thể nhân bản tới nhiều đích off-site cùng lúc, không chỉ một, nên bạn có thể giữ, ví dụ, một rest-server trên máy của một người bạn và một S3 bucket song song. Thêm các đích bổ sung trên Settings, Off-site, mỗi đích có kho lưu trữ riêng, lớp lưu trữ S3, cờ append-only, lưu giữ và ngân sách tăng trưởng riêng. Một thiết lập off-site đơn hiện có được chuyển sang nguyên vẹn làm đích đầu tiên, và mọi đích của một miền đều nhân bản theo lịch trình off-site của miền đó.
-- **Lịch trình off-site theo từng miền** (được chỉnh cùng với mọi lịch trình khác trên Settings, Schedules): để trống để nhân bản sau mỗi lần sao lưu cục bộ, hoặc đặt một nhịp độ (ví dụ `weekly Sun 03:00`) để gửi off-site ít thường xuyên hơn tần suất bạn sao lưu cục bộ. Một nút **Replicate now** lo các lần chạy theo yêu cầu.
-- **Lưu giữ off-site** nằm trên Settings, Off-site để bạn có thể giữ các bản sao off-site lâu hơn như một kho lưu trữ. Để chính sách tất cả bằng 0 để không bao giờ tự động dọn bớt các snapshot off-site.
-- **Giới hạn băng thông** (Settings, Off-site) giới hạn tốc độ tải lên/tải xuống của restic để việc nhân bản không làm bão hòa WAN của bạn.
-- Một **chỉ báo nhân bản** hiển thị miền nào đang nhân bản trong khi nó chạy (trên trang của nó và bảng điều khiển). Đó là một chỉ báo hoạt động, không phải một thanh phần trăm, vì `restic copy` không phơi bày tiến độ đọc được bằng máy.
+- **Nhiều điểm sao chép cho mỗi miền.** Một miền có thể được sao chép đến nhiều điểm lưu trữ cùng lúc, ví dụ một rest-server ở nhà một người bạn và một bucket B2. Mức lưu giữ, lớp lưu trữ, append-only, giới hạn và ngân sách tăng trưởng thuộc về điểm lưu trữ, nên mỗi bản sao tuân theo quy tắc của điểm lưu trữ mà nó được gửi tới.
+- **Lịch sao chép theo từng miền** (được chỉnh cùng với mọi lịch trình khác trên Cài đặt, Lịch trình): để trống để sao chép sau mỗi lần sao lưu cục bộ, hoặc đặt một nhịp độ (ví dụ `weekly Sun 03:00`) để sao chép ít thường xuyên hơn tần suất bạn sao lưu. **Sao chép ngay** trên hàng của miền chạy nó theo yêu cầu.
+- **Lưu giữ theo từng điểm lưu trữ.** Mỗi điểm lưu trữ giữ quy tắc riêng của nó, nên một điểm lưu trữ off-site có thể giữ các bản sao lâu hơn để lưu trữ dài hạn. Một điểm lưu trữ có mọi quy tắc bằng 0 thì không bao giờ cắt bớt.
+- **Giới hạn băng thông** theo từng điểm lưu trữ giới hạn tốc độ tải lên và tải xuống của restic để việc sao chép không làm bão hòa WAN của bạn.
+- Một **chỉ báo nhân bản** hiển thị miền nào đang sao chép trong khi việc sao chép chạy (trên trang của nó và bảng điều khiển). Đó là một chỉ báo hoạt động, không phải một thanh phần trăm, vì `restic copy` không phơi bày tiến độ đọc được bằng máy.
 
 !!! note "Khôi phục từ bất kỳ nơi nào"
     Mọi container, VM, bộ tập tin, flash và cấu hình ứng dụng đều liệt kê các bản sao lưu của mình như một dòng thời gian duy nhất trên tất cả những nơi một bản sao lưu nằm ở đó. Một bản sao lưu đã được sao chép sang B2 chỉ xuất hiện một lần, được đánh dấu bằng từng nơi đang giữ nó. Một lần khôi phục lấy nơi đầu tiên nó tiếp cận được, bắt đầu từ kho mà mục đó được ghi vào, và bạn có thể chọn một nơi khác cho từng hàng. Các nơi off-site chỉ được đọc khi bạn mở chúng. Xóa tại một nơi sẽ kiểm tra những nơi khác trước và cho biết đó có phải bản sao cuối cùng hay không.
@@ -21,53 +21,49 @@ Mỗi thẻ container, VM và bộ tập tin có một hàng **Nơi lưu trữ**
 
 - **Cục bộ** ghi mục vào kho được hiển thị dưới **Lưu tại** và không sao chép nó đi đâu cả. Dùng cho dữ liệu đã có sẵn một bản sao thứ hai, ví dụ một share nằm trên NAS.
 - **Cục bộ + ngoài site** cũng ghi vào đó, đồng thời sao chép đến các đích đã đánh dấu dưới **Sao chép đến**, mỗi chip ứng với một đích off-site của miền. Bỏ đánh dấu một chip thì đích đó sẽ không nhận thêm gì mới từ mục này nữa.
-- **Chỉ ngoài site** ghi mục thẳng vào nơi dưới **Gửi đến**: một kho trực tiếp bên cạnh một đích off-site, hoặc một kho từ xa bạn đã thiết lập dưới Cài đặt, Đường dẫn và lưu trữ, Kho lưu trữ.
+- **Chỉ ngoài site** ghi mục thẳng vào điểm lưu trữ dưới **Gửi đến**, bất kỳ điểm lưu trữ nào khác ngoài nơi lưu chính của miền. Khi miền đã được sao chép đến điểm lưu trữ đó, mục nhận một kho trực tiếp bên cạnh các bản sao; nếu không, BombVault tạo một kho cho miền tại đó.
 
 Vị trí được cố định kể từ lần sao lưu đầu tiên của mục, vì BombVault không bao giờ di chuyển bản sao lưu giữa các kho. Các bản sao thì có thể thay đổi bất cứ lúc nào. Một đích không còn nhận mục nữa vẫn giữ các bản sao đang có và cắt bớt chúng theo mức lưu giữ riêng ở lần chạy off-site tiếp theo của miền; **Xóa tại B2** trên thẻ sẽ xóa chúng ngay lập tức. Khi một số bản sao đó không tồn tại ở nơi nào khác, xác nhận sẽ liệt kê chúng theo ngày và yêu cầu nhập tên của mục. Không thể xóa bất cứ thứ gì khỏi các đích append-only.
 
-Dưới hàng này, thẻ cho biết mục đang đi đến đâu và thực sự có gì ở đó: có bao nhiêu địa điểm đang giữ nó, mỗi đích được thấy lần cuối khi nào, và có đáp ứng 3-2-1 hay không. Một địa điểm là máy chủ có dữ liệu gốc, mỗi đích off-site và mỗi kho được đánh dấu **Ngoài cơ sở**. BombVault kiểm tra bản sao và địa điểm; nó không kiểm tra phần "hai loại vật lưu trữ" của 3-2-1.
+Dưới hàng này, thẻ cho biết mục đang đi đến đâu và thực sự có gì ở đó: có bao nhiêu địa điểm đang giữ nó, mỗi đích được thấy lần cuối khi nào, và có đáp ứng 3-2-1 hay không. Một địa điểm là máy chủ có dữ liệu gốc và mỗi điểm lưu trữ ở một địa điểm khác (xem [Ngoài cơ sở](#off-the-premises-mark)). BombVault kiểm tra bản sao và địa điểm; nó không kiểm tra phần "hai loại vật lưu trữ" của 3-2-1.
 
-### Nơi lưu trữ mặc định
+### Mặc định theo từng miền
 
-Cài đặt, Đường dẫn và lưu trữ, **Nơi lưu trữ mặc định** có một hàng cho mỗi miền với cùng ba phân đoạn. Các bản sao áp dụng ngay cho mọi mục không có lựa chọn riêng, và cho các thư mục dự án của các stack Compose. Vị trí áp dụng cho một mục mới ở lần sao lưu đầu tiên của nó; thay đổi nó không di chuyển bất kỳ bản sao lưu nào. Trước khi lưu, hàng này nêu tên mọi đích sẽ nhận thêm hoặc mất mục, và điều đó có nghĩa là bao nhiêu snapshot. **Áp dụng cho các mục chưa có bản sao lưu** đưa mọi mục chưa có bản sao lưu nào trở về mặc định.
+Thẻ **Miền** dưới Cài đặt, Lưu trữ có một hàng cho mỗi miền. **Sao chép đến** áp dụng ngay cho mọi mục không có lựa chọn riêng, và cho các thư mục dự án của các stack Compose. Khi một miền đã có bản sao lưu, **Lưu tại** áp dụng cho một mục mới ở lần sao lưu đầu tiên của nó, và thay đổi nó không di chuyển bất kỳ bản sao lưu nào. Trước khi lưu, hàng này nêu tên mọi điểm lưu trữ sẽ nhận thêm hoặc mất mục và điều đó có nghĩa là bao nhiêu snapshot, và câu hỏi xác nhận kèm công tắc **Áp dụng cho các mục chưa có bản sao lưu**, công tắc này cũng đưa mọi mục chưa có bản sao lưu nào sang mặc định mới. **Ngoại lệ** liệt kê các mục có lựa chọn riêng.
 
-Một đích off-site mới sẽ nhận mọi mục không đặt là Cục bộ. Hộp thoại thêm đích đó cho biết có bao nhiêu mục và, nếu biết, đó là bao nhiêu lịch sử, đồng thời đề nghị bỏ qua những mục đã bị loại trừ khỏi các đích khác.
+Đánh dấu một điểm lưu trữ mới dưới **Sao chép đến** sẽ khiến nó nhận mọi mục không đặt là Cục bộ. Lời xác nhận cho biết có bao nhiêu mục và, nếu biết, đó là bao nhiêu lịch sử.
 
 ### Kho trực tiếp
 
-Chọn kho trực tiếp của một đích dưới Chỉ ngoài site sẽ mở một hộp thoại với vị trí được đề xuất bên cạnh đích đó, ví dụ `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, và một lần kiểm tra kết nối không tạo ra gì cả. **Tạo và dùng** sẽ tạo kho và trỏ mục vào đó. Một kho trực tiếp nhận khóa, lớp lưu trữ, giới hạn, cài đặt append-only và mức lưu giữ của đích, và thay đổi theo chúng; thẻ Kho lưu trữ hiển thị nó ở chế độ chỉ đọc. Khi một khóa mới của đích không thể mở được nó, kho trực tiếp giữ nguyên khóa đang có và lần lưu sẽ cho biết điều đó. Các snapshot của nó mang nhãn `bv:direct`, và mọi lần cắt tỉa khác đều giữ chúng lại, nên một kho trực tiếp đã mất liên kết với đích của nó sẽ không bao giờ già đi theo các quy tắc cục bộ. B2 được truy cập qua điểm cuối S3 của nó, với ID khóa và khóa ứng dụng được nhập làm thông tin xác thực S3; một khóa chỉ giới hạn trong thư mục riêng của đích sẽ không thể tiếp cận thư mục bên cạnh nó, vì vậy hãy giới hạn khóa vào thư mục phía trên đích thay vì vậy.
+Chọn dưới Chỉ ngoài site một điểm lưu trữ mà miền đã được sao chép đến sẽ hỏi một lần, rồi tạo một kho trực tiếp bên cạnh các bản sao, ví dụ `s3:https://s3.eu-central-003.backblazeb2.com/bucket/container-direct`, và trỏ mục vào đó. Với một đích sao chép không có điểm lưu trữ, lựa chọn này mở một hộp thoại với một địa chỉ được đề xuất và một lần kiểm tra kết nối không tạo ra gì cả, và **Tạo và dùng** sẽ tạo kho. Một kho trực tiếp nhận khóa, lớp lưu trữ, giới hạn, cài đặt append-only và mức lưu giữ của điểm lưu trữ, và thay đổi theo chúng. Khi một khóa mới của điểm lưu trữ không thể mở được nó, kho trực tiếp giữ nguyên khóa đang có và lần lưu sẽ cho biết điều đó. Các snapshot của nó mang nhãn `bv:direct`, và mọi lần cắt tỉa khác đều giữ chúng lại, nên một kho trực tiếp đã mất liên kết với điểm lưu trữ của nó sẽ không bao giờ già đi theo các quy tắc cục bộ. Một khóa B2 bị giới hạn trong một thư mục phải bao trùm địa chỉ của điểm lưu trữ, không chỉ thư mục của miền, nếu không thư mục bên cạnh sẽ nằm ngoài tầm với.
 
-### Ngoài cơ sở
+### Ngoài cơ sở {#off-the-premises-mark}
 
-Một kho đã đặt tên có thể được đánh dấu **Ngoài cơ sở** trên thẻ Kho lưu trữ. Các kho từ xa bắt đầu ở trạng thái đã đánh dấu; hãy tắt nó cho một rest-server trong cùng tòa nhà. Dấu này chỉ tính vào số địa điểm và 3-2-1 trên các thẻ. Nó không thay đổi bản sao nào.
+Một bản sao chỉ được tính là một địa điểm riêng khi điểm lưu trữ của nó ở một địa điểm khác. Một điểm lưu trữ đám mây luôn được tính còn một thư mục trên Unraid này thì không bao giờ; với một NAS, một rest-server hoặc một máy chủ SFTP, hãy trả lời **Thiết bị nằm ở đâu?** trong phần chi tiết của điểm lưu trữ bằng **Ở đây, trong nhà** hoặc **Ở một địa điểm khác**. Câu trả lời chỉ dùng để đếm địa điểm và 3-2-1 trên các thẻ và bảng điều khiển. Nó không thay đổi bản sao nào.
 
 ### Sau một lần xây dựng lại
 
-Các lựa chọn sao chép sống trong cài đặt riêng của BombVault. Sau một lần xây dựng lại qua Discover mà không có `/config` được khôi phục, chúng biến mất, và việc sao chép mọi thứ sẽ gửi lại lên B2 những mục bạn đã từng bỏ qua. Vì vậy việc nhân bản off-site của mọi miền được xây dựng lại sẽ tạm dừng. Dashboard hiển thị điều này bằng màu hổ phách, và Nơi lưu trữ mặc định đưa ra **Xác nhận mặc định** với một bản xem trước những gì lần chạy tiếp theo sẽ sao chép, cùng các tên trong bản sao lưu không có mục tương ứng, mà bạn có thể bỏ qua ngay tại đó. Chỉ có xác nhận mới chấm dứt việc tạm dừng; nhập một tệp cài đặt sẽ mang quy tắc và mặc định trở lại nhưng không chấm dứt việc tạm dừng.
+Các lựa chọn sao chép sống trong cài đặt riêng của BombVault. Sau một lần xây dựng lại qua Discover mà không có `/config` được khôi phục, chúng biến mất, và việc sao chép mọi thứ sẽ gửi lại lên B2 những mục bạn đã từng bỏ qua. Vì vậy việc nhân bản off-site của mọi miền được xây dựng lại sẽ tạm dừng. Dashboard hiển thị điều này bằng màu hổ phách, và hàng của miền trên thẻ Miền đưa ra **Xác nhận mặc định** với một bản xem trước những gì lần chạy tiếp theo sẽ sao chép, cùng các tên trong bản sao lưu không có mục tương ứng, mà bạn có thể bỏ qua ngay tại đó. Chỉ có xác nhận mới chấm dứt việc tạm dừng; nhập một tệp cài đặt sẽ mang quy tắc và mặc định trở lại nhưng không chấm dứt việc tạm dừng.
 
-## Kho chính từ xa {#remote-primary-repositories}
+## Một miền được lưu ở điểm lưu trữ từ xa {#remote-primary-repositories}
 
-Đường dẫn sao lưu của một miền (Cài đặt, Đường dẫn và lưu trữ) không giới hạn ở thư mục cục bộ: trỏ thẳng nó tới một kho restic từ xa (`s3:...`, `rest:http://host:8000/repo`, `sftp:nguoidung@host:/repo`, `rclone:remote:bucket/duong-dan`) và BombVault sao lưu thẳng tới đó, không cần bản sao cục bộ riêng và không có bước nhân bản. Đây thực sự là một hình thái khác với nhân bản ngoại vi ở trên: ở đó kho cục bộ là kho chính còn kho ngoại vi là bản lưu trữ của nó trong khả năng có thể; ở đây kho từ xa **chính là** kho chính, và là bản duy nhất chừng nào bạn chưa cấu hình thêm nhân bản ngoại vi (hoặc một kho từ xa thứ hai) cho miền đó.
+Một miền không nhất thiết phải được lưu cục bộ. Khi vị trí sao lưu của nó chưa chứa bản sao lưu nào, hãy chọn một điểm lưu trữ từ xa dưới **Lưu tại** trên thẻ Miền và miền sẽ sao lưu thẳng tới đó, không có bản sao cục bộ và không có bước sao chép. Khi đó kho từ xa là bản duy nhất, trừ khi miền còn được sao chép đến một điểm lưu trữ khác. Mọi điểm lưu trữ từ xa đều có cùng các biện pháp bảo vệ:
 
-Mỗi trong năm ô đường dẫn (Container, Máy ảo, Flash, Cấu hình, Tệp) đều có ngay bên cạnh một công tắc **Cục bộ / Từ xa**:
+- **Một lần kiểm tra kết nối** trước khi bất cứ thứ gì được ghi.
+- **Giới hạn băng thông** cho chính việc sao lưu, đúng những tùy chọn `--limit-upload` và `--limit-download` mà một lần sao chép dùng.
+- **Bảo vệ append-only**, được xác minh bằng đúng bài kiểm tra can thiệp chủ động. Khi bật, BombVault không bao giờ cắt tỉa kho, vì thông tin đăng nhập trên máy này không được phép xóa bản sao lưu duy nhất.
+- **Ngân sách tăng trưởng**, lấy từ chính xu hướng kích thước mà thẻ Lưu trữ theo dõi.
 
-- **Cục bộ** hiển thị trình duyệt thư mục quen thuộc.
-- **Từ xa** đổi nó thành một ô URL đơn giản, kèm một nút mở đúng hộp thoại kiểm tra kết nối và thông tin đăng nhập mà các đích ngoại vi vẫn dùng, chỉ khác là được cấu hình cho kho chính này. Từ đó bạn có:
-    - **Một lần kiểm tra kết nối** với đường dẫn thật, trước khi bạn trông cậy vào nó.
-    - **Giới hạn băng thông** (tải lên và tải xuống) để một bản sao lưu theo lịch tới kho chính từ xa không làm nghẽn đường WAN của bạn: đúng những tùy chọn restic `--limit-upload` và `--limit-download` mà nhân bản ngoại vi dùng, nay áp lên chính việc sao lưu.
-    - **Bảo vệ chỉ-ghi-thêm (bất biến)**, được xác minh bằng đúng bài kiểm tra can thiệp chủ động (một phép thử DELETE thật tới đầu bên kia) mà các đích ngoại vi nhận được. Khi bật, BombVault từ chối tự cắt tỉa kho: vì phía sau không có bản sao cục bộ riêng, thông tin đăng nhập trên máy này không được phép xóa bản sao lưu duy nhất.
-    - **Cảnh báo ngân sách tăng trưởng**, lấy từ chính xu hướng kích thước kho mà thẻ Lưu trữ vốn đã theo dõi.
+Một miền được lưu ở điểm lưu trữ từ xa là nguồn của các bản sao của nó, giống như một miền cục bộ; xem [Sao chép giữa các điểm lưu trữ có thông tin đăng nhập khác nhau](storage-places.md#different-credentials).
 
-Không điều nào trong số này là bắt buộc: một đường dẫn từ xa gõ tay, không lưu thiết lập an toàn nào, vẫn sao lưu y như trước (băng thông không giới hạn, cắt tỉa được, không cảnh báo ngân sách). Hộp thoại an toàn có ở đó cho lúc bạn muốn đúng những lớp bảo vệ mà một bản sao ngoại vi nhận được, mà không phải tạo riêng một đích ngoại vi chỉ để có chúng.
-
-!!! note "Thông tin đăng nhập đám mây và REST dùng chung"
-    Kho chính từ xa xác thực bằng đúng thông tin đăng nhập S3/REST đã cấu hình ở Cài đặt, Ngoại vi, Thông tin đăng nhập đám mây. Không có kho thông tin đăng nhập riêng cho các kho chính.
+!!! note "Thông tin đăng nhập thuộc về điểm lưu trữ"
+    Một điểm lưu trữ từ xa giữ thông tin đăng nhập riêng của nó. Một điểm lưu trữ được thiết lập bằng thông tin đăng nhập đám mây dùng chung sẽ tiếp tục dùng chúng cho đến khi quyền truy cập của nó được thay đổi trong phần chi tiết.
 
 ## Off-site bất biến (append-only)
 
 Đánh dấu một kho off-site là append-only để ransomware, hoặc một máy chủ bị xâm nhập, không thể xóa hay ghi lại các bản sao lưu của bạn. Phía bên kia (một `restic/rest-server` chạy ở chế độ `--append-only`) **thực thi** điều đó. BombVault chỉ luôn **xác minh** nó và không bao giờ hiển thị xanh chỉ dựa trên một tuyên bố cấu hình.
 
-Trình hướng dẫn **thiết lập off-site có hướng dẫn** dẫn bạn từ lựa chọn backend (rest-server / rclone / S3) qua một đoạn triển khai rest-server sẵn sàng để dán, một lần kiểm tra kết nối, công tắc bất biến (chạy ngay lập tức bài kiểm tra can thiệp) và một chiến lược lưu giữ, nên off-site append-only là điều có thể đạt được mà không cần chỉnh sửa cấu hình bằng tay.
+Cửa sổ **Thêm điểm lưu trữ** kèm một công thức sẵn sàng để dán cho một rest-server ở chế độ append-only, với một người dùng cho BombVault này. Tại một điểm lưu trữ rest-server có bật **Append-only**, **Kiểm tra append-only** trong phần chi tiết của điểm lưu trữ chạy bài kiểm tra can thiệp cho từng miền được lưu hoặc được sao chép tại đó, nên off-site append-only là điều có thể đạt được mà không cần chỉnh sửa cấu hình bằng tay.
 
 !!! note "Xóa thành công dưới `/locks/` là hành vi mong đợi"
     Append-only không có nghĩa là không còn xóa được gì nữa. restic phải tự tạo và giải phóng khóa của nó, nên `/locks/` cố ý vẫn ghi và xóa được. Các snapshot và dữ liệu phía sau chúng, tức đúng thứ mà mã độc tống tiền nhắm tới, không thể bị xóa. Nếu bạn tự kiểm tra phía xa, một thao tác xóa thành công dưới `/locks/` là hành vi đúng chứ không phải lỗ hổng bảo vệ.
@@ -118,28 +114,28 @@ Phần trên mô tả các bộ phận. Đây là một thiết lập hoàn ch�
 
 Hai máy: **TOWER** chạy các container và gửi bản sao lưu, **VAULT** nhận chúng và cưỡng chế tính bất biến. Hãy thay bằng tên, địa chỉ và đường dẫn chia sẻ của bạn.
 
-**1. Trên VAULT, dựng máy chủ chỉ-ghi-thêm.** Trong BombVault trên TOWER, vào *Cài đặt → Ngoại vi → thiết lập có hướng dẫn*, chọn **rest-server** và tạo công thức. Sao chép thẻ **Mẫu Unraid (XML)**, lưu trên VAULT thành `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, rồi *Docker → Add Container* và chọn **rest-server** trong danh sách mẫu. Trước khi khởi động, ghi dòng `htpasswd` hiển thị vào `/mnt/user/appdata/rest-server/.htpasswd` trên VAULT. Mật khẩu dùng một lần chỉ hiện một lần và không bao giờ được lưu, hãy sao chép ngay. Dòng đó mang chính mật khẩu ấy, đã được băm bằng bcrypt sẵn cho bạn: văn bản rõ đi vào thông tin đăng nhập REST trên TOWER, dòng đã băm đi vào `.htpasswd` trên VAULT. Bạn không phải tự băm gì cả.
+**1. Trên VAULT, dựng máy chủ chỉ-ghi-thêm.** Trong BombVault trên TOWER, mở *Cài đặt → Lưu trữ*, nhấp **Thêm điểm lưu trữ**, chọn **rest-server** và nhấp **Hiện công thức**. Sao chép khối **Mẫu Unraid**, lưu trên VAULT thành `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, rồi *Docker → Add Container* và chọn **rest-server** trong danh sách mẫu. Trước khi khởi động, ghi dòng `htpasswd` hiển thị vào `/mnt/user/appdata/rest-server/.htpasswd` trên VAULT. Mật khẩu chỉ hiện một lần và không bao giờ được lưu; công thức đã điền nó cùng người dùng vào biểu mẫu trên TOWER, nên hãy để cửa sổ đó mở. Dòng `htpasswd` mang chính mật khẩu ấy, đã được băm bằng bcrypt sẵn cho bạn, nên bạn không phải tự băm gì cả.
 
-    Giữ nguyên `--append-only` trong ô OPTIONS. Đó chính là điểm mấu chốt: thiếu nó, VAULT lại chỉ là một thư mục chia sẻ thông thường.
+    Giữ nguyên `--append-only` trong ô OPTIONS. Thiếu nó, VAULT lại chỉ là một thư mục chia sẻ thông thường.
 
-**2. Trên TOWER, trỏ kho ngoại vi tới đó.** Địa chỉ kho theo đúng mẫu mà công thức in ra:
+**2. Trên TOWER, thêm điểm lưu trữ.** Nhập địa chỉ của VAULT, `http://VAULT:8000`, bên cạnh người dùng và mật khẩu mà công thức đã điền, rồi nhấp **Kiểm tra kết nối**. BombVault dựng địa chỉ từ các thông tin đó:
 
-    rest:http://VAULT:8000/bombvault-containers/containers
+    rest:http://VAULT:8000/tower
 
-Đoạn đầu của đường dẫn là người dùng htpasswd, đoạn thứ hai là kho. Nhập người dùng và mật khẩu đã tạo làm thông tin đăng nhập REST của đích, rồi chạy **kiểm tra kết nối**.
+Đoạn đầu của đường dẫn là người dùng htpasswd, ở đây là `tower`, và mỗi miền có thư mục riêng bên dưới, ví dụ `rest:http://VAULT:8000/tower/container`. Trả lời **Thiết bị nằm ở đâu?** bằng **Ở một địa điểm khác**, nhấp **Thêm**, rồi đánh dấu điểm lưu trữ dưới **Sao chép đến** cho các miền cần gửi đến đó.
 
-**3. Trên TOWER, bật „Bất biến”.** Kiểm tra can thiệp chạy ngay và phải báo *được bảo vệ*. Ý nghĩa các kết quả:
+**3. Trên TOWER, bật Append-only** dưới **Bảo vệ** trong phần chi tiết của điểm lưu trữ, rồi nhấp **Kiểm tra append-only**. Bài kiểm tra chạy cho từng miền được lưu hoặc được sao chép tại điểm lưu trữ, và mỗi miền phải báo *xóa bị từ chối*. Ý nghĩa các kết quả:
 
 | Kết quả | Điều đã xảy ra |
 | --- | --- |
-| **được bảo vệ** | VAULT đã từ chối lệnh xóa. Đây là trạng thái đạt duy nhất. |
-| **KHÔNG được bảo vệ** | VAULT đã chấp nhận một lệnh xóa. Thiếu `--append-only` hoặc nó đã bị bỏ đi. |
-| **không kết luận được** | Không thuộc trường hợp nào. Thường là địa chỉ không phải địa chỉ mà chính restic dùng, hoặc thông tin đăng nhập đã đổi. Không có gì được ghi lại và không có cảnh báo nào. |
+| **xóa bị từ chối** | VAULT đã từ chối lệnh xóa. Đây là trạng thái đạt duy nhất. |
+| **xóa được chấp nhận** | VAULT đã chấp nhận một lệnh xóa. Thiếu `--append-only` hoặc nó đã bị bỏ đi. |
+| một thông báo thay vì kết quả | Bài kiểm tra không chạy được. Thường là địa chỉ không phải địa chỉ mà chính restic dùng, hoặc thông tin đăng nhập đã đổi. Không có gì được ghi lại và không có cảnh báo nào. |
 
 **4. Trên VAULT, xem những gì tới nơi.** Bật *Cài đặt → Bộ nhận*, mở thẻ **Bộ nhận** và đăng ký kho ở chế độ chỉ đọc.
 
 !!! warning "Vị trí là đường dẫn **bên trong** container, viết tương đối so với điểm gắn của máy chủ"
-    Nhập `user/appdata/rest-server/bombvault-containers/containers`, **không phải** `/mnt/user/appdata/…`. BombVault chạy trong container, nơi `/mnt` của máy chủ được gắn ở chỗ khác; đường dẫn tuyệt đối của máy chủ không tồn tại bên trong. Nếu bạn dán vào, BombVault nay sẽ cho biết đường dẫn tương đối cần dùng.
+    Nhập `user/appdata/rest-server/tower/container`, **không phải** `/mnt/user/appdata/…`. BombVault chạy trong container, nơi `/mnt` của máy chủ được gắn ở chỗ khác; đường dẫn tuyệt đối của máy chủ không tồn tại bên trong. Nếu bạn dán vào, BombVault sẽ cho biết đường dẫn tương đối cần dùng.
 
     **APP_KEY bên gửi** là khóa của TOWER, không phải của VAULT. Bạn tìm thấy nó trên TOWER tại *Cài đặt → Hệ thống*.
 
@@ -151,7 +147,7 @@ Một tab **Recovery** chuyên biệt dẫn một bản cài đặt mới hoặc
 
 1. **Khôi phục cài đặt của chính BombVault trước**, nên các đường dẫn sao lưu, đích off-site và thông tin đăng nhập mà phần còn lại của quy trình cần được điền sẵn (áp dụng qua một lần tự khởi động lại thông qua Docker socket, nên cơ sở dữ liệu cài đặt đang chạy không bao giờ bị ghi đè dưới một handle đang mở).
 2. **Kiểm tra BombVault có thể đọc các bản sao lưu của bạn** (điểm mắc kẹt về khóa mã hóa ngay từ đầu).
-3. Cho bạn **trỏ tới kho hiện có của bạn** (cục bộ hoặc off-site).
+3. Cho bạn **trỏ tới kho hiện có của bạn**: một thư mục cục bộ, hoặc một điểm lưu trữ từ xa được kết nối qua cùng cửa sổ **Thêm điểm lưu trữ** như trên Cài đặt, Lưu trữ.
 4. **Khám phá** các container, VM và bộ tập tin được lưu trong đó.
 5. **Khôi phục tất cả chúng** (để nguyên trạng thái dừng, nên bạn khởi động chúng một cách có chủ đích), với bộ khôi phục của bạn chỉ cách một cú nhấp.
 

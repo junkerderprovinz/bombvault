@@ -33,7 +33,7 @@ Bu genellikle, konteyner işlem ortasında güncellendiğinde ya da yeniden baş
 
 ## Bir yedeklemeden sonra site dışı kopyam gerçekleşmedi
 
-Site dışı çoğaltma tasarım gereği en iyi çabadır, böylece bir site dışı aksaklık asla yerel yedeklemeyi bozmaz. O etki alanı için site dışı zamanlamayı denetleyin (Ayarlar, Zamanlamalar): boş bir zamanlama her yerel yedeklemeden sonra çoğaltır, bir sıklık ise daha seyrek gönderir. İstek üzerine bir çalışma için Site dışı sekmesindeki **Şimdi çoğalt**'ı kullanın ve Kontrol Paneli'ndeki çoğaltma göstergesini izleyin.
+Site dışı çoğaltma tasarım gereği en iyi çabadır, böylece bir site dışı aksaklık asla yerel yedeklemeyi bozmaz. O etki alanı için site dışı zamanlamayı denetleyin (Ayarlar, Zamanlamalar): boş bir zamanlama her yerel yedeklemeden sonra çoğaltır, bir sıklık ise daha seyrek gönderir. İstek üzerine bir çalışma için Ayarlar, Depolama altında etki alanının satırındaki **Şimdi kopyala**'yı kullanın ve Kontrol Paneli'ndeki çoğaltma göstergesini izleyin.
 
 ## Bir geri yükleme başlamadan iptal oldu
 

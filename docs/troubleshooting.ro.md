@@ -33,7 +33,7 @@ Acesta este de obicei un blocaj restic orfan lăsat în urmă când containerul 
 
 ## Copia mea off-site nu s-a întâmplat după un backup
 
-Replicarea off-site este best-effort prin design, așa că o problemă off-site nu eșuează niciodată backupul local. Verifică programarea off-site pentru acel domeniu (Setări, Programări): o programare goală replică după fiecare backup local, în timp ce o cadență trimite mai rar. Folosește **Replicate now** în fila Off-site pentru o rulare la cerere și urmărește indicatorul de replicare pe panoul principal.
+Replicarea off-site este best-effort prin design, așa că o problemă off-site nu eșuează niciodată backupul local. Verifică programarea off-site pentru acel domeniu (Setări, Programări): o programare goală replică după fiecare backup local, în timp ce o cadență trimite mai rar. Folosește **Copiază acum** pe rândul domeniului din Setări, Stocare pentru o rulare la cerere și urmărește indicatorul de replicare pe panoul principal.
 
 ## O restaurare s-a oprit înainte de a începe
 

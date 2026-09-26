@@ -1,6 +1,6 @@
 # Yapılandırma
 
-Bu sayfa konteynerin ortam değişkenlerini, şablonun sağladığı bağlamaları, SSH üzerinden VM yedeklemesini ve site dışı kurulumu kapsar. Yedekleme **depo yolları** ortam değişkenleriyle değil, uygulamanın içinde yapılandırılır (Ayarlar, Yedekleme yolları).
+Bu sayfa konteynerin ortam değişkenlerini, şablonun sağladığı bağlamaları, SSH üzerinden VM yedeklemesini ve site dışı kurulumu kapsar. Yedeklerin nereye gideceğini ortam değişkenleriyle değil, uygulamanın içinde, **Ayarlar, Depolama** sekmesinde belirlersiniz.
 
 ## Ortam değişkenleri
 
@@ -26,7 +26,7 @@ Bu sayfa konteynerin ortam değişkenlerini, şablonun sağladığı bağlamalar
 
 Docker soketini, flash'ı (`/boot`) ve **Host Data** kökünü (`/mnt`) CA şablonunda gösterildiği gibi bağlayın. Yedekleme *kaynakları* ve *hedefleri* her ikisi de Host Data altında yer alır ve o **slave** olarak bağlanır, böylece konteyner başladıktan sonra bağlanan bir uzak paylaşım (örneğin `/mnt/remotes` altında) yeniden başlatma olmadan görünür hale gelir.
 
-Yedekleme depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files}` şeklindedir, ilk yedeklemede oluşturulur. Konumu istediğiniz zaman **Ayarlar, Yedekleme yolları**'nda değiştirin.
+Yeni bir kurulum her etki alanını **Unraid** konumunda, `/mnt/user/bombvault` altında etki alanı başına bir klasörle (`container`, `vms`, `flash`, `config`, `files`) depolar; klasörler ilk yedeklemede oluşturulur. Yerel ya da uzak başka konumları **Ayarlar, Depolama** sekmesinde eklersiniz; bkz. [Depolama konumları](storage-places.md).
 
 !!! note "Host entegrasyon denetimi"
     Konteyner başladıktan sonra web arayüzünde `/spike`'ı açın. Her bağlamayı ve CLI'ı (Docker soketi, libvirt, restic, qemu-img, rclone) yoklar ve eksik parçaları bildirir.
@@ -71,20 +71,20 @@ Hızlı kurulum:
 
 ## Site dışı kurulum
 
-**Ayarlar, Site dışı** sekmesinde bir site dışı kopya kurun. Tam iş akışı için (değiştirilemez/yalnızca ekleme, kurcalama testi ve DR tatbikatları) bkz. [Site dışı ve kurtarma](offsite-recovery.md). Kısaca:
+Site dışı kopyalar depolama konumlarına gider. Konumu **Ayarlar, Depolama** sekmesinde **Konum ekle** ile ekleyin, sonra etki alanının satırında **Kopyalama hedefleri** altında işaretleyin. [Depolama konumları](storage-places.md) her bağlantı türünü, [Site dışı ve kurtarma](offsite-recovery.md) ise append-only'yi, kurcalama testini ve DR tatbikatlarını anlatır. Kısaca:
 
-- **Arka uçlar:** SMB/CIFS ve NFS (paylaşımı bağlayın ve ona bir Yedekleme Yolu ayarlayın), rclone olmadan yerel restic arka uçları (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) ya da herhangi bir rclone uzak konumu (`rclone:<remote>:<bucket>/path`).
-- **Bulut kimlik bilgileri** Ayarlar, Site dışı, Bulut kimlik bilgileri altında şifreli saklanır.
-- **SSH hedefleri karşı tarafta hiçbir şey kurmayı gerektirmez.** `sftp:` yalnızca bir SSH sunucusu gerektirir. **Ayarlar, Sistem, SSH üzerinden VM Yedeği** bölümündeki genel anahtarı (ayrıca `/config/ssh/id_ed25519.pub` konumunda) hedef kullanıcının `~/.ssh/authorized_keys` dosyasına ekleyin.
-- **Site dışı kopya:** BombVault yeni anlık görüntüleri en iyi çaba temelinde `restic copy` ile çoğaltır. Yerel depo birincil kalır. Her etki alanının kendi site dışı zamanlaması ve ayrıca bir **Şimdi çoğalt** düğmesi vardır.
-- **Etki alanı başına birden fazla site dışı hedef:** her etki alanı aynı anda birkaç site dışı hedefe çoğaltabilir. Ayarlar, Site dışı'nda her biri kendi deposu, S3 depolama sınıfı, yalnızca ekleme bayrağı, saklama ve büyüme bütçesiyle ek hedefler ekleyin; hepsi o etki alanının site dışı zamanlamasında çoğaltılır. Mevcut tek bir site dışı kurulum ilk hedef olarak taşınır.
-- **Kaynak başına saklama:** yerel ilke Ayarlar, Yollar ve Depolama'da yer alır; site dışı ilke Ayarlar, Site dışı'nda (site dışı anlık görüntüleri asla otomatik kırpmamak için tümünü sıfır bırakın).
-- **Bant genişliği sınırları:** Ayarlar, Site dışı altında restic yükleme/indirme hızını sınırlayın.
-- **Soğuk ve arşiv depolama sınıfı (S3):** yerel bir S3 site dışı deposu için geri yüklenebilir bir katman seçin (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone uzak konumları sınıflarını rclone yapılandırmasında ayarlar.
+- **Bağlantı türleri:** bu Unraid'deki bir klasör ya da `/mnt/remotes` altına bağlanmış bir NAS paylaşımı, S3 depolama (Backblaze B2 ve diğer bulut sağlayıcıları ya da MinIO veya Garage gibi kendi sunucunuzda çalışan bir hizmet), rest-server, Hetzner Storage Box dahil SFTP, Nextcloud, ownCloud ve OpenCloud için WebDAV, Azure Blob ve herhangi bir rclone uzak tanımı. Backblaze B2 yalnızca anahtarı ister: BombVault bucket'ı ve S3 uç noktasını anahtardan okur.
+- **Kimlik bilgileri** ait oldukları konumla birlikte şifreli saklanır. Çekme kaynaklarının kullandığı kimlik bilgisi kümeleri, Örnekler sayfasının **Çekme** sekmesindedir.
+- **SSH hedefleri karşı tarafta hiçbir şey kurmayı gerektirmez.** Bir SFTP konumu yalnızca bir SSH sunucusu gerektirir. SFTP formunda gösterilen genel anahtarı (ayrıca **Ayarlar, Sistem, SSH üzerinden VM Yedeği** altında ve `/config/ssh/id_ed25519.pub` dosyasında bulunur) hedef kullanıcının `~/.ssh/authorized_keys` dosyasına ekleyin.
+- **Site dışı kopya:** BombVault yeni anlık görüntüleri, etki alanının depolandığı konuma ek olarak, en iyi çaba temelinde `restic copy` ile kopyalar. Her etki alanının Ayarlar, Zamanlamalar'da kendi kopyalama zamanlaması ve satırında **Şimdi kopyala** vardır.
+- **Etki alanı başına birden çok kopyalama konumu:** **Kopyalama hedefleri** altında istediğiniz kadar konum işaretleyin; her biri etki alanının zamanlamasıyla kopyalar.
+- **Saklama, sınırlar, depolama sınıfı ve büyüme bütçesi konuma aittir** ve konumun ayrıntılarında ayarlanır. Bir konumun saklama kuralları oradaki her depoya uygulanır, böylece site dışı bir konum kopyaları bir arşiv olarak daha uzun tutabilir; her kuralı sıfır olan bir konum hiçbir şeyi kırpmaz.
+- **Soğuk ve arşiv depolama sınıfı (S3):** bir S3 konumu için geri yüklenebilir bir katman seçin (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone uzak konumları sınıflarını rclone yapılandırmasında ayarlar.
+- **Uzak bir konumda depolanan etki alanı:** bkz. [Uzak bir konumda depolanan etki alanı](offsite-recovery.md#remote-primary-repositories).
 
 ## Taşınabilir ayarlar (dışa ve içe aktarma) {#portable-settings-export-and-import}
 
-Ayarlar sayfasındaki **Ayarları dışa ve içe aktar** kartı, tüm BombVault yapılandırmanızı (etki alanı ayarları, site dışı hedefler, zamanlamalar, saklama, bildirimler) başka bir örnekte içe aktarabileceğiniz taşınabilir bir JSON dosyasına yazar, böylece yeni bir makineye taşınmak ya da bir kurulumu klonlamak her şeyi elle yeniden girmek anlamına gelmez. İçe aktarma bir önizleme gösterir ve onay ister ve yedekleme verilerinize ya da geçmişinize asla dokunmaz.
+Ayarlar sayfasındaki **Ayarları dışa ve içe aktar** kartı, tüm BombVault yapılandırmanızı (etki alanı ayarları, depolama konumları, zamanlamalar, bildirimler) başka bir örnekte içe aktarabileceğiniz taşınabilir bir JSON dosyasına yazar, böylece yeni bir makineye taşınmak ya da bir kurulumu klonlamak her şeyi elle yeniden girmek anlamına gelmez. İçe aktarma bir önizleme gösterir ve onay ister ve yedekleme verilerinize ya da geçmişinize asla dokunmaz.
 
 !!! warning "Dışa aktarma kimlik bilgileri içerebilir"
-    Site dışı ve bildirim kimlik bilgilerini dosyaya dahil edip etmeyeceğinizi siz seçersiniz. Kimlik bilgileri dahilken, dışa aktarma kurtarma kitiniz kadar hassastır, bu nedenle onu güvenli bir yerde saklayın. Onlarsız, dosya yalnızca gizli olmayan ayarları tutar.
+    Konumlarınızın ve bildirimlerinizin kimlik bilgilerini dosyaya dahil edip etmeyeceğinizi siz seçersiniz. Kimlik bilgileri dahilken, dışa aktarma kurtarma kitiniz kadar hassastır, bu nedenle onu güvenli bir yerde saklayın. Onlarsız, dosya yalnızca gizli olmayan ayarları tutar.

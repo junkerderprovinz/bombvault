@@ -33,7 +33,7 @@ Di solito è un lock restic orfano lasciato quando il container è stato aggiorn
 
 ## La mia copia off-site non è avvenuta dopo un backup
 
-La replica off-site è best-effort per progettazione, così un intoppo off-site non fa mai fallire il backup locale. Controlla il calendario off-site per quel dominio (Impostazioni, Calendari): un calendario vuoto replica dopo ogni backup locale, mentre una cadenza spedisce meno spesso. Usa **Replica ora** nella scheda Off-site per un'esecuzione su richiesta, e osserva l'indicatore di replica sulla Dashboard.
+La replica off-site è best-effort per progettazione, così un intoppo off-site non fa mai fallire il backup locale. Controlla il calendario off-site per quel dominio (Impostazioni, Calendari): un calendario vuoto replica dopo ogni backup locale, mentre una cadenza spedisce meno spesso. Usa **Copia ora** sulla riga del dominio in Impostazioni, Archiviazione per un'esecuzione su richiesta, e osserva l'indicatore di replica sulla Dashboard.
 
 ## Un ripristino si è interrotto prima di iniziare
 

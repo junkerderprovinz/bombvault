@@ -1,6 +1,6 @@
 # Configurazione
 
-Questa pagina copre le variabili d'ambiente del container, i mount forniti dal template, il backup delle VM via SSH e la configurazione off-site. I **percorsi dei repository** di backup si configurano dentro l'app (Impostazioni, Percorsi di backup), non tramite variabili d'ambiente.
+Questa pagina copre le variabili d'ambiente del container, i mount forniti dal template, il backup delle VM via SSH e la configurazione off-site. Dove vanno i backup lo imposti dentro l'app, in **Impostazioni, Archiviazione**, non tramite variabili d'ambiente.
 
 ## Variabili d'ambiente
 
@@ -26,7 +26,7 @@ Questa pagina copre le variabili d'ambiente del container, i mount forniti dal t
 
 Monta il socket Docker, il flash (`/boot`) e la radice **Host Data** (`/mnt`) come mostrato nel template CA. Le *origini* e le *destinazioni* dei backup risiedono entrambe sotto Host Data, ed è montato **slave** così una condivisione remota che si monta dopo l'avvio del container (per esempio sotto `/mnt/remotes`) diventa visibile senza un riavvio.
 
-I percorsi dei repository di backup hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files}`, creati al primo backup. Cambia la posizione in qualsiasi momento in **Impostazioni, Percorsi di backup**.
+Un'installazione nuova salva ogni dominio nel luogo **Unraid**, in `/mnt/user/bombvault` con una cartella per dominio (`container`, `vms`, `flash`, `config`, `files`), creata al primo backup. Aggiungi altri luoghi, locali o remoti, in **Impostazioni, Archiviazione**; vedi [Luoghi di archiviazione](storage-places.md).
 
 !!! note "Verifica dell'integrazione host"
     Apri `/spike` nell'interfaccia web dopo l'avvio del container. Sonda ogni mount e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e segnala eventuali pezzi mancanti.
@@ -71,20 +71,20 @@ Il template aggiunge `--add-host=host.docker.internal:host-gateway` così il con
 
 ## Configurazione off-site
 
-Configura una replica off-site nella scheda **Impostazioni, Off-site**. Vedi [Off-site e ripristino](offsite-recovery.md) per il flusso di lavoro completo (immutabile/append-only, tamper testing ed esercitazioni DR). In breve:
+Le copie off-site vanno nei luoghi di archiviazione. Aggiungi il luogo in **Impostazioni, Archiviazione** con **Aggiungi luogo**, poi spuntalo in **Copiato su** sulla riga del dominio. [Luoghi di archiviazione](storage-places.md) copre ogni tipo di connessione, e [Off-site e ripristino](offsite-recovery.md) copre append-only, tamper testing ed esercitazioni DR. In breve:
 
-- **Backend:** SMB/CIFS e NFS (monta la condivisione e puntaci un Percorso di backup), backend restic nativi senza rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), o qualsiasi remote rclone (`rclone:<remote>:<bucket>/path`).
-- **Le credenziali cloud** vengono memorizzate cifrate sotto Impostazioni, Off-site, Credenziali cloud.
-- **Le destinazioni SSH non richiedono nulla di installato sull'altro lato.** `sftp:` necessita solo di un server SSH. Aggiungi la chiave pubblica da **Impostazioni, Sistema, Backup VM via SSH** (anche in `/config/ssh/id_ed25519.pub`) al file `~/.ssh/authorized_keys` dell'utente di destinazione.
-- **Copia off-site:** BombVault replica i nuovi snapshot con `restic copy` su base best-effort. Il repo locale resta primario. Ogni dominio ha il proprio calendario off-site, più un pulsante **Replica ora**.
-- **Più destinazioni off-site per dominio:** ogni dominio può replicare verso più destinazioni off-site contemporaneamente. Aggiungi destinazioni extra in Impostazioni, Off-site, ciascuna con il proprio repository, classe di archiviazione S3, flag append-only, conservazione e budget di crescita; replicano tutte secondo il calendario off-site di quel dominio. Una configurazione off-site singola esistente viene riportata come prima destinazione.
-- **Conservazione per sorgente:** la policy locale risiede su Impostazioni, Percorsi e Archiviazione; la policy off-site su Impostazioni, Off-site (lasciala tutta a zero per non tagliare mai automaticamente gli snapshot off-site).
-- **Limiti di banda:** limita la velocità di upload/download di restic sotto Impostazioni, Off-site.
-- **Classe di archiviazione fredda e d'archivio (S3):** per un repo off-site S3 nativo, scegli un livello leggibile in ripristino (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). I remote rclone impostano la loro classe nella configurazione rclone.
+- **Tipi di connessione:** una cartella su questo Unraid o una condivisione NAS montata sotto `/mnt/remotes`, archiviazione S3 (Backblaze B2 e gli altri provider cloud, oppure un servizio autogestito come MinIO o Garage), rest-server, SFTP inclusa una Hetzner Storage Box, WebDAV per Nextcloud, ownCloud e OpenCloud, Azure Blob e qualsiasi remote rclone. Backblaze B2 richiede solo la chiave: BombVault ne ricava il bucket e l'endpoint S3.
+- **Le credenziali** vengono memorizzate cifrate insieme al luogo a cui appartengono. I set di credenziali usati dalle sorgenti di prelievo si trovano nella scheda **Prelievo** della pagina Istanze.
+- **Le destinazioni SSH non richiedono nulla di installato sull'altro lato.** Un luogo SFTP necessita solo di un server SSH. Aggiungi la chiave pubblica mostrata nel modulo SFTP (anche in **Impostazioni, Sistema, Backup VM via SSH** e in `/config/ssh/id_ed25519.pub`) al file `~/.ssh/authorized_keys` dell'utente di destinazione.
+- **Copia off-site:** BombVault copia i nuovi snapshot con `restic copy` su base best-effort, in aggiunta al luogo in cui è salvato un dominio. Ogni dominio ha il proprio calendario di copia in Impostazioni, Calendari, più **Copia ora** sulla sua riga.
+- **Più luoghi di copia per dominio:** spunta in **Copiato su** tutti i luoghi che vuoi; ognuno copia secondo il calendario del dominio.
+- **Conservazione, limiti, classe di archiviazione e budget di crescita appartengono al luogo** e si impostano nei suoi dettagli. La conservazione di un luogo vale per ogni repository che contiene, così un luogo off-site può tenere le copie più a lungo come archivio; un luogo con tutte le regole a zero non taglia mai.
+- **Classe di archiviazione fredda e d'archivio (S3):** per un luogo S3, scegli un livello leggibile in ripristino (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). I remote rclone impostano la loro classe nella configurazione rclone.
+- **Un dominio salvato in un luogo remoto:** vedi [Un dominio salvato in un luogo remoto](offsite-recovery.md#remote-primary-repositories).
 
 ## Impostazioni portatili (esporta e importa) {#portable-settings-export-and-import}
 
-La scheda **Esporta e importa impostazioni** nella pagina Impostazioni scrive l'intera configurazione BombVault (impostazioni di dominio, destinazioni off-site, calendari, conservazione, notifiche) in un file JSON portatile che puoi importare su un'altra istanza, così passare a una nuova macchina o clonare una configurazione non significa reinserire tutto a mano. L'importazione mostra un'anteprima e chiede conferma, e non tocca mai i tuoi dati di backup o la cronologia.
+La scheda **Esporta e importa impostazioni** nella pagina Impostazioni scrive l'intera configurazione BombVault (impostazioni di dominio, luoghi di archiviazione, calendari, notifiche) in un file JSON portatile che puoi importare su un'altra istanza, così passare a una nuova macchina o clonare una configurazione non significa reinserire tutto a mano. L'importazione mostra un'anteprima e chiede conferma, e non tocca mai i tuoi dati di backup o la cronologia.
 
 !!! warning "L'esportazione può contenere credenziali"
-    Scegli tu se includere le credenziali off-site e di notifica nel file. Con le credenziali incluse, l'esportazione è sensibile quanto il tuo kit di ripristino, quindi conservala in un luogo sicuro. Senza di esse, il file contiene solo impostazioni non segrete.
+    Scegli tu se includere nel file le credenziali dei tuoi luoghi e delle notifiche. Con le credenziali incluse, l'esportazione è sensibile quanto il tuo kit di ripristino, quindi conservala in un luogo sicuro. Senza di esse, il file contiene solo impostazioni non segrete.
