@@ -18,6 +18,9 @@ type RestoreDrill struct {
 	// Kind is the drill flavour: "subset" (the default; `restic check
 	// --read-data-subset`) or "dr" (a real sandbox restore from off-site).
 	Kind string `json:"kind"`
+	// TargetID is the off-site target a DR drill ran against, "" for a local
+	// drill and for a target the settings describe without a row.
+	TargetID string `json:"targetId"`
 }
 
 // defaultRestoreDrillLimit caps an unbounded ListRestoreDrills request.
@@ -30,9 +33,9 @@ func (r *Repo) AddRestoreDrill(d RestoreDrill) error {
 		d.Kind = "subset"
 	}
 	_, err := r.db.Exec(`
-		INSERT INTO restore_drills (domain, source, at, ok, detail, kind)
-		VALUES (?, ?, ?, ?, ?, ?)`,
-		d.Domain, d.Source, d.At, boolInt(d.OK), d.Detail, d.Kind,
+		INSERT INTO restore_drills (domain, source, at, ok, detail, kind, offsite_target_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		d.Domain, d.Source, d.At, boolInt(d.OK), d.Detail, d.Kind, d.TargetID,
 	)
 	if err != nil {
 		return fmt.Errorf("AddRestoreDrill: %w", err)
@@ -45,7 +48,7 @@ func (r *Repo) AddRestoreDrill(d RestoreDrill) error {
 // has been recorded yet.
 func (r *Repo) LatestRestoreDrill(domain, source string) (RestoreDrill, bool, error) {
 	row := r.db.QueryRow(`
-		SELECT domain, source, at, ok, detail, kind
+		SELECT domain, source, at, ok, detail, kind, offsite_target_id
 		FROM restore_drills
 		WHERE domain = ? AND source = ?
 		ORDER BY at DESC
@@ -66,7 +69,7 @@ func (r *Repo) LatestRestoreDrill(domain, source string) (RestoreDrill, bool, er
 // recorded.
 func (r *Repo) LatestRestoreDrillKind(domain, source, kind string) (RestoreDrill, bool, error) {
 	row := r.db.QueryRow(`
-		SELECT domain, source, at, ok, detail, kind
+		SELECT domain, source, at, ok, detail, kind, offsite_target_id
 		FROM restore_drills
 		WHERE domain = ? AND source = ? AND kind = ?
 		ORDER BY at DESC
@@ -88,7 +91,7 @@ func (r *Repo) ListRestoreDrills(domain, source string, limit int) ([]RestoreDri
 		limit = defaultRestoreDrillLimit
 	}
 	rows, err := r.db.Query(`
-		SELECT domain, source, at, ok, detail, kind
+		SELECT domain, source, at, ok, detail, kind, offsite_target_id
 		FROM restore_drills
 		WHERE domain = ? AND source = ?
 		ORDER BY at DESC
@@ -115,7 +118,7 @@ func (r *Repo) ListRestoreDrills(domain, source string, limit int) ([]RestoreDri
 func scanRestoreDrill(s scanner) (RestoreDrill, error) {
 	var d RestoreDrill
 	var ok int
-	if err := s.Scan(&d.Domain, &d.Source, &d.At, &ok, &d.Detail, &d.Kind); err != nil {
+	if err := s.Scan(&d.Domain, &d.Source, &d.At, &ok, &d.Detail, &d.Kind, &d.TargetID); err != nil {
 		return RestoreDrill{}, err
 	}
 	d.OK = ok != 0
