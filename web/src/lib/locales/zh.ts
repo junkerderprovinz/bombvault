@@ -19,6 +19,7 @@ const zh: Partial<Translations> = {
   "about.crypto": "加密货币",
   "about.paypal": "PayPal",
   "about.cryptoTitle": "用加密货币捐赠",
+  "about.donateAppeal": "给你的骑士扔一枚硬币吧：它能覆盖一部分开销，让项目活下去。我做的东西全部免费，也没有广告。",
   "about.cryptoIntro": "先选择币种和网络，然后扫码或复制地址。",
   "about.cryptoNetworks": "网络",
   "about.cryptoNoTag": "无需 destination tag，也无需 memo。",

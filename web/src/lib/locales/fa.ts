@@ -22,6 +22,7 @@ const fa: Partial<Translations> = {
   "about.crypto": "رمزارز",
   "about.paypal": "PayPal",
   "about.cryptoTitle": "کمک با رمزارز",
+  "about.donateAppeal": "سکه‌ای برای شوالیه‌ات بینداز: بخشی از هزینه‌ها را می‌پوشاند و پروژه را زنده نگه می‌دارد. هر چه می‌سازم رایگان است و تبلیغ ندارد.",
   "about.cryptoIntro": "یک ارز و یک شبکه انتخاب کن، سپس کد را اسکن کن یا نشانی را کپی کن.",
   "about.cryptoNetworks": "شبکه‌ها",
   "about.cryptoNoTag": "به Destination Tag یا Memo نیازی نیست.",

@@ -19,6 +19,7 @@ const fr: Partial<Translations> = {
   "about.crypto": "Crypto",
   "about.paypal": "PayPal",
   "about.cryptoTitle": "Faire un don en crypto",
+  "about.donateAppeal": "Lancez une pièce à votre chevalier : elle couvre une partie des frais et garde le projet en vie. Tout ce que je crée est gratuit et sans publicité.",
   "about.cryptoIntro": "Choisissez une monnaie et un réseau, puis scannez le code ou copiez l'adresse.",
   "about.cryptoNetworks": "Réseaux",
   "about.cryptoNoTag": "Ni destination tag ni memo ne sont nécessaires.",
