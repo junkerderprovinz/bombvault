@@ -76,35 +76,8 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 	}
 	// Open the run row now and settle it from the named returns, so every
 	// outcome from here on leaves a dated row.
-	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "tamper")
-	if rErr != nil {
-		log.Printf("api: tamper %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
-		runID = ""
-	}
-	defer func() {
-		if runID == "" {
-			return
-		}
-		// "skipped" means the test ran without a verdict: visible, but not red.
-		status := "success"
-		detail := verdict.Detail
-		switch {
-		case err != nil:
-			status = statusSkipped
-			detail = truncateRunErr(err)
-		case !verdict.Testable:
-			status = statusSkipped
-		case !verdict.Protected:
-			status = "failed"
-		}
-		const maxDetail = 500 // truncateRunErr's cap for runs.error
-		if len(detail) > maxDetail {
-			detail = detail[:maxDetail]
-		}
-		if fErr := s.store.FinishRun(runID, status, "", 0, detail); fErr != nil {
-			log.Printf("api: tamper %s: could not finish run record: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
-		}
-	}()
+	runID := s.startTamperRun(domain)
+	defer func() { s.finishTamperRun(runID, domain, verdict, err) }()
 
 	var fold tamperFold
 	for _, t := range targets {
@@ -116,6 +89,42 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 	}
 	// An error leaves no verdict; the deferred finish records a skipped run.
 	return fold.verdict()
+}
+
+// startTamperRun opens a tamper run row on the domain. It returns "" when the
+// store cannot, since the test itself can still run.
+func (s *Service) startTamperRun(domain string) string {
+	runID, err := s.store.StartRun(domainRunTargetID(domain), "tamper")
+	if err != nil {
+		log.Printf("api: tamper %s: could not start run record (continuing): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return ""
+	}
+	return runID
+}
+
+// finishTamperRun settles a tamper run row from the test's outcome: success
+// when every delete was refused, failed when one was accepted, and skipped,
+// visible but not red, when the test ran without a verdict.
+func (s *Service) finishTamperRun(runID, domain string, verdict TamperVerdict, err error) {
+	if runID == "" {
+		return
+	}
+	status, detail := "success", verdict.Detail
+	switch {
+	case err != nil:
+		status, detail = statusSkipped, truncateRunErr(err)
+	case !verdict.Testable:
+		status = statusSkipped
+	case !verdict.Protected:
+		status = "failed"
+	}
+	const maxDetail = 500 // truncateRunErr's cap for runs.error
+	if len(detail) > maxDetail {
+		detail = detail[:maxDetail]
+	}
+	if fErr := s.store.FinishRun(runID, status, "", 0, detail); fErr != nil {
+		log.Printf("api: tamper %s: could not finish run record: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
+	}
 }
 
 // tamperFold folds tamper verdicts worst-of: testable if any repository is,
@@ -181,23 +190,25 @@ func (s *Service) RunPlaceTamperTest(ctx context.Context, id string) (TamperVerd
 		return TamperVerdict{}, errPlaceNothingToTest
 	}
 	var fold tamperFold
-	for _, r := range repos {
-		fold.add(s.tamperTestRow(ctx, settings, r))
+	for _, d := range places.Domains {
+		if len(repos[d]) > 0 {
+			fold.add(s.tamperTestPlaceDomain(ctx, settings, d, repos[d]))
+		}
 	}
 	return fold.verdict()
 }
 
-// placeTamperRepos lists what a place test probes: the path of each domain
-// whose home the place is, carrying the domain's primary row, and each
+// placeTamperRepos lists by domain what a place test probes: the path of each
+// domain whose home the place is, carrying the domain's primary row, and each
 // enabled copy there. The move onto places leaves a primary row off its home
 // place, so the row is looked up by domain. Named and direct repositories
 // have no domain to keep a verdict under.
-func (s *Service) placeTamperRepos(id string, settings store.Settings) ([]store.OffsiteTarget, error) {
+func (s *Service) placeTamperRepos(id string, settings store.Settings) (map[string][]store.OffsiteTarget, error) {
 	homes, err := s.store.DomainPlaces()
 	if err != nil {
 		return nil, err
 	}
-	var repos []store.OffsiteTarget
+	repos := map[string][]store.OffsiteTarget{}
 	for _, d := range places.Domains {
 		if homes[d] != id {
 			continue
@@ -207,7 +218,7 @@ func (s *Service) placeTamperRepos(id string, settings store.Settings) ([]store.
 			return nil, err
 		}
 		path.Domain, path.Repo = d, domainPathRaw(d, settings)
-		repos = append(repos, path)
+		repos[d] = append(repos[d], path)
 	}
 	rows, err := s.store.PlaceRows(id)
 	if err != nil {
@@ -215,23 +226,35 @@ func (s *Service) placeTamperRepos(id string, settings store.Settings) ([]store.
 	}
 	for _, r := range rows {
 		if r.Role == store.RoleOffsite && r.Enabled {
-			repos = append(repos, r)
+			repos[r.Domain] = append(repos[r.Domain], r)
 		}
 	}
 	return repos, nil
 }
 
-// tamperTestRow probes one repository with its own credentials under its
-// domain's lock, so a place test and a domain test cannot both alert on one
-// flip. A domain path without a primary row keeps no verdict: under the
-// empty id its last one would be whatever another target of the domain got.
-func (s *Service) tamperTestRow(ctx context.Context, settings store.Settings, row store.OffsiteTarget) (TamperVerdict, error) {
-	creds, _ := s.decodeCloudFor(settings, row.CredsRef)
-	if row.ID == "" {
-		return probeDeletes(ctx, row.Repo, creds)
+// tamperTestPlaceDomain probes one domain's repositories at a place, each
+// with its own credentials, under the domain's lock and with the progress
+// line and run row the domain test writes. A domain path without a primary
+// row keeps no verdict: under the empty id its last one would be whatever
+// another target of the domain got.
+func (s *Service) tamperTestPlaceDomain(ctx context.Context, settings store.Settings, domain string, repos []store.OffsiteTarget) (verdict TamperVerdict, err error) {
+	defer s.lockTamper(domain)()
+	tkey := "tamper:" + domain
+	_, startedAt := s.progBegin(ctx, tkey, "maintenance")
+	defer func() { s.progEnd(tkey, "maintenance", err == nil, startedAt) }()
+	runID := s.startTamperRun(domain)
+	defer func() { s.finishTamperRun(runID, domain, verdict, err) }()
+
+	var fold tamperFold
+	for _, r := range repos {
+		creds, _ := s.decodeCloudFor(settings, r.CredsRef)
+		if r.ID == "" {
+			fold.add(probeDeletes(ctx, r.Repo, creds))
+			continue
+		}
+		fold.add(s.runTamperTestForTarget(ctx, domain, r, creds))
 	}
-	defer s.lockTamper(row.Domain)()
-	return s.runTamperTestForTarget(ctx, row.Domain, row, creds)
+	return fold.verdict()
 }
 
 // runTamperTestForTarget probes one off-site destination's delete path. A
