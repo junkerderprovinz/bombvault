@@ -22,6 +22,7 @@ function domain(over: Partial<DomainStatus> = {}): DomainStatus {
     lastVerifiedOK: false,
     verifiedDetail: "",
     drillDetail: "",
+    drillTarget: "",
     offsiteConfigured: false,
     offPremisesCovered: false,
     offsiteImmutable: false,
@@ -93,5 +94,26 @@ describe("ProtectionCard, off-site", () => {
   it("stays quiet when every item already lives off the premises", () => {
     renderCard([domain({ offPremisesCovered: true })]);
     expect(screen.queryByText(/No off-site copy/)).toBeNull();
+  });
+});
+
+describe("ProtectionCard, off-site DR drill", () => {
+  afterEach(cleanup);
+
+  const drilled = { offsiteConfigured: true, lastDrDrillAt: 1_700_000_000 };
+
+  it("names the target a passed drill restored from", () => {
+    renderCard([domain({ ...drilled, lastDrDrillOK: true, drillTarget: "Hetzner" })]);
+    expect(screen.getByTitle(/^proven restorable from off-site · Hetzner · /)).toBeTruthy();
+  });
+
+  it("names the target beside the reason a drill failed", () => {
+    renderCard([domain({ ...drilled, drillDetail: "restore failed", drillTarget: "Hetzner" })]);
+    expect(screen.getByText("off-site DR restore · Hetzner · reason: restore failed")).toBeTruthy();
+  });
+
+  it("reads as before when the server names no target", () => {
+    renderCard([domain({ ...drilled, drillDetail: "restore failed" })]);
+    expect(screen.getByText("off-site DR restore · reason: restore failed")).toBeTruthy();
   });
 });
