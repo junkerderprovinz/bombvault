@@ -11,12 +11,13 @@ import (
 )
 
 // DeploySnippet is a one-time recipe for an append-only rest-server holding a
-// domain's off-site repo. Password is the plaintext htpasswd password, shown
-// once and never stored; Htpasswd is its bcrypt line.
+// domain's off-site repo, or every domain of a rest-server place. Password is
+// the plaintext htpasswd password, shown once and never stored; Htpasswd is
+// its bcrypt line.
 type DeploySnippet struct {
-	User      string `json:"user"`      // htpasswd user "bombvault-<domain>"
+	User      string `json:"user"`      // htpasswd user: "bombvault-<domain>", or this BombVault's name for a place
 	Password  string `json:"password"`  // one-time plaintext password (never stored)
-	Htpasswd  string `json:"htpasswd"`  // "bombvault-<domain>:<bcrypt-hash>"
+	Htpasswd  string `json:"htpasswd"`  // "<user>:<bcrypt-hash>"
 	DockerRun string `json:"dockerRun"` // docker run recipe (+ echo pre-step + repo-URL hint)
 	Compose   string `json:"compose"`   // docker-compose equivalent, same values
 	Unraid    string `json:"unraid"`    // Unraid container template (XML), same values
@@ -48,20 +49,23 @@ func buildDeploySnippet(domain string) (DeploySnippet, error) {
 	default:
 		return DeploySnippet{}, fmt.Errorf("unknown domain %q", domain)
 	}
+	user := "bombvault-" + domain
+	// A placeholder address, never a real one.
+	return buildRestServerSnippet(user, fmt.Sprintf("# repo URL for BombVault: rest:http://192.168.x.x:8000/%s/%s", user, domain))
+}
 
+// buildRestServerSnippet builds a fresh recipe with a new password for user;
+// repoHint closes each form of it with where BombVault finds the server.
+func buildRestServerSnippet(user, repoHint string) (DeploySnippet, error) {
 	password, err := randomDeployPassword()
 	if err != nil {
 		return DeploySnippet{}, err
 	}
-	user := "bombvault-" + domain
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptDeployCost)
 	if err != nil {
 		return DeploySnippet{}, fmt.Errorf("hash password: %w", err)
 	}
 	htpasswd := user + ":" + string(hash)
-
-	// A placeholder address, never a real one.
-	repoHint := fmt.Sprintf("# repo URL for BombVault: rest:http://192.168.x.x:8000/%s/%s", user, domain)
 
 	dockerRun := fmt.Sprintf(`# 1) create the append-only credential on the storage box:
 echo '%s' >> /path/on/storage-box/restic/.htpasswd
@@ -172,6 +176,44 @@ func (h *Handler) handleDeploySnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	snip, err := buildDeploySnippet(domain)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snippet": snip}))
+}
+
+// recipeUser is the rest-server user of the place recipe: this BombVault's
+// name in lower-case letters, digits and hyphens, so each BombVault that
+// shares a rest-server has one login and its own private tree there.
+func recipeUser(instance string) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(instance) {
+		switch {
+		case (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'):
+			b.WriteRune(r)
+		case b.Len() > 0 && !strings.HasSuffix(b.String(), "-"):
+			b.WriteByte('-')
+		}
+	}
+	if user := strings.TrimSuffix(b.String(), "-"); user != "" {
+		return user
+	}
+	return "bombvault"
+}
+
+// handleRestServerRecipe returns a one-time recipe for an append-only
+// rest-server with one user for this BombVault, as the rest-server form of the
+// add window shows it. Nothing is stored, so the plaintext password is shown
+// once. GET /api/places/rest-server-recipe
+func (h *Handler) handleRestServerRecipe(w http.ResponseWriter, _ *http.Request) {
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	user := recipeUser(settings.InstanceName)
+	snip, err := buildRestServerSnippet(user, "# in BombVault: add a rest-server place with the address http://192.168.x.x:8000 and the user "+user)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

@@ -260,6 +260,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/placement/exclude", h.handlePlacementExclude)
 	mux.HandleFunc("GET /api/placement/options", h.handlePlacementOptions)
 	mux.HandleFunc("GET /api/places/catalog", h.handlePlacesCatalog)
+	mux.HandleFunc("GET /api/places/rest-server-recipe", h.handleRestServerRecipe)
 	mux.HandleFunc("GET /api/places", h.handleListPlaces)
 	mux.HandleFunc("POST /api/places/probe", h.handleProbePlace)
 	mux.HandleFunc("POST /api/places", h.handleCreatePlace)
