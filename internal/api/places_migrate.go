@@ -601,7 +601,11 @@ func storeName(base string) string {
 // MigrateToPlaces moves a database from before storage places onto places,
 // once. It runs at start rather than as a SQL migration because telling a mesh
 // target or a rest-server user apart needs the decrypted credential sets. A
-// run that fails writes nothing, and the next start tries again.
+// run that fails writes no place, and the next start tries again.
+//
+// Mesh targets leave sort order 0 first, as at every start, so the places do
+// not depend on which of the two runs first at start, and an import that calls
+// this gets the same.
 func (s *Service) MigrateToPlaces() error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -609,6 +613,9 @@ func (s *Service) MigrateToPlaces() error {
 	}
 	if settings.PlacesMigrated != 0 {
 		return nil
+	}
+	if _, err := s.MoveMeshTargetsOffPrimarySlot(); err != nil {
+		return fmt.Errorf("move mesh targets off sort order 0: %w", err)
 	}
 	in, err := s.placesMigrationInput(settings)
 	if err != nil {
