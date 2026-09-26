@@ -441,12 +441,10 @@ func placedChanges(p Place, row OffsiteTarget, addr string, turnedOn bool) ([]st
 
 // mirrorPlaceSettingsTx writes p into the settings row s: the path of every
 // domain whose home place p is, and the off-site field of every domain whose
-// field row stands at p. The field holds the row's address only while the
-// row is on: left filled under a row that is off, it would have replication
-// fall back to the field and copy there anyway.
+// field row stands at p.
 func mirrorPlaceSettingsTx(tx *sql.Tx, p Place, homes map[string]string, s *Settings) error {
 	for _, domain := range places.Domains {
-		path, offsite, immutable := domainColumns(s, domain)
+		path, _, _ := domainColumns(s, domain)
 		if homes[domain] == p.ID {
 			addr, ok := places.Address(p.Base, p.Folders, domain, "")
 			if !ok {
@@ -459,13 +457,22 @@ func mirrorPlaceSettingsTx(tx *sql.Tx, p Place, homes map[string]string, s *Sett
 			return fmt.Errorf("WritePlace field of %s: %w", domain, err)
 		}
 		if found && field.PlaceID == p.ID {
-			*offsite, *immutable = "", false
-			if field.Enabled {
-				*offsite, *immutable = field.Repo, field.Immutable
-			}
+			fillField(s, field)
 		}
 	}
 	return nil
+}
+
+// fillField writes a domain's field row into its off-site field. The field
+// holds the row's address only while the row is on: left filled under a row
+// that is off, it would have replication fall back to the field and copy
+// there anyway.
+func fillField(s *Settings, row OffsiteTarget) {
+	_, offsite, immutable := domainColumns(s, row.Domain)
+	*offsite, *immutable = "", false
+	if row.Enabled {
+		*offsite, *immutable = row.Repo, row.Immutable
+	}
 }
 
 // domainColumns points at the settings fields a place writes for domain:

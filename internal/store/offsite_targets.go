@@ -286,9 +286,24 @@ func fieldRowQ(q queryer, domain string) (OffsiteTarget, bool, error) {
 }
 
 // MakeFieldOffsiteTarget puts a replication destination on sort_order 0, which
-// makes it the row its domain's off-site field edits.
+// makes it the row its domain's off-site field edits. At a place the row keeps
+// what the place wrote and fills the field the way the place does, since the
+// place owns the field from then on.
 func (r *Repo) MakeFieldOffsiteTarget(id string) error {
-	if _, err := r.db.Exec(`UPDATE offsite_targets SET sort_order = 0 WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
+	_, err := r.mutateSettings(func(tx *sql.Tx, _ Settings, after *Settings) error {
+		if _, err := tx.Exec(`UPDATE offsite_targets SET sort_order = 0 WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
+			return err
+		}
+		row, err := offsiteTargetTx(tx, id)
+		if err != nil {
+			return err
+		}
+		if row.PlaceID != "" {
+			fillField(after, row)
+		}
+		return nil
+	})
+	if err != nil {
 		return fmt.Errorf("MakeFieldOffsiteTarget: %w", err)
 	}
 	return nil
