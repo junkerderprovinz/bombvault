@@ -70,20 +70,6 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 	return err
 }
 
-// nextOffsiteSortOrder returns a sort order after every target of domain, so a
-// new or moved target stays off the primary's 0.
-func (s *Service) nextOffsiteSortOrder(domain string) (int, error) {
-	targets, err := s.store.OffsiteTargetsForDomain(domain)
-	if err != nil {
-		return 0, err
-	}
-	next := 1
-	for _, t := range targets {
-		next = max(next, t.SortOrder+1)
-	}
-	return next, nil
-}
-
 // MoveMeshTargetsOffPrimarySlot moves every target accepted from a mesh offer
 // off sort order 0, which a settings save treats as the primary, and returns how
 // many it moved. One on the repo the domain's off-site setting names is that
@@ -113,10 +99,7 @@ func (s *Service) MoveMeshTargetsOffPrimarySlot() (int, error) {
 			if t.SortOrder != 0 || !accepted[t.Repo] || t.Repo == offsiteRepoFromSettings(d, settings) {
 				continue
 			}
-			if t.SortOrder, err = s.nextOffsiteSortOrder(d); err != nil {
-				return moved, err
-			}
-			if _, err := s.store.UpsertOffsiteTarget(t); err != nil {
+			if err := s.store.MoveOffsiteTargetBehind(t.ID); err != nil {
 				return moved, err
 			}
 			moved++
