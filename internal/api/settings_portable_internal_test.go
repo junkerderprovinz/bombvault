@@ -642,6 +642,8 @@ func TestScrubRepoLocationLeavesCredentialFreeLocationsAlone(t *testing.T) {
 		// A login name is no secret, and the Storage Box short form needs it.
 		"sftp:u123456@u123456.your-storagebox.de:/bv/vms",
 		"sftp://u123456@u123456.your-storagebox.de:23//bv/vms",
+		"rclone::webdav,url='https://cloud.example.com/dav':bv",
+		"rclone::webdav,url='https://anna@cloud.example.com/dav':bv",
 	} {
 		if got := scrubRepoLocation(loc); got != loc {
 			t.Fatalf("scrubRepoLocation(%q) = %q, want it untouched", loc, got)
@@ -654,6 +656,9 @@ func TestScrubRepoLocationKeepsTheSchemeWhenItDropsThePassword(t *testing.T) {
 		{locWithCreds, "rest:https://[redacted]@storage.example.com:8000/containers"},
 		{"sftp://backupuser:hunter2@nas.local:23//srv/restic", "sftp://[redacted]@nas.local:23//srv/restic"},
 		{"rest:https://backupuser:wJalrXUtnFEMI/K7MDENG@host:8000/repo", "rest:https://[redacted]@host:8000/repo"},
+		// An rclone connection string quotes the URL it carries.
+		{"rclone::webdav,url='https://anna:secret@cloud.example.com/dav':bv", "rclone::webdav,url='https://[redacted]@cloud.example.com/dav':bv"},
+		{`rclone::webdav,url="https://anna:se/cret@cloud.example.com/dav":bv`, `rclone::webdav,url="https://[redacted]@cloud.example.com/dav":bv`},
 	} {
 		if got := scrubRepoLocation(c.in); got != c.want {
 			t.Errorf("scrubRepoLocation(%q) = %q, want %q", c.in, got, c.want)

@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -104,9 +105,10 @@ const redactedLocationMarker = "[redacted]@"
 // It matches with repoUserinfoRe, the pattern the error scrubber uses on repo
 // locations, and leaves a userinfo without a password alone: the sftp short
 // form sftp:user@host:/repo holds a login name, and redacting that would turn
-// a working location into one the operator has to retype.
+// a working location into one the operator has to retype. urlPasswordRe then
+// reaches the URLs repoUserinfoRe stops short of.
 func scrubRepoLocation(loc string) string {
-	return repoUserinfoRe.ReplaceAllStringFunc(loc, func(match string) string {
+	loc = repoUserinfoRe.ReplaceAllStringFunc(loc, func(match string) string {
 		m := repoUserinfoRe.FindStringSubmatch(match)
 		scheme := m[1] + ":" + m[2]
 		if !strings.Contains(match[len(scheme):], ":") {
@@ -114,7 +116,13 @@ func scrubRepoLocation(loc string) string {
 		}
 		return scheme + redactedLocationMarker
 	})
+	return urlPasswordRe.ReplaceAllString(loc, "//"+redactedLocationMarker)
 }
+
+// urlPasswordRe matches the "user:password@" of a URL anywhere in a location,
+// such as the quoted url of an rclone connection string, where repoUserinfoRe
+// stops at the quote. Like repoUserinfoRe, it lets the password hold "/".
+var urlPasswordRe = regexp.MustCompile(`//[^@\s"'/]*:[^@\s"']*@`)
 
 // locationRedacted reports whether a repo location reached the import with its
 // embedded credential already stripped by a plain export.
