@@ -849,6 +849,8 @@ const et: Partial<Translations> = {
   "runReason.interrupted": "katkestatud (BombVault taaskäivitus töö ajal)",
   "runReason.shutdown": "tühistatud (BombVault suleti)",
   "runReason.containerGone": "konteinerit pole hostis enam olemas",
+  "runReason.stalled": "one=seisakuvalvur peatas selle, sest {n} tunni jooksul ei olnud edenemist|other=seisakuvalvur peatas selle, sest {n} tunni jooksul ei olnud edenemist",
+  "runReason.stalledReading": "one=seisakuvalvur peatas selle, sest {n} tunni jooksul ei olnud edenemist; loeti andmekogumit {dataset}|other=seisakuvalvur peatas selle, sest {n} tunni jooksul ei olnud edenemist; loeti andmekogumit {dataset}",
   "runReason.dbdumpAuth": "andmebaas keeldus sisselogimisest",
   "runReason.dbdumpPrivileges": "andmebaasi kasutajal puudub õigus, mida tõmmis vajab",
   "runReason.dbdumpUnreachable": "andmebaasiserver ei võtnud ühendust vastu",

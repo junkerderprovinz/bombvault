@@ -849,6 +849,8 @@ const id: Partial<Translations> = {
   "runReason.interrupted": "terputus (BombVault dimulai ulang di tengah proses)",
   "runReason.shutdown": "dibatalkan (BombVault dimatikan)",
   "runReason.containerGone": "kontainer tidak ada lagi di host",
+  "runReason.stalled": "dihentikan oleh penjaga macet setelah {n} jam tanpa kemajuan",
+  "runReason.stalledReading": "dihentikan oleh penjaga macet setelah {n} jam tanpa kemajuan saat membaca {dataset}",
   "runReason.dbdumpAuth": "basis data menolak login",
   "runReason.dbdumpPrivileges": "pengguna basis data tidak punya hak yang dibutuhkan dump",
   "runReason.dbdumpUnreachable": "server basis data tidak menerima koneksi",

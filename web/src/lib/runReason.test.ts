@@ -134,6 +134,21 @@ describe("runReason", () => {
     expect(runReason("", t)).toBe("");
   });
 
+  it("says after how many hours the stall guard stopped a run", () => {
+    const counted = (key: TranslationKey, n?: number): string => `${key}(${n})`;
+    expect(runReason("stopped by the stall guard after 1 hour without progress", counted)).toBe("runReason.stalled(1)");
+    expect(runReason("stopped by the stall guard after 3 hours without progress", counted)).toBe("runReason.stalled(3)");
+  });
+
+  it("names the dataset a stalled ZFS run was reading", () => {
+    const withDataset = (key: TranslationKey, n?: number): string => `${key}(${n}) {dataset}`;
+    expect(
+      runReason("stopped by the stall guard after 2 hours without progress while reading tank/app data", withDataset)
+    ).toBe("runReason.stalledReading(2) tank/app data");
+    expect(isOwnReason("stopped by the stall guard after 2 hours without progress while reading tank/app")).toBe(true);
+    expect(isOwnReason("stopped by the stall guard after 2 hours without progress")).toBe(true);
+  });
+
   it("owns a reason only while it stands alone", () => {
     expect(isOwnReason("database dump failed: the dump was empty")).toBe(true);
     expect(isOwnReason("database dump failed: the dump was empty: exit 1")).toBe(false);
@@ -179,6 +194,19 @@ describe("RunReasonText", () => {
     expect(first.props?.children).toBe("immich_server");
     expect(note[2]).toBe(", ");
     expect((note[3] as ElementNode).props?.children).toBe("immich_ml");
+  });
+
+  it("isolates the dataset a stalled ZFS run was reading", () => {
+    const withDataset = (key: TranslationKey): string => `${key} {dataset}.`;
+    const parts = children(
+      RunReasonText({ reason: "stopped by the stall guard after 1 hour without progress while reading tank/app", t: withDataset })
+    );
+    expect(parts[0]).toBe("runReason.stalledReading ");
+    const dataset = parts[1] as ElementNode;
+    expect(dataset.type).toBe("bdi");
+    expect(dataset.props?.dir).toBe("ltr");
+    expect(dataset.props?.children).toBe("tank/app");
+    expect(parts[2]).toBe(".");
   });
 
   it("renders a reason without a detail as bare text", () => {

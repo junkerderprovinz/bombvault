@@ -955,6 +955,8 @@ const nl: Partial<Translations> = {
   "runReason.interrupted": "onderbroken (BombVault is halverwege opnieuw gestart)",
   "runReason.shutdown": "afgebroken (BombVault is afgesloten)",
   "runReason.containerGone": "container bestaat niet meer op de host",
+  "runReason.stalled": "one=gestopt door de vastloopbewaking na {n} uur zonder voortgang|other=gestopt door de vastloopbewaking na {n} uur zonder voortgang",
+  "runReason.stalledReading": "one=gestopt door de vastloopbewaking na {n} uur zonder voortgang tijdens het lezen van {dataset}|other=gestopt door de vastloopbewaking na {n} uur zonder voortgang tijdens het lezen van {dataset}",
   "runReason.dbdumpAuth": "de database weigerde de aanmelding",
   "runReason.dbdumpPrivileges": "de databasegebruiker mist een recht dat de dump nodig heeft",
   "runReason.dbdumpUnreachable": "de databaseserver accepteerde geen verbinding",

@@ -973,6 +973,8 @@ const vi: Partial<Translations> = {
   "runReason.interrupted": "bị gián đoạn (BombVault khởi động lại giữa chừng)",
   "runReason.shutdown": "đã hủy (BombVault đã tắt)",
   "runReason.containerGone": "vùng chứa không còn trên máy chủ",
+  "runReason.stalled": "bị trình canh treo dừng sau {n} giờ không có tiến triển",
+  "runReason.stalledReading": "bị trình canh treo dừng sau {n} giờ không có tiến triển khi đang đọc {dataset}",
   "runReason.dbdumpAuth": "cơ sở dữ liệu đã từ chối đăng nhập",
   "runReason.dbdumpPrivileges": "người dùng cơ sở dữ liệu thiếu một quyền mà bản kết xuất cần",
   "runReason.dbdumpUnreachable": "máy chủ cơ sở dữ liệu không nhận kết nối",

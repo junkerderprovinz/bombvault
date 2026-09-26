@@ -849,6 +849,8 @@ const hr: Partial<Translations> = {
   "runReason.interrupted": "prekinuto (BombVault se ponovno pokrenuo usred izvođenja)",
   "runReason.shutdown": "otkazano (BombVault je zaustavljen)",
   "runReason.containerGone": "spremnik više ne postoji na domaćinu",
+  "runReason.stalled": "one=zaustavio ga je čuvar zastoja nakon {n} sata bez napretka|few=zaustavio ga je čuvar zastoja nakon {n} sata bez napretka|other=zaustavio ga je čuvar zastoja nakon {n} sati bez napretka",
+  "runReason.stalledReading": "one=zaustavio ga je čuvar zastoja nakon {n} sata bez napretka dok je čitao {dataset}|few=zaustavio ga je čuvar zastoja nakon {n} sata bez napretka dok je čitao {dataset}|other=zaustavio ga je čuvar zastoja nakon {n} sati bez napretka dok je čitao {dataset}",
   "runReason.dbdumpAuth": "baza podataka odbila je prijavu",
   "runReason.dbdumpPrivileges": "korisniku baze podataka nedostaje ovlast koja je izvozu potrebna",
   "runReason.dbdumpUnreachable": "poslužitelj baze podataka nije prihvatio vezu",

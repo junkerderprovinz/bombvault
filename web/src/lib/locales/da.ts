@@ -981,6 +981,8 @@ const da: Partial<Translations> = {
   "runReason.interrupted": "afbrudt (BombVault blev genstartet undervejs)",
   "runReason.shutdown": "annulleret (BombVault blev lukket ned)",
   "runReason.containerGone": "containeren findes ikke længere på værten",
+  "runReason.stalled": "one=stoppet af stopvagten efter {n} time uden fremskridt|other=stoppet af stopvagten efter {n} timer uden fremskridt",
+  "runReason.stalledReading": "one=stoppet af stopvagten efter {n} time uden fremskridt under læsning af {dataset}|other=stoppet af stopvagten efter {n} timer uden fremskridt under læsning af {dataset}",
   "runReason.dbdumpAuth": "databasen afviste logind",
   "runReason.dbdumpPrivileges": "databasebrugeren mangler en rettighed, som dumpen har brug for",
   "runReason.dbdumpUnreachable": "databaseserveren tog ikke imod en forbindelse",

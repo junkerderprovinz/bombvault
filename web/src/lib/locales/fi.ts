@@ -981,6 +981,8 @@ const fi: Partial<Translations> = {
   "runReason.interrupted": "keskeytyi (BombVault käynnistyi uudelleen kesken ajon)",
   "runReason.shutdown": "peruttu (BombVault sammutettiin)",
   "runReason.containerGone": "säiliötä ei enää ole isäntäkoneella",
+  "runReason.stalled": "one=pysähtymisvahti keskeytti sen {n} tunnin jälkeen ilman edistymistä|other=pysähtymisvahti keskeytti sen {n} tunnin jälkeen ilman edistymistä",
+  "runReason.stalledReading": "one=pysähtymisvahti keskeytti sen {n} tunnin jälkeen ilman edistymistä, kun luettiin {dataset}|other=pysähtymisvahti keskeytti sen {n} tunnin jälkeen ilman edistymistä, kun luettiin {dataset}",
   "runReason.dbdumpAuth": "tietokanta hylkäsi kirjautumisen",
   "runReason.dbdumpPrivileges": "tietokannan käyttäjältä puuttuu oikeus, jota vedos tarvitsee",
   "runReason.dbdumpUnreachable": "tietokantapalvelin ei ottanut yhteyttä vastaan",

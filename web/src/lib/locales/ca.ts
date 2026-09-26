@@ -849,6 +849,8 @@ const ca: Partial<Translations> = {
   "runReason.interrupted": "interromput (BombVault s'ha reiniciat durant l'execució)",
   "runReason.shutdown": "cancel·lat (BombVault s'ha aturat)",
   "runReason.containerGone": "el contenidor ja no existeix a l'amfitrió",
+  "runReason.stalled": "one=aturat pel vigilant de bloquejos al cap de {n} hora sense progrés|many=aturat pel vigilant de bloquejos al cap de {n} hores sense progrés|other=aturat pel vigilant de bloquejos al cap de {n} hores sense progrés",
+  "runReason.stalledReading": "one=aturat pel vigilant de bloquejos al cap de {n} hora sense progrés mentre llegia {dataset}|many=aturat pel vigilant de bloquejos al cap de {n} hores sense progrés mentre llegia {dataset}|other=aturat pel vigilant de bloquejos al cap de {n} hores sense progrés mentre llegia {dataset}",
   "runReason.dbdumpAuth": "la base de dades ha rebutjat l'inici de sessió",
   "runReason.dbdumpPrivileges": "a l'usuari de la base de dades li falta un permís que el bolcat necessita",
   "runReason.dbdumpUnreachable": "el servidor de la base de dades no ha acceptat la connexió",

@@ -964,6 +964,8 @@ const hu: Partial<Translations> = {
   "runReason.interrupted": "megszakadt (a BombVault futás közben újraindult)",
   "runReason.shutdown": "megszakítva (a BombVault leállt)",
   "runReason.containerGone": "a konténer már nem létezik a gazdagépen",
+  "runReason.stalled": "one=a leállásfigyelő leállította, mert {n} óráig nem haladt|other=a leállásfigyelő leállította, mert {n} óráig nem haladt",
+  "runReason.stalledReading": "one=a leállásfigyelő leállította, mert {n} óráig nem haladt; épp ezt olvasta: {dataset}|other=a leállásfigyelő leállította, mert {n} óráig nem haladt; épp ezt olvasta: {dataset}",
   "runReason.dbdumpAuth": "az adatbázis elutasította a bejelentkezést",
   "runReason.dbdumpPrivileges": "az adatbázis felhasználójának hiányzik egy jog, amelyre a mentésnek szüksége van",
   "runReason.dbdumpUnreachable": "az adatbázis-kiszolgáló nem fogadott kapcsolatot",

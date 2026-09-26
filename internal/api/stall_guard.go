@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
@@ -108,6 +109,18 @@ func (g *stallGuard) decideLocked(now time.Time) stallDecision {
 	return d
 }
 
+// act logs a decision and carries out its cancel. The cause names the stall,
+// so the run and its notification can say what stopped the backup.
+func (g *stallGuard) act(d stallDecision, cancel context.CancelCauseFunc, label string) {
+	if d.warn {
+		log.Printf("api: %s: no progress for %v. The backup is still running; if the target is a network share, check that it is still responding.", label, d.silent.Round(time.Minute)) //nolint:gosec // G706: label is a fixed caller literal
+	}
+	if d.cancel {
+		log.Printf("api: %s: cancelled after %v without progress. Nothing was written by the stalled attempt: restic writes its snapshot last, so an aborted run leaves unreferenced data and no snapshot.", label, d.silent.Round(time.Minute)) //nolint:gosec // G706: label is a fixed caller literal
+		cancel(&backup.StalledError{After: g.cancelAfter})
+	}
+}
+
 // stallWarnAfter is how long a backup may be silent before the log says so.
 // Fixed rather than configurable: it is a hint, not a policy, and one more
 // environment variable to explain costs more than it buys.
@@ -162,18 +175,9 @@ const stallTickInterval = time.Minute
 // (an interrupted restore has already removed the container and half-written
 // its appdata) and maintenance commands emit no counters at all, so silence
 // there would mean nothing.
-func armStallGuard(ctx context.Context, cancel context.CancelFunc, label string) context.Context {
+func armStallGuard(ctx context.Context, cancel context.CancelCauseFunc, label string) context.Context {
 	g := newStallGuard(stallWarnAfter, stallCancelAfter(), time.Now())
-
-	act := func(d stallDecision) {
-		if d.warn {
-			log.Printf("api: %s: no progress for %v. The backup is still running; if the target is a network share, check that it is still responding.", label, d.silent.Round(time.Minute)) //nolint:gosec // G706: label is a fixed caller literal
-		}
-		if d.cancel {
-			log.Printf("api: %s: cancelled after %v without progress. Nothing was written by the stalled attempt: restic writes its snapshot last, so an aborted run leaves unreferenced data and no snapshot.", label, d.silent.Round(time.Minute)) //nolint:gosec // G706: label is a fixed caller literal
-			cancel()
-		}
-	}
+	act := func(d stallDecision) { g.act(d, cancel, label) }
 
 	watched := restic.WithWatcher(ctx, func(p restic.Progress) { act(g.observe(p, time.Now())) })
 

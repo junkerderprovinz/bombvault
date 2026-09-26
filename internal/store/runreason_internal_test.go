@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // namedReasons returns every reason and note the frontend has to recognise.
@@ -19,6 +20,7 @@ func namedReasons() map[string]string {
 		"ReasonShutdown":            ReasonShutdown,
 		"ReasonContainerGone":       ReasonContainerGone,
 		"ReasonCancelled":           ReasonCancelled,
+		"ReasonStalled":             ReasonStalled,
 		"ReasonDBDumpAuth":          ReasonDBDumpAuth,
 		"ReasonDBDumpPrivileges":    ReasonDBDumpPrivileges,
 		"ReasonDBDumpUnreachable":   ReasonDBDumpUnreachable,
@@ -92,6 +94,25 @@ func TestRunReasonsAreDistinct(t *testing.T) {
 				t.Errorf("%s = %q begins %s = %q, so a detail cannot be told from a longer reason",
 					name, r, otherName, other)
 			}
+		}
+	}
+}
+
+// The frontend reads the hours and the dataset back out of this sentence, so
+// its shape is pinned here as well as in runReason.test.ts.
+func TestStalledReasonNamesTheHoursAndTheDataset(t *testing.T) {
+	cases := []struct {
+		after   time.Duration
+		dataset string
+		want    string
+	}{
+		{time.Hour, "", "stopped by the stall guard after 1 hour without progress"},
+		{2 * time.Hour, "", "stopped by the stall guard after 2 hours without progress"},
+		{time.Hour, "tank/appdata/plex", "stopped by the stall guard after 1 hour without progress while reading tank/appdata/plex"},
+	}
+	for _, c := range cases {
+		if got := StalledReason(c.after, c.dataset); got != c.want {
+			t.Errorf("StalledReason(%v, %q) = %q, want %q", c.after, c.dataset, got, c.want)
 		}
 	}
 }

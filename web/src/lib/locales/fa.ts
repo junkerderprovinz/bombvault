@@ -849,6 +849,8 @@ const fa: Partial<Translations> = {
   "runReason.interrupted": "قطع شد (BombVault در میانه اجرا دوباره راه‌اندازی شد)",
   "runReason.shutdown": "لغو شد (BombVault خاموش شد)",
   "runReason.containerGone": "کانتینر دیگر روی میزبان وجود ندارد",
+  "runReason.stalled": "one=نگهبان توقف پس از {n} ساعت بدون پیشرفت آن را متوقف کرد|other=نگهبان توقف پس از {n} ساعت بدون پیشرفت آن را متوقف کرد",
+  "runReason.stalledReading": "one=هنگام خواندن {dataset}، نگهبان توقف پس از {n} ساعت بدون پیشرفت آن را متوقف کرد|other=هنگام خواندن {dataset}، نگهبان توقف پس از {n} ساعت بدون پیشرفت آن را متوقف کرد",
   "runReason.dbdumpAuth": "پایگاه داده ورود را رد کرد",
   "runReason.dbdumpPrivileges": "کاربر پایگاه داده اختیاری را که تخلیه لازم دارد ندارد",
   "runReason.dbdumpUnreachable": "کارساز پایگاه داده هیچ اتصالی را نپذیرفت",

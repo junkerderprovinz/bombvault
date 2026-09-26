@@ -416,8 +416,8 @@ func TestDBDumpAdapterStallCancelsOnlyTheDump(t *testing.T) {
 		return restic.Summary{}, nil, ctx.Err()
 	}}
 	a := dumpAdapter(eng, &dumpFakeDocker{})
-	a.guard = func(ctx context.Context, cancel context.CancelFunc, _ string) context.Context {
-		time.AfterFunc(10*time.Millisecond, cancel)
+	a.guard = func(ctx context.Context, cancel context.CancelCauseFunc, _ string) context.Context {
+		time.AfterFunc(10*time.Millisecond, func() { cancel(&backup.StalledError{After: time.Hour}) })
 		return ctx
 	}
 

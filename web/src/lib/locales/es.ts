@@ -979,6 +979,8 @@ const es: Partial<Translations> = {
   "runReason.interrupted": "interrumpido (BombVault se reinició a mitad de la ejecución)",
   "runReason.shutdown": "cancelado (BombVault se detuvo)",
   "runReason.containerGone": "el contenedor ya no existe en el anfitrión",
+  "runReason.stalled": "one=detenido por el vigilante de bloqueos tras {n} hora sin progreso|many=detenido por el vigilante de bloqueos tras {n} horas sin progreso|other=detenido por el vigilante de bloqueos tras {n} horas sin progreso",
+  "runReason.stalledReading": "one=detenido por el vigilante de bloqueos tras {n} hora sin progreso mientras leía {dataset}|many=detenido por el vigilante de bloqueos tras {n} horas sin progreso mientras leía {dataset}|other=detenido por el vigilante de bloqueos tras {n} horas sin progreso mientras leía {dataset}",
   "runReason.dbdumpAuth": "la base de datos rechazó el inicio de sesión",
   "runReason.dbdumpPrivileges": "al usuario de la base de datos le falta un permiso que el volcado necesita",
   "runReason.dbdumpUnreachable": "el servidor de la base de datos no aceptó la conexión",

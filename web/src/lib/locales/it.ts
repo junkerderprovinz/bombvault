@@ -951,6 +951,8 @@ const it: Partial<Translations> = {
   "runReason.interrupted": "interrotto (BombVault è stato riavviato durante l'esecuzione)",
   "runReason.shutdown": "annullato (BombVault è stato arrestato)",
   "runReason.containerGone": "il contenitore non esiste più sull'host",
+  "runReason.stalled": "one=interrotto dal controllo blocchi dopo {n} ora senza avanzamento|many=interrotto dal controllo blocchi dopo {n} ore senza avanzamento|other=interrotto dal controllo blocchi dopo {n} ore senza avanzamento",
+  "runReason.stalledReading": "one=interrotto dal controllo blocchi dopo {n} ora senza avanzamento durante la lettura di {dataset}|many=interrotto dal controllo blocchi dopo {n} ore senza avanzamento durante la lettura di {dataset}|other=interrotto dal controllo blocchi dopo {n} ore senza avanzamento durante la lettura di {dataset}",
   "runReason.dbdumpAuth": "il database ha rifiutato l'accesso",
   "runReason.dbdumpPrivileges": "all'utente del database manca un permesso necessario al dump",
   "runReason.dbdumpUnreachable": "il server del database non ha accettato la connessione",

@@ -849,6 +849,8 @@ const ms: Partial<Translations> = {
   "runReason.interrupted": "terganggu (BombVault dimulakan semula di tengah larian)",
   "runReason.shutdown": "dibatalkan (BombVault telah dimatikan)",
   "runReason.containerGone": "bekas tidak lagi wujud pada hos",
+  "runReason.stalled": "dihentikan oleh pengawal tersekat selepas {n} jam tanpa kemajuan",
+  "runReason.stalledReading": "dihentikan oleh pengawal tersekat selepas {n} jam tanpa kemajuan semasa membaca {dataset}",
   "runReason.dbdumpAuth": "pangkalan data menolak log masuk",
   "runReason.dbdumpPrivileges": "pengguna pangkalan data tiada kebenaran yang diperlukan oleh dump",
   "runReason.dbdumpUnreachable": "pelayan pangkalan data tidak menerima sambungan",

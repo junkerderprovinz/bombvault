@@ -961,6 +961,8 @@ const he: Partial<Translations> = {
   "runReason.interrupted": "הופסק (BombVault הופעל מחדש באמצע הריצה)",
   "runReason.shutdown": "בוטל (BombVault כובה)",
   "runReason.containerGone": "המכולה כבר לא קיימת במארח",
+  "runReason.stalled": "one=נעצר על ידי שומר התקיעה אחרי שעה אחת ללא התקדמות|two=נעצר על ידי שומר התקיעה אחרי שעתיים ללא התקדמות|other=נעצר על ידי שומר התקיעה אחרי {n} שעות ללא התקדמות",
+  "runReason.stalledReading": "one=נעצר על ידי שומר התקיעה אחרי שעה אחת ללא התקדמות בזמן קריאת {dataset}|two=נעצר על ידי שומר התקיעה אחרי שעתיים ללא התקדמות בזמן קריאת {dataset}|other=נעצר על ידי שומר התקיעה אחרי {n} שעות ללא התקדמות בזמן קריאת {dataset}",
   "runReason.dbdumpAuth": "מסד הנתונים דחה את ההתחברות",
   "runReason.dbdumpPrivileges": "למשתמש מסד הנתונים חסרה הרשאה שההעתק זקוק לה",
   "runReason.dbdumpUnreachable": "שרת מסד הנתונים לא קיבל חיבור",

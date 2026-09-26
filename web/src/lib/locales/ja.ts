@@ -953,6 +953,8 @@ const ja: Partial<Translations> = {
   "runReason.interrupted": "中断（実行中に BombVault が再起動しました）",
   "runReason.shutdown": "中止（BombVault が停止しました）",
   "runReason.containerGone": "コンテナーはホスト上にもう存在しません",
+  "runReason.stalled": "停止検知により、{n} 時間進捗がなかったため停止しました",
+  "runReason.stalledReading": "{dataset} の読み取り中に、停止検知により、{n} 時間進捗がなかったため停止しました",
   "runReason.dbdumpAuth": "データベースがログインを拒否しました",
   "runReason.dbdumpPrivileges": "データベースのユーザーにダンプが必要とする権限がありません",
   "runReason.dbdumpUnreachable": "データベースサーバーが接続を受け付けませんでした",

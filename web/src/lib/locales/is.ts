@@ -849,6 +849,8 @@ const is: Partial<Translations> = {
   "runReason.interrupted": "rofið (BombVault endurræstist í miðri keyrslu)",
   "runReason.shutdown": "hætt við (BombVault var slökkt)",
   "runReason.containerGone": "gámurinn er ekki lengur til á hýsilnum",
+  "runReason.stalled": "one=stöðvað af stöðvunarverðinum eftir {n} klukkustund án framvindu|other=stöðvað af stöðvunarverðinum eftir {n} klukkustundir án framvindu",
+  "runReason.stalledReading": "one=stöðvað af stöðvunarverðinum eftir {n} klukkustund án framvindu við lestur á {dataset}|other=stöðvað af stöðvunarverðinum eftir {n} klukkustundir án framvindu við lestur á {dataset}",
   "runReason.dbdumpAuth": "gagnagrunnurinn hafnaði innskráningunni",
   "runReason.dbdumpPrivileges": "notanda gagnagrunnsins vantar réttindi sem afritunin þarf",
   "runReason.dbdumpUnreachable": "gagnagrunnsþjónninn tók ekki við tengingu",

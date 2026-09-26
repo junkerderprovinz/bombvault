@@ -981,6 +981,8 @@ const tr: Partial<Translations> = {
   "runReason.interrupted": "kesildi (BombVault çalışma sırasında yeniden başladı)",
   "runReason.shutdown": "iptal edildi (BombVault kapatıldı)",
   "runReason.containerGone": "kapsayıcı artık ana makinede yok",
+  "runReason.stalled": "one=takılma bekçisi {n} saat boyunca ilerleme olmadığı için durdurdu|other=takılma bekçisi {n} saat boyunca ilerleme olmadığı için durdurdu",
+  "runReason.stalledReading": "one={dataset} okunurken takılma bekçisi {n} saat boyunca ilerleme olmadığı için durdurdu|other={dataset} okunurken takılma bekçisi {n} saat boyunca ilerleme olmadığı için durdurdu",
   "runReason.dbdumpAuth": "veritabanı oturum açmayı reddetti",
   "runReason.dbdumpPrivileges": "veritabanı kullanıcısında dökümün ihtiyaç duyduğu bir yetki yok",
   "runReason.dbdumpUnreachable": "veritabanı sunucusu bağlantı kabul etmedi",

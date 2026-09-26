@@ -849,6 +849,8 @@ const lt: Partial<Translations> = {
   "runReason.interrupted": "nutraukta (BombVault buvo paleistas iš naujo vykdymo metu)",
   "runReason.shutdown": "atšaukta (BombVault buvo išjungtas)",
   "runReason.containerGone": "konteinerio kompiuteryje nebėra",
+  "runReason.stalled": "one=sustabdė strigimo sargas po {n} valandos be pažangos|few=sustabdė strigimo sargas po {n} valandų be pažangos|many=sustabdė strigimo sargas po {n} valandos be pažangos|other=sustabdė strigimo sargas po {n} valandų be pažangos",
+  "runReason.stalledReading": "one=sustabdė strigimo sargas po {n} valandos be pažangos, skaitant {dataset}|few=sustabdė strigimo sargas po {n} valandų be pažangos, skaitant {dataset}|many=sustabdė strigimo sargas po {n} valandos be pažangos, skaitant {dataset}|other=sustabdė strigimo sargas po {n} valandų be pažangos, skaitant {dataset}",
   "runReason.dbdumpAuth": "duomenų bazė atmetė prisijungimą",
   "runReason.dbdumpPrivileges": "duomenų bazės naudotojui trūksta teisės, kurios reikia išrašui",
   "runReason.dbdumpUnreachable": "duomenų bazės serveris nepriėmė jokio ryšio",

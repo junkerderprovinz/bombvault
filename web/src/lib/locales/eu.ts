@@ -849,6 +849,8 @@ const eu: Partial<Translations> = {
   "runReason.interrupted": "etenda (BombVault berrabiarazi da exekuzioaren erdian)",
   "runReason.shutdown": "bertan behera utzia (BombVault itzali da)",
   "runReason.containerGone": "edukiontzia ez dago jada ostalarian",
+  "runReason.stalled": "one=geldialdien zaindariak gelditu du, {n} orduz aurrerapenik gabe|other=geldialdien zaindariak gelditu du, {n} orduz aurrerapenik gabe",
+  "runReason.stalledReading": "one=geldialdien zaindariak gelditu du, {n} orduz aurrerapenik gabe, {dataset} irakurtzen ari zela|other=geldialdien zaindariak gelditu du, {n} orduz aurrerapenik gabe, {dataset} irakurtzen ari zela",
   "runReason.dbdumpAuth": "datu-baseak saioa hastea ukatu du",
   "runReason.dbdumpPrivileges": "datu-basearen erabiltzaileari iraulketak behar duen baimen bat falta zaio",
   "runReason.dbdumpUnreachable": "datu-basearen zerbitzariak ez du konexiorik onartu",

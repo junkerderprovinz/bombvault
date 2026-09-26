@@ -849,6 +849,8 @@ const hi: Partial<Translations> = {
   "runReason.interrupted": "बाधित (BombVault चलते-चलते पुनः आरंभ हुआ)",
   "runReason.shutdown": "रद्द (BombVault बंद कर दिया गया)",
   "runReason.containerGone": "कंटेनर अब होस्ट पर मौजूद नहीं है",
+  "runReason.stalled": "one=स्टॉल गार्ड ने {n} घंटे तक कोई प्रगति न होने पर रोक दिया|other=स्टॉल गार्ड ने {n} घंटे तक कोई प्रगति न होने पर रोक दिया",
+  "runReason.stalledReading": "one={dataset} पढ़ते समय स्टॉल गार्ड ने {n} घंटे तक कोई प्रगति न होने पर रोक दिया|other={dataset} पढ़ते समय स्टॉल गार्ड ने {n} घंटे तक कोई प्रगति न होने पर रोक दिया",
   "runReason.dbdumpAuth": "डेटाबेस ने लॉगिन अस्वीकार कर दिया",
   "runReason.dbdumpPrivileges": "डेटाबेस उपयोगकर्ता के पास वह अधिकार नहीं है जो डंप को चाहिए",
   "runReason.dbdumpUnreachable": "डेटाबेस सर्वर ने कोई कनेक्शन स्वीकार नहीं किया",

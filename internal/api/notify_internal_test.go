@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -149,6 +150,33 @@ func TestNotifyBackupReportsACancelAsNoFailure(t *testing.T) {
 				t.Errorf("Unraid notification = %s", sent)
 			}
 		})
+	}
+}
+
+// A run the stall guard stopped fails with a context error of restic's; the
+// notification says what stopped it instead.
+func TestNotifyBackupNamesTheStallGuard(t *testing.T) {
+	var messages []string
+	wh := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		messages = append(messages, string(body))
+	}))
+	defer wh.Close()
+	s := unraidNotifyService(t, nil)
+	if err := s.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic"}); err != nil {
+		t.Fatal(err)
+	}
+	ctx, stop := context.WithCancelCause(context.Background())
+	stop(&backup.StalledError{After: 2 * time.Hour})
+
+	s.notifyBackup(ctx, "files", "docs", "files:docs", false, backup.Summary{}, fmt.Errorf("restic backup cancelled: %w", ctx.Err()))
+
+	if len(messages) != 1 {
+		t.Fatalf("webhook messages = %v, want one", messages)
+	}
+	want := `Backup of files \"docs\" FAILED: stopped by the stall guard after 2 hours without progress`
+	if !strings.Contains(messages[0], want) || strings.Contains(messages[0], "context canceled") {
+		t.Fatalf("message = %s, want it to contain %s", messages[0], want)
 	}
 }
 

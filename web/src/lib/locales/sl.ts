@@ -847,6 +847,8 @@ const sl: Partial<Translations> = {
   "runReason.interrupted": "prekinjeno (BombVault se je znova zagnal med izvajanjem)",
   "runReason.shutdown": "preklicano (BombVault je bil zaustavljen)",
   "runReason.containerGone": "vsebnika na gostitelju ni več",
+  "runReason.stalled": "one=ustavil ga je varuh zastojev po {n} uri brez napredka|two=ustavil ga je varuh zastojev po {n} urah brez napredka|few=ustavil ga je varuh zastojev po {n} urah brez napredka|other=ustavil ga je varuh zastojev po {n} urah brez napredka",
+  "runReason.stalledReading": "one=ustavil ga je varuh zastojev po {n} uri brez napredka med branjem {dataset}|two=ustavil ga je varuh zastojev po {n} urah brez napredka med branjem {dataset}|few=ustavil ga je varuh zastojev po {n} urah brez napredka med branjem {dataset}|other=ustavil ga je varuh zastojev po {n} urah brez napredka med branjem {dataset}",
   "runReason.dbdumpAuth": "podatkovna baza je zavrnila prijavo",
   "runReason.dbdumpPrivileges": "uporabniku podatkovne baze manjka pravica, ki jo izvoz potrebuje",
   "runReason.dbdumpUnreachable": "strežnik podatkovne baze ni sprejel povezave",

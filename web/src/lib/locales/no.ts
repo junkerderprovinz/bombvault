@@ -958,6 +958,8 @@ const no: Partial<Translations> = {
   "runReason.interrupted": "avbrutt (BombVault startet på nytt underveis)",
   "runReason.shutdown": "avbrutt av nedstenging (BombVault ble slått av)",
   "runReason.containerGone": "beholderen finnes ikke lenger på verten",
+  "runReason.stalled": "one=stoppet av stoppvakten etter {n} time uten fremdrift|other=stoppet av stoppvakten etter {n} timer uten fremdrift",
+  "runReason.stalledReading": "one=stoppet av stoppvakten etter {n} time uten fremdrift under lesing av {dataset}|other=stoppet av stoppvakten etter {n} timer uten fremdrift under lesing av {dataset}",
   "runReason.dbdumpAuth": "databasen avviste innloggingen",
   "runReason.dbdumpPrivileges": "databasebrukeren mangler en rettighet dumpen trenger",
   "runReason.dbdumpUnreachable": "databasetjeneren tok ikke imot noen tilkobling",

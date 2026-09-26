@@ -973,6 +973,8 @@ const zh: Partial<Translations> = {
   "runReason.interrupted": "已中断（BombVault 在运行途中重启）",
   "runReason.shutdown": "已取消（BombVault 已关闭）",
   "runReason.containerGone": "容器已不在主机上",
+  "runReason.stalled": "因 {n} 小时没有进展，已被停滞守护停止",
+  "runReason.stalledReading": "读取 {dataset} 时，因 {n} 小时没有进展，已被停滞守护停止",
   "runReason.dbdumpAuth": "数据库拒绝了登录",
   "runReason.dbdumpPrivileges": "数据库用户缺少转储所需的权限",
   "runReason.dbdumpUnreachable": "数据库服务器没有接受连接",

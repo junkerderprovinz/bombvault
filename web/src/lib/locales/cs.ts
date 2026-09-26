@@ -979,6 +979,8 @@ const cs: Partial<Translations> = {
   "runReason.interrupted": "přerušeno (BombVault byl restartován během běhu)",
   "runReason.shutdown": "zrušeno (BombVault byl ukončen)",
   "runReason.containerGone": "kontejner už na hostiteli neexistuje",
+  "runReason.stalled": "one=zastaveno hlídačem zaseknutí po {n} hodině bez postupu|few=zastaveno hlídačem zaseknutí po {n} hodinách bez postupu|many=zastaveno hlídačem zaseknutí po {n} hodiny bez postupu|other=zastaveno hlídačem zaseknutí po {n} hodinách bez postupu",
+  "runReason.stalledReading": "one=zastaveno hlídačem zaseknutí po {n} hodině bez postupu, při čtení {dataset}|few=zastaveno hlídačem zaseknutí po {n} hodinách bez postupu, při čtení {dataset}|many=zastaveno hlídačem zaseknutí po {n} hodiny bez postupu, při čtení {dataset}|other=zastaveno hlídačem zaseknutí po {n} hodinách bez postupu, při čtení {dataset}",
   "runReason.dbdumpAuth": "databáze odmítla přihlášení",
   "runReason.dbdumpPrivileges": "uživateli databáze chybí oprávnění, které výpis potřebuje",
   "runReason.dbdumpUnreachable": "databázový server nepřijal spojení",

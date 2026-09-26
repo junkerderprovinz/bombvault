@@ -659,12 +659,13 @@ func backupHardCap() time.Duration {
 // a restore is not cancellable by design, and a prune emits no byte counters
 // at all, so silence there means nothing and cancelling on it would be wrong.
 func backupHoldCtx(ctx context.Context) (context.Context, context.CancelFunc) {
-	base := context.WithoutCancel(ctx)
-	held, cancel := context.WithCancel(base)
+	held, stop := context.WithCancelCause(context.WithoutCancel(ctx))
+	cancel := func() { stop(nil) }
 	if cap := backupHardCap(); cap > 0 {
-		held, cancel = context.WithTimeout(base, cap)
+		capped, release := context.WithTimeout(held, cap)
+		held, cancel = capped, func() { release(); stop(nil) }
 	}
-	return armStallGuard(held, cancel, "backup"), cancel
+	return armStallGuard(held, stop, "backup"), cancel
 }
 
 // drillLockWait is the most a SCHEDULED drill waits for the per-domain lock to
@@ -11170,10 +11171,29 @@ func (s *Service) shutdownStatus(status string) (string, string, bool) {
 	return "cancelled", store.ReasonShutdown, true
 }
 
+// stalledReason is the reason a backup the stall guard cancelled is recorded
+// and reported with, and whether ctx was cancelled by it. A reason that already
+// names the stall, as a ZFS run's does with its dataset, is kept.
+func stalledReason(ctx context.Context, errMsg string) (string, bool) {
+	stall := backup.StalledBy(ctx)
+	switch {
+	case stall == nil:
+		return errMsg, false
+	case strings.HasPrefix(errMsg, store.ReasonStalled):
+		return errMsg, true
+	}
+	return stall.Error(), true
+}
+
 func (r runsAdapter) Finish(runID, status string, sum backup.Summary, errMsg string) error {
 	if r.svc != nil {
+		stalled, isStall := stalledReason(r.ctx, errMsg)
 		if newStatus, newMsg, changed := r.svc.shutdownStatus(status); changed {
 			status, errMsg = newStatus, newMsg
+		} else if status == "failed" && isStall {
+			// The guard cancelled first; a cancel pressed while the run unwinds
+			// came too late to be the reason.
+			errMsg = stalled
 		} else if status == "failed" && r.svc.backupWasCancelled(r.cancelKey) {
 			// A user cancelled this backup (#200). The error in hand is the
 			// context cancellation that followed, and recording it as a failure
@@ -11218,6 +11238,8 @@ type startedRunsAdapter struct {
 	// cancels one must get the same "cancelled" row a cancelled folder backup
 	// gets, not a red failure.
 	cancelKey string
+	// ctx is the backup's context, whose cause tells a stall apart.
+	ctx context.Context
 }
 
 var _ backup.Runs = startedRunsAdapter{}
@@ -11226,8 +11248,11 @@ func (r startedRunsAdapter) Start(string, string) (string, error) { return r.run
 
 func (r startedRunsAdapter) Finish(runID, status string, sum backup.Summary, errMsg string) error {
 	if r.svc != nil {
+		stalled, isStall := stalledReason(r.ctx, errMsg)
 		if newStatus, newMsg, changed := r.svc.shutdownStatus(status); changed {
 			status, errMsg = newStatus, newMsg
+		} else if status == "failed" && isStall {
+			errMsg = stalled
 		} else if status == "failed" && r.svc.backupWasCancelled(r.cancelKey) {
 			// See runsAdapter.Finish for the whole reasoning (#200). Repeated
 			// rather than shared because these two adapters have deliberately
@@ -11927,7 +11952,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		return backup.Summary{}, fmt.Errorf("backup vm: record run start: %w", err)
 	}
 	s.bindBackupRun("vm:"+name, runID)
-	deps.Runs = startedRunsAdapter{st: s.store, runID: runID, svc: s, cancelKey: "vm:" + name}
+	deps.Runs = startedRunsAdapter{st: s.store, runID: runID, svc: s, cancelKey: "vm:" + name, ctx: ctx}
 	// RunTag correlates every snapshot ONE backup invocation produces — only
 	// meaningful (and only set) when this backup will actually produce MORE
 	// than one restic snapshot (a file-only VM's single snapshot is already
@@ -17460,6 +17485,7 @@ func singletonItemName(domain string) string {
 // notifications are off. cancelKey is the key the backup registered its cancel
 // under, empty for a failure before it could be cancelled.
 func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey string, ok bool, sum backup.Summary, backupErr error) {
+	stalled, isStall := stalledReason(ctx, scrubError(backupErr))
 	// A cancelled or stalled run is reported on the context that just ended.
 	ctx = context.WithoutCancel(ctx)
 	c, err := s.NotifyConfig()
@@ -17474,13 +17500,15 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey stri
 	// failure, and only those who hear about every backup hear about it.
 	// Healthchecks still gets the end of the run it saw start, since a start
 	// left open turns the check red once its grace time is up.
-	cancelled := !ok && s.backupWasCancelled(cancelKey)
+	cancelled := !ok && !isStall && s.backupWasCancelled(cancelKey)
 	var msg string
 	switch {
 	case ok:
 		msg = fmt.Sprintf("Backup of %s succeeded (snapshot %s, %s).", target, shortID(sum.SnapshotID), humanBytes(sum.Bytes))
 	case cancelled:
 		msg = fmt.Sprintf("Backup of %s was cancelled.", target)
+	case isStall:
+		msg = fmt.Sprintf("Backup of %s FAILED: %s", target, stalled)
 	default:
 		msg = fmt.Sprintf("Backup of %s FAILED: %s", target, scrubError(backupErr))
 	}

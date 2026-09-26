@@ -849,6 +849,8 @@ const lv: Partial<Translations> = {
   "runReason.interrupted": "pārtraukts (BombVault tika restartēts izpildes laikā)",
   "runReason.shutdown": "atcelts (BombVault tika izslēgts)",
   "runReason.containerGone": "konteinera resursdatorā vairs nav",
+  "runReason.stalled": "zero=apturēja iestrēgšanas sargs pēc {n} stundām bez progresa|one=apturēja iestrēgšanas sargs pēc {n} stundas bez progresa|other=apturēja iestrēgšanas sargs pēc {n} stundām bez progresa",
+  "runReason.stalledReading": "zero=apturēja iestrēgšanas sargs pēc {n} stundām bez progresa, lasot {dataset}|one=apturēja iestrēgšanas sargs pēc {n} stundas bez progresa, lasot {dataset}|other=apturēja iestrēgšanas sargs pēc {n} stundām bez progresa, lasot {dataset}",
   "runReason.dbdumpAuth": "datubāze noraidīja pieteikšanos",
   "runReason.dbdumpPrivileges": "datubāzes lietotājam trūkst tiesību, kas izrakstam ir vajadzīgas",
   "runReason.dbdumpUnreachable": "datubāzes serveris nepieņēma savienojumu",

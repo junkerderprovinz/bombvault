@@ -958,6 +958,8 @@ const pt: Partial<Translations> = {
   "runReason.interrupted": "interrompido (o BombVault reiniciou a meio da execução)",
   "runReason.shutdown": "cancelado (o BombVault foi encerrado)",
   "runReason.containerGone": "o contentor já não existe no anfitrião",
+  "runReason.stalled": "one=interrompido pelo vigia de bloqueios após {n} hora sem progresso|many=interrompido pelo vigia de bloqueios após {n} horas sem progresso|other=interrompido pelo vigia de bloqueios após {n} horas sem progresso",
+  "runReason.stalledReading": "one=interrompido pelo vigia de bloqueios após {n} hora sem progresso durante a leitura de {dataset}|many=interrompido pelo vigia de bloqueios após {n} horas sem progresso durante a leitura de {dataset}|other=interrompido pelo vigia de bloqueios após {n} horas sem progresso durante a leitura de {dataset}",
   "runReason.dbdumpAuth": "a base de dados recusou o início de sessão",
   "runReason.dbdumpPrivileges": "falta ao utilizador da base de dados uma permissão de que o dump precisa",
   "runReason.dbdumpUnreachable": "o servidor da base de dados não aceitou a ligação",

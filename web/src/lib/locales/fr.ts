@@ -961,6 +961,8 @@ const fr: Partial<Translations> = {
   "runReason.interrupted": "interrompu (BombVault a redémarré en cours d'exécution)",
   "runReason.shutdown": "annulé (BombVault a été arrêté)",
   "runReason.containerGone": "le conteneur n'existe plus sur l'hôte",
+  "runReason.stalled": "one=arrêté par le garde-fou anti-blocage après {n} heure sans progression|many=arrêté par le garde-fou anti-blocage après {n} heures sans progression|other=arrêté par le garde-fou anti-blocage après {n} heures sans progression",
+  "runReason.stalledReading": "one=arrêté par le garde-fou anti-blocage après {n} heure sans progression pendant la lecture de {dataset}|many=arrêté par le garde-fou anti-blocage après {n} heures sans progression pendant la lecture de {dataset}|other=arrêté par le garde-fou anti-blocage après {n} heures sans progression pendant la lecture de {dataset}",
   "runReason.dbdumpAuth": "la base de données a refusé l'authentification",
   "runReason.dbdumpPrivileges": "il manque à l'utilisateur de la base de données un droit dont le dump a besoin",
   "runReason.dbdumpUnreachable": "le serveur de base de données n'a accepté aucune connexion",

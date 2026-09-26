@@ -93,5 +93,6 @@ describe("a run's error", () => {
   it("leaves an error without a code of its own to the run reasons", () => {
     expect(zfsRunReasonCode("cancelled by the user")).toBeNull();
     expect(zfsRunReasonCode("restic backup failed: Fatal: wrong password")).toBeNull();
+    expect(zfsRunReasonCode("stopped by the stall guard after 1 hour without progress while reading tank/app")).toBeNull();
   });
 });

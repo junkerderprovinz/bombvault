@@ -1,10 +1,13 @@
 package api
 
 import (
+	"context"
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // The stall guard decides when a backup that is going nowhere gets cancelled.
@@ -140,5 +143,73 @@ func TestStallGuardFiresWithoutAnyFurtherStatusLines(t *testing.T) {
 	}
 	if d := g.tick(at(121 * 60)); !d.cancel {
 		t.Fatalf("want a cancel from the clock alone, got %+v", d)
+	}
+}
+
+// The cause is what lets the run row and the notification say the guard
+// stopped the backup, and after how long.
+func TestStallGuardCancelsWithTheStallAsCause(t *testing.T) {
+	g := newStallGuard(30*time.Minute, 3*time.Hour, at(0))
+	ctx, cancel := context.WithCancelCause(context.Background())
+
+	g.act(stallDecision{cancel: true, silent: 3*time.Hour + time.Minute}, cancel, "backup")
+
+	stall := backup.StalledBy(ctx)
+	if stall == nil {
+		t.Fatalf("cause = %v, want the stall", context.Cause(ctx))
+	}
+	if stall.After != 3*time.Hour {
+		t.Fatalf("the stall names %v, want the configured 3h", stall.After)
+	}
+}
+
+// finishStalledRun records a run as the backup package does when restic
+// returns the context error of a stalled backup.
+func finishStalledRun(t *testing.T, cancelKey, errMsg string, userCancel bool) store.Run {
+	t.Helper()
+	st := newTestStore(t)
+	s := &Service{store: st}
+	ctx, stop := context.WithCancelCause(context.Background())
+	s.registerBackupCancel(cancelKey, func() { stop(nil) })
+	stop(&backup.StalledError{After: time.Hour})
+	if userCancel {
+		s.CancelBackupRun(cancelKey, "")
+	}
+	runID, err := st.StartRun("item", "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := runsAdapter{st: st, ctx: ctx, svc: s, cancelKey: cancelKey}
+	if err := a.Finish(runID, "failed", backup.Summary{}, errMsg); err != nil {
+		t.Fatal(err)
+	}
+	runs, err := st.ListRuns(1)
+	if err != nil || len(runs) != 1 {
+		t.Fatalf("list runs: %v %v", runs, err)
+	}
+	return runs[0]
+}
+
+func TestStalledBackupRecordsTheStallAsItsReason(t *testing.T) {
+	got := finishStalledRun(t, "files:docs", "context canceled", false)
+	if got.Status != "failed" || got.Error != store.StalledReason(time.Hour, "") {
+		t.Fatalf("run = %s %q, want failed with the stall reason", got.Status, got.Error)
+	}
+}
+
+// A ZFS run names the dataset it was reading, which the plain reason cannot.
+func TestStalledBackupKeepsAReasonThatNamesTheDataset(t *testing.T) {
+	reason := store.StalledReason(time.Hour, "tank/appdata")
+	got := finishStalledRun(t, "zfs:tank", reason, false)
+	if got.Error != reason {
+		t.Fatalf("reason = %q, want %q", got.Error, reason)
+	}
+}
+
+// A cancel pressed while the stalled run unwinds came too late to stop it.
+func TestStalledBackupStaysStalledWhenCancelledAfterwards(t *testing.T) {
+	got := finishStalledRun(t, "files:docs", "context canceled", true)
+	if got.Status != "failed" || got.Error != store.StalledReason(time.Hour, "") {
+		t.Fatalf("run = %s %q, want failed with the stall reason", got.Status, got.Error)
 	}
 }

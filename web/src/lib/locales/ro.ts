@@ -961,6 +961,8 @@ const ro: Partial<Translations> = {
   "runReason.interrupted": "întrerupt (BombVault a repornit în timpul rulării)",
   "runReason.shutdown": "anulat (BombVault a fost oprit)",
   "runReason.containerGone": "containerul nu mai există pe gazdă",
+  "runReason.stalled": "one=oprit de paznicul de blocaje după {n} oră fără progres|few=oprit de paznicul de blocaje după {n} ore fără progres|other=oprit de paznicul de blocaje după {n} de ore fără progres",
+  "runReason.stalledReading": "one=oprit de paznicul de blocaje după {n} oră fără progres în timp ce citea {dataset}|few=oprit de paznicul de blocaje după {n} ore fără progres în timp ce citea {dataset}|other=oprit de paznicul de blocaje după {n} de ore fără progres în timp ce citea {dataset}",
   "runReason.dbdumpAuth": "baza de date a refuzat autentificarea",
   "runReason.dbdumpPrivileges": "utilizatorului bazei de date îi lipsește un drept de care dumpul are nevoie",
   "runReason.dbdumpUnreachable": "serverul bazei de date nu a acceptat conexiunea",

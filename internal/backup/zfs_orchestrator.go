@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
@@ -224,13 +225,17 @@ func BackupZFSItem(ctx context.Context, d ZFSBackupDeps) (Summary, error) {
 		d.addMember(runID, m)
 	}
 
-	summary, failures := d.backupMembers(ctx, runID, snap)
+	summary, failures, interrupted := d.backupMembers(ctx, runID, snap)
 
 	status := statusSuccess
 	var runErr error
 	if len(failures) > 0 {
 		status = statusFailed
 		runErr = &ZFSRefusal{Detail: strings.Join(failures, ", ")}
+		// A stall is one dataset that hung, not a list of datasets that failed.
+		if stall := StalledBy(ctx); stall != nil {
+			runErr = &ZFSRefusal{Detail: store.StalledReason(stall.After, interrupted)}
+		}
 	}
 	if finErr := d.Runs.Finish(runID, status, summary, truncateErr(runErr)); finErr != nil {
 		log.Printf("zfs backup: finish run for %s: %v", d.Root, finErr)
@@ -268,8 +273,9 @@ func (d ZFSBackupDeps) addMember(runID string, m ZFSMemberResult) {
 }
 
 // backupMembers reads every member of the frozen tree and returns the item's
-// summary together with the members that failed, named for the run's error.
-func (d ZFSBackupDeps) backupMembers(ctx context.Context, runID, snap string) (Summary, []string) {
+// summary, the members that failed, named for the run's error, and the member
+// whose read the end of ctx cut short.
+func (d ZFSBackupDeps) backupMembers(ctx context.Context, runID, snap string) (summary Summary, failures []string, interrupted string) {
 	relPaths := make([]string, len(d.Members))
 	for i, m := range d.Members {
 		relPaths[i] = m.RelPath
@@ -278,8 +284,7 @@ func (d ZFSBackupDeps) backupMembers(ctx context.Context, runID, snap string) (S
 
 	// The tree is measured when every member it read was, so a tree whose
 	// datasets were all empty is a measured zero.
-	summary := Summary{Measured: true, SelectionFP: d.SelectionFP}
-	var failures []string
+	summary = Summary{Measured: true, SelectionFP: d.SelectionFP}
 	for i, m := range d.Members {
 		if ctx.Err() != nil {
 			for _, rest := range d.Members[i:] {
@@ -293,6 +298,9 @@ func (d ZFSBackupDeps) backupMembers(ctx context.Context, runID, snap string) (S
 		res, read := d.backupMember(ctx, m, snap, split[m.RelPath])
 		res.DurationMS = d.Clock().Sub(start).Milliseconds()
 		d.addMember(runID, res)
+		if res.Outcome == codeNotReached {
+			interrupted = m.Dataset
+		}
 
 		switch res.Outcome {
 		case outcomeBackedUp:
@@ -310,7 +318,7 @@ func (d ZFSBackupDeps) backupMembers(ctx context.Context, runID, snap string) (S
 	if len(failures) > 0 {
 		summary.Measured = false
 	}
-	return summary, failures
+	return summary, failures, interrupted
 }
 
 // backupMember reads one member and returns what the run records for it,

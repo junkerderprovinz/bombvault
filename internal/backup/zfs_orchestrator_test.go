@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
@@ -622,6 +623,54 @@ func TestBackupZFSItemCancelMarksRemainingNotReached(t *testing.T) {
 	}
 	if len(f.restic.calls) != 1 {
 		t.Fatalf("members after the cancel must not be read: %v", f.restic.calls)
+	}
+}
+
+func TestBackupZFSItemStallNamesTheDatasetItWasReading(t *testing.T) {
+	f := newZFSFixture()
+	ctx, cancel := context.WithCancelCause(t.Context())
+	f.restic.onCall = func(dataset string) {
+		if dataset == zfsTestPlex {
+			cancel(&backup.StalledError{After: time.Hour})
+		}
+	}
+	f.restic.errs[zfsTestPlex] = context.Canceled
+
+	_, err := f.run(t, ctx)
+
+	want := store.StalledReason(time.Hour, zfsTestPlex)
+	if err == nil || err.Error() != want {
+		t.Fatalf("err = %v, want %q", err, want)
+	}
+	if got := f.runs.finishOf(t, "run-1"); got.status != "failed" || got.note != want {
+		t.Fatalf("run finished %s with %q, want failed with %q", got.status, got.note, want)
+	}
+	if got := f.recorder.member(t, zfsTestRoot).Outcome; got != "backed-up" {
+		t.Fatalf("the dataset read before the stall is %q, want backed-up", got)
+	}
+	for _, dataset := range []string{zfsTestPlex, zfsTestDB} {
+		if got := f.recorder.member(t, dataset).Outcome; got != "not-reached" {
+			t.Fatalf("%s outcome = %q, want not-reached", dataset, got)
+		}
+	}
+}
+
+// A cancel by hand is no stall, so the run keeps its list of members.
+func TestBackupZFSItemCancelKeepsTheMemberList(t *testing.T) {
+	f := newZFSFixture()
+	ctx, cancel := context.WithCancel(t.Context())
+	f.restic.onCall = func(dataset string) {
+		if dataset == zfsTestPlex {
+			cancel()
+		}
+	}
+	f.restic.errs[zfsTestPlex] = context.Canceled
+
+	_, err := f.run(t, ctx)
+
+	want := zfsTestPlex + " [not-reached], " + zfsTestDB + " [not-reached]"
+	if err == nil || err.Error() != want {
+		t.Fatalf("err = %v, want %q", err, want)
 	}
 }
 

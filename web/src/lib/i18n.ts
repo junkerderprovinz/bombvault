@@ -1073,6 +1073,10 @@ export const en = {
   "runReason.interrupted": "interrupted (BombVault restarted mid-run)",
   "runReason.shutdown": "aborted (BombVault was shut down)",
   "runReason.containerGone": "container no longer exists on the host",
+  "runReason.stalled":
+    "one=stopped by the stall guard after {n} hour without progress|other=stopped by the stall guard after {n} hours without progress",
+  "runReason.stalledReading":
+    "one=stopped by the stall guard after {n} hour without progress while reading {dataset}|other=stopped by the stall guard after {n} hours without progress while reading {dataset}",
   "runReason.dbdumpAuth": "the database refused the login",
   "runReason.dbdumpPrivileges": "the database user lacks a privilege the dump needs",
   "runReason.dbdumpUnreachable": "the database server did not accept a connection",
@@ -3586,6 +3590,10 @@ export const de: Translations = {
   "runReason.interrupted": "unterbrochen (BombVault wurde mitten im Lauf neu gestartet)",
   "runReason.shutdown": "abgebrochen (BombVault wurde beendet)",
   "runReason.containerGone": "Container gibt es auf dem Host nicht mehr",
+  "runReason.stalled":
+    "one=vom Stillstandswächter nach {n} Stunde ohne Fortschritt gestoppt|other=vom Stillstandswächter nach {n} Stunden ohne Fortschritt gestoppt",
+  "runReason.stalledReading":
+    "one=vom Stillstandswächter nach {n} Stunde ohne Fortschritt gestoppt, beim Lesen von {dataset}|other=vom Stillstandswächter nach {n} Stunden ohne Fortschritt gestoppt, beim Lesen von {dataset}",
   "runReason.dbdumpAuth": "die Datenbank hat die Anmeldung abgelehnt",
   "runReason.dbdumpPrivileges": "dem Datenbankbenutzer fehlt ein Recht, das der Dump braucht",
   "runReason.dbdumpUnreachable": "der Datenbankserver hat keine Verbindung angenommen",

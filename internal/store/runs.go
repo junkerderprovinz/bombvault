@@ -213,7 +213,27 @@ const (
 	// ReasonCancelled is written when the user cancels a running backup, so the
 	// row does not read like a failure.
 	ReasonCancelled = "cancelled by the user"
+
+	// ReasonStalled begins the reason of a backup the stall guard cancelled.
+	// StalledReason writes the whole sentence.
+	ReasonStalled = "stopped by the stall guard"
 )
+
+// StalledReason is the reason of a backup the stall guard cancelled after
+// going without progress for after, naming the ZFS dataset it was reading when
+// there is one. runReason.ts reads the hours and the dataset back out of it.
+func StalledReason(after time.Duration, dataset string) string {
+	hours := int(after / time.Hour)
+	unit := "hours"
+	if hours == 1 {
+		unit = "hour"
+	}
+	reason := fmt.Sprintf("%s after %d %s without progress", ReasonStalled, hours, unit)
+	if dataset != "" {
+		reason += " while reading " + dataset
+	}
+	return reason
+}
 
 // Why a database dump did not produce a snapshot. Each of these may carry a
 // detail after a ": " separator, the scrubbed tail of the tool's own output;

@@ -381,7 +381,7 @@ type dbDumpAdapter struct {
 	startedAt   int64
 	// guard arms the dump-scoped stall guard; nil means armStallGuard. A field
 	// so a test can trip it in milliseconds, where the real one counts hours.
-	guard func(ctx context.Context, cancel context.CancelFunc, label string) context.Context
+	guard func(ctx context.Context, cancel context.CancelCauseFunc, label string) context.Context
 }
 
 var _ backup.DBDumper = (*dbDumpAdapter)(nil)
@@ -392,13 +392,15 @@ func (a *dbDumpAdapter) Dump(ctx context.Context, req backup.DBDumpRequest) (bac
 
 	dumpCtx, cancel := context.WithTimeout(ctx, req.Plan.MaxRuntime+dbDumpContextGrace)
 	defer cancel()
+	dumpCtx, stop := context.WithCancelCause(dumpCtx)
+	defer stop(nil)
 	arm := a.guard
 	if arm == nil {
 		arm = armStallGuard
 	}
 	// The guard replaces the watcher the backup armed on ctx, so a stalled dump
 	// cancels the dump and nothing else; the publisher chains after it.
-	dumpCtx = arm(dumpCtx, cancel, "database dump")
+	dumpCtx = arm(dumpCtx, stop, "database dump")
 	dumpCtx = restic.WithAddedWatcher(dumpCtx, a.publishBytes())
 
 	sum, lines, err := a.engine.BackupFromCommand(dumpCtx, req.Repo, req.Plan.StdinPath, tags,

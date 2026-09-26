@@ -953,6 +953,8 @@ const pl: Partial<Translations> = {
   "runReason.interrupted": "przerwane (BombVault uruchomił się ponownie w trakcie)",
   "runReason.shutdown": "anulowane (BombVault został zatrzymany)",
   "runReason.containerGone": "kontener już nie istnieje na hoście",
+  "runReason.stalled": "one=zatrzymane przez strażnika zastoju po {n} godzinie bez postępu|few=zatrzymane przez strażnika zastoju po {n} godzinach bez postępu|many=zatrzymane przez strażnika zastoju po {n} godzinach bez postępu|other=zatrzymane przez strażnika zastoju po {n} godziny bez postępu",
+  "runReason.stalledReading": "one=zatrzymane przez strażnika zastoju po {n} godzinie bez postępu podczas odczytu {dataset}|few=zatrzymane przez strażnika zastoju po {n} godzinach bez postępu podczas odczytu {dataset}|many=zatrzymane przez strażnika zastoju po {n} godzinach bez postępu podczas odczytu {dataset}|other=zatrzymane przez strażnika zastoju po {n} godziny bez postępu podczas odczytu {dataset}",
   "runReason.dbdumpAuth": "baza danych odrzuciła logowanie",
   "runReason.dbdumpPrivileges": "użytkownikowi bazy danych brakuje uprawnienia, którego potrzebuje zrzut",
   "runReason.dbdumpUnreachable": "serwer bazy danych nie przyjął połączenia",

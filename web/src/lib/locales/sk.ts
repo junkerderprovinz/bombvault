@@ -849,6 +849,8 @@ const sk: Partial<Translations> = {
   "runReason.interrupted": "prerušené (BombVault sa reštartoval počas behu)",
   "runReason.shutdown": "zrušené (BombVault bol ukončený)",
   "runReason.containerGone": "kontajner už na hostiteľovi neexistuje",
+  "runReason.stalled": "one=zastavené strážcom zaseknutia po {n} hodine bez postupu|few=zastavené strážcom zaseknutia po {n} hodinách bez postupu|many=zastavené strážcom zaseknutia po {n} hodiny bez postupu|other=zastavené strážcom zaseknutia po {n} hodinách bez postupu",
+  "runReason.stalledReading": "one=zastavené strážcom zaseknutia po {n} hodine bez postupu, pri čítaní {dataset}|few=zastavené strážcom zaseknutia po {n} hodinách bez postupu, pri čítaní {dataset}|many=zastavené strážcom zaseknutia po {n} hodiny bez postupu, pri čítaní {dataset}|other=zastavené strážcom zaseknutia po {n} hodinách bez postupu, pri čítaní {dataset}",
   "runReason.dbdumpAuth": "databáza odmietla prihlásenie",
   "runReason.dbdumpPrivileges": "používateľovi databázy chýba oprávnenie, ktoré výpis potrebuje",
   "runReason.dbdumpUnreachable": "databázový server neprijal spojenie",

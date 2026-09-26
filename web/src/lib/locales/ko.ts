@@ -953,6 +953,8 @@ const ko: Partial<Translations> = {
   "runReason.interrupted": "중단됨 (실행 중 BombVault가 다시 시작됨)",
   "runReason.shutdown": "취소됨 (BombVault가 종료됨)",
   "runReason.containerGone": "컨테이너가 호스트에 더 이상 없습니다",
+  "runReason.stalled": "정체 감시가 {n}시간 동안 진행이 없어 중지함",
+  "runReason.stalledReading": "{dataset} 읽는 중 정체 감시가 {n}시간 동안 진행이 없어 중지함",
   "runReason.dbdumpAuth": "데이터베이스가 로그인을 거부했습니다",
   "runReason.dbdumpPrivileges": "데이터베이스 사용자에게 덤프에 필요한 권한이 없습니다",
   "runReason.dbdumpUnreachable": "데이터베이스 서버가 연결을 받지 않았습니다",

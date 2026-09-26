@@ -849,6 +849,8 @@ const gl: Partial<Translations> = {
   "runReason.interrupted": "interrompido (BombVault reiniciouse a metade da execución)",
   "runReason.shutdown": "cancelado (BombVault detívose)",
   "runReason.containerGone": "o contedor xa non existe no anfitrión",
+  "runReason.stalled": "one=detido polo vixiante de bloqueos tras {n} hora sen progreso|other=detido polo vixiante de bloqueos tras {n} horas sen progreso",
+  "runReason.stalledReading": "one=detido polo vixiante de bloqueos tras {n} hora sen progreso mentres lía {dataset}|other=detido polo vixiante de bloqueos tras {n} horas sen progreso mentres lía {dataset}",
   "runReason.dbdumpAuth": "a base de datos rexeitou o inicio de sesión",
   "runReason.dbdumpPrivileges": "ao usuario da base de datos fáltalle un permiso que o volcado necesita",
   "runReason.dbdumpUnreachable": "o servidor da base de datos non aceptou a conexión",

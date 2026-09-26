@@ -849,6 +849,8 @@ const bg: Partial<Translations> = {
   "runReason.interrupted": "прекъснато (BombVault се рестартира по време на изпълнение)",
   "runReason.shutdown": "прекратено (BombVault беше спрян)",
   "runReason.containerGone": "контейнерът вече не съществува на хоста",
+  "runReason.stalled": "one=спряно от защитата срещу застой след {n} час без напредък|other=спряно от защитата срещу застой след {n} часа без напредък",
+  "runReason.stalledReading": "one=спряно от защитата срещу застой след {n} час без напредък, докато четеше {dataset}|other=спряно от защитата срещу застой след {n} часа без напредък, докато четеше {dataset}",
   "runReason.dbdumpAuth": "базата данни отказа влизането",
   "runReason.dbdumpPrivileges": "на потребителя на базата данни му липсва право, от което дъмпът се нуждае",
   "runReason.dbdumpUnreachable": "сървърът на базата данни не прие връзка",

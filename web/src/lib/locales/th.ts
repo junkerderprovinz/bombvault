@@ -984,6 +984,8 @@ const th: Partial<Translations> = {
   "runReason.interrupted": "ถูกขัดจังหวะ (BombVault เริ่มทำงานใหม่ระหว่างรอบ)",
   "runReason.shutdown": "ยกเลิก (BombVault ถูกปิด)",
   "runReason.containerGone": "คอนเทนเนอร์ไม่มีอยู่บนโฮสต์แล้ว",
+  "runReason.stalled": "ถูกหยุดโดยตัวเฝ้าการค้างหลังจากไม่มีความคืบหน้า {n} ชั่วโมง",
+  "runReason.stalledReading": "ถูกหยุดโดยตัวเฝ้าการค้างหลังจากไม่มีความคืบหน้า {n} ชั่วโมง ขณะอ่าน {dataset}",
   "runReason.dbdumpAuth": "ฐานข้อมูลปฏิเสธการเข้าสู่ระบบ",
   "runReason.dbdumpPrivileges": "ผู้ใช้ฐานข้อมูลขาดสิทธิ์ที่การดัมป์ต้องใช้",
   "runReason.dbdumpUnreachable": "เซิร์ฟเวอร์ฐานข้อมูลไม่รับการเชื่อมต่อ",

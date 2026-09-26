@@ -84,6 +84,28 @@ function importAppTail(text: string): { rest: string; apps: StoppedApps } | unde
   return undefined;
 }
 
+/**
+ * What a backup the stall guard cancelled writes: the hours it went without
+ * progress and, for a ZFS item, the dataset it was reading. Keep in step with
+ * StalledReason in internal/store/runs.go.
+ */
+const STALLED = "stopped by the stall guard";
+const STALLED_REASON = new RegExp(`^${STALLED} after (\\d+) hours? without progress(?: while reading (.+))?$`);
+
+interface Stall {
+  hours: number;
+  dataset?: string;
+}
+
+function stallOf(text: string): Stall | undefined {
+  const m = STALLED_REASON.exec(text);
+  return m ? { hours: Number(m[1]), dataset: m[2] } : undefined;
+}
+
+function stallKey(stall: Stall): TranslationKey {
+  return stall.dataset === undefined ? "runReason.stalled" : "runReason.stalledReading";
+}
+
 /** What an import writes when its tool reported errors: how many it counted and
  *  where the previous data folder waits. The count picks the sentence. */
 const IMPORT_ERRORS = /^database imported with errors: (\d+), the previous data folder is kept at (.+)$/;
@@ -146,6 +168,11 @@ export function runReasonParts(raw: string | null | undefined, t: T): RunReasonP
   }
   if (!text) return { head: "", detail: "" };
 
+  const stall = stallOf(text);
+  if (stall) {
+    return { head: t(stallKey(stall), stall.hours).replace("{dataset}", stall.dataset ?? ""), detail: "" };
+  }
+
   const errors = IMPORT_ERRORS.exec(text);
   if (errors) return { head: t("runReason.dbimportErrors", Number(errors[1])), detail: errors[2] };
 
@@ -199,6 +226,11 @@ export function RunReasonText({
   reason: string | null | undefined;
   t: T;
 }): ReactElement {
+  const stall = stallOf(reason?.trim() ?? "");
+  if (stall?.dataset !== undefined) {
+    const [before, after = ""] = t(stallKey(stall), stall.hours).split("{dataset}");
+    return createElement(Fragment, null, before, createElement("bdi", { dir: "ltr" }, stall.dataset), after);
+  }
   const { head, detail, note, apps } = runReasonParts(reason, t);
   const tail: ReactNode[] = note ? ["; ", apps ? stoppedAppsNote(apps, t) : note] : [];
   if (!detail) return createElement(Fragment, null, head, ...tail);
@@ -215,5 +247,5 @@ export function RunReasonText({
 export function isOwnReason(raw: string | null | undefined): boolean {
   if (!raw) return false;
   const text = raw.trim();
-  return text in RUN_REASONS || text in RUN_REASON_PREFIXES;
+  return text in RUN_REASONS || text in RUN_REASON_PREFIXES || stallOf(text) !== undefined;
 }
