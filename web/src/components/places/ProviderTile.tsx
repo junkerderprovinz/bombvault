@@ -1,6 +1,6 @@
 import { useId, type CSSProperties } from "react";
 import { Badge } from "../Badge";
-import { PlaceMark } from "../placeMarks";
+import { PlaceMark, placeTile } from "../placeMarks";
 import { hueVars } from "../../lib/appearance";
 import { useGridNav } from "../../lib/gridNav";
 import { useT, type TranslationKey } from "../../lib/i18n";
@@ -13,7 +13,10 @@ import { useTipBubble } from "../../lib/useTipBubble";
 // The provider tiles of the add window. A tile is the crypto window's coin
 // tile (.glim-coin-tile), with a fixed size in place of aspect-square because
 // provider names run longer than tickers: every tile is the same 7rem square,
-// the mark is 48px and the name takes at most two lines of 12px.
+// the mark is 48px and the name takes at most two lines of 12px. Under the
+// pointer a tile lights up in its brand's colour, as the coin tiles do, in one
+// frame, since a fade would leave its mark trailing. One without a brand mark
+// has no colour to light up in and climbs the ramp.
 
 const GROUPS: { id: PlaceGroup; key: TranslationKey }[] = [
   { id: "cloud", key: "places.group.cloud" },
@@ -44,6 +47,10 @@ export function ProviderTile({
   const showName = mode !== "glyph";
   const name = providerName(t, provider.id);
   const tip = useTipBubble(showName ? undefined : name);
+  const lit = placeTile(provider.id);
+  let look = "bg-carbon-surface2 text-carbon-textSub transition-colors hover:bg-carbon-surface3";
+  if (selected) look = "glim-active bg-accent text-accentContrast transition-colors";
+  else if (lit) look = "glim-brand-tile bg-carbon-surface2 text-carbon-textSub";
 
   return (
     <>
@@ -63,12 +70,8 @@ export function ProviderTile({
         onBlur={tip.handlers.onBlur}
         onMouseEnter={tip.handlers.onMouseEnter}
         onMouseLeave={tip.handlers.onMouseLeave}
-        style={hueVars(hueIndex) as CSSProperties}
-        className={`glim-coin-tile glim-hue flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-2 rounded-control px-2 transition-colors ${
-          selected
-            ? "glim-active bg-accent text-accentContrast"
-            : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-tileHover hover:text-carbon-tileHoverInk"
-        }`}
+        style={{ ...hueVars(hueIndex), ...(lit && { "--tile": lit.color, "--tile-ink": lit.ink }) } as CSSProperties}
+        className={`glim-coin-tile glim-hue flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-2 rounded-control px-2 ${look}`}
       >
         {showMark && <PlaceMark provider={provider.id} size={48} />}
         {showName && <span className="line-clamp-2 text-center text-xs font-medium leading-tight">{name}</span>}

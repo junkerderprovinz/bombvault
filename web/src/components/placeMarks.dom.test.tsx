@@ -4,13 +4,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render } from "@testing-library/react";
-import { PlaceMark } from "./placeMarks";
+import { PlaceMark, placeTile } from "./placeMarks";
 
 afterEach(cleanup);
 
 const here = dirname(fileURLToPath(import.meta.url));
 const marksCss = readFileSync(join(here, "../placeMarks.css"), "utf8");
-const indexCss = readFileSync(join(here, "../index.css"), "utf8");
 
 /** The provider ids of internal/places/catalog.go, in tile order. */
 const CATALOG = [
@@ -132,35 +131,39 @@ describe("PlaceMark", () => {
     expect(marksCss).toMatch(/\.glim-coin-tile\.glim-active \.glim-place-mark \*/);
   });
 
-  it("shows our logo drawn for a light ground on a hovered tile", () => {
-    const logos = draw("bombvault").querySelectorAll(".glim-place-logo > img");
-    expect([...logos].map((img) => img.getAttribute("src"))).toEqual(["/logo.svg", "/logo-light.svg"]);
-    expect(marksCss).toMatch(
-      /\[data-theme="dark"\] \.glim-coin-tile:not\(\.glim-active\):hover \.glim-place-logo > img:first-child \{\s*display: block;/
-    );
-    expect(marksCss).toMatch(
-      /\[data-theme="dark"\] \.glim-coin-tile:not\(\.glim-active\):hover \.glim-place-logo > img:last-child \{\s*display: none;/
-    );
+  it("paints every part of a brand mark through the lit tile's ink, or cuts it out where it lies on another part", () => {
+    const painted = (box: HTMLElement) =>
+      [...box.querySelectorAll("svg [fill]")].filter((n) => !n.closest("clipPath") && n.getAttribute("fill") !== "none");
+    for (const id of CATALOG.filter((p) => placeTile(p))) {
+      for (const part of painted(draw(id))) {
+        expect(part.getAttribute("fill"), id).toMatch(/^var\(--mark-(ink|cut), /);
+      }
+      cleanup();
+    }
+    const cuts = (id: string) => painted(draw(id)).filter((n) => n.getAttribute("fill")!.startsWith("var(--mark-cut"));
+    expect(cuts("idrive").map((n) => n.getAttribute("fill"))).toEqual(["var(--mark-cut, #ffffff)"]);
+    cleanup();
+    expect(cuts("garage").length).toBeGreaterThan(0);
+    cleanup();
+    expect(cuts("b2")).toEqual([]);
   });
 });
 
 describe("the mark colours", () => {
   const dark = tokens(':root,\n[data-theme="dark"]');
   const light = tokens('[data-theme="light"]');
-  const hover = tokens(".glim-coin-tile:not(.glim-active):hover");
   const used = usedTokens();
 
-  it("define every token a mark draws in, for both grounds and the hover", () => {
+  it("define every token a mark draws in, for both grounds", () => {
     expect(used.length).toBeGreaterThan(30);
     for (const name of used) {
       expect(dark[name], name).toBeDefined();
       expect(light[name], name).toBeDefined();
-      expect(hover[name], name).toBeDefined();
     }
   });
 
   it("define no token that no mark draws in", () => {
-    for (const set of [dark, light, hover]) {
+    for (const set of [dark, light]) {
       expect(Object.keys(set).filter((name) => !used.includes(name))).toEqual([]);
     }
   });
@@ -172,11 +175,29 @@ describe("the mark colours", () => {
     }
   });
 
-  it("keep 2.5:1 on the grey tile hover", () => {
-    const grey = /--carbon-tile-hover:\s*(#[0-9a-f]{6})/.exec(indexCss)![1]!;
-    expect(grey).toBe("#a8a8a8");
-    for (const name of used) {
-      expect(contrast(hover[name]!, grey), name).toBeGreaterThanOrEqual(2.5);
+  it("light a brand's tile in its own colour, with an ink that keeps 2.5:1 on it", () => {
+    const brands = CATALOG.filter((id) => draw(id).querySelector("svg[data-mark]"));
+    cleanup();
+    expect(brands.length).toBeGreaterThan(25);
+    for (const id of brands) {
+      const tile = placeTile(id);
+      expect(tile, id).toBeDefined();
+      expect(contrast(tile!.ink, tile!.color), id).toBeGreaterThanOrEqual(2.5);
+      // White reverses a mark wherever it holds; OpenCloud brings its own pair.
+      if (id !== "opencloud") {
+        expect(tile!.ink, id).toBe(contrast("#ffffff", tile!.color) >= 2.5 ? "#ffffff" : "#161616");
+      }
     }
+    expect(placeTile("opencloud")).toEqual({ color: "#20434f", ink: "#e2baff" });
+  });
+
+  it("leave a provider without a brand mark of its own unlit", () => {
+    for (const id of ["juicefs", "s3-other", "rest-server", "sftp", "bombvault", "share", "unknown"]) {
+      expect(placeTile(id), id).toBeUndefined();
+    }
+  });
+
+  it("need no values of their own for a hovered tile", () => {
+    expect(marksCss).not.toMatch(/:not\(\.glim-active\):hover/);
   });
 });
