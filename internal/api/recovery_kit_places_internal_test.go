@@ -21,9 +21,8 @@ func TestTheRecoveryKitNamesEveryPlaceAndTheVariablesItRunsWith(t *testing.T) {
 		Base: "rclone:" + places.RemoteName("0a1b") + ":bombvault", Folders: places.DefaultFolders(), CredsRef: "dav", Enabled: true})
 	f.storePlace(store.Place{Name: "Blob", Provider: "azure", Kind: "azure", Base: "azure:backups:",
 		Folders: places.DefaultFolders(), CredsRef: "blob", Enabled: true})
-	f.storePlace(bucketAt("B2", "s3:https://s3.example.com/bucket"))
-	f.storePlace(store.Place{Name: "Unraid", Provider: "unraid-folder", Kind: "local", Base: "backups",
-		Folders: places.DefaultFolders(), Enabled: true})
+	f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	f.storePlace(localPlace("Unraid", "backups"))
 	unraid, err := f.svc.resolveRepo("backups")
 	if err != nil {
 		t.Fatal(err)
