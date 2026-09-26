@@ -391,13 +391,13 @@ const MARK_OF: Record<string, Brand | Glyph | "bombvault"> = {
 /**
  * The colour each brand's tile lights up in under the pointer ("Brand tiles"
  * in GlimStone) and the ink on it: the brand's own colour, and white wherever
- * white keeps 2.5:1 on it, #161616 below that. OpenCloud keeps its own pair.
+ * white reaches 2:1 on it, #161616 below that. OpenCloud keeps its own pair.
  */
 const TILES: Record<Brand, { color: string; ink: string }> = {
   b2: { color: "#e21e29", ink: "#ffffff" },
   aws: { color: "#252f3e", ink: "#ffffff" },
   cloudflare: { color: "#f38020", ink: "#ffffff" },
-  wasabi: { color: "#01cd3e", ink: "#161616" },
+  wasabi: { color: "#01cd3e", ink: "#ffffff" },
   hetzner: { color: "#d50c2d", ink: "#ffffff" },
   storj: { color: "#0052ff", ink: "#ffffff" },
   idrive: { color: "#1372ba", ink: "#ffffff" },
@@ -412,7 +412,7 @@ const TILES: Record<Brand, { color: string; ink: string }> = {
   azure: { color: "#0072c6", ink: "#ffffff" },
   minio: { color: "#c72e49", ink: "#ffffff" },
   seaweedfs: { color: "#0162bf", ink: "#ffffff" },
-  garage: { color: "#ff9329", ink: "#161616" },
+  garage: { color: "#ff9329", ink: "#ffffff" },
   ceph: { color: "#f0424d", ink: "#ffffff" },
   rustfs: { color: "#0196d0", ink: "#ffffff" },
   versity: { color: "#191b2a", ink: "#ffffff" },
@@ -420,7 +420,7 @@ const TILES: Record<Brand, { color: string; ink: string }> = {
   owncloud: { color: "#041e42", ink: "#ffffff" },
   opencloud: { color: "#20434f", ink: "#e2baff" },
   rclone: { color: "#3f79ad", ink: "#ffffff" },
-  synology: { color: "#b5b5b6", ink: "#161616" },
+  synology: { color: "#b5b5b6", ink: "#ffffff" },
   qnap: { color: "#0c2e82", ink: "#ffffff" },
   truenas: { color: "#0095d5", ink: "#ffffff" },
   unraid: { color: "#f15a2c", ink: "#ffffff" },
