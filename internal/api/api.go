@@ -271,6 +271,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/storage/domains", h.handleStorageDomains)
 	mux.HandleFunc("POST /api/storage/domains/{d}/home/preview", h.handleDomainHomePreview)
 	mux.HandleFunc("PUT /api/storage/domains/{d}/home", h.handleDomainHome)
+	mux.HandleFunc("POST /api/storage/domains/{d}/copies/preview", h.handleDomainCopiesPreview)
+	mux.HandleFunc("PUT /api/storage/domains/{d}/copies", h.handleDomainCopies)
 	mux.HandleFunc("POST /api/offsite/{domain}", h.handleReplicateOffsite)
 	// Primary-target probe; the per-target one is the /targets/{id}/test route above.
 	mux.HandleFunc("POST /api/offsite/{domain}/test", h.handleTestOffsite)

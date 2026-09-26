@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"slices"
 
 	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -545,5 +546,255 @@ func (h *Handler) handleDomainHome(w http.ResponseWriter, r *http.Request) {
 		placeFail(w, err)
 	default:
 		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"reset": reset, "kept": kept}))
+	}
+}
+
+// CopiesPreview is what switching one chip of a domain row does.
+type CopiesPreview struct {
+	PlaceID   string         `json:"placeId"`
+	On        bool           `json:"on"`
+	TargetID  string         `json:"targetId,omitempty"`  // "" while the place holds no target of the domain
+	Suffix    string         `json:"suffix,omitempty"`    // the address ending of a new target
+	Skip      []string       `json:"skip"`                // containers, VMs, folder sets: the default's skip after the chip
+	Enabled   bool           `json:"enabled"`             // whether the target is switched on before the chip
+	NewTarget *targetPreview `json:"newTarget,omitempty"` // a new target, or a stopped one switched on: what it receives at its next run
+	Impact    *defaultImpact `json:"impact,omitempty"`
+}
+
+// same compares what the window showed, not snapshot counts, which every
+// backup changes.
+func (pv CopiesPreview) same(o CopiesPreview) bool {
+	if pv.PlaceID != o.PlaceID || pv.On != o.On || pv.TargetID != o.TargetID || pv.Suffix != o.Suffix ||
+		pv.Enabled != o.Enabled || !slices.Equal(pv.Skip, o.Skip) {
+		return false
+	}
+	switch {
+	case pv.NewTarget != nil && o.NewTarget != nil:
+		return pv.NewTarget.Items == o.NewTarget.Items
+	case pv.Impact != nil && o.Impact != nil:
+		return pv.Impact.sameCounts(*o.Impact)
+	}
+	return pv.NewTarget == nil && o.NewTarget == nil && pv.Impact == nil && o.Impact == nil
+}
+
+// copiesPreviewAnswer is a preview in the ok envelope.
+type copiesPreviewAnswer struct {
+	OK bool `json:"ok"`
+	CopiesPreview
+}
+
+// domainCopiesPreview works out a chip: the target it switches or creates at
+// the place and, for containers, VMs and folder sets, the default's skip
+// after it with the question the defaults card asked for the same change.
+func (s *Service) domainCopiesPreview(ctx context.Context, domain, placeID string, on bool) (CopiesPreview, error) {
+	pv := CopiesPreview{PlaceID: placeID, On: on, Skip: []string{}}
+	p, err := s.store.GetPlace(placeID)
+	if err != nil {
+		return pv, err
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return pv, err
+	}
+	homes, err := s.store.DomainPlaces()
+	if err != nil {
+		return pv, err
+	}
+	rows, err := s.store.PlaceRows(p.ID)
+	if err != nil {
+		return pv, err
+	}
+	a := domainAt(p, rows, homes[domain], domain)
+	switch {
+	case a.home:
+		return pv, errPlaceHomeDomain
+	case on && !p.Enabled:
+		return pv, errPlaceOff
+	case a.target != nil:
+		pv.TargetID, pv.Enabled = a.target.ID, a.target.Enabled
+	case on:
+		if pv.Suffix, err = s.newTargetSuffix(settings, p, rows, a, domain); err != nil {
+			return pv, err
+		}
+	}
+	if !validPlacementDomain(domain) {
+		return pv, nil
+	}
+	return pv, s.previewCopiesSkip(ctx, settings, domain, p, &pv)
+}
+
+// newTargetSuffix is the address ending a new target of the domain takes at
+// the place, none or -copies beside the domain's named repository there,
+// once that address has passed the location check.
+func (s *Service) newTargetSuffix(settings store.Settings, p store.Place, rows []store.OffsiteTarget, a domainAtPlace, domain string) (string, error) {
+	if _, ok := p.Folders[domain]; !ok {
+		return "", store.ErrPlaceDomainUnavailable
+	}
+	suffix := ""
+	if a.repo != nil {
+		if placeIsRepository(p, rows) {
+			return "", errPlaceIsRepository
+		}
+		suffix = copiesSuffix
+	}
+	addr, _ := store.PlaceAddress(p, domain, suffix)
+	loc, err := s.resolveRepo(addr)
+	if err != nil {
+		return "", err
+	}
+	return suffix, s.locationClash(settings, loc, locationSelf{target: true})
+}
+
+// previewCopiesSkip fills in the default's skip after the chip and what it
+// changes. The default's own place takes no chip: it is where the domain
+// stores.
+func (s *Service) previewCopiesSkip(ctx context.Context, settings store.Settings, domain string, p store.Place, pv *CopiesPreview) error {
+	read, err := s.readPlacement(settings, domain)
+	if err != nil {
+		return err
+	}
+	named, err := s.namedRepoIndex()
+	if err != nil {
+		return err
+	}
+	if repo, ok := named[read.State.Default.Home]; ok && repo.PlaceID == p.ID && repo.CompanionOf == "" {
+		return errPlaceHomeDomain
+	}
+	if pv.TargetID == "" && !pv.On {
+		pv.Skip = append(pv.Skip, read.defaultSkip()...)
+		return nil
+	}
+	pv.Skip = chipSkip(read, pv.TargetID, pv.On)
+	if pv.On && (pv.TargetID == "" || !pv.Enabled) {
+		next := read.withDefaultSkip(pv.Skip)
+		preview, err := s.newTargetPreview(ctx, domain, pv.TargetID, &next)
+		pv.NewTarget = &preview
+		return err
+	}
+	impact, err := s.defaultImpactFor(ctx, domain, defaultChange{Skip: &pv.Skip})
+	pv.Impact = &impact
+	return err
+}
+
+// chipSkip is the default's skip once a chip is switched. Under ["*"] a chip
+// switched on leaves out every other enabled target instead, since not being
+// in ["*"] means nothing; a chip switched off that leaves no enabled target
+// in goes back to ["*"].
+func chipSkip(p placementRead, targetID string, on bool) []string {
+	cur := p.defaultSkip()
+	enabled := p.enabledTargets()
+	switch {
+	case on && skipsEverything(cur):
+		out := []string{}
+		for _, t := range enabled {
+			if t.ID != targetID {
+				out = append(out, t.ID)
+			}
+		}
+		return out
+	case on:
+		return slices.DeleteFunc(slices.Clone(cur), func(id string) bool { return id == targetID })
+	}
+	next := withTarget(cur, targetID)
+	if len(enabled) > 0 && !slices.ContainsFunc(enabled, func(t store.OffsiteTarget) bool { return !skipsTarget(next, t.ID) }) {
+		return []string{store.SkipAll}
+	}
+	return slices.Clone(next)
+}
+
+// domainCopiesBody is a chip as the window confirms it.
+type domainCopiesBody struct {
+	PlaceID string         `json:"placeId"`
+	On      bool           `json:"on"`
+	Expect  *CopiesPreview `json:"expect"`
+}
+
+// setDomainCopies writes a chip once the preview reads as the window showed
+// it: the target and the default's skip in one transaction, and for flash and
+// config the target's switch. A chip switched on also starts a target that was
+// stopped on its own, or leaving it out of the skip would copy nothing.
+// placeEditMu keeps an edit of the place from moving the address the preview
+// judged, and placementMu every other write of the default out, from the
+// preview to the write.
+func (s *Service) setDomainCopies(ctx context.Context, domain string, body domainCopiesBody) (CopiesPreview, error) {
+	s.placeEditMu.Lock()
+	defer s.placeEditMu.Unlock()
+	s.placementMu.Lock()
+	defer s.placementMu.Unlock()
+	pv, err := s.domainCopiesPreview(ctx, domain, body.PlaceID, body.On)
+	if err != nil {
+		return pv, err
+	}
+	if body.Expect == nil || !pv.same(*body.Expect) {
+		return pv, errPlacementStale
+	}
+	if pv.TargetID == "" && !pv.On {
+		return pv, nil
+	}
+	w := store.DomainCopiesWrite{Domain: domain, PlaceID: pv.PlaceID, TargetID: pv.TargetID, Suffix: pv.Suffix}
+	if validPlacementDomain(domain) {
+		w.Skip = &pv.Skip
+	}
+	if !validPlacementDomain(domain) || (pv.On && pv.TargetID != "" && !pv.Enabled) {
+		w.Enabled = &pv.On
+	}
+	if _, err := s.store.WriteDomainCopies(w); err != nil {
+		return pv, err
+	}
+	if pv.Impact != nil {
+		for _, t := range pv.Impact.Dropped {
+			if t.Unknown {
+				s.listTargetInBackground(domain, t.TargetID)
+			}
+		}
+	}
+	return pv, nil
+}
+
+// handleDomainCopiesPreview serves POST /api/storage/domains/{d}/copies/preview.
+func (h *Handler) handleDomainCopiesPreview(w http.ResponseWriter, r *http.Request) {
+	domain, ok := storageDomainParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		PlaceID string `json:"placeId"`
+		On      bool   `json:"on"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	pv, err := h.svc.domainCopiesPreview(r.Context(), domain, body.PlaceID, body.On)
+	switch {
+	case errors.Is(err, store.ErrPlaceNotFound):
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such place"})
+	case err != nil:
+		placeFail(w, err)
+	default:
+		writeJSON(w, http.StatusOK, copiesPreviewAnswer{OK: true, CopiesPreview: pv})
+	}
+}
+
+// handleDomainCopies serves PUT /api/storage/domains/{d}/copies. A stale
+// answer carries the fresh preview.
+func (h *Handler) handleDomainCopies(w http.ResponseWriter, r *http.Request) {
+	domain, ok := storageDomainParam(w, r)
+	if !ok {
+		return
+	}
+	var body domainCopiesBody
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	pv, err := h.svc.setDomainCopies(r.Context(), domain, body)
+	switch {
+	case errors.Is(err, store.ErrPlaceNotFound):
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such place"})
+	case errors.Is(err, errPlacementStale):
+		placementFail(w, err, map[string]any{"preview": pv})
+	case err != nil:
+		placeFail(w, err)
+	default:
+		writeJSON(w, http.StatusOK, okEnvelope(nil))
 	}
 }
