@@ -538,8 +538,8 @@ func TestAHomePlaceStaysSwitchedOn(t *testing.T) {
 func TestOnlyARemotePlaceTakesTheAppendOnlySwitch(t *testing.T) {
 	f := newPlacementFixture(t)
 	unraid := f.storePlace(localPlace("Unraid", "backups"))
-	if res := f.do(http.MethodPatch, "/api/places/"+unraid.ID, map[string]any{"immutable": true}); res["ok"] != false || res["code"] != nil {
-		t.Fatalf("append-only on a local place = %v, want a plain refusal", res)
+	if res := f.do(http.MethodPatch, "/api/places/"+unraid.ID, map[string]any{"immutable": true}); res["ok"] != false || res["code"] != "place-no-append-only" {
+		t.Fatalf("append-only on a local place = %v, want place-no-append-only", res)
 	}
 	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
 	target := f.placeTarget(b2, "containers", "")
