@@ -40,7 +40,7 @@ disaster recovery</strong> of your Docker containers, KVM/libvirt VMs and the Un
 <a href="https://restic.net">restic</a> underneath. The restore is where it shines: a backed-up
 container <strong>shows up in the Docker tab again</strong> and a VM
 <strong>in the VM Manager</strong>, exactly as it was, even after you deleted it. You don't
-reinstall or reconfigure anything by hand. Backup paths, encryption, schedules and retention are
+reinstall or reconfigure anything by hand. Storage places, encryption, schedules and retention are
 all set in the web UI, which follows your system's light or dark preference, so there is no config
 file to edit.</p>
 
@@ -49,7 +49,7 @@ file to edit.</p>
   <li>Three domains in one app: Docker containers (appdata and definition), KVM/libvirt VMs (disks, XML and UEFI NVRAM), and the whole Unraid flash (<code>/boot</code>)</li>
   <li>A restore that reinstalls for you: containers are replayed against the Docker API and VMs are defined again in the VM Manager, so they come back as they were</li>
   <li>VM backup without a libvirt mount: BombVault runs <code>virsh</code> on the host over SSH (<code>qemu+ssh://</code>), so it cannot get in the way of your VM Manager. Choose between graceful shutdown and live snapshots through the guest agent</li>
-  <li>Off-site repos through rclone (Backblaze B2, S3, Google Drive and more) or SMB/NFS. The rclone config is stored encrypted</li>
+  <li>Backups and copies go to storage places: a folder on the server, an SMB or NFS share, S3 at Backblaze B2, Amazon, Cloudflare R2, Wasabi, Hetzner and others, a rest-server, SFTP, Nextcloud over WebDAV, Azure Blob or any rclone remote. Each place has its own credentials, stored encrypted, and its own retention and limits</li>
   <li>Retention by keep-last, daily, weekly and monthly, pruned automatically after each backup</li>
   <li>File-level restore: browse a container snapshot and put a single file back where it came from</li>
   <li>Integrity checks (<code>restic check</code>) and pre/post-backup hooks, for example <code>mysqldump</code> for an app-consistent backup</li>
