@@ -293,13 +293,19 @@ func (s *Service) adoptSlot(p store.Place, rows []store.OffsiteTarget, homes map
 			return "", "", errPlaceIsRepository
 		}
 		return row.Domain, copiesSuffix, nil
+	case !p.Enabled:
+		// A repository there would be switched off with the place, and every
+		// item backing up to it would fail.
+		return "", "", errPlaceOff
 	case row.CompanionOf != "":
 		target, found, err := s.store.GetOffsiteTarget(row.CompanionOf)
-		if err != nil {
+		switch {
+		case err != nil:
 			return "", "", err
-		}
-		if !found || target.PlaceID != p.ID {
+		case !found || target.PlaceID != p.ID:
 			return "", "", errMirroredField
+		case placeIsRepository(p, rows):
+			return "", "", errPlaceIsRepository
 		}
 		return target.Domain, directSuffix, nil
 	case domain != "" && !validPlacementDomain(domain):
