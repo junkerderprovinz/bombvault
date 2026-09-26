@@ -43,15 +43,6 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
- * elapsedSince renders the span from a backend-stamped `startedAt` (Unix
- * seconds) to `nowMs` (epoch milliseconds) via formatDuration. It returns ""
- * when `startedAt` is missing, not positive, or in the future (clock skew).
- *
- * The backend sends 0 for an unknown start (see progress.go's Event), and a 0
- * would otherwise render as the age of the Unix epoch; formatDuration only
- * rejects a start in the future.
- */
-/**
  * formatMillis is formatDuration for a span measured in milliseconds. Under a
  * second it keeps the milliseconds, which whole seconds would round to "0s".
  */
@@ -60,6 +51,15 @@ export function formatMillis(ms: number): string {
   return formatDuration(ms / 1000);
 }
 
+/**
+ * elapsedSince renders the span from a backend-stamped `startedAt` (Unix
+ * seconds) to `nowMs` (epoch milliseconds) via formatDuration. It returns ""
+ * when `startedAt` is missing, not positive, or in the future (clock skew).
+ *
+ * The backend sends 0 for an unknown start (see progress.go's Event), and a 0
+ * would otherwise render as the age of the Unix epoch; formatDuration only
+ * rejects a start in the future.
+ */
 export function elapsedSince(startedAt: number | undefined, nowMs: number): string {
   if (typeof startedAt !== "number" || !Number.isFinite(startedAt) || startedAt <= 0) return "";
   return formatDuration((nowMs - startedAt * 1000) / 1000);
