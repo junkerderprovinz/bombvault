@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 func (f *placementFixture) placeRepo(placeID, domain string) map[string]any {
@@ -201,6 +203,48 @@ func TestADirectRepositoryJoinsOnlyThePlaceOfItsTarget(t *testing.T) {
 	direct := f.direct(elsewhere)
 	if res := f.adopt(b2.ID, direct.ID, ""); res["ok"] != false || res["code"] != "mirrored-field" {
 		t.Fatalf("adopt = %v, want mirrored-field", res)
+	}
+}
+
+func TestADirectRepositoryDoesNotJoinAPlaceThatIsARepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := s3Place("B2 root", "s3:https://s3.example.com/bucket")
+	p.Folders = map[string]string{"containers": "", "vms": ""}
+	root := f.storePlace(p)
+	target := f.placeTarget(root, "containers", "")
+	direct, err := f.st.CreateCompanionRepo(target.ID, "B2 root direct", "s3:https://s3.example.com/other")
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.eng.opens["s3:https://s3.example.com/bucket-direct"] = false
+
+	if res := f.adopt(root.ID, direct.ID, ""); res["ok"] != false || res["code"] != "place-is-repository" {
+		t.Fatalf("adopt = %v, want place-is-repository", res)
+	}
+	if row, err := f.st.GetNamedRepo(direct.ID); err != nil || row.PlaceID != "" || row.Repo != direct.Repo {
+		t.Fatalf("row = %+v, %v, want it untouched", row, err)
+	}
+}
+
+func TestARepositoryDoesNotJoinASwitchedOffPlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := localPlace("NAS", "nas")
+	p.Enabled = false
+	nas := f.storePlace(p)
+	named := f.namedRepo("Old NAS", "nas/containers")
+	f.container("nginx", named.ID)
+	direct := f.direct(f.placeTarget(nas, "vms", ""))
+
+	for _, c := range []struct {
+		row    store.OffsiteTarget
+		domain string
+	}{{named, "containers"}, {direct, ""}} {
+		if res := f.adopt(nas.ID, c.row.ID, c.domain); res["ok"] != false || res["code"] != "place-off" {
+			t.Fatalf("adopt %s = %v, want place-off", c.row.Name, res)
+		}
+		if row, err := f.st.GetNamedRepo(c.row.ID); err != nil || row.PlaceID != "" || !row.Enabled {
+			t.Fatalf("%s = %+v, %v, want it on and without a place", c.row.Name, row, err)
+		}
 	}
 }
 
