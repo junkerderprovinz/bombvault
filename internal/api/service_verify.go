@@ -412,20 +412,21 @@ var errNothingToDrill = errors.New("no restorable file data in the newest off-si
 // restores the newest off-site snapshot of the drill target into a marker-guarded
 // sandbox under the restore folder, verifies the restored file count + bytes
 // against restic's own accounting, deletes the sandbox (marker-guarded), and
-// records a restore_drills(kind='dr', source='offsite') row. It takes the domain
-// repo lock exactly like a real restore, so a scheduled backup can never fire
-// mid-drill and vice-versa; busy → errDomainBusy, recording nothing. A failure
-// records kind='dr' ok=false and fires the drill-failure notification.
+// records a restore_drills(kind='dr', source='offsite') row naming the target.
+// It takes the domain repo lock exactly like a real restore, so a scheduled
+// backup can never fire mid-drill and vice versa; busy returns errDomainBusy and
+// records nothing. A failure records kind='dr' ok=false and fires the
+// drill-failure notification.
 func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bool) (drill store.RestoreDrill, err error) {
 	switch domain {
 	case "containers", "vms", "flash", "files":
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
 	}
-	// A DR drill only ever restores from an off-site repo. A non-offsite
-	// source (the scheduler's legacy call, or "local") normalises to the bare
-	// "offsite" primary; an "offsite:<id>" source drills, and records under,
-	// that specific destination.
+	// A DR drill only ever restores from an off-site repo, so any other source
+	// takes the first enabled target. An "offsite:<id>" source drills that
+	// target, and the result is recorded for the domain all the same, naming
+	// the target, because it answers whether the domain restores from off-site.
 	if !isOffsiteSource(source) {
 		source = "offsite"
 	}
@@ -460,18 +461,19 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 			// off-site DR check did not run rather than freezing the red with no
 			// reason (#30).
 			skip := store.RestoreDrill{
-				Domain: domain,
-				Source: source,
-				Kind:   "dr",
-				At:     time.Now().Unix(),
-				OK:     false,
-				Detail: "skipped: repository busy longer than " + drillLockWait.String() + " (a backup or off-site copy held it)",
+				Domain:   domain,
+				Source:   "offsite",
+				Kind:     "dr",
+				At:       time.Now().Unix(),
+				OK:       false,
+				Detail:   "skipped: repository busy longer than " + drillLockWait.String() + " (a backup or off-site copy held it)",
+				TargetID: target.ID,
 			}
 			if aErr := s.store.AddRestoreDrill(skip); aErr != nil {
 				log.Printf("api: drill: record busy-skip for %q: %v", domain, aErr) //nolint:gosec // G706: domain is %q-quoted and validated above
 			}
 			s.recordDomainRun(domain, "drdrill", false, skip.Detail)
-			s.notifyDrillFailure(ctx, domain, source, skip.Detail)
+			s.notifyDrillFailure(ctx, domain, skip.Source, skip.Detail)
 			return skip, errDomainBusy
 		}
 		unlock = u
@@ -530,11 +532,12 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 		return store.RestoreDrill{}, drillErr
 	}
 	drill = store.RestoreDrill{
-		Domain: domain,
-		Source: source,
-		At:     time.Now().Unix(),
-		OK:     drillErr == nil,
-		Kind:   "dr",
+		Domain:   domain,
+		Source:   "offsite",
+		At:       time.Now().Unix(),
+		OK:       drillErr == nil,
+		Kind:     "dr",
+		TargetID: target.ID,
 	}
 	if drillErr != nil {
 		drill.Detail = scrubError(drillErr)
@@ -552,7 +555,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	// restore check.
 	s.recordDomainRun(domain, "drdrill", drill.OK, drill.Detail)
 	if drillErr != nil {
-		s.notifyDrillFailure(ctx, domain, source, drill.Detail)
+		s.notifyDrillFailure(ctx, domain, drill.Source, drill.Detail)
 	}
 	return drill, drillErr
 }
