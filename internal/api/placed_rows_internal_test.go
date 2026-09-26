@@ -340,3 +340,22 @@ func TestAPlacedMeshTargetOnSortOrderZeroStaysThere(t *testing.T) {
 		t.Fatalf("mesh target = %+v, want it as its place left it: %+v", got, row)
 	}
 }
+
+func TestTheOffsiteFieldOnAPlacedTargetsAddressAddsNoSecondRow(t *testing.T) {
+	f := newPlacementFixture(t)
+	row := f.placeTarget(f.storePlace(bucketAt("B2", "s3:https://s3.example.com/bucket")), "containers", "")
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersOffsite = row.Repo
+	if err := f.svc.syncPrimaryOffsiteTarget("containers", settings); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.storedTarget(row.ID); got != row {
+		t.Fatalf("placed target = %+v, want it as its place left it: %+v", got, row)
+	}
+	if targets, err := f.st.OffsiteTargetsForDomain("containers"); err != nil || len(targets) != 1 {
+		t.Fatalf("containers targets = %+v, %v, want only the placed one", targets, err)
+	}
+}

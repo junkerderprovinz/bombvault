@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"log"
+	"slices"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -22,10 +23,11 @@ func validOffsiteDomain(domain string) bool {
 
 // syncPrimaryOffsiteTarget writes a domain's off-site settings field into the
 // target on sort_order 0. Without one, a target already on the field's
-// location takes that role, so the domain does not copy there twice, and
+// location moves onto that slot, so the domain does not copy there twice, and
 // failing that a new row is made. Clearing the field switches that row off,
 // so filling it again brings back the same target. A target at a place is
-// left alone: the place writes it, and the field only follows.
+// left alone, on the slot or on the field's location: the place writes it,
+// and the field only follows.
 func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Settings) error {
 	if s.store == nil {
 		return nil
@@ -48,11 +50,15 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 		if err != nil {
 			return err
 		}
-		for _, t := range targets {
-			if t.Repo == repo {
-				primary, ok = t, true
-				break
+		onRepo := func(t store.OffsiteTarget) bool { return t.Repo == repo }
+		unplaced := func(t store.OffsiteTarget) bool { return onRepo(t) && t.PlaceID == "" }
+		if i := slices.IndexFunc(targets, unplaced); i >= 0 {
+			if err := s.store.MakeFieldOffsiteTarget(targets[i].ID); err != nil {
+				return err
 			}
+			primary, ok = targets[i], true
+		} else if slices.ContainsFunc(targets, onRepo) {
+			return nil
 		}
 	}
 	t := settingsOffsiteTarget(domain, settings, repo)
