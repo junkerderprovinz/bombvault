@@ -2954,8 +2954,8 @@ export const de: Translations = {
   "restore.confirmBody":
     "Der Container wird gestoppt, seine Appdata ersetzt und aus dem Backup neu erstellt. Fortfahren?",
   "restore.cancel": "Wiederherstellung abbrechen",
-  "backup.cancel": "Sicherung abbrechen",
-  "backup.cancelConfirm": "Sicherung von {name} abbrechen? Der Lauf endet ohne Schnappschuss, und nichts bereits Gesichertes geht verloren.",
+  "backup.cancel": "Backup abbrechen",
+  "backup.cancelConfirm": "Backup von {name} abbrechen? Der Lauf endet ohne Snapshot, und nichts bereits Gesichertes geht verloren.",
   "backup.cancelTooLate": "Das Backup von {name} hat seinen Wiederherstellungspunkt schon geschrieben und startet die Container wieder. Abbrechen geht jetzt nicht mehr.",
   "backup.cancelNotRunning": "Das Backup von {name} war schon fertig. Es gab nichts abzubrechen.",
   "runReason.cancelled": "Von der Benutzerin abgebrochen",

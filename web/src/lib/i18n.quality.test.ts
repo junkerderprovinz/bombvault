@@ -1,10 +1,11 @@
-// Two gaps the parity test cannot see. A value still identical to English is
+// Gaps the parity test cannot see. A value still identical to English is
 // keyed and placeholdered correctly, yet untranslated, and only a reader of that
 // language notices. Two en keys holding the same sentence are maintained twice
-// and drift apart the first time one is edited. Both checks fail rather than
+// and drift apart the first time one is edited. A German string can name a
+// thing differently from the rest of the German UI. The checks fail rather than
 // warn, and every exception sits on an allow-list.
 import { describe, expect, it } from "vitest";
-import { en } from "./i18n";
+import { de, en } from "./i18n";
 import { allLocales as locales } from "./localesForTests";
 
 /**
@@ -115,5 +116,16 @@ describe("no sentence lives in two keys", () => {
       "These keys hold the same sentence in EVERY language, so it is maintained " +
         "in several places and will drift. Point one at the other.",
     ).toEqual([]);
+  });
+});
+
+describe("German keeps one name for each thing", () => {
+  // The German UI says Backup and Snapshot throughout. A single dialog that
+  // switches to Sicherung and Schnappschuss reads like a different action.
+  it("calls a snapshot a Snapshot and the cancel action a Backup", () => {
+    const odd = Object.entries(de)
+      .filter(([key, value]) => /Schnappschuss/.test(value) || (key.startsWith("backup.cancel") && /Sicherung/.test(value)))
+      .map(([key, value]) => `${key}: ${value}`);
+    expect(odd).toEqual([]);
   });
 });
