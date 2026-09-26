@@ -352,10 +352,54 @@ func TestTheOffsiteFieldOnAPlacedTargetsAddressAddsNoSecondRow(t *testing.T) {
 	if err := f.svc.syncPrimaryOffsiteTarget("containers", settings); err != nil {
 		t.Fatal(err)
 	}
-	if got := f.storedTarget(row.ID); got != row {
-		t.Fatalf("placed target = %+v, want it as its place left it: %+v", got, row)
+	want := row
+	want.SortOrder = 0
+	if got := f.storedTarget(row.ID); got != want {
+		t.Fatalf("placed target = %+v, want it as its place left it, as the field's row: %+v", got, want)
 	}
 	if targets, err := f.st.OffsiteTargetsForDomain("containers"); err != nil || len(targets) != 1 {
 		t.Fatalf("containers targets = %+v, %v, want only the placed one", targets, err)
+	}
+}
+
+func TestTheOffsiteFieldOnAPlacedTargetsAddressFollowsThePlace(t *testing.T) {
+	for name, leave := range map[string]func(*placementFixture, store.Place){
+		"switched off": func(f *placementFixture, p store.Place) {
+			p.Enabled = false
+			f.storePlace(p)
+		},
+		"removed": func(f *placementFixture, p store.Place) {
+			if _, err := f.st.DeletePlaceIfUnused(p.ID); err != nil {
+				f.t.Fatal(err)
+			}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := newPlacementFixture(t)
+			b2 := f.storePlace(bucketAt("B2", "s3:https://s3.example.com/bucket"))
+			row := f.placeTarget(b2, "containers", "")
+			typed, _ := f.do(http.MethodGet, "/api/settings", nil)["settings"].(map[string]any)
+			typed["containersOffsite"] = row.Repo
+			if res := f.do(http.MethodPut, "/api/settings", typed); res["ok"] != true {
+				t.Fatalf("PUT /api/settings = %v", res)
+			}
+
+			leave(f, b2)
+			next, _ := f.do(http.MethodGet, "/api/settings", nil)["settings"].(map[string]any)
+			if res := f.do(http.MethodPut, "/api/settings", next); res["ok"] != true {
+				t.Fatalf("PUT /api/settings = %v", res)
+			}
+
+			settings, err := f.st.GetSettings()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if settings.ContainersOffsite != "" {
+				t.Fatalf("containers field = %q, want it empty with its place %s", settings.ContainersOffsite, name)
+			}
+			if targets := f.svc.offsiteReplicationTargets("containers", settings); len(targets) != 0 {
+				t.Fatalf("containers still copies to %+v", targets)
+			}
+		})
 	}
 }

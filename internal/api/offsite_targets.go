@@ -26,8 +26,8 @@ func validOffsiteDomain(domain string) bool {
 // location moves onto that slot, so the domain does not copy there twice, and
 // failing that a new row is made. Clearing the field switches that row off,
 // so filling it again brings back the same target. A target at a place is
-// left alone, on the slot or on the field's location: the place writes it,
-// and the field only follows.
+// not written, on the slot or on the field's location: it only moves onto
+// the slot, and from then on its place writes the field.
 func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Settings) error {
 	if s.store == nil {
 		return nil
@@ -57,8 +57,8 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 				return err
 			}
 			primary, ok = targets[i], true
-		} else if slices.ContainsFunc(targets, onRepo) {
-			return nil
+		} else if i := slices.IndexFunc(targets, onRepo); i >= 0 {
+			return s.store.MakeFieldOffsiteTarget(targets[i].ID)
 		}
 	}
 	t := settingsOffsiteTarget(domain, settings, repo)

@@ -201,3 +201,45 @@ func TestMakeFieldOffsiteTargetPutsTheRowOnZero(t *testing.T) {
 		t.Fatalf("FieldOffsiteTarget = %q ok=%v err=%v, want %s", got.ID, ok, err, second.ID)
 	}
 }
+
+func TestATargetAtAPlaceMadeTheFieldsRowFillsTheFieldAsItsPlaceWould(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := bucketPlace()
+	bucket.Immutable = true
+	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	on := store.SeedOffsiteTarget(t, r, "containers", addressAt(t, bucket, "containers", ""))
+	off := store.SeedOffsiteTarget(t, r, "vms", addressAt(t, bucket, "vms", ""))
+	off.Enabled = false
+	upsertRow(t, r, off)
+	attachRow(t, db, on.ID, bucket.ID, "containers", "")
+	attachRow(t, db, off.ID, bucket.ID, "vms", "")
+	mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	if _, err := r.MutateSettings(func(s *store.Settings) error {
+		s.ContainersOffsite, s.VMsOffsite = on.Repo, off.Repo
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	before := map[string]store.OffsiteTarget{}
+	for _, id := range []string{on.ID, off.ID} {
+		before[id], _, _ = r.GetOffsiteTarget(id)
+	}
+
+	for _, id := range []string{on.ID, off.ID} {
+		if err := r.MakeFieldOffsiteTarget(id); err != nil {
+			t.Fatalf("MakeFieldOffsiteTarget: %v", err)
+		}
+		want := before[id]
+		want.SortOrder = 0
+		if got, _, _ := r.GetOffsiteTarget(id); got != want {
+			t.Fatalf("target = %+v, want it as its place wrote it, on sort order 0: %+v", got, want)
+		}
+	}
+	s := storedSettings(t, r)
+	if s.ContainersOffsite != on.Repo || !s.ContainersOffsiteImmutable {
+		t.Fatalf("containers field = %q, %v, want the target's address, append-only", s.ContainersOffsite, s.ContainersOffsiteImmutable)
+	}
+	if s.VMsOffsite != "" {
+		t.Fatalf("vms field = %q, want it empty under a target that is off", s.VMsOffsite)
+	}
+}
