@@ -213,6 +213,41 @@ func TestImportOnFreshInstanceTakesTheRedactedDomainPath(t *testing.T) {
 	}
 }
 
+func TestASelfImportOfAPlainExportKeepsTheCredentialedPlaceWhole(t *testing.T) {
+	h, st := newPortableHandler(t, appKeyA)
+	seedSource(t, h, st)
+	seedCredentialedPlace(t, st)
+	body, _ := doExport(t, h, "")
+
+	if env := doImport(t, h, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+	placesNow, err := st.ListPlaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(placesNow) != 1 {
+		t.Fatalf("places = %+v, want the rest place alone", placesNow)
+	}
+	if placesNow[0].Base != restPlaceBase {
+		t.Errorf("base = %q, want the one it had here", placesNow[0].Base)
+	}
+	homes, err := st.DomainPlaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if homes["vms"] != "place-rest" {
+		t.Errorf("vms is stored at %q, want place-rest", homes["vms"])
+	}
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.VMsPath != restPlaceBase+"/vms" {
+		t.Errorf("vmsPath = %q, want the working path with its credential", s.VMsPath)
+	}
+}
+
 func TestImportOnFreshInstanceTakesAStorageBoxPathWhole(t *testing.T) {
 	const box = "sftp:u123456@u123456.your-storagebox.de:/bv/vms"
 	src, srcStore := newPortableHandler(t, appKeyA)
