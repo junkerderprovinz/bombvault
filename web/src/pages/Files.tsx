@@ -602,7 +602,8 @@ function FileSetRestorePanel({
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const { flagged } = useOpenAnomalies();
-  const [loading, setLoading] = useState(false);
+  // Before the first answer an empty list would report a linked backup as gone.
+  const [loading, setLoading] = useState(true);
   // A failed list load replaces the whole list, so it stays inline rather
   // than going into a toast.
   const [error, setError] = useState<string | null>(null);

@@ -503,7 +503,8 @@ function VMRestorePanel({
 }) {
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [loading, setLoading] = useState(false);
+  // Before the first answer an empty list would report a linked backup as gone.
+  const [loading, setLoading] = useState(true);
   // A failed list load replaces the list, so it stays inline rather than in a
   // toast.
   const [error, setError] = useState<string | null>(null);

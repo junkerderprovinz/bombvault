@@ -70,7 +70,8 @@ export function ZFSRestorePanel({
   const preselected = useRef(false);
   const [source, setSource] = useState<RepoSource>("local");
   const [points, setPoints] = useState<ZFSRestorePoint[]>([]);
-  const [loading, setLoading] = useState(false);
+  // Before the first answer an empty list would report a linked backup as gone.
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stamp, setStamp] = useState("");
   const [dataset, setDataset] = useState(item.dataset);

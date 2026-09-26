@@ -182,3 +182,25 @@ it("says that a linked dump is gone and names the nearest one", async () => {
     en["restore.nearestPoint"].replace("{date}", isolateLtr(new Date("2026-09-01T02:00:00Z").toLocaleString()))
   );
 });
+
+it("says nothing about a linked backup before the list has loaded", async () => {
+  // A notice rendered and removed again within one load still reaches a screen
+  // reader. By the time the observer runs it may be gone from the tree it was
+  // added to, so the removed nodes are searched as well.
+  const announced: string[] = [];
+  const observer = new MutationObserver((records) => {
+    for (const r of records) {
+      for (const node of [...r.addedNodes, ...r.removedNodes]) {
+        if (!(node instanceof HTMLElement)) continue;
+        const found = node.matches('[role="status"]') ? [node] : [...node.querySelectorAll('[role="status"]')];
+        announced.push(...found.map((el) => el.textContent ?? ""));
+      }
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+  await renderPanel({ preselect: "good000000aa", preselectAt: GONE_AT });
+  await screen.findByText("bad00000");
+  await act(async () => {});
+  observer.disconnect();
+  expect(announced).toEqual([]);
+});

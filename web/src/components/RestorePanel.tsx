@@ -866,7 +866,8 @@ export function RestorePanel({
 }: RestorePanelProps) {
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [loading, setLoading] = useState(false);
+  // Before the first answer an empty list would report a linked backup as gone.
+  const [loading, setLoading] = useState(true);
   // A failed load stays inline rather than in a toast: it describes the
   // section, not a one-off action.
   const [error, setError] = useState<string | null>(null);
