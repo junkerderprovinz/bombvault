@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -342,5 +344,210 @@ func TestAHomePreviewOfAnUnknownPlaceIsNotFound(t *testing.T) {
 	}
 	if code, _ := f.doStatus(http.MethodPost, "/api/storage/domains/nope/home/preview", map[string]any{"placeId": "x"}); code != http.StatusBadRequest {
 		t.Fatalf("unknown domain = %d, want 400", code)
+	}
+}
+
+func (f *placementFixture) putHome(domain, placeID string, expect map[string]any, applyToOpen bool) map[string]any {
+	f.t.Helper()
+	return f.do(http.MethodPut, "/api/storage/domains/"+domain+"/home",
+		map[string]any{"placeId": placeID, "expect": expect, "applyToOpen": applyToOpen})
+}
+
+func TestChoosingAPlaceForADomainWithoutBackupsMakesItTheHome(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	old := f.namedRepo("Old NAS", "oldnas")
+	f.setDefault("containers", old.ID, store.SkipAll)
+
+	res := f.putHome("containers", nas.ID, f.homePreview("containers", nas.ID), false)
+
+	homes, err := f.st.DomainPlaces()
+	if res["ok"] != true || err != nil || homes["containers"] != nas.ID {
+		t.Fatalf("PUT = %v; homes %v, %v", res, homes, err)
+	}
+	if settings, err := f.st.GetSettings(); err != nil || settings.ContainersPath != "nas/containers" {
+		t.Fatalf("containers path = %q, %v", settings.ContainersPath, err)
+	}
+	if d, _, err := f.st.PlacementDefaultFor("containers"); err != nil || d.Home != "" || !reflect.DeepEqual(d.Skip, []string{store.SkipAll}) {
+		t.Fatalf("default = %+v, %v, want it back on the domain path with its skip", d, err)
+	}
+}
+
+func TestChoosingAPlaceForADomainWithBackupsPointsItsDefaultThere(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	f.container("nginx", "")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+
+	res := f.putHome("containers", nas.ID, f.homePreview("containers", nas.ID), false)
+
+	d, _, err := f.st.PlacementDefaultFor("containers")
+	if res["ok"] != true || err != nil || d.Home == "" {
+		t.Fatalf("PUT = %v; default %+v, %v", res, d, err)
+	}
+	if repo, err := f.st.GetNamedRepo(d.Home); err != nil || repo.PlaceID != nas.ID || repo.Repo != "nas/containers" {
+		t.Fatalf("default home = %+v, %v, want the NAS repository of containers", repo, err)
+	}
+	if homes, err := f.st.DomainPlaces(); err != nil || homes["containers"] != unraid.ID {
+		t.Fatalf("homes = %v, %v, want Unraid kept", homes, err)
+	}
+}
+
+func TestApplyToOpenResetsTheItemsWithoutBackups(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	f.container("nginx", "")
+	f.container("plex", "")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+
+	res := f.putHome("containers", nas.ID, f.homePreview("containers", nas.ID), true)
+
+	plex := f.home(store.ItemRef{Domain: "containers", Key: "plex"})
+	nginx := f.home(store.ItemRef{Domain: "containers", Key: "nginx"})
+	if res["ok"] != true || !reflect.DeepEqual(res["reset"], []any{"plex"}) || plex.Choice != store.RepoOpen || nginx.Choice != store.RepoChosen {
+		t.Fatalf("PUT = %v; plex %+v, nginx %+v", res, plex, nginx)
+	}
+}
+
+func TestStoredInHoldsTheDomainFromItsPreviewToItsLastReset(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	f.container("nginx", "")
+	f.container("plex", "")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+	pv := f.homePreview("containers", nas.ID)
+	free := 0
+	f.eng.onSnapshots = func() {
+		if unlock, ok := f.svc.tryLockDomainFor("containers", "backup"); ok {
+			free++
+			unlock()
+		}
+	}
+
+	res := f.putHome("containers", nas.ID, pv, true)
+
+	if res["ok"] != true || free != 0 {
+		t.Fatalf("PUT = %v; a backup could have started at %d of its listings", res, free)
+	}
+}
+
+func TestAStaleStoredInAnswerIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	pv := f.homePreview("containers", nas.ID)
+	pv["mode"] = "default"
+
+	res := f.putHome("containers", nas.ID, pv, false)
+
+	if res["ok"] != false || res["code"] != "stale" || res["preview"].(map[string]any)["mode"] != "home-place" {
+		t.Fatalf("PUT = %v, want stale with a fresh preview", res)
+	}
+	if homes, err := f.st.DomainPlaces(); err != nil || homes["containers"] != unraid.ID {
+		t.Fatalf("homes = %v, %v, want them unchanged", homes, err)
+	}
+}
+
+func TestADefaultThatMovesDuringTheWriteAnswersStaleWithTheFreshPreview(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	old := f.namedRepo("Old NAS", "oldnas")
+	f.container("nginx", "")
+	f.openContainer("plex")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+	pv := f.homePreview("containers", nas.ID)
+	listings := 0
+	f.eng.onSnapshots = func() {
+		// The second listing of the write counts plex for its preview, which
+		// has read the default by then.
+		if listings++; listings == 2 {
+			f.setDefault("containers", old.ID)
+		}
+	}
+
+	res := f.putHome("containers", nas.ID, pv, false)
+
+	fresh, _ := res["preview"].(map[string]any)
+	impact, _ := fresh["impact"].(map[string]any)
+	if res["ok"] != false || res["code"] != "stale" || impact["home"] != old.ID || fresh["repoId"] == nil || fresh["creates"] != nil {
+		t.Fatalf("PUT = %v, want stale with the preview of the moved default", res)
+	}
+	if d, _, err := f.st.PlacementDefaultFor("containers"); err != nil || d.Home != old.ID {
+		t.Fatalf("default = %+v, %v, want the one that moved in", d, err)
+	}
+}
+
+func TestFlashMovesItsHomeAndLeavesItsBackupsBehind(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	f.hold(f.singletonRepo("flash"), snap("f1", 100, "flash"))
+
+	res := f.putHome("flash", nas.ID, f.homePreview("flash", nas.ID), false)
+
+	homes, err := f.st.DomainPlaces()
+	if res["ok"] != true || err != nil || homes["flash"] != nas.ID {
+		t.Fatalf("PUT = %v; homes %v, %v", res, homes, err)
+	}
+	if settings, err := f.st.GetSettings(); err != nil || settings.FlashPath != "nas/flash" {
+		t.Fatalf("flash path = %q, %v", settings.FlashPath, err)
+	}
+}
+
+func TestAStoredInChangeWaitsForARunningBackup(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	pv := f.homePreview("containers", nas.ID)
+	unlock, ok := f.svc.tryLockDomainFor("containers", "backup")
+	if !ok {
+		t.Fatal("the containers lock is taken")
+	}
+	defer unlock()
+	if res := f.putHome("containers", nas.ID, pv, false); res["ok"] != false || res["code"] != "domain-busy" {
+		t.Fatalf("PUT = %v, want domain-busy", res)
+	}
+}
+
+func TestAStoredInChangeWaitsForAnEditOfThePlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	pv, err := f.svc.domainHomePreview(context.Background(), "containers", nas.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.svc.placeEditMu.Lock()
+	done := make(chan error, 1)
+	go func() {
+		_, _, _, err := f.svc.setDomainHome(context.Background(), "containers", domainHomeBody{PlaceID: nas.ID, Expect: &pv})
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		t.Fatalf("the home moved during an edit of its place: %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+	f.svc.placeEditMu.Unlock()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the home never moved")
+	}
+}
+
+func TestAStoredInChangeToAnUnknownPlaceIsNotFound(t *testing.T) {
+	f := newPlacementFixture(t)
+	code, res := f.doStatus(http.MethodPut, "/api/storage/domains/containers/home",
+		map[string]any{"placeId": "nope", "expect": map[string]any{"mode": "home-place", "placeId": "nope"}, "applyToOpen": false})
+	if code != http.StatusNotFound || res["ok"] != false {
+		t.Fatalf("PUT = %d %v, want 404", code, res)
 	}
 }

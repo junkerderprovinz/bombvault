@@ -407,3 +407,143 @@ func (h *Handler) handleDomainHomePreview(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusOK, homePreviewAnswer{OK: true, HomePreview: pv})
 	}
 }
+
+// same compares what the window showed, not snapshot counts, which every
+// backup changes.
+func (pv HomePreview) same(o HomePreview) bool {
+	if pv.Mode != o.Mode || pv.PlaceID != o.PlaceID || pv.HomePlace != o.HomePlace || pv.RepoID != o.RepoID || pv.Creates != o.Creates {
+		return false
+	}
+	if pv.Impact == nil || o.Impact == nil {
+		return pv.Impact == nil && o.Impact == nil
+	}
+	return pv.Impact.sameCounts(*o.Impact)
+}
+
+// domainHomeBody is "Stored in" as the window confirms it.
+type domainHomeBody struct {
+	PlaceID     string       `json:"placeId"`
+	Expect      *HomePreview `json:"expect"`
+	ApplyToOpen bool         `json:"applyToOpen"`
+}
+
+// setDomainHome writes "Stored in" once the preview reads as the window
+// showed it. It holds the domain lock from the preview to the last item it
+// resets, so no backup writes to the old path or takes the old default in
+// between.
+func (s *Service) setDomainHome(ctx context.Context, domain string, body domainHomeBody) (HomePreview, []string, []keptItem, error) {
+	unlock, ok := s.tryLockDomainFor(domain, placementLockReason)
+	if !ok {
+		return HomePreview{}, nil, nil, errPlacementBusy
+	}
+	defer unlock()
+	pv, err := s.writeDomainHome(ctx, domain, body)
+	if err != nil || pv.Mode != homeModeDefault || !body.ApplyToOpen {
+		return pv, []string{}, []keptItem{}, err
+	}
+	reset, kept, err := s.applyDefaultToOpen(ctx, domain)
+	return pv, reset, kept, err
+}
+
+// writeDomainHome holds placeEditMu from the preview to the write, so no edit
+// of the place moves the address the preview judged.
+func (s *Service) writeDomainHome(ctx context.Context, domain string, body domainHomeBody) (HomePreview, error) {
+	s.placeEditMu.Lock()
+	defer s.placeEditMu.Unlock()
+	pv, err := s.domainHomePreview(ctx, domain, body.PlaceID)
+	switch {
+	case err != nil:
+		return pv, err
+	case body.Expect == nil || !pv.same(*body.Expect):
+		return pv, errPlacementStale
+	case pv.Mode != homeModeDefault:
+		return pv, s.moveHomePlace(domain, pv.PlaceID)
+	}
+	if err := s.setDefaultHome(ctx, domain, pv); !errors.Is(err, errPlacementStale) {
+		return pv, err
+	}
+	// The defaults card writes the default without the domain lock, so it can
+	// move after the preview; a stale answer carries a fresh one.
+	fresh, err := s.domainHomePreview(ctx, domain, body.PlaceID)
+	if err != nil {
+		return fresh, err
+	}
+	return fresh, errPlacementStale
+}
+
+// moveHomePlace makes the place the domain's home: its path moves there, and
+// for containers, VMs and folder sets the default goes back to that path.
+// Backups at the old home stay where they are.
+func (s *Service) moveHomePlace(domain, placeID string) error {
+	p, err := s.store.GetPlace(placeID)
+	if err != nil {
+		return err
+	}
+	if _, err := s.writePlace(store.PlaceWrite{Place: p, HomeDomains: map[string]string{domain: p.ID}}, nil); err != nil {
+		return err
+	}
+	if !validPlacementDomain(domain) {
+		return nil
+	}
+	s.placementMu.Lock()
+	defer s.placementMu.Unlock()
+	d, found, err := s.store.PlacementDefaultFor(domain)
+	if err != nil || !found || d.Home == "" {
+		return err
+	}
+	_, err = s.store.PutPlacementDefault(domain, "", d.Skip)
+	return err
+}
+
+// setDefaultHome points the default at the repository the place stands for,
+// made on this first choice, through the defaults card's own write.
+func (s *Service) setDefaultHome(ctx context.Context, domain string, pv HomePreview) error {
+	p, err := s.store.GetPlace(pv.PlaceID)
+	if err != nil {
+		return err
+	}
+	id, _, err := s.placeRepoFor(ctx, p, domain, true)
+	if err != nil {
+		return err
+	}
+	_, _, err = s.putDefault(ctx, domain, defaultChange{Home: &id, Expect: pv.Impact})
+	return err
+}
+
+// applyDefaultToOpen resets every item without backups to the default, what
+// "Apply to entries without backups" does, under the caller's domain lock.
+func (s *Service) applyDefaultToOpen(ctx context.Context, domain string) ([]string, []keptItem, error) {
+	candidates, _, err := s.applyDefaultPreview(ctx, domain)
+	if err != nil {
+		return nil, nil, err
+	}
+	keys := make([]string, 0, len(candidates))
+	for _, c := range candidates {
+		keys = append(keys, c.Key)
+	}
+	return s.applyDefaultLocked(ctx, domain, keys)
+}
+
+// handleDomainHome serves PUT /api/storage/domains/{d}/home. A stale answer
+// carries the fresh preview.
+func (h *Handler) handleDomainHome(w http.ResponseWriter, r *http.Request) {
+	domain, ok := storageDomainParam(w, r)
+	if !ok {
+		return
+	}
+	var body domainHomeBody
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	pv, reset, kept, err := h.svc.setDomainHome(r.Context(), domain, body)
+	switch {
+	case errors.Is(err, store.ErrPlaceNotFound):
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such place"})
+	case errors.Is(err, errPlacementStale):
+		placementFail(w, err, map[string]any{"preview": pv})
+	case err != nil:
+		placeFail(w, err)
+	default:
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"reset": reset, "kept": kept}))
+	}
+}
