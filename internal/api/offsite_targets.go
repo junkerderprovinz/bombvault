@@ -71,9 +71,10 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 }
 
 // MoveMeshTargetsOffPrimarySlot moves every target accepted from a mesh offer
-// off sort order 0, which a settings save treats as the primary, and returns how
-// many it moved. One on the repo the domain's off-site setting names is that
-// primary and stays.
+// off sort order 0, where a settings save would take it for the row the
+// domain's off-site field edits, and returns how many it moved. One on the
+// location the field names is that row and stays, and so does one at a place,
+// which a settings save leaves alone.
 func (s *Service) MoveMeshTargetsOffPrimarySlot() (int, error) {
 	offers, err := s.store.ListMeshOffers()
 	if err != nil {
@@ -96,7 +97,7 @@ func (s *Service) MoveMeshTargetsOffPrimarySlot() (int, error) {
 			return moved, err
 		}
 		for _, t := range targets {
-			if t.SortOrder != 0 || !accepted[t.Repo] || t.Repo == offsiteRepoFromSettings(d, settings) {
+			if t.SortOrder != 0 || t.PlaceID != "" || !accepted[t.Repo] || t.Repo == offsiteRepoFromSettings(d, settings) {
 				continue
 			}
 			if err := s.store.MoveOffsiteTargetBehind(t.ID); err != nil {

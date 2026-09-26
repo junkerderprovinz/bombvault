@@ -301,3 +301,42 @@ func TestAFlashChipSwitchedOffStaysOffAfterAnUnrelatedSettingsSave(t *testing.T)
 		t.Fatalf("flash still copies to %+v", targets)
 	}
 }
+
+// acceptedOffer leaves an accepted mesh offer of location, as an accept does.
+func (f *placementFixture) acceptedOffer(location string) {
+	f.t.Helper()
+	offer, err := f.st.CreateMeshOffer(store.MeshOffer{From: "tower", Repo: location})
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	if err := f.st.UpdateMeshOfferStatus(offer.ID, "accepted"); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
+// towerPlace is another BombVault's rest-server, offering containers.
+func (f *placementFixture) towerPlace() store.Place {
+	f.t.Helper()
+	return f.storePlace(store.Place{Name: "Tower", Provider: "bombvault", Kind: string(places.KindREST),
+		Base: "rest:http://tower:8000/bv", Folders: map[string]string{"containers": "containers"}, OffPremises: true, Enabled: true})
+}
+
+func TestAPlacedMeshTargetOnSortOrderZeroStaysThere(t *testing.T) {
+	f := newPlacementFixture(t)
+	tower := f.towerPlace()
+	row := f.placedFieldRow("containers", tower)
+	row.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(row); err != nil {
+		t.Fatal(err)
+	}
+	f.storePlace(tower)
+	row = f.storedTarget(row.ID)
+	f.acceptedOffer(row.Repo)
+
+	if moved, err := f.svc.MoveMeshTargetsOffPrimarySlot(); err != nil || moved != 0 {
+		t.Fatalf("moved %d, %v, want nothing moved", moved, err)
+	}
+	if got := f.storedTarget(row.ID); got != row {
+		t.Fatalf("mesh target = %+v, want it as its place left it: %+v", got, row)
+	}
+}
