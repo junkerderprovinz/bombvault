@@ -169,32 +169,68 @@ func (s *Service) RunPlaceTamperTest(ctx context.Context, id string) (TamperVerd
 	case !p.Enabled:
 		return TamperVerdict{}, errPlaceOff
 	}
-	rows, err := s.store.PlaceRows(id)
-	if err != nil {
-		return TamperVerdict{}, err
-	}
-	rows = slices.DeleteFunc(rows, func(r store.OffsiteTarget) bool {
-		return r.Role == store.RoleRepo || !r.Enabled
-	})
-	if len(rows) == 0 {
-		return TamperVerdict{}, errPlaceNothingToTest
-	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return TamperVerdict{}, fmt.Errorf("read settings: %w", err)
 	}
+	repos, err := s.placeTamperRepos(id, settings)
+	if err != nil {
+		return TamperVerdict{}, err
+	}
+	if len(repos) == 0 {
+		return TamperVerdict{}, errPlaceNothingToTest
+	}
 	var fold tamperFold
-	for _, r := range rows {
+	for _, r := range repos {
 		fold.add(s.tamperTestRow(ctx, settings, r))
 	}
 	return fold.verdict()
 }
 
-// tamperTestRow probes one row with its own credentials under its domain's
-// lock, so a place test and a domain test cannot both alert on one flip.
+// placeTamperRepos lists what a place test probes: the path of each domain
+// whose home the place is, carrying the domain's primary row, and each
+// enabled copy there. The move onto places leaves a primary row off its home
+// place, so the row is looked up by domain. Named and direct repositories
+// have no domain to keep a verdict under.
+func (s *Service) placeTamperRepos(id string, settings store.Settings) ([]store.OffsiteTarget, error) {
+	homes, err := s.store.DomainPlaces()
+	if err != nil {
+		return nil, err
+	}
+	var repos []store.OffsiteTarget
+	for _, d := range places.Domains {
+		if homes[d] != id {
+			continue
+		}
+		path, _, err := s.store.PrimaryRemoteTarget(d)
+		if err != nil {
+			return nil, err
+		}
+		path.Domain, path.Repo = d, domainPathRaw(d, settings)
+		repos = append(repos, path)
+	}
+	rows, err := s.store.PlaceRows(id)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range rows {
+		if r.Role == store.RoleOffsite && r.Enabled {
+			repos = append(repos, r)
+		}
+	}
+	return repos, nil
+}
+
+// tamperTestRow probes one repository with its own credentials under its
+// domain's lock, so a place test and a domain test cannot both alert on one
+// flip. A domain path without a primary row keeps no verdict: under the
+// empty id its last one would be whatever another target of the domain got.
 func (s *Service) tamperTestRow(ctx context.Context, settings store.Settings, row store.OffsiteTarget) (TamperVerdict, error) {
-	defer s.lockTamper(row.Domain)()
 	creds, _ := s.decodeCloudFor(settings, row.CredsRef)
+	if row.ID == "" {
+		return probeDeletes(ctx, row.Repo, creds)
+	}
+	defer s.lockTamper(row.Domain)()
 	return s.runTamperTestForTarget(ctx, row.Domain, row, creds)
 }
 
@@ -205,7 +241,25 @@ func (s *Service) tamperTestRow(ctx context.Context, settings store.Settings, ro
 // an unreachable server never flips a stored verdict. The caller holds the
 // per-domain lock.
 func (s *Service) runTamperTestForTarget(ctx context.Context, domain string, target store.OffsiteTarget, creds CloudCreds) (TamperVerdict, error) {
-	loc := target.Repo
+	verdict, err := probeDeletes(ctx, target.Repo, creds)
+	if err != nil || !verdict.Testable {
+		return verdict, err
+	}
+	// Read the previous verdict before recording the new one, so a flip to
+	// unprotected alerts exactly once.
+	prev, hadPrev, _ := s.store.LatestTamperTestForTarget(domain, target.ID)
+	if recErr := s.store.RecordTamperTestForTarget(domain, target.ID, verdict.Protected, verdict.Detail); recErr != nil {
+		return TamperVerdict{}, fmt.Errorf("record tamper test: %w", recErr)
+	}
+	if hadPrev && prev.Protected && !verdict.Protected {
+		s.notifyProtectionLost(ctx, domain, verdict.Detail)
+	}
+	return verdict, nil
+}
+
+// probeDeletes sends both probes to the repository at loc and folds their
+// answers into a verdict, recording nothing.
+func probeDeletes(ctx context.Context, loc string, creds CloudCreds) (TamperVerdict, error) {
 	// The probe is a raw HTTP DELETE to rest-server; rclone, s3, sftp and local
 	// repos cannot be tested this way.
 	if !strings.HasPrefix(loc, "rest:") {
@@ -254,16 +308,6 @@ func (s *Service) runTamperTestForTarget(ctx context.Context, domain string, tar
 	verdict := TamperVerdict{Testable: true, Protected: protected}
 	if !protected {
 		verdict.Detail = strings.Join(details, "; ")
-	}
-
-	// Read the previous verdict before recording the new one, so a flip to
-	// unprotected alerts exactly once.
-	prev, hadPrev, _ := s.store.LatestTamperTestForTarget(domain, target.ID)
-	if recErr := s.store.RecordTamperTestForTarget(domain, target.ID, verdict.Protected, verdict.Detail); recErr != nil {
-		return TamperVerdict{}, fmt.Errorf("record tamper test: %w", recErr)
-	}
-	if hadPrev && prev.Protected && !verdict.Protected {
-		s.notifyProtectionLost(ctx, domain, verdict.Detail)
 	}
 	return verdict, nil
 }
