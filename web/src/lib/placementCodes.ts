@@ -31,6 +31,19 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "home-unreadable": "placementCode.homeUnreadable",
   "snapshot-missing": "placementCode.snapshotMissing",
   "direct-access-denied": "placementCode.directAccessDenied",
+  // A place can refuse a placement write too, so its codes live here as well.
+  "place-name-taken": "places.error.nameTaken",
+  "place-home-domain": "places.error.homeDomain",
+  "place-is-repository": "places.error.isRepository",
+  "place-folder-blank": "places.error.folderBlank",
+  "place-domain-unavailable": "places.error.domainUnavailable",
+  "place-address-taken": "places.error.addressTaken",
+  "place-off": "places.error.off",
+  "place-repo-shared": "places.error.repoShared",
+  "place-no-append-only": "places.error.noAppendOnly",
+  "place-nothing-to-test": "places.error.nothingToTest",
+  "place-keeps-less": "places.error.keepsLess",
+  "place-append-only-off": "places.error.appendOnlyOff",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {
