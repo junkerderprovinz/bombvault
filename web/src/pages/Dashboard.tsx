@@ -30,7 +30,8 @@ import { useToast } from "../lib/toast";
 import { formatCadence } from "../components/CadenceBuilder";
 import { NO_VALUE, relativeTime, formatTs, formatDuration } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
-import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
+import { useDashboardLayout, CustomizableBlock } from "../lib/dashboardLayout";
+import { useReorder } from "../lib/dragLift";
 import { ActivityLog } from "../components/ActivityLog";
 import { AnomalyRow, type AnomalyAction } from "../components/AnomalyRow";
 import { RunAnomalyBadge } from "../components/RunAnomalyBadge";
@@ -3361,7 +3362,7 @@ export function Dashboard() {
   ];
 
   const defaultOrder = blocks.map((b) => b.id);
-  const { order, hidden, reorder, toggleHidden, toggleWidth, getWidth, reset } =
+  const { order, hidden, reorder, setVisibleOrder, toggleHidden, toggleWidth, getWidth, reset } =
     useDashboardLayout(defaultOrder);
 
   // Persisted order → concrete blocks. Unknown/stale ids are guarded out, and
@@ -3378,41 +3379,22 @@ export function Dashboard() {
   const visibleBlocks = orderedAvailable.filter((b) => shown(b.id));
   const hiddenBlocks = orderedAvailable.filter((b) => !shown(b.id));
 
-  // Native HTML5 drag-and-drop — the dragged id lives in a ref (no re-render
-  // mid-drag); onDrop reorders relative to the drop-target block. The move
-  // up/down buttons on each block are the accessible + touch fallback.
-  const draggingId = useRef<string | null>(null);
-  const dragHandlersFor = (blockId: string): BlockDragHandlers => ({
-    onDragStart: (e) => {
-      draggingId.current = blockId;
-      e.dataTransfer.effectAllowed = "move";
-      try {
-        e.dataTransfer.setData("text/plain", blockId);
-      } catch {
-        /* some browsers restrict setData during dragstart — the ref suffices */
-      }
-    },
-    onDragOver: (e) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-    },
-    onDrop: (e) => {
-      e.preventDefault();
-      let dragged = draggingId.current;
-      if (!dragged) {
-        try {
-          dragged = e.dataTransfer.getData("text/plain") || null;
-        } catch {
-          dragged = null;
-        }
-      }
-      if (dragged && dragged !== blockId) reorder(dragged, blockId);
-      draggingId.current = null;
-    },
-    onDragEnd: () => {
-      draggingId.current = null;
-    },
+  // A card is carried by the grip in its control bar and lands in its gap;
+  // the move buttons are the keyboard's way to do the same.
+  const grid = useRef<HTMLDivElement>(null);
+  const drag = useReorder({
+    ids: visibleBlocks.map((b) => b.id),
+    container: grid,
+    attr: "data-grid-block",
+    axis: "x",
+    arm: "move",
+    enabled: editing,
+    onReorder: setVisibleOrder,
   });
+  const byVisibleId = new Map(visibleBlocks.map((b) => [b.id, b]));
+  const carriedBlocks = drag.order
+    .map((id) => byVisibleId.get(id))
+    .filter((b): b is (typeof visibleBlocks)[number] => !!b);
 
   return (
     // GlimStone follow-up pass (live-review round, jdp emphatic: "Die
@@ -3642,12 +3624,11 @@ export function Dashboard() {
           grid is JSX-gated on isDesktop (see the max-md note by the gate
           below); the phone reads the Home blocks above instead. The
           width. The col-span lives on this wrapper div (not on
-          CustomizableBlock's own root) so it applies in BOTH edit mode (where
+          CustomizableBlock's own root) so it applies in both edit mode (where
           CustomizableBlock renders its control-bar div) and view mode (where
-          it renders only `<>{children}</>`). In edit mode each block carries a
-          control bar + native drag-and-drop; otherwise the card renders
-          plainly. Dragging still reorders the flat `order` array — the grid
-          simply derives each cell's span from order + width. */}
+          it renders only `<>{children}</>`). In edit mode the wrapper is also
+          what lifts when a card is carried by its grip; the grid derives each
+          cell's span from order and width. */}
       {/* hueSeq/nextHue — SAME page-wide running-counter pattern as
           Settings.tsx's own `nextHue()` (see that file's own `hueSeq`
           comment), just declared here instead of at the top of the return:
@@ -3685,14 +3666,18 @@ export function Dashboard() {
           is ever alive, whichever way the breakpoint is crossed. At md+ the
           gate is transparent, so the desktop grid is unchanged. */}
       {isDesktop && (
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
+      <div
+        ref={grid}
+        className={`relative grid grid-cols-1 gap-10 md:grid-cols-2 ${drag.held !== null ? "glim-drag-armed" : ""}`}
+      >
         {(() => {
           let hueSeq = 0;
           const nextHue = () => hueSeq++;
-          return visibleBlocks.map((b, i) => (
+          return carriedBlocks.map((b, i) => (
             <div
               key={b.id}
-              className={getWidth(b.id) === "half" ? "md:col-span-1" : "md:col-span-2"}
+              data-grid-block={b.id}
+              className={`${getWidth(b.id) === "half" ? "md:col-span-1" : "md:col-span-2"} ${drag.look(b.id)}`}
             >
               <CustomizableBlock
                 id={b.id}
@@ -3702,7 +3687,7 @@ export function Dashboard() {
                 isFirst={i === 0}
                 isLast={i === visibleBlocks.length - 1}
                 editing={editing}
-                dragHandlers={dragHandlersFor(b.id)}
+                onGripPointerDown={(e) => drag.press(e, b.id)}
                 /* Move relative to the VISIBLE neighbour (skips hidden / advanced-gated
                    blocks in the stored order) so a single press always reorders. */
                 onMoveUp={() => {

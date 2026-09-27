@@ -51,7 +51,7 @@ import { ProgressBar } from "../components/ProgressBar";
 import { tLtr, withLtrFragments, withLtrPlaceholder, EXCLUDES_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { relativeTime } from "../lib/reltime";
-import { useDragReorder } from "../lib/useDragReorder";
+import { useReorder } from "../lib/dragLift";
 import { useConfirm } from "../lib/useConfirm";
 import { hueVars } from "../lib/appearance";
 import { Selector, type SelectorItem } from "../components/Selector";
@@ -3440,8 +3440,7 @@ function BackupOrderPanel({
   const [shakeSave, setShakeSave] = useState(0);
   const [shakeReset, setShakeReset] = useState(0);
   const hydrated = useRef(false);
-  // #124: collapse the whole card (persisted per browser) and reorder rows by
-  // native drag-and-drop (live reorder via the shared useDragReorder hook below).
+  // #124: collapse the whole card, persisted per browser.
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem(BACKUP_ORDER_COLLAPSED_KEY) === "1";
@@ -3495,22 +3494,21 @@ function BackupOrderPanel({
     setSaveState("idle");
   }
 
-  // Drag-and-drop reorder: lift `from` out and drop it at `to` (arrows do a swap;
-  // a drag can jump several rows at once, so this splices instead).
-  function reorder(from: number, to: number) {
-    setNames((prev) => {
-      if (from === to || to < 0 || to >= prev.length) return prev;
-      const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
-      return next;
-    });
-    setSaveState("idle");
-  }
-
-  // Live drag-to-reorder: the shared hook calls reorder() as a row is dragged over
-  // another, so the rows shift immediately instead of only settling on drop.
-  const { dragIndex, rowProps } = useDragReorder<HTMLLIElement>(reorder, saveState === "saving");
+  // A row is carried by its grip and lands in its gap; the arrows are the
+  // keyboard's way to do the same.
+  const list = useRef<HTMLOListElement>(null);
+  const drag = useReorder({
+    ids: names,
+    container: list,
+    attr: "data-order-name",
+    axis: "y",
+    arm: "move",
+    enabled: saveState !== "saving",
+    onReorder: (next) => {
+      setNames(next);
+      setSaveState("idle");
+    },
+  });
 
   function toggleCollapsed() {
     setCollapsed((v) => {
@@ -3653,18 +3651,21 @@ function BackupOrderPanel({
           <p className="text-xs text-carbon-textMuted">{t("backupOrder.empty")}</p>
         ) : (
           <>
-            <ol className="flex flex-col gap-1">
-              {names.map((name, i) => (
+            {/* The list is the rows' offsetParent, the layout a drag measures
+                in. While a row is carried the others wiggle. */}
+            <ol ref={list} className={`relative flex flex-col gap-1 ${drag.held !== null ? "glim-drag-armed" : ""}`}>
+              {drag.order.map((name, i) => (
                 <li
                   key={name}
-                  {...rowProps(i)}
-                  className={`flex items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-1.5 ${
-                    dragIndex === i ? "opacity-40" : ""
-                  }`}
+                  data-order-name={name}
+                  className={`flex select-none items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-1.5 ${drag.look(name)}`}
                 >
-                  {/* Drag grip — a mouse affordance; keyboard users reorder with the
-                      arrow buttons below (so the grip is decorative / aria-hidden). */}
-                  <span className="shrink-0 cursor-grab text-carbon-textSub active:cursor-grabbing" aria-hidden="true">
+                  {/* The grip is for a pointer; the keyboard uses the arrows. */}
+                  <span
+                    className="shrink-0 cursor-grab touch-none text-carbon-textSub active:cursor-grabbing"
+                    aria-hidden="true"
+                    onPointerDown={(e) => drag.press(e, name)}
+                  >
                     <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
                       <circle cx="3" cy="3" r="1" />
                       <circle cx="7" cy="3" r="1" />
