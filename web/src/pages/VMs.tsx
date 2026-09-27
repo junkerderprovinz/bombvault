@@ -1749,6 +1749,8 @@ export function VMs() {
           vms={vms}
           anomalyOf={(name) => anomalies.find("vm", name)}
           anomalyEnabled={anomalyEnabled}
+          checksOf={(name) => itemChecks.find("vm", name)}
+          onChecksChanged={itemChecks.reload}
           restoreRequest={restoreRequest}
         />
       )}
@@ -1801,6 +1803,8 @@ function MobileVMsBlock({
   vms,
   anomalyOf,
   anomalyEnabled,
+  checksOf,
+  onChecksChanged,
   restoreRequest,
 }: {
   /** The page's memoized filtered+sorted list; useLoadMore's identity
@@ -1843,6 +1847,8 @@ function MobileVMsBlock({
   vms: VM[];
   anomalyOf: (libvirtName: string) => AnomalyItem | undefined;
   anomalyEnabled: boolean;
+  checksOf: (libvirtName: string) => ItemChecks | undefined;
+  onChecksChanged: () => void;
   /** A link from another page asking to restore one of the VMs. */
   restoreRequest: RestoreRequest;
 }) {
@@ -1931,6 +1937,8 @@ function MobileVMsBlock({
           linkCandidates={linkCandidates}
           anomaly={anomalyOf(openVm.libvirtName)}
           anomalyEnabled={anomalyEnabled}
+          checks={checksOf(openVm.libvirtName)}
+          onChecksChanged={onChecksChanged}
           restoreRequest={restoreRequest.item === openVm.libvirtName ? restoreRequest : undefined}
         />
       )}
@@ -2139,6 +2147,8 @@ function MobileVMDetail({
   linkCandidates,
   anomaly,
   anomalyEnabled,
+  checks,
+  onChecksChanged,
   restoreRequest,
 }: {
   vm: VM;
@@ -2150,6 +2160,8 @@ function MobileVMDetail({
   linkCandidates: string[];
   anomaly?: AnomalyItem;
   anomalyEnabled: boolean;
+  checks?: ItemChecks;
+  onChecksChanged?: () => void;
   restoreRequest?: RestoreRequest;
 }) {
   const { push } = useToast();
@@ -2272,6 +2284,8 @@ function MobileVMDetail({
           a removed VM too: the entry stays scheduled and every run logs a
           skip until this switch goes off. */}
       <IncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} save={setVMInclude} />
+
+      <ItemChecksLine checks={checks} hasBackup={vm.lastBackup != null} onChanged={onChecksChanged} />
 
       {/* ContainerRow's disclosure block with a single section. */}
       <div className="flex flex-col gap-2">
