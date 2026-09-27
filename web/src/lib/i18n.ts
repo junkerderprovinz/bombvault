@@ -1826,7 +1826,7 @@ export const en = {
   // so the consequence is named before it happens. Rendered under the
   // FolderBrowser in FileSetDialog (plan 04-04).
   "files.pathChangeHint": "Changing the folder clears the ticked sub-folder selection.",
-  // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
+  // Files domain: Settings, Dashboard, Recovery
   "settings.filesEnabled": "Folders",
   "settings.filesEnabledHint": "Back up arbitrary folders under your mounts as file sets, independent of the other domains.",
   "jobs.filesSection": "Folders",
@@ -3850,7 +3850,7 @@ export const de: Translations = {
   "files.emptySelectionBlocked":
     "Ein Set braucht mindestens einen Ordner, deshalb kann der letzte Haken nicht entfernt werden. Nutze Set entfernen, wenn du dieses Set nicht mehr brauchst.",
   "files.pathChangeHint": "Wenn du den Ordner änderst, wird die angekreuzte Unterordner-Auswahl gelöscht.",
-  // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
+  // Files domain: Settings, Dashboard, Recovery
   "settings.filesEnabled": "Ordner",
   "settings.filesEnabledHint": "Beliebige Ordner unter deinen Mounts als Datei-Sets sichern, unabhängig von den anderen Domänen.",
   "jobs.filesSection": "Ordner",
