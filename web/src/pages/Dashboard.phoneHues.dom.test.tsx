@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
 // Every phone row participates in the colour engine.
 //
 // The rotation is the design language's rule for "a position belongs to one
@@ -13,7 +12,6 @@
 // The page renders through the real components against a mocked api module,
 // with the desktop media query held at "phone"; jsdom otherwise answers
 // desktop and the phone surface would never mount.
-// ---------------------------------------------------------------------------
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";

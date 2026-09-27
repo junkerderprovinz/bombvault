@@ -28,7 +28,7 @@ import { useBackupWatch } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 import { formatCadence } from "../components/CadenceBuilder";
-import { relativeTime, formatTs, formatDuration } from "../lib/reltime";
+import { NO_VALUE, relativeTime, formatTs, formatDuration } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
 import { ActivityLog } from "../components/ActivityLog";
@@ -2056,7 +2056,7 @@ function StorageCard({
   const totalsDedup =
     totals && totals.rawSize > 0 && totals.restoreSize > 0
       ? `${(totals.restoreSize / totals.rawSize).toFixed(1)}x`
-      : "—";
+      : NO_VALUE;
 
   if (dense) {
     // Off-site copy age: the most recent replication across the configured
@@ -2439,14 +2439,12 @@ function SummaryCell({
   );
 }
 
-// ---------------------------------------------------------------------------
 // Shared summary derivations; extracted so the phone Home blocks read the
 // Same source of truth as the desktop summary tier: this file's own stated
 // principle for /api/schedule/next ("the two read the same source and must
 // not be able to disagree with each other on screen") now applies to the
 // mobile Next-run card and repo-health card too. Pure functions over
 // props/state that already exist; no fetch of their own.
-// ---------------------------------------------------------------------------
 
 /** Worst RPO status across enabled, non-off domains: any overdue/never is red,
  *  else any warn is amber, else any ok is green, else all off = neutral. The
@@ -2641,7 +2639,6 @@ function WorstRpoHealthLine({
   );
 }
 
-// ---------------------------------------------------------------------------
 // Mobile Home blocks; the glanceable phone surface.
 //
 // Below the 48rem breakpoint the desktop customizable block grid is replaced
@@ -2678,7 +2675,6 @@ function WorstRpoHealthLine({
 // user's back, doubling every phone load's round-trips. With both faces
 // JSX-gated exactly one surface is ever alive, and at the 48rem boundary the
 // two switches agree.
-// ---------------------------------------------------------------------------
 
 function NextRunCard({
   t,
@@ -2759,7 +2755,6 @@ function NextRunCard({
   );
 }
 
-// ---------------------------------------------------------------------------
 // Phone thumb-zone trigger; the surface's one solid-accent control, and the
 // owner of the everything pass's fire-and-watch cycle. Mounted at every
 // width: unmounting it at 48rem killed the live watch the moment a phone
@@ -2775,7 +2770,6 @@ function NextRunCard({
 // component: same watch args, confirm-first press, deep-link into the run
 // sheet via the page's latch, and terminal toasts (at either width, since a
 // pass fired on a phone also reports its outcome after the rotation).
-// ---------------------------------------------------------------------------
 function PhoneEverythingTrigger({
   t,
   onWatchRun,

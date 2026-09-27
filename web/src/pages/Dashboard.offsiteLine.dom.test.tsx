@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
 // Dashboard phone storage block: the off-site line's three states.
 //
 // The line answers "is a copy of my backups somewhere else?" so it may only
@@ -13,7 +12,6 @@
 // The page renders through the real components against a mocked api module,
 // with the desktop media query held at "phone"; jsdom otherwise answers
 // desktop and the phone surface would never mount.
-// ---------------------------------------------------------------------------
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";

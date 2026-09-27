@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
 // BottomNav's dom contract; the bar-card and the More trigger.
 //
 // The geometry half of the bar-card (insets, radius, safe areas) is CSS and
@@ -18,7 +17,6 @@
 //   - in glyph mode the slot's name lives in aria-label and opens the app's
 //     tip bubble (lib/useTipBubble), the sidebar's mechanism; the native
 //     title attribute is retired.
-// ---------------------------------------------------------------------------
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -169,7 +167,6 @@ describe("BottomNav More trigger", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // The bar's own label axis ("bottombar", lib/controls.ts); behaviour, not
 // just the source asserts mobileShellSource.test.ts carries. The four modes
 // change what a slot's caption is: visible text, or sr-only words behind an
@@ -180,7 +177,6 @@ describe("BottomNav More trigger", () => {
 // modes' observable surface in a dom environment is exactly classes and
 // attributes. The axis preference arrives the way the real app delivers it;
 // the localStorage key getLabelMode reads; never by poking the hook.
-// ---------------------------------------------------------------------------
 describe("BottomNav label axis (bottombar)", () => {
   const AXIS_KEY = "bv-labels-bottombar";
 

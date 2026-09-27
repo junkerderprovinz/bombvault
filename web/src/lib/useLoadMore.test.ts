@@ -1,15 +1,13 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// useLoadMore — window math and behavior proofs for the mobile list
+// useLoadMore: window math and behavior proofs for the mobile list
 // pagination primitive. loadMoreWindow is pure, so its boundary math is asserted directly;
 // the hook is exercised through the real React wiring with renderHook (the
-// useVisibilityGate.test.ts precedent) — no re-render is faked, so a passing
+// useVisibilityGate.test.ts precedent): no re-render is faked, so a passing
 // reset-on-identity-change test means the consumer filter flow flips the
 // slice on the real render path.
 //
 // jsdom (not node) because renderHook needs a document; the pure-fn asserts
 // are environment-independent either way.
-// ---------------------------------------------------------------------------
 import { afterEach, describe, expect, it } from "vitest";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { loadMoreWindow, useLoadMore } from "./useLoadMore";
@@ -53,8 +51,8 @@ describe("loadMoreWindow (pure)", () => {
 });
 
 describe("useLoadMore (hook)", () => {
-  // The items array must be STABLE across renders (a useState/module const,
-  // like every consumer's filtered array) — the hook resets on identity
+  // The items array must be stable across renders (a useState/module const,
+  // like every consumer's filtered array): the hook resets on identity
   // change by contract, so a fresh array per render callback would loop.
   it("shows the initial window and reports more", () => {
     const items = makeItems(45);
@@ -109,8 +107,8 @@ describe("useLoadMore (hook)", () => {
     const { result, rerender } = renderHook(() => useLoadMore(items));
     act(() => result.current.showMore());
     expect(result.current.visible).toHaveLength(40);
-    // A NEW array instance is a new filter result even with equal content —
-    // consumers pass the filtered array, so identity IS the filter signal.
+    // A new array instance is a new filter result even with equal content:
+    // consumers pass the filtered array, so identity is the filter signal.
     items = makeItems(45);
     rerender();
     expect(result.current.visible).toHaveLength(20);
@@ -133,7 +131,7 @@ describe("useLoadMore (hook)", () => {
     const { result, rerender } = renderHook(() => useLoadMore(items, 20, "filters:f"));
     act(() => result.current.showMore());
     expect(result.current.visible).toHaveLength(40);
-    // A poll/tick re-merge: NEW array identity, SAME filter key — a refresh,
+    // A poll/tick re-merge: new array identity, same filter key, a refresh,
     // not a filter result. The reader's page survives it.
     items = makeItems(45);
     rerender();

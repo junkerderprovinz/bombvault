@@ -212,12 +212,10 @@ describe("BottomSheet", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Extension contracts. PropsHarness forwards the additive props onto an
 // already-open sheet; the capabilities are consumed with the sheet open,
 // exactly as RunDetailSheet (fullHeight and footer) and ConfirmSheet mount
 // them.
-// ---------------------------------------------------------------------------
 function PropsHarness({ sheetProps }: { sheetProps: Partial<BottomSheetProps> }) {
   return (
     <I18nProvider>

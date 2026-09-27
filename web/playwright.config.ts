@@ -1,5 +1,4 @@
-// ---------------------------------------------------------------------------
-// Playwright harness — the responsive-regression gate for the mobile shell
+// Playwright harness: the responsive-regression gate for the mobile shell
 // and the phone layouts of the Dashboard, Containers and VMs pages.
 //
 // Why the compiled Go binary and not `vite preview` or MSW: the binary serves
@@ -28,7 +27,6 @@
 // runs: it must never silently pick up a spec whose subject matter the tree
 // does not carry (its assertions would fail against a tree that lacks the
 // surfaces they guard). Specs join this list as their subject matter lands.
-// ---------------------------------------------------------------------------
 import { defineConfig, devices } from "@playwright/test";
 import { existsSync } from "node:fs";
 import { join } from "node:path";

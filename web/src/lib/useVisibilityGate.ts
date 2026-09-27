@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // Use visibility gate; the one Page-Visibility hook (the visibility pause gate), plus
 // the plain read non-React consumers use.
 //
@@ -32,7 +31,6 @@
 // directions. The opposite default would pause every consumer forever in any
 // document-less context; this default degrades to exactly the pre-gate
 // behavior (consumers stay live), never to a frozen UI.
-// ---------------------------------------------------------------------------
 import { useSyncExternalStore } from "react";
 
 /** Plain visibility read for non-React consumers; backupWatch's poll chain

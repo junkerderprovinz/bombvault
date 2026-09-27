@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // Nav model; guard tests for the one ordered navigation registry.
 //
 // Node environment, no DOM: this renders nothing; it asserts the registry's
@@ -9,7 +8,6 @@
 // their own entry's `enabled`, bar/More as structural filter derivations, and
 // never a hue field (hue assignment stays Sidebar's render-time nextHue()
 // counter; see navModel.ts's header comment for why).
-// ---------------------------------------------------------------------------
 import { describe, expect, it } from "vitest";
 import type { Settings } from "./api";
 import { en } from "./i18n";

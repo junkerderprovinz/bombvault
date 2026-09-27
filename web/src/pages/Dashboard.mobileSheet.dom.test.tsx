@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
 // Dashboard phone run-sheet state machine.
 //
 // The phone sheet host lives on the Dashboard page (no route), fed by two
@@ -26,7 +25,6 @@
 // (only the read endpoints are stubbed; ApiError and every type stay the real
 // module's), with the desktop media query held at "phone"; jsdom otherwise
 // answers desktop and the phone surface would never mount.
-// ---------------------------------------------------------------------------
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";

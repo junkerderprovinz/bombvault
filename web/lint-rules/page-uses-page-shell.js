@@ -5,9 +5,9 @@
 //   1. The root of the page component, the one the file is named for, must be
 //      `className={PAGE_SHELL}`, so a new page in src/pages is covered as soon
 //      as it exists. A page that also renders as a tab panel of another page
-//      may pick between the two shared shells with a ternary
-//      (`embedded ? PAGE_SHELL_TABBED : PAGE_SHELL`), as long as one arm is the
-//      shell this file requires.
+//      may pick between two shared shells with a ternary
+//      (`embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE`),
+//      as long as one arm is the shell this file requires.
 //   2. Nothing in src/pages may hand-roll the shell: a `className` that pairs
 //      a `max-w-*xl` cap with `flex-col` and a card-sized `gap-*` is a page
 //      shell, whatever it is called.
@@ -15,8 +15,8 @@
 // Exceptions are configured in eslint.config.js rather than inferred:
 //
 //     exceptions: {
-//       "Settings.tsx": "PAGE_SHELL_TABBED",  // its 7-tab strip needs 1424px
-//       "Login.tsx": null,                    // not a routed page at all
+//       "Settings.tsx": "PAGE_SHELL_TABBED_RESPONSIVE",  // its 7-tab strip needs 1424px
+//       "Login.tsx": null,                               // not a routed page at all
 //     }
 //
 // The rule only visits src/pages/*.tsx and only recognises the default export
@@ -162,7 +162,6 @@ export default {
     // sees one file's AST.
     const SHARED_SHELLS = [
       "PAGE_SHELL",
-      "PAGE_SHELL_TABBED",
       "PAGE_SHELL_RESPONSIVE",
       "PAGE_SHELL_TABBED_RESPONSIVE",
     ];
@@ -175,10 +174,10 @@ export default {
       if (!v || v.type !== "JSXExpressionContainer") return false;
       const e = v.expression;
       if (e.type === "Identifier") return e.name === requiredShell;
-      // `embedded ? PAGE_SHELL_TABBED : PAGE_SHELL` for a page that is also a
-      // tab panel of another (Receiver, Fleet and Pull inside Instances). Both
-      // arms must be shared shells and one must be the required one; a literal
-      // in either arm is a violation.
+      // `embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE` for a
+      // page that is also a tab panel of another (Receiver, Fleet and Pull
+      // inside Instances). Both arms must be shared shells and one must be the
+      // required one; a literal in either arm is a violation.
       if (e.type === "ConditionalExpression") {
         const arms = [e.consequent, e.alternate];
         return (

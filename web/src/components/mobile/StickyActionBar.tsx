@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // StickyActionBar; the one shared sticky-in-flow action bar (consumed by the
 // tree Save bar, the Dashboard's trigger zone, and the step flows that follow).
 //
@@ -31,7 +30,6 @@
 // The scroller keeps --sticky-action-h of scroll padding for this bar
 // (Layout.tsx), so a control the keyboard scrolls to does not come to rest
 // underneath it.
-// ---------------------------------------------------------------------------
 
 import type { ReactNode } from "react";
 

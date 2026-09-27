@@ -11,8 +11,7 @@ import {
 import { createPortal } from "react-dom";
 import { computeBubblePosition } from "../../lib/bubblePosition";
 
-// ---------------------------------------------------------------------------
-// TapPopover — the anchored tap-popover primitive.
+// TapPopover: the anchored tap-popover primitive.
 //
 // Hover has no touch equivalent, so every affordance that only opens on
 // hover/focus is dead on a phone. This component is the below-breakpoint
@@ -22,7 +21,7 @@ import { computeBubblePosition } from "../../lib/bubblePosition";
 // a portalled role="dialog" panel anchored to the trigger.
 //
 // Why hand-rolled, and what is lifted rather than re-invented (the house
-// anti-pattern is a mechanism re-derived from scratch — see BottomSheet's
+// anti-pattern is a mechanism re-derived from scratch, see BottomSheet's
 // header for the doctrine):
 //   - Positioning is THE ONE positioning maths, lib/bubblePosition.ts's
 //     computeBubblePosition (clamp-then-flip over BUBBLE_VIEWPORT_MARGIN 8),
@@ -30,36 +29,36 @@ import { computeBubblePosition } from "../../lib/bubblePosition";
 //     panel is measured only once it is in the DOM (its real height depends
 //     on how the content wraps), and the corrected position lands before the
 //     first paint. No second flip/clamp implementation may exist.
-//     computeBubblePosition returns the CLAMPED CENTER X, so the panel pairs
-//     `w-max` with `-translate-x-1/2` — the exact documented pairing the
+//     computeBubblePosition returns the clamped center x, so the panel pairs
+//     `w-max` with `-translate-x-1/2`, the exact documented pairing the
 //     .glim-bubble/.glim-time-popover engine classes use; dropping either
-//     puts the panel's left EDGE at the trigger's center (half off-screen).
-//   - Escape is a document-level keydown listener, never a React onKeyDown —
+//     puts the panel's left edge at the trigger's center (half off-screen).
+//   - Escape is a document-level keydown listener, never a React onKeyDown:
 //     the pattern documented broken at useConfirm.tsx:25-33 (focus drifting
 //     to <body> silently kills inline Escape).
-//   - Focus is light (a popover is NOT a modal): on open, focus moves
-//     into the panel itself (tabIndex -1); on ANY dismissal it restores to
+//   - Focus is light (a popover is not a modal): on open, focus moves
+//     into the panel itself (tabIndex -1); on any dismissal it restores to
 //     the trigger. Capture-then-restore in one effect with the cleanup doing
 //     the restore is BottomSheet.tsx's open-effect shape minus the trap.
-//     There is deliberately NO Tab containment cycling: a trap would make
+//     There is no Tab containment cycling: a trap would make
 //     Escape/outside-tap semantics modal for no reason, and the panel's own
 //     content stays in the page's normal tab order (asserted in the dom
-//     tests — a Tab keydown is never preventDefault()ed).
+//     tests, a Tab keydown is never preventDefault()ed).
 //   - The dismissal layer is a TRANSPARENT full-viewport div UNDER the panel
 //     (z-40 below the panel's z-50), not a scrim: a popover is not a modal,
 //     so there is no dimming. It is a REAL event-consuming layer: outside
 //     taps land on it and die there, never reaching the
-//     content beneath. It is deliberately NOT `inert` for the reason
+//     content beneath. It is not `inert` for the reason
 //     BottomSheet measured for its scrim: inert elements are skipped in
 //     hit-testing, so the tap would pass straight through to whatever is
-//     behind it — the exact leak this layer exists to prevent. The
+//     behind it, the exact leak this layer exists to prevent. The
 //     target === currentTarget guard mirrors BottomSheet's scrim.
 //   - Re-tap-to-toggle comes free from the layering: while open, the
 //     backdrop covers the trigger too, so a second tap on the trigger's
 //     spot hits the backdrop and closes. The trigger's own onClick is the
-//     same toggle for the direct-dispatch case (jsdom, keyboard) — both
+//     same toggle for the direct-dispatch case (jsdom, keyboard); both
 //     paths close, which is what the contract requires.
-//   - Entrance is the existing glim-fade engine class — an opacity-only
+//   - Entrance is the existing glim-fade engine class, an opacity-only
 //     keyframe already self-gated by prefers-reduced-motion in index.css
 //     (and already the .glim-bubble/.glim-picker-popover entrance), so no
 //     new motion code and no motion-variant juggling.
@@ -69,16 +68,15 @@ import { computeBubblePosition } from "../../lib/bubblePosition";
 // the owner decides (ColorPickerPopover, whose drag/dismissal effects are
 // gated on its own `open` state and must stay live on mobile).
 //
-// This component owns NO user-visible strings: the panel's accessible name
+// This component owns no user-visible strings: the panel's accessible name
 // arrives via `label` and the trigger's via `triggerLabel`, both already
-// translated by the caller (the locale tables are single-owner — no new keys
+// translated by the caller (the locale tables are single-owner, no new keys
 // may be minted here).
-// ---------------------------------------------------------------------------
 
 export interface TapPopoverProps {
   /** The panel dialog's accessible name, already translated by the caller. */
   label: string;
-  /** Panel content — the consumer's own surface, unmodified. */
+  /** Panel content: the consumer's own surface, unmodified. */
   children: ReactNode;
   /** The trigger button's content (glyph, label text, indicator dot). Leave
    *  undefined for a trigger that is its own visual (the colour swatch). */
@@ -98,7 +96,7 @@ export interface TapPopoverProps {
   disabled?: boolean;
   /** Controlled open state. Undefined = uncontrolled (internal state). */
   open?: boolean;
-  /** Controlled change callback — every open/close path reports through it. */
+  /** Controlled change callback: every open/close path reports through it. */
   onOpenChange?: (open: boolean) => void;
   /** Extra classes for the panel: surface-internal layout (padding, column
    *  gaps, min/max width) is the consumer's; this component owns the chrome
@@ -135,7 +133,7 @@ export function TapPopover({
 
   // Measure-then-place, useTipBubble.tsx's shape: the panel's real size only
   // exists once it is mounted, and the useLayoutEffect (not useEffect) puts
-  // the corrected position down BEFORE the first paint — no top-left flash.
+  // the corrected position down before the first paint: no top-left flash.
   // computeBubblePosition is THE positioning maths; nothing inline here.
   useLayoutEffect(() => {
     if (!open) return;
@@ -157,9 +155,9 @@ export function TapPopover({
   }, [open]);
 
   // Light focus, BottomSheet's open-effect shape minus the trap: move
-  // focus into the panel on open; the effect's cleanup — which runs on every
-  // open→closed transition, i.e. on EVERY dismissal path (backdrop, Escape,
-  // re-tap) — restores focus to the trigger, guarding the same way for a
+  // focus into the panel on open; the effect's cleanup (which runs on every
+  // open→closed transition, i.e. on every dismissal path: backdrop, Escape,
+  // re-tap) restores focus to the trigger, guarding the same way for a
   // trigger that unmounted while the popover was open. No Tab containment
   // cycling anywhere: see the header note.
   useEffect(() => {
@@ -185,10 +183,10 @@ export function TapPopover({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, setOpen]);
 
-  // The trigger stays MOUNTED on both sides of open (focus-restore needs the
+  // The trigger stays mounted on both sides of open (focus-restore needs the
   // element alive), and one toggle handler serves the closed→open and
   // direct-dispatch open→closed cases; the backdrop owns the real-world
-  // open→closed case (it covers the trigger — header note).
+  // open→closed case (it covers the trigger, header note).
   const triggerButton = (
     <button
       ref={triggerRef}
@@ -200,7 +198,7 @@ export function TapPopover({
       title={triggerLabel}
       style={triggerStyle}
       onClick={() => setOpen(!open)}
-      // min-h-11/min-w-11 is the 44px touch floor — this component only ever
+      // min-h-11/min-w-11 is the 44px touch floor: this component only ever
       // renders below the breakpoint, so the floor is unconditional here.
       className={`inline-flex min-h-11 min-w-11 items-center justify-center ${triggerClassName}`}
     >
@@ -219,10 +217,10 @@ export function TapPopover({
       {triggerButton}
       {createPortal(
         <>
-          {/* The consuming dismissal layer: transparent (NO scrim tint — a
-              popover is not a modal), full-viewport, UNDER the panel, and a
-              real hit target so outside taps die here. Deliberately
-              not `inert` — see the header note. */}
+          {/* The consuming dismissal layer: transparent (no scrim tint, a
+              popover is not a modal), full-viewport, under the panel, and a
+              real hit target so outside taps die here. It is
+              not `inert`, see the header note. */}
           <div aria-hidden="true" className="fixed inset-0 z-40" onClick={onBackdropClick} />
           {/* The panel: portalled to <body> (escapes ancestor CSS transforms,
               the InfoBubble/useConfirm portal fix), centred on

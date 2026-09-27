@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // Mobile shell e2e: the real-binary contract for the mobile chrome.
 //
 // The first test proves the chrome switch (bar on mobile / Sidebar on
@@ -21,7 +20,6 @@
 // exactness contract: the bar renders exactly the registry slots, the
 // enabled bar destinations plus the More trigger, nothing else (bar-exactness
 // test below).
-// ---------------------------------------------------------------------------
 import { expect, test, type Page } from "@playwright/test";
 
 // The two device projects from playwright.config.ts. Everything else is a
