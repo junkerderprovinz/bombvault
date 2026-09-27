@@ -26,6 +26,7 @@ import {
   IconInfo,
   IconKey,
   IconKeyRevoke,
+  IconLatest,
   IconLink,
   IconMail,
   IconPlay,
@@ -86,7 +87,8 @@ const RULES: Rule[] = [
   // (backupDone) never takes the check by substring accident.
   [/\bdone\b/i, () => <IconCheckCircle />],
   [/back|previous|prev\b/i, () => <IconBack />],
-  [/next|continue|forward|jumpToLatest/i, () => <IconForward />],
+  [/jumpToLatest/i, () => <IconLatest />],
+  [/next|continue|forward/i, () => <IconForward />],
 
   // Connections, above the probing rules so recovery.connectPreview, which
   // connects first and previews after, gets the link.

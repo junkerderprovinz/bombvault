@@ -126,6 +126,15 @@ export function IconForward() {
   );
 }
 
+/** Jump to the newest entry. */
+export function IconLatest() {
+  return (
+    <G>
+      <path fill="currentColor" fillRule="evenodd" d="M8 1a1 1 0 0 0 -2 0v5H4a0.5 0.5 0 0 0 -0.354 0.854l3 3a0.5 0.5 0 0 0 0.708 0l3 -3A0.5 0.5 0 0 0 10 6H8V1ZM4 12a1 1 0 1 0 0 2h6a1 1 0 1 0 0 -2H4Z" clipRule="evenodd" strokeWidth="1"></path>
+    </G>
+  );
+}
+
 /** Select all. */
 export function IconSelectAll() {
   return (

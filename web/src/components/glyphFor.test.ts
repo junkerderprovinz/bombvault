@@ -30,6 +30,11 @@ describe("glyphFor", () => {
     expect(glyphFor("common.confirm")).not.toEqual(glyphFor("common.save"));
   });
 
+  it("points the jump to the newest log line down, not forward", () => {
+    expect(glyphFor("activityLog.jumpToLatest")).toBeDefined();
+    expect(glyphFor("activityLog.jumpToLatest")).not.toEqual(glyphFor("wizard.next"));
+  });
+
   it("returns undefined rather than a meaningless symbol", () => {
     // A key nothing sensible matches keeps its text in glyph mode, which is
     // the better failure: a wrong symbol is worse than a word.
