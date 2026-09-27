@@ -524,12 +524,13 @@ func (s *Service) configuredBackupPaths(name string, in model.Inspect) []string 
 // detection, filtered to those that exist on disk (a stateless container ends up
 // with an empty list).
 func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
-	paths, _ := s.effectiveBackupPathsWithSelection(name, in)
+	paths, _, _ := s.effectiveBackupPathsWithSelection(name, in)
 	return paths
 }
 
-// effectiveBackupPathsWithSelection returns the same paths and the stored
-// selection they were derived from, out of one read of the target row.
+// effectiveBackupPathsWithSelection returns the same paths, the configured
+// paths they were filtered from and the stored selection both were derived
+// from, out of one read of the target row.
 //
 // A backup needs both: the includes become the restic positionals, the
 // exclusion branches the --exclude tail. With two reads, a PATCH landing in
@@ -545,13 +546,13 @@ func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
 // before it, which is ordinary staleness: the whole selection is then the
 // new one, the next run uses it, and no snapshot is internally
 // inconsistent.
-func (s *Service) effectiveBackupPathsWithSelection(name string, in model.Inspect) (paths, selection []string) {
-	chosen := s.resolveAppdataPaths(name, in)
+func (s *Service) effectiveBackupPathsWithSelection(name string, in model.Inspect) (paths, configured, stored []string) {
+	configured = s.resolveAppdataPaths(name, in)
 	if existing, gErr := s.store.GetTargetByContainer(name); gErr == nil && len(existing.SelectedPaths) > 0 {
-		selection = existing.SelectedPaths
-		chosen = includesOnly(selection)
+		stored = existing.SelectedPaths
+		configured = includesOnly(stored)
 	}
-	return onlyExistingPaths(chosen), selection
+	return onlyExistingPaths(configured), configured, stored
 }
 
 // emptyBackupIsUnreachable decides what an empty effective path list means,

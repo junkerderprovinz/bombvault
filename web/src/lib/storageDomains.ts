@@ -36,15 +36,19 @@ export function copiesExpect(p: CopiesPreview): CopiesPreview {
 }
 
 /** impactLines says what a change of a domain's default does to each target,
- *  and how many items without a location take `home` at their first backup. */
-export function impactLines(t: T, lang: string, impact: DefaultImpact, home: string): string[] {
+ *  and how many items without a location take `home` at their first backup.
+ *  Only containers have project folders, so only their lines name them. */
+export function impactLines(t: T, lang: string, domain: string, impact: DefaultImpact, home: string): string[] {
+  const containers = domain === "containers";
   const uncheckable = (names: string[]) => t("placement.uncheckable").replace("{list}", () => formatList(lang, names));
   const lines: string[] = [];
   for (const d of impact.dropped) {
     lines.push(
       d.unknown
-        ? t("placementDefaults.dropAskUnknown").replace(/\{target\}/g, () => d.name).replace("{n}", String(d.items))
-        : t("placementDefaults.dropAsk")
+        ? t(containers ? "placementDefaults.dropAskUnknownContainers" : "placementDefaults.dropAskUnknown")
+            .replace(/\{target\}/g, () => d.name)
+            .replace("{n}", String(d.items))
+        : t(containers ? "placementDefaults.dropAskContainers" : "placementDefaults.dropAsk")
             .replace("{target}", () => d.name)
             .replace("{n}", String(d.items))
             .replace("{copies}", String(d.snapshots))
@@ -53,7 +57,7 @@ export function impactLines(t: T, lang: string, impact: DefaultImpact, home: str
   }
   for (const a of impact.added) {
     lines.push(
-      t("placementDefaults.addAsk")
+      t(containers ? "placementDefaults.addAskContainers" : "placementDefaults.addAsk")
         .replace("{target}", () => a.name)
         .replace("{n}", String(a.items))
         .replace("{snapshots}", String(a.snapshots))

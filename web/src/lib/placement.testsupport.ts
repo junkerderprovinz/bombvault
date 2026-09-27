@@ -140,7 +140,7 @@ export function placementObserved(over?: Partial<PlacementObserved>): PlacementO
   return {
     noBackup: false,
     places: [
-      observedPlace({ place: "local", label: "", count: 0, latest: 1_758_166_800, seenAt: 1_758_166_800 }),
+      observedPlace({ place: "local", label: "", count: 3, latest: 1_758_166_800, seenAt: 1_758_166_800 }),
       observedPlace(),
     ],
     sites: 2,
@@ -337,4 +337,11 @@ export function wheel(el: Element, notches: number): void {
   for (let i = 0; i < notches; i++) {
     fireEvent.wheel(el, { deltaY: 100 });
   }
+}
+
+/** The text of every button in `root` drawn with the accent fill. */
+export function accentButtons(root: HTMLElement): string[] {
+  return Array.from(root.querySelectorAll("button"))
+    .filter((b) => b.className.includes("bg-accent"))
+    .map((b) => b.textContent ?? "");
 }

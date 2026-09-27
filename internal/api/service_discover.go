@@ -36,13 +36,16 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 	if err != nil {
 		return DiscoverResult{}, fmt.Errorf("read settings: %w", err)
 	}
-	// The distinct container names from the container:<name> tags, across every
-	// repository this domain writes to, each with the named repository (#204) it
-	// was found in. A not-yet-created repo yields nothing. A read failure comes
-	// back as readErr together with whatever the named repositories yielded, so
-	// an install whose domain repository is unreadable is still rebuilt as far
-	// as it can be; the Recovery wizard classifies on that error.
-	names, formerNames, skipped, directRows, readErr := s.discoverNamesAcrossRepos(ctx, settings, "containers", "container:")
+	// The distinct container names from the container:<name> and dbdump:<name>
+	// tags, across every repository this domain writes to, each with the named
+	// repository (#204) it was found in. A stack member whose data sits under
+	// the compose working directory has no volume backup at all, so its dumps
+	// are the only evidence that it exists. A not-yet-created repo yields
+	// nothing. A read failure comes back as readErr together with whatever the
+	// named repositories yielded, so an install whose domain repository is
+	// unreadable is still rebuilt as far as it can be; the Recovery wizard
+	// classifies on that error.
+	names, formerNames, skipped, directRows, readErr := s.discoverNamesAcrossRepos(ctx, settings, "containers", "container:", dbDumpIdentityPrefix)
 	findings, fErr := s.directFindings("containers", directRows)
 	if fErr != nil {
 		log.Printf("api: discover containers: could not match direct repositories to targets: %v", fErr)
@@ -416,10 +419,11 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult,
 }
 
 // discoverNamesAcrossRepos collects the item names a domain's snapshots
-// carry (from the tagPrefix tag, e.g. "container:") across every repository
+// carry (from any of tagPrefixes, e.g. "container:") across every repository
 // the domain writes to, and remembers which repository each name was found
 // in: the value is the named repository's id (#204), or "" for the domain's
-// own.
+// own. An item with more than one identity is one name, and the newest
+// snapshot of any of them decides where it belongs.
 //
 // Discover is the path back from a lost /config: it rebuilds items out of
 // the snapshots that still exist. An item pointed at a named repository
@@ -461,7 +465,7 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult,
 // as a link. Only container and VM backups write that tag. The fourth is
 // every plain named repository holding bv:direct snapshots of the domain: a
 // direct repository that lost its link.
-func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.Settings, domain, tagPrefix string) (map[string]string, map[string][]string, []repoSkip, []store.OffsiteTarget, error) {
+func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.Settings, domain string, tagPrefixes ...string) (map[string]string, map[string][]string, []repoSkip, []store.OffsiteTarget, error) {
 	own, err := s.repoFor(settings, domain, "local")
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -605,7 +609,7 @@ func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.S
 			log.Printf("api: discover %s: could not read %s (continuing): %v", domain, s.refName(ref), scrubError(sErr)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own and the error scrubbed
 			continue
 		}
-		if !ref.Own && ref.Named.CompanionOf == "" && holdsDirect(snaps, tagPrefix) {
+		if !ref.Own && ref.Named.CompanionOf == "" && holdsDirect(snaps, tagPrefixes) {
 			direct = append(direct, ref.Named)
 		}
 		id := ""
@@ -627,8 +631,8 @@ func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.S
 				}
 			}
 			for _, tag := range snap.Tags {
-				rest, ok := strings.CutPrefix(tag, tagPrefix)
-				if !ok || rest == "" {
+				rest := nameAfterAnyPrefix(tag, tagPrefixes)
+				if rest == "" {
 					continue
 				}
 				if len(formerHere) > 0 {

@@ -21,6 +21,18 @@ vi.mock("../lib/api", async (importOriginal) => ({
   browse: async () => ({ ok: true, dirs: [{ name: "appdata", path: "user/appdata" }] }),
   listRepos: async () => ({ ok: true, repos: [] }),
   getCloudCredSets: async () => ({ ok: true, sets: [] }),
+  zfsHostDatasets: async () => ({
+    ok: true,
+    available: true,
+    code: "ok",
+    target: "root@tower",
+    datasets: [],
+    hiddenLegacy: 0,
+    unusedZvols: 0,
+    notInItem: 0,
+    truncated: false,
+    maxNameLength: 219,
+  }),
   proposeMeshOffer: async () => ({
     ok: true,
     snippet: { user: "u", password: "p", htpasswd: "", dockerRun: "docker run", compose: "services:", unraid: "", repo: "rest:" },
@@ -50,6 +62,9 @@ const { PullDialog } = await import("../pages/Pull");
 const { ReceiverDialog } = await import("../pages/Receiver");
 const { FleetDialog, ProposeMeshDialog } = await import("../pages/Fleet");
 const { AddPlaceDialog } = await import("./places/AddPlaceDialog");
+const { ZFSAddDialog } = await import("./zfs/ZFSAddDialog");
+const { McpClientDialog } = await import("../pages/settings/McpClientDialog");
+const { OTHER_CLIENT } = await import("../lib/mcpClients");
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -235,6 +250,35 @@ const WINDOWS: Shown[] = [
       // The row now holds Close alone, so it has to be the one that answered.
       expect(screen.queryByRole("button", { name: en["fleet.mesh.send"] })).toBeNull();
     },
+    last: en["common.close"],
+  },
+  {
+    file: "components/zfs/ZFSAddDialog.tsx",
+    name: "the ZFS add window",
+    open: () => shown(<ZFSAddDialog onClose={() => {}} onAdded={() => {}} />),
+    last: en["zfs.add.submit"].replace("{n}", "0"),
+  },
+  {
+    file: "pages/settings/McpClientDialog.tsx",
+    name: "the MCP client window",
+    open: () =>
+      shown(
+        <McpClientDialog
+          client={OTHER_CLIENT}
+          keys={[]}
+          lists={0}
+          snippetBase={{ origin: "https://tower:3443", endpointPath: "/mcp", selfSigned: false }}
+          allowStartHint=""
+          oauth={{ enabled: false, issuer: "", active: false, grantLimit: 0, connectorPath: "" }}
+          authEnabled={false}
+          onOAuthChange={() => {}}
+          onCreate={async () => null}
+          onCopy={() => {}}
+          onDownloadCertificate={() => {}}
+          onClose={() => {}}
+          t={t}
+        />,
+      ),
     last: en["common.close"],
   },
   {

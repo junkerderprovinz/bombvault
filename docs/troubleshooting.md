@@ -18,7 +18,7 @@ BombVault serves HTTPS out of the box on port `3443` (self-signed certificate), 
 
 VM backup talks to libvirt over SSH, never a mount.
 
-- Confirm SSH is enabled on the host and BombVault's public key is authorized in `/root/.ssh/authorized_keys` (Settings, System, VM Backup over SSH shows the key and a **Test connection** button).
+- Confirm SSH is enabled on the host and BombVault's public key is authorized in `/root/.ssh/authorized_keys` (Settings, System, Host SSH shows the key and a **Test connection** button).
 - On a custom `br0.x` network, set `LIBVIRT_HOST` to your Unraid LAN IP (the container cannot reach the host via `host.docker.internal` there). Enable **Settings, Docker, Host access to custom networks**.
 - If you changed Unraid's SSH port, set `LIBVIRT_SSH_PORT` to match.
 - Full step-by-step diagnosis (reachability test, VLAN routing, `Permission denied (publickey)`, `Host key verification failed`) is in the [VM backup over SSH guide](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -42,6 +42,56 @@ Before anything is stopped or removed, restore runs a pre-flight conflict check:
 ## A plain export failed instead of writing a file
 
 If age encryption is on (Settings) but no valid recipient is set, an export fails with a clear error instead of writing plaintext. Add a valid recipient (an age public key or an SSH public key), or turn encryption off if you intend the export to be plaintext. See [Features](features.md).
+
+## A database dump failed
+
+A failed dump never fails the backup around it; it is recorded as its own failed run, and the reason names what to fix.
+
+- **Login refused.** The dump signs in with the container's own password variables (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` or their `_FILE` versions). Check them on the database container. A `_FILE` variable pointing at a secret the container's own user cannot read fails the same way.
+- **Missing privileges.** With a random root password the dump can only sign in as the app user, so it holds that one database, and MySQL 8.4 and newer may refuse it outright. Give the container a real root password, or switch the dump off for it.
+- **The system tables need an upgrade.** MariaDB refuses to dump when its system tables come from an older version (error 1558). Add the variable `MARIADB_AUTO_UPGRADE=1` and restart the container, or run `mariadb-upgrade` inside it once.
+- **No dump tool.** A slim or self-built image without `pg_dump`, `mysqldump` or `mariadb-dump` cannot be dumped. Use the official image, or switch the dump off.
+- **A time limit.** A dump gets `DB_DUMP_MAX_HOURS` (6 by default), the backup around it gets `BACKUP_MAX_HOURS`, and a dump that stops making progress is cut after `BACKUP_STALL_HOURS`. The usual cause of the last one is a lock the application holds. Raise the limit that fired, or dump while the application is quiet.
+- **The container is paused or restarting.** The dump talks to the running server. If the container keeps restarting, its own log says why.
+- **A damaged dump could not be removed.** A dump BombVault could not finish is deleted again. When that delete fails, the dump stays in the list marked as damaged, and you can delete it there.
+
+## An import failed
+
+An import stops the container, moves its data folder aside and lets the image create an empty one in its place. If a step before the import itself fails, the old folder is put back automatically. If the import fails, the container keeps the fresh folder and the old one stays beside it as `<data folder>.bombvault-before-import-<timestamp>`; the run's error message names the exact path.
+
+To put it back by hand: stop the container, rename the current data folder out of the way, rename the kept folder back to the original name, and start the container. On Unraid, the file manager does this from the Shares tab.
+
+## A ZFS dataset backup failed or skipped a dataset {#zfs-datasets}
+
+Every problem carries a reason code in brackets, and the [ZFS datasets](zfs-datasets.md#reason-codes) page lists all of them with the fix. The three most common:
+
+- **`snapshot-loop`**: the snapshot did not reach BombVault because Host Data does not pass new mounts through. Edit the container, set the Access Mode of Host Data to Read/Write - Slave and restart BombVault.
+- **`key-not-loaded`**: an encrypted dataset whose key is not loaded is skipped. Load the key with `zfs load-key` and mount the dataset; the next backup includes it.
+- **`ssh-auth`**: the server refused BombVault's key. The connection card on the ZFS page shows the command that authorizes it; run it once on the server.
+
+## An item stays at "Learning N/10"
+
+Most anomaly checks start after 10 successful backups of an item, and the count starts again after **Mark as expected** and after the item's selection changed. An item that is not scheduled does not learn, and a container without appdata has nothing to learn from, which its badge says.
+
+## Retention stopped deleting old backups of one item
+
+An open critical anomaly is holding them: the item's source is almost empty, shrank sharply, or one backup stored most of its data again. Open the anomaly from the badge on the item. If data is missing or was encrypted, restore from the linked last good backup first. Then acknowledge the anomaly, or mark it as expected if the change was yours, and the next run prunes as usual. The retention preview marks such an item as kept. For a ZFS item only the dataset named in the anomaly keeps its old backups, and the other datasets of the tree are pruned as usual.
+
+## Manual prune says some items were kept
+
+The same cause: prune leaves the old backups of an item with such an anomaly alone and names the item in its message. Everything else is pruned as usual.
+
+## History import says a repository could not be read
+
+After the upgrade BombVault reads the sizes of earlier backups from each repository once. A repository it could not reach at that time, such as an off-site target that was down or a share that was not mounted, is counted on the **Anomalies** card under **Settings, Integrity** and tried again once a day. Its items learn from new backups in the meantime.
+
+## The disk-space warning does not match the Unraid dashboard
+
+On the Unraid user share (`/mnt/user`) the free space is that of the whole array, not of one disk. Remote repositories are measured only through rclone remotes that report their free space; S3, B2, REST and SFTP repositories have no figure and are listed as not measured on the **Anomalies** card.
+
+## An AI assistant cannot connect
+
+The [MCP server page](mcp.md#troubleshooting) lists what each status code and each refusal of the MCP endpoint means and what to do about it.
 
 ## The container keeps restarting or looks unhealthy
 

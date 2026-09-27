@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"slices"
 	"strings"
@@ -10,7 +11,9 @@ import (
 )
 
 // offsiteConfigDomains lists the domains that can have an off-site target.
-var offsiteConfigDomains = []string{"containers", "vms", "flash", "config", "files"}
+var offsiteConfigDomains = []string{"containers", "vms", "flash", "config", "files", "zfs"}
+
+var invalidOffsiteDomain = "invalid domain: must be one of " + strings.Join(offsiteConfigDomains, ", ")
 
 func validOffsiteDomain(domain string) bool {
 	for _, d := range offsiteConfigDomains {
@@ -92,12 +95,66 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 	return err
 }
 
-// MoveMeshTargetsOffPrimarySlot moves every target accepted from a mesh offer
-// off sort order 0, where a settings save would take it for the row the
-// domain's off-site field edits, and returns how many it moved. One on the
-// location the field names is that row and stays, and so does one at a place,
-// which a settings save leaves alone.
-func (s *Service) MoveMeshTargetsOffPrimarySlot() (int, error) {
+// rejectAdoptionOverOwnSettings refuses off-site settings under which
+// syncPrimaryOffsiteTarget would take over an additional target for the
+// domain's off-site field and replace settings the user gave that target, such
+// as its append-only flag. A target at a place is never written that way. It
+// returns a user-facing sentence, or "".
+func (s *Service) rejectAdoptionOverOwnSettings(settings store.Settings) (string, error) {
+	for _, d := range offsiteConfigDomains {
+		repo := offsiteRepoFromSettings(d, settings)
+		if repo == "" {
+			continue
+		}
+		field, ok, err := s.store.FieldOffsiteTarget(d)
+		if err != nil {
+			return "", err
+		}
+		if ok && (field.PlaceID != "" || field.Repo == repo) {
+			continue
+		}
+		targets, err := s.store.OffsiteTargetsForDomain(d)
+		if err != nil {
+			return "", err
+		}
+		i := slices.IndexFunc(targets, func(t store.OffsiteTarget) bool { return t.Repo == repo && t.PlaceID == "" })
+		if i < 0 || sameOffsitePolicy(targets[i], settingsOffsiteTarget(d, settings, repo)) {
+			continue
+		}
+		return fmt.Sprintf("the %s off-site repository is the additional target %q, which has settings of its own: remove that target or give it the off-site settings first", d, targets[i].Name), nil
+	}
+	return "", nil
+}
+
+// sameOffsitePolicy reports whether a and b replicate, age and limit the same way.
+func sameOffsitePolicy(a, b store.OffsiteTarget) bool {
+	return a.Immutable == b.Immutable && a.Schedule == b.Schedule &&
+		a.RetentionKeepLast == b.RetentionKeepLast && a.RetentionKeepDaily == b.RetentionKeepDaily &&
+		a.RetentionKeepWeekly == b.RetentionKeepWeekly && a.RetentionKeepMonthly == b.RetentionKeepMonthly &&
+		a.LimitUpload == b.LimitUpload && a.LimitDownload == b.LimitDownload &&
+		a.GrowthBudgetGB == b.GrowthBudgetGB
+}
+
+// MoveTargetsOffPrimarySlot runs moveTargetsOffPrimarySlot against the stored
+// settings at startup, before a settings save can take a stray row for the
+// domain's off-site field.
+func (s *Service) MoveTargetsOffPrimarySlot() (int, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return 0, err
+	}
+	return s.moveTargetsOffPrimarySlot(settings)
+}
+
+// moveTargetsOffPrimarySlot moves every target but the field row off sort
+// order 0, which a settings save treats as the row the domain's off-site field
+// edits, and returns how many it moved. The field row is one at a place, whose
+// place writes the field, else the row on the location the field names, else
+// the oldest row at 0. A domain without the setting keeps the oldest
+// switched-off row at 0, the one a cleared field leaves behind for the next
+// fill, unless it came from a mesh offer and so was never the field's. A row
+// at a place is never moved: its place decides where it stands.
+func (s *Service) moveTargetsOffPrimarySlot(settings store.Settings) (int, error) {
 	offers, err := s.store.ListMeshOffers()
 	if err != nil {
 		return 0, err
@@ -108,18 +165,30 @@ func (s *Service) MoveMeshTargetsOffPrimarySlot() (int, error) {
 			accepted[o.Repo] = true
 		}
 	}
-	settings, err := s.store.GetSettings()
-	if err != nil {
-		return 0, err
-	}
 	moved := 0
 	for _, d := range offsiteConfigDomains {
 		targets, err := s.store.OffsiteTargetsForDomain(d)
 		if err != nil {
 			return moved, err
 		}
+		repo := offsiteRepoFromSettings(d, settings)
+		var slot []store.OffsiteTarget
 		for _, t := range targets {
-			if t.SortOrder != 0 || t.PlaceID != "" || !accepted[t.Repo] || t.Repo == offsiteRepoFromSettings(d, settings) {
+			if t.SortOrder == 0 {
+				slot = append(slot, t)
+			}
+		}
+		keep := slices.IndexFunc(slot, func(t store.OffsiteTarget) bool { return t.PlaceID != "" })
+		if keep < 0 {
+			keep = slices.IndexFunc(slot, func(t store.OffsiteTarget) bool {
+				return repo != "" && t.Repo == repo || repo == "" && !t.Enabled && !accepted[t.Repo]
+			})
+		}
+		if keep < 0 && repo != "" && len(slot) > 0 {
+			keep = 0
+		}
+		for i, t := range slot {
+			if i == keep || t.PlaceID != "" {
 				continue
 			}
 			if err := s.store.MoveOffsiteTargetBehind(t.ID); err != nil {

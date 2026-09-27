@@ -64,11 +64,18 @@ describe("the preview a domain-row write sends back", () => {
 
 describe("impactLines", () => {
   it("names what each target stops and starts receiving, and who takes the new home", () => {
-    expect(impactLines(t, "en", impact, "NAS Keller")).toEqual([
+    expect(impactLines(t, "en", "containers", impact, "NAS Keller")).toEqual([
       "Items and project folders that B2 no longer gets: 3. Copies that stay there: 40.",
       "Items and project folders that NAS gets from now on: 2. Snapshots uploaded at the next run: at most 10.",
       "Could not be checked: plex",
       "Items without a location that take NAS Keller at their first backup: 4.",
+    ]);
+  });
+
+  it("names project folders only for containers", () => {
+    expect(impactLines(t, "en", "vms", impact, "NAS Keller").slice(0, 2)).toEqual([
+      "Items that B2 no longer gets: 3. Copies that stay there: 40.",
+      "Items that NAS gets from now on: 2. Snapshots uploaded at the next run: at most 10.",
     ]);
   });
 });

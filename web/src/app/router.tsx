@@ -1,15 +1,19 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./Layout";
 import { Dashboard } from "../pages/Dashboard";
+import { Anomalies } from "../pages/Anomalies";
 import { Containers } from "../pages/Containers";
 import { VMs } from "../pages/VMs";
 import { Flash } from "../pages/Flash";
 import { Config } from "../pages/Config";
 import { Files } from "../pages/Files";
+import { ZFS } from "../pages/ZFS";
 import { Instances } from "../pages/Instances";
 import { SettingsPage } from "../pages/Settings";
 import Recovery from "../pages/Recovery";
 import { GlyphSheet } from "../pages/Glyphs";
+import { OAuthConsent } from "../pages/OAuthConsent";
+import { mcpShipped } from "../lib/mcpSwitch";
 import { I18nProvider } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 
@@ -20,14 +24,20 @@ export function AppRouter() {
       <ToastProvider>
         <BrowserRouter>
           <Routes>
+            {/* The page an OAuth client sends the operator to. It stands on its
+                own like the login screen, without the rail, and checks the
+                session itself. */}
+            {mcpShipped && <Route path="/oauth/authorize" element={<OAuthConsent />} />}
             <Route element={<Layout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/anomalies" element={<Anomalies />} />
               <Route path="/containers" element={<Containers />} />
               <Route path="/vms" element={<VMs />} />
               <Route path="/flash" element={<Flash />} />
               <Route path="/config" element={<Config />} />
               <Route path="/files" element={<Files />} />
+              <Route path="/zfs" element={<ZFS />} />
               {/* Receiver, Pull and Fleet are tabs of Instances. Their own
                   paths stay as redirects because bookmarks, release notes and
                   support answers link to them. */}

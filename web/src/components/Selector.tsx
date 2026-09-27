@@ -106,10 +106,10 @@ interface SelectorCommon {
  * colours at the default offset; pages/settings/hueOffsets.test.ts requires
  * every hued selector in that tree to take its offset from here.
  *
- * The palette has eight colours and the tree twelve selectors, so some starts
+ * The palette has eight colours and the tree thirteen selectors, so some starts
  * are shared, always between selectors on different tabs: `drillKind`
  * (Integrity) and the domain rows (Storage) reuse starts of the Appearance
- * tab.
+ * tab, and `mcpClient` (System) shares `notifyOn`'s (Notifications).
  */
 export const HUE_OFFSET = {
   tabs: 0,
@@ -126,6 +126,7 @@ export const HUE_OFFSET = {
   /** A place's "Where is the device?" on the Storage tab, a start no other
    *  selector there takes. */
   placeWhere: 3,
+  mcpClient: 7,
 } as const;
 
 export type SelectorProps =

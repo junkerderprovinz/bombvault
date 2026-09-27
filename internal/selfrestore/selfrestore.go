@@ -19,6 +19,7 @@ import (
 
 const stagingDirName = ".restore-staging"
 const markerName = ".restore-pending"
+const appliedMarkerName = ".restore-applied"
 
 // StagingRoot is the directory a staged config restore is restic-restored into.
 func StagingRoot(dataDir string) string { return filepath.Join(dataDir, stagingDirName) }
@@ -26,6 +27,11 @@ func StagingRoot(dataDir string) string { return filepath.Join(dataDir, stagingD
 // MarkerPath is the file whose presence tells the next boot that a staged
 // config restore is waiting to be applied.
 func MarkerPath(dataDir string) string { return filepath.Join(dataDir, markerName) }
+
+// AppliedMarkerPath is the file whose presence says that a restored database
+// is in place and the boot has not finished what a restore asks of it yet.
+// ApplyPending writes it; whoever finishes that work removes it.
+func AppliedMarkerPath(dataDir string) string { return filepath.Join(dataDir, appliedMarkerName) }
 
 // RestoredSnapshotDir is where restic recreates the snapshot subtree under the
 // staging root. The config backup source is <dataDir>/.snapshot and restic
@@ -78,7 +84,13 @@ func ApplyPending(dataDir string) (bool, error) {
 	// SQLite would replay a leftover WAL of the old database into the restored one.
 	_ = os.Remove(live + "-wal")
 	_ = os.Remove(live + "-shm")
+	// Written before the swap, so that a boot dying right after it still leaves
+	// the next one knowing where the database came from.
+	if err := os.WriteFile(AppliedMarkerPath(dataDir), []byte("applied"), 0o600); err != nil {
+		return false, fmt.Errorf("selfrestore: mark the restore as applied: %w", err)
+	}
 	if err := replace(stagedDB, live); err != nil {
+		_ = os.Remove(AppliedMarkerPath(dataDir))
 		return false, err
 	}
 	_ = os.RemoveAll(StagingRoot(dataDir))

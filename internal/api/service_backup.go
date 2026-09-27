@@ -24,16 +24,16 @@ import (
 // "Backup Everything" pass, a sequential run over every domain (containers,
 // vms, flash, files, config) triggered as one unit, so that for example a
 // dead-man's-switch ping fires only once everything is done. The value is
-// the parent run's id; runsAdapter and startedRunsAdapter read it via
-// runGroupFromContext and stamp it onto the child run they just started
-// (store.SetRunGroup), so that run can be traced back to its pass.
+// the parent run's id; startRunWith reads it via runGroupFromContext and
+// writes it into the child run's INSERT, so that run can be traced back to
+// its pass. A context without one records no group.
 type runGroupKey struct{}
 
 // WithRunGroup marks ctx as belonging to the "Backup Everything" pass whose
 // parent run id is groupID (see runGroupKey). Set by BackupEverything around
 // each domain's own backup entry point (s.Backup/s.BackupVM/s.BackupFlash/
-// s.BackupFileSet/s.BackupConfig); read by runsAdapter/startedRunsAdapter
-// when they record that call's child run.
+// s.BackupFileSet/s.BackupConfig); read by startRunWith when it records that
+// call's child run.
 func WithRunGroup(ctx context.Context, groupID string) context.Context {
 	return context.WithValue(ctx, runGroupKey{}, groupID)
 }
@@ -113,6 +113,22 @@ func (s *Service) ScheduleSelfRestart() bool {
 	return true
 }
 
+// inspectNamed inspects the container called name and fails when none is. Docker
+// falls back to an id prefix for a name no container has, so a removed "db"
+// would otherwise resolve to whichever container's id starts with db. Callers
+// act on the returned id, which a container recreated in the meantime does not
+// share.
+func (s *Service) inspectNamed(ctx context.Context, name string) (model.Inspect, error) {
+	in, err := s.docker.Inspect(ctx, name)
+	if err != nil {
+		return model.Inspect{}, err
+	}
+	if strings.TrimPrefix(in.Name, "/") != name {
+		return model.Inspect{}, fmt.Errorf("no container is named %q", name)
+	}
+	return in, nil
+}
+
 // Backup runs a full container backup: resolve repo + mode, ensure the repo,
 // inspect the container, find-or-create its target, and drive the orchestrator.
 func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, retErr error) {
@@ -126,13 +142,16 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// Detached from the caller, but reachable by shutdown: a closing browser
 	// tab must not stop a backup, while the process itself leaving must, or the
 	// run is killed anyway without anyone recording that it happened.
-	s.registerBackupCancel("container:"+name, cancel)
-	defer s.unregisterBackupCancel("container:" + name)
+	s.registerBackupCancel(ctx, "container:"+name, cancel)
+	defer s.endBackupCancel("container:"+name, &retErr)
 	// Never back up BombVault's own container: stopping it mid-run kills this process.
 	if self := s.selfContainerName(ctx); self != "" && name == self {
 		return backup.Summary{}, ErrSelfBackup
 	}
 	defer s.lockDomain("containers")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "containers")
 
 	// #64: a domain-wide fault (repo mount lost, disk full, restic repo error)
 	// that begins mid-batch trips one of the pre-flight early returns below
@@ -153,7 +172,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	orchestrated := false
 	defer func() {
 		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrContainerNotInstalled) {
-			s.recordPreflightFailure("Backup", name, targetID, retErr)
+			s.recordPreflightFailure(ctx, "Backup", name, targetID, retErr)
 		}
 	}()
 
@@ -190,7 +209,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// recreated on restore). Both halves of the selection come out of one
 	// read: the includes become the positionals, and selection feeds the
 	// --exclude tail further down (see effectiveBackupPathsWithSelection).
-	effective, selection := s.effectiveBackupPathsWithSelection(name, in)
+	effective, configured, selection := s.effectiveBackupPathsWithSelection(name, in)
 
 	// Guard against a silent no-op: if a previous backup captured data (or the
 	// user selected folders) but every path now resolves away, e.g. because
@@ -206,7 +225,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// previous backup captured has disappeared from disk.
 	if s.emptyBackupIsUnreachable(name, effective) {
 		err := fmt.Errorf("backup %q: its backup folders are not reachable right now (is the appdata share mounted?). Refusing an empty backup that would look successful", name)
-		s.notifyBackup(ctx, "container", name, false, backup.Summary{}, err)
+		s.notifyBackup(ctx, "container", name, "", false, backup.Summary{}, err)
 		return backup.Summary{}, err
 	}
 
@@ -250,7 +269,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// cannot be inspected (e.g. removed) is logged and left untouched.
 	var deps []backup.StopContainer
 	for _, dep := range tg.StopContainers {
-		di, dErr := s.docker.Inspect(ctx, dep)
+		di, dErr := s.inspectNamed(ctx, dep)
 		if dErr != nil {
 			log.Printf("api: backup: inspect dependency %q: %v (leaving as-is)", dep, dErr) //nolint:gosec // G706: dep is %q-quoted
 			continue
@@ -260,6 +279,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		// and, when enabled, wait for each to be healthy before its dependents (#119).
 		deps = append(deps, backup.StopContainer{
 			Name:       dep,
+			ID:         di.ID,
 			WasRunning: di.Running,
 			Service:    composeService(di.Config.Labels),
 			DependsOn:  parseDependsOn(di.Config.Labels),
@@ -288,6 +308,27 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// or success run), so the pre-flight failure finisher above stands down to
 	// avoid a double record.
 	orchestrated = true
+	dumpPlan := s.dbDumpPlanFor(settings, tg, name, in)
+	var dumper backup.DBDumper
+	var dumpOutcome backup.DBDumpOutcome
+	if dumpPlan != nil {
+		dumper = &dbDumpAdapter{
+			svc: s, engine: s.engine, docker: s.docker, mode: mode,
+			container: name, containerID: in.ID, progressKey: pkey, startedAt: startedAt,
+			extraTags: s.directTags(settings, "containers", repo),
+		}
+	}
+	excludes := append(s.resolveExcludePatterns(tg.Excludes, in), excludedBranches(selection)...)
+	// The fingerprint covers the configured folders, not the ones that resolved
+	// on disk just now: an unmounted share must look like the selection it has
+	// always been, so the detectors report the collapse instead of writing it
+	// off as a change the user made.
+	selectionFP := selectionFingerprint(itemSelection{
+		Kind:     "container",
+		Paths:    configured,
+		Excludes: excludes,
+		Caches:   enabledKeys(tg.ExcludeCaches),
+	})
 	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{
 		ContainerRef:           name,
 		FormerNames:            aliasOldNames(aliases),
@@ -314,14 +355,21 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		// snapshot nobody asked for. Patterns travel as typed builder arguments
 		// into BackupArgs (excludes before --, positionals after), never through a
 		// shell.
-		Excludes:  append(s.resolveExcludePatterns(tg.Excludes, in), excludedBranches(selection)...),
-		Docker:    s.docker,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, "containers", repo)},
-		Templates: templatesAdapter{},
-		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name},
+		Excludes:     excludes,
+		Docker:       s.docker,
+		Restic:       &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "containers", repo)},
+		Templates:    templatesAdapter{},
+		Runs:         runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name},
+		DBDump:       dumpPlan,
+		DBDumper:     dumper,
+		OnDBDumpDone: func(o backup.DBDumpOutcome) { dumpOutcome = o },
+		Committed:    func() { s.commitBackup(pkey, startedAt) },
 	})
 	s.progEnd(pkey, "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "container", name, err == nil, sum, err)
+	s.notifyBackup(ctx, "container", name, "container:"+name, err == nil, sum, err)
+	// After the backup's own outcome is known, so the dump's message can say
+	// whether the files around it made it.
+	s.notifyDBDumpFailed(ctx, tg.ID, name, dumpOutcome, err == nil)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -360,9 +408,14 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 			log.Printf("api: backup: %v", err)
 		}
 	}
+	// The dumps are their own retention series, forgotten without a prune so
+	// the container's pass below reclaims both at once.
+	if dumpPlan != nil {
+		s.forgetDBDumpSeries(ctx, repo, settings, mode, name, tg.ID)
+	}
 	// A renamed container's "keep last N" counts across the rename, as long as
 	// no other machine has used the old name since.
-	s.applyRetention(ctx, repo, settings, mode, s.containerIdentity(name), "containers")
+	s.applyRetention(ctx, repo, settings, mode, s.containerIdentity(name), "containers", anomalyScope{Kind: anomalyScopeItem, ID: tg.ID})
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "containers", settings, repo, "container:"+name)
 	s.collectStatsAfterItem(ctx, "containers")
@@ -419,12 +472,12 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 		return
 	}
 	if err := s.recreateForUpdate(ctx, name, in); err != nil {
-		_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", "", 0, truncateRunErr(err))
+		_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(err))
 		s.setUpdateCheck(name, "failed")
 		log.Printf("api: update-after-backup: recreate %q failed (backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
-	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", "", 0, "")
+	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", backup.Summary{}, "")
 	s.setUpdateCheck(name, "updated")
 
 	// #116: BombVault just recreated the container, so its image tag moved to
@@ -525,7 +578,7 @@ func (s *Service) recordUpdateFailure(name, targetID string, cause error) {
 		log.Printf("api: update-after-backup: %q could not record update failure: %v (cause: %v)", name, rErr, cause) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
-	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", "", 0, truncateRunErr(cause))
+	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(cause))
 }
 
 // StartBackupAll launches a server-side batch backup of the named
@@ -554,7 +607,7 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 	}
 	if op, busy := s.domainBusy("containers"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on containers", op)
+		return false, domainBusyError{op: op, domain: "containers"}
 	}
 	// Detach immediately so the run, and the self-detection it depends on, is
 	// independent of the request that started it (canceled the moment the
@@ -675,7 +728,7 @@ func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
 	}
 	if op, busy := s.domainBusy("containers"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on containers", op)
+		return false, domainBusyError{op: op, domain: "containers"}
 	}
 	// Detach so the run is independent of the request that started it (canceled
 	// the moment the handler returns); Backup applies its own hard timeout.
@@ -691,11 +744,126 @@ func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
 			if errors.Is(err, backup.ErrContainerNotInstalled) {
 				log.Printf("api: backup: %q skipped: not installed (backups only)", name) //nolint:gosec // G706: name is %q-quoted
 			} else {
-				log.Printf("api: backup: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+				log.Printf("api: backup: %q %s: %v", name, backupEnding(err), err) //nolint:gosec // G706: name is %q-quoted
 			}
 		}
 	}()
 	return true, nil
+}
+
+// orderVMNamesForRun sequences a manual VM batch the way a scheduled VM run is
+// sequenced: the operator's explicit backup order first, then the name order
+// for the rest. A selected VM that has no stored row yet keeps its place in the
+// selection instead of being dropped.
+func (s *Service) orderVMNamesForRun(names []string) []string {
+	stored, err := s.store.ListVMTargets()
+	if err != nil {
+		log.Printf("api: backup-vms-all: read vm targets: %v (using selection order)", err)
+		return names
+	}
+	store.SortVMTargetsForRun(stored)
+	requested := make(map[string]bool, len(names))
+	for _, n := range names {
+		requested[n] = true
+	}
+	seen := make(map[string]bool, len(names))
+	out := make([]string, 0, len(names))
+	for _, vm := range stored {
+		if requested[vm.Name] && !seen[vm.Name] {
+			out = append(out, vm.Name)
+			seen[vm.Name] = true
+		}
+	}
+	for _, n := range names {
+		if !seen[n] {
+			out = append(out, n)
+			seen[n] = true
+		}
+	}
+	return out
+}
+
+// StartBackupVMsAll launches sequential backups for the named VMs in one
+// background batch and returns immediately, mirroring StartBackupFilesAll for
+// the VM domain. Two rules come from the existing VM paths: the queue runs in
+// the operator's backup order whatever order the caller passed, and a VM the
+// host no longer defines is a skip rather than a batch failure. Overall progress
+// is published under "batch:vms" while each VM still publishes its own
+// "vm:<name>" bar as it runs. Shares batchActive; returns (false, nil) if a
+// backup/batch is already running, or (false, err) if the vms domain is already
+// busy with another op.
+func (s *Service) StartBackupVMsAll(ctx context.Context, names []string) (bool, error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return false, nil
+	}
+	if op, busy := s.domainBusy("vms"); busy {
+		s.batchActive.Store(false)
+		return false, domainBusyError{op: op, domain: "vms"}
+	}
+	// Detach immediately so the batch is independent of the request that started
+	// it (canceled the moment the handler returns). Each per-VM BackupVM applies
+	// its own hard timeout, so the batch needs no deadline of its own.
+	// #95: the bulk flag suppresses each VM's inline off-site replication so the
+	// whole batch is replicated once after the loop.
+	bctx := WithBulkReplicateSuppressed(context.WithoutCancel(ctx))
+	go func() {
+		// See StartBackupAll's identical pair of defers. This one contains a panic
+		// outside the per-item loop; inside it every VM has its own recovery in
+		// backupVMOneForBatch, so one bad VM cannot abort the rest of the batch.
+		defer s.recoverOperation("backup-vms-all", nil, nil)
+		defer s.batchActive.Store(false)
+
+		queue := make([]string, 0, len(names))
+		for _, n := range names {
+			if n != "" {
+				queue = append(queue, n)
+			}
+		}
+		queue = s.orderVMNamesForRun(queue)
+		total := len(queue)
+		const key = "batch:vms"
+		s.publishBatch(key, 0, true)
+		ok, fail, skipped := 0, 0, 0
+		for i, n := range queue {
+			if err := s.backupVMOneForBatch(bctx, n); err != nil {
+				if errors.Is(err, backup.ErrVMNotInstalled) {
+					skipped++
+					log.Printf("api: backup-vms-all: %q skipped: not defined on the host", n) //nolint:gosec // G706: n is %q-quoted
+				} else {
+					fail++
+					log.Printf("api: backup-vms-all: %q failed (continuing): %v", n, err) //nolint:gosec // G706: n is %q-quoted
+				}
+			} else {
+				ok++
+			}
+			s.publishBatch(key, float64(i+1)/float64(total)*100, true)
+		}
+		s.publishBatch(key, 100, false)
+		// Retention first, so the off-site copy below has fewer snapshots to
+		// carry. Each VM's forget already ran inline without a prune under the
+		// bulk flag, so this is a plain space reclaim for the whole batch.
+		s.PruneAfterBulk(bctx, "vms")
+		s.ReplicateOffsiteAfterBulk(bctx, "vms")
+		// One repository sample for the whole round rather than one per VM.
+		s.maybeCollectStats(bctx, "vms")
+		log.Printf("api: backup-vms-all done: %d ok, %d skipped, %d failed (of %d requested %d)", ok, skipped, fail, total, len(names))
+	}()
+	return true, nil
+}
+
+// backupVMOneForBatch backs up a single queued VM on behalf of
+// StartBackupVMsAll. See backupOneForBatch, the containers-batch counterpart,
+// for why each item gets its own recovery instead of one shared at the batch
+// level.
+func (s *Service) backupVMOneForBatch(ctx context.Context, name string) (err error) {
+	// See backupOneForBatch for why this must be a direct defer, not wrapped.
+	defer s.recoverOperation("backup-vms-all: "+name, &err, func(msg string) {
+		if tg, tErr := s.store.GetVMTargetByName(name); tErr == nil {
+			s.failStuckRun(tg.ID, msg)
+		}
+	})
+	_, err = s.BackupVM(ctx, name)
+	return err
 }
 
 // BackupInProgress reports whether a single backup, a batch, or a restore is

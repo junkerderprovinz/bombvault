@@ -1,11 +1,13 @@
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import type {
+  AnomalySummary,
   Container,
   FileSetView,
   ImportSettingsResponse,
   RegistryAuthEntry,
   Settings,
   VM,
+  ZFSDatasetView,
 } from "../../../lib/api";
 import type { RainbowState } from "../../../lib/appearance";
 import type { ControlAxis, LabelMode } from "../../../lib/controls";
@@ -23,7 +25,9 @@ export type DomainToggleKey =
   | "configEnabled"
   | "receiverEnabled"
   | "pullEnabled"
-  | "fleetEnabled";
+  | "fleetEnabled"
+  | "zfsEnabled"
+  | "dbDumpsEnabled";
 
 export type ScheduleBoolKey =
   | "perItemSchedules"
@@ -136,6 +140,12 @@ export type SettingsTabProps = {
   configScheduleToggleBusy: boolean;
   configScheduleToggleShake: number;
   loadFileSets: () => void;
+  zfsItems: ZFSDatasetView[];
+  loadZFSItems: () => void;
+  toggleDbDumps: (next: boolean) => Promise<void>;
+  anomalySummary: AnomalySummary | null;
+  setAnomalySaveState: SetSaveState;
+  setAnomalySaveError: SetSaveError;
   fieldPulse: Partial<Record<keyof Settings, number>>;
   save: SaveSettings;
   toggleDomainEnabled: (key: DomainToggleKey, next: boolean) => Promise<void>;

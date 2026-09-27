@@ -10,6 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -108,5 +109,143 @@ func TestSendDigestRespectsNeverPolicy(t *testing.T) {
 	}
 	if atomic.LoadInt32(hits) != 0 {
 		t.Fatal("a muted policy must send NO digest")
+	}
+}
+
+// seedRunOfKind records one finished run of any kind for the target.
+func seedRunOfKind(t *testing.T, st *store.Repo, targetID, kind, status string) {
+	t.Helper()
+	id, err := st.StartRun(targetID, kind)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(id, status, "", 0, ""); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDigestListsDBDumpKind(t *testing.T) {
+	svc, st, body := digestTestService(t, "always")
+
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "pg", AppdataPaths: []string{"/host/user/appdata/pg"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedBackupRun(t, st, tg.ID, "success", "", 1024)
+	seedRunOfKind(t, st, tg.ID, "dbdump", "success")
+	seedRunOfKind(t, st, tg.ID, "dbdumpsave", "success")
+	seedRunOfKind(t, st, tg.ID, "dbimport", "success")
+
+	if err := svc.SendDigest(context.Background()); err != nil {
+		t.Fatalf("SendDigest: %v", err)
+	}
+
+	got := body()
+	for _, want := range []string{"dbdump: 1 ok, 0 failed", "dbdumpsave: 1 ok, 0 failed", "dbimport: 1 ok, 0 failed"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("digest is missing %q:\n%s", want, got)
+		}
+	}
+	order := []string{"- backup:", "- dbdump:", "- dbdumpsave:", "- dbimport:"}
+	at := 0
+	for _, line := range order {
+		i := strings.Index(got[at:], line)
+		if i < 0 {
+			t.Fatalf("digest is missing %q:\n%s", line, got)
+		}
+		at += i
+	}
+}
+
+func TestDigestLeavesOutWhatADatabaseToolSaid(t *testing.T) {
+	svc, st, body := digestTestService(t, "always")
+
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "pg", AppdataPaths: []string{"/host/user/appdata/pg"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	quoted := "pg_dump: error: DETAIL: Key (email)=(alice@example.com) already exists"
+	seedFailedRunOfKind(t, st, tg.ID, "dbdump", store.ReasonDBDumpTool+": "+quoted)
+	seedFailedRunOfKind(t, st, tg.ID, "dbimport",
+		store.ReasonDBImportFailed+": the previous data folder is kept at /data/pg.bombvault-before-import-20260917-021403; exit 1: "+quoted)
+
+	if err := svc.SendDigest(context.Background()); err != nil {
+		t.Fatalf("SendDigest: %v", err)
+	}
+
+	got := body()
+	if strings.Contains(got, "alice@example.com") {
+		t.Fatalf("the digest carries a row a database tool quoted:\n%s", got)
+	}
+	for _, want := range []string{"dbdump pg: " + store.ReasonDBDumpTool, "pg.bombvault-before-import-20260917-021403"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("digest is missing %q:\n%s", want, got)
+		}
+	}
+}
+
+func seedFailedRunOfKind(t *testing.T, st *store.Repo, targetID, kind, reason string) {
+	t.Helper()
+	id, err := st.StartRun(targetID, kind)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(id, "failed", "", 0, reason); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// The weekly reminder for a critical nobody settled and for the deleting of
+// old backups that is still waiting on it.
+func TestDigestMentionsOpenAnomalies(t *testing.T) {
+	svc, st, body := digestTestService(t, "always")
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedBackupRun(t, st, tg.ID, "success", "", 1024)
+	if err := svc.SendDigest(context.Background()); err != nil {
+		t.Fatalf("SendDigest: %v", err)
+	}
+	if strings.Contains(body(), "Anomalies still open") {
+		t.Fatalf("a digest with no findings must not mention them, got %q", body())
+	}
+
+	now := time.Now().Unix()
+	seedAnomaly(t, st, store.Anomaly{
+		ID: "shrink", Detector: "source", Metric: "source_bytes_shrink", Severity: "critical",
+		ScopeKind: "item", ScopeID: tg.ID, TargetID: tg.ID, Domain: "container", LastSeenAt: now,
+	})
+	seedAnomaly(t, st, store.Anomaly{
+		ID: "slower", Detector: "duration", Metric: "duration_slower", Severity: "warning",
+		ScopeKind: "item", ScopeID: tg.ID, TargetID: tg.ID, Domain: "container", LastSeenAt: now,
+	})
+	startAnomalyEngine(t, svc)
+
+	if err := svc.SendDigest(context.Background()); err != nil {
+		t.Fatalf("SendDigest: %v", err)
+	}
+	if want := "Anomalies still open: critical 1, warning 1, retention paused for 1 item(s)"; !strings.Contains(body(), want) {
+		t.Fatalf("digest must carry %q, got %q", want, body())
+	}
+}
+
+func TestDigestReportsTheZFSOffsiteCopy(t *testing.T) {
+	svc, st, body := digestTestService(t, "always")
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ZFSEnabled = true
+	s.ZFSOffsite = "s3:offsite-zfs"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.SendDigest(context.Background()); err != nil {
+		t.Fatalf("SendDigest: %v", err)
+	}
+	if got := body(); !strings.Contains(got, "- zfs: no successful copy yet") {
+		t.Fatalf("the digest must say how current the ZFS off-site copy is, got %q", got)
 	}
 }

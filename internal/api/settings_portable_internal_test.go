@@ -6,12 +6,15 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -746,7 +749,7 @@ func TestImportLogsWhenAFileIDCollidesAcrossRoles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	buf := captureLog(t)
+	buf := watchLog(t)
 	exp := settingsExport{
 		OffsiteTargets: []offsiteTargetView{
 			{ID: target.ID, Domain: "containers", Name: target.Name, Repo: target.Repo, Enabled: true},
@@ -776,5 +779,449 @@ func TestImportLogsWhenAFileIDCollidesAcrossRoles(t *testing.T) {
 	backRepo, err := st.GetNamedRepo(repo.ID)
 	if err != nil || backRepo.Name != repo.Name || backRepo.Repo != repo.Repo {
 		t.Fatalf("the named repository was rewritten by the colliding target entry: %+v, %v", backRepo, err)
+	}
+}
+
+// TestExportImportCarriesDBDumpsEnabled: the global dump switch is portable
+// like every other domain setting, so a rebuilt instance dumps what the old one
+// dumped.
+func TestExportImportCarriesDBDumpsEnabled(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	s, err := srcStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.DBDumpsEnabled = false
+	if err := srcStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	body, exp := doExport(t, src, "")
+	if exp.Settings.DBDumpsEnabled == nil || *exp.Settings.DBDumpsEnabled {
+		t.Fatalf("the export must name the switch, got %v", exp.Settings.DBDumpsEnabled)
+	}
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply envelope wrong: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.DBDumpsEnabled {
+		t.Fatal("an imported off switch must reach the row")
+	}
+}
+
+// TestImportWithoutDBDumpsFieldKeepsIt: every other bool in the import view is
+// copied unconditionally, so a file written before the switch existed would
+// switch a default-on safety feature off without a word. Absent means keep.
+func TestImportWithoutDBDumpsFieldKeepsIt(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	body, _ := doExport(t, src, "")
+
+	var raw map[string]any
+	if err := json.Unmarshal(body, &raw); err != nil {
+		t.Fatal(err)
+	}
+	settings := raw["settings"].(map[string]any)
+	delete(settings, "dbDumpsEnabled")
+	older, err := json.Marshal(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if env := doImport(t, dst, older, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply envelope wrong: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.DBDumpsEnabled {
+		t.Fatal("an export file that predates the switch must leave it alone")
+	}
+}
+
+func TestSettingsExportImportCarriesAnomalySettings(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	s, err := srcStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.AnomalyEnabled = false
+	s.AnomalySensitivity = "strict"
+	s.AnomalyNotifyMin = "warning"
+	s.AnomalyRetentionHold = false
+	if err := srcStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	body, exp := doExport(t, src, "")
+	if exp.Settings.AnomalyEnabled == nil || *exp.Settings.AnomalyEnabled {
+		t.Fatalf("the export must name the switch, got %v", exp.Settings.AnomalyEnabled)
+	}
+	if exp.Settings.AnomalySensitivity != "strict" || exp.Settings.AnomalyNotifyMin != "warning" {
+		t.Fatalf("preset and minimum not exported: %+v", exp.Settings)
+	}
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	preview := doImport(t, dst, body, "")
+	groups := preview["summary"].(map[string]any)["settingsGroups"].([]any)
+	if !slices.Contains(groups, any("anomalies")) {
+		t.Fatalf("the preview has to name the group it would change, got %v", groups)
+	}
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply envelope wrong: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.AnomalyEnabled || got.AnomalyRetentionHold ||
+		got.AnomalySensitivity != "strict" || got.AnomalyNotifyMin != "warning" {
+		t.Fatalf("the four fields did not survive the round trip: %+v", got)
+	}
+
+	bad := exp
+	bad.Settings.AnomalySensitivity = "wild"
+	badBody, err := json.Marshal(bad)
+	if err != nil {
+		t.Fatal(err)
+	}
+	env := doImport(t, dst, badBody, "?apply=true")
+	want := rejectInvalidAnomalySettings(bad.Settings)
+	if msg, _ := env["error"].(string); env["ok"] != false || !strings.Contains(msg, want) {
+		t.Fatalf("an unknown preset must be refused with %q, got %v", want, env)
+	}
+}
+
+// Every other switch in the import view is copied as it stands, so a file
+// written before this version would turn detection and the data-loss pause off
+// on the instance it is applied to.
+func TestPreFeatureExportImportsAndKeepsDetectionOn(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	body, _ := doExport(t, src, "")
+
+	var raw map[string]any
+	if err := json.Unmarshal(body, &raw); err != nil {
+		t.Fatal(err)
+	}
+	settings := raw["settings"].(map[string]any)
+	for _, key := range []string{"anomalyEnabled", "anomalySensitivity", "anomalyNotifyMin", "anomalyRetentionHold"} {
+		delete(settings, key)
+	}
+	older, err := json.Marshal(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	before, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if env := doImport(t, dst, older, "?apply=true"); env["ok"] != true {
+		t.Fatalf("a file from before the feature has to import: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.AnomalyEnabled || !got.AnomalyRetentionHold {
+		t.Fatalf("detection and the pause must stay on: %+v", got)
+	}
+	if got.AnomalySensitivity != before.AnomalySensitivity || got.AnomalyNotifyMin != before.AnomalyNotifyMin {
+		t.Fatalf("preset and minimum must keep their stored values: %+v", got)
+	}
+}
+
+// seedMCPKeys stores two keys the way the API does, each with an entry in its
+// log, and with fixed material so an export can be searched for every part of
+// them.
+func seedMCPKeys(t *testing.T, st *store.Repo) []string {
+	t.Helper()
+	var traces []string
+	for _, k := range []struct{ id, label, digest, hint string }{
+		{"0b7e0b7e0b7e0b7e0b7e0b7e0b7e0b7e", "Claude Code laptop", "9f1c4b2ade", "Zq7X"},
+		{"77aa77aa77aa77aa77aa77aa77aa77aa", "Workshop desktop", "31e8d70ac5", "Wm4P"},
+	} {
+		if _, err := st.CreateMCPKey(k.id, k.label, "", k.digest, k.hint, "check-"+k.id, true, 1789600000); err != nil {
+			t.Fatalf("seed key %s: %v", k.label, err)
+		}
+		traces = append(traces, k.label, k.digest, k.hint)
+		runID := strings.Repeat("c0de", 7) + k.id[:4]
+		if err := st.RecordMCPKeyEvent(k.id, store.MCPKeyEvent{At: 1789600100, Tool: "cancel_backup", Outcome: "ok", RunID: runID}); err != nil {
+			t.Fatalf("seed activity of %s: %v", k.label, err)
+		}
+		traces = append(traces, runID)
+	}
+	return traces
+}
+
+// activeMCPKeyLabels returns the labels of the keys a request could still
+// authenticate with.
+func activeMCPKeyLabels(t *testing.T, st *store.Repo) []string {
+	t.Helper()
+	keys, err := st.ActiveMCPKeys()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := make([]string, 0, len(keys))
+	for _, k := range keys {
+		out = append(out, k.Label)
+	}
+	return out
+}
+
+func TestExportNeverCarriesMCPKeysOrTheirLogs(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	traces := append(seedMCPKeys(t, srcStore), secret.MCPKeyPrefix)
+
+	for _, query := range []string{"", "?includeCredentials=true"} {
+		body, _ := doExport(t, src, query)
+		for _, trace := range traces {
+			if bytes.Contains(body, []byte(trace)) {
+				t.Fatalf("export%q carries %q", query, trace)
+			}
+		}
+	}
+}
+
+func TestImportLeavesMCPKeysAlone(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	body, _ := doExport(t, src, "?includeCredentials=true")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	seedMCPKeys(t, dstStore)
+	before := activeMCPKeyLabels(t, dstStore)
+
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply envelope wrong: %v", env)
+	}
+	if got := activeMCPKeyLabels(t, dstStore); !reflect.DeepEqual(got, before) {
+		t.Fatalf("active keys after a plain import = %v, want %v", got, before)
+	}
+
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(body, &raw); err != nil {
+		t.Fatal(err)
+	}
+	raw["mcpKeys"] = json.RawMessage(`[{"label":"x","keyDigest":"deadbeef"}]`)
+	crafted, err := json.Marshal(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if env := doImport(t, dst, crafted, "?apply=true"); env["ok"] != true {
+		t.Fatalf("a file with an unknown top-level field must still import: %v", env)
+	}
+	got := activeMCPKeyLabels(t, dstStore)
+	if !reflect.DeepEqual(got, before) {
+		t.Fatalf("a crafted mcpKeys field changed the key set: %v", got)
+	}
+}
+
+// encoding/json drops both fields when two of them claim the same key, so a
+// setting named twice in the view would vanish from the export without an
+// error.
+func TestSettingsViewNamesEachFieldOnce(t *testing.T) {
+	seen := map[string]string{}
+	typ := reflect.TypeOf(settingsView{})
+	for i := range typ.NumField() {
+		f := typ.Field(i)
+		name, _, _ := strings.Cut(f.Tag.Get("json"), ",")
+		if prev, ok := seen[name]; ok {
+			t.Errorf("%s and %s are both exported as %q", prev, f.Name, name)
+		}
+		seen[name] = f.Name
+	}
+}
+
+// Every setting the database dumps, the ZFS domain and anomaly detection
+// brought is written under one key and reaches the instance the file is
+// applied to.
+func TestExportImportCarriesEveryDumpZFSAndAnomalySettingOnce(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	s, err := srcStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.DBDumpsEnabled = false
+	s.ZFSEnabled = true
+	s.ZFSPath = "zfs"
+	s.ZFSSchedule = "daily 03:30"
+	s.ZFSOffsite = "s3:offsite-zfs"
+	s.ZFSOffsiteSchedule = "weekly Sun 05:00"
+	s.ZFSOffsiteImmutable = true
+	s.AnomalyEnabled = false
+	s.AnomalySensitivity = "permissive"
+	s.AnomalyNotifyMin = "info"
+	s.AnomalyRetentionHold = false
+	if err := srcStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	body, _ := doExport(t, src, "")
+	for _, key := range []string{
+		"dbDumpsEnabled",
+		"zfsEnabled", "zfsPath", "zfsSchedule", "zfsOffsite", "zfsOffsiteSchedule", "zfsOffsiteImmutable",
+		"anomalyEnabled", "anomalySensitivity", "anomalyNotifyMin", "anomalyRetentionHold",
+	} {
+		if n := bytes.Count(body, []byte(`"`+key+`":`)); n != 1 {
+			t.Errorf("the export names %q %d times, want once", key, n)
+		}
+	}
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply envelope wrong: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	type portable struct {
+		DBDumpsEnabled                                       bool
+		ZFSEnabled                                           bool
+		ZFSPath, ZFSSchedule, ZFSOffsite, ZFSOffsiteSchedule string
+		ZFSOffsiteImmutable                                  bool
+		AnomalyEnabled, AnomalyRetentionHold                 bool
+		AnomalySensitivity, AnomalyNotifyMin                 string
+	}
+	pick := func(x store.Settings) portable {
+		return portable{
+			x.DBDumpsEnabled, x.ZFSEnabled,
+			x.ZFSPath, x.ZFSSchedule, x.ZFSOffsite, x.ZFSOffsiteSchedule, x.ZFSOffsiteImmutable,
+			x.AnomalyEnabled, x.AnomalyRetentionHold, x.AnomalySensitivity, x.AnomalyNotifyMin,
+		}
+	}
+	if want, have := pick(s), pick(got); want != have {
+		t.Fatalf("after the import:\n got %+v\nwant %+v", have, want)
+	}
+}
+
+func TestImportOfFileWithoutZFSKeepsTheZFSSetup(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	body, _ := doExport(t, src, "")
+
+	var raw map[string]any
+	if err := json.Unmarshal(body, &raw); err != nil {
+		t.Fatal(err)
+	}
+	settings := raw["settings"].(map[string]any)
+	for key := range settings {
+		if strings.HasPrefix(key, "zfs") {
+			delete(settings, key)
+		}
+	}
+	older, err := json.Marshal(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	s, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ZFSEnabled = true
+	s.ZFSPath = "zfs"
+	s.ZFSSchedule = "daily 03:30"
+	s.ZFSOffsite = "s3:offsite-zfs"
+	s.ZFSOffsiteSchedule = "weekly Sun 05:00"
+	s.ZFSOffsiteImmutable = true
+	if err := dstStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	for _, tg := range []store.OffsiteTarget{
+		{ID: "tgt-zfs", Domain: zfsDomain, Name: "Primary", Repo: "s3:offsite-zfs", Enabled: true, CreatedAt: 3000, SortOrder: 0},
+		{ID: "tgt-zfs-2", Domain: zfsDomain, Name: "Second site", Repo: "s3:offsite-zfs-2", Enabled: true, CreatedAt: 4000, SortOrder: 1},
+	} {
+		if _, err := dstStore.UpsertOffsiteTarget(tg); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if env := doImport(t, dst, older, "?apply=true"); env["ok"] != true {
+		t.Fatalf("a file from before the ZFS domain has to import: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.ZFSEnabled || got.ZFSPath != "zfs" || got.ZFSSchedule != "daily 03:30" ||
+		got.ZFSOffsite != "s3:offsite-zfs" || got.ZFSOffsiteSchedule != "weekly Sun 05:00" || !got.ZFSOffsiteImmutable {
+		t.Fatalf("the ZFS setup must survive a file that does not know it: %+v", got)
+	}
+	if got.ContainersPath != "containers" {
+		t.Fatalf("the rest of the file must still apply: containersPath=%q", got.ContainersPath)
+	}
+	targets, err := dstStore.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var keptZFS bool
+	for _, tg := range targets {
+		if tg.ID == "tgt-zfs-2" && tg.Repo == "s3:offsite-zfs-2" {
+			keptZFS = true
+		}
+	}
+	if !keptZFS {
+		t.Fatalf("the ZFS off-site destination must survive the import: %+v", targets)
+	}
+}
+
+// A file from an older version can hold an additional target at sort order 0,
+// which a settings save takes for the domain's primary: deleted where the
+// domain has no off-site setting, rewritten onto that setting's repository
+// where it has one. The import keeps both as additional targets.
+func TestImportKeepsAdditionalTargetsLeftOnThePrimarySortOrder(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	for _, tg := range []store.OffsiteTarget{
+		{ID: "tgt-early", Domain: "containers", Name: "Peer", Repo: "rest:http://peer:8000/containers", Enabled: true, CreatedAt: 500, SortOrder: 0},
+		{ID: "tgt-vms", Domain: "vms", Name: "Peer", Repo: "rest:http://peer:8000/vms", Enabled: true, CreatedAt: 3000, SortOrder: 0},
+	} {
+		if _, err := srcStore.UpsertOffsiteTarget(tg); err != nil {
+			t.Fatal(err)
+		}
+	}
+	body, _ := doExport(t, src, "")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+
+	want := map[string]string{
+		"tgt-1":     "s3:offsite-containers",
+		"tgt-2":     "s3:offsite-archive",
+		"tgt-early": "rest:http://peer:8000/containers",
+		"tgt-vms":   "rest:http://peer:8000/vms",
+	}
+	targets, err := dstStore.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(targets) != len(want) {
+		t.Fatalf("want %d targets, got %+v", len(want), targets)
+	}
+	for _, tg := range targets {
+		if tg.Repo != want[tg.ID] {
+			t.Fatalf("target %s points at %q, want %q", tg.ID, tg.Repo, want[tg.ID])
+		}
+		if primary := tg.ID == "tgt-1"; primary != (tg.SortOrder == 0) {
+			t.Fatalf("target %s sits at sort order %d", tg.ID, tg.SortOrder)
+		}
 	}
 }

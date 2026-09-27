@@ -55,6 +55,15 @@ describe("PlacementFlow", () => {
     expect(marks).toEqual(["unraid-folder", "b2"]);
   });
 
+  it("leaves the password out of a target without a name", async () => {
+    listed.places = [];
+    listed.targets = [
+      { id: "t1", domain: "flash", name: "", repo: "rest:https://bv:hunter2@tower:8000/flash", enabled: true, sortOrder: 0 },
+    ];
+    const { container } = renderWithProviders(<PlacementFlow domain="flash" />);
+    await waitFor(() => expect(container.textContent).toBe("Unraid → rest:https://[redacted]@tower:8000/flash"));
+  });
+
   it("says nothing without an enabled target", async () => {
     listed.targets = [];
     const { container } = renderWithProviders(<PlacementFlow domain="config" />);

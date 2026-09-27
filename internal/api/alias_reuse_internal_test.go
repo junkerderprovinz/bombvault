@@ -102,7 +102,7 @@ func TestContainerIdentityOwnsItsWholeNameDespiteItsOwnAliasOnIt(t *testing.T) {
 	snaps := []restic.Snapshot{{ID: "old", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:radarr", "p1"}}}
 	eng := &retentionListEngine{snaps: snaps}
 	s := &Service{store: st, engine: eng}
-	if got := s.containerIdentity("radarr").owned(snaps); len(got) != 1 {
+	if got := ownedByAny(snaps, s.containerIdentity("radarr")); len(got) != 1 {
 		t.Fatalf("owned = %v, want its own snapshot from before it was renamed away", got)
 	}
 	settings, err := st.GetSettings()
@@ -110,7 +110,7 @@ func TestContainerIdentityOwnsItsWholeNameDespiteItsOwnAliasOnIt(t *testing.T) {
 		t.Fatal(err)
 	}
 	settings.RetentionKeepLast = 3
-	s.applyRetention(context.Background(), "rest:http://fake/containers", settings, restic.Mode{}, s.containerIdentity("radarr"), "containers")
+	s.applyRetention(context.Background(), "rest:http://fake/containers", settings, restic.Mode{}, s.containerIdentity("radarr"), "containers", anomalyScope{})
 	if len(eng.forgetTags) != 1 || eng.forgetTags[0][0] != "container:radarr" {
 		t.Fatalf("forget tag sets = %v; its own old snapshots must not pause its retention", eng.forgetTags)
 	}
@@ -134,13 +134,13 @@ func TestContainerIdentityClaimsNothingOfItsNameWhenAliasesAreUnreadable(t *test
 	}
 	s := &Service{store: st}
 	snaps := []restic.Snapshot{{ID: "pre1", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:radarr-movies", "p1"}}}
-	if got := s.containerIdentity("radarr-movies").owned(snaps); len(got) != 1 {
+	if got := ownedByAny(snaps, s.containerIdentity("radarr-movies")); len(got) != 1 {
 		t.Fatalf("baseline: owned = %v, want its snapshot", got)
 	}
 	if _, err := db.Exec("DROP TABLE target_aliases"); err != nil {
 		t.Fatal(err)
 	}
-	if got := s.containerIdentity("radarr-movies").owned(snaps); len(got) != 0 {
+	if got := ownedByAny(snaps, s.containerIdentity("radarr-movies")); len(got) != 0 {
 		t.Fatalf("aliases unreadable: owned = %v, want nothing", got)
 	}
 }

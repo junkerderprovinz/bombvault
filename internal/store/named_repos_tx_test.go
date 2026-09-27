@@ -146,9 +146,9 @@ func TestSetNamedRepoLocationIfUnusedRefusesWhileInUse(t *testing.T) {
 	}
 }
 
-// TestSetNamedRepoLocationIfUnusedRefusesWhileADefaultPointsAtIt is the move's
-// side of the same gap DeleteNamedRepoIfUnused already closed: a default that
-// names this repository as home has no row in an item table, so the item count
+// TestSetNamedRepoLocationIfUnusedRefusesWhileADefaultPointsAtIt holds a move
+// to the rule DeleteNamedRepoIfUnused keeps for a delete: a default that names
+// this repository as home has no row in an item table, so the item count
 // alone would wave the move through and leave every open item of that domain
 // starting a fresh repository at the new place while its snapshots stay behind.
 func TestSetNamedRepoLocationIfUnusedRefusesWhileADefaultPointsAtIt(t *testing.T) {

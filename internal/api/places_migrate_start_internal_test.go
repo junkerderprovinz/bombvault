@@ -50,7 +50,7 @@ func TestTheMoveLogCountsOnePlaceInTheSingular(t *testing.T) {
 	if err := f.st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
-	logs := captureLog(t)
+	logs := watchLog(t)
 	if err := f.svc.MigrateToPlaces(); err != nil {
 		t.Fatal(err)
 	}

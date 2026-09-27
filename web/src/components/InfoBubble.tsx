@@ -5,8 +5,9 @@ import { useTipBubble } from "../lib/useTipBubble";
 // paragraph under the control. It is never accent-coloured, because the accent
 // means active.
 //
-// `onAccent` is for an icon inside a heading badge on the accent fill: it
-// inherits the badge's --accent-contrast ink and keeps full opacity.
+// `onAccent` is for an icon that sits on a control's own surface, such as a
+// heading badge on the accent fill or a button that HintSlot lays it over: it
+// inherits that surface's ink and keeps full opacity.
 export function InfoBubble({ tip, onAccent = false }: { tip: string; onAccent?: boolean }) {
   const tooltip = useTipBubble(tip);
 

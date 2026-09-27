@@ -626,7 +626,7 @@ func storeName(base string) string {
 // target or a rest-server user apart needs the decrypted credential sets. A
 // run that fails writes no place, and the next start tries again.
 //
-// Mesh targets leave sort order 0 first, as at every start, so the places do
+// Stray targets leave sort order 0 first, as at every start, so the places do
 // not depend on which of the two runs first at start, and an import that calls
 // this gets the same.
 func (s *Service) MigrateToPlaces() error {
@@ -637,8 +637,8 @@ func (s *Service) MigrateToPlaces() error {
 	if settings.PlacesMigrated != 0 {
 		return nil
 	}
-	if _, err := s.MoveMeshTargetsOffPrimarySlot(); err != nil {
-		return fmt.Errorf("move mesh targets off sort order 0: %w", err)
+	if _, err := s.MoveTargetsOffPrimarySlot(); err != nil {
+		return fmt.Errorf("move targets off sort order 0: %w", err)
 	}
 	in, err := s.placesMigrationInput(settings)
 	if err != nil {

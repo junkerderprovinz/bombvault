@@ -196,7 +196,7 @@ func firstRun(t *testing.T, f *placementFixture) []string {
 		if err := f.svc.ReplicateOffsite(ctx, d); err != nil {
 			out = append(out, fmt.Sprintf("replicate %s: %v", d, err))
 		}
-		if err := f.svc.pruneDomain(ctx, d, "local", true); err != nil {
+		if _, err := f.svc.pruneDomain(ctx, d, "local", true); err != nil {
 			out = append(out, fmt.Sprintf("prune %s: %v", d, err))
 		}
 	}

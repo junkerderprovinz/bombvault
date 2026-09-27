@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -64,7 +65,11 @@ func rowRetentionPolicy(t store.OffsiteTarget) restic.RetentionPolicy {
 // repository (#204) carries its own flag and may be a plain folder on a
 // share, so this applies to a local path as readily as to a cloud bucket.
 // Anything with no append-only flag anywhere is unaffected.
-func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, id entryIdentity, domain string) {
+//
+// hold names the series whose findings can pause this pass: an open critical
+// finding that says the source lost its data keeps its own item's snapshots
+// until the user has seen it. An empty hold is never held.
+func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, id entryIdentity, domain string, hold anomalyScope) {
 	p := s.retentionPolicyForRef(settings, domain, s.refFor(settings, domain, repo))
 	if !p.Any() {
 		return
@@ -78,6 +83,16 @@ func (s *Service) applyRetention(ctx context.Context, repo string, settings stor
 	// restic forget without a tag would select the whole repository.
 	if id.tag == "" {
 		log.Printf("api: %s: retention skipped: the item has no identity tag", domain) //nolint:gosec // G706: domain is a fixed literal
+		return
+	}
+	held, why, err := s.anomalies.RetentionHeld(ctx, hold)
+	if err != nil {
+		log.Printf("api: %s: retention skipped for %s: the anomaly check failed: %v", domain, id.tag, err) //nolint:gosec // G706: domain is a fixed literal and tags are validated names
+		s.notifyRetentionFailed(ctx, id.tag, "the anomaly check could not run, so nothing was deleted: "+scrubError(err))
+		return
+	}
+	if held {
+		log.Printf("api: %s: retention paused for %s: %s", domain, id.tag, why) //nolint:gosec // G706: domain is a fixed literal and tags are validated names
 		return
 	}
 	prune := !bulkReplicateSuppressed(ctx) // bulk run: one batched prune after the loop
@@ -150,9 +165,11 @@ func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.
 	return s.engine.ForgetPolicy(ctx, repo, p, mode, tags, prune)
 }
 
-// identityTags returns the distinct identity tags in snaps: container:, vm:,
-// fileset: and stack: names and the fixed flash and config tags. Marker tags
-// such as p1, p2 and live are not identities.
+// identityTags returns the distinct item-identity tags present in snaps:
+// container:<name>, vm:<name>, fileset:<name>, stack:<name>, dbdump:<name>,
+// zfs:<dataset>, and the fixed flash/config tags. Profile/marker tags (p1, p2,
+// live) are not identities, and neither are the tags describing a dump
+// (engine, image, version, database names, the run it belongs to).
 func identityTags(snaps []restic.Snapshot) []string {
 	seen := map[string]bool{}
 	var out []string
@@ -160,7 +177,8 @@ func identityTags(snaps []restic.Snapshot) []string {
 		for _, t := range sn.Tags {
 			isIdentity := t == "flash" || t == "config" ||
 				strings.HasPrefix(t, "container:") || strings.HasPrefix(t, "vm:") ||
-				strings.HasPrefix(t, "fileset:") || strings.HasPrefix(t, "stack:")
+				strings.HasPrefix(t, "fileset:") || strings.HasPrefix(t, "stack:") ||
+				strings.HasPrefix(t, dbDumpIdentityPrefix) || strings.HasPrefix(t, "zfs:")
 			if isIdentity && !seen[t] {
 				seen[t] = true
 				out = append(out, t)
@@ -179,28 +197,52 @@ func identityTags(snaps []restic.Snapshot) []string {
 // together with a later machine's under the same name. That pass runs only for
 // a repository with no identity tag at all, one written before identity tags
 // existed, so its retention does not silently stop.
-func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) error {
+//
+// It has no domain in hand and a named repository can hold several (#204), so
+// it asks for the holds of the whole installation and returns every tag it
+// left alone. The repo-wide pass cannot spare a held item, so it refuses while
+// anything is held.
+func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) ([]string, error) {
 	if !p.Any() {
-		return nil
+		return nil, nil
 	}
-	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	held, err := s.anomalies.HeldIdentityTags()
 	if err != nil {
-		return fmt.Errorf("list snapshots for retention: %w", err)
+		return nil, fmt.Errorf("read which items are paused: %w", err)
 	}
+	snaps, sErr := s.engine.Snapshots(ctx, repo, mode)
 	tags := identityTags(snaps)
-	if len(tags) == 0 {
-		return s.forgetWithLockHeal(ctx, repo, p, mode, nil, true)
+	if sErr != nil || len(tags) == 0 {
+		var listErr error
+		if sErr != nil {
+			listErr = fmt.Errorf("list snapshots for retention: %w", sErr)
+		}
+		// Both reasons reach the run record: a destination that cannot be
+		// listed is not something an acknowledge fixes.
+		if len(held) > 0 {
+			return held.names(), errors.Join(listErr, errRetentionPaused(len(held)))
+		}
+		if listErr != nil {
+			return nil, listErr
+		}
+		return nil, s.forgetWithLockHeal(ctx, repo, p, mode, nil, true)
 	}
-	return s.applyRetentionToTags(ctx, repo, p, mode, tags, snaps)
+	return s.applyRetentionToTags(ctx, repo, p, mode, tags, snaps, held)
 }
 
 // applyRetentionToTags forgets per identity and prunes once, for a caller that
 // already knows what the repository holds. snaps is what the tags were read
-// from, which is what decides how an alias's old name folds.
-func (s *Service) applyRetentionToTags(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, snaps []restic.Snapshot) error {
+// from, which is what decides how an alias's old name folds. A group held
+// is left alone and returned.
+func (s *Service) applyRetentionToTags(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, snaps []restic.Snapshot, held heldIdentityTags) ([]string, error) {
 	groups, _ := s.foldAliasedIdentityTags(tags, snaps) // skipped tags are logged there and kept
+	var paused []string
 	var errs []error
 	for _, group := range groups {
+		if held.holdsAny(group) {
+			paused = append(paused, group...)
+			continue
+		}
 		if fErr := s.forgetWithLockHeal(ctx, repo, p, mode, group, false); fErr != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", strings.Join(group, ","), fErr))
 		}
@@ -208,7 +250,7 @@ func (s *Service) applyRetentionToTags(ctx context.Context, repo string, p resti
 	if pErr := s.engine.Prune(ctx, repo, mode); pErr != nil {
 		errs = append(errs, pErr)
 	}
-	return errors.Join(errs...)
+	return paused, errors.Join(errs...)
 }
 
 // foldAliasedIdentityTags groups the identity tags that belong to one entry,
@@ -282,7 +324,12 @@ func (s *Service) aliasFoldDomains() []aliasFoldDomain {
 			v.liveNames[t.Name] = true
 		}
 	}
-	return []aliasFoldDomain{c, v}
+	// The dumps carry the container's name under their own prefix, so the same
+	// rows answer for them; they fold as a series of their own because that is
+	// how they are forgotten.
+	d := c
+	d.prefix = dbDumpIdentityPrefix
+	return []aliasFoldDomain{c, v, d}
 }
 
 // foldTag is foldAliasedIdentityTags's decision for one tag: the group it
@@ -320,12 +367,119 @@ func (s *Service) foldTag(tag string, snaps []restic.Snapshot, domains []aliasFo
 	return tag, false
 }
 
+// previewRetentionPerIdentity is the read-only twin of
+// applyRetentionPerIdentity: it reports what that pass WOULD remove, asking the
+// same question in the same shape: one tag-scoped preview per identity, with
+// the same repo-wide fallback when the listing fails or carries no identity
+// tags. The mirroring is what makes it right. A single repo-wide dry run is
+// cheaper and answers a DIFFERENT question: it would show removals that never
+// happen and hide ones that do, because the per-identity pass is what actually
+// runs.
+//
+// It stays away from forgetWithLockHeal. That helper's first act is
+// unlockStale, which DELETES lock files, and a preview must never write to
+// a repository, least of all one another process is holding.
+//
+// One failing identity does not blank the answer: the remaining tags are still
+// previewed and the failures come back alongside the groups that succeeded, so
+// an operator learns about the repositories that answered instead of seeing a
+// bare error for all of them.
+func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) ([]restic.ForgetGroup, []string, error) {
+	if !p.Any() {
+		return nil, nil, nil
+	}
+	held, hErr := s.anomalies.HeldIdentityTags()
+	if hErr != nil {
+		return nil, nil, fmt.Errorf("read which items are paused: %w", hErr)
+	}
+	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	tags := identityTags(snaps)
+	if err != nil || len(tags) == 0 {
+		if len(held) > 0 {
+			return nil, held.names(), errRetentionPaused(len(held))
+		}
+		groups, pErr := s.engine.ForgetPreview(ctx, repo, p, mode, "")
+		return groups, nil, pErr
+	}
+	var out []restic.ForgetGroup
+	var paused []string
+	var errs []error
+	for _, tag := range tags {
+		if held.holds(tag) {
+			paused = append(paused, tag)
+			out = append(out, restic.ForgetGroup{Tags: []string{tag}, Keep: snapshotsTagged(snaps, tag)})
+			continue
+		}
+		groups, pErr := s.engine.ForgetPreview(ctx, repo, p, mode, tag)
+		if pErr != nil {
+			errs = append(errs, fmt.Errorf("%s: %w", tag, pErr))
+			continue
+		}
+		for _, g := range groups {
+			// restic reports an ungrouped forget's group with no tags of its own
+			// (cmd_forget.go copies the grouping key, and --group-by "" has none),
+			// so without this every item is labelled as the whole repository.
+			if len(g.Tags) == 0 {
+				g.Tags = []string{tag}
+			}
+			out = append(out, g)
+		}
+	}
+	return out, paused, errors.Join(errs...)
+}
+
+// snapshotsTagged is every snapshot carrying tag, the keep list of an item
+// whose retention is paused.
+func snapshotsTagged(snaps []restic.Snapshot, tag string) []restic.Snapshot {
+	var out []restic.Snapshot
+	for _, sn := range snaps {
+		if slices.Contains(sn.Tags, tag) {
+			out = append(out, sn)
+		}
+	}
+	return out
+}
+
+// notifyMCPKeyChange reports that a key was created, replaced, allowed to start
+// backups, set to read only or revoked. A credential change is not a backup
+// result, so it goes out whenever notifications are configured and not switched
+// off, and never to Healthchecks, which tracks backups. The key is never in it.
+//
+// The settings are read before it returns and the sending happens in the
+// background, so a change is judged by the configuration in force when it was
+// made and the caller does not wait on a slow endpoint.
+//
+// A client that signed in through OAuth is reported the same way, by the name
+// it has on its tile.
+func (s *Service) notifyMCPKeyChange(ctx context.Context, event string, k store.MCPKey, addr string) {
+	c, err := s.NotifyConfig()
+	if err != nil || c.On == "" || c.On == "never" {
+		return
+	}
+	title := "BombVault: MCP key " + event
+	msg := fmt.Sprintf("The MCP key %q (ending in %s) was %s from %s. If this was not you, revoke it under Settings > System > MCP server.",
+		k.Label, k.Hint, event, addr)
+	if k.Kind == store.MCPKindOAuth {
+		title = "BombVault: MCP client " + event
+		msg = fmt.Sprintf("The MCP client %q, signed in through OAuth, was %s from %s. If this was not you, revoke its access under Settings > System > MCP server.",
+			k.Label, event, addr)
+	}
+	go func() {
+		notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "mcp", notify.Event{Title: title, Message: msg, OK: false})
+		if s.unraidGate(c.Unraid) {
+			if e := s.sendUnraidNotify(ctx, title, msg, "warning"); e != nil {
+				log.Printf("notify: unraid: %v", e)
+			}
+		}
+	}()
+}
+
 // notifyRetentionFailed sends a best-effort alert when the post-backup
 // retention prune fails. Mirrors notifyReplicationFailed's policy gate; a no-op
 // when notifications are off.
 func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	subject := "Retention prune FAILED for " + tag
@@ -345,7 +499,9 @@ func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string)
 // forget stream no percentage) and records a "prune" run, so a manual or
 // scheduled prune shows up on the dashboard activity log and run history
 // instead of running invisibly.
-func (s *Service) PruneDomain(ctx context.Context, domain, source string) error {
+// The tags it returns are the items whose old backups it kept because an
+// unusual backup is holding them.
+func (s *Service) PruneDomain(ctx context.Context, domain, source string) ([]string, error) {
 	return s.pruneDomain(ctx, domain, source, true)
 }
 
@@ -374,7 +530,7 @@ func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 	}
 	// applyPolicy=false: the per-item tag-scoped forgets already ran inline during
 	// the loop (without --prune), so this pass is a plain space-reclaim.
-	if err := s.pruneDomain(ctx, domain, "local", false); err != nil {
+	if _, err := s.pruneDomain(ctx, domain, "local", false); err != nil {
 		log.Printf("api: prune %s: batched prune failed: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 	}
 }
@@ -385,19 +541,19 @@ func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 // retention now") versus a plain space reclaim (`restic prune` only, the
 // batched post-bulk pass, whose per-item forgets already ran inline
 // without --prune).
-func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyPolicy bool) (err error) {
+func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyPolicy bool) (paused []string, err error) {
 	// Every repository this domain's items write to (#204). Prune is what
 	// turns a forgotten snapshot back into free space, so pruning only the
 	// domain repository would never reclaim the space retention freed on a
 	// named one, and nothing would say so.
 	settings, repos, skipped, err := s.domainReposForOp(domain, source)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var target store.OffsiteTarget
 	if isOffsiteSource(source) {
 		if target, err = s.offsiteTargetForSource(settings, domain, source); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	// An immutable repo is never pruned from this box (append-only is the
@@ -441,18 +597,18 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		// or unresolvable would hear only "append-only", never that a repository
 		// was not considered at all.
 		if sErr := skippedError("this prune", skipped); sErr != nil {
-			return errors.Join(refusal, sErr)
+			return nil, errors.Join(refusal, sErr)
 		}
-		return refusal
+		return nil, refusal
 	}
 	repos, missing, err := s.reposThatExist(prunable, "no backups to prune yet")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	skipped = append(skipped, missing...)
 	unlock, ok := s.tryLockDomainFor(domain, "prune")
 	if !ok {
-		return errDomainBusy
+		return nil, errDomainBusy
 	}
 	defer unlock()
 	// Per repository, like the other three (see CheckDomain).
@@ -462,7 +618,7 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	pkey := "prune:" + domain
 	_, startedAt := s.progBegin(ctx, pkey, "maintenance")
 	defer func() { s.progEnd(pkey, "maintenance", err == nil, startedAt) }()
-	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "prune")
+	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "prune")
 	if rErr != nil {
 		log.Printf("api: prune %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
 		runID = ""
@@ -471,11 +627,11 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		if runID == "" {
 			return
 		}
-		status := "success"
+		status, note := "success", retentionPausedNote(paused)
 		if err != nil {
-			status = "failed"
+			status, note = "failed", truncateRunErr(err)
 		}
-		if fErr := s.store.FinishRun(runID, status, "", 0, truncateRunErr(err)); fErr != nil {
+		if fErr := s.store.FinishRun(runID, status, "", 0, note); fErr != nil {
 			log.Printf("api: prune %s: could not finish run record: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}()
@@ -511,17 +667,20 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		if policy.Any() {
 			// Per identity: a tag-scoped, ungrouped forget per item and one prune,
 			// which also drains frozen path-groups (#91).
-			if err = s.applyRetentionPerIdentity(ctx, r.Loc, policy, rMode); err != nil {
+			var repoPaused []string
+			repoPaused, err = s.applyRetentionPerIdentity(ctx, r.Loc, policy, rMode)
+			paused = append(paused, repoPaused...)
+			if err != nil {
 				err = fmt.Errorf("pruning %s: %w", s.refName(r), err)
-				return err
+				return paused, err
 			}
 			continue
 		}
 		if err = s.engine.Prune(ctx, r.Loc, rMode); err != nil {
 			err = fmt.Errorf("pruning %s: %w", s.refName(r), err)
-			return err
+			return paused, err
 		}
 	}
 	err = skippedError("this prune", skipped)
-	return err
+	return paused, err
 }

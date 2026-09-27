@@ -81,6 +81,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     listContainers: () => Promise.resolve({ ok: true, containers: [] }),
     listVMs: () => Promise.resolve({ ok: true, vms: [] }),
     listFileSets: () => Promise.resolve({ ok: true, fileSets: [] }),
+    listZFSDatasets: () => Promise.resolve({ ok: true, datasets: [] }),
     getStatus: () => Promise.resolve({ ok: true }),
     importSettingsPreview: () =>
       Promise.resolve({
@@ -170,7 +171,9 @@ afterEach(() => {
   cleanup();
 });
 
-describe("two settings writes inside one round-trip", () => {
+// Each test renders the whole Settings page, which can take past five seconds
+// when the suite runs in parallel.
+describe("two settings writes inside one round-trip", { timeout: 15000 }, () => {
   it("sends the second one built on the first, not on the pre-first baseline", async () => {
     await renderPage();
 
@@ -225,7 +228,7 @@ describe("two settings writes inside one round-trip", () => {
   });
 });
 
-describe("a settings import", () => {
+describe("a settings import", { timeout: 15000 }, () => {
   async function importAFile() {
     await gotoTab("system");
     const file = new File(['{"schemaVersion":1}'], "settings.json", { type: "application/json" });

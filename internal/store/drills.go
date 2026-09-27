@@ -18,10 +18,15 @@ type RestoreDrill struct {
 	// Kind is the drill flavour: "subset" (the default; `restic check
 	// --read-data-subset`) or "dr" (a real sandbox restore from off-site).
 	Kind string `json:"kind"`
-	// TargetID is the off-site target a DR drill ran against, "" for a local
-	// drill and for a target the settings describe without a row.
-	TargetID string `json:"targetId"`
+	// OffsiteTargetID names the off-site target the drill read, so one named
+	// repository going bad is a finding of its own rather than a gap in the
+	// domain's history. Empty for a local drill and for a domain-wide one.
+	OffsiteTargetID string `json:"offsiteTargetId"`
 }
+
+// DrillKey is one series of restore drills: a domain and source, optionally one
+// named off-site target, per drill flavour.
+type DrillKey struct{ Domain, Source, TargetID, Kind string }
 
 // defaultRestoreDrillLimit caps an unbounded ListRestoreDrills request.
 const defaultRestoreDrillLimit = 365
@@ -35,7 +40,7 @@ func (r *Repo) AddRestoreDrill(d RestoreDrill) error {
 	_, err := r.db.Exec(`
 		INSERT INTO restore_drills (domain, source, at, ok, detail, kind, offsite_target_id)
 		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		d.Domain, d.Source, d.At, boolInt(d.OK), d.Detail, d.Kind, d.TargetID,
+		d.Domain, d.Source, d.At, boolInt(d.OK), d.Detail, d.Kind, d.OffsiteTargetID,
 	)
 	if err != nil {
 		return fmt.Errorf("AddRestoreDrill: %w", err)
@@ -134,10 +139,62 @@ func (r *Repo) ListRestoreDrills(domain, source string, limit int) ([]RestoreDri
 	return out, nil
 }
 
+// ListRestoreDrillKeys returns every series of drills that has rows, so a
+// regression check runs over exactly the checks this installation performs.
+func (r *Repo) ListRestoreDrillKeys() ([]DrillKey, error) {
+	rows, err := r.db.Query(`
+		SELECT DISTINCT domain, source, offsite_target_id, kind
+		FROM restore_drills
+		ORDER BY domain, source, offsite_target_id, kind`)
+	if err != nil {
+		return nil, fmt.Errorf("ListRestoreDrillKeys: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var out []DrillKey
+	for rows.Next() {
+		var k DrillKey
+		if sErr := rows.Scan(&k.Domain, &k.Source, &k.TargetID, &k.Kind); sErr != nil {
+			return nil, fmt.Errorf("ListRestoreDrillKeys: %w", sErr)
+		}
+		out = append(out, k)
+	}
+	return out, rows.Err()
+}
+
+// ListRestoreDrillsKind returns up to limit drills of one series, newest first.
+// It reads one kind and one off-site target, so a nightly subset check cannot
+// bury the handful of DR drills below it.
+func (r *Repo) ListRestoreDrillsKind(domain, source, targetID, kind string, limit int) ([]RestoreDrill, error) {
+	if limit <= 0 {
+		limit = defaultRestoreDrillLimit
+	}
+	rows, err := r.db.Query(`
+		SELECT domain, source, at, ok, detail, kind, offsite_target_id
+		FROM restore_drills
+		WHERE domain = ? AND source = ? AND offsite_target_id = ? AND kind = ?
+		ORDER BY at DESC, rowid DESC
+		LIMIT ?`, domain, source, targetID, kind, limit)
+	if err != nil {
+		return nil, fmt.Errorf("ListRestoreDrillsKind: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var out []RestoreDrill
+	for rows.Next() {
+		d, sErr := scanRestoreDrill(rows)
+		if sErr != nil {
+			return nil, fmt.Errorf("ListRestoreDrillsKind: %w", sErr)
+		}
+		out = append(out, d)
+	}
+	return out, rows.Err()
+}
+
 func scanRestoreDrill(s scanner) (RestoreDrill, error) {
 	var d RestoreDrill
 	var ok int
-	if err := s.Scan(&d.Domain, &d.Source, &d.At, &ok, &d.Detail, &d.Kind, &d.TargetID); err != nil {
+	if err := s.Scan(&d.Domain, &d.Source, &d.At, &ok, &d.Detail, &d.Kind, &d.OffsiteTargetID); err != nil {
 		return RestoreDrill{}, err
 	}
 	d.OK = ok != 0

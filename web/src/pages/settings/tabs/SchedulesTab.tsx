@@ -3,6 +3,7 @@ import {
   ApiError,
   backupEverythingNow,
   patchFileSet,
+  patchZFSDataset,
   setScheduleCadence,
   setVMScheduleCadence,
 } from "../../../lib/api";
@@ -15,7 +16,7 @@ import { Toggle } from "../../../components/Toggle";
 import { Badge } from "../../../components/Badge";
 import { Button } from "../../../components/Button";
 import { ScheduleRow, scheduleStatus } from "../../../components/ScheduleBadge";
-import type { Settings, Container, VM, FileSetView } from "../../../lib/api";
+import type { Settings, Container, VM, FileSetView, ZFSDatasetView } from "../../../lib/api";
 import { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { tLtr } from "../../../lib/ltrFragments";
@@ -310,6 +311,111 @@ function FilesSection({
   );
 }
 
+// Domain section for ZFS, in the same shape as FilesSection: the cadence card
+// plus one row per item whose "include in schedule" toggle PATCHes the item
+// directly rather than going through a save bar.
+function ZFSSection({
+  settings,
+  syncSchedules,
+  items,
+  perItem,
+  onChange,
+  onItemsChanged,
+  t,
+  hueIndex,
+}: {
+  settings: Settings;
+  syncSchedules: boolean;
+  items: ZFSDatasetView[];
+  perItem: boolean;
+  onChange: (schedule: string) => void;
+  onItemsChanged: () => void;
+  t: ReturnType<typeof useT>["t"];
+  hueIndex?: number;
+}) {
+  const { push } = useToast();
+  const schedule = syncSchedules ? settings.containersSchedule : settings.zfsSchedule;
+  const [busy, setBusy] = useState<Record<string, boolean>>({});
+
+  async function setItemCadence(id: string, cadence: string) {
+    const res = await patchZFSDataset(id, { scheduleCadence: cadence });
+    if (res.ok) onItemsChanged();
+    return res;
+  }
+
+  async function toggle(item: ZFSDatasetView) {
+    setBusy((b) => ({ ...b, [item.id]: true }));
+    try {
+      const res = await patchZFSDataset(item.id, { enabled: !item.enabled });
+      if (res.ok) onItemsChanged();
+      else push(res.error ?? t("settings.error"), "fail");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+    } finally {
+      setBusy((b) => ({ ...b, [item.id]: false }));
+    }
+  }
+
+  return (
+    <Card title={t("jobs.zfsSection")} hint={t("jobs.zfsIncludeHint")} hueIndex={hueIndex}>
+      <ScheduleRow schedule={schedule} hint={syncSchedules ? t("jobs.syncSchedulesHint") : undefined} />
+      <div className="rounded-card bg-carbon-surface2 p-4">
+        <CadenceBuilder
+          label={t("jobs.zfsSection")}
+          value={schedule}
+          disabled={syncSchedules}
+          onChange={onChange}
+          hueIndex={hueIndex}
+        />
+      </div>
+
+      {items.length === 0 ? (
+        <p className="text-sm text-carbon-textMuted">{t("jobs.noZfsDatasetsIncluded")}</p>
+      ) : (
+        <div className="flex flex-col gap-1">
+          {items.map((d) => (
+            <div key={d.id} className="flex flex-col gap-2 py-2 text-sm">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-2 h-2 rounded-full shrink-0 ${
+                    d.enabled ? "bg-statusOkSolid" : "bg-carbon-surface3"
+                  }`}
+                />
+                <span dir="ltr" className="font-medium text-carbon-text flex-1 min-w-0 truncate text-start">
+                  {d.dataset}
+                </span>
+                {d.hostMountpoint && (
+                  <span dir="ltr" className="text-xs font-mono text-carbon-textMuted truncate hidden sm:block max-w-xs text-start">
+                    {d.hostMountpoint}
+                  </span>
+                )}
+                <label className="flex items-center gap-2 shrink-0 cursor-pointer">
+                  <span className="text-xs text-carbon-textSub">{t("files.enabled")}</span>
+                  <Toggle
+                    hideLabel
+                    label={`${t("files.enabled")}: ${d.dataset}`}
+                    checked={d.enabled}
+                    onChange={() => void toggle(d)}
+                    disabled={!!busy[d.id]}
+                  />
+                </label>
+              </div>
+              <EffectiveScheduleLine effective={d.effectiveSchedule} domainLabelKey="jobs.zfsSection" />
+              {perItem && (
+                <ItemScheduleOverride
+                  name={d.dataset}
+                  initial={d.scheduleCadence}
+                  onSave={(cadence) => setItemCadence(d.id, cadence)}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export function EverythingSection({
   settings,
   update,
@@ -336,6 +442,7 @@ export function EverythingSection({
     settings.vmsSchedule,
     settings.flashSchedule,
     settings.filesSchedule,
+    settings.zfsSchedule,
     settings.configSchedule,
   ].some((s) => scheduleStatus(s) !== "off");
   const overlapWarning = everythingOn && anyDomainOn;
@@ -468,6 +575,8 @@ export function SchedulesTab({
   configScheduleToggleBusy,
   configScheduleToggleShake,
   loadFileSets,
+  zfsItems,
+  loadZFSItems,
   fieldPulse,
   scheduleField,
   autoSaveScheduleField,
@@ -545,6 +654,16 @@ export function SchedulesTab({
         t={t}
         hueIndex={nextHue()}
       />
+      <ZFSSection
+        settings={settings}
+        syncSchedules={syncSchedules}
+        items={zfsItems}
+        perItem={settings.perItemSchedules}
+        onChange={(v) => scheduleField("zfsSchedule", v)}
+        onItemsChanged={loadZFSItems}
+        t={t}
+        hueIndex={nextHue()}
+      />
 
       <Card title={t("settings.schedulesOffsite")} hueIndex={nextHue()}>
         {([
@@ -553,6 +672,7 @@ export function SchedulesTab({
           ["flashOffsiteSchedule", "nav.flash"],
           ["configOffsiteSchedule", "nav.config"],
           ["filesOffsiteSchedule", "nav.files"],
+          ["zfsOffsiteSchedule", "nav.zfs"],
         ] as const).map(([key, label]) => (
           <div key={key} className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t(label)}</span>

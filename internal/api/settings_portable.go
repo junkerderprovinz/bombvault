@@ -72,6 +72,26 @@ type settingsExport struct {
 	Places              []placeExport      `json:"places"`
 	StorageDomainPlaces map[string]string  `json:"storageDomainPlaces"`
 	Credentials         *exportCredentials `json:"credentials,omitempty"`
+	// predatesZFS is set when the file carries no zfsEnabled key: it comes from
+	// a build without the ZFS domain, so its empty ZFS fields say nothing about
+	// the ZFS setup of the instance it is applied to.
+	predatesZFS bool
+}
+
+func (e *settingsExport) UnmarshalJSON(b []byte) error {
+	type plain settingsExport
+	if err := json.Unmarshal(b, (*plain)(e)); err != nil {
+		return err
+	}
+	var probe struct {
+		Settings map[string]json.RawMessage `json:"settings"`
+	}
+	if err := json.Unmarshal(b, &probe); err != nil {
+		return err
+	}
+	_, hasZFS := probe.Settings["zfsEnabled"]
+	e.predatesZFS = !hasZFS
+	return nil
 }
 
 // buildSettingsView is the export's settings block: the view the settings page
@@ -170,9 +190,9 @@ func locationRedacted(loc string) bool {
 func redactExportLocations(exp *settingsExport) {
 	for _, loc := range []*string{
 		&exp.Settings.ContainersPath, &exp.Settings.VMsPath, &exp.Settings.FlashPath,
-		&exp.Settings.ConfigPath, &exp.Settings.FilesPath,
+		&exp.Settings.ConfigPath, &exp.Settings.FilesPath, &exp.Settings.ZFSPath,
 		&exp.Settings.ContainersOffsite, &exp.Settings.VMsOffsite, &exp.Settings.FlashOffsite,
-		&exp.Settings.ConfigOffsite, &exp.Settings.FilesOffsite,
+		&exp.Settings.ConfigOffsite, &exp.Settings.FilesOffsite, &exp.Settings.ZFSOffsite,
 	} {
 		*loc = scrubRepoLocation(*loc)
 	}
@@ -202,6 +222,7 @@ func redactedLocations(exp settingsExport) []string {
 		{"flashOffsite", exp.Settings.FlashOffsite},
 		{"configOffsite", exp.Settings.ConfigOffsite},
 		{"filesOffsite", exp.Settings.FilesOffsite},
+		{"zfsOffsite", exp.Settings.ZFSOffsite},
 	} {
 		if locationRedacted(f.loc) {
 			out = append(out, f.name)
@@ -561,21 +582,38 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 		return unchecked
 	}
 	s := mergeImportedSettings(here, exp.Settings)
+	offsite := exp.OffsiteTargets
+	if exp.predatesZFS {
+		// The apply keeps this instance's ZFS locations, so those are the ones
+		// a repository in the file must not land on.
+		keepZFSSettings(&s, here)
+		targets, err := h.store.ListOffsiteTargets()
+		if err != nil {
+			return unchecked
+		}
+		for _, t := range targets {
+			if t.Domain == zfsDomain {
+				offsite = append(slices.Clip(offsite), offsiteTargetView{Repo: t.Repo})
+			}
+		}
+	}
 	for _, p := range []place{
 		{"the Containers path", s.ContainersPath}, {"the VMs path", s.VMsPath},
 		{"the Flash path", s.FlashPath}, {"the Config path", s.ConfigPath},
 		{"the Folders path", s.FilesPath},
+		{"the ZFS datasets path", s.ZFSPath},
 		{"the Containers off-site destination", s.ContainersOffsite},
 		{"the VMs off-site destination", s.VMsOffsite},
 		{"the Flash off-site destination", s.FlashOffsite},
 		{"the Config off-site destination", s.ConfigOffsite},
 		{"the Folders off-site destination", s.FilesOffsite},
+		{"the ZFS datasets off-site destination", s.ZFSOffsite},
 	} {
 		if loc, ok := resolve(p.loc); ok {
 			occupied = append(occupied, place{p.label, loc})
 		}
 	}
-	for _, tv := range exp.OffsiteTargets {
+	for _, tv := range offsite {
 		loc := tv.Repo
 		if locationRedacted(loc) {
 			target, _, err := h.store.GetOffsiteTarget(strings.TrimSpace(tv.ID))
@@ -704,6 +742,11 @@ func validateExport(exp settingsExport, mountRoot string) string {
 	if msg := rejectInvalidSettingsNames(exp.Settings); msg != "" {
 		return "invalid settings: " + msg
 	}
+	// The two anomaly presets, through the guard the save uses, so an import
+	// cannot persist a value the Settings page then refuses to save.
+	if msg := rejectInvalidAnomalySettings(exp.Settings); msg != "" {
+		return "invalid settings: " + msg
+	}
 	return ""
 }
 
@@ -711,8 +754,9 @@ func validateExport(exp settingsExport, mountRoot string) string {
 // parse check in handlePutSettings: a cadence left out here imports unchecked.
 func exportCadences(v settingsView) []string {
 	return []string{
-		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule,
+		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule, v.ZFSSchedule,
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
+		v.ZFSOffsiteSchedule,
 		v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule, v.EverythingSchedule,
 	}
 }
@@ -758,20 +802,30 @@ func settingsGroups(v settingsView) []string {
 			groups = append(groups, name)
 		}
 	}
-	add("domains", v.ContainersEnabled || v.VMsEnabled || v.FlashEnabled || v.ConfigEnabled || v.FilesEnabled ||
-		v.ContainersPath != "" || v.VMsPath != "" || v.FlashPath != "" || v.ConfigPath != "" || v.FilesPath != "")
+	// The dump switch counts when it is off, the mirror image of the flags
+	// above: it is on by default, so switching it off is what an apply imposes.
+	add("domains", v.ContainersEnabled || v.VMsEnabled || v.FlashEnabled || v.ConfigEnabled || v.FilesEnabled || v.ZFSEnabled ||
+		v.ContainersPath != "" || v.VMsPath != "" || v.FlashPath != "" || v.ConfigPath != "" || v.FilesPath != "" || v.ZFSPath != "" ||
+		(v.DBDumpsEnabled != nil && !*v.DBDumpsEnabled))
 	add("schedules", v.ContainersSchedule != "" || v.VMsSchedule != "" || v.FlashSchedule != "" ||
-		v.ConfigSchedule != "" || v.FilesSchedule != "")
+		v.ConfigSchedule != "" || v.FilesSchedule != "" || v.ZFSSchedule != "")
 	// The whole-server pass is an area of its own: it is the one setting an
 	// apply can switch on for a server that never ran it, so the preview names it.
 	add("everything", v.EverythingSchedule != "")
 	add("retention", v.RetentionKeepLast > 0 || v.RetentionKeepDaily > 0 || v.RetentionKeepWeekly > 0 || v.RetentionKeepMonthly > 0 ||
 		v.OffsiteRetentionKeepLast > 0 || v.OffsiteRetentionKeepDaily > 0 || v.OffsiteRetentionKeepWeekly > 0 || v.OffsiteRetentionKeepMonthly > 0)
-	add("offsite", v.ContainersOffsite != "" || v.VMsOffsite != "" || v.FlashOffsite != "" || v.ConfigOffsite != "" || v.FilesOffsite != "")
+	add("offsite", v.ContainersOffsite != "" || v.VMsOffsite != "" || v.FlashOffsite != "" || v.ConfigOffsite != "" ||
+		v.FilesOffsite != "" || v.ZFSOffsite != "")
 	add("drills", v.DrillsEnabled || v.DrillsSchedule != "" || v.OffsiteDrillsEnabled)
 	add("digest", v.DigestEnabled || v.DigestSchedule != "")
 	add("monitoring", v.MetricsEnabled || v.WidgetTokenSet)
 	add("language", v.DefaultLanguage != "")
+	// Named only when the file departs from the defaults, so importing a file
+	// that leaves detection as it ships says nothing about it.
+	add("anomalies", (v.AnomalyEnabled != nil && !*v.AnomalyEnabled) ||
+		(v.AnomalyRetentionHold != nil && !*v.AnomalyRetentionHold) ||
+		(v.AnomalySensitivity != "" && v.AnomalySensitivity != string(sensBalanced)) ||
+		(v.AnomalyNotifyMin != "" && v.AnomalyNotifyMin != "critical"))
 	add("exportEncryption", v.ExportEncryptEnabled || v.ExportAgeRecipients != "")
 	return groups
 }
@@ -841,6 +895,9 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	if err != nil {
 		return err
 	}
+	if _, err := h.svc.moveTargetsOffPrimarySlot(s); err != nil {
+		return err
+	}
 	h.svc.syncAllPrimaryOffsiteTargets(s)
 	// The places are rebuilt before the reload, so a reload that fails leaves
 	// no instance that had places on none.
@@ -853,7 +910,7 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	// A backup the reload finds due waits for its domain.
 	release()
 	if h.scheduler != nil {
-		if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
+		if err := h.scheduler.ReloadWithGates(s, h.dueGates()); err != nil {
 			return errors.Join(placesErr, err)
 		}
 	}
@@ -885,17 +942,26 @@ func (h *Handler) writeImport(exp settingsExport, installed store.Installed, pri
 	// session epoch, recovery-kit ack, registry auths, credential blobs). It runs
 	// inside the transaction so they are read at write time: a password change
 	// landing during a slow import must not be reverted by this write.
+	var anomalyChanged bool
 	if _, err := h.store.MutateSettings(func(cur *store.Settings) error {
-		*cur = mergeImportedSettings(*cur, exp.Settings)
+		merged := mergeImportedSettings(*cur, exp.Settings)
+		if exp.predatesZFS {
+			keepZFSSettings(&merged, *cur)
+		}
+		anomalyChanged = anomalySettingsMoved(*cur, merged)
+		*cur = merged
 		return nil
 	}); err != nil {
 		return err
+	}
+	if anomalyChanged {
+		h.svc.anomalies.settingsChanged()
 	}
 
 	// Replace the off-site targets with the imported set (a clean, deterministic
 	// round-trip): drop the current rows, then upsert each imported target
 	// preserving its id + created_at so the far instance reproduces the source.
-	if err := h.replaceOffsiteTargets(exp.OffsiteTargets, exp.Settings); err != nil {
+	if err := h.replaceOffsiteTargets(exp.OffsiteTargets, exp.Settings, exp.predatesZFS); err != nil {
 		return err
 	}
 
@@ -968,6 +1034,8 @@ func offsiteRepoFromView(domain string, v settingsView) string {
 		return v.ConfigOffsite
 	case "files":
 		return v.FilesOffsite
+	case "zfs":
+		return v.ZFSOffsite
 	}
 	return ""
 }
@@ -982,8 +1050,9 @@ func offsiteRepoFromView(domain string, v settingsView) string {
 // lands under a fresh id with nothing to keep, so the row's redacted repo would
 // never match the merged field and the domain would end up with no row on
 // sort_order 0. The file's field and its row were redacted the same way on
-// export, so comparing the file against itself always matches.
-func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings settingsView) error {
+// export, so comparing the file against itself always matches. With keepZFS
+// the ZFS destinations stay as they are, because the file cannot describe them.
+func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings settingsView, keepZFS bool) error {
 	current, err := h.store.ListOffsiteTargets()
 	if err != nil {
 		return err
@@ -998,7 +1067,7 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 	currentRepo := make(map[string]string, len(current))
 	for _, t := range current {
 		currentRepo[t.ID] = t.Repo
-		if inFile[t.ID] {
+		if inFile[t.ID] || (keepZFS && t.Domain == zfsDomain) {
 			continue
 		}
 		if err := h.store.DeleteOffsiteTarget(t.ID); err != nil {
@@ -1019,6 +1088,9 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 		}
 	}
 	for _, d := range offsiteConfigDomains {
+		if keepZFS && d == zfsDomain {
+			continue
+		}
 		if err := h.store.NormalizeOffsiteSortOrder(d, offsiteRepoFromView(d, fileSettings)); err != nil {
 			return err
 		}
@@ -1234,6 +1306,17 @@ func rejectInvalidCredSets(sets []CloudCredSet) string {
 	return ""
 }
 
+// keepZFSSettings puts the instance's own ZFS setup back over a merge from a
+// file that predates the domain, which would otherwise switch it off.
+func keepZFSSettings(out *store.Settings, existing store.Settings) {
+	out.ZFSEnabled = existing.ZFSEnabled
+	out.ZFSPath = existing.ZFSPath
+	out.ZFSSchedule = existing.ZFSSchedule
+	out.ZFSOffsite = existing.ZFSOffsite
+	out.ZFSOffsiteSchedule = existing.ZFSOffsiteSchedule
+	out.ZFSOffsiteImmutable = existing.ZFSOffsiteImmutable
+}
+
 // mergeImportedSettings maps the imported view onto a Settings row, keeping the
 // per-instance fields the export leaves out and clamping numbers the way the
 // settings save does. The metrics and widget tokens arrive blank in the view
@@ -1267,6 +1350,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.FlashEnabled = v.FlashEnabled
 	out.ConfigEnabled = v.ConfigEnabled
 	out.FilesEnabled = v.FilesEnabled
+	out.ZFSEnabled = v.ZFSEnabled
 	// Domain paths through restoredLocation: a plain export redacts a remote
 	// one, and the local default a fresh instance holds is no location to keep
 	// over it.
@@ -1275,6 +1359,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.FlashPath = restoredLocation(existing.FlashPath, v.FlashPath)
 	out.ConfigPath = restoredLocation(existing.ConfigPath, v.ConfigPath)
 	out.FilesPath = restoredLocation(existing.FilesPath, v.FilesPath)
+	out.ZFSPath = restoredLocation(existing.ZFSPath, v.ZFSPath)
 	out.RestoreFolder = v.RestoreFolder
 	// Off-site locations, via importedLocation: a location the plain export
 	// stripped a credential out of never overwrites a working one here.
@@ -1283,16 +1368,19 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.FlashOffsite = importedLocation(existing.FlashOffsite, v.FlashOffsite)
 	out.ConfigOffsite = importedLocation(existing.ConfigOffsite, v.ConfigOffsite)
 	out.FilesOffsite = importedLocation(existing.FilesOffsite, v.FilesOffsite)
+	out.ZFSOffsite = importedLocation(existing.ZFSOffsite, v.ZFSOffsite)
 	out.ContainersOffsiteSchedule = v.ContainersOffsiteSchedule
 	out.VMsOffsiteSchedule = v.VMsOffsiteSchedule
 	out.FlashOffsiteSchedule = v.FlashOffsiteSchedule
 	out.ConfigOffsiteSchedule = v.ConfigOffsiteSchedule
 	out.FilesOffsiteSchedule = v.FilesOffsiteSchedule
+	out.ZFSOffsiteSchedule = v.ZFSOffsiteSchedule
 	out.ContainersSchedule = v.ContainersSchedule
 	out.VMsSchedule = v.VMsSchedule
 	out.FlashSchedule = v.FlashSchedule
 	out.ConfigSchedule = v.ConfigSchedule
 	out.FilesSchedule = v.FilesSchedule
+	out.ZFSSchedule = v.ZFSSchedule
 	out.EverythingSchedule = v.EverythingSchedule
 	out.FlashZipExportEnabled = v.FlashZipExportEnabled
 	out.FlashZipExportPath = v.FlashZipExportPath
@@ -1318,6 +1406,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.FlashOffsiteImmutable = v.FlashOffsiteImmutable
 	out.ConfigOffsiteImmutable = v.ConfigOffsiteImmutable
 	out.FilesOffsiteImmutable = v.FilesOffsiteImmutable
+	out.ZFSOffsiteImmutable = v.ZFSOffsiteImmutable
 	out.OffsiteGrowthBudgetGB = max(0, v.OffsiteGrowthBudgetGB)
 	out.TamperTestSchedule = v.TamperTestSchedule
 	out.DRDrillTarget = strings.TrimSpace(v.DRDrillTarget)
@@ -1335,6 +1424,16 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.RestartHealthWait = v.RestartHealthWait
 	out.RestartHealthTimeoutSec = clampHealthTimeoutSec(v.RestartHealthTimeoutSec)
 	out.PerItemSchedules = v.PerItemSchedules
+	// An export written before the switch existed carries no value for it, and
+	// taking that as "off" would stop dumping databases on the instance the
+	// file is applied to.
+	if v.DBDumpsEnabled != nil {
+		out.DBDumpsEnabled = *v.DBDumpsEnabled
+	}
+	// Same contract as the dump switch, and the same reason: a file written
+	// before this version carries none of the four, and reading that as "off"
+	// would take detection and the data-loss pause with it.
+	applyAnomalySettings(&out, v)
 
 	return out
 }

@@ -7,10 +7,10 @@ This page covers the container's environment variables, the mounts the template 
 | Variable | Required | Description |
 |---|---|---|
 | `APP_KEY` | **Yes** | 32-byte hex secret (64 hex chars) used to derive the restic repo password. Generate with `openssl rand -hex 32`. Keep this safe: losing it makes encrypted backups unrecoverable. |
-| `LIBVIRT_HOST` | For VMs | Unraid host reached over SSH for VM backup (default `host.docker.internal`; the template pre-fills a LAN-IP placeholder). Use your Unraid LAN IP, required on a custom `br0.x` network. |
-| `LIBVIRT_SSH_PORT` | No | Host SSH port for VM backup (default `22`). |
-| `LIBVIRT_SSH_USER` | No | SSH user on the host for VM backup (default `root`). |
-| `LIBVIRT_URI` | No | Full libvirt connection URI, used **verbatim** instead of building one from the three `LIBVIRT_*` variables above (which are then ignored for the connection string). Default unset. Needed on TrueNAS Scale, whose libvirtd listens on a non-standard socket the built-string form cannot express: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. See [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)'s TrueNAS Scale section. |
+| `LIBVIRT_HOST` | For VMs and ZFS datasets | Unraid host reached over SSH for VM and ZFS dataset backups (template field **Host SSH: Address**, default `host.docker.internal`). The template pre-fills the placeholder `192.168.x.x`, which counts as unset. Use your Unraid LAN IP, required on a custom `br0.x` network. |
+| `LIBVIRT_SSH_PORT` | No | Host SSH port for VM and ZFS dataset backups (template field **Host SSH: Port**, default `22`). |
+| `LIBVIRT_SSH_USER` | No | SSH user on the host for VM and ZFS dataset backups (template field **Host SSH: User**, default `root`). |
+| `LIBVIRT_URI` | No | Full libvirt connection URI, used **verbatim** instead of building one from the three `LIBVIRT_*` variables above (which are then ignored for the connection string). Default unset. Needed on TrueNAS Scale, whose libvirtd listens on a non-standard socket the built-string form cannot express: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. See [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)'s TrueNAS Scale section. When it is a `qemu+ssh://` URI, each of `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` and `LIBVIRT_SSH_PORT` that is not set is taken from it, also for BombVault's own SSH commands (NVRAM transfer, ZFS datasets). |
 | `PORT` | No | HTTP port (default `3000`; only used with `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | No | HTTPS port (default `3443`; the template publishes it 1:1, so the WebUI answers on `https://<ip>:3443`). |
 | `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only (for use behind a TLS-terminating reverse proxy). |
@@ -20,13 +20,17 @@ This page covers the container's environment variables, the mounts the template 
 | `PLATFORM` | No | Forces which platform BombVault treats itself as running on, instead of auto-detecting: `unraid`, `generic`, or `truenas` (default unset — auto-detects Unraid by probing for its `dockerMan` marker under the flash mount, otherwise `generic`; an unrecognized value also falls back to `generic`, logged). Set it explicitly on a generic Docker host or TrueNAS Scale rather than relying on the Unraid-only auto-probe — the generic compose file does this. Changes the appdata-fallback convention, the cross-instance restore-destination defaults, and whether the Unraid-only notification/companion-plugin steps are attempted at all (see `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | No | The name of the BombVault container itself, so it never backs up (and thus stops) itself. |
 | `BACKUP_MAX_HOURS` | No | Maximum wall-clock hours a single backup run may hold its domain lock before it is force-cancelled (a guard so a wedged run cannot block the domain forever). Empty (the default) uses `48`. Raise it for very large or slow cloud backups (a run cancelled at the cap fails with `context deadline exceeded`). Set `0` to disable the cap entirely. |
+| `BACKUP_STALL_HOURS` | No | Hours a backup may make **no progress at all** before it is cancelled. Empty (the default) uses `2`; set `0` to never cancel on a stall. This is the finer of the two guards and usually the one that fires: it watches whether anything is still happening rather than how long the run has taken, so a slow but healthy multi-terabyte backup is left alone while one wedged on an unresponsive share is stopped in hours instead of days. A warning is logged after 30 minutes of silence, before anything is cancelled. Scanning counts as progress: restic writes no bytes while it walks a large tree, and that phase is watched through its file and byte totals rather than through the bytes written. The two variables are independent, and `BACKUP_MAX_HOURS` still bounds the phases after the backup itself (retention, statistics, off-site copy), where there are no counters to watch. |
+| `DB_DUMP_MAX_HOURS` | No | Hours one automatic database dump may run before it is stopped. Empty (the default) uses `6`; allowed values are `1` to `48`, and the limit is kept an hour below `BACKUP_MAX_HOURS` (at half of it when that is under two hours), so a long dump is cut by its own limit and reported as such rather than taking the backup down with it. A dump that makes no progress is stopped earlier, after `BACKUP_STALL_HOURS`. A stopped dump fails on its own and the container backup carries on. On Unraid, add it to the BombVault container with **Add another Path, Port, Variable**. |
 | `TZ` | No | Timezone for the scheduler (for example `Europe/Berlin`). **Leave it unset and every schedule runs in UTC**: one set to 02:30 then fires at 02:30 UTC rather than on your own wall clock. On Unraid you never set this yourself: the system passes its own timezone into every container. |
 
 ## Mounts
 
 Mount the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`) as shown in the CA template. Backup *sources* and *destinations* both live under Host Data, and it is mounted **slave** so a remote share that mounts after the container starts (for example under `/mnt/remotes`) becomes visible without a restart.
 
-A fresh install stores every domain in the place **Unraid**, at `/mnt/user/bombvault` with one folder per domain (`container`, `vms`, `flash`, `config`, `files`), created on the first backup. You add further places, local or remote, on **Settings, Storage**; see [Storage places](storage-places.md).
+ZFS dataset backups need this mode too: the host mounts a dataset's snapshot only after the container has started. See [ZFS datasets](zfs-datasets.md).
+
+A fresh install stores every domain in the place **Unraid**, at `/mnt/user/bombvault` with one folder per domain (`container`, `vms`, `flash`, `config`, `files`, `zfs`), created on the first backup. You add further places, local or remote, on **Settings, Storage**; see [Storage places](storage-places.md).
 
 !!! note "Host integration check"
     Open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces.
@@ -39,6 +43,7 @@ For each container, BombVault auto-selects which bind mounts and named volumes t
 - **Docker named volumes** are always included — they have no throwaway equivalent, so there is nothing to filter — **but only when the volume's real host storage path is itself reachable through the Host Data mount**, exactly like any other host path BombVault backs up. Docker's default local-volume driver stores a volume under the daemon's own data root — `/var/lib/docker/volumes/<name>/_data` unless you've customized it (check with `docker info -f '{{.DockerRootDir}}'`) — which is NOT covered by the narrow, single-directory Host Data mount the generic `docker-compose.yml` uses by default. An unreachable volume is silently skipped, not an error. To actually back up named volumes on a generic host, point Host Data (and `HOST_SOURCE_ROOT`) at a common ancestor that also covers the Docker data root — see the compose file's Host Data comment for the tradeoff (Unraid sidesteps this by mounting all of `/mnt`, its own universal top-level convention, for the same reason).
 - **Docker Compose project directory:** if the container carries the standard `com.docker.compose.project.working_dir` label (set automatically by `docker compose up`), that directory is added too, regardless of whether any bind matched a data-root segment.
 - **`bombvault.data` label override:** set the label `bombvault.data=true` on a container to include ALL of its bind mounts, for a layout neither convention above catches (for example a single `/srv/plex/config` bind with no Compose project). Any non-empty value other than `false` counts as truthy; an absent label or `bombvault.data=false` changes nothing.
+- **`bombvault.dbdump` label:** set `bombvault.dbdump=false` on a container to switch its automatic database dump off (`0`, `no` and `off` do the same), or name the engine (`postgres`, `mysql`, `mariadb`) to dump a container BombVault does not recognise by itself. The label wins over the switch on the container's card, which is the way to do it on Unraid.
 
 ## Security model
 
@@ -50,9 +55,14 @@ For each container, BombVault auto-selects which bind mounts and named volumes t
 - Because the gate is opt-in, when unset the whole UI and API (including the off-site setup, tamper-test routes and the recovery kit) are reachable by anyone who can reach the port. Enable the gate once off-site, immutable backups or encryption are in use.
 - Run BombVault only on a trusted, non-exposed network. For remote access put it behind a reverse proxy that adds authentication and TLS. Responses carry baseline security headers (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Behind a reverse proxy every request carries the proxy's address, so without `TRUSTED_PROXY` the login throttle counts every client in one bucket and an attacker's failures lock you out as well. Name the proxy in `TRUSTED_PROXY` to get per-client counting back.
+- A reverse proxy in front of BombVault has to pass the `Authorization` or `X-API-Key` header through to `/mcp` and must not buffer its responses, or assistants cannot connect. See [MCP server](mcp.md#tls).
 - With `HTTP_ONLY=true` the session cookie loses its `Secure` flag (it has to, to work over plain HTTP), so only enable the password behind a TLS-terminating proxy if confidentiality matters.
 - The VM-backup SSH connection trusts the host key on first connect (TOFU) and pins it thereafter. Verify the host's key out-of-band if your container-to-host path is not trusted.
 - Backups are encrypted by restic when encryption is enabled (Settings; on by default), with the key derived from `APP_KEY`.
+
+## MCP server {#mcp-server}
+
+The MCP server needs no environment variable. You switch it on by creating a key under **Settings, System, MCP server**, and it answers at `/mcp` on the same port as the web interface (for example `https://192.168.1.10:3443/mcp`). Without an active key that path answers `404`. Clients, certificates and limits are described on [MCP server](mcp.md).
 
 ## VM backup over SSH
 
@@ -60,7 +70,7 @@ BombVault backs up KVM/libvirt VMs **without mounting any libvirt path**. It run
 
 Quick setup:
 
-1. **Settings, System, VM Backup over SSH:** copy the shown public key.
+1. **Settings, System, Host SSH:** copy the shown public key.
 2. Append it to Unraid's `/root/.ssh/authorized_keys` (also persisted to the flash so it survives reboots).
 3. Click **Test connection**.
 
@@ -75,12 +85,25 @@ Off-site copies go to storage places. Add the place on **Settings, Storage** wit
 
 - **Connection kinds:** a folder on this Unraid or a NAS share mounted under `/mnt/remotes`, S3 storage (Backblaze B2 and the other cloud providers, or a self-hosted service such as MinIO or Garage), rest-server, SFTP including a Hetzner Storage Box, WebDAV for Nextcloud, ownCloud and OpenCloud, Azure Blob, and any rclone remote. Backblaze B2 needs only the key: BombVault reads the bucket and the S3 endpoint from it.
 - **Credentials** are stored encrypted with the place they belong to. The credential sets that pull sources use are on the **Pull** tab of the Instances page.
-- **SSH targets need nothing installed on the far side.** An SFTP place only needs an SSH server. Add the public key shown in the SFTP form (also under **Settings, System, VM Backup over SSH** and at `/config/ssh/id_ed25519.pub`) to the target user's `~/.ssh/authorized_keys`.
+- **SSH targets need nothing installed on the far side.** An SFTP place only needs an SSH server. Add the public key shown in the SFTP form (also under **Settings, System, Host SSH** and at `/config/ssh/id_ed25519.pub`) to the target user's `~/.ssh/authorized_keys`.
 - **Off-site copy:** BombVault copies new snapshots with `restic copy` on a best-effort basis, on top of the place a domain is stored in. Each domain has its own copy schedule on Settings, Schedules, plus **Copy now** on its row.
 - **Several copy places per domain:** tick as many places as you like under **Copied to**; each copies on the domain's schedule.
 - **Retention, limits, storage class and growth budget belong to the place** and are set in its details. A place's retention applies to every repository at it, so an off-site place can keep copies longer as an archive; a place with every rule at zero never trims.
 - **Cold and archival storage class (S3):** for an S3 place, pick a restore-readable tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone remotes set their class in the rclone config.
 - **A domain stored in a remote place:** see [A domain stored in a remote place](offsite-recovery.md#remote-primary-repositories).
+
+## Anomalies {#anomalies}
+
+Anomaly detection is set up in the **Anomalies** card on **Settings, Integrity**. Each control saves as soon as you change it, and the three under the switch are hidden while detection is off.
+
+| Setting | Default | What it does |
+|---|---|---|
+| **Detect anomalies** | On | Compares every backup with the item's own history. Switched off, nothing new is checked and the **Anomalies** entry leaves the sidebar; the card still links to earlier findings. |
+| **Sensitivity** | Balanced | Strict reports smaller changes, Permissive only large ones. |
+| **Send a notification for** | Critical findings only | The lowest severity that sends a message through the channels set up under Notifications. Repeated backup and dump failures and failed scheduled restore checks already send their own message and are not sent twice. |
+| **Keep old backups when a source shrinks sharply or is rewritten** | On | While an item has an open finding for an almost empty source, a sharp shrink or most of its data stored again, retention and prune leave that item's old backups alone. Acknowledge the finding or mark it as expected to let them go. |
+
+Each item can use its own sensitivity and notification minimum. Set them on the **Items** tab of the **Anomalies** page, or in the item's own panel: the folders section of a container and the settings of a VM (both in advanced mode), the folder editor of a folder set, and the **Flash** and **Self-Backup** pages. For a ZFS item they are in its editor on the **ZFS** page and apply to every dataset of its tree.
 
 ## Portable settings (export and import) {#portable-settings-export-and-import}
 

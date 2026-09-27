@@ -63,6 +63,36 @@ var (
 type Summary struct {
 	SnapshotID string
 	Bytes      int64
+	// Measured is true when restic reported its totals for this backup. It is
+	// false for a container with no appdata paths, where restic never ran, and
+	// for a summary line without totals; the fields below are then recorded as
+	// nothing rather than as zeros.
+	Measured    bool
+	SourceBytes int64
+	SourceFiles int64
+	FilesNew    int64
+	ResticMS    int64
+	// HasParent is filled in by the service adapter when it had to ask whether
+	// restic found a parent snapshot. Nil means unknown.
+	HasParent *bool
+	// SelectionFP fingerprints what the item was configured to back up, set by
+	// the adapter that produced this summary. It travels with the numbers it
+	// belongs to, so a dump and the container backup around it keep their own.
+	SelectionFP string
+}
+
+// Plus adds o into s: the file disks of a VM plus each of its zvol disks. The
+// snapshot id, the parent flag and the fingerprint stay s's, and the result
+// counts as measured only when both sides are, so a partly unmeasured run
+// records nothing instead of an undercount.
+func (s Summary) Plus(o Summary) Summary {
+	s.Bytes += o.Bytes
+	s.SourceBytes += o.SourceBytes
+	s.SourceFiles += o.SourceFiles
+	s.FilesNew += o.FilesNew
+	s.ResticMS += o.ResticMS
+	s.Measured = s.Measured && o.Measured
+	return s
 }
 
 // Docker is the subset of host control the orchestrator needs. The rich
@@ -128,7 +158,10 @@ type Templates interface {
 // Runs records the lifecycle of a backup/restore run.
 type Runs interface {
 	Start(targetID, kind string) (runID string, err error)
-	Finish(runID, status, snapshotID string, bytes int64, errMsg string) error
+	// Finish records the outcome. sum carries the snapshot id, the new data and,
+	// where the run was measured, restic's own totals; a failure passes an empty
+	// summary.
+	Finish(runID, status string, sum Summary, errMsg string) error
 }
 
 // ---------------------------------------------------------------------------
@@ -140,7 +173,11 @@ type Runs interface {
 // that was already stopped is left exactly as it was — neither stopped nor
 // restarted — so a backup never starts a container the user had off (#33).
 type StopContainer struct {
-	Name       string
+	Name string
+	// ID is the container the service found under Name. Stop and start go by
+	// it, so a name that meanwhile belongs to nothing cannot reach another
+	// container through Docker's id prefix match.
+	ID         string
 	WasRunning bool
 	// Service and DependsOn carry the container's compose identity (the
 	// com.docker.compose.service label and the service names it depends_on) so the
@@ -151,6 +188,13 @@ type StopContainer struct {
 	// themselves.
 	Service   string
 	DependsOn []string
+}
+
+func (c StopContainer) ref() string {
+	if c.ID != "" {
+		return c.ID
+	}
+	return c.Name
 }
 
 // BackupDeps bundles everything BackupContainer needs.
@@ -182,13 +226,28 @@ type BackupDeps struct {
 	// restarted afterwards.
 	WasRunning bool
 	// PreHook / PostHook are optional shell commands run inside the container via
-	// `sh -c`. PreHook runs while the container is still up (before stop) so a DB
-	// dump can be captured INTO appdata and included in the backup; a PreHook
-	// failure aborts the backup (no inconsistent snapshot). PostHook runs after
-	// the container is back up; its failure is logged but never fails the backup.
+	// `sh -c`. PreHook runs while the container is still up (before stop), so a
+	// step that needs a live container (flushing a cache) happens before the
+	// snapshot; a PreHook failure aborts the backup (no inconsistent snapshot).
+	// A database dump belongs in DBDump, not here. PostHook runs after the
+	// container is back up; its failure is logged but never fails the backup.
 	// Hooks only run when WasRunning (you cannot exec in a stopped container).
 	PreHook  string
 	PostHook string
+	// DBDump, when non-nil, streams a logical dump of this container's database
+	// into the repository as its own snapshot, after PreHook and before the stop,
+	// while the server still runs. It is never fatal: its outcome is a run of its
+	// own. Skipped when !WasRunning. A nil plan leaves argv, tags, exec calls and
+	// run records exactly as they are without one.
+	DBDump   *DBDumpPlan
+	DBDumper DBDumper
+	// OnDBDumpDone hands the dump's recorded outcome to the caller, which sends
+	// the notification once the backup's own result is known.
+	OnDBDumpDone func(DBDumpOutcome)
+	// Committed is called once the backup has written what it keeps, before the
+	// containers are started again. A cancel from there on could not undo the
+	// backup, so the caller stops offering one.
+	Committed func()
 	// StopContainers are OTHER containers to stop for the duration of this
 	// backup (e.g. a database) and restart afterwards. Each carries its own
 	// WasRunning: a dependency that was already stopped is left untouched
@@ -358,7 +417,7 @@ func pullRef(in model.Inspect) string {
 // BackupContainer orchestrates a container backup:
 //
 //	recordRunStart
-//	→ stop → restic backup → capture+persist template
+//	→ pre-hook → database dump → stop → restic backup → capture+persist template
 //	→ FINALLY always start (even on error)
 //	→ recordRunFinish(success|failed)
 //	→ re-throw on failure
@@ -370,14 +429,27 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		return Summary{}, fmt.Errorf("backup: record run start: %w", err)
 	}
 
-	// Pre-backup hook runs while the container is still UP (before stop), so a DB
-	// dump etc. lands in appdata and is included below. A failure aborts the
+	// Pre-backup hook runs while the container is still UP (before stop), so what
+	// it writes lands in appdata and is included below. A failure aborts the
 	// backup — we never store a snapshot the hook was meant to make consistent.
 	// Skipped when the container is already stopped (cannot exec in it).
 	if d.WasRunning && d.PreHook != "" {
 		if hookErr := d.Docker.Exec(ctx, d.ContainerRef, []string{"sh", "-c", d.PreHook}); hookErr != nil {
 			e := fmt.Errorf("backup: pre-hook: %w", hookErr)
-			_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
+			_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(e))
+			return Summary{}, e
+		}
+	}
+
+	// The dump runs against the live database, so it has to happen before the
+	// stop. A cancel or a deadline during it ends the backup here, while nothing
+	// is stopped yet: there is nothing to restart and no post-hook to run.
+	var dumpNote string
+	if d.WasRunning && d.DBDump != nil && d.DBDumper != nil {
+		dumpNote = runDBDump(ctx, d, runID)
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			e := fmt.Errorf("backup: stopped after database dump: %w", ctxErr)
+			_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(e))
 			return Summary{}, e
 		}
 	}
@@ -386,13 +458,10 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	if stopTimeout <= 0 {
 		stopTimeout = defaultStopTimeout
 	}
-	tags := []string{"container:" + d.ContainerRef, "p1"}
 	// One tag per alias, so a reader matches the snapshot on any of them.
 	// restic splits a tag value on commas; the names go unescaped because the
 	// takeover only stores names that pass the Docker name check.
-	for _, f := range d.FormerNames {
-		tags = append(tags, "formerly:"+f)
-	}
+	tags := withFormerNames([]string{"container:" + d.ContainerRef, "p1"}, d.FormerNames)
 
 	var (
 		summary     Summary
@@ -408,13 +477,21 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		// depends_on ordering.
 		var stoppedDeps []StopContainer
 
+		// The restart runs on a context the run's cancellation does not reach.
+		// Cancel, BACKUP_MAX_HOURS and shutdown all end ctx, and the Docker SDK
+		// refuses a request on a done context at once, so a restart on ctx left
+		// every container stopped for its backup stopped for good: cancelling a
+		// backup took the app down. Each step below is bounded on its own
+		// (runningWaitTimeout, the per-container health timeout).
+		restartCtx := context.WithoutCancel(ctx)
+
 		// The restart is split across TWO defers so a dependency is NEVER left
 		// stopped. This one is registered FIRST, so it runs LAST on unwind: it always
 		// brings the stopped dependents back (in compose depends_on order, optionally
-		// health-gated — see restartStoppedDeps), even if the target-restart/hook
+		// health-gated, see RestartInOrder), even if the target-restart/hook
 		// defer below fails or panics. It is the "never leave a dep stopped" guard.
 		defer func() {
-			restartStoppedDeps(ctx, d, stoppedDeps)
+			RestartInOrder(restartCtx, d.Docker, stoppedDeps, d.HealthWait, d.HealthTimeout)
 		}()
 
 		// Registered SECOND, so it runs FIRST on unwind. Order matters: bring the
@@ -432,11 +509,11 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		defer func() {
 			targetUp := false
 			if d.WasRunning {
-				if startErr := d.Docker.Start(ctx, d.ContainerRef); startErr != nil {
+				if startErr := d.Docker.Start(restartCtx, d.ContainerRef); startErr != nil {
 					if backupErr == nil {
 						backupErr = fmt.Errorf("backup: restart container: %w", startErr)
 					}
-				} else if waitErr := d.Docker.WaitRunning(ctx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
+				} else if waitErr := d.Docker.WaitRunning(restartCtx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
 					if backupErr == nil {
 						backupErr = fmt.Errorf("backup: wait container running: %w", waitErr)
 					}
@@ -449,7 +526,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 				// The hook may have recreated the target (stop/remove/create+start);
 				// re-wait so it is Running before its netns dependents are restarted.
 				if targetUp {
-					if waitErr := d.Docker.WaitRunning(ctx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
+					if waitErr := d.Docker.WaitRunning(restartCtx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
 						log.Printf("backup: wait container %q running after post-backup step: %v", d.ContainerRef, waitErr)
 					}
 				}
@@ -458,9 +535,16 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 
 		// Stop the target for its own backup (consistent appdata) when it was
 		// running. A stopped container is backed up in place and left as-is.
+		// The stops run on restartCtx: a cancel only aborts the request, the
+		// daemon still finishes the stop, and a restart issued before that
+		// finds the container running and leaves it to go down for good.
 		if d.WasRunning {
-			if backupErr = d.Docker.Stop(ctx, d.ContainerRef, stopTimeout); backupErr != nil {
+			if backupErr = d.Docker.Stop(restartCtx, d.ContainerRef, stopTimeout); backupErr != nil {
 				backupErr = fmt.Errorf("backup: stop container: %w", backupErr)
+				return
+			}
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				backupErr = fmt.Errorf("backup: cancelled while stopping the container: %w", ctxErr)
 				return
 			}
 		}
@@ -473,11 +557,15 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 			if !dep.WasRunning {
 				continue // already stopped: leave it exactly as it was (#33)
 			}
-			if stopErr := d.Docker.Stop(ctx, dep.Name, stopTimeout); stopErr != nil {
+			if stopErr := d.Docker.Stop(restartCtx, dep.ref(), stopTimeout); stopErr != nil {
 				log.Printf("backup: stop dependency %q failed (continuing): %v", dep.Name, stopErr)
 				continue
 			}
 			stoppedDeps = append(stoppedDeps, dep)
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				backupErr = fmt.Errorf("backup: cancelled while stopping its dependencies: %w", ctxErr)
+				return
+			}
 		}
 
 		// A container with no existing source paths (a stateless app, or appdata
@@ -514,10 +602,13 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 				}
 			}
 		}
+		if d.Committed != nil {
+			d.Committed()
+		}
 	}()
 
 	if backupErr != nil {
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(backupErr))
+		_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(backupErr))
 		return Summary{}, backupErr
 	}
 
@@ -530,47 +621,49 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		}
 	}
 
-	snap := ""
+	// A container with no appdata paths never ran restic, so its run carries no
+	// snapshot and no measurement rather than a row of zeros.
+	recorded := Summary{}
 	if summarySeen {
-		snap = summary.SnapshotID
+		recorded = summary
 	}
-	if err := d.Runs.Finish(runID, statusSuccess, snap, summary.Bytes, ""); err != nil {
+	if err := d.Runs.Finish(runID, statusSuccess, recorded, dumpNote); err != nil {
 		return summary, fmt.Errorf("backup: record run finish: %w", err)
 	}
 	return summary, nil
 }
 
-// restartStoppedDeps brings the dependency containers we stopped for a backup
-// back up, in compose depends_on order (a dependency before the containers that
-// depend on it), reusing the same topological sort the stack restore uses. It is
-// fully best-effort: every failure is logged, never returned, so the restart of
-// one dependency can never abort the restart of the others or the backup flow.
+// DockerHealth is the part of Docker an ordered restart needs, so a caller
+// outside a container backup can reuse it without building a BackupDeps.
+type DockerHealth interface {
+	Start(ctx context.Context, name string) error
+	Health(ctx context.Context, name string) (model.Health, error)
+}
+
+// RestartInOrder brings the containers a backup stopped back up in compose
+// depends_on order (a dependency before the containers that depend on it),
+// reusing the same topological sort the stack restore uses. It is fully
+// best-effort: every failure is logged, never returned, so the restart of one
+// container can never abort the restart of the others or the flow around it.
 //
-// The depends_on ORDERING is ALWAYS applied — it is strictly safer than the old
-// unordered restart and cannot make things worse. When d.HealthWait is set, the
-// restart additionally waits for each dependency to become ready (its Docker
-// healthcheck reports "healthy", or — with no healthcheck — Running plus a short
-// grace) BEFORE it starts the containers that depend on it, bounded by a
-// per-container timeout after which it warns and proceeds so nothing hangs. This
-// is what fixes the real case where a service (Authelia/Nextcloud) came back
-// before the dependency it needs (Pi-hole) and stayed broken (#119).
+// With healthWait set, it also waits for each dependency to become ready (its
+// Docker healthcheck reports "healthy", or, with no healthcheck, Running plus a
+// short grace) before it starts the containers that depend on it, bounded by a
+// per-container timeout after which it warns and proceeds so nothing hangs. That
+// is what keeps a service (Authelia/Nextcloud) from coming back before the
+// dependency it needs (Pi-hole) and staying broken (#119).
 //
-// Containers not in a compose project (no service label / no depends_on) have no
+// Containers not in a compose project (no service label, no depends_on) have no
 // edges, so they keep a stable order among themselves and are simply started.
-func restartStoppedDeps(ctx context.Context, d BackupDeps, deps []StopContainer) {
+func RestartInOrder(ctx context.Context, d DockerHealth, deps []StopContainer, healthWait bool, healthTimeout time.Duration) {
 	if len(deps) == 0 {
 		return
 	}
-	services := make([]string, len(deps))
-	dependsOn := make([][]string, len(deps))
-	for i, dep := range deps {
-		services[i] = dep.Service
-		dependsOn[i] = dep.DependsOn
-	}
+	services, dependsOn := composeIdentity(deps)
 	order := compose.StartOrder(services, dependsOn)
 	graph := compose.DepGraph(services, dependsOn)
 
-	timeout := d.HealthTimeout
+	timeout := healthTimeout
 	if timeout <= 0 {
 		timeout = defaultHealthTimeout
 	}
@@ -585,19 +678,69 @@ func restartStoppedDeps(ctx context.Context, d BackupDeps, deps []StopContainer)
 		// resolved (ready or given up on). Processing in topological order means
 		// those dependencies were started in an earlier iteration; here we wait for
 		// them lazily, exactly when a dependent needs them.
-		if d.HealthWait {
+		if healthWait {
 			for _, j := range graph[i] {
 				if !resolved[j] {
-					waitHealthy(ctx, d, deps[j].Name, timeout)
+					waitHealthy(ctx, d, deps[j].ref(), timeout)
 					resolved[j] = true
 				}
 			}
 		}
-		if startErr := d.Docker.Start(ctx, deps[i].Name); startErr != nil {
+		if startErr := d.Start(ctx, deps[i].ref()); startErr != nil {
 			log.Printf("backup: restart dependency %q failed: %v", deps[i].Name, startErr)
 			resolved[i] = true // never let a dependent block on a container that failed to start
 		}
 	}
+}
+
+// StopLevels groups deps into the levels a stop walks through: level 0 holds the
+// containers nothing else in the set depends on, so the containers of one level
+// can be stopped in parallel and a dependency is only stopped once everything
+// that needs it is down.
+func StopLevels(deps []StopContainer) [][]int {
+	if len(deps) == 0 {
+		return nil
+	}
+	services, dependsOn := composeIdentity(deps)
+	graph := compose.DepGraph(services, dependsOn)
+	dependents := make([][]int, len(deps))
+	for i, needs := range graph {
+		for _, j := range needs {
+			dependents[j] = append(dependents[j], i)
+		}
+	}
+
+	// A container's dependents come after it in the start order, so walking that
+	// order backwards has every dependent's level ready when its turn comes.
+	level := make([]int, len(deps))
+	order := compose.StartOrder(services, dependsOn)
+	for k := len(order) - 1; k >= 0; k-- {
+		i := order[k]
+		for _, dependent := range dependents[i] {
+			if level[dependent]+1 > level[i] {
+				level[i] = level[dependent] + 1
+			}
+		}
+	}
+
+	levels := make([][]int, 0, len(deps))
+	for i, l := range level {
+		for len(levels) <= l {
+			levels = append(levels, nil)
+		}
+		levels[l] = append(levels[l], i)
+	}
+	return levels
+}
+
+func composeIdentity(deps []StopContainer) (services []string, dependsOn [][]string) {
+	services = make([]string, len(deps))
+	dependsOn = make([][]string, len(deps))
+	for i, dep := range deps {
+		services[i] = dep.Service
+		dependsOn[i] = dep.DependsOn
+	}
+	return services, dependsOn
 }
 
 // waitHealthy polls a container until it is ready or timeout elapses. Readiness
@@ -609,10 +752,10 @@ func restartStoppedDeps(ctx context.Context, d BackupDeps, deps []StopContainer)
 // (e.g. the container was removed mid-wait, or docker is briefly unreachable)
 // stops the wait and returns rather than blocking, and a cancelled context
 // returns immediately. It never returns an error — the restart is best-effort.
-func waitHealthy(ctx context.Context, d BackupDeps, name string, timeout time.Duration) {
+func waitHealthy(ctx context.Context, d DockerHealth, name string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for {
-		h, err := d.Docker.Health(ctx, name)
+		h, err := d.Health(ctx, name)
 		if err != nil {
 			// Cannot see the container (removed mid-wait, transient docker error):
 			// do not block the whole restart on it — log and move on.
@@ -660,6 +803,9 @@ func waitHealthy(ctx context.Context, d BackupDeps, name string, timeout time.Du
 //
 // Returns an error WITHOUT recording a run when not confirmed or the snapshot
 // id is invalid (nothing destructive has happened yet).
+//
+// A database dump is never replayed here: the restored snapshot was taken with
+// the container stopped and is the authoritative state.
 func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 	if !d.Confirmed {
 		return ErrNotConfirmed
@@ -677,7 +823,7 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 
 	restoreErr := runRestore(ctx, d)
 	if restoreErr != nil {
-		_ = d.Runs.Finish(runID, restoreOutcome(restoreErr), "", 0, truncateErr(restoreErr))
+		_ = d.Runs.Finish(runID, restoreOutcome(restoreErr), Summary{}, truncateErr(restoreErr))
 		return restoreErr
 	}
 
@@ -690,7 +836,7 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 	// A partial-mapping restore (RESTORE-01) still records success — the run
 	// itself completed — but the note channel says what was left out, so a DR
 	// audit never mistakes "success" for "everything came back".
-	if err := d.Runs.Finish(runID, statusSuccess, recordedSnap, 0, skippedPathsNote(d.SkippedPaths)); err != nil {
+	if err := d.Runs.Finish(runID, statusSuccess, Summary{SnapshotID: recordedSnap}, skippedPathsNote(d.SkippedPaths)); err != nil {
 		return fmt.Errorf("restore: record run finish: %w", err)
 	}
 	return nil
@@ -952,28 +1098,24 @@ func scrubRunErrOutsideARepoLocation(s string) string {
 	return runErrCredentialRe.ReplaceAllString(s, "[redacted]@")
 }
 
-// restoreConflictBypass reports whether err carries this package's own
-// ErrRestoreConflict sentinel and, if so, returns its message completely
-// UNSCRUBBED, and true. checkRestoreConflicts' message ("host port 8080/tcp
-// is already used by container ...") is already user-safe — IP/host-port/
-// container names, never a host filesystem path — and runErrPathRe's regex
-// matches ANY slash-containing token, not just a real path, so routing it
-// through scrubRunErr unconditionally mangles "8080/tcp" into "8080[path]",
-// destroying exactly the information the message exists to convey.
+// bypassMessage reports whether err carries one of the sentinels whose message
+// is already safe to show and has to reach the run row unscrubbed.
+//
+// checkRestoreConflicts' message ("host port 8080/tcp is already used by
+// container ...") holds IP addresses, host ports and container names, never a
+// host filesystem path, and runErrPathRe matches every slash-containing token, so
+// scrubbing it mangles "8080/tcp" into "8080[path]" and destroys exactly the
+// information the message exists to convey. A ZFSRefusal is built from validated
+// dataset names and reason codes for the same reason: scrubbed, "cache/appdata"
+// becomes "[path]" and the run history no longer says which dataset failed.
 //
 // This mirrors internal/api/handlers.go's scrubBypassMessage, which the api
-// package's own copy of truncateRunErr consults for the identical reason —
-// including this exact sentinel, plus 4 more that are only ever constructed
-// inside package api. This package can't import internal/api to share that
-// helper directly (internal/api already imports internal/backup, so the
-// reverse import would cycle) and, per the package doc comment above,
-// deliberately doesn't take on that kind of dependency anyway — same
-// reasoning as runErrPathRe/runErrCredentialRe's duplication above.
-// ErrRestoreConflict is the only one of those 5 sentinels this package's own
-// error paths can ever produce or receive, so it's the only one this bypass
-// needs to know about.
-func restoreConflictBypass(err error) (string, bool) {
-	if errors.Is(err, ErrRestoreConflict) {
+// package's own copy of truncateRunErr consults for the identical reason.
+// internal/api already imports this package, so the reverse import would cycle,
+// and the package doc above rules that dependency out anyway; the duplication is
+// the same trade as runErrPathRe/runErrCredentialRe above.
+func bypassMessage(err error) (string, bool) {
+	if errors.Is(err, ErrRestoreConflict) || errors.Is(err, ErrZFSRefusal) {
 		return err.Error(), true
 	}
 	return "", false
@@ -982,8 +1124,7 @@ func restoreConflictBypass(err error) (string, bool) {
 // truncateErr scrubs and bounds an error message so it fits the DB's
 // runs.error column.
 //
-// This scrubs every error EXCEPT one carrying ErrRestoreConflict (see
-// restoreConflictBypass), which passes through unscrubbed instead. Every
+// This scrubs every error except the ones bypassMessage lets through. Every
 // other error is scrubbed unconditionally, not just for the restic/dockercli
 // adapters whose errors already come pre-scrubbed through their own
 // interfaces (scrubbing an already-clean string is a no-op, so that costs
@@ -992,20 +1133,12 @@ func restoreConflictBypass(err error) (string, bool) {
 // runs.error, so scrubbing HERE protects every current caller and
 // every future one, instead of relying on every backupErr/restoreErr this
 // package ever builds having been routed through a scrubbing adapter first.
-//
-// An earlier version of this function scrubbed EVERYTHING unconditionally,
-// including an ErrRestoreConflict-wrapped error, on the theory that running
-// the scrub regexes over already-clean text is a harmless no-op. That was
-// false for exactly this sentinel — see restoreConflictBypass — so
-// checkRestoreConflicts' host:port conflict list used to reach runs.error
-// with its port numbers mangled into "[path]" even though the identical
-// error survives intact through the api package's scrubError.
 func truncateErr(err error) string {
 	if err == nil {
 		return ""
 	}
 	msg := err.Error()
-	if bypass, ok := restoreConflictBypass(err); ok {
+	if bypass, ok := bypassMessage(err); ok {
 		msg = bypass
 	} else {
 		msg = scrubRunErr(msg)

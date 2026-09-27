@@ -50,7 +50,7 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 	}
 	if op, busy := s.domainBusy("vms"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on vms", op)
+		return false, domainBusyError{op: op, domain: "vms"}
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -61,7 +61,7 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupVM(bctx, name); err != nil {
-			log.Printf("api: backup vm: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+			log.Printf("api: backup vm: %q %s: %v", name, backupEnding(err), err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
 	return true, nil
@@ -178,6 +178,9 @@ type VMView struct {
 	AliasConflicts []string `json:"aliasConflicts"`
 	// Aliases are the libvirt names this entry had before, oldest link first.
 	Aliases []string `json:"aliases"`
+	// homeBackups is how many backups the listing found at the VM's home, nil
+	// when the home was not listed.
+	homeBackups *int
 }
 
 // vmUUID returns tg's libvirt UUID. An empty column is filled from the saved
@@ -275,13 +278,14 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	// guessing, as on the container list. With no VM and no entry there is
 	// nothing to date.
 	var snapTimes map[string]int64
+	var homeCounts backupCounts
 	snapTimesFailed := false
 	if len(infos) > 0 || len(targets) > 0 {
-		if m, sErr := s.LatestVMBackupTimes(ctx); sErr != nil {
+		if m, c, sErr := s.LatestVMBackupTimes(ctx); sErr != nil {
 			log.Printf("api: list vms: latest backup times: %v", sErr)
 			snapTimesFailed = true
 		} else {
-			snapTimes = m
+			snapTimes, homeCounts = m, c
 		}
 	}
 
@@ -304,7 +308,10 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 			v.ScheduleCadence = t.ScheduleCadence
 			run, _ = s.store.LastSuccessfulBackup(t.ID)
 		}
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(vm.Name, run, snapTimes, snapTimesFailed)
+		home, hErr := s.primaryRepo(settings, "vms", vm.Name)
+		unlisted := snapTimesFailed || (hErr == nil && restic.IsRemoteRepo(home))
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[vm.Name], unlisted)
+		v.homeBackups = homeCounts.at(home, vm.Name)
 		own := v.LastBackup != nil
 		hasOwnBackup[vm.Name] = own
 		if !own {
@@ -330,7 +337,10 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	for _, t := range orphanTargets {
 		v := VMView{Name: t.Name, LibvirtName: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence, AliasConflicts: aliasConflicts.of(t.ID), Aliases: formerNames.of(t.ID)}
 		run, _ := s.store.LastSuccessfulBackup(t.ID)
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(t.Name, run, snapTimes, snapTimesFailed)
+		home, hErr := s.primaryRepo(settings, "vms", t.Name)
+		unlisted := snapTimesFailed || (hErr == nil && restic.IsRemoteRepo(home))
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.Name], unlisted)
+		v.homeBackups = homeCounts.at(home, t.Name)
 		views = append(views, v)
 	}
 	return views, nil
@@ -451,7 +461,7 @@ func (s *Service) removeStrayOverlays(diskPaths []string) {
 // is already returned to the caller.
 func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
 	if tg, err := s.store.GetVMTargetByName(name); err == nil {
-		if runID, sErr := s.store.StartRun(tg.ID, "backup"); sErr == nil {
+		if runID, sErr := s.startRun(ctx, tg.ID, "backup"); sErr == nil {
 			msg := cause.Error()
 			if len(msg) > 500 {
 				msg = msg[:500]
@@ -459,7 +469,7 @@ func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
 			_ = s.store.FinishRun(runID, "failed", "", 0, msg)
 		}
 	}
-	s.notifyBackup(ctx, "VM", name, false, backup.Summary{}, cause)
+	s.notifyBackup(ctx, "VM", name, "", false, backup.Summary{}, cause)
 }
 
 // vmDiskContainerPaths is where restic reads the file disks of domain through
@@ -489,9 +499,12 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
-	s.registerBackupCancel("vm:"+name, cancel) // reachable by shutdown
-	defer s.unregisterBackupCancel("vm:" + name)
+	s.registerBackupCancel(ctx, "vm:"+name, cancel) // reachable by shutdown
+	defer s.endBackupCancel("vm:"+name, &retErr)
 	defer s.lockDomain("vms")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "vms")
 
 	// Everything down to the orchestrator returns before any run is recorded,
 	// so a failure there would leave the card that started this backup waiting
@@ -504,7 +517,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	orchestrated := false
 	defer func() {
 		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrVMNotInstalled) {
-			s.recordPreflightFailure("BackupVM", name, targetID, retErr)
+			s.recordPreflightFailure(ctx, "BackupVM", name, targetID, retErr)
 		}
 	}()
 	settings, err := s.store.GetSettings()
@@ -679,6 +692,17 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		log.Printf("api: backup vm: aliases of %q: %v", name, aliasErr) //nolint:gosec // G706: %q-quoted
 	}
 
+	// A zvol disk is part of what this VM covers just as much as a file-backed
+	// one, so dropping either has to move the fingerprint.
+	sources := append([]string{}, diskPaths...)
+	for _, bd := range vmBlockDisks {
+		sources = append(sources, bd.Dataset)
+	}
+	selectionFP := selectionFingerprint(itemSelection{
+		Kind:     "vm",
+		Paths:    sources,
+		Excludes: domain.SkipSnapshotDevs,
+	})
 	deps := backup.VMBackupDeps{
 		Name:             name,
 		FormerNames:      aliasOldNames(aliases),
@@ -690,7 +714,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		TargetID:         tg.ID,
 		DataDir:          s.cfg.DataDir,
 		VM:               s.virsh,
-		Restic:           &resticAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, "vms", repo)},
+		Restic:           &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "vms", repo)},
 		BlockDisks:       vmBlockDisks,
 		ZFSHost:          sshZFSHost{ssh: s.ssh},
 		ZvolRestic:       &resticZvolAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, "vms", repo)},
@@ -720,20 +744,12 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// deps before they are passed in (see startedRunsAdapter). Wrapped in
 	// startedRunsAdapter, the orchestrator's Runs.Start is a read of this same
 	// id, not a second run row.
-	runID, err := s.store.StartRun(tg.ID, "backup")
+	runID, err := s.startRun(ctx, tg.ID, "backup")
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("backup vm: record run start: %w", err)
 	}
-	if gid := runGroupFromContext(ctx); gid != "" {
-		// The "Backup Everything" group stamp runsAdapter.Start does, inline here
-		// because the run id is produced once, right here, rather than in a later
-		// Start() call. Best-effort: a stamp failure must never fail a backup that
-		// already started.
-		if serr := s.store.SetRunGroup(runID, gid); serr != nil {
-			log.Printf("api: BackupVM: run %s: stamp group %s failed: %v", runID, gid, serr) //nolint:gosec // G706: runID/gid are internal ids, not user input
-		}
-	}
-	deps.Runs = startedRunsAdapter{st: s.store, runID: runID, svc: s, cancelKey: "vm:" + name}
+	s.bindBackupRun("vm:"+name, runID)
+	deps.Runs = startedRunsAdapter{st: s.store, runID: runID, svc: s, cancelKey: "vm:" + name, ctx: ctx}
 	// RunTag correlates every snapshot one backup invocation produces, and is
 	// only set when this backup produces more than one restic snapshot. A
 	// file-only VM's single snapshot is already identified by its "vm:<name>"
@@ -759,7 +775,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		sum, err = backup.BackupVMGraceful(bctx, deps)
 	}
 	s.progEnd(vkey, "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "VM", name, err == nil, sum, err)
+	s.notifyBackup(ctx, "VM", name, vkey, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -782,12 +798,12 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// Retention runs once for the VM's identity, aliases included, and once per
 	// zvol disk tag, so each disk's history ages as its own group. zvol tags
 	// have no aliases: a VM with block disks is never offered a takeover.
-	s.applyRetention(ctx, repo, settings, mode, s.vmIdentity(name), "vms")
+	s.applyRetention(ctx, repo, settings, mode, s.vmIdentity(name), "vms", anomalyScope{Kind: anomalyScopeItem, ID: tg.ID})
 	for _, bd := range vmBlockDisks {
 		if bd.Dev == "" {
 			continue // without a target dev it has no tag of its own and ages with "vm:<name>"
 		}
-		s.applyRetention(ctx, repo, settings, mode, tagIdentity("vm:"+name+":zvol:"+bd.Dev), "vms")
+		s.applyRetention(ctx, repo, settings, mode, tagIdentity("vm:"+name+":zvol:"+bd.Dev), "vms", anomalyScope{Kind: anomalyScopeItem, ID: tg.ID})
 	}
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "vms", settings, repo, "vm:"+name)
@@ -1358,7 +1374,7 @@ func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source s
 // wired (no key yet).
 func (s *Service) VMSSHInfo() (host, publicKey string, err error) {
 	if s.ssh == nil {
-		return "", "", errors.New("vm backup over SSH is not configured")
+		return "", "", errors.New("host SSH is not configured")
 	}
 	pub, err := s.ssh.PublicKey()
 	if err != nil {
@@ -1367,24 +1383,32 @@ func (s *Service) VMSSHInfo() (host, publicKey string, err error) {
 	return s.cfg.LibvirtHost, pub, nil
 }
 
-// VMSSHTest checks that libvirt is reachable over SSH (used by the Settings
-// "Test connection" button). Bounded by a timeout so an unreachable host
-// (e.g. a macvlan container with no route) fails fast instead of hanging.
-func (s *Service) VMSSHTest(ctx context.Context) error {
+// HostSSHTest checks the SSH link VM backups, ZFS backups and Unraid
+// notifications share. Only VM backups need libvirt, so a missing libvirt
+// comes back as libvirtErr and leaves the link itself passing (#53). The
+// timeout makes a host with no route fail fast instead of hanging.
+func (s *Service) HostSSHTest(ctx context.Context) (libvirtErr, err error) {
 	if s.ssh == nil {
-		return errors.New("vm backup over SSH is not configured")
+		return nil, errors.New("host SSH is not configured")
 	}
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
+	// Checked first because an SSH or auth failure explains more than the
+	// libvirt error it would also cause.
 	if err := s.ssh.EnsureKnownHost(ctx); err != nil {
-		return err // SSH, auth or reachability problem; clearer than libvirt's error
+		return nil, err
 	}
-	if err := s.ssh.Test(ctx); err != nil {
-		// EnsureKnownHost passed, so SSH auth and reachability are fine and only
-		// libvirt is missing. Say so, so a notifications-only user (who needs the
-		// SSH connection but not libvirt) isn't misled into thinking their SSH is
-		// broken (#53).
-		return fmt.Errorf("%w. The SSH connection itself is working, and libvirt is only needed for VM backups, not for Unraid notifications", err)
+	return s.ssh.Test(ctx), nil
+}
+
+// VMSSHTest is HostSSHTest for VM backups, which fail without libvirt.
+func (s *Service) VMSSHTest(ctx context.Context) error {
+	libvirtErr, err := s.HostSSHTest(ctx)
+	if err != nil {
+		return err
+	}
+	if libvirtErr != nil {
+		return fmt.Errorf("%w. The SSH connection itself is working; libvirt is only needed for VM backups", libvirtErr)
 	}
 	return nil
 }
@@ -1394,7 +1418,7 @@ func (s *Service) VMSSHTest(ctx context.Context) error {
 // so a hung SSH attempt can't stall the check.
 func (s *Service) LibvirtReachable() error {
 	if s.ssh == nil {
-		return errors.New("vm backup over SSH is not configured")
+		return errors.New("host SSH is not configured")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 12*time.Second)
 	defer cancel()

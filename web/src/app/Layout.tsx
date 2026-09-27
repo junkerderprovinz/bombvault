@@ -1,10 +1,14 @@
 import { Outlet, useLocation } from "react-router-dom";
+import { Button } from "../components/Button";
+import { IconMenu } from "../components/navGlyphs";
 import { Sidebar } from "../components/Sidebar";
 import { useEffect, useState, useCallback } from "react";
 import { getSettings, getAuth, getHealth, type Settings } from "../lib/api";
 import { LoginPage } from "../pages/Login";
 import { WhatsNewDialog } from "../components/WhatsNewDialog";
+import { AnomalyProvider } from "../lib/useAnomalies";
 import { sync as syncDisplayPrefs } from "../lib/displayPrefs";
+import { useT } from "../lib/i18n";
 
 // The last BombVault version this browser has seen. The "What's new" dialog
 // opens once when the running version differs.
@@ -32,6 +36,15 @@ export function Layout() {
   const [authEnabled, setAuthEnabled] = useState(false);
   const [whatsNewVersion, setWhatsNewVersion] = useState<string | null>(null);
   const location = useLocation();
+  const { t } = useT();
+  // The rail below the sm breakpoint closes on every navigation, reset during
+  // render rather than in an effect so it never paints open on the new page.
+  const [railOpen, setRailOpen] = useState(false);
+  const [railLocation, setRailLocation] = useState(location.key);
+  if (railLocation !== location.key) {
+    setRailLocation(location.key);
+    setRailOpen(false);
+  }
 
   // Runs on mount and again after a successful login.
   const checkAuth = useCallback(() => {
@@ -147,24 +160,48 @@ export function Layout() {
   // spaces both from the window edge and from each other. It is GlimStone's
   // --page-gutter (1rem, `p-4`), the same in every app that uses the design
   // language. The content's 1.5rem padding is a separate distance on top.
+  // Inside the gate, so a browser that may not enter polls nothing. The rail's
+  // count and the dashboard card read the same summary from here.
   return (
-    <div className="flex h-screen overflow-hidden bg-carbon-background gap-4 p-4">
-      <Sidebar settings={settings} authEnabled={authEnabled} />
-      {/* `main` is the scroll container. It and the route wrapper are flex
-          columns so a short page can fill the height and push a footer to the
-          bottom (Settings does this with AboutFooter); other pages render at
-          their natural height. */}
-      <main className="flex-1 flex flex-col overflow-y-auto min-w-0">
-        {/* The page padding lives inside the scroll container. There is none
-            at the bottom, so at the end of a scroll the last card ends level
-            with the rail instead of 24px above it. */}
-        <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col p-6 pb-0">
-          <Outlet />
+    <AnomalyProvider>
+      <div className="flex h-screen overflow-hidden bg-carbon-background gap-4 p-4">
+        {/* Below sm the rail would leave a phone's page too narrow to use, so
+            it folds into the menu button and opens over the page. */}
+        {railOpen && (
+          <div
+            data-testid="rail-backdrop"
+            className="glim-modal-backdrop fixed inset-0 z-30 sm:hidden"
+            onClick={() => setRailOpen(false)}
+          />
+        )}
+        <div className={`flex shrink-0 ${railOpen ? "max-sm:fixed max-sm:inset-y-4 max-sm:start-4 max-sm:z-40 max-sm:rounded-card max-sm:bg-carbon-surface max-sm:shadow-2xl" : "max-sm:hidden"}`}>
+          <Sidebar settings={settings} authEnabled={authEnabled} />
         </div>
-      </main>
-      {whatsNewVersion && (
-        <WhatsNewDialog version={whatsNewVersion} onClose={() => setWhatsNewVersion(null)} />
-      )}
-    </div>
+        {/* `main` is the scroll container. It and the route wrapper are flex
+            columns so a short page can fill the height and push a footer to the
+            bottom (Settings does this with AboutFooter); other pages render at
+            their natural height. */}
+        <main className="flex-1 flex flex-col overflow-y-auto min-w-0">
+          {/* The page padding lives inside the scroll container. There is none
+              at the bottom, so at the end of a scroll the last card ends level
+              with the rail instead of 24px above it. */}
+          <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col p-6 pb-0">
+            <div className="sm:hidden mb-4">
+              <Button
+                label={t("nav.menu")}
+                labelKey="nav.menu"
+                glyph={<IconMenu />}
+                ariaExpanded={railOpen}
+                onClick={() => setRailOpen(!railOpen)}
+              />
+            </div>
+            <Outlet />
+          </div>
+        </main>
+        {whatsNewVersion && (
+          <WhatsNewDialog version={whatsNewVersion} onClose={() => setWhatsNewVersion(null)} />
+        )}
+      </div>
+    </AnomalyProvider>
   );
 }

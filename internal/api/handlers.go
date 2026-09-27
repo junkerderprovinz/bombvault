@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/schedule"
 )
 
 // writeJSON encodes v as JSON with the given status code.
@@ -142,8 +144,17 @@ func scrubBypassMessage(err error) (string, bool) {
 	case errors.Is(err, errUnraidPlatformMismatch):
 		// /boot and /host/boot are what the operator has to act on.
 		return err.Error(), true
+	case errors.Is(err, backup.ErrZFSRefusal):
+		// Built from validated dataset names and reason codes, and the names
+		// contain "/": scrubbed, "cache/appdata" becomes "[path]" and the run
+		// history stops saying which dataset failed.
+		return err.Error(), true
 	case errors.Is(err, errZvolRebaseFailed):
 		// The ZFS dataset and pool names are the message and contain "/".
+		return err.Error(), true
+	case errors.Is(err, errDBImportFolders):
+		// The data folders an import set aside are what the operator has to act
+		// on, so they must survive the scrubber (see errDBImportFolders).
 		return err.Error(), true
 	case errors.Is(err, errRestPathUser):
 		// No path here, just two htpasswd user names. It bypasses so the exact
@@ -274,8 +285,9 @@ func (h *Handler) handleHealth(w http.ResponseWriter, _ *http.Request) {
 // separators, a leading "-" (argv option injection) and an empty name, and
 // validResourceName adds a ".." check. The router decodes "%2f" and "%2e%2e"
 // into the path value, so an unchecked {name} could carry "../" into the
-// template and XML file sinks.
-var resourceNameRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)
+// template and XML file sinks. The dump helper's --container flag matches
+// against the same pattern.
+var resourceNameRe = regexp.MustCompile(model.ResourceNamePattern)
 
 func validResourceName(name string) bool {
 	return resourceNameRe.MatchString(name) && !strings.Contains(name, "..")
@@ -366,6 +378,20 @@ func kindParam(r *http.Request) string {
 	return "subset"
 }
 
+// dueGates is the set of last-run queries the everyN cadence needs, one per
+// backup domain.
+func (h *Handler) dueGates() schedule.DueGates {
+	return schedule.DueGates{
+		Containers: h.containersLastRun,
+		VMs:        h.vmsLastRun,
+		Flash:      h.flashLastRun,
+		Config:     h.configLastRun,
+		Files:      h.filesLastRun,
+		ZFS:        h.zfsLastRun,
+		Everything: h.everythingLastRun,
+	}
+}
+
 // reloadScheduler re-reads the settings and re-registers every schedule entry,
 // including the per-item entries, after a change outside the settings form
 // such as a per-item cadence PATCH.
@@ -374,5 +400,5 @@ func (h *Handler) reloadScheduler() error {
 	if err != nil {
 		return err
 	}
-	return h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun)
+	return h.scheduler.ReloadWithGates(s, h.dueGates())
 }

@@ -6,18 +6,34 @@ import (
 	"strings"
 )
 
-// NewSPAHandler hands /api/, /metrics and /widget to apiRouter, serves existing
-// files from spaFS and answers every other path with index.html, so deep links
-// and reloads work. /metrics and /widget sit outside /api because Prometheus
-// and embedding pages expect those URLs.
+// NewSPAHandler hands /api/, /metrics, /widget, /mcp and the OAuth endpoints
+// to apiRouter, serves existing files from spaFS and answers every other path
+// with index.html, so deep links and reloads work. The ones outside /api sit
+// there because Prometheus, embedding pages and MCP clients expect those URLs.
+// The consent page at /oauth/authorize is part of the shell.
 func NewSPAHandler(spaFS fs.FS, apiRouter http.Handler) http.Handler {
 	fileServer := http.FileServerFS(spaFS)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// The API router answers unknown /api/ paths with a 404 itself.
-		if r.URL.Path == "/api" || strings.HasPrefix(r.URL.Path, "/api/") ||
-			r.URL.Path == "/metrics" || r.URL.Path == "/widget" {
+		// The API router answers unknown /api/ paths with a 404 itself, and it
+		// registers the exact /mcp only, so /mcp/x never gets the shell: its
+		// answer is a 404, or a 401 while a login password is set.
+		switch p := r.URL.Path; {
+		case p == "/api" || strings.HasPrefix(p, "/api/") ||
+			p == "/metrics" || p == "/widget" ||
+			p == mcpEndpointPath || strings.HasPrefix(p, mcpEndpointPath+"/"),
+			p == oauthResourceMeta, p == oauthServerMetaPath,
+			p == oauthRegisterPath, p == oauthTokenPath, p == oauthRevokePath:
 			apiRouter.ServeHTTP(w, r)
+			return
+		}
+
+		// An MCP client that got a 401 asks for OAuth metadata next. The shell
+		// would answer 200 with markup and the client would report a parse
+		// error instead of "unauthorized", so every other document there is a
+		// 404.
+		if strings.HasPrefix(r.URL.Path, "/.well-known/") {
+			http.NotFound(w, r)
 			return
 		}
 

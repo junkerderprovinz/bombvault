@@ -91,14 +91,15 @@ func (s *Service) newPass(settings store.Settings, p placementRead) (replication
 
 // targetVisit is what a pass does at one target.
 type targetVisit struct {
-	p         placementRead
-	owners    ownerContext
-	targetID  string
-	filtered  bool // a name is left out here, so every id restic gets is chosen by the rules
-	observe   bool // the target has a row, so what it holds is recorded
-	agingOnly bool // no item is copied here; the visit lists and ages what the target holds
-	aged      bool // it was aged under this state of the rules already
-	wasAged   bool // an aging mark exists, cleared when items are copied here again
+	p           placementRead
+	owners      ownerContext
+	targetID    string
+	filtered    bool // a name is left out here, so every id restic gets is chosen by the rules
+	observe     bool // the target has a row, so what it holds is recorded
+	agingOnly   bool // no item is copied here; the visit lists and ages what the target holds
+	aged        bool // it was aged under this state of the rules already
+	wasAged     bool // an aging mark exists, cleared when items are copied here again
+	unreachable bool // a source could not be reached, so the keep-policy does not run after this pass
 }
 
 // visit decides what the pass does at one target, and whether it opens it at
@@ -174,6 +175,8 @@ type sourceCopy struct {
 	send       []restic.Snapshot // what goes; with whole, what restic is expected to take
 	answers    bool              // the source holds snapshots of the domain
 	unmeasured bool              // whole, and its own listing failed; send is not a real estimate
+	left       []restic.Snapshot // taken out of send because the keep-policy forgets it right after
+	failed     bool
 }
 
 // copySources copies every source to one target; dst is the target's listing
@@ -211,8 +214,15 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 		if !c.whole {
 			held = append(held, c.send...)
 		}
-		total += len(c.send)
 		plan = append(plan, c)
+	}
+	// The keep-policy does not run after a pass with a failed or unreachable
+	// source, so nothing is left out for it then.
+	if dstErr == nil && len(out.errs) == 0 && !v.unreachable {
+		s.leaveOutWhatTheTargetForgets(plan, dst, target)
+	}
+	for _, c := range plan {
+		total += len(c.send)
 	}
 	if dstErr != nil {
 		total = 0 // unknown; the progress shows no "of N"
@@ -220,7 +230,8 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 	copyCtx := s.progBeginCopySink(ctx, domain, startedAt, total, lastCopy)
 	lim := targetOffsiteLimits(target)
 	done := 0
-	for _, c := range plan {
+	for i := range plan {
+		c := &plan[i]
 		if !c.whole && len(c.send) == 0 {
 			if c.answers {
 				out.accounted++
@@ -244,10 +255,14 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 		if err != nil {
 			log.Printf("api: offsite %s: copying %s failed (continuing with the other sources): %v", domain, shortRepoName(c.src.Loc), scrubError(err)) //nolint:gosec // G706: domain is a fixed literal, the name is shortened and the error scrubbed here
 			out.errs = append(out.errs, fmt.Errorf("copying %s: %w", shortRepoName(c.src.Loc), err))
+			c.failed = true
 			continue
 		}
 		out.copied++
 		out.accounted++
+	}
+	if len(out.errs) > 0 {
+		s.copyWhatWasLeftOut(copyCtx, domain, dest, mode, lim, plan, done, &out)
 	}
 	return out
 }
@@ -300,10 +315,28 @@ func (s *Service) copyMode(settings store.Settings, domain, dest string, mode re
 	return mode
 }
 
+// copyWhatWasLeftOut sends what the keep-policy was expected to forget after a
+// copy failed, since the policy then does not run and the target would go
+// without those snapshots for as long as the failure lasts.
+func (s *Service) copyWhatWasLeftOut(ctx context.Context, domain, dest string, mode restic.Mode, lim restic.Limits, plan []sourceCopy, done int, out *copyOutcome) {
+	for _, c := range plan {
+		if c.failed || len(c.left) == 0 {
+			continue
+		}
+		landed, err := s.copyInChunks(ctx, dest, c.src.Loc, c.left, lim, mode, done)
+		out.landed = append(out.landed, landed...)
+		done += len(landed)
+		if err != nil {
+			log.Printf("api: offsite %s: copying the rest of %s failed: %v", domain, shortRepoName(c.src.Loc), scrubError(err)) //nolint:gosec // G706: domain is a fixed literal, the name is shortened and the error scrubbed here
+			out.errs = append(out.errs, fmt.Errorf("copying %s: %w", shortRepoName(c.src.Loc), err))
+		}
+	}
+}
+
 // planSource lists one source and decides what it sends to the target. held is
 // what the target holds plus what earlier sources of this pass send it.
 func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mode, v targetVisit, src domainRepoRef, held []restic.Snapshot, heldKnown bool) (sourceCopy, error) {
-	c := sourceCopy{src: src, whole: !v.filtered && !src.CountOnly && (src.Own || domainTagPrefix(domain) == "")}
+	c := sourceCopy{src: src, whole: !v.filtered && !src.CountOnly && (src.Own || len(domainTagPrefixes(domain)) == 0)}
 	snaps, err := s.listSnapshots(ctx, src.Loc, mode)
 	if err != nil {
 		if c.whole {
@@ -329,6 +362,90 @@ func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mod
 		c.send = snaps // the target could not be read: every id, and restic skips what it holds
 	}
 	return c, nil
+}
+
+// leaveOutWhatTheTargetForgets drops from each send what the target's
+// keep-policy removes right after the copy. A snapshot the target aged out is
+// otherwise pending again at every pass, uploaded and forgotten once more. A
+// whole source that loses a snapshot this way hands restic its ids instead.
+func (s *Service) leaveOutWhatTheTargetForgets(plan []sourceCopy, dst []restic.Snapshot, target store.OffsiteTarget) {
+	p := rowRetentionPolicy(target)
+	if !p.Any() || target.Immutable {
+		return
+	}
+	after := slices.Clone(dst)
+	seen := map[string]bool{}
+	for _, sn := range dst {
+		seen[restic.Identity(sn)] = true
+	}
+	for _, c := range plan {
+		for _, sn := range c.send {
+			if !seen[restic.Identity(sn)] {
+				seen[restic.Identity(sn)] = true
+				after = append(after, sn)
+			}
+		}
+	}
+	forgotten := s.forgottenByPolicy(after, p)
+	if len(forgotten) == 0 {
+		return
+	}
+	for i := range plan {
+		c := &plan[i]
+		var kept []restic.Snapshot
+		for _, sn := range c.send {
+			if forgotten[sn.ID] {
+				c.left = append(c.left, sn)
+			} else {
+				kept = append(kept, sn)
+			}
+		}
+		if len(c.left) > 0 {
+			c.send, c.whole = kept, false
+		}
+	}
+}
+
+// forgottenByPolicy predicts the per-item forget ageTarget runs: the ids p
+// removes from snaps, grouped the way applyRetentionToTags groups them. A held
+// group, and one sharing a snapshot with another group, whose outcome depends
+// on the order the forgets run in, removes nothing here.
+func (s *Service) forgottenByPolicy(snaps []restic.Snapshot, p restic.RetentionPolicy) map[string]bool {
+	held, err := s.anomalies.HeldIdentityTags()
+	if err != nil {
+		return nil
+	}
+	groups, _ := s.foldAliasedIdentityTags(identityTags(snaps), snaps)
+	groupOf := map[string]int{}
+	for i, g := range groups {
+		for _, tag := range g {
+			groupOf[tag] = i
+		}
+	}
+	members := make([][]restic.Snapshot, len(groups))
+	shared := make([]bool, len(groups))
+	for _, sn := range snaps {
+		in := map[int]bool{}
+		for _, tag := range sn.Tags {
+			if i, ok := groupOf[tag]; ok {
+				in[i] = true
+			}
+		}
+		for i := range in {
+			members[i] = append(members[i], sn)
+			shared[i] = shared[i] || len(in) > 1
+		}
+	}
+	out := map[string]bool{}
+	for i, g := range groups {
+		if shared[i] || held.holdsAny(g) {
+			continue
+		}
+		if removed, ok := p.Forgets(members[i]); ok {
+			maps.Copy(out, removed)
+		}
+	}
+	return out
 }
 
 // copyInChunks hands restic the snapshots in blocks of copyChunkSize and returns
@@ -360,13 +477,13 @@ func pendingSnapshots(src, held []restic.Snapshot) []restic.Snapshot {
 	return out
 }
 
-// ofDomain keeps the snapshots carrying the domain's tag prefix; a named
-// repository may hold other domains' snapshots too.
+// ofDomain keeps the snapshots carrying one of the domain's tag prefixes; a
+// named repository may hold other domains' snapshots too.
 func ofDomain(snaps []restic.Snapshot, domain string) []restic.Snapshot {
-	prefix := domainTagPrefix(domain)
+	prefixes := domainTagPrefixes(domain)
 	var out []restic.Snapshot
 	for _, sn := range snaps {
-		if slices.ContainsFunc(sn.Tags, func(tag string) bool { return strings.HasPrefix(tag, prefix) }) {
+		if snapshotInDomain(sn, prefixes) {
 			out = append(out, sn)
 		}
 	}
@@ -444,14 +561,23 @@ func (s *Service) ageTarget(ctx context.Context, domain, dest string, mode resti
 		snaps = append(slices.Clone(held), landed...)
 		tags = identityTags(snaps)
 	}
+	var paused []string
 	var err error
 	if len(tags) == 0 {
-		err = s.applyRetentionPerIdentity(ctx, dest, op, mode)
+		paused, err = s.applyRetentionPerIdentity(ctx, dest, op, mode)
 	} else {
-		err = s.applyRetentionToTags(ctx, dest, op, mode, tags, snaps)
+		var held heldIdentityTags
+		if held, err = s.anomalies.HeldIdentityTags(); err != nil {
+			err = fmt.Errorf("read which items are paused: %w", err)
+		} else {
+			paused, err = s.applyRetentionToTags(ctx, dest, op, mode, tags, snaps, held)
+		}
 	}
 	if err != nil {
 		log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+	}
+	if len(paused) > 0 {
+		log.Printf("api: offsite %s: %s", domain, retentionPausedNote(paused)) //nolint:gosec // G706: domain is a fixed literal and tags are validated names
 	}
 	if v.observe {
 		after, lErr := s.listSnapshots(ctx, dest, mode)

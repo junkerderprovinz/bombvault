@@ -3,6 +3,7 @@ import { CadenceBuilder } from "../../../components/CadenceBuilder";
 import { ScheduleRow } from "../../../components/ScheduleBadge";
 import { Card } from "../shared";
 import { IntegrityCard } from "../IntegrityCard";
+import { AnomalyCard } from "../AnomalyCard";
 import type { SettingsTabProps } from "./types";
 
 export function IntegrityTab({
@@ -15,6 +16,12 @@ export function IntegrityTab({
   save,
   scheduleField,
   scheduleUpdate,
+  anomalySummary,
+  autoSaveToggle,
+  fieldBusy,
+  fieldShake,
+  setAnomalySaveState,
+  setAnomalySaveError,
 }: SettingsTabProps) {
   // Mirrors immutableOffsiteDomains in internal/schedule: the tamper test is
   // only scheduled when some domain has an off-site repo flagged immutable,
@@ -24,7 +31,8 @@ export function IntegrityTab({
     (settings.vmsOffsite !== "" && settings.vmsOffsiteImmutable) ||
     (settings.flashOffsite !== "" && settings.flashOffsiteImmutable) ||
     (settings.configOffsite !== "" && settings.configOffsiteImmutable) ||
-    (settings.filesOffsite !== "" && settings.filesOffsiteImmutable);
+    (settings.filesOffsite !== "" && settings.filesOffsiteImmutable) ||
+    (settings.zfsOffsite !== "" && settings.zfsOffsiteImmutable);
 
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
@@ -74,6 +82,22 @@ export function IntegrityTab({
           </Card>
         );
       })()}
+
+      {/* Last, so the restore checks and their schedule stay next to each
+          other. The target of /settings#anomalies; the margin keeps the
+          heading badge, which straddles the card's top edge, in view. */}
+      <div id="anomalies" className="scroll-mt-6">
+        <AnomalyCard
+          t={t}
+          settings={settings}
+          summary={anomalySummary}
+          save={(key, next) => void autoSaveToggle(key, next, setAnomalySaveState, setAnomalySaveError)}
+          busy={fieldBusy}
+          shake={fieldShake}
+          pulse={fieldPulse}
+          hueIndex={nextHue()}
+        />
+      </div>
     </>
   );
 }

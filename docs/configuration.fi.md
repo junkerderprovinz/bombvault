@@ -7,10 +7,10 @@ Tämä sivu käsittelee kontin ympäristömuuttujat, mallin tarjoamat liitokset,
 | Muuttuja | Vaadittu | Kuvaus |
 |---|---|---|
 | `APP_KEY` | **Kyllä** | 32-tavuinen heksadesimaalisalaisuus (64 heksamerkkiä), jota käytetään restic-repon salasanan johtamiseen. Luo komennolla `openssl rand -hex 32`. Pidä tämä turvassa: sen menettäminen tekee salatuista varmuuskopioista palautuskelvottomia. |
-| `LIBVIRT_HOST` | Virtuaalikoneille | Unraid-isäntä, johon otetaan yhteys SSH:n yli VM-varmuuskopiointia varten (oletus `host.docker.internal`; malli esitäyttää LAN-IP-paikanvaraajan). Käytä Unraidin LAN-IP-osoitetta, vaadittu mukautetussa `br0.x`-verkossa. |
-| `LIBVIRT_SSH_PORT` | Ei | Isännän SSH-portti VM-varmuuskopiointiin (oletus `22`). |
-| `LIBVIRT_SSH_USER` | Ei | SSH-käyttäjä isännällä VM-varmuuskopiointiin (oletus `root`). |
-| `LIBVIRT_URI` | Ei | Täydellinen libvirt-yhteys-URI, jota käytetään **sellaisenaan** sen sijaan, että se rakennettaisiin yllä olevista kolmesta `LIBVIRT_*`-muuttujasta (jotka jätetään silloin huomiotta yhteysmerkkijonon osalta). Oletuksena asettamaton. Tarvitaan TrueNAS Scalessa, jonka libvirtd kuuntelee epästandardissa soketissa, jota rakennettu merkkijonomuoto ei pysty ilmaisemaan: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Katso TrueNAS Scale -osio tiedostosta [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Virtuaalikoneille | Unraid-isäntä, johon otetaan yhteys SSH:n yli VM-varmuuskopiointia varten (oletus `host.docker.internal`; malli esitäyttää LAN-IP-paikanvaraajan). Käytä Unraidin LAN-IP-osoitetta, vaadittu mukautetussa `br0.x`-verkossa. Käytössä myös ZFS-tietojoukkojen varmuuskopioissa (mallin kenttä **Host SSH: Address**); paikkamerkki `192.168.x.x` lasketaan asettamattomaksi. |
+| `LIBVIRT_SSH_PORT` | Ei | Isännän SSH-portti VM-varmuuskopiointiin (oletus `22`). Mallin kenttä **Host SSH: Port**, myös ZFS-tietojoukoille. |
+| `LIBVIRT_SSH_USER` | Ei | SSH-käyttäjä isännällä VM-varmuuskopiointiin (oletus `root`). Mallin kenttä **Host SSH: User**, myös ZFS-tietojoukoille. |
+| `LIBVIRT_URI` | Ei | Täydellinen libvirt-yhteys-URI, jota käytetään **sellaisenaan** sen sijaan, että se rakennettaisiin yllä olevista kolmesta `LIBVIRT_*`-muuttujasta (jotka jätetään silloin huomiotta yhteysmerkkijonon osalta). Oletuksena asettamaton. Tarvitaan TrueNAS Scalessa, jonka libvirtd kuuntelee epästandardissa soketissa, jota rakennettu merkkijonomuoto ei pysty ilmaisemaan: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Katso TrueNAS Scale -osio tiedostosta [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Jos se on `qemu+ssh://`-URI, jokainen asettamaton muuttujista `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` ja `LIBVIRT_SSH_PORT` otetaan siitä, myös BombVaultin omiin SSH-komentoihin (NVRAM-siirto, ZFS-tietojoukot). |
 | `PORT` | Ei | HTTP-portti (oletus `3000`; käytetään vain asetuksella `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Ei | HTTPS-portti (oletus `3443`; malli julkaisee sen 1:1, joten WebUI vastaa osoitteessa `https://<ip>:3443`). |
 | `HTTP_ONLY` | Ei | Aseta `true` poistaaksesi itse allekirjoitetun HTTPS-kuuntelijan käytöstä ja tarjotaksesi vain selkeää HTTP:tä (käytettäväksi TLS:n päättävän käänteisen välityspalvelimen takana). |
@@ -20,13 +20,16 @@ Tämä sivu käsittelee kontin ympäristömuuttujat, mallin tarjoamat liitokset,
 | `PLATFORM` | Ei | Pakottaa alustan, jolla BombVault katsoo itsensä toimivan, sen sijaan että se tunnistaisi sen automaattisesti: `unraid`, `generic` tai `truenas` (oletuksena asettamaton: tunnistaa Unraidin automaattisesti koettelemalla sen `dockerMan`-merkkiä flash-liitoksen alta, muuten `generic`; tunnistamaton arvo palautuu myös arvoon `generic`, mistä kirjataan loki). Aseta se eksplisiittisesti yleisellä Docker-isännällä tai TrueNAS Scalessa sen sijaan, että luotat pelkkään Unraid-tunnistukseen. Yleinen compose-tiedosto tekee näin. Muuttaa appdata-varakäytäntöä, instanssien välisen palautuskohteen oletuksia sekä sitä, yritetäänkö Unraid-kohtaisia ilmoitus-/kumppanilisäosavaiheita ylipäätään (katso `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Ei | Itse BombVault-kontin nimi, jotta se ei koskaan varmuuskopioi (ja siten pysäytä) itseään. |
 | `BACKUP_MAX_HOURS` | Ei | Maksimimäärä kellonaikatunteja, jonka yksittäinen varmuuskopiointiajo saa pitää toimialuelukkoaan ennen kuin se pakotetaan peruutettavaksi (suoja, jotta jumittunut ajo ei voi tukkia toimialuetta ikuisesti). Tyhjä (oletus) käyttää arvoa `48`. Nosta sitä hyvin suuria tai hitaita pilvivarmuuskopioita varten (ajo, joka peruutetaan katossa, epäonnistuu virheellä `context deadline exceeded`). Aseta `0` poistaaksesi katon kokonaan käytöstä. |
+| `DB_DUMP_MAX_HOURS` | Ei | Tunnit, jotka yksi automaattinen tietokantavedos saa kestää ennen kuin se pysäytetään. Tyhjä (oletus) käyttää arvoa `6`; sallitut arvot ovat `1`...`48`, ja raja pidetään tunnin alle `BACKUP_MAX_HOURS`-arvon (puolessa siitä, jos se on alle kaksi tuntia), jotta pitkä vedos katkeaa omaan rajaansa ja raportoidaan sellaisena sen sijaan, että se kaataisi koko varmuuskopion. Vedos, joka ei enää edisty, pysäytetään aiemmin, `BACKUP_STALL_HOURS`-ajan jälkeen. Pysäytetty vedos epäonnistuu omana ajonaan ja kontin varmuuskopiointi jatkuu. Unraidissa lisää muuttuja BombVault-konttiin valinnalla **Add another Path, Port, Variable**. |
 | `TZ` | Ei | Ajastimen aikavyöhyke (esimerkiksi `Europe/Berlin`). **Jos sitä ei aseteta, kaikki ajastukset toimivat UTC-ajassa**: klo 02:30 asetettu ajastus käynnistyy silloin klo 02:30 UTC eikä paikallisen kellon mukaan. Unraidissa tätä ei aseteta itse: järjestelmä välittää oman aikavyöhykkeensä jokaiseen säilöön. |
 
 ## Liitokset
 
 Liitä Docker-soketti, flash (`/boot`) ja **Host Data** -juuri (`/mnt`) kuten CA-mallissa on näytetty. Varmuuskopioinnin *lähteet* ja *kohteet* asuvat molemmat Host Datan alla, ja se liitetään **slave**-tilassa, joten etäjako, joka liittyy kontin käynnistymisen jälkeen (esimerkiksi kohtaan `/mnt/remotes`), tulee näkyviin ilman uudelleenkäynnistystä.
 
-Uusi asennus tallentaa jokaisen toimialueen paikkaan **Unraid** polkuun `/mnt/user/bombvault`, yksi kansio kutakin toimialuetta kohden (`container`, `vms`, `flash`, `config`, `files`), ja kansiot luodaan ensimmäisen varmuuskopion yhteydessä. Muita paikkoja, paikallisia tai etäpaikkoja, lisäät kohdassa **Asetukset, Tallennustila**; katso [Tallennuspaikat](storage-places.md).
+ZFS-tietojoukkojen varmuuskopiot tarvitsevat myös tämän tilan: isäntä liittää tietojoukon tilannevedoksen vasta sen jälkeen, kun kontti on käynnistynyt. Katso [ZFS-tietojoukot](zfs-datasets.md).
+
+Uusi asennus tallentaa jokaisen toimialueen paikkaan **Unraid** polkuun `/mnt/user/bombvault`, yksi kansio kutakin toimialuetta kohden (`container`, `vms`, `flash`, `config`, `files`, `zfs`), ja kansiot luodaan ensimmäisen varmuuskopion yhteydessä. Muita paikkoja, paikallisia tai etäpaikkoja, lisäät kohdassa **Asetukset, Tallennustila**; katso [Tallennuspaikat](storage-places.md).
 
 !!! note "Isäntäintegraation tarkistus"
     Avaa `/spike` verkkokäyttöliittymässä kontin käynnistyttyä. Se koettaa jokaista liitosta ja komentorivityökalua (Docker-soketti, libvirt, restic, qemu-img, rclone) ja raportoi puuttuvat palaset.
@@ -39,6 +42,7 @@ Kunkin kontin kohdalla BombVault valitsee itse, mitkä bind-liitokset ja nimetyt
 - **Nimetyt Docker-taltiot** otetaan aina mukaan, koska niillä ei ole kertakäyttöistä vastinetta eikä siten mitään suodatettavaa, **mutta vain silloin, kun taltion todellinen tallennuspolku isännässä on itse tavoitettavissa Host Data -liitoksen kautta**, aivan kuten mikä tahansa muu isäntäpolku, jonka BombVault varmuuskopioi. Paikallisten taltioiden oletusajuri sijoittaa taltion demonin oman datajuuren alle, siis polkuun `/var/lib/docker/volumes/<nimi>/_data`, ellei sitä ole muutettu (tarkista komennolla `docker info -f '{{.DockerRootDir}}'`). Tuo paikka EI kuulu siihen kapeaan, yhden hakemiston Host Data -liitokseen, jota yleinen `docker-compose.yml` oletuksena käyttää. Tavoittamaton taltio ohitetaan äänettömästi, se ei ole virhe. Jotta nimetyt taltiot todella varmuuskopioituvat yleisessä isännässä, osoita Host Data (ja `HOST_SOURCE_ROOT`) yhteiseen ylempään hakemistoon, joka kattaa myös Dockerin datajuuren: kompromissi on kuvattu compose-tiedoston Host Data -kommentissa (Unraid kiertää tämän liittämällä samasta syystä koko `/mnt`-hakemiston, oman ylimmän tason yleiskäytäntönsä).
 - **Docker Composen projektihakemisto:** jos kontissa on vakiotunniste `com.docker.compose.project.working_dir` (jonka `docker compose up` asettaa automaattisesti), myös tuo hakemisto lisätään riippumatta siitä, osuiko jokin liitos datajuuren osaan.
 - **Ohitus tunnisteella `bombvault.data`:** aseta konttiin tunniste `bombvault.data=true`, niin KAIKKI sen bind-liitokset otetaan mukaan. Tämä on tarkoitettu kokoonpanolle, jota kumpikaan yllä olevista käytännöistä ei nappaa (esimerkiksi yksittäinen liitos `/srv/plex/config` ilman Compose-projektia). Mikä tahansa ei-tyhjä arvo paitsi `false` lasketaan todeksi; puuttuva tunniste tai `bombvault.data=false` ei muuta mitään.
+- **Tunniste `bombvault.dbdump`:** aseta kontille `bombvault.dbdump=false`, niin sen automaattinen tietokantavedos kytkeytyy pois (`0`, `no` ja `off` tekevät saman), tai nimeä moottori (`postgres`, `mysql`, `mariadb`), jolloin vedos otetaan kontista, jota BombVault ei itse tunnista. Tunniste voittaa kontin kortilla olevan kytkimen, joka on Unraidissa tavallinen tapa.
 
 ## Turvallisuusmalli
 
@@ -50,9 +54,14 @@ Kunkin kontin kohdalla BombVault valitsee itse, mitkä bind-liitokset ja nimetyt
 - Koska portti on käyttöön otettava, kun se on asettamatta, koko käyttöliittymä ja rajapinta (mukaan lukien etäsijainnin määritys, peukalointitestireitit ja palautuspaketti) ovat kenen tahansa tavoitettavissa, joka pääsee porttiin. Ota portti käyttöön heti kun käytät etäsijaintia, muuttumattomia varmuuskopioita tai salausta.
 - Aja BombVaultia vain luotetussa, altistamattomassa verkossa. Etäkäyttöä varten sijoita se käänteisen välityspalvelimen taakse, joka lisää todennuksen ja TLS:n. Vastaukset kantavat perustason turvaotsikot (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Käänteisproxyn takana jokainen pyyntö kantaa proxyn osoitetta, joten ilman `TRUSTED_PROXY`-asetusta jarru laskee kaikki asiakkaat samaan ämpäriin ja hyökkääjän epäonnistumiset lukitsevat myös sinut ulos. Nimeä proxy `TRUSTED_PROXY`-asetuksessa, niin laskenta palaa asiakaskohtaiseksi.
+- BombVaultin edessä olevan käänteisen välityspalvelimen on välitettävä otsake `Authorization` tai `X-API-Key` polkuun `/mcp` eikä se saa puskuroida vastauksia, muuten avustajat eivät saa yhteyttä. Katso [MCP-palvelin](mcp.md#tls).
 - Asetuksella `HTTP_ONLY=true` istuntoeväste menettää `Secure`-lippunsa (sen on pakko, jotta se toimisi selkeän HTTP:n yli), joten ota salasana käyttöön TLS:n päättävän välityspalvelimen takana vain jos luottamuksellisuudella on väliä.
 - VM-varmuuskopioinnin SSH-yhteys luottaa isäntäavaimeen ensimmäisellä yhteydellä (TOFU) ja kiinnittää sen sen jälkeen. Vahvista isännän avain erillistä kanavaa pitkin, jos kontti-isäntä-reittisi ei ole luotettu.
 - Varmuuskopiot ovat resticin salaamia, kun salaus on käytössä (Asetukset; oletuksena päällä), avaimen ollessa johdettuna `APP_KEY`:stä.
+
+## MCP-palvelin {#mcp-server}
+
+MCP-palvelin ei tarvitse ympäristömuuttujaa. Otat sen käyttöön luomalla avaimen kohdassa **Asetukset, Järjestelmä, MCP-palvelin**, ja se vastaa polussa `/mcp` samassa portissa kuin verkkokäyttöliittymä (esimerkiksi `https://192.168.1.10:3443/mcp`). Ilman aktiivista avainta se polku vastaa `404`. Asiakasohjelmat, varmenteet ja rajat kuvataan sivulla [MCP-palvelin](mcp.md).
 
 ## VM-varmuuskopiointi SSH:n yli
 
@@ -60,7 +69,7 @@ BombVault varmuuskopioi KVM/libvirt-virtuaalikoneet **liittämättä yhtäkään
 
 Pikamääritys:
 
-1. **Asetukset, Järjestelmä, VM Backup over SSH:** kopioi näytetty julkinen avain.
+1. **Asetukset, Järjestelmä, Palvelimen SSH:** kopioi näytetty julkinen avain.
 2. Lisää se Unraidin tiedostoon `/root/.ssh/authorized_keys` (myös flashiin tallennettuna, jotta se säilyy uudelleenkäynnistysten yli).
 3. Napsauta **Test connection**.
 
@@ -81,6 +90,19 @@ Etäkopiot menevät tallennuspaikkoihin. Lisää paikka kohdassa **Asetukset, Ta
 - **Säilytys, rajoitukset, tallennusluokka ja kasvubudjetti kuuluvat paikalle**, ja ne asetetaan paikan tiedoissa. Paikan säilytys koskee jokaista sen arkistoa, joten etäpaikka voi säilyttää kopioita pidempään arkistona; paikka, jonka jokainen sääntö on nolla, ei koskaan karsi mitään.
 - **Kylmä- ja arkistotallennusluokka (S3):** valitse S3-paikalle palautuksesta luettava taso (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-etäsijainnit asettavat luokkansa rclone-määrityksessä.
 - **Etäpaikkaan tallennettu toimialue:** katso [Etäpaikkaan tallennettu toimialue](offsite-recovery.md#remote-primary-repositories).
+
+## Poikkeamat {#anomalies}
+
+Poikkeamien tunnistus asetetaan kortissa **Poikkeamat** kohdassa **Asetukset, Eheys**. Jokainen säädin tallentuu heti, kun muutat sitä, ja kytkimen alla olevat kolme ovat piilossa, kun tunnistus on pois päältä.
+
+| Asetus | Oletus | Mitä se tekee |
+|---|---|---|
+| **Tunnista poikkeamat** | Päällä | Vertaa jokaista varmuuskopiota kohteen omaan historiaan. Pois päältä mitään uutta ei tarkisteta ja kohta **Poikkeamat** poistuu sivupalkista; kortti linkittää yhä aiempiin havaintoihin. |
+| **Herkkyys** | Tasapainoinen | Tiukka ilmoittaa pienemmistäkin muutoksista, Salliva vain suurista. |
+| **Lähetä ilmoitus, kun kyseessä on** | Vain kriittiset havainnot | Alin vakavuus, joka lähettää viestin kohdassa Ilmoitukset määritettyjen kanavien kautta. Toistuvasti epäonnistuneet varmuuskopiot ja vedokset sekä epäonnistuneet ajastetut palautustarkistukset lähettävät jo oman viestinsä, eikä niitä lähetetä kahdesti. |
+| **Säilytä vanhat varmuuskopiot, kun lähde kutistuu jyrkästi tai kirjoitetaan uudelleen** | Päällä | Niin kauan kuin kohteella on avoin havainto lähes tyhjästä lähteestä, voimakkaasta kutistumisesta tai suurimman osan datasta uudelleentallennuksesta, säilytys ja siivous jättävät kohteen vanhat varmuuskopiot rauhaan. Kuittaa havainto tai merkitse se odotetuksi vapauttaaksesi ne. |
+
+Jokaisella kohteella voi olla oma herkkyys ja oma ilmoitusminimi. Aseta ne sivun **Poikkeamat** välilehdellä **Kohteet** tai kohteen omassa paneelissa: kontin kansio-osiossa ja virtuaalikoneen asetuksissa (molemmat lisätilassa), kansiojoukon kansioeditorissa sekä sivuilla **Flash** ja **Itsevarmuuskopio**. ZFS-kohteella ne ovat kohteen muokkaimessa **ZFS**-sivulla ja koskevat puun jokaista tietojoukkoa.
 
 ## Siirrettävät asetukset (vienti ja tuonti) {#portable-settings-export-and-import}
 

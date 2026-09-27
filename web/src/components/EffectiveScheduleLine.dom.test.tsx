@@ -15,6 +15,10 @@ function draw(effective?: EffectiveSchedule) {
   return render(<EffectiveScheduleLine effective={effective} />);
 }
 
+function drawZFS(effective: EffectiveSchedule) {
+  return render(<EffectiveScheduleLine effective={effective} domainLabelKey="jobs.zfsSection" />);
+}
+
 afterEach(cleanup);
 
 describe("EffectiveScheduleLine", () => {
@@ -43,6 +47,12 @@ describe("EffectiveScheduleLine", () => {
     draw({ kind: "domain", spec: "weekly mon 02:00", alsoSpec: "" });
     // The name comes from jobs.filesSection, the card's own title key.
     expect(screen.getByText(/folders/i)).toBeTruthy();
+  });
+
+  it("names the card the caller points it at for a domain run", () => {
+    drawZFS({ kind: "domain", spec: "weekly mon 02:00", alsoSpec: "" });
+    expect(screen.getByText(/from ZFS datasets/i)).toBeTruthy();
+    expect(screen.queryByText(/folders/i)).toBeNull();
   });
 
   it("names Backup Everything for an everything-only run", () => {

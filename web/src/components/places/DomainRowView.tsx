@@ -78,10 +78,12 @@ function ApplyToOpenSwitch({ onChange }: { onChange: (on: boolean) => void }) {
 // What the next run copies once a paused default is confirmed, with a switch to
 // leave out each name in the backups that has no item here.
 function ConfirmLines({
+  domain,
   targets,
   unmatched,
   onExclude,
 }: {
+  domain: PlacementDomain;
   targets: TargetPreviewRow[];
   unmatched: UnmatchedName[];
   onExclude: (identities: string[]) => void;
@@ -98,7 +100,7 @@ function ConfirmLines({
       {targets.map((target) => (
         <div key={target.targetId} className="flex flex-col gap-1">
           <p className="text-sm text-carbon-text">{target.name}</p>
-          <NewTargetPreviewLines target={target.name} preview={target.preview} />
+          <NewTargetPreviewLines domain={domain} target={target.name} preview={target.preview} />
         </div>
       ))}
       {unmatched.length > 0 && (
@@ -205,7 +207,7 @@ export function DomainRowView({
         ? { applyToOpen: false }
         : null;
     }
-    const lines = p.impact ? impactLines(t, lang, p.impact, place) : [];
+    const lines = p.impact ? impactLines(t, lang, row.domain, p.impact, place) : [];
     if (p.creates === "repository") {
       lines.unshift(t("storageDomains.createsRepository").replace("{domain}", () => domain).replace("{place}", () => place));
     } else if (p.creates === "direct") {
@@ -256,12 +258,12 @@ export function DomainRowView({
   // A chip without a new target or an impact (flash, self-backup) asks nothing.
   async function askChip(p: CopiesPreview): Promise<boolean> {
     const place = placeName(p.placeId);
-    const lines = p.impact ? impactLines(t, lang, p.impact, place) : [];
+    const lines = p.impact ? impactLines(t, lang, row.domain, p.impact, place) : [];
     const extra = () => (lines.length > 0 ? <Lines lines={lines} /> : undefined);
     if (p.on) {
       if (p.newTarget) {
         return confirm(t("newTarget.intro").replace("{target}", () => place), {
-          extra: <NewTargetPreviewLines target={place} preview={p.newTarget} />,
+          extra: <NewTargetPreviewLines domain={row.domain} target={place} preview={p.newTarget} />,
         });
       }
       const lead = lines.shift();
@@ -310,7 +312,7 @@ export function DomainRowView({
       if (!preview.ok) return refused(preview, "confirm");
       let excluded: string[] = [];
       const extra = (
-        <ConfirmLines targets={preview.targets ?? []} unmatched={preview.unmatched ?? []} onExclude={(ids) => (excluded = ids)} />
+        <ConfirmLines domain={d} targets={preview.targets ?? []} unmatched={preview.unmatched ?? []} onExclude={(ids) => (excluded = ids)} />
       );
       if (!(await confirm(t("placementDefaults.confirmAsk"), { confirmKey: "placementDefaults.confirm", extra }))) return;
       const res = await confirmPlacementDefault(d, excluded);

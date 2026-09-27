@@ -29,6 +29,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
 // ResticEngine is the subset of *restic.Restic the service depends on. Defining
@@ -48,12 +49,26 @@ type ResticEngine interface {
 	// the mode's password decrypts.
 	RepoID(ctx context.Context, repo string, mode restic.Mode) (string, error)
 	Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
+	// BackupDir backs up the contents of dir as the snapshot's own tree root,
+	// with restic running inside dir. A ZFS member is read this way, so its
+	// tree root stays the dataset root although the directory it is read from
+	// names a different snapshot every run.
+	BackupDir(ctx context.Context, repo, dir string, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
 	// BackupStdin backs up all of rd as a single synthetic file recorded under
 	// path. The zvol VM disk backup pipes a `zfs send` stream through it straight
 	// into `restic backup --stdin`, with no local staging file; see
 	// backup.ZvolRestic.
 	BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string, mode restic.Mode) (restic.Summary, error)
+	// BackupFromCommand backs up the stdout of command as the single file
+	// stdinPath. It also returns what command wrote to stderr, which is where a
+	// database dump reports its own verdict and the pid it runs under inside
+	// the container.
+	BackupFromCommand(ctx context.Context, repo, stdinPath string, tags, command []string, mode restic.Mode) (restic.Summary, []string, error)
 	RestorePath(ctx context.Context, repo, snapshotID, path string, mode restic.Mode) error
+	// RestoreAll restores a whole snapshot into target, without what the
+	// exclude patterns match. A ZFS member's tree root is the dataset root, so
+	// its files land directly in target.
+	RestoreAll(ctx context.Context, repo, snapshotID, target string, mode restic.Mode, excludes ...string) error
 	// DumpRaw streams the synthetic file at path from the given snapshot into w.
 	// It is the restore-side counterpart of BackupStdin and feeds a `zfs receive`
 	// over SSH.
@@ -63,6 +78,13 @@ type ResticEngine interface {
 	// and no filesystem metadata is restored.
 	DumpZip(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, mode restic.Mode) error
 	Snapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
+	// SnapshotsMeta lists the same snapshots with the counters restic stores on
+	// them. It is separate from Snapshots so the listings the SPA receives keep
+	// the keys they have.
+	SnapshotsMeta(ctx context.Context, repo string, mode restic.Mode) ([]restic.SnapshotMeta, error)
+	// SnapshotParent returns the snapshot restic based snapshotID on, empty when
+	// it found none.
+	SnapshotParent(ctx context.Context, repo, snapshotID string, mode restic.Mode) (string, error)
 	Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, mode restic.Mode) error
 	// ForgetPolicy applies a keep-policy (retention). Inert when the policy has
 	// no dimension set. tags scopes the policy to one item's snapshots as a
@@ -71,6 +93,11 @@ type ResticEngine interface {
 	// to the repo-wide paths-grouped pass. prune reclaims freed space in the
 	// same run; batch callers pass false and Prune once at the end.
 	ForgetPolicy(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, prune bool) error
+	// ForgetPreview reports what ForgetPolicy WOULD remove for the same policy
+	// and tag, without changing the repository and without taking a lock, so it
+	// can answer while a backup is running. Inert when the policy has no
+	// dimension set, for the same reason ForgetPolicy is.
+	ForgetPreview(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string) ([]restic.ForgetGroup, error)
 	// Ls lists the files in a snapshot (for file-level restore).
 	Ls(ctx context.Context, repo, snapshotID string, mode restic.Mode) ([]restic.FileEntry, error)
 	// LsStream lists a snapshot's nodes like Ls but hands each entry to onEntry
@@ -166,11 +193,26 @@ type Service struct {
 	engine   ResticEngine
 	ssh      HostSSH         // optional; nil = no SSH (VM NVRAM transfer skipped)
 	progress *progress.Store // optional; nil = progress reporting disabled
+	// zfs owns the pools the ZFS domain snapshots. Optional; nil refuses every
+	// entry point of that domain with ssh-missing rather than skipping silently.
+	zfs zfs.Host
+	// zfsHostLast is the last host listing that worked, guarded by zfsHostMu.
+	zfsHostMu   sync.Mutex
+	zfsHostLast *zfsHostListing
 	// hostShell runs the "Backup Everything" global pre/post hook commands in
 	// BombVault's own container (see hostshell.go). NewService sets the real
 	// execHostShell, so it is never nil in production; tests override it with
 	// SetHostShell.
 	hostShell HostShell
+	// dbDumpHelper is the path of this binary, which restic runs as the
+	// dbdump-stream subcommand to get a dump on its stdin. Resolved in
+	// NewService; tests set it directly.
+	dbDumpHelper string
+	// dbDumpChown gives a saved dump or a folder BombVault created its owner
+	// through the open file: nil uses (*os.File).Chown, tests inject a fake
+	// because a developer machine refuses to hand a file to another user.
+	// Accessed via dbDumpChownFn.
+	dbDumpChown func(f *os.File, uid, gid int) error
 	// platform is the detected or injected Platform adapter (Unraid, generic, ...)
 	// behind the appdata fallback, the cross-instance restore-destination defaults
 	// and the Unraid update-status reconcile. nil means platform.Unraid{} (see
@@ -192,10 +234,19 @@ type Service struct {
 	// case) uses the platform statfs implementation (diskFreeBytes); tests
 	// inject a fake. Accessed via diskFreeFn.
 	diskFree func(path string) (uint64, error)
+	// diskStat and rcloneAbout are the capacity rule's probes, seams for the
+	// same reason diskFree is one: nil uses the platform statfs and the rclone
+	// binary. Accessed via diskStatFn and rcloneAboutFn.
+	diskStat    func(path string) (diskStatResult, error)
+	rcloneAbout func(ctx context.Context, remote string) (aboutResult, error)
 	// dirNonEmptyProbe is the container-restore overwrite guard's "does this
 	// destination already hold data" seam: nil uses the real filesystem
 	// (dirNonEmpty); tests inject a fake. Accessed via dirNonEmptyFn.
 	dirNonEmptyProbe func(path string) bool
+	// anomalies evaluates the backup history after every run. Nil on a Service
+	// built as a bare literal, which most of this package's tests are; every
+	// method of it survives that.
+	anomalies *anomalyEngine
 	// repoMu serialises operations per domain repo. A backup holds its domain's
 	// lock for the whole run; maintenance (unlock/prune/delete) TryLocks and
 	// reports "busy" instead, so a destructive `restic unlock --remove-all` /
@@ -228,6 +279,10 @@ type Service struct {
 	// cancel a restore the first time a caller forgot the prefix.
 	backupCancels map[string]context.CancelFunc
 
+	// backupCtxs is the context each cancel in backupCancels ends. Same guard,
+	// same lifetime.
+	backupCtxs map[string]context.Context
+
 	// cancelledBackups marks the keys a user cancelled (#200), so the run about to
 	// fail with a context error is recorded as "cancelled" instead. It shares
 	// backupCancels' guard and lifetime (set by CancelBackupRun, cleared by
@@ -235,11 +290,27 @@ type Service struct {
 	// able to call the cancel func after a user cancellation raced ahead of it.
 	cancelledBackups map[string]bool
 
+	// backupRuns is the run id each key in backupCancels writes, as far as it
+	// is known yet. Same guard, same lifetime.
+	backupRuns map[string]string
+
+	// committedBackups marks the keys whose backup has written its restore
+	// point (commitBackup), which CancelBackupRun then refuses. Same guard,
+	// same lifetime.
+	committedBackups map[string]bool
+
 	// shuttingDown is set once by BeginShutdown and never cleared.
 	// runsAdapter.Finish reads it to record a run cut short by shutdown as
 	// aborted rather than failed, so the history says the server went down
 	// instead of showing an unexplained error.
 	shuttingDown atomic.Bool
+
+	// stopCtx is cancelled by BeginShutdown. Work that outlives the request
+	// that asked for it, such as an MCP tool call on a detached handler
+	// context, hangs off it so docker stop reaches it too.
+	stopOnce   sync.Once
+	stopCtx    context.Context
+	stopCancel context.CancelFunc
 
 	// selfName is BombVault's own container name, resolved once and cached, so a
 	// backup never stops the process doing the backing up.
@@ -416,15 +487,17 @@ func (s *Service) lockTamper(domain string) func() {
 
 // NewService constructs the backup service.
 func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcli.Virsh, eng ResticEngine) *Service {
-	return &Service{
+	s := &Service{
 		cfg: cfg, store: st, docker: d, virsh: v, engine: eng,
-		hostShell: execHostShell{},
+		hostShell:    execHostShell{},
+		dbDumpHelper: helperBinaryPath(),
 		repoMu: map[string]*sync.Mutex{
 			"containers": {},
 			"vms":        {},
 			"flash":      {},
 			"config":     {},
 			"files":      {},
+			"zfs":        {},
 		},
 		domainActivity:    map[string]string{},
 		runCancels:        map[string]context.CancelFunc{},
@@ -432,6 +505,8 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 		suggestCache:      map[string]suggestCacheEntry{},
 		suggestFlights:    map[string]*suggestFlight{},
 	}
+	s.anomalies = newAnomalyEngine(s, time.Now)
+	return s
 }
 
 // errDomainBusy is returned by a maintenance op when a backup is holding the
@@ -454,6 +529,12 @@ func (s *Service) clearDomainActivity(domain string) {
 	delete(s.domainActivity, domain)
 	s.activityMu.Unlock()
 }
+
+// domainBusyError is a start refused because another operation holds the
+// domain, which a caller answers as busy rather than as a failure.
+type domainBusyError struct{ op, domain string }
+
+func (e domainBusyError) Error() string { return e.op + " is running on " + e.domain }
 
 // domainBusy reports the activity label of a domain whose repo lock is held,
 // and whether it is held at all. A backup starter uses it to refuse a busy
@@ -550,12 +631,19 @@ func backupHardCap() time.Duration {
 // configurable hard cap (backupHardCap). With an unlimited cap
 // (BACKUP_MAX_HOURS=0) no deadline is set; the returned context is still
 // cancelled by the deferred cancel func when the run returns.
+// It is also where the stall guard is armed, because this function is the one
+// gate every backup run passes and nothing else does. Arming it any further
+// down (at progBegin, say) would have caught restores and maintenance runs too:
+// a restore is not cancellable by design, and a prune emits no byte counters
+// at all, so silence there means nothing and cancelling on it would be wrong.
 func backupHoldCtx(ctx context.Context) (context.Context, context.CancelFunc) {
-	base := context.WithoutCancel(ctx)
+	held, stop := context.WithCancelCause(context.WithoutCancel(ctx))
+	cancel := func() { stop(nil) }
 	if cap := backupHardCap(); cap > 0 {
-		return context.WithTimeout(base, cap)
+		capped, release := context.WithTimeout(held, cap)
+		held, cancel = capped, func() { release(); stop(nil) }
 	}
-	return context.WithCancel(base)
+	return armStallGuard(held, stop, "backup"), cancel
 }
 
 // drillLockWait is the most a scheduled drill waits for the per-domain lock to
@@ -946,6 +1034,10 @@ func truncateRunErr(err error) string {
 	}
 	msg := err.Error()
 	if bypass, ok := scrubBypassMessage(err); ok {
+		// An import bounds its own cause, and its folder paths must stay whole.
+		if errors.Is(err, errDBImportFolders) {
+			return bypass
+		}
 		msg = bypass
 	} else {
 		msg = scrubSecrets(msg)

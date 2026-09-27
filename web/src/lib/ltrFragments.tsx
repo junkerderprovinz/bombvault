@@ -70,10 +70,6 @@ export function withLtrPlaceholder(text: string, token: string, value: string): 
  * guard in ltrFragments.test.ts, with withLtrFragments.
  */
 export function withLtrIsolates(text: string, fragments: readonly string[]): string {
-  // Escapes, because a literal zero-width character is invisible in an editor
-  // and easy to delete by accident.
-  const LRI = "\u2066";
-  const PDI = "\u2069";
   // Same precedence as withLtrFragments: wrapped text is not matched again.
   let parts: { text: string; wrapped: boolean }[] = [{ text, wrapped: false }];
   for (const frag of fragments) {
@@ -89,7 +85,19 @@ export function withLtrIsolates(text: string, fragments: readonly string[]): str
       return out;
     });
   }
-  return parts.map((p) => (p.wrapped ? `${LRI}${p.text}${PDI}` : p.text)).join("");
+  return parts.map((p) => (p.wrapped ? isolateLtr(p.text) : p.text)).join("");
+}
+
+/**
+ * isolateLtr keeps a value put into a sentence, such as "4.0 GB" or a date, in
+ * one left-to-right piece. Digits and the spaces and commas between them are
+ * weak or neutral in the bidi algorithm, so in Arabic or Hebrew prose "4.0 GB"
+ * shows as "GB 4.0".
+ */
+export function isolateLtr(value: string): string {
+  // Escapes, because a literal zero-width character is invisible in an editor
+  // and easy to delete by accident.
+  return `\u2066${value}\u2069`;
 }
 
 /** excludes.hint's leading-`/` example path. `.git` and `{a,b}` elsewhere in
@@ -124,11 +132,32 @@ export const APPRISE_ENDPOINT_LTR_FRAGMENTS = ["/notify/"] as const;
 /** The authorized-keys path the VM SSH card tells the user to append to. */
 export const VM_SSH_KEY_PATH_LTR_FRAGMENTS = ["/root/.ssh/authorized_keys"] as const;
 
+/** The Unraid user share, which the ZFS pages name as the mapping that hides
+ *  snapshots. */
+export const USER_SHARE_LTR_FRAGMENTS = ["/mnt/user"] as const;
+
+/** The mount root a dataset needs a mountpoint below. */
+export const MOUNT_ROOT_LTR_FRAGMENTS = ["/mnt"] as const;
+
+/** Both spellings, for the fix that contrasts them. The longer one comes
+ *  first so the bare mount root is only wrapped where it stands alone. */
+export const USER_SHARE_VS_MOUNT_ROOT_LTR_FRAGMENTS = ["/mnt/user", "/mnt"] as const;
+
+/** zfs.excludesHint's example pattern, measured from the item's dataset. */
+export const ZFS_EXCLUDE_EXAMPLE_LTR_FRAGMENTS = ["/plex/Library/Cache"] as const;
+
 /** cadence.cronInvalid's worked example. Not a path, but the same bug: a run of
  *  digits, spaces, `*` and `/` is entirely weak/neutral bidi classes, so an RTL
  *  paragraph reorders the whole expression and the user is shown a cron line
  *  they cannot type back. */
 export const CRON_EXAMPLE_LTR_FRAGMENTS = ["0 */6 * * *"] as const;
+
+/** The three paths a cloud assistant calls, which a reverse proxy has to let
+ *  through for sign-in through OAuth. */
+export const MCP_OAUTH_PATHS_LTR_FRAGMENTS = ["/.well-known/", "/oauth/", "/mcp"] as const;
+
+/** The two rest-server paths a direct repository may take, the longer first. */
+export const REST_PATH_EXAMPLE_LTR_FRAGMENTS = ["/user/files-direct", "/files-direct"] as const;
 
 /**
  * LTR_FRAGMENTS_BY_KEY maps each translation key to its fragment list. The
@@ -156,6 +185,12 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "settings.metricsHint": METRICS_ENDPOINT_LTR_FRAGMENTS,
   "vm.ssh.publicKey": VM_SSH_KEY_PATH_LTR_FRAGMENTS,
   "cadence.cronInvalid": CRON_EXAMPLE_LTR_FRAGMENTS,
+  "zfs.code.shfs-only": USER_SHARE_LTR_FRAGMENTS,
+  "zfs.fix.shfs-only": USER_SHARE_VS_MOUNT_ROOT_LTR_FRAGMENTS,
+  "zfs.fix.legacy-mount": MOUNT_ROOT_LTR_FRAGMENTS,
+  "zfs.excludesHint": ZFS_EXCLUDE_EXAMPLE_LTR_FRAGMENTS,
+  "mcp.oauthProxyNote": MCP_OAUTH_PATHS_LTR_FRAGMENTS,
+  "placementCode.restPathTooDeep": REST_PATH_EXAMPLE_LTR_FRAGMENTS,
 } as const satisfies Record<string, readonly string[]>;
 
 /**

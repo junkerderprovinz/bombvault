@@ -94,6 +94,7 @@ var placementCodes = []struct {
 	{store.ErrDirectRepo, "direct-repo"},
 	{errDirectAccessDenied, "direct-access-denied"},
 	{errPlaceProbeFailed, "place-probe-failed"},
+	{errRestPathTooDeep, "rest-path-too-deep"},
 	{errAppendOnlyOffsiteTarget, "append-only"},
 	{errRemovalGrown, "removal-grown"},
 	{errNameMismatch, "name-mismatch"},
@@ -128,6 +129,15 @@ func placementFail(w http.ResponseWriter, err error, extra map[string]any) {
 // replicate a single repository and never reach this.
 func validPlacementDomain(domain string) bool {
 	return slices.Contains(store.PlacementDomains, domain)
+}
+
+// itemIdentityPrefix is the tag prefix of an item's own identity in a
+// placement domain, and "" in any other.
+func itemIdentityPrefix(domain string) string {
+	if !validPlacementDomain(domain) {
+		return ""
+	}
+	return domainTagPrefixes(domain)[0]
 }
 
 // itemParam reads {domain} and {name} of an /api/items route with the validator

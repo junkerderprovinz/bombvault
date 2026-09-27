@@ -58,47 +58,88 @@ const (
 	EffectiveBoth = "both"
 )
 
+// EffectiveContainerSchedule answers the same question for one container, and
+// EffectiveVMSchedule for one VM. Both delegate to effectiveItemSchedule, so
+// the three domains can never drift into answering it differently.
+//
+// They exist because the question has no other answer in the tree: file sets
+// had this helper from #199, containers and VMs never did, and "is this item
+// actually backed up by anything" is exactly what a coverage report has to get
+// right. Getting it wrong in the safe-looking direction is the dangerous one,
+// because it reports something as protected while nothing backs it up.
+func EffectiveContainerSchedule(t store.Target, s store.Settings) EffectiveSchedule {
+	return effectiveItemSchedule(s.ContainersEnabled, t.IncludeInSchedule, t.ScheduleCadence, s.ContainersSchedule, s)
+}
+
+// EffectiveVMSchedule computes the outcome for one VM.
+func EffectiveVMSchedule(v store.VMTarget, s store.Settings) EffectiveSchedule {
+	return effectiveItemSchedule(s.VMsEnabled, v.IncludeInSchedule, v.ScheduleCadence, s.VMsSchedule, s)
+}
+
+// effectiveItemSchedule is the shared body: the same branches, in the same
+// order, reading the same inputs the scheduler reads. See
+// EffectiveFileSetSchedule below for what each branch mirrors and why.
+func effectiveItemSchedule(domainEnabled, included bool, override, domainSchedule string, s store.Settings) EffectiveSchedule {
+	if !domainEnabled || !included {
+		return EffectiveSchedule{Kind: EffectiveNone}
+	}
+	if s.PerItemSchedules {
+		switch cls := classifyItemOverride(override); {
+		case cls.ownEntry:
+			return EffectiveSchedule{Kind: EffectiveOwn, Spec: override}
+		case !cls.inDomainRun:
+			return EffectiveSchedule{Kind: EffectiveNone}
+		}
+	}
+	domain := cadenceRuns(domainSchedule)
+	everything := cadenceRuns(s.EverythingSchedule)
+	switch {
+	case domain && everything:
+		return EffectiveSchedule{Kind: EffectiveBoth, Spec: domainSchedule, AlsoSpec: s.EverythingSchedule}
+	case domain:
+		return EffectiveSchedule{Kind: EffectiveDomain, Spec: domainSchedule}
+	case everything:
+		return EffectiveSchedule{Kind: EffectiveEverything, Spec: s.EverythingSchedule}
+	default:
+		return EffectiveSchedule{Kind: EffectiveNone}
+	}
+}
+
 // EffectiveFileSetSchedule computes the outcome for one set.
 func EffectiveFileSetSchedule(fs store.FileSet, s store.Settings) EffectiveSchedule {
 	// The Folders domain toggle gates the domain job (`off: !settings.FilesEnabled`
 	// in registerJobs) and the files leg of Backup Everything (the {"files",
 	// settings.FilesEnabled, ...} row in everythingRun). With it off, no path
 	// reaches a file set.
-	if !s.FilesEnabled {
-		return EffectiveSchedule{Kind: EffectiveNone}
-	}
 	// Enabled is checked by all three: registerPerItemEntries skips !fs.Enabled,
 	// RunFilesJob skips it, and everythingRunFiles skips it. This is the branch
 	// whose label lies, so it is the one worth naming plainly on screen.
-	if !fs.Enabled {
-		return EffectiveSchedule{Kind: EffectiveNone}
+	//
+	// The body moved to effectiveItemSchedule when containers and VMs gained the
+	// same helper. Sharing it is the point: three domains answering "what
+	// actually happens to this item" with three copies of the same branches is
+	// three places for them to drift.
+	return effectiveItemSchedule(s.FilesEnabled, fs.Enabled, fs.ScheduleCadence, s.FilesSchedule, s)
+}
+
+// EffectiveZFSDatasetSchedule computes the outcome for one ZFS item.
+func EffectiveZFSDatasetSchedule(d store.ZFSDataset, s store.Settings) EffectiveSchedule {
+	return effectiveItemSchedule(s.ZFSEnabled, d.Enabled, d.ScheduleCadence, s.ZFSSchedule, s)
+}
+
+// PausedByOverride reports whether an item's own schedule override switches its
+// backups off, the operator's pause. EffectiveSchedule collapses that into
+// EffectiveNone together with a disabled domain and an excluded item, so the
+// two cases need a reading of their own where they have to be told apart. An
+// item with a cadence of its own is not paused, so a manual "back up this
+// domain now" takes it along even though the scheduled domain pass leaves it to
+// its own entry.
+func PausedByOverride(override string, perItem bool) bool {
+	if !perItem {
+		return false
 	}
-	if s.PerItemSchedules {
-		switch cls := classifyItemOverride(fs.ScheduleCadence); {
-		case cls.ownEntry:
-			// Its own entry, and DomainRunFileSets drops it from the domain run
-			// and from Backup Everything. Report the override the user typed,
-			// not cls.Spec: cls.Spec is the compiled cron expression.
-			return EffectiveSchedule{Kind: EffectiveOwn, Spec: fs.ScheduleCadence}
-		case !cls.inDomainRun:
-			// A literal "off" override: no entry, and out of every run.
-			return EffectiveSchedule{Kind: EffectiveNone}
-		}
-	}
-	// From here the set follows the domain default, so what covers it is
-	// whichever of the two schedules is switched on.
-	domain := cadenceRuns(s.FilesSchedule)
-	everything := cadenceRuns(s.EverythingSchedule)
-	switch {
-	case domain && everything:
-		return EffectiveSchedule{Kind: EffectiveBoth, Spec: s.FilesSchedule, AlsoSpec: s.EverythingSchedule}
-	case domain:
-		return EffectiveSchedule{Kind: EffectiveDomain, Spec: s.FilesSchedule}
-	case everything:
-		return EffectiveSchedule{Kind: EffectiveEverything, Spec: s.EverythingSchedule}
-	default:
-		return EffectiveSchedule{Kind: EffectiveNone}
-	}
+	cls := classifyItemOverride(override)
+	return !cls.ownEntry && !cls.inDomainRun
 }
 
 // cadenceRuns reports whether a cadence string would ever fire. An unparseable

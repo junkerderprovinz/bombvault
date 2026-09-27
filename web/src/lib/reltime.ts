@@ -43,6 +43,15 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
+ * formatMillis is formatDuration for a span measured in milliseconds. Under a
+ * second it keeps the milliseconds, which whole seconds would round to "0s".
+ */
+export function formatMillis(ms: number): string {
+  if (Number.isFinite(ms) && ms >= 0 && ms < 1000) return `${Math.round(ms)}ms`;
+  return formatDuration(ms / 1000);
+}
+
+/**
  * elapsedSince renders the span from a backend-stamped `startedAt` (Unix
  * seconds) to `nowMs` (epoch milliseconds) via formatDuration. It returns ""
  * when `startedAt` is missing, not positive, or in the future (clock skew).

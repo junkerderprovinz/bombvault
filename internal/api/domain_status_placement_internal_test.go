@@ -161,7 +161,7 @@ func TestTheStatusNamesTheTargetOfTheLastDRDrill(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.target("flash", "B2", "s3:b2/flash")
 	hetzner := f.target("flash", "Hetzner", "sftp:u1@hetzner:/flash")
-	if err := f.st.AddRestoreDrill(store.RestoreDrill{Domain: "flash", Source: "offsite", Kind: "dr", At: 100, OK: true, TargetID: hetzner.ID}); err != nil {
+	if err := f.st.AddRestoreDrill(store.RestoreDrill{Domain: "flash", Source: "offsite", Kind: "dr", At: 100, OK: true, OffsiteTargetID: hetzner.ID}); err != nil {
 		t.Fatal(err)
 	}
 	if got := f.domainStatus("flash").DrillTarget; got != "Hetzner" {
@@ -184,7 +184,7 @@ func TestTheDRDrillVerdictIsTheWorstOfEachTargetsLatestDrill(t *testing.T) {
 	hetzner := f.target("flash", "Hetzner", "sftp:u1@hetzner:/flash")
 	drill := func(target string, at int64, detail string) {
 		t.Helper()
-		d := store.RestoreDrill{Domain: "flash", Source: "offsite", Kind: "dr", At: at, OK: detail == "", Detail: detail, TargetID: target}
+		d := store.RestoreDrill{Domain: "flash", Source: "offsite", Kind: "dr", At: at, OK: detail == "", Detail: detail, OffsiteTargetID: target}
 		if err := f.st.AddRestoreDrill(d); err != nil {
 			t.Fatal(err)
 		}
@@ -208,8 +208,8 @@ func TestADRDrillOfASwitchedOffTargetDoesNotSetTheVerdict(t *testing.T) {
 	b2 := f.target("flash", "B2", "s3:b2/flash")
 	hetzner := f.target("flash", "Hetzner", "sftp:u1@hetzner:/flash")
 	for _, d := range []store.RestoreDrill{
-		{Domain: "flash", Source: "offsite", Kind: "dr", At: 100, Detail: "verification mismatch", TargetID: b2.ID},
-		{Domain: "flash", Source: "offsite", Kind: "dr", At: 200, OK: true, TargetID: hetzner.ID},
+		{Domain: "flash", Source: "offsite", Kind: "dr", At: 100, Detail: "verification mismatch", OffsiteTargetID: b2.ID},
+		{Domain: "flash", Source: "offsite", Kind: "dr", At: 200, OK: true, OffsiteTargetID: hetzner.ID},
 	} {
 		if err := f.st.AddRestoreDrill(d); err != nil {
 			t.Fatal(err)
@@ -230,14 +230,14 @@ func TestADRDrillOfATargetInTheHouseProvesNothingOffSite(t *testing.T) {
 	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
 	f.linkRow(nas.ID, f.storePlace(nasKeller()), "containers", "")
 	b2 := f.target("containers", "B2", b2Containers)
-	if err := f.st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "offsite", Kind: "dr", At: 100, OK: true, TargetID: nas.ID}); err != nil {
+	if err := f.st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "offsite", Kind: "dr", At: 100, OK: true, OffsiteTargetID: nas.ID}); err != nil {
 		t.Fatal(err)
 	}
 	if d := f.domainStatus("containers"); d.LastDRDrillAt != 0 || d.DrillTarget != "" {
 		t.Fatalf("drill at %d on %q, want none: only the NAS in the house was drilled", d.LastDRDrillAt, d.DrillTarget)
 	}
 
-	if err := f.st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "offsite", Kind: "dr", At: 50, OK: true, TargetID: b2.ID}); err != nil {
+	if err := f.st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "offsite", Kind: "dr", At: 50, OK: true, OffsiteTargetID: b2.ID}); err != nil {
 		t.Fatal(err)
 	}
 	if d := f.domainStatus("containers"); d.LastDRDrillAt != 50 || d.DrillTarget != "B2" {
@@ -250,8 +250,8 @@ func TestSwitchingOffTheFailingTargetLeavesTheOtherTargetsVerdict(t *testing.T) 
 	b2 := f.target("flash", "B2", "s3:b2/flash")
 	hetzner := f.target("flash", "Hetzner", "sftp:u1@hetzner:/flash")
 	for _, d := range []store.RestoreDrill{
-		{Domain: "flash", Source: "offsite", Kind: "dr", At: 200, OK: true, TargetID: hetzner.ID},
-		{Domain: "flash", Source: "offsite", Kind: "dr", At: 300, Detail: "verification mismatch", TargetID: b2.ID},
+		{Domain: "flash", Source: "offsite", Kind: "dr", At: 200, OK: true, OffsiteTargetID: hetzner.ID},
+		{Domain: "flash", Source: "offsite", Kind: "dr", At: 300, Detail: "verification mismatch", OffsiteTargetID: b2.ID},
 	} {
 		if err := f.st.AddRestoreDrill(d); err != nil {
 			t.Fatal(err)

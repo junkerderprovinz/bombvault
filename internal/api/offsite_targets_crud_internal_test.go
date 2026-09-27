@@ -91,7 +91,7 @@ func TestTheServerDecidesWhereANewTargetGoes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	body, _ := json.Marshal(offsiteTargetView{Domain: "containers", Name: "Hetzner", Repo: "sftp:u1@hetzner:/c", Enabled: true, SortOrder: 0})
+	body := []byte(`{"domain":"containers","name":"Hetzner","repo":"sftp:u1@hetzner:/c","enabled":true}`)
 	rec := httptest.NewRecorder()
 	h.handleCreateOffsiteTarget(rec, jsonReq(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
 	env := decodeEnvelope(t, rec)
@@ -101,7 +101,6 @@ func TestTheServerDecidesWhereANewTargetGoes(t *testing.T) {
 	}
 	id, _ := created["id"].(string)
 
-	body, _ = json.Marshal(offsiteTargetView{Domain: "containers", Name: "Hetzner", Repo: "sftp:u1@hetzner:/c", Enabled: true, SortOrder: 0})
 	req := jsonReq(http.MethodPut, "/api/offsite/targets/"+id, bytes.NewReader(body))
 	req.SetPathValue("id", id)
 	rec = httptest.NewRecorder()
@@ -138,11 +137,9 @@ func TestOffsiteTargetCreateValidation(t *testing.T) {
 	}
 }
 
-// TestUpdateOffsiteTargetRefusesADomainChange: PUT keeps the stored sort_order,
-// so moving a row to another domain through the same request would leave it
-// sitting on that domain's slot 0 alongside whatever is already there. The UI
-// never sends a domain change, but the API must refuse one rather than trust
-// the body.
+// TestUpdateOffsiteTargetRefusesADomainChange: a target's copy rules and its
+// direct repository belong to its domain. The UI never sends a domain change,
+// but the API must refuse one rather than trust the body.
 func TestUpdateOffsiteTargetRefusesADomainChange(t *testing.T) {
 	h, st := newCRUDHandler(t)
 	tg, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Primary", Repo: "s3:c1", Enabled: true})
@@ -191,31 +188,92 @@ func TestCreateOffsiteTargetWithoutSortOrderGoesLast(t *testing.T) {
 	}
 }
 
-// A create never takes sort order 0, whatever the body asks for: that slot is
-// the row the domain's off-site field edits.
-func TestCreateOffsiteTargetWithSortOrderZeroStillGoesLast(t *testing.T) {
+// Sort order 0 is the primary, which the off-site setting in Settings manages,
+// so the create route refuses it and anything below it.
+func TestCreateOffsiteTargetRefusesPrimarySortOrder(t *testing.T) {
 	h, st := newCRUDHandler(t)
-	field, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Primary", Repo: "s3:c", Enabled: true})
+	for _, order := range []int{0, -1} {
+		body, _ := json.Marshal(offsiteTargetView{Domain: "containers", Name: "Second", Repo: "s3:c2", Enabled: true, SortOrder: order})
+		rec := httptest.NewRecorder()
+		h.handleCreateOffsiteTarget(rec, jsonReq(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
+		if env := decodeEnvelope(t, rec); env["ok"] == true {
+			t.Fatalf("sortOrder %d: want a refusal, got %v", order, env)
+		}
+	}
+	all, err := st.ListOffsiteTargets()
 	if err != nil {
 		t.Fatal(err)
 	}
-	for i, c := range []struct {
-		order int
-		repo  string
-	}{{0, "s3:c2"}, {-1, "s3:c3"}} {
-		body, _ := json.Marshal(offsiteTargetView{Domain: "containers", Name: c.repo, Repo: c.repo, Enabled: true, SortOrder: c.order})
-		rec := httptest.NewRecorder()
-		h.handleCreateOffsiteTarget(rec, jsonReq(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
-		env := decodeEnvelope(t, rec)
-		if env["ok"] != true {
-			t.Fatalf("sortOrder %d: create not ok: %v", c.order, env)
-		}
-		if got := env["target"].(map[string]any)["sortOrder"]; got != float64(i+1) {
-			t.Fatalf("sortOrder %d: stored at %v, want %d", c.order, got, i+1)
+	if len(all) != 0 {
+		t.Fatalf("a refused create stored targets: %+v", all)
+	}
+}
+
+// putOffsiteTarget sends body to the update route for id and returns the
+// envelope.
+func putOffsiteTarget(t *testing.T, h *Handler, id, body string) map[string]any {
+	t.Helper()
+	req := jsonReq(http.MethodPut, "/api/offsite/targets/"+id, bytes.NewReader([]byte(body)))
+	req.SetPathValue("id", id)
+	rec := httptest.NewRecorder()
+	h.handleUpdateOffsiteTarget(rec, req)
+	return decodeEnvelope(t, rec)
+}
+
+// An additional target moved onto sort order 0 would sit next to the primary,
+// and the next settings save could take it for the primary and rewrite it.
+func TestUpdateOffsiteTargetRefusesMovingOntoPrimarySortOrder(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	extra, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Second", Repo: "s3:c2", Enabled: true, SortOrder: 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, order := range []string{"0", "-1"} {
+		env := putOffsiteTarget(t, h, extra.ID, `{"domain":"containers","name":"Second","repo":"s3:c2","enabled":true,"sortOrder":`+order+`}`)
+		if env["ok"] == true {
+			t.Fatalf("sortOrder %s: want a refusal, got %v", order, env)
 		}
 	}
-	if got, _, _ := st.FieldOffsiteTarget("containers"); got.ID != field.ID {
-		t.Fatalf("field row = %s, want %s", got.ID, field.ID)
+	got, _, err := st.GetOffsiteTarget(extra.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.SortOrder != 2 {
+		t.Fatalf("a refused update moved the target to sort order %d", got.SortOrder)
+	}
+}
+
+// The off-site wizard stores the credential set on the primary through this
+// route and sends the row back with its sort order 0.
+func TestUpdateOffsiteTargetKeepsEditingThePrimary(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	primary, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Primary", Repo: "s3:c", Enabled: true, SortOrder: 0})
+	if err != nil {
+		t.Fatal(err)
+	}
+	env := putOffsiteTarget(t, h, primary.ID, `{"domain":"containers","name":"Primary","repo":"s3:c","credsRef":"cs1","enabled":true,"sortOrder":0}`)
+	if env["ok"] != true {
+		t.Fatalf("editing the primary was refused: %v", env)
+	}
+	if got := env["target"].(map[string]any); got["credsRef"] != "cs1" || got["sortOrder"] != float64(0) {
+		t.Fatalf("the primary did not keep its edit and its place: %v", got)
+	}
+}
+
+// A body without a sort order leaves the target where it is instead of moving
+// it onto the primary's 0.
+func TestUpdateOffsiteTargetWithoutSortOrderKeepsItsPlace(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	extra, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Second", Repo: "s3:c2", Enabled: true, SortOrder: 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	env := putOffsiteTarget(t, h, extra.ID, `{"domain":"containers","name":"Renamed","repo":"s3:c2","enabled":true}`)
+	if env["ok"] != true {
+		t.Fatalf("update not ok: %v", env)
+	}
+	if got := env["target"].(map[string]any); got["name"] != "Renamed" || got["sortOrder"] != float64(2) {
+		t.Fatalf("want the new name at sort order 2, got %v", got)
 	}
 }
 
@@ -228,5 +286,26 @@ func TestUpdateOffsiteTargetMissing(t *testing.T) {
 	h.handleUpdateOffsiteTarget(rec, req)
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want 404", rec.Code)
+	}
+}
+
+// The primary belongs to the off-site setting of its domain. Moved to another
+// domain it would sit next to that domain's primary and leave its own domain
+// without one.
+func TestUpdateOffsiteTargetKeepsThePrimaryInItsDomain(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	primary, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Primary", Repo: "s3:c", Enabled: true, SortOrder: 0})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if env := putOffsiteTarget(t, h, primary.ID, `{"domain":"vms","name":"Primary","repo":"s3:c","enabled":true}`); env["ok"] == true {
+		t.Fatalf("the primary moved to another domain: %v", env)
+	}
+	got, _, err := st.GetOffsiteTarget(primary.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Domain != "containers" || got.SortOrder != 0 {
+		t.Fatalf("a refused update changed the primary: %+v", got)
 	}
 }

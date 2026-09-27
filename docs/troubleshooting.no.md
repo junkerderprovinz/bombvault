@@ -18,7 +18,7 @@ BombVault serverer HTTPS rett ut av boksen på port `3443` (selvsignert sertifik
 
 VM-sikkerhetskopiering snakker med libvirt over SSH, aldri en montering.
 
-- Bekreft at SSH er aktivert på hosten og at BombVaults offentlige nøkkel er autorisert i `/root/.ssh/authorized_keys` (Innstillinger, System, VM Backup over SSH viser nøkkelen og en **Test tilkobling**-knapp).
+- Bekreft at SSH er aktivert på hosten og at BombVaults offentlige nøkkel er autorisert i `/root/.ssh/authorized_keys` (Innstillinger, System, Verts-SSH viser nøkkelen og en **Test tilkobling**-knapp).
 - På et egendefinert `br0.x`-nettverk, sett `LIBVIRT_HOST` til din Unraid-LAN-IP (containeren kan ikke nå hosten via `host.docker.internal` der). Aktiver **Settings, Docker, Host access to custom networks**.
 - Hvis du endret Unraids SSH-port, sett `LIBVIRT_SSH_PORT` til å matche.
 - Full trinn-for-trinn-diagnose (nåbarhetstest, VLAN-ruting, `Permission denied (publickey)`, `Host key verification failed`) finnes i [veiledningen for VM-sikkerhetskopiering over SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -42,6 +42,56 @@ Før noe stoppes eller fjernes, kjører gjenopprettingen en pre-flight konflikts
 ## En vanlig eksport feilet i stedet for å skrive en fil
 
 Hvis age-kryptering er på (Innstillinger) men ingen gyldig mottaker er satt, feiler en eksport med en tydelig feil i stedet for å skrive klartekst. Legg til en gyldig mottaker (en age-offentlig nøkkel eller en SSH-offentlig nøkkel), eller slå av kryptering hvis du har til hensikt at eksporten skal være klartekst. Se [Funksjoner](features.md).
+
+## En databasedump mislyktes
+
+En mislykket dump velter aldri sikkerhetskopien rundt den; den føres som sin egen mislykkede kjøring, og årsaken sier hva som må rettes.
+
+- **Innlogging avvist.** Dumpen logger inn med containerens egne passordvariabler (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` eller `_FILE`-utgavene deres). Sjekk dem på databasecontaineren. En `_FILE`-variabel som peker på en hemmelighet containerens egen bruker ikke får lese, feiler på samme måte.
+- **Manglende rettigheter.** Med et tilfeldig root-passord kan dumpen bare logge inn som appbrukeren og inneholder dermed bare den ene databasen, og MySQL 8.4 og nyere kan avvise den helt. Gi containeren et ekte root-passord, eller slå av dumpen for den.
+- **Systemtabellene må oppgraderes.** MariaDB nekter å bli dumpet når systemtabellene stammer fra en eldre versjon (feil 1558). Legg til variabelen `MARIADB_AUTO_UPGRADE=1` og start containeren på nytt, eller kjør `mariadb-upgrade` inni den én gang.
+- **Ingen dumpverktøy.** Et slankt eller egenbygd image uten `pg_dump`, `mysqldump` eller `mariadb-dump` kan ikke dumpes. Bruk det offisielle imaget, eller slå av dumpen.
+- **En tidsgrense.** En dump får `DB_DUMP_MAX_HOURS` (6 som standard), sikkerhetskopien rundt får `BACKUP_MAX_HOURS`, og en dump som slutter å komme videre, kuttes etter `BACKUP_STALL_HOURS`. Det siste skyldes som regel en lås applikasjonen holder. Hev grensen som slo til, eller ta dumpen mens applikasjonen er rolig.
+- **Containeren er satt på pause eller starter på nytt.** Dumpen snakker med serveren mens den kjører. Hvis containeren starter på nytt igjen og igjen, sier loggen dens hvorfor.
+- **En skadet dump kunne ikke fjernes.** En dump BombVault ikke fikk fullført, slettes igjen. Når den slettingen feiler, blir dumpen stående i listen merket som skadet, og du kan slette den derfra.
+
+## En import mislyktes
+
+En import stopper containeren, setter datamappen til side og lar imaget lage en tom i stedet. Feiler et steg før selve importen, legges den gamle mappen tilbake av seg selv. Feiler importen, beholder containeren den ferske mappen, og den gamle blir liggende ved siden av som `<datamappe>.bombvault-before-import-<tidsstempel>`; feilmeldingen fra kjøringen nevner den nøyaktige stien.
+
+Slik legger du den tilbake for hånd: stopp containeren, gi den nåværende datamappen et annet navn så den er av veien, gi den bevarte mappen tilbake det opprinnelige navnet, og start containeren. På Unraid gjør filbehandleren under fanen Shares dette.
+
+## En sikkerhetskopi av ZFS-datasett feilet eller hoppet over et datasett {#zfs-datasets}
+
+Hvert problem har en årsakskode i hakeparenteser, og siden [ZFS-datasett](zfs-datasets.md#reason-codes) viser alle med løsningen. De tre vanligste:
+
+- **`snapshot-loop`**: øyeblikksbildet nådde ikke BombVault fordi Host Data ikke sender nye monteringer videre. Rediger containeren, sett Access Mode for Host Data til Read/Write - Slave og start BombVault på nytt.
+- **`key-not-loaded`**: et kryptert datasett der nøkkelen ikke er lastet, hoppes over. Last nøkkelen med `zfs load-key` og monter datasettet; neste sikkerhetskopi tar det med.
+- **`ssh-auth`**: serveren avviste BombVaults nøkkel. Tilkoblingskortet på ZFS-siden viser kommandoen som godkjenner den; kjør den én gang på serveren.
+
+## Et element blir stående på "Lærer N/10"
+
+De fleste avvikskontroller begynner etter 10 vellykkede sikkerhetskopier av et element, og tellingen begynner på nytt etter **Merk som forventet** og etter at elementets utvalg er endret. Et element uten tidsplan lærer ikke, og en container uten appdata har ingenting å lære av, noe merket også sier.
+
+## Oppbevaringen sletter ikke lenger gamle sikkerhetskopier av ett element
+
+Et åpent kritisk avvik holder dem tilbake: elementets kilde er nesten tom, har krympet kraftig, eller en sikkerhetskopi har lagret det meste av dataene på nytt. Åpne avviket fra merket ved elementet. Mangler det data, eller er de kryptert, gjenopprett først fra den lenkede siste gode sikkerhetskopien. Kvitter deretter for avviket, eller merk det som forventet hvis endringen var din, så rydder neste kjøring som vanlig. Forhåndsvisningen av oppbevaringen merker et slikt element som beholdt. For et ZFS-element beholder bare datasettet avviket nevner, sine gamle sikkerhetskopier; de andre datasettene i treet ryddes som vanlig.
+
+## Manuell opprydding sier at noen elementer ble beholdt
+
+Samme årsak: oppryddingen lar de gamle sikkerhetskopiene av et element med et slikt avvik være og nevner elementet i meldingen sin. Alt annet ryddes som vanlig.
+
+## Historikkimporten sier at et repository ikke kunne leses
+
+Etter oppgraderingen leser BombVault én gang størrelsen på tidligere sikkerhetskopier fra hvert repository. Et repository som ikke kunne nås da, for eksempel et eksternt mål som var nede eller en share som ikke var montert, står i kortet **Avvik** under **Innstillinger, Integritet** og prøves igjen én gang om dagen. I mellomtiden lærer elementene av nye sikkerhetskopier.
+
+## Varselet om diskplass stemmer ikke med Unraids dashbord
+
+På Unraids brukershare (`/mnt/user`) er den ledige plassen hele arrayets, ikke én disks. Eksterne repositorier måles bare via rclone-remoter som oppgir ledig plass; S3-, B2-, REST- og SFTP-repositorier har ikke noe tall og står som ikke målt i kortet **Avvik**.
+
+## En AI-assistent får ikke koblet til
+
+Siden [MCP-server](mcp.md#troubleshooting) viser hva hver statuskode og hvert avslag fra MCP-endepunktet betyr, og hva du kan gjøre med det.
 
 ## Containeren fortsetter å starte på nytt eller ser usunn ut
 

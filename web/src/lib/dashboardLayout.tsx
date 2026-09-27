@@ -69,9 +69,11 @@ function readStored(): StoredLayout | null {
   }
 }
 
-// mergeOrder drops stored ids that are no longer known and appends new default
-// ids at the end, so a card added later shows up without a reset.
-function mergeOrder(stored: string[], defaultOrder: string[]): string[] {
+// mergeOrder drops stored ids that are no longer known and places every new
+// default id directly behind the card it follows by default, so a card added
+// later lands next to the one it belongs with rather than below the fold. A
+// predecessor the stored order does not have leaves the new id at the end.
+export function mergeOrder(stored: string[], defaultOrder: string[]): string[] {
   const known = new Set(defaultOrder);
   const merged: string[] = [];
   const seen = new Set<string>();
@@ -81,11 +83,12 @@ function mergeOrder(stored: string[], defaultOrder: string[]): string[] {
       seen.add(id);
     }
   }
-  for (const id of defaultOrder) {
-    if (!seen.has(id)) {
-      merged.push(id);
-      seen.add(id);
-    }
+  for (const [i, id] of defaultOrder.entries()) {
+    if (seen.has(id)) continue;
+    const after = i > 0 ? merged.indexOf(defaultOrder[i - 1]) : -1;
+    if (after >= 0) merged.splice(after + 1, 0, id);
+    else merged.push(id);
+    seen.add(id);
   }
   return merged;
 }

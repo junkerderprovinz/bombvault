@@ -150,8 +150,8 @@ BombVault 提供两个层级的证明，证明您的备份确实可还原，而�
 1. **检查 BombVault 能否读取您的备份**（把加密密钥的陷阱放在最前面）。
 2. **还原 BombVault 自身的设置**，这样流程其余部分所需的备份路径、异地目标和凭据都会预先填好。它从“自我备份”行在 **存放于** 下指定的存储位置读取设置备份，或从“自我备份”在 **复制到** 下的副本读取，并显示该存储位置及其地址；要从另一个存储位置读取，请先在第 3 步中更改“自我备份”行。还原通过 Docker 套接字上的自我重启应用，因此运行中的设置数据库绝不会在打开的句柄下被覆盖。
 3. **通过“域”卡片的各行附加您现有的备份**：在每个域的行中，在 **存放于** 下选择其备份所在的存储位置，在 **复制到** 下选择存放其副本的存储位置。尚未出现在任何行中的存储位置，例如共享文件夹、服务器或云存储桶，通过 **添加存储位置** 连接，与设置，存储中的是同一个窗口。随后 **连接并预览** 会检查备份能否读取。
-4. **发现**存储在其中的容器、虚拟机和文件集。
-5. **将它们全部还原**（保持停止，以便您有意地启动它们），您的恢复工具包一键即达。
+4. **发现**存储在其中的容器、虚拟机、文件集和 ZFS 数据集。
+5. **一次还原容器和虚拟机**（保持停止，以便您有意地启动它们），并列出文件集和 ZFS 项目供您逐个还原；ZFS 项目还原后处于关闭状态。您的恢复工具包一键即达。
 
 !!! note "重建后异地副本会等待"
     当第 4 步在没有旧设置的情况下重建条目时，这些域的异地复制会暂停，直到存放位置默认值被确认。参见[每个项目的存放位置](#placement)。
@@ -172,6 +172,9 @@ BombVault 提供两个层级的证明，证明您的备份确实可还原，而�
 !!! danger "将恢复工具包存放在服务器之外"
     工具包包含解密您备份的密钥。请将它存放在安全且与服务器分离的地方（一个密码管理器、一份存于保险箱的打印件）。如果您同时丢失了 BombVault 和 `APP_KEY` 且没有恢复工具包，您的加密备份将无法恢复。
 
+!!! warning "最新的快照不一定是应该恢复的那个"
+    从 restic 0.17 起，`restic snapshots` 会显示每个快照的大小。数据丢失后，最新的快照可能是被清空的那个，所以不要恢复比之前的快照小得多的快照。遭遇勒索软件后，它可能是大小如常但已被加密的那个。如果 BombVault 仍在运行，请先查看它的 **异常** 页面：上面会列出最后一个正常的备份。恢复不需要 BombVault 的任何异常数据，保留暂停只会保留更多快照。
+
 ### 手边没有恢复包时
 
 密码不存放在任何地方，而是从 `APP_KEY` **算出来**的。只要有密钥和一个 shell，你就能自己复现它：
@@ -188,3 +191,27 @@ printf 'bombvault:restic-repo' \
     通过异地复制到达这里的仓库，是发送它的机器用**它自己的** `APP_KEY` 创建的。用接收方的密钥去派生会得到一个 restic 拒绝的密码，那看起来和仓库损坏一模一样，其实并没有损坏。这正是 `restic check` 在接收到的仓库上反复索要密码的常见原因。
 
 由于恢复定义存放在每个仓库**内部**（`<repo>/def`、`<repo>/vm-def`），被复制的仓库文件夹是完全自包含的，因此工具包加上仓库就是一次裸机还原所需的全部。
+
+## 取回数据库转储 {#database-dumps}
+
+数据库转储是容器仓库中一个独立的还原点，带有标签 `dbdump:<container>`，里面只有一个文件 `/dbdump/<container>.sql`。BombVault 在 **备份** 里列出、下载并导入它们；下面是只用 restic 完成同样步骤的方法，为 BombVault 不在身边的那一天准备。
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+每个转储上的 `dbversion:` 和 `dbname:` 标签说明它来自哪个服务器版本、包含哪些数据库。完整的文件以 `-- PostgreSQL database cluster dump complete` 或 `-- Dump completed` 结尾。
+
+把它导入一个相同或更新版本（PostgreSQL）、或相同大版本（MySQL 和 MariaDB）的容器，该容器要先用空数据目录启动一次完成初始化。宿主机不需要数据库客户端，容器里就有：
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+若只想从完整转储里取一个数据库，MySQL 和 MariaDB 的客户端命令接受 `--one-database <name>`。PostgreSQL 的转储每个数据库一段，每段以一行 `\connect <name>` 开头：把那一段复制成单独的文件，先创建数据库，再用 `-d <name>` 导入。
+
+!!! warning "以 root 取的转储会带上服务器的用户"
+    以 root 取的 MySQL 或 MariaDB 完整转储包含系统数据库 `mysql`，导入它会把新服务器的账号，连同 root 的密码，替换为转储里的那些。在 PostgreSQL 上，针对容器自己创建的用户出现 `role ... already exists` 属于预期，无害。

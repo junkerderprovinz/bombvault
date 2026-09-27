@@ -2,6 +2,7 @@ import { downloadRecoveryKit } from "../../../lib/api";
 import { FolderBrowser } from "../../../components/FolderBrowser";
 import { DomainsCard } from "../../../components/places/DomainsCard";
 import { PlacesCard } from "../../../components/places/PlacesCard";
+import { RetentionPreview } from "../../../components/RetentionPreview";
 import { NumberField } from "../../../components/NumberField";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { Button } from "../../../components/Button";
@@ -55,6 +56,22 @@ export function StorageTab({
     <>
       <PlacesCard hueIndex={nextHue()} hostMountRoot={hostMountRoot} />
       <DomainsCard hueIndex={nextHue()} />
+      {/* Which restore points the next run is about to delete, where a domain
+          is stored and where it is copied, each by the rules of its place.
+          Advanced-only, because it costs one restic call per item per
+          repository and is a question asked on purpose. */}
+      {advanced && (
+        <Card title={t("retentionPreview.title")} hint={t("retentionPreview.hint")} hueIndex={nextHue()}>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-carbon-text">{t("storageDomains.storedIn")}</span>
+            <RetentionPreview t={t} source="local" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-carbon-text">{t("storageDomains.copiedTo")}</span>
+            <RetentionPreview t={t} source="offsite" />
+          </div>
+        </Card>
+      )}
 
       <Card title={t("settings.restoreFolder")} hint={t("settings.restoreFolderHint")} hueIndex={nextHue()}>
         <FolderBrowser
@@ -288,7 +305,7 @@ export function StorageTab({
         <div className="flex flex-col gap-3">
           <ToggleRow
             label={t("export.encrypt.enable")}
-            hint={`${t("export.encrypt.hint")} ${t("export.encrypt.ageInfo")} ${t("export.encrypt.enableHint")}`}
+            hint={`${t("export.encrypt.hint")} ${t("export.encrypt.ageInfo")} ${t("export.encrypt.enableHint")} ${t("export.encrypt.kitSealed")}`}
             checked={settings.exportEncryptEnabled}
             onChange={(v) => void autoSaveField("exportEncryptEnabled", v, setExportEncSaveState, setExportEncSaveError)}
             disabled={mergedFieldBusy.exportEncryptEnabled}

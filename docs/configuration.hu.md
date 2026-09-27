@@ -7,10 +7,10 @@ Ez az oldal a konténer környezeti változóit, a sablon által biztosított cs
 | Változó | Kötelező | Leírás |
 |---|---|---|
 | `APP_KEY` | **Igen** | 32 bájtos hexadecimális titok (64 hexadecimális karakter), amely a restic tároló jelszavának származtatására szolgál. Generáld az `openssl rand -hex 32` paranccsal. Óvd ezt: az elvesztése visszaállíthatatlanná teszi a titkosított mentéseket. |
-| `LIBVIRT_HOST` | VM-ekhez | Az SSH-n keresztül elért Unraid hoszt a VM-mentéshez (alapból `host.docker.internal`; a sablon egy LAN-IP helyőrzővel tölti ki előre). Használd az Unraid LAN IP-jét, egyéni `br0.x` hálózaton kötelező. |
-| `LIBVIRT_SSH_PORT` | Nem | A hoszt SSH-portja a VM-mentéshez (alapból `22`). |
-| `LIBVIRT_SSH_USER` | Nem | SSH-felhasználó a hoszton a VM-mentéshez (alapból `root`). |
-| `LIBVIRT_URI` | Nem | Teljes libvirt kapcsolati URI, amelyet a rendszer **szó szerint** használ a fenti három `LIBVIRT_*` változóból történő összeállítás helyett (ezeket a kapcsolati karakterlánc előállításakor ekkor figyelmen kívül hagyja). Alapból nincs beállítva. TrueNAS Scale-en szükséges, ahol a libvirtd egy nem szabványos socketen figyel, amit az összeállított forma nem tud kifejezni: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Lásd a [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) TrueNAS Scale szakaszát. |
+| `LIBVIRT_HOST` | VM-ekhez | Az SSH-n keresztül elért Unraid hoszt a VM-mentéshez (alapból `host.docker.internal`; a sablon egy LAN-IP helyőrzővel tölti ki előre). Használd az Unraid LAN IP-jét, egyéni `br0.x` hálózaton kötelező. A ZFS-adatkészletek mentése is ezt használja (sablonmező: **Host SSH: Address**); a `192.168.x.x` helykitöltő nem beállítottnak számít. |
+| `LIBVIRT_SSH_PORT` | Nem | A hoszt SSH-portja a VM-mentéshez (alapból `22`). Sablonmező: **Host SSH: Port**, a ZFS-adatkészletekhez is. |
+| `LIBVIRT_SSH_USER` | Nem | SSH-felhasználó a hoszton a VM-mentéshez (alapból `root`). Sablonmező: **Host SSH: User**, a ZFS-adatkészletekhez is. |
+| `LIBVIRT_URI` | Nem | Teljes libvirt kapcsolati URI, amelyet a rendszer **szó szerint** használ a fenti három `LIBVIRT_*` változóból történő összeállítás helyett (ezeket a kapcsolati karakterlánc előállításakor ekkor figyelmen kívül hagyja). Alapból nincs beállítva. TrueNAS Scale-en szükséges, ahol a libvirtd egy nem szabványos socketen figyel, amit az összeállított forma nem tud kifejezni: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Lásd a [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) TrueNAS Scale szakaszát. Ha ez egy `qemu+ssh://` URI, a `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` és `LIBVIRT_SSH_PORT` közül mindegyik, amelyik nincs beállítva, ebből kerül átvételre, a BombVault saját SSH-parancsaihoz is (NVRAM-átvitel, ZFS-adatkészletek). |
 | `PORT` | Nem | HTTP-port (alapból `3000`; csak `HTTP_ONLY=true` mellett használatos). |
 | `HTTPS_PORT` | Nem | HTTPS-port (alapból `3443`; a sablon 1:1 arányban teszi közzé, így a WebUI a `https://<ip>:3443` címen válaszol). |
 | `HTTP_ONLY` | Nem | Állítsd `true`-ra az önaláírt HTTPS-figyelő letiltásához, és csak egyszerű HTTP kiszolgálásához (egy TLS-lezáró reverse proxy mögötti használatra). |
@@ -20,13 +20,16 @@ Ez az oldal a konténer környezeti változóit, a sablon által biztosított cs
 | `PLATFORM` | Nem | Kikényszeríti, hogy a BombVault milyen platformon fut szerinte, ahelyett hogy automatikusan felismerné: `unraid`, `generic` vagy `truenas` (alapból nincs beállítva: a flash csatolás alatti `dockerMan` jelző keresésével automatikusan felismeri az Unraidet, egyébként `generic`; egy nem felismert érték szintén `generic`-re esik vissza, naplózva). Állítsd be kifejezetten egy generikus Docker-hoszton vagy TrueNAS Scale-en, ahelyett hogy a csak Unraidre működő automatikus felismerésre hagyatkoznál; a generikus compose-fájl ezt teszi. Megváltoztatja az appdata-tartalék konvenciót, a példányok közötti visszaállítási cél alapértelmezéseit, valamint azt, hogy a csak Unraidre vonatkozó értesítési és kísérő bővítmény lépéseket egyáltalán megkísérli-e (lásd: `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Nem | Magának a BombVault konténernek a neve, hogy soha ne mentse (és így ne állítsa le) önmagát. |
 | `BACKUP_MAX_HOURS` | Nem | A maximális valós idejű órák száma, ameddig egyetlen mentési futás a tartományzárolását tarthatja, mielőtt kényszerítve megszakadna (egy védelem, hogy egy beragadt futás ne blokkolhassa örökre a tartományt). Üresen (az alapértelmezett) `48`-at használ. Emeld nagyon nagy vagy lassú felhőmentésekhez (egy a korlátnál megszakított futás `context deadline exceeded` hibával hiúsul meg). Állítsd `0`-ra a korlát teljes letiltásához. |
+| `DB_DUMP_MAX_HOURS` | Nem | Órák, ameddig egy automatikus adatbázis-dump futhat, mielőtt leállítják. Üresen (alapértelmezés) `6` órát jelent; a megengedett értékek `1`-től `48`-ig tartanak, és a korlát egy órával `BACKUP_MAX_HOURS` alatt marad (két óránál rövidebb érték esetén annak felénél), hogy egy hosszú dumpot a saját korlátja vágjon el és így is jelentsék, ahelyett hogy magával rántaná a mentést. Az a dump, amelyik nem halad tovább, már `BACKUP_STALL_HOURS` után leáll. A leállított dump önmagában lesz sikertelen, a konténer mentése pedig folytatódik. Unraidon a változót a BombVault konténerhez az **Add another Path, Port, Variable** ponttal veszed fel. |
 | `TZ` | Nem | Időzóna az ütemezőhöz (például `Europe/Berlin`). **Ha nincs beállítva, minden ütemezés UTC szerint fut**: a 02:30-ra állított ütemezés ekkor 02:30 UTC-kor indul, nem a helyi idő szerint. Unraiden ezt soha nem kell beállítania: a rendszer a saját időzónáját adja át minden konténernek. |
 
 ## Csatolások
 
 Csatold a Docker socketet, a flasht (`/boot`) és a **Host Data** gyökeret (`/mnt`), ahogy a CA-sablonban látható. A mentési *források* és *célok* egyaránt a Host Data alatt találhatók, és az **slave** módban van csatolva, így egy távoli megosztás, amely a konténer indulása után csatolódik (például a `/mnt/remotes` alatt), újraindítás nélkül válik láthatóvá.
 
-Egy friss telepítés minden tartományt az **Unraid** nevű tárhelyen tárol, a `/mnt/user/bombvault` alatt, tartományonként egy mappával (`container`, `vms`, `flash`, `config`, `files`), amelyek az első mentéskor jönnek létre. További tárhelyeket, helyieket vagy távoliakat, a **Beállítások, Tárolás** alatt adhatsz hozzá; lásd: [Tárhelyek](storage-places.md).
+A ZFS-adatkészletek mentéséhez is ez a mód kell: egy adatkészlet pillanatképét a hoszt csak a konténer indulása után csatolja. Lásd: [ZFS-adatkészletek](zfs-datasets.md).
+
+Egy friss telepítés minden tartományt az **Unraid** nevű tárhelyen tárol, a `/mnt/user/bombvault` alatt, tartományonként egy mappával (`container`, `vms`, `flash`, `config`, `files`, `zfs`), amelyek az első mentéskor jönnek létre. További tárhelyeket, helyieket vagy távoliakat, a **Beállítások, Tárolás** alatt adhatsz hozzá; lásd: [Tárhelyek](storage-places.md).
 
 !!! note "Hosztintegráció-ellenőrzés"
     A konténer elindulása után nyisd meg a `/spike` oldalt a webes felületen. Ez minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat.
@@ -39,6 +42,7 @@ Minden konténernél a BombVault maga választja ki, mely bind csatolások és n
 - **A nevesített Docker-kötetek** mindig bekerülnek, mert nincs eldobható megfelelőjük, így nincs mit kiszűrni, **de csak akkor, ha a kötet valódi tárolási útvonala a gazdagépen maga is elérhető a Host Data csatoláson át**, pontosan úgy, mint bármely más gazdagép-útvonal, amit a BombVault ment. A helyi kötetek alapértelmezett meghajtója a kötetet a démon saját adatgyökere alá teszi, vagyis a `/var/lib/docker/volumes/<név>/_data` helyre, hacsak nem módosítottad (ellenőrizd a `docker info -f '{{.DockerRootDir}}'` paranccsal). Ezt a helyet NEM fedi le az az egyetlen könyvtárból álló szűk Host Data csatolás, amit az általános `docker-compose.yml` alapból használ. Az elérhetetlen kötet csendben kimarad, ez nem hiba. Ahhoz, hogy általános gazdagépen a nevesített kötetek tényleg mentésre kerüljenek, irányítsd a Host Data csatolást (és a `HOST_SOURCE_ROOT` értéket) egy olyan közös szülőkönyvtárra, amely a Docker adatgyökerét is lefedi: a mérlegelést a compose fájl Host Data megjegyzése írja le (az Unraid ezt úgy kerüli meg, hogy ugyanezért az egész `/mnt` könyvtárat csatolja, a saját, legfelső szintű általános szokása szerint).
 - **Docker Compose projektkönyvtár:** ha a konténeren ott a szokásos `com.docker.compose.project.working_dir` címke (a `docker compose up` automatikusan felteszi), az a könyvtár is bekerül, függetlenül attól, hogy bármelyik bind illeszkedett-e egy adatgyökér-szakaszra.
 - **Felülbírálás a `bombvault.data` címkével:** tedd a konténerre a `bombvault.data=true` címkét, hogy MINDEN bind csatolása bekerüljön, olyan elrendezéshez, amit a fenti két szokás egyike sem fog meg (például egyetlen `/srv/plex/config` bind Compose projekt nélkül). Minden nem üres, `false`-tól különböző érték igaznak számít; hiányzó címke vagy `bombvault.data=false` semmit nem változtat.
+- **`bombvault.dbdump` címke:** tedd a konténerre a `bombvault.dbdump=false` címkét, hogy kikapcsold az automatikus adatbázis-dumpját (`0`, `no` és `off` ugyanezt teszi), vagy nevezd meg a motort (`postgres`, `mysql`, `mariadb`), hogy olyan konténerről készüljön dump, amelyet a BombVault magától nem ismer fel. A címke erősebb a konténer kártyáján lévő kapcsolónál, ami Unraidon a megszokott út.
 
 ## Biztonsági modell
 
@@ -50,9 +54,14 @@ Minden konténernél a BombVault maga választja ki, mely bind csatolások és n
 - Mivel a védelem opcionális, ha nincs beállítva, a teljes felület és API (beleértve a telephelyen kívüli beállítást, a manipulációs teszt útvonalait és a helyreállítási csomagot) elérhető bárki számára, aki eléri a portot. Kapcsold be a védelmet, amint telephelyen kívüli, módosíthatatlan mentések vagy titkosítás van használatban.
 - A BombVaultot csak megbízható, nem kitett hálózaton futtasd. A távoli hozzáféréshez tedd egy reverse proxy mögé, amely hitelesítést és TLS-t ad hozzá. A válaszok alapszintű biztonsági fejléceket hordoznak (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Fordított proxy mögött minden kérés a proxy címét viseli, így `TRUSTED_PROXY` nélkül a fék minden ügyfelet egy vödörben számol, és egy támadó hibái téged is kizárnak. Add meg a proxyt a `TRUSTED_PROXY` értékeként, hogy visszatérjen az ügyfelenkénti számolás.
+- A BombVault előtti fordított proxynak tovább kell adnia az `Authorization` vagy az `X-API-Key` fejlécet a `/mcp` felé, és nem pufferelheti a válaszokat, különben az asszisztensek nem tudnak csatlakozni. Lásd [MCP-kiszolgáló](mcp.md#tls).
 - A `HTTP_ONLY=true` mellett a munkamenet-süti elveszíti a `Secure` jelzőjét (muszáj, hogy egyszerű HTTP-n működjön), így csak egy TLS-lezáró proxy mögött kapcsold be a jelszót, ha a bizalmasság számít.
 - A VM-mentés SSH-kapcsolata az első kapcsolatfelvételkor megbízik a hoszt-kulcsban (TOFU), és utána rögzíti. Ellenőrizd a hoszt kulcsát sávon kívül, ha a konténer-hoszt útvonalad nem megbízható.
 - A mentések a restic által titkosítottak, ha a titkosítás engedélyezve van (Beállítások; alapból be), a kulcs az `APP_KEY`-ből származtatva.
+
+## MCP-kiszolgáló {#mcp-server}
+
+Az MCP-kiszolgálóhoz nem kell környezeti változó. Úgy kapcsolod be, hogy létrehozol egy kulcsot a **Beállítások, Rendszer, MCP-kiszolgáló** részen, és a `/mcp` útvonalon válaszol ugyanazon a porton, mint a webes felület (például `https://192.168.1.10:3443/mcp`). Aktív kulcs nélkül ez az útvonal `404`-gyel válaszol. A klienseket, a tanúsítványokat és a korlátokat az [MCP-kiszolgáló](mcp.md) oldal írja le.
 
 ## VM-mentés SSH-n keresztül
 
@@ -60,7 +69,7 @@ A BombVault a KVM/libvirt VM-eket **bármely libvirt-útvonal csatolása nélkü
 
 Gyors beállítás:
 
-1. **Beállítások, Rendszer, VM-mentés SSH-n keresztül:** másold ki a megjelenített nyilvános kulcsot.
+1. **Beállítások, Rendszer, Gazdagép SSH:** másold ki a megjelenített nyilvános kulcsot.
 2. Fűzd hozzá az Unraid `/root/.ssh/authorized_keys` fájljához (a flashre is mentve, így túléli az újraindításokat).
 3. Kattints a **Kapcsolat tesztelése** gombra.
 
@@ -81,6 +90,19 @@ A telephelyen kívüli másolatok tárhelyekre kerülnek. Add hozzá a tárhelye
 - **A megőrzés, a korlátok, a tárolási osztály és a növekedési keret a tárhelyhez tartozik**, és a részleteiben állíthatók be. Egy tárhely megőrzése minden rajta lévő tárolóra vonatkozik, így egy telephelyen kívüli tárhely archívumként tovább megtarthatja a másolatokat; az a tárhely, amelynek minden szabálya nulla, soha nem vág vissza semmit.
 - **Hideg és archív tárolási osztály (S3):** egy S3-tárhelyhez válassz egy visszaállításra olvasható szintet (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Az rclone remote-ok a saját osztályukat az rclone konfigban állítják be.
 - **Távoli tárhelyen tárolt tartomány:** lásd: [Távoli tárhelyen tárolt tartomány](offsite-recovery.md#remote-primary-repositories).
+
+## Anomáliák {#anomalies}
+
+Az anomáliák észlelését a **Beállítások, Integritás** alatti **Anomáliák** kártyán állítod be. Minden vezérlő azonnal ment, amint módosítod, a kapcsoló alatti három pedig rejtve marad, amíg az észlelés ki van kapcsolva.
+
+| Beállítás | Alapérték | Mit csinál |
+|---|---|---|
+| **Anomáliák felismerése** | Be | Minden mentést összevet az elem saját előzményeivel. Kikapcsolva semmi újat nem ellenőriz, és az **Anomáliák** bejegyzés eltűnik az oldalsávból; a kártya továbbra is a korábbi észlelésekre mutat. |
+| **Érzékenység** | Kiegyensúlyozott | A Szigorú kisebb változásokat is jelez, a Megengedő csak nagyokat. |
+| **Értesítés küldése ekkor** | Csak kritikus leletek | Az a legalacsonyabb súlyosság, amely üzenetet küld az Értesítések alatt beállított csatornákon. Az ismételten sikertelen mentések és dumpok, valamint a sikertelen ütemezett visszaállítási ellenőrzések már saját üzenetet küldenek, ezeket nem küldi el kétszer. |
+| **Régi mentések megtartása, ha egy forrás erősen zsugorodik vagy újraíródik** | Be | Amíg egy elemnek nyitott észlelése van majdnem üres forrás, erős zsugorodás vagy az adatok nagy részének újbóli eltárolása miatt, a megőrzés és a tisztítás békén hagyja a régi mentéseit. Nyugtázd az észlelést vagy jelöld várhatónak, hogy felszabaduljanak. |
+
+Minden elemnek lehet saját érzékenysége és saját értesítési minimuma. Ezeket az **Anomáliák** oldal **Elemek** lapján vagy az elem saját paneljén állítod be: egy konténer mappaszakaszában és egy virtuális gép beállításaiban (mindkettő speciális módban), egy mappakészlet mappaszerkesztőjében, valamint a **Flash** és a **Önmentés** oldalon. Egy ZFS-elemnél ezek az elem szerkesztőjében vannak a **ZFS** oldalon, és a fa minden adatkészletére érvényesek.
 
 ## Hordozható beállítások (exportálás és importálás) {#portable-settings-export-and-import}
 

@@ -150,8 +150,8 @@ Een speciaal tabblad **Herstel** leidt een verse of herbouwde installatie op é�
 1. **Controleert of BombVault je back-ups kan lezen** (het encryptiesleutel-addertje vooraf).
 2. **Herstelt BombVaults eigen instellingen**, zodat de back-uppaden, off-site doelen en inloggegevens die de rest van de flow nodig heeft al zijn ingevuld. De instellingen-back-up wordt gelezen van de plek die de rij Zelf-back-up onder **Opgeslagen in** noemt, of van de kopie van de Zelf-back-up onder **Gekopieerd naar**, en de stap toont die plek met haar adres. Wil je van een andere plek lezen, wijzig dan eerst de rij Zelf-back-up in stap 3. Het herstel wordt toegepast via een self-restart over de Docker-socket, zodat de live instellingendatabase nooit onder een open handle wordt overschreven.
 3. **Koppelt je bestaande back-ups** via de rijen van de kaart Domeinen: kies op de rij van elk domein onder **Opgeslagen in** de plek waar de back-ups staan en onder **Gekopieerd naar** de plekken met de kopieën. Een plek die nog geen rij aanbiedt, zoals een share, een server of een cloudbucket, verbind je met **Plek toevoegen**, hetzelfde venster als op Instellingen, Opslag. **Verbinden & voorbeeld** controleert daarna of de back-ups te lezen zijn.
-4. **Ontdekt** de containers, VM's en bestandssets die erin zijn opgeslagen.
-5. **Herstelt ze allemaal** (gestopt gelaten, zodat je ze bewust start), met je herstelkit één klik weg.
+4. **Ontdekt** de containers, VM's, bestandssets en ZFS-datasets die erin zijn opgeslagen.
+5. **Herstelt de containers en VM's in één keer** (gestopt gelaten, zodat je ze bewust start) en toont de bestandssets en ZFS-items om een voor een te herstellen; ZFS-items komen uitgeschakeld terug. Je herstelkit is één klik weg.
 
 !!! note "Off-site kopieën wachten na een rebuild"
     Als stap 4 items herbouwt zonder de oude instellingen, pauzeert de off-site replicatie van die domeinen tot de standaardplaatsing is bevestigd. Zie [Plaatsing per item](#placement).
@@ -172,6 +172,9 @@ Eén klik downloadt de **hoofdsleutel**, het **afgeleide restic-wachtwoord** en 
 !!! danger "Bewaar de herstelkit buiten de server"
     De kit bevat het geheim dat je back-ups ontsleutelt. Bewaar hem ergens veilig en gescheiden van de server (een wachtwoordmanager, een geprinte kopie in een kluis). Als je zowel BombVault als `APP_KEY` verliest zonder herstelkit, kunnen je versleutelde back-ups niet worden hersteld.
 
+!!! warning "De nieuwste snapshot is niet altijd de juiste om te herstellen"
+    Sinds restic 0.17 toont `restic snapshots` de grootte van elke snapshot. Na dataverlies kan de nieuwste snapshot de leeggemaakte zijn, dus herstel geen snapshot die veel kleiner is dan de vorige. Na ransomware kan het de versleutelde zijn, met de gebruikelijke grootte. Draait BombVault nog, kijk dan eerst op de pagina **Anomalieën**: die noemt de laatste goede back-up. Een herstel heeft geen anomaliegegevens van BombVault nodig, en de retentiepauze bewaart alleen maar meer snapshots.
+
 ### Als het pakket niet bij de hand is
 
 Het wachtwoord staat nergens opgeslagen, het wordt **berekend** uit de `APP_KEY`. Met de sleutel en een shell kun je het dus zelf namaken:
@@ -188,3 +191,27 @@ Dat is HMAC-SHA256 over de vaste tekst `bombvault:restic-repo`, met de ruwe byte
     Een repository dat hier via off-sitereplicatie is beland, is aangemaakt door de machine die het stuurde, met **diens** `APP_KEY`. Afleiden uit de sleutel van de ontvangende machine geeft een wachtwoord dat restic weigert, wat precies leest als een kapot repository terwijl het dat niet is. Dat is de gebruikelijke reden dat `restic check` op een ontvangen repository steeds opnieuw om het wachtwoord vraagt.
 
 Omdat hersteldefinities **binnen** elke repo leven (`<repo>/def`, `<repo>/vm-def`), is een gekopieerde repo-map volledig zelfstandig, dus de kit plus de repo is alles wat een bare-metal-herstel nodig heeft.
+
+## Een databasedump terughalen {#database-dumps}
+
+Een databasedump is een eigen herstelpunt in de containerrepository, met het label `dbdump:<container>` en één bestand, `/dbdump/<container>.sql`. BombVault toont, downloadt en importeert ze onder **Back-ups**; hieronder staan dezelfde stappen met alleen restic, voor de dag dat BombVault er niet is.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+De labels `dbversion:` en `dbname:` op elke dump zeggen uit welke serverversie hij komt en welke databases hij bevat. Een volledig bestand eindigt met `-- PostgreSQL database cluster dump complete` of `-- Dump completed`.
+
+Importeer hem in een container van dezelfde of een nieuwere versie (PostgreSQL), of dezelfde hoofdversie (MySQL en MariaDB), die één keer met een lege datamap is gestart zodat hij zich initialiseert. De host heeft geen databaseclient nodig, de container heeft er een:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Voor één database uit een volledige dump nemen MySQL en MariaDB `--one-database <name>` op het clientcommando. Een PostgreSQL-dump heeft per database een sectie die begint met een regel `\connect <name>`: kopieer die sectie naar een eigen bestand en importeer dat met `-d <name>` nadat je de database hebt aangemaakt.
+
+!!! warning "Een dump als root neemt de gebruikers van de server mee"
+    Een volledige MySQL- of MariaDB-dump die als root is genomen, bevat de systeemdatabase `mysql`; importeren vervangt daarmee de accounts van de nieuwe server, inclusief het root-wachtwoord, door die uit de dump. Op PostgreSQL is `role ... already exists` voor de gebruiker die de container aanmaakte te verwachten en onschuldig.

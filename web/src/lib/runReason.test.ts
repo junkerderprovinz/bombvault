@@ -1,0 +1,225 @@
+// runReason has no framework dependency, and RunReasonText returns a plain
+// element tree, so both are checked as objects without jsdom. The stub resolver
+// returns the key, which makes the chosen translation assertable.
+import { describe, expect, it } from "vitest";
+import {
+  isOwnReason,
+  isWarningNote,
+  runReason,
+  runReasonParts,
+  RunReasonText,
+  RUN_REASON_PREFIXES,
+} from "./runReason";
+import type { TranslationKey } from "./i18n";
+
+const t = (key: TranslationKey): string => key;
+
+interface ElementNode {
+  type?: unknown;
+  props?: { dir?: string; children?: unknown };
+}
+
+function children(node: unknown): unknown[] {
+  const kids = (node as ElementNode).props?.children;
+  return Array.isArray(kids) ? kids : [kids];
+}
+
+describe("runReason", () => {
+  it("translates database dump reasons with detail", () => {
+    expect(runReason("database dump failed: the database refused the login: FATAL x", t)).toBe(
+      "runReason.dbdumpAuth: FATAL x"
+    );
+    expect(runReasonParts("database dump failed: the database refused the login: FATAL x", t)).toEqual({
+      head: "runReason.dbdumpAuth",
+      detail: "FATAL x",
+    });
+  });
+
+  it("translates every reason it knows, with and without a detail", () => {
+    for (const [reason, key] of Object.entries(RUN_REASON_PREFIXES)) {
+      expect(runReason(reason, t)).toBe(key);
+      expect(runReasonParts(`${reason}: tail`, t)).toEqual({ head: key, detail: "tail" });
+    }
+  });
+
+  it("covers the reasons that carry more than a tool message", () => {
+    expect(runReason("database dump failed: the database's system tables need an upgrade", t)).toBe(
+      "runReason.dbdumpNeedsUpgrade"
+    );
+    expect(runReason("database dump failed: the backup's own time limit was reached", t)).toBe(
+      "runReason.dbdumpBackupCap"
+    );
+    expect(runReason("database dump failed: a damaged dump snapshot could not be removed: 1a2b3c4d", t)).toBe(
+      "runReason.dbdumpLeftover: 1a2b3c4d"
+    );
+    expect(runReason("database import failed and the old data could not be put back: /a, /b", t)).toBe(
+      "runReason.dbimportRollback: /a, /b"
+    );
+    expect(runReason("database import failed: the import tool reported an error: exit 1", t)).toBe(
+      "runReason.dbimportFailed: exit 1"
+    );
+  });
+
+  it("counts the errors an import reported, and keeps the folder as the detail", () => {
+    const counted = (key: TranslationKey, n?: number): string => `${key}(${n})`;
+    expect(
+      runReasonParts("database imported with errors: 1, the previous data folder is kept at /mnt/pg.old", counted)
+    ).toEqual({ head: "runReason.dbimportErrors(1)", detail: "/mnt/pg.old" });
+    expect(
+      runReasonParts("database imported with errors: 12, the previous data folder is kept at /mnt/pg.old", counted)
+    ).toEqual({ head: "runReason.dbimportErrors(12)", detail: "/mnt/pg.old" });
+  });
+
+  it("prefers an exact match over a prefix", () => {
+    expect(runReason("cancelled by the user", t)).toBe("runReason.cancelled");
+    expect(runReasonParts("cancelled by the user", t)).toEqual({
+      head: "runReason.cancelled",
+      detail: "",
+    });
+  });
+
+  it("translates the note that a dump may still be running", () => {
+    expect(runReasonParts("cancelled by the user: orphan stop failed", t)).toEqual({
+      head: "runReason.cancelled",
+      detail: "",
+      note: "runReason.dbdumpOrphan",
+    });
+    expect(runReason("database dump failed: the dump tool reported an error: ERROR 1045; orphan stop failed", t)).toBe(
+      "runReason.dbdumpTool: ERROR 1045; runReason.dbdumpOrphan"
+    );
+    expect(runReason("database dump failed: time limit reached: orphan stop failed", t)).toBe(
+      "runReason.dbdumpTimeout; runReason.dbdumpOrphan"
+    );
+  });
+
+  it("names the apps an import left stopped in the reader's language", () => {
+    const withApps = (key: TranslationKey): string => `${key} {apps}`;
+    expect(
+      runReasonParts(
+        "database imported; the previous data folder was kept: /mnt/pg.old; could not start these apps again: immich_server, immich_ml",
+        withApps
+      )
+    ).toEqual({
+      head: "runReason.dbimportKeptOld {apps}",
+      detail: "/mnt/pg.old",
+      note: "runReason.dbimportAppsDown immich_server, immich_ml",
+      apps: { key: "runReason.dbimportAppsDown", names: ["immich_server", "immich_ml"] },
+    });
+    expect(
+      runReason(
+        "database import failed: the import tool reported an error: exit 1: x; these apps stay stopped until the data folder is sorted out: immich_server",
+        withApps
+      )
+    ).toBe("runReason.dbimportFailed {apps}: exit 1: x; runReason.dbimportAppsStopped immich_server");
+  });
+
+  it("counts the apps so their sentence can agree with them", () => {
+    const counts: number[] = [];
+    const record = (key: TranslationKey, n?: number): string => {
+      if (n !== undefined) counts.push(n);
+      return key;
+    };
+    const kept = "database imported; the previous data folder was kept: /mnt/pg.old";
+    runReasonParts(`${kept}; could not start these apps again: immich_server`, record);
+    runReasonParts(`${kept}; could not start these apps again: immich_server, immich_ml, immich_web`, record);
+    expect(counts).toEqual([1, 3]);
+  });
+
+  it("hands back a reason it does not know", () => {
+    expect(runReason("Fatal: repository is already locked", t)).toBe("Fatal: repository is already locked");
+    expect(runReasonParts("Fatal: repository is already locked", t)).toEqual({
+      head: "Fatal: repository is already locked",
+      detail: "",
+    });
+    expect(runReason("", t)).toBe("");
+  });
+
+  it("says after how many hours the stall guard stopped a run", () => {
+    const counted = (key: TranslationKey, n?: number): string => `${key}(${n})`;
+    expect(runReason("stopped by the stall guard after 1 hour without progress", counted)).toBe("runReason.stalled(1)");
+    expect(runReason("stopped by the stall guard after 3 hours without progress", counted)).toBe("runReason.stalled(3)");
+  });
+
+  it("names the dataset a stalled ZFS run was reading", () => {
+    const withDataset = (key: TranslationKey, n?: number): string => `${key}(${n}) {dataset}`;
+    expect(
+      runReason("stopped by the stall guard after 2 hours without progress while reading tank/app data", withDataset)
+    ).toBe("runReason.stalledReading(2) tank/app data");
+    expect(isOwnReason("stopped by the stall guard after 2 hours without progress while reading tank/app")).toBe(true);
+    expect(isOwnReason("stopped by the stall guard after 2 hours without progress")).toBe(true);
+  });
+
+  it("owns a reason only while it stands alone", () => {
+    expect(isOwnReason("database dump failed: the dump was empty")).toBe(true);
+    expect(isOwnReason("database dump failed: the dump was empty: exit 1")).toBe(false);
+    expect(isOwnReason("Fatal: repository is already locked")).toBe(false);
+  });
+});
+
+describe("RunReasonText", () => {
+  it("isolates the detail and leaves the head to the page direction", () => {
+    const parts = children(RunReasonText({ reason: "database dump failed: the dump tool reported an error: ERROR 1045", t }));
+    expect(parts[0]).toBe("runReason.dbdumpTool");
+    expect(parts[1]).toBe(": ");
+    const detail = parts[2] as ElementNode;
+    expect(detail.type).toBe("bdi");
+    expect(detail.props?.dir).toBe("ltr");
+    expect(detail.props?.children).toBe("ERROR 1045");
+  });
+
+  it("follows the page direction for the note that a dump may still be running", () => {
+    const parts = children(
+      RunReasonText({ reason: "database dump failed: the dump tool reported an error: ERROR 1045; orphan stop failed", t })
+    );
+    expect(parts[0]).toBe("runReason.dbdumpTool");
+    expect((parts[2] as ElementNode).props?.children).toBe("ERROR 1045");
+    expect(parts.slice(3)).toEqual(["; ", "runReason.dbdumpOrphan"]);
+  });
+
+  it("isolates every app name in the note that says which apps stay stopped", () => {
+    const withApps = (key: TranslationKey): string => `${key} {apps}`;
+    const parts = children(
+      RunReasonText({
+        reason:
+          "database import failed: the import tool reported an error: exit 1; " +
+          "these apps stay stopped until the data folder is sorted out: immich_server, immich_ml",
+        t: withApps,
+      })
+    );
+    const note = children(parts[parts.length - 1]);
+    expect(note[0]).toBe("runReason.dbimportAppsStopped ");
+    const first = note[1] as ElementNode;
+    expect(first.type).toBe("bdi");
+    expect(first.props?.dir).toBe("ltr");
+    expect(first.props?.children).toBe("immich_server");
+    expect(note[2]).toBe(", ");
+    expect((note[3] as ElementNode).props?.children).toBe("immich_ml");
+  });
+
+  it("isolates the dataset a stalled ZFS run was reading", () => {
+    const withDataset = (key: TranslationKey): string => `${key} {dataset}.`;
+    const parts = children(
+      RunReasonText({ reason: "stopped by the stall guard after 1 hour without progress while reading tank/app", t: withDataset })
+    );
+    expect(parts[0]).toBe("runReason.stalledReading ");
+    const dataset = parts[1] as ElementNode;
+    expect(dataset.type).toBe("bdi");
+    expect(dataset.props?.dir).toBe("ltr");
+    expect(dataset.props?.children).toBe("tank/app");
+    expect(parts[2]).toBe(".");
+  });
+
+  it("renders a reason without a detail as bare text", () => {
+    const parts = children(RunReasonText({ reason: "database dump failed: no progress", t }));
+    expect(parts).toEqual(["runReason.dbdumpStalled"]);
+  });
+});
+
+describe("isWarningNote", () => {
+  it("warns about a successful import that left an app stopped", () => {
+    expect(isWarningNote("database imported; the previous data folder was kept: /mnt/pg.old")).toBe(false);
+    expect(
+      isWarningNote("database imported; the previous data folder was kept: /mnt/pg.old; could not start these apps again: immich_server")
+    ).toBe(true);
+  });
+});

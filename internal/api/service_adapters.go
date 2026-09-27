@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -22,16 +23,109 @@ type resticAdapter struct {
 	// extraTags go on every snapshot the adapter writes, after the
 	// orchestrator's own.
 	extraTags []string
+	// selectionFP fingerprints what this item is configured to back up, empty
+	// for the restore and maintenance constructions, which cover no selection.
+	selectionFP string
 }
 
-var _ backup.Restic = (*resticAdapter)(nil)
+var (
+	_ backup.Restic    = (*resticAdapter)(nil)
+	_ backup.ZFSRestic = (*resticAdapter)(nil)
+)
+
+// snapshotParentTimeout bounds the extra restic call a run pays for when every
+// file it read was new. It reads one snapshot, so a repository that needs
+// longer than this has stopped answering.
+const snapshotParentTimeout = 30 * time.Second
 
 func (a *resticAdapter) Backup(ctx context.Context, repo string, paths, tags []string, excludes ...string) (backup.Summary, error) {
 	sum, err := a.engine.Backup(ctx, repo, paths, withTags(tags, a.extraTags), a.mode, excludes...)
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	return backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded)}, nil
+	out := backupSummaryFrom(sum)
+	out.SelectionFP = a.selectionFP
+	out.HasParent = a.parentFlag(ctx, repo, out)
+	return out, nil
+}
+
+// backupSummaryFrom converts what restic reported about a finished backup. A
+// line without total_duration leaves the run unmeasured: restic prints the
+// totals together, so a missing duration means the figures beside it are
+// missing too, and recording them as zeros would read as a source that emptied
+// itself.
+func backupSummaryFrom(sum restic.Summary) backup.Summary {
+	out := backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded)}
+	if sum.TotalDuration == nil {
+		return out
+	}
+	out.Measured = true
+	out.SourceBytes = int64(sum.TotalBytesProcessed) //nolint:gosec // G115: restic cannot have read more than 8 EiB
+	out.SourceFiles = int64(sum.TotalFilesProcessed) //nolint:gosec // G115: nor more than 2^63 files
+	out.FilesNew = int64(sum.FilesNew)
+	// The span the backfill reads from backup_start and backup_end, so a
+	// series holds one measure on both sides of an upgrade.
+	out.ResticMS = sum.Elapsed.Milliseconds()
+	return out
+}
+
+// parentFlag answers whether restic had an earlier snapshot to compare
+// against, and asks only when every file it read was new. A first backup into a
+// fresh repository and a rewrite of every file read the same way, because
+// restic counts a file as new when its path is missing from the parent tree,
+// and appending a suffix to every file is what ransomware leaves behind. Only
+// the parent separates the two, so an unreadable one stays unknown.
+func (a *resticAdapter) parentFlag(ctx context.Context, repo string, sum backup.Summary) *bool {
+	if !sum.Measured || sum.FilesNew == 0 || sum.FilesNew != sum.SourceFiles {
+		return nil
+	}
+	pctx, cancel := context.WithTimeout(ctx, snapshotParentTimeout)
+	defer cancel()
+	parent, err := a.engine.SnapshotParent(pctx, repo, sum.SnapshotID, a.mode)
+	if err != nil {
+		log.Printf("api: backup: could not read whether snapshot %s was based on an earlier one: %v", shortID(sum.SnapshotID), err)
+		return nil
+	}
+	has := parent != ""
+	return &has
+}
+
+// metricsOf returns what a run recorded of restic's own figures, nil when
+// restic did not report them.
+func metricsOf(sum backup.Summary) *store.RunMetrics {
+	if !sum.Measured {
+		return nil
+	}
+	return &store.RunMetrics{
+		SourceBytes: sum.SourceBytes,
+		SourceFiles: sum.SourceFiles,
+		FilesNew:    sum.FilesNew,
+		ResticMS:    sum.ResticMS,
+		HasParent:   sum.HasParent,
+	}
+}
+
+// BackupDir carries restic's per-file counters through, which a ZFS run
+// records per member and the domain's baselines read back, together with the
+// totals anomaly detection watches every dataset by.
+func (a *resticAdapter) BackupDir(ctx context.Context, repo, dir string, tags []string, excludes ...string) (backup.ZFSBackupSummary, error) {
+	sum, err := a.engine.BackupDir(ctx, repo, dir, withTags(tags, a.extraTags), a.mode, excludes...)
+	if err != nil {
+		return backup.ZFSBackupSummary{}, err
+	}
+	measured := backupSummaryFrom(sum)
+	return backup.ZFSBackupSummary{
+		SnapshotID:      sum.SnapshotID,
+		BytesAdded:      int64(sum.BytesAdded),
+		FilesNew:        int64(sum.FilesNew),
+		FilesChanged:    int64(sum.FilesChanged),
+		FilesUnmodified: int64(sum.FilesUnmodified),
+		Measured:        measured.Measured,
+		SourceBytes:     measured.SourceBytes,
+		SourceFiles:     measured.SourceFiles,
+		ResticMS:        measured.ResticMS,
+		HasParent:       a.parentFlag(ctx, repo, measured),
+	}, nil
 }
 
 func (a *resticAdapter) RestorePaths(ctx context.Context, repo, snapshotID string, paths []string) error {
@@ -86,9 +180,9 @@ func (templatesAdapter) Read(dir, name string) (string, bool, error) { return te
 func (templatesAdapter) Write(dir, name, xml string) error { return template.Write(dir, name, xml) }
 
 // runsAdapter satisfies backup.Runs over *store.Repo (StartRun/FinishRun).
-// ctx is captured at construction so Start can read runGroupFromContext
-// and stamp a "Backup Everything" pass's parent run id onto the child run
-// it just created (see runGroupKey); a ctx without a group changes nothing.
+// ctx is captured at construction so Start can read the "Backup Everything"
+// pass's parent run id (see runGroupKey) and the run origin off it. A ctx
+// carrying neither records a plain row.
 type runsAdapter struct {
 	st  *store.Repo
 	ctx context.Context
@@ -108,19 +202,13 @@ type runsAdapter struct {
 var _ backup.Runs = runsAdapter{}
 
 func (r runsAdapter) Start(targetID, kind string) (string, error) {
-	id, err := r.st.StartRun(targetID, kind)
-	if err != nil {
-		return "", err
+	// The package-level form, because the bookkeeping-only call sites build
+	// this adapter without a Service.
+	runID, err := startRunWith(r.ctx, r.st, targetID, kind)
+	if err == nil && r.svc != nil && r.cancelKey != "" && kind == "backup" {
+		r.svc.bindBackupRun(r.cancelKey, runID)
 	}
-	if gid := runGroupFromContext(r.ctx); gid != "" {
-		// Best-effort, like every other post-Start bookkeeping call in this
-		// file: the run already started successfully, so a stamp failure is
-		// logged, never returned (see store.SetRunGroup's doc comment).
-		if serr := r.st.SetRunGroup(id, gid); serr != nil {
-			log.Printf("api: run %s: stamp group %s failed: %v", id, gid, serr) //nolint:gosec // G706: id/gid are internal ids, not user input
-		}
-	}
-	return id, nil
+	return runID, err
 }
 
 // shutdownStatus rewrites a failure that is really a shutdown.
@@ -150,10 +238,29 @@ func (s *Service) shutdownStatus(status string) (string, string, bool) {
 	return "cancelled", store.ReasonShutdown, true
 }
 
-func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
+// stalledReason is the reason a backup the stall guard cancelled is recorded
+// and reported with, and whether ctx was cancelled by it. A reason that already
+// names the stall, as a ZFS run's does with its dataset, is kept.
+func stalledReason(ctx context.Context, errMsg string) (string, bool) {
+	stall := backup.StalledBy(ctx)
+	switch {
+	case stall == nil:
+		return errMsg, false
+	case strings.HasPrefix(errMsg, store.ReasonStalled):
+		return errMsg, true
+	}
+	return stall.Error(), true
+}
+
+func (r runsAdapter) Finish(runID, status string, sum backup.Summary, errMsg string) error {
 	if r.svc != nil {
+		stalled, isStall := stalledReason(r.ctx, errMsg)
 		if newStatus, newMsg, changed := r.svc.shutdownStatus(status); changed {
 			status, errMsg = newStatus, newMsg
+		} else if status == "failed" && isStall {
+			// The guard cancelled first; a cancel pressed while the run unwinds
+			// came too late to be the reason.
+			errMsg = stalled
 		} else if status == "failed" && r.svc.backupWasCancelled(r.cancelKey) {
 			// A user cancelled this backup (#200). The error in hand is the context
 			// cancellation that followed, and recording it as a failure would put a
@@ -167,7 +274,7 @@ func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMs
 			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
-	return r.st.FinishRun(runID, status, snapshotID, bytes, errMsg)
+	return r.st.FinishRunMeasured(runID, status, sum.SnapshotID, sum.Bytes, errMsg, metricsOf(sum), sum.SelectionFP)
 }
 
 // startedRunsAdapter satisfies backup.Runs like runsAdapter, except Start
@@ -175,7 +282,7 @@ func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMs
 // BackupVM needs the run id before VMBackupDeps is built, to set RunTag =
 // "vmrun:<runID>"; RunTag drives every restic tag the orchestrator builds
 // (see VMBackupDeps.RunTag), so it cannot wait for the orchestrator's own
-// Runs.Start call. BackupVM calls store.StartRun itself and wraps the
+// Runs.Start call. BackupVM calls startRun itself and wraps the
 // result here, so the orchestrator's Start is a read rather than a second,
 // orphaned run row; Finish delegates to the real store like runsAdapter.
 type startedRunsAdapter struct {
@@ -191,16 +298,21 @@ type startedRunsAdapter struct {
 	// cancels one must get the same "cancelled" row a cancelled folder backup
 	// gets, not a red failure.
 	cancelKey string
+	// ctx is the backup's context, whose cause tells a stall apart.
+	ctx context.Context
 }
 
 var _ backup.Runs = startedRunsAdapter{}
 
 func (r startedRunsAdapter) Start(string, string) (string, error) { return r.runID, nil }
 
-func (r startedRunsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
+func (r startedRunsAdapter) Finish(runID, status string, sum backup.Summary, errMsg string) error {
 	if r.svc != nil {
+		stalled, isStall := stalledReason(r.ctx, errMsg)
 		if newStatus, newMsg, changed := r.svc.shutdownStatus(status); changed {
 			status, errMsg = newStatus, newMsg
+		} else if status == "failed" && isStall {
+			errMsg = stalled
 		} else if status == "failed" && r.svc.backupWasCancelled(r.cancelKey) {
 			// See runsAdapter.Finish (#200). Repeated rather than shared because the
 			// two adapters are separate types, and a helper taking (svc, status, key)
@@ -208,7 +320,7 @@ func (r startedRunsAdapter) Finish(runID, status, snapshotID string, bytes int64
 			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
-	return r.st.FinishRun(runID, status, snapshotID, bytes, errMsg)
+	return r.st.FinishRunMeasured(runID, status, sum.SnapshotID, sum.Bytes, errMsg, metricsOf(sum), sum.SelectionFP)
 }
 
 // sshZFSHost adapts HostSSH's Run/StreamCommand/RunWithStdin surface into
@@ -259,7 +371,7 @@ func (a *resticZvolAdapter) BackupStdin(ctx context.Context, repo string, rd io.
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	return backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded)}, nil
+	return backupSummaryFrom(sum), nil
 }
 
 func (a *resticZvolAdapter) DumpTo(ctx context.Context, repo, snapshotID, path string, w io.Writer) error {

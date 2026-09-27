@@ -71,8 +71,8 @@ services:
       HOST_SOURCE_ROOT: /host/user
 
       # VM backup (optional): uncomment to back up VMs on a libvirtd host
-      # reachable over SSH, the same settings as the Unraid template's "VM
-      # Backup" fields. LIBVIRT_HOST defaults to host.docker.internal, so when
+      # reachable over SSH, the same settings as the Unraid template's "Host
+      # SSH" fields. LIBVIRT_HOST defaults to host.docker.internal, so when
       # libvirtd runs on this Docker host, uncomment extra_hosts below and set
       # only the SSH user and port.
       # LIBVIRT_HOST: 192.168.x.x       # only if libvirtd is on another host

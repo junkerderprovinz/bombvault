@@ -45,11 +45,13 @@ describe("PlacementStatus", () => {
     await waitFor(() => expect(fake.callsTo("getOffsiteRemoval")).toEqual([[item, "t-hz"]]));
   });
 
-  it("locks the button at an append-only target", async () => {
+  it("locks the button at an append-only target and says why where a keyboard reaches it", async () => {
     const view = placementView({ observed: placementObserved({ older: [olderCopies({ appendOnly: true })] }) });
     renderWithProviders(<PlacementStatus item={item} name="nginx" view={view} onChanged={vi.fn()} />);
     const button = (await screen.findByRole("button", { name: "Delete in Hetzner" })) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
+    const why = screen.getByLabelText("Hetzner is append-only. Nothing here may delete from it.");
+    expect(why.getAttribute("tabindex")).toBe("0");
   });
 
   it("tells the card once the copies are gone", async () => {

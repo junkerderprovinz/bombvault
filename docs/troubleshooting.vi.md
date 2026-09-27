@@ -18,7 +18,7 @@ BombVault phục vụ HTTPS ngay từ đầu trên cổng `3443` (chứng chỉ 
 
 Sao lưu VM kết nối libvirt qua SSH, không bao giờ qua một điểm gắn kết.
 
-- Xác nhận SSH được bật trên máy chủ và khóa công khai của BombVault được ủy quyền trong `/root/.ssh/authorized_keys` (Settings, System, VM Backup over SSH hiển thị khóa và một nút **Test connection**).
+- Xác nhận SSH được bật trên máy chủ và khóa công khai của BombVault được ủy quyền trong `/root/.ssh/authorized_keys` (Settings, System, Host SSH hiển thị khóa và một nút **Test connection**).
 - Trên một mạng `br0.x` tùy chỉnh, đặt `LIBVIRT_HOST` thành IP LAN Unraid của bạn (container không thể tiếp cận máy chủ qua `host.docker.internal` ở đó). Bật **Settings, Docker, Host access to custom networks**.
 - Nếu bạn đã đổi cổng SSH của Unraid, đặt `LIBVIRT_SSH_PORT` cho khớp.
 - Chẩn đoán từng bước đầy đủ (kiểm tra khả năng tiếp cận, định tuyến VLAN, `Permission denied (publickey)`, `Host key verification failed`) nằm trong [hướng dẫn Sao lưu VM qua SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -42,6 +42,56 @@ Trước khi bất cứ thứ gì bị dừng hoặc xóa, việc khôi phục c
 ## Một bản xuất thô đã thất bại thay vì ghi một tệp
 
 Nếu bật mã hóa age (Settings) nhưng không đặt người nhận hợp lệ nào, một bản xuất sẽ thất bại với một lỗi rõ ràng thay vì ghi văn bản thô. Thêm một người nhận hợp lệ (một khóa công khai age hoặc một khóa công khai SSH), hoặc tắt mã hóa nếu bạn có ý định bản xuất là văn bản thô. Xem [Tính năng](features.md).
+
+## Một bản kết xuất cơ sở dữ liệu đã thất bại
+
+Bản kết xuất thất bại không bao giờ làm hỏng bản sao lưu bao quanh nó; nó được ghi lại như một lần chạy thất bại của riêng mình, và lý do cho biết phải sửa gì.
+
+- **Bị từ chối đăng nhập.** Bản kết xuất đăng nhập bằng chính các biến mật khẩu của container (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` hoặc bản `_FILE` của chúng). Hãy kiểm tra chúng trên container cơ sở dữ liệu. Một biến `_FILE` trỏ tới bí mật mà người dùng của chính container không đọc được cũng thất bại y như vậy.
+- **Thiếu quyền.** Với mật khẩu root ngẫu nhiên, bản kết xuất chỉ đăng nhập được với tư cách người dùng ứng dụng nên chỉ chứa đúng cơ sở dữ liệu đó, còn MySQL 8.4 trở lên có thể từ chối hẳn. Hãy đặt cho container một mật khẩu root thật, hoặc tắt kết xuất của nó.
+- **Các bảng hệ thống cần nâng cấp.** MariaDB từ chối kết xuất khi bảng hệ thống của nó đến từ phiên bản cũ hơn (lỗi 1558). Thêm biến `MARIADB_AUTO_UPGRADE=1` rồi khởi động lại container, hoặc chạy `mariadb-upgrade` một lần bên trong.
+- **Không có công cụ kết xuất.** Một image rút gọn hay tự dựng mà thiếu `pg_dump`, `mysqldump` hoặc `mariadb-dump` thì không kết xuất được. Hãy dùng image chính thức, hoặc tắt kết xuất.
+- **Giới hạn thời gian.** Một bản kết xuất có `DB_DUMP_MAX_HOURS` (mặc định 6), bản sao lưu bao quanh có `BACKUP_MAX_HOURS`, còn bản kết xuất ngừng tiến triển sẽ bị cắt sau `BACKUP_STALL_HOURS`. Trường hợp cuối thường do một khóa mà ứng dụng đang giữ. Hãy nâng giới hạn đã kích hoạt, hoặc kết xuất lúc ứng dụng rảnh rỗi.
+- **Container đang tạm dừng hoặc đang khởi động lại.** Bản kết xuất nói chuyện với máy chủ đang chạy. Nếu container cứ khởi động lại, nhật ký của chính nó sẽ nói vì sao.
+- **Không xóa được một bản kết xuất hỏng.** Bản kết xuất mà BombVault không hoàn tất được sẽ bị xóa đi. Khi lần xóa đó thất bại, bản kết xuất vẫn nằm trong danh sách với dấu hỏng, và bạn có thể xóa nó ở đó.
+
+## Một lần nhập đã thất bại
+
+Việc nhập sẽ dừng container, dời thư mục dữ liệu của nó sang một bên và để image tạo một thư mục trống vào chỗ đó. Nếu một bước trước khi nhập thất bại, thư mục cũ được đặt trở lại một cách tự động. Nếu chính việc nhập thất bại, container giữ thư mục mới còn thư mục cũ nằm bên cạnh với tên `<thư mục dữ liệu>.bombvault-before-import-<dấu thời gian>`; thông báo lỗi của lần chạy nêu đúng đường dẫn.
+
+Để đặt lại bằng tay: dừng container, đổi tên thư mục dữ liệu hiện tại cho khuất lối, đổi tên thư mục được giữ về tên gốc, rồi khởi động container. Trên Unraid, trình quản lý tệp ở thẻ Shares làm được việc này.
+
+## Sao lưu tập dữ liệu ZFS thất bại hoặc bỏ qua một tập dữ liệu {#zfs-datasets}
+
+Mỗi sự cố có một mã lý do trong ngoặc vuông, và trang [Tập dữ liệu ZFS](zfs-datasets.md#reason-codes) liệt kê tất cả cùng cách khắc phục. Ba trường hợp hay gặp nhất:
+
+- **`snapshot-loop`**: ảnh chụp không tới được BombVault vì Host Data không chuyển tiếp các lần gắn mới. Sửa container, đặt Access Mode của Host Data thành Read/Write - Slave rồi khởi động lại BombVault.
+- **`key-not-loaded`**: tập dữ liệu mã hóa chưa nạp khóa sẽ bị bỏ qua. Nạp khóa bằng `zfs load-key` và gắn tập dữ liệu; lần sao lưu sau sẽ gồm nó.
+- **`ssh-auth`**: máy chủ từ chối khóa của BombVault. Thẻ kết nối trên trang ZFS hiện lệnh cấp quyền cho khóa; chạy lệnh đó một lần trên máy chủ.
+
+## Một mục đứng yên ở "Đang học N/10"
+
+Phần lớn kiểm tra bất thường bắt đầu sau 10 bản sao lưu thành công của một mục, và việc đếm bắt đầu lại sau **Đánh dấu là đã lường trước** và sau khi lựa chọn của mục thay đổi. Một mục không có lịch thì không học, và một container không có appdata thì không có gì để học, huy hiệu của nó cũng cho biết điều đó.
+
+## Chính sách lưu giữ không còn xóa bản sao lưu cũ của một mục
+
+Một bất thường nghiêm trọng đang mở giữ chúng lại: nguồn của mục gần như trống, đã co lại mạnh, hoặc một bản sao lưu đã lưu lại phần lớn dữ liệu. Mở bất thường từ huy hiệu trên mục. Nếu thiếu dữ liệu hoặc dữ liệu đã bị mã hóa, trước tiên hãy khôi phục từ bản sao lưu tốt cuối cùng được liên kết. Sau đó xác nhận bất thường, hoặc đánh dấu là đã lường trước nếu thay đổi do bạn, và lần chạy kế tiếp sẽ dọn dẹp như thường. Bản xem trước lưu giữ đánh dấu mục như vậy là được giữ lại. Với một mục ZFS, chỉ tập dữ liệu mà bất thường nêu tên mới giữ các bản sao lưu cũ; các tập dữ liệu khác trong cây vẫn được dọn như thường.
+
+## Dọn dẹp thủ công báo rằng một số mục đã được giữ lại
+
+Cùng nguyên nhân: việc dọn dẹp không động đến các bản sao lưu cũ của mục có bất thường như vậy và nêu tên mục trong thông báo. Mọi thứ khác được dọn như thường.
+
+## Nhập lịch sử báo rằng không đọc được một kho lưu trữ
+
+Sau khi cập nhật, BombVault đọc một lần kích thước của các bản sao lưu trước đó từ mỗi kho. Một kho không truy cập được vào lúc đó, chẳng hạn một đích ngoài site bị sập hoặc một chia sẻ chưa được gắn, sẽ được liệt kê trong thẻ **Bất thường** tại **Cài đặt, Toàn vẹn** và được thử lại mỗi ngày một lần. Trong lúc đó, các mục của nó học từ các bản sao lưu mới.
+
+## Cảnh báo dung lượng đĩa không khớp với bảng điều khiển Unraid
+
+Trên chia sẻ người dùng của Unraid (`/mnt/user`), dung lượng trống là của cả mảng, không phải của một đĩa. Kho từ xa chỉ được đo qua các remote rclone có báo dung lượng trống; kho S3, B2, REST và SFTP không có số liệu và được liệt kê là chưa đo trong thẻ **Bất thường**.
+
+## Trợ lý AI không kết nối được
+
+Trang [Máy chủ MCP](mcp.md#troubleshooting) giải thích ý nghĩa của từng mã trạng thái và từng lần từ chối của điểm kết nối MCP, cùng cách xử lý.
 
 ## Container cứ khởi động lại hoặc trông không khỏe mạnh
 

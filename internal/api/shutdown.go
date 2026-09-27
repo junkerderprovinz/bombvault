@@ -2,8 +2,12 @@ package api
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 )
 
 // shutdownGrace bounds how long BeginShutdown waits for cancelled backups to
@@ -13,14 +17,30 @@ import (
 const shutdownGrace = 10 * time.Second
 
 // registerBackupCancel records a running backup's cancel func under its
-// progress key so shutdown and CancelBackupRun can reach it. Pair it with a
-// deferred unregisterBackupCancel.
-func (s *Service) registerBackupCancel(key string, cancel context.CancelFunc) {
+// progress key so shutdown and CancelBackupRun can reach it, and the context it
+// cancels, so CancelBackupRun can tell a backup the stall guard already stopped.
+// Pair it with a deferred unregisterBackupCancel.
+func (s *Service) registerBackupCancel(ctx context.Context, key string, cancel context.CancelFunc) {
 	s.cancelMu.Lock()
 	if s.backupCancels == nil {
 		s.backupCancels = map[string]context.CancelFunc{}
 	}
+	if s.backupCtxs == nil {
+		s.backupCtxs = map[string]context.Context{}
+	}
 	s.backupCancels[key] = cancel
+	s.backupCtxs[key] = ctx
+	s.cancelMu.Unlock()
+}
+
+// bindBackupRun records the run the backup under key writes, so a cancel aimed
+// at that run cannot reach the next backup that registers the same key.
+func (s *Service) bindBackupRun(key, runID string) {
+	s.cancelMu.Lock()
+	if s.backupRuns == nil {
+		s.backupRuns = map[string]string{}
+	}
+	s.backupRuns[key] = runID
 	s.cancelMu.Unlock()
 }
 
@@ -30,8 +50,70 @@ func (s *Service) registerBackupCancel(key string, cancel context.CancelFunc) {
 func (s *Service) unregisterBackupCancel(key string) {
 	s.cancelMu.Lock()
 	delete(s.backupCancels, key)
+	delete(s.backupCtxs, key)
+	delete(s.backupRuns, key)
 	delete(s.cancelledBackups, key)
+	delete(s.committedBackups, key)
 	s.cancelMu.Unlock()
+}
+
+// errBackupCancelled matches the error of a backup the user cancelled. The
+// cancellation mark ends with the run, so a caller that logs the error later
+// can only tell from the error itself.
+var errBackupCancelled = errors.New("backup cancelled by the user")
+
+type cancelledBackupError struct{ err error }
+
+func (e cancelledBackupError) Error() string   { return e.err.Error() }
+func (e cancelledBackupError) Unwrap() []error { return []error{e.err, errBackupCancelled} }
+
+// endBackupCancel is the deferred unregisterBackupCancel of a backup that
+// returns *err. A failure of a backup the user cancelled comes back matching
+// errBackupCancelled.
+func (s *Service) endBackupCancel(key string, err *error) {
+	if *err != nil && s.backupWasCancelled(key) {
+		*err = cancelledBackupError{*err}
+	}
+	s.unregisterBackupCancel(key)
+}
+
+// IsBackupCancelled reports whether err is the failure of a backup the user
+// cancelled, which a round of several items counts as no failure.
+func IsBackupCancelled(err error) bool { return errors.Is(err, errBackupCancelled) }
+
+// backupEnding is the word a log line uses for a backup that returned err.
+func backupEnding(err error) string {
+	if IsBackupCancelled(err) {
+		return "cancelled"
+	}
+	return "failed"
+}
+
+// commitBackup marks the backup under key as past the point a cancel could
+// undo: its restore point is written and only the restart is left. The user
+// can no longer cancel it; shutdown still reaches it. The progress stream
+// carries the mark, so the web interface stops offering a cancel.
+func (s *Service) commitBackup(key string, startedAt int64) {
+	s.cancelMu.Lock()
+	if s.committedBackups == nil {
+		s.committedBackups = map[string]bool{}
+	}
+	s.committedBackups[key] = true
+	s.cancelMu.Unlock()
+	if s.progress != nil {
+		s.progress.Publish(progress.Event{Key: key, Phase: "backup", Percent: 100, Active: true, StartedAt: startedAt, Committed: true})
+	}
+}
+
+// BackupCommitted reports whether the backup under key has written its
+// restore point, and with a runID, whether that backup writes that run.
+func (s *Service) BackupCommitted(key, runID string) bool {
+	s.cancelMu.Lock()
+	defer s.cancelMu.Unlock()
+	if runID != "" && s.backupRuns[key] != runID {
+		return false
+	}
+	return s.committedBackups[key]
 }
 
 // CancelBackupRun cancels the in-flight backup under a progress key and reports
@@ -41,9 +123,24 @@ func (s *Service) unregisterBackupCancel(key string) {
 // reach a restore.
 // The mark it sets makes runsAdapter.Finish record the run as cancelled rather
 // than failed.
-func (s *Service) CancelBackupRun(key string) bool {
+//
+// A non-empty runID cancels only while the backup under key still writes that
+// run, checked under the same lock as the cancel itself, so a caller that
+// looked the run up a moment earlier cannot reach the next backup of the item.
+// The web interface's button passes none: it means whatever runs there now.
+//
+// A committed backup is refused: its restore point is written, and a cancel
+// could only claim to stop it. So is one the stall guard stopped, which is
+// only unwinding and is recorded as stalled.
+func (s *Service) CancelBackupRun(key, runID string) bool {
 	s.cancelMu.Lock()
 	cancel, ok := s.backupCancels[key]
+	if (runID != "" && s.backupRuns[key] != runID) || s.committedBackups[key] {
+		ok = false
+	}
+	if ok && backup.StalledBy(s.backupCtxs[key]) != nil {
+		ok = false
+	}
 	if ok {
 		if s.cancelledBackups == nil {
 			s.cancelledBackups = map[string]bool{}
@@ -79,6 +176,24 @@ func (s *Service) inFlightBackups() int {
 // uses it to label aborts; it is not a health flag.
 func (s *Service) IsShuttingDown() bool { return s.shuttingDown.Load() }
 
+// EndDetachedWork cancels the stop context, which ends the work requests wait
+// on after their own context is detached. The server calls it before it waits
+// for those requests; BeginShutdown calls it again.
+func (s *Service) EndDetachedWork() {
+	s.stopOnce.Do(s.openStopContext)
+	s.stopCancel()
+}
+
+// StopContext returns a context that BeginShutdown cancels.
+func (s *Service) StopContext() context.Context {
+	s.stopOnce.Do(s.openStopContext)
+	return s.stopCtx
+}
+
+func (s *Service) openStopContext() {
+	s.stopCtx, s.stopCancel = context.WithCancel(context.Background())
+}
+
 // BeginShutdown marks the process as leaving, cancels every in-flight backup
 // and waits up to shutdownGrace for them to unwind. Backups that fail meanwhile
 // are recorded as cancelled, which leaves the startup reaper's "interrupted"
@@ -89,6 +204,7 @@ func (s *Service) IsShuttingDown() bool { return s.shuttingDown.Load() }
 // interrupted. BeginShutdown is safe to call more than once.
 func (s *Service) BeginShutdown() {
 	s.shuttingDown.Store(true)
+	s.EndDetachedWork()
 
 	s.cancelMu.Lock()
 	cancels := make([]context.CancelFunc, 0, len(s.backupCancels))

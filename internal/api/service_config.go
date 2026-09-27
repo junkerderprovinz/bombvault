@@ -141,7 +141,7 @@ func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
 	}
 	if op, busy := s.domainBusy("config"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on config", op)
+		return false, domainBusyError{op: op, domain: "config"}
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -150,7 +150,7 @@ func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
 		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupConfig(bctx); err != nil {
-			log.Printf("api: backup config failed: %v", err)
+			log.Printf("api: backup config %s: %v", backupEnding(err), err)
 		}
 	}()
 	return true, nil
@@ -165,14 +165,17 @@ var _ backup.ConfigRestic = (*resticAdapter)(nil)
 // snapshot (VACUUM-INTO of the WAL-mode DB + verbatim static files) and always
 // removes that snapshot afterwards, so a rebuilt Unraid box can recover BombVault
 // itself with no container stop.
-func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
+func (s *Service) BackupConfig(ctx context.Context) (_ backup.Summary, retErr error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
-	s.registerBackupCancel("config", cancel) // reachable by shutdown
-	defer s.unregisterBackupCancel("config")
+	s.registerBackupCancel(ctx, "config", cancel) // reachable by shutdown
+	defer s.endBackupCancel("config", &retErr)
 	defer s.lockDomain("config")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "config")
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -204,15 +207,15 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 		SourceDir: stagingDir,
 		Repo:      repo,
 		TargetID:  store.ConfigTargetID,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode},
+		Restic:    &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFingerprint(itemSelection{Kind: "config"})},
 		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "config"},
 	})
 	s.progEnd("config", "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "config", "", err == nil, sum, err)
+	s.notifyBackup(ctx, "config", "", "config", err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, tagIdentity("config"), "config")
+	s.applyRetention(ctx, repo, settings, mode, tagIdentity("config"), "config", anomalyScope{Kind: anomalyScopeItem, ID: store.ConfigTargetID})
 	s.replicateOffsite(ctx, "config", settings, repo, "")
 	s.collectStatsAfterItem(ctx, "config")
 	s.checkPrimaryRemoteBudget(ctx, "config", repo, settings)
@@ -309,7 +312,7 @@ func (s *Service) RestoreConfig(ctx context.Context, snapshotID, source string) 
 	// attempt should not let it linger. Best-effort; a leftover .bad must
 	// never block a restore.
 	_ = os.RemoveAll(root + ".bad")
-	runID, err := s.store.StartRun(store.ConfigTargetID, "restore")
+	runID, err := s.startRun(ctx, store.ConfigTargetID, "restore")
 	if err != nil {
 		return fmt.Errorf("config restore: start run: %w", err)
 	}
@@ -370,7 +373,7 @@ func (s *Service) StartRestoreConfig(ctx context.Context, snapshotID, source str
 	}
 	if op, busy := s.domainBusy("config"); busy {
 		s.batchActive.Store(false)
-		return false, false, fmt.Errorf("%s is running on config", op)
+		return false, false, domainBusyError{op: op, domain: "config"}
 	}
 	// On a recovered panic the guard has to be released here as well: unlike
 	// the success path below, nothing else left running would release it, and

@@ -25,6 +25,13 @@ describe("DirectRepoDialog", () => {
   beforeEach(() => fake.reset());
   afterEach(cleanup);
 
+  it("fills only the button that creates the repository", async () => {
+    renderDialog();
+    await screen.findByDisplayValue("b2:bucket:containers-direct");
+    const accents = screen.getAllByRole("button").filter((b) => b.className.includes("bg-accent"));
+    expect(accents.map((b) => b.textContent)).toEqual([screen.getByRole("button", { name: /and use/ }).textContent]);
+  });
+
   it("starts from the place the server suggests beside the target", async () => {
     renderDialog();
     expect(await screen.findByDisplayValue("b2:bucket:containers-direct")).toBeTruthy();

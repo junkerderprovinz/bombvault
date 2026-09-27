@@ -794,6 +794,23 @@ func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"enabled": false}))
 }
 
+// authGatePublicPath reports whether a path is reachable without a session. The
+// reason for each entry is in authGate's doc comment; every one of them gates
+// itself on a token, a key or a check inside its own handler.
+func authGatePublicPath(path string) bool {
+	switch path {
+	case "/api/auth", "/api/login", "/api/health",
+		"/metrics",
+		"/widget", "/api/widget/data",
+		"/api/fleet/status", "/api/fleet/mesh-offer",
+		"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish",
+		mcpEndpointPath,
+		oauthResourceMeta, oauthServerMetaPath, oauthRegisterPath, oauthTokenPath, oauthRevokePath:
+		return true
+	}
+	return false
+}
+
 // authGate requires a session cookie once a login password is set, and passes
 // everything through while none is. These paths are always open:
 //   - GET /api/auth, POST /api/login and GET /api/health, so the SPA can load
@@ -805,6 +822,10 @@ func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 //   - POST /api/fleet/mesh-offer, the one write on this list, behind the same
 //     fleet token. It only stores a pending offer for a person to review.
 //   - The passkey status and the two passkey login halves.
+//   - POST /mcp and the OAuth discovery, registration, token and revocation
+//     routes. An assistant's MCP client carries no session cookie either; the
+//     endpoint gates itself on its own keys and tokens and answers 404 while
+//     none exists. The key management routes under /api/mcp need a session.
 func (h *Handler) authGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// A store error must not drop the gate, so it fails closed, keeping
@@ -812,11 +833,9 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		s, err := h.store.GetSettings()
 		if err != nil {
 			log.Printf("api: authGate: GetSettings: %v", err)
-			switch r.URL.Path {
-			case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data", "/api/fleet/status", "/api/fleet/mesh-offer",
-				"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish":
+			if authGatePublicPath(r.URL.Path) {
 				next.ServeHTTP(w, r)
-			default:
+			} else {
 				writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 					"ok":    false,
 					"error": "authentication unavailable",
@@ -831,13 +850,7 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 			return
 		}
 
-		// The public paths from the doc comment above.
-		switch r.URL.Path {
-		case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data", "/api/fleet/status", "/api/fleet/mesh-offer",
-			// The passkey login halves are how someone signs in. The status
-			// tells an unauthenticated caller only counts and whether this
-			// address can carry a passkey; the key list needs a session.
-			"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish":
+		if authGatePublicPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}

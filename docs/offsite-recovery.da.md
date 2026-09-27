@@ -150,8 +150,8 @@ En dedikeret **Recovery**-fane fører en frisk eller genopbygget installation ge
 1. **Tjekker, at BombVault kan læse dine sikkerhedskopier** (krypteringsnøgle-faldgruben på forkant).
 2. **Gendanner BombVaults egne indstillinger**, så de sikkerhedskopi-stier, off-site-destinationer og legitimationsoplysninger, resten af forløbet har brug for, er forudfyldte. Indstillingssikkerhedskopien læses fra det sted, som rækken Auto-sikkerhedskopi angiver under **Gemt på**, eller fra Auto-sikkerhedskopiens kopi under **Kopieret til**, og stedet vises med sin adresse; vil du læse fra et andet sted, så ændr først rækken Auto-sikkerhedskopi i trin 3. Gendannelsen anvendes via en selv-genstart over Docker-socket'en, så den kørende indstillingsdatabase aldrig overskrives under et åbent handle.
 3. **Tilknytter dine eksisterende sikkerhedskopier** via rækkerne på kortet Domæner: i hvert domænes række vælger du stedet, hvor dets sikkerhedskopier ligger, under **Gemt på** og stederne med dets kopier under **Kopieret til**. Et sted, som ingen række tilbyder endnu, for eksempel en deling, en server eller en cloud-bucket, forbindes med **Tilføj sted**, det samme vindue som på Indstillinger, Lagring. **Opret forbindelse & forhåndsvis** tjekker derefter, at sikkerhedskopierne kan læses.
-4. **Opdager** de containere, VM'er og filsæt, der er gemt i det.
-5. **Gendanner dem alle** (efterladt stoppet, så du starter dem bevidst), med dit gendannelseskit et klik væk.
+4. **Opdager** de containere, VM'er, filsæt og ZFS-datasæt, der er gemt i det.
+5. **Gendanner containere og VM'er i ét hug** (efterladt stoppet, så du starter dem bevidst) og viser filsæt og ZFS-elementer, som du gendanner ét ad gangen; ZFS-elementer kommer tilbage slået fra. Dit gendannelseskit er et klik væk.
 
 !!! note "Eksterne kopier venter efter en genopbygning"
     Når trin 4 genopbygger elementer uden de gamle indstillinger, sættes off-site-replikeringen af de domæner på pause, indtil standardplaceringen er bekræftet. Se [Placering pr. element](#placement).
@@ -172,6 +172,9 @@ Dette er den brik, der gør katastrofegendannelse mulig, selv når der ikke er n
 !!! danger "Opbevar gendannelseskittet uden for serveren"
     Kittet indeholder hemmeligheden, der dekrypterer dine sikkerhedskopier. Hold det et sikkert sted adskilt fra serveren (en adgangskodemanager, en printet kopi i en boks). Hvis du mister både BombVault og `APP_KEY` uden noget gendannelseskit, kan dine krypterede sikkerhedskopier ikke gendannes.
 
+!!! warning "Det nyeste snapshot er ikke altid det, der skal gendannes"
+    Siden restic 0.17 viser `restic snapshots` størrelsen på hvert snapshot. Efter datatab kan det nyeste snapshot være det tømte, så gendan ikke et snapshot, der er langt mindre end dem før det. Efter ransomware kan det være det krypterede i den sædvanlige størrelse. Hvis BombVault stadig kører, så se først på siden **Afvigelser**: den nævner den seneste gode sikkerhedskopi. En gendannelse kræver ingen anomalidata fra BombVault, og opbevaringspausen beholder kun flere snapshots.
+
 ### Når sættet ikke er ved hånden
 
 Adgangskoden gemmes ingen steder, den **beregnes** ud fra `APP_KEY`. Med nøglen og en shell kan du altså genskabe den selv:
@@ -188,3 +191,27 @@ Det er HMAC-SHA256 over den faste streng `bombvault:restic-repo`, med de rå byt
     Et arkiv, der er landet her via off-site-replikering, blev oprettet af maskinen, der sendte det, med **dens** `APP_KEY`. Udleder du fra den modtagende maskines nøgle, får du en adgangskode, restic afviser, hvilket ligner et ødelagt arkiv til forveksling uden at være det. Det er den sædvanlige grund til, at `restic check` på et modtaget arkiv bliver ved med at spørge om adgangskoden.
 
 Fordi gendannelsesdefinitioner lever **inde** i hvert repo (`<repo>/def`, `<repo>/vm-def`), er en kopieret repo-mappe fuldt selvstændig, så kittet plus repoet er alt, hvad en bare-metal-gendannelse har brug for.
+
+## Hent et databasedump tilbage {#database-dumps}
+
+Et databasedump er sit eget gendannelsespunkt i container-repositoriet, med etiketten `dbdump:<container>` og den ene fil `/dbdump/<container>.sql`. BombVault viser, henter og importerer dem under **Sikkerhedskopier**; nedenfor er de samme trin med restic alene, til den dag BombVault ikke er der.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Etiketterne `dbversion:` og `dbname:` på hvert dump fortæller, hvilken serverversion det kommer fra, og hvilke databaser det rummer. En komplet fil slutter med `-- PostgreSQL database cluster dump complete` eller `-- Dump completed`.
+
+Importér det i en container med samme eller en nyere version (PostgreSQL) eller samme hovedversion (MySQL og MariaDB), startet én gang med en tom datamappe, så den initialiserer sig. Værten har ikke brug for en databaseklient, containeren har en:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+For en enkelt database ud af et fuldt dump tager MySQL og MariaDB `--one-database <name>` på klientkommandoen. Et PostgreSQL-dump har én sektion per database, hver indledt med en linje `\connect <name>`: kopiér den sektion over i sin egen fil, og importér den med `-d <name>`, efter at databasen er oprettet.
+
+!!! warning "Et dump taget som root bringer serverens brugere med"
+    Et fuldt MySQL- eller MariaDB-dump taget som root indeholder systemdatabasen `mysql`, så en import erstatter den nye servers konti, root-adgangskoden inklusive, med dem fra dumpet. På PostgreSQL er `role ... already exists` for den bruger, containeren selv oprettede, forventet og harmløst.

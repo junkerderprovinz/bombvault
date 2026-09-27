@@ -59,6 +59,14 @@ A domain stored in a remote place is the source of its copies like a local one; 
 !!! note "Credentials belong to the place"
     A remote place keeps its own credentials. A place set up with the shared cloud credentials keeps using them until its access is changed in its details.
 
+### SMB and WebDAV without a host mount {#smb-webdav}
+
+Settings, Off-site, rclone has a form for a Windows or Samba share and for a WebDAV server (Nextcloud, ownCloud, SharePoint or any other). Fill in a short name, the host and share (SMB) or the URL and server type (WebDAV), the user and the password, and BombVault writes the rclone section for you. rclone obscures the password itself before it is stored; adding a destination with a name that already exists replaces that section instead of adding a second one.
+
+The form answers with the finished location, for example `rclone:nas:backups`. Put that into a Backup Path or an off-site destination and add a sub-folder if you want one (`rclone:nas:backups/bombvault`). The share is the first path segment, not part of the name.
+
+This is the better route than mounting the share on Unraid: restic advises against keeping a repository on a mounted CIFS share, and here nothing is mounted. NFS is not in the form because neither restic nor rclone has an NFS backend; for NFS, mount the export on the host and point a Backup Path at it.
+
 ## Immutable (append-only) off-site
 
 Flag an off-site repo append-only so ransomware, or a compromised host, cannot delete or rewrite your backups. The far side (a `restic/rest-server` running in `--append-only` mode) **enforces** it. BombVault only ever **verifies** it and never shows green on a configuration claim alone.
@@ -150,8 +158,8 @@ A dedicated **Recovery** tab walks a fresh or rebuilt install through the disast
 1. **Checks BombVault can read your backups** (the encryption-key gotcha up front).
 2. **Restores BombVault's own settings**, so the backup paths, off-site targets and credentials the rest of the flow needs come pre-filled. It reads the settings backup from the place the Self-Backup row names under **Stored in**, or from the Self-Backup's copy under **Copied to**, and shows that place with its address; to read from another place, change the Self-Backup row in step 3 first. The restore is applied via a self-restart over the Docker socket, so the live settings database is never overwritten under an open handle.
 3. **Attaches your existing backups** through the rows of the Domains card: on each domain's row, choose the place its backups lie on under **Stored in** and the places holding its copies under **Copied to**. A place no row offers yet, such as a share, a server or a cloud bucket, is connected with **Add place**, the same window as on Settings, Storage. **Connect & preview** then checks that the backups can be read.
-4. **Discovers** the containers, VMs and file sets stored in it.
-5. **Restores them all** (left stopped, so you start them deliberately), with your recovery kit one click away.
+4. **Discovers** the containers, VMs, file sets and ZFS datasets stored in it.
+5. **Restores the containers and VMs in one go** (left stopped, so you start them deliberately) and lists the file sets and ZFS items to restore one by one; ZFS items come back switched off. Your recovery kit is one click away.
 
 !!! note "Off-site copies wait after a rebuild"
     When step 4 rebuilds entries without the old settings, off-site replication of those domains pauses until the placement default is confirmed. See [Placement per item](#placement).
@@ -172,6 +180,18 @@ One click downloads the **master key**, the **derived restic password**, and the
 !!! danger "Store the recovery kit off the server"
     The kit contains the secret that decrypts your backups. Keep it somewhere safe and separate from the server (a password manager, a printed copy in a safe). If you lose both BombVault and `APP_KEY` with no recovery kit, your encrypted backups cannot be recovered.
 
+!!! warning "The newest snapshot is not always the one to restore"
+    Since restic 0.17, `restic snapshots` shows each snapshot's size. After data loss the newest snapshot can be the emptied one, so do not restore a snapshot that is far smaller than the ones before it. After ransomware it can be the encrypted one at the usual size. If BombVault still runs, check its **Anomalies** page first: it names the last good backup. A restore does not need any of BombVault's anomaly data, and the retention pause only ever keeps more snapshots.
+
+### Sealing the kit
+
+If you have turned on age encryption for the plain exports (Settings), the kit is sealed with it too and downloads as `bombvault-recovery-kit.md.age`. It is ASCII-armored rather than binary, so it is still plain text: pasting it into a password manager or printing it works exactly as before, the contents are simply unreadable without your key.
+
+!!! warning "Do not store the age key inside the kit"
+    You need your age **private** key to open a sealed kit. Keep it somewhere that does not depend on the kit itself, or you will have two things to recover instead of one. Sealing is worth it when the kit is stored somewhere you do not fully control (a shared password manager, cloud notes, a printout in an office); a kit in your own safe is already protected by the safe.
+
+    With encryption on and no usable recipient configured, the download is refused outright. BombVault never falls back to handing out the master key in the clear.
+
 ### If you do not have the kit to hand
 
 The password is not stored anywhere, it is **computed** from `APP_KEY`, so you can reproduce it yourself with nothing but the key and a shell:
@@ -186,3 +206,27 @@ That is HMAC-SHA256 over the fixed string `bombvault:restic-repo`, keyed with th
     A repository that arrived here through off-site replication was created by the machine that sent it, with **its** `APP_KEY`. Deriving from the receiving box's key produces a password restic will reject, which reads exactly like a corrupt repository and is not. This is the usual reason `restic check` on a received repo asks for a password over and over.
 
 Because recovery definitions live **inside** each repo (`<repo>/def`, `<repo>/vm-def`), a copied repo folder is fully self-contained, so the kit plus the repo is everything a bare-metal restore needs.
+
+## Getting a database dump back {#database-dumps}
+
+A database dump is a restore point of its own in the containers repository, tagged `dbdump:<container>`, holding the single file `/dbdump/<container>.sql`. BombVault lists, downloads and imports them under **Backups**; below are the same steps with restic alone, for the day BombVault is not there.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+The tags `dbversion:` and `dbname:` on each dump say which server version it came from and which databases it holds. A complete file ends with `-- PostgreSQL database cluster dump complete` or `-- Dump completed`.
+
+Import it into a container of the same or a newer version (PostgreSQL), or the same major version (MySQL and MariaDB), started once with an empty data folder so it initialises. The host needs no database client, the container has one:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+For a single database out of a full dump, MySQL and MariaDB take `--one-database <name>` on the client command. A PostgreSQL dump has one section per database, each starting with a `\connect <name>` line: copy that section into its own file and import it with `-d <name>` after creating the database.
+
+!!! warning "A root dump carries the server's users"
+    A full MySQL or MariaDB dump taken as root contains the `mysql` system database, so importing it replaces the new server's accounts, including root's password, with the ones from the dump. On PostgreSQL, `role ... already exists` for the user the container created is expected and harmless.

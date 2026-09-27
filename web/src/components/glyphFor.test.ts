@@ -61,3 +61,15 @@ describe("glyphFor on the About card", () => {
     expect(glyphFor("recovery.emailless")).toBeUndefined();
   });
 });
+
+describe("glyphFor on credentials", () => {
+  it("marks revoking a key apart from switching two-factor off", () => {
+    expect(glyphFor("mcp.revoke")).toBeDefined();
+    expect(glyphFor("mcp.revoke")).not.toEqual(glyphFor("auth.twoFactorDisable"));
+    expect(glyphFor("mcp.revoke")).not.toEqual(glyphFor("mcp.rotate"));
+  });
+
+  it("gives removing a passkey the same mark as revoking a key", () => {
+    expect(glyphFor("auth.passkeyRemove")).toEqual(glyphFor("mcp.revoke"));
+  });
+});

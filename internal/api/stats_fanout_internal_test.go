@@ -179,6 +179,42 @@ func TestStatsSampleRetriesAfterFailure(t *testing.T) {
 	}
 }
 
+// A domain that is switched off has no repository to measure, and a sample of
+// it would only write a failure into the log.
+func TestStatsSampleSkipsASwitchedOffDomain(t *testing.T) {
+	eng := &statsFakeEngine{entered: make(chan struct{}, 4)}
+	svc, st := statsTestService(t, eng)
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersEnabled = false
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	svc.CollectStatsAsync("containers", "local")
+
+	select {
+	case <-eng.entered:
+		t.Fatal("a switched-off domain was sampled")
+	case <-time.After(300 * time.Millisecond):
+	}
+}
+
+func TestStatsSampleRunsForASwitchedOnDomain(t *testing.T) {
+	eng := &statsFakeEngine{entered: make(chan struct{}, 4)}
+	svc, _ := statsTestService(t, eng)
+
+	svc.CollectStatsAsync("containers", "local")
+
+	select {
+	case <-eng.entered:
+	case <-time.After(10 * time.Second):
+		t.Fatal("a switched-on domain without a sample was never sampled")
+	}
+}
+
 type failingStatsEngine struct {
 	ResticEngine
 	tries int
@@ -257,18 +293,28 @@ func TestPrimaryRemoteBudgetIgnoresAnItemsOwnRepository(t *testing.T) {
 // A domain wired straight to maybeCollectStats would sample once per item of a
 // round, with no error and no log line to show for it.
 func TestPerItemSuccessPathsUseTheRoundAwareHook(t *testing.T) {
-	src := mustReadService(t)
-	for _, domain := range []string{"containers", "vms", "flash", "files", "config"} {
-		if !strings.Contains(src, `s.collectStatsAfterItem(ctx, "`+domain+`")`) {
-			t.Errorf("%s's success path must sample via collectStatsAfterItem", domain)
+	svcSrc := mustReadService(t)
+	// The ZFS run names its domain through the package constant, so its guard
+	// reads the argument it is written with.
+	for _, site := range []struct{ src, domain, arg string }{
+		{svcSrc, "containers", `"containers"`},
+		{svcSrc, "vms", `"vms"`},
+		{svcSrc, "flash", `"flash"`},
+		{svcSrc, "files", `"files"`},
+		{svcSrc, "config", `"config"`},
+		{mustReadSource(t, "zfs_run.go"), "zfs", "zfsDomain"},
+	} {
+		src := site.src
+		if !strings.Contains(src, `s.collectStatsAfterItem(ctx, `+site.arg+`)`) {
+			t.Errorf("%s's success path must sample via collectStatsAfterItem", site.domain)
 		}
-		if strings.Contains(src, `s.maybeCollectStats(ctx, "`+domain+`")`) {
+		if strings.Contains(src, `s.maybeCollectStats(ctx, `+site.arg+`)`) {
 			t.Errorf("%s's success path calls maybeCollectStats(ctx, ...) directly, which samples "+
-				"once per item during a round; use collectStatsAfterItem", domain)
+				"once per item during a round; use collectStatsAfterItem", site.domain)
 		}
 	}
 	// The round itself samples once at the end, with the batch context.
-	if !strings.Contains(src, `s.maybeCollectStats(bctx, "containers")`) {
+	if !strings.Contains(svcSrc, `s.maybeCollectStats(bctx, "containers")`) {
 		t.Error("a container round must still sample once, at the end")
 	}
 }

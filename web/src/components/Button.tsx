@@ -5,6 +5,7 @@ import { mergeRefs } from "../lib/mergeRefs";
 import { useLabelMode } from "../lib/useLabelMode";
 import { useTipBubble } from "../lib/useTipBubble";
 import { glyphFor } from "./glyphFor";
+import { HintSlot, HintSpace } from "./HintSlot";
 import { IconClose } from "./navGlyphs";
 
 // Button is the app's one clickable control; something you only read is a
@@ -52,6 +53,15 @@ const TONE_CLASS: Record<ButtonTone, string> = {
   warn: "bg-statusWarnSolid text-carbon-background hover:opacity-90",
 };
 
+// The text colour of each tone alone, for the (i) HintSlot lays over a button.
+const TONE_INK: Record<ButtonTone, string> = {
+  accent: "text-accentContrast",
+  neutral: "text-carbon-text",
+  subtle: "text-carbon-text",
+  danger: "text-carbon-background",
+  warn: "text-carbon-background",
+};
+
 export function Button({
   label,
   labelKey,
@@ -62,12 +72,15 @@ export function Button({
   disabled = false,
   type = "button",
   className = "",
-  title,
+  title: ownTitle,
   hueIndex,
   busy = false,
   autoFocus = false,
+  ariaExpanded,
+  ariaControls,
   stage: stageOverride,
   keepLabel = false,
+  hint,
   ref,
 }: {
   /** The button's words, present in every mode: visible, or hidden but
@@ -105,6 +118,10 @@ export function Button({
   /** Shows a spinner in place of the glyph. Independent of `disabled`. */
   busy?: boolean;
   autoFocus?: boolean;
+  /** For a disclosure: whether the panel it opens is showing. */
+  ariaExpanded?: boolean;
+  /** The id of the panel a disclosure opens. */
+  ariaControls?: string;
   /** Forces a width stage instead of deriving one from the label, for two
    *  buttons that must match but live in different components. Pass
    *  `groupStage([labelA, labelB])` to both so they agree in every language.
@@ -114,6 +131,10 @@ export function Button({
    *  than an action, such as a directory row in the folder browser, where a
    *  column of identical folder glyphs would be unreadable. */
   keepLabel?: boolean;
+  /** What the button does beyond its label, or why it is unavailable, as an
+   *  (i) inside the button; see HintSlot. A button showing its glyph alone has
+   *  no room for one, so there the explanation joins the button's own bubble. */
+  hint?: string;
 }) {
   const mode = useLabelMode("buttons");
   const chip = variant === "chip";
@@ -138,6 +159,7 @@ export function Button({
   // Reactive words appear on hover, a CSS state, so at rest it is a hiding mode.
   const showText = effective !== "glyph" && !reactive;
   const showGlyph = effective !== "text" && hasGlyph;
+  const slotted = !!hint && showText && !chip;
 
   // The stage comes from the label in the current language, not from what is
   // rendered, so switching between text and text-with-glyph never reflows.
@@ -153,6 +175,10 @@ export function Button({
         ? ""
         : STAGE_CLASS[stageOverride ?? widthStage(label)];
 
+  // A hint with no room inside the button goes into its bubble, after the
+  // title it adds to.
+  const title = slotted || !hint ? ownTitle : [ownTitle, hint].filter(Boolean).join(" ");
+
   // In glyph mode the label is the tooltip, joined with `title` unless the two
   // are the same words. Reactive counts as showing text here, because hovering
   // reveals the words and a bubble would cover them.
@@ -161,8 +187,9 @@ export function Button({
       ? title
       : [...new Set([label, title].filter(Boolean))].join(" — ")) || undefined;
   // A disabled reactive button gets no hover, so its label never reveals and it
-  // keeps the bubble to say why it is unavailable.
-  const tooltip = useTipBubble(reactive && !disabled ? undefined : tip, disabled);
+  // keeps the bubble to say why it is unavailable. The hover reveals no hint
+  // either, so a button with one keeps the bubble as well.
+  const tooltip = useTipBubble(reactive && !disabled && !hint ? undefined : tip, disabled);
 
   const hueOn = hueIndex !== undefined;
   const hueStyle = {
@@ -174,7 +201,7 @@ export function Button({
     ...(stageOverride && stage ? ({ width: `var(--btn-w-${stageOverride})` } as CSSProperties) : {}),
   };
 
-  return (
+  const button = (
     <>
       {/* `wrap` only acts on a disabled button with a tip: a disabled <button>
           gets no mouse events or focus, so a box around it has to receive the
@@ -186,6 +213,8 @@ export function Button({
           onClick={onClick}
           disabled={disabled}
           autoFocus={autoFocus}
+          aria-expanded={ariaExpanded}
+          aria-controls={ariaControls}
           aria-describedby={tooltip.describedBy}
           {...tooltip.handlers}
           style={Object.keys(hueStyle).length ? hueStyle : undefined}
@@ -208,9 +237,22 @@ export function Button({
           <span className={showText ? "glim-btn-label" : reactive ? "glim-label-reactive" : "sr-only"}>
             {label}
           </span>
+          {slotted && <HintSpace />}
         </button>,
       )}
       {tooltip.bubble}
     </>
+  );
+
+  if (!slotted || !hint) return button;
+  return (
+    <HintSlot
+      tip={hint}
+      ink={TONE_INK[tone]}
+      end="var(--btn-pad-x)"
+      hue={hueOn ? (hueVars(hueIndex) as CSSProperties) : undefined}
+    >
+      {button}
+    </HintSlot>
   );
 }

@@ -45,7 +45,7 @@ func randomDeployPassword() (string, error) {
 // response that returns it.
 func buildDeploySnippet(domain string) (DeploySnippet, error) {
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		return DeploySnippet{}, fmt.Errorf("unknown domain %q", domain)
 	}
@@ -170,7 +170,7 @@ func xmlCommentSafe(s string) string {
 func (h *Handler) handleDeploySnippet(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return

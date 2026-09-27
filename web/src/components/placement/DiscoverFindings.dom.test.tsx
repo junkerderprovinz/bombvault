@@ -68,6 +68,14 @@ describe("DiscoverFindings", () => {
     expect(screen.getByRole("button", { name: "Connect with B2" })).toBeTruthy();
   });
 
+  it("says so when the server cannot be reached and keeps the offer", async () => {
+    fake.reply("connectRepo", new Error("Failed to fetch"));
+    renderWithProviders(<DiscoverFindings paused={[]} leftOpen={[]} directRepos={[oldB2]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Connect with B2" }));
+    expect(await screen.findByText("Failed to fetch")).toBeTruthy();
+    await waitFor(() => expect((screen.getByRole("button", { name: "Connect with B2" }) as HTMLButtonElement).disabled).toBe(false));
+  });
+
   it("only offers a target that is switched on", async () => {
     listed.targets = [
       { id: "t1", enabled: true },

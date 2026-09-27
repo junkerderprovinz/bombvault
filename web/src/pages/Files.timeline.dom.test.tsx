@@ -77,7 +77,7 @@ describe("folder set backups", () => {
     fireEvent.click(screen.getByRole("button", { name: "Backups" }));
     fireEvent.click(await screen.findByRole("button", { name: "Delete all backups" }));
 
-    expect(await screen.findByText(/ALL local backups/)).toBeTruthy();
+    expect(await screen.findByText(/all local backups/)).toBeTruthy();
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Delete all backups" }));
     await waitFor(() => expect(deleteFileSetBackups).toHaveBeenCalledWith("set1"));
   });

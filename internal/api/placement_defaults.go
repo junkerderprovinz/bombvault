@@ -178,7 +178,7 @@ func (s *Service) defaultRowFor(settings store.Settings, named map[string]store.
 // make the card slow to the same degree the button's own check is expensive
 // per item it actually touches. The name says what it counts: a row Discover
 // rebuilt has snapshots but no recorded run, so it lands here too, and the
-// apply button still refuses it as has-backups when asked to reset it - the
+// apply button still refuses it as has-backups when asked to reset it. The
 // two never claimed the same thing, so they cannot disagree.
 func (s *Service) defaultCountsFor(p placementRead) (defaultCounts, error) {
 	var c defaultCounts
@@ -746,7 +746,7 @@ func unmatchedNames(p placementRead, items []domainItem, listing sourceListing) 
 // pause and confirmed state exactly as they are, so confirming a healthy
 // domain still cannot take the rebuild check out of service.
 func (s *Service) confirmDefault(domain string, exclude []string) error {
-	prefix := domainTagPrefix(domain)
+	prefix := itemIdentityPrefix(domain)
 	for _, id := range exclude {
 		if !strings.HasPrefix(id, prefix) || id == prefix {
 			return errInvalidPlacement

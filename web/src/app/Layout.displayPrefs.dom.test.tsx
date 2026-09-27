@@ -19,6 +19,24 @@ vi.mock("../lib/api", () => ({
   getAuth: async () => ({ ok: true, enabled: true, authed: authState.authed }),
   getSettings: async () => ({ ok: true, settings: null }),
   getHealth: async () => ({ ok: true, version: "v8.5.4" }),
+  // The layout polls the anomaly summary for the rail and the dashboard card.
+  getAnomalySummary: async () => ({
+    ok: true,
+    summary: {
+      enabled: false,
+      ready: true,
+      generation: 0,
+      open: { critical: 0, warning: 0, info: 0 },
+      recoveredCritical: 0,
+      learningItems: 0,
+      retentionHeld: 0,
+      evalErrors: 0,
+      notifyMuted: false,
+      backfill: { slots: 0, done: 0, failed: 0, filled: 0, withoutSummary: 0 },
+      unmeasuredVolumes: [],
+    },
+  }),
+  getAnomalies: async () => ({ ok: true, anomalies: [], nextCursor: "" }),
 }));
 
 // Stubs for the heavy parts that play no role here.

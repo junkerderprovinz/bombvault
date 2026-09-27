@@ -81,12 +81,13 @@ func tablePresent(table string) func(*sql.Tx) (bool, error) {
 	}
 }
 
-// recordedAs reports whether a migration of this name is already recorded under
-// another number. It guards bodies that only change data and leave nothing to probe.
-func recordedAs(name string) func(*sql.Tx) (bool, error) {
+// migrationRecorded reports whether a migration of this name was applied under
+// any number, the guard for a body that changes rows rather than the schema.
+func migrationRecorded(name string) func(*sql.Tx) (bool, error) {
 	return func(tx *sql.Tx) (bool, error) {
 		var n int
-		if err := tx.QueryRow(`SELECT count(*) FROM schema_migrations WHERE name = ?`, name).Scan(&n); err != nil {
+		err := tx.QueryRow(`SELECT count(*) FROM schema_migrations WHERE name = ?`, name).Scan(&n)
+		if err != nil {
 			return false, fmt.Errorf("probe migration %s: %w", name, err)
 		}
 		return n > 0, nil
@@ -1590,8 +1591,10 @@ ALTER TABLE settings ADD COLUMN pull_enabled INTEGER NOT NULL DEFAULT 0;`,
 		// last target in the order the rows were created. With the field empty,
 		// the oldest switched-off row already on 0 keeps it instead: that is the
 		// row a cleared field leaves behind, and it must still be there for the
-		// next fill to find. The body only changes data, so recordedAs is what
-		// keeps a renumbered copy from running a second time.
+		// next fill to find. The ZFS domain is left alone: its field comes with a
+		// later migration, and MoveTargetsOffPrimarySlot settles it at startup.
+		// The body only changes data, so migrationRecorded is what keeps a
+		// renumbered copy from running a second time.
 		version: 109,
 		name:    "offsite_targets_primary_slot",
 		sql: `
@@ -1627,6 +1630,7 @@ CREATE TEMP TABLE slot_moves AS
                     OR (o3.created_at = ot.created_at AND o3.id < ot.id))) AS sort_order
     FROM offsite_targets ot
    WHERE ot.role = 'offsite' AND ot.sort_order = 0
+     AND ot.domain IN (SELECT domain FROM slot_field)
      AND ot.id NOT IN (SELECT id FROM slot_primary);
 
 UPDATE offsite_targets
@@ -1637,7 +1641,7 @@ UPDATE offsite_targets SET sort_order = 0 WHERE id IN (SELECT id FROM slot_prima
 DROP TABLE temp.slot_moves;
 DROP TABLE temp.slot_primary;
 DROP TABLE temp.slot_field;`,
-		alreadySatisfied: recordedAs("offsite_targets_primary_slot"),
+		alreadySatisfied: migrationRecorded("offsite_targets_primary_slot"),
 	},
 	{
 		// Copy rules hang on the snapshot name, not on an item row, so a rule
@@ -1795,9 +1799,10 @@ UPDATE offsite_targets SET off_premises = 1
 		// the alias survives the target it points at being edited or deleted
 		// around it.
 		//
-		// Versions 109 to 119 stay free because other builds record unrelated
-		// migrations as 109. The guard records this version without the body on
-		// a database that already has the table.
+		// A branch build recorded this body and the next two as 109 to 111,
+		// numbers the placement migrations own (see misnumbered), so they sit
+		// above those. The guard records this version without the body on a
+		// database that already has the table.
 		version: 120,
 		name:    "target_aliases",
 		sql: `CREATE TABLE IF NOT EXISTS target_aliases (
@@ -1834,6 +1839,506 @@ CREATE INDEX IF NOT EXISTS idx_target_aliases_target ON target_aliases(domain, t
 		name:             "target_alias_prev_definition",
 		sql:              `ALTER TABLE target_aliases ADD COLUMN prev_definition TEXT NOT NULL DEFAULT '';`,
 		alreadySatisfied: columnPresent("target_aliases", "prev_definition"),
+	},
+	{
+		// Per-container opt-out of the automatic database dump. Polarity "off" so
+		// that the column default, and a container that has no target row yet,
+		// both mean the dump is on, which is the product default for recognised
+		// database images. Owned by SetDBDumpOff, never touched by UpsertTarget's
+		// ON CONFLICT clause.
+		version:          dbDumpMigrationBase,
+		name:             "targets_db_dump_off",
+		sql:              `ALTER TABLE targets ADD COLUMN db_dump_off INTEGER NOT NULL DEFAULT 0;`,
+		alreadySatisfied: columnPresent("targets", "db_dump_off"),
+	},
+	{
+		// Global switch for the automatic database dumps, one place to stop them
+		// for every container at once. Default on.
+		version:          dbDumpMigrationBase + 1,
+		name:             "settings_db_dumps_enabled",
+		sql:              `ALTER TABLE settings ADD COLUMN db_dumps_enabled INTEGER NOT NULL DEFAULT 1;`,
+		alreadySatisfied: columnPresent("settings", "db_dumps_enabled"),
+	},
+	{
+		// The engine a user chose for a container that only looks like a database
+		// (image name and variable prefix, not the curated list). Empty means no
+		// choice: curated images dump by default, lookalikes do not. Owned by
+		// SetDBDumpEngine, never touched by UpsertTarget's ON CONFLICT clause.
+		version:          dbDumpMigrationBase + 2,
+		name:             "targets_db_dump_engine",
+		sql:              `ALTER TABLE targets ADD COLUMN db_dump_engine TEXT NOT NULL DEFAULT '';`,
+		alreadySatisfied: columnPresent("targets", "db_dump_engine"),
+	},
+	{
+		// ZFS datasets are a domain of their own, so they carry the same six
+		// settings every other domain has. Off on a database that predates them,
+		// because the host may not even have a pool.
+		version:          zfsMigrationBase,
+		name:             "settings_zfs_enabled",
+		sql:              `ALTER TABLE settings ADD COLUMN zfs_enabled INTEGER NOT NULL DEFAULT 0;`,
+		alreadySatisfied: columnPresent("settings", "zfs_enabled"),
+	},
+	{
+		version:          zfsMigrationBase + 1,
+		name:             "settings_zfs_path",
+		sql:              `ALTER TABLE settings ADD COLUMN zfs_path TEXT NOT NULL DEFAULT 'user/bombvault/zfs';`,
+		alreadySatisfied: columnPresent("settings", "zfs_path"),
+	},
+	{
+		version:          zfsMigrationBase + 2,
+		name:             "settings_zfs_schedule",
+		sql:              `ALTER TABLE settings ADD COLUMN zfs_schedule TEXT NOT NULL DEFAULT 'off';`,
+		alreadySatisfied: columnPresent("settings", "zfs_schedule"),
+	},
+	{
+		version:          zfsMigrationBase + 3,
+		name:             "settings_zfs_offsite",
+		sql:              `ALTER TABLE settings ADD COLUMN zfs_offsite TEXT NOT NULL DEFAULT '';`,
+		alreadySatisfied: columnPresent("settings", "zfs_offsite"),
+	},
+	{
+		version:          zfsMigrationBase + 4,
+		name:             "settings_zfs_offsite_schedule",
+		sql:              `ALTER TABLE settings ADD COLUMN zfs_offsite_schedule TEXT NOT NULL DEFAULT '';`,
+		alreadySatisfied: columnPresent("settings", "zfs_offsite_schedule"),
+	},
+	{
+		version:          zfsMigrationBase + 5,
+		name:             "settings_zfs_offsite_immutable",
+		sql:              `ALTER TABLE settings ADD COLUMN zfs_offsite_immutable INTEGER NOT NULL DEFAULT 0;`,
+		alreadySatisfied: columnPresent("settings", "zfs_offsite_immutable"),
+	},
+	{
+		// One row per item, keyed on the root dataset of the tree it protects.
+		// The members are derived from the host on every run and live in
+		// zfs_members, so nothing here has to be kept in step with the pool.
+		// runs.target_id points at id, exactly as it does for a file set.
+		version: zfsMigrationBase + 6,
+		name:    "zfs_datasets",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_datasets (
+  id                   TEXT    PRIMARY KEY,
+  dataset              TEXT    NOT NULL UNIQUE,
+  enabled              INTEGER NOT NULL DEFAULT 1,
+  excludes             TEXT    NOT NULL DEFAULT '[]',
+  excluded_children    TEXT    NOT NULL DEFAULT '[]',
+  schedule_cadence     TEXT    NOT NULL DEFAULT '',
+  repo                 TEXT    NOT NULL DEFAULT '',
+  stop_containers      TEXT    NOT NULL DEFAULT '[]',
+  restart_pending      TEXT    NOT NULL DEFAULT '[]',
+  hook_container       TEXT    NOT NULL DEFAULT '',
+  pre_snapshot         TEXT    NOT NULL DEFAULT '',
+  post_snapshot        TEXT    NOT NULL DEFAULT '',
+  last_check_code      TEXT    NOT NULL DEFAULT '',
+  last_check_detail    TEXT    NOT NULL DEFAULT '',
+  last_check_at        INTEGER NOT NULL DEFAULT 0,
+  last_host_mountpoint TEXT    NOT NULL DEFAULT '',
+  leftover_count       INTEGER NOT NULL DEFAULT 0,
+  leftover_checked_at  INTEGER NOT NULL DEFAULT 0,
+  created_at           INTEGER NOT NULL DEFAULT 0
+);`,
+		alreadySatisfied: tablePresent("zfs_datasets"),
+	},
+	{
+		// The state of every dataset in an item's tree as the last preflight or
+		// run found it. first_seen_at is what makes a child picked up later
+		// visible as new, so a replace keeps it.
+		version: zfsMigrationBase + 7,
+		name:    "zfs_members",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_members (
+  item_id          TEXT    NOT NULL,
+  dataset          TEXT    NOT NULL,
+  host_mountpoint  TEXT    NOT NULL DEFAULT '',
+  outcome          TEXT    NOT NULL DEFAULT '',
+  detail           TEXT    NOT NULL DEFAULT '',
+  first_seen_at    INTEGER NOT NULL DEFAULT 0,
+  last_backup_at   INTEGER NOT NULL DEFAULT 0,
+  used_by_dataset  INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (item_id, dataset)
+);`,
+		alreadySatisfied: tablePresent("zfs_members"),
+	},
+	{
+		// What a ZFS run has that the runs table has no column for: the stamp
+		// that names the restore point, how long the apps were held, and a
+		// post-snapshot command's complaint.
+		version: zfsMigrationBase + 8,
+		name:    "zfs_runs",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_runs (
+  run_id           TEXT    PRIMARY KEY,
+  item_id          TEXT    NOT NULL,
+  snapshot_name    TEXT    NOT NULL DEFAULT '',
+  window_seconds   INTEGER NOT NULL DEFAULT -1,
+  hook_detail      TEXT    NOT NULL DEFAULT ''
+);`,
+		alreadySatisfied: tablePresent("zfs_runs"),
+	},
+	{
+		// One row per member per run, written as each member finishes. The
+		// per-dataset index serves the history of a single dataset, which is
+		// read far more often than a whole run.
+		version: zfsMigrationBase + 9,
+		name:    "zfs_run_members",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_run_members (
+  run_id            TEXT    NOT NULL,
+  dataset           TEXT    NOT NULL,
+  outcome           TEXT    NOT NULL,
+  is_new            INTEGER NOT NULL DEFAULT 0,
+  restic_snapshot   TEXT    NOT NULL DEFAULT '',
+  bytes_added       INTEGER NOT NULL DEFAULT 0,
+  files_new         INTEGER NOT NULL DEFAULT 0,
+  files_changed     INTEGER NOT NULL DEFAULT 0,
+  files_unmodified  INTEGER NOT NULL DEFAULT 0,
+  duration_ms       INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (run_id, dataset)
+);
+CREATE INDEX IF NOT EXISTS idx_zfs_run_members_dataset ON zfs_run_members(dataset);`,
+		alreadySatisfied: tablePresent("zfs_run_members"),
+	},
+	{
+		// The snapshots taken before an in-place restore. They are kept until
+		// the user deletes one, so they need a durable row: the sweeper that
+		// removes leaked backup stamps must be able to tell them apart.
+		version: zfsMigrationBase + 10,
+		name:    "zfs_safety_snapshots",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_safety_snapshots (
+  item_id          TEXT    NOT NULL,
+  dataset          TEXT    NOT NULL,
+  name             TEXT    NOT NULL,
+  created_at       INTEGER NOT NULL,
+  used_bytes       INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (dataset, name)
+);`,
+		alreadySatisfied: tablePresent("zfs_safety_snapshots"),
+	},
+	{
+		// The Schedules tab treats the domain schedules as one while they are
+		// equal. zfs_schedule arrived as "off", which would split a shared
+		// schedule on upgrade, so it joins one that was in step. A switched-off
+		// domain never runs its schedule, so this starts nothing on its own.
+		// The guard is the name because an UPDATE leaves no column to probe,
+		// and it must not run twice after a renumbering.
+		version: zfsMigrationBase + 11,
+		name:    "settings_zfs_schedule_joins_sync",
+		sql: `UPDATE settings SET zfs_schedule = containers_schedule
+WHERE zfs_schedule = 'off'
+  AND containers_schedule NOT IN ('off', '')
+  AND vms_schedule = containers_schedule
+  AND flash_schedule = containers_schedule
+  AND files_schedule = containers_schedule;`,
+		alreadySatisfied: migrationRecorded("settings_zfs_schedule_joins_sync"),
+	},
+	{
+		// What restic read during a run, next to the data it added, plus the
+		// fingerprint of the selection the run covered. The unmeasured state is
+		// NULL and not 0, because an emptied source measures a real 0 and is
+		// exactly the signal anomaly detection looks for. The index carries the
+		// per-item window over a table that holds every run of every item.
+		version: anomalyMigrationBase,
+		name:    "runs_source_metrics",
+		sql: `ALTER TABLE runs ADD COLUMN source_bytes INTEGER;
+ALTER TABLE runs ADD COLUMN source_files INTEGER;
+ALTER TABLE runs ADD COLUMN files_new INTEGER;
+ALTER TABLE runs ADD COLUMN restic_ms INTEGER;
+ALTER TABLE runs ADD COLUMN has_parent INTEGER;
+ALTER TABLE runs ADD COLUMN selection_fp TEXT;
+CREATE INDEX IF NOT EXISTS idx_runs_target_kind_started ON runs(target_id, kind, started_at);`,
+		alreadySatisfied: columnPresent("runs", "source_bytes"),
+	},
+	{
+		// The findings anomaly detection keeps, the preferences and expectations a
+		// user sets on them, the free-space samples the capacity rule reads, and
+		// the state of the one-off backfill out of the repositories.
+		//
+		// A finding is an episode: one row lives from the first pass that saw the
+		// condition to the pass that saw it gone, and the partial unique index is
+		// what keeps a second open row of the same fingerprint out.
+		//
+		// A zfsds scope id is the dataset name, not the item id: a dataset's name
+		// is the identity of its backups, so keying by item would restart every
+		// dataset's history when a tree is re-rooted. target_id still carries the
+		// item, for the cascades and for grouping.
+		//
+		// No alreadySatisfied guard, per the v107 rule: the body is CREATE-only and
+		// idempotent, and a guard on the first table would skip creating the others
+		// on a database that has only some of them.
+		version: anomalyMigrationBase + 1,
+		name:    "anomalies",
+		sql: `
+CREATE TABLE IF NOT EXISTS anomalies (
+  id                TEXT    PRIMARY KEY,
+  fingerprint       TEXT    NOT NULL,
+  detector          TEXT    NOT NULL,
+  metric            TEXT    NOT NULL,
+  severity          TEXT    NOT NULL,
+  state             TEXT    NOT NULL DEFAULT 'open',
+  scope_kind        TEXT    NOT NULL,
+  scope_id          TEXT    NOT NULL,
+  target_id         TEXT    NOT NULL DEFAULT '',
+  domain            TEXT    NOT NULL DEFAULT '',
+  run_id            TEXT    NOT NULL DEFAULT '',
+  last_run_id       TEXT    NOT NULL DEFAULT '',
+  last_run_at       INTEGER NOT NULL DEFAULT 0,
+  last_good_run_id  TEXT    NOT NULL DEFAULT '',
+  cleared_at        INTEGER NOT NULL DEFAULT 0,
+  observed          REAL    NOT NULL DEFAULT 0,
+  expected          REAL    NOT NULL DEFAULT 0,
+  threshold         REAL    NOT NULL DEFAULT 0,
+  samples           INTEGER NOT NULL DEFAULT 0,
+  sensitivity       TEXT    NOT NULL DEFAULT '',
+  details           TEXT    NOT NULL DEFAULT '{}',
+  occurrences       INTEGER NOT NULL DEFAULT 1,
+  first_seen_at     INTEGER NOT NULL,
+  last_seen_at      INTEGER NOT NULL,
+  recovered_at      INTEGER NOT NULL DEFAULT 0,
+  resolved_at       INTEGER NOT NULL DEFAULT 0,
+  acked_at          INTEGER NOT NULL DEFAULT 0,
+  ack_note          TEXT    NOT NULL DEFAULT '',
+  notified_at       INTEGER NOT NULL DEFAULT 0,
+  notified_severity TEXT    NOT NULL DEFAULT ''
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_anomalies_open_fingerprint ON anomalies(fingerprint) WHERE state = 'open';
+CREATE INDEX IF NOT EXISTS idx_anomalies_state_seen ON anomalies(state, last_seen_at);
+CREATE INDEX IF NOT EXISTS idx_anomalies_scope ON anomalies(scope_kind, scope_id);
+CREATE INDEX IF NOT EXISTS idx_anomalies_fingerprint_seen ON anomalies(fingerprint, last_seen_at);
+CREATE INDEX IF NOT EXISTS idx_anomalies_target ON anomalies(target_id);
+
+CREATE TABLE IF NOT EXISTS anomaly_item_prefs (
+  target_id   TEXT PRIMARY KEY,
+  sensitivity TEXT NOT NULL DEFAULT '',
+  notify_min  TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS anomaly_expectations (
+  scope_kind TEXT    NOT NULL,
+  scope_id   TEXT    NOT NULL,
+  target_id  TEXT    NOT NULL,
+  family     TEXT    NOT NULL,
+  since_at   INTEGER NOT NULL DEFAULT 0,
+  ceiling    REAL    NOT NULL DEFAULT 0,
+  anomaly_id TEXT    NOT NULL DEFAULT '',
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (scope_kind, scope_id, family)
+);
+
+CREATE TABLE IF NOT EXISTS volume_samples (
+  volume      TEXT    NOT NULL,
+  at          INTEGER NOT NULL,
+  free_bytes  INTEGER NOT NULL,
+  total_bytes INTEGER,
+  domains     TEXT    NOT NULL DEFAULT '',
+  source      TEXT    NOT NULL DEFAULT 'statfs',
+  PRIMARY KEY (volume, at)
+);
+
+CREATE TABLE IF NOT EXISTS anomaly_backfill (
+  slot            TEXT    PRIMARY KEY,
+  attempted_at    INTEGER NOT NULL,
+  done            INTEGER NOT NULL DEFAULT 0,
+  filled          INTEGER NOT NULL DEFAULT 0,
+  without_summary INTEGER NOT NULL DEFAULT 0,
+  error           TEXT    NOT NULL DEFAULT ''
+);`,
+	},
+	{
+		// The feature switch, the preset every item follows unless it overrides it,
+		// the severity from which a finding is pushed, and the guard that stops
+		// retention from deleting good backups against a lost source. All four on,
+		// because a user who never opens the tab is the one the guard is for.
+		//
+		// Guarded like every other ALTER body above.
+		version: anomalyMigrationBase + 2,
+		name:    "settings_anomaly",
+		sql: `ALTER TABLE settings ADD COLUMN anomaly_enabled INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE settings ADD COLUMN anomaly_sensitivity TEXT NOT NULL DEFAULT 'balanced';
+ALTER TABLE settings ADD COLUMN anomaly_notify_min TEXT NOT NULL DEFAULT 'critical';
+ALTER TABLE settings ADD COLUMN anomaly_retention_hold INTEGER NOT NULL DEFAULT 1;`,
+		alreadySatisfied: columnPresent("settings", "anomaly_enabled"),
+	},
+	{
+		// Who started a run, for the Activity log and the audit trail. '' means
+		// the web interface or the scheduler; 'mcp' marks a run started through
+		// the MCP endpoint, and started_via_key holds the mcp_keys.id of the key.
+		// Written in the same INSERT as the run (StartRunWith), never as a later
+		// stamp that could fail on its own. The partial index serves the start
+		// cooldown and stays empty until a key is used.
+		version:          mcpMigrationBase,
+		name:             "runs_started_via",
+		alreadySatisfied: columnPresent("runs", "started_via"),
+		sql: `
+ALTER TABLE runs ADD COLUMN started_via     TEXT NOT NULL DEFAULT '';
+ALTER TABLE runs ADD COLUMN started_via_key TEXT NOT NULL DEFAULT '';
+CREATE INDEX IF NOT EXISTS idx_runs_started_via ON runs(target_id, started_at) WHERE started_via != '';`,
+	},
+	{
+		// A key is shown once and only its HMAC-SHA256 digest, peppered with the
+		// APP_KEY, is stored, so nothing here authenticates anybody on its own.
+		// key_check lets the card notice an APP_KEY change that silently broke
+		// every digest. Revoking keeps the row with key_digest emptied, so the
+		// Activity log can still name the key behind an old run, which is why the
+		// label is unique among active rows only.
+		version:          mcpMigrationBase + 1,
+		name:             "mcp_keys",
+		alreadySatisfied: tablePresent("mcp_keys"),
+		sql: `
+CREATE TABLE IF NOT EXISTS mcp_keys (
+  id                TEXT    PRIMARY KEY,
+  label             TEXT    NOT NULL DEFAULT '',
+  key_digest        TEXT    NOT NULL DEFAULT '',
+  key_hint          TEXT    NOT NULL DEFAULT '',
+  key_check         TEXT    NOT NULL DEFAULT '',
+  can_start_backups INTEGER NOT NULL DEFAULT 1,
+  created_at        INTEGER NOT NULL DEFAULT 0,
+  rotated_at        INTEGER NOT NULL DEFAULT 0,
+  last_used_at      INTEGER NOT NULL DEFAULT 0,
+  last_used_from    TEXT    NOT NULL DEFAULT '',
+  revoked_at        INTEGER NOT NULL DEFAULT 0,
+  revoked_reason    TEXT    NOT NULL DEFAULT ''
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_keys_digest ON mcp_keys(key_digest) WHERE key_digest != '';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_keys_active_label ON mcp_keys(lower(label)) WHERE revoked_at = 0;`,
+	},
+	{
+		// What restic read for each dataset of a ZFS tree, next to what the
+		// dataset added: a child emptied inside a large tree barely moves the
+		// item's total. NULL is unmeasured, 0 a dataset that held nothing. The
+		// index serves the backfill, which finds a member by the snapshot it
+		// wrote.
+		version: zfsMemberMetricsMigration,
+		name:    "zfs_run_members_source_metrics",
+		sql: `ALTER TABLE zfs_run_members ADD COLUMN source_bytes INTEGER;
+ALTER TABLE zfs_run_members ADD COLUMN source_files INTEGER;
+ALTER TABLE zfs_run_members ADD COLUMN has_parent INTEGER;
+CREATE INDEX IF NOT EXISTS idx_zfs_run_members_snapshot ON zfs_run_members(restic_snapshot);`,
+		alreadySatisfied: columnPresent("zfs_run_members", "source_bytes"),
+	},
+	{
+		// The published anomaly branch build recorded its own migrations as
+		// 136 to 138, so a database that ran it skips the two ZFS steps this
+		// build numbers 136 and 137. This one and the next put them back; the
+		// body is CREATE-only and needs no guard.
+		version: zfsRecoveryMigration,
+		name:    "zfs_safety_snapshots_recovery",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_safety_snapshots (
+  item_id          TEXT    NOT NULL,
+  dataset          TEXT    NOT NULL,
+  name             TEXT    NOT NULL,
+  created_at       INTEGER NOT NULL,
+  used_bytes       INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (dataset, name)
+);`,
+	},
+	{
+		version: zfsRecoveryMigration + 1,
+		name:    "settings_zfs_schedule_joins_sync_recovery",
+		sql: `UPDATE settings SET zfs_schedule = containers_schedule
+WHERE zfs_schedule = 'off'
+  AND containers_schedule NOT IN ('off', '')
+  AND vms_schedule = containers_schedule
+  AND flash_schedule = containers_schedule
+  AND files_schedule = containers_schedule;`,
+		alreadySatisfied: migrationRecorded("settings_zfs_schedule_joins_sync"),
+	},
+	{
+		// What each MCP key did, for its log on the settings card: the tool, the
+		// outcome and the run a cancel named, never the arguments. mcp_key_calls
+		// counts the calls per quarter hour, so a key's calls today stay exact
+		// after its events have been capped. Both are pruned as they are written.
+		version: mcpActivityMigration,
+		name:    "mcp_key_activity",
+		sql: `CREATE TABLE IF NOT EXISTS mcp_key_events (
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  key_id  TEXT    NOT NULL,
+  at      INTEGER NOT NULL,
+  tool    TEXT    NOT NULL DEFAULT '',
+  outcome TEXT    NOT NULL DEFAULT '',
+  run_id  TEXT    NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_mcp_key_events_key ON mcp_key_events(key_id, id);
+CREATE INDEX IF NOT EXISTS idx_mcp_key_events_at ON mcp_key_events(at);
+CREATE TABLE IF NOT EXISTS mcp_key_calls (
+  key_id TEXT    NOT NULL,
+  slot   INTEGER NOT NULL,
+  calls  INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (key_id, slot)
+);`,
+	},
+	{
+		// Every call but an action that went through gets a cap of its own, so
+		// an assistant polling a running backup or retrying a refused call
+		// cannot push the backup's start and cancel out of the key's log. The
+		// rows already there are sorted by the tools that act.
+		version:          mcpActivityMigration + 1,
+		name:             "mcp_key_events_routine",
+		alreadySatisfied: columnPresent("mcp_key_events", "routine"),
+		sql: `ALTER TABLE mcp_key_events ADD COLUMN routine INTEGER NOT NULL DEFAULT 0;
+UPDATE mcp_key_events SET routine = 1
+WHERE tool <> ''
+  AND (outcome <> 'ok' OR tool NOT IN ('start_backup', 'start_domain_backup', 'start_backup_everything', 'cancel_backup'));
+CREATE INDEX IF NOT EXISTS idx_mcp_key_events_routine ON mcp_key_events(key_id, routine, id);`,
+	},
+	{
+		// The client a key was created for, by its id in the card's client
+		// list, so the key's tile can show that client's mark. '' is a key made
+		// before the list existed or through Other client.
+		version:          mcpActivityMigration + 2,
+		name:             "mcp_keys_client",
+		alreadySatisfied: columnPresent("mcp_keys", "client"),
+		sql:              `ALTER TABLE mcp_keys ADD COLUMN client TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// The gate's own refusals name no tool, so mcp_key_events_routine left
+		// them under the cap of the starts and cancels, which a looping client
+		// then filled. They count as routine like every other refusal.
+		version: mcpActivityMigration + 3,
+		name:    "mcp_key_events_gate_refusals_routine",
+		sql:     `UPDATE mcp_key_events SET routine = 1 WHERE tool = '' AND outcome <> 'ok';`,
+	},
+	{
+		// A client that signed in through OAuth is a row of mcp_keys like a key,
+		// so its tile, log, start switch and runs work the same way. It carries
+		// no key digest; its tokens live in mcp_oauth_tokens. oauth_client names
+		// the registered client and resource the audience its tokens are for.
+		version:          mcpOAuthMigration,
+		name:             "mcp_keys_oauth",
+		alreadySatisfied: columnPresent("mcp_keys", "kind"),
+		sql: `ALTER TABLE mcp_keys ADD COLUMN kind TEXT NOT NULL DEFAULT 'key';
+ALTER TABLE mcp_keys ADD COLUMN oauth_client TEXT NOT NULL DEFAULT '';
+ALTER TABLE mcp_keys ADD COLUMN resource TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// The authorization server behind the MCP endpoint: its one settings row,
+		// the clients that registered themselves, and the tokens it issued. Only
+		// HMAC digests of secrets are stored. A spent refresh token stays until it
+		// expires, so presenting it again can be recognised as theft.
+		version: mcpOAuthMigration + 1,
+		name:    "mcp_oauth",
+		sql: `CREATE TABLE IF NOT EXISTS mcp_oauth_settings (
+  id         INTEGER PRIMARY KEY CHECK (id = 1),
+  enabled    INTEGER NOT NULL DEFAULT 0,
+  issuer     TEXT    NOT NULL DEFAULT '',
+  updated_at INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS mcp_oauth_clients (
+  id            TEXT    PRIMARY KEY,
+  name          TEXT    NOT NULL DEFAULT '',
+  redirect_uris TEXT    NOT NULL DEFAULT '[]',
+  auth_method   TEXT    NOT NULL DEFAULT 'none',
+  secret_digest TEXT    NOT NULL DEFAULT '',
+  known         TEXT    NOT NULL DEFAULT '',
+  created_at    INTEGER NOT NULL DEFAULT 0,
+  created_from  TEXT    NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_mcp_oauth_clients_created ON mcp_oauth_clients(created_at);
+CREATE TABLE IF NOT EXISTS mcp_oauth_tokens (
+  digest     TEXT    PRIMARY KEY,
+  grant_id   TEXT    NOT NULL,
+  kind       TEXT    NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT 0,
+  expires_at INTEGER NOT NULL DEFAULT 0,
+  spent_at   INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_grant ON mcp_oauth_tokens(grant_id, kind);
+CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expires_at);`,
 	},
 	{
 		// A storage place is one connected location, written down once with
@@ -1912,20 +2417,62 @@ UPDATE offsite_targets SET off_with_place = 1
 	},
 }
 
-// placesMigrationBase numbers the storage place schema from one place. It
-// starts above 153, the highest number v9.0.0 records.
-const placesMigrationBase = 154
+// dbDumpMigrationBase numbers the three database-dump columns from one place,
+// so they keep their order if the base has to move before release.
+const dbDumpMigrationBase = 123
 
-// misnumbered holds migrations that test builds recorded under numbers v9.0.0
-// gives to its database dump and ZFS columns. Migrate forgets those records,
-// so the owners of the numbers run, and the guards of the place migrations
+// zfsMigrationBase numbers the twelve steps of the ZFS domain from one place,
+// so they keep their order if the base has to move before release.
+const zfsMigrationBase = 126
+
+// anomalyMigrationBase numbers the anomaly schema from one place, for the same
+// reason dbDumpMigrationBase does.
+const anomalyMigrationBase = 138
+
+// mcpMigrationBase numbers the MCP server's migrations from one place, so they
+// keep their order if the base has to move before release.
+const mcpMigrationBase = 141
+
+// zfsMemberMetricsMigration numbers the per-dataset source metrics. They extend
+// a ZFS table for anomaly detection, so they need both schemas and come after
+// every block above.
+const zfsMemberMetricsMigration = mcpMigrationBase + 2
+
+// zfsRecoveryMigration numbers the two steps that restore what the anomaly
+// branch numbering hid. The next migration takes 148: the published MCP
+// branch build recorded its two as 146 and 147, and a database that ran it
+// would skip anything else numbered so.
+const zfsRecoveryMigration = zfsMemberMetricsMigration + 1
+
+// mcpActivityMigration numbers the per-key activity record. It skips the two
+// numbers zfsRecoveryMigration explains.
+const mcpActivityMigration = 148
+
+// mcpOAuthMigration numbers the OAuth sign-in of the MCP endpoint.
+const mcpOAuthMigration = mcpActivityMigration + 4
+
+// placesMigrationBase numbers the storage place schema from one place, after
+// the OAuth sign-in.
+const placesMigrationBase = mcpOAuthMigration + 2
+
+// misnumbered holds records that branch builds wrote under numbers that belong
+// to other migrations: the placement migrations own 109 to 111, and v9.0.0
+// gives 123 to 127 to its database dump and ZFS columns. Migrate forgets them,
+// so the owners of the numbers run, and the guards of the migrations named here
 // record them again under their own numbers without running a body twice.
-var misnumbered = map[int]string{
-	123: "storage_places",
-	124: "storage_domain_places",
-	125: "offsite_targets_place",
-	126: "settings_places_migrated",
-	127: "offsite_targets_off_with_place",
+var misnumbered = []struct {
+	version int
+	name    string
+}{
+	{109, "target_aliases"},
+	{110, "vm_uuid"},
+	{111, "target_alias_prev_definition"},
+	{109, "named_repo_already_offsite"},
+	{123, "storage_places"},
+	{124, "storage_domain_places"},
+	{125, "offsite_targets_place"},
+	{126, "settings_places_migrated"},
+	{127, "offsite_targets_off_with_place"},
 }
 
 // Migrate applies any pending forward-only migrations to db.
@@ -1947,9 +2494,9 @@ func Migrate(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("migrate: create schema_migrations: %w", err)
 	}
-	for version, name := range misnumbered {
-		if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version = ? AND name = ?`, version, name); err != nil {
-			return fmt.Errorf("migrate: forget v%d (%s): %w", version, name, err)
+	for _, r := range misnumbered {
+		if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version = ? AND name = ?`, r.version, r.name); err != nil {
+			return fmt.Errorf("migrate: forget v%d (%s): %w", r.version, r.name, err)
 		}
 	}
 

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { subscribePlacement } from "../../lib/placementEvents";
 import { renderWithProviders, timelineMark, timelinePlace, timelineRow } from "../../lib/placement.testsupport";
 import type { TimelinePick } from "./Timeline";
 
@@ -45,6 +46,33 @@ function open() {
 describe("Timeline", () => {
   beforeEach(() => fake.reset());
   afterEach(cleanup);
+
+  it("leads with the newest backup only and separates rows without lines", async () => {
+    const a2 = "a2a2a2a2";
+    fake.reply("getTimeline", {
+      ok: true,
+      places: [home],
+      rows: [timelineRow(a2, "2026-09-19T03:00:00Z", timelineMark("local", a2)), timelineRow(a1, at, timelineMark("local", a1))],
+    });
+    const picks: TimelinePick[] = [];
+    renderWithProviders(
+      <Timeline
+        domain="containers"
+        itemKey="nginx"
+        itemName="nginx"
+        open
+        renderActions={(pick) => {
+          picks.push(pick);
+          return null;
+        }}
+      />
+    );
+    await waitFor(() => expect(picks.length).toBeGreaterThanOrEqual(2));
+    const lead = new Map(picks.map((p) => [p.row.key, p.lead]));
+    expect(lead).toEqual(new Map([[a2, true], [a1, false]]));
+    const group = screen.getByRole("group", { name: "nginx" });
+    expect(group.innerHTML).not.toContain("border-");
+  });
 
   it("reads only local places when it opens and names the ones not checked", async () => {
     fake.reply("getTimeline", {
@@ -160,7 +188,7 @@ describe("Timeline", () => {
     expect(await screen.findByText("only here")).toBeTruthy();
   });
 
-  it("locks the delete of a place that only accepts new backups", async () => {
+  it("locks the delete of a place that only accepts new backups and says why where a keyboard reaches it", async () => {
     fake.reply("getTimeline", {
       ok: true,
       places: [{ ...home, appendOnly: true }, b2],
@@ -169,6 +197,8 @@ describe("Timeline", () => {
     open();
     const del = (await screen.findByRole("button", { name: "Delete" })) as HTMLButtonElement;
     expect(del.disabled).toBe(true);
+    const why = screen.getByLabelText("The target is append-only. Nothing here may delete from it.");
+    expect(why.getAttribute("tabindex")).toBe("0");
   });
 
   it("asks the server about every place when a whole row is deleted", async () => {
@@ -183,5 +213,36 @@ describe("Timeline", () => {
     await waitFor(() => expect(fake.callsTo("getTimelineDeletePreview")).toHaveLength(2));
     expect(fake.callsTo("getTimelineDeletePreview")[1]).toEqual(["containers", "nginx", a1, ["local"]]);
     answerFirst();
+  });
+
+  async function deleteAt(tab: string, place: string) {
+    fake.reply("getTimeline", {
+      ok: true,
+      places: [home, b2],
+      rows: [timelineRow(a1, at, timelineMark("local", a1), timelineMark("offsite:t-b2", "b1b1b1b1"))],
+    });
+    fake.reply("getTimelineDeletePreview", {
+      ok: true,
+      delete: [{ place, label: tab, snapshotIds: [a1] }],
+      others: [],
+    });
+    const changed = vi.fn();
+    const unsubscribe = subscribePlacement(changed);
+    open();
+    fireEvent.click(await screen.findByRole("tab", { name: tab }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Delete" }));
+    await waitFor(() => expect(fake.callsTo("deleteTimelineRow")).toHaveLength(1));
+    await waitFor(() => expect(fake.callsTo("getTimeline")).toHaveLength(2));
+    unsubscribe();
+    return changed;
+  }
+
+  it("tells the cards to read their copies again after a delete at a target", async () => {
+    expect(await deleteAt("B2", "offsite:t-b2")).toHaveBeenCalled();
+  });
+
+  it("leaves the cards alone after a delete at the item's own location", async () => {
+    expect(await deleteAt("Unraid", "local")).not.toHaveBeenCalled();
   });
 });

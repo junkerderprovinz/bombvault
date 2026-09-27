@@ -65,43 +65,77 @@ func (s *Service) SetNotifyConfig(c notify.Config) error {
 	return err
 }
 
+// singletonItemName is the label of a domain that has no per-item name, and
+// empty for one that has. Without it a "%s %q" label renders an empty quote
+// (`config ""`), and the same item would be called different things depending
+// on which message names it.
+func singletonItemName(domain string) string {
+	switch domain {
+	case "flash":
+		return "Unraid flash"
+	case "config":
+		return "BombVault configuration"
+	}
+	return ""
+}
+
 // notifyBackup sends a best-effort notification for a completed backup. It reads
 // the stored config each call (cheap; backups are infrequent) and is a no-op when
-// notifications are off.
-func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool, sum backup.Summary, backupErr error) {
+// notifications are off. cancelKey is the key the backup registered its cancel
+// under, empty for a failure before it could be cancelled.
+func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey string, ok bool, sum backup.Summary, backupErr error) {
+	stalled, isStall := stalledReason(ctx, scrubError(backupErr))
+	// A cancelled or stalled run is reported on the context that just ended.
+	ctx = context.WithoutCancel(ctx)
 	c, err := s.NotifyConfig()
 	if err != nil || c.On == "" || c.On == "never" {
 		return
 	}
-	// Singleton domains have no per-item name, so a "%s %q" label would render an
-	// empty quote (e.g. `config ""`). Give each a clean human label.
-	var target string
-	switch domain {
-	case "flash":
-		target = "Unraid flash"
-	case "config":
-		target = "BombVault configuration"
-	default:
+	target := singletonItemName(domain)
+	if target == "" {
 		target = fmt.Sprintf("%s %q", domain, name)
 	}
+	// A cancel is what somebody asked for, so like the run row it is no
+	// failure, and only those who hear about every backup hear about it.
+	// Healthchecks still gets the end of the run it saw start, since a start
+	// left open turns the check red once its grace time is up.
+	// A shutdown is labelled the same way, first, as runsAdapter.Finish does.
+	interrupted := !ok && s.IsShuttingDown()
+	cancelled := !ok && !interrupted && !isStall && s.backupWasCancelled(cancelKey)
 	var msg string
-	if ok {
+	switch {
+	case ok:
 		msg = fmt.Sprintf("Backup of %s succeeded (snapshot %s, %s).", target, shortID(sum.SnapshotID), humanBytes(sum.Bytes))
-	} else {
+	case interrupted:
+		msg = fmt.Sprintf("Backup of %s was stopped because BombVault shut down.", target)
+	case cancelled:
+		msg = fmt.Sprintf("Backup of %s was cancelled.", target)
+	case isStall:
+		msg = fmt.Sprintf("Backup of %s FAILED: %s", target, stalled)
+	default:
 		msg = fmt.Sprintf("Backup of %s FAILED: %s", target, scrubError(backupErr))
 	}
-	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok})
+	if o := runOriginFromContext(ctx); o.Via == "mcp" {
+		msg += " " + s.mcpOriginSentence(o.KeyID)
+	}
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok || cancelled || interrupted})
 
 	// Unraid native notification (delivered over SSH; notify.Send is
 	// HTTP-only). Honour the same policy: notifyBackup already returned for
 	// "never", so send on "always" or on any failure. In scheduled summary mode
 	// drop the per-item Unraid push too; ScheduledNotifyResult sends the one
 	// aggregate (#56).
-	if s.unraidGate(c.Unraid) && (c.On == "always" || !ok) &&
+	failed := !ok && !cancelled && !interrupted
+	if s.unraidGate(c.Unraid) && (c.On == "always" || failed) &&
 		(!notify.MessagesSuppressed(ctx) || !c.ScheduledSummary) {
 		level := "normal"
 		subject := "BombVault: backup OK"
-		if !ok {
+		switch {
+		case interrupted:
+			subject = "BombVault: backup interrupted"
+		case cancelled:
+			subject = "BombVault: backup cancelled"
+		case failed:
 			level = "warning"
 			subject = "BombVault: backup FAILED"
 		}
@@ -109,6 +143,18 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 			log.Printf("notify: unraid: %v", e)
 		}
 	}
+}
+
+// mcpOriginSentence names the MCP key behind a backup for the notification
+// about it. A key the store cannot name still gets the sentence: what the
+// reader needs is that the backup came from neither the schedule nor the web
+// interface.
+func (s *Service) mcpOriginSentence(keyID string) string {
+	key, err := s.store.GetMCPKey(keyID)
+	if err != nil || key.Label == "" {
+		return "Started through MCP."
+	}
+	return fmt.Sprintf("Started through MCP with the key %q.", key.Label)
 }
 
 // statusSkipped marks a run BombVault intentionally did not perform because the
@@ -136,7 +182,7 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	}
 	// Always record the skip so Run History shows it every run (a cheap audit trail)
 	// rather than the removed target silently vanishing from the dashboard.
-	if runID, sErr := s.store.StartRun(tg.ID, "backup"); sErr != nil {
+	if runID, sErr := s.startRun(ctx, tg.ID, "backup"); sErr != nil {
 		log.Printf("api: Backup: skip %q: start skipped run: %v", name, sErr) //nolint:gosec // G706: name is %q-quoted
 	} else if fErr := s.store.FinishRun(runID, statusSkipped, "", 0, store.ReasonContainerGone); fErr != nil {
 		log.Printf("api: Backup: skip %q: finish skipped run: %v", name, fErr) //nolint:gosec // G706: name is %q-quoted
@@ -180,12 +226,12 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 // since the caller is already returning the real one. An entry with no target row
 // yet has nothing to key a run to, so there the reason is only logged, and the
 // scheduled summary still names it from the returned error.
-func (s *Service) recordPreflightFailure(kind, name, targetID string, cause error) {
+func (s *Service) recordPreflightFailure(ctx context.Context, kind, name, targetID string, cause error) {
 	if targetID == "" {
 		log.Printf("api: %s: %q failed before a run could be recorded (no target row yet): %v", kind, name, cause) //nolint:gosec // G706: kind is a fixed literal, name is %q-quoted
 		return
 	}
-	runID, err := s.store.StartRun(targetID, "backup")
+	runID, err := s.startRun(ctx, targetID, "backup")
 	if err != nil {
 		log.Printf("api: %s: %q: start failed run: %v", kind, name, err) //nolint:gosec // G706: see above
 		return
@@ -272,6 +318,14 @@ func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, atte
 		summary = fmt.Sprintf("Scheduled %s backup: %d of %d items failed.\n%s",
 			domain, failed, attempted, formatItemFailures(failures))
 	}
+	// A dump fails without failing the backup around it, so the round's balance
+	// says nothing about it and the summary has to name it separately.
+	if tally := dbDumpTallyFrom(ctx); tally != nil {
+		if line := tally.take(); line != "" {
+			summary += "\n" + line
+			ok = false
+		}
+	}
 	// Reuse Send for the message channels with the Healthchecks ping suppressed
 	// (ScheduledHealthchecksResult already sent the one aggregate HC ping). The summary
 	// ctx carries no message-suppress flag, so Send delivers it (shouldSend still gates
@@ -316,7 +370,7 @@ func formatItemFailures(failures []schedule.ItemFailure) string {
 // host's notify script over SSH. level is "normal" | "warning" | "alert".
 func (s *Service) sendUnraidNotify(ctx context.Context, subject, desc, level string) error {
 	if s.ssh == nil {
-		return errors.New("no SSH connection for Unraid notifications (set it up in Settings → VM Backup over SSH)")
+		return errors.New("no SSH connection for Unraid notifications (set it up in Settings, System, Host SSH)")
 	}
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()

@@ -74,6 +74,8 @@ func (s *Service) DiscoverSource(domain string) string {
 		repo, err = s.vmsRepoPath(settings)
 	case "files":
 		repo, err = s.filesRepoPath(settings)
+	case zfsDomain:
+		repo, err = s.zfsRepoPath(settings)
 	default:
 		repo, err = s.containersRepoPath(settings)
 	}
@@ -555,6 +557,16 @@ func (s *Service) domainReposInUse(settings store.Settings, domain string) ([]do
 				ids[id] = true
 			}
 		}
+	case zfsDomain:
+		datasets, dErr := s.store.ListZFSDatasets()
+		if dErr != nil {
+			return out, []repoSkip{{Name: "this domain's items", Reason: "their list could not be read", Unreachable: true}}, nil //nolint:nilerr // see above
+		}
+		for _, d := range datasets {
+			if id := strings.TrimSpace(d.Repo); id != "" {
+				ids[id] = true
+			}
+		}
 	}
 	named, err := s.store.ListNamedRepos()
 	if err != nil {
@@ -581,19 +593,46 @@ func (s *Service) domainReposInUse(settings store.Settings, domain string) ([]do
 	return out, skipped, nil
 }
 
-// domainTagPrefix is the identity-tag prefix every snapshot of a domain carries
-// ("container:<name>", "vm:<name>", "fileset:<name>"). Empty for flash and
-// config, which have no per-item repositories and therefore cannot share one.
-func domainTagPrefix(domain string) string {
+// domainTagPrefixes are the identity-tag prefixes a domain's snapshots carry.
+// Containers have two: the volume backup and the database dump, which is a
+// snapshot of its own in the same repository. Empty for flash and config, which
+// have no per-item repositories and therefore cannot share one.
+func domainTagPrefixes(domain string) []string {
 	switch domain {
 	case "containers":
-		return "container:"
+		return []string{"container:", dbDumpIdentityPrefix}
 	case "vms":
-		return "vm:"
+		return []string{"vm:"}
 	case "files":
-		return "fileset:"
+		return []string{"fileset:"}
+	case zfsDomain:
+		return []string{"zfs:"}
+	}
+	return nil
+}
+
+// nameAfterAnyPrefix returns the item name a tag carries under one of prefixes,
+// or "" when it carries none.
+func nameAfterAnyPrefix(tag string, prefixes []string) string {
+	for _, prefix := range prefixes {
+		if rest, ok := strings.CutPrefix(tag, prefix); ok && rest != "" {
+			return rest
+		}
 	}
 	return ""
+}
+
+// snapshotInDomain reports whether sn carries one of the domain's identity
+// prefixes.
+func snapshotInDomain(sn restic.Snapshot, prefixes []string) bool {
+	for _, tag := range sn.Tags {
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(tag, prefix) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // domainRepoRef is one repository of a domain together with what it is.
@@ -778,6 +817,17 @@ func skippedError(what string, skipped []repoSkip) error {
 	return fmt.Errorf("%s covered only part of this domain: %s", what, strings.Join(parts, ", "))
 }
 
+// retentionPausedNote is what a pass that left held items alone records and
+// reports, in the same shape as skippedError: the work was done, except for
+// the items whose old backups a finding is keeping. Empty when nothing was
+// held, so a clean pass carries no note.
+func retentionPausedNote(tags []string) string {
+	if len(tags) == 0 {
+		return ""
+	}
+	return "done, except: deleting old backups is paused for " + strings.Join(tags, ", ")
+}
+
 // nothingCoveredError is skippedError's counterpart for an operation that
 // covered nothing. It is a separate sentence, because "covered only part"
 // is false there, and it is the message a single-repository domain whose
@@ -859,6 +909,8 @@ func (s *Service) repoFor(settings store.Settings, domain, source string) (strin
 		return s.configRepoPath(settings)
 	case "files":
 		return s.filesRepoPath(settings)
+	case zfsDomain:
+		return s.zfsRepoPath(settings)
 	default:
 		return "", fmt.Errorf("unknown domain %q", domain)
 	}

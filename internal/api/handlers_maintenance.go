@@ -8,11 +8,11 @@ import (
 )
 
 // handleCheck verifies the integrity of a domain's restic repo (restic check).
-// POST /api/check/{domain}  domain ∈ {containers, vms, flash, files}
+// POST /api/check/{domain}  domain ∈ {containers, vms, flash, files, zfs}
 func (h *Handler) handleCheck(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -28,11 +28,11 @@ func (h *Handler) handleCheck(w http.ResponseWriter, r *http.Request) {
 // recorded result. ?kind=subset (default) is the classic `restic check
 // --read-data-subset` integrity check; ?kind=dr is a real off-site sandbox restore
 // (containers, flash + files only). POST /api/verify/{domain}?source=&kind=
-// domain ∈ {containers,vms,flash,files}
+// domain ∈ {containers,vms,flash,files,zfs}
 func (h *Handler) handleRunDrill(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -53,7 +53,7 @@ func (h *Handler) handleRunDrill(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleDrills(w http.ResponseWriter, r *http.Request) {
 	domain := r.URL.Query().Get("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -94,7 +94,7 @@ func (h *Handler) handleDrills(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleUnlock(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -117,16 +117,59 @@ func (h *Handler) handleUnlock(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	if err := h.svc.PruneDomain(r.Context(), domain, sourceParam(r)); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+	paused, err := h.svc.PruneDomain(r.Context(), domain, sourceParam(r))
+	if err != nil {
+		body := failEnvelope(err)
+		if len(paused) > 0 {
+			body["paused"] = paused
+		}
+		writeJSON(w, http.StatusOK, body)
+		return
+	}
+	if len(paused) > 0 {
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"paused": paused}))
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleRetentionPreview reports what the next retention run would remove for a
+// domain, without removing anything.
+// GET /api/retention/preview/{domain}[?source=offsite|offsite:<id>]
+//
+// A GET on purpose: csrfGate exempts GET, so a read-only question needs no
+// token, while authGate still protects it like every other /api route. The
+// domain whitelist is handlePrune's own, because the preview and the prune
+// must never disagree about which domains exist.
+func (h *Handler) handleRetentionPreview(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	switch domain {
+	case "containers", "vms", "flash", "config", "files", "zfs":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	preview, err := h.svc.PreviewRetention(r.Context(), domain, sourceParam(r))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	// Nil slices are normalised so the client always meets a list, never null,
+	// the same courtesy handleExcludesPreview extends.
+	if preview.Repos == nil {
+		preview.Repos = []RetentionPreviewRepo{}
+	}
+	for i := range preview.Repos {
+		if preview.Repos[i].Items == nil {
+			preview.Repos[i].Items = []RetentionPreviewItem{}
+		}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"preview": preview}))
 }
 
 // handleDeleteSnapshot forgets a single snapshot from a domain's repo.
@@ -134,7 +177,7 @@ func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -153,7 +196,7 @@ func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -171,7 +214,7 @@ func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request)
 func (h *Handler) handleTestOffsite(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return

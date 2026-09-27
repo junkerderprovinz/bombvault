@@ -1,6 +1,8 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect, type CSSProperties } from "react";
 import { logout, type Settings } from "../lib/api";
+import { Badge, type BadgeTone } from "./Badge";
+import { useAnomalySummary } from "../lib/useAnomalies";
 import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { hueVars } from "../lib/appearance";
@@ -9,6 +11,7 @@ import {
   IconContainers,
   IconVM,
   IconFiles,
+  IconZFS,
   IconFleet,
   IconDashboard,
   IconRecovery,
@@ -17,6 +20,7 @@ import {
   IconViewSimple,
   IconViewAdvanced,
   IconGear,
+  IconAnomalies,
 } from "./navGlyphs";
 import { IconSignOut } from "./glyphs";
 import { useLabelMode } from "../lib/useLabelMode";
@@ -28,11 +32,13 @@ export {
   IconContainers,
   IconVM,
   IconFiles,
+  IconZFS,
   IconReceiver,
   IconFleet,
   IconFolder,
   IconLocal,
   IconCloud,
+  IconDatabase,
   IconAdd,
   IconDownload,
   IconBackupNow,
@@ -66,6 +72,9 @@ interface NavItem {
   icon: React.ReactNode;
   /** The row's rainbow position, assigned by the caller in render order. */
   hueIndex: number;
+  /** A figure beside the label, such as the open anomalies. It carries its
+   *  own name, because the bare number says nothing on its own. */
+  count?: { value: number; tone: BadgeTone; label: string };
 }
 
 // Easter egg: idle, then wobble, then boom.
@@ -137,7 +146,7 @@ function railVars(i: number): CSSProperties {
 
 // NavItem is one destination row. On the current route glim-active switches the
 // icon tint off, because the filled badge already shows the hue.
-function NavItem({ to, label, icon, hueIndex }: NavItem) {
+function NavItem({ to, label, icon, hueIndex, count }: NavItem) {
   // The rail has its own label axis: reducing it to glyphs changes the layout,
   // not just the density.
   const labelMode = useLabelMode("sidebar");
@@ -171,6 +180,11 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
             `sr-only` is absolutely positioned, so it leaves no gap beside the
             centred glyph. */}
         <span className={showLabel ? undefined : reactive ? "glim-label-reactive" : "sr-only"}>{label}</span>
+        {count && count.value > 0 && (
+          <Badge tone={count.tone} size="small" shape="pill" ariaLabel={count.label} className="ms-auto">
+            {count.value}
+          </Badge>
+        )}
       </NavLink>
       {tooltip.bubble}
     </>
@@ -275,9 +289,13 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
   const flashEnabled = settings?.flashEnabled ?? false;
   const configEnabled = settings?.configEnabled ?? false;
   const filesEnabled = settings?.filesEnabled ?? false;
+  const zfsEnabled = settings?.zfsEnabled ?? false;
   const receiverEnabled = settings?.receiverEnabled ?? false;
   const fleetEnabled = settings?.fleetEnabled ?? false;
   const pullEnabled = settings?.pullEnabled ?? false;
+  const anomaliesEnabled = settings?.anomalyEnabled ?? false;
+  const { summary } = useAnomalySummary();
+  const loudAnomalies = summary ? summary.open.critical + summary.open.warning : 0;
 
   // The brand block is GlimStone's: the mark centred above the name, smaller
   // and without the name in the narrow rail. The button's aria-label names it
@@ -468,13 +486,24 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
                 icon={<IconDashboard />}
                 hueIndex={nextHue()}
               />
-              {/* Always visible: disaster recovery is a core, non-expert flow. */}
-              <NavItem
-                to="/recovery"
-                label={t("nav.recovery")}
-                icon={<IconRecovery />}
-                hueIndex={nextHue()}
-              />
+              {/* Right under Dashboard: a finding that holds old backups back
+                  has to be reachable whatever order the dashboard cards are
+                  in. Detection is a feature switch, not a domain, so the row
+                  goes when it is off; the Settings card still links to the
+                  page for what was found earlier. */}
+              {anomaliesEnabled && (
+                <NavItem
+                  to="/anomalies"
+                  label={t("nav.anomalies")}
+                  icon={<IconAnomalies />}
+                  hueIndex={nextHue()}
+                  count={{
+                    value: loudAnomalies,
+                    tone: summary && summary.open.critical > 0 ? "fail" : "warn",
+                    label: t("anomaly.navCountAria").replace("{n}", loudAnomalies.toLocaleString()),
+                  }}
+                />
+              )}
               <NavItem
                 to="/containers"
                 label={t("nav.containers")}
@@ -490,9 +519,20 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
               {filesEnabled && (
                 <NavItem to="/files" label={t("nav.files")} icon={<IconFiles />} hueIndex={nextHue()} />
               )}
+              {zfsEnabled && (
+                <NavItem to="/zfs" label={t("nav.zfs")} icon={<IconZFS />} hueIndex={nextHue()} />
+              )}
               {configEnabled && (
                 <NavItem to="/config" label={t("nav.config")} icon={<IconConfig />} hueIndex={nextHue()} />
               )}
+              {/* Always visible: disaster recovery is a core, non-expert flow.
+                  It sits below the backup types because it restores them. */}
+              <NavItem
+                to="/recovery"
+                label={t("nav.recovery")}
+                icon={<IconRecovery />}
+                hueIndex={nextHue()}
+              />
               {/* Receiver, Fleet and Pull share one row. The Instances page
                   shows only the tabs whose setting is on. */}
               {(receiverEnabled || fleetEnabled || pullEnabled) && (

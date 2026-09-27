@@ -7,10 +7,10 @@ Bu sayfa konteynerin ortam değişkenlerini, şablonun sağladığı bağlamalar
 | Değişken | Gerekli | Açıklama |
 |---|---|---|
 | `APP_KEY` | **Evet** | restic depo parolasını türetmek için kullanılan 32 baytlık onaltılık gizli anahtar (64 onaltılık karakter). `openssl rand -hex 32` ile oluşturun. Bunu güvende tutun: kaybetmek şifreli yedekleri kurtarılamaz hale getirir. |
-| `LIBVIRT_HOST` | VM'ler için | VM yedeklemesi için SSH üzerinden ulaşılan Unraid host'u (varsayılan `host.docker.internal`; şablon bir LAN-IP yer tutucusunu önceden doldurur). Unraid LAN IP'nizi kullanın, özel bir `br0.x` ağında gereklidir. |
-| `LIBVIRT_SSH_PORT` | Hayır | VM yedeklemesi için host SSH portu (varsayılan `22`). |
-| `LIBVIRT_SSH_USER` | Hayır | VM yedeklemesi için host'taki SSH kullanıcısı (varsayılan `root`). |
-| `LIBVIRT_URI` | Hayır | Tam libvirt bağlantı URI'si; yukarıdaki üç `LIBVIRT_*` değişkeninden bir tane oluşturmak yerine **harfiyen** kullanılır (bu durumda söz konusu değişkenler bağlantı dizesi için yok sayılır). Varsayılan olarak ayarlanmamıştır. libvirtd'i standart olmayan, oluşturulan dize biçiminin ifade edemediği bir soket üzerinden dinleyen TrueNAS Scale'de gereklidir: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. TrueNAS Scale bölümü GitHub'daki [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) adresinde yer alır. |
+| `LIBVIRT_HOST` | VM'ler için | VM yedeklemesi için SSH üzerinden ulaşılan Unraid host'u (varsayılan `host.docker.internal`; şablon bir LAN-IP yer tutucusunu önceden doldurur). Unraid LAN IP'nizi kullanın, özel bir `br0.x` ağında gereklidir. ZFS veri kümesi yedekleri de bunu kullanır (şablon alanı **Host SSH: Address**); `192.168.x.x` yer tutucusu ayarlanmamış sayılır. |
+| `LIBVIRT_SSH_PORT` | Hayır | VM yedeklemesi için host SSH portu (varsayılan `22`). Şablon alanı **Host SSH: Port**, ZFS veri kümeleri için de. |
+| `LIBVIRT_SSH_USER` | Hayır | VM yedeklemesi için host'taki SSH kullanıcısı (varsayılan `root`). Şablon alanı **Host SSH: User**, ZFS veri kümeleri için de. |
+| `LIBVIRT_URI` | Hayır | Tam libvirt bağlantı URI'si; yukarıdaki üç `LIBVIRT_*` değişkeninden bir tane oluşturmak yerine **harfiyen** kullanılır (bu durumda söz konusu değişkenler bağlantı dizesi için yok sayılır). Varsayılan olarak ayarlanmamıştır. libvirtd'i standart olmayan, oluşturulan dize biçiminin ifade edemediği bir soket üzerinden dinleyen TrueNAS Scale'de gereklidir: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. TrueNAS Scale bölümü GitHub'daki [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) adresinde yer alır. Bir `qemu+ssh://` URI ise `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` ve `LIBVIRT_SSH_PORT` değişkenlerinden ayarlanmamış olan her biri ondan alınır, BombVault'un kendi SSH komutları için de (NVRAM aktarımı, ZFS veri kümeleri). |
 | `PORT` | Hayır | HTTP portu (varsayılan `3000`; yalnızca `HTTP_ONLY=true` ile kullanılır). |
 | `HTTPS_PORT` | Hayır | HTTPS portu (varsayılan `3443`; şablon onu 1:1 yayımlar, böylece WebUI `https://<ip>:3443` üzerinde yanıt verir). |
 | `HTTP_ONLY` | Hayır | Kendinden imzalı HTTPS dinleyicisini devre dışı bırakmak ve yalnızca düz HTTP sunmak için `true` ayarlayın (TLS'yi sonlandıran bir ters proxy arkasında kullanım için). |
@@ -20,13 +20,16 @@ Bu sayfa konteynerin ortam değişkenlerini, şablonun sağladığı bağlamalar
 | `PLATFORM` | Hayır | Otomatik algılama yerine, BombVault'un kendisini hangi platformda çalışıyor sayacağını zorunlu kılar: `unraid`, `generic` veya `truenas` (varsayılan olarak ayarlanmamıştır: flash bağlamasının altında `dockerMan` işaretini yoklayarak Unraid'i otomatik algılar, aksi halde `generic` kullanır; tanınmayan bir değer de günlüğe kaydedilerek `generic`'e geri döner). Yalnızca Unraid'e özgü otomatik yoklamaya güvenmek yerine, genel bir Docker host'unda veya TrueNAS Scale'de bunu açıkça ayarlayın; genel compose dosyası zaten böyle yapar. appdata-fallback kuralını, örnekler arası geri yükleme hedefi varsayılanlarını ve yalnızca Unraid'e özgü bildirim/yardımcı eklenti adımlarının hiç denenip denenmeyeceğini değiştirir (bkz. `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Hayır | BombVault konteynerinin kendi adı, böylece kendisini asla yedeklemez (ve dolayısıyla durdurmaz). |
 | `BACKUP_MAX_HOURS` | Hayır | Tek bir yedekleme çalışmasının, zorla iptal edilmeden önce etki alanı kilidini tutabileceği maksimum duvar saati saati (sıkışmış bir çalışmanın etki alanını sonsuza dek engelleyememesi için bir koruma). Boş (varsayılan) `48` kullanır. Çok büyük ya da yavaş bulut yedeklemeleri için artırın (sınırda iptal edilen bir çalışma `context deadline exceeded` ile başarısız olur). Sınırı tamamen devre dışı bırakmak için `0` ayarlayın. |
+| `DB_DUMP_MAX_HOURS` | Hayır | Otomatik bir veritabanı dökümünün durdurulmadan önce çalışabileceği saat sayısı. Boş (varsayılan) `6` kullanır; izin verilen değerler `1` ile `48` arasıdır ve sınır `BACKUP_MAX_HOURS` değerinin bir saat altında tutulur (bu değer iki saatten azsa yarısında), böylece uzun bir döküm yedeklemeyi de beraberinde götürmek yerine kendi sınırıyla kesilir ve öyle raporlanır. İlerlemeyi kesen bir döküm daha erken, `BACKUP_STALL_HOURS` sonunda durdurulur. Durdurulan döküm kendi başına başarısız olur, konteynerin yedeklemesi sürer. Unraid'de değişkeni BombVault konteynerine **Add another Path, Port, Variable** ile eklersiniz. |
 | `TZ` | Hayır | Zamanlayıcı için saat dilimi (örneğin `Europe/Berlin`). **Ayarlanmazsa tüm zamanlamalar UTC olarak çalışır**: 02:30 olarak ayarlanan bir zamanlama yerel saatte değil 02:30 UTC'de başlar. Unraid'de bunu asla kendiniz ayarlamazsınız: sistem kendi saat dilimini her kapsayıcıya aktarır. |
 
 ## Bağlamalar
 
 Docker soketini, flash'ı (`/boot`) ve **Host Data** kökünü (`/mnt`) CA şablonunda gösterildiği gibi bağlayın. Yedekleme *kaynakları* ve *hedefleri* her ikisi de Host Data altında yer alır ve o **slave** olarak bağlanır, böylece konteyner başladıktan sonra bağlanan bir uzak paylaşım (örneğin `/mnt/remotes` altında) yeniden başlatma olmadan görünür hale gelir.
 
-Yeni bir kurulum her etki alanını **Unraid** konumunda, `/mnt/user/bombvault` altında etki alanı başına bir klasörle (`container`, `vms`, `flash`, `config`, `files`) depolar; klasörler ilk yedeklemede oluşturulur. Yerel ya da uzak başka konumları **Ayarlar, Depolama** sekmesinde eklersiniz; bkz. [Depolama konumları](storage-places.md).
+ZFS veri kümesi yedeklerinin de bu moda ihtiyacı vardır: ana makine bir veri kümesinin anlık görüntüsünü ancak konteyner başladıktan sonra bağlar. Bkz. [ZFS veri kümeleri](zfs-datasets.md).
+
+Yeni bir kurulum her etki alanını **Unraid** konumunda, `/mnt/user/bombvault` altında etki alanı başına bir klasörle (`container`, `vms`, `flash`, `config`, `files`, `zfs`) depolar; klasörler ilk yedeklemede oluşturulur. Yerel ya da uzak başka konumları **Ayarlar, Depolama** sekmesinde eklersiniz; bkz. [Depolama konumları](storage-places.md).
 
 !!! note "Host entegrasyon denetimi"
     Konteyner başladıktan sonra web arayüzünde `/spike`'ı açın. Her bağlamayı ve CLI'ı (Docker soketi, libvirt, restic, qemu-img, rclone) yoklar ve eksik parçaları bildirir.
@@ -39,6 +42,7 @@ Her kapsayıcı için hangi bind bağlarının ve adlandırılmış birimlerin y
 - **Adlandırılmış Docker birimleri** her zaman dahil edilir, çünkü atılabilir bir karşılıkları yoktur ve süzülecek bir şey kalmaz, **ama yalnızca birimin ana makinedeki gerçek depolama yolunun kendisi Host Data bağı üzerinden erişilebilir olduğunda**, tıpkı BombVault'un yedeklediği diğer her ana makine yolu gibi. Varsayılan yerel birim sürücüsü bir birimi arka planın kendi veri kökünün altına, yani değiştirilmediyse `/var/lib/docker/volumes/<ad>/_data` yoluna koyar (`docker info -f '{{.DockerRootDir}}'` ile bakabilirsiniz). Bu konum, genel `docker-compose.yml` dosyasının varsayılan olarak kullandığı tek dizinlik dar Host Data bağının kapsamında DEĞİLDİR. Erişilemeyen birim sessizce atlanır, bu bir hata değildir. Genel bir ana makinede adlandırılmış birimlerin gerçekten yedeklenmesi için Host Data'yı (ve `HOST_SOURCE_ROOT` değerini) Docker'ın veri kökünü de kapsayan ortak bir üst dizine yöneltin: ödünleşim compose dosyasının Host Data yorumunda anlatılıyor (Unraid, aynı nedenle kendi en üst düzey genel geleneği olan `/mnt` dizininin tamamını bağlayarak bunu aşar).
 - **Docker Compose proje dizini:** kapsayıcı olağan `com.docker.compose.project.working_dir` etiketini taşıyorsa (`docker compose up` bunu kendiliğinden koyar), herhangi bir bind bağının veri kökü parçasıyla eşleşip eşleşmediğine bakılmaksızın o dizin de eklenir.
 - **`bombvault.data` etiketiyle geçersiz kılma:** yukarıdaki iki geleneğin de yakalayamadığı bir düzen için (örneğin Compose projesi olmayan tek bir `/srv/plex/config` bağı) kapsayıcıya `bombvault.data=true` etiketini koyarak TÜM bind bağlarını dahil edin. `false` dışındaki boş olmayan her değer doğru sayılır; etiketin bulunmaması ya da `bombvault.data=false` hiçbir şeyi değiştirmez.
+- **`bombvault.dbdump` etiketi:** bir konteynere `bombvault.dbdump=false` koyarak otomatik veritabanı dökümünü kapatın (`0`, `no` ve `off` da aynı işi görür) ya da motoru adlandırarak (`postgres`, `mysql`, `mariadb`) BombVault'un kendiliğinden tanımadığı bir konteynerin dökümünü aldırın. Etiket, konteynerin kartındaki anahtara üstün gelir; Unraid'de olağan yol o anahtardır.
 
 ## Güvenlik modeli
 
@@ -50,9 +54,14 @@ Her kapsayıcı için hangi bind bağlarının ve adlandırılmış birimlerin y
 - Kapı isteğe bağlı olduğu için, ayarlanmadığında tüm arayüz ve API (site dışı kurulum, kurcalama testi rotaları ve kurtarma kiti dahil) porta ulaşabilen herkes tarafından erişilebilirdir. Site dışı, değiştirilemez yedekler ya da şifreleme kullanıldığında kapıyı etkinleştirin.
 - BombVault'u yalnızca güvenilen, dışarıya açık olmayan bir ağda çalıştırın. Uzaktan erişim için onu kimlik doğrulama ve TLS ekleyen bir ters proxy arkasına yerleştirin. Yanıtlar temel güvenlik başlıklarını taşır (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Ters vekil sunucunun arkasında her istek vekilin adresini taşır; bu yüzden `TRUSTED_PROXY` olmadan fren tüm istemcileri tek kovada sayar ve bir saldırganın başarısızlıkları seni de dışarıda bırakır. Vekili `TRUSTED_PROXY` içinde belirt ki sayım yeniden istemci başına yapılsın.
+- BombVault'un önündeki bir ters vekil sunucu `Authorization` ya da `X-API-Key` başlığını `/mcp` yoluna iletmeli ve yanıtları arabelleğe almamalıdır; aksi hâlde asistanlar bağlanamaz. Bkz. [MCP sunucusu](mcp.md#tls).
 - `HTTP_ONLY=true` ile oturum çerezi `Secure` bayrağını kaybeder (düz HTTP üzerinde çalışması için buna zorunludur), bu nedenle gizlilik önemliyse parolayı yalnızca TLS'yi sonlandıran bir proxy arkasında etkinleştirin.
 - VM yedekleme SSH bağlantısı, ilk bağlantıda host anahtarına güvenir (TOFU) ve sonrasında onu sabitler. Konteynerden host'a giden yolunuz güvenilir değilse host'un anahtarını bant dışı doğrulayın.
 - Şifreleme etkinleştirildiğinde (Ayarlar; varsayılan olarak açık) yedekler restic tarafından şifrelenir, anahtar `APP_KEY`'den türetilir.
+
+## MCP sunucusu {#mcp-server}
+
+MCP sunucusu hiçbir ortam değişkeni gerektirmez. **Ayarlar, Sistem, MCP sunucusu** altında bir anahtar oluşturarak açarsınız ve web arayüzüyle aynı bağlantı noktasında `/mcp` yolunda yanıt verir (örneğin `https://192.168.1.10:3443/mcp`). Etkin anahtar yokken bu yol `404` ile yanıt verir. İstemciler, sertifikalar ve sınırlar [MCP sunucusu](mcp.md) sayfasında anlatılır.
 
 ## SSH üzerinden VM yedeklemesi
 
@@ -60,7 +69,7 @@ BombVault, KVM/libvirt VM'lerini **herhangi bir libvirt yolunu bağlamadan** yed
 
 Hızlı kurulum:
 
-1. **Ayarlar, Sistem, SSH üzerinden VM Yedeği:** gösterilen genel anahtarı kopyalayın.
+1. **Ayarlar, Sistem, Ana makine SSH:** gösterilen genel anahtarı kopyalayın.
 2. Onu Unraid'in `/root/.ssh/authorized_keys` dosyasına ekleyin (yeniden başlatmalarda kalıcı olması için flash'a da yazılır).
 3. **Bağlantıyı test et**'e tıklayın.
 
@@ -81,6 +90,19 @@ Site dışı kopyalar depolama konumlarına gider. Konumu **Ayarlar, Depolama** 
 - **Saklama, sınırlar, depolama sınıfı ve büyüme bütçesi konuma aittir** ve konumun ayrıntılarında ayarlanır. Bir konumun saklama kuralları oradaki her depoya uygulanır, böylece site dışı bir konum kopyaları bir arşiv olarak daha uzun tutabilir; her kuralı sıfır olan bir konum hiçbir şeyi kırpmaz.
 - **Soğuk ve arşiv depolama sınıfı (S3):** bir S3 konumu için geri yüklenebilir bir katman seçin (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone uzak konumları sınıflarını rclone yapılandırmasında ayarlar.
 - **Uzak bir konumda depolanan etki alanı:** bkz. [Uzak bir konumda depolanan etki alanı](offsite-recovery.md#remote-primary-repositories).
+
+## Anormallikler {#anomalies}
+
+Anomali algılama **Ayarlar, Bütünlük** altındaki **Anormallikler** kartında ayarlanır. Her denetim değiştirdiğiniz anda kaydedilir ve algılama kapalıyken anahtarın altındaki üçü gizlenir.
+
+| Ayar | Varsayılan | Ne yapar |
+|---|---|---|
+| **Anormallikleri algıla** | Açık | Her yedeği öğenin kendi geçmişiyle karşılaştırır. Kapalıyken yeni hiçbir şey denetlenmez ve **Anormallikler** girişi kenar çubuğundan kalkar; kart yine de önceki bulgulara bağlantı verir. |
+| **Hassasiyet** | Dengeli | Katı daha küçük değişiklikleri de bildirir, Hoşgörülü yalnızca büyükleri. |
+| **Şunlar için bildirim gönder** | Yalnızca kritik bulgular | Bildirimler altında kurulan kanallar üzerinden mesaj gönderen en düşük önem derecesi. Tekrarlanan başarısız yedekler ve dökümler ile başarısız zamanlanmış geri yükleme denetimleri zaten kendi mesajlarını gönderir ve iki kez gönderilmez. |
+| **Bir kaynak sert biçimde küçüldüğünde veya yeniden yazıldığında eski yedekleri tut** | Açık | Bir öğenin neredeyse boş kaynak, güçlü küçülme ya da verilerin çoğunun yeniden kaydedilmesi için açık bir bulgusu olduğu sürece saklama ve temizlik o öğenin eski yedeklerine dokunmaz. Serbest bırakmak için bulguyu onaylayın ya da beklenen olarak işaretleyin. |
+
+Her öğenin kendi hassasiyeti ve kendi bildirim alt sınırı olabilir. Bunları **Anormallikler** sayfasının **Ögeler** sekmesinde ya da öğenin kendi panelinde ayarlayın: bir konteynerin klasörler bölümü ve bir VM'nin ayarları (ikisi de gelişmiş modda), bir klasör setinin klasör düzenleyicisi ve **Flash** ile **Öz yedek** sayfaları. Bir ZFS öğesinde bunlar **ZFS** sayfasındaki öğe düzenleyicisindedir ve ağacın her veri kümesi için geçerlidir.
 
 ## Taşınabilir ayarlar (dışa ve içe aktarma) {#portable-settings-export-and-import}
 

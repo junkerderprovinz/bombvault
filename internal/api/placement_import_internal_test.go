@@ -379,7 +379,7 @@ func TestTheImportPreviewNamesATargetItCannotLookUp(t *testing.T) {
 	b2 := f.target("containers", "B2", "b2:bucket:containers")
 	exp := f.do(http.MethodGet, "/api/settings/export", nil)
 	f.unreadableTarget(b2.ID)
-	logged := captureLog(t)
+	logged := watchLog(t)
 
 	summary := f.do(http.MethodPost, "/api/settings/import", exp)["summary"].(map[string]any)
 	list := summary["newTargets"].([]any)

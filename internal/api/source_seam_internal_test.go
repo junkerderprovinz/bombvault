@@ -272,7 +272,7 @@ func TestASwitchedOffTargetIsReachedByItsIDAndNeverByAnother(t *testing.T) {
 	if err := s.DeleteBackupsVM(ctx, "win11", source); !errors.Is(err, errAppendOnlyOffsiteTarget) {
 		t.Fatalf("DeleteBackupsVM = %v, want errAppendOnlyOffsiteTarget", err)
 	}
-	if err := s.PruneDomain(ctx, "vms", source); !errors.Is(err, errAppendOnlyOffsiteTarget) {
+	if _, err := s.PruneDomain(ctx, "vms", source); !errors.Is(err, errAppendOnlyOffsiteTarget) {
 		t.Fatalf("PruneDomain = %v, want errAppendOnlyOffsiteTarget", err)
 	}
 

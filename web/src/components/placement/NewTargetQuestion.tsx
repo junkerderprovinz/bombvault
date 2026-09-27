@@ -33,11 +33,13 @@ export function itemName(identity: string): string {
 /** NewTargetPreviewLines says what a target receives at its first run. With
  *  onExclusion it offers to leave out here what other targets leave out. */
 export function NewTargetPreviewLines({
+  domain,
   target,
   preview,
   exclusion = NOTHING,
   onExclusion,
 }: {
+  domain: OffsiteDomain;
   target: string;
   preview: TargetPreview;
   exclusion?: NewTargetExclusion;
@@ -47,7 +49,7 @@ export function NewTargetPreviewLines({
   const formerly = preview.formerlyExcluded.map((e) => itemName(e.identity));
   return (
     <div className="flex flex-col gap-1 text-sm text-carbon-textSub">
-      <p>{t("newTarget.items").replace("{n}", String(preview.items))}</p>
+      <p>{t(domain === "containers" ? "newTarget.itemsContainers" : "newTarget.items").replace("{n}", String(preview.items))}</p>
       <p>{t("newTarget.snapshots").replace("{n}", String(preview.snapshots))}</p>
       {preview.bytes !== null && <p>{t("newTarget.size").replace("{size}", humanBytes(preview.bytes))}</p>}
       {preview.unreadable.length > 0 && (
@@ -77,10 +79,12 @@ export function NewTargetPreviewLines({
 // Holds the switches while the question is open; the answer is read from
 // onChoice once it closes.
 function ExclusionChoice({
+  domain,
   target,
   preview,
   onChoice,
 }: {
+  domain: OffsiteDomain;
   target: string;
   preview: TargetPreview;
   onChoice: (next: NewTargetExclusion) => void;
@@ -88,6 +92,7 @@ function ExclusionChoice({
   const [exclusion, setExclusion] = useState(NOTHING);
   return (
     <NewTargetPreviewLines
+      domain={domain}
       target={target}
       preview={preview}
       exclusion={exclusion}
@@ -122,11 +127,11 @@ export function useNewTargetQuestion(): {
       const preview = res.preview;
       if (!res.ok || !preview) {
         const reason = <p className="text-sm text-carbon-textSub">{placementErrorText(t, lang, res, "settings.error")}</p>;
-        return (await confirm(intro, { extra: reason })) ? { go: true, alsoExclude: null } : { go: false };
+        return (await confirm(intro, { extra: reason, cancelTone: "neutral" })) ? { go: true, alsoExclude: null } : { go: false };
       }
       let chosen = NOTHING;
-      const extra = <ExclusionChoice target={q.name} preview={preview} onChoice={(next) => (chosen = next)} />;
-      if (!(await confirm(intro, { extra }))) return { go: false };
+      const extra = <ExclusionChoice domain={domain} target={q.name} preview={preview} onChoice={(next) => (chosen = next)} />;
+      if (!(await confirm(intro, { extra, cancelTone: "neutral" }))) return { go: false };
       return { go: true, alsoExclude: chosen.identities.length > 0 || chosen.default ? chosen : null };
     },
     [confirm, t, lang]

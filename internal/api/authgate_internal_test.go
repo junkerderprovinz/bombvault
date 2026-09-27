@@ -12,11 +12,19 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// authGatePublicPaths mirrors authGate's allowlist: the login screen and the
+// authGatePublicPaths is the complete allowlist: the login screen and the
 // health check have to work without a session and while the store is failing.
-// The widget handlers check the widget token themselves, because an embedding
-// iframe carries no session cookie.
-var authGatePublicPaths = []string{"/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data"}
+// The widget, fleet and passkey handlers check their own token or gate the
+// answer inside the handler, because an embedding iframe, a polling peer and
+// somebody who is not signed in yet carry no session cookie. /mcp is self-gated
+// on its own keys and answers 404 while none exists; the key management routes
+// under /api/mcp stay session-protected.
+var authGatePublicPaths = []string{
+	"/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data",
+	"/api/fleet/status", "/api/fleet/mesh-offer",
+	"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish",
+	"/mcp",
+}
 
 // newAuthGateHandler returns a Handler on a fresh in-memory store, plus the
 // *sql.DB so a test can break the store by closing it. authGate needs only cfg
@@ -128,6 +136,35 @@ func TestAuthGateOnBlocksWithoutCookie(t *testing.T) {
 		if code != http.StatusOK || !called {
 			t.Fatalf("auth on, no cookie: public path %s must pass through, got code=%d called=%v", p, code, called)
 		}
+	}
+}
+
+// TestAuthGatePublicPathListIsExact keeps the mirror above honest: a path added
+// to the gate without a line here, or a line here the gate does not honour,
+// fails. The key management routes and a sub-path of /mcp are named explicitly
+// because both would be a way past the session.
+func TestAuthGatePublicPathListIsExact(t *testing.T) {
+	public := map[string]bool{}
+	for _, p := range authGatePublicPaths {
+		public[p] = true
+		if !authGatePublicPath(p) {
+			t.Errorf("authGatePublicPath(%q) = false, want true", p)
+		}
+	}
+	for _, p := range []string{"/api/mcp/keys", "/api/mcp/certificate", "/api/status", "/mcp/x", "/api/widget/token", "/api/fleet/peers"} {
+		if public[p] {
+			t.Fatalf("%q is on the mirror; it must not be", p)
+		}
+		if authGatePublicPath(p) {
+			t.Errorf("authGatePublicPath(%q) = true, want the session gate to hold", p)
+		}
+	}
+
+	h, repo, _ := newAuthGateHandler(t)
+	enableAuth(t, h, repo)
+	code, called := gateStatus(t, h, "/mcp/x", "")
+	if code != http.StatusUnauthorized || called {
+		t.Fatalf("/mcp/x with a password set: want 401 without reaching next, got code=%d called=%v", code, called)
 	}
 }
 

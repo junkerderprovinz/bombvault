@@ -150,8 +150,8 @@ Um separador **Recuperação** dedicado acompanha uma instalação de raiz ou re
 1. **Verifica que o BombVault consegue ler os seus backups** (o senão da chave de encriptação logo à partida).
 2. **Restaura as próprias definições do BombVault**, para que os caminhos de backup, os destinos externos e as credenciais de que o resto do fluxo precisa venham pré-preenchidos. O backup de definições é lido do lugar que a linha Auto-backup indica em **Guardado em**, ou da cópia do Auto-backup em **Copiado para**, e o passo mostra esse lugar com o seu endereço; para ler de outro lugar, altere primeiro a linha Auto-backup no passo 3. O restauro é aplicado através de um reinício automático sobre o socket Docker, para que a base de dados de definições em execução nunca seja sobrescrita sob um handle aberto.
 3. **Anexa os seus backups existentes** através das linhas do cartão Domínios: na linha de cada domínio, escolha em **Guardado em** o lugar onde estão os backups dele e em **Copiado para** os lugares que guardam as cópias. Um lugar que ainda nenhuma linha oferece, como uma partilha, um servidor ou um bucket na nuvem, liga-se com **Adicionar lugar**, a mesma janela que em Definições, Armazenamento. **Ligar e pré-visualizar** verifica depois se os backups podem ser lidos.
-4. **Descobre** os containers, VMs e conjuntos de ficheiros nele armazenados.
-5. **Restaura-os todos** (deixados parados, para que os inicie deliberadamente), com o seu kit de recuperação a um clique de distância.
+4. **Descobre** os containers, VMs, conjuntos de ficheiros e conjuntos de dados ZFS nele armazenados.
+5. **Restaura os containers e as VMs de uma só vez** (deixados parados, para que os inicie deliberadamente) e lista os conjuntos de ficheiros e os elementos ZFS para restaurar um a um; os elementos ZFS voltam desativados. O seu kit de recuperação está a um clique de distância.
 
 !!! note "As cópias externas esperam depois de uma reconstrução"
     Quando o passo 4 reconstrói entradas sem as definições antigas, a replicação externa desses domínios entra em pausa até a localização padrão ser confirmada. Consulte [Localização por item](#placement).
@@ -172,6 +172,9 @@ Um clique transfere a **chave mestra**, a **palavra-passe restic derivada**, e a
 !!! danger "Guarde o kit de recuperação fora do servidor"
     O kit contém o segredo que decifra os seus backups. Guarde-o num local seguro e separado do servidor (um gestor de palavras-passe, uma cópia impressa num cofre). Se perder ambos o BombVault e a `APP_KEY` sem kit de recuperação, os seus backups encriptados não podem ser recuperados.
 
+!!! warning "O snapshot mais recente nem sempre é o que deve restaurar"
+    Desde o restic 0.17, `restic snapshots` mostra o tamanho de cada snapshot. Após uma perda de dados, o snapshot mais recente pode ser o que foi esvaziado, por isso não restaure um snapshot muito mais pequeno do que os anteriores. Após um ransomware pode ser o cifrado, com o tamanho habitual. Se o BombVault ainda estiver a correr, veja primeiro a sua página **Anomalias**: ela indica o último backup bom. Um restauro não precisa de nenhum dado de anomalias do BombVault, e a pausa da retenção só mantém mais snapshots.
+
 ### Se não tiveres o kit à mão
 
 A palavra-passe não está guardada em lado nenhum, é **calculada** a partir da `APP_KEY`. Com a chave e uma shell podes reproduzi-la tu próprio:
@@ -188,3 +191,27 @@ printf 'bombvault:restic-repo' \
     Um repositório que chegou aqui por replicação fora do local foi criado pela máquina que o enviou, com a **sua** `APP_KEY`. Derivar a partir da chave da máquina recetora dá uma palavra-passe que o restic recusa, o que se lê exatamente como um repositório corrompido sem o ser. É a razão habitual para o `restic check` num repositório recebido pedir a palavra-passe vezes sem conta.
 
 Como as definições de recuperação vivem **dentro** de cada repo (`<repo>/def`, `<repo>/vm-def`), uma pasta de repo copiada é totalmente autossuficiente, por isso o kit mais o repo é tudo o que um restauro em bare-metal precisa.
+
+## Recuperar um dump de base de dados {#database-dumps}
+
+Um dump de base de dados é um ponto de restauro próprio no repositório dos containers, com a etiqueta `dbdump:<container>` e um único ficheiro, `/dbdump/<container>.sql`. O BombVault lista-os, descarrega-os e importa-os em **Backups**; abaixo estão os mesmos passos só com o restic, para o dia em que o BombVault não estiver lá.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+As etiquetas `dbversion:` e `dbname:` de cada dump dizem de que versão de servidor veio e que bases contém. Um ficheiro completo termina com `-- PostgreSQL database cluster dump complete` ou `-- Dump completed`.
+
+Importa-o para um container da mesma versão ou de uma mais recente (PostgreSQL), ou da mesma versão principal (MySQL e MariaDB), arrancado uma vez com a pasta de dados vazia para que se inicialize. O anfitrião não precisa de cliente de base de dados, o container tem um:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Para uma só base dentro de um dump completo, o MySQL e o MariaDB aceitam `--one-database <name>` no comando do cliente. Um dump de PostgreSQL tem uma secção por base, cada uma a começar numa linha `\connect <name>`: copia essa secção para um ficheiro próprio e importa-o com `-d <name>` depois de criares a base.
+
+!!! warning "Um dump feito como root traz as contas do servidor"
+    Um dump completo de MySQL ou MariaDB feito como root contém a base de sistema `mysql`, pelo que importá-lo substitui as contas do servidor novo, palavra-passe de root incluída, pelas do dump. No PostgreSQL, `role ... already exists` para o utilizador criado pelo container é esperado e inofensivo.

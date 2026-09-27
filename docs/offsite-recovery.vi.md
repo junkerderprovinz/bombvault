@@ -150,8 +150,8 @@ Một tab **Recovery** chuyên biệt dẫn một bản cài đặt mới hoặc
 1. **Kiểm tra BombVault có thể đọc các bản sao lưu của bạn** (điểm mắc kẹt về khóa mã hóa ngay từ đầu).
 2. **Khôi phục cài đặt của chính BombVault**, nên các đường dẫn sao lưu, đích off-site và thông tin đăng nhập mà phần còn lại của quy trình cần được điền sẵn. Nó đọc bản sao lưu cài đặt từ điểm lưu trữ mà hàng Tự sao lưu ghi ở **Lưu tại**, hoặc từ bản sao của Tự sao lưu ở **Sao chép đến**, và hiển thị điểm lưu trữ đó kèm địa chỉ; để đọc từ một điểm lưu trữ khác, hãy đổi hàng Tự sao lưu ở bước 3 trước. Việc khôi phục được áp dụng qua một lần tự khởi động lại thông qua Docker socket, nên cơ sở dữ liệu cài đặt đang chạy không bao giờ bị ghi đè dưới một handle đang mở.
 3. **Gắn các bản sao lưu hiện có của bạn** qua các hàng của thẻ **Miền**: trên hàng của mỗi miền, chọn điểm lưu trữ chứa các bản sao lưu của nó ở **Lưu tại** và các điểm lưu trữ giữ bản sao của nó ở **Sao chép đến**. Một điểm lưu trữ chưa có hàng nào đưa ra, chẳng hạn một thư mục chia sẻ, một máy chủ hay một bucket đám mây, được kết nối bằng **Thêm điểm lưu trữ**, cùng cửa sổ như trên Cài đặt, Lưu trữ. Sau đó **Kết nối và xem trước** kiểm tra rằng các bản sao lưu đọc được.
-4. **Khám phá** các container, VM và bộ tập tin được lưu trong đó.
-5. **Khôi phục tất cả chúng** (để nguyên trạng thái dừng, nên bạn khởi động chúng một cách có chủ đích), với bộ khôi phục của bạn chỉ cách một cú nhấp.
+4. **Khám phá** các container, VM, bộ tập tin và tập dữ liệu ZFS được lưu trong đó.
+5. **Khôi phục các container và VM cùng một lúc** (để nguyên trạng thái dừng, nên bạn khởi động chúng một cách có chủ đích) và liệt kê các bộ tập tin và mục ZFS để khôi phục từng cái một; các mục ZFS trở lại ở trạng thái tắt. Bộ khôi phục của bạn chỉ cách một cú nhấp.
 
 !!! note "Các bản sao off-site chờ sau một lần xây dựng lại"
     Khi bước 4 xây dựng lại các mục nhập mà không có cài đặt cũ, việc nhân bản off-site của các miền đó tạm dừng cho đến khi nơi lưu trữ mặc định được xác nhận. Xem [Nơi lưu trữ theo từng mục](#placement).
@@ -172,6 +172,9 @@ Một cú nhấp tải xuống **khóa chính**, **mật khẩu restic dẫn xu�
 !!! danger "Cất giữ bộ khôi phục ngoài máy chủ"
     Bộ khôi phục chứa bí mật giải mã các bản sao lưu của bạn. Giữ nó ở nơi an toàn và tách biệt khỏi máy chủ (một trình quản lý mật khẩu, một bản in trong két sắt). Nếu bạn mất cả BombVault và `APP_KEY` mà không có bộ khôi phục, các bản sao lưu đã mã hóa của bạn không thể khôi phục được.
 
+!!! warning "Snapshot mới nhất không phải lúc nào cũng là cái nên khôi phục"
+    Từ restic 0.17, `restic snapshots` hiển thị kích thước của mỗi snapshot. Sau khi mất dữ liệu, snapshot mới nhất có thể là cái đã bị làm trống, vì vậy đừng khôi phục một snapshot nhỏ hơn nhiều so với các snapshot trước nó. Sau ransomware, đó có thể là cái đã bị mã hóa với kích thước bình thường. Nếu BombVault vẫn chạy, hãy xem trang **Bất thường** trước: trang này nêu bản sao lưu tốt cuối cùng. Việc khôi phục không cần dữ liệu bất thường nào của BombVault, và việc tạm dừng lưu giữ chỉ giữ lại nhiều snapshot hơn.
+
 ### Khi không có bộ khôi phục trong tay
 
 Mật khẩu không được lưu ở đâu cả, nó được **tính** từ `APP_KEY`. Chỉ cần khóa và một shell là bạn tự tạo lại được:
@@ -188,3 +191,27 @@ printf 'bombvault:restic-repo' \
     Kho đến đây qua nhân bản ngoại vi được tạo bởi máy đã gửi nó, bằng `APP_KEY` của **chính máy đó**. Suy ra từ khóa của máy nhận sẽ cho một mật khẩu mà restic từ chối, trông y hệt một kho bị hỏng mà thực ra không hỏng. Đây là lý do thường gặp khiến `restic check` trên kho đã nhận cứ hỏi mật khẩu mãi.
 
 Vì các định nghĩa khôi phục nằm **bên trong** mỗi kho (`<repo>/def`, `<repo>/vm-def`), một thư mục kho được sao chép hoàn toàn tự chứa, nên bộ khôi phục cộng với kho là tất cả những gì một lần khôi phục bare-metal cần.
+
+## Lấy lại một bản kết xuất cơ sở dữ liệu {#database-dumps}
+
+Bản kết xuất cơ sở dữ liệu là một điểm khôi phục riêng trong kho của các container, mang nhãn `dbdump:<container>` và chỉ chứa một tệp duy nhất, `/dbdump/<container>.sql`. BombVault liệt kê, tải về và nhập chúng ở mục **Sao lưu**; dưới đây là cùng các bước ấy chỉ với restic, dành cho ngày không có BombVault.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Các nhãn `dbversion:` và `dbname:` trên mỗi bản kết xuất cho biết nó đến từ phiên bản máy chủ nào và chứa những cơ sở dữ liệu nào. Một tệp trọn vẹn kết thúc bằng `-- PostgreSQL database cluster dump complete` hoặc `-- Dump completed`.
+
+Hãy nhập nó vào một container cùng phiên bản hoặc mới hơn (PostgreSQL), hoặc cùng phiên bản chính (MySQL và MariaDB), đã được khởi động một lần với thư mục dữ liệu trống để nó tự khởi tạo. Máy chủ vật lý không cần trình khách cơ sở dữ liệu, container đã có sẵn:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Để lấy một cơ sở dữ liệu duy nhất từ bản kết xuất đầy đủ, MySQL và MariaDB nhận `--one-database <name>` trên lệnh trình khách. Bản kết xuất PostgreSQL có một phần cho mỗi cơ sở dữ liệu, mỗi phần mở đầu bằng dòng `\connect <name>`: chép phần đó ra tệp riêng rồi nhập bằng `-d <name>` sau khi đã tạo cơ sở dữ liệu.
+
+!!! warning "Bản kết xuất lấy bằng root mang theo người dùng của máy chủ"
+    Bản kết xuất đầy đủ của MySQL hay MariaDB lấy bằng root có chứa cơ sở dữ liệu hệ thống `mysql`, nên khi nhập, các tài khoản của máy chủ mới, kể cả mật khẩu root, sẽ bị thay bằng tài khoản trong bản kết xuất. Trên PostgreSQL, thông báo `role ... already exists` về người dùng do chính container tạo là chuyện bình thường và vô hại.

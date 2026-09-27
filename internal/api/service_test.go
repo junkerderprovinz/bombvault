@@ -1028,6 +1028,7 @@ func offsiteReplTestService(t *testing.T, eng *fakeResticEngine) (*api.Service, 
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
 	st := newMemStore(t)
 	s := mustSettings(t, st)
+	s.FlashEnabled = true
 	s.FlashPath = "backups/flash"
 	s.FlashOffsite = "rest:http://192.168.1.2:8000/flash"
 	if err := st.UpdateSettings(s); err != nil {
@@ -1622,7 +1623,7 @@ func TestDeleteSnapshotPrimaryImmutableRefused(t *testing.T) {
 func TestPruneDomainOffsiteImmutableRefused(t *testing.T) {
 	svc, eng := newImmutableOffsiteSvc(t)
 
-	err := svc.PruneDomain(context.Background(), "containers", "offsite")
+	_, err := svc.PruneDomain(context.Background(), "containers", "offsite")
 	if err == nil || !strings.Contains(err.Error(), "append-only") {
 		t.Fatalf("off-site prune on an immutable repo must fail with an append-only error, got %v", err)
 	}
@@ -1631,7 +1632,7 @@ func TestPruneDomainOffsiteImmutableRefused(t *testing.T) {
 	}
 
 	// The LOCAL repo is unaffected by the off-site immutable flag.
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("local prune must stay allowed: %v", err)
 	}
 	if len(eng.manualPruned) != 1 {
@@ -2173,6 +2174,43 @@ func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	}
 }
 
+func TestServiceBackupStopsOnlyContainersOfThatExactName(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetStopContainers("plex", []string{"mariadb", "db"}); err != nil {
+		t.Fatal(err)
+	}
+	// "db" was removed, and Docker answers the bare name with the container
+	// whose id starts with it.
+	d := &fakeServiceDocker{
+		inspect: model.Inspect{Name: "/plex", ID: "91e7", Running: true},
+		inspects: map[string]model.Inspect{
+			"mariadb": {Name: "/mariadb", ID: "5eed", Running: true},
+			"db":      {Name: "/immich_postgres", ID: "db7a", Running: true},
+		},
+	}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if _, err := svc.Backup(context.Background(), "plex"); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	calls := strings.Join(d.calls, " ")
+	if strings.Contains(calls, "stop:db") || strings.Contains(calls, "start:db") {
+		t.Errorf("calls = %q, want the container another name resolves to left alone", calls)
+	}
+	if !strings.Contains(calls, "stop:5eed") || !strings.Contains(calls, "start:5eed") {
+		t.Errorf("calls = %q, want mariadb stopped and started by its id", calls)
+	}
+}
+
 // TestServiceBackupNoAppdataDefinitionOnly pins the forum fix: a stateless
 // container with no existing source paths is backed up "definition-only" (its
 // recreate recipe is captured) instead of failing with restic's "all source
@@ -2289,6 +2327,46 @@ func drainTwoEvents(t *testing.T, ch <-chan progress.Event) (begin, term progres
 // TestBackupRefusesSelf pins the forum fix: BombVault must never back up its own
 // container (stopping it mid-backup is suicide). With the self-container known,
 // Backup returns ErrSelfBackup and never touches Docker's lifecycle.
+func TestBackupCannotBeCancelledWhileItStartsTheContainerAgain(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(root+"/appdata/plex", 0o750); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/plex", Image: "plex:latest", Running: true}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	var accepted []bool
+	d.onStart = func(string) { accepted = append(accepted, svc.CancelBackupRun("container:plex", "")) }
+
+	sum, err := svc.Backup(context.Background(), "plex")
+	if err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	if len(accepted) == 0 {
+		t.Fatal("the container was never started again")
+	}
+	for _, ok := range accepted {
+		if ok {
+			t.Fatal("a cancel was accepted after the restore point was written")
+		}
+	}
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 1 || runs[0].Status != "success" || runs[0].SnapshotID != sum.SnapshotID {
+		t.Fatalf("runs = %+v, want the one backup recorded as the success it is", runs)
+	}
+}
+
 func TestBackupRefusesSelf(t *testing.T) {
 	t.Setenv("BOMBVAULT_SELF_CONTAINER", "BombVault")
 	svc, d, eng, _ := backupTestService(t)
@@ -4240,8 +4318,9 @@ func TestDiffSnapshots(t *testing.T) {
 
 // TestTagSnapshot pins the tag-add access control + sanitisation: a bad snapshot
 // id is rejected, a tag with a comma is refused (restic tags are
-// comma-separated), tags are trimmed and empties dropped, and a valid call tags
-// the snapshot through the engine.
+// comma-separated), a tag under one of BombVault's own prefixes is refused, tags
+// are trimmed and empties dropped, and a valid call tags the snapshot through
+// the engine.
 func TestTagSnapshot(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "aaaa1111", Tags: []string{"container:plex"}},
@@ -4263,6 +4342,17 @@ func TestTagSnapshot(t *testing.T) {
 	}
 	if len(eng.taggedSnaps) != 0 {
 		t.Fatalf("must not tag with an invalid tag, got %v", eng.taggedSnaps)
+	}
+
+	// A tag under one of BombVault's own prefixes is refused: it would place the
+	// snapshot in an item's retention series or in its rename history.
+	for _, tag := range []string{"container:other", "dbdump:plex", "formerly:plex-old", "zfs:cache/appdata"} {
+		if err := svc.TagSnapshot(ctx, "plex", "local", "aaaa1111", []string{tag}); err == nil || !strings.Contains(err.Error(), "reserved") {
+			t.Fatalf("%q must be refused as reserved, got %v", tag, err)
+		}
+	}
+	if len(eng.taggedSnaps) != 0 {
+		t.Fatalf("must not tag with a reserved tag, got %v", eng.taggedSnaps)
 	}
 
 	// Happy path: tags are trimmed, empties dropped, the snapshot is tagged.
@@ -5332,28 +5422,47 @@ func TestDiscoverSkipsUnsafeFormerNameAlias(t *testing.T) {
 	}
 }
 
+// commandBackup is one restic backup taken from a command's stdout.
+type commandBackup struct {
+	Repo      string
+	StdinPath string
+	Tags      []string
+	Command   []string
+}
+
 type fakeResticEngine struct {
-	inited         []string
-	backedUp       []string
-	lastPaths      []string
-	lastTags       []string
-	lastExcludes   []string
-	lastMode       restic.Mode
-	restored       []string
-	restoreErrPath string // when set, RestoreInclude fails on this include path
-	restoreErr     error  // when set, every RestoreInclude/RestorePath returns it (e.g. context.Canceled)
-	forgotten      []string
+	inited    []string
+	backedUp  []string
+	lastPaths []string
+	// lastDir is the directory of the last BackupDir call, and
+	// restoreAllTargets every whole-snapshot restore, in order.
+	lastDir           string
+	restoreAllTargets []string
+	lastTags          []string
+	lastExcludes      []string
+	lastMode          restic.Mode
+	restored          []string
+	restoreErrPath    string // when set, RestoreInclude fails on this include path
+	restoreErr        error  // when set, every RestoreInclude/RestorePath returns it (e.g. context.Canceled)
+	forgotten         []string
 	// forgotRepos is the repository of every Forget call, parallel to the ids it
 	// carried, so a test can check where a delete landed.
 	forgotRepos []string
 	forgotModes []restic.Mode
 	prunedRepos []string
 	forgetTags  []string // identity tags passed to ForgetPolicy
-	// forgetPolicyPrunes is the prune flag of every ForgetPolicy call, parallel
-	// to forgetTags, so a test can tell how many of a backup's retention passes
-	// actually pruned rather than just how many ran.
-	forgetPolicyPrunes []bool
-	checked            []string
+	// forgetPolicyPruned is the prune flag of each ForgetPolicy call, parallel
+	// to forgetTags. A backup of a database container runs two passes and only
+	// the second may prune, which is invisible without it.
+	forgetPolicyPruned []bool
+	// The read-only retention preview, kept apart from the slices above so a
+	// preview can never satisfy an assertion that retention actually ran.
+	previewRepos  []string
+	previewModes  []restic.Mode
+	previewTags   []string
+	previewGroups []restic.ForgetGroup
+	previewErr    error
+	checked       []string
 	// The mode each maintenance call was made with, parallel to the repo slices
 	// above, so a test can check that every repository is addressed with its own
 	// credentials, storage class and caps.
@@ -5382,6 +5491,13 @@ type fakeResticEngine struct {
 	// snapsByRepo overrides snaps for a specific repository; anything not listed
 	// falls back to snaps.
 	snapsByRepo map[string][]restic.Snapshot
+	// backupSummaries are served to Backup in order, so a test can feed the
+	// source totals of a whole history; an empty queue falls back to the fixed
+	// summary above.
+	backupSummaries []restic.Summary
+	// The counter listing and the parent the anomaly history reads.
+	snapsMetaByRepo map[string][]restic.SnapshotMeta
+	snapshotParent  string
 	// listedRepos is every repository Snapshots was asked about, in order, so a
 	// test can tell which repositories a pass such as discovery looked in.
 	listedRepos []string
@@ -5483,6 +5599,15 @@ type fakeResticEngine struct {
 	// disk backup path.
 	stdinBackups   []string
 	stdinBackupErr error
+	// The database dump path. commandBackups records every BackupFromCommand
+	// call; onCommandBackup runs at its entry, which is how a test reads what
+	// had already happened when the dump began (the container must still be
+	// running).
+	commandBackups     []commandBackup
+	commandBackupSum   restic.Summary
+	commandBackupLines []string
+	commandBackupErr   error
+	onCommandBackup    func()
 	// dumpRawCalls records each DumpRaw call ("snapshotID:path"), the restic side
 	// of a zvol VM disk restore.
 	dumpRawCalls []string
@@ -5549,7 +5674,7 @@ func (f *fakeResticEngine) RepoID(ctx context.Context, repo string, m restic.Mod
 	return "fake-" + filepath.ToSlash(repo), nil
 }
 
-func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []string, m restic.Mode, excludes ...string) (restic.Summary, error) {
+func (f *fakeResticEngine) Backup(ctx context.Context, repo string, paths, tags []string, m restic.Mode, excludes ...string) (restic.Summary, error) {
 	if f.backupPanic {
 		panic("boom during backup")
 	}
@@ -5567,7 +5692,13 @@ func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []
 		}
 	}
 	if f.block != nil {
-		<-f.block
+		// A cancelled backup ends in restic returning the context error; that is
+		// how the run bookkeeping tells a cancellation from a failure.
+		select {
+		case <-f.block:
+		case <-ctx.Done():
+			return restic.Summary{}, ctx.Err()
+		}
 	}
 	f.backedUp = append(f.backedUp, repo)
 	f.lastPaths = paths
@@ -5577,7 +5708,40 @@ func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []
 	if f.backupErr != nil {
 		return restic.Summary{}, f.backupErr
 	}
+	if len(f.backupSummaries) > 0 {
+		sum := f.backupSummaries[0]
+		f.backupSummaries = f.backupSummaries[1:]
+		return sum, nil
+	}
 	return restic.Summary{SnapshotID: "deadbeef12345678", BytesAdded: 2048}, nil
+}
+
+// BackupDir records the directory a ZFS member was read from, which is the
+// one thing that tells two members of the same run apart.
+func (f *fakeResticEngine) BackupDir(_ context.Context, repo, dir string, tags []string, m restic.Mode, excludes ...string) (restic.Summary, error) {
+	f.backedUp = append(f.backedUp, repo)
+	f.lastDir = dir
+	f.lastTags = tags
+	f.lastExcludes = excludes
+	f.lastMode = m
+	if f.backupErr != nil {
+		return restic.Summary{}, f.backupErr
+	}
+	return restic.Summary{SnapshotID: "deadbeef12345678", BytesAdded: 2048}, nil
+}
+
+// RestoreAll records where a whole snapshot was restored to.
+func (f *fakeResticEngine) RestoreAll(_ context.Context, _, snapshotID, target string, _ restic.Mode, _ ...string) error {
+	f.restoreAllTargets = append(f.restoreAllTargets, snapshotID+":"+target)
+	return f.restoreErr
+}
+
+func (f *fakeResticEngine) SnapshotsMeta(_ context.Context, repo string, _ restic.Mode) ([]restic.SnapshotMeta, error) {
+	return f.snapsMetaByRepo[repo], nil
+}
+
+func (f *fakeResticEngine) SnapshotParent(_ context.Context, _, _ string, _ restic.Mode) (string, error) {
+	return f.snapshotParent, nil
 }
 
 // BackupStdin records each zvol disk's stdin backup. Each call gets its own
@@ -5590,6 +5754,25 @@ func (f *fakeResticEngine) BackupStdin(_ context.Context, _ string, rd io.Reader
 		return restic.Summary{}, f.stdinBackupErr
 	}
 	return restic.Summary{SnapshotID: fmt.Sprintf("zvolSnap%d", len(f.stdinBackups)), BytesAdded: 1024}, nil
+}
+
+// BackupFromCommand records each database dump's restic call and answers with
+// the scripted summary, forwarded command lines and error.
+func (f *fakeResticEngine) BackupFromCommand(_ context.Context, repo, stdinPath string, tags, command []string, _ restic.Mode) (restic.Summary, []string, error) {
+	if f.onCommandBackup != nil {
+		f.onCommandBackup()
+	}
+	f.commandBackups = append(f.commandBackups, commandBackup{
+		Repo: repo, StdinPath: stdinPath, Tags: tags, Command: command,
+	})
+	if f.commandBackupErr != nil {
+		return restic.Summary{}, f.commandBackupLines, f.commandBackupErr
+	}
+	sum := f.commandBackupSum
+	if sum.SnapshotID == "" {
+		sum = restic.Summary{SnapshotID: "dbdump00deadbeef", TotalBytesProcessed: 4096}
+	}
+	return sum, f.commandBackupLines, nil
 }
 
 // DumpRaw records each zvol disk's restore-side dump call.
@@ -5697,9 +5880,23 @@ func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic
 		f.prunedRepos = append(f.prunedRepos, repo)
 		// One entry per call, so the tags of a folded alias count as one group.
 		f.forgetTags = append(f.forgetTags, strings.Join(tags, ","))
-		f.forgetPolicyPrunes = append(f.forgetPolicyPrunes, prune)
+		f.forgetPolicyPruned = append(f.forgetPolicyPruned, prune)
 	}
 	return f.forgetPolicyErr
+}
+
+// ForgetPreview records the read-only retention preview. It keeps its own
+// recorders rather than reusing forgetTags/prunedRepos: those pin that
+// retention REALLY ran, and a preview must never be able to satisfy an
+// assertion about the repository having been changed.
+func (f *fakeResticEngine) ForgetPreview(_ context.Context, repo string, p restic.RetentionPolicy, m restic.Mode, tag string) ([]restic.ForgetGroup, error) {
+	if !p.Any() {
+		return nil, nil
+	}
+	f.previewRepos = append(f.previewRepos, repo)
+	f.previewModes = append(f.previewModes, m)
+	f.previewTags = append(f.previewTags, tag)
+	return f.previewGroups, f.previewErr
 }
 
 func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]restic.FileEntry, error) {
@@ -6259,11 +6456,11 @@ func TestADRDrillOfOneTargetIsRecordedForTheDomain(t *testing.T) {
 	if len(eng.restored) != 1 || !strings.HasPrefix(eng.restored[0], "sftp:u1@hetzner:/flash:") {
 		t.Fatalf("restored %v, want one restore from Hetzner", eng.restored)
 	}
-	if drill.Source != "offsite" || drill.TargetID != hetzner.ID {
+	if drill.Source != "offsite" || drill.OffsiteTargetID != hetzner.ID {
 		t.Fatalf("drill = %+v, want source offsite naming Hetzner", drill)
 	}
 	latest, found, err := st.LatestRestoreDrillKind("flash", "offsite", "dr")
-	if err != nil || !found || latest.TargetID != hetzner.ID {
+	if err != nil || !found || latest.OffsiteTargetID != hetzner.ID {
 		t.Fatalf("recorded dr drill = %+v, found %v, %v; want one naming Hetzner", latest, found, err)
 	}
 }
@@ -6841,7 +7038,7 @@ func TestCheckDomainFailureRecordsFailedRunAndProgress(t *testing.T) {
 func TestPruneDomainCallsPrune(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := initRepoSvc(t, eng)
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(eng.manualPruned) != 1 {
@@ -6859,7 +7056,7 @@ func TestPruneDomainCallsPrune(t *testing.T) {
 func TestPruneDomainClearsStaleLockFirst(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := initRepoSvc(t, eng)
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(eng.unlockedRepos) != 1 {
@@ -6893,7 +7090,7 @@ func TestPruneDomainAppliesRetentionWhenSet(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(eng.prunedRepos) != 1 {
@@ -6933,7 +7130,7 @@ func TestPruneDomainPerSourceRetention(t *testing.T) {
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
 	// Off-site prune → off-site policy is set → applies retention (ForgetPolicy).
-	if err := svc.PruneDomain(context.Background(), "containers", "offsite"); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", "offsite"); err != nil {
 		t.Fatalf("PruneDomain offsite: %v", err)
 	}
 	if len(eng.prunedRepos) != 1 || len(eng.manualPruned) != 0 {
@@ -6941,7 +7138,7 @@ func TestPruneDomainPerSourceRetention(t *testing.T) {
 	}
 
 	// Local prune → local policy is off → plain space-reclaim, not the off-site policy.
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain local: %v", err)
 	}
 	if len(eng.prunedRepos) != 1 {
@@ -6965,7 +7162,7 @@ func TestPruneDomainEmitsMaintenanceProgressAndRunRecord(t *testing.T) {
 	ch, cancel := prog.Subscribe()
 	defer cancel()
 
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(eng.manualPruned) != 1 {
@@ -7004,7 +7201,7 @@ func TestPruneDomainFailureRecordsFailedRunAndProgress(t *testing.T) {
 	ch, cancel := prog.Subscribe()
 	defer cancel()
 
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err == nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err == nil {
 		t.Fatal("expected PruneDomain to surface the engine's prune error")
 	}
 
@@ -7411,6 +7608,48 @@ func TestRecoveryKit(t *testing.T) {
 			t.Error("kit must list the config off-site location when one is set")
 		}
 	})
+
+	t.Run("database dumps: the kit says where a dump is and how to feed it back", func(t *testing.T) {
+		dir := t.TempDir()
+		cfg := config.Config{AppKey: strings.Repeat("c", 64), DataDir: dir, HostMountRoot: dir}
+		svc := api.NewService(cfg, newMemStore(t), &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+		kit, err := svc.RecoveryKit()
+		if err != nil {
+			t.Fatalf("RecoveryKit: %v", err)
+		}
+		for _, want := range []string{
+			"Database dumps without BombVault",
+			"--tag dbdump:<container>",
+			"/dbdump/<container>.sql",
+			"docker exec -i <container>",
+			"--one-database",
+		} {
+			if !strings.Contains(kit, want) {
+				t.Errorf("the kit does not mention %q, so a dump cannot be read back with restic alone", want)
+			}
+		}
+	})
+
+	// After data loss the newest snapshot is often the emptied or encrypted
+	// one, and the kit is read when BombVault's own warnings are out of reach.
+	t.Run("the manual restore warns against the newest snapshot after data loss", func(t *testing.T) {
+		dir := t.TempDir()
+		cfg := config.Config{AppKey: strings.Repeat("c", 64), DataDir: dir, HostMountRoot: dir}
+		svc := api.NewService(cfg, newMemStore(t), &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+		kit, err := svc.RecoveryKit()
+		if err != nil {
+			t.Fatalf("RecoveryKit: %v", err)
+		}
+		manual := kit[strings.Index(kit, "## Manual restore without BombVault"):]
+		manual = manual[:strings.Index(manual, "Notes:")]
+		for _, want := range []string{"far smaller than the ones before it", "encrypted", "Anomalies page"} {
+			if !strings.Contains(manual, want) {
+				t.Errorf("the manual restore steps do not mention %q", want)
+			}
+		}
+	})
 }
 
 func TestRecoveryKitCredentials(t *testing.T) {
@@ -7785,7 +8024,7 @@ func TestLatestContainerBackupTimesFoldsAlias(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	times, err := svc.LatestContainerBackupTimes(context.Background())
+	times, _, err := svc.LatestContainerBackupTimes(context.Background())
 	if err != nil {
 		t.Fatalf("LatestContainerBackupTimes: %v", err)
 	}
@@ -7796,7 +8035,7 @@ func TestLatestContainerBackupTimesFoldsAlias(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := times["radarr"]; got != want.Unix() {
+	if got := times["radarr"].Newest(); got != want.Unix() {
 		t.Fatalf("radarr should fold in the alias's newer snapshot, want %d got %d (%+v)", want.Unix(), got, times)
 	}
 	if _, ok := times["sonarr"]; !ok {
@@ -7809,7 +8048,7 @@ func TestLatestContainerBackupTimesFoldsAlias(t *testing.T) {
 // name "radarr" up again. Under that name, a snapshot from the link on is
 // B's and one from before it is A's, whichever of them is newer.
 func TestLatestContainerBackupTimesDoesNotStealReusedAliasName(t *testing.T) {
-	latest := func(t *testing.T, snaps []restic.Snapshot) map[string]int64 {
+	latest := func(t *testing.T, snaps []restic.Snapshot) map[string]api.ContainerSnapshotTimes {
 		t.Helper()
 		dir := t.TempDir()
 		cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -7831,7 +8070,7 @@ func TestLatestContainerBackupTimesDoesNotStealReusedAliasName(t *testing.T) {
 			t.Fatal(err)
 		}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{snaps: snaps})
-		times, err := svc.LatestContainerBackupTimes(context.Background())
+		times, _, err := svc.LatestContainerBackupTimes(context.Background())
 		if err != nil {
 			t.Fatalf("LatestContainerBackupTimes: %v", err)
 		}
@@ -7843,19 +8082,19 @@ func TestLatestContainerBackupTimesDoesNotStealReusedAliasName(t *testing.T) {
 
 	t.Run("a snapshot after the link counts for B", func(t *testing.T) {
 		times := latest(t, []restic.Snapshot{own, post})
-		if got, want := times["radarr"], unixOf(t, post.Time); got != want {
+		if got, want := times["radarr"].Newest(), unixOf(t, post.Time); got != want {
 			t.Fatalf("radarr = %d, want B's own %d (%+v)", got, want, times)
 		}
-		if got, want := times["radarr-old"], unixOf(t, own.Time); got != want {
+		if got, want := times["radarr-old"].Newest(), unixOf(t, own.Time); got != want {
 			t.Fatalf("radarr-old = %d, want A's own %d (%+v)", got, want, times)
 		}
 	})
 	t.Run("a snapshot before the link counts for A", func(t *testing.T) {
 		times := latest(t, []restic.Snapshot{own, pre})
-		if got, ok := times["radarr"]; ok {
+		if got := times["radarr"].Newest(); got > 0 {
 			t.Fatalf("radarr = %d, want no date: its only snapshot is A's (%+v)", got, times)
 		}
-		if got, want := times["radarr-old"], unixOf(t, pre.Time); got != want {
+		if got, want := times["radarr-old"].Newest(), unixOf(t, pre.Time); got != want {
 			t.Fatalf("radarr-old = %d, want its pre-link %d (%+v)", got, want, times)
 		}
 	})
@@ -7897,7 +8136,7 @@ func TestPruneDomainFoldsRenamedContainerAliasIntoOneRetentionGroup(t *testing.T
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(eng.forgetTags) != 2 {
@@ -7953,7 +8192,7 @@ func TestPruneDomainDoesNotFoldAReusedAliasNameIntoTheOldEntry(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(eng.forgetTags) != 2 {
@@ -8811,5 +9050,205 @@ func TestUnlinkContainerAliasMovesDRDrillTargetBack(t *testing.T) {
 	}
 	if got.DRDrillTarget != "radarr-movies" {
 		t.Fatalf("DRDrillTarget = %q, want %q (moved back)", got.DRDrillTarget, "radarr-movies")
+	}
+}
+
+// A dump snapshot lives in the container's own repository, so a named
+// repository holds it next to the volume snapshots. Narrowing the off-site copy
+// to "container:" alone leaves every dump behind, and nobody notices until the
+// off-site copy is the only one left.
+func TestOffsiteCopyNarrowingKeepsDumps(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "1111aaaa", Tags: []string{"container:plex"}},
+		{ID: "2222bbbb", Tags: []string{"dbdump:plex"}},
+		{ID: "3333cccc", Tags: []string{"vm:win11"}},
+	}}
+	svc, st, _, cold := twoRepoDomain(t, eng)
+	eng.snapsByRepo = map[string][]restic.Snapshot{
+		"rest:http://192.168.1.2:8000/containers": nil,
+	}
+
+	s := mustSettings(t, st)
+	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	narrowed := false
+	for i, c := range eng.copied {
+		src := filepath.ToSlash(strings.SplitN(c, "->", 2)[0])
+		if src != filepath.ToSlash(cold) {
+			continue
+		}
+		narrowed = true
+		got := eng.copiedIDs[i]
+		if len(got) != 2 || !contains(got, "1111aaaa") || !contains(got, "2222bbbb") {
+			t.Fatalf("the named repository was copied with ids %v, want the container snapshot and its dump.\n"+
+				"A dump that never reaches off-site is missing exactly when the off-site copy is all there is.", got)
+		}
+	}
+	if !narrowed {
+		t.Fatalf("the named repository was never copied: %v", eng.copied)
+	}
+}
+
+// A database container whose data sits under a compose working directory has no
+// volume backup of its own. Its dumps are the only trace it leaves, so a
+// discovery that reads "container:" alone cannot rebuild it after a /config
+// loss.
+func TestDiscoverFindsDumpOnlyContainer(t *testing.T) {
+	eng := &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{}}
+	svc, st, own, _ := twoRepoDomain(t, eng)
+	eng.snapsByRepo[filepath.ToSlash(own)] = []restic.Snapshot{
+		{ID: "1111aaaa", Tags: []string{"dbdump:immich_pg"}},
+	}
+	writeDiscoverableDef(t, filepath.Join(own, "def"), "immich_pg")
+
+	res, err := svc.Discover(context.Background(), false)
+	if err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if res.Found != 1 {
+		t.Fatalf("Discover found %d items, want the dump-only container", res.Found)
+	}
+	if _, err := st.GetTargetByContainer("immich_pg"); err != nil {
+		t.Fatalf("the rebuilt target is missing: %v", err)
+	}
+}
+
+// Newest wins across both identities, not within each: a container whose volume
+// backup is old and whose dumps are current belongs to the repository the dumps
+// are in, which is where its next backup goes.
+func TestDiscoverNewestWinsAcrossPrefixes(t *testing.T) {
+	eng := &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{}}
+	svc, st, own, cold := twoRepoDomain(t, eng)
+	eng.snapsByRepo[filepath.ToSlash(own)] = []restic.Snapshot{
+		{ID: "1111aaaa", Time: "2026-01-01T00:00:00Z", Tags: []string{"container:sonarr"}},
+	}
+	eng.snapsByRepo[filepath.ToSlash(cold)] = []restic.Snapshot{
+		{ID: "2222bbbb", Time: "2026-09-01T00:00:00Z", Tags: []string{"dbdump:sonarr"}},
+	}
+	writeDiscoverableDef(t, filepath.Join(own, "def"), "sonarr")
+
+	if _, err := svc.Discover(context.Background(), false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	tg, err := st.GetTargetByContainer("sonarr")
+	if err != nil {
+		t.Fatalf("the rebuilt target is missing: %v", err)
+	}
+	named, err := st.ListNamedRepos()
+	if err != nil || len(named) != 1 {
+		t.Fatalf("ListNamedRepos: %v (%d rows)", err, len(named))
+	}
+	if tg.Repo != named[0].ID {
+		t.Errorf("sonarr was attributed to repository %q, want the named one %q holding its newest snapshot",
+			tg.Repo, named[0].ID)
+	}
+}
+
+// "Add tag" writes a tag onto a snapshot of the operator's choosing. A tag with
+// a prefix BombVault reads as an identity would put a volume snapshot into a
+// dump list or into another item's retention series.
+func TestTagSnapshotRefusesReservedPrefixes(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:plex"}},
+	}}
+	svc := diffTagTestService(t, eng)
+
+	reserved := []string{
+		"dbdump:x", "bvrun:1", "dbengine:postgres", "dbimage:postgres:16", "dbversion:1",
+		"dbname:x", "container:y", "vm:y", "fileset:y", "stack:z", "vmrun:1",
+	}
+	for _, tag := range reserved {
+		err := svc.TagSnapshot(context.Background(), "plex", "local", "aaaa1111", []string{tag})
+		if err == nil || !strings.Contains(err.Error(), "reserved") {
+			t.Errorf("tag %q was accepted (%v), want a refusal naming the reserved prefix", tag, err)
+		}
+	}
+	if len(eng.taggedSnaps) != 0 {
+		t.Fatalf("a refused tag must not reach the engine, got %v", eng.taggedSnaps)
+	}
+	if err := svc.TagSnapshot(context.Background(), "plex", "local", "aaaa1111", []string{"keep"}); err != nil {
+		t.Fatalf("an ordinary tag must still be accepted: %v", err)
+	}
+}
+
+// Deleting a container's backups leaves nothing behind, dumps included: a dump
+// left in the repository is invisible in the interface and pruned by nothing.
+func TestDeleteBackupsForgetsDumps(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "pg", AppdataPaths: []string{"/x"}}); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:pg", "p1"}},
+		{ID: "bbbb2222", Tags: []string{"dbdump:pg", "p1"}},
+		{ID: "cccc3333", Tags: []string{"container:sonarr", "p1"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if err := svc.DeleteBackups(context.Background(), "pg", "local"); err != nil {
+		t.Fatalf("DeleteBackups: %v", err)
+	}
+	if len(eng.forgotten) != 2 || !contains(eng.forgotten, "aaaa1111") || !contains(eng.forgotten, "bbbb2222") {
+		t.Fatalf("forgot %v, want the container's snapshots and its dumps", eng.forgotten)
+	}
+}
+
+// A container that exists only as dumps must hit the append-only refusal before
+// the delete takes the domain lock or clears a lock file: the function's own
+// comment names a guaranteed-refused write against a protected repository as
+// the defect.
+func TestDeleteBackupsDumpOnlyRefusedBeforeAnyLock(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	const repo = "rest:http://192.168.1.9:8000/containers"
+	s.ContainersPath = repo
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "pg", AppdataPaths: []string{"/x"}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: repo, Immutable: true, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "bbbb2222", Tags: []string{"dbdump:pg", "p1"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	err := svc.DeleteBackups(context.Background(), "pg", "local")
+	if err == nil || !strings.Contains(err.Error(), "append-only") {
+		t.Fatalf("delete = %v, want an append-only refusal", err)
+	}
+	if len(eng.unlockedRepos) != 0 {
+		t.Errorf("a refused delete cleared locks on %v", eng.unlockedRepos)
+	}
+	if len(eng.forgotten) != 0 {
+		t.Errorf("a refused delete forgot %v", eng.forgotten)
+	}
+	if _, err := st.GetTargetByContainer("pg"); err != nil {
+		t.Fatalf("a refused delete must not drop the container target: %v", err)
 	}
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/logring"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
@@ -30,6 +31,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/sshconn"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 	web "github.com/junkerderprovinz/bombvault/web"
 )
 
@@ -39,6 +41,12 @@ func main() {
 	// before run() so it never touches the store, scheduler or server.
 	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
 		os.Exit(healthcheck())
+	}
+	// The database dump helper restic starts for `backup --stdin-from-command`.
+	// Handled here for the same reason as the healthcheck: it must touch no
+	// config, no store and no log ring, and its stdout belongs to the dump.
+	if len(os.Args) > 1 && os.Args[1] == "dbdump-stream" {
+		os.Exit(runDBDumpStream(context.Background(), os.Args[2:], os.Stdout, os.Stderr, defaultDBDumpDeps()))
 	}
 	if err := run(); err != nil {
 		log.Printf("fatal: %v", err)
@@ -98,6 +106,11 @@ func healthcheckAt(port, httpsPort string) int {
 // missed overnight backup lands promptly. Fixed on purpose — a knob would
 // mostly invite foot-guns; revisit only if real setups need longer.
 const catchUpStartupDelay = 2 * time.Minute
+
+// zfsStartupSweepBudget caps the boot-time hunt for snapshots an interrupted run
+// left behind. Every call in it goes over SSH, so an unreachable host would
+// otherwise keep the ZFS domain locked for the rest of the process's life.
+const zfsStartupSweepBudget = 2 * time.Minute
 
 // platformFor maps a detected/overridden platform.Kind to a concrete
 // platform.Platform adapter. Every Kind BombVault knows about (Unraid,
@@ -161,11 +174,25 @@ func logSchedulerTimezone() {
 	}
 }
 
+// roundItemErr is an item's error as a scheduled round counts it: a backup the
+// user cancelled is no failure of the round, and its own run says cancelled.
+func roundItemErr(err error) error {
+	if api.IsBackupCancelled(err) {
+		return nil
+	}
+	return err
+}
+
 func run() error {
 	// Send the standard logger to stdout so all runtime logs share ONE stream
 	// with the ASCII banner (printed via fmt to stdout). Otherwise Docker/Unraid
 	// interleaves stderr (log default) above the stdout banner.
-	log.SetOutput(os.Stdout)
+	//
+	// Tee'd through the log ring so the diagnostics bundle can carry the recent
+	// output. A TEE, not a replacement: stdout stays exactly what it was, so
+	// `docker logs` is unaffected and the ring is an extra copy rather than a
+	// redirection of the log everyone already knows how to reach.
+	log.SetOutput(logring.Default.Tee(os.Stdout))
 
 	cfg, err := config.LoadFromEnv()
 	if err != nil {
@@ -183,7 +210,8 @@ func run() error {
 	// moment to swap BombVault's own settings database, which the running process
 	// otherwise holds open (WAL). Fail-safe: on any error the boot continues on the
 	// existing live DB (ApplyPending has already cleared the pending state).
-	if applied, err := selfrestore.ApplyPending(cfg.DataDir); err != nil {
+	applied, err := selfrestore.ApplyPending(cfg.DataDir)
+	if err != nil {
 		log.Printf("selfrestore: %v", err) // fail-safe: boot continues on the live DB
 	} else if applied {
 		log.Printf("selfrestore: applied a staged config restore; booting on the restored settings")
@@ -198,6 +226,10 @@ func run() error {
 		return err
 	}
 	st := store.New(db)
+
+	if err := api.RevokeMCPKeysAfterConfigRestore(st, cfg.DataDir, time.Now()); err != nil {
+		return err
+	}
 
 	// Reap runs left in 'running' by a previous lifetime (crash/update mid-backup)
 	// so they don't linger as a perpetual "running" status on the dashboard.
@@ -270,7 +302,8 @@ func run() error {
 	// trim (TrimResticCache) can measure + evict per-repo cache subdirs. Empty
 	// (the mkdir-failed fallback above) disables the size-based trim.
 	svc.SetResticCacheDir(resticCacheDir)
-	svc.SetHostSSH(sc) // NVRAM transfer over SSH + the Settings key/test endpoints
+	svc.SetHostSSH(sc)                 // NVRAM transfer over SSH + the Settings key/test endpoints
+	svc.SetZFSHost(zfs.NewSSHHost(sc)) // same connection: snapshots and dataset listings for the ZFS domain
 	// Live backup/restore progress: the service publishes percentages here and the
 	// SSE endpoint (/api/progress) streams them to the SPA's per-card bars.
 	prog := progress.NewStore()
@@ -279,10 +312,10 @@ func run() error {
 	if err := svc.WriteRcloneConfFile(); err != nil {
 		log.Printf("rclone: write config: %v", err) // non-fatal: off-site stays unavailable until fixed
 	}
-	if n, mErr := svc.MoveMeshTargetsOffPrimarySlot(); mErr != nil {
-		log.Printf("offsite: move mesh targets off sort order 0: %v", mErr)
+	if n, mErr := svc.MoveTargetsOffPrimarySlot(); mErr != nil {
+		log.Printf("offsite: move additional targets off sort order 0: %v", mErr)
 	} else if n > 0 {
-		log.Printf("offsite: moved %d mesh target(s) off sort order 0 so a settings save keeps them", n)
+		log.Printf("offsite: moved %d additional target(s) off sort order 0 so a settings save keeps them", n)
 	}
 	// Before the scheduler and the server, so no run and no request meets a
 	// half-placed database. A failure leaves every row as it was; backups run on
@@ -297,14 +330,15 @@ func run() error {
 	// aggregate start/success/fail ping — wired via SetHealthchecksAggregator below —
 	// represents the whole domain job, not each container/VM (#49). Every other
 	// notification channel still fires per item.
+	rounds := api.NewScheduledRounds()
 	scheduler := schedule.New(
 		func(name string) error {
-			ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background())))
+			ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(rounds.Context("containers"))))
 			_, bErr := svc.Backup(ctx, name)
 			if errors.Is(bErr, backup.ErrContainerNotInstalled) {
 				return nil // container no longer on the host: a skip (already recorded), not a job failure (#57)
 			}
-			return bErr
+			return roundItemErr(bErr)
 		},
 		st.ListTargetsScheduleOrder, // #95: never/least-recently-backed-up first so a slow run can't starve the same tail
 	)
@@ -315,17 +349,21 @@ func run() error {
 			if errors.Is(bErr, backup.ErrVMNotInstalled) {
 				return nil // VM no longer on the host: a skip (already logged), not a job failure
 			}
-			return bErr
+			return roundItemErr(bErr)
 		},
 		st.ListVMTargets,
 	)
 	// Aggregate the per-domain Healthchecks lifecycle for scheduled multi-item runs:
 	// one /start before the first item, one success/fail after the last (#49).
 	scheduler.SetHealthchecksAggregator(
-		func(domain string) { svc.ScheduledHealthchecksStart(context.Background(), domain) },
+		func(domain string) {
+			rounds.Begin(domain)
+			svc.ScheduledHealthchecksStart(context.Background(), domain)
+		},
 		func(domain string, attempted, failed int, failures []schedule.ItemFailure) {
-			svc.ScheduledHealthchecksResult(context.Background(), domain, attempted, failed)
-			svc.ScheduledNotifyResult(context.Background(), domain, attempted, failed, failures)
+			ctx := rounds.End(domain)
+			svc.ScheduledHealthchecksResult(ctx, domain, attempted, failed)
+			svc.ScheduledNotifyResult(ctx, domain, attempted, failed, failures)
 		},
 	)
 	scheduler.SetFlashJob(func() error {
@@ -343,8 +381,15 @@ func run() error {
 	scheduler.SetFilesJob(func(id string) error {
 		ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background())))
 		_, bErr := svc.BackupFileSet(ctx, id)
-		return bErr
+		return roundItemErr(bErr)
 	}, st.ListFileSets)
+	// ZFS datasets are scheduled like file sets: one item at a time, with the
+	// per-item pings suppressed in favour of the aggregate one.
+	scheduler.SetZFSJob(func(id string) error {
+		ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background())))
+		_, bErr := svc.BackupZFSDataset(ctx, id)
+		return roundItemErr(bErr)
+	}, st.ListZFSDatasets)
 	// "Backup Everything": a 6th, independent pseudo-domain that loops over all
 	// five domains internally (internal/api/everything.go's BackupEverything),
 	// so — like SetFlashJob/SetConfigJob — the scheduled closure takes no
@@ -455,17 +500,39 @@ func run() error {
 	flashLastRun := schedule.LastRunFunc(st.LastSuccessfulFlashBackup)
 	configLastRun := schedule.LastRunFunc(st.LastSuccessfulConfigBackup)
 	filesLastRun := schedule.FilesDueGate(st)
+	zfsLastRun := schedule.ZFSDueGate(st)
 	everythingLastRun := schedule.LastRunFunc(st.LastEverythingPass)
 
 	if settings, sErr := st.GetSettings(); sErr == nil {
 		// Apply the saved CPU cap before anything can start a restic child ([558]).
 		restic.SetMaxProcs(settings.BackupCores)
-		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun, everythingLastRun); rErr != nil {
+		gates := schedule.DueGates{
+			Containers: containersLastRun, VMs: vmsLastRun, Flash: flashLastRun,
+			Config: configLastRun, Files: filesLastRun, ZFS: zfsLastRun,
+			Everything: everythingLastRun,
+		}
+		if rErr := scheduler.ReloadWithGates(settings, gates); rErr != nil {
 			log.Printf("scheduler: initial reload failed: %v", rErr)
 		}
 	} else {
 		log.Printf("scheduler: could not read settings: %v", sErr)
 	}
+	// Containers a dataset snapshot left stopped come back before anything else:
+	// this is Docker only and fast, and a user's applications being down outranks
+	// the rest of the boot.
+	svc.RecoverZFSRestarts(context.Background())
+	// The sweep talks to the host over SSH, where one call can take half a
+	// minute, so it runs in the background: the image health check would restart
+	// the container in the middle of a boot that waits for it. Holding the domain
+	// lock from here keeps a scheduled ZFS job behind the sweep all the same.
+	unlockZFS := svc.LockDomainForStartupSweep()
+	go func() {
+		defer unlockZFS()
+		sctx, cancel := context.WithTimeout(context.Background(), zfsStartupSweepBudget)
+		defer cancel()
+		svc.SweepZFSLeftoversOnStartup(sctx)
+	}()
+
 	scheduler.Start()
 	defer scheduler.Stop()
 
@@ -519,7 +586,15 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+	// The anomaly worker evaluates the backup history after every run and stops
+	// with the same context the server does.
+	svc.StartAnomalyEngine(ctx)
+
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
+	// An MCP listing of a repository that stopped answering holds its request
+	// open until the stop context ends; without this the server would wait out
+	// its grace for it and exit with an error.
+	server.BeforeShutdown = svc.EndDetachedWork
 	runErr := server.Run(ctx)
 
 	if ctx.Err() != nil {

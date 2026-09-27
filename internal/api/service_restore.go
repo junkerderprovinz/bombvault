@@ -790,14 +790,14 @@ func (s *Service) finishRestoreRun(runID, snapshotID string, rerr error) {
 	var err error
 	switch {
 	case rerr == nil:
-		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", snapshotID, 0, "")
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", backup.Summary{SnapshotID: snapshotID}, "")
 	case errors.Is(rerr, context.Canceled):
 		// A user cancel is an intentional, recorded outcome, not a failure: record
 		// it as "cancelled" and fire no failure alert (the terminal progEnd already
 		// fired to clear the bar).
-		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "cancelled", "", 0, "cancelled by user")
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "cancelled", backup.Summary{}, "cancelled by user")
 	default:
-		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", "", 0, truncateRunErr(rerr))
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(rerr))
 	}
 	if err != nil {
 		log.Printf("api: restore: record run finish failed: %v", err)
@@ -816,7 +816,7 @@ func (s *Service) finishRestoreRunWarn(runID, snapshotID, warn string) {
 	}
 	// As in beginRestoreRunForTarget, a restore run is never part of a grouped
 	// pass, so context.Background() loses nothing.
-	err := runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", snapshotID, 0, warn)
+	err := runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", backup.Summary{SnapshotID: snapshotID}, warn)
 	if err != nil {
 		log.Printf("api: restore: record run finish (warning) failed: %v", err)
 	}
@@ -996,6 +996,11 @@ func (s *Service) StartRestoreToPath(ctx context.Context, name, source, snapshot
 // restored as <id>:docs yields keep-a and keep-b and not the
 // never-backed-up sibling; TestRestoreCommonAncestorOfRecordedRoots in
 // internal/restic pins it.
+//
+// A ZFS member snapshot is the one shape this does not fit: it was taken inside
+// a snapshot directory on ".", so the path it recorded names that run's
+// snapshot and its tree root is the dataset root. The ZFS restore selects "/"
+// and never asks here.
 func snapshotRestoreRoot(snaps []restic.Snapshot, id string) string {
 	for _, sn := range snaps {
 		if sn.ID == id || strings.HasPrefix(sn.ID, id) {

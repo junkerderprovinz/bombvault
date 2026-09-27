@@ -40,7 +40,7 @@ func TestAnItemOnANamedRepositoryAgesByTheLocalPolicy(t *testing.T) {
 	nas := f.namedRepo("NAS", "nas")
 	f.container("nginx", nas.ID)
 	settings := localKeepLast(t, f, 3)
-	f.svc.applyRetention(context.Background(), f.root+"/nas", settings, restic.Mode{}, tagIdentity("container:nginx"), "containers")
+	f.svc.applyRetention(context.Background(), f.root+"/nas", settings, restic.Mode{}, tagIdentity("container:nginx"), "containers", anomalyScope{})
 	want := []forgetCall{{Repo: f.root + "/nas", Tags: []string{"container:nginx"}, Policy: restic.RetentionPolicy{KeepLast: 3}, Prune: true}}
 	if !reflect.DeepEqual(f.eng.forgets, want) {
 		t.Fatalf("forgets = %+v, want %+v", f.eng.forgets, want)
@@ -54,7 +54,7 @@ func TestAManualPruneAgesEveryRepositoryOfTheDomain(t *testing.T) {
 	localKeepLast(t, f, 3)
 	f.hold(f.domainPath("containers"), snap("a1", 100, "container:plex"))
 	f.hold(f.root+"/nas", snap("b1", 100, "container:nginx"))
-	if err := f.svc.pruneDomain(context.Background(), "containers", "local", true); err != nil {
+	if _, err := f.svc.pruneDomain(context.Background(), "containers", "local", true); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
 	var aged []string

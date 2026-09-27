@@ -20,6 +20,7 @@ Propulsé par [restic](https://restic.net), chaque sauvegarde est donc dédupliq
 | **Flash Unraid** | Toute la clé USB flash (`/boot`) : OS, licence, config de la matrice, partages, réseau et config des plugins. |
 | **Configuration de l'application** | Le propre `/config` de BombVault : sa base de réglages, ses identifiants hors site et la paire de clés SSH libvirt. |
 | **Fichiers et dossiers** | Des **jeux de fichiers** nommés, n'importe quel dossier du serveur, chacun avec des motifs d'exclusion optionnels par jeu. |
+| **Jeux de données ZFS** | Un jeu de données avec tous ceux qui se trouvent en dessous, lu depuis un instantané ZFS et stocké comme un dossier. Voir [Jeux de données ZFS](zfs-datasets.md). |
 
 ## La restauration est la vedette
 

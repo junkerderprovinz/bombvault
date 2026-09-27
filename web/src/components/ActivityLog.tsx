@@ -7,6 +7,8 @@ import { hueVars } from "../lib/appearance";
 import { listRuns, getScheduleNext } from "../lib/api";
 import type { Run, ScheduleNext } from "../lib/api";
 import { useProgress } from "../lib/progress";
+import { useOpenAnomalies } from "../lib/useAnomalies";
+import { RunAnomalyBadge } from "./RunAnomalyBadge";
 import { useT } from "../lib/i18n";
 import { SelectField } from "./SelectField";
 import type { TranslationKey } from "../lib/i18n";
@@ -78,6 +80,8 @@ function glyphLabelKey(status: LogStatus): TranslationKey {
 export function ActivityLog({
   dayFilter = null,
   onClearDayFilter,
+  runFilter = null,
+  onClearRunFilter,
   hueIndex,
 }: {
   /** Local calendar day (YYYY-MM-DD) picked in the Dashboard heatmap, or null.
@@ -85,15 +89,20 @@ export function ActivityLog({
   dayFilter?: string | null;
   /** Called by the day chip's clear button; the Dashboard owns the state. */
   onClearDayFilter?: () => void;
+  /** One run, linked from a key's log on the MCP card, or null. */
+  runFilter?: string | null;
+  onClearRunFilter?: () => void;
   /** Rainbow position of the heading, from Dashboard's nextHue() counter.
    *  Omit for the plain accent. */
   hueIndex?: number;
 } = {}) {
   const { t } = useT();
   const [runs, setRuns] = useState<Run[]>([]);
+  const [runsLoaded, setRunsLoaded] = useState(false);
   const [scheduleNext, setScheduleNext] = useState<ScheduleNext[]>([]);
   const [now, setNow] = useState<number>(() => Date.now());
   const progressMap = useProgress();
+  const { byRunId } = useOpenAnomalies();
 
   const [filterText, setFilterText] = useState("");
   const [filterDomain, setFilterDomain] = useState<LogFilterDomain>("all");
@@ -106,9 +115,11 @@ export function ActivityLog({
   useEffect(() => {
     let alive = true;
     const load = () => {
-      listRuns()
+      listRuns(runFilter ?? undefined)
         .then((res) => {
-          if (alive && res.ok) setRuns(res.runs ?? []);
+          if (!alive || !res.ok) return;
+          setRuns(res.runs ?? []);
+          setRunsLoaded(true);
         })
         .catch(() => {
           /* keep showing the last known runs */
@@ -120,7 +131,7 @@ export function ActivityLog({
       alive = false;
       clearInterval(id);
     };
-  }, []);
+  }, [runFilter]);
 
   // The next scheduled run, for the idle line at the end.
   useEffect(() => {
@@ -161,8 +172,8 @@ export function ActivityLog({
 
   // buildLogLines takes this instead of `t`, so it can be tested without an
   // I18nProvider.
-  const resolveName: ResolveName = (key, params) => {
-    let s = t(key as TranslationKey);
+  const resolveName: ResolveName = (key, params, count) => {
+    let s = t(key as TranslationKey, count);
     if (params) {
       for (const [name, value] of Object.entries(params)) s = s.split(`{${name}}`).join(value);
     }
@@ -183,9 +194,16 @@ export function ActivityLog({
         kind: filterType,
         text: filterText,
         day: dayFilter ?? undefined,
+        runId: runFilter ?? undefined,
       }),
-    [lines, filterDomain, filterType, filterText, dayFilter]
+    [lines, filterDomain, filterType, filterText, dayFilter, runFilter]
   );
+
+  const linkedRun = runFilter === null ? undefined : runs.find((r) => r.id === runFilter);
+  const runGone = runFilter !== null && runsLoaded && !linkedRun;
+  // A running run shows through its live line, which only exists once progress
+  // has arrived.
+  const runPending = linkedRun?.status === "running" && !lines.some((l) => l.runId === runFilter);
 
   // Stay at the bottom as lines arrive, until the user scrolls up.
   useEffect(() => {
@@ -261,6 +279,17 @@ export function ActivityLog({
             />
           </span>
         )}
+        {runFilter && (
+          <span className="inline-flex items-center gap-1 rounded-pill bg-accent text-accentContrast ps-2.5 pe-1 py-0.5 text-xs font-medium">
+            {t("activityLog.runFilterChip")}
+            <Button
+              label={t("activityLog.clearRunFilter")}
+              labelKey="activityLog.clearRunFilter"
+              variant="chip"
+              onClick={onClearRunFilter}
+            />
+          </span>
+        )}
       </div>
 
       <div className="relative">
@@ -269,6 +298,8 @@ export function ActivityLog({
           onScroll={handleScroll}
           className="max-h-96 overflow-y-auto rounded-card bg-black/20 font-mono text-xs leading-relaxed px-3 py-2 flex flex-col gap-0.5"
         >
+          {runGone && <p className="text-carbon-textMuted">{t("activityLog.runGone")}</p>}
+          {runPending && <p className="text-carbon-textMuted">{t("activityLog.runStillGoing")}</p>}
           {filteredLines.map((l) => (
             <div key={l.id} className="flex items-start gap-2">
               <span className="text-carbon-textMuted shrink-0 tabular-nums">
@@ -282,7 +313,8 @@ export function ActivityLog({
               {!l.idle && (
                 <span className="shrink-0 text-carbon-textMuted">{domainLabel(resolveName, l.domain)}</span>
               )}
-              <span className={`flex-1 min-w-0 wrap-break-word ${colorFor(l.status)}`}>{l.text}</span>
+              <span className={`flex-1 min-w-0 wrap-break-word ${l.warn ? "text-statusWarn" : colorFor(l.status)}`}>{l.text}</span>
+              {l.runId && <RunAnomalyBadge findings={byRunId.get(l.runId)} t={t} />}
             </div>
           ))}
         </div>

@@ -242,7 +242,8 @@ func (h *Handler) handleListFileSets(w http.ResponseWriter, r *http.Request) {
 		fs := byID[v.ID]
 		it := placementItem{
 			Key: v.ID, Identity: "fileset:" + v.Name,
-			Home: store.HomeState{Exists: true, Repo: fs.Repo, Choice: fs.RepoChosen},
+			Home:        store.HomeState{Exists: true, Repo: fs.Repo, Choice: fs.RepoChosen},
+			HomeBackups: v.homeBackups,
 		}
 		if run, _ := h.store.LastSuccessfulBackup(v.ID); run != nil {
 			it.LastSuccess = run.StartedAt

@@ -20,6 +20,7 @@ Việc khôi phục diễn ra tự động. Các container xuất hiện lại t
 | **Unraid flash** | Toàn bộ USB flash (`/boot`): OS, giấy phép, cấu hình mảng, share, cấu hình mạng và plugin. |
 | **Cấu hình ứng dụng** | `/config` của chính BombVault: cơ sở dữ liệu cài đặt, thông tin đăng nhập off-site và cặp khóa SSH libvirt. |
 | **Tập tin & thư mục** | Các **bộ tập tin** có tên, bất kỳ thư mục nào trên máy chủ, mỗi bộ có tùy chọn mẫu loại trừ riêng. |
+| **Tập dữ liệu ZFS** | Một tập dữ liệu cùng mọi tập bên dưới, đọc từ một ảnh chụp ZFS và lưu như một thư mục. Xem [Tập dữ liệu ZFS](zfs-datasets.md). |
 
 ## Khôi phục là ngôi sao
 

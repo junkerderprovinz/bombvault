@@ -1,19 +1,33 @@
-import { useT } from "../lib/i18n";
+import { useT, type TranslationKey } from "../lib/i18n";
 import { formatCadence } from "./CadenceBuilder";
 import type { EffectiveSchedule } from "../lib/api";
+import { useForeignScheduleZone, zoneLabel } from "../lib/scheduleZone";
 
 /**
- * EffectiveScheduleLine says in one sentence what happens to a folder set,
- * since "Include in schedule", the Folders schedule and Backup Everything
- * interact. The server computes the outcome (schedule.EffectiveFileSetSchedule)
- * and this only formats it.
+ * EffectiveScheduleLine says in one sentence what happens to one item, since
+ * "Include in schedule", the domain schedule and Backup Everything interact.
+ * The server computes the outcome (schedule.EffectiveFileSetSchedule) and this
+ * only formats it. `domainLabelKey` is the schedule card's own title key, so
+ * the sentence names the card the reader would go to.
  */
-export function EffectiveScheduleLine({ effective }: { effective?: EffectiveSchedule }) {
+export function EffectiveScheduleLine({
+  effective,
+  domainLabelKey = "jobs.filesSection",
+}: {
+  effective?: EffectiveSchedule;
+  domainLabelKey?: TranslationKey;
+}) {
   const { t, lang } = useT();
+  const zone = useForeignScheduleZone();
   if (!effective) return null;
 
-  const when = effective.spec ? formatCadence(effective.spec, t, lang) : "";
-  const alsoWhen = effective.alsoSpec ? formatCadence(effective.alsoSpec, t, lang) : "";
+  const cadence = (spec: string) => {
+    const text = spec ? formatCadence(spec, t, lang) : "";
+    if (!text || !zone) return text;
+    return t("cadence.serverClock").replace("{when}", text).replace("{zone}", zoneLabel(zone));
+  };
+  const when = cadence(effective.spec);
+  const alsoWhen = cadence(effective.alsoSpec);
 
   let text: string;
   let tone: string;
@@ -37,7 +51,7 @@ export function EffectiveScheduleLine({ effective }: { effective?: EffectiveSche
       tone = "text-carbon-textSub";
       break;
     case "domain":
-      text = t("files.effectiveDomain").replace("{when}", when).replace("{domain}", t("jobs.filesSection"));
+      text = t("files.effectiveDomain").replace("{when}", when).replace("{domain}", t(domainLabelKey));
       tone = "text-carbon-textSub";
       break;
     default:

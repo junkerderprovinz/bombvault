@@ -7,10 +7,10 @@ Deze pagina behandelt de omgevingsvariabelen van de container, de mounts die de 
 | Variabele | Vereist | Beschrijving |
 |---|---|---|
 | `APP_KEY` | **Ja** | 32-byte hex-geheim (64 hex-tekens) gebruikt om het restic-repo-wachtwoord af te leiden. Genereer met `openssl rand -hex 32`. Bewaar dit veilig: kwijtraken maakt versleutelde back-ups onherstelbaar. |
-| `LIBVIRT_HOST` | Voor VM's | Unraid-host bereikt via SSH voor VM-back-up (standaard `host.docker.internal`; de template vult vooraf een LAN-IP-placeholder in). Gebruik je Unraid LAN-IP, vereist op een custom `br0.x`-netwerk. |
-| `LIBVIRT_SSH_PORT` | Nee | SSH-poort van de host voor VM-back-up (standaard `22`). |
-| `LIBVIRT_SSH_USER` | Nee | SSH-gebruiker op de host voor VM-back-up (standaard `root`). |
-| `LIBVIRT_URI` | Nee | Volledige libvirt-verbindings-URI, **letterlijk** gebruikt in plaats van er één op te bouwen uit de drie `LIBVIRT_*`-variabelen hierboven (die dan voor de verbindingsstring worden genegeerd). Standaard niet ingesteld. Nodig op TrueNAS Scale, waar libvirtd luistert op een niet-standaard socket die de opgebouwde vorm niet kan uitdrukken: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Zie de TrueNAS Scale-sectie van [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Voor VM's | Unraid-host bereikt via SSH voor VM-back-up (standaard `host.docker.internal`; de template vult vooraf een LAN-IP-placeholder in). Gebruik je Unraid LAN-IP, vereist op een custom `br0.x`-netwerk. Ook gebruikt voor back-ups van ZFS-datasets (templateveld **Host SSH: Address**); de plaatshouder `192.168.x.x` geldt als niet ingesteld. |
+| `LIBVIRT_SSH_PORT` | Nee | SSH-poort van de host voor VM-back-up (standaard `22`). Templateveld **Host SSH: Port**, ook voor ZFS-datasets. |
+| `LIBVIRT_SSH_USER` | Nee | SSH-gebruiker op de host voor VM-back-up (standaard `root`). Templateveld **Host SSH: User**, ook voor ZFS-datasets. |
+| `LIBVIRT_URI` | Nee | Volledige libvirt-verbindings-URI, **letterlijk** gebruikt in plaats van er één op te bouwen uit de drie `LIBVIRT_*`-variabelen hierboven (die dan voor de verbindingsstring worden genegeerd). Standaard niet ingesteld. Nodig op TrueNAS Scale, waar libvirtd luistert op een niet-standaard socket die de opgebouwde vorm niet kan uitdrukken: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Zie de TrueNAS Scale-sectie van [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Is het een `qemu+ssh://`-URI, dan wordt elk van `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` en `LIBVIRT_SSH_PORT` die niet is ingesteld eruit overgenomen, ook voor BombVaults eigen SSH-opdrachten (NVRAM-overdracht, ZFS-datasets). |
 | `PORT` | Nee | HTTP-poort (standaard `3000`; alleen gebruikt met `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Nee | HTTPS-poort (standaard `3443`; de template publiceert hem 1:1, dus de WebUI antwoordt op `https://<ip>:3443`). |
 | `HTTP_ONLY` | Nee | Zet `true` om de zelfondertekende HTTPS-listener uit te schakelen en alleen platte HTTP te serveren (voor gebruik achter een TLS-terminerende reverse proxy). |
@@ -20,13 +20,16 @@ Deze pagina behandelt de omgevingsvariabelen van de container, de mounts die de 
 | `PLATFORM` | Nee | Forceert welk platform BombVault denkt te draaien, in plaats van automatisch te detecteren: `unraid`, `generic` of `truenas` (standaard niet ingesteld: detecteert Unraid automatisch door te zoeken naar diens `dockerMan`-marker onder de flash-mount, anders `generic`; een onherkende waarde valt ook terug op `generic`, gelogd). Stel het expliciet in op een generieke Docker-host of TrueNAS Scale, in plaats van te vertrouwen op de automatische Unraid-detectie; het generieke compose-bestand doet dit. Verandert de appdata-fallbackconventie, de standaardbestemmingen voor herstel tussen instanties, en of de Unraid-only meldings-/companion-plugin-stappen wel worden geprobeerd (zie `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Nee | De naam van de BombVault-container zelf, zodat het nooit een back-up maakt van (en dus stopt) zichzelf. |
 | `BACKUP_MAX_HOURS` | Nee | Maximaal aantal klok-uren dat een enkele back-uprun zijn domeinlock mag vasthouden voordat hij geforceerd wordt geannuleerd (een beveiliging zodat een vastgelopen run het domein niet eeuwig kan blokkeren). Leeg (de standaard) gebruikt `48`. Verhoog het voor zeer grote of trage cloud-back-ups (een run die bij de limiet wordt geannuleerd mislukt met `context deadline exceeded`). Zet `0` om de limiet helemaal uit te schakelen. |
+| `DB_DUMP_MAX_HOURS` | Nee | Uren die één automatische databasedump mag draaien voordat hij wordt gestopt. Leeg (de standaard) gebruikt `6`; toegestaan zijn `1` tot `48`, en de limiet blijft een uur onder `BACKUP_MAX_HOURS` (op de helft ervan als die onder twee uur ligt), zodat een lange dump door zijn eigen limiet wordt afgekapt en als zodanig wordt gemeld in plaats van de back-up mee te sleuren. Een dump die niet meer vordert, wordt eerder gestopt, na `BACKUP_STALL_HOURS`. Een gestopte dump mislukt op zichzelf en de back-up van de container gaat door. Voeg de variabele op Unraid toe aan de BombVault-container met **Add another Path, Port, Variable**. |
 | `TZ` | Nee | Tijdzone voor de planner (bijvoorbeeld `Europe/Berlin`). **Niet ingesteld betekent dat alle planningen in UTC draaien**: een planning op 02:30 start dan om 02:30 UTC en niet op de lokale klok. Op Unraid stel je dit nooit zelf in: het systeem geeft zijn eigen tijdzone door aan elke container. |
 
 ## Mounts
 
 Mount de Docker-socket, de flash (`/boot`) en de root **Host Data** (`/mnt`) zoals getoond in de CA-template. Back-up*bronnen* en *bestemmingen* leven allebei onder Host Data, en het wordt **slave** gemount zodat een remote share die na de start van de container mount (bijvoorbeeld onder `/mnt/remotes`) zichtbaar wordt zonder herstart.
 
-Een nieuwe installatie slaat elk domein op in de plek **Unraid**, op `/mnt/user/bombvault` met één map per domein (`container`, `vms`, `flash`, `config`, `files`), aangemaakt bij de eerste back-up. Meer plekken, lokaal of extern, voeg je toe op **Instellingen, Opslag**; zie [Opslagplekken](storage-places.md).
+Back-ups van ZFS-datasets hebben deze modus ook nodig: de host koppelt de snapshot van een dataset pas aan nadat de container is gestart. Zie [ZFS-datasets](zfs-datasets.md).
+
+Een nieuwe installatie slaat elk domein op in de plek **Unraid**, op `/mnt/user/bombvault` met één map per domein (`container`, `vms`, `flash`, `config`, `files`, `zfs`), aangemaakt bij de eerste back-up. Meer plekken, lokaal of extern, voeg je toe op **Instellingen, Opslag**; zie [Opslagplekken](storage-places.md).
 
 !!! note "Controle van hostintegratie"
     Open `/spike` in de web-UI nadat de container is gestart. Het test elke mount en CLI (Docker-socket, libvirt, restic, qemu-img, rclone) en meldt eventuele ontbrekende onderdelen.
@@ -39,6 +42,7 @@ Voor elke container kiest BombVault zelf welke bind mounts en benoemde volumes w
 - **Benoemde Docker-volumes** worden altijd meegenomen, want er is geen wegwerpbaar equivalent en dus niets te filteren, **maar alleen wanneer het echte opslagpad van het volume op de host zelf bereikbaar is via de Host Data-koppeling**, net als elk ander hostpad dat BombVault back-upt. Het standaard stuurprogramma voor lokale volumes legt een volume onder de datawortel van de daemon zelf, dus `/var/lib/docker/volumes/<naam>/_data` tenzij dat is aangepast (controleer met `docker info -f '{{.DockerRootDir}}'`). Die plek valt NIET binnen de smalle Host Data-koppeling van één map die de generieke `docker-compose.yml` standaard gebruikt. Een onbereikbaar volume wordt stilzwijgend overgeslagen, dat is geen fout. Om benoemde volumes op een generieke host echt te back-uppen, richt je Host Data (en `HOST_SOURCE_ROOT`) op een gemeenschappelijke bovenliggende map die ook de datawortel van Docker omvat: zie de Host Data-opmerking in het compose-bestand voor de afweging (Unraid omzeilt dit door om dezelfde reden heel `/mnt` te koppelen, zijn eigen universele conventie op het hoogste niveau).
 - **Projectmap van Docker Compose:** draagt de container het gebruikelijke label `com.docker.compose.project.working_dir` (automatisch gezet door `docker compose up`), dan komt die map er ook bij, ongeacht of een bind op een datawortel-segment paste.
 - **Overschrijven met het label `bombvault.data`:** zet het label `bombvault.data=true` op een container om ALLE bind mounts mee te nemen, voor een indeling die geen van beide conventies hierboven vangt (bijvoorbeeld één enkele bind `/srv/plex/config` zonder Compose-project). Elke niet-lege waarde behalve `false` telt als waar; een ontbrekend label of `bombvault.data=false` verandert niets.
+- **Label `bombvault.dbdump`:** zet `bombvault.dbdump=false` op een container om zijn automatische databasedump uit te zetten (`0`, `no` en `off` doen hetzelfde), of noem de engine (`postgres`, `mysql`, `mariadb`) om een container te dumpen die BombVault zelf niet herkent. Het label wint van de schakelaar op de kaart van de container, die op Unraid de gebruikelijke weg is.
 
 ## Beveiligingsmodel
 
@@ -50,9 +54,14 @@ Voor elke container kiest BombVault zelf welke bind mounts en benoemde volumes w
 - Omdat de poort opt-in is, zijn wanneer die niet is ingesteld de hele UI en API (inclusief de off-site setup, tamper-test-routes en de herstelkit) bereikbaar voor iedereen die de poort kan bereiken. Schakel de beveiliging in zodra off-site, onveranderlijke back-ups of versleuteling in gebruik zijn.
 - Draai BombVault alleen op een vertrouwd, niet-blootgesteld netwerk. Zet het voor externe toegang achter een reverse proxy die authenticatie en TLS toevoegt. Antwoorden dragen basis-beveiligingsheaders (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Achter een reverse proxy draagt elk verzoek het adres van de proxy, dus zonder `TRUSTED_PROXY` telt de inlogrem alle clients bij elkaar en sluiten de mislukte pogingen van een aanvaller ook jou buiten. Noem de proxy in `TRUSTED_PROXY` om weer per client te tellen.
+- Een reverse proxy voor BombVault moet de header `Authorization` of `X-API-Key` doorgeven aan `/mcp` en mag de antwoorden niet bufferen, anders kunnen assistenten geen verbinding maken. Zie [MCP-server](mcp.md#tls).
 - Met `HTTP_ONLY=true` verliest de sessiecookie zijn `Secure`-vlag (dat moet, om over platte HTTP te werken), dus schakel het wachtwoord alleen achter een TLS-terminerende proxy in als vertrouwelijkheid ertoe doet.
 - De VM-back-up-SSH-verbinding vertrouwt de host key bij het eerste contact (TOFU) en pint hem daarna vast. Verifieer de host key van de host out-of-band als je container-naar-host-pad niet vertrouwd is.
 - Back-ups worden door restic versleuteld wanneer versleuteling is ingeschakeld (Instellingen; standaard aan), met de sleutel afgeleid van `APP_KEY`.
+
+## MCP-server {#mcp-server}
+
+De MCP-server heeft geen omgevingsvariabele nodig. Je schakelt hem in door een sleutel aan te maken onder **Instellingen, Systeem, MCP-server**, en hij antwoordt op `/mcp` op dezelfde poort als de webinterface (bijvoorbeeld `https://192.168.1.10:3443/mcp`). Zonder actieve sleutel antwoordt dat pad met `404`. Clients, certificaten en grenzen staan op [MCP-server](mcp.md).
 
 ## VM-back-up via SSH
 
@@ -60,7 +69,7 @@ BombVault maakt back-ups van KVM/libvirt-VM's **zonder enig libvirt-pad te mount
 
 Snelle setup:
 
-1. **Instellingen, Systeem, VM-back-up via SSH:** kopieer de getoonde publieke sleutel.
+1. **Instellingen, Systeem, Host-SSH:** kopieer de getoonde publieke sleutel.
 2. Voeg hem toe aan Unraids `/root/.ssh/authorized_keys` (ook op de flash bewaard zodat hij herstarts overleeft).
 3. Klik op **Verbinding testen**.
 
@@ -81,6 +90,19 @@ Off-site kopieën gaan naar opslagplekken. Voeg de plek toe op **Instellingen, O
 - **Retentie, limieten, opslagklasse en groeibudget horen bij de plek** en worden in de details ervan ingesteld. De retentie van een plek geldt voor elke repository op die plek, zodat een off-site plek kopieën langer als archief kan bewaren; een plek waar elke regel op nul staat, trimt nooit.
 - **Koude en archiefopslagklasse (S3):** kies voor een S3-plek een herstel-leesbare tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remotes stellen hun klasse in de rclone-config in.
 - **Een domein op een externe plek:** zie [Een domein op een externe plek](offsite-recovery.md#remote-primary-repositories).
+
+## Anomalieën {#anomalies}
+
+Anomaliedetectie stel je in op de kaart **Anomalieën** onder **Instellingen, Integriteit**. Elk bedieningselement slaat meteen op, en de drie onder de schakelaar zijn verborgen zolang de detectie uit staat.
+
+| Instelling | Standaard | Wat het doet |
+|---|---|---|
+| **Anomalieën detecteren** | Aan | Vergelijkt elke back-up met de eigen geschiedenis van het item. Uitgeschakeld wordt er niets nieuws meer gecontroleerd en verdwijnt het item **Anomalieën** uit de zijbalk; de kaart linkt nog steeds naar eerdere bevindingen. |
+| **Gevoeligheid** | Gebalanceerd | Streng meldt ook kleinere veranderingen, Soepel alleen grote. |
+| **Een melding sturen voor** | Alleen kritieke bevindingen | De laagste ernst die een bericht stuurt via de kanalen die onder Meldingen zijn ingesteld. Herhaald mislukte back-ups en dumps en mislukte geplande herstelcontroles sturen al een eigen bericht en worden niet dubbel verstuurd. |
+| **Oude back-ups bewaren als een bron sterk krimpt of wordt herschreven** | Aan | Zolang een item een open bevinding heeft voor een bijna lege bron, een sterke krimp of het grootste deel van de data opnieuw opgeslagen, laten retentie en opschonen de oude back-ups van dat item met rust. Bevestig de bevinding of markeer haar als verwacht om ze vrij te geven. |
+
+Elk item kan een eigen gevoeligheid en een eigen meldingsminimum hebben. Stel ze in op het tabblad **Items** van de pagina **Anomalieën**, of in het eigen paneel van het item: het mappengedeelte van een container en de instellingen van een VM (allebei in de geavanceerde modus), de mappeneditor van een mappenset en de pagina's **Flash** en **Zelf-back-up**. Voor een ZFS-item staan ze in de editor op de pagina **ZFS** en gelden ze voor elke dataset van de boom.
 
 ## Portable instellingen (exporteren en importeren) {#portable-settings-export-and-import}
 

@@ -84,6 +84,25 @@ func applyThrough(t *testing.T, db *sql.DB, maxVersion int) {
 	}
 }
 
+// bootAs runs Migrate as a build whose newest migration is maxVersion
+// would, guards included. applyThrough runs every body unguarded, which fails
+// from v94 on, where a body is only correct behind its guard.
+func bootAs(t *testing.T, db *sql.DB, maxVersion int) {
+	t.Helper()
+	all := migrations
+	defer func() { migrations = all }()
+	var older []migration
+	for _, m := range all {
+		if m.version <= maxVersion {
+			older = append(older, m)
+		}
+	}
+	migrations = older
+	if err := Migrate(db); err != nil {
+		t.Fatalf("seed through v%d: %v", maxVersion, err)
+	}
+}
+
 // seedMainLatest builds the database of a user who installed :latest from the
 // CA template: 89 = settings_everything, 90 = runs_group_id, and no
 // schedule_job_runs table.
@@ -169,8 +188,7 @@ func appliedVersions(t *testing.T, db *sql.DB) map[int]string {
 // TestMigrationVersionsAreUniqueAndAscending requires every version once, in
 // ascending order. Migrate skips a version whose row already exists, so the
 // second of two migrations sharing a number would never run on a database that
-// applied the first. Gaps are allowed: 109 to 119 stay free because other
-// builds record unrelated migrations as 109.
+// applied the first. Gaps are allowed.
 func TestMigrationVersionsAreUniqueAndAscending(t *testing.T) {
 	seen := map[int]string{}
 	last := 0
@@ -192,7 +210,7 @@ func TestMigrationVersionsAreUniqueAndAscending(t *testing.T) {
 	}
 }
 
-// TestMigrationNamesAreUnique backs recordedAs, which finds a migration by name.
+// TestMigrationNamesAreUnique backs migrationRecorded, which finds a migration by name.
 func TestMigrationNamesAreUnique(t *testing.T) {
 	seen := map[string]int{}
 	for _, m := range migrations {
@@ -295,6 +313,10 @@ func TestUpgradeConvergesFromEveryShippedDatabase(t *testing.T) {
 		{
 			name: "already ran a post-merge branch build (89/90/91)",
 			seed: seedMergedBranch,
+		},
+		{
+			name: "main before database dumps (tops out at v122)",
+			seed: func(t *testing.T, db *sql.DB) { bootAs(t, db, lastMainMigration) },
 		},
 		{
 			name: "fresh install",
@@ -414,6 +436,94 @@ func TestUpgradeFromMainLatestKeepsUserData(t *testing.T) {
 	}
 }
 
+// lastMainMigration is the newest version main recorded before the dump, ZFS,
+// anomaly and MCP schemas joined it. Every body up to it is unchanged here, so
+// bootAs(db, lastMainMigration) gives the database a :latest user holds.
+const lastMainMigration = 122
+
+func TestUpgradeFromMainBeforeDumpsKeepsDataAndAddsTheNewSchemas(t *testing.T) {
+	db := OpenMem(t)
+	bootAs(t, db, lastMainMigration)
+	if applied := appliedVersions(t, db); applied[lastMainMigration] != "target_alias_prev_definition" {
+		t.Fatalf("seed tops out at %q, want target_alias_prev_definition", applied[lastMainMigration])
+	}
+
+	if _, err := db.Exec(`INSERT INTO targets (id, container_name, appdata_paths, created_at) VALUES ('t1', 'postgres', '[]', 1700000000)`); err != nil {
+		t.Fatalf("seed a target: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO runs (id, target_id, kind, status, started_at, group_id) VALUES ('r1', 't1', 'backup', 'success', 1700000000, 'grp-1')`); err != nil {
+		t.Fatalf("seed a run: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO target_aliases (id, domain, old_name, target_id, linked_at) VALUES ('a1', 'containers', 'pg', 't1', 1700000000)`); err != nil {
+		t.Fatalf("seed an alias: %v", err)
+	}
+	if _, err := db.Exec(`UPDATE settings SET containers_schedule = 'daily 03:00', vms_schedule = 'daily 03:00',
+		flash_schedule = 'daily 03:00', files_schedule = 'daily 03:00' WHERE id = 1`); err != nil {
+		t.Fatalf("seed the schedules: %v", err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("upgrade from a main database failed, so the container would not boot: %v", err)
+	}
+
+	var status, group string
+	if err := db.QueryRow(`SELECT status, group_id FROM runs WHERE id = 'r1'`).Scan(&status, &group); err != nil {
+		t.Fatalf("run lost in the upgrade: %v", err)
+	}
+	if status != "success" || group != "grp-1" {
+		t.Fatalf("run = %q/%q, want success/grp-1", status, group)
+	}
+	var sourceBytes sql.NullInt64
+	var startedVia string
+	if err := db.QueryRow(`SELECT source_bytes, started_via FROM runs WHERE id = 'r1'`).Scan(&sourceBytes, &startedVia); err != nil {
+		t.Fatalf("read the new run columns: %v", err)
+	}
+	if sourceBytes.Valid || startedVia != "" {
+		t.Fatalf("an old run reads source_bytes=%v started_via=%q, want no metrics and no MCP origin", sourceBytes, startedVia)
+	}
+
+	var dumpOff int
+	var engine string
+	if err := db.QueryRow(`SELECT db_dump_off, db_dump_engine FROM targets WHERE id = 't1'`).Scan(&dumpOff, &engine); err != nil {
+		t.Fatalf("target lost in the upgrade: %v", err)
+	}
+	if dumpOff != 0 || engine != "" {
+		t.Fatalf("db_dump_off = %d, db_dump_engine = %q; an existing container must keep the default dump", dumpOff, engine)
+	}
+	var aliasTarget string
+	if err := db.QueryRow(`SELECT target_id FROM target_aliases WHERE id = 'a1'`).Scan(&aliasTarget); err != nil || aliasTarget != "t1" {
+		t.Fatalf("alias lost in the upgrade: %q, %v", aliasTarget, err)
+	}
+
+	var dumps, zfsOn, anomalyOn int
+	var zfsSchedule string
+	if err := db.QueryRow(`SELECT db_dumps_enabled, zfs_enabled, zfs_schedule, anomaly_enabled FROM settings WHERE id = 1`).
+		Scan(&dumps, &zfsOn, &zfsSchedule, &anomalyOn); err != nil {
+		t.Fatalf("read the new settings: %v", err)
+	}
+	if dumps != 1 || zfsOn != 0 || anomalyOn != 1 {
+		t.Fatalf("db_dumps_enabled=%d zfs_enabled=%d anomaly_enabled=%d, want 1, 0, 1", dumps, zfsOn, anomalyOn)
+	}
+	if zfsSchedule != "daily 03:00" {
+		t.Fatalf("zfs_schedule = %q, want it joined to the shared schedule", zfsSchedule)
+	}
+	for _, table := range []string{"zfs_datasets", "zfs_members", "zfs_runs", "zfs_run_members", "zfs_safety_snapshots", "anomalies", "mcp_keys"} {
+		if !hasTable(t, db, table) {
+			t.Fatalf("%s missing after the upgrade", table)
+		}
+	}
+
+	applied := appliedVersions(t, db)
+	for _, m := range migrations {
+		if applied[m.version] != m.name {
+			t.Fatalf("v%d = %q, want %q recorded", m.version, applied[m.version], m.name)
+		}
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatalf("second migrate after the upgrade: %v", err)
+	}
+}
+
 // TestUpgradeFromPreMergeBranchDatabase starts from a database that ran the
 // feature branch (89 = schedule_job_runs), which must take main's two
 // migrations and keep its data.
@@ -517,6 +627,68 @@ func TestRunsCompletedBackfill(t *testing.T) {
 	}
 }
 
+// TestZFSMigrationsAreSatisfiedWhenAlreadyApplied builds a database that took
+// the ZFS bodies under numbers this build does not use, which is what a
+// renumbering at merge time leaves behind, and expects the guards to record the
+// versions without re-running an ALTER SQLite cannot repeat.
+func TestZFSMigrationsAreSatisfiedWhenAlreadyApplied(t *testing.T) {
+	db := OpenMem(t)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("first migrate: %v", err)
+	}
+
+	var zfsNames []string
+	for _, m := range migrations {
+		if m.version >= zfsMigrationBase && m.version < anomalyMigrationBase {
+			zfsNames = append(zfsNames, m.name)
+		}
+	}
+	if len(zfsNames) != 12 {
+		t.Fatalf("found %d migrations from v%d to v%d, want the 12 of the ZFS domain", len(zfsNames), zfsMigrationBase, anomalyMigrationBase-1)
+	}
+	for i, name := range zfsNames {
+		if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name = ?`, name); err != nil {
+			t.Fatalf("forget %s: %v", name, err)
+		}
+		record(t, db, 900+i, name)
+	}
+	if _, err := db.Exec(`UPDATE settings SET zfs_path = 'user/tank/zfs', zfs_schedule = 'daily 03:00' WHERE id = 1`); err != nil {
+		t.Fatalf("configure the domain: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO zfs_datasets (id, dataset) VALUES ('z1', 'cache/appdata')`); err != nil {
+		t.Fatalf("seed an item: %v", err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("migrate over a database that already has the ZFS schema: %v", err)
+	}
+
+	applied := appliedVersions(t, db)
+	for _, m := range migrations {
+		if m.version < zfsMigrationBase || m.version >= anomalyMigrationBase {
+			continue
+		}
+		if applied[m.version] != m.name {
+			t.Fatalf("v%d = %q, want %q recorded so the next boot does not retry it", m.version, applied[m.version], m.name)
+		}
+	}
+
+	var path, schedule string
+	if err := db.QueryRow(`SELECT zfs_path, zfs_schedule FROM settings WHERE id = 1`).Scan(&path, &schedule); err != nil {
+		t.Fatalf("settings lost in the upgrade: %v", err)
+	}
+	if path != "user/tank/zfs" || schedule != "daily 03:00" {
+		t.Fatalf("zfs_path = %q, zfs_schedule = %q; a skipped body must not reset the columns", path, schedule)
+	}
+	var dataset string
+	if err := db.QueryRow(`SELECT dataset FROM zfs_datasets WHERE id = 'z1'`).Scan(&dataset); err != nil {
+		t.Fatalf("item lost in the upgrade: %v", err)
+	}
+	if dataset != "cache/appdata" {
+		t.Fatalf("dataset = %q, want cache/appdata", dataset)
+	}
+}
+
 // tableDDL returns a table's columns with the details a plain name:type
 // comparison would miss (nullability, default, primary key).
 func tableDDL(t *testing.T, db *sql.DB, table string) string {
@@ -581,4 +753,89 @@ func schemaFingerprint(t *testing.T, db *sql.DB) string {
 		out += "INDEX " + idx + "[" + ddl.String + "] "
 	}
 	return out
+}
+
+// TestZFSScheduleJoinsSchedulesThatWereInStep upgrades a database whose
+// Containers, VMs, Flash and Folders schedules were kept in step. The ZFS
+// schedule arrives as "off", and unless it joins them the page reads the
+// shared schedule as switched off.
+func TestZFSScheduleJoinsSchedulesThatWereInStep(t *testing.T) {
+	for name, tc := range map[string]struct {
+		containers, vms, want string
+	}{
+		"in step":          {containers: "daily 03:00", vms: "daily 03:00", want: "daily 03:00"},
+		"one differs":      {containers: "daily 03:00", vms: "weekly 0 04:00", want: "off"},
+		"all switched off": {containers: "off", vms: "off", want: "off"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			db := OpenMem(t)
+			if err := Migrate(db); err != nil {
+				t.Fatalf("first migrate: %v", err)
+			}
+			if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name = 'settings_zfs_schedule_joins_sync'`); err != nil {
+				t.Fatalf("forget the backfill: %v", err)
+			}
+			if _, err := db.Exec(`UPDATE settings SET containers_schedule = ?, vms_schedule = ?, flash_schedule = ?,
+				files_schedule = ?, zfs_schedule = 'off' WHERE id = 1`, tc.containers, tc.vms, tc.containers, tc.containers); err != nil {
+				t.Fatalf("set the schedules: %v", err)
+			}
+			if err := Migrate(db); err != nil {
+				t.Fatalf("upgrade: %v", err)
+			}
+			var got string
+			if err := db.QueryRow(`SELECT zfs_schedule FROM settings WHERE id = 1`).Scan(&got); err != nil {
+				t.Fatal(err)
+			}
+			if got != tc.want {
+				t.Fatalf("zfs_schedule = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// The published build of the anomaly branch numbered its migrations from 136,
+// where this build keeps the last two ZFS steps. A database that ran it has
+// 136 and 137 recorded under other names, so the upgrade skips both bodies.
+func TestAnomalyBranchDatabaseGetsTheZFSStepsItsNumbersHid(t *testing.T) {
+	db := OpenMem(t)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("first migrate: %v", err)
+	}
+	if _, err := db.Exec(`DROP TABLE zfs_safety_snapshots`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version >= ?`, zfsMigrationBase+10); err != nil {
+		t.Fatal(err)
+	}
+	record(t, db, zfsMigrationBase+10, "runs_source_metrics")
+	record(t, db, zfsMigrationBase+11, "anomalies")
+	record(t, db, anomalyMigrationBase, "settings_anomaly")
+	if _, err := db.Exec(`UPDATE settings SET zfs_schedule = 'off', containers_schedule = 'daily 03:00',
+		vms_schedule = 'daily 03:00', flash_schedule = 'daily 03:00', files_schedule = 'daily 03:00' WHERE id = 1`); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("migrate over the anomaly branch's numbering: %v", err)
+	}
+	if !hasTable(t, db, "zfs_safety_snapshots") {
+		t.Fatal("zfs_safety_snapshots is missing, so every in-place ZFS restore fails")
+	}
+	var schedule string
+	if err := db.QueryRow(`SELECT zfs_schedule FROM settings WHERE id = 1`).Scan(&schedule); err != nil {
+		t.Fatal(err)
+	}
+	if schedule != "daily 03:00" {
+		t.Fatalf("zfs_schedule = %q, want it joined to the shared schedule", schedule)
+	}
+}
+
+// The published build of the MCP branch recorded its two migrations as 146
+// and 147, and a database that ran it would skip whatever else took them.
+func TestNoMigrationTakesTheNumbersTheMCPBranchRecorded(t *testing.T) {
+	for _, m := range migrations {
+		if m.version == 146 || m.version == 147 {
+			t.Fatalf("v%d (%s) would be skipped on a database that ran the MCP branch build", m.version, m.name)
+		}
+	}
 }

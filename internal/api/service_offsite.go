@@ -142,6 +142,8 @@ func offsiteRepoFromSettings(domain string, settings store.Settings) string {
 		return settings.ConfigOffsite
 	case "files":
 		return settings.FilesOffsite
+	case zfsDomain:
+		return settings.ZFSOffsite
 	}
 	return ""
 }
@@ -179,6 +181,8 @@ func offsiteScheduleFromSettings(domain string, settings store.Settings) string 
 		return settings.ConfigOffsiteSchedule
 	case "files":
 		return settings.FilesOffsiteSchedule
+	case zfsDomain:
+		return settings.ZFSOffsiteSchedule
 	}
 	return ""
 }
@@ -201,6 +205,8 @@ func offsiteImmutableFor(domain string, s store.Settings) bool {
 		return s.ConfigOffsiteImmutable
 	case "files":
 		return s.FilesOffsiteImmutable
+	case zfsDomain:
+		return s.ZFSOffsiteImmutable
 	}
 	return false
 }
@@ -304,7 +310,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	// on the reserved domain target id, like prune/verify), so the replication
 	// shows up in the dashboard Activity Log and Run History. It is one row per
 	// domain per call. Best-effort.
-	activityRunID, aErr := s.store.StartRun(domainRunTargetID(domain), "offsite")
+	activityRunID, aErr := s.startRun(ctx, domainRunTargetID(domain), "offsite")
 	if aErr != nil {
 		log.Printf("api: offsite %s: could not start activity run (continuing): %v", domain, aErr) //nolint:gosec // G706: domain is a fixed literal
 		activityRunID = ""
@@ -527,6 +533,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	if dstErr != nil {
 		log.Printf("api: offsite %s: could not list the destination before copying: %v", domain, scrubError(dstErr)) //nolint:gosec // G706: domain is a fixed literal, the error scrubbed here
 	}
+	visit.unreachable = len(unreachableSkips(skipped)) > 0
 	out := s.copySources(ctx, domain, dest, s.copyMode(settings, domain, dest, mode, localRepos), target, visit, localRepos, dstSnaps, dstErr, startedAt, lastCopy)
 	copied, accounted, destIsASource := out.copied, out.accounted, out.destIsASource
 	// Carried past the maintenance below: whatever did arrive is aged, sampled and
@@ -932,6 +939,20 @@ func (s *Service) replicateOffsite(ctx context.Context, domain string, settings 
 		log.Printf("api: offsite %s: this item's repository %s; not copied again", domain, offSiteReason(ref)) //nolint:gosec // G706: domain is a fixed literal
 		return
 	}
+	// The local backup is written by now. A cancel, the stall guard or the hour
+	// cap that ended its context during the retention must not cost the fresh
+	// snapshot its copy, so the copy gets a hold of its own that only the
+	// process stop ends early.
+	if ctx.Err() != nil {
+		if s.IsShuttingDown() {
+			log.Printf("api: offsite %s: not copied, BombVault is shutting down; the next copy catches up", domain) //nolint:gosec // G706: domain is a fixed literal
+			return
+		}
+		held, cancel := backupHoldCtx(ctx)
+		defer cancel()
+		defer context.AfterFunc(s.StopContext(), cancel)()
+		ctx = held
+	}
 	// The skip list of the whole domain, even though this hook copies exactly
 	// one repository. It is not a report (the hook only logs); the
 	// destination's retention needs it.
@@ -1332,7 +1353,7 @@ func (s *Service) repoSharedWithAnotherDomain(settings store.Settings, domain st
 	if r.Own || r.Named.ID == "" {
 		return false
 	}
-	for _, d := range []string{"containers", "vms", "files"} {
+	for _, d := range []string{"containers", "vms", "files", zfsDomain} {
 		if d == domain {
 			continue
 		}

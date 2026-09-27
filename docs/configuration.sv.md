@@ -7,10 +7,10 @@ Den här sidan täcker containerns miljövariabler, monteringarna som mallen til
 | Variabel | Obligatorisk | Beskrivning |
 |---|---|---|
 | `APP_KEY` | **Ja** | 32-byte hex-hemlighet (64 hex-tecken) som används för att härleda restic-repo-lösenordet. Generera med `openssl rand -hex 32`. Förvara den säkert: att förlora den gör krypterade säkerhetskopior oåterställbara. |
-| `LIBVIRT_HOST` | För VM:ar | Unraid-värd nådd över SSH för VM-säkerhetskopiering (standard `host.docker.internal`; mallen förifyller en LAN-IP-platshållare). Använd din Unraid-LAN-IP, obligatorisk på ett anpassat `br0.x`-nätverk. |
-| `LIBVIRT_SSH_PORT` | Nej | Värdens SSH-port för VM-säkerhetskopiering (standard `22`). |
-| `LIBVIRT_SSH_USER` | Nej | SSH-användare på värden för VM-säkerhetskopiering (standard `root`). |
-| `LIBVIRT_URI` | Nej | Fullständig anslutnings-URI för libvirt, används **ordagrant** i stället för att bygga en från de tre `LIBVIRT_*`-variablerna ovan (som då ignoreras för anslutningssträngen). Inte satt som standard. Behövs på TrueNAS Scale, vars libvirtd lyssnar på en icke-standardsocket som den sammansatta strängformen inte kan uttrycka: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Se TrueNAS Scale-avsnittet i [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | För VM:ar | Unraid-värd nådd över SSH för VM-säkerhetskopiering (standard `host.docker.internal`; mallen förifyller en LAN-IP-platshållare). Använd din Unraid-LAN-IP, obligatorisk på ett anpassat `br0.x`-nätverk. Används också för säkerhetskopior av ZFS-datauppsättningar (mallfält **Host SSH: Address**); platshållaren `192.168.x.x` räknas som inte satt. |
+| `LIBVIRT_SSH_PORT` | Nej | Värdens SSH-port för VM-säkerhetskopiering (standard `22`). Mallfält **Host SSH: Port**, även för ZFS-datauppsättningar. |
+| `LIBVIRT_SSH_USER` | Nej | SSH-användare på värden för VM-säkerhetskopiering (standard `root`). Mallfält **Host SSH: User**, även för ZFS-datauppsättningar. |
+| `LIBVIRT_URI` | Nej | Fullständig anslutnings-URI för libvirt, används **ordagrant** i stället för att bygga en från de tre `LIBVIRT_*`-variablerna ovan (som då ignoreras för anslutningssträngen). Inte satt som standard. Behövs på TrueNAS Scale, vars libvirtd lyssnar på en icke-standardsocket som den sammansatta strängformen inte kan uttrycka: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Se TrueNAS Scale-avsnittet i [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Är det en `qemu+ssh://`-URI hämtas var och en av `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` och `LIBVIRT_SSH_PORT` som inte är satt från den, även för BombVaults egna SSH-kommandon (NVRAM-överföring, ZFS-datauppsättningar). |
 | `PORT` | Nej | HTTP-port (standard `3000`; används endast med `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Nej | HTTPS-port (standard `3443`; mallen publicerar den 1:1, så WebUI svarar på `https://<ip>:3443`). |
 | `HTTP_ONLY` | Nej | Sätt `true` för att inaktivera den självsignerade HTTPS-lyssnaren och servera enbart vanlig HTTP (för användning bakom en TLS-terminerande reverse proxy). |
@@ -20,13 +20,16 @@ Den här sidan täcker containerns miljövariabler, monteringarna som mallen til
 | `PLATFORM` | Nej | Tvingar vilken plattform BombVault uppfattar sig själv som att köra på, i stället för att identifiera den automatiskt: `unraid`, `generic` eller `truenas` (standard inte satt: identifierar Unraid automatiskt genom att sondera efter dess `dockerMan`-markör under flash-monteringen, annars `generic`; ett okänt värde faller också tillbaka till `generic`, vilket loggas). Sätt den explicit på en generisk Docker-värd eller TrueNAS Scale i stället för att förlita dig på den Unraid-specifika autosonderingen, vilket den generiska compose-filen gör. Ändrar reservkonventionen för appdata, standardmålen för återställning mellan instanser, och om de Unraid-specifika stegen för aviseringar och kompanjonsplugin ens försöks (se `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Nej | Namnet på själva BombVault-containern, så att den aldrig säkerhetskopierar (och därmed stoppar) sig själv. |
 | `BACKUP_MAX_HOURS` | Nej | Maximalt antal väggklockstimmar en enskild säkerhetskopieringskörning får hålla sitt domänlås innan den tvingas avbrytas (ett skydd så att en fastnad körning inte kan blockera domänen för alltid). Tomt (standard) använder `48`. Höj det för mycket stora eller långsamma molnsäkerhetskopior (en körning som avbryts vid taket misslyckas med `context deadline exceeded`). Sätt `0` för att inaktivera taket helt. |
+| `DB_DUMP_MAX_HOURS` | Nej | Timmar som en automatisk databasdump får köra innan den stoppas. Tomt (standard) använder `6`; tillåtna värden är `1` till `48`, och gränsen hålls en timme under `BACKUP_MAX_HOURS` (på hälften av den när den är under två timmar), så att en lång dump kapas av sin egen gräns och rapporteras som det i stället för att dra med sig säkerhetskopian. En dump som slutar göra framsteg stoppas tidigare, efter `BACKUP_STALL_HOURS`. En stoppad dump misslyckas för sig själv och containerns säkerhetskopiering fortsätter. På Unraid lägger du till variabeln på BombVault-containern med **Add another Path, Port, Variable**. |
 | `TZ` | Nej | Tidszon för schemaläggaren (till exempel `Europe/Berlin`). **Om den inte anges körs alla scheman i UTC**: ett schema satt till 02:30 startar då 02:30 UTC och inte enligt lokal tid. På Unraid ställer du aldrig in detta själv: systemet skickar sin egen tidszon till varje container. |
 
 ## Monteringar
 
 Montera Docker-socketen, flashen (`/boot`) och **Host Data**-roten (`/mnt`) som visas i CA-mallen. Både säkerhetskopieringens *källor* och *mål* ligger under Host Data, och den monteras **slave** så att en fjärresurs som monteras efter att containern startat (till exempel under `/mnt/remotes`) blir synlig utan en omstart.
 
-En ny installation sparar varje domän på lagringsplatsen **Unraid**, under `/mnt/user/bombvault` med en mapp per domän (`container`, `vms`, `flash`, `config`, `files`), som skapas vid den första säkerhetskopieringen. Fler lagringsplatser, lokala eller fjärranslutna, lägger du till under **Inställningar, Lagring**; se [Lagringsplatser](storage-places.md).
+Säkerhetskopior av ZFS-datauppsättningar behöver också det här läget: värden monterar en uppsättnings ögonblicksbild först efter att containern har startat. Se [ZFS-datauppsättningar](zfs-datasets.md).
+
+En ny installation sparar varje domän på lagringsplatsen **Unraid**, under `/mnt/user/bombvault` med en mapp per domän (`container`, `vms`, `flash`, `config`, `files`, `zfs`), som skapas vid den första säkerhetskopieringen. Fler lagringsplatser, lokala eller fjärranslutna, lägger du till under **Inställningar, Lagring**; se [Lagringsplatser](storage-places.md).
 
 !!! note "Värdintegrationskontroll"
     Öppna `/spike` i webbgränssnittet efter att containern startat. Den sonderar varje montering och CLI (Docker-socket, libvirt, restic, qemu-img, rclone) och rapporterar eventuella saknade delar.
@@ -39,6 +42,7 @@ För varje container väljer BombVault själv vilka bind-monteringar och namngiv
 - **Namngivna Docker-volymer** tas alltid med, eftersom de saknar en slängbar motsvarighet och det därmed inte finns något att filtrera bort, **men bara när volymens verkliga lagringssökväg på värden själv går att nå genom Host Data-monteringen**, precis som varje annan värdsökväg BombVault säkerhetskopierar. Standarddrivrutinen för lokala volymer lägger en volym under demonens egen datarot, alltså `/var/lib/docker/volumes/<namn>/_data` om inget ändrats (kontrollera med `docker info -f '{{.DockerRootDir}}'`). Den platsen omfattas INTE av den smala Host Data-monteringen med en enda katalog som den generiska `docker-compose.yml` använder som standard. En onåbar volym hoppas tyst över, det är inget fel. För att verkligen säkerhetskopiera namngivna volymer på en generisk värd, rikta Host Data (och `HOST_SOURCE_ROOT`) mot en gemensam överordnad katalog som även täcker Dockers datarot: avvägningen står i Host Data-kommentaren i compose-filen (Unraid kringgår detta genom att av samma skäl montera hela `/mnt`, sin egen allmängiltiga konvention på översta nivån).
 - **Projektkatalog för Docker Compose:** bär containern den vanliga etiketten `com.docker.compose.project.working_dir` (sätts automatiskt av `docker compose up`) läggs även den katalogen till, oavsett om någon bind matchade ett datarot-segment.
 - **Åsidosättning med etiketten `bombvault.data`:** sätt etiketten `bombvault.data=true` på en container för att ta med ALLA dess bind-monteringar, för en uppställning som ingen av konventionerna ovan fångar (till exempel en enda bind `/srv/plex/config` utan Compose-projekt). Varje icke-tomt värde utom `false` räknas som sant; en saknad etikett eller `bombvault.data=false` ändrar ingenting.
+- **Etiketten `bombvault.dbdump`:** sätt `bombvault.dbdump=false` på en container för att stänga av dess automatiska databasdump (`0`, `no` och `off` gör detsamma), eller namnge motorn (`postgres`, `mysql`, `mariadb`) för att dumpa en container som BombVault inte känner igen på egen hand. Etiketten går före reglaget på containerns kort, som är den vanliga vägen på Unraid.
 
 ## Säkerhetsmodell
 
@@ -50,9 +54,14 @@ För varje container väljer BombVault själv vilka bind-monteringar och namngiv
 - Eftersom spärren är opt-in är hela gränssnittet och API:et (inklusive off-site-uppsättningen, manipulationstest-rutterna och återställningskitet) nåbara av vem som helst som kan nå porten när den är osatt. Aktivera spärren när off-site, oföränderliga säkerhetskopior eller kryptering används.
 - Kör BombVault endast på ett betrott, icke-exponerat nätverk. För fjärråtkomst, placera den bakom en reverse proxy som lägger till autentisering och TLS. Svar bär baslinje-säkerhetsrubriker (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Bakom en omvänd proxy bär varje begäran proxyns adress, så utan `TRUSTED_PROXY` räknar inloggningsbromsen alla klienter i samma hink och en angripares misslyckanden låser ute även dig. Ange proxyn i `TRUSTED_PROXY` för att få tillbaka räkning per klient.
+- En omvänd proxy framför BombVault måste skicka vidare headern `Authorization` eller `X-API-Key` till `/mcp` och får inte buffra svaren, annars kan assistenter inte ansluta. Se [MCP-server](mcp.md#tls).
 - Med `HTTP_ONLY=true` förlorar sessionscookien sin `Secure`-flagga (den måste det, för att fungera över vanlig HTTP), så aktivera bara lösenordet bakom en TLS-terminerande proxy om konfidentialitet är viktig.
 - VM-säkerhetskopieringens SSH-anslutning litar på värdnyckeln vid första anslutningen (TOFU) och pinnar den därefter. Verifiera värdens nyckel out-of-band om din container-till-värd-väg inte är betrodd.
 - Säkerhetskopior krypteras av restic när kryptering är aktiverad (Inställningar; på som standard), med nyckeln härledd från `APP_KEY`.
+
+## MCP-server {#mcp-server}
+
+MCP-servern behöver ingen miljövariabel. Du slår på den genom att skapa en nyckel under **Inställningar, System, MCP-server**, och den svarar på `/mcp` på samma port som webbgränssnittet (till exempel `https://192.168.1.10:3443/mcp`). Utan en aktiv nyckel svarar den sökvägen med `404`. Klienter, certifikat och gränser beskrivs på [MCP-server](mcp.md).
 
 ## VM-säkerhetskopiering över SSH
 
@@ -60,7 +69,7 @@ BombVault säkerhetskopierar KVM/libvirt-VM:ar **utan att montera någon libvirt
 
 Snabbuppsättning:
 
-1. **Inställningar, System, VM Backup over SSH:** kopiera den visade publika nyckeln.
+1. **Inställningar, System, Värd-SSH:** kopiera den visade publika nyckeln.
 2. Lägg till den i Unraids `/root/.ssh/authorized_keys` (även bevarad till flashen så att den överlever omstarter).
 3. Klicka på **Testa anslutning**.
 
@@ -81,6 +90,19 @@ Off-site-kopior går till lagringsplatser. Lägg till lagringsplatsen under **In
 - **Retention, gränser, lagringsklass och tillväxtbudget hör till lagringsplatsen** och ställs in i dess detaljer. Retentionen för en lagringsplats gäller för varje arkiv på den, så en off-site-lagringsplats kan behålla kopior längre som ett arkiv; en lagringsplats där varje regel står på noll trimmar aldrig.
 - **Kall och arkivlagringsklass (S3):** för en S3-lagringsplats, välj en återställningsläsbar nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-fjärrar ställer in sin klass i rclone-konfigurationen.
 - **En domän sparad på en fjärransluten lagringsplats:** se [En domän sparad på en fjärransluten lagringsplats](offsite-recovery.md#remote-primary-repositories).
+
+## Avvikelser {#anomalies}
+
+Avvikelsedetekteringen ställs in i kortet **Avvikelser** under **Inställningar, Integritet**. Varje kontroll sparas så fort du ändrar den, och de tre under reglaget döljs medan detekteringen är avstängd.
+
+| Inställning | Standard | Vad den gör |
+|---|---|---|
+| **Upptäck avvikelser** | På | Jämför varje säkerhetskopia med objektets egen historik. Avstängt kontrolleras inget nytt och posten **Avvikelser** försvinner ur sidofältet; kortet länkar fortfarande till tidigare fynd. |
+| **Känslighet** | Balanserad | Strikt rapporterar mindre förändringar, Tillåtande bara stora. |
+| **Skicka avisering för** | Bara kritiska fynd | Den lägsta allvarlighetsgrad som skickar ett meddelande via kanalerna som ställts in under Aviseringar. Upprepade misslyckade säkerhetskopior och dumpar och misslyckade schemalagda återställningskontroller skickar redan ett eget meddelande och skickas inte två gånger. |
+| **Behåll gamla säkerhetskopior när en källa krymper kraftigt eller skrivs om** | På | Så länge ett objekt har ett öppet fynd för en nästan tom källa, en kraftig krympning eller det mesta av datan sparad på nytt låter gallring och rensning objektets gamla säkerhetskopior vara. Kvittera fyndet eller markera det som väntat för att släppa dem. |
+
+Varje objekt kan ha en egen känslighet och ett eget aviseringsminimum. Ställ in dem på fliken **Objekt** på sidan **Avvikelser**, eller i objektets egen panel: mappavsnittet för en container och inställningarna för en VM (båda i avancerat läge), mappredigeraren för en mappuppsättning och sidorna **Flash** och **Auto-säkerhetskopia**. För ett ZFS-objekt finns de i objektets redigerare på sidan **ZFS** och gäller för varje datauppsättning i dess träd.
 
 ## Portabla inställningar (exportera och importera) {#portable-settings-export-and-import}
 

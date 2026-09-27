@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	"math"
+	"path/filepath"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -60,6 +62,26 @@ func (s *Service) diskFreeFn() func(string) (uint64, error) {
 		return s.diskFree
 	}
 	return diskFreeBytes
+}
+
+// diskStatFn returns the volume probe a test injected, or the platform statfs.
+func (s *Service) diskStatFn() func(string) (diskStatResult, error) {
+	if s.diskStat != nil {
+		return s.diskStat
+	}
+	return diskStat
+}
+
+// rcloneAboutFn returns the remote-capacity probe a test injected, or the
+// rclone binary reading this instance's own configuration.
+func (s *Service) rcloneAboutFn() func(context.Context, string) (aboutResult, error) {
+	if s.rcloneAbout != nil {
+		return s.rcloneAbout
+	}
+	config := filepath.Join(s.cfg.DataDir, "rclone.conf")
+	return func(ctx context.Context, remote string) (aboutResult, error) {
+		return rcloneAbout(ctx, config, remote)
+	}
 }
 
 // StorageForecast builds the forecast for a domain and source from its size

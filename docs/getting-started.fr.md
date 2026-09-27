@@ -68,8 +68,8 @@ Le modèle monte aussi pour vous le socket Docker, la flash (`/boot`) et la raci
 *Le tableau de bord après une première sauvegarde : ce qui est protégé, ce qui suit, et un journal en direct.*
 
 1. Ouvrez l'interface web à `https://<votre-ip-unraid>:3443` (certificat auto-signé par défaut).
-2. Dans **Paramètres**, activez les domaines de sauvegarde souhaités (Conteneurs, VMs, Flash, Config, Fichiers) et choisissez une couleur d'accentuation.
-3. Dans l'onglet **Conteneurs**, choisissez un conteneur et cliquez sur **Sauvegarder** pour créer votre premier point de restauration. Les chemins de dépôt ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files}` et sont créés à la première sauvegarde.
+2. Dans **Paramètres**, activez les domaines de sauvegarde souhaités (Conteneurs, VMs, Flash, Config, Fichiers, Jeux de données ZFS) et choisissez une couleur d'accentuation.
+3. Dans l'onglet **Conteneurs**, choisissez un conteneur et cliquez sur **Sauvegarder** pour créer votre premier point de restauration. Les chemins de dépôt ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` et sont créés à la première sauvegarde.
 4. Configurez la planification depuis **Paramètres, Plannings**. Il existe une option en un clic pour *tout inclure dans le planning* pour les conteneurs et les VMs.
 
 !!! tip "Optionnel : choisir un ordre de sauvegarde"

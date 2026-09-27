@@ -21,7 +21,12 @@
 {% do c1.add_docker_socket() %}
 
 {% do c1.add_storage(values.consts.config_path, values.storage.config) %}
-{% do c1.add_storage(host_data_path, values.storage.host_data) %}
+{# ZFS dataset backups read snapshots the host mounts below host_data after the app has started. #}
+{% set host_data = values.storage.host_data %}
+{% if host_data.type == "host_path" %}
+  {% set host_data = dict(host_data, host_path_config=dict(host_data.host_path_config, propagation="rslave")) %}
+{% endif %}
+{% do c1.add_storage(host_data_path, host_data) %}
 
 {% for store in values.storage.additional_storage %}
   {% do c1.add_storage(store.mount_path, store) %}

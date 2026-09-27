@@ -66,7 +66,7 @@ export function PlacementStatus({
             labelKey="offsiteRemoval.delete"
             tone="neutral"
             disabled={o.appendOnly}
-            title={o.appendOnly ? t("offsiteRemoval.appendOnly").replace("{target}", () => o.name) : undefined}
+            hint={o.appendOnly ? t("offsiteRemoval.appendOnly").replace("{target}", () => o.name) : undefined}
             onClick={() => setRemoving({ id: o.targetId, name: o.name })}
           />
         </div>

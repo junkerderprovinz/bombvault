@@ -14,12 +14,32 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
+// ContainerSnapshotTimes is what the repositories hold for one container: the
+// unix time of its newest files snapshot and of its newest database dump.
+type ContainerSnapshotTimes struct {
+	Files int64
+	Dump  int64
+}
+
+// Newest is the time of this container's most recent snapshot of either kind.
+func (c ContainerSnapshotTimes) Newest() int64 {
+	return max(c.Files, c.Dump)
+}
+
+// DumpOnly reports a container that exists in the repositories as database
+// dumps alone. Restoring it brings back a container with an empty database, so
+// a bulk restore has to leave it out and say so.
+func (c ContainerSnapshotTimes) DumpOnly() bool {
+	return c.Dump > 0 && c.Files == 0
+}
+
 // LatestContainerBackupTimes returns, per container name, the unix time of the
-// newest backup that name owns. A card's date is read from here rather than
-// from the run history, so it agrees with the list of backups under it: an
-// entry rebuilt by Discover has no run at all (#44), and a run stays with the
-// entry while a backup stays with the name it was written under.
-func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]int64, error) {
+// newest backup that name owns, under each identity a container has: its files
+// snapshots and its database dumps. A card's date is read from here rather
+// than from the run history, so it agrees with the list of backups under it:
+// an entry rebuilt by Discover has no run at all (#44), and a run stays with
+// the entry while a backup stays with the name it was written under.
+func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]ContainerSnapshotTimes, backupCounts, error) {
 	// When the targets cannot be read nothing folds, and each old name keeps
 	// its own date.
 	idToName := map[string]string{}
@@ -30,19 +50,33 @@ func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]in
 			idToName[t.ID] = t.ContainerName
 		}
 	}
-	return s.latestBackupTimes(ctx, "containers", "container", idToName)
+	out := map[string]ContainerSnapshotTimes{}
+	counts, err := s.eachBackupTime(ctx, "containers", "container", idToName, []string{"container:", dbDumpIdentityPrefix},
+		func(prefix, name string, unix int64) {
+			times := out[name]
+			if prefix == dbDumpIdentityPrefix {
+				times.Dump = max(times.Dump, unix)
+			} else {
+				times.Files = max(times.Files, unix)
+			}
+			out[name] = times
+		})
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, counts, nil
 }
 
 // LatestFileSetBackupTimes is LatestContainerBackupTimes for the folder sets.
 // A set's name is fixed once it has backups, so no former name folds into it;
 // backups left under a name no set carries any more come back as their own set
 // through Discover.
-func (s *Service) LatestFileSetBackupTimes(ctx context.Context) (map[string]int64, error) {
-	return s.latestBackupTimes(ctx, "files", "fileset", nil)
+func (s *Service) LatestFileSetBackupTimes(ctx context.Context) (map[string]int64, backupCounts, error) {
+	return s.latestBackupTimes(ctx, "files", "fileset", "fileset:", nil)
 }
 
 // LatestVMBackupTimes is LatestContainerBackupTimes for the VMs domain.
-func (s *Service) LatestVMBackupTimes(ctx context.Context) (map[string]int64, error) {
+func (s *Service) LatestVMBackupTimes(ctx context.Context) (map[string]int64, backupCounts, error) {
 	idToName := map[string]string{}
 	if targets, tErr := s.store.ListVMTargets(); tErr != nil {
 		log.Printf("api: last-backup times: listing VM targets for alias fold: %v; leaving every tag as its own identity", tErr)
@@ -51,13 +85,42 @@ func (s *Service) LatestVMBackupTimes(ctx context.Context) (map[string]int64, er
 			idToName[t.ID] = t.Name
 		}
 	}
-	return s.latestBackupTimes(ctx, "vms", "vm", idToName)
+	return s.latestBackupTimes(ctx, "vms", "vm", "vm:", idToName)
 }
 
-// latestBackupTimes reads one snapshot listing per repository of domain and
-// keeps, per name, the newest time under that name's tag. idToName carries the
-// current name of every entry, for the alias fold.
-func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain string, idToName map[string]string) (map[string]int64, error) {
+// latestBackupTimes keeps, per name, the newest time under that name's tag, for
+// a domain whose items have one identity each.
+func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain, prefix string, idToName map[string]string) (map[string]int64, backupCounts, error) {
+	out := map[string]int64{}
+	counts, err := s.eachBackupTime(ctx, domain, aliasDomain, idToName, []string{prefix}, func(_, name string, unix int64) {
+		out[name] = max(out[name], unix)
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	return out, counts, nil
+}
+
+// backupCounts holds, per local repository that was listed, how many snapshots
+// each name has there.
+type backupCounts map[string]map[string]int
+
+// at is how many snapshots name has in repo, nil when repo was not listed.
+func (c backupCounts) at(repo, name string) *int {
+	for loc, names := range c {
+		if sameRepoLocation(loc, repo) {
+			return new(names[name])
+		}
+	}
+	return nil
+}
+
+// eachBackupTime reads one snapshot listing per local repository of domain and
+// calls fn for every snapshot carrying one of prefixes, with the prefix, the
+// name the tag folds to and the snapshot's unix time. idToName carries the
+// current name of every entry, for the alias fold. The same calls are counted
+// per repository it could list.
+func (s *Service) eachBackupTime(ctx context.Context, domain, aliasDomain string, idToName map[string]string, prefixes []string, fn func(prefix, name string, unix int64)) (backupCounts, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
@@ -75,15 +138,15 @@ func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain str
 	if err != nil {
 		return nil, err
 	}
-	prefix := aliasDomain + ":"
-	out := make(map[string]int64)
+	counts := backupCounts{}
 	for _, repo := range repos {
-		if localRepoMissing(repo.Loc) {
+		// A list never opens a remote repository; its items are dated from their
+		// runs instead.
+		if localRepoMissing(repo.Loc) || restic.IsRemoteRepo(repo.Loc) {
 			continue
 		}
-		// Per repository, like every other reader: with the shared mode, a
-		// container on a remote named repository with its own credentials could
-		// not be listed, and the dashboard would say it had never been backed up.
+		// Per repository, like every other reader: a named repository has its own
+		// mode.
 		all, lErr := s.listSnapshots(ctx, repo.Loc, s.primaryModeFor(settings, domain, repo.Loc))
 		if lErr != nil {
 			// One unreachable repository must not blank the whole column: the
@@ -93,6 +156,8 @@ func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain str
 			log.Printf("api: last-backup times: repository unreadable, skipping: %v", lErr)
 			continue
 		}
+		names := map[string]int{}
+		counts[repo.Loc] = names
 		for _, snap := range all {
 			ts, perr := time.Parse(time.RFC3339Nano, snap.Time)
 			if perr != nil {
@@ -100,26 +165,28 @@ func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain str
 			}
 			unix := ts.Unix()
 			for _, tag := range snap.Tags {
-				name, ok := strings.CutPrefix(tag, prefix)
-				if !ok || name == "" {
-					continue
-				}
-				// A rename leaves the old tag on snapshots already written. One
-				// from before the link is the renamed entry's and counts for its
-				// current name, whoever holds the old name today; a later one
-				// stays under the old name.
-				if a, aErr := s.store.AliasByOldName(aliasDomain, name); aErr == nil {
-					if cur := idToName[a.TargetID]; cur != "" && newAliasClaim(prefix, a).claims(snap) {
-						name = cur
+				for _, prefix := range prefixes {
+					name, ok := strings.CutPrefix(tag, prefix)
+					if !ok || name == "" {
+						continue
 					}
-				}
-				if unix > out[name] {
-					out[name] = unix
+					// A rename leaves the old tag on snapshots already written. One
+					// from before the link is the renamed entry's and counts for its
+					// current name, whoever holds the old name today; a later one
+					// stays under the old name. A dump follows its container the
+					// same way, under its own prefix.
+					if a, aErr := s.store.AliasByOldName(aliasDomain, name); aErr == nil {
+						if cur := idToName[a.TargetID]; cur != "" && newAliasClaim(prefix, a).claims(snap) {
+							name = cur
+						}
+					}
+					names[name]++
+					fn(prefix, name, unix)
 				}
 			}
 		}
 	}
-	return out, nil
+	return counts, nil
 }
 
 // Snapshots lists the snapshots of a single container. The containers
@@ -130,9 +197,9 @@ func (s *Service) Snapshots(ctx context.Context, name, source string) ([]restic.
 	return s.containerSnapshotsOf(ctx, name, source, s.containerIdentity(name))
 }
 
-// containerSnapshotsOf is Snapshots for an identity the caller has already
-// built, so a gate lists with the one it checked.
-func (s *Service) containerSnapshotsOf(ctx context.Context, name, source string, id entryIdentity) ([]restic.Snapshot, error) {
+// containerSnapshotsOf is Snapshots for the identities the caller has already
+// built, so a gate lists with the ones it checked.
+func (s *Service) containerSnapshotsOf(ctx context.Context, name, source string, ids ...entryIdentity) ([]restic.Snapshot, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
@@ -141,7 +208,7 @@ func (s *Service) containerSnapshotsOf(ctx context.Context, name, source string,
 	if err != nil {
 		return nil, err
 	}
-	return s.snapshotsOwnedBy(ctx, repo, s.repoModeFor(settings, "containers", source, repo), id)
+	return s.snapshotsOwnedBy(ctx, repo, s.repoModeFor(settings, "containers", source, repo), ids...)
 }
 
 // containerIdentity is the container entry that answers to name, with every
@@ -157,6 +224,20 @@ func (s *Service) containerIdentity(name string) entryIdentity {
 		ownID = tg.ID
 	}
 	return withRowReadErr(s.aliasedIdentity("container", "container:", name, ownID), err)
+}
+
+// containerDumpIdentity is the same container entry under the tag its database
+// dumps carry. A dump is a snapshot of its own beside the volume backups, and
+// a rename moves both: the entry's aliases name the container, not one kind of
+// snapshot. The two stay separate identities because each ages under its own
+// retention series.
+func (s *Service) containerDumpIdentity(name string) entryIdentity {
+	ownID := ""
+	tg, err := s.store.GetTargetByContainer(name)
+	if err == nil {
+		ownID = tg.ID
+	}
+	return withRowReadErr(s.aliasedIdentity("container", dbDumpIdentityPrefix, name, ownID), err)
 }
 
 // vmIdentity is containerIdentity for VMs. name is the libvirt name: on
@@ -254,17 +335,22 @@ func (s *Service) snapshotsForTag(ctx context.Context, repo string, mode restic.
 	return s.snapshotsForTags(ctx, repo, mode, []string{tag})
 }
 
-// snapshotsOwnedBy lists repo and keeps the snapshots id owns: those under its
-// current tag that no other entry's alias claims, plus each alias's from
-// before that alias was linked. Every reader of an entry's history goes
-// through here, so neither a renamed entry nor a machine that took its old
-// name up again can reach the other's snapshots.
-func (s *Service) snapshotsOwnedBy(ctx context.Context, repo string, mode restic.Mode, id entryIdentity) ([]restic.Snapshot, error) {
-	listed, err := s.snapshotsForTags(ctx, repo, mode, id.listTags())
+// snapshotsOwnedBy lists repo once and keeps the snapshots ids own: those
+// under an identity's current tag that no other entry's alias claims, plus
+// each alias's from before that alias was linked. Every reader of an entry's
+// history goes through here, so neither a renamed entry nor a machine that
+// took its old name up again can reach the other's snapshots. A container is
+// passed both of its identities where its dumps count as its backups.
+func (s *Service) snapshotsOwnedBy(ctx context.Context, repo string, mode restic.Mode, ids ...entryIdentity) ([]restic.Snapshot, error) {
+	var tags []string
+	for _, id := range ids {
+		tags = append(tags, id.listTags()...)
+	}
+	listed, err := s.snapshotsForTags(ctx, repo, mode, tags)
 	if err != nil {
 		return nil, err
 	}
-	return id.owned(listed), nil
+	return ownedByAny(listed, ids...), nil
 }
 
 // snapshotsForTags is snapshotsForTag for several tags: a snapshot is included
@@ -434,10 +520,33 @@ func chosenSnapshot(snaps []restic.Snapshot, id string) *restic.Snapshot {
 	return nil
 }
 
-// sanitizeTags trims each tag, drops empties, and rejects any tag containing a
-// comma or a control character. restic stores tags as a comma-separated list, so
-// a comma would split one tag into two; control characters could corrupt argv or
-// the snapshot metadata. Returns an error naming the offending tag.
+// reservedTagPrefixes are the prefixes BombVault writes itself. A hand-written
+// tag carrying one would put the snapshot into an item's retention series, into
+// a database dump listing, or into the rename history that decides whose
+// snapshots a name holds, which is why "add tag" refuses them.
+var reservedTagPrefixes = []string{
+	"container:", "vm:", "fileset:", "stack:", "vmrun:", "formerly:",
+	dbDumpIdentityPrefix, "dbengine:", "dbimage:", "dbversion:", "dbname:", "bvrun:", "zfs:",
+}
+
+// tagValueError reports why a string cannot be a restic tag. restic stores tags
+// as a comma-separated list, so a comma would split one tag into two; control
+// characters could corrupt argv or the snapshot metadata.
+func tagValueError(tag string) error {
+	if strings.ContainsRune(tag, ',') {
+		return fmt.Errorf("invalid tag %q: tags cannot contain a comma", tag)
+	}
+	for _, r := range tag {
+		if r < 0x20 || r == 0x7f {
+			return fmt.Errorf("invalid tag %q: tags cannot contain control characters", tag)
+		}
+	}
+	return nil
+}
+
+// sanitizeTags trims each tag, drops empties, and rejects any tag restic cannot
+// carry or BombVault reserves for itself. Returns an error naming the offending
+// tag.
 func sanitizeTags(in []string) ([]string, error) {
 	out := make([]string, 0, len(in))
 	for _, raw := range in {
@@ -445,12 +554,12 @@ func sanitizeTags(in []string) ([]string, error) {
 		if tag == "" {
 			continue
 		}
-		if strings.ContainsRune(tag, ',') {
-			return nil, fmt.Errorf("invalid tag %q: tags cannot contain a comma", tag)
+		if err := tagValueError(tag); err != nil {
+			return nil, err
 		}
-		for _, r := range tag {
-			if r < 0x20 || r == 0x7f {
-				return nil, fmt.Errorf("invalid tag %q: tags cannot contain control characters", tag)
+		for _, prefix := range reservedTagPrefixes {
+			if strings.HasPrefix(tag, prefix) {
+				return nil, fmt.Errorf("invalid tag %q: this prefix is reserved for BombVault", tag)
 			}
 		}
 		out = append(out, tag)

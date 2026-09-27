@@ -7,8 +7,12 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"slices"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -32,27 +36,32 @@ type settingsView struct {
 	FlashEnabled              bool   `json:"flashEnabled"`
 	ConfigEnabled             bool   `json:"configEnabled"`
 	FilesEnabled              bool   `json:"filesEnabled"`
+	ZFSEnabled                bool   `json:"zfsEnabled"`
 	ContainersPath            string `json:"containersPath"`
 	VMsPath                   string `json:"vmsPath"`
 	FlashPath                 string `json:"flashPath"`
 	ConfigPath                string `json:"configPath"`
 	FilesPath                 string `json:"filesPath"`
+	ZFSPath                   string `json:"zfsPath"`
 	RestoreFolder             string `json:"restoreFolder"`
 	ContainersOffsite         string `json:"containersOffsite"`
 	VMsOffsite                string `json:"vmsOffsite"`
 	FlashOffsite              string `json:"flashOffsite"`
 	ConfigOffsite             string `json:"configOffsite"`
 	FilesOffsite              string `json:"filesOffsite"`
+	ZFSOffsite                string `json:"zfsOffsite"`
 	ContainersOffsiteSchedule string `json:"containersOffsiteSchedule"`
 	VMsOffsiteSchedule        string `json:"vmsOffsiteSchedule"`
 	FlashOffsiteSchedule      string `json:"flashOffsiteSchedule"`
 	ConfigOffsiteSchedule     string `json:"configOffsiteSchedule"`
 	FilesOffsiteSchedule      string `json:"filesOffsiteSchedule"`
+	ZFSOffsiteSchedule        string `json:"zfsOffsiteSchedule"`
 	ContainersSchedule        string `json:"containersSchedule"`
 	VMsSchedule               string `json:"vmsSchedule"`
 	FlashSchedule             string `json:"flashSchedule"`
 	ConfigSchedule            string `json:"configSchedule"`
 	FilesSchedule             string `json:"filesSchedule"`
+	ZFSSchedule               string `json:"zfsSchedule"`
 	// Scheduled flash ZIP export: enable, destination folder (relative subpath
 	// under the mount root), and how many timestamped zips to keep (0 = a single
 	// overwriting flash-latest.zip).
@@ -107,6 +116,7 @@ type settingsView struct {
 	FlashOffsiteImmutable      bool `json:"flashOffsiteImmutable"`
 	ConfigOffsiteImmutable     bool `json:"configOffsiteImmutable"`
 	FilesOffsiteImmutable      bool `json:"filesOffsiteImmutable"`
+	ZFSOffsiteImmutable        bool `json:"zfsOffsiteImmutable"`
 	// Off-site growth budget in GB (0 = alarm off) + tamper-test cadence +
 	// DR-drill target container/VM ('' = auto).
 	OffsiteGrowthBudgetGB int    `json:"offsiteGrowthBudgetGB"`
@@ -163,6 +173,23 @@ type settingsView struct {
 	// PullEnabled gates fetching another instance's backups into this box's own
 	// repository. Off by default, and unlike the two flags above it writes data.
 	PullEnabled bool `json:"pullEnabled"`
+	// DBDumpsEnabled is the emergency stop for the automatic database dumps,
+	// on by default. A pointer where its neighbours are plain bools: the GET
+	// always fills it, and on PUT or import nil means keep. Every other bool
+	// here is copied as it stands, so an export file or a browser tab that
+	// predates the switch would otherwise turn a safety feature off without a
+	// word.
+	DBDumpsEnabled *bool `json:"dbDumpsEnabled"`
+	// Anomaly detection over the backup history: the switch, the preset every
+	// item follows, the severity from which a finding is pushed, and the pause
+	// on deleting old backups after a loss of data. The two switches are
+	// pointers and the two presets keep their stored value when blank, for the
+	// reason DBDumpsEnabled above is a pointer: a file or a browser tab that
+	// predates them would otherwise turn detection and the pause off.
+	AnomalyEnabled       *bool  `json:"anomalyEnabled"`
+	AnomalySensitivity   string `json:"anomalySensitivity"`
+	AnomalyNotifyMin     string `json:"anomalyNotifyMin"`
+	AnomalyRetentionHold *bool  `json:"anomalyRetentionHold"`
 	// InstanceName is this instance's display name, reported to polling fleet
 	// peers so their Fleet page can label this box. Not a secret.
 	InstanceName string `json:"instanceName"`
@@ -206,11 +233,13 @@ func toView(s store.Settings) settingsView {
 		FlashEnabled:      s.FlashEnabled,
 		ConfigEnabled:     s.ConfigEnabled,
 		FilesEnabled:      s.FilesEnabled,
+		ZFSEnabled:        s.ZFSEnabled,
 		ContainersPath:    s.ContainersPath,
 		VMsPath:           s.VMsPath,
 		FlashPath:         s.FlashPath,
 		ConfigPath:        s.ConfigPath,
 		FilesPath:         s.FilesPath,
+		ZFSPath:           s.ZFSPath,
 		RestoreFolder:     s.RestoreFolder,
 		// Verbatim: the credentialed export, gated on a login password, needs a
 		// complete copy. The other exits scrub on their own, through
@@ -220,16 +249,19 @@ func toView(s store.Settings) settingsView {
 		FlashOffsite:                s.FlashOffsite,
 		ConfigOffsite:               s.ConfigOffsite,
 		FilesOffsite:                s.FilesOffsite,
+		ZFSOffsite:                  s.ZFSOffsite,
 		ContainersOffsiteSchedule:   s.ContainersOffsiteSchedule,
 		VMsOffsiteSchedule:          s.VMsOffsiteSchedule,
 		FlashOffsiteSchedule:        s.FlashOffsiteSchedule,
 		ConfigOffsiteSchedule:       s.ConfigOffsiteSchedule,
 		FilesOffsiteSchedule:        s.FilesOffsiteSchedule,
+		ZFSOffsiteSchedule:          s.ZFSOffsiteSchedule,
 		ContainersSchedule:          s.ContainersSchedule,
 		VMsSchedule:                 s.VMsSchedule,
 		FlashSchedule:               s.FlashSchedule,
 		ConfigSchedule:              s.ConfigSchedule,
 		FilesSchedule:               s.FilesSchedule,
+		ZFSSchedule:                 s.ZFSSchedule,
 		FlashZipExportEnabled:       s.FlashZipExportEnabled,
 		FlashZipExportPath:          s.FlashZipExportPath,
 		FlashZipExportKeep:          s.FlashZipExportKeep,
@@ -260,6 +292,7 @@ func toView(s store.Settings) settingsView {
 		FlashOffsiteImmutable:       s.FlashOffsiteImmutable,
 		ConfigOffsiteImmutable:      s.ConfigOffsiteImmutable,
 		FilesOffsiteImmutable:       s.FilesOffsiteImmutable,
+		ZFSOffsiteImmutable:         s.ZFSOffsiteImmutable,
 		OffsiteGrowthBudgetGB:       s.OffsiteGrowthBudgetGB,
 		TamperTestSchedule:          s.TamperTestSchedule,
 		DRDrillTarget:               s.DRDrillTarget,
@@ -279,6 +312,11 @@ func toView(s store.Settings) settingsView {
 		PerItemSchedules:            s.PerItemSchedules,
 		FleetEnabled:                s.FleetEnabled,
 		PullEnabled:                 s.PullEnabled,
+		DBDumpsEnabled:              &s.DBDumpsEnabled,
+		AnomalyEnabled:              &s.AnomalyEnabled,
+		AnomalySensitivity:          s.AnomalySensitivity,
+		AnomalyNotifyMin:            s.AnomalyNotifyMin,
+		AnomalyRetentionHold:        &s.AnomalyRetentionHold,
 		InstanceName:                s.InstanceName,
 		FleetToken:                  "", // secret, never echoed; FleetTokenSet reports presence
 		FleetTokenSet:               s.FleetToken != "",
@@ -314,6 +352,7 @@ func scrubGetSettingsSecrets(v settingsView) settingsView {
 	v.FlashOffsite = scrubRepoLocation(v.FlashOffsite)
 	v.ConfigOffsite = scrubRepoLocation(v.ConfigOffsite)
 	v.FilesOffsite = scrubRepoLocation(v.FilesOffsite)
+	v.ZFSOffsite = scrubRepoLocation(v.ZFSOffsite)
 	v.EverythingPreHook = ""
 	v.EverythingPostHook = ""
 	return v
@@ -343,11 +382,15 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 	// object; hostMountRoot and platform sit beside it so the strict PUT
 	// decoder never sees them. platform is the detected or overridden
 	// platform.Kind ("unraid", "generic", "truenas") and cannot be changed here.
+	// scheduleZone is the clock every schedule is read on, which the page names
+	// when the browser runs on a different one.
+	zone, offset := time.Now().Zone()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":            true,
 		"settings":      view,
 		"hostMountRoot": h.cfg.HostMountRoot,
 		"platform":      string(h.svc.platformFn().Kind()),
+		"scheduleZone":  map[string]any{"name": zone, "offsetSeconds": offset},
 	})
 }
 
@@ -365,6 +408,7 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 func rejectEveryNSchedules(v settingsView) string {
 	for _, cad := range []string{
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
+		v.ZFSOffsiteSchedule,
 	} {
 		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
 			return "this schedule does not support 'everyN': use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression"
@@ -436,11 +480,13 @@ func (h *Handler) rejectSettingsPathOnNamedRepo(v settingsView, cur store.Settin
 		{"Flash", v.FlashPath, cur.FlashPath},
 		{"Config", v.ConfigPath, cur.ConfigPath},
 		{"Folders", v.FilesPath, cur.FilesPath},
+		{"ZFS datasets", v.ZFSPath, cur.ZFSPath},
 		{"Containers off-site", v.ContainersOffsite, cur.ContainersOffsite},
 		{"VMs off-site", v.VMsOffsite, cur.VMsOffsite},
 		{"Flash off-site", v.FlashOffsite, cur.FlashOffsite},
 		{"Config off-site", v.ConfigOffsite, cur.ConfigOffsite},
 		{"Folders off-site", v.FilesOffsite, cur.FilesOffsite},
+		{"ZFS datasets off-site", v.ZFSOffsite, cur.ZFSOffsite},
 	} {
 		if strings.TrimSpace(f.loc) == "" {
 			continue
@@ -512,6 +558,44 @@ func (h *Handler) rejectNestedSettingsPath(v settingsView, cur store.Settings) s
 	return ""
 }
 
+// applyOffsiteSettings writes the form's off-site fields onto cur. The GET hands
+// out locations with any embedded credential replaced by the redaction marker,
+// so a location that still carries it keeps the stored one; writing it back
+// would destroy the stored password on the next unrelated save.
+func applyOffsiteSettings(cur *store.Settings, v settingsView) {
+	keepLocation := func(incoming, stored string) string {
+		if locationRedacted(incoming) {
+			return stored
+		}
+		return incoming
+	}
+	cur.ContainersOffsite = keepLocation(v.ContainersOffsite, cur.ContainersOffsite)
+	cur.VMsOffsite = keepLocation(v.VMsOffsite, cur.VMsOffsite)
+	cur.FlashOffsite = keepLocation(v.FlashOffsite, cur.FlashOffsite)
+	cur.ConfigOffsite = keepLocation(v.ConfigOffsite, cur.ConfigOffsite)
+	cur.FilesOffsite = keepLocation(v.FilesOffsite, cur.FilesOffsite)
+	cur.ZFSOffsite = keepLocation(v.ZFSOffsite, cur.ZFSOffsite)
+	cur.ContainersOffsiteSchedule = v.ContainersOffsiteSchedule
+	cur.VMsOffsiteSchedule = v.VMsOffsiteSchedule
+	cur.FlashOffsiteSchedule = v.FlashOffsiteSchedule
+	cur.ConfigOffsiteSchedule = v.ConfigOffsiteSchedule
+	cur.FilesOffsiteSchedule = v.FilesOffsiteSchedule
+	cur.ZFSOffsiteSchedule = v.ZFSOffsiteSchedule
+	cur.OffsiteRetentionKeepLast = max(0, v.OffsiteRetentionKeepLast)
+	cur.OffsiteRetentionKeepDaily = max(0, v.OffsiteRetentionKeepDaily)
+	cur.OffsiteRetentionKeepWeekly = max(0, v.OffsiteRetentionKeepWeekly)
+	cur.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
+	cur.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
+	cur.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
+	cur.ContainersOffsiteImmutable = v.ContainersOffsiteImmutable
+	cur.VMsOffsiteImmutable = v.VMsOffsiteImmutable
+	cur.FlashOffsiteImmutable = v.FlashOffsiteImmutable
+	cur.ConfigOffsiteImmutable = v.ConfigOffsiteImmutable
+	cur.FilesOffsiteImmutable = v.FilesOffsiteImmutable
+	cur.ZFSOffsiteImmutable = v.ZFSOffsiteImmutable
+	cur.OffsiteGrowthBudgetGB = max(0, v.OffsiteGrowthBudgetGB)
+}
+
 // rejectInvalidSettingsPaths validates every repo location a settings row
 // carries: the restore folder is always local, a remote backend (rclone:/s3:/
 // rest:/sftp:/b2:) is accepted verbatim, an unprefixed remote-looking value is
@@ -527,8 +611,8 @@ func rejectInvalidSettingsPaths(v settingsView, mountRoot string) string {
 
 	// A blank off-site field means none.
 	for _, sub := range []string{
-		v.ContainersPath, v.VMsPath, v.FlashPath, v.ConfigPath, v.FilesPath, v.RestoreFolder,
-		v.ContainersOffsite, v.VMsOffsite, v.FlashOffsite, v.ConfigOffsite, v.FilesOffsite,
+		v.ContainersPath, v.VMsPath, v.FlashPath, v.ConfigPath, v.FilesPath, v.ZFSPath, v.RestoreFolder,
+		v.ContainersOffsite, v.VMsOffsite, v.FlashOffsite, v.ConfigOffsite, v.FilesOffsite, v.ZFSOffsite,
 	} {
 		if sub == "" || restic.IsRemoteRepo(sub) {
 			continue
@@ -561,9 +645,56 @@ func rejectInvalidSettingsNames(v settingsView) string {
 	return ""
 }
 
+// rejectInvalidAnomalySettings guards the two anomaly presets on both write
+// paths. Blank means "keep what is stored", so an export from before the
+// feature and a client that sends neither key both pass.
+func rejectInvalidAnomalySettings(v settingsView) string {
+	if p := v.AnomalySensitivity; p != "" && !slices.Contains(anomalyPresets, Sensitivity(p)) {
+		return "unknown anomaly sensitivity " + strconv.Quote(p)
+	}
+	if m := v.AnomalyNotifyMin; m != "" && !slices.Contains(anomalyNotifyLevels, m) {
+		return "unknown anomaly notification minimum " + strconv.Quote(m)
+	}
+	return ""
+}
+
+// applyAnomalySettings writes the four anomaly fields onto the row and reports
+// whether any of them moved. An absent switch and a blank preset keep what is
+// stored, so an old browser tab saving an unrelated card cannot switch
+// detection or the retention pause off.
+func applyAnomalySettings(cur *store.Settings, v settingsView) bool {
+	before := *cur
+	if v.AnomalyEnabled != nil {
+		cur.AnomalyEnabled = *v.AnomalyEnabled
+	}
+	if v.AnomalySensitivity != "" {
+		cur.AnomalySensitivity = v.AnomalySensitivity
+	}
+	if v.AnomalyNotifyMin != "" {
+		cur.AnomalyNotifyMin = v.AnomalyNotifyMin
+	}
+	if v.AnomalyRetentionHold != nil {
+		cur.AnomalyRetentionHold = *v.AnomalyRetentionHold
+	}
+	return anomalySettingsMoved(before, *cur)
+}
+
+// anomalySettingsMoved reports whether a write changed any of the four fields,
+// which is when the engine has to judge every series again.
+func anomalySettingsMoved(before, after store.Settings) bool {
+	return before.AnomalyEnabled != after.AnomalyEnabled ||
+		before.AnomalySensitivity != after.AnomalySensitivity ||
+		before.AnomalyNotifyMin != after.AnomalyNotifyMin ||
+		before.AnomalyRetentionHold != after.AnomalyRetentionHold
+}
+
 func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	var v settingsView
 	if !decodeBody(w, r, &v) {
+		return
+	}
+	if msg := rejectInvalidAnomalySettings(v); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
 
@@ -595,10 +726,22 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
+	next := cur
+	applyOffsiteSettings(&next, v)
+	adoptMsg, adoptErr := h.svc.rejectAdoptionOverOwnSettings(next)
+	if adoptErr != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(adoptErr))
+		return
+	}
+	if adoptMsg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": adoptMsg})
+		return
+	}
 
 	for _, cad := range []string{
-		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule,
+		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule, v.ZFSSchedule,
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
+		v.ZFSOffsiteSchedule,
 		v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule, v.EverythingSchedule,
 	} {
 		if _, err := schedule.ParseCadence(cad); err != nil {
@@ -637,7 +780,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		if tErr := h.svc.VMSSHTest(r.Context()); tErr != nil {
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok":    false,
-				"error": "Can't enable VM backup yet: " + scrubError(tErr) + ". Set up the SSH key under “VM Backup over SSH” and click Test connection first.",
+				"error": "Can't enable VM backup yet: " + scrubError(tErr) + ". Set up the SSH key under “Host SSH” and click Test connection first.",
 			})
 			return
 		}
@@ -647,6 +790,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// to get verbatim, since a registry host can contain "/" and failEnvelope
 	// would turn it into "[path]". It is carried out of the callback for that.
 	var registryInputErr error
+
+	// Whether this save touched detection at all, so the engine judges every
+	// series again only when the rules behind it moved.
+	var anomalyChanged bool
 
 	// The form's own fields are assigned one by one onto the current row inside
 	// the transaction, never as a whole struct literal, so a column this form
@@ -663,37 +810,21 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.FlashEnabled = v.FlashEnabled
 		cur.ConfigEnabled = v.ConfigEnabled
 		cur.FilesEnabled = v.FilesEnabled
+		cur.ZFSEnabled = v.ZFSEnabled
 		cur.ContainersPath = v.ContainersPath
 		cur.VMsPath = v.VMsPath
 		cur.FlashPath = v.FlashPath
 		cur.ConfigPath = v.ConfigPath
 		cur.FilesPath = v.FilesPath
+		cur.ZFSPath = v.ZFSPath
 		cur.RestoreFolder = v.RestoreFolder
-		// GET hands these locations out with any credential replaced by the
-		// redaction marker, so a location that still carries it keeps the stored
-		// one, as the settings import does. Otherwise the next unrelated save
-		// would destroy the stored password.
-		keepLocation := func(incoming, stored string) string {
-			if locationRedacted(incoming) {
-				return stored
-			}
-			return incoming
-		}
-		cur.ContainersOffsite = keepLocation(v.ContainersOffsite, cur.ContainersOffsite)
-		cur.VMsOffsite = keepLocation(v.VMsOffsite, cur.VMsOffsite)
-		cur.FlashOffsite = keepLocation(v.FlashOffsite, cur.FlashOffsite)
-		cur.ConfigOffsite = keepLocation(v.ConfigOffsite, cur.ConfigOffsite)
-		cur.FilesOffsite = keepLocation(v.FilesOffsite, cur.FilesOffsite)
-		cur.ContainersOffsiteSchedule = v.ContainersOffsiteSchedule
-		cur.VMsOffsiteSchedule = v.VMsOffsiteSchedule
-		cur.FlashOffsiteSchedule = v.FlashOffsiteSchedule
-		cur.ConfigOffsiteSchedule = v.ConfigOffsiteSchedule
-		cur.FilesOffsiteSchedule = v.FilesOffsiteSchedule
+		applyOffsiteSettings(cur, v)
 		cur.ContainersSchedule = v.ContainersSchedule
 		cur.VMsSchedule = v.VMsSchedule
 		cur.FlashSchedule = v.FlashSchedule
 		cur.ConfigSchedule = v.ConfigSchedule
 		cur.FilesSchedule = v.FilesSchedule
+		cur.ZFSSchedule = v.ZFSSchedule
 		cur.FlashZipExportEnabled = v.FlashZipExportEnabled
 		cur.FlashZipExportPath = v.FlashZipExportPath
 		cur.FlashZipExportKeep = max(0, v.FlashZipExportKeep)
@@ -702,12 +833,6 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.RetentionKeepDaily = max(0, v.RetentionKeepDaily)
 		cur.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
 		cur.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
-		cur.OffsiteRetentionKeepLast = max(0, v.OffsiteRetentionKeepLast)
-		cur.OffsiteRetentionKeepDaily = max(0, v.OffsiteRetentionKeepDaily)
-		cur.OffsiteRetentionKeepWeekly = max(0, v.OffsiteRetentionKeepWeekly)
-		cur.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
-		cur.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
-		cur.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
 		// A number above the machine's thread count caps nothing. 0 means every
 		// core.
 		cur.BackupCores = min(max(0, v.BackupCores), runtime.NumCPU())
@@ -717,12 +842,6 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.DrillsSubsetPct = max(1, min(100, v.DrillsSubsetPct))
 		cur.OffsiteDrillsEnabled = v.OffsiteDrillsEnabled
 		cur.RecoveryKitAck = v.RecoveryKitAck
-		cur.ContainersOffsiteImmutable = v.ContainersOffsiteImmutable
-		cur.VMsOffsiteImmutable = v.VMsOffsiteImmutable
-		cur.FlashOffsiteImmutable = v.FlashOffsiteImmutable
-		cur.ConfigOffsiteImmutable = v.ConfigOffsiteImmutable
-		cur.FilesOffsiteImmutable = v.FilesOffsiteImmutable
-		cur.OffsiteGrowthBudgetGB = max(0, v.OffsiteGrowthBudgetGB)
 		cur.TamperTestSchedule = v.TamperTestSchedule
 		cur.DRDrillTarget = strings.TrimSpace(v.DRDrillTarget)
 		cur.DRDrillTargetVM = strings.TrimSpace(v.DRDrillTargetVM)
@@ -741,6 +860,13 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.PerItemSchedules = v.PerItemSchedules
 		cur.FleetEnabled = v.FleetEnabled
 		cur.PullEnabled = v.PullEnabled
+		// An absent switch keeps the stored one: an older tab posts a body
+		// without it, and reading that as "off" would stop dumping databases
+		// on a save of an unrelated card.
+		if v.DBDumpsEnabled != nil {
+			cur.DBDumpsEnabled = *v.DBDumpsEnabled
+		}
+		anomalyChanged = applyAnomalySettings(cur, v)
 		cur.InstanceName = strings.TrimSpace(v.InstanceName)
 		cur.EverythingSchedule = v.EverythingSchedule
 		// Blank keeps the stored command, like the tokens below: GET never
@@ -804,11 +930,14 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// The replication path reads each domain's primary offsite_targets row, so
 	// the saved off-site config is mirrored there; settings stay the source for
 	// the fallback path.
+	if anomalyChanged {
+		h.svc.anomalies.settingsChanged()
+	}
 	h.svc.syncAllPrimaryOffsiteTargets(s)
 	// The CPU cap reaches restic through the environment of the next child it
 	// starts, so it applies without a restart; a running backup keeps its value.
 	restic.SetMaxProcs(s.BackupCores)
-	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
+	if err := h.scheduler.ReloadWithGates(s, h.dueGates()); err != nil {
 		// The settings are saved, but the scheduler could not re-register.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
@@ -817,7 +946,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// not a failure: BombVault never prunes an append-only repo, so the policy
 	// does nothing until the far side enforces it.
 	notes := []string{}
-	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable || s.ConfigOffsiteImmutable || s.FilesOffsiteImmutable) &&
+	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable || s.ConfigOffsiteImmutable ||
+		s.FilesOffsiteImmutable || s.ZFSOffsiteImmutable) &&
 		(s.OffsiteRetentionKeepLast > 0 || s.OffsiteRetentionKeepDaily > 0 ||
 			s.OffsiteRetentionKeepWeekly > 0 || s.OffsiteRetentionKeepMonthly > 0) {
 		notes = append(notes, "The off-site repo is append-only (immutable), so BombVault will not apply the off-site retention policy; enforce retention far-side (e.g. a rest-server prune cron) or use a maintenance window.")
@@ -846,6 +976,25 @@ func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
 	if !h.requireAuthForSecrets(w, "downloading the recovery kit") {
 		return
 	}
+	// The seal decision is made BEFORE the kit is built, from ONE settings read,
+	// and a failed read refuses outright. ExportEncryptionOn() will not do:
+	// that is a second, best-effort read which reports false when the store
+	// errors, harmless where it only picks a filename and catastrophic here,
+	// where it would answer "encryption off" to a transient error and hand out
+	// the master key in the clear.
+	settings, sErr := h.store.GetSettings()
+	if sErr != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(sErr))
+		return
+	}
+	recipients, sealing, rErr := h.svc.exportRecipients(settings)
+	if rErr != nil {
+		// Encryption on with no usable recipient. Refuse; never fall back to
+		// the plaintext this setting exists to prevent.
+		writeJSON(w, http.StatusOK, failEnvelope(rErr))
+		return
+	}
+
 	kit, err := h.svc.RecoveryKit()
 	if err != nil {
 		// A build failure (settings read) is reported as JSON before any body is
@@ -853,10 +1002,27 @@ func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
-	w.Header().Set("Content-Disposition", `attachment; filename="bombvault-recovery-kit.md"`)
+
+	body := []byte(kit)
+	contentType := "text/markdown; charset=utf-8"
+	filename := "bombvault-recovery-kit.md"
+	if sealing {
+		sealed, sealErr := ageseal.SealArmored(body, recipients)
+		if sealErr != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(sealErr))
+			return
+		}
+		body = sealed
+		// Armored, so it stays text: the kit is meant to be pasted into a
+		// password manager or printed, and that has to keep working sealed.
+		contentType = "application/octet-stream"
+		filename = "bombvault-recovery-kit.md.age"
+	}
+
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
 	w.WriteHeader(http.StatusOK)
-	if _, wErr := w.Write([]byte(kit)); wErr != nil {
+	if _, wErr := w.Write(body); wErr != nil {
 		// Log only the failure, never the body (it contains the master key).
 		log.Printf("api: recovery-kit: write failed: %v", wErr)
 	}

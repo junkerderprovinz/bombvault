@@ -270,7 +270,7 @@ var placementMigrations = []struct {
 	name  string
 	probe func(*sql.Tx) (bool, error)
 }{
-	{"offsite_targets_primary_slot", recordedAs("offsite_targets_primary_slot")},
+	{"offsite_targets_primary_slot", migrationRecorded("offsite_targets_primary_slot")},
 	{"offsite_copy_rules", tablePresent("offsite_copy_rules")},
 	{"placement_defaults", tablePresent("placement_defaults")},
 	{"offsite_item_copies", tablePresent("offsite_item_copies")},
@@ -296,9 +296,9 @@ func probeOnce(t *testing.T, db *sql.DB, probe func(*sql.Tx) (bool, error)) bool
 	return ok
 }
 
-// TestPlacementMigrationsSurviveRenumbering replays two migrations inserted in
-// front of the placement ones: a database that ran them under the old numbers
-// takes the two new ones and records every renumbered body without running it
+// TestPlacementMigrationsSurviveRenumbering checks that a database that
+// recorded the placement migrations under other numbers takes the migrations
+// now in front of them and records each renumbered body without running it
 // again.
 func TestPlacementMigrationsSurviveRenumbering(t *testing.T) {
 	db := OpenMem(t)
@@ -320,13 +320,11 @@ func TestPlacementMigrationsSurviveRenumbering(t *testing.T) {
 		{version: first + 1, name: "incoming_two", sql: `CREATE TABLE incoming_two (x INTEGER)`},
 	}
 	list = append(list, incoming...)
-	for i, b := range placementMigrations {
-		m := migrationNamed(t, b.name)
-		m.version = first + len(incoming) + i
-		list = append(list, m)
+	for i, p := range placementMigrations {
+		list = append(list, renumbered(t, p.name, first+len(incoming)+i))
 	}
-	// Everything from the first placement migration up, so the renumbered list is
-	// what decides where each body is recorded.
+	// Everything from the first placement migration up, so the renumbered list
+	// is what decides where each body is recorded.
 	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version >= ?`, first); err != nil {
 		t.Fatal(err)
 	}
@@ -341,17 +339,89 @@ func TestPlacementMigrationsSurviveRenumbering(t *testing.T) {
 			t.Errorf("v%d recorded as %q, want %s run", m.version, applied[m.version], m.name)
 		}
 	}
-	for i, b := range placementMigrations {
+	for i, p := range placementMigrations {
 		v := first + len(incoming) + i
-		if applied[v] != b.name {
-			t.Errorf("v%d recorded as %q, want %s", v, applied[v], b.name)
+		if applied[v] != p.name {
+			t.Errorf("v%d recorded as %q, want %s", v, applied[v], p.name)
 		}
-		if !probeOnce(t, db, b.probe) {
-			t.Errorf("%s has not taken effect", b.name)
+		if !probeOnce(t, db, p.probe) {
+			t.Errorf("%s has not taken effect", p.name)
 		}
 	}
 	if got := sortOrders(t, db); !maps.Equal(got, orders) {
 		t.Errorf("sort_order = %v after the renumbering, want %v", got, orders)
+	}
+}
+
+// migrateAsBuild migrates db with the migrations up to v8.11.1 followed by
+// extra, the way a build that numbered other bodies from 109 did.
+func migrateAsBuild(t *testing.T, db *sql.DB, extra ...migration) {
+	t.Helper()
+	all := migrations
+	defer func() { migrations = all }()
+	var list []migration
+	for _, m := range all {
+		if m.version <= v8111Schema {
+			list = append(list, m)
+		}
+	}
+	migrations = append(list, extra...)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("migrate as the other build: %v", err)
+	}
+}
+
+func renumbered(t *testing.T, name string, version int) migration {
+	t.Helper()
+	m := migrationNamed(t, name)
+	m.version = version
+	return m
+}
+
+func TestPlacementMigrationsRunWhereAnotherBuildRecordedTheirNumbers(t *testing.T) {
+	builds := map[string]func(t *testing.T) []migration{
+		"renamed entries at 109 to 111": func(t *testing.T) []migration {
+			return []migration{
+				renumbered(t, "target_aliases", 109),
+				renumbered(t, "vm_uuid", 110),
+				renumbered(t, "target_alias_prev_definition", 111),
+			}
+		},
+		"already off site at 109": func(*testing.T) []migration {
+			return []migration{{
+				version: 109, name: "named_repo_already_offsite",
+				sql: `ALTER TABLE offsite_targets ADD COLUMN already_offsite INTEGER NOT NULL DEFAULT 0;`,
+			}}
+		},
+	}
+	for name, build := range builds {
+		t.Run(name, func(t *testing.T) {
+			db := OpenMem(t)
+			seedV8111(t, db)
+			migrateAsBuild(t, db, build(t)...)
+			if err := Migrate(db); err != nil {
+				t.Fatalf("Migrate: %v", err)
+			}
+
+			applied := appliedVersions(t, db)
+			for _, m := range migrations {
+				if applied[m.version] != m.name {
+					t.Errorf("v%d recorded as %q, want %s", m.version, applied[m.version], m.name)
+				}
+			}
+			for _, p := range placementMigrations {
+				if !probeOnce(t, db, p.probe) {
+					t.Errorf("%s has not taken effect", p.name)
+				}
+			}
+			want := map[string]int{"c-field": 0, "c-hetzner": 1, "c-mesh": 2, "f-field": 0, "r-nas": 0, "r-box": 0}
+			if got := sortOrders(t, db); !maps.Equal(got, want) {
+				t.Errorf("sort_order = %v, want %v", got, want)
+			}
+			if n := intOf(t, db, `SELECT count(*) FROM placement_defaults WHERE domain = 'containers' AND confirmed_manually = 1`); n != 1 {
+				t.Errorf("containers has %d confirmed defaults, want the one it keeps replicating with", n)
+			}
+		})
 	}
 }
 

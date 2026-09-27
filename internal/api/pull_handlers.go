@@ -73,7 +73,7 @@ func pullSourceToView(ps store.PullSource) pullSourceView {
 // pullDomains is where a pulled snapshot may land. It is the same set the
 // backup side knows, and a source must name exactly one: a sender replicates per
 // domain into separate repositories, so a source repository holds one domain.
-var pullDomains = map[string]bool{"containers": true, "vms": true, "files": true, "flash": true, "config": true}
+var pullDomains = map[string]bool{"containers": true, "vms": true, "files": true, "flash": true, "config": true, "zfs": true}
 
 // buildPullSource validates in and folds it onto existing (the zero value on
 // create), returning the row to persist or a user-facing message.
@@ -87,7 +87,7 @@ func (h *Handler) buildPullSource(in pullSourceInput, existing store.PullSource,
 	}
 	domain := strings.TrimSpace(in.Domain)
 	if !pullDomains[domain] {
-		return store.PullSource{}, "choose which kind of backup this source holds (containers, vms, files, flash or config)"
+		return store.PullSource{}, "choose which kind of backup this source holds (containers, vms, files, zfs, flash or config)"
 	}
 
 	ps := existing

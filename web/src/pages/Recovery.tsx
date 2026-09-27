@@ -10,7 +10,7 @@ import { withLtrIsolates, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS } from "../lib
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
-import { IconRestore } from "../components/Sidebar";
+import { IconDatabase, IconRestore } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
@@ -20,17 +20,22 @@ import { CopyPicker, PlaceLine, useSelfBackupPlaces } from "../components/recove
 import { ToggleRow } from "./settings/shared";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { fireAndWaitRun } from "../lib/backupWatch";
+import { importRefusedKey } from "../lib/dbdump";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import {
   discover,
   discoverVMs,
   discoverFiles,
+  discoverZFS,
   discoverAll,
   getSettings,
   putSettings,
   listContainers,
   listVMs,
   listFileSets,
+  listZFSDatasets,
+  listDbDumps,
+  importDbDump,
   fileSetSnapshots,
   restore,
   restoreVM,
@@ -53,9 +58,11 @@ import {
   type Container,
   type VM,
   type FileSetView,
+  type ZFSDatasetView,
   type FileEntry,
   type ForeignInventory,
   type ForeignItem,
+  type Snapshot,
 } from "../lib/api";
 import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { useConfirm } from "../lib/useConfirm";
@@ -144,6 +151,97 @@ function RestoreRow({
         }
         t={t}
       />
+    </div>
+  );
+}
+
+// DumpOnlyRow restores a container the repositories hold as dumps alone and
+// imports its newest dump into it. The container comes back running, because
+// the import writes through the started server, and the two runs are watched
+// one after the other so the row can say which of them failed.
+function DumpOnlyRow({
+  name,
+  t,
+  otherActive,
+  hueIndex,
+}: {
+  name: string;
+  t: ReturnType<typeof useT>["t"];
+  otherActive: boolean;
+  hueIndex: number;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [outcome, setOutcome] = useState<{ ok: boolean; message: string } | null>(null);
+
+  async function run() {
+    setBusy(true);
+    setOutcome(null);
+    try {
+      const restored = await fireAndWaitRun({
+        kind: "restore",
+        matchRun: (r) => r.domain === "container" && r.target === name,
+        start: () => restore(name, "latest", true),
+        t,
+      });
+      if (!restored.ok) {
+        setOutcome({ ok: false, message: restored.error ?? t("common.restoreFailed") });
+        return;
+      }
+      const list = await listDbDumps(name);
+      const newest = (list.dumps ?? []).find((d) => !d.damaged);
+      if (!newest) {
+        setOutcome({ ok: false, message: t("dbdump.none") });
+        return;
+      }
+      // The refusal id is read inside start(), the only place it reaches: the
+      // watch reports a refused start as its plain message.
+      const refused = { message: "" };
+      const imported = await fireAndWaitRun({
+        kind: "dbimport",
+        matchRun: (r) => r.domain === "container" && r.target === name,
+        start: async () => {
+          const res = await importDbDump(name, newest.id);
+          const key = res.ok ? null : importRefusedKey(res.code, newest.engine);
+          if (key) {
+            refused.message = t(key).replace("{server}", res.server ?? "").replace("{dump}", res.dump ?? "");
+          }
+          return res;
+        },
+        t,
+      });
+      setOutcome(
+        imported.ok
+          ? { ok: true, message: t("dbdump.importDone") }
+          : { ok: false, message: refused.message || imported.error || t("common.actionFailed") }
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div
+      className="flex flex-col gap-1 py-2 glim-hue"
+      style={hueVars(hueIndex) as CSSProperties}
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-carbon-text font-medium flex-1 min-w-0 truncate">{name}</span>
+        <Button
+          label={t("recovery.restoreAndImport")}
+          labelKey="recovery.restoreAndImport"
+          glyph={<IconDatabase />}
+          tone="accent"
+          onClick={() => void run()}
+          disabled={busy || otherActive}
+          busy={busy}
+          title={busy ? t("dbdump.busyImporting") : undefined}
+        />
+      </div>
+      {outcome && (
+        <p className={`text-xs wrap-break-word ${outcome.ok ? "text-statusOk" : "text-statusFail"}`}>
+          {outcome.message}
+        </p>
+      )}
     </div>
   );
 }
@@ -255,6 +353,23 @@ function isForeignSessionGone(err: string | undefined): boolean {
   return !!err && /session/i.test(err) && /(expired|unknown)/i.test(err);
 }
 
+/** The dataset a foreign ZFS snapshot holds, from its zfs: tag. */
+function zfsSnapshotDataset(s: Snapshot): string {
+  return s.tags.find((tag) => tag.startsWith("zfs:"))?.slice(4) ?? "";
+}
+
+/** The host snapshot a ZFS backup read, which every dataset of one run
+ *  shares; a snapshot without one stands for itself. */
+function zfsRunStamp(s: Snapshot): string {
+  return /\/\.zfs\/snapshot\/([^/]+)$/.exec(s.paths[0] ?? "")?.[1] ?? s.id;
+}
+
+/** Whether two datasets are one, or one lies below the other. A restore is
+ *  recorded on the item that covers the dataset, which may be its parent. */
+function zfsSameTree(a: string, b: string): boolean {
+  return a === b || a.startsWith(b + "/") || b.startsWith(a + "/");
+}
+
 // ForeignItemRow restores one foreign item from a chosen snapshot; its runs are
 // recorded under the same domains as local ones. Files and VMs need a
 // destination folder: a foreign file set has no trusted local source path, and
@@ -275,7 +390,7 @@ function ForeignItemRow({
   onSessionGone,
   hueIndex,
 }: {
-  domain: "containers" | "vms" | "files";
+  domain: "containers" | "vms" | "files" | "zfs";
   item: ForeignItem;
   session: string;
   hostMountRoot: string;
@@ -295,7 +410,10 @@ function ForeignItemRow({
   // VMs start at the local VM domains path, the folder the backend falls back
   // to anyway; file sets start blank.
   const [target, setTarget] = useState(domain === "vms" ? "user/domains" : "");
-  const needsTarget = domain === "files" || domain === "vms";
+  // A dataset tree is restored into a folder here, never over the live
+  // datasets: an in-place ZFS restore needs the item's own settings, which a
+  // foreign repository does not carry.
+  const needsTarget = domain === "files" || domain === "vms" || domain === "zfs";
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
@@ -310,7 +428,14 @@ function ForeignItemRow({
   const [filesError, setFilesError] = useState<string | null>(null);
   const [filesFilter, setFilesFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const subsetActive = domain === "files" && filesMode === "subset";
+
+  // ZFS only: the whole tree of one run, or one dataset of it, whole or a
+  // picked part.
+  const [zfsDataset, setZFSDataset] = useState("");
+  const [zfsPickFiles, setZFSPickFiles] = useState(false);
+  const subsetActive =
+    (domain === "files" && filesMode === "subset") || (domain === "zfs" && zfsDataset !== "" && zfsPickFiles);
+  const restoreItem = domain === "zfs" && zfsDataset !== "" ? zfsDataset : item.name;
 
   // Containers only: appdata is remapped onto this host. `overwrite` confirms
   // writing into a non-empty destination that may belong to another container;
@@ -325,9 +450,26 @@ function ForeignItemRow({
   const onSessionGoneRef = useRef(onSessionGone);
   onSessionGoneRef.current = onSessionGone;
 
-  const runDomain = domain === "containers" ? "container" : domain === "vms" ? "vm" : "files";
-  // Newest first for the picker; restic lists oldest first.
-  const snaps = [...item.snapshots].reverse();
+  const runDomain =
+    domain === "containers" ? "container" : domain === "vms" ? "vm" : domain === "zfs" ? "zfs" : "files";
+  // Newest first for the picker; restic lists oldest first. A whole tree is
+  // restored per run, so each run is offered once, and a single dataset offers
+  // only its own snapshots.
+  const newestFirst = [...item.snapshots].reverse();
+  const zfsDatasets =
+    domain === "zfs" ? [...new Set(item.snapshots.map(zfsSnapshotDataset).filter(Boolean))].sort() : [];
+  const snaps =
+    domain !== "zfs"
+      ? newestFirst
+      : zfsDataset !== ""
+        ? newestFirst.filter((s) => zfsSnapshotDataset(s) === zfsDataset)
+        : newestFirst.filter((s, i) => newestFirst.findIndex((o) => zfsRunStamp(o) === zfsRunStamp(s)) === i);
+
+  function chooseZFSDataset(next: string) {
+    setZFSDataset(next);
+    setSnapshot("latest");
+    if (next === "") setZFSPickFiles(false);
+  }
 
   // Best effort: the restore guards the destination either way.
   useEffect(() => {
@@ -354,7 +496,7 @@ function ForeignItemRow({
     setFilesLoading(true);
     setFilesError(null);
     setSelected(new Set());
-    listForeignFiles(session, item.name, snapshot)
+    listForeignFiles(session, restoreItem, snapshot, domain === "zfs" ? "zfs" : "files")
       .then((res) => {
         if (cancelled) return;
         if (res.ok) setForeignFiles(res.files ?? []);
@@ -373,7 +515,7 @@ function ForeignItemRow({
     return () => {
       cancelled = true;
     };
-  }, [subsetActive, session, item.name, snapshot, t]);
+  }, [subsetActive, session, restoreItem, snapshot, domain, t]);
 
   function toggleSelected(p: string) {
     setSelected((prev) => {
@@ -399,12 +541,14 @@ function ForeignItemRow({
     try {
       const res = await fireAndWaitRun({
         kind: "restore",
-        matchRun: (r) => r.domain === runDomain && r.target === item.name,
+        matchRun: (r) =>
+          r.domain === runDomain &&
+          (domain === "zfs" ? zfsSameTree(r.target, restoreItem) : r.target === item.name),
         start: () =>
           foreignRestore({
             session,
             domain,
-            item: item.name,
+            item: restoreItem,
             snapshot,
             confirm: true,
             // Empty leaves the default to the backend: user/domains for VMs,
@@ -412,6 +556,7 @@ function ForeignItemRow({
             target: target.trim() || undefined,
             paths: subsetActive ? [...selected] : undefined,
             overwrite: domain === "containers" ? overwrite : undefined,
+            wholeTree: domain === "zfs" ? zfsDataset === "" : undefined,
           }),
         t,
       });
@@ -526,6 +671,50 @@ function ForeignItemRow({
             onChange={setTarget}
             placeholder="user/domains"
             hint={t("recovery.foreignVMDestHint")}
+          />
+        </div>
+      )}
+      {domain === "zfs" && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3 flex-wrap text-xs">
+            <span className="text-carbon-textSub">{t("zfs.restore.dataset")}</span>
+            <SelectField
+              value={zfsDataset}
+              onChange={chooseZFSDataset}
+              label={t("zfs.restore.dataset")}
+              disabled={busy}
+              options={[
+                { value: "", label: t("zfs.restore.wholeTree") },
+                ...zfsDatasets.map((d) => ({ value: d, label: d })),
+              ]}
+              className="rounded-control bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text glim-field-focus"
+            />
+            {zfsDataset !== "" && (
+              <Toggle
+                checked={zfsPickFiles}
+                onChange={setZFSPickFiles}
+                disabled={busy}
+                label={t("zfs.restore.selectFiles")}
+              />
+            )}
+          </div>
+          {subsetActive && (
+            <SnapshotFileTree
+              files={foreignFiles}
+              loading={filesLoading}
+              error={filesError}
+              filter={filesFilter}
+              onFilterChange={setFilesFilter}
+              selected={selected}
+              onToggle={toggleSelected}
+              t={t}
+            />
+          )}
+          <FolderBrowser
+            label={t("recovery.foreignTargetFolder")}
+            value={target}
+            hostMountRoot={hostMountRoot}
+            onChange={setTarget}
           />
         </div>
       )}
@@ -712,7 +901,7 @@ function ForeignRestoreCard({
       setLocalNames(names);
       setLocalKnown(known);
       setSession(res.session);
-      setInventory(res.inventory ?? { containers: [], vms: [], fileSets: [] });
+      setInventory(res.inventory ?? { containers: [], vms: [], fileSets: [], dbDumps: [], zfs: [] });
       setPhase("connected");
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -751,17 +940,24 @@ function ForeignRestoreCard({
 
   const connectState: StepState =
     phase === "connected" ? "ok" : phase === "error" ? "bad" : "idle";
+  // The dumps count towards the total: a repository that holds only them is
+  // not empty, it holds the only copy of those databases.
   const total = inventory
-    ? inventory.containers.length + inventory.vms.length + inventory.fileSets.length
+    ? inventory.containers.length +
+      inventory.vms.length +
+      inventory.fileSets.length +
+      inventory.zfs.length +
+      inventory.dbDumps.length
     : 0;
   const browseState: StepState = !session ? "idle" : sessionGone ? "warn" : total > 0 ? "ok" : "warn";
 
-  const groups: { domain: "containers" | "vms" | "files"; label: string; items: ForeignItem[] }[] =
+  const groups: { domain: "containers" | "vms" | "files" | "zfs"; label: string; items: ForeignItem[] }[] =
     inventory
       ? [
           { domain: "containers" as const, label: t("nav.containers"), items: inventory.containers },
           { domain: "vms" as const, label: t("nav.vms"), items: inventory.vms },
           { domain: "files" as const, label: t("nav.files"), items: inventory.fileSets },
+          { domain: "zfs" as const, label: t("nav.zfs"), items: inventory.zfs },
         ].filter((g) => g.items.length > 0)
       : [];
 
@@ -941,10 +1137,11 @@ function ForeignRestoreCard({
                       session={session}
                       hostMountRoot={hostMountRoot}
                       existsLocally={
-                        // File sets restore into a chosen folder and never
-                        // overwrite. An unreadable local inventory counts as a
-                        // possible collision.
+                        // File sets and dataset trees restore into a chosen
+                        // folder and never overwrite. An unreadable local
+                        // inventory counts as a possible collision.
                         g.domain !== "files" &&
+                        g.domain !== "zfs" &&
                         (!localKnown ||
                           localNames.has(
                             (g.domain === "containers" ? "container:" : "vm:") + item.name
@@ -952,6 +1149,7 @@ function ForeignRestoreCard({
                       }
                       collisionKnown={
                         g.domain !== "files" &&
+                        g.domain !== "zfs" &&
                         localKnown &&
                         localNames.has(
                           (g.domain === "containers" ? "container:" : "vm:") + item.name
@@ -966,6 +1164,13 @@ function ForeignRestoreCard({
                   ))}
                 </div>
               ))
+            )}
+            {/* Named, not offered: a dump is restored with the restic CLI, and
+                the recovery kit carries the commands. */}
+            {inventory && inventory.dbDumps.length > 0 && (
+              <p className="text-xs text-carbon-textMuted leading-relaxed">
+                {t("recovery.foreignDbDumps", inventory.dbDumps.length)}
+              </p>
             )}
           </>
         )}
@@ -1219,8 +1424,13 @@ export default function Recovery() {
     setChecking(true);
     setLastError(null);
     try {
-      const [c, v, f] = await Promise.all([discover(true), discoverVMs(true), discoverFiles(true)]);
-      const results: DiscoverResult[] = [c, v, f];
+      const [c, v, f, z] = await Promise.all([
+        discover(true),
+        discoverVMs(true),
+        discoverFiles(true),
+        discoverZFS(true),
+      ]);
+      const results: DiscoverResult[] = [c, v, f, z];
       const keyErr = results.find((r) => !r.ok && isKeyMismatch(r.error));
       if (keyErr) {
         setReadableState("bad");
@@ -1233,11 +1443,11 @@ export default function Recovery() {
         setLastError(otherErr.error ?? null);
         return "warn";
       }
-      const total = (c.discovered ?? 0) + (v.discovered ?? 0) + (f.discovered ?? 0);
+      const total = (c.discovered ?? 0) + (v.discovered ?? 0) + (f.discovered ?? 0) + (z.discovered ?? 0);
       // The wizard reads each domain's primary path, which after a disaster is
       // often an empty local folder. With the path named, an empty answer reads
       // as "it looked in the wrong place" rather than "my backups are gone".
-      setReadSources([c.repo, v.repo, f.repo].filter((r): r is string => !!r));
+      setReadSources([c.repo, v.repo, f.repo, z.repo].filter((r): r is string => !!r));
       // A repository that could not be opened keeps the pill off green even when
       // the others had content. One switched off on purpose is only named: it is
       // no fault, and holding the pill amber would also swallow the success
@@ -1383,6 +1593,7 @@ export default function Recovery() {
   const [containers, setContainers] = useState<Container[]>([]);
   const [vms, setVMs] = useState<VM[]>([]);
   const [fileSets, setFileSets] = useState<FileSetView[]>([]);
+  const [zfsItems, setZFSItems] = useState<ZFSDatasetView[]>([]);
 
   const runDiscover = useCallback(async () => {
     setDiscovering(true);
@@ -1398,10 +1609,16 @@ export default function Recovery() {
           isKeyMismatch(counts.error) ? t("recovery.appKeyRemedy") : counts.error
         );
       }
-      const [cs, vs, fs] = await Promise.all([listContainers(), listVMs(), listFileSets()]);
+      const [cs, vs, fs, zs] = await Promise.all([
+        listContainers(),
+        listVMs(),
+        listFileSets(),
+        listZFSDatasets(),
+      ]);
       setContainers(cs.containers ?? []);
       setVMs(vs.vms ?? []);
       setFileSets(fs.ok ? fs.fileSets ?? [] : []);
+      setZFSItems(zs.ok ? zs.datasets ?? [] : []);
       setDiscovered(counts);
       if (counts.paused.length > 0 || counts.leftOpen.length > 0) placementChanged();
     } catch (err) {
@@ -1418,7 +1635,7 @@ export default function Recovery() {
   const discoverStepState: StepState = discovered
     ? discoverError || discovered.skippedNeedsAction
       ? "warn"
-      : discovered.containers + discovered.vms + discovered.files > 0
+      : discovered.containers + discovered.vms + discovered.files + discovered.zfs > 0
         ? "ok"
         : "warn"
     : "idle";
@@ -1476,14 +1693,19 @@ export default function Recovery() {
   // never rejects the next one as already running.
   const restoreAll = useCallback(async () => {
     if (restoreAllBusy) return;
-    if (containers.length === 0 && vms.length === 0) return;
-    if (!(await confirm(t("containers.restoreSelectedConfirm")))) return;
+    const withFiles = containers.filter((c) => !c.dumpOnly);
+    const dumpOnly = containers.length - withFiles.length;
+    if (withFiles.length === 0 && vms.length === 0) return;
+    const question = dumpOnly
+      ? `${t("containers.restoreSelectedConfirm")} ${t("recovery.dumpOnlySkipped", dumpOnly)}`
+      : t("containers.restoreSelectedConfirm");
+    if (!(await confirm(question))) return;
     setRestoreAllBusy(true);
     setRestoreAllResult(null);
     let ok = 0;
     let fail = 0;
     try {
-      for (const c of containers) {
+      for (const c of withFiles) {
         const res = await fireAndWaitRun({
           kind: "restore",
           matchRun: (r) => r.domain === "container" && r.target === c.name,
@@ -1511,7 +1733,12 @@ export default function Recovery() {
     }
   }, [restoreAllBusy, containers, vms, t, confirm]);
 
-  const anyDiscovered = containers.length > 0 || vms.length > 0 || fileSets.length > 0;
+  // A container rebuilt from dumps alone restores into an empty database, so it
+  // is listed apart and imports its dump in the same step.
+  const containersWithFiles = containers.filter((c) => !c.dumpOnly);
+  const dumpOnlyContainers = containers.filter((c) => c.dumpOnly);
+  const anyDiscovered =
+    containers.length > 0 || vms.length > 0 || fileSets.length > 0 || zfsItems.length > 0;
   const restoreStepState: StepState = restoreAllResult
     ? restoreAllResult.fail > 0
       ? "warn"
@@ -1742,7 +1969,7 @@ export default function Recovery() {
             title={discovering ? t("containers.discovering") : undefined}
           />
 
-          {discovered && discovered.containers + discovered.vms + discovered.files > 0 && (
+          {discovered && discovered.containers + discovered.vms + discovered.files + discovered.zfs > 0 && (
             <span className="text-sm text-statusOk">
               {t("recovery.foundCounts")
                 .replace("{c}", String(discovered.containers))
@@ -1750,11 +1977,14 @@ export default function Recovery() {
               {discovered.files > 0 && (
                 <> {t("recovery.filesFound").replace("{f}", String(discovered.files))}</>
               )}
+              {discovered.zfs > 0 && (
+                <> {t("recovery.zfsFound", discovered.zfs)}</>
+              )}
             </span>
           )}
         </div>
 
-        {discovered && discovered.containers + discovered.vms + discovered.files === 0 && (
+        {discovered && discovered.containers + discovered.vms + discovered.files + discovered.zfs === 0 && (
           <p className="text-sm text-statusWarn">{t("recovery.foundNone")}</p>
         )}
         {/* Without the skipped repositories named, an unmounted share would
@@ -1781,7 +2011,7 @@ export default function Recovery() {
           <>
             {/* File sets carry no original path, so restoreAll() skips them and
                 they restore per row into a chosen folder. */}
-            {(containers.length > 0 || vms.length > 0) && (
+            {(containersWithFiles.length > 0 || vms.length > 0) && (
               <div className="flex flex-wrap items-center gap-3">
                 {running.active && !restoreAllBusy && (
                   <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
@@ -1813,17 +2043,34 @@ export default function Recovery() {
               </div>
             )}
 
-            {containers.length > 0 && (
+            {containersWithFiles.length > 0 && (
               <div className="flex flex-col">
                 <span className="text-xs font-medium text-carbon-textSub pt-1 pb-1">
                   {t("nav.containers")}
                 </span>
-                {containers.map((c) => (
+                {containersWithFiles.map((c) => (
                   <RestoreRow
                     key={`container:${c.name}`}
                     domain="container"
                     name={c.name}
                     lastBackup={c.lastBackup}
+                    t={t}
+                    otherActive={rowOtherActive}
+                    hueIndex={nextHue()}
+                  />
+                ))}
+              </div>
+            )}
+            {dumpOnlyContainers.length > 0 && (
+              <div className="flex flex-col">
+                <span className="inline-flex items-center gap-1 self-start text-xs font-medium text-carbon-textSub pt-2 pb-1">
+                  {t("recovery.dumpOnlyTitle")}
+                  <InfoBubble tip={t("recovery.dumpOnlyHint")} />
+                </span>
+                {dumpOnlyContainers.map((c) => (
+                  <DumpOnlyRow
+                    key={`dbdump:${c.name}`}
+                    name={c.name}
                     t={t}
                     otherActive={rowOtherActive}
                     hueIndex={nextHue()}
@@ -1865,6 +2112,19 @@ export default function Recovery() {
                     otherActive={rowOtherActive}
                     hueIndex={nextHue()}
                   />
+                ))}
+              </div>
+            )}
+            {zfsItems.length > 0 && (
+              <div className="flex flex-col">
+                <span className="inline-flex items-center gap-1 self-start text-xs font-medium text-carbon-textSub pt-2 pb-1">
+                  {t("nav.zfs")}
+                  <InfoBubble tip={t("recovery.zfsRestoreHint")} />
+                </span>
+                {zfsItems.map((d) => (
+                  <span key={d.id} className="py-1 text-sm text-carbon-text">
+                    {d.dataset}
+                  </span>
                 ))}
               </div>
             )}

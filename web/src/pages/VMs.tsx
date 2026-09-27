@@ -3,7 +3,7 @@ import { listVMs, backupVMNow, restoreVM, setVMInclude, setVMIncludeAll, setVMMe
 import { FilterPopover } from "../components/FilterPopover";
 import { IconTipButton } from "../components/IconTipButton";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
-import type { VM, VmOrder, PlacementView } from "../lib/api";
+import type { AnomalyItem, VM, VmOrder, PlacementView } from "../lib/api";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT, stateLabel } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
@@ -37,6 +37,10 @@ import { PlacementRow } from "../components/placement/PlacementRow";
 import { subscribePlacement } from "../lib/placementEvents";
 import { subscribeRepos } from "../lib/useNamedRepos";
 import { Timeline, type TimelinePick } from "../components/timeline/Timeline";
+import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
+import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
+import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -360,16 +364,19 @@ function VMSnapshotActions({
   pick,
   vmName,
   vmDisplayName,
+  preselected,
   t,
 }: {
   pick: TimelinePick;
   /** Raw libvirt name: drives the progress key and the restore action. */
   vmName: string;
   vmDisplayName?: string;
+  /** A finding's restore link asked for this backup, so its restore starts open. */
+  preselected: boolean;
   t: T;
 }) {
   const running = anyActive(useProgress());
-  const [showRestore, setShowRestore] = useState(false);
+  const [showRestore, setShowRestore] = useState(preselected);
   return (
     <>
       {pick.mark.tags.length > 0 && (
@@ -379,7 +386,7 @@ function VMSnapshotActions({
         label={t("restore.open")}
         labelKey="restore.open"
         glyph={<IconRestore />}
-        tone="accent"
+        tone={pick.lead ? "accent" : "neutral"}
         onClick={() => setShowRestore((p) => !p)}
         className="shrink-0"
       />
@@ -407,6 +414,8 @@ function VMRestorePanel({
   displayName,
   t,
   open,
+  preselect = "",
+  preselectAt = 0,
 }: {
   /** Raw libvirt name. Every call in this panel uses it, never displayName. */
   name: string;
@@ -417,12 +426,17 @@ function VMRestorePanel({
   /** Owned by VMRow's `openSections`, as components/RestorePanel.tsx takes
    *  `open` from ContainerRow, so both cards share one disclosure. */
   open: boolean;
+  /** The snapshot a finding's restore link asked for. */
+  preselect?: string;
+  /** When that snapshot was taken, in Unix seconds. */
+  preselectAt?: number;
 }) {
   const [reloadTick, setReloadTick] = useState(0);
   const [deletingAll, setDeletingAll] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
+  const { flagged } = useOpenAnomalies();
 
   // "Delete all" empties the local place, which is what the question it asks
   // says; a copy at a target goes through its own row in the timeline. It
@@ -450,9 +464,8 @@ function VMRestorePanel({
       });
   }
 
-  // Closed renders nothing at all: the trigger lives in VMRow now, so there
-  // is no header left to keep painting. Mirrors components/RestorePanel.tsx's
-  // own `if (!open) return null`.
+  // Closed renders nothing at all: the trigger lives in VMRow, as it does for
+  // components/RestorePanel.tsx.
   if (!open) return null;
 
   return (
@@ -465,6 +478,8 @@ function VMRestorePanel({
           itemKey={name}
           itemName={displayName ?? name}
           open={open}
+          flagged={flagged}
+          request={preselect ? { snapshot: preselect, at: preselectAt } : undefined}
           header={(rows) =>
             rows.some((r) => r.places.some((m) => m.place === "local")) && (
               <Button
@@ -481,7 +496,13 @@ function VMRestorePanel({
             )
           }
           renderActions={(pick) => (
-            <VMSnapshotActions pick={pick} vmName={name} vmDisplayName={displayName} t={t} />
+            <VMSnapshotActions
+              pick={pick}
+              vmName={name}
+              vmDisplayName={displayName}
+              preselected={pick.row.key === preselect}
+              t={t}
+            />
           )}
         />
       </div>
@@ -501,6 +522,9 @@ export function VMRow({
   onToggleSelect,
   linkCandidates = [],
   index,
+  anomaly,
+  anomalyEnabled = false,
+  restoreRequest,
 }: {
   vm: VM;
   t: T;
@@ -513,6 +537,11 @@ export function VMRow({
   linkCandidates?: string[];
   /** Position in the rendered list, which sets the palette position. */
   index: number;
+  anomaly?: AnomalyItem;
+  anomalyEnabled?: boolean;
+  /** A finding's restore link for this VM: the card opens its backups and
+   *  comes into view. */
+  restoreRequest?: RestoreRequest;
 }) {
   const installed = vm.state !== "not-installed";
   const progressMap = useProgress();
@@ -525,7 +554,14 @@ export function VMRow({
 
   // The same shape as ContainerRow's `openSections`, although VMs have only one
   // section, so the two cards keep one disclosure control.
-  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
+  const [openSections, setOpenSections] = useState<Set<string>>(
+    () => new Set(restoreRequest ? ["backups"] : [])
+  );
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // jsdom has no scrollIntoView.
+    if (restoreRequest) cardRef.current?.scrollIntoView?.({ block: "start" });
+  }, [restoreRequest]);
   function toggleSection(id: string) {
     setOpenSections((prev) => {
       const next = new Set(prev);
@@ -542,6 +578,7 @@ export function VMRow({
 
   return (
     <div
+      ref={cardRef}
       style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
       // glim-active while this VM's own backup or restore runs, so reactive
       // mode shows the hue without hover, as on ContainerRow.
@@ -568,6 +605,7 @@ export function VMRow({
             <span className="font-semibold text-carbon-text text-sm min-w-0 truncate">
               {vm.name}
             </span>
+            <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
             {installed ? (
               <Badge tone={stateTone(vm.state)}>{stateLabel(t, vm.state)}</Badge>
             ) : (
@@ -677,11 +715,17 @@ export function VMRow({
           </span>
         </div>
 
+        <Advanced>
+          <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
+        </Advanced>
+
         <VMRestorePanel
           name={vm.libvirtName}
           displayName={vm.name}
           t={t}
           open={openSections.has("backups")}
+          preselect={restoreRequest?.snapshot}
+          preselectAt={restoreRequest?.at}
         />
       </div>
 
@@ -1045,6 +1089,9 @@ function VMBackupOrderPanel({
 
 export function VMs() {
   const { t } = useT();
+  const anomalies = useAnomalyItems();
+  const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const restoreRequest = useRestoreRequest();
   // Read directly rather than relying on <Advanced>: the order panel's
   // hueIndex={nextHue()} is evaluated when the element is built, even if
   // <Advanced> then renders nothing, so nextHue() may only run when the panel
@@ -1435,6 +1482,9 @@ export function VMs() {
               onToggleSelect={() => toggleSelect(v.libvirtName)}
               linkCandidates={notInstalledNames}
               index={i}
+              anomaly={anomalies.find("vm", v.libvirtName)}
+              anomalyEnabled={anomalyEnabled}
+              restoreRequest={restoreRequest.item === v.libvirtName ? restoreRequest : undefined}
             />
           ))}
         </div>
@@ -1454,6 +1504,9 @@ export function VMs() {
               onRefresh={() => void loadVMs()}
               onPlacement={(next) => placeVM(v.libvirtName, next)}
               index={live.length + i}
+              anomaly={anomalies.find("vm", v.libvirtName)}
+              anomalyEnabled={anomalyEnabled}
+              restoreRequest={restoreRequest.item === v.libvirtName ? restoreRequest : undefined}
             />
           ))}
         </div>

@@ -146,7 +146,7 @@ func TestAnUnreadablePlacementLeavesATraceInsteadOfReadingAsUnruled(t *testing.T
 	f := newPlacementFixture(t)
 	f.target("containers", "B2", "b2:bucket:containers")
 	breakRule(t, f, "containers", "container:nginx")
-	logs := captureLog(t)
+	logs := watchLog(t)
 
 	paused, byTarget, targets := f.svc.placementCurrency(settingsOf(t, f.svc), "containers")
 	if paused || byTarget || targets != nil {

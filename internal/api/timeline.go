@@ -135,6 +135,12 @@ func (it timelineItem) isDisk(snap restic.Snapshot) bool {
 	})
 }
 
+// isDump reports whether snap is a container's database dump, which the card
+// lists apart from the backups a timeline row restores.
+func isDump(snap restic.Snapshot) bool {
+	return slices.ContainsFunc(snap.Tags, func(tag string) bool { return strings.HasPrefix(tag, dbDumpIdentityPrefix) })
+}
+
 // incomplete reports whether a place misses a disk snapshot a restore of the
 // run would look up there. Without a vmrun tag there is no group to look them
 // up in, and a backup of a VM with zvol disks always sets one.
@@ -261,7 +267,7 @@ func rowsAt(it timelineItem, place string, own []restic.Snapshot) []timelineRow 
 	rows := []timelineRow{}
 	index := map[string]int{}
 	for _, snap := range newestFirst(own) {
-		if it.isDisk(snap) {
+		if it.isDisk(snap) || isDump(snap) {
 			continue
 		}
 		key := restic.Identity(snap)

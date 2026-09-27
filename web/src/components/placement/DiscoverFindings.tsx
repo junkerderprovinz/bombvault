@@ -55,6 +55,8 @@ export function DiscoverFindings({
       push(t("discover.connected").replace("{name}", () => finding.name).replace("{target}", () => target.name), "success");
       setConnected((prev) => [...prev, finding.repoId]);
       reposChanged();
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
       setBusy(false);
     }

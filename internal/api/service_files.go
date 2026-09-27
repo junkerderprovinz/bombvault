@@ -30,7 +30,7 @@ func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, erro
 	}
 	if op, busy := s.domainBusy("files"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on files", op)
+		return false, domainBusyError{op: op, domain: "files"}
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -39,7 +39,7 @@ func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, erro
 		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupFileSet(bctx, id); err != nil {
-			log.Printf("api: backup file set: %q failed: %v", id, err) //nolint:gosec // G706: id is %q-quoted
+			log.Printf("api: backup file set: %q %s: %v", id, backupEnding(err), err) //nolint:gosec // G706: id is %q-quoted
 		}
 	}()
 	return true, nil
@@ -59,7 +59,7 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 	}
 	if op, busy := s.domainBusy("files"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on files", op)
+		return false, domainBusyError{op: op, domain: "files"}
 	}
 	// Detach immediately so the batch is independent of the request that
 	// started it (canceled the moment the handler returns). Each per-set
@@ -154,12 +154,15 @@ var _ backup.FilesRestic = (*resticAdapter)(nil)
 // with a clear error before any restic call, recording a failed run against
 // the set's id so a scheduled backup of a vanished folder surfaces in Run
 // History.
-func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary, error) {
+func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summary, retErr error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	defer s.lockDomain("files")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "files")
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -176,8 +179,8 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	// make the Cancel button answer "cancelled: false" and do nothing, with no
 	// error anywhere to explain it. What runs before this is a settings read
 	// and a row lookup, neither of which can hang or is worth cancelling.
-	s.registerBackupCancel("files:"+set.Name, cancel)
-	defer s.unregisterBackupCancel("files:" + set.Name)
+	s.registerBackupCancel(ctx, "files:"+set.Name, cancel)
+	defer s.endBackupCancel("files:"+set.Name, &retErr)
 	// A set without a path cannot be backed up (Discover creates path-less,
 	// disabled sets from fileset: tags alone); say so instead of letting
 	// paths.Resolve report a misleading traversal error for "".
@@ -192,7 +195,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		// Record the miss as a failed run so a scheduled backup of a renamed or
 		// deleted folder shows up in Run History instead of failing invisibly.
 		err := fmt.Errorf("files backup: source path not found for %q (%s does not exist under the host mount)", set.Name, src)
-		if runID, sErr := s.store.StartRun(set.ID, "backup"); sErr != nil {
+		if runID, sErr := s.startRun(ctx, set.ID, "backup"); sErr != nil {
 			log.Printf("api: files backup: %q: record missing-path run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
 			// truncateRunErr, like every other FinishRun of the service: the message
 			// embeds the resolved host path (scrub), and a file set's name and path
@@ -237,7 +240,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 				reason = fmt.Sprintf("source folder for %q could not be read (%s): %v", set.Name, src, eErr)
 			}
 			err := fmt.Errorf("files backup: %s", reason)
-			if runID, sErr := s.store.StartRun(set.ID, "backup"); sErr != nil {
+			if runID, sErr := s.startRun(ctx, set.ID, "backup"); sErr != nil {
 				log.Printf("api: files backup: %q: record failed run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
 			} else if fErr := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(err)); fErr != nil {
 				log.Printf("api: files backup: %q: finish failed run: %v", set.Name, fErr) //nolint:gosec // G706: name is %q-quoted
@@ -280,6 +283,12 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 			anchored = append(anchored, e)
 		}
 	}
+	selectionFP := selectionFingerprint(itemSelection{
+		Kind:     "files",
+		Root:     set.Path,
+		Paths:    set.SelectedPaths,
+		Excludes: set.Excludes,
+	})
 	sum, err := backup.BackupFileSetDir(fctx, backup.FileSetBackupDeps{
 		SourceDir:   src,
 		SourcePaths: positionals,
@@ -288,15 +297,15 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		SetName:     set.Name,
 		Excludes: append(append([]string{}, set.Excludes...),
 			excludedBranches(anchored)...),
-		Restic: &resticAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, "files", repo)},
+		Restic: &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "files", repo)},
 		Runs:   runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "files:" + set.Name},
 	})
 	s.progEnd(key, "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "files", set.Name, err == nil, sum, err)
+	s.notifyBackup(ctx, "files", set.Name, "files:"+set.Name, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, tagIdentity("fileset:"+set.Name), "files")
+	s.applyRetention(ctx, repo, settings, mode, tagIdentity("fileset:"+set.Name), "files", anomalyScope{Kind: anomalyScopeItem, ID: set.ID})
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "files", settings, repo, "fileset:"+set.Name)
 	s.collectStatsAfterItem(ctx, "files")
@@ -386,6 +395,9 @@ type FileSetView struct {
 	// that looks most sensible silently protects nothing).
 	EffectiveSchedule schedule.EffectiveSchedule `json:"effectiveSchedule"`
 	Placement         placementView              `json:"placement"`
+	// homeBackups is how many backups the listing found at the set's home, nil
+	// when the home was not listed.
+	homeBackups *int
 }
 
 // ListFileSetViews returns all configured file sets with their last-backup
@@ -403,13 +415,14 @@ func (s *Service) ListFileSetViews(ctx context.Context) ([]FileSetView, error) {
 	}
 	// Dated from the backups a set owns, as on the container and VM lists.
 	var snapTimes map[string]int64
+	var homeCounts backupCounts
 	snapTimesFailed := false
 	if len(sets) > 0 {
-		if m, sErr := s.LatestFileSetBackupTimes(ctx); sErr != nil {
+		if m, c, sErr := s.LatestFileSetBackupTimes(ctx); sErr != nil {
 			log.Printf("api: list file sets: latest backup times: %v", sErr)
 			snapTimesFailed = true
 		} else {
-			snapTimes = m
+			snapTimes, homeCounts = m, c
 		}
 	}
 	views := make([]FileSetView, 0, len(sets))
@@ -442,9 +455,11 @@ func (s *Service) ListFileSetViews(ctx context.Context) ([]FileSetView, error) {
 		// (the NULL column).
 		v.SelectedPaths = set.SelectedPaths
 		run, _ := s.store.LastSuccessfulBackup(set.ID)
-		if finished, _ := lastBackupDate(set.Name, run, snapTimes, snapTimesFailed); finished != nil {
+		unlisted := snapTimesFailed || restic.IsRemoteRepo(v.RepoEffective)
+		if finished, _ := lastBackupDate(run, snapTimes[set.Name], unlisted); finished != nil {
 			v.LastBackup = *finished
 		}
+		v.homeBackups = homeCounts.at(v.RepoEffective, set.Name)
 		if resolved, rErr := paths.Resolve(s.cfg.HostMountRoot, set.Path); rErr == nil {
 			if _, statErr := os.Stat(resolved); statErr == nil { //nolint:gosec // G703: resolved is containment-validated under the host mount root
 				v.PathExists = true
@@ -677,10 +692,11 @@ func (s *Service) containerHasBackups(ctx context.Context, name string) (bool, e
 		}
 	}
 	id := s.containerIdentity(name)
-	if id.readErr != nil {
-		return false, fmt.Errorf("its backups could not be checked: %w", id.readErr)
+	dumps := s.containerDumpIdentity(name)
+	if readErr := partialIdentityErr(id, dumps); readErr != nil {
+		return false, fmt.Errorf("its backups could not be checked: %w", readErr)
 	}
-	snaps, err := s.containerSnapshotsOf(ctx, name, "local", id)
+	snaps, err := s.containerSnapshotsOf(ctx, name, "local", id, dumps)
 	if err != nil {
 		// Unreadable is not "empty": refusing conservatively is the safe way
 		// round, because the cost of being wrong the other way is a split

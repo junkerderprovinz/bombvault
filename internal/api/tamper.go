@@ -50,7 +50,7 @@ var tamperHTTPClient = &http.Client{
 // scheduled test against a non-REST off-site still shows up.
 func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict TamperVerdict, err error) {
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		return TamperVerdict{}, fmt.Errorf("unknown domain %q", domain)
 	}
@@ -76,7 +76,7 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 	}
 	// Open the run row now and settle it from the named returns, so every
 	// outcome from here on leaves a dated row.
-	runID := s.startTamperRun(domain)
+	runID := s.startTamperRun(ctx, domain)
 	defer func() { s.finishTamperRun(runID, domain, verdict, err) }()
 
 	var fold tamperFold
@@ -93,8 +93,8 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 
 // startTamperRun opens a tamper run row on the domain. It returns "" when the
 // store cannot, since the test itself can still run.
-func (s *Service) startTamperRun(domain string) string {
-	runID, err := s.store.StartRun(domainRunTargetID(domain), "tamper")
+func (s *Service) startTamperRun(ctx context.Context, domain string) string {
+	runID, err := s.startRun(ctx, domainRunTargetID(domain), "tamper")
 	if err != nil {
 		log.Printf("api: tamper %s: could not start run record (continuing): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		return ""
@@ -252,7 +252,7 @@ func (s *Service) tamperTestPlaceDomain(ctx context.Context, settings store.Sett
 	tkey := "tamper:" + domain
 	_, startedAt := s.progBegin(ctx, tkey, "maintenance")
 	defer func() { s.progEnd(tkey, "maintenance", err == nil, startedAt) }()
-	runID := s.startTamperRun(domain)
+	runID := s.startTamperRun(ctx, domain)
 	defer func() { s.finishTamperRun(runID, domain, verdict, err) }()
 
 	var fold tamperFold
@@ -424,7 +424,7 @@ func (s *Service) notifyProtectionLost(ctx context.Context, domain, detail strin
 func (h *Handler) handleTamperTest(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return

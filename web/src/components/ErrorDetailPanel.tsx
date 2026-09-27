@@ -1,6 +1,8 @@
 // ErrorDetailPanel is the modal behind the dashboard's error count. It groups
-// the failed runs by error message, so one fault across many targets reads as
-// one row, and lets the user acknowledge a group or every failure at once.
+// the failed runs by kind, origin and error message, so one fault across many
+// targets reads as one row while a failed database dump never reads as the
+// container's backup, and lets the user acknowledge a group or every failure
+// at once.
 // After an acknowledge it reloads and calls onChanged so the parent can
 // refresh its count.
 
@@ -13,7 +15,11 @@ import type { TranslationKey } from "../lib/i18n";
 import { LOG_FILTER_DOMAINS, LOG_FILTER_KINDS } from "../lib/activityLog";
 import type { LogFilterDomain, LogFilterKind } from "../lib/activityLog";
 import { SelectField } from "./SelectField";
+import { remedyKey } from "../lib/dbdump";
+import { runKindLabel } from "../lib/runKind";
+import { RunReasonText } from "../lib/runReason";
 import { formatTs, relativeTime } from "../lib/reltime";
+import { InfoBubble } from "./InfoBubble";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { IconClose } from "./Sidebar";
@@ -28,17 +34,21 @@ const DOMAIN_SELECT_TO_RUN: Record<string, string> = {
   flash: "flash",
   config: "config",
   files: "files",
+  zfs: "zfs",
   everything: "everything",
 };
 
 interface ErrorGroup {
-  key: string; // trimmed error message, the group identity
+  key: string; // kind, origin and trimmed error message, the group identity
+  kind: string; // the run kind every member of the group has
   message: string; // display text, may be empty
   ids: string[]; // the run ids in this group (the acknowledge targets)
   targets: string[]; // unique affected target names (run.target, never the UUID)
   domains: string[]; // unique singular domains present in the group
   latest: number; // newest startedAt across the group (unix seconds)
   count: number; // number of failed runs in the group
+  viaMcp: boolean; // the whole group was started by an assistant
+  mcpLabels: string[]; // the MCP keys behind the members, without the purged ones
 }
 
 export function ErrorDetailPanel({
@@ -97,6 +107,8 @@ export function ErrorDetailPanel({
         return t("activityLog.domainConfig");
       case "files":
         return t("activityLog.domainFiles");
+      case "zfs":
+        return t("activityLog.domainZFS");
       case "everything":
         return t("activityLog.domainEverything");
       default:
@@ -120,15 +132,25 @@ export function ErrorDetailPanel({
         const hay = `${message} ${r.target} ${domainLabel(r.domain)}`.toLowerCase();
         if (!hay.includes(text)) continue;
       }
-      let g = byMsg.get(message);
+      // The origin belongs in the identity: merged into the scheduler's
+      // failures, the MCP line below would speak for occurrences no assistant
+      // caused. Neither a kind nor an origin contains a space, so the triple
+      // cannot be read two ways.
+      const origin = r.startedVia === "mcp" ? "mcp" : "self";
+      const key = `${r.kind} ${origin} ${message}`;
+      let g = byMsg.get(key);
       if (!g) {
-        g = { key: message, message, ids: [], targets: [], domains: [], latest: 0, count: 0 };
-        byMsg.set(message, g);
+        g = { key, kind: r.kind, message, ids: [], targets: [], domains: [], latest: 0, count: 0, viaMcp: false, mcpLabels: [] };
+        byMsg.set(key, g);
       }
       g.ids.push(r.id);
       g.count++;
       if (r.target && !g.targets.includes(r.target)) g.targets.push(r.target);
       if (r.domain && !g.domains.includes(r.domain)) g.domains.push(r.domain);
+      if (r.startedVia === "mcp") {
+        g.viaMcp = true;
+        if (r.startedViaLabel && !g.mcpLabels.includes(r.startedViaLabel)) g.mcpLabels.push(r.startedViaLabel);
+      }
       if (r.startedAt > g.latest) g.latest = r.startedAt;
     }
     return Array.from(byMsg.values()).sort((a, b) => b.latest - a.latest);
@@ -136,7 +158,7 @@ export function ErrorDetailPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runs, filterText, filterDomain, filterType, t]);
 
-  const countLabel = (n: number) => t("errorPanel.count").replace("{count}", String(n));
+  const countLabel = (n: number) => t("errorPanel.count", n);
 
   const acknowledge = (body: { ids?: string[]; all?: boolean }) => {
     setBusy(true);
@@ -207,12 +229,25 @@ export function ErrorDetailPanel({
           )}
           {!loading && groups.length > 0 && (
             <div>
-              {groups.map((g) => (
+              {groups.map((g) => {
+                // Only a dump failure has advice of ours; everything else in
+                // here is a message from restic, rclone or Docker.
+                const remedy = g.kind === "dbdump" ? remedyKey(g.message) : null;
+                return (
                 <div key={g.key || "(none)"} className="flex flex-col gap-1.5 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-2">
                       <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-statusFailSolid" />
-                      <p className="min-w-0 wrap-break-word text-sm text-statusFail">{g.message || "—"}</p>
+                      <p className="min-w-0 wrap-break-word text-sm text-statusFail">
+                        {g.message ? (
+                          <>
+                            {runKindLabel(t, g.kind)}: <RunReasonText reason={g.message} t={t} />
+                          </>
+                        ) : (
+                          runKindLabel(t, g.kind)
+                        )}
+                      </p>
+                      {remedy && <InfoBubble tip={t(remedy)} />}
                     </div>
                     {/* Both badges take size="large" so they are the same height,
                         although one renders a span and the other a button. */}
@@ -237,10 +272,23 @@ export function ErrorDetailPanel({
                       {g.targets.join(", ")}
                       {g.domains.length > 0 ? ` · ${g.domains.map((d) => domainLabel(d)).join(", ")}` : ""}
                     </span>
+                    {/* A failure an assistant caused overnight belongs where
+                        the operator first looks, not only in the activity log. */}
+                    {g.viaMcp && (
+                      <span className="wrap-break-word">
+                        {g.mcpLabels.length > 0
+                          ? t("activityLog.viaMcpLine", g.mcpLabels.length).replace(
+                              "{keys}",
+                              g.mcpLabels.join(", ")
+                            )
+                          : t("activityLog.viaMcpLineUnknownKey")}
+                      </span>
+                    )}
                     <span title={formatTs(g.latest)}>{relativeTime(t, g.latest)}</span>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

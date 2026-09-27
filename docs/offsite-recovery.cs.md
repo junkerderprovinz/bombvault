@@ -150,8 +150,8 @@ Vyhrazená záložka **Obnova** provede čistou nebo znovu sestavenou instalaci 
 1. **Zkontroluje, že BombVault umí číst vaše zálohy** (zádrhel se šifrovacím klíčem hned zkraje).
 2. **Obnoví vlastní nastavení BombVaultu**, takže zálohovací cesty, cíle mimo lokalitu a přihlašovací údaje, které zbytek postupu potřebuje, přijdou předvyplněné. Zálohu nastavení čte z místa, které řádek Autozáloha uvádí pod **Uloženo v**, nebo z kopie Autozálohy pod **Kopírováno do**, a ukáže to místo s jeho adresou; chcete-li číst z jiného místa, nejdřív změňte řádek Autozáloha v kroku 3. Obnova se aplikuje přes sebe-restart přes Docker socket, takže se živá databáze nastavení nikdy nepřepisuje pod otevřeným handlem.
 3. **Připojí vaše existující zálohy** přes řádky karty Domény: na řádku každé domény zvolte pod **Uloženo v** místo, kde leží její zálohy, a pod **Kopírováno do** místa s jejími kopiemi. Místo, které zatím žádný řádek nenabízí, třeba sdílenou složku, server nebo cloudový bucket, připojíte přes **Přidat místo**, stejné okno jako v Nastavení, Úložiště. **Připojit a zobrazit náhled** pak ověří, že zálohy jdou přečíst.
-4. **Objeví** kontejnery, VM a sady souborů v něm uložené.
-5. **Obnoví je všechny** (ponechané zastavené, takže je spustíte záměrně), s vaší sadou pro obnovu na jedno kliknutí.
+4. **Objeví** kontejnery, VM, sady souborů a datové sady ZFS v něm uložené.
+5. **Obnoví najednou kontejnery a VM** (ponechané zastavené, takže je spustíte záměrně) a vypíše sady souborů a položky ZFS k obnovení jednu po druhé; položky ZFS se vrátí vypnuté. Sada pro obnovu je na jedno kliknutí.
 
 !!! note "Kopie mimo lokalitu čekají po opětovném sestavení"
     Když krok 4 znovu sestaví položky bez starého nastavení, replikace mimo lokalitu těchto domén se pozastaví, dokud se nepotvrdí výchozí umístění. Viz [Umístění pro jednotlivé položky](#placement).
@@ -172,6 +172,9 @@ Jedno kliknutí stáhne **hlavní klíč**, **odvozené heslo restic** a **přes
 !!! danger "Uložte sadu pro obnovu mimo server"
     Sada obsahuje tajemství, které dešifruje vaše zálohy. Uchovejte ji na bezpečném místě odděleně od serveru (správce hesel, tištěná kopie v trezoru). Pokud ztratíte jak BombVault, tak `APP_KEY` bez sady pro obnovu, vaše šifrované zálohy nelze obnovit.
 
+!!! warning "Nejnovější snímek není vždy ten, který obnovit"
+    Od restic 0.17 ukazuje `restic snapshots` velikost každého snímku. Po ztrátě dat může být nejnovější snímek ten vyprázdněný, proto neobnovujte snímek, který je mnohem menší než ty před ním. Po ransomwaru to může být ten zašifrovaný v obvyklé velikosti. Pokud BombVault ještě běží, podívejte se nejdřív na jeho stránku **Anomálie**: uvádí poslední dobrou zálohu. Obnova nepotřebuje žádná data o anomáliích z BombVault a pozastavení uchovávání vždy jen ponechá více snímků.
+
 ### Když sada není po ruce
 
 Heslo není nikde uloženo, **počítá se** z `APP_KEY`. S klíčem a shellem si je tedy dokážete odvodit sami:
@@ -188,3 +191,27 @@ Je to HMAC-SHA256 nad pevným řetězcem `bombvault:restic-repo`, klíčem jsou 
     Úložiště, které sem přišlo replikací mimo lokalitu, vytvořil stroj, který je odeslal, svým **vlastním** `APP_KEY`. Odvození z klíče přijímajícího stroje dá heslo, které restic odmítne, což vypadá přesně jako poškozené úložiště, aniž by jím bylo. To je obvyklý důvod, proč se `restic check` na přijatém úložišti stále dokola ptá na heslo.
 
 Protože definice pro obnovu žijí **uvnitř** každého repozitáře (`<repo>/def`, `<repo>/vm-def`), je zkopírovaná složka repozitáře plně soběstačná, takže sada plus repozitář jsou vším, co obnova na holém železe potřebuje.
+
+## Získání dumpu databáze zpět {#database-dumps}
+
+Dump databáze je vlastní bod obnovy v repozitáři kontejnerů, se štítkem `dbdump:<container>` a jediným souborem `/dbdump/<container>.sql`. BombVault je vypisuje, stahuje a importuje v sekci **Zálohy**; níže jsou tytéž kroky se samotným resticem, pro den, kdy BombVault k ruce není.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Štítky `dbversion:` a `dbname:` u každého dumpu říkají, z jaké verze serveru pochází a jaké databáze obsahuje. Úplný soubor končí řádkem `-- PostgreSQL database cluster dump complete` nebo `-- Dump completed`.
+
+Naimportujte ho do kontejneru ve stejné nebo novější verzi (PostgreSQL), případně ve stejné hlavní verzi (MySQL a MariaDB), jednou spuštěného s prázdnou datovou složkou, aby se inicializoval. Hostitel žádného databázového klienta nepotřebuje, kontejner ho má:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Pro jednu databázi z úplného dumpu berou MySQL a MariaDB `--one-database <name>` v příkazu klienta. Dump PostgreSQL má na každou databázi jednu sekci, každá začíná řádkem `\connect <name>`: zkopírujte tu svou do vlastního souboru a po vytvoření databáze ho naimportujte s `-d <name>`.
+
+!!! warning "Dump pořízený jako root nese uživatele serveru"
+    Úplný dump MySQL nebo MariaDB pořízený jako root obsahuje systémovou databázi `mysql`, takže jeho import nahradí účty nového serveru, včetně hesla roota, účty z dumpu. U PostgreSQL je `role ... already exists` pro uživatele, kterého vytvořil kontejner, očekávané a neškodné.

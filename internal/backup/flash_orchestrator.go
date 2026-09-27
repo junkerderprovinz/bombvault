@@ -33,10 +33,10 @@ func BackupFlash(ctx context.Context, d FlashBackupDeps) (Summary, error) {
 	// zips built from it. restic matches ".git" by basename at any depth.
 	summary, err := d.Restic.Backup(ctx, d.Repo, []string{d.SourceDir}, []string{"flash"}, ".git")
 	if err != nil {
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(err))
+		_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(err))
 		return Summary{}, err
 	}
-	if err := d.Runs.Finish(runID, statusSuccess, summary.SnapshotID, summary.Bytes, ""); err != nil {
+	if err := d.Runs.Finish(runID, statusSuccess, summary, ""); err != nil {
 		return summary, fmt.Errorf("flash backup: record run: %w", err)
 	}
 	return summary, nil

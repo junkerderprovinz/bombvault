@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
@@ -18,7 +19,7 @@ import (
 )
 
 // CheckDomain verifies the integrity of a domain's restic repo (restic check).
-// domain is "containers" | "vms" | "flash" | "files". Returns a friendly error
+// domain is "containers" | "vms" | "flash" | "files" | "zfs". Returns a friendly error
 // when the repo has not been created yet. Bounded by a timeout so a huge repo
 // can't hang the request forever.
 func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err error) {
@@ -61,7 +62,7 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 	vkey := "verify:" + domain
 	_, startedAt := s.progBegin(ctx, vkey, "maintenance")
 	defer func() { s.progEnd(vkey, "maintenance", err == nil, startedAt) }()
-	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "verify")
+	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "verify")
 	if rErr != nil {
 		log.Printf("api: verify %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
 		runID = ""
@@ -168,7 +169,7 @@ func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind stri
 // diagnoses an unmounted share would send a mail each time.
 func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wait bool) (drill store.RestoreDrill, err error) {
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", zfsDomain:
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
 	}
@@ -450,7 +451,7 @@ func (s *Service) drDrillTarget(settings store.Settings, domain, source string) 
 // drill-failure notification.
 func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bool) (drill store.RestoreDrill, err error) {
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", zfsDomain:
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
 	}
@@ -492,13 +493,13 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 			// off-site DR check did not run rather than freezing the red with no
 			// reason (#30).
 			skip := store.RestoreDrill{
-				Domain:   domain,
-				Source:   "offsite",
-				Kind:     "dr",
-				At:       time.Now().Unix(),
-				OK:       false,
-				Detail:   "skipped: repository busy longer than " + drillLockWait.String() + " (a backup or off-site copy held it)",
-				TargetID: target.ID,
+				Domain:          domain,
+				Source:          "offsite",
+				Kind:            "dr",
+				At:              time.Now().Unix(),
+				OK:              false,
+				Detail:          "skipped: repository busy longer than " + drillLockWait.String() + " (a backup or off-site copy held it)",
+				OffsiteTargetID: target.ID,
 			}
 			if aErr := s.store.AddRestoreDrill(skip); aErr != nil {
 				log.Printf("api: drill: record busy-skip for %q: %v", domain, aErr) //nolint:gosec // G706: domain is %q-quoted and validated above
@@ -563,12 +564,12 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 		return store.RestoreDrill{}, drillErr
 	}
 	drill = store.RestoreDrill{
-		Domain:   domain,
-		Source:   "offsite",
-		At:       time.Now().Unix(),
-		OK:       drillErr == nil,
-		Kind:     "dr",
-		TargetID: target.ID,
+		Domain:          domain,
+		Source:          "offsite",
+		At:              time.Now().Unix(),
+		OK:              drillErr == nil,
+		Kind:            "dr",
+		OffsiteTargetID: target.ID,
 	}
 	if drillErr != nil {
 		drill.Detail = scrubError(drillErr)
@@ -599,8 +600,10 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 // newest snapshot outright (flash is a single whole-USB image, no per-item
 // scoping). files follows flash, the newest snapshot in the files repo
 // outright, since a file-set restore is sandbox-cheap and any set proves
-// the repo restorable. An empty repo or a target with no off-site snapshot
-// yields a clear error.
+// the repo restorable. zfs takes the newest snapshot carrying a zfs: tag,
+// because a member's tree root is its dataset root and any member proves the
+// repo restorable. An empty repo or a target with no off-site snapshot yields
+// a clear error.
 func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (string, error) {
 	all, err := s.listSnapshots(ctx, repo, mode)
 	if err != nil {
@@ -612,6 +615,8 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 	switch domain {
 	case "flash", "files":
 		return newestSnapshot(all).ID, nil
+	case zfsDomain:
+		return newestZFSMemberSnapshot(all)
 	case "containers", "vms":
 		var (
 			target string
@@ -648,6 +653,25 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 	default:
 		return "", fmt.Errorf("unknown domain %q", domain)
 	}
+}
+
+// newestZFSMemberSnapshot picks the newest member snapshot of the ZFS domain.
+// A repository shared with another domain also holds snapshots this drill must
+// not restore, so the tag decides rather than the timestamp alone.
+func newestZFSMemberSnapshot(all []restic.Snapshot) (string, error) {
+	var scoped []restic.Snapshot
+	for _, snap := range all {
+		for _, t := range snap.Tags {
+			if rest, ok := strings.CutPrefix(t, "zfs:"); ok && rest != "" {
+				scoped = append(scoped, snap)
+				break
+			}
+		}
+	}
+	if len(scoped) == 0 {
+		return "", errNothingToDrill
+	}
+	return newestSnapshot(scoped).ID, nil
 }
 
 // newestSnapshot returns the snapshot with the latest Time (RFC3339 sorts
@@ -928,7 +952,9 @@ func (s *Service) notifyDrillFailure(ctx context.Context, domain, where, detail 
 // detail is bounded to the same cap as truncateRunErr. Best-effort: a store
 // error is logged and never fails the check that already ran.
 func (s *Service) recordDomainRun(domain, kind string, ok bool, detail string) {
-	runID, err := s.store.StartRun(domainRunTargetID(domain), kind)
+	// A drill or tamper row is never started through a tool, so a caller's
+	// context here would put the wrong name in the audit trail.
+	runID, err := s.startRun(context.Background(), domainRunTargetID(domain), kind)
 	if err != nil {
 		log.Printf("api: %s %s: could not start run record (continuing): %v", kind, domain, err) //nolint:gosec // G706: kind and domain are fixed literals
 		return

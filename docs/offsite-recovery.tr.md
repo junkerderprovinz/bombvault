@@ -150,8 +150,8 @@ Yolun ilk parçası htpasswd kullanıcısıdır, burada `tower`; her etki alanı
 1. **BombVault'un yedeklerinizi okuyabildiğini denetler** (şifreleme anahtarı tuzağı en başta).
 2. **BombVault'un kendi ayarlarını geri yükler**, böylece akışın geri kalanının ihtiyaç duyduğu yedekleme yolları, site dışı hedefler ve kimlik bilgileri önceden doldurulmuş gelir. Ayar yedeğini, Öz yedek satırının **Depolama konumu** altında belirttiği konumdan ya da Öz yedeğin **Kopyalama hedefleri** altındaki kopyasından okur ve o konumu adresiyle gösterir; başka bir konumdan okumak için önce 3. adımdaki Öz yedek satırını değiştirin. Geri yükleme Docker soketi üzerinden bir öz yeniden başlatma ile uygulanır, böylece canlı ayar veritabanı açık bir tanıtıcı altında asla üzerine yazılmaz.
 3. **Mevcut yedeklerinizi bağlar**, bunu **Alanlar** kartının satırları üzerinden yapar: her etki alanının satırında, yedeklerinin bulunduğu konumu **Depolama konumu** altında, kopyalarını tutan konumları da **Kopyalama hedefleri** altında seçin. Henüz hiçbir satırın sunmadığı bir konum, örneğin bir paylaşım, bir sunucu ya da bir bulut bucket'ı, Ayarlar, Depolama'dakiyle aynı pencere olan **Konum ekle** ile bağlanır. Ardından **Bağlan ve önizle** yedeklerin okunabildiğini denetler.
-4. İçinde saklanan konteynerleri, VM'leri ve dosya kümelerini **keşfeder**.
-5. **Hepsini geri yükler** (durdurulmuş bırakılır, böylece onları kasıtlı olarak başlatırsınız), kurtarma kitiniz bir tık ötede.
+4. İçinde saklanan konteynerleri, VM'leri, dosya kümelerini ve ZFS veri kümelerini **keşfeder**.
+5. **Konteynerleri ve VM'leri tek seferde geri yükler** (durdurulmuş bırakılır, böylece onları kasıtlı olarak başlatırsınız), dosya kümelerini ve ZFS öğelerini tek tek geri yüklemeniz için listeler; ZFS öğeleri kapalı olarak geri gelir. Kurtarma kitiniz bir tık ötede.
 
 !!! note "Site dışı kopyalar bir yeniden kurulumdan sonra bekler"
     4. adım eski ayarlar olmadan girişleri yeniden kurduğunda, o etki alanlarının site dışı çoğaltması, yerleşim varsayılanı onaylanana kadar duraklar. Bkz. [Öge başına yerleşim](#placement).
@@ -172,6 +172,9 @@ Tek tık, **ana anahtarı**, **türetilen restic parolasını** ve **tam depo ko
 !!! danger "Kurtarma kitini sunucu dışında saklayın"
     Kit, yedeklerinizin şifresini çözen gizli anahtarı içerir. Onu güvenli ve sunucudan ayrı bir yerde tutun (bir parola yöneticisi, bir kasada basılı bir kopya). Hem BombVault'u hem de `APP_KEY`'i kurtarma kiti olmadan kaybederseniz, şifreli yedekleriniz kurtarılamaz.
 
+!!! warning "En yeni anlık görüntü her zaman geri yüklenecek olan değildir"
+    restic 0.17'den beri `restic snapshots` her anlık görüntünün boyutunu gösterir. Veri kaybından sonra en yeni anlık görüntü boşaltılmış olan olabilir, bu yüzden öncekilerden çok daha küçük bir anlık görüntüyü geri yüklemeyin. Fidye yazılımından sonra olağan boyutta şifrelenmiş olan olabilir. BombVault hâlâ çalışıyorsa önce **Anormallikler** sayfasına bakın: son iyi yedeği gösterir. Geri yükleme için BombVault'un anomali verilerine gerek yoktur ve saklama duraklatması yalnızca daha fazla anlık görüntü tutar.
+
 ### Kurtarma seti elinizin altında değilse
 
 Parola hiçbir yerde saklanmaz, `APP_KEY` değerinden **hesaplanır**. Anahtar ve bir kabuk varsa onu kendiniz de üretebilirsiniz:
@@ -188,3 +191,27 @@ Bu, sabit `bombvault:restic-repo` dizgesi üzerinde HMAC-SHA256'dır; anahtar ol
     Saha dışı çoğaltmayla buraya ulaşan bir depo, onu gönderen makinede **kendi** `APP_KEY` değeriyle oluşturulmuştur. Alan makinenin anahtarından türetmek, restic'in reddettiği bir parola verir; bu tam olarak bozuk bir depo gibi görünür ama değildir. Alınan bir depoda `restic check` komutunun parolayı defalarca sormasının olağan nedeni budur.
 
 Kurtarma tanımları her deponun **içinde** yer aldığı için (`<repo>/def`, `<repo>/vm-def`), kopyalanan bir depo klasörü tamamen bağımsızdır, böylece kit ile birlikte depo, çıplak makine geri yüklemesinin ihtiyaç duyduğu her şeydir.
+
+## Bir veritabanı dökümünü geri alma {#database-dumps}
+
+Bir veritabanı dökümü, konteyner deposunda kendi başına bir geri yükleme noktasıdır; `dbdump:<container>` etiketini taşır ve tek bir dosya içerir, `/dbdump/<container>.sql`. BombVault bunları **Yedekler** altında listeler, indirir ve içe aktarır; aşağıdakiler aynı adımların yalnızca restic ile hali, BombVault'un yanınızda olmadığı gün için.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Her dökümdeki `dbversion:` ve `dbname:` etiketleri, dökümün hangi sunucu sürümünden geldiğini ve hangi veritabanlarını taşıdığını söyler. Tam bir dosya `-- PostgreSQL database cluster dump complete` ya da `-- Dump completed` ile biter.
+
+Dökümü aynı ya da daha yeni sürümlü (PostgreSQL) veya aynı ana sürümlü (MySQL ve MariaDB) bir konteynere aktarın; konteyner, kendini kurması için boş bir veri klasörüyle bir kez başlatılmış olmalı. Ana makinede veritabanı istemcisi gerekmez, konteynerde var:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Tam bir dökümden tek bir veritabanı için MySQL ve MariaDB, istemci komutunda `--one-database <name>` kabul eder. PostgreSQL dökümünde her veritabanı için bir bölüm vardır ve her biri `\connect <name>` satırıyla başlar: o bölümü kendi dosyasına kopyalayın ve veritabanını oluşturduktan sonra `-d <name>` ile aktarın.
+
+!!! warning "Root ile alınan bir döküm sunucunun kullanıcılarını da taşır"
+    Root ile alınan tam bir MySQL ya da MariaDB dökümü `mysql` sistem veritabanını içerir; içe aktarmak yeni sunucunun hesaplarını, root parolası dahil, dökümdekilerle değiştirir. PostgreSQL'de, konteynerin kendi oluşturduğu kullanıcı için gelen `role ... already exists` beklenen ve zararsız bir iletidir.

@@ -70,6 +70,7 @@ func newPlacementFixture(t *testing.T) *placementFixture {
 	eng := &placementEngine{
 		snaps:   map[string][]restic.Snapshot{},
 		listErr: map[string]error{},
+		copyErr: map[string]error{},
 		opens:   map[string]bool{},
 		openErr: map[string]error{},
 		ids:     map[string]string{},
@@ -428,6 +429,7 @@ type placementEngine struct {
 	mu      sync.Mutex
 	snaps   map[string][]restic.Snapshot // by slash-spelled location
 	listErr map[string]error
+	copyErr map[string]error  // Copy fails for this source and copies nothing
 	opens   map[string]bool   // RepoOpens; a missing entry is true
 	openErr map[string]error  // RepoOpensErr's message for a location in opens=false; default is a generic one
 	ids     map[string]string // RepoID: the id of the repository at a location
@@ -527,6 +529,9 @@ func (e *placementEngine) Copy(_ context.Context, dest, src string, ids []string
 	defer e.mu.Unlock()
 	d, s := filepath.ToSlash(dest), filepath.ToSlash(src)
 	e.copies = append(e.copies, copyCall{Dest: d, Src: s, IDs: slices.Clone(ids)})
+	if err := e.copyErr[s]; err != nil {
+		return err
+	}
 	held := map[string]bool{}
 	for _, sn := range e.snaps[d] {
 		held[sn.ID], held[sn.Original] = true, true

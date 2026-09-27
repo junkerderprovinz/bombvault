@@ -159,12 +159,12 @@ func TestApplyRetentionListsOnlyForAnEntryWithAliases(t *testing.T) {
 	s := &Service{store: st, engine: eng}
 	ctx := context.Background()
 
-	s.applyRetention(ctx, "rest:http://fake/containers", settings, restic.Mode{}, s.containerIdentity("plex"), "containers")
-	s.applyRetention(ctx, "rest:http://fake/vms", settings, restic.Mode{}, s.vmIdentity("win11"), "vms")
+	s.applyRetention(ctx, "rest:http://fake/containers", settings, restic.Mode{}, s.containerIdentity("plex"), "containers", anomalyScope{})
+	s.applyRetention(ctx, "rest:http://fake/vms", settings, restic.Mode{}, s.vmIdentity("win11"), "vms", anomalyScope{})
 	if eng.listCalls != 0 {
 		t.Fatalf("an entry without aliases must not list snapshots for retention, got %d listings", eng.listCalls)
 	}
-	s.applyRetention(ctx, "rest:http://fake/vms", settings, restic.Mode{}, s.vmIdentity("win10"), "vms")
+	s.applyRetention(ctx, "rest:http://fake/vms", settings, restic.Mode{}, s.vmIdentity("win10"), "vms", anomalyScope{})
 	if eng.listCalls != 1 {
 		t.Fatalf("an entry with aliases lists exactly once, got %d listings", eng.listCalls)
 	}

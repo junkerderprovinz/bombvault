@@ -36,7 +36,7 @@ func TestARowAtAPlaceAgesByTheRulesItsPlaceMirrors(t *testing.T) {
 	f.container("nginx", nas.ID)
 	f.linkRow(nas.ID, f.storePlace(nasPlace(5)), "", "")
 
-	f.svc.applyRetention(context.Background(), f.root+"/nas", settings, restic.Mode{}, tagIdentity("container:nginx"), "containers")
+	f.svc.applyRetention(context.Background(), f.root+"/nas", settings, restic.Mode{}, tagIdentity("container:nginx"), "containers", anomalyScope{})
 	want := []forgetCall{{Repo: f.root + "/nas", Tags: []string{"container:nginx"}, Policy: restic.RetentionPolicy{KeepLast: 5}, Prune: true}}
 	if !reflect.DeepEqual(f.eng.forgets, want) {
 		t.Fatalf("forgets = %+v, want %+v", f.eng.forgets, want)
@@ -57,7 +57,7 @@ func TestTheDomainPathAgesByItsHomePlace(t *testing.T) {
 	if got := f.svc.retentionPolicyForRef(settings, "vms", ownRef(f.domainPath("vms"))); got != (restic.RetentionPolicy{KeepLast: 3}) {
 		t.Errorf("a domain path without a home place = %+v, want the local keep-last 3", got)
 	}
-	f.svc.applyRetention(context.Background(), f.domainPath("containers"), settings, restic.Mode{}, tagIdentity("container:plex"), "containers")
+	f.svc.applyRetention(context.Background(), f.domainPath("containers"), settings, restic.Mode{}, tagIdentity("container:plex"), "containers", anomalyScope{})
 	want := []forgetCall{{Repo: f.domainPath("containers"), Tags: []string{"container:plex"}, Policy: restic.RetentionPolicy{KeepLast: 7}, Prune: true}}
 	if !reflect.DeepEqual(f.eng.forgets, want) {
 		t.Fatalf("forgets = %+v, want %+v", f.eng.forgets, want)
@@ -193,9 +193,9 @@ func TestAnAppendOnlyPlaceForgetsNothingWhateverItKeeps(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	f.svc.applyRetention(ctx, b2Containers, settings, restic.Mode{}, tagIdentity("container:plex"), "containers")
-	f.svc.applyRetention(ctx, archive.Repo, settings, restic.Mode{}, tagIdentity("container:nginx"), "containers")
-	if err := f.svc.PruneDomain(ctx, "containers", "local"); !errors.Is(err, errAppendOnlyPrimaryRemote) {
+	f.svc.applyRetention(ctx, b2Containers, settings, restic.Mode{}, tagIdentity("container:plex"), "containers", anomalyScope{})
+	f.svc.applyRetention(ctx, archive.Repo, settings, restic.Mode{}, tagIdentity("container:nginx"), "containers", anomalyScope{})
+	if _, err := f.svc.PruneDomain(ctx, "containers", "local"); !errors.Is(err, errAppendOnlyPrimaryRemote) {
 		t.Fatalf("PruneDomain = %v, want the remote-primary append-only refusal", err)
 	}
 	if len(f.eng.forgets) != 0 || len(f.eng.prunes) != 0 {
@@ -220,8 +220,8 @@ func TestADirectRepositoryAtAnAppendOnlyPlaceForgetsNothing(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	f.svc.applyRetention(ctx, direct.Repo, settings, restic.Mode{}, tagIdentity("container:nginx"), "containers")
-	if err := f.svc.PruneDomain(ctx, "containers", "local"); err != nil {
+	f.svc.applyRetention(ctx, direct.Repo, settings, restic.Mode{}, tagIdentity("container:nginx"), "containers", anomalyScope{})
+	if _, err := f.svc.PruneDomain(ctx, "containers", "local"); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(f.eng.forgets) != 0 || len(f.eng.prunes) != 1 || f.eng.prunes[0] != f.domainPath("containers") {
@@ -239,7 +239,7 @@ func TestAnOffsitePruneAgesByTheTargetsOwnRules(t *testing.T) {
 	}
 	f.hold(b2Containers, snap("c1", 100, "container:nginx"))
 
-	if err := f.svc.PruneDomain(context.Background(), "containers", "offsite:"+b2.ID); err != nil {
+	if _, err := f.svc.PruneDomain(context.Background(), "containers", "offsite:"+b2.ID); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	want := []forgetCall{{Repo: b2Containers, Tags: []string{"container:nginx"}, Policy: restic.RetentionPolicy{KeepLast: 4}}}
@@ -255,7 +255,7 @@ func TestAnOffsitePruneAgesByItsPlace(t *testing.T) {
 	f.linkRow(b2.ID, f.storePlace(b2Place(6)), "containers", "")
 	f.hold(b2Containers, snap("c1", 100, "container:nginx"))
 
-	if err := f.svc.PruneDomain(context.Background(), "containers", "offsite"); err != nil {
+	if _, err := f.svc.PruneDomain(context.Background(), "containers", "offsite"); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	want := []forgetCall{{Repo: b2Containers, Tags: []string{"container:nginx"}, Policy: restic.RetentionPolicy{KeepLast: 6}}}
@@ -272,7 +272,7 @@ func TestAnAppendOnlyPlaceRefusesTheOffsitePrune(t *testing.T) {
 	f.linkRow(b2.ID, f.storePlace(place), "containers", "")
 	f.hold(b2Containers, snap("c1", 100, "container:nginx"))
 
-	if err := f.svc.PruneDomain(context.Background(), "containers", "offsite:"+b2.ID); !errors.Is(err, errAppendOnlyOffsiteTarget) {
+	if _, err := f.svc.PruneDomain(context.Background(), "containers", "offsite:"+b2.ID); !errors.Is(err, errAppendOnlyOffsiteTarget) {
 		t.Fatalf("PruneDomain = %v, want the append-only refusal", err)
 	}
 	if len(f.eng.forgets) != 0 || len(f.eng.prunes) != 0 {

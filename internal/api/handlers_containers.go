@@ -10,6 +10,7 @@ import (
 	"slices"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/dbdump"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -65,6 +66,43 @@ type containerView struct {
 	AliasConflicts []string `json:"aliasConflicts"`
 	// Aliases are the names this entry had before, oldest link first.
 	Aliases []string `json:"aliases"`
+	// The database fields are all empty or false for a container that is not
+	// recognised as a database server. DBEngine is what would be dumped,
+	// DBSuggestedEngine the guess for a container that only looks like one, and
+	// DBTier how it was recognised ("" | curated | lookalike | label).
+	DBEngine          string `json:"dbEngine"`
+	DBSuggestedEngine string `json:"dbSuggestedEngine"`
+	DBTier            string `json:"dbTier"`
+	DBDumpOff         bool   `json:"dbDumpOff"`
+	DBDumpEngine      string `json:"dbDumpEngine"`
+	// DBDumpLabelOff is the bombvault.dbdump=false label, which wins over the
+	// toggle, and DBDumpsGlobalOff the switch in Settings. The page never loads
+	// settings, so the row has to carry it.
+	DBDumpLabelOff   bool `json:"dbDumpLabelOff"`
+	DBDumpsGlobalOff bool `json:"dbDumpsGlobalOff"`
+	// DBDataCoverage says what the files backup of this container is worth:
+	// "stopped", "live", "none" or "unknown".
+	DBDataCoverage string `json:"dbDataCoverage"`
+	// DBDumpHookOverlap reports that the stored pre-hook already runs a dump
+	// tool, so the container would be dumped twice.
+	DBDumpHookOverlap bool            `json:"dbDumpHookOverlap"`
+	LastDBDump        *lastDBDumpView `json:"lastDbDump,omitempty"`
+	// DumpOnly: the repositories hold database dumps of this container and no
+	// files backup, so restoring it alone brings back an empty database.
+	DumpOnly bool `json:"dumpOnly"`
+	// homeBackups is how many backups the listing found at the container's
+	// home, nil when the home was not listed.
+	homeBackups *int
+}
+
+// lastDBDumpView is the container's most recent dump attempt. Error carries the
+// stored run reason, which is a constant plus an optional detail, or a success
+// note.
+type lastDBDumpView struct {
+	At     int64  `json:"at"`
+	Status string `json:"status"`
+	Bytes  int64  `json:"bytes"`
+	Error  string `json:"error"`
 }
 
 func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
@@ -81,6 +119,13 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	self := h.svc.SelfContainerName(r.Context())
+
+	settings, sErr := h.store.GetSettings()
+	if sErr != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(sErr))
+		return
+	}
+	dbRows := h.svc.dbDumpRows(r.Context(), infos, byName)
 
 	live := make(map[string]bool, len(infos))
 	for _, c := range infos {
@@ -107,13 +152,14 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	// One listing dates every row and tells the rename pass whether a live
 	// container has backups under its own name; snapTimesFailed keeps that pass
 	// from guessing off a partial read.
-	var snapTimes map[string]int64
+	var snapTimes map[string]ContainerSnapshotTimes
+	var homeCounts backupCounts
 	snapTimesFailed := false
-	if m, sErr := h.svc.LatestContainerBackupTimes(r.Context()); sErr != nil {
+	if m, c, sErr := h.svc.LatestContainerBackupTimes(r.Context()); sErr != nil {
 		log.Printf("api: list containers: latest backup times: %v", sErr)
 		snapTimesFailed = true
 	} else {
-		snapTimes = m
+		snapTimes, homeCounts = m, c
 	}
 
 	views := make([]containerView, 0, len(infos)+len(targets))
@@ -133,10 +179,24 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			AliasConflicts: []string{},
 			Aliases:        []string{},
 		}
+		if db, ok := dbRows[c.Name]; ok {
+			v.DBEngine = db.Engine
+			v.DBSuggestedEngine = db.Suggested
+			v.DBTier = db.Tier
+			v.DBDumpLabelOff = db.LabelOff
+			v.DBDataCoverage = db.Coverage
+			v.DBDumpHookOverlap = db.HookOverlap
+			v.DBDumpsGlobalOff = !settings.DBDumpsEnabled
+		}
 		var run *store.Run
 		if t, ok := byName[c.Name]; ok {
 			v.AliasConflicts = aliasConflicts.of(t.ID)
 			v.Aliases = formerNames.of(t.ID)
+			if v.DBTier != "" {
+				v.DBDumpOff = t.DBDumpOff
+				v.DBDumpEngine = t.DBDumpEngine
+				v.LastDBDump = h.lastDBDump(t.ID)
+			}
 			v.IncludeInSchedule = t.IncludeInSchedule
 			v.PreHook = t.PreHook
 			v.PostHook = t.PostHook
@@ -149,7 +209,10 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.ScheduleCadence = t.ScheduleCadence
 			run, _ = h.store.LastSuccessfulBackup(t.ID)
 		}
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(c.Name, run, snapTimes, snapTimesFailed)
+		home, hErr := h.svc.primaryRepo(settings, "containers", c.Name)
+		unlisted := snapTimesFailed || (hErr == nil && restic.IsRemoteRepo(home))
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[c.Name].Newest(), unlisted)
+		v.homeBackups = homeCounts.at(home, c.Name)
 		own := v.LastBackup != nil
 		hasOwnBackup[c.Name] = own
 		if !own {
@@ -192,15 +255,39 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			if json.Unmarshal([]byte(t.Definition), &def) == nil {
 				v.Image = def.Inspect.Config.Image
 				v.Stack = def.Inspect.Config.Labels["com.docker.compose.project"]
+				// The definition is all there is to recognise an uninstalled
+				// container by; its dumps are still in the repository and the
+				// row says what they are.
+				chosen, _ := dbdump.ParseEngine(t.DBDumpEngine)
+				cfg := def.Inspect.Config
+				rec := dbdump.Resolve(cfg.Image, envNames(cfg.Env), cfg.Labels, chosen)
+				v.DBEngine = string(rec.Engine)
+				v.DBSuggestedEngine = string(rec.Suggested)
+				v.DBTier = string(rec.Tier)
+				v.DBDumpLabelOff = rec.LabelOff
 			}
 		}
+		if v.DBTier != "" {
+			v.DBDumpOff = t.DBDumpOff
+			v.DBDumpEngine = t.DBDumpEngine
+			v.DBDumpsGlobalOff = !settings.DBDumpsEnabled
+			v.DBDumpHookOverlap = dumpToolRe.MatchString(t.PreHook)
+			v.LastDBDump = h.lastDBDump(t.ID)
+		}
+		// A container the repositories hold as dumps alone comes back with an
+		// empty database, which the recovery wizard says before it restores
+		// everything.
+		v.DumpOnly = snapTimes[t.ContainerName].DumpOnly()
 		run, _ := h.store.LastSuccessfulBackup(t.ID)
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(t.ContainerName, run, snapTimes, snapTimesFailed)
+		home, hErr := h.svc.primaryRepo(settings, "containers", t.ContainerName)
+		unlisted := snapTimesFailed || (hErr == nil && restic.IsRemoteRepo(home))
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.ContainerName].Newest(), unlisted)
+		v.homeBackups = homeCounts.at(home, t.ContainerName)
 		views = append(views, v)
 	}
 	items := make([]placementItem, 0, len(views))
 	for _, v := range views {
-		it := placementItem{Key: v.Name, Identity: "container:" + v.Name, Stack: v.Stack}
+		it := placementItem{Key: v.Name, Identity: "container:" + v.Name, Stack: v.Stack, HomeBackups: v.homeBackups}
 		if t, ok := byName[v.Name]; ok {
 			it.Home = store.HomeState{Exists: true, Repo: t.Repo, Choice: t.RepoChosen}
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
@@ -216,26 +303,26 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "containers": views})
 }
 
-// lastBackupDate is the newest backup name owns, so a card's date agrees with
-// the list of backups under it. The run stands in only while the repository
-// could not be listed, because an unreachable repository must not read as
-// "never backed up". The start time comes from the run that wrote that backup
-// and from no other, since the dashboard measures a duration from the pair.
-func lastBackupDate(name string, run *store.Run, times map[string]int64, unreadable bool) (finished, started *int64) {
+// lastBackupDate is the newest backup an entry owns, so a card's date agrees
+// with the list of backups under it. newest is when that backup was taken, 0
+// for none. The run stands in when the repository was not listed, remote or
+// unreachable, because that must not read as "never backed up". The
+// start time comes from the run that wrote that backup and from no other,
+// since the dashboard measures a duration from the pair.
+func lastBackupDate(run *store.Run, newest int64, unreadable bool) (finished, started *int64) {
 	if unreadable {
 		if run == nil {
 			return nil, nil
 		}
 		return run.FinishedAt, &run.StartedAt
 	}
-	ts, ok := times[name]
-	if !ok || ts <= 0 {
+	if newest <= 0 {
 		return nil, nil
 	}
-	if run != nil && run.FinishedAt != nil && run.StartedAt <= ts && ts <= *run.FinishedAt {
-		return &ts, &run.StartedAt
+	if run != nil && run.FinishedAt != nil && run.StartedAt <= newest && newest <= *run.FinishedAt {
+		return &newest, &run.StartedAt
 	}
-	return &ts, nil
+	return &newest, nil
 }
 
 // aliasIndex holds former names by the ID of the entry they belong to.
@@ -271,6 +358,26 @@ func (idx aliasIndex) of(targetID string) []string {
 		return names
 	}
 	return []string{}
+}
+
+// lastDBDump reads the target's most recent dump attempt, or nil when there is
+// none. A read failure is nil too: the row's job is the dump state, and a
+// container card that refuses to render because one query failed is worse than
+// one that leaves the line out.
+func (h *Handler) lastDBDump(targetID string) *lastDBDumpView {
+	run, err := h.store.LastRunOfKind(targetID, "dbdump")
+	if err != nil {
+		log.Printf("api: list containers: reading the last database dump failed: %v", err)
+		return nil
+	}
+	if run == nil {
+		return nil
+	}
+	at := run.StartedAt
+	if run.FinishedAt != nil {
+		at = *run.FinishedAt
+	}
+	return &lastDBDumpView{At: at, Status: run.Status, Bytes: run.Bytes, Error: run.Error}
 }
 
 // handleDeleteBackups removes every backup of a container from the selected
@@ -536,7 +643,8 @@ func (h *Handler) handleRestoreCancel(w http.ResponseWriter, r *http.Request) {
 // handleRestoreCancel because a cancelled restore leaves a container gone and
 // its appdata partial, and a wrong key prefix must not reach that. A key that
 // is not running is an idempotent success (cancelled:false), so a tab still
-// showing the button for a finished backup gets no error.
+// showing the button for a finished backup gets no error. The reason tells that
+// case apart from a backup that already wrote its restore point.
 func (h *Handler) handleBackupCancel(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Key string `json:"key"`
@@ -544,8 +652,15 @@ func (h *Handler) handleBackupCancel(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	cancelled := h.svc.CancelBackupRun(body.Key)
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": cancelled})
+	if h.svc.CancelBackupRun(body.Key, "") {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": true})
+		return
+	}
+	reason := "not_running"
+	if h.svc.BackupCommitted(body.Key, "") {
+		reason = "committed"
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": false, "reason": reason})
 }
 
 // handleListFiles lists the files in a container snapshot for file-level restore.
@@ -629,6 +744,138 @@ func (h *Handler) handleRestoreContainerTo(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
 }
 
+// handleListDBDumps lists a container's database dumps.
+// GET /api/containers/{name}/dbdumps?source=
+func (h *Handler) handleListDBDumps(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	dumps, err := h.svc.DBDumps(r.Context(), name, sourceParam(r))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dumps": dumps}))
+}
+
+// handleDownloadDBDump streams one database dump to the browser.
+// GET /api/containers/{name}/dbdumps/{id}/download?source=&gz=1&check=1
+//
+// check=1 is the preflight the UI runs before it starts the native download: it
+// answers the envelope without streaming. The download itself refuses with 409
+// and no Content-Disposition, so a browser never saves an error envelope under
+// a .sql name.
+func (h *Handler) handleDownloadDBDump(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	id := r.PathValue("id")
+	gz := r.URL.Query().Get("gz") == "1"
+	if r.URL.Query().Get("check") == "1" {
+		if err := h.svc.DownloadDBDump(r.Context(), name, sourceParam(r), id, gz, true, nil, nil); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+		writeJSON(w, http.StatusOK, okEnvelope(nil))
+		return
+	}
+
+	var filename, contentType string
+	lw := &headerOnFirstWrite{w: w, header: func() {
+		w.Header().Set("Content-Type", contentType)
+		w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Cache-Control", "no-store")
+	}}
+	err := h.svc.DownloadDBDump(r.Context(), name, sourceParam(r), id, gz, false, func(v DBDumpView, sealed bool) {
+		filename = DBDumpDownloadName(name, v, gz, sealed)
+		switch {
+		case sealed:
+			contentType = "application/octet-stream"
+		case gz:
+			contentType = "application/gzip"
+		default:
+			contentType = "application/sql"
+		}
+	}, lw)
+	switch {
+	case err == nil:
+	case !lw.wrote:
+		writeJSON(w, http.StatusConflict, failEnvelope(err))
+	default:
+		// The attachment is under way, and a response that ends cleanly would be
+		// saved as a finished dump. Only a broken connection marks it failed.
+		log.Printf("api: download of a database dump of %q broke off: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		panic(http.ErrAbortHandler)
+	}
+}
+
+// handleSaveDBDumpTo writes one database dump into a folder on the server.
+// POST /api/containers/{name}/dbdumps/{id}/save?source=  body {targetPath, gz}
+//
+// Asynchronous like the to-folder restore: validation and the resolved file
+// name come back in the ack, the writing runs detached under its own run kind.
+func (h *Handler) handleSaveDBDumpTo(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		TargetPath string `json:"targetPath"`
+		GZ         bool   `json:"gz"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	target, started, err := h.svc.StartSaveDBDumpToPath(r.Context(), name, sourceParam(r), r.PathValue("id"), body.TargetPath, body.GZ)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
+}
+
+// handleImportDBDump imports one database dump into a freshly initialised
+// database. POST /api/containers/{name}/dbdumps/{id}/import?source=
+//
+// Asynchronous like the to-folder restore: every refusal is answered here, with
+// the reason id the page translates, and the work itself runs detached.
+func (h *Handler) handleImportDBDump(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	started, err := h.svc.StartImportDBDump(r.Context(), name, sourceParam(r), r.PathValue("id"))
+	switch {
+	case err != nil:
+		writeJSON(w, http.StatusOK, importRefusalEnvelope(err))
+	case !started:
+		writeJSON(w, http.StatusOK, codedFailEnvelope(errors.New("a backup or restore is already running"), importRefusedBusy))
+	default:
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
+	}
+}
+
+// importRefusalEnvelope answers a refused import: the reason id the page turns
+// into a sentence, plus the two major versions a version mismatch names.
+func importRefusalEnvelope(err error) map[string]any {
+	var refusal *importRefusal
+	if !errors.As(err, &refusal) {
+		return failEnvelope(err)
+	}
+	out := codedFailEnvelope(err, refusal.code)
+	if refusal.code == importRefusedVersion {
+		out["server"], out["dump"] = refusal.server, refusal.dump
+	}
+	return out
+}
+
 // handleDiff compares two of a container's snapshots and returns the summary of
 // what changed between them. GET /api/containers/{name}/diff?from=&to=&source=
 func (h *Handler) handleDiff(w http.ResponseWriter, r *http.Request) {
@@ -701,6 +948,12 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		ExcludeCaches     map[string]bool `json:"excludeCaches"`
 		UpdateAfterBackup *bool           `json:"updateAfterBackup"`
 		ScheduleCadence   *string         `json:"scheduleCadence"`
+		// DBDumpOff opts the container out of the automatic database dump;
+		// DBDumpEngine names the engine a container that only looks like a
+		// database is dumped with. Pointers like their neighbours: the card
+		// saves one field at a time.
+		DBDumpOff    *bool   `json:"dbDumpOff"`
+		DBDumpEngine *string `json:"dbDumpEngine"`
 		// Repo is the older spelling of home {repo}.
 		Repo *string `json:"repo"`
 		// Home is this item's own location: a named repository from Settings,
@@ -769,6 +1022,22 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	if body.UpdateAfterBackup != nil {
 		if err := h.svc.SetUpdateAfterBackup(r.Context(), name, *body.UpdateAfterBackup); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.DBDumpOff != nil {
+		if err := h.svc.SetDBDumpOff(r.Context(), name, *body.DBDumpOff); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.DBDumpEngine != nil {
+		if err := h.svc.SetDBDumpEngine(r.Context(), name, *body.DBDumpEngine); err != nil {
+			status := http.StatusOK
+			if errors.Is(err, errUnknownDBDumpEngine) {
+				status = http.StatusBadRequest
+			}
+			writeJSON(w, status, failEnvelope(err))
 			return
 		}
 	}

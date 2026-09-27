@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import type { PlacementView } from "../../lib/api";
 import {
+  accentButtons,
   homeOption,
   placementOptions,
   placementPlan,
@@ -128,6 +129,7 @@ describe("PlacementRow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Set" }));
     const dialog = await screen.findByRole("dialog");
     expect(dialog.textContent).toContain("Back up nginx to Cold · mounted from now on? The location is fixed from the first backup on.");
+    expect(accentButtons(dialog)).toEqual(["Set"]);
     fireEvent.click(within(dialog).getByRole("button", { name: "Set" }));
     await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, { home: { repo: "repo-cold" } }]]));
   });
@@ -173,6 +175,7 @@ describe("PlacementRow", () => {
     expect(dialog.textContent).toContain("At the next run, snapshots of nginx are uploaded:");
     expect(dialog.textContent).toContain("B2: about 40");
     expect(dialog.textContent).toContain("Could not be checked: NAS Keller");
+    expect(accentButtons(dialog)).toEqual(["Confirm"]);
     expect(dialog.textContent).toContain("Uploads can cost money at the provider.");
     fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
@@ -208,6 +211,7 @@ describe("PlacementRow", () => {
     const dialog = await screen.findByRole("dialog");
     expect(dialog.textContent).toContain("It could not be worked out how much of nginx would be uploaded.");
     expect(dialog.textContent).not.toContain("At the next run, snapshots of nginx are uploaded:");
+    expect(accentButtons(dialog)).toEqual(["Confirm"]);
     expect(dialog.textContent).toContain("The placement rules could not be read, so nothing is copied until they can.");
     expect(dialog.textContent).toContain("Uploads can cost money at the provider.");
     fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));

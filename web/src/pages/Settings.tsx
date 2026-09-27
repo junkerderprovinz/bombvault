@@ -1,13 +1,15 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listVMs, putSettings, setAuthPassword } from "../lib/api";
+import { getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listVMs, listZFSDatasets, putSettings, setAuthPassword } from "../lib/api";
+import { useAnomalySummary } from "../lib/useAnomalies";
 import { pushSaveWarnings } from "../lib/placementCodes";
 import { getLabelMode, type ControlAxis, type LabelMode } from "../lib/controls";
 import { PAGE_SHELL_TABBED } from "../lib/pageShell";
 import { Button } from "../components/Button";
 import { useReveal } from "../lib/useReveal";
-import type { Settings, Container, VM, FileSetView, RegistryAuthEntry } from "../lib/api";
+import type { Settings, Container, VM, FileSetView, RegistryAuthEntry, ZFSDatasetView } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { useToast } from "../lib/toast";
+import { useConfirm } from "../lib/useConfirm";
 import { randomId } from "../lib/uuid";
 import { useAdvanced } from "../lib/advanced";
 import { getRainbow, setRainbow, type RainbowState } from "../lib/appearance";
@@ -106,6 +108,12 @@ const TAB_ORDER: TabKey[] = [
 
 // Links and bookmarks that name the Off-site tab open Storage, which holds its settings.
 const TAB_ALIASES: Partial<Record<string, TabKey>> = { offsite: "storage" };
+
+/** Hashes that name a card rather than a tab: the tab holding the card opens
+ *  and the card scrolls into view, since it sits below the fold. */
+const CARD_TAB: Record<string, TabKey> = {
+  anomalies: "integrity",
+};
 
 // ---------------------------------------------------------------------------
 // Settings tab icons (GlimStone form-engine Phase 2, Task 3 — design-language
@@ -326,6 +334,7 @@ export function SettingsPage() {
   const { t } = useT();
   const { advanced } = useAdvanced();
   const { push, quiet, setQuiet } = useToast();
+  const { confirm, confirmDialog } = useConfirm();
 
   const [tab, setTab] = useState<TabKey>("general");
   // Settings tab slide (GlimStone motion-engine animation 7) — 1 = the tab
@@ -644,6 +653,12 @@ export function SettingsPage() {
   const [, setWatchdogSaveState] = useState<SaveState>("idle");
   const [, setWatchdogSaveError] = useState<string | null>(null);
 
+  // Anomalies card (integrity tab): every field saves on its own through
+  // autoSaveToggle, which puts the old value back when the save is refused.
+  const [, setAnomalySaveState] = useState<SaveState>("idle");
+  const [, setAnomalySaveError] = useState<string | null>(null);
+  const { summary: anomalySummary } = useAnomalySummary();
+
   // Schedules tab (migrated from the retired Plans page). The container list
   // feeds the Containers schedule section's included-members list; syncSchedules
   // applies the Containers cadence to VMs + Flash + Folders.
@@ -652,6 +667,8 @@ export function SettingsPage() {
   const [vms, setVMs] = useState<VM[]>([]);
   // File sets feed the Files schedule section's member list (live enabled toggles).
   const [fileSets, setFileSets] = useState<FileSetView[]>([]);
+  // ZFS items do the same for the ZFS schedule section.
+  const [zfsItems, setZFSItems] = useState<ZFSDatasetView[]>([]);
   const [syncSchedules, setSyncSchedules] = useState(false);
   // Task 5 (live-review — "Speichern-Buttons können weg, es soll immer alles
   // live gespeichert werden"): this whole tab used to funnel every field
@@ -727,18 +744,15 @@ export function SettingsPage() {
     // mount load lands in that promise's .catch — killing the whole Settings
     // page, not just this card (see lib/uuid.ts).
     setRegistryRowIds(s.registryAuths.map(() => randomId()));
-    // Detect whether the domain schedules are already in sync (Containers ==
-    // VMs == Flash == Folders, and not off), so the Schedules tab's sync
-    // toggle reflects the server state. Reproduced from the retired Plans
-    // page; filesSchedule is part of the comparison alongside Task 2's own
-    // extension of the toggle's live effect to cover Folders too — without it,
-    // a server state where Containers/VMs/Flash already matched but Folders
-    // didn't would show the toggle ON while Folders still quietly held its own
-    // independent value until the next edit.
+    // The sync toggle reads as on only when Containers, VMs, Flash, Folders
+    // and ZFS already share one cadence that is not off. A domain that differs
+    // keeps its own value until the next edit, so the toggle must not claim
+    // otherwise.
     setSyncSchedules(
       s.vmsSchedule === s.containersSchedule &&
         s.flashSchedule === s.containersSchedule &&
         s.filesSchedule === s.containersSchedule &&
+        s.zfsSchedule === s.containersSchedule &&
         s.containersSchedule !== "off" &&
         s.containersSchedule !== ""
     );
@@ -790,6 +804,7 @@ export function SettingsPage() {
 
     // Load the file sets for the Schedules tab's Files section. Non-fatal too.
     loadFileSets();
+    loadZFSItems();
   }, []);
 
   // loadFileSets (re)fetches the file-set list — on mount and after a Files
@@ -804,11 +819,24 @@ export function SettingsPage() {
       });
   }
 
+  // loadZFSItems does for the ZFS section what loadFileSets does for Folders.
+  function loadZFSItems() {
+    listZFSDatasets()
+      .then((r) => {
+        if (r.ok) setZFSItems(r.datasets ?? []);
+      })
+      .catch(() => {
+        // Non-fatal: the ZFS schedule section shows an empty member list.
+      });
+  }
+
   // Deep-link support: /settings#storage (and every other tab hash) selects the
-  // matching tab instead of scrolling. Read once on mount, and also listen for
-  // hashchange so an in-app link fired while already on /settings switches the
-  // tab (no remount happens in that case). An alias is rewritten in the
-  // address too, so a reload opens the tab the page shows.
+  // matching tab, and a card hash (CARD_TAB) selects the card's tab. Read once
+  // on mount, and also listen for hashchange so an in-app link fired while
+  // already on /settings switches the tab (no remount happens in that case).
+  // An alias is rewritten in the address too, so a reload opens the tab the
+  // page shows.
+  const [cardAnchor, setCardAnchor] = useState("");
   useEffect(() => {
     const applyHash = () => {
       const raw = window.location.hash.replace(/^#/, "");
@@ -821,21 +849,32 @@ export function SettingsPage() {
         }
       }
       const h = alias ?? raw;
-      if ((TAB_ORDER as string[]).includes(h)) {
-        // Direction (motion-engine animation 7): computed the same way the
-        // tab strip's own onChange below does, just reading the CURRENT tab
-        // off tabRef instead of a closed-over (and here, permanently stale —
-        // this effect only ever runs once, at mount) `tab` value.
+      const target = CARD_TAB[h] ?? h;
+      if ((TAB_ORDER as string[]).includes(target)) {
+        // The slide direction reads the current tab off tabRef: this effect
+        // runs once, so its own `tab` is the one from mount.
         const from = TAB_ORDER.indexOf(tabRef.current);
-        const to = TAB_ORDER.indexOf(h as TabKey);
+        const to = TAB_ORDER.indexOf(target as TabKey);
         if (from !== -1 && to !== -1) setTabDir(to > from ? 1 : -1);
-        setTab(h as TabKey);
+        setTab(target as TabKey);
+        setCardAnchor(target === h ? "" : h);
       }
     };
     applyHash();
     window.addEventListener("hashchange", applyHash);
     return () => window.removeEventListener("hashchange", applyHash);
   }, []);
+
+  // The card exists only once the settings have loaded and its tab is showing.
+  const settingsLoaded = settings !== null;
+  useEffect(() => {
+    if (!cardAnchor || !settingsLoaded) return;
+    const card = document.getElementById(cardAnchor);
+    if (!card) return;
+    // jsdom has no scrollIntoView.
+    card.scrollIntoView?.({ block: "start" });
+    setCardAnchor("");
+  }, [cardAnchor, settingsLoaded, tab]);
 
   // While "sync" is on, mirror the Containers cadence onto VMs + Flash +
   // Folders (Task 2 — "der toggle soll auch ordner einschließen") in live
@@ -855,16 +894,19 @@ export function SettingsPage() {
     if (
       settings.vmsSchedule === merged &&
       settings.flashSchedule === merged &&
-      settings.filesSchedule === merged
+      settings.filesSchedule === merged &&
+      settings.zfsSchedule === merged
     ) {
       return;
     }
     setSettings((prev) =>
-      prev ? { ...prev, vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged } : prev
+      prev
+        ? { ...prev, vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged, zfsSchedule: merged }
+        : prev
     );
     debouncedSave("schedSync", () => {
       void save(
-        { vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged },
+        { vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged, zfsSchedule: merged },
         setSchedSaveState,
         setSchedSaveError
       );
@@ -1008,6 +1050,31 @@ export function SettingsPage() {
       setSettings((s) => (s ? { ...s, [key]: prev ?? !next } : s));
       setDomainToggleShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
     }
+  }
+
+  // Switching every dump off at once can leave a database with no consistent
+  // copy at all, and the containers it happens to are named before it does.
+  // Only a dump that runs today can be lost, and "unknown" coverage cannot
+  // carry the claim that the dump is the only consistent copy. A label naming
+  // the engine wins over the switch on the card.
+  async function toggleDbDumps(next: boolean) {
+    if (!next) {
+      const atRisk = containers
+        .filter(
+          (c) =>
+            c.dbTier !== "" &&
+            (!c.dbDumpOff || c.dbTier === "label") &&
+            !c.dbDumpLabelOff &&
+            (c.dbTier !== "lookalike" || c.dbDumpEngine !== "") &&
+            (c.dbDataCoverage === "live" || c.dbDataCoverage === "none")
+        )
+        .map((c) => c.name);
+      const question = atRisk.length
+        ? t("settings.dbDumpsOffConfirm", atRisk.length).replace("{names}", atRisk.join(", "))
+        : t("settings.dbDumpsOffConfirmPlain");
+      if (!(await confirm(question, { confirmKey: "common.confirm" }))) return;
+    }
+    await toggleDomainEnabled("dbDumpsEnabled", next);
   }
 
   // autoSaveField (GlimStone follow-up round, Paths & Storage tab rework,
@@ -1376,12 +1443,15 @@ export function SettingsPage() {
     const prevVms = settings.vmsSchedule;
     const prevFlash = settings.flashSchedule;
     const prevFiles = settings.filesSchedule;
+    const prevZFS = settings.zfsSchedule;
     setSettings((s) =>
-      s ? { ...s, vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged } : s
+      s
+        ? { ...s, vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged, zfsSchedule: merged }
+        : s
     );
     setSyncToggleBusy(true);
     const ok = await save(
-      { vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged },
+      { vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged, zfsSchedule: merged },
       setSchedSaveState,
       setSchedSaveError
     );
@@ -1389,7 +1459,9 @@ export function SettingsPage() {
     if (!ok) {
       setSyncSchedules(false);
       setSettings((s) =>
-        s ? { ...s, vmsSchedule: prevVms, flashSchedule: prevFlash, filesSchedule: prevFiles } : s
+        s
+          ? { ...s, vmsSchedule: prevVms, flashSchedule: prevFlash, filesSchedule: prevFiles, zfsSchedule: prevZFS }
+          : s
       );
       setSyncToggleShake((n) => n + 1);
     }
@@ -1602,6 +1674,12 @@ export function SettingsPage() {
     configScheduleToggleBusy,
     configScheduleToggleShake,
     loadFileSets,
+    zfsItems,
+    loadZFSItems,
+    toggleDbDumps,
+    anomalySummary,
+    setAnomalySaveState,
+    setAnomalySaveError,
     fieldPulse,
     save,
     toggleDomainEnabled,
@@ -1842,6 +1920,7 @@ export function SettingsPage() {
         className="flex flex-col gap-10 glim-tab-slide flex-1"
         style={{ maxWidth: tabStripWidth ?? undefined, "--tab-dir": tabDir } as CSSProperties}
       >
+      {confirmDialog}
       {tab === "general" && <GeneralTab {...tabProps} />}
       {tab === "storage" && <StorageTab {...tabProps} />}
       {tab === "schedules" && <SchedulesTab {...tabProps} />}

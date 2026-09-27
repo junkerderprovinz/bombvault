@@ -150,8 +150,8 @@ Un onglet **Récupération** dédié accompagne une installation neuve ou recons
 1. **Vérifie que BombVault peut lire vos sauvegardes** (le piège de la clé de chiffrement en amont).
 2. **Restaure les propres réglages de BombVault**, afin que les chemins de sauvegarde, les cibles hors site et les identifiants dont le reste du flux a besoin soient pré-remplis. Il lit la sauvegarde des réglages depuis le lieu que la ligne Auto-sauvegarde indique sous **Stocké dans**, ou depuis la copie de l'Auto-sauvegarde sous **Copié vers**, et affiche ce lieu avec son adresse ; pour lire depuis un autre lieu, modifiez d'abord la ligne Auto-sauvegarde à l'étape 3. La restauration est appliquée via un auto-redémarrage sur le socket Docker, de sorte que la base de réglages active n'est jamais écrasée sous un handle ouvert.
 3. **Rattache vos sauvegardes existantes** via les lignes de la carte Domaines : sur la ligne de chaque domaine, choisissez sous **Stocké dans** le lieu où se trouvent ses sauvegardes et sous **Copié vers** les lieux qui contiennent ses copies. Un lieu qu'aucune ligne ne propose encore, comme un partage, un serveur ou un bucket cloud, se connecte avec **Ajouter un lieu**, la même fenêtre que dans Paramètres, Stockage. **Connexion et aperçu** vérifie ensuite que les sauvegardes sont lisibles.
-4. **Découvre** les conteneurs, VMs et jeux de fichiers qui y sont stockés.
-5. **Les restaure tous** (laissés arrêtés, afin que vous les démarriez délibérément), avec votre kit de récupération à un clic.
+4. **Découvre** les conteneurs, VMs, jeux de fichiers et jeux de données ZFS qui y sont stockés.
+5. **Restaure les conteneurs et les VMs en une fois** (laissés arrêtés, afin que vous les démarriez délibérément) et liste les jeux de fichiers et les éléments ZFS à restaurer un par un ; les éléments ZFS reviennent désactivés. Votre kit de récupération est à un clic.
 
 !!! note "Les copies hors site attendent après une reconstruction"
     Quand l'étape 4 reconstruit des entrées sans les anciens réglages, la réplication hors site de ces domaines se met en pause jusqu'à ce que l'emplacement par défaut soit confirmé. Voir [Emplacement par élément](#placement).
@@ -172,6 +172,9 @@ Un clic télécharge la **clé maîtresse**, le **mot de passe restic dérivé**
 !!! danger "Conservez le kit de récupération hors du serveur"
     Le kit contient le secret qui déchiffre vos sauvegardes. Gardez-le en lieu sûr et à l'écart du serveur (un gestionnaire de mots de passe, une copie imprimée dans un coffre). Si vous perdez à la fois BombVault et `APP_KEY` sans kit de récupération, vos sauvegardes chiffrées ne peuvent pas être récupérées.
 
+!!! warning "Le snapshot le plus récent n'est pas toujours celui à restaurer"
+    Depuis restic 0.17, `restic snapshots` affiche la taille de chaque snapshot. Après une perte de données, le snapshot le plus récent peut être celui qui a été vidé : ne restaurez donc pas un snapshot beaucoup plus petit que les précédents. Après un rançongiciel, ce peut être le snapshot chiffré, de taille habituelle. Si BombVault tourne encore, consultez d'abord sa page **Anomalies** : elle indique la dernière bonne sauvegarde. Une restauration n'a besoin d'aucune donnée d'anomalie de BombVault, et la pause de rétention ne fait jamais que garder plus de snapshots.
+
 ### Si le kit n'est pas sous la main
 
 Le mot de passe n'est stocké nulle part, il est **calculé** à partir de l'`APP_KEY`. Avec la clé et un shell, vous pouvez donc le reproduire vous-même :
@@ -188,3 +191,27 @@ C'est un HMAC-SHA256 sur la chaîne fixe `bombvault:restic-repo`, avec pour clé
     Un dépôt arrivé ici par réplication hors site a été créé par la machine qui l'a envoyé, avec **son** `APP_KEY`. Dériver depuis la clé de la machine réceptrice donne un mot de passe que restic refuse, ce qui ressemble exactement à un dépôt corrompu sans en être un. C'est la raison habituelle pour laquelle `restic check` sur un dépôt reçu redemande le mot de passe encore et encore.
 
 Parce que les définitions de récupération vivent **à l'intérieur** de chaque dépôt (`<repo>/def`, `<repo>/vm-def`), un dossier de dépôt copié est entièrement autonome, de sorte que le kit plus le dépôt sont tout ce dont une restauration sur machine nue a besoin.
+
+## Récupérer un dump de base de données {#database-dumps}
+
+Un dump de base de données est un point de restauration à part entière dans le dépôt des conteneurs, portant l'étiquette `dbdump:<container>` et contenant le seul fichier `/dbdump/<container>.sql`. BombVault les liste, les télécharge et les importe sous **Sauvegardes** ; voici les mêmes étapes avec restic seul, pour le jour où BombVault n'est pas là.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Les étiquettes `dbversion:` et `dbname:` de chaque dump indiquent la version du serveur d'où il vient et les bases qu'il contient. Un fichier complet se termine par `-- PostgreSQL database cluster dump complete` ou `-- Dump completed`.
+
+Importez-le dans un conteneur de la même version ou d'une plus récente (PostgreSQL), ou de la même version majeure (MySQL et MariaDB), démarré une fois avec un dossier de données vide pour qu'il s'initialise. L'hôte n'a besoin d'aucun client de base de données, le conteneur en a un :
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Pour une seule base issue d'un dump complet, MySQL et MariaDB acceptent `--one-database <name>` sur la commande du client. Un dump PostgreSQL comporte une section par base, chacune commençant par une ligne `\connect <name>` : copiez cette section dans un fichier à part et importez-le avec `-d <name>` après avoir créé la base.
+
+!!! warning "Un dump pris en root emporte les comptes du serveur"
+    Un dump complet MySQL ou MariaDB pris en root contient la base système `mysql` : l'importer remplace donc les comptes du nouveau serveur, mot de passe root compris, par ceux du dump. Sur PostgreSQL, `role ... already exists` pour l'utilisateur créé par le conteneur est attendu et sans conséquence.

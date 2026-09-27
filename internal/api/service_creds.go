@@ -536,9 +536,9 @@ func (s *Service) decodeCloudFor(settings store.Settings, credsRef string) (Clou
 	return set.CloudCreds, err
 }
 
-// namedRepoItemNames lists the containers, VMs and folder sets pointed at one
-// named repository (#204), as a single comma-separated line for the recovery
-// kit. Built from the three item lists rather than a new store query, and
+// namedRepoItemNames lists the containers, VMs, folder sets and ZFS items
+// pointed at one named repository (#204), as a single comma-separated line for
+// the recovery kit. Built from the item lists rather than a new store query, and
 // tolerant of a read failure: the location is the part that must not be lost,
 // the inventory is the help.
 func (s *Service) namedRepoItemNames(id string) string {
@@ -561,6 +561,13 @@ func (s *Service) namedRepoItemNames(id string) string {
 		for _, f := range sets {
 			if strings.TrimSpace(f.Repo) == id {
 				out = append(out, "folder set "+f.Name)
+			}
+		}
+	}
+	if ds, err := s.store.ListZFSDatasets(); err == nil {
+		for _, d := range ds {
+			if strings.TrimSpace(d.Repo) == id {
+				out = append(out, "ZFS dataset "+d.Dataset)
 			}
 		}
 	}
@@ -596,8 +603,8 @@ func (s *Service) RecoveryKit() (string, error) {
 	// settings (the same resolution the engine uses), so the kit names the real
 	// places the data lives. A resolution failure for one domain leaves that line
 	// blank rather than failing the whole kit.
-	repos := make([]recoveryRepo, 0, 4)
-	for _, d := range []string{"containers", "vms", "flash", "files"} {
+	repos := make([]recoveryRepo, 0, 5)
+	for _, d := range []string{"containers", "vms", "flash", "files", zfsDomain} {
 		rr := recoveryRepo{Domain: d}
 		if loc, rErr := s.repoFor(settings, d, "local"); rErr == nil {
 			rr.Local = loc
@@ -661,9 +668,10 @@ func (s *Service) RecoveryKit() (string, error) {
 	// answers both "where is it" and "what is in there".
 	if named, nErr := s.store.ListNamedRepos(); nErr == nil && len(named) > 0 {
 		w("## Named repositories (per-item)\n\n")
-		w("These repositories hold the backups of individual containers, VMs or folder\n")
-		w("sets that were pointed at them instead of their domain repository above. They\n")
-		w("are ordinary restic repositories and use the same password as the rest.\n\n")
+		w("These repositories hold the backups of individual containers, VMs, folder\n")
+		w("sets or ZFS datasets that were pointed at them instead of their domain\n")
+		w("repository above. They are ordinary restic repositories and use the same\n")
+		w("password as the rest.\n\n")
 		for _, n := range named {
 			loc := n.Repo
 			if resolved, rErr := s.resolveRepo(n.Repo); rErr == nil {
@@ -700,6 +708,11 @@ func (s *Service) RecoveryKit() (string, error) {
 		w("- config (off-site): %s\n", settings.ConfigOffsite)
 	}
 	w("\n")
+	if mcpShipped {
+		w("Restoring this backup revokes every MCP key and every OAuth sign-in; create\n")
+		w("new keys and let cloud assistants sign in again under\n")
+		w("Settings > System > MCP server afterwards.\n\n")
+	}
 
 	// Off-site and cloud credentials: the stored rest-server and S3 keys and
 	// rclone config a user needs to reach a remote repository after losing
@@ -807,6 +820,11 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("       restic -r <repo> snapshots\n\n")
 	w("4. Restore a snapshot into a target directory (`restic restore`):\n\n")
 	w("       restic -r <repo> restore <snapshot-id> --target <restore-dir>\n\n")
+	w("   Pick the snapshot with care. Since restic 0.17, `restic snapshots` shows each\n")
+	w("   snapshot's size. After data loss the newest snapshot can be the emptied one,\n")
+	w("   so do not restore a snapshot that is far smaller than the ones before it.\n")
+	w("   After ransomware it can be the encrypted one at the usual size. If BombVault\n")
+	w("   still runs, check its Anomalies page first: it names the last good backup.\n\n")
 	w("Notes:\n")
 	w("- For a local repo, point <repo> at the backup folder on disk (the path above is the\n")
 	w("  container view; on the host it is your backup share, e.g. /mnt/user/<...>).\n")
@@ -816,8 +834,76 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("  (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY for S3, RESTIC_REST_USERNAME /\n")
 	w("  RESTIC_REST_PASSWORD for a REST server) and use the repo verbatim.\n")
 
+	b.WriteString(s.zfsKitSection(settings))
+	b.WriteString(dbDumpKitSection)
+
 	return b.String(), nil
 }
+
+// dbDumpKitSection explains how to get a database dump back with restic and the
+// database's own client. It is written to be pasted into a terminal, so it uses
+// plain quotes and no typographic dashes.
+const dbDumpKitSection = `
+## Database dumps without BombVault
+
+Recognised database containers are dumped before each backup into the containers
+repository as snapshots of their own, tagged dbdump:<container>. Each holds one
+file, /dbdump/<container>.sql.
+
+1. List the dumps of one container (the tags dbversion:<version> and
+   dbname:<database> show the server version and the databases each dump holds):
+
+       restic -r <repo> snapshots --tag dbdump:<container>
+
+2. Write the newest dump to a file (or replace "latest" with a snapshot id). A
+   complete file ends with "-- PostgreSQL database cluster dump complete" or
+   "-- Dump completed":
+
+       restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+
+   After data loss the newest dump can be the one taken of an emptied
+   database. The list from step 1 shows each dump's size; skip one that is far
+   smaller than those before it. If BombVault still runs, its Anomalies page
+   names the last good dump.
+
+3. Create the database container again with an empty data folder and the same or
+   a newer version (PostgreSQL), or the same major version (MySQL, MariaDB). Let
+   it start once so it initialises. The host has no database client; run the
+   import through the container, with the container's own variables:
+
+       PostgreSQL:
+         docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+       MariaDB:
+         docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+       MySQL (and MariaDB images before 11):
+         docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+
+   A dump taken with an app user instead of root (it holds one database) is
+   imported the same way with that user and its password variable.
+
+4. Only one database out of a full dump:
+
+       MySQL/MariaDB: add --one-database <name> to the client command above; the
+         client then skips every statement for other databases.
+       PostgreSQL: the dump has one section per database, each starting with a
+         line "\connect <name>". Copy the section for your database into its own
+         file and import that file with -d <name> after creating the database.
+
+Notes:
+- A dump is never loaded back automatically. Restoring a container restores its
+  files, which are newer than the dump when they were saved with the container
+  stopped. Use a dump when those files cannot be used. BombVault's "Import into
+  a fresh database" does step 3 for you and keeps the old data folder.
+- PostgreSQL: "role ... already exists" for the user the container created is
+  expected and harmless. Other errors are real.
+- MySQL/MariaDB: a full (root) dump contains the mysql system database, users
+  and their password hashes; importing it replaces the new server's users,
+  including root's password, with the ones from the dump.
+- A PostgreSQL dump from a server with the 2025 security update starts with
+  \restrict; import it with a psql of the same or a newer patch release.
+- The file contains every table and the password hashes of the database users.
+  Keep it private.
+`
 
 // orNone returns s, or "(not resolved)" when s is empty, so a blank repo line in
 // the recovery kit reads clearly instead of trailing off.

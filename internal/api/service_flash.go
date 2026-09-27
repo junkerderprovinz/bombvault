@@ -21,6 +21,40 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
+// primaryRepoIsRemote reports whether an item's primary repository is a restic
+// remote backend, which is what makes listing it cost time and traffic. item is
+// what the domain's listing function takes: a container or VM name, a folder
+// set's id, and nothing for flash and config. A location that does not resolve
+// counts as not remote.
+func (s *Service) primaryRepoIsRemote(settings store.Settings, domain, item string) bool {
+	repo, err := s.primaryRepo(settings, domain, item)
+	return err == nil && restic.IsRemoteRepo(repo)
+}
+
+// primaryRepo resolves the repository an item backs up to, item as for
+// primaryRepoIsRemote.
+func (s *Service) primaryRepo(settings store.Settings, domain, item string) (repo string, err error) {
+	switch domain {
+	case "containers":
+		repo, err = s.containerRepoForName(settings, item, "local")
+	case "vms":
+		repo, err = s.vmRepoForName(settings, item, "local")
+	case "files":
+		var set store.FileSet
+		if set, err = s.store.GetFileSet(item); err == nil {
+			repo, err = s.fileSetRepoFor(settings, set, "local")
+		}
+	case zfsDomain:
+		var d store.ZFSDataset
+		if d, err = s.store.GetZFSDataset(item); err == nil {
+			repo, err = s.zfsDatasetRepoFor(settings, d, "local")
+		}
+	default:
+		repo, err = s.repoFor(settings, domain, "local")
+	}
+	return repo, err
+}
+
 // flashZipExportDir resolves the operator-configured output folder for the
 // scheduled flash zip export. Unlike flashRepoPath, which may hand a remote
 // backend like "s3:…" straight to restic, this is always a local folder, so
@@ -44,7 +78,7 @@ func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
 	}
 	if op, busy := s.domainBusy("flash"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on flash", op)
+		return false, domainBusyError{op: op, domain: "flash"}
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -53,7 +87,7 @@ func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
 		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupFlash(bctx); err != nil {
-			log.Printf("api: backup flash failed: %v", err)
+			log.Printf("api: backup flash %s: %v", backupEnding(err), err)
 		}
 	}()
 	return true, nil
@@ -65,15 +99,18 @@ var _ backup.FlashRestic = (*resticAdapter)(nil)
 // BackupFlash backs up the whole Unraid USB flash (the mounted /boot) to the
 // flash repo via restic. Fails with a clear message if the flash directory is
 // not mounted (the /boot → /host/boot mount is required for this domain).
-func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
+func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	// Reachable by shutdown, like every other backup.
-	s.registerBackupCancel("flash", cancel)
-	defer s.unregisterBackupCancel("flash")
+	s.registerBackupCancel(ctx, "flash", cancel)
+	defer s.endBackupCancel("flash", &retErr)
 	defer s.lockDomain("flash")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "flash")
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -101,15 +138,15 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		SourceDir: s.cfg.FlashDir,
 		Repo:      repo,
 		TargetID:  store.FlashTargetID,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode},
+		Restic:    &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFingerprint(itemSelection{Kind: "flash"})},
 		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "flash"},
 	})
 	s.progEnd("flash", "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "flash", "", err == nil, sum, err)
+	s.notifyBackup(ctx, "flash", "", "flash", err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, tagIdentity("flash"), "flash")
+	s.applyRetention(ctx, repo, settings, mode, tagIdentity("flash"), "flash", anomalyScope{Kind: anomalyScopeItem, ID: store.FlashTargetID})
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "flash", settings, repo, "")
 	s.collectStatsAfterItem(ctx, "flash")
@@ -152,7 +189,7 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	// line. A disabled export publishes nothing, hence below the guard.
 	_, startedAt := s.progBegin(ctx, "export:flash", "maintenance")
 	defer func() { s.progEnd("export:flash", "maintenance", err == nil, startedAt) }()
-	runID, rErr := s.store.StartRun(store.FlashTargetID, "export")
+	runID, rErr := s.startRun(ctx, store.FlashTargetID, "export")
 	if rErr != nil {
 		log.Printf("api: flash zip export: could not start run record (continuing): %v", rErr)
 		runID = ""
@@ -314,7 +351,7 @@ func (s *Service) DownloadFlashZip(ctx context.Context, snapshotID, source strin
 	if onResolved != nil {
 		onResolved(id)
 	}
-	runID, err := s.store.StartRun(store.FlashTargetID, "restore")
+	runID, err := s.startRun(ctx, store.FlashTargetID, "restore")
 	if err != nil {
 		return fmt.Errorf("flash download: start run: %w", err)
 	}

@@ -7,10 +7,10 @@ Trang này bao quát các biến môi trường của container, các điểm g�
 | Biến | Bắt buộc | Mô tả |
 |---|---|---|
 | `APP_KEY` | **Có** | Bí mật hex 32 byte (64 ký tự hex) dùng để dẫn xuất mật khẩu kho restic. Tạo bằng `openssl rand -hex 32`. Giữ nó an toàn: đánh mất nó khiến các bản sao lưu đã mã hóa không thể khôi phục được. |
-| `LIBVIRT_HOST` | Cho VM | Máy chủ Unraid được kết nối qua SSH để sao lưu VM (mặc định `host.docker.internal`; template điền sẵn một chỗ giữ chỗ IP-LAN). Dùng IP LAN Unraid của bạn, bắt buộc trên một mạng `br0.x` tùy chỉnh. |
-| `LIBVIRT_SSH_PORT` | Không | Cổng SSH của máy chủ để sao lưu VM (mặc định `22`). |
-| `LIBVIRT_SSH_USER` | Không | Người dùng SSH trên máy chủ để sao lưu VM (mặc định `root`). |
-| `LIBVIRT_URI` | Không | URI kết nối libvirt đầy đủ, được dùng **nguyên văn** thay vì xây dựng từ ba biến `LIBVIRT_*` phía trên (khi đó các biến này bị bỏ qua đối với chuỗi kết nối). Mặc định không đặt. Cần thiết trên TrueNAS Scale, nơi libvirtd của nó lắng nghe trên một socket không chuẩn mà dạng chuỗi dựng sẵn không thể diễn đạt được: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Xem phần TrueNAS Scale trong [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Cho VM | Máy chủ Unraid được kết nối qua SSH để sao lưu VM (mặc định `host.docker.internal`; template điền sẵn một chỗ giữ chỗ IP-LAN). Dùng IP LAN Unraid của bạn, bắt buộc trên một mạng `br0.x` tùy chỉnh. Cũng dùng cho sao lưu tập dữ liệu ZFS (trường mẫu **Host SSH: Address**); giá trị giữ chỗ `192.168.x.x` được coi là chưa đặt. |
+| `LIBVIRT_SSH_PORT` | Không | Cổng SSH của máy chủ để sao lưu VM (mặc định `22`). Trường mẫu **Host SSH: Port**, cũng dùng cho tập dữ liệu ZFS. |
+| `LIBVIRT_SSH_USER` | Không | Người dùng SSH trên máy chủ để sao lưu VM (mặc định `root`). Trường mẫu **Host SSH: User**, cũng dùng cho tập dữ liệu ZFS. |
+| `LIBVIRT_URI` | Không | URI kết nối libvirt đầy đủ, được dùng **nguyên văn** thay vì xây dựng từ ba biến `LIBVIRT_*` phía trên (khi đó các biến này bị bỏ qua đối với chuỗi kết nối). Mặc định không đặt. Cần thiết trên TrueNAS Scale, nơi libvirtd của nó lắng nghe trên một socket không chuẩn mà dạng chuỗi dựng sẵn không thể diễn đạt được: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Xem phần TrueNAS Scale trong [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Nếu là URI `qemu+ssh://`, mỗi biến trong `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` và `LIBVIRT_SSH_PORT` chưa đặt sẽ lấy từ đó, kể cả cho các lệnh SSH riêng của BombVault (chuyển NVRAM, tập dữ liệu ZFS). |
 | `PORT` | Không | Cổng HTTP (mặc định `3000`; chỉ dùng với `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Không | Cổng HTTPS (mặc định `3443`; template công bố nó 1:1, nên WebUI trả lời tại `https://<ip>:3443`). |
 | `HTTP_ONLY` | Không | Đặt `true` để tắt trình lắng nghe HTTPS tự ký và chỉ phục vụ HTTP thuần (để dùng phía sau một reverse proxy kết thúc TLS). |
@@ -20,13 +20,16 @@ Trang này bao quát các biến môi trường của container, các điểm g�
 | `PLATFORM` | Không | Buộc BombVault coi mình đang chạy trên nền tảng nào, thay vì tự phát hiện: `unraid`, `generic`, hoặc `truenas` (mặc định không đặt: tự phát hiện Unraid bằng cách dò tìm dấu hiệu `dockerMan` của nó dưới điểm gắn kết flash, nếu không thì dùng `generic`; một giá trị không nhận dạng được cũng quay về `generic`, được ghi log). Đặt nó rõ ràng trên một máy chủ Docker thông thường hoặc TrueNAS Scale, thay vì dựa vào việc dò tìm tự động chỉ dành cho Unraid; tệp compose thông thường đã làm đúng như vậy. Thay đổi quy ước dự phòng appdata, các đích khôi phục mặc định khi khôi phục sang một phiên bản khác, và liệu các bước thông báo/plugin đồng hành chỉ dành cho Unraid có được thử hay không (xem `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Không | Tên của chính container BombVault, để nó không bao giờ sao lưu (và do đó dừng) chính mình. |
 | `BACKUP_MAX_HOURS` | Không | Số giờ đồng hồ tối đa mà một lần sao lưu đơn có thể giữ khóa miền của nó trước khi bị hủy cưỡng bức (một biện pháp bảo vệ để một lần chạy bị kẹt không thể chặn miền mãi mãi). Để trống (mặc định) dùng `48`. Tăng nó lên cho các bản sao lưu đám mây rất lớn hoặc chậm (một lần chạy bị hủy ở mức giới hạn thất bại với `context deadline exceeded`). Đặt `0` để tắt hoàn toàn giới hạn. |
+| `DB_DUMP_MAX_HOURS` | Không | Số giờ một lần kết xuất cơ sở dữ liệu tự động được phép chạy trước khi bị dừng. Để trống (mặc định) là `6`; giá trị cho phép từ `1` đến `48`, và giới hạn này được giữ thấp hơn `BACKUP_MAX_HOURS` một giờ (bằng một nửa giá trị đó khi nó dưới hai giờ), để một bản kết xuất dài bị chính giới hạn của nó cắt và được báo cáo như vậy, thay vì kéo cả bản sao lưu theo. Bản kết xuất không còn tiến triển sẽ bị dừng sớm hơn, sau `BACKUP_STALL_HOURS`. Một bản kết xuất bị dừng chỉ thất bại cho riêng nó, còn bản sao lưu của container vẫn tiếp tục. Trên Unraid, thêm biến này vào container BombVault bằng **Add another Path, Port, Variable**. |
 | `TZ` | Không | Múi giờ cho bộ lập lịch (ví dụ `Europe/Berlin`). **Nếu không đặt, mọi lịch trình sẽ chạy theo UTC**: lịch đặt lúc 02:30 sẽ bắt đầu lúc 02:30 UTC chứ không theo giờ địa phương. Trên Unraid bạn không bao giờ tự đặt giá trị này: hệ thống truyền múi giờ của chính nó vào mọi container. |
 
 ## Điểm gắn kết
 
 Gắn kết Docker socket, flash (`/boot`) và gốc **Host Data** (`/mnt`) như hiển thị trong template CA. Cả *nguồn* và *đích* sao lưu đều nằm dưới Host Data, và nó được gắn kết **slave** nên một share từ xa được gắn kết sau khi container khởi động (ví dụ dưới `/mnt/remotes`) trở nên hiển thị mà không cần khởi động lại.
 
-Một bản cài mới lưu mọi miền trong điểm lưu trữ **Unraid**, tại `/mnt/user/bombvault` với một thư mục cho mỗi miền (`container`, `vms`, `flash`, `config`, `files`), được tạo ở lần sao lưu đầu tiên. Bạn thêm các điểm lưu trữ khác, cục bộ hoặc từ xa, trên **Cài đặt, Lưu trữ**; xem [Điểm lưu trữ](storage-places.md).
+Sao lưu tập dữ liệu ZFS cũng cần chế độ này: máy chủ chỉ gắn ảnh chụp của một tập dữ liệu sau khi container đã khởi động. Xem [Tập dữ liệu ZFS](zfs-datasets.md).
+
+Một bản cài mới lưu mọi miền trong điểm lưu trữ **Unraid**, tại `/mnt/user/bombvault` với một thư mục cho mỗi miền (`container`, `vms`, `flash`, `config`, `files`, `zfs`), được tạo ở lần sao lưu đầu tiên. Bạn thêm các điểm lưu trữ khác, cục bộ hoặc từ xa, trên **Cài đặt, Lưu trữ**; xem [Điểm lưu trữ](storage-places.md).
 
 !!! note "Kiểm tra tích hợp máy chủ"
     Mở `/spike` trong giao diện web sau khi container khởi động. Nó kiểm thử mọi điểm gắn kết và CLI (Docker socket, libvirt, restic, qemu-img, rclone) và báo cáo bất kỳ phần nào bị thiếu.
@@ -39,6 +42,7 @@ Với mỗi container, BombVault tự chọn những bind mount và volume có t
 - **Volume Docker có tên** luôn được đưa vào, vì chúng không có bản tương đương dùng một lần nên chẳng có gì để lọc bỏ, **nhưng chỉ khi đường dẫn lưu trữ thật của volume trên máy chủ tự nó tới được qua điểm gắn Host Data**, đúng như mọi đường dẫn máy chủ khác mà BombVault sao lưu. Trình điều khiển volume cục bộ mặc định đặt volume dưới gốc dữ liệu của chính daemon, tức `/var/lib/docker/volumes/<tên>/_data` nếu bạn chưa đổi (kiểm tra bằng `docker info -f '{{.DockerRootDir}}'`). Vị trí đó KHÔNG nằm trong điểm gắn Host Data hẹp, chỉ một thư mục, mà tệp `docker-compose.yml` chung dùng theo mặc định. Volume không tới được sẽ bị bỏ qua lặng lẽ, đó không phải lỗi. Để thật sự sao lưu volume có tên trên một máy chủ thông thường, hãy trỏ Host Data (và `HOST_SOURCE_ROOT`) tới một thư mục cha chung bao trùm cả gốc dữ liệu của Docker: đánh đổi được nêu trong ghi chú Host Data của tệp compose (Unraid né chuyện này bằng cách gắn toàn bộ `/mnt`, quy ước cấp cao nhất của riêng nó, cũng vì cùng lý do).
 - **Thư mục dự án Docker Compose:** nếu container mang nhãn tiêu chuẩn `com.docker.compose.project.working_dir` (do `docker compose up` tự đặt), thư mục đó cũng được thêm vào, bất kể có bind nào khớp một đoạn gốc dữ liệu hay không.
 - **Ghi đè bằng nhãn `bombvault.data`:** đặt nhãn `bombvault.data=true` lên container để đưa vào TẤT CẢ bind mount của nó, dành cho bố cục mà cả hai quy ước trên đều không bắt được (ví dụ một bind `/srv/plex/config` đơn lẻ, không có dự án Compose). Mọi giá trị không rỗng khác `false` đều tính là đúng; thiếu nhãn hoặc `bombvault.data=false` thì không thay đổi gì.
+- **Nhãn `bombvault.dbdump`:** đặt `bombvault.dbdump=false` trên một container để tắt việc kết xuất cơ sở dữ liệu tự động của nó (`0`, `no` và `off` cũng vậy), hoặc nêu tên động cơ (`postgres`, `mysql`, `mariadb`) để kết xuất một container mà BombVault không tự nhận ra. Nhãn thắng công tắc trên thẻ của container, vốn là cách thường dùng trên Unraid.
 
 ## Mô hình bảo mật
 
@@ -50,9 +54,14 @@ Với mỗi container, BombVault tự chọn những bind mount và volume có t
 - Vì cổng bảo vệ là tùy chọn tham gia, khi chưa đặt thì toàn bộ giao diện và API (bao gồm thiết lập off-site, các tuyến kiểm tra can thiệp và bộ khôi phục) đều có thể truy cập bởi bất kỳ ai truy cập được cổng. Bật cổng bảo vệ một khi bạn dùng đến off-site, sao lưu bất biến hoặc mã hóa.
 - Chỉ chạy BombVault trên một mạng tin cậy, không phơi ra ngoài. Để truy cập từ xa, đặt nó phía sau một reverse proxy có thêm xác thực và TLS. Các phản hồi mang theo các tiêu đề bảo mật cơ bản (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Sau một proxy ngược, mọi yêu cầu đều mang địa chỉ của proxy, nên nếu không có `TRUSTED_PROXY` thì bộ hãm đếm tất cả máy khách vào một giỏ và những lần thất bại của kẻ tấn công cũng khóa bạn ở ngoài. Khai báo proxy trong `TRUSTED_PROXY` để việc đếm trở lại theo từng máy khách.
+- Reverse proxy đặt trước BombVault phải chuyển tiếp header `Authorization` hoặc `X-API-Key` tới `/mcp` và không được đệm câu trả lời, nếu không trợ lý sẽ không kết nối được. Xem [Máy chủ MCP](mcp.md#tls).
 - Với `HTTP_ONLY=true` cookie phiên mất cờ `Secure` của nó (bắt buộc phải vậy, để hoạt động qua HTTP thuần), nên chỉ bật mật khẩu phía sau một proxy kết thúc TLS nếu tính bảo mật là quan trọng.
 - Kết nối SSH sao lưu VM tin cậy host key ở lần kết nối đầu tiên (TOFU) và ghim nó sau đó. Xác minh khóa của máy chủ ngoài luồng nếu đường dẫn container-tới-máy-chủ của bạn không tin cậy.
 - Các bản sao lưu được mã hóa bởi restic khi bật mã hóa (Settings; mặc định bật), với khóa dẫn xuất từ `APP_KEY`.
+
+## Máy chủ MCP {#mcp-server}
+
+Máy chủ MCP không cần biến môi trường nào. Bạn bật nó bằng cách tạo một khóa tại **Cài đặt, Hệ thống, Máy chủ MCP**, và nó trả lời ở `/mcp` trên cùng cổng với giao diện web (ví dụ `https://192.168.1.10:3443/mcp`). Khi không có khóa đang hoạt động, đường dẫn này trả lời `404`. Máy khách, chứng chỉ và các giới hạn được mô tả tại [Máy chủ MCP](mcp.md).
 
 ## Sao lưu VM qua SSH
 
@@ -60,7 +69,7 @@ BombVault sao lưu các KVM/libvirt VM **mà không gắn kết bất kỳ đư�
 
 Thiết lập nhanh:
 
-1. **Settings, System, VM Backup over SSH:** sao chép khóa công khai được hiển thị.
+1. **Settings, System, Host SSH:** sao chép khóa công khai được hiển thị.
 2. Thêm nó vào `/root/.ssh/authorized_keys` của Unraid (cũng được lưu vào flash để nó tồn tại qua các lần khởi động lại).
 3. Nhấp **Test connection**.
 
@@ -81,6 +90,19 @@ Các bản sao off-site được gửi đến các điểm lưu trữ. Thêm đi
 - **Mức lưu giữ, giới hạn, lớp lưu trữ và ngân sách tăng trưởng thuộc về điểm lưu trữ** và được đặt trong phần chi tiết của nó. Mức lưu giữ của một điểm lưu trữ áp dụng cho mọi kho tại đó, nên một điểm lưu trữ off-site có thể giữ các bản sao lâu hơn để lưu trữ dài hạn; một điểm lưu trữ có mọi quy tắc bằng 0 thì không bao giờ cắt bớt.
 - **Lớp lưu trữ nguội và lưu trữ dài hạn (S3):** với một điểm lưu trữ S3, chọn một tầng có thể đọc để khôi phục (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Các remote rclone đặt lớp của chúng trong cấu hình rclone.
 - **Một miền được lưu ở điểm lưu trữ từ xa:** xem [Một miền được lưu ở điểm lưu trữ từ xa](offsite-recovery.md#remote-primary-repositories).
+
+## Bất thường {#anomalies}
+
+Phát hiện bất thường được thiết lập trong thẻ **Bất thường** tại **Cài đặt, Toàn vẹn**. Mỗi điều khiển được lưu ngay khi bạn thay đổi, và ba điều khiển dưới công tắc bị ẩn khi tính năng phát hiện đang tắt.
+
+| Thiết lập | Mặc định | Tác dụng |
+|---|---|---|
+| **Phát hiện bất thường** | Bật | So mỗi bản sao lưu với lịch sử riêng của mục. Khi tắt, không có gì mới được kiểm tra và mục **Bất thường** rời khỏi thanh bên; thẻ vẫn liên kết tới các phát hiện trước đó. |
+| **Độ nhạy** | Cân bằng | Nghiêm báo cả những thay đổi nhỏ hơn, Dễ dãi chỉ báo thay đổi lớn. |
+| **Gửi thông báo cho** | Chỉ các phát hiện nghiêm trọng | Mức nghiêm trọng thấp nhất gửi tin nhắn qua các kênh đã thiết lập tại Thông báo. Các lần sao lưu và dump thất bại lặp lại và các kiểm tra khôi phục theo lịch thất bại vốn đã gửi tin nhắn riêng và không bị gửi hai lần. |
+| **Giữ bản sao lưu cũ khi nguồn co lại mạnh hoặc bị ghi lại** | Bật | Chừng nào một mục còn một phát hiện đang mở về nguồn gần như trống, co lại mạnh hoặc phần lớn dữ liệu được lưu lại, việc lưu giữ và dọn dẹp sẽ không động đến các bản sao lưu cũ của mục đó. Xác nhận phát hiện hoặc đánh dấu là đã lường trước để giải phóng chúng. |
+
+Mỗi mục có thể có độ nhạy và mức thông báo tối thiểu riêng. Đặt chúng ở thẻ **Mục** của trang **Bất thường**, hoặc trong bảng của chính mục đó: phần thư mục của một container và thiết lập của một VM (cả hai ở chế độ nâng cao), trình sửa thư mục của một bộ thư mục, và các trang **Flash** và **Tự sao lưu**. Với một mục ZFS, chúng nằm trong trình chỉnh sửa của mục trên trang **ZFS** và áp dụng cho mọi tập dữ liệu trong cây của mục.
 
 ## Cài đặt di động (xuất và nhập) {#portable-settings-export-and-import}
 

@@ -46,6 +46,10 @@ function dynamicKeyPatterns(corpus: string): RegExp[] {
 
 const DYNAMIC = dynamicKeyPatterns(CORPUS);
 
+// Every run of key characters between two quotes, gathered once, since
+// searching the whole corpus for each of three thousand keys takes seconds.
+const QUOTED = new Set(CORPUS.match(/(?<=["'])[\w.-]+(?=["'])/g) ?? []);
+
 // KNOWN_ORPHANS lists keys that are already dead. It is a ratchet: removing an
 // entry is free, since nothing requires them to exist, but it must not grow.
 const KNOWN_ORPHANS = new Set([
@@ -122,6 +126,7 @@ describe("translation keys", () => {
     const orphans = Object.keys(en).filter(
       (key) =>
         !KNOWN_ORPHANS.has(key) &&
+        !QUOTED.has(key) &&
         !CORPUS.includes(`"${key}"`) &&
         !CORPUS.includes(`'${key}'`) &&
         !DYNAMIC.some((r) => r.test(key))

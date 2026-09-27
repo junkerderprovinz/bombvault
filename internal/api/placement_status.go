@@ -21,7 +21,7 @@ type placementPlan struct {
 type observedPlace struct {
 	Place  string `json:"place"` // "local" | "offsite:<id>"
 	Label  string `json:"label"`
-	Count  int    `json:"count"`
+	Count  *int   `json:"count"` // nil for a home the list did not read
 	Latest int64  `json:"latest"`
 	SeenAt int64  `json:"seenAt"` // when the item's copies were last seen there, 0 while it has none
 	Stale  bool   `json:"stale"`
@@ -351,7 +351,7 @@ func observedState(p placementRead, item placementItem, f *statusFacts, repoID s
 	}
 	o := &placementObserved{Places: []observedPlace{}, Older: []olderCopies{}}
 
-	local := observedPlace{Place: "local", Label: f.label(repoID), Latest: item.LastSuccess, SeenAt: item.LastSuccess, State: "unknown"}
+	local := observedPlace{Place: "local", Label: f.label(repoID), Count: item.HomeBackups, Latest: item.LastSuccess, SeenAt: item.LastSuccess, State: "unknown"}
 	if item.LastSuccess > 0 {
 		local.State, local.Counts = "counts", true
 	}
@@ -410,7 +410,7 @@ func (f *statusFacts) targetPlace(t store.OffsiteTarget, c store.ItemCopies, hol
 	obs, listed := f.observed[t.ID]
 	pl := observedPlace{
 		Place: offsiteSourcePrefix + t.ID, Label: placementTargetName(t),
-		Count: c.SnapshotCount, Latest: c.LatestSnapshotAt, SeenAt: c.ObservedAt,
+		Count: new(c.SnapshotCount), Latest: c.LatestSnapshotAt, SeenAt: c.ObservedAt,
 	}
 	switch {
 	case !t.Enabled:

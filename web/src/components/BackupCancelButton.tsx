@@ -5,10 +5,18 @@
 // It posts the backup's progress key ("files:<name>", "container:<name>",
 // "vm:<name>", "flash", "config"). A key whose backup has finished answers
 // cancelled:false, so a stale tab cannot cause an error.
+//
+// A container backup that has written its restore point and only starts its
+// containers again cannot be cancelled, and the confirmation would promise a
+// run without a snapshot. The progress stream marks that phase and the button
+// hides, as it does while the bar of a finished run lingers. A confirmation
+// that is open at that moment closes with the answer the server would give.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cancelBackup } from "../lib/api";
 import type { useT } from "../lib/i18n";
+import { useToast } from "../lib/toast";
+import { useProgress } from "../lib/progress";
 import { useConfirm } from "../lib/useConfirm";
 import { Button } from "./Button";
 
@@ -30,15 +38,41 @@ export function BackupCancelButton({
   onCancelled?: () => void;
 }) {
   const [cancelling, setCancelling] = useState(false);
-  const { confirm, confirmDialog } = useConfirm();
+  const asking = useRef(false);
+  const holder = useRef<HTMLSpanElement>(null);
+  const { confirm, confirmDialog, dismiss } = useConfirm();
+  const { push } = useToast();
+  const entry = useProgress()[cancelKey];
+  const committed = entry?.committed === true;
+  const cancellable = !committed && !entry?.finished;
+
+  useEffect(() => {
+    if (cancellable || !asking.current) return;
+    asking.current = false;
+    dismiss();
+    // The button that opened the dialog is gone, so focus would fall back to the
+    // top of the page.
+    holder.current?.focus();
+    push(t(committed ? "backup.cancelTooLate" : "backup.cancelNotRunning").replace(/\{name\}/g, name), "warn");
+  }, [cancellable, committed, dismiss, push, t, name]);
 
   async function handle() {
     const msg = t("backup.cancelConfirm").replace(/\{name\}/g, name);
-    if (!(await confirm(msg))) return;
+    asking.current = true;
+    const yes = await confirm(msg);
+    asking.current = false;
+    if (!yes) return;
     setCancelling(true);
     try {
-      await cancelBackup(cancelKey);
-      onCancelled?.();
+      const res = await cancelBackup(cancelKey);
+      if (res.cancelled) {
+        onCancelled?.();
+      } else {
+        // The button stays on screen until the next poll, so without a word
+        // the click would look ignored.
+        const key = res.reason === "committed" ? "backup.cancelTooLate" : "backup.cancelNotRunning";
+        push(t(key).replace(/\{name\}/g, name), "warn");
+      }
     } catch {
       // The backup keeps running and the button stays usable; the run row
       // shows what happened.
@@ -48,17 +82,19 @@ export function BackupCancelButton({
   }
 
   return (
-    <>
-      <Button
-        label={t("backup.cancel")}
-        labelKey="backup.cancel"
-        tone="neutral"
-        onClick={() => void handle()}
-        disabled={cancelling}
-        busy={cancelling}
-        title={cancelling ? t("restore.cancelling") : undefined}
-      />
+    <span ref={holder} tabIndex={-1} className="inline-flex">
+      {cancellable && (
+        <Button
+          label={t("backup.cancel")}
+          labelKey="backup.cancel"
+          tone="neutral"
+          onClick={() => void handle()}
+          disabled={cancelling}
+          busy={cancelling}
+          title={cancelling ? t("restore.cancelling") : undefined}
+        />
+      )}
       {confirmDialog}
-    </>
+    </span>
   );
 }

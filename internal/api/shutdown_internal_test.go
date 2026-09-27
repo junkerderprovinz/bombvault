@@ -43,7 +43,7 @@ func TestBeginShutdownCancelsBackupsAndSparesRestores(t *testing.T) {
 	restoreCtx, restoreCancel := context.WithCancel(context.Background())
 	defer restoreCancel()
 
-	s.registerBackupCancel("container:plex", backupCancel)
+	s.registerBackupCancel(context.Background(), "container:plex", backupCancel)
 	s.registerCancel("container:plex", restoreCancel) // the restore registry
 
 	// Unregister like a real backup does, or BeginShutdown waits out the grace.
@@ -81,7 +81,7 @@ func TestBeginShutdownGivesUpRatherThanHanging(t *testing.T) {
 	s := &Service{}
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	s.registerBackupCancel("container:wedged", cancel) // never unregistered
+	s.registerBackupCancel(context.Background(), "container:wedged", cancel) // never unregistered
 
 	start := time.Now()
 	s.BeginShutdown()

@@ -150,8 +150,8 @@ Ein eigener **Recovery**-Tab führt eine frische oder neu aufgebaute Installatio
 1. **Prüft, dass BombVault deine Backups lesen kann** (der Verschlüsselungsschlüssel-Fallstrick vorab).
 2. **Stellt BombVaults eigene Einstellungen wieder her**, sodass die Backup-Pfade, Off-site-Ziele und Zugangsdaten, die der Rest des Ablaufs braucht, vorausgefüllt sind. Das Einstellungs-Backup wird von dem Ort gelesen, den die Zeile „Selbst-Backup“ unter **Gespeichert in** nennt, oder von der Kopie des Selbst-Backups unter **Kopiert nach**; der Schritt zeigt diesen Ort mit seiner Adresse. Um von einem anderen Ort zu lesen, änderst du zuerst die Zeile „Selbst-Backup“ in Schritt 3. Angewendet wird die Wiederherstellung per Selbst-Neustart über den Docker-Socket, sodass die laufende Einstellungsdatenbank nie unter einem offenen Handle überschrieben wird.
 3. **Hängt deine vorhandenen Backups an**, über die Zeilen der Karte Domänen: In der Zeile jedes Bereichs wählst du unter **Gespeichert in** den Ort, an dem seine Backups liegen, und unter **Kopiert nach** die Orte mit seinen Kopien. Einen Ort, den noch keine Zeile anbietet, etwa eine Freigabe, einen Server oder einen Cloud-Bucket, verbindest du mit **Ort hinzufügen**, demselben Fenster wie unter Einstellungen, Speicher. **Verbinden & prüfen** testet danach, ob sich die Backups lesen lassen.
-4. **Entdeckt** die darin gespeicherten Container, VMs und Dateisätze.
-5. **Stellt sie alle wieder her** (gestoppt belassen, sodass du sie bewusst startest), mit deinem Recovery-Kit einen Klick entfernt.
+4. **Entdeckt** die darin gespeicherten Container, VMs, Dateisätze und ZFS-Datasets.
+5. **Stellt Container und VMs in einem Rutsch wieder her** (gestoppt belassen, sodass du sie bewusst startest) und listet Dateisätze und ZFS-Elemente auf, die du einzeln wiederherstellst; ZFS-Elemente kommen ausgeschaltet zurück. Dein Recovery-Kit ist einen Klick entfernt.
 
 !!! note "Off-site-Kopien warten nach einem Neuaufbau"
     Wenn Schritt 4 Einträge ohne die alten Einstellungen neu aufbaut, pausiert die Off-site-Replikation dieser Bereiche, bis die Ablage-Vorgabe bestätigt ist. Siehe [Ablage pro Element](#placement).
@@ -172,6 +172,9 @@ Ein Klick lädt den **Master-Key**, das **abgeleitete restic-Passwort** und die 
 !!! danger "Bewahre das Recovery-Kit off-box auf"
     Das Kit enthält das Geheimnis, das deine Backups entschlüsselt. Bewahre es an einem sicheren Ort getrennt vom Server auf (ein Passwortmanager, eine gedruckte Kopie im Safe). Wenn du sowohl BombVault als auch `APP_KEY` ohne Recovery-Kit verlierst, können deine verschlüsselten Backups nicht wiederhergestellt werden.
 
+!!! warning "Der neueste Snapshot ist nicht immer der richtige"
+    Seit restic 0.17 zeigt `restic snapshots` die Größe jedes Snapshots. Nach einem Datenverlust kann der neueste Snapshot der geleerte sein, stelle also keinen Snapshot wieder her, der viel kleiner ist als die davor. Nach Ransomware kann es der verschlüsselte in der üblichen Größe sein. Wenn BombVault noch läuft, sieh zuerst auf der Seite **Anomalien** nach: Sie nennt das letzte gute Backup. Für eine Wiederherstellung braucht es keine Anomalie-Daten von BombVault, und die Aufbewahrungspause behält immer nur mehr Snapshots.
+
 ### Wenn das Kit gerade nicht zur Hand ist
 
 Das Passwort ist nirgends gespeichert, es wird aus dem `APP_KEY` **berechnet**. Mit dem Schlüssel und einer Shell kannst du es also selbst nachbilden:
@@ -188,3 +191,27 @@ Das ist HMAC-SHA256 über die feste Zeichenkette `bombvault:restic-repo`, als Sc
     Ein Repository, das über die Off-site-Replikation hier gelandet ist, wurde von der sendenden Maschine mit **deren** `APP_KEY` angelegt. Leitest du aus dem Schlüssel der empfangenden Kiste ab, kommt ein Passwort heraus, das restic ablehnt. Das liest sich genau wie ein kaputtes Repository und ist keines. Das ist der übliche Grund, warum `restic check` auf einem empfangenen Repo immer wieder nach dem Passwort fragt.
 
 Weil Recovery-Definitionen **in** jedem Repo liegen (`<repo>/def`, `<repo>/vm-def`), ist ein kopierter Repo-Ordner vollständig eigenständig, sodass das Kit plus das Repo alles ist, was eine Bare-Metal-Wiederherstellung braucht.
+
+## Einen Datenbank-Dump zurückholen {#database-dumps}
+
+Ein Datenbank-Dump ist ein eigener Wiederherstellungspunkt im Container-Repository, mit der Marke `dbdump:<container>` und der einen Datei `/dbdump/<container>.sql`. BombVault listet, lädt und importiert sie unter **Backups**; unten stehen dieselben Schritte mit restic allein, für den Tag, an dem BombVault nicht da ist.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Die Marken `dbversion:` und `dbname:` an jedem Dump sagen, aus welcher Serverversion er stammt und welche Datenbanken er enthält. Eine vollständige Datei endet mit `-- PostgreSQL database cluster dump complete` oder `-- Dump completed`.
+
+Spiele ihn in einen Container derselben oder einer neueren Version (PostgreSQL) beziehungsweise derselben Hauptversion (MySQL und MariaDB) ein, der einmal mit leerem Datenordner gestartet wurde, damit er sich einrichtet. Der Host braucht keinen Datenbank-Client, der Container hat einen:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Für eine einzelne Datenbank aus einem vollen Dump nehmen MySQL und MariaDB `--one-database <name>` am Client-Befehl. Ein PostgreSQL-Dump hat je Datenbank einen Abschnitt, der mit einer Zeile `\connect <name>` beginnt: kopiere diesen Abschnitt in eine eigene Datei und spiele sie nach dem Anlegen der Datenbank mit `-d <name>` ein.
+
+!!! warning "Ein Root-Dump bringt die Benutzer des Servers mit"
+    Ein voller MySQL- oder MariaDB-Dump, als root genommen, enthält die Systemdatenbank `mysql`. Beim Einspielen ersetzt er damit die Konten des neuen Servers, das Root-Passwort eingeschlossen, durch die aus dem Dump. Bei PostgreSQL ist `role ... already exists` für den Benutzer, den der Container angelegt hat, zu erwarten und harmlos.

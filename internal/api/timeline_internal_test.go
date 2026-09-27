@@ -72,6 +72,22 @@ func TestTimelineShowsACopyInTheRowOfItsOriginal(t *testing.T) {
 	}
 }
 
+func TestTimelineLeavesADatabaseDumpToItsOwnList(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("postgres", "")
+	f.hold(f.domainPath("containers"),
+		snap("a1a1a1a1", 1_758_000_000, "container:postgres"),
+		snap("d1d1d1d1", 1_758_000_000, "dbdump:postgres", "dbengine:postgres"))
+
+	tl, err := f.svc.Timeline(context.Background(), "containers", "postgres")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := rowKeys(tl.Rows); !slices.Equal(got, []string{"a1a1a1a1"}) {
+		t.Fatalf("rows = %v, want the volume backup alone", got)
+	}
+}
+
 func TestTimelineReadsALocalTargetWhenItOpens(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.container("nginx", "")

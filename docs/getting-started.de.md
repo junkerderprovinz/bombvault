@@ -68,8 +68,8 @@ Das Template hängt außerdem den Docker-Socket, den Flash (`/boot`) und das Wur
 *Das Dashboard nach der ersten Sicherung: was geschützt ist, was als Nächstes läuft, und ein mitlaufendes Protokoll.*
 
 1. Öffne die Web-Oberfläche unter `https://<your-unraid-ip>:3443` (selbstsigniertes Zertifikat von Haus aus).
-2. Aktiviere in den **Einstellungen** die gewünschten Backup-Bereiche (Container, VMs, Flash, Config, Dateien) und wähle eine Akzentfarbe.
-3. Wähle im **Container**-Tab einen Container und klicke auf **Back up**, um deinen ersten Wiederherstellungspunkt zu erstellen. Repository-Pfade sind standardmäßig `/mnt/user/bombvault/{container,vms,flash,config,files}` und werden beim ersten Backup angelegt.
+2. Aktiviere in den **Einstellungen** die gewünschten Backup-Bereiche (Container, VMs, Flash, Config, Dateien, ZFS-Datasets) und wähle eine Akzentfarbe.
+3. Wähle im **Container**-Tab einen Container und klicke auf **Back up**, um deinen ersten Wiederherstellungspunkt zu erstellen. Repository-Pfade sind standardmäßig `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` und werden beim ersten Backup angelegt.
 4. Richte die Planung unter **Einstellungen, Zeitpläne** ein. Es gibt ein Ein-Klick-*alle in Zeitplan aufnehmen* für Container und VMs.
 
 !!! tip "Optional: eine Backup-Reihenfolge festlegen"

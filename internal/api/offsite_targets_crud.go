@@ -91,6 +91,8 @@ func offsiteTargetsToViews(ts []store.OffsiteTarget) []offsiteTargetView {
 // settings file uses too.
 type offsiteTargetBody struct {
 	offsiteTargetView
+	// SortOrder shadows the view's so a missing one can be told apart from 0.
+	SortOrder   *int                `json:"sortOrder"`
 	AlsoExclude *newTargetExclusion `json:"alsoExclude"`
 }
 
@@ -125,7 +127,7 @@ func (v offsiteTargetView) toStoreTarget() store.OffsiteTarget {
 // valid. t must come from toStoreTarget.
 func validateOffsiteTargetInput(t store.OffsiteTarget) string {
 	if !validOffsiteDomain(t.Domain) {
-		return "invalid domain: must be one of containers, vms, flash, config, files"
+		return invalidOffsiteDomain
 	}
 	if t.Repo == "" {
 		return "repo must not be empty"
@@ -228,9 +230,9 @@ func (h *Handler) handleListOffsiteTargets(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"targets": offsiteTargetsToViews(targets)}))
 }
 
-// handleCreateOffsiteTarget creates an additional off-site target behind the
-// domain's last one. POST /api/offsite/targets; the body's id, createdAt and
-// sortOrder are ignored.
+// handleCreateOffsiteTarget adds an additional off-site target. An id or
+// createdAt in the body is ignored, and without a sortOrder the target goes
+// after the domain's existing ones.
 func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Request) {
 	var v offsiteTargetBody
 	if !decodeBody(w, r, &v) {
@@ -239,6 +241,12 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	t := v.toStoreTarget()
 	if msg := validateOffsiteTargetInput(t); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	// Sort order 0 is the row the domain's off-site field edits. A row created
+	// there would be rewritten by the next settings save.
+	if v.SortOrder != nil && *v.SortOrder < 1 {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "sortOrder must be 1 or higher: 0 is the primary target, and the off-site setting in Settings manages it"})
 		return
 	}
 	if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
@@ -255,6 +263,10 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
+	t.SortOrder = 0
+	if v.SortOrder != nil {
+		t.SortOrder = *v.SortOrder
+	}
 	stored, err := h.store.CreateOffsiteTarget(t)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -269,10 +281,8 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
 }
 
-// handleUpdateOffsiteTarget updates an existing off-site target in place.
-// PUT /api/offsite/targets/{id}. The id comes from the path; created_at and
-// sort_order stay as stored, and a request that tries to move the target to
-// another domain is refused (see the domain check below).
+// handleUpdateOffsiteTarget replaces the target named in the path, keeping its
+// id and creation time, and its sort order when the body has none.
 func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	existing, ok, err := h.store.GetOffsiteTarget(id)
@@ -289,12 +299,21 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	t := v.toStoreTarget()
+	t.SortOrder = existing.SortOrder
+	if v.SortOrder != nil {
+		t.SortOrder = *v.SortOrder
+	}
 	if msg := validateOffsiteTargetInput(t); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	// PUT keeps the stored sort_order, so a domain change would carry the row's
-	// current slot into a domain where that slot may already be taken.
+	// The primary keeps its 0; any other target moved there would leave two
+	// rows at 0, and the settings sync could rewrite the wrong one.
+	if t.SortOrder < 1 && t.SortOrder != existing.SortOrder {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "sortOrder must be 1 or higher: 0 is the primary target, and the off-site setting in Settings manages it"})
+		return
+	}
+	// A target's copy rules and its direct repository belong to its domain.
 	if t.Domain != existing.Domain {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "cannot move an off-site target to another domain"})
 		return

@@ -40,6 +40,8 @@ func domainPathRaw(domain string, settings store.Settings) string {
 		return settings.ConfigPath
 	case "files":
 		return settings.FilesPath
+	case "zfs":
+		return settings.ZFSPath
 	}
 	return ""
 }

@@ -2,7 +2,9 @@ package api_test
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 	"time"
@@ -16,6 +18,14 @@ import (
 // newMemStore opens an in-memory SQLite store, migrates it, and returns a Repo.
 func newMemStore(t *testing.T) *store.Repo {
 	t.Helper()
+	st, _ := newMemStoreDB(t)
+	return st
+}
+
+// newMemStoreDB is newMemStore with the connection, for a test that has to
+// backdate what it seeded so a series reads as history and not as one burst.
+func newMemStoreDB(t *testing.T) (*store.Repo, *sql.DB) {
+	t.Helper()
 	db, err := store.Open(":memory:")
 	if err != nil {
 		t.Fatalf("open mem store: %v", err)
@@ -24,7 +34,7 @@ func newMemStore(t *testing.T) *store.Repo {
 	if err := store.Migrate(db); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
-	return store.New(db)
+	return store.New(db), db
 }
 
 // fakeServiceDocker is a configurable Docker fake satisfying dockercli.Docker.
@@ -33,7 +43,11 @@ type fakeServiceDocker struct {
 	listOut []dockercli.ContainerInfo
 	listErr error
 
-	inspect    model.Inspect
+	inspect model.Inspect
+	// inspects answers per container name, for the tests that list several and
+	// care which one was asked about. A name that is not in it falls back to
+	// inspect.
+	inspects   map[string]model.Inspect
 	inspectErr error
 
 	liveName    string
@@ -54,10 +68,20 @@ type fakeServiceDocker struct {
 	imageRemoveErr error
 	createErr      error
 	createErrName  string // when set, CreateAndStart fails for this container name
-	started        bool
-	createdIn      model.Inspect
-	createdStart   bool
-	calls          []string
+
+	execOut    string // stdout of ExecOutput
+	execStderr string // stderr tail of ExecStdin
+	execExit   int    // exit code both report
+	execErr    error
+	execFed    string // what ExecStdin was fed
+
+	started bool
+	// onStart runs inside Start, e.g. to cancel a backup while it starts the
+	// containers again.
+	onStart      func(name string)
+	createdIn    model.Inspect
+	createdStart bool
+	calls        []string
 }
 
 var _ dockercli.Docker = (*fakeServiceDocker)(nil)
@@ -72,6 +96,9 @@ func (f *fakeServiceDocker) Inspect(_ context.Context, name string) (model.Inspe
 	if f.inspectErr != nil {
 		return model.Inspect{}, f.inspectErr
 	}
+	if in, ok := f.inspects[name]; ok {
+		return in, nil
+	}
 	return f.inspect, nil
 }
 
@@ -83,6 +110,9 @@ func (f *fakeServiceDocker) Stop(_ context.Context, name string, _ time.Duration
 func (f *fakeServiceDocker) Start(_ context.Context, name string) error {
 	f.calls = append(f.calls, "start:"+name)
 	f.started = true
+	if f.onStart != nil {
+		f.onStart(name)
+	}
 	return f.startErr
 }
 
@@ -131,6 +161,25 @@ func (f *fakeServiceDocker) ImageRemove(_ context.Context, id string) error {
 func (f *fakeServiceDocker) Exec(_ context.Context, name string, cmd []string) error {
 	f.calls = append(f.calls, "exec:"+name)
 	return nil
+}
+
+func (f *fakeServiceDocker) ExecOutput(_ context.Context, name string, _ []string, max int) (string, int, error) {
+	f.calls = append(f.calls, "execOutput:"+name)
+	out := f.execOut
+	if len(out) > max {
+		out = out[:max]
+	}
+	return out, f.execExit, f.execErr
+}
+
+func (f *fakeServiceDocker) ExecStdin(_ context.Context, name string, _ []string, stdin io.Reader, _ int) (string, int, error) {
+	f.calls = append(f.calls, "execStdin:"+name)
+	fed, err := io.ReadAll(stdin)
+	if err != nil {
+		return "", 0, err
+	}
+	f.execFed = string(fed)
+	return f.execStderr, f.execExit, f.execErr
 }
 
 func (f *fakeServiceDocker) CreateAndStart(_ context.Context, in model.Inspect, start bool) error {

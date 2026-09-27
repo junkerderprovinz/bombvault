@@ -1,6 +1,7 @@
 import { Fragment, useState, type ReactNode } from "react";
 import type { TimelineDomain, TimelineMark, TimelinePlace, TimelineRow } from "../../lib/api";
 import { useT } from "../../lib/i18n";
+import { placementChanged } from "../../lib/placementEvents";
 import { autoMark, newestId, sourceOfPlace } from "../../lib/timeline";
 import { useConfirm } from "../../lib/useConfirm";
 import { useHostLabel } from "../../lib/useHostLabel";
@@ -9,6 +10,8 @@ import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import { Selector } from "../Selector";
 import type { RepoSource } from "../SourceToggle";
+import { Badge } from "../Badge";
+import { MissingRestorePoint } from "../restore/MissingRestorePoint";
 import { TimelineDeleteDialog } from "./TimelineDeleteDialog";
 
 export interface TimelinePick {
@@ -21,6 +24,9 @@ export interface TimelinePick {
   onMissing: () => void;
   /** Call when the snapshot changed at its place, after a new tag for instance. */
   refresh: () => void;
+  /** The row whose restore is the view's one accent action: the backup a
+   *  finding asked for, else the newest. */
+  lead: boolean;
 }
 
 /** Timeline shows one row per backup of an item, with a mark for every place
@@ -33,6 +39,8 @@ export function Timeline({
   open,
   renderActions,
   header,
+  flagged,
+  request,
 }: {
   domain: TimelineDomain;
   itemKey: string;
@@ -42,6 +50,11 @@ export function Timeline({
   /** Rendered above the rows once they are loaded. The places come with it so
    *  a header can tell an empty list from one whose places nobody has read. */
   header?: (rows: TimelineRow[], places: TimelinePlace[]) => ReactNode;
+  /** Backups an open data-loss finding was raised on, by the id findings use. */
+  flagged?: ReadonlySet<string>;
+  /** The backup a finding's restore link asks for. Its row stands out, and a
+   *  list without it says so once every place has been read. */
+  request?: { snapshot: string; at: number };
 }) {
   const { t } = useT();
   const host = useHostLabel();
@@ -56,6 +69,7 @@ export function Timeline({
   const orderOf = (place: string) => places.findIndex((p) => p.place === place);
   const pending = places.filter((p) => p.state !== "read");
   const unchecked = pending.filter((p) => p.state === "unchecked");
+  const leadKey = rows.some((row) => row.key === request?.snapshot) ? request?.snapshot : rows[0]?.key;
 
   function selected(row: TimelineRow): TimelineMark | null {
     const want = chosen[row.key];
@@ -79,13 +93,13 @@ export function Timeline({
   }
 
   return (
-    <div role="group" aria-label={itemName} className="flex flex-col">
+    <div role="group" aria-label={itemName} className="flex flex-col gap-1.5">
       {/* A place that was not read keeps its line rather than disappearing, so
           nobody reads an empty list as "there is nothing left". */}
       {pending.map((p) => (
         <div
           key={p.place}
-          className="flex items-center gap-2 py-1.5 text-xs text-carbon-textMuted"
+          className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-textMuted"
         >
           <span>
             {t(p.state === "unreadable" ? "timeline.unreadable" : "timeline.unchecked").replace(
@@ -107,6 +121,14 @@ export function Timeline({
       {loading && <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>}
       {error !== null && <p className="py-3 text-xs text-statusFail">{error || t("common.loadBackupsFailed")}</p>}
       {!loading && error === null && header?.(rows, places)}
+      {!loading && error === null && request && places.length > 0 && pending.length === 0 && (
+        <MissingRestorePoint
+          requested={request.snapshot}
+          requestedAt={request.at}
+          points={rows.map((row) => ({ id: row.key, at: Math.floor(Date.parse(row.time) / 1000) }))}
+          t={t}
+        />
+      )}
       {!loading && error === null && rows.length === 0 && pending.length === 0 && (
         <p className="py-3 text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
       )}
@@ -116,12 +138,22 @@ export function Timeline({
           const place = mark ? places.find((p) => p.place === mark.place) : undefined;
           const marks = [...row.places].sort((a, b) => orderOf(a.place) - orderOf(b.place));
           return (
-            <div key={row.key} className="flex flex-col gap-1 py-1.5">
+            <div
+              key={row.key}
+              className={`flex flex-col gap-1 rounded-control px-2 py-1.5 ${
+                request?.snapshot === row.key ? "bg-carbon-surface3" : "bg-carbon-surface2"
+              }`}
+            >
               <div className="flex items-center gap-3 flex-wrap text-sm">
                 <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
                   {(mark ? newestId(mark) : row.key).slice(0, 8)}
                 </span>
                 <span className="text-carbon-textMuted text-xs">{new Date(row.time).toLocaleString()}</span>
+                {flagged?.has(row.key) && (
+                  <Badge tone="fail" size="small">
+                    {t("anomaly.snapshotFlagged")}
+                  </Badge>
+                )}
                 <Selector
                   items={marks.map((m) => ({
                     id: m.place,
@@ -151,6 +183,7 @@ export function Timeline({
                       source: sourceOfPlace(mark.place),
                       onMissing: () => void missing(row, mark.place),
                       refresh: () => void loadPlace(mark.place),
+                      lead: row.key === leadKey,
                     })}
                   </Fragment>
                   <Button
@@ -158,7 +191,7 @@ export function Timeline({
                     labelKey="common.delete"
                     tone="neutral"
                     disabled={place.appendOnly}
-                    title={place.appendOnly ? t("placementCode.appendOnly") : undefined}
+                    hint={place.appendOnly ? t("placementCode.appendOnly") : undefined}
                     onClick={() => setDeleting({ row, places: [mark.place] })}
                   />
                   <Button
@@ -194,6 +227,8 @@ export function Timeline({
           onDone={() => {
             setDeleting(null);
             reload();
+            // The cards count the copies at targets, so they read them again.
+            if (deleting.places.length === 0 || deleting.places.some((p) => p !== "local")) placementChanged();
           }}
           onClose={() => setDeleting(null)}
         />

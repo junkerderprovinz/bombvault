@@ -20,6 +20,7 @@ Angetrieben von [restic](https://restic.net), sodass jedes Backup dedupliziert, 
 | **Unraid-Flash** | Der gesamte USB-Flash (`/boot`): OS, Lizenz, Array-Konfiguration, Freigaben, Netzwerk- und Plugin-Konfiguration. |
 | **App-Konfiguration** | BombVaults eigenes `/config`: seine Einstellungsdatenbank, Off-site-Zugangsdaten und das libvirt-SSH-Schlüsselpaar. |
 | **Dateien & Ordner** | Benannte **Dateisätze**, jeder beliebige Ordner auf dem Server, jeweils mit optionalen Ausschlussmustern pro Satz. |
+| **ZFS-Datasets** | Ein Dataset mit allen Datasets darunter, gelesen aus einem ZFS-Snapshot und gespeichert wie ein Ordner. Siehe [ZFS-Datasets](zfs-datasets.md). |
 
 ## Die Wiederherstellung ist der Star
 

@@ -318,10 +318,10 @@ const LiveSnapshotName = "bombvault-tmp"
 // paths: failed on error, success otherwise.
 func finishVMRun(d VMBackupDeps, runID string, summary Summary, backupErr error) (Summary, error) {
 	if backupErr != nil {
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(backupErr))
+		_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(backupErr))
 		return Summary{}, backupErr
 	}
-	if err := d.Runs.Finish(runID, statusSuccess, summary.SnapshotID, summary.Bytes, ""); err != nil {
+	if err := d.Runs.Finish(runID, statusSuccess, summary, ""); err != nil {
 		return summary, fmt.Errorf("vm backup: record run finish: %w", err)
 	}
 	return summary, nil
@@ -360,26 +360,40 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	var backupErr error
 	var summary Summary
 
+	// Not ctx: a cancelled or timed-out backup ends ctx, and a start on a done
+	// context is refused at once, which left the VM shut off.
+	restartCtx := context.WithoutCancel(ctx)
+	var shuttingDown bool
+
 	func() {
 		// ALWAYS restart the VM if it was running before — even on any error below.
 		defer func() {
 			if !wasRunning {
 				return
 			}
-			if startErr := d.VM.Start(ctx, d.Name); startErr != nil && backupErr == nil {
+			// The guest goes on shutting down after a cancel. Starting it while
+			// it is still up does nothing, and it would then stay off.
+			if shuttingDown {
+				if err := waitShutOff(restartCtx, d.VM, d.Name, d.ShutdownTimeout); err != nil {
+					log.Printf("vm backup: wait for %q to shut off before starting it again: %v", d.Name, err)
+				}
+			}
+			if startErr := d.VM.Start(restartCtx, d.Name); startErr != nil && backupErr == nil {
 				backupErr = fmt.Errorf("vm backup: restart vm: %w", startErr)
 			}
 		}()
 
 		// Graceful shutdown + poll until "shut off".
 		if wasRunning {
-			if backupErr = d.VM.Shutdown(ctx, d.Name); backupErr != nil {
+			if backupErr = d.VM.Shutdown(restartCtx, d.Name); backupErr != nil {
 				backupErr = fmt.Errorf("vm backup: shutdown: %w", backupErr)
 				return
 			}
+			shuttingDown = true
 			if backupErr = waitShutOff(ctx, d.VM, d.Name, d.ShutdownTimeout); backupErr != nil {
 				return
 			}
+			shuttingDown = false
 		}
 
 		// Build path list: disks + nvram + tpm (if present).
@@ -402,8 +416,13 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 		// zvol mechanism (see backupBlockDisksAndLog) — file-backed disks
 		// above are completely untouched by this. A no-op when d.BlockDisks
 		// is empty (every VM in production today).
-		if zErr := backupBlockDisksAndLog(ctx, d, "vm backup"); zErr != nil {
+		disks, zErr := backupBlockDisksAndLog(ctx, d, "vm backup")
+		if zErr != nil {
 			backupErr = zErr
+			return
+		}
+		if len(d.BlockDisks) > 0 {
+			summary = summary.Plus(disks)
 		}
 	}()
 
@@ -491,9 +510,12 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	// ALWAYS commit EVERY overlay back, even if the backup failed, so no disk keeps
 	// diverging on an uncommitted overlay. Attempt all devices; report the first
 	// failure (the VM keeps running on its overlay either way — no data lost).
+	// Not ctx: a cancelled or timed-out backup ends ctx, a commit on a done
+	// context is refused at once, and the VM would stay on its overlay.
 	var commitErr error
+	commitCtx := context.WithoutCancel(ctx)
 	for _, dev := range commitDevs {
-		if cErr := d.VM.BlockCommitActivePivot(ctx, d.Name, dev); cErr != nil && commitErr == nil {
+		if cErr := d.VM.BlockCommitActivePivot(commitCtx, d.Name, dev); cErr != nil && commitErr == nil {
 			commitErr = cErr
 		}
 	}
@@ -510,8 +532,12 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	// SnapshotCreateDiskOnly/BlockCommitActivePivot target) — see
 	// backupBlockDisksAndLog. A no-op when d.BlockDisks is empty (every VM in
 	// production today).
-	if zErr := backupBlockDisksAndLog(ctx, d, "vm live backup"); zErr != nil {
+	disks, zErr := backupBlockDisksAndLog(ctx, d, "vm live backup")
+	if zErr != nil {
 		return Summary{}, zErr
+	}
+	if len(d.BlockDisks) > 0 {
+		summary = summary.Plus(disks)
 	}
 	return summary, nil
 }
@@ -580,10 +606,10 @@ func RestoreVM(ctx context.Context, d VMRestoreDeps) error {
 
 	restoreErr := runVMRestore(ctx, d)
 	if restoreErr != nil {
-		_ = d.Runs.Finish(runID, restoreOutcome(restoreErr), "", 0, truncateErr(restoreErr))
+		_ = d.Runs.Finish(runID, restoreOutcome(restoreErr), Summary{}, truncateErr(restoreErr))
 		return restoreErr
 	}
-	if err := d.Runs.Finish(runID, statusSuccess, d.SnapshotID, 0, ""); err != nil {
+	if err := d.Runs.Finish(runID, statusSuccess, Summary{SnapshotID: d.SnapshotID}, ""); err != nil {
 		return fmt.Errorf("vm restore: record run finish: %w", err)
 	}
 	return nil
@@ -902,22 +928,23 @@ func zvolBackupSnapshotName(now time.Time) string {
 // file's "commit every overlay" pattern in runVMLive above: a later disk's
 // data should still reach the backup repo even if an earlier disk's did
 // not) — the FIRST failure is returned to the caller, which fails the whole
-// VM backup run. A successful disk's outcome (dataset, restic snapshot id,
-// bytes) is only LOGGED: nothing yet persists it anywhere a later restore
-// can find it — see VMBackupDeps.BlockDisks's doc comment for that known,
-// intentionally-unsolved gap.
+// VM backup run, so the summed summary returned here is never a partial one.
+// A disk's own restic snapshot id is only logged: nothing persists it anywhere
+// a later restore can find it. See VMBackupDeps.BlockDisks's doc comment for
+// that known, unsolved gap.
 //
 // logPrefix lets each caller's log/error lines carry ITS OWN prefix ("vm
 // backup" for runVMGraceful, "vm live backup" for runVMLive) rather than a
 // hardcoded one, matching every other error this file returns from either
 // method — an operator triaging a live-backup failure should never see a
 // "vm backup:"-prefixed line and wonder whether the graceful path ran.
-func backupBlockDisksAndLog(ctx context.Context, d VMBackupDeps, logPrefix string) error {
+func backupBlockDisksAndLog(ctx context.Context, d VMBackupDeps, logPrefix string) (Summary, error) {
 	if len(d.BlockDisks) == 0 {
-		return nil
+		return Summary{}, nil
 	}
 	snapName := zvolBackupSnapshotName(time.Now())
 	var firstErr error
+	total := Summary{Measured: true}
 	for _, bd := range d.BlockDisks {
 		// Each disk gets its OWN identity tag when it carries a Dev (see
 		// VMBlockDisk.Dev's doc comment) — "vm:<name>" otherwise, EXACTLY the
@@ -944,9 +971,10 @@ func backupBlockDisksAndLog(ctx context.Context, d VMBackupDeps, logPrefix strin
 			}
 			continue
 		}
+		total = total.Plus(sum)
 		log.Printf("%s: zvol disk %q: backed up as restic snapshot %s (%d bytes), tags %v", logPrefix, bd.Dataset, sum.SnapshotID, sum.Bytes, tags)
 	}
-	return firstErr
+	return total, firstErr
 }
 
 // zvolRestoreSuffix marks a dataset zvolRestoreTargetDataset created — never

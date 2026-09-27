@@ -150,8 +150,8 @@ Una pestaña **Recuperación** dedicada guía una instalación nueva o reconstru
 1. **Comprueba que BombVault puede leer tus copias** (la trampa de la clave de cifrado por adelantado).
 2. **Restaura los propios ajustes de BombVault**, de modo que las rutas de copia, los destinos externos y las credenciales que necesita el resto del flujo vengan rellenados de antemano. Lee la copia de configuración del lugar que la fila Autocopia indica en **Almacenado en**, o de la copia de la Autocopia en **Copiado a**, y muestra ese lugar con su dirección; para leer de otro lugar, cambia primero la fila Autocopia en el paso 3. La restauración se aplica mediante un autoreinicio a través del socket de Docker, de modo que la base de datos de ajustes en ejecución nunca se sobrescribe bajo un descriptor abierto.
 3. **Adjunta tus copias existentes** mediante las filas de la tarjeta Dominios: en la fila de cada dominio, elige en **Almacenado en** el lugar donde están sus copias de seguridad y en **Copiado a** los lugares que guardan sus copias. Un lugar que ninguna fila ofrece todavía, como un recurso compartido, un servidor o un bucket en la nube, se conecta con **Añadir lugar**, la misma ventana que en Ajustes, Almacenamiento. Después, **Conectar y previsualizar** comprueba que las copias se pueden leer.
-4. **Descubre** los contenedores, VMs y conjuntos de archivos almacenados en él.
-5. **Los restaura todos** (dejados detenidos, para que los inicies deliberadamente), con tu kit de recuperación a un clic de distancia.
+4. **Descubre** los contenedores, VMs, conjuntos de archivos y conjuntos de datos ZFS almacenados en él.
+5. **Restaura los contenedores y las VMs de una vez** (dejados detenidos, para que los inicies deliberadamente) y lista los conjuntos de archivos y los elementos ZFS para restaurarlos uno a uno; los elementos ZFS vuelven desactivados. Tu kit de recuperación está a un clic de distancia.
 
 !!! note "Las copias externas esperan tras una reconstrucción"
     Cuando el paso 4 reconstruye entradas sin los ajustes antiguos, la replicación externa de esos dominios se pausa hasta que se confirme el valor predeterminado de ubicación. Consulta [Ubicación por elemento](#placement).
@@ -172,6 +172,9 @@ Un clic descarga la **clave maestra**, la **contraseña restic derivada** y las 
 !!! danger "Guarda el kit de recuperación fuera del servidor"
     El kit contiene el secreto que descifra tus copias. Guárdalo en un lugar seguro y separado del servidor (un gestor de contraseñas, una copia impresa en una caja fuerte). Si pierdes tanto BombVault como `APP_KEY` sin kit de recuperación, tus copias cifradas no se pueden recuperar.
 
+!!! warning "La instantánea más reciente no siempre es la que hay que restaurar"
+    Desde restic 0.17, `restic snapshots` muestra el tamaño de cada instantánea. Tras una pérdida de datos, la instantánea más reciente puede ser la vaciada, así que no restaures una instantánea mucho más pequeña que las anteriores. Tras un ransomware puede ser la cifrada, con el tamaño habitual. Si BombVault sigue funcionando, mira antes su página **Anomalías**: indica la última copia buena. Una restauración no necesita ningún dato de anomalías de BombVault, y la pausa de retención solo conserva más instantáneas, nunca menos.
+
 ### Si no tienes el kit a mano
 
 La contraseña no se guarda en ningún sitio, se **calcula** a partir de la `APP_KEY`. Con la clave y una shell puedes reproducirla tú mismo:
@@ -188,3 +191,27 @@ Es un HMAC-SHA256 sobre la cadena fija `bombvault:restic-repo`, con los bytes cr
     Un repositorio que llegó aquí por replicación fuera de sede lo creó la máquina que lo envió, con **su** `APP_KEY`. Derivar desde la clave de la máquina receptora produce una contraseña que restic rechaza, lo que se lee exactamente como un repositorio corrupto sin serlo. Esa es la razón habitual de que `restic check` sobre un repositorio recibido pida la contraseña una y otra vez.
 
 Como las definiciones de recuperación viven **dentro** de cada repo (`<repo>/def`, `<repo>/vm-def`), una carpeta de repo copiada es totalmente autocontenida, de modo que el kit más el repo es todo lo que una restauración desde cero necesita.
+
+## Recuperar un volcado de base de datos {#database-dumps}
+
+Un volcado de base de datos es un punto de restauración propio en el repositorio de contenedores, con la etiqueta `dbdump:<container>` y un único archivo, `/dbdump/<container>.sql`. BombVault los lista, los descarga y los importa en **Copias**; abajo están los mismos pasos solo con restic, para el día en que BombVault no esté.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Las etiquetas `dbversion:` y `dbname:` de cada volcado dicen de qué versión de servidor viene y qué bases contiene. Un archivo completo termina con `-- PostgreSQL database cluster dump complete` o `-- Dump completed`.
+
+Impórtalo en un contenedor de la misma versión o una más reciente (PostgreSQL), o de la misma versión mayor (MySQL y MariaDB), arrancado una vez con la carpeta de datos vacía para que se inicialice. El anfitrión no necesita cliente de base de datos, el contenedor ya tiene uno:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Para una sola base dentro de un volcado completo, MySQL y MariaDB aceptan `--one-database <name>` en el comando del cliente. Un volcado de PostgreSQL tiene una sección por base, cada una empezando por una línea `\connect <name>`: copia esa sección a un archivo aparte e impórtalo con `-d <name>` después de crear la base.
+
+!!! warning "Un volcado hecho como root lleva las cuentas del servidor"
+    Un volcado completo de MySQL o MariaDB hecho como root contiene la base de sistema `mysql`, así que importarlo reemplaza las cuentas del servidor nuevo, incluida la contraseña de root, por las del volcado. En PostgreSQL, `role ... already exists` para el usuario que creó el contenedor es esperable e inofensivo.

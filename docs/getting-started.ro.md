@@ -68,8 +68,8 @@ Lipește rezultatul în câmpul `APP_KEY` al șablonului.
 *Tabloul după prima copie: ce e protejat, ce rulează în continuare și un jurnal viu.*
 
 1. Deschide interfața web la `https://<your-unraid-ip>:3443` (certificat auto-semnat implicit).
-2. În **Setări**, activează domeniile de backup dorite (Containere, VM-uri, Flash, Config, Fișiere) și alege o culoare de accent.
-3. În fila **Containere**, alege un container și apasă **Back up** pentru a-ți crea primul punct de restaurare. Căile depozitelor implicite sunt `/mnt/user/bombvault/{container,vms,flash,config,files}` și sunt create la primul backup.
+2. În **Setări**, activează domeniile de backup dorite (Containere, VM-uri, Flash, Config, Fișiere, Seturi de date ZFS) și alege o culoare de accent.
+3. În fila **Containere**, alege un container și apasă **Back up** pentru a-ți crea primul punct de restaurare. Căile depozitelor implicite sunt `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` și sunt create la primul backup.
 4. Configurează programarea din **Setări, Programări**. Există un *include all in schedule* cu un singur clic pentru containere și VM-uri.
 
 !!! tip "Opțional: alege o ordine de backup"

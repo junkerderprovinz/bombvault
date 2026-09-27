@@ -110,12 +110,12 @@ export function PlacementRow({
           <p>{t("placement.uploadCost")}</p>
         </div>
       );
-      return confirm(t("placement.uploadUnknown").replace("{name}", () => name), { extra });
+      return confirm(t("placement.uploadUnknown").replace("{name}", () => name), { extra, cancelTone: "neutral" });
     }
     const added = (res.added ?? []).filter((a) => a.snapshots > 0);
     if (added.length === 0) return true;
     const intro = t("placement.uploadIntro").replace("{name}", () => name);
-    return confirm(intro, { extra: <UploadLines added={added} /> });
+    return confirm(intro, { extra: <UploadLines added={added} />, cancelTone: "neutral" });
   }
 
   async function run(step: PlacementStep) {
@@ -153,7 +153,12 @@ export function PlacementRow({
       const home = step.confirmHome;
       if (home !== null) {
         const question = t("placement.confirmHome").replace("{name}", () => name).replace("{home}", () => home);
-        if (!(await confirm(question, { confirmLabel: t("placement.saveHome"), confirmLabelKey: "placement.saveHome" }))) return;
+        const yes = await confirm(question, {
+          confirmLabel: t("placement.saveHome"),
+          confirmLabelKey: "placement.saveHome",
+          cancelTone: "neutral",
+        });
+        if (!yes) return;
       }
       if (addsTargets(shown, step.change) && !(await uploadsAgreed(step.change))) return;
     } finally {

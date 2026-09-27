@@ -28,13 +28,19 @@ func mustReadService(t *testing.T) string {
 		if strings.HasSuffix(f, "_test.go") {
 			continue
 		}
-		raw, err := os.ReadFile(f) //nolint:gosec // G304: a file name from this package's own directory
-		if err != nil {
-			t.Fatalf("read %s: %v", f, err)
-		}
-		src.Write(raw)
+		src.WriteString(mustReadSource(t, f))
 	}
 	return src.String()
+}
+
+// mustReadSource is mustReadService for a domain that lives in its own file.
+func mustReadSource(t *testing.T, file string) string {
+	t.Helper()
+	raw, err := os.ReadFile(file) //nolint:gosec // G304: file is a source name from this package's own directory
+	if err != nil {
+		t.Fatalf("read %s: %v", file, err)
+	}
+	return string(raw)
 }
 
 // funcBody returns the source of a *Service method in the service files, up to
@@ -142,14 +148,20 @@ func TestReplicationAgreesWithItself(t *testing.T) {
 // Discover rebuilds items from their snapshots after /config is lost, so it has
 // to look in the named repositories too.
 func TestDiscoverLooksInEveryRepository(t *testing.T) {
-	src := mustReadService(t)
-	for _, fn := range []string{"Discover", "DiscoverVMs", "DiscoverFileSets"} {
+	src := mustReadService(t) + mustReadSource(t, "zfs_crud.go")
+	for _, fn := range []string{"Discover", "DiscoverVMs", "DiscoverFileSets", "DiscoverZFSDatasets"} {
 		body := funcBody(t, src, fn)
 		if !strings.Contains(body, "s.discoverNamesAcrossRepos(") {
 			t.Errorf("%s no longer looks in every repository of its domain.\n"+
 				"An item on its own repository is then never rebuilt after a /config loss, and\n"+
 				"nothing on screen says its backups exist.", fn)
 		}
+	}
+	// A rediscovered ZFS item goes back on the repository its snapshots are in.
+	if !strings.Contains(funcBody(t, src, "DiscoverZFSDatasets"), "Repo: repoID") {
+		t.Error("DiscoverZFSDatasets no longer restores a rediscovered item's repository.\n" +
+			"The item is then rebuilt onto the domain repository, shows an empty history,\n" +
+			"and its next backup lands somewhere other than its own snapshots.")
 	}
 }
 

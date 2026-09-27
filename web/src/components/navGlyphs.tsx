@@ -266,6 +266,38 @@ export function IconCloud() {
   );
 }
 
+/** A database. */
+export function IconDatabase() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 14 14"
+      fill="currentColor"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      <ellipse cx="7" cy="3.3" rx="5.4" ry="1.8" /><path d="M1.6 5.7Q7 9.3 12.4 5.7L12.4 7.7Q7 11.3 1.6 7.7Z" /><path d="M1.6 8.7Q7 12.3 12.4 8.7L12.4 10.7Q7 14.3 1.6 10.7Z" />
+    </svg>
+  );
+}
+
+/** ZFS datasets. */
+export function IconZFS() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 14 14"
+      fill="currentColor"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      <ellipse cx="7" cy="2.6" rx="5.4" ry="1.8" /><ellipse cx="7" cy="7" rx="5.4" ry="1.8" /><ellipse cx="7" cy="11.4" rx="5.4" ry="1.8" />
+    </svg>
+  );
+}
+
 /** Add. */
 export function IconAdd() {
   return (
@@ -383,6 +415,38 @@ export function IconTabStorage() {
       aria-hidden="true"
     >
       <path d="M448 73.143v45.714C448 159.143 347.667 192 224 192S0 159.143 0 118.857V73.143C0 32.857 100.333 0 224 0s224 32.857 224 73.143zM448 176v102.857C448 319.143 347.667 352 224 352S0 319.143 0 278.857V176c48.125 33.143 136.208 48.572 224 48.572S399.874 209.143 448 176zm0 160v102.857C448 479.143 347.667 512 224 512S0 479.143 0 438.857V336c48.125 33.143 136.208 48.572 224 48.572S399.874 369.143 448 336z" />
+    </svg>
+  );
+}
+
+/** Anomalies, a backup that does not fit its history. */
+export function IconAnomalies() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 14 14"
+      fill="currentColor"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      <rect x="1.4" y="8.6" width="2.2" height="4" rx="1.1" /><rect x="4.4" y="7.4" width="2.2" height="5.2" rx="1.1" /><rect x="7.4" y="1.4" width="2.2" height="11.2" rx="1.1" /><rect x="10.4" y="8" width="2.2" height="4.6" rx="1.1" />
+    </svg>
+  );
+}
+
+/** Menu, the navigation rail on a narrow window. */
+export function IconMenu() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 14 14"
+      fill="currentColor"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      <rect x="1.4" y="2.4" width="11.2" height="2.2" rx="1.1" /><rect x="1.4" y="5.9" width="11.2" height="2.2" rx="1.1" /><rect x="1.4" y="9.4" width="11.2" height="2.2" rx="1.1" />
     </svg>
   );
 }

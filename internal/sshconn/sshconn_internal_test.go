@@ -1,8 +1,11 @@
 package sshconn
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -139,5 +142,68 @@ func TestLastLine(t *testing.T) {
 				t.Errorf("lastLine(%q) = %q, want %q", tc.in, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestCappedBufferReportsTheCut(t *testing.T) {
+	full := &cappedBuffer{max: 4}
+	if _, err := full.Write([]byte("abcd")); err != nil || full.cut {
+		t.Fatalf("a write that fits exactly: err %v, cut %v", err, full.cut)
+	}
+	if n, err := full.Write([]byte("\n")); err != nil || n != 1 || !full.cut {
+		t.Fatalf("a byte past the limit: n %d, err %v, cut %v", n, err, full.cut)
+	}
+	if full.buf.String() != "abcd" {
+		t.Fatalf("kept %q, want the first four bytes", full.buf.String())
+	}
+}
+
+// TestRunCaptureFailsWhenStdoutIsCut floods stdout with whole lines, so the
+// cut lands on a line boundary and the trimmed output looks complete.
+func TestRunCaptureFailsWhenStdoutIsCut(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("needs a POSIX shell")
+	}
+	script := filepath.Join(t.TempDir(), "fake-ssh")
+	body := "#!/bin/sh\nyes 'cache/appdata/child' | head -n 2000000\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil { //nolint:gosec // G306: an executable stand-in for ssh
+		t.Fatal(err)
+	}
+	old := sshBinary
+	sshBinary = script
+	t.Cleanup(func() { sshBinary = old })
+
+	_, _, err := testConn(t).RunCapture(context.Background(), "zfs", "list")
+	if !errors.Is(err, ErrStdoutCut) {
+		t.Fatalf("err = %v, want ErrStdoutCut", err)
+	}
+}
+
+// TestRunCaptureKeepsStdoutAndStderrApart points sshBinary at a script that
+// writes to both streams and fails, which is what a zfs call looks like when
+// the remote user may not snapshot.
+func TestRunCaptureKeepsStdoutAndStderrApart(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("needs a POSIX shell")
+	}
+	script := filepath.Join(t.TempDir(), "fake-ssh")
+	body := "#!/bin/sh\necho out-line\necho err-line >&2\nexit 1\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil { //nolint:gosec // G306: an executable stand-in for ssh
+		t.Fatal(err)
+	}
+	old := sshBinary
+	sshBinary = script
+	t.Cleanup(func() { sshBinary = old })
+
+	c := testConn(t)
+	stdout, stderr, err := c.RunCapture(context.Background(), "zfs", "snapshot", "cache/appdata@bombvault-20260917031500")
+	if err == nil {
+		t.Fatal("RunCapture reported success for a command that exited 1")
+	}
+	if stdout != "out-line" {
+		t.Errorf("stdout = %q", stdout)
+	}
+	if stderr != "err-line" {
+		t.Errorf("stderr = %q", stderr)
 	}
 }

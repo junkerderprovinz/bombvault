@@ -35,13 +35,30 @@ type fakeVM struct {
 	snapshotErr     error
 	blockcommitErr  error
 	guestAgent      bool
-	freezeOnQuiesce bool   // fail a quiesced snapshot with a freeze error (then a no-quiesce retry succeeds)
-	snapshotQuiesce []bool // records the quiesce arg of each SnapshotCreateDiskOnly call
+	freezeOnQuiesce bool    // fail a quiesced snapshot with a freeze error (then a no-quiesce retry succeeds)
+	snapshotQuiesce []bool  // records the quiesce arg of each SnapshotCreateDiskOnly call
+	startCtxErrs    []error // ctx.Err() at every Start, for the cancelled-backup restart test
+	commitCtxErrs   []error // ctx.Err() at every BlockCommitActivePivot, same purpose
+
+	// stateSeq scripts State answers one per call, the last one sticking;
+	// stateVal answers when it is empty. startStates is the state the last poll
+	// saw when Start was called.
+	stateSeq    []string
+	lastState   string
+	startStates []string
+	onShutdown  func()
 }
 
 func (f *fakeVM) State(_ context.Context, name string) (string, error) {
 	f.log = append(f.log, "state:"+name)
-	return f.stateVal, f.stateErr
+	f.lastState = f.stateVal
+	if len(f.stateSeq) > 0 {
+		f.lastState = f.stateSeq[0]
+		if len(f.stateSeq) > 1 {
+			f.stateSeq = f.stateSeq[1:]
+		}
+	}
+	return f.lastState, f.stateErr
 }
 
 func (f *fakeVM) IsActive(_ context.Context, name string) (bool, error) {
@@ -56,6 +73,9 @@ func (f *fakeVM) DumpXML(_ context.Context, name string) (string, error) {
 
 func (f *fakeVM) Shutdown(_ context.Context, name string) error {
 	f.log = append(f.log, "shutdown:"+name)
+	if f.onShutdown != nil {
+		f.onShutdown()
+	}
 	return f.shutdownErr
 }
 
@@ -64,8 +84,10 @@ func (f *fakeVM) Destroy(_ context.Context, name string) error {
 	return f.destroyErr
 }
 
-func (f *fakeVM) Start(_ context.Context, name string) error {
+func (f *fakeVM) Start(ctx context.Context, name string) error {
 	f.log = append(f.log, "start:"+name)
+	f.startCtxErrs = append(f.startCtxErrs, ctx.Err())
+	f.startStates = append(f.startStates, f.lastState)
 	return f.startErr
 }
 
@@ -98,8 +120,9 @@ func (f *fakeVM) SnapshotCreateDiskOnly(_ context.Context, name, _ string, quies
 	return f.snapshotErr
 }
 
-func (f *fakeVM) BlockCommitActivePivot(_ context.Context, name, device string) error {
+func (f *fakeVM) BlockCommitActivePivot(ctx context.Context, name, device string) error {
 	f.log = append(f.log, "blockcommit:"+name+":"+device)
+	f.commitCtxErrs = append(f.commitCtxErrs, ctx.Err())
 	return f.blockcommitErr
 }
 

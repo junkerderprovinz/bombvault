@@ -132,7 +132,7 @@ const (
 const primaryRowName = "Primary (remote)"
 
 // UpsertOffsiteTarget inserts t or updates the row with its id, keeping that
-// row's sort_order and companion link, and returns the row as stored. An
+// row's companion link, and returns the row as stored. An
 // empty ID gets a fresh one and an empty Role means RoleOffsite.
 //
 // Every read and write here is scoped to t's role, like the rest of this
@@ -213,6 +213,7 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			  limit_download         = excluded.limit_download,
 			  growth_budget_gb       = excluded.growth_budget_gb,
 			  enabled                = excluded.enabled,
+			  sort_order             = excluded.sort_order,
 			  off_premises           = excluded.off_premises,
 			  off_with_place         = CASE WHEN offsite_targets.enabled = excluded.enabled
 			                                THEN offsite_targets.off_with_place ELSE 0 END
@@ -235,7 +236,8 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	return commitStoredTargetTx(tx, t.ID)
 }
 
-// CreateOffsiteTarget inserts a replication destination behind the domain's last one.
+// CreateOffsiteTarget inserts a replication destination at t.SortOrder, or
+// behind the domain's last one when that is 0.
 func (r *Repo) CreateOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
@@ -256,13 +258,14 @@ func (r *Repo) CreateOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 		  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 		  limit_upload, limit_download, growth_budget_gb, enabled, created_at,
 		  place_id, place_domain, place_suffix, sort_order)
-		SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(MAX(sort_order), 0) + 1
+		SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+		  CASE WHEN ? > 0 THEN ? ELSE COALESCE(MAX(sort_order), 0) + 1 END
 		  FROM offsite_targets WHERE role = ? AND domain = ?`,
 		t.ID, t.Domain, t.Name, t.Repo, RoleOffsite, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt,
 		t.PlaceID, t.PlaceDomain, t.PlaceSuffix,
-		RoleOffsite, t.Domain,
+		t.SortOrder, t.SortOrder, RoleOffsite, t.Domain,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("CreateOffsiteTarget: %w", err)
@@ -703,9 +706,10 @@ func (r *Repo) ConnectCompanion(repoID, targetID string) error {
 // the database or an open transaction, so the guarded writes below cannot drift
 // from the count the interface shows.
 const itemsUsingNamedRepoQ = `
-		SELECT (SELECT COUNT(*) FROM targets   WHERE repo = ?)
-		     + (SELECT COUNT(*) FROM vms       WHERE repo = ?)
-		     + (SELECT COUNT(*) FROM file_sets WHERE repo = ?)`
+		SELECT (SELECT COUNT(*) FROM targets      WHERE repo = ?)
+		     + (SELECT COUNT(*) FROM vms          WHERE repo = ?)
+		     + (SELECT COUNT(*) FROM file_sets    WHERE repo = ?)
+		     + (SELECT COUNT(*) FROM zfs_datasets WHERE repo = ?)`
 
 // NamedRepoUse is what still points at a named repository.
 type NamedRepoUse struct {
@@ -736,7 +740,7 @@ func (r *Repo) DeleteNamedRepoIfUnused(id string) (NamedRepoUse, error) {
 	if companionOf != "" {
 		return use, ErrDirectRepo
 	}
-	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id).Scan(&use.Items); err != nil {
+	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id, id).Scan(&use.Items); err != nil {
 		return use, fmt.Errorf("DeleteNamedRepoIfUnused count: %w", err)
 	}
 	if use.DefaultDomains, err = placementDomainsUsingRepoTx(tx, id); err != nil {
@@ -775,7 +779,7 @@ func (r *Repo) SetNamedRepoLocationIfUnused(id, location string, offPremises boo
 		return use, fmt.Errorf("SetNamedRepoLocationIfUnused: %w", err)
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
-	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id).Scan(&use.Items); err != nil {
+	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id, id).Scan(&use.Items); err != nil {
 		return use, fmt.Errorf("SetNamedRepoLocationIfUnused count: %w", err)
 	}
 	if use.DefaultDomains, err = placementDomainsUsingRepoTx(tx, id); err != nil {
@@ -798,14 +802,15 @@ func (r *Repo) SetNamedRepoLocationIfUnused(id, location string, offPremises boo
 	return use, nil
 }
 
-// ItemsUsingNamedRepo counts the containers, VMs and file sets that currently
-// point at this named repository. Used for DISPLAY (the "n in use" badge) and to
-// explain a refusal before it happens; the refusals themselves are enforced by
-// DeleteNamedRepoIfUnused / SetNamedRepoLocationIfUnused, which re-count inside
-// their own transaction so the answer cannot go stale between the two calls.
+// ItemsUsingNamedRepo counts the containers, VMs, file sets and ZFS items that
+// currently point at this named repository. Used for display (the "n in use"
+// badge) and to explain a refusal before it happens; the refusals themselves
+// are enforced by DeleteNamedRepoIfUnused / SetNamedRepoLocationIfUnused, which
+// re-count inside their own transaction so the answer cannot go stale between
+// the two calls.
 func (r *Repo) ItemsUsingNamedRepo(id string) (int, error) {
 	var n int
-	err := r.db.QueryRow(itemsUsingNamedRepoQ, id, id, id).Scan(&n)
+	err := r.db.QueryRow(itemsUsingNamedRepoQ, id, id, id, id).Scan(&n)
 	if err != nil {
 		return 0, fmt.Errorf("ItemsUsingNamedRepo: %w", err)
 	}
@@ -917,7 +922,7 @@ func deleteOffsiteTargetIfUnusedTx(tx *sql.Tx, id string) (TargetUse, error) {
 		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
 	}
 	if c := use.CompanionID; c != "" {
-		if err := tx.QueryRow(itemsUsingNamedRepoQ, c, c, c).Scan(&use.Items); err != nil {
+		if err := tx.QueryRow(itemsUsingNamedRepoQ, c, c, c, c).Scan(&use.Items); err != nil {
 			return use, fmt.Errorf("DeleteOffsiteTargetIfUnused count: %w", err)
 		}
 		if use.DefaultDomains, err = placementDomainsUsingRepoTx(tx, c); err != nil {

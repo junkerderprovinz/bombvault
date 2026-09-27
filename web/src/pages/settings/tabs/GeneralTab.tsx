@@ -73,6 +73,7 @@ export function GeneralTab({
   domainToggleShake,
   fieldPulse,
   toggleDomainEnabled,
+  toggleDbDumps,
 }: SettingsTabProps) {
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
@@ -94,6 +95,19 @@ export function GeneralTab({
           pulseNonce={fieldPulse.containersEnabled}
           hueIndex={0}
         />
+        {/* Indented under Containers: it only acts on containers, and reads as
+            a sub-option of that domain rather than a domain of its own. */}
+        <div className="ps-6">
+          <ToggleRow
+            label={t("settings.dbDumps")}
+            hint={t("settings.dbDumpsHint")}
+            checked={settings.dbDumpsEnabled}
+            onChange={(v) => void toggleDbDumps(v)}
+            disabled={domainToggleBusy.dbDumpsEnabled}
+            shakeNonce={domainToggleShake.dbDumpsEnabled}
+            pulseNonce={fieldPulse.dbDumpsEnabled}
+          />
+        </div>
         <ToggleRow
           label={t("settings.vmsEnabled")}
           hint={t("settings.vmsEnabledHint")}
@@ -125,6 +139,16 @@ export function GeneralTab({
           hueIndex={3}
         />
         <ToggleRow
+          label={t("settings.zfsEnabled")}
+          hint={t("settings.zfsEnabledHint")}
+          checked={settings.zfsEnabled}
+          onChange={(v) => void toggleDomainEnabled("zfsEnabled", v)}
+          disabled={domainToggleBusy.zfsEnabled}
+          shakeNonce={domainToggleShake.zfsEnabled}
+          pulseNonce={fieldPulse.zfsEnabled}
+          hueIndex={4}
+        />
+        <ToggleRow
           label={t("settings.configEnabled")}
           hint={t("settings.configEnabledHint")}
           checked={settings.configEnabled}
@@ -132,7 +156,7 @@ export function GeneralTab({
           disabled={domainToggleBusy.configEnabled}
           shakeNonce={domainToggleShake.configEnabled}
           pulseNonce={fieldPulse.configEnabled}
-          hueIndex={4}
+          hueIndex={5}
         />
         <ToggleRow
           label={t("settings.receiverEnabled")}
@@ -142,7 +166,7 @@ export function GeneralTab({
           disabled={domainToggleBusy.receiverEnabled}
           shakeNonce={domainToggleShake.receiverEnabled}
           pulseNonce={fieldPulse.receiverEnabled}
-          hueIndex={5}
+          hueIndex={6}
         />
         <ToggleRow
           label={t("settings.fleetEnabled")}
@@ -152,7 +176,7 @@ export function GeneralTab({
           disabled={domainToggleBusy.fleetEnabled}
           shakeNonce={domainToggleShake.fleetEnabled}
           pulseNonce={fieldPulse.fleetEnabled}
-          hueIndex={6}
+          hueIndex={7}
         />
         {/* Unlike receiver and fleet, pull writes: it fetches another
             instance's backups into this box's repository, and its hint says
@@ -165,7 +189,7 @@ export function GeneralTab({
           disabled={domainToggleBusy.pullEnabled}
           shakeNonce={domainToggleShake.pullEnabled}
           pulseNonce={fieldPulse.pullEnabled}
-          hueIndex={7}
+          hueIndex={8}
         />
       </Card>
 

@@ -110,6 +110,8 @@ func TestAcceptMeshOffer(t *testing.T) {
 	h.handleAcceptMeshOffer(w, r)
 	if resp := decodeResp(t, w); resp["ok"] != false {
 		t.Fatalf("invalid domain must be rejected: %v", resp)
+	} else if msg, _ := resp["error"].(string); !strings.Contains(msg, "zfs") {
+		t.Fatalf("the error leaves out a domain the offer can go to: %q", msg)
 	}
 
 	w = httptest.NewRecorder()
@@ -283,7 +285,7 @@ func TestMeshTargetAtSortOrderZeroMovesBehindThePrimary(t *testing.T) {
 	containersMesh := accept("containers", "rest:http://tower-a:8000/containers")
 	vmsMesh := accept("vms", "rest:http://tower-a:8000/vms")
 
-	moved, err := h.svc.MoveMeshTargetsOffPrimarySlot()
+	moved, err := h.svc.MoveTargetsOffPrimarySlot()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -309,7 +311,7 @@ func TestMeshTargetAtSortOrderZeroMovesBehindThePrimary(t *testing.T) {
 	if moved != 2 {
 		t.Fatalf("moved = %d, want 2", moved)
 	}
-	if again, err := h.svc.MoveMeshTargetsOffPrimarySlot(); err != nil || again != 0 {
+	if again, err := h.svc.MoveTargetsOffPrimarySlot(); err != nil || again != 0 {
 		t.Fatalf("a second run moved %d (err %v), want 0", again, err)
 	}
 }
@@ -338,11 +340,52 @@ func TestAMeshTargetOnTheOffsiteFieldsLocationStaysOnSortOrderZero(t *testing.T)
 		t.Fatal(err)
 	}
 
-	if moved, err := h.svc.MoveMeshTargetsOffPrimarySlot(); err != nil || moved != 0 {
+	if moved, err := h.svc.MoveTargetsOffPrimarySlot(); err != nil || moved != 0 {
 		t.Fatalf("moved %d (err %v), want 0", moved, err)
 	}
 	if got, _, _ := st.FieldOffsiteTarget("containers"); got.ID != field.ID {
 		t.Fatalf("field target = %+v, want %s still on sort order 0", got, field.ID)
+	}
+}
+
+// The startup repair also covers mesh targets accepted into the ZFS domain.
+func TestZFSMeshTargetAtSortOrderZeroMovesOffIt(t *testing.T) {
+	h, st := meshHandlerFixture(t, strings.Repeat("f", 64))
+
+	repo := "rest:http://tower-a:8000/zfs"
+	offer, err := st.CreateMeshOffer(store.MeshOffer{From: "tower-a", Repo: repo})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.UpdateMeshOfferStatus(offer.ID, "accepted"); err != nil {
+		t.Fatal(err)
+	}
+	mesh, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: zfsDomain, Name: "mesh: tower-a", Repo: repo, Enabled: true, SortOrder: 0,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	moved, err := h.svc.MoveTargetsOffPrimarySlot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if moved != 1 {
+		t.Fatalf("moved = %d, want 1", moved)
+	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	h.svc.syncAllPrimaryOffsiteTargets(settings)
+
+	targets, err := st.OffsiteTargetsForDomain(zfsDomain)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(targets) != 1 || targets[0].ID != mesh.ID || targets[0].SortOrder != 1 {
+		t.Fatalf("zfs mesh target should sit at sort order 1 after a settings save, got %+v", targets)
 	}
 }
 

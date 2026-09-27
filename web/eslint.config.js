@@ -101,6 +101,9 @@ export default [
             // Not a routed page: Layout renders it in place of the app shell
             // while auth is blocked.
             "Login.tsx": null,
+            // The OAuth consent page stands alone like the login screen, one
+            // narrow card in the middle of the window.
+            "OAuthConsent.tsx": null,
           },
         },
       ],

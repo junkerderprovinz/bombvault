@@ -365,7 +365,7 @@ func TestAPlacedMeshTargetOnSortOrderZeroStaysThere(t *testing.T) {
 	row = f.storedTarget(row.ID)
 	f.acceptedOffer(row.Repo)
 
-	if moved, err := f.svc.MoveMeshTargetsOffPrimarySlot(); err != nil || moved != 0 {
+	if moved, err := f.svc.MoveTargetsOffPrimarySlot(); err != nil || moved != 0 {
 		t.Fatalf("moved %d, %v, want nothing moved", moved, err)
 	}
 	if got := f.storedTarget(row.ID); got != row {

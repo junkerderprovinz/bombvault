@@ -23,7 +23,57 @@ func (f *fakeFilesRestic) Backup(_ context.Context, _ string, paths, tags []stri
 	if f.backupErr != nil {
 		return backup.Summary{}, f.backupErr
 	}
-	return backup.Summary{SnapshotID: "abcd1234ef567890", Bytes: 4096}, nil
+	return filesSummary, nil
+}
+
+var filesSummary = backup.Summary{
+	SnapshotID:  "abcd1234ef567890",
+	Bytes:       4096,
+	Measured:    true,
+	SourceBytes: 65536,
+	SourceFiles: 12,
+	FilesNew:    2,
+	ResticMS:    900,
+}
+
+func TestFilesBackupFinishCarriesSummary(t *testing.T) {
+	t.Run("a successful backup records what restic measured", func(t *testing.T) {
+		runs := &fakeRuns{}
+		_, err := backup.BackupFileSetDir(context.Background(), backup.FileSetBackupDeps{
+			SourceDir: "/host/user/data/docs",
+			Repo:      "/repo/files",
+			TargetID:  "set-1",
+			SetName:   "docs",
+			Restic:    &fakeFilesRestic{},
+			Runs:      runs,
+		})
+		if err != nil {
+			t.Fatalf("BackupFileSetDir: %v", err)
+		}
+		got := runs.finishOf(t, "run-1")
+		if got.status != "success" || got.sum != filesSummary {
+			t.Fatalf("finish = %+v, want the restic summary on a success", got)
+		}
+	})
+
+	t.Run("a failed backup records no metrics", func(t *testing.T) {
+		runs := &fakeRuns{}
+		_, err := backup.BackupFileSetDir(context.Background(), backup.FileSetBackupDeps{
+			SourceDir: "/host/user/data/docs",
+			Repo:      "/repo/files",
+			TargetID:  "set-1",
+			SetName:   "docs",
+			Restic:    &fakeFilesRestic{backupErr: errors.New("restic boom")},
+			Runs:      runs,
+		})
+		if err == nil {
+			t.Fatal("expected the restic failure to surface")
+		}
+		got := runs.finishOf(t, "run-1")
+		if got.status != "failed" || got.sum != (backup.Summary{}) {
+			t.Fatalf("finish = %+v, want an empty summary on a failure", got)
+		}
+	})
 }
 
 func TestBackupFileSetDir(t *testing.T) {

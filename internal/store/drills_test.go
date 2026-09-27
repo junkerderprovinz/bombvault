@@ -67,16 +67,83 @@ func TestADrillKeepsTheTargetItRanAgainst(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := store.New(db)
-	if err := r.AddRestoreDrill(store.RestoreDrill{Domain: "flash", Source: "offsite", Kind: "dr", At: 100, OK: true, TargetID: "b2"}); err != nil {
+	if err := r.AddRestoreDrill(store.RestoreDrill{Domain: "flash", Source: "offsite", Kind: "dr", At: 100, OK: true, OffsiteTargetID: "b2"}); err != nil {
 		t.Fatal(err)
 	}
 
 	latest, _, err := r.LatestRestoreDrillKind("flash", "offsite", "dr")
-	if err != nil || latest.TargetID != "b2" {
+	if err != nil || latest.OffsiteTargetID != "b2" {
 		t.Fatalf("latest dr drill = %+v, %v; want target b2", latest, err)
 	}
 	list, err := r.ListRestoreDrills("flash", "offsite", 1)
-	if err != nil || len(list) != 1 || list[0].TargetID != "b2" {
+	if err != nil || len(list) != 1 || list[0].OffsiteTargetID != "b2" {
 		t.Fatalf("listed drills = %+v, %v; want one against b2", list, err)
+	}
+}
+
+func TestListRestoreDrillsKindReadsOnlyThatKind(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	for i := range 2 {
+		d := store.RestoreDrill{Domain: "containers", Source: "offsite", Kind: "dr", At: int64(100 + i), OK: true}
+		if err := r.AddRestoreDrill(d); err != nil {
+			t.Fatalf("AddRestoreDrill dr: %v", err)
+		}
+	}
+	for i := range 25 {
+		d := store.RestoreDrill{Domain: "containers", Source: "offsite", Kind: "subset", At: int64(1000 + i), OK: true}
+		if err := r.AddRestoreDrill(d); err != nil {
+			t.Fatalf("AddRestoreDrill subset: %v", err)
+		}
+	}
+	named := store.RestoreDrill{
+		Domain: "containers", Source: "offsite", Kind: "dr", At: 2000, OK: false,
+		Detail: "restore came back short", OffsiteTargetID: "wasabi",
+	}
+	if err := r.AddRestoreDrill(named); err != nil {
+		t.Fatalf("AddRestoreDrill named: %v", err)
+	}
+
+	drills, err := r.ListRestoreDrillsKind("containers", "offsite", "", "dr", 20)
+	if err != nil {
+		t.Fatalf("ListRestoreDrillsKind: %v", err)
+	}
+	if len(drills) != 2 {
+		t.Fatalf("got %d dr drills, want the 2 that are not the named target's", len(drills))
+	}
+	for _, d := range drills {
+		if d.Kind != "dr" || d.OffsiteTargetID != "" {
+			t.Fatalf("read a foreign row: %+v", d)
+		}
+	}
+
+	onTarget, err := r.ListRestoreDrillsKind("containers", "offsite", "wasabi", "dr", 20)
+	if err != nil {
+		t.Fatalf("ListRestoreDrillsKind named: %v", err)
+	}
+	if len(onTarget) != 1 || onTarget[0].Detail != "restore came back short" {
+		t.Fatalf("the named target's drill is not keyed to it: %+v", onTarget)
+	}
+
+	keys, err := r.ListRestoreDrillKeys()
+	if err != nil {
+		t.Fatalf("ListRestoreDrillKeys: %v", err)
+	}
+	want := map[store.DrillKey]bool{
+		{Domain: "containers", Source: "offsite", Kind: "dr"}:                     true,
+		{Domain: "containers", Source: "offsite", Kind: "subset"}:                 true,
+		{Domain: "containers", Source: "offsite", TargetID: "wasabi", Kind: "dr"}: true,
+	}
+	if len(keys) != len(want) {
+		t.Fatalf("got %d keys, want %d: %+v", len(keys), len(want), keys)
+	}
+	for _, k := range keys {
+		if !want[k] {
+			t.Fatalf("unexpected key %+v", k)
+		}
 	}
 }

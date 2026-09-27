@@ -370,7 +370,7 @@ describe("DomainsCard copies", () => {
     copiesPreviews.push({ ok: true, ...copies({ newTarget }) });
     await tick("Containers", "NAS Keller");
     expect(within(dialog()).getByText(en["newTarget.intro"].replace("{target}", "NAS Keller"))).toBeTruthy();
-    expect(within(dialog()).getByText(en["newTarget.items"].replace("{n}", "7"))).toBeTruthy();
+    expect(within(dialog()).getByText(en["newTarget.itemsContainers"].replace("{n}", "7"))).toBeTruthy();
     expect(chip("Containers", "NAS Keller").getAttribute("aria-pressed")).toBe("true");
     await answer(en["common.confirm"]);
     expect(copiesBodies).toEqual([{ placeId: "p-nas", on: true, expect: copies({ newTarget }) }]);
@@ -395,7 +395,7 @@ describe("DomainsCard copies", () => {
     ).toBeTruthy();
     expect(
       within(dialog()).getByText(
-        en["placementDefaults.dropAsk"].replace("{target}", "B2").replace("{n}", "4").replace("{copies}", "30")
+        en["placementDefaults.dropAskContainers"].replace("{target}", "B2").replace("{n}", "4").replace("{copies}", "30")
       )
     ).toBeTruthy();
     expect(within(dialog()).getByText(en["storageDomains.copiesOffOwnChoice"])).toBeTruthy();

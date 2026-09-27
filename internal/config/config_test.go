@@ -114,3 +114,120 @@ func TestLoadDataRootSegmentsParsesCommaSeparatedList(t *testing.T) {
 		}
 	}
 }
+
+func TestLoadDerivesSSHTargetFromLibvirtURIWhenUnset(t *testing.T) {
+	c, err := config.Load(map[string]string{
+		"APP_KEY":     strings.Repeat("a", 64),
+		"LIBVIRT_URI": "qemu+ssh://truenas_admin@nas.lan:2222/system?socket=/run/truenas_libvirt/libvirt-sock",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.LibvirtHost != "nas.lan" || c.LibvirtSSHUser != "truenas_admin" || c.LibvirtSSHPort != "2222" {
+		t.Fatalf("target = %s@%s:%s, want truenas_admin@nas.lan:2222", c.LibvirtSSHUser, c.LibvirtHost, c.LibvirtSSHPort)
+	}
+}
+
+func TestLoadDerivesEachUnsetVariableSeparately(t *testing.T) {
+	c, err := config.Load(map[string]string{
+		"APP_KEY":      strings.Repeat("a", 64),
+		"LIBVIRT_URI":  "qemu+ssh://truenas_admin@nas.lan:2222/system",
+		"LIBVIRT_HOST": "10.0.0.5",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.LibvirtHost != "10.0.0.5" {
+		t.Errorf("LibvirtHost = %q, want the value from the environment", c.LibvirtHost)
+	}
+	if c.LibvirtSSHUser != "truenas_admin" || c.LibvirtSSHPort != "2222" {
+		t.Errorf("user/port = %s:%s, want them from the URI", c.LibvirtSSHUser, c.LibvirtSSHPort)
+	}
+}
+
+func TestLoadExplicitLibvirtHostWinsOverURI(t *testing.T) {
+	c, err := config.Load(map[string]string{
+		"APP_KEY":          strings.Repeat("a", 64),
+		"LIBVIRT_URI":      "qemu+ssh://truenas_admin@nas.lan:2222/system",
+		"LIBVIRT_HOST":     "10.0.0.5",
+		"LIBVIRT_SSH_USER": "root",
+		"LIBVIRT_SSH_PORT": "1004",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.LibvirtHost != "10.0.0.5" || c.LibvirtSSHUser != "root" || c.LibvirtSSHPort != "1004" {
+		t.Fatalf("target = %s@%s:%s, want the environment's own values", c.LibvirtSSHUser, c.LibvirtHost, c.LibvirtSSHPort)
+	}
+}
+
+func TestLoadNonSSHURIKeepsDefaults(t *testing.T) {
+	c, err := config.Load(map[string]string{
+		"APP_KEY":     strings.Repeat("a", 64),
+		"LIBVIRT_URI": "qemu:///system",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.LibvirtHost != "host.docker.internal" || c.LibvirtSSHUser != "root" || c.LibvirtSSHPort != "22" {
+		t.Fatalf("target = %s@%s:%s, want the defaults", c.LibvirtSSHUser, c.LibvirtHost, c.LibvirtSSHPort)
+	}
+	if c.LibvirtURIHost != "" || c.LibvirtURIUser != "" {
+		t.Errorf("URI target = %s@%s, want nothing", c.LibvirtURIUser, c.LibvirtURIHost)
+	}
+}
+
+func TestLoadRecordsURITarget(t *testing.T) {
+	c, err := config.Load(map[string]string{
+		"APP_KEY":      strings.Repeat("a", 64),
+		"LIBVIRT_URI":  "qemu+ssh://truenas_admin@nas.lan:2222/system",
+		"LIBVIRT_HOST": "10.0.0.5",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The probe reports uri-mismatch from these, so they stay even when the
+	// environment wins.
+	if c.LibvirtURIHost != "nas.lan" || c.LibvirtURIUser != "truenas_admin" {
+		t.Fatalf("URI target = %s@%s, want truenas_admin@nas.lan", c.LibvirtURIUser, c.LibvirtURIHost)
+	}
+}
+
+func TestLoadTreatsTemplatePlaceholderAsUnset(t *testing.T) {
+	c, err := config.Load(map[string]string{
+		"APP_KEY":      strings.Repeat("a", 64),
+		"LIBVIRT_HOST": "192.168.x.x",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.LibvirtHost != "host.docker.internal" {
+		t.Errorf("LibvirtHost = %q, want the default", c.LibvirtHost)
+	}
+	if !c.LibvirtHostWasPlaceholder {
+		t.Error("LibvirtHostWasPlaceholder is false")
+	}
+
+	c, err = config.Load(map[string]string{
+		"APP_KEY":      strings.Repeat("a", 64),
+		"LIBVIRT_HOST": "192.168.x.x",
+		"LIBVIRT_URI":  "qemu+ssh://truenas_admin@nas.lan:2222/system",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.LibvirtHost != "nas.lan" {
+		t.Errorf("LibvirtHost = %q, want the URI's host", c.LibvirtHost)
+	}
+
+	c, err = config.Load(map[string]string{
+		"APP_KEY":      strings.Repeat("a", 64),
+		"LIBVIRT_HOST": "192.168.10.10",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.LibvirtHost != "192.168.10.10" || c.LibvirtHostWasPlaceholder {
+		t.Errorf("a real address was taken for the placeholder: %q", c.LibvirtHost)
+	}
+}

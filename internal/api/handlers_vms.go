@@ -115,7 +115,7 @@ func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
 	}
 	items := make([]placementItem, 0, len(views))
 	for _, v := range views {
-		it := placementItem{Key: v.LibvirtName, Identity: "vm:" + v.LibvirtName}
+		it := placementItem{Key: v.LibvirtName, Identity: "vm:" + v.LibvirtName, HomeBackups: v.homeBackups}
 		if t, ok := byName[v.LibvirtName]; ok {
 			it.Home = store.HomeState{Exists: true, Repo: t.Repo, Choice: t.RepoChosen}
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
@@ -293,9 +293,14 @@ func (h *Handler) handleVMSSHInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleVMSSHTest(w http.ResponseWriter, r *http.Request) {
-	if err := h.svc.VMSSHTest(r.Context()); err != nil {
+	libvirtErr, err := h.svc.HostSSHTest(r.Context())
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	body := map[string]any{"libvirt": libvirtErr == nil}
+	if libvirtErr != nil {
+		body["libvirtError"] = scrubError(libvirtErr)
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(body))
 }

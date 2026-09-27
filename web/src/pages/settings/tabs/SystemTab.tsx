@@ -5,11 +5,13 @@ import { Button } from "../../../components/Button";
 import { RevealInput } from "../../../components/RevealInput";
 import { tLtr } from "../../../lib/ltrFragments";
 import { SpikePanel } from "../../../components/SpikePanel";
-import { Card, ToggleRow } from "../shared";
+import { Card, LOGIN_PASSWORD_FIELD, ToggleRow } from "../shared";
 import { VMSSHCard } from "../VMSSHCard";
 import { FleetSettingsCard } from "../FleetSettingsCard";
 import { SettingsPortabilityCard } from "../SettingsPortabilityCard";
 import { DashboardWidgetCard } from "../DashboardWidgetCard";
+import { McpServerCard } from "../McpServerCard";
+import { mcpShipped } from "../../../lib/mcpSwitch";
 import type { SettingsTabProps } from "./types";
 
 export function SystemTab({
@@ -126,10 +128,11 @@ export function SystemTab({
         }}
         hueIndex={nextHue()}
       />
+      {mcpShipped && <McpServerCard hueIndex={nextHue()} passwordSet={authEnabled} />}
 
-      {/* Shown whenever VMs are enabled, so the SSH setup VM backups need is
-          never hidden behind Advanced. */}
-      {(advanced || settings.vmsEnabled) && <VMSSHCard t={t} hueIndex={nextHue()} />}
+      {/* Shown whenever VMs or ZFS are enabled, so the SSH setup their backups
+          need is never hidden behind Advanced. */}
+      {(advanced || settings.vmsEnabled || settings.zfsEnabled) && <VMSSHCard t={t} hueIndex={nextHue()} />}
 
       {advanced && (() => {
         // One slot for the heading and the panel's button, so both share a
@@ -162,6 +165,7 @@ export function SystemTab({
             </label>
             <RevealInput
               {...revealPwNew}
+              id={LOGIN_PASSWORD_FIELD}
               value={pwNew}
               onChange={(e) => setPwNew(e.target.value)}
               autoComplete="new-password"

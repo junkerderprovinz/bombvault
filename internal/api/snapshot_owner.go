@@ -68,9 +68,9 @@ func (s *Service) ownerContextByName(domain string) (ownerContext, error) {
 func (c ownerContext) identityOf(tag string) []string {
 	switch c.domain {
 	case "containers":
-		for _, prefix := range []string{"container:", "stack:"} {
+		for _, prefix := range []string{"container:", "stack:", dbDumpIdentityPrefix} {
 			if name, ok := strings.CutPrefix(tag, prefix); ok && name != "" {
-				return []string{tag}
+				return []string{itemTag(tag)}
 			}
 		}
 	case "vms":
@@ -98,6 +98,15 @@ func (c ownerContext) identityOf(tag string) []string {
 		}
 	}
 	return nil
+}
+
+// itemTag is the identity tag of the item a tag names: a database dump
+// belongs to its container, so it follows that container's placement.
+func itemTag(tag string) string {
+	if name, ok := strings.CutPrefix(tag, dbDumpIdentityPrefix); ok && name != "" {
+		return "container:" + name
+	}
+	return tag
 }
 
 // splitDisk splits a VM tag's name at its last ":zvol:". Device names hold no
@@ -271,10 +280,14 @@ func (c ownerContext) throughLink(id string, ts time.Time, timed bool) (possible
 }
 
 // namesItem reports whether snap carries identity, or a former name linked to
-// it, as a tag of its own. A disk image carries neither, only a tag derived
-// from one.
+// it, as a tag of its own; a container's database dump names the container. A
+// disk image carries neither, only a tag derived from one.
 func (c ownerContext) namesItem(snap restic.Snapshot, identity string) bool {
-	for _, tag := range snap.Tags {
+	for _, raw := range snap.Tags {
+		tag := raw
+		if c.domain == "containers" {
+			tag = itemTag(raw)
+		}
 		if tag == identity || c.aliases[tag].identity == identity {
 			return true
 		}

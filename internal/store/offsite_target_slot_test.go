@@ -41,6 +41,18 @@ func TestCreateOffsiteTargetGoesBehindTheDomainsLastTarget(t *testing.T) {
 	}
 }
 
+func TestCreateOffsiteTargetTakesTheSortOrderItIsGiven(t *testing.T) {
+	r := newRepo(t)
+	store.SeedFieldTarget(t, r, "containers", "s3:field")
+	got, err := r.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Repo: "s3:second", SortOrder: 7, Enabled: true})
+	if err != nil {
+		t.Fatalf("CreateOffsiteTarget: %v", err)
+	}
+	if got.SortOrder != 7 || sortOrderOf(t, r, got.ID) != 7 {
+		t.Fatalf("target got sort_order %d, want 7", got.SortOrder)
+	}
+}
+
 func TestCreateOffsiteTargetRefusesAnEmptyLocation(t *testing.T) {
 	r := newRepo(t)
 	if _, err := r.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Repo: " "}); !errors.Is(err, store.ErrEmptyOffsiteRepo) {
@@ -48,20 +60,20 @@ func TestCreateOffsiteTargetRefusesAnEmptyLocation(t *testing.T) {
 	}
 }
 
-func TestUpsertOffsiteTargetKeepsTheStoredSortOrder(t *testing.T) {
+func TestUpsertOffsiteTargetWritesItsSortOrder(t *testing.T) {
 	r := newRepo(t)
 	store.SeedFieldTarget(t, r, "containers", "s3:field")
 	tg := store.SeedOffsiteTarget(t, r, "containers", "s3:second")
 
 	tg.Name = "Hetzner"
-	tg.SortOrder = 0
+	tg.SortOrder = 5
 	tg.CreatedAt = 0
 	got, err := r.UpsertOffsiteTarget(tg)
 	if err != nil {
 		t.Fatalf("UpsertOffsiteTarget: %v", err)
 	}
-	if got.SortOrder != 1 || sortOrderOf(t, r, tg.ID) != 1 {
-		t.Fatalf("update moved the row to sort_order %d, want 1", got.SortOrder)
+	if got.SortOrder != 5 || sortOrderOf(t, r, tg.ID) != 5 {
+		t.Fatalf("update left the row at sort_order %d, want 5", got.SortOrder)
 	}
 	if got.Name != "Hetzner" || got.CreatedAt == 0 {
 		t.Fatalf("returned row = %+v, want the stored one", got)

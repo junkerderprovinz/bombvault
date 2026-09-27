@@ -20,6 +20,7 @@ A [restic](https://restic.net) hajtja, így minden mentés deduplikált, inkreme
 | **Unraid flash** | A teljes USB flash (`/boot`): operációs rendszer, licenc, tömbkonfiguráció, megosztások, hálózati és bővítmény-konfiguráció. |
 | **Alkalmazás-konfiguráció** | A BombVault saját `/config` mappája: a beállítás-adatbázisa, a telephelyen kívüli hitelesítő adatok és a libvirt SSH-kulcspár. |
 | **Fájlok és mappák** | Elnevezett **fájlkészletek**, a szerver bármely mappája, mindegyik opcionális, készletenkénti kizárási mintákkal. |
+| **ZFS-adatkészletek** | Egy adatkészlet az összes alatta lévővel, egy ZFS pillanatképből olvasva és mappaként mentve. Lásd: [ZFS-adatkészletek](zfs-datasets.md). |
 
 ## A visszaállítás a főszereplő
 

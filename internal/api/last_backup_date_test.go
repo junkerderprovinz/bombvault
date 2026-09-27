@@ -322,7 +322,7 @@ func TestLatestVMBackupTimesFoldsAlias(t *testing.T) {
 	}}
 	svc := vmTimesService(t, st, &renameSuggestVirsh{}, eng)
 
-	times, err := svc.LatestVMBackupTimes(context.Background())
+	times, _, err := svc.LatestVMBackupTimes(context.Background())
 	if err != nil {
 		t.Fatalf("LatestVMBackupTimes: %v", err)
 	}

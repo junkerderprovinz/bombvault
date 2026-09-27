@@ -7,10 +7,10 @@
 | 변수 | 필수 | 설명 |
 |---|---|---|
 | `APP_KEY` | **예** | restic 저장소 비밀번호를 파생하는 데 사용되는 32바이트 16진수 비밀 값(64개의 16진수 문자). `openssl rand -hex 32`로 생성하세요. 안전하게 보관하세요: 잃어버리면 암호화된 백업을 복구할 수 없게 됩니다. |
-| `LIBVIRT_HOST` | VM용 | VM 백업을 위해 SSH로 도달하는 Unraid 호스트(기본값 `host.docker.internal`; 템플릿이 LAN IP 자리 표시자를 미리 채웁니다). Unraid LAN IP를 사용하세요. 사용자 지정 `br0.x` 네트워크에서는 필수입니다. |
-| `LIBVIRT_SSH_PORT` | 아니요 | VM 백업용 호스트 SSH 포트(기본값 `22`). |
-| `LIBVIRT_SSH_USER` | 아니요 | VM 백업용 호스트의 SSH 사용자(기본값 `root`). |
-| `LIBVIRT_URI` | 아니요 | 전체 libvirt 연결 URI입니다. 위의 세 `LIBVIRT_*` 변수로 조합하는 대신 이 값을 **그대로** 사용합니다(이 경우 위 변수들은 연결 문자열 생성에 쓰이지 않습니다). 기본값은 설정되지 않음입니다. TrueNAS Scale에서 필요합니다. 이곳의 libvirtd는 조합 방식으로는 표현할 수 없는 비표준 소켓에서 대기합니다. 예: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. TrueNAS Scale 섹션은 [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)를 참고하세요. |
+| `LIBVIRT_HOST` | VM용 | VM 백업을 위해 SSH로 도달하는 Unraid 호스트(기본값 `host.docker.internal`; 템플릿이 LAN IP 자리 표시자를 미리 채웁니다). Unraid LAN IP를 사용하세요. 사용자 지정 `br0.x` 네트워크에서는 필수입니다. ZFS 데이터세트 백업에도 쓰입니다(템플릿 필드 **Host SSH: Address**). 자리 표시자 `192.168.x.x`는 설정되지 않은 것으로 봅니다. |
+| `LIBVIRT_SSH_PORT` | 아니요 | VM 백업용 호스트 SSH 포트(기본값 `22`). 템플릿 필드 **Host SSH: Port**, ZFS 데이터세트에도 쓰입니다. |
+| `LIBVIRT_SSH_USER` | 아니요 | VM 백업용 호스트의 SSH 사용자(기본값 `root`). 템플릿 필드 **Host SSH: User**, ZFS 데이터세트에도 쓰입니다. |
+| `LIBVIRT_URI` | 아니요 | 전체 libvirt 연결 URI입니다. 위의 세 `LIBVIRT_*` 변수로 조합하는 대신 이 값을 **그대로** 사용합니다(이 경우 위 변수들은 연결 문자열 생성에 쓰이지 않습니다). 기본값은 설정되지 않음입니다. TrueNAS Scale에서 필요합니다. 이곳의 libvirtd는 조합 방식으로는 표현할 수 없는 비표준 소켓에서 대기합니다. 예: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. TrueNAS Scale 섹션은 [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)를 참고하세요. `qemu+ssh://` URI이면 `LIBVIRT_HOST`, `LIBVIRT_SSH_USER`, `LIBVIRT_SSH_PORT` 중 설정되지 않은 것은 각각 여기서 가져오며, BombVault 자체의 SSH 명령(NVRAM 전송, ZFS 데이터세트)에도 적용됩니다. |
 | `PORT` | 아니요 | HTTP 포트(기본값 `3000`; `HTTP_ONLY=true`에서만 사용됨). |
 | `HTTPS_PORT` | 아니요 | HTTPS 포트(기본값 `3443`; 템플릿이 1:1로 게시하므로 WebUI가 `https://<ip>:3443`에서 응답함). |
 | `HTTP_ONLY` | 아니요 | 자체 서명 HTTPS 리스너를 비활성화하고 일반 HTTP만 제공하려면 `true`로 설정(TLS 종료 리버스 프록시 뒤에서 사용). |
@@ -20,13 +20,16 @@
 | `PLATFORM` | 아니요 | 자동 감지 대신 BombVault가 자신이 실행 중이라고 판단할 플랫폼을 강제로 지정합니다: `unraid`, `generic`, `truenas` 중 하나입니다(기본값은 설정되지 않음입니다. 플래시 마운트 아래의 `dockerMan` 표시를 찾아 Unraid를 자동 감지하고, 찾지 못하면 `generic`으로 처리합니다. 인식되지 않는 값도 `generic`으로 대체되며 이때 로그가 남습니다). 일반 Docker 호스트나 TrueNAS Scale에서는 Unraid 전용 자동 감지에 의존하지 말고 명시적으로 설정하세요. 일반용 compose 파일이 이렇게 되어 있습니다. 이 값은 appdata 대체 규칙, 인스턴스 간 복원 대상 기본값, Unraid 전용 알림/컴패니언 플러그인 단계 시도 여부를 바꿉니다(`internal/platform` 참고). |
 | `BOMBVAULT_SELF_CONTAINER` | 아니요 | BombVault 컨테이너 자체의 이름으로, 자기 자신을 절대 백업(따라서 중지)하지 않도록 합니다. |
 | `BACKUP_MAX_HOURS` | 아니요 | 단일 백업 실행이 강제 취소되기 전에 도메인 잠금을 유지할 수 있는 최대 실제 경과 시간(멈춘 실행이 도메인을 영원히 차단하지 못하게 하는 보호 장치). 비어 있으면(기본값) `48`을 사용합니다. 매우 크거나 느린 클라우드 백업에는 이를 높이세요(상한에서 취소된 실행은 `context deadline exceeded`로 실패함). 상한을 완전히 비활성화하려면 `0`으로 설정하세요. |
+| `DB_DUMP_MAX_HOURS` | 아니요 | 자동 데이터베이스 덤프 한 번이 중단되기 전까지 실행될 수 있는 시간. 비워 두면(기본값) `6`을 씁니다. 허용 범위는 `1`부터 `48`까지이며, 이 한도는 `BACKUP_MAX_HOURS`보다 한 시간 낮게 유지됩니다(그 값이 두 시간 미만이면 그 절반). 긴 덤프가 백업을 함께 쓰러뜨리지 않고 자기 한도에서 끊겨 그렇게 보고되도록 하기 위해서입니다. 더 이상 진행되지 않는 덤프는 `BACKUP_STALL_HOURS` 뒤에 그보다 일찍 중단됩니다. 중단된 덤프는 그 자체로 실패하고 컨테이너 백업은 계속됩니다. Unraid에서는 **Add another Path, Port, Variable** 로 BombVault 컨테이너에 추가합니다. |
 | `TZ` | 아니요 | 스케줄러용 시간대(예: `Europe/Berlin`). **설정하지 않으면 모든 일정이 UTC로 실행됩니다**: 02:30으로 설정한 일정은 현지 시간이 아니라 02:30 UTC에 시작됩니다. Unraid에서는 직접 설정하지 않습니다. 시스템이 자체 시간대를 모든 컨테이너에 전달합니다. |
 
 ## 마운트
 
 CA 템플릿에 표시된 대로 Docker 소켓, 플래시(`/boot`), **Host Data** 루트(`/mnt`)를 마운트하세요. 백업 *소스*와 *대상*은 모두 Host Data 아래에 있으며, **slave**로 마운트되므로 컨테이너 시작 후에 마운트되는 원격 공유(예: `/mnt/remotes` 아래)가 재시작 없이 보이게 됩니다.
 
-새로 설치하면 모든 도메인이 **Unraid** 장소의 `/mnt/user/bombvault`에 도메인마다 폴더 하나씩(`container`, `vms`, `flash`, `config`, `files`) 저장되며, 폴더는 첫 백업 시 생성됩니다. 로컬이든 원격이든 다른 장소는 **설정, 스토리지**에서 추가합니다. [저장 장소](storage-places.md)를 참고하세요.
+ZFS 데이터세트 백업에도 이 모드가 필요합니다. 호스트는 컨테이너가 시작된 뒤에야 데이터세트의 스냅샷을 마운트하기 때문입니다. [ZFS 데이터세트](zfs-datasets.md)를 참고하세요.
+
+새로 설치하면 모든 도메인이 **Unraid** 장소의 `/mnt/user/bombvault`에 도메인마다 폴더 하나씩(`container`, `vms`, `flash`, `config`, `files`, `zfs`) 저장되며, 폴더는 첫 백업 시 생성됩니다. 로컬이든 원격이든 다른 장소는 **설정, 스토리지**에서 추가합니다. [저장 장소](storage-places.md)를 참고하세요.
 
 !!! note "호스트 통합 확인"
     컨테이너가 시작된 후 웹 UI에서 `/spike`를 엽니다. 모든 마운트와 CLI(Docker 소켓, libvirt, restic, qemu-img, rclone)를 검사하고 누락된 부분을 보고합니다.
@@ -39,6 +42,7 @@ CA 템플릿에 표시된 대로 Docker 소켓, 플래시(`/boot`), **Host Data*
 - **Docker의 명명된 볼륨**은 항상 포함됩니다. 버려도 되는 대응물이 없어 걸러낼 것이 없기 때문입니다. **다만 그 볼륨의 실제 호스트 저장 경로 자체가 Host Data 마운트를 통해 닿을 수 있을 때만** 해당하며, 이는 BombVault가 백업하는 다른 호스트 경로와 똑같은 조건입니다. 기본 로컬 볼륨 드라이버는 볼륨을 데몬 자신의 데이터 루트 아래, 즉 바꾸지 않았다면 `/var/lib/docker/volumes/<name>/_data`에 둡니다(`docker info -f '{{.DockerRootDir}}'`로 확인하세요). 이 위치는 일반 `docker-compose.yml`이 기본으로 쓰는 단일 디렉터리의 좁은 Host Data 마운트에 포함되지 않습니다. 닿을 수 없는 볼륨은 조용히 건너뛰며 오류가 아닙니다. 일반 호스트에서 명명된 볼륨을 실제로 백업하려면 Host Data(그리고 `HOST_SOURCE_ROOT`)를 Docker 데이터 루트까지 아우르는 공통 상위 디렉터리로 지정하세요. 그 대가는 compose 파일의 Host Data 주석을 보십시오(Unraid는 같은 이유로 자체 최상위 관례인 `/mnt` 전체를 마운트해 이 문제를 비껴갑니다).
 - **Docker Compose 프로젝트 디렉터리:** 컨테이너에 표준 레이블 `com.docker.compose.project.working_dir`(`docker compose up`이 자동으로 붙임)이 있으면, 어떤 바인드가 데이터 루트 구간에 맞았는지와 무관하게 그 디렉터리도 추가됩니다.
 - **레이블 `bombvault.data`로 덮어쓰기:** 컨테이너에 `bombvault.data=true` 레이블을 붙이면 그 바인드 마운트를 전부 포함합니다. 위 두 관례 어느 쪽도 잡지 못하는 구성(예: Compose 프로젝트 없이 `/srv/plex/config` 바인드 하나만 있는 경우)을 위한 것입니다. `false`가 아닌 비어 있지 않은 값은 모두 참으로 치며, 레이블이 없거나 `bombvault.data=false`이면 아무것도 달라지지 않습니다.
+- **레이블 `bombvault.dbdump`:** 컨테이너에 `bombvault.dbdump=false`를 달면 그 컨테이너의 자동 데이터베이스 덤프가 꺼집니다(`0`, `no`, `off`도 같습니다). 엔진 이름(`postgres`, `mysql`, `mariadb`)을 적으면 BombVault가 스스로 인식하지 못하는 컨테이너도 덤프합니다. 레이블은 컨테이너 카드의 스위치보다 우선하며, Unraid에서는 그 스위치가 일반적인 방법입니다.
 
 ## 보안 모델
 
@@ -50,9 +54,14 @@ CA 템플릿에 표시된 대로 Docker 소켓, 플래시(`/boot`), **Host Data*
 - 게이트는 선택 사용이므로, 설정하지 않으면 전체 UI와 API(오프사이트 설정, 변조 테스트 경로, 복구 키트 포함)에 포트에 접근할 수 있는 누구나 도달할 수 있습니다. 오프사이트, 불변 백업 또는 암호화를 사용하게 되면 게이트를 활성화하세요.
 - BombVault는 신뢰할 수 있고 외부에 노출되지 않은 네트워크에서만 실행하세요. 원격 접근에는 인증과 TLS를 추가하는 리버스 프록시 뒤에 두세요. 응답에는 기본 보안 헤더(CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`)가 포함됩니다.
 - 리버스 프록시 뒤에서는 모든 요청이 프록시의 주소를 지니므로, `TRUSTED_PROXY` 없이는 로그인 제한이 모든 클라이언트를 한 통에서 세고 공격자의 실패가 당신도 잠급니다. `TRUSTED_PROXY`에 프록시를 지정하면 클라이언트별 계수가 돌아옵니다.
+- BombVault 앞의 리버스 프록시는 `Authorization` 또는 `X-API-Key` 헤더를 `/mcp`로 그대로 넘겨야 하고 응답을 버퍼링하면 안 됩니다. 그렇지 않으면 어시스턴트가 연결할 수 없습니다. [MCP 서버](mcp.md#tls)를 참고하세요.
 - `HTTP_ONLY=true`에서는 세션 쿠키가 `Secure` 플래그를 잃으므로(일반 HTTP에서 작동하려면 그래야 함), 기밀성이 중요하다면 TLS 종료 프록시 뒤에서만 비밀번호를 활성화하세요.
 - VM 백업 SSH 연결은 첫 접속 시 호스트 키를 신뢰하고(TOFU) 이후 이를 고정합니다. 컨테이너에서 호스트로의 경로가 신뢰할 수 없다면 호스트의 키를 대역 외로 확인하세요.
 - 암호화가 활성화되면(설정; 기본 켜짐) 백업은 restic에 의해 암호화되며, 키는 `APP_KEY`에서 파생됩니다.
+
+## MCP 서버 {#mcp-server}
+
+MCP 서버에는 환경 변수가 필요 없습니다. **설정, 시스템, MCP 서버**에서 키를 만들면 켜지고, 웹 인터페이스와 같은 포트의 `/mcp`에서 응답합니다(예: `https://192.168.1.10:3443/mcp`). 활성 키가 없으면 이 경로는 `404`로 답합니다. 클라이언트, 인증서, 제한은 [MCP 서버](mcp.md)에 설명되어 있습니다.
 
 ## SSH를 통한 VM 백업
 
@@ -60,7 +69,7 @@ BombVault는 **어떤 libvirt 경로도 마운트하지 않고** KVM/libvirt VM�
 
 빠른 설정:
 
-1. **설정, 시스템, SSH를 통한 VM 백업:** 표시된 공개 키를 복사합니다.
+1. **설정, 시스템, 호스트 SSH:** 표시된 공개 키를 복사합니다.
 2. Unraid의 `/root/.ssh/authorized_keys`에 추가합니다(재부팅 후에도 유지되도록 플래시에도 저장됨).
 3. **연결 테스트**를 클릭합니다.
 
@@ -81,6 +90,19 @@ BombVault는 **어떤 libvirt 경로도 마운트하지 않고** KVM/libvirt VM�
 - **보존, 제한, 스토리지 클래스, 증가 예산은 장소에 속하며** 장소의 세부 정보에서 설정합니다. 장소의 보존은 그곳의 모든 저장소에 적용되므로, 오프사이트 장소는 사본을 아카이브로 더 오래 보관할 수 있습니다. 모든 규칙이 0인 장소는 아무것도 정리하지 않습니다.
 - **콜드 및 아카이브 스토리지 클래스(S3):** S3 장소의 경우 복원 가능한 계층(Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval)을 선택하세요. rclone 원격은 rclone 구성에서 클래스를 설정합니다.
 - **원격 장소에 저장된 도메인:** [원격 장소에 저장된 도메인](offsite-recovery.md#remote-primary-repositories)을 참고하세요.
+
+## 이상 징후 {#anomalies}
+
+이상 징후 감지는 **설정, 무결성**의 **이상 징후** 카드에서 설정합니다. 각 컨트롤은 바꾸는 즉시 저장되며, 감지가 꺼져 있는 동안에는 스위치 아래의 세 가지가 숨겨집니다.
+
+| 설정 | 기본값 | 하는 일 |
+|---|---|---|
+| **이상 징후 감지** | 켜짐 | 각 백업을 대상 자신의 기록과 비교합니다. 끄면 새로 검사하는 것이 없고 사이드바에서 **이상 징후** 항목이 사라집니다. 카드는 계속 이전 발견으로 연결됩니다. |
+| **민감도** | 균형 | 엄격은 작은 변화도 알리고, 느슨은 큰 변화만 알립니다. |
+| **알림을 보낼 대상** | 중대한 발견만 | 알림에서 설정한 채널로 메시지를 보내는 가장 낮은 심각도입니다. 반복되는 백업과 덤프 실패, 실패한 예약 복원 검사는 이미 자체 메시지를 보내므로 두 번 보내지 않습니다. |
+| **원본이 크게 줄거나 다시 쓰이면 오래된 백업 보존** | 켜짐 | 대상에 거의 빈 소스, 큰 축소, 데이터 대부분의 재저장에 대한 열린 발견이 있는 동안 보존 정책과 정리는 그 대상의 오래된 백업을 건드리지 않습니다. 해제하려면 발견을 확인하거나 예상된 것으로 표시하세요. |
+
+각 대상은 자체 민감도와 자체 알림 최소 수준을 가질 수 있습니다. **이상 징후** 페이지의 **대상** 탭이나 대상 자체 패널에서 설정하세요: 컨테이너의 폴더 섹션과 VM의 설정(둘 다 고급 모드), 폴더 세트의 폴더 편집기, 그리고 **플래시** 및 **셀프 백업** 페이지입니다. ZFS 대상은 **ZFS** 페이지의 대상 편집기에서 설정하며, 트리의 모든 데이터세트에 적용됩니다.
 
 ## 이식 가능한 설정(내보내기 및 가져오기) {#portable-settings-export-and-import}
 

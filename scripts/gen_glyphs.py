@@ -188,6 +188,28 @@ CROSS = '<g transform="rotate(45 7 7)">%s</g>' % _CROSS_BARS
 PLUS_BOX = "0 0 14 14"
 CROSS_BOX = "2 2 10 10"
 
+# The database cylinder. Every database glyph in Streamline's free set carries
+# a second mark (a check, a cog, a cross) and both of those already mean
+# something else here, so this one is drawn on the same 14-unit grid: a cap and
+# two bands, each gap as wide at the centre as at the sides, which is what makes
+# a single-colour stack read as a stack.
+DATABASE = (
+    '<ellipse cx="7" cy="3.3" rx="5.4" ry="1.8" />'
+    '<path d="M1.6 5.7Q7 9.3 12.4 5.7L12.4 7.7Q7 11.3 1.6 7.7Z" />'
+    '<path d="M1.6 8.7Q7 12.3 12.4 8.7L12.4 10.7Q7 14.3 1.6 10.7Z" />'
+)
+DATABASE_BOX = "0 0 14 14"
+
+# ZFS datasets. Three separated platters on the same 14-unit grid as the
+# database cylinder: the pool is a stack of disks, and keeping the gaps open
+# stops the two marks reading as the same object in the rail.
+ZFS = (
+    '<ellipse cx="7" cy="2.6" rx="5.4" ry="1.8" />'
+    '<ellipse cx="7" cy="7" rx="5.4" ry="1.8" />'
+    '<ellipse cx="7" cy="11.4" rx="5.4" ry="1.8" />'
+)
+ZFS_BOX = "0 0 14 14"
+
 # Multi-line notes become block comments in the generated files; see doc().
 CLOSE_NOTE = """Close
 
@@ -203,6 +225,37 @@ CANCEL_NOTE = """Cancel or dismiss
 The same drawing and cropped viewBox as navGlyphs' IconClose, which explains
 the frame."""
 
+# Four backups on one baseline with the third far above them. The free
+# Streamline set has no chart with an outlier in it, so the columns are drawn
+# on the same 14-unit grid as the database cylinder: pill caps like IconAdd's
+# bars, one column per reading, and the height difference is the whole mark.
+ANOMALY_COLUMNS = (
+    '<rect x="1.4" y="8.6" width="2.2" height="4" rx="1.1" />'
+    '<rect x="4.4" y="7.4" width="2.2" height="5.2" rx="1.1" />'
+    '<rect x="7.4" y="1.4" width="2.2" height="11.2" rx="1.1" />'
+    '<rect x="10.4" y="8" width="2.2" height="4.6" rx="1.1" />'
+)
+ANOMALY_BOX = "0 0 14 14"
+
+# The rail folded away on a narrow window: three bars with the anomaly
+# columns' caps, laid flat.
+MENU_BARS = (
+    '<rect x="1.4" y="2.4" width="11.2" height="2.2" rx="1.1" />'
+    '<rect x="1.4" y="5.9" width="11.2" height="2.2" rx="1.1" />'
+    '<rect x="1.4" y="9.4" width="11.2" height="2.2" rx="1.1" />'
+)
+MENU_BOX = "0 0 14 14"
+
+# Taking a credential away. IconShieldOff already means switching two-factor
+# off, a protection going down, which is not what revoking a key does. So this
+# is IconKey's own drawing on the same grid with a bar across it, and a gap cut
+# around the bar so the two still read apart at 16px. The outline was computed
+# once as a polygon difference and is kept as plain path data.
+KEY_REVOKE = '<path fillRule="evenodd" d="%s" />' % io.open(
+    "../scripts/glyph-paths/key-revoke.txt", encoding="utf-8"
+).read().strip()
+KEY_REVOKE_BOX = "0 0 14 14"
+
 # Glyphs that do not come from the Streamline set. They are emitted after the
 # generated ones and carry their own viewBox instead of going through G's
 # 14-unit grid; the rendered box is 16px either way.
@@ -217,6 +270,8 @@ EXTRA_NAV = [
         '<path d="%s" />' % io.open("../scripts/docker-path.txt", encoding="utf-8").read().strip(),
     ),
     ("IconCloud", "Off-site or cloud", CLOUD_BOX, CLOUD),
+    ("IconDatabase", "A database", DATABASE_BOX, DATABASE),
+    ("IconZFS", "ZFS datasets", ZFS_BOX, ZFS),
     ("IconAdd", "Add", PLUS_BOX, PLUS),
     ("IconClose", CLOSE_NOTE, CROSS_BOX, CROSS),
     # Imported whole and cropped to their measured ink. Sources and licences,
@@ -240,6 +295,8 @@ EXTRA_NAV = [
              (3.0, 1.0, 18.0, 22.0), "integrity"),
     imported("IconTabStorage", "Storage tab", "0 0 448 512",
              (0.0, 0.0, 448.0, 512.0), "storage"),
+    ("IconAnomalies", "Anomalies, a backup that does not fit its history", ANOMALY_BOX, ANOMALY_COLUMNS),
+    ("IconMenu", "Menu, the navigation rail on a narrow window", MENU_BOX, MENU_BARS),
 ]
 
 # IconCancel is the same cross as IconClose, so the app has one X.
@@ -263,6 +320,7 @@ EXTRA_ACTION = [
     # with GitHub. They are passed as an explicit glyph at the one call site
     # that means them.
     imported("IconGithub", "The project's GitHub repository", "0 0 24 24", (0.0, 0.297, 24.0, 23.406), "github"),
+    ("IconKeyRevoke", "Revoke a key or a passkey", KEY_REVOKE_BOX, KEY_REVOKE),
 ]
 
 ATTRIBUTION = """// %s

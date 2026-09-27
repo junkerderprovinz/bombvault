@@ -217,7 +217,7 @@ export interface ExceptionItem {
 }
 
 export interface DomainRow {
-  domain: string;
+  domain: PlaceDomain;
   homePlace: string;
   storedIn: string;
   /** Only after an explicit check; the row itself never lists a repository. */

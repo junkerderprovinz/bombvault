@@ -12,8 +12,9 @@ const backupNow = vi.fn(async () => ({ ok: true }));
 vi.mock("../lib/api", () => ({ backupNow: (...a: unknown[]) => backupNow(...a) }));
 
 const fire = vi.fn(async () => {});
+const watch = { isPending: false };
 vi.mock("../lib/backupWatch", () => ({
-  useBackupWatch: () => ({ state: { phase: "idle" }, fire, isPending: false }),
+  useBackupWatch: () => ({ state: { phase: "idle" }, fire, isPending: watch.isPending }),
 }));
 
 vi.mock("../lib/toast", () => ({ useToast: () => ({ push: vi.fn() }) }));
@@ -25,6 +26,7 @@ const t = ((k: string) => k) as unknown as ReturnType<typeof import("../lib/i18n
 beforeEach(() => {
   localStorage.clear();
   fire.mockClear();
+  watch.isPending = false;
 });
 afterEach(cleanup);
 
@@ -71,5 +73,48 @@ describe("BackupButton stop warning", () => {
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: /backupNow/i })); });
     expect(await screen.findByText("containers.stopWarning")).toBeTruthy();
     spy.mockRestore();
+  });
+});
+
+// A dump of a large database runs for many minutes with no percentage of its
+// own, so the button has to say what is happening instead of "backing up".
+describe("BackupButton while a database is being dumped", () => {
+  const tEn = ((k: string) => en[k as keyof typeof en]) as unknown as ReturnType<
+    typeof import("../lib/i18n").useT
+  >["t"];
+
+  function bubbleOf(el: HTMLElement): string {
+    fireEvent.mouseEnter(el);
+    return document.querySelector(".glim-bubble")?.textContent ?? "";
+  }
+
+  it("counts the dumped bytes while this container's own backup is dumping", () => {
+    watch.isPending = true;
+    const { container } = render(
+      <BackupButton
+        name="immich_postgres"
+        t={tEn}
+        progress={{ phase: "backup", percent: 0, active: true, lastSeen: 0, stage: "dbdump", bytes: 5_242_880 }}
+      />
+    );
+    expect(bubbleOf(container.querySelector("span, button") as HTMLElement)).toContain("5.0 MB");
+  });
+
+  it("says a dump is running when another container's backup blocks this one", () => {
+    const { container } = render(
+      <BackupButton
+        name="plex"
+        t={tEn}
+        running={{ active: true, phase: "backup", stage: "dbdump" }}
+      />
+    );
+    expect(bubbleOf(container.querySelector("span, button") as HTMLElement)).toBe(en["dbdump.busyDumping"]);
+  });
+
+  it("keeps the plain busy hint when no dump is running", () => {
+    const { container } = render(
+      <BackupButton name="plex" t={tEn} running={{ active: true, phase: "backup" }} />
+    );
+    expect(bubbleOf(container.querySelector("span, button") as HTMLElement)).toBe(en["common.backupRunning"]);
   });
 });

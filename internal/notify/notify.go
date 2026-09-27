@@ -84,8 +84,9 @@ type Config struct {
 	MatrixRoom       string `json:"matrixRoom"`
 	HealthchecksURL  string `json:"healthchecksUrl"`
 	// HealthchecksByDomain maps a backup domain ("container", "VM", "flash",
-	// "config", "files") to its own check URL, which replaces HealthchecksURL
-	// for that domain. An empty entry falls back to HealthchecksURL.
+	// "config", "files", "zfs") to its own check URL, which replaces
+	// HealthchecksURL for that domain. An empty entry falls back to
+	// HealthchecksURL.
 	HealthchecksByDomain map[string]string `json:"healthchecksByDomain"`
 	// Unraid sends each event to Unraid's own notification system. The service
 	// layer delivers it over SSH through the host's notify script; Send does not.
@@ -182,11 +183,11 @@ type Event struct {
 	OK      bool
 }
 
-// active reports whether notifications are switched on at all. It is an
+// Active reports whether notifications are switched on at all. It is an
 // allowlist, so a corrupted or hand-edited value sends nothing. An empty On
 // means nobody has chosen yet and counts as "failure", because whoever fills
 // in a channel wants to hear when a backup breaks.
-func (c Config) active() bool {
+func (c Config) Active() bool {
 	switch c.On {
 	case "", "always", "failure":
 		return true
@@ -281,7 +282,7 @@ func (c Config) appriseReady() bool {
 // outcomes unless notifications are off, because a check needs its success
 // pings to stay green.
 func Send(ctx context.Context, c Config, domain string, ev Event) {
-	if !c.active() {
+	if !c.Active() {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
@@ -335,7 +336,7 @@ func Send(ctx context.Context, c Config, domain string, ev Event) {
 // The Apprise post needs On=always and is skipped for per-item sends in
 // summary mode.
 func SendStart(ctx context.Context, c Config, domain string) {
-	if !c.active() {
+	if !c.Active() {
 		return
 	}
 	hcURL := c.healthchecksURLFor(domain)
@@ -369,7 +370,7 @@ func SendStart(ctx context.Context, c Config, domain string) {
 // scheduler's plural spelling ("containers", "vms").
 func PingDomainStart(ctx context.Context, c Config, domain string) {
 	hcURL := c.healthchecksURLFor(domain)
-	if !c.active() || hcURL == "" {
+	if !c.Active() || hcURL == "" {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
@@ -385,7 +386,7 @@ func PingDomainStart(ctx context.Context, c Config, domain string) {
 // items failed", is sent as the body so it shows in the check's event log.
 func PingDomainResult(ctx context.Context, c Config, domain string, ok bool, summary string) {
 	hcURL := c.healthchecksURLFor(domain)
-	if !c.active() || hcURL == "" {
+	if !c.Active() || hcURL == "" {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)

@@ -1,0 +1,549 @@
+package api
+
+import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"log"
+	"net"
+	"net/http"
+	"os"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+	"unicode"
+	"unicode/utf8"
+
+	"github.com/junkerderprovinz/bombvault/internal/secret"
+	"github.com/junkerderprovinz/bombvault/internal/selfrestore"
+	"github.com/junkerderprovinz/bombvault/internal/store"
+)
+
+// mcpKeyView is one key as the settings card sees it. The key itself is handed
+// out once at creation and is not in here; the hint is what tells two apart.
+type mcpKeyView struct {
+	ID              string `json:"id"`
+	ViaOAuth        bool   `json:"viaOAuth"`
+	Label           string `json:"label"`
+	Client          string `json:"client"`
+	Hint            string `json:"hint"`
+	CanStartBackups bool   `json:"canStartBackups"`
+	CreatedAt       int64  `json:"createdAt"`
+	RotatedAt       int64  `json:"rotatedAt"`
+	LastUsedAt      int64  `json:"lastUsedAt"`
+	LastUsedFrom    string `json:"lastUsedFrom"`
+	RevokedAt       int64  `json:"revokedAt"`
+	RevokedReason   string `json:"revokedReason"`
+	InUse           bool   `json:"inUse"`
+	Unusable        string `json:"unusable"`
+	CallsToday      int    `json:"callsToday"`
+}
+
+var (
+	errMCPKeyLabel         = errors.New("a key needs a name of 1 to 64 characters")
+	errMCPKeyClient        = errors.New("a client id is 1 to 32 lower-case letters, digits and dashes")
+	errMCPKeyNeedsPassword = errors.New("set a login password before creating a key or adding a certificate name from this address")
+)
+
+// mcpErrorCodes translates the refusals of the card's two subjects, the keys
+// and the certificate, into the codes it renders as its own sentences.
+var mcpErrorCodes = []struct {
+	err  error
+	code string
+}{
+	{store.ErrMCPKeyNotFound, "mcp-key-not-found"},
+	{store.ErrMCPKeyLimit, "mcp-key-limit"},
+	{store.ErrMCPKeyLabelTaken, "mcp-key-label-taken"},
+	{store.ErrMCPKeyInUse, "mcp-key-in-use"},
+	{store.ErrMCPKeyActive, "mcp-key-active"},
+	{errCertNameInvalid, "cert-name-invalid"},
+	{errCertNameLimit, "cert-name-limit"},
+	{errCertNotOwn, "cert-not-own"},
+	{errCertWriteFailed, "cert-write-failed"},
+}
+
+func writeMCPError(w http.ResponseWriter, err error) {
+	for _, c := range mcpErrorCodes {
+		if errors.Is(err, c.err) {
+			writeJSON(w, http.StatusOK, codedFailEnvelope(err, c.code))
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, failEnvelope(err))
+}
+
+// normalizeMCPKeyLabel trims a label and reports whether it is a usable name:
+// 1 to 64 runes, no control characters.
+func normalizeMCPKeyLabel(s string) (string, bool) {
+	s = strings.TrimSpace(s)
+	if n := utf8.RuneCountInString(s); n == 0 || n > 64 {
+		return "", false
+	}
+	for _, r := range s {
+		if unicode.IsControl(r) {
+			return "", false
+		}
+	}
+	return s, true
+}
+
+// mcpClientID is the shape of an id in the card's client list. The server does
+// not keep that list; it only stores the id for the key's tile.
+var mcpClientID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
+
+// mcpKeyIDParam reads the {id} path value and answers 400 itself when it is not
+// the 32-hex shape every row in the table carries.
+func mcpKeyIDParam(w http.ResponseWriter, r *http.Request) (string, bool) {
+	id := r.PathValue("id")
+	if !validRunID(id) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid key id"})
+		return "", false
+	}
+	return id, true
+}
+
+// mcpKeyPrivateSuffixes only ever resolve inside a network, so no answer from
+// public DNS can point one of them at a LAN address.
+var mcpKeyPrivateSuffixes = []string{".local", ".lan", ".home", ".home.arpa", ".internal", ".localdomain", ".ts.net"}
+
+// mcpKeyHostAllowed reports whether a key may be created or replaced from the
+// given request host while no login password is set: an IP literal, localhost,
+// a single-label name or a private-use suffix, none of which a public DNS name
+// can rebind.
+func mcpKeyHostAllowed(host string) bool {
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+	host = strings.ToLower(strings.Trim(strings.TrimSpace(host), "[]"))
+	if host == "" {
+		return false
+	}
+	if net.ParseIP(host) != nil || !strings.Contains(host, ".") {
+		return true
+	}
+	for _, suffix := range mcpKeyPrivateSuffixes {
+		if strings.HasSuffix(host, suffix) {
+			return true
+		}
+	}
+	return false
+}
+
+// mcpKeysAllowedFrom reports whether this request may mint key material. A
+// login password settles it: the session cookie is bound to the real host name,
+// so a page that rebound its DNS to this address carries no session. Without
+// one, only a host that cannot be rebound at all counts.
+func (h *Handler) mcpKeysAllowedFrom(r *http.Request) bool {
+	if _, _, on := h.authEnabled(); on {
+		return true
+	}
+	return mcpKeyHostAllowed(r.Host)
+}
+
+// servedOwnCertificate reports whether the browser behind r negotiated TLS with
+// BombVault itself. Behind a proxy that ends TLS, clients see the proxy's
+// certificate, and a warning about BombVault's would point at the wrong fix.
+// A browser sends no server name for an IP address and the page's own name
+// otherwise; a proxy connecting upstream sends its target's name or none, and
+// usually a forwarding header as well.
+func servedOwnCertificate(r *http.Request) bool {
+	if r.TLS == nil {
+		return false
+	}
+	for _, name := range []string{"Forwarded", "X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto", "X-Real-Ip"} {
+		if r.Header.Get(name) != "" {
+			return false
+		}
+	}
+	host := r.Host
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+	host = strings.Trim(host, "[]")
+	if net.ParseIP(host) != nil {
+		return r.TLS.ServerName == ""
+	}
+	return strings.EqualFold(r.TLS.ServerName, host)
+}
+
+func (h *Handler) mcpKeyViewOf(k store.MCPKey, inUse bool, callsToday int) mcpKeyView {
+	return mcpKeyView{
+		ID:              k.ID,
+		ViaOAuth:        k.Kind == store.MCPKindOAuth,
+		Label:           k.Label,
+		Client:          k.Client,
+		Hint:            k.Hint,
+		CanStartBackups: k.CanStartBackups,
+		CreatedAt:       k.CreatedAt,
+		RotatedAt:       k.RotatedAt,
+		LastUsedAt:      k.LastUsedAt,
+		LastUsedFrom:    k.LastUsedFrom,
+		RevokedAt:       k.RevokedAt,
+		RevokedReason:   k.RevokedReason,
+		InUse:           inUse,
+		Unusable:        h.mcpKeyUnusable(k),
+		CallsToday:      callsToday,
+	}
+}
+
+// mcpKeyUnusable names why a key can no longer authenticate, or "" while it
+// still can. A reinstall or a restore onto another container brings a new
+// APP_KEY and every digest stops matching at once; the check value is derived
+// from the id, so it tells that apart from a client sending the wrong key.
+func (h *Handler) mcpKeyUnusable(k store.MCPKey) string {
+	if k.RevokedAt == 0 && k.Check != secret.MCPKeyCheck(h.cfg.AppKey, k.ID) {
+		return "app-key-changed"
+	}
+	return ""
+}
+
+// mcpKeyItem builds the view of a single key for a mutation's response.
+func (h *Handler) mcpKeyItem(r *http.Request, k store.MCPKey) mcpKeyView {
+	inUse, err := h.store.MCPKeyIDsInUse()
+	if err != nil {
+		log.Printf("api: mcp: could not read which keys the run history names: %v", err)
+	}
+	calls, err := h.store.MCPKeyCallsSince(mcpCallsSince(r, h.mcp.now()))
+	if err != nil {
+		log.Printf("api: mcp: could not count the calls of key %s: %v", k.ID, err)
+	}
+	return h.mcpKeyViewOf(k, inUse[k.ID], calls[k.ID])
+}
+
+// mcpCallsSince is where a key's calls today start counting: at the midnight
+// the card sends as ?since=, which is the browser's, while the call slots still
+// cover it, and at the server's own midnight otherwise.
+func mcpCallsSince(r *http.Request, now time.Time) int64 {
+	if since, err := strconv.ParseInt(r.URL.Query().Get("since"), 10, 64); err == nil &&
+		since <= now.Unix() && now.Unix()-since < store.MCPKeyCallsCovered {
+		return since
+	}
+	y, m, d := now.Date()
+	return time.Date(y, m, d, 0, 0, 0, 0, now.Location()).Unix()
+}
+
+func (h *Handler) handleListMCPKeys(w http.ResponseWriter, r *http.Request) {
+	// A grant whose refresh token ran out is shown as expired rather than as
+	// active until the next sign-in happens to prune it.
+	if err := h.store.PruneOAuth(h.mcp.now().Unix()); err != nil {
+		log.Printf("api: mcp: oauth: prune: %v", err)
+	}
+	oauth, err := h.mcpOAuthView()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	rows, err := h.store.ListMCPKeys()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	inUse, err := h.store.MCPKeyIDsInUse()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	calls, err := h.store.MCPKeyCallsSince(mcpCallsSince(r, h.mcp.now()))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	// Empty rather than nil, so the card always gets two arrays to iterate.
+	active, revoked := []mcpKeyView{}, []mcpKeyView{}
+	for _, k := range rows {
+		v := h.mcpKeyViewOf(k, inUse[k.ID], calls[k.ID])
+		if k.RevokedAt != 0 {
+			revoked = append(revoked, v)
+			continue
+		}
+		active = append(active, v)
+	}
+	_, _, authOn := h.authEnabled()
+	var certificate any
+	if info, ok := h.svc.CertificateInfo(); ok && servedOwnCertificate(r) {
+		certificate = info
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"endpointPath":     mcpEndpointPath,
+		"certificate":      certificate,
+		"limit":            store.MCPKeyLimit,
+		"authEnabled":      authOn,
+		"hostAllowsKeys":   h.mcpKeysAllowedFrom(r),
+		"startsPerHour":    mcpStartsPerHour,
+		"cooldownMinutes":  int(mcpStartCooldown / time.Minute),
+		"itemStartsPerDay": mcpItemStartsPerDay,
+		"keys":             active,
+		"revoked":          revoked,
+		"oauth":            oauth,
+	}))
+}
+
+func (h *Handler) handleCreateMCPKey(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Label           string `json:"label"`
+		Client          string `json:"client"`
+		CanStartBackups *bool  `json:"canStartBackups"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if body.Client != "" && !mcpClientID.MatchString(body.Client) {
+		writeJSON(w, http.StatusOK, failEnvelope(errMCPKeyClient))
+		return
+	}
+	if !h.mcpKeysAllowedFrom(r) {
+		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyNeedsPassword, "mcp-key-needs-password"))
+		return
+	}
+	label, ok := normalizeMCPKeyLabel(body.Label)
+	if !ok {
+		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyLabel, "mcp-key-label-invalid"))
+		return
+	}
+	canStart := body.CanStartBackups == nil || *body.CanStartBackups
+
+	key, err := secret.NewMCPKey()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	id := newMCPKeyID()
+	row, err := h.store.CreateMCPKey(id, label, body.Client,
+		secret.HashMCPKey(h.cfg.AppKey, key), secret.MCPKeyHint(key), secret.MCPKeyCheck(h.cfg.AppKey, id),
+		canStart, time.Now().Unix())
+	if err != nil {
+		writeMCPError(w, err)
+		return
+	}
+	h.recordMCPKeyChange(r, row, "created", "created")
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"key": key, "item": h.mcpKeyItem(r, row)}))
+}
+
+func (h *Handler) handleUpdateMCPKey(w http.ResponseWriter, r *http.Request) {
+	id, ok := mcpKeyIDParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		Label           *string `json:"label"`
+		CanStartBackups *bool   `json:"canStartBackups"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	var label *string
+	if body.Label != nil {
+		clean, valid := normalizeMCPKeyLabel(*body.Label)
+		if !valid {
+			writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyLabel, "mcp-key-label-invalid"))
+			return
+		}
+		label = &clean
+	}
+	row, err := h.store.UpdateMCPKey(id, label, body.CanStartBackups)
+	if err != nil {
+		writeMCPError(w, err)
+		return
+	}
+	event := ""
+	if body.CanStartBackups != nil {
+		event = "set to read only"
+		if *body.CanStartBackups {
+			event = "allowed to start backups"
+		}
+	}
+	h.recordMCPKeyChange(r, row, "updated", event)
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"item": h.mcpKeyItem(r, row)}))
+}
+
+func (h *Handler) handleRotateMCPKey(w http.ResponseWriter, r *http.Request) {
+	id, ok := mcpKeyIDParam(w, r)
+	if !ok {
+		return
+	}
+	if !h.mcpKeysAllowedFrom(r) {
+		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyNeedsPassword, "mcp-key-needs-password"))
+		return
+	}
+	key, err := secret.NewMCPKey()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	row, err := h.store.RotateMCPKey(id,
+		secret.HashMCPKey(h.cfg.AppKey, key), secret.MCPKeyHint(key), secret.MCPKeyCheck(h.cfg.AppKey, id),
+		time.Now().Unix())
+	if err != nil {
+		writeMCPError(w, err)
+		return
+	}
+	h.recordMCPKeyChange(r, row, "rotated", "replaced")
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"key": key, "item": h.mcpKeyItem(r, row)}))
+}
+
+func (h *Handler) handleRevokeMCPKey(w http.ResponseWriter, r *http.Request) {
+	id, ok := mcpKeyIDParam(w, r)
+	if !ok {
+		return
+	}
+	row, err := h.store.GetMCPKey(id)
+	if err != nil {
+		writeMCPError(w, err)
+		return
+	}
+	if err := h.store.RevokeMCPKey(id, "user", time.Now().Unix()); err != nil {
+		writeMCPError(w, err)
+		return
+	}
+	h.recordMCPKeyChange(r, row, "revoked", "revoked")
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+func (h *Handler) handlePurgeMCPKey(w http.ResponseWriter, r *http.Request) {
+	id, ok := mcpKeyIDParam(w, r)
+	if !ok {
+		return
+	}
+	row, err := h.store.GetMCPKey(id)
+	if err != nil {
+		writeMCPError(w, err)
+		return
+	}
+	if err := h.store.PurgeMCPKey(id); err != nil {
+		writeMCPError(w, err)
+		return
+	}
+	h.recordMCPKeyChange(r, row, "purged", "")
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// mcpKeyRunsShown is how many of the backups a key started its log lists.
+const mcpKeyRunsShown = 20
+
+// handleMCPKeyActivity is a key's log for its tile on the settings card: the
+// calls and refusals kept for it and the newest runs it started, which the
+// card links to.
+func (h *Handler) handleMCPKeyActivity(w http.ResponseWriter, r *http.Request) {
+	id, ok := mcpKeyIDParam(w, r)
+	if !ok {
+		return
+	}
+	if _, err := h.store.GetMCPKey(id); err != nil {
+		writeMCPError(w, err)
+		return
+	}
+	events, err := h.store.MCPKeyEvents(id)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	runs, err := h.store.RunsStartedByMCPKey(id, mcpKeyRunsShown)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"events": events,
+		"runs":   h.runViews(runs),
+	}))
+}
+
+// handleMCPCertificate hands out the certificate the web interface serves, so
+// an operator can make their client trust it.
+func (h *Handler) handleMCPCertificate(w http.ResponseWriter, r *http.Request) {
+	pemBytes, ok := h.svc.CertificatePEM()
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "application/x-pem-file")
+	w.Header().Set("Content-Disposition", `attachment; filename="bombvault-cert.pem"`)
+	if _, err := w.Write(pemBytes); err != nil {
+		log.Printf("api: mcp: send certificate: %v", err)
+	}
+}
+
+// handleAddMCPCertificateName adds the address the operator reached BombVault
+// on to its certificate, which is what a Node client needs before it connects.
+// It follows the same host rule as creating a key: the names are material the
+// server then presents, there are only sixteen of them, and nothing in the
+// product takes one back.
+func (h *Handler) handleAddMCPCertificateName(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Host string `json:"host"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if h.cfg.HTTPOnly {
+		http.NotFound(w, r)
+		return
+	}
+	if !h.mcpKeysAllowedFrom(r) {
+		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyNeedsPassword, "mcp-key-needs-password"))
+		return
+	}
+	info, err := h.svc.AddCertificateName(body.Host)
+	if err != nil {
+		writeMCPError(w, err)
+		return
+	}
+	log.Printf("api: mcp: certificate reissued for %d address(es)", len(info.Names))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"certificate": info}))
+}
+
+// recordMCPKeyChange logs the mutation and, for a change worth waking the
+// operator for, notifies as well. The log line carries the id and the hint and
+// never the label, because it ends up in the diagnostics bundle.
+//
+// The notification is sent beside the response, not in front of it: a create
+// and a rotate carry the one-time key, and an endpoint that swallows the
+// connection would otherwise hold that key back for the notifier's whole
+// budget and leave an unusable row behind if the client gave up first.
+func (h *Handler) recordMCPKeyChange(r *http.Request, k store.MCPKey, logged, event string) {
+	if k.Kind == store.MCPKindOAuth {
+		log.Printf("api: mcp: grant %s of client %s %s", k.ID, k.OAuthClient, logged)
+	} else {
+		log.Printf("api: mcp: key %s ...%s %s", k.ID, k.Hint, logged)
+	}
+	if event == "" {
+		return
+	}
+	ctx, addr := context.WithoutCancel(r.Context()), h.loginClientKey(r)
+	h.svc.notifyMCPKeyChange(ctx, event, k, addr)
+}
+
+// newMCPKeyID returns a 32 hex character id. The caller mints it because the
+// key_check value is derived from the id before the row exists.
+func newMCPKeyID() string {
+	buf := make([]byte, 16)
+	if _, err := rand.Read(buf); err != nil {
+		panic(fmt.Sprintf("newMCPKeyID: %v", err))
+	}
+	return hex.EncodeToString(buf)
+}
+
+// RevokeMCPKeysAfterConfigRestore revokes every active MCP key while a restored
+// configuration database is marked as applied: it may hold keys that were
+// revoked after it was saved. The mark goes only once the revoke went through,
+// so a boot that fails in between leaves the revoke to the next one, and an
+// error here has to stop the boot rather than serve the restored keys.
+func RevokeMCPKeysAfterConfigRestore(st *store.Repo, dataDir string, now time.Time) error {
+	marker := selfrestore.AppliedMarkerPath(dataDir)
+	if _, err := os.Stat(marker); os.IsNotExist(err) {
+		return nil
+	}
+	n, err := st.RevokeAllMCPKeys("config-restore", now.Unix())
+	if err != nil {
+		return fmt.Errorf("revoke MCP keys after the configuration restore: %w", err)
+	}
+	if n > 0 {
+		log.Printf("selfrestore: revoked %d MCP key(s): a restored configuration may contain keys that were revoked after it was saved; create new keys under Settings > System > MCP server", n)
+	}
+	return os.Remove(marker)
+}

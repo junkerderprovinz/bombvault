@@ -629,7 +629,7 @@ func TestAnImportDoesNotMoveARepositoryInUseOntoItsPlace(t *testing.T) {
 		t.Fatal(err)
 	}
 	dst.vm("win11", repo.ID)
-	buf := captureLog(t)
+	buf := watchLog(t)
 
 	if res := dst.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
 		t.Fatalf("import = %v", res)
@@ -662,7 +662,7 @@ func TestARedactedPlaceDoesNotTakeOverAWorkingDomainPath(t *testing.T) {
 	if err := dstStore.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	buf := captureLog(t)
+	buf := watchLog(t)
 
 	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
 		t.Fatalf("apply failed: %v", env)
@@ -708,7 +708,7 @@ func TestARedactedPlaceDoesNotTakeOverAWorkingOffsiteField(t *testing.T) {
 	dst := newPlacementFixture(t)
 	const working = "rest:https://backupuser:dst-pass@storage.example.com:8000/containers" //nolint:gosec // G101: fake credential
 	dst.fieldTarget("containers", working)
-	buf := captureLog(t)
+	buf := watchLog(t)
 
 	if res := dst.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
 		t.Fatalf("import = %v", res)

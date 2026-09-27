@@ -9,6 +9,80 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
+// hasDrillTask reports whether the task list holds an exact task.
+func hasDrillTask(tasks []drillTask, want drillTask) bool {
+	for _, tk := range tasks {
+		if tk == want {
+			return true
+		}
+	}
+	return false
+}
+
+// TestDrillTasksIncludeZFSOffsiteDR checks that an enabled ZFS domain gets the
+// local subset check, plus a DR drill once it has an off-site target and
+// off-site drills are on.
+func TestDrillTasksIncludeZFSOffsiteDR(t *testing.T) {
+	base := store.Settings{
+		ZFSEnabled:           true,
+		ZFSSchedule:          "daily 03:00",
+		DrillsEnabled:        true,
+		OffsiteDrillsEnabled: true,
+	}
+
+	tasks := drillScheduler(targetRows{}, nil, nil).drillTasks(base)
+	if !hasDrillTask(tasks, drillTask{domain: "zfs", source: "local", kind: "subset"}) {
+		t.Fatalf("expected a local subset drill for zfs, got %v", tasks)
+	}
+	for _, tk := range tasks {
+		if tk.domain == "zfs" && tk.kind == "dr" {
+			t.Fatalf("zfs must not get a DR task without an off-site target: %v", tasks)
+		}
+	}
+
+	sc := drillScheduler(targetRows{"zfs": {offsiteTarget("zfs", "z1", true)}}, nil, nil)
+	tasks = sc.drillTasks(base)
+	if !hasDrillTask(tasks, drillTask{domain: "zfs", source: "offsite:z1", kind: "dr", targetID: "z1"}) {
+		t.Fatalf("expected an off-site DR drill for zfs, got %v", tasks)
+	}
+
+	optedOut := base
+	optedOut.OffsiteDrillsEnabled = false
+	for _, tk := range sc.drillTasks(optedOut) {
+		if tk.domain == "zfs" && tk.kind == "dr" {
+			t.Fatalf("no off-site DR task expected when off-site drills are off, got %v", tk)
+		}
+	}
+}
+
+// TestEnabledDrillDomainsIncludeZFS checks that the subset drill follows the
+// ZFS switch: a disabled domain has no current backups to drill.
+func TestEnabledDrillDomainsIncludeZFS(t *testing.T) {
+	for _, d := range enabledDrillDomains(store.Settings{}) {
+		if d == "zfs" {
+			t.Fatalf("a switched-off ZFS domain must not be drilled: %v", d)
+		}
+	}
+	got := enabledDrillDomains(store.Settings{FilesEnabled: true, ZFSEnabled: true})
+	if len(got) != 2 || got[0] != "files" || got[1] != "zfs" {
+		t.Fatalf("zfs must be drilled after files, got %v", got)
+	}
+}
+
+// TestImmutableOffsiteDomainsIncludeZFS checks that the scheduled tamper test
+// covers the ZFS domain once its off-site repo is flagged immutable.
+func TestImmutableOffsiteDomainsIncludeZFS(t *testing.T) {
+	for _, d := range immutableOffsiteDomains(store.Settings{}) {
+		if d == "zfs" {
+			t.Fatalf("zfs must not be a tamper-test domain when the flag is unset: %v", d)
+		}
+	}
+	got := immutableOffsiteDomains(store.Settings{FilesOffsiteImmutable: true, ZFSOffsiteImmutable: true})
+	if len(got) != 2 || got[0] != "files" || got[1] != "zfs" {
+		t.Fatalf("zfs must follow files in the tamper-test domains, got %v", got)
+	}
+}
+
 // drillSettings switches on every domain and both kinds of drill, the way a
 // box that drills everything is set up.
 func drillSettings() store.Settings {

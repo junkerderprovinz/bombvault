@@ -18,7 +18,7 @@ BombVault sirve HTTPS de fábrica en el puerto `3443` (certificado autofirmado),
 
 La copia de VM habla con libvirt por SSH, nunca con un montaje.
 
-- Confirma que SSH está habilitado en el host y que la clave pública de BombVault está autorizada en `/root/.ssh/authorized_keys` (Ajustes, Sistema, Copia de VM por SSH muestra la clave y un botón **Probar conexión**).
+- Confirma que SSH está habilitado en el host y que la clave pública de BombVault está autorizada en `/root/.ssh/authorized_keys` (Ajustes, Sistema, SSH del host muestra la clave y un botón **Probar conexión**).
 - En una red `br0.x` personalizada, establece `LIBVIRT_HOST` a la IP LAN de tu Unraid (el contenedor no puede alcanzar el host mediante `host.docker.internal` ahí). Habilita **Ajustes, Docker, Host access to custom networks**.
 - Si cambiaste el puerto SSH de Unraid, establece `LIBVIRT_SSH_PORT` para que coincida.
 - El diagnóstico paso a paso completo (prueba de accesibilidad, enrutamiento VLAN, `Permission denied (publickey)`, `Host key verification failed`) está en la [guía de copia de VM por SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -42,6 +42,56 @@ Antes de detener o eliminar nada, la restauración ejecuta una comprobación de 
 ## Una exportación sencilla falló en lugar de escribir un archivo
 
 Si el cifrado age está activado (Ajustes) pero no hay ningún destinatario válido definido, una exportación falla con un error claro en lugar de escribir texto plano. Añade un destinatario válido (una clave pública age o una clave pública SSH), o desactiva el cifrado si quieres que la exportación sea en texto plano. Consulta [Funciones](features.md).
+
+## Un volcado de base de datos falló
+
+Un volcado fallido nunca hace fallar la copia que lo rodea; queda registrado como una ejecución fallida propia, y el motivo dice qué arreglar.
+
+- **Acceso rechazado.** El volcado entra con las variables de contraseña del propio contenedor (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` o sus versiones `_FILE`). Revísalas en el contenedor de la base de datos. Una variable `_FILE` que apunta a un secreto que el usuario del contenedor no puede leer falla igual.
+- **Faltan privilegios.** Con una contraseña de root aleatoria, el volcado solo puede entrar como usuario de la aplicación, así que contiene esa única base, y MySQL 8.4 y posteriores pueden rechazarlo del todo. Dale al contenedor una contraseña de root de verdad, o apágale el volcado.
+- **Las tablas del sistema necesitan una actualización.** MariaDB se niega a volcarse cuando sus tablas del sistema vienen de una versión anterior (error 1558). Añade la variable `MARIADB_AUTO_UPGRADE=1` y reinicia el contenedor, o ejecuta `mariadb-upgrade` dentro una vez.
+- **Sin herramienta de volcado.** Una imagen ligera o hecha a mano sin `pg_dump`, `mysqldump` ni `mariadb-dump` no se puede volcar. Usa la imagen oficial, o apaga el volcado.
+- **Un límite de tiempo.** Un volcado tiene `DB_DUMP_MAX_HOURS` (6 por defecto), la copia que lo rodea tiene `BACKUP_MAX_HOURS`, y un volcado que deja de avanzar se corta tras `BACKUP_STALL_HOURS`. Lo último suele deberse a un bloqueo que mantiene la aplicación. Sube el límite que saltó, o vuelca mientras la aplicación está tranquila.
+- **El contenedor está pausado o reiniciándose.** El volcado habla con el servidor en marcha. Si el contenedor se reinicia una y otra vez, su propio registro dice por qué.
+- **Un volcado dañado no se pudo eliminar.** Un volcado que BombVault no pudo terminar se borra. Cuando ese borrado falla, el volcado se queda en la lista marcado como dañado y puedes eliminarlo ahí.
+
+## Una importación falló
+
+Una importación para el contenedor, aparta su carpeta de datos y deja que la imagen cree una vacía en su lugar. Si falla un paso previo a la importación en sí, la carpeta antigua se devuelve sola. Si falla la importación, el contenedor se queda con la carpeta nueva y la antigua permanece al lado como `<carpeta de datos>.bombvault-before-import-<marca de tiempo>`; el mensaje de error de la ejecución nombra la ruta exacta.
+
+Para devolverla a mano: para el contenedor, renombra la carpeta de datos actual para quitarla de en medio, renombra la carpeta guardada a su nombre original y arranca el contenedor. En Unraid, el gestor de archivos de la pestaña Shares hace esto.
+
+## Una copia de un conjunto de datos ZFS falló u omitió un conjunto {#zfs-datasets}
+
+Cada problema lleva un código de motivo entre corchetes, y la página [Conjuntos de datos ZFS](zfs-datasets.md#reason-codes) los enumera todos con su solución. Los tres más habituales:
+
+- **`snapshot-loop`**: la instantánea no llegó a BombVault porque Host Data no transmite los montajes nuevos. Edita el contenedor, pon el Access Mode de Host Data en Read/Write - Slave y reinicia BombVault.
+- **`key-not-loaded`**: un conjunto cifrado cuya clave no está cargada se omite. Carga la clave con `zfs load-key` y monta el conjunto; la siguiente copia lo incluye.
+- **`ssh-auth`**: el servidor rechazó la clave de BombVault. La tarjeta de conexión de la página ZFS muestra el comando que la autoriza; ejecútalo una vez en el servidor.
+
+## Un elemento se queda en "Aprendiendo N/10"
+
+La mayoría de las comprobaciones de anomalías empiezan tras 10 copias correctas de un elemento, y la cuenta vuelve a empezar tras **Marcar como esperada** y tras cambiar la selección del elemento. Un elemento sin programación no aprende, y un contenedor sin appdata no tiene de qué aprender, como indica su insignia.
+
+## La retención dejó de borrar las copias antiguas de un elemento
+
+Una anomalía crítica abierta las retiene: la fuente del elemento está casi vacía, encogió mucho, o una copia volvió a guardar la mayoría de sus datos. Abre la anomalía desde la insignia del elemento. Si faltan datos o se cifraron, restaura primero desde la última copia buena enlazada. Después confirma la anomalía, o márcala como esperada si el cambio fue tuyo, y la siguiente ejecución limpia como siempre. La vista previa de retención marca ese elemento como conservado. En un elemento ZFS solo el conjunto de datos que nombra la anomalía conserva sus copias antiguas; los demás conjuntos del árbol se limpian como siempre.
+
+## La limpieza manual dice que se conservaron algunos elementos
+
+La misma causa: la limpieza no toca las copias antiguas de un elemento con una anomalía así y lo nombra en su mensaje. Todo lo demás se limpia como siempre.
+
+## La importación del historial dice que no se pudo leer un repositorio
+
+Tras la actualización, BombVault lee una vez el tamaño de las copias anteriores de cada repositorio. Un repositorio que no estaba accesible en ese momento, como un destino externo caído o un recurso compartido sin montar, aparece en la tarjeta **Anomalías** de **Ajustes, Integridad** y se reintenta una vez al día. Mientras tanto, sus elementos aprenden de las copias nuevas.
+
+## El aviso de espacio en disco no coincide con el panel de Unraid
+
+En el recurso compartido de usuario de Unraid (`/mnt/user`) el espacio libre es el de todo el array, no el de un disco. Los repositorios remotos solo se miden mediante remotos de rclone que informan de su espacio libre; los repositorios S3, B2, REST y SFTP no tienen dato y aparecen como no medidos en la tarjeta **Anomalías**.
+
+## Un asistente de IA no consigue conectarse
+
+La página [Servidor MCP](mcp.md#troubleshooting) explica qué significa cada código de estado y cada rechazo del punto de conexión MCP, y qué hacer en cada caso.
 
 ## El contenedor se reinicia constantemente o parece no saludable
 

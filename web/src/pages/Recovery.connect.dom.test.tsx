@@ -42,6 +42,7 @@ vi.mock("../lib/api", async (importOriginal) => ({
       containers: 1,
       vms: 0,
       files: 0,
+      zfs: 0,
       skipped: [],
       skippedNeedsAction: false,
       paused: [],
@@ -51,6 +52,7 @@ vi.mock("../lib/api", async (importOriginal) => ({
   listContainers: () => Promise.resolve({ ok: true, containers: [{ name: "plex", lastBackup: 1_700_000_000 }] }),
   listVMs: () => Promise.resolve({ ok: true, vms: [] }),
   listFileSets: () => Promise.resolve({ ok: true, fileSets: [] }),
+  listZFSDatasets: () => Promise.resolve({ ok: true, datasets: [] }),
 }));
 
 const unraid = {

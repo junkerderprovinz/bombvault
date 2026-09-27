@@ -9,9 +9,10 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// DeleteBackups removes every backup of a container. From the local source it
-// also forgets the container's entry; from an off-site source it deletes at that
-// target only and the entry stays.
+// DeleteBackups removes every backup of a container, its volume backups and
+// its database dumps alike. From the local source it also forgets the
+// container's entry; from an off-site source it deletes at that target only and
+// the entry stays.
 //
 // Forgetting the entry takes its aliases with it, so the pre-link part of an
 // old name falls to whichever entry uses that name next. The user asked for
@@ -52,8 +53,10 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 	protection := s.primaryAppendOnly("containers", repo)
 	if protection != appendOnlyNone {
 		// A read, and it answers the only question left: is there anything in here
-		// for the flag to protect?
-		snaps, sErr := s.Snapshots(ctx, name, "")
+		// for the flag to protect? Both identities count, or a container that
+		// exists only as dumps takes the lock and runs a forget that is refused
+		// anyway.
+		snaps, sErr := s.containerSnapshotsOf(ctx, name, "", s.containerIdentity(name), s.containerDumpIdentity(name))
 		if sErr != nil {
 			return sErr
 		}
@@ -68,7 +71,8 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 	}
 	defer unlock()
 	id := s.containerIdentity(name)
-	if err := refuseDeleteWithPartialIdentity(name, id); err != nil {
+	dumps := s.containerDumpIdentity(name)
+	if err := refuseDeleteWithPartialIdentity(name, id, dumps); err != nil {
 		return err
 	}
 	// The entry's former names keep its copy rule unless a container installed
@@ -81,7 +85,7 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 		s.unlockStale(ctx, repo, mode)
 	}
 
-	snaps, err := s.containerSnapshotsOf(ctx, name, "", id)
+	snaps, err := s.containerSnapshotsOf(ctx, name, "", id, dumps)
 	if err != nil {
 		return err
 	}
@@ -285,21 +289,21 @@ func (s *Service) ForgetVMTarget(ctx context.Context, name string) error {
 	return nil
 }
 
-// refuseRowRemovalWithBackups refuses to remove the row of name while its
-// identity id owns a snapshot in repo or any off-site target of domain, or
-// while one of them cannot be read. The row carries the aliases that make its
-// older backups its own; without them those backups would fall to whichever
+// refuseRowRemovalWithBackups refuses to remove the row of name while one of
+// its identities ids owns a snapshot in repo or any off-site target of domain,
+// or while one of them cannot be read. The row carries the aliases that make
+// its older backups its own; without them those backups would fall to whichever
 // entry takes the name next.
-func (s *Service) refuseRowRemovalWithBackups(ctx context.Context, settings store.Settings, domain, name, repo string, id entryIdentity) error {
-	if id.readErr != nil {
-		return fmt.Errorf("%q keeps its entry: its backups could not be checked: %w", name, id.readErr)
+func (s *Service) refuseRowRemovalWithBackups(ctx context.Context, settings store.Settings, domain, name, repo string, ids ...entryIdentity) error {
+	if readErr := partialIdentityErr(ids...); readErr != nil {
+		return fmt.Errorf("%q keeps its entry: its backups could not be checked: %w", name, readErr)
 	}
 	places, err := s.backupPlaces(settings, domain, []string{repo})
 	if err != nil {
 		return fmt.Errorf("%q keeps its entry until its backups can be ruled out: %w", name, err)
 	}
 	for _, p := range places {
-		owned, err := s.snapshotsOwnedBy(ctx, p.repo, p.mode, id)
+		owned, err := s.snapshotsOwnedBy(ctx, p.repo, p.mode, ids...)
 		if err != nil {
 			return fmt.Errorf("%q keeps its entry until its backups can be ruled out: %s could not be read: %w", name, p.name, err)
 		}
@@ -310,14 +314,15 @@ func (s *Service) refuseRowRemovalWithBackups(ctx context.Context, settings stor
 	return nil
 }
 
-// refuseDeleteWithPartialIdentity refuses delete-all while id is partial,
-// because it would forget only part of the entry's backups and then drop the
-// aliases that make the rest its own.
-func refuseDeleteWithPartialIdentity(name string, id entryIdentity) error {
-	if id.readErr == nil {
+// refuseDeleteWithPartialIdentity refuses delete-all while one of ids is
+// partial, because it would forget only part of the entry's backups and then
+// drop the aliases that make the rest its own.
+func refuseDeleteWithPartialIdentity(name string, ids ...entryIdentity) error {
+	readErr := partialIdentityErr(ids...)
+	if readErr == nil {
 		return nil
 	}
-	return fmt.Errorf("nothing was deleted: the backups of %q could not be checked: %w", name, id.readErr)
+	return fmt.Errorf("nothing was deleted: the backups of %q could not be checked: %w", name, readErr)
 }
 
 // refuseDefinedVM answers an error when name is among installed, for the routes
@@ -437,7 +442,7 @@ func (s *Service) ForgetTarget(ctx context.Context, name string) error {
 	if err != nil {
 		return fmt.Errorf("%q keeps its entry: its repository could not be resolved to check for backups: %w", name, err)
 	}
-	if err := s.refuseRowRemovalWithBackups(ctx, settings, "containers", name, repo, s.containerIdentity(name)); err != nil {
+	if err := s.refuseRowRemovalWithBackups(ctx, settings, "containers", name, repo, s.containerIdentity(name), s.containerDumpIdentity(name)); err != nil {
 		return err
 	}
 	if err := s.store.DeleteTarget(name, installed); err != nil {

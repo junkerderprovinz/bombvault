@@ -60,7 +60,7 @@ func TestManualBackupOfAComposeMemberPrunesOnce(t *testing.T) {
 	}
 
 	pruned := 0
-	for _, p := range eng.forgetPolicyPrunes {
+	for _, p := range eng.forgetPolicyPruned {
 		if p {
 			pruned++
 		}

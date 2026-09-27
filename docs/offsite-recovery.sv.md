@@ -150,8 +150,8 @@ En dedikerad **Återställning**-flik lotsar en ny eller ombyggd installation ge
 1. **Kontrollerar att BombVault kan läsa dina säkerhetskopior** (krypteringsnyckel-fällan direkt).
 2. **Återställer BombVaults egna inställningar**, så att säkerhetskopiesökvägarna, off-site-målen och uppgifterna som resten av flödet behöver kommer förifyllda. Den läser inställningssäkerhetskopian från lagringsplatsen som raden Auto-säkerhetskopia anger under **Sparad i**, eller från Auto-säkerhetskopians kopia under **Kopierad till**, och visar den lagringsplatsen med sin adress; för att läsa från en annan lagringsplats, ändra först raden Auto-säkerhetskopia i steg 3. Återställningen tillämpas via en självomstart över Docker-socketen, så att den körande inställningsdatabasen aldrig skrivs över under ett öppet handtag.
 3. **Ansluter dina befintliga säkerhetskopior** via raderna på kortet **Domäner**: på varje domäns rad väljer du lagringsplatsen där dess säkerhetskopior ligger under **Sparad i** och lagringsplatserna med dess kopior under **Kopierad till**. En lagringsplats som ingen rad erbjuder än, till exempel en utdelning, en server eller en molnbucket, ansluts med **Lägg till lagringsplats**, samma fönster som under Inställningar, Lagring. **Anslut och förhandsgranska** kontrollerar sedan att säkerhetskopiorna går att läsa.
-4. **Identifierar** containrarna, VM:arna och filuppsättningarna lagrade i det.
-5. **Återställer dem alla** (lämnade stoppade, så att du startar dem medvetet), med ditt återställningskit ett klick bort.
+4. **Identifierar** containrarna, VM:arna, filuppsättningarna och ZFS-datauppsättningarna lagrade i det.
+5. **Återställer containrarna och VM:arna i ett svep** (lämnade stoppade, så att du startar dem medvetet) och listar filuppsättningarna och ZFS-objekten som du återställer ett i taget; ZFS-objekt kommer tillbaka avstängda. Ditt återställningskit är ett klick bort.
 
 !!! note "Off-site-kopior väntar efter en ombyggnad"
     När steg 4 återbygger poster utan de gamla inställningarna pausar off-site-replikeringen för de domänerna tills standardplaceringen bekräftas. Se [Placering per objekt](#placement).
@@ -172,6 +172,9 @@ Ett klick laddar ner **huvudnyckeln**, det **härledda restic-lösenordet** och 
 !!! danger "Förvara återställningskitet bort från servern"
     Kitet innehåller hemligheten som dekrypterar dina säkerhetskopior. Förvara det på en säker plats åtskild från servern (en lösenordshanterare, en utskriven kopia i ett kassaskåp). Om du förlorar både BombVault och `APP_KEY` utan något återställningskit kan dina krypterade säkerhetskopior inte återställas.
 
+!!! warning "Den senaste snapshoten är inte alltid den som ska återställas"
+    Sedan restic 0.17 visar `restic snapshots` storleken på varje snapshot. Efter dataförlust kan den senaste snapshoten vara den tömda, så återställ inte en snapshot som är mycket mindre än de före den. Efter ransomware kan det vara den krypterade, i vanlig storlek. Om BombVault fortfarande körs, titta först på sidan **Avvikelser**: den anger den senaste bra säkerhetskopian. En återställning behöver inga avvikelsedata från BombVault, och gallringspausen behåller bara fler snapshots.
+
 ### När paketet inte finns till hands
 
 Lösenordet lagras ingenstans, det **beräknas** ur `APP_KEY`. Med nyckeln och ett skal kan du alltså återskapa det själv:
@@ -188,3 +191,27 @@ Det är HMAC-SHA256 över den fasta strängen `bombvault:restic-repo`, med de r�
     Ett arkiv som kommit hit via off-site-replikering skapades av maskinen som skickade det, med **dess** `APP_KEY`. Att härleda ur den mottagande maskinens nyckel ger ett lösenord som restic avvisar, vilket ser ut precis som ett trasigt arkiv utan att vara det. Det är den vanliga anledningen till att `restic check` på ett mottaget arkiv frågar efter lösenordet gång på gång.
 
 Eftersom återställningsdefinitioner ligger **inuti** varje repo (`<repo>/def`, `<repo>/vm-def`) är en kopierad repo-mapp helt självständig, så kitet plus repot är allt en bare-metal-återställning behöver.
+
+## Hämta tillbaka en databasdump {#database-dumps}
+
+En databasdump är en egen återställningspunkt i containerförrådet, med etiketten `dbdump:<container>` och den enda filen `/dbdump/<container>.sql`. BombVault listar, hämtar och importerar dem under **Säkerhetskopior**; nedan står samma steg med enbart restic, för dagen då BombVault inte finns till hands.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Etiketterna `dbversion:` och `dbname:` på varje dump säger vilken serverversion den kommer från och vilka databaser den rymmer. En komplett fil slutar med `-- PostgreSQL database cluster dump complete` eller `-- Dump completed`.
+
+Importera den i en container med samma eller nyare version (PostgreSQL), eller samma huvudversion (MySQL och MariaDB), startad en gång med tom datamapp så att den initierar sig. Värden behöver ingen databasklient, containern har en:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+För en enda databas ur en full dump tar MySQL och MariaDB `--one-database <name>` på klientkommandot. En PostgreSQL-dump har ett avsnitt per databas, vart och ett inlett med raden `\connect <name>`: kopiera det avsnittet till en egen fil och importera den med `-d <name>` efter att databasen skapats.
+
+!!! warning "En dump tagen som root bär med sig serverns användare"
+    En full MySQL- eller MariaDB-dump tagen som root innehåller systemdatabasen `mysql`, så en import ersätter den nya serverns konton, root-lösenordet inräknat, med dem från dumpen. På PostgreSQL är `role ... already exists` för användaren som containern själv skapade väntat och ofarligt.

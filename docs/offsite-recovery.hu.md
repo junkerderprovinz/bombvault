@@ -150,8 +150,8 @@ Egy dedikált **Helyreállítás** fül egy helyen végigvezet egy friss vagy ú
 1. **Ellenőrzi, hogy a BombVault olvasni tudja-e a mentéseidet** (a titkosításikulcs-buktató előre).
 2. **Visszaállítja a BombVault saját beállításait**, így a mentési útvonalak, telephelyen kívüli célok és hitelesítő adatok, amelyekre a folyamat többi része szüksége van, előre kitöltve jelennek meg. A beállítás-mentést abból a tárhelyből olvassa, amelyet az Önmentés sora a **Tárolva itt** alatt megnevez, vagy az Önmentés **Másolva ide** alatti másolatából, és a tárhelyet a címével együtt mutatja; ha másik tárhelyről olvasnál, előbb módosítsd az Önmentés sorát a 3. lépésben. A visszaállítás a Docker socketen keresztüli önújraindítással érvényesül, így az élő beállítás-adatbázis soha nem íródik felül nyitott handle alatt.
 3. **Csatolja a meglévő mentéseidet** a Tartományok kártya sorain keresztül: minden tartomány sorában válaszd ki a **Tárolva itt** alatt azt a tárhelyet, ahol a mentései vannak, a **Másolva ide** alatt pedig azokat a tárhelyeket, amelyek a másolatait őrzik. Egy tárhelyet, amelyet még egyik sor sem kínál, például egy megosztást, szervert vagy felhős bucketet, a **Tárhely hozzáadása** ablakkal csatlakoztatsz, ugyanazzal, mint a Beállítások, Tárolás alatt. A **Csatlakozás és előnézet** ezután ellenőrzi, hogy a mentések olvashatók-e.
-4. **Felfedezi** a benne tárolt konténereket, VM-eket és fájlkészleteket.
-5. **Mindet visszaállítja** (leállítva hagyva, így te indítod el őket szándékosan), a helyreállítási csomagoddal egy kattintásnyira.
+4. **Felfedezi** a benne tárolt konténereket, VM-eket, fájlkészleteket és ZFS-adatkészleteket.
+5. **A konténereket és a VM-eket egyszerre visszaállítja** (leállítva hagyva, így te indítod el őket szándékosan), a fájlkészleteket és a ZFS-elemeket pedig felsorolja, hogy egyenként állítsd vissza őket; a ZFS-elemek kikapcsolva térnek vissza. A helyreállítási csomagod egy kattintásnyira van.
 
 !!! note "A telephelyen kívüli másolatok várnak egy újraépítés után"
     Amikor a 4. lépés a régi beállítások nélkül épít újra bejegyzéseket, azoknak a tartományoknak a telephelyen kívüli replikációja szünetel, amíg az elhelyezési alapértelmezést meg nem erősítik. Lásd: [Elhelyezés elemenként](#placement).
@@ -172,6 +172,9 @@ Egy kattintás letölti a **mesterkulcsot**, a **származtatott restic jelszót*
 !!! danger "Tárold a helyreállítási csomagot a szerveren kívül"
     A csomag azt a titkot tartalmazza, amely visszafejti a mentéseidet. Tartsd biztonságos, a szervertől elkülönített helyen (egy jelszókezelő, egy nyomtatott példány egy széfben). Ha elveszíted a BombVaultot és az `APP_KEY`-t is, helyreállítási csomag nélkül, a titkosított mentéseid nem állíthatók helyre.
 
+!!! warning "Nem mindig a legújabb pillanatképet kell visszaállítani"
+    A restic 0.17 óta a `restic snapshots` minden pillanatkép méretét mutatja. Adatvesztés után a legújabb pillanatkép lehet a kiürített, ezért ne állíts vissza olyan pillanatképet, amely sokkal kisebb az előzőeknél. Zsarolóvírus után lehet a titkosított, szokásos méretben. Ha a BombVault még fut, előbb nézd meg az **Anomáliák** oldalát: megnevezi az utolsó jó mentést. A visszaállításhoz nincs szükség a BombVault anomáliaadataira, és a megőrzés szüneteltetése mindig csak több pillanatképet tart meg.
+
 ### Ha a csomag épp nincs kéznél
 
 A jelszó sehol nincs tárolva, az `APP_KEY` értékéből **számolódik**. A kulccsal és egy shellel tehát magad is előállíthatod:
@@ -188,3 +191,27 @@ Ez HMAC-SHA256 a rögzített `bombvault:restic-repo` karakterlánc fölött, kul
     Az a tároló, amely külső telephelyi replikációval érkezett ide, a küldő gépen jött létre, annak **saját** `APP_KEY` kulcsával. A fogadó gép kulcsából származtatva olyan jelszót kapsz, amelyet a restic elutasít, és ez pontosan úgy néz ki, mint egy sérült tároló, holott nem az. Ez a szokásos oka annak, hogy a `restic check` egy fogadott tárolón újra és újra jelszót kér.
 
 Mivel a helyreállítási definíciók minden tárolón **belül** élnek (`<repo>/def`, `<repo>/vm-def`), egy másolt tárolómappa teljesen önálló, így a csomag plusz a tároló minden, amire egy bare-metal visszaállításnak szüksége van.
+
+## Adatbázis-dump visszaszerzése {#database-dumps}
+
+Egy adatbázis-dump önálló visszaállítási pont a konténerek tárolójában, `dbdump:<container>` címkével és egyetlen fájllal, `/dbdump/<container>.sql`. A BombVault a **Mentések** alatt listázza, letölti és importálja őket; alább ugyanezek a lépések pusztán a restickel, arra a napra, amikor a BombVault nincs kéznél.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Az egyes dumpokon a `dbversion:` és `dbname:` címke megmondja, melyik kiszolgálóverzióból való és mely adatbázisokat tartalmazza. A teljes fájl vége `-- PostgreSQL database cluster dump complete` vagy `-- Dump completed`.
+
+Importáld egy azonos vagy újabb verziójú (PostgreSQL), illetve azonos főverziójú (MySQL és MariaDB) konténerbe, amelyet egyszer üres adatmappával indítottál, hogy feltöltse magát. A gazdagépnek nem kell adatbázis-kliens, a konténerben van:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Ha egy teljes dumpból csak egy adatbázis kell, a MySQL és a MariaDB elfogadja a `--one-database <name>` kapcsolót a kliens parancsán. A PostgreSQL-dumpban adatbázisonként egy szakasz van, mindegyik egy `\connect <name>` sorral kezdődik: másold a szakaszt külön fájlba, és az adatbázis létrehozása után `-d <name>` kapcsolóval importáld.
+
+!!! warning "A rootként készült dump magával viszi a kiszolgáló felhasználóit"
+    A rootként készült teljes MySQL- vagy MariaDB-dump tartalmazza a `mysql` rendszeradatbázist, így az importálás az új kiszolgáló fiókjait, a root jelszavát is beleértve, a dumpban lévőkre cseréli. PostgreSQL-en a konténer által létrehozott felhasználóra kapott `role ... already exists` üzenet várható és ártalmatlan.
