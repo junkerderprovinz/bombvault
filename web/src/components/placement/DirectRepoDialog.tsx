@@ -125,6 +125,7 @@ export function DirectRepoDialog({
       confirmLabel={t("directRepo.addAndUse")}
       confirmLabelKey="directRepo.addAndUse"
       cancelLabel={t("common.cancel")}
+      cancelTone="neutral"
       extra={
         <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-xs text-carbon-textSub">

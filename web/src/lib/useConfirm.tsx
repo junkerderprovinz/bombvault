@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
+import type { ButtonTone } from "../components/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useT, type TranslationKey } from "./i18n";
 
@@ -33,6 +34,8 @@ export interface ConfirmOptions {
   requireText?: string;
   /** Label of the field requireText is typed into. */
   requirePrompt?: string;
+  /** Surface of the confirm button; a delete that leaves Cancel the one accent passes "neutral". */
+  confirmTone?: ButtonTone;
 }
 
 interface PendingConfirm extends ConfirmOptions {
@@ -115,6 +118,7 @@ export function useConfirm() {
           cancelLabel={pending.cancelLabel ?? t("common.cancel")}
           extra={extra}
           confirmDisabled={locked}
+          confirmTone={pending.confirmTone}
           onConfirm={() => settle(true)}
           onCancel={() => settle(false)}
         />,

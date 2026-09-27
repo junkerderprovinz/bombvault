@@ -47,6 +47,33 @@ describe("Timeline", () => {
   beforeEach(() => fake.reset());
   afterEach(cleanup);
 
+  it("leads with the newest backup only and separates rows without lines", async () => {
+    const a2 = "a2a2a2a2";
+    fake.reply("getTimeline", {
+      ok: true,
+      places: [home],
+      rows: [timelineRow(a2, "2026-09-19T03:00:00Z", timelineMark("local", a2)), timelineRow(a1, at, timelineMark("local", a1))],
+    });
+    const picks: TimelinePick[] = [];
+    renderWithProviders(
+      <Timeline
+        domain="containers"
+        itemKey="nginx"
+        itemName="nginx"
+        open
+        renderActions={(pick) => {
+          picks.push(pick);
+          return null;
+        }}
+      />
+    );
+    await waitFor(() => expect(picks.length).toBeGreaterThanOrEqual(2));
+    const lead = new Map(picks.map((p) => [p.row.key, p.lead]));
+    expect(lead).toEqual(new Map([[a2, true], [a1, false]]));
+    const group = screen.getByRole("group", { name: "nginx" });
+    expect(group.innerHTML).not.toContain("border-");
+  });
+
   it("reads only local places when it opens and names the ones not checked", async () => {
     fake.reply("getTimeline", {
       ok: true,

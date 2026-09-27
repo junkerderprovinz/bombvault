@@ -24,6 +24,9 @@ export interface TimelinePick {
   onMissing: () => void;
   /** Call when the snapshot changed at its place, after a new tag for instance. */
   refresh: () => void;
+  /** The row whose restore is the view's one accent action: the backup a
+   *  finding asked for, else the newest. */
+  lead: boolean;
 }
 
 /** Timeline shows one row per backup of an item, with a mark for every place
@@ -66,6 +69,7 @@ export function Timeline({
   const orderOf = (place: string) => places.findIndex((p) => p.place === place);
   const pending = places.filter((p) => p.state !== "read");
   const unchecked = pending.filter((p) => p.state === "unchecked");
+  const leadKey = rows.some((row) => row.key === request?.snapshot) ? request?.snapshot : rows[0]?.key;
 
   function selected(row: TimelineRow): TimelineMark | null {
     const want = chosen[row.key];
@@ -89,13 +93,13 @@ export function Timeline({
   }
 
   return (
-    <div role="group" aria-label={itemName} className="flex flex-col">
+    <div role="group" aria-label={itemName} className="flex flex-col gap-1.5">
       {/* A place that was not read keeps its line rather than disappearing, so
           nobody reads an empty list as "there is nothing left". */}
       {pending.map((p) => (
         <div
           key={p.place}
-          className="flex items-center gap-2 py-1.5 border-b border-carbon-border text-xs text-carbon-textMuted"
+          className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-textMuted"
         >
           <span>
             {t(p.state === "unreadable" ? "timeline.unreadable" : "timeline.unchecked").replace(
@@ -136,8 +140,8 @@ export function Timeline({
           return (
             <div
               key={row.key}
-              className={`flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0${
-                request?.snapshot === row.key ? " bg-carbon-surface2 px-2 rounded-control" : ""
+              className={`flex flex-col gap-1 rounded-control px-2 py-1.5 ${
+                request?.snapshot === row.key ? "bg-carbon-surface3" : "bg-carbon-surface2"
               }`}
             >
               <div className="flex items-center gap-3 flex-wrap text-sm">
@@ -179,6 +183,7 @@ export function Timeline({
                       source: sourceOfPlace(mark.place),
                       onMissing: () => void missing(row, mark.place),
                       refresh: () => void loadPlace(mark.place),
+                      lead: row.key === leadKey,
                     })}
                   </Fragment>
                   <Button

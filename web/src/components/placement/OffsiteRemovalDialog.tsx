@@ -74,6 +74,7 @@ export function OffsiteRemovalDialog({
           {
             confirmLabel: t("offsiteRemoval.delete").replace("{target}", () => target.name),
             confirmLabelKey: "common.delete",
+            confirmTone: "neutral",
             extra: only ? <OnlyThere preview={preview} /> : undefined,
             requireText: only ? preview.name : undefined,
             requirePrompt: t("offsiteRemoval.typeName").replace("{name}", () => preview.name),

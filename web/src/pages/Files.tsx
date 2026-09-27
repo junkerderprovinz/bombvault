@@ -348,6 +348,7 @@ function FileSetRestoreControl({
   restoreFolder,
   otherActive,
   onMissing,
+  lead,
   t,
 }: {
   set: FileSetView;
@@ -357,6 +358,8 @@ function FileSetRestoreControl({
   restoreFolder: string;
   otherActive: { active: boolean; phase?: string };
   onMissing: () => void;
+  /** The view's one accent restore goes to the timeline's lead row. */
+  lead: boolean;
   t: T;
 }) {
   // Without a path the server cannot restore in place, so only a folder works.
@@ -422,7 +425,7 @@ function FileSetRestoreControl({
           <Button
             label={t("snapshots.restore")}
             labelKey="snapshots.restore"
-            tone="accent"
+            tone={lead ? "accent" : "neutral"}
             onClick={() => void handleRestore()}
             disabled={isPending || blockedByOther || (dest === "folder" && targetPath.trim() === "")}
             busy={isPending}
@@ -590,6 +593,7 @@ function FileSetRestorePanel({
                   restoreFolder={restoreFolder}
                   otherActive={running}
                   onMissing={pick.onMissing}
+                  lead={pick.lead}
                   t={t}
                 />
               </div>

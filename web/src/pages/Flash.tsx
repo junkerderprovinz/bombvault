@@ -120,7 +120,7 @@ function FlashDownload({ pick, t }: { pick: TimelinePick; t: T }) {
       label={t("flash.download")}
       labelKey="flash.download"
       glyph={<IconDownload />}
-      tone="accent"
+      tone={pick.lead ? "accent" : "neutral"}
       onClick={handleDownload}
       disabled={preparing}
       busy={preparing}

@@ -30,6 +30,14 @@ describe("TimelineDeleteDialog", () => {
   beforeEach(() => fake.reset());
   afterEach(cleanup);
 
+  it("leaves the delete neutral and Cancel the one accent", async () => {
+    fake.reply("getTimelineDeletePreview", { ok: true, delete: [atHome], others: [] });
+    open();
+    const del = await screen.findByRole("button", { name: "Delete" });
+    expect(del.className).not.toContain("bg-accent");
+    expect(screen.getByRole("button", { name: "Cancel" }).className).toContain("bg-accent");
+  });
+
   it("names the places that still hold the backup and deletes what the preview named", async () => {
     fake.reply("getTimelineDeletePreview", {
       ok: true,

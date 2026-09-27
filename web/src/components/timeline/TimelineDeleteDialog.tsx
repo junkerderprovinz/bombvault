@@ -82,6 +82,7 @@ export function TimelineDeleteDialog({
       const yes = await confirm(t("timeline.deleteAsk").replace("{list}", () => names(del)), {
         confirmLabel: everywhere ? t("timeline.deleteRow") : t("common.delete"),
         confirmLabelKey: everywhere ? "timeline.deleteRow" : "common.delete",
+        confirmTone: "neutral",
         extra: (
           <div className="flex flex-col gap-1 text-sm text-carbon-textSub">
             {lines.map((line) => (

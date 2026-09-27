@@ -708,7 +708,7 @@ function SnapshotActions({
         label={t("restore.open")}
         labelKey="restore.open"
         glyph={<IconRestore />}
-        tone="accent"
+        tone={pick.lead ? "accent" : "neutral"}
         onClick={() => setShowRestore((p) => !p)}
       />
       {showRestore && (

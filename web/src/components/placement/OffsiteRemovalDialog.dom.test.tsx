@@ -41,6 +41,13 @@ describe("OffsiteRemovalDialog", () => {
   beforeEach(() => fake.reset());
   afterEach(cleanup);
 
+  it("leaves the delete neutral and Cancel the one accent", async () => {
+    open();
+    const del = await screen.findByRole("button", { name: "Delete in B2" });
+    expect(del.className).not.toContain("bg-accent");
+    expect(screen.getByRole("button", { name: "Cancel" }).className).toContain("bg-accent");
+  });
+
   it("asks with the count when nothing exists only at the target", async () => {
     const { onDone } = open();
     expect(await screen.findByText("Delete every copy of vaultwarden in B2? Copies: 14.")).toBeTruthy();

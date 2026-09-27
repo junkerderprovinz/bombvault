@@ -112,8 +112,9 @@ async function renderPanel(over: Partial<PanelProps> = {}) {
   });
 }
 
+// A timeline row is a rounded surface; a dump row keeps its line.
 function rowOf(shortId: string): HTMLElement {
-  return screen.getByText(shortId).closest("div.border-b") as HTMLElement;
+  return screen.getByText(shortId).closest("div.border-b, div.rounded-control") as HTMLElement;
 }
 
 afterEach(() => {
