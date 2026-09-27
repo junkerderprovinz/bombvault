@@ -1718,6 +1718,8 @@ function MobileContainerDetail({
   linkCandidates,
   anomaly,
   anomalyEnabled,
+  checks,
+  onChecksChanged,
   restoreRequest,
 }: {
   container: Container;
@@ -1734,6 +1736,8 @@ function MobileContainerDetail({
   linkCandidates: string[];
   anomaly?: AnomalyItem;
   anomalyEnabled: boolean;
+  checks?: ItemChecks;
+  onChecksChanged?: () => void;
   /** A link from another page asking to restore this container. */
   restoreRequest?: RestoreRequest;
 }) {
@@ -1904,6 +1908,9 @@ function MobileContainerDetail({
           treeViewportClassName="h-auto"
         />
       </Advanced>
+      {!self && (
+        <ItemChecksLine checks={checks} hasBackup={container.lastBackup != null} onChanged={onChecksChanged} startTest />
+      )}
       {/* The remaining sections through the SAME chips block the desktop row
           renders (folders is the detail's own body, already open), then
           stop-a-running-backup and the live progress, both gated exactly as
@@ -4289,6 +4296,8 @@ export function Containers() {
           linkCandidates={notInstalledNames}
           anomaly={anomalies.find("container", openContainer.name)}
           anomalyEnabled={anomalyEnabled}
+          checks={itemChecks.find("container", openContainer.name)}
+          onChecksChanged={itemChecks.reload}
           restoreRequest={restoreRequest.item === openContainer.name ? restoreRequest : undefined}
         />
       )}
