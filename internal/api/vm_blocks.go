@@ -87,7 +87,9 @@ func (s *Service) planBlockBackup(ctx context.Context, name string, domain virsh
 			return vmBlockPlan{reason: blocksReasonDiskFormat}
 		}
 	}
-	if running, err := s.virsh.IsActive(ctx, name); err != nil || !running {
+	// A paused guest still has its qemu process, which is what the backup
+	// job talks to.
+	if state, err := s.virsh.State(ctx, name); err != nil || (state != "running" && state != "paused") {
 		return vmBlockPlan{reason: blocksReasonVMOff}
 	}
 	budget := int64(backup.DefaultBlocksBudget)
