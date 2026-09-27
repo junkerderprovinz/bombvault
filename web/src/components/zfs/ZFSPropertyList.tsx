@@ -39,8 +39,8 @@ export function ZFSPropertyList({
         {names.map((name) => {
           const fate = zfsPropertyFate(name, into);
           return (
-            <li key={name} className="flex items-center gap-2">
-              <span dir="ltr" className={`font-mono text-start ${fate === "applied" ? "text-carbon-text" : "text-carbon-textMuted"}`}>
+            <li key={name} className="flex flex-wrap items-center gap-x-2">
+              <span dir="ltr" className={`min-w-0 break-all font-mono text-start ${fate === "applied" ? "text-carbon-text" : "text-carbon-textMuted"}`}>
                 {name}={properties[name]}
               </span>
               {fate !== "applied" && (

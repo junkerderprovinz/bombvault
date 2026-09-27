@@ -90,14 +90,14 @@ export function ExcludePresetPanel({
       {open && (
         <div id={panelId} className="flex flex-col gap-1.5 rounded-control bg-carbon-surface2 p-2">
           {entries.map((e) => (
-            <div key={e.line} className="flex items-center gap-2">
+            <div key={e.line} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
               <Toggle
                 checked={picked[e.line] ?? false}
                 onChange={(next) => setPicked((p) => ({ ...p, [e.line]: next }))}
                 label={t(KIND_LABEL[e.kind])}
               />
               <InfoBubble tip={t(KIND_HINT[e.kind])} />
-              <span dir="ltr" className="min-w-0 flex-1 truncate text-start font-mono text-xs text-carbon-textSub" title={e.line}>
+              <span dir="ltr" className="min-w-0 basis-full truncate text-start font-mono text-xs text-carbon-textSub sm:basis-0 sm:flex-1" title={e.line}>
                 {e.line}
               </span>
             </div>
