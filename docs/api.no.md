@@ -63,8 +63,33 @@ En feil kommer tilbake som `{"error": {"code": "...", "message": "..."}}` med ti
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Noe annet kjører, området er slått av, eller det er ingenting å gjøre |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | En grense holder forespørselen tilbake; `Retry-After` sier når du kan prøve igjen |
 
-Starter følger de samme grensene som [starter via MCP](mcp.md#starting-backups): 12 i timen per token, 15 minutter mellom to starter av samme element, høyst 4 starter av ett element på 24 timer, og oppbevaringsvernet. De tre siste teller starter via MCP og via API-et sammen. Et token kan gjøre 120 forespørsler i minuttet. Fem mislykkede forsøk fra én adresse sperrer den i ett minutt.
+Starter følger de samme grensene som [starter via MCP](mcp.md#starting-backups): 12 i timen per token, 15 minutter mellom to starter av samme element, høyst 4 starter av ett element på 24 timer, og oppbevaringsvernet. De tre siste teller starter via MCP, via API-et og fra Home Assistant sammen. Et token kan gjøre 120 forespørsler i minuttet. Fem mislykkede forsøk fra én adresse sperrer den i ett minutt.
 
 ## OpenAPI {#openapi}
 
 BombVault leverer en beskrivelse av disse rutene på `/api/v1/openapi.json` (OpenAPI 3.1). Den krever ikke noe token. Last den inn i Swagger UI, Postman eller en kodegenerator.
+
+## Home Assistant {#home-assistant}
+
+BombVault kan dukke opp i Home Assistant som en enhet, via MQTT-discovery. Home Assistant trenger MQTT-integrasjonen sin og en megler, for eksempel Mosquitto-tillegget. Ingen egen komponent trengs.
+
+1. Åpne **Innstillinger, System, Home Assistant** i BombVault.
+2. Skriv inn adressen og porten til megleren, og brukernavn og passord hvis den ber om det. Slå på **Bruk TLS** hvis megleren bruker TLS, som regel på port 8883; sertifikatet må være gyldig for adressen du skrev inn.
+3. Slå på **Koble til Home Assistant** og klikk **Lagre**. Kortet viser når tilkoblingen er oppe.
+
+Enheten heter BombVault, eller BombVault med instansnavnet i parentes, og har disse entitetene:
+
+| Entitet | Hva den viser |
+|---|---|
+| Status | `ok`, `warning`, `failed` eller `off`, det verste av områdene som er slått på |
+| Running job | Hva som kjører nå, eller `idle` |
+| Open anomalies | Hvor mange anomalier som er åpne |
+| Next scheduled backup | Når neste planlagte kopi starter |
+| *Område* last backup | Når den siste vellykkede kopien av området kjørte |
+| *Område* last result | Hvordan den siste kopien endte |
+| *Område* repository free space | Ledig plass der det primære repositoryet ligger, hvis BombVault kan lese den |
+| Back up *område* | En knapp som tar kopi av hele området |
+
+Navnene på entitetene er på engelsk, fordi Home Assistant tar dem slik BombVault sender dem. Hvert område som er slått på, får egne entiteter, og et område du slår av, mister dem. Knappene følger de samme grensene som [starter via API-et](#errors). Alle som kan publisere på megleren, kan trykke på dem, så gi megleren et passord eller slå av **Knapper starter sikkerhetskopier**.
+
+BombVault leser statusen sin hvert 15. sekund og publiserer den når noe har endret seg, som JSON under `<prefiks>/<node>/state`. Prefikset er `bombvault` så lenge du ikke endrer det, og noden er en kort id BombVault velger én gang. Discovery-meldingene går til standardprefikset `homeassistant` i Home Assistant. Begge beholdes (retained). En last will merker enheten som utilgjengelig hvis BombVault stopper uten å si fra. Slår du forbindelsen av, fjerner BombVault enheten og entitetene fra Home Assistant.

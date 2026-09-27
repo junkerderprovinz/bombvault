@@ -63,8 +63,33 @@ BombVault 独自の自己署名証明書を使っている場合は、`--cacert 
 | 409 | `busy`、`domain_off`、`nothing_to_back_up`、`not_running` | 別の処理が実行中、領域がオフ、または何もすることがない |
 | 429 | `throttled`、`rate_limited`、`cooldown`、`retention_guard` | 制限によって保留された。再試行できる時刻は `Retry-After` が示す |
 
-開始には [MCP 経由の開始](mcp.md#starting-backups) と同じ制限がかかります。トークンごとに 1 時間 12 回、同じ項目の開始の間隔は 15 分、1 項目あたり 24 時間で最大 4 回、そして保持の保護です。後の 3 つは MCP と API 経由の開始を合わせて数えます。トークン 1 つで 1 分に 120 リクエストまで送れます。同じアドレスから 5 回失敗すると、そのアドレスは 1 分間ロックされます。
+開始には [MCP 経由の開始](mcp.md#starting-backups) と同じ制限がかかります。トークンごとに 1 時間 12 回、同じ項目の開始の間隔は 15 分、1 項目あたり 24 時間で最大 4 回、そして保持の保護です。後の 3 つは MCP、API、Home Assistant からの開始を合わせて数えます。トークン 1 つで 1 分に 120 リクエストまで送れます。同じアドレスから 5 回失敗すると、そのアドレスは 1 分間ロックされます。
 
 ## OpenAPI {#openapi}
 
 BombVault はこれらのルートの説明を `/api/v1/openapi.json` (OpenAPI 3.1) で提供します。トークンは不要です。Swagger UI、Postman、コードジェネレーターに読み込めます。
+
+## Home Assistant {#home-assistant}
+
+BombVault は MQTT 検出を使って、Home Assistant にデバイスとして表示できます。Home Assistant には MQTT 連携と、Mosquitto アドオンなどのブローカーが必要です。専用のコンポーネントは不要です。
+
+1. BombVault で **設定、システム、Home Assistant** を開きます。
+2. ブローカーのアドレスとポートを入力し、求められる場合はユーザー名とパスワードも入力します。ブローカーが TLS を使う場合 (通常はポート 8883) は **TLS を使う** をオンにします。証明書は入力したアドレスに対して有効である必要があります。
+3. **Home Assistant に接続** をオンにして **保存** をクリックします。接続できるとカードに表示されます。
+
+デバイスの名前は BombVault、またはインスタンス名を括弧で付けた BombVault で、次のエンティティがあります。
+
+| エンティティ | 表示する内容 |
+|---|---|
+| Status | `ok`、`warning`、`failed`、`off` のいずれか。オンの領域の中で最も悪い状態 |
+| Running job | いま実行中の処理、または `idle` |
+| Open anomalies | 未解決の異常の数 |
+| Next scheduled backup | 次の予定バックアップの開始時刻 |
+| *領域* last backup | 領域の最後に成功したバックアップの時刻 |
+| *領域* last result | 最後のバックアップの結果 |
+| *領域* repository free space | メインリポジトリがある場所の空き容量 (BombVault が読み取れる場合) |
+| Back up *領域* | 領域全体をバックアップするボタン |
+
+エンティティ名は英語です。Home Assistant は BombVault が送ったとおりの名前を使うためです。オンの領域にはそれぞれエンティティが作られ、オフにした領域からは消えます。ボタンには [API 経由の開始](#errors) と同じ制限がかかります。ブローカーに公開できる人は誰でも押せるので、ブローカーにパスワードを設定するか、**ボタンでバックアップを開始** をオフにしてください。
+
+BombVault は 15 秒ごとに状態を読み取り、何か変わったときに `<接頭辞>/<ノード>/state` へ JSON で公開します。接頭辞は変更しない限り `bombvault` で、ノードは BombVault が一度だけ選ぶ短い ID です。検出メッセージは Home Assistant の既定の接頭辞 `homeassistant` に送られます。どちらも保持 (retained) されます。BombVault が予告なく止まった場合は、ラストウィル (last will) がデバイスを利用不可にします。連携をオフにすると、BombVault はデバイスとそのエンティティを Home Assistant から削除します。

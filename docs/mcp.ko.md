@@ -38,7 +38,7 @@ BombVault에는 Model Context Protocol(MCP) 서버가 내장되어 있습니다.
 
 도메인이나 Backup Everything을 시작하면 제한에 걸린 항목은 빼고 응답에서 그 이름을 알려 줍니다. 이 제한들은 웹 인터페이스와 일정에는 적용되지 않습니다. 시간당 한도는 메모리에 있으므로 BombVault를 다시 시작하면 초기화됩니다.
 
-[API](api.md#errors)를 통한 시작은 항목별 제한과 보존 보호에서 MCP를 통한 시작과 함께 계산됩니다.
+[API](api.md#errors)와 [Home Assistant](api.md#home-assistant)를 통한 시작은 항목별 제한과 보존 보호에서 MCP를 통한 시작과 함께 계산됩니다.
 
 ## 켜기 {#switch-on}
 

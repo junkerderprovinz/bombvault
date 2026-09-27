@@ -63,8 +63,33 @@ curl -s -X POST -H "Authorization: Bearer $BOMBVAULT_TOKEN" \
 | 409 | `busy`、`domain_off`、`nothing_to_back_up`、`not_running` | 已有其他操作在运行、领域已关闭，或无事可做 |
 | 429 | `throttled`、`rate_limited`、`cooldown`、`retention_guard` | 某项限制暂缓了请求；`Retry-After` 说明何时重试 |
 
-启动与 [通过 MCP 启动](mcp.md#starting-backups) 受同样的限制：每个令牌每小时 12 次，同一项目两次启动相隔 15 分钟，同一项目 24 小时内最多 4 次，以及保留保护。后三项把通过 MCP 和 API 的启动合在一起计算。一个令牌每分钟最多 120 个请求。同一地址失败五次后会被锁定一分钟。
+启动与 [通过 MCP 启动](mcp.md#starting-backups) 受同样的限制：每个令牌每小时 12 次，同一项目两次启动相隔 15 分钟，同一项目 24 小时内最多 4 次，以及保留保护。后三项把通过 MCP、API 和 Home Assistant 的启动合在一起计算。一个令牌每分钟最多 120 个请求。同一地址失败五次后会被锁定一分钟。
 
 ## OpenAPI {#openapi}
 
 BombVault 在 `/api/v1/openapi.json` 提供这些路由的说明（OpenAPI 3.1）。不需要令牌。可以把它载入 Swagger UI、Postman 或代码生成器。
+
+## Home Assistant {#home-assistant}
+
+BombVault 可以通过 MQTT 发现，以设备的形式出现在 Home Assistant 中。Home Assistant 需要启用它的 MQTT 集成，并有一个代理，例如 Mosquitto 加载项。不需要任何专用组件。
+
+1. 在 BombVault 中打开 **设置、系统、Home Assistant**。
+2. 输入代理的地址和端口；如果代理要求，再输入用户名和密码。如果代理使用 TLS（通常在端口 8883），就打开 **使用 TLS**；它的证书必须对你输入的地址有效。
+3. 打开 **连接到 Home Assistant** 并点击 **保存**。连接建立后，卡片会显示出来。
+
+设备名为 BombVault，或在括号中带上实例名称的 BombVault，包含以下实体：
+
+| 实体 | 显示内容 |
+|---|---|
+| Status | `ok`、`warning`、`failed` 或 `off`，即已启用领域中最差的状态 |
+| Running job | 当前正在运行的操作，或 `idle` |
+| Open anomalies | 未处理的异常数量 |
+| Next scheduled backup | 下一次计划备份的开始时间 |
+| *领域* last backup | 该领域最近一次成功备份的时间 |
+| *领域* last result | 最近一次备份的结果 |
+| *领域* repository free space | 其主仓库所在位置的剩余空间（如果 BombVault 能读取） |
+| Back up *领域* | 备份整个领域的按钮 |
+
+实体名称是英文的，因为 Home Assistant 会原样使用 BombVault 发送的名称。每个已启用的领域都有自己的实体，关闭的领域会失去它们。按钮与 [通过 API 启动](#errors) 受同样的限制。任何能向代理发布消息的人都能按下它们，所以请给代理设置密码，或关闭 **按钮启动备份**。
+
+BombVault 每 15 秒读取一次自身状态，有变化时以 JSON 发布到 `<前缀>/<节点>/state`。前缀默认为 `bombvault`，除非你修改它；节点是 BombVault 选定一次的短 ID。发现消息发送到 Home Assistant 的默认前缀 `homeassistant`。两者都会保留（retained）。如果 BombVault 未通知就停止，遗嘱消息（last will）会把设备标为不可用。关闭这个连接后，BombVault 会从 Home Assistant 中移除该设备及其实体。

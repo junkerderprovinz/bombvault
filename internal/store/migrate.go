@@ -2128,6 +2128,23 @@ CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expi
 		sql: `DROP INDEX IF EXISTS idx_mcp_keys_active_label;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_keys_active_label ON mcp_keys(kind = 'api', lower(label)) WHERE revoked_at = 0;`,
 	},
+	{
+		// The Home Assistant link: one row, written by the first save.
+		version: apiMigrationBase + 1,
+		name:    "mqtt_settings",
+		sql: `CREATE TABLE IF NOT EXISTS mqtt_settings (
+  id           INTEGER PRIMARY KEY CHECK (id = 1),
+  enabled      INTEGER NOT NULL DEFAULT 0,
+  host         TEXT    NOT NULL DEFAULT '',
+  port         INTEGER NOT NULL DEFAULT 1883,
+  username     TEXT    NOT NULL DEFAULT '',
+  password_enc BLOB,
+  tls          INTEGER NOT NULL DEFAULT 0,
+  topic_prefix TEXT    NOT NULL DEFAULT 'bombvault',
+  buttons      INTEGER NOT NULL DEFAULT 1,
+  node_id      TEXT    NOT NULL DEFAULT ''
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,

@@ -529,10 +529,11 @@ const ORIGIN_SUFFIX = {
   api: { named: "activityLog.viaApi", revoked: "activityLog.viaApiRevoked", unknown: "activityLog.viaApiUnknownKey" },
 } as const;
 
-/** withOrigin names the MCP key or API token behind a run. Every kind gets the
- *  suffix, so a prune or an off-site copy such a start caused reads the same
- *  way as the backup. */
+/** withOrigin names the MCP key or API token behind a run, or Home Assistant.
+ *  Every kind gets the suffix, so a prune or an off-site copy such a start
+ *  caused reads the same way as the backup. */
 function withOrigin(resolveName: ResolveName, run: Run, line: string): string {
+  if (run.startedVia === "mqtt") return resolveName("activityLog.viaHomeAssistant", { line });
   if (run.startedVia !== "mcp" && run.startedVia !== "api") return line;
   const suffix = ORIGIN_SUFFIX[run.startedVia];
   if (!run.startedViaLabel) return resolveName(suffix.unknown, { line });

@@ -38,7 +38,7 @@ Bir yedekleme hizmetleri durdurduğu ve eski geri yükleme noktalarını dışar
 
 Bir alanın ya da Backup Everything'in başlatılması, bir sınırın geri tuttuğu öğeleri dışarıda bırakır ve yanıtında adlarını verir. Bu sınırların hiçbiri web arayüzünü ve zamanlamayı etkilemez. Saatlik kota bellekte tutulur, bu yüzden BombVault'un yeniden başlatılması onu sıfırlar.
 
-[API](api.md#errors) üzerinden başlatmalar, öğe başına aynı sınırlarda ve saklama korumasında MCP üzerinden başlatmalarla birlikte sayılır.
+[API](api.md#errors) üzerinden ve [Home Assistant](api.md#home-assistant)'tan başlatmalar, öğe başına aynı sınırlarda ve saklama korumasında MCP üzerinden başlatmalarla birlikte sayılır.
 
 ## Açmak {#switch-on}
 

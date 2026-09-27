@@ -46,7 +46,7 @@ interface ErrorGroup {
   domains: string[]; // unique singular domains present in the group
   latest: number; // newest startedAt across the group (unix seconds)
   count: number; // number of failed runs in the group
-  via: "" | "mcp" | "api"; // what started every member, "" for the schedule and the web interface
+  via: "" | "mcp" | "api" | "mqtt"; // what started every member, "" for the schedule and the web interface
   viaLabels: string[]; // the MCP keys or API tokens behind the members, without the purged ones
 }
 
@@ -299,6 +299,9 @@ export function ErrorDetailPanel({
                             )
                           : t("activityLog.viaMcpLineUnknownKey")}
                       </span>
+                    )}
+                    {g.via === "mqtt" && (
+                      <span className="wrap-break-word">{t("activityLog.viaHomeAssistantLine")}</span>
                     )}
                     {g.via === "api" && (
                       <span className="wrap-break-word">

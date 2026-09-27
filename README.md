@@ -127,6 +127,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Anomaly detection (size, duration, shrink) | ✅ | ✅ | ❌ | ⚠️ paid Console | ❌ | ❌ |
 | AI assistant access (MCP) | ✅ | ✅ | ❌ | ⚠️ third party | ❌ | ❌ |
 | Documented HTTP API for scripts, with its own tokens | ✅ | ✅ | ❌ | ⚠️ undocumented | ⚠️ undocumented | ❌ |
+| Home Assistant integration | ✅ over MQTT | ✅ | ❌ | ⚠️ third party | ⚠️ third party | ⚠️ third party |
 | Backs up desktops and laptops | ❌ | ❌ | ❌ | ✅ | ✅ | ⚠️ Windows experimental |
 | Runs outside Unraid | ✅ | ⚠️ replica only | ❌ | ✅ | ✅ | ✅ |
 | In Unraid Community Applications | ✅ | ✅ | ✅ | ✅ community template | ✅ community template | ✅ community template |
@@ -253,6 +254,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 - **Weekly digest** — one message per week through those same channels: run counts, how much new backup data landed, whether off-site is current, and the top failures. Off by default, with its own cadence on Settings → Notifications, so a week in which nothing needed you is still reported as such instead of being indistinguishable from a week the alerts never fired.
 - **Prometheus `/metrics`** — opt-in (default off, optional bearer token) for Grafana or Uptime Kuma; exposes backup status, sizes and timestamps, with no secrets or paths in the labels.
 - **HTTP API** under `/api/v1` for scripts and dashboards: status, items, runs, anomalies, storage and starting a backup, described in an OpenAPI file BombVault serves itself. Each script gets a named token, read-only or allowed to start backups, created under **Settings → System → API tokens**. See [docs/api.md](docs/api.md).
+- **Home Assistant** through MQTT discovery: BombVault appears as a device with sensors for status, the running job, open anomalies, the next scheduled backup and each domain's last backup, result and free space, plus a backup button per domain. Off by default; set the broker under **Settings → System → Home Assistant**. See [docs/api.md](docs/api.md#home-assistant).
 
 </details>
 

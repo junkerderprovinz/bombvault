@@ -38,7 +38,7 @@ Como una copia detiene servicios y saca puntos de restauración antiguos, los in
 
 Un inicio de dominio o de Backup Everything deja fuera los elementos que retiene algún límite y los nombra en su respuesta. Ni la interfaz web ni la programación se ven afectadas por nada de esto. El cupo por hora vive en memoria, así que un reinicio de BombVault lo pone a cero.
 
-Los inicios por la [API](api.md#errors) cuentan para los mismos límites por elemento que los inicios por MCP, y para la protección de retención.
+Los inicios por la [API](api.md#errors) y desde [Home Assistant](api.md#home-assistant) cuentan para los mismos límites por elemento que los inicios por MCP, y para la protección de retención.
 
 ## Activarlo {#switch-on}
 

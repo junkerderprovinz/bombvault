@@ -911,3 +911,11 @@ describe("a run an API token started", () => {
     expect(unnamed[0].text).toContain("activityLog.viaApiUnknownKey");
   });
 });
+
+describe("a run a Home Assistant button started", () => {
+  it("says so without a key", () => {
+    const lines = buildLogLines([makeRun({ startedVia: "mqtt" })], {}, [], resolveName, 2_000_000);
+    expect(lines[0].text).toMatch(/^activityLog\.viaHomeAssistant /);
+    expect(lines[0].text).not.toContain("key=");
+  });
+});

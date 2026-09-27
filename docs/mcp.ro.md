@@ -38,7 +38,7 @@ Pentru că o copie oprește servicii și scoate afară puncte de restaurare vech
 
 O pornire de domeniu sau de Backup Everything lasă pe dinafară elementele reținute de o limită și le numește în răspuns. Interfața web și programarea nu sunt atinse de niciuna dintre aceste limite. Bugetul orar stă în memorie, așa că o repornire a BombVault îl readuce la zero.
 
-Pornirile prin [API](api.md#errors) se numără la aceleași limite pe element ca pornirile prin MCP și la protecția de retenție.
+Pornirile prin [API](api.md#errors) și din [Home Assistant](api.md#home-assistant) se numără la aceleași limite pe element ca pornirile prin MCP și la protecția de retenție.
 
 ## Pornire {#switch-on}
 

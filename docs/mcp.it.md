@@ -38,7 +38,7 @@ Poiché un backup ferma dei servizi e fa uscire vecchi punti di ripristino, gli 
 
 Un avvio di dominio o di Backup Everything lascia fuori gli elementi trattenuti da un limite e li nomina nella risposta. L'interfaccia web e la pianificazione non sono toccate da nessuno di questi limiti. Il budget orario vive in memoria, quindi un riavvio di BombVault lo azzera.
 
-Gli avvii tramite l'[API](api.md#errors) contano negli stessi limiti per elemento degli avvii tramite MCP e nella protezione della conservazione.
+Gli avvii tramite l'[API](api.md#errors) e da [Home Assistant](api.md#home-assistant) contano negli stessi limiti per elemento degli avvii tramite MCP e nella protezione della conservazione.
 
 ## Attivarlo {#switch-on}
 

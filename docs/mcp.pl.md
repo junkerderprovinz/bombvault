@@ -38,7 +38,7 @@ Ponieważ kopia zatrzymuje usługi i wypycha stare punkty przywracania, uruchomi
 
 Uruchomienie domeny lub Backup Everything pomija elementy zatrzymane przez któryś limit i wymienia je w odpowiedzi. Żaden z tych limitów nie dotyczy interfejsu WWW ani harmonogramu. Budżet godzinowy jest trzymany w pamięci, więc restart BombVault go zeruje.
 
-Uruchomienia przez [API](api.md#errors) liczą się do tych samych limitów na element co uruchomienia przez MCP oraz do ochrony retencji.
+Uruchomienia przez [API](api.md#errors) i z [Home Assistant](api.md#home-assistant) liczą się do tych samych limitów na element co uruchomienia przez MCP oraz do ochrony retencji.
 
 ## Włączanie {#switch-on}
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/homeassistant"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
@@ -74,6 +75,9 @@ type Handler struct {
 	// mcp holds the MCP endpoint's transport, its per-key budget and the
 	// counters /metrics reports. mountMCP creates one when NewHandler did not.
 	mcp *mcpState
+
+	// ha is the MQTT link to Home Assistant, created by Router.
+	ha *homeassistant.Bridge
 }
 
 // NewHandler constructs the API handler.
@@ -141,6 +145,14 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/tokens/{id}/revoke", h.handleRevokeMCPKey)
 	mux.HandleFunc("DELETE /api/tokens/{id}", h.handlePurgeMCPKey)
 	mux.HandleFunc("GET /api/tokens/{id}/activity", h.handleMCPKeyActivity)
+
+	// Home Assistant over MQTT (homeassistant.go). Session-protected: the
+	// settings carry the broker password.
+	if h.ha == nil {
+		h.ha = h.newHomeAssistantBridge()
+	}
+	mux.HandleFunc("GET /api/homeassistant", h.handleGetHomeAssistant)
+	mux.HandleFunc("PUT /api/homeassistant", h.handleSetHomeAssistant)
 
 	// Public / auth endpoints — also allow-listed inside authGate.
 	mux.HandleFunc("GET /api/health", h.handleHealth)

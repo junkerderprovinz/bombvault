@@ -38,7 +38,7 @@ Vì sao lưu làm dừng dịch vụ và đẩy các điểm khôi phục cũ ra
 
 Khi bắt đầu một miền hoặc Backup Everything, các mục bị một giới hạn giữ lại sẽ bị bỏ qua và được nêu tên trong câu trả lời. Không giới hạn nào trong số này áp dụng cho giao diện web và lịch. Hạn mức mỗi giờ nằm trong bộ nhớ, nên khởi động lại BombVault sẽ đặt nó về không.
 
-Các lần bắt đầu qua [API](api.md#errors) được tính chung với các lần bắt đầu qua MCP trong cùng giới hạn cho mỗi mục và trong cơ chế bảo vệ lưu giữ.
+Các lần bắt đầu qua [API](api.md#errors) và từ [Home Assistant](api.md#home-assistant) được tính chung với các lần bắt đầu qua MCP trong cùng giới hạn cho mỗi mục và trong cơ chế bảo vệ lưu giữ.
 
 ## Bật tính năng {#switch-on}
 

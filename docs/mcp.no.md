@@ -38,7 +38,7 @@ Fordi en sikkerhetskopi stopper ting og skyver ut gamle gjenopprettingspunkter, 
 
 En start av et domene eller av Backup Everything utelater elementene som en grense holder tilbake, og nevner dem i svaret. Webgrensesnittet og tidsplanen berøres ikke av noe av dette. Timebudsjettet ligger i minnet, så en omstart av BombVault nullstiller det.
 
-Starter via [API-et](api.md#errors) teller med i de samme grensene per element som starter via MCP, og i oppbevaringsvernet.
+Starter via [API-et](api.md#errors) og fra [Home Assistant](api.md#home-assistant) teller med i de samme grensene per element som starter via MCP, og i oppbevaringsvernet.
 
 ## Slå det på {#switch-on}
 

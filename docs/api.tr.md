@@ -63,8 +63,33 @@ Hata, uygun durum koduyla `{"error": {"code": "...", "message": "..."}}` olarak 
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Başka bir şey çalışıyor, alan kapalı ya da yapılacak bir şey yok |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Bir sınır isteği bekletiyor; `Retry-After` ne zaman yeniden deneneceğini söyler |
 
-Başlatmalar [MCP üzerinden başlatmalarla](mcp.md#starting-backups) aynı sınırlara tabidir: belirteç başına saatte 12, aynı öğenin iki başlatması arasında 15 dakika, bir öğe için 24 saatte en çok 4 başlatma ve saklama koruması. Son üçü MCP ve API üzerinden başlatmaları birlikte sayar. Bir belirteç dakikada 120 istek yapabilir. Bir adresten beş başarısız deneme o adresi bir dakika kilitler.
+Başlatmalar [MCP üzerinden başlatmalarla](mcp.md#starting-backups) aynı sınırlara tabidir: belirteç başına saatte 12, aynı öğenin iki başlatması arasında 15 dakika, bir öğe için 24 saatte en çok 4 başlatma ve saklama koruması. Son üçü MCP ve API üzerinden ve Home Assistant'tan başlatmaları birlikte sayar. Bir belirteç dakikada 120 istek yapabilir. Bir adresten beş başarısız deneme o adresi bir dakika kilitler.
 
 ## OpenAPI {#openapi}
 
 BombVault bu yolların açıklamasını `/api/v1/openapi.json` adresinde sunar (OpenAPI 3.1). Belirteç gerekmez. Swagger UI, Postman veya bir kod üreticisine yükle.
+
+## Home Assistant {#home-assistant}
+
+BombVault, MQTT keşfi sayesinde Home Assistant'ta bir cihaz olarak görünebilir. Home Assistant'ın bunun için MQTT entegrasyonuna ve bir aracıya, örneğin Mosquitto eklentisine ihtiyacı vardır. Ayrı bir bileşen gerekmez.
+
+1. BombVault'ta **Ayarlar, Sistem, Home Assistant** bölümünü aç.
+2. Aracının adresini ve bağlantı noktasını, isterse kullanıcı adını ve parolayı gir. Aracı TLS kullanıyorsa, genellikle 8883 numaralı bağlantı noktasında, **TLS kullan** seçeneğini aç; sertifikası girdiğin adres için geçerli olmalı.
+3. **Home Assistant'a bağlan** seçeneğini aç ve **Kaydet** düğmesine tıkla. Kart, bağlantı kurulduğunda bunu gösterir.
+
+Cihazın adı BombVault'tur ya da parantez içinde örnek adıyla BombVault'tur ve şu varlıkları vardır:
+
+| Varlık | Gösterdiği |
+|---|---|
+| Status | `ok`, `warning`, `failed` veya `off`, açık alanların en kötüsü |
+| Running job | Şu anda ne çalışıyor, ya da `idle` |
+| Open anomalies | Kaç anomali açık |
+| Next scheduled backup | Sonraki planlı yedeğin ne zaman başladığı |
+| *Alan* last backup | Alanın son başarılı yedeğinin ne zaman çalıştığı |
+| *Alan* last result | Son yedeğinin nasıl bittiği |
+| *Alan* repository free space | Ana deposunun bulunduğu yerdeki boş alan, BombVault okuyabiliyorsa |
+| Back up *alan* | Tüm alanı yedekleyen bir düğme |
+
+Varlık adları İngilizcedir, çünkü Home Assistant onları BombVault'un gönderdiği gibi alır. Açık her alan kendi varlıklarını alır, kapattığın bir alan onları kaybeder. Düğmeler [API üzerinden başlatmalarla](#errors) aynı sınırlara tabidir. Aracıya yayın yapabilen herkes onlara basabilir; bu yüzden aracıya bir parola ver ya da **Düğmeler yedekleme başlatır** seçeneğini kapat.
+
+BombVault durumunu her 15 saniyede bir okur ve bir şey değiştiğinde `<önek>/<düğüm>/state` altında JSON olarak yayımlar. Önek, sen değiştirmedikçe `bombvault`'tur; düğüm ise BombVault'un bir kez seçtiği kısa bir kimliktir. Keşif iletileri Home Assistant'ın varsayılan öneki `homeassistant`'a gider. İkisi de saklanır (retained). Son vasiyet (last will), BombVault haber vermeden durursa cihazı kullanılamaz olarak işaretler. Bağlantıyı kapatırsan BombVault cihazı ve varlıklarını Home Assistant'tan kaldırır.

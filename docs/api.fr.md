@@ -63,8 +63,33 @@ Une erreur revient sous la forme `{"error": {"code": "...", "message": "..."}}` 
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Autre chose tourne, le domaine est désactivé, ou il n'y a rien à faire |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Une limite retient la requête ; `Retry-After` dit quand réessayer |
 
-Les lancements suivent les mêmes limites que [ceux via MCP](mcp.md#starting-backups) : 12 par heure et par jeton, 15 minutes entre deux lancements du même élément, au plus 4 lancements d'un élément en 24 heures, et la protection de rétention. Les trois dernières comptent ensemble les lancements via MCP et via l'API. Un jeton peut faire 120 requêtes par minute. Après cinq échecs depuis une adresse, elle est bloquée une minute.
+Les lancements suivent les mêmes limites que [ceux via MCP](mcp.md#starting-backups) : 12 par heure et par jeton, 15 minutes entre deux lancements du même élément, au plus 4 lancements d'un élément en 24 heures, et la protection de rétention. Les trois dernières comptent ensemble les lancements via MCP, via l'API et depuis Home Assistant. Un jeton peut faire 120 requêtes par minute. Après cinq échecs depuis une adresse, elle est bloquée une minute.
 
 ## OpenAPI {#openapi}
 
 BombVault sert une description de ces routes sous `/api/v1/openapi.json` (OpenAPI 3.1). Aucun jeton n'est nécessaire. Charge-la dans Swagger UI, Postman ou un générateur de code.
+
+## Home Assistant {#home-assistant}
+
+BombVault peut apparaître dans Home Assistant comme un appareil, grâce à la découverte MQTT. Home Assistant a besoin de son intégration MQTT et d'un broker, par exemple le module Mosquitto. Aucun composant personnalisé n'est nécessaire.
+
+1. Dans BombVault, ouvre **Paramètres, Système, Home Assistant**.
+2. Saisis l'adresse et le port du broker, ainsi que le nom d'utilisateur et le mot de passe s'il en demande. Active **Utiliser TLS** si le broker parle TLS, en général sur le port 8883 ; son certificat doit être valide pour l'adresse saisie.
+3. Active **Se connecter à Home Assistant** et clique sur **Enregistrer**. La carte indique quand la connexion est établie.
+
+L'appareil s'appelle BombVault, ou BombVault avec le nom de l'instance entre parenthèses, et possède ces entités :
+
+| Entité | Ce qu'elle affiche |
+|---|---|
+| Status | `ok`, `warning`, `failed` ou `off`, le pire des domaines activés |
+| Running job | Ce qui tourne maintenant, ou `idle` |
+| Open anomalies | Le nombre d'anomalies ouvertes |
+| Next scheduled backup | Quand démarre la prochaine sauvegarde planifiée |
+| *Domaine* last backup | Quand a eu lieu la dernière sauvegarde réussie du domaine |
+| *Domaine* last result | Comment s'est terminée sa dernière sauvegarde |
+| *Domaine* repository free space | L'espace libre là où se trouve son dépôt principal, si BombVault peut le lire |
+| Back up *domaine* | Un bouton qui sauvegarde tout le domaine |
+
+Les noms des entités sont en anglais, car Home Assistant les reprend tels que BombVault les envoie. Chaque domaine activé a ses propres entités, et un domaine désactivé les perd. Les boutons suivent les mêmes limites que les [lancements via l'API](#errors). Toute personne qui peut publier sur le broker peut appuyer dessus : protège donc le broker par un mot de passe, ou désactive **Les boutons lancent des sauvegardes**.
+
+BombVault lit son état toutes les 15 secondes et le publie quand quelque chose a changé, en JSON sous `<préfixe>/<nœud>/state`. Le préfixe est `bombvault` tant que tu ne le changes pas, et le nœud est un court identifiant que BombVault choisit une fois. Les messages de découverte vont au préfixe par défaut de Home Assistant, `homeassistant`. Les deux sont conservés (retained). Un dernier message (last will) marque l'appareil comme indisponible si BombVault s'arrête sans prévenir. Désactiver la liaison retire l'appareil et ses entités de Home Assistant.

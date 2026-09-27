@@ -38,7 +38,7 @@ Como uma cópia para serviços e faz sair pontos de restauro antigos, os início
 
 Um início de domínio ou de Backup Everything deixa de fora os elementos que um limite retém e indica-os na resposta. A interface web e o agendamento não são afetados por nada disto. A quota horária vive em memória, por isso um reinício do BombVault repõe-na a zero.
 
-Os inícios pela [API](api.md#errors) contam para os mesmos limites por item que os inícios por MCP, e para a proteção da retenção.
+Os inícios pela [API](api.md#errors) e a partir do [Home Assistant](api.md#home-assistant) contam para os mesmos limites por item que os inícios por MCP, e para a proteção da retenção.
 
 ## Ativar {#switch-on}
 

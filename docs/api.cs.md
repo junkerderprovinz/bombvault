@@ -63,8 +63,33 @@ Chyba se vrátí jako `{"error": {"code": "...", "message": "..."}}` s odpovída
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Už něco běží, oblast je vypnutá, nebo není co dělat |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Limit požadavek zdrží; `Retry-After` říká, kdy to zkusit znovu |
 
-Spuštění mají stejné limity jako [spuštění přes MCP](mcp.md#starting-backups): 12 za hodinu na token, 15 minut mezi dvěma spuštěními téže položky, nejvýše 4 spuštění jedné položky za 24 hodin a ochrana uchovávání. Poslední tři počítají spuštění přes MCP a přes API dohromady. Token smí poslat 120 požadavků za minutu. Pět neúspěšných pokusů z jedné adresy ji na minutu zablokuje.
+Spuštění mají stejné limity jako [spuštění přes MCP](mcp.md#starting-backups): 12 za hodinu na token, 15 minut mezi dvěma spuštěními téže položky, nejvýše 4 spuštění jedné položky za 24 hodin a ochrana uchovávání. Poslední tři počítají spuštění přes MCP, přes API a z Home Assistant dohromady. Token smí poslat 120 požadavků za minutu. Pět neúspěšných pokusů z jedné adresy ji na minutu zablokuje.
 
 ## OpenAPI {#openapi}
 
 BombVault poskytuje popis těchto cest na `/api/v1/openapi.json` (OpenAPI 3.1). Nepotřebuje token. Načti ho do Swagger UI, Postmanu nebo generátoru kódu.
+
+## Home Assistant {#home-assistant}
+
+BombVault se může v Home Assistant objevit jako zařízení díky zjišťování MQTT. Home Assistant k tomu potřebuje svou integraci MQTT a broker, třeba doplněk Mosquitto. Žádná vlastní komponenta není potřeba.
+
+1. V BombVault otevři **Nastavení, Systém, Home Assistant**.
+2. Zadej adresu a port brokeru, a pokud je vyžaduje, i uživatelské jméno a heslo. Zapni **Použít TLS**, pokud broker používá TLS, obvykle na portu 8883; jeho certifikát musí platit pro zadanou adresu.
+3. Zapni **Připojit k Home Assistant** a klikni na **Uložit**. Karta ukáže, až spojení naběhne.
+
+Zařízení se jmenuje BombVault, případně BombVault s názvem instance v závorce, a má tyto entity:
+
+| Entita | Co ukazuje |
+|---|---|
+| Status | `ok`, `warning`, `failed` nebo `off`, nejhorší ze zapnutých oblastí |
+| Running job | Co právě běží, nebo `idle` |
+| Open anomalies | Kolik anomálií je otevřených |
+| Next scheduled backup | Kdy začne další plánovaná záloha |
+| *Oblast* last backup | Kdy proběhla poslední úspěšná záloha oblasti |
+| *Oblast* last result | Jak skončila její poslední záloha |
+| *Oblast* repository free space | Volné místo tam, kde leží její hlavní repozitář, pokud ho BombVault umí přečíst |
+| Back up *oblast* | Tlačítko, které zálohuje celou oblast |
+
+Názvy entit jsou anglicky, protože Home Assistant je přebírá tak, jak je BombVault posílá. Každá zapnutá oblast dostane vlastní entity a vypnutá o ně přijde. Tlačítka mají stejné limity jako [spuštění přes API](#errors). Stisknout je může každý, kdo smí do brokeru publikovat, proto brokeru dej heslo, nebo vypni **Tlačítka spouštějí zálohy**.
+
+BombVault čte svůj stav každých 15 sekund a zveřejní ho, když se něco změnilo, jako JSON pod `<předpona>/<uzel>/state`. Předpona je `bombvault`, dokud ji nezměníš, a uzel je krátký identifikátor, který si BombVault jednou zvolí. Zprávy zjišťování jdou pod výchozí předponu Home Assistant `homeassistant`. Obojí se uchovává (retained). Poslední vůle (last will) označí zařízení jako nedostupné, když se BombVault zastaví bez ohlášení. Vypnutím propojení BombVault zařízení i jeho entity z Home Assistant odstraní.

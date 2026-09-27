@@ -2404,6 +2404,8 @@ export const en = {
   "activityLog.viaApiUnknownKey": "{line} (via API)",
   "activityLog.viaApiLine": "one=Started through the API with the token {keys}|other=Started through the API with the tokens {keys}",
   "activityLog.viaApiLineUnknownKey": "Started through the API",
+  "activityLog.viaHomeAssistant": "{line} (via Home Assistant)",
+  "activityLog.viaHomeAssistantLine": "Started from Home Assistant",
 
   // MCP server: the key lifecycle, the client snippets and the certificate
   // of the address the operator opened BombVault at.
@@ -2644,6 +2646,26 @@ export const en = {
   "api.logKeptHint": "BombVault keeps up to a month of each token's calls: the newest 500 successful starts and cancels, and the newest 200 other calls (reads, refusals and errors). It never stores what was sent, or the token itself.",
   "api.outcomeNotPermitted": "Refused: this token may only read",
   "api.outcomeStartLimit": "Refused: this token has used up its starts for this hour",
+  "ha.title": "Home Assistant",
+  "ha.hint": "Sends the backup status to Home Assistant through an MQTT broker. BombVault shows up there as a device with sensors and a backup button per domain. Point Home Assistant's MQTT integration at the same broker.",
+  "ha.loadFailed": "The Home Assistant settings could not be loaded",
+  "ha.enable": "Connect to Home Assistant",
+  "ha.host": "MQTT broker",
+  "ha.hostPlaceholder": "Host name or IP address",
+  "ha.prefix": "Topic prefix",
+  "ha.prefixHint": "BombVault publishes its state under this prefix. Home Assistant finds the device on its own under its homeassistant discovery prefix.",
+  "ha.tls": "Use TLS",
+  "ha.tlsHint": "The broker's certificate has to be valid for the host name above. Mosquitto usually takes TLS on port 8883.",
+  "ha.buttons": "Buttons start backups",
+  "ha.buttonsHint": "Adds a button per domain that backs up the whole domain. A press has the same limits as the API: {minutes} minutes apart for the same item and {perDay} per item a day. Anyone who can publish to the broker can press it.",
+  "ha.statusOff": "Off",
+  "ha.statusConnected": "Connected to the broker",
+  "ha.statusConnecting": "Connecting to the broker",
+  "ha.statusError": "Not connected: {error}",
+  "ha.hostInvalid": "Enter the broker's host name or IP address.",
+  "ha.portInvalid": "The port is a number from 1 to 65535.",
+  "ha.prefixInvalid": "The topic prefix takes letters, digits, dashes and underscores, with slashes between them.",
+  "ha.removeFailed": "Saved, but the broker did not answer, so Home Assistant still lists the device. Remove it there, or switch this on and off again once the broker answers.",
 
   // Export / import settings (portable config file)
   "settingsIO.title": "Export / import settings",
@@ -4985,6 +5007,8 @@ export const de: Translations = {
   "activityLog.viaApiUnknownKey": "{line} (über API)",
   "activityLog.viaApiLine": "one=Über die API mit dem Token {keys} gestartet|other=Über die API mit den Tokens {keys} gestartet",
   "activityLog.viaApiLineUnknownKey": "Über die API gestartet",
+  "activityLog.viaHomeAssistant": "{line} (über Home Assistant)",
+  "activityLog.viaHomeAssistantLine": "Über Home Assistant gestartet",
 
   // MCP-Server: Schlüssel, Client-Ausschnitte und das Zertifikat der
   // Adresse, unter der BombVault geöffnet wurde.
@@ -5225,6 +5249,26 @@ export const de: Translations = {
   "api.logKeptHint": "BombVault hebt die Aufrufe jedes Tokens bis zu einem Monat auf: die neuesten 500 erfolgreichen Starts und Abbrüche und die neuesten 200 übrigen Aufrufe (Lesezugriffe, Ablehnungen und Fehler). Was geschickt wurde, speichert es nie, das Token selbst auch nicht.",
   "api.outcomeNotPermitted": "Abgelehnt: Dieses Token darf nur lesen",
   "api.outcomeStartLimit": "Abgelehnt: Dieses Token hat seine Starts für diese Stunde verbraucht",
+  "ha.title": "Home Assistant",
+  "ha.hint": "Schickt den Backup-Status über einen MQTT-Broker an Home Assistant. BombVault erscheint dort als Gerät mit Sensoren und einem Backup-Knopf je Domäne. Richte die MQTT-Integration von Home Assistant auf denselben Broker.",
+  "ha.loadFailed": "Die Home-Assistant-Einstellungen konnten nicht geladen werden",
+  "ha.enable": "Mit Home Assistant verbinden",
+  "ha.host": "MQTT-Broker",
+  "ha.hostPlaceholder": "Hostname oder IP-Adresse",
+  "ha.prefix": "Themen-Präfix",
+  "ha.prefixHint": "Unter diesem Präfix veröffentlicht BombVault seinen Zustand. Home Assistant findet das Gerät von selbst über sein Discovery-Präfix homeassistant.",
+  "ha.tls": "TLS verwenden",
+  "ha.tlsHint": "Das Zertifikat des Brokers muss für den Hostnamen oben gültig sein. Mosquitto nimmt TLS meist auf Port 8883 an.",
+  "ha.buttons": "Knöpfe starten Backups",
+  "ha.buttonsHint": "Legt je Domäne einen Knopf an, der die ganze Domäne sichert. Ein Druck hat dieselben Grenzen wie die API: {minutes} Minuten Abstand beim selben Element und {perDay} pro Element und Tag. Jeder, der auf dem Broker veröffentlichen darf, kann ihn drücken.",
+  "ha.statusOff": "Aus",
+  "ha.statusConnected": "Mit dem Broker verbunden",
+  "ha.statusConnecting": "Verbinde mit dem Broker",
+  "ha.statusError": "Nicht verbunden: {error}",
+  "ha.hostInvalid": "Gib den Hostnamen oder die IP-Adresse des Brokers ein.",
+  "ha.portInvalid": "Der Port ist eine Zahl von 1 bis 65535.",
+  "ha.prefixInvalid": "Das Themen-Präfix besteht aus Buchstaben, Ziffern, Binde- und Unterstrichen, mit Schrägstrichen dazwischen.",
+  "ha.removeFailed": "Gespeichert, aber der Broker hat nicht geantwortet, deshalb führt Home Assistant das Gerät noch. Entferne es dort oder schalte das hier wieder ein und aus, sobald der Broker antwortet.",
 
   // Einstellungen exportieren / importieren (portable Konfigurationsdatei)
   "settingsIO.title": "Einstellungen exportieren / importieren",

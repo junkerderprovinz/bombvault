@@ -63,8 +63,33 @@ Virhe palaa muodossa `{"error": {"code": "...", "message": "..."}}` vastaavalla 
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Jotain muuta on käynnissä, alue on pois päältä tai tehtävää ei ole |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Raja pidättää pyynnön; `Retry-After` kertoo, milloin voi yrittää uudelleen |
 
-Käynnistyksiin pätevät samat rajat kuin [MCP:n kautta tehtyihin](mcp.md#starting-backups): 12 tunnissa tokenia kohti, 15 minuuttia saman kohteen kahden käynnistyksen välillä, enintään 4 saman kohteen käynnistystä 24 tunnissa sekä säilytyssuoja. Kolme viimeistä laskevat MCP:n ja API:n kautta tehdyt käynnistykset yhteen. Token voi tehdä 120 pyyntöä minuutissa. Viisi epäonnistunutta yritystä samasta osoitteesta lukitsee sen minuutiksi.
+Käynnistyksiin pätevät samat rajat kuin [MCP:n kautta tehtyihin](mcp.md#starting-backups): 12 tunnissa tokenia kohti, 15 minuuttia saman kohteen kahden käynnistyksen välillä, enintään 4 saman kohteen käynnistystä 24 tunnissa sekä säilytyssuoja. Kolme viimeistä laskevat MCP:n ja API:n kautta sekä Home Assistantista tehdyt käynnistykset yhteen. Token voi tehdä 120 pyyntöä minuutissa. Viisi epäonnistunutta yritystä samasta osoitteesta lukitsee sen minuutiksi.
 
 ## OpenAPI {#openapi}
 
 BombVault tarjoaa näiden reittien kuvauksen osoitteessa `/api/v1/openapi.json` (OpenAPI 3.1). Se ei vaadi tokenia. Lataa se Swagger UI:hin, Postmaniin tai koodigeneraattoriin.
+
+## Home Assistant {#home-assistant}
+
+BombVault voi näkyä Home Assistantissa laitteena MQTT-löydön kautta. Home Assistant tarvitsee MQTT-integraationsa ja välittäjän, esimerkiksi Mosquitto-lisäosan. Omaa komponenttia ei tarvita.
+
+1. Avaa BombVaultissa **Asetukset, Järjestelmä, Home Assistant**.
+2. Anna välittäjän osoite ja portti sekä käyttäjänimi ja salasana, jos se niitä pyytää. Kytke **Käytä TLS:ää** päälle, jos välittäjä käyttää TLS:ää, yleensä portissa 8883; sen varmenteen on oltava voimassa antamallesi osoitteelle.
+3. Kytke **Yhdistä Home Assistantiin** päälle ja napsauta **Tallenna**. Kortti näyttää, kun yhteys on muodostettu.
+
+Laitteen nimi on BombVault tai BombVault, jonka perässä on instanssin nimi suluissa, ja sillä on nämä entiteetit:
+
+| Entiteetti | Mitä se näyttää |
+|---|---|
+| Status | `ok`, `warning`, `failed` tai `off`, päällä olevista alueista huonoin |
+| Running job | Mikä on nyt käynnissä, tai `idle` |
+| Open anomalies | Montako poikkeamaa on avoinna |
+| Next scheduled backup | Milloin seuraava ajastettu kopio alkaa |
+| *Alue* last backup | Milloin alueen viimeisin onnistunut kopio ajettiin |
+| *Alue* last result | Miten sen viimeisin kopio päättyi |
+| *Alue* repository free space | Vapaa tila siellä, missä sen ensisijainen repository on, jos BombVault pystyy lukemaan sen |
+| Back up *alue* | Painike, joka varmuuskopioi koko alueen |
+
+Entiteettien nimet ovat englanniksi, koska Home Assistant ottaa ne sellaisina kuin BombVault ne lähettää. Jokainen päällä oleva alue saa omat entiteettinsä, ja pois kytketty alue menettää ne. Painikkeisiin pätevät samat rajat kuin [API:n kautta tehtyihin käynnistyksiin](#errors). Kuka tahansa, joka voi julkaista välittäjään, voi painaa niitä, joten suojaa välittäjä salasanalla tai kytke **Painikkeet käynnistävät varmuuskopioita** pois.
+
+BombVault lukee tilansa 15 sekunnin välein ja julkaisee sen, kun jokin on muuttunut, JSON-muodossa aiheessa `<etuliite>/<solmu>/state`. Etuliite on `bombvault`, kunnes muutat sen, ja solmu on lyhyt tunniste, jonka BombVault valitsee kerran. Löytöviestit menevät Home Assistantin oletusetuliitteeseen `homeassistant`. Molemmat säilytetään (retained). Viimeinen viesti (last will) merkitsee laitteen saavuttamattomaksi, jos BombVault pysähtyy ilmoittamatta. Kun kytket yhteyden pois, BombVault poistaa laitteen ja sen entiteetit Home Assistantista.

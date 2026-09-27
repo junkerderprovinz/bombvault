@@ -38,7 +38,7 @@ BombVault には Model Context Protocol (MCP) のサーバーが組み込まれ�
 
 ドメインや Backup Everything の開始では、制限に引っかかった項目は除外され、応答の中で名前が示されます。これらの制限はどれも Web インターフェースとスケジュールには影響しません。1 時間ごとの枠はメモリ上にあるため、BombVault を再起動するとリセットされます。
 
-[API](api.md#errors) 経由の開始は、項目ごとの制限と保持の保護において、MCP 経由の開始と合わせて数えられます。
+[API](api.md#errors) 経由と [Home Assistant](api.md#home-assistant) からの開始は、項目ごとの制限と保持の保護において、MCP 経由の開始と合わせて数えられます。
 
 ## オンにする {#switch-on}
 

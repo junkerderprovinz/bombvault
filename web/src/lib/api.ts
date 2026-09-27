@@ -458,8 +458,9 @@ export interface Run {
   // runView.Domain value comment for it and missed this, its TS counterpart.
   domain: string;
   /** What asked for the run: "" for the web interface and the scheduler,
-   *  "mcp" for an assistant, "api" for an API token. */
-  startedVia?: "" | "mcp" | "api";
+   *  "mcp" for an assistant, "api" for an API token, "mqtt" for a Home
+   *  Assistant button. */
+  startedVia?: "" | "mcp" | "api" | "mqtt";
   startedViaKey?: string;
   /** The operator's name for the MCP key or API token behind the run, "" once
    *  it is purged from the list. */
@@ -4924,6 +4925,41 @@ export function purgeApiToken(id: string): Promise<OkEnvelope> {
 
 export function getApiTokenActivity(id: string): Promise<McpKeyActivity> {
   return fetchJSON(`/api/tokens/${encodeURIComponent(id)}/activity`);
+}
+
+/** The Home Assistant link over MQTT. The password never comes back;
+ *  passwordSet says whether one is stored. */
+export interface HomeAssistantSettings {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username: string;
+  passwordSet: boolean;
+  tls: boolean;
+  prefix: string;
+  buttons: boolean;
+  nodeId: string;
+  status: { connected: boolean; error: string };
+}
+
+export function getHomeAssistant(): Promise<
+  OkEnvelope & { settings?: HomeAssistantSettings; cooldownMinutes?: number; itemStartsPerDay?: number }
+> {
+  return fetchJSON("/api/homeassistant");
+}
+
+/** Saves and reconnects. An empty password keeps the stored one. */
+export function setHomeAssistant(body: {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  tls: boolean;
+  prefix: string;
+  buttons: boolean;
+}): Promise<OkEnvelope & { settings?: HomeAssistantSettings; warning?: string }> {
+  return fetchJSON("/api/homeassistant", { method: "PUT", body: JSON.stringify(body) });
 }
 
 /** Reissues BombVault's own certificate with `host` among its names, so a

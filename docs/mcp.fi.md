@@ -38,7 +38,7 @@ Koska varmuuskopio pysäyttää asioita ja työntää vanhoja palautuspisteitä 
 
 Toimialueen tai Backup Everythingin käynnistys jättää pois kohteet, jotka jokin raja pidättää, ja nimeää ne vastauksessaan. Mikään näistä ei koske verkkokäyttöliittymää eikä ajastusta. Tuntikiintiö on muistissa, joten BombVaultin uudelleenkäynnistys nollaa sen.
 
-[API:n](api.md#errors) kautta tehdyt käynnistykset lasketaan samoihin kohdekohtaisiin rajoihin kuin MCP:n kautta tehdyt sekä säilytyssuojaan.
+[API:n](api.md#errors) kautta ja [Home Assistantista](api.md#home-assistant) tehdyt käynnistykset lasketaan samoihin kohdekohtaisiin rajoihin kuin MCP:n kautta tehdyt sekä säilytyssuojaan.
 
 ## Ota käyttöön {#switch-on}
 

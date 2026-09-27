@@ -4,7 +4,7 @@
     "title": "BombVault API",
     "version": "1",
     "summary": "Read backup health and start backups from scripts and home automation.",
-    "description": "Every route needs an API token, created under Settings, System, API tokens. Send it as `Authorization: Bearer <token>` or as `X-API-Key: <token>`. A read-only token can call every GET route; the POST routes need a token that may start backups. Starts share their limits with MCP: a number of starts per hour per token, a pause between two starts of the same item, a number of starts per item per day, and the retention guard. Times are unix seconds unless a field says otherwise.",
+    "description": "Every route needs an API token, created under Settings, System, API tokens. Send it as `Authorization: Bearer <token>` or as `X-API-Key: <token>`. A read-only token can call every GET route; the POST routes need a token that may start backups. Starts share their limits with MCP and Home Assistant: a number of starts per hour per token, a pause between two starts of the same item, a number of starts per item per day, and the retention guard. Times are unix seconds unless a field says otherwise.",
     "license": { "name": "AGPL-3.0", "identifier": "AGPL-3.0-only" }
   },
   "servers": [{ "url": "/" }],

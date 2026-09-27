@@ -63,8 +63,33 @@ Lỗi trả về dưới dạng `{"error": {"code": "...", "message": "..."}}` k
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Đã có việc khác đang chạy, miền đang tắt, hoặc không có gì để làm |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Một giới hạn giữ yêu cầu lại; `Retry-After` cho biết khi nào thử lại |
 
-Việc bắt đầu tuân theo cùng giới hạn như [bắt đầu qua MCP](mcp.md#starting-backups): 12 lần mỗi giờ cho mỗi mã, cách nhau 15 phút giữa hai lần bắt đầu cùng một mục, tối đa 4 lần cho một mục trong 24 giờ, và cơ chế bảo vệ lưu giữ. Ba giới hạn sau tính chung các lần bắt đầu qua MCP và qua API. Một mã được gửi 120 yêu cầu mỗi phút. Năm lần thử thất bại từ một địa chỉ sẽ khóa địa chỉ đó trong một phút.
+Việc bắt đầu tuân theo cùng giới hạn như [bắt đầu qua MCP](mcp.md#starting-backups): 12 lần mỗi giờ cho mỗi mã, cách nhau 15 phút giữa hai lần bắt đầu cùng một mục, tối đa 4 lần cho một mục trong 24 giờ, và cơ chế bảo vệ lưu giữ. Ba giới hạn sau tính chung các lần bắt đầu qua MCP, qua API và từ Home Assistant. Một mã được gửi 120 yêu cầu mỗi phút. Năm lần thử thất bại từ một địa chỉ sẽ khóa địa chỉ đó trong một phút.
 
 ## OpenAPI {#openapi}
 
 BombVault cung cấp mô tả các tuyến này tại `/api/v1/openapi.json` (OpenAPI 3.1). Không cần mã thông báo. Hãy nạp nó vào Swagger UI, Postman hoặc một trình tạo mã.
+
+## Home Assistant {#home-assistant}
+
+BombVault có thể xuất hiện trong Home Assistant như một thiết bị, nhờ cơ chế khám phá MQTT. Home Assistant cần tích hợp MQTT của nó và một broker, ví dụ tiện ích bổ sung Mosquitto. Không cần thành phần riêng nào.
+
+1. Trong BombVault, mở **Cài đặt, Hệ thống, Home Assistant**.
+2. Nhập địa chỉ và cổng của broker, cùng tên người dùng và mật khẩu nếu broker yêu cầu. Bật **Dùng TLS** nếu broker dùng TLS, thường ở cổng 8883; chứng chỉ của broker phải hợp lệ cho địa chỉ bạn nhập.
+3. Bật **Kết nối với Home Assistant** và bấm **Lưu**. Thẻ sẽ cho biết khi kết nối đã thông.
+
+Thiết bị có tên BombVault, hoặc BombVault kèm tên phiên bản chạy trong ngoặc, và có các thực thể sau:
+
+| Thực thể | Hiển thị gì |
+|---|---|
+| Status | `ok`, `warning`, `failed` hoặc `off`, trạng thái tệ nhất trong các miền đang bật |
+| Running job | Việc đang chạy, hoặc `idle` |
+| Open anomalies | Số bất thường còn mở |
+| Next scheduled backup | Khi nào bản sao lưu theo lịch tiếp theo bắt đầu |
+| *Miền* last backup | Khi nào bản sao lưu thành công gần nhất của miền chạy |
+| *Miền* last result | Bản sao lưu gần nhất kết thúc ra sao |
+| *Miền* repository free space | Dung lượng trống nơi đặt kho chính của miền, nếu BombVault đọc được |
+| Back up *miền* | Nút sao lưu cả miền |
+
+Tên thực thể bằng tiếng Anh, vì Home Assistant dùng đúng tên BombVault gửi. Mỗi miền đang bật có thực thể riêng, và miền bạn tắt sẽ mất chúng. Các nút tuân theo cùng giới hạn như [bắt đầu qua API](#errors). Ai công bố được lên broker đều bấm được, nên hãy đặt mật khẩu cho broker hoặc tắt **Nút bấm bắt đầu sao lưu**.
+
+BombVault đọc trạng thái của mình mỗi 15 giây và công bố khi có thay đổi, dạng JSON tại `<tiền tố>/<nút>/state`. Tiền tố là `bombvault` nếu bạn không đổi, còn nút là một mã ngắn BombVault chọn một lần. Các thông điệp khám phá đi tới tiền tố mặc định của Home Assistant là `homeassistant`. Cả hai đều được giữ lại (retained). Thông điệp di chúc (last will) đánh dấu thiết bị là không khả dụng nếu BombVault dừng mà không báo trước. Khi tắt liên kết, BombVault gỡ thiết bị và các thực thể của nó khỏi Home Assistant.

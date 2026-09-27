@@ -63,8 +63,33 @@ A hiba `{"error": {"code": "...", "message": "..."}}` formában tér vissza, a m
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Már fut valami, a terület ki van kapcsolva, vagy nincs teendő |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Egy korlát visszatartja a kérést; a `Retry-After` megmondja, mikor próbálkozhatsz újra |
 
-Az indításokra ugyanazok a korlátok vonatkoznak, mint az [MCP-n keresztüliekre](mcp.md#starting-backups): tokenenként óránként 12, ugyanannak az elemnek két indítása között 15 perc, egy elemnek 24 óra alatt legfeljebb 4 indítás, valamint a megőrzési védelem. Az utolsó három együtt számolja az MCP-n és az API-n keresztüli indításokat. Egy token percenként 120 kérést küldhet. Egy címről öt sikertelen próbálkozás után a cím egy percre letiltódik.
+Az indításokra ugyanazok a korlátok vonatkoznak, mint az [MCP-n keresztüliekre](mcp.md#starting-backups): tokenenként óránként 12, ugyanannak az elemnek két indítása között 15 perc, egy elemnek 24 óra alatt legfeljebb 4 indítás, valamint a megőrzési védelem. Az utolsó három együtt számolja az MCP-n és az API-n keresztüli, valamint a Home Assistantből érkező indításokat. Egy token percenként 120 kérést küldhet. Egy címről öt sikertelen próbálkozás után a cím egy percre letiltódik.
 
 ## OpenAPI {#openapi}
 
 A BombVault ezeknek az útvonalaknak a leírását a `/api/v1/openapi.json` címen szolgálja ki (OpenAPI 3.1). Ehhez nem kell token. Töltsd be a Swagger UI-ba, a Postmanbe vagy egy kódgenerátorba.
+
+## Home Assistant {#home-assistant}
+
+A BombVault eszközként jelenhet meg a Home Assistantben, MQTT-felderítéssel. Ehhez a Home Assistantnek kell a saját MQTT-integrációja és egy bróker, például a Mosquitto bővítmény. Saját komponensre nincs szükség.
+
+1. A BombVaultban nyisd meg a **Beállítások, Rendszer, Home Assistant** részt.
+2. Add meg a bróker címét és portját, és ha kéri, a felhasználónevet és a jelszót. Kapcsold be a **TLS használata** kapcsolót, ha a bróker TLS-t használ, általában a 8883-as porton; a tanúsítványának érvényesnek kell lennie a megadott címre.
+3. Kapcsold be a **Csatlakozás a Home Assistanthez** kapcsolót, és kattints a **Mentés** gombra. A kártya mutatja, amikor a kapcsolat felépült.
+
+Az eszköz neve BombVault, vagy BombVault a példány nevével zárójelben, és ezek az entitásai vannak:
+
+| Entitás | Mit mutat |
+|---|---|
+| Status | `ok`, `warning`, `failed` vagy `off`, a bekapcsolt területek közül a legrosszabb |
+| Running job | Mi fut éppen, vagy `idle` |
+| Open anomalies | Hány anomália nyitott |
+| Next scheduled backup | Mikor indul a következő ütemezett mentés |
+| *Terület* last backup | Mikor futott a terület utolsó sikeres mentése |
+| *Terület* last result | Hogyan végződött az utolsó mentése |
+| *Terület* repository free space | A szabad hely ott, ahol a fő tárolója van, ha a BombVault ki tudja olvasni |
+| Back up *terület* | Egy gomb, amely az egész területet menti |
+
+Az entitások neve angol, mert a Home Assistant úgy veszi át őket, ahogy a BombVault küldi. Minden bekapcsolt terület saját entitásokat kap, a kikapcsolt elveszíti őket. A gombokra ugyanazok a korlátok vonatkoznak, mint az [API-n keresztüli indításokra](#errors). Bárki megnyomhatja őket, aki közzétehet a brókeren, ezért adj jelszót a brókernek, vagy kapcsold ki az **A gombok mentést indítanak** kapcsolót.
+
+A BombVault 15 másodpercenként beolvassa az állapotát, és közzéteszi, ha valami változott, JSON-ként a `<előtag>/<csomópont>/state` témában. Az előtag `bombvault`, amíg meg nem változtatod, a csomópont pedig egy rövid azonosító, amelyet a BombVault egyszer választ. A felderítési üzenetek a Home Assistant alapértelmezett `homeassistant` előtagjára mennek. Mindkettő megőrzött (retained). Egy utolsó üzenet (last will) elérhetetlennek jelöli az eszközt, ha a BombVault szó nélkül leáll. Ha kikapcsolod a kapcsolatot, a BombVault eltávolítja az eszközt és az entitásait a Home Assistantből.

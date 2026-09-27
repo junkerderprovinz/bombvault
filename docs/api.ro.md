@@ -63,8 +63,33 @@ O eroare se întoarce ca `{"error": {"code": "...", "message": "..."}}`, cu star
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Rulează deja altceva, domeniul e oprit sau nu e nimic de făcut |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | O limită reține cererea; `Retry-After` spune când poți încerca din nou |
 
-Pornirile respectă aceleași limite ca [pornirile prin MCP](mcp.md#starting-backups): 12 pe oră per token, 15 minute între două porniri ale aceluiași element, cel mult 4 porniri ale unui element în 24 de ore și protecția de retenție. Ultimele trei numără împreună pornirile prin MCP și prin API. Un token poate face 120 de cereri pe minut. Cinci încercări eșuate de la o adresă o blochează un minut.
+Pornirile respectă aceleași limite ca [pornirile prin MCP](mcp.md#starting-backups): 12 pe oră per token, 15 minute între două porniri ale aceluiași element, cel mult 4 porniri ale unui element în 24 de ore și protecția de retenție. Ultimele trei numără împreună pornirile prin MCP, prin API și din Home Assistant. Un token poate face 120 de cereri pe minut. Cinci încercări eșuate de la o adresă o blochează un minut.
 
 ## OpenAPI {#openapi}
 
 BombVault servește o descriere a acestor rute la `/api/v1/openapi.json` (OpenAPI 3.1). Nu cere token. Încarc-o în Swagger UI, Postman sau un generator de cod.
+
+## Home Assistant {#home-assistant}
+
+BombVault poate apărea în Home Assistant ca dispozitiv, prin descoperirea MQTT. Home Assistant are nevoie de integrarea sa MQTT și de un broker, de exemplu add-on-ul Mosquitto. Nu e nevoie de nicio componentă proprie.
+
+1. În BombVault, deschide **Setări, Sistem, Home Assistant**.
+2. Introdu adresa și portul brokerului, iar utilizatorul și parola dacă le cere. Pornește **Folosește TLS** dacă brokerul folosește TLS, de obicei pe portul 8883; certificatul lui trebuie să fie valid pentru adresa introdusă.
+3. Pornește **Conectează la Home Assistant** și apasă **Salvare**. Cardul arată când conexiunea e activă.
+
+Dispozitivul se numește BombVault, sau BombVault cu numele instanței între paranteze, și are aceste entități:
+
+| Entitate | Ce arată |
+|---|---|
+| Status | `ok`, `warning`, `failed` sau `off`, cel mai rău dintre domeniile pornite |
+| Running job | Ce rulează acum, sau `idle` |
+| Open anomalies | Câte anomalii sunt deschise |
+| Next scheduled backup | Când începe următoarea copie planificată |
+| *Domeniu* last backup | Când a rulat ultima copie reușită a domeniului |
+| *Domeniu* last result | Cum s-a încheiat ultima sa copie |
+| *Domeniu* repository free space | Spațiul liber acolo unde se află depozitul său principal, dacă BombVault îl poate citi |
+| Back up *domeniu* | Un buton care copiază tot domeniul |
+
+Numele entităților sunt în engleză, pentru că Home Assistant le preia așa cum le trimite BombVault. Fiecare domeniu pornit primește entități proprii, iar unul pe care îl oprești le pierde. Butoanele respectă aceleași limite ca [pornirile prin API](#errors). Oricine poate publica pe broker le poate apăsa, așa că pune o parolă brokerului sau oprește **Butoanele pornesc copii**.
+
+BombVault își citește starea la fiecare 15 secunde și o publică atunci când s-a schimbat ceva, ca JSON sub `<prefix>/<nod>/state`. Prefixul este `bombvault` cât timp nu îl schimbi, iar nodul este un identificator scurt pe care BombVault îl alege o dată. Mesajele de descoperire merg la prefixul implicit al Home Assistant, `homeassistant`. Ambele sunt păstrate (retained). Un ultim mesaj (last will) marchează dispozitivul ca indisponibil dacă BombVault se oprește fără să anunțe. Dacă oprești legătura, BombVault scoate dispozitivul și entitățile lui din Home Assistant.

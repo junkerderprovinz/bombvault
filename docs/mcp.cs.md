@@ -38,7 +38,7 @@ Protože záloha zastavuje služby a vytlačuje staré body obnovy, jsou spušt�
 
 Spuštění domény nebo Backup Everything vynechá položky, které nějaký limit zadrží, a vyjmenuje je v odpovědi. Webové rozhraní ani plán se žádného z těchto limitů netýkají. Hodinový rozpočet je jen v paměti, takže restart BombVaultu ho vynuluje.
 
-Spuštění přes [API](api.md#errors) se u limitů na položku i u ochrany uchovávání počítají spolu se spuštěními přes MCP.
+Spuštění přes [API](api.md#errors) a z [Home Assistant](api.md#home-assistant) se u limitů na položku i u ochrany uchovávání počítají spolu se spuštěními přes MCP.
 
 ## Zapnutí {#switch-on}
 

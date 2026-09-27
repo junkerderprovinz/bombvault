@@ -63,8 +63,33 @@ Błąd wraca jako `{"error": {"code": "...", "message": "..."}}` z odpowiednim s
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Coś innego już działa, obszar jest wyłączony albo nie ma nic do zrobienia |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Limit wstrzymuje żądanie; `Retry-After` mówi, kiedy spróbować ponownie |
 
-Uruchomienia podlegają tym samym limitom co [uruchomienia przez MCP](mcp.md#starting-backups): 12 na godzinę na token, 15 minut między dwoma uruchomieniami tego samego elementu, najwyżej 4 uruchomienia elementu w ciągu 24 godzin oraz ochrona retencji. Ostatnie trzy liczą razem uruchomienia przez MCP i przez API. Token może wysłać 120 żądań na minutę. Pięć nieudanych prób z jednego adresu blokuje go na minutę.
+Uruchomienia podlegają tym samym limitom co [uruchomienia przez MCP](mcp.md#starting-backups): 12 na godzinę na token, 15 minut między dwoma uruchomieniami tego samego elementu, najwyżej 4 uruchomienia elementu w ciągu 24 godzin oraz ochrona retencji. Ostatnie trzy liczą razem uruchomienia przez MCP, przez API i z Home Assistant. Token może wysłać 120 żądań na minutę. Pięć nieudanych prób z jednego adresu blokuje go na minutę.
 
 ## OpenAPI {#openapi}
 
 BombVault udostępnia opis tych tras pod `/api/v1/openapi.json` (OpenAPI 3.1). Nie potrzeba do tego tokenu. Wczytaj go do Swagger UI, Postmana albo generatora kodu.
+
+## Home Assistant {#home-assistant}
+
+BombVault może pojawić się w Home Assistant jako urządzenie dzięki wykrywaniu MQTT. Home Assistant potrzebuje do tego swojej integracji MQTT i brokera, na przykład dodatku Mosquitto. Żaden własny komponent nie jest potrzebny.
+
+1. W BombVault otwórz **Ustawienia, System, Home Assistant**.
+2. Wpisz adres i port brokera, a także nazwę użytkownika i hasło, jeśli ich wymaga. Włącz **Użyj TLS**, jeśli broker używa TLS, zwykle na porcie 8883; jego certyfikat musi być ważny dla wpisanego adresu.
+3. Włącz **Połącz z Home Assistant** i kliknij **Zapisz**. Karta pokazuje, kiedy połączenie działa.
+
+Urządzenie nazywa się BombVault albo BombVault z nazwą instancji w nawiasie i ma takie encje:
+
+| Encja | Co pokazuje |
+|---|---|
+| Status | `ok`, `warning`, `failed` lub `off`, najgorszy stan spośród włączonych obszarów |
+| Running job | Co teraz działa, albo `idle` |
+| Open anomalies | Ile anomalii jest otwartych |
+| Next scheduled backup | Kiedy zaczyna się następna zaplanowana kopia |
+| *Obszar* last backup | Kiedy wykonano ostatnią udaną kopię obszaru |
+| *Obszar* last result | Jak zakończyła się jego ostatnia kopia |
+| *Obszar* repository free space | Wolne miejsce tam, gdzie leży jego główne repozytorium, jeśli BombVault może je odczytać |
+| Back up *obszar* | Przycisk, który kopiuje cały obszar |
+
+Nazwy encji są po angielsku, bo Home Assistant przejmuje je tak, jak wysyła je BombVault. Każdy włączony obszar dostaje własne encje, a wyłączony je traci. Przyciski podlegają tym samym limitom co [uruchomienia przez API](#errors). Nacisnąć je może każdy, kto może publikować w brokerze, więc zabezpiecz broker hasłem albo wyłącz **Przyciski uruchamiają kopie**.
+
+BombVault odczytuje swój stan co 15 sekund i publikuje go, gdy coś się zmieniło, jako JSON pod `<prefiks>/<węzeł>/state`. Prefiks to `bombvault`, dopóki go nie zmienisz, a węzeł to krótki identyfikator, który BombVault wybiera raz. Komunikaty wykrywania trafiają pod domyślny prefiks Home Assistant, `homeassistant`. Oba są zachowywane (retained). Ostatnia wola (last will) oznacza urządzenie jako niedostępne, jeśli BombVault zatrzyma się bez uprzedzenia. Wyłączenie połączenia usuwa urządzenie i jego encje z Home Assistant.

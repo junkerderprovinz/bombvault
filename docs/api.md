@@ -63,8 +63,33 @@ An error comes back as `{"error": {"code": "...", "message": "..."}}` with a mat
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Something else is running, the domain is off, or there is nothing to do |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | A limit holds the request back; `Retry-After` says when to try again |
 
-Starts follow the same limits as [starts through MCP](mcp.md#starting-backups): 12 per hour per token, 15 minutes between two starts of the same item, at most 4 starts of one item in 24 hours, and the retention guard. The last three count starts through MCP and the API together. A token can make 120 requests a minute. Five failed attempts from one address lock it out for a minute.
+Starts follow the same limits as [starts through MCP](mcp.md#starting-backups): 12 per hour per token, 15 minutes between two starts of the same item, at most 4 starts of one item in 24 hours, and the retention guard. The last three count starts through MCP, the API and Home Assistant together. A token can make 120 requests a minute. Five failed attempts from one address lock it out for a minute.
 
 ## OpenAPI {#openapi}
 
 BombVault serves a description of these routes at `/api/v1/openapi.json` (OpenAPI 3.1). It needs no token. Load it into Swagger UI, Postman or a code generator.
+
+## Home Assistant {#home-assistant}
+
+BombVault can appear in Home Assistant as a device, through MQTT discovery. Home Assistant needs its MQTT integration and a broker, for example the Mosquitto add-on. No custom component is involved.
+
+1. In BombVault, open **Settings, System, Home Assistant**.
+2. Enter the broker's address and port, and its user name and password if it asks for them. Switch **Use TLS** on if the broker takes TLS, usually on port 8883; its certificate has to be valid for the address you entered.
+3. Switch **Connect to Home Assistant** on and click **Save**. The card shows when the connection is up.
+
+The device is called BombVault, or BombVault with the instance name in brackets, and has these entities:
+
+| Entity | What it shows |
+|---|---|
+| Status | `ok`, `warning`, `failed` or `off`, the worst of the domains that are switched on |
+| Running job | What runs now, or `idle` |
+| Open anomalies | How many anomalies are open |
+| Next scheduled backup | When the next scheduled backup starts |
+| *Domain* last backup | When the domain's last successful backup ran |
+| *Domain* last result | How its last backup ended |
+| *Domain* repository free space | Free space where its primary repository lives, if BombVault can read it |
+| Back up *domain* | A button that backs up the whole domain |
+
+Every switched-on domain gets its own entities, and a domain you switch off loses them. The buttons follow the same limits as [starts through the API](#errors). Anyone who can publish to the broker can press them, so give the broker a password, or switch **Buttons start backups** off.
+
+BombVault reads its state every 15 seconds and publishes it when something changed, as JSON under `<prefix>/<node>/state`. The prefix is `bombvault` unless you change it, and the node is a short id BombVault picks once. The discovery messages go to Home Assistant's default prefix `homeassistant`. Both are retained. A last will marks the device unavailable if BombVault stops without saying so. Switching the link off removes the device and its entities from Home Assistant.
