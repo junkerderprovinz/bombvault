@@ -71,10 +71,10 @@ export function placeErrorText(t: T, lang: string, res: PlaceRefusal, fallback: 
       if (res.holders) return t("places.error.inUse").replace("{holders}", holdersText(t, lang, res.holders));
       return t("places.error.folderInUse");
     case "place-location-established":
-      return t("places.error.locationEstablished", res.snapshots ?? 0).replace(
-        "{domains}",
-        domainNames(t, lang, res.domains ?? [])
-      );
+      // A named repository is counted by the items on it, not by snapshots,
+      // and the repository a place is itself belongs to no domain.
+      if (!res.snapshots || !res.domains?.length) return t("places.error.locationEstablishedPlain");
+      return t("places.error.locationEstablished", res.snapshots).replace("{domains}", domainNames(t, lang, res.domains));
     case "place-probe-failed":
       return probeFailureText(t, lang, res.probe ?? res);
   }
