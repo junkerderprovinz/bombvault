@@ -2489,6 +2489,13 @@ const ja: Partial<Translations> = {
   "dashboard.startTestFailed": "起動テスト失敗：{name}",
   "settings.startTest": "起動テスト",
   "settings.startTestHelp": "スケジュールされた復元チェックごとに、コンテナーを 1 つ隔離コピーとして復元し、起動して立ち上がるかを確認します。コピーは専用ネットワーク上で CPU 1 個とメモリー 2 GiB で動作し、終了後に削除されます。",
+  "integrity.pruning": "整理中…",
+  "progress.count.packs": "{n} パック中 {done}",
+  "progress.count.snapshots": "{n} スナップショット中 {done}",
+  "progress.count.indexes": "{n} インデックス中 {done}",
+  "progress.count.files": "{n} ファイル中 {done}",
+  "progress.count.items": "{n} 中 {done}",
+  "progress.remaining": "残り {time}",
 };
 
 export default ja;

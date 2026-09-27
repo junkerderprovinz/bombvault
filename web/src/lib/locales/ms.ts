@@ -2508,6 +2508,13 @@ const ms: Partial<Translations> = {
   "dashboard.startTestFailed": "Ujian mula gagal: {name}",
   "settings.startTest": "Ujian mula",
   "settings.startTestHelp": "Setiap semakan pemulihan berjadual juga memulihkan satu bekas ke salinan terasing, memulakannya dan menyemak bahawa ia hidup. Salinan berjalan dengan 1 CPU dan memori 2 GiB pada rangkaiannya sendiri dan dibuang selepas itu.",
+  "integrity.pruning": "Membersihkan…",
+  "progress.count.packs": "{done} daripada {n} pek",
+  "progress.count.snapshots": "{done} daripada {n} petikan",
+  "progress.count.indexes": "{done} daripada {n} indeks",
+  "progress.count.files": "{done} daripada {n} fail",
+  "progress.count.items": "{done} daripada {n}",
+  "progress.remaining": "baki {time}",
 };
 
 export default ms;

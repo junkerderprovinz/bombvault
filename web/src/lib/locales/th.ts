@@ -2500,6 +2500,13 @@ const th: Partial<Translations> = {
   "dashboard.startTestFailed": "ทดสอบการเริ่มล้มเหลว: {name}",
   "settings.startTest": "ทดสอบการเริ่ม",
   "settings.startTestHelp": "การตรวจการกู้คืนตามกำหนดแต่ละครั้งจะกู้คืนคอนเทนเนอร์หนึ่งตัวเป็นสำเนาแยกด้วย เริ่มสำเนาแล้วตรวจว่าทำงานขึ้นมาได้ สำเนาทำงานด้วย 1 CPU และหน่วยความจำ 2 GiB บนเครือข่ายของตัวเอง แล้วถูกลบหลังจากนั้น",
+  "integrity.pruning": "กำลังล้าง…",
+  "progress.count.packs": "{done} จาก {n} แพ็ก",
+  "progress.count.snapshots": "{done} จาก {n} สแนปช็อต",
+  "progress.count.indexes": "{done} จาก {n} ดัชนี",
+  "progress.count.files": "{done} จาก {n} ไฟล์",
+  "progress.count.items": "{done} จาก {n}",
+  "progress.remaining": "เหลือ {time}",
 };
 
 export default th;

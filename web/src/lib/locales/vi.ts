@@ -2489,6 +2489,13 @@ const vi: Partial<Translations> = {
   "dashboard.startTestFailed": "Kiểm tra khởi động thất bại: {name}",
   "settings.startTest": "Kiểm tra khởi động",
   "settings.startTestHelp": "Mỗi lần kiểm tra khôi phục theo lịch cũng khôi phục một container thành bản sao cô lập, khởi động nó và kiểm tra xem nó có chạy lên không. Bản sao chạy với 1 CPU và 2 GiB bộ nhớ trên mạng riêng và bị xóa sau đó.",
+  "integrity.pruning": "Đang dọn dẹp…",
+  "progress.count.packs": "{done}/{n} gói",
+  "progress.count.snapshots": "{done}/{n} bản chụp",
+  "progress.count.indexes": "{done}/{n} chỉ mục",
+  "progress.count.files": "{done}/{n} tệp",
+  "progress.count.items": "{done}/{n}",
+  "progress.remaining": "còn {time}",
 };
 
 export default vi;

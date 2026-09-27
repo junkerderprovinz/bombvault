@@ -2500,6 +2500,13 @@ const ar: Partial<Translations> = {
   "dashboard.startTestFailed": "فشل اختبار التشغيل: {name}",
   "settings.startTest": "اختبار التشغيل",
   "settings.startTestHelp": "يستعيد كل فحص استعادة مجدول أيضًا حاويًا واحدًا إلى نسخة معزولة، ويشغّلها ويتحقق من أنها تعمل. تعمل النسخة بمعالج واحد و2 GiB من الذاكرة على شبكة خاصة بها، وتُزال بعد ذلك.",
+  "integrity.pruning": "جارٍ التنظيف…",
+  "progress.count.packs": "zero={done} من {n} حزمة|one={done} من حزمة واحدة|two={done} من حزمتين|few={done} من {n} حزم|many={done} من {n} حزمة|other={done} من {n} حزمة",
+  "progress.count.snapshots": "zero={done} من {n} لقطة|one={done} من لقطة واحدة|two={done} من لقطتين|few={done} من {n} لقطات|many={done} من {n} لقطة|other={done} من {n} لقطة",
+  "progress.count.indexes": "zero={done} من {n} فهرس|one={done} من فهرس واحد|two={done} من فهرسين|few={done} من {n} فهارس|many={done} من {n} فهرسًا|other={done} من {n} فهرس",
+  "progress.count.files": "zero={done} من {n} ملف|one={done} من ملف واحد|two={done} من ملفين|few={done} من {n} ملفات|many={done} من {n} ملفًا|other={done} من {n} ملف",
+  "progress.count.items": "{done} من {n}",
+  "progress.remaining": "متبقٍّ {time}",
 };
 
 export default ar;

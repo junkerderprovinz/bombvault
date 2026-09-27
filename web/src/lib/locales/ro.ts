@@ -2500,6 +2500,13 @@ const ro: Partial<Translations> = {
   "dashboard.startTestFailed": "Testul de pornire a eșuat: {name}",
   "settings.startTest": "Test de pornire",
   "settings.startTestHelp": "Fiecare verificare programată a restaurării restaurează și un container într-o copie izolată, o pornește și verifică dacă funcționează. Copia rulează cu 1 CPU și 2 GiB de memorie într-o rețea proprie și este ștearsă apoi.",
+  "integrity.pruning": "Se curăță…",
+  "progress.count.packs": "one={done} din {n} pachet|few={done} din {n} pachete|other={done} din {n} de pachete",
+  "progress.count.snapshots": "one={done} din {n} instantaneu|few={done} din {n} instantanee|other={done} din {n} de instantanee",
+  "progress.count.indexes": "one={done} din {n} index|few={done} din {n} indexuri|other={done} din {n} de indexuri",
+  "progress.count.files": "one={done} din {n} fișier|few={done} din {n} fișiere|other={done} din {n} de fișiere",
+  "progress.count.items": "{done} din {n}",
+  "progress.remaining": "mai sunt {time}",
 };
 
 export default ro;

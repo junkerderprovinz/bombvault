@@ -2497,6 +2497,13 @@ const sv: Partial<Translations> = {
   "dashboard.startTestFailed": "Starttest misslyckades: {name}",
   "settings.startTest": "Starttest",
   "settings.startTestHelp": "Varje schemalagd återställningskontroll återställer också en container som en isolerad kopia, startar den och kontrollerar att den kommer upp. Kopian körs med 1 CPU och 2 GiB minne i ett eget nätverk och tas bort efteråt.",
+  "integrity.pruning": "Rensar…",
+  "progress.count.packs": "one={done} av {n} pack|other={done} av {n} pack",
+  "progress.count.snapshots": "one={done} av {n} ögonblicksbild|other={done} av {n} ögonblicksbilder",
+  "progress.count.indexes": "one={done} av {n} index|other={done} av {n} index",
+  "progress.count.files": "one={done} av {n} fil|other={done} av {n} filer",
+  "progress.count.items": "{done} av {n}",
+  "progress.remaining": "{time} kvar",
 };
 
 export default sv;

@@ -2500,6 +2500,13 @@ const hu: Partial<Translations> = {
   "dashboard.startTestFailed": "Indítási teszt sikertelen: {name}",
   "settings.startTest": "Indítási teszt",
   "settings.startTestHelp": "Minden ütemezett visszaállítási ellenőrzés egy konténert is visszaállít egy elszigetelt másolatba, elindítja, és ellenőrzi, hogy elindul-e. A másolat 1 CPU-val és 2 GiB memóriával fut egy saját hálózaton, utána eltávolításra kerül.",
+  "integrity.pruning": "Takarítás…",
+  "progress.count.packs": "{done} / {n} csomag",
+  "progress.count.snapshots": "{done} / {n} pillanatkép",
+  "progress.count.indexes": "{done} / {n} index",
+  "progress.count.files": "{done} / {n} fájl",
+  "progress.count.items": "{done} / {n}",
+  "progress.remaining": "még {time}",
 };
 
 export default hu;

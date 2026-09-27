@@ -2508,6 +2508,13 @@ const hr: Partial<Translations> = {
   "dashboard.startTestFailed": "Test pokretanja nije uspio: {name}",
   "settings.startTest": "Test pokretanja",
   "settings.startTestHelp": "Svaka zakazana provjera vraćanja također vraća jedan kontejner u izoliranu kopiju, pokreće je i provjerava da se podigne. Kopija radi s 1 CPU-om i 2 GiB memorije na vlastitoj mreži i nakon toga se uklanja.",
+  "integrity.pruning": "Čišćenje…",
+  "progress.count.packs": "one={done} od {n} paketa|few={done} od {n} paketa|other={done} od {n} paketa",
+  "progress.count.snapshots": "one={done} od {n} snimke|few={done} od {n} snimke|other={done} od {n} snimki",
+  "progress.count.indexes": "one={done} od {n} indeksa|few={done} od {n} indeksa|other={done} od {n} indeksa",
+  "progress.count.files": "one={done} od {n} datoteke|few={done} od {n} datoteke|other={done} od {n} datoteka",
+  "progress.count.items": "{done} od {n}",
+  "progress.remaining": "još {time}",
 };
 
 export default hr;

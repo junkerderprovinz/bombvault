@@ -2497,6 +2497,13 @@ const he: Partial<Translations> = {
   "dashboard.startTestFailed": "בדיקת ההפעלה נכשלה: {name}",
   "settings.startTest": "בדיקת הפעלה",
   "settings.startTestHelp": "כל בדיקת שחזור מתוזמנת משחזרת גם קונטיינר אחד לעותק מבודד, מפעילה אותו ובודקת שהוא עולה. העותק רץ עם מעבד אחד ו-2 GiB זיכרון ברשת משלו ומוסר אחר כך.",
+  "integrity.pruning": "מנקה…",
+  "progress.count.packs": "one={done} מתוך חבילה אחת|two={done} מתוך שתי חבילות|other={done} מתוך {n} חבילות",
+  "progress.count.snapshots": "one={done} מתוך תמונת מצב אחת|two={done} מתוך שתי תמונות מצב|other={done} מתוך {n} תמונות מצב",
+  "progress.count.indexes": "one={done} מתוך אינדקס אחד|two={done} מתוך שני אינדקסים|other={done} מתוך {n} אינדקסים",
+  "progress.count.files": "one={done} מתוך קובץ אחד|two={done} מתוך שני קבצים|other={done} מתוך {n} קבצים",
+  "progress.count.items": "{done} מתוך {n}",
+  "progress.remaining": "נותרו {time}",
 };
 
 export default he;

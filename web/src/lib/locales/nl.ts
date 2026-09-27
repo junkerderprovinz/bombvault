@@ -2494,6 +2494,13 @@ const nl: Partial<Translations> = {
   "dashboard.startTestFailed": "Starttest mislukt: {name}",
   "settings.startTest": "Starttest",
   "settings.startTestHelp": "Elke geplande herstelcontrole zet ook één container terug als geïsoleerde kopie, start die en controleert of hij opkomt. De kopie draait met 1 CPU en 2 GiB geheugen op een eigen netwerk en wordt daarna verwijderd.",
+  "integrity.pruning": "Opruimen…",
+  "progress.count.packs": "one={done} van {n} pack|other={done} van {n} packs",
+  "progress.count.snapshots": "one={done} van {n} snapshot|other={done} van {n} snapshots",
+  "progress.count.indexes": "one={done} van {n} index|other={done} van {n} indexen",
+  "progress.count.files": "one={done} van {n} bestand|other={done} van {n} bestanden",
+  "progress.count.items": "{done} van {n}",
+  "progress.remaining": "nog {time}",
 };
 
 export default nl;

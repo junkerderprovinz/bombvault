@@ -2508,6 +2508,13 @@ const sk: Partial<Translations> = {
   "dashboard.startTestFailed": "Test spustenia zlyhal: {name}",
   "settings.startTest": "Test spustenia",
   "settings.startTestHelp": "Každá naplánovaná kontrola obnovenia navyše obnoví jeden kontajner do izolovanej kópie, spustí ju a overí, že nabehne. Kópia beží s 1 CPU a 2 GiB pamäte vo vlastnej sieti a potom sa odstráni.",
+  "integrity.pruning": "Čistí sa…",
+  "progress.count.packs": "one={done} z {n} balíka|few={done} z {n} balíkov|many={done} z {n} balíka|other={done} z {n} balíkov",
+  "progress.count.snapshots": "one={done} z {n} snímky|few={done} z {n} snímok|many={done} z {n} snímky|other={done} z {n} snímok",
+  "progress.count.indexes": "one={done} z {n} indexu|few={done} z {n} indexov|many={done} z {n} indexu|other={done} z {n} indexov",
+  "progress.count.files": "one={done} z {n} súboru|few={done} z {n} súborov|many={done} z {n} súboru|other={done} z {n} súborov",
+  "progress.count.items": "{done} z {n}",
+  "progress.remaining": "zostáva {time}",
 };
 
 export default sk;

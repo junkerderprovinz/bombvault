@@ -2495,6 +2495,13 @@ const es: Partial<Translations> = {
   "dashboard.startTestFailed": "La prueba de arranque falló: {name}",
   "settings.startTest": "Prueba de arranque",
   "settings.startTestHelp": "Cada comprobación de restauración programada también restaura un contenedor en una copia aislada, la arranca y comprueba que se levanta. La copia funciona con 1 CPU y 2 GiB de memoria en una red propia y después se elimina.",
+  "integrity.pruning": "Depurando…",
+  "progress.count.packs": "one={done} de {n} paquete|other={done} de {n} paquetes",
+  "progress.count.snapshots": "one={done} de {n} instantánea|other={done} de {n} instantáneas",
+  "progress.count.indexes": "one={done} de {n} índice|other={done} de {n} índices",
+  "progress.count.files": "one={done} de {n} archivo|other={done} de {n} archivos",
+  "progress.count.items": "{done} de {n}",
+  "progress.remaining": "quedan {time}",
 };
 
 export default es;

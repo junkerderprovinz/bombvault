@@ -49,7 +49,19 @@ export interface ProgressState {
   // `active` stays true meanwhile, so this is how to tell there is nothing left
   // to cancel.
   finished?: boolean;
+  // A check or prune counting through one of its steps: `done` of `total`
+  // `unit`s, and the estimated seconds left in that step, absent while there
+  // is too little to go by. restic reports packs and the like, not bytes.
+  done?: number;
+  total?: number;
+  unit?: CountUnit;
+  remaining?: number;
 }
+
+/** The units restic counts in during a check or prune. */
+export type CountUnit = "packs" | "snapshots" | "indexes" | "files" | "items";
+
+const COUNT_UNITS: CountUnit[] = ["packs", "snapshots", "indexes", "files", "items"];
 
 /** The steps that report bytes instead of a percentage. */
 export type ProgressStage = "dbdump" | "dbdumpsave" | "dbimport";
@@ -155,6 +167,10 @@ function applyEvent(ev: ProgressFrame): void {
     bytes: ev.bytes,
     committed: ev.committed,
     finished: ev.active ? undefined : true,
+    done: ev.done,
+    total: ev.total,
+    unit: ev.unit,
+    remaining: ev.remaining,
   };
 
   current = { ...current, [ev.key]: entry };
@@ -211,6 +227,10 @@ export function parseProgressFrame(data: string): ProgressFrame | null {
     stage: ev.stage && STAGES.includes(ev.stage) ? ev.stage : undefined,
     bytes: typeof ev.bytes === "number" ? ev.bytes : undefined,
     committed: ev.committed === true ? true : undefined,
+    done: typeof ev.done === "number" ? ev.done : undefined,
+    total: typeof ev.total === "number" && ev.total > 0 ? ev.total : undefined,
+    unit: ev.unit && COUNT_UNITS.includes(ev.unit) ? ev.unit : ev.total ? "items" : undefined,
+    remaining: typeof ev.remaining === "number" && ev.remaining > 0 ? ev.remaining : undefined,
   };
 }
 

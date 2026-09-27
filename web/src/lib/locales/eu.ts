@@ -2508,6 +2508,13 @@ const eu: Partial<Translations> = {
   "dashboard.startTestFailed": "Abiarazte-probak huts egin du: {name}",
   "settings.startTest": "Abiarazte-proba",
   "settings.startTestHelp": "Programatutako berrezarpen-egiaztapen bakoitzak edukiontzi bat ere berrezartzen du kopia isolatu batean, abiarazi eta martxan jartzen den egiaztatzen du. Kopiak CPU 1 eta 2 GiB memoria ditu bere sarean, eta gero kentzen da.",
+  "integrity.pruning": "Garbitzen…",
+  "progress.count.packs": "one={done} / pakete {n}|other={done} / {n} pakete",
+  "progress.count.snapshots": "one={done} / argazki {n}|other={done} / {n} argazki",
+  "progress.count.indexes": "one={done} / indize {n}|other={done} / {n} indize",
+  "progress.count.files": "one={done} / fitxategi {n}|other={done} / {n} fitxategi",
+  "progress.count.items": "{done} / {n}",
+  "progress.remaining": "{time} falta dira",
 };
 
 export default eu;

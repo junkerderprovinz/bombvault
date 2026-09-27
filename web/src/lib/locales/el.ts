@@ -2497,6 +2497,13 @@ const el: Partial<Translations> = {
   "dashboard.startTestFailed": "Η δοκιμή εκκίνησης απέτυχε: {name}",
   "settings.startTest": "Δοκιμή εκκίνησης",
   "settings.startTestHelp": "Κάθε προγραμματισμένος έλεγχος επαναφοράς επαναφέρει επίσης ένα κοντέινερ σε απομονωμένο αντίγραφο, το εκκινεί και ελέγχει ότι σηκώνεται. Το αντίγραφο τρέχει με 1 CPU και 2 GiB μνήμης σε δικό του δίκτυο και αφαιρείται μετά.",
+  "integrity.pruning": "Εκκαθάριση…",
+  "progress.count.packs": "one={done} από {n} πακέτο|other={done} από {n} πακέτα",
+  "progress.count.snapshots": "one={done} από {n} στιγμιότυπο|other={done} από {n} στιγμιότυπα",
+  "progress.count.indexes": "one={done} από {n} ευρετήριο|other={done} από {n} ευρετήρια",
+  "progress.count.files": "one={done} από {n} αρχείο|other={done} από {n} αρχεία",
+  "progress.count.items": "{done} από {n}",
+  "progress.remaining": "απομένουν {time}",
 };
 
 export default el;

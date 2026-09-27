@@ -2508,6 +2508,13 @@ const lt: Partial<Translations> = {
   "dashboard.startTestFailed": "Paleidimo testas nepavyko: {name}",
   "settings.startTest": "Paleidimo testas",
   "settings.startTestHelp": "Kiekviena suplanuota atkūrimo patikra taip pat atkuria vieną konteinerį į izoliuotą kopiją, ją paleidžia ir patikrina, ar ji pasileidžia. Kopija veikia su 1 CPU ir 2 GiB atminties savo tinkle, po to pašalinama.",
+  "integrity.pruning": "Valoma…",
+  "progress.count.packs": "one={done} iš {n} paketo|few={done} iš {n} paketų|many={done} iš {n} paketo|other={done} iš {n} paketų",
+  "progress.count.snapshots": "one={done} iš {n} momentinės kopijos|few={done} iš {n} momentinių kopijų|many={done} iš {n} momentinės kopijos|other={done} iš {n} momentinių kopijų",
+  "progress.count.indexes": "one={done} iš {n} indekso|few={done} iš {n} indeksų|many={done} iš {n} indekso|other={done} iš {n} indeksų",
+  "progress.count.files": "one={done} iš {n} failo|few={done} iš {n} failų|many={done} iš {n} failo|other={done} iš {n} failų",
+  "progress.count.items": "{done} iš {n}",
+  "progress.remaining": "liko {time}",
 };
 
 export default lt;

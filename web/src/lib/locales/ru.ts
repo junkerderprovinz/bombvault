@@ -2492,6 +2492,13 @@ const ru: Partial<Translations> = {
   "dashboard.startTestFailed": "Тест запуска не пройден: {name}",
   "settings.startTest": "Тест запуска",
   "settings.startTestHelp": "Каждая плановая проверка восстановления дополнительно восстанавливает один контейнер в изолированную копию, запускает её и проверяет, что она поднимается. Копия работает с 1 CPU и 2 ГиБ памяти в собственной сети и затем удаляется.",
+  "integrity.pruning": "Очистка…",
+  "progress.count.packs": "one={done} из {n} пакета|few={done} из {n} пакетов|many={done} из {n} пакетов|other={done} из {n} пакета",
+  "progress.count.snapshots": "one={done} из {n} снимка|few={done} из {n} снимков|many={done} из {n} снимков|other={done} из {n} снимка",
+  "progress.count.indexes": "one={done} из {n} индекса|few={done} из {n} индексов|many={done} из {n} индексов|other={done} из {n} индекса",
+  "progress.count.files": "one={done} из {n} файла|few={done} из {n} файлов|many={done} из {n} файлов|other={done} из {n} файла",
+  "progress.count.items": "{done} из {n}",
+  "progress.remaining": "осталось {time}",
 };
 
 export default ru;

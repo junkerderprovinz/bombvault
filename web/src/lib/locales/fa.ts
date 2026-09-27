@@ -2508,6 +2508,13 @@ const fa: Partial<Translations> = {
   "dashboard.startTestFailed": "آزمون راه‌اندازی ناموفق بود: {name}",
   "settings.startTest": "آزمون راه‌اندازی",
   "settings.startTestHelp": "هر بررسی بازیابی زمان‌بندی‌شده همچنین یک کانتینر را در یک نسخهٔ جداشده بازیابی می‌کند، آن را اجرا می‌کند و بررسی می‌کند که بالا بیاید. نسخه با ۱ CPU و ۲ GiB حافظه در شبکهٔ خودش اجرا و سپس حذف می‌شود.",
+  "integrity.pruning": "در حال پاک‌سازی…",
+  "progress.count.packs": "{done} از {n} بسته",
+  "progress.count.snapshots": "{done} از {n} اسنپ‌شات",
+  "progress.count.indexes": "{done} از {n} نمایه",
+  "progress.count.files": "{done} از {n} فایل",
+  "progress.count.items": "{done} از {n}",
+  "progress.remaining": "{time} مانده",
 };
 
 export default fa;

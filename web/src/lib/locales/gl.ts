@@ -2508,6 +2508,13 @@ const gl: Partial<Translations> = {
   "dashboard.startTestFailed": "A proba de arranque fallou: {name}",
   "settings.startTest": "Proba de arranque",
   "settings.startTestHelp": "Cada comprobación de restauración programada tamén restaura un contedor nunha copia illada, arrincaa e comproba que se levanta. A copia funciona con 1 CPU e 2 GiB de memoria nunha rede propia e despois elimínase.",
+  "integrity.pruning": "Depurando…",
+  "progress.count.packs": "one={done} de {n} paquete|other={done} de {n} paquetes",
+  "progress.count.snapshots": "one={done} de {n} instantánea|other={done} de {n} instantáneas",
+  "progress.count.indexes": "one={done} de {n} índice|other={done} de {n} índices",
+  "progress.count.files": "one={done} de {n} ficheiro|other={done} de {n} ficheiros",
+  "progress.count.items": "{done} de {n}",
+  "progress.remaining": "quedan {time}",
 };
 
 export default gl;

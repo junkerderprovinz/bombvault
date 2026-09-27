@@ -9,6 +9,7 @@ import { dumpLeftRunning, dumpWasCancelled, importHadErrors } from "./dbdump";
 import type { ProgressMap, ProgressStage, ProgressState } from "./progress";
 import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
+import type { CountUnit } from "./progress";
 import type { TranslationKey } from "./i18n";
 import { isWarningNote, runReason, runReasonParts } from "./runReason";
 
@@ -234,6 +235,25 @@ function domainOpSignature(kind: string, domain: string): string {
   return `domain|${kind}|${domain}`;
 }
 
+const COUNT_KEYS: Record<CountUnit, string> = {
+  packs: "progress.count.packs",
+  snapshots: "progress.count.snapshots",
+  indexes: "progress.count.indexes",
+  files: "progress.count.files",
+  items: "progress.count.items",
+};
+
+/**
+ * countProgressText says how far a check or prune has counted, "12 of 47
+ * packs · 2m 5s left", or "" before restic has counted anything.
+ */
+export function countProgressText(resolveName: ResolveName, state: ProgressState): string {
+  if (!state.total) return "";
+  const count = resolveName(COUNT_KEYS[state.unit ?? "items"], { done: String(state.done ?? 0) }, state.total);
+  if (!state.remaining) return count;
+  return `${count} · ${resolveName("progress.remaining", { time: formatDuration(state.remaining) })}`;
+}
+
 /** Live-line text per domain-scoped operation. The export line takes no
  *  {domain}: the flash ZIP export is flash-only, so its text names flash. */
 const DOMAIN_OP_RUNNING_KEYS: Record<"prune" | "verify" | "drill" | "drdrill" | "tamper" | "export", string> = {
@@ -366,7 +386,9 @@ function buildLiveLines(
     // prune, verify, drill, drdrill, tamper and export: domain-wide
     // operations that record a Run row on the domain target the same way.
     const domain = normalizeDomain(parsed.domain);
-    const text = resolveName(DOMAIN_OP_RUNNING_KEYS[parsed.scope], { domain: domainLabel(resolveName, domain) });
+    const base = resolveName(DOMAIN_OP_RUNNING_KEYS[parsed.scope], { domain: domainLabel(resolveName, domain) });
+    const counted = countProgressText(resolveName, state);
+    const text = counted ? `${base} ${counted}` : base;
     const opSig = domainOpSignature(parsed.scope, domain);
     if (!keep(opSig)) continue;
     signatures.add(opSig);

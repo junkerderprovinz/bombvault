@@ -2495,6 +2495,13 @@ const cs: Partial<Translations> = {
   "dashboard.startTestFailed": "Test spuštění selhal: {name}",
   "settings.startTest": "Test spuštění",
   "settings.startTestHelp": "Každá naplánovaná kontrola obnovy navíc obnoví jeden kontejner do izolované kopie, spustí ji a ověří, že naběhne. Kopie běží s 1 CPU a 2 GiB paměti ve vlastní síti a poté se odstraní.",
+  "integrity.pruning": "Čistí se…",
+  "progress.count.packs": "one={done} z {n} balíku|few={done} ze {n} balíků|many={done} z {n} balíku|other={done} z {n} balíků",
+  "progress.count.snapshots": "one={done} z {n} snímku|few={done} ze {n} snímků|many={done} z {n} snímku|other={done} z {n} snímků",
+  "progress.count.indexes": "one={done} z {n} indexu|few={done} ze {n} indexů|many={done} z {n} indexu|other={done} z {n} indexů",
+  "progress.count.files": "one={done} z {n} souboru|few={done} ze {n} souborů|many={done} z {n} souboru|other={done} z {n} souborů",
+  "progress.count.items": "{done} z {n}",
+  "progress.remaining": "zbývá {time}",
 };
 
 export default cs;

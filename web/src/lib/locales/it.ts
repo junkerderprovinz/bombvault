@@ -2497,6 +2497,13 @@ const it: Partial<Translations> = {
   "dashboard.startTestFailed": "Test di avvio non riuscito: {name}",
   "settings.startTest": "Test di avvio",
   "settings.startTestHelp": "Ogni controllo di ripristino pianificato ripristina anche un container in una copia isolata, la avvia e controlla che parta. La copia gira con 1 CPU e 2 GiB di memoria su una rete propria e poi viene rimossa.",
+  "integrity.pruning": "Pulizia…",
+  "progress.count.packs": "one={done} di {n} pack|other={done} di {n} pack",
+  "progress.count.snapshots": "one={done} di {n} snapshot|other={done} di {n} snapshot",
+  "progress.count.indexes": "one={done} di {n} indice|other={done} di {n} indici",
+  "progress.count.files": "one={done} di {n} file|other={done} di {n} file",
+  "progress.count.items": "{done} di {n}",
+  "progress.remaining": "mancano {time}",
 };
 
 export default it;

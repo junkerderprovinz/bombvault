@@ -2497,6 +2497,13 @@ const fi: Partial<Translations> = {
   "dashboard.startTestFailed": "Käynnistystesti epäonnistui: {name}",
   "settings.startTest": "Käynnistystesti",
   "settings.startTestHelp": "Jokainen ajastettu palautustarkistus palauttaa lisäksi yhden kontin eristettyyn kopioon, käynnistää sen ja tarkistaa, että se nousee. Kopio toimii 1 CPU:lla ja 2 GiB muistilla omassa verkossaan ja poistetaan lopuksi.",
+  "integrity.pruning": "Siivotaan…",
+  "progress.count.packs": "one={done}/{n} paketista|other={done}/{n} paketista",
+  "progress.count.snapshots": "one={done}/{n} tilannevedoksesta|other={done}/{n} tilannevedoksesta",
+  "progress.count.indexes": "one={done}/{n} indeksistä|other={done}/{n} indeksistä",
+  "progress.count.files": "one={done}/{n} tiedostosta|other={done}/{n} tiedostosta",
+  "progress.count.items": "{done}/{n}",
+  "progress.remaining": "{time} jäljellä",
 };
 
 export default fi;

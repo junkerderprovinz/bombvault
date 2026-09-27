@@ -2489,6 +2489,13 @@ const zh: Partial<Translations> = {
   "dashboard.startTestFailed": "启动测试失败：{name}",
   "settings.startTest": "启动测试",
   "settings.startTestHelp": "每次计划的恢复检查还会把一个容器恢复为隔离副本，启动它并检查能否正常运行。副本在自己的网络中以 1 个 CPU 和 2 GiB 内存运行，之后会被删除。",
+  "integrity.pruning": "正在清理…",
+  "progress.count.packs": "{done}/{n} 个包",
+  "progress.count.snapshots": "{done}/{n} 个快照",
+  "progress.count.indexes": "{done}/{n} 个索引",
+  "progress.count.files": "{done}/{n} 个文件",
+  "progress.count.items": "{done}/{n}",
+  "progress.remaining": "剩余 {time}",
 };
 
 export default zh;

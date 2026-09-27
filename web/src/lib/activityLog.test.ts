@@ -925,3 +925,26 @@ describe("buildLogLines live start test", () => {
     expect(line.text).toBe("activityLog.lineStartTestRunning name=whoami");
   });
 });
+
+describe("buildLogLines live check progress", () => {
+  it("adds how far a verify has counted and the time left", () => {
+    const progress: ProgressMap = {
+      "verify:containers": {
+        phase: "maintenance", percent: 25, active: true, lastSeen: 5_000_000,
+        done: 12, total: 47, unit: "packs", remaining: 125,
+      },
+    };
+    const [line] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(line.text).toBe(
+      "activityLog.lineVerifyRunning domain=activityLog.domainContainers progress.count.packs done=12 · progress.remaining time=2m 5s"
+    );
+  });
+
+  it("stays the plain running line before restic counts anything", () => {
+    const progress: ProgressMap = {
+      "prune:vms": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
+    };
+    const [line] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(line.text).toBe("activityLog.linePruneRunning domain=activityLog.domainVMs");
+  });
+});

@@ -2492,6 +2492,13 @@ const uk: Partial<Translations> = {
   "dashboard.startTestFailed": "Тест запуску не пройдено: {name}",
   "settings.startTest": "Тест запуску",
   "settings.startTestHelp": "Кожна запланована перевірка відновлення також відновлює один контейнер в ізольовану копію, запускає її та перевіряє, що вона піднімається. Копія працює з 1 CPU і 2 ГіБ пам'яті у власній мережі й потім видаляється.",
+  "integrity.pruning": "Очищення…",
+  "progress.count.packs": "one={done} з {n} пакета|few={done} з {n} пакетів|many={done} з {n} пакетів|other={done} з {n} пакета",
+  "progress.count.snapshots": "one={done} з {n} знімка|few={done} з {n} знімків|many={done} з {n} знімків|other={done} з {n} знімка",
+  "progress.count.indexes": "one={done} з {n} індексу|few={done} з {n} індексів|many={done} з {n} індексів|other={done} з {n} індексу",
+  "progress.count.files": "one={done} з {n} файлу|few={done} з {n} файлів|many={done} з {n} файлів|other={done} з {n} файлу",
+  "progress.count.items": "{done} з {n}",
+  "progress.remaining": "залишилося {time}",
 };
 
 export default uk;

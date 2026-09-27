@@ -13,10 +13,13 @@ import { SelectField } from "../../components/SelectField";
 import { IconCheckCircle } from "../../components/Sidebar";
 import { RepoSource, SourceToggle, isOffsiteSource } from "../../components/SourceToggle";
 import { IconKey, IconPrune } from "../../components/glyphs";
+import { ProgressBar } from "../../components/ProgressBar";
+import { countProgressText, type ResolveName } from "../../lib/activityLog";
 import { useAdvanced } from "../../lib/advanced";
 import { heldTagLabels } from "../../lib/anomalies";
 import { Container, RestoreDrill, Settings, VM, checkDomain, getDrills, getStatus, listContainers, listVMs, pruneDomain, runDrill, tamperTest, unlockDomain } from "../../lib/api";
-import { useT } from "../../lib/i18n";
+import { useT, type TranslationKey } from "../../lib/i18n";
+import { useProgress, type ProgressState } from "../../lib/progress";
 import { relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
@@ -41,6 +44,26 @@ export function IntegrityCard({
   hueIndex?: number;
 }) {
   const { advanced } = useAdvanced();
+  const progressMap = useProgress();
+  const resolveName: ResolveName = (key, params, count) => {
+    let s = t(key as TranslationKey, count);
+    for (const [name, value] of Object.entries(params ?? {})) s = s.split(`{${name}}`).join(value);
+    return s;
+  };
+  // The check, prune or restore check running for a domain, wherever it was
+  // started from: this card, the schedule or another tab.
+  function runningOf(domain: string): { state: ProgressState; label: string } | null {
+    const ops: [string, TranslationKey][] = [
+      [`verify:${domain}`, "integrity.checking"],
+      [`prune:${domain}`, "integrity.pruning"],
+      [`drill:${domain}`, "verify.running"],
+    ];
+    for (const [key, labelKey] of ops) {
+      const state = progressMap[key];
+      if (state?.active && !state.finished) return { state, label: t(labelKey) };
+    }
+    return null;
+  }
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
   type ActState = "idle" | "busy" | "ok" | "fail";
@@ -400,6 +423,7 @@ export function IntegrityCard({
           const drill = lastDrill[domain];
           const tRes = tamper[domain];
           const tLast = lastTamper[domain];
+          const live = runningOf(domain);
           return (
             <div key={domain} className="flex flex-col gap-1">
               <div className="flex items-center gap-2 flex-wrap">
@@ -487,6 +511,15 @@ export function IntegrityCard({
                   )
                 )}
               </div>
+
+              {live && (
+                <ProgressBar
+                  inline
+                  active
+                  percent={live.state.total ? live.state.percent : 0}
+                  label={[live.label, countProgressText(resolveName, live.state)].filter(Boolean).join(" ")}
+                />
+              )}
 
               {/* The append-only check always probes the off-site repo,
                   whatever the source. The glyph is its own node so RTL

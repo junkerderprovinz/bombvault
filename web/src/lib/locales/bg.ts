@@ -2508,6 +2508,13 @@ const bg: Partial<Translations> = {
   "dashboard.startTestFailed": "Тестът за стартиране е неуспешен: {name}",
   "settings.startTest": "Тест за стартиране",
   "settings.startTestHelp": "Всяка планирана проверка за възстановяване също възстановява един контейнер като изолирано копие, стартира го и проверява дали тръгва. Копието работи с 1 CPU и 2 GiB памет в собствена мрежа и после се премахва.",
+  "integrity.pruning": "Почистване…",
+  "progress.count.packs": "one={done} от {n} пакет|other={done} от {n} пакета",
+  "progress.count.snapshots": "one={done} от {n} снимка|other={done} от {n} снимки",
+  "progress.count.indexes": "one={done} от {n} индекс|other={done} от {n} индекса",
+  "progress.count.files": "one={done} от {n} файл|other={done} от {n} файла",
+  "progress.count.items": "{done} от {n}",
+  "progress.remaining": "остават {time}",
 };
 
 export default bg;

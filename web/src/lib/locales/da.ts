@@ -2497,6 +2497,13 @@ const da: Partial<Translations> = {
   "dashboard.startTestFailed": "Starttest mislykkedes: {name}",
   "settings.startTest": "Starttest",
   "settings.startTestHelp": "Hvert planlagt gendannelsestjek gendanner også én container som en isoleret kopi, starter den og tjekker, at den kommer op. Kopien kører med 1 CPU og 2 GiB hukommelse på sit eget netværk og fjernes bagefter.",
+  "integrity.pruning": "Rydder op…",
+  "progress.count.packs": "one={done} af {n} pakke|other={done} af {n} pakker",
+  "progress.count.snapshots": "one={done} af {n} snapshot|other={done} af {n} snapshots",
+  "progress.count.indexes": "one={done} af {n} indeks|other={done} af {n} indekser",
+  "progress.count.files": "one={done} af {n} fil|other={done} af {n} filer",
+  "progress.count.items": "{done} af {n}",
+  "progress.remaining": "{time} tilbage",
 };
 
 export default da;

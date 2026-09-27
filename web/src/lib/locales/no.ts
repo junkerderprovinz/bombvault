@@ -2497,6 +2497,13 @@ const no: Partial<Translations> = {
   "dashboard.startTestFailed": "Starttest mislyktes: {name}",
   "settings.startTest": "Starttest",
   "settings.startTestHelp": "Hver planlagte gjenopprettingssjekk gjenoppretter også én container som en isolert kopi, starter den og sjekker at den kommer opp. Kopien kjører med 1 CPU og 2 GiB minne på et eget nettverk og fjernes etterpå.",
+  "integrity.pruning": "Rydder…",
+  "progress.count.packs": "one={done} av {n} pakke|other={done} av {n} pakker",
+  "progress.count.snapshots": "one={done} av {n} øyeblikksbilde|other={done} av {n} øyeblikksbilder",
+  "progress.count.indexes": "one={done} av {n} indeks|other={done} av {n} indekser",
+  "progress.count.files": "one={done} av {n} fil|other={done} av {n} filer",
+  "progress.count.items": "{done} av {n}",
+  "progress.remaining": "{time} igjen",
 };
 
 export default no;

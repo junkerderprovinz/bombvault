@@ -2508,6 +2508,13 @@ const et: Partial<Translations> = {
   "dashboard.startTestFailed": "Käivitustest ebaõnnestus: {name}",
   "settings.startTest": "Käivitustest",
   "settings.startTestHelp": "Iga ajastatud taastekontroll taastab lisaks ühe konteineri isoleeritud koopiaks, käivitab selle ja kontrollib, et see tõuseb. Koopia töötab 1 CPU ja 2 GiB mäluga oma võrgus ning eemaldatakse pärast.",
+  "integrity.pruning": "Puhastamine…",
+  "progress.count.packs": "one={done} / {n} pakist|other={done} / {n} pakist",
+  "progress.count.snapshots": "one={done} / {n} hetktõmmisest|other={done} / {n} hetktõmmisest",
+  "progress.count.indexes": "one={done} / {n} indeksist|other={done} / {n} indeksist",
+  "progress.count.files": "one={done} / {n} failist|other={done} / {n} failist",
+  "progress.count.items": "{done} / {n}",
+  "progress.remaining": "jäänud {time}",
 };
 
 export default et;

@@ -2866,6 +2866,13 @@ export const en = {
   "dashboard.startTestFailed": "Start test failed: {name}",
   "settings.startTest": "Start test",
   "settings.startTestHelp": "Each scheduled restore check also restores one container into an isolated copy, starts it and checks that it comes up. The copy runs with 1 CPU and 2 GiB of memory on a network of its own and is removed afterwards.",
+  "integrity.pruning": "Pruning…",
+  "progress.count.packs": "one={done} of {n} pack|other={done} of {n} packs",
+  "progress.count.snapshots": "one={done} of {n} snapshot|other={done} of {n} snapshots",
+  "progress.count.indexes": "one={done} of {n} index|other={done} of {n} indexes",
+  "progress.count.files": "one={done} of {n} file|other={done} of {n} files",
+  "progress.count.items": "{done} of {n}",
+  "progress.remaining": "{time} left",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -5414,6 +5421,13 @@ export const de: Translations = {
   "dashboard.startTestFailed": "Start-Test fehlgeschlagen: {name}",
   "settings.startTest": "Start-Test",
   "settings.startTestHelp": "Jede geplante Wiederherstellungsprüfung stellt zusätzlich einen Container als isolierte Kopie wieder her, startet sie und prüft, ob sie hochkommt. Die Kopie läuft mit 1 CPU und 2 GiB Speicher in einem eigenen Netz und wird danach entfernt.",
+  "integrity.pruning": "Räume auf…",
+  "progress.count.packs": "one={done} von {n} Pack|other={done} von {n} Packs",
+  "progress.count.snapshots": "one={done} von {n} Snapshot|other={done} von {n} Snapshots",
+  "progress.count.indexes": "one={done} von {n} Index|other={done} von {n} Indizes",
+  "progress.count.files": "one={done} von {n} Datei|other={done} von {n} Dateien",
+  "progress.count.items": "{done} von {n}",
+  "progress.remaining": "noch {time}",
 };
 
 // ---------------------------------------------------------------------------

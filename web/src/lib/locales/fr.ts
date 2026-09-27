@@ -2497,6 +2497,13 @@ const fr: Partial<Translations> = {
   "dashboard.startTestFailed": "Échec du test de démarrage : {name}",
   "settings.startTest": "Test de démarrage",
   "settings.startTestHelp": "Chaque contrôle de restauration planifié restaure aussi un conteneur dans une copie isolée, la démarre et vérifie qu'elle se lance. La copie tourne avec 1 CPU et 2 Gio de mémoire sur un réseau à elle et est supprimée ensuite.",
+  "integrity.pruning": "Nettoyage…",
+  "progress.count.packs": "one={done} sur {n} pack|other={done} sur {n} packs",
+  "progress.count.snapshots": "one={done} sur {n} instantané|other={done} sur {n} instantanés",
+  "progress.count.indexes": "one={done} sur {n} index|other={done} sur {n} index",
+  "progress.count.files": "one={done} sur {n} fichier|other={done} sur {n} fichiers",
+  "progress.count.items": "{done} sur {n}",
+  "progress.remaining": "encore {time}",
 };
 
 export default fr;

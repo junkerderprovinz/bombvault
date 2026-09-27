@@ -2497,6 +2497,13 @@ const tr: Partial<Translations> = {
   "dashboard.startTestFailed": "Başlatma testi başarısız: {name}",
   "settings.startTest": "Başlatma testi",
   "settings.startTestHelp": "Her zamanlanmış geri yükleme denetimi ayrıca bir kapsayıcıyı yalıtılmış bir kopyaya geri yükler, başlatır ve ayağa kalktığını denetler. Kopya kendi ağında 1 CPU ve 2 GiB bellekle çalışır ve ardından kaldırılır.",
+  "integrity.pruning": "Temizleniyor…",
+  "progress.count.packs": "{n} paketin {done} kadarı",
+  "progress.count.snapshots": "{n} anlık görüntünün {done} kadarı",
+  "progress.count.indexes": "{n} dizinin {done} kadarı",
+  "progress.count.files": "{n} dosyanın {done} kadarı",
+  "progress.count.items": "{n} içinden {done}",
+  "progress.remaining": "{time} kaldı",
 };
 
 export default tr;

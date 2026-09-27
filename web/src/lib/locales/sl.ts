@@ -2492,6 +2492,13 @@ const sl: Partial<Translations> = {
   "dashboard.startTestFailed": "Preizkus zagona ni uspel: {name}",
   "settings.startTest": "Preizkus zagona",
   "settings.startTestHelp": "Vsako načrtovano preverjanje obnovitve obnovi tudi en vsebnik v izolirano kopijo, jo zažene in preveri, ali se zažene. Kopija teče z 1 CPU in 2 GiB pomnilnika v lastnem omrežju in se nato odstrani.",
+  "integrity.pruning": "Čiščenje…",
+  "progress.count.packs": "one={done} od {n} paketa|two={done} od {n} paketov|few={done} od {n} paketov|other={done} od {n} paketov",
+  "progress.count.snapshots": "one={done} od {n} posnetka|two={done} od {n} posnetkov|few={done} od {n} posnetkov|other={done} od {n} posnetkov",
+  "progress.count.indexes": "one={done} od {n} indeksa|two={done} od {n} indeksov|few={done} od {n} indeksov|other={done} od {n} indeksov",
+  "progress.count.files": "one={done} od {n} datoteke|two={done} od {n} datotek|few={done} od {n} datotek|other={done} od {n} datotek",
+  "progress.count.items": "{done} od {n}",
+  "progress.remaining": "še {time}",
 };
 
 export default sl;

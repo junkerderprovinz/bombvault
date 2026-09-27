@@ -2508,6 +2508,13 @@ const hi: Partial<Translations> = {
   "dashboard.startTestFailed": "स्टार्ट टेस्ट विफल: {name}",
   "settings.startTest": "स्टार्ट टेस्ट",
   "settings.startTestHelp": "हर तय रीस्टोर जाँच एक कंटेनर को अलग कॉपी में भी रीस्टोर करती है, उसे शुरू करती है और जाँचती है कि वह चालू होती है। कॉपी अपने नेटवर्क पर 1 CPU और 2 GiB मेमोरी के साथ चलती है और बाद में हटा दी जाती है।",
+  "integrity.pruning": "सफ़ाई हो रही है…",
+  "progress.count.packs": "one={n} में से {done} पैक|other={n} में से {done} पैक",
+  "progress.count.snapshots": "one={n} में से {done} स्नैपशॉट|other={n} में से {done} स्नैपशॉट",
+  "progress.count.indexes": "one={n} में से {done} इंडेक्स|other={n} में से {done} इंडेक्स",
+  "progress.count.files": "one={n} में से {done} फ़ाइल|other={n} में से {done} फ़ाइलें",
+  "progress.count.items": "{n} में से {done}",
+  "progress.remaining": "{time} बाकी",
 };
 
 export default hi;

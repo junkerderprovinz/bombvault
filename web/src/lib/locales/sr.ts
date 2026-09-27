@@ -2492,6 +2492,13 @@ const sr: Partial<Translations> = {
   "dashboard.startTestFailed": "Тест покретања није успео: {name}",
   "settings.startTest": "Тест покретања",
   "settings.startTestHelp": "Свака заказана провера враћања такође враћа један контејнер у изоловану копију, покреће је и проверава да ли се подиже. Копија ради са 1 CPU и 2 GiB меморије на сопственој мрежи и после се уклања.",
+  "integrity.pruning": "Чишћење…",
+  "progress.count.packs": "one={done} од {n} пакета|few={done} од {n} пакета|other={done} од {n} пакета",
+  "progress.count.snapshots": "one={done} од {n} снимка|few={done} од {n} снимка|other={done} од {n} снимака",
+  "progress.count.indexes": "one={done} од {n} индекса|few={done} од {n} индекса|other={done} од {n} индекса",
+  "progress.count.files": "one={done} од {n} датотеке|few={done} од {n} датотеке|other={done} од {n} датотека",
+  "progress.count.items": "{done} од {n}",
+  "progress.remaining": "још {time}",
 };
 
 export default sr;

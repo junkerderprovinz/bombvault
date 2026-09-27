@@ -2508,6 +2508,13 @@ const id: Partial<Translations> = {
   "dashboard.startTestFailed": "Uji mulai gagal: {name}",
   "settings.startTest": "Uji mulai",
   "settings.startTestHelp": "Setiap uji pemulihan terjadwal juga memulihkan satu kontainer ke salinan terisolasi, menjalankannya, dan memeriksa bahwa salinan itu menyala. Salinan berjalan dengan 1 CPU dan memori 2 GiB di jaringannya sendiri, lalu dihapus.",
+  "integrity.pruning": "Membersihkan…",
+  "progress.count.packs": "{done} dari {n} paket",
+  "progress.count.snapshots": "{done} dari {n} snapshot",
+  "progress.count.indexes": "{done} dari {n} indeks",
+  "progress.count.files": "{done} dari {n} berkas",
+  "progress.count.items": "{done} dari {n}",
+  "progress.remaining": "sisa {time}",
 };
 
 export default id;

@@ -2497,6 +2497,13 @@ const pt: Partial<Translations> = {
   "dashboard.startTestFailed": "Teste de arranque falhou: {name}",
   "settings.startTest": "Teste de arranque",
   "settings.startTestHelp": "Cada verificação de restauro agendada também restaura um contentor numa cópia isolada, arranca-a e verifica se sobe. A cópia corre com 1 CPU e 2 GiB de memória numa rede própria e é removida depois.",
+  "integrity.pruning": "A limpar…",
+  "progress.count.packs": "one={done} de {n} pack|other={done} de {n} packs",
+  "progress.count.snapshots": "one={done} de {n} snapshot|other={done} de {n} snapshots",
+  "progress.count.indexes": "one={done} de {n} índice|other={done} de {n} índices",
+  "progress.count.files": "one={done} de {n} ficheiro|other={done} de {n} ficheiros",
+  "progress.count.items": "{done} de {n}",
+  "progress.remaining": "faltam {time}",
 };
 
 export default pt;

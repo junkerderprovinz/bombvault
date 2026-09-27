@@ -2492,6 +2492,13 @@ const pl: Partial<Translations> = {
   "dashboard.startTestFailed": "Test uruchomienia nieudany: {name}",
   "settings.startTest": "Test uruchomienia",
   "settings.startTestHelp": "Każdy zaplanowany test przywracania przywraca też jeden kontener jako odizolowaną kopię, uruchamia ją i sprawdza, czy wstaje. Kopia działa z 1 CPU i 2 GiB pamięci we własnej sieci i jest potem usuwana.",
+  "integrity.pruning": "Czyszczenie…",
+  "progress.count.packs": "one={done} z {n} paczki|few={done} z {n} paczek|many={done} z {n} paczek|other={done} z {n} paczki",
+  "progress.count.snapshots": "one={done} z {n} migawki|few={done} z {n} migawek|many={done} z {n} migawek|other={done} z {n} migawki",
+  "progress.count.indexes": "one={done} z {n} indeksu|few={done} z {n} indeksów|many={done} z {n} indeksów|other={done} z {n} indeksu",
+  "progress.count.files": "one={done} z {n} pliku|few={done} z {n} plików|many={done} z {n} plików|other={done} z {n} pliku",
+  "progress.count.items": "{done} z {n}",
+  "progress.remaining": "zostało {time}",
 };
 
 export default pl;

@@ -2508,6 +2508,13 @@ const lv: Partial<Translations> = {
   "dashboard.startTestFailed": "Palaišanas tests neizdevās: {name}",
   "settings.startTest": "Palaišanas tests",
   "settings.startTestHelp": "Katra ieplānotā atjaunošanas pārbaude arī atjauno vienu konteineru izolētā kopijā, palaiž to un pārbauda, vai tā sāk darboties. Kopija darbojas ar 1 CPU un 2 GiB atmiņas savā tīklā un pēc tam tiek noņemta.",
+  "integrity.pruning": "Tīra…",
+  "progress.count.packs": "zero={done} no {n} pakām|one={done} no {n} pakas|other={done} no {n} pakām",
+  "progress.count.snapshots": "zero={done} no {n} momentuzņēmumiem|one={done} no {n} momentuzņēmuma|other={done} no {n} momentuzņēmumiem",
+  "progress.count.indexes": "zero={done} no {n} indeksiem|one={done} no {n} indeksa|other={done} no {n} indeksiem",
+  "progress.count.files": "zero={done} no {n} failiem|one={done} no {n} faila|other={done} no {n} failiem",
+  "progress.count.items": "{done} no {n}",
+  "progress.remaining": "atlikušas {time}",
 };
 
 export default lv;

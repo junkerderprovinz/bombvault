@@ -920,6 +920,43 @@ func (s *Service) progBegin(ctx context.Context, key, phase string) (context.Con
 	}), startedAt
 }
 
+// progCounted returns a context that turns restic's counter lines into live
+// "maintenance" events for key: done, total, unit, and the seconds left in the
+// current step, estimated from how long its units have taken so far. A step is
+// a run of counters with the same unit and total, since restic starts a fresh
+// one for each part of a check or prune.
+func (s *Service) progCounted(ctx context.Context, key string, startedAt int64) context.Context {
+	if s.progress == nil {
+		return ctx
+	}
+	var step progress.CountProgress
+	var stepStart time.Time
+	return progress.WithCountSink(ctx, func(c progress.CountProgress) {
+		now := time.Now()
+		if c.Unit != step.Unit || c.Total != step.Total || c.Done < step.Done {
+			stepStart = now
+		}
+		step = c
+		s.progress.Publish(progress.Event{
+			Key: key, Phase: "maintenance", Active: true, StartedAt: startedAt,
+			Percent: float64(c.Done) / float64(c.Total) * 100,
+			Done:    c.Done, Total: c.Total, Unit: c.Unit,
+			Remaining: remainingSeconds(now.Sub(stepStart), c.Done, c.Total),
+		})
+	})
+}
+
+// remainingSeconds extrapolates the time left from the units done so far. It
+// gives 0, meaning unknown, until the step has run five seconds and done one
+// unit, because an estimate from less jumps around too much to read.
+func remainingSeconds(elapsed time.Duration, done, total int64) int64 {
+	if done <= 0 || done >= total || elapsed < 5*time.Second {
+		return 0
+	}
+	left := elapsed.Seconds() / float64(done) * float64(total-done)
+	return int64(left + 0.5)
+}
+
 // offsiteLastCopy holds the most recently PUBLISHED live restic-copy
 // percentage for one "offsite:<domain>" replication (across however many
 // sequential targets a multiTarget loop runs) — the one real signal
@@ -15165,13 +15202,13 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 	// repositories a domain HAS, which is the number of rows an operator created.
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(len(repos))*15*time.Minute)
 	defer cancel()
-	// Publish a "maintenance" progress pair (begin/terminal, indeterminate — restic
-	// check streams no percentage) and record a "verify" run, so a manual/scheduled
-	// verify shows up on the dashboard activity log/run history instead of running
-	// invisibly.
+	// Publish "maintenance" progress, with restic's pack counts while it reads,
+	// and record a "verify" run, so a manual or scheduled verify shows up on the
+	// dashboard activity log and run history instead of running invisibly.
 	vkey := "verify:" + domain
 	_, startedAt := s.progBegin(ctx, vkey, "maintenance")
 	defer func() { s.progEnd(vkey, "maintenance", err == nil, startedAt) }()
+	ctx = s.progCounted(ctx, vkey, startedAt)
 	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "verify")
 	if rErr != nil {
 		log.Printf("api: verify %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
@@ -15383,6 +15420,7 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 	dkey := "drill:" + domain
 	_, startedAt := s.progBegin(ctx, dkey, "maintenance")
 	defer func() { s.progEnd(dkey, "maintenance", err == nil, startedAt) }()
+	ctx = s.progCounted(ctx, dkey, startedAt)
 
 	// Reading back a subset of real pack data can be slow on a large repo; bound
 	// the whole pass over the domain's repositories.
@@ -16423,10 +16461,10 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 
 // PruneDomain reclaims repository space freed by forgotten snapshots
 // (restic prune). Bounded by a generous timeout — pruning a large repo is slow.
-// Once the domain lock is held it publishes a "maintenance" progress pair
-// (begin/terminal, indeterminate — restic prune/forget streams no percentage)
-// and records a "prune" run, so a manual/scheduled prune shows up on the
-// dashboard activity log/run history instead of running invisibly.
+// Once the domain lock is held it publishes "maintenance" progress, with
+// restic's counts for each step of the prune, and records a "prune" run, so a
+// manual or scheduled prune shows up on the dashboard activity log and run
+// history instead of running invisibly.
 // The tags it returns are the items whose old backups it kept because an
 // unusual backup is holding them.
 func (s *Service) PruneDomain(ctx context.Context, domain, source string) ([]string, error) {
@@ -16537,6 +16575,7 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	pkey := "prune:" + domain
 	_, startedAt := s.progBegin(ctx, pkey, "maintenance")
 	defer func() { s.progEnd(pkey, "maintenance", err == nil, startedAt) }()
+	ctx = s.progCounted(ctx, pkey, startedAt)
 	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "prune")
 	if rErr != nil {
 		log.Printf("api: prune %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal

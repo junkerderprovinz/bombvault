@@ -2489,6 +2489,13 @@ const ko: Partial<Translations> = {
   "dashboard.startTestFailed": "시작 테스트 실패: {name}",
   "settings.startTest": "시작 테스트",
   "settings.startTestHelp": "예약된 복원 검사마다 컨테이너 하나를 격리된 사본으로 복원하고, 시작한 뒤 정상적으로 올라오는지 확인합니다. 사본은 자체 네트워크에서 CPU 1개와 메모리 2 GiB로 실행되고 끝나면 제거됩니다.",
+  "integrity.pruning": "정리 중…",
+  "progress.count.packs": "팩 {n}개 중 {done}개",
+  "progress.count.snapshots": "스냅숏 {n}개 중 {done}개",
+  "progress.count.indexes": "인덱스 {n}개 중 {done}개",
+  "progress.count.files": "파일 {n}개 중 {done}개",
+  "progress.count.items": "{n}개 중 {done}개",
+  "progress.remaining": "{time} 남음",
 };
 
 export default ko;

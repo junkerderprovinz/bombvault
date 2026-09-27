@@ -2508,6 +2508,13 @@ const is: Partial<Translations> = {
   "dashboard.startTestFailed": "Ræsingarprófun mistókst: {name}",
   "settings.startTest": "Ræsingarprófun",
   "settings.startTestHelp": "Hver áætluð endurheimtarprófun endurheimtir líka einn gám í einangrað eintak, ræsir það og kannar hvort það fari í gang. Eintakið keyrir með 1 örgjörva og 2 GiB minni á eigin neti og er fjarlægt á eftir.",
+  "integrity.pruning": "Hreinsa…",
+  "progress.count.packs": "one={done} af {n} pakka|other={done} af {n} pökkum",
+  "progress.count.snapshots": "one={done} af {n} skyndimynd|other={done} af {n} skyndimyndum",
+  "progress.count.indexes": "one={done} af {n} vísi|other={done} af {n} vísum",
+  "progress.count.files": "one={done} af {n} skrá|other={done} af {n} skrám",
+  "progress.count.items": "{done} af {n}",
+  "progress.remaining": "{time} eftir",
 };
 
 export default is;

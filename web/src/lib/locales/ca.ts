@@ -2508,6 +2508,13 @@ const ca: Partial<Translations> = {
   "dashboard.startTestFailed": "La prova d'arrencada ha fallat: {name}",
   "settings.startTest": "Prova d'arrencada",
   "settings.startTestHelp": "Cada comprovació de restauració programada també restaura un contenidor en una còpia aïllada, l'arrenca i comprova que funciona. La còpia s'executa amb 1 CPU i 2 GiB de memòria en una xarxa pròpia i després s'elimina.",
+  "integrity.pruning": "S'està purgant…",
+  "progress.count.packs": "one={done} de {n} paquet|other={done} de {n} paquets",
+  "progress.count.snapshots": "one={done} de {n} instantània|other={done} de {n} instantànies",
+  "progress.count.indexes": "one={done} de {n} índex|other={done} de {n} índexs",
+  "progress.count.files": "one={done} de {n} fitxer|other={done} de {n} fitxers",
+  "progress.count.items": "{done} de {n}",
+  "progress.remaining": "queden {time}",
 };
 
 export default ca;
