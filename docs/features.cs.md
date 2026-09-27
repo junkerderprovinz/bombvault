@@ -11,7 +11,7 @@ BombVault je ve výchozím nastavení jednoduchý a hluboký, když to potřebuj
 | Co | Co se ukládá |
 |---|---|
 | **Docker kontejnery** | Adresář appdata plus definice kontejneru (image, proměnné prostředí, porty, štítky, svazky). |
-| **KVM / libvirt VM** | Diskové image VM, definice XML a UEFI NVRAM (šetrné vypnutí nebo živý snímek, přes SSH). Živé snímky se automaticky vrátí k šetrné záloze, pokud snímek nelze vytvořit, takže záloha VM nikdy jen tak neskončí chybou. |
+| **KVM / libvirt VM** | Diskové image VM, definice XML a UEFI NVRAM (šetrné vypnutí nebo živý snímek, přes SSH). Živé snímky se automaticky vrátí k šetrné záloze, pokud snímek nelze vytvořit, takže záloha VM nikdy jen tak neskončí chybou. Se zapnutou volbou *Jen změněné bloky* se běžící VM s disky qcow2 čte přes kontrolní body libvirt, takže záloha přečte jen bloky zapsané od té předchozí, a každý snapshot přesto sám obnoví celý disk. |
 | **Unraid flash** | Celý USB flash (`/boot`): OS, licence, konfigurace pole, sdílené složky, síť a konfigurace pluginů. Obnova je stažení `.zip` na jedno kliknutí a nikdy nepřepíše živý flash. |
 | **Konfigurace aplikace** | Vlastní `/config` BombVaultu (databáze nastavení, přihlašovací údaje mimo lokalitu, pár klíčů SSH pro libvirt), zachyceno pomocí SQLite `VACUUM INTO`, takže databáze v režimu WAL není nikdy zachycena uprostřed zápisu. Obnovováno pomocí sebe-restartu, takže se živá databáze nikdy nepřepisuje pod otevřeným handlem. |
 | **Soubory a složky** | Pojmenované **sady souborů**: libovolná složka na serveru (sdílená složka, vaše dokumenty, knihovna fotek), každá s volitelnými vylučovacími vzory pro danou sadu. Plná rovnocennost s ostatními doménami (plány, uchovávání, kopie mimo lokalitu, kontroly integrity a cvičné obnovy). |

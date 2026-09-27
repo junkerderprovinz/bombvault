@@ -31,6 +31,7 @@ import { Button } from "../components/Button";
 import { groupStage } from "../lib/controls";
 // The Containers page's schedule switch, saving through setVMInclude here.
 import { IncludeToggle } from "../components/IncludeToggle";
+import { VMBlockToggle } from "../components/VMBlockToggle";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";
@@ -811,12 +812,13 @@ export function VMRow({
           <LinkEntryPicker candidates={linkCandidates} entry={takeoverEntry} onDone={onRefresh} t={t} />
         )}
         {/* IncludeToggle renders its own label. */}
-        <div className="ms-auto">
+        <div className="ms-auto flex flex-col items-end gap-2">
           <IncludeToggle
             name={vm.libvirtName}
             initial={vm.includeInSchedule}
             save={setVMInclude}
           />
+          {installed && <VMBlockToggle vm={vm} />}
         </div>
       </div>
 
@@ -2259,6 +2261,7 @@ function MobileVMDetail({
           a removed VM too: the entry stays scheduled and every run logs a
           skip until this switch goes off. */}
       <IncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} save={setVMInclude} />
+      {installed && <VMBlockToggle vm={vm} />}
 
       {/* ContainerRow's disclosure block with a single section. */}
       <div className="flex flex-col gap-2">
