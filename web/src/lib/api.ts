@@ -1489,6 +1489,18 @@ export interface ExcludeSuggestion {
   complete: boolean;
 }
 
+export interface ExcludePresetEntry {
+  line: string;
+  kind: string;
+  /** Starts unticked: the folder can also hold something the app cannot fetch again. */
+  optional: boolean;
+}
+
+export interface ExcludePreset {
+  app: string;
+  entries: ExcludePresetEntry[];
+}
+
 /**
  * GET /api/containers/{name}/excludes/suggest — the exclusion assistant's scan.
  * Returns exclude candidates (well-known junk dirs like cache/tmp/logs by name,
@@ -1542,6 +1554,8 @@ export function suggestContainerExcludes(
    *  the text stays translatable and an unknown id from a newer server renders
    *  nothing. Optional, so an older server still typechecks. */
   advisories?: string[] | null;
+  /** Folders a recognised app fills again by itself. Offered, never applied. */
+  preset?: ExcludePreset | null;
 }> {
   const q = source ? `?source=${source}` : "";
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/excludes/suggest${q}`);
@@ -2943,6 +2957,51 @@ export function flashDownloadURL(snapshotId: string, source?: string): string {
   return `/api/flash/download?snapshot=${encodeURIComponent(snapshotId)}${srcParam(source, "&")}`;
 }
 
+export interface FlashPlugin {
+  name: string;
+  version: string;
+  size: number;
+  /** Package files outside the plugin folder, as paths below /boot. */
+  packages: string[];
+}
+
+/** GET /api/flash/plugins: the plugins one flash backup holds. */
+export function listFlashPlugins(snapshotId: string, source?: string): Promise<OkEnvelope & { plugins?: FlashPlugin[] }> {
+  return fetchJSON(`/api/flash/plugins?snapshot=${encodeURIComponent(snapshotId)}${srcParam(source, "&")}`);
+}
+
+export interface AppdataBackupArchive {
+  folder: string;
+  container: string;
+  file: string;
+  size: number;
+  /** When the plugin made the backup, in seconds. */
+  time: number;
+  status: "new" | "imported" | "no-container" | "not-backed-up";
+}
+
+/** POST /api/import/appdata-backup/scan: what an Appdata.Backup folder holds. */
+export function scanAppdataBackup(path: string): Promise<OkEnvelope & { archives?: AppdataBackupArchive[] }> {
+  return fetchJSON("/api/import/appdata-backup/scan", { method: "POST", body: JSON.stringify({ path }) });
+}
+
+/** POST /api/import/appdata-backup: imports every new archive in the background. */
+export function importAppdataBackup(path: string): Promise<OkEnvelope & { started?: boolean; archives?: number }> {
+  return fetchJSON("/api/import/appdata-backup", { method: "POST", body: JSON.stringify({ path }) });
+}
+
+/** POST /api/flash/plugins/restore: writes one plugin back into the live flash. */
+export function restoreFlashPlugin(
+  snapshot: string,
+  name: string,
+  source?: string
+): Promise<OkEnvelope & { started?: boolean }> {
+  return fetchJSON("/api/flash/plugins/restore", {
+    method: "POST",
+    body: JSON.stringify({ snapshot, name, source, confirm: true }),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Config API (singleton domain — BombVault's OWN settings self-backup)
 // ---------------------------------------------------------------------------
@@ -3418,6 +3477,9 @@ export interface ZFSRestorePointItem {
   relPath: string;
   snapshotId: string;
   outcome: string;
+  /** The dataset's locally set ZFS properties when it was backed up. Absent
+   *  for a backup from before they were recorded. */
+  properties?: Record<string, string>;
 }
 
 /** One run instant: the member snapshots that share one host snapshot stamp. */
@@ -3435,6 +3497,10 @@ export interface ZFSRestoreRequest {
   /** Absolute inside the member's own tree; empty restores all of it. */
   paths?: string[];
   targetPath?: string;
+  /** A dataset that does not exist yet, created with the stored properties. */
+  newDataset?: string;
+  /** Set the stored properties on the dataset before writing into it. */
+  applyProperties?: boolean;
   confirm: boolean;
   safetySnapshot?: boolean;
   safetyOffConfirm?: boolean;
@@ -3446,6 +3512,8 @@ export interface ZFSRestoreAck extends ZFSCodedEnvelope {
   started?: boolean;
   target?: string;
   safetySnapshot?: string;
+  /** The dataset the restore created. It stays even if the restore fails. */
+  created?: string;
 }
 
 /** What one run did to one dataset of the tree. */

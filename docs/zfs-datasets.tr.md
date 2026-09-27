@@ -63,6 +63,7 @@ Bir konteyner aynı anda hem bu listede hem de **Konteynerler** sayfasında olab
 
 - **Veri kümesinin içine geri yükle.** Yedekteki dosyalar veri kümesinin bağlama noktasına yazılır. Aynı adlı dosyaların üzerine yazılır, diğerleri kalır. Veri kümesi hiçbir zaman geri sarılmaz veya değiştirilmez. BombVault veri kümesinin bağlı, görünür ve yazılabilir olduğunu başlamadan önce bir kez, yazmadan hemen önce tekrar denetler. İçine bir alt veri kümesi bağlanmış olan yerlere hiçbir şey yazılmaz: alt veri kümesi dosyalarını, sahibini ve izinlerini korur ve kendi yedeğinden geri yüklenir.
 - **Bir klasöre geri yükle.** `/mnt` altında bir klasör seçin. BombVault klasörün bağlı bir havuzda veya paylaşımda olduğunu ve yeterli boş alan bulunduğunu denetler. Bu, SSH bağlantısı olmadan ve artık var olmayan veri kümeleri için de çalışır.
+- **Yeni bir veri kümesine.** Henüz var olmayan bir veri kümesi adı ver. BombVault onu yedekte saklanan ZFS özellikleriyle oluşturur ve içine geri yükler, bkz. [Yeni bir veri kümesi olarak geri yükleme](#new-dataset).
 - **Dosya seç** (gelişmiş): yalnızca seçtiğiniz dosya ve klasörleri veri kümesine geri yazın.
 - **Bu yedeğin bütün veri kümeleri** (gelişmiş): ağacın her veri kümesini seçtiğiniz klasörün kendi alt klasörüne. O yedekte atlanan veri kümeleri adlandırılır.
 - **Başka bir sunucudan:** **Kurtarma** sayfası başka bir BombVault'un deposundan, her zaman bir klasöre geri yükler: bir yedeğin tüm veri kümeleri, her biri kendi alt klasörüne, ya da ağacın bir veri kümesi, tamamı veya seçilmiş dosyalar.
@@ -79,27 +80,23 @@ Bir geri yüklemeden sonra geri dönmek için veri kümesinin içindeki `.zfs/sn
 
 ### Yeni bir veri kümesi olarak geri yükleme {#new-dataset}
 
-BombVault veri kümesi oluşturmaz. Onu istediğiniz özelliklerle sunucuda oluşturun, ardından bağlama noktası olan bir klasöre geri yükleyin:
+BombVault her yedekle birlikte her veri kümesinin yerel olarak ayarlanmış ZFS özelliklerini saklar: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity ve kendi kullanıcı özelliklerin. Devralınan ve salt okunur değerler dışarıda bırakılır, çünkü kendiliğinden geri gelirler. BombVault bunları saklamaya başlamadan önceki yedeklerde hiç yoktur.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-ve BombVault'ta `/mnt` altındaki `cache/appdata-restored` klasörüne geri yükleyin.
+- **Yeni bir veri kümesine** her saklanan özellikle `zfs create` çalıştırır. casesensitivity, normalization ve utf8only yalnızca bu şekilde ayarlanabilir. Kopya orijinalle çakışmasın diye bağlama noktası dışarıda bırakılır; geri yükleme yazabilsin diye `canmount`, `readonly` ve şifreleme de. Şifreli bir veri kümesinin altındaki yeni veri kümesi onun şifrelemesini alır. Üstteki veri kümesi mevcut olmalıdır. Oluşturulduktan sonra bir şey başarısız olursa yeni veri kümesi sunucuda kalır, çünkü BombVault asla bir veri kümesini yok etmez.
+- **Veri kümesinin içine geri yükle** saklanan özellikleri geri yüklemenin yanında gösterir. **Bu özellikleri de ayarla**, var olan bir veri kümesinin hâlâ kabul ettiği özellikleri herhangi bir dosya yazılmadan önce ayarlar. Bu anahtar olmadan veri kümesi ayarlarını korur.
 
 ## Yedekte ne var {#contents}
 
-Yedekte: yedeklenen her veri kümesinin dosya ve klasörleri, restic'in sakladığı şekliyle sahiplikleri, izinleri, zaman damgaları ve genişletilmiş öznitelikleriyle.
+Yedekte: yedeklenen her veri kümesinin dosya ve klasörleri, restic'in sakladığı şekliyle sahiplikleri, izinleri, zaman damgaları ve genişletilmiş öznitelikleriyle ve her veri kümesinin yerel olarak ayarlanmış ZFS özellikleri.
 
 Yedekte olmayanlar:
 
-- veri kümelerinin ZFS özellikleri (compression, recordsize, quota, mountpoint ve diğerleri);
 - her veri kümesinin en üst klasörünün kendi sahibi ve izinleri (altındaki her şey dahildir). Veri kümesinin içine geri yükleme mevcut en üst klasörü olduğu gibi bırakır, bir klasöre geri yükleme onu `0755` izinleriyle oluşturur;
 - mevcut ZFS anlık görüntüleri;
 - atlanan veya dışarıda bırakılan alt veri kümeleri;
 - birimler.
 
-Yeni bir havuza geri yüklemek için önce veri kümelerini istediğiniz özelliklerle oluşturun. TrueNAS'ın SMB veri kümelerinde kullandığı NFSv4 ACL'lerinin beklediğiniz gibi geri gelip gelmediği henüz doğrulanmadı; bu yüzden onlara güvenmeden önce kendi verilerinizle bir geri yüklemeyi deneyin.
+Yeni bir havuza geri yüklemek için havuzu oluştur ve her veri kümesini yeni bir veri kümesine geri yükle. TrueNAS'ın SMB veri kümelerinde kullandığı NFSv4 ACL'lerinin beklediğiniz gibi geri gelip gelmediği henüz doğrulanmadı; bu yüzden onlara güvenmeden önce kendi verilerinizle bir geri yüklemeyi deneyin.
 
 ## Şifreli veri kümeleri {#encryption}
 
@@ -180,6 +177,10 @@ Sayfa, çalıştırma geçmişi ve bildirimler bir sorunu bu kodlardan biriyle a
 | `not-enough-space` | Hedefte yeterli boş alan yok. | Yer açın ya da başka bir klasör seçin. |
 | `safety-snapshot-failed` | Güvenlik anlık görüntüsü alınamadı, bu yüzden hiçbir şey geri yüklenmedi. | Ayrıntılar zfs'nin iletisini gösterir. |
 | `safety-name-too-long` | Veri kümesinin adı bir güvenlik anlık görüntüsü için fazla uzun. | Güvenlik anlık görüntüsünü kapatın ya da bir klasöre geri yükleyin. |
+| `dataset-exists` | Bu adda bir veri kümesi zaten var. | Yeni bir ad seç ya da veri kümesinin kendisine geri yükle. |
+| `create-failed` | Yeni veri kümesi oluşturulamadı. | Ayrıntılar zfs'in mesajını gösterir. Üstteki veri kümesinin var olduğunu kontrol et. |
+| `new-dataset-not-visible` | Yeni veri kümesi oluşturuldu ama BombVault onu göremiyor, bu yüzden hiçbir şey geri yüklenmedi. | Veri kümesi sunucuda kalır. Onu Host Data yolunun altına bağla ve içine geri yükle. |
+| `set-properties-failed` | Saklanan özellikler ayarlanamadı, bu yüzden hiçbir şey geri yüklenmedi. | Ayrıntılar zfs'nin iletisini gösterir. |
 
 ### Konteynerin ne gördüğünü denetlemek {#mountinfo}
 
@@ -201,6 +202,8 @@ Her satır konteynerin içindeki bir bağlamadır. Bir veri kümesinin satırı,
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Yeni bir veri kümesine geri yükleme ayrıca üstteki veri kümesinde `create` izni gerektirir; saklanan özellikleri ayarlamak da o özellikler için izin gerektirir.
 
   TrueNAS'ta root olmayan bir SSH oturumunun yolunda `/usr/sbin` yoktur; BombVault o durumda doğrudan `/usr/sbin/zfs` çağırır.
 - Uygulamanın **Host Data** değeri veri kümelerinin üstünde bir ana makine yolu olmalıdır, örneğin `/mnt/tank`; ixVolume olmamalıdır. Bir ana makine yoluyla uygulama, ana makinenin yeni bağlamalarını BombVault'a iletir (`rslave`); anlık görüntü erişiminin ihtiyaç duyduğu da budur.

@@ -63,6 +63,7 @@ Otevřete **Zálohy** u položky, vyberte zálohu a pak datovou sadu. Výchozí 
 
 - **Obnovit do datové sady.** Soubory ze zálohy se zapíší do přípojného bodu datové sady. Soubory se stejným názvem se přepíšou, ostatní zůstanou. Datová sada se nikdy nevrací do dřívějšího stavu ani nenahrazuje. BombVault zkontroluje, že je datová sada připojená, viditelná a zapisovatelná, jednou před začátkem a znovu těsně před zápisem. Tam, kde je uvnitř připojená podřízená sada, se nic nezapisuje: ta si ponechá své soubory, vlastníka a oprávnění a obnoví se ze své vlastní zálohy.
 - **Obnovit do složky.** Vyberte složku pod `/mnt`. BombVault zkontroluje, že složka leží na připojeném poolu nebo sdílené složce a že je dost volného místa. Funguje to bez spojení SSH i pro datové sady, které už neexistují.
+- **Do nové datové sady.** Zadej datovou sadu, která ještě neexistuje. BombVault ji vytvoří s vlastnostmi ZFS uloženými v záloze a obnoví do ní, viz [Obnova jako nová datová sada](#new-dataset).
 - **Vybrat soubory** (pokročilé): zapsat zpět do datové sady jen soubory a složky, které vyberete.
 - **Všechny datové sady této zálohy** (pokročilé): každou datovou sadu stromu do vlastní podsložky vybrané složky. Datové sady, které byly v této záloze přeskočeny, se uvedou.
 - **Z jiného serveru:** stránka **Obnova** obnovuje z repozitáře jiného BombVaultu, vždy do složky: všechny datové sady jedné zálohy, každou do vlastní podsložky, nebo jednu datovou sadu stromu, celou nebo vybrané soubory.
@@ -79,27 +80,23 @@ Chcete-li se po obnově vrátit, zkopírujte jednotlivé soubory z `.zfs/snapsho
 
 ### Obnova jako nová datová sada {#new-dataset}
 
-BombVault datové sady nevytváří. Vytvořte ji na serveru s požadovanými vlastnostmi a pak obnovte do složky, která je jejím přípojným bodem:
+BombVault s každou zálohou uloží lokálně nastavené vlastnosti ZFS každé datové sady: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity a tvoje vlastní uživatelské vlastnosti. Zděděné hodnoty a hodnoty jen pro čtení se vynechají, protože se vrátí samy. Zálohy z doby, kdy je BombVault ještě neukládal, žádné nemají.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-a v BombVaultu obnovte do složky `cache/appdata-restored` pod `/mnt`.
+- **Do nové datové sady** spustí `zfs create` se všemi uloženými vlastnostmi. casesensitivity, normalization a utf8only jde nastavit jen takto. Přípojný bod se vynechá, aby kopie nekolidovala s originálem, stejně jako `canmount`, `readonly` a šifrování, aby obnova mohla zapisovat. Nová datová sada pod šifrovanou převezme její šifrování. Nadřazená datová sada musí existovat. Když po vytvoření něco selže, nová datová sada zůstane na serveru, protože BombVault nikdy datovou sadu neničí.
+- **Obnovit do datové sady** ukáže uložené vlastnosti vedle obnovy. **Nastavit i tyto vlastnosti** nastaví ty, které existující datová sada ještě přijme, dřív než se zapíše jakýkoli soubor. Bez tohoto přepínače si datová sada ponechá své nastavení.
 
 ## Co záloha obsahuje {#contents}
 
-V záloze: soubory a složky každé zálohované datové sady, s vlastníkem, oprávněními, časovými razítky a rozšířenými atributy tak, jak je restic ukládá.
+V záloze: soubory a složky každé zálohované datové sady, s vlastníkem, oprávněními, časovými razítky a rozšířenými atributy tak, jak je restic ukládá a lokálně nastavené vlastnosti ZFS každé datové sady.
 
 Není v záloze:
 
-- vlastnosti ZFS datových sad (compression, recordsize, quota, mountpoint a ostatní);
 - vlastník a oprávnění samotné nejvyšší složky každé datové sady (vše pod ní je zahrnuto). Obnova do datové sady nechá existující nejvyšší složku, jak je, obnova do složky ji vytvoří s oprávněními `0755`;
 - existující snímky ZFS;
 - podřízené sady, které byly přeskočeny nebo vynechány;
 - svazky.
 
-Pro obnovu na nový pool nejprve vytvořte datové sady s požadovanými vlastnostmi. Zda se ACL NFSv4, jak je TrueNAS používá na datových sadách SMB, vrátí tak, jak čekáte, zatím nebylo ověřeno, proto si obnovu vyzkoušejte na vlastních datech, než se na to spolehnete.
+Pro obnovu na nový pool vytvoř pool a obnov každou datovou sadu do nové datové sady. Zda se ACL NFSv4, jak je TrueNAS používá na datových sadách SMB, vrátí tak, jak čekáte, zatím nebylo ověřeno, proto si obnovu vyzkoušejte na vlastních datech, než se na to spolehnete.
 
 ## Šifrované datové sady {#encryption}
 
@@ -180,6 +177,10 @@ Stránka, historie běhů a oznámení pojmenují problém jedním z těchto kó
 | `not-enough-space` | V cíli není dost volného místa. | Uvolněte místo, nebo vyberte jinou složku. |
 | `safety-snapshot-failed` | Bezpečnostní snímek nešel pořídit, takže se nic neobnovilo. | Podrobnosti ukazují zprávu zfs. |
 | `safety-name-too-long` | Název datové sady je na bezpečnostní snímek příliš dlouhý. | Vypněte bezpečnostní snímek, nebo obnovte do složky. |
+| `dataset-exists` | Datová sada s tímto názvem už existuje. | Zvol nový název, nebo obnov přímo do datové sady. |
+| `create-failed` | Novou datovou sadu se nepodařilo vytvořit. | Podrobnosti ukazují zprávu zfs. Zkontroluj, že nadřazená datová sada existuje. |
+| `new-dataset-not-visible` | Nová datová sada byla vytvořena, ale BombVault ji nevidí, takže se nic neobnovilo. | Datová sada zůstává na serveru. Připoj ji pod cestu Host Data a obnov do ní. |
+| `set-properties-failed` | Uložené vlastnosti se nepodařilo nastavit, takže se nic neobnovilo. | Podrobnosti ukazují zprávu zfs. |
 
 ### Kontrola toho, co kontejner vidí {#mountinfo}
 
@@ -201,6 +202,8 @@ Každý řádek je jedno připojení uvnitř kontejneru. Řádek datové sady uk
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Obnova do nové datové sady navíc potřebuje `create` na nadřazené datové sadě a nastavení uložených vlastností potřebuje oprávnění k těmto vlastnostem.
 
   Relace SSH bez roota na TrueNAS nemá v cestě `/usr/sbin`; BombVault pak volá přímo `/usr/sbin/zfs`.
 - **Host Data** aplikace musí být cesta hostitele nad datovými sadami, například `/mnt/tank`, ne ixVolume. S cestou hostitele předává aplikace nová připojení hostitele do BombVaultu (`rslave`), a to přístup ke snímkům potřebuje.

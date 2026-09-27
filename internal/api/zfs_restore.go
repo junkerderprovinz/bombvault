@@ -42,6 +42,9 @@ type ZFSRestorePointItem struct {
 	RelPath    string `json:"relPath"`
 	SnapshotID string `json:"snapshotId"`
 	Outcome    string `json:"outcome"`
+	// Properties are the dataset's locally set ZFS properties as the run found
+	// them, absent for a backup from before they were recorded.
+	Properties map[string]string `json:"properties,omitempty"`
 }
 
 // ZFSRestoreRequest is one restore the panel asks for.
@@ -52,17 +55,26 @@ type ZFSRestoreRequest struct {
 	// Paths are absolute inside the member's own tree; empty restores all of it.
 	Paths []string `json:"paths"`
 	// TargetPath is a folder below the host mount; empty restores in place.
-	TargetPath       string `json:"targetPath"`
-	Confirm          bool   `json:"confirm"`
-	SafetySnapshot   bool   `json:"safetySnapshot"`
-	SafetyOffConfirm bool   `json:"safetyOffConfirm"`
-	StopContainers   bool   `json:"stopContainers"`
+	TargetPath string `json:"targetPath"`
+	// NewDataset is a dataset that does not exist yet. It is created with the
+	// stored properties and the member is restored into it.
+	NewDataset string `json:"newDataset"`
+	// ApplyProperties sets the stored properties on the dataset an in-place
+	// restore writes into, before any file is written.
+	ApplyProperties  bool `json:"applyProperties"`
+	Confirm          bool `json:"confirm"`
+	SafetySnapshot   bool `json:"safetySnapshot"`
+	SafetyOffConfirm bool `json:"safetyOffConfirm"`
+	StopContainers   bool `json:"stopContainers"`
 }
 
 // ZFSRestoreAck is what the caller learns the moment a restore starts.
 type ZFSRestoreAck struct {
 	Target         string `json:"target"`
 	SafetySnapshot string `json:"safetySnapshot"`
+	// Created names the dataset the restore created, which stays even if the
+	// restore fails later.
+	Created string `json:"created,omitempty"`
 }
 
 // zfsRestoreStep is one restic call of a restore: a member snapshot and where
@@ -91,6 +103,8 @@ type zfsRestorePlan struct {
 	consistency backup.ZFSConsistency
 	// snapshotID is what the run record points at, the first member restored.
 	snapshotID string
+	// setProps are applied to the in-place dataset before the files.
+	setProps zfs.Properties
 }
 
 // ListZFSRestorePoints groups an item's member snapshots into the run instants
@@ -106,6 +120,10 @@ func (s *Service) ListZFSRestorePoints(ctx context.Context, id, source string) (
 		return nil, err
 	}
 	outcomes := s.zfsRunOutcomes(d.ID)
+	props, pErr := s.store.ZFSPropertiesOfItem(d.ID)
+	if pErr != nil {
+		log.Printf("api: zfs: reading the stored properties of %s failed: %v", d.Dataset, pErr)
+	}
 	points := map[string]map[string]ZFSRestorePointItem{}
 	for _, snap := range snaps {
 		dataset, ok := zfsSnapshotDataset(snap, d.Dataset)
@@ -128,6 +146,7 @@ func (s *Service) ListZFSRestorePoints(ctx context.Context, id, source string) (
 			RelPath:    zfsRelPath(d.Dataset, dataset),
 			SnapshotID: snap.ID,
 			Outcome:    outcome,
+			Properties: props[snap.ID],
 		}
 	}
 	out := make([]ZFSRestorePoint, 0, len(points))
@@ -318,9 +337,17 @@ func (s *Service) prepareRestoreZFS(ctx context.Context, id, source string, req 
 		mode:   s.repoModeFor(settings, zfsDomain, source, repo),
 		paths:  selected,
 	}
+	newDataset := strings.TrimSpace(req.NewDataset)
 	if sub := strings.TrimSpace(req.TargetPath); sub != "" {
+		if newDataset != "" {
+			return zfsRestorePlan{}, ZFSRestoreAck{}, errors.New("choose a folder or a new dataset, not both")
+		}
 		ack, fErr := s.planZFSRestoreToFolder(ctx, &plan, point, req, sub)
 		return plan, ack, fErr
+	}
+	if newDataset != "" {
+		ack, nErr := s.planZFSRestoreNewDataset(ctx, &plan, point, req, newDataset)
+		return plan, ack, nErr
 	}
 	ack, pErr := s.planZFSRestoreInPlace(ctx, &plan, d, settings, point, req)
 	return plan, ack, pErr
@@ -383,6 +410,12 @@ func (s *Service) planZFSRestoreInPlace(ctx context.Context, plan *zfsRestorePla
 	if err := zfsRefuseCoveredPaths(plan.paths, covered); err != nil {
 		return ZFSRestoreAck{}, err
 	}
+	if req.ApplyProperties {
+		if len(member.Properties) == 0 {
+			return ZFSRestoreAck{}, errors.New("this backup holds no ZFS properties to apply")
+		}
+		plan.setProps = member.Properties
+	}
 	plan.inPlace = true
 	plan.covered = covered
 	plan.dataset = req.Dataset
@@ -400,6 +433,73 @@ func (s *Service) planZFSRestoreInPlace(ctx context.Context, plan *zfsRestorePla
 		ack.SafetySnapshot = req.Dataset + "@" + name
 	}
 	return ack, nil
+}
+
+// planZFSRestoreNewDataset creates the dataset a restore writes into, with the
+// properties stored for the member, and waits until the container sees it.
+// Everything that can refuse without a trace runs before the create; after
+// it the dataset stays, since BombVault never destroys one.
+func (s *Service) planZFSRestoreNewDataset(ctx context.Context, plan *zfsRestorePlan, point ZFSRestorePoint, req ZFSRestoreRequest, name string) (ZFSRestoreAck, error) {
+	if req.WholeTree {
+		return ZFSRestoreAck{}, errors.New("a whole tree can only be restored into a folder")
+	}
+	if s.zfs == nil {
+		return ZFSRestoreAck{}, zfsRefuse("ssh-missing", "")
+	}
+	if err := zfs.ValidateDatasetName(name); err != nil || !strings.Contains(name, "/") {
+		return ZFSRestoreAck{}, zfsRefuse("invalid-name", name)
+	}
+	member, ok := zfsPointMember(point, req.Dataset)
+	if !ok || member.SnapshotID == "" {
+		return ZFSRestoreAck{}, fmt.Errorf("dataset %q was not backed up at this restore point", req.Dataset)
+	}
+	lctx, cancel := context.WithTimeout(ctx, zfsListTimeout)
+	_, err := s.zfs.Tree(lctx, name)
+	cancel()
+	switch {
+	case err == nil:
+		return ZFSRestoreAck{}, zfsRefuse("dataset-exists", name)
+	case zfsErrCode(err) != "not-found":
+		return ZFSRestoreAck{}, zfsRefuse(zfsErrCode(err), name)
+	}
+	cctx, cancel := context.WithTimeout(ctx, zfsSnapshotTimeout)
+	err = s.zfs.Create(cctx, name, member.Properties)
+	cancel()
+	if err != nil {
+		return ZFSRestoreAck{}, zfsRefuse("create-failed", name+": "+zfsDetail(err.Error()))
+	}
+	cpath, code := s.zfsAwaitWritableMount(ctx, name)
+	switch code {
+	case "":
+	case "not-visible", "not-mounted", "shfs-only":
+		return ZFSRestoreAck{Created: name}, zfsRefuse("new-dataset-not-visible", name)
+	default:
+		return ZFSRestoreAck{Created: name}, zfsRefuse(code, name)
+	}
+	plan.dataset = req.Dataset
+	plan.steps = []zfsRestoreStep{{snapshotID: member.SnapshotID, target: cpath}}
+	plan.snapshotID = member.SnapshotID
+	return ZFSRestoreAck{Target: cpath, Created: name}, nil
+}
+
+// zfsAwaitWritableMount waits for a dataset created a moment ago to reach the
+// container, which it does through the Host Data mount's propagation.
+func (s *Service) zfsAwaitWritableMount(ctx context.Context, dataset string) (string, string) {
+	deadline := time.Now().Add(zfsSnapshotWait)
+	for {
+		cpath, _, code := s.zfsRestoreMount(ctx, dataset, dataset)
+		if code == "" {
+			return cpath, ""
+		}
+		if (code != "not-visible" && code != "not-mounted") || time.Now().After(deadline) {
+			return "", code
+		}
+		select {
+		case <-ctx.Done():
+			return "", code
+		case <-time.After(zfsSnapshotPoll):
+		}
+	}
 }
 
 // zfsRestoreMembers picks what a to-folder restore writes: every member the run
@@ -608,6 +708,14 @@ func (s *Service) runRestoreZFS(ctx context.Context, plan zfsRestorePlan) error 
 			return err
 		}
 		plan.covered = covered
+	}
+	if len(plan.setProps) > 0 {
+		sctx, cancel := context.WithTimeout(ctx, zfsSnapshotTimeout)
+		err := s.zfs.SetProperties(sctx, plan.dataset, plan.setProps)
+		cancel()
+		if err != nil {
+			return &backup.ZFSRefusal{Code: "set-properties-failed", Detail: plan.dataset + ": " + zfsDetail(err.Error())}
+		}
 	}
 	if plan.consistency != nil {
 		thaw, _, err := plan.consistency.Freeze(ctx)

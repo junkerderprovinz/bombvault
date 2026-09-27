@@ -63,6 +63,7 @@ Open **Backups** on the item, pick the backup, then the dataset. By default that
 
 - **Into the dataset.** Files from the backup are written into the dataset's mountpoint. Files with the same name are overwritten, other files stay. The dataset is never rolled back or replaced. BombVault checks that the dataset is mounted, visible and writable, once before it starts and again right before it writes. Where a child dataset is mounted inside it, nothing is written: the child keeps its files, owner and permissions, and is restored from its own backup.
 - **To a folder.** Pick a folder below `/mnt`. BombVault checks that the folder is on a mounted pool or share and that there is enough free space. This works without the SSH link and for datasets that no longer exist.
+- **Into a new dataset.** Name a dataset that does not exist yet. BombVault creates it with the ZFS properties stored in the backup and restores into it, see [Restoring as a new dataset](#new-dataset).
 - **Select files** (Advanced): write only the files and folders you pick back into the dataset.
 - **All datasets of this backup** (Advanced): every dataset of the tree into its own subfolder of the folder you pick. Datasets that were skipped in that backup are named.
 - **From another server:** the **Recovery** page restores from another BombVault's repository, always into a folder: all datasets of one backup, each into its own subfolder, or one dataset of the tree, whole or selected files.
@@ -79,27 +80,23 @@ To go back after a restore, copy single files from `.zfs/snapshot/bombvault-prer
 
 ### Restoring as a new dataset {#new-dataset}
 
-BombVault does not create datasets. Create it on the server with the properties you want, then restore to a folder that is its mountpoint:
+BombVault stores the locally set ZFS properties of every dataset with each backup: compression, record size, quota, reservation, atime, xattr, acltype, case sensitivity and your own user properties. Inherited and read-only values are left out, because they come back on their own. Backups from before BombVault stored them have none.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-and in BombVault restore to the folder `cache/appdata-restored` below `/mnt`.
+- **Into a new dataset** runs `zfs create` with every stored property. Case sensitivity, normalization and utf8only can only be set this way. The mountpoint is left out, so the copy does not collide with the original, and so are `canmount`, `readonly` and the encryption settings, so the restore can write. A new dataset below an encrypted one takes over its encryption. The dataset above the new one has to exist. If something fails after the new dataset was created, it stays on the server, because BombVault never destroys a dataset.
+- **Into the dataset** lists the stored properties next to the restore. **Also set these properties** sets the ones an existing dataset can still take, before any file is written. Without that switch the dataset keeps its settings.
 
 ## What is in the backup {#contents}
 
-In the backup: the files and folders of every backed-up dataset, with their ownership, modes, timestamps and extended attributes as restic stores them.
+In the backup: the files and folders of every backed-up dataset, with their ownership, modes, timestamps and extended attributes as restic stores them, and the locally set ZFS properties of each dataset.
 
 Not in the backup:
 
-- the datasets' ZFS properties (compression, recordsize, quota, mountpoint and the rest);
 - the owner and mode of each dataset's top folder itself (everything below it is included). A restore into the dataset leaves the existing top folder as it is, a restore to a folder creates it with mode `0755`;
 - existing ZFS snapshots;
 - children that were skipped or left out;
 - volumes.
 
-To restore onto a new pool, create the datasets first with the properties you want. Whether NFSv4 ACLs, as TrueNAS uses them on SMB datasets, come back the way you expect has not been verified yet, so check a restore on your own data before you rely on them.
+To restore onto a new pool, create the pool and restore each dataset into a new dataset. Whether NFSv4 ACLs, as TrueNAS uses them on SMB datasets, come back the way you expect has not been verified yet, so check a restore on your own data before you rely on them.
 
 ## Encrypted datasets {#encryption}
 
@@ -180,6 +177,10 @@ The page, the run history and the notifications name a problem with one of these
 | `not-enough-space` | Not enough free space at the destination. | Free space or choose another folder. |
 | `safety-snapshot-failed` | The safety snapshot could not be taken, so nothing was restored. | The details show zfs's message. |
 | `safety-name-too-long` | The dataset name is too long for a safety snapshot. | Switch the safety snapshot off, or restore to a folder. |
+| `dataset-exists` | A dataset with this name already exists. | Choose a new name, or restore into the dataset itself. |
+| `create-failed` | The new dataset could not be created. | The details show zfs's message. Check that the dataset above it exists. |
+| `new-dataset-not-visible` | The new dataset was created, but BombVault cannot see it, so nothing was restored. | The dataset stays on the server. Mount it below the Host Data path and restore into it. |
+| `set-properties-failed` | The stored properties could not be set, so nothing was restored. | The details show zfs's message. |
 
 ### Checking what the container sees {#mountinfo}
 
@@ -201,6 +202,8 @@ Each line is one mount inside the container. The line of a dataset shows its pat
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Restoring into a new dataset also needs `create` on the dataset above it, and setting stored properties needs permission for those properties.
 
   A non-root SSH session on TrueNAS does not have `/usr/sbin` in its path; BombVault then calls `/usr/sbin/zfs` directly.
 - The app's **Host Data** must be a host path above the datasets, for example `/mnt/tank`, not an ixVolume. With a host path the app passes the host's new mounts on to BombVault (`rslave`), which snapshot access needs.

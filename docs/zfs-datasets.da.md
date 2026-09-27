@@ -63,6 +63,7 @@ En container kan stå på denne liste og på siden **Containers** på samme tid.
 
 - **Gendan ind i datasættet.** Filer fra sikkerhedskopien skrives ind i datasættets monteringspunkt. Filer med samme navn overskrives, andre bliver liggende. Datasættet rulles aldrig tilbage eller erstattes. BombVault tjekker, at datasættet er monteret, synligt og skrivbart, én gang før det starter og igen lige før det skriver. Hvor et underdatasæt er monteret inde i det, skrives intet: Underdatasættet beholder sine filer, sin ejer og sine rettigheder og gendannes fra sin egen sikkerhedskopi.
 - **Gendan til en mappe.** Vælg en mappe under `/mnt`. BombVault tjekker, at mappen ligger på en monteret pool eller share, og at der er plads nok. Det virker uden SSH-forbindelsen og for datasæt, der ikke længere findes.
+- **Til et nyt datasæt.** Angiv et datasæt, der ikke findes endnu. BombVault opretter det med ZFS-egenskaberne fra sikkerhedskopien og gendanner ind i det, se [Gendan som nyt datasæt](#new-dataset).
 - **Vælg filer** (avanceret): skriv kun de filer og mapper, du vælger, tilbage i datasættet.
 - **Alle datasæt i denne sikkerhedskopi** (avanceret): hvert datasæt i træet i sin egen undermappe af den mappe, du vælger. Datasæt, der blev sprunget over i den sikkerhedskopi, nævnes.
 - **Fra en anden server:** Siden **Gendannelse** gendanner fra en anden BombVaults repository, altid til en mappe: alle datasæt i én sikkerhedskopi, hvert i sin egen undermappe, eller ét datasæt i træet, helt eller valgte filer.
@@ -79,27 +80,23 @@ For at gå tilbage efter en gendannelse kopierer du enkelte filer fra `.zfs/snap
 
 ### Gendan som nyt datasæt {#new-dataset}
 
-BombVault opretter ikke datasæt. Opret det på serveren med de egenskaber, du vil have, og gendan derefter til en mappe, der er dets monteringspunkt:
+BombVault gemmer med hver sikkerhedskopi de lokalt satte ZFS-egenskaber for hvert datasæt: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity og dine egne brugeregenskaber. Nedarvede og skrivebeskyttede værdier udelades, fordi de kommer tilbage af sig selv. Sikkerhedskopier fra før BombVault gemte dem, har ingen.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-og gendan i BombVault til mappen `cache/appdata-restored` under `/mnt`.
+- **Til et nyt datasæt** kører `zfs create` med hver gemt egenskab. casesensitivity, normalization og utf8only kan kun sættes på den måde. Monteringspunktet udelades, så kopien ikke støder sammen med originalen, og det samme gælder `canmount`, `readonly` og krypteringen, så gendannelsen kan skrive. Et nyt datasæt under et krypteret overtager dets kryptering. Datasættet ovenover skal findes. Hvis noget fejler, efter det er oprettet, bliver det nye datasæt på serveren, fordi BombVault aldrig ødelægger et datasæt.
+- **Gendan ind i datasættet** viser de gemte egenskaber ved siden af gendannelsen. **Sæt også disse egenskaber** sætter dem, et eksisterende datasæt stadig tager imod, før en eneste fil skrives. Uden den kontakt beholder datasættet sine indstillinger.
 
 ## Hvad sikkerhedskopien indeholder {#contents}
 
-I sikkerhedskopien: filerne og mapperne i hvert sikkerhedskopieret datasæt, med ejer, rettigheder, tidsstempler og udvidede attributter, som restic gemmer dem.
+I sikkerhedskopien: filerne og mapperne i hvert sikkerhedskopieret datasæt, med ejer, rettigheder, tidsstempler og udvidede attributter, som restic gemmer dem og de lokalt satte ZFS-egenskaber for hvert datasæt.
 
 Ikke i sikkerhedskopien:
 
-- datasættenes ZFS-egenskaber (compression, recordsize, quota, mountpoint og resten);
 - ejer og rettigheder for selve den øverste mappe i hvert datasæt (alt under den er med). En gendannelse ind i datasættet lader den eksisterende øverste mappe være, som den er, en gendannelse til en mappe opretter den med rettighederne `0755`;
 - eksisterende ZFS-snapshots;
 - underdatasæt, der blev sprunget over eller udeladt;
 - volumener.
 
-For at gendanne til en ny pool skal du først oprette datasættene med de egenskaber, du vil have. Om NFSv4-ACL'er, som TrueNAS bruger dem på SMB-datasæt, kommer tilbage som forventet, er endnu ikke afprøvet, så test en gendannelse med dine egne data, før du stoler på dem.
+For at gendanne til en ny pool opretter du poolen og gendanner hvert datasæt til et nyt datasæt. Om NFSv4-ACL'er, som TrueNAS bruger dem på SMB-datasæt, kommer tilbage som forventet, er endnu ikke afprøvet, så test en gendannelse med dine egne data, før du stoler på dem.
 
 ## Krypterede datasæt {#encryption}
 
@@ -180,6 +177,10 @@ Siden, kørselshistorikken og notifikationerne nævner et problem med en af diss
 | `not-enough-space` | Ikke nok ledig plads på destinationen. | Frigør plads, eller vælg en anden mappe. |
 | `safety-snapshot-failed` | Sikkerhedssnapshottet kunne ikke tages, så intet blev gendannet. | Detaljerne viser zfs' besked. |
 | `safety-name-too-long` | Datasætnavnet er for langt til et sikkerhedssnapshot. | Slå sikkerhedssnapshottet fra, eller gendan til en mappe. |
+| `dataset-exists` | Der findes allerede et datasæt med dette navn. | Vælg et nyt navn, eller gendan ind i selve datasættet. |
+| `create-failed` | Det nye datasæt kunne ikke oprettes. | Detaljerne viser beskeden fra zfs. Tjek, at datasættet ovenover findes. |
+| `new-dataset-not-visible` | Det nye datasæt blev oprettet, men BombVault kan ikke se det, så intet blev gendannet. | Datasættet bliver på serveren. Montér det under Host Data-stien, og gendan ind i det. |
+| `set-properties-failed` | De gemte egenskaber kunne ikke sættes, så intet blev gendannet. | Detaljerne viser zfs' besked. |
 
 ### Tjek, hvad containeren ser {#mountinfo}
 
@@ -201,6 +202,8 @@ Hver linje er en montering inde i containeren. Et datasæts linje viser dets sti
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Gendannelse til et nyt datasæt kræver desuden `create` på datasættet ovenover, og at sætte gemte egenskaber kræver rettigheder til de egenskaber.
 
   En SSH-session uden root på TrueNAS har ikke `/usr/sbin` i sin sti; BombVault kalder så `/usr/sbin/zfs` direkte.
 - Appens **Host Data** skal være en værtssti over datasættene, for eksempel `/mnt/tank`, ikke et ixVolume. Med en værtssti sender appen værtens nye monteringer videre til BombVault (`rslave`), og det kræver snapshotadgang.

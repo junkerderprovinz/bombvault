@@ -101,6 +101,7 @@ type ResticEngine interface {
 	// tree root stays the dataset root although the directory it is read from
 	// names a different snapshot every run.
 	BackupDir(ctx context.Context, repo, dir string, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
+	ImportDir(ctx context.Context, repo, dir string, tags []string, at time.Time, mode restic.Mode) (restic.Summary, error)
 	// BackupStdin backs up the ENTIRE content of rd as a single synthetic file
 	// recorded under path, tagged with tags — the zvol VM disk backup path
 	// (v8.0.0 VM service-layer integration, Task 2): a `zfs send` stream piped
@@ -7562,7 +7563,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		// failure resolution happens here, in the synchronous prepare phase: the
 		// orchestrator only ever receives a list it has checked.
 		chosen := chosenSnapshot(snaps, snapshotID)
-		mapped, skipped, narrowed := mapRestorePaths(tg.AppdataPaths, chosen.Paths)
+		mapped, skipped, narrowed := mapRestorePaths(tg.AppdataPaths, s.restoreRootsOf(*chosen))
 		// A pass-2 result is a stored path that only an ANCESTOR of it was
 		// recorded for. That proves it lies under a backed-up root; it does NOT
 		// prove it is in the snapshot. The branch may have been carved out by a

@@ -63,6 +63,7 @@ En container kan stå på den här listan och på sidan **Containers** samtidigt
 
 - **Återställ in i datauppsättningen.** Filer från säkerhetskopian skrivs till datauppsättningens monteringspunkt. Filer med samma namn skrivs över, andra ligger kvar. Datauppsättningen rullas aldrig tillbaka eller ersätts. BombVault kontrollerar att datauppsättningen är monterad, synlig och skrivbar, en gång innan det börjar och igen precis innan det skriver. Där en underliggande datauppsättning är monterad inuti skrivs ingenting: den behåller sina filer, sin ägare och sina behörigheter och återställs från sin egen säkerhetskopia.
 - **Återställ till en mapp.** Välj en mapp under `/mnt`. BombVault kontrollerar att mappen ligger på en monterad pool eller resurs och att det finns tillräckligt med ledigt utrymme. Det fungerar utan SSH-anslutningen och för datauppsättningar som inte längre finns.
+- **Till en ny datauppsättning.** Ange en datauppsättning som inte finns ännu. BombVault skapar den med ZFS-egenskaperna i säkerhetskopian och återställer till den, se [Återställa som ny datauppsättning](#new-dataset).
 - **Välj filer** (avancerat): skriv bara tillbaka de filer och mappar du väljer till datauppsättningen.
 - **Alla datauppsättningar i den här säkerhetskopian** (avancerat): varje datauppsättning i trädet i en egen undermapp i den mapp du väljer. Datauppsättningar som hoppades över i den säkerhetskopian nämns.
 - **Från en annan server:** sidan **Återställning** återställer från en annan BombVaults repository, alltid till en mapp: alla datauppsättningar i en säkerhetskopia, var och en i en egen undermapp, eller en datauppsättning i trädet, hel eller valda filer.
@@ -79,27 +80,23 @@ För att gå tillbaka efter en återställning kopierar du enskilda filer från 
 
 ### Återställa som ny datauppsättning {#new-dataset}
 
-BombVault skapar inte datauppsättningar. Skapa den på servern med de egenskaper du vill ha och återställ sedan till en mapp som är dess monteringspunkt:
+BombVault sparar med varje säkerhetskopia de lokalt satta ZFS-egenskaperna för varje datauppsättning: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity och dina egna användaregenskaper. Ärvda och skrivskyddade värden utelämnas, eftersom de kommer tillbaka av sig själva. Säkerhetskopior från innan BombVault sparade dem har inga.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-och återställ i BombVault till mappen `cache/appdata-restored` under `/mnt`.
+- **Till en ny datauppsättning** kör `zfs create` med varje sparad egenskap. casesensitivity, normalization och utf8only kan bara sättas så. Monteringspunkten utelämnas så att kopian inte krockar med originalet, liksom `canmount`, `readonly` och krypteringen, så att återställningen kan skriva. En ny datauppsättning under en krypterad tar över dess kryptering. Datauppsättningen ovanför måste finnas. Om något misslyckas efter att den skapats ligger den nya datauppsättningen kvar på servern, eftersom BombVault aldrig förstör en datauppsättning.
+- **Återställ in i datauppsättningen** visar de sparade egenskaperna bredvid återställningen. **Sätt även dessa egenskaper** sätter de som en befintlig datauppsättning fortfarande tar emot, innan någon fil skrivs. Utan den brytaren behåller datauppsättningen sina inställningar.
 
 ## Vad säkerhetskopian innehåller {#contents}
 
-I säkerhetskopian: filerna och mapparna i varje säkerhetskopierad datauppsättning, med ägare, behörigheter, tidsstämplar och utökade attribut så som restic lagrar dem.
+I säkerhetskopian: filerna och mapparna i varje säkerhetskopierad datauppsättning, med ägare, behörigheter, tidsstämplar och utökade attribut så som restic lagrar dem, samt de lokalt satta ZFS-egenskaperna för varje datauppsättning.
 
 Inte i säkerhetskopian:
 
-- datauppsättningarnas ZFS-egenskaper (compression, recordsize, quota, mountpoint och resten);
 - ägare och behörigheter för själva den översta mappen i varje datauppsättning (allt under den ingår). En återställning in i datauppsättningen lämnar den befintliga översta mappen som den är, en återställning till en mapp skapar den med behörigheterna `0755`;
 - befintliga ZFS-ögonblicksbilder;
 - underliggande datauppsättningar som hoppades över eller utelämnades;
 - volymer.
 
-För att återställa till en ny pool skapar du först datauppsättningarna med de egenskaper du vill ha. Om NFSv4-ACL:er, så som TrueNAS använder dem på SMB-datauppsättningar, kommer tillbaka som du förväntar dig är ännu inte kontrollerat, så testa en återställning med dina egna data innan du litar på dem.
+För att återställa till en ny pool skapar du poolen och återställer varje datauppsättning till en ny datauppsättning. Om NFSv4-ACL:er, så som TrueNAS använder dem på SMB-datauppsättningar, kommer tillbaka som du förväntar dig är ännu inte kontrollerat, så testa en återställning med dina egna data innan du litar på dem.
 
 ## Krypterade datauppsättningar {#encryption}
 
@@ -180,6 +177,10 @@ Sidan, körningshistoriken och aviseringarna anger ett problem med en av de här
 | `not-enough-space` | Inte tillräckligt med ledigt utrymme på målet. | Frigör utrymme eller välj en annan mapp. |
 | `safety-snapshot-failed` | Säkerhetsögonblicksbilden kunde inte tas, så ingenting återställdes. | Detaljerna visar meddelandet från zfs. |
 | `safety-name-too-long` | Namnet på datauppsättningen är för långt för en säkerhetsögonblicksbild. | Stäng av säkerhetsögonblicksbilden, eller återställ till en mapp. |
+| `dataset-exists` | Det finns redan en datauppsättning med det här namnet. | Välj ett nytt namn, eller återställ till själva datauppsättningen. |
+| `create-failed` | Den nya datauppsättningen kunde inte skapas. | Detaljerna visar meddelandet från zfs. Kontrollera att datauppsättningen ovanför finns. |
+| `new-dataset-not-visible` | Den nya datauppsättningen skapades, men BombVault ser den inte, så ingenting återställdes. | Datauppsättningen ligger kvar på servern. Montera den under Host Data-sökvägen och återställ till den. |
+| `set-properties-failed` | De sparade egenskaperna kunde inte sättas, så ingenting återställdes. | Detaljerna visar meddelandet från zfs. |
 
 ### Kontrollera vad containern ser {#mountinfo}
 
@@ -201,6 +202,8 @@ Varje rad är en montering i containern. Raden för en datauppsättning visar de
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Att återställa till en ny datauppsättning kräver dessutom `create` på datauppsättningen ovanför, och att sätta sparade egenskaper kräver behörighet för de egenskaperna.
 
   En SSH-session utan root på TrueNAS har inte `/usr/sbin` i sin sökväg; BombVault anropar då `/usr/sbin/zfs` direkt.
 - Appens **Host Data** måste vara en värdsökväg ovanför datauppsättningarna, till exempel `/mnt/tank`, inte en ixVolume. Med en värdsökväg skickar appen värdens nya monteringar vidare till BombVault (`rslave`), och det behöver åtkomst till ögonblicksbilder.

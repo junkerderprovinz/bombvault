@@ -1,0 +1,184 @@
+package api
+
+import (
+	"context"
+	"errors"
+	"reflect"
+	"strings"
+	"testing"
+
+	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
+)
+
+func TestZFSBackupStoresEachDatasetsProperties(t *testing.T) {
+	s, st, host, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+	host.props = map[string]zfs.Properties{
+		zfsRoot:  {"compression": "zstd", "casesensitivity": "insensitive"},
+		zfsChild: {"recordsize": "1048576"},
+	}
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	got, err := st.ZFSPropertiesOfItem(d.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	byDataset := map[string]map[string]string{}
+	runs, _ := st.ListZFSRuns(d.ID, 1)
+	members, _ := st.ListZFSRunMembers(runs[0].RunID)
+	for _, m := range members {
+		byDataset[m.Dataset] = got[m.ResticSnapshot]
+	}
+	if !reflect.DeepEqual(byDataset[zfsRoot], map[string]string(host.props[zfsRoot])) ||
+		!reflect.DeepEqual(byDataset[zfsChild], map[string]string(host.props[zfsChild])) {
+		t.Fatalf("stored %v, want the properties the host reported per dataset", byDataset)
+	}
+}
+
+func TestZFSBackupRunsWhenThePropertiesCannotBeRead(t *testing.T) {
+	s, st, host, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+	host.propsErr = errors.New("zfs get: permission denied")
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err != nil {
+		t.Fatalf("a failed property read must not fail the backup: %v", err)
+	}
+	if got, _ := st.ZFSPropertiesOfItem(d.ID); len(got) != 0 {
+		t.Fatalf("stored %v without having read anything", got)
+	}
+}
+
+// zfsSeedProperties records a run instant whose members carry properties, the
+// way a backup would have left it.
+func zfsSeedProperties(t *testing.T, st *store.Repo, itemID string, props map[string]string) {
+	t.Helper()
+	runID, err := st.StartRun(itemID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.RecordZFSRun(runID, itemID, zfsStamp, -1, ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.AddZFSRunMember(store.ZFSRunMember{RunID: runID, Dataset: zfsRoot, Outcome: "backed-up", ResticSnapshot: zfsRootSnapID}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetZFSRunMemberProperties(runID, zfsRoot, props); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestZFSRestorePointCarriesTheStoredProperties(t *testing.T) {
+	s, st, _, _ := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+	zfsSeedProperties(t, st, d.ID, map[string]string{"compression": "zstd"})
+
+	points, err := s.ListZFSRestorePoints(context.Background(), d.ID, "local")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, ok := zfsPointMember(points[0], zfsRoot)
+	if !ok || m.Properties["compression"] != "zstd" {
+		t.Fatalf("member = %+v, want the stored compression", m)
+	}
+}
+
+func TestZFSRestoreIntoANewDatasetCreatesItWithTheStoredProperties(t *testing.T) {
+	s, st, host, eng := zfsRestoreFixture(t)
+	root := s.cfg.HostMountRoot
+	host.strictTree = true
+	d := zfsSeedItem(t, st, zfsRoot)
+	zfsSeedProperties(t, st, d.ID, map[string]string{
+		"compression": "zstd", "casesensitivity": "insensitive", "mountpoint": "/mnt/cache/appdata",
+	})
+	const fresh = "cache/copy"
+	records := zfsMountRecords
+	host.onCreate = func(name string) {
+		host.mu.Lock()
+		host.tree = append(host.tree, zfsEntry(name, "/mnt/"+name))
+		host.mu.Unlock()
+		zfsMountRecords = func() []zfs.MountRecord {
+			return append(records(), zfs.MountRecord{
+				MountPoint: zfsMemberPath(root, name), Root: "/", FSType: "zfs", Source: name,
+				Options: []string{"rw"}, Optional: []string{"master:9"},
+			})
+		}
+	}
+	t.Cleanup(func() { zfsMountRecords = records })
+
+	req := zfsRestoreRequest(zfsRoot)
+	req.NewDataset = fresh
+	req.SafetySnapshot = false
+	ack, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req)
+	if err != nil || !started {
+		t.Fatalf("start: %v %v", started, err)
+	}
+	if ack.Created != fresh || ack.Target != zfsMemberPath(root, fresh) {
+		t.Fatalf("ack = %+v", ack)
+	}
+	if run := zfsAwaitRestore(t, st, d.ID); run.Status != "success" {
+		t.Fatalf("restore run = %+v", run)
+	}
+	if !hostDid(host, "create -o casesensitivity=insensitive -o compression=zstd "+fresh) {
+		t.Fatalf("host calls = %v, want a create with the stored properties and no mountpoint", host.recorded())
+	}
+	if hostDid(host, "snapshot "+fresh) {
+		t.Fatal("a new dataset needs no safety snapshot")
+	}
+	want := "RestoreAll|" + zfsRootSnapID + "->" + zfsMemberPath(root, fresh)
+	if len(eng.restores) != 1 || eng.restores[0] != want {
+		t.Fatalf("restores = %v, want %q", eng.restores, want)
+	}
+}
+
+func TestZFSRestoreRefusesANewDatasetThatExists(t *testing.T) {
+	s, st, host, _ := zfsRestoreFixture(t)
+	host.strictTree = true
+	d := zfsSeedItem(t, st, zfsRoot)
+	req := zfsRestoreRequest(zfsRoot)
+	req.NewDataset = zfsChild
+
+	_, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req)
+	if started || err == nil || !strings.Contains(err.Error(), "dataset-exists") {
+		t.Fatalf("started=%v err=%v, want dataset-exists", started, err)
+	}
+	for _, c := range host.recorded() {
+		if strings.HasPrefix(c, "create") {
+			t.Fatalf("created %q although the name was taken", c)
+		}
+	}
+}
+
+func TestZFSRestoreSetsPropertiesOnlyWhenAsked(t *testing.T) {
+	for _, apply := range []bool{false, true} {
+		s, st, host, _ := zfsRestoreFixture(t)
+		d := zfsSeedItem(t, st, zfsRoot)
+		zfsSeedProperties(t, st, d.ID, map[string]string{"compression": "zstd", "utf8only": "on"})
+		req := zfsRestoreRequest(zfsRoot)
+		req.ApplyProperties = apply
+
+		if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req); err != nil || !started {
+			t.Fatalf("start: %v %v", started, err)
+		}
+		zfsAwaitRestore(t, st, d.ID)
+		set := hostDid(host, "set compression=zstd "+zfsRoot)
+		if set != apply {
+			t.Fatalf("apply=%v: host calls %v", apply, host.recorded())
+		}
+		if hostDid(host, "set utf8only") {
+			t.Fatal("a creation-time property was set on an existing dataset")
+		}
+	}
+}
+
+func TestZFSRestoreRefusesToApplyPropertiesNobodyStored(t *testing.T) {
+	s, st, _, _ := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+	req := zfsRestoreRequest(zfsRoot)
+	req.ApplyProperties = true
+	if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req); started || err == nil {
+		t.Fatalf("started=%v err=%v, want a refusal", started, err)
+	}
+}

@@ -25,6 +25,7 @@ import { RestoreProgress } from "../restore/RestoreProgress";
 import { Selector, type SelectorItem } from "../Selector";
 import { SelectField } from "../SelectField";
 import { SnapshotFileTree } from "../SnapshotFileTree";
+import { ZFSPropertyList } from "./ZFSPropertyList";
 import { IconCopy, IconRestore } from "../Sidebar";
 import { SourceToggle, type RepoSource } from "../SourceToggle";
 import { ToggleRow } from "../../pages/settings/shared";
@@ -44,7 +45,7 @@ const WHOLE_TREE = "";
 /** Member states that make writing into the live dataset impossible. */
 const NOT_WRITABLE = new Set(["gone", "not-mounted", "not-visible"]);
 
-type Mode = "inPlace" | "folder" | "select";
+type Mode = "inPlace" | "newDataset" | "folder" | "select";
 
 export function ZFSRestorePanel({
   item,
@@ -79,6 +80,8 @@ export function ZFSRestorePanel({
   const [dataset, setDataset] = useState(item.dataset);
   const [mode, setMode] = useState<Mode>("inPlace");
   const [targetPath, setTargetPath] = useState(restoreFolder);
+  const [newDataset, setNewDataset] = useState("");
+  const [applyProps, setApplyProps] = useState(false);
   const [safety, setSafety] = useState(true);
   const [safetyOffConfirmed, setSafetyOffConfirmed] = useState(false);
   const [stopContainers, setStopContainers] = useState(true);
@@ -161,8 +164,12 @@ export function ZFSRestorePanel({
   // works for every dataset, gone ones included. A whole tree has no single
   // live dataset to write into.
   const folderOnly = wholeTree || blocked !== null;
-  const active: Mode = folderOnly && mode !== "folder" ? "folder" : mode;
-  const inPlace = active !== "folder";
+  const newDatasetPossible = !wholeTree && (member?.snapshotId ?? "") !== "";
+  const active: Mode =
+    mode === "folder" || (mode === "newDataset" ? newDatasetPossible : !folderOnly) ? mode : "folder";
+  const inPlace = active === "inPlace" || active === "select";
+  const storedProps = member?.properties ?? {};
+  const hasProps = Object.keys(storedProps).length > 0;
   const mountpoint = live?.hostMountpoint ?? item.hostMountpoint;
 
   const progressKey = `zfs:${item.dataset}`;
@@ -182,6 +189,8 @@ export function ZFSRestorePanel({
           wholeTree,
           paths: active === "select" ? [...picked] : [],
           targetPath: active === "folder" ? targetPath.trim() : "",
+          newDataset: active === "newDataset" ? newDataset.trim() : "",
+          applyProperties: inPlace && hasProps && applyProps,
           confirm: true,
           safetySnapshot: inPlace && safety,
           safetyOffConfirm: inPlace && safetyOffConfirmed,
@@ -227,7 +236,7 @@ export function ZFSRestorePanel({
   useEffect(() => {
     reset();
     setAck(null);
-  }, [dataset, stamp, active, targetPath, reset]);
+  }, [dataset, stamp, active, targetPath, newDataset, reset]);
 
   useEffect(() => {
     if (active !== "select" || !member || member.snapshotId === "") return;
@@ -258,6 +267,12 @@ export function ZFSRestorePanel({
 
   async function handleRestore() {
     if (active === "folder" && targetPath.trim() === "") return;
+    if (active === "newDataset") {
+      const name = newDataset.trim();
+      if (name === "") return;
+      const question = t("zfs.restore.newDatasetConfirm").replace("{name}", name);
+      if (!(await confirm(question, { confirmKey: "snapshots.restore" }))) return;
+    }
     if (inPlace) {
       const question = t("zfs.restore.confirm").replace("{path}", mountpoint);
       if (!(await confirm(question, { confirmKey: "snapshots.restore" }))) return;
@@ -299,6 +314,7 @@ export function ZFSRestorePanel({
       disabled: folderOnly,
       title: blocked !== null ? t(blocked) : undefined,
     },
+    { id: "newDataset", label: t("zfs.restore.newDataset"), disabled: !newDatasetPossible },
     { id: "folder", label: t("zfs.restore.toFolder") },
     ...(advanced
       ? [{ id: "select", label: t("zfs.restore.selectFiles"), disabled: folderOnly }]
@@ -383,7 +399,10 @@ export function ZFSRestorePanel({
                   select="one"
                   active={active}
                   buttonHeight
-                  onChange={(id) => setMode(id as Mode)}
+                  onChange={(id) => {
+                    if (id === "newDataset" && newDataset === "" && !wholeTree) setNewDataset(`${dataset}-restored`);
+                    setMode(id as Mode);
+                  }}
                   disabled={isPending}
                 />
                 {inPlace && <InfoBubble tip={t("zfs.restore.inPlaceHint").replace("{path}", mountpoint)} />}
@@ -407,6 +426,27 @@ export function ZFSRestorePanel({
               </div>
 
               {blocked !== null && <p className="text-xs text-statusWarn">{tLtr(t, blocked)}</p>}
+
+              {active === "newDataset" && (
+                <div className="flex flex-col gap-1">
+                  <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+                    {t("zfs.restore.newDatasetName")}
+                    <InfoBubble tip={t("zfs.restore.newDatasetHint")} />
+                  </span>
+                  <input
+                    type="text"
+                    dir="ltr"
+                    aria-label={t("zfs.restore.newDatasetName")}
+                    value={newDataset}
+                    onChange={(e) => setNewDataset(e.target.value)}
+                    spellCheck={false}
+                    className="w-full max-w-md rounded-control bg-carbon-surface2 px-3 py-1.5 text-start font-mono text-xs text-carbon-text glim-field-focus"
+                  />
+                </div>
+              )}
+
+              {active === "newDataset" && hasProps && <ZFSPropertyList properties={storedProps} into="new" t={t} />}
+              {inPlace && hasProps && <ZFSPropertyList properties={storedProps} into="existing" t={t} />}
 
               {active === "folder" && (
                 <FolderBrowser
@@ -437,6 +477,15 @@ export function ZFSRestorePanel({
 
               {inPlace && (
                 <div className="flex flex-col gap-1">
+                  {hasProps && (
+                    <ToggleRow
+                      label={t("zfs.restore.applyProperties")}
+                      hint={t("zfs.restore.applyPropertiesHint")}
+                      checked={applyProps}
+                      onChange={setApplyProps}
+                      disabled={isPending}
+                    />
+                  )}
                   <ToggleRow
                     label={t("zfs.restore.safetySnapshot")}
                     hint={t("zfs.restore.safetySnapshotHint")}
@@ -460,6 +509,11 @@ export function ZFSRestorePanel({
 
               {ack && (
                 <div className="flex flex-col gap-1">
+                  {ack.created && (
+                    <p className="text-xs text-carbon-textSub">
+                      {t("zfs.restore.created").replace("{name}", ack.created)}
+                    </p>
+                  )}
                   <p className="text-xs text-carbon-textSub">
                     {/* In place the server answers with the path inside the
                         container; the reader knows the dataset by where the

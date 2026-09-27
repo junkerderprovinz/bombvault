@@ -68,6 +68,10 @@ export const ZFS_CODE_KEY = {
   "not-enough-space": "zfs.code.not-enough-space",
   "safety-snapshot-failed": "zfs.code.safety-snapshot-failed",
   "safety-name-too-long": "zfs.code.safety-name-too-long",
+  "dataset-exists": "zfs.code.dataset-exists",
+  "create-failed": "zfs.code.create-failed",
+  "new-dataset-not-visible": "zfs.code.new-dataset-not-visible",
+  "set-properties-failed": "zfs.code.set-properties-failed",
 } as const satisfies Record<string, TranslationKey>;
 
 export type ZFSReasonCode = keyof typeof ZFS_CODE_KEY;
@@ -101,6 +105,9 @@ export const ZFS_FIX_KEY: Partial<Record<ZFSReasonCode, TranslationKey>> = {
   "read-only-mount": "zfs.fix.read-only-mount",
   "destination-not-mounted": "zfs.fix.destination-not-mounted",
   stalled: "zfs.fix.stalled",
+  "dataset-exists": "zfs.fix.dataset-exists",
+  "create-failed": "zfs.fix.create-failed",
+  "new-dataset-not-visible": "zfs.fix.new-dataset-not-visible",
 };
 
 /** Member codes whose sentence already says the dataset is skipped, so no
