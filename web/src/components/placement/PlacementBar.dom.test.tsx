@@ -2,6 +2,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen } from "@testing-library/react";
 import type { PlacementOptions, PlacementView } from "../../lib/api";
+import { en } from "../../lib/i18n";
+import { stepForHome, stepForSendTo } from "../../lib/placement";
 import { homeOption, placementOptions, placementView, renderWithProviders, sendToOption } from "../../lib/placement.testsupport";
 
 vi.mock("../placeMarks", () => ({
@@ -11,6 +13,8 @@ vi.mock("../placeMarks", () => ({
 }));
 
 const { PlacementBar } = await import("./PlacementBar");
+
+const t = ((key: string) => en[key as keyof typeof en] ?? key) as never;
 
 function renderBar(view: PlacementView, options: PlacementOptions = placementOptions()) {
   const handlers = { onSegment: vi.fn(), onHome: vi.fn(), onSendTo: vi.fn(), onChip: vi.fn() };
@@ -105,5 +109,68 @@ describe("PlacementBar", () => {
     fireEvent.click(screen.getByRole("combobox", { name: "Send to" }));
     const option = screen.getByRole("option", { name: "B2" });
     expect(option.querySelector('[data-testid="mark"]')?.getAttribute("data-provider")).toBe("b2");
+  });
+});
+
+describe("PlacementBar with places that hold no repository yet", () => {
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  const unraid = homeOption({ name: "Unraid", placeId: "p-unraid", provider: "unraid-folder" });
+  const nas = homeOption({ name: "NAS Keller", kind: "local", location: "nas/containers", placeId: "p-nas", provider: "synology" });
+  const cold = homeOption({ id: "repo-cold", name: "Cold", kind: "local", location: "/mnt/remotes/cold", placeId: "p-cold" });
+  const b2 = sendToOption({ kind: "remote", repoId: "", targetId: "", name: "B2", placeId: "p-b2", provider: "b2" });
+  const hetzner = sendToOption({ repoId: "", targetId: "t-hz", name: "Hetzner", placeId: "p-hz", provider: "hetzner" });
+  const box = sendToOption({ repoId: "", targetId: "t-box", name: "Storagebox" });
+  const options = placementOptions({ homes: [unraid, nas, cold], sendTo: [b2, hetzner, box] });
+
+  function choose(field: string, name: string) {
+    fireEvent.click(screen.getByRole("combobox", { name: field }));
+    fireEvent.click(screen.getByRole("option", { name }));
+    fireEvent.click(screen.getByRole("button", { name: "Set" }));
+  }
+
+  it("keeps a local place apart from the domain path and hands each choice to its own step", () => {
+    const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const view = placementView({ repo: "repo-cold", repoKind: "local", repoLabel: "Cold" });
+    const { onHome } = renderBar(view, options);
+    fireEvent.click(screen.getByRole("combobox", { name: "Stored on" }));
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Unraid", "NAS Keller", "Cold"]);
+    fireEvent.click(screen.getByRole("combobox", { name: "Stored on" }));
+    expect(errors.mock.calls.flat().join(" ")).not.toMatch(/same key/);
+
+    choose("Stored on", "NAS Keller");
+    choose("Stored on", "Unraid");
+    expect(onHome.mock.calls).toEqual([["place:p-nas"], [""]]);
+
+    const [toPlace, toPath] = onHome.mock.calls.map(([key]) => stepForHome(key, view, options, t, "Unraid"));
+    expect(toPlace).toMatchObject({ kind: "place", placeId: "p-nas", repoKind: "local", offsiteOnly: false });
+    expect(toPath).toMatchObject({ kind: "save", change: { home: { repo: "" } } });
+  });
+
+  it("sends a remote place and a target at a place through the place, and only a target without one to the direct dialog", () => {
+    const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const view = placementView({ segment: "offsite-only", repo: "repo-old", repoKind: "remote", repoLabel: "Old", skip: ["*"] });
+    const { onSendTo } = renderBar(view, options);
+    fireEvent.click(screen.getByRole("combobox", { name: "Send to" }));
+    expect(screen.getAllByRole("option").map((o) => o.textContent).slice(0, 3)).toEqual([
+      "B2",
+      "Hetzner",
+      "Storagebox · direct · created when first chosen",
+    ]);
+    fireEvent.click(screen.getByRole("combobox", { name: "Send to" }));
+    expect(errors.mock.calls.flat().join(" ")).not.toMatch(/same key/);
+
+    choose("Send to", "B2");
+    choose("Send to", "Hetzner");
+    choose("Send to", "Storagebox · direct · created when first chosen");
+    expect(onSendTo.mock.calls).toEqual([[b2], [hetzner], [box]]);
+
+    const steps = onSendTo.mock.calls.map(([opt]) => stepForSendTo(opt, view, t));
+    expect(steps[0]).toMatchObject({ kind: "place", placeId: "p-b2", repoKind: "remote" });
+    expect(steps[1]).toMatchObject({ kind: "place", placeId: "p-hz", repoKind: "direct" });
+    expect(steps[2]).toEqual({ kind: "direct", target: box });
   });
 });
