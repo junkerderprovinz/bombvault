@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
@@ -515,5 +516,56 @@ func TestCheckRestoreShowsTheFreeSpaceWhenNothingGrows(t *testing.T) {
 	res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"})
 	if c := lineOf(t, res, lineSpace); c.Status != lineOK || c.Need != 0 || c.Free != 1<<30 {
 		t.Fatalf("space = %+v", c)
+	}
+}
+
+// blockImageScope is a changed-block VM restore of two disks into dir: a qcow2
+// disk that is there now and a raw one that is not.
+func blockImageScope(t *testing.T, free uint64) (*Service, restoreScope, string) {
+	t.Helper()
+	dir := filepath.ToSlash(t.TempDir())
+	if err := os.WriteFile(dir+"/vdisk1.img", []byte("old"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	svc := &Service{cfg: config.Config{HostMountRoot: dir, HostSourceRoot: "/mnt/user"}}
+	svc.diskStat = func(string) (diskStatResult, error) {
+		return diskStatResult{Free: free, Volume: "dev:1"}, nil
+	}
+	plan := vmRestorePlan{snapshotID: "cccc3333", images: []backup.VMRestoreImage{
+		{Disk: backup.BlocksDisk{Dev: "vda", Format: "qcow2", Size: 100, Segment: 10}, Target: dir + "/vdisk1.img"},
+		{Disk: backup.BlocksDisk{Dev: "vdb", Format: "raw", Size: 50, Segment: 10}, Target: dir + "/vdisk2.img"},
+	}}
+	return svc, vmScope(plan, "win11"), dir
+}
+
+func TestCheckRestorePlansTheDisksOfAChangedBlockSnapshot(t *testing.T) {
+	svc, sc, dir := blockImageScope(t, 1<<30)
+	if len(sc.steps) != 0 || !slices.Equal(sc.written, []string{dir}) {
+		t.Fatalf("a segment snapshot has no folder to dry-run: steps=%v written=%v", sc.steps, sc.written)
+	}
+	plan, need, err := svc.previewRestore(context.Background(), sc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Changed != 1 || plan.Added != 1 || plan.Error != "" || len(plan.Files) != 2 {
+		t.Fatalf("plan = %+v", plan)
+	}
+	// The qcow2 disk is built raw and then converted, the raw one only built.
+	if need[dir] != 250 {
+		t.Fatalf("need = %v, want 250", need)
+	}
+	if c := svc.spaceLine(sc, need, false); c.Status != lineOK || c.Need != 250 {
+		t.Fatalf("space = %+v", c)
+	}
+}
+
+func TestCheckRestoreDoesNotBlockOnADiskImageCountedAtItsCeiling(t *testing.T) {
+	svc, sc, _ := blockImageScope(t, 200)
+	plan, need, err := svc.previewRestore(context.Background(), sc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c := svc.spaceLine(sc, need, plan.Partial); c.Status != lineSkip || c.Reason != reasonUnmeasured {
+		t.Fatalf("space = %+v, want grey, since the images may fit without their holes", c)
 	}
 }
