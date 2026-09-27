@@ -487,10 +487,9 @@ func TestPrimaryRemoteRoutesRegister(t *testing.T) {
 	_ = (&Handler{}).Router() // panics on a conflicting pattern
 }
 
-// TestTestPrimaryRepoAndTamperTest covers the two probe endpoints end-to-end
-// through the SERVICE methods (TestPrimaryRepo / RunPrimaryTamperTest), reusing
-// probeStubEngine from offsite_target_probe_internal_test.go.
-func TestTestPrimaryRepoAndTamperTest(t *testing.T) {
+// TestTestPrimaryRepo covers the probe endpoint end-to-end through the service
+// method, reusing probeStubEngine from offsite_target_probe_internal_test.go.
+func TestTestPrimaryRepo(t *testing.T) {
 	const repo = "rest:http://good:8000/containers"
 	svc, st, eng := newProbeSvc(t, map[string]bool{repo: true})
 
@@ -524,11 +523,5 @@ func TestTestPrimaryRepoAndTamperTest(t *testing.T) {
 	reachable, initialized, err := svc.TestPrimaryRepo(context.Background(), "containers")
 	if err != nil || !reachable || !initialized {
 		t.Fatalf("TestPrimaryRepo = (%v, %v, %v), want reachable+initialized", reachable, initialized, err)
-	}
-
-	// Tamper test on an unsaved config: a clear "save first" error, not a
-	// crash or a silent probe under a synthetic id.
-	if _, err := svc.RunPrimaryTamperTest(context.Background(), "containers"); err == nil {
-		t.Fatal("expected RunPrimaryTamperTest to require a saved safety config first")
 	}
 }

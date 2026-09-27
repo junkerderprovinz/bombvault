@@ -270,6 +270,15 @@ func TestAnUnusedPlaceHasNothingToTamperTest(t *testing.T) {
 	}
 }
 
+func TestARemoteDomainPathIsTamperTestedThroughItsPlaceOnly(t *testing.T) {
+	f := newPlacementFixture(t)
+	rec := httptest.NewRecorder()
+	f.h.Router().ServeHTTP(rec, jsonReq(http.MethodPost, "/api/settings/primary-remote/vms/tamper-test", nil))
+	if rec.Code == http.StatusOK {
+		t.Fatalf("POST = %d %s, want no such route", rec.Code, rec.Body.String())
+	}
+}
+
 func TestAnUnknownPlaceIsNotTamperTested(t *testing.T) {
 	f := newPlacementFixture(t)
 	if code, res := f.doStatus(http.MethodPost, "/api/places/nosuchplace/tamper-test", nil); code != http.StatusNotFound || res["ok"] != false {

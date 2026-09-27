@@ -932,9 +932,8 @@ func (s *Service) failStuckRun(targetID, msg string) {
 //
 // Every other error is scrubbed, not just restic-originated ones. restic's
 // lastReason is already clean, and scrubbing it again is a no-op, but not
-// every caller goes through restic first: tamper.go's tamperProbe and
-// primary_remote.go's RunPrimaryTamperTest can surface a raw url.Parse
-// error, whose Error() embeds the full unparsed input URL, credentials and
+// every caller goes through restic first: tamper.go's tamperProbe can
+// surface a raw url.Parse error, whose Error() embeds the full unparsed input URL, credentials and
 // all. runs.error reaches the UI (handleRuns embeds store.Run), the weekly
 // digest (digest.go forwards run.Error to every notification channel) and
 // the widget feed (widget.go's truncateWidgetError only limits length), so
