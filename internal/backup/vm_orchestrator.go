@@ -329,6 +329,13 @@ type VMRestoreDeps struct {
 	ZFSHost    ZFSHost
 	ZvolRestic ZvolRestic
 
+	// Images, when set, are the disks of a changed-block snapshot, rebuilt
+	// from their segments in place of the restic restore of the disk folders.
+	// DiskPaths then lists their targets for the path checks.
+	Images      []VMRestoreImage
+	ImageDumper BlockDumper
+	Convert     ImageConverter
+
 	VM     VM
 	Restic Restic
 	Runs   Runs
@@ -716,7 +723,13 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 	// VM disk images, NVRAM, and TPM state are all FILES; restic's
 	// <id>:<subpath> subtree form needs a DIRECTORY (a file path fails with
 	// "not a directory").
-	if len(d.RestoreDirs) > 0 {
+	if len(d.Images) > 0 {
+		for _, img := range d.Images {
+			if err := RestoreBlockImage(ctx, d.ImageDumper, d.Convert, d.RepoPath, d.SnapshotID, img); err != nil {
+				return fmt.Errorf("vm restore: %w", err)
+			}
+		}
+	} else if len(d.RestoreDirs) > 0 {
 		// Each snapshot subtree goes into its Target: a chosen pool for a
 		// cross-instance restore, the moved folder for a snapshot from before a rename.
 		for _, rd := range d.RestoreDirs {
