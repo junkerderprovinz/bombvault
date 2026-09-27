@@ -473,7 +473,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 				log.Printf("api: drill: record busy-skip for %q: %v", domain, aErr) //nolint:gosec // G706: domain is %q-quoted and validated above
 			}
 			s.recordDomainRun(domain, "drdrill", false, skip.Detail)
-			s.notifyDrillFailure(ctx, domain, skip.Source, skip.Detail)
+			s.notifyDrillFailure(ctx, domain, placementTargetName(target), skip.Detail)
 			return skip, errDomainBusy
 		}
 		unlock = u
@@ -555,7 +555,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	// restore check.
 	s.recordDomainRun(domain, "drdrill", drill.OK, drill.Detail)
 	if drillErr != nil {
-		s.notifyDrillFailure(ctx, domain, drill.Source, drill.Detail)
+		s.notifyDrillFailure(ctx, domain, placementTargetName(target), drill.Detail)
 	}
 	return drill, drillErr
 }
@@ -869,8 +869,9 @@ func (s *Service) Drills(domain, source string, limit int) ([]store.RestoreDrill
 
 // notifyDrillFailure sends a best-effort notification when a restore-verification
 // drill fails (the backup is not provably restorable). Mirrors notifyBackup's
-// policy + Unraid fan-out; a no-op when notifications are off.
-func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail string) {
+// policy + Unraid fan-out; a no-op when notifications are off. where names what
+// was read back: the source of a subset drill, the target of a DR drill.
+func (s *Service) notifyDrillFailure(ctx context.Context, domain, where, detail string) {
 	c, err := s.NotifyConfig()
 	if err != nil || c.On == "" || c.On == "never" {
 		return
@@ -879,7 +880,7 @@ func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail
 	if domain != "flash" {
 		target = domain
 	}
-	msg := fmt.Sprintf("Restore verification of %s (%s) FAILED, so the backup may not be restorable: %s", target, source, detail)
+	msg := fmt.Sprintf("Restore verification of %s (%s) FAILED, so the backup may not be restorable: %s", target, where, detail)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: false})
 	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: restore verification FAILED", msg, "warning"); e != nil {
