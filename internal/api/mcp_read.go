@@ -228,14 +228,20 @@ func (h *Handler) toolGetStorageStats(ctx context.Context, req *mcp.CallToolRequ
 		if c.Primary {
 			primaryFree = c.Free
 		}
+		var source any
+		if c.Source != "" {
+			source = c.Source
+		}
 		repositories = append(repositories, map[string]any{
-			"name":       c.Name,
-			"primary":    c.Primary,
-			"remote":     c.Remote,
-			"at":         c.At,
-			"usedBytes":  c.Used,
-			"freeBytes":  c.Free,
-			"totalBytes": c.Total,
+			"name":                c.Name,
+			"primary":             c.Primary,
+			"remote":              c.Remote,
+			"at":                  c.At,
+			"usedBytes":           c.Used,
+			"freeBytes":           c.Free,
+			"totalBytes":          c.Total,
+			"capacitySource":      source,
+			"capacityUnsupported": c.Unsupported,
 		})
 	}
 

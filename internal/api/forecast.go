@@ -169,15 +169,19 @@ func weeksToFull(freeBytes, growthPerWeek int64) (float64, bool) {
 }
 
 // repoCapacity is the room on the disk or remote one repository sits on. A
-// nil figure is unknown, and At is when it was read.
+// nil figure is unknown, and At is when it was read. Source names what
+// measured it, as in StorageForecast, and Unsupported marks a backend that
+// cannot report its room at all.
 type repoCapacity struct {
-	Name    string
-	Primary bool
-	Remote  bool
-	At      *int64
-	Free    *int64
-	Used    *int64
-	Total   *int64
+	Name        string
+	Primary     bool
+	Remote      bool
+	At          *int64
+	Free        *int64
+	Used        *int64
+	Total       *int64
+	Source      string
+	Unsupported bool
 }
 
 // repoCapacities reads the room around every repository a domain writes to. A
@@ -204,13 +208,17 @@ func (s *Service) repoCapacities(domain string) []repoCapacity {
 				now := s.anomalies.nowUnix()
 				free, used, total := clampToInt64(res.Free), clampToInt64(res.Used), clampToInt64(res.Total)
 				c.At, c.Free, c.Used, c.Total = &now, &free, &used, &total
+				c.Source = volumeSource(res.FSType)
 			}
-		case isRcloneLocation(ref.Loc):
+		case remoteVolumeSource(ref.Loc) == "":
+			c.Unsupported = true
+		default:
 			if readings == nil {
 				readings = s.newestVolumeReadings()
 			}
-			if v, ok := readings["remote:"+repoLocationKey(ref.Loc)]; ok {
+			if v, ok := readings[remoteVolumeKey(ref.Loc)]; ok {
 				c.At, c.Free, c.Total = &v.At, &v.FreeBytes, v.TotalBytes
+				c.Source = v.Source
 				if v.TotalBytes != nil {
 					used := *v.TotalBytes - v.FreeBytes
 					c.Used = &used

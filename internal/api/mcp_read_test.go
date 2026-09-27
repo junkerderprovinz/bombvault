@@ -1594,13 +1594,28 @@ func TestMCPGetStorageStatsCarriesTheFreeSpace(t *testing.T) {
 		t.Fatal(err)
 	}
 	res := mcpCallTool(t, h, key, "get_storage_stats", `{"domain":"containers"}`)
-	if res.Structured["freeBytes"] != float64(6<<30) || res.Structured["capacitySource"] != "sftp" || res.Structured["weeksToFull"] != float64(6) {
+	own := primaryRepository(t, res.Structured)
+	if own["freeBytes"] != float64(6<<30) || own["capacitySource"] != "sftp" || res.Structured["weeksToFull"] != float64(6) {
 		t.Fatalf("an SFTP repository's reading did not reach the answer: %v", res.Structured)
 	}
 
 	setPath("b2:bucket/containers")
 	res = mcpCallTool(t, h, key, "get_storage_stats", `{"domain":"containers"}`)
-	if res.Structured["capacityUnsupported"] != true || res.Structured["freeBytes"] != nil {
+	own = primaryRepository(t, res.Structured)
+	if own["capacityUnsupported"] != true || own["freeBytes"] != nil {
 		t.Fatalf("a B2 repository must say it reports no free space: %v", res.Structured)
 	}
+}
+
+// primaryRepository is the domain's own entry in get_storage_stats' list.
+func primaryRepository(t *testing.T, out map[string]any) map[string]any {
+	t.Helper()
+	repos, _ := out["repositories"].([]any)
+	for _, r := range repos {
+		if m, _ := r.(map[string]any); m["primary"] == true {
+			return m
+		}
+	}
+	t.Fatalf("no primary repository in %v", out)
+	return nil
 }
