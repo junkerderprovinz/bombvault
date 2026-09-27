@@ -24,6 +24,7 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   // Nothing but placeholders and punctuation once the tokens are removed, so
   // there is no prose to translate.
   "activityLog.lineOther",
+  "anomaly.figure",
   "cadence.fmtCron",
   "dbdump.versionLabel",
   "zfs.safety.row",
