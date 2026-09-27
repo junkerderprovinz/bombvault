@@ -352,3 +352,14 @@ describe("ZFS add dialog", () => {
     expect(screen.getByText(en["zfs.add.none"])).toBeTruthy();
   });
 });
+
+// jsdom lays nothing out, so this pins the class the phone layout rests on.
+describe("ZFS add dialog at phone width", () => {
+  it("gives a dataset's name the whole row and moves the size under it", async () => {
+    await openDialog();
+    const row = screen.getAllByRole("treeitem")[0]!;
+    expect(row.className).toContain("max-md:flex-wrap");
+    const name = row.querySelector("span.font-mono")!.parentElement!;
+    expect(name.className).toContain("max-md:basis-[calc(100%-1.5rem)]");
+  });
+});

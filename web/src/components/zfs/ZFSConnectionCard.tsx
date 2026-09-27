@@ -157,7 +157,7 @@ export function ZFSConnectionCard() {
                 type="button"
                 onClick={() => setDetailsOpen((open) => !open)}
                 aria-expanded={detailsOpen}
-                className="flex items-center gap-1.5 self-start text-xs text-carbon-textMuted hover:text-carbon-text"
+                className="flex items-center gap-1.5 self-start text-xs text-carbon-textMuted hover:text-carbon-text pointer-coarse:min-h-11"
               >
                 <IconDisclosure open={detailsOpen} />
                 {t("zfs.connection.details")}

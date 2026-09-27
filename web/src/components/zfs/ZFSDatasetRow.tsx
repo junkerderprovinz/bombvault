@@ -175,8 +175,8 @@ function ZFSRunDetailView({ run, item, t }: { run: Run; item: ZFSDatasetView; t:
         const memberKey = zfsMemberKey(m.outcome);
         const fixKey = memberKey ? null : zfsFixKey(m.outcome);
         return (
-          <p key={m.dataset} className="flex items-center gap-2 text-caption text-carbon-textSub">
-            <span dir="ltr" className="font-mono text-start">{m.dataset}</span>
+          <p key={m.dataset} className="flex items-center gap-2 text-caption text-carbon-textSub max-md:flex-wrap">
+            <span dir="ltr" className="font-mono text-start max-md:wrap-anywhere">{m.dataset}</span>
             {m.isNew && (
               <Badge tone="active" size="small">
                 {t("zfs.member.new")}
@@ -253,7 +253,7 @@ function ZFSSafetySection({ item, t, onRefresh }: { item: ZFSDatasetView; t: T; 
           type="button"
           aria-expanded={open}
           onClick={handleOpen}
-          className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text"
+          className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text pointer-coarse:min-h-11"
         >
           <IconDisclosure open={open} />
           {title}
@@ -265,7 +265,7 @@ function ZFSSafetySection({ item, t, onRefresh }: { item: ZFSDatasetView; t: T; 
         <ul aria-label={title} className="flex flex-col gap-1">
           {snapshots.map((snap) => (
             <li key={`${snap.dataset}@${snap.name}`} className="flex items-center gap-2 text-xs">
-              <span dir="ltr" className="font-mono text-carbon-textSub text-start truncate">
+              <span dir="ltr" className="font-mono text-carbon-textSub text-start truncate max-md:whitespace-normal max-md:wrap-anywhere">
                 {t("zfs.safety.row")
                   .replace("{dataset}", `${snap.dataset}@${snap.name}`)
                   .replace("{age}", relativeTime(t, snap.createdAt))
@@ -278,7 +278,7 @@ function ZFSSafetySection({ item, t, onRefresh }: { item: ZFSDatasetView; t: T; 
                 tone="accent"
                 variant="icon"
                 onClick={() => void handleDelete(snap)}
-                className="ms-auto"
+                className="ms-auto shrink-0"
               />
             </li>
           ))}
@@ -488,8 +488,8 @@ function ZFSItemSettings({
           />
         </div>
         {gone.map((dataset) => (
-          <p key={dataset} className="flex items-center gap-2 text-xs text-carbon-textMuted">
-            <span dir="ltr" className="font-mono text-start">{dataset}</span>
+          <p key={dataset} className="flex items-center gap-2 text-xs text-carbon-textMuted max-md:flex-wrap">
+            <span dir="ltr" className="font-mono text-start max-md:wrap-anywhere">{dataset}</span>
             {t("zfs.excludedGone")}
             <Button
               label={t("zfs.removeMissing")}
@@ -761,7 +761,7 @@ export function ZFSDatasetRow({
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span dir="ltr" className="font-semibold text-carbon-text text-sm truncate text-start">
+            <span dir="ltr" className="font-semibold text-carbon-text text-sm truncate text-start max-md:whitespace-normal max-md:wrap-anywhere">
               {item.dataset}
             </span>
             <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
@@ -803,7 +803,7 @@ export function ZFSDatasetRow({
               />
             )}
           </div>
-          <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start">
+          <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start max-md:whitespace-normal max-md:wrap-anywhere">
             {item.hostMountpoint}
           </p>
           {checkCode !== "" && item.lastCheckAt > 0 && (
@@ -813,7 +813,7 @@ export function ZFSDatasetRow({
           )}
         </div>
 
-        <div className="ms-auto flex items-start gap-1.5 shrink-0">
+        <div className="ms-auto flex items-start gap-1.5 shrink-0 flex-wrap max-md:w-full max-md:justify-end">
           <ZFSBackupButton item={item} t={t} onDone={onRefresh} running={running} />
           <Button
             label={t("common.edit")}
@@ -869,7 +869,7 @@ export function ZFSDatasetRow({
       )}
 
       {item.leftoverCount > 0 && (
-        <p className="flex items-center gap-1.5 text-xs text-statusWarn">
+        <p className="flex flex-wrap items-center gap-1.5 text-xs text-statusWarn">
           {t("zfs.leftovers", item.leftoverCount)}
           <InfoBubble tip={t("zfs.leftoversHint")} />
           <Button
@@ -879,6 +879,7 @@ export function ZFSDatasetRow({
             onClick={() => void handleSweep()}
             disabled={sweeping}
             busy={sweeping}
+            className="glim-btn-wrap"
           />
         </p>
       )}
@@ -895,7 +896,7 @@ export function ZFSDatasetRow({
           type="button"
           aria-expanded={membersOpen}
           onClick={() => setMembersOpen((open) => !open)}
-          className="flex items-center gap-1.5 self-start text-xs text-carbon-textSub hover:text-carbon-text"
+          className="flex items-center gap-1.5 self-start text-xs text-carbon-textSub hover:text-carbon-text pointer-coarse:min-h-11"
         >
           <IconDisclosure open={membersOpen} />
           {t("zfs.membersSummary", item.members.length)}
