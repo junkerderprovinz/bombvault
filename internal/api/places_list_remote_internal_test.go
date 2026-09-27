@@ -24,7 +24,7 @@ func TestThePlaceListsOpenNoRemoteRepository(t *testing.T) {
 	f.eng.mu.Unlock()
 
 	for _, route := range []struct {
-		path string
+		path  string
 		serve func(http.ResponseWriter, *http.Request)
 	}{
 		{"/api/places", f.h.handleListPlaces},
