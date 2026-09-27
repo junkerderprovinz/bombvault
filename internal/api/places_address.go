@@ -113,10 +113,18 @@ type domainLocks struct {
 }
 
 // take locks the domain unless the edit holds it already. A repository that
-// serves every domain has none to take; items backing up to it count as
-// backups at its address.
+// serves every domain takes every domain's lock, since items of any of them
+// may back up to it.
 func (l *domainLocks) take(domain string) error {
-	if _, ok := l.held[domain]; ok || domain == "" {
+	if domain == "" {
+		for _, d := range places.Domains {
+			if err := l.take(d); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if _, ok := l.held[domain]; ok {
 		return nil
 	}
 	unlock, ok := l.s.tryLockDomainFor(domain, placementLockReason)

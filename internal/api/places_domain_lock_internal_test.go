@@ -66,6 +66,27 @@ func TestAPlaceEditDoesNotMoveATargetWhileItsCopyRuns(t *testing.T) {
 	}
 }
 
+func TestARepositoryServingEveryDomainIsNotMovedWhileAnyDomainIsBusy(t *testing.T) {
+	f := newPlacementFixture(t)
+	pool := localPlace("Pool", "pool")
+	pool.Folders = map[string]string{"containers": "", "vms": ""}
+	pool = f.storePlace(pool)
+	repo, err := f.st.CreatePlaceRepo(pool.ID, "", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.holdDomain("files", "backup")
+
+	res := f.do(http.MethodPatch, "/api/places/"+pool.ID, map[string]any{"address": map[string]string{"path": "moved"}})
+
+	if res["ok"] != false || res["code"] != "domain-busy" {
+		t.Fatalf("PATCH = %v, want domain-busy", res)
+	}
+	if row, err := f.st.GetNamedRepo(repo.ID); err != nil || row.Repo != repo.Repo {
+		t.Fatalf("repository = %+v, %v, want it at %q", row, err, repo.Repo)
+	}
+}
+
 func TestADomainPathIsNotAdoptedOntoANewAddressWhileItsBackupRuns(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.storePlace(localPlace("NAS", "nas"))
