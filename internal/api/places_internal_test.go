@@ -1160,6 +1160,39 @@ func TestNewCredentialsAreTriedWhenTheAddressFormKeepsTheBase(t *testing.T) {
 	}
 }
 
+func TestNewCredentialsAreTriedAtANewBaseWhereNothingMoves(t *testing.T) {
+	for _, c := range []struct {
+		key string
+		ok  bool
+	}{{"k2", true}, {"k3", false}} {
+		f := newPlacementFixture(t)
+		if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {
+			t.Fatal(err)
+		}
+		p := s3Place("B2", "s3:https://s3.example.com/bucket")
+		p.CredsRef = "b2-set"
+		b2 := f.storePlace(p)
+		for _, name := range b2.Folders {
+			f.eng.opens["s3:https://s3.example.com/other/"+name] = false
+		}
+		folder := "s3:https://s3.example.com/other/container"
+		f.eng.keys[folder], f.eng.ids[folder] = "AWS_ACCESS_KEY_ID="+c.key, "r9"
+		f.eng.openErr[folder] = errors.New("Access Denied")
+
+		res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{
+			"address": map[string]string{"endpoint": "s3.example.com", "bucket": "other"},
+			"fields":  map[string]string{"keyId": "k2", "secret": "s2"},
+		})
+
+		if got := res["ok"] == true; got != c.ok || (!c.ok && res["code"] != "place-probe-failed") {
+			t.Fatalf("PATCH with a bucket that wants %s = %v, want ok %v", c.key, res, c.ok)
+		}
+		if stored, err := f.st.GetPlace(b2.ID); err != nil || (stored.Base == p.Base) == c.ok {
+			t.Fatalf("place = %+v, %v, want the edit saved only when the new key opens the new bucket", stored, err)
+		}
+	}
+}
+
 func TestAMovedAddressIsOpenedWithTheCredentialsTheEditBrings(t *testing.T) {
 	f := newPlacementFixture(t)
 	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}}}); err != nil {

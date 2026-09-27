@@ -945,6 +945,13 @@ func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody
 		if err := s.checkMoves(ctx, moves, mode); err != nil {
 			return store.Place{}, nil, err
 		}
+		// With nothing moved, checkMoves opened nothing, so the new credentials
+		// are tried at the folders of the new base.
+		if change != nil && len(moves) == 0 {
+			if probe := s.probeFolders(ctx, next.Base, next.Folders, mode); !probe.OK {
+				return store.Place{}, nil, &probeFailedErr{result: probe}
+			}
+		}
 	}
 	var edit func([]CloudCredSet) []CloudCredSet
 	if change != nil {
