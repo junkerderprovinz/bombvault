@@ -119,7 +119,7 @@ export function UnraidTileSection({
       {status.kind === "noSsh" && (
         <div className="flex flex-col gap-2">
           <p className="text-xs text-carbon-textSub">{t("settings.dashTileNoSsh")}</p>
-          <div className="flex items-start gap-2">
+          <div className="flex items-start gap-2 max-md:flex-col">
             <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
               {DASH_PLUGIN_PLG_URL}
             </code>
@@ -320,7 +320,7 @@ export function DashboardWidgetCard({
             wrapperClassName="w-full"
             className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus"
           />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               label={t("settings.widgetRegenerate")}
               labelKey="settings.widgetRegenerate"

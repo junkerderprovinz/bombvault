@@ -70,8 +70,10 @@ export function PathModeSwitch({
   return (
     <div className="flex flex-col gap-1.5">
       {/* The label and the switch are one decision about one path, so they
-          share a row; FolderBrowser's own label is turned off below. */}
-      <div className="flex items-center justify-between gap-2">
+          share a row; FolderBrowser's own label is turned off below. On a
+          phone the pinned switch does not fit beside the label and goes under
+          it. */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <label className="text-xs text-carbon-textSub">{label}</label>
         <Selector
           items={[

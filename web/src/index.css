@@ -130,22 +130,11 @@
 /* The phone arm of --settings-tab-seg-w. The desktop arm is the --nav-row-w
    pin, and the element carries it as a `md:` override (Settings.tsx), so the
    48rem literal stays in the one place that owns it (lib/useMediaQuery.ts)
-   rather than being written a second time here.
-
-   The width is the viewport minus what the row loses before the segments:
-   the page column's p-4 (2 x 1rem) and the strip's six gaps, which are the
-   container's own gap-1 (6 x 0.25rem), so 3.5rem, plus 1.5rem for a classic
-   scrollbar, which 100vw counts and the content box does not. That is about
-   15px in a desktop browser at phone width; on a phone the scrollbar is an
-   overlay and the reserve goes unused. Divided by seven it gives 44.3px at
-   390px, so seven segments sit on one row. Floored at 2.5rem so the narrowest
-   supported width cannot shrink a segment below tap-target scale; there the
-   floor costs one wrapped row, two bounded rows rather than the seven a fixed
-   pin gives. The row height is --nav-row-h at every width, labels truncate
-   inside the shrunken box (Selector's span.truncate), and each tab keeps its
-   glyph and accessible name. */
+   rather than being written a second time here. Below 48rem the strip is a
+   grid over the page column, so a tab takes its cell's width and the row
+   always spans the column, whatever a scrollbar takes from it. */
 :root {
-  --settings-tab-seg-w: max(2.5rem, calc((100vw - 5rem) / 7));
+  --settings-tab-seg-w: auto;
 }
 
 /* Safe-area insets; the three edges a device's own hardware claims (side

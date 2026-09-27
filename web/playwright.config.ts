@@ -83,6 +83,7 @@ const testMatch = [
   "anomalies-phone.spec.ts",
   "zfs-phone.spec.ts",
   "instances-phone.spec.ts",
+  "settings-phone.spec.ts",
 ];
 
 for (const spec of testMatch) {

@@ -108,8 +108,9 @@ export default [
           // src/lib/pageShell.ts.
           exceptions: {
             // The seven-tab Selector strip is 1424px wide in German, and
-            // PAGE_SHELL's 1152px cap would wrap it onto two rows.
-            "Settings.tsx": "PAGE_SHELL_TABBED",
+            // PAGE_SHELL's 1152px cap would wrap it onto two rows. Below 48rem
+            // the card rhythm steps down to 24px like the other phone pages.
+            "Settings.tsx": "PAGE_SHELL_TABBED_RESPONSIVE",
             // Below 48rem the Card rhythm steps down to 24px (md:gap-10 is
             // gap-10 at/above it, so desktop is unchanged by construction).
             // Same 1152px cap. See PAGE_SHELL_RESPONSIVE in pageShell.ts.

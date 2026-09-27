@@ -38,9 +38,10 @@ export const PAGE_SHELL = "flex flex-col gap-10 max-w-6xl";
 export const PAGE_SHELL_RESPONSIVE = "flex flex-col gap-6 md:gap-10 max-w-6xl";
 
 /**
- * The root wrapper for Settings and for a page embedded as a tab panel of
- * another page: the same 40px gap without the width cap, plus the `flex-1` that
- * Settings' sticky AboutFooter needs to fill the main column.
+ * The root wrapper for a page embedded as a tab panel of another page, and the
+ * desktop half of Settings' shell: the same 40px gap without the width cap,
+ * plus the `flex-1` that Settings' sticky AboutFooter needs to fill the main
+ * column.
  *
  * Settings cannot take the cap. Its 7-tab Selector strip is `size="lg"` with
  * `equalWidth`, so it is seven times its widest segment, 1424px in German, and
@@ -51,8 +52,9 @@ export const PAGE_SHELL_RESPONSIVE = "flex flex-col gap-6 md:gap-10 max-w-6xl";
 export const PAGE_SHELL_TABBED = "flex flex-col gap-10 flex-1";
 
 /**
- * PAGE_SHELL_TABBED with the phone rhythm of PAGE_SHELL_RESPONSIVE, for a tab
- * panel whose host page steps down to 24px below 48rem. Without it the panel
- * would keep 40px gaps inside a page that has dropped them.
+ * PAGE_SHELL_TABBED with the phone rhythm of PAGE_SHELL_RESPONSIVE: 24px below
+ * 48rem, 40px at and above it. Settings uses it, and so do the pages embedded
+ * as tab panels, which would otherwise keep 40px gaps inside a host page that
+ * has dropped them.
  */
 export const PAGE_SHELL_TABBED_RESPONSIVE = "flex flex-col gap-6 md:gap-10 flex-1";

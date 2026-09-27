@@ -1147,3 +1147,23 @@ describe("sign-in through OAuth on the card", () => {
     expect(create.disabled).toBe(false);
   });
 });
+
+// jsdom lays nothing out, so these pin the classes the phone layout rests on.
+describe("the MCP card at phone width", () => {
+  it("lets a key's name wrap instead of cutting it beside Edit", async () => {
+    await renderCard(payload({ keys: [key({ label: "Claude Code on the workstation" })] }));
+    const name = await screen.findByText("Claude Code on the workstation");
+    expect(name.className).toContain("max-md:whitespace-normal");
+    expect(name.parentElement!.className).toContain("max-md:flex-wrap");
+  });
+
+  it("keeps the certificate button inside its warning", async () => {
+    vi.stubGlobal("location", new URL("https://192.168.1.10:3443/settings"));
+    await renderCard(
+      payload({ keys: [key()], certificate: { selfIssued: true, names: ["localhost"], fingerprint: "ab:cd" } })
+    );
+    expect((await screen.findByRole("button", { name: en["mcp.certAddAddress"] })).className).toContain(
+      "glim-btn-wrap"
+    );
+  });
+});

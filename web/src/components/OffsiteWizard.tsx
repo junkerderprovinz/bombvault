@@ -547,7 +547,7 @@ export function OffsiteWizard({
             ["s3", "offsite.wizard.backendS3"],
             ["path", "offsite.wizard.backendPath"],
           ] as const).map(([val, label]) => (
-            <label key={val} className="flex items-center gap-2 text-sm text-carbon-text cursor-pointer">
+            <label key={val} className="flex items-center gap-2 text-sm text-carbon-text cursor-pointer pointer-coarse:min-h-(--btn-h)">
               <input
                 type="radio"
                 name={`backend-${domain}`}
@@ -735,6 +735,7 @@ export function OffsiteWizard({
             hueIndex={hueIndex}
             onClick={() => void runTest()}
             disabled={testBusy}
+            className="pointer-coarse:h-(--btn-h) pointer-coarse:px-3"
           >
             {testBusy ? t("offsite.testing") : t("offsite.test")}
           </Badge>

@@ -25,6 +25,11 @@ import { useToast } from "../lib/toast";
 // app's usual chip size.
 const ROW_BADGE_SIZE: BadgeSize = "medium";
 
+// A 20px chip is too small to hit with a finger, so under a coarse pointer the
+// row's buttons take the button height. The status chips beside them stay
+// chips.
+const ROW_ACTION = "glim-tile-raise pointer-coarse:h-(--btn-h) pointer-coarse:px-3";
+
 // Editor for a domain's additional off-site targets (sortOrder > 0). The
 // primary target (sortOrder 0, synced from the Settings off-site config) has
 // its own editor above. This section owns no Settings state: it calls the
@@ -103,7 +108,7 @@ function TargetTestButton({ id, t }: { id: string; t: T }) {
       onClick={() => void go()}
       disabled={busy}
       title={t("offsite.test")}
-      className={shake ? "glim-tile-raise glim-shake" : "glim-tile-raise"}
+      className={shake ? `${ROW_ACTION} glim-shake` : ROW_ACTION}
     >
       {busy ? t("offsite.testing") : t("offsite.targets.test")}
     </Badge>
@@ -275,7 +280,7 @@ export function OffsiteTargetsSection({
       {targets.map((tgt) => (
         <div
           key={tgt.id}
-          className="glim-tile flex items-start justify-between gap-3 rounded-card p-3"
+          className="glim-tile flex items-start justify-between gap-3 rounded-card p-3 max-md:flex-col"
         >
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{tgt.name || tgt.repo}</span>
@@ -294,9 +299,11 @@ export function OffsiteTargetsSection({
               )}
             </span>
           </div>
-          <div className="flex shrink-0 items-start gap-2">
+          {/* On a phone the actions move under the name, which otherwise
+              shrinks to a column one character wide beside them. */}
+          <div className="flex shrink-0 flex-wrap items-start gap-2">
             <TargetTestButton id={tgt.id} t={t} />
-            <Badge as="button" tone="neutral" size={ROW_BADGE_SIZE} onClick={() => openEdit(tgt)} className="glim-tile-raise">
+            <Badge as="button" tone="neutral" size={ROW_BADGE_SIZE} onClick={() => openEdit(tgt)} className={ROW_ACTION}>
               {t("offsite.targets.edit")}
             </Badge>
             {/* Neutral like Edit, not red. The two-click confirm, whose label
@@ -309,7 +316,7 @@ export function OffsiteTargetsSection({
                 size={ROW_BADGE_SIZE}
                 onClick={() => void remove(tgt.id)}
                 disabled={removingId === tgt.id}
-                className={removeShake ? "glim-tile-raise glim-shake" : "glim-tile-raise"}
+                className={removeShake ? `${ROW_ACTION} glim-shake` : ROW_ACTION}
               >
                 {removingId === tgt.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
               </Badge>
@@ -319,7 +326,7 @@ export function OffsiteTargetsSection({
                 tone="neutral"
                 size={ROW_BADGE_SIZE}
                 onClick={() => setConfirmRemove(tgt.id)}
-                className="glim-tile-raise"
+                className={ROW_ACTION}
               >
                 {t("offsite.targets.remove")}
               </Badge>

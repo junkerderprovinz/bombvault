@@ -437,36 +437,24 @@ test("landscape 844x390: at >=48rem the desktop chrome owns the shell", async ({
 // ---------------------------------------------------------------------------
 // The Settings tab strip at phone widths.
 // The strip pins every segment to the sidebar row-box width (--nav-row-w,
-// 200px) on desktop, and before the phone arm of --settings-tab-seg-w that
-// same pin on a 390px phone wrapped its seven flex-none segments into seven
-// stacked rows, roughly 350px of chrome before any Settings content. The clamp
-// fits one row from 360px up and bounds the wrap at two on the narrowest
-// supported width, where its 2.5rem floor takes over. Geometry, not
-// screenshots, per this file's contracts: how many rows the seven tabs
-// occupy, and no segment shrunk below that floor (tap-target scale; the
-// row height is --nav-row-h at every width). English on purpose: the clamp
-// is a fixed per-segment width with truncating labels, so it behaves the
-// same in every locale, and en keeps the assertion on that mechanism rather
-// than on a locale's typography.
+// 200px) on desktop, and that pin on a 390px phone wrapped its seven flex-none
+// segments into seven stacked rows, roughly 350px of chrome before any
+// Settings content. Below 48rem the strip is a grid over the page column: one
+// row of seven while a tab keeps 44px, otherwise four over three. Geometry,
+// not screenshots, per this file's contracts: the tabs per row, no tab under
+// 44px, and a row that spans the column. English on purpose: the cells do not
+// follow the labels, so the strip behaves the same in every locale, and en
+// keeps the assertion on that mechanism rather than on a locale's typography.
 // ---------------------------------------------------------------------------
 
-// What a classic scrollbar takes on Windows and Linux. The clamp reads
-// 100vw, which counts that bar while the row's content box does not get it,
-// so a row that only just fits an overlay-scrollbar viewport wraps in a
-// window that has a real one. No browser here renders one (device contexts
-// use overlays, headless hides them), so it is subtracted instead.
-const CLASSIC_SCROLLBAR = 15;
-
-// Rows rather than a height bound: two stacked rows are 90px at 390px, inside
-// any bound loose enough to let one row through.
-async function assertStrip(page: Page, width: number, rows: number): Promise<void> {
+async function assertStrip(page: Page, width: number, perRow: number[]): Promise<void> {
   const strip = page.getByRole("tablist", { name: "Settings" });
   await expect(strip).toBeVisible();
   await settle(page);
 
   const geometry = await strip.evaluate((el) => {
-    // The page column scrolls, not the document, so the scrollbar and the
-    // padding that bound this row both belong to that column.
+    // The page column scrolls, not the document, so the width the row may
+    // take is that column's content box.
     let column = el.parentElement;
     while (column && getComputedStyle(column).overflowY === "visible") column = column.parentElement;
     column ??= document.documentElement;
@@ -478,42 +466,34 @@ async function assertStrip(page: Page, width: number, rows: number): Promise<voi
       }),
       available:
         column.clientWidth - parseFloat(style.paddingInlineStart) - parseFloat(style.paddingInlineEnd),
-      scrollbar: column.offsetWidth - column.clientWidth,
     };
   });
   expect(geometry.tabs, "the Settings strip owns exactly the seven page tabs").toHaveLength(7);
 
-  const actual = new Set(geometry.tabs.map((t) => t.top)).size;
-  expect(actual, `the seven tabs sit on ${actual} rows at ${width}px, not ${rows}`).toBe(rows);
+  const tops = [...new Set(geometry.tabs.map((t) => t.top))];
+  const actual = tops.map((top) => geometry.tabs.filter((t) => t.top === top).length);
+  expect(actual, `the tabs per row at ${width}px`).toEqual(perRow);
 
-  // Every tab survives the clamp tappable: no segment under the 2.5rem
-  // floor (subpixel tolerance, nothing looser).
   for (const { width: w } of geometry.tabs) {
-    expect(w, `a Settings tab shrunk to ${w}px, under the clamp floor`).toBeGreaterThanOrEqual(39.5);
+    expect(w, `a Settings tab shrunk to ${w}px, under a fingertip`).toBeGreaterThanOrEqual(43.5);
   }
 
-  if (rows > 1) return;
-
-  // The one row has to survive a browser window too, not just a phone: what
-  // the tabs and their gaps span must still fit once a classic scrollbar has
-  // taken its width off the row.
-  const span = Math.max(...geometry.tabs.map((t) => t.right)) - Math.min(...geometry.tabs.map((t) => t.left));
-  const windowed = geometry.available - Math.max(0, CLASSIC_SCROLLBAR - geometry.scrollbar);
-  expect(
-    span,
-    `the row spans ${span.toFixed(1)}px and a window with a scrollbar leaves ${windowed.toFixed(1)}px at ${width}px`,
-  ).toBeLessThanOrEqual(windowed + 0.5);
+  // The full row spans the column, so the cards below, which take the strip's
+  // width, span it too.
+  const first = geometry.tabs.filter((t) => t.top === tops[0]);
+  const span = Math.max(...first.map((t) => t.right)) - Math.min(...first.map((t) => t.left));
+  expect(Math.abs(span - geometry.available), `the row spans ${span.toFixed(1)}px of ${geometry.available}px`).toBeLessThanOrEqual(1);
 }
 
-for (const { width, rows } of [
-  { width: 390, rows: 1 },
-  { width: 360, rows: 1 },
-  { width: 320, rows: 2 },
+for (const { width, perRow } of [
+  { width: 390, perRow: [7] },
+  { width: 360, perRow: [4, 3] },
+  { width: 320, perRow: [4, 3] },
 ]) {
-  test(`settings tab strip @ ${width}px: the seven tabs sit on ${rows} row(s)`, async ({ page }, testInfo) => {
-    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the clamp lives below 48rem");
+  test(`settings tab strip @ ${width}px: the seven tabs sit ${perRow.join(" over ")}`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the grid lives below 48rem");
     await bootSeededPage(page, "en", width, "/settings");
-    await assertStrip(page, width, rows);
+    await assertStrip(page, width, perRow);
   });
 }
 
@@ -523,7 +503,7 @@ for (const { width, rows } of [
 test("settings tab strip @ 390px in a desktop window: one row with a scrollbar too", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-768", "one desktop project carries this; the pair would run it twice");
   await bootSeededPage(page, "en", 390, "/settings");
-  await assertStrip(page, 390, 1);
+  await assertStrip(page, 390, [7]);
 });
 
 // The appearance card's pinned wells, which spread over the row they get once
