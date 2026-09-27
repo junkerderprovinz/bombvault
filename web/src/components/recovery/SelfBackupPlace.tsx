@@ -45,15 +45,18 @@ export function useSelfBackupPlaces(): SelfBackupPlaces | null {
 }
 
 /** PlaceLine shows a place read-only: its mark and name, and the address it
- *  resolves to for the Self-Backup. */
+ *  resolves to for the Self-Backup. An address on no place, or one whose
+ *  place has not loaded yet, shows alone. */
 export function PlaceLine({ label, place, name, address }: { label: string; place?: Place; name: string; address: string }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs text-carbon-textSub">{label}</span>
-      <span className="flex items-center gap-2 text-sm text-carbon-text">
-        {place && <PlaceMark provider={place.provider} />}
-        {name}
-      </span>
+      {name && (
+        <span className="flex items-center gap-2 text-sm text-carbon-text">
+          {place && <PlaceMark provider={place.provider} />}
+          {name}
+        </span>
+      )}
       {address && (
         <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">
           {address}
