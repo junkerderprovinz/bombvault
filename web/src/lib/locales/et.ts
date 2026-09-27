@@ -2317,6 +2317,7 @@ const et: Partial<Translations> = {
   "placementCode.homeUnreadable": "Üksuse asukohta ei õnnestunud lugeda, seega midagi ei kustutatud.",
   "placementCode.snapshotMissing": "Seda varukoopiat pole enam valitud kohas.",
   "placementCode.directAccessDenied": "Võti ei saa seda kohta lugeda. Sihtmärgi enda kausta piiratud võti ei pääse selle kõrval olevasse kausta; piira võti selle asemel sihtmärgist ülalpool oleva kaustaga.",
+  "placementCode.restPathTooDeep": "rest-server loob hoidlaid kõige rohkem kahe kausta sügavusele, näiteks /files-direct või /user/files-direct. Vali lühem tee.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} otse säilitab nüüd vähem. Üksused, mille ainus koopia on seal: {n}.",

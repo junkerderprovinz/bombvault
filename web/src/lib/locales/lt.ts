@@ -2317,6 +2317,7 @@ const lt: Partial<Translations> = {
   "placementCode.homeUnreadable": "Nepavyko nuskaityti elemento vietos, todėl nieko nebuvo ištrinta.",
   "placementCode.snapshotMissing": "Šios atsarginės kopijos nebėra pasirinktoje vietoje.",
   "placementCode.directAccessDenied": "Raktas negali nuskaityti šios vietos. Raktas, apribotas tik iki paties tikslo aplanko, negali pasiekti šalia esančio aplanko; vietoj to apribokite raktą iki aplanko virš tikslo.",
+  "placementCode.restPathTooDeep": "rest-server kuria saugyklas ne giliau kaip dviem aplankais, pvz., /files-direct arba /user/files-direct. Pasirinkite trumpesnį kelią.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tiesiogiai dabar saugo mažiau. Elementai, kurių vienintelė kopija yra ten: {n}.",

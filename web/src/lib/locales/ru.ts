@@ -2301,6 +2301,7 @@ const ru: Partial<Translations> = {
   "placementCode.homeUnreadable": "Не удалось прочитать расположение элемента, поэтому ничего не было удалено.",
   "placementCode.snapshotMissing": "Этой резервной копии больше нет в выбранном месте.",
   "placementCode.directAccessDenied": "Ключ не может прочитать это место. Ключ, ограниченный собственной папкой цели, не может обратиться к папке рядом с ней; ограничьте ключ папкой на уровень выше цели.",
+  "placementCode.restPathTooDeep": "rest-server создаёт репозитории не глубже двух папок, например /files-direct или /user/files-direct. Выберите путь покороче.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} напрямую теперь хранит меньше. Элементы, чья единственная копия там: {n}.",

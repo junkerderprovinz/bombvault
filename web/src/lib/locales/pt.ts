@@ -2306,6 +2306,7 @@ const pt: Partial<Translations> = {
   "placementCode.homeUnreadable": "Não foi possível ler a localização do item, por isso nada foi apagado.",
   "placementCode.snapshotMissing": "Este backup já não está no lugar escolhido.",
   "placementCode.directAccessDenied": "A chave não consegue ler este lugar. Uma chave limitada à pasta do próprio destino não consegue alcançar a pasta ao lado dela; limite antes a chave à pasta acima do destino.",
+  "placementCode.restPathTooDeep": "Um rest-server cria repositórios no máximo a duas pastas de profundidade, como /files-direct ou /user/files-direct. Escolha um caminho mais curto.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direto agora conserva menos. Itens cuja única cópia está lá: {n}.",

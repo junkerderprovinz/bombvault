@@ -2317,6 +2317,7 @@ const hr: Partial<Translations> = {
   "placementCode.homeUnreadable": "Lokaciju stavke nije bilo moguće pročitati, pa ništa nije izbrisano.",
   "placementCode.snapshotMissing": "Ova sigurnosna kopija više nije na odabranom mjestu.",
   "placementCode.directAccessDenied": "Ključ ne može pročitati ovo mjesto. Ključ ograničen na vlastitu mapu odredišta ne može doprijeti do susjedne mape; umjesto toga ograniči ključ na mapu iznad odredišta.",
+  "placementCode.restPathTooDeep": "rest-server stvara repozitorije najviše dvije mape duboko, npr. /files-direct ili /user/files-direct. Odaberi kraću putanju.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} izravno sada čuva manje. Stavke čija je jedina kopija ondje: {n}.",

@@ -2303,6 +2303,7 @@ const nl: Partial<Translations> = {
   "placementCode.homeUnreadable": "De locatie van het item kon niet worden gelezen, dus is er niets verwijderd.",
   "placementCode.snapshotMissing": "Deze back-up staat niet meer op de gekozen plek.",
   "placementCode.directAccessDenied": "De sleutel kan deze plek niet lezen. Een sleutel die beperkt is tot de eigen map van het doel, kan niet bij de map ernaast; beperk de sleutel in plaats daarvan tot de map boven het doel.",
+  "placementCode.restPathTooDeep": "Een rest-server maakt repository's hoogstens twee mappen diep aan, zoals /files-direct of /user/files-direct. Kies een korter pad.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct bewaart nu minder. Items waarvan de enige kopie daar staat: {n}.",

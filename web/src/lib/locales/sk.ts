@@ -2317,6 +2317,7 @@ const sk: Partial<Translations> = {
   "placementCode.homeUnreadable": "Umiestnenie položky sa nepodarilo načítať, takže nič nebolo vymazané.",
   "placementCode.snapshotMissing": "Táto záloha už nie je na zvolenom mieste.",
   "placementCode.directAccessDenied": "Kľúč nedokáže prečítať toto miesto. Kľúč obmedzený na vlastný priečinok cieľa sa nedostane do priečinka vedľa neho; namiesto toho obmedzte kľúč na priečinok nad cieľom.",
+  "placementCode.restPathTooDeep": "rest-server vytvára repozitáre najviac dva priečinky hlboko, napríklad /files-direct alebo /user/files-direct. Zvoľ kratšiu cestu.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} priamo teraz uchováva menej. Položky, ktorých jediná kópia je tam: {n}.",

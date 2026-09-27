@@ -2301,6 +2301,7 @@ const uk: Partial<Translations> = {
   "placementCode.homeUnreadable": "Не вдалося прочитати розташування елемента, тому нічого не було видалено.",
   "placementCode.snapshotMissing": "Цієї резервної копії більше немає в обраному місці.",
   "placementCode.directAccessDenied": "Ключ не може прочитати це місце. Ключ, обмежений власною текою цілі, не може дістатися до теки поруч із нею; натомість обмеж ключ текою над ціллю.",
+  "placementCode.restPathTooDeep": "rest-server створює репозиторії не глибше двох тек, наприклад /files-direct або /user/files-direct. Виберіть коротший шлях.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} напряму тепер зберігає менше. Елементи, чия єдина копія там: {n}.",

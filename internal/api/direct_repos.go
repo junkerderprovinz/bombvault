@@ -26,6 +26,11 @@ var errForeignDomain = errors.New("that direct repository belongs to a target of
 
 var errTargetInUse = errors.New("this target's direct repository is still in use")
 
+// errRestPathTooDeep refuses a rest-server location more than two path levels
+// down: rest-server creates a repository at /repo/ or /user/repo/ and answers
+// 404 below that, so the test would call the place empty and the create fail.
+var errRestPathTooDeep = errors.New("a rest-server creates repositories at most two folders deep")
+
 // errDirectAccessDenied marks a direct-repository probe that reached the
 // backend but was turned away: the key does not cover this particular place,
 // most often because it is scoped to the target's own folder rather than the
@@ -229,6 +234,9 @@ func (s *Service) directLocation(settings store.Settings, location string) (stri
 	loc, err := s.resolveRepo(strings.TrimSpace(location))
 	if err != nil {
 		return "", err
+	}
+	if place, elems := locationParts(loc); strings.HasPrefix(place, "rest:") && len(elems) > 2 {
+		return "", errRestPathTooDeep
 	}
 	if err := s.locationClash(settings, loc, locationSelf{}); err != nil {
 		return "", err

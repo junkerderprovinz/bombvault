@@ -2317,6 +2317,7 @@ const ms: Partial<Translations> = {
   "placementCode.homeUnreadable": "Lokasi item tidak dapat dibaca, jadi tiada apa-apa yang dipadam.",
   "placementCode.snapshotMissing": "Sandaran ini tidak lagi berada di tempat yang dipilih.",
   "placementCode.directAccessDenied": "Kunci tidak dapat membaca tempat ini. Kunci yang terhad kepada folder sasaran itu sendiri tidak dapat mencapai folder di sebelahnya; hadkan kunci itu kepada folder di atas sasaran sebagai gantinya.",
+  "placementCode.restPathTooDeep": "rest-server mencipta repositori paling dalam dua folder, seperti /files-direct atau /user/files-direct. Pilih laluan yang lebih pendek.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} terus kini menyimpan lebih sedikit. Item yang satu-satunya salinan ada di situ: {n}.",

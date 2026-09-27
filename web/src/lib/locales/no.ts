@@ -2306,6 +2306,7 @@ const no: Partial<Translations> = {
   "placementCode.homeUnreadable": "Elementets plassering kunne ikke leses, så ingenting ble slettet.",
   "placementCode.snapshotMissing": "Denne sikkerhetskopien er ikke lenger på det valgte stedet.",
   "placementCode.directAccessDenied": "Nøkkelen kan ikke lese dette stedet. En nøkkel som er begrenset til målets egen mappe, når ikke mappen ved siden av; begrens i stedet nøkkelen til mappen over målet.",
+  "placementCode.restPathTooDeep": "En rest-server oppretter depoter høyst to mapper dypt, for eksempel /files-direct eller /user/files-direct. Velg en kortere sti.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkte beholder nå mindre. Elementer der eneste kopi ligger der: {n}.",

@@ -2306,6 +2306,7 @@ const fr: Partial<Translations> = {
   "placementCode.homeUnreadable": "Impossible de lire l'emplacement de l'élément, donc rien n'a été supprimé.",
   "placementCode.snapshotMissing": "Cette sauvegarde n'est plus à l'endroit choisi.",
   "placementCode.directAccessDenied": "La clé ne peut pas lire cet emplacement. Une clé limitée au dossier propre de la cible ne peut pas atteindre le dossier voisin ; limitez plutôt la clé au dossier au-dessus de la cible.",
+  "placementCode.restPathTooDeep": "Un rest-server crée des dépôts à deux dossiers de profondeur au plus, comme /files-direct ou /user/files-direct. Choisissez un chemin plus court.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct conserve désormais moins. Éléments dont c'est la seule copie : {n}.",

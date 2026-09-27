@@ -31,6 +31,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "home-unreadable": "placementCode.homeUnreadable",
   "snapshot-missing": "placementCode.snapshotMissing",
   "direct-access-denied": "placementCode.directAccessDenied",
+  "rest-path-too-deep": "placementCode.restPathTooDeep",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {

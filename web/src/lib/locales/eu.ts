@@ -2317,6 +2317,7 @@ const eu: Partial<Translations> = {
   "placementCode.homeUnreadable": "Ezin izan da elementuaren kokapena irakurri, beraz ez da ezer ezabatu.",
   "placementCode.snapshotMissing": "Babeskopia hau ez dago jada aukeratutako lekuan.",
   "placementCode.directAccessDenied": "Gakoak ezin du leku hau irakurri. Helburuaren beraren karpetara mugatutako gako batek ezin du haren alboko karpeta atzitu; horren ordez, mugatu gakoa helburuaren gaineko karpetara.",
+  "placementCode.restPathTooDeep": "rest-server batek gehienez bi karpetako sakoneran sortzen ditu biltegiak, adibidez /files-direct edo /user/files-direct. Aukeratu bide laburrago bat.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} zuzenak orain gutxiago gordetzen du. Kopia bakarra hor duten elementuak: {n}.",

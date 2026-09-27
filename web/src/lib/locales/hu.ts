@@ -2309,6 +2309,7 @@ const hu: Partial<Translations> = {
   "placementCode.homeUnreadable": "Az elem helyét nem sikerült beolvasni, ezért semmi sem törlődött.",
   "placementCode.snapshotMissing": "Ez a mentés már nincs a kiválasztott helyen.",
   "placementCode.directAccessDenied": "A kulcs nem tudja beolvasni ezt a helyet. A cél saját mappájára korlátozott kulcs nem éri el a mellette lévő mappát; korlátozd inkább a kulcsot a cél feletti mappára.",
+  "placementCode.restPathTooDeep": "A rest-server legfeljebb két mappa mélységben hoz létre tárolókat, például /files-direct vagy /user/files-direct. Válassz rövidebb útvonalat.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} közvetlenül most kevesebbet őriz meg. Elemek, amelyeknek egyetlen másolata ott van: {n}.",

@@ -2317,6 +2317,7 @@ const gl: Partial<Translations> = {
   "placementCode.homeUnreadable": "Non se puido ler a localización do elemento, así que non se borrou nada.",
   "placementCode.snapshotMissing": "Esta copia de seguranza xa non está no lugar escollido.",
   "placementCode.directAccessDenied": "A clave non pode ler este lugar. Unha clave limitada ao propio cartafol do destino non pode acadar o cartafol veciño; limita a clave ao cartafol superior ao destino no seu lugar.",
+  "placementCode.restPathTooDeep": "Un rest-server crea repositorios como máximo a dous cartafoles de profundidade, como /files-direct ou /user/files-direct. Escolle unha ruta máis curta.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo agora conserva menos. Elementos cuxa única copia está aí: {n}.",

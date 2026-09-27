@@ -2306,6 +2306,7 @@ const tr: Partial<Translations> = {
   "placementCode.homeUnreadable": "Ögenin konumu okunamadı, bu yüzden hiçbir şey silinmedi.",
   "placementCode.snapshotMissing": "Bu yedek artık seçilen yerde değil.",
   "placementCode.directAccessDenied": "Anahtar bu yeri okuyamaz. Hedefin kendi klasörüyle sınırlı bir anahtar, yanındaki klasöre erişemez; bunun yerine anahtarı hedefin üstündeki klasörle sınırla.",
+  "placementCode.restPathTooDeep": "rest-server depoları en fazla iki klasör derinliğinde oluşturur, örneğin /files-direct veya /user/files-direct. Daha kısa bir yol seçin.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} doğrudan artık daha az tutuyor. Tek kopyası orada olan ögeler: {n}.",

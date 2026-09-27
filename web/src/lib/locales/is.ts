@@ -2317,6 +2317,7 @@ const is: Partial<Translations> = {
   "placementCode.homeUnreadable": "Ekki tókst að lesa staðsetningu atriðisins, svo ekkert var eytt.",
   "placementCode.snapshotMissing": "Þetta afrit er ekki lengur á valda staðnum.",
   "placementCode.directAccessDenied": "Lykillinn getur ekki lesið þennan stað. Lykill sem er takmarkaður við möppu skotmarksins sjálfs nær ekki í möppuna við hliðina á henni; takmarkaðu lykilinn þess í stað við möppuna fyrir ofan skotmarkið.",
+  "placementCode.restPathTooDeep": "rest-server býr til geymslur í mesta lagi tveimur möppum niður, t.d. /files-direct eða /user/files-direct. Veldu styttri slóð.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} beint varðveitir nú minna. Atriði sem eiga eina afritið þar: {n}.",

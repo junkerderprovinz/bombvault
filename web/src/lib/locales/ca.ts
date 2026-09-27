@@ -2317,6 +2317,7 @@ const ca: Partial<Translations> = {
   "placementCode.homeUnreadable": "No s'ha pogut llegir la ubicació de l'element, així que no s'ha esborrat res.",
   "placementCode.snapshotMissing": "Aquesta còpia de seguretat ja no és al lloc escollit.",
   "placementCode.directAccessDenied": "La clau no pot llegir aquest lloc. Una clau limitada a la carpeta pròpia de la destinació no pot arribar a la carpeta del costat; limita la clau a la carpeta superior a la destinació.",
+  "placementCode.restPathTooDeep": "Un rest-server crea repositoris com a màxim a dues carpetes de profunditat, com ara /files-direct o /user/files-direct. Tria un camí més curt.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directe ara conserva menys. Elements l'única còpia dels quals hi és: {n}.",

@@ -2309,6 +2309,7 @@ const ar: Partial<Translations> = {
   "placementCode.homeUnreadable": "تعذّرت قراءة موقع العنصر، لذا لم يُحذف شيء.",
   "placementCode.snapshotMissing": "هذه النسخة الاحتياطية لم تعد في المكان المختار.",
   "placementCode.directAccessDenied": "المفتاح لا يستطيع قراءة هذا المكان. مفتاح مقتصر على مجلد الهدف نفسه لا يستطيع الوصول إلى المجلد المجاور له؛ اقصر المفتاح بدلاً من ذلك على المجلد الذي يعلو الهدف.",
+  "placementCode.restPathTooDeep": "يُنشئ rest-server المستودعات على عمق مجلدين كحد أقصى، مثل /files-direct أو /user/files-direct. اختر مسارًا أقصر.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} المباشر يحتفظ الآن بأقل. العناصر التي نسختها الوحيدة هناك: {n}.",

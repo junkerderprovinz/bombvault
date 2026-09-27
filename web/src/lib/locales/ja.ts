@@ -2298,6 +2298,7 @@ const ja: Partial<Translations> = {
   "placementCode.homeUnreadable": "項目の保存場所を読み取れなかったため、何も削除されませんでした。",
   "placementCode.snapshotMissing": "このバックアップは選択した場所にもうありません。",
   "placementCode.directAccessDenied": "キーはこの場所を読み取れません。ターゲット自身のフォルダーに限定したキーは、隣のフォルダーには届きません。代わりにキーをターゲットの一つ上のフォルダーに限定してください。",
+  "placementCode.restPathTooDeep": "rest-server がリポジトリを作成できるのはフォルダー2階層までです（例: /files-direct、/user/files-direct）。もっと短いパスを選んでください。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ダイレクトは今、保持量が減りました。唯一のコピーがそこにある項目: {n}。",

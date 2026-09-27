@@ -1973,6 +1973,7 @@ export const en = {
   "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
   "placementCode.snapshotMissing": "This backup is no longer at the chosen place.",
   "placementCode.directAccessDenied": "The key cannot read this place. A key limited to the target's own folder cannot reach the folder next to it; limit the key to the folder above the target instead.",
+  "placementCode.restPathTooDeep": "A rest-server creates repositories at most two folders deep, such as /files-direct or /user/files-direct. Choose a shorter path.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct now keeps less. Items whose only copy is there: {n}.",
@@ -4725,6 +4726,7 @@ export const de: Translations = {
   "placementCode.homeUnreadable": "Der Ort des Eintrags ließ sich nicht lesen, deshalb wurde nichts gelöscht.",
   "placementCode.snapshotMissing": "Diese Sicherung liegt nicht mehr am gewählten Ort.",
   "placementCode.directAccessDenied": "Der Schlüssel kann diesen Ort nicht lesen. Ein Schlüssel, der auf den eigenen Ordner des Ziels beschränkt ist, erreicht den Ordner daneben nicht; beschränke den Schlüssel stattdessen auf den Ordner über dem Ziel.",
+  "placementCode.restPathTooDeep": "Ein rest-server legt Repositorys höchstens zwei Ordner tief an, etwa /files-direct oder /user/files-direct. Wähle einen kürzeren Pfad.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt bewahrt jetzt weniger auf. Einträge, deren einzige Kopie dort liegt: {n}.",

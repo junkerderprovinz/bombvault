@@ -2317,6 +2317,7 @@ const fa: Partial<Translations> = {
   "placementCode.homeUnreadable": "مکان این مورد خوانده نشد، بنابراین چیزی حذف نشد.",
   "placementCode.snapshotMissing": "این پشتیبان دیگر در مکان انتخاب‌شده نیست.",
   "placementCode.directAccessDenied": "این کلید نمی‌تواند این مکان را بخواند. کلیدی که به پوشه خود هدف محدود شده نمی‌تواند به پوشه کنار آن دسترسی پیدا کند؛ در عوض کلید را به پوشه بالای هدف محدود کنید.",
+  "placementCode.restPathTooDeep": "rest-server مخزن‌ها را حداکثر در عمق دو پوشه می‌سازد، مانند /files-direct یا /user/files-direct. مسیر کوتاه‌تری انتخاب کنید.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} مستقیم اکنون کمتر نگه می‌دارد. موردهایی که تنها نسخه‌شان همان‌جاست: {n}.",

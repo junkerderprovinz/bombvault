@@ -385,6 +385,27 @@ func TestTestingADirectLocationReportsAccessDenied(t *testing.T) {
 	}
 }
 
+func TestARestServerPathDeeperThanTwoLevelsIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("files", "rest", "rest:http://rest.example:8000/files")
+	deep := "rest:http://rest.example:8000/p91/deep/x"
+	res := f.do("POST", "/api/offsite/targets/"+target.ID+"/direct/test", map[string]any{"location": deep})
+	if res["ok"] != false || res["code"] != "rest-path-too-deep" {
+		t.Fatalf("test of a three-level rest path = %v", res)
+	}
+	res = f.do("POST", "/api/repos", map[string]any{"name": "", "repo": deep, "companionOf": target.ID})
+	if res["ok"] != false || res["code"] != "rest-path-too-deep" {
+		t.Fatalf("create at a three-level rest path = %v", res)
+	}
+	if len(f.eng.ensured) != 0 {
+		t.Fatalf("the refused create set up %v", f.eng.ensured)
+	}
+	res = f.do("POST", "/api/offsite/targets/"+target.ID+"/direct/test", map[string]any{"location": "rest:http://rest.example:8000/p91/two/"})
+	if res["ok"] != true {
+		t.Fatalf("test of a two-level rest path = %v", res)
+	}
+}
+
 func TestCreatingADirectRepositoryEnsuresItOnlyThen(t *testing.T) {
 	f := newPlacementFixture(t)
 	target := f.target("containers", "NAS", "backups/nas-offsite")

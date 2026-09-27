@@ -2301,6 +2301,7 @@ const pl: Partial<Translations> = {
   "placementCode.homeUnreadable": "Nie udało się odczytać lokalizacji elementu, więc nic nie zostało usunięte.",
   "placementCode.snapshotMissing": "Tej kopii zapasowej nie ma już w wybranym miejscu.",
   "placementCode.directAccessDenied": "Klucz nie może odczytać tego miejsca. Klucz ograniczony do własnego katalogu celu nie sięga do katalogu obok niego; ogranicz klucz zamiast tego do katalogu nad celem.",
+  "placementCode.restPathTooDeep": "rest-server tworzy repozytoria najwyżej dwa foldery w głąb, np. /files-direct lub /user/files-direct. Wybierz krótszą ścieżkę.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} bezpośrednio przechowuje teraz mniej. Elementy, których jedyna kopia tam jest: {n}.",

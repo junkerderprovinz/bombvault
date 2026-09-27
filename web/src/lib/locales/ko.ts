@@ -2298,6 +2298,7 @@ const ko: Partial<Translations> = {
   "placementCode.homeUnreadable": "항목의 위치를 읽을 수 없어 아무것도 삭제되지 않았습니다.",
   "placementCode.snapshotMissing": "이 백업은 더 이상 선택한 위치에 없습니다.",
   "placementCode.directAccessDenied": "키는 이 위치를 읽을 수 없습니다. 대상 자신의 폴더로 제한된 키는 그 옆 폴더에는 닿지 못합니다. 대신 키를 대상보다 한 단계 위 폴더로 제한하세요.",
+  "placementCode.restPathTooDeep": "rest-server는 저장소를 최대 두 폴더 깊이까지만 만듭니다(예: /files-direct 또는 /user/files-direct). 더 짧은 경로를 선택하세요.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 직접은 이제 더 적게 보관합니다. 유일한 사본이 그곳에 있는 항목: {n}개.",
