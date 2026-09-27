@@ -67,7 +67,6 @@ var placementCodes = []struct {
 	{errPlaceNothingToTest, "place-nothing-to-test"},
 	{errPlaceKeepsLess, "place-keeps-less"},
 	{errPlaceAppendOnlyOff, "place-append-only-off"},
-	{errRESTPathDeep, "place-rest-path-deep"},
 
 	{errPlacementUnreadable, "placement-unreadable"},
 	{errInvalidPlacement, "invalid-placement"},
@@ -93,8 +92,8 @@ var placementCodes = []struct {
 	{errTargetInUse, "target-in-use"},
 	{store.ErrDirectRepo, "direct-repo"},
 	{errDirectAccessDenied, "direct-access-denied"},
-	{errPlaceProbeFailed, "place-probe-failed"},
 	{errRestPathTooDeep, "rest-path-too-deep"},
+	{errPlaceProbeFailed, "place-probe-failed"},
 	{errAppendOnlyOffsiteTarget, "append-only"},
 	{errRemovalGrown, "removal-grown"},
 	{errNameMismatch, "name-mismatch"},

@@ -2145,7 +2145,6 @@ const sv: Partial<Translations> = {
   "places.error.nothingToTest": "Ingen domän sparas eller kopieras på den här lagringsplatsen, så det finns inget att testa.",
   "places.error.keepsLess": "Den här lagringsplatsen behåller färre ögonblicksbilder än arkivet har nu, och dess nästa rensning skulle glömma resten. Höj lagringsplatsens kvarhållning först.",
   "places.error.appendOnlyOff": "Det här arkivet är append-only men lagringsplatsen är det inte, så en rensning där kan radera dess ögonblicksbilder. Slå först på append-only på lagringsplatsen.",
-  "places.error.restPathDeep": "rest-server skapar arkiv högst två nivåer djupt, och varje domän får en egen mapp under den här. Ange en enda mapp, utan snedstreck.",
   "places.error.ownedField": "Lagringsplatsen bestämmer det här värdet. Ändra det i detaljerna för lagringsplatsen under Inställningar, Lagring.",
   "places.error.unknownProvider": "Den här servern kan inte ansluta till den sortens lagring.",
   "places.error.locationEstablished": "one=Säkerhetskopior ligger på den gamla adressen ({n} ögonblicksbild av {domains}), och den nya innehåller inte samma arkiv.|other=Säkerhetskopior ligger på den gamla adressen ({n} ögonblicksbilder av {domains}), och den nya innehåller inte samma arkiv.",

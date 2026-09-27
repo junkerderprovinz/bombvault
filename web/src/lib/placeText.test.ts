@@ -19,7 +19,6 @@ describe("placeErrorText", () => {
       "place-nothing-to-test",
       "place-keeps-less",
       "place-append-only-off",
-      "place-rest-path-deep",
       "place-owned-field",
       "place-name-missing",
       "place-unasked",

@@ -24,7 +24,7 @@ describe("placementErrorText", () => {
     const codes = [
       "place-name-taken", "place-home-domain", "place-is-repository", "place-folder-blank", "place-domain-unavailable",
       "place-address-taken", "place-off", "place-repo-shared", "place-no-append-only", "place-nothing-to-test",
-      "place-keeps-less", "place-append-only-off", "place-rest-path-deep", "place-owned-field",
+      "place-keeps-less", "place-append-only-off", "place-owned-field",
       "place-name-missing", "place-unasked", "place-unknown-provider",
     ];
     for (const code of codes) {

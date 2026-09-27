@@ -274,7 +274,6 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errPlaceNothingToTest:           "place-nothing-to-test",
 		errPlaceKeepsLess:               "place-keeps-less",
 		errPlaceAppendOnlyOff:           "place-append-only-off",
-		errRESTPathDeep:                 "place-rest-path-deep",
 		store.ErrPlaceOwnedField:        "place-owned-field",
 		errPlaceNameMissing:             "place-name-missing",
 		errPlaceUnasked:                 "place-unasked",

@@ -2165,7 +2165,6 @@ const ca: Partial<Translations> = {
   "places.error.nothingToTest": "En aquest lloc no s'emmagatzema ni es copia cap domini, així que no hi ha res a provar.",
   "places.error.keepsLess": "Aquest lloc conserva menys instantànies de les que té ara el repositori, i la seva propera neteja oblidaria la resta. Augmenta primer la retenció del lloc.",
   "places.error.appendOnlyOff": "Aquest repositori és append-only i el lloc no, així que una neteja allà en podria esborrar les instantànies. Activa primer l'append-only al lloc.",
-  "places.error.restPathDeep": "rest-server crea repositoris com a molt a dos nivells de profunditat, i cada domini té la seva pròpia carpeta dins d'aquesta. Escriu una sola carpeta, sense barra.",
   "places.error.ownedField": "Aquest valor el fixa el lloc. Canvia'l als detalls del lloc a Configuració, Emmagatzematge.",
   "places.error.unknownProvider": "Aquest servidor no es pot connectar a aquest tipus d'emmagatzematge.",
   "places.error.locationEstablished": "one=A l'adreça antiga hi ha còpies de seguretat ({n} instantània de {domains}), i a la nova no hi ha el mateix repositori.|many=A l'adreça antiga hi ha còpies de seguretat ({n} d'instantànies de {domains}), i a la nova no hi ha el mateix repositori.|other=A l'adreça antiga hi ha còpies de seguretat ({n} instantànies de {domains}), i a la nova no hi ha el mateix repositori.",

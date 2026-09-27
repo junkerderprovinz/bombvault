@@ -27,11 +27,18 @@ var errForeignDomain = errors.New("that direct repository belongs to a target of
 
 var errTargetInUse = errors.New("this target's direct repository is still in use")
 
-// errRestPathTooDeep refuses a rest-server location more than two path levels
-// down, or deeper than its target where a reverse proxy adds a path prefix:
-// rest-server creates a repository at /repo/ or /user/repo/ and answers 404
-// below that, so the test would call the place empty and the create fail.
+// errRestPathTooDeep refuses a rest-server location deeper than restTooDeep
+// allows. rest-server creates a repository at /repo/ or /user/repo/ and answers
+// 404 below that, so a connection test would call the location empty and the
+// first backup or copy there would fail.
 var errRestPathTooDeep = errors.New("a rest-server creates repositories at most two folders deep")
+
+// restTooDeep reports whether a repository at the path elems of a rest-server
+// location lies deeper than the server creates one: two folders below its
+// root, or as deep as known, a repository already there behind a path prefix.
+func restTooDeep(elems []string, known int) bool {
+	return len(elems) > max(2, known)
+}
 
 // errDirectAccessDenied marks a direct-repository probe that reached the
 // backend but was turned away: the key does not cover this particular place,
@@ -237,7 +244,7 @@ func (s *Service) directLocation(settings store.Settings, target store.OffsiteTa
 	if err != nil {
 		return "", err
 	}
-	if place, elems := locationParts(loc); strings.HasPrefix(place, "rest:") && len(elems) > restDepth(target) {
+	if place, elems := locationParts(loc); strings.HasPrefix(place, "rest:") && restTooDeep(elems, restDepth(target)) {
 		return "", errRestPathTooDeep
 	}
 	if err := s.locationClash(settings, loc, locationSelf{}); err != nil {
@@ -246,14 +253,13 @@ func (s *Service) directLocation(settings store.Settings, target store.OffsiteTa
 	return loc, nil
 }
 
-// restDepth is how many path levels a direct repository beside target may
-// have on a rest-server: two, or the target's own depth behind a path prefix.
+// restDepth is how deep target lies on a rest-server, 0 for a target elsewhere.
 func restDepth(target store.OffsiteTarget) int {
 	place, elems := locationParts(target.Repo)
 	if strings.HasPrefix(place, "rest:") {
-		return max(2, len(elems))
+		return len(elems)
 	}
-	return 2
+	return 0
 }
 
 // probeDirectLocation is the create dialog's connection test. It opens location

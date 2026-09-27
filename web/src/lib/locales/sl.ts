@@ -2148,7 +2148,6 @@ const sl: Partial<Translations> = {
   "places.error.nothingToTest": "Na tem mestu ni shranjena ali kopirana nobena domena, zato ni česa preizkusiti.",
   "places.error.keepsLess": "To mesto hrani manj posnetkov, kot jih ima repozitorij zdaj, in njegovo naslednje čiščenje bi ostale izbrisalo. Najprej povečaj hrambo mesta.",
   "places.error.appendOnlyOff": "Ta repozitorij ima samo-dodajanje, mesto pa ne, zato bi čiščenje tam lahko izbrisalo njegove posnetke. Najprej vklopi samo-dodajanje na mestu.",
-  "places.error.restPathDeep": "rest-server ustvarja repozitorije največ dve ravni globoko, vsaka domena pa pod to mapo dobi svojo mapo. Vnesi eno samo mapo, brez poševnice.",
   "places.error.ownedField": "To vrednost določa mesto. Spremeni jo v podrobnostih mesta pod Nastavitve, Shramba.",
   "places.error.unknownProvider": "Ta strežnik se ne more povezati s to vrsto shrambe.",
   "places.error.locationEstablished": "one=Na starem naslovu so varnostne kopije ({domains}: {n} posnetek), novi naslov pa ne vsebuje istega repozitorija.|two=Na starem naslovu so varnostne kopije ({domains}: {n} posnetka), novi naslov pa ne vsebuje istega repozitorija.|few=Na starem naslovu so varnostne kopije ({domains}: {n} posnetki), novi naslov pa ne vsebuje istega repozitorija.|other=Na starem naslovu so varnostne kopije ({domains}: {n} posnetkov), novi naslov pa ne vsebuje istega repozitorija.",

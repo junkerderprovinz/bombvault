@@ -2138,7 +2138,6 @@ const vi: Partial<Translations> = {
   "places.error.nothingToTest": "Không có miền nào được lưu hay sao chép tại điểm lưu trữ này, nên không có gì để kiểm tra.",
   "places.error.keepsLess": "Điểm lưu trữ này giữ ít snapshot hơn số mà kho đang có, và lần dọn bớt tiếp theo sẽ bỏ phần còn lại. Hãy tăng mức lưu giữ của điểm lưu trữ trước.",
   "places.error.appendOnlyOff": "Kho này là append-only còn điểm lưu trữ thì không, nên một lần dọn bớt ở đó có thể xóa các snapshot của kho. Hãy bật append-only ở điểm lưu trữ trước.",
-  "places.error.restPathDeep": "rest-server chỉ tạo kho sâu tối đa hai cấp, và mỗi miền có thư mục riêng bên dưới thư mục này. Hãy nhập một thư mục duy nhất, không có dấu gạch chéo.",
   "places.error.ownedField": "Giá trị này do điểm lưu trữ quyết định. Hãy thay đổi trong phần chi tiết của điểm lưu trữ tại Cài đặt, Lưu trữ.",
   "places.error.unknownProvider": "Máy chủ này không thể kết nối với loại lưu trữ đó.",
   "places.error.locationEstablished": "Có bản sao lưu ở địa chỉ cũ ({n} snapshot của {domains}), và địa chỉ mới không chứa cùng kho đó.",

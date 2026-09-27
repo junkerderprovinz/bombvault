@@ -1813,7 +1813,7 @@ export const en = {
   "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
   "placementCode.snapshotMissing": "This backup is no longer at the chosen place.",
   "placementCode.directAccessDenied": "The key cannot read this place. A key limited to the target's own folder cannot reach the folder next to it; limit the key to the folder above the target instead.",
-  "placementCode.restPathTooDeep": "A rest-server creates repositories at most two folders deep, such as /files-direct or /user/files-direct. Choose a shorter path.",
+  "placementCode.restPathTooDeep": "A rest-server creates repositories at most two folders deep, such as /files-direct or /user/files-direct. A place keeps each domain in a folder below its path, so the path of a rest-server place can be one folder only. Choose a shorter path.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct now keeps less. Items whose only copy is there: {n}.",
@@ -2874,7 +2874,6 @@ export const en = {
   "places.error.nothingToTest": "No domain is stored or copied at this place, so there is nothing to test.",
   "places.error.keepsLess": "This place keeps fewer snapshots than the repository does now, and its next prune would forget the rest. Raise the place's retention first.",
   "places.error.appendOnlyOff": "This repository is append-only and the place is not, so a prune there could delete its snapshots. Switch append-only on at the place first.",
-  "places.error.restPathDeep": "rest-server creates repositories at most two levels deep, and each domain gets a folder of its own below this one. Enter a single folder, without a slash.",
   "places.error.ownedField": "The place sets this value. Change it in the details of the place under Settings, Storage.",
   "places.error.unknownProvider": "This server cannot connect to that kind of storage.",
   "places.error.locationEstablished": "one=Backups lie at the old address ({n} snapshot of {domains}), and the new one does not hold the same repository.|other=Backups lie at the old address ({n} snapshots of {domains}), and the new one does not hold the same repository.",
@@ -4664,7 +4663,7 @@ export const de: Translations = {
   "placementCode.homeUnreadable": "Der Ort des Eintrags ließ sich nicht lesen, deshalb wurde nichts gelöscht.",
   "placementCode.snapshotMissing": "Diese Sicherung liegt nicht mehr am gewählten Ort.",
   "placementCode.directAccessDenied": "Der Schlüssel kann diesen Ort nicht lesen. Ein Schlüssel, der auf den eigenen Ordner des Ziels beschränkt ist, erreicht den Ordner daneben nicht; beschränke den Schlüssel stattdessen auf den Ordner über dem Ziel.",
-  "placementCode.restPathTooDeep": "Ein rest-server legt Repositorys höchstens zwei Ordner tief an, etwa /files-direct oder /user/files-direct. Wähle einen kürzeren Pfad.",
+  "placementCode.restPathTooDeep": "Ein rest-server legt Repositorys höchstens zwei Ordner tief an, etwa /files-direct oder /user/files-direct. Ein Ort legt jede Domäne in einem Ordner unter seinem Pfad ab, daher kann der Pfad eines rest-server-Ortes nur ein Ordner sein. Wähle einen kürzeren Pfad.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt bewahrt jetzt weniger auf. Einträge, deren einzige Kopie dort liegt: {n}.",
@@ -5695,7 +5694,6 @@ export const de: Translations = {
   "places.error.nothingToTest": "An diesem Ort wird keine Domäne gespeichert oder kopiert, deshalb gibt es nichts zu prüfen.",
   "places.error.keepsLess": "Dieser Ort behält weniger Snapshots als das Repository jetzt, und sein nächstes Aufräumen würde den Rest löschen. Erhöhe zuerst die Aufbewahrung des Ortes.",
   "places.error.appendOnlyOff": "Dieses Repository ist append-only, der Ort nicht, dort könnte ein Aufräumen also seine Snapshots löschen. Schalte zuerst append-only am Ort ein.",
-  "places.error.restPathDeep": "rest-server legt Repositories höchstens zwei Ebenen tief an, und jede Domäne bekommt darunter einen eigenen Ordner. Gib einen einzelnen Ordner ohne Schrägstrich an.",
   "places.error.ownedField": "Diesen Wert legt der Ort fest. Ändere ihn in den Details des Ortes unter Einstellungen, Speicher.",
   "places.error.unknownProvider": "Mit dieser Art von Speicher kann sich dieser Server nicht verbinden.",
   "places.error.locationEstablished": "one=Am alten Ort liegen Sicherungen ({n} Snapshot von {domains}), und am neuen liegt nicht dasselbe Repository.|other=Am alten Ort liegen Sicherungen ({n} Snapshots von {domains}), und am neuen liegt nicht dasselbe Repository.",

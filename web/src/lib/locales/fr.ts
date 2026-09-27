@@ -2145,7 +2145,6 @@ const fr: Partial<Translations> = {
   "places.error.nothingToTest": "Aucun domaine n'est stocké ni copié dans ce lieu, il n'y a donc rien à tester.",
   "places.error.keepsLess": "Ce lieu conserve moins d'instantanés que le dépôt n'en contient maintenant, et son prochain élagage oublierait le reste. Augmentez d'abord la rétention du lieu.",
   "places.error.appendOnlyOff": "Ce dépôt est en append-only mais pas le lieu, un élagage pourrait donc y supprimer ses instantanés. Activez d'abord le mode append-only sur le lieu.",
-  "places.error.restPathDeep": "rest-server crée les dépôts à deux niveaux de profondeur au plus, et chaque domaine reçoit son propre dossier sous celui-ci. Saisissez un seul dossier, sans barre oblique.",
   "places.error.ownedField": "Cette valeur est fixée par le lieu. Modifiez-la dans les détails du lieu sous Paramètres, Stockage.",
   "places.error.unknownProvider": "Ce serveur ne peut pas se connecter à ce type de stockage.",
   "places.error.locationEstablished": "one=Des sauvegardes se trouvent à l'ancienne adresse ({n} instantané de {domains}), et la nouvelle ne contient pas le même dépôt.|many=Des sauvegardes se trouvent à l'ancienne adresse ({n} instantanés de {domains}), et la nouvelle ne contient pas le même dépôt.|other=Des sauvegardes se trouvent à l'ancienne adresse ({n} instantanés de {domains}), et la nouvelle ne contient pas le même dépôt.",

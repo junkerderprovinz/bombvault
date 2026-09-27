@@ -2165,7 +2165,6 @@ const et: Partial<Translations> = {
   "places.error.nothingToTest": "Sellesse salvestuskohta ei salvestata ega kopeerita ühtki domeeni, seega pole midagi testida.",
   "places.error.keepsLess": "See salvestuskoht säilitab vähem hetktõmmiseid, kui hoidlas praegu on, ja selle järgmine puhastus unustaks ülejäänud. Suurenda esmalt salvestuskoha säilitamist.",
   "places.error.appendOnlyOff": "See hoidla on ainult-lisamise režiimis, salvestuskoht aga mitte, seega võiks puhastus seal selle hetktõmmised kustutada. Lülita esmalt salvestuskohas ainult-lisamise režiim sisse.",
-  "places.error.restPathDeep": "rest-server loob hoidlaid kõige rohkem kahe taseme sügavusele ja iga domeen saab selle alla oma kausta. Sisesta üks kaust, ilma kaldkriipsuta.",
   "places.error.ownedField": "Selle väärtuse määrab salvestuskoht. Muuda seda salvestuskoha üksikasjades jaotises Seaded, Salvestusruum.",
   "places.error.unknownProvider": "See server ei saa sellist tüüpi salvestusruumiga ühendust luua.",
   "places.error.locationEstablished": "one=Vanal aadressil on varukoopiaid ({domains}: {n} hetktõmmis) ja uuel aadressil pole sama hoidlat.|other=Vanal aadressil on varukoopiaid ({domains}: {n} hetktõmmist) ja uuel aadressil pole sama hoidlat.",

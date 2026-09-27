@@ -910,7 +910,7 @@ func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody
 			return store.Place{}, nil, err
 		}
 		if next.Base != p.Base && provider.Kind == places.KindREST && restPathDeep(body.Address) && !placeIsRepository(p, rows) {
-			return store.Place{}, nil, errRESTPathDeep
+			return store.Place{}, nil, errRestPathTooDeep
 		}
 		if next.Base != p.Base && provider.Kind == places.KindLocal {
 			if err := s.localPlaceReady(placeProbe{provider: provider, base: next.Base}); err != nil {

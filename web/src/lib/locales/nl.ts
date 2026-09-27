@@ -2142,7 +2142,6 @@ const nl: Partial<Translations> = {
   "places.error.nothingToTest": "Er wordt geen domein op deze plek opgeslagen of naar deze plek gekopieerd, dus er valt niets te testen.",
   "places.error.keepsLess": "Deze plek bewaart minder snapshots dan de repository nu heeft, en de volgende opschoning zou de rest vergeten. Verhoog eerst het bewaarbeleid van de plek.",
   "places.error.appendOnlyOff": "Deze repository is append-only en de plek niet, dus een opschoning daar kan de snapshots ervan verwijderen. Schakel eerst append-only in op de plek.",
-  "places.error.restPathDeep": "rest-server maakt repository's hooguit twee niveaus diep aan, en elk domein krijgt een eigen map onder deze. Vul één map in, zonder schuine streep.",
   "places.error.ownedField": "Deze waarde wordt door de plek bepaald. Wijzig hem bij de details van de plek onder Instellingen, Opslag.",
   "places.error.unknownProvider": "Deze server kan geen verbinding maken met dat soort opslag.",
   "places.error.locationEstablished": "one=Op het oude adres staan back-ups ({n} snapshot van {domains}), en op het nieuwe staat niet dezelfde repository.|other=Op het oude adres staan back-ups ({n} snapshots van {domains}), en op het nieuwe staat niet dezelfde repository.",

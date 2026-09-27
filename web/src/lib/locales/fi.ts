@@ -2145,7 +2145,6 @@ const fi: Partial<Translations> = {
   "places.error.nothingToTest": "Tähän paikkaan ei tallenneta eikä kopioida yhtään toimialuetta, joten testattavaa ei ole.",
   "places.error.keepsLess": "Tämä paikka säilyttää vähemmän tilannevedoksia kuin arkistossa nyt on, ja sen seuraava karsinta unohtaisi loput. Nosta ensin paikan säilytystä.",
   "places.error.appendOnlyOff": "Tämä arkisto on append-only, mutta paikka ei ole, joten karsinta siellä voisi poistaa sen tilannevedokset. Kytke ensin append-only päälle paikassa.",
-  "places.error.restPathDeep": "rest-server luo arkistoja enintään kahden tason syvyyteen, ja jokainen toimialue saa oman kansionsa tämän alle. Anna yksi kansio ilman kauttaviivaa.",
   "places.error.ownedField": "Paikka määrää tämän arvon. Muuta sitä paikan tiedoissa kohdassa Asetukset, Tallennustila.",
   "places.error.unknownProvider": "Tämä palvelin ei voi muodostaa yhteyttä tämäntyyppiseen tallennustilaan.",
   "places.error.locationEstablished": "one=Vanhassa osoitteessa on varmuuskopioita ({domains}: {n} tilannevedos), eikä uudessa osoitteessa ole samaa arkistoa.|other=Vanhassa osoitteessa on varmuuskopioita ({domains}: {n} tilannevedosta), eikä uudessa osoitteessa ole samaa arkistoa.",

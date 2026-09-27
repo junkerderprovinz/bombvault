@@ -2165,7 +2165,6 @@ const lv: Partial<Translations> = {
   "places.error.nothingToTest": "Šajā vietā netiek glabāts vai kopēts neviens domēns, tāpēc nav ko pārbaudīt.",
   "places.error.keepsLess": "Šī vieta saglabā mazāk momentuzņēmumu, nekā krātuvē ir tagad, un nākamā iztīrīšana aizmirstu pārējos. Vispirms palieliniet vietas saglabāšanu.",
   "places.error.appendOnlyOff": "Šī krātuve ir tikai-pievienot, bet vieta nav, tāpēc iztīrīšana tur varētu izdzēst tās momentuzņēmumus. Vispirms ieslēdziet tikai-pievienot šai vietai.",
-  "places.error.restPathDeep": "rest-server izveido krātuves ne dziļāk par diviem līmeņiem, un katrs domēns zem šīs mapes saņem savu mapi. Ievadiet vienu mapi bez slīpsvītras.",
   "places.error.ownedField": "Šo vērtību nosaka vieta. Mainiet to vietas detaļās sadaļā Iestatījumi, Krātuve.",
   "places.error.unknownProvider": "Šis serveris nevar pieslēgties šāda veida krātuvei.",
   "places.error.locationEstablished": "zero=Vecajā adresē ir dublējumi ({domains}: {n} momentuzņēmumu), un jaunajā adresē nav tās pašas krātuves.|one=Vecajā adresē ir dublējumi ({domains}: {n} momentuzņēmums), un jaunajā adresē nav tās pašas krātuves.|other=Vecajā adresē ir dublējumi ({domains}: {n} momentuzņēmumi), un jaunajā adresē nav tās pašas krātuves.",

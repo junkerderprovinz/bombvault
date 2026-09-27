@@ -46,7 +46,6 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "place-nothing-to-test": "places.error.nothingToTest",
   "place-keeps-less": "places.error.keepsLess",
   "place-append-only-off": "places.error.appendOnlyOff",
-  "place-rest-path-deep": "places.error.restPathDeep",
   "place-owned-field": "places.error.ownedField",
   "place-name-missing": "places.form.nameFirst",
   "place-unasked": "places.form.whereFirst",
