@@ -7,7 +7,7 @@ BombVault má vestavěný server pro Model Context Protocol (MCP), protokol, kte
 | Nástroj | Co dělá | Druh |
 |---|---|---|
 | `get_health` | Verze, název instance, zda běží záloha a co tento klíč smí | čtení |
-| `get_status` | Stav ochrany podle domén: poslední úspěšná záloha, očekávaný interval, ověření a kontroly off-site, další naplánované běhy | čtení |
+| `get_status` | Stav ochrany podle domén: poslední úspěšná záloha, očekávaný interval, ověření a kontroly off-site, další naplánované běhy, zálohy čekající na klid aplikace | čtení |
 | `get_coverage` | Co BombVault chrání a co ne, u každé položky s důvodem | čtení |
 | `list_items` | Každý chráněný kontejner, VM a sada složek, flash disk a konfigurace aplikace, s plánem, tím, co záloha zastaví, poslední zálohou a její délkou; databázové kontejnery uvádějí i poslední dump; uvádí i datasety ZFS s výsledkem jejich poslední kontroly | čtení |
 | `list_runs` | Historie běhů od nejnovějších, filtrovatelná podle domény, položky, stavu, druhu a času | čtení |

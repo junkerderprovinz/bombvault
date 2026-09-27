@@ -93,10 +93,27 @@ func (h *Handler) toolGetStatus(ctx context.Context, _ *mcp.CallToolRequest) (*m
 		next = append(next, h.scheduler.NextRuns()...)
 	}
 
+	waiting := make([]map[string]any, 0)
+	for _, w := range h.svc.IdleWaits() {
+		row := map[string]any{
+			"domain":   w.Domain,
+			"item":     w.Name,
+			"busyItem": w.Busy,
+			"reason":   w.Reason,
+			"since":    w.Since,
+			"deadline": w.Deadline,
+		}
+		if w.Stack != "" {
+			row["stack"] = w.Stack
+		}
+		waiting = append(waiting, row)
+	}
+
 	h.logMCPCall(ctx, "get_status", "ok")
 	return mcpOK(map[string]any{
 		"domains":           domains,
 		"nextRuns":          next,
+		"waitingForIdle":    waiting,
 		"backupRunning":     h.svc.BackupInProgress(),
 		"everythingRunning": h.svc.EverythingInProgress(),
 	}), nil

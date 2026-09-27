@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -408,5 +410,32 @@ func TestAContainerTakenOffTheScheduleIsDroppedFromItsResumedWait(t *testing.T) 
 	groups, _ := st.ListIdleWaitGroups()
 	if len(groups) != 1 || !slices.Equal(groups[0].Members, []string{"db"}) {
 		t.Fatalf("stored %+v", groups)
+	}
+}
+
+func TestMCPStatusListsTheBackupsWaitingForAnIdleApp(t *testing.T) {
+	h, _, _, _ := newMCPGateHandler(t)
+	h.svc.waits().groups["stack:immich"] = &idleGroup{
+		IdleWaitGroup: store.IdleWaitGroup{Key: "stack:immich", Stack: "immich", Members: []string{"immich-db", "immich-server"}, Since: 10, Deadline: 3610},
+		busy:          "immich-server", reason: "streaming",
+	}
+	ctx := withMCPCaller(context.Background(), mcpCaller{KeyID: "0b7e", Hint: "x9Qa"})
+	res, _ := h.toolGetStatus(ctx, &mcp.CallToolRequest{})
+	if res.IsError {
+		t.Fatalf("get_status: %v", res.StructuredContent)
+	}
+	body, _ := json.Marshal(res.StructuredContent)
+	var got struct {
+		Waiting []map[string]any `json:"waitingForIdle"`
+	}
+	if err := json.Unmarshal(body, &got); err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Waiting) != 2 {
+		t.Fatalf("waitingForIdle = %v", got.Waiting)
+	}
+	w := got.Waiting[0]
+	if w["item"] != "immich-db" || w["stack"] != "immich" || w["busyItem"] != "immich-server" || w["reason"] != "streaming" || w["deadline"] != float64(3610) || w["domain"] != "containers" {
+		t.Fatalf("first wait = %v", w)
 	}
 }
