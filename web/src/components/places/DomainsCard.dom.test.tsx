@@ -520,10 +520,10 @@ describe("DomainsCard pause and copy now", () => {
   it("names the targets of a domain that fit no place and copies the domain now to them", async () => {
     rows = [row("containers"), row("flash")];
     unplaced = [
-      { rowId: "t-native", domain: "containers", role: "target", name: "B2 native", repo: "b2:bucket:containers" },
-      { rowId: "t-swift", domain: "containers", role: "target", name: "Swift", repo: "swift:box:containers" },
-      { rowId: "t-gs", domain: "vms", role: "target", name: "GCS", repo: "gs:bucket:vms" },
-      { rowId: "", domain: "flash", role: "path", name: "", repo: "b2:bucket:flash" },
+      { rowId: "t-native", domain: "containers", role: "target", name: "B2 native", repo: "b2:bucket:containers", immutable: false, protectable: true, items: 0 },
+      { rowId: "t-swift", domain: "containers", role: "target", name: "Swift", repo: "swift:box:containers", immutable: false, protectable: true, items: 0 },
+      { rowId: "t-gs", domain: "vms", role: "target", name: "GCS", repo: "gs:bucket:vms", immutable: false, protectable: true, items: 0 },
+      { rowId: "", domain: "flash", role: "path", name: "", repo: "b2:bucket:flash", immutable: false, protectable: true, items: 0 },
     ];
     await card();
     const containers = rowOf("Containers");
@@ -539,7 +539,7 @@ describe("DomainsCard pause and copy now", () => {
 
   it("offers Copy now beside chips without a target when a target fits no place", async () => {
     rows = [row("vms", { chips: [{ placeId: "p-b2", on: false, disabled: false }] })];
-    unplaced = [{ rowId: "t-gs", domain: "vms", role: "target", name: "GCS", repo: "gs:bucket:vms" }];
+    unplaced = [{ rowId: "t-gs", domain: "vms", role: "target", name: "GCS", repo: "gs:bucket:vms", immutable: false, protectable: true, items: 0 }];
     await card();
     expect(chip("VMs", "B2").getAttribute("aria-pressed")).toBe("false");
     expect(within(rowOf("VMs")).getByRole("button", { name: en["storageDomains.copyNow"] })).toBeTruthy();

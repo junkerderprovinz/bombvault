@@ -104,6 +104,12 @@ export interface UnplacedRow {
   role: "path" | "target" | "repository" | "direct";
   name: string;
   repo: string;
+  /** The row's append-only flag; a domain path keeps it on its domain's primary row. */
+  immutable: boolean;
+  /** The row takes an append-only switch of its own. */
+  protectable: boolean;
+  /** Items whose backups lie there, for the question before append-only goes off. */
+  items: number;
 }
 
 export type FolderState = "empty" | "repository" | "absent" | "error";
@@ -297,6 +303,11 @@ export function tamperTestPlace(id: string): Promise<PlaceRefusal & TamperVerdic
 /** Puts a row without a place at this place. An empty rowId is the domain's own path. */
 export function adoptRow(placeId: string, rowId: string, domain: string): Promise<PlaceRefusal & { place?: Place }> {
   return post(placePath(placeId, "/adopt"), { rowId, domain });
+}
+
+/** Switches append-only on a row without a place, named as adoptRow names it. */
+export function setUnplacedAppendOnly(rowId: string, domain: string, immutable: boolean): Promise<PlaceRefusal> {
+  return fetchJSON("/api/places/unplaced", { method: "PATCH", body: JSON.stringify({ rowId, domain, immutable }) });
 }
 
 /** The repository the place stands for in a domain, made when it is missing; "" is the domain path. */
