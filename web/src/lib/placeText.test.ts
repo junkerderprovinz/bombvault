@@ -15,6 +15,8 @@ describe("placeErrorText", () => {
       "place-off",
       "place-no-append-only",
       "place-nothing-to-test",
+      "place-keeps-less",
+      "place-append-only-off",
     ]) {
       const text = placeErrorText(t, "en", { ok: false, code, error: "server text" }, "settings.error");
       expect(text, code).not.toBe("server text");
