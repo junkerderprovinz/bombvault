@@ -1281,10 +1281,12 @@ export function Files() {
     void Promise.all([sets, settings]).finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
+  // Subscribed once: loadSets is a new function on every render, so
+  // listing it would resubscribe each time.
   useEffect(() => {
     const offs = [subscribeRepos(() => void loadSets()), subscribePlacement(() => void loadSets())];
     return () => offs.forEach((off) => off());
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- loadSets is stable for this page's lifetime; adding it would re-run the effect on every render
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function placeSet(id: string, next: PlacementView) {
     setSets((prev) => prev.map((s) => (s.id === id ? { ...s, placement: next } : s)));

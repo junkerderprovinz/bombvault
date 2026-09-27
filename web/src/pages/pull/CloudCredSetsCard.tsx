@@ -142,7 +142,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{s.name}</span>
             <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">
-              {s.s3KeyId || s.restUser || "—"}
+              {s.s3KeyId || s.restUser || "-"}
             </span>
           </div>
           <div className="flex shrink-0 items-start gap-2">

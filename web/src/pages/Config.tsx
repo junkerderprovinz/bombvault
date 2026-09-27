@@ -174,12 +174,9 @@ function ConfigSettingsCard({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Config page — BombVault's OWN settings self-backup. Backup + status only; the
-// restore flow (which restarts the app to swap the live DB) lives in the Recovery
-// tab, so the self-referential restart stays in one place.
-// ---------------------------------------------------------------------------
-
+// Config backs up BombVault's own settings and shows their status. Restoring
+// them restarts the app to swap the live database, so that lives on the
+// Recovery page with the other self-restart.
 export function Config() {
   const { t } = useT();
   const [settings, setSettings] = useState<Settings | null>(null);

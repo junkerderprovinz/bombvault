@@ -1122,10 +1122,12 @@ export function VMs() {
     void loadVMs().finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
+  // Subscribed once: loadVMs is a new function on every render, so
+  // listing it would resubscribe each time.
   useEffect(() => {
     const offs = [subscribeRepos(() => void loadVMs()), subscribePlacement(() => void loadVMs())];
     return () => offs.forEach((off) => off());
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- loadVMs is stable for this page's lifetime; adding it would re-run the effect on every render
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function placeVM(libvirtName: string, next: PlacementView) {
     setVMs((prev) => prev.map((v) => (v.libvirtName === libvirtName ? { ...v, placement: next } : v)));
