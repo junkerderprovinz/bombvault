@@ -2226,6 +2226,7 @@ const no: Partial<Translations> = {
   "schedule.overrideHint": "Tom bruker kategoriens tidsplan.",
   "schedule.overrideSaved": "Overstyring lagret",
   "run.kindExport": "Eksport",
+  "run.kindImport": "Import",
   "run.kindDRDrill": "DR-sjekk",
   "run.kindDbDump": "Databasedump",
   "run.kindDbDumpSave": "Dump lagret",

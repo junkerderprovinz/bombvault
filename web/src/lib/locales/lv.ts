@@ -342,6 +342,7 @@ const lv: Partial<Translations> = {
   "run.kindRestore": "Atjaunošana",
   "run.kindUpdate": "Atjaunināšana",
   "run.kindExport": "Eksports",
+  "run.kindImport": "Imports",
   "run.kindDRDrill": "DR pārbaude",
   "run.kindDbDump": "Datubāzes izraksts",
   "run.kindDbDumpSave": "Izraksts saglabāts",

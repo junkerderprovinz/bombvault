@@ -342,6 +342,7 @@ const eu: Partial<Translations> = {
   "run.kindRestore": "Berrezarpena",
   "run.kindUpdate": "Eguneraketa",
   "run.kindExport": "Esportazioa",
+  "run.kindImport": "Inportazioa",
   "run.kindDRDrill": "DR egiaztapena",
   "run.kindDbDump": "Datu-base iraulketa",
   "run.kindDbDumpSave": "Iraulketa gordeta",

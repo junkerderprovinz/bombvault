@@ -2218,6 +2218,7 @@ const ko: Partial<Translations> = {
   "schedule.overrideHint": "비워 두면 카테고리 일정을 사용합니다.",
   "schedule.overrideSaved": "재정의가 저장됨",
   "run.kindExport": "내보내기",
+  "run.kindImport": "가져오기",
   "run.kindDRDrill": "DR 점검",
   "run.kindDbDump": "데이터베이스 덤프",
   "run.kindDbDumpSave": "덤프 저장됨",

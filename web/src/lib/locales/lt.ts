@@ -342,6 +342,7 @@ const lt: Partial<Translations> = {
   "run.kindRestore": "Atkūrimas",
   "run.kindUpdate": "Atnaujinimas",
   "run.kindExport": "Eksportavimas",
+  "run.kindImport": "Importavimas",
   "run.kindDRDrill": "DR patikra",
   "run.kindDbDump": "Duomenų bazės išklotinė",
   "run.kindDbDumpSave": "Išklotinė išsaugota",

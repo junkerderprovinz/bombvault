@@ -2226,6 +2226,7 @@ const sv: Partial<Translations> = {
   "schedule.overrideHint": "Tomt använder kategorins schema.",
   "schedule.overrideSaved": "Åsidosättning sparad",
   "run.kindExport": "Export",
+  "run.kindImport": "Import",
   "run.kindDRDrill": "DR-kontroll",
   "run.kindDbDump": "Databasdump",
   "run.kindDbDumpSave": "Dump sparad",

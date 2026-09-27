@@ -342,6 +342,7 @@ const gl: Partial<Translations> = {
   "run.kindRestore": "Restauración",
   "run.kindUpdate": "Actualización",
   "run.kindExport": "Exportación",
+  "run.kindImport": "Importación",
   "run.kindDRDrill": "Comprobación DR",
   "run.kindDbDump": "Envorcado de base de datos",
   "run.kindDbDumpSave": "Envorcado gardado",

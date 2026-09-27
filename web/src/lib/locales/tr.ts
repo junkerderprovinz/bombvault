@@ -2226,6 +2226,7 @@ const tr: Partial<Translations> = {
   "schedule.overrideHint": "Boş, kategori zamanlamasını kullanır.",
   "schedule.overrideSaved": "Geçersiz kılma kaydedildi",
   "run.kindExport": "Dışa aktarma",
+  "run.kindImport": "İçe aktarma",
   "run.kindDRDrill": "DR denetimi",
   "run.kindDbDump": "Veritabanı dökümü",
   "run.kindDbDumpSave": "Döküm kaydedildi",

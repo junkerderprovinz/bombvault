@@ -2229,6 +2229,7 @@ const ro: Partial<Translations> = {
   "schedule.overrideHint": "Gol folosește programarea categoriei.",
   "schedule.overrideSaved": "Înlocuire salvată",
   "run.kindExport": "Export",
+  "run.kindImport": "Import",
   "run.kindDRDrill": "Verificare DR",
   "run.kindDbDump": "Dump al bazei de date",
   "run.kindDbDumpSave": "Dump salvat",

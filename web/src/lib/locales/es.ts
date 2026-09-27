@@ -2224,6 +2224,7 @@ const es: Partial<Translations> = {
   "schedule.overrideHint": "Vacío usa la programación de la categoría.",
   "schedule.overrideSaved": "Anulación guardada",
   "run.kindExport": "Exportación",
+  "run.kindImport": "Importación",
   "run.kindDRDrill": "Comprobación DR",
   "run.kindDbDump": "Volcado de base de datos",
   "run.kindDbDumpSave": "Volcado guardado",

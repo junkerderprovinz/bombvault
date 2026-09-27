@@ -2218,6 +2218,7 @@ const ja: Partial<Translations> = {
   "schedule.overrideHint": "空の場合はカテゴリのスケジュールを使用します。",
   "schedule.overrideSaved": "上書きを保存しました",
   "run.kindExport": "エクスポート",
+  "run.kindImport": "インポート",
   "run.kindDRDrill": "DRチェック",
   "run.kindDbDump": "データベースダンプ",
   "run.kindDbDumpSave": "ダンプを保存",

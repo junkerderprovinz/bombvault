@@ -2218,6 +2218,7 @@ const zh: Partial<Translations> = {
   "schedule.overrideHint": "留空则使用分类计划。",
   "schedule.overrideSaved": "覆盖已保存",
   "run.kindExport": "导出",
+  "run.kindImport": "导入",
   "run.kindDRDrill": "灾备检查",
   "run.kindDbDump": "数据库转储",
   "run.kindDbDumpSave": "转储已保存",

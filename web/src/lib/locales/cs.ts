@@ -2224,6 +2224,7 @@ const cs: Partial<Translations> = {
   "schedule.overrideHint": "Prázdné pole použije plán kategorie.",
   "schedule.overrideSaved": "Přepsání uloženo",
   "run.kindExport": "Export",
+  "run.kindImport": "Import",
   "run.kindDRDrill": "Kontrola DR",
   "run.kindDbDump": "Výpis databáze",
   "run.kindDbDumpSave": "Výpis uložen",

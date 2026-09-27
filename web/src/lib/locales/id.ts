@@ -342,6 +342,7 @@ const id: Partial<Translations> = {
   "run.kindRestore": "Pemulihan",
   "run.kindUpdate": "Pembaruan",
   "run.kindExport": "Ekspor",
+  "run.kindImport": "Impor",
   "run.kindDRDrill": "Pemeriksaan DR",
   "run.kindDbDump": "Dump basis data",
   "run.kindDbDumpSave": "Dump disimpan",

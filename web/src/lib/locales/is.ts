@@ -342,6 +342,7 @@ const is: Partial<Translations> = {
   "run.kindRestore": "Endurheimt",
   "run.kindUpdate": "Uppfærsla",
   "run.kindExport": "Útflutningur",
+  "run.kindImport": "Innflutningur",
   "run.kindDRDrill": "DR-próf",
   "run.kindDbDump": "Gagnagrunnsafrit",
   "run.kindDbDumpSave": "Afrit vistað",

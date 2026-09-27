@@ -2226,6 +2226,7 @@ const el: Partial<Translations> = {
   "schedule.overrideHint": "Το κενό χρησιμοποιεί το χρονοδιάγραμμα της κατηγορίας.",
   "schedule.overrideSaved": "Η παράκαμψη αποθηκεύτηκε",
   "run.kindExport": "Εξαγωγή",
+  "run.kindImport": "Εισαγωγή",
   "run.kindDRDrill": "Έλεγχος DR",
   "run.kindDbDump": "Αντίγραφο βάσης δεδομένων",
   "run.kindDbDumpSave": "Αντίγραφο αποθηκεύτηκε",

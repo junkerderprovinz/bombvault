@@ -342,6 +342,7 @@ const ca: Partial<Translations> = {
   "run.kindRestore": "Restauració",
   "run.kindUpdate": "Actualització",
   "run.kindExport": "Exportació",
+  "run.kindImport": "Importació",
   "run.kindDRDrill": "Prova DR",
   "run.kindDbDump": "Bolcat de base de dades",
   "run.kindDbDumpSave": "Bolcat desat",

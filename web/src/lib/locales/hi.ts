@@ -342,6 +342,7 @@ const hi: Partial<Translations> = {
   "run.kindRestore": "रीस्टोर",
   "run.kindUpdate": "अपडेट",
   "run.kindExport": "एक्सपोर्ट",
+  "run.kindImport": "इम्पोर्ट",
   "run.kindDRDrill": "DR जाँच",
   "run.kindDbDump": "डेटाबेस डंप",
   "run.kindDbDumpSave": "डंप सहेजा गया",

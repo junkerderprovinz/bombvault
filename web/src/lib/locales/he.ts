@@ -2226,6 +2226,7 @@ const he: Partial<Translations> = {
   "schedule.overrideHint": "ריק משתמש בלוח הזמנים של הקטגוריה.",
   "schedule.overrideSaved": "העקיפה נשמרה",
   "run.kindExport": "ייצוא",
+  "run.kindImport": "ייבוא",
   "run.kindDRDrill": "בדיקת DR",
   "run.kindDbDump": "היטל בסיס נתונים",
   "run.kindDbDumpSave": "ההיטל נשמר",
