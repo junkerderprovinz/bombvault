@@ -804,6 +804,22 @@ func (r *Repo) ItemsUsingNamedRepo(id string) (int, error) {
 	return n, nil
 }
 
+// NamedRepoDomains lists, sorted, the domains that use a named repository:
+// those with an item backing up to it and those whose placement default
+// homes new items there.
+func (r *Repo) NamedRepoDomains(id string) ([]string, error) {
+	out, err := stringsQ(r.db, `
+		SELECT 'containers' WHERE EXISTS (SELECT 1 FROM targets WHERE repo = ?)
+		UNION SELECT 'vms' WHERE EXISTS (SELECT 1 FROM vms WHERE repo = ?)
+		UNION SELECT 'files' WHERE EXISTS (SELECT 1 FROM file_sets WHERE repo = ?)
+		UNION SELECT domain FROM placement_defaults WHERE home = ?
+		ORDER BY 1`, id, id, id, id)
+	if err != nil {
+		return nil, fmt.Errorf("NamedRepoDomains: %w", err)
+	}
+	return out, nil
+}
+
 // GetOffsiteTarget returns the off-site REPLICATION DESTINATION (role =
 // 'offsite') with the given id. The bool is false (with a zero OffsiteTarget)
 // when no such row exists — including when id names a "primary" row: the

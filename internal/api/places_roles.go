@@ -370,6 +370,15 @@ func (s *Service) adoptSlot(p store.Place, rows []store.OffsiteTarget, homes map
 	if a := domainAt(p, rows, homes[domain], domain); a.home || a.target != nil || a.repo != nil {
 		return "", "", errPlaceAddressTaken
 	}
+	// A named repository in one domain's folder serves that domain alone, so
+	// the items and default of any other would lose it.
+	users, err := s.store.NamedRepoDomains(row.ID)
+	if err != nil {
+		return "", "", err
+	}
+	if slices.ContainsFunc(users, func(d string) bool { return d != domain }) {
+		return "", "", errPlaceRepoShared
+	}
 	return domain, "", nil
 }
 

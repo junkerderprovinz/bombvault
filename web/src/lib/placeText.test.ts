@@ -14,6 +14,7 @@ describe("placeErrorText", () => {
       "place-domain-unavailable",
       "place-address-taken",
       "place-off",
+      "place-repo-shared",
       "place-no-append-only",
       "place-nothing-to-test",
       "place-keeps-less",

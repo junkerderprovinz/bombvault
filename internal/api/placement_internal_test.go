@@ -268,6 +268,7 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		store.ErrPlaceDomainUnavailable: "place-domain-unavailable",
 		errPlaceAddressTaken:            "place-address-taken",
 		errPlaceOff:                     "place-off",
+		errPlaceRepoShared:              "place-repo-shared",
 		errLocalAppendOnly:              "place-no-append-only",
 		errPlaceNothingToTest:           "place-nothing-to-test",
 		errPlaceKeepsLess:               "place-keeps-less",
