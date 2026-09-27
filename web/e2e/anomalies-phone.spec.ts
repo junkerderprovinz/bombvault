@@ -1,10 +1,10 @@
 // The Anomalies page, the phone Home's anomalies card and the More sheet's
-// count at phone width. A fresh harness database has detection off and no
-// history, so findings of every severity and kind, the watched items and the
-// summary are staged at the route layer. On the phones: the 24px card rhythm,
-// no pan, nothing past the edge, and open findings where a phone user looks
-// first. On the desktop: the 40px rhythm and a dashboard with one anomalies
-// card, in its grid. German, because its labels run longest.
+// count. A fresh harness database has detection off and no history, so
+// findings of every severity and kind, the watched items and the summary are
+// staged at the route layer. On the phones: the 24px card rhythm, no pan and
+// nothing past the edge with every card, line and panel open. On the desktop:
+// one card per item, the 40px rhythm, and the actions reaching the API with
+// the ids they name. German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -56,6 +56,8 @@ function finding(over: Record<string, unknown>) {
 }
 
 const NEXTCLOUD = "Nextcloud_AIO_Datenbank_Hauptserver_Produktivsystem";
+const PAPERLESS = "Paperless-ngx-Dokumentenverwaltung";
+const NOTE = "Bewusst aufgeräumt, die alten Aufnahmen der Überwachungskamera liegen jetzt auf dem Archivserver";
 
 const FINDINGS = [
   finding({
@@ -67,9 +69,20 @@ const FINDINGS = [
     details: { median: 40 * GB, mad: GB, z: 7.4, collapse: true },
   }),
   finding({
+    targetId: "tg-nextcloud",
+    detector: "duration",
+    metric: "duration_slower",
+    severity: "warning",
+    name: NEXTCLOUD,
+    observed: 9_660_000,
+    expected: 860_000,
+    threshold: 2_000_000,
+  }),
+  finding({
     detector: "reliability",
     metric: "failure_streak",
     domain: "vm",
+    targetId: "tg-windows",
     name: "Windows-Arbeitsplatzrechner Buchhaltung",
     observed: 4,
     expected: 0,
@@ -83,6 +96,8 @@ const FINDINGS = [
     metric: "drill_dr",
     severity: "critical",
     scopeKind: "domain",
+    scopeId: "flash:offsite:t1",
+    targetId: "",
     domain: "flash",
     name: "",
     targetName: "Hetzner Storage Box Frankfurt Zweitstandort",
@@ -95,6 +110,7 @@ const FINDINGS = [
     metric: "new_data_rewrite",
     severity: "warning",
     domain: "files",
+    targetId: "tg-fotos",
     name: "Fotoarchiv Familienurlaube Südtirol",
     observed: 180 * GB,
     expected: 2 * GB,
@@ -104,7 +120,9 @@ const FINDINGS = [
     metric: "dump_bytes_shrink",
     severity: "warning",
     scopeKind: "dump",
+    targetId: "tg-immich",
     name: "immich_postgres_datenbank",
+    retentionHeld: true,
     lastGood: { runId: "run-good-2", snapshotId: "9e11b0a4", at: NOW - 5 * DAY },
     details: { collapse: true, median: 3 * GB },
   }),
@@ -114,6 +132,7 @@ const FINDINGS = [
     severity: "warning",
     scopeKind: "zfsds",
     domain: "zfs",
+    targetId: "tg-tank",
     name: "tank",
     part: "tank/fotos/archiv/familienurlaube-suedtirol-2019-bis-2026",
     observed: 5_400_000,
@@ -124,14 +143,26 @@ const FINDINGS = [
     detector: "reliability",
     metric: "flaky",
     severity: "warning",
-    name: "Paperless-ngx-Dokumentenverwaltung",
+    targetId: "tg-paperless",
+    name: PAPERLESS,
     details: { failed: 3, total: 10 },
+  }),
+  finding({
+    detector: "source",
+    metric: "source_bytes_growth",
+    severity: "info",
+    targetId: "tg-paperless",
+    name: PAPERLESS,
+    observed: 86 * GB,
+    expected: 12 * GB,
   }),
   finding({
     detector: "integrity",
     metric: "drill_subset",
     severity: "warning",
     scopeKind: "domain",
+    scopeId: "containers:offsite:t1",
+    targetId: "",
     domain: "containers",
     name: "",
     targetName: "Hetzner Storage Box Frankfurt Zweitstandort",
@@ -143,6 +174,8 @@ const FINDINGS = [
     metric: "capacity_eta",
     severity: "info",
     scopeKind: "volume",
+    scopeId: "vol-cache",
+    targetId: "",
     domain: "containers,vms,files",
     name: "",
     observed: 23,
@@ -155,6 +188,8 @@ const FINDINGS = [
     metric: "capacity_low",
     severity: "info",
     scopeKind: "volume",
+    scopeId: "vol-array",
+    targetId: "",
     domain: "containers,vms",
     name: "",
     observed: 0.04,
@@ -162,15 +197,19 @@ const FINDINGS = [
     expectable: false,
     details: { freeBytes: 80 * GB },
   }),
+];
+
+const CLOSED = [
   finding({
     metric: "source_files_shrink",
     severity: "warning",
     state: "acknowledged",
+    targetId: "tg-homeassistant",
     name: "Home-Assistant-Konfiguration",
     observed: 120,
     expected: 48_000,
     ackedAt: NOW - DAY,
-    ackNote: "Bewusst aufgeräumt, die alten Aufnahmen der Überwachungskamera liegen jetzt auf dem Archivserver",
+    ackNote: NOTE,
     stillPresent: true,
   }),
   finding({
@@ -178,13 +217,17 @@ const FINDINGS = [
     metric: "new_data",
     severity: "info",
     state: "expected",
-    scopeKind: "domain",
+    scopeKind: "item",
+    targetId: "config",
     domain: "config",
     name: "",
     ackedAt: NOW - 2 * DAY,
     details: { refBytes: 50 * 1024 ** 2 },
   }),
 ];
+
+/** The cards the open findings make: one per item, restore check series and disk. */
+const CARD_COUNT = new Set(FINDINGS.map((a) => a.targetId || `${a.scopeKind}:${a.scopeId}`)).size;
 
 function series(part: string, samples: number) {
   return {
@@ -223,7 +266,7 @@ const ITEMS = [
     targetId: "tg-nextcloud",
     name: NEXTCLOUD,
     dump: series("", 4),
-    open: { critical: 1, warning: 0, info: 0 },
+    open: { critical: 1, warning: 1, info: 0 },
     retentionHeld: true,
     selectionSince: NOW - 9 * DAY,
     expectations: [
@@ -258,9 +301,15 @@ const ITEMS = [
     ],
   }),
   item({
+    targetId: "tg-archiv",
+    domain: "zfs",
+    name: "archiv",
+    datasets: [series("archiv/dokumente/steuererklaerungen-und-belege-2019-bis-2026", 12)],
+  }),
+  item({
     targetId: "tg-nodata",
     domain: "vm",
-    name: "Windows-Arbeitsplatzrechner Buchhaltung",
+    name: "Windows-Arbeitsplatzrechner Buchhaltung Zweitgerät",
     learning: { samples: 0, needed: 10, newData: 0, source: 0, duration: 0, noData: true },
     typical: { sourceBytes: null, newDataBytes: null, resticMs: null },
   }),
@@ -269,10 +318,12 @@ const ITEMS = [
 interface Stage {
   enabled?: boolean;
   findings?: typeof FINDINGS;
+  closed?: typeof CLOSED;
   open?: { critical: number; warning: number; info: number };
+  lang?: string;
 }
 
-function summary({ enabled = true, open = { critical: 3, warning: 5, info: 2 } }: Stage) {
+function summary({ enabled = true, open = { critical: 3, warning: 6, info: 3 } }: Stage) {
   return {
     enabled,
     ready: true,
@@ -280,7 +331,7 @@ function summary({ enabled = true, open = { critical: 3, warning: 5, info: 2 } }
     open,
     recoveredCritical: 1,
     learningItems: 2,
-    retentionHeld: 1,
+    retentionHeld: 2,
     evalErrors: 0,
     notifyMuted: false,
     backfill: { slots: 0, done: 0, failed: 0, filled: 0, withoutSummary: 0 },
@@ -291,6 +342,7 @@ function summary({ enabled = true, open = { critical: 3, warning: 5, info: 2 } }
 async function stage(page: Page, width: number, s: Stage = {}): Promise<void> {
   const enabled = s.enabled ?? true;
   const findings = s.findings ?? FINDINGS;
+  const closed = s.closed ?? CLOSED;
   await page.route("**/api/settings", async (route) => {
     if (route.request().method() !== "GET") return route.continue();
     const res = await route.fetch();
@@ -305,14 +357,15 @@ async function stage(page: Page, width: number, s: Stage = {}): Promise<void> {
     (url) => url.pathname === "/api/anomalies",
     (route) => {
       const state = new URL(route.request().url()).searchParams.get("state");
-      const rows = state === "open" ? findings.filter((a) => a.state === "open") : findings;
+      const rows = state === "open" ? findings : state === "closed" ? closed : [...findings, ...closed];
       return route.fulfill({ json: { ok: true, anomalies: rows, nextCursor: "" } });
     },
   );
   // Same seeding as narrow-viewport.spec.ts: the stored locale is the look,
   // and the server's display prefs must not overwrite it mid-boot.
   await page.route("**/api/display-prefs*", (route) => route.abort());
-  await page.addInitScript(() => window.localStorage.setItem("bv-lang", "de"));
+  const lang = s.lang ?? "de";
+  await page.addInitScript((code) => window.localStorage.setItem("bv-lang", code), lang);
   await page.setViewportSize({ width, height: 800 });
 }
 
@@ -351,7 +404,7 @@ async function expectNothingPansOrClips(page: Page): Promise<void> {
       clipped: main
         ? [...main.querySelectorAll("button, a, input, select, textarea, [role='switch']")].filter(past).map(name)
         : null,
-      overflowing: main ? [...main.querySelectorAll("span, p, dd, dt, h3, label")].filter(past).map(name) : null,
+      overflowing: main ? [...main.querySelectorAll("span, p, dd, dt, h2, h3, label")].filter(past).map(name) : null,
     };
   });
   expect(layout.mainPan, "#bv-main is missing").not.toBeNull();
@@ -363,45 +416,34 @@ async function expectNothingPansOrClips(page: Page): Promise<void> {
   await expect.soft(page.locator("#bv-main")).not.toContainText("`");
 }
 
-async function openFindings(page: Page, url: string): Promise<void> {
+async function openPage(page: Page, url = "/anomalies"): Promise<void> {
   await page.goto(url);
-  await expect(page.getByRole("heading", { level: 1, name: "Anomalien" })).toBeVisible();
-  await expect(page.getByText(NEXTCLOUD, { exact: false }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByRole("region", { name: NEXTCLOUD })).toBeVisible();
   await settle(page);
 }
 
-for (const width of [320, 360]) {
-  test(`anomaly findings @ ${width}px: every kind, filter and detail fits`, async ({ page }, testInfo) => {
-    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
-    // Every state with the period filter showing, narrowed to one item, so
-    // all five filters and the item chip are on screen at once.
-    await page.addInitScript(() =>
-      window.localStorage.setItem(
-        "bv-anomalies-filter",
-        JSON.stringify({ state: "all", period: "90", severity: "", detector: "", domain: "" }),
-      ),
-    );
-    await stage(page, width);
-    await openFindings(page, "/anomalies?scope=item:tg-nextcloud#findings");
-    await expect(page.getByRole("button", { name: "Wieder alle Elemente anzeigen" })).toBeVisible();
+/** Opens every disclosure on the page: finding lines, monitoring panels, the
+ *  quiet items and the closed findings. */
+async function openEverything(page: Page): Promise<void> {
+  // A select's trigger carries aria-expanded too, but opening one only
+  // floats its list; the disclosures are what change the layout.
+  const closed = page.locator("#bv-main button[aria-expanded='false']:not([role='combobox'])");
+  for (;;) {
+    if ((await closed.count()) === 0) break;
+    await closed.first().click();
+  }
+  await settle(page);
+}
 
-    const details = page.getByRole("button", { name: "Details" });
-    const count = await details.count();
-    expect(count).toBe(FINDINGS.length);
-    for (let i = 0; i < count; i++) await details.nth(i).click();
-    await page.getByRole("checkbox", { name: "Alle angezeigten auswählen" }).check();
-    await settle(page);
-
-    expect.soft(await cardGap(page)).toBe("24px");
-    await expectNothingPansOrClips(page);
-  });
-
-  test(`anomaly items @ ${width}px: learning, series and expectations fit`, async ({ page }, testInfo) => {
+for (const width of [320, 390]) {
+  test(`anomaly cards @ ${width}px: every kind, line and panel open fits`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
     await stage(page, width);
-    await page.goto("/anomalies#items");
-    await expect(page.getByText("Jellyfin-Mediathek Wohnzimmer")).toBeVisible();
-    await settle(page);
+    await openPage(page);
+    await expect(page.getByRole("region")).toHaveCount(CARD_COUNT);
+    await openEverything(page);
+    await expect(page.getByText(`Notiz: ${NOTE}`)).toBeVisible();
 
     expect.soft(await cardGap(page)).toBe("24px");
     await expectNothingPansOrClips(page);
@@ -409,7 +451,7 @@ for (const width of [320, 360]) {
 
   test(`anomalies @ ${width}px with detection off and nothing found`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
-    await stage(page, width, { enabled: false, findings: [], open: { critical: 0, warning: 0, info: 0 } });
+    await stage(page, width, { enabled: false, findings: [], closed: [], open: { critical: 0, warning: 0, info: 0 } });
     await page.goto("/anomalies");
     await expect(page.getByText("Die Anomalie-Erkennung ist ausgeschaltet.", { exact: false })).toBeVisible();
     await expect(page.getByText("Keine offenen Anomalien.")).toBeVisible();
@@ -420,39 +462,114 @@ for (const width of [320, 360]) {
   });
 }
 
-test("anomaly findings on a phone: the small controls are big enough to tap", async ({ page }, testInfo) => {
-  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the larger targets follow the coarse pointer");
-  await stage(page, 360);
-  await openFindings(page, "/anomalies?scope=item:tg-nextcloud#findings");
-
-  const detailsBox = (await page.getByRole("button", { name: "Details" }).first().boundingBox())!;
-  expect(detailsBox.height, "Details is shorter than a fingertip").toBeGreaterThanOrEqual(43.5);
-
-  // A tap a finger's width beside the row's checkbox still ticks it.
-  const box = page.getByRole("checkbox", { name: `${NEXTCLOUD} auswählen` });
-  await box.scrollIntoViewIfNeeded();
-  const r = (await box.boundingBox())!;
-  await page.touchscreen.tap(r.x + r.width / 2, r.y + r.height + 10);
-  await expect(box).toBeChecked();
-
-  // The same for the item chip's remove control, the only way back to every
-  // item.
-  const chip = page.getByRole("button", { name: "Wieder alle Elemente anzeigen" });
-  await chip.scrollIntoViewIfNeeded();
-  const c = (await chip.boundingBox())!;
-  await page.touchscreen.tap(c.x + c.width / 2, c.y + c.height + 10);
-  await expect(chip).toHaveCount(0);
-  expect(new URL(page.url()).searchParams.get("scope")).toBeNull();
+test("anomaly cards read right to left without panning", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the narrow column is where RTL overflows");
+  await stage(page, 390, { lang: "ar" });
+  await openPage(page);
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await openEverything(page);
+  await expectNothingPansOrClips(page);
 });
 
-test("anomalies on the desktop keep the 40px rhythm and the small controls", async ({ page }, testInfo) => {
-  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
-  await stage(page, testInfo.project.use.viewport!.width);
-  await openFindings(page, "/anomalies#findings");
+test("a finding's line is big enough to tap on a phone", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the larger targets follow the coarse pointer");
+  await stage(page, 390);
+  await openPage(page);
+  const line = page.getByRole("region", { name: NEXTCLOUD }).locator("button[aria-expanded]").first();
+  const box = (await line.boundingBox())!;
+  expect(box.height, "a finding's line is shorter than a fingertip").toBeGreaterThanOrEqual(43.5);
+});
 
-  expect(await cardGap(page)).toBe("40px");
-  const detailsBox = (await page.getByRole("button", { name: "Details" }).first().boundingBox())!;
-  expect(Math.round(detailsBox.height)).toBe(16);
+test.describe("on the desktop", () => {
+  test.skip(({ viewport, isMobile }) => isMobile || viewport?.width !== 1280, "the desktop checks run once, at 1280");
+
+  test("one card per item, in the 40px rhythm, worst first", async ({ page }) => {
+    await stage(page, 1280);
+    await openPage(page);
+
+    const cards = page.getByRole("region");
+    await expect(cards).toHaveCount(CARD_COUNT);
+    await expect(cards.first()).toHaveAttribute("aria-label", NEXTCLOUD);
+    const lines = page.getByRole("region", { name: NEXTCLOUD }).getByRole("button", { expanded: false });
+    await expect(lines.filter({ hasNotText: "Überwachung" })).toHaveCount(2);
+    expect(await cardGap(page)).toBe("40px");
+    await expectNothingPansOrClips(page);
+  });
+
+  test("a finding's line opens to the whole sentence and its actions", async ({ page }) => {
+    await stage(page, 1280);
+    await openPage(page);
+    const nextcloud = page.getByRole("region", { name: NEXTCLOUD });
+    const line = nextcloud.getByRole("button", { name: /Fast leer/ });
+    await expect(line).toHaveAttribute("aria-expanded", "false");
+    await line.click();
+    await expect(line).toHaveAttribute("aria-expanded", "true");
+    await expect(nextcloud.getByText(new RegExp(`^${NEXTCLOUD} ist fast leer`))).toBeVisible();
+    await expect(nextcloud.getByRole("button", { name: "Als erwartet markieren" })).toBeVisible();
+    await expect(nextcloud.getByRole("button", { name: "Quittieren" })).toBeVisible();
+    // The card's own main action is the restore, so the line does not repeat it.
+    await expect(nextcloud.getByRole("button", { name: /wiederherstellen/ })).toHaveCount(1);
+  });
+
+  test("Alle N quittieren sends exactly that item's ids", async ({ page }) => {
+    await stage(page, 1280);
+    const sent: string[][] = [];
+    await page.route("**/api/anomalies/acknowledge", async (route) => {
+      sent.push((route.request().postDataJSON() as { ids: string[] }).ids);
+      await route.fulfill({ json: { ok: true, changed: 2, skipped: 0, released: 0 } });
+    });
+    await openPage(page);
+
+    await page.getByRole("region", { name: PAPERLESS }).getByRole("button", { name: "Alle 2 quittieren" }).click();
+    await expect.poll(() => sent.length).toBe(1);
+    const paperless = FINDINGS.filter((a) => a.targetId === "tg-paperless").map((a) => a.id);
+    expect(sent[0]).toEqual(paperless);
+  });
+
+  test("a tile hides its severity and brings it back", async ({ page }) => {
+    await stage(page, 1280);
+    await openPage(page);
+    const tile = page.getByRole("group", { name: "Schweregrad" }).getByRole("button", { name: /Warnungen/ });
+    await expect(tile).toHaveAttribute("aria-pressed", "true");
+    await expect(tile).toContainText("6");
+
+    await tile.click();
+    await expect(tile).toHaveAttribute("aria-pressed", "false");
+    await expect(page.getByRole("region", { name: "immich_postgres_datenbank" })).toHaveCount(0);
+    // A card keeps its findings of the severities still shown.
+    const paperless = page.getByRole("region", { name: PAPERLESS });
+    await expect(paperless.locator("button[aria-expanded]")).toHaveCount(1);
+
+    await tile.click();
+    await expect(page.getByRole("region", { name: "immich_postgres_datenbank" })).toBeVisible();
+  });
+
+  test("the closed row lists what was settled, with its note", async ({ page }) => {
+    await stage(page, 1280);
+    await openPage(page);
+    const row = page.getByRole("button", { name: /Geschlossen in den letzten 30 Tagen/ });
+    await expect(row).toContainText(String(CLOSED.length));
+    await row.click();
+    await page.getByRole("button", { name: /^Home-Assistant-Konfiguration:/ }).click();
+    await expect(page.getByText(`Notiz: ${NOTE}`)).toBeVisible();
+  });
+
+  test("a link to one item opens its card and brings it into view", async ({ page }) => {
+    await stage(page, 1280);
+    await page.goto("/anomalies?scope=item:tg-paperless");
+    const paperless = page.getByRole("region", { name: PAPERLESS });
+    await expect(paperless.locator("button[aria-expanded='true']")).toHaveCount(2);
+    await expect(paperless).toBeInViewport();
+    await expect(
+      page.getByRole("region", { name: NEXTCLOUD }).locator("button[aria-expanded='true']"),
+    ).toHaveCount(0);
+  });
+
+  test("an item's badge on its own page leads to its card", async ({ page }) => {
+    await stage(page, 1280);
+    await page.goto("/anomalies?scope=item:tg-tank");
+    await expect(page.getByRole("region", { name: "tank" }).locator("button[aria-expanded='true']")).toHaveCount(1);
+  });
 });
 
 // The phone Home column, top to bottom, by its section headings.
