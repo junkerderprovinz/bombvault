@@ -75,6 +75,17 @@ describe("ProviderGrid", () => {
     expect(tiles()[2]!.querySelector("svg")?.getAttribute("width")).toBe("48");
   });
 
+  it("lays each group's tiles out in fixed columns, centred in the window", () => {
+    grid();
+    for (const group of screen.getAllByRole("group")) {
+      const row = within(group).getAllByRole("option")[0]!.parentElement!;
+      expect(row.className).toMatch(/\bgrid\b/);
+      expect(row.className).toContain("grid-cols-[repeat(auto-fill,7rem)]");
+      expect(row.className).toMatch(/\bjustify-center\b/);
+      expect(row.className).not.toMatch(/\bflex-wrap\b/);
+    }
+  });
+
   it("is the coin tile, lit in its brand's colour under the pointer", () => {
     grid();
     // The tiles in group order, as the first test reads them.

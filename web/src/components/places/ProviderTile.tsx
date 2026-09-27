@@ -115,7 +115,9 @@ export function ProviderGrid({
                 {t(group.key)}
               </Badge>
             </h3>
-            <div className="flex flex-wrap gap-2">
+            {/* Columns as wide as a tile, so every group lines up under the
+                one above, and the spare width split on both sides. */}
+            <div className="grid grid-cols-[repeat(auto-fill,7rem)] justify-center gap-2">
               {members.map((p) => {
                 const i = ordered.indexOf(p);
                 return (
