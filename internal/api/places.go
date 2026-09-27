@@ -913,8 +913,10 @@ func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody
 			return store.Place{}, nil, &probeFailedErr{result: probe}
 		}
 	}
+	locks := &domainLocks{s: s}
+	defer locks.release()
 	if next.Base != p.Base || !maps.Equal(next.Folders, p.Folders) {
-		moves, err := s.placeMoves(settings, p, next, rows, homes)
+		moves, err := s.placeMoves(settings, p, next, rows, homes, locks)
 		if err != nil {
 			return store.Place{}, nil, err
 		}
