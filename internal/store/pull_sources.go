@@ -13,20 +13,26 @@ var ErrEmptyPullRepo = errors.New("pull source location must not be empty")
 
 // PullSource is another BombVault's repository whose snapshots this box copies
 // into its own repository on its own schedule: off-site replication in reverse.
-// Like a ReceivedRepo it keeps the other instance's APP_KEY encrypted, because
-// the source repository's password derives from it.
+// Like a ReceivedRepo it keeps the other instance's restic password sealed.
 type PullSource struct {
-	ID   string
-	Name string
+	ID string
+	// MemberID is the source instance's id in the pairing group. It is empty
+	// on a row from before pairing, which has to be paired again.
+	MemberID string
+	Name     string
 	// Repo is the source instance's repository location (rest:, s3:, sftp:, b2:,
 	// or a path under the host mount). The API refuses `rclone:`, as foreign.go
 	// does: rclone reads its remotes from our own config and would authenticate
 	// to a caller-chosen endpoint with our secrets.
 	Repo string
-	// AppKeyEnc is the source instance's APP_KEY, encrypted with this
-	// instance's key (internal/secret). It is never logged or returned in the
-	// clear, and like received_repos it stays out of the settings export.
-	AppKeyEnc []byte
+	// ResticPasswordEnc is the source instance's restic password, sealed with
+	// this instance's key (internal/secret). It is never logged or returned
+	// in the clear, and like received_repos it stays out of the settings
+	// export.
+	ResticPasswordEnc []byte
+	// LegacyAppKeyEnc is a source APP_KEY stored before pairing existed. It
+	// is only read to convert it to ResticPasswordEnc and then cleared.
+	LegacyAppKeyEnc []byte
 	// CredsRef names a set in the encrypted cloud-credentials blob, so a remote
 	// source uses its own backend credentials rather than this box's.
 	CredsRef string
@@ -52,7 +58,7 @@ type PullSource struct {
 	SortOrder       int
 }
 
-const pullSourceCols = `id, name, repo, app_key_enc, creds_ref, domain, cadence,
+const pullSourceCols = `id, member_id, name, repo, restic_password_enc, app_key_enc, creds_ref, domain, cadence,
 	limit_download, limit_upload, last_pull_at, last_pull_ok, last_pull_error,
 	snapshots_pulled, enabled, created_at, sort_order`
 
@@ -68,13 +74,12 @@ func (r *Repo) CreatePullSource(ps PullSource) (PullSource, error) {
 	if ps.CreatedAt == 0 {
 		ps.CreatedAt = time.Now().Unix()
 	}
-	if ps.AppKeyEnc == nil {
-		ps.AppKeyEnc = []byte{} // the column rejects NULL
-	}
+	ps.ResticPasswordEnc = notNullBlob(ps.ResticPasswordEnc)
+	ps.LegacyAppKeyEnc = notNullBlob(ps.LegacyAppKeyEnc)
 	_, err := r.db.Exec(`
 		INSERT INTO pull_sources (`+pullSourceCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		ps.ID, ps.Name, ps.Repo, ps.AppKeyEnc, ps.CredsRef, ps.Domain, ps.Cadence,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		ps.ID, ps.MemberID, ps.Name, ps.Repo, ps.ResticPasswordEnc, ps.LegacyAppKeyEnc, ps.CredsRef, ps.Domain, ps.Cadence,
 		ps.LimitDownload, ps.LimitUpload, ps.LastPullAt, nullBool(ps.LastPullOK), ps.LastPullError,
 		ps.SnapshotsPulled, boolInt(ps.Enabled), ps.CreatedAt, ps.SortOrder,
 	)
@@ -90,14 +95,15 @@ func (r *Repo) UpdatePullSource(ps PullSource) error {
 	if strings.TrimSpace(ps.Repo) == "" {
 		return ErrEmptyPullRepo
 	}
-	if ps.AppKeyEnc == nil {
-		ps.AppKeyEnc = []byte{} // the column rejects NULL
-	}
+	ps.ResticPasswordEnc = notNullBlob(ps.ResticPasswordEnc)
+	ps.LegacyAppKeyEnc = notNullBlob(ps.LegacyAppKeyEnc)
 	_, err := r.db.Exec(`
 		UPDATE pull_sources SET
-		  name             = ?,
-		  repo             = ?,
-		  app_key_enc      = ?,
+		  member_id           = ?,
+		  name                = ?,
+		  repo                = ?,
+		  restic_password_enc = ?,
+		  app_key_enc         = ?,
 		  creds_ref        = ?,
 		  domain           = ?,
 		  cadence          = ?,
@@ -110,7 +116,7 @@ func (r *Repo) UpdatePullSource(ps PullSource) error {
 		  enabled          = ?,
 		  sort_order       = ?
 		WHERE id = ?`,
-		ps.Name, ps.Repo, ps.AppKeyEnc, ps.CredsRef, ps.Domain, ps.Cadence,
+		ps.MemberID, ps.Name, ps.Repo, ps.ResticPasswordEnc, ps.LegacyAppKeyEnc, ps.CredsRef, ps.Domain, ps.Cadence,
 		ps.LimitDownload, ps.LimitUpload, ps.LastPullAt, nullBool(ps.LastPullOK), ps.LastPullError,
 		ps.SnapshotsPulled, boolInt(ps.Enabled), ps.SortOrder, ps.ID,
 	)
@@ -185,7 +191,7 @@ func scanPullSource(s scanner) (PullSource, error) {
 	var ps PullSource
 	var enabled int
 	err := s.Scan(
-		&ps.ID, &ps.Name, &ps.Repo, &ps.AppKeyEnc, &ps.CredsRef, &ps.Domain, &ps.Cadence,
+		&ps.ID, &ps.MemberID, &ps.Name, &ps.Repo, &ps.ResticPasswordEnc, &ps.LegacyAppKeyEnc, &ps.CredsRef, &ps.Domain, &ps.Cadence,
 		&ps.LimitDownload, &ps.LimitUpload, &ps.LastPullAt, &ps.LastPullOK, &ps.LastPullError,
 		&ps.SnapshotsPulled, &enabled, &ps.CreatedAt, &ps.SortOrder,
 	)
@@ -195,3 +201,6 @@ func scanPullSource(s scanner) (PullSource, error) {
 	ps.Enabled = enabled != 0
 	return ps, nil
 }
+
+// NeedsPairing reports whether the row predates pairing and names no member.
+func (ps PullSource) NeedsPairing() bool { return ps.MemberID == "" }

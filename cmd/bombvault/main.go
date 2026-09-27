@@ -276,6 +276,11 @@ func run() error {
 
 	// Backup service bridges the adapters into the DI orchestrator.
 	svc := api.NewService(cfg, st, dc, vc, engine)
+	if err := svc.ConvertLegacyAppKeys(); err != nil {
+		log.Printf("group: converting stored APP_KEYs to restic passwords: %v", err)
+	}
+	svc.StartGroup()
+	defer svc.StopGroup()
 	// Detect (or honor cfg.PlatformOverride, i.e. the PLATFORM env var) which
 	// host BombVault is running on, and map it to a concrete Platform adapter
 	// (internal/platform): the appdata-fallback convention, cross-instance

@@ -47,20 +47,21 @@ func TestPullSourceCRUD(t *testing.T) {
 	r := store.New(db)
 
 	const appKey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-	const foreignKey = "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
-	enc, err := secret.Encrypt(appKey, []byte(foreignKey))
+	const foreignPassword = "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
+	enc, err := secret.Encrypt(appKey, []byte(foreignPassword))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	made, err := r.CreatePullSource(store.PullSource{
-		Name:          "Tower next door",
-		Repo:          "rest:http://192.168.1.9:8000/containers",
-		AppKeyEnc:     enc,
-		Domain:        "containers",
-		Cadence:       "daily 04:00",
-		LimitDownload: 2048,
-		Enabled:       true,
+		Name:              "Tower next door",
+		Repo:              "rest:http://192.168.1.9:8000/containers",
+		ResticPasswordEnc: enc,
+		MemberID:          "member-b",
+		Domain:            "containers",
+		Cadence:           "daily 04:00",
+		LimitDownload:     2048,
+		Enabled:           true,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -76,13 +77,15 @@ func TestPullSourceCRUD(t *testing.T) {
 	if got.LastPullOK.Valid {
 		t.Fatalf("a source that has never been pulled must report NULL, not a verdict: %+v", got.LastPullOK)
 	}
-	if strings.Contains(string(got.AppKeyEnc), foreignKey) {
-		t.Fatal("the foreign APP_KEY is stored in the clear.\n" +
-			"It belongs to another machine, so this is the one secret in the app that is not ours to lose.")
+	if strings.Contains(string(got.ResticPasswordEnc), foreignPassword) {
+		t.Fatal("the other instance's restic password is stored in the clear")
 	}
-	back, err := secret.Decrypt(appKey, got.AppKeyEnc)
-	if err != nil || string(back) != foreignKey {
-		t.Fatalf("the stored ciphertext must decrypt back to the key that was entered: %q err=%v", back, err)
+	if got.MemberID != "member-b" || got.NeedsPairing() {
+		t.Fatalf("the member id did not round-trip: %+v", got)
+	}
+	back, err := secret.Decrypt(appKey, got.ResticPasswordEnc)
+	if err != nil || string(back) != foreignPassword {
+		t.Fatalf("the stored ciphertext must decrypt back to the password that was stored: %q err=%v", back, err)
 	}
 
 	// Writing a verdict leaves the configuration columns alone.

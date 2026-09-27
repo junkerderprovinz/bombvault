@@ -4,10 +4,11 @@ package api
 // and monitors it read-only: receiverInventory groups the snapshots by source,
 // and receiverCheck runs an independent restic check on the receiving hardware.
 //
-// As in foreign.go, the repo is opened with the sending instance's APP_KEY
-// through RepoOpens, never EnsureRepo, which would initialize a missing repo,
-// and every probe sets NoLock. Nothing here writes to the received repo. The
-// sending key is stored encrypted, decrypted only here and never logged.
+// The repo is opened with the sending instance's restic password, which
+// arrives over the pairing group, through RepoOpens, never EnsureRepo, which
+// would initialize a missing repo, and every probe sets NoLock. Nothing here
+// writes to the received repo. The password is stored sealed, opened only here
+// and never logged.
 
 import (
 	"context"
@@ -19,8 +20,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
-	"github.com/junkerderprovinz/bombvault/internal/restickey"
-	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -83,19 +82,14 @@ func (s *Service) receiverOpen(ctx context.Context, rr store.ReceivedRepo) (stri
 		}
 		repo = resolved
 	}
-	keyBytes, err := secret.Decrypt(s.cfg.AppKey, rr.AppKeyEnc)
+	password, err := s.openResticPassword(rr.ResticPasswordEnc)
 	if err != nil {
-		return "", restic.Mode{}, errors.New("could not decrypt the stored sending APP_KEY for this received repo")
-	}
-	sendingKey := string(keyBytes)
-	// restickey.Derive panics on non-hex input, so check the shape first.
-	if !foreignKeyRe.MatchString(sendingKey) {
-		return "", restic.Mode{}, errors.New("the stored sending APP_KEY is not 64 lowercase hex characters")
+		return "", restic.Mode{}, err
 	}
 	// NoLock keeps the read-only probe from writing a lock file into the received
 	// (append-only) repo. Try the encrypted mode a BombVault sender always uses,
 	// then fall back to a plain repo.
-	encMode := restic.Mode{Encrypted: true, Password: restickey.Derive(sendingKey), NoLock: true}
+	encMode := restic.Mode{Encrypted: true, Password: password, NoLock: true}
 	plainMode := restic.Mode{NoLock: true}
 	switch {
 	case s.engine.RepoOpens(ctx, repo, encMode):
@@ -105,7 +99,7 @@ func (s *Service) receiverOpen(ctx context.Context, rr store.ReceivedRepo) (stri
 	default:
 		// No slash in "BombVault or restic": scrubError would redact "/restic" as
 		// a path.
-		return "", restic.Mode{}, errors.New("could not open the received repository: wrong APP_KEY, or the location is not a BombVault or restic repository")
+		return "", restic.Mode{}, errors.New("could not open the received repository: wrong restic password, or the location is not a BombVault or restic repository")
 	}
 }
 

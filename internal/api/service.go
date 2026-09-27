@@ -19,6 +19,7 @@ import (
 	"io/fs"
 	"log"
 	"maps"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -36,11 +37,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
+	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -496,6 +499,15 @@ type Service struct {
 	// constructed.
 	detectMu     sync.Mutex
 	detectFlight *encryptionDetectFlight
+
+	// groupOnce builds groupMgr, which connects this instance to the others
+	// that share its pairing phrase, and relaySrv, the relay it serves when
+	// that switch is on. Built on first use, so a Service literal works too.
+	groupOnce      sync.Once
+	groupMgr       *group.Manager
+	relaySrv       *relay.Server
+	peerMuxOnce    sync.Once
+	peerMuxHandler http.Handler
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock

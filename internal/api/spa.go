@@ -20,7 +20,7 @@ func NewSPAHandler(spaFS fs.FS, apiRouter http.Handler) http.Handler {
 		// answer is a 404, or a 401 while a login password is set.
 		switch p := r.URL.Path; {
 		case p == "/api" || strings.HasPrefix(p, "/api/") ||
-			p == "/metrics" || p == "/widget" ||
+			p == "/metrics" || p == "/widget" || p == relayConnectPath ||
 			p == mcpEndpointPath || strings.HasPrefix(p, mcpEndpointPath+"/"),
 			p == oauthResourceMeta, p == oauthServerMetaPath,
 			p == oauthRegisterPath, p == oauthTokenPath, p == oauthRevokePath:

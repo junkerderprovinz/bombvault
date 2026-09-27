@@ -126,7 +126,10 @@ func atoiSafe(s string) int {
 func withCompression(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Vary", "Accept-Encoding")
-		if !strings.Contains(strings.ToLower(r.Header.Get("Accept-Encoding")), "gzip") {
+		// A WebSocket upgrade needs the connection itself, which the gzip
+		// writer cannot hand over.
+		if !strings.Contains(strings.ToLower(r.Header.Get("Accept-Encoding")), "gzip") ||
+			strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
 			next.ServeHTTP(w, r)
 			return
 		}

@@ -119,7 +119,6 @@ func TestSettingsSaveKeepsInstanceOwnedColumns(t *testing.T) {
 		s.RegistryAuths = "registry-blob"
 		s.MetricsToken = "metrics-token"
 		s.WidgetToken = "widget-token"
-		s.FleetToken = "fleet-token"
 		return nil
 	}); err != nil {
 		t.Fatal(err)
@@ -151,7 +150,6 @@ func TestSettingsSaveKeepsInstanceOwnedColumns(t *testing.T) {
 		{"RegistryAuths", seeded.RegistryAuths, after.RegistryAuths},
 		{"MetricsToken", seeded.MetricsToken, after.MetricsToken},
 		{"WidgetToken", seeded.WidgetToken, after.WidgetToken},
-		{"FleetToken", seeded.FleetToken, after.FleetToken},
 	} {
 		if c.got != c.want {
 			t.Errorf("%s = %q after a settings save, want %q; the form wrote a column it does not own", c.name, c.got, c.want)

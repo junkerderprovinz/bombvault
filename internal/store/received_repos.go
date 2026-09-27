@@ -15,13 +15,19 @@ var ErrEmptyReceivedRepo = errors.New("received repo location must not be empty"
 // replicates into and this box monitors read-only. It is unrelated to Target,
 // which is a backup source.
 type ReceivedRepo struct {
-	ID   string
-	Name string
-	Repo string
-	// AppKeyEnc is the sending instance's APP_KEY, encrypted with this
-	// instance's key (internal/secret). Only the read-only engine decrypts it,
-	// and it is never logged or returned in the clear.
-	AppKeyEnc []byte
+	ID string
+	// MemberID is the sending instance's id in the pairing group. It is
+	// empty on a row from before pairing, which has to be paired again.
+	MemberID string
+	Name     string
+	Repo     string
+	// ResticPasswordEnc is the sending instance's restic password, sealed
+	// with this instance's key (internal/secret). It opens the repository
+	// and nothing else, and it is never logged or returned in the clear.
+	ResticPasswordEnc []byte
+	// LegacyAppKeyEnc is a sending APP_KEY stored before pairing existed. It
+	// is only read to convert it to ResticPasswordEnc and then cleared.
+	LegacyAppKeyEnc []byte
 	// DeadManHours is how long without a new snapshot before the dead man's
 	// switch alert fires. Default 26.
 	DeadManHours int
@@ -45,7 +51,10 @@ type ReceivedRepo struct {
 	SortOrder         int
 }
 
-const receivedRepoCols = `id, name, repo, app_key_enc, dead_man_hours, check_cadence, read_data_percent,
+// NeedsPairing reports whether the row predates pairing and names no member.
+func (rr ReceivedRepo) NeedsPairing() bool { return rr.MemberID == "" }
+
+const receivedRepoCols = `id, member_id, name, repo, restic_password_enc, app_key_enc, dead_man_hours, check_cadence, read_data_percent,
 	last_check_at, last_check_ok, last_check_error, last_check_read_data, enabled, created_at, sort_order`
 
 // CreateReceivedRepo inserts a new received repo, assigning an ID and CreatedAt
@@ -60,13 +69,12 @@ func (r *Repo) CreateReceivedRepo(rr ReceivedRepo) (ReceivedRepo, error) {
 	if rr.CreatedAt == 0 {
 		rr.CreatedAt = time.Now().Unix()
 	}
-	if rr.AppKeyEnc == nil {
-		rr.AppKeyEnc = []byte{} // the column rejects NULL
-	}
+	rr.ResticPasswordEnc = notNullBlob(rr.ResticPasswordEnc)
+	rr.LegacyAppKeyEnc = notNullBlob(rr.LegacyAppKeyEnc)
 	_, err := r.db.Exec(`
 		INSERT INTO received_repos (`+receivedRepoCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		rr.ID, rr.Name, rr.Repo, rr.AppKeyEnc, rr.DeadManHours, rr.CheckCadence, rr.ReadDataPercent,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		rr.ID, rr.MemberID, rr.Name, rr.Repo, rr.ResticPasswordEnc, rr.LegacyAppKeyEnc, rr.DeadManHours, rr.CheckCadence, rr.ReadDataPercent,
 		rr.LastCheckAt, nullBool(rr.LastCheckOK), rr.LastCheckError, boolInt(rr.LastCheckReadData),
 		boolInt(rr.Enabled), rr.CreatedAt, rr.SortOrder,
 	)
@@ -82,13 +90,14 @@ func (r *Repo) UpdateReceivedRepo(rr ReceivedRepo) error {
 	if strings.TrimSpace(rr.Repo) == "" {
 		return ErrEmptyReceivedRepo
 	}
-	if rr.AppKeyEnc == nil {
-		rr.AppKeyEnc = []byte{} // the column rejects NULL
-	}
+	rr.ResticPasswordEnc = notNullBlob(rr.ResticPasswordEnc)
+	rr.LegacyAppKeyEnc = notNullBlob(rr.LegacyAppKeyEnc)
 	_, err := r.db.Exec(`
 		UPDATE received_repos SET
+		  member_id            = ?,
 		  name                 = ?,
 		  repo                 = ?,
+		  restic_password_enc  = ?,
 		  app_key_enc          = ?,
 		  dead_man_hours       = ?,
 		  check_cadence        = ?,
@@ -100,7 +109,7 @@ func (r *Repo) UpdateReceivedRepo(rr ReceivedRepo) error {
 		  enabled              = ?,
 		  sort_order           = ?
 		WHERE id = ?`,
-		rr.Name, rr.Repo, rr.AppKeyEnc, rr.DeadManHours, rr.CheckCadence, rr.ReadDataPercent,
+		rr.MemberID, rr.Name, rr.Repo, rr.ResticPasswordEnc, rr.LegacyAppKeyEnc, rr.DeadManHours, rr.CheckCadence, rr.ReadDataPercent,
 		rr.LastCheckAt, nullBool(rr.LastCheckOK), rr.LastCheckError, boolInt(rr.LastCheckReadData),
 		boolInt(rr.Enabled), rr.SortOrder, rr.ID,
 	)
@@ -175,7 +184,7 @@ func scanReceivedRepo(s scanner) (ReceivedRepo, error) {
 	var rr ReceivedRepo
 	var readData, enabled int
 	err := s.Scan(
-		&rr.ID, &rr.Name, &rr.Repo, &rr.AppKeyEnc, &rr.DeadManHours, &rr.CheckCadence, &rr.ReadDataPercent,
+		&rr.ID, &rr.MemberID, &rr.Name, &rr.Repo, &rr.ResticPasswordEnc, &rr.LegacyAppKeyEnc, &rr.DeadManHours, &rr.CheckCadence, &rr.ReadDataPercent,
 		&rr.LastCheckAt, &rr.LastCheckOK, &rr.LastCheckError, &readData, &enabled, &rr.CreatedAt, &rr.SortOrder,
 	)
 	if err != nil {
@@ -184,6 +193,15 @@ func scanReceivedRepo(s scanner) (ReceivedRepo, error) {
 	rr.LastCheckReadData = readData != 0
 	rr.Enabled = enabled != 0
 	return rr, nil
+}
+
+// notNullBlob turns nil into an empty slice, since a nil slice binds as NULL
+// and the blob columns reject it.
+func notNullBlob(b []byte) []byte {
+	if b == nil {
+		return []byte{}
+	}
+	return b
 }
 
 func nullBool(b sql.NullBool) any {
