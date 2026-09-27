@@ -690,10 +690,6 @@
      twin. 100% of a colour mixed with black is the colour itself. */
   --ink-mix:          100%;
   --accent-text:      color-mix(in srgb, var(--accent) var(--ink-mix), black);
-  /* The ink on a solid --accent-text fill, for the About card's mail button,
-     whose hover surface is the colour of its mark. Here --accent-text is the
-     accent, so its ink is the accent's; the light block states its own. */
-  --accent-text-contrast: var(--accent-contrast);
 
   /* One elevation, one hairline, one focus ring. Elevation and hairline are
      GlimStone's; the ring derives from the accent. */
@@ -830,10 +826,6 @@
      3.74:1 on surface2. At 45% the worst of the eight presets measures 5.13:1
      on surface2, 6.15:1 on a card and 6.77:1 on white. */
   --ink-mix: 45%;
-  /* White on that ink, worst preset 6.77:1. Not --accent-contrast, which is
-     computed against the accent and would give a light accent black ink on
-     this dark fill. */
-  --accent-text-contrast: #ffffff;
 
   /* Anything painting the flat --accent as text or a thin graphic misses the
      contrast minimums on these surfaces and should use the accentText
@@ -942,7 +934,6 @@
     --field-focus-ring: rgba(142, 106, 0, 1);
     --field-focus-well: #cdcdcd;
     --ink-mix: 45%;
-    --accent-text-contrast: #ffffff;
     --status-offsite-text: #0043ce;
   }
 }
@@ -1332,6 +1323,21 @@ body {
    single-colour version for the hover. */
 .glim-mark-hover { display: none; }
 
+/* The About card's marks at rest. A published brand colour fails on one of
+   the two grounds, so they take the adjusted theme tokens, and the house mark
+   follows the accent as ink. */
+.glim-paypal-mark { color: var(--brand-paypal); }
+.glim-bitcoin-mark { color: var(--brand-bitcoin); }
+.glim-github-mark { color: var(--brand-github); }
+.glim-house-mark { color: var(--accent-text); }
+
+/* The brands' tile colours: the true colour and the ink that holds on it, white
+   wherever white reaches 2:1 and near-black below that. */
+.glim-tile-github { --tile: #181717; --tile-ink: #ffffff; } /* 17.9:1 */
+.glim-tile-paypal { --tile: #003087; --tile-ink: #ffffff; } /* 13.4:1 */
+.glim-tile-bitcoin { --tile: #f7931a; --tile-ink: #161616; } /* 7.9:1 */
+/* Buy Me a Coffee's own near-black, the ink of their button. 13.8:1. */
+.glim-tile-coffee { --tile: #ffdd00; --tile-ink: #0d0c22; }
 /* The button that reaches the app's own authors follows the colour engine. */
 .glim-tile-house { --tile: var(--accent); --tile-ink: var(--accent-contrast); }
 
@@ -1552,6 +1558,12 @@ body {
   }
 }
 
+/* The About card's give buttons stand a blank line of the card's text apart
+   from the sentences above and below them. */
+.glim-about-give {
+  margin-block: calc(var(--text-body) * 1.5);
+}
+
 /* The MCP clients' tile colours (McpServerCard's client buttons), from the
    brands' own palettes, with the ink as GlimStone's brand tiles pick it: white
    wherever white reaches 2:1 on the fill, near-black below that. */
@@ -1680,66 +1692,6 @@ body {
 }
 [data-rainbow="reactive"] .glim-coin-tile:hover svg {
   fill: currentColor;
-}
-
-/* The About card's brand buttons (AboutCard). At rest the button is neutral
-   and only the mark is coloured, in --brand, the per-theme value that reaches
-   3:1. On hover the button becomes the brand in its true colour, --brand-fill,
-   the ground every brand colour was drawn for, and everything on it, the mark
-   included, flips to --brand-ink. CSS `fill` beats the attribute
-   donateMarks.tsx writes.
-
-   The `svg path` selectors are for glyphs.tsx, which writes
-   `fill="currentColor"` on the path, where the attribute beats a fill
-   inherited from the <svg>. Every mark is single-colour, so painting both
-   levels is safe. */
-.glim-brand-btn .glim-btn-glyph svg,
-.glim-brand-btn .glim-btn-glyph svg path {
-  fill: var(--brand);
-  transition: fill 120ms;
-}
-.glim-brand-btn:hover:not(:disabled) {
-  background-color: var(--brand-fill);
-  color: var(--brand-ink);
-}
-.glim-brand-btn:hover:not(:disabled) .glim-btn-glyph svg,
-.glim-brand-btn:hover:not(:disabled) .glim-btn-glyph svg path {
-  fill: currentColor;
-}
-
-/* Per brand: the resting mark (a token, since it changes with the theme), then
-   the true colour and its measured ink, which do not. */
-.glim-brand-coffee {
-  --brand: var(--brand-coffee);
-  --brand-fill: #ffdd00;
-  /* Buy Me a Coffee's own near-black, the ink their button uses. 13.8:1. */
-  --brand-ink: #0d0c22;
-}
-.glim-brand-bitcoin {
-  --brand: var(--brand-bitcoin);
-  --brand-fill: #f7931a;
-  --brand-ink: #161616; /* 7.9:1 */
-}
-.glim-brand-paypal {
-  --brand: var(--brand-paypal);
-  --brand-fill: #003087;
-  --brand-ink: #ffffff; /* 13.4:1 */
-}
-.glim-brand-github {
-  --brand: var(--brand-github);
-  --brand-fill: #181717;
-  --brand-ink: #ffffff; /* 18.3:1 */
-}
-
-/* The mail button reaches the workshop rather than a third party, so it
-   follows the colour engine: the mark, the hover fill and its ink are engine
-   tokens. As with the brands, the hover fill is the mark's own colour,
-   --accent-text, which on the light theme is darker than --accent; a flat
-   --accent fill would change the button's colour under the pointer. */
-.glim-brand-house {
-  --brand: var(--accent-text);
-  --brand-fill: var(--accent-text);
-  --brand-ink: var(--accent-text-contrast);
 }
 
 /* SidebarControls' Simple/Advanced toggle follows the same glyph rule as
