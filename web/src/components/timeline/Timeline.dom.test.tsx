@@ -85,6 +85,14 @@ describe("Timeline", () => {
     expect(fake.callsTo("getTimelinePlace")).toEqual([]);
   });
 
+  // jsdom lays nothing out, so this pins the class the phone layout rests on.
+  it("moves Check under a long place name on a phone instead of squeezing it", async () => {
+    fake.reply("getTimeline", { ok: true, places: [home, { ...b2, state: "unchecked" }], rows: [] });
+    open();
+    const check = await screen.findByRole("button", { name: "Check" });
+    expect(check.closest("div.flex")!.className).toContain("max-md:flex-wrap");
+  });
+
   it("checks exactly the place asked for", async () => {
     fake.reply("getTimeline", {
       ok: true,

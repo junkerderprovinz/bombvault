@@ -272,6 +272,8 @@ describe("VMs page renders ONE layout (desktop identity in jsdom)", () => {
     vi.mocked(listVMs).mockResolvedValue({ ok: true, vms: manyVMs });
   });
 
+  // Role queries over 25 cards with their placement rows take seconds in jsdom
+  // while the whole suite runs, hence the longer timeout.
   it("renders the desktop face with no hidden twin and the mobile block absent", async () => {
     const { container } = render(
       <MemoryRouter>
@@ -301,5 +303,5 @@ describe("VMs page renders ONE layout (desktop identity in jsdom)", () => {
     for (const vm of manyVMs) {
       expect(screen.getByText(vm.name)).toBeTruthy();
     }
-  });
+  }, 20_000);
 });
