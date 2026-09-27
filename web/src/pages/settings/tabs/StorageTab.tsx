@@ -282,7 +282,7 @@ export function StorageTab({
       {/* Plain-export encryption and the repositories' own encryption share one
           card. Each field saves on its own: the toggles optimistically with a
           revert on failure, the recipients field debounced like the registry
-          fields in the Image Cleanup card above. */}
+          fields above. */}
       <Card title={t("settings.exportsEncryptionTitle")} hint={t("settings.exportsEncryptionHint")} hueIndex={nextHue()}>
         {/* Plain-export encryption (age) */}
         <div className="flex flex-col gap-3">

@@ -50,11 +50,9 @@ export function SystemTab({
 
   return (
     <>
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM: Monitoring (Prometheus)                                    */}
-      {/* ------------------------------------------------------------------ */}
-      {/* `advanced &&` inline, not the <Advanced> wrapper, same reason as
-          the Storage tab's cacheTitle Card above. */}
+      {/* Conditional cards use a plain `&&` rather than the <Advanced>
+          wrapper, whose children are built before it decides, so a hidden
+          card would still spend a hue slot and shift every later heading. */}
       {advanced && (
       <Card title={t("settings.metrics")} hueIndex={nextHue()}>
         {/* The metrics syntax sits in the toggle's bubble: /metrics and the
@@ -69,9 +67,8 @@ export function SystemTab({
           shakeNonce={fieldShake.metricsEnabled}
           pulseNonce={fieldPulse.metricsEnabled}
         />
-        {/* Write-only secret (the GET never echoes it): blank-on-save keeps the
-            stored token, so a stored one shows as the same "saved, leave blank
-            to keep" placeholder the cloud-credential secrets use. */}
+        {/* Write-only secret: the GET never echoes it and a blank save keeps
+            the stored token, so a stored one shows the "saved" placeholder. */}
         <label className="flex flex-col gap-1.5">
           <span className="text-xs text-carbon-textSub">{t("settings.metricsToken")}</span>
           <RevealInput
@@ -82,10 +79,8 @@ export function SystemTab({
             onChange={(e) => {
               const v = e.target.value;
               setSettings((prev) => prev ? { ...prev, metricsToken: v } : prev);
-              // Full-page Speichern-Button sweep: was this Card's own bottom
-              // SaveBar. Keeps the SAME "is-set flag honest locally" patch
-              // shape the old onSave sent, a non-blank token being saved
-              // marks itself set; a blank save keeps whatever was stored.
+              // A non-blank token marks itself set; a blank save keeps
+              // whatever was stored.
               debouncedSave("metricsToken", () =>
                 void save(
                   { metricsToken: v, metricsTokenSet: v.trim() !== "" || settings.metricsTokenSet },
@@ -102,17 +97,14 @@ export function SystemTab({
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM: Dashboard widget (embeddable activity log). Not behind       */}
-      {/* Advanced: it is an end-user feature, unlike the ops-y metrics card.  */}
-      {/* ------------------------------------------------------------------ */}
+      {/* Not behind Advanced: the widget is an end-user feature, unlike the
+          metrics card. */}
       <DashboardWidgetCard
         t={t}
         tokenSet={settings.widgetTokenSet}
         onTokenSet={(set) => {
-          // Keep BOTH the live state and the saved baseline in sync: the token
-          // is managed by its own endpoints, so a later save (which merges onto
-          // the baseline) must not carry a stale widgetTokenSet.
+          // The token has its own endpoints, so the saved baseline is updated
+          // too; a later save merges onto it and must not carry a stale flag.
           setSettings((prev) => (prev ? { ...prev, widgetTokenSet: set } : prev));
           if (savedBaseline.current) {
             savedBaseline.current = { ...savedBaseline.current, widgetTokenSet: set };
@@ -135,37 +127,13 @@ export function SystemTab({
         hueIndex={nextHue()}
       />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM: VM Backup over SSH                                         */}
-      {/* Advanced, OR shown whenever VMs are enabled so the SSH setup you    */}
-      {/* need to make VM backups work is never hidden behind Advanced.       */}
-      {/* ------------------------------------------------------------------ */}
+      {/* Shown whenever VMs are enabled, so the SSH setup VM backups need is
+          never hidden behind Advanced. */}
       {(advanced || settings.vmsEnabled) && <VMSSHCard t={t} hueIndex={nextHue()} />}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM: Spike (host-integration check; KEEP, it is LIVE).           */}
-      {/* ------------------------------------------------------------------ */}
-      {/* `advanced &&` inline, not the <Advanced> wrapper component: the
-          wrapper takes `children` as an ALREADY-BUILT prop, so a
-          hueIndex={nextHue()} inside it would fire every render regardless
-          of whether Advanced ends up showing it, caught live (Playwright
-          against the real deployed container: this exact site, plus three
-          more of the same shape, cacheTitle/offsiteLimits/metrics above,
-          were each silently "spending" a hue slot on a Card that never
-          painted, shifting every later heading on that tab by one position
-          while Advanced was off). Plain `&&` short-circuits correctly,
-          exactly like every other conditional Card on this page, this was
-          the one call site that still used the wrapper component instead. */}
       {advanced && (() => {
-        // Button-size/colour-engine sweep (jdp, live review: "Die vielen
-        // Buttons sind unterschiedlich groß und nicht alle im
-        // Regenbogenmodus"): the Check Now button inside SpikePanel had no
-        // tie to this Card's own hueIndex at all. `hueIdx` captured once in
-        // this IIFE and threaded into BOTH the Card's own heading notch and
-        // SpikePanel's new `hueIndex` prop, the same "one Card, two
-        // hue-aware children share ONE position" shape the schedulesChecks
-        // Card's own IIFE below already uses for its Card+CadenceBuilder
-        // pair, not a second independent `nextHue()` call.
+        // One slot for the heading and the panel's button, so both share a
+        // colour.
         const hueIdx = nextHue();
         return (
           <Card title={t("spike.title")} hueIndex={hueIdx}>
@@ -174,24 +142,10 @@ export function SystemTab({
         );
       })()}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM: Security                                                   */}
-      {/* ------------------------------------------------------------------ */}
-      {/* Button-size/colour-engine sweep (jdp, live review: "Die vielen
-          Buttons sind unterschiedlich groß und nicht alle im
-          Regenbogenmodus"): the buttons below had no tie to this Card's own
-          hue at all. (It used to name three - Save, Logout and
-          Logout-everywhere; the two sign-out buttons are gone, see the note
-          where they stood.) IIFE captures `hueIdx`
-          once and reuses it for both the Card's own heading notch and every
-          button inside it, the same "one Card, several hue-aware children
-          share ONE position" shape the schedulesChecks/Spike Cards above
-          already use, not several independent `nextHue()` calls. */}
       {(() => {
         const hueIdx = nextHue();
         return (
       <Card title={t("auth.security")} hint={t("auth.passwordHint")} hueIndex={hueIdx}>
-        {/* Status badge */}
         <div className="flex items-center gap-2">
           <span
             className={`inline-block h-2 w-2 rounded-full ${authEnabled ? "bg-statusOkSolid" : "bg-carbon-textMuted"}`}
@@ -201,7 +155,6 @@ export function SystemTab({
           </span>
         </div>
 
-        {/* Set / Change password form */}
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-carbon-textSub">
@@ -230,14 +183,12 @@ export function SystemTab({
               wrapperClassName="w-full"
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />
-            {/* The rule, stated before it is broken rather than after. There
-                was no minimum at all before v8.6.0, and "1234" was accepted. */}
+            {/* The rule, stated before it is broken rather than after. */}
             <span className="text-xs text-carbon-textSub">
               {t("auth.passwordMinHint", minPasswordLen)}
             </span>
           </div>
 
-          {/* Save / status row */}
           <div className="flex items-center gap-3 pt-1">
             <Button
               key={pwSaveShake || 0}
@@ -259,21 +210,15 @@ export function SystemTab({
           </div>
         </div>
 
-        {/* No sign-out here (GlimStone rule 22: a settings card configures,
-            the shell operates). The sidebar signs out, and a password change
-            ends every other session, because the server's handleSetPassword
-            (internal/api/handlers_auth.go) rotates the session epoch. */}
+        {/* No sign-out here: a settings card configures, the shell operates.
+            A password change ends every other session anyway, because
+            handleSetPassword rotates the session epoch. */}
       </Card>
         );
       })()}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM: the second login factor (v8.6.0). Its own Card rather than  */}
-      {/* another section inside Security: enrolment is a three-step sequence */}
-      {/* with a QR code and a one-time list of recovery codes, which is more  */}
-      {/* than the password form's register, and it reads as a separate        */}
-      {/* decision from "is there a password at all".                          */}
-      {/* ------------------------------------------------------------------ */}
+      {/* Enrolment is a three-step sequence with a QR code and recovery
+          codes, a separate decision from whether there is a password. */}
       <TwoFactorCard
         passwordSet={authEnabled}
         enabled={totpEnabled}
@@ -289,20 +234,10 @@ export function SystemTab({
         hueIndex={nextHue()}
       />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM: passkeys. Its own Card beside the second factor because it   */}
-      {/* is a different decision: the factor makes the password stronger,     */}
-      {/* a passkey replaces typing it. And unlike the factor it is not always */}
-      {/* available, so the card's first job is explaining when it is not.     */}
-      {/* ------------------------------------------------------------------ */}
+      {/* A card of its own: the second factor strengthens the password, a
+          passkey replaces typing it. */}
       <PasskeyCard passwordSet={authEnabled} hueIndex={nextHue()} />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM: Export / import settings                                    */}
-      {/* Portable config file: move this instance's settings + off-site      */}
-      {/* destinations (and, opt-in, credentials) to another install. Backups, */}
-      {/* snapshots and history are never touched.                            */}
-      {/* ------------------------------------------------------------------ */}
       <SettingsPortabilityCard t={t} hueIndex={nextHue()} applyImport={applyImportedSettings} />
     </>
   );
