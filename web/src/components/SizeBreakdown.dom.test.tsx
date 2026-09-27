@@ -62,7 +62,7 @@ it("polls while the breakdown is worked out and then lists the rows", async () =
     await vi.advanceTimersByTimeAsync(2000);
   });
   expect(getSizeBreakdown).toHaveBeenCalledTimes(2);
-  expect(screen.getByText("3.0 MB in 12 files, 1.0 MB of it new.", { exact: false })).toBeTruthy();
+  expect(screen.getByText("3.0 MB in 12 files, 1.0 MB of it new or changed.", { exact: false })).toBeTruthy();
   expect(screen.getByText("Preferences.xml")).toBeTruthy();
   expect(screen.getByText("3 more entries")).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Preferences.xml" })).toBeNull();

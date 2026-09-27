@@ -96,7 +96,7 @@ func (h *Handler) mcpToolDefs() []mcpToolDef {
 		},
 		{
 			tool: remoteReadTool("get_size_breakdown", "Size by folder of one item",
-				"Which folders and files take the space in the newest backup of one container, VM or folder set, largest first, and how much of each the latest backup added new or changed. "+
+				"Which folders and files take the space in the newest backup of one container, VM or folder set, largest first, and how much of each the latest backup added new or changed; a changed file counts with its whole size. "+
 					"Sizes are file sizes in the backup, before deduplication and compression. Start at the top and pass a folder's path to go one level down; a row with open true can be opened. "+
 					"The first call for a backup starts working it out and answers with state running; call again after a while. It reads only the repository's index, never the files. "+
 					"A state failed carries the error; pass retry true to try again. "+
