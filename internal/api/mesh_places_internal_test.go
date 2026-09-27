@@ -61,6 +61,36 @@ func TestAnAcceptedOfferBringsAPlaceForItsDomainAlone(t *testing.T) {
 	}
 }
 
+func TestTwoAcceptsOfOneOfferMakeOnePlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	offer := f.meshOffer()
+	// Held, the sets stop each accept at its place write, after it has found
+	// the offer pending.
+	f.svc.credSetsMu.Lock()
+	answers := make(chan map[string]any, 2)
+	for range 2 {
+		go func() {
+			_, res := f.doStatus(http.MethodPost, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{"domain": "containers"})
+			answers <- res
+		}()
+	}
+	time.Sleep(100 * time.Millisecond)
+	f.svc.credSetsMu.Unlock()
+
+	var refusals []any
+	for range 2 {
+		if res := <-answers; res["ok"] != true {
+			refusals = append(refusals, res["error"])
+		}
+	}
+	if len(refusals) != 1 || refusals[0] != "offer is not pending" {
+		t.Fatalf("refusals = %v, want the second accept told the offer is taken", refusals)
+	}
+	if all, err := f.st.ListPlaces(); err != nil || len(all) != 1 {
+		t.Fatalf("places = %+v, %v, want one", all, err)
+	}
+}
+
 func TestASecondOfferFromOnePeerGetsAPlaceOfItsOwn(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.accept(f.meshOffer(), "containers")

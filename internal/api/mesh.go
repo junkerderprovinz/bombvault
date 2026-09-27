@@ -150,8 +150,16 @@ func (h *Handler) undoAcceptedOffer(placeID, setID string, cause error) error {
 // handleAcceptMeshOffer turns a pending offer into a place for the chosen
 // domain, with the peer's REST credentials as its credential set, and that
 // domain's target there. Nothing is probed first, just as when an admin
-// creates them by hand.
+// creates them by hand. It holds placeEditMu from the pending check to the
+// status write, so a second accept finds the offer taken and an import does
+// not rebuild the places around a half-written one.
 func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) {
+	var in meshOfferAcceptInput
+	if !decodeBody(w, r, &in) {
+		return
+	}
+	h.svc.placeEditMu.Lock()
+	defer h.svc.placeEditMu.Unlock()
 	offer, ok, err := h.store.GetMeshOffer(r.PathValue("id"))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -163,10 +171,6 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 	}
 	if offer.Status != "pending" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "offer is not pending"})
-		return
-	}
-	var in meshOfferAcceptInput
-	if !decodeBody(w, r, &in) {
 		return
 	}
 	if !validOffsiteDomain(in.Domain) {
