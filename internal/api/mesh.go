@@ -123,16 +123,13 @@ type meshOfferAcceptInput struct {
 	AlsoExclude *newTargetExclusion `json:"alsoExclude"`
 }
 
-// dropCredSet takes one credential set out of the stored list. It reads that
-// list itself, because writing back a copy read earlier would drop whatever
-// another request added or renamed in between, along with its password; the
-// write merges blanked secrets back by id.
+// dropCredSet takes one credential set out of the stored list, read under the
+// same lock as the write, so a set another request adds or changes in between
+// is kept as it wrote it.
 func (h *Handler) dropCredSet(id string) error {
-	sets, err := h.svc.CloudCredSets()
-	if err != nil {
-		return err
-	}
-	return h.svc.SetCloudCredSets(slices.DeleteFunc(sets, func(s CloudCredSet) bool { return s.ID == id }))
+	return h.svc.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
+		return slices.DeleteFunc(sets, func(s CloudCredSet) bool { return s.ID == id })
+	})
 }
 
 // undoAcceptedOffer takes back the place, its target and the credential set

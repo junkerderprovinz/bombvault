@@ -4,6 +4,7 @@ import (
 	"maps"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -95,5 +96,71 @@ func TestAnOfferNoPlaceCanHoldIsRefused(t *testing.T) {
 	again, _, gErr := f.st.GetMeshOffer(offer.ID)
 	if err != nil || len(all) != 0 || tErr != nil || len(targets) != 0 || gErr != nil || again.Status != "pending" {
 		t.Fatalf("places %v, targets %v, offer %q: want nothing written", all, targets, again.Status)
+	}
+}
+
+func TestDroppingAnOffersSetKeepsTheSetsWrittenMeanwhile(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "set-offer", Name: "mesh: tower-a", Kind: "rest", CloudCreds: CloudCreds{RESTUser: "bv", RESTPassword: "peer-password"}},
+		{ID: "set-b2", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "K005", S3Secret: "old-secret"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	f.svc.credSetsMu.Lock()
+	done := make(chan error, 1)
+	go func() { done <- f.h.dropCredSet("set-offer") }()
+	// Long enough for a drop that reads the sets before the lock to read them.
+	time.Sleep(100 * time.Millisecond)
+	// What a place write does under the lock: a new secret for one set and a
+	// set of its own.
+	if _, err := f.st.MutateSettings(func(s *store.Settings) error {
+		sets, err := f.svc.decodeCloudCredSets(*s)
+		if err != nil {
+			return err
+		}
+		for i := range sets {
+			if sets[i].ID == "set-b2" {
+				sets[i].S3Secret = "new-secret"
+			}
+		}
+		sets = append(sets, CloudCredSet{ID: "set-nas", Name: "NAS", WebDAVUser: "anna", WebDAVPass: "pw"})
+		s.CloudCredSets, err = f.svc.encodeCloudCredSets(sets)
+		return err
+	}); err != nil {
+		f.svc.credSetsMu.Unlock()
+		t.Fatal(err)
+	}
+	f.svc.credSetsMu.Unlock()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the drop never finished")
+	}
+
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sets, err := f.svc.decodeCloudCredSets(settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	byID := map[string]CloudCredSet{}
+	for _, s := range sets {
+		byID[s.ID] = s
+	}
+	if _, left := byID["set-offer"]; left {
+		t.Error("the offer's set is still there")
+	}
+	if got := byID["set-b2"].S3Secret; got != "new-secret" {
+		t.Errorf("B2 secret = %q, want the one written meanwhile", got)
+	}
+	if _, ok := byID["set-nas"]; !ok {
+		t.Errorf("sets = %+v, want the set written meanwhile kept", sets)
 	}
 }
