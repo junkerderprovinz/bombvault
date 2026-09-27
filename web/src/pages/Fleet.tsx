@@ -27,6 +27,7 @@ import { IconDisclosure } from "../components/IconDisclosure";
 import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData, OffsiteDomain } from "../lib/api";
 import { credSetsChanged } from "../lib/useCloudCredSets";
 import { offsiteTargetsChanged } from "../lib/useOffsiteTargets";
+import { placementErrorText } from "../lib/placementCodes";
 import { placementChanged } from "../lib/placementEvents";
 import { useNewTargetQuestion } from "../components/placement/NewTargetQuestion";
 import { useT, type TranslationKey } from "../lib/i18n";
@@ -177,6 +178,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
   const [domain, setDomain] = useState<string>(offer.suggestedDomain || "containers");
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  const { lang } = useT();
   const { ask, dialog } = useNewTargetQuestion();
   const [shakeAccept, setShakeAccept] = useState(0);
   const [shakeDecline, setShakeDecline] = useState(0);
@@ -207,7 +209,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
         if (answer.alsoExclude) placementChanged();
         onChanged();
       } else {
-        push(res.error ?? t("fleet.mesh.saveError"), "fail");
+        push(placementErrorText(t, lang, res, "fleet.mesh.saveError"), "fail");
         setShakeAccept((n) => n + 1);
       }
     } catch (err) {

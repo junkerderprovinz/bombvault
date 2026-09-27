@@ -66,6 +66,15 @@ describe("accepting a mesh offer", () => {
     await waitFor(() => expect(button.hasAttribute("disabled")).toBe(false));
   });
 
+  it("words a placement refusal of the accept in the reader's language", async () => {
+    fake.reply("acceptMeshOffer", { ok: false, code: "copy-rule-taken", error: "copy rule taken" });
+    renderWithProviders(<Fleet />);
+    fireEvent.click(await screen.findByRole("button", { name: "Accept" }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Confirm" }));
+    expect(await screen.findByText("That name already has copy rules of its own.")).toBeTruthy();
+    expect(screen.queryByText("copy rule taken")).toBeNull();
+  });
+
   it("accepts nothing when the question is cancelled", async () => {
     renderWithProviders(<Fleet />);
     fireEvent.click(await screen.findByRole("button", { name: "Accept" }));
