@@ -221,6 +221,34 @@ describe("PlacementDefaultsCard", () => {
     expect(within(row).getByRole("toolbar", { name: "Placement" })).toBeTruthy();
   });
 
+  describe("says so when the server cannot be reached", () => {
+    it("while a change is asked about", async () => {
+      const two = placementOptions({ targets: [targetOption(), targetOption({ id: "t-hz", name: "Hetzner", primary: false })] });
+      fake.reply("getPlacementOptions", { ok: true, options: two }, { ok: true, options: two }, { ok: true, options: two });
+      fake.reply("previewPlacementDefault", new Error("Failed to fetch"));
+      const row = await containersRow();
+      fireEvent.click(within(row).getByRole("button", { name: "Hetzner" }));
+      expect(await screen.findByText("Failed to fetch")).toBeTruthy();
+    });
+
+    it("while the default is applied", async () => {
+      fake.reply("getApplyDefaultPreview", new Error("Failed to fetch"));
+      const row = await containersRow();
+      const apply = within(row).getByRole("button", { name: "Apply to items without backups" }) as HTMLButtonElement;
+      fireEvent.click(apply);
+      expect(await screen.findByText("Failed to fetch")).toBeTruthy();
+      await waitFor(() => expect(apply.disabled).toBe(false));
+    });
+
+    it("while a paused default is confirmed", async () => {
+      withContainers({ paused: true, confirmedAt: 0 });
+      fake.reply("getConfirmPreview", new Error("Failed to fetch"));
+      const row = await containersRow();
+      fireEvent.click(within(row).getByRole("button", { name: "Confirm default" }));
+      expect(await screen.findByText("Failed to fetch")).toBeTruthy();
+    });
+  });
+
   it("shows only its sentence for a default that cannot be read", async () => {
     withContainers({ unreadable: true });
     renderWithProviders(<PlacementDefaultsCard />);

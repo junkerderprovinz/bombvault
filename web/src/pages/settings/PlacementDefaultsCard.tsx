@@ -150,6 +150,10 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
     setShake((n) => n + 1);
   }
 
+  function unreachable(err: unknown) {
+    fail({ ok: false, error: err instanceof Error ? err.message : undefined });
+  }
+
   // agreed asks when a change moves the location or changes what a target
   // receives. A change that does neither is saved without a question.
   async function agreed(impact: DefaultImpact, home: string | undefined): Promise<boolean> {
@@ -196,6 +200,8 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
         }
         impact = res.impact;
       }
+    } catch (err) {
+      unreachable(err);
     } finally {
       setBusy(false);
     }
@@ -240,6 +246,8 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
       const changed = (res.kept ?? []).filter((k) => k.reason === "changed");
       if (changed.length > 0) push(t("placementDefaults.applyKeptChanged").replace("{list}", () => names(changed)), "warn");
       placementChanged();
+    } catch (err) {
+      unreachable(err);
     } finally {
       setBusy(false);
     }
@@ -270,6 +278,8 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
       }
       push(t("placementDefaults.confirmed"), "success");
       placementChanged();
+    } catch (err) {
+      unreachable(err);
     } finally {
       setBusy(false);
     }
