@@ -125,6 +125,11 @@ func TestApplyPendingSwapsValidStaging(t *testing.T) {
 	if _, err := os.Stat(selfrestore.MarkerPath(dataDir)); !os.IsNotExist(err) {
 		t.Fatalf("marker not cleared: %v", err)
 	}
+	// The boot that applied the restore may die before it has dealt with the
+	// restored database, so the next boot has to be able to tell.
+	if _, err := os.Stat(selfrestore.AppliedMarkerPath(dataDir)); err != nil {
+		t.Fatalf("the applied restore is not marked for the boot that follows: %v", err)
+	}
 	if _, err := os.Stat(selfrestore.StagingRoot(dataDir)); !os.IsNotExist(err) {
 		t.Fatalf("staging root not removed: %v", err)
 	}
@@ -172,6 +177,9 @@ func TestApplyPendingRejectsTruncatedDB(t *testing.T) {
 	}
 	if _, err := os.Stat(selfrestore.MarkerPath(dataDir)); !os.IsNotExist(err) {
 		t.Fatalf("marker not cleared after truncated staging: %v", err)
+	}
+	if _, err := os.Stat(selfrestore.AppliedMarkerPath(dataDir)); !os.IsNotExist(err) {
+		t.Fatalf("a restore that was not applied is marked as applied: %v", err)
 	}
 	if _, err := os.Stat(selfrestore.StagingRoot(dataDir) + ".bad"); err != nil {
 		t.Fatalf("bad staging not preserved as .bad: %v", err)

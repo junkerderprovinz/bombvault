@@ -68,8 +68,8 @@ The template also mounts the Docker socket, the flash (`/boot`) and the **Host D
 *The dashboard after a first backup: what is protected, what runs next, and a live log.*
 
 1. Open the web UI at `https://<your-unraid-ip>:3443` (self-signed certificate out of the box).
-2. In **Settings**, enable the backup domains you want (Containers, VMs, Flash, Config, Files) and pick an accent colour.
-3. On the **Containers** tab, pick a container and click **Back up** to make your first restore point. Repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files}` and are created on the first backup.
+2. In **Settings**, enable the backup domains you want (Containers, VMs, Flash, Config, Files, ZFS datasets) and pick an accent colour.
+3. On the **Containers** tab, pick a container and click **Back up** to make your first restore point. Repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` and are created on the first backup.
 4. Set up scheduling from **Settings, Schedules**. There is a one-click *include all in schedule* for containers and VMs.
 
 !!! tip "Optional: pick a backup order"

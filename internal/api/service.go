@@ -49,6 +49,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/template"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
 // containerDefinition is the recreate recipe persisted at backup time so that
@@ -94,13 +95,27 @@ type ResticEngine interface {
 	// discarding it, for TestOffsite, which needs to explain why a repo didn't open.
 	RepoOpensErr(ctx context.Context, repo string, mode restic.Mode) error
 	Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
+	// BackupDir backs up the contents of dir as the snapshot's own tree root,
+	// with restic running inside dir. A ZFS member is read this way, so its
+	// tree root stays the dataset root although the directory it is read from
+	// names a different snapshot every run.
+	BackupDir(ctx context.Context, repo, dir string, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
 	// BackupStdin backs up the ENTIRE content of rd as a single synthetic file
 	// recorded under path, tagged with tags — the zvol VM disk backup path
 	// (v8.0.0 VM service-layer integration, Task 2): a `zfs send` stream piped
 	// straight into `restic backup --stdin`, no local staging file. See
 	// backup.ZvolRestic's doc comment (resticZvolAdapter below satisfies it).
 	BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string, mode restic.Mode) (restic.Summary, error)
+	// BackupFromCommand backs up the stdout of command as the single file
+	// stdinPath. It also returns what command wrote to stderr, which is where a
+	// database dump reports its own verdict and the pid it runs under inside
+	// the container.
+	BackupFromCommand(ctx context.Context, repo, stdinPath string, tags, command []string, mode restic.Mode) (restic.Summary, []string, error)
 	RestorePath(ctx context.Context, repo, snapshotID, path string, mode restic.Mode) error
+	// RestoreAll restores a whole snapshot into target, without what the
+	// exclude patterns match. A ZFS member's tree root is the dataset root, so
+	// its files land directly in target.
+	RestoreAll(ctx context.Context, repo, snapshotID, target string, mode restic.Mode, excludes ...string) error
 	// DumpRaw streams the synthetic file at path, from the given snapshot, into
 	// w — the restore-side counterpart of BackupStdin, feeding a `zfs receive`
 	// over SSH (see backup.ZvolRestic's doc comment).
@@ -110,6 +125,13 @@ type ResticEngine interface {
 	// touched and no filesystem metadata is restored).
 	DumpZip(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, mode restic.Mode) error
 	Snapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
+	// SnapshotsMeta lists the same snapshots with the counters restic stores on
+	// them. It is separate from Snapshots so the listings the SPA receives keep
+	// the keys they have.
+	SnapshotsMeta(ctx context.Context, repo string, mode restic.Mode) ([]restic.SnapshotMeta, error)
+	// SnapshotParent returns the snapshot restic based snapshotID on, empty when
+	// it found none.
+	SnapshotParent(ctx context.Context, repo, snapshotID string, mode restic.Mode) (string, error)
 	Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, mode restic.Mode) error
 	// ForgetPolicy applies a keep-policy (retention). Inert when the policy has
 	// no dimension set. tags scopes the policy to one item's snapshots as a
@@ -118,6 +140,11 @@ type ResticEngine interface {
 	// to the repo-wide paths-grouped pass. prune reclaims freed space in the
 	// same run; batch callers pass false and Prune once at the end.
 	ForgetPolicy(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, prune bool) error
+	// ForgetPreview reports what ForgetPolicy WOULD remove for the same policy
+	// and tag, without changing the repository and without taking a lock, so it
+	// can answer while a backup is running. Inert when the policy has no
+	// dimension set, for the same reason ForgetPolicy is.
+	ForgetPreview(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string) ([]restic.ForgetGroup, error)
 	// Ls lists the files in a snapshot (for file-level restore).
 	Ls(ctx context.Context, repo, snapshotID string, mode restic.Mode) ([]restic.FileEntry, error)
 	// LsStream lists a snapshot's nodes like Ls but hands each entry to onEntry
@@ -217,11 +244,26 @@ type Service struct {
 	engine   ResticEngine
 	ssh      HostSSH         // optional; nil = no SSH (VM NVRAM transfer skipped)
 	progress *progress.Store // optional; nil = progress reporting disabled
+	// zfs owns the pools the ZFS domain snapshots. Optional; nil refuses every
+	// entry point of that domain with ssh-missing rather than skipping silently.
+	zfs zfs.Host
+	// zfsHostLast is the last host listing that worked, guarded by zfsHostMu.
+	zfsHostMu   sync.Mutex
+	zfsHostLast *zfsHostListing
 	// hostShell runs the "Backup Everything" global pre/post hook commands in
 	// BombVault's OWN container (see hostshell.go). Defaulted to the real
 	// execHostShell adapter in NewService, so it is never nil in production;
 	// SetHostShell overrides it for tests.
 	hostShell HostShell
+	// dbDumpHelper is the path of this binary, which restic runs as the
+	// dbdump-stream subcommand to get a dump on its stdin. Resolved in
+	// NewService; tests set it directly.
+	dbDumpHelper string
+	// dbDumpChown gives a saved dump or a folder BombVault created its owner
+	// through the open file: nil uses (*os.File).Chown, tests inject a fake
+	// because a developer machine refuses to hand a file to another user.
+	// Accessed via dbDumpChownFn.
+	dbDumpChown func(f *os.File, uid, gid int) error
 	// platform is the detected/injected Platform adapter (Unraid/generic/…)
 	// for the appdata-fallback convention, cross-instance restore-destination
 	// defaults, and the Unraid update-status reconcile step. Optional; nil
@@ -245,10 +287,19 @@ type Service struct {
 	// case) uses the platform statfs implementation (diskFreeBytes); tests
 	// inject a fake. Accessed via diskFreeFn.
 	diskFree func(path string) (uint64, error)
+	// diskStat and rcloneAbout are the capacity rule's probes, seams for the
+	// same reason diskFree is one: nil uses the platform statfs and the rclone
+	// binary. Accessed via diskStatFn and rcloneAboutFn.
+	diskStat    func(path string) (diskStatResult, error)
+	rcloneAbout func(ctx context.Context, remote string) (aboutResult, error)
 	// dirNonEmptyProbe is the container-restore overwrite guard's "does this
 	// destination already hold data" seam: nil uses the real filesystem
 	// (dirNonEmpty); tests inject a fake. Accessed via dirNonEmptyFn.
 	dirNonEmptyProbe func(path string) bool
+	// anomalies evaluates the backup history after every run. Nil on a Service
+	// built as a bare literal, which most of this package's tests are; every
+	// method of it survives that.
+	anomalies *anomalyEngine
 	// repoMu serialises operations per domain repo. A backup holds its domain's
 	// lock for the whole run; maintenance (unlock/prune/delete) TryLocks and
 	// reports "busy" instead, so a destructive `restic unlock --remove-all` /
@@ -287,6 +338,10 @@ type Service struct {
 	// prefix and quietly cancels a restore.
 	backupCancels map[string]context.CancelFunc
 
+	// backupCtxs is the context each cancel in backupCancels ends. Same guard,
+	// same lifetime.
+	backupCtxs map[string]context.Context
+
 	// cancelledBackups marks the keys a USER cancelled (#200), so the run that
 	// is about to fail with a context error can be recorded as "cancelled"
 	// instead. Same guard, same lifetime as backupCancels: set by
@@ -295,11 +350,27 @@ type Service struct {
 	// stay callable by shutdown even after a user cancellation raced ahead of it.
 	cancelledBackups map[string]bool
 
+	// backupRuns is the run id each key in backupCancels writes, as far as it
+	// is known yet. Same guard, same lifetime.
+	backupRuns map[string]string
+
+	// committedBackups marks the keys whose backup has written its restore
+	// point (commitBackup), which CancelBackupRun then refuses. Same guard,
+	// same lifetime.
+	committedBackups map[string]bool
+
 	// shuttingDown is set once, by BeginShutdown, and never cleared: the process
 	// is on its way out. runsAdapter.Finish reads it to tell a run we ABORTED
 	// from a run that FAILED, which is the difference between a red row nobody
 	// can explain and an honest "the server went down".
 	shuttingDown atomic.Bool
+
+	// stopCtx is cancelled by BeginShutdown. Work that outlives the request
+	// that asked for it, such as an MCP tool call on a detached handler
+	// context, hangs off it so docker stop reaches it too.
+	stopOnce   sync.Once
+	stopCtx    context.Context
+	stopCancel context.CancelFunc
 
 	// self-container detection (resolved once, cached): the name of BombVault's
 	// OWN container, so a backup never stops the process doing the backing up.
@@ -461,15 +532,17 @@ func (s *Service) lockTamper(domain string) func() {
 
 // NewService constructs the backup service.
 func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcli.Virsh, eng ResticEngine) *Service {
-	return &Service{
+	s := &Service{
 		cfg: cfg, store: st, docker: d, virsh: v, engine: eng,
-		hostShell: execHostShell{},
+		hostShell:    execHostShell{},
+		dbDumpHelper: helperBinaryPath(),
 		repoMu: map[string]*sync.Mutex{
 			"containers": {},
 			"vms":        {},
 			"flash":      {},
 			"config":     {},
 			"files":      {},
+			"zfs":        {},
 		},
 		domainActivity:    map[string]string{},
 		runCancels:        map[string]context.CancelFunc{},
@@ -477,6 +550,8 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 		suggestCache:      map[string]suggestCacheEntry{},
 		suggestFlights:    map[string]*suggestFlight{},
 	}
+	s.anomalies = newAnomalyEngine(s, time.Now)
+	return s
 }
 
 // errDomainBusy is returned by a maintenance op when a backup is holding the
@@ -499,6 +574,12 @@ func (s *Service) clearDomainActivity(domain string) {
 	delete(s.domainActivity, domain)
 	s.activityMu.Unlock()
 }
+
+// domainBusyError is a start refused because another operation holds the
+// domain, which a caller answers as busy rather than as a failure.
+type domainBusyError struct{ op, domain string }
+
+func (e domainBusyError) Error() string { return e.op + " is running on " + e.domain }
 
 // domainBusy reports the activity label of a domain whose repo lock is currently
 // held, and whether it is held at all. It lets a backup starter refuse a busy
@@ -596,12 +677,19 @@ func backupHardCap() time.Duration {
 // configurable hard cap (backupHardCap). With an unlimited cap
 // (BACKUP_MAX_HOURS=0) no deadline is set; the returned context is still
 // cancelled by the deferred cancel func when the run returns.
+// It is also where the stall guard is armed, because this function is the one
+// gate every backup run passes and nothing else does. Arming it any further
+// down (at progBegin, say) would have caught restores and maintenance runs too:
+// a restore is not cancellable by design, and a prune emits no byte counters
+// at all, so silence there means nothing and cancelling on it would be wrong.
 func backupHoldCtx(ctx context.Context) (context.Context, context.CancelFunc) {
-	base := context.WithoutCancel(ctx)
+	held, stop := context.WithCancelCause(context.WithoutCancel(ctx))
+	cancel := func() { stop(nil) }
 	if cap := backupHardCap(); cap > 0 {
-		return context.WithTimeout(base, cap)
+		capped, release := context.WithTimeout(held, cap)
+		held, cancel = capped, func() { release(); stop(nil) }
 	}
-	return context.WithCancel(base)
+	return armStallGuard(held, stop, "backup"), cancel
 }
 
 // drillLockWait is the most a SCHEDULED drill waits for the per-domain lock to
@@ -1013,6 +1101,8 @@ func (s *Service) DiscoverSource(domain string) string {
 		repo, err = s.vmsRepoPath(settings)
 	case "files":
 		repo, err = s.filesRepoPath(settings)
+	case zfsDomain:
+		repo, err = s.zfsRepoPath(settings)
 	default:
 		repo, err = s.containersRepoPath(settings)
 	}
@@ -1210,6 +1300,35 @@ func (s *Service) fileSetRepoFor(settings store.Settings, set store.FileSet, sou
 		return s.repoFor(settings, "files", source)
 	}
 	return s.fileSetRepoPath(settings, set)
+}
+
+// primaryRepoIsRemote reports whether an item's primary repository is a restic
+// remote backend, which is what makes listing it cost time and traffic. item is
+// what the domain's listing function takes: a container or VM name, a folder
+// set's id, and nothing for flash and config. A location that does not resolve
+// counts as not remote.
+func (s *Service) primaryRepoIsRemote(settings store.Settings, domain, item string) bool {
+	var repo string
+	var err error
+	switch domain {
+	case "containers":
+		repo, err = s.containerRepoForName(settings, item, "local")
+	case "vms":
+		repo, err = s.vmRepoForName(settings, item, "local")
+	case "files":
+		var set store.FileSet
+		if set, err = s.store.GetFileSet(item); err == nil {
+			repo, err = s.fileSetRepoFor(settings, set, "local")
+		}
+	case zfsDomain:
+		var d store.ZFSDataset
+		if d, err = s.store.GetZFSDataset(item); err == nil {
+			repo, err = s.zfsDatasetRepoFor(settings, d, "local")
+		}
+	default:
+		repo, err = s.repoFor(settings, domain, "local")
+	}
+	return err == nil && restic.IsRemoteRepo(repo)
 }
 
 // flashZipExportDir resolves the operator-configured output folder for the
@@ -1597,7 +1716,11 @@ func (s *Service) retentionPolicyForSource(settings store.Settings, source strin
 // (#204) carries its own flag and may be a plain folder on a share, so this
 // applies to a local path as readily as to a cloud bucket. Anything with no
 // append-only flag anywhere is unaffected.
-func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, id entryIdentity, domain string) {
+//
+// hold names the series whose findings can pause this pass: an open critical
+// finding that says the source lost its data keeps its own item's snapshots
+// until the user has seen it. An empty hold is never held.
+func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, id entryIdentity, domain string, hold anomalyScope) {
 	p := s.retentionPolicyForRef(settings, s.refFor(settings, domain, repo))
 	if !p.Any() {
 		return
@@ -1613,6 +1736,16 @@ func (s *Service) applyRetention(ctx context.Context, repo string, settings stor
 	// restic forget without a tag would select the whole repository.
 	if id.tag == "" {
 		log.Printf("api: %s: retention skipped: the item has no identity tag", domain) //nolint:gosec // G706: domain is a fixed literal
+		return
+	}
+	held, why, err := s.anomalies.RetentionHeld(ctx, hold)
+	if err != nil {
+		log.Printf("api: %s: retention skipped for %s: the anomaly check failed: %v", domain, id.tag, err) //nolint:gosec // G706: domain is a fixed literal and tags are validated names
+		s.notifyRetentionFailed(ctx, id.tag, "the anomaly check could not run, so nothing was deleted: "+scrubError(err))
+		return
+	}
+	if held {
+		log.Printf("api: %s: retention paused for %s: %s", domain, id.tag, why) //nolint:gosec // G706: domain is a fixed literal and tags are validated names
 		return
 	}
 	prune := !bulkReplicateSuppressed(ctx) // bulk run: one batched prune after the loop
@@ -1688,9 +1821,11 @@ func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.
 	return s.engine.ForgetPolicy(ctx, repo, p, mode, tags, prune)
 }
 
-// identityTags returns the distinct identity tags in snaps: container:, vm:,
-// fileset: and stack: names and the fixed flash and config tags. Marker tags
-// such as p1, p2 and live are not identities.
+// identityTags returns the distinct item-identity tags present in snaps:
+// container:<name>, vm:<name>, fileset:<name>, stack:<name>, dbdump:<name>,
+// zfs:<dataset>, and the fixed flash/config tags. Profile/marker tags (p1, p2,
+// live) are not identities, and neither are the tags describing a dump
+// (engine, image, version, database names, the run it belongs to).
 func identityTags(snaps []restic.Snapshot) []string {
 	seen := map[string]bool{}
 	var out []string
@@ -1698,7 +1833,8 @@ func identityTags(snaps []restic.Snapshot) []string {
 		for _, t := range sn.Tags {
 			isIdentity := t == "flash" || t == "config" ||
 				strings.HasPrefix(t, "container:") || strings.HasPrefix(t, "vm:") ||
-				strings.HasPrefix(t, "fileset:") || strings.HasPrefix(t, "stack:")
+				strings.HasPrefix(t, "fileset:") || strings.HasPrefix(t, "stack:") ||
+				strings.HasPrefix(t, dbDumpIdentityPrefix) || strings.HasPrefix(t, "zfs:")
 			if isIdentity && !seen[t] {
 				seen[t] = true
 				out = append(out, t)
@@ -1717,28 +1853,52 @@ func identityTags(snaps []restic.Snapshot) []string {
 // together with a later machine's under the same name. That pass runs only for
 // a repository with no identity tag at all, one written before identity tags
 // existed, so its retention does not silently stop.
-func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) error {
+//
+// It has no domain in hand and a named repository can hold several (#204), so
+// it asks for the holds of the whole installation and returns every tag it
+// left alone. The repo-wide pass cannot spare a held item, so it refuses while
+// anything is held.
+func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) ([]string, error) {
 	if !p.Any() {
-		return nil
+		return nil, nil
 	}
-	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	held, err := s.anomalies.HeldIdentityTags()
 	if err != nil {
-		return fmt.Errorf("list snapshots for retention: %w", err)
+		return nil, fmt.Errorf("read which items are paused: %w", err)
 	}
+	snaps, sErr := s.engine.Snapshots(ctx, repo, mode)
 	tags := identityTags(snaps)
-	if len(tags) == 0 {
-		return s.forgetWithLockHeal(ctx, repo, p, mode, nil, true)
+	if sErr != nil || len(tags) == 0 {
+		var listErr error
+		if sErr != nil {
+			listErr = fmt.Errorf("list snapshots for retention: %w", sErr)
+		}
+		// Both reasons reach the run record: a destination that cannot be
+		// listed is not something an acknowledge fixes.
+		if len(held) > 0 {
+			return held.names(), errors.Join(listErr, errRetentionPaused(len(held)))
+		}
+		if listErr != nil {
+			return nil, listErr
+		}
+		return nil, s.forgetWithLockHeal(ctx, repo, p, mode, nil, true)
 	}
-	return s.applyRetentionToTags(ctx, repo, p, mode, tags, snaps)
+	return s.applyRetentionToTags(ctx, repo, p, mode, tags, snaps, held)
 }
 
 // applyRetentionToTags forgets per identity and prunes once, for a caller that
 // already knows what the repository holds. snaps is what the tags were read
-// from, which is what decides how an alias's old name folds.
-func (s *Service) applyRetentionToTags(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, snaps []restic.Snapshot) error {
+// from, which is what decides how an alias's old name folds. A group held
+// is left alone and returned.
+func (s *Service) applyRetentionToTags(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, snaps []restic.Snapshot, held heldIdentityTags) ([]string, error) {
 	groups, _ := s.foldAliasedIdentityTags(tags, snaps) // skipped tags are logged there and kept
+	var paused []string
 	var errs []error
 	for _, group := range groups {
+		if held.holdsAny(group) {
+			paused = append(paused, group...)
+			continue
+		}
 		if fErr := s.forgetWithLockHeal(ctx, repo, p, mode, group, false); fErr != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", strings.Join(group, ","), fErr))
 		}
@@ -1746,7 +1906,7 @@ func (s *Service) applyRetentionToTags(ctx context.Context, repo string, p resti
 	if pErr := s.engine.Prune(ctx, repo, mode); pErr != nil {
 		errs = append(errs, pErr)
 	}
-	return errors.Join(errs...)
+	return paused, errors.Join(errs...)
 }
 
 // foldAliasedIdentityTags groups the identity tags that belong to one entry,
@@ -1820,7 +1980,12 @@ func (s *Service) aliasFoldDomains() []aliasFoldDomain {
 			v.liveNames[t.Name] = true
 		}
 	}
-	return []aliasFoldDomain{c, v}
+	// The dumps carry the container's name under their own prefix, so the same
+	// rows answer for them; they fold as a series of their own because that is
+	// how they are forgotten.
+	d := c
+	d.prefix = dbDumpIdentityPrefix
+	return []aliasFoldDomain{c, v, d}
 }
 
 // foldTag is foldAliasedIdentityTags's decision for one tag: the group it
@@ -1858,12 +2023,85 @@ func (s *Service) foldTag(tag string, snaps []restic.Snapshot, domains []aliasFo
 	return tag, false
 }
 
+// previewRetentionPerIdentity is the read-only twin of
+// applyRetentionPerIdentity: it reports what that pass WOULD remove, asking the
+// same question in the same shape: one tag-scoped preview per identity, with
+// the same repo-wide fallback when the listing fails or carries no identity
+// tags. The mirroring is what makes it right. A single repo-wide dry run is
+// cheaper and answers a DIFFERENT question: it would show removals that never
+// happen and hide ones that do, because the per-identity pass is what actually
+// runs.
+//
+// It stays away from forgetWithLockHeal. That helper's first act is
+// unlockStale, which DELETES lock files, and a preview must never write to
+// a repository, least of all one another process is holding.
+//
+// One failing identity does not blank the answer: the remaining tags are still
+// previewed and the failures come back alongside the groups that succeeded, so
+// an operator learns about the repositories that answered instead of seeing a
+// bare error for all of them.
+func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) ([]restic.ForgetGroup, []string, error) {
+	if !p.Any() {
+		return nil, nil, nil
+	}
+	held, hErr := s.anomalies.HeldIdentityTags()
+	if hErr != nil {
+		return nil, nil, fmt.Errorf("read which items are paused: %w", hErr)
+	}
+	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	tags := identityTags(snaps)
+	if err != nil || len(tags) == 0 {
+		if len(held) > 0 {
+			return nil, held.names(), errRetentionPaused(len(held))
+		}
+		groups, pErr := s.engine.ForgetPreview(ctx, repo, p, mode, "")
+		return groups, nil, pErr
+	}
+	var out []restic.ForgetGroup
+	var paused []string
+	var errs []error
+	for _, tag := range tags {
+		if held.holds(tag) {
+			paused = append(paused, tag)
+			out = append(out, restic.ForgetGroup{Tags: []string{tag}, Keep: snapshotsTagged(snaps, tag)})
+			continue
+		}
+		groups, pErr := s.engine.ForgetPreview(ctx, repo, p, mode, tag)
+		if pErr != nil {
+			errs = append(errs, fmt.Errorf("%s: %w", tag, pErr))
+			continue
+		}
+		for _, g := range groups {
+			// restic reports an ungrouped forget's group with no tags of its own
+			// (cmd_forget.go copies the grouping key, and --group-by "" has none),
+			// so without this every item is labelled as the whole repository.
+			if len(g.Tags) == 0 {
+				g.Tags = []string{tag}
+			}
+			out = append(out, g)
+		}
+	}
+	return out, paused, errors.Join(errs...)
+}
+
+// snapshotsTagged is every snapshot carrying tag, the keep list of an item
+// whose retention is paused.
+func snapshotsTagged(snaps []restic.Snapshot, tag string) []restic.Snapshot {
+	var out []restic.Snapshot
+	for _, sn := range snaps {
+		if slices.Contains(sn.Tags, tag) {
+			out = append(out, sn)
+		}
+	}
+	return out
+}
+
 // notifyRetentionFailed sends a best-effort alert when the post-backup
 // retention prune fails. Mirrors notifyReplicationFailed's policy gate; a no-op
 // when notifications are off.
 func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	subject := "Retention prune FAILED for " + tag
@@ -1874,6 +2112,40 @@ func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string)
 			log.Printf("notify: unraid: %v", e)
 		}
 	}
+}
+
+// notifyMCPKeyChange reports that a key was created, replaced, allowed to start
+// backups, set to read only or revoked. A credential change is not a backup
+// result, so it goes out whenever notifications are configured and not switched
+// off, and never to Healthchecks, which tracks backups. The key is never in it.
+//
+// The settings are read before it returns and the sending happens in the
+// background, so a change is judged by the configuration in force when it was
+// made and the caller does not wait on a slow endpoint.
+//
+// A client that signed in through OAuth is reported the same way, by the name
+// it has on its tile.
+func (s *Service) notifyMCPKeyChange(ctx context.Context, event string, k store.MCPKey, addr string) {
+	c, err := s.NotifyConfig()
+	if err != nil || c.On == "" || c.On == "never" {
+		return
+	}
+	title := "BombVault: MCP key " + event
+	msg := fmt.Sprintf("The MCP key %q (ending in %s) was %s from %s. If this was not you, revoke it under Settings > System > MCP server.",
+		k.Label, k.Hint, event, addr)
+	if k.Kind == store.MCPKindOAuth {
+		title = "BombVault: MCP client " + event
+		msg = fmt.Sprintf("The MCP client %q, signed in through OAuth, was %s from %s. If this was not you, revoke its access under Settings > System > MCP server.",
+			k.Label, event, addr)
+	}
+	go func() {
+		notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "mcp", notify.Event{Title: title, Message: msg, OK: false})
+		if s.unraidGate(c.Unraid) {
+			if e := s.sendUnraidNotify(ctx, title, msg, "warning"); e != nil {
+				log.Printf("notify: unraid: %v", e)
+			}
+		}
+	}()
 }
 
 // offsiteTargetsFor returns a domain's ENABLED off-site destinations from the
@@ -2043,6 +2315,8 @@ func offsiteRepoFromSettings(domain string, settings store.Settings) string {
 		return settings.ConfigOffsite
 	case "files":
 		return settings.FilesOffsite
+	case zfsDomain:
+		return settings.ZFSOffsite
 	}
 	return ""
 }
@@ -2085,6 +2359,8 @@ func offsiteScheduleFromSettings(domain string, settings store.Settings) string 
 		return settings.ConfigOffsiteSchedule
 	case "files":
 		return settings.FilesOffsiteSchedule
+	case zfsDomain:
+		return settings.ZFSOffsiteSchedule
 	}
 	return ""
 }
@@ -2107,6 +2383,8 @@ func offsiteImmutableFor(domain string, s store.Settings) bool {
 		return s.ConfigOffsiteImmutable
 	case "files":
 		return s.FilesOffsiteImmutable
+	case zfsDomain:
+		return s.ZFSOffsiteImmutable
 	}
 	return false
 }
@@ -2558,6 +2836,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		{"flash", settings.FlashEnabled, settings.FlashSchedule, s.store.LastSuccessfulFlashBackup},
 		{"config", settings.ConfigEnabled, settings.ConfigSchedule, s.store.LastSuccessfulConfigBackup},
 		{"files", settings.FilesEnabled, settings.FilesSchedule, s.store.LastSuccessfulFilesBackup},
+		{zfsDomain, settings.ZFSEnabled, settings.ZFSSchedule, s.store.LastSuccessfulZFSBackup},
 	}
 
 	out := make([]DomainStatusEntry, 0, len(domains))
@@ -2732,13 +3011,15 @@ type HistoryDay struct {
 	Flash      DayStat `json:"flash"`
 	Config     DayStat `json:"config"`
 	Files      DayStat `json:"files"`
+	ZFS        DayStat `json:"zfs"`
 }
 
 // runDomains is the target_id → domain map ("container" | "vm" | "flash" |
-// "config" | "files") used to attribute each run to its domain. It mirrors the
-// same mapping handleRuns uses: container targets, VM targets, file sets, and
-// the singleton flash/config ids. Best-effort — an unknown id (e.g. a deleted
-// target) maps to "" and is ignored by the bucketer.
+// "config" | "files" | "zfs") used to attribute each run to its domain. It
+// mirrors the same mapping handleRuns uses: container targets, VM targets,
+// file sets, ZFS items and the singleton flash/config ids. Best-effort: an
+// unknown id (for example a deleted target) maps to "" and is ignored by the
+// bucketer.
 func (s *Service) runDomains() map[string]string {
 	domain := map[string]string{store.FlashTargetID: "flash", store.ConfigTargetID: "config"}
 	if cts, err := s.store.ListTargets(); err == nil {
@@ -2754,6 +3035,11 @@ func (s *Service) runDomains() map[string]string {
 	if fss, err := s.store.ListFileSets(); err == nil {
 		for _, fs := range fss {
 			domain[fs.ID] = "files"
+		}
+	}
+	if ds, err := s.store.ListZFSDatasets(); err == nil {
+		for _, d := range ds {
+			domain[d.ID] = zfsDomain
 		}
 	}
 	return domain
@@ -2807,6 +3093,8 @@ func bucketRunsByDay(runs []store.Run, domain map[string]string, startUnix, endU
 			stat = &out[i].Config
 		case "files":
 			stat = &out[i].Files
+		case zfsDomain:
+			stat = &out[i].ZFS
 		default:
 			continue
 		}
@@ -3002,6 +3290,11 @@ func (s *Service) MaybeCollectStatsAfterBulk(ctx context.Context, domain string)
 // scheduled backup). Best-effort; errors are only logged. domain/source are always
 // from a fixed whitelist (handler-validated or literal).
 func (s *Service) CollectStatsAsync(domain, source string) {
+	// A switched-off domain has no repository, and the Storage card asks for
+	// every domain whether it is on or not.
+	if settings, err := s.store.GetSettings(); err != nil || !domainEnabled(settings, domain) {
+		return
+	}
 	source = collectStatsSource(source)
 	if latest, found, err := s.store.LatestRepoStat(domain, source); err == nil && found &&
 		time.Since(time.Unix(latest.At, 0)) < repoStatsMinInterval {
@@ -3019,6 +3312,25 @@ func (s *Service) CollectStatsAsync(domain, source string) {
 			log.Printf("api: stats: %s/%s: async collect failed: %v", domain, source, err) //nolint:gosec // G706: domain/source are fixed-whitelist values
 		}
 	}()
+}
+
+// domainEnabled reports whether domain is switched on in s.
+func domainEnabled(s store.Settings, domain string) bool {
+	switch domain {
+	case "containers":
+		return s.ContainersEnabled
+	case "vms":
+		return s.VMsEnabled
+	case "files":
+		return s.FilesEnabled
+	case zfsDomain:
+		return s.ZFSEnabled
+	case "flash":
+		return s.FlashEnabled
+	case "config":
+		return s.ConfigEnabled
+	}
+	return false
 }
 
 // collectStatsSource normalises a stats source: any off-site source — bare
@@ -3042,6 +3354,7 @@ func (s *Service) CollectStatsOnStartup() {
 	if err != nil {
 		return
 	}
+	var domains []string
 	for _, d := range []struct {
 		name    string
 		enabled bool
@@ -3051,11 +3364,135 @@ func (s *Service) CollectStatsOnStartup() {
 		{"flash", settings.FlashEnabled},
 		{"config", settings.ConfigEnabled},
 		{"files", settings.FilesEnabled},
+		{zfsDomain, settings.ZFSEnabled},
 	} {
 		if d.enabled {
 			s.CollectStatsAsync(d.name, "local")
+			domains = append(domains, d.name)
 		}
 	}
+	// One reading per volume before the first backup of the day, so a disk that
+	// is already filling has a trend to show rather than a single point.
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+		for _, domain := range domains {
+			s.sampleVolumesFor(ctx, domain)
+		}
+	}()
+}
+
+const (
+	// volumeSampleEvery and volumeSampleRemoteEvery throttle the free-space
+	// readings. A statfs is free, so a busy night should not fill the table; an
+	// rclone probe is an API call against somebody else's service.
+	volumeSampleEvery       = int64(3600)
+	volumeSampleRemoteEvery = int64(6 * 3600)
+)
+
+// sampleVolumesFor records how much room every repository of a domain still
+// has. It runs on the way out of a backup attempt, successful or not: a backup
+// that failed because the disk is full is exactly the reading the capacity rule
+// needs, and the repository statistics are written only after a good one.
+func (s *Service) sampleVolumesFor(ctx context.Context, domain string) {
+	_, repos, _, err := s.domainReposForOp(domain, "local")
+	if err != nil {
+		log.Printf("api: capacity: %s: the repositories could not be resolved: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return
+	}
+	now := s.anomalies.nowUnix()
+	recent, err := s.store.ListVolumeSamples(now - volumeSampleRemoteEvery)
+	if err != nil {
+		log.Printf("api: capacity: %s: the previous readings could not be read: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return
+	}
+	// The attempts count as well as the readings: a remote that timed out wrote
+	// no sample, and asking it again on the next backup costs the same wait.
+	seen := s.anomalies.lastVolumeProbes()
+	for _, sample := range recent {
+		seen[sample.Volume] = max(seen[sample.Volume], sample.At)
+	}
+
+	var unmeasured []string
+	wrote := false
+	for _, ref := range repos {
+		sample, err := s.probeVolume(ctx, ref, seen, now)
+		switch {
+		case errors.Is(err, errAboutUnsupported) || errors.Is(err, errVolumeUnmeasurable):
+			unmeasured = append(unmeasured, s.refName(ref))
+		case err != nil:
+			log.Printf("api: capacity: %s: %s could not be measured: %v", domain, s.refName(ref), scrubError(err)) //nolint:gosec // G706: domain is a literal, the name is scrubbed
+		case sample == nil:
+			continue // read recently enough
+		default:
+			sample.Domains = []string{domain}
+			if addErr := s.store.AddVolumeSample(*sample); addErr != nil {
+				log.Printf("api: capacity: %s: the reading could not be stored: %v", domain, addErr) //nolint:gosec // G706: domain is a fixed literal
+				continue
+			}
+			seen[sample.Volume] = sample.At
+			wrote = true
+		}
+	}
+	s.anomalies.noteUnmeasuredVolumes(domain, unmeasured)
+	if wrote {
+		s.anomalies.MarkVolumeDirty()
+	}
+}
+
+// errVolumeUnmeasurable is a repository this box cannot ask about at all: S3,
+// B2, a REST server or SFTP answer no capacity question.
+var errVolumeUnmeasurable = errors.New("this backend reports no capacity")
+
+// probeVolume measures one repository, or returns nil when the volume it sits
+// on was read recently enough.
+func (s *Service) probeVolume(ctx context.Context, ref domainRepoRef,
+	seen map[string]int64, now int64) (*store.VolumeSample, error) {
+
+	if !restic.IsRemoteRepo(ref.Loc) {
+		if localRepoMissing(ref.Loc) {
+			return nil, nil
+		}
+		res, err := s.diskStatFn()(ref.Loc)
+		if err != nil {
+			return nil, err
+		}
+		if now-seen[res.Volume] < volumeSampleEvery {
+			return nil, nil
+		}
+		total := clampToInt64(res.Total)
+		return &store.VolumeSample{
+			Volume: res.Volume, At: now, Source: "statfs",
+			FreeBytes: clampToInt64(res.Free), TotalBytes: &total,
+		}, nil
+	}
+	if !isRcloneLocation(ref.Loc) {
+		return nil, errVolumeUnmeasurable
+	}
+	volume := "remote:" + repoLocationKey(ref.Loc)
+	if now-seen[volume] < volumeSampleRemoteEvery {
+		return nil, nil
+	}
+	remote, err := rcloneRemoteOf(ref.Loc)
+	if err != nil {
+		return nil, err
+	}
+	s.anomalies.noteVolumeProbe(volume, now)
+	about, err := s.rcloneAboutFn()(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+	return &store.VolumeSample{
+		Volume: volume, At: now, Source: "rclone",
+		FreeBytes: about.Free, TotalBytes: about.Total,
+	}, nil
+}
+
+// repoLocationKey names a remote repository's volume without writing the
+// location itself into the table, which can carry a bucket and a user name.
+func repoLocationKey(loc string) string {
+	sum := sha256.Sum256([]byte(strings.TrimSpace(loc)))
+	return hex.EncodeToString(sum[:])[:16]
 }
 
 // copyToOffsite replicates a domain's local repo to its off-site DESTINATIONS with
@@ -3134,7 +3571,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	// up in the dashboard Activity Log/Run History as persisted history. This stays
 	// per-DOMAIN (one row per domain per call) — per-target activity/progress is a
 	// later stage, and with a single target it is identical to before. Best-effort.
-	activityRunID, aErr := s.store.StartRun(domainRunTargetID(domain), "offsite")
+	activityRunID, aErr := s.startRun(ctx, domainRunTargetID(domain), "offsite")
 	if aErr != nil {
 		log.Printf("api: offsite %s: could not start activity run (continuing): %v", domain, aErr) //nolint:gosec // G706: domain is a fixed literal
 		activityRunID = ""
@@ -3730,28 +4167,24 @@ func bulkReplicateSuppressed(ctx context.Context) bool {
 // "Backup Everything" pass (a sequential run over every domain — containers,
 // vms, flash, files, config — triggered as one unit, e.g. so a dead-man's-
 // switch ping can fire only once everything is done). The value is the
-// PARENT run's id; runsAdapter/startedRunsAdapter read it via
-// runGroupFromContext and stamp it onto the CHILD run they just started
-// (store.SetRunGroup), so that run is durably traceable back to the pass
-// that produced it. Unset by every caller today — a pure no-op until
-// BackupEverything (internal/api/everything.go) starts setting it.
+// PARENT run's id; startRunWith reads it via runGroupFromContext and writes it
+// into the CHILD run's INSERT, so that run is durably traceable back to the
+// pass that produced it. A context without one records no group.
 type runGroupKey struct{}
 
 // WithRunGroup marks ctx as belonging to the "Backup Everything" pass whose
 // parent run id is groupID (see runGroupKey). Set by BackupEverything around
 // each domain's own backup entry point (s.Backup/s.BackupVM/s.BackupFlash/
-// s.BackupFileSet/s.BackupConfig); read by runsAdapter/startedRunsAdapter
-// when they record that call's child run.
+// s.BackupFileSet/s.BackupConfig); read by startRunWith when it records that
+// call's child run.
 func WithRunGroup(ctx context.Context, groupID string) context.Context {
 	return context.WithValue(ctx, runGroupKey{}, groupID)
 }
 
 // runGroupFromContext reports the parent run id this context's backup call
-// belongs to, or "" when it isn't part of a "Backup Everything" pass — true
-// for every context in the codebase today, and for every restore/other-kind
-// runsAdapter construction site that isn't part of such a pass. A nil ctx
-// (e.g. a zero-value runsAdapter/startedRunsAdapter built without one) is
-// treated the same as "no group", never a panic.
+// belongs to, or "" when it isn't part of a "Backup Everything" pass. A nil ctx
+// (a zero-value runsAdapter built without one) is treated the same as "no
+// group", never a panic.
 func runGroupFromContext(ctx context.Context) string {
 	if ctx == nil {
 		return ""
@@ -3830,6 +4263,20 @@ func (s *Service) replicateOffsite(ctx context.Context, domain string, settings 
 	if alreadyOffSite(ref) {
 		log.Printf("api: offsite %s: this item's repository %s; not copied again", domain, offSiteReason(ref)) //nolint:gosec // G706: domain is a fixed literal
 		return
+	}
+	// The local backup is written by now. A cancel, the stall guard or the hour
+	// cap that ended its context during the retention must not cost the fresh
+	// snapshot its copy, so the copy gets a hold of its own that only the
+	// process stop ends early.
+	if ctx.Err() != nil {
+		if s.IsShuttingDown() {
+			log.Printf("api: offsite %s: not copied, BombVault is shutting down; the next copy catches up", domain) //nolint:gosec // G706: domain is a fixed literal
+			return
+		}
+		held, cancel := backupHoldCtx(ctx)
+		defer cancel()
+		defer context.AfterFunc(s.StopContext(), cancel)()
+		ctx = held
 	}
 	// The skip list of the WHOLE domain, even though this hook copies exactly one
 	// repository. It is not this hook's report - it never surfaces one, it only
@@ -4711,12 +5158,13 @@ func (s *Service) configuredBackupPaths(name string, in model.Inspect) []string 
 // detection, filtered to those that exist on disk (a stateless container ends up
 // with an empty list).
 func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
-	paths, _ := s.effectiveBackupPathsWithSelection(name, in)
+	paths, _, _ := s.effectiveBackupPathsWithSelection(name, in)
 	return paths
 }
 
-// effectiveBackupPathsWithSelection returns the same paths AND the stored
-// selection they were derived from, out of ONE read of the target row.
+// effectiveBackupPathsWithSelection returns the same paths, the configured
+// paths they were filtered from AND the stored selection both were derived
+// from, out of ONE read of the target row.
 //
 // A backup needs both: the includes become the restic positionals, the
 // exclusion branches become the --exclude tail. Reading them separately let a
@@ -4732,13 +5180,13 @@ func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
 // One read cannot tear. It can still be overtaken by a save that lands just
 // before it, which is ordinary staleness: the whole selection is then the new
 // one, the next run uses it, and no snapshot is internally inconsistent.
-func (s *Service) effectiveBackupPathsWithSelection(name string, in model.Inspect) (paths, selection []string) {
-	chosen := s.resolveAppdataPaths(name, in)
+func (s *Service) effectiveBackupPathsWithSelection(name string, in model.Inspect) (paths, configured, stored []string) {
+	configured = s.resolveAppdataPaths(name, in)
 	if existing, gErr := s.store.GetTargetByContainer(name); gErr == nil && len(existing.SelectedPaths) > 0 {
-		selection = existing.SelectedPaths
-		chosen = includesOnly(selection)
+		stored = existing.SelectedPaths
+		configured = includesOnly(stored)
 	}
-	return onlyExistingPaths(chosen), selection
+	return onlyExistingPaths(configured), configured, stored
 }
 
 // emptyBackupIsUnreachable decides what an empty effective path list MEANS, and
@@ -4870,6 +5318,22 @@ func (s *Service) ScheduleSelfRestart() bool {
 	return true
 }
 
+// inspectNamed inspects the container called name and fails when none is. Docker
+// falls back to an id prefix for a name no container has, so a removed "db"
+// would otherwise resolve to whichever container's id starts with db. Callers
+// act on the returned id, which a container recreated in the meantime does not
+// share.
+func (s *Service) inspectNamed(ctx context.Context, name string) (model.Inspect, error) {
+	in, err := s.docker.Inspect(ctx, name)
+	if err != nil {
+		return model.Inspect{}, err
+	}
+	if strings.TrimPrefix(in.Name, "/") != name {
+		return model.Inspect{}, fmt.Errorf("no container is named %q", name)
+	}
+	return in, nil
+}
+
 // Backup runs a full container backup: resolve repo + mode, ensure the repo,
 // inspect the container, find-or-create its target, and drive the orchestrator.
 func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, retErr error) {
@@ -4884,13 +5348,16 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// closing browser tab must not stop a backup, while the process itself
 	// leaving must — otherwise the run is killed anyway, just without anyone
 	// writing down that it happened.
-	s.registerBackupCancel("container:"+name, cancel)
-	defer s.unregisterBackupCancel("container:" + name)
+	s.registerBackupCancel(ctx, "container:"+name, cancel)
+	defer s.endBackupCancel("container:"+name, &retErr)
 	// Never back up our own container: stopping it mid-run is suicide.
 	if self := s.selfContainerName(ctx); self != "" && name == self {
 		return backup.Summary{}, ErrSelfBackup
 	}
 	defer s.lockDomain("containers")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "containers")
 
 	// #64: a domain-wide fault (repo mount lost, disk full, restic repo error) that
 	// begins mid-batch trips one of the pre-flight early-returns below — settings,
@@ -4910,7 +5377,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	orchestrated := false
 	defer func() {
 		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrContainerNotInstalled) {
-			s.recordPreflightFailure("Backup", name, targetID, retErr)
+			s.recordPreflightFailure(ctx, "Backup", name, targetID, retErr)
 		}
 	}()
 
@@ -4948,7 +5415,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// the positionals, and selection feeds the --exclude tail further down. Two
 	// reads let a save landing between them pair old positionals with new
 	// exclusions - see effectiveBackupPathsWithSelection.
-	effective, selection := s.effectiveBackupPathsWithSelection(name, in)
+	effective, configured, selection := s.effectiveBackupPathsWithSelection(name, in)
 
 	// Guard against a SILENT no-op: if a PREVIOUS backup captured data (or the user
 	// selected folders) but every path now resolves away — e.g. the appdata share
@@ -4965,7 +5432,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// the data a previous backup captured has disappeared from disk.
 	if s.emptyBackupIsUnreachable(name, effective) {
 		err := fmt.Errorf("backup %q: its backup folders are not reachable right now (is the appdata share mounted?). Refusing an empty backup that would look successful", name)
-		s.notifyBackup(ctx, "container", name, false, backup.Summary{}, err)
+		s.notifyBackup(ctx, "container", name, "", false, backup.Summary{}, err)
 		return backup.Summary{}, err
 	}
 
@@ -5010,7 +5477,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// cannot inspect (e.g. removed) is logged and left untouched.
 	var deps []backup.StopContainer
 	for _, dep := range tg.StopContainers {
-		di, dErr := s.docker.Inspect(ctx, dep)
+		di, dErr := s.inspectNamed(ctx, dep)
 		if dErr != nil {
 			log.Printf("api: backup: inspect dependency %q: %v (leaving as-is)", dep, dErr) //nolint:gosec // G706: dep is %q-quoted
 			continue
@@ -5020,6 +5487,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		// and, when enabled, wait for each to be healthy before its dependents (#119).
 		deps = append(deps, backup.StopContainer{
 			Name:       dep,
+			ID:         di.ID,
 			WasRunning: di.Running,
 			Service:    composeService(di.Config.Labels),
 			DependsOn:  parseDependsOn(di.Config.Labels),
@@ -5047,6 +5515,27 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// BackupContainer now owns run bookkeeping (it records its own failed/success run),
 	// so the pre-flight failure finisher above must stand down to avoid a double record.
 	orchestrated = true
+	dumpPlan := s.dbDumpPlanFor(settings, tg, name, in)
+	var dumper backup.DBDumper
+	var dumpOutcome backup.DBDumpOutcome
+	if dumpPlan != nil {
+		dumper = &dbDumpAdapter{
+			svc: s, engine: s.engine, docker: s.docker, mode: mode,
+			container: name, containerID: in.ID, progressKey: pkey, startedAt: startedAt,
+			extraTags: s.directTags(settings, "containers", repo),
+		}
+	}
+	excludes := append(s.resolveExcludePatterns(tg.Excludes, in), excludedBranches(selection)...)
+	// The fingerprint covers the configured folders, not the ones that resolved
+	// on disk just now: an unmounted share must look like the selection it has
+	// always been, so the detectors report the collapse instead of writing it
+	// off as a change the user made.
+	selectionFP := selectionFingerprint(itemSelection{
+		Kind:     "container",
+		Paths:    configured,
+		Excludes: excludes,
+		Caches:   enabledKeys(tg.ExcludeCaches),
+	})
 	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{
 		ContainerRef:           name,
 		FormerNames:            aliasOldNames(aliases),
@@ -5074,14 +5563,21 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		// positional from another is a snapshot nobody asked for. Patterns
 		// travel as typed builder arguments into BackupArgs (excludes before
 		// --, positionals after) — never through a shell.
-		Excludes:  append(s.resolveExcludePatterns(tg.Excludes, in), excludedBranches(selection)...),
-		Docker:    s.docker,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, "containers", repo)},
-		Templates: templatesAdapter{},
-		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name},
+		Excludes:     excludes,
+		Docker:       s.docker,
+		Restic:       &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "containers", repo)},
+		Templates:    templatesAdapter{},
+		Runs:         runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name},
+		DBDump:       dumpPlan,
+		DBDumper:     dumper,
+		OnDBDumpDone: func(o backup.DBDumpOutcome) { dumpOutcome = o },
+		Committed:    func() { s.commitBackup(pkey, startedAt) },
 	})
 	s.progEnd(pkey, "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "container", name, err == nil, sum, err)
+	s.notifyBackup(ctx, "container", name, "container:"+name, err == nil, sum, err)
+	// After the backup's own outcome is known, so the dump's message can say
+	// whether the files around it made it.
+	s.notifyDBDumpFailed(ctx, tg.ID, name, dumpOutcome, err == nil)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -5120,9 +5616,14 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 			log.Printf("api: backup: %v", err)
 		}
 	}
+	// The dumps are their own retention series, forgotten without a prune so
+	// the container's pass below reclaims both at once.
+	if dumpPlan != nil {
+		s.forgetDBDumpSeries(ctx, repo, settings, mode, name, tg.ID)
+	}
 	// A renamed container's "keep last N" counts across the rename, as long as
 	// no other machine has used the old name since.
-	s.applyRetention(ctx, repo, settings, mode, s.containerIdentity(name), "containers")
+	s.applyRetention(ctx, repo, settings, mode, s.containerIdentity(name), "containers", anomalyScope{Kind: anomalyScopeItem, ID: tg.ID})
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "containers", settings, repo, "container:"+name)
 	s.collectStatsAfterItem(ctx, "containers")
@@ -5180,12 +5681,12 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 		return
 	}
 	if err := s.recreateForUpdate(ctx, name, in); err != nil {
-		_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", "", 0, truncateRunErr(err))
+		_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(err))
 		s.setUpdateCheck(name, "failed")
 		log.Printf("api: update-after-backup: recreate %q failed (backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
-	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", "", 0, "")
+	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", backup.Summary{}, "")
 	s.setUpdateCheck(name, "updated")
 
 	// #116: BombVault just recreated the container, so its image tag moved to the
@@ -5285,7 +5786,7 @@ func (s *Service) recordUpdateFailure(name, targetID string, cause error) {
 		log.Printf("api: update-after-backup: %q could not record update failure: %v (cause: %v)", name, rErr, cause) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
-	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", "", 0, truncateRunErr(cause))
+	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(cause))
 }
 
 // StartBackupAll launches a server-side batch backup of the named containers,
@@ -5313,7 +5814,7 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 	}
 	if op, busy := s.domainBusy("containers"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on containers", op)
+		return false, domainBusyError{op: op, domain: "containers"}
 	}
 	// Detach immediately so the run — and the self-detection it depends on — is
 	// independent of the request that started it (which is canceled the moment the
@@ -5438,7 +5939,7 @@ func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
 	}
 	if op, busy := s.domainBusy("containers"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on containers", op)
+		return false, domainBusyError{op: op, domain: "containers"}
 	}
 	// Detach so the run is independent of the request that started it (canceled
 	// the moment the handler returns); Backup applies its own hard timeout.
@@ -5454,7 +5955,7 @@ func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
 			if errors.Is(err, backup.ErrContainerNotInstalled) {
 				log.Printf("api: backup: %q skipped — not installed (backups only)", name) //nolint:gosec // G706: name is %q-quoted
 			} else {
-				log.Printf("api: backup: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+				log.Printf("api: backup: %q %s: %v", name, backupEnding(err), err) //nolint:gosec // G706: name is %q-quoted
 			}
 		}
 	}()
@@ -5472,7 +5973,7 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 	}
 	if op, busy := s.domainBusy("vms"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on vms", op)
+		return false, domainBusyError{op: op, domain: "vms"}
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -5483,7 +5984,7 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupVM(bctx, name); err != nil {
-			log.Printf("api: backup vm: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+			log.Printf("api: backup vm: %q %s: %v", name, backupEnding(err), err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
 	return true, nil
@@ -5499,7 +6000,7 @@ func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
 	}
 	if op, busy := s.domainBusy("flash"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on flash", op)
+		return false, domainBusyError{op: op, domain: "flash"}
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -5508,7 +6009,7 @@ func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
 		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupFlash(bctx); err != nil {
-			log.Printf("api: backup flash failed: %v", err)
+			log.Printf("api: backup flash %s: %v", backupEnding(err), err)
 		}
 	}()
 	return true, nil
@@ -5525,7 +6026,7 @@ func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
 	}
 	if op, busy := s.domainBusy("config"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on config", op)
+		return false, domainBusyError{op: op, domain: "config"}
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -5534,7 +6035,7 @@ func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
 		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupConfig(bctx); err != nil {
-			log.Printf("api: backup config failed: %v", err)
+			log.Printf("api: backup config %s: %v", backupEnding(err), err)
 		}
 	}()
 	return true, nil
@@ -5552,7 +6053,7 @@ func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, erro
 	}
 	if op, busy := s.domainBusy("files"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on files", op)
+		return false, domainBusyError{op: op, domain: "files"}
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
@@ -5561,7 +6062,7 @@ func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, erro
 		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupFileSet(bctx, id); err != nil {
-			log.Printf("api: backup file set: %q failed: %v", id, err) //nolint:gosec // G706: id is %q-quoted
+			log.Printf("api: backup file set: %q %s: %v", id, backupEnding(err), err) //nolint:gosec // G706: id is %q-quoted
 		}
 	}()
 	return true, nil
@@ -5581,7 +6082,7 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 	}
 	if op, busy := s.domainBusy("files"); busy {
 		s.batchActive.Store(false)
-		return false, fmt.Errorf("%s is running on files", op)
+		return false, domainBusyError{op: op, domain: "files"}
 	}
 	// Detach immediately so the batch is independent of the request that started
 	// it (canceled the moment the handler returns). Each per-set BackupFileSet
@@ -5643,6 +6144,121 @@ func (s *Service) backupFileSetOneForBatch(ctx context.Context, id string) (err 
 		s.failStuckRun(id, msg)
 	})
 	_, err = s.BackupFileSet(ctx, id)
+	return err
+}
+
+// orderVMNamesForRun sequences a manual VM batch the way a scheduled VM run is
+// sequenced: the operator's explicit backup order first, then the name order
+// for the rest. A selected VM that has no stored row yet keeps its place in the
+// selection instead of being dropped.
+func (s *Service) orderVMNamesForRun(names []string) []string {
+	stored, err := s.store.ListVMTargets()
+	if err != nil {
+		log.Printf("api: backup-vms-all: read vm targets: %v (using selection order)", err)
+		return names
+	}
+	store.SortVMTargetsForRun(stored)
+	requested := make(map[string]bool, len(names))
+	for _, n := range names {
+		requested[n] = true
+	}
+	seen := make(map[string]bool, len(names))
+	out := make([]string, 0, len(names))
+	for _, vm := range stored {
+		if requested[vm.Name] && !seen[vm.Name] {
+			out = append(out, vm.Name)
+			seen[vm.Name] = true
+		}
+	}
+	for _, n := range names {
+		if !seen[n] {
+			out = append(out, n)
+			seen[n] = true
+		}
+	}
+	return out
+}
+
+// StartBackupVMsAll launches sequential backups for the named VMs in one
+// background batch and returns immediately, mirroring StartBackupFilesAll for
+// the VM domain. Two rules come from the existing VM paths: the queue runs in
+// the operator's backup order whatever order the caller passed, and a VM the
+// host no longer defines is a skip rather than a batch failure. Overall progress
+// is published under "batch:vms" while each VM still publishes its own
+// "vm:<name>" bar as it runs. Shares batchActive; returns (false, nil) if a
+// backup/batch is already running, or (false, err) if the vms domain is already
+// busy with another op.
+func (s *Service) StartBackupVMsAll(ctx context.Context, names []string) (bool, error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return false, nil
+	}
+	if op, busy := s.domainBusy("vms"); busy {
+		s.batchActive.Store(false)
+		return false, domainBusyError{op: op, domain: "vms"}
+	}
+	// Detach immediately so the batch is independent of the request that started
+	// it (canceled the moment the handler returns). Each per-VM BackupVM applies
+	// its own hard timeout, so the batch needs no deadline of its own.
+	// #95: the bulk flag suppresses each VM's inline off-site replication so the
+	// whole batch is replicated once after the loop.
+	bctx := WithBulkReplicateSuppressed(context.WithoutCancel(ctx))
+	go func() {
+		// See StartBackupAll's identical pair of defers. This one contains a panic
+		// outside the per-item loop; inside it every VM has its own recovery in
+		// backupVMOneForBatch, so one bad VM cannot abort the rest of the batch.
+		defer s.recoverOperation("backup-vms-all", nil, nil)
+		defer s.batchActive.Store(false)
+
+		queue := make([]string, 0, len(names))
+		for _, n := range names {
+			if n != "" {
+				queue = append(queue, n)
+			}
+		}
+		queue = s.orderVMNamesForRun(queue)
+		total := len(queue)
+		const key = "batch:vms"
+		s.publishBatch(key, 0, true)
+		ok, fail, skipped := 0, 0, 0
+		for i, n := range queue {
+			if err := s.backupVMOneForBatch(bctx, n); err != nil {
+				if errors.Is(err, backup.ErrVMNotInstalled) {
+					skipped++
+					log.Printf("api: backup-vms-all: %q skipped: not defined on the host", n) //nolint:gosec // G706: n is %q-quoted
+				} else {
+					fail++
+					log.Printf("api: backup-vms-all: %q failed (continuing): %v", n, err) //nolint:gosec // G706: n is %q-quoted
+				}
+			} else {
+				ok++
+			}
+			s.publishBatch(key, float64(i+1)/float64(total)*100, true)
+		}
+		s.publishBatch(key, 100, false)
+		// Retention first, so the off-site copy below has fewer snapshots to
+		// carry. Each VM's forget already ran inline without a prune under the
+		// bulk flag, so this is a plain space reclaim for the whole batch.
+		s.PruneAfterBulk(bctx, "vms")
+		s.ReplicateOffsiteAfterBulk(bctx, "vms")
+		// One repository sample for the whole round rather than one per VM.
+		s.maybeCollectStats(bctx, "vms")
+		log.Printf("api: backup-vms-all done: %d ok, %d skipped, %d failed (of %d requested %d)", ok, skipped, fail, total, len(names))
+	}()
+	return true, nil
+}
+
+// backupVMOneForBatch backs up a single queued VM on behalf of
+// StartBackupVMsAll. See backupOneForBatch, the containers-batch counterpart,
+// for why each item gets its own recovery instead of one shared at the batch
+// level.
+func (s *Service) backupVMOneForBatch(ctx context.Context, name string) (err error) {
+	// See backupOneForBatch for why this must be a direct defer, not wrapped.
+	defer s.recoverOperation("backup-vms-all: "+name, &err, func(msg string) {
+		if tg, tErr := s.store.GetVMTargetByName(name); tErr == nil {
+			s.failStuckRun(tg.ID, msg)
+		}
+	})
+	_, err = s.BackupVM(ctx, name)
 	return err
 }
 
@@ -6174,13 +6790,16 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 	if err != nil {
 		return DiscoverResult{}, fmt.Errorf("read settings: %w", err)
 	}
-	// The distinct container names from the container:<name> tags, across every
-	// repository this domain writes to, each with the named repository (#204) it
-	// was found in. A not-yet-created repo yields nothing. A read failure comes
-	// back as readErr together with whatever the named repositories yielded, so
-	// an install whose domain repository is unreadable is still rebuilt as far
-	// as it can be; the Recovery wizard classifies on that error.
-	names, formerNames, skipped, directRows, readErr := s.discoverNamesAcrossRepos(ctx, settings, "containers", "container:")
+	// The distinct container names from the container:<name> and dbdump:<name>
+	// tags, across every repository this domain writes to, each with the named
+	// repository (#204) it was found in. A stack member whose data sits under
+	// the compose working directory has no volume backup at all, so its dumps
+	// are the only evidence that it exists. A not-yet-created repo yields
+	// nothing. A read failure comes back as readErr together with whatever the
+	// named repositories yielded, so an install whose domain repository is
+	// unreadable is still rebuilt as far as it can be; the Recovery wizard
+	// classifies on that error.
+	names, formerNames, skipped, directRows, readErr := s.discoverNamesAcrossRepos(ctx, settings, "containers", "container:", dbDumpIdentityPrefix)
 	findings, fErr := s.directFindings("containers", directRows)
 	if fErr != nil {
 		log.Printf("api: discover containers: could not match direct repositories to targets: %v", fErr)
@@ -7128,12 +7747,32 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 	return true, nil
 }
 
+// ContainerSnapshotTimes is what the repositories hold for one container: the
+// unix time of its newest files snapshot and of its newest database dump.
+type ContainerSnapshotTimes struct {
+	Files int64
+	Dump  int64
+}
+
+// Newest is the time of this container's most recent snapshot of either kind.
+func (c ContainerSnapshotTimes) Newest() int64 {
+	return max(c.Files, c.Dump)
+}
+
+// DumpOnly reports a container that exists in the repositories as database
+// dumps alone. Restoring it brings back a container with an empty database, so
+// a bulk restore has to leave it out and say so.
+func (c ContainerSnapshotTimes) DumpOnly() bool {
+	return c.Dump > 0 && c.Files == 0
+}
+
 // LatestContainerBackupTimes returns, per container name, the unix time of the
-// newest backup that name owns. A card's date is read from here rather than
-// from the run history, so it agrees with the list of backups under it: an
-// entry rebuilt by Discover has no run at all (#44), and a run stays with the
-// entry while a backup stays with the name it was written under.
-func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]int64, error) {
+// newest backup that name owns, under each identity a container has: its files
+// snapshots and its database dumps. A card's date is read from here rather
+// than from the run history, so it agrees with the list of backups under it:
+// an entry rebuilt by Discover has no run at all (#44), and a run stays with
+// the entry while a backup stays with the name it was written under.
+func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]ContainerSnapshotTimes, error) {
 	// When the targets cannot be read nothing folds, and each old name keeps
 	// its own date.
 	idToName := map[string]string{}
@@ -7144,7 +7783,21 @@ func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]in
 			idToName[t.ID] = t.ContainerName
 		}
 	}
-	return s.latestBackupTimes(ctx, "containers", "container", idToName)
+	out := map[string]ContainerSnapshotTimes{}
+	err := s.eachBackupTime(ctx, "containers", "container", idToName, []string{"container:", dbDumpIdentityPrefix},
+		func(prefix, name string, unix int64) {
+			times := out[name]
+			if prefix == dbDumpIdentityPrefix {
+				times.Dump = max(times.Dump, unix)
+			} else {
+				times.Files = max(times.Files, unix)
+			}
+			out[name] = times
+		})
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // LatestFileSetBackupTimes is LatestContainerBackupTimes for the folder sets.
@@ -7152,7 +7805,7 @@ func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]in
 // backups left under a name no set carries any more come back as their own set
 // through Discover.
 func (s *Service) LatestFileSetBackupTimes(ctx context.Context) (map[string]int64, error) {
-	return s.latestBackupTimes(ctx, "files", "fileset", nil)
+	return s.latestBackupTimes(ctx, "files", "fileset", "fileset:", nil)
 }
 
 // LatestVMBackupTimes is LatestContainerBackupTimes for the VMs domain.
@@ -7165,16 +7818,30 @@ func (s *Service) LatestVMBackupTimes(ctx context.Context) (map[string]int64, er
 			idToName[t.ID] = t.Name
 		}
 	}
-	return s.latestBackupTimes(ctx, "vms", "vm", idToName)
+	return s.latestBackupTimes(ctx, "vms", "vm", "vm:", idToName)
 }
 
-// latestBackupTimes reads one snapshot listing per repository of domain and
-// keeps, per name, the newest time under that name's tag. idToName carries the
-// current name of every entry, for the alias fold.
-func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain string, idToName map[string]string) (map[string]int64, error) {
+// latestBackupTimes keeps, per name, the newest time under that name's tag,
+// for a domain whose items have one identity each.
+func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain, prefix string, idToName map[string]string) (map[string]int64, error) {
+	out := map[string]int64{}
+	err := s.eachBackupTime(ctx, domain, aliasDomain, idToName, []string{prefix}, func(_, name string, unix int64) {
+		out[name] = max(out[name], unix)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// eachBackupTime reads one snapshot listing per repository of domain and calls
+// fn for every snapshot carrying one of prefixes, with the prefix, the name
+// the tag folds to and the snapshot's unix time. idToName carries the current
+// name of every entry, for the alias fold.
+func (s *Service) eachBackupTime(ctx context.Context, domain, aliasDomain string, idToName map[string]string, prefixes []string, fn func(prefix, name string, unix int64)) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return nil, fmt.Errorf("read settings: %w", err)
+		return fmt.Errorf("read settings: %w", err)
 	}
 	// EVERY repository this domain's containers write to, not just the domain's
 	// own (#204). A container pointed at a named repository keeps its snapshots
@@ -7189,10 +7856,8 @@ func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain str
 	// answers "shared" when it cannot tell.
 	repos, _, err := s.domainReposInUse(settings, domain)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	prefix := aliasDomain + ":"
-	out := make(map[string]int64)
 	for _, repo := range repos {
 		if localRepoMissing(repo.Loc) {
 			continue
@@ -7218,26 +7883,27 @@ func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain str
 			}
 			unix := ts.Unix()
 			for _, tag := range snap.Tags {
-				name, ok := strings.CutPrefix(tag, prefix)
-				if !ok || name == "" {
-					continue
-				}
-				// A rename leaves the old tag on snapshots already written. One
-				// from before the link is the renamed entry's and counts for its
-				// current name, whoever holds the old name today; a later one
-				// stays under the old name.
-				if a, aErr := s.store.AliasByOldName(aliasDomain, name); aErr == nil {
-					if cur := idToName[a.TargetID]; cur != "" && newAliasClaim(prefix, a).claims(snap) {
-						name = cur
+				for _, prefix := range prefixes {
+					name, ok := strings.CutPrefix(tag, prefix)
+					if !ok || name == "" {
+						continue
 					}
-				}
-				if unix > out[name] {
-					out[name] = unix
+					// A rename leaves the old tag on snapshots already written. One
+					// from before the link is the renamed entry's and counts for its
+					// current name, whoever holds the old name today; a later one
+					// stays under the old name. A dump follows its container the
+					// same way, under its own prefix.
+					if a, aErr := s.store.AliasByOldName(aliasDomain, name); aErr == nil {
+						if cur := idToName[a.TargetID]; cur != "" && newAliasClaim(prefix, a).claims(snap) {
+							name = cur
+						}
+					}
+					fn(prefix, name, unix)
 				}
 			}
 		}
 	}
-	return out, nil
+	return nil
 }
 
 // domainReposForOp is domainRepoSource for an operation that has to reach ALL of
@@ -7341,6 +8007,16 @@ func (s *Service) domainReposInUse(settings store.Settings, domain string) ([]do
 				ids[id] = true
 			}
 		}
+	case zfsDomain:
+		datasets, dErr := s.store.ListZFSDatasets()
+		if dErr != nil {
+			return out, []repoSkip{{Name: "this domain's items", Reason: "their list could not be read", Unreachable: true}}, nil //nolint:nilerr // see above
+		}
+		for _, d := range datasets {
+			if id := strings.TrimSpace(d.Repo); id != "" {
+				ids[id] = true
+			}
+		}
 	}
 	named, err := s.store.ListNamedRepos()
 	if err != nil {
@@ -7367,19 +8043,46 @@ func (s *Service) domainReposInUse(settings store.Settings, domain string) ([]do
 	return out, skipped, nil
 }
 
-// domainTagPrefix is the identity-tag prefix every snapshot of a domain carries
-// ("container:<name>", "vm:<name>", "fileset:<name>"). Empty for flash and
-// config, which have no per-item repositories and therefore cannot share one.
-func domainTagPrefix(domain string) string {
+// domainTagPrefixes are the identity-tag prefixes a domain's snapshots carry.
+// Containers have two: the volume backup and the database dump, which is a
+// snapshot of its own in the same repository. Empty for flash and config, which
+// have no per-item repositories and therefore cannot share one.
+func domainTagPrefixes(domain string) []string {
 	switch domain {
 	case "containers":
-		return "container:"
+		return []string{"container:", dbDumpIdentityPrefix}
 	case "vms":
-		return "vm:"
+		return []string{"vm:"}
 	case "files":
-		return "fileset:"
+		return []string{"fileset:"}
+	case zfsDomain:
+		return []string{"zfs:"}
+	}
+	return nil
+}
+
+// nameAfterAnyPrefix returns the item name a tag carries under one of prefixes,
+// or "" when it carries none.
+func nameAfterAnyPrefix(tag string, prefixes []string) string {
+	for _, prefix := range prefixes {
+		if rest, ok := strings.CutPrefix(tag, prefix); ok && rest != "" {
+			return rest
+		}
 	}
 	return ""
+}
+
+// snapshotInDomain reports whether sn carries one of the domain's identity
+// prefixes.
+func snapshotInDomain(sn restic.Snapshot, prefixes []string) bool {
+	for _, tag := range sn.Tags {
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(tag, prefix) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // domainRepoRef is ONE repository of a domain together with WHAT it is.
@@ -7573,6 +8276,17 @@ func skippedError(what string, skipped []repoSkip) error {
 	return fmt.Errorf("%s covered only part of this domain: %s", what, strings.Join(parts, ", "))
 }
 
+// retentionPausedNote is what a pass that left held items alone records and
+// reports, in the same shape as skippedError: the work was done, except for
+// the items whose old backups a finding is keeping. Empty when nothing was
+// held, so a clean pass carries no note.
+func retentionPausedNote(tags []string) string {
+	if len(tags) == 0 {
+		return ""
+	}
+	return "done, except: deleting old backups is paused for " + strings.Join(tags, ", ")
+}
+
 // nothingCoveredError is skippedError's counterpart for the case where the
 // operation covered NOTHING: a separate sentence rather than the same one with a
 // different subject, because "covered only part" is false there and the
@@ -7593,9 +8307,11 @@ func nothingCoveredError(skipped []repoSkip) error {
 }
 
 // discoverNamesAcrossRepos collects the item names a domain's snapshots carry
-// (from the tagPrefix tag, e.g. "container:") across EVERY repository the domain
-// writes to, and remembers WHICH repository each name was found in: the value is
-// the named repository's id (#204), or "" for the domain's own.
+// (from any of tagPrefixes, e.g. "container:") across every repository the
+// domain writes to, and remembers which repository each name was found in: the
+// value is the named repository's id (#204), or "" for the domain's own. An
+// item with more than one identity is one name, and the newest snapshot of any
+// of them decides where it belongs.
 //
 // Discover is the path back from a lost /config: it rebuilds items out of the
 // snapshots that still exist. Reading only the domain repository made an item
@@ -7646,7 +8362,7 @@ func nothingCoveredError(skipped []repoSkip) error {
 // link. Only container and VM backups write that tag. The fourth is every plain
 // named repository holding bv:direct snapshots of the domain: a direct
 // repository that lost its link.
-func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.Settings, domain, tagPrefix string) (map[string]string, map[string][]string, []repoSkip, []store.OffsiteTarget, error) {
+func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.Settings, domain string, tagPrefixes ...string) (map[string]string, map[string][]string, []repoSkip, []store.OffsiteTarget, error) {
 	own, err := s.repoFor(settings, domain, "local")
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -7796,7 +8512,7 @@ func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.S
 			log.Printf("api: discover %s: could not read %s (continuing): %v", domain, s.refName(ref), scrubError(sErr)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own and the error scrubbed
 			continue
 		}
-		if !ref.Own && ref.Named.CompanionOf == "" && holdsDirect(snaps, tagPrefix) {
+		if !ref.Own && ref.Named.CompanionOf == "" && holdsDirect(snaps, tagPrefixes) {
 			direct = append(direct, ref.Named)
 		}
 		id := ""
@@ -7818,8 +8534,8 @@ func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.S
 				}
 			}
 			for _, tag := range snap.Tags {
-				rest, ok := strings.CutPrefix(tag, tagPrefix)
-				if !ok || rest == "" {
+				rest := nameAfterAnyPrefix(tag, tagPrefixes)
+				if rest == "" {
 					continue
 				}
 				if len(formerHere) > 0 {
@@ -8056,7 +8772,7 @@ func (s *Service) repoSharedWithAnotherDomain(settings store.Settings, domain st
 	if r.Own || r.Named.ID == "" {
 		return false
 	}
-	for _, d := range []string{"containers", "vms", "files"} {
+	for _, d := range []string{"containers", "vms", "files", zfsDomain} {
 		if d == domain {
 			continue
 		}
@@ -8142,9 +8858,9 @@ func (s *Service) Snapshots(ctx context.Context, name, source string) ([]restic.
 	return s.containerSnapshotsOf(ctx, name, source, s.containerIdentity(name))
 }
 
-// containerSnapshotsOf is Snapshots for an identity the caller has already
-// built, so a gate lists with the one it checked.
-func (s *Service) containerSnapshotsOf(ctx context.Context, name, source string, id entryIdentity) ([]restic.Snapshot, error) {
+// containerSnapshotsOf is Snapshots for the identities the caller has already
+// built, so a gate lists with the ones it checked.
+func (s *Service) containerSnapshotsOf(ctx context.Context, name, source string, ids ...entryIdentity) ([]restic.Snapshot, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
@@ -8153,7 +8869,7 @@ func (s *Service) containerSnapshotsOf(ctx context.Context, name, source string,
 	if err != nil {
 		return nil, err
 	}
-	return s.snapshotsOwnedBy(ctx, repo, s.repoModeFor(settings, "containers", source, repo), id)
+	return s.snapshotsOwnedBy(ctx, repo, s.repoModeFor(settings, "containers", source, repo), ids...)
 }
 
 // containerIdentity is the container entry that answers to name, with every
@@ -8169,6 +8885,20 @@ func (s *Service) containerIdentity(name string) entryIdentity {
 		ownID = tg.ID
 	}
 	return withRowReadErr(s.aliasedIdentity("container", "container:", name, ownID), err)
+}
+
+// containerDumpIdentity is the same container entry under the tag its database
+// dumps carry. A dump is a snapshot of its own beside the volume backups, and
+// a rename moves both: the entry's aliases name the container, not one kind of
+// snapshot. The two stay separate identities because each ages under its own
+// retention series.
+func (s *Service) containerDumpIdentity(name string) entryIdentity {
+	ownID := ""
+	tg, err := s.store.GetTargetByContainer(name)
+	if err == nil {
+		ownID = tg.ID
+	}
+	return withRowReadErr(s.aliasedIdentity("container", dbDumpIdentityPrefix, name, ownID), err)
 }
 
 // vmIdentity is containerIdentity for VMs. name is the libvirt name: on
@@ -8266,17 +8996,22 @@ func (s *Service) snapshotsForTag(ctx context.Context, repo string, mode restic.
 	return s.snapshotsForTags(ctx, repo, mode, []string{tag})
 }
 
-// snapshotsOwnedBy lists repo and keeps the snapshots id owns: those under its
-// current tag that no other entry's alias claims, plus each alias's from
-// before that alias was linked. Every reader of an entry's history goes
-// through here, so neither a renamed entry nor a machine that took its old
-// name up again can reach the other's snapshots.
-func (s *Service) snapshotsOwnedBy(ctx context.Context, repo string, mode restic.Mode, id entryIdentity) ([]restic.Snapshot, error) {
-	listed, err := s.snapshotsForTags(ctx, repo, mode, id.listTags())
+// snapshotsOwnedBy lists repo once and keeps the snapshots ids own: those
+// under an identity's current tag that no other entry's alias claims, plus
+// each alias's from before that alias was linked. Every reader of an entry's
+// history goes through here, so neither a renamed entry nor a machine that
+// took its old name up again can reach the other's snapshots. A container is
+// passed both of its identities where its dumps count as its backups.
+func (s *Service) snapshotsOwnedBy(ctx context.Context, repo string, mode restic.Mode, ids ...entryIdentity) ([]restic.Snapshot, error) {
+	var tags []string
+	for _, id := range ids {
+		tags = append(tags, id.listTags()...)
+	}
+	listed, err := s.snapshotsForTags(ctx, repo, mode, tags)
 	if err != nil {
 		return nil, err
 	}
-	return id.owned(listed), nil
+	return ownedByAny(listed, ids...), nil
 }
 
 // snapshotsForTags is snapshotsForTag for several tags: a snapshot is included
@@ -8594,14 +9329,14 @@ func (s *Service) finishRestoreRun(runID, snapshotID string, rerr error) {
 	var err error
 	switch {
 	case rerr == nil:
-		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", snapshotID, 0, "")
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", backup.Summary{SnapshotID: snapshotID}, "")
 	case errors.Is(rerr, context.Canceled):
 		// A user cancel is an intentional, recorded outcome — NOT a failure: record
 		// it as "cancelled" and fire no failure alert (restores have no failure
 		// notifier today; the terminal progEnd already fired to clear the bar).
-		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "cancelled", "", 0, "cancelled by user")
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "cancelled", backup.Summary{}, "cancelled by user")
 	default:
-		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", "", 0, truncateRunErr(rerr))
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(rerr))
 	}
 	if err != nil {
 		log.Printf("api: restore: record run finish failed: %v", err)
@@ -8621,7 +9356,7 @@ func (s *Service) finishRestoreRunWarn(runID, snapshotID, warn string) {
 	// restore run is never part of a "Backup Everything" pass's group-stamped
 	// children (see runGroupKey's doc comment), so context.Background() is a
 	// genuine no-op here.
-	err := runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", snapshotID, 0, warn)
+	err := runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", backup.Summary{SnapshotID: snapshotID}, warn)
 	if err != nil {
 		log.Printf("api: restore: record run finish (warning) failed: %v", err)
 	}
@@ -8694,6 +9429,10 @@ func truncateRunErr(err error) string {
 	}
 	msg := err.Error()
 	if bypass, ok := scrubBypassMessage(err); ok {
+		// An import bounds its own cause, and its folder paths must stay whole.
+		if errors.Is(err, errDBImportFolders) {
+			return bypass
+		}
 		msg = bypass
 	} else {
 		msg = scrubSecrets(msg)
@@ -9010,6 +9749,11 @@ func chosenSnapshot(snaps []restic.Snapshot, id string) *restic.Snapshot {
 // recording docs/keep-a and docs/keep-b, restored as <id>:docs, produced
 // keep-a and keep-b and left the never-backed-up sibling docs/nie-gesichert
 // absent. TestRestoreCommonAncestorOfRecordedRoots in internal/restic pins it.
+//
+// A ZFS member snapshot is the one shape this does not fit: it was taken inside
+// a snapshot directory on ".", so the path it recorded names that run's
+// snapshot and its tree root is the dataset root. The ZFS restore selects "/"
+// and never asks here.
 func snapshotRestoreRoot(snaps []restic.Snapshot, id string) string {
 	for _, sn := range snaps {
 		if sn.ID == id || strings.HasPrefix(sn.ID, id) {
@@ -9108,10 +9852,33 @@ func vmrunGroupSnapshot(group []restic.Snapshot, tag string) (restic.Snapshot, b
 	return restic.Snapshot{}, false
 }
 
-// sanitizeTags trims each tag, drops empties, and rejects any tag containing a
-// comma or a control character. restic stores tags as a comma-separated list, so
-// a comma would split one tag into two; control characters could corrupt argv or
-// the snapshot metadata. Returns an error naming the offending tag.
+// reservedTagPrefixes are the prefixes BombVault writes itself. A hand-written
+// tag carrying one would put the snapshot into an item's retention series, into
+// a database dump listing, or into the rename history that decides whose
+// snapshots a name holds, which is why "add tag" refuses them.
+var reservedTagPrefixes = []string{
+	"container:", "vm:", "fileset:", "stack:", "vmrun:", "formerly:",
+	dbDumpIdentityPrefix, "dbengine:", "dbimage:", "dbversion:", "dbname:", "bvrun:", "zfs:",
+}
+
+// tagValueError reports why a string cannot be a restic tag. restic stores tags
+// as a comma-separated list, so a comma would split one tag into two; control
+// characters could corrupt argv or the snapshot metadata.
+func tagValueError(tag string) error {
+	if strings.ContainsRune(tag, ',') {
+		return fmt.Errorf("invalid tag %q: tags cannot contain a comma", tag)
+	}
+	for _, r := range tag {
+		if r < 0x20 || r == 0x7f {
+			return fmt.Errorf("invalid tag %q: tags cannot contain control characters", tag)
+		}
+	}
+	return nil
+}
+
+// sanitizeTags trims each tag, drops empties, and rejects any tag restic cannot
+// carry or BombVault reserves for itself. Returns an error naming the offending
+// tag.
 func sanitizeTags(in []string) ([]string, error) {
 	out := make([]string, 0, len(in))
 	for _, raw := range in {
@@ -9119,12 +9886,12 @@ func sanitizeTags(in []string) ([]string, error) {
 		if tag == "" {
 			continue
 		}
-		if strings.ContainsRune(tag, ',') {
-			return nil, fmt.Errorf("invalid tag %q: tags cannot contain a comma", tag)
+		if err := tagValueError(tag); err != nil {
+			return nil, err
 		}
-		for _, r := range tag {
-			if r < 0x20 || r == 0x7f {
-				return nil, fmt.Errorf("invalid tag %q: tags cannot contain control characters", tag)
+		for _, prefix := range reservedTagPrefixes {
+			if strings.HasPrefix(tag, prefix) {
+				return nil, fmt.Errorf("invalid tag %q: this prefix is reserved for BombVault", tag)
 			}
 		}
 		out = append(out, tag)
@@ -9132,9 +9899,10 @@ func sanitizeTags(in []string) ([]string, error) {
 	return out, nil
 }
 
-// DeleteBackups removes every backup of a container. From the local source it
-// also forgets the container's entry; from an off-site source it deletes at that
-// target only and the entry stays.
+// DeleteBackups removes every backup of a container, its volume backups and
+// its database dumps alike. From the local source it also forgets the
+// container's entry; from an off-site source it deletes at that target only and
+// the entry stays.
 //
 // Forgetting the entry takes its aliases with it, so the pre-link part of an
 // old name falls to whichever entry uses that name next. The user asked for
@@ -9176,8 +9944,10 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 	protection := s.primaryAppendOnly("containers", repo)
 	if protection != appendOnlyNone {
 		// A read, and it answers the only question left: is there anything in here
-		// for the flag to protect?
-		snaps, sErr := s.Snapshots(ctx, name, "")
+		// for the flag to protect? Both identities count, or a container that
+		// exists only as dumps takes the lock and runs a forget that is refused
+		// anyway.
+		snaps, sErr := s.containerSnapshotsOf(ctx, name, "", s.containerIdentity(name), s.containerDumpIdentity(name))
 		if sErr != nil {
 			return sErr
 		}
@@ -9192,7 +9962,8 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 	}
 	defer unlock()
 	id := s.containerIdentity(name)
-	if err := refuseDeleteWithPartialIdentity(name, id); err != nil {
+	dumps := s.containerDumpIdentity(name)
+	if err := refuseDeleteWithPartialIdentity(name, id, dumps); err != nil {
 		return err
 	}
 	// The entry's former names keep its copy rule unless a container installed
@@ -9205,7 +9976,7 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 		s.unlockStale(ctx, repo, mode)
 	}
 
-	snaps, err := s.containerSnapshotsOf(ctx, name, "", id)
+	snaps, err := s.containerSnapshotsOf(ctx, name, "", id, dumps)
 	if err != nil {
 		return err
 	}
@@ -9412,21 +10183,21 @@ func (s *Service) ForgetVMTarget(ctx context.Context, name string) error {
 	return nil
 }
 
-// refuseRowRemovalWithBackups refuses to remove the row of name while its
-// identity id owns a snapshot in repo or any off-site target of domain, or
-// while one of them cannot be read. The row carries the aliases that make its
-// older backups its own; without them those backups would fall to whichever
+// refuseRowRemovalWithBackups refuses to remove the row of name while one of
+// its identities ids owns a snapshot in repo or any off-site target of domain,
+// or while one of them cannot be read. The row carries the aliases that make
+// its older backups its own; without them those backups would fall to whichever
 // entry takes the name next.
-func (s *Service) refuseRowRemovalWithBackups(ctx context.Context, settings store.Settings, domain, name, repo string, id entryIdentity) error {
-	if id.readErr != nil {
-		return fmt.Errorf("%q keeps its entry: its backups could not be checked: %w", name, id.readErr)
+func (s *Service) refuseRowRemovalWithBackups(ctx context.Context, settings store.Settings, domain, name, repo string, ids ...entryIdentity) error {
+	if readErr := partialIdentityErr(ids...); readErr != nil {
+		return fmt.Errorf("%q keeps its entry: its backups could not be checked: %w", name, readErr)
 	}
 	places, err := s.backupPlaces(settings, domain, []string{repo})
 	if err != nil {
 		return fmt.Errorf("%q keeps its entry until its backups can be ruled out: %w", name, err)
 	}
 	for _, p := range places {
-		owned, err := s.snapshotsOwnedBy(ctx, p.repo, p.mode, id)
+		owned, err := s.snapshotsOwnedBy(ctx, p.repo, p.mode, ids...)
 		if err != nil {
 			return fmt.Errorf("%q keeps its entry until its backups can be ruled out: %s could not be read: %w", name, p.name, err)
 		}
@@ -9437,14 +10208,15 @@ func (s *Service) refuseRowRemovalWithBackups(ctx context.Context, settings stor
 	return nil
 }
 
-// refuseDeleteWithPartialIdentity refuses delete-all while id is partial,
-// because it would forget only part of the entry's backups and then drop the
-// aliases that make the rest its own.
-func refuseDeleteWithPartialIdentity(name string, id entryIdentity) error {
-	if id.readErr == nil {
+// refuseDeleteWithPartialIdentity refuses delete-all while one of ids is
+// partial, because it would forget only part of the entry's backups and then
+// drop the aliases that make the rest its own.
+func refuseDeleteWithPartialIdentity(name string, ids ...entryIdentity) error {
+	readErr := partialIdentityErr(ids...)
+	if readErr == nil {
 		return nil
 	}
-	return fmt.Errorf("nothing was deleted: the backups of %q could not be checked: %w", name, id.readErr)
+	return fmt.Errorf("nothing was deleted: the backups of %q could not be checked: %w", name, readErr)
 }
 
 // refuseDefinedVM answers an error when name is among installed, for the routes
@@ -9566,7 +10338,7 @@ func (s *Service) ForgetTarget(ctx context.Context, name string) error {
 	if err != nil {
 		return fmt.Errorf("%q keeps its entry: its repository could not be resolved to check for backups: %w", name, err)
 	}
-	if err := s.refuseRowRemovalWithBackups(ctx, settings, "containers", name, repo, s.containerIdentity(name)); err != nil {
+	if err := s.refuseRowRemovalWithBackups(ctx, settings, "containers", name, repo, s.containerIdentity(name), s.containerDumpIdentity(name)); err != nil {
 		return err
 	}
 	if err := s.store.DeleteTarget(name, installed); err != nil {
@@ -9742,7 +10514,7 @@ func (s *Service) reposToCheckForTakeover(settings store.Settings, domain, newNa
 // backup naming one of the entry's names as a former name is its own, made
 // before an unlink.
 func (s *Service) refuseForeignBackups(ctx context.Context, settings store.Settings, domain, targetID, currentName, newName string, repos []string) error {
-	settingsDomain, prefix, _ := aliasDomain(domain)
+	settingsDomain, _, _ := aliasDomain(domain)
 	own, err := s.ownNamesFor(domain, targetID, currentName)
 	if err != nil {
 		return fmt.Errorf("%q cannot be checked for backups: %w", newName, err)
@@ -9752,9 +10524,9 @@ func (s *Service) refuseForeignBackups(ctx context.Context, settings store.Setti
 		return fmt.Errorf("%q cannot be checked for backups: %w", newName, err)
 	}
 	for _, p := range places {
-		// The literal tag: an identity widened by aliases would pull in the
+		// The literal tags: an identity widened by aliases would pull in the
 		// history of whatever row holds newName.
-		snaps, err := s.snapshotsForTag(ctx, p.repo, p.mode, prefix+newName)
+		snaps, err := s.snapshotsForTags(ctx, p.repo, p.mode, entryTags(domain, newName))
 		if err != nil {
 			return fmt.Errorf("%q cannot be checked for backups: %s could not be read: %w", newName, p.name, err)
 		}
@@ -10070,24 +10842,52 @@ func aliasDomain(domain string) (settingsDomain, prefix, kind string) {
 	return "containers", "container:", "container"
 }
 
+// entryTagPrefixes are the identity-tag prefixes an entry's snapshots carry in
+// the alias domain. A container has two: its files backups and its database
+// dumps.
+func entryTagPrefixes(domain string) []string {
+	settingsDomain, _, _ := aliasDomain(domain)
+	return domainTagPrefixes(settingsDomain)
+}
+
+// entryTags are those prefixes on one name.
+func entryTags(domain, name string) []string {
+	prefixes := entryTagPrefixes(domain)
+	tags := make([]string, 0, len(prefixes))
+	for _, prefix := range prefixes {
+		tags = append(tags, prefix+name)
+	}
+	return tags
+}
+
 // oldNameReused reports whether a's old name holds a snapshot a does not
 // claim, one taken at or after the link or at a time that does not parse, in
 // repos or in any off-site target of the alias's domain. The error names the
 // place that could not be read.
 func (s *Service) oldNameReused(ctx context.Context, settings store.Settings, a store.Alias, repos []string) (bool, error) {
-	domain, prefix, _ := aliasDomain(a.Domain)
+	domain, _, _ := aliasDomain(a.Domain)
 	places, err := s.backupPlaces(settings, domain, repos)
 	if err != nil {
 		return false, err
 	}
-	claim := newAliasClaim(prefix, a)
+	// Both of a container's identities, since a dump under the old name is as
+	// good a sign that the name is in use again as a files backup.
+	var claims []aliasClaim
+	var tags []string
+	for _, prefix := range entryTagPrefixes(a.Domain) {
+		claim := newAliasClaim(prefix, a)
+		claims = append(claims, claim)
+		tags = append(tags, claim.tag)
+	}
 	for _, p := range places {
-		snaps, err := s.snapshotsForTag(ctx, p.repo, p.mode, claim.tag)
+		snaps, err := s.snapshotsForTags(ctx, p.repo, p.mode, tags)
 		if err != nil {
 			return false, fmt.Errorf("%s could not be read: %w", p.name, err)
 		}
-		if !claim.claimsEvery(snaps) {
-			return true, nil
+		for _, claim := range claims {
+			if !claim.claimsEvery(snaps) {
+				return true, nil
+			}
 		}
 	}
 	return false, nil
@@ -10267,16 +11067,109 @@ type resticAdapter struct {
 	// extraTags go on every snapshot the adapter writes, after the
 	// orchestrator's own.
 	extraTags []string
+	// selectionFP fingerprints what this item is configured to back up, empty
+	// for the restore and maintenance constructions, which cover no selection.
+	selectionFP string
 }
 
-var _ backup.Restic = (*resticAdapter)(nil)
+var (
+	_ backup.Restic    = (*resticAdapter)(nil)
+	_ backup.ZFSRestic = (*resticAdapter)(nil)
+)
+
+// snapshotParentTimeout bounds the extra restic call a run pays for when every
+// file it read was new. It reads one snapshot, so a repository that needs
+// longer than this has stopped answering.
+const snapshotParentTimeout = 30 * time.Second
 
 func (a *resticAdapter) Backup(ctx context.Context, repo string, paths, tags []string, excludes ...string) (backup.Summary, error) {
 	sum, err := a.engine.Backup(ctx, repo, paths, withTags(tags, a.extraTags), a.mode, excludes...)
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	return backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded)}, nil
+	out := backupSummaryFrom(sum)
+	out.SelectionFP = a.selectionFP
+	out.HasParent = a.parentFlag(ctx, repo, out)
+	return out, nil
+}
+
+// backupSummaryFrom converts what restic reported about a finished backup. A
+// line without total_duration leaves the run unmeasured: restic prints the
+// totals together, so a missing duration means the figures beside it are
+// missing too, and recording them as zeros would read as a source that emptied
+// itself.
+func backupSummaryFrom(sum restic.Summary) backup.Summary {
+	out := backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded)}
+	if sum.TotalDuration == nil {
+		return out
+	}
+	out.Measured = true
+	out.SourceBytes = int64(sum.TotalBytesProcessed) //nolint:gosec // G115: restic cannot have read more than 8 EiB
+	out.SourceFiles = int64(sum.TotalFilesProcessed) //nolint:gosec // G115: nor more than 2^63 files
+	out.FilesNew = int64(sum.FilesNew)
+	// The span the backfill reads from backup_start and backup_end, so a
+	// series holds one measure on both sides of an upgrade.
+	out.ResticMS = sum.Elapsed.Milliseconds()
+	return out
+}
+
+// parentFlag answers whether restic had an earlier snapshot to compare
+// against, and asks only when every file it read was new. A first backup into a
+// fresh repository and a rewrite of every file read the same way, because
+// restic counts a file as new when its path is missing from the parent tree,
+// and appending a suffix to every file is what ransomware leaves behind. Only
+// the parent separates the two, so an unreadable one stays unknown.
+func (a *resticAdapter) parentFlag(ctx context.Context, repo string, sum backup.Summary) *bool {
+	if !sum.Measured || sum.FilesNew == 0 || sum.FilesNew != sum.SourceFiles {
+		return nil
+	}
+	pctx, cancel := context.WithTimeout(ctx, snapshotParentTimeout)
+	defer cancel()
+	parent, err := a.engine.SnapshotParent(pctx, repo, sum.SnapshotID, a.mode)
+	if err != nil {
+		log.Printf("api: backup: could not read whether snapshot %s was based on an earlier one: %v", shortID(sum.SnapshotID), err)
+		return nil
+	}
+	has := parent != ""
+	return &has
+}
+
+// metricsOf returns what a run recorded of restic's own figures, nil when
+// restic did not report them.
+func metricsOf(sum backup.Summary) *store.RunMetrics {
+	if !sum.Measured {
+		return nil
+	}
+	return &store.RunMetrics{
+		SourceBytes: sum.SourceBytes,
+		SourceFiles: sum.SourceFiles,
+		FilesNew:    sum.FilesNew,
+		ResticMS:    sum.ResticMS,
+		HasParent:   sum.HasParent,
+	}
+}
+
+// BackupDir carries restic's per-file counters through, which a ZFS run
+// records per member and the domain's baselines read back, together with the
+// totals anomaly detection watches every dataset by.
+func (a *resticAdapter) BackupDir(ctx context.Context, repo, dir string, tags []string, excludes ...string) (backup.ZFSBackupSummary, error) {
+	sum, err := a.engine.BackupDir(ctx, repo, dir, withTags(tags, a.extraTags), a.mode, excludes...)
+	if err != nil {
+		return backup.ZFSBackupSummary{}, err
+	}
+	measured := backupSummaryFrom(sum)
+	return backup.ZFSBackupSummary{
+		SnapshotID:      sum.SnapshotID,
+		BytesAdded:      int64(sum.BytesAdded),
+		FilesNew:        int64(sum.FilesNew),
+		FilesChanged:    int64(sum.FilesChanged),
+		FilesUnmodified: int64(sum.FilesUnmodified),
+		Measured:        measured.Measured,
+		SourceBytes:     measured.SourceBytes,
+		SourceFiles:     measured.SourceFiles,
+		ResticMS:        measured.ResticMS,
+		HasParent:       a.parentFlag(ctx, repo, measured),
+	}, nil
 }
 
 func (a *resticAdapter) RestorePaths(ctx context.Context, repo, snapshotID string, paths []string) error {
@@ -10330,11 +11223,9 @@ func (templatesAdapter) Read(dir, name string) (string, bool, error) { return te
 func (templatesAdapter) Write(dir, name, xml string) error           { return template.Write(dir, name, xml) }
 
 // runsAdapter satisfies backup.Runs over *store.Repo (StartRun/FinishRun).
-// ctx is captured at construction solely so Start can read
-// runGroupFromContext and stamp a "Backup Everything" pass's parent run id
-// onto the child run it just created (see runGroupKey's doc comment) — every
-// caller whose ctx carries no group (everyone today) sees no behaviour
-// change at all.
+// ctx is captured at construction solely so Start can read the "Backup
+// Everything" pass's parent run id (see runGroupKey's doc comment) and the run
+// origin off it. A ctx carrying neither records a plain row.
 type runsAdapter struct {
 	st  *store.Repo
 	ctx context.Context
@@ -10355,19 +11246,13 @@ type runsAdapter struct {
 var _ backup.Runs = runsAdapter{}
 
 func (r runsAdapter) Start(targetID, kind string) (string, error) {
-	id, err := r.st.StartRun(targetID, kind)
-	if err != nil {
-		return "", err
+	// The package-level form, because the bookkeeping-only call sites build
+	// this adapter without a Service.
+	runID, err := startRunWith(r.ctx, r.st, targetID, kind)
+	if err == nil && r.svc != nil && r.cancelKey != "" && kind == "backup" {
+		r.svc.bindBackupRun(r.cancelKey, runID)
 	}
-	if gid := runGroupFromContext(r.ctx); gid != "" {
-		// Best-effort, like every other post-Start bookkeeping call in this
-		// file: the run already started successfully, so a stamp failure is
-		// logged, never returned (see store.SetRunGroup's doc comment).
-		if serr := r.st.SetRunGroup(id, gid); serr != nil {
-			log.Printf("api: run %s: stamp group %s failed: %v", id, gid, serr) //nolint:gosec // G706: id/gid are internal ids, not user input
-		}
-	}
-	return id, nil
+	return runID, err
 }
 
 // shutdownStatus rewrites a failure that is really a shutdown ([375]).
@@ -10397,10 +11282,29 @@ func (s *Service) shutdownStatus(status string) (string, string, bool) {
 	return "cancelled", store.ReasonShutdown, true
 }
 
-func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
+// stalledReason is the reason a backup the stall guard cancelled is recorded
+// and reported with, and whether ctx was cancelled by it. A reason that already
+// names the stall, as a ZFS run's does with its dataset, is kept.
+func stalledReason(ctx context.Context, errMsg string) (string, bool) {
+	stall := backup.StalledBy(ctx)
+	switch {
+	case stall == nil:
+		return errMsg, false
+	case strings.HasPrefix(errMsg, store.ReasonStalled):
+		return errMsg, true
+	}
+	return stall.Error(), true
+}
+
+func (r runsAdapter) Finish(runID, status string, sum backup.Summary, errMsg string) error {
 	if r.svc != nil {
+		stalled, isStall := stalledReason(r.ctx, errMsg)
 		if newStatus, newMsg, changed := r.svc.shutdownStatus(status); changed {
 			status, errMsg = newStatus, newMsg
+		} else if status == "failed" && isStall {
+			// The guard cancelled first; a cancel pressed while the run unwinds
+			// came too late to be the reason.
+			errMsg = stalled
 		} else if status == "failed" && r.svc.backupWasCancelled(r.cancelKey) {
 			// A user cancelled this backup (#200). The error in hand is the
 			// context cancellation that followed, and recording it as a failure
@@ -10417,7 +11321,7 @@ func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMs
 			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
-	return r.st.FinishRun(runID, status, snapshotID, bytes, errMsg)
+	return r.st.FinishRunMeasured(runID, status, sum.SnapshotID, sum.Bytes, errMsg, metricsOf(sum), sum.SelectionFP)
 }
 
 // startedRunsAdapter satisfies backup.Runs exactly like runsAdapter, except
@@ -10427,8 +11331,8 @@ func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMs
 // "vmrun:<runID>" (RunTag drives every restic tag the orchestrator builds —
 // see VMBackupDeps.RunTag's doc comment — so it cannot be filled in only
 // AFTER the orchestrator's own Runs.Start call, which is where the run id was
-// generated before this adapter existed). BackupVM calls store.StartRun
-// itself up front and wraps the result in this adapter so the orchestrator's
+// generated before this adapter existed). BackupVM calls startRun itself up
+// front and wraps the result in this adapter so the orchestrator's
 // internal Start call is a no-op read rather than a second, orphaned run row;
 // Finish still delegates to the real store, exactly like runsAdapter.
 type startedRunsAdapter struct {
@@ -10445,16 +11349,21 @@ type startedRunsAdapter struct {
 	// cancels one must get the same "cancelled" row a cancelled folder backup
 	// gets, not a red failure.
 	cancelKey string
+	// ctx is the backup's context, whose cause tells a stall apart.
+	ctx context.Context
 }
 
 var _ backup.Runs = startedRunsAdapter{}
 
 func (r startedRunsAdapter) Start(string, string) (string, error) { return r.runID, nil }
 
-func (r startedRunsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
+func (r startedRunsAdapter) Finish(runID, status string, sum backup.Summary, errMsg string) error {
 	if r.svc != nil {
+		stalled, isStall := stalledReason(r.ctx, errMsg)
 		if newStatus, newMsg, changed := r.svc.shutdownStatus(status); changed {
 			status, errMsg = newStatus, newMsg
+		} else if status == "failed" && isStall {
+			errMsg = stalled
 		} else if status == "failed" && r.svc.backupWasCancelled(r.cancelKey) {
 			// See runsAdapter.Finish for the whole reasoning (#200). Repeated
 			// rather than shared because these two adapters have deliberately
@@ -10463,7 +11372,7 @@ func (r startedRunsAdapter) Finish(runID, status, snapshotID string, bytes int64
 			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
-	return r.st.FinishRun(runID, status, snapshotID, bytes, errMsg)
+	return r.st.FinishRunMeasured(runID, status, sum.SnapshotID, sum.Bytes, errMsg, metricsOf(sum), sum.SelectionFP)
 }
 
 // sshZFSHost adapts HostSSH's semantic Run/StreamCommand/RunWithStdin SSH
@@ -10515,7 +11424,7 @@ func (a *resticZvolAdapter) BackupStdin(ctx context.Context, repo string, rd io.
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	return backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded)}, nil
+	return backupSummaryFrom(sum), nil
 }
 
 func (a *resticZvolAdapter) DumpTo(ctx context.Context, repo, snapshotID, path string, w io.Writer) error {
@@ -10724,7 +11633,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 			v.ScheduleCadence = t.ScheduleCadence
 			run, _ = s.store.LastSuccessfulBackup(t.ID)
 		}
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(vm.Name, run, snapTimes, snapTimesFailed)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[vm.Name], snapTimesFailed)
 		own := v.LastBackup != nil
 		hasOwnBackup[vm.Name] = own
 		if !own {
@@ -10750,7 +11659,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	for _, t := range orphanTargets {
 		v := VMView{Name: t.Name, LibvirtName: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence, AliasConflicts: aliasConflicts.of(t.ID), Aliases: formerNames.of(t.ID)}
 		run, _ := s.store.LastSuccessfulBackup(t.ID)
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(t.Name, run, snapTimes, snapTimesFailed)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.Name], snapTimesFailed)
 		views = append(views, v)
 	}
 	return views, nil
@@ -10868,7 +11777,7 @@ func (s *Service) removeStrayOverlays(diskPaths []string) {
 // is ignored (the real cause is already being returned to the caller).
 func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
 	if tg, err := s.store.GetVMTargetByName(name); err == nil {
-		if runID, sErr := s.store.StartRun(tg.ID, "backup"); sErr == nil {
+		if runID, sErr := s.startRun(ctx, tg.ID, "backup"); sErr == nil {
 			msg := cause.Error()
 			if len(msg) > 500 {
 				msg = msg[:500]
@@ -10876,7 +11785,7 @@ func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
 			_ = s.store.FinishRun(runID, "failed", "", 0, msg)
 		}
 	}
-	s.notifyBackup(ctx, "VM", name, false, backup.Summary{}, cause)
+	s.notifyBackup(ctx, "VM", name, "", false, backup.Summary{}, cause)
 }
 
 // vmDiskContainerPaths is where restic reads the file disks of domain through
@@ -10903,9 +11812,12 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
-	s.registerBackupCancel("vm:"+name, cancel) // reachable by shutdown ([375])
-	defer s.unregisterBackupCancel("vm:" + name)
+	s.registerBackupCancel(ctx, "vm:"+name, cancel) // reachable by shutdown ([375])
+	defer s.endBackupCancel("vm:"+name, &retErr)
 	defer s.lockDomain("vms")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "vms")
 
 	// Everything down to the orchestrator returns before any run is recorded,
 	// so a failure there would leave the card that started this backup waiting
@@ -10918,7 +11830,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	orchestrated := false
 	defer func() {
 		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrVMNotInstalled) {
-			s.recordPreflightFailure("BackupVM", name, targetID, retErr)
+			s.recordPreflightFailure(ctx, "BackupVM", name, targetID, retErr)
 		}
 	}()
 	settings, err := s.store.GetSettings()
@@ -11091,6 +12003,17 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		log.Printf("api: backup vm: aliases of %q: %v", name, aliasErr) //nolint:gosec // G706: %q-quoted
 	}
 
+	// A zvol disk is part of what this VM covers just as much as a file-backed
+	// one, so dropping either has to move the fingerprint.
+	sources := append([]string{}, diskPaths...)
+	for _, bd := range vmBlockDisks {
+		sources = append(sources, bd.Dataset)
+	}
+	selectionFP := selectionFingerprint(itemSelection{
+		Kind:     "vm",
+		Paths:    sources,
+		Excludes: domain.SkipSnapshotDevs,
+	})
 	deps := backup.VMBackupDeps{
 		Name:             name,
 		FormerNames:      aliasOldNames(aliases),
@@ -11102,7 +12025,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		TargetID:         tg.ID,
 		DataDir:          s.cfg.DataDir,
 		VM:               s.virsh,
-		Restic:           &resticAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, "vms", repo)},
+		Restic:           &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "vms", repo)},
 		BlockDisks:       vmBlockDisks,
 		ZFSHost:          sshZFSHost{ssh: s.ssh},
 		ZvolRestic:       &resticZvolAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, "vms", repo)},
@@ -11133,21 +12056,12 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// service-layer integration, Task 2; see startedRunsAdapter's doc
 	// comment). Wrapping it in startedRunsAdapter means the orchestrator's own
 	// Runs.Start call is a no-op read of this same id, not a second run row.
-	runID, err := s.store.StartRun(tg.ID, "backup")
+	runID, err := s.startRun(ctx, tg.ID, "backup")
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("backup vm: record run start: %w", err)
 	}
-	if gid := runGroupFromContext(ctx); gid != "" {
-		// Same "Backup Everything" group-stamp runsAdapter.Start does — inline
-		// here (rather than inside startedRunsAdapter) because the run id, and
-		// therefore the stamp, is produced ONCE right here, not inside a later
-		// Start() call (see startedRunsAdapter's doc comment above). Best-effort:
-		// a stamp failure must never fail a backup that already started.
-		if serr := s.store.SetRunGroup(runID, gid); serr != nil {
-			log.Printf("api: BackupVM: run %s: stamp group %s failed: %v", runID, gid, serr) //nolint:gosec // G706: runID/gid are internal ids, not user input
-		}
-	}
-	deps.Runs = startedRunsAdapter{st: s.store, runID: runID, svc: s, cancelKey: "vm:" + name}
+	s.bindBackupRun("vm:"+name, runID)
+	deps.Runs = startedRunsAdapter{st: s.store, runID: runID, svc: s, cancelKey: "vm:" + name, ctx: ctx}
 	// RunTag correlates every snapshot ONE backup invocation produces — only
 	// meaningful (and only set) when this backup will actually produce MORE
 	// than one restic snapshot (a file-only VM's single snapshot is already
@@ -11175,7 +12089,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		sum, err = backup.BackupVMGraceful(bctx, deps)
 	}
 	s.progEnd(vkey, "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "VM", name, err == nil, sum, err)
+	s.notifyBackup(ctx, "VM", name, vkey, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -11197,12 +12111,12 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// Retention runs once for the VM's identity, aliases included, and once per
 	// zvol disk tag, so each disk's history ages as its own group. zvol tags
 	// have no aliases: a VM with block disks is never offered a takeover.
-	s.applyRetention(ctx, repo, settings, mode, s.vmIdentity(name), "vms")
+	s.applyRetention(ctx, repo, settings, mode, s.vmIdentity(name), "vms", anomalyScope{Kind: anomalyScopeItem, ID: tg.ID})
 	for _, bd := range vmBlockDisks {
 		if bd.Dev == "" {
 			continue // without a target dev it has no tag of its own and ages with "vm:<name>"
 		}
-		s.applyRetention(ctx, repo, settings, mode, tagIdentity("vm:"+name+":zvol:"+bd.Dev), "vms")
+		s.applyRetention(ctx, repo, settings, mode, tagIdentity("vm:"+name+":zvol:"+bd.Dev), "vms", anomalyScope{Kind: anomalyScopeItem, ID: tg.ID})
 	}
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "vms", settings, repo, "vm:"+name)
@@ -12037,7 +12951,7 @@ func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source s
 // wired (no key yet).
 func (s *Service) VMSSHInfo() (host, publicKey string, err error) {
 	if s.ssh == nil {
-		return "", "", errors.New("vm backup over SSH is not configured")
+		return "", "", errors.New("host SSH is not configured")
 	}
 	pub, err := s.ssh.PublicKey()
 	if err != nil {
@@ -12046,24 +12960,32 @@ func (s *Service) VMSSHInfo() (host, publicKey string, err error) {
 	return s.cfg.LibvirtHost, pub, nil
 }
 
-// VMSSHTest checks that libvirt is reachable over SSH (used by the Settings
-// "Test connection" button). Bounded by a timeout so an unreachable host
-// (e.g. a macvlan container with no route) fails fast instead of hanging.
-func (s *Service) VMSSHTest(ctx context.Context) error {
+// HostSSHTest checks the SSH link VM backups, ZFS backups and Unraid
+// notifications share. Only VM backups need libvirt, so a missing libvirt
+// comes back as libvirtErr and leaves the link itself passing (#53). The
+// timeout makes a host with no route fail fast instead of hanging.
+func (s *Service) HostSSHTest(ctx context.Context) (libvirtErr, err error) {
 	if s.ssh == nil {
-		return errors.New("vm backup over SSH is not configured")
+		return nil, errors.New("host SSH is not configured")
 	}
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
+	// Checked first because an SSH or auth failure explains more than the
+	// libvirt error it would also cause.
 	if err := s.ssh.EnsureKnownHost(ctx); err != nil {
-		return err // SSH/auth/reachability problem — clearer than libvirt's error
+		return nil, err
 	}
-	if err := s.ssh.Test(ctx); err != nil {
-		// EnsureKnownHost passed, so SSH auth + reachability are fine — only
-		// libvirt is missing. Say so, so a notifications-only user (who needs the
-		// SSH connection but not libvirt) isn't misled into thinking their SSH is
-		// broken (#53).
-		return fmt.Errorf("%w. The SSH connection itself is working, and libvirt is only needed for VM backups, not for Unraid notifications", err)
+	return s.ssh.Test(ctx), nil
+}
+
+// VMSSHTest is HostSSHTest for VM backups, which fail without libvirt.
+func (s *Service) VMSSHTest(ctx context.Context) error {
+	libvirtErr, err := s.HostSSHTest(ctx)
+	if err != nil {
+		return err
+	}
+	if libvirtErr != nil {
+		return fmt.Errorf("%w. The SSH connection itself is working; libvirt is only needed for VM backups", libvirtErr)
 	}
 	return nil
 }
@@ -12073,7 +12995,7 @@ func (s *Service) VMSSHTest(ctx context.Context) error {
 // a hung SSH attempt can't stall the spike.
 func (s *Service) LibvirtReachable() error {
 	if s.ssh == nil {
-		return errors.New("vm backup over SSH is not configured")
+		return errors.New("host SSH is not configured")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 12*time.Second)
 	defer cancel()
@@ -12108,16 +13030,19 @@ var _ backup.FlashRestic = (*resticAdapter)(nil)
 // BackupFlash backs up the whole Unraid USB flash (the mounted /boot) to the
 // flash repo via restic. Fails with a clear message if the flash directory is
 // not mounted (the /boot → /host/boot mount is required for this domain).
-func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
+func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	// [375]: this is one of the two runs jdp's 31.08. log shows cut off within
 	// 30 seconds of the 04:00 schedule.
-	s.registerBackupCancel("flash", cancel)
-	defer s.unregisterBackupCancel("flash")
+	s.registerBackupCancel(ctx, "flash", cancel)
+	defer s.endBackupCancel("flash", &retErr)
 	defer s.lockDomain("flash")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "flash")
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -12145,15 +13070,15 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		SourceDir: s.cfg.FlashDir,
 		Repo:      repo,
 		TargetID:  store.FlashTargetID,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode},
+		Restic:    &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFingerprint(itemSelection{Kind: "flash"})},
 		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "flash"},
 	})
 	s.progEnd("flash", "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "flash", "", err == nil, sum, err)
+	s.notifyBackup(ctx, "flash", "", "flash", err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, tagIdentity("flash"), "flash")
+	s.applyRetention(ctx, repo, settings, mode, tagIdentity("flash"), "flash", anomalyScope{Kind: anomalyScopeItem, ID: store.FlashTargetID})
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "flash", settings, repo, "")
 	s.collectStatsAfterItem(ctx, "flash")
@@ -12196,7 +13121,7 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	// export publishes nothing (nothing ran) — hence below the guard.
 	_, startedAt := s.progBegin(ctx, "export:flash", "maintenance")
 	defer func() { s.progEnd("export:flash", "maintenance", err == nil, startedAt) }()
-	runID, rErr := s.store.StartRun(store.FlashTargetID, "export")
+	runID, rErr := s.startRun(ctx, store.FlashTargetID, "export")
 	if rErr != nil {
 		log.Printf("api: flash zip export: could not start run record (continuing): %v", rErr)
 		runID = ""
@@ -12295,12 +13220,15 @@ var _ backup.FilesRestic = (*resticAdapter)(nil)
 // A source folder that does not exist under the host mount fails with a clear
 // error BEFORE any restic call, recording a failed run against the set's id so
 // a scheduled backup of a vanished folder surfaces in Run History.
-func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary, error) {
+func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summary, retErr error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	defer s.lockDomain("files")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "files")
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -12326,8 +13254,8 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	// Moving the registration down costs nothing: what now runs before it is a
 	// settings read and a row lookup, neither of which can hang, and neither of
 	// which is worth cancelling.
-	s.registerBackupCancel("files:"+set.Name, cancel)
-	defer s.unregisterBackupCancel("files:" + set.Name)
+	s.registerBackupCancel(ctx, "files:"+set.Name, cancel)
+	defer s.endBackupCancel("files:"+set.Name, &retErr)
 	// A set without a path cannot be backed up (Discover creates path-less,
 	// disabled sets from fileset: tags alone) — say so instead of letting
 	// paths.Resolve report a misleading traversal error for "".
@@ -12342,7 +13270,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		// Record the miss as a failed run so a scheduled backup of a renamed or
 		// deleted folder shows up in Run History instead of failing invisibly.
 		err := fmt.Errorf("files backup: source path not found for %q (%s does not exist under the host mount)", set.Name, src)
-		if runID, sErr := s.store.StartRun(set.ID, "backup"); sErr != nil {
+		if runID, sErr := s.startRun(ctx, set.ID, "backup"); sErr != nil {
 			log.Printf("api: files backup: %q: record missing-path run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
 			// truncateRunErr, like every other FinishRun in this file: it is "the one
 			// function that writes runs.error", and this was the only call site
@@ -12388,7 +13316,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 				reason = fmt.Sprintf("source folder for %q could not be read (%s): %v", set.Name, src, eErr)
 			}
 			err := fmt.Errorf("files backup: %s", reason)
-			if runID, sErr := s.store.StartRun(set.ID, "backup"); sErr != nil {
+			if runID, sErr := s.startRun(ctx, set.ID, "backup"); sErr != nil {
 				log.Printf("api: files backup: %q: record failed run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
 			} else if fErr := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(err)); fErr != nil {
 				log.Printf("api: files backup: %q: finish failed run: %v", set.Name, fErr) //nolint:gosec // G706: name is %q-quoted
@@ -12434,6 +13362,12 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 			anchored = append(anchored, e)
 		}
 	}
+	selectionFP := selectionFingerprint(itemSelection{
+		Kind:     "files",
+		Root:     set.Path,
+		Paths:    set.SelectedPaths,
+		Excludes: set.Excludes,
+	})
 	sum, err := backup.BackupFileSetDir(fctx, backup.FileSetBackupDeps{
 		SourceDir:   src,
 		SourcePaths: positionals,
@@ -12442,15 +13376,15 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		SetName:     set.Name,
 		Excludes: append(append([]string{}, set.Excludes...),
 			excludedBranches(anchored)...),
-		Restic: &resticAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, "files", repo)},
+		Restic: &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFP, extraTags: s.directTags(settings, "files", repo)},
 		Runs:   runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "files:" + set.Name},
 	})
 	s.progEnd(key, "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "files", set.Name, err == nil, sum, err)
+	s.notifyBackup(ctx, "files", set.Name, "files:"+set.Name, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, tagIdentity("fileset:"+set.Name), "files")
+	s.applyRetention(ctx, repo, settings, mode, tagIdentity("fileset:"+set.Name), "files", anomalyScope{Kind: anomalyScopeItem, ID: set.ID})
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "files", settings, repo, "fileset:"+set.Name)
 	s.collectStatsAfterItem(ctx, "files")
@@ -12596,7 +13530,7 @@ func (s *Service) ListFileSetViews(ctx context.Context) ([]FileSetView, error) {
 		// nil so omitempty drops the key (the NULL legacy switch).
 		v.SelectedPaths = set.SelectedPaths
 		run, _ := s.store.LastSuccessfulBackup(set.ID)
-		if finished, _ := lastBackupDate(set.Name, run, snapTimes, snapTimesFailed); finished != nil {
+		if finished, _ := lastBackupDate(run, snapTimes[set.Name], snapTimesFailed); finished != nil {
 			v.LastBackup = *finished
 		}
 		if resolved, rErr := paths.Resolve(s.cfg.HostMountRoot, set.Path); rErr == nil {
@@ -12830,10 +13764,11 @@ func (s *Service) containerHasBackups(ctx context.Context, name string) (bool, e
 		}
 	}
 	id := s.containerIdentity(name)
-	if id.readErr != nil {
-		return false, fmt.Errorf("its backups could not be checked: %w", id.readErr)
+	dumps := s.containerDumpIdentity(name)
+	if readErr := partialIdentityErr(id, dumps); readErr != nil {
+		return false, fmt.Errorf("its backups could not be checked: %w", readErr)
 	}
-	snaps, err := s.containerSnapshotsOf(ctx, name, "local", id)
+	snaps, err := s.containerSnapshotsOf(ctx, name, "local", id, dumps)
 	if err != nil {
 		// Unreadable is not "empty": refusing conservatively is the safe way
 		// round, because the cost of being wrong the other way is a split
@@ -13572,14 +14507,17 @@ var _ backup.ConfigRestic = (*resticAdapter)(nil)
 // snapshot (VACUUM-INTO of the WAL-mode DB + verbatim static files) and always
 // removes that snapshot afterwards, so a rebuilt Unraid box can recover BombVault
 // itself with no container stop.
-func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
+func (s *Service) BackupConfig(ctx context.Context) (_ backup.Summary, retErr error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
-	s.registerBackupCancel("config", cancel) // reachable by shutdown ([375])
-	defer s.unregisterBackupCancel("config")
+	s.registerBackupCancel(ctx, "config", cancel) // reachable by shutdown ([375])
+	defer s.endBackupCancel("config", &retErr)
 	defer s.lockDomain("config")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "config")
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -13611,15 +14549,15 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 		SourceDir: stagingDir,
 		Repo:      repo,
 		TargetID:  store.ConfigTargetID,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode},
+		Restic:    &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFingerprint(itemSelection{Kind: "config"})},
 		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "config"},
 	})
 	s.progEnd("config", "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "config", "", err == nil, sum, err)
+	s.notifyBackup(ctx, "config", "", "config", err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, tagIdentity("config"), "config")
+	s.applyRetention(ctx, repo, settings, mode, tagIdentity("config"), "config", anomalyScope{Kind: anomalyScopeItem, ID: store.ConfigTargetID})
 	s.replicateOffsite(ctx, "config", settings, repo, "")
 	s.collectStatsAfterItem(ctx, "config")
 	s.checkPrimaryRemoteBudget(ctx, "config", repo, settings)
@@ -13698,7 +14636,7 @@ func (s *Service) DownloadFlashZip(ctx context.Context, snapshotID, source strin
 	if onResolved != nil {
 		onResolved(id)
 	}
-	runID, err := s.store.StartRun(store.FlashTargetID, "restore")
+	runID, err := s.startRun(ctx, store.FlashTargetID, "restore")
 	if err != nil {
 		return fmt.Errorf("flash download: start run: %w", err)
 	}
@@ -13857,7 +14795,7 @@ func (s *Service) RestoreConfig(ctx context.Context, snapshotID, source string) 
 	// contains a plaintext rclone.conf + ssh private key, so a fresh attempt should
 	// not let it linger. Best-effort — a leftover .bad must never block a restore.
 	_ = os.RemoveAll(root + ".bad")
-	runID, err := s.store.StartRun(store.ConfigTargetID, "restore")
+	runID, err := s.startRun(ctx, store.ConfigTargetID, "restore")
 	if err != nil {
 		return fmt.Errorf("config restore: start run: %w", err)
 	}
@@ -13929,7 +14867,7 @@ func (s *Service) StartRestoreConfig(ctx context.Context, snapshotID, source str
 	}
 	if op, busy := s.domainBusy("config"); busy {
 		s.batchActive.Store(false)
-		return false, false, fmt.Errorf("%s is running on config", op)
+		return false, false, domainBusyError{op: op, domain: "config"}
 	}
 	// On a recovered panic the guard must ALSO be released here: unlike the
 	// success path below, nothing else is left running that would release it, and
@@ -14216,7 +15154,7 @@ func (s *Service) PreviewExcludes(ctx context.Context, name string, candidate []
 }
 
 // CheckDomain verifies the integrity of a domain's restic repo (restic check).
-// domain is "containers" | "vms" | "flash" | "files". Returns a friendly error
+// domain is "containers" | "vms" | "flash" | "files" | "zfs". Returns a friendly error
 // when the repo has not been created yet. Bounded by a timeout so a huge repo
 // can't hang the request forever.
 func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err error) {
@@ -14259,7 +15197,7 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 	vkey := "verify:" + domain
 	_, startedAt := s.progBegin(ctx, vkey, "maintenance")
 	defer func() { s.progEnd(vkey, "maintenance", err == nil, startedAt) }()
-	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "verify")
+	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "verify")
 	if rErr != nil {
 		log.Printf("api: verify %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
 		runID = ""
@@ -14365,7 +15303,7 @@ func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind stri
 // four mails at the one moment they were already looking straight at it.
 func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wait bool) (drill store.RestoreDrill, err error) {
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", zfsDomain:
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
 	}
@@ -14620,7 +15558,7 @@ var errNothingToDrill = errors.New("no restorable file data in the newest off-si
 // records kind='dr' ok=false AND fires the drill-failure notification.
 func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bool) (drill store.RestoreDrill, err error) {
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", zfsDomain:
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
 	}
@@ -14762,8 +15700,10 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 // its vm:<name> tag — same pattern as containers. flash: the newest snapshot
 // outright (flash is a single whole-USB image, no per-item scoping). files
 // follows the flash path: the newest snapshot in the files repo outright — a
-// file-set restore is sandbox-cheap and any set proves the repo restorable. An
-// empty repo or a target with no off-site snapshot yields a clear error.
+// file-set restore is sandbox-cheap and any set proves the repo restorable. zfs
+// takes the newest snapshot carrying a zfs: tag, because a member's tree root
+// is its dataset root and any member proves the repo restorable. An empty repo
+// or a target with no off-site snapshot yields a clear error.
 func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (string, error) {
 	all, err := s.listSnapshots(ctx, repo, mode)
 	if err != nil {
@@ -14775,6 +15715,8 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 	switch domain {
 	case "flash", "files":
 		return newestSnapshot(all).ID, nil
+	case zfsDomain:
+		return newestZFSMemberSnapshot(all)
 	case "containers", "vms":
 		var (
 			target string
@@ -14811,6 +15753,25 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 	default:
 		return "", fmt.Errorf("unknown domain %q", domain)
 	}
+}
+
+// newestZFSMemberSnapshot picks the newest member snapshot of the ZFS domain.
+// A repository shared with another domain also holds snapshots this drill must
+// not restore, so the tag decides rather than the timestamp alone.
+func newestZFSMemberSnapshot(all []restic.Snapshot) (string, error) {
+	var scoped []restic.Snapshot
+	for _, snap := range all {
+		for _, t := range snap.Tags {
+			if rest, ok := strings.CutPrefix(t, "zfs:"); ok && rest != "" {
+				scoped = append(scoped, snap)
+				break
+			}
+		}
+	}
+	if len(scoped) == 0 {
+		return "", errNothingToDrill
+	}
+	return newestSnapshot(scoped).ID, nil
 }
 
 // newestSnapshot returns the snapshot with the latest Time (RFC3339 sorts
@@ -15101,6 +16062,8 @@ func (s *Service) repoFor(settings store.Settings, domain, source string) (strin
 		return s.configRepoPath(settings)
 	case "files":
 		return s.filesRepoPath(settings)
+	case zfsDomain:
+		return s.zfsRepoPath(settings)
 	default:
 		return "", fmt.Errorf("unknown domain %q", domain)
 	}
@@ -15151,7 +16114,9 @@ func domainRunTargetID(domain string) string {
 // detail is bounded to the same cap as truncateRunErr. Best-effort: a store
 // error is logged and never fails the check that already ran.
 func (s *Service) recordDomainRun(domain, kind string, ok bool, detail string) {
-	runID, err := s.store.StartRun(domainRunTargetID(domain), kind)
+	// A drill or tamper row is never started through a tool, so a caller's
+	// context here would put the wrong name in the audit trail.
+	runID, err := s.startRun(context.Background(), domainRunTargetID(domain), kind)
 	if err != nil {
 		log.Printf("api: %s %s: could not start run record (continuing): %v", kind, domain, err) //nolint:gosec // G706: kind and domain are fixed literals
 		return
@@ -15505,7 +16470,9 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 // (begin/terminal, indeterminate — restic prune/forget streams no percentage)
 // and records a "prune" run, so a manual/scheduled prune shows up on the
 // dashboard activity log/run history instead of running invisibly.
-func (s *Service) PruneDomain(ctx context.Context, domain, source string) error {
+// The tags it returns are the items whose old backups it kept because an
+// unusual backup is holding them.
+func (s *Service) PruneDomain(ctx context.Context, domain, source string) ([]string, error) {
 	return s.pruneDomain(ctx, domain, source, true)
 }
 
@@ -15533,7 +16500,7 @@ func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 	}
 	// applyPolicy=false: the per-item tag-scoped forgets already ran inline during
 	// the loop (without --prune), so this pass is a plain space-reclaim.
-	if err := s.pruneDomain(ctx, domain, "local", false); err != nil {
+	if _, err := s.pruneDomain(ctx, domain, "local", false); err != nil {
 		log.Printf("api: prune %s: batched prune failed: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 	}
 }
@@ -15543,14 +16510,14 @@ func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 // per-identity forget --keep-* then one prune — "apply retention now") versus a
 // plain space-reclaim (`restic prune` only — the batched post-bulk pass, whose
 // per-item forgets already ran inline without --prune).
-func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyPolicy bool) (err error) {
+func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyPolicy bool) (paused []string, err error) {
 	// EVERY repository this domain's items write to (#204). Prune is what turns a
 	// forgotten snapshot back into free space, so pruning only the domain
 	// repository means the space retention freed on a named one is never
 	// reclaimed - and nothing says so.
 	settings, repos, skipped, err := s.domainReposForOp(domain, source)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// An immutable repo is never pruned from this box (append-only is the point),
 	// and that is now a decision PER repository rather than for the domain:
@@ -15571,7 +16538,7 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		if isOffsiteSource(source) {
 			immutable, iErr := s.offsiteSourceImmutable(settings, domain, source)
 			if iErr != nil {
-				return iErr
+				return nil, iErr
 			}
 			if immutable {
 				if refusal == nil {
@@ -15596,18 +16563,18 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		// unresolvable hears only "append-only", and never that a repository was
 		// not considered at all.
 		if sErr := skippedError("this prune", skipped); sErr != nil {
-			return errors.Join(refusal, sErr)
+			return nil, errors.Join(refusal, sErr)
 		}
-		return refusal
+		return nil, refusal
 	}
 	repos, missing, err := s.reposThatExist(prunable, "no backups to prune yet")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	skipped = append(skipped, missing...)
 	unlock, ok := s.tryLockDomainFor(domain, "prune")
 	if !ok {
-		return errDomainBusy
+		return nil, errDomainBusy
 	}
 	defer unlock()
 	// Per repository, like the other three (see CheckDomain).
@@ -15617,7 +16584,7 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	pkey := "prune:" + domain
 	_, startedAt := s.progBegin(ctx, pkey, "maintenance")
 	defer func() { s.progEnd(pkey, "maintenance", err == nil, startedAt) }()
-	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "prune")
+	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "prune")
 	if rErr != nil {
 		log.Printf("api: prune %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
 		runID = ""
@@ -15626,11 +16593,11 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		if runID == "" {
 			return
 		}
-		status := "success"
+		status, note := "success", retentionPausedNote(paused)
 		if err != nil {
-			status = "failed"
+			status, note = "failed", truncateRunErr(err)
 		}
-		if fErr := s.store.FinishRun(runID, status, "", 0, truncateRunErr(err)); fErr != nil {
+		if fErr := s.store.FinishRun(runID, status, "", 0, note); fErr != nil {
 			log.Printf("api: prune %s: could not finish run record: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}()
@@ -15666,19 +16633,22 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		if policy.Any() {
 			// Per-identity: tag-scoped, ungrouped forget per item + one prune —
 			// also drains frozen path-groups left by the old grouping (issue #91).
-			if err = s.applyRetentionPerIdentity(ctx, r.Loc, policy, rMode); err != nil {
+			var repoPaused []string
+			repoPaused, err = s.applyRetentionPerIdentity(ctx, r.Loc, policy, rMode)
+			paused = append(paused, repoPaused...)
+			if err != nil {
 				err = fmt.Errorf("pruning %s: %w", s.refName(r), err)
-				return err
+				return paused, err
 			}
 			continue
 		}
 		if err = s.engine.Prune(ctx, r.Loc, rMode); err != nil {
 			err = fmt.Errorf("pruning %s: %w", s.refName(r), err)
-			return err
+			return paused, err
 		}
 	}
 	err = skippedError("this prune", skipped)
-	return err
+	return paused, err
 }
 
 // DeleteSnapshot forgets a single snapshot by id from a domain's repo (restic
@@ -16290,9 +17260,9 @@ func (s *Service) decodeCloudFor(settings store.Settings, credsRef string) (Clou
 // Encryption-key recovery kit (disaster recovery without a running BombVault)
 // ---------------------------------------------------------------------------
 
-// namedRepoItemNames lists the containers, VMs and folder sets pointed at one
-// named repository (#204), as a single comma-separated line for the recovery
-// kit. Built from the three item lists rather than a new store query, and
+// namedRepoItemNames lists the containers, VMs, folder sets and ZFS items
+// pointed at one named repository (#204), as a single comma-separated line for
+// the recovery kit. Built from the item lists rather than a new store query, and
 // tolerant of a read failure: the location is the part that must not be lost,
 // the inventory is the help.
 func (s *Service) namedRepoItemNames(id string) string {
@@ -16315,6 +17285,13 @@ func (s *Service) namedRepoItemNames(id string) string {
 		for _, f := range sets {
 			if strings.TrimSpace(f.Repo) == id {
 				out = append(out, "folder set "+f.Name)
+			}
+		}
+	}
+	if ds, err := s.store.ListZFSDatasets(); err == nil {
+		for _, d := range ds {
+			if strings.TrimSpace(d.Repo) == id {
+				out = append(out, "ZFS dataset "+d.Dataset)
 			}
 		}
 	}
@@ -16349,8 +17326,8 @@ func (s *Service) RecoveryKit() (string, error) {
 	// settings (the same resolution the engine uses), so the kit names the real
 	// places the data lives. A resolution failure for one domain leaves that line
 	// blank rather than failing the whole kit.
-	repos := make([]recoveryRepo, 0, 4)
-	for _, d := range []string{"containers", "vms", "flash", "files"} {
+	repos := make([]recoveryRepo, 0, 5)
+	for _, d := range []string{"containers", "vms", "flash", "files", zfsDomain} {
 		rr := recoveryRepo{Domain: d}
 		if loc, rErr := s.repoFor(settings, d, "local"); rErr == nil {
 			rr.Local = loc
@@ -16415,9 +17392,10 @@ func (s *Service) RecoveryKit() (string, error) {
 	// the kit answers both "where is it" and "what is in there".
 	if named, nErr := s.store.ListNamedRepos(); nErr == nil && len(named) > 0 {
 		w("## Named repositories (per-item)\n\n")
-		w("These repositories hold the backups of individual containers, VMs or folder\n")
-		w("sets that were pointed at them instead of their domain repository above. They\n")
-		w("are ordinary restic repositories and use the SAME password as the rest.\n\n")
+		w("These repositories hold the backups of individual containers, VMs, folder\n")
+		w("sets or ZFS datasets that were pointed at them instead of their domain\n")
+		w("repository above. They are ordinary restic repositories and use the SAME\n")
+		w("password as the rest.\n\n")
 		for _, n := range named {
 			loc := n.Repo
 			if resolved, rErr := s.resolveRepo(n.Repo); rErr == nil {
@@ -16453,6 +17431,11 @@ func (s *Service) RecoveryKit() (string, error) {
 		w("- config (off-site): %s\n", settings.ConfigOffsite)
 	}
 	w("\n")
+	if mcpShipped {
+		w("Restoring this backup revokes every MCP key and every OAuth sign-in; create\n")
+		w("new keys and let cloud assistants sign in again under\n")
+		w("Settings > System > MCP server afterwards.\n\n")
+	}
 
 	// Off-site/cloud credentials — the stored rest-server / S3 keys and rclone
 	// config a user needs to reach a remote repository after losing BombVault.
@@ -16523,6 +17506,11 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("       restic -r <repo> snapshots\n\n")
 	w("4. Restore a snapshot into a target directory (`restic restore`):\n\n")
 	w("       restic -r <repo> restore <snapshot-id> --target <restore-dir>\n\n")
+	w("   Pick the snapshot with care. Since restic 0.17, `restic snapshots` shows each\n")
+	w("   snapshot's size. After data loss the newest snapshot can be the emptied one,\n")
+	w("   so do not restore a snapshot that is far smaller than the ones before it.\n")
+	w("   After ransomware it can be the encrypted one at the usual size. If BombVault\n")
+	w("   still runs, check its Anomalies page first: it names the last good backup.\n\n")
 	w("Notes:\n")
 	w("- For a LOCAL repo, point <repo> at the backup folder on disk (the path above is the\n")
 	w("  container view; on the host it is your backup share, e.g. /mnt/user/<...>).\n")
@@ -16532,8 +17520,76 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("  (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY for S3, RESTIC_REST_USERNAME /\n")
 	w("  RESTIC_REST_PASSWORD for a REST server) and use the repo verbatim.\n")
 
+	b.WriteString(s.zfsKitSection(settings))
+	b.WriteString(dbDumpKitSection)
+
 	return b.String(), nil
 }
+
+// dbDumpKitSection explains how to get a database dump back with restic and the
+// database's own client. It is written to be pasted into a terminal, so it uses
+// plain quotes and no typographic dashes.
+const dbDumpKitSection = `
+## Database dumps without BombVault
+
+Recognised database containers are dumped before each backup into the containers
+repository as snapshots of their own, tagged dbdump:<container>. Each holds one
+file, /dbdump/<container>.sql.
+
+1. List the dumps of one container (the tags dbversion:<version> and
+   dbname:<database> show the server version and the databases each dump holds):
+
+       restic -r <repo> snapshots --tag dbdump:<container>
+
+2. Write the newest dump to a file (or replace "latest" with a snapshot id). A
+   complete file ends with "-- PostgreSQL database cluster dump complete" or
+   "-- Dump completed":
+
+       restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+
+   After data loss the newest dump can be the one taken of an emptied
+   database. The list from step 1 shows each dump's size; skip one that is far
+   smaller than those before it. If BombVault still runs, its Anomalies page
+   names the last good dump.
+
+3. Create the database container again with an empty data folder and the same or
+   a newer version (PostgreSQL), or the same major version (MySQL, MariaDB). Let
+   it start once so it initialises. The host has no database client; run the
+   import through the container, with the container's own variables:
+
+       PostgreSQL:
+         docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+       MariaDB:
+         docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+       MySQL (and MariaDB images before 11):
+         docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+
+   A dump taken with an app user instead of root (it holds one database) is
+   imported the same way with that user and its password variable.
+
+4. Only one database out of a full dump:
+
+       MySQL/MariaDB: add --one-database <name> to the client command above; the
+         client then skips every statement for other databases.
+       PostgreSQL: the dump has one section per database, each starting with a
+         line "\connect <name>". Copy the section for your database into its own
+         file and import that file with -d <name> after creating the database.
+
+Notes:
+- A dump is never loaded back automatically. Restoring a container restores its
+  files, which are newer than the dump when they were saved with the container
+  stopped. Use a dump when those files cannot be used. BombVault's "Import into
+  a fresh database" does step 3 for you and keeps the old data folder.
+- PostgreSQL: "role ... already exists" for the user the container created is
+  expected and harmless. Other errors are real.
+- MySQL/MariaDB: a full (root) dump contains the mysql system database, users
+  and their password hashes; importing it replaces the new server's users,
+  including root's password, with the ones from the dump.
+- A PostgreSQL dump from a server with the 2025 security update starts with
+  \restrict; import it with a psql of the same or a newer patch release.
+- The file contains every table and the password hashes of the database users.
+  Keep it private.
+`
 
 // orNone returns s, or "(not resolved)" when s is empty, so a blank repo line in
 // the recovery kit reads clearly instead of trailing off.
@@ -16544,42 +17600,76 @@ func orNone(s string) string {
 	return s
 }
 
+// singletonItemName is the label of a domain that has no per-item name, and
+// empty for one that has. Without it a "%s %q" label renders an empty quote
+// (`config ""`), and the same item would be called different things depending
+// on which message names it.
+func singletonItemName(domain string) string {
+	switch domain {
+	case "flash":
+		return "Unraid flash"
+	case "config":
+		return "BombVault configuration"
+	}
+	return ""
+}
+
 // notifyBackup sends a best-effort notification for a completed backup. It reads
 // the stored config each call (cheap; backups are infrequent) and is a no-op when
-// notifications are off.
-func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool, sum backup.Summary, backupErr error) {
+// notifications are off. cancelKey is the key the backup registered its cancel
+// under, empty for a failure before it could be cancelled.
+func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey string, ok bool, sum backup.Summary, backupErr error) {
+	stalled, isStall := stalledReason(ctx, scrubError(backupErr))
+	// A cancelled or stalled run is reported on the context that just ended.
+	ctx = context.WithoutCancel(ctx)
 	c, err := s.NotifyConfig()
 	if err != nil || c.On == "" || c.On == "never" {
 		return
 	}
-	// Singleton domains have no per-item name, so a "%s %q" label would render an
-	// empty quote (e.g. `config ""`). Give each a clean human label.
-	var target string
-	switch domain {
-	case "flash":
-		target = "Unraid flash"
-	case "config":
-		target = "BombVault configuration"
-	default:
+	target := singletonItemName(domain)
+	if target == "" {
 		target = fmt.Sprintf("%s %q", domain, name)
 	}
+	// A cancel is what somebody asked for, so like the run row it is no
+	// failure, and only those who hear about every backup hear about it.
+	// Healthchecks still gets the end of the run it saw start, since a start
+	// left open turns the check red once its grace time is up.
+	// A shutdown is labelled the same way, first, as runsAdapter.Finish does.
+	interrupted := !ok && s.IsShuttingDown()
+	cancelled := !ok && !interrupted && !isStall && s.backupWasCancelled(cancelKey)
 	var msg string
-	if ok {
+	switch {
+	case ok:
 		msg = fmt.Sprintf("Backup of %s succeeded (snapshot %s, %s).", target, shortID(sum.SnapshotID), humanBytes(sum.Bytes))
-	} else {
+	case interrupted:
+		msg = fmt.Sprintf("Backup of %s was stopped because BombVault shut down.", target)
+	case cancelled:
+		msg = fmt.Sprintf("Backup of %s was cancelled.", target)
+	case isStall:
+		msg = fmt.Sprintf("Backup of %s FAILED: %s", target, stalled)
+	default:
 		msg = fmt.Sprintf("Backup of %s FAILED: %s", target, scrubError(backupErr))
 	}
-	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok})
+	if o := runOriginFromContext(ctx); o.Via == "mcp" {
+		msg += " " + s.mcpOriginSentence(o.KeyID)
+	}
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok || cancelled || interrupted})
 
 	// Unraid native notification (delivered over SSH; notify.Send is HTTP-only).
 	// Honour the same policy: notifyBackup already returned for "never", so send
 	// on "always" or on any failure. In scheduled summary mode, drop the per-item
 	// Unraid push too — ScheduledNotifyResult sends the one aggregate (#56).
-	if s.unraidGate(c.Unraid) && (c.On == "always" || !ok) &&
+	failed := !ok && !cancelled && !interrupted
+	if s.unraidGate(c.Unraid) && (c.On == "always" || failed) &&
 		(!notify.MessagesSuppressed(ctx) || !c.ScheduledSummary) {
 		level := "normal"
 		subject := "BombVault: backup OK"
-		if !ok {
+		switch {
+		case interrupted:
+			subject = "BombVault: backup interrupted"
+		case cancelled:
+			subject = "BombVault: backup cancelled"
+		case failed:
 			level = "warning"
 			subject = "BombVault: backup FAILED"
 		}
@@ -16587,6 +17677,18 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 			log.Printf("notify: unraid: %v", e)
 		}
 	}
+}
+
+// mcpOriginSentence names the MCP key behind a backup for the notification
+// about it. A key the store cannot name still gets the sentence: what the
+// reader needs is that the backup came from neither the schedule nor the web
+// interface.
+func (s *Service) mcpOriginSentence(keyID string) string {
+	key, err := s.store.GetMCPKey(keyID)
+	if err != nil || key.Label == "" {
+		return "Started through MCP."
+	}
+	return fmt.Sprintf("Started through MCP with the key %q.", key.Label)
 }
 
 // statusSkipped marks a run BombVault intentionally did NOT perform because the
@@ -16613,7 +17715,7 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	}
 	// Always record the skip so Run History shows it every run (a cheap, honest audit
 	// trail) rather than the removed target silently vanishing from the dashboard.
-	if runID, sErr := s.store.StartRun(tg.ID, "backup"); sErr != nil {
+	if runID, sErr := s.startRun(ctx, tg.ID, "backup"); sErr != nil {
 		log.Printf("api: Backup: skip %q: start skipped run: %v", name, sErr) //nolint:gosec // G706: name is %q-quoted
 	} else if fErr := s.store.FinishRun(runID, statusSkipped, "", 0, store.ReasonContainerGone); fErr != nil {
 		log.Printf("api: Backup: skip %q: finish skipped run: %v", name, fErr) //nolint:gosec // G706: name is %q-quoted
@@ -16657,12 +17759,12 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 // since the caller is already returning the real one. An entry with no target row
 // yet has nothing to key a run to, so there the reason is only logged, and the
 // scheduled summary still names it from the returned error.
-func (s *Service) recordPreflightFailure(kind, name, targetID string, cause error) {
+func (s *Service) recordPreflightFailure(ctx context.Context, kind, name, targetID string, cause error) {
 	if targetID == "" {
 		log.Printf("api: %s: %q failed before a run could be recorded (no target row yet): %v", kind, name, cause) //nolint:gosec // G706: kind is a fixed literal, name is %q-quoted
 		return
 	}
-	runID, err := s.store.StartRun(targetID, "backup")
+	runID, err := s.startRun(ctx, targetID, "backup")
 	if err != nil {
 		log.Printf("api: %s: %q: start failed run: %v", kind, name, err) //nolint:gosec // G706: see above
 		return
@@ -16746,6 +17848,14 @@ func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, atte
 		summary = fmt.Sprintf("Scheduled %s backup: %d of %d items failed.\n%s",
 			domain, failed, attempted, formatItemFailures(failures))
 	}
+	// A dump fails without failing the backup around it, so the round's balance
+	// says nothing about it and the summary has to name it separately.
+	if tally := dbDumpTallyFrom(ctx); tally != nil {
+		if line := tally.take(); line != "" {
+			summary += "\n" + line
+			ok = false
+		}
+	}
 	// Reuse Send for the message channels with the Healthchecks ping suppressed
 	// (ScheduledHealthchecksResult already sent the one aggregate HC ping). The summary
 	// ctx carries no message-suppress flag, so Send delivers it (shouldSend still gates
@@ -16789,7 +17899,7 @@ func formatItemFailures(failures []schedule.ItemFailure) string {
 // host's notify script over SSH. level is "normal" | "warning" | "alert".
 func (s *Service) sendUnraidNotify(ctx context.Context, subject, desc, level string) error {
 	if s.ssh == nil {
-		return errors.New("no SSH connection for Unraid notifications (set it up in Settings → VM Backup over SSH)")
+		return errors.New("no SSH connection for Unraid notifications (set it up in Settings, System, Host SSH)")
 	}
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()

@@ -18,7 +18,7 @@ Az `APP_KEY` származtatja a restic tároló jelszavát. Nélküle (és a titkos
 
 A VM-mentés SSH-n keresztül kommunikál a libvirttel, soha nem egy csatoláson.
 
-- Ellenőrizd, hogy az SSH engedélyezve van-e a hoszton, és a BombVault nyilvános kulcsa engedélyezve van-e a `/root/.ssh/authorized_keys` fájlban (a Beállítások, Rendszer, VM-mentés SSH-n keresztül mutatja a kulcsot és egy **Kapcsolat tesztelése** gombot).
+- Ellenőrizd, hogy az SSH engedélyezve van-e a hoszton, és a BombVault nyilvános kulcsa engedélyezve van-e a `/root/.ssh/authorized_keys` fájlban (a Beállítások, Rendszer, Gazdagép SSH mutatja a kulcsot és egy **Kapcsolat tesztelése** gombot).
 - Egy egyéni `br0.x` hálózaton állítsd a `LIBVIRT_HOST`-ot az Unraid LAN IP-jére (a konténer ott nem éri el a hosztot a `host.docker.internal`-on keresztül). Engedélyezd a **Beállítások, Docker, Host access to custom networks** opciót.
 - Ha megváltoztattad az Unraid SSH-portját, állítsd be a `LIBVIRT_SSH_PORT`-ot, hogy egyezzen.
 - A teljes, lépésről lépésre diagnózis (elérhetőségi teszt, VLAN-útválasztás, `Permission denied (publickey)`, `Host key verification failed`) a [VM-mentés SSH-n keresztül útmutatóban](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) található.
@@ -42,6 +42,56 @@ Mielőtt bármit is leállítanának vagy eltávolítanának, a visszaállítás
 ## Egy egyszerű export meghiúsult ahelyett, hogy fájlt írt volna
 
 Ha az age-titkosítás be van kapcsolva (Beállítások), de nincs beállítva érvényes címzett, egy export világos hibával leáll, ahelyett hogy nyílt szöveget írna. Adj hozzá egy érvényes címzettet (egy age nyilvános kulcs vagy egy SSH nyilvános kulcs), vagy kapcsold ki a titkosítást, ha az exportot nyílt szövegnek szánod. Lásd: [Funkciók](features.md).
+
+## Egy adatbázis-dump sikertelen volt
+
+A sikertelen dump sosem buktatja el a körülötte futó mentést; saját sikertelen futásként kerül be, és az ok megmondja, mit kell javítani.
+
+- **Elutasított bejelentkezés.** A dump a konténer saját jelszóváltozóival lép be (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` vagy ezek `_FILE` változatai). Ellenőrizd őket az adatbázis-konténeren. Ugyanígy bukik el az a `_FILE` változó, amely olyan titokra mutat, amelyet a konténer saját felhasználója nem olvashat.
+- **Hiányzó jogosultságok.** Véletlenszerű root-jelszó mellett a dump csak az alkalmazás felhasználójaként tud belépni, így csak azt az egy adatbázist tartalmazza, a MySQL 8.4 és újabb pedig teljesen elutasíthatja. Adj a konténernek valódi root-jelszót, vagy kapcsold ki nála a dumpot.
+- **A rendszertáblák frissítést kérnek.** A MariaDB megtagadja a dumpot, ha a rendszertáblái régebbi verzióból valók (1558-as hiba). Vedd fel a `MARIADB_AUTO_UPGRADE=1` változót és indítsd újra a konténert, vagy futtasd benne egyszer a `mariadb-upgrade` parancsot.
+- **Nincs dump eszköz.** Egy lecsupaszított vagy saját kezűleg épített képfájlból `pg_dump`, `mysqldump` vagy `mariadb-dump` nélkül nem lehet dumpot készíteni. Válts a hivatalos képfájlra, vagy kapcsold ki a dumpot.
+- **Időkorlát.** Egy dump a `DB_DUMP_MAX_HOURS` keretet kapja (alapból 6), a körülötte futó mentés a `BACKUP_MAX_HOURS` keretet, és az a dump, amelyik nem halad tovább, `BACKUP_STALL_HOURS` után elvágódik. Az utóbbi mögött rendszerint az alkalmazás által tartott zár áll. Emeld meg azt a korlátot, amelyik életbe lépett, vagy akkor dumpolj, amikor az alkalmazás nyugton van.
+- **A konténer szünetel vagy újraindul.** A dump a futó kiszolgálóval beszél. Ha a konténer folyton újraindul, a saját naplója megmondja, miért.
+- **Egy sérült dumpot nem lehetett eltávolítani.** Azt a dumpot, amelyet a BombVault nem tudott befejezni, törli. Ha ez a törlés nem sikerül, a dump sérültként megjelölve a listában marad, és onnan törölheted.
+
+## Egy import sikertelen volt
+
+Az import leállítja a konténert, félreteszi az adatmappáját, és hagyja, hogy a képfájl a helyére egy üreset hozzon létre. Ha az import előtti lépések egyike hiúsul meg, a régi mappa magától visszakerül. Ha maga az import bukik el, a konténernél marad a friss mappa, a régi pedig mellette marad `<adatmappa>.bombvault-before-import-<időbélyeg>` néven; a futás hibaüzenete megnevezi a pontos elérési utat.
+
+Kézi visszaállítás: állítsd le a konténert, nevezd át az aktuális adatmappát az útból, nevezd vissza a megőrzött mappát az eredeti nevére, majd indítsd el a konténert. Unraidon ezt a Shares fül fájlkezelője elvégzi.
+
+## Egy ZFS-adatkészlet mentése hibára futott vagy kihagyott egy adatkészletet {#zfs-datasets}
+
+Minden problémához szögletes zárójelben ok-kód tartozik, és a [ZFS-adatkészletek](zfs-datasets.md#reason-codes) oldal mindet felsorolja a javítással. A három leggyakoribb:
+
+- **`snapshot-loop`**: a pillanatkép nem jutott el a BombVaulthoz, mert a Host Data nem adja tovább az új csatolásokat. Szerkeszd a konténert, állítsd a Host Data Access Mode értékét Read/Write - Slave-re, és indítsd újra a BombVaultot.
+- **`key-not-loaded`**: a titkosított adatkészletet, amelynek kulcsa nincs betöltve, kihagyja. Töltsd be a kulcsot a `zfs load-key` paranccsal, és csatold az adatkészletet; a következő mentés már tartalmazza.
+- **`ssh-auth`**: a kiszolgáló elutasította a BombVault kulcsát. A ZFS oldal kapcsolatkártyája mutatja a parancsot, amely engedélyezi; futtasd egyszer a kiszolgálón.
+
+## Egy elem "Tanul N/10" állapotban marad
+
+A legtöbb anomália-ellenőrzés egy elem 10 sikeres mentése után indul, és a számlálás újraindul a **Jelölés várhatóként** után és az elem kijelölésének módosulása után. Az ütemezés nélküli elem nem tanul, egy appdata nélküli konténernek pedig nincs miből tanulnia, amit a jelvénye is mutat.
+
+## A megőrzés nem törli többé egy elem régi mentéseit
+
+Egy nyitott kritikus anomália tartja vissza őket: az elem forrása majdnem üres, erősen összezsugorodott, vagy egy mentés az adatok nagy részét újra eltárolta. Nyisd meg az anomáliát az elem jelvényéről. Ha adat hiányzik vagy titkosították, előbb állítsd vissza a hivatkozott utolsó jó mentésből. Utána nyugtázd az anomáliát, vagy jelöld várhatónak, ha a változás tőled jött, és a következő futás a szokásos módon takarít. A megőrzési előnézet az ilyen elemet megtartottként jelöli. Egy ZFS-elemnél csak az anomáliában megnevezett adatkészlet tartja meg a régi mentéseit; a fa többi adatkészlete a szokásos módon takarítódik.
+
+## A kézi tisztítás szerint néhány elemet megtartott
+
+Ugyanaz az ok: a tisztítás békén hagyja az ilyen anomáliájú elem régi mentéseit, és az üzenetében megnevezi az elemet. Minden mást a szokásos módon tisztít.
+
+## Az előzmények importja szerint egy tárolót nem sikerült beolvasni
+
+Frissítés után a BombVault egyszer beolvassa a korábbi mentések méretét minden tárolóból. Az a tároló, amely akkor nem volt elérhető, például egy leállt külső cél vagy egy fel nem csatolt megosztás, megjelenik a **Beállítások, Integritás** alatti **Anomáliák** kártyán, és naponta egyszer újrapróbálja. Addig az elemei az új mentésekből tanulnak.
+
+## A lemezterület-figyelmeztetés nem egyezik az Unraid irányítópulttal
+
+Az Unraid felhasználói megosztásán (`/mnt/user`) a szabad hely az egész tömbé, nem egyetlen lemezé. A távoli tárolókat csak olyan rclone távoli tárolókon keresztül méri, amelyek jelentik a szabad helyüket; az S3, B2, REST és SFTP tárolóknak nincs adatuk, és az **Anomáliák** kártyán nem mértként szerepelnek.
+
+## Egy MI-asszisztens nem tud csatlakozni
+
+Az [MCP-kiszolgáló](mcp.md#troubleshooting) oldal leírja, mit jelentenek az MCP-végpont egyes állapotkódjai és elutasításai, és mit tehetsz ellenük.
 
 ## A konténer folyamatosan újraindul vagy egészségtelennek tűnik
 

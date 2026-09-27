@@ -18,7 +18,7 @@ BombVault serve HTTPS pronto all'uso sulla porta `3443` (certificato autofirmato
 
 Il backup delle VM comunica con libvirt via SSH, mai un mount.
 
-- Conferma che SSH sia abilitato sull'host e che la chiave pubblica di BombVault sia autorizzata in `/root/.ssh/authorized_keys` (Impostazioni, Sistema, Backup VM via SSH mostra la chiave e un pulsante **Prova connessione**).
+- Conferma che SSH sia abilitato sull'host e che la chiave pubblica di BombVault sia autorizzata in `/root/.ssh/authorized_keys` (Impostazioni, Sistema, SSH dell'host mostra la chiave e un pulsante **Prova connessione**).
 - Su una rete `br0.x` personalizzata, imposta `LIBVIRT_HOST` sull'IP LAN del tuo Unraid (lì il container non può raggiungere l'host tramite `host.docker.internal`). Abilita **Impostazioni, Docker, Host access to custom networks**.
 - Se hai cambiato la porta SSH di Unraid, imposta `LIBVIRT_SSH_PORT` di conseguenza.
 - La diagnosi completa passo passo (test di raggiungibilità, routing VLAN, `Permission denied (publickey)`, `Host key verification failed`) è nella [guida al backup delle VM via SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -42,6 +42,56 @@ Prima che qualcosa venga fermato o rimosso, il ripristino esegue una verifica de
 ## Un'esportazione in chiaro è fallita invece di scrivere un file
 
 Se la cifratura age è attiva (Impostazioni) ma non è impostato alcun destinatario valido, un'esportazione fallisce con un errore chiaro invece di scrivere testo in chiaro. Aggiungi un destinatario valido (una chiave pubblica age o una chiave pubblica SSH), oppure disattiva la cifratura se intendi che l'esportazione sia in chiaro. Vedi [Funzionalità](features.md).
+
+## Un dump del database è fallito
+
+Un dump fallito non fa mai fallire il backup che lo circonda: viene registrato come esecuzione fallita a sé, e il motivo dice cosa sistemare.
+
+- **Accesso rifiutato.** Il dump entra con le variabili di password del container stesso (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` o le loro versioni `_FILE`). Controllale sul container del database. Una variabile `_FILE` che punta a un segreto illeggibile per l'utente del container fallisce allo stesso modo.
+- **Privilegi mancanti.** Con una password di root casuale il dump può entrare solo come utente dell'applicazione, quindi contiene quel singolo database, e MySQL 8.4 e successivi possono rifiutarlo del tutto. Dai al container una vera password di root, oppure spegni il suo dump.
+- **Le tabelle di sistema vanno aggiornate.** MariaDB rifiuta il dump quando le sue tabelle di sistema vengono da una versione più vecchia (errore 1558). Aggiungi la variabile `MARIADB_AUTO_UPGRADE=1` e riavvia il container, oppure esegui `mariadb-upgrade` una volta al suo interno.
+- **Nessuno strumento di dump.** Un'immagine snella o costruita in casa senza `pg_dump`, `mysqldump` o `mariadb-dump` non si può dumpare. Usa l'immagine ufficiale, o spegni il dump.
+- **Un limite di tempo.** Un dump ha `DB_DUMP_MAX_HOURS` (6 di default), il backup attorno ha `BACKUP_MAX_HOURS`, e un dump che smette di avanzare viene tagliato dopo `BACKUP_STALL_HOURS`. L'ultimo caso nasce quasi sempre da un lock tenuto dall'applicazione. Alza il limite che è scattato, oppure fai il dump mentre l'applicazione è tranquilla.
+- **Il container è in pausa o si sta riavviando.** Il dump parla con il server in funzione. Se il container si riavvia di continuo, il suo log dice perché.
+- **Un dump danneggiato non si è potuto rimuovere.** Un dump che BombVault non è riuscito a completare viene cancellato. Quando quella cancellazione fallisce, il dump resta nell'elenco segnato come danneggiato e lo puoi eliminare da lì.
+
+## Un import è fallito
+
+Un import ferma il container, sposta di lato la sua cartella dati e lascia che l'immagine ne crei una vuota al suo posto. Se fallisce un passo prima dell'import vero e proprio, la vecchia cartella torna al suo posto da sola. Se fallisce l'import, il container tiene la cartella nuova e quella vecchia resta accanto come `<cartella dati>.bombvault-before-import-<data e ora>`; il messaggio di errore dell'esecuzione indica il percorso esatto.
+
+Per rimetterla a mano: ferma il container, rinomina la cartella dati attuale per toglierla di mezzo, rinomina la cartella conservata al nome originale e avvia il container. Su Unraid lo fa il gestore file nella scheda Shares.
+
+## Un backup di un dataset ZFS è fallito o ha saltato un dataset {#zfs-datasets}
+
+Ogni problema porta un codice di motivo tra parentesi quadre, e la pagina [Dataset ZFS](zfs-datasets.md#reason-codes) li elenca tutti con la soluzione. I tre più comuni:
+
+- **`snapshot-loop`**: lo snapshot non è arrivato a BombVault perché Host Data non inoltra i nuovi mount. Modifica il container, imposta l'Access Mode di Host Data su Read/Write - Slave e riavvia BombVault.
+- **`key-not-loaded`**: un dataset cifrato la cui chiave non è caricata viene saltato. Carica la chiave con `zfs load-key` e monta il dataset; il backup successivo lo include.
+- **`ssh-auth`**: il server ha rifiutato la chiave di BombVault. La scheda di connessione nella pagina ZFS mostra il comando che la autorizza; eseguilo una volta sul server.
+
+## Un elemento resta su "Sta imparando N/10"
+
+La maggior parte dei controlli di anomalia parte dopo 10 backup riusciti di un elemento, e il conteggio riparte dopo **Segna come attesa** e dopo una modifica della selezione dell'elemento. Un elemento non pianificato non impara, e un container senza appdata non ha nulla da cui imparare, come dice il suo badge.
+
+## La conservazione non elimina più i vecchi backup di un elemento
+
+Li trattiene un'anomalia critica aperta: la sorgente dell'elemento è quasi vuota, si è ridotta molto, oppure un backup ha salvato di nuovo la maggior parte dei dati. Apri l'anomalia dal badge dell'elemento. Se mancano dati o sono stati cifrati, ripristina prima dall'ultimo backup buono collegato. Poi conferma l'anomalia, o segnala come prevista se il cambiamento è tuo, e l'esecuzione successiva pulisce come sempre. L'anteprima della conservazione indica un elemento del genere come mantenuto. Per un elemento ZFS solo il dataset indicato nell'anomalia conserva i vecchi backup; gli altri dataset dell'albero vengono ripuliti come sempre.
+
+## La pulizia manuale dice che alcuni elementi sono stati mantenuti
+
+La stessa causa: la pulizia lascia stare i vecchi backup di un elemento con un'anomalia di questo tipo e lo nomina nel suo messaggio. Tutto il resto viene pulito come sempre.
+
+## L'importazione della cronologia dice che un repository non si è potuto leggere
+
+Dopo l'aggiornamento BombVault legge una volta le dimensioni dei backup precedenti da ogni repository. Un repository non raggiungibile in quel momento, per esempio una destinazione esterna non disponibile o una condivisione non montata, compare nella scheda **Anomalie** di **Impostazioni, Integrità** e viene ritentato una volta al giorno. Nel frattempo i suoi elementi imparano dai nuovi backup.
+
+## L'avviso sullo spazio su disco non corrisponde alla dashboard di Unraid
+
+Sulla condivisione utente di Unraid (`/mnt/user`) lo spazio libero è quello dell'intero array, non di un singolo disco. I repository remoti vengono misurati solo tramite i remote rclone che riportano il loro spazio libero; i repository S3, B2, REST e SFTP non hanno un dato e compaiono come non misurati nella scheda **Anomalie**.
+
+## Un assistente IA non riesce a collegarsi
+
+La pagina [Server MCP](mcp.md#troubleshooting) spiega cosa significano ogni codice di stato e ogni rifiuto del punto di connessione MCP, e cosa fare.
 
 ## Il container continua a riavviarsi o sembra non sano
 

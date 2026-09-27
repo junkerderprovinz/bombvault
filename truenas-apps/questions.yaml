@@ -300,7 +300,8 @@ questions:
           label: Host Data
           description: |
             The pool or dataset holding the app data to back up, for example /mnt/tank.</br>
-            Data of apps on ixVolume storage is not reachable.
+            Data of apps on ixVolume storage is not reachable.</br>
+            ZFS dataset backups need a Host Path above the datasets they back up, for example /mnt/tank, and do not work with an ixVolume.
           schema:
             type: dict
             attrs:

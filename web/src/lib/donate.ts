@@ -1,5 +1,6 @@
-// The donation addresses, listed coin first the way a donor thinks ("I have
-// USDT"), with the chain as a second choice underneath. Every network carries
+// Where donations go: Buy Me a Coffee, PayPal and the crypto addresses. The
+// addresses are listed coin first the way a donor thinks ("I have USDT"), with
+// the chain as a second choice underneath. Every network carries
 // its own address, so no chain can be picked without a wallet that lives on it.
 // Tron is absent because there is no Tron address, and the EVM one would be
 // lost there.
@@ -7,6 +8,29 @@
 // donate.test.ts checks each address as far as its format allows. The XRP
 // account was also checked on the ledger; a payment to an XRP account that
 // does not exist is rejected rather than lost.
+import type { PaypalConfig } from "./paypal";
+
+/**
+ * Buy Me a Coffee's widget page, the one BMAC page that allows framing; the
+ * profile page answers X-Frame-Options: SAMEORIGIN. Same handle as
+ * .github/FUNDING.yml.
+ */
+export const COFFEE_WIDGET = "https://buymeacoffee.com/widget/page/junkerderprovinz?description=&color=%23FFDD00";
+
+/** The live PayPal app. Each plan is priced at 1 EUR a unit, and the amount is
+ *  the quantity. */
+export const PAYPAL: PaypalConfig = {
+  clientId: "BAAbFqgNYfuCIBT_gwVE64oqj-E-jmxFiLaoR1yMIF9KK-CW16x5Pt2bSjBloqbTF4TvjFYw3ZTLnRP8_U",
+  plans: { month: "P-2ND5083133959702RNK2375A", year: "P-2FN843952N550243RNK2375A" },
+  currency: "EUR",
+};
+
+/** The preset amounts in the PayPal window, in whole euros. */
+export const PAYPAL_AMOUNTS = ["10", "25", "50"];
+export const PAYPAL_DEFAULT_AMOUNT = "25";
+
+/** What the donor's PayPal history shows for the payment. */
+export const PAYPAL_DESCRIPTION = "BombVault";
 
 /** One address, and the chain it lives on. */
 export interface CryptoNetwork {
@@ -29,6 +53,9 @@ export interface CryptoCoin {
   name: string;
   /** Never empty, and every entry carries an address. */
   networks: CryptoNetwork[];
+  /** The coin's own colour, which its tile fills with under the pointer, and
+   *  the ink on it: white where white reaches 2:1, #161616 below that. */
+  tile: { color: string; ink: string };
 }
 
 // Each wallet is defined once, so the networks that share it cannot drift apart.
@@ -50,12 +77,14 @@ export const CRYPTO_COINS: CryptoCoin[] = [
     id: "btc",
     symbol: "BTC",
     name: "Bitcoin",
+    tile: { color: "#f7931a", ink: "#ffffff" }, // 2.3:1
     networks: [{ id: "bitcoin", name: "Bitcoin", address: BTC }],
   },
   {
     id: "eth",
     symbol: "ETH",
     name: "Ethereum",
+    tile: { color: "#627eea", ink: "#ffffff" }, // 3.7:1
     // Native ETH only. ETH on BNB Smart Chain is a bridged token, and offering
     // it beside the real thing invites sending the wrong one.
     networks: [ETHEREUM, BASE, OPTIMISM],
@@ -64,36 +93,42 @@ export const CRYPTO_COINS: CryptoCoin[] = [
     id: "usdt",
     symbol: "USDT",
     name: "Tether",
+    tile: { color: "#26a17b", ink: "#ffffff" }, // 3.3:1
     networks: [ETHEREUM, BSC, SOLANA],
   },
   {
     id: "usdc",
     symbol: "USDC",
     name: "USD Coin",
+    tile: { color: "#2775ca", ink: "#ffffff" }, // 4.7:1
     networks: [ETHEREUM, BASE, SOLANA],
   },
   {
     id: "bnb",
     symbol: "BNB",
     name: "BNB",
+    tile: { color: "#f0b90b", ink: "#161616" }, // 10.0:1
     networks: [BSC],
   },
   {
     id: "sol",
     symbol: "SOL",
     name: "Solana",
+    tile: { color: "#9945ff", ink: "#ffffff" }, // 4.5:1
     networks: [SOLANA],
   },
   {
     id: "sui",
     symbol: "SUI",
     name: "Sui",
+    tile: { color: "#4da2ff", ink: "#ffffff" }, // 2.7:1
     networks: [{ id: "sui", name: "Sui", address: SUI }],
   },
   {
     id: "xrp",
     symbol: "XRP",
     name: "XRP",
+    tile: { color: "#23292f", ink: "#ffffff" }, // 14.7:1
     networks: [
       {
         id: "xrpl",

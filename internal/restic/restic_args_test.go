@@ -164,6 +164,73 @@ func TestForgetPolicyArgsSeveralTagsAreOneGroup(t *testing.T) {
 	}
 }
 
+// TestForgetPreviewArgs pins the read-only twin of ForgetPolicyArgs: same
+// selection and same keep dimensions, but it answers "what WOULD retention
+// remove" without touching the repository.
+//
+// The two flags that matter are --dry-run and --no-lock, and they are only
+// correct TOGETHER. In restic 0.17.3 cmd_forget.go the repository is opened
+// with openWithExclusiveLock(ctx, gopts, opts.DryRun && gopts.NoLock): with
+// --dry-run alone restic still takes the EXCLUSIVE lock, so a "preview" would
+// block a running backup (or be blocked by it) and would write lock files into
+// a remote repository just to answer a question. --no-lock alone is refused
+// outright with "--no-lock is only applicable in combination with --dry-run
+// for forget command". Hence: both, always.
+func TestForgetPreviewArgs(t *testing.T) {
+	t.Run("tag-scoped: --tag + ungrouped, mirroring the real per-identity pass", func(t *testing.T) {
+		got := ForgetPreviewArgs("/repo",
+			RetentionPolicy{KeepLast: 5}, Mode{Encrypted: true}, "container:plex")
+		want := []string{"-r", "/repo", "forget", "--dry-run", "--no-lock", "--json",
+			"--tag", "container:plex", "--group-by", "", "--keep-last", "5", "--keep-tag", DirectTag}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("legacy repo-wide pass: paths grouping, only set dimensions", func(t *testing.T) {
+		got := ForgetPreviewArgs("/repo",
+			RetentionPolicy{KeepLast: 5, KeepMonthly: 6}, Mode{Encrypted: true}, "")
+		want := []string{"-r", "/repo", "forget", "--dry-run", "--no-lock", "--json",
+			"--group-by", "paths", "--keep-last", "5", "--keep-monthly", "6", "--keep-tag", DirectTag}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted adds insecure flag, full policy", func(t *testing.T) {
+		got := ForgetPreviewArgs("/repo",
+			RetentionPolicy{KeepLast: 3, KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 12},
+			Mode{Encrypted: false}, "vm:win11")
+		want := []string{"-r", "/repo", "forget", "--insecure-no-password", "--dry-run", "--no-lock", "--json",
+			"--tag", "vm:win11", "--group-by", "",
+			"--keep-last", "3", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12",
+			"--keep-tag", DirectTag}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	// The negative half is the important one: --prune would turn a cheap
+	// question into a full index read over the network, and --retry-lock is
+	// meaningless once nothing is locked.
+	t.Run("never prunes, never waits for a lock, always both dry-run and no-lock", func(t *testing.T) {
+		got := ForgetPreviewArgs("/repo", RetentionPolicy{KeepLast: 1}, Mode{Encrypted: true}, "flash")
+		var dryRun, noLock bool
+		for _, a := range got {
+			switch a {
+			case "--prune":
+				t.Fatalf("a preview must never prune, got %v", got)
+			case "--retry-lock":
+				t.Fatalf("a preview takes no lock, so it must not wait for one, got %v", got)
+			case "--dry-run":
+				dryRun = true
+			case "--no-lock":
+				noLock = true
+			}
+		}
+		if !dryRun || !noLock {
+			t.Fatalf("restic 0.17.3 locks exclusively unless --dry-run AND --no-lock are both present, got %v", got)
+		}
+	})
+}
+
 // TestForgetArgs pins that ForgetArgs (forgetting specific snapshot IDs, as
 // opposed to the keep-policy sweep in ForgetPolicyArgs) also carries
 // --retry-lock so a transient cross-process/cross-domain lock on the repo is
@@ -453,6 +520,96 @@ func TestBackupArgsExcludeCaches(t *testing.T) {
 	})
 }
 
+// TestBackupArgsHasNoGroupBy pins that the path-based backup builder leaves
+// grouping at restic's default. Every container, VM, flash, config and folder
+// snapshot is grouped by host and paths; a --group-by host,tags here would put
+// snapshots of different sources into one retention group.
+func TestBackupArgsHasNoGroupBy(t *testing.T) {
+	for _, got := range [][]string{
+		BackupArgs("/repo", []string{"/src"}, []string{"container:plex"}, Mode{Encrypted: true}),
+		BackupArgs("/repo", []string{"/src"}, nil, Mode{Encrypted: false}, "logs"),
+		BackupArgs("s3:bucket/repo", []string{"/a", "/b"}, []string{"flash"},
+			Mode{Encrypted: true, ExcludeCaches: true, Limits: Limits{UploadKBps: 512}}),
+	} {
+		for _, a := range got {
+			if a == "--group-by" {
+				t.Fatalf("BackupArgs must not group by tags, got %v", got)
+			}
+		}
+	}
+}
+
+// TestBackupDirArgs pins the argv of a backup taken inside a directory on the
+// positional ".". The --group-by flag is what makes restic find the previous
+// snapshot of the same dataset although the absolute working directory carries
+// a different snapshot name every run.
+func TestBackupDirArgs(t *testing.T) {
+	t.Run("encrypted", func(t *testing.T) {
+		got := BackupDirArgs("/repo", []string{"zfs:cache/appdata"}, Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--json", "--host", "bombvault",
+			"--group-by", "host,tags", "--tag", "zfs:cache/appdata", "--", "."}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted with excludes", func(t *testing.T) {
+		got := BackupDirArgs("/repo", []string{"zfs:cache/appdata/plex"}, Mode{Encrypted: false},
+			"/mnt/cache/appdata/plex/.zfs/snapshot/bombvault-20260923T010000/Library/Cache", "*.tmp")
+		want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--insecure-no-password", "--json",
+			"--host", "bombvault", "--group-by", "host,tags", "--tag", "zfs:cache/appdata/plex",
+			"--exclude", "/mnt/cache/appdata/plex/.zfs/snapshot/bombvault-20260923T010000/Library/Cache",
+			"--exclude", "*.tmp", "--", "."}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("limits and exclude-caches keep the slots they have in BackupArgs", func(t *testing.T) {
+		got := BackupDirArgs("s3:bucket/repo", []string{"zfs:tank/data"},
+			Mode{Encrypted: true, ExcludeCaches: true, Limits: Limits{UploadKBps: 1024, DownloadKBps: 512}}, "logs")
+		want := []string{"-r", "s3:bucket/repo", "--retry-lock", "5m", "--limit-upload", "1024", "--limit-download", "512",
+			"backup", "--json", "--host", "bombvault", "--group-by", "host,tags", "--tag", "zfs:tank/data",
+			"--exclude-caches", "--exclude", "logs", "--", "."}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
+// TestRestoreAllArgs pins the argv for restoring a whole snapshot into a target
+// directory, the shape the ZFS domain needs because its snapshot tree root is
+// the dataset root.
+func TestRestoreAllArgs(t *testing.T) {
+	t.Run("encrypted", func(t *testing.T) {
+		got := RestoreAllArgs("/repo", "abc123", "/mnt/cache/appdata", Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "restore", "--json", "--target", "/mnt/cache/appdata", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted", func(t *testing.T) {
+		got := RestoreAllArgs("/repo", "abc123", "/restore", Mode{Encrypted: false})
+		want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--json", "--target", "/restore", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("a foreign source repository is only read", func(t *testing.T) {
+		got := RestoreAllArgs("/repo", "abc123", "/restore", Mode{Encrypted: true, NoLock: true})
+		want := []string{"-r", "/repo", "restore", "--no-lock", "--json", "--target", "/restore", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("excluded paths", func(t *testing.T) {
+		got := RestoreAllArgs("/repo", "abc123", "/mnt/cache/appdata", Mode{Encrypted: true}, "/plex", "/db")
+		want := []string{"-r", "/repo", "restore", "--json", "--target", "/mnt/cache/appdata",
+			"--exclude", "/plex", "--exclude", "/db", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
 func TestDumpZipArgsEncrypted(t *testing.T) {
 	got := DumpZipArgs("/repo", "abc123", "/host/boot", Mode{Encrypted: true})
 	want := []string{"-r", "/repo", "dump", "-a", "zip", "--", "abc123:/host/boot", "/"}
@@ -491,6 +648,50 @@ func TestBackupStdinArgsUnencrypted(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}
+}
+
+// TestBackupCommandArgs pins the argv of a database dump: restic runs the
+// helper itself (`--stdin-from-command`) so a command that exits non-zero
+// leaves no snapshot behind. The command follows the separator, and the
+// builder keeps BackupArgs' flag ordering so a remote primary's limits and
+// storage class still apply.
+func TestBackupCommandArgs(t *testing.T) {
+	command := []string{"/usr/local/bin/bombvault", "dbdump-stream", "--container", "pg", "--engine", "postgres", "--max-seconds", "21600"}
+
+	t.Run("encrypted", func(t *testing.T) {
+		got := BackupCommandArgs("/repo", "/dbdump/pg.sql", []string{"dbdump:pg", "p1"}, Mode{Encrypted: true}, command)
+		want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--json", "--host", "bombvault",
+			"--tag", "dbdump:pg", "--tag", "p1", "--stdin-filename", "/dbdump/pg.sql", "--stdin-from-command", "--",
+			"/usr/local/bin/bombvault", "dbdump-stream", "--container", "pg", "--engine", "postgres", "--max-seconds", "21600"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted names the insecure flag right after the verb", func(t *testing.T) {
+		got := BackupCommandArgs("/repo", "/dbdump/pg.sql", []string{"dbdump:pg"}, Mode{Encrypted: false}, command)
+		want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--insecure-no-password", "--json", "--host", "bombvault",
+			"--tag", "dbdump:pg", "--stdin-filename", "/dbdump/pg.sql", "--stdin-from-command", "--",
+			"/usr/local/bin/bombvault", "dbdump-stream", "--container", "pg", "--engine", "postgres", "--max-seconds", "21600"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("limits keep the global slot", func(t *testing.T) {
+		got := BackupCommandArgs("rest:http://host:8000/repo", "/dbdump/pg.sql", nil,
+			Mode{Encrypted: true, Limits: Limits{UploadKBps: 500, DownloadKBps: 250}}, command)
+		want := []string{"-r", "rest:http://host:8000/repo", "--retry-lock", "5m", "--limit-upload", "500", "--limit-download", "250",
+			"backup", "--json", "--host", "bombvault", "--stdin-filename", "/dbdump/pg.sql", "--stdin-from-command", "--",
+			"/usr/local/bin/bombvault", "dbdump-stream", "--container", "pg", "--engine", "postgres", "--max-seconds", "21600"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("a dump walks no filesystem, so it never excludes caches", func(t *testing.T) {
+		got := BackupCommandArgs("/repo", "/dbdump/pg.sql", nil, Mode{Encrypted: true, ExcludeCaches: true}, command)
+		if argsContain(got, "--exclude-caches") {
+			t.Fatalf("got %v, want no --exclude-caches", got)
+		}
+	})
 }
 
 // TestDumpRawArgs pins the restore-side counterpart of BackupStdinArgs: no
@@ -720,6 +921,45 @@ func TestSnapshotsArgs(t *testing.T) {
 		want := []string{"-r", "/repo", "snapshots", "--insecure-no-password", "--no-lock", "--json"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
+func TestSnapshotParentArgs(t *testing.T) {
+	t.Run("encrypted", func(t *testing.T) {
+		got := SnapshotArgs("/repo", "abc123", Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "snapshots", "--no-lock", "--json", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted", func(t *testing.T) {
+		got := SnapshotArgs("/repo", "abc123", Mode{Encrypted: false})
+		want := []string{"-r", "/repo", "snapshots", "--insecure-no-password", "--no-lock", "--json", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("the parent of a snapshot without one is empty", func(t *testing.T) {
+		list := []byte(`[{"id":"feedface","parent":"aaaabbbb"},{"id":"feedfacf"}]`)
+		got, err := parseSnapshotParent(list)
+		if err != nil {
+			t.Fatalf("parseSnapshotParent: %v", err)
+		}
+		if got != "aaaabbbb" {
+			t.Fatalf("parent = %q, want aaaabbbb", got)
+		}
+		got, err = parseSnapshotParent([]byte(`[{"id":"feedfacf"}]`))
+		if err != nil {
+			t.Fatalf("parseSnapshotParent: %v", err)
+		}
+		if got != "" {
+			t.Fatalf("parent = %q, want empty", got)
+		}
+	})
+	t.Run("an empty list is an error", func(t *testing.T) {
+		if _, err := parseSnapshotParent([]byte(`[]`)); err == nil {
+			t.Fatal("parseSnapshotParent of an empty list returned no error")
 		}
 	})
 }

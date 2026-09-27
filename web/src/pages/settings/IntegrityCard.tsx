@@ -14,6 +14,7 @@ import { IconCheckCircle } from "../../components/Sidebar";
 import { RepoSource, SourceToggle, isOffsiteSource } from "../../components/SourceToggle";
 import { IconKey, IconPrune } from "../../components/glyphs";
 import { useAdvanced } from "../../lib/advanced";
+import { heldTagLabels } from "../../lib/anomalies";
 import { Container, RestoreDrill, Settings, VM, checkDomain, getDrills, getStatus, listContainers, listVMs, pruneDomain, runDrill, tamperTest, unlockDomain } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
@@ -74,7 +75,7 @@ export function IntegrityCard({
   const [, setTgtVMState] = useState<SaveState>("idle");
   const [, setTgtVMError] = useState<string | null>(null);
 
-  type Domain = "containers" | "vms" | "flash" | "files";
+  type Domain = "containers" | "vms" | "flash" | "files" | "zfs";
   type Action = "verify" | "unlock" | "prune";
 
   const domains: { key: Domain; label: string }[] = [
@@ -82,6 +83,7 @@ export function IntegrityCard({
     { key: "vms", label: t("settings.vmsEnabled") },
     { key: "flash", label: t("settings.flashEnabled") },
     { key: "files", label: t("settings.filesEnabled") },
+    { key: "zfs", label: t("settings.zfsEnabled") },
   ];
 
   // Load the containers once for the DR-drill target picker (includes orphans
@@ -205,6 +207,10 @@ export function IntegrityCard({
       if (skipped.length) {
         push(t("integrity.unlockPartial").replace("{list}", skipped.join(", ")), "warn");
       }
+      const paused: string[] = "paused" in r && Array.isArray(r.paused) ? r.paused : [];
+      if (r.ok && paused.length) {
+        push(t("anomaly.prunePaused").replace("{names}", heldTagLabels(paused, t).join(", ")), "warn");
+      }
       if (r.ok) {
         setState((s) => ({ ...s, [key]: "ok" }));
       } else {
@@ -289,6 +295,7 @@ export function IntegrityCard({
     vms: settings.vmsOffsite !== "" && settings.vmsOffsiteImmutable,
     flash: settings.flashOffsite !== "" && settings.flashOffsiteImmutable,
     files: settings.filesOffsite !== "" && settings.filesOffsiteImmutable,
+    zfs: settings.zfsOffsite !== "" && settings.zfsOffsiteImmutable,
   };
 
   const selectCls =

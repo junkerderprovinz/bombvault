@@ -134,7 +134,7 @@ func TestPerIdentityRetentionAgesARepositoryOfProjectFolders(t *testing.T) {
 	}
 	eng := &stackEngine{snaps: []restic.Snapshot{{ID: "a1", Tags: []string{"stack:immich", "p1"}}}}
 	s := &Service{engine: eng, store: store.New(db)}
-	if err := s.applyRetentionPerIdentity(context.Background(), "/repo", restic.RetentionPolicy{KeepLast: 3}, restic.Mode{}); err != nil {
+	if _, err := s.applyRetentionPerIdentity(context.Background(), "/repo", restic.RetentionPolicy{KeepLast: 3}, restic.Mode{}); err != nil {
 		t.Fatalf("applyRetentionPerIdentity: %v", err)
 	}
 	if want := []stackForget{{Tag: "stack:immich", Prune: false}}; !slices.Equal(eng.forgets, want) || eng.prunes != 1 {

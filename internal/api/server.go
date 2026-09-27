@@ -38,6 +38,9 @@ const bindHost = "0.0.0.0"
 type Server struct {
 	cfg     config.Config
 	handler http.Handler
+	// BeforeShutdown runs when Run starts to stop, before it waits for the
+	// requests still open: work a request waits on has to end first.
+	BeforeShutdown func()
 }
 
 // NewServer returns a Server for the API router and the SPA in spaFS.
@@ -58,15 +61,25 @@ func NewServer(cfg config.Config, spaFS fs.FS, apiRouter http.Handler) *Server {
 // GET /widget is meant to be framed by other dashboards, so it gets its own CSP
 // with frame-ancestors * and no X-Frame-Options. Every other path, including
 // the widget's /api/widget/data feed, is sent with DENY.
+//
+// The About card's give windows are the one place the app reaches another
+// origin: Buy Me a Coffee's widget as a frame, and PayPal's SDK, which loads
+// its script, frames its buttons and card form, and calls home. The SDK draws
+// a placeholder of its buttons in a blank frame of this page, which inherits
+// this policy, so the two logos on it need img-src. Nothing loads before
+// somebody opens its window.
 func securityHeaders(next http.Handler) http.Handler {
+	const paypalHosts = "https://www.paypal.com https://*.paypal.com https://*.paypalobjects.com"
+
 	// TestThemeBootScriptCSPHashMatches fails when this hash does not match the
 	// inline script in web/index.html, whitespace included.
 	const csp = "default-src 'self'; " +
-		"script-src 'self' 'sha256-OyogNhfMmFOmnpKoxuucDcL3wuNp1ArXH1kHMlcPetY='; " +
+		"script-src 'self' 'sha256-OyogNhfMmFOmnpKoxuucDcL3wuNp1ArXH1kHMlcPetY=' " + paypalHosts + "; " +
 		"style-src 'self' 'unsafe-inline'; " +
-		"img-src 'self' data:; " +
+		"img-src 'self' data: https://www.paypalobjects.com; " +
 		"font-src 'self' data:; " +
-		"connect-src 'self'; " +
+		"connect-src 'self' " + paypalHosts + "; " +
+		"frame-src " + paypalHosts + " https://buymeacoffee.com; " +
 		"object-src 'none'; " +
 		"base-uri 'self'; " +
 		"frame-ancestors 'none'"
@@ -97,9 +110,9 @@ func securityHeaders(next http.Handler) http.Handler {
 }
 
 // httpShutdownGrace bounds how long Run waits for in-flight requests on
-// shutdown. Backups are handled by Service.BeginShutdown before this, and an
-// SSE progress stream never closes on its own, so a long grace would only
-// delay every stop.
+// shutdown. Backups are cancelled by Service.BeginShutdown once Run is back,
+// and an SSE progress stream never closes on its own, so a long grace would
+// only delay every stop.
 const httpShutdownGrace = 3 * time.Second
 
 // Run serves HTTPS with a self-signed certificate, or plain HTTP when
@@ -125,15 +138,19 @@ func (s *Server) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("server: ensure cert: %w", err)
 		}
+		if err := loadServedCertificate(certPath, keyPath); err != nil {
+			return fmt.Errorf("server: load cert: %w", err)
+		}
 		addr := net.JoinHostPort(bindHost, strconv.Itoa(s.cfg.HTTPSPort))
 		srv = &http.Server{
 			Addr:              addr,
 			Handler:           s.handler,
 			ReadHeaderTimeout: 15 * time.Second,
+			TLSConfig:         servedTLSConfig(),
 		}
 		printBanner()
 		printReady("HTTPS", s.cfg.HTTPSPort)
-		serve = func() error { return srv.ListenAndServeTLS(certPath, keyPath) }
+		serve = func() error { return srv.ListenAndServeTLS("", "") }
 	}
 
 	errCh := make(chan error, 1)
@@ -143,6 +160,9 @@ func (s *Server) Run(ctx context.Context) error {
 	case err := <-errCh:
 		return err
 	case <-ctx.Done():
+		if s.BeforeShutdown != nil {
+			s.BeforeShutdown()
+		}
 		shutCtx, cancel := context.WithTimeout(context.Background(), httpShutdownGrace)
 		defer cancel()
 		if err := srv.Shutdown(shutCtx); err != nil {

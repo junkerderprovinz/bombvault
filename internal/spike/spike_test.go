@@ -151,3 +151,40 @@ func TestDefaultProbesConstruct(t *testing.T) {
 		}
 	}
 }
+
+func TestDefaultProbesIncludeBestEffortZFS(t *testing.T) {
+	probes := spike.DefaultProbes()
+	at := -1
+	libvirtAt := -1
+	for i, p := range probes {
+		switch p.Name {
+		case "zfs":
+			at = i
+		case "libvirt":
+			libvirtAt = i
+		}
+	}
+	if at < 0 {
+		t.Fatal("DefaultProbes has no zfs probe, so a broken mapping only shows up when the first backup fails")
+	}
+	if at != libvirtAt+1 {
+		t.Fatalf("the zfs probe sits at %d, want right after libvirt at %d", at, libvirtAt)
+	}
+	if !probes[at].BestEffort {
+		t.Fatal("the zfs probe gates AllOK, so every server without ZFS reports a red host-integration panel")
+	}
+}
+
+func TestZFSProbeFailureKeepsAllOK(t *testing.T) {
+	probes := []spike.Probe{
+		{Name: "docker", Fn: alwaysOK},
+		{Name: "zfs", Fn: alwaysFail, BestEffort: true},
+	}
+	checks, allOK := spike.Run(spike.Deps{}, probes)
+	if !allOK {
+		t.Fatal("a failing zfs probe must not lower AllOK")
+	}
+	if checks[1].OK {
+		t.Fatal("the failing zfs probe must still be reported as not OK")
+	}
+}

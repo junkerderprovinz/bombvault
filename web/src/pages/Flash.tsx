@@ -17,6 +17,10 @@ import { FlashZipExportCard } from "./settings/FlashZipExportCard";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconDownload } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
+import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
+import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
+import { useRestoreRequest } from "../lib/restoreRequest";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -127,6 +131,10 @@ function FlashDownload({ pick, t }: { pick: TimelinePick; t: T }) {
 
 export function Flash() {
   const { t } = useT();
+  const anomaly = useAnomalyItems().find("flash", "flash");
+  const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const { flagged } = useOpenAnomalies();
+  const restoreRequest = useRestoreRequest();
   const progressMap = useProgress();
   const progress = progressMap["flash"];
   // Any backup, restore or replication in flight disables the backup button
@@ -140,7 +148,10 @@ export function Flash() {
     // spaces the heading and the cards.
     <div className={PAGE_SHELL}>
       <div>
-        <h1 className="text-2xl font-semibold text-carbon-text">{t("flash.title")}</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold text-carbon-text">{t("flash.title")}</h1>
+          <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
+        </div>
         <p className="mt-1 text-sm text-carbon-textSub">{tLtr(t, "flash.subtitle")}</p>
         <div className="mt-2 flex flex-col gap-1">
           <OffsiteIndicator domain="flash" />
@@ -169,6 +180,7 @@ export function Flash() {
               busyPhase={running.phase}
             />
           </div>
+          <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
 
           {/* As on the Folders page: a restore has its own control with its
               own warning. */}
@@ -208,6 +220,8 @@ export function Flash() {
             itemName={t("flash.title")}
             open
             renderActions={(pick) => <FlashDownload pick={pick} t={t} />}
+            flagged={flagged}
+            request={restoreRequest}
           />
         </div>
       </div>

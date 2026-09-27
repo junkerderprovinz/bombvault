@@ -20,7 +20,7 @@ const digestWindow = 7 * 24 * time.Hour
 const digestMaxFailures = 5
 
 // digestKindOrder keeps the count lines in the same order every week.
-var digestKindOrder = []string{"backup", "restore", "update", "prune", "verify", "offsite", "drill", "drdrill", "tamper", "export"}
+var digestKindOrder = []string{"backup", "dbdump", "dbdumpsave", "dbimport", "restore", "update", "prune", "verify", "offsite", "drill", "drdrill", "tamper", "export"}
 
 // digestKindCount is one kind's finished-run tally inside the digest window.
 type digestKindCount struct {
@@ -54,6 +54,10 @@ type digestStats struct {
 	// lines (newest first); MoreFailures counts the collapsed remainder.
 	Failures     []string
 	MoreFailures int
+	// AnomaliesCritical, AnomaliesWarning and AnomaliesHeld are the findings
+	// nobody has settled yet, whenever they were raised: the weekly reminder
+	// that a critical is still open and that deleting old backups is waiting.
+	AnomaliesCritical, AnomaliesWarning, AnomaliesHeld int
 }
 
 // digestBackupScheduleFor returns a domain's local backup schedule, which sets
@@ -70,6 +74,8 @@ func digestBackupScheduleFor(domain string, settings store.Settings) string {
 		return settings.ConfigSchedule
 	case "files":
 		return settings.FilesSchedule
+	case "zfs":
+		return settings.ZFSSchedule
 	}
 	return ""
 }
@@ -91,6 +97,11 @@ func (s *Service) runTargetNames() map[string]string {
 	if fss, err := s.store.ListFileSets(); err == nil {
 		for _, fs := range fss {
 			names[fs.ID] = fs.Name
+		}
+	}
+	if ds, err := s.store.ListZFSDatasets(); err == nil {
+		for _, d := range ds {
+			names[d.ID] = d.Dataset
 		}
 	}
 	return names
@@ -129,7 +140,7 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 					// Domain-scoped runs use the domain name as their target id.
 					name = run.TargetID
 				}
-				reason := run.Error
+				reason := shareableRunError(run.Kind, run.Error)
 				const maxReason = 160
 				if len(reason) > maxReason {
 					reason = reason[:maxReason]
@@ -145,7 +156,7 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 	if err != nil {
 		return digestStats{}, fmt.Errorf("read settings: %w", err)
 	}
-	for _, domain := range []string{"containers", "vms", "flash", "config", "files"} {
+	for _, domain := range offsiteConfigDomains {
 		if s.offsiteRepoFor(domain, settings) == "" {
 			continue
 		}
@@ -167,6 +178,13 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 		}
 		stats.Offsite = append(stats.Offsite, line)
 	}
+
+	counts, _, err := s.store.OpenAnomalyCounts()
+	if err != nil {
+		return digestStats{}, fmt.Errorf("read open anomalies: %w", err)
+	}
+	stats.AnomaliesCritical, stats.AnomaliesWarning = counts["critical"], counts["warning"]
+	stats.AnomaliesHeld = s.anomalies.summary().RetentionHeld
 	return stats, nil
 }
 
@@ -233,6 +251,11 @@ func composeDigest(stats digestStats) string {
 				fmt.Fprintf(&b, "- %s: current (last copy %s)\n", line.Domain, digestAge(stats.Now, line.LastOK))
 			}
 		}
+	}
+
+	if stats.AnomaliesCritical > 0 || stats.AnomaliesWarning > 0 || stats.AnomaliesHeld > 0 {
+		fmt.Fprintf(&b, "Anomalies still open: critical %d, warning %d, retention paused for %d item(s)\n",
+			stats.AnomaliesCritical, stats.AnomaliesWarning, stats.AnomaliesHeld)
 	}
 
 	if len(stats.Failures) > 0 {

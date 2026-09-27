@@ -270,7 +270,7 @@ var branchMigrations = []struct {
 	name  string
 	probe func(*sql.Tx) (bool, error)
 }{
-	{"offsite_targets_primary_slot", recordedAs("offsite_targets_primary_slot")},
+	{"offsite_targets_primary_slot", migrationRecorded("offsite_targets_primary_slot")},
 	{"offsite_copy_rules", tablePresent("offsite_copy_rules")},
 	{"placement_defaults", tablePresent("placement_defaults")},
 	{"offsite_item_copies", tablePresent("offsite_item_copies")},

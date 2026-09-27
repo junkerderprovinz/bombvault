@@ -86,3 +86,21 @@ func TestTruncateErrNilAndTruncation(t *testing.T) {
 		t.Fatalf("truncateErr should cap at 500 chars, got %d", len(got))
 	}
 }
+
+// TestTruncateErrKeepsZFSRefusalNames checks that a ZFS refusal keeps the
+// dataset name a user has to read to know which dataset failed, while an
+// ordinary error with a path in it is still scrubbed.
+func TestTruncateErrKeepsZFSRefusalNames(t *testing.T) {
+	got := truncateErr(&ZFSRefusal{Code: "snapshot-loop", Detail: "cache/appdata"})
+	if !strings.Contains(got, "cache/appdata") {
+		t.Fatalf("truncateErr turned the dataset name into a path placeholder, got %q", got)
+	}
+	if !strings.Contains(got, "snapshot-loop") {
+		t.Fatalf("truncateErr dropped the reason code, got %q", got)
+	}
+
+	got = truncateErr(errors.New("open /host/user/cache/appdata/db: permission denied"))
+	if !strings.Contains(got, "[path]") {
+		t.Fatalf("truncateErr must still scrub a path in an ordinary error, got %q", got)
+	}
+}

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -19,9 +21,11 @@ import (
 
 // fakeHostSSH records Run calls. runOut and runErr are what Run returns.
 type fakeHostSSH struct {
-	runs   [][]string
-	runOut string
-	runErr error
+	runs         [][]string
+	runOut       string
+	runErr       error
+	testErr      error
+	knownHostErr error
 }
 
 var _ HostSSH = (*fakeHostSSH)(nil)
@@ -29,8 +33,8 @@ var _ HostSSH = (*fakeHostSSH)(nil)
 func (f *fakeHostSSH) ReadFile(context.Context, string) ([]byte, error) { return nil, nil }
 func (f *fakeHostSSH) WriteFile(context.Context, string, []byte) error  { return nil }
 func (f *fakeHostSSH) PublicKey() (string, error)                       { return "", nil }
-func (f *fakeHostSSH) Test(context.Context) error                       { return nil }
-func (f *fakeHostSSH) EnsureKnownHost(context.Context) error            { return nil }
+func (f *fakeHostSSH) Test(context.Context) error                       { return f.testErr }
+func (f *fakeHostSSH) EnsureKnownHost(context.Context) error            { return f.knownHostErr }
 func (f *fakeHostSSH) Run(_ context.Context, args ...string) (string, error) {
 	f.runs = append(f.runs, args)
 	return f.runOut, f.runErr
@@ -67,12 +71,12 @@ func TestNotifyBackupUnraidHonoursPolicy(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	s.notifyBackup(context.Background(), "container", "plex", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+	s.notifyBackup(context.Background(), "container", "plex", "", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
 	if len(ssh.runs) != 0 {
 		t.Fatalf("no Unraid notify expected on success (policy=failure), got %v", ssh.runs)
 	}
 
-	s.notifyBackup(context.Background(), "container", "plex", false, backup.Summary{}, errors.New("boom"))
+	s.notifyBackup(context.Background(), "container", "plex", "", false, backup.Summary{}, errors.New("boom"))
 	if len(ssh.runs) != 1 {
 		t.Fatalf("expected 1 Unraid notify on failure, got %d", len(ssh.runs))
 	}
@@ -85,12 +89,152 @@ func TestNotifyBackupUnraidHonoursPolicy(t *testing.T) {
 	}
 }
 
+func TestNotifyBackupReportsACancelAsNoFailure(t *testing.T) {
+	for _, on := range []string{"failure", "always"} {
+		t.Run(on, func(t *testing.T) {
+			var mu sync.Mutex
+			var hcPaths []string
+			var messages []string
+			hc := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+				mu.Lock()
+				hcPaths = append(hcPaths, r.URL.Path)
+				mu.Unlock()
+			}))
+			defer hc.Close()
+			wh := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+				body, _ := io.ReadAll(r.Body)
+				mu.Lock()
+				messages = append(messages, string(body))
+				mu.Unlock()
+			}))
+			defer wh.Close()
+
+			ssh := &fakeHostSSH{}
+			s := unraidNotifyService(t, ssh)
+			if err := s.SetNotifyConfig(notify.Config{
+				On: on, Unraid: true, HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic",
+			}); err != nil {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithCancel(context.Background())
+			s.registerBackupCancel(context.Background(), "container:plex", cancel)
+			defer s.unregisterBackupCancel("container:plex")
+			if !s.CancelBackupRun("container:plex", "") {
+				t.Fatal("the backup could not be cancelled")
+			}
+
+			s.notifyBackup(ctx, "container", "plex", "container:plex", false, backup.Summary{},
+				fmt.Errorf("backup: cancelled while stopping the container: %w", ctx.Err()))
+
+			mu.Lock()
+			defer mu.Unlock()
+			if len(hcPaths) != 1 || hcPaths[0] != "/" {
+				t.Errorf("a cancel ended the Healthchecks run with %v, want the plain end ping", hcPaths)
+			}
+			if on == "failure" {
+				if len(messages) != 0 || len(ssh.runs) != 0 {
+					t.Fatalf("a cancel reached someone who only hears about failures: %v %v", messages, ssh.runs)
+				}
+				return
+			}
+			if len(messages) != 1 || !strings.Contains(messages[0], `Backup of container \"plex\" was cancelled.`) {
+				t.Fatalf("webhook messages = %v", messages)
+			}
+			if strings.Contains(messages[0], "FAILED") || strings.Contains(messages[0], "context canceled") {
+				t.Errorf("a cancel reads as a failure: %s", messages[0])
+			}
+			if len(ssh.runs) != 1 {
+				t.Fatalf("%d Unraid notifications, want one", len(ssh.runs))
+			}
+			if sent := strings.Join(ssh.runs[0], " "); strings.Contains(sent, "warning") || !strings.Contains(sent, "backup cancelled") {
+				t.Errorf("Unraid notification = %s", sent)
+			}
+		})
+	}
+}
+
+// A run the stall guard stopped fails with a context error of restic's; the
+// notification says what stopped it instead.
+func TestNotifyBackupNamesTheStallGuard(t *testing.T) {
+	var messages []string
+	wh := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		messages = append(messages, string(body))
+	}))
+	defer wh.Close()
+	s := unraidNotifyService(t, nil)
+	if err := s.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic"}); err != nil {
+		t.Fatal(err)
+	}
+	ctx, stop := context.WithCancelCause(context.Background())
+	stop(&backup.StalledError{After: 2 * time.Hour})
+
+	s.notifyBackup(ctx, "files", "docs", "files:docs", false, backup.Summary{}, fmt.Errorf("restic backup cancelled: %w", ctx.Err()))
+
+	if len(messages) != 1 {
+		t.Fatalf("webhook messages = %v, want one", messages)
+	}
+	want := `Backup of files \"docs\" FAILED: stopped by the stall guard after 2 hours without progress`
+	if !strings.Contains(messages[0], want) || strings.Contains(messages[0], "context canceled") {
+		t.Fatalf("message = %s, want it to contain %s", messages[0], want)
+	}
+}
+
+// A container stop cancels the backups in flight, and their run rows say
+// cancelled. The message agrees with the row instead of reporting a failure
+// with a context error.
+func TestNotifyBackupReportsAShutdownAsAnInterruption(t *testing.T) {
+	var mu sync.Mutex
+	var hcPaths, messages []string
+	hc := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		hcPaths = append(hcPaths, r.URL.Path)
+		mu.Unlock()
+	}))
+	defer hc.Close()
+	wh := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		mu.Lock()
+		messages = append(messages, string(body))
+		mu.Unlock()
+	}))
+	defer wh.Close()
+	ssh := &fakeHostSSH{}
+	s := unraidNotifyService(t, ssh)
+	if err := s.SetNotifyConfig(notify.Config{
+		On: "always", Unraid: true, HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	s.shuttingDown.Store(true)
+	cancel()
+
+	s.notifyBackup(ctx, "container", "plex", "container:plex", false, backup.Summary{},
+		fmt.Errorf("backup: cancelled while stopping the container: %w", ctx.Err()))
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(hcPaths) != 1 || hcPaths[0] != "/" {
+		t.Errorf("a shutdown ended the Healthchecks run with %v, want the plain end ping", hcPaths)
+	}
+	if len(messages) != 1 || !strings.Contains(messages[0], `Backup of container \"plex\" was stopped because BombVault shut down.`) {
+		t.Fatalf("webhook messages = %v", messages)
+	}
+	if len(ssh.runs) != 1 {
+		t.Fatalf("%d Unraid notifications, want one", len(ssh.runs))
+	}
+	if sent := strings.Join(ssh.runs[0], " "); strings.Contains(sent, "warning") || strings.Contains(sent, "FAILED") {
+		t.Errorf("Unraid notification = %s", sent)
+	}
+}
+
 func TestNotifyBackupUnraidSkippedWithoutSSH(t *testing.T) {
 	s := unraidNotifyService(t, nil)
 	if err := s.SetNotifyConfig(notify.Config{On: "always", Unraid: true}); err != nil {
 		t.Fatal(err)
 	}
-	s.notifyBackup(context.Background(), "flash", "", true, backup.Summary{}, nil)
+	s.notifyBackup(context.Background(), "flash", "", "", true, backup.Summary{}, nil)
 }
 
 // The config domain has no item name, so a generic "%s %q" label would read
@@ -102,7 +246,7 @@ func TestNotifyBackupConfigLabel(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	s.notifyBackup(context.Background(), "config", "", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+	s.notifyBackup(context.Background(), "config", "", "", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
 	if len(ssh.runs) != 1 {
 		t.Fatalf("expected 1 Unraid notify for a config backup, got %d", len(ssh.runs))
 	}
@@ -241,7 +385,7 @@ func runScheduledContainers(s *Service, items []string, fail map[string]bool) {
 			failed++
 			berr = errors.New("boom")
 		}
-		s.notifyBackup(ictx, "container", name, ok, backup.Summary{SnapshotID: "deadbeef"}, berr)
+		s.notifyBackup(ictx, "container", name, "", ok, backup.Summary{SnapshotID: "deadbeef"}, berr)
 	}
 	s.ScheduledHealthchecksResult(context.Background(), "containers", attempted, failed)
 }
@@ -339,11 +483,211 @@ func TestManualSingleBackupStillPingsHealthchecksOnce(t *testing.T) {
 
 	ctx := context.Background()
 	s.notifyBackupStart(ctx, "container")
-	s.notifyBackup(ctx, "container", "plex", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+	s.notifyBackup(ctx, "container", "plex", "", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
 
 	mu.Lock()
 	defer mu.Unlock()
 	if len(paths) != 2 || paths[0] != "/start" || paths[1] != "/" {
 		t.Fatalf("manual single backup should ping /start then success, got %v", paths)
 	}
+}
+
+// dumpNotifyService is unraidNotifyService with a container target to hang the
+// dump runs on.
+func dumpNotifyService(t *testing.T, ssh HostSSH, c notify.Config) (*Service, string) {
+	t.Helper()
+	s := unraidNotifyService(t, ssh)
+	if err := s.SetNotifyConfig(c); err != nil {
+		t.Fatal(err)
+	}
+	tg, err := s.store.UpsertTarget(store.Target{ContainerName: "pg", AppdataPaths: []string{"/x"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s, tg.ID
+}
+
+// recordDumpRun writes a finished dbdump run and returns its id.
+func recordDumpRun(t *testing.T, s *Service, targetID, status, reason string) string {
+	t.Helper()
+	id, err := s.store.StartRun(targetID, "dbdump")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.store.FinishRun(id, status, "", 0, reason); err != nil {
+		t.Fatal(err)
+	}
+	return id
+}
+
+func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
+	failed := func(runID, reason string) backup.DBDumpOutcome {
+		return backup.DBDumpOutcome{RunID: runID, Status: "failed", Reason: reason}
+	}
+
+	t.Run("it says how the files backup went", func(t *testing.T) {
+		ssh := &fakeHostSSH{}
+		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true})
+
+		runID := recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpAuth+": FATAL: password authentication failed for user \"immich\"")
+		s.notifyDBDumpFailed(context.Background(), targetID, "pg", failed(runID, store.ReasonDBDumpAuth+": FATAL: password authentication failed for user \"immich\""), true)
+
+		if len(ssh.runs) != 1 {
+			t.Fatalf("%d messages, want one", len(ssh.runs))
+		}
+		sent := strings.Join(ssh.runs[0], " ")
+		if !strings.Contains(sent, `Database dump of container "pg" failed: the database refused the login.`) {
+			t.Errorf("message = %s", sent)
+		}
+		if !strings.Contains(sent, "The files backup of the container succeeded.") {
+			t.Errorf("message does not say how the backup went: %s", sent)
+		}
+		if strings.Contains(sent, "password authentication failed") {
+			t.Errorf("the tool's own message left the box: %s", sent)
+		}
+		if !strings.Contains(sent, "warning") {
+			t.Errorf("a failed dump notifies at level warning: %s", sent)
+		}
+	})
+
+	t.Run("a backup that failed as well", func(t *testing.T) {
+		ssh := &fakeHostSSH{}
+		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true})
+
+		runID := recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpTool)
+		s.notifyDBDumpFailed(context.Background(), targetID, "pg", failed(runID, store.ReasonDBDumpTool), false)
+
+		if len(ssh.runs) != 1 {
+			t.Fatalf("%d messages, want one", len(ssh.runs))
+		}
+		if sent := strings.Join(ssh.runs[0], " "); !strings.Contains(sent, "The files backup of the container failed as well; see its own message.") {
+			t.Errorf("message = %s", sent)
+		}
+	})
+
+	t.Run("a dump left running in the container", func(t *testing.T) {
+		ssh := &fakeHostSSH{}
+		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true})
+
+		reason := withOrphanStopFailed(store.ReasonDBDumpTool + ": pg_dumpall: error: query failed")
+		runID := recordDumpRun(t, s, targetID, "failed", reason)
+		s.notifyDBDumpFailed(context.Background(), targetID, "pg", failed(runID, reason), true)
+
+		if len(ssh.runs) != 1 {
+			t.Fatalf("%d messages, want one", len(ssh.runs))
+		}
+		sent := strings.Join(ssh.runs[0], " ")
+		if !strings.Contains(sent, "The dump may still be running inside the container until its time limit.") {
+			t.Errorf("message does not say the dump may still run: %s", sent)
+		}
+		if strings.Contains(sent, "query failed") {
+			t.Errorf("the tool's own message left the box: %s", sent)
+		}
+	})
+
+	t.Run("the same failure twice", func(t *testing.T) {
+		ssh := &fakeHostSSH{}
+		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true})
+
+		first := recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpAuth)
+		s.notifyDBDumpFailed(context.Background(), targetID, "pg", failed(first, store.ReasonDBDumpAuth), true)
+
+		second := recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpAuth+": FATAL")
+		s.notifyDBDumpFailed(context.Background(), targetID, "pg", failed(second, store.ReasonDBDumpAuth+": FATAL"), true)
+		if len(ssh.runs) != 1 {
+			t.Fatalf("%d messages, want the repeat to stay quiet", len(ssh.runs))
+		}
+
+		third := recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpTool)
+		s.notifyDBDumpFailed(context.Background(), targetID, "pg", failed(third, store.ReasonDBDumpTool), true)
+		if len(ssh.runs) != 2 {
+			t.Fatalf("%d messages, want another reason to speak up", len(ssh.runs))
+		}
+
+		recordDumpRun(t, s, targetID, "success", "")
+		fourth := recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpTool)
+		s.notifyDBDumpFailed(context.Background(), targetID, "pg", failed(fourth, store.ReasonDBDumpTool), true)
+		if len(ssh.runs) != 3 {
+			t.Fatalf("%d messages, want the same reason after a success to speak up", len(ssh.runs))
+		}
+	})
+
+	t.Run("a cancelled dump", func(t *testing.T) {
+		ssh := &fakeHostSSH{}
+		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "always", Unraid: true})
+
+		runID := recordDumpRun(t, s, targetID, "cancelled", store.ReasonCancelled)
+		s.notifyDBDumpFailed(context.Background(), targetID, "pg",
+			backup.DBDumpOutcome{RunID: runID, Status: "cancelled", Reason: store.ReasonCancelled}, true)
+		s.notifyDBDumpFailed(context.Background(), targetID, "pg",
+			backup.DBDumpOutcome{RunID: runID, Status: "failed", Reason: store.ReasonCancelled}, true)
+
+		if len(ssh.runs) != 0 {
+			t.Fatalf("a cancelled dump notified: %v", ssh.runs)
+		}
+	})
+
+	t.Run("a scheduled round in summary mode", func(t *testing.T) {
+		ssh := &fakeHostSSH{}
+		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true, ScheduledSummary: true})
+
+		ctx := withDBDumpTally(notify.WithMessagesSuppressed(context.Background()))
+		runID := recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpAuth)
+		s.notifyDBDumpFailed(ctx, targetID, "pg", failed(runID, store.ReasonDBDumpAuth), true)
+		if len(ssh.runs) != 0 {
+			t.Fatalf("a per-item message went out in summary mode: %v", ssh.runs)
+		}
+
+		s.ScheduledNotifyResult(ctx, "containers", 1, 0, nil)
+		if len(ssh.runs) != 1 {
+			t.Fatalf("%d summaries, want one", len(ssh.runs))
+		}
+		if sent := strings.Join(ssh.runs[0], " "); !strings.Contains(sent, "1 database dump failed: pg") {
+			t.Fatalf("summary = %s", sent)
+		}
+	})
+}
+
+func TestScheduledRoundNamesAFailedDumpInItsSummary(t *testing.T) {
+	failedDump := func(runID string) backup.DBDumpOutcome {
+		return backup.DBDumpOutcome{RunID: runID, Status: "failed", Reason: store.ReasonDBDumpAuth}
+	}
+
+	t.Run("the items and the summary share the round", func(t *testing.T) {
+		ssh := &fakeHostSSH{}
+		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true, ScheduledSummary: true})
+		rounds := NewScheduledRounds()
+
+		rounds.Begin("containers")
+		item := notify.WithMessagesSuppressed(rounds.Context("containers"))
+		s.notifyDBDumpFailed(item, targetID, "pg", failedDump(recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpAuth)), true)
+		if len(ssh.runs) != 0 {
+			t.Fatalf("a per-item message went out in summary mode: %v", ssh.runs)
+		}
+		s.ScheduledNotifyResult(rounds.End("containers"), "containers", 1, 0, nil)
+
+		if len(ssh.runs) != 1 {
+			t.Fatalf("%d summaries, want one", len(ssh.runs))
+		}
+		if sent := strings.Join(ssh.runs[0], " "); !strings.Contains(sent, "1 database dump failed: pg") {
+			t.Errorf("summary = %s", sent)
+		}
+	})
+
+	t.Run("overlapping rounds name the dump once", func(t *testing.T) {
+		ssh := &fakeHostSSH{}
+		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true, ScheduledSummary: true})
+		rounds := NewScheduledRounds()
+
+		rounds.Begin("containers")
+		rounds.Begin("containers")
+		item := notify.WithMessagesSuppressed(rounds.Context("containers"))
+		s.notifyDBDumpFailed(item, targetID, "pg", failedDump(recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpAuth)), true)
+		s.ScheduledNotifyResult(rounds.End("containers"), "containers", 1, 0, nil)
+		s.ScheduledNotifyResult(rounds.End("containers"), "containers", 1, 0, nil)
+
+		if len(ssh.runs) != 1 {
+			t.Fatalf("%d summaries, want the dump named in exactly one", len(ssh.runs))
+		}
+	})
 }

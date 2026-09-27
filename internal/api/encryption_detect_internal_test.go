@@ -67,11 +67,13 @@ func setPaths(t *testing.T, st *store.Repo, paths map[string]string) store.Setti
 	settings.FlashPath = paths["flash"]
 	settings.FilesPath = paths["files"]
 	settings.ConfigPath = paths["config"]
+	settings.ZFSPath = paths["zfs"]
 	settings.ContainersOffsite = paths["containersOffsite"]
 	settings.VMsOffsite = ""
 	settings.FlashOffsite = ""
 	settings.FilesOffsite = ""
 	settings.ConfigOffsite = ""
+	settings.ZFSOffsite = ""
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}

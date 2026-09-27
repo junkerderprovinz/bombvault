@@ -18,6 +18,7 @@ import type {
   ReceivedRepoInput,
   ReceiverInventory,
 } from "../lib/api";
+import { dbDumpNameOf, isDbDumpIdentity } from "../lib/dbdump";
 import { useT } from "../lib/i18n";
 import { PAGE_SHELL, PAGE_SHELL_TABBED } from "../lib/pageShell";
 import { relativeTime } from "../lib/reltime";
@@ -37,6 +38,13 @@ import { ToggleRow } from "./settings/shared";
 import { IconDisclosure } from "../components/IconDisclosure";
 
 type T = ReturnType<typeof useT>["t"];
+
+/** The name a received item goes by: its identity tag, or the dumps of a
+ *  container in words. */
+function itemLabel(item: string, t: T): string {
+  if (isDbDumpIdentity(item)) return t("dbdump.retentionItem").replace("{name}", dbDumpNameOf(item));
+  return item || "-";
+}
 
 // Mirrors the backend's foreignKeyRe for instant feedback; the server checks
 // the key again and probes the repo with it.
@@ -99,7 +107,7 @@ function InventoryPanel({ repo, t }: { repo: ReceivedRepoStatus; t: T }) {
           {inv.sources.map((s, i) => (
             <tr key={`${s.host}/${s.item}/${i}`} className="border-t border-carbon-border">
               <td className="py-1.5 pe-3 text-carbon-text">
-                <span className="font-medium">{s.item || "-"}</span>
+                <span className="font-medium">{itemLabel(s.item, t)}</span>
                 {s.host && <span className="text-carbon-textMuted"> · {s.host}</span>}
               </td>
               <td className="py-1.5 pe-3 text-end text-carbon-textSub font-mono">{s.snapshotCount}</td>

@@ -21,3 +21,7 @@ linters:
       - path: '_test\.go'
         linters: [staticcheck]
         text: "SA5011"
+      # Redaction tests need credential-shaped fixtures to prove nothing leaks.
+      - path: '_test\.go'
+        linters: [gosec]
+        text: "G101"

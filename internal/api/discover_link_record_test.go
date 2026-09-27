@@ -48,6 +48,12 @@ func newContainerLinks(t *testing.T) *containerLinks {
 	}}
 	f.db, f.st = openStore(t)
 	useContainerRepo(t, f.st)
+	// A fresh size sample keeps the setup backups from starting a background
+	// sampler, which would list the repository while Discover runs and shift a
+	// test that counts listings.
+	if err := f.st.AddRepoStat(store.RepoStat{Domain: "containers", Source: "local", At: time.Now().Unix()}); err != nil {
+		t.Fatal(err)
+	}
 	f.repo = establishLocalRepo(t, root, "backups/containers")
 	f.docker = &fakeServiceDocker{inspect: model.Inspect{Image: "radarr:latest"}}
 	f.eng = &fakeResticEngine{}

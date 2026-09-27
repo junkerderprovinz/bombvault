@@ -6,6 +6,8 @@
 // stops here rather than continuing into SettingsPage itself.
 import type { SaveState } from "./shared";
 import { Button } from "../../components/Button";
+import { InfoBubble } from "../../components/InfoBubble";
+import { RcloneRemoteForm } from "../../components/RcloneRemoteForm";
 import { Card } from "../settings/shared";
 import { getRclone, setRclone } from "../../lib/api";
 import { useEffect, useState } from "react";
@@ -72,6 +74,20 @@ export function RcloneCard({
 
   return (
     <Card title={t("rclone.title")} hint={t("rclone.hint")} hueIndex={hueIndex} nested={nested}>
+      {/* The form comes FIRST, above the paste box. The two cover the same
+          ground for different people: the box is the escape hatch for any of
+          rclone seventy backends, the form covers the two that are asked for
+          most and that nobody should have to write an INI section for. Putting
+          the box first taught every new user that a config file is the normal
+          way in. */}
+      <div className="flex flex-col gap-2 border-b border-carbon-border pb-4">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+          {t("rcloneRemote.heading")}
+          <InfoBubble tip={t("rcloneRemote.hint")} />
+        </div>
+        <RcloneRemoteForm t={t} onAdded={() => refresh()} />
+      </div>
+
       <div className="text-sm text-carbon-text">
         {t("rclone.configured")}:{" "}
         <span dir="ltr" className="font-mono text-start">{remotes.length > 0 ? remotes.join(", ") : "—"}</span>

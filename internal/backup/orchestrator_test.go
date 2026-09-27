@@ -3,6 +3,7 @@ package backup_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -49,21 +50,40 @@ type fakeDocker struct {
 	healthSeq map[string][]model.Health
 	// healthErr scripts a Health inspect error per name (graceful-degradation test).
 	healthErr map[string]error
+
+	// startCtxErrs and waitCtxErrs record ctx.Err() at every Start / WaitRunning,
+	// so a test can prove the restart after a cancelled backup did not inherit
+	// the cancellation (the real SDK fails at once on a done context).
+	startCtxErrs []error
+	waitCtxErrs  []error
+
+	// onStop runs inside Stop before it answers, e.g. to cancel the run while
+	// Docker is still stopping the container. stopCtxErrs records ctx.Err()
+	// after it: the client gives up on a stop whose context ended, and the
+	// daemon carries that stop through anyway.
+	onStop      func()
+	stopCtxErrs []error
 }
 
-func (d *fakeDocker) Stop(_ context.Context, name string, _ time.Duration) error {
+func (d *fakeDocker) Stop(ctx context.Context, name string, _ time.Duration) error {
 	d.log = append(d.log, "stop:"+name)
+	if d.onStop != nil {
+		d.onStop()
+	}
+	d.stopCtxErrs = append(d.stopCtxErrs, ctx.Err())
 	return d.stopErr
 }
 
-func (d *fakeDocker) Start(_ context.Context, name string) error {
+func (d *fakeDocker) Start(ctx context.Context, name string) error {
 	d.log = append(d.log, "start:"+name)
+	d.startCtxErrs = append(d.startCtxErrs, ctx.Err())
 	d.started = true
 	return d.startErr
 }
 
-func (d *fakeDocker) WaitRunning(_ context.Context, name string, _ time.Duration) error {
+func (d *fakeDocker) WaitRunning(ctx context.Context, name string, _ time.Duration) error {
 	d.log = append(d.log, "waitRunning:"+name)
+	d.waitCtxErrs = append(d.waitCtxErrs, ctx.Err())
 	return d.waitRunningErr
 }
 
@@ -135,6 +155,8 @@ type fakeRestic struct {
 	capturedPaths    []string
 	capturedExcludes []string // --exclude args passed to the last Backup call
 	capturedTags     []string // tags passed to the last Backup call
+	// onBackup runs inside Backup, e.g. to cancel the run's context mid-backup.
+	onBackup func()
 }
 
 func (r *fakeRestic) VerifySnapshot(_ context.Context, repo, snapshotID string) error {
@@ -146,6 +168,9 @@ func (r *fakeRestic) Backup(_ context.Context, repo string, paths, tags []string
 	r.log = append(r.log, "backup:"+repo+":"+strings.Join(paths, ",")+":"+strings.Join(tags, ","))
 	r.capturedExcludes = excludes
 	r.capturedTags = tags
+	if r.onBackup != nil {
+		r.onBackup()
+	}
 	if r.backupErr != nil {
 		return backup.Summary{}, r.backupErr
 	}
@@ -182,28 +207,69 @@ func (t *fakeTemplates) Write(dir, name, xml string) error {
 	return t.writeErr
 }
 
+// runFinish is one recorded Finish, so a flow with more than one run can be
+// checked per run rather than by position in the status list.
+type runFinish struct {
+	runID  string
+	status string
+	sum    backup.Summary
+	note   string
+}
+
 type fakeRuns struct {
 	log       []string
 	startErr  error
 	finishErr error
 	lastRunID string
 	finishes  []string // recorded "status" values
+	// numbered hands every run its own id; the zero value answers run-1 always.
+	numbered bool
+	// startErrKind, when set, narrows startErr to runs of that kind.
+	startErrKind string
+	started      int
+	kinds        []string
+	finishCalls  []runFinish
 }
 
 func (r *fakeRuns) Start(targetID, kind string) (string, error) {
 	r.log = append(r.log, "runStart:"+targetID+":"+kind)
+	r.kinds = append(r.kinds, kind)
+	r.started++
 	r.lastRunID = "run-1"
+	if r.numbered {
+		r.lastRunID = fmt.Sprintf("run-%d", r.started)
+	}
+	if r.startErrKind != "" && r.startErrKind != kind {
+		return r.lastRunID, nil
+	}
 	return r.lastRunID, r.startErr
 }
 
-func (r *fakeRuns) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
+func (r *fakeRuns) Finish(runID, status string, sum backup.Summary, errMsg string) error {
 	entry := "runFinish:" + runID + ":" + status
 	if errMsg != "" {
 		entry += ":" + errMsg
 	}
 	r.log = append(r.log, entry)
 	r.finishes = append(r.finishes, status)
+	r.finishCalls = append(r.finishCalls, runFinish{
+		runID:  runID,
+		status: status,
+		sum:    sum,
+		note:   errMsg,
+	})
 	return r.finishErr
+}
+
+func (r *fakeRuns) finishOf(t *testing.T, runID string) runFinish {
+	t.Helper()
+	for _, f := range r.finishCalls {
+		if f.runID == runID {
+			return f
+		}
+	}
+	t.Fatalf("no finish recorded for %q: %v", runID, r.finishCalls)
+	return runFinish{}
 }
 
 // ---------------------------------------------------------------------------
@@ -403,6 +469,74 @@ func TestBackupHappyPath(t *testing.T) {
 	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
 		t.Fatalf("run finishes = %v, want [success]", runs.finishes)
 	}
+}
+
+func TestBackupContainerFinishCarriesMeasuredSummary(t *testing.T) {
+	measured := backup.Summary{
+		SnapshotID:  "deadbeef12345678",
+		Bytes:       1024,
+		Measured:    true,
+		SourceBytes: 1048576,
+		SourceFiles: 816,
+		FilesNew:    3,
+		ResticMS:    2431,
+	}
+	deps := func(r *fakeRestic, runs *fakeRuns, paths []string) backup.BackupDeps {
+		return backup.BackupDeps{
+			ContainerRef:         "plex",
+			ContainerName:        "Plex",
+			RepoPath:             "/repo",
+			AppdataPaths:         paths,
+			StopTimeout:          30 * time.Second,
+			TargetID:             "target-1",
+			WasRunning:           true,
+			SnapshotTemplatesDir: "/data/templates",
+			FlashTemplatesDir:    "/boot/templates",
+			Docker:               &fakeDocker{},
+			Restic:               r,
+			Templates:            &fakeTemplates{},
+			Runs:                 runs,
+		}
+	}
+
+	t.Run("a successful backup records what restic measured", func(t *testing.T) {
+		runs := &fakeRuns{}
+		r := &fakeRestic{summary: measured}
+		if _, err := backup.BackupContainer(t.Context(), deps(r, runs, []string{"/host/user/appdata/plex"})); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		got := runs.finishOf(t, "run-1")
+		if got.status != "success" || got.sum != measured {
+			t.Fatalf("finish = %+v, want the restic summary on a success", got)
+		}
+	})
+
+	t.Run("a failed backup records no metrics", func(t *testing.T) {
+		runs := &fakeRuns{}
+		r := &fakeRestic{summary: measured, backupErr: errors.New("repository is locked")}
+		if _, err := backup.BackupContainer(t.Context(), deps(r, runs, []string{"/host/user/appdata/plex"})); err == nil {
+			t.Fatal("expected the restic failure to surface")
+		}
+		got := runs.finishOf(t, "run-1")
+		if got.status != "failed" || got.sum != (backup.Summary{}) {
+			t.Fatalf("finish = %+v, want an empty summary on a failure", got)
+		}
+	})
+
+	t.Run("a container without appdata paths is not measured", func(t *testing.T) {
+		runs := &fakeRuns{}
+		r := &fakeRestic{summary: measured}
+		if _, err := backup.BackupContainer(t.Context(), deps(r, runs, nil)); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		got := runs.finishOf(t, "run-1")
+		if got.status != "success" {
+			t.Fatalf("finish = %+v, want a success", got)
+		}
+		if got.sum.SnapshotID != "" || got.sum.Measured {
+			t.Fatalf("summary = %+v, want no snapshot and no measurement where restic never ran", got.sum)
+		}
+	})
 }
 
 func TestBackupStopsAndRestartsDependencies(t *testing.T) {
@@ -1256,5 +1390,44 @@ func TestRestoreDepsSkippedPathsEmptyIsByteIdentical(t *testing.T) {
 	want := "runFinish:run-1:success"
 	if got := nilLog[len(nilLog)-1]; got != want {
 		t.Fatalf("final run log entry = %q, want exactly %q (no note suffix — byte-identical to pre-SkippedPaths behavior)", got, want)
+	}
+}
+
+// RestartInOrder is what the ZFS consistency window uses to bring the apps it
+// stopped back up, so the order and the health gating it gives outside a
+// container backup have to match what the backup itself does.
+func TestRestartInOrderMatchesDependencyOrder(t *testing.T) {
+	defer backup.SetHealthTimingForTest(time.Millisecond, time.Millisecond)()
+	d := &fakeDocker{}
+	deps := []backup.StopContainer{
+		{Name: "web", WasRunning: true, Service: "web", DependsOn: []string{"app"}},
+		{Name: "app", WasRunning: true, Service: "app", DependsOn: []string{"db"}},
+		{Name: "db", WasRunning: true, Service: "db"},
+	}
+	backup.RestartInOrder(t.Context(), d, deps, true, time.Second)
+
+	db, app, web := idxOf(d.log, "start:db"), idxOf(d.log, "start:app"), idxOf(d.log, "start:web")
+	if db < 0 || app < 0 || web < 0 {
+		t.Fatalf("every container must be started: %v", d.log)
+	}
+	if db >= app || app >= web {
+		t.Fatalf("expected db before app before web: %v", d.log)
+	}
+	if h := idxOf(d.log, "health:db"); h < 0 || h >= app {
+		t.Fatalf("app must wait for db to be healthy: %v", d.log)
+	}
+}
+
+func TestStopLevelsIsReverseStartOrder(t *testing.T) {
+	deps := []backup.StopContainer{
+		{Name: "web", Service: "web", DependsOn: []string{"app"}},
+		{Name: "api", Service: "api", DependsOn: []string{"app"}},
+		{Name: "app", Service: "app", DependsOn: []string{"db"}},
+		{Name: "db", Service: "db"},
+	}
+	got := backup.StopLevels(deps)
+	want := [][]int{{0, 1}, {2}, {3}}
+	if fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Fatalf("StopLevels = %v, want %v", got, want)
 	}
 }

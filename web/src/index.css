@@ -14,8 +14,6 @@
   --color-carbon-border: var(--carbon-border);
   --color-carbon-hover: var(--carbon-hover);
   --color-carbon-hoverRaised: var(--carbon-hover-raised);
-  --color-carbon-tileHover: var(--carbon-tile-hover);
-  --color-carbon-tileHoverInk: var(--carbon-tile-hover-ink);
 
   /* accent is the raw accent as a solid fill; accentContrast the black or white
      ink on that fill; accentSoft a 14% wash of it; accentText accent-coloured
@@ -143,7 +141,7 @@
   gap: var(--btn-gap);
   height: var(--btn-h);
   padding-inline: var(--btn-pad-x);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-pill);
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1;
@@ -178,7 +176,7 @@
   width: 1.125rem;
   min-width: 0;
   padding-inline: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   opacity: 0.7;
   transition: opacity 120ms, background-color 120ms;
 }
@@ -438,11 +436,10 @@
 /* Shape and type scale do not change with the theme, so they are declared once
    on :root. A copy in each theme block would compete with a [data-shape]
    override of the same specificity on source order alone. These are the
-   "round" values: the default, and what lib/shape.ts falls back to when the
-   stored value is missing or invalid. */
+   "round" values; lib/shape.ts stamps "soft" when nothing valid is stored. */
 :root {
-  --radius-card:      1rem;
-  --radius-control:   0.625rem;
+  --radius-card:      1.25rem;
+  --radius-control:   0.75rem;
   --radius-pill:      9999px;
 
   /* The rail's width in glyph mode, GlimStone's `--rail-narrow`. A shared
@@ -460,8 +457,14 @@
 /* The shape axis. Every rounded corner reads --radius-card, --radius-control or
    --radius-pill, so switching the attribute reshapes cards, buttons, tabs,
    inputs, pills and badges together. The values are GlimStone's SHAPES, so
-   "soft" and "square" look the same in every app that uses them. lib/shape.ts
-   sets the attribute on <html>, validated and defaulting to "round". */
+   every shape looks the same in every app that uses them. lib/shape.ts sets
+   the attribute on <html>, validated and defaulting to "soft".
+
+   --radius-card is for cards, windows and menus, --radius-control for fields,
+   panels and tiles, and --radius-pill for everything somebody presses:
+   buttons, tabs, nav rows, badges, selector segments and switches. Only round
+   tells the last two apart, and there the pressable things are true pills
+   while a text field keeps a corner a paragraph can sit in. */
 :root[data-shape="soft"] {
   --radius-card:    0.5rem;
   --radius-control: 0.3125rem;
@@ -472,6 +475,24 @@
   --radius-card:    0;
   --radius-control: 0;
   --radius-pill:    0;
+}
+
+/* The hidden shape (leafTap in lib/shape.ts): two opposite corners rounded,
+   the other two sharp. The tokens stay single lengths, so a calc() on them
+   keeps working, and one rule takes the other diagonal away from every
+   element. It is physical rather than logical so the leaf leans the same way
+   in every language. */
+:root[data-shape="leaf"] {
+  --radius-card:    1.25rem;
+  --radius-control: 0.75rem;
+  --radius-pill:    1.125rem;
+}
+
+:root[data-shape="leaf"] *,
+:root[data-shape="leaf"] *::before,
+:root[data-shape="leaf"] *::after {
+  border-top-right-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
 }
 
 /* Tailwind v4 defaults borders to currentcolor; this keeps v3's gray-200 for
@@ -539,18 +560,20 @@
      directions. */
   --carbon-hover-raised: #6f6f6f;
 
-  /* The hover of a picker tile that carries brand marks, and its ink. One step
-     up the ramp goes unnoticed on a dark ground and white shouts, so this is a
-     light grey; the marks on it switch to their light-ground values. */
-  --carbon-tile-hover: #a8a8a8;
-  --carbon-tile-hover-ink: #161616;
-
   /* The same tone as --carbon-surface, one step above the content, so the rail
      reads as its own column. */
   --carbon-sidebar:   #262626;
 
   /* Nav text, a touch brighter than --carbon-text-sub. */
   --sidebar-text:     #e0e0e0;
+
+  /* A tile set straight on a card (an MCP key, an off-site target): one step
+     lighter than the card, with its chips and switch one step above that. */
+  --glim-tile-bg:           var(--carbon-surface2);
+  --glim-tile-raised:       var(--carbon-surface3);
+  --glim-tile-raised-hover: var(--carbon-hover-raised);
+  --glim-tile-switch-off:   var(--carbon-hover-raised);
+  --glim-tile-well:         var(--carbon-bg);
 
   /* The default accent, sunflower yellow. lib/accent.ts overrides it at
      runtime and computes --accent-contrast and --accent-soft for the active
@@ -688,11 +711,16 @@
   --carbon-hover:     #e0e0e0;
   /* The third hover tier, one step darker here (see the dark block). */
   --carbon-hover-raised: #c6c6c6;
-  --carbon-tile-hover: #d1d1d1;
-  --carbon-tile-hover-ink: #161616;
 
   /* The raised surface tone, as in the reference. */
   --carbon-sidebar:   #ffffff;
+
+  /* A faint grey tile on the white card; see the dark block. */
+  --glim-tile-bg:           var(--carbon-bg);
+  --glim-tile-raised:       var(--carbon-surface2);
+  --glim-tile-raised-hover: var(--carbon-surface3);
+  --glim-tile-switch-off:   var(--carbon-surface3);
+  --glim-tile-well:         var(--carbon-surface);
 
   --sidebar-text:     #393939;
 
@@ -799,13 +827,16 @@
     --carbon-surface3:  #d1d1d1;
     --carbon-hover:     #e0e0e0;
     --carbon-hover-raised: #c6c6c6;
-    --carbon-tile-hover: #d1d1d1;
-    --carbon-tile-hover-ink: #161616;
     --carbon-border:    #d1d1d1;
     --carbon-text:      #161616;
     --carbon-text-sub:  #525252;
     --carbon-text-muted:#6f6f6f;
     --sidebar-text:     #393939;
+    --glim-tile-bg:           var(--carbon-bg);
+    --glim-tile-raised:       var(--carbon-surface2);
+    --glim-tile-raised-hover: var(--carbon-surface3);
+    --glim-tile-switch-off:   var(--carbon-surface3);
+    --glim-tile-well:         var(--carbon-surface);
 
     --elevation: 0 1px 2px rgba(0, 0, 0, .06), 0 16px 36px -26px rgba(0, 0, 0, .35);
     --hairline: inset 0 0 0 1px rgba(0, 0, 0, .05);
@@ -1185,10 +1216,330 @@ body {
   color: inherit;
 }
 
+/* A tile carrying a brand mark, as in GlimStone's reference/tokens.css ("Brand
+   tiles"). Under the pointer it fills with the brand's own colour (--tile), the
+   same on both themes, and its name and mark take that colour's ink
+   (--tile-ink). A mark paints each part with var(--mark-ink, <own colour>), or
+   var(--mark-cut, <own colour>) where the part lies on another part of the
+   mark, so it keeps its own colours at rest. No transition, since a mark of
+   many parts would trail its tile, and only under a real pointer, or a tap on
+   a touch screen would leave a resting tile lit. A unit that carries `group`
+   lights all its tiles at once. */
+@media (hover: hover) {
+  .group:hover > .glim-brand-tile,
+  .glim-brand-tile:hover {
+    background-color: var(--tile);
+    color: var(--tile-ink);
+    --mark-ink: var(--tile-ink);
+    --mark-cut: var(--tile);
+  }
+  :is(.glim-brand-tile:hover, .group:hover > .glim-brand-tile) .glim-mark-rest { display: none; }
+  :is(.glim-brand-tile:hover, .group:hover > .glim-brand-tile) .glim-mark-hover { display: block; }
+}
+/* A mark whose layers do not survive one ink brings the brand's own
+   single-colour version for the hover. */
+.glim-mark-hover { display: none; }
+
+/* The button that reaches the app's own authors follows the colour engine. */
+.glim-tile-house { --tile: var(--accent); --tile-ink: var(--accent-contrast); }
+
+/* GlimStone's README button (reference/tokens.css, "The App tab"): 160 by
+   46.6 on a 16px rem. At rest the mark keeps its colours and the name stands
+   alone in the middle. Under the pointer the whole unit fills with its
+   brand's colour, the name moves up and the second line comes in below it.
+   The mark sits closer to the edge than in the reference, since a row of
+   many client buttons reads the marks as a column. */
+.glim-readme-btn-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8125rem;
+}
+
+.glim-readme-btn-unit {
+  position: relative;
+  display: inline-flex;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.glim-readme-btn {
+  position: relative;
+  flex: none;
+  width: 10rem;
+  height: 2.9125rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background-color: var(--carbon-surface2);
+  color: var(--carbon-text);
+  --mark-ground: var(--carbon-surface2);
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* The unit clips everything at its edge, a ring outside the button too. */
+.glim-readme-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -3px;
+}
+
+.glim-readme-btn.glim-readme-btn-seg {
+  width: 5.4375rem;
+}
+
+.glim-readme-btn-seg::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 1.5px;
+  background-color: color-mix(in srgb, currentColor 22%, transparent);
+}
+
+/* The height is the README's mark, and the box is wider than tall, so a wide
+   mark is not shrunk to a sliver. */
+.glim-readme-btn-mark {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 0.875rem;
+  width: 2rem;
+  height: 1.5625rem;
+  translate: 0 -50%;
+  display: flex;
+}
+
+.glim-readme-btn-mark svg,
+.glim-readme-btn-art svg {
+  width: 100%;
+  height: 100%;
+}
+
+.glim-readme-btn-mark svg:not(.glim-mark-hover),
+.glim-readme-btn-art svg {
+  display: block;
+}
+
+.glim-readme-btn-art {
+  position: absolute;
+  inset: 0;
+}
+
+@media (hover: hover) {
+  .group:hover > .glim-brand-tile .glim-readme-btn-mark,
+  .group:hover .glim-readme-btn-hint {
+    color: var(--tile-ink);
+  }
+  /* A segment under the pointer is a shade deeper than the unit it lights. */
+  .glim-readme-btn-group > .glim-readme-btn:hover {
+    background-color: color-mix(in srgb, var(--tile) 86%, black);
+  }
+}
+
+.glim-readme-btn-text {
+  position: absolute;
+  inset-block: 0;
+  inset-inline: 3.3125rem 0.625rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.15;
+}
+
+.glim-readme-btn-seg .glim-readme-btn-text {
+  inset-inline: 0.375rem;
+  align-items: center;
+  text-align: center;
+}
+
+.glim-readme-btn-unit:has(.glim-readme-btn-hint) .glim-readme-btn-text {
+  inset-inline-end: 1.75rem;
+}
+
+.glim-readme-btn-name,
+.glim-readme-btn-sub {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.glim-readme-btn-name {
+  font-size: var(--text-body);
+  font-weight: 700;
+  transition: translate calc(var(--motion-page-dur, 0ms) / 2) var(--motion-page-ease, ease);
+}
+
+/* Half the second line's height down, so the name alone sits in the middle. */
+.glim-readme-btn-name:not(:only-child) {
+  translate: 0 0.4375rem;
+}
+
+.glim-readme-btn-sub {
+  font-size: 0.75rem;
+  opacity: 0;
+  translate: 0 0.25rem;
+  transition:
+    opacity calc(var(--motion-page-dur, 0ms) / 2) ease,
+    translate calc(var(--motion-page-dur, 0ms) / 2) var(--motion-page-ease, ease);
+}
+
+/* `--note` holds the second line in view while it reports something, such as
+   a command just copied. A button still to come says so at rest. */
+.glim-readme-btn-unit:is(:hover, :focus-within, .glim-readme-btn-unit--note, .glim-readme-btn-soon) .glim-readme-btn-name {
+  translate: 0 0;
+}
+
+.glim-readme-btn-unit:is(:hover, :focus-within, .glim-readme-btn-unit--note, .glim-readme-btn-soon) .glim-readme-btn-sub {
+  opacity: 0.9;
+  translate: 0 0;
+}
+
+.glim-readme-btn-soon .glim-readme-btn {
+  color: var(--carbon-text-muted);
+  cursor: default;
+}
+
+.glim-readme-btn-soon .glim-readme-btn-mark {
+  opacity: 0.45;
+}
+
+/* Without a pointer there is no hover to bring the second line in. */
+@media (hover: none) {
+  .glim-readme-btn-name:not(:only-child) {
+    translate: 0 0;
+  }
+  .glim-readme-btn-sub {
+    opacity: 0.9;
+    translate: 0 0;
+  }
+}
+
+.glim-readme-btn-hint {
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 0.625rem;
+  z-index: 2;
+  translate: 0 -50%;
+}
+
+/* The README's sheen, here once per visit of the pointer and across the whole
+   unit, a group at nearly twice the time so it crosses at the same speed. */
+.glim-readme-btn-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glim-readme-btn-sheen::after {
+  content: '';
+  position: absolute;
+  top: -0.75rem;
+  bottom: -0.75rem;
+  left: -4rem;
+  width: 2.0625rem;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.28) 45%, rgb(255 255 255 / 0.28) 55%, transparent);
+  transform: skewX(-16deg);
+}
+
+@keyframes glim-readme-sheen {
+  to {
+    left: calc(100% + 2rem);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  :root:not([data-motion="off"]) .glim-readme-btn-unit:not(.glim-readme-btn-soon):hover .glim-readme-btn-sheen::after {
+    animation: glim-readme-sheen var(--motion-button-sheen-dur, 800ms) linear;
+  }
+  :root:not([data-motion="off"]) .glim-readme-btn-group:hover .glim-readme-btn-sheen::after {
+    animation-duration: calc(var(--motion-button-sheen-dur, 800ms) * 1.9);
+  }
+}
+
+/* The MCP clients' tile colours (McpServerCard's client buttons), from the
+   brands' own palettes, with the ink as GlimStone's brand tiles pick it: white
+   wherever white reaches 2:1 on the fill, near-black below that. */
+.glim-tile-anythingllm { --tile: #020617; --tile-ink: #ffffff; } /* 20.2:1 */
+.glim-tile-antigravity { --tile: #4285f4; --tile-ink: #ffffff; } /* 3.6:1 */
+.glim-tile-chatgpt { --tile: #10a37f; --tile-ink: #ffffff; } /* 3.2:1 */
+.glim-tile-claude { --tile: #d97757; --tile-ink: #ffffff; } /* 3.1:1 */
+.glim-tile-cline { --tile: #e8912d; --tile-ink: #ffffff; } /* 2.5:1 */
+.glim-tile-openai { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
+.glim-tile-continue { --tile: #005dc7; --tile-ink: #ffffff; } /* 6.2:1 */
+.glim-tile-copilot { --tile: #8957e5; --tile-ink: #ffffff; } /* 4.6:1 */
+.glim-tile-cursor { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
+.glim-tile-gemini { --tile: #4285f4; --tile-ink: #ffffff; } /* 3.6:1 */
+.glim-tile-goose { --tile: #ff6d3b; --tile-ink: #ffffff; } /* 2.8:1 */
+.glim-tile-grok { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
+.glim-tile-jan { --tile: #f17455; --tile-ink: #ffffff; } /* 2.8:1 */
+.glim-tile-jetbrains { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
+.glim-tile-kimi { --tile: #007cff; --tile-ink: #ffffff; } /* 3.9:1 */
+.glim-tile-lmstudio { --tile: #4f46e5; --tile-ink: #ffffff; } /* 6.3:1 */
+.glim-tile-mistral { --tile: #fa520f; --tile-ink: #ffffff; } /* 3.3:1 */
+.glim-tile-msty { --tile: #7c5cfc; --tile-ink: #ffffff; } /* 4.4:1 */
+.glim-tile-n8n { --tile: #ea4b71; --tile-ink: #ffffff; } /* 3.7:1 */
+.glim-tile-openwebui { --tile: #0a0a0a; --tile-ink: #ffffff; } /* 19.8:1 */
+.glim-tile-opencode { --tile: #211e1e; --tile-ink: #ffffff; } /* 16.5:1 */
+.glim-tile-perplexity { --tile: #20808d; --tile-ink: #ffffff; } /* 4.6:1 */
+.glim-tile-qwen { --tile: #615ced; --tile-ink: #ffffff; } /* 4.9:1 */
+.glim-tile-roocode { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
+.glim-tile-visualstudio { --tile: #5c2d91; --tile-ink: #ffffff; } /* 9.4:1 */
+.glim-tile-vscode { --tile: #007acc; --tile-ink: #ffffff; } /* 4.5:1 */
+.glim-tile-warp { --tile: #01a4ff; --tile-ink: #ffffff; } /* 2.7:1 */
+.glim-tile-windsurf { --tile: #58e5c0; --tile-ink: #161616; } /* 11.5:1 */
+.glim-tile-zed { --tile: #0866ff; --tile-ink: #ffffff; } /* 4.8:1 */
+
+/* A tile set straight on a card. Its chips, its switch while off and a panel
+   opened inside it each keep one step of contrast to the tile, which the
+   card's own tones would not: a neutral chip is the dark tile's colour. */
+.glim-tile {
+  background-color: var(--glim-tile-bg);
+  --mark-ground: var(--glim-tile-bg);
+}
+.glim-tile .glim-tile-raise { background-color: var(--glim-tile-raised); }
+.glim-tile button.glim-tile-raise:hover:not(:disabled) { background-color: var(--glim-tile-raised-hover); }
+.glim-tile [role="switch"][aria-checked="false"] { background-color: var(--glim-tile-switch-off); }
+.glim-tile .glim-tile-well { background-color: var(--glim-tile-well); }
+
+/* A client's mark beside a key's name and in the setup dialog. The hover
+   version only belongs to a lit README button. */
+.glim-client-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.25rem;
+  flex: none;
+  color: var(--carbon-text);
+}
+.glim-client-mark svg { width: 100%; height: 100%; display: block; }
+.glim-client-mark .glim-mark-hover { display: none; }
+.glim-client-mark-lg { width: 2.25rem; height: 1.75rem; }
+
+/* A mark colour that reads as a hole on the dark theme's button is lifted
+   there; the lit tile swaps in the single-colour mark anyway. */
+[data-theme="dark"] .glim-mark-lift .glim-mark-rest { filter: brightness(1.55); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .glim-mark-lift .glim-mark-rest { filter: brightness(1.55); }
+}
+
+/* The dot of a setup dialog waiting for the client's first call breathes, so
+   the wait reads as live rather than stuck. */
+@keyframes glim-wait-breathe {
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-motion="off"]) .glim-wait-dot {
+    animation: glim-wait-breathe var(--motion-breathe-dur, 1400ms) ease-in-out infinite;
+  }
+}
+
 /* The crypto window's coin tiles (CryptoDonateDialog). Each mark is drawn in
-   its --coin-* token. Where a tile's ground stops matching its theme, the rules
-   below change the tokens or the fill. :not(.glim-active):hover and
-   .glim-active never both apply. */
+   its --coin-* token at rest and lights up as a brand tile. */
 
 /* Selected: the tile is filled with the accent, so every mark drops its brand
    colour and takes the ink paired with that fill, as with .glim-hue-icon. The
@@ -1199,21 +1550,6 @@ body {
    currentColor is the button's `text-accentContrast`. */
 .glim-coin-tile.glim-active svg {
   fill: currentColor;
-}
-
-/* A hovered tile turns --carbon-tile-hover, a light grey in both themes, where
-   most brand colours fade to about 1:1 (Bitcoin 1.04, Sui 1.11). Each mark
-   switches to a deeper value of its own hue that keeps 2.5:1 on #a8a8a8 and
-   3.9:1 on the light theme's #d1d1d1, and XRP to its own near-black. */
-.glim-coin-tile:not(.glim-active):hover {
-  --coin-btc:  #8f550f;
-  --coin-eth:  #495eaf;
-  --coin-usdt: #1a6f55;
-  --coin-usdc: #2163ac;
-  --coin-bnb:  #7c5f18;
-  --coin-sol:  #813ad6;
-  --coin-sui:  #30649e;
-  --coin-xrp:  #23292f;
 }
 
 /* Reactive labels on a coin tile, the vertical twin of
@@ -1241,11 +1577,11 @@ body {
 /* In reactive mode a hovered tile takes the selected tile's fill in its own
    palette position, so the tile under the pointer looks like the one a click
    would select. The tiles carry .glim-hue, but an unselected tile spends no
-   --accent (surface2 at rest, --carbon-tile-hover under the pointer), so
+   --accent (surface2 at rest, its coin's colour under the pointer), so
    without this the engine would have nothing to show. The other modes keep
-   the grey tile hover. No :not(.glim-active) needed: the selected tile
-   already has this fill. The mark drops its brand colour as on the selected
-   tile. */
+   the brand tile hover, which this rule outranks. No :not(.glim-active)
+   needed: the selected tile already has this fill. The mark drops its brand
+   colour as on the selected tile. */
 [data-rainbow="reactive"] .glim-coin-tile:hover {
   background-color: var(--accent);
   color: var(--accent-contrast);
@@ -1433,6 +1769,10 @@ body {
   --motion-page-dur: 320ms;
   /* One pass of light along a filling bar; shorter reads as busier work. */
   --motion-sheen-dur: 1500ms;
+  /* One crossing of a README button while the pointer rests on it. */
+  --motion-button-sheen-dur: 800ms;
+  /* One breath of a dot that waits for something live, such as a first call. */
+  --motion-breathe-dur: 1400ms;
 
   /* Every level sets these; a quiet level is a smaller number, never a missing
      animation.
@@ -1457,6 +1797,14 @@ body {
 
   --motion-shake-scale: 1;                /* multiplies glim-shake's translateX steps */
   --motion-shake-dur: 360ms;
+
+  /* How far each sidebar row is thrown and tipped when the logo goes off, and
+     how long the blast takes to reach the next row down. Step times eleven
+     rows plus the duration has to stay under Sidebar.tsx's 1400ms boom. */
+  --motion-quake-dist: 10px;
+  --motion-quake-tilt: 1.6deg;
+  --motion-quake-dur: 560ms;
+  --motion-quake-step: 70ms;
 
   /* The other animations, each described where it is defined:
      shape    border-radius transition when data-shape changes
@@ -1496,6 +1844,8 @@ body {
      clicks on the same option is a choice, not an inherited default. */
   --motion-page-travel: 20px;
   --motion-sheen-dur: 900ms;
+  --motion-button-sheen-dur: 560ms;
+  --motion-breathe-dur: 900ms;
   --motion-press-scale: .94;
   --motion-lift-dist: 4px;
   --motion-spin-dur: 560ms;
@@ -1511,6 +1861,11 @@ body {
 
   --motion-shake-scale: 1.9;
   --motion-shake-dur: 520ms;
+
+  --motion-quake-dist: 16px;
+  --motion-quake-tilt: 2.6deg;
+  --motion-quake-dur: 640ms;
+  --motion-quake-step: 65ms;
 
   --motion-shape-dur: 460ms;
   --motion-shape-ease: cubic-bezier(.22, 1.94, .45, 1);
@@ -1543,6 +1898,8 @@ body {
   --motion-page-travel: 6px;
   --motion-page-dur: 180ms;
   --motion-sheen-dur: 2400ms;
+  --motion-button-sheen-dur: 1200ms;
+  --motion-breathe-dur: 2200ms;
   --motion-press-scale: .99;
   --motion-lift-dist: 1px;
   --motion-spin-dur: 1000ms;
@@ -1556,6 +1913,11 @@ body {
 
   --motion-shake-scale: .5;
   --motion-shake-dur: 220ms;
+
+  --motion-quake-dist: 5px;
+  --motion-quake-tilt: .8deg;
+  --motion-quake-dur: 400ms;
+  --motion-quake-step: 50ms;
 
   --motion-shape-dur: 140ms;
 
@@ -1587,6 +1949,8 @@ body {
   /* Named although the band is removed at this level, so every level answers
      every dial. */
   --motion-sheen-dur: 0ms;
+  --motion-button-sheen-dur: 1600ms;
+  --motion-breathe-dur: 2800ms;
   /* 1 and 0 rather than no rule: the same declarations resolve to no
      movement. */
   --motion-press-scale: 1;
@@ -1603,6 +1967,11 @@ body {
 
   --motion-shake-scale: 0;
   --motion-shake-dur: 300ms;
+
+  --motion-quake-dist: 0px;
+  --motion-quake-tilt: 0deg;
+  --motion-quake-dur: 0ms;
+  --motion-quake-step: 0ms;
 
   /* Durations collapse to zero, so each end state paints at once, and a zero
      stagger step and cap make every row delay zero. */
@@ -1657,6 +2026,25 @@ body {
   45%      { transform: translate(-2px, 1px) rotate(-6deg); }
   60%      { transform: translate(2px, -1px) rotate(6deg); }
   80%      { transform: translate(-1px, 0) rotate(-4deg); }
+}
+
+/* The blast running down the sidebar: each row is thrown on its own, one after
+   the next from the top, and --rail-dir sends neighbours opposite ways first so
+   the rows never move as one block. Two axes and a tilt, because a shake on
+   one axis reads as a slide. */
+@keyframes glim-egg-quake {
+  0%   { transform: none; }
+  12%  { transform: translate(calc(var(--rail-dir, 1) * var(--motion-quake-dist, 10px)), calc(.5 * var(--motion-quake-dist, 10px)))
+                    rotate(calc(var(--rail-dir, 1) * var(--motion-quake-tilt, 1.6deg))); }
+  28%  { transform: translate(calc(var(--rail-dir, 1) * -.75 * var(--motion-quake-dist, 10px)), calc(-.25 * var(--motion-quake-dist, 10px)))
+                    rotate(calc(var(--rail-dir, 1) * -.75 * var(--motion-quake-tilt, 1.6deg))); }
+  44%  { transform: translate(calc(var(--rail-dir, 1) * .5 * var(--motion-quake-dist, 10px)), calc(.15 * var(--motion-quake-dist, 10px)))
+                    rotate(calc(var(--rail-dir, 1) * .5 * var(--motion-quake-tilt, 1.6deg))); }
+  60%  { transform: translate(calc(var(--rail-dir, 1) * -.3 * var(--motion-quake-dist, 10px)), 0)
+                    rotate(calc(var(--rail-dir, 1) * -.3 * var(--motion-quake-tilt, 1.6deg))); }
+  78%  { transform: translate(calc(var(--rail-dir, 1) * .15 * var(--motion-quake-dist, 10px)), 0)
+                    rotate(calc(var(--rail-dir, 1) * .1 * var(--motion-quake-tilt, 1.6deg))); }
+  100% { transform: none; }
 }
 
 /* Each fragment flies from rest to its per-tile (--dx,--dy) with spin, a downward
@@ -1967,6 +2355,12 @@ body {
     animation: glim-spark-fly 820ms cubic-bezier(.2, .6, .3, 1) forwards;
     animation-delay: var(--delay, 0ms);
   }
+  /* --rail-i is the row's position in the rail, footer included, and
+     --rail-dir alternates with it (Sidebar.tsx's railVars). */
+  .glim-egg-quake .glim-nav-row {
+    animation: glim-egg-quake var(--motion-quake-dur, 560ms) ease-out;
+    animation-delay: calc(var(--rail-i, 0) * var(--motion-quake-step, 70ms));
+  }
 
   .glim-page-enter {
     animation:
@@ -2093,6 +2487,10 @@ body {
   :root[data-motion="storm"] .glim-particle {
     animation: glim-spark-fly 820ms cubic-bezier(.2, .6, .3, 1) forwards;
     animation-delay: var(--delay, 0ms);
+  }
+  :root[data-motion="storm"] .glim-egg-quake .glim-nav-row {
+    animation: glim-egg-quake var(--motion-quake-dur, 560ms) ease-out;
+    animation-delay: calc(var(--rail-i, 0) * var(--motion-quake-step, 70ms));
   }
   :root[data-motion="storm"] .glim-page-enter {
     animation:

@@ -56,6 +56,35 @@ describe("plural forms in the tables", () => {
   it("are declared on the strings that carry a count", () => {
     expect(labelled).toContain("takeover.backups");
     expect(labelled).toContain("time.minutesAgo");
+    expect(labelled).toContain("dbdump.introNotice");
+    expect(labelled).toContain("dbdump.stackRestoreWarn");
+    expect(labelled).toContain("recovery.foreignDbDumps");
+    expect(labelled).toContain("recovery.dumpOnlySkipped");
+    expect(labelled).toContain("runReason.dbimportAppsStopped");
+    expect(labelled).toContain("runReason.dbimportErrors");
+    expect(labelled).toContain("errorPanel.count");
+    expect(labelled).toContain("settings.dbDumpsOffConfirm");
+    expect(labelled).toContain("dbdump.importStops");
+    for (const key of [
+      "recovery.zfsFound",
+      "zfs.discovered",
+      "zfs.notInItem",
+      "zfs.unusedZvols",
+      "zfs.code.leftover-snapshots",
+      "zfs.membersSummary",
+      "zfs.skippedCount",
+      "zfs.excludesCount",
+      "zfs.excludeMatches",
+      "zfs.leftovers",
+      "zfs.sweepRemaining",
+      "zfs.safety.title",
+      "zfs.deleteKeptSafety",
+      "zfs.add.unusedZvols",
+      "zfs.add.hiddenLegacy",
+      "zfs.add.truncated",
+    ]) {
+      expect(labelled).toContain(key);
+    }
   });
 
   it.each(Object.entries(locales))("locale %s offers only categories it uses", (code, table) => {
@@ -67,5 +96,27 @@ describe("plural forms in the tables", () => {
       expect(stray, `${code} "${key}" labels ${stray.join(", ")}, which ${code} never selects`).toEqual([]);
       expect(f.has("other"), `${code} "${key}" has no other form to fall back on`).toBe(true);
     }
+  });
+});
+
+describe("the dump counts in Czech and Slovak", () => {
+  // Both languages have a "many" category, but Intl selects it only for
+  // fractions: five and up land in "other". A table that reads "many" as the
+  // big-number form puts the genitive singular on screen, "5 výpisu".
+  const form = (code: string, key: string, n: number): string =>
+    countText((locales[code] as Record<string, string>)[key], code, n);
+
+  it("read as the genitive plural from five upwards", () => {
+    expect(form("cs", "recovery.foreignDbDumps", 5)).toContain("5 výpisů");
+    expect(form("sk", "recovery.foreignDbDumps", 5)).toContain("5 výpisov");
+    expect(form("cs", "recovery.dumpOnlySkipped", 11)).toContain("11 databází");
+    expect(form("sk", "recovery.dumpOnlySkipped", 11)).toContain("11 databáz");
+    expect(form("cs", "dbdump.introNotice", 25)).toContain("25 databází");
+    expect(form("sk", "dbdump.introNotice", 25)).toContain("25 databáz");
+  });
+
+  it("keep their own form for two, three and four", () => {
+    expect(form("cs", "recovery.foreignDbDumps", 3)).toContain("3 výpisy");
+    expect(form("sk", "recovery.foreignDbDumps", 3)).toContain("3 výpisy");
   });
 });

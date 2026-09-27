@@ -29,6 +29,7 @@ type Handler struct {
 	flashLastRun      schedule.LastRunFunc
 	configLastRun     schedule.LastRunFunc
 	filesLastRun      schedule.LastRunFunc
+	zfsLastRun        schedule.LastRunFunc
 	everythingLastRun schedule.LastRunFunc
 
 	// Cached host-integration check, warmed once at startup so the dashboard
@@ -69,6 +70,10 @@ type Handler struct {
 	// bounds the map's total memory even under a flood of one-off keys that
 	// are each queried exactly once. Guarded by loginMu, like loginFails.
 	loginSweepCalls int
+
+	// mcp holds the MCP endpoint's transport, its per-key budget and the
+	// counters /metrics reports. mountMCP creates one when NewHandler did not.
+	mcp *mcpState
 }
 
 // NewHandler constructs the API handler.
@@ -87,7 +92,7 @@ func NewHandler(
 		svc:       svc,
 		scheduler: scheduler,
 		probes:    probes,
-		// Same six gate queries main.go wires for the initial reload — a settings
+		// Same gate queries main.go wires for the initial reload. A settings
 		// save re-arms the scheduler through this handler, so a divergence here
 		// would mean the gates changed meaning the first time a user pressed a
 		// switch. See main.go's own comment for why each is what it is.
@@ -96,6 +101,7 @@ func NewHandler(
 		flashLastRun:      schedule.LastRunFunc(st.LastSuccessfulFlashBackup),
 		configLastRun:     schedule.LastRunFunc(st.LastSuccessfulConfigBackup),
 		filesLastRun:      schedule.FilesDueGate(st),
+		zfsLastRun:        schedule.ZFSDueGate(st),
 		everythingLastRun: schedule.LastRunFunc(st.LastEverythingPass),
 		// Initialized explicitly rather than relying on every loginFails call
 		// site happening to only read-or-delete a nil map without ever
@@ -104,6 +110,7 @@ func NewHandler(
 		// future edit that assigns into loginFails elsewhere without that
 		// same nil-check would panic).
 		loginFails: make(map[string][]time.Time),
+		mcp:        newMCPState(),
 	}
 }
 
@@ -118,6 +125,10 @@ func (h *Handler) SetProgress(p *progress.Store) { h.progress = p }
 // paths) requires a valid session cookie.
 func (h *Handler) Router() http.Handler {
 	mux := http.NewServeMux()
+
+	if mcpShipped {
+		h.mountMCP(mux)
+	}
 
 	// Public / auth endpoints — also allow-listed inside authGate.
 	mux.HandleFunc("GET /api/health", h.handleHealth)
@@ -205,6 +216,10 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/containers/{name}/files", h.handleListFiles)
 	mux.HandleFunc("POST /api/containers/{name}/restore-files", h.handleRestoreFiles)
 	mux.HandleFunc("POST /api/containers/{name}/restore-to", h.handleRestoreContainerTo)
+	mux.HandleFunc("GET /api/containers/{name}/dbdumps", h.handleListDBDumps)
+	mux.HandleFunc("GET /api/containers/{name}/dbdumps/{id}/download", h.handleDownloadDBDump)
+	mux.HandleFunc("POST /api/containers/{name}/dbdumps/{id}/save", h.handleSaveDBDumpTo)
+	mux.HandleFunc("POST /api/containers/{name}/dbdumps/{id}/import", h.handleImportDBDump)
 	mux.HandleFunc("GET /api/containers/{name}/diff", h.handleDiff)
 	mux.HandleFunc("POST /api/containers/{name}/tag", h.handleTagSnapshot)
 	mux.HandleFunc("DELETE /api/containers/{name}/backups", h.handleDeleteBackups)
@@ -226,6 +241,10 @@ func (h *Handler) Router() http.Handler {
 	// (requireAuthForSecrets), so trusted-LAN mode cannot hand every stored
 	// backend credential to an unauthenticated LAN client.
 	mux.HandleFunc("GET /api/settings/export", h.handleExportSettings)
+	// The support bundle. Gated by requireAuthForSecrets inside the handler and
+	// on neither authGate allowlist: it carries the whole configuration and the
+	// recent log, so it fails closed in trusted-LAN mode like the recovery kit.
+	mux.HandleFunc("GET /api/diagnostics", h.handleDiagnostics)
 	mux.HandleFunc("POST /api/settings/import", h.handleImportSettings)
 	mux.HandleFunc("GET /api/recovery-kit", h.handleRecoveryKit)
 	mux.HandleFunc("POST /api/recovery-kit/ack", h.handleRecoveryKitAck)
@@ -245,6 +264,9 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/verify", h.handleDrills)
 	mux.HandleFunc("POST /api/unlock/{domain}", h.handleUnlock)
 	mux.HandleFunc("POST /api/prune/{domain}", h.handlePrune)
+	// What the prune above WOULD remove, without removing it. Read-only, so a
+	// GET: no CSRF token needed, and it answers while a backup is running.
+	mux.HandleFunc("GET /api/retention/preview/{domain}", h.handleRetentionPreview)
 	mux.HandleFunc("DELETE /api/snapshots/{domain}/{id}", h.handleDeleteSnapshot)
 	// Off-site target CRUD (multi-off-site). The literal "targets" segment is more
 	// specific than "{domain}", so these never collide with the per-domain routes.
@@ -301,6 +323,24 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/runs", h.handleRuns)
 	mux.HandleFunc("POST /api/runs/ack", h.handleAckRuns)
 	mux.HandleFunc("GET /api/status", h.handleStatus)
+	// What nothing backs up. The status route above is per domain and cannot
+	// answer it: a container nobody ever added is absent from every list it has.
+	mux.HandleFunc("GET /api/coverage", h.handleCoverage)
+
+	// What the backup history says about itself: the findings, the items they
+	// are about, and what the user decided about them.
+	mux.HandleFunc("GET /api/anomalies", h.handleAnomalies)
+	mux.HandleFunc("GET /api/anomalies/summary", h.handleAnomalySummary)
+	mux.HandleFunc("GET /api/anomalies/items", h.handleAnomalyItems)
+	mux.HandleFunc("GET /api/anomalies/{id}", h.handleAnomaly)
+	mux.HandleFunc("POST /api/anomalies/acknowledge", h.handleAcknowledgeAnomalies)
+	mux.HandleFunc("POST /api/anomalies/expected", h.handleAnomaliesExpected)
+	mux.HandleFunc("PUT /api/anomalies/items/{targetId}/prefs", h.handleAnomalyItemPrefs)
+	mux.HandleFunc("DELETE /api/anomalies/items/{targetId}/expectations/{family}", h.handleForgetAnomalyExpectation)
+	// An SMB or WebDAV destination from a form instead of a hand-written rclone
+	// config. Carries a live storage password, so it sits behind
+	// requireAuthForSecrets inside the handler.
+	mux.HandleFunc("POST /api/offsite/rclone-remote", h.handleAddRcloneRemote)
 	mux.HandleFunc("GET /api/history", h.handleHistory)
 	mux.HandleFunc("GET /api/stats", h.handleStats)
 	mux.HandleFunc("GET /api/browse", h.handleBrowse)
@@ -374,6 +414,28 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/items/{domain}/{name}/timeline", h.handleTimeline)
 	mux.HandleFunc("GET /api/items/{domain}/{name}/timeline/{key}/delete", h.handleTimelineDeletePreview)
 	mux.HandleFunc("DELETE /api/items/{domain}/{name}/timeline/{key}", h.handleTimelineDelete)
+	// ZFS endpoints (the zfs domain: a dataset and the datasets below it, read
+	// from one recursive snapshot).
+	mux.HandleFunc("GET /api/zfs", h.handleListZFSDatasets)
+	mux.HandleFunc("GET /api/zfs/connection", h.handleZFSConnection)
+	mux.HandleFunc("GET /api/zfs/host", h.handleZFSHostDatasets)
+	mux.HandleFunc("POST /api/zfs/check", h.handleZFSCheck)
+	mux.HandleFunc("POST /api/zfs/datasets", h.handleCreateZFSDatasets)
+	mux.HandleFunc("PATCH /api/zfs/datasets/{id}", h.handlePatchZFSDataset)
+	mux.HandleFunc("DELETE /api/zfs/datasets/{id}", h.handleDeleteZFSDataset)
+	mux.HandleFunc("DELETE /api/zfs/datasets/{id}/backups", h.handleDeleteBackupsZFSDataset)
+	mux.HandleFunc("GET /api/zfs/datasets/{id}/safety-snapshots", h.handleListZFSSafetySnapshots)
+	mux.HandleFunc("DELETE /api/zfs/datasets/{id}/safety-snapshots", h.handleDeleteZFSSafetySnapshot)
+	mux.HandleFunc("GET /api/zfs/runs/{runId}/members", h.handleZFSRunMembers)
+	mux.HandleFunc("POST /api/zfs/excludes/preview", h.handlePreviewZFSExcludes)
+	mux.HandleFunc("POST /api/zfs/datasets/{id}/backup", h.handleBackupZFSDataset)
+	mux.HandleFunc("POST /api/zfs/backup-all", h.handleBackupZFSAll)
+	mux.HandleFunc("POST /api/zfs/datasets/{id}/probe", h.handleProbeZFSDataset)
+	mux.HandleFunc("POST /api/zfs/datasets/{id}/sweep", h.handleSweepZFSDataset)
+	mux.HandleFunc("GET /api/zfs/datasets/{id}/restore-points", h.handleZFSRestorePoints)
+	mux.HandleFunc("GET /api/zfs/datasets/{id}/files", h.handleListSnapshotFilesZFS)
+	mux.HandleFunc("POST /api/zfs/datasets/{id}/restore", h.handleRestoreZFS)
+	mux.HandleFunc("POST /api/zfs/discover", h.handleDiscoverZFS)
 
 	// Foreign-repo read-only session endpoints (restore from ANOTHER BombVault
 	// instance's repo, #61). Sessions are in-memory with a TTL — never persisted

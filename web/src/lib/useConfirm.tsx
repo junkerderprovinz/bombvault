@@ -42,7 +42,7 @@ interface PendingConfirm extends ConfirmOptions {
 const FOCUSABLE_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function focusableElements(root: HTMLElement): HTMLElement[] {
+export function focusableElements(root: HTMLElement): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
 }
 
@@ -77,8 +77,10 @@ export function useConfirm() {
   // Escape (works no matter where focus currently is) + the Tab/Shift+Tab
   // focus trap, both only while a confirmation is actually showing. Shared
   // with the direct window (see useDialogKeys below) so it isn't a copy.
-  const cancel = useCallback(() => settle(false), [settle]);
-  useDialogKeys(pending !== null, dialogRef, cancel);
+  // dismiss is also for a caller whose question stopped making sense while
+  // the dialog was open.
+  const dismiss = useCallback(() => settle(false), [settle]);
+  useDialogKeys(pending !== null, dialogRef, dismiss);
 
   // Locked while a required text is still unmatched; undefined for every
   // caller that never asked for one, so the ordinary dialog stays unaffected.
@@ -123,7 +125,7 @@ export function useConfirm() {
       )
     : null;
 
-  return { confirm, confirmDialog };
+  return { confirm, confirmDialog, dismiss };
 }
 
 /** useDialogKeys gives an open dialog Escape from anywhere and a Tab trap over

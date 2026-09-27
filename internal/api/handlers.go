@@ -24,7 +24,10 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/dbdump"
+	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/releasenotes"
@@ -265,9 +268,18 @@ func scrubBypassMessage(err error) (string, bool) {
 		// a platform-mismatch refusal (TestNotify's Unraid channel, the
 		// dashboard-tile plugin) — see unraidPlatformMismatchError.
 		return err.Error(), true
+	case errors.Is(err, backup.ErrZFSRefusal):
+		// Built from validated dataset names and reason codes, and the names
+		// contain "/": scrubbed, "cache/appdata" becomes "[path]" and the run
+		// history stops saying which dataset failed.
+		return err.Error(), true
 	case errors.Is(err, errZvolRebaseFailed):
 		// Same deal again: the ZFS dataset/pool names ARE the message, and
 		// necessarily contain "/" — see errZvolRebaseFailed.
+		return err.Error(), true
+	case errors.Is(err, errDBImportFolders):
+		// The data folders an import set aside are what the operator has to act
+		// on, so they must survive the scrubber (see errDBImportFolders).
 		return err.Error(), true
 	case errors.Is(err, errRestPathUser):
 		// This one is here for a different reason than its neighbours: the
@@ -558,6 +570,9 @@ func (h *Handler) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "metrics error", http.StatusInternalServerError)
 		return
 	}
+	if mcpShipped {
+		body += h.mcpMetrics()
+	}
 	w.Header().Set("Content-Type", metricsContentType)
 	w.WriteHeader(http.StatusOK)
 	if _, wErr := w.Write([]byte(body)); wErr != nil {
@@ -617,6 +632,40 @@ type containerView struct {
 	AliasConflicts []string `json:"aliasConflicts"`
 	// Aliases are the names this entry had before, oldest link first.
 	Aliases []string `json:"aliases"`
+	// The database fields are all empty or false for a container that is not
+	// recognised as a database server. DBEngine is what would be dumped,
+	// DBSuggestedEngine the guess for a container that only looks like one, and
+	// DBTier how it was recognised ("" | curated | lookalike | label).
+	DBEngine          string `json:"dbEngine"`
+	DBSuggestedEngine string `json:"dbSuggestedEngine"`
+	DBTier            string `json:"dbTier"`
+	DBDumpOff         bool   `json:"dbDumpOff"`
+	DBDumpEngine      string `json:"dbDumpEngine"`
+	// DBDumpLabelOff is the bombvault.dbdump=false label, which wins over the
+	// toggle, and DBDumpsGlobalOff the switch in Settings. The page never loads
+	// settings, so the row has to carry it.
+	DBDumpLabelOff   bool `json:"dbDumpLabelOff"`
+	DBDumpsGlobalOff bool `json:"dbDumpsGlobalOff"`
+	// DBDataCoverage says what the files backup of this container is worth:
+	// "stopped", "live", "none" or "unknown".
+	DBDataCoverage string `json:"dbDataCoverage"`
+	// DBDumpHookOverlap reports that the stored pre-hook already runs a dump
+	// tool, so the container would be dumped twice.
+	DBDumpHookOverlap bool            `json:"dbDumpHookOverlap"`
+	LastDBDump        *lastDBDumpView `json:"lastDbDump,omitempty"`
+	// DumpOnly: the repositories hold database dumps of this container and no
+	// files backup, so restoring it alone brings back an empty database.
+	DumpOnly bool `json:"dumpOnly"`
+}
+
+// lastDBDumpView is the container's most recent dump attempt. Error carries the
+// stored run reason, which is a constant plus an optional detail, or a success
+// note.
+type lastDBDumpView struct {
+	At     int64  `json:"at"`
+	Status string `json:"status"`
+	Bytes  int64  `json:"bytes"`
+	Error  string `json:"error"`
 }
 
 func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
@@ -633,6 +682,13 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	self := h.svc.SelfContainerName(r.Context())
+
+	settings, sErr := h.store.GetSettings()
+	if sErr != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(sErr))
+		return
+	}
+	dbRows := h.svc.dbDumpRows(r.Context(), infos, byName)
 
 	live := make(map[string]bool, len(infos))
 	for _, c := range infos {
@@ -659,7 +715,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	// One listing dates every row and tells the rename pass whether a live
 	// container has backups under its own name; snapTimesFailed keeps that pass
 	// from guessing off a partial read.
-	var snapTimes map[string]int64
+	var snapTimes map[string]ContainerSnapshotTimes
 	snapTimesFailed := false
 	if m, sErr := h.svc.LatestContainerBackupTimes(r.Context()); sErr != nil {
 		log.Printf("api: list containers: latest backup times: %v", sErr)
@@ -685,10 +741,24 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			AliasConflicts: []string{},
 			Aliases:        []string{},
 		}
+		if db, ok := dbRows[c.Name]; ok {
+			v.DBEngine = db.Engine
+			v.DBSuggestedEngine = db.Suggested
+			v.DBTier = db.Tier
+			v.DBDumpLabelOff = db.LabelOff
+			v.DBDataCoverage = db.Coverage
+			v.DBDumpHookOverlap = db.HookOverlap
+			v.DBDumpsGlobalOff = !settings.DBDumpsEnabled
+		}
 		var run *store.Run
 		if t, ok := byName[c.Name]; ok {
 			v.AliasConflicts = aliasConflicts.of(t.ID)
 			v.Aliases = formerNames.of(t.ID)
+			if v.DBTier != "" {
+				v.DBDumpOff = t.DBDumpOff
+				v.DBDumpEngine = t.DBDumpEngine
+				v.LastDBDump = h.lastDBDump(t.ID)
+			}
 			v.IncludeInSchedule = t.IncludeInSchedule
 			v.PreHook = t.PreHook
 			v.PostHook = t.PostHook
@@ -701,7 +771,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.ScheduleCadence = t.ScheduleCadence
 			run, _ = h.store.LastSuccessfulBackup(t.ID)
 		}
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(c.Name, run, snapTimes, snapTimesFailed)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[c.Name].Newest(), snapTimesFailed)
 		own := v.LastBackup != nil
 		hasOwnBackup[c.Name] = own
 		if !own {
@@ -744,10 +814,31 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			if json.Unmarshal([]byte(t.Definition), &def) == nil {
 				v.Image = def.Inspect.Config.Image
 				v.Stack = def.Inspect.Config.Labels["com.docker.compose.project"]
+				// The definition is all there is to recognise an uninstalled
+				// container by; its dumps are still in the repository and the
+				// row says what they are.
+				chosen, _ := dbdump.ParseEngine(t.DBDumpEngine)
+				cfg := def.Inspect.Config
+				rec := dbdump.Resolve(cfg.Image, envNames(cfg.Env), cfg.Labels, chosen)
+				v.DBEngine = string(rec.Engine)
+				v.DBSuggestedEngine = string(rec.Suggested)
+				v.DBTier = string(rec.Tier)
+				v.DBDumpLabelOff = rec.LabelOff
 			}
 		}
+		if v.DBTier != "" {
+			v.DBDumpOff = t.DBDumpOff
+			v.DBDumpEngine = t.DBDumpEngine
+			v.DBDumpsGlobalOff = !settings.DBDumpsEnabled
+			v.DBDumpHookOverlap = dumpToolRe.MatchString(t.PreHook)
+			v.LastDBDump = h.lastDBDump(t.ID)
+		}
+		// A container the repositories hold as dumps alone comes back with an
+		// empty database, which the recovery wizard says before it restores
+		// everything.
+		v.DumpOnly = snapTimes[t.ContainerName].DumpOnly()
 		run, _ := h.store.LastSuccessfulBackup(t.ID)
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(t.ContainerName, run, snapTimes, snapTimesFailed)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.ContainerName].Newest(), snapTimesFailed)
 		views = append(views, v)
 	}
 	items := make([]placementItem, 0, len(views))
@@ -768,26 +859,26 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "containers": views})
 }
 
-// lastBackupDate is the newest backup name owns, so a card's date agrees with
-// the list of backups under it. The run stands in only while the repository
-// could not be listed, because an unreachable repository must not read as
-// "never backed up". The start time comes from the run that wrote that backup
-// and from no other, since the dashboard measures a duration from the pair.
-func lastBackupDate(name string, run *store.Run, times map[string]int64, unreadable bool) (finished, started *int64) {
+// lastBackupDate is the newest backup an entry owns, so a card's date agrees
+// with the list of backups under it. newest is when that backup was taken, 0
+// for none. The run stands in only while the repository could not be listed,
+// because an unreachable repository must not read as "never backed up". The
+// start time comes from the run that wrote that backup and from no other,
+// since the dashboard measures a duration from the pair.
+func lastBackupDate(run *store.Run, newest int64, unreadable bool) (finished, started *int64) {
 	if unreadable {
 		if run == nil {
 			return nil, nil
 		}
 		return run.FinishedAt, &run.StartedAt
 	}
-	ts, ok := times[name]
-	if !ok || ts <= 0 {
+	if newest <= 0 {
 		return nil, nil
 	}
-	if run != nil && run.FinishedAt != nil && run.StartedAt <= ts && ts <= *run.FinishedAt {
-		return &ts, &run.StartedAt
+	if run != nil && run.FinishedAt != nil && run.StartedAt <= newest && newest <= *run.FinishedAt {
+		return &newest, &run.StartedAt
 	}
-	return &ts, nil
+	return &newest, nil
 }
 
 // aliasIndex holds former names by the ID of the entry they belong to.
@@ -825,13 +916,34 @@ func (idx aliasIndex) of(targetID string) []string {
 	return []string{}
 }
 
+// lastDBDump reads the target's most recent dump attempt, or nil when there is
+// none. A read failure is nil too: the row's job is the dump state, and a
+// container card that refuses to render because one query failed is worse than
+// one that leaves the line out.
+func (h *Handler) lastDBDump(targetID string) *lastDBDumpView {
+	run, err := h.store.LastRunOfKind(targetID, "dbdump")
+	if err != nil {
+		log.Printf("api: list containers: reading the last database dump failed: %v", err)
+		return nil
+	}
+	if run == nil {
+		return nil
+	}
+	at := run.StartedAt
+	if run.FinishedAt != nil {
+		at = *run.FinishedAt
+	}
+	return &lastDBDumpView{At: at, Status: run.Status, Bytes: run.Bytes, Error: run.Error}
+}
+
 // resourceNameRe matches a safe Docker container / libvirt VM name: it starts
 // with an alphanumeric and contains only [A-Za-z0-9._-]. This forbids path
 // separators, a leading "-" (argv option-injection) and an empty name; the
 // extra ".." check forbids parent-dir traversal even within the charset. The
 // Go 1.22 router decodes "%2f"/"%2e%2e" into the path value, so an unvalidated
 // {name} could otherwise carry "../" into the template/XML file sinks (CWE-22).
-var resourceNameRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)
+// The dump helper's --container flag matches against the same pattern.
+var resourceNameRe = regexp.MustCompile(model.ResourceNamePattern)
 
 func validResourceName(name string) bool {
 	return resourceNameRe.MatchString(name) && !strings.Contains(name, "..")
@@ -1327,7 +1439,8 @@ func (h *Handler) handleRestoreCancel(w http.ResponseWriter, r *http.Request) {
 //
 // Cancelling a key that is not running is an idempotent success
 // (cancelled:false): a browser tab that still shows the button for a backup
-// that finished a second ago must not produce an error.
+// that finished a second ago must not produce an error. The reason tells that
+// case apart from a backup that already wrote its restore point.
 func (h *Handler) handleBackupCancel(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Key string `json:"key"`
@@ -1335,8 +1448,15 @@ func (h *Handler) handleBackupCancel(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	cancelled := h.svc.CancelBackupRun(body.Key)
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": cancelled})
+	if h.svc.CancelBackupRun(body.Key, "") {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": true})
+		return
+	}
+	reason := "not_running"
+	if h.svc.BackupCommitted(body.Key, "") {
+		reason = "committed"
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": false, "reason": reason})
 }
 
 // stackParam reads {project}, a compose project name, which is laxer than a
@@ -1474,6 +1594,138 @@ func (h *Handler) handleRestoreContainerTo(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
 }
 
+// handleListDBDumps lists a container's database dumps.
+// GET /api/containers/{name}/dbdumps?source=
+func (h *Handler) handleListDBDumps(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	dumps, err := h.svc.DBDumps(r.Context(), name, sourceParam(r))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dumps": dumps}))
+}
+
+// handleDownloadDBDump streams one database dump to the browser.
+// GET /api/containers/{name}/dbdumps/{id}/download?source=&gz=1&check=1
+//
+// check=1 is the preflight the UI runs before it starts the native download: it
+// answers the envelope without streaming. The download itself refuses with 409
+// and no Content-Disposition, so a browser never saves an error envelope under
+// a .sql name.
+func (h *Handler) handleDownloadDBDump(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	id := r.PathValue("id")
+	gz := r.URL.Query().Get("gz") == "1"
+	if r.URL.Query().Get("check") == "1" {
+		if err := h.svc.DownloadDBDump(r.Context(), name, sourceParam(r), id, gz, true, nil, nil); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+		writeJSON(w, http.StatusOK, okEnvelope(nil))
+		return
+	}
+
+	var filename, contentType string
+	lw := &headerOnFirstWrite{w: w, header: func() {
+		w.Header().Set("Content-Type", contentType)
+		w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Cache-Control", "no-store")
+	}}
+	err := h.svc.DownloadDBDump(r.Context(), name, sourceParam(r), id, gz, false, func(v DBDumpView, sealed bool) {
+		filename = DBDumpDownloadName(name, v, gz, sealed)
+		switch {
+		case sealed:
+			contentType = "application/octet-stream"
+		case gz:
+			contentType = "application/gzip"
+		default:
+			contentType = "application/sql"
+		}
+	}, lw)
+	switch {
+	case err == nil:
+	case !lw.wrote:
+		writeJSON(w, http.StatusConflict, failEnvelope(err))
+	default:
+		// The attachment is under way, and a response that ends cleanly would be
+		// saved as a finished dump. Only a broken connection marks it failed.
+		log.Printf("api: download of a database dump of %q broke off: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		panic(http.ErrAbortHandler)
+	}
+}
+
+// handleSaveDBDumpTo writes one database dump into a folder on the server.
+// POST /api/containers/{name}/dbdumps/{id}/save?source=  body {targetPath, gz}
+//
+// Asynchronous like the to-folder restore: validation and the resolved file
+// name come back in the ack, the writing runs detached under its own run kind.
+func (h *Handler) handleSaveDBDumpTo(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		TargetPath string `json:"targetPath"`
+		GZ         bool   `json:"gz"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	target, started, err := h.svc.StartSaveDBDumpToPath(r.Context(), name, sourceParam(r), r.PathValue("id"), body.TargetPath, body.GZ)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
+}
+
+// handleImportDBDump imports one database dump into a freshly initialised
+// database. POST /api/containers/{name}/dbdumps/{id}/import?source=
+//
+// Asynchronous like the to-folder restore: every refusal is answered here, with
+// the reason id the page translates, and the work itself runs detached.
+func (h *Handler) handleImportDBDump(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	started, err := h.svc.StartImportDBDump(r.Context(), name, sourceParam(r), r.PathValue("id"))
+	switch {
+	case err != nil:
+		writeJSON(w, http.StatusOK, importRefusalEnvelope(err))
+	case !started:
+		writeJSON(w, http.StatusOK, codedFailEnvelope(errors.New("a backup or restore is already running"), importRefusedBusy))
+	default:
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
+	}
+}
+
+// importRefusalEnvelope answers a refused import: the reason id the page turns
+// into a sentence, plus the two major versions a version mismatch names.
+func importRefusalEnvelope(err error) map[string]any {
+	var refusal *importRefusal
+	if !errors.As(err, &refusal) {
+		return failEnvelope(err)
+	}
+	out := codedFailEnvelope(err, refusal.code)
+	if refusal.code == importRefusedVersion {
+		out["server"], out["dump"] = refusal.server, refusal.dump
+	}
+	return out
+}
+
 // handleDiff compares two of a container's snapshots and returns the summary of
 // what changed between them. GET /api/containers/{name}/diff?from=&to=&source=
 func (h *Handler) handleDiff(w http.ResponseWriter, r *http.Request) {
@@ -1555,6 +1807,12 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		ExcludeCaches     map[string]bool `json:"excludeCaches"`
 		UpdateAfterBackup *bool           `json:"updateAfterBackup"`
 		ScheduleCadence   *string         `json:"scheduleCadence"`
+		// DBDumpOff opts the container out of the automatic database dump;
+		// DBDumpEngine names the engine a container that only looks like a
+		// database is dumped with. Pointers like their neighbours: the card
+		// saves one field at a time.
+		DBDumpOff    *bool   `json:"dbDumpOff"`
+		DBDumpEngine *string `json:"dbDumpEngine"`
 		// Repo is the older spelling of home {repo}.
 		Repo *string `json:"repo"`
 		// Home is this item's own location: a named repository from Settings,
@@ -1629,6 +1887,22 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	if body.DBDumpOff != nil {
+		if err := h.svc.SetDBDumpOff(r.Context(), name, *body.DBDumpOff); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.DBDumpEngine != nil {
+		if err := h.svc.SetDBDumpEngine(r.Context(), name, *body.DBDumpEngine); err != nil {
+			status := http.StatusOK
+			if errors.Is(err, errUnknownDBDumpEngine) {
+				status = http.StatusBadRequest
+			}
+			writeJSON(w, status, failEnvelope(err))
+			return
+		}
+	}
 	if body.ScheduleCadence != nil {
 		if err := h.svc.SetScheduleCadence(r.Context(), name, *body.ScheduleCadence); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -1652,6 +1926,20 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
+// dueGates is the set of last-run queries the everyN cadence needs, one per
+// backup domain.
+func (h *Handler) dueGates() schedule.DueGates {
+	return schedule.DueGates{
+		Containers: h.containersLastRun,
+		VMs:        h.vmsLastRun,
+		Flash:      h.flashLastRun,
+		Config:     h.configLastRun,
+		Files:      h.filesLastRun,
+		ZFS:        h.zfsLastRun,
+		Everything: h.everythingLastRun,
+	}
+}
+
 // reloadScheduler re-reads the settings and re-registers every schedule entry,
 // including the per-item override entries (#121). Called after a change that alters
 // the schedule structure outside the settings form (a per-item cadence PATCH).
@@ -1660,7 +1948,7 @@ func (h *Handler) reloadScheduler() error {
 	if err != nil {
 		return err
 	}
-	return h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun)
+	return h.scheduler.ReloadWithGates(s, h.dueGates())
 }
 
 // handleScheduleIncludeAll sets the include_in_schedule flag for EVERY installed
@@ -1854,27 +2142,32 @@ type settingsView struct {
 	FlashEnabled              bool   `json:"flashEnabled"`
 	ConfigEnabled             bool   `json:"configEnabled"`
 	FilesEnabled              bool   `json:"filesEnabled"`
+	ZFSEnabled                bool   `json:"zfsEnabled"`
 	ContainersPath            string `json:"containersPath"`
 	VMsPath                   string `json:"vmsPath"`
 	FlashPath                 string `json:"flashPath"`
 	ConfigPath                string `json:"configPath"`
 	FilesPath                 string `json:"filesPath"`
+	ZFSPath                   string `json:"zfsPath"`
 	RestoreFolder             string `json:"restoreFolder"`
 	ContainersOffsite         string `json:"containersOffsite"`
 	VMsOffsite                string `json:"vmsOffsite"`
 	FlashOffsite              string `json:"flashOffsite"`
 	ConfigOffsite             string `json:"configOffsite"`
 	FilesOffsite              string `json:"filesOffsite"`
+	ZFSOffsite                string `json:"zfsOffsite"`
 	ContainersOffsiteSchedule string `json:"containersOffsiteSchedule"`
 	VMsOffsiteSchedule        string `json:"vmsOffsiteSchedule"`
 	FlashOffsiteSchedule      string `json:"flashOffsiteSchedule"`
 	ConfigOffsiteSchedule     string `json:"configOffsiteSchedule"`
 	FilesOffsiteSchedule      string `json:"filesOffsiteSchedule"`
+	ZFSOffsiteSchedule        string `json:"zfsOffsiteSchedule"`
 	ContainersSchedule        string `json:"containersSchedule"`
 	VMsSchedule               string `json:"vmsSchedule"`
 	FlashSchedule             string `json:"flashSchedule"`
 	ConfigSchedule            string `json:"configSchedule"`
 	FilesSchedule             string `json:"filesSchedule"`
+	ZFSSchedule               string `json:"zfsSchedule"`
 	// Scheduled flash ZIP export: enable, destination folder (relative subpath
 	// under the mount root), and how many timestamped zips to keep (0 = a single
 	// overwriting flash-latest.zip).
@@ -1933,6 +2226,7 @@ type settingsView struct {
 	FlashOffsiteImmutable      bool `json:"flashOffsiteImmutable"`
 	ConfigOffsiteImmutable     bool `json:"configOffsiteImmutable"`
 	FilesOffsiteImmutable      bool `json:"filesOffsiteImmutable"`
+	ZFSOffsiteImmutable        bool `json:"zfsOffsiteImmutable"`
 	// Off-site growth budget in GB (0 = alarm off) + tamper-test cadence +
 	// DR-drill target container/VM ('' = auto).
 	OffsiteGrowthBudgetGB int    `json:"offsiteGrowthBudgetGB"`
@@ -1998,6 +2292,23 @@ type settingsView struct {
 	// repository (#227). Default false (opt-in) like the two flags above, and the
 	// only one of the three that writes data here rather than reading.
 	PullEnabled bool `json:"pullEnabled"`
+	// DBDumpsEnabled is the emergency stop for the automatic database dumps,
+	// on by default. A pointer where its neighbours are plain bools: the GET
+	// always fills it, and on PUT or import nil means keep. Every other bool
+	// here is copied as it stands, so an export file or a browser tab that
+	// predates the switch would otherwise turn a safety feature off without a
+	// word.
+	DBDumpsEnabled *bool `json:"dbDumpsEnabled"`
+	// Anomaly detection over the backup history: the switch, the preset every
+	// item follows, the severity from which a finding is pushed, and the pause
+	// on deleting old backups after a loss of data. The two switches are
+	// pointers and the two presets keep their stored value when blank, for the
+	// reason DBDumpsEnabled above is a pointer: a file or a browser tab that
+	// predates them would otherwise turn detection and the pause off.
+	AnomalyEnabled       *bool  `json:"anomalyEnabled"`
+	AnomalySensitivity   string `json:"anomalySensitivity"`
+	AnomalyNotifyMin     string `json:"anomalyNotifyMin"`
+	AnomalyRetentionHold *bool  `json:"anomalyRetentionHold"`
 	// InstanceName is this instance's own display name, reported to polling
 	// fleet peers so a peer's Fleet page can label this box. Not a secret.
 	InstanceName string `json:"instanceName"`
@@ -2050,11 +2361,13 @@ func toView(s store.Settings) settingsView {
 		FlashEnabled:      s.FlashEnabled,
 		ConfigEnabled:     s.ConfigEnabled,
 		FilesEnabled:      s.FilesEnabled,
+		ZFSEnabled:        s.ZFSEnabled,
 		ContainersPath:    s.ContainersPath,
 		VMsPath:           s.VMsPath,
 		FlashPath:         s.FlashPath,
 		ConfigPath:        s.ConfigPath,
 		FilesPath:         s.FilesPath,
+		ZFSPath:           s.ZFSPath,
 		RestoreFolder:     s.RestoreFolder,
 		// Verbatim here on purpose. toView is the faithful store-to-view
 		// mapping that BOTH exits share, and the credentialed settings export
@@ -2066,16 +2379,19 @@ func toView(s store.Settings) settingsView {
 		FlashOffsite:                s.FlashOffsite,
 		ConfigOffsite:               s.ConfigOffsite,
 		FilesOffsite:                s.FilesOffsite,
+		ZFSOffsite:                  s.ZFSOffsite,
 		ContainersOffsiteSchedule:   s.ContainersOffsiteSchedule,
 		VMsOffsiteSchedule:          s.VMsOffsiteSchedule,
 		FlashOffsiteSchedule:        s.FlashOffsiteSchedule,
 		ConfigOffsiteSchedule:       s.ConfigOffsiteSchedule,
 		FilesOffsiteSchedule:        s.FilesOffsiteSchedule,
+		ZFSOffsiteSchedule:          s.ZFSOffsiteSchedule,
 		ContainersSchedule:          s.ContainersSchedule,
 		VMsSchedule:                 s.VMsSchedule,
 		FlashSchedule:               s.FlashSchedule,
 		ConfigSchedule:              s.ConfigSchedule,
 		FilesSchedule:               s.FilesSchedule,
+		ZFSSchedule:                 s.ZFSSchedule,
 		FlashZipExportEnabled:       s.FlashZipExportEnabled,
 		FlashZipExportPath:          s.FlashZipExportPath,
 		FlashZipExportKeep:          s.FlashZipExportKeep,
@@ -2106,6 +2422,7 @@ func toView(s store.Settings) settingsView {
 		FlashOffsiteImmutable:       s.FlashOffsiteImmutable,
 		ConfigOffsiteImmutable:      s.ConfigOffsiteImmutable,
 		FilesOffsiteImmutable:       s.FilesOffsiteImmutable,
+		ZFSOffsiteImmutable:         s.ZFSOffsiteImmutable,
 		OffsiteGrowthBudgetGB:       s.OffsiteGrowthBudgetGB,
 		TamperTestSchedule:          s.TamperTestSchedule,
 		DRDrillTarget:               s.DRDrillTarget,
@@ -2125,6 +2442,11 @@ func toView(s store.Settings) settingsView {
 		PerItemSchedules:            s.PerItemSchedules,
 		FleetEnabled:                s.FleetEnabled,
 		PullEnabled:                 s.PullEnabled,
+		DBDumpsEnabled:              &s.DBDumpsEnabled,
+		AnomalyEnabled:              &s.AnomalyEnabled,
+		AnomalySensitivity:          s.AnomalySensitivity,
+		AnomalyNotifyMin:            s.AnomalyNotifyMin,
+		AnomalyRetentionHold:        &s.AnomalyRetentionHold,
 		InstanceName:                s.InstanceName,
 		FleetToken:                  "", // secret — never echoed; FleetTokenSet reports presence
 		FleetTokenSet:               s.FleetToken != "",
@@ -2172,6 +2494,7 @@ func scrubGetSettingsSecrets(v settingsView) settingsView {
 	v.FlashOffsite = scrubRepoLocation(v.FlashOffsite)
 	v.ConfigOffsite = scrubRepoLocation(v.ConfigOffsite)
 	v.FilesOffsite = scrubRepoLocation(v.FilesOffsite)
+	v.ZFSOffsite = scrubRepoLocation(v.ZFSOffsite)
 	v.EverythingPreHook = ""
 	v.EverythingPostHook = ""
 	return v
@@ -2206,11 +2529,15 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 	// platform is the detected/overridden platform.Kind ("unraid"/"generic"/
 	// "truenas", see internal/platform) — read-only host-environment info, not a
 	// setting the UI can change.
+	// scheduleZone is the clock every schedule is read on, which the page names
+	// when the browser runs on a different one.
+	zone, offset := time.Now().Zone()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":            true,
 		"settings":      view,
 		"hostMountRoot": h.cfg.HostMountRoot,
 		"platform":      string(h.svc.platformFn().Kind()),
+		"scheduleZone":  map[string]any{"name": zone, "offsetSeconds": offset},
 	})
 }
 
@@ -2247,6 +2574,7 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 func rejectEveryNSchedules(v settingsView) string {
 	for _, cad := range []string{
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
+		v.ZFSOffsiteSchedule,
 	} {
 		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
 			return "this schedule does not support 'everyN': use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression"
@@ -2284,11 +2612,13 @@ func (h *Handler) rejectSettingsPathOnNamedRepo(v settingsView, cur store.Settin
 		{"Flash", v.FlashPath, cur.FlashPath},
 		{"Config", v.ConfigPath, cur.ConfigPath},
 		{"Folders", v.FilesPath, cur.FilesPath},
+		{"ZFS datasets", v.ZFSPath, cur.ZFSPath},
 		{"Containers off-site", v.ContainersOffsite, cur.ContainersOffsite},
 		{"VMs off-site", v.VMsOffsite, cur.VMsOffsite},
 		{"Flash off-site", v.FlashOffsite, cur.FlashOffsite},
 		{"Config off-site", v.ConfigOffsite, cur.ConfigOffsite},
 		{"Folders off-site", v.FilesOffsite, cur.FilesOffsite},
+		{"ZFS datasets off-site", v.ZFSOffsite, cur.ZFSOffsite},
 	} {
 		if strings.TrimSpace(f.loc) == "" {
 			continue
@@ -2360,6 +2690,44 @@ func (h *Handler) rejectNestedSettingsPath(v settingsView, cur store.Settings) s
 	return ""
 }
 
+// applyOffsiteSettings writes the form's off-site fields onto cur. The GET hands
+// out locations with any embedded credential replaced by the redaction marker,
+// so a location that still carries it keeps the stored one; writing it back
+// would destroy the stored password on the next unrelated save.
+func applyOffsiteSettings(cur *store.Settings, v settingsView) {
+	keepLocation := func(incoming, stored string) string {
+		if locationRedacted(incoming) {
+			return stored
+		}
+		return incoming
+	}
+	cur.ContainersOffsite = keepLocation(v.ContainersOffsite, cur.ContainersOffsite)
+	cur.VMsOffsite = keepLocation(v.VMsOffsite, cur.VMsOffsite)
+	cur.FlashOffsite = keepLocation(v.FlashOffsite, cur.FlashOffsite)
+	cur.ConfigOffsite = keepLocation(v.ConfigOffsite, cur.ConfigOffsite)
+	cur.FilesOffsite = keepLocation(v.FilesOffsite, cur.FilesOffsite)
+	cur.ZFSOffsite = keepLocation(v.ZFSOffsite, cur.ZFSOffsite)
+	cur.ContainersOffsiteSchedule = v.ContainersOffsiteSchedule
+	cur.VMsOffsiteSchedule = v.VMsOffsiteSchedule
+	cur.FlashOffsiteSchedule = v.FlashOffsiteSchedule
+	cur.ConfigOffsiteSchedule = v.ConfigOffsiteSchedule
+	cur.FilesOffsiteSchedule = v.FilesOffsiteSchedule
+	cur.ZFSOffsiteSchedule = v.ZFSOffsiteSchedule
+	cur.OffsiteRetentionKeepLast = max(0, v.OffsiteRetentionKeepLast)
+	cur.OffsiteRetentionKeepDaily = max(0, v.OffsiteRetentionKeepDaily)
+	cur.OffsiteRetentionKeepWeekly = max(0, v.OffsiteRetentionKeepWeekly)
+	cur.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
+	cur.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
+	cur.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
+	cur.ContainersOffsiteImmutable = v.ContainersOffsiteImmutable
+	cur.VMsOffsiteImmutable = v.VMsOffsiteImmutable
+	cur.FlashOffsiteImmutable = v.FlashOffsiteImmutable
+	cur.ConfigOffsiteImmutable = v.ConfigOffsiteImmutable
+	cur.FilesOffsiteImmutable = v.FilesOffsiteImmutable
+	cur.ZFSOffsiteImmutable = v.ZFSOffsiteImmutable
+	cur.OffsiteGrowthBudgetGB = max(0, v.OffsiteGrowthBudgetGB)
+}
+
 // rejectInvalidSettingsPaths validates every repo location a settings row
 // carries: the restore folder is always local, a remote backend (rclone:/s3:/
 // rest:/sftp:/b2:) is accepted verbatim, an unprefixed remote-looking value is
@@ -2386,8 +2754,8 @@ func rejectInvalidSettingsPaths(v settingsView, mountRoot string) string {
 	// blank = none). A remote backend (rclone:/s3:/rest:…) is accepted verbatim;
 	// a local path must stay under the mount root.
 	for _, sub := range []string{
-		v.ContainersPath, v.VMsPath, v.FlashPath, v.ConfigPath, v.FilesPath, v.RestoreFolder,
-		v.ContainersOffsite, v.VMsOffsite, v.FlashOffsite, v.ConfigOffsite, v.FilesOffsite,
+		v.ContainersPath, v.VMsPath, v.FlashPath, v.ConfigPath, v.FilesPath, v.ZFSPath, v.RestoreFolder,
+		v.ContainersOffsite, v.VMsOffsite, v.FlashOffsite, v.ConfigOffsite, v.FilesOffsite, v.ZFSOffsite,
 	} {
 		if sub == "" || restic.IsRemoteRepo(sub) {
 			continue
@@ -2423,9 +2791,56 @@ func rejectInvalidSettingsNames(v settingsView) string {
 	return ""
 }
 
+// rejectInvalidAnomalySettings guards the two anomaly presets on both write
+// paths. Blank means "keep what is stored", so an export from before the
+// feature and a client that sends neither key both pass.
+func rejectInvalidAnomalySettings(v settingsView) string {
+	if p := v.AnomalySensitivity; p != "" && !slices.Contains(anomalyPresets, Sensitivity(p)) {
+		return "unknown anomaly sensitivity " + strconv.Quote(p)
+	}
+	if m := v.AnomalyNotifyMin; m != "" && !slices.Contains(anomalyNotifyLevels, m) {
+		return "unknown anomaly notification minimum " + strconv.Quote(m)
+	}
+	return ""
+}
+
+// applyAnomalySettings writes the four anomaly fields onto the row and reports
+// whether any of them moved. An absent switch and a blank preset keep what is
+// stored, so an old browser tab saving an unrelated card cannot switch
+// detection or the retention pause off.
+func applyAnomalySettings(cur *store.Settings, v settingsView) bool {
+	before := *cur
+	if v.AnomalyEnabled != nil {
+		cur.AnomalyEnabled = *v.AnomalyEnabled
+	}
+	if v.AnomalySensitivity != "" {
+		cur.AnomalySensitivity = v.AnomalySensitivity
+	}
+	if v.AnomalyNotifyMin != "" {
+		cur.AnomalyNotifyMin = v.AnomalyNotifyMin
+	}
+	if v.AnomalyRetentionHold != nil {
+		cur.AnomalyRetentionHold = *v.AnomalyRetentionHold
+	}
+	return anomalySettingsMoved(before, *cur)
+}
+
+// anomalySettingsMoved reports whether a write changed any of the four fields,
+// which is when the engine has to judge every series again.
+func anomalySettingsMoved(before, after store.Settings) bool {
+	return before.AnomalyEnabled != after.AnomalyEnabled ||
+		before.AnomalySensitivity != after.AnomalySensitivity ||
+		before.AnomalyNotifyMin != after.AnomalyNotifyMin ||
+		before.AnomalyRetentionHold != after.AnomalyRetentionHold
+}
+
 func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	var v settingsView
 	if !decodeBody(w, r, &v) {
+		return
+	}
+	if msg := rejectInvalidAnomalySettings(v); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
 
@@ -2458,12 +2873,24 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
+	next := cur
+	applyOffsiteSettings(&next, v)
+	adoptMsg, adoptErr := h.svc.rejectAdoptionOverOwnSettings(next)
+	if adoptErr != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(adoptErr))
+		return
+	}
+	if adoptMsg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": adoptMsg})
+		return
+	}
 
 	// Validate each cadence parses (backup schedules + off-site + drills +
 	// tamper-test schedules).
 	for _, cad := range []string{
-		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule,
+		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule, v.ZFSSchedule,
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
+		v.ZFSOffsiteSchedule,
 		v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule, v.EverythingSchedule,
 	} {
 		if _, err := schedule.ParseCadence(cad); err != nil {
@@ -2510,7 +2937,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		if tErr := h.svc.VMSSHTest(r.Context()); tErr != nil {
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok":    false,
-				"error": "Can't enable VM backup yet: " + scrubError(tErr) + ". Set up the SSH key under “VM Backup over SSH” and click Test connection first.",
+				"error": "Can't enable VM backup yet: " + scrubError(tErr) + ". Set up the SSH key under “Host SSH” and click Test connection first.",
 			})
 			return
 		}
@@ -2522,6 +2949,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// mangle into "[path]". Carried out of the callback so that one shape
 	// survives while every other failure keeps going through failEnvelope.
 	var registryInputErr error
+
+	// Whether this save touched detection at all, so the engine judges every
+	// series again only when the rules behind it moved.
+	var anomalyChanged bool
 
 	// Write the form's OWN fields onto the CURRENT row, one assignment each —
 	// never `*cur = store.Settings{…}`. A whole-struct literal writes every
@@ -2542,39 +2973,21 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.FlashEnabled = v.FlashEnabled
 		cur.ConfigEnabled = v.ConfigEnabled
 		cur.FilesEnabled = v.FilesEnabled
+		cur.ZFSEnabled = v.ZFSEnabled
 		cur.ContainersPath = v.ContainersPath
 		cur.VMsPath = v.VMsPath
 		cur.FlashPath = v.FlashPath
 		cur.ConfigPath = v.ConfigPath
 		cur.FilesPath = v.FilesPath
+		cur.ZFSPath = v.ZFSPath
 		cur.RestoreFolder = v.RestoreFolder
-		// keepLocation: the GET now hands out these locations with any embedded
-		// credential replaced by the redaction marker, so every client's
-		// baseline carries the redacted form. Writing that back verbatim would
-		// destroy the stored password on the next unrelated save. A location
-		// that still carries the marker therefore keeps the stored one, exactly
-		// as the settings IMPORT already resolves a redacted location.
-		keepLocation := func(incoming, stored string) string {
-			if locationRedacted(incoming) {
-				return stored
-			}
-			return incoming
-		}
-		cur.ContainersOffsite = keepLocation(v.ContainersOffsite, cur.ContainersOffsite)
-		cur.VMsOffsite = keepLocation(v.VMsOffsite, cur.VMsOffsite)
-		cur.FlashOffsite = keepLocation(v.FlashOffsite, cur.FlashOffsite)
-		cur.ConfigOffsite = keepLocation(v.ConfigOffsite, cur.ConfigOffsite)
-		cur.FilesOffsite = keepLocation(v.FilesOffsite, cur.FilesOffsite)
-		cur.ContainersOffsiteSchedule = v.ContainersOffsiteSchedule
-		cur.VMsOffsiteSchedule = v.VMsOffsiteSchedule
-		cur.FlashOffsiteSchedule = v.FlashOffsiteSchedule
-		cur.ConfigOffsiteSchedule = v.ConfigOffsiteSchedule
-		cur.FilesOffsiteSchedule = v.FilesOffsiteSchedule
+		applyOffsiteSettings(cur, v)
 		cur.ContainersSchedule = v.ContainersSchedule
 		cur.VMsSchedule = v.VMsSchedule
 		cur.FlashSchedule = v.FlashSchedule
 		cur.ConfigSchedule = v.ConfigSchedule
 		cur.FilesSchedule = v.FilesSchedule
+		cur.ZFSSchedule = v.ZFSSchedule
 		cur.FlashZipExportEnabled = v.FlashZipExportEnabled
 		cur.FlashZipExportPath = v.FlashZipExportPath
 		cur.FlashZipExportKeep = max(0, v.FlashZipExportKeep)
@@ -2583,12 +2996,6 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.RetentionKeepDaily = max(0, v.RetentionKeepDaily)
 		cur.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
 		cur.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
-		cur.OffsiteRetentionKeepLast = max(0, v.OffsiteRetentionKeepLast)
-		cur.OffsiteRetentionKeepDaily = max(0, v.OffsiteRetentionKeepDaily)
-		cur.OffsiteRetentionKeepWeekly = max(0, v.OffsiteRetentionKeepWeekly)
-		cur.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
-		cur.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
-		cur.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
 		// Clamped to the machine's own thread count: a number above it is not a
 		// cap at all, and a negative one is meaningless. 0 stays 0 (= every core).
 		cur.BackupCores = min(max(0, v.BackupCores), runtime.NumCPU())
@@ -2598,12 +3005,6 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.DrillsSubsetPct = max(1, min(100, v.DrillsSubsetPct))
 		cur.OffsiteDrillsEnabled = v.OffsiteDrillsEnabled
 		cur.RecoveryKitAck = v.RecoveryKitAck
-		cur.ContainersOffsiteImmutable = v.ContainersOffsiteImmutable
-		cur.VMsOffsiteImmutable = v.VMsOffsiteImmutable
-		cur.FlashOffsiteImmutable = v.FlashOffsiteImmutable
-		cur.ConfigOffsiteImmutable = v.ConfigOffsiteImmutable
-		cur.FilesOffsiteImmutable = v.FilesOffsiteImmutable
-		cur.OffsiteGrowthBudgetGB = max(0, v.OffsiteGrowthBudgetGB)
 		cur.TamperTestSchedule = v.TamperTestSchedule
 		cur.DRDrillTarget = strings.TrimSpace(v.DRDrillTarget)
 		cur.DRDrillTargetVM = strings.TrimSpace(v.DRDrillTargetVM)
@@ -2622,6 +3023,13 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.PerItemSchedules = v.PerItemSchedules
 		cur.FleetEnabled = v.FleetEnabled
 		cur.PullEnabled = v.PullEnabled
+		// An absent switch keeps the stored one: an older tab posts a body
+		// without it, and reading that as "off" would stop dumping databases
+		// on a save of an unrelated card.
+		if v.DBDumpsEnabled != nil {
+			cur.DBDumpsEnabled = *v.DBDumpsEnabled
+		}
+		anomalyChanged = applyAnomalySettings(cur, v)
 		cur.InstanceName = strings.TrimSpace(v.InstanceName)
 		cur.EverythingSchedule = v.EverythingSchedule
 		// Blank keeps the stored command, same contract as the three tokens
@@ -2693,12 +3101,15 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// Dual-write: mirror the just-saved off-site config into each domain's PRIMARY
 	// offsite_targets row so the replication path (which now reads those rows) sees
 	// the change. Settings stays authoritative for the fallback/rollback path.
+	if anomalyChanged {
+		h.svc.anomalies.settingsChanged()
+	}
 	h.svc.syncAllPrimaryOffsiteTargets(s)
 	// The CPU cap reaches restic through the process environment of the NEXT
 	// child it starts ([558]), so applying it here takes effect without a
 	// restart — a backup already in flight keeps the value it began with.
 	restic.SetMaxProcs(s.BackupCores)
-	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
+	if err := h.scheduler.ReloadWithGates(s, h.dueGates()); err != nil {
 		// Settings persisted but the scheduler could not re-register — report it.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
@@ -2707,7 +3118,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// fail. BombVault never prunes an append-only repo, so the policy is inert
 	// until enforced far-side.
 	notes := []string{}
-	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable || s.ConfigOffsiteImmutable || s.FilesOffsiteImmutable) &&
+	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable || s.ConfigOffsiteImmutable ||
+		s.FilesOffsiteImmutable || s.ZFSOffsiteImmutable) &&
 		(s.OffsiteRetentionKeepLast > 0 || s.OffsiteRetentionKeepDaily > 0 ||
 			s.OffsiteRetentionKeepWeekly > 0 || s.OffsiteRetentionKeepMonthly > 0) {
 		notes = append(notes, "The off-site repo is append-only (immutable), so BombVault will not apply the off-site retention policy; enforce retention far-side (e.g. a rest-server prune cron) or use a maintenance window.")
@@ -2764,6 +3176,25 @@ func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
 	if !h.requireAuthForSecrets(w, "downloading the recovery kit") {
 		return
 	}
+	// The seal decision is made BEFORE the kit is built, from ONE settings read,
+	// and a failed read refuses outright. ExportEncryptionOn() will not do:
+	// that is a second, best-effort read which reports false when the store
+	// errors, harmless where it only picks a filename and catastrophic here,
+	// where it would answer "encryption off" to a transient error and hand out
+	// the master key in the clear.
+	settings, sErr := h.store.GetSettings()
+	if sErr != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(sErr))
+		return
+	}
+	recipients, sealing, rErr := h.svc.exportRecipients(settings)
+	if rErr != nil {
+		// Encryption on with no usable recipient. Refuse; never fall back to
+		// the plaintext this setting exists to prevent.
+		writeJSON(w, http.StatusOK, failEnvelope(rErr))
+		return
+	}
+
 	kit, err := h.svc.RecoveryKit()
 	if err != nil {
 		// A build failure (settings read) is reported as JSON before any body is
@@ -2771,10 +3202,27 @@ func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
-	w.Header().Set("Content-Disposition", `attachment; filename="bombvault-recovery-kit.md"`)
+
+	body := []byte(kit)
+	contentType := "text/markdown; charset=utf-8"
+	filename := "bombvault-recovery-kit.md"
+	if sealing {
+		sealed, sealErr := ageseal.SealArmored(body, recipients)
+		if sealErr != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(sealErr))
+			return
+		}
+		body = sealed
+		// Armored, so it stays text: the kit is meant to be pasted into a
+		// password manager or printed, and that has to keep working sealed.
+		contentType = "application/octet-stream"
+		filename = "bombvault-recovery-kit.md.age"
+	}
+
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
 	w.WriteHeader(http.StatusOK)
-	if _, wErr := w.Write([]byte(kit)); wErr != nil {
+	if _, wErr := w.Write(body); wErr != nil {
 		// Log only the failure, never the body (it contains the master key).
 		log.Printf("api: recovery-kit: write failed: %v", wErr)
 	}
@@ -2799,11 +3247,11 @@ func (h *Handler) handleRecoveryKitAck(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handleCheck verifies the integrity of a domain's restic repo (restic check).
-// POST /api/check/{domain}  domain ∈ {containers, vms, flash, files}
+// POST /api/check/{domain}  domain ∈ {containers, vms, flash, files, zfs}
 func (h *Handler) handleCheck(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -2819,11 +3267,11 @@ func (h *Handler) handleCheck(w http.ResponseWriter, r *http.Request) {
 // recorded result. ?kind=subset (default) is the classic `restic check
 // --read-data-subset` integrity check; ?kind=dr is a real off-site sandbox restore
 // (containers, flash + files only). POST /api/verify/{domain}?source=&kind=
-// domain ∈ {containers,vms,flash,files}
+// domain ∈ {containers,vms,flash,files,zfs}
 func (h *Handler) handleRunDrill(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -2844,7 +3292,7 @@ func (h *Handler) handleRunDrill(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleDrills(w http.ResponseWriter, r *http.Request) {
 	domain := r.URL.Query().Get("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -2885,7 +3333,7 @@ func (h *Handler) handleDrills(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleUnlock(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -2910,16 +3358,59 @@ func (h *Handler) handleUnlock(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	if err := h.svc.PruneDomain(r.Context(), domain, sourceParam(r)); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+	paused, err := h.svc.PruneDomain(r.Context(), domain, sourceParam(r))
+	if err != nil {
+		body := failEnvelope(err)
+		if len(paused) > 0 {
+			body["paused"] = paused
+		}
+		writeJSON(w, http.StatusOK, body)
+		return
+	}
+	if len(paused) > 0 {
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"paused": paused}))
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleRetentionPreview reports what the next retention run would remove for a
+// domain, without removing anything.
+// GET /api/retention/preview/{domain}[?source=offsite|offsite:<id>]
+//
+// A GET on purpose: csrfGate exempts GET, so a read-only question needs no
+// token, while authGate still protects it like every other /api route. The
+// domain whitelist is handlePrune's own, because the preview and the prune
+// must never disagree about which domains exist.
+func (h *Handler) handleRetentionPreview(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	switch domain {
+	case "containers", "vms", "flash", "config", "files", "zfs":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	preview, err := h.svc.PreviewRetention(r.Context(), domain, sourceParam(r))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	// Nil slices are normalised so the client always meets a list, never null,
+	// the same courtesy handleExcludesPreview extends.
+	if preview.Repos == nil {
+		preview.Repos = []RetentionPreviewRepo{}
+	}
+	for i := range preview.Repos {
+		if preview.Repos[i].Items == nil {
+			preview.Repos[i].Items = []RetentionPreviewItem{}
+		}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"preview": preview}))
 }
 
 // handleDeleteSnapshot forgets a single snapshot from a domain's repo.
@@ -2927,7 +3418,7 @@ func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -2952,7 +3443,7 @@ func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request)
 	// supported the domain all along; this handler-local copy of the domain
 	// list was the only thing rejecting it, which is why self-backup alone had
 	// no connection test, no replicate-now and no wizard snippet.
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -2974,7 +3465,7 @@ func (h *Handler) handleTestOffsite(w http.ResponseWriter, r *http.Request) {
 	// supported the domain all along; this handler-local copy of the domain
 	// list was the only thing rejecting it, which is why self-backup alone had
 	// no connection test, no replicate-now and no wizard snippet.
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3001,7 +3492,7 @@ func (h *Handler) handleDeploySnippet(w http.ResponseWriter, r *http.Request) {
 	// supported the domain all along; this handler-local copy of the domain
 	// list was the only thing rejecting it, which is why self-backup alone had
 	// no connection test, no replicate-now and no wizard snippet.
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3025,7 +3516,7 @@ func (h *Handler) handleTamperTest(w http.ResponseWriter, r *http.Request) {
 	// supported the domain all along; this handler-local copy of the domain
 	// list was the only thing rejecting it, which is why self-backup alone had
 	// no connection test, no replicate-now and no wizard snippet.
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3334,6 +3825,7 @@ func (h *Handler) runSpikeAndCache() (any, bool) {
 		Docker:        h.docker,
 		ContainerPath: h.svc.ContainerPath(),
 		LibvirtTest:   h.svc.LibvirtReachable,
+		ZFSTest:       h.svc.ZFSSpikeStatus,
 	}
 	checks, allOK := spike.Run(deps, h.probes)
 	h.spikeMu.Lock()
@@ -3380,6 +3872,11 @@ type runView struct {
 	store.Run
 	Target string `json:"target"`
 	Domain string `json:"domain"` // "container" | "vm" | "flash" | "config" | "files" | "everything" | ""
+	// StartedViaLabel is the operator's name for the MCP key behind the run and
+	// StartedViaRevoked says whether that key is revoked. Both stay empty for a
+	// run the web interface or the scheduler started.
+	StartedViaLabel   string `json:"startedViaLabel"`
+	StartedViaRevoked bool   `json:"startedViaRevoked"`
 }
 
 // runTargetMaps resolves target_id → (human name, domain) across every domain,
@@ -3414,10 +3911,16 @@ func (h *Handler) runTargetMaps() (name, domain map[string]string) {
 			domain[fs.ID] = "files"
 		}
 	}
+	if ds, lErr := h.store.ListZFSDatasets(); lErr == nil {
+		for _, d := range ds {
+			name[d.ID] = d.Dataset
+			domain[d.ID] = "zfs"
+		}
+	}
 	return name, domain
 }
 
-func (h *Handler) handleRuns(w http.ResponseWriter, _ *http.Request) {
+func (h *Handler) handleRuns(w http.ResponseWriter, r *http.Request) {
 	// Return a generous window so the dashboard's day-filter can show several
 	// days of history, not just the latest handful.
 	runs, err := h.store.ListRuns(500)
@@ -3425,12 +3928,55 @@ func (h *Handler) handleRuns(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	// ?run names the run a link opened the log on, which can be older than the
+	// window.
+	if id := r.URL.Query().Get("run"); id != "" && !slices.ContainsFunc(runs, func(run store.Run) bool { return run.ID == id }) {
+		run, err := h.store.GetRun(id)
+		switch {
+		case err == nil:
+			runs = append(runs, run)
+		case !errors.Is(err, store.ErrRunNotFound):
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "runs": h.runViews(runs)})
+}
+
+// runViews enriches stored runs with their target's name and domain and names
+// the MCP key behind the ones an assistant started.
+func (h *Handler) runViews(runs []store.Run) []runView {
 	name, domain := h.runTargetMaps()
+	keys := h.mcpKeysBehind(runs)
 	views := make([]runView, 0, len(runs))
 	for _, r := range runs {
-		views = append(views, runView{Run: r, Target: name[r.TargetID], Domain: domain[r.TargetID]})
+		v := runView{Run: r, Target: name[r.TargetID], Domain: domain[r.TargetID]}
+		if key, ok := keys[r.StartedViaKey]; ok {
+			v.StartedViaLabel = key.Label
+			v.StartedViaRevoked = key.RevokedAt > 0
+		}
+		views = append(views, v)
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "runs": views})
+	return views
+}
+
+// mcpKeysBehind indexes the MCP keys the runs name, and reads none at all when
+// no run came from MCP. A revoked key is included: the audit trail has to keep
+// naming the client that started a run after the key it used is gone.
+func (h *Handler) mcpKeysBehind(runs []store.Run) map[string]store.MCPKey {
+	if !slices.ContainsFunc(runs, func(r store.Run) bool { return r.StartedViaKey != "" }) {
+		return nil
+	}
+	keys, err := h.store.ListMCPKeys()
+	if err != nil {
+		log.Printf("api: runs: reading the MCP key names failed: %v", err)
+		return nil
+	}
+	out := make(map[string]store.MCPKey, len(keys))
+	for _, key := range keys {
+		out[key.ID] = key
+	}
+	return out
 }
 
 // handleAckRuns marks failed runs as acknowledged so the dashboard's error panel
@@ -3545,7 +4091,7 @@ func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
 
 // handleStats returns a domain's recorded repository-size samples for the
 // size/dedup trend. GET /api/stats?domain=&source=&limit= — domain ∈ {containers,
-// vms, flash, files}; source ∈ {local, offsite} (default local); limit defaults to
+// vms, flash, files, zfs}; source ∈ {local, offsite} (default local); limit defaults to
 // 90, clamped to 1..365. The response carries the ascending sample list plus the
 // latest sample (or null when there is none) for the headline figure. "files" is
 // accepted because CollectStatsOnStartup / maybeCollectStats already sample the
@@ -3557,7 +4103,7 @@ func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleStats(w http.ResponseWriter, r *http.Request) {
 	domain := r.URL.Query().Get("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -4520,6 +5066,15 @@ func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 //     same self-gated fleet token as the status poll above; the ONLY write
 //     endpoint on this allowlist. It only ever stores a pending offer for a
 //     human to review; accept/decline/propose stay session-protected.)
+//   - GET /api/auth/passkeys and the two POST /api/auth/passkey/login halves
+//     (they are how somebody who is not signed in signs in, beside /api/login.
+//     The status answers an unauthenticated caller with counts and whether this
+//     address can carry a passkey at all, never with a credential; the list of
+//     registered keys is gated inside the handler on a session.)
+//   - POST /mcp  (an assistant's MCP client carries no session cookie either.
+//     It is self-gated on its own keys and answers 404 while none exists, so it
+//     is never open. The key management routes under /api/mcp stay
+//     session-protected.)
 func (h *Handler) authGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Read auth state directly so we can fail CLOSED on a store error: a
@@ -4529,11 +5084,9 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		s, err := h.store.GetSettings()
 		if err != nil {
 			log.Printf("api: authGate: GetSettings: %v", err)
-			switch r.URL.Path {
-			case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data", "/api/fleet/status", "/api/fleet/mesh-offer",
-				"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish":
+			if authGatePublicPath(r.URL.Path) {
 				next.ServeHTTP(w, r)
-			default:
+			} else {
 				writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 					"ok":    false,
 					"error": "authentication unavailable",
@@ -4548,20 +5101,7 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 			return
 		}
 
-		// Always allow the public auth + health endpoints, plus the self-gating
-		// /metrics scrape endpoint (Prometheus can't carry the session cookie),
-		// the self-gating widget endpoints (an embedding iframe can't either),
-		// the self-gating fleet status endpoint (a polling peer can't either),
-		// and the self-gating mesh-offer inbox (same reasoning, and the same
-		// fleet token — see the doc comment above).
-		switch r.URL.Path {
-		case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data", "/api/fleet/status", "/api/fleet/mesh-offer",
-			// The passkey status and the two login halves, beside /api/login for
-			// the same reason: they are how somebody who is not signed in signs in.
-			// The status answers an unauthenticated caller with counts and whether
-			// this address can carry a passkey at all, never with a credential; the
-			// list of registered keys is gated inside the handler on a session.
-			"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish":
+		if authGatePublicPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -4578,6 +5118,23 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// authGatePublicPath reports whether a path is reachable without a session. The
+// reason for each entry is in authGate's doc comment; every one of them gates
+// itself on a token, a key or a check inside its own handler.
+func authGatePublicPath(path string) bool {
+	switch path {
+	case "/api/auth", "/api/login", "/api/health",
+		"/metrics",
+		"/widget", "/api/widget/data",
+		"/api/fleet/status", "/api/fleet/mesh-offer",
+		"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish",
+		mcpEndpointPath,
+		oauthResourceMeta, oauthServerMetaPath, oauthRegisterPath, oauthTokenPath, oauthRevokePath:
+		return true
+	}
+	return false
 }
 
 // ---------------------------------------------------------------------------
@@ -4915,11 +5472,16 @@ func (h *Handler) handleVMSSHInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleVMSSHTest(w http.ResponseWriter, r *http.Request) {
-	if err := h.svc.VMSSHTest(r.Context()); err != nil {
+	libvirtErr, err := h.svc.HostSSHTest(r.Context())
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	body := map[string]any{"libvirt": libvirtErr == nil}
+	if libvirtErr != nil {
+		body["libvirtError"] = scrubError(libvirtErr)
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(body))
 }
 
 // classifyReadDirError maps a browse read failure to the additive per-listing
@@ -5747,7 +6309,8 @@ func (h *Handler) handleForeignClose(w http.ResponseWriter, r *http.Request) {
 // see StartForeignRestore's doc comment. There is no UI for this field yet —
 // it is reachable via a direct API call only; the request fails with a clear,
 // actionable error instead of a deep zfs-receive failure when it's needed but
-// missing.
+// missing. wholeTree, for the zfs domain, restores every dataset of the
+// snapshot's run into its own subfolder of target.
 func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Session   string   `json:"session"`
@@ -5759,11 +6322,21 @@ func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 		Paths     []string `json:"paths"`
 		Overwrite bool     `json:"overwrite"`
 		ZvolPool  string   `json:"zvolPool"`
+		WholeTree bool     `json:"wholeTree"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	started, err := h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target, body.Paths, body.Overwrite, body.ZvolPool)
+	var started bool
+	var err error
+	switch {
+	case body.WholeTree && body.Domain != zfsDomain:
+		err = errors.New("only a ZFS tree can be restored whole")
+	case body.WholeTree:
+		started, err = h.svc.StartForeignRestoreZFSTree(r.Context(), body.Session, body.Item, body.Snapshot, body.Confirm, body.Target)
+	default:
+		started, err = h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target, body.Paths, body.Overwrite, body.ZvolPool)
+	}
 	if err != nil { // synchronous validation failed — nothing was started
 		writeJSON(w, http.StatusBadRequest, failEnvelope(err))
 		return

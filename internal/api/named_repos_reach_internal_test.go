@@ -16,19 +16,25 @@ import (
 
 func mustReadService(t *testing.T) string {
 	t.Helper()
-	raw, err := os.ReadFile("service.go")
+	return mustReadSource(t, "service.go")
+}
+
+// mustReadSource is mustReadService for a domain that lives in its own file.
+func mustReadSource(t *testing.T, file string) string {
+	t.Helper()
+	raw, err := os.ReadFile(file) //nolint:gosec // G304: file is a fixed source name this guard scans
 	if err != nil {
-		t.Fatalf("read service.go: %v", err)
+		t.Fatalf("read %s: %v", file, err)
 	}
 	return string(raw)
 }
 
-// funcBody returns the source of a *Service method in service.go, up to its
-// closing brace at column zero. Stopping there keeps the next function's doc
-// comment from satisfying a guard.
+// funcBody returns the source of a *Service method, up to its closing brace at
+// column zero. Stopping there keeps the next function's doc comment from
+// satisfying a guard.
 func funcBody(t *testing.T, src, name string) string {
 	t.Helper()
-	return receiverFuncBody(t, src, `\(s \*Service\)`, name, "service.go")
+	return receiverFuncBody(t, src, `\(s \*Service\)`, name, "the service sources")
 }
 
 // receiverFuncBody is funcBody for any receiver and file.
@@ -128,14 +134,20 @@ func TestReplicationAgreesWithItself(t *testing.T) {
 // Discover rebuilds items from their snapshots after /config is lost, so it has
 // to look in the named repositories too.
 func TestDiscoverLooksInEveryRepository(t *testing.T) {
-	src := mustReadService(t)
-	for _, fn := range []string{"Discover", "DiscoverVMs", "DiscoverFileSets"} {
+	src := mustReadService(t) + mustReadSource(t, "zfs_crud.go")
+	for _, fn := range []string{"Discover", "DiscoverVMs", "DiscoverFileSets", "DiscoverZFSDatasets"} {
 		body := funcBody(t, src, fn)
 		if !strings.Contains(body, "s.discoverNamesAcrossRepos(") {
 			t.Errorf("%s no longer looks in every repository of its domain.\n"+
 				"An item on its own repository is then never rebuilt after a /config loss, and\n"+
 				"nothing on screen says its backups exist.", fn)
 		}
+	}
+	// A rediscovered ZFS item goes back on the repository its snapshots are in.
+	if !strings.Contains(funcBody(t, src, "DiscoverZFSDatasets"), "Repo: repoID") {
+		t.Error("DiscoverZFSDatasets no longer restores a rediscovered item's repository.\n" +
+			"The item is then rebuilt onto the domain repository, shows an empty history,\n" +
+			"and its next backup lands somewhere other than its own snapshots.")
 	}
 }
 

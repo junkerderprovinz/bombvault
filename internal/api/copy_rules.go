@@ -530,7 +530,7 @@ type newTargetExclusion struct {
 // checkExclusion refuses an answer the new-target question could not have
 // offered, before the target it belongs to is written.
 func checkExclusion(domain string, ex newTargetExclusion) error {
-	prefix := domainTagPrefix(domain)
+	prefix := itemIdentityPrefix(domain)
 	if prefix == "" {
 		return errInvalidPlacement
 	}

@@ -107,6 +107,15 @@ func validPlacementDomain(domain string) bool {
 	return slices.Contains(store.PlacementDomains, domain)
 }
 
+// itemIdentityPrefix is the tag prefix of an item's own identity in a
+// placement domain, and "" in any other.
+func itemIdentityPrefix(domain string) string {
+	if !validPlacementDomain(domain) {
+		return ""
+	}
+	return domainTagPrefixes(domain)[0]
+}
+
 // itemParam reads {domain} and {name} of an /api/items route with the validator
 // the domain's own routes use, and writes the 400 itself.
 func (h *Handler) itemParam(w http.ResponseWriter, r *http.Request, domains ...string) (domain, key string, ok bool) {

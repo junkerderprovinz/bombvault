@@ -6,7 +6,7 @@ A helyi mentések megvédenek egy elveszett konténertől vagy egy rossz frissí
 
 Tartsd meg a gyors helyi mentést, és adj hozzá egy vagy több telephelyen kívüli replikát. Állíts be egy tárolót tartományonként a **Beállítások, Telephelyen kívüli** fülön. A BombVault az új pillanatképeket `restic copy` segítségével, legjobb szándék szerint replikálja oda, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. A helyi tároló marad az elsődleges.
 
-- **Több telephelyen kívüli cél tartományonként.** Minden tartomány (konténerek, VM-ek, flash, config és fájlkészletek) egyszerre több telephelyen kívüli célra is replikálhat, nem csak egyre, így párhuzamosan tarthatsz például egy rest-servert egy barátod gépén és egy S3-bucketet is. Adj hozzá további célokat a Beállítások, Telephelyen kívüli alatt, mindegyiket saját tárolóval, S3-tárolási osztállyal, append-only jelzővel, megőrzéssel és növekedési kerettel. Egy meglévő egyetlen telephelyen kívüli beállítás érintetlenül, az első célként öröklődik át, és egy tartomány minden célja az adott tartomány telephelyen kívüli ütemezése szerint replikál.
+- **Több telephelyen kívüli cél tartományonként.** Minden tartomány (konténerek, VM-ek, flash, config, fájlkészletek és ZFS-adatkészletek) egyszerre több telephelyen kívüli célra is replikálhat, nem csak egyre, így párhuzamosan tarthatsz például egy rest-servert egy barátod gépén és egy S3-bucketet is. Adj hozzá további célokat a Beállítások, Telephelyen kívüli alatt, mindegyiket saját tárolóval, S3-tárolási osztállyal, append-only jelzővel, megőrzéssel és növekedési kerettel. Egy meglévő egyetlen telephelyen kívüli beállítás érintetlenül, az első célként öröklődik át, és egy tartomány minden célja az adott tartomány telephelyen kívüli ütemezése szerint replikál.
 - **Tartományonkénti telephelyen kívüli ütemezés** (minden más ütemezés mellett a Beállítások, Ütemezések alatt szerkesztve): hagyd üresen, hogy minden helyi mentés után replikáljon, vagy állíts be egy ütemet (például `weekly Sun 03:00`), hogy ritkábban szállítson telephelyen kívülre, mint amilyen gyakran helyben mentesz. Egy **Replikálás most** gomb fedi le az igény szerinti futásokat.
 - **A telephelyen kívüli megőrzés** a Beállítások, Telephelyen kívüli alatt él, így a telephelyen kívüli másolatokat archívumként tovább megtarthatod. Hagyd a szabályt mind nullán, hogy soha ne nyesse automatikusan a telephelyen kívüli pillanatképeket.
 - **A sávszélesség-korlátok** (Beállítások, Telephelyen kívüli) korlátozzák a restic fel- és letöltési sebességét, hogy a replikáció ne telítse a WAN-odat.
@@ -49,7 +49,7 @@ A másolási választások a BombVault saját beállításaiban élnek. Egy Felf
 
 Egy tartomány mentési útvonala (Beállítások, Útvonalak és tárolás) nem korlátozódik helyi mappára: irányítsd egyenesen egy restic távoli tárolóra (`s3:...`, `rest:http://host:8000/repo`, `sftp:felhasznalo@host:/repo`, `rclone:remote:bucket/utvonal`), és a BombVault közvetlenül oda ment, külön helyi másolat és replikációs lépés nélkül. Ez valóban más alak, mint a fenti külső telephelyi replikáció: ott a helyi tároló az elsődleges, a külső pedig annak legjobb tudás szerinti archívuma; itt a távoli tároló **maga** az elsődleges, és ez az egyetlen példány, amíg az adott tartományhoz nem állítasz be külső telephelyi replikációt is (vagy egy második távoli tárolót).
 
-Az öt útvonalmező (Konténerek, Virtuális gépek, Flash, Konfiguráció, Fájlok) mindegyike mellett közvetlenül ott áll egy **Helyi / Távoli** kapcsoló:
+A hat útvonalmező (Konténerek, Virtuális gépek, Flash, Konfiguráció, Fájlok, ZFS-adatkészletek) mindegyike mellett közvetlenül ott áll egy **Helyi / Távoli** kapcsoló:
 
 - **Helyi** a megszokott mappaböngészőt mutatja.
 - **Távoli** ezt egy egyszerű URL-mezőre cseréli, plusz egy gombra, amely ugyanazt a kapcsolatteszt és hitelesítőadat párbeszédet nyitja meg, amit a külső telephelyi célok használnak, csak épp ehhez az elsődleges tárolóhoz beállítva. Onnan a következőket kapod:
@@ -152,8 +152,8 @@ Egy dedikált **Helyreállítás** fül egy helyen végigvezet egy friss vagy ú
 1. **Először visszaállítja a BombVault saját beállításait**, így a mentési útvonalak, telephelyen kívüli célok és hitelesítő adatok, amelyekre a folyamat többi része szüksége van, előre kitöltve jelennek meg (a Docker socketen keresztüli önújraindítással alkalmazva, így az élő beállítás-adatbázis soha nem íródik felül nyitott handle alatt).
 2. **Ellenőrzi, hogy a BombVault olvasni tudja-e a mentéseidet** (a titkosításikulcs-buktató előre).
 3. Lehetővé teszi, hogy **rámutass a meglévő tárolódra** (helyi vagy telephelyen kívüli).
-4. **Felfedezi** a benne tárolt konténereket, VM-eket és fájlkészleteket.
-5. **Mindet visszaállítja** (leállítva hagyva, így te indítod el őket szándékosan), a helyreállítási csomagoddal egy kattintásnyira.
+4. **Felfedezi** a benne tárolt konténereket, VM-eket, fájlkészleteket és ZFS-adatkészleteket.
+5. **A konténereket és a VM-eket egyszerre visszaállítja** (leállítva hagyva, így te indítod el őket szándékosan), a fájlkészleteket és a ZFS-elemeket pedig felsorolja, hogy egyenként állítsd vissza őket; a ZFS-elemek kikapcsolva térnek vissza. A helyreállítási csomagod egy kattintásnyira van.
 
 !!! note "A telephelyen kívüli másolatok várnak egy újraépítés után"
     Amikor a 4. lépés a régi beállítások nélkül épít újra bejegyzéseket, azoknak a tartományoknak a telephelyen kívüli replikációja szünetel, amíg az elhelyezési alapértelmezést meg nem erősítik. Lásd: [Elhelyezés elemenként](#placement).
@@ -174,6 +174,9 @@ Egy kattintás letölti a **mesterkulcsot**, a **származtatott restic jelszót*
 !!! danger "Tárold a helyreállítási csomagot a szerveren kívül"
     A csomag azt a titkot tartalmazza, amely visszafejti a mentéseidet. Tartsd biztonságos, a szervertől elkülönített helyen (egy jelszókezelő, egy nyomtatott példány egy széfben). Ha elveszíted a BombVaultot és az `APP_KEY`-t is, helyreállítási csomag nélkül, a titkosított mentéseid nem állíthatók helyre.
 
+!!! warning "Nem mindig a legújabb pillanatképet kell visszaállítani"
+    A restic 0.17 óta a `restic snapshots` minden pillanatkép méretét mutatja. Adatvesztés után a legújabb pillanatkép lehet a kiürített, ezért ne állíts vissza olyan pillanatképet, amely sokkal kisebb az előzőeknél. Zsarolóvírus után lehet a titkosított, szokásos méretben. Ha a BombVault még fut, előbb nézd meg az **Anomáliák** oldalát: megnevezi az utolsó jó mentést. A visszaállításhoz nincs szükség a BombVault anomáliaadataira, és a megőrzés szüneteltetése mindig csak több pillanatképet tart meg.
+
 ### Ha a csomag épp nincs kéznél
 
 A jelszó sehol nincs tárolva, az `APP_KEY` értékéből **számolódik**. A kulccsal és egy shellel tehát magad is előállíthatod:
@@ -190,3 +193,27 @@ Ez HMAC-SHA256 a rögzített `bombvault:restic-repo` karakterlánc fölött, kul
     Az a tároló, amely külső telephelyi replikációval érkezett ide, a küldő gépen jött létre, annak **saját** `APP_KEY` kulcsával. A fogadó gép kulcsából származtatva olyan jelszót kapsz, amelyet a restic elutasít, és ez pontosan úgy néz ki, mint egy sérült tároló, holott nem az. Ez a szokásos oka annak, hogy a `restic check` egy fogadott tárolón újra és újra jelszót kér.
 
 Mivel a helyreállítási definíciók minden tárolón **belül** élnek (`<repo>/def`, `<repo>/vm-def`), egy másolt tárolómappa teljesen önálló, így a csomag plusz a tároló minden, amire egy bare-metal visszaállításnak szüksége van.
+
+## Adatbázis-dump visszaszerzése {#database-dumps}
+
+Egy adatbázis-dump önálló visszaállítási pont a konténerek tárolójában, `dbdump:<container>` címkével és egyetlen fájllal, `/dbdump/<container>.sql`. A BombVault a **Mentések** alatt listázza, letölti és importálja őket; alább ugyanezek a lépések pusztán a restickel, arra a napra, amikor a BombVault nincs kéznél.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Az egyes dumpokon a `dbversion:` és `dbname:` címke megmondja, melyik kiszolgálóverzióból való és mely adatbázisokat tartalmazza. A teljes fájl vége `-- PostgreSQL database cluster dump complete` vagy `-- Dump completed`.
+
+Importáld egy azonos vagy újabb verziójú (PostgreSQL), illetve azonos főverziójú (MySQL és MariaDB) konténerbe, amelyet egyszer üres adatmappával indítottál, hogy feltöltse magát. A gazdagépnek nem kell adatbázis-kliens, a konténerben van:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Ha egy teljes dumpból csak egy adatbázis kell, a MySQL és a MariaDB elfogadja a `--one-database <name>` kapcsolót a kliens parancsán. A PostgreSQL-dumpban adatbázisonként egy szakasz van, mindegyik egy `\connect <name>` sorral kezdődik: másold a szakaszt külön fájlba, és az adatbázis létrehozása után `-d <name>` kapcsolóval importáld.
+
+!!! warning "A rootként készült dump magával viszi a kiszolgáló felhasználóit"
+    A rootként készült teljes MySQL- vagy MariaDB-dump tartalmazza a `mysql` rendszeradatbázist, így az importálás az új kiszolgáló fiókjait, a root jelszavát is beleértve, a dumpban lévőkre cseréli. PostgreSQL-en a konténer által létrehozott felhasználóra kapott `role ... already exists` üzenet várható és ártalmatlan.

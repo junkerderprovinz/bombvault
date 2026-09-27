@@ -31,7 +31,7 @@ func (l *logBuffer) String() string {
 	return l.b.String()
 }
 
-func captureLog(t *testing.T) *logBuffer {
+func watchLog(t *testing.T) *logBuffer {
 	t.Helper()
 	l := &logBuffer{}
 	prev := log.Writer()
@@ -97,7 +97,7 @@ func TestAnUnreachableSourceNothingIsCopiedFromHoldsTheKeepPolicyQuietly(t *test
 		t.Fatal(err)
 	}
 	f.hold(f.domainPath("files"), snap("d1", 100, "fileset:Docs"))
-	logs := captureLog(t)
+	logs := watchLog(t)
 
 	f.svc.replicateOffsite(context.Background(), "files", settingsOf(t, f.svc), f.domainPath("files"), "fileset:Docs")
 	if err := f.svc.ReplicateOffsite(context.Background(), "files"); err != nil {

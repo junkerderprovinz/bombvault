@@ -164,7 +164,7 @@ describe("VMRow matches the container card's structure", () => {
     fireEvent.click(screen.getByRole("button", { name: en["snapshots.title"] }));
     fireEvent.click(await screen.findByRole("button", { name: en["snapshots.deleteAll"] }));
 
-    expect(await screen.findByText(/ALL local backups/)).toBeTruthy();
+    expect(await screen.findByText(/all local backups/)).toBeTruthy();
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["snapshots.deleteAll"] }));
     await waitFor(() => expect(deleteBackupsVM).toHaveBeenCalledWith(trueNasVM.libvirtName, "local"));
   });

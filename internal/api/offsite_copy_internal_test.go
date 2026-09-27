@@ -190,6 +190,23 @@ func TestAnItemOnLocalIsLeftOutOfTheCopy(t *testing.T) {
 	}
 }
 
+func TestADatabaseDumpFollowsItsContainersCopyRule(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	f.replicated("containers")
+	f.rule("containers", "container:plex", store.SkipAll)
+	f.hold(f.domainPath("containers"),
+		snap("a1", 100, "container:nginx"), snap("d1", 100, "dbdump:nginx", "dbengine:postgres"),
+		snap("p1", 100, "container:plex"), snap("d2", 100, "dbdump:plex", "dbengine:postgres"))
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.eng.copies) != 1 || !slices.Equal(f.eng.copies[0].IDs, []string{"a1", "d1"}) {
+		t.Fatalf("copies = %+v, want nginx's backup and dump, and nothing of plex", f.eng.copies)
+	}
+}
+
 func TestRulesAndAFailedTargetListingCopyNothing(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := keepLast(t, f, f.target("containers", "B2", "b2:bucket:containers"), 3)

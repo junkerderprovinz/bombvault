@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -109,6 +110,53 @@ func TestSecurityHeadersWidgetFraming(t *testing.T) {
 	}
 }
 
+// TestCSPAllowsTheGiveWindows checks that the SPA's CSP lets the About card's
+// Buy Me a Coffee frame and PayPal's SDK load, and that PayPal reaches no
+// directive beyond scripts, frames, connections and the placeholder's logos.
+func TestCSPAllowsTheGiveWindows(t *testing.T) {
+	h := securityHeaders(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	directives := map[string][]string{}
+	for _, d := range strings.Split(w.Header().Get("Content-Security-Policy"), ";") {
+		fields := strings.Fields(d)
+		if len(fields) > 0 {
+			directives[fields[0]] = fields[1:]
+		}
+	}
+
+	paypal := []string{"https://www.paypal.com", "https://*.paypal.com", "https://*.paypalobjects.com"}
+	want := map[string][]string{
+		"script-src":  paypal,
+		"connect-src": paypal,
+		"frame-src":   append(slices.Clone(paypal), "https://buymeacoffee.com"),
+		"img-src":     {"https://www.paypalobjects.com"},
+	}
+	for name, sources := range want {
+		for _, s := range sources {
+			if !slices.Contains(directives[name], s) {
+				t.Errorf("%s lacks %s: %v", name, s, directives[name])
+			}
+		}
+	}
+	for name, sources := range directives {
+		if _, ok := want[name]; ok {
+			continue
+		}
+		for _, s := range sources {
+			if strings.Contains(s, "paypal") || strings.Contains(s, "buymeacoffee") {
+				t.Errorf("%s allows %s", name, s)
+			}
+		}
+	}
+	if got := directives["frame-ancestors"]; !slices.Equal(got, []string{"'none'"}) {
+		t.Errorf("frame-ancestors = %v, want 'none'", got)
+	}
+}
+
 // TestThemeBootScriptCSPHashMatches checks the script-src hash in
 // securityHeaders against the inline theme-boot script in web/index.html,
 // which sets data-theme before first paint. Without 'unsafe-inline' the script
@@ -195,4 +243,45 @@ func firstDeclValue(t *testing.T, src, prefix string) string {
 		t.Fatalf("truncated hex value after %q", prefix)
 	}
 	return hex[:7]
+}
+
+// TestWidgetDBDumpLines checks that the widget words a database dump as one
+// instead of letting it fall through to the backup shape, where a failed dump
+// would read "<name> backup failed".
+func TestWidgetDBDumpLines(t *testing.T) {
+	page := string(widgetPage)
+
+	for _, kind := range []string{"dbdump", "dbdumpsave", "dbimport"} {
+		if !strings.Contains(page, `case "`+kind+`":`) {
+			t.Fatalf("widget.html has no line shape for %q, so it reads as a backup", kind)
+		}
+	}
+
+	dump := widgetCaseBody(t, page, "dbdump")
+	for _, want := range []string{"database dumped", "one database only", "database dump failed: "} {
+		if !strings.Contains(dump, want) {
+			t.Errorf("the dump line is missing %q:\n%s", want, dump)
+		}
+	}
+	if strings.ContainsAny(dump, "\u2014\u2013") {
+		t.Errorf("the dump line uses a dash instead of a hyphen:\n%s", dump)
+	}
+	if !strings.Contains(page, `"database dump failed: "`) {
+		t.Error("widget.html repeats the stored reason head instead of stripping it")
+	}
+}
+
+// widgetCaseBody returns the body of one `case "<kind>":` branch of the
+// widget's line composition.
+func widgetCaseBody(t *testing.T, page, kind string) string {
+	t.Helper()
+	start := strings.Index(page, `case "`+kind+`":`)
+	if start < 0 {
+		t.Fatalf("no case for %q", kind)
+	}
+	rest := page[start+len(`case "`+kind+`":`):]
+	if end := strings.Index(rest, "case \""); end >= 0 {
+		return rest[:end]
+	}
+	return rest
 }

@@ -89,3 +89,13 @@ describe("ProtectionCard, off-site", () => {
     expect(screen.queryByText(/No off-site copy/)).toBeNull();
   });
 });
+
+describe("ProtectionCard, the ZFS row", () => {
+  afterEach(cleanup);
+
+  it("names the domain and offers the drill every DR-capable domain gets", () => {
+    renderCard([domain({ domain: "zfs", offsiteConfigured: true, offsiteDrillScheduled: true })]);
+    expect(screen.getByText(en["dashboard.domainZFS"])).toBeTruthy();
+    expect(screen.getByRole("button", { name: en["drill.runOffsiteDr"] })).toBeTruthy();
+  });
+});

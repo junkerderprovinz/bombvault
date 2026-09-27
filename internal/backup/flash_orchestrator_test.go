@@ -21,7 +21,49 @@ func (f *fakeFlashRestic) Backup(_ context.Context, _ string, paths, _ []string,
 	if f.backupErr != nil {
 		return backup.Summary{}, f.backupErr
 	}
-	return backup.Summary{SnapshotID: "abcd1234ef567890", Bytes: 4096}, nil
+	return flashSummary, nil
+}
+
+var flashSummary = backup.Summary{
+	SnapshotID:  "abcd1234ef567890",
+	Bytes:       4096,
+	Measured:    true,
+	SourceBytes: 2097152,
+	SourceFiles: 1204,
+	FilesNew:    7,
+	ResticMS:    5120,
+}
+
+func TestFlashBackupFinishCarriesSummary(t *testing.T) {
+	t.Run("a successful backup records what restic measured", func(t *testing.T) {
+		runs := &fakeRuns{}
+		_, err := backup.BackupFlash(context.Background(), backup.FlashBackupDeps{
+			SourceDir: "/host/boot", Repo: "/repo/flash", TargetID: "flash",
+			Restic: &fakeFlashRestic{}, Runs: runs,
+		})
+		if err != nil {
+			t.Fatalf("BackupFlash: %v", err)
+		}
+		got := runs.finishOf(t, "run-1")
+		if got.status != "success" || got.sum != flashSummary {
+			t.Fatalf("finish = %+v, want the restic summary on a success", got)
+		}
+	})
+
+	t.Run("a failed backup records no metrics", func(t *testing.T) {
+		runs := &fakeRuns{}
+		_, err := backup.BackupFlash(context.Background(), backup.FlashBackupDeps{
+			SourceDir: "/host/boot", Repo: "/repo/flash", TargetID: "flash",
+			Restic: &fakeFlashRestic{backupErr: errors.New("restic boom")}, Runs: runs,
+		})
+		if err == nil {
+			t.Fatal("expected the restic failure to surface")
+		}
+		got := runs.finishOf(t, "run-1")
+		if got.status != "failed" || got.sum != (backup.Summary{}) {
+			t.Fatalf("finish = %+v, want an empty summary on a failure", got)
+		}
+	})
 }
 
 func TestBackupFlash(t *testing.T) {

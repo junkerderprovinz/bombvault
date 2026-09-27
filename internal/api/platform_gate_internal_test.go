@@ -107,7 +107,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 		if err := s.SetNotifyConfig(notify.Config{On: "always", Unraid: true}); err != nil {
 			t.Fatal(err)
 		}
-		s.notifyBackup(context.Background(), "container", "plex", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+		s.notifyBackup(context.Background(), "container", "plex", "", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
 	})
 
 	t.Run("recordAndNotifyContainerSkip", func(t *testing.T) {

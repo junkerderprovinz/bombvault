@@ -8,6 +8,7 @@ package sshconn
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -155,6 +156,62 @@ func (c *Conn) Run(ctx context.Context, args ...string) (string, error) {
 		return strings.TrimSpace(string(out)), fmt.Errorf("sshconn: run %q: %w", args[0], err)
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+// sshBinary is a var so a test can put a stand-in in its place; the argv
+// sshExec builds starts with -i, which a go test helper process would take for
+// one of its own flags.
+var sshBinary = "ssh"
+
+const (
+	captureStdoutLimit = 16 << 20
+	captureStderrLimit = 64 << 10
+)
+
+// RunCapture executes a command on the host over SSH and returns its two
+// streams apart. Run discards stderr, which leaves a remote "permission
+// denied" as a bare exit status; the ZFS domain reads its reason codes out of
+// that text.
+func (c *Conn) RunCapture(ctx context.Context, args ...string) (string, string, error) {
+	cmd := exec.CommandContext(ctx, sshBinary, c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted; host/user from config
+	stdout := &cappedBuffer{max: captureStdoutLimit}
+	stderr := &cappedBuffer{max: captureStderrLimit}
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	err := cmd.Run()
+	out, errOut := strings.TrimSpace(stdout.buf.String()), strings.TrimSpace(stderr.buf.String())
+	if err != nil {
+		return out, errOut, fmt.Errorf("sshconn: run %q: %w", args[0], err)
+	}
+	if stdout.cut {
+		return out, errOut, fmt.Errorf("sshconn: run %q: %w", args[0], ErrStdoutCut)
+	}
+	return out, errOut, nil
+}
+
+// ErrStdoutCut is what RunCapture returns when stdout ran past its limit. The
+// trimmed output cannot show a cut that fell on a line boundary, so a caller
+// parsing a listing has to hear it from here.
+var ErrStdoutCut = errors.New("the output is larger than the 16 MiB capture limit")
+
+// cappedBuffer keeps the first max bytes and reports the rest as written, so a
+// remote command that floods a stream neither fills the container's memory nor
+// dies of a broken pipe.
+type cappedBuffer struct {
+	buf bytes.Buffer
+	max int
+	cut bool
+}
+
+func (b *cappedBuffer) Write(p []byte) (int, error) {
+	n := len(p)
+	room := b.max - b.buf.Len()
+	if n > room {
+		b.cut = true
+		p = p[:max(room, 0)]
+	}
+	b.buf.Write(p) //nolint:errcheck // bytes.Buffer.Write never fails
+	return n, nil
 }
 
 // ReadFile returns the bytes of a file on the host (used for NVRAM).

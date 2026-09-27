@@ -265,3 +265,23 @@ it("still hands the element to the caller's own ref, object or callback", () => 
   expect(document.activeElement).toBe(close);
   expect(fromCallback).toBe(screen.getByRole("button", { name: "Cancel" }));
 });
+
+it("carries a hint as an (i) inside the button that stays reachable while it is disabled", () => {
+  setLabelMode("buttons", "text");
+  render(<Button label="Delete" labelKey={null} hint="Still named in the history" disabled onClick={() => {}} />);
+  const button = screen.getByRole("button", { name: "Delete" });
+  const info = screen.getByLabelText("Still named in the history");
+  expect(button.contains(info)).toBe(false);
+  expect(button.parentElement?.contains(info)).toBe(true);
+  expect(info.getAttribute("tabindex")).toBe("0");
+  expect(screen.queryByRole("tooltip")).toBeNull();
+});
+
+it("moves a hint into the bubble once the button shows its glyph alone", () => {
+  setLabelMode("buttons", "glyph");
+  render(<Button label="Delete" labelKey={null} glyph={<svg />} hint="Still named in the history" onClick={() => {}} />);
+  expect(screen.queryByLabelText("Still named in the history")).toBeNull();
+  const button = screen.getByRole("button", { name: "Delete" });
+  fireEvent.mouseEnter(button);
+  expect(screen.getByRole("tooltip").textContent).toContain("Still named in the history");
+});

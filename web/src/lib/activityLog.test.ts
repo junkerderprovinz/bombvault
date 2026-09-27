@@ -3,8 +3,9 @@
 // the translation key and its params assertable.
 import { describe, expect, it } from "vitest";
 import { buildLogLines, domainLabel, filterLogLines, formatLogDate } from "./activityLog";
-import type { LogLine } from "./activityLog";
+import type { LogLine, ResolveName } from "./activityLog";
 import type { Run, ScheduleNext } from "./api";
+import { countText, en } from "./i18n";
 import type { ProgressMap } from "./progress";
 
 const resolveName = (key: string, params?: Record<string, string>): string =>
@@ -60,6 +61,16 @@ describe("buildLogLines", () => {
     expect(live.status).toBe("running");
     expect(live.text).toContain("activityLog.lineBackingUpItem");
     expect(live.text).toContain("percent=41"); // clamped + rounded
+  });
+
+  it("gives a live line the id of the run it shows, so a link to that run finds it", () => {
+    const progress: ProgressMap = {
+      "container:plex": { phase: "backup", percent: 12, active: true, lastSeen: 5_000_000 },
+    };
+    const running = makeRun({ id: "r-live", status: "running", finishedAt: null });
+    const lines = buildLogLines([running], progress, [], resolveName, 5_000_000);
+    const shown = filterLogLines(lines, { domain: "all", kind: "all", text: "", runId: "r-live" });
+    expect(shown.map((l) => l.id)).toEqual(["live:container:plex"]);
   });
 
   it("appends the idle next-up line only when nothing is active", () => {
@@ -522,6 +533,27 @@ describe("filterLogLines day filter", () => {
   });
 });
 
+describe("filterLogLines run filter", () => {
+  const at = new Date(2026, 6, 23, 9, 0, 0).getTime();
+  const lines: LogLine[] = [
+    { id: "run:a", runId: "a", atMs: at, status: "success", text: "Backed up plex", domain: "containers", kind: "backup", live: false },
+    { id: "run:b", runId: "b", atMs: at, status: "failed", text: "Backup of win11 failed", domain: "vms", kind: "backup", live: false },
+    { id: "live", atMs: at, status: "running", text: "Backing up sonarr", domain: "containers", kind: "backup", live: true },
+    { id: "idle", atMs: at, status: "info", text: "next up", domain: "", kind: "", live: false, idle: true },
+  ];
+
+  it("keeps the linked run and the idle line", () => {
+    expect(filterLogLines(lines, { domain: "all", kind: "all", text: "", runId: "b" }).map((l) => l.id)).toEqual([
+      "run:b",
+      "idle",
+    ]);
+  });
+
+  it("is off when no run is linked", () => {
+    expect(filterLogLines(lines, { domain: "all", kind: "all", text: "" })).toHaveLength(lines.length);
+  });
+});
+
 // Without a locale the date follows the engine's default, like every other
 // date in the app, rather than navigator.language, which can disagree with it
 // (a macOS "en-US" UI language with a Portuguese region).
@@ -586,6 +618,21 @@ describe("a live line whose stream has gone quiet", () => {
   });
 });
 
+describe("a running ZFS backup", () => {
+  it("is a line of its own domain, named after the root dataset", () => {
+    const lines = buildLogLines(
+      [],
+      { "zfs:tank/appdata": { phase: "backup", percent: 40, active: true, lastSeen: 2_000_000 } },
+      [],
+      resolveName,
+      2_000_000
+    );
+    expect(lines).toHaveLength(1);
+    expect(lines[0].domain).toBe("zfs");
+    expect(lines[0].text).toContain("tank/appdata");
+  });
+});
+
 // Every log line names its domain, since a container and a folder set can share
 // a name.
 describe("domainLabel", () => {
@@ -596,8 +643,253 @@ describe("domainLabel", () => {
   });
 
   it("labels every domain the log can emit, none falling through to the raw literal", () => {
-    for (const d of ["containers", "vms", "flash", "config", "files", "everything"]) {
-      expect(domainLabel(t, d)).toBe(`T:activityLog.domain${d[0].toUpperCase()}${d.slice(1)}`.replace("domainVms", "domainVMs"));
+    for (const d of ["containers", "vms", "flash", "config", "files", "zfs", "everything"]) {
+      expect(domainLabel(t, d)).toBe(
+        `T:activityLog.domain${d[0].toUpperCase()}${d.slice(1)}`
+          .replace("domainVms", "domainVMs")
+          .replace("domainZfs", "domainZFS")
+      );
     }
+  });
+});
+
+// A dump is its own run against the container's target, so without lines of its
+// own the log would print the raw kind through lineOther.
+describe("dbdump runs", () => {
+  const dump = (over: Partial<Run>): Run =>
+    makeRun({ id: "d1", kind: "dbdump", target: "immich_postgres", bytes: 5_242_880, ...over });
+
+  it("reads a finished dump as a dump, not as a backup", () => {
+    const [line] = buildLogLines([dump({})], {}, [], resolveName, 2_000_000);
+    expect(line.status).toBe("success");
+    expect(line.kind).toBe("dbdump");
+    expect(line.text).toContain("activityLog.lineDbDumpSuccess");
+    expect(line.text).toContain("name=immich_postgres");
+    expect(line.text).toContain("bytes=5.0 MB");
+    expect(line.text).toContain("duration=30s");
+    expect(line.text).not.toContain("lineOther");
+  });
+
+  it("keeps a success note on the line instead of dropping it", () => {
+    const [line] = buildLogLines(
+      [dump({ error: "database dump covers one database only" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    expect(line.text).toContain("activityLog.lineDbDumpNote");
+    expect(line.text).toContain("note=runReason.dbdumpOneDatabase");
+  });
+
+  it("translates a failure and keeps the tool's own message behind it", () => {
+    const [line] = buildLogLines(
+      [dump({ status: "failed", error: "database dump failed: the database refused the login: FATAL no" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    expect(line.status).toBe("failed");
+    expect(line.text).toContain("activityLog.lineDbDumpFailed");
+    expect(line.text).toContain("error=runReason.dbdumpAuth: FATAL no");
+  });
+
+  // A cancelled dump is recorded as a failure carrying the cancellation as its
+  // reason, so the reason decides how the line reads, not the status.
+  it("says a cancelled dump was cancelled rather than that it failed", () => {
+    const [line] = buildLogLines(
+      [dump({ status: "failed", error: "cancelled by the user" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    expect(line.text).toContain("activityLog.lineDbDumpCancelled");
+    expect(line.text).not.toContain("lineDbDumpFailed");
+  });
+
+  it("flags a cancelled dump that may still be running in the container", () => {
+    const [line] = buildLogLines(
+      [dump({ status: "failed", error: "cancelled by the user: orphan stop failed" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    expect(line.status).toBe("failed");
+    expect(line.text).toContain("error=runReason.cancelled; runReason.dbdumpOrphan");
+  });
+
+  it("has its own lines for a saved dump and an import", () => {
+    const runs = [
+      dump({ id: "s1", kind: "dbdumpsave" }),
+      dump({ id: "s2", kind: "dbdumpsave", status: "failed", error: "no space left on device" }),
+      dump({ id: "s3", kind: "dbdumpsave", status: "cancelled" }),
+      dump({ id: "i1", kind: "dbimport" }),
+      dump({ id: "i2", kind: "dbimport", error: "database imported with errors" }),
+      dump({ id: "i3", kind: "dbimport", status: "failed", error: "database import failed: the import tool reported an error" }),
+    ];
+    const texts = buildLogLines(runs, {}, [], resolveName, 2_000_000).map((l) => l.text);
+    expect(texts[0]).toContain("activityLog.lineDbDumpSaved");
+    expect(texts[1]).toContain("activityLog.lineDbDumpSaveFailed");
+    expect(texts[2]).toContain("activityLog.lineDbDumpSaveCancelled");
+    expect(texts[3]).toContain("activityLog.lineDbImported");
+    expect(texts[4]).toContain("activityLog.lineDbImportedErrors");
+    expect(texts[4]).toContain("note=runReason.dbimportErrors");
+    expect(texts[5]).toContain("activityLog.lineDbImportFailed");
+    expect(texts.join(" ")).not.toContain("lineOther");
+  });
+
+  it("names an app an import could not start again", () => {
+    const run = dump({
+      id: "i1",
+      kind: "dbimport",
+      error: "database imported; the previous data folder was kept: /mnt/pg.old; could not start these apps again: immich_server",
+    });
+    const [line] = buildLogLines([run], {}, [], resolveName, 2_000_000);
+    expect(line.text).toContain("activityLog.lineDbImported");
+    expect(line.text).toContain("runReason.dbimportAppsDown");
+  });
+
+  const english: ResolveName = (key, params, count) => {
+    let s = countText(en[key as keyof typeof en] ?? key, "en", count);
+    for (const [name, value] of Object.entries(params ?? {})) s = s.split(`{${name}}`).join(value);
+    return s;
+  };
+
+  it("says once how many errors an import reported", () => {
+    const runs = [
+      dump({ id: "i1", kind: "dbimport", error: "database imported with errors: 1, the previous data folder is kept at /mnt/pg.old" }),
+      dump({ id: "i2", kind: "dbimport", error: "database imported with errors: 4, the previous data folder is kept at /mnt/pg.old" }),
+    ];
+    const lines = buildLogLines(runs, {}, [], english, 2_000_000);
+    expect(lines.find((l) => l.id === "run:i1")?.text).toBe(
+      "immich_postgres database imported with errors: 1 error, the previous data folder was kept: /mnt/pg.old"
+    );
+    expect(lines.find((l) => l.id === "run:i2")?.text).toContain("4 errors, the previous data folder was kept");
+  });
+
+  it("agrees with the number of apps an import could not start again", () => {
+    const kept = "database imported; the previous data folder was kept: /mnt/pg.old";
+    const runs = [
+      dump({ id: "i1", kind: "dbimport", error: `${kept}; could not start these apps again: immich_server` }),
+      dump({ id: "i2", kind: "dbimport", error: `${kept}; could not start these apps again: immich_server, immich_ml` }),
+    ];
+    const lines = buildLogLines(runs, {}, [], english, 2_000_000);
+    expect(lines.find((l) => l.id === "run:i1")?.text).toContain("this app did not start again");
+    expect(lines.find((l) => l.id === "run:i2")?.text).toContain("these apps did not start again");
+  });
+
+  it("colours a successful run as a warning only when its note asks for action", () => {
+    const runs = [
+      dump({ id: "i1", kind: "dbimport", error: "database imported; the previous data folder was kept: /mnt/pg.old" }),
+      dump({
+        id: "i2",
+        kind: "dbimport",
+        error: "database imported; the previous data folder was kept: /mnt/pg.old; could not start these apps again: immich_server",
+      }),
+    ];
+    const lines = buildLogLines(runs, {}, [], resolveName, 2_000_000);
+    expect(lines.find((l) => l.id === "run:i1")?.warn).toBeUndefined();
+    expect(lines.find((l) => l.id === "run:i2")?.warn).toBe(true);
+    expect(lines.find((l) => l.id === "run:i2")?.status).toBe("success");
+  });
+
+  it("counts the dumped bytes on the live line, where there is no percentage", () => {
+    const progress: ProgressMap = {
+      "container:immich_postgres": {
+        phase: "backup",
+        percent: 0,
+        active: true,
+        lastSeen: 5_000_000,
+        stage: "dbdump",
+        bytes: 1_048_576,
+      },
+    };
+    const [line] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(line.text).toContain("activityLog.lineDumpingItem");
+    expect(line.text).toContain("bytes=1.0 MB");
+    expect(line.text).not.toContain("percent=");
+    expect(line.kind).toBe("dbdump");
+  });
+
+  it("names the save and the import while they run", () => {
+    const at = (stage: "dbdumpsave" | "dbimport"): ProgressMap => ({
+      "container:immich_postgres": { phase: "restore", percent: 0, active: true, lastSeen: 5_000_000, stage, bytes: 512 },
+    });
+    expect(buildLogLines([], at("dbdumpsave"), [], resolveName, 5_000_000)[0].text).toContain(
+      "activityLog.lineSavingDumpItem"
+    );
+    expect(buildLogLines([], at("dbimport"), [], resolveName, 5_000_000)[0].text).toContain(
+      "activityLog.lineImportingItem"
+    );
+  });
+
+  it("keeps only dump lines under the dump filter", () => {
+    const lines = buildLogLines(
+      [dump({}), makeRun({ id: "b1" }), dump({ id: "s1", kind: "dbdumpsave" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    const filtered = filterLogLines(lines, { domain: "all", kind: "dbdump", text: "" });
+    expect(filtered.map((l) => l.id)).toEqual(["run:d1"]);
+  });
+
+  it("shows a save and an import under the restore filter, where a user looks for them", () => {
+    const lines = buildLogLines(
+      [dump({ id: "s1", kind: "dbdumpsave" }), dump({ id: "i1", kind: "dbimport" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    const filtered = filterLogLines(lines, { domain: "all", kind: "restore", text: "" });
+    expect(filtered.map((l) => l.id)).toEqual(["run:s1", "run:i1"]);
+  });
+});
+
+describe("a run an assistant started", () => {
+  const viaMcp = (over: Partial<Run>): Run =>
+    makeRun({ startedVia: "mcp", startedViaKey: "k1", startedViaLabel: "office laptop", ...over });
+
+  it("appends via MCP with the key label", () => {
+    const lines = buildLogLines([viaMcp({})], {}, [], resolveName, 2_000_000);
+    expect(lines[0].text).toMatch(/^activityLog\.viaMcp /);
+    expect(lines[0].text).toContain("key=office laptop");
+    expect(lines[0].text).toContain("line=activityLog.lineBackupSuccess");
+
+    // A domain-wide operation an MCP start caused says so as well.
+    const prune = buildLogLines(
+      [viaMcp({ id: "p1", kind: "prune", targetId: "containers" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    expect(prune[0].text).toMatch(/^activityLog\.viaMcp /);
+    expect(prune[0].text).toContain("line=activityLog.linePruneSuccess");
+  });
+
+  it("marks a revoked key", () => {
+    const lines = buildLogLines([viaMcp({ startedViaRevoked: true })], {}, [], resolveName, 2_000_000);
+    expect(lines[0].text).toContain("activityLog.viaMcpRevoked");
+    expect(lines[0].text).toContain("key=office laptop");
+  });
+
+  it("without a label", () => {
+    const lines = buildLogLines([viaMcp({ startedViaLabel: "" })], {}, [], resolveName, 2_000_000);
+    expect(lines[0].text).toContain("activityLog.viaMcpUnknownKey");
+    expect(lines[0].text).not.toContain("key=");
+  });
+
+  it("leaves a scheduled run and a live line untouched", () => {
+    const progress: ProgressMap = {
+      "container:plex": { phase: "backup", percent: 20, active: true, lastSeen: 5_000_000 },
+    };
+    const lines = buildLogLines([makeRun({ id: "s1", finishedAt: 900 })], progress, [], resolveName, 5_000_000);
+    expect(lines.map((l) => l.text).join(" ")).not.toContain("viaMcp");
   });
 });

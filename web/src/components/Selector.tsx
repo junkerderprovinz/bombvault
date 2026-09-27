@@ -106,10 +106,11 @@ interface SelectorCommon {
  * colours at the default offset; pages/settings/hueOffsets.test.ts requires
  * every hued selector in that tree to take its offset from here.
  *
- * The palette has eight colours and the tree twelve selectors, so some starts
+ * The palette has eight colours and the tree thirteen selectors, so some starts
  * are shared, always between selectors on different tabs: `drillKind`
  * (Integrity) and the placement rows (Paths & Storage) reuse starts of the
- * Appearance tab.
+ * Appearance tab, and `mcpClient` (System) shares `notifyOn`'s
+ * (Notifications).
  */
 export const HUE_OFFSET = {
   tabs: 0,
@@ -123,6 +124,7 @@ export const HUE_OFFSET = {
   drillKind: 1,
   /** The three placement default rows, +3 per row: 1, 4 and 7. */
   placement: 1,
+  mcpClient: 7,
 } as const;
 
 export type SelectorProps =
@@ -503,7 +505,7 @@ export function Selector(props: SelectorProps) {
       className={[
         "flex items-center",
         well
-          ? "w-fit max-w-full flex-wrap gap-[0.2rem] rounded-control bg-carbon-surface3 p-[0.2rem]"
+          ? "w-fit max-w-full flex-wrap gap-[0.2rem] rounded-pill bg-carbon-surface3 p-[0.2rem]"
           : "flex-wrap gap-1",
         className,
       ]
@@ -518,8 +520,8 @@ export function Selector(props: SelectorProps) {
           // Well segments are rounded too, so the selected pill follows the
           // shape setting along with the groove.
           well
-            ? "rounded-control [transition:background-color_120ms_ease]"
-            : "rounded-control transition-colors",
+            ? "rounded-pill [transition:background-color_120ms_ease]"
+            : "rounded-pill transition-colors",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           // An iconOnly segment is all glyph, and on an icon-only badge only
           // the fill takes the colour (design-language.md), so it skips the

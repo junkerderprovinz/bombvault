@@ -20,6 +20,7 @@ Käyttövoimana [restic](https://restic.net), joten jokainen varmuuskopio on ded
 | **Unraid flash** | Koko USB-flash (`/boot`): käyttöjärjestelmä, lisenssi, array-määritys, jaot, verkko ja laajennusten määritys. |
 | **Sovelluksen asetukset** | BombVaultin oma `/config`: sen asetustietokanta, etätunnukset ja libvirt-SSH-avainpari. |
 | **Tiedostot ja kansiot** | Nimetyt **tiedostojoukot**, mikä tahansa palvelimen kansio, kukin valinnaisin joukkokohtaisin poissulkukuvioin. |
+| **ZFS-tietojoukot** | Tietojoukko kaikkine alapuolisine tietojoukkoineen, luettuna yhdestä ZFS-tilannevedoksesta ja tallennettuna kuten kansio. Katso [ZFS-tietojoukot](zfs-datasets.md). |
 
 ## Palautus on tähti
 

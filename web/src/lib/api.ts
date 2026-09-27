@@ -62,6 +62,60 @@ export interface Container {
   aliases?: string[];
   /** The former names of this entry that a live container carries again, sorted. */
   aliasConflicts?: string[];
+  /** The engine BombVault would dump, empty when this is not a database. */
+  dbEngine: DbEngine;
+  /** The guess for a container that only looks like a database (tier 2). */
+  dbSuggestedEngine: DbEngine;
+  /** How the container was recognised: "" (not a database), "curated" (a known
+   *  image), "lookalike" (looks like one) or "label" (switched on by label). */
+  dbTier: "" | "curated" | "lookalike" | "label";
+  dbDumpOff: boolean;
+  /** The engine a lookalike was confirmed as; "" means the dump is off. */
+  dbDumpEngine: DbEngine;
+  /** The bombvault.dbdump=false label, which wins over the toggle. */
+  dbDumpLabelOff: boolean;
+  /** The Settings switch for every container. The Containers page loads no
+   *  settings, so each row carries it. */
+  dbDumpsGlobalOff: boolean;
+  dbDataCoverage: DbDataCoverage;
+  /** The container's pre-backup hook already runs a dump tool. */
+  dbDumpHookOverlap: boolean;
+  lastDbDump?: LastDBDump;
+  /** The repositories hold dumps of this container and no files backup, so
+   *  restoring it alone brings back an empty database. */
+  dumpOnly: boolean;
+}
+
+/** The engines BombVault can dump; "" for a container that is not a database. */
+export type DbEngine = "" | "postgres" | "mysql" | "mariadb";
+
+/** What the files backup of a database container is worth: taken while it was
+ *  stopped, copied while the server ran, not taken at all, or undetermined. */
+export type DbDataCoverage = "" | "stopped" | "live" | "none" | "unknown";
+
+/** One database dump from GET /api/containers/{name}/dbdumps */
+export interface DBDumpView {
+  id: string;
+  time: string;
+  engine: DbEngine;
+  image: string;
+  version: string;
+  databases: string[];
+  bytes: number;
+  /** Left behind by a failed dump: it can be deleted and nothing else. */
+  damaged: boolean;
+  /** The volume snapshot taken in the same backup, matched against a
+   *  snapshot's `original` before its `id` so off-site copies pair too. */
+  pairedSnapshotId?: string;
+}
+
+/** The container's most recent dump attempt, as its card shows it. `error`
+ *  carries the recorded run reason, which may be a success note. */
+export interface LastDBDump {
+  at: number;
+  status: "success" | "failed" | "cancelled";
+  bytes: number;
+  error: string;
 }
 
 export interface ListContainersResponse {
@@ -88,6 +142,9 @@ export interface Snapshot {
   paths: string[];
   tags: string[];
   hostname: string;
+  /** On an off-site source, the id this snapshot was copied from. A copy gets a
+   *  new id, so anything that refers to a local snapshot matches this first. */
+  original?: string;
 }
 
 export interface ListSnapshotsResponse {
@@ -122,6 +179,9 @@ export interface Settings {
   flashEnabled: boolean;
   configEnabled: boolean;
   filesEnabled: boolean;
+  /** ZFS datasets: a dataset and the datasets below it are backed up together
+   *  from one recursive snapshot, over the same SSH link the VM domain uses. */
+  zfsEnabled: boolean;
   /** Receiver dashboard (read-only monitoring of an append-only off-site repo
    *  that another BombVault pushes to). Gates the Receiver tab like the other
    *  domain enables. Default false. */
@@ -131,11 +191,23 @@ export interface Settings {
   fleetEnabled: boolean;
   /** Fetching another instance's backups into this box's own repository (#227). */
   pullEnabled: boolean;
+  /** Dumping recognised database containers before their backup, for every
+   *  container at once. A container can still be switched off on its card. */
+  dbDumpsEnabled: boolean;
+  /** Anomaly detection over the backup history, the preset every item follows
+   *  unless it carries its own, the severity from which a finding is pushed,
+   *  and whether a finding that means data was lost pauses the deletion of old
+   *  backups of that item. */
+  anomalyEnabled: boolean;
+  anomalySensitivity: string;
+  anomalyNotifyMin: string;
+  anomalyRetentionHold: boolean;
   containersPath: string;
   vmsPath: string;
   flashPath: string;
   configPath: string;
   filesPath: string;
+  zfsPath: string;
   restoreFolder: string;
   // Flash zip export (#28): after each flash backup, also write the snapshot out
   // as a plain .zip to this folder for off-server sync. Keep=0 → a single
@@ -157,16 +229,19 @@ export interface Settings {
   flashOffsite: string;
   configOffsite: string;
   filesOffsite: string;
+  zfsOffsite: string;
   containersOffsiteSchedule: string;
   vmsOffsiteSchedule: string;
   flashOffsiteSchedule: string;
   configOffsiteSchedule: string;
   filesOffsiteSchedule: string;
+  zfsOffsiteSchedule: string;
   containersSchedule: string;
   vmsSchedule: string;
   flashSchedule: string;
   configSchedule: string;
   filesSchedule: string;
+  zfsSchedule: string;
   /** "Backup Everything" pass: a 6th, independent cadence that runs
    *  every domain in sequence (containers, VMs, flash, folders, self-backup),
    *  then fires everythingPostHook exactly once — a dead-man's-switch ping
@@ -232,6 +307,7 @@ export interface Settings {
   flashOffsiteImmutable: boolean;
   configOffsiteImmutable: boolean;
   filesOffsiteImmutable: boolean;
+  zfsOffsiteImmutable: boolean;
   /** Off-site growth budget in GB (0 = alarm off). */
   offsiteGrowthBudgetGB: number;
   /** Cadence for the scheduled off-site tamper test (default "weekly Sun 04:30"). */
@@ -304,6 +380,8 @@ export interface RegistryAuthEntry {
   tokenSet: boolean;
 }
 
+export type ScheduleZone = { name: string; offsetSeconds: number };
+
 export interface GetSettingsResponse {
   ok: boolean;
   settings: Settings;
@@ -315,6 +393,8 @@ export interface GetSettingsResponse {
    *  e.g. to gate the Files page's "Host system config" preset (offered only
    *  off Unraid, which already has the dedicated flash domain for this). */
   platform: string;
+  /** The clock the server reads every schedule on, and its offset from UTC. */
+  scheduleZone?: ScheduleZone;
   /** Present only on the graceful failure envelope ({ok:false} at HTTP 200). */
   error?: string;
 }
@@ -375,11 +455,19 @@ export interface Run {
   error: string;
   acknowledged: boolean; // true once dismissed from the dashboard error panel (#126)
   target: string; // human target name (container/VM/file-set name, or "Unraid flash")
-  // "container" | "vm" | "flash" | "config" | "files" | "everything" | "".
+  // "container" | "vm" | "flash" | "config" | "files" | "zfs" | "everything" | "".
   // "everything" is the Backup Everything pass's PARENT run (see
   // store.EverythingTargetID). main's own follow-up commit updated the Go-side
   // runView.Domain value comment for it and missed this, its TS counterpart.
   domain: string;
+  /** What asked for the run: "" for the web interface and the scheduler,
+   *  "mcp" for an assistant. */
+  startedVia?: "" | "mcp";
+  startedViaKey?: string;
+  /** The operator's name for the MCP key behind the run, "" once that key is
+   *  purged from the list. */
+  startedViaLabel?: string;
+  startedViaRevoked?: boolean;
 }
 
 export interface ListRunsResponse {
@@ -474,6 +562,7 @@ export interface HistoryDay {
   flash: DayStat;
   config: DayStat;
   files: DayStat;
+  zfs: DayStat;
 }
 
 export interface HistoryResponse {
@@ -746,14 +835,18 @@ export function cancelRestore(key: string): Promise<{ ok: boolean; cancelled: bo
  * POST /api/backup/cancel {key} — stop a backup that is running, by its progress
  * key ("files:<name>" / "container:<name>" / "vm:<name>" / "flash" / "config").
  * A key that is not running answers {ok:true,cancelled:false} and changes
- * nothing, so a stale button cannot produce an error.
+ * nothing, so a stale button cannot produce an error. The reason says whether
+ * nothing was running or the backup already wrote its restore point and is
+ * only starting its containers again.
  *
  * Safe in a way the restore counterpart is not: restic writes its snapshot last,
  * so an aborted backup leaves unreferenced data and no snapshot, collected by
  * the next prune, and nothing on the host is touched. The run is recorded as
  * "cancelled" rather than "failed" and fires no failure alert.
  */
-export function cancelBackup(key: string): Promise<{ ok: boolean; cancelled: boolean }> {
+export function cancelBackup(
+  key: string
+): Promise<{ ok: boolean; cancelled: boolean; reason?: "committed" | "not_running" }> {
   return fetchJSON("/api/backup/cancel", {
     method: "POST",
     body: JSON.stringify({ key }),
@@ -1130,6 +1223,86 @@ export function setUpdateAfterBackup(name: string, updateAfterBackup: boolean): 
   });
 }
 
+/** PATCH /api/containers/{name}: switch the database dump off or back on. */
+export function setDbDumpOff(name: string, off: boolean): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ dbDumpOff: off }),
+  });
+}
+
+/** PATCH /api/containers/{name}: confirm what a lookalike container runs, or ""
+ *  to leave it undumped. Confirming an engine switches the dump on, so it also
+ *  lifts an opt-out the row kept from a time the container was recognised by
+ *  its image or label. */
+export function setDbDumpEngine(name: string, engine: DbEngine): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify(engine ? { dbDumpEngine: engine, dbDumpOff: false } : { dbDumpEngine: "" }),
+  });
+}
+
+/** GET /api/containers/{name}/dbdumps: the container's database dumps. */
+export function listDbDumps(
+  name: string,
+  source?: string
+): Promise<OkEnvelope & { dumps?: DBDumpView[] }> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/dbdumps${srcParam(source)}`);
+}
+
+/**
+ * GET /api/containers/{name}/dbdumps/{id}/download streams one dump to the
+ * browser. Used as a plain <a> link, like the flash download: the GET carries
+ * the session cookie, and the server's Content-Disposition names the file, so a
+ * sealed dump arrives as .sql.age.
+ */
+export function dbDumpDownloadURL(name: string, id: string, source?: string, gz?: boolean): string {
+  const path = `/api/containers/${encodeURIComponent(name)}/dbdumps/${encodeURIComponent(id)}/download`;
+  return `${path}${srcParam(source)}${gz ? (source ? "&" : "?") + "gz=1" : ""}`;
+}
+
+/**
+ * The same endpoint with check=1, which answers the envelope without streaming.
+ * A refusal can then be shown as a message instead of a failed download.
+ */
+export function checkDbDumpDownload(name: string, id: string, source?: string): Promise<OkEnvelope> {
+  const path = `/api/containers/${encodeURIComponent(name)}/dbdumps/${encodeURIComponent(id)}/download`;
+  return fetchJSON(`${path}${srcParam(source)}${source ? "&" : "?"}check=1`);
+}
+
+/**
+ * POST /api/containers/{name}/dbdumps/{id}/save writes a dump as a file into a
+ * folder on the server. ASYNC, like the other restore-to jobs: the ack carries
+ * the resolved folder and the work runs detached.
+ */
+export function saveDbDumpTo(
+  name: string,
+  id: string,
+  targetPath: string,
+  gz: boolean,
+  source?: string
+): Promise<RestoreToResponse> {
+  const path = `/api/containers/${encodeURIComponent(name)}/dbdumps/${encodeURIComponent(id)}/save`;
+  return fetchJSON(`${path}${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify({ targetPath, gz }),
+  });
+}
+
+/**
+ * POST /api/containers/{name}/dbdumps/{id}/import imports a dump into a freshly
+ * started, empty database. ASYNC. A refusal answers `code` with the reason id
+ * the page turns into a sentence, and a version mismatch the two versions.
+ */
+export function importDbDump(
+  name: string,
+  id: string,
+  source?: string
+): Promise<OkEnvelope & { started?: boolean; server?: string; dump?: string }> {
+  const path = `/api/containers/${encodeURIComponent(name)}/dbdumps/${encodeURIComponent(id)}/import`;
+  return fetchJSON(`${path}${srcParam(source)}`, { method: "POST" });
+}
+
 /** PATCH /api/containers/{name} — set this container's restic --exclude patterns. */
 export function setContainerExcludes(name: string, excludes: string[]): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
@@ -1220,6 +1393,12 @@ export function suggestContainerExcludes(
   unreadableRoots?: string[] | null;
   pathsUnavailable?: boolean;
   indexFailed?: boolean;
+  /** Caveats about the CONTAINER rather than about any one suggested line:
+   *  things a folder scan cannot see, such as an application keeping its
+   *  metadata in a database that runs in another container. IDs, not prose, so
+   *  the text stays translatable and an unknown id from a newer server renders
+   *  nothing. Optional, so an older server still typechecks. */
+  advisories?: string[] | null;
 }> {
   const q = source ? `?source=${source}` : "";
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/excludes/suggest${q}`);
@@ -1270,10 +1449,11 @@ export function discoverVMs(probe = false): Promise<DiscoverEnvelope> {
 }
 
 /**
- * Runs all three domain discovers (rebuild containers + VMs from the encrypted
- * backup defs, plus file sets from their fileset: snapshot tags) and returns the
- * counts. The caller then re-fetches listContainers()/listVMs()/listFileSets()
- * to show the reconstructed targets.
+ * Runs every domain discover (rebuild containers + VMs from the encrypted
+ * backup defs, file sets from their fileset: snapshot tags and ZFS items from
+ * their zfs: tags) and returns the counts. The caller then re-fetches
+ * listContainers()/listVMs()/listFileSets()/listZFSDatasets() to show the
+ * reconstructed targets.
  *
  * handleDiscover answers HTTP 200 with an {ok:false, error} envelope on a real
  * failure (e.g. a wrong APP_KEY), so a naive `discovered ?? 0` would silently
@@ -1285,6 +1465,7 @@ export async function discoverAll(): Promise<{
   containers: number;
   vms: number;
   files: number;
+  zfs: number;
   error?: string;
   skipped: string[];
   skippedNeedsAction: boolean;
@@ -1292,21 +1473,23 @@ export async function discoverAll(): Promise<{
   leftOpen: string[];
   directRepos: DirectRepoFinding[];
 }> {
-  const [c, v, f] = await Promise.all([discover(), discoverVMs(), discoverFiles()]);
-  const failed = [c, v, f].find((r) => !r.ok);
-  // De-duplicated: the same named repository is searched by all three domains, so
-  // one unmounted share would otherwise be named three times in one sentence.
-  const skipped = [...new Set([c, v, f].flatMap((r) => r.skipped ?? []))];
+  const results = await Promise.all([discover(), discoverVMs(), discoverFiles(), discoverZFS()]);
+  const [c, v, f, z] = results;
+  const failed = results.find((r) => !r.ok);
+  // De-duplicated: the same named repository is searched by every domain, so
+  // one unmounted share would otherwise be named several times in one sentence.
+  const skipped = [...new Set(results.flatMap((r) => r.skipped ?? []))];
   const answers: [PlacementDomain, DiscoverEnvelope][] = [["containers", c], ["vms", v], ["files", f]];
   return {
     containers: c.discovered ?? 0,
     vms: v.discovered ?? 0,
     files: f.discovered ?? 0,
+    zfs: z.discovered ?? 0,
     ...(failed ? { error: failed.error ?? "discover failed" } : {}),
     skipped,
-    // ANY domain that hit something actionable. The sentence lists all three
-    // domains' skips together, so the flag has to be the union too.
-    skippedNeedsAction: [c, v, f].some((r) => r.skippedNeedsAction === true),
+    // Any domain that hit something actionable. The sentence lists every
+    // domain's skips together, so the flag has to be the union too.
+    skippedNeedsAction: results.some((r) => r.skippedNeedsAction === true),
     paused: answers.filter(([, r]) => r.paused === true).map(([d]) => d),
     leftOpen: [...new Set(answers.flatMap(([, r]) => r.leftOpen ?? []))],
     directRepos: mergeDirectFindings(answers.flatMap(([, r]) => r.directRepos ?? [])),
@@ -1672,6 +1855,20 @@ export function recoveryKitUrl(): string {
  * download), but immune to a toolchain whose DOM lib resolution is broken and
  * would spuriously flag the bare global names.
  */
+/**
+ * Pulls the filename out of a Content-Disposition header.
+ *
+ * The server decides what a download is called, because only the server knows
+ * what it produced: a recovery kit is .md when it is plaintext and .md.age when
+ * export encryption sealed it. Returns null when the header is absent or
+ * carries no filename, so the caller can fall back to its own default.
+ */
+export function filenameFromDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const match = /filename="?([^";]+)"?/i.exec(header);
+  return match ? match[1] : null;
+}
+
 export async function downloadRecoveryKit(): Promise<string | null> {
   const g = globalThis as unknown as {
     fetch(url: string): Promise<{
@@ -1714,7 +1911,13 @@ export async function downloadRecoveryKit(): Promise<string | null> {
     const url = g.URL.createObjectURL(blob);
     const a = g.document.createElement("a");
     a.href = url;
-    a.download = "bombvault-recovery-kit.md";
+    // The name comes from the SERVER, not from here. With export encryption on
+    // the kit is age-sealed and arrives as bombvault-recovery-kit.md.age;
+    // saving that under a hard-coded .md would hand the user a file whose name
+    // lies about its contents, and an editor would open a wall of ciphertext.
+    a.download =
+      filenameFromDisposition(res.headers.get("content-disposition")) ??
+      "bombvault-recovery-kit.md";
     g.document.body.appendChild(a);
     a.click();
     a.remove();
@@ -1736,7 +1939,7 @@ export function ackRecoveryKit(): Promise<OkEnvelope> {
 
 /** POST /api/check/{domain} — verify a domain's restic repo integrity. */
 export function checkDomain(
-  domain: "containers" | "vms" | "flash" | "files",
+  domain: "containers" | "vms" | "flash" | "files" | "zfs",
   source?: string
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/check/${domain}${srcParam(source)}`, { method: "POST" });
@@ -1797,22 +2000,82 @@ export function getDrills(
  * green tick.
  */
 export function unlockDomain(
-  domain: "containers" | "vms" | "flash" | "files",
+  domain: "containers" | "vms" | "flash" | "files" | "zfs",
   source?: string
 ): Promise<OkEnvelope & { skipped?: string[] }> {
   return fetchJSON(`/api/unlock/${domain}${srcParam(source)}`, { method: "POST" });
 }
 
-/** POST /api/prune/{domain} — reclaim space from forgotten snapshots (restic prune). */
+/**
+ * POST /api/prune/{domain} reclaims space from forgotten snapshots (restic
+ * prune). `paused` names the items a finding is holding: their snapshots were
+ * kept on purpose, which is not the same as nothing to do.
+ */
 export function pruneDomain(
-  domain: "containers" | "vms" | "flash" | "config" | "files",
+  domain: "containers" | "vms" | "flash" | "config" | "files" | "zfs",
   source?: string
-): Promise<OkEnvelope> {
+): Promise<OkEnvelope & { paused?: string[] }> {
   return fetchJSON(`/api/prune/${domain}${srcParam(source)}`, { method: "POST" });
 }
 
+/** One snapshot in a retention preview, as restic reports it. */
+export type RetentionPreviewSnapshot = {
+  id: string;
+  time: string;
+  paths?: string[] | null;
+  tags?: string[] | null;
+  hostname?: string;
+};
+
+/** One item's verdict: what the policy keeps, and what the next run removes. */
+export type RetentionPreviewItem = {
+  tag: string;
+  keep?: RetentionPreviewSnapshot[] | null;
+  remove?: RetentionPreviewSnapshot[] | null;
+  /** A finding is holding this item, so the empty removal list is a decision. */
+  paused?: boolean;
+};
+
 /**
- * The five domains that can carry an off-site destination, a remote primary
+ * One repository's part of the answer. A domain can write to several
+ * repositories (#204), so the preview is reported per repository, and an
+ * append-only one is named as such rather than shown with an empty list, which
+ * would read as "nothing to do" instead of "retention never runs here".
+ */
+export type RetentionPreviewRepo = {
+  name: string;
+  appendOnly: boolean;
+  items: RetentionPreviewItem[];
+  error?: string;
+};
+
+/** What the next retention run would remove, without removing anything. */
+export type RetentionPreview = {
+  policy: {
+    on: boolean;
+    keepLast: number;
+    keepDaily: number;
+    keepWeekly: number;
+    keepMonthly: number;
+  };
+  repos: RetentionPreviewRepo[];
+  skipped?: string[] | null;
+};
+
+/**
+ * GET /api/retention/preview/{domain}: what the next retention run WOULD
+ * remove. Read-only: it takes no repository lock and answers while a backup is
+ * running, which is exactly when someone wants to know what tonight will delete.
+ */
+export function previewRetention(
+  domain: "containers" | "vms" | "flash" | "config" | "files" | "zfs",
+  source?: string
+): Promise<OkEnvelope & { preview: RetentionPreview }> {
+  return fetchJSON(`/api/retention/preview/${domain}${srcParam(source)}`);
+}
+
+/**
+ * The domains that can carry an off-site destination, a remote primary
  * path, or both. Defined here because api.ts is the layer everything else
  * imports, so this is the one place a domain can be added without leaving a
  * stale copy behind.
@@ -1822,7 +2085,7 @@ export function pruneDomain(
  * connection test and no per-destination credentials, even though its backend
  * supported all three the whole time (#176, kramttocs).
  */
-export type OffsiteDomain = "containers" | "vms" | "flash" | "config" | "files";
+export type OffsiteDomain = "containers" | "vms" | "flash" | "config" | "files" | "zfs";
 
 /** POST /api/offsite/{domain} — replicate a domain's local repo to its off-site repo now. */
 export function replicateOffsite(
@@ -2093,7 +2356,7 @@ export function deleteRepo(
  * An unknown domain answers HTTP 400.
  */
 export function listOffsiteTargets(
-  domain?: "containers" | "vms" | "flash" | "config" | "files"
+  domain?: "containers" | "vms" | "flash" | "config" | "files" | "zfs"
 ): Promise<OkEnvelope & { targets?: OffsiteTarget[] }> {
   const qs = domain ? `?domain=${encodeURIComponent(domain)}` : "";
   return fetchJSON(`/api/offsite/targets${qs}`);
@@ -2676,6 +2939,15 @@ export function getStackDir(project: string, source: string): Promise<OkEnvelope
   return fetchJSON(`/api/stacks/${encodeURIComponent(project)}/dir${srcParam(source)}`);
 }
 
+/** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */
+export function deleteSnapshot(
+  domain: "containers" | "vms" | "flash" | "config" | "files" | "zfs",
+  id: string,
+  source?: string
+): Promise<OkEnvelope> {
+  return fetchJSON(`/api/snapshots/${domain}/${encodeURIComponent(id)}${srcParam(source)}`, { method: "DELETE" });
+}
+
 /** GET /api/rclone — configured rclone remote names (never secrets). */
 export function getRclone(): Promise<OkEnvelope & { remotes?: string[] }> {
   return fetchJSON("/api/rclone");
@@ -2699,8 +2971,9 @@ export function getSpike(): Promise<SpikeResponse> {
   return fetchJSON("/api/spike");
 }
 
-export function listRuns(): Promise<ListRunsResponse> {
-  return fetchJSON("/api/runs");
+/** The newest runs. `run` adds that one run when it is older than the rest. */
+export function listRuns(run?: string): Promise<ListRunsResponse> {
+  return fetchJSON(run ? `/api/runs?run=${encodeURIComponent(run)}` : "/api/runs");
 }
 
 /**
@@ -2963,8 +3236,9 @@ export function getVMSSH(): Promise<
   return fetchJSON("/api/vm/ssh");
 }
 
-/** POST /api/vm/ssh/test — check libvirt is reachable over SSH. */
-export function testVMSSH(): Promise<OkEnvelope> {
+/** POST /api/vm/ssh/test: checks the host SSH link. ok with libvirt false
+ *  means SSH works and only VM backups are blocked. */
+export function testVMSSH(): Promise<OkEnvelope & { libvirt?: boolean; libvirtError?: string }> {
   return fetchJSON("/api/vm/ssh/test", { method: "POST" });
 }
 
@@ -3279,6 +3553,413 @@ export function discoverFiles(probe = false): Promise<DiscoverEnvelope> {
   return fetchJSON(`/api/files/discover${probe ? "?probe=true" : ""}`, { method: "POST" });
 }
 
+/*
+ * ZFS API (the zfs backup domain). The shapes match internal/api/zfs_views.go,
+ * zfs_probe.go, zfs_crud.go and zfs_restore.go.
+ *
+ * Every refusal that has a reason code answers {ok:false, code, error}. The
+ * page turns the code into a sentence (lib/zfsCodes.ts); `error` carries the
+ * raw host text and belongs in a details block, not in the sentence.
+ */
+
+/** A refusal that names the reason the page translates. */
+export type ZFSCodedEnvelope = OkEnvelope & { code?: string };
+
+/** One dataset of an item's tree, as the last check or run found it. */
+export interface ZFSMemberView {
+  dataset: string;
+  /** Path below the item's root, "" for the root itself. */
+  relPath: string;
+  hostMountpoint: string;
+  /** A member outcome (zfs.MemberOutcomes) or a reason code. */
+  outcome: string;
+  /** First seen after the item was created, so a run can name what it picked up. */
+  isNew: boolean;
+  usedByDataset: number;
+  lastBackupAt: number;
+}
+
+/** One ZFS item from GET /api/zfs. */
+export interface ZFSDatasetView {
+  id: string;
+  /** The root dataset; the item covers it and everything below it. */
+  dataset: string;
+  enabled: boolean;
+  excludes: string[];
+  scheduleCadence: string;
+  repo: string;
+  repoEffective: string;
+  stopContainers: string[];
+  /** Containers a failed run left stopped. */
+  restartPending: string[];
+  excludedChildren: string[];
+  hookContainer: string;
+  preSnapshot: string;
+  postSnapshot: string;
+  hostMountpoint: string;
+  lastBackup: number;
+  lastRunStatus: string;
+  /** "" when the item has never been checked; "ok" when nothing is wrong. */
+  lastCheckCode: string;
+  lastCheckDetail: string;
+  lastCheckAt: number;
+  /** Snapshot stamps an interrupted run left on the tree. */
+  leftoverCount: number;
+  safetyCount: number;
+  safetyOldestAt: number;
+  members: ZFSMemberView[];
+  effectiveSchedule: EffectiveSchedule;
+}
+
+export interface ListZFSDatasetsResponse extends OkEnvelope {
+  datasets?: ZFSDatasetView[];
+}
+
+/** What one look at a dataset tree found. */
+export interface ZFSCheck {
+  dataset: string;
+  code: string;
+  detail: string;
+  hostMountpoint: string;
+  containerPath: string;
+  /** Set with the "too many datasets" code: the limit and the first names over it. */
+  max?: number;
+  names?: string[];
+  members: ZFSMemberView[];
+}
+
+/** What stands between the domain and a working backup. */
+export interface ZFSConnectionResult extends OkEnvelope {
+  code: string;
+  target: string;
+  /** The target LIBVIRT_URI names, for the mismatch sentence. */
+  uriTarget: string;
+  version: string;
+  detail: string;
+  zfsBinary: string;
+  propagation: string;
+  /** Mounts that do not reach the container, named in the propagation fix. */
+  unpropagated: string[];
+}
+
+/** One dataset of the host listing, with what it may become. */
+export interface ZFSHostDataset {
+  dataset: string;
+  /** "filesystem" or "volume". */
+  type: string;
+  hostMountpoint: string;
+  referenced: number;
+  used: number;
+  usedByDataset: number;
+  mounted: boolean;
+  encrypted: boolean;
+  keyLoaded: boolean;
+  visible: boolean;
+  writable: boolean;
+  /** The outcome this dataset would have as a member, "" when it backs up. */
+  memberCode: string;
+  /** The item this dataset already is. */
+  managedId: string;
+  /** The item this dataset already sits inside. */
+  coveredBy: string;
+  vmDisk: boolean;
+  system: boolean;
+  /** A volume a VM references, so the VM domain already carries it. */
+  vmVolume: boolean;
+  /** Why this dataset cannot become an item of its own. */
+  blockers: string[];
+}
+
+/** The host listing plus the counts the page states. */
+export interface ZFSHostResult extends OkEnvelope {
+  available: boolean;
+  code: string;
+  target: string;
+  datasets: ZFSHostDataset[];
+  hiddenLegacy: number;
+  unusedZvols: number;
+  notInItem: number;
+  truncated: boolean;
+  /** The longest root name an item accepts, for the name-too-long sentence. */
+  maxNameLength: number;
+}
+
+/** One item the add dialog asks for. */
+export interface ZFSCreateItem {
+  dataset: string;
+  excludedChildren?: string[];
+  excludes?: string[];
+  stopContainers?: string[];
+  repo?: string;
+  enabled?: boolean;
+}
+
+/** What became of one requested item. An empty code means it was created. */
+export interface ZFSCreateResult {
+  dataset: string;
+  id: string;
+  code: string;
+  detail: string;
+}
+
+/** The fields one item's inline settings can change. */
+export interface ZFSDatasetPatch {
+  enabled?: boolean;
+  excludes?: string[];
+  excludedChildren?: string[];
+  scheduleCadence?: string;
+  repo?: string;
+  stopContainers?: string[];
+  hookContainer?: string;
+  preSnapshot?: string;
+  postSnapshot?: string;
+}
+
+/** What a delete left on the pool. */
+export interface ZFSDeleteResult extends OkEnvelope {
+  leftoversRemaining?: number;
+  safetyRemaining?: number;
+}
+
+/** One dataset of the tree as a restore point left it. A member with no
+ *  snapshot id was skipped, empty or excluded at the time. */
+export interface ZFSRestorePointItem {
+  dataset: string;
+  relPath: string;
+  snapshotId: string;
+  outcome: string;
+}
+
+/** One run instant: the member snapshots that share one host snapshot stamp. */
+export interface ZFSRestorePoint {
+  stamp: string;
+  time: number;
+  members: ZFSRestorePointItem[];
+}
+
+/** One restore the panel asks for. An empty targetPath restores in place. */
+export interface ZFSRestoreRequest {
+  stamp: string;
+  dataset: string;
+  wholeTree?: boolean;
+  /** Absolute inside the member's own tree; empty restores all of it. */
+  paths?: string[];
+  targetPath?: string;
+  confirm: boolean;
+  safetySnapshot?: boolean;
+  safetyOffConfirm?: boolean;
+  stopContainers?: boolean;
+}
+
+/** What the caller learns the moment a restore starts. */
+export interface ZFSRestoreAck extends ZFSCodedEnvelope {
+  started?: boolean;
+  target?: string;
+  safetySnapshot?: string;
+}
+
+/** What one run did to one dataset of the tree. */
+export interface ZFSRunMember {
+  dataset: string;
+  outcome: string;
+  resticSnapshot: string;
+  isNew: boolean;
+  bytesAdded: number;
+  filesNew: number;
+  filesChanged: number;
+  filesUnmodified: number;
+  durationMs: number;
+}
+
+/** One run's detail beyond what the runs list holds. */
+export interface ZFSRunDetail extends OkEnvelope {
+  members?: ZFSRunMember[];
+  /** How long the applications were held, -1 when the item stops nothing. */
+  windowSeconds?: number;
+  hookDetail?: string;
+}
+
+/** A snapshot an in-place restore kept, until the user deletes it. */
+export interface ZFSSafetySnapshot {
+  dataset: string;
+  name: string;
+  createdAt: number;
+  usedBytes: number;
+}
+
+/** What one exclude line would leave out of the next backup. */
+export interface ZFSExcludePreviewRow {
+  pattern: string;
+  matches: number;
+  sample: string[];
+}
+
+/** GET /api/zfs. Served from the database alone, so the list still renders
+ *  while the host is off. */
+export function listZFSDatasets(): Promise<ListZFSDatasetsResponse> {
+  return fetchJSON("/api/zfs");
+}
+
+/** GET /api/zfs/connection, the connection card's whole answer. */
+export function zfsConnection(): Promise<ZFSConnectionResult> {
+  return fetchJSON("/api/zfs/connection");
+}
+
+/** GET /api/zfs/host, the pools as the host has them, for the add dialog. */
+export function zfsHostDatasets(): Promise<ZFSHostResult> {
+  return fetchJSON("/api/zfs/host");
+}
+
+/** POST /api/zfs/check: what a tree the dialog offers would back up. */
+export function checkZFSDataset(
+  dataset: string,
+  excludedChildren: string[] = []
+): Promise<ZFSCodedEnvelope & { check?: ZFSCheck }> {
+  return fetchJSON("/api/zfs/check", {
+    method: "POST",
+    body: JSON.stringify({ dataset, excludedChildren }),
+  });
+}
+
+/** POST /api/zfs/datasets, adding the ticked trees. The batch answers item by
+ *  item, so one refused root does not lose the rest. */
+export function createZFSDatasets(
+  items: ZFSCreateItem[]
+): Promise<OkEnvelope & { results?: ZFSCreateResult[] }> {
+  return fetchJSON("/api/zfs/datasets", {
+    method: "POST",
+    body: JSON.stringify({ items }),
+  });
+}
+
+/** PATCH /api/zfs/datasets/{id}. A field left out keeps its stored value, so a
+ *  form that does not know a field cannot clear it. */
+export function patchZFSDataset(id: string, patch: ZFSDatasetPatch): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+/** DELETE /api/zfs/datasets/{id}, keeping its backups. `safety` also destroys
+ *  the safety snapshots earlier restores kept. */
+export function deleteZFSDataset(id: string, safety = false): Promise<ZFSDeleteResult> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}?safety=${safety}`, {
+    method: "DELETE",
+  });
+}
+
+/** DELETE /api/zfs/datasets/{id}/backups: forget every member's snapshots,
+ *  then the item. */
+export function deleteBackupsZFSDataset(id: string): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/backups`, { method: "DELETE" });
+}
+
+/** POST /api/zfs/datasets/{id}/backup. Answers before the run ends (see
+ *  BackupResponse): watch the "zfs:<root>" SSE key and the recorded run for the
+ *  outcome. */
+export function backupZFSDataset(id: string): Promise<BackupResponse> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/backup`, { method: "POST" });
+}
+
+/** POST /api/zfs/backup-all, one detached batch over the given items, watched
+ *  through the "batch:zfs" progress key. */
+export function backupZFSAll(ids: string[]): Promise<OkEnvelope & { started?: number }> {
+  return fetchJSON("/api/zfs/backup-all", {
+    method: "POST",
+    body: JSON.stringify({ ids }),
+  });
+}
+
+/** POST /api/zfs/datasets/{id}/probe: take a real snapshot, prove the container
+ *  can read it, remove it again. */
+export function probeZFSDataset(id: string): Promise<OkEnvelope & { check?: ZFSCheck }> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/probe`, { method: "POST" });
+}
+
+/** POST /api/zfs/datasets/{id}/sweep, removing the snapshot stamps earlier runs
+ *  left behind. `remaining` counts the ones that would not go. */
+export function sweepZFSDataset(id: string): Promise<ZFSCodedEnvelope & { remaining?: number }> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/sweep`, { method: "POST" });
+}
+
+/** GET /api/zfs/datasets/{id}/restore-points, newest first. */
+export function zfsRestorePoints(
+  id: string,
+  source?: string
+): Promise<ZFSCodedEnvelope & { points?: ZFSRestorePoint[] }> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/restore-points${srcParam(source)}`);
+}
+
+/** GET /api/zfs/datasets/{id}/files: one member snapshot's files, for the
+ *  selective restore. */
+export function listSnapshotFilesZFS(
+  id: string,
+  snapshot: string,
+  source?: string
+): Promise<ListFilesResponse> {
+  return fetchJSON(
+    `/api/zfs/datasets/${encodeURIComponent(id)}/files?snapshot=${encodeURIComponent(snapshot)}${srcParam(source, "&")}`
+  );
+}
+
+/** POST /api/zfs/datasets/{id}/restore. Answers before the restore ends: the
+ *  ack carries the resolved target and the safety snapshot's name; watch the
+ *  "zfs:<root>" SSE key. */
+export function restoreZFS(
+  id: string,
+  req: ZFSRestoreRequest,
+  source?: string
+): Promise<ZFSRestoreAck> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/restore${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+/** POST /api/zfs/discover, rebuilding the item list from the zfs: tags in
+ *  storage. `probe` = read-only readiness check (see discover). Rebuilt items
+ *  arrive switched off, and `rootsToCheck` counts the ones whose root was inferred
+ *  from tags alone and wants a look. */
+export function discoverZFS(probe = false): Promise<DiscoverEnvelope & { rootsToCheck?: number }> {
+  return fetchJSON(`/api/zfs/discover${probe ? "?probe=true" : ""}`, { method: "POST" });
+}
+
+/** GET /api/zfs/runs/{runId}/members, one run's per-dataset detail. */
+export function zfsRunMembers(runId: string): Promise<ZFSRunDetail> {
+  return fetchJSON(`/api/zfs/runs/${encodeURIComponent(runId)}/members`);
+}
+
+/** GET /api/zfs/datasets/{id}/safety-snapshots, reconciled against the pool. */
+export function listZFSSafetySnapshots(
+  id: string
+): Promise<ZFSCodedEnvelope & { snapshots?: ZFSSafetySnapshot[] }> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/safety-snapshots`);
+}
+
+/** DELETE /api/zfs/datasets/{id}/safety-snapshots, destroying one of them. */
+export function deleteZFSSafetySnapshot(
+  id: string,
+  dataset: string,
+  name: string
+): Promise<ZFSCodedEnvelope> {
+  const qs = new URLSearchParams({ dataset, name }).toString();
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/safety-snapshots?${qs}`, {
+    method: "DELETE",
+  });
+}
+
+/** POST /api/zfs/excludes/preview: what each exclude line would leave out. */
+export function previewZFSExcludes(
+  id: string,
+  excludes: string[]
+): Promise<OkEnvelope & { rows?: ZFSExcludePreviewRow[] }> {
+  return fetchJSON("/api/zfs/excludes/preview", {
+    method: "POST",
+    body: JSON.stringify({ id, excludes }),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Encryption-mode auto-detection
 //
@@ -3360,6 +4041,12 @@ export interface ForeignInventory {
   containers: ForeignItem[];
   vms: ForeignItem[];
   fileSets: ForeignItem[];
+  /** Database dumps. They are not restored from here: the recovery kit says
+   *  how to get one out with the restic CLI. */
+  dbDumps: ForeignItem[];
+  /** One entry per dataset tree, carrying the snapshots of every dataset
+   *  below its root. */
+  zfs: ForeignItem[];
 }
 
 export interface ForeignOpenResponse extends OkEnvelope {
@@ -3424,7 +4111,7 @@ export function foreignClose(session: string): Promise<OkEnvelope> {
  */
 export async function foreignRestore(req: {
   session: string;
-  domain: "containers" | "vms" | "files";
+  domain: "containers" | "vms" | "files" | "zfs";
   item: string;
   snapshot: string;
   confirm: boolean;
@@ -3434,6 +4121,9 @@ export async function foreignRestore(req: {
    *  belong to a different container (#125). Default off; the backend refuses
    *  without it. */
   overwrite?: boolean;
+  /** zfs domain: restore every dataset of the snapshot's run, each into its
+   *  own subfolder of `target`. */
+  wholeTree?: boolean;
 }): Promise<OkEnvelope & { started?: boolean }> {
   const res = await fetch("/api/foreign/restore", {
     method: "POST",
@@ -3448,18 +4138,20 @@ export async function foreignRestore(req: {
   }
 }
 
-/** POST /api/foreign/files — list the files of one file set's snapshot in an open
- *  foreign session, so the Recovery card can offer a subfolder/file picker before
- *  a selective foreign restore (#123). Read-only and files-domain only; `snapshot`
- *  accepts "latest". The foreign, session-scoped twin of listSnapshotFilesFileSet. */
+/** POST /api/foreign/files: list the files of one file set's or one dataset's
+ *  snapshot in an open foreign session, so the Recovery card can offer a
+ *  subfolder/file picker before a selective foreign restore (#123). Read-only;
+ *  `snapshot` accepts "latest". The foreign, session-scoped twin of
+ *  listSnapshotFilesFileSet. */
 export function listForeignFiles(
   session: string,
   item: string,
-  snapshot: string
+  snapshot: string,
+  domain: "files" | "zfs" = "files"
 ): Promise<ListFilesResponse> {
   return fetchJSON("/api/foreign/files", {
     method: "POST",
-    body: JSON.stringify({ session, domain: "files", item, snapshot }),
+    body: JSON.stringify({ session, domain, item, snapshot }),
   });
 }
 
@@ -4158,4 +4850,592 @@ export function renamePasskey(id: string, name: string): Promise<OkEnvelope> {
  *  removing every passkey never locks anybody out. */
 export function deletePasskey(id: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/auth/passkeys/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/**
+ * GET /api/diagnostics: download the redacted support bundle.
+ *
+ * Modelled on downloadRecoveryKit, and for the same reason: every failure path
+ * (the 403 refusal when no login password is set, a 200 fail envelope while
+ * building) answers JSON, while the bundle itself streams as application/zip.
+ * Detecting that difference is what stops an error body being saved to disk as
+ * a .zip the user then tries to open.
+ *
+ * Returns null on success, or the server's own message to show.
+ */
+export async function downloadDiagnostics(): Promise<string | null> {
+  const g = globalThis as unknown as {
+    fetch(url: string): Promise<{
+      ok: boolean;
+      status: number;
+      headers: { get(name: string): string | null };
+      json(): Promise<unknown>;
+      blob(): Promise<unknown>;
+    }>;
+    document: {
+      createElement(tag: string): {
+        href: string;
+        download: string;
+        click(): void;
+        remove(): void;
+      };
+      body: { appendChild(node: unknown): void };
+    };
+    URL: {
+      createObjectURL(blob: unknown): string;
+      revokeObjectURL(url: string): void;
+    };
+  };
+  try {
+    const res = await g.fetch("/api/diagnostics");
+    const ct = res.headers.get("content-type") ?? "";
+    if (!res.ok || ct.includes("application/json")) {
+      // Backend-provided error text shown verbatim by design: the API answers
+      // English, and the client does not translate it.
+      try {
+        const body = (await res.json()) as { error?: string };
+        return body.error || `download failed (HTTP ${res.status})`;
+      } catch {
+        return `download failed (HTTP ${res.status})`;
+      }
+    }
+    const blob = await res.blob();
+    const url = g.URL.createObjectURL(blob);
+    const a = g.document.createElement("a");
+    a.href = url;
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.download = `bombvault-diagnostics-${stamp}.zip`;
+    g.document.body.appendChild(a);
+    a.click();
+    a.remove();
+    g.URL.revokeObjectURL(url);
+    return null;
+  } catch (e) {
+    return e instanceof Error ? e.message : String(e);
+  }
+}
+
+/** One item nothing backs up automatically. */
+export type CoverageItem = {
+  name: string;
+  /** "not-set-up" | "not-included" | "override-off" | "no-schedule" |
+   *  "zfs-member-skipped" and the database-dump reasons */
+  reason: string;
+  /** With "zfs-member-skipped": the member outcome that left the dataset out. */
+  code?: string;
+  neverBackedUp: boolean;
+};
+
+/** One domain's part of the coverage answer. */
+export type CoverageDomain = {
+  domain: "containers" | "vms" | "files" | "zfs";
+  /** A switched-off domain reports neither protected nor unprotected items: it
+   *  is a decision, not a gap. */
+  enabled: boolean;
+  total: number;
+  protected: number;
+  unprotected: CoverageItem[];
+};
+
+/** What on this server is not backed up by anything. */
+export type CoverageReport = {
+  domains: CoverageDomain[];
+  total: number;
+  protected: number;
+};
+
+/**
+ * GET /api/coverage: the items nothing backs up.
+ *
+ * Distinct from getStatus(), which is per domain: it reports whether the items
+ * that ARE scheduled ran on time and cannot see the container nobody ever
+ * added.
+ */
+export function getCoverage(): Promise<OkEnvelope & { coverage: CoverageReport }> {
+  return fetchJSON("/api/coverage");
+}
+
+/** An SMB or WebDAV destination as the form describes it. */
+export type RcloneRemoteForm = {
+  name: string;
+  type: "smb" | "webdav";
+  host?: string;
+  share?: string;
+  url?: string;
+  vendor?: string;
+  user: string;
+  password: string;
+};
+
+/**
+ * POST /api/offsite/rclone-remote: store an SMB or WebDAV destination.
+ *
+ * The password is obscured server-side by rclone itself and never stored in
+ * the clear. On success the answer carries the finished repository location to
+ * paste into a backup path, because "name:share/path" is the shape that goes
+ * wrong quietly.
+ */
+export function addRcloneRemote(
+  form: RcloneRemoteForm
+): Promise<OkEnvelope & { location?: string }> {
+  return fetchJSON("/api/offsite/rclone-remote", {
+    method: "POST",
+    body: JSON.stringify(form),
+  });
+}
+
+export type AnomalySeverity = "critical" | "warning" | "info";
+export type AnomalyState = "open" | "resolved" | "acknowledged" | "expected";
+export type AnomalyDetector =
+  | "new_data"
+  | "source"
+  | "duration"
+  | "reliability"
+  | "integrity"
+  | "capacity";
+export type AnomalyScopeKind = "item" | "dump" | "zfsds" | "domain" | "volume";
+
+/** The backup a finding about lost data says to restore from. */
+export type RestorePointRef = {
+  runId: string;
+  snapshotId: string;
+  at: number;
+};
+
+/**
+ * One finding. The backend sends ids and numbers only: the sentence a reader
+ * sees is built in lib/anomalies.ts, and `name` is empty wherever the label is
+ * a translated one (flash, config, a whole domain, the storage volume).
+ */
+export type AnomalyView = {
+  id: string;
+  detector: AnomalyDetector;
+  metric: string;
+  severity: AnomalySeverity;
+  state: AnomalyState;
+  scopeKind: AnomalyScopeKind;
+  scopeId: string;
+  targetId: string;
+  domain: string;
+  /** ZFS dataset for a zfsds row, "" otherwise. */
+  part: string;
+  /** The named off-site target of a restore-check row, "" otherwise. */
+  targetName: string;
+  name: string;
+  runId: string;
+  lastRunId: string;
+  lastRunAt: number;
+  /** Only on the findings that mean data was lost. */
+  lastGood?: RestorePointRef;
+  /** The backups such a finding was raised and last seen on. */
+  flaggedSnapshots?: string[];
+  observed: number;
+  expected: number;
+  threshold: number;
+  samples: number;
+  sensitivity: string;
+  details: Record<string, number | boolean | string>;
+  occurrences: number;
+  firstSeenAt: number;
+  lastSeenAt: number;
+  recoveredAt: number;
+  resolvedAt: number;
+  ackedAt: number;
+  clearedAt: number;
+  ackNote: string;
+  notifiedAt: number;
+  /** Whether this condition can be marked as expected. */
+  expectable: boolean;
+  /** Whether this finding is pausing the deletion of old backups. */
+  retentionHeld: boolean;
+  /** A settled row whose condition has not cleared. */
+  stillPresent: boolean;
+};
+
+/** The figures the sidebar, the dashboard card and the Settings card poll. */
+export type AnomalySummary = {
+  enabled: boolean;
+  /** False until the first full pass of this process has run. */
+  ready: boolean;
+  /** Grows with every pass and every user action; the hooks refetch on it. */
+  generation: number;
+  open: Record<AnomalySeverity, number>;
+  recoveredCritical: number;
+  learningItems: number;
+  retentionHeld: number;
+  evalErrors: number;
+  /** No channel or an explicit "never": nothing is pushed. */
+  notifyMuted: boolean;
+  backfill: {
+    slots: number;
+    done: number;
+    failed: number;
+    filled: number;
+    withoutSummary: number;
+  };
+  /** Repositories whose backend answers no free-space question, by name. */
+  unmeasuredVolumes: string[];
+};
+
+/** A series that belongs to an item: its database dumps, or one ZFS dataset. */
+export type AnomalySeriesInfo = {
+  part: string;
+  learning: { samples: number; needed: number };
+  typical: { sourceBytes: number | null; resticMs: number | null };
+  open: Record<AnomalySeverity, number>;
+  retentionHeld: boolean;
+};
+
+/** One watched item on the Items tab. */
+export type AnomalyItem = {
+  targetId: string;
+  domain: string;
+  name: string;
+  /** Included in the schedule, in an enabled domain. */
+  scheduled: boolean;
+  /** The item's own override, "" when it follows the global setting. */
+  sensitivity: string;
+  effective: string;
+  notifyMin: string;
+  effectiveNotifyMin: string;
+  learning: {
+    samples: number;
+    needed: number;
+    newData: number;
+    source: number;
+    duration: number;
+    noData: boolean;
+  };
+  /** Null per field while the rule behind it is still learning. */
+  typical: {
+    sourceBytes: number | null;
+    newDataBytes: number | null;
+    resticMs: number | null;
+  };
+  dump: AnomalySeriesInfo | null;
+  datasets: AnomalySeriesInfo[];
+  open: Record<AnomalySeverity, number>;
+  retentionHeld: boolean;
+  /** When the selection was last re-based, 0 when it never was. */
+  selectionSince: number;
+  expectations: {
+    scopeKind: string;
+    part: string;
+    family: string;
+    sinceAt: number;
+    ceiling: number;
+    updatedAt: number;
+  }[];
+};
+
+/**
+ * The listing's query. `state` takes "open", "closed", "all" or a comma list;
+ * `scope` is "item:<targetId>", "domain:<domain>:<source>" or "volume:<key>".
+ * An unknown value is refused with code "bad-filter" rather than quietly
+ * answering an empty page.
+ */
+export type AnomalyFilter = {
+  state?: string;
+  severity?: string;
+  detector?: string;
+  domain?: string;
+  scope?: string;
+  since?: number;
+  limit?: number;
+  cursor?: string;
+};
+
+/** GET /api/anomalies */
+export function getAnomalies(
+  f: AnomalyFilter = {}
+): Promise<OkEnvelope & { anomalies: AnomalyView[]; nextCursor: string }> {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(f)) {
+    if (value !== undefined && value !== "") query.set(key, String(value));
+  }
+  const suffix = query.toString();
+  return fetchJSON(`/api/anomalies${suffix ? `?${suffix}` : ""}`);
+}
+
+/**
+ * GET /api/anomalies/summary is served from memory and polled by the layout.
+ * Go sends an empty list as null unless every path that builds it allocates
+ * one, and every reader takes the list's length.
+ */
+export async function getAnomalySummary(): Promise<
+  OkEnvelope & { summary: AnomalySummary }
+> {
+  const res = await fetchJSON<OkEnvelope & { summary: AnomalySummary }>("/api/anomalies/summary");
+  if (!res.ok || !res.summary) return res;
+  return { ...res, summary: { ...res.summary, unmeasuredVolumes: res.summary.unmeasuredVolumes ?? [] } };
+}
+
+/** GET /api/anomalies/{id} */
+export function getAnomaly(
+  id: string
+): Promise<OkEnvelope & { anomaly: AnomalyView }> {
+  return fetchJSON(`/api/anomalies/${encodeURIComponent(id)}`);
+}
+
+export type AnomalyActionResult = OkEnvelope & {
+  changed: number;
+  skipped: number;
+  /** How many retention holds this call ended. */
+  released: number;
+};
+
+/**
+ * POST /api/anomalies/acknowledge settles what the user has seen. This
+ * releases the hold on deleting old backups of those series, so it is the one
+ * anomaly action with a consequence beyond the page.
+ */
+export function acknowledgeAnomalies(
+  ids: string[],
+  note?: string
+): Promise<AnomalyActionResult> {
+  return fetchJSON("/api/anomalies/acknowledge", {
+    method: "POST",
+    body: JSON.stringify({ ids, note: note ?? "" }),
+  });
+}
+
+/** POST /api/anomalies/expected settles and records the new level as normal. */
+export function markAnomaliesExpected(
+  ids: string[],
+  note?: string
+): Promise<AnomalyActionResult> {
+  return fetchJSON("/api/anomalies/expected", {
+    method: "POST",
+    body: JSON.stringify({ ids, note: note ?? "" }),
+  });
+}
+
+/** GET /api/anomalies/items */
+export function getAnomalyItems(): Promise<
+  OkEnvelope & { items: AnomalyItem[] }
+> {
+  return fetchJSON("/api/anomalies/items");
+}
+
+/**
+ * PUT /api/anomalies/items/{targetId}/prefs carries one item's overrides. A key
+ * that is left out keeps its stored value, an empty one follows the global setting,
+ * so the two controls can save on their own.
+ */
+export function setItemAnomalyPrefs(
+  targetId: string,
+  prefs: { sensitivity?: string; notifyMin?: string }
+): Promise<OkEnvelope> {
+  return fetchJSON(
+    `/api/anomalies/items/${encodeURIComponent(targetId)}/prefs`,
+    { method: "PUT", body: JSON.stringify(prefs) }
+  );
+}
+
+/** DELETE one expectation, so its rule watches the series again. */
+export function forgetAnomalyExpectation(
+  targetId: string,
+  family: string,
+  scope = "item",
+  part = ""
+): Promise<OkEnvelope> {
+  const query = new URLSearchParams({ scope });
+  if (part) query.set("part", part);
+  return fetchJSON(
+    `/api/anomalies/items/${encodeURIComponent(targetId)}/expectations/` +
+      `${encodeURIComponent(family)}?${query.toString()}`,
+    { method: "DELETE" }
+  );
+}
+
+/** One MCP key as the settings card sees it. The key itself is handed out once
+ *  at creation and never again; `hint` is what tells two of them apart. */
+export interface McpKeyView {
+  id: string;
+  /** A client that signed in through OAuth rather than a key. It has no key to
+   *  replace and no hint. */
+  viaOAuth: boolean;
+  label: string;
+  /** The id in the card's client list of the client the key was made for,
+   *  "" for none. */
+  client: string;
+  hint: string;
+  canStartBackups: boolean;
+  createdAt: number;
+  rotatedAt: number;
+  lastUsedAt: number;
+  /** Address of the last request that used the key, "" when it has not been used. */
+  lastUsedFrom: string;
+  revokedAt: number;
+  revokedReason:
+    | ""
+    | "user"
+    | "config-restore"
+    | "replaced"
+    | "expired"
+    | "refresh-reuse"
+    | "code-replay"
+    | "client"
+    | "oauth-off"
+    | "oauth-moved";
+  /** The run history still names this key, so purging it would orphan those rows. */
+  inUse: boolean;
+  unusable: "" | "app-key-changed";
+  /** Tool calls since the midnight listMcpKeys sent. */
+  callsToday: number;
+}
+
+/** The certificate the web interface serves, from GET /api/mcp/keys. */
+export interface McpCertificateInfo {
+  selfIssued: boolean;
+  names: string[];
+  fingerprint: string;
+}
+
+export interface McpKeysResponse extends OkEnvelope {
+  endpointPath: string;
+  limit: number;
+  authEnabled: boolean;
+  /** False when the request came in under a public-looking host name while no
+   *  login password is set: keys can then neither be created nor replaced. */
+  hostAllowsKeys: boolean;
+  startsPerHour: number;
+  cooldownMinutes: number;
+  itemStartsPerDay: number;
+  certificate: McpCertificateInfo | null;
+  keys: McpKeyView[];
+  revoked: McpKeyView[];
+  oauth: McpOAuthView;
+}
+
+/** Sign-in through OAuth for clients that cannot take a key. `active` is what
+ *  the server offers: the switch, a public address and a login password. */
+export interface McpOAuthView {
+  enabled: boolean;
+  issuer: string;
+  active: boolean;
+  grantLimit: number;
+  connectorPath: string;
+}
+
+export function setMcpOAuth(enabled: boolean, issuer: string): Promise<OkEnvelope & { oauth?: McpOAuthView }> {
+  return fetchJSON("/api/mcp/oauth", {
+    method: "PUT",
+    body: JSON.stringify({ enabled, issuer }),
+  });
+}
+
+/** What the consent page shows about the client asking to sign in. `known`
+ *  is the id of a client the card has a mark for, decided by where the client
+ *  returns to. */
+export interface OAuthConsentClient {
+  id: string;
+  name: string;
+  known: string;
+  redirectHost: string;
+  loopback: boolean;
+}
+
+export interface OAuthConsentInfo extends OkEnvelope {
+  client?: OAuthConsentClient;
+  ticket?: string;
+  limitReached?: boolean;
+  grantLimit?: number;
+}
+
+/** GET /api/oauth/authorize with the query the client sent to /oauth/authorize. */
+export function getOAuthConsent(search: string): Promise<OAuthConsentInfo> {
+  return fetchJSON(`/api/oauth/authorize${search}`);
+}
+
+export function answerOAuthConsent(
+  ticket: string,
+  allow: boolean,
+  canStartBackups: boolean
+): Promise<OkEnvelope & { redirect?: string }> {
+  return fetchJSON("/api/oauth/authorize", {
+    method: "POST",
+    body: JSON.stringify({ ticket, allow, canStartBackups }),
+  });
+}
+
+/** The answer to creating or replacing a key: the secret, shown once. */
+export interface McpKeySecretResponse extends OkEnvelope {
+  key?: string;
+  item?: McpKeyView;
+}
+
+export const MCP_CERTIFICATE_URL = "/api/mcp/certificate";
+
+export function listMcpKeys(): Promise<McpKeysResponse> {
+  // The server counts a key's calls today from this browser's midnight, which
+  // is the day the operator reading the card means.
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  return fetchJSON(`/api/mcp/keys?since=${Math.floor(midnight.getTime() / 1000)}`);
+}
+
+/** One entry of a key's log: a tool call, or a request the endpoint refused
+ *  before any tool ran, which leaves `tool` empty. `outcome` is "ok" or the
+ *  refusal code; `runId` names the run a cancel was about. */
+export interface McpKeyEvent {
+  at: number;
+  tool: string;
+  outcome: string;
+  runId: string;
+}
+
+/** GET /api/mcp/keys/{id}/activity: what the key did, newest first, and the
+ *  newest backups it started. */
+export interface McpKeyActivity extends OkEnvelope {
+  events: McpKeyEvent[];
+  runs: Run[];
+}
+
+export function getMcpKeyActivity(id: string): Promise<McpKeyActivity> {
+  return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}/activity`);
+}
+
+export function createMcpKey(
+  label: string,
+  canStartBackups: boolean,
+  client: string
+): Promise<McpKeySecretResponse> {
+  return fetchJSON("/api/mcp/keys", {
+    method: "POST",
+    body: JSON.stringify({ label, canStartBackups, client }),
+  });
+}
+
+export function updateMcpKey(
+  id: string,
+  patch: { label?: string; canStartBackups?: boolean }
+): Promise<OkEnvelope & { item?: McpKeyView }> {
+  return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function rotateMcpKey(id: string): Promise<McpKeySecretResponse> {
+  return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}/rotate`, { method: "POST" });
+}
+
+export function revokeMcpKey(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}/revoke`, { method: "POST" });
+}
+
+export function purgeMcpKey(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** Reissues BombVault's own certificate with `host` among its names, so a
+ *  client reaching it at that address trusts it. */
+export function addMcpCertificateName(
+  host: string
+): Promise<OkEnvelope & { certificate?: McpCertificateInfo }> {
+  return fetchJSON("/api/mcp/certificate/names", {
+    method: "POST",
+    body: JSON.stringify({ host }),
+  });
 }

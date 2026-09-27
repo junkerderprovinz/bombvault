@@ -296,19 +296,19 @@ func (c *Client) Exec(ctx context.Context, name string, cmd []string) error {
 		return fmt.Errorf("dockercli: exec attach: %w", err)
 	}
 	defer att.Close()
-	var outBuf, errBuf bytes.Buffer
-	// Cap the captured output: we only keep a short tail for the error reason, so
-	// a hook flooding stdout cannot balloon memory (the rest of the stream is
-	// drained-and-discarded so the exec still finishes).
-	limited := io.LimitReader(att.Reader, 64<<10)
-	_, _ = stdcopy.StdCopy(&outBuf, &errBuf, limited)
-	_, _ = io.Copy(io.Discard, att.Reader) // drain any remainder past the cap
+	outBuf, errBuf, err := drainExecOutput(ctx, att.Reader, att.Close)
+	if err != nil {
+		return fmt.Errorf("dockercli: exec: %w", err)
+	}
 
-	insp, err := c.api.ContainerExecInspect(ctx, created.ID)
+	exitCode, err := waitExecExit(ctx, func(ctx context.Context) (bool, int, error) {
+		insp, err := c.api.ContainerExecInspect(ctx, created.ID)
+		return insp.Running, insp.ExitCode, err
+	}, execExitPoll, execExitWait)
 	if err != nil {
 		return fmt.Errorf("dockercli: exec inspect: %w", err)
 	}
-	if insp.ExitCode != 0 {
+	if exitCode != 0 {
 		reason := strings.TrimSpace(errBuf.String())
 		if reason == "" {
 			reason = strings.TrimSpace(outBuf.String())
@@ -316,9 +316,71 @@ func (c *Client) Exec(ctx context.Context, name string, cmd []string) error {
 		if len(reason) > 200 {
 			reason = reason[len(reason)-200:]
 		}
-		return fmt.Errorf("hook exited %d: %s", insp.ExitCode, reason)
+		return fmt.Errorf("hook exited %d: %s", exitCode, reason)
 	}
 	return nil
+}
+
+// How long Exec keeps asking whether a finished stream also means a finished
+// process. The daemon records the exit code from its own event handler, apart
+// from closing the output, so the two are milliseconds apart in practice; the
+// wait only has to outlast that gap, not the hook.
+var (
+	execExitPoll = 50 * time.Millisecond
+	execExitWait = 10 * time.Second
+)
+
+// drainExecOutput reads an exec attach to the end and keeps a capped copy of
+// stdout and stderr for the failure reason. The cap stops a hook that floods its
+// output from ballooning memory; everything past it is read and discarded so the
+// process can still finish.
+//
+// The attach is a hijacked raw connection whose Read never looks at the context,
+// so a hook that hangs inside the container used to hold the backup until the
+// hook itself gave up: the cancel button, BACKUP_MAX_HOURS and shutdown all end
+// in a cancelled context that never reached this read. Closing the attach when
+// the context ends is what unblocks it. The process inside the container keeps
+// running (the daemon starts it detached); the container stop that follows a
+// pre-hook, or the container's own lifetime, ends it.
+func drainExecOutput(ctx context.Context, r io.Reader, closeAttach func()) (stdout, stderr bytes.Buffer, err error) {
+	stop := context.AfterFunc(ctx, closeAttach)
+	defer stop()
+
+	_, _ = stdcopy.StdCopy(&stdout, &stderr, io.LimitReader(r, 64<<10))
+	_, _ = io.Copy(io.Discard, r)
+
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return stdout, stderr, ctxErr
+	}
+	return stdout, stderr, nil
+}
+
+// waitExecExit asks inspect until the process reports it is no longer running
+// and returns its exit code. Reading the code once, straight after the output
+// ended, could see the zero of a process that had not finished yet, and a
+// failing hook would then count as a success.
+func waitExecExit(ctx context.Context, inspect func(context.Context) (running bool, exitCode int, err error), poll, maxWait time.Duration) (int, error) {
+	deadline := time.Now().Add(maxWait)
+	for {
+		if err := ctx.Err(); err != nil {
+			return 0, err
+		}
+		running, code, err := inspect(ctx)
+		if err != nil {
+			return 0, err
+		}
+		if !running {
+			return code, nil
+		}
+		if time.Now().After(deadline) {
+			return 0, fmt.Errorf("process still reported running %s after its output ended", maxWait)
+		}
+		select {
+		case <-ctx.Done():
+			return 0, ctx.Err()
+		case <-time.After(poll):
+		}
+	}
 }
 
 // Remove removes a container by name or ID.

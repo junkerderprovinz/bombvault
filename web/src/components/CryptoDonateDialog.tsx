@@ -82,6 +82,7 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5">
+          <p className="text-sm text-carbon-text">{t("about.donateAppeal")}</p>
           <p className="text-sm text-carbon-textSub">{t("about.cryptoIntro")}</p>
 
           <div className="flex flex-col items-center gap-3 rounded-card bg-carbon-surface2 p-4">
@@ -151,17 +152,17 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
                 aria-label={`${c.name} (${c.symbol})`}
                 title={c.name}
                 onClick={() => pickCoin(c)}
-                style={hueVars(i) as CSSProperties}
+                style={{ ...hueVars(i), "--tile": c.tile.color, "--tile-ink": c.tile.ink } as CSSProperties}
                 // `aspect-square` keeps the tile square in every label mode, so
-                // the grid does not reflow when the mode changes. The hover is
-                // GlimStone's tile grey with its dark ink, and index.css
-                // deepens the marks that would fade on it.
-                className={`glim-coin-tile glim-hue flex aspect-square flex-col items-center justify-center gap-2 rounded-control px-2 transition-colors ${
+                // the grid does not reflow when the mode changes. Under the
+                // pointer a tile lights up in its coin's colour, without a
+                // transition, since the mark would trail the tile.
+                className={`glim-coin-tile glim-hue flex aspect-square flex-col items-center justify-center gap-2 rounded-control px-2 ${
                   reactive ? "glim-reactive " : ""
                 }${
                   c.id === coin.id
-                    ? "glim-active bg-accent text-accentContrast"
-                    : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-tileHover hover:text-carbon-tileHoverInk"
+                    ? "glim-active bg-accent text-accentContrast transition-colors"
+                    : "glim-brand-tile bg-carbon-surface2 text-carbon-textSub"
                 }`}
               >
                 {/* About half the tile. */}

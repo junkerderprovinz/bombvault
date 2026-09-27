@@ -31,6 +31,9 @@ type ListVMTargetsFunc func() ([]store.VMTarget, error)
 // ListFileSetsFunc returns the current list of file sets.
 type ListFileSetsFunc func() ([]store.FileSet, error)
 
+// ListZFSDatasetsFunc returns the current list of ZFS items.
+type ListZFSDatasetsFunc func() ([]store.ZFSDataset, error)
+
 // LastRunFunc returns the time of the last successful backup for a domain, or
 // a zero time when there has been none. It keeps this package independent of
 // the store.
@@ -210,6 +213,21 @@ func DomainRunFileSets(sets []store.FileSet, perItem bool) []store.FileSet {
 	return out
 }
 
+// DomainRunZFSDatasets is the ZFS counterpart of DomainRunTargets. RunZFSJob
+// still checks Enabled.
+func DomainRunZFSDatasets(ds []store.ZFSDataset, perItem bool) []store.ZFSDataset {
+	if !perItem {
+		return ds
+	}
+	out := make([]store.ZFSDataset, 0, len(ds))
+	for _, d := range ds {
+		if classifyItemOverride(d.ScheduleCadence).inDomainRun {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
 // DomainRunVMTargets is the VM counterpart of DomainRunTargets.
 func DomainRunVMTargets(vms []store.VMTarget, perItem bool) []store.VMTarget {
 	if !perItem {
@@ -263,6 +281,17 @@ func DomainRunHasFileWork(sets []store.FileSet) bool {
 	return false
 }
 
+// DomainRunHasZFSWork is the ZFS counterpart of DomainRunHasWork. It checks
+// Enabled, as RunZFSJob does.
+func DomainRunHasZFSWork(ds []store.ZFSDataset) bool {
+	for _, d := range ds {
+		if d.Enabled {
+			return true
+		}
+	}
+	return false
+}
+
 // DomainGateStore is what a multi-item domain's everyN due-gate reads: the
 // settings (for the per-item switch), the domain's items, and the last
 // successful backup among a given set of them.
@@ -271,6 +300,7 @@ type DomainGateStore interface {
 	ListTargets() ([]store.Target, error)
 	ListVMTargets() ([]store.VMTarget, error)
 	ListFileSets() ([]store.FileSet, error)
+	ListZFSDatasets() ([]store.ZFSDataset, error)
 	LastSuccessfulBackupAmong(ids []string) (time.Time, error)
 }
 
@@ -338,6 +368,27 @@ func FilesDueGate(st DomainGateStore) LastRunFunc {
 		for _, fs := range DomainRunFileSets(sets, settings.PerItemSchedules) {
 			if fs.Enabled {
 				ids = append(ids, fs.ID)
+			}
+		}
+		return st.LastSuccessfulBackupAmong(ids)
+	}
+}
+
+// ZFSDueGate is the ZFS counterpart of FilesDueGate.
+func ZFSDueGate(st DomainGateStore) LastRunFunc {
+	return func() (time.Time, error) {
+		settings, err := st.GetSettings()
+		if err != nil {
+			return time.Time{}, fmt.Errorf("zfs due-gate: read settings: %w", err)
+		}
+		ds, err := st.ListZFSDatasets()
+		if err != nil {
+			return time.Time{}, fmt.Errorf("zfs due-gate: list datasets: %w", err)
+		}
+		ids := make([]string, 0, len(ds))
+		for _, d := range DomainRunZFSDatasets(ds, settings.PerItemSchedules) {
+			if d.Enabled {
+				ids = append(ids, d.ID)
 			}
 		}
 		return st.LastSuccessfulBackupAmong(ids)
@@ -641,6 +692,8 @@ type Scheduler struct {
 	listVMsFn      ListVMTargetsFunc
 	backupFiles    BackupFunc
 	listFileSetsFn ListFileSetsFunc
+	backupZFS      BackupFunc
+	listZFSFn      ListZFSDatasetsFunc
 	backupFlash    func() error
 	configJob      func() error
 	replicateOffFn func(domain string) error
@@ -839,6 +892,13 @@ func (s *Scheduler) SetFilesJob(backupFilesFn BackupFunc, listFn ListFileSetsFun
 	s.listFileSetsFn = listFn
 }
 
+// SetZFSJob wires scheduled ZFS backups: backupZFSFn is called with each due
+// item's ID and listFn returns the items when the job fires. Call before Reload.
+func (s *Scheduler) SetZFSJob(backupZFSFn BackupFunc, listFn ListZFSDatasetsFunc) {
+	s.backupZFS = backupZFSFn
+	s.listZFSFn = listFn
+}
+
 // SetFlashJob wires the scheduled flash backup. Flash is a singleton (the Unraid
 // USB), so the job takes no arguments. Call before Reload.
 func (s *Scheduler) SetFlashJob(backupFlashFn func() error) {
@@ -1025,20 +1085,38 @@ type domainSpec struct {
 
 // Reload registers all entries from settings, replacing earlier ones, so it can
 // be called after every settings change. It passes no last-run queries, so a
-// backup domain with an everyN cadence is not registered; ReloadWithDueChecks
+// backup domain with an everyN cadence is not registered; ReloadWithGates
 // handles those.
 func (s *Scheduler) Reload(settings store.Settings) error {
-	return s.ReloadWithDueChecks(settings, nil, nil, nil, nil, nil, nil)
+	return s.ReloadWithGates(settings, DueGates{})
 }
 
-// ReloadWithDueChecks is Reload with a last-run query per backup domain, which
-// the everyN due-gate needs. A nil query means that domain cannot use an everyN
-// cadence. The drill, tamper and digest schedules get theirs from
-// SetJobRunStore instead.
+// DueGates carries one last-run query per backup domain. A nil query means that
+// domain cannot use an everyN cadence.
+type DueGates struct {
+	Containers, VMs, Flash, Config, Files, ZFS, Everything LastRunFunc
+}
+
+// ReloadWithDueChecks is ReloadWithGates with one query per argument and no ZFS
+// gate.
 func (s *Scheduler) ReloadWithDueChecks(
 	settings store.Settings,
 	containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun, everythingLastRun LastRunFunc,
 ) error {
+	return s.ReloadWithGates(settings, DueGates{
+		Containers: containersLastRun,
+		VMs:        vmsLastRun,
+		Flash:      flashLastRun,
+		Config:     configLastRun,
+		Files:      filesLastRun,
+		Everything: everythingLastRun,
+	})
+}
+
+// ReloadWithGates is Reload with a last-run query per backup domain, which the
+// everyN due-gate needs. The drill, tamper and digest schedules get theirs from
+// SetJobRunStore instead.
+func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 	s.reloadMu.Lock()
 	defer s.reloadMu.Unlock()
 
@@ -1097,7 +1175,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 					s.replicateAfterBulkFn("containers")
 				}
 			},
-			lastRun: containersLastRun,
+			lastRun: g.Containers,
 		},
 		{
 			cadence: settings.VMsSchedule,
@@ -1128,7 +1206,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 					s.replicateAfterBulkFn("vms")
 				}
 			},
-			lastRun: vmsLastRun,
+			lastRun: g.VMs,
 		},
 		{
 			cadence: settings.FlashSchedule,
@@ -1143,7 +1221,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: flash job: backup failed: %v", err)
 				}
 			},
-			lastRun: flashLastRun,
+			lastRun: g.Flash,
 		},
 		{
 			cadence: settings.ConfigSchedule,
@@ -1158,7 +1236,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: config job: backup failed: %v", err)
 				}
 			},
-			lastRun: configLastRun,
+			lastRun: g.Config,
 		},
 		{
 			cadence: settings.FilesSchedule,
@@ -1188,7 +1266,37 @@ func (s *Scheduler) ReloadWithDueChecks(
 					s.replicateAfterBulkFn("files")
 				}
 			},
-			lastRun: filesLastRun,
+			lastRun: g.Files,
+		},
+		{
+			cadence: settings.ZFSSchedule,
+			name:    "zfs",
+			off:     !settings.ZFSEnabled,
+			fn: func() {
+				if s.backupZFS == nil || s.listZFSFn == nil {
+					log.Print("schedule: zfs job skipped, ZFS backup not wired (SetZFSJob)")
+					return
+				}
+				ds, err := s.listZFSFn()
+				if err != nil {
+					log.Printf("schedule: zfs job: list datasets: %v", err)
+					return
+				}
+				ds = DomainRunZFSDatasets(ds, settings.PerItemSchedules)
+				if !DomainRunHasZFSWork(ds) {
+					return
+				}
+				s.runAggregatedHC("zfs", func() (int, int, []ItemFailure) {
+					return RunZFSJob(ds, s.backupZFS)
+				})
+				if s.pruneAfterBulkFn != nil {
+					s.pruneAfterBulkFn("zfs")
+				}
+				if s.replicateAfterBulkFn != nil {
+					s.replicateAfterBulkFn("zfs")
+				}
+			},
+			lastRun: g.ZFS,
 		},
 		{
 			cadence: settings.EverythingSchedule,
@@ -1202,7 +1310,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: everything job: backup failed: %v", err)
 				}
 			},
-			lastRun: everythingLastRun,
+			lastRun: g.Everything,
 		},
 	}
 
@@ -1232,6 +1340,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 		offsite("flash", settings.FlashOffsiteSchedule, settings.FlashEnabled),
 		offsite("config", settings.ConfigOffsiteSchedule, settings.ConfigEnabled),
 		offsite("files", settings.FilesOffsiteSchedule, settings.FilesEnabled),
+		offsite("zfs", settings.ZFSOffsiteSchedule, settings.ZFSEnabled),
 	)
 
 	if settings.DrillsEnabled {
@@ -1537,6 +1646,28 @@ func (s *Scheduler) registerPerItemEntries() error {
 			}
 		}
 	}
+	if s.backupZFS != nil && s.listZFSFn != nil {
+		ds, err := s.listZFSFn()
+		if err != nil {
+			log.Printf("schedule: per-item zfs: list datasets: %v", err)
+		} else {
+			for _, d := range ds {
+				if !d.Enabled {
+					continue
+				}
+				sched := classifyItemOverride(d.ScheduleCadence)
+				if !sched.ownEntry {
+					continue
+				}
+				id := d.ID
+				if err := s.addPerItemEntry(sched.Spec, "zfs", func() {
+					s.runZFSItem(id)
+				}); err != nil {
+					return fmt.Errorf("schedule: per-item zfs item %q: %w", d.Dataset, err)
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -1645,6 +1776,35 @@ func (s *Scheduler) runFileSetItem(id string) {
 	}
 }
 
+// runZFSItem is the ZFS counterpart of runFileSetItem and looks the item up by
+// ID as well.
+func (s *Scheduler) runZFSItem(id string) {
+	ds, err := s.listZFSFn()
+	if err != nil {
+		log.Printf("schedule: per-item zfs job: list datasets: %v", err)
+		return
+	}
+	var one *store.ZFSDataset
+	for i := range ds {
+		if ds[i].ID == id {
+			one = &ds[i]
+			break
+		}
+	}
+	if one == nil || !one.Enabled {
+		return
+	}
+	s.runAggregatedHC("zfs", func() (int, int, []ItemFailure) {
+		return RunZFSJob([]store.ZFSDataset{*one}, s.backupZFS)
+	})
+	if s.pruneAfterBulkFn != nil {
+		s.pruneAfterBulkFn("zfs")
+	}
+	if s.replicateAfterBulkFn != nil {
+		s.replicateAfterBulkFn("zfs")
+	}
+}
+
 // CatchUpMissed runs, once, every backup domain that missed its most recent fire
 // while the app was down, as anacron does for a server that is off overnight. A
 // missed domain (see missedRun) runs through the same wrapped cron job a real
@@ -1715,6 +1875,9 @@ func drillTasks(settings store.Settings) []drillTask {
 		if settings.FilesEnabled && settings.FilesOffsite != "" {
 			out = append(out, drillTask{domain: "files", source: "offsite", kind: "dr"})
 		}
+		if settings.ZFSEnabled && settings.ZFSOffsite != "" {
+			out = append(out, drillTask{domain: "zfs", source: "offsite", kind: "dr"})
+		}
 	}
 	return out
 }
@@ -1738,6 +1901,9 @@ func enabledDrillDomains(settings store.Settings) []string {
 	if settings.FilesEnabled {
 		out = append(out, "files")
 	}
+	if settings.ZFSEnabled {
+		out = append(out, "zfs")
+	}
 	return out
 }
 
@@ -1760,6 +1926,9 @@ func immutableOffsiteDomains(settings store.Settings) []string {
 	}
 	if settings.FilesOffsiteImmutable {
 		out = append(out, "files")
+	}
+	if settings.ZFSOffsiteImmutable {
+		out = append(out, "zfs")
 	}
 	return out
 }
@@ -1826,6 +1995,23 @@ func RunFilesJob(sets []store.FileSet, backupFn BackupFunc) (attempted, failed i
 			failed++
 			failures = append(failures, ItemFailure{Name: fs.Name, Reason: err.Error()})
 			log.Printf("schedule: files job: backup %q failed: %v", fs.Name, err)
+		}
+	}
+	return attempted, failed, failures
+}
+
+// RunZFSJob is RunContainersJob for enabled ZFS items. backupFn receives the
+// item's ID, while failures are reported under the root dataset's name.
+func RunZFSJob(ds []store.ZFSDataset, backupFn BackupFunc) (attempted, failed int, failures []ItemFailure) {
+	for _, d := range ds {
+		if !d.Enabled {
+			continue
+		}
+		attempted++
+		if err := backupFn(d.ID); err != nil {
+			failed++
+			failures = append(failures, ItemFailure{Name: d.Dataset, Reason: err.Error()})
+			log.Printf("schedule: zfs job: backup %q failed: %v", d.Dataset, err)
 		}
 	}
 	return attempted, failed, failures

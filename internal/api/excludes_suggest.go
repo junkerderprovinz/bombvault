@@ -197,6 +197,14 @@ type SuggestResult struct {
 	UnexaminedRoots  []string
 	UnreadableRoots  []string
 	PathsUnavailable bool
+	// Advisories are caveats about the CONTAINER rather than about any one
+	// suggested line: things a folder scan cannot see, such as an application
+	// keeping its metadata in a database that runs somewhere else entirely.
+	//
+	// IDs, never prose. The interface maps an id to a translation key, so the
+	// text lives in the 42 locale tables like every other sentence, and an id a
+	// newer server invents renders nothing rather than a raw literal.
+	Advisories []string
 }
 
 // suggestCacheEntry is one container's cached snapshot aggregate. Key pins the
@@ -999,11 +1007,29 @@ func (s *Service) suggestCachePut(name string, e suggestCacheEntry) {
 // currently stat: it reads the backup, so an unmounted array is no reason to
 // withhold the answer it holds. Only the live walk needs a filesystem, and when
 // it has none it says so instead of returning an empty list.
-func (s *Service) SuggestExcludes(ctx context.Context, name, source string) (SuggestResult, error) {
+func (s *Service) SuggestExcludes(ctx context.Context, name, source string) (out SuggestResult, err error) {
 	in, err := s.docker.Inspect(ctx, name)
 	if err != nil {
 		return SuggestResult{}, fmt.Errorf("inspect container: %w", err)
 	}
+
+	// Attached on EVERY return path, through a named result and a defer, because
+	// a caveat about how this application stores its data is true whether or not
+	// a single exclusion is offered. Three of the returns below are early ones,
+	// and one of them, the stateless path, is exactly where an Immich install
+	// whose media sits on an unselected share ends up: the folder scan has
+	// nothing to say there, and the database in the other container is still
+	// missing from the backup.
+	image := in.Config.Image
+	if image == "" {
+		image = in.Image
+	}
+	advisories := appAdvisoriesFor(image)
+	defer func() {
+		if len(advisories) > 0 {
+			out.Advisories = advisories
+		}
+	}()
 	configured := s.configuredBackupPaths(name, in)
 	if len(configured) == 0 {
 		// Genuinely stateless: no selection, no appdata mount. Nothing to scan and
@@ -1183,11 +1209,16 @@ func (h *Handler) handleExcludesSuggest(w http.ResponseWriter, r *http.Request) 
 		// A failed index read is not a failed REQUEST: the panel stays up, states
 		// that it could not finish reading the backup, and offers a live scan.
 		if errors.Is(err, errSuggestIndexRead) {
+			// The advisories travel even here. Whether the index could be read
+			// says nothing about where this application keeps its database, and
+			// an operator who reaches this branch is the LAST one who should be
+			// left without that warning.
 			writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 				"suggestions": []ExcludeSuggestion{},
 				"truncated":   false,
 				"source":      suggestSourceSnapshot,
 				"indexFailed": true,
+				"advisories":  res.Advisories,
 			}))
 			return
 		}
@@ -1208,5 +1239,6 @@ func (h *Handler) handleExcludesSuggest(w http.ResponseWriter, r *http.Request) 
 		"unreadableRoots":  res.UnreadableRoots,
 		"pathsUnavailable": res.PathsUnavailable,
 		"indexFailed":      false,
+		"advisories":       res.Advisories,
 	}))
 }

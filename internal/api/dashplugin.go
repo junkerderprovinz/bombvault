@@ -45,7 +45,7 @@ const (
 // dashPluginOutputMax caps the transcript tail returned to the UI.
 const dashPluginOutputMax = 1500
 
-var errDashPluginNoSSH = errors.New("host SSH is not configured (set it up in Settings → VM Backup over SSH)")
+var errDashPluginNoSSH = errors.New("host SSH is not configured (set it up in Settings, System, Host SSH)")
 
 // dashOutputTail returns the last dashPluginOutputMax bytes of a transcript,
 // where a plugin install puts its failure reason.

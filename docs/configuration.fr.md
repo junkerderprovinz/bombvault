@@ -7,10 +7,10 @@ Cette page couvre les variables d'environnement du conteneur, les montages fourn
 | Variable | Requise | Description |
 |---|---|---|
 | `APP_KEY` | **Oui** | Secret hexadécimal de 32 octets (64 caractères hexa) utilisé pour dériver le mot de passe du dépôt restic. Générez avec `openssl rand -hex 32`. Gardez-le en lieu sûr : le perdre rend les sauvegardes chiffrées irrécupérables. |
-| `LIBVIRT_HOST` | Pour les VMs | Hôte Unraid atteint via SSH pour la sauvegarde de VM (par défaut `host.docker.internal` ; le modèle pré-remplit un placeholder d'IP LAN). Utilisez l'IP LAN de votre Unraid, requis sur un réseau `br0.x` personnalisé. |
-| `LIBVIRT_SSH_PORT` | Non | Port SSH de l'hôte pour la sauvegarde de VM (par défaut `22`). |
-| `LIBVIRT_SSH_USER` | Non | Utilisateur SSH sur l'hôte pour la sauvegarde de VM (par défaut `root`). |
-| `LIBVIRT_URI` | Non | URI de connexion libvirt complète, utilisée **telle quelle** au lieu d'en construire une à partir des trois variables `LIBVIRT_*` ci-dessus (qui sont alors ignorées pour la chaîne de connexion). Non définie par défaut. Nécessaire sur TrueNAS Scale, dont le libvirtd écoute sur un socket non standard que le format construit automatiquement ne peut pas exprimer : `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Voir la section TrueNAS Scale de [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Pour les VMs | Hôte Unraid atteint via SSH pour la sauvegarde de VM (par défaut `host.docker.internal` ; le modèle pré-remplit un placeholder d'IP LAN). Utilisez l'IP LAN de votre Unraid, requis sur un réseau `br0.x` personnalisé. Sert aussi aux sauvegardes de jeux de données ZFS (champ du modèle **Host SSH: Address**) ; la valeur fictive `192.168.x.x` compte comme non définie. |
+| `LIBVIRT_SSH_PORT` | Non | Port SSH de l'hôte pour la sauvegarde de VM (par défaut `22`). Champ du modèle **Host SSH: Port**, aussi pour les jeux de données ZFS. |
+| `LIBVIRT_SSH_USER` | Non | Utilisateur SSH sur l'hôte pour la sauvegarde de VM (par défaut `root`). Champ du modèle **Host SSH: User**, aussi pour les jeux de données ZFS. |
+| `LIBVIRT_URI` | Non | URI de connexion libvirt complète, utilisée **telle quelle** au lieu d'en construire une à partir des trois variables `LIBVIRT_*` ci-dessus (qui sont alors ignorées pour la chaîne de connexion). Non définie par défaut. Nécessaire sur TrueNAS Scale, dont le libvirtd écoute sur un socket non standard que le format construit automatiquement ne peut pas exprimer : `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Voir la section TrueNAS Scale de [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Si c'est une URI `qemu+ssh://`, chacune des variables `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` et `LIBVIRT_SSH_PORT` qui n'est pas définie en est tirée, y compris pour les commandes SSH de BombVault (transfert NVRAM, jeux de données ZFS). |
 | `PORT` | Non | Port HTTP (par défaut `3000` ; utilisé uniquement avec `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Non | Port HTTPS (par défaut `3443` ; le modèle le publie en 1:1, de sorte que l'interface web répond sur `https://<ip>:3443`). |
 | `HTTP_ONLY` | Non | Mettez `true` pour désactiver l'écouteur HTTPS auto-signé et ne servir que du HTTP simple (pour un usage derrière un reverse proxy terminant le TLS). |
@@ -20,13 +20,16 @@ Cette page couvre les variables d'environnement du conteneur, les montages fourn
 | `PLATFORM` | Non | Force la plateforme sur laquelle BombVault se considère comme s'exécutant, au lieu de la détecter automatiquement : `unraid`, `generic` ou `truenas` (non définie par défaut : détecte automatiquement Unraid en sondant son marqueur `dockerMan` sous le montage flash, sinon `generic` ; une valeur non reconnue retombe elle aussi sur `generic`, journalisé). Définissez-la explicitement sur un hôte Docker générique ou sur TrueNAS Scale plutôt que de vous fier à la sonde automatique propre à Unraid : c'est ce que fait le fichier compose générique. Modifie la convention de repli appdata, les valeurs par défaut de destination de restauration entre instances, et si les étapes de notification/plugin compagnon propres à Unraid sont tentées ou non (voir `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Non | Le nom du conteneur BombVault lui-même, afin qu'il ne se sauvegarde jamais (et donc ne s'arrête jamais) lui-même. |
 | `BACKUP_MAX_HOURS` | Non | Nombre maximal d'heures d'horloge qu'une exécution de sauvegarde unique peut détenir le verrou de son domaine avant d'être forcée à s'annuler (une protection pour qu'une exécution coincée ne puisse pas bloquer le domaine à jamais). Vide (la valeur par défaut) utilise `48`. Augmentez-le pour de très grandes ou lentes sauvegardes cloud (une exécution annulée au plafond échoue avec `context deadline exceeded`). Mettez `0` pour désactiver complètement le plafond. |
+| `DB_DUMP_MAX_HOURS` | Non | Heures pendant lesquelles un dump automatique de base de données peut tourner avant d'être arrêté. Vide (par défaut) utilise `6` ; les valeurs admises vont de `1` à `48`, et la limite reste une heure sous `BACKUP_MAX_HOURS` (à la moitié de celui-ci quand il est inférieur à deux heures), pour qu'un long dump soit coupé par sa propre limite et signalé comme tel au lieu d'emporter la sauvegarde avec lui. Un dump qui n'avance plus est arrêté plus tôt, après `BACKUP_STALL_HOURS`. Un dump arrêté échoue pour lui-même et la sauvegarde du conteneur continue. Sur Unraid, ajoutez la variable au conteneur BombVault avec **Add another Path, Port, Variable**. |
 | `TZ` | Non | Fuseau horaire pour le planificateur (par exemple `Europe/Berlin`). **Si elle n'est pas définie, toutes les planifications s'exécutent en UTC** : une planification à 02:30 démarre alors à 02:30 UTC et non à l'heure locale. Sur Unraid, vous ne le définissez jamais vous-même : le système transmet son propre fuseau horaire à chaque conteneur. |
 
 ## Montages
 
 Montez le socket Docker, la flash (`/boot`) et la racine **Host Data** (`/mnt`) comme indiqué dans le modèle CA. Les *sources* et les *destinations* de sauvegarde vivent toutes deux sous Host Data, et elle est montée en **slave** afin qu'un partage distant qui se monte après le démarrage du conteneur (par exemple sous `/mnt/remotes`) devienne visible sans redémarrage.
 
-Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files}`, créés à la première sauvegarde. Changez l'emplacement à tout moment dans **Paramètres, Chemins de sauvegarde**.
+Les sauvegardes de jeux de données ZFS ont aussi besoin de ce mode : l'hôte ne monte l'instantané d'un jeu de données qu'après le démarrage du conteneur. Voir [Jeux de données ZFS](zfs-datasets.md).
+
+Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, créés à la première sauvegarde. Changez l'emplacement à tout moment dans **Paramètres, Chemins de sauvegarde**.
 
 !!! note "Vérification de l'intégration hôte"
     Ouvrez `/spike` dans l'interface web après le démarrage du conteneur. Il sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante.
@@ -39,6 +42,7 @@ Pour chaque conteneur, BombVault choisit lui-même les montages bind et les volu
 - **Les volumes Docker nommés** sont toujours inclus, car ils n'ont pas d'équivalent jetable et il n'y a donc rien à filtrer, **mais seulement si le chemin de stockage hôte réel du volume est lui-même accessible via le montage Host Data**, exactement comme tout autre chemin hôte sauvegardé par BombVault. Le pilote de volumes locaux par défaut range un volume sous la racine de données du démon, soit `/var/lib/docker/volumes/<nom>/_data` sauf personnalisation (à vérifier avec `docker info -f '{{.DockerRootDir}}'`). Cet emplacement n'est PAS couvert par le montage Host Data étroit, à répertoire unique, que le `docker-compose.yml` générique utilise par défaut. Un volume inaccessible est ignoré en silence, ce n'est pas une erreur. Pour réellement sauvegarder les volumes nommés sur un hôte générique, pointez Host Data (et `HOST_SOURCE_ROOT`) vers un ancêtre commun qui couvre aussi la racine de données de Docker : voyez le commentaire Host Data du fichier compose pour le compromis (Unraid contourne le problème en montant tout `/mnt`, sa propre convention universelle de premier niveau, pour la même raison).
 - **Répertoire de projet Docker Compose :** si le conteneur porte le label standard `com.docker.compose.project.working_dir` (posé automatiquement par `docker compose up`), ce répertoire est ajouté lui aussi, qu'un bind ait correspondu ou non à un segment de racine de données.
 - **Dérogation par le label `bombvault.data` :** posez le label `bombvault.data=true` sur un conteneur pour inclure TOUS ses montages bind, pour une organisation qu'aucune des deux conventions ci-dessus ne rattrape (par exemple un unique bind `/srv/plex/config` sans projet Compose). Toute valeur non vide autre que `false` compte comme vraie ; un label absent ou `bombvault.data=false` ne change rien.
+- **Label `bombvault.dbdump` :** posez `bombvault.dbdump=false` sur un conteneur pour désactiver son dump automatique de base de données (`0`, `no` et `off` font la même chose), ou nommez le moteur (`postgres`, `mysql`, `mariadb`) pour vidanger un conteneur que BombVault ne reconnaît pas de lui-même. Le label l'emporte sur l'interrupteur de la carte du conteneur, qui est la voie habituelle sur Unraid.
 
 ## Modèle de sécurité
 
@@ -50,9 +54,14 @@ Pour chaque conteneur, BombVault choisit lui-même les montages bind et les volu
 - Parce que la protection est optionnelle, lorsqu'elle n'est pas définie, toute l'interface et l'API (y compris la configuration hors site, les routes de test de sabotage et le kit de récupération) sont accessibles à quiconque peut atteindre le port. Activez la protection dès que des sauvegardes hors site, immuables ou du chiffrement sont utilisés.
 - N'exécutez BombVault que sur un réseau de confiance et non exposé. Pour un accès distant, placez-le derrière un reverse proxy qui ajoute authentification et TLS. Les réponses portent des en-têtes de sécurité de base (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Derrière un reverse proxy, chaque requête porte l'adresse du proxy : sans `TRUSTED_PROXY`, la limitation des connexions compte tous les clients dans un seul compteur et les échecs d'un attaquant vous bloquent aussi. Indiquez le proxy dans `TRUSTED_PROXY` pour retrouver un comptage par client.
+- Un reverse proxy placé devant BombVault doit transmettre l'en-tête `Authorization` ou `X-API-Key` à `/mcp` et ne doit pas mettre ses réponses en tampon, sinon les assistants ne peuvent pas se connecter. Voir [Serveur MCP](mcp.md#tls).
 - Avec `HTTP_ONLY=true`, le cookie de session perd son indicateur `Secure` (il le doit, pour fonctionner sur du HTTP simple), n'activez donc le mot de passe derrière un proxy terminant le TLS que si la confidentialité importe.
 - La connexion SSH de sauvegarde de VM fait confiance à la clé d'hôte à la première connexion (TOFU) et l'épingle ensuite. Vérifiez la clé de l'hôte hors bande si votre chemin conteneur-vers-hôte n'est pas de confiance.
 - Les sauvegardes sont chiffrées par restic lorsque le chiffrement est activé (Paramètres ; activé par défaut), avec la clé dérivée de `APP_KEY`.
+
+## Serveur MCP {#mcp-server}
+
+Le serveur MCP n'a besoin d'aucune variable d'environnement. Vous l'activez en créant une clé sous **Paramètres, Système, Serveur MCP**, et il répond sur `/mcp` sur le même port que l'interface web (par exemple `https://192.168.1.10:3443/mcp`). Sans clé active, ce chemin répond `404`. Les clients, les certificats et les limites sont décrits sur la page [Serveur MCP](mcp.md).
 
 ## Sauvegarde de VM via SSH
 
@@ -60,7 +69,7 @@ BombVault sauvegarde les VMs KVM/libvirt **sans monter aucun chemin libvirt**. I
 
 Configuration rapide :
 
-1. **Paramètres, Système, Sauvegarde de VM via SSH :** copiez la clé publique affichée.
+1. **Paramètres, Système, SSH de l'hôte :** copiez la clé publique affichée.
 2. Ajoutez-la à l'`/root/.ssh/authorized_keys` d'Unraid (également persistée sur la flash afin qu'elle survive aux redémarrages).
 3. Cliquez sur **Tester la connexion**.
 
@@ -75,12 +84,25 @@ Configurez un réplica hors site dans l'onglet **Paramètres, Hors site**. Voir 
 
 - **Backends :** SMB/CIFS et NFS (montez le partage et pointez-y un Chemin de sauvegarde), backends restic natifs sans rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), ou n'importe quel remote rclone (`rclone:<remote>:<bucket>/path`).
 - **Les identifiants cloud** sont stockés chiffrés sous Paramètres, Hors site, Identifiants cloud.
-- **Les cibles SSH ne nécessitent rien d'installé côté distant.** `sftp:` requiert seulement un serveur SSH. Ajoutez la clé publique de **Paramètres, Système, Sauvegarde de VM via SSH** (aussi disponible à `/config/ssh/id_ed25519.pub`) à l'`~/.ssh/authorized_keys` de l'utilisateur cible.
+- **Les cibles SSH ne nécessitent rien d'installé côté distant.** `sftp:` requiert seulement un serveur SSH. Ajoutez la clé publique de **Paramètres, Système, SSH de l'hôte** (aussi disponible à `/config/ssh/id_ed25519.pub`) à l'`~/.ssh/authorized_keys` de l'utilisateur cible.
 - **Copie hors site :** BombVault réplique les nouveaux instantanés avec `restic copy` au mieux. Le dépôt local reste principal. Chaque domaine a son propre planning hors site, plus un bouton **Répliquer maintenant**.
 - **Plusieurs cibles hors site par domaine :** chaque domaine peut répliquer vers plusieurs destinations hors site à la fois. Ajoutez des cibles supplémentaires dans Paramètres, Hors site, chacune avec son propre dépôt, sa classe de stockage S3, son indicateur append-only, sa rétention et son budget de croissance ; elles répliquent toutes selon le planning hors site de ce domaine. Une configuration hors site unique existante est reprise comme première cible.
 - **Rétention par source :** la politique locale vit dans Paramètres, Chemins et stockage ; la politique hors site dans Paramètres, Hors site (laissez-la entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site).
 - **Limites de bande passante :** plafonnez le débit d'envoi/de téléchargement de restic sous Paramètres, Hors site.
 - **Classe de stockage froid et archivage (S3) :** pour un dépôt hors site S3 natif, choisissez un niveau lisible à la restauration (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Les remotes rclone définissent leur classe dans la config rclone.
+
+## Anomalies {#anomalies}
+
+La détection d'anomalies se règle dans la carte **Anomalies** de **Paramètres, Intégrité**. Chaque contrôle enregistre dès que vous le modifiez, et les trois sous l'interrupteur sont masqués tant que la détection est désactivée.
+
+| Réglage | Par défaut | Effet |
+|---|---|---|
+| **Détecter les anomalies** | Activé | Compare chaque sauvegarde à l'historique propre de l'élément. Désactivé, plus rien de nouveau n'est contrôlé et l'entrée **Anomalies** quitte la barre latérale ; la carte renvoie toujours vers les constats antérieurs. |
+| **Sensibilité** | Équilibrée | Stricte signale des changements plus petits, Permissive seulement les grands. |
+| **Envoyer une notification pour** | Seulement les constats critiques | La gravité minimale qui envoie un message par les canaux configurés dans Notifications. Les échecs répétés de sauvegardes et de dumps et les contrôles de restauration planifiés en échec envoient déjà leur propre message et ne sont pas envoyés deux fois. |
+| **Garder les anciennes sauvegardes quand une source rétrécit fortement ou est réécrite** | Activé | Tant qu'un élément a un constat ouvert pour une source presque vide, un fort rétrécissement ou la plupart de ses données réenregistrées, la rétention et le nettoyage laissent ses anciennes sauvegardes intactes. Accusez réception du constat ou marquez-le comme attendu pour les libérer. |
+
+Chaque élément peut avoir sa propre sensibilité et son propre minimum de notification. Réglez-les dans l'onglet **Éléments** de la page **Anomalies**, ou dans le panneau de l'élément : la section des dossiers d'un conteneur et les réglages d'une VM (tous deux en mode avancé), l'éditeur de dossiers d'un ensemble de dossiers, et les pages **Flash** et **Auto-sauvegarde**. Pour un élément ZFS, ils se trouvent dans son éditeur sur la page **ZFS** et valent pour chaque jeu de données de son arborescence.
 
 ## Réglages portables (exporter et importer) {#portable-settings-export-and-import}
 

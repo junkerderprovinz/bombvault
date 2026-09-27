@@ -113,6 +113,67 @@ func TestBackupVMGracefulZvolFailureFailsWholeRun(t *testing.T) {
 	}
 }
 
+// TestBackupVMGracefulRecordsZvolDisksInRunSummary pins that a VM's block
+// disks count towards its run, so a zvol VM's history is not the file disks
+// alone.
+func TestBackupVMGracefulRecordsZvolDisksInRunSummary(t *testing.T) {
+	file := backup.Summary{
+		SnapshotID: "fileSnap1234", Bytes: 1024,
+		Measured: true, SourceBytes: 4096, SourceFiles: 12, FilesNew: 3, ResticMS: 900,
+	}
+	zvol := backup.Summary{
+		SnapshotID: "zvolSnap5678", Bytes: 2048,
+		Measured: true, SourceBytes: 8192, SourceFiles: 1, FilesNew: 1, ResticMS: 600,
+	}
+
+	t.Run("the disks sum into the run", func(t *testing.T) {
+		vm := &fakeVM{active: true, stateVal: "shut off"}
+		r := &fakeRestic{summary: file}
+		runs := &fakeRuns{}
+		host := &fakeZFSHost{streamSendData: []byte("zvol stream bytes")}
+		zr := &fakeZvolRestic{backupSummary: zvol}
+
+		d := sampleVMBackupDeps(t, vm, r, runs)
+		d.BlockDisks = []backup.VMBlockDisk{{Dataset: "tank/vms/win10/disk1"}}
+		d.ZFSHost = host
+		d.ZvolRestic = zr
+
+		if _, err := backup.BackupVMGraceful(t.Context(), d); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		got := runs.finishOf(t, "run-1").sum
+		if got.SnapshotID != "fileSnap1234" {
+			t.Fatalf("SnapshotID = %q, want the file backup's snapshot", got.SnapshotID)
+		}
+		if got.Bytes != 3072 || got.SourceBytes != 12288 || got.SourceFiles != 13 || got.ResticMS != 1500 {
+			t.Fatalf("summary = %+v, want the file disks and the zvol disk summed", got)
+		}
+		if !got.Measured {
+			t.Fatalf("Measured = false, want a measured run when every part was measured")
+		}
+	})
+
+	t.Run("a failing disk records no metrics", func(t *testing.T) {
+		vm := &fakeVM{active: true, stateVal: "shut off"}
+		r := &fakeRestic{summary: file}
+		runs := &fakeRuns{}
+		host := &fakeZFSHost{snapshotCreateErr: errors.New("dataset does not exist")}
+
+		d := sampleVMBackupDeps(t, vm, r, runs)
+		d.BlockDisks = []backup.VMBlockDisk{{Dataset: "tank/vms/win10/disk1"}}
+		d.ZFSHost = host
+		d.ZvolRestic = &fakeZvolRestic{}
+
+		if _, err := backup.BackupVMGraceful(t.Context(), d); err == nil {
+			t.Fatal("expected an error when the zvol disk backup fails")
+		}
+		got := runs.finishOf(t, "run-1")
+		if got.status != "failed" || got.sum != (backup.Summary{}) {
+			t.Fatalf("finish = %+v, want an empty summary on a failure", got)
+		}
+	})
+}
+
 // TestBackupVMGracefulZvolAttemptsAllDisksAfterOneFails checks that the other
 // disks are still backed up after one fails, so as much data as possible
 // reaches the repository.

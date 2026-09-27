@@ -5,29 +5,24 @@ import { getVMSSH, testVMSSH } from "../../lib/api";
 import { copyText } from "../../lib/clipboard";
 import { useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
+import { authorizeCommand } from "../../lib/sshAuthorize";
 import { useToast } from "../../lib/toast";
 import { Card } from "./shared";
 import { useEffect, useState } from "react";
 
 // VMSSHCard shows BombVault's SSH public key (to authorize on the Unraid host)
-// and a connection test. It fetches its own data so SettingsPage does not
-// need extra state.
+// and a connection test for the link VM and ZFS backups share. It fetches its
+// own data so SettingsPage does not need extra state.
 export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { push } = useToast();
   const [host, setHost] = useState("");
   const [pub, setPub] = useState("");
-  const [testState, setTestState] = useState<"idle" | "testing" | "ok" | "fail">("idle");
+  const [testState, setTestState] = useState<"idle" | "testing" | "ok" | "noLibvirt" | "fail">("idle");
   // Bumped on a failed test; the Test button is keyed on it, so each bump
   // replays its shake.
   const [shake, setShake] = useState(0);
 
-  // Ready-to-paste command that authorizes this key on the Unraid host, both for
-  // the live session and persistently (Unraid restores root.pubkeys on boot).
-  const authorizeCmd = pub
-    ? `mkdir -p /root/.ssh /boot/config/ssh && chmod 700 /root/.ssh
-echo '${pub}' | tee -a /root/.ssh/authorized_keys /boot/config/ssh/root.pubkeys >/dev/null
-chmod 600 /root/.ssh/authorized_keys`
-    : "";
+  const authorizeCmd = authorizeCommand(pub);
 
   useEffect(() => {
     getVMSSH()
@@ -45,7 +40,7 @@ chmod 600 /root/.ssh/authorized_keys`
     try {
       const r = await testVMSSH();
       if (r.ok) {
-        setTestState("ok");
+        setTestState(r.libvirt === false ? "noLibvirt" : "ok");
       } else {
         setTestState("fail");
         push(r.error ?? t("vm.ssh.testFail"), "fail");
@@ -155,6 +150,9 @@ chmod 600 /root/.ssh/authorized_keys`
           />
           {testState === "ok" && (
             <span className="text-sm text-statusOk">{t("vm.ssh.testOk")}</span>
+          )}
+          {testState === "noLibvirt" && (
+            <span className="text-sm text-statusWarn">{t("vm.ssh.testNoLibvirt")}</span>
           )}
           {/* The error itself went to the toast; this only marks the state. */}
           {testState === "fail" && (

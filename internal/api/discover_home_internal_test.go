@@ -67,7 +67,7 @@ func TestDiscoverLeavesAnItemOpenWhenItsRepositoryIsRefused(t *testing.T) {
 	loc := f.root + "/backups/nas-vms-direct"
 	f.hold(loc, snap("aaaa0001", 200, "container:nginx"))
 	writeContainerDef(t, f, loc, "nginx")
-	logs := captureLog(t)
+	logs := watchLog(t)
 	res, err := f.svc.Discover(context.Background(), false)
 	if err != nil || res.Found != 1 {
 		t.Fatalf("Discover = %+v, %v", res, err)

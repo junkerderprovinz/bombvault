@@ -6,7 +6,7 @@ Backupurile locale te protejează de un container pierdut sau o actualizare defe
 
 Păstrează backupul local rapid și adaugă una sau mai multe replici off-site. Setează un depozit per domeniu în fila **Setări, Off-site**. BombVault replică acolo instantaneele noi cu `restic copy` pe bază de best-effort, astfel încât o problemă off-site nu eșuează niciodată backupul local. Depozitul local rămâne principal.
 
-- **Mai multe ținte off-site per domeniu.** Fiecare domeniu (containere, VM-uri, flash, config și seturi de fișiere) poate replica către mai multe destinații off-site simultan, nu doar una, așa că poți păstra, de exemplu, un rest-server pe stația unui prieten și un bucket S3 în paralel. Adaugă ținte suplimentare în Setări, Off-site, fiecare cu propriul depozit, clasă de stocare S3, indicator append-only, retenție și buget de creștere. O configurare off-site unică existentă este preluată neatinsă ca prima țintă, iar fiecare țintă a unui domeniu replică conform programării off-site a acelui domeniu.
+- **Mai multe ținte off-site per domeniu.** Fiecare domeniu (containere, VM-uri, flash, config, seturi de fișiere și seturi de date ZFS) poate replica către mai multe destinații off-site simultan, nu doar una, așa că poți păstra, de exemplu, un rest-server pe stația unui prieten și un bucket S3 în paralel. Adaugă ținte suplimentare în Setări, Off-site, fiecare cu propriul depozit, clasă de stocare S3, indicator append-only, retenție și buget de creștere. O configurare off-site unică existentă este preluată neatinsă ca prima țintă, iar fiecare țintă a unui domeniu replică conform programării off-site a acelui domeniu.
 - **Programare off-site per domeniu** (editată alături de fiecare altă programare în Setări, Programări): las-o goală pentru a replica după fiecare backup local, sau setează o cadență (de exemplu `weekly Sun 03:00`) pentru a trimite off-site mai rar decât faci backup local. Un buton **Replicate now** acoperă rulările la cerere.
 - **Retenția off-site** se află în Setări, Off-site astfel încât să poți păstra copiile off-site mai mult timp ca arhivă. Las-o politica toată zero pentru a nu tăia niciodată automat instantaneele off-site.
 - **Limitele de lățime de bandă** (Setări, Off-site) limitează rata de upload/download restic astfel încât replicarea să nu satureze WAN-ul tău.
@@ -49,7 +49,7 @@ Alegerile de copiere trăiesc în propriile setări ale BombVault. După o recon
 
 Calea de copiere a unui domeniu (Setări, Căi și stocare) nu se limitează la un dosar local: îndreapt-o direct către un depozit restic la distanță (`s3:...`, `rest:http://gazda:8000/depozit`, `sftp:utilizator@gazda:/depozit`, `rclone:remote:bucket/cale`) și BombVault salvează direct acolo, fără copie locală separată și fără pas de replicare. Este o formă cu adevărat diferită de replicarea în afara sediului de mai sus: acolo depozitul local este cel primar, iar cel din afara sediului este o arhivă a lui, pe cât posibil; aici depozitul la distanță **este** cel primar și este singura copie, atâta timp cât nu configurezi și o replicare în afara sediului (sau un al doilea depozit la distanță) pentru acel domeniu.
 
-Fiecare dintre cele cinci câmpuri de cale (Containere, Mașini virtuale, Flash, Configurație, Fișiere) are chiar alături un comutator **Local / La distanță**:
+Fiecare dintre cele șase câmpuri de cale (Containere, Mașini virtuale, Flash, Configurație, Fișiere, Seturi de date ZFS) are chiar alături un comutator **Local / La distanță**:
 
 - **Local** arată exploratorul de dosare obișnuit.
 - **La distanță** îl schimbă cu un simplu câmp de URL, plus un buton care deschide același dialog de test al conexiunii și de acreditări folosit de destinațiile din afara sediului, configurat însă pentru acest depozit primar. De acolo obții:
@@ -152,8 +152,8 @@ O filă dedicată **Recuperare** conduce o instalare nouă sau reconstruită pri
 1. **Restaurează mai întâi propriile setări ale BombVault**, astfel încât căile de backup, țintele off-site și credențialele de care restul fluxului are nevoie să fie precompletate (aplicate printr-o auto-repornire peste socket-ul Docker, astfel încât baza de date de setări în execuție să nu fie niciodată suprascrisă sub un handle deschis).
 2. **Verifică dacă BombVault poate citi backupurile tale** (capcana cheii de criptare, în față).
 3. Îți permite să **îndrepți către depozitul tău existent** (local sau off-site).
-4. **Descoperă** containerele, VM-urile și seturile de fișiere stocate în el.
-5. **Le restaurează pe toate** (lăsate oprite, ca să le pornești deliberat), cu kitul tău de recuperare la un clic distanță.
+4. **Descoperă** containerele, VM-urile, seturile de fișiere și seturile de date ZFS stocate în el.
+5. **Restaurează containerele și VM-urile dintr-odată** (lăsate oprite, ca să le pornești deliberat) și listează seturile de fișiere și elementele ZFS de restaurat unul câte unul; elementele ZFS revin dezactivate. Kitul tău de recuperare e la un clic distanță.
 
 !!! note "Copiile off-site așteaptă după o reconstrucție"
     Când pasul 4 reconstruiește intrări fără setările vechi, replicarea off-site a acelor domenii se suspendă până când amplasarea implicită este confirmată. Vezi [Amplasare per element](#placement).
@@ -174,6 +174,9 @@ Un clic descarcă **cheia principală**, **parola restic derivată** și **loca�
 !!! danger "Stochează kitul de recuperare în afara serverului"
     Kitul conține secretul care decriptează backupurile tale. Păstrează-l undeva în siguranță și separat de server (un manager de parole, o copie printată într-un seif). Dacă pierzi atât BombVault cât și `APP_KEY` fără niciun kit de recuperare, backupurile tale criptate nu pot fi recuperate.
 
+!!! warning "Cel mai nou snapshot nu este întotdeauna cel de restaurat"
+    Începând cu restic 0.17, `restic snapshots` arată dimensiunea fiecărui snapshot. După o pierdere de date, cel mai nou snapshot poate fi cel golit, așa că nu restaura un snapshot mult mai mic decât cele dinaintea lui. După un ransomware poate fi cel criptat, de dimensiune obișnuită. Dacă BombVault încă rulează, uită-te mai întâi pe pagina sa **Anomalii**: ea numește ultimul backup bun. O restaurare nu are nevoie de niciun fel de date despre anomalii din BombVault, iar pauza retenției doar păstrează mai multe snapshoturi.
+
 ### Când kitul nu e la îndemână
 
 Parola nu este stocată nicăieri, se **calculează** din `APP_KEY`. Cu cheia și un shell o poți reproduce singur:
@@ -190,3 +193,27 @@ Este HMAC-SHA256 peste șirul fix `bombvault:restic-repo`, cu octeții bruți ai
     Un depozit ajuns aici prin replicare în afara sediului a fost creat de mașina care l-a trimis, cu `APP_KEY`-ul **ei**. Derivarea din cheia mașinii care primește dă o parolă pe care restic o refuză, ceea ce arată exact ca un depozit corupt fără să fie. Acesta e motivul obișnuit pentru care `restic check` pe un depozit primit cere parola iar și iar.
 
 Deoarece definițiile de recuperare se află **în interiorul** fiecărui depozit (`<repo>/def`, `<repo>/vm-def`), un folder de depozit copiat este complet autonom, așa că kitul plus depozitul este tot ce are nevoie o restaurare bare-metal.
+
+## Recuperarea unui dump de bază de date {#database-dumps}
+
+Un dump de bază de date este un punct de restaurare de sine stătător în depozitul containerelor, cu eticheta `dbdump:<container>` și un singur fișier, `/dbdump/<container>.sql`. BombVault le listează, le descarcă și le importă la **Backupuri**; mai jos sunt aceiași pași doar cu restic, pentru ziua în care BombVault nu este la îndemână.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Etichetele `dbversion:` și `dbname:` de pe fiecare dump spun din ce versiune de server provine și ce baze conține. Un fișier complet se termină cu `-- PostgreSQL database cluster dump complete` sau `-- Dump completed`.
+
+Importă-l într-un container de aceeași versiune sau una mai nouă (PostgreSQL), ori de aceeași versiune majoră (MySQL și MariaDB), pornit o dată cu folderul de date gol ca să se inițializeze. Gazda nu are nevoie de client de bază de date, containerul are unul:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Pentru o singură bază dintr-un dump complet, MySQL și MariaDB acceptă `--one-database <name>` în comanda clientului. Un dump PostgreSQL are câte o secțiune pentru fiecare bază, fiecare începând cu o linie `\connect <name>`: copiază secțiunea într-un fișier propriu și importă-l cu `-d <name>` după ce ai creat baza.
+
+!!! warning "Un dump luat ca root aduce cu el utilizatorii serverului"
+    Un dump complet MySQL sau MariaDB luat ca root conține baza de sistem `mysql`, așa că importul înlocuiește conturile serverului nou, inclusiv parola de root, cu cele din dump. Pe PostgreSQL, `role ... already exists` pentru utilizatorul creat de container este de așteptat și inofensiv.

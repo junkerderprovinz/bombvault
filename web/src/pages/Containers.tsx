@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, getStackDir, ApiError, type ContainerTargetsBody } from "../lib/api";
-import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, PlacementView } from "../lib/api";
+import type { AnomalyItem, Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, PlacementView } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { SelectionTree } from "../components/SelectionTree";
 import { PlacementRow } from "../components/placement/PlacementRow";
@@ -20,6 +20,10 @@ import { Advanced, useAdvanced } from "../lib/advanced";
 import { BackupButton } from "../components/BackupButton";
 import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
+import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
+import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
+import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
@@ -33,6 +37,8 @@ import { FormerNames } from "../components/FormerNames";
 import { containerTakeover } from "../lib/useTakeOver";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { Button } from "../components/Button";
+import { DatabaseDumpRow } from "../components/DatabaseDumpRow";
+import { introDatabases, updateWarnKey } from "../lib/dbdump";
 import { groupStage } from "../lib/controls";
 import { ToggleRow } from "./settings/shared";
 import { BackupCancelButton } from "../components/BackupCancelButton";
@@ -48,6 +54,7 @@ import { placementErrorText } from "../lib/placementCodes";
 import { hueVars } from "../lib/appearance";
 import { Selector, type SelectorItem } from "../components/Selector";
 import { useToast } from "../lib/toast";
+import { useDebouncedSave } from "../lib/useDebouncedSave";
 import { IconSearch } from "../components/glyphs";
 
 import { Toggle } from "../components/Toggle";
@@ -95,6 +102,15 @@ function snapshotIsStale(rfc3339: string): boolean {
 // no backup yet" on every one of them, including the folder scan offered after
 // an index read failed — a container that demonstrably HAS a backup, which is
 // the only reason its index was read at all.
+// An advisory id from the server mapped to its sentence. Unknown ids answer
+// null and render nothing: a newer server may know caveats this interface does
+// not, and a raw "immich-db-separate" on screen would be worse than silence.
+function advisoryKey(id: string): TranslationKey | null {
+  if (id === "immich-db-separate") return "excludes.advisoryImmichDb";
+  if (id === "nextcloud-db-separate") return "excludes.advisoryNextcloudDb";
+  return null;
+}
+
 function liveSourceKey(reason: "no-snapshot" | "requested" | "not-in-snapshot"): TranslationKey {
   if (reason === "requested") return "excludes.assistSourceLiveRequested";
   if (reason === "not-in-snapshot") return "excludes.assistSourceLiveNotInSnapshot";
@@ -278,6 +294,9 @@ type BackupFilterKey = "all" | "backedUp" | "neverBackedUp";
 
 const SCHEDULE_FILTER_STORAGE_KEY = "bv-containers-schedule-filter";
 const BACKUP_FILTER_STORAGE_KEY = "bv-containers-backup-filter";
+// Per browser, not per user: the note introduces the dump switch once, and
+// has done its job as soon as someone has read it.
+const DBDUMP_INTRO_KEY = "bv-dbdump-intro-seen";
 
 function loadScheduleFilterKey(): ScheduleFilterKey {
   const v = localStorage.getItem(SCHEDULE_FILTER_STORAGE_KEY);
@@ -415,75 +434,13 @@ function ExportButton({ name, t }: { name: string; t: T }) {
   );
 }
 
-// useDebouncedSave — a small per-instance "call `run` DELAY_MS after the last
-// invocation, cancel the pending one if called again first" hook: the exact
-// same shape/delay as Settings.tsx's own page-level debouncedSave/DEBOUNCE_MS
-// (which every remaining free-text field in this app — registry host/user/
-// token, the age-recipients list, cron/schedule strings — already auto-saves
-// through), just scoped to ONE component instance instead of a shared
-// page-level timer map keyed by field name. HooksEditor/ExcludesEditor below
-// are each their own instance (one per container row), so unlike
-// SettingsPage — which can have several unrelated debounced fields live at
-// once and needs a string key to keep their timers apart — each of these only
-// ever has ONE outstanding timer of its own, so no key is needed here.
-const AUTOSAVE_DEBOUNCE_MS = 800;
-
-function useDebouncedSave(delayMs: number = AUTOSAVE_DEBOUNCE_MS) {
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // A pending debounce must not fire after this component has unmounted (the
-  // user edits a field then closes/navigates away within the delay window) —
-  // same "capture the ref, clear on unmount" guard Settings.tsx's own
-  // debounce-cleanup effect uses.
-  useEffect(() => {
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
-    };
-  }, []);
-  function debouncedSave(run: () => void) {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(run, delayMs);
-  }
-  // cancel() is what lets an IMMEDIATE save win over a pending debounced one.
-  // Without it the two paths raced and the timer won by construction, because
-  // it fires later: clicking a suggestion chip within 800ms of a keystroke saved
-  // the chip's list, then the timer wrote the PRE-CHIP list back over it — and
-  // both paths toasted "Saved". A caller that saves right now must retire the
-  // timer first; every such caller already computes the full next list, so
-  // nothing typed is lost by dropping it.
-  function cancel() {
-    if (timer.current) {
-      clearTimeout(timer.current);
-      timer.current = null;
-    }
-  }
-  return { debouncedSave, cancel };
-}
-
-// HooksEditor edits the per-container pre/post-backup commands (collapsible).
-// `open` is now controlled by the caller (Containers.tsx's ContainerRow, via
-// its own shared five-chip Selector strip — see that call site's own comment)
-// rather than an internal useState: this component no longer renders its own
-// trigger button, only the content pane, shown or hidden by the prop.
-//
-// Live-save conversion (jdp, live review: "Brauchen wir die Speichern-Buttons
-// in den Aufklappcards überhaupt? Es soll doch immer live speichern."): the
-// explicit Save button is GONE — both fields now debounce-auto-save via
-// useDebouncedSave above, 800ms after the last keystroke, combined into ONE
-// setContainerHooks(pre, post) call (the same "compute the next value
-// locally, pass it straight into the debounced closure" shape Settings.tsx's
-// own registryAuths row edits use for their own multi-field-into-one-PATCH
-// save). No revert-on-failure and no `.glim-shake` here — matching
-// Settings.tsx's OWN debouncedSave text-field convention exactly (see e.g.
-// pathSaveState's "only the setters are needed" comment): a shell command is
-// free text like a cron string or a registry token, already saved this exact
-// way elsewhere in this app with zero exception, and reverting a field the
-// user might still be actively typing into would be jarring rather than
-// helpful — the toast alone reports a failure, and the value simply stays as
-// typed for the next edit (or a reload) to pick up. Discrete boolean/
-// selection saves (FoldersEditor's mount checkboxes, StopContainersEditor's
-// picker rows) are the other half of this conversion and DO keep revert +
-// shake, since those really are one-click toggles, not continuous typing —
-// see FoldersEditor's own `toggle()` comment for that half's reasoning.
+// HooksEditor edits the per-container pre/post-backup commands. The caller's
+// Selector strip decides whether the pane is open. Both fields save through
+// useDebouncedSave, 800ms after the last keystroke, as one
+// setContainerHooks(pre, post) call. A failed save does not revert the field:
+// a shell command is free text the user may still be typing, so the toast
+// reports the failure and the value stays for the next edit. One-click toggles
+// such as FoldersEditor's mount switches do revert on failure.
 function HooksEditor({
   name,
   initialPre,
@@ -527,7 +484,7 @@ function HooksEditor({
           setPre(nextPre);
           debouncedSave(() => void saveHooks(nextPre, post));
         }} spellCheck={false}
-          placeholder="mysqldump -uroot -p$PW db > /config/dump.sql" className={inputCls} />
+          placeholder="redis-cli SAVE" className={inputCls} />
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-xs text-carbon-textSub">{t("hooks.post")}</span>
@@ -566,12 +523,16 @@ function UpdateAfterBackupRow({
   initial,
   lastUpdateCheck,
   lastUpdateResult,
+  databaseWarn,
   t,
 }: {
   name: string;
   initial: boolean;
   lastUpdateCheck: number;
   lastUpdateResult: string;
+  /** What an update means for a recognised database, whose major version it
+   *  can move; null for any other container. */
+  databaseWarn: TranslationKey | null;
   t: T;
 }) {
   const [enabled, setEnabled] = useState(initial);
@@ -609,7 +570,7 @@ function UpdateAfterBackupRow({
         // (issue #193, after a first night with this on for every container).
         // Said here rather than only in the docs, because this toggle is where
         // someone decides to switch it on.
-        hint={`${t("update.afterBackupHint")} ${t("update.afterBackupOrphans")}`}
+        hint={`${t("update.afterBackupHint")} ${t("update.afterBackupOrphans")}${databaseWarn ? ` ${t(databaseWarn)}` : ""}`}
         checked={enabled}
         onChange={(next) => void handle(next)}
         disabled={busy}
@@ -702,11 +663,17 @@ export function FoldersEditor({
   open,
   t,
   lastBackup = null,
+  anomaly,
+  anomalyEnabled = false,
 }: {
   name: string;
   stack: string;
   open: boolean;
   t: T;
+  /** What anomaly detection knows about this container, for its own
+   *  sensitivity and notification setting. */
+  anomaly?: AnomalyItem;
+  anomalyEnabled?: boolean;
   /** Unix seconds of the container's last successful backup, null when none
    *  exists (Container.lastBackup verbatim). The D-02 narrowing gate: a
    *  narrowing selection only warns when there is at least one prior
@@ -1383,6 +1350,8 @@ export function FoldersEditor({
       {!loading && mounts.length === 0 && custom.length === 0 && (
         <p className="text-xs text-carbon-textMuted">{t("folders.empty")}</p>
       )}
+      {!loading && <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />}
+
       {/* D-02: the mount rows and custom rows ARE the tree's level-1 items —
           rendered by SelectionTree with lazy children under each, per-node
           state derived from the (includes, exclusions) mirror. The row's
@@ -1569,6 +1538,7 @@ function StopContainersEditor({
   // with the existing `containers.notInstalled` badge text rather than a
   // second bespoke "stale" label.
   const candidateNames = new Set(candidates.map((c) => c.name));
+  const installedNames = new Set(installedContainers.map((c) => c.name));
 
   // Discrete boolean toggle — optimistic flip, immediate save, revert +
   // `.glim-shake` (keyed by container name) on failure. Same shape as
@@ -1712,9 +1682,14 @@ function StopContainersEditor({
           {sortedSelected.map((n) => (
             <span
               key={`${n}-${rowShake[n] ?? 0}`}
-              className={`inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-0.5 text-xs text-carbon-textSub${rowShake[n] ? " glim-shake" : ""}`}
+              className={`inline-flex items-center gap-1.5 rounded-pill bg-carbon-surface2 px-2 py-0.5 text-xs text-carbon-textSub${rowShake[n] ? " glim-shake" : ""}`}
             >
               {n}
+              {/* A backup or an import passes over a name no container has, so
+                  the chip says so without opening the picker. */}
+              {!installedNames.has(n) && (
+                <span className="text-caption text-statusFail">{t("containers.notInstalled")}</span>
+              )}
               <Button
                 label={t("stophook.remove").replace("{name}", n)}
                 labelKey="stophook.remove"
@@ -1735,10 +1710,31 @@ function StopContainersEditor({
 // container's live mounts: a container path is translated to the anchored host
 // path restic stored (shown muted), a bare name passes through, and a line that
 // would exclude nothing is warned. Clones StopContainersEditor + a preview pane.
-type ExcludePreviewRow = { raw: string; resolved: string; status: string; matches: boolean };
+export type ExcludePreviewRow = { raw: string; resolved: string; status: string; matches: boolean };
+
+// How a caller resolves candidate lines. Each domain has its own endpoint and
+// its own answer shape, so the adapter rather than the raw call is the prop.
+export type ExcludePreview = (name: string, lines: string[]) => Promise<ExcludePreviewRow[]>;
+
+const containerExcludePreview: ExcludePreview = async (name, lines) => {
+  const r = await previewContainerExcludes(name, lines);
+  return r.ok ? r.preview : [];
+};
 
 // `open` is controlled by the caller — see HooksEditor's own comment.
-export function ExcludesEditor({ name, initial, open, t }: { name: string; initial: string[]; open: boolean; t: T }) {
+export function ExcludesEditor({
+  name,
+  initial,
+  open,
+  t,
+  preview: resolvePreview = containerExcludePreview,
+}: {
+  name: string;
+  initial: string[];
+  open: boolean;
+  t: T;
+  preview?: ExcludePreview;
+}) {
   const [text, setText] = useState(initial.join("\n"));
   const [state, setState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
@@ -1767,9 +1763,9 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
     }
     let cancelled = false;
     const id = setTimeout(() => {
-      previewContainerExcludes(name, lines)
-        .then((r) => {
-          if (!cancelled) setPreview(r.ok ? r.preview : []);
+      resolvePreview(name, lines)
+        .then((rows) => {
+          if (!cancelled) setPreview(rows);
         })
         .catch(() => {
           if (!cancelled) setPreview([]);
@@ -1779,7 +1775,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
       cancelled = true;
       clearTimeout(id);
     };
-  }, [text, name, open]);
+  }, [text, name, open, resolvePreview]);
 
   // The current exclude lines as the editor holds them (unsaved edits included) —
   // the single source both the save button and the assistant's one-click actions
@@ -1838,6 +1834,11 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
   // there was no backup to read instead. "Nothing left to exclude" would be the
   // loudest lie this panel can tell.
   const [pathsUnavailable, setPathsUnavailable] = useState(false);
+  // Caveats about the container itself, which the folder scan cannot see. Held
+  // apart from the suggestion list on purpose: they are true whether or not a
+  // single exclusion is offered, and the most important one is true precisely
+  // when the list is empty.
+  const [advisories, setAdvisories] = useState<string[]>([]);
   // The backup index could not be read. Not a failed scan: the panel stays up
   // and offers the folder scan as an explicit second request.
   const [indexFailed, setIndexFailed] = useState(false);
@@ -1868,6 +1869,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
     setUnexamined([]);
     setUnreadable([]);
     setPathsUnavailable(false);
+    setAdvisories([]);
     try {
       const r = await suggestContainerExcludes(name, live ? "live" : undefined);
       if (r.ok) {
@@ -1884,6 +1886,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
         setUnreadable(r.unreadableRoots ?? []);
         setPathsUnavailable(r.pathsUnavailable === true);
         setIndexFailed(r.indexFailed === true);
+        setAdvisories(r.advisories ?? []);
       } else {
         setSuggestions([]);
         setScanFailed(true);
@@ -2057,6 +2060,15 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                 reasons. Both are claims no per-row flag can make, and with
                 several roots their absence read as a finished scan of all of
                 them. */}
+            {!scanning &&
+              advisories.map((id) => {
+                const key = advisoryKey(id);
+                return key ? (
+                  <p key={id} className="text-xs text-statusWarn">
+                    {t(key)}
+                  </p>
+                ) : null;
+              })}
             {!scanning && unexamined.length > 0 && (
               <p className="text-xs text-statusWarn">
                 {withLtrPlaceholder(t("excludes.assistUnexamined"), "{paths}", unexamined.join(", "))}
@@ -2105,7 +2117,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                       // chip", the same broad "not a real state" bucket this
                       // chip belongs in, sitting next to its "large" sibling
                       // which keeps its own real warn meaning unchanged).
-                      className={`inline-flex items-center rounded-control px-2 py-0.5 text-xs font-medium ${
+                      className={`inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-medium ${
                         sg.reason === "large" ? "bg-statusWarnBgStrong text-statusWarn" : "bg-statusNeutralBg text-statusNeutral"
                       }`}
                     >
@@ -2166,7 +2178,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                 {currentLines.map((line) => (
                   <span
                     key={line}
-                    className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-0.5 text-xs font-mono text-carbon-textSub"
+                    className="inline-flex items-center gap-1.5 rounded-pill bg-carbon-surface2 px-2 py-0.5 text-xs font-mono text-carbon-textSub"
                   >
                     {line}
                     <Button
@@ -2213,6 +2225,9 @@ export function ContainerRow({
   onToggleSelect,
   linkCandidates = [],
   index,
+  anomaly,
+  anomalyEnabled = false,
+  restoreRequest,
 }: {
   container: Container;
   /** Every installed container on this BombVault instance — threaded down
@@ -2235,6 +2250,11 @@ export function ContainerRow({
    *  the list index rather than a hash of `container.name`; see the callers
    *  below. */
   index: number;
+  anomaly?: AnomalyItem;
+  anomalyEnabled?: boolean;
+  /** A finding's restore link for this container: the card opens its backups
+   *  and comes into view. */
+  restoreRequest?: RestoreRequest;
 }) {
   const installed = container.installed;
   const progressMap = useProgress();
@@ -2268,10 +2288,17 @@ export function ContainerRow({
   // Selector stays `select="many"` — which is what keeps a section CLOSABLE by
   // clicking its own chip again. A `select="one"` strip always has exactly one
   // thing selected and could never close the last one.
-  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
+  const [openSections, setOpenSections] = useState<Set<string>>(
+    () => new Set(restoreRequest ? ["backups"] : [])
+  );
   function toggleSection(id: string) {
     setOpenSections((prev) => (prev.has(id) ? new Set() : new Set([id])));
   }
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // jsdom has no scrollIntoView.
+    if (restoreRequest) cardRef.current?.scrollIntoView?.({ block: "start" });
+  }, [restoreRequest]);
 
   // "Has data configured" indicator — the same three facts
   // StopContainersEditor/ExcludesEditor/HooksEditor used to check internally
@@ -2307,6 +2334,8 @@ export function ContainerRow({
 
   return (
     <div
+      ref={cardRef}
+      id={`container-${container.name}`}
       style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
       // glim-hue owns the position; glim-tint washes the WHOLE card with it
       // (trap #2, design-language.md's "Rainbow" section) — without the wash
@@ -2341,6 +2370,7 @@ export function ContainerRow({
             <span className="font-semibold text-carbon-text text-sm min-w-0 truncate">
               {container.name}
             </span>
+            <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
             {installed ? (
               <Badge tone={stateTone(container.state)}>{stateLabel(t, container.state)}</Badge>
             ) : (
@@ -2390,7 +2420,7 @@ export function ContainerRow({
             </span>
           ) : (
             <>
-              <BackupButton name={container.name} t={t} onBackedUp={onDeleted} running={running} />
+              <BackupButton name={container.name} t={t} onBackedUp={onDeleted} running={running} progress={progress} />
               {/* Plain tar+xml export is an advanced-only extra. */}
               <Advanced><ExportButton name={container.name} t={t} /></Advanced>
             </>
@@ -2436,12 +2466,16 @@ export function ContainerRow({
             name={container.name}
             initial={container.includeInSchedule}
           />
+          {/* The dump row shows in both views: it is on by default and changes
+              what a backup does, so it must not hide behind advanced. */}
+          <DatabaseDumpRow container={container} t={t} />
           <Advanced when={installed}>
             <UpdateAfterBackupRow
               name={container.name}
               initial={container.updateAfterBackup ?? false}
               lastUpdateCheck={container.lastUpdateCheck}
               lastUpdateResult={container.lastUpdateResult}
+              databaseWarn={updateWarnKey(container)}
               t={t}
             />
           </Advanced>
@@ -2527,6 +2561,8 @@ export function ContainerRow({
             open={openSections.has("folders")}
             t={t}
             lastBackup={container.lastBackup}
+            anomaly={anomaly}
+            anomalyEnabled={anomalyEnabled}
           />
           <StopContainersEditor
             name={container.name}
@@ -2549,7 +2585,22 @@ export function ContainerRow({
             t={t}
           />
         </Advanced>
-        <RestorePanel name={container.name} aliases={aliases} t={t} installed={installed} open={openSections.has("backups")} />
+        <RestorePanel
+          name={container.name}
+          preselect={restoreRequest && !restoreRequest.dump ? restoreRequest.snapshot : ""}
+          preselectDump={restoreRequest?.dump ? restoreRequest.snapshot : ""}
+          preselectAt={restoreRequest?.at}
+          aliases={aliases}
+          t={t}
+          installed={installed}
+          open={openSections.has("backups")}
+          isDatabase={container.dbTier !== ""}
+          dbCoverage={container.dbDataCoverage}
+          containerRunning={container.state === "running"}
+          importStops={(container.stopContainers ?? []).filter((dep) =>
+            installedContainers.some((c) => c.name === dep && c.state === "running")
+          )}
+        />
       </div>
 
       {/* Stop a running backup, gated as on the Folders page: not on a
@@ -2620,7 +2671,7 @@ function ScheduleIncludeAllControl({
         tone="accent"
         onClick={() => void run(true)}
         disabled={busy}
-        className={`inline-flex items-center rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+        className={`inline-flex items-center rounded-pill bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
           shakeInclude ? " glim-shake" : ""
         }`}
       />
@@ -2631,7 +2682,7 @@ function ScheduleIncludeAllControl({
         tone="subtle"
         onClick={() => void run(false)}
         disabled={busy}
-        className={`inline-flex items-center rounded-control px-3 py-1 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
+        className={`inline-flex items-center rounded-pill px-3 py-1 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
           shakeExclude ? " glim-shake" : ""
         }`}
       />
@@ -2646,6 +2697,11 @@ function ScheduleIncludeAllControl({
 interface StackGroup {
   project: string;
   members: Container[];
+}
+
+/** Joins names the way the reader's language joins a list, "a, b and c". */
+function listSeparated(lang: string, names: string[]): string {
+  return new Intl.ListFormat(lang, { style: "long", type: "conjunction" }).format(names);
 }
 
 // groupStacks buckets BACKED-UP containers by their non-empty compose project and
@@ -2705,8 +2761,8 @@ export function StackCard({
   const [source, setSource] = useState<RepoSource>("local");
   const [startInOrder, setStartInOrder] = useState(true);
   const [busy, setBusy] = useState(false);
-  const { push } = useToast();
   const { lang } = useT();
+  const { push } = useToast();
   // Read through a ref rather than the hook value directly: run() reads this
   // after its own await (the restore confirm, then getStackDir), by which
   // point a slow-to-load target list may have caught up. Closing over the
@@ -2760,7 +2816,13 @@ export function StackCard({
   }, [started, anyMemberActive]);
 
   async function run() {
-    if (!(await confirm(t("stack.restoreConfirm")))) return;
+    // A member whose data folder is copied while the stack runs comes back as
+    // files that may not start, so the question names it.
+    const live = group.members.filter((m) => m.dbDataCoverage === "live").map((m) => m.name);
+    const question = live.length
+      ? `${t("stack.restoreConfirm")} ${t("dbdump.stackRestoreWarn", live.length).replace("{names}", listSeparated(lang, live))}`
+      : t("stack.restoreConfirm");
+    if (!(await confirm(question))) return;
     setBusy(true);
     setStarted(false);
     setFinished(false);
@@ -2838,7 +2900,7 @@ export function StackCard({
           tip={t("stack.restore")}
           onClick={() => setOpen((p) => !p)}
           ariaExpanded={open}
-          className="shrink-0 inline-flex items-center rounded-control p-1.5 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+          className="shrink-0 inline-flex items-center rounded-pill p-1.5 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
             <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
@@ -3231,7 +3293,7 @@ function BackupOrderPanel({
                     tip={t("backupOrder.moveUp")}
                     onClick={() => move(i, -1)}
                     disabled={i === 0 || saveState === "saving"}
-                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-pill p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path fill="currentColor" d="M1.3 8.7 6 3.3 10.7 8.7Z" />
@@ -3241,7 +3303,7 @@ function BackupOrderPanel({
                     tip={t("backupOrder.moveDown")}
                     onClick={() => move(i, 1)}
                     disabled={i === names.length - 1 || saveState === "saving"}
-                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-pill p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path fill="currentColor" d="M1.3 3.3 6 8.7 10.7 3.3Z" />
@@ -3258,7 +3320,7 @@ function BackupOrderPanel({
                 tone="subtle"
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
-                className={`inline-flex items-center rounded-control px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
+                className={`inline-flex items-center rounded-pill px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
                   shakeReset ? " glim-shake" : ""
                 }`}
               />
@@ -3285,6 +3347,9 @@ function BackupOrderPanel({
 
 export function Containers() {
   const { t } = useT();
+  const anomalies = useAnomalyItems();
+  const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const restoreRequest = useRestoreRequest();
   // Advanced-mode flag read directly (not just via the <Advanced> wrapper
   // below): BackupOrderPanel's own hueIndex must only be resolved via
   // `nextHue()` when the panel will ACTUALLY render — a JSX child's props
@@ -3315,6 +3380,13 @@ export function Containers() {
   // the Discover / "Backup selected" buttons alongside their existing toasts.
   const [shakeDiscover, setShakeDiscover] = useState(0);
   const [shakeBackupSelected, setShakeBackupSelected] = useState(0);
+  const [introDismissed, setIntroDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(DBDUMP_INTRO_KEY) === "1";
+    } catch {
+      return false; // without storage the note shows again, which is the harmless way to be wrong
+    }
+  });
   // Overall server-side batch-backup progress (independent of this browser).
   const progress = useProgress();
   const batch = progress["batch:containers"];
@@ -3625,6 +3697,18 @@ export function Containers() {
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
 
+  const recognisedDatabases = introDatabases(containers);
+  const [introBefore, introAfter] = t("dbdump.introNotice", recognisedDatabases.length).split("{name}");
+
+  function dismissIntro() {
+    setIntroDismissed(true);
+    try {
+      localStorage.setItem(DBDUMP_INTRO_KEY, "1");
+    } catch {
+      /* the note comes back next time */
+    }
+  }
+
   return (
     // PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich breit
     // machen?"): was `gap-6 max-w-5xl` — 1024px wide on a 24px Card rhythm,
@@ -3664,6 +3748,25 @@ export function Containers() {
           />
         </div>
       </div>
+
+      {/* The databases BombVault recognised on this box, said once. It names a
+          count and points at the first card, so the switch is one click away. */}
+      {!introDismissed && recognisedDatabases.length > 0 && (
+        <div className="flex items-start gap-3 rounded-card bg-carbon-surface p-4 flex-wrap">
+          <p className="min-w-0 flex-1 text-sm text-carbon-textSub">
+            {introBefore}
+            <a className="text-accentText underline hover:no-underline" href={`#container-${recognisedDatabases[0].name}`}>
+              <bdi>{recognisedDatabases[0].name}</bdi>
+            </a>
+            {introAfter}
+          </p>
+          <Button
+            label={t("dbdump.introDismiss")}
+            labelKey="dbdump.introDismiss"
+            onClick={dismissIntro}
+          />
+        </div>
+      )}
 
       {/* Server-side batch-backup banner — visible while a "back up all" run is in
           flight, even if it was started from another tab/session. */}
@@ -3827,7 +3930,7 @@ export function Containers() {
             tone="accent"
             onClick={() => void backupSelected()}
             disabled={bulkBusy || batchActive || running.active}
-            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            className={`inline-flex items-center rounded-pill bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
               shakeBackupSelected ? " glim-shake" : ""
             }`}
           />
@@ -3879,6 +3982,9 @@ export function Containers() {
               onToggleSelect={c.self ? undefined : () => toggleSelect(c.name)}
               linkCandidates={notInstalledNames}
               index={i}
+              anomaly={anomalies.find("container", c.name)}
+              anomalyEnabled={anomalyEnabled}
+              restoreRequest={restoreRequest.item === c.name ? restoreRequest : undefined}
             />
           ))}
         </div>
@@ -3923,6 +4029,9 @@ export function Containers() {
               onDeleted={() => void loadContainers()}
               onPlacement={(next) => placeContainer(c.name, next)}
               index={live.length + i}
+              anomaly={anomalies.find("container", c.name)}
+              anomalyEnabled={anomalyEnabled}
+              restoreRequest={restoreRequest.item === c.name ? restoreRequest : undefined}
             />
           ))}
         </div>

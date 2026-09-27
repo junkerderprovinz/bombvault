@@ -9,6 +9,8 @@ import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import { Selector } from "../Selector";
 import type { RepoSource } from "../SourceToggle";
+import { Badge } from "../Badge";
+import { MissingRestorePoint } from "../restore/MissingRestorePoint";
 import { TimelineDeleteDialog } from "./TimelineDeleteDialog";
 
 export interface TimelinePick {
@@ -33,6 +35,8 @@ export function Timeline({
   open,
   renderActions,
   header,
+  flagged,
+  request,
 }: {
   domain: TimelineDomain;
   itemKey: string;
@@ -42,6 +46,11 @@ export function Timeline({
   /** Rendered above the rows once they are loaded. The places come with it so
    *  a header can tell an empty list from one whose places nobody has read. */
   header?: (rows: TimelineRow[], places: TimelinePlace[]) => ReactNode;
+  /** Backups an open data-loss finding was raised on, by the id findings use. */
+  flagged?: ReadonlySet<string>;
+  /** The backup a finding's restore link asks for. Its row stands out, and a
+   *  list without it says so once every place has been read. */
+  request?: { snapshot: string; at: number };
 }) {
   const { t } = useT();
   const host = useHostLabel();
@@ -107,6 +116,14 @@ export function Timeline({
       {loading && <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>}
       {error !== null && <p className="py-3 text-xs text-statusFail">{error || t("common.loadBackupsFailed")}</p>}
       {!loading && error === null && header?.(rows, places)}
+      {!loading && error === null && request && places.length > 0 && pending.length === 0 && (
+        <MissingRestorePoint
+          requested={request.snapshot}
+          requestedAt={request.at}
+          points={rows.map((row) => ({ id: row.key, at: Math.floor(Date.parse(row.time) / 1000) }))}
+          t={t}
+        />
+      )}
       {!loading && error === null && rows.length === 0 && pending.length === 0 && (
         <p className="py-3 text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
       )}
@@ -116,12 +133,22 @@ export function Timeline({
           const place = mark ? places.find((p) => p.place === mark.place) : undefined;
           const marks = [...row.places].sort((a, b) => orderOf(a.place) - orderOf(b.place));
           return (
-            <div key={row.key} className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
+            <div
+              key={row.key}
+              className={`flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0${
+                request?.snapshot === row.key ? " bg-carbon-surface2 px-2 rounded-control" : ""
+              }`}
+            >
               <div className="flex items-center gap-3 flex-wrap text-sm">
                 <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
                   {(mark ? newestId(mark) : row.key).slice(0, 8)}
                 </span>
                 <span className="text-carbon-textMuted text-xs">{new Date(row.time).toLocaleString()}</span>
+                {flagged?.has(row.key) && (
+                  <Badge tone="fail" size="small">
+                    {t("anomaly.snapshotFlagged")}
+                  </Badge>
+                )}
                 <Selector
                   items={marks.map((m) => ({
                     id: m.place,

@@ -43,9 +43,10 @@ function Mark({
 const B24 = "0 0 24 24";
 
 /**
- * Each coin's mark in its brand colour, as a --coin-* token from index.css:
- * the tile hover switches the tokens to deeper values, and the theme switches
- * XRP's near-black.
+ * Each coin's mark in its brand colour, as a --coin-* token from index.css,
+ * which the theme switches for XRP's near-black. A symbol on a disc is a hole
+ * in it, so a lit tile shows its own colour there and the mark needs no
+ * --mark-cut part.
  */
 const PATHS: Record<string, { box: string; d: string; color: string }> = {
   btc: {
@@ -113,7 +114,7 @@ export function CoinMark({ coin, size = 16 }: { coin: string; size?: number }): 
   const mark = PATHS[coin];
   // No placeholder: the tile still shows its ticker.
   if (!mark) return null;
-  return <Mark box={mark.box} d={mark.d} size={size} color={mark.color} />;
+  return <Mark box={mark.box} d={mark.d} size={size} color={`var(--mark-ink, ${mark.color})`} />;
 }
 
 /** Buy Me a Coffee's mark, for the button that opens their page. */

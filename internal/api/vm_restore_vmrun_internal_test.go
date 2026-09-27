@@ -1,27 +1,12 @@
 package api
 
-// Tests for restore-side "vmrun:<runID>" correlation-tag resolution — v8.0.0
-// VM service-layer integration, Task 3 (the design notes). Task 1/2 tag every
-// snapshot ONE
-// mixed file+zvol VM backup produces (the main file-backed snapshot plus one
-// per zvol disk) with a shared "vmrun:<runID>" tag; this file proves
-// prepareRestoreVMForTarget resolves that group correctly — for an explicit
-// snapshot id AND for "latest" — and, the critical regression case, falls
-// back to EXACTLY the pre-Task-3 single-"vm:<name>"-tag resolution when the
-// resolved snapshot carries no "vmrun:" tag at all (a Run predating this
-// plan, or a file-only VM's snapshot, which never gets one — a real,
-// permanent case, not a transitional one).
-//
-// These tests operate at the prepareRestoreVMForTarget PLAN level (same style
-// as foreign_vm_restore_internal_test.go's requirement pins) rather than
-// driving the full executeRestoreVM/virsh dance — Task 3's job is resolution,
-// and the plan's blockDisks/snapshotID fields are exactly what
-// RestoreZvolDisk/RestorePaths consume (see VMRestoreBlockDisk's own doc
-// comment) — so asserting them directly is the precise unit under test. A
-// separate end-to-end test (vm_restore_vmrun_wiring_test.go, package
-// api_test) drives the real BackupVM->RestoreVM round trip through the
-// zvol-restore fakes for extra assurance that the resolved values actually
-// reach RestoreZvolDisk correctly.
+// One backup of a VM with file and zvol disks writes a main snapshot plus one
+// per zvol disk, all sharing a "vmrun:<runID>" tag. These tests check that
+// prepareRestoreVMForTarget resolves that group, and that a snapshot without
+// the tag (a file-only VM, or an older backup) resolves from the plain
+// "vm:<name>" tag alone. They assert the plan, which is what RestoreZvolDisk
+// and RestorePaths consume; vm_restore_vmrun_wiring_test.go runs the full
+// backup and restore round trip.
 
 import (
 	"context"
@@ -33,10 +18,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// vmrunDomainXML mirrors vmDomainXML (foreign_vm_restore_internal_test.go)
-// plus TWO block-device (zvol) disks, so one backup run produces 3 restic
-// snapshots correlated by a shared "vmrun:<runID>" tag — 1 file-backed + 2
-// zvol.
+// vmrunDomainXML is vmDomainXML with two zvol disks added, so one backup run
+// produces three snapshots sharing a "vmrun:<runID>" tag.
 const vmrunDomainXML = `<domain type='kvm'><name>mixedvm</name>` +
 	`<devices><disk type='file' device='disk'><source file='/mnt/pool/domains/mixedvm/mixedvm.qcow2'/><target dev='vda'/></disk>` +
 	`<disk type='block' device='disk'><source dev='/dev/zvol/tank/vms/mixedvm/disk1'/><target dev='vdb'/></disk>` +
@@ -45,11 +28,8 @@ const vmrunDomainXML = `<domain type='kvm'><name>mixedvm</name>` +
 // mixedvmDisk is the file-backed disk of vmrunDomainXML as the backup reads it.
 const mixedvmDisk = "/host/user/pool/domains/mixedvm/mixedvm.qcow2"
 
-// vmrunGroupSnaps builds the 3-snapshot restic listing one mixed-VM backup
-// run under runTag produces: the main file-backed snapshot (mainID) plus one
-// per zvol disk (vdb -> vdbID, vdc -> vdcID), each carrying its own identity
-// tag AND the shared runTag — mirroring backupBlockDisksAndLog/runVMGraceful's
-// real tag shape (internal/backup/vm_orchestrator.go).
+// vmrunGroupSnaps builds the listing one backup run of vmrunDomainXML
+// produces, with the tags internal/backup gives each snapshot.
 func vmrunGroupSnaps(runTag, mainID, vdbID, vdcID string) []restic.Snapshot {
 	return []restic.Snapshot{
 		{ID: mainID, Tags: []string{"vm:mixedvm", "p2", runTag}, Paths: []string{mixedvmDisk}},
@@ -60,8 +40,6 @@ func vmrunGroupSnaps(runTag, mainID, vdbID, vdcID string) []restic.Snapshot {
 	}
 }
 
-// blockDisksByDataset indexes plan.blockDisks by SourceDataset for
-// order-independent assertions.
 func blockDisksByDataset(bds []backup.VMRestoreBlockDisk) map[string]backup.VMRestoreBlockDisk {
 	out := make(map[string]backup.VMRestoreBlockDisk, len(bds))
 	for _, bd := range bds {
@@ -70,11 +48,8 @@ func blockDisksByDataset(bds []backup.VMRestoreBlockDisk) map[string]backup.VMRe
 	return out
 }
 
-// vmrunRestoreTarget builds the store.VMTarget + repo fixture shared by every
-// test below: the mixed-disk domain XML, a seeded local repo dir, and SSH
-// wired (fakeHostSSH, notify_internal_test.go) so the zvol-disk guard in
-// prepareRestoreVMForTarget doesn't refuse the restore before resolution even
-// runs.
+// vmrunRestoreTarget builds the target and repo the tests below share. SSH is
+// wired because prepareRestoreVMForTarget refuses a zvol restore without it.
 func vmrunRestoreTarget(t *testing.T, eng ResticEngine) (*Service, repoRef, store.VMTarget) {
 	t.Helper()
 	s := vmRestoreSvc(t, eng)
@@ -85,10 +60,8 @@ func vmrunRestoreTarget(t *testing.T, eng ResticEngine) (*Service, repoRef, stor
 	return s, repoRef{repo: repoDir}, tg
 }
 
-// TestPrepareRestoreVMResolvesVmrunGroupForAllThreeDisks pins requirement (a):
-// a "latest" restore of a Run with a 3-snapshot vmrun: group resolves the
-// main snapshot AND both zvol disks' own snapshot id + stdin path from that
-// group — each disk keyed to the CORRECT snapshot, not swapped or dropped.
+// A "latest" restore resolves the main snapshot and each zvol disk's own
+// snapshot and stdin path from the group, none swapped or dropped.
 func TestPrepareRestoreVMResolvesVmrunGroupForAllThreeDisks(t *testing.T) {
 	const runTag = "vmrun:run-abc"
 	snaps := vmrunGroupSnaps(runTag, "deadbeef12345678", "1111111111111111", "2222222222222222")
@@ -116,10 +89,7 @@ func TestPrepareRestoreVMResolvesVmrunGroupForAllThreeDisks(t *testing.T) {
 	}
 }
 
-// TestPrepareRestoreVMExplicitSnapshotIDResolvesVmrunGroup covers the OTHER
-// half of requirement (a): an explicit (non-"latest") snapshot id from the
-// request must resolve the SAME vmrun: group the "latest" path does — the
-// group lookup is not something that only kicks in for "latest".
+// An explicit snapshot id resolves the group just as "latest" does.
 func TestPrepareRestoreVMExplicitSnapshotIDResolvesVmrunGroup(t *testing.T) {
 	const runTag = "vmrun:run-explicit"
 	snaps := vmrunGroupSnaps(runTag, "aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb", "cccccccccccccccc")
@@ -141,16 +111,13 @@ func TestPrepareRestoreVMExplicitSnapshotIDResolvesVmrunGroup(t *testing.T) {
 	}
 }
 
-// TestPrepareRestoreVMLatestPicksNewestRunsGroupNotOlder pins requirement (c):
-// with TWO backup runs' snapshots present (an older and a newer, each its own
-// vmrun: group), a "latest" restore must resolve the NEWER run's group — not
-// silently mix disks from the two runs, and not resolve the older one's.
+// With two runs in the repo, "latest" resolves every disk from the newer run
+// and never mixes in the older one.
 func TestPrepareRestoreVMLatestPicksNewestRunsGroupNotOlder(t *testing.T) {
 	older := vmrunGroupSnaps("vmrun:run-older", "1000000000000000", "1000000000000001", "1000000000000002")
 	newer := vmrunGroupSnaps("vmrun:run-newer", "2000000000000000", "2000000000000001", "2000000000000002")
-	// snapshotsForTag preserves listSnapshots' own ordering; "latest" picks the
-	// LAST element of the "vm:"+name-tagged list, so the newer run's main
-	// snapshot must sort after the older run's.
+	// "latest" is the last "vm:"+name snapshot in listing order, so the newer
+	// run goes second.
 	all := append(append([]restic.Snapshot{}, older...), newer...)
 	eng := &foreignRecordingEngine{snaps: all}
 	s, ref, tg := vmrunRestoreTarget(t, eng)
@@ -160,26 +127,21 @@ func TestPrepareRestoreVMLatestPicksNewestRunsGroupNotOlder(t *testing.T) {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
 	if plan.snapshotID != "2000000000000000" {
-		t.Fatalf("main snapshotID = %q, want the NEWER run's file-backed snapshot", plan.snapshotID)
+		t.Fatalf("main snapshotID = %q, want the newer run's file-backed snapshot", plan.snapshotID)
 	}
 	byDataset := blockDisksByDataset(plan.blockDisks)
 	vdb := byDataset["tank/vms/mixedvm/disk1"]
 	if vdb.SnapshotID != "2000000000000001" {
-		t.Fatalf("vdb disk resolution = %+v, want the NEWER run's snapshot 2000000000000001 (never the older run's 1000000000000001)", vdb)
+		t.Fatalf("vdb disk resolution = %+v, want the newer run's snapshot 2000000000000001 (never the older run's 1000000000000001)", vdb)
 	}
 	vdc := byDataset["tank/vms/mixedvm/disk2"]
 	if vdc.SnapshotID != "2000000000000002" {
-		t.Fatalf("vdc disk resolution = %+v, want the NEWER run's snapshot 2000000000000002 (never the older run's 1000000000000002)", vdc)
+		t.Fatalf("vdc disk resolution = %+v, want the newer run's snapshot 2000000000000002 (never the older run's 1000000000000002)", vdc)
 	}
 }
 
-// TestPrepareRestoreVMFallsBackWhenNoVmrunTag pins requirement (b), the
-// CRITICAL regression case: a Run whose resolved snapshot carries no
-// "vmrun:" tag at all (predating this plan, or any backup that for some
-// reason never got one) must resolve EXACTLY as it did before Task 3 — the
-// main snapshot from the plain "vm:"+name tag scan alone, and every zvol
-// disk's SnapshotID/StdinPath left at ZERO VALUE (only SourceDataset set),
-// never a group lookup invented from thin air.
+// Without a "vmrun:" tag the main snapshot comes from the plain "vm:"+name
+// tag, and each zvol disk keeps only its SourceDataset: no snapshot is guessed.
 func TestPrepareRestoreVMFallsBackWhenNoVmrunTag(t *testing.T) {
 	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{
 		{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2"}, Paths: []string{mixedvmDisk}}, // no vmrun: tag
@@ -201,36 +163,18 @@ func TestPrepareRestoreVMFallsBackWhenNoVmrunTag(t *testing.T) {
 			t.Fatalf("blockDisk %+v: SourceDataset must still be resolved from the domain XML in the fallback", bd)
 		}
 		if bd.SnapshotID != "" || bd.StdinPath != "" {
-			t.Fatalf("blockDisk %+v: SnapshotID/StdinPath must stay at zero value with no vmrun: group (byte-identical to before Task 3)", bd)
+			t.Fatalf("blockDisk %+v: SnapshotID/StdinPath must stay at zero value with no vmrun: group", bd)
 		}
 	}
 }
 
-// TestPrepareRestoreVMSingleSnapshotVmrunGroupFallsBackForZvolDisks pins a
-// DIFFERENT shape of requirement (b) than TestPrepareRestoreVMFallsBackWhenNoVmrunTag
-// above: here the resolved snapshot DOES carry a real "vmrun:" tag (this was
-// a mixed-disk run, not one predating the tag), but the group that tag
-// resolves to contains ONLY the main snapshot itself — e.g. every zvol disk's
-// own backup failed AFTER the main file-backed restic Backup call had already
-// succeeded and been tagged (backupBlockDisksAndLog, internal/backup/
-// vm_orchestrator.go, continues past each failed disk and only surfaces the
-// first error once every disk has been attempted, by which point the main
-// snapshot already exists with the "vmrun:" tag — deps.RunTag is set purely
-// from the domain XML's block-disk COUNT, before any zvol backup runs).
-//
-// A single-snapshot vmrun: group must resolve IDENTICALLY to having no
-// vmrun: tag at all: every disk's SnapshotID/StdinPath stays at zero value
-// (RestoreZvolDisk fails loudly, nothing is invented). The presence of A
-// "vmrun:" tag/group must never be conflated with the presence of a MATCHING
-// group member for a given disk — vmrunGroupSnapshot's per-tag lookup must
-// still correctly report "not found" for a group that only contains the
-// main snapshot's own "vm:<name>" tag.
+// The main snapshot carries a "vmrun:" tag but the zvol backups of that run all
+// failed, so the group holds only the main snapshot. The zvol disks then
+// resolve as if there were no tag, and RestoreZvolDisk fails instead of
+// restoring a guessed snapshot.
 func TestPrepareRestoreVMSingleSnapshotVmrunGroupFallsBackForZvolDisks(t *testing.T) {
 	const runTag = "vmrun:run-partial"
 	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{
-		// Only the main snapshot exists in the whole repo — it carries the
-		// real runTag (so vmRunTag finds it and a group lookup DOES fire),
-		// but neither zvol disk's own snapshot was ever created.
 		{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2", runTag}, Paths: []string{mixedvmDisk}},
 	}}
 	s, ref, tg := vmrunRestoreTarget(t, eng)
@@ -250,7 +194,7 @@ func TestPrepareRestoreVMSingleSnapshotVmrunGroupFallsBackForZvolDisks(t *testin
 			t.Fatalf("blockDisk %+v: SourceDataset must still be resolved from the domain XML", bd)
 		}
 		if bd.SnapshotID != "" || bd.StdinPath != "" {
-			t.Fatalf("blockDisk %+v: SnapshotID/StdinPath must stay at zero value when the vmrun: group has no matching zvol member (single-snapshot group) — behaving EXACTLY like the no-tag-at-all fallback, not silently inventing or misattributing a snapshot", bd)
+			t.Fatalf("blockDisk %+v: SnapshotID/StdinPath must stay at zero value when the vmrun: group has no matching zvol member, as without a tag", bd)
 		}
 	}
 }

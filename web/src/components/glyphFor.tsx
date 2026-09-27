@@ -25,6 +25,7 @@ import {
   IconForward,
   IconInfo,
   IconKey,
+  IconKeyRevoke,
   IconLink,
   IconMail,
   IconPlay,
@@ -63,7 +64,10 @@ const RULES: Rule[] = [
   [/unlock/i, () => <IconUnlock />],
 
   // Creation and editing.
-  [/\.add|addSet|addPreset|addTarget|addTag|credSets\.add|registryAdd|passkeyAdd|passkeyCreate/i, () => <IconAdd />],
+  [/\.add|addSet|addPreset|addTarget|addTag|credSets\.add|registryAdd|passkeyAdd|passkeyCreate|certAddAddress/i, () => <IconAdd />],
+  // A list that fetches its next page grows by the same plus as one that gains
+  // an entry.
+  [/loadMore/i, () => <IconAdd />],
   [/edit|rename|editSet/i, () => <IconPencil />],
   [/save|apply/i, () => <IconSave />],
 
@@ -84,7 +88,12 @@ const RULES: Rule[] = [
 
   // Probing and inspection. "accept", "confirm" and "resolveAll" agree to what
   // is on screen, so they take the same check.
-  [/test|verify|check|drill|appendOnly|tamper|accept|approve|confirm(?!Password)|resolveAll|\.stored$/i, () => <IconCheckCircle />],
+  [/test|probe|verify|check|drill|appendOnly|tamper|accept|approve|confirm(?!Password)|resolveAll|\.stored$/i, () => <IconCheckCircle />],
+  // Settling an anomaly: seen and closed takes the same check as the other
+  // agreements, while marking it as expected records a new normal level.
+  [/acknowledge/i, () => <IconCheckCircle />],
+  [/expected/i, () => <IconSave />],
+
   [/scan|discover|browse|search/i, () => <IconSearch />],
   [/show|reveal|preview|view/i, () => <IconEye />],
   [/hint|info|explain|examples/i, () => <IconInfo />],
@@ -102,6 +111,9 @@ const RULES: Rule[] = [
   [/logout|signOut/i, () => <IconSignOut />],
   [/twoFactorEnable|totpEnable/i, () => <IconShieldOn />],
   [/twoFactorDisable|totpDisable/i, () => <IconShieldOff />],
+  // Revoking takes one credential away, which is neither the row being
+  // deleted nor the second factor going off.
+  [/revoke|passkeyRemove$/i, () => <IconKeyRevoke />],
   [/compare|diff\b/i, () => <IconCompare />],
   [/credential|password|secret|token|key\b/i, () => <IconKey />],
 
@@ -126,7 +138,7 @@ const RULES: Rule[] = [
   // Places and configuration, last because they are the vaguest.
   [/folder|path|directory/i, () => <IconFolder />],
   [/settings|config|setup|wizard|options/i, () => <IconGear />],
-  [/refresh|reload|retry|tryAgain/i, () => <IconRefresh />],
+  [/refresh|reload|retry|tryAgain|rotate/i, () => <IconRefresh />],
 ];
 
 /**

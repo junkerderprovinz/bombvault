@@ -5,6 +5,7 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { IconDownload } from "../../components/Sidebar";
 import { IconUpload } from "../../components/glyphs";
 import {
+  downloadDiagnostics,
   excludeFromTarget,
   exportSettings,
   importSettingsPreview,
@@ -22,7 +23,7 @@ import { placementChanged } from "../../lib/placementEvents";
 import { useRef, useState } from "react";
 
 const IMPORT_GROUP_KEYS: Record<string, TranslationKey> = {
-  domains: "settingsIO.group.domains",
+  domains: "settings.domains",
   schedules: "settingsIO.group.schedules",
   everything: "settingsIO.group.everything",
   retention: "settingsIO.group.retention",
@@ -32,6 +33,7 @@ const IMPORT_GROUP_KEYS: Record<string, TranslationKey> = {
   monitoring: "settingsIO.group.monitoring",
   language: "settingsIO.group.language",
   exportEncryption: "settingsIO.group.exportEncryption",
+  anomalies: "settingsIO.group.anomalies",
 };
 // SettingsPortabilityCard, lifted out of Settings.tsx ([337]).
 //
@@ -52,6 +54,7 @@ export function SettingsPortabilityCard({
   const { push } = useToast();
   const [includeCreds, setIncludeCreds] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [diagBusy, setDiagBusy] = useState(false);
   // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
   // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): a failed
   // action shows its message via a TOAST, never as permanent page text, and
@@ -84,6 +87,19 @@ export function SettingsPortabilityCard({
     setImportDone(false);
     setExclusions({});
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  async function handleDiagnostics() {
+    setDiagBusy(true);
+    // Backend-provided error text shown verbatim BY DESIGN, like the export
+    // above: the 403 refusal when no login password is set is the message the
+    // user needs, and it already says what to do about it.
+    const err = await downloadDiagnostics();
+    setDiagBusy(false);
+    if (err) {
+      push(err, "fail");
+      bumpShake("diagnostics");
+    }
   }
 
   async function handleExport() {
@@ -317,7 +333,7 @@ export function SettingsPortabilityCard({
                 tone="neutral"
                 onClick={resetImport}
                 disabled={busy}
-                className={`rounded-control px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
+                className={`rounded-pill px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
                 hueIndex={hueIndex}
               />
               <Button
@@ -341,6 +357,30 @@ export function SettingsPortabilityCard({
             {t("settingsIO.importSuccess")}
           </span>
         )}
+      </div>
+
+      {/* DIAGNOSTICS ------------------------------------------------------ */}
+      {/* Neighbour to export/import because it is the same idiom (a file goes
+          out), but a different purpose: this one is written to be read by
+          somebody else, which is why it is redacted and why it is never a
+          configuration backup. */}
+      <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
+        <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+          {t("diagnostics.heading")}
+          <InfoBubble tip={t("diagnostics.hint")} />
+        </h3>
+        <Button
+          key={shake.diagnostics || 0}
+          label={t("diagnostics.button")}
+          labelKey="diagnostics.button"
+          tone="neutral"
+          glyph={<IconDownload />}
+          onClick={() => void handleDiagnostics()}
+          disabled={busy}
+          busy={diagBusy}
+          title={diagBusy ? t("diagnostics.busy") : undefined}
+          className={`self-start${shake.diagnostics ? " glim-shake" : ""}`}
+        />
       </div>
     </Card>
   );

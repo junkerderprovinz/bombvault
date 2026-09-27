@@ -152,8 +152,8 @@ export function PasskeyCard({
                 </span>
               </div>
               <Button
-                label={t("common.delete")}
-                labelKey="common.delete"
+                label={t("auth.passkeyRemove")}
+                labelKey="auth.passkeyRemove"
                 tone="neutral"
                 onClick={() => setPendingDelete(p)}
                 disabled={busy}
@@ -218,8 +218,8 @@ export function PasskeyCard({
         <ConfirmDialog
           title={t("auth.passkeyRemoveTitle")}
           message={t("auth.passkeyRemoveConfirm").replace("{name}", pendingDelete.name)}
-          confirmLabel={t("common.delete")}
-          confirmLabelKey="common.delete"
+          confirmLabel={t("auth.passkeyRemove")}
+          confirmLabelKey="auth.passkeyRemove"
           cancelLabel={t("common.cancel")}
           onConfirm={() => void remove(pendingDelete)}
           onCancel={() => setPendingDelete(null)}

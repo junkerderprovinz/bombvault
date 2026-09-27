@@ -7,10 +7,10 @@
 | 变量 | 是否必需 | 描述 |
 |---|---|---|
 | `APP_KEY` | **是** | 用于派生 restic 仓库密码的 32 字节十六进制密钥（64 个十六进制字符）。用 `openssl rand -hex 32` 生成。请妥善保管：丢失它将使加密备份无法恢复。 |
-| `LIBVIRT_HOST` | 虚拟机需要 | 用于虚拟机备份、通过 SSH 连接的 Unraid 主机（默认 `host.docker.internal`；模板会预填一个 LAN-IP 占位符）。请使用您的 Unraid LAN IP，在自定义 `br0.x` 网络上为必需。 |
-| `LIBVIRT_SSH_PORT` | 否 | 用于虚拟机备份的主机 SSH 端口（默认 `22`）。 |
-| `LIBVIRT_SSH_USER` | 否 | 用于虚拟机备份的主机上的 SSH 用户（默认 `root`）。 |
-| `LIBVIRT_URI` | 否 | 完整的 libvirt 连接 URI，将**原样**使用，而不再由上方三个 `LIBVIRT_*` 变量拼接而成（此时这三个变量对连接字符串不再生效）。默认未设置。TrueNAS Scale 上需要用到它，因为其 libvirtd 监听在拼接形式无法表达的非标准套接字上：`qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`。参见 [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) 的 TrueNAS Scale 部分。 |
+| `LIBVIRT_HOST` | 虚拟机需要 | 用于虚拟机备份、通过 SSH 连接的 Unraid 主机（默认 `host.docker.internal`；模板会预填一个 LAN-IP 占位符）。请使用您的 Unraid LAN IP，在自定义 `br0.x` 网络上为必需。 ZFS 数据集备份也使用它（模板字段 **Host SSH: Address**）；占位值 `192.168.x.x` 视为未设置。 |
+| `LIBVIRT_SSH_PORT` | 否 | 用于虚拟机备份的主机 SSH 端口（默认 `22`）。 模板字段 **Host SSH: Port**，ZFS 数据集也使用。 |
+| `LIBVIRT_SSH_USER` | 否 | 用于虚拟机备份的主机上的 SSH 用户（默认 `root`）。 模板字段 **Host SSH: User**，ZFS 数据集也使用。 |
+| `LIBVIRT_URI` | 否 | 完整的 libvirt 连接 URI，将**原样**使用，而不再由上方三个 `LIBVIRT_*` 变量拼接而成（此时这三个变量对连接字符串不再生效）。默认未设置。TrueNAS Scale 上需要用到它，因为其 libvirtd 监听在拼接形式无法表达的非标准套接字上：`qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`。参见 [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) 的 TrueNAS Scale 部分。 如果是 `qemu+ssh://` URI，`LIBVIRT_HOST`、`LIBVIRT_SSH_USER` 和 `LIBVIRT_SSH_PORT` 中未设置的每一项都从中获取，BombVault 自己的 SSH 命令（NVRAM 传输、ZFS 数据集）也是如此。 |
 | `PORT` | 否 | HTTP 端口（默认 `3000`；仅在 `HTTP_ONLY=true` 时使用）。 |
 | `HTTPS_PORT` | 否 | HTTPS 端口（默认 `3443`；模板以 1:1 发布它，因此 WebUI 在 `https://<ip>:3443` 上应答）。 |
 | `HTTP_ONLY` | 否 | 设为 `true` 以禁用自签名 HTTPS 监听器，仅提供纯 HTTP 服务（用于在一个终止 TLS 的反向代理之后）。 |
@@ -20,13 +20,16 @@
 | `PLATFORM` | 否 | 强制指定 BombVault 认为自己运行在哪个平台上，而不进行自动检测：`unraid`、`generic` 或 `truenas`（默认未设置，会通过在闪存挂载下探测 `dockerMan` 标记来自动检测 Unraid，否则为 `generic`；无法识别的值同样回退为 `generic`，并记录到日志）。请在通用 Docker 主机或 TrueNAS Scale 上显式设置它，而不要依赖仅适用于 Unraid 的自动探测；通用 compose 文件正是这样做的。它会改变 appdata 回退约定、跨实例还原目标的默认值，以及是否会尝试仅适用于 Unraid 的通知/配套插件步骤（参见 `internal/platform`）。 |
 | `BOMBVAULT_SELF_CONTAINER` | 否 | BombVault 容器自身的名称，以便它绝不会备份（从而停止）自己。 |
 | `BACKUP_MAX_HOURS` | 否 | 单次备份运行在被强制取消前可持有其域锁的最长挂钟小时数（一道防护，防止卡死的运行永久阻塞该域）。留空（默认）使用 `48`。对于非常大或缓慢的云备份可调高它（在上限处被取消的运行会以 `context deadline exceeded` 失败）。设为 `0` 可完全禁用该上限。 |
+| `DB_DUMP_MAX_HOURS` | 否 | 一次自动数据库转储在被停止前可以运行的小时数。留空（默认）使用 `6`；允许 `1` 到 `48`，并且该上限比 `BACKUP_MAX_HOURS` 低一小时（该值不足两小时时取其一半），好让长转储被自己的上限截断并如实上报，而不是把备份一起拖垮。不再有进展的转储会更早停止，在 `BACKUP_STALL_HOURS` 之后。被停止的转储只算它自己失败，容器备份继续进行。在 Unraid 上，用 **Add another Path, Port, Variable** 把该变量加到 BombVault 容器。 |
 | `TZ` | 否 | 计划任务的时区（例如 `Europe/Berlin`）。 **未设置时，所有计划均按 UTC 运行**：设为 02:30 的计划将在 02:30 UTC 启动，而不是本地时间。 在 Unraid 上无需自行设置：系统会将自身时区传递给每个容器。 |
 
 ## 挂载
 
 按 CA 模板所示挂载 Docker 套接字、闪存（`/boot`）和 **Host Data** 根目录（`/mnt`）。备份的*来源*和*目标*都位于 Host Data 之下，且它以 **slave** 方式挂载，因此在容器启动后才挂载的远程共享（例如位于 `/mnt/remotes` 之下）无需重启即可可见。
 
-备份仓库路径默认为 `/mnt/user/bombvault/{container,vms,flash,config,files}`，在首次备份时创建。可随时在**设置，备份路径**中更改位置。
+ZFS 数据集备份同样需要这种模式：主机要在容器启动之后才挂载数据集的快照。参见 [ZFS 数据集](zfs-datasets.md)。
+
+备份仓库路径默认为 `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`，在首次备份时创建。可随时在**设置，备份路径**中更改位置。
 
 !!! note "主机集成检查"
     容器启动后在 Web 界面打开 `/spike`。它会探测每个挂载和 CLI（Docker 套接字、libvirt、restic、qemu-img、rclone）并报告任何缺失的部分。
@@ -39,6 +42,7 @@
 - **Docker 具名卷** 一律纳入，因为它们没有可丢弃的对应物，也就没什么可过滤的，**但仅当该卷在宿主机上的真实存储路径本身能通过 Host Data 挂载抵达时才算**，这和 BombVault 备份的其他宿主机路径条件完全一致。默认的本地卷驱动会把卷放在守护进程自己的数据根目录下，即未做修改时的 `/var/lib/docker/volumes/<name>/_data`（可用 `docker info -f '{{.DockerRootDir}}'` 查看）。这个位置并不在通用 `docker-compose.yml` 默认使用的那个只含单个目录的窄 Host Data 挂载里。抵达不到的卷会被静默跳过，这不算错误。要在通用主机上真正备份具名卷，请把 Host Data（以及 `HOST_SOURCE_ROOT`）指向一个同时覆盖 Docker 数据根目录的共同上级目录，取舍见 compose 文件里的 Host Data 注释（Unraid 出于同样的原因，直接挂载整个 `/mnt`，也就是它自己的顶层通用约定，从而绕开了这个问题）。
 - **Docker Compose 项目目录：** 若容器带有标准标签 `com.docker.compose.project.working_dir`（由 `docker compose up` 自动设置），该目录也会一并加入，无论是否有绑定命中了数据根目录片段。
 - **用标签 `bombvault.data` 覆盖：** 给容器设上标签 `bombvault.data=true`，即可纳入它的全部绑定挂载，适用于上面两条约定都抓不到的布局（例如没有 Compose 项目、只有单个 `/srv/plex/config` 绑定）。除 `false` 之外任何非空值都算作真；没有该标签或 `bombvault.data=false` 则什么也不改变。
+- **标签 `bombvault.dbdump`：** 给容器设置 `bombvault.dbdump=false` 即可关闭它的自动数据库转储（`0`、`no`、`off` 效果相同），或者写上引擎名（`postgres`、`mysql`、`mariadb`），让 BombVault 转储它自己认不出来的容器。标签优先于容器卡片上的开关，而在 Unraid 上通常就用那个开关。
 
 ## 安全模型
 
@@ -50,9 +54,14 @@
 - 由于该门是可选启用的，未设置时整个界面和 API（包括异地设置、篡改测试路由和恢复工具包）对任何能访问该端口的人都可访问。在使用异地、不可变备份或加密后就启用该门。
 - 请仅在受信任、未对外暴露的网络上运行 BombVault。对于远程访问，请将它置于一个添加了身份验证和 TLS 的反向代理之后。响应携带基线安全头（CSP、`nosniff`、`X-Frame-Options`、`Referrer-Policy`）。
 - 在反向代理后面，每个请求携带的都是代理的地址，因此不设置 `TRUSTED_PROXY` 时登录限流会把所有客户端算作一个，攻击者的失败也会把你锁在门外。在 `TRUSTED_PROXY` 中写明代理，即可恢复按客户端计数。
+- BombVault 前面的反向代理必须把 `Authorization` 或 `X-API-Key` 请求头转发到 `/mcp`，并且不能缓冲响应，否则助手无法连接。见 [MCP 服务器](mcp.md#tls)。
 - 使用 `HTTP_ONLY=true` 时，会话 cookie 会失去其 `Secure` 标志（必须如此，才能在纯 HTTP 上工作），因此只有在保密性重要时才在一个终止 TLS 的代理之后启用密码。
 - 虚拟机备份的 SSH 连接在首次连接时信任主机密钥（TOFU）并此后固定它。如果您的容器到主机的路径不受信任，请带外验证主机的密钥。
 - 启用加密时（设置；默认开启），备份由 restic 加密，密钥从 `APP_KEY` 派生。
+
+## MCP 服务器 {#mcp-server}
+
+MCP 服务器不需要任何环境变量。在 **设置、系统、MCP 服务器** 中创建密钥即可开启，它在与网页界面相同的端口上响应 `/mcp`（例如 `https://192.168.1.10:3443/mcp`）。没有有效密钥时，该路径返回 `404`。客户端、证书和限制见 [MCP 服务器](mcp.md)。
 
 ## 通过 SSH 进行虚拟机备份
 
@@ -60,7 +69,7 @@ BombVault **不挂载任何 libvirt 路径**即可备份 KVM/libvirt 虚拟机�
 
 快速设置：
 
-1. **设置，系统，通过 SSH 备份虚拟机：** 复制显示的公钥。
+1. **设置，系统，主机 SSH：** 复制显示的公钥。
 2. 将它追加到 Unraid 的 `/root/.ssh/authorized_keys`（也会持久化到闪存，以便重启后仍然有效）。
 3. 点击**测试连接**。
 
@@ -75,12 +84,25 @@ BombVault **不挂载任何 libvirt 路径**即可备份 KVM/libvirt 虚拟机�
 
 - **后端：** SMB/CIFS 和 NFS（挂载共享并将备份路径指向它）、无需 rclone 的原生 restic 后端（`s3:...`、`rest:http://host:8000/repo`、`sftp:user@host:/repo`），或任意 rclone 远程（`rclone:<remote>:<bucket>/path`）。
 - **云凭据**以加密方式存储在设置，异地，云凭据之下。
-- **SSH 目标无需在对端安装任何东西。** `sftp:` 只需要一个 SSH 服务器。将来自**设置，系统，通过 SSH 备份虚拟机**的公钥（也位于 `/config/ssh/id_ed25519.pub`）添加到目标用户的 `~/.ssh/authorized_keys`。
+- **SSH 目标无需在对端安装任何东西。** `sftp:` 只需要一个 SSH 服务器。将来自**设置，系统，主机 SSH**的公钥（也位于 `/config/ssh/id_ed25519.pub`）添加到目标用户的 `~/.ssh/authorized_keys`。
 - **异地复制：** BombVault 以尽力而为的方式用 `restic copy` 复制新快照。本地仓库保持为主。每个域都有各自的异地计划，外加一个**立即复制**按钮。
 - **每个域可有多个异地目标：** 每个域都可以同时复制到多个异地目标。在设置，异地添加额外目标，每个目标都有各自的仓库、S3 存储类别、append-only 标志、保留和增长预算；它们全都按该域的异地计划复制。一个现有的单一异地设置会作为第一个目标沿用下来。
 - **按来源的保留：** 本地策略位于设置，路径与存储；异地策略位于设置，异地（将它全部留为零则从不自动清理异地快照）。
 - **带宽限制：** 在设置，异地之下限制 restic 的上传/下载速率。
 - **冷存储与归档存储类别（S3）：** 对于原生 S3 异地仓库，选择一个可还原读取的层级（Standard、Standard-IA、One Zone-IA、Intelligent-Tiering、Glacier Instant Retrieval）。rclone 远程在 rclone 配置中设置其类别。
+
+## 异常 {#anomalies}
+
+异常检测在 **设置，完整性** 的 **异常** 卡片中设置。每个控件在您更改后立即保存，检测关闭时开关下方的三个控件会隐藏。
+
+| 设置 | 默认值 | 作用 |
+|---|---|---|
+| **检测异常** | 开启 | 将每次备份与对象自己的历史进行比较。关闭后不再检查任何新内容，**异常** 条目会从侧边栏消失；卡片仍然链接到以前的发现。 |
+| **灵敏度** | 均衡 | 严格会报告较小的变化，宽松只报告大的变化。 |
+| **发送通知的范围** | 仅严重的发现 | 通过 通知 中设置的渠道发送消息的最低严重程度。重复失败的备份和转储以及失败的计划恢复检查已经会发送自己的消息，不会发送两次。 |
+| **当源急剧缩小或被重写时保留旧备份** | 开启 | 只要对象有关于几乎为空的源、大幅缩小或大部分数据被重新存储的未关闭发现，保留策略和清理就不会动它的旧备份。确认该发现或将其标记为预期之内即可释放它们。 |
+
+每个对象都可以有自己的灵敏度和通知最低级别。可在 **异常** 页面的 **对象** 标签页中设置，也可在对象自己的面板中设置：容器的文件夹部分和虚拟机的设置（两者都在高级模式下）、文件夹集的文件夹编辑器，以及 **闪存** 和 **自我备份** 页面。ZFS 对象的这些设置在 **ZFS** 页面上该对象的编辑器里，适用于其树中的每个数据集。
 
 ## 可移植设置（导出与导入） {#portable-settings-export-and-import}
 

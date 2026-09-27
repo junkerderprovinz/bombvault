@@ -18,7 +18,7 @@ BombVault obsluhuje HTTPS rovnou z krabice na portu `3443` (samopodepsaný certi
 
 Záloha VM komunikuje s libvirt přes SSH, nikdy přes připojení.
 
-- Potvrďte, že SSH je povoleno na hostiteli a veřejný klíč BombVaultu je autorizovaný v `/root/.ssh/authorized_keys` (Nastavení, Systém, Záloha VM přes SSH zobrazuje klíč a tlačítko **Otestovat připojení**).
+- Potvrďte, že SSH je povoleno na hostiteli a veřejný klíč BombVaultu je autorizovaný v `/root/.ssh/authorized_keys` (Nastavení, Systém, SSH k hostiteli zobrazuje klíč a tlačítko **Otestovat připojení**).
 - Na vlastní síti `br0.x` nastavte `LIBVIRT_HOST` na svou LAN IP Unraidu (kontejner tam nemůže dosáhnout na hostitele přes `host.docker.internal`). Povolte **Nastavení, Docker, Host access to custom networks**.
 - Pokud jste změnili SSH port Unraidu, nastavte `LIBVIRT_SSH_PORT`, aby odpovídal.
 - Kompletní krok za krokem diagnóza (test dosažitelnosti, směrování VLAN, `Permission denied (publickey)`, `Host key verification failed`) je v [průvodci Záloha VM přes SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -42,6 +42,56 @@ Než se cokoli zastaví nebo odebere, obnova spustí předletovou kontrolu konfl
 ## Prostý export selhal místo zapsání souboru
 
 Pokud je šifrování age zapnuto (Nastavení), ale není nastaven platný příjemce, export selže s jasnou chybou místo zapsání prostého textu. Přidejte platného příjemce (veřejný klíč age nebo veřejný klíč SSH), nebo vypněte šifrování, pokud zamýšlíte, aby export byl prostý text. Viz [Funkce](features.md).
+
+## Dump databáze selhal
+
+Neúspěšný dump nikdy nepoloží zálohu kolem sebe; zapíše se jako vlastní neúspěšný běh a důvod říká, co spravit.
+
+- **Odmítnuté přihlášení.** Dump se přihlašuje proměnnými s heslem samotného kontejneru (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` nebo jejich verzemi `_FILE`). Zkontrolujte je na kontejneru s databází. Proměnná `_FILE` ukazující na tajemství, které uživatel kontejneru nesmí číst, dopadne stejně.
+- **Chybějící oprávnění.** S náhodným heslem roota se dump přihlásí jen jako uživatel aplikace, obsáhne tedy jen tu jednu databázi, a MySQL 8.4 a novější ho může odmítnout úplně. Dejte kontejneru skutečné heslo roota, nebo mu dump vypněte.
+- **Systémové tabulky potřebují povýšit.** MariaDB odmítá dump, když její systémové tabulky pocházejí ze starší verze (chyba 1558). Přidejte proměnnou `MARIADB_AUTO_UPGRADE=1` a restartujte kontejner, nebo v něm jednou spusťte `mariadb-upgrade`.
+- **Žádný nástroj pro dump.** Odlehčený nebo vlastnoručně sestavený image bez `pg_dump`, `mysqldump` či `mariadb-dump` dumpovat nejde. Vezměte oficiální image, nebo dump vypněte.
+- **Časový limit.** Dump dostane `DB_DUMP_MAX_HOURS` (výchozí 6), záloha kolem něj `BACKUP_MAX_HOURS`, a dump, který přestane postupovat, se utne po `BACKUP_STALL_HOURS`. Za posledním případem bývá zámek držený aplikací. Zvedněte limit, který zabral, nebo dumpujte, když je aplikace v klidu.
+- **Kontejner je pozastavený nebo se restartuje.** Dump mluví s běžícím serverem. Pokud se kontejner restartuje pořád dokola, jeho vlastní log řekne proč.
+- **Poškozený dump se nepodařilo odstranit.** Dump, který BombVault nedokázal dokončit, se zase smaže. Když se to smazání nepovede, dump zůstane v seznamu označený jako poškozený a můžete ho tam smazat.
+
+## Import selhal
+
+Import zastaví kontejner, odsune jeho datovou složku stranou a nechá image vytvořit na jejím místě prázdnou. Selže-li krok před samotným importem, stará složka se vrátí sama. Selže-li import, kontejner si nechá čerstvou složku a stará zůstane vedle jako `<datová složka>.bombvault-before-import-<časová značka>`; chybová hláška běhu uvádí přesnou cestu.
+
+Ruční návrat: zastavte kontejner, přejmenujte současnou datovou složku stranou, přejmenujte zachovanou složku zpět na původní název a kontejner spusťte. Na Unraidu to zvládne správce souborů na kartě Shares.
+
+## Záloha datové sady ZFS selhala nebo nějakou sadu přeskočila {#zfs-datasets}
+
+Každý problém nese kód důvodu v hranatých závorkách a stránka [Datové sady ZFS](zfs-datasets.md#reason-codes) je uvádí všechny i s nápravou. Tři nejčastější:
+
+- **`snapshot-loop`**: snímek se k BombVaultu nedostal, protože Host Data nepředává nová připojení. Uprav kontejner, nastav Access Mode u Host Data na Read/Write - Slave a restartuj BombVault.
+- **`key-not-loaded`**: šifrovaná datová sada bez načteného klíče se přeskočí. Načti klíč pomocí `zfs load-key` a připoj sadu; příští záloha ji zahrne.
+- **`ssh-auth`**: server odmítl klíč BombVaultu. Karta připojení na stránce ZFS ukazuje příkaz, který ho povolí; spusť ho jednou na serveru.
+
+## Položka zůstává na "Učí se N/10"
+
+Většina kontrol anomálií začíná po 10 úspěšných zálohách položky a počítání začne znovu po **Označit jako očekávané** a po změně výběru položky. Položka bez plánu se neučí a kontejner bez appdata se nemá z čeho učit, což říká i jeho odznak.
+
+## Uchovávání přestalo mazat staré zálohy jedné položky
+
+Drží je otevřená kritická anomálie: zdroj položky je téměř prázdný, výrazně se zmenšil, nebo záloha znovu uložila většinu dat. Otevřete anomálii z odznaku u položky. Pokud data chybí nebo byla zašifrována, obnovte nejprve z odkazované poslední dobré zálohy. Pak anomálii potvrďte, nebo ji označte jako očekávanou, pokud změna pochází od vás, a další běh uklidí jako obvykle. Náhled uchovávání takovou položku označí jako ponechanou. U položky ZFS si staré zálohy ponechá jen datová sada, kterou anomálie jmenuje; ostatní datové sady stromu se pročistí jako obvykle.
+
+## Ruční čištění hlásí, že některé položky byly ponechány
+
+Stejná příčina: čištění nechá staré zálohy položky s takovou anomálií na pokoji a uvede ji ve své zprávě. Všechno ostatní se vyčistí jako obvykle.
+
+## Import historie hlásí, že repozitář nešlo přečíst
+
+Po aktualizaci BombVault jednou načte velikosti dřívějších záloh z každého repozitáře. Repozitář, který v tu chvíli nebyl dostupný, například nefunkční vzdálený cíl nebo nepřipojená sdílená složka, je uveden na kartě **Anomálie** v **Nastavení, Integrita** a zkouší se znovu jednou denně. Jeho položky se mezitím učí z nových záloh.
+
+## Varování o místě na disku nesouhlasí s přehledem Unraidu
+
+Na uživatelské sdílené složce Unraidu (`/mnt/user`) je volné místo celého pole, ne jednoho disku. Vzdálené repozitáře se měří jen přes rclone remoty, které hlásí své volné místo; repozitáře S3, B2, REST a SFTP žádný údaj nemají a na kartě **Anomálie** jsou uvedeny jako neměřené.
+
+## Asistent s umělou inteligencí se nepřipojí
+
+Stránka [Server MCP](mcp.md#troubleshooting) uvádí, co znamená každý stavový kód a každé odmítnutí koncového bodu MCP a co s tím dělat.
 
 ## Kontejner se stále restartuje nebo vypadá unhealthy
 

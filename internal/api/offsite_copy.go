@@ -254,7 +254,7 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 // planSource lists one source and decides what it sends to the target. held is
 // what the target holds plus what earlier sources of this pass send it.
 func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mode, v targetVisit, src domainRepoRef, held []restic.Snapshot, heldKnown bool) (sourceCopy, error) {
-	c := sourceCopy{src: src, whole: !v.filtered && !src.CountOnly && (src.Own || domainTagPrefix(domain) == "")}
+	c := sourceCopy{src: src, whole: !v.filtered && !src.CountOnly && (src.Own || len(domainTagPrefixes(domain)) == 0)}
 	snaps, err := s.listSnapshots(ctx, src.Loc, mode)
 	if err != nil {
 		if c.whole {
@@ -311,13 +311,13 @@ func pendingSnapshots(src, held []restic.Snapshot) []restic.Snapshot {
 	return out
 }
 
-// ofDomain keeps the snapshots carrying the domain's tag prefix; a named
-// repository may hold other domains' snapshots too.
+// ofDomain keeps the snapshots carrying one of the domain's tag prefixes; a
+// named repository may hold other domains' snapshots too.
 func ofDomain(snaps []restic.Snapshot, domain string) []restic.Snapshot {
-	prefix := domainTagPrefix(domain)
+	prefixes := domainTagPrefixes(domain)
 	var out []restic.Snapshot
 	for _, sn := range snaps {
-		if slices.ContainsFunc(sn.Tags, func(tag string) bool { return strings.HasPrefix(tag, prefix) }) {
+		if snapshotInDomain(sn, prefixes) {
 			out = append(out, sn)
 		}
 	}
@@ -395,14 +395,23 @@ func (s *Service) ageTarget(ctx context.Context, domain, dest string, mode resti
 		snaps = append(slices.Clone(held), landed...)
 		tags = identityTags(snaps)
 	}
+	var paused []string
 	var err error
 	if len(tags) == 0 {
-		err = s.applyRetentionPerIdentity(ctx, dest, op, mode)
+		paused, err = s.applyRetentionPerIdentity(ctx, dest, op, mode)
 	} else {
-		err = s.applyRetentionToTags(ctx, dest, op, mode, tags, snaps)
+		var held heldIdentityTags
+		if held, err = s.anomalies.HeldIdentityTags(); err != nil {
+			err = fmt.Errorf("read which items are paused: %w", err)
+		} else {
+			paused, err = s.applyRetentionToTags(ctx, dest, op, mode, tags, snaps, held)
+		}
 	}
 	if err != nil {
 		log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+	}
+	if len(paused) > 0 {
+		log.Printf("api: offsite %s: %s", domain, retentionPausedNote(paused)) //nolint:gosec // G706: domain is a fixed literal and tags are validated names
 	}
 	if v.observe {
 		after, lErr := s.listSnapshots(ctx, dest, mode)

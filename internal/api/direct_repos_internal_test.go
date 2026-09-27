@@ -213,7 +213,7 @@ func TestALocationThatDoesNotResolveIsReportedByTheClashCheck(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	logs := captureLog(t)
+	logs := watchLog(t)
 	if res := f.do("POST", "/api/repos", map[string]any{"name": "Cold", "repo": "backups/cold"}); res["ok"] != true {
 		t.Fatalf("a repository beside the unresolvable one: %v", res)
 	}
@@ -653,18 +653,18 @@ func TestADirectRepositoryAgesByItsTargetsRules(t *testing.T) {
 	f.container("web", d.ID)
 	ctx := context.Background()
 
-	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, tagIdentity("container:web"), "containers")
+	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, tagIdentity("container:web"), "containers", anomalyScope{})
 	want := restic.RetentionPolicy{KeepLast: 3, KeepDaily: 2, Direct: true}
 	if got := forgetsAt(f, loc); len(got) != 1 || got[0].Policy != want {
 		t.Fatalf("after a backup the direct repository forgot with %+v, want %+v", got, want)
 	}
-	f.svc.applyRetention(ctx, f.domainPath("containers"), settings, restic.Mode{}, tagIdentity("container:db"), "containers")
+	f.svc.applyRetention(ctx, f.domainPath("containers"), settings, restic.Mode{}, tagIdentity("container:db"), "containers", anomalyScope{})
 	if got := forgetsAt(f, f.domainPath("containers")); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 7}) {
 		t.Fatalf("the domain path forgot with %+v, want the local rule", got)
 	}
 
 	f.hold(loc, snap("a1", 100, "container:web", restic.DirectTag))
-	if err := f.svc.pruneDomain(ctx, "containers", "local", true); err != nil {
+	if _, err := f.svc.pruneDomain(ctx, "containers", "local", true); err != nil {
 		t.Fatal(err)
 	}
 	pruned := forgetsAt(f, loc)
@@ -679,7 +679,7 @@ func TestADirectRepositoryAgesByItsTargetsRules(t *testing.T) {
 
 	v, vLoc := directWithRules(t, f, "vms", 3, 0, true)
 	f.vm("win11", v.ID)
-	f.svc.applyRetention(ctx, vLoc, settings, restic.Mode{}, tagIdentity("vm:win11"), "vms")
+	f.svc.applyRetention(ctx, vLoc, settings, restic.Mode{}, tagIdentity("vm:win11"), "vms", anomalyScope{})
 	if got := forgetsAt(f, vLoc); len(got) != 0 {
 		t.Fatalf("an append-only direct repository was forgotten: %+v", got)
 	}
@@ -776,7 +776,7 @@ func TestDirectSnapshotsOutliveTheLocalRuleUntilTheirTargetClaimsThem(t *testing
 	)
 	ctx := context.Background()
 
-	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, tagIdentity("container:web"), "containers")
+	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, tagIdentity("container:web"), "containers", anomalyScope{})
 	if got := heldIDs(f, loc); !slices.Equal(got, []string{"d1", "d2", "d3", "n2"}) {
 		t.Fatalf("the local rule on a repository that lost its link left %v, want every direct snapshot and the newest", got)
 	}
@@ -784,7 +784,7 @@ func TestDirectSnapshotsOutliveTheLocalRuleUntilTheirTargetClaimsThem(t *testing
 	if err := f.st.ConnectCompanion(old.ID, target.ID); err != nil {
 		t.Fatal(err)
 	}
-	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, tagIdentity("container:web"), "containers")
+	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, tagIdentity("container:web"), "containers", anomalyScope{})
 	if got := heldIDs(f, loc); !slices.Equal(got, []string{"d3", "n2"}) {
 		t.Fatalf("the target's rules left %v, want the two newest", got)
 	}
@@ -925,7 +925,7 @@ func TestAnImportKeepsTheDirectRepositoryOfATargetItCarries(t *testing.T) {
 	gone := f.target("vms", "Hetzner", "sftp:u@box:/vms")
 	dk := f.direct(kept)
 	dg := f.direct(gone)
-	if err := f.h.replaceOffsiteTargets([]offsiteTargetView{offsiteTargetToView(kept)}, settingsView{}); err != nil {
+	if err := f.h.replaceOffsiteTargets([]offsiteTargetView{offsiteTargetToView(kept)}, settingsView{}, false); err != nil {
 		t.Fatal(err)
 	}
 	k, err := f.st.GetNamedRepo(dk.ID)
@@ -944,7 +944,7 @@ func TestAnImportKeepsWhatAKeptTargetHasObserved(t *testing.T) {
 	gone := f.target("containers", "Hetzner", "sftp:u@box:/containers")
 	f.listing("containers", kept.ID, 100, copiesRow("container:web", 3, 90))
 	f.listing("containers", gone.ID, 100, copiesRow("container:web", 2, 90))
-	if err := f.h.replaceOffsiteTargets([]offsiteTargetView{offsiteTargetToView(kept)}, settingsView{}); err != nil {
+	if err := f.h.replaceOffsiteTargets([]offsiteTargetView{offsiteTargetToView(kept)}, settingsView{}, false); err != nil {
 		t.Fatal(err)
 	}
 	copies, err := f.st.ItemCopiesForDomain("containers")
@@ -1052,7 +1052,7 @@ func TestAnImportLeavesADirectRepositoryWhereItsTargetWrites(t *testing.T) {
 	f := newPlacementFixture(t)
 	target := f.target("containers", "B2", "b2:bkt:containers")
 	d := f.direct(target)
-	logs := captureLog(t)
+	logs := watchLog(t)
 	view := offsiteTargetToView(d)
 	view.Repo = "b2:bkt:somewhere-else"
 	view.Name = "B2 direct renamed"

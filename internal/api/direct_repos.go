@@ -784,18 +784,10 @@ type directFinding struct {
 
 // holdsDirect reports whether a listing has a snapshot of this domain that was
 // written straight into a direct repository.
-func holdsDirect(snaps []restic.Snapshot, tagPrefix string) bool {
-	for _, sn := range snaps {
-		if !slices.Contains(sn.Tags, restic.DirectTag) {
-			continue
-		}
-		for _, tag := range sn.Tags {
-			if strings.HasPrefix(tag, tagPrefix) {
-				return true
-			}
-		}
-	}
-	return false
+func holdsDirect(snaps []restic.Snapshot, tagPrefixes []string) bool {
+	return slices.ContainsFunc(snaps, func(sn restic.Snapshot) bool {
+		return slices.Contains(sn.Tags, restic.DirectTag) && snapshotInDomain(sn, tagPrefixes)
+	})
 }
 
 // directFindings pairs each plain repository holding bv:direct snapshots of a

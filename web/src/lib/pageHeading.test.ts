@@ -13,8 +13,9 @@ import { describe, expect, it } from "vitest";
 const PAGES = join(dirname(fileURLToPath(import.meta.url)), "..", "pages");
 
 // Glyphs.tsx is a developer sheet reachable only by typing its route, and
-// Login.tsx is the pre-authentication card with no tab and no subtitle.
-const NOT_A_TAB = new Set(["Glyphs.tsx", "Login.tsx"]);
+// Login.tsx and OAuthConsent.tsx are standalone cards with no tab and no
+// subtitle.
+const NOT_A_TAB = new Set(["Glyphs.tsx", "Login.tsx", "OAuthConsent.tsx"]);
 
 function pageFiles(): string[] {
   return readdirSync(PAGES).filter((f) => /^[A-Z].*\.tsx$/.test(f) && !/\.test\.tsx$/.test(f) && !NOT_A_TAB.has(f));

@@ -18,7 +18,7 @@ A `APP_KEY` deriva a palavra-passe do repositório restic. Sem ela (e sem o kit 
 
 O backup de VM comunica com o libvirt por SSH, nunca por uma montagem.
 
-- Confirme que o SSH está ativado no host e que a chave pública do BombVault está autorizada em `/root/.ssh/authorized_keys` (Definições, Sistema, Backup de VM por SSH mostra a chave e um botão **Testar ligação**).
+- Confirme que o SSH está ativado no host e que a chave pública do BombVault está autorizada em `/root/.ssh/authorized_keys` (Definições, Sistema, SSH do anfitrião mostra a chave e um botão **Testar ligação**).
 - Numa rede `br0.x` personalizada, defina `LIBVIRT_HOST` para o IP LAN do seu Unraid (o container não consegue alcançar o host via `host.docker.internal` aí). Ative **Definições, Docker, Host access to custom networks**.
 - Se alterou a porta SSH do Unraid, defina `LIBVIRT_SSH_PORT` para corresponder.
 - O diagnóstico completo passo a passo (teste de alcance, encaminhamento de VLAN, `Permission denied (publickey)`, `Host key verification failed`) está no [guia de backup de VM por SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
@@ -42,6 +42,56 @@ Antes de qualquer coisa ser parada ou removida, o restauro corre uma verificaç�
 ## Uma exportação simples falhou em vez de escrever um ficheiro
 
 Se a encriptação age estiver ligada (Definições) mas não estiver definido nenhum destinatário válido, uma exportação falha com um erro claro em vez de escrever texto simples. Adicione um destinatário válido (uma chave pública age ou uma chave pública SSH), ou desligue a encriptação se pretender que a exportação seja texto simples. Consulte [Funcionalidades](features.md).
+
+## Um dump de base de dados falhou
+
+Um dump falhado nunca faz falhar o backup à volta dele; fica registado como uma execução falhada própria, e o motivo diz o que corrigir.
+
+- **Entrada recusada.** O dump entra com as variáveis de palavra-passe do próprio container (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` ou as versões `_FILE`). Confirma-as no container da base de dados. Uma variável `_FILE` que aponta para um segredo que o utilizador do container não consegue ler falha da mesma maneira.
+- **Privilégios em falta.** Com uma palavra-passe de root aleatória, o dump só consegue entrar como utilizador da aplicação, pelo que contém apenas aquela base, e o MySQL 8.4 e mais recentes podem recusá-lo de todo. Dá ao container uma palavra-passe de root a sério, ou desliga-lhe o dump.
+- **As tabelas de sistema precisam de atualização.** O MariaDB recusa o dump quando as suas tabelas de sistema vêm de uma versão mais antiga (erro 1558). Acrescenta a variável `MARIADB_AUTO_UPGRADE=1` e reinicia o container, ou corre `mariadb-upgrade` lá dentro uma vez.
+- **Sem ferramenta de dump.** Uma imagem enxuta ou feita à mão sem `pg_dump`, `mysqldump` ou `mariadb-dump` não pode ser despejada. Usa a imagem oficial, ou desliga o dump.
+- **Um limite de tempo.** Um dump tem `DB_DUMP_MAX_HOURS` (6 por omissão), o backup à volta tem `BACKUP_MAX_HOURS`, e um dump que deixa de avançar é cortado ao fim de `BACKUP_STALL_HOURS`. Este último caso vem quase sempre de um bloqueio que a aplicação mantém. Sobe o limite que disparou, ou faz o dump enquanto a aplicação está sossegada.
+- **O container está em pausa ou a reiniciar.** O dump fala com o servidor em funcionamento. Se o container reinicia sem parar, o seu próprio registo diz porquê.
+- **Um dump danificado não pôde ser removido.** Um dump que o BombVault não conseguiu terminar é apagado. Quando esse apagamento falha, o dump fica na lista marcado como danificado e podes eliminá-lo aí.
+
+## Uma importação falhou
+
+Uma importação para o container, põe a pasta de dados de lado e deixa a imagem criar uma vazia no lugar. Se falhar um passo antes da importação em si, a pasta antiga volta sozinha ao sítio. Se falhar a importação, o container fica com a pasta nova e a antiga permanece ao lado como `<pasta de dados>.bombvault-before-import-<data e hora>`; a mensagem de erro da execução indica o caminho exato.
+
+Para a repor à mão: para o container, muda o nome da pasta de dados atual para a tirar do caminho, muda o nome da pasta guardada de volta ao original e arranca o container. No Unraid, o gestor de ficheiros no separador Shares faz isto.
+
+## Uma cópia de um conjunto de dados ZFS falhou ou ignorou um conjunto {#zfs-datasets}
+
+Cada problema tem um código de motivo entre parênteses retos, e a página [Conjuntos de dados ZFS](zfs-datasets.md#reason-codes) lista-os todos com a solução. Os três mais comuns:
+
+- **`snapshot-loop`**: o instantâneo não chegou ao BombVault porque o Host Data não passa as novas montagens. Edite o container, ponha o Access Mode do Host Data em Read/Write - Slave e reinicie o BombVault.
+- **`key-not-loaded`**: um conjunto cifrado cuja chave não está carregada é ignorado. Carregue a chave com `zfs load-key` e monte o conjunto; a próxima cópia inclui-o.
+- **`ssh-auth`**: o servidor recusou a chave do BombVault. O cartão de ligação da página ZFS mostra o comando que a autoriza; execute-o uma vez no servidor.
+
+## Um elemento fica em "A aprender N/10"
+
+A maioria das verificações de anomalias começa após 10 backups bem-sucedidos de um elemento, e a contagem recomeça após **Marcar como esperada** e depois de a seleção do elemento mudar. Um elemento sem agendamento não aprende, e um contentor sem appdata não tem com que aprender, como indica o seu distintivo.
+
+## A retenção deixou de apagar os backups antigos de um elemento
+
+Uma anomalia crítica aberta está a segurá-los: a origem do elemento está quase vazia, encolheu muito, ou um backup voltou a guardar a maior parte dos dados. Abra a anomalia a partir do distintivo do elemento. Se faltarem dados ou tiverem sido cifrados, restaure primeiro a partir do último backup bom indicado. Depois confirme a anomalia, ou marque-a como esperada se a alteração foi sua, e a execução seguinte limpa como de costume. A pré-visualização da retenção assinala esse elemento como mantido. Num elemento ZFS só o conjunto de dados indicado na anomalia mantém os backups antigos; os outros conjuntos da árvore são limpos como de costume.
+
+## A limpeza manual diz que alguns elementos foram mantidos
+
+A mesma causa: a limpeza deixa em paz os backups antigos de um elemento com uma anomalia destas e indica-o na sua mensagem. Tudo o resto é limpo como de costume.
+
+## A importação do histórico diz que um repositório não pôde ser lido
+
+Depois da atualização, o BombVault lê uma vez o tamanho dos backups anteriores de cada repositório. Um repositório que não estava acessível nesse momento, como um destino externo em baixo ou uma partilha não montada, aparece no cartão **Anomalias** em **Definições, Integridade** e é tentado de novo uma vez por dia. Entretanto, os seus elementos aprendem com os backups novos.
+
+## O aviso de espaço em disco não coincide com o painel do Unraid
+
+Na partilha de utilizador do Unraid (`/mnt/user`) o espaço livre é o de todo o array, não o de um disco. Os repositórios remotos só são medidos através de remotes rclone que indicam o seu espaço livre; os repositórios S3, B2, REST e SFTP não têm valor e aparecem como não medidos no cartão **Anomalias**.
+
+## Um assistente de IA não consegue ligar-se
+
+A página [Servidor MCP](mcp.md#troubleshooting) explica o que significa cada código de estado e cada recusa do ponto de ligação MCP, e o que fazer.
 
 ## O container continua a reiniciar ou parece não-saudável
 

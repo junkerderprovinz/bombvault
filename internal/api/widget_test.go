@@ -298,3 +298,42 @@ func TestWidgetTokenSettingsRoundTrip(t *testing.T) {
 		t.Fatalf("settings round-trip must keep the widget token, got %d", w.Code)
 	}
 }
+
+func TestWidgetFeedLeavesOutWhatADatabaseToolSaid(t *testing.T) {
+	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	const tok = "0123456789abcdef0123456789abcdef"
+	setWidgetToken(t, st, tok)
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "mariadb"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	const row = "Duplicate entry 'alice@example.com' for key 'email'"
+	for kind, reason := range map[string]string{
+		"dbdump": store.ReasonDBDumpTool + ": mysqldump: Got error: 1062: " + row,
+		"dbimport": store.ReasonDBImportFailed + ": the previous data folder is kept at /data/db.bombvault-before-import-20260917-021403; " +
+			"exit 1: ERROR 1062 (23000) at line 812: " + row,
+	} {
+		id, err := st.StartRun(tg.ID, kind)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := st.FinishRun(id, "failed", "", 0, reason); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	runs, _ := widgetDataBody(t, h, tok)["runs"].([]any)
+	if len(runs) != 2 {
+		t.Fatalf("want 2 runs, got %d", len(runs))
+	}
+	for _, r := range runs {
+		row := r.(map[string]any)
+		msg, _ := row["error"].(string)
+		if strings.Contains(msg, "alice@example.com") {
+			t.Errorf("the %s line carries the database tool's message: %q", row["kind"], msg)
+		}
+		if !strings.HasPrefix(msg, "database ") {
+			t.Errorf("the %s line lost its reason: %q", row["kind"], msg)
+		}
+	}
+}

@@ -44,6 +44,20 @@ func TestProjectFoldersBelongToContainersAndMarkersToNobody(t *testing.T) {
 	}
 }
 
+func TestADatabaseDumpBelongsToItsContainer(t *testing.T) {
+	c := ownerContext{domain: "containers"}
+	if got := c.identityOf("dbdump:immich_pg"); !slices.Equal(got, []string{"container:immich_pg"}) {
+		t.Errorf("identityOf(dbdump:immich_pg) = %v, want the container", got)
+	}
+	dump := restic.Snapshot{ID: "d1", Tags: []string{"dbdump:immich_pg", "dbengine:postgres", "p1"}}
+	if !c.namesItem(dump, "container:immich_pg") {
+		t.Error("a dump does not name its container, so a delete at a target would leave it behind")
+	}
+	if (ownerContext{domain: "vms"}).identityOf("dbdump:immich_pg") != nil {
+		t.Error("a dump belongs to no VM")
+	}
+}
+
 func TestADiskTagOfTwoKnownVMsBelongsToBoth(t *testing.T) {
 	both := ownerContext{domain: "vms", known: map[string]bool{"vm:a": true, "vm:a:zvol:b": true}}
 	if got := both.identityOf("vm:a:zvol:b"); !slices.Equal(got, []string{"vm:a", "vm:a:zvol:b"}) {

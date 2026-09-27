@@ -267,7 +267,14 @@ const NOT_A_PATH: Record<string, string> = {
   "dashboard.forecastShrink": "same unit as forecastGrowth",
   "rclone.pathHint": "the example is rclone:<remote>:<bucket>/path. It begins with letters, a strong LTR class that anchors the whole run; only a leading `/` misrenders",
   "recovery.foreignVMDestHint": "the run is <destination>/<vm-name>/ and BOTH placeholder words are translated (sl 'ime-vm', sr 'naziv-vm'), so no literal fragment can match in every locale; the leading character is `<`, not `/`",
+  "mcp.certSystemTip":
+    "the Linux certificate folder in an InfoBubble tip, which takes a string and not nodes; ar, he and fa carry a left-to-right mark before it",
+  "mcp.cloudWarning":
+    "the endpoint path in an InfoBubble tip and a dialog sentence, both plain strings; ar, he and fa carry a left-to-right mark before it",
+  "mcp.keyEnvTip":
+    "a home-folder file in a shell command inside an InfoBubble tip, which takes a string; ar, he and fa carry left-to-right marks around the file and the command",
   "folders.customPlaceholder": "orphaned key, rendered nowhere (see i18n.orphans.test.ts's ratchet)",
+  "anomaly.learning": "a fraction, not a path: {n}/{needed} counts the backups the detector has learned from",
 };
 
 describe("coverage: every en string that embeds a path is accounted for", () => {

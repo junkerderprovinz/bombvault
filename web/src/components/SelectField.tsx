@@ -1,5 +1,6 @@
 import { useId, useRef, useState, type ReactNode, type Ref } from "react";
 import { DropdownListbox } from "./DropdownListbox";
+import { InfoBubble } from "./InfoBubble";
 import { mergeRefs } from "../lib/mergeRefs";
 import { stepIndex } from "../lib/selectScroll";
 
@@ -136,5 +137,42 @@ export function SelectField<T extends string>({
         ))}
       </DropdownListbox>
     </>
+  );
+}
+
+/** A SelectField under its own visible caption, the shape a filter row and a
+ *  settings row share. */
+export function LabelledSelect<T extends string>({
+  label,
+  hint,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  /** Explanation in an (i) bubble beside the caption. */
+  hint?: string;
+  value: T;
+  onChange: (next: T) => void;
+  options: SelectOption<T>[];
+}) {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="flex items-center gap-1.5">
+        <label htmlFor={id} className="text-xs text-carbon-textMuted">
+          {label}
+        </label>
+        {hint && <InfoBubble tip={hint} />}
+      </span>
+      <SelectField
+        id={id}
+        label={label}
+        value={value}
+        onChange={onChange}
+        options={options}
+        className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+      />
+    </div>
   );
 }

@@ -20,6 +20,7 @@ Postaveno na [restic](https://restic.net), takže každá záloha je deduplikova
 | **Unraid flash** | Celý USB flash (`/boot`): OS, licence, konfigurace pole, sdílené složky, síť a konfigurace pluginů. |
 | **Konfigurace aplikace** | Vlastní `/config` BombVaultu: jeho databáze nastavení, přihlašovací údaje mimo lokalitu a pár klíčů SSH pro libvirt. |
 | **Soubory a složky** | Pojmenované **sady souborů**, libovolná složka na serveru, každá s volitelnými vylučovacími vzory pro danou sadu. |
+| **Datové sady ZFS** | Datová sada se všemi sadami pod ní, čtená z jednoho snímku ZFS a uložená jako složka. Viz [Datové sady ZFS](zfs-datasets.md). |
 
 ## Obnova je hvězdou
 

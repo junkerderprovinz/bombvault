@@ -382,10 +382,10 @@ func TestLatestContainerBackupTimesKeepsPostLinkSnapshotUnderOldName(t *testing.
 	if err != nil {
 		t.Fatalf("LatestContainerBackupTimes: %v", err)
 	}
-	if got, want := times["radarr"], unixOf(t, "2024-05-01T00:00:00Z"); got != want {
+	if got, want := times["radarr"].Newest(), unixOf(t, "2024-05-01T00:00:00Z"); got != want {
 		t.Fatalf("radarr = %d, want its newest pre-link snapshot %d (%+v)", got, want, times)
 	}
-	if got, want := times["radarr-movies"], unixOf(t, "2024-09-01T00:00:00Z"); got != want {
+	if got, want := times["radarr-movies"].Newest(), unixOf(t, "2024-09-01T00:00:00Z"); got != want {
 		t.Fatalf("radarr-movies = %d, want the returned machine's own %d (%+v)", got, want, times)
 	}
 }
@@ -416,7 +416,7 @@ func TestPruneDomainFoldsAliasOnlyWhileAllItsSnapshotsPredateLink(t *testing.T) 
 		}
 		eng := &fakeResticEngine{snaps: snaps}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
-		if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+		if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 			t.Fatalf("PruneDomain: %v", err)
 		}
 		return sortedCopy(eng.forgetTags)

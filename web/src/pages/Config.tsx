@@ -17,6 +17,10 @@ import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
+import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
+import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
+import { useRestoreRequest } from "../lib/restoreRequest";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -174,15 +178,16 @@ function ConfigSettingsCard({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Config page — BombVault's OWN settings self-backup. Backup + status only; the
-// restore flow (which restarts the app to swap the live DB) lives in the Recovery
-// tab, so the self-referential restart stays in one place.
-// ---------------------------------------------------------------------------
-
+// Config is the self-backup page for BombVault's own settings: backups and the
+// snapshot list. Restoring restarts the app to swap the live database, so that
+// stays in the Recovery tab.
 export function Config() {
   const { t } = useT();
   const [settings, setSettings] = useState<Settings | null>(null);
+  const anomaly = useAnomalyItems().find("config", "config");
+  const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const { flagged } = useOpenAnomalies();
+  const restoreRequest = useRestoreRequest();
   const [reloadTick, setReloadTick] = useState(0);
   const progressMap = useProgress();
   const progress = progressMap["config"];
@@ -201,7 +206,10 @@ export function Config() {
   return (
     <div className={PAGE_SHELL}>
       <div>
-        <h1 className="text-2xl font-semibold text-carbon-text">{t("config.title")}</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold text-carbon-text">{t("config.title")}</h1>
+          <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
+        </div>
         <p className="mt-1 text-sm text-carbon-textSub">{t("config.subtitle")}</p>
       </div>
 
@@ -228,6 +236,16 @@ export function Config() {
               busyPhase={running.phase}
             />
           </div>
+          <ItemAnomalySettings
+            item={anomaly}
+            enabled={anomalyEnabled}
+            globals={
+              settings
+                ? { sensitivity: settings.anomalySensitivity, notifyMin: settings.anomalyNotifyMin }
+                : undefined
+            }
+            t={t}
+          />
 
           {/* A restore has its own control with its own warning. */}
           {progress && progress.active && progress.phase !== "restore" && (
@@ -261,6 +279,8 @@ export function Config() {
             itemName={t("config.snapshotsTitle")}
             open
             renderActions={() => null}
+            flagged={flagged}
+            request={restoreRequest}
           />
         </div>
       </div>

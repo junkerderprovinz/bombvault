@@ -80,7 +80,7 @@ func (s *Service) backupStackDir(ctx context.Context, project, dir string) error
 	if _, err := s.engine.Backup(ctx, repo, []string{dir}, []string{tag, "p1"}, mode); err != nil {
 		return fmt.Errorf("stack %s: %w", project, err)
 	}
-	s.applyRetention(ctx, repo, settings, mode, tagIdentity(tag), "containers")
+	s.applyRetention(ctx, repo, settings, mode, tagIdentity(tag), "containers", anomalyScope{})
 	return nil
 }
 

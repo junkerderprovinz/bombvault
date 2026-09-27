@@ -18,6 +18,7 @@ export function RestoreCancelButton({
   cancelKey,
   inPlace,
   name,
+  confirmText,
   t,
   cancelledRef,
 }: {
@@ -28,6 +29,9 @@ export function RestoreCancelButton({
   inPlace: boolean;
   /** Human name substituted into the in-place warning ({name}). */
   name: string;
+  /** Replaces the warning where cancelling leaves something else behind than a
+   *  half-written folder. */
+  confirmText?: string;
   t: T;
   /** Paired watch's cancelled flag: set true on a successful cancel so a no-run
    *  restore finishes "cancelled", not a green "Restored". */
@@ -37,9 +41,11 @@ export function RestoreCancelButton({
   const { confirm, confirmDialog } = useConfirm();
 
   async function handle() {
-    const msg = inPlace
-      ? t("restore.cancelConfirmInPlace").replace(/\{name\}/g, name)
-      : t("restore.cancelConfirmSafe");
+    const msg =
+      confirmText ??
+      (inPlace
+        ? t("restore.cancelConfirmInPlace").replace(/\{name\}/g, name)
+        : t("restore.cancelConfirmSafe"));
     // The warning is in the message; the dialog has no colour of its own.
     if (!(await confirm(msg))) return;
     setCancelling(true);

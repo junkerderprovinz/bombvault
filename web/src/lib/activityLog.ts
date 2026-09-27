@@ -5,25 +5,27 @@
 // React, i18n or a live stream.
 
 import type { Run, ScheduleNext } from "./api";
-import type { ProgressMap, ProgressState } from "./progress";
+import { dumpLeftRunning, dumpWasCancelled, importHadErrors } from "./dbdump";
+import type { ProgressMap, ProgressStage, ProgressState } from "./progress";
 import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
-import { RUN_REASONS } from "./runReason";
+import type { TranslationKey } from "./i18n";
+import { isWarningNote, runReason, runReasonParts } from "./runReason";
 
 /** Picks a line's glyph and colour in ActivityLog.tsx. */
 export type LogStatus = "running" | "success" | "failed" | "offsite" | "info";
 
 /** The domain a line belongs to, for the domain filter. "everything" is the
- *  Backup Everything pass over the other five (store.EverythingTargetID on the
+ *  Backup Everything pass over the others (store.EverythingTargetID on the
  *  backend). "" means a finished run's target could not be resolved, e.g. a
  *  deleted item. */
-export type LogDomain = "containers" | "vms" | "flash" | "config" | "files" | "everything" | "";
+export type LogDomain = "containers" | "vms" | "flash" | "config" | "files" | "zfs" | "everything" | "";
 
 /** The operation kind, for the type filter. "update" (the image update after a
  *  backup) has no filter chip but still carries a kind for search. "drill" is
  *  the local restore drill and "drdrill" the off-site DR check; rows recorded
  *  before the two were split stay "drill". */
-export type LogKind = "backup" | "restore" | "prune" | "verify" | "offsite" | "update" | "drill" | "drdrill" | "tamper" | "export" | "";
+export type LogKind = "backup" | "restore" | "prune" | "verify" | "offsite" | "update" | "drill" | "drdrill" | "tamper" | "export" | "dbdump" | "";
 
 export interface LogLine {
   /** Stable React key. */
@@ -42,24 +44,36 @@ export interface LogLine {
    *  so filterLogLines exempts it from the quick filters; otherwise an active
    *  filter chip could hide it. */
   idle?: boolean;
+  /** A run that succeeded with a note worth acting on, coloured like the run
+   *  history colours that note. */
+  warn?: boolean;
+  /** The run behind the line, finished or still going, for the marks an open
+   *  finding puts on it and for a link that opens the log on one run. */
+  runId?: string;
 }
 
 /**
- * Turns a translation key and optional `{placeholder}` params into text.
+ * Turns a translation key and optional `{placeholder}` params into text. The
+ * count picks the plural form of a key that offers several.
  * Injected so buildLogLines stays pure: ActivityLog.tsx passes useT()'s `t`,
  * tests pass a stub.
  */
-export type ResolveName = (key: string, params?: Record<string, string>) => string;
+export type ResolveName = (key: string, params?: Record<string, string>, count?: number) => string;
+
+/** The `t` a run reason expects, fed from a ResolveName. */
+function reasonT(resolveName: ResolveName) {
+  return (key: TranslationKey, n?: number) => resolveName(key, undefined, n);
+}
 
 /**
- * reasonText translates a run's error when it is one of our own sentences
- * (RUN_REASONS), so a "…failed: {error}" line does not start in German and
- * end in English. Messages from restic, rclone or Docker pass through as is.
+ * reasonText translates a run's error when it is one of our own sentences, so a
+ * "…failed: {error}" line does not start in German and end in English. A tool's
+ * own message behind ours stays as it was stored, and a message from restic,
+ * rclone or Docker passes through whole.
  */
 function reasonText(raw: string | undefined, resolveName: ResolveName): string {
   if (!raw) return "";
-  const key = RUN_REASONS[raw.trim()];
-  return key ? resolveName(key) : raw;
+  return runReason(raw, reasonT(resolveName));
 }
 
 const DOMAIN_KEYS: Record<string, string> = {
@@ -68,6 +82,7 @@ const DOMAIN_KEYS: Record<string, string> = {
   flash: "activityLog.domainFlash",
   config: "activityLog.domainConfig",
   files: "activityLog.domainFiles",
+  zfs: "activityLog.domainZFS",
   everything: "activityLog.domainEverything",
 };
 
@@ -111,6 +126,7 @@ function normalizeDomain(domain: string): LogDomain {
     domain === "flash" ||
     domain === "config" ||
     domain === "files" ||
+    domain === "zfs" ||
     domain === "everything"
   ) {
     return domain;
@@ -138,7 +154,7 @@ function formatBytesShort(n: number): string {
 }
 
 type ParsedKey =
-  | { scope: "item"; domain: "container" | "vm" | "files" | "flash" | "config"; name: string }
+  | { scope: "item"; domain: "container" | "vm" | "files" | "zfs" | "flash" | "config"; name: string }
   | { scope: "batch"; domain: string }
   | { scope: "offsite" | "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export"; domain: string };
 
@@ -154,6 +170,7 @@ function parseProgressKey(key: string): ParsedKey | null {
   if (key.startsWith("container:")) return { scope: "item", domain: "container", name: key.slice("container:".length) };
   if (key.startsWith("vm:")) return { scope: "item", domain: "vm", name: key.slice("vm:".length) };
   if (key.startsWith("files:")) return { scope: "item", domain: "files", name: key.slice("files:".length) };
+  if (key.startsWith("zfs:")) return { scope: "item", domain: "zfs", name: key.slice("zfs:".length) };
   if (key.startsWith("batch:")) return { scope: "batch", domain: key.slice("batch:".length) };
   if (key.startsWith("offsite:")) return { scope: "offsite", domain: key.slice("offsite:".length) };
   if (key.startsWith("prune:")) return { scope: "prune", domain: key.slice("prune:".length) };
@@ -166,9 +183,9 @@ function parseProgressKey(key: string): ParsedKey | null {
 }
 
 /**
- * itemDisplayName resolves an item-scope key's display name. Container, VM
- * and file-set names are proper nouns and shown as is; the flash and config
- * singletons get their translated domain label. The check is on
+ * itemDisplayName resolves an item-scope key's display name. Container, VM,
+ * file-set and dataset names are proper nouns and shown as is; the flash and
+ * config singletons get their translated domain label. The check is on
  * `parsed.domain`, not on the name, so a container called "flash" stays a
  * container.
  */
@@ -177,6 +194,13 @@ function itemDisplayName(resolveName: ResolveName, parsed: Extract<ParsedKey, { 
   if (parsed.domain === "config") return domainLabel(resolveName, "config");
   return parsed.name;
 }
+
+/** The live line of a step that counts bytes instead of a percentage. */
+const STAGE_LINE_KEYS: Record<ProgressStage, string> = {
+  dbdump: "activityLog.lineDumpingItem",
+  dbdumpsave: "activityLog.lineSavingDumpItem",
+  dbimport: "activityLog.lineImportingItem",
+};
 
 interface LiveResult {
   lines: LogLine[];
@@ -247,7 +271,7 @@ function buildLiveLines(
   resolveName: ResolveName,
   now: number,
   liveNow: number = now,
-  stillRunning: ReadonlySet<string> = new Set()
+  stillRunning: ReadonlyMap<string, string> = new Map()
 ): LiveResult {
   const lines: LogLine[] = [];
   const signatures = new Set<string>();
@@ -274,16 +298,19 @@ function buildLiveLines(
     if (parsed.scope === "item") {
       const name = itemDisplayName(resolveName, parsed);
       const domain = normalizeDomain(parsed.domain);
-      const kind: LogKind = state.phase === "restore" ? "restore" : "backup";
+      // A dump, a dump save and an import each record a run of their own kind,
+      // so the signature follows the stage rather than the phase around it.
+      const runKind = state.stage ?? (state.phase === "restore" ? "restore" : "backup");
       const pct = displayPercent(state.percent);
-      const text =
-        kind === "restore"
+      const text = state.stage
+        ? resolveName(STAGE_LINE_KEYS[state.stage], { name, bytes: formatBytesShort(state.bytes ?? 0) })
+        : runKind === "restore"
           ? resolveName("activityLog.lineRestoringItem", { name, percent: String(pct) })
           : resolveName("activityLog.lineBackingUpItem", { name, percent: String(pct) });
-      const sig = itemSignature(kind, domain, name);
+      const sig = itemSignature(runKind, domain, name);
       if (!keep(sig)) continue;
       signatures.add(sig);
-      lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind, live: true });
+      lines.push({ id: `live:${key}`, runId: stillRunning.get(sig), atMs: state.lastSeen, status: "running", text, domain, kind: asLogKind(runKind), live: true });
       continue;
     }
 
@@ -311,7 +338,7 @@ function buildLiveLines(
       const offsiteSig = domainOpSignature("offsite", domain);
       if (!keep(offsiteSig)) continue;
       signatures.add(offsiteSig);
-      lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "offsite", text, domain, kind: "offsite", live: true });
+      lines.push({ id: `live:${key}`, runId: stillRunning.get(offsiteSig), atMs: state.lastSeen, status: "offsite", text, domain, kind: "offsite", live: true });
       continue;
     }
 
@@ -322,7 +349,7 @@ function buildLiveLines(
     const opSig = domainOpSignature(parsed.scope, domain);
     if (!keep(opSig)) continue;
     signatures.add(opSig);
-    lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind: parsed.scope, live: true });
+    lines.push({ id: `live:${key}`, runId: stillRunning.get(opSig), atMs: state.lastSeen, status: "running", text, domain, kind: parsed.scope, live: true });
   }
 
   return { lines, signatures };
@@ -396,6 +423,46 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
         : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
   }
 
+  if (run.kind === "dbdump") {
+    // A dump that may still be running is worth a look even when it was cancelled.
+    if (dumpWasCancelled(run.error) && !dumpLeftRunning(run.error)) {
+      return { status: "info", text: resolveName("activityLog.lineDbDumpCancelled", { name }) };
+    }
+    if (run.status === "success") {
+      const bytes = formatBytesShort(run.bytes);
+      return run.error
+        ? { status: "success", text: resolveName("activityLog.lineDbDumpNote", { name, bytes, duration, note: reasonText(run.error, resolveName) }) }
+        : { status: "success", text: resolveName("activityLog.lineDbDumpSuccess", { name, bytes, duration }) };
+    }
+    return run.status === "failed"
+      ? { status: "failed", text: resolveName("activityLog.lineDbDumpFailed", { name, error: reasonText(run.error, resolveName) }) }
+      : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
+  }
+
+  if (run.kind === "dbdumpsave") {
+    return run.status === "success"
+      ? { status: "success", text: resolveName("activityLog.lineDbDumpSaved", { name, bytes: formatBytesShort(run.bytes) }) }
+      : run.status === "failed"
+        ? { status: "failed", text: resolveName("activityLog.lineDbDumpSaveFailed", { name, error: reasonText(run.error, resolveName) }) }
+        : run.status === "cancelled"
+          ? { status: "info", text: resolveName("activityLog.lineDbDumpSaveCancelled", { name }) }
+          : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
+  }
+
+  if (run.kind === "dbimport") {
+    if (run.status === "success") {
+      if (importHadErrors(run.error)) {
+        return { status: "success", text: resolveName("activityLog.lineDbImportedErrors", { name, note: reasonText(run.error, resolveName) }) };
+      }
+      const text = resolveName("activityLog.lineDbImported", { name });
+      const { note } = runReasonParts(run.error, reasonT(resolveName));
+      return { status: "success", text: note ? `${text}; ${note}` : text };
+    }
+    return run.status === "failed"
+      ? { status: "failed", text: resolveName("activityLog.lineDbImportFailed", { name, error: reasonText(run.error, resolveName) }) }
+      : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
+  }
+
   if (run.kind === "restore") {
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineRestoreSuccess", { name, duration }) }
@@ -426,8 +493,12 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
 }
 
 /** Narrows a raw Run.kind string to LogKind; an unknown kind becomes ""
- *  rather than a filter value nothing offers. */
+ *  rather than a filter value nothing offers. Saving a dump to a folder and
+ *  importing one are restore-side work, and that is the filter someone reaches
+ *  for to find them. */
 function asLogKind(kind: string): LogKind {
+  if (kind === "dbdumpsave" || kind === "dbimport") return "restore";
+  if (kind === "dbdump") return "dbdump";
   if (
     kind === "backup" ||
     kind === "restore" ||
@@ -452,6 +523,18 @@ function isDomainOpKind(kind: string): boolean {
   return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "drill" || kind === "drdrill" || kind === "tamper" || kind === "export";
 }
 
+/** withMcpOrigin names the key behind a run an assistant started. Every kind
+ *  gets the suffix, so a prune or an off-site copy an MCP start caused reads
+ *  the same way as the backup. */
+function withMcpOrigin(resolveName: ResolveName, run: Run, line: string): string {
+  if (run.startedVia !== "mcp") return line;
+  if (!run.startedViaLabel) return resolveName("activityLog.viaMcpUnknownKey", { line });
+  const key = run.startedViaLabel;
+  return run.startedViaRevoked
+    ? resolveName("activityLog.viaMcpRevoked", { line, key })
+    : resolveName("activityLog.viaMcp", { line, key });
+}
+
 function buildHistoryLines(runs: Run[], resolveName: ResolveName, liveSignatures: Set<string>): LogLine[] {
   const lines: LogLine[] = [];
   for (const run of runs) {
@@ -466,7 +549,18 @@ function buildHistoryLines(runs: Run[], resolveName: ResolveName, liveSignatures
     if (liveSignatures.has(signature)) continue;
 
     const { status, text } = finishedLineText(resolveName, run, domain, name);
-    lines.push({ id: `run:${run.id}`, atMs: run.finishedAt * 1000, status, text, domain, kind: asLogKind(run.kind), live: false });
+    const line: LogLine = {
+      id: `run:${run.id}`,
+      runId: run.id,
+      atMs: run.finishedAt * 1000,
+      status,
+      text: withMcpOrigin(resolveName, run, text),
+      domain,
+      kind: asLogKind(run.kind),
+      live: false,
+    };
+    if (run.status === "success" && isWarningNote(run.error)) line.warn = true;
+    lines.push(line);
   }
   return lines;
 }
@@ -511,14 +605,15 @@ export function buildLogLines(
 ): LogLine[] {
   // The runs the backend still reports as running, keyed with the same
   // signatures buildHistoryLines uses, so a stale live line can ask whether
-  // its run is still going.
-  const stillRunning = new Set<string>();
+  // its run is still going and a live line carries its run's id.
+  const stillRunning = new Map<string, string>();
   for (const run of runs) {
     if (run.status !== "running") continue;
     const isDomainOp = isDomainOpKind(run.kind);
     const domain: LogDomain = isDomainOp ? normalizeDomain(run.targetId) : normalizeDomain(run.domain);
-    stillRunning.add(
-      isDomainOp ? domainOpSignature(run.kind, domain) : itemSignature(run.kind, domain, run.target)
+    stillRunning.set(
+      isDomainOp ? domainOpSignature(run.kind, domain) : itemSignature(run.kind, domain, run.target),
+      run.id
     );
   }
 
@@ -563,13 +658,13 @@ function isoDateOf(atMs: number): string {
 }
 
 /** Domain quick-filter value ("all" plus every LogDomain except ""). */
-export type LogFilterDomain = "all" | "containers" | "vms" | "flash" | "config" | "files" | "everything";
+export type LogFilterDomain = "all" | "containers" | "vms" | "flash" | "config" | "files" | "zfs" | "everything";
 
 /** Type quick-filter value: "all" plus the kinds the filter bar offers, which
  *  leaves out "update". "drill" and "drdrill" are separate values (local
  *  subset check and off-site DR restore check); DR rows recorded before the
  *  split say "drill" and keep matching the drill filter. */
-export type LogFilterKind = "all" | "backup" | "restore" | "prune" | "verify" | "offsite" | "drill" | "drdrill" | "tamper" | "export";
+export type LogFilterKind = "all" | "backup" | "restore" | "dbdump" | "prune" | "verify" | "offsite" | "drill" | "drdrill" | "tamper" | "export";
 
 /** The filter bar's options as value and translation-key pairs. The activity
  *  log's bar and the error panel's both read them from here, so a new kind
@@ -581,6 +676,7 @@ export const LOG_FILTER_DOMAINS: { value: LogFilterDomain; key: string }[] = [
   { value: "flash", key: "activityLog.domainFlash" },
   { value: "config", key: "activityLog.domainConfig" },
   { value: "files", key: "activityLog.domainFiles" },
+  { value: "zfs", key: "activityLog.domainZFS" },
   { value: "everything", key: "activityLog.domainEverything" },
 ];
 
@@ -588,6 +684,7 @@ export const LOG_FILTER_KINDS: { value: LogFilterKind; key: string }[] = [
   { value: "all", key: "activityLog.filterAllTypes" },
   { value: "backup", key: "activityLog.typeBackup" },
   { value: "restore", key: "activityLog.typeRestore" },
+  { value: "dbdump", key: "run.kindDbDump" },
   { value: "prune", key: "activityLog.typePrune" },
   { value: "verify", key: "activityLog.typeVerify" },
   { value: "offsite", key: "activityLog.typeOffsite" },
@@ -612,13 +709,16 @@ export interface LogFilter {
    *  quick filters, it never hides the idle line, the one that says what runs
    *  next. */
   day?: string;
+  /** One run, set by a link from a key's log on the MCP card. The idle line
+   *  stays, as it does for the day. */
+  runId?: string;
 }
 
 /**
  * filterLogLines narrows `lines` by the domain and type quick filters, the
- * heatmap day and the free-text search. The search also matches the line's
- * date, in ISO form and in the short form the UI shows, so typing a date
- * narrows the log too.
+ * heatmap day, a linked run and the free-text search. The search also matches
+ * the line's date, in ISO form and in the short form the UI shows, so typing a
+ * date narrows the log too.
  */
 export function filterLogLines(lines: LogLine[], filter: LogFilter): LogLine[] {
   const q = filter.text.trim().toLowerCase();
@@ -630,6 +730,7 @@ export function filterLogLines(lines: LogLine[], filter: LogFilter): LogLine[] {
       if (filter.domain !== "all" && l.domain !== filter.domain) return false;
       if (filter.kind !== "all" && l.kind !== filter.kind) return false;
       if (filter.day && isoDateOf(l.atMs) !== filter.day) return false;
+      if (filter.runId && l.runId !== filter.runId) return false;
     }
     if (q) {
       const haystack = `${l.text} ${isoDateOf(l.atMs)} ${formatLogDate(l.atMs, lang)}`.toLowerCase();

@@ -14,10 +14,12 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"sync/atomic"
@@ -209,10 +211,52 @@ func storageClassFlags(repo, class string) []string {
 
 // Summary holds the fields we extract from restic's --json backup summary line.
 type Summary struct {
-	SnapshotID   string  `json:"snapshot_id"`
-	FilesNew     int     `json:"files_new"`
-	FilesChanged int     `json:"files_changed"`
-	BytesAdded   float64 `json:"data_added"`
+	SnapshotID      string  `json:"snapshot_id"`
+	FilesNew        int     `json:"files_new"`
+	FilesChanged    int     `json:"files_changed"`
+	FilesUnmodified int     `json:"files_unmodified"`
+	BytesAdded      float64 `json:"data_added"`
+	// TotalBytesProcessed is what restic read, before deduplication. For a
+	// backup taken from a command it is the size of the stream itself.
+	TotalBytesProcessed uint64 `json:"total_bytes_processed"`
+	TotalFilesProcessed uint64 `json:"total_files_processed"`
+	// TotalDuration is a pointer because its presence is what marks the totals
+	// above as measured: restic prints the three together, so a summary line
+	// without them (an older binary, a truncated line) must not read as a
+	// source that shrank to nothing.
+	TotalDuration *float64 `json:"total_duration,omitempty"` // seconds
+	// Elapsed is how long restic ran, from its start to its end. It is the span
+	// a snapshot records as backup_start to backup_end, which is all a run read
+	// back from the repository has. total_duration covers only a part of that
+	// span, most of a second short on a small backup, so the two do not compare.
+	Elapsed time.Duration `json:"-"`
+}
+
+// SnapshotSummary is the counter set restic stores with a snapshot since 0.17.
+type SnapshotSummary struct {
+	TotalBytesProcessed uint64 `json:"total_bytes_processed"`
+}
+
+// SnapshotMetaSummary is the full counter set of a snapshot taken by restic
+// 0.17 or later, read from the repository rather than from a running backup.
+type SnapshotMetaSummary struct {
+	BackupStart         time.Time `json:"backup_start"`
+	BackupEnd           time.Time `json:"backup_end"`
+	FilesNew            uint64    `json:"files_new"`
+	DataAdded           uint64    `json:"data_added"`
+	TotalFilesProcessed uint64    `json:"total_files_processed"`
+	TotalBytesProcessed uint64    `json:"total_bytes_processed"`
+}
+
+// SnapshotMeta is one snapshot as the metric backfill needs it. It is a type
+// of its own so that the snapshot lists the SPA receives (snapshot panels,
+// retention preview, foreign inventory) keep the keys they have.
+type SnapshotMeta struct {
+	ID     string   `json:"id"`
+	Tags   []string `json:"tags"`
+	Parent string   `json:"parent,omitempty"`
+	// Summary is absent on snapshots written by restic before 0.17.
+	Summary *SnapshotMetaSummary `json:"summary,omitempty"`
 }
 
 // Snapshot holds a subset of the restic snapshot JSON. Original is the hex id
@@ -229,6 +273,8 @@ type Snapshot struct {
 	Tags     []string `json:"tags"`
 	Hostname string   `json:"hostname"`
 	Original string   `json:"original,omitempty"`
+	// Summary is absent on snapshots written by restic before 0.17.
+	Summary *SnapshotSummary `json:"summary,omitempty"`
 }
 
 // Identity is the key a snapshot is known by across copies: the id it was first
@@ -436,6 +482,20 @@ func CatConfigArgs(repo string, m Mode) []string {
 // a bare name like ".git" by basename at any depth); paths are placed after --
 // (arg-injection guard).
 func BackupArgs(repo string, paths []string, tags []string, m Mode, excludes ...string) []string {
+	return backupArgs(repo, tags, m, "", excludes, paths)
+}
+
+// BackupDirArgs returns the argv for a backup run inside a directory on the
+// positional ".". --group-by host,tags makes restic look for the parent among
+// the snapshots carrying the same tags, so it finds the previous run although
+// the absolute working directory names a different ZFS snapshot every night.
+// Exactly one identity tag belongs here: a second tag puts the run into a group
+// of its own, and every night would read every file again.
+func BackupDirArgs(repo string, tags []string, m Mode, excludes ...string) []string {
+	return backupArgs(repo, tags, m, "host,tags", excludes, []string{"."})
+}
+
+func backupArgs(repo string, tags []string, m Mode, groupBy string, excludes, positionals []string) []string {
 	args := repoFlag(repo)
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
@@ -449,6 +509,9 @@ func BackupArgs(repo string, paths []string, tags []string, m Mode, excludes ...
 	// restic group across container recreations; otherwise retention silently
 	// stops collapsing snapshots after an update.
 	args = append(args, "--host", backupHost)
+	if groupBy != "" {
+		args = append(args, "--group-by", groupBy)
+	}
 	for _, tag := range tags {
 		args = append(args, "--tag", tag)
 	}
@@ -465,7 +528,7 @@ func BackupArgs(repo string, paths []string, tags []string, m Mode, excludes ...
 		args = append(args, "--exclude", ex)
 	}
 	args = append(args, "--")
-	args = append(args, paths...)
+	args = append(args, positionals...)
 	return args
 }
 
@@ -517,6 +580,32 @@ func BackupStdinArgs(repo, path string, tags []string, m Mode) []string {
 	}
 	args = append(args, "--stdin", "--stdin-filename", path)
 	return args
+}
+
+// BackupCommandArgs returns the argv slice for `restic backup
+// --stdin-from-command`, which has restic start the command itself and store
+// its stdout under stdinPath. restic checks the command's exit code and saves
+// no snapshot at all when it is non-zero (verified against restic 0.17.3), so a
+// dump that dies halfway leaves nothing behind that looks like a backup.
+//
+// The command takes the positional slot BackupArgs uses for paths. A dump walks
+// no filesystem, so there is no --exclude-caches.
+func BackupCommandArgs(repo, stdinPath string, tags []string, m Mode, command []string) []string {
+	args := repoFlag(repo)
+	args = append(args, storageClassFlags(repo, m.StorageClass)...)
+	args = append(args, retryLockFlags()...)
+	args = append(args, limitFlags(m.Limits)...)
+	args = append(args, "backup")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--json")
+	args = append(args, "--host", backupHost)
+	for _, tag := range tags {
+		args = append(args, "--tag", tag)
+	}
+	args = append(args, "--stdin-filename", stdinPath, "--stdin-from-command", "--")
+	return append(args, command...)
 }
 
 // DumpRawArgs returns the argv slice for `restic dump <snapshotID> <path>` —
@@ -596,7 +685,7 @@ func RestoreSubtreeToArgs(repo, snapshotID, subtreePath, target string, m Mode) 
 		args = append(args, insecureFlag)
 	}
 	if m.NoLock {
-		args = append(args, "--no-lock") // a foreign restore only READS the source repo
+		args = append(args, "--no-lock") // a foreign restore only reads the source repo
 	}
 	args = append(args, "--json")
 	args = append(args, "--target", target)
@@ -697,6 +786,27 @@ func RestoreSubtreeIncludeArgs(repo, snapshotID, subtreePath, includePath, targe
 	return args
 }
 
+// RestoreAllArgs returns the argv for restoring a whole snapshot into target.
+// A ZFS member's snapshot has the dataset root as its tree root, because the
+// backup ran inside the snapshot directory on ".", so its files land directly
+// in target without the absolute path of the run that stored them. excludes
+// are patterns restic leaves out of the restore.
+func RestoreAllArgs(repo, snapshotID, target string, m Mode, excludes ...string) []string {
+	args := repoFlag(repo)
+	args = append(args, "restore")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	if m.NoLock {
+		args = append(args, "--no-lock") // a foreign restore only READS the source repo
+	}
+	args = append(args, "--json", "--target", target)
+	for _, p := range excludes {
+		args = append(args, "--exclude", p)
+	}
+	return append(args, "--", snapshotID)
+}
+
 // CheckArgs returns the argv slice for `restic check` (verifies repository
 // structure + metadata integrity). Under NoLock (the receiver's read-only
 // integrity check on a received / append-only repo) the check is lock-free
@@ -757,6 +867,14 @@ func SnapshotsArgs(repo string, m Mode) []string {
 	}
 	args = append(args, "--no-lock", "--json")
 	return args
+}
+
+// SnapshotArgs returns the argv slice for `restic snapshots --no-lock --json
+// <snapshotID>`, the one-snapshot form of SnapshotsArgs and read-only for the
+// same reason. The id is passed as a positional after the end-of-flags marker,
+// like StatsRestoreSizeArgs does.
+func SnapshotArgs(repo, snapshotID string, m Mode) []string {
+	return append(SnapshotsArgs(repo, m), "--", snapshotID)
 }
 
 // StatsArgs returns the argv slice for `restic stats --no-lock --json --mode
@@ -872,9 +990,71 @@ func (p RetentionPolicy) Any() bool {
 	return p.KeepLast > 0 || p.KeepDaily > 0 || p.KeepWeekly > 0 || p.KeepMonthly > 0
 }
 
+// ForgetGroup is one entry of `restic forget --json`: the snapshots a keep
+// policy would KEEP and those it would REMOVE, for one selection group. With
+// the tag-scoped, ungrouped selection BombVault uses (see ForgetPolicyArgs)
+// there is exactly one group per identity; the legacy paths-grouped pass can
+// produce several.
+//
+// restic's forget JSON also carries a "reasons" array explaining WHY each kept
+// snapshot survived. It is left unmodelled: nothing reads it yet, and
+// an unknown field is simply ignored on unmarshal, so adding it later is not a
+// breaking change.
+type ForgetGroup struct {
+	Tags   []string   `json:"tags"`
+	Host   string     `json:"host"`
+	Paths  []string   `json:"paths"`
+	Keep   []Snapshot `json:"keep"`
+	Remove []Snapshot `json:"remove"`
+}
+
+// parseForgetGroups reads `restic forget --json` output.
+//
+// Empty output is no error: restic 0.17.3 prints the JSON array only under
+// `if gopts.JSON && len(jsonGroups) > 0`, so a policy that matches no group
+// writes nothing at all to stdout. That is the ordinary "nothing would be
+// removed" answer, and treating it as malformed would put a parse error in
+// front of the user for the most common case of all.
+func parseForgetGroups(out []byte) ([]ForgetGroup, error) {
+	if len(bytes.TrimSpace(out)) == 0 {
+		return nil, nil
+	}
+	var groups []ForgetGroup
+	if err := json.Unmarshal(out, &groups); err != nil {
+		return nil, fmt.Errorf("restic forget: parse JSON: %w", err)
+	}
+	return groups, nil
+}
+
+// keepFlags renders a policy's set dimensions as restic --keep-* flags, in a
+// fixed order so the argv is stable and testable. An unset (zero) dimension is
+// omitted rather than sent as 0, which restic would read as "keep none".
+// Unless p.Direct is set, --keep-tag DirectTag keeps every snapshot written
+// into a direct repository. Shared by the real pass (ForgetPolicyArgs) and the
+// preview (ForgetPreviewArgs) so the two can never drift into answering
+// different questions.
+func keepFlags(p RetentionPolicy) []string {
+	var args []string
+	if p.KeepLast > 0 {
+		args = append(args, "--keep-last", strconv.Itoa(p.KeepLast))
+	}
+	if p.KeepDaily > 0 {
+		args = append(args, "--keep-daily", strconv.Itoa(p.KeepDaily))
+	}
+	if p.KeepWeekly > 0 {
+		args = append(args, "--keep-weekly", strconv.Itoa(p.KeepWeekly))
+	}
+	if p.KeepMonthly > 0 {
+		args = append(args, "--keep-monthly", strconv.Itoa(p.KeepMonthly))
+	}
+	if !p.Direct {
+		args = append(args, "--keep-tag", DirectTag)
+	}
+	return args
+}
+
 // ForgetPolicyArgs returns the argv for `restic forget --keep-* [--prune]`.
-// Only the set dimensions are emitted. Unless p.Direct is set, --keep-tag
-// DirectTag keeps every snapshot written into a direct repository.
+// Only the set dimensions are emitted, see keepFlags.
 //
 // With tags (e.g. "container:plex"), the policy covers the snapshots carrying
 // any of them as one group (--group-by ""), so an item's history stays one set
@@ -903,25 +1083,46 @@ func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tags []string, pru
 		// because hosts vary across container incarnations (#17).
 		args = append(args, "--group-by", "paths")
 	}
-	if p.KeepLast > 0 {
-		args = append(args, "--keep-last", strconv.Itoa(p.KeepLast))
-	}
-	if p.KeepDaily > 0 {
-		args = append(args, "--keep-daily", strconv.Itoa(p.KeepDaily))
-	}
-	if p.KeepWeekly > 0 {
-		args = append(args, "--keep-weekly", strconv.Itoa(p.KeepWeekly))
-	}
-	if p.KeepMonthly > 0 {
-		args = append(args, "--keep-monthly", strconv.Itoa(p.KeepMonthly))
-	}
-	if !p.Direct {
-		args = append(args, "--keep-tag", DirectTag)
-	}
+	args = append(args, keepFlags(p)...)
 	if prune {
 		args = append(args, "--prune")
 	}
 	return args
+}
+
+// ForgetPreviewArgs returns the argv for the read-only twin of
+// ForgetPolicyArgs: `restic forget --dry-run --no-lock --json --keep-*`, which
+// reports what the policy WOULD remove without removing anything. Selection
+// and keep dimensions are identical to ForgetPolicyArgs, so the preview models
+// the pass that really runs (tag-scoped and ungrouped per identity, paths-
+// grouped for the legacy repo-wide case) rather than a different question.
+//
+// --dry-run and --no-lock are only correct TOGETHER. restic 0.17.3 opens the
+// repository with openWithExclusiveLock(ctx, gopts, opts.DryRun && gopts.NoLock):
+// with --dry-run alone it still takes the EXCLUSIVE lock, so a "preview" would
+// collide with a running backup and would write lock files into a remote
+// repository merely to answer a question. --no-lock on its own is refused with
+// "--no-lock is only applicable in combination with --dry-run for forget
+// command". The same trade SnapshotsArgs (see above) already makes applies
+// here: without a lock the answer can be marginally stale if a forget races it,
+// never wrong in a way that destroys data, and a writer is never blocked.
+//
+// Left out on purpose: --prune (restic would run a full prune dry run, reading
+// the whole index, which is expensive and goes over the network for a remote
+// repo) and --retry-lock (there is no lock to wait for).
+func ForgetPreviewArgs(repo string, p RetentionPolicy, m Mode, tag string) []string {
+	args := repoFlag(repo)
+	args = append(args, "forget")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--dry-run", "--no-lock", "--json")
+	if tag != "" {
+		args = append(args, "--tag", tag, "--group-by", "")
+	} else {
+		args = append(args, "--group-by", "paths")
+	}
+	return append(args, keepFlags(p)...)
 }
 
 // UnlockArgs returns the argv slice for `restic unlock`. removeAll adds
@@ -1035,9 +1236,23 @@ func (r Restic) authEnv(m Mode) []string {
 // argv.  On failure, full stderr is logged server-side but only a scrubbed
 // error is returned to the caller.
 func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) {
+	return r.runIn(ctx, "", args, m)
+}
+
+// runIn is run with a working directory. restic resolves a relative target and
+// the absolute paths it matches excludes against from its own cwd, and Go's
+// os.Getwd prefers PWD over the resolved path, so a caller that runs inside a
+// symlinked or automounted directory gets the path it asked for only when PWD
+// says so. Go's exec fills PWD in by itself only when Env is nil, which it
+// never is here.
+func (r Restic) runIn(ctx context.Context, dir string, args []string, m Mode) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
 	configureProcGroup(cmd)
 	env := r.authEnv(m)
+	if dir != "" {
+		cmd.Dir = dir
+		env = append(env, "PWD="+dir)
+	}
 	var out []byte
 	var err error
 	// When a progress sink is present (backup/restore), stream stdout so each
@@ -1048,7 +1263,7 @@ func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) 
 		// TTY or RESTIC_PROGRESS_FPS is set. Our stdout is a pipe, so without this
 		// restic prints only the final summary and the bar would never fill.
 		cmd.Env = append(env, "RESTIC_PROGRESS_FPS=3")
-		out, err = runStreaming(cmd, args, sink)
+		out, err = runStreaming(cmd, args, sink, WatcherFrom(ctx))
 	} else {
 		cmd.Env = env
 		out, err = runBuffered(cmd, args)
@@ -1139,8 +1354,43 @@ func scanLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) ([]byte, 
 		return nil, runError(args, stderr.String())
 	}
 
+	out := scanStdout(stdout, args, onLine)
+	if err := cmd.Wait(); err != nil {
+		if werr := backupExit3Err(args, err, stderr.String()); werr != nil {
+			return out, werr
+		}
+		return nil, runError(args, stderr.String())
+	}
+	return out, nil
+}
+
+// scanLinesStderr is scanLines for the one caller that needs restic's stderr as
+// well: a backup taken from a command, whose child's own output arrives there
+// prefixed with "subprocess ". Exit 3 stays a hard failure, because a snapshot
+// restic wrote from a stream it could not read to the end must not be trusted.
+func scanLinesStderr(cmd *exec.Cmd, args []string, onLine func(line []byte)) ([]byte, string, error) {
+	stderr := &headTailBuffer{max: subprocessStderrCap}
+	cmd.Stderr = stderr
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, "", fmt.Errorf("restic %s: stdout pipe: %w", subcommand(args), err)
+	}
+	if err := cmd.Start(); err != nil {
+		return nil, stderr.String(), commandRunError(args, stderr.String())
+	}
+
+	out := scanStdout(stdout, args, onLine)
+	if err := cmd.Wait(); err != nil {
+		return out, stderr.String(), commandRunError(args, stderr.String())
+	}
+	return out, stderr.String(), nil
+}
+
+// scanStdout hands every complete line of r to onLine and returns the whole
+// output, so a trailing summary line can be parsed afterwards.
+func scanStdout(r io.Reader, args []string, onLine func(line []byte)) []byte {
 	var out bytes.Buffer
-	sc := bufio.NewScanner(stdout)
+	sc := bufio.NewScanner(r)
 	// Status/summary lines are normally small, but a status line embeds the
 	// current file path, which can be very long. Allow up to 16 MiB so a giant
 	// path can't overflow the scanner and make a successful backup look failed
@@ -1157,16 +1407,50 @@ func scanLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) ([]byte, 
 	if scErr := sc.Err(); scErr != nil {
 		log.Printf("restic %s: stdout scan: %v", subcommand(args), scErr)
 		// Drain the rest of stdout so restic doesn't block writing to a full pipe,
-		// which would hang cmd.Wait below.
-		_, _ = io.Copy(io.Discard, stdout)
+		// which would hang the caller's cmd.Wait.
+		_, _ = io.Copy(io.Discard, r)
 	}
-	if err := cmd.Wait(); err != nil {
-		if werr := backupExit3Err(args, err, stderr.String()); werr != nil {
-			return out.Bytes(), werr
-		}
-		return nil, runError(args, stderr.String())
+	return out.Bytes()
+}
+
+// subprocessStderrCap is how much of each end of restic's stderr a backup taken
+// from a command keeps. The head holds the dump's pid line, which the orphan
+// stop needs, the tail holds whatever explained a failure.
+const subprocessStderrCap = 128 << 10
+
+// headTailBuffer keeps the first and the last max bytes written to it. A
+// newline is inserted where content was dropped, so a line from the head is
+// never fused with one from the tail.
+type headTailBuffer struct {
+	max     int
+	written int
+	head    []byte
+	tail    []byte
+}
+
+func (b *headTailBuffer) Write(p []byte) (int, error) {
+	n := len(p)
+	b.written += n
+	if room := b.max - len(b.head); room > 0 {
+		take := min(len(p), room)
+		b.head = append(b.head, p[:take]...)
+		p = p[take:]
 	}
-	return out.Bytes(), nil
+	if len(p) > b.max {
+		p = p[len(p)-b.max:]
+	}
+	b.tail = append(b.tail, p...)
+	if extra := len(b.tail) - b.max; extra > 0 {
+		b.tail = b.tail[:copy(b.tail, b.tail[extra:])]
+	}
+	return n, nil
+}
+
+func (b *headTailBuffer) String() string {
+	if len(b.head)+len(b.tail) == b.written {
+		return string(b.head) + string(b.tail)
+	}
+	return string(b.head) + "\n" + string(b.tail)
 }
 
 // streamLines is scanLines without the accumulating buffer: it runs cmd with
@@ -1256,10 +1540,20 @@ func (r Restic) LsStream(ctx context.Context, repo, snapshotID string, m Mode, o
 // runStreaming runs restic and scans its --json stdout line by line, forwarding
 // each "status" line's percent_done to the sink while still accumulating the
 // full output so a trailing summary line can be parsed afterwards.
-func runStreaming(cmd *exec.Cmd, args []string, sink progress.Sink) ([]byte, error) {
+func runStreaming(cmd *exec.Cmd, args []string, sink progress.Sink, watch ProgressWatcher) ([]byte, error) {
 	return scanLines(cmd, args, func(line []byte) {
 		if pct, ok := statusPercent(line); ok {
 			sink(pct)
+		}
+		// The second, optional reader: the full counter set, for callers that
+		// need to know whether anything is still HAPPENING rather than how far
+		// along it is. Parsed separately from statusPercent above rather than
+		// folded into it, so the progress bar keeps working byte-for-byte as
+		// before even if this ever changes.
+		if watch != nil {
+			if p, ok := ParseProgress(line); ok {
+				watch(p)
+			}
 		}
 	})
 }
@@ -1410,8 +1704,36 @@ func backupExit3Err(args []string, err error, stderr string) error {
 // reason to the caller so the UI shows WHY restic failed (e.g. "repository is
 // already locked") instead of a generic message.
 func runError(args []string, stderr string) error {
+	log.Printf("restic %s stderr: %s", subcommand(args), stderr)
+	return stderrError(args, stderr)
+}
+
+// commandRunError is runError for a backup taken from a command. The lines
+// restic forwarded from the command can quote a database row and the log ends
+// up in the diagnostics bundle, so the log keeps restic's own lines only. The
+// protocol lines the helper writes for BombVault are the last thing a killed
+// dump leaves behind, so they are kept out of the reason as well.
+func commandRunError(args []string, stderr string) error {
+	var own, reason []string
+	left := 0
+	for _, line := range strings.Split(stderr, "\n") {
+		if strings.HasPrefix(line, subprocessLinePrefix) {
+			left++
+			if !strings.Contains(line, dumpProtocolPrefix) {
+				reason = append(reason, line)
+			}
+			continue
+		}
+		own = append(own, line)
+		reason = append(reason, line)
+	}
+	log.Printf("restic %s stderr (%d lines from the command left out): %s", subcommand(args), left, strings.Join(own, "\n"))
+	return stderrError(args, strings.Join(reason, "\n"))
+}
+
+// stderrError is the concise, path-scrubbed error runError returns.
+func stderrError(args []string, stderr string) error {
 	sub := subcommand(args)
-	log.Printf("restic %s stderr: %s", sub, stderr)
 	msg := fmt.Sprintf("restic %s failed", sub)
 	if reason := lastReason(stderr); reason != "" {
 		msg = fmt.Sprintf("restic %s failed: %s", sub, reason)
@@ -1850,6 +2172,7 @@ func (r Restic) RepoOpensErr(ctx context.Context, repo string, m Mode) error {
 // Backup backs up paths into the repo, tagging each snapshot with tags, and
 // returns the parsed backup summary.
 func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []string, m Mode, excludes ...string) (Summary, error) {
+	start := time.Now()
 	out, err := r.run(ctx, BackupArgs(repo, paths, tags, m, excludes...), m)
 	if err != nil {
 		// restic exit 3 (a source file could not be read) still created the snapshot,
@@ -1857,13 +2180,56 @@ func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []
 		// logged in backupExit3Err. Un-parseable output means it was not a clean
 		// exit-3, so fall through to the real error.
 		if errors.Is(err, ErrBackupSourceUnreadable) {
-			if sum, perr := ParseBackupSummary(out); perr == nil {
+			if sum, perr := summarySince(out, start); perr == nil {
 				return sum, nil
 			}
 		}
 		return Summary{}, err
 	}
-	return ParseBackupSummary(out)
+	return summarySince(out, start)
+}
+
+// BackupDir backs up the contents of dir as the snapshot's own tree root,
+// running restic inside dir on the positional ".". Both dir and a local
+// repository have to be absolute, because restic resolves a relative path
+// against its working directory, which here is the snapshot being read.
+func (r Restic) BackupDir(ctx context.Context, repo, dir string, tags []string, m Mode, excludes ...string) (Summary, error) {
+	if !filepath.IsAbs(dir) {
+		return Summary{}, fmt.Errorf("restic backup directory %q is not absolute", dir)
+	}
+	if !IsRemoteRepo(repo) && !filepath.IsAbs(repo) {
+		return Summary{}, fmt.Errorf("restic repository %q is not absolute", repo)
+	}
+	m = snapshotDirMode(m)
+	start := time.Now()
+	out, err := r.runIn(ctx, dir, BackupDirArgs(repo, tags, m, excludes...), m)
+	if err != nil {
+		// Exit 3 means a source file could not be read but the snapshot exists,
+		// the same as in Backup.
+		if errors.Is(err, ErrBackupSourceUnreadable) {
+			if sum, perr := summarySince(out, start); perr == nil {
+				return sum, nil
+			}
+		}
+		return Summary{}, err
+	}
+	return summarySince(out, start)
+}
+
+// snapshotDirMode keeps restic from storing each file's device number. Every
+// mount of a ZFS snapshot gets a new one, so an unchanged run would otherwise
+// write the whole metadata tree again. restic still stores it for hardlinks,
+// where it tells two links apart.
+func snapshotDirMode(m Mode) Mode {
+	m.Env = append(slices.Clone(m.Env), "RESTIC_FEATURES=device-id-for-hardlinks")
+	return m
+}
+
+// RestoreAll restores a whole snapshot into target, leaving out what the
+// exclude patterns match.
+func (r Restic) RestoreAll(ctx context.Context, repo, snapshotID, target string, m Mode, excludes ...string) error {
+	_, err := r.run(ctx, RestoreAllArgs(repo, snapshotID, target, m, excludes...), m)
+	return err
 }
 
 // DumpZip streams the snapshot subtree rooted at subfolder as a zip into w
@@ -1906,6 +2272,7 @@ func (r Restic) BackupStdin(ctx context.Context, repo string, rd io.Reader, path
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; path/tags are internal values (a zvol dataset/snapshot identifier), never raw user input
 	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)
+	start := time.Now()
 	out, err := runWithStdin(cmd, args, rd)
 	err = ctxCancelErr(ctx, args, err)
 	if err != nil {
@@ -1913,13 +2280,83 @@ func (r Restic) BackupStdin(ctx context.Context, repo string, rd io.Reader, path
 		// be read") path in principle (e.g. a mid-stream read error surfaced that
 		// way) — handle it exactly like Backup does for consistency.
 		if errors.Is(err, ErrBackupSourceUnreadable) {
-			if sum, perr := ParseBackupSummary(out); perr == nil {
+			if sum, perr := summarySince(out, start); perr == nil {
 				return sum, nil
 			}
 		}
 		return Summary{}, err
 	}
-	return ParseBackupSummary(out)
+	return summarySince(out, start)
+}
+
+// CommandSnapshotPartialError reports a backup taken from a command that
+// exited 3: restic saved a snapshot although it could not read the command's
+// output to the end, so the snapshot holds a truncated dump.
+type CommandSnapshotPartialError struct{ SnapshotID string }
+
+func (e *CommandSnapshotPartialError) Error() string {
+	if e.SnapshotID == "" {
+		return "restic backup: the dump stream could not be read to the end"
+	}
+	return fmt.Sprintf("restic backup: the dump stream could not be read to the end; snapshot %s is incomplete", e.SnapshotID)
+}
+
+// subprocessLinePrefix is how restic labels a line its child wrote to stderr.
+const subprocessLinePrefix = "subprocess "
+
+// dumpProtocolPrefix marks the lines the dump script writes for BombVault
+// rather than for the reader: the pid of the dump and its scope.
+const dumpProtocolPrefix = "bombvault-dbdump-"
+
+// BackupFromCommand backs up the stdout of command into repo under stdinPath
+// and returns the lines restic forwarded from the command, on success as well
+// as on failure: the dump reports its pid and its own verdict there, and the
+// pid is what stops a dump left running inside the container.
+//
+// Exit 3 is a failure here rather than the success-with-warning Backup makes of
+// it, wrapped in a CommandSnapshotPartialError that names the snapshot restic
+// saved anyway. Status lines reach a watcher on ctx but never the progress
+// sink: the sink carries the surrounding backup's own percentage, and a
+// stage-less event from this call would wipe the card's dump stage.
+func (r Restic) BackupFromCommand(ctx context.Context, repo, stdinPath string, tags, command []string, m Mode) (Summary, []string, error) {
+	args := BackupCommandArgs(repo, stdinPath, tags, m, command)
+	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; the command is this binary with validated flags
+	configureProcGroup(cmd)
+	// restic emits periodic --json status only to a TTY or with this set, and
+	// the stall guard needs those lines to see a dump that stopped moving.
+	cmd.Env = append(r.authEnv(m), "RESTIC_PROGRESS_FPS=3")
+
+	start := time.Now()
+	watch := WatcherFrom(ctx)
+	out, stderr, err := scanLinesStderr(cmd, args, func(line []byte) {
+		if watch == nil {
+			return
+		}
+		if p, ok := ParseProgress(line); ok {
+			watch(p)
+		}
+	})
+	lines := subprocessLines(stderr)
+	if err != nil {
+		if cmd.ProcessState != nil && cmd.ProcessState.ExitCode() == 3 {
+			sum, _ := ParseBackupSummary(out)
+			err = &CommandSnapshotPartialError{SnapshotID: sum.SnapshotID}
+		}
+		return Summary{}, lines, ctxCancelErr(ctx, args, err)
+	}
+	sum, err := summarySince(out, start)
+	return sum, lines, err
+}
+
+// subprocessLines picks out what restic forwarded from the command it ran.
+func subprocessLines(stderr string) []string {
+	var lines []string
+	for _, line := range strings.Split(stderr, "\n") {
+		if line = strings.TrimRight(line, "\r"); strings.HasPrefix(line, subprocessLinePrefix) {
+			lines = append(lines, line)
+		}
+	}
+	return lines
 }
 
 // DumpRaw streams a single backed-up path's raw bytes (no zip/tar wrapping)
@@ -2037,6 +2474,42 @@ func (r Restic) Snapshots(ctx context.Context, repo string, m Mode) ([]Snapshot,
 		return nil, fmt.Errorf("restic snapshots: parse JSON: %w", err)
 	}
 	return snaps, nil
+}
+
+// SnapshotsMeta lists the same snapshots as Snapshots and reads the counters
+// and the parent link each one carries, for the metric backfill.
+func (r Restic) SnapshotsMeta(ctx context.Context, repo string, m Mode) ([]SnapshotMeta, error) {
+	out, err := r.run(ctx, SnapshotsArgs(repo, m), m)
+	if err != nil {
+		return nil, err
+	}
+	var metas []SnapshotMeta
+	if err := json.Unmarshal(out, &metas); err != nil {
+		return nil, fmt.Errorf("restic snapshots: parse JSON: %w", err)
+	}
+	return metas, nil
+}
+
+// SnapshotParent returns the snapshot one snapshot was based on, empty when it
+// has none. A backup in which every file is new reads differently with a parent
+// than without one, and only the repository says which of the two it was.
+func (r Restic) SnapshotParent(ctx context.Context, repo, snapshotID string, m Mode) (string, error) {
+	out, err := r.run(ctx, SnapshotArgs(repo, snapshotID, m), m)
+	if err != nil {
+		return "", err
+	}
+	return parseSnapshotParent(out)
+}
+
+func parseSnapshotParent(out []byte) (string, error) {
+	var metas []SnapshotMeta
+	if err := json.Unmarshal(out, &metas); err != nil {
+		return "", fmt.Errorf("restic snapshots: parse JSON: %w", err)
+	}
+	if len(metas) == 0 {
+		return "", fmt.Errorf("restic snapshots: snapshot not found")
+	}
+	return metas[0].Parent, nil
 }
 
 // Stats returns repository statistics for the chosen --mode (see StatsArgs).
@@ -2188,6 +2661,26 @@ func (r Restic) ForgetPolicy(ctx context.Context, repo string, p RetentionPolicy
 	return err
 }
 
+// ForgetPreview reports what ForgetPolicy WOULD remove for the same policy and
+// the same tag, without changing the repository (see ForgetPreviewArgs). It
+// takes no lock, so a concurrent backup is never blocked and the answer can be
+// marginally stale, the same trade Snapshots and Stats already make.
+//
+// An inert policy is a no-op, exactly as in ForgetPolicy: retention that is
+// switched off removes nothing, and asking restic anyway would report the whole
+// repository as about to be deleted (forget with no --keep-* flag keeps
+// nothing).
+func (r Restic) ForgetPreview(ctx context.Context, repo string, p RetentionPolicy, m Mode, tag string) ([]ForgetGroup, error) {
+	if !p.Any() {
+		return nil, nil
+	}
+	out, err := r.run(ctx, ForgetPreviewArgs(repo, p, m, tag), m)
+	if err != nil {
+		return nil, err
+	}
+	return parseForgetGroups(out)
+}
+
 // Unlock removes locks from the repo (`restic unlock`). removeAll clears ALL
 // locks, not just stale ones — safe because BombVault is the sole writer.
 func (r Restic) Unlock(ctx context.Context, repo string, removeAll bool, m Mode) error {
@@ -2264,6 +2757,14 @@ func parseDiffStatistics(data []byte) (DiffResult, error) {
 		}
 	}
 	return DiffResult{}, fmt.Errorf("restic diff: no statistics line in output")
+}
+
+// summarySince parses a finished backup's summary and records how long restic
+// ran since start.
+func summarySince(out []byte, start time.Time) (Summary, error) {
+	sum, err := ParseBackupSummary(out)
+	sum.Elapsed = time.Since(start)
+	return sum, err
 }
 
 // ParseBackupSummary scans lines of restic --json backup output for the

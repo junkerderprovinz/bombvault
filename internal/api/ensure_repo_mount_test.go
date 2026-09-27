@@ -19,14 +19,18 @@ import (
 // fixture here does too; neither may count as the backing mount.
 const hostMountRoot = "/host/user"
 
+// mountinfoEscaper escapes a mount point the way the kernel does, so a temp
+// directory with a space in it stays one field.
+var mountinfoEscaper = strings.NewReplacer(`\`, `\134`, " ", `\040`, "\t", `\011`, "\n", `\012`)
+
 // writeMountinfo writes a mountinfo fixture whose mount points are the given
-// paths, verbatim, and points the api package at it until cleanup.
+// paths and points the api package at it until cleanup.
 func writeMountinfo(t *testing.T, mountPoints ...string) {
 	t.Helper()
 	var b strings.Builder
 	for i, mp := range mountPoints {
 		// id parent major:minor root mountpoint opts... - fstype source superopts
-		fmt.Fprintf(&b, "%d 1 0:%d / %s rw,relatime shared:%d - xfs /dev/sd%c rw\n", 36+i, 10+i, mp, i+1, 'a'+i)
+		fmt.Fprintf(&b, "%d 1 0:%d / %s rw,relatime shared:%d - xfs /dev/sd%c rw\n", 36+i, 10+i, mountinfoEscaper.Replace(mp), i+1, 'a'+i)
 	}
 	path := filepath.Join(t.TempDir(), "mountinfo")
 	if err := os.WriteFile(path, []byte(b.String()), 0o600); err != nil {

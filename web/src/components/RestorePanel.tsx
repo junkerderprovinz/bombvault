@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { listSnapshots, restore, listSnapshotFiles, restoreContainerFiles, restoreContainerToPath, diffSnapshots, tagSnapshot, getSettings } from "../lib/api";
-import type { Snapshot, FileEntry, SnapshotDiff } from "../lib/api";
+import type { Snapshot, FileEntry, SnapshotDiff, DBDumpView, DbDataCoverage } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { Advanced, useAdvanced } from "../lib/advanced";
 import { useBackupWatch } from "../lib/backupWatch";
@@ -8,6 +8,11 @@ import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { SNAPSHOT_MISSING } from "../lib/timeline";
 import { RestoreProgress } from "./restore/RestoreProgress";
 import { RestoreAction } from "./restore/RestoreAction";
+import { DatabaseDumpList } from "./restore/DatabaseDumpList";
+import { pairsWith } from "../lib/dbdump";
+import { Badge } from "./Badge";
+import { InfoBubble } from "./InfoBubble";
+import { SourceToggle, type RepoSource } from "./SourceToggle";
 import { FolderBrowser } from "./FolderBrowser";
 import { RecentRunsList } from "./RecentRunsList";
 import { SnapshotFileTree } from "./SnapshotFileTree";
@@ -19,6 +24,7 @@ import { SelectField } from "./SelectField";
 import { IconRestore } from "./Sidebar";
 import { IconDisclosure } from "./IconDisclosure";
 import { Timeline, type TimelinePick } from "./timeline/Timeline";
+import { useOpenAnomalies } from "../lib/useAnomalies";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -37,13 +43,22 @@ function humanBytes(n: number): string {
 }
 
 // displayTags hides the ownership tags under the entry's own or a former name,
-// the formerly: takeover marker and the internal marker tags: "p1" is an
-// orchestrator marker and "bv:direct" marks a snapshot written straight into a
-// direct repository. All of them stay in restic's metadata untouched.
+// the formerly: takeover marker, the internal marker tags and the
+// machine-readable prefixes that pair a backup with its database dump and
+// describe the dumped server. "p1" is an orchestrator marker and "bv:direct"
+// marks a snapshot written straight into a direct repository. All of them stay
+// in restic's metadata untouched.
 const INTERNAL_TAGS = new Set(["p1", "bv:direct"]);
+const INTERNAL_PREFIXES = ["bvrun:", "dbengine:", "dbimage:", "dbversion:", "dbname:"];
 export function displayTags(tags: string[], containerName: string, aliases: string[] = []): string[] {
   const owners = new Set([containerName, ...aliases].map((n) => `container:${n}`));
-  return tags.filter((tg) => !owners.has(tg) && !INTERNAL_TAGS.has(tg) && !tg.startsWith("formerly:"));
+  return tags.filter(
+    (tg) =>
+      !owners.has(tg) &&
+      !INTERNAL_TAGS.has(tg) &&
+      !tg.startsWith("formerly:") &&
+      !INTERNAL_PREFIXES.some((p) => tg.startsWith(p))
+  );
 }
 
 // SnapshotFileBrowser restores ticked files and folders from a snapshot, in
@@ -228,6 +243,12 @@ function SnapshotFileBrowser({
 
 interface RestorePanelProps {
   name: string;
+  /** The snapshot a finding's restore link asked for. */
+  preselect?: string;
+  /** The same for a finding about the container's database dump. */
+  preselectDump?: string;
+  /** When the asked-for snapshot or dump was taken, in Unix seconds. */
+  preselectAt?: number;
   /** The entry's former names, whose ownership tags are hidden like its own. */
   aliases?: string[];
   t: T;
@@ -236,6 +257,15 @@ interface RestorePanelProps {
   installed?: boolean;
   /** Whether the panel is shown. The caller owns the toggle. */
   open: boolean;
+  /** The container is a database BombVault dumps, so an empty dump list is
+   *  news rather than noise. */
+  isDatabase?: boolean;
+  /** What the files backup of the database's data folder is worth. */
+  dbCoverage?: DbDataCoverage;
+  /** The container is up, which the import needs. */
+  containerRunning?: boolean;
+  /** The running apps an import stops while it runs. */
+  importStops?: string[];
 }
 
 // RecreateButton recreates a container that is not installed from its saved
@@ -571,7 +601,7 @@ function SnapshotTags({
       {shown.map((tg) => (
         <span
           key={tg}
-          className="inline-flex items-center rounded-control bg-carbon-surface3 px-1.5 py-0.5 text-caption text-carbon-textSub"
+          className="inline-flex items-center rounded-pill bg-carbon-surface3 px-1.5 py-0.5 text-caption text-carbon-textSub"
         >
           {tg}
         </span>
@@ -617,6 +647,9 @@ function SnapshotActions({
   aliases,
   hostMountRoot,
   defaultFolder,
+  paired,
+  coverage,
+  preselected,
   t,
 }: {
   pick: TimelinePick;
@@ -624,11 +657,18 @@ function SnapshotActions({
   aliases: string[];
   hostMountRoot: string;
   defaultFolder: string;
+  /** A database dump was taken in the same backup as this snapshot. */
+  paired: boolean;
+  /** What the files in this snapshot are worth, for the restore warning. */
+  coverage: DbDataCoverage;
+  /** A finding's restore link asked for this snapshot, so its restore
+   *  choices start open. */
+  preselected: boolean;
   t: T;
 }) {
   const { advanced } = useAdvanced();
   const running = anyActive(useProgress());
-  const [showRestore, setShowRestore] = useState(false);
+  const [showRestore, setShowRestore] = useState(preselected);
   // Basic mode offers only the in-place restore.
   const [mode, setMode] = useState<RestoreMode>("inPlace");
   const effectiveMode: RestoreMode = advanced ? mode : "inPlace";
@@ -650,6 +690,16 @@ function SnapshotActions({
           />
         </div>
       </Advanced>
+      {/* The tip repeats in a bubble: a title alone is out of reach for touch
+          and keyboard. */}
+      {paired && (
+        <span className="flex items-center gap-1">
+          <Badge tone="neutral" size="small" title={t("dbdump.pairedTip")}>
+            {t("dbdump.pairedBadge")}
+          </Badge>
+          <InfoBubble tip={t("dbdump.pairedTip")} />
+        </span>
+      )}
       {/* Square icon badge, no hueIndex needed: this row sits inside
           ContainerRow's own `.glim-hue` element, so the ambient rainbow
           position already applies. The timeline row itself carries id, time
@@ -701,6 +751,11 @@ function SnapshotActions({
           {effectiveMode === "inPlace" && (
             <div className="flex flex-col gap-2 border-t border-carbon-border pt-2">
               <p className="text-caption text-carbon-textMuted">{t("restore.inPlaceHint")}</p>
+              {(coverage === "live" || coverage === "none") && (
+                <p className="text-xs text-statusWarn">
+                  {t(coverage === "live" ? "dbdump.restoreLiveWarn" : "dbdump.restoreNoneWarn")}
+                </p>
+              )}
               <RestoreAction
                 domain="container"
                 name={containerName}
@@ -751,11 +806,29 @@ function SnapshotActions({
 // setting is empty. It matches the backend column default.
 export const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
 
-export function RestorePanel({ name, aliases = [], t, installed = true, open }: RestorePanelProps) {
+export function RestorePanel({
+  name,
+  preselect = "",
+  preselectDump = "",
+  preselectAt = 0,
+  aliases = [],
+  t,
+  installed = true,
+  open,
+  isDatabase = false,
+  dbCoverage = "",
+  containerRunning = false,
+  importStops,
+}: RestorePanelProps) {
   // Restore-to-folder needs the default folder + host mount root to seed the
   // FolderBrowser. Fetched once the panel is opened (not on mount).
   const [restoreFolder, setRestoreFolder] = useState(DEFAULT_RESTORE_FOLDER);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
+  // The dumps are listed from one source at a time, and held here as well as
+  // in their list because the pairing badge sits on the timeline rows.
+  const [dumpSource, setDumpSource] = useState<RepoSource>("local");
+  const [dumps, setDumps] = useState<DBDumpView[]>([]);
+  const { flagged } = useOpenAnomalies();
 
   // Seeds the restore-to-folder pickers once the panel opens.
   useEffect(() => {
@@ -783,6 +856,8 @@ export function RestorePanel({ name, aliases = [], t, installed = true, open }: 
         itemKey={name}
         itemName={name}
         open={open}
+        flagged={flagged}
+        request={preselect ? { snapshot: preselect, at: preselectAt } : undefined}
         header={(rows, places) => {
           // A place nobody has read may hold every backup this container has,
           // so neither sentence below is true yet: the container would be
@@ -799,9 +874,32 @@ export function RestorePanel({ name, aliases = [], t, installed = true, open }: 
             aliases={aliases}
             hostMountRoot={hostMountRoot}
             defaultFolder={restoreFolder}
+            paired={dumps.some((dump) => pairsWith(dump, { id: pick.snapshotId, original: pick.row.key }))}
+            coverage={dbCoverage}
+            preselected={pick.row.key === preselect}
             t={t}
           />
         )}
+      />
+      <Advanced>
+        <div className="flex items-center gap-2 py-2 border-t border-carbon-border">
+          <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
+          <SourceToggle source={dumpSource} onChange={setDumpSource} domain="containers" />
+        </div>
+      </Advanced>
+      <DatabaseDumpList
+        containerName={name}
+        source={dumpSource}
+        recognised={isDatabase}
+        canImport={installed && containerRunning}
+        importStops={importStops}
+        hostMountRoot={hostMountRoot}
+        defaultFolder={restoreFolder}
+        reloadTick={0}
+        onDumps={setDumps}
+        preselect={preselectDump}
+        preselectAt={preselectAt}
+        t={t}
       />
     </div>
   );

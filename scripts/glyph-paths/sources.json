@@ -33,5 +33,10 @@
     "viewBox": "0 0 24 24",
     "paths": 1,
     "from": "simple-icons/icons/github.svg (CC0)"
+  },
+  "key-revoke": {
+    "viewBox": "0 0 14 14",
+    "paths": 1,
+    "from": "IconKey (Streamline interface-essential/key.svg, CC BY 4.0) with a bar cut through it"
   }
 }

@@ -24,7 +24,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -35,8 +37,10 @@ import (
 type hookFakeEngine struct {
 	ResticEngine
 	copied []string
-	forgot []string
-	pruned []string
+	// copyCtxErrs is what the context of each copy said when it started.
+	copyCtxErrs []error
+	forgot      []string
+	pruned      []string
 	// snapsByRepo lets the discovery tests below share this fixture: keyed by the
 	// slash-spelled location, because resolveRepo builds its answers from the
 	// slash-spelled mount root rather than from filepath.Join's separators.
@@ -55,8 +59,9 @@ func (f *hookFakeEngine) Snapshots(_ context.Context, repo string, _ restic.Mode
 	return f.snapsByRepo[filepath.ToSlash(repo)], nil
 }
 
-func (f *hookFakeEngine) Copy(_ context.Context, dest, src string, _ []string, _ restic.Limits, _ restic.Mode) error {
+func (f *hookFakeEngine) Copy(ctx context.Context, dest, src string, _ []string, _ restic.Limits, _ restic.Mode) error {
 	f.copied = append(f.copied, src+"->"+dest)
+	f.copyCtxErrs = append(f.copyCtxErrs, ctx.Err())
 	return nil
 }
 
@@ -379,5 +384,44 @@ func TestTheHookDoesNotAgeTheDestinationBehindAnUnreachableSource(t *testing.T) 
 			"while a repository this domain uses was unreachable. The retention there is per\n"+
 			"identity over what the DESTINATION holds, so it trims the off-site copies of the\n"+
 			"items whose only other copy is the repository that went away.", eng.forgot, eng.pruned)
+	}
+}
+
+// The local backup is written before the hook runs. A cancel, the stall guard
+// or the hour cap ending the backup's context during its retention must not
+// cost the fresh snapshot its off-site copy.
+func TestTheHookCopiesAfterTheBackupContextEnded(t *testing.T) {
+	eng := &hookFakeEngine{}
+	svc, st, own, _ := hookSvc(t, eng)
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, stop := context.WithCancelCause(context.Background())
+	stop(&backup.StalledError{After: time.Hour})
+
+	svc.replicateOffsite(ctx, "containers", settings, own, "container:plex")
+
+	if len(eng.copied) != 1 || eng.copyCtxErrs[0] != nil {
+		t.Fatalf("copies = %v on contexts %v, want one on a live context", eng.copied, eng.copyCtxErrs)
+	}
+}
+
+// A shutdown ends the process the copy would run in; the next copy catches up.
+func TestTheHookCopiesNothingWhileShuttingDown(t *testing.T) {
+	eng := &hookFakeEngine{}
+	svc, st, own, _ := hookSvc(t, eng)
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	svc.shuttingDown.Store(true)
+	cancel()
+
+	svc.replicateOffsite(ctx, "containers", settings, own, "container:plex")
+
+	if len(eng.copied) != 0 {
+		t.Fatalf("copied %v while shutting down", eng.copied)
 	}
 }

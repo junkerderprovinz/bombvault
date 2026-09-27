@@ -2,12 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { hueVars } from "../lib/appearance";
-import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill, getScheduleNext } from "../lib/api";
-import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat, StorageForecast, ScheduleNext } from "../lib/api";
+import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getCoverage, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill, getScheduleNext, acknowledgeAnomalies, markAnomaliesExpected } from "../lib/api";
+import type { Run, SpikeCheck, Container, Settings, DomainStatus, CoverageReport, HistoryDay, DayStat, RepoStat, StorageForecast, ScheduleNext, AnomalySummary, AnomalyView, AnomalyActionResult } from "../lib/api";
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
 import { useT } from "../lib/i18n";
 import { SelectField } from "../components/SelectField";
-import { isOwnReason, runReason } from "../lib/runReason";
+import { isOwnReason, isWarningNote, RunReasonText } from "../lib/runReason";
+import { runKindLabel } from "../lib/runKind";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -16,6 +17,11 @@ import { relativeTime, formatTs, formatDuration } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
 import { ActivityLog } from "../components/ActivityLog";
+import { AnomalyRow, type AnomalyAction } from "../components/AnomalyRow";
+import { RunAnomalyBadge } from "../components/RunAnomalyBadge";
+import { InfoBubble } from "../components/InfoBubble";
+import { ANOMALY_CHANGED_EVENT, sortOpenAnomalies } from "../lib/anomalies";
+import { useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { IconPencil } from "../components/Sidebar";
 import { IconTipButton } from "../components/IconTipButton";
@@ -26,6 +32,8 @@ import { buildForecastLine, humanBytes, type ResolveForecast } from "../lib/fore
 import type { TranslationKey } from "../lib/i18n";
 import { Button } from "../components/Button";
 import { IconCheckCircle } from "../components/Sidebar";
+import { tLtr } from "../lib/ltrFragments";
+import { zfsCodeSentence, zfsFixKey } from "../lib/zfsCodes";
 
 // Same cadence as ActivityLog's own runs polling (web/src/components/ActivityLog.tsx)
 // so the summary tier's "Last result" cell and the Activity Log never disagree
@@ -59,36 +67,10 @@ function runDomainLabel(t: ReturnType<typeof useT>["t"], domain: string): string
       return t("activityLog.domainConfig");
     case "files":
       return t("activityLog.domainFiles");
+    case "zfs":
+      return t("activityLog.domainZFS");
     default:
       return domain;
-  }
-}
-
-function runKindLabel(t: ReturnType<typeof useT>["t"], kind: string): string {
-  switch (kind) {
-    case "backup":
-      return t("run.kindBackup");
-    case "restore":
-      return t("run.kindRestore");
-    case "update":
-      return t("run.kindUpdate");
-    case "prune":
-      return t("activityLog.typePrune");
-    case "verify":
-      return t("activityLog.typeVerify");
-    case "offsite":
-      return t("activityLog.typeOffsite");
-    case "drill":
-      return t("activityLog.jobDrill");
-    case "drdrill":
-      return t("run.kindDRDrill");
-    case "tamper":
-      return t("activityLog.jobTamper");
-    case "export":
-      return t("run.kindExport");
-    default:
-      // An unknown future kind shows its raw literal rather than a wrong label.
-      return kind;
   }
 }
 
@@ -166,6 +148,39 @@ function StatCard({
   return <div className={base}>{inner}</div>;
 }
 
+// The kinds the error badge counts, and the outcome each one can clear. A dump
+// and an import stand apart from the item's backup: a failed dump must not hide
+// a failed backup of the same container, and neither of them cancels the other.
+// A saved dump is missing on purpose, since writing a copy of an old dump into
+// a folder says nothing about the state of the database (#3).
+const ERROR_CLASSES: Record<string, string> = {
+  backup: "item",
+  restore: "item",
+  update: "item",
+  dbdump: "dbdump",
+  dbimport: "dbimport",
+};
+
+/**
+ * How many failures the error badge stands for: the last completed run per
+ * target and class, counting only the ones that failed (#100). A target that
+ * has since succeeded drops out, and so does an acknowledged failure (#126).
+ * `runs` arrives newest-first, and a still running one is skipped so an
+ * in-flight retry does not hide the previous result.
+ */
+export function unresolvedErrorCount(runs: Run[]): number {
+  const latest = new Map<string, Run>();
+  for (const r of runs) {
+    const cls = ERROR_CLASSES[r.kind];
+    if (!cls) continue;
+    if (r.status === "running") continue;
+    if (r.acknowledged) continue;
+    const key = `${r.targetId}|${cls}`;
+    if (!latest.has(key)) latest.set(key, r);
+  }
+  return Array.from(latest.values()).filter((r) => r.status === "failed").length;
+}
+
 // computeStatData fetches the four inputs the stat cards need and derives the
 // tile values. Extracted from the component so it can be re-run on demand (after
 // the error panel acknowledges failures) as well as on mount. Rejects if any
@@ -190,28 +205,7 @@ async function computeStatData(): Promise<StatData> {
   const schedEnabled = settings ? settings.containersSchedule !== "off" && settings.containersSchedule !== "" : false;
   const activeJobs = schedEnabled ? installed.filter((c) => c.includeInSchedule).length : 0;
   const pausedJobs = !schedEnabled ? installed.filter((c) => c.includeInSchedule).length : 0;
-  // Scoped to backup/restore/update kinds — a failed prune/verify
-  // (maintenance) run is surfaced in the Activity Log, not here, so this
-  // badge keeps its original "backup/restore failures" meaning (#3).
-  //
-  // Reflects the LAST completed run per item (#100), not a cumulative
-  // count of every failure ever recorded — a target that has since
-  // backed up (or restored/updated) successfully must drop out. `runs`
-  // arrives newest-first, so the first non-"running" run seen per
-  // targetId is that item's latest completed outcome; "running" runs
-  // are skipped so an in-flight retry doesn't hide the prior result.
-  // Acknowledged failures (#126) are skipped too, so resolving an error in the
-  // detail panel drops the target out of the badge just like a later success.
-  const latestCompletedByTarget = new Map<string, (typeof runs)[number]>();
-  for (const r of runs) {
-    if (r.kind !== "backup" && r.kind !== "restore" && r.kind !== "update") continue;
-    if (r.status === "running") continue;
-    if (r.acknowledged) continue;
-    if (!latestCompletedByTarget.has(r.targetId)) {
-      latestCompletedByTarget.set(r.targetId, r);
-    }
-  }
-  const errors = Array.from(latestCompletedByTarget.values()).filter((r) => r.status === "failed").length;
+  const errors = unresolvedErrorCount(runs);
 
   return {
     containers: installed.length,
@@ -414,11 +408,15 @@ function statusLabel(status: string, t: ReturnType<typeof useT>["t"]): string {
 
 function Card({
   title,
+  hint,
   children,
   action,
   hueIndex,
 }: {
   title: string;
+  /** One-line explanation of the whole card, shown as an (i) bubble beside
+   *  the title, as on the Settings cards. */
+  hint?: string;
   children: React.ReactNode;
   action?: React.ReactNode;
   /** Rainbow position for THIS Card's own heading notch — GlimStone
@@ -490,7 +488,10 @@ function Card({
       style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >
       <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex} insetStart={5}>{title}</Badge>
+        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex} insetStart={5}>
+          {title}
+          {hint && <InfoBubble tip={hint} onAccent />}
+        </Badge>
       </h2>
       <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4 overflow-hidden">
         {/* action used to share a `justify-between` row with the <h2> above,
@@ -609,6 +610,222 @@ function chipForRpo(status: string): string {
 // nothing is scheduled there and an unscheduled domain takes the "off" branch
 // long before the badge is reached. That is correct behaviour and a bad way to
 // verify a change, so the card is rendered directly instead.
+/**
+ * What on this server nothing backs up.
+ *
+ * The protection card above is per DOMAIN and answers "did the scheduled
+ * backups run on time". It cannot see the container nobody ever added: that one
+ * is absent from every list and every error, so no traffic light turns amber
+ * for it. This card names it.
+ *
+ * A switched-off backup type is left out of the ratio entirely. Counting an
+ * operator VMs they chose not to back up would put a permanent red list
+ * in front of a correctly configured server, and a card that cries wolf is a
+ * card people hide.
+ */
+export function CoverageCard({
+  t,
+  coverage,
+  loading,
+  hueIndex,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  coverage: CoverageReport | null;
+  loading: boolean;
+  hueIndex?: number;
+}) {
+  const reasonKey: Record<string, TranslationKey> = {
+    "not-set-up": "coverage.reason.notSetUp",
+    "not-included": "coverage.reason.notIncluded",
+    "override-off": "coverage.reason.overrideOff",
+    "no-schedule": "coverage.reason.noSchedule",
+    "db-dump-failing": "coverage.reason.dbDumpFailing",
+    "db-dump-only-copy-off": "coverage.reason.dbDumpOnlyCopyOff",
+    "db-not-scheduled": "coverage.reason.dbNotScheduled",
+    "zfs-member-skipped": "coverage.reason.zfsMemberSkipped",
+  };
+
+  function skippedTip(code: string): string {
+    const fix = zfsFixKey(code);
+    return fix ? `${zfsCodeSentence(t, code)} ${tLtr(t, fix)}` : zfsCodeSentence(t, code);
+  }
+
+  const rows = (coverage?.domains ?? [])
+    .filter((d) => d.enabled)
+    .flatMap((d) => d.unprotected.map((i) => ({ ...i, domain: d.domain })));
+
+  return (
+    <Card title={t("coverage.title")} hueIndex={hueIndex}>
+      {/* The card says what it counts and what it leaves out on purpose, right
+          where it is read. Without it the ratio invites the wrong reading: a
+          switched-off backup type is missing from it on purpose. */}
+      <p className="mb-2 text-xs text-carbon-textSub">{t("coverage.hint")}</p>
+      {loading ? (
+        <p className="text-sm text-carbon-textSub">{t("folder.loading")}</p>
+      ) : rows.length === 0 ? (
+        <p className="text-sm text-carbon-textSub">{t("coverage.allProtected")}</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-carbon-textSub">
+            {t("coverage.ratio")
+              .replace("{protected}", String(coverage?.protected ?? 0))
+              .replace("{total}", String(coverage?.total ?? 0))}
+          </p>
+          <ul className="flex flex-col gap-1">
+            {rows.map((r) => (
+              <li key={r.domain + ":" + r.name} className="flex flex-wrap items-baseline gap-x-2">
+                <span className="text-sm text-carbon-text">{r.name}</span>
+                <span className="inline-flex items-center gap-1 text-xs text-carbon-textSub">
+                  {t(reasonKey[r.reason] ?? "coverage.reason.noSchedule")}
+                  {r.code && <InfoBubble tip={skippedTip(r.code)} />}
+                </span>
+                {r.neverBackedUp && (
+                  <span className="text-xs text-statusWarn">{t("coverage.neverBackedUp")}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/**
+ * What the backup history says is out of the ordinary.
+ *
+ * It sits next to the coverage card because the two answer the same question
+ * from opposite ends: that one names what nothing backs up, this one names the
+ * backup that ran and came out wrong. Only critical and warning findings reach
+ * the card; notes are counted and linked, so a card people read stays a card
+ * about things that matter.
+ */
+export function AnomaliesCard({
+  t,
+  summary,
+  open,
+  loading,
+  error,
+  hueIndex,
+  onAcknowledge,
+  onExpected,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  summary: AnomalySummary | null;
+  open: AnomalyView[];
+  loading: boolean;
+  /** The summary or the listing was refused or never arrived. */
+  error: boolean;
+  hueIndex?: number;
+  onAcknowledge?: AnomalyAction;
+  onExpected?: AnomalyAction;
+}) {
+  const rows = sortOpenAnomalies(open);
+  const criticals = rows.filter((a) => a.severity === "critical").slice(0, 5);
+  const warnings = rows.filter((a) => a.severity === "warning").slice(0, 3);
+  const loud = summary ? summary.open.critical + summary.open.warning : 0;
+  const notShown = Math.max(0, loud - criticals.length - warnings.length);
+
+  return (
+    <Card title={t("anomaly.title")} hint={t("anomaly.cardHint")} hueIndex={hueIndex}>
+      {loading && !summary ? (
+        <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>
+      ) : error || !summary ? (
+        // A request that did not arrive says nothing about the backups, so it
+        // must not borrow the all-clear's wording.
+        <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
+      ) : !summary.enabled ? (
+        <div className="flex flex-col gap-1 text-sm text-carbon-textSub">
+          <p>{t("anomaly.off")}</p>
+          <Link to="/settings#anomalies" className="text-accentText hover:underline">
+            {t("anomaly.openSettings")}
+          </Link>
+          {open.length > 0 && (
+            <Link to="/anomalies" className="text-accentText hover:underline">
+              {t("anomaly.showEarlier")}
+            </Link>
+          )}
+        </div>
+      ) : criticals.length === 0 && warnings.length === 0 ? (
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-carbon-textSub">{t("anomaly.allClear")}</p>
+          {summary.learningItems > 0 && (
+            <p className="text-xs text-carbon-textSub">
+              {t("anomaly.learningCount", summary.learningItems)}
+            </p>
+          )}
+          {summary.open.info > 0 && (
+            <Link to="/anomalies" className="text-xs text-carbon-textMuted hover:underline">
+              {t("anomaly.notesCount", summary.open.info)}
+            </Link>
+          )}
+          {summary.evalErrors > 0 && (
+            <p className="text-xs text-statusWarn">{t("anomaly.evalErrors", summary.evalErrors)}</p>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <p className="flex flex-wrap gap-x-3 text-xs text-carbon-textSub">
+            {summary.open.critical > 0 && <span>{t("anomaly.countCritical", summary.open.critical)}</span>}
+            {summary.open.warning > 0 && <span>{t("anomaly.countWarning", summary.open.warning)}</span>}
+            {summary.retentionHeld > 0 && <span>{t("anomaly.countHeld", summary.retentionHeld)}</span>}
+          </p>
+          {[...criticals, ...warnings].map((a) => (
+            <AnomalyRow
+              key={a.id}
+              a={a}
+              t={t}
+              compact
+              onAcknowledge={onAcknowledge}
+              onExpected={onExpected}
+            />
+          ))}
+          <div className="flex flex-wrap items-baseline gap-x-3">
+            {notShown > 0 && (
+              <span className="text-xs text-carbon-textSub">{t("anomaly.moreCount", notShown)}</span>
+            )}
+            <Link to="/anomalies" className="text-xs text-accentText hover:underline">
+              {t("anomaly.showAll")}
+            </Link>
+          </div>
+        </div>
+      )}
+      {summary?.enabled && !summary.ready && (
+        <p className="text-xs text-carbon-textMuted">{t("anomaly.checking")}</p>
+      )}
+    </Card>
+  );
+}
+
+// The card's data. Summary and rows share one generation, so the counts and
+// the listed findings always describe the same pass.
+function AnomaliesBlock({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
+  const { summary, error: summaryFailed, loading } = useAnomalySummary();
+  const { list, error: listFailed } = useOpenAnomalies();
+
+  const settle = useCallback(
+    (call: (ids: string[]) => Promise<AnomalyActionResult>) => async (a: AnomalyView) => {
+      const res = await call([a.id]);
+      if (res.ok) window.dispatchEvent(new Event(ANOMALY_CHANGED_EVENT));
+      return res;
+    },
+    []
+  );
+
+  return (
+    <AnomaliesCard
+      t={t}
+      summary={summary}
+      open={list}
+      loading={loading}
+      error={summaryFailed || listFailed}
+      hueIndex={hueIndex}
+      onAcknowledge={settle((ids) => acknowledgeAnomalies(ids))}
+      onExpected={settle((ids) => markAnomaliesExpected(ids))}
+    />
+  );
+}
+
 export function ProtectionCard({
   t,
   domains,
@@ -636,7 +853,8 @@ export function ProtectionCard({
     setDrRunError((prev) => {
       const next: Record<string, string> = {};
       for (const d of domains) {
-        const drCapable = d.domain === "containers" || d.domain === "flash" || d.domain === "files";
+        const drCapable =
+          d.domain === "containers" || d.domain === "flash" || d.domain === "files" || d.domain === "zfs";
         const reachable = drCapable && d.status !== "off" && d.offsiteConfigured;
         if (reachable && prev[d.domain] !== undefined) next[d.domain] = prev[d.domain];
       }
@@ -685,6 +903,8 @@ export function ProtectionCard({
         return t("dashboard.domainFlash");
       case "files":
         return t("dashboard.domainFiles");
+      case "zfs":
+        return t("dashboard.domainZFS");
       default:
         return domain;
     }
@@ -714,11 +934,12 @@ export function ProtectionCard({
         <div className="@container divide-y divide-carbon-border glim-content-fade">
           {domains.map((d) => {
             const off = d.status === "off";
-            // Only containers, flash + files ever run an off-site DR drill
-            // (schedule.go drillTasks / runDRDrill). VMs + config can have an
-            // off-site repo but cannot be DR-drilled, so they must show NO DR
-            // pill or Run-DR button.
-            const drCapable = d.domain === "containers" || d.domain === "flash" || d.domain === "files";
+            // Only containers, flash, files and ZFS run an off-site DR drill
+            // (schedule.go drillTasks / runDRDrill). VMs and config can have an
+            // off-site repo but cannot be drilled, so they show no DR pill and
+            // no Run-DR button.
+            const drCapable =
+              d.domain === "containers" || d.domain === "flash" || d.domain === "files" || d.domain === "zfs";
             // Off-site DR opt-out (#37): the scheduled DR drill is turned off for a
             // DR-capable domain that HAS an off-site repo. The pill then reads NEUTRAL
             // ("manual only") — but only when there is no failing result to show.
@@ -982,6 +1203,8 @@ export function RansomwareCard({
         return t("dashboard.domainFlash");
       case "files":
         return t("dashboard.domainFiles");
+      case "zfs":
+        return t("dashboard.domainZFS");
       default:
         return domain;
     }
@@ -1195,8 +1418,9 @@ export function RansomwareCard({
 // Recent Runs card
 // ---------------------------------------------------------------------------
 
-function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
+export function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const [runs, setRuns] = useState<Run[]>([]);
+  const { byRunId } = useOpenAnomalies();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [day, setDay] = useState("all");
@@ -1254,12 +1478,15 @@ function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?:
               <div key={run.id} className="flex flex-col gap-0.5 py-2.5 text-sm">
                 <div className="flex items-center gap-3">
                   <Badge tone={statusTone(run.status)}>{statusLabel(run.status, t)}</Badge>
-                  <span className="text-carbon-text font-medium w-16 shrink-0 truncate">
+                  {/* Room for two lines: "Database dump" and its translations
+                      do not fit one line at 360px. */}
+                  <span className="text-carbon-text font-medium min-w-16 max-w-32 shrink-0 break-words">
                     {runKindLabel(t, run.kind)}
                   </span>
                   <span className="text-carbon-text flex-1 truncate min-w-0">
                     {runTargetText(t, run)}
                   </span>
+                  <RunAnomalyBadge findings={byRunId.get(run.id)} t={t} />
                   {/* Start → end + duration, with the relative age underneath (#45/#50). */}
                   <span className="flex flex-col items-end shrink-0 text-xs leading-tight">
                     <span className="text-carbon-textSub whitespace-nowrap">
@@ -1279,14 +1506,14 @@ function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?:
                 </div>
                 {/* dir stays "ltr" for a restic/rclone/Docker message (Latin
                     technical text, which has to read left-to-right even on an
-                    Arabic page) and follows the page for one of OUR sentences,
-                    which is now actually in the reader's language ([377]). */}
+                    Arabic page) and follows the page for one of our own
+                    sentences, which is in the reader's language ([377]). */}
                 {run.status === "failed" && run.error && (
                   <p
                     dir={isOwnReason(run.error) ? undefined : "ltr"}
                     className="ps-16 text-xs text-statusFail wrap-break-word text-start"
                   >
-                    {runReason(run.error, t)}
+                    <RunReasonText reason={run.error} t={t} />
                   </p>
                 )}
                 {run.status === "skipped" && run.error && (
@@ -1294,7 +1521,20 @@ function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?:
                     dir={isOwnReason(run.error) ? undefined : "ltr"}
                     className="ps-16 text-xs text-carbon-textMuted wrap-break-word text-start"
                   >
-                    {runReason(run.error, t)}
+                    <RunReasonText reason={run.error} t={t} />
+                  </p>
+                )}
+                {/* A run can succeed and still have something to say: which
+                    folder the import kept, or that only one database was
+                    reachable. */}
+                {run.status === "success" && run.error && (
+                  <p
+                    dir={isOwnReason(run.error) ? undefined : "ltr"}
+                    className={`ps-16 text-xs wrap-break-word text-start ${
+                      isWarningNote(run.error) ? "text-statusWarn" : "text-carbon-textMuted"
+                    }`}
+                  >
+                    <RunReasonText reason={run.error} t={t} />
                   </p>
                 )}
               </div>
@@ -1418,7 +1658,7 @@ function LastBackupsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
 // Backup health heatmap (GitHub-contributions style)
 // ---------------------------------------------------------------------------
 
-type HeatDomain = "containers" | "vms" | "flash" | "config" | "files";
+type HeatDomain = "containers" | "vms" | "flash" | "config" | "files" | "zfs";
 
 // cellColor maps a day's outcome (for the selected domain) to a fill color:
 // any failure → red; all-ok → green shades that deepen with more successful
@@ -1518,6 +1758,8 @@ function HealthHeatmapCard({
         return t("dashboard.domainConfig");
       case "files":
         return t("dashboard.domainFiles");
+      case "zfs":
+        return t("dashboard.domainZFS");
     }
   };
 
@@ -1541,7 +1783,7 @@ function HealthHeatmapCard({
   // alone), and not grounds for a fresh opt-out either.
   const toggle = (
     <Selector
-      items={(["containers", "vms", "flash", "config", "files"] as HeatDomain[]).map((d) => ({
+      items={(["containers", "vms", "flash", "config", "files", "zfs"] as HeatDomain[]).map((d) => ({
         id: d,
         label: domainLabel(d),
       }))}
@@ -1684,7 +1926,7 @@ function Sparkline({
 // Storage card — repo size + dedup trend per domain
 // ---------------------------------------------------------------------------
 
-type StorageDomain = "containers" | "vms" | "flash" | "files";
+type StorageDomain = "containers" | "vms" | "flash" | "files" | "zfs";
 
 interface DomainStats {
   domain: StorageDomain;
@@ -1711,7 +1953,7 @@ function StorageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueInde
 
   useEffect(() => {
     let active = true;
-    const domains: StorageDomain[] = ["containers", "vms", "flash", "files"];
+    const domains: StorageDomain[] = ["containers", "vms", "flash", "files", "zfs"];
     Promise.all(domains.map((d) => getStats(d, "local", 90)))
       .then((results) => {
         if (!active) return;
@@ -1743,6 +1985,8 @@ function StorageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueInde
         return t("dashboard.domainFlash");
       case "files":
         return t("dashboard.domainFiles");
+      case "zfs":
+        return t("dashboard.domainZFS");
     }
   };
 
@@ -1891,7 +2135,7 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
         <button
           type="button"
           onClick={() => void downloadRecoveryKit().then(setKitError)}
-          className="rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+          className="rounded-pill bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
         >
           {t("recovery.download")}
         </button>
@@ -1947,7 +2191,7 @@ function FreshInstallNudge({
             with the raw accent colour and no fill at all. This card's own one
             call-to-action functions as a primary action (rule 3 allows
             exactly one solid-accent primary action per page/card), so it
-            takes the SAME filled rounded-control/bg-accent/text-accentContrast
+            takes the SAME filled rounded-pill/bg-accent/text-accentContrast
             treatment every other primary button in this app already uses
             (e.g. Config.tsx's Save button) — matching an established idiom
             rather than routing through Badge's tone system, which has no
@@ -1955,7 +2199,7 @@ function FreshInstallNudge({
             one for a single call site. */}
         <Link
           to="/recovery"
-          className="self-start inline-flex items-center gap-1 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity"
+          className="self-start inline-flex items-center gap-1 rounded-pill bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity"
         >
           {t("recovery.freshNudgeCta")} <span className="inline-block rtl:-scale-x-100">→</span>
         </Link>
@@ -2227,6 +2471,8 @@ export function Dashboard() {
   // duplicate round-trip — both cards read the same extended domain status).
   const [statusDomains, setStatusDomains] = useState<DomainStatus[]>([]);
   const [statusLoading, setStatusLoading] = useState(true);
+  const [coverage, setCoverage] = useState<CoverageReport | null>(null);
+  const [coverageLoading, setCoverageLoading] = useState(true);
 
   // Newest run for the summary tier's "Last result" cell. listRuns returns
   // newest-first, so runs[0] is the latest. Polled (not fetched once) so the
@@ -2306,6 +2552,17 @@ export function Dashboard() {
         .finally(() => {
           if (active) setStatusLoading(false);
         });
+      // Same trigger as the status above: adding a container to a schedule, or
+      // switching a whole domain off, changes what is covered, and both of
+      // those dispatch bv:settings-changed.
+      getCoverage()
+        .then((res) => {
+          if (active && res.ok) setCoverage(res.coverage);
+        })
+        .catch(() => {/* non-fatal */})
+        .finally(() => {
+          if (active) setCoverageLoading(false);
+        });
     };
     load();
     // Live-refresh when protection-relevant state changes elsewhere (e.g. a manual
@@ -2334,6 +2591,23 @@ export function Dashboard() {
     if (!el) return; // Activity Log block hidden via customize — filter still set
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     el.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+  };
+
+  // A key's log on the MCP card links a run here as ?run=<id>. The log narrows
+  // to it and comes into view once, for the link that opened the page; clearing
+  // it drops the parameter, so a reload shows the whole log again.
+  const [logRunFilter, setLogRunFilter] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get("run") || null
+  );
+  useEffect(() => {
+    if (logRunFilter) activityLogBlockRef.current?.scrollIntoView?.({ block: "start" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const clearLogRun = () => {
+    setLogRunFilter(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("run");
+    window.history.replaceState(window.history.state, "", url);
   };
 
   // Customizable dashboard (#46) — everything below the heading + banners is a
@@ -2405,6 +2679,8 @@ export function Dashboard() {
           <ActivityLog
             dayFilter={logDayFilter}
             onClearDayFilter={() => setLogDayFilter(null)}
+            runFilter={logRunFilter}
+            onClearRunFilter={clearLogRun}
             hueIndex={nextHue()}
           />
         </div>
@@ -2421,6 +2697,24 @@ export function Dashboard() {
       render: (nextHue) => (
         <ProtectionCard t={t} domains={statusDomains} loading={statusLoading} hueIndex={nextHue()} />
       ),
+    },
+    {
+      // Directly after protection, because the two answer halves of one
+      // question: that card says whether what IS scheduled ran on time, this
+      // one says what is not scheduled at all.
+      id: "coverage",
+      label: t("coverage.title"),
+      render: (nextHue) => (
+        <CoverageCard t={t} coverage={coverage} loading={coverageLoading} hueIndex={nextHue()} />
+      ),
+    },
+    {
+      // Beside coverage, because the two answer the same question from
+      // opposite ends: what nothing backs up, and what the backups say went
+      // wrong.
+      id: "anomalies",
+      label: t("anomaly.title"),
+      render: (nextHue) => <AnomaliesBlock t={t} hueIndex={nextHue()} />,
     },
     {
       id: "ransomware",
@@ -2474,8 +2768,11 @@ export function Dashboard() {
     .filter(
       (b): b is (typeof blocks)[number] => !!b && (advanced || !b.advancedOnly)
     );
-  const visibleBlocks = orderedAvailable.filter((b) => !hidden.has(b.id));
-  const hiddenBlocks = orderedAvailable.filter((b) => hidden.has(b.id));
+  // A link to one run shows the activity log even where the layout hides it,
+  // or the link would land on a page without the log it points to.
+  const shown = (id: string) => !hidden.has(id) || (id === "activityLog" && logRunFilter !== null);
+  const visibleBlocks = orderedAvailable.filter((b) => shown(b.id));
+  const hiddenBlocks = orderedAvailable.filter((b) => !shown(b.id));
 
   // Native HTML5 drag-and-drop — the dragged id lives in a ref (no re-render
   // mid-drag); onDrop reorders relative to the drop-target block. The move
@@ -2548,7 +2845,7 @@ export function Dashboard() {
           top-right corner toggles the customize/edit mode.
             That pencil is `h-8 w-8` + centring, not the `p-2` it used to size
           itself with. It is a square icon-only badge by every other measure
-          (the same rounded-control tile, the same bg-carbon-surface2/hover
+          (the same rounded-pill tile, the same bg-carbon-surface2/hover
           recipe as Settings' Registry add/remove and FolderBrowser's browse
           badge), but it derived its own footprint from padding around an 18px
           glyph and landed on 34px — measured live — where every other square
@@ -2569,6 +2866,7 @@ export function Dashboard() {
             <OffsiteIndicator domain="vms" withLabel />
             <OffsiteIndicator domain="flash" withLabel />
             <OffsiteIndicator domain="files" withLabel />
+            <OffsiteIndicator domain="zfs" withLabel />
           </div>
         </div>
         {/* Real `.glim-bubble` tooltip, not the OS's native `title=` balloon
@@ -2591,14 +2889,13 @@ export function Dashboard() {
             — only the tooltip mechanism changes. `aria-pressed` is threaded
             through IconTipButton's new optional prop so the toggle state is
             not lost in the swap (this is a toggle, not a one-shot action).
-              32px and `rounded-control` are unchanged, so it still matches
-            every other square icon control app-wide and still tracks the
-            shape engine. */}
+              32px and `rounded-pill` keep it matched to every other square
+            icon control app-wide and tracking the shape engine. */}
         <IconTipButton
           onClick={() => setEditing((v) => !v)}
           tip={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
           ariaPressed={editing}
-          className={`shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-control motion-safe:transition-colors ${
+          className={`shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-pill motion-safe:transition-colors ${
             editing
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text"
@@ -2749,7 +3046,7 @@ export function Dashboard() {
             {hiddenBlocks.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2.5 py-1.5"
+                className="flex items-center gap-2 rounded-pill bg-carbon-surface2 px-2.5 py-1.5"
               >
                 <span className="max-w-48 truncate text-xs text-carbon-textSub">
                   {b.label}

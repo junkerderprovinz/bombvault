@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 )
@@ -135,7 +136,113 @@ func (s *Service) Metrics() (string, error) {
 		}
 	}
 
+	if err := s.writeDBDumpMetrics(&b); err != nil {
+		return "", err
+	}
 	return b.String(), nil
+}
+
+// writeDBDumpMetrics adds the database dump families. A dump never turns its
+// container red, so alerting on a database that stopped being dumped needs
+// series of its own.
+func (s *Service) writeDBDumpMetrics(b *strings.Builder) error {
+	dumpCounts, err := s.store.RunCountsOfKind("dbdump")
+	if err != nil {
+		return fmt.Errorf("metrics: database dump counts: %w", err)
+	}
+	b.WriteString("# HELP bombvault_dbdump_runs_total Total number of finished database dump runs per status.\n")
+	b.WriteString("# TYPE bombvault_dbdump_runs_total counter\n")
+	for _, status := range []string{"success", "failed"} {
+		fmt.Fprintf(b, "bombvault_dbdump_runs_total{status=\"%s\"} %d\n", status, dumpCounts["containers"][status])
+	}
+
+	targets, err := s.store.ListTargets()
+	if err != nil {
+		return fmt.Errorf("metrics: targets: %w", err)
+	}
+	var body strings.Builder
+	for _, t := range targets {
+		at, lErr := s.store.LastSuccessOfKind(t.ID, "dbdump")
+		if lErr != nil {
+			return fmt.Errorf("metrics: last database dump of %s: %w", t.ContainerName, lErr)
+		}
+		if at == 0 {
+			continue
+		}
+		fmt.Fprintf(&body, "bombvault_dbdump_last_success_timestamp_seconds{container=\"%s\"} %d\n",
+			escapeLabelValue(t.ContainerName), at)
+	}
+	if body.Len() > 0 {
+		b.WriteString("# HELP bombvault_dbdump_last_success_timestamp_seconds Unix time of the last successful database dump per container.\n")
+		b.WriteString("# TYPE bombvault_dbdump_last_success_timestamp_seconds gauge\n")
+		b.WriteString(body.String())
+	}
+	return nil
+}
+
+// mcpMetrics renders the MCP series, which let an operator alert on a looping
+// or hostile client. The request counters are process-local and reset on a
+// restart, like every other counter here.
+func (h *Handler) mcpMetrics() string {
+	h.mcp.countMu.Lock()
+	requests := make(map[string]uint64, len(h.mcp.requests))
+	for outcome, n := range h.mcp.requests {
+		requests[outcome] = n
+	}
+	toolCalls := make(map[mcpToolOutcome]uint64, len(h.mcp.toolCalls))
+	for call, n := range h.mcp.toolCalls {
+		toolCalls[call] = n
+	}
+	h.mcp.countMu.Unlock()
+
+	outcomes := make([]string, 0, len(requests))
+	for outcome := range requests {
+		outcomes = append(outcomes, outcome)
+	}
+	sort.Strings(outcomes)
+
+	var b strings.Builder
+	b.WriteString("# HELP bombvault_mcp_requests_total Requests to the MCP endpoint per gate outcome.\n")
+	b.WriteString("# TYPE bombvault_mcp_requests_total counter\n")
+	for _, outcome := range outcomes {
+		fmt.Fprintf(&b, "bombvault_mcp_requests_total{outcome=\"%s\"} %d\n",
+			escapeLabelValue(outcome), requests[outcome])
+	}
+
+	if len(toolCalls) > 0 {
+		calls := make([]mcpToolOutcome, 0, len(toolCalls))
+		for call := range toolCalls {
+			calls = append(calls, call)
+		}
+		sort.Slice(calls, func(i, j int) bool {
+			if calls[i].tool != calls[j].tool {
+				return calls[i].tool < calls[j].tool
+			}
+			return calls[i].outcome < calls[j].outcome
+		})
+		b.WriteString("# HELP bombvault_mcp_tool_calls_total Tool calls per tool and outcome.\n")
+		b.WriteString("# TYPE bombvault_mcp_tool_calls_total counter\n")
+		for _, call := range calls {
+			fmt.Fprintf(&b, "bombvault_mcp_tool_calls_total{tool=\"%s\",outcome=\"%s\"} %d\n",
+				escapeLabelValue(call.tool), escapeLabelValue(call.outcome), toolCalls[call])
+		}
+	}
+
+	keys, err := h.store.ActiveMCPKeys()
+	if err != nil {
+		log.Printf("api: mcp: could not count the active keys for /metrics: %v", err)
+		return b.String()
+	}
+	usable := 0
+	for _, k := range keys {
+		if h.mcpKeyUnusable(k) == "" {
+			usable++
+		}
+	}
+	b.WriteString("# HELP bombvault_mcp_active_keys Number of MCP keys that can currently authenticate.\n")
+	b.WriteString("# TYPE bombvault_mcp_active_keys gauge\n")
+	fmt.Fprintf(&b, "bombvault_mcp_active_keys %d\n", usable)
+	return b.String()
 }
 
 func boolMetric(v bool) int {

@@ -48,7 +48,7 @@ var tamperHTTPClient = &http.Client{
 // scheduled test against a non-REST off-site still shows up.
 func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict TamperVerdict, err error) {
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		return TamperVerdict{}, fmt.Errorf("unknown domain %q", domain)
 	}
@@ -74,7 +74,7 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 	}
 	// Open the run row now and settle it from the named returns, so every
 	// outcome from here on leaves a dated row.
-	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "tamper")
+	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "tamper")
 	if rErr != nil {
 		log.Printf("api: tamper %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
 		runID = ""

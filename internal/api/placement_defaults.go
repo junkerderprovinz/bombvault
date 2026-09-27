@@ -741,7 +741,7 @@ func unmatchedNames(p placementRead, items []domainItem, listing sourceListing) 
 // pause and confirmed state exactly as they are, so confirming a healthy
 // domain still cannot take the rebuild check out of service.
 func (s *Service) confirmDefault(domain string, exclude []string) error {
-	prefix := domainTagPrefix(domain)
+	prefix := itemIdentityPrefix(domain)
 	for _, id := range exclude {
 		if !strings.HasPrefix(id, prefix) || id == prefix {
 			return errInvalidPlacement
