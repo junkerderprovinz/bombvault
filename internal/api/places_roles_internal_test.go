@@ -248,6 +248,21 @@ func TestARepositoryDoesNotJoinASwitchedOffPlace(t *testing.T) {
 	}
 }
 
+func TestATargetDoesNotJoinASwitchedOffPlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.Enabled = false
+	b2 := f.storePlace(p)
+	loose := f.target("containers", "B2", "s3:https://s3.example.com/bucket/container")
+
+	if res := f.adopt(b2.ID, loose.ID, ""); res["ok"] != false || res["code"] != "place-off" {
+		t.Fatalf("adopt = %v, want place-off", res)
+	}
+	if row := f.storedTarget(loose.ID); row.PlaceID != "" || !row.Enabled {
+		t.Fatalf("target = %+v, want it on and without a place", row)
+	}
+}
+
 func TestADomainPathWithoutAPlaceJoinsThePlaceAtItsAddress(t *testing.T) {
 	f := newPlacementFixture(t)
 	bv := f.storePlace(localPlace("Unraid", "user/bombvault"))

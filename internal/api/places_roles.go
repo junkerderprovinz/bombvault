@@ -333,6 +333,10 @@ func (s *Service) unplacedRow(id string) (store.OffsiteTarget, error) {
 // serves nothing else.
 func (s *Service) adoptSlot(p store.Place, rows []store.OffsiteTarget, homes map[string]string, row store.OffsiteTarget, domain string) (string, string, error) {
 	switch {
+	case !p.Enabled:
+		// A row there would be switched off with the place: a target would stop
+		// copying, and every item backing up to a repository would fail.
+		return "", "", errPlaceOff
 	case row.Role == store.RoleOffsite:
 		if domain != "" && domain != row.Domain {
 			return "", "", errInvalidPlacement
@@ -347,10 +351,6 @@ func (s *Service) adoptSlot(p store.Place, rows []store.OffsiteTarget, homes map
 			return "", "", errPlaceIsRepository
 		}
 		return row.Domain, copiesSuffix, nil
-	case !p.Enabled:
-		// A repository there would be switched off with the place, and every
-		// item backing up to it would fail.
-		return "", "", errPlaceOff
 	case row.CompanionOf != "":
 		target, found, err := s.store.GetOffsiteTarget(row.CompanionOf)
 		switch {
