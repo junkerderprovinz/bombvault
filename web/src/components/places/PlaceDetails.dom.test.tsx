@@ -262,7 +262,7 @@ describe("PlaceDetails sections", () => {
         kind: "rest",
         provider: "rest-server",
         immutable: true,
-        usage: { homeDomains: [], defaults: [], copyDomains: ["containers"], items: 0, copies: 4, repositories: 0 },
+        usage: { homeDomains: [], defaults: [], copyDomains: ["containers"], items: 0, copies: 4, repositories: 1 },
         creds: { shared: false, fields: { user: "tower" }, set: ["password"] },
       }),
       undefined
@@ -304,7 +304,7 @@ describe("PlaceDetails sections", () => {
         kind: "rest",
         provider: "rest-server",
         immutable: true,
-        usage: { homeDomains: [], defaults: [], copyDomains: ["vms"], items: 0, copies: 0, repositories: 0 },
+        usage: { homeDomains: [], defaults: [], copyDomains: ["vms"], items: 0, copies: 0, repositories: 1 },
         creds: { shared: false, fields: { user: "tower" }, set: ["password"] },
       }),
       undefined
@@ -322,6 +322,21 @@ describe("PlaceDetails sections", () => {
     expect(screen.queryByText(en["places.details.tamperProtected"])).toBeNull();
   });
 
+  it("offers the tamper test at a place that is itself one repository", () => {
+    details(
+      place({
+        kind: "rest",
+        provider: "rest-server",
+        immutable: true,
+        repository: true,
+        usage: { homeDomains: [], defaults: ["containers"], copyDomains: [], items: 3, copies: 0, repositories: 1 },
+        creds: { shared: false, fields: { user: "tower" }, set: ["password"] },
+      }),
+      undefined
+    );
+    expect(screen.getByRole("button", { name: en["places.details.tamperTest"] })).toBeTruthy();
+  });
+
   it("tests the place once and shows one verdict, whatever domains back up or copy to it", async () => {
     tamperAnswer = { ok: true, testable: true, protected: false, detail: "the server accepted a delete (HTTP 200)" };
     details(
@@ -329,7 +344,7 @@ describe("PlaceDetails sections", () => {
         kind: "rest",
         provider: "rest-server",
         immutable: true,
-        usage: { homeDomains: ["vms"], defaults: [], copyDomains: ["containers"], items: 1, copies: 1, repositories: 0 },
+        usage: { homeDomains: ["vms"], defaults: [], copyDomains: ["containers"], items: 1, copies: 1, repositories: 2 },
         creds: { shared: false, fields: { user: "tower" }, set: ["password"] },
       }),
       undefined

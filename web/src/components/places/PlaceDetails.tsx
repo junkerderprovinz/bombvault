@@ -329,7 +329,6 @@ export function PlaceDetails({
   }
 
   const asks = provider !== undefined && provider.offPremises === undefined;
-  const tamperDomains = place.usage.copyDomains.length + place.usage.homeDomains.length;
   const fieldId = (key: string) => `place-${place.id}-${key}`;
 
   return (
@@ -424,7 +423,7 @@ export function PlaceDetails({
               <Toggle label={t("places.details.appendOnly")} checked={draft.immutable} onChange={(v) => void setAppendOnly(v)} />
               <InfoBubble tip={t("places.details.appendOnlyHint")} />
             </span>
-            {place.kind === "rest" && draft.immutable && tamperDomains > 0 && (
+            {place.kind === "rest" && draft.immutable && place.usage.repositories > 0 && (
               <Button
                 key={`tamper-${shake.tamper ?? 0}`}
                 label={t("places.details.tamperTest")}
