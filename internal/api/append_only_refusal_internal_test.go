@@ -45,8 +45,8 @@ func TestEveryAppendOnlyFlagGetsItsOwnSentence(t *testing.T) {
 	}
 }
 
-// A row whose address fits no place has no details of its own; it takes the
-// switch of the place it is assigned to.
+// A row whose address fits no place has no details; its switch sits in its
+// own row of that list.
 func TestAnAppendOnlyRefusalSaysWhereARowWithoutAPlaceGetsItsSwitch(t *testing.T) {
 	for _, c := range []struct {
 		err  error
@@ -56,7 +56,7 @@ func TestAnAppendOnlyRefusalSaysWhereARowWithoutAPlaceGetsItsSwitch(t *testing.T
 		{errAppendOnlyOffsiteTarget, "A destination"},
 		{errAppendOnlyPrimaryRemote, "A path"},
 	} {
-		want := c.what + " listed under Without a place takes that switch from the place it is assigned to"
+		want := c.what + " listed under Without a place has that switch in its own row there"
 		if !strings.Contains(c.err.Error(), want) {
 			t.Errorf("refusal %q does not say %q", c.err.Error(), want)
 		}
