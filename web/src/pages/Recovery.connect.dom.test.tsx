@@ -131,6 +131,14 @@ describe("Recovery's attach step", () => {
     expect(screen.getByRole("dialog", { name: en["places.addTitle"] })).toBeTruthy();
   });
 
+  it("leaves Connect & preview as the step's one accent action", async () => {
+    await renderPage();
+    const accents = within(step(en["recovery.step2"]))
+      .getAllByRole("button")
+      .filter((b) => b.className.includes("bg-accent"));
+    expect(accents.map((b) => b.textContent)).toEqual([en["recovery.connectPreview"]]);
+  });
+
   it("saves the encryption choice on Connect & preview and leaves every location as stored", async () => {
     await renderPage();
     fireEvent.click(screen.getByRole("switch", { name: en["settings.encryptionLabel"] }));

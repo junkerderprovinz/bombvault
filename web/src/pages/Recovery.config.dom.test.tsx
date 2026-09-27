@@ -1,14 +1,13 @@
 // @vitest-environment jsdom
-// Restoring BombVault's own settings saves the config location first. When a
-// storage place keeps the stored one, the restore must not run from a location
-// the user did not type.
+// Restoring BombVault's own settings reads from the place the Self-Backup row
+// names. A place owns the config path, so step 2 shows it and has nothing to type.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
-import type { Settings } from "../lib/api";
-import { placesChanged } from "../lib/places";
+import type { OffsiteTarget, Settings } from "../lib/api";
+import { placesChanged, type Place } from "../lib/places";
 import { stubEventSource } from "../lib/placement.testsupport";
 
 const stored = {
@@ -25,26 +24,33 @@ const stored = {
   encryptionEnabled: true,
 } as Settings;
 const puts: Settings[] = [];
-const restores: string[] = [];
-let kept: string[] = [];
+const restores: [string, string | undefined][] = [];
+
+function place(id: string, name: string, provider: string, homeDomains: string[]): Place {
+  return { id, name, provider, enabled: true, folders: {}, usage: { homeDomains } } as unknown as Place;
+}
+
+let places: Place[] = [];
+let configTargets: OffsiteTarget[] = [];
 
 vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),
   getSettings: () => Promise.resolve({ ok: true, settings: { ...stored }, hostMountRoot: "/host/user" }),
   putSettings: (s: Settings) => {
     puts.push(s);
-    return Promise.resolve({ ok: true, warnings: [], notes: [], kept });
+    return Promise.resolve({ ok: true, warnings: [], notes: [], kept: [] });
   },
-  restoreConfig: (snapshot: string) => {
-    restores.push(snapshot);
+  restoreConfig: (snapshot: string, source?: string) => {
+    restores.push([snapshot, source]);
     return Promise.resolve({ ok: true, staged: true, autoRestart: false });
   },
+  listOffsiteTargets: () => Promise.resolve({ ok: true, targets: configTargets }),
   getVMSSH: () => Promise.resolve({ ok: false }),
 }));
 
 vi.mock("../lib/places", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/places")>()),
-  listPlaces: () => Promise.resolve({ ok: true, places: [], unplaced: [] }),
+  listPlaces: () => Promise.resolve({ ok: true, places, unplaced: [] }),
 }));
 
 const { default: Recovery } = await import("./Recovery");
@@ -53,8 +59,10 @@ beforeEach(() => {
   stubEventSource();
   puts.length = 0;
   restores.length = 0;
-  kept = [];
   stored.configPath = "backups/config";
+  stored.configOffsite = "";
+  places = [place("p-unraid", "Unraid", "unraid-folder", ["config", "containers"]), place("p-b2", "B2", "b2", [])];
+  configTargets = [];
 });
 afterEach(cleanup);
 
@@ -72,45 +80,70 @@ async function renderPage() {
   });
 }
 
+function configStep(): HTMLElement {
+  return screen.getByRole("heading", { name: new RegExp(en["recovery.stepConfig"]) }).parentElement!;
+}
+
 async function restore() {
   await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: en["recovery.configRestore"] }));
+    fireEvent.click(within(configStep()).getByRole("button", { name: en["recovery.configRestore"] }));
   });
 }
 
-async function restoreFrom(path: string) {
-  await renderPage();
-  fireEvent.change(screen.getByDisplayValue("backups/config"), { target: { value: path } });
-  await restore();
+async function offsite() {
+  await act(async () => {
+    fireEvent.click(within(configStep()).getByRole("tab", { name: en["source.offsite"] }));
+  });
 }
 
 describe("Recovery's own-settings restore", () => {
-  it("restores nothing and shows the stored path again when a storage place keeps it", async () => {
-    kept = ["configPath"];
-    await restoreFrom("backups/old-config");
-    expect(puts[0]?.configPath).toBe("backups/old-config");
-    expect(restores).toEqual([]);
-    expect(screen.getByDisplayValue("backups/config")).toBeTruthy();
-    expect(screen.queryByDisplayValue("backups/old-config")).toBeNull();
-    expect(screen.getAllByText(en["recovery.placeKept"]).length).toBeGreaterThan(0);
+  it("shows the Self-Backup row's place and path, has nothing to type and restores from there", async () => {
+    await renderPage();
+    const step = configStep();
+    expect(within(step).getByText("Unraid")).toBeTruthy();
+    expect(within(step).getByText("backups/config")).toBeTruthy();
+    expect(within(step).getByText(en["recovery.configOtherHome"])).toBeTruthy();
+    expect(within(step).queryAllByRole("textbox")).toEqual([]);
+    await restore();
+    expect(puts).toEqual([]);
+    expect(restores).toEqual([["latest", undefined]]);
   });
 
-  it("stages the restore from the typed path when the save keeps it", async () => {
-    await restoreFrom("backups/old-config");
-    expect(restores).toEqual(["latest"]);
-    expect(screen.getByDisplayValue("backups/old-config")).toBeTruthy();
-    expect(screen.queryByText(en["recovery.placeKept"])).toBeNull();
-  });
-
-  it("restores from the place the Self-Backup row in step 3 moved it to", async () => {
+  it("follows the Self-Backup row when it moves to another place", async () => {
     await renderPage();
     stored.configPath = "places/nas/config";
+    places = [place("p-unraid", "Unraid", "unraid-folder", ["containers"]), place("p-nas", "NAS", "synology", ["config"])];
     await act(async () => {
       placesChanged();
     });
-    expect(screen.getByDisplayValue("places/nas/config")).toBeTruthy();
+    const step = configStep();
+    expect(within(step).getByText("NAS")).toBeTruthy();
+    expect(within(step).getByText("places/nas/config")).toBeTruthy();
+    expect(within(step).queryByText("backups/config")).toBeNull();
+  });
+
+  it("restores from the Self-Backup's copy it shows", async () => {
+    stored.configOffsite = "b2:bucket/config";
+    configTargets = [
+      { id: "t-hz", name: "Hetzner", sortOrder: 1, placeId: "", enabled: true } as OffsiteTarget,
+      { id: "t-b2", name: "B2 target", sortOrder: 0, placeId: "p-b2", enabled: true } as OffsiteTarget,
+    ];
+    await renderPage();
+    await offsite();
+    const step = configStep();
+    expect(within(step).getByText("B2")).toBeTruthy();
+    expect(within(step).getByText("b2:bucket/config")).toBeTruthy();
+    expect(within(step).getByText(en["recovery.configOtherCopy"])).toBeTruthy();
     await restore();
-    expect(puts[0]?.configPath).toBe("places/nas/config");
-    expect(restores).toEqual(["latest"]);
+    expect(restores).toEqual([["latest", "offsite:t-b2"]]);
+  });
+
+  it("says where to add a copy and restores nothing off-site while the Self-Backup has none", async () => {
+    await renderPage();
+    await offsite();
+    const step = configStep();
+    expect(within(step).getByText(en["recovery.configNoCopy"])).toBeTruthy();
+    const button = within(step).getByRole("button", { name: en["recovery.configRestore"] }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
   });
 });
