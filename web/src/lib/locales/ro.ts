@@ -2470,6 +2470,14 @@ const ro: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elemente care nu au putut fi verificate la ultima trecere: {n}. Jurnalul le numește.",
   "anomaly.settings.unmeasured": "Depozite fără valoare pentru spațiul liber: {names}",
   "anomaly.settings.openPage": "Arată anomaliile",
+  "checks.restoreOk": "Restaurare verificată {time}",
+  "checks.restoreFailed": "Verificarea restaurării a eșuat",
+  "checks.restoreNever": "Restaurarea nu a fost încă verificată",
+  "checks.probeNow": "Verifică restaurarea",
+  "checks.probeHint": "Restaurează un eșantion din cea mai nouă copie într-un dosar temporar și îl compară cu ce s-a salvat. Rulează și singur după prima copie.",
+  "checks.probeRunning": "Se verifică restaurarea…",
+  "checks.probeFiles": "one=A fost recitit {n} fișier|few=Au fost recitite {n} fișiere|other=Au fost recitite {n} de fișiere",
+  "activityLog.lineProbeRunning": "Verificarea restaurării în curs: {name} …",
 };
 
 export default ro;

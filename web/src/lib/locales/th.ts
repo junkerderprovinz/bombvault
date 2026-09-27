@@ -2470,6 +2470,14 @@ const th: Partial<Translations> = {
   "anomaly.settings.evalErrors": "รายการที่ตรวจไม่ได้ในรอบล่าสุด: {n} บันทึกระบุชื่อไว้",
   "anomaly.settings.unmeasured": "คลังข้อมูลที่ไม่มีตัวเลขพื้นที่ว่าง: {names}",
   "anomaly.settings.openPage": "แสดงความผิดปกติ",
+  "checks.restoreOk": "ตรวจการกู้คืนแล้ว {time}",
+  "checks.restoreFailed": "การตรวจการกู้คืนล้มเหลว",
+  "checks.restoreNever": "ยังไม่ได้ตรวจการกู้คืน",
+  "checks.probeNow": "ตรวจการกู้คืน",
+  "checks.probeHint": "กู้คืนตัวอย่างจากข้อมูลสำรองล่าสุดลงในโฟลเดอร์ชั่วคราวแล้วเทียบกับสิ่งที่บันทึกไว้ และทำงานเองหลังการสำรองข้อมูลครั้งแรกด้วย",
+  "checks.probeRunning": "กำลังตรวจการกู้คืน…",
+  "checks.probeFiles": "อ่านกลับ {n} ไฟล์",
+  "activityLog.lineProbeRunning": "กำลังตรวจการกู้คืน {name} …",
 };
 
 export default th;

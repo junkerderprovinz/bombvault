@@ -2478,6 +2478,14 @@ const eu: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Azken pasaldian egiaztatu ezin izan diren elementuak: {n}. Egunkariak izendatzen ditu.",
   "anomaly.settings.unmeasured": "Leku libreko daturik gabeko biltegiak: {names}",
   "anomaly.settings.openPage": "Erakutsi anomaliak",
+  "checks.restoreOk": "Berrezarpena egiaztatuta, {time}",
+  "checks.restoreFailed": "Berrezarpen-egiaztapenak huts egin du",
+  "checks.restoreNever": "Berrezarpena oraindik ez da egiaztatu",
+  "checks.probeNow": "Egiaztatu berrezarpena",
+  "checks.probeHint": "Babeskopia berrienaren lagin bat karpeta iragankor batean berrezartzen du eta gordetakoarekin alderatzen du. Lehen babeskopiaren ondoren berez ere exekutatzen da.",
+  "checks.probeRunning": "Berrezarpena egiaztatzen…",
+  "checks.probeFiles": "one={n} fitxategi irakurri da berriro|other={n} fitxategi irakurri dira berriro",
+  "activityLog.lineProbeRunning": "Berrezarpen-egiaztapena exekutatzen: {name} …",
 };
 
 export default eu;

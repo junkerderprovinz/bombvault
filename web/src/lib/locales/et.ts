@@ -2478,6 +2478,14 @@ const et: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Üksusi, mida viimasel läbimisel ei saanud kontrollida: {n}. Logi nimetab need.",
   "anomaly.settings.unmeasured": "Hoidlad ilma vaba ruumi näitajata: {names}",
   "anomaly.settings.openPage": "Näita kõrvalekaldeid",
+  "checks.restoreOk": "Taastamist kontrolliti {time}",
+  "checks.restoreFailed": "Taastekontroll ebaõnnestus",
+  "checks.restoreNever": "Taastamist pole veel kontrollitud",
+  "checks.probeNow": "Kontrolli taastamist",
+  "checks.probeHint": "Taastab uusimast varundusest valimi ajutisse kausta ja võrdleb seda salvestatuga. Käivitub ka ise pärast esimest varundust.",
+  "checks.probeRunning": "Taastamist kontrollitakse…",
+  "checks.probeFiles": "one={n} fail loeti tagasi|other={n} faili loeti tagasi",
+  "activityLog.lineProbeRunning": "Taastekontroll töötab: {name} …",
 };
 
 export default et;

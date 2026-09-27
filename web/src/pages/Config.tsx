@@ -24,6 +24,8 @@ import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconTrash } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemChecksLine } from "../components/ItemChecksLine";
+import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
 import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
 import { findingSnapshotId } from "../lib/anomalies";
@@ -271,6 +273,7 @@ export function Config() {
   const { t } = useT();
   const [settings, setSettings] = useState<Settings | null>(null);
   const anomaly = useAnomalyItems().find("config", "config");
+  const itemChecks = useItemChecks();
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
   const { flagged } = useOpenAnomalies();
   const restoreRequest = useRestoreRequest();
@@ -366,6 +369,7 @@ export function Config() {
             }
             t={t}
           />
+          <ItemChecksLine checks={itemChecks.find("config", "config")} hasBackup={snapshots.length > 0} onChanged={itemChecks.reload} />
 
           {/* A restore has its own control with its own warning. */}
           {progress && progress.active && progress.phase !== "restore" && (

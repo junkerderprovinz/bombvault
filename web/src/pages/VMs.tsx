@@ -4,7 +4,7 @@ import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FilterPopover } from "../components/FilterPopover";
 import { IconTipButton } from "../components/IconTipButton";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
-import type { AnomalyItem, VM, Snapshot, VmOrder } from "../lib/api";
+import type { AnomalyItem, ItemChecks, VM, Snapshot, VmOrder } from "../lib/api";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT, stateLabel } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
@@ -37,6 +37,8 @@ import { Selector } from "../components/Selector";
 import { useToast } from "../lib/toast";
 import { RepoPicker } from "../components/RepoPicker";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemChecksLine } from "../components/ItemChecksLine";
+import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
 import { findingSnapshotId } from "../lib/anomalies";
 import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
@@ -651,6 +653,8 @@ export function VMRow({
   anomaly,
   anomalyEnabled = false,
   restoreRequest,
+  checks,
+  onChecksChanged,
 }: {
   vm: VM;
   t: T;
@@ -666,6 +670,8 @@ export function VMRow({
   /** A finding's restore link for this VM: the card opens its backups and
    *  comes into view. */
   restoreRequest?: RestoreRequest;
+  checks?: ItemChecks;
+  onChecksChanged?: () => void;
 }) {
   const installed = vm.state !== "not-installed";
   const progressMap = useProgress();
@@ -821,6 +827,8 @@ export function VMRow({
           />
         </div>
       </div>
+
+      <ItemChecksLine checks={checks} hasBackup={vm.lastBackup != null} onChanged={onChecksChanged} />
 
       {/* ContainerRow's disclosure block with a single section. */}
       <div className="flex flex-col gap-2">
@@ -1233,6 +1241,7 @@ export function VMs() {
   const { t } = useT();
   const anomalies = useAnomalyItems();
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const itemChecks = useItemChecks();
   const restoreRequest = useRestoreRequest();
   // Read directly rather than relying on <Advanced>: the order panel's
   // hueIndex={nextHue()} is evaluated when the element is built, even if
@@ -1607,6 +1616,8 @@ export function VMs() {
               anomaly={anomalies.find("vm", v.libvirtName)}
               anomalyEnabled={anomalyEnabled}
               restoreRequest={restoreRequest.item === v.libvirtName ? restoreRequest : undefined}
+              checks={itemChecks.find("vm", v.libvirtName)}
+              onChecksChanged={itemChecks.reload}
             />
           ))}
         </div>
@@ -1628,6 +1639,8 @@ export function VMs() {
               anomaly={anomalies.find("vm", v.libvirtName)}
               anomalyEnabled={anomalyEnabled}
               restoreRequest={restoreRequest.item === v.libvirtName ? restoreRequest : undefined}
+              checks={itemChecks.find("vm", v.libvirtName)}
+              onChecksChanged={itemChecks.reload}
             />
           ))}
         </div>

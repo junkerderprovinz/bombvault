@@ -156,7 +156,8 @@ function formatBytesShort(n: number): string {
 type ParsedKey =
   | { scope: "item"; domain: "container" | "vm" | "files" | "zfs" | "flash" | "config"; name: string }
   | { scope: "batch"; domain: string }
-  | { scope: "offsite" | "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export"; domain: string };
+  | { scope: "offsite" | "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export"; domain: string }
+  | { scope: "check"; domain: string; name: string };
 
 /**
  * parseProgressKey decodes a live SSE progress key; progress.ts documents the
@@ -179,6 +180,12 @@ function parseProgressKey(key: string): ParsedKey | null {
   if (key.startsWith("drdrill:")) return { scope: "drdrill", domain: key.slice("drdrill:".length) };
   if (key.startsWith("tamper:")) return { scope: "tamper", domain: key.slice("tamper:".length) };
   if (key.startsWith("export:")) return { scope: "export", domain: key.slice("export:".length) };
+  // "probe:<domain>:<name>", the restore probe of one item.
+  if (key.startsWith("probe:")) {
+    const rest = key.slice("probe:".length);
+    const at = rest.indexOf(":");
+    if (at > 0) return { scope: "check", domain: rest.slice(0, at), name: rest.slice(at + 1) };
+  }
   return null;
 }
 
@@ -339,6 +346,16 @@ function buildLiveLines(
       if (!keep(offsiteSig)) continue;
       signatures.add(offsiteSig);
       lines.push({ id: `live:${key}`, runId: stillRunning.get(offsiteSig), atMs: state.lastSeen, status: "offsite", text, domain, kind: "offsite", live: true });
+      continue;
+    }
+
+    if (parsed.scope === "check") {
+      // A probe records no run, so staleness is all there is to end it.
+      if (!keep(null)) continue;
+      const domain = normalizeDomain(parsed.domain);
+      const name = parsed.domain === "flash" || parsed.domain === "config" ? domainLabel(resolveName, domain) : parsed.name;
+      const text = resolveName("activityLog.lineProbeRunning", { name });
+      lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind: "drill", live: true });
       continue;
     }
 

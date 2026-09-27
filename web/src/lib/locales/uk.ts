@@ -2462,6 +2462,14 @@ const uk: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Об'єкти, які не вдалося перевірити в останньому проході: {n}. Журнал їх називає.",
   "anomaly.settings.unmeasured": "Репозиторії без даних про вільне місце: {names}",
   "anomaly.settings.openPage": "Показати аномалії",
+  "checks.restoreOk": "Відновлення перевірено {time}",
+  "checks.restoreFailed": "Перевірку відновлення не пройдено",
+  "checks.restoreNever": "Відновлення ще не перевірялося",
+  "checks.probeNow": "Перевірити відновлення",
+  "checks.probeHint": "Відновлює вибірку з найновішої резервної копії в тимчасову теку й порівнює її зі збереженим. Після першої копії запускається і сама.",
+  "checks.probeRunning": "Перевірка відновлення…",
+  "checks.probeFiles": "one=Прочитано {n} файл|few=Прочитано {n} файли|many=Прочитано {n} файлів|other=Прочитано {n} файлу",
+  "activityLog.lineProbeRunning": "Триває перевірка відновлення: {name} …",
 };
 
 export default uk;

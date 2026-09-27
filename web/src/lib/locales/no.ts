@@ -2467,6 +2467,14 @@ const no: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementer som ikke kunne sjekkes i siste runde: {n}. Loggen navngir dem.",
   "anomaly.settings.unmeasured": "Repositorier uten tall for ledig plass: {names}",
   "anomaly.settings.openPage": "Vis avvik",
+  "checks.restoreOk": "Gjenoppretting sjekket {time}",
+  "checks.restoreFailed": "Gjenopprettingssjekk mislyktes",
+  "checks.restoreNever": "Gjenoppretting ikke sjekket ennå",
+  "checks.probeNow": "Sjekk gjenoppretting",
+  "checks.probeHint": "Gjenoppretter et utvalg av den nyeste sikkerhetskopien til en midlertidig mappe og sammenligner det med det som ble lagret. Kjører også av seg selv etter den første sikkerhetskopien.",
+  "checks.probeRunning": "Sjekker gjenopprettingen…",
+  "checks.probeFiles": "one={n} fil lest tilbake|other={n} filer lest tilbake",
+  "activityLog.lineProbeRunning": "Gjenopprettingssjekk kjører: {name} …",
 };
 
 export default no;

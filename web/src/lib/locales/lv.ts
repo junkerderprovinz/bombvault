@@ -2478,6 +2478,14 @@ const lv: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Vienumi, kurus pēdējā pārskatā neizdevās pārbaudīt: {n}. Žurnāls tos nosauc.",
   "anomaly.settings.unmeasured": "Krātuves bez brīvās vietas rādītāja: {names}",
   "anomaly.settings.openPage": "Rādīt anomālijas",
+  "checks.restoreOk": "Atjaunošana pārbaudīta {time}",
+  "checks.restoreFailed": "Atjaunošanas pārbaude neizdevās",
+  "checks.restoreNever": "Atjaunošana vēl nav pārbaudīta",
+  "checks.probeNow": "Pārbaudīt atjaunošanu",
+  "checks.probeHint": "Atjauno jaunākās rezerves kopijas paraugu pagaidu mapē un salīdzina to ar saglabāto. Pēc pirmās rezerves kopijas tiek palaista arī pati.",
+  "checks.probeRunning": "Pārbauda atjaunošanu…",
+  "checks.probeFiles": "zero=Nolasīti {n} faili|one=Nolasīts {n} fails|other=Nolasīti {n} faili",
+  "activityLog.lineProbeRunning": "Atjaunošanas pārbaude notiek: {name} …",
 };
 
 export default lv;

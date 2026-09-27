@@ -2478,6 +2478,14 @@ const hr: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Stavke koje nije bilo moguće provjeriti u zadnjem prolazu: {n}. Zapisnik ih imenuje.",
   "anomaly.settings.unmeasured": "Repozitoriji bez podatka o slobodnom prostoru: {names}",
   "anomaly.settings.openPage": "Prikaži anomalije",
+  "checks.restoreOk": "Vraćanje provjereno {time}",
+  "checks.restoreFailed": "Provjera vraćanja nije uspjela",
+  "checks.restoreNever": "Vraćanje još nije provjereno",
+  "checks.probeNow": "Provjeri vraćanje",
+  "checks.probeHint": "Vraća uzorak najnovije sigurnosne kopije u privremenu mapu i uspoređuje ga sa spremljenim. Pokreće se i sam nakon prve sigurnosne kopije.",
+  "checks.probeRunning": "Provjera vraćanja…",
+  "checks.probeFiles": "one=Pročitana {n} datoteka|few=Pročitane {n} datoteke|other=Pročitano {n} datoteka",
+  "activityLog.lineProbeRunning": "Provjera vraćanja u tijeku: {name} …",
 };
 
 export default hr;

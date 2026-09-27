@@ -2478,6 +2478,14 @@ const lt: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementai, kurių nepavyko patikrinti per paskutinį ėjimą: {n}. Žurnalas juos įvardija.",
   "anomaly.settings.unmeasured": "Saugyklos be laisvos vietos duomenų: {names}",
   "anomaly.settings.openPage": "Rodyti anomalijas",
+  "checks.restoreOk": "Atkūrimas patikrintas {time}",
+  "checks.restoreFailed": "Atkūrimo patikra nepavyko",
+  "checks.restoreNever": "Atkūrimas dar nepatikrintas",
+  "checks.probeNow": "Tikrinti atkūrimą",
+  "checks.probeHint": "Atkuria naujausios kopijos imtį į laikiną aplanką ir palygina ją su išsaugotais duomenimis. Po pirmosios kopijos paleidžiama ir savaime.",
+  "checks.probeRunning": "Tikrinamas atkūrimas…",
+  "checks.probeFiles": "one=Perskaitytas {n} failas|few=Perskaityti {n} failai|many=Perskaityta {n} failo|other=Perskaityta {n} failų",
+  "activityLog.lineProbeRunning": "Vykdoma atkūrimo patikra: {name} …",
 };
 
 export default lt;

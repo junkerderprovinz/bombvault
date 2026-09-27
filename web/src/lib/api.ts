@@ -1958,6 +1958,40 @@ export function runDrill(
   );
 }
 
+/** One restore probe of one item: a sample of its backup restored into a
+ *  sandbox and compared with what the backup recorded. */
+export interface ItemProbe {
+  targetId: string;
+  domain: string;
+  at: number;
+  ok: boolean;
+  detail: string;
+  snapshotId: string;
+  files: number;
+  bytes: number;
+  /** "first" after the item's first backup, "manual" when somebody asked. */
+  trigger: "first" | "manual";
+}
+
+/** What the item cards show about the checks of one item. `domain` and `name`
+ *  are the ones the anomaly list uses. */
+export interface ItemChecks {
+  targetId: string;
+  domain: string;
+  name: string;
+  probe?: ItemProbe;
+}
+
+/** GET /api/checks/items: the newest check results of every item. */
+export function getItemChecks(): Promise<{ ok: boolean; items?: ItemChecks[]; error?: string }> {
+  return fetchJSON("/api/checks/items");
+}
+
+/** POST /api/checks/probe/{id}: a restore probe of the item's newest backup. */
+export function probeItem(targetId: string): Promise<{ ok: boolean; probe?: ItemProbe; error?: string }> {
+  return fetchJSON(`/api/checks/probe/${encodeURIComponent(targetId)}`, { method: "POST" });
+}
+
 /**
  * GET /api/verify?domain=&source=&limit= — the recorded restore-verification
  * drills for a domain + source (newest first), plus the latest one for the badge.

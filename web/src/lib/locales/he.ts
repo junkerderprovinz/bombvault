@@ -2467,6 +2467,14 @@ const he: Partial<Translations> = {
   "anomaly.settings.evalErrors": "פריטים שלא ניתן היה לבדוק בסבב האחרון: {n}. היומן מפרט אותם.",
   "anomaly.settings.unmeasured": "מאגרים ללא נתון שטח פנוי: {names}",
   "anomaly.settings.openPage": "להציג חריגות",
+  "checks.restoreOk": "השחזור נבדק {time}",
+  "checks.restoreFailed": "בדיקת השחזור נכשלה",
+  "checks.restoreNever": "השחזור עוד לא נבדק",
+  "checks.probeNow": "בדוק שחזור",
+  "checks.probeHint": "משחזר דגימה מהגיבוי החדש ביותר לתיקייה זמנית ומשווה אותה למה שנשמר. רץ גם מעצמו אחרי הגיבוי הראשון.",
+  "checks.probeRunning": "בודק את השחזור…",
+  "checks.probeFiles": "one=נקרא בחזרה קובץ {n}|two=נקראו בחזרה {n} קבצים|other=נקראו בחזרה {n} קבצים",
+  "activityLog.lineProbeRunning": "בדיקת שחזור פועלת: {name} …",
 };
 
 export default he;

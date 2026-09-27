@@ -2478,6 +2478,14 @@ const ca: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elements que no s'han pogut comprovar en l'última passada: {n}. El registre els anomena.",
   "anomaly.settings.unmeasured": "Repositoris sense xifra d'espai lliure: {names}",
   "anomaly.settings.openPage": "Mostra les anomalies",
+  "checks.restoreOk": "Restauració comprovada {time}",
+  "checks.restoreFailed": "La comprovació de restauració ha fallat",
+  "checks.restoreNever": "Restauració encara no comprovada",
+  "checks.probeNow": "Comprova la restauració",
+  "checks.probeHint": "Restaura una mostra de la còpia més recent en una carpeta temporal i la compara amb el que es va desar. També s'executa sola després de la primera còpia.",
+  "checks.probeRunning": "S'està comprovant la restauració…",
+  "checks.probeFiles": "one=S'ha tornat a llegir {n} fitxer|other=S'han tornat a llegir {n} fitxers",
+  "activityLog.lineProbeRunning": "S'està executant la comprovació de restauració: {name} …",
 };
 
 export default ca;

@@ -2467,6 +2467,14 @@ const fr: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Éléments qui n'ont pas pu être contrôlés lors du dernier passage : {n}. Le journal les nomme.",
   "anomaly.settings.unmeasured": "Dépôts sans valeur d'espace libre : {names}",
   "anomaly.settings.openPage": "Voir les anomalies",
+  "checks.restoreOk": "Restauration vérifiée {time}",
+  "checks.restoreFailed": "Échec du contrôle de restauration",
+  "checks.restoreNever": "Restauration pas encore vérifiée",
+  "checks.probeNow": "Vérifier la restauration",
+  "checks.probeHint": "Restaure un échantillon de la sauvegarde la plus récente dans un dossier temporaire et le compare à ce qui a été enregistré. S'exécute aussi tout seul après la première sauvegarde.",
+  "checks.probeRunning": "Vérification de la restauration…",
+  "checks.probeFiles": "one={n} fichier relu|other={n} fichiers relus",
+  "activityLog.lineProbeRunning": "Contrôle de restauration en cours : {name} …",
 };
 
 export default fr;

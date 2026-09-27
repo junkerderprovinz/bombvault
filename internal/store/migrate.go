@@ -2119,6 +2119,27 @@ CREATE TABLE IF NOT EXISTS mcp_oauth_tokens (
 CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_grant ON mcp_oauth_tokens(grant_id, kind);
 CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expires_at);`,
 	},
+	{
+		// One restore probe of one item: the check after its first backup, or
+		// one somebody asked for. The time this migration ran is when first
+		// backups start counting, so items backed up before it are not all
+		// probed at once after an update.
+		version: verifyMigrationBase,
+		name:    "item_probes",
+		sql: `CREATE TABLE IF NOT EXISTS item_probes (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  target_id   TEXT    NOT NULL,
+  domain      TEXT    NOT NULL,
+  at          INTEGER NOT NULL,
+  ok          INTEGER NOT NULL,
+  detail      TEXT    NOT NULL DEFAULT '',
+  snapshot_id TEXT    NOT NULL DEFAULT '',
+  files       INTEGER NOT NULL DEFAULT 0,
+  bytes       INTEGER NOT NULL DEFAULT 0,
+  trigger     TEXT    NOT NULL DEFAULT 'first'
+);
+CREATE INDEX IF NOT EXISTS idx_item_probes_target ON item_probes(target_id, at);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2154,6 +2175,10 @@ const mcpActivityMigration = 148
 
 // mcpOAuthMigration numbers the OAuth sign-in of the MCP endpoint.
 const mcpOAuthMigration = mcpActivityMigration + 4
+
+// verifyMigrationBase numbers the restore probes and start tests from one
+// place, for the same reason dbDumpMigrationBase does.
+const verifyMigrationBase = 180
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

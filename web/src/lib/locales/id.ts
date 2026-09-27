@@ -2478,6 +2478,14 @@ const id: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Item yang tidak dapat diperiksa pada putaran terakhir: {n}. Log menyebutkan namanya.",
   "anomaly.settings.unmeasured": "Repositori tanpa angka ruang kosong: {names}",
   "anomaly.settings.openPage": "Tampilkan anomali",
+  "checks.restoreOk": "Pemulihan diperiksa {time}",
+  "checks.restoreFailed": "Uji pemulihan gagal",
+  "checks.restoreNever": "Pemulihan belum diperiksa",
+  "checks.probeNow": "Periksa pemulihan",
+  "checks.probeHint": "Memulihkan sampel dari cadangan terbaru ke folder sementara dan membandingkannya dengan yang disimpan. Juga berjalan sendiri setelah cadangan pertama.",
+  "checks.probeRunning": "Memeriksa pemulihan…",
+  "checks.probeFiles": "{n} berkas dibaca ulang",
+  "activityLog.lineProbeRunning": "Uji pemulihan sedang berjalan: {name} …",
 };
 
 export default id;

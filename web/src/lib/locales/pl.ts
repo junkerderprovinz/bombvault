@@ -2462,6 +2462,14 @@ const pl: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementy, których nie udało się sprawdzić w ostatnim przebiegu: {n}. Dziennik je wymienia.",
   "anomaly.settings.unmeasured": "Repozytoria bez danych o wolnym miejscu: {names}",
   "anomaly.settings.openPage": "Pokaż anomalie",
+  "checks.restoreOk": "Przywracanie sprawdzone {time}",
+  "checks.restoreFailed": "Test przywracania nie powiódł się",
+  "checks.restoreNever": "Przywracanie jeszcze nie sprawdzone",
+  "checks.probeNow": "Sprawdź przywracanie",
+  "checks.probeHint": "Przywraca próbkę najnowszej kopii do folderu tymczasowego i porównuje ją z zapisanymi danymi. Uruchamia się też sam po pierwszej kopii.",
+  "checks.probeRunning": "Sprawdzanie przywracania…",
+  "checks.probeFiles": "one=Odczytano {n} plik|few=Odczytano {n} pliki|many=Odczytano {n} plików|other=Odczytano {n} pliku",
+  "activityLog.lineProbeRunning": "Trwa test przywracania: {name} …",
 };
 
 export default pl;

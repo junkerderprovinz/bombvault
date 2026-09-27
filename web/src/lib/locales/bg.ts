@@ -2478,6 +2478,14 @@ const bg: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Елементи, които не можаха да бъдат проверени при последния преглед: {n}. Дневникът ги посочва.",
   "anomaly.settings.unmeasured": "Хранилища без данни за свободното място: {names}",
   "anomaly.settings.openPage": "Покажи аномалиите",
+  "checks.restoreOk": "Възстановяването е проверено {time}",
+  "checks.restoreFailed": "Проверката за възстановяване е неуспешна",
+  "checks.restoreNever": "Възстановяването още не е проверено",
+  "checks.probeNow": "Провери възстановяването",
+  "checks.probeHint": "Възстановява извадка от най-новото архивиране във временна папка и я сравнява със записаното. Изпълнява се и само след първото архивиране.",
+  "checks.probeRunning": "Възстановяването се проверява…",
+  "checks.probeFiles": "one=Прочетен е {n} файл|other=Прочетени са {n} файла",
+  "activityLog.lineProbeRunning": "Проверка на възстановяването: {name} …",
 };
 
 export default bg;

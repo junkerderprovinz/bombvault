@@ -2459,6 +2459,14 @@ const vi: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Mục không kiểm tra được trong lượt gần nhất: {n}. Nhật ký nêu tên chúng.",
   "anomaly.settings.unmeasured": "Kho lưu trữ không có số liệu dung lượng trống: {names}",
   "anomaly.settings.openPage": "Xem bất thường",
+  "checks.restoreOk": "Đã kiểm tra khôi phục {time}",
+  "checks.restoreFailed": "Kiểm tra khôi phục thất bại",
+  "checks.restoreNever": "Chưa kiểm tra khôi phục",
+  "checks.probeNow": "Kiểm tra khôi phục",
+  "checks.probeHint": "Khôi phục một mẫu của bản sao lưu mới nhất vào thư mục tạm và so sánh với dữ liệu đã lưu. Cũng tự chạy sau lần sao lưu đầu tiên.",
+  "checks.probeRunning": "Đang kiểm tra khôi phục…",
+  "checks.probeFiles": "Đã đọc lại {n} tệp",
+  "activityLog.lineProbeRunning": "Đang kiểm tra khôi phục: {name} …",
 };
 
 export default vi;

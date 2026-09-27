@@ -2464,6 +2464,14 @@ const nl: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Items die bij de laatste ronde niet gecontroleerd konden worden: {n}. Het logboek noemt ze.",
   "anomaly.settings.unmeasured": "Repositories zonder cijfer voor vrije ruimte: {names}",
   "anomaly.settings.openPage": "Anomalieën tonen",
+  "checks.restoreOk": "Herstel gecontroleerd {time}",
+  "checks.restoreFailed": "Herstelcontrole mislukt",
+  "checks.restoreNever": "Herstel nog niet gecontroleerd",
+  "checks.probeNow": "Herstel controleren",
+  "checks.probeHint": "Zet een steekproef van de nieuwste back-up terug in een tijdelijke map en vergelijkt die met wat is opgeslagen. Loopt ook vanzelf na de eerste back-up.",
+  "checks.probeRunning": "Herstel wordt gecontroleerd…",
+  "checks.probeFiles": "one={n} bestand teruggelezen|other={n} bestanden teruggelezen",
+  "activityLog.lineProbeRunning": "Herstelcontrole loopt: {name} …",
 };
 
 export default nl;

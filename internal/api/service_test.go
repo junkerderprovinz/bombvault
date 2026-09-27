@@ -5955,6 +5955,12 @@ func (f *fakeResticEngine) RestoreInclude(ctx context.Context, repo, snapshotID,
 	return nil
 }
 
+func (f *fakeResticEngine) RestoreVerify(_ context.Context, repo, snapshotID string, files []string, target string, _ restic.Mode) error {
+	f.callLog = append(f.callLog, "RestoreVerify")
+	f.restored = append(f.restored, repo+":"+snapshotID+":"+strings.Join(files, ",")+"->"+target)
+	return f.restoreErr
+}
+
 func (f *fakeResticEngine) RestoreSubtreeTo(_ context.Context, repo, snapshotID, subtreePath, target string, _ restic.Mode) error {
 	f.callLog = append(f.callLog, "RestoreSubtreeTo")
 	f.blockIfArmed()

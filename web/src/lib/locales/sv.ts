@@ -2467,6 +2467,14 @@ const sv: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Objekt som inte kunde kontrolleras i senaste omgången: {n}. Loggen namnger dem.",
   "anomaly.settings.unmeasured": "Repositorier utan siffra för ledigt utrymme: {names}",
   "anomaly.settings.openPage": "Visa avvikelser",
+  "checks.restoreOk": "Återställning kontrollerad {time}",
+  "checks.restoreFailed": "Återställningskontrollen misslyckades",
+  "checks.restoreNever": "Återställning inte kontrollerad än",
+  "checks.probeNow": "Kontrollera återställning",
+  "checks.probeHint": "Återställer ett urval ur den senaste säkerhetskopian till en tillfällig mapp och jämför det med det som sparades. Körs också av sig själv efter den första säkerhetskopian.",
+  "checks.probeRunning": "Kontrollerar återställningen…",
+  "checks.probeFiles": "one={n} fil läst tillbaka|other={n} filer lästa tillbaka",
+  "activityLog.lineProbeRunning": "Återställningskontroll pågår: {name} …",
 };
 
 export default sv;

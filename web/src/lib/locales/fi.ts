@@ -2467,6 +2467,14 @@ const fi: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Kohteet, joita ei voitu tarkistaa viime kierroksella: {n}. Loki nimeää ne.",
   "anomaly.settings.unmeasured": "Säilöt ilman tietoa vapaasta tilasta: {names}",
   "anomaly.settings.openPage": "Näytä poikkeamat",
+  "checks.restoreOk": "Palautus tarkistettu {time}",
+  "checks.restoreFailed": "Palautustarkistus epäonnistui",
+  "checks.restoreNever": "Palautusta ei ole vielä tarkistettu",
+  "checks.probeNow": "Tarkista palautus",
+  "checks.probeHint": "Palauttaa otoksen uusimmasta varmuuskopiosta väliaikaiseen kansioon ja vertaa sitä tallennettuun. Käynnistyy myös itsestään ensimmäisen varmuuskopion jälkeen.",
+  "checks.probeRunning": "Palautusta tarkistetaan…",
+  "checks.probeFiles": "one={n} tiedosto luettu takaisin|other={n} tiedostoa luettu takaisin",
+  "activityLog.lineProbeRunning": "Palautustarkistus käynnissä: {name} …",
 };
 
 export default fi;

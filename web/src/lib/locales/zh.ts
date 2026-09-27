@@ -2459,6 +2459,14 @@ const zh: Partial<Translations> = {
   "anomaly.settings.evalErrors": "上一轮无法检查的项目：{n}。日志里有名称。",
   "anomaly.settings.unmeasured": "没有可用空间数据的存储库：{names}",
   "anomaly.settings.openPage": "查看异常",
+  "checks.restoreOk": "已检查恢复（{time}）",
+  "checks.restoreFailed": "恢复检查失败",
+  "checks.restoreNever": "尚未检查恢复",
+  "checks.probeNow": "检查恢复",
+  "checks.probeHint": "将最新备份的一部分恢复到临时文件夹，并与保存的内容比对。首次备份后也会自动运行。",
+  "checks.probeRunning": "正在检查恢复…",
+  "checks.probeFiles": "已读回 {n} 个文件",
+  "activityLog.lineProbeRunning": "恢复检查进行中：{name} …",
 };
 
 export default zh;

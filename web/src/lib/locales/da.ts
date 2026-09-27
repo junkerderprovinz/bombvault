@@ -2467,6 +2467,14 @@ const da: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementer der ikke kunne tjekkes i sidste gennemløb: {n}. Loggen nævner dem.",
   "anomaly.settings.unmeasured": "Repositories uden tal for ledig plads: {names}",
   "anomaly.settings.openPage": "Vis afvigelser",
+  "checks.restoreOk": "Gendannelse tjekket {time}",
+  "checks.restoreFailed": "Gendannelsestjek mislykkedes",
+  "checks.restoreNever": "Gendannelse endnu ikke tjekket",
+  "checks.probeNow": "Tjek gendannelse",
+  "checks.probeHint": "Gendanner et udsnit af den nyeste sikkerhedskopi til en midlertidig mappe og sammenligner det med det gemte. Kører også af sig selv efter den første sikkerhedskopi.",
+  "checks.probeRunning": "Tjekker gendannelsen…",
+  "checks.probeFiles": "one={n} fil læst tilbage|other={n} filer læst tilbage",
+  "activityLog.lineProbeRunning": "Gendannelsestjek kører: {name} …",
 };
 
 export default da;

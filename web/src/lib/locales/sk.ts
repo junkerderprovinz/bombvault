@@ -2478,6 +2478,14 @@ const sk: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Položky, ktoré sa v poslednom prechode nedali skontrolovať: {n}. Denník ich menuje.",
   "anomaly.settings.unmeasured": "Repozitáre bez údaja o voľnom mieste: {names}",
   "anomaly.settings.openPage": "Zobraziť anomálie",
+  "checks.restoreOk": "Obnovenie overené {time}",
+  "checks.restoreFailed": "Kontrola obnovenia zlyhala",
+  "checks.restoreNever": "Obnovenie zatiaľ neoverené",
+  "checks.probeNow": "Overiť obnovenie",
+  "checks.probeHint": "Obnoví vzorku najnovšej zálohy do dočasného priečinka a porovná ju s uloženými dátami. Spúšťa sa aj sama po prvej zálohe.",
+  "checks.probeRunning": "Overuje sa obnovenie…",
+  "checks.probeFiles": "one=Spätne načítaný {n} súbor|few=Spätne načítané {n} súbory|many=Spätne načítaného {n} súboru|other=Spätne načítaných {n} súborov",
+  "activityLog.lineProbeRunning": "Kontrola obnovenia prebieha: {name} …",
 };
 
 export default sk;

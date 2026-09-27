@@ -2467,6 +2467,14 @@ const el: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Στοιχεία που δεν ελέγχθηκαν στο τελευταίο πέρασμα: {n}. Το αρχείο καταγραφής τα ονομάζει.",
   "anomaly.settings.unmeasured": "Αποθετήρια χωρίς στοιχείο ελεύθερου χώρου: {names}",
   "anomaly.settings.openPage": "Εμφάνιση ανωμαλιών",
+  "checks.restoreOk": "Η επαναφορά ελέγχθηκε {time}",
+  "checks.restoreFailed": "Ο έλεγχος επαναφοράς απέτυχε",
+  "checks.restoreNever": "Η επαναφορά δεν έχει ελεγχθεί ακόμα",
+  "checks.probeNow": "Έλεγχος επαναφοράς",
+  "checks.probeHint": "Επαναφέρει ένα δείγμα του νεότερου αντιγράφου σε προσωρινό φάκελο και το συγκρίνει με ό,τι αποθηκεύτηκε. Εκτελείται επίσης μόνος του μετά το πρώτο αντίγραφο.",
+  "checks.probeRunning": "Έλεγχος επαναφοράς…",
+  "checks.probeFiles": "one=Διαβάστηκε ξανά {n} αρχείο|other=Διαβάστηκαν ξανά {n} αρχεία",
+  "activityLog.lineProbeRunning": "Έλεγχος επαναφοράς σε εξέλιξη: {name} …",
 };
 
 export default el;

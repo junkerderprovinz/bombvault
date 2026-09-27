@@ -116,6 +116,9 @@ type ResticEngine interface {
 	// exclude patterns match. A ZFS member's tree root is the dataset root, so
 	// its files land directly in target.
 	RestoreAll(ctx context.Context, repo, snapshotID, target string, mode restic.Mode, excludes ...string) error
+	// RestoreVerify restores the given files of a snapshot into target and
+	// reads each one back against its content hashes. The restore probe uses it.
+	RestoreVerify(ctx context.Context, repo, snapshotID string, files []string, target string, mode restic.Mode) error
 	// DumpRaw streams the synthetic file at path, from the given snapshot, into
 	// w — the restore-side counterpart of BackupStdin, feeding a `zfs receive`
 	// over SSH (see backup.ZvolRestic's doc comment).
@@ -496,6 +499,14 @@ type Service struct {
 	// constructed.
 	detectMu     sync.Mutex
 	detectFlight *encryptionDetectFlight
+
+	// probeQueue holds the items waiting for the restore probe after their
+	// first backup, and probeWorking says whether its worker is running. Both
+	// are guarded by probeMu.
+	probeMu      sync.Mutex
+	probeQueue   []string
+	probeWorking bool
+	firstProbes  atomic.Bool
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock
@@ -5576,6 +5587,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	if err != nil {
 		return backup.Summary{}, err
 	}
+	s.queueFirstProbe(tg.ID)
 
 	// Mirror the definition (encrypted) onto the backup storage so a freshly
 	// installed BombVault can rebuild its state via Discover after losing
@@ -12011,6 +12023,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	if err != nil {
 		return backup.Summary{}, err
 	}
+	s.queueFirstProbe(tg.ID)
 	// A successful live backup commits its overlay back into the base and pivots
 	// the VM onto it, but leaves the orphaned overlay file behind — delete it so
 	// the next snapshot doesn't fail "already exists". No-op after graceful.
@@ -12996,6 +13009,7 @@ func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr err
 	if err != nil {
 		return backup.Summary{}, err
 	}
+	s.queueFirstProbe(store.FlashTargetID)
 	s.applyRetention(ctx, repo, settings, mode, tagIdentity("flash"), "flash", anomalyScope{Kind: anomalyScopeItem, ID: store.FlashTargetID})
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "flash", settings, mode, repo)
@@ -13305,6 +13319,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 	if err != nil {
 		return backup.Summary{}, err
 	}
+	s.queueFirstProbe(set.ID)
 	s.applyRetention(ctx, repo, settings, mode, tagIdentity("fileset:"+set.Name), "files", anomalyScope{Kind: anomalyScopeItem, ID: set.ID})
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "files", settings, mode, repo)
@@ -14499,6 +14514,7 @@ func (s *Service) BackupConfig(ctx context.Context) (_ backup.Summary, retErr er
 	if err != nil {
 		return backup.Summary{}, err
 	}
+	s.queueFirstProbe(store.ConfigTargetID)
 	s.applyRetention(ctx, repo, settings, mode, tagIdentity("config"), "config", anomalyScope{Kind: anomalyScopeItem, ID: store.ConfigTargetID})
 	s.replicateOffsite(ctx, "config", settings, mode, repo)
 	s.collectStatsAfterItem(ctx, "config")
@@ -15793,37 +15809,11 @@ func (s *Service) newestBackedUpVM() (string, error) {
 // removed. Reuses the SAME RestoreInclude machinery + paths.Resolve containment as
 // a real restore-to-folder.
 func (s *Service) sandboxRestoreVerify(ctx context.Context, domain string, settings store.Settings, repo, snapID string, mode restic.Mode) error {
-	sub := path.Join(settings.RestoreFolder, fmt.Sprintf("bombvault-drill-%s-%d", domain, time.Now().UnixNano()))
-	sandbox, err := paths.Resolve(s.cfg.HostMountRoot, sub)
+	sandbox, cleanup, err := s.newDrillSandbox(settings, "bombvault-drill-"+domain)
 	if err != nil {
-		return errors.New("invalid restore folder: must be a relative subpath under the host mount")
+		return err
 	}
-	// Create the parent (restore folder) then the sandbox LEAF with os.Mkdir, which
-	// FAILS if it already exists — a positive assertion that this is a fresh dir of
-	// ours before it becomes a marker-guarded RemoveAll target (MkdirAll would
-	// silently adopt a pre-existing directory).
-	if err := paths.EnsureDir(filepath.Dir(sandbox)); err != nil {
-		return fmt.Errorf("create drill sandbox parent: %w", err)
-	}
-	if err := os.Mkdir(sandbox, 0o700); err != nil { //nolint:gosec // G703: sandbox is resolved strictly under the host mount root by paths.Resolve
-		return fmt.Errorf("create drill sandbox: %w", err)
-	}
-	// Marker FIRST — before any restore — so the cleanup interlock can always
-	// confirm this is a sandbox we created, even if the restore fails midway. If the
-	// marker write itself fails the (still empty) dir would leak, so remove it
-	// explicitly on that path before the cleanup defer is even registered.
-	markerPath := filepath.Join(sandbox, drillMarkerName)
-	if err := os.WriteFile(markerPath, []byte("bombvault dr drill\n"), 0o600); err != nil { //nolint:gosec // G306: marker is a non-secret sentinel; 0600 is already restrictive
-		if rmErr := os.Remove(sandbox); rmErr != nil { //nolint:gosec // G703: sandbox is resolved strictly under the host mount root by paths.Resolve (rejects absolute/traversal); it was just created empty by os.Mkdir above
-			log.Printf("api: dr-drill: could not remove sandbox after marker-write failure: %v", rmErr)
-		}
-		return fmt.Errorf("write drill marker: %w", err)
-	}
-	defer func() {
-		if cErr := cleanupDrillSandbox(sandbox); cErr != nil {
-			log.Printf("api: dr-drill: cleanup: %v", cErr)
-		}
-	}()
+	defer cleanup()
 
 	// Bound the restore at restoreTimeout, matching a real restore — reading a whole
 	// snapshot back over a slow off-site link can take many hours, far more than a

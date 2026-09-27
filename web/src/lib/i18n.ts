@@ -2836,6 +2836,14 @@ export const en = {
   "anomaly.settings.evalErrors": "Items that could not be checked in the last pass: {n}. The log names them.",
   "anomaly.settings.unmeasured": "Repositories without a free-space figure: {names}",
   "anomaly.settings.openPage": "Show anomalies",
+  "checks.restoreOk": "Restore checked {time}",
+  "checks.restoreFailed": "Restore check failed",
+  "checks.restoreNever": "Restore not checked yet",
+  "checks.probeNow": "Check restore",
+  "checks.probeHint": "Restores a sample of the newest backup into a temporary folder and compares it with what was saved. It also runs on its own after the first backup.",
+  "checks.probeRunning": "Checking the restore…",
+  "checks.probeFiles": "one=Read back {n} file|other=Read back {n} files",
+  "activityLog.lineProbeRunning": "Restore check running: {name} …",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -5354,6 +5362,14 @@ export const de: Translations = {
   "anomaly.settings.evalErrors": "Elemente, die im letzten Durchgang nicht geprüft werden konnten: {n}. Das Log nennt sie.",
   "anomaly.settings.unmeasured": "Repositories ohne Angabe zum freien Platz: {names}",
   "anomaly.settings.openPage": "Anomalien zeigen",
+  "checks.restoreOk": "Wiederherstellung geprüft, {time}",
+  "checks.restoreFailed": "Wiederherstellungsprüfung fehlgeschlagen",
+  "checks.restoreNever": "Wiederherstellung noch nicht geprüft",
+  "checks.probeNow": "Wiederherstellung prüfen",
+  "checks.probeHint": "Stellt eine Stichprobe der neuesten Sicherung in einem temporären Ordner wieder her und vergleicht sie mit dem Gesicherten. Läuft nach der ersten Sicherung auch von selbst.",
+  "checks.probeRunning": "Wiederherstellung wird geprüft…",
+  "checks.probeFiles": "one={n} Datei zurückgelesen|other={n} Dateien zurückgelesen",
+  "activityLog.lineProbeRunning": "Wiederherstellungsprüfung läuft: {name} …",
 };
 
 // ---------------------------------------------------------------------------

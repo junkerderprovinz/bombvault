@@ -2459,6 +2459,14 @@ const ja: Partial<Translations> = {
   "anomaly.settings.evalErrors": "前回の確認で調べられなかった項目: {n}。ログに名前があります。",
   "anomaly.settings.unmeasured": "空き容量がわからないリポジトリ: {names}",
   "anomaly.settings.openPage": "異常を表示",
+  "checks.restoreOk": "復元を確認済み（{time}）",
+  "checks.restoreFailed": "復元チェックに失敗しました",
+  "checks.restoreNever": "復元はまだ確認されていません",
+  "checks.probeNow": "復元を確認",
+  "checks.probeHint": "最新のバックアップの一部を一時フォルダーに復元し、保存された内容と照合します。最初のバックアップの後にも自動で実行されます。",
+  "checks.probeRunning": "復元を確認中…",
+  "checks.probeFiles": "{n} 件のファイルを読み戻しました",
+  "activityLog.lineProbeRunning": "復元チェック実行中：{name} …",
 };
 
 export default ja;

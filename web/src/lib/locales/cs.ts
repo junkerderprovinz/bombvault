@@ -2465,6 +2465,14 @@ const cs: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Položky, které v posledním průchodu nešlo zkontrolovat: {n}. Protokol je jmenuje.",
   "anomaly.settings.unmeasured": "Repozitáře bez údaje o volném místě: {names}",
   "anomaly.settings.openPage": "Zobrazit anomálie",
+  "checks.restoreOk": "Obnova ověřena {time}",
+  "checks.restoreFailed": "Kontrola obnovy selhala",
+  "checks.restoreNever": "Obnova zatím neověřena",
+  "checks.probeNow": "Ověřit obnovu",
+  "checks.probeHint": "Obnoví vzorek nejnovější zálohy do dočasné složky a porovná ho s uloženými daty. Spouští se také sama po první záloze.",
+  "checks.probeRunning": "Ověřuje se obnova…",
+  "checks.probeFiles": "one=Zpětně načten {n} soubor|few=Zpětně načteny {n} soubory|many=Zpětně načteno {n} souboru|other=Zpětně načteno {n} souborů",
+  "activityLog.lineProbeRunning": "Probíhá kontrola obnovy: {name} …",
 };
 
 export default cs;

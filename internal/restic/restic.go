@@ -751,6 +751,23 @@ func RestoreIncludeArgs(repo, snapshotID, includePath, target string, m Mode) []
 	return args
 }
 
+// RestoreVerifyArgs returns the argv for restoring the given files of a
+// snapshot into target and reading every restored file back against its
+// content hashes (--verify). The paths are include patterns, so a caller must
+// leave out any path with a glob character in it.
+func RestoreVerifyArgs(repo, snapshotID string, files []string, target string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "restore")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--json", "--verify", "--target", target)
+	for _, f := range files {
+		args = append(args, "--include", f)
+	}
+	return append(args, "--", snapshotID)
+}
+
 // RestoreSubtreeIncludeArgs returns the argv for restoring ONLY includePath out
 // of a snapshot's subtree INTO target:
 // `restic restore <id>:<subtreePath> --target <target> --include <includePath>`.
@@ -2206,6 +2223,13 @@ func snapshotDirMode(m Mode) Mode {
 // exclude patterns match.
 func (r Restic) RestoreAll(ctx context.Context, repo, snapshotID, target string, m Mode, excludes ...string) error {
 	_, err := r.run(ctx, RestoreAllArgs(repo, snapshotID, target, m, excludes...), m)
+	return err
+}
+
+// RestoreVerify restores the given files of a snapshot into target and has
+// restic read each one back against its content hashes.
+func (r Restic) RestoreVerify(ctx context.Context, repo, snapshotID string, files []string, target string, m Mode) error {
+	_, err := r.run(ctx, RestoreVerifyArgs(repo, snapshotID, files, target, m), m)
 	return err
 }
 

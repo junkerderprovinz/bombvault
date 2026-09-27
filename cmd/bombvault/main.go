@@ -588,6 +588,7 @@ func run() error {
 	// The anomaly worker evaluates the backup history after every run and stops
 	// with the same context the server does.
 	svc.StartAnomalyEngine(ctx)
+	svc.EnableFirstProbes()
 
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
 	// An MCP listing of a repository that stopped answering holds its request

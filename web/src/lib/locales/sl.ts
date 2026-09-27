@@ -2462,6 +2462,14 @@ const sl: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementi, ki jih v zadnjem prehodu ni bilo mogoče preveriti: {n}. Dnevnik jih poimenuje.",
   "anomaly.settings.unmeasured": "Repozitoriji brez podatka o prostem prostoru: {names}",
   "anomaly.settings.openPage": "Prikaži anomalije",
+  "checks.restoreOk": "Obnovitev preverjena {time}",
+  "checks.restoreFailed": "Preverjanje obnovitve ni uspelo",
+  "checks.restoreNever": "Obnovitev še ni preverjena",
+  "checks.probeNow": "Preveri obnovitev",
+  "checks.probeHint": "Obnovi vzorec najnovejše varnostne kopije v začasno mapo in ga primerja s shranjenim. Po prvi varnostni kopiji se zažene tudi sam.",
+  "checks.probeRunning": "Preverjanje obnovitve…",
+  "checks.probeFiles": "one=Prebrana {n} datoteka|two=Prebrani {n} datoteki|few=Prebrane {n} datoteke|other=Prebranih {n} datotek",
+  "activityLog.lineProbeRunning": "Preverjanje obnovitve teče: {name} …",
 };
 
 export default sl;

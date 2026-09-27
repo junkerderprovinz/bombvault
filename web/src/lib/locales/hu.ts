@@ -2470,6 +2470,14 @@ const hu: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Az utolsó körben nem ellenőrizhető elemek: {n}. A napló megnevezi őket.",
   "anomaly.settings.unmeasured": "Tárolók szabad hely adat nélkül: {names}",
   "anomaly.settings.openPage": "Anomáliák megjelenítése",
+  "checks.restoreOk": "Visszaállítás ellenőrizve, {time}",
+  "checks.restoreFailed": "A visszaállítási ellenőrzés sikertelen",
+  "checks.restoreNever": "A visszaállítás még nincs ellenőrizve",
+  "checks.probeNow": "Visszaállítás ellenőrzése",
+  "checks.probeHint": "A legújabb mentés egy mintáját visszaállítja egy ideiglenes mappába, és összeveti a mentett adatokkal. Az első mentés után magától is lefut.",
+  "checks.probeRunning": "Visszaállítás ellenőrzése…",
+  "checks.probeFiles": "{n} fájl visszaolvasva",
+  "activityLog.lineProbeRunning": "Visszaállítási ellenőrzés fut: {name} …",
 };
 
 export default hu;

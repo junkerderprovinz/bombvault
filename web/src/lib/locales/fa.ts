@@ -2478,6 +2478,14 @@ const fa: Partial<Translations> = {
   "anomaly.settings.evalErrors": "مواردی که در دور آخر بررسی نشدند: {n}. گزارش آن‌ها را نام می‌برد.",
   "anomaly.settings.unmeasured": "مخزن‌های بدون رقم فضای آزاد: {names}",
   "anomaly.settings.openPage": "نمایش ناهنجاری‌ها",
+  "checks.restoreOk": "بازیابی بررسی شد، {time}",
+  "checks.restoreFailed": "بررسی بازیابی ناموفق بود",
+  "checks.restoreNever": "بازیابی هنوز بررسی نشده",
+  "checks.probeNow": "بررسی بازیابی",
+  "checks.probeHint": "نمونه‌ای از جدیدترین پشتیبان را در یک پوشهٔ موقت بازیابی می‌کند و با آنچه ذخیره شده مقایسه می‌کند. پس از اولین پشتیبان خودکار هم اجرا می‌شود.",
+  "checks.probeRunning": "در حال بررسی بازیابی…",
+  "checks.probeFiles": "{n} فایل دوباره خوانده شد",
+  "activityLog.lineProbeRunning": "بررسی بازیابی در حال اجراست: {name} …",
 };
 
 export default fa;

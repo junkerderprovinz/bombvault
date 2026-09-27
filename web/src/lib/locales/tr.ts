@@ -2467,6 +2467,14 @@ const tr: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Son geçişte denetlenemeyen ögeler: {n}. Günlük onları adlandırıyor.",
   "anomaly.settings.unmeasured": "Boş alan bilgisi olmayan depolar: {names}",
   "anomaly.settings.openPage": "Anormallikleri göster",
+  "checks.restoreOk": "Geri yükleme denetlendi, {time}",
+  "checks.restoreFailed": "Geri yükleme denetimi başarısız",
+  "checks.restoreNever": "Geri yükleme henüz denetlenmedi",
+  "checks.probeNow": "Geri yüklemeyi denetle",
+  "checks.probeHint": "En yeni yedekten bir örneği geçici bir klasöre geri yükler ve kaydedilenle karşılaştırır. İlk yedeklemeden sonra kendiliğinden de çalışır.",
+  "checks.probeRunning": "Geri yükleme denetleniyor…",
+  "checks.probeFiles": "{n} dosya geri okundu",
+  "activityLog.lineProbeRunning": "Geri yükleme denetimi çalışıyor: {name} …",
 };
 
 export default tr;

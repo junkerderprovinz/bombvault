@@ -2462,6 +2462,14 @@ const ru: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Объекты, которые не удалось проверить в последнем проходе: {n}. Журнал их называет.",
   "anomaly.settings.unmeasured": "Репозитории без данных о свободном месте: {names}",
   "anomaly.settings.openPage": "Показать аномалии",
+  "checks.restoreOk": "Восстановление проверено {time}",
+  "checks.restoreFailed": "Проверка восстановления не пройдена",
+  "checks.restoreNever": "Восстановление ещё не проверялось",
+  "checks.probeNow": "Проверить восстановление",
+  "checks.probeHint": "Восстанавливает выборку из последней резервной копии во временную папку и сравнивает её с сохранённым. После первой копии запускается и сама.",
+  "checks.probeRunning": "Проверка восстановления…",
+  "checks.probeFiles": "one=Прочитан {n} файл|few=Прочитано {n} файла|many=Прочитано {n} файлов|other=Прочитано {n} файла",
+  "activityLog.lineProbeRunning": "Идёт проверка восстановления: {name} …",
 };
 
 export default ru;

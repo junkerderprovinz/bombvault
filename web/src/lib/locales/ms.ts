@@ -2478,6 +2478,14 @@ const ms: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Item yang tidak dapat diperiksa dalam pusingan terakhir: {n}. Log menamakannya.",
   "anomaly.settings.unmeasured": "Repositori tanpa angka ruang kosong: {names}",
   "anomaly.settings.openPage": "Tunjukkan anomali",
+  "checks.restoreOk": "Pemulihan disemak {time}",
+  "checks.restoreFailed": "Semakan pemulihan gagal",
+  "checks.restoreNever": "Pemulihan belum disemak",
+  "checks.probeNow": "Semak pemulihan",
+  "checks.probeHint": "Memulihkan sampel sandaran terbaharu ke folder sementara dan membandingkannya dengan yang disimpan. Ia juga berjalan sendiri selepas sandaran pertama.",
+  "checks.probeRunning": "Menyemak pemulihan…",
+  "checks.probeFiles": "{n} fail dibaca semula",
+  "activityLog.lineProbeRunning": "Semakan pemulihan sedang berjalan: {name} …",
 };
 
 export default ms;

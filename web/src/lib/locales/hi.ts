@@ -2478,6 +2478,14 @@ const hi: Partial<Translations> = {
   "anomaly.settings.evalErrors": "पिछले दौर में जिन आइटम की जाँच नहीं हो सकी: {n}। लॉग उनके नाम बताता है।",
   "anomaly.settings.unmeasured": "जिन रिपॉज़िटरी की खाली जगह का आँकड़ा नहीं है: {names}",
   "anomaly.settings.openPage": "विसंगतियाँ दिखाएँ",
+  "checks.restoreOk": "रीस्टोर जाँचा गया, {time}",
+  "checks.restoreFailed": "रीस्टोर जाँच विफल",
+  "checks.restoreNever": "रीस्टोर अभी जाँचा नहीं गया",
+  "checks.probeNow": "रीस्टोर जाँचें",
+  "checks.probeHint": "सबसे नए बैकअप का एक नमूना अस्थायी फ़ोल्डर में रीस्टोर करता है और सहेजे गए डेटा से मिलाता है। पहले बैकअप के बाद यह अपने आप भी चलता है।",
+  "checks.probeRunning": "रीस्टोर जाँचा जा रहा है…",
+  "checks.probeFiles": "one={n} फ़ाइल वापस पढ़ी गई|other={n} फ़ाइलें वापस पढ़ी गईं",
+  "activityLog.lineProbeRunning": "रीस्टोर जाँच चल रही है: {name} …",
 };
 
 export default hi;

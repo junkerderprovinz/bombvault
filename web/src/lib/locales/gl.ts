@@ -2478,6 +2478,14 @@ const gl: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementos que non se puideron comprobar na última pasada: {n}. O rexistro nómeaos.",
   "anomaly.settings.unmeasured": "Repositorios sen dato de espazo libre: {names}",
   "anomaly.settings.openPage": "Ver anomalías",
+  "checks.restoreOk": "Restauración comprobada {time}",
+  "checks.restoreFailed": "A comprobación de restauración fallou",
+  "checks.restoreNever": "Restauración aínda sen comprobar",
+  "checks.probeNow": "Comprobar restauración",
+  "checks.probeHint": "Restaura unha mostra da copia máis recente nun cartafol temporal e compáraa co gardado. Tamén se executa soa despois da primeira copia.",
+  "checks.probeRunning": "Comprobando a restauración…",
+  "checks.probeFiles": "one=Releuse {n} ficheiro|other=Relérronse {n} ficheiros",
+  "activityLog.lineProbeRunning": "A comprobación de restauración está en execución: {name} …",
 };
 
 export default gl;

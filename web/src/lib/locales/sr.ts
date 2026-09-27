@@ -2462,6 +2462,14 @@ const sr: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Ставке које није било могуће проверити у последњем пролазу: {n}. Дневник их именује.",
   "anomaly.settings.unmeasured": "Репозиторијуми без податка о слободном простору: {names}",
   "anomaly.settings.openPage": "Прикажи аномалије",
+  "checks.restoreOk": "Враћање проверено {time}",
+  "checks.restoreFailed": "Провера враћања није успела",
+  "checks.restoreNever": "Враћање још није проверено",
+  "checks.probeNow": "Провери враћање",
+  "checks.probeHint": "Враћа узорак најновије резервне копије у привремену фасциклу и пореди га са сачуваним. Покреће се и сам после прве резервне копије.",
+  "checks.probeRunning": "Провера враћања…",
+  "checks.probeFiles": "one=Прочитана {n} датотека|few=Прочитане {n} датотеке|other=Прочитано {n} датотека",
+  "activityLog.lineProbeRunning": "Провера враћања у току: {name} …",
 };
 
 export default sr;

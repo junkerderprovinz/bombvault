@@ -893,3 +893,24 @@ describe("a run an assistant started", () => {
     expect(lines.map((l) => l.text).join(" ")).not.toContain("viaMcp");
   });
 });
+
+describe("buildLogLines live restore probe", () => {
+  it("names the item the probe reads back", () => {
+    const progress: ProgressMap = {
+      "probe:containers:nextcloud": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
+    };
+    const [line] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(line.id).toBe("live:probe:containers:nextcloud");
+    expect(line.kind).toBe("drill");
+    expect(line.domain).toBe("containers");
+    expect(line.text).toBe("activityLog.lineProbeRunning name=nextcloud");
+  });
+
+  it("uses the domain label for the flash drive", () => {
+    const progress: ProgressMap = {
+      "probe:flash:Unraid flash": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
+    };
+    const [line] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(line.text).toBe("activityLog.lineProbeRunning name=activityLog.domainFlash");
+  });
+});

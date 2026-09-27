@@ -19,6 +19,8 @@ import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconDownload, IconTrash } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemChecksLine } from "../components/ItemChecksLine";
+import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
 import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
 import { findingSnapshotId } from "../lib/anomalies";
@@ -208,6 +210,7 @@ function FlashSnapshotRow({
 export function Flash() {
   const { t } = useT();
   const anomaly = useAnomalyItems().find("flash", "flash");
+  const itemChecks = useItemChecks();
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
   const { flagged } = useOpenAnomalies();
   const restoreRequest = useRestoreRequest();
@@ -286,6 +289,7 @@ export function Flash() {
             />
           </div>
           <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
+          <ItemChecksLine checks={itemChecks.find("flash", "flash")} hasBackup={snapshots.length > 0} onChanged={itemChecks.reload} />
 
           {/* As on the Folders page: a restore has its own control with its
               own warning. */}

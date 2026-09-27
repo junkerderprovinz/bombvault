@@ -2465,6 +2465,14 @@ const es: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementos que no se pudieron comprobar en la última pasada: {n}. El registro los nombra.",
   "anomaly.settings.unmeasured": "Repositorios sin dato de espacio libre: {names}",
   "anomaly.settings.openPage": "Ver anomalías",
+  "checks.restoreOk": "Restauración comprobada {time}",
+  "checks.restoreFailed": "La comprobación de restauración falló",
+  "checks.restoreNever": "Restauración aún no comprobada",
+  "checks.probeNow": "Comprobar restauración",
+  "checks.probeHint": "Restaura una muestra de la copia más reciente en una carpeta temporal y la compara con lo guardado. También se ejecuta sola después de la primera copia.",
+  "checks.probeRunning": "Comprobando la restauración…",
+  "checks.probeFiles": "one=Se releyó {n} archivo|other=Se releyeron {n} archivos",
+  "activityLog.lineProbeRunning": "Comprobación de restauración en curso: {name} …",
 };
 
 export default es;

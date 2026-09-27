@@ -2467,6 +2467,14 @@ const pt: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Itens que não foi possível verificar na última passagem: {n}. O registo indica quais.",
   "anomaly.settings.unmeasured": "Repositórios sem valor de espaço livre: {names}",
   "anomaly.settings.openPage": "Ver anomalias",
+  "checks.restoreOk": "Restauro verificado {time}",
+  "checks.restoreFailed": "A verificação de restauro falhou",
+  "checks.restoreNever": "Restauro ainda não verificado",
+  "checks.probeNow": "Verificar restauro",
+  "checks.probeHint": "Restaura uma amostra do backup mais recente numa pasta temporária e compara-a com o que foi guardado. Também corre sozinha depois do primeiro backup.",
+  "checks.probeRunning": "A verificar o restauro…",
+  "checks.probeFiles": "one={n} ficheiro relido|other={n} ficheiros relidos",
+  "activityLog.lineProbeRunning": "Verificação de restauro em curso: {name} …",
 };
 
 export default pt;

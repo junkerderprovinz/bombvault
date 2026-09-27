@@ -2467,6 +2467,14 @@ const it: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Elementi che non è stato possibile controllare nell'ultimo passaggio: {n}. Il registro li elenca.",
   "anomaly.settings.unmeasured": "Repository senza dato sullo spazio libero: {names}",
   "anomaly.settings.openPage": "Mostra le anomalie",
+  "checks.restoreOk": "Ripristino verificato {time}",
+  "checks.restoreFailed": "Controllo di ripristino non riuscito",
+  "checks.restoreNever": "Ripristino non ancora verificato",
+  "checks.probeNow": "Verifica ripristino",
+  "checks.probeHint": "Ripristina un campione del backup più recente in una cartella temporanea e lo confronta con quanto salvato. Viene eseguito anche da solo dopo il primo backup.",
+  "checks.probeRunning": "Verifica del ripristino…",
+  "checks.probeFiles": "one=Riletto {n} file|other=Riletti {n} file",
+  "activityLog.lineProbeRunning": "Controllo di ripristino in corso: {name} …",
 };
 
 export default it;

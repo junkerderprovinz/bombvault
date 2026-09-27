@@ -2470,6 +2470,14 @@ const ar: Partial<Translations> = {
   "anomaly.settings.evalErrors": "عناصر تعذر فحصها في الجولة الأخيرة: {n}. السجل يسمّيها.",
   "anomaly.settings.unmeasured": "مستودعات بلا رقم للمساحة الحرة: {names}",
   "anomaly.settings.openPage": "عرض الحالات الشاذة",
+  "checks.restoreOk": "تم فحص الاستعادة {time}",
+  "checks.restoreFailed": "فشل فحص الاستعادة",
+  "checks.restoreNever": "لم يتم فحص الاستعادة بعد",
+  "checks.probeNow": "فحص الاستعادة",
+  "checks.probeHint": "يستعيد عينة من أحدث نسخة احتياطية إلى مجلد مؤقت ويقارنها بما تم حفظه. يعمل أيضًا تلقائيًا بعد أول نسخة احتياطية.",
+  "checks.probeRunning": "جارٍ فحص الاستعادة…",
+  "checks.probeFiles": "zero=قُرئ {n} ملف|one=قُرئ ملف واحد|two=قُرئ ملفان|few=قُرئت {n} ملفات|many=قُرئ {n} ملفًا|other=قُرئ {n} ملف",
+  "activityLog.lineProbeRunning": "فحص الاستعادة قيد التنفيذ: {name} …",
 };
 
 export default ar;

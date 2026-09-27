@@ -285,6 +285,16 @@ type mcpItemView struct {
 	LastRunAt           int64        `json:"lastRunAt"`
 	LastRunStatus       string       `json:"lastRunStatus"`
 	Database            *mcpDatabase `json:"database,omitempty"`
+	RestoreCheck        *mcpProbe    `json:"restoreCheck,omitempty"`
+}
+
+// mcpProbe is the newest restore probe of an item: a sample of its newest
+// backup restored into a sandbox and compared with what the backup recorded.
+type mcpProbe struct {
+	At      int64  `json:"at"`
+	OK      bool   `json:"ok"`
+	Detail  string `json:"detail,omitempty"`
+	Trigger string `json:"trigger"`
 }
 
 func (v *mcpItemView) stamp(s store.BackupStamp) {
@@ -429,6 +439,17 @@ func (h *Handler) mcpItems(ctx context.Context, settings store.Settings, domain 
 	}
 	if _, want := items["config"]; want && settings.ConfigEnabled {
 		items["config"] = []mcpItemView{mcpSingletonItem("config", settings.ConfigSchedule, settings.EverythingSchedule, stamps)}
+	}
+	probes, err := h.store.LatestItemProbes()
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, rows := range items {
+		for i := range rows {
+			if p, ok := probes[rows[i].ID]; ok {
+				rows[i].RestoreCheck = &mcpProbe{At: p.At, OK: p.OK, Detail: mcpScrubText(p.Detail), Trigger: p.Trigger}
+			}
+		}
 	}
 	return items, known, nil
 }

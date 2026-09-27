@@ -2478,6 +2478,14 @@ const is: Partial<Translations> = {
   "anomaly.settings.evalErrors": "Einingar sem ekki tókst að athuga í síðustu umferð: {n}. Annállinn nefnir þær.",
   "anomaly.settings.unmeasured": "Geymslur án tölu um laust pláss: {names}",
   "anomaly.settings.openPage": "Sýna frávik",
+  "checks.restoreOk": "Endurheimt prófuð {time}",
+  "checks.restoreFailed": "Endurheimtarprófun mistókst",
+  "checks.restoreNever": "Endurheimt ekki prófuð enn",
+  "checks.probeNow": "Prófa endurheimt",
+  "checks.probeHint": "Endurheimtir sýnishorn úr nýjasta afritinu í tímabundna möppu og ber það saman við það sem var vistað. Keyrir líka sjálfkrafa eftir fyrsta afritið.",
+  "checks.probeRunning": "Prófar endurheimt…",
+  "checks.probeFiles": "one={n} skrá lesin til baka|other={n} skrár lesnar til baka",
+  "activityLog.lineProbeRunning": "Endurheimtarprófun í gangi: {name} …",
 };
 
 export default is;

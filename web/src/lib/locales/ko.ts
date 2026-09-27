@@ -2459,6 +2459,14 @@ const ko: Partial<Translations> = {
   "anomaly.settings.evalErrors": "지난 점검에서 확인하지 못한 항목: {n}. 로그에 이름이 있습니다.",
   "anomaly.settings.unmeasured": "여유 공간 수치가 없는 저장소: {names}",
   "anomaly.settings.openPage": "이상 징후 보기",
+  "checks.restoreOk": "복원 확인됨 ({time})",
+  "checks.restoreFailed": "복원 검사 실패",
+  "checks.restoreNever": "아직 복원을 확인하지 않음",
+  "checks.probeNow": "복원 확인",
+  "checks.probeHint": "최신 백업의 일부를 임시 폴더에 복원하고 저장된 내용과 비교합니다. 첫 백업 후에도 자동으로 실행됩니다.",
+  "checks.probeRunning": "복원 확인 중…",
+  "checks.probeFiles": "파일 {n}개를 다시 읽음",
+  "activityLog.lineProbeRunning": "복원 검사 실행 중: {name} …",
 };
 
 export default ko;

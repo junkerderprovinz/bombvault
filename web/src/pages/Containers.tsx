@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerRepo, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody } from "../lib/api";
-import type { AnomalyItem, Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse } from "../lib/api";
+import type { AnomalyItem, Container, ItemChecks, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { SelectionTree } from "../components/SelectionTree";
 import { RepoPicker } from "../components/RepoPicker";
@@ -19,6 +19,8 @@ import { BackupButton } from "../components/BackupButton";
 import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemChecksLine } from "../components/ItemChecksLine";
+import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
 import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
 import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
@@ -2259,6 +2261,8 @@ export function ContainerRow({
   anomaly,
   anomalyEnabled = false,
   restoreRequest,
+  checks,
+  onChecksChanged,
 }: {
   container: Container;
   /** Every installed container on this BombVault instance — threaded down
@@ -2284,6 +2288,8 @@ export function ContainerRow({
   /** A finding's restore link for this container: the card opens its backups
    *  and comes into view. */
   restoreRequest?: RestoreRequest;
+  checks?: ItemChecks;
+  onChecksChanged?: () => void;
 }) {
   const installed = container.installed;
   const progressMap = useProgress();
@@ -2542,6 +2548,10 @@ export function ContainerRow({
           instead — always-visible summary data, not part of the expandable
           content, wrapping onto its own line at narrow widths via the same
           `flex-wrap` this row already needs for the chips themselves. */}
+      {!container.self && (
+        <ItemChecksLine checks={checks} hasBackup={container.lastBackup != null} onChanged={onChecksChanged} />
+      )}
+
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           {/* buttonHeight, so this row's triggers are the same size as the
@@ -3341,6 +3351,7 @@ export function Containers() {
   const { t } = useT();
   const anomalies = useAnomalyItems();
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const itemChecks = useItemChecks();
   const restoreRequest = useRestoreRequest();
   // Advanced-mode flag read directly (not just via the <Advanced> wrapper
   // below): BackupOrderPanel's own hueIndex must only be resolved via
@@ -3959,6 +3970,8 @@ export function Containers() {
               anomaly={anomalies.find("container", c.name)}
               anomalyEnabled={anomalyEnabled}
               restoreRequest={restoreRequest.item === c.name ? restoreRequest : undefined}
+              checks={itemChecks.find("container", c.name)}
+              onChecksChanged={itemChecks.reload}
             />
           ))}
         </div>
@@ -4005,6 +4018,8 @@ export function Containers() {
               anomaly={anomalies.find("container", c.name)}
               anomalyEnabled={anomalyEnabled}
               restoreRequest={restoreRequest.item === c.name ? restoreRequest : undefined}
+              checks={itemChecks.find("container", c.name)}
+              onChecksChanged={itemChecks.reload}
             />
           ))}
         </div>
