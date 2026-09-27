@@ -3209,6 +3209,9 @@ export interface ZFSRestorePointItem {
   relPath: string;
   snapshotId: string;
   outcome: string;
+  /** The dataset's locally set ZFS properties when it was backed up. Absent
+   *  for a backup from before they were recorded. */
+  properties?: Record<string, string>;
 }
 
 /** One run instant: the member snapshots that share one host snapshot stamp. */
@@ -3226,6 +3229,10 @@ export interface ZFSRestoreRequest {
   /** Absolute inside the member's own tree; empty restores all of it. */
   paths?: string[];
   targetPath?: string;
+  /** A dataset that does not exist yet, created with the stored properties. */
+  newDataset?: string;
+  /** Set the stored properties on the dataset before writing into it. */
+  applyProperties?: boolean;
   confirm: boolean;
   safetySnapshot?: boolean;
   safetyOffConfirm?: boolean;
@@ -3237,6 +3244,8 @@ export interface ZFSRestoreAck extends ZFSCodedEnvelope {
   started?: boolean;
   target?: string;
   safetySnapshot?: string;
+  /** The dataset the restore created. It stays even if the restore fails. */
+  created?: string;
 }
 
 /** What one run did to one dataset of the tree. */

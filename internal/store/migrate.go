@@ -2119,6 +2119,14 @@ CREATE TABLE IF NOT EXISTS mcp_oauth_tokens (
 CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_grant ON mcp_oauth_tokens(grant_id, kind);
 CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expires_at);`,
 	},
+	{
+		// The locally set ZFS properties of each dataset a run backed up, as
+		// JSON, so a restore can create a new dataset with them.
+		version:          zfsPropertiesMigration,
+		name:             "zfs_run_members_properties",
+		alreadySatisfied: columnPresent("zfs_run_members", "properties"),
+		sql:              `ALTER TABLE zfs_run_members ADD COLUMN properties TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2154,6 +2162,10 @@ const mcpActivityMigration = 148
 
 // mcpOAuthMigration numbers the OAuth sign-in of the MCP endpoint.
 const mcpOAuthMigration = mcpActivityMigration + 4
+
+// zfsPropertiesMigration numbers the column that keeps each dataset's ZFS
+// properties.
+const zfsPropertiesMigration = 200
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.
