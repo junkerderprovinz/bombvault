@@ -36,7 +36,10 @@ func newPortableHandler(t *testing.T, appKey string) (*Handler, *store.Repo) {
 	// An empty restic engine, not nil: the import preview lists each enabled
 	// domain's copy sources to describe the targets a file adds, and that
 	// walk reaches the engine even with nothing ever run here.
-	eng := &placementEngine{snaps: map[string][]restic.Snapshot{}, listErr: map[string]error{}, opens: map[string]bool{}, lists: map[string]int{}}
+	eng := &placementEngine{
+		snaps: map[string][]restic.Snapshot{}, listErr: map[string]error{}, opens: map[string]bool{}, openErr: map[string]error{},
+		ids: map[string]string{}, opened: map[string]int{}, keys: map[string]string{}, lists: map[string]int{},
+	}
 	svc := &Service{cfg: cfg, store: st, engine: eng}
 	return &Handler{cfg: cfg, store: st, svc: svc}, st
 }
