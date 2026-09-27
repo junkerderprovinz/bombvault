@@ -1840,7 +1840,7 @@ CREATE INDEX IF NOT EXISTS idx_target_aliases_target ON target_aliases(domain, t
 		// its credentials, retention, protection and the folder of each
 		// domain. Runs read the target rows and domain paths; a place writes
 		// them.
-		version: 123,
+		version: placesMigrationBase,
 		name:    "storage_places",
 		sql: `
 CREATE TABLE IF NOT EXISTS storage_places (
@@ -1870,7 +1870,7 @@ CREATE TABLE IF NOT EXISTS storage_places (
 	},
 	{
 		// The home place of a domain: the place its path lies at.
-		version: 124,
+		version: placesMigrationBase + 1,
 		name:    "storage_domain_places",
 		sql: `
 CREATE TABLE IF NOT EXISTS storage_domain_places (
@@ -1882,7 +1882,7 @@ CREATE TABLE IF NOT EXISTS storage_domain_places (
 	{
 		// A row at a place holds the place's address for place_domain plus
 		// place_suffix in repo. Existing rows start at no place.
-		version:          125,
+		version:          placesMigrationBase + 2,
 		name:             "offsite_targets_place",
 		alreadySatisfied: columnPresent("offsite_targets", "place_id"),
 		sql: `
@@ -1893,7 +1893,7 @@ ALTER TABLE offsite_targets ADD COLUMN place_suffix TEXT NOT NULL DEFAULT '';`,
 	{
 		// Building the places from an existing setup needs the decrypted
 		// credentials, so it runs in Go at startup and marks its end here.
-		version:          126,
+		version:          placesMigrationBase + 3,
 		name:             "settings_places_migrated",
 		sql:              `ALTER TABLE settings ADD COLUMN places_migrated INTEGER NOT NULL DEFAULT 0;`,
 		alreadySatisfied: columnPresent("settings", "places_migrated"),
@@ -1902,7 +1902,7 @@ ALTER TABLE offsite_targets ADD COLUMN place_suffix TEXT NOT NULL DEFAULT '';`,
 		// Marks the rows a place switched off, the only ones it switches back
 		// on. A row found off at a place that is off has no record of which
 		// switch did it, so it goes with the place.
-		version:          127,
+		version:          placesMigrationBase + 4,
 		name:             "offsite_targets_off_with_place",
 		alreadySatisfied: columnPresent("offsite_targets", "off_with_place"),
 		sql: `
@@ -1910,6 +1910,22 @@ ALTER TABLE offsite_targets ADD COLUMN off_with_place INTEGER NOT NULL DEFAULT 0
 UPDATE offsite_targets SET off_with_place = 1
  WHERE enabled = 0 AND place_id IN (SELECT id FROM storage_places WHERE enabled = 0);`,
 	},
+}
+
+// placesMigrationBase numbers the storage place schema from one place. It
+// starts above 153, the highest number v9.0.0 records.
+const placesMigrationBase = 154
+
+// misnumbered holds migrations that test builds recorded under numbers v9.0.0
+// gives to its database dump and ZFS columns. Migrate forgets those records,
+// so the owners of the numbers run, and the guards of the place migrations
+// record them again under their own numbers without running a body twice.
+var misnumbered = map[int]string{
+	123: "storage_places",
+	124: "storage_domain_places",
+	125: "offsite_targets_place",
+	126: "settings_places_migrated",
+	127: "offsite_targets_off_with_place",
 }
 
 // Migrate applies any pending forward-only migrations to db.
@@ -1930,6 +1946,11 @@ func Migrate(db *sql.DB) error {
 	)`)
 	if err != nil {
 		return fmt.Errorf("migrate: create schema_migrations: %w", err)
+	}
+	for version, name := range misnumbered {
+		if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version = ? AND name = ?`, version, name); err != nil {
+			return fmt.Errorf("migrate: forget v%d (%s): %w", version, name, err)
+		}
 	}
 
 	for _, m := range migrations {

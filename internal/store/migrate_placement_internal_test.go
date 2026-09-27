@@ -264,9 +264,9 @@ func TestPrimarySlotMigrationRunsOnceUnderAnyNumber(t *testing.T) {
 	}
 }
 
-// branchMigrations are this branch's migrations in order, each with a probe
+// placementMigrations are the placement migrations in order, each with a probe
 // that is true once its body has taken effect.
-var branchMigrations = []struct {
+var placementMigrations = []struct {
 	name  string
 	probe func(*sql.Tx) (bool, error)
 }{
@@ -296,10 +296,10 @@ func probeOnce(t *testing.T, db *sql.DB, probe func(*sql.Tx) (bool, error)) bool
 	return ok
 }
 
-// TestPlacementMigrationsSurviveRenumbering replays the rebase that puts two
-// migrations of main in front of this branch: a database that ran the branch
-// under the old numbers takes main's two and records every renumbered body
-// without running it again.
+// TestPlacementMigrationsSurviveRenumbering replays two migrations inserted in
+// front of the placement ones: a database that ran them under the old numbers
+// takes the two new ones and records every renumbered body without running it
+// again.
 func TestPlacementMigrationsSurviveRenumbering(t *testing.T) {
 	db := OpenMem(t)
 	seedV8111(t, db)
@@ -307,7 +307,7 @@ func TestPlacementMigrationsSurviveRenumbering(t *testing.T) {
 		t.Fatalf("Migrate: %v", err)
 	}
 	orders := sortOrders(t, db)
-	first := migrationNamed(t, branchMigrations[0].name).version
+	first := migrationNamed(t, placementMigrations[0].name).version
 
 	var list []migration
 	for _, m := range migrations {
@@ -320,12 +320,12 @@ func TestPlacementMigrationsSurviveRenumbering(t *testing.T) {
 		{version: first + 1, name: "incoming_two", sql: `CREATE TABLE incoming_two (x INTEGER)`},
 	}
 	list = append(list, incoming...)
-	for i, b := range branchMigrations {
+	for i, b := range placementMigrations {
 		m := migrationNamed(t, b.name)
 		m.version = first + len(incoming) + i
 		list = append(list, m)
 	}
-	// Everything from the first branch migration up, so the renumbered list is
+	// Everything from the first placement migration up, so the renumbered list is
 	// what decides where each body is recorded.
 	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version >= ?`, first); err != nil {
 		t.Fatal(err)
@@ -341,7 +341,7 @@ func TestPlacementMigrationsSurviveRenumbering(t *testing.T) {
 			t.Errorf("v%d recorded as %q, want %s run", m.version, applied[m.version], m.name)
 		}
 	}
-	for i, b := range branchMigrations {
+	for i, b := range placementMigrations {
 		v := first + len(incoming) + i
 		if applied[v] != b.name {
 			t.Errorf("v%d recorded as %q, want %s", v, applied[v], b.name)

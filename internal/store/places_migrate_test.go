@@ -161,7 +161,7 @@ func TestApplyPlacesMigrationWritesNothingWhenADomainPathMovedSinceThePlan(t *te
 }
 
 // A migrated place is off only when every row on it was, and nothing says which
-// switch turned them off, so they go with the place as migration 127 has it.
+// switch turned them off, so they go with the place as the off_with_place migration has it.
 func TestARowOffAtAMigratedPlaceThatIsOffComesOnWithIt(t *testing.T) {
 	r, b2, nas := placesMigrationScene(t)
 	b2.Enabled = false

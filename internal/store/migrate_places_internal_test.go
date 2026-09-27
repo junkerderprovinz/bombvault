@@ -1,6 +1,22 @@
 package store
 
-import "testing"
+import (
+	"fmt"
+	"slices"
+	"testing"
+)
+
+// placeMigrations are the storage place migrations in order.
+var placeMigrations = []string{
+	"storage_places",
+	"storage_domain_places",
+	"offsite_targets_place",
+	"settings_places_migrated",
+	"offsite_targets_off_with_place",
+}
+
+// v900Schema is the last migration a v9.0.0 database has recorded.
+const v900Schema = 153
 
 func TestAFreshDatabaseHasTheStoragePlaceSchema(t *testing.T) {
 	db := OpenMem(t)
@@ -54,22 +70,89 @@ func TestThePlaceSchemaIsRecordedWhereItAlreadyExists(t *testing.T) {
 	if err := Migrate(db); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version IN (123, 124, 125, 126, 127)`); err != nil {
-		t.Fatal(err)
+	for _, name := range placeMigrations {
+		if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name = ?`, name); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if err := Migrate(db); err != nil {
 		t.Fatalf("migrate over a database that already has the place schema: %v", err)
 	}
-	for _, v := range []int{123, 124, 125, 126, 127} {
-		if !applied(t, db, v) {
-			t.Errorf("v%d was not recorded", v)
+	for _, name := range placeMigrations {
+		if v := migrationNamed(t, name).version; !applied(t, db, v) {
+			t.Errorf("v%d (%s) was not recorded", v, name)
+		}
+	}
+}
+
+func TestAv900DatabaseTakesThePlaceSchema(t *testing.T) {
+	db := OpenMem(t)
+	migrateThrough(t, db, 122)
+	for v := 123; v <= v900Schema; v++ {
+		if _, err := db.Exec(`INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, 0)`,
+			v, fmt.Sprintf("v900_%d", v)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	for _, table := range []string{"storage_places", "storage_domain_places"} {
+		if !hasTable(t, db, table) {
+			t.Errorf("table %s is missing", table)
+		}
+	}
+	for _, column := range []string{"place_id", "off_with_place"} {
+		if !hasColumn(t, db, "offsite_targets", column) {
+			t.Errorf("offsite_targets.%s is missing", column)
+		}
+	}
+	if _, err := New(db).GetSettings(); err != nil {
+		t.Fatalf("GetSettings: %v", err)
+	}
+}
+
+// Test builds recorded the place migrations as 123 to 127. Those numbers
+// belong to other migrations, which have to run there all the same.
+func TestPlaceRecordsUnderEarlierNumbersMakeWayForTheirOwners(t *testing.T) {
+	db := OpenMem(t)
+	migrateThrough(t, db, 122)
+	for i, name := range placeMigrations {
+		if _, err := db.Exec(migrationNamed(t, name).sql); err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		if _, err := db.Exec(`INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, 0)`,
+			123+i, name); err != nil {
+			t.Fatal(err)
+		}
+	}
+	owner := migration{version: 123, name: "targets_db_dump_off",
+		sql: `ALTER TABLE targets ADD COLUMN db_dump_off INTEGER NOT NULL DEFAULT 0;`}
+	at := slices.IndexFunc(migrations, func(m migration) bool { return m.version > 122 })
+	withMigrations(t, slices.Insert(slices.Clone(migrations), at, owner))
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+
+	got := appliedVersions(t, db)
+	if got[123] != owner.name || !hasColumn(t, db, "targets", "db_dump_off") {
+		t.Errorf("v123 recorded as %q, want %s with its column", got[123], owner.name)
+	}
+	for v := 124; v <= 127; v++ {
+		if name, ok := got[v]; ok {
+			t.Errorf("v%d still recorded as %q", v, name)
+		}
+	}
+	for _, name := range placeMigrations {
+		if v := migrationNamed(t, name).version; got[v] != name {
+			t.Errorf("v%d recorded as %q, want %s", v, got[v], name)
 		}
 	}
 }
 
 func TestRowsOffAtASwitchedOffPlaceComeBackWithItAfterTheUpgrade(t *testing.T) {
 	db := OpenMem(t)
-	migrateThrough(t, db, 126)
+	migrateThrough(t, db, migrationNamed(t, "settings_places_migrated").version)
 	if _, err := db.Exec(`
 INSERT INTO storage_places (id, name, provider, kind, base, folders, enabled) VALUES
   ('p-off', 'B2',  's3-other', 's3',    's3:b2',       '{"containers":"containers","flash":"flash"}', 0),
