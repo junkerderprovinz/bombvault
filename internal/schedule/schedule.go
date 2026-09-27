@@ -1860,6 +1860,11 @@ func drillTasks(settings store.Settings) []drillTask {
 	for _, d := range enabledDrillDomains(settings) {
 		out = append(out, drillTask{domain: d, source: "local", kind: "subset"})
 	}
+	// A start test starts a restored copy of a container, so it waits for
+	// its own switch.
+	if settings.StartTestEnabled && settings.ContainersEnabled {
+		out = append(out, drillTask{domain: "containers", source: "local", kind: "start"})
+	}
 	// An off-site DR drill downloads a whole snapshot, which costs egress on
 	// metered clouds, so these have their own switch.
 	if settings.OffsiteDrillsEnabled {

@@ -18,11 +18,11 @@ export function RestoreChecksSection({
   settings: Settings;
   update: (patch: Partial<Settings>) => void;
   /** Save feedback for the two toggles, which save themselves. */
-  busy?: Partial<Record<"drillsEnabled" | "offsiteDrillsEnabled", boolean>>;
-  shake?: Partial<Record<"drillsEnabled" | "offsiteDrillsEnabled", number>>;
+  busy?: Partial<Record<"drillsEnabled" | "offsiteDrillsEnabled" | "startTestEnabled", boolean>>;
+  shake?: Partial<Record<"drillsEnabled" | "offsiteDrillsEnabled" | "startTestEnabled", number>>;
   /** The success counterpart of shake. SettingsPage passes its whole
    *  fieldPulse map, which is keyed by every Settings key. */
-  pulse?: Partial<Record<"drillsEnabled" | "offsiteDrillsEnabled", number>>;
+  pulse?: Partial<Record<"drillsEnabled" | "offsiteDrillsEnabled" | "startTestEnabled", number>>;
   t: ReturnType<typeof useT>["t"];
   hueIndex?: number;
 }) {
@@ -48,6 +48,17 @@ export function RestoreChecksSection({
           onChange={(v) => update({ offsiteDrillsEnabled: v })}
           shakeNonce={shake?.offsiteDrillsEnabled}
           pulseNonce={pulse?.offsiteDrillsEnabled}
+        />
+      )}
+      {settings.drillsEnabled && (
+        <ToggleRow
+          label={t("settings.startTest")}
+          hint={t("settings.startTestHelp")}
+          checked={settings.startTestEnabled}
+          disabled={busy?.startTestEnabled}
+          onChange={(v) => update({ startTestEnabled: v })}
+          shakeNonce={shake?.startTestEnabled}
+          pulseNonce={pulse?.startTestEnabled}
         />
       )}
       {/* `enabled` follows drillsEnabled because this card's on/off is a

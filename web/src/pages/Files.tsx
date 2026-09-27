@@ -25,7 +25,7 @@ import {
   getSettings,
   getFileSetPreset,
 } from "../lib/api";
-import type { AnomalyItem, BrowseResponse, FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
+import type { AnomalyItem, BrowseResponse, ItemChecks, FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
 import { applyToggle, browseRelToHost, splitFlatSet, toFlatList } from "../lib/selectionTree";
 import { SelectionTree } from "../components/SelectionTree";
 import { RepoPicker } from "../components/RepoPicker";
@@ -61,6 +61,8 @@ import { useToast } from "../lib/toast";
 import { IconRestore } from "../components/Sidebar";
 import { IconDisclosure } from "../components/IconDisclosure";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemChecksLine } from "../components/ItemChecksLine";
+import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
 import { findingSnapshotId } from "../lib/anomalies";
 import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
@@ -1229,6 +1231,8 @@ export function FileSetRow({
   anomaly,
   anomalyEnabled = false,
   restoreRequest,
+  checks,
+  onChecksChanged,
 }: {
   set: FileSetView;
   hostMountRoot: string;
@@ -1243,6 +1247,8 @@ export function FileSetRow({
   /** A finding's restore link for this set: the card opens its backups and
    *  comes into view. */
   restoreRequest?: RestoreRequest;
+  checks?: ItemChecks;
+  onChecksChanged?: () => void;
 }) {
   const progressMap = useProgress();
   const progress = progressMap[`files:${set.name}`];
@@ -1365,6 +1371,8 @@ export function FileSetRow({
           server-computed sentence as the Schedules card. */}
       <EffectiveScheduleLine effective={set.effectiveSchedule} />
 
+      <ItemChecksLine checks={checks} hasBackup={!!set.lastBackup} onChanged={onChecksChanged} />
+
       {/* Backups disclosure with the last-backup date on its row, as on the
           container card. */}
       <FileSetRestorePanel
@@ -1429,6 +1437,7 @@ export function Files() {
   const { t } = useT();
   const anomalies = useAnomalyItems();
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const itemChecks = useItemChecks();
   const restoreRequest = useRestoreRequest();
   const { push } = useToast();
   // Any backup, restore or replication in flight disables the bulk buttons.
@@ -1675,6 +1684,8 @@ export function Files() {
               index={i}
               anomaly={anomalies.find("files", s.id)}
               anomalyEnabled={anomalyEnabled}
+              checks={itemChecks.find("files", s.id)}
+              onChecksChanged={itemChecks.reload}
               restoreRequest={restoreRequest.item === s.name ? restoreRequest : undefined}
             />
           ))}

@@ -13,10 +13,13 @@ import { SelectField } from "../../components/SelectField";
 import { IconCheckCircle } from "../../components/Sidebar";
 import { RepoSource, SourceToggle, isOffsiteSource } from "../../components/SourceToggle";
 import { IconKey, IconPrune } from "../../components/glyphs";
+import { ProgressBar } from "../../components/ProgressBar";
+import { countProgressText, type ResolveName } from "../../lib/activityLog";
 import { useAdvanced } from "../../lib/advanced";
 import { heldTagLabels } from "../../lib/anomalies";
 import { Container, RestoreDrill, Settings, VM, checkDomain, getDrills, getStatus, listContainers, listVMs, pruneDomain, runDrill, tamperTest, unlockDomain } from "../../lib/api";
-import { useT } from "../../lib/i18n";
+import { useT, type TranslationKey } from "../../lib/i18n";
+import { STALE_MS, useProgress, type ProgressState } from "../../lib/progress";
 import { relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
@@ -41,6 +44,43 @@ export function IntegrityCard({
   hueIndex?: number;
 }) {
   const { advanced } = useAdvanced();
+  const progressMap = useProgress();
+  const resolveName: ResolveName = (key, params, count) => {
+    let s = t(key as TranslationKey, count);
+    for (const [name, value] of Object.entries(params ?? {})) s = s.split(`{${name}}`).join(value);
+    return s;
+  };
+  // A run keeps sending events, if only a repeat of its last one, so a bar
+  // that has heard nothing for STALE_MS belongs to a run that died, as when
+  // BombVault restarted under it. The clock ticks while a bar shows, because a
+  // dead run sends nothing that would re-render the card.
+  const [now, setNow] = useState(() => Date.now());
+  const liveKeys = Object.keys(progressMap).filter(
+    (k) => /^(verify|prune|drill):/.test(k) && progressMap[k].active && !progressMap[k].finished
+  );
+  const anyLive = liveKeys.length > 0;
+  useEffect(() => {
+    if (!anyLive) return;
+    const id = window.setInterval(() => setNow(Date.now()), 5000);
+    return () => window.clearInterval(id);
+  }, [anyLive]);
+
+  // The check, prune or restore check running for a domain, wherever it was
+  // started from: this card, the schedule or another tab.
+  function runningOf(domain: string): { state: ProgressState; label: string } | null {
+    const ops: [string, TranslationKey][] = [
+      [`verify:${domain}`, "integrity.checking"],
+      [`prune:${domain}`, "integrity.pruning"],
+      [`drill:${domain}`, "verify.running"],
+    ];
+    for (const [key, labelKey] of ops) {
+      const state = progressMap[key];
+      if (state?.active && !state.finished && Math.max(now, Date.now()) - state.lastSeen <= STALE_MS) {
+        return { state, label: t(labelKey) };
+      }
+    }
+    return null;
+  }
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
   type ActState = "idle" | "busy" | "ok" | "fail";
@@ -131,6 +171,36 @@ export function IntegrityCard({
     // domains is a stable literal list; re-run only when the source changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source]);
+
+  // A restore check that ends while the card is open, started here or
+  // anywhere else, has just written the domain's newest result.
+  const liveDrills = liveKeys.filter((k) => k.startsWith("drill:")).sort().join("|");
+  const [prevDrills, setPrevDrills] = useState(liveDrills);
+  const [endedDrills, setEndedDrills] = useState<string[]>([]);
+  if (prevDrills !== liveDrills) {
+    const ended = prevDrills
+      .split("|")
+      .filter((k) => k && !liveDrills.split("|").includes(k))
+      .map((k) => k.slice("drill:".length));
+    setPrevDrills(liveDrills);
+    if (ended.length) setEndedDrills(ended);
+  }
+  useEffect(() => {
+    if (!endedDrills.length) return;
+    let active = true;
+    for (const domain of endedDrills) {
+      getDrills(domain, source, 1)
+        .then((r) => {
+          if (active && r.ok) setLastDrill((m) => ({ ...m, [domain]: r.latest ?? null }));
+        })
+        .catch(() => undefined);
+    }
+    return () => {
+      active = false;
+    };
+    // Only the ended runs start a read; a source change has its own above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endedDrills]);
 
   // Load each domain's last tamper-test verdict once, so the append-only row's
   // idle caption mirrors the drill row's "last verified" line. The check always
@@ -400,6 +470,7 @@ export function IntegrityCard({
           const drill = lastDrill[domain];
           const tRes = tamper[domain];
           const tLast = lastTamper[domain];
+          const live = runningOf(domain);
           return (
             <div key={domain} className="flex flex-col gap-1">
               <div className="flex items-center gap-2 flex-wrap">
@@ -487,6 +558,15 @@ export function IntegrityCard({
                   )
                 )}
               </div>
+
+              {live && (
+                <ProgressBar
+                  inline
+                  active
+                  percent={live.state.total ? live.state.percent : 0}
+                  label={[live.label, countProgressText(resolveName, live.state)].filter(Boolean).join(" ")}
+                />
+              )}
 
               {/* The append-only check always probes the off-site repo,
                   whatever the source. The glyph is its own node so RTL

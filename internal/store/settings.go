@@ -272,6 +272,9 @@ type Settings struct {
 	// collapsed, shrank sharply or was rewritten, until the finding is
 	// acknowledged or marked as expected.
 	AnomalyRetentionHold bool
+	// StartTestEnabled adds a start test of one container to every scheduled
+	// restore check: restored into an isolated copy, started and checked.
+	StartTestEnabled bool
 }
 
 // settingsQuerier and settingsExecer are satisfied by both *sql.DB and *sql.Tx,
@@ -323,7 +326,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       totp_secret, totp_enabled, totp_recovery,
 		       anomaly_enabled, anomaly_sensitivity, anomaly_notify_min, anomaly_retention_hold,
 		       retention_keep_yearly, offsite_retention_keep_yearly,
-		       repo_compression
+		       repo_compression, start_test_enabled
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -333,7 +336,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	var catchUpMissed, watchdogEnabled, exportEncryptEnabled, receiverEnabled int
 	var restartHealthWait, reconcileUnraidUpdateStatus, perItemSchedules int
 	var fleetEnabled, pullEnabled, dbDumpsEnabled, totpEnabled int
-	var anomalyEnabled, anomalyRetentionHold int
+	var anomalyEnabled, anomalyRetentionHold, startTestEnabled int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled, &zfsEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.ZFSPath, &s.RestoreFolder,
@@ -367,6 +370,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&anomalyEnabled, &s.AnomalySensitivity, &s.AnomalyNotifyMin, &anomalyRetentionHold,
 		&s.RetentionKeepYearly, &s.OffsiteRetentionKeepYearly,
 		&s.Compression,
+		&startTestEnabled,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing: run Migrate first")
@@ -407,6 +411,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	s.DBDumpsEnabled = dbDumpsEnabled != 0
 	s.AnomalyEnabled = anomalyEnabled != 0
 	s.AnomalyRetentionHold = anomalyRetentionHold != 0
+	s.StartTestEnabled = startTestEnabled != 0
 	return s, nil
 }
 
@@ -567,7 +572,8 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  anomaly_retention_hold       = ?,
 		  retention_keep_yearly        = ?,
 		  offsite_retention_keep_yearly = ?,
-		  repo_compression             = ?
+		  repo_compression             = ?,
+		  start_test_enabled           = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -620,6 +626,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		s.RetentionKeepYearly,
 		s.OffsiteRetentionKeepYearly,
 		s.Compression,
+		boolInt(s.StartTestEnabled),
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

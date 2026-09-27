@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder, setVMRepo, getSettings } from "../lib/api";
-import type { AnomalyItem, VM, Snapshot, VmOrder, Run } from "../lib/api";
+import type { AnomalyItem, ItemChecks, VM, Snapshot, VmOrder, Run } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FilterPopover } from "../components/FilterPopover";
 import { ChipFilter, loadStoredFilterKey } from "../components/ChipFilter";
@@ -48,6 +48,8 @@ import { MobileDetailShell } from "../components/mobile/MobileDetailShell";
 import { RunDetailSheet } from "../components/mobile/RunDetailSheet";
 import { MobileSectionLabel } from "../components/mobile/MobileSectionLabel";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemChecksLine } from "../components/ItemChecksLine";
+import { useItemChecks } from "../lib/useItemChecks";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
 import { findingSnapshotId } from "../lib/anomalies";
 import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
@@ -649,6 +651,8 @@ export function VMRow({
   anomaly,
   anomalyEnabled = false,
   restoreRequest,
+  checks,
+  onChecksChanged,
 }: {
   vm: VM;
   t: T;
@@ -664,6 +668,8 @@ export function VMRow({
   /** A finding's restore link for this VM: the card opens its backups and
    *  comes into view. */
   restoreRequest?: RestoreRequest;
+  checks?: ItemChecks;
+  onChecksChanged?: () => void;
 }) {
   const installed = vm.state !== "not-installed";
   const progressMap = useProgress();
@@ -819,6 +825,8 @@ export function VMRow({
           />
         </div>
       </div>
+
+      <ItemChecksLine checks={checks} hasBackup={vm.lastBackup != null} onChanged={onChecksChanged} />
 
       {/* ContainerRow's disclosure block with a single section. */}
       <div className="flex flex-col gap-2">
@@ -1313,6 +1321,7 @@ export function VMs() {
   const isDesktop = useIsDesktop();
   const anomalies = useAnomalyItems();
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const itemChecks = useItemChecks();
   const restoreRequest = useRestoreRequest();
   // Read directly rather than relying on <Advanced>: the order panel's
   // hueIndex={nextHue()} is evaluated when the element is built, even if
@@ -1676,6 +1685,8 @@ export function VMs() {
               anomaly={anomalies.find("vm", v.libvirtName)}
               anomalyEnabled={anomalyEnabled}
               restoreRequest={restoreRequest.item === v.libvirtName ? restoreRequest : undefined}
+              checks={itemChecks.find("vm", v.libvirtName)}
+              onChecksChanged={itemChecks.reload}
             />
           ))}
         </div>
@@ -1699,6 +1710,8 @@ export function VMs() {
               anomaly={anomalies.find("vm", v.libvirtName)}
               anomalyEnabled={anomalyEnabled}
               restoreRequest={restoreRequest.item === v.libvirtName ? restoreRequest : undefined}
+              checks={itemChecks.find("vm", v.libvirtName)}
+              onChecksChanged={itemChecks.reload}
             />
           ))}
         </div>

@@ -203,3 +203,23 @@ func TestContainerSummaryMappingCarriesMountsAndLabels(t *testing.T) {
 		}
 	})
 }
+
+func TestRecreateKeepsTheContainersOwnHealthcheck(t *testing.T) {
+	resp := container.InspectResponse{
+		ContainerJSONBase: &container.ContainerJSONBase{ID: "abc", Name: "/db"},
+		Config: &container.Config{
+			Image:       "postgres:16",
+			Healthcheck: &container.HealthConfig{Test: []string{"CMD-SHELL", "pg_isready"}, Retries: 5},
+		},
+	}
+	in := mapInspect(resp)
+	cfg, _ := buildCreateConfig(in)
+	if cfg.Healthcheck == nil || cfg.Healthcheck.Test[1] != "pg_isready" || cfg.Healthcheck.Retries != 5 {
+		t.Fatalf("healthcheck = %+v", cfg.Healthcheck)
+	}
+
+	resp.Config.Healthcheck = nil
+	if cfg, _ := buildCreateConfig(mapInspect(resp)); cfg.Healthcheck != nil {
+		t.Fatal("without a healthcheck of its own, the image's applies")
+	}
+}

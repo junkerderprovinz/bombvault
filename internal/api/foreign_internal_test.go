@@ -185,6 +185,15 @@ func (f *foreignRecordingEngine) RestoreInclude(_ context.Context, repo, snapsho
 	return nil
 }
 
+func (f *foreignRecordingEngine) RestoreVerify(_ context.Context, repo, snapshotID string, files []string, target string, m restic.Mode) error {
+	f.record("RestoreVerify")
+	f.recordMode(m)
+	f.mu.Lock()
+	f.restores = append(f.restores, "RestoreVerify|"+repo+"|"+snapshotID+"|"+strings.Join(files, ",")+"->"+target)
+	f.mu.Unlock()
+	return nil
+}
+
 func (f *foreignRecordingEngine) RestoreSubtreeTo(_ context.Context, repo, snapshotID, subtreePath, target string, m restic.Mode) error {
 	f.record("RestoreSubtreeTo")
 	f.recordMode(m)

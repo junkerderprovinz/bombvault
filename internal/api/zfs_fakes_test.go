@@ -271,6 +271,11 @@ func (e *zfsFakeEngine) RestoreInclude(_ context.Context, _, snapshotID, include
 	return nil
 }
 
+func (e *zfsFakeEngine) RestoreVerify(_ context.Context, _, snapshotID string, files []string, target string, _ restic.Mode) error {
+	e.recordRestore("RestoreVerify|" + snapshotID + "|" + strings.Join(files, ",") + "->" + target)
+	return nil
+}
+
 func (e *zfsFakeEngine) RestoreSubtreeTo(_ context.Context, _, snapshotID, subtreePath, target string, _ restic.Mode) error {
 	e.recordRestore("RestoreSubtreeTo|" + snapshotID + "|" + subtreePath + "->" + target)
 	return nil

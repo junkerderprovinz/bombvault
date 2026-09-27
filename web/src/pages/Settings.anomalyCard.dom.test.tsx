@@ -11,6 +11,14 @@ import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
 
+// The card follows live progress, and jsdom has no EventSource.
+class FakeEventSource {
+  onmessage: ((ev: MessageEvent) => void) | null = null;
+  close() {
+    /* no-op */
+  }
+}
+
 function baseSettings(over: Partial<Settings> = {}): Settings {
   return {
     encryptionEnabled: true,
@@ -149,6 +157,7 @@ async function renderWithSummary() {
 let scrolled: Element[] = [];
 
 beforeEach(() => {
+  vi.stubGlobal("EventSource", FakeEventSource);
   stubBrowser();
   putAnswer = { ok: true };
   putBodies.length = 0;
