@@ -38,6 +38,12 @@ func domainAt(p store.Place, rows []store.OffsiteTarget, homePlace, domain strin
 	return a
 }
 
+// repositoryTaken reports whether the place is itself a repository that
+// already serves a row or a domain path, and so takes no second role.
+func repositoryTaken(p store.Place, rows []store.OffsiteTarget, homes map[string]string) bool {
+	return placeIsRepository(p, rows) && (len(rows) > 0 || slices.Contains(slices.Collect(maps.Values(homes)), p.ID))
+}
+
 // placeRepoFor is the repository a place stands for as the home of a domain's
 // items: the domain path at its home place, the domain's repository there,
 // the direct repository beside the domain's target there, or a new named
@@ -86,10 +92,10 @@ func (s *Service) placeRepoFor(ctx context.Context, p store.Place, domain string
 	// repository, so it is made without a domain, and only while the base
 	// serves nothing else.
 	named := domain
-	if placeIsRepository(p, rows) {
-		if len(rows) > 0 || slices.Contains(slices.Collect(maps.Values(homes)), p.ID) {
-			return "", "", errPlaceIsRepository
-		}
+	switch {
+	case repositoryTaken(p, rows, homes):
+		return "", "", errPlaceIsRepository
+	case placeIsRepository(p, rows):
 		named = ""
 	}
 	if !create {
@@ -362,7 +368,7 @@ func (s *Service) adoptSlot(p store.Place, rows []store.OffsiteTarget, homes map
 		if _, offered := p.Folders[domain]; domain != "" && !offered {
 			return "", "", store.ErrPlaceDomainUnavailable
 		}
-		if len(rows) > 0 || slices.Contains(slices.Collect(maps.Values(homes)), p.ID) {
+		if repositoryTaken(p, rows, homes) {
 			return "", "", errPlaceAddressTaken
 		}
 		return "", "", nil
