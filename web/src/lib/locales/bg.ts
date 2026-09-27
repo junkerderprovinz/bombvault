@@ -549,6 +549,21 @@ const bg: Partial<Translations> = {
   "streaming.limitHint": "Ако нормалният лимит е по-нисък, той остава.",
   "streaming.hold": "Обратно към нормалното след (мин)",
   "streaming.holdHint": "Колко дълго трафикът трябва да остане под прага, преди нормалният лимит да се върне.",
+  "idle.toggle": "Изчакай приложението да утихне",
+  "idle.toggleHint": "Планираното архивиране на този контейнер изчаква, докато приложението е заето, и започва, щом утихне или когато изтече времето за изчакване. Медиен сървър е в покой, когато не стриймва, всяко друго приложение, когато процесорът и трафикът остават ниски (Настройки, Графици). Ръчните архивирания никога не чакат.",
+  "idle.maxHours": "Изчаквай най-много (часа)",
+  "idle.waiting": "Чака покой: {reason}. Започва най-късно в {time}.",
+  "idle.reasonStreaming": "тече стрийминг",
+  "idle.reasonCpu": "процесорът е зает",
+  "idle.reasonNetwork": "мрежата е заета",
+  "idle.reasonMeasuring": "още се измерва",
+  "idle.title": "Покой преди архивиране",
+  "idle.hint": "Кога приложението се смята за спокойно за контейнер, чието планирано архивиране изчаква това. Медиен сървър е в покой, когато не стриймва. За контейнер в мрежата на хоста се брои само процесорът.",
+  "idle.cpu": "Процесор под (% от ядро)",
+  "idle.cpuHint": "100 е едно цяло ядро, както го показва docker stats.",
+  "idle.net": "Трафик под (Mbit/s)",
+  "idle.quiet": "Поне (мин)",
+  "idle.quietHint": "Колко дълго процесорът и трафикът трябва да останат под двете граници.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Наблюдение (Prometheus)",
@@ -1956,6 +1971,7 @@ const bg: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Възстановяване на {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Архивиране на всички {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Качване извън обекта — {domain} …",
+  "activityLog.lineWaitingIdle": "Архивирането на {name} чака покой: {reason}. Започва най-късно в {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Качване извън обекта — {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Качване извън обекта — {domain} … {percent}% общо (снапшот {index} от {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Качване извън обекта — {domain} … {percent}% общо (снапшот {index} от {total}) · {duration}",
@@ -2258,6 +2274,7 @@ const bg: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Криптиране на експорта",
   "settingsIO.group.anomalies": "Откриване на аномалии",
   "settingsIO.group.streaming": "Стриймингът с предимство",
+  "settingsIO.group.idle": "Покой преди архивиране",
 
   // Backup order
   "backupOrder.title": "Ред на архивиране",

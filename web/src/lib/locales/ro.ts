@@ -900,6 +900,21 @@ const ro: Partial<Translations> = {
   "streaming.limitHint": "Dacă limita normală e mai mică, rămâne ea.",
   "streaming.hold": "Revenire la normal după (min)",
   "streaming.holdHint": "Cât timp trebuie să rămână traficul sub prag înainte să revină limita normală.",
+  "idle.toggle": "Așteaptă până când aplicația e inactivă",
+  "idle.toggleHint": "O copie programată a acestui container așteaptă cât timp aplicația e ocupată și pornește imediat ce devine inactivă sau când se termină așteptarea. Un server media e inactiv când nu face streaming, orice altă aplicație când CPU și traficul rămân scăzute (Setări, Programări). Copiile manuale nu așteaptă niciodată.",
+  "idle.maxHours": "Așteaptă cel mult (ore)",
+  "idle.waiting": "Așteaptă inactivitatea: {reason}. Pornește cel târziu la {time}.",
+  "idle.reasonStreaming": "rulează un stream",
+  "idle.reasonCpu": "CPU este ocupat",
+  "idle.reasonNetwork": "rețeaua este ocupată",
+  "idle.reasonMeasuring": "încă se măsoară",
+  "idle.title": "Inactivitate înainte de copie",
+  "idle.hint": "Când o aplicație contează ca inactivă pentru un container a cărui copie programată așteaptă asta. Un server media e inactiv când nu face streaming. Pentru un container din rețeaua gazdei contează doar CPU.",
+  "idle.cpu": "CPU sub (% dintr-un nucleu)",
+  "idle.cpuHint": "100 înseamnă un nucleu întreg, cum îl arată docker stats.",
+  "idle.net": "Trafic sub (Mbit/s)",
+  "idle.quiet": "Cel puțin (min)",
+  "idle.quietHint": "Cât timp trebuie să rămână CPU și traficul sub ambele limite.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Monitorizare (Prometheus)",
@@ -1746,6 +1761,7 @@ const ro: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Se restaurează {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Se face backup la toate {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Încărcare externă: {domain} …",
+  "activityLog.lineWaitingIdle": "Copia pentru {name} așteaptă inactivitatea: {reason}. Pornește cel târziu la {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Încărcare externă: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Încărcare externă: {domain} … {percent}% în total (instantaneul {index} din {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Încărcare externă: {domain} … {percent}% în total (instantaneul {index} din {total}) · {duration}",
@@ -2091,6 +2107,7 @@ const ro: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Criptarea exporturilor",
   "settingsIO.group.anomalies": "Detectarea anomaliilor",
   "settingsIO.group.streaming": "Întâi streamingul",
+  "settingsIO.group.idle": "Inactivitate înainte de copie",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Panou receptor",

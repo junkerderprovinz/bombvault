@@ -920,6 +920,21 @@ const el: Partial<Translations> = {
   "streaming.limitHint": "Αν το κανονικό όριο είναι χαμηλότερο, ισχύει αυτό.",
   "streaming.hold": "Επιστροφή στο κανονικό μετά από (λεπτά)",
   "streaming.holdHint": "Πόση ώρα πρέπει η κίνηση να μείνει κάτω από το όριο πριν επιστρέψει το κανονικό όριο.",
+  "idle.toggle": "Αναμονή μέχρι να ηρεμήσει η εφαρμογή",
+  "idle.toggleHint": "Ένα προγραμματισμένο αντίγραφο ασφαλείας αυτού του container περιμένει όσο η εφαρμογή είναι απασχολημένη και ξεκινά μόλις ηρεμήσει ή όταν τελειώσει η αναμονή. Ένας διακομιστής πολυμέσων ηρεμεί όταν δεν κάνει streaming, κάθε άλλη εφαρμογή όταν CPU και κίνηση μένουν χαμηλά (Ρυθμίσεις, Προγραμματισμοί). Τα χειροκίνητα αντίγραφα δεν περιμένουν ποτέ.",
+  "idle.maxHours": "Αναμονή το πολύ (ώρες)",
+  "idle.waiting": "Περιμένει ηρεμία: {reason}. Ξεκινά το αργότερο στις {time}.",
+  "idle.reasonStreaming": "εκτελείται stream",
+  "idle.reasonCpu": "η CPU είναι απασχολημένη",
+  "idle.reasonNetwork": "το δίκτυο είναι απασχολημένο",
+  "idle.reasonMeasuring": "γίνεται ακόμη μέτρηση",
+  "idle.title": "Ηρεμία πριν από το αντίγραφο",
+  "idle.hint": "Πότε μια εφαρμογή θεωρείται ήρεμη για container του οποίου το προγραμματισμένο αντίγραφο περιμένει γι' αυτό. Ένας διακομιστής πολυμέσων είναι ήρεμος όταν δεν κάνει streaming. Για container στο δίκτυο του host μετρά μόνο η CPU.",
+  "idle.cpu": "CPU κάτω από (% ενός πυρήνα)",
+  "idle.cpuHint": "Το 100 είναι ένας ολόκληρος πυρήνας, όπως το δείχνει το docker stats.",
+  "idle.net": "Κίνηση κάτω από (Mbit/s)",
+  "idle.quiet": "Για τουλάχιστον (λεπτά)",
+  "idle.quietHint": "Πόση ώρα πρέπει CPU και κίνηση να μείνουν κάτω και από τα δύο όρια.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Παρακολούθηση (Prometheus)",
@@ -1743,6 +1758,7 @@ const el: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Επαναφορά {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Δημιουργία αντιγράφου όλων {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Μεταφόρτωση εκτός τόπου: {domain} …",
+  "activityLog.lineWaitingIdle": "Το αντίγραφο του {name} περιμένει ηρεμία: {reason}. Ξεκινά το αργότερο στις {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Μεταφόρτωση εκτός τόπου: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Μεταφόρτωση εκτός τόπου: {domain} … {percent}% συνολικά (στιγμιότυπο {index} από {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Μεταφόρτωση εκτός τόπου: {domain} … {percent}% συνολικά (στιγμιότυπο {index} από {total}) · {duration}",
@@ -2088,6 +2104,7 @@ const el: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Κρυπτογράφηση εξαγωγών",
   "settingsIO.group.anomalies": "Εντοπισμός ανωμαλιών",
   "settingsIO.group.streaming": "Πρώτα το streaming",
+  "settingsIO.group.idle": "Ηρεμία πριν από το αντίγραφο",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Πίνακας δέκτη",

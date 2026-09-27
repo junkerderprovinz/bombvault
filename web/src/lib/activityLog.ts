@@ -4,7 +4,8 @@
 // clock as arguments, so the merge, dedupe and ordering can be tested without
 // React, i18n or a live stream.
 
-import type { Run, ScheduleNext } from "./api";
+import type { IdleWait, Run, ScheduleNext } from "./api";
+import { IDLE_REASON_KEYS } from "./idleWaits";
 import { dumpLeftRunning, dumpWasCancelled, importHadErrors } from "./dbdump";
 import type { OffsiteThrottle, ProgressMap, ProgressStage, ProgressState } from "./progress";
 import { offsiteRunProgress, STALE_MS } from "./progress";
@@ -600,11 +601,29 @@ function buildIdleLine(scheduleNext: ScheduleNext[], resolveName: ResolveName, n
   return { id: "idle-next", atMs: now, status: "info", text, domain: "", kind: "", live: false, idle: true };
 }
 
+/** One line per scheduled backup held back until its app is idle. */
+function buildWaitLines(waits: IdleWait[], resolveName: ResolveName): LogLine[] {
+  return waits.map((w) => ({
+    id: `wait:${w.domain}:${w.name}`,
+    atMs: w.since * 1000,
+    status: "info",
+    text: resolveName("activityLog.lineWaitingIdle", {
+      name: w.name,
+      reason: resolveName(IDLE_REASON_KEYS[w.reason] ?? IDLE_REASON_KEYS.measuring),
+      time: formatClockTime(w.deadline, false),
+    }),
+    domain: normalizeDomain(w.domain),
+    kind: "backup",
+    live: false,
+  }));
+}
+
 /**
- * buildLogLines merges finished runs, live progress and the next scheduled
- * fire into one deduped list: history oldest first, then the live lines, and
- * an idle line at the end only when nothing is running. `liveNow` defaults to
- * `now`; buildLiveLines explains why the off-site line wants a faster clock.
+ * buildLogLines merges finished runs, live progress, the backups waiting for
+ * an idle app and the next scheduled fire into one deduped list: history
+ * oldest first, then the waiting lines, then the live lines, and an idle line
+ * at the end only when nothing is running. `liveNow` defaults to `now`;
+ * buildLiveLines explains why the off-site line wants a faster clock.
  */
 export function buildLogLines(
   runs: Run[],
@@ -612,7 +631,8 @@ export function buildLogLines(
   scheduleNext: ScheduleNext[],
   resolveName: ResolveName,
   now: number,
-  liveNow: number = now
+  liveNow: number = now,
+  waits: IdleWait[] = []
 ): LogLine[] {
   // The runs the backend still reports as running, keyed with the same
   // signatures buildHistoryLines uses, so a stale live line can ask whether
@@ -634,10 +654,11 @@ export function buildLogLines(
   const orderedHistory = historyLines.slice().sort((a, b) => a.atMs - b.atMs);
   const orderedLive = liveLines.slice().sort((a, b) => a.atMs - b.atMs);
 
-  const result = [...orderedHistory, ...orderedLive];
+  const waitLines = buildWaitLines(waits, resolveName).sort((a, b) => a.atMs - b.atMs);
+  const result = [...orderedHistory, ...waitLines, ...orderedLive];
 
   if (orderedLive.length === 0) {
-    const idle = buildIdleLine(scheduleNext, resolveName, now, orderedHistory.length > 0);
+    const idle = buildIdleLine(scheduleNext, resolveName, now, orderedHistory.length > 0 || waitLines.length > 0);
     if (idle) result.push(idle);
   }
 

@@ -892,6 +892,21 @@ const pl: Partial<Translations> = {
   "streaming.limitHint": "Jeśli zwykły limit jest niższy, pozostaje.",
   "streaming.hold": "Powrót do normy po (min)",
   "streaming.holdHint": "Jak długo ruch musi pozostać poniżej progu, zanim wróci zwykły limit.",
+  "idle.toggle": "Czekaj, aż aplikacja będzie bezczynna",
+  "idle.toggleHint": "Zaplanowana kopia zapasowa tego kontenera czeka, dopóki aplikacja jest zajęta, i rusza, gdy tylko jest bezczynna albo gdy minie czas oczekiwania. Serwer multimediów jest bezczynny, gdy nie streamuje, każda inna aplikacja, gdy CPU i ruch pozostają niskie (Ustawienia, Harmonogramy). Kopie ręczne nigdy nie czekają.",
+  "idle.maxHours": "Czekaj najwyżej (godz.)",
+  "idle.waiting": "Czeka na bezczynność: {reason}. Rusza najpóźniej o {time}.",
+  "idle.reasonStreaming": "trwa stream",
+  "idle.reasonCpu": "CPU jest zajęte",
+  "idle.reasonNetwork": "sieć jest zajęta",
+  "idle.reasonMeasuring": "trwa pomiar",
+  "idle.title": "Bezczynność przed kopią",
+  "idle.hint": "Kiedy aplikacja jest uznawana za bezczynną dla kontenera, którego zaplanowana kopia na to czeka. Serwer multimediów jest bezczynny, gdy nie streamuje. Dla kontenera w sieci hosta liczy się tylko CPU.",
+  "idle.cpu": "CPU poniżej (% rdzenia)",
+  "idle.cpuHint": "100 to jeden cały rdzeń, tak jak pokazuje docker stats.",
+  "idle.net": "Ruch poniżej (Mbit/s)",
+  "idle.quiet": "Przez co najmniej (min)",
+  "idle.quietHint": "Jak długo CPU i ruch muszą pozostać poniżej obu limitów.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Monitorowanie (Prometheus)",
@@ -1738,6 +1753,7 @@ const pl: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Przywracanie {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Tworzenie kopii wszystkich {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Wysyłka poza siedzibę: {domain} …",
+  "activityLog.lineWaitingIdle": "Kopia {name} czeka na bezczynność: {reason}. Rusza najpóźniej o {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Wysyłka poza siedzibę: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Wysyłka poza siedzibę: {domain} … {percent}% łącznie (migawka {index} z {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Wysyłka poza siedzibę: {domain} … {percent}% łącznie (migawka {index} z {total}) · {duration}",
@@ -2083,6 +2099,7 @@ const pl: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Szyfrowanie eksportów",
   "settingsIO.group.anomalies": "Wykrywanie anomalii",
   "settingsIO.group.streaming": "Najpierw streaming",
+  "settingsIO.group.idle": "Bezczynność przed kopią",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Panel odbiornika",

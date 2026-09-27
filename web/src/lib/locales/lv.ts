@@ -549,6 +549,21 @@ const lv: Partial<Translations> = {
   "streaming.limitHint": "Ja parastais ierobežojums ir zemāks, tas paliek.",
   "streaming.hold": "Atpakaļ uz parasto pēc (min)",
   "streaming.holdHint": "Cik ilgi datplūsmai jāpaliek zem sliekšņa, pirms atgriežas parastais ierobežojums.",
+  "idle.toggle": "Gaidīt, līdz lietotne ir dīkstāvē",
+  "idle.toggleHint": "Šī konteinera plānotā dublēšana gaida, kamēr lietotne ir aizņemta, un sākas, tiklīdz tā ir dīkstāvē vai beidzas gaidīšanas laiks. Mediju serveris ir dīkstāvē, kad nestraumē, jebkura cita lietotne, kad CPU un datplūsma paliek zemi (Iestatījumi, Grafiki). Manuālās dublēšanas nekad negaida.",
+  "idle.maxHours": "Gaidīt ne ilgāk kā (stundas)",
+  "idle.waiting": "Gaida dīkstāvi: {reason}. Sāksies vēlākais {time}.",
+  "idle.reasonStreaming": "notiek straume",
+  "idle.reasonCpu": "CPU ir aizņemts",
+  "idle.reasonNetwork": "tīkls ir aizņemts",
+  "idle.reasonMeasuring": "vēl mēra",
+  "idle.title": "Dīkstāve pirms dublēšanas",
+  "idle.hint": "Kad lietotne tiek uzskatīta par dīkstāvē esošu konteineram, kura plānotā dublēšana to gaida. Mediju serveris ir dīkstāvē, kad nestraumē. Konteineram resursdatora tīklā skaitās tikai CPU.",
+  "idle.cpu": "CPU zem (% no kodola)",
+  "idle.cpuHint": "100 ir viens vesels kodols, kā to rāda docker stats.",
+  "idle.net": "Datplūsma zem (Mbit/s)",
+  "idle.quiet": "Vismaz (min)",
+  "idle.quietHint": "Cik ilgi CPU un datplūsmai jāpaliek zem abām robežām.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Uzraudzība (Prometheus)",
@@ -1956,6 +1971,7 @@ const lv: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Atjauno {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Dublē visus {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Attālināta augšupielāde: {domain} …",
+  "activityLog.lineWaitingIdle": "{name} dublēšana gaida dīkstāvi: {reason}. Sāksies vēlākais {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Attālināta augšupielāde: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Attālināta augšupielāde: {domain} … {percent}% kopā (momentuzņēmums {index} no {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Attālināta augšupielāde: {domain} … {percent}% kopā (momentuzņēmums {index} no {total}) · {duration}",
@@ -2258,6 +2274,7 @@ const lv: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Eksporta šifrēšana",
   "settingsIO.group.anomalies": "Anomāliju noteikšana",
   "settingsIO.group.streaming": "Straumēšana pirmajā vietā",
+  "settingsIO.group.idle": "Dīkstāve pirms dublēšanas",
 
   // Backup order
   "backupOrder.title": "Rezerves kopēšanas secība",

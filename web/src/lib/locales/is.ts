@@ -549,6 +549,21 @@ const is: Partial<Translations> = {
   "streaming.limitHint": "Ef venjulegu mörkin eru lægri halda þau sér.",
   "streaming.hold": "Aftur í venjulegt eftir (mín.)",
   "streaming.holdHint": "Hve lengi umferðin þarf að haldast undir þröskuldinum áður en venjulegu mörkin koma aftur.",
+  "idle.toggle": "Bíða þar til forritið er aðgerðalaust",
+  "idle.toggleHint": "Áætluð afritun þessa gáms bíður meðan forritið er upptekið og byrjar þegar það er aðgerðalaust, eða þegar biðtíminn er liðinn. Margmiðlunarþjónn er aðgerðalaus þegar hann streymir ekki, önnur forrit þegar örgjörvi og umferð haldast lág (Stillingar, Tímaáætlanir). Handvirk afritun bíður aldrei.",
+  "idle.maxHours": "Bíða í mesta lagi (klst.)",
+  "idle.waiting": "Bíður eftir ró: {reason}. Byrjar í síðasta lagi kl. {time}.",
+  "idle.reasonStreaming": "streymi er í gangi",
+  "idle.reasonCpu": "örgjörvinn er upptekinn",
+  "idle.reasonNetwork": "netið er upptekið",
+  "idle.reasonMeasuring": "enn að mæla",
+  "idle.title": "Ró fyrir afritun",
+  "idle.hint": "Hvenær forrit telst aðgerðalaust fyrir gám sem áætluð afritun bíður eftir. Margmiðlunarþjónn er aðgerðalaus þegar hann streymir ekki. Fyrir gám á neti hýsils telst aðeins örgjörvinn.",
+  "idle.cpu": "Örgjörvi undir (% af kjarna)",
+  "idle.cpuHint": "100 er einn heill kjarni, eins og docker stats sýnir.",
+  "idle.net": "Umferð undir (Mbit/s)",
+  "idle.quiet": "Í að minnsta kosti (mín.)",
+  "idle.quietHint": "Hve lengi örgjörvi og umferð þurfa að haldast undir báðum mörkunum.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Vöktun (Prometheus)",
@@ -1956,6 +1971,7 @@ const is: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Endurheimti {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Afrita öll {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Fjarlægt uppstreymi: {domain} …",
+  "activityLog.lineWaitingIdle": "Afritun {name} bíður eftir ró: {reason}. Byrjar í síðasta lagi kl. {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Fjarlægt uppstreymi: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Fjarlægt uppstreymi: {domain} … {percent}% alls (snapshot {index} af {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Fjarlægt uppstreymi: {domain} … {percent}% alls (snapshot {index} af {total}) · {duration}",
@@ -2258,6 +2274,7 @@ const is: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Dulkóðun útflutnings",
   "settingsIO.group.anomalies": "Frávikagreining",
   "settingsIO.group.streaming": "Streymi fyrst",
+  "settingsIO.group.idle": "Ró fyrir afritun",
 
   // Backup order
   "backupOrder.title": "Röð afritunar",

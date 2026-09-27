@@ -923,6 +923,21 @@ const ar: Partial<Translations> = {
   "streaming.limitHint": "إذا كان الحد العادي أقل، يبقى هو.",
   "streaming.hold": "العودة إلى العادي بعد (دقيقة)",
   "streaming.holdHint": "المدة التي يجب أن تبقى فيها حركة المرور تحت العتبة قبل عودة الحد العادي.",
+  "idle.toggle": "انتظر حتى يهدأ التطبيق",
+  "idle.toggleHint": "ينتظر النسخ الاحتياطي المجدول لهذه الحاوية ما دام التطبيق مشغولًا، ويبدأ عندما يهدأ أو عند انتهاء مدة الانتظار. يكون خادم الوسائط هادئًا حين لا يبث، وأي تطبيق آخر حين يبقى المعالج وحركة المرور منخفضين (الإعدادات، الجداول). النسخ اليدوية لا تنتظر أبدًا.",
+  "idle.maxHours": "الانتظار بحد أقصى (ساعات)",
+  "idle.waiting": "ينتظر الهدوء: {reason}. يبدأ في موعد أقصاه {time}.",
+  "idle.reasonStreaming": "بث جارٍ",
+  "idle.reasonCpu": "المعالج مشغول",
+  "idle.reasonNetwork": "الشبكة مشغولة",
+  "idle.reasonMeasuring": "القياس مستمر",
+  "idle.title": "الهدوء قبل النسخ الاحتياطي",
+  "idle.hint": "متى يُعد التطبيق هادئًا لحاوية ينتظر نسخها الاحتياطي المجدول ذلك. يُعد خادم الوسائط هادئًا حين لا يبث. للحاوية على شبكة المضيف يُحتسب المعالج فقط.",
+  "idle.cpu": "المعالج أقل من (% من نواة)",
+  "idle.cpuHint": "100 تعني نواة كاملة، كما يعرضها docker stats.",
+  "idle.net": "حركة المرور أقل من (Mbit/s)",
+  "idle.quiet": "لمدة لا تقل عن (دقيقة)",
+  "idle.quietHint": "المدة التي يجب أن يبقى فيها المعالج وحركة المرور تحت الحدين.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "المراقبة (Prometheus)",
@@ -1746,6 +1761,7 @@ const ar: Partial<Translations> = {
   "activityLog.lineRestoringItem": "جارٍ استعادة {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "جارٍ نسخ جميع {domain} احتياطيًا … {percent}%",
   "activityLog.lineOffsiteRunning": "رفع خارج الموقع: {domain} …",
+  "activityLog.lineWaitingIdle": "النسخ الاحتياطي لـ {name} ينتظر الهدوء: {reason}. يبدأ في موعد أقصاه {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "رفع خارج الموقع: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "رفع خارج الموقع: {domain} … {percent}% إجمالاً (اللقطة {index} من {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "رفع خارج الموقع: {domain} … {percent}% إجمالاً (اللقطة {index} من {total}) · {duration}",
@@ -2091,6 +2107,7 @@ const ar: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "تشفير التصدير",
   "settingsIO.group.anomalies": "اكتشاف الحالات الشاذة",
   "settingsIO.group.streaming": "البث أولًا",
+  "settingsIO.group.idle": "الهدوء قبل النسخ الاحتياطي",
 
   // Receiver dashboard
   "settings.receiverEnabled": "لوحة المستقبِل",

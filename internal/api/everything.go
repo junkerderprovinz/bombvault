@@ -251,6 +251,7 @@ func (s *Service) everythingRunContainers(ctx context.Context, runID string, set
 	targets = schedule.DomainRunTargets(targets, settings.PerItemSchedules)
 	skip := everythingSkips(ctx)
 	targets = slices.DeleteFunc(targets, func(t store.Target) bool { return skip[t.ID] })
+	targets = s.holdEverythingContainers(ctx, targets)
 	if !schedule.DomainRunHasWork(targets) {
 		return everythingDomainIdle(domain)
 	}

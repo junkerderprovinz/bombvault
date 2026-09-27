@@ -549,6 +549,21 @@ const hr: Partial<Translations> = {
   "streaming.limitHint": "Ako je uobičajeno ograničenje niže, ono ostaje.",
   "streaming.hold": "Natrag na normalno nakon (min)",
   "streaming.holdHint": "Koliko dugo promet mora ostati ispod praga prije nego što se vrati uobičajeno ograničenje.",
+  "idle.toggle": "Pričekaj da aplikacija miruje",
+  "idle.toggleHint": "Zakazana sigurnosna kopija ovog spremnika čeka dok je aplikacija zauzeta i počinje čim miruje ili kad čekanje istekne. Medijski poslužitelj miruje kad ne streama, svaka druga aplikacija kad CPU i promet ostanu niski (Postavke, Rasporedi). Ručne kopije nikad ne čekaju.",
+  "idle.maxHours": "Čekaj najviše (sati)",
+  "idle.waiting": "Čeka mirovanje: {reason}. Počinje najkasnije u {time}.",
+  "idle.reasonStreaming": "stream je u tijeku",
+  "idle.reasonCpu": "CPU je zauzet",
+  "idle.reasonNetwork": "mreža je zauzeta",
+  "idle.reasonMeasuring": "još se mjeri",
+  "idle.title": "Mirovanje prije kopije",
+  "idle.hint": "Kad se aplikacija smatra da miruje za spremnik čija zakazana kopija čeka na to. Medijski poslužitelj miruje kad ne streama. Za spremnik na mreži domaćina broji se samo CPU.",
+  "idle.cpu": "CPU ispod (% jezgre)",
+  "idle.cpuHint": "100 je jedna cijela jezgra, kako je prikazuje docker stats.",
+  "idle.net": "Promet ispod (Mbit/s)",
+  "idle.quiet": "Barem (min)",
+  "idle.quietHint": "Koliko dugo CPU i promet moraju ostati ispod obje granice.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Nadzor (Prometheus)",
@@ -1956,6 +1971,7 @@ const hr: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Vraćanje {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Izrada sigurnosne kopije svih {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Izvanmrežni prijenos: {domain} …",
+  "activityLog.lineWaitingIdle": "Kopija {name} čeka mirovanje: {reason}. Počinje najkasnije u {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Izvanmrežni prijenos: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Izvanmrežni prijenos: {domain} … {percent}% ukupno (snimka {index} od {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Izvanmrežni prijenos: {domain} … {percent}% ukupno (snimka {index} od {total}) · {duration}",
@@ -2258,6 +2274,7 @@ const hr: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Enkripcija izvoza",
   "settingsIO.group.anomalies": "Otkrivanje anomalija",
   "settingsIO.group.streaming": "Najprije streaming",
+  "settingsIO.group.idle": "Mirovanje prije kopije",
 
   // Backup order
   "backupOrder.title": "Redoslijed sigurnosne kopije",

@@ -395,7 +395,7 @@ func run() error {
 	// and reporting it as an error would put a red line in the log for the guard
 	// doing exactly its job.
 	scheduler.SetEverythingJob(func() error {
-		_, bErr := svc.BackupEverything(context.Background())
+		_, bErr := svc.BackupEverything(api.WithScheduledPass(context.Background()))
 		if errors.Is(bErr, api.ErrEverythingInFlight) {
 			log.Print("schedule: everything job skipped — a Backup Everything pass is already running")
 			return nil
@@ -425,6 +425,10 @@ func run() error {
 			log.Printf("schedule: stack backup: %v", err)
 		}
 	})
+	// A scheduled container whose app is busy waits outside its run, and is
+	// backed up on its own once the app is idle or the wait is over.
+	scheduler.SetIdleHold(svc.HoldForIdle)
+	svc.SetHeldContainerRun(scheduler.RunContainerNow)
 	// #95: batched off-site replication for scheduled multi-item domains. After the
 	// whole backup loop the domain is replicated ONCE (the per-item inline copy is
 	// suppressed via WithBulkReplicateSuppressed above), so a high-latency off-site

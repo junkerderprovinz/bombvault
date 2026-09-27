@@ -718,6 +718,11 @@ type Scheduler struct {
 	pullFn            func() error
 	fleetFn           func() error
 	everythingFn      func() error
+
+	// idleHold takes a scheduled container that has to wait for its app to be
+	// idle out of the run; see SetIdleHold.
+	idleHold IdleHoldFunc
+
 	// hcRunStart and hcRunFinish send one Healthchecks start and one result ping
 	// per scheduled multi-item run instead of one per item.
 	hcRunStart  func(domain string)
@@ -943,6 +948,34 @@ func (s *Scheduler) SetStacksAfterBulkJob(fn func(names []string)) {
 	s.stacksAfterBulkFn = fn
 }
 
+// IdleHoldFunc decides whether a scheduled container waits for its app to be
+// idle. When it returns true it has taken the container and calls run itself
+// once the app is idle or the wait is over, so the caller goes on without it.
+type IdleHoldFunc func(t store.Target, run func()) bool
+
+// SetIdleHold wires the wait for an idle app into the scheduled container runs.
+func (s *Scheduler) SetIdleHold(fn IdleHoldFunc) {
+	s.idleHold = fn
+}
+
+// holdBusy drops the containers whose app is busy from a scheduled run. Each
+// one runs later on its own, the way a per-item schedule does, so its wait
+// holds neither the domain lock nor the containers behind it.
+func (s *Scheduler) holdBusy(targets []store.Target) []store.Target {
+	if s.idleHold == nil {
+		return targets
+	}
+	out := make([]store.Target, 0, len(targets))
+	for _, t := range targets {
+		name := t.ContainerName
+		if t.IncludeInSchedule && s.idleHold(t, func() { s.RunContainerNow(name) }) {
+			continue
+		}
+		out = append(out, t)
+	}
+	return out
+}
+
 // SetDrillJob wires the scheduled restore-verification drills. drillFn is called
 // with (domain, source, kind) for each task from drillTasks. Call before Reload.
 func (s *Scheduler) SetDrillJob(drillFn func(domain, source, kind string) error) {
@@ -1149,7 +1182,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					log.Printf("schedule: containers job: list targets: %v", err)
 					return
 				}
-				targets = DomainRunTargets(targets, perItem)
+				targets = s.holdBusy(DomainRunTargets(targets, perItem))
 				if !DomainRunHasWork(targets) {
 					return
 				}
@@ -1688,27 +1721,45 @@ func (s *Scheduler) addPerItemEntry(spec, domain string, jobFn func()) error {
 	return nil
 }
 
-// runContainerItem backs up one container on its own cadence through the same
-// path as a domain run. It re-reads the targets so that a container removed or
-// excluded since the last reload is skipped.
+// runContainerItem backs up one container on its own cadence, unless its app is
+// busy and it waits for that first.
 func (s *Scheduler) runContainerItem(name string) {
+	one := s.scheduledContainer(name)
+	if one == nil {
+		return
+	}
+	if s.idleHold != nil && s.idleHold(*one, func() { s.RunContainerNow(name) }) {
+		return
+	}
+	s.backUpContainerItem(*one)
+}
+
+// RunContainerNow backs up one scheduled container through the same path as a
+// domain run, without waiting for its app. It re-reads the targets so that a
+// container removed or excluded since the fire is skipped.
+func (s *Scheduler) RunContainerNow(name string) {
+	if one := s.scheduledContainer(name); one != nil {
+		s.backUpContainerItem(*one)
+	}
+}
+
+func (s *Scheduler) scheduledContainer(name string) *store.Target {
 	targets, err := s.listFn()
 	if err != nil {
 		log.Printf("schedule: per-item containers job: list targets: %v", err)
-		return
+		return nil
 	}
-	var one *store.Target
 	for i := range targets {
-		if targets[i].ContainerName == name {
-			one = &targets[i]
-			break
+		if targets[i].ContainerName == name && targets[i].IncludeInSchedule {
+			return &targets[i]
 		}
 	}
-	if one == nil || !one.IncludeInSchedule {
-		return
-	}
+	return nil
+}
+
+func (s *Scheduler) backUpContainerItem(one store.Target) {
 	s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
-		return RunContainersJob([]store.Target{*one}, s.backup)
+		return RunContainersJob([]store.Target{one}, s.backup)
 	})
 	if s.pruneAfterBulkFn != nil {
 		s.pruneAfterBulkFn("containers")

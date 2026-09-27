@@ -918,6 +918,21 @@ const cs: Partial<Translations> = {
   "streaming.limitHint": "Pokud je běžný limit nižší, platí dál.",
   "streaming.hold": "Zpět k normálu po (min)",
   "streaming.holdHint": "Jak dlouho musí provoz zůstat pod prahem, než se vrátí běžný limit.",
+  "idle.toggle": "Počkat, až bude aplikace v klidu",
+  "idle.toggleHint": "Plánovaná záloha tohoto kontejneru čeká, dokud je aplikace zaneprázdněná, a začne, jakmile je v klidu, nebo až čekání skončí. Mediální server je v klidu, když nestreamuje, jiná aplikace, když CPU a provoz zůstanou nízko (Nastavení, Plány). Ruční zálohy nečekají nikdy.",
+  "idle.maxHours": "Čekat nejvýš (hodin)",
+  "idle.waiting": "Čeká na klid: {reason}. Začne nejpozději v {time}.",
+  "idle.reasonStreaming": "běží stream",
+  "idle.reasonCpu": "CPU je vytížený",
+  "idle.reasonNetwork": "síť je vytížená",
+  "idle.reasonMeasuring": "ještě se měří",
+  "idle.title": "Klid před zálohou",
+  "idle.hint": "Kdy se aplikace počítá jako v klidu pro kontejner, jehož plánovaná záloha na to čeká. Mediální server je v klidu, když nestreamuje. U kontejneru v síti hostitele se počítá jen CPU.",
+  "idle.cpu": "CPU pod (% jádra)",
+  "idle.cpuHint": "100 je jedno celé jádro, jak ho ukazuje docker stats.",
+  "idle.net": "Provoz pod (Mbit/s)",
+  "idle.quiet": "Aspoň (min)",
+  "idle.quietHint": "Jak dlouho musí CPU a provoz zůstat pod oběma limity.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Monitorování (Prometheus)",
@@ -1741,6 +1756,7 @@ const cs: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Obnovuji {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Zálohuji všechny {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Odesílání mimo lokalitu: {domain} …",
+  "activityLog.lineWaitingIdle": "Záloha {name} čeká na klid: {reason}. Začne nejpozději v {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Odesílání mimo lokalitu: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Odesílání mimo lokalitu: {domain} … {percent} % celkem (snímek {index} z {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Odesílání mimo lokalitu: {domain} … {percent} % celkem (snímek {index} z {total}) · {duration}",
@@ -2086,6 +2102,7 @@ const cs: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Šifrování exportů",
   "settingsIO.group.anomalies": "Rozpoznávání anomálií",
   "settingsIO.group.streaming": "Nejdřív streamování",
+  "settingsIO.group.idle": "Klid před zálohou",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Panel přijímače",

@@ -903,6 +903,21 @@ const hu: Partial<Translations> = {
   "streaming.limitHint": "Ha a szokásos korlát alacsonyabb, az marad.",
   "streaming.hold": "Vissza a normálba ennyi után (perc)",
   "streaming.holdHint": "Mennyi ideig kell a forgalomnak a küszöb alatt maradnia, mielőtt a szokásos korlát visszatér.",
+  "idle.toggle": "Várjon, amíg az alkalmazás nyugalomban van",
+  "idle.toggleHint": "A konténer ütemezett mentése vár, amíg az alkalmazás elfoglalt, és elindul, amint nyugalomba kerül, vagy amikor lejár a várakozás. Egy médiaszerver nyugalomban van, ha nem streamel, minden más alkalmazás, ha a CPU és a forgalom alacsony marad (Beállítások, Ütemezések). A kézi mentések sosem várnak.",
+  "idle.maxHours": "Legfeljebb ennyit várjon (óra)",
+  "idle.waiting": "Nyugalomra vár: {reason}. Legkésőbb {time}-kor indul.",
+  "idle.reasonStreaming": "stream fut",
+  "idle.reasonCpu": "a CPU foglalt",
+  "idle.reasonNetwork": "a hálózat foglalt",
+  "idle.reasonMeasuring": "még mér",
+  "idle.title": "Nyugalom mentés előtt",
+  "idle.hint": "Mikor számít egy alkalmazás nyugalomban lévőnek egy olyan konténernél, amelynek ütemezett mentése erre vár. Egy médiaszerver nyugalomban van, ha nem streamel. A gazdagép hálózatán futó konténernél csak a CPU számít.",
+  "idle.cpu": "CPU ez alatt (egy mag %-a)",
+  "idle.cpuHint": "A 100 egy teljes mag, ahogy a docker stats mutatja.",
+  "idle.net": "Forgalom ez alatt (Mbit/s)",
+  "idle.quiet": "Legalább (perc)",
+  "idle.quietHint": "Mennyi ideig kell a CPU-nak és a forgalomnak mindkét korlát alatt maradnia.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Monitorozás (Prometheus)",
@@ -1746,6 +1761,7 @@ const hu: Partial<Translations> = {
   "activityLog.lineRestoringItem": "{name} visszaállítása … {percent}%",
   "activityLog.lineBackingUpBatch": "Az összes {domain} mentése … {percent}%",
   "activityLog.lineOffsiteRunning": "Telephelyen kívüli feltöltés: {domain} …",
+  "activityLog.lineWaitingIdle": "{name} mentése nyugalomra vár: {reason}. Legkésőbb {time}-kor indul.",
   "activityLog.lineOffsiteRunningWithDuration": "Telephelyen kívüli feltöltés: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Telephelyen kívüli feltöltés: {domain} … {percent}% összesen (pillanatkép {index}/{total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Telephelyen kívüli feltöltés: {domain} … {percent}% összesen (pillanatkép {index}/{total}) · {duration}",
@@ -2091,6 +2107,7 @@ const hu: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Exportok titkosítása",
   "settingsIO.group.anomalies": "Anomáliafelismerés",
   "settingsIO.group.streaming": "Elsőbbség a streamelésnek",
+  "settingsIO.group.idle": "Nyugalom mentés előtt",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Fogadó irányítópult",

@@ -414,6 +414,12 @@ type Service struct {
 	// trafficSt watches media servers and busy apps; see traffic.go.
 	trafficOnce sync.Once
 	trafficSt   *trafficState
+	// idleWaits holds the scheduled backups waiting for an idle app, and
+	// heldRun backs up a container a scheduled "Backup Everything" pass held
+	// back; see idle_wait.go.
+	waitsOnce sync.Once
+	idleWaits *idleWaits
+	heldRun   func(name string)
 
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on

@@ -915,6 +915,21 @@ const uk: Partial<Translations> = {
   "streaming.limitHint": "Якщо звичайний ліміт нижчий, лишається він.",
   "streaming.hold": "Повернення до звичайного через (хв)",
   "streaming.holdHint": "Скільки часу трафік має лишатися нижче порогу, перш ніж повернеться звичайний ліміт.",
+  "idle.toggle": "Чекати, доки застосунок простоює",
+  "idle.toggleHint": "Запланована копія цього контейнера чекає, поки застосунок зайнятий, і починається, щойно він простоює або минає час очікування. Медіасервер простоює, коли не веде стрімінг, будь-який інший застосунок, коли навантаження на CPU і трафік лишаються низькими (Налаштування, Розклади). Ручні копії ніколи не чекають.",
+  "idle.maxHours": "Чекати не довше (годин)",
+  "idle.waiting": "Чекає простою: {reason}. Почнеться не пізніше {time}.",
+  "idle.reasonStreaming": "триває стрімінг",
+  "idle.reasonCpu": "CPU зайнятий",
+  "idle.reasonNetwork": "мережа зайнята",
+  "idle.reasonMeasuring": "ще вимірюється",
+  "idle.title": "Простій перед копією",
+  "idle.hint": "Коли застосунок вважається таким, що простоює, для контейнера, чия запланована копія цього чекає. Медіасервер простоює, коли не веде стрімінг. Для контейнера в мережі хоста враховується лише CPU.",
+  "idle.cpu": "CPU нижче (% одного ядра)",
+  "idle.cpuHint": "100 означає одне ціле ядро, як показує docker stats.",
+  "idle.net": "Трафік нижче (Mbit/s)",
+  "idle.quiet": "Щонайменше (хв)",
+  "idle.quietHint": "Скільки CPU і трафік мають лишатися нижче обох меж.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Моніторинг (Prometheus)",
@@ -1738,6 +1753,7 @@ const uk: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Відновлення {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Резервне копіювання всіх {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Завантаження у зовнішнє сховище — {domain} …",
+  "activityLog.lineWaitingIdle": "Копія {name} чекає простою: {reason}. Почнеться не пізніше {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Завантаження у зовнішнє сховище — {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Завантаження у зовнішнє сховище — {domain} … {percent}% загалом (знімок {index} з {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Завантаження у зовнішнє сховище — {domain} … {percent}% загалом (знімок {index} з {total}) · {duration}",
@@ -2083,6 +2099,7 @@ const uk: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Шифрування експортів",
   "settingsIO.group.anomalies": "Виявлення аномалій",
   "settingsIO.group.streaming": "Спершу стрімінг",
+  "settingsIO.group.idle": "Простій перед копією",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Панель приймача",

@@ -634,6 +634,9 @@ type containerView struct {
 	// DumpOnly: the repositories hold database dumps of this container and no
 	// files backup, so restoring it alone brings back an empty database.
 	DumpOnly bool `json:"dumpOnly"`
+	// IdleWaitHours is how long a scheduled backup waits at most for the app to
+	// be idle, 0 when it does not wait.
+	IdleWaitHours int `json:"idleWaitHours"`
 }
 
 // lastDBDumpView is the container's most recent dump attempt. Error carries the
@@ -660,6 +663,10 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	self := h.svc.SelfContainerName(r.Context())
+	idleHours, iErr := h.store.IdleWaitHours()
+	if iErr != nil {
+		log.Printf("api: list containers: idle waits: %v", iErr)
+	}
 
 	settings, sErr := h.store.GetSettings()
 	if sErr != nil {
@@ -748,6 +755,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.BackupOrder = t.BackupOrder
 			v.ScheduleCadence = t.ScheduleCadence
 			v.Repo = t.Repo
+			v.IdleWaitHours = idleHours[t.ID]
 			run, _ = h.store.LastSuccessfulBackup(t.ID)
 		}
 		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[c.Name].Newest(), snapTimesFailed)
@@ -1816,6 +1824,9 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		// saves one field at a time.
 		DBDumpOff    *bool   `json:"dbDumpOff"`
 		DBDumpEngine *string `json:"dbDumpEngine"`
+		// IdleWaitHours is how long a scheduled backup waits at most for the
+		// app to be idle; 0 switches the wait off.
+		IdleWaitHours *int `json:"idleWaitHours"`
 		// Repo is this item's OWN repository (#204): the ID of a named
 		// repository from Settings, or "" to put it back on the domain's. A
 		// pointer for the same reason as the fields above - a form that does
@@ -1890,6 +1901,12 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.UpdateAfterBackup != nil {
 		if err := h.svc.SetUpdateAfterBackup(r.Context(), name, *body.UpdateAfterBackup); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.IdleWaitHours != nil {
+		if err := setIdleWait(h.store, name, *body.IdleWaitHours); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}

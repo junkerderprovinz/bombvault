@@ -928,6 +928,21 @@ const es: Partial<Translations> = {
   "streaming.limitHint": "Si el límite normal es más bajo, se mantiene.",
   "streaming.hold": "Volver a lo normal tras (min)",
   "streaming.holdHint": "Cuánto tiempo debe quedar el tráfico por debajo del umbral antes de que vuelva el límite normal.",
+  "idle.toggle": "Esperar a que la app esté inactiva",
+  "idle.toggleHint": "Una copia programada de este contenedor espera mientras la app está ocupada y empieza en cuanto queda inactiva, o cuando acaba la espera. Un servidor multimedia está inactivo cuando no hace streaming; cualquier otra app, cuando la CPU y el tráfico se mantienen bajos (Ajustes, Programaciones). Las copias manuales nunca esperan.",
+  "idle.maxHours": "Esperar como máximo (horas)",
+  "idle.waiting": "Espera inactividad: {reason}. Empieza como tarde a las {time}.",
+  "idle.reasonStreaming": "hay un streaming en curso",
+  "idle.reasonCpu": "la CPU está ocupada",
+  "idle.reasonNetwork": "la red está ocupada",
+  "idle.reasonMeasuring": "aún se está midiendo",
+  "idle.title": "Inactividad antes de la copia",
+  "idle.hint": "Cuándo una app cuenta como inactiva para un contenedor cuya copia programada lo espera. Un servidor multimedia está inactivo cuando no hace streaming. En un contenedor en la red del host solo cuenta la CPU.",
+  "idle.cpu": "CPU por debajo de (% de un núcleo)",
+  "idle.cpuHint": "100 es un núcleo entero, como lo muestra docker stats.",
+  "idle.net": "Tráfico por debajo de (Mbit/s)",
+  "idle.quiet": "Durante al menos (min)",
+  "idle.quietHint": "Cuánto tiempo deben quedar la CPU y el tráfico por debajo de ambos límites.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Monitorización (Prometheus)",
@@ -1741,6 +1756,7 @@ const es: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Restaurando {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Copiando todos los {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Subida externa: {domain} …",
+  "activityLog.lineWaitingIdle": "La copia de {name} espera inactividad: {reason}. Empieza como tarde a las {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Subida externa: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Subida externa: {domain} … {percent}% en total (snapshot {index} de {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Subida externa: {domain} … {percent}% en total (snapshot {index} de {total}) · {duration}",
@@ -2086,6 +2102,7 @@ const es: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Cifrado de exportaciones",
   "settingsIO.group.anomalies": "Detección de anomalías",
   "settingsIO.group.streaming": "Primero el streaming",
+  "settingsIO.group.idle": "Inactividad antes de la copia",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Panel de receptor",

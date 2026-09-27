@@ -549,6 +549,21 @@ const hi: Partial<Translations> = {
   "streaming.limitHint": "अगर सामान्य सीमा कम है, तो वही रहती है।",
   "streaming.hold": "इसके बाद सामान्य (मिनट)",
   "streaming.holdHint": "सामान्य सीमा लौटने से पहले ट्रैफ़िक को कितनी देर सीमा से नीचे रहना होगा।",
+  "idle.toggle": "ऐप के खाली होने तक रुकें",
+  "idle.toggleHint": "इस कंटेनर का शेड्यूल्ड बैकअप तब तक रुकता है जब तक ऐप व्यस्त है, और ऐप खाली होते ही या प्रतीक्षा का समय खत्म होने पर शुरू होता है। मीडिया सर्वर तब खाली माना जाता है जब वह स्ट्रीम नहीं कर रहा, बाकी ऐप तब जब CPU और ट्रैफ़िक कम रहें (सेटिंग्स, शेड्यूल)। मैनुअल बैकअप कभी नहीं रुकते।",
+  "idle.maxHours": "ज़्यादा से ज़्यादा रुकें (घंटे)",
+  "idle.waiting": "खाली होने का इंतज़ार: {reason}। {time} तक ज़रूर शुरू होगा।",
+  "idle.reasonStreaming": "एक स्ट्रीम चल रही है",
+  "idle.reasonCpu": "CPU व्यस्त है",
+  "idle.reasonNetwork": "नेटवर्क व्यस्त है",
+  "idle.reasonMeasuring": "अभी माप रहा है",
+  "idle.title": "बैकअप से पहले खाली समय",
+  "idle.hint": "कोई ऐप कब खाली माना जाए, उन कंटेनरों के लिए जिनका शेड्यूल्ड बैकअप इसका इंतज़ार करता है। मीडिया सर्वर तब खाली है जब वह स्ट्रीम नहीं कर रहा। होस्ट नेटवर्क पर कंटेनर के लिए सिर्फ़ CPU गिना जाता है।",
+  "idle.cpu": "CPU इससे कम (एक कोर का %)",
+  "idle.cpuHint": "100 एक पूरा कोर है, जैसा docker stats दिखाता है।",
+  "idle.net": "ट्रैफ़िक इससे कम (Mbit/s)",
+  "idle.quiet": "कम से कम (मिनट)",
+  "idle.quietHint": "CPU और ट्रैफ़िक को कितनी देर दोनों सीमाओं से नीचे रहना होगा।",
 
   // Monitoring (Prometheus)
   "settings.metrics": "निगरानी (Prometheus)",
@@ -1956,6 +1971,7 @@ const hi: Partial<Translations> = {
   "activityLog.lineRestoringItem": "{name} रीस्टोर हो रहा है … {percent}%",
   "activityLog.lineBackingUpBatch": "सभी {domain} का बैकअप लिया जा रहा है … {percent}%",
   "activityLog.lineOffsiteRunning": "ऑफ़-साइट अपलोड: {domain} …",
+  "activityLog.lineWaitingIdle": "{name} का बैकअप खाली होने का इंतज़ार कर रहा है: {reason}। {time} तक ज़रूर शुरू होगा।",
   "activityLog.lineOffsiteRunningWithDuration": "ऑफ़-साइट अपलोड: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "ऑफ़-साइट अपलोड: {domain} … कुल {percent}% (स्नैपशॉट {index}/{total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "ऑफ़-साइट अपलोड: {domain} … कुल {percent}% (स्नैपशॉट {index}/{total}) · {duration}",
@@ -2258,6 +2274,7 @@ const hi: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "एक्सपोर्ट एन्क्रिप्शन",
   "settingsIO.group.anomalies": "विसंगति पहचान",
   "settingsIO.group.streaming": "पहले स्ट्रीमिंग",
+  "settingsIO.group.idle": "बैकअप से पहले खाली समय",
 
   // Backup order
   "backupOrder.title": "बैकअप क्रम",

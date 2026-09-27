@@ -897,6 +897,21 @@ const pt: Partial<Translations> = {
   "streaming.limitHint": "Se o limite normal for mais baixo, mantém-se.",
   "streaming.hold": "Voltar ao normal após (min)",
   "streaming.holdHint": "Quanto tempo o tráfego tem de ficar abaixo do limiar antes de o limite normal voltar.",
+  "idle.toggle": "Esperar até a app estar inativa",
+  "idle.toggleHint": "Uma cópia programada deste contentor espera enquanto a app está ocupada e começa assim que fica inativa, ou quando a espera termina. Um servidor multimédia está inativo quando não faz streaming; qualquer outra app, quando a CPU e o tráfego se mantêm baixos (Definições, Agendamentos). As cópias manuais nunca esperam.",
+  "idle.maxHours": "Esperar no máximo (horas)",
+  "idle.waiting": "Espera inatividade: {reason}. Começa o mais tardar às {time}.",
+  "idle.reasonStreaming": "há um streaming em curso",
+  "idle.reasonCpu": "a CPU está ocupada",
+  "idle.reasonNetwork": "a rede está ocupada",
+  "idle.reasonMeasuring": "ainda a medir",
+  "idle.title": "Inatividade antes da cópia",
+  "idle.hint": "Quando uma app conta como inativa para um contentor cuja cópia programada espera por isso. Um servidor multimédia está inativo quando não faz streaming. Num contentor na rede do anfitrião só conta a CPU.",
+  "idle.cpu": "CPU abaixo de (% de um núcleo)",
+  "idle.cpuHint": "100 é um núcleo inteiro, tal como o docker stats o mostra.",
+  "idle.net": "Tráfego abaixo de (Mbit/s)",
+  "idle.quiet": "Durante pelo menos (min)",
+  "idle.quietHint": "Quanto tempo a CPU e o tráfego têm de ficar abaixo dos dois limites.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Monitorização (Prometheus)",
@@ -1743,6 +1758,7 @@ const pt: Partial<Translations> = {
   "activityLog.lineRestoringItem": "A restaurar {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "A fazer backup de todos os {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Envio externo: {domain} …",
+  "activityLog.lineWaitingIdle": "A cópia de {name} espera inatividade: {reason}. Começa o mais tardar às {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Envio externo: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Envio externo: {domain} … {percent}% no total (snapshot {index} de {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Envio externo: {domain} … {percent}% no total (snapshot {index} de {total}) · {duration}",
@@ -2088,6 +2104,7 @@ const pt: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Encriptação das exportações",
   "settingsIO.group.anomalies": "Deteção de anomalias",
   "settingsIO.group.streaming": "Primeiro o streaming",
+  "settingsIO.group.idle": "Inatividade antes da cópia",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Painel do recetor",

@@ -894,6 +894,21 @@ const nl: Partial<Translations> = {
   "streaming.limitHint": "Is de normale limiet lager, dan blijft die.",
   "streaming.hold": "Terug naar normaal na (min)",
   "streaming.holdHint": "Hoe lang het verkeer onder de drempel moet blijven voordat de normale limiet terugkomt.",
+  "idle.toggle": "Wachten tot de app rustig is",
+  "idle.toggleHint": "Een geplande back-up van deze container wacht zolang de app bezig is en start zodra die rustig is, of wanneer de wachttijd voorbij is. Een mediaserver is rustig als hij niet streamt, elke andere app als CPU en verkeer laag blijven (Instellingen, Schema's). Handmatige back-ups wachten nooit.",
+  "idle.maxHours": "Hoogstens wachten (uur)",
+  "idle.waiting": "Wacht op rust: {reason}. Start uiterlijk om {time}.",
+  "idle.reasonStreaming": "er loopt een stream",
+  "idle.reasonCpu": "CPU is bezig",
+  "idle.reasonNetwork": "netwerk is bezig",
+  "idle.reasonMeasuring": "wordt nog gemeten",
+  "idle.title": "Rust voor de back-up",
+  "idle.hint": "Wanneer een app als rustig telt voor een container waarvan de geplande back-up daarop wacht. Een mediaserver is rustig als hij niet streamt. Voor een container op het hostnetwerk telt alleen de CPU.",
+  "idle.cpu": "CPU onder (% van een kern)",
+  "idle.cpuHint": "100 is een hele kern, zoals docker stats die toont.",
+  "idle.net": "Verkeer onder (Mbit/s)",
+  "idle.quiet": "Minstens (min)",
+  "idle.quietHint": "Hoe lang CPU en verkeer onder beide grenzen moeten blijven.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Monitoring (Prometheus)",
@@ -1740,6 +1755,7 @@ const nl: Partial<Translations> = {
   "activityLog.lineRestoringItem": "{name} herstellen … {percent}%",
   "activityLog.lineBackingUpBatch": "Back-up maken van alle {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-site upload: {domain} …",
+  "activityLog.lineWaitingIdle": "Back-up van {name} wacht op rust: {reason}. Start uiterlijk om {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Off-site upload: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Off-site upload: {domain} … {percent}% totaal (snapshot {index} van {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-site upload: {domain} … {percent}% totaal (snapshot {index} van {total}) · {duration}",
@@ -2085,6 +2101,7 @@ const nl: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Exportversleuteling",
   "settingsIO.group.anomalies": "Anomaliedetectie",
   "settingsIO.group.streaming": "Streaming eerst",
+  "settingsIO.group.idle": "Rust voor de back-up",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Ontvanger-dashboard",

@@ -549,6 +549,21 @@ const sk: Partial<Translations> = {
   "streaming.limitHint": "Ak je bežný limit nižší, platí ďalej.",
   "streaming.hold": "Späť k normálu po (min)",
   "streaming.holdHint": "Ako dlho musí prevádzka zostať pod prahom, kým sa vráti bežný limit.",
+  "idle.toggle": "Počkať, kým bude aplikácia v kľude",
+  "idle.toggleHint": "Plánovaná záloha tohto kontajnera čaká, kým je aplikácia zaneprázdnená, a začne, hneď ako je v kľude, alebo keď čakanie skončí. Mediálny server je v kľude, keď nestreamuje, iná aplikácia, keď CPU a prevádzka zostanú nízko (Nastavenia, Plány). Ručné zálohy nečakajú nikdy.",
+  "idle.maxHours": "Čakať najviac (hodín)",
+  "idle.waiting": "Čaká na kľud: {reason}. Začne najneskôr o {time}.",
+  "idle.reasonStreaming": "beží stream",
+  "idle.reasonCpu": "CPU je vyťažený",
+  "idle.reasonNetwork": "sieť je vyťažená",
+  "idle.reasonMeasuring": "ešte sa meria",
+  "idle.title": "Kľud pred zálohou",
+  "idle.hint": "Kedy sa aplikácia považuje za pokojnú pre kontajner, ktorého plánovaná záloha na to čaká. Mediálny server je v kľude, keď nestreamuje. Pri kontajneri v sieti hostiteľa sa počíta len CPU.",
+  "idle.cpu": "CPU pod (% jadra)",
+  "idle.cpuHint": "100 je jedno celé jadro, ako ho ukazuje docker stats.",
+  "idle.net": "Prevádzka pod (Mbit/s)",
+  "idle.quiet": "Aspoň (min)",
+  "idle.quietHint": "Ako dlho musia CPU a prevádzka zostať pod oboma limitmi.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Monitorovanie (Prometheus)",
@@ -1956,6 +1971,7 @@ const sk: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Obnovuje sa {name} … {percent} %",
   "activityLog.lineBackingUpBatch": "Zálohujú sa všetky {domain} … {percent} %",
   "activityLog.lineOffsiteRunning": "Externé nahrávanie: {domain} …",
+  "activityLog.lineWaitingIdle": "Záloha {name} čaká na kľud: {reason}. Začne najneskôr o {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Externé nahrávanie: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Externé nahrávanie: {domain} … {percent} % celkovo (snímka {index} z {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Externé nahrávanie: {domain} … {percent} % celkovo (snímka {index} z {total}) · {duration}",
@@ -2258,6 +2274,7 @@ const sk: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Šifrovanie exportu",
   "settingsIO.group.anomalies": "Rozpoznávanie anomálií",
   "settingsIO.group.streaming": "Najprv streamovanie",
+  "settingsIO.group.idle": "Kľud pred zálohou",
 
   // Backup order
   "backupOrder.title": "Poradie zálohovania",

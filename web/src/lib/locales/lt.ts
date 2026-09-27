@@ -549,6 +549,21 @@ const lt: Partial<Translations> = {
   "streaming.limitHint": "Jei įprastas apribojimas mažesnis, jis lieka.",
   "streaming.hold": "Grįžti į įprastą po (min.)",
   "streaming.holdHint": "Kiek laiko srautas turi išlikti žemiau ribos, kol grįš įprastas apribojimas.",
+  "idle.toggle": "Laukti, kol programa ilsėsis",
+  "idle.toggleHint": "Suplanuota šio konteinerio atsarginė kopija laukia, kol programa užimta, ir prasideda, kai ji ilsisi arba kai baigiasi laukimo laikas. Medijos serveris ilsisi, kai netransliuoja, bet kuri kita programa, kai procesorius ir srautas lieka maži (Nustatymai, Tvarkaraščiai). Rankinės kopijos niekada nelaukia.",
+  "idle.maxHours": "Laukti daugiausia (val.)",
+  "idle.waiting": "Laukia ramybės: {reason}. Prasidės vėliausiai {time}.",
+  "idle.reasonStreaming": "vyksta srautas",
+  "idle.reasonCpu": "procesorius užimtas",
+  "idle.reasonNetwork": "tinklas užimtas",
+  "idle.reasonMeasuring": "dar matuojama",
+  "idle.title": "Ramybė prieš kopiją",
+  "idle.hint": "Kada programa laikoma ilsinčia konteineriui, kurio suplanuota kopija to laukia. Medijos serveris ilsisi, kai netransliuoja. Konteineriui pagrindinio kompiuterio tinkle skaičiuojamas tik procesorius.",
+  "idle.cpu": "Procesorius žemiau (% branduolio)",
+  "idle.cpuHint": "100 yra visas branduolys, kaip rodo docker stats.",
+  "idle.net": "Srautas žemiau (Mbit/s)",
+  "idle.quiet": "Bent (min.)",
+  "idle.quietHint": "Kiek laiko procesorius ir srautas turi likti žemiau abiejų ribų.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Stebėjimas (Prometheus)",
@@ -1956,6 +1971,7 @@ const lt: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Atkuriama {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Kopijuojami visi {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Nuotolinis siuntimas: {domain} …",
+  "activityLog.lineWaitingIdle": "{name} kopija laukia ramybės: {reason}. Prasidės vėliausiai {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Nuotolinis siuntimas: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Nuotolinis siuntimas: {domain} … {percent}% iš viso (momentinė kopija {index} iš {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Nuotolinis siuntimas: {domain} … {percent}% iš viso (momentinė kopija {index} iš {total}) · {duration}",
@@ -2258,6 +2274,7 @@ const lt: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Eksporto šifravimas",
   "settingsIO.group.anomalies": "Anomalijų aptikimas",
   "settingsIO.group.streaming": "Pirmiausia srautinis perdavimas",
+  "settingsIO.group.idle": "Ramybė prieš kopiją",
 
   // Backup order
   "backupOrder.title": "Atsarginio kopijavimo tvarka",

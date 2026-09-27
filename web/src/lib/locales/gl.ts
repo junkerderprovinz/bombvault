@@ -549,6 +549,21 @@ const gl: Partial<Translations> = {
   "streaming.limitHint": "Se o límite normal é máis baixo, mantense.",
   "streaming.hold": "Volver ao normal tras (min)",
   "streaming.holdHint": "Canto tempo debe quedar o tráfico por debaixo do limiar antes de que volva o límite normal.",
+  "idle.toggle": "Agardar a que a app estea inactiva",
+  "idle.toggleHint": "Unha copia programada deste contedor agarda mentres a app está ocupada e comeza cando queda inactiva, ou cando remata a espera. Un servidor multimedia está inactivo cando non fai streaming; calquera outra app, cando a CPU e o tráfico se manteñen baixos (Configuración, Horarios). As copias manuais nunca agardan.",
+  "idle.maxHours": "Agardar como máximo (horas)",
+  "idle.waiting": "Agarda inactividade: {reason}. Comeza como moi tarde ás {time}.",
+  "idle.reasonStreaming": "hai un streaming en curso",
+  "idle.reasonCpu": "a CPU está ocupada",
+  "idle.reasonNetwork": "a rede está ocupada",
+  "idle.reasonMeasuring": "aínda se está a medir",
+  "idle.title": "Inactividade antes da copia",
+  "idle.hint": "Cando unha app conta como inactiva para un contedor cuxa copia programada o agarda. Un servidor multimedia está inactivo cando non fai streaming. Nun contedor na rede do servidor só conta a CPU.",
+  "idle.cpu": "CPU por baixo de (% dun núcleo)",
+  "idle.cpuHint": "100 é un núcleo enteiro, como o mostra docker stats.",
+  "idle.net": "Tráfico por baixo de (Mbit/s)",
+  "idle.quiet": "Durante polo menos (min)",
+  "idle.quietHint": "Canto tempo deben quedar a CPU e o tráfico por baixo dos dous límites.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Supervisión (Prometheus)",
@@ -1956,6 +1971,7 @@ const gl: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Restaurando {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Copiando todos os {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Subida externa: {domain} …",
+  "activityLog.lineWaitingIdle": "A copia de {name} agarda inactividade: {reason}. Comeza como moi tarde ás {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Subida externa: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Subida externa: {domain} … {percent}% en total (instantánea {index} de {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Subida externa: {domain} … {percent}% en total (instantánea {index} de {total}) · {duration}",
@@ -2258,6 +2274,7 @@ const gl: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Cifrado de exportación",
   "settingsIO.group.anomalies": "Detección de anomalías",
   "settingsIO.group.streaming": "Primeiro o streaming",
+  "settingsIO.group.idle": "Inactividade antes da copia",
 
   // Backup order
   "backupOrder.title": "Orde de copia",

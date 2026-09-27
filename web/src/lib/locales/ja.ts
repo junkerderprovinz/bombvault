@@ -892,6 +892,21 @@ const ja: Partial<Translations> = {
   "streaming.limitHint": "通常の制限のほうが低い場合はそちらが残ります。",
   "streaming.hold": "通常に戻るまで (分)",
   "streaming.holdHint": "通常の制限に戻る前に、トラフィックがしきい値を下回っている必要がある時間です。",
+  "idle.toggle": "アプリがアイドルになるまで待つ",
+  "idle.toggleHint": "このコンテナーのスケジュールされたバックアップは、アプリが忙しい間は待機し、アイドルになった時点か、待ち時間が終わった時点で始まります。メディアサーバーはストリーミングしていないとき、その他のアプリは CPU とトラフィックが低いままのときにアイドルとみなします（設定、スケジュール）。手動バックアップは待ちません。",
+  "idle.maxHours": "最大待機時間 (時間)",
+  "idle.waiting": "アイドル待ち: {reason}。遅くとも {time} に開始します。",
+  "idle.reasonStreaming": "ストリーミング中",
+  "idle.reasonCpu": "CPU が使用中",
+  "idle.reasonNetwork": "ネットワークが使用中",
+  "idle.reasonMeasuring": "測定中",
+  "idle.title": "バックアップ前のアイドル",
+  "idle.hint": "スケジュールされたバックアップがアイドルを待つコンテナーについて、アプリをアイドルとみなす条件です。メディアサーバーはストリーミングしていないときにアイドルです。ホストネットワーク上のコンテナーは CPU だけで判断します。",
+  "idle.cpu": "CPU がこれ未満 (1 コアの %)",
+  "idle.cpuHint": "100 は 1 コア分で、docker stats の表示と同じです。",
+  "idle.net": "トラフィックがこれ未満 (Mbit/s)",
+  "idle.quiet": "継続時間 (分)",
+  "idle.quietHint": "CPU とトラフィックが両方の上限を下回っている必要がある時間です。",
 
   // Monitoring (Prometheus)
   "settings.metrics": "監視 (Prometheus)",
@@ -1735,6 +1750,7 @@ const ja: Partial<Translations> = {
   "activityLog.lineRestoringItem": "{name} を復元中 … {percent}%",
   "activityLog.lineBackingUpBatch": "すべての{domain}をバックアップ中 … {percent}%",
   "activityLog.lineOffsiteRunning": "オフサイトへアップロード中：{domain} …",
+  "activityLog.lineWaitingIdle": "{name} のバックアップはアイドル待ち: {reason}。遅くとも {time} に開始します。",
   "activityLog.lineOffsiteRunningWithDuration": "オフサイトへアップロード中：{domain} …（{duration}）",
   "activityLog.lineOffsiteRunningSnapshotPercent": "オフサイトへアップロード中：{domain} … 全体 {percent}%（スナップショット {index}/{total}）",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "オフサイトへアップロード中：{domain} … 全体 {percent}%（スナップショット {index}/{total}・{duration}）",
@@ -2080,6 +2096,7 @@ const ja: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "エクスポートの暗号化",
   "settingsIO.group.anomalies": "異常検出",
   "settingsIO.group.streaming": "ストリーミング優先",
+  "settingsIO.group.idle": "バックアップ前のアイドル",
 
   // Receiver dashboard
   "settings.receiverEnabled": "レシーバーダッシュボード",

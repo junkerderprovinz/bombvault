@@ -549,6 +549,21 @@ const ca: Partial<Translations> = {
   "streaming.limitHint": "Si el límit normal és més baix, es manté.",
   "streaming.hold": "Tornar a la normalitat després de (min)",
   "streaming.holdHint": "Quant de temps ha d'estar el trànsit per sota del llindar abans que torni el límit normal.",
+  "idle.toggle": "Esperar que l'aplicació estigui inactiva",
+  "idle.toggleHint": "Una còpia programada d'aquest contenidor espera mentre l'aplicació està ocupada i comença quan queda inactiva, o quan s'acaba l'espera. Un servidor multimèdia està inactiu quan no fa streaming; qualsevol altra aplicació, quan la CPU i el trànsit es mantenen baixos (Configuració, Horaris). Les còpies manuals no esperen mai.",
+  "idle.maxHours": "Esperar com a màxim (hores)",
+  "idle.waiting": "Espera la inactivitat: {reason}. Comença com a tard a les {time}.",
+  "idle.reasonStreaming": "hi ha un streaming en curs",
+  "idle.reasonCpu": "la CPU està ocupada",
+  "idle.reasonNetwork": "la xarxa està ocupada",
+  "idle.reasonMeasuring": "encara es mesura",
+  "idle.title": "Inactivitat abans de la còpia",
+  "idle.hint": "Quan una aplicació compta com a inactiva per a un contenidor la còpia programada del qual ho espera. Un servidor multimèdia està inactiu quan no fa streaming. Per a un contenidor a la xarxa de l'amfitrió només compta la CPU.",
+  "idle.cpu": "CPU per sota de (% d'un nucli)",
+  "idle.cpuHint": "100 és un nucli sencer, com ho mostra docker stats.",
+  "idle.net": "Trànsit per sota de (Mbit/s)",
+  "idle.quiet": "Durant almenys (min)",
+  "idle.quietHint": "Quant de temps han d'estar la CPU i el trànsit per sota de tots dos límits.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Supervisió (Prometheus)",
@@ -1956,6 +1971,7 @@ const ca: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Restaurant {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Fent còpia de tots els {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Pujada externa: {domain} …",
+  "activityLog.lineWaitingIdle": "La còpia de {name} espera la inactivitat: {reason}. Comença com a tard a les {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Pujada externa: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Pujada externa: {domain} … {percent}% en total (instantani {index} de {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Pujada externa: {domain} … {percent}% en total (instantani {index} de {total}) · {duration}",
@@ -2258,6 +2274,7 @@ const ca: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Xifratge d'exportació",
   "settingsIO.group.anomalies": "Detecció d'anomalies",
   "settingsIO.group.streaming": "Primer l'streaming",
+  "settingsIO.group.idle": "Inactivitat abans de la còpia",
 
   // Backup order
   "backupOrder.title": "Ordre de còpia",

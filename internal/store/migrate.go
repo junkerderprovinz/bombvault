@@ -2134,6 +2134,25 @@ CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expi
   stream_hold_min  INTEGER NOT NULL DEFAULT 5
 );`,
 	},
+	{
+		// When an app that is no media server counts as idle.
+		version:          trafficMigration + 1,
+		name:             "traffic_settings_idle",
+		alreadySatisfied: columnPresent("traffic_settings", "idle_cpu_pct"),
+		sql: `ALTER TABLE traffic_settings ADD COLUMN idle_cpu_pct INTEGER NOT NULL DEFAULT 10;
+ALTER TABLE traffic_settings ADD COLUMN idle_net_mbit INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE traffic_settings ADD COLUMN idle_quiet_min INTEGER NOT NULL DEFAULT 3;`,
+	},
+	{
+		// The containers whose scheduled backup waits for an idle app, keyed by
+		// target id so a rename keeps the choice.
+		version: trafficMigration + 2,
+		name:    "item_idle_wait",
+		sql: `CREATE TABLE IF NOT EXISTS item_idle_wait (
+  target_id TEXT PRIMARY KEY,
+  hours     INTEGER NOT NULL
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,

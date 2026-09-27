@@ -897,6 +897,21 @@ const no: Partial<Translations> = {
   "streaming.limitHint": "Er den vanlige grensen lavere, gjelder den fortsatt.",
   "streaming.hold": "Tilbake til normalt etter (min)",
   "streaming.holdHint": "Hvor lenge trafikken må holde seg under terskelen før den vanlige grensen kommer tilbake.",
+  "idle.toggle": "Vent til appen er i ro",
+  "idle.toggleHint": "En planlagt sikkerhetskopi av denne containeren venter mens appen er opptatt, og starter når den er i ro, eller når ventetiden er over. En medieserver er i ro når den ikke strømmer, alle andre apper når CPU og trafikk holder seg lavt (Innstillinger, Tidsplaner). Manuelle sikkerhetskopier venter aldri.",
+  "idle.maxHours": "Vent maks (timer)",
+  "idle.waiting": "Venter på ro: {reason}. Starter senest kl. {time}.",
+  "idle.reasonStreaming": "en strøm pågår",
+  "idle.reasonCpu": "CPU-en er opptatt",
+  "idle.reasonNetwork": "nettverket er opptatt",
+  "idle.reasonMeasuring": "måler fortsatt",
+  "idle.title": "Ro før sikkerhetskopi",
+  "idle.hint": "Når en app regnes som i ro for en container der den planlagte sikkerhetskopien venter på det. En medieserver er i ro når den ikke strømmer. For en container på vertsnettverket teller bare CPU.",
+  "idle.cpu": "CPU under (% av en kjerne)",
+  "idle.cpuHint": "100 er én hel kjerne, slik docker stats viser det.",
+  "idle.net": "Trafikk under (Mbit/s)",
+  "idle.quiet": "I minst (min)",
+  "idle.quietHint": "Hvor lenge CPU og trafikk må holde seg under begge grensene.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Overvåking (Prometheus)",
@@ -1743,6 +1758,7 @@ const no: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Gjenoppretter {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Sikkerhetskopierer alle {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-site-opplasting: {domain} …",
+  "activityLog.lineWaitingIdle": "Sikkerhetskopien av {name} venter på ro: {reason}. Starter senest kl. {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Off-site-opplasting: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Off-site-opplasting: {domain} … {percent} % totalt (snapshot {index} av {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-site-opplasting: {domain} … {percent} % totalt (snapshot {index} av {total}) · {duration}",
@@ -2088,6 +2104,7 @@ const no: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Eksportkryptering",
   "settingsIO.group.anomalies": "Avviksdeteksjon",
   "settingsIO.group.streaming": "Strømming først",
+  "settingsIO.group.idle": "Ro før sikkerhetskopi",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Mottakerpanel",

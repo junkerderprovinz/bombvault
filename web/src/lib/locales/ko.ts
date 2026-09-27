@@ -892,6 +892,21 @@ const ko: Partial<Translations> = {
   "streaming.limitHint": "평소 제한이 더 낮으면 그 제한이 유지됩니다.",
   "streaming.hold": "평소로 돌아가기까지 (분)",
   "streaming.holdHint": "평소 제한이 돌아오기 전에 트래픽이 기준 아래에 머물러야 하는 시간입니다.",
+  "idle.toggle": "앱이 유휴 상태가 될 때까지 대기",
+  "idle.toggleHint": "이 컨테이너의 예약 백업은 앱이 바쁜 동안 기다렸다가 유휴 상태가 되거나 대기 시간이 끝나면 시작합니다. 미디어 서버는 스트리밍하지 않을 때, 다른 앱은 CPU와 트래픽이 낮게 유지될 때 유휴 상태입니다(설정, 일정). 수동 백업은 절대 기다리지 않습니다.",
+  "idle.maxHours": "최대 대기 시간(시간)",
+  "idle.waiting": "유휴 대기 중: {reason}. 늦어도 {time}에 시작합니다.",
+  "idle.reasonStreaming": "스트리밍 중",
+  "idle.reasonCpu": "CPU 사용 중",
+  "idle.reasonNetwork": "네트워크 사용 중",
+  "idle.reasonMeasuring": "측정 중",
+  "idle.title": "백업 전 유휴 상태",
+  "idle.hint": "예약 백업이 유휴 상태를 기다리는 컨테이너에서 앱을 유휴 상태로 보는 기준입니다. 미디어 서버는 스트리밍하지 않을 때 유휴 상태입니다. 호스트 네트워크의 컨테이너는 CPU만 봅니다.",
+  "idle.cpu": "CPU 기준 미만(코어 1개의 %)",
+  "idle.cpuHint": "100은 코어 하나 전체이며, docker stats 표시와 같습니다.",
+  "idle.net": "트래픽 기준 미만(Mbit/s)",
+  "idle.quiet": "최소 지속 시간(분)",
+  "idle.quietHint": "CPU와 트래픽이 두 기준 아래에 머물러야 하는 시간입니다.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "모니터링 (Prometheus)",
@@ -1735,6 +1750,7 @@ const ko: Partial<Translations> = {
   "activityLog.lineRestoringItem": "{name} 복원 중 … {percent}%",
   "activityLog.lineBackingUpBatch": "모든 {domain} 백업 중 … {percent}%",
   "activityLog.lineOffsiteRunning": "오프사이트 업로드: {domain} …",
+  "activityLog.lineWaitingIdle": "{name} 백업이 유휴 상태를 기다리는 중: {reason}. 늦어도 {time}에 시작합니다.",
   "activityLog.lineOffsiteRunningWithDuration": "오프사이트 업로드: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "오프사이트 업로드: {domain} … 전체 {percent}% (스냅샷 {index}/{total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "오프사이트 업로드: {domain} … 전체 {percent}% (스냅샷 {index}/{total}) · {duration}",
@@ -2080,6 +2096,7 @@ const ko: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "내보내기 암호화",
   "settingsIO.group.anomalies": "이상 징후 감지",
   "settingsIO.group.streaming": "스트리밍 우선",
+  "settingsIO.group.idle": "백업 전 유휴 상태",
 
   // Receiver dashboard
   "settings.receiverEnabled": "수신기 대시보드",

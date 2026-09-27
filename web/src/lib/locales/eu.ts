@@ -549,6 +549,21 @@ const eu: Partial<Translations> = {
   "streaming.limitHint": "Muga arrunta baxuagoa bada, hori mantentzen da.",
   "streaming.hold": "Normaltasunera itzuli ondoren (min)",
   "streaming.holdHint": "Zenbat denbora egon behar duen trafikoak atalasearen azpitik muga arrunta itzuli aurretik.",
+  "idle.toggle": "Itxaron aplikazioa geldirik egon arte",
+  "idle.toggleHint": "Edukiontzi honen babeskopia programatuak itxaroten du aplikazioa lanpetuta dagoen bitartean, eta geldirik dagoenean edo itxarotea amaitzean hasten da. Multimedia-zerbitzari bat geldirik dago streamingik egiten ez duenean; beste edozein aplikazio, CPUa eta trafikoa baxu mantentzen direnean (Ezarpenak, Egutegiak). Eskuzko babeskopiek ez dute inoiz itxaroten.",
+  "idle.maxHours": "Itxaron gehienez (ordu)",
+  "idle.waiting": "Geldialdiaren zain: {reason}. Beranduenez {time}etan hasiko da.",
+  "idle.reasonStreaming": "streaming bat martxan dago",
+  "idle.reasonCpu": "CPUa lanpetuta dago",
+  "idle.reasonNetwork": "sarea lanpetuta dago",
+  "idle.reasonMeasuring": "oraindik neurtzen",
+  "idle.title": "Geldialdia babeskopiaren aurretik",
+  "idle.hint": "Noiz jotzen den aplikazio bat geldirik, babeskopia programatuak horren zain dagoen edukiontzi batentzat. Multimedia-zerbitzari bat geldirik dago streamingik egiten ez duenean. Ostalariaren sarean dagoen edukiontzi batean CPUak bakarrik balio du.",
+  "idle.cpu": "CPUa honen azpitik (nukleo baten %)",
+  "idle.cpuHint": "100 nukleo oso bat da, docker stats-ek erakusten duen bezala.",
+  "idle.net": "Trafikoa honen azpitik (Mbit/s)",
+  "idle.quiet": "Gutxienez (min)",
+  "idle.quietHint": "Zenbat denbora egon behar duten CPUak eta trafikoak bi mugen azpitik.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Gainbegiratzea (Prometheus)",
@@ -1956,6 +1971,7 @@ const eu: Partial<Translations> = {
   "activityLog.lineRestoringItem": "{name} berrezartzen… %{percent}",
   "activityLog.lineBackingUpBatch": "{domain} guztiak babesten… %{percent}",
   "activityLog.lineOffsiteRunning": "Kanpoko igoera: {domain} …",
+  "activityLog.lineWaitingIdle": "{name}(r)en babeskopia geldialdiaren zain: {reason}. Beranduenez {time}etan hasiko da.",
   "activityLog.lineOffsiteRunningWithDuration": "Kanpoko igoera: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Kanpoko igoera: {domain} … %{percent} guztira ({index}/{total} argazkia)",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Kanpoko igoera: {domain} … %{percent} guztira ({index}/{total} argazkia) · {duration}",
@@ -2258,6 +2274,7 @@ const eu: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Esportazioaren zifratzea",
   "settingsIO.group.anomalies": "Anomalien detekzioa",
   "settingsIO.group.streaming": "Streaminga lehenik",
+  "settingsIO.group.idle": "Geldialdia babeskopiaren aurretik",
 
   // Backup order
   "backupOrder.title": "Babeskopia-ordena",

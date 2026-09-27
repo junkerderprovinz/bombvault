@@ -900,6 +900,21 @@ const he: Partial<Translations> = {
   "streaming.limitHint": "אם המגבלה הרגילה נמוכה יותר, היא נשארת.",
   "streaming.hold": "חזרה לרגיל אחרי (דק')",
   "streaming.holdHint": "כמה זמן התעבורה צריכה להישאר מתחת לסף לפני שהמגבלה הרגילה חוזרת.",
+  "idle.toggle": "להמתין עד שהאפליקציה שקטה",
+  "idle.toggleHint": "גיבוי מתוזמן של הקונטיינר הזה ממתין כל עוד האפליקציה עסוקה, ומתחיל ברגע שהיא שקטה או כשזמן ההמתנה נגמר. שרת מדיה שקט כשהוא לא משדר, כל אפליקציה אחרת כש-CPU והתעבורה נשארים נמוכים (הגדרות, תזמונים). גיבויים ידניים אף פעם לא ממתינים.",
+  "idle.maxHours": "להמתין לכל היותר (שעות)",
+  "idle.waiting": "ממתין לשקט: {reason}. מתחיל לכל המאוחר ב-{time}.",
+  "idle.reasonStreaming": "שידור פעיל",
+  "idle.reasonCpu": "ה-CPU עסוק",
+  "idle.reasonNetwork": "הרשת עסוקה",
+  "idle.reasonMeasuring": "עדיין נמדד",
+  "idle.title": "שקט לפני גיבוי",
+  "idle.hint": "מתי אפליקציה נחשבת שקטה עבור קונטיינר שהגיבוי המתוזמן שלו ממתין לכך. שרת מדיה שקט כשהוא לא משדר. בקונטיינר ברשת המארח רק ה-CPU נחשב.",
+  "idle.cpu": "CPU מתחת ל- (% מליבה)",
+  "idle.cpuHint": "100 הוא ליבה שלמה, כפי ש-docker stats מציג.",
+  "idle.net": "תעבורה מתחת ל- (Mbit/s)",
+  "idle.quiet": "לפחות (דק')",
+  "idle.quietHint": "כמה זמן ה-CPU והתעבורה צריכים להישאר מתחת לשתי המגבלות.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "ניטור (Prometheus)",
@@ -1743,6 +1758,7 @@ const he: Partial<Translations> = {
   "activityLog.lineRestoringItem": "משחזר את {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "מגבה את כל {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "העלאה מחוץ לאתר: {domain} …",
+  "activityLog.lineWaitingIdle": "הגיבוי של {name} ממתין לשקט: {reason}. מתחיל לכל המאוחר ב-{time}.",
   "activityLog.lineOffsiteRunningWithDuration": "העלאה מחוץ לאתר: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "העלאה מחוץ לאתר: {domain} … {percent}% בסך הכול (תמונת מצב {index} מתוך {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "העלאה מחוץ לאתר: {domain} … {percent}% בסך הכול (תמונת מצב {index} מתוך {total}) · {duration}",
@@ -2088,6 +2104,7 @@ const he: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "הצפנת ייצוא",
   "settingsIO.group.anomalies": "זיהוי חריגות",
   "settingsIO.group.streaming": "סטרימינג קודם",
+  "settingsIO.group.idle": "שקט לפני גיבוי",
 
   // Receiver dashboard
   "settings.receiverEnabled": "לוח מקלט",

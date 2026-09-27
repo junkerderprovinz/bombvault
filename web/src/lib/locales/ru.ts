@@ -892,6 +892,21 @@ const ru: Partial<Translations> = {
   "streaming.limitHint": "Если обычный лимит ниже, остаётся он.",
   "streaming.hold": "Возврат к обычному через (мин)",
   "streaming.holdHint": "Сколько трафик должен оставаться ниже порога, прежде чем вернётся обычный лимит.",
+  "idle.toggle": "Ждать, пока приложение простаивает",
+  "idle.toggleHint": "Запланированная копия этого контейнера ждёт, пока приложение занято, и начинается, как только оно простаивает или истекает время ожидания. Медиасервер простаивает, когда не ведёт стриминг, любое другое приложение, когда нагрузка на CPU и трафик остаются низкими (Настройки, Расписания). Ручные копии никогда не ждут.",
+  "idle.maxHours": "Ждать не дольше (часов)",
+  "idle.waiting": "Ждёт простоя: {reason}. Начнётся не позже {time}.",
+  "idle.reasonStreaming": "идёт стриминг",
+  "idle.reasonCpu": "CPU занят",
+  "idle.reasonNetwork": "сеть занята",
+  "idle.reasonMeasuring": "ещё измеряется",
+  "idle.title": "Простой перед копией",
+  "idle.hint": "Когда приложение считается простаивающим для контейнера, чья запланированная копия этого ждёт. Медиасервер простаивает, когда не ведёт стриминг. Для контейнера в сети хоста учитывается только CPU.",
+  "idle.cpu": "CPU ниже (% одного ядра)",
+  "idle.cpuHint": "100 означает одно целое ядро, как показывает docker stats.",
+  "idle.net": "Трафик ниже (Mbit/s)",
+  "idle.quiet": "Не меньше (мин)",
+  "idle.quietHint": "Сколько CPU и трафик должны оставаться ниже обоих пределов.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Мониторинг (Prometheus)",
@@ -1738,6 +1753,7 @@ const ru: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Восстановление {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Резервное копирование всех {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Загрузка во внешнее хранилище — {domain} …",
+  "activityLog.lineWaitingIdle": "Копия {name} ждёт простоя: {reason}. Начнётся не позже {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Загрузка во внешнее хранилище — {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Загрузка во внешнее хранилище — {domain} … {percent}% всего (снимок {index} из {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Загрузка во внешнее хранилище — {domain} … {percent}% всего (снимок {index} из {total}) · {duration}",
@@ -2083,6 +2099,7 @@ const ru: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Шифрование экспортов",
   "settingsIO.group.anomalies": "Обнаружение аномалий",
   "settingsIO.group.streaming": "Сначала стриминг",
+  "settingsIO.group.idle": "Простой перед копией",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Панель приёмника",

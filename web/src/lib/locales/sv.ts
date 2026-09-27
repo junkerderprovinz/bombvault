@@ -920,6 +920,21 @@ const sv: Partial<Translations> = {
   "streaming.limitHint": "Är den vanliga gränsen lägre gäller den.",
   "streaming.hold": "Tillbaka till normalt efter (min)",
   "streaming.holdHint": "Hur länge trafiken måste ligga under tröskeln innan den vanliga gränsen kommer tillbaka.",
+  "idle.toggle": "Vänta tills appen är i vila",
+  "idle.toggleHint": "En schemalagd säkerhetskopia av den här containern väntar medan appen är upptagen och startar när den är i vila, eller när väntetiden är slut. En mediaserver är i vila när den inte streamar, andra appar när CPU och trafik håller sig låga (Inställningar, Scheman). Manuella säkerhetskopior väntar aldrig.",
+  "idle.maxHours": "Vänta högst (timmar)",
+  "idle.waiting": "Väntar på vila: {reason}. Startar senast kl. {time}.",
+  "idle.reasonStreaming": "en stream pågår",
+  "idle.reasonCpu": "CPU:n är upptagen",
+  "idle.reasonNetwork": "nätverket är upptaget",
+  "idle.reasonMeasuring": "mäter fortfarande",
+  "idle.title": "Vila före säkerhetskopia",
+  "idle.hint": "När en app räknas som i vila för en container vars schemalagda säkerhetskopia väntar på det. En mediaserver är i vila när den inte streamar. För en container på värdnätverket räknas bara CPU.",
+  "idle.cpu": "CPU under (% av en kärna)",
+  "idle.cpuHint": "100 är en hel kärna, så som docker stats visar det.",
+  "idle.net": "Trafik under (Mbit/s)",
+  "idle.quiet": "I minst (min)",
+  "idle.quietHint": "Hur länge CPU och trafik måste ligga under båda gränserna.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Övervakning (Prometheus)",
@@ -1743,6 +1758,7 @@ const sv: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Återställer {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Säkerhetskopierar alla {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-site-uppladdning: {domain} …",
+  "activityLog.lineWaitingIdle": "Säkerhetskopian av {name} väntar på vila: {reason}. Startar senast kl. {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Off-site-uppladdning: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Off-site-uppladdning: {domain} … {percent} % totalt (snapshot {index} av {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-site-uppladdning: {domain} … {percent} % totalt (snapshot {index} av {total}) · {duration}",
@@ -2088,6 +2104,7 @@ const sv: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Exportkryptering",
   "settingsIO.group.anomalies": "Avvikelsedetektering",
   "settingsIO.group.streaming": "Streaming först",
+  "settingsIO.group.idle": "Vila före säkerhetskopia",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Mottagarpanel",

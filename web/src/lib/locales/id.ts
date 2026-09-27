@@ -549,6 +549,21 @@ const id: Partial<Translations> = {
   "streaming.limitHint": "Jika batas normal lebih rendah, batas itu tetap berlaku.",
   "streaming.hold": "Kembali normal setelah (menit)",
   "streaming.holdHint": "Berapa lama lalu lintas harus tetap di bawah ambang sebelum batas normal kembali.",
+  "idle.toggle": "Tunggu sampai aplikasi diam",
+  "idle.toggleHint": "Backup terjadwal kontainer ini menunggu selama aplikasi sibuk dan mulai begitu aplikasi diam, atau saat waktu tunggu habis. Server media diam saat tidak streaming, aplikasi lain saat CPU dan lalu lintas tetap rendah (Pengaturan, Jadwal). Backup manual tidak pernah menunggu.",
+  "idle.maxHours": "Tunggu paling lama (jam)",
+  "idle.waiting": "Menunggu diam: {reason}. Mulai paling lambat pukul {time}.",
+  "idle.reasonStreaming": "streaming sedang berjalan",
+  "idle.reasonCpu": "CPU sibuk",
+  "idle.reasonNetwork": "jaringan sibuk",
+  "idle.reasonMeasuring": "masih mengukur",
+  "idle.title": "Diam sebelum backup",
+  "idle.hint": "Kapan aplikasi dianggap diam untuk kontainer yang backup terjadwalnya menunggu hal itu. Server media diam saat tidak streaming. Untuk kontainer di jaringan host hanya CPU yang dihitung.",
+  "idle.cpu": "CPU di bawah (% satu inti)",
+  "idle.cpuHint": "100 adalah satu inti penuh, seperti yang ditampilkan docker stats.",
+  "idle.net": "Lalu lintas di bawah (Mbit/s)",
+  "idle.quiet": "Selama minimal (menit)",
+  "idle.quietHint": "Berapa lama CPU dan lalu lintas harus tetap di bawah kedua batas.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Pemantauan (Prometheus)",
@@ -1956,6 +1971,7 @@ const id: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Memulihkan {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Mencadangkan semua {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Unggah off-site: {domain} …",
+  "activityLog.lineWaitingIdle": "Backup {name} menunggu diam: {reason}. Mulai paling lambat pukul {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Unggah off-site: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Unggah off-site: {domain} … {percent}% keseluruhan (snapshot {index} dari {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Unggah off-site: {domain} … {percent}% keseluruhan (snapshot {index} dari {total}) · {duration}",
@@ -2258,6 +2274,7 @@ const id: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Enkripsi ekspor",
   "settingsIO.group.anomalies": "Deteksi anomali",
   "settingsIO.group.streaming": "Utamakan streaming",
+  "settingsIO.group.idle": "Diam sebelum backup",
 
   // Backup order
   "backupOrder.title": "Urutan pencadangan",

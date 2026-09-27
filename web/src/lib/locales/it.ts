@@ -900,6 +900,21 @@ const it: Partial<Translations> = {
   "streaming.limitHint": "Se il limite normale è più basso, resta quello.",
   "streaming.hold": "Ritorno alla normalità dopo (min)",
   "streaming.holdHint": "Per quanto tempo il traffico deve restare sotto la soglia prima che torni il limite normale.",
+  "idle.toggle": "Attendi che l'app sia inattiva",
+  "idle.toggleHint": "Un backup pianificato di questo container attende finché l'app è occupata e parte appena è inattiva, o quando l'attesa è finita. Un media server è inattivo quando non trasmette, ogni altra app quando CPU e traffico restano bassi (Impostazioni, Pianificazioni). I backup manuali non aspettano mai.",
+  "idle.maxHours": "Attendi al massimo (ore)",
+  "idle.waiting": "Attende l'inattività: {reason}. Parte al più tardi alle {time}.",
+  "idle.reasonStreaming": "è in corso uno stream",
+  "idle.reasonCpu": "la CPU è occupata",
+  "idle.reasonNetwork": "la rete è occupata",
+  "idle.reasonMeasuring": "misurazione in corso",
+  "idle.title": "Inattività prima del backup",
+  "idle.hint": "Quando un'app conta come inattiva per un container il cui backup pianificato la attende. Un media server è inattivo quando non trasmette. Per un container sulla rete dell'host conta solo la CPU.",
+  "idle.cpu": "CPU sotto (% di un core)",
+  "idle.cpuHint": "100 è un core intero, come lo mostra docker stats.",
+  "idle.net": "Traffico sotto (Mbit/s)",
+  "idle.quiet": "Per almeno (min)",
+  "idle.quietHint": "Per quanto tempo CPU e traffico devono restare sotto entrambi i limiti.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Monitoraggio (Prometheus)",
@@ -1743,6 +1758,7 @@ const it: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Ripristino di {name} in corso … {percent}%",
   "activityLog.lineBackingUpBatch": "Backup di tutti i {domain} in corso … {percent}%",
   "activityLog.lineOffsiteRunning": "Caricamento off-site: {domain} …",
+  "activityLog.lineWaitingIdle": "Il backup di {name} attende l'inattività: {reason}. Parte al più tardi alle {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Caricamento off-site: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Caricamento off-site: {domain} … {percent}% in totale (snapshot {index} di {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Caricamento off-site: {domain} … {percent}% in totale (snapshot {index} di {total}) · {duration}",
@@ -2088,6 +2104,7 @@ const it: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Crittografia degli export",
   "settingsIO.group.anomalies": "Rilevamento delle anomalie",
   "settingsIO.group.streaming": "Prima lo streaming",
+  "settingsIO.group.idle": "Inattività prima del backup",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Dashboard ricevitore",

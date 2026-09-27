@@ -661,6 +661,21 @@ export const en = {
   "streaming.limitHint": "If the normal limit is lower, it stays.",
   "streaming.hold": "Back to normal after (min)",
   "streaming.holdHint": "How long the traffic has to stay below the threshold before the normal limit comes back.",
+  "idle.toggle": "Wait until the app is idle",
+  "idle.toggleHint": "A scheduled backup of this container waits while the app is busy and starts once it is idle, or when the wait is over. A media server is idle when it isn't streaming, any other app when CPU and traffic stay low (Settings, Schedules). Manual backups never wait.",
+  "idle.maxHours": "Wait at most (hours)",
+  "idle.waiting": "Waits for idle: {reason}. Starts by {time} at the latest.",
+  "idle.reasonStreaming": "a stream is running",
+  "idle.reasonCpu": "CPU is busy",
+  "idle.reasonNetwork": "network is busy",
+  "idle.reasonMeasuring": "still measuring",
+  "idle.title": "Idle before backup",
+  "idle.hint": "When an app counts as idle for a container whose scheduled backup waits for it. A media server counts as idle when it isn't streaming. For a container on the host network only CPU counts.",
+  "idle.cpu": "CPU below (% of a core)",
+  "idle.cpuHint": "100 is one full core, as docker stats shows it.",
+  "idle.net": "Traffic below (Mbit/s)",
+  "idle.quiet": "For at least (min)",
+  "idle.quietHint": "How long CPU and traffic have to stay below both limits.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Monitoring (Prometheus)",
@@ -2318,6 +2333,7 @@ export const en = {
   "activityLog.lineRestoringItem": "Restoring {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Backing up all {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-site upload: {domain} …",
+  "activityLog.lineWaitingIdle": "Backup of {name} waits for idle: {reason}. Starts by {time} at the latest.",
   // Issue #159: the {duration}-carrying sibling of lineOffsiteRunning, used
   // once the live progress event's startedAt is known (see activityLog.ts's
   // buildLiveLines) but no live per-snapshot percentage is available yet.
@@ -2644,6 +2660,7 @@ export const en = {
   "settingsIO.group.exportEncryption": "Export encryption",
   "settingsIO.group.anomalies": "Anomaly detection",
   "settingsIO.group.streaming": "Streaming first",
+  "settingsIO.group.idle": "Idle before backup",
 
   // Backup order (#119) — manual per-container backup sequence, Containers page.
   "backupOrder.title": "Backup order",
@@ -3413,6 +3430,21 @@ export const de: Translations = {
   "streaming.limitHint": "Ist die normale Grenze niedriger, bleibt sie.",
   "streaming.hold": "Zurück zum Normalen nach (Min.)",
   "streaming.holdHint": "So lange muss der Verkehr unter der Schwelle bleiben, bevor die normale Grenze zurückkommt.",
+  "idle.toggle": "Warten, bis die App ruht",
+  "idle.toggleHint": "Ein geplantes Backup dieses Containers wartet, solange die App beschäftigt ist, und startet, sobald sie ruht, oder wenn die Wartezeit um ist. Ein Mediaserver ruht, wenn er nicht streamt, jede andere App, wenn CPU und Verkehr niedrig bleiben (Einstellungen, Zeitpläne). Manuelle Backups warten nie.",
+  "idle.maxHours": "Höchstens warten (Stunden)",
+  "idle.waiting": "Wartet auf Ruhe: {reason}. Startet spätestens um {time}.",
+  "idle.reasonStreaming": "ein Stream läuft",
+  "idle.reasonCpu": "CPU ist beschäftigt",
+  "idle.reasonNetwork": "Netz ist beschäftigt",
+  "idle.reasonMeasuring": "wird noch gemessen",
+  "idle.title": "Ruhe vor dem Backup",
+  "idle.hint": "Wann eine App als ruhig gilt, für Container, deren geplantes Backup darauf wartet. Ein Mediaserver ruht, wenn er nicht streamt. Bei einem Container im Host-Netz zählt nur die CPU.",
+  "idle.cpu": "CPU unter (% eines Kerns)",
+  "idle.cpuHint": "100 ist ein ganzer Kern, wie docker stats es anzeigt.",
+  "idle.net": "Verkehr unter (Mbit/s)",
+  "idle.quiet": "Mindestens (Min.)",
+  "idle.quietHint": "So lange müssen CPU und Verkehr unter beiden Grenzen bleiben.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Monitoring (Prometheus)",
@@ -4876,6 +4908,7 @@ export const de: Translations = {
   "activityLog.lineRestoringItem": "Stelle {name} wieder her … {percent}%",
   "activityLog.lineBackingUpBatch": "Sichere alle {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-Site-Upload: {domain} …",
+  "activityLog.lineWaitingIdle": "Backup von {name} wartet auf Ruhe: {reason}. Startet spätestens um {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Off-Site-Upload: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Off-Site-Upload: {domain} … {percent} % gesamt (Snapshot {index} von {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-Site-Upload: {domain} … {percent} % gesamt (Snapshot {index} von {total}) · {duration}",
@@ -5184,6 +5217,7 @@ export const de: Translations = {
   "settingsIO.group.exportEncryption": "Export-Verschlüsselung",
   "settingsIO.group.anomalies": "Anomalie-Erkennung",
   "settingsIO.group.streaming": "Streaming zuerst",
+  "settingsIO.group.idle": "Ruhe vor dem Backup",
 
   // Backup order (#119)
   "backupOrder.title": "Backup-Reihenfolge",

@@ -920,6 +920,21 @@ const tr: Partial<Translations> = {
   "streaming.limitHint": "Normal sınır daha düşükse o geçerli kalır.",
   "streaming.hold": "Normale dönüş süresi (dk)",
   "streaming.holdHint": "Normal sınır geri gelmeden önce trafiğin eşiğin altında kalması gereken süre.",
+  "idle.toggle": "Uygulama boşta kalana kadar bekle",
+  "idle.toggleHint": "Bu konteynerin zamanlanmış yedeği, uygulama meşgulken bekler ve uygulama boşta kalınca ya da bekleme süresi dolunca başlar. Bir medya sunucusu yayın yapmıyorsa boştadır, diğer uygulamalar CPU ve trafik düşük kaldığında (Ayarlar, Zamanlamalar). Elle başlatılan yedekler asla beklemez.",
+  "idle.maxHours": "En fazla bekle (saat)",
+  "idle.waiting": "Boşta kalmasını bekliyor: {reason}. En geç {time} başlar.",
+  "idle.reasonStreaming": "bir yayın sürüyor",
+  "idle.reasonCpu": "CPU meşgul",
+  "idle.reasonNetwork": "ağ meşgul",
+  "idle.reasonMeasuring": "hâlâ ölçülüyor",
+  "idle.title": "Yedek öncesi boşta kalma",
+  "idle.hint": "Zamanlanmış yedeği bunu bekleyen bir konteyner için uygulamanın ne zaman boşta sayıldığı. Bir medya sunucusu yayın yapmıyorsa boştadır. Ana makine ağındaki bir konteynerde yalnızca CPU sayılır.",
+  "idle.cpu": "CPU şunun altında (bir çekirdeğin %)",
+  "idle.cpuHint": "100, docker stats'in gösterdiği gibi tam bir çekirdektir.",
+  "idle.net": "Trafik şunun altında (Mbit/s)",
+  "idle.quiet": "En az (dk)",
+  "idle.quietHint": "CPU ve trafiğin iki sınırın da altında kalması gereken süre.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "İzleme (Prometheus)",
@@ -1743,6 +1758,7 @@ const tr: Partial<Translations> = {
   "activityLog.lineRestoringItem": "{name} geri yükleniyor … %{percent}",
   "activityLog.lineBackingUpBatch": "Tüm {domain} yedekleniyor … %{percent}",
   "activityLog.lineOffsiteRunning": "Site dışı yükleme: {domain} …",
+  "activityLog.lineWaitingIdle": "{name} yedeği boşta kalmasını bekliyor: {reason}. En geç {time} başlar.",
   "activityLog.lineOffsiteRunningWithDuration": "Site dışı yükleme: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Site dışı yükleme: {domain} … toplam %{percent} (anlık görüntü {index}/{total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Site dışı yükleme: {domain} … toplam %{percent} (anlık görüntü {index}/{total}) · {duration}",
@@ -2088,6 +2104,7 @@ const tr: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Dışa aktarma şifrelemesi",
   "settingsIO.group.anomalies": "Anormallik algılama",
   "settingsIO.group.streaming": "Önce yayın",
+  "settingsIO.group.idle": "Yedek öncesi boşta kalma",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Alıcı panosu",

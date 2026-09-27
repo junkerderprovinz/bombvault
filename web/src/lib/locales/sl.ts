@@ -549,6 +549,21 @@ const sl: Partial<Translations> = {
   "streaming.limitHint": "Če je običajna omejitev nižja, ostane ta.",
   "streaming.hold": "Nazaj na običajno po (min)",
   "streaming.holdHint": "Koliko časa mora promet ostati pod pragom, preden se vrne običajna omejitev.",
+  "idle.toggle": "Počakaj, da aplikacija miruje",
+  "idle.toggleHint": "Načrtovana varnostna kopija tega vsebnika čaka, dokler je aplikacija zasedena, in se začne, ko miruje ali ko se čakanje izteče. Medijski strežnik miruje, ko ne pretaka, vsaka druga aplikacija, ko CPE in promet ostaneta nizka (Nastavitve, Urniki). Ročne kopije nikoli ne čakajo.",
+  "idle.maxHours": "Čakaj največ (ur)",
+  "idle.waiting": "Čaka na mirovanje: {reason}. Začne se najpozneje ob {time}.",
+  "idle.reasonStreaming": "pretakanje teče",
+  "idle.reasonCpu": "CPE je zaseden",
+  "idle.reasonNetwork": "omrežje je zasedeno",
+  "idle.reasonMeasuring": "še se meri",
+  "idle.title": "Mirovanje pred kopijo",
+  "idle.hint": "Kdaj aplikacija velja za mirujočo za vsebnik, katerega načrtovana kopija čaka na to. Medijski strežnik miruje, ko ne pretaka. Za vsebnik v omrežju gostitelja šteje samo CPE.",
+  "idle.cpu": "CPE pod (% jedra)",
+  "idle.cpuHint": "100 je eno celo jedro, kot ga prikaže docker stats.",
+  "idle.net": "Promet pod (Mbit/s)",
+  "idle.quiet": "Vsaj (min)",
+  "idle.quietHint": "Kako dolgo morata CPE in promet ostati pod obema mejama.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Nadzor (Prometheus)",
@@ -1940,6 +1955,7 @@ const sl: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Obnavljanje {name} … {percent} %",
   "activityLog.lineBackingUpBatch": "Izdelovanje varnostnih kopij za vse {domain} … {percent} %",
   "activityLog.lineOffsiteRunning": "Nalaganje na zunanjo kopijo: {domain} …",
+  "activityLog.lineWaitingIdle": "Kopija {name} čaka na mirovanje: {reason}. Začne se najpozneje ob {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Nalaganje na zunanjo kopijo: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Nalaganje na zunanjo kopijo: {domain} … {percent} % skupno (posnetek {index} od {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Nalaganje na zunanjo kopijo: {domain} … {percent} % skupno (posnetek {index} od {total}) · {duration}",
@@ -2242,6 +2258,7 @@ const sl: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Šifriranje izvoza",
   "settingsIO.group.anomalies": "Zaznavanje anomalij",
   "settingsIO.group.streaming": "Najprej pretakanje",
+  "settingsIO.group.idle": "Mirovanje pred kopijo",
 
   // Backup order (#119)
   "backupOrder.title": "Vrstni red varnostnega kopiranja",

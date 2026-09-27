@@ -549,6 +549,21 @@ const ms: Partial<Translations> = {
   "streaming.limitHint": "Jika had biasa lebih rendah, had itu kekal.",
   "streaming.hold": "Kembali biasa selepas (min)",
   "streaming.holdHint": "Berapa lama trafik mesti kekal di bawah ambang sebelum had biasa kembali.",
+  "idle.toggle": "Tunggu sehingga aplikasi senyap",
+  "idle.toggleHint": "Sandaran berjadual bekas ini menunggu selagi aplikasi sibuk dan bermula sebaik sahaja ia senyap, atau apabila masa menunggu tamat. Pelayan media senyap apabila tidak menstrim, aplikasi lain apabila CPU dan trafik kekal rendah (Tetapan, Jadual). Sandaran manual tidak pernah menunggu.",
+  "idle.maxHours": "Tunggu paling lama (jam)",
+  "idle.waiting": "Menunggu senyap: {reason}. Bermula selewat-lewatnya pada {time}.",
+  "idle.reasonStreaming": "penstriman sedang berjalan",
+  "idle.reasonCpu": "CPU sibuk",
+  "idle.reasonNetwork": "rangkaian sibuk",
+  "idle.reasonMeasuring": "masih mengukur",
+  "idle.title": "Senyap sebelum sandaran",
+  "idle.hint": "Bila aplikasi dikira senyap bagi bekas yang sandaran berjadualnya menunggu perkara itu. Pelayan media senyap apabila tidak menstrim. Bagi bekas pada rangkaian hos hanya CPU dikira.",
+  "idle.cpu": "CPU di bawah (% satu teras)",
+  "idle.cpuHint": "100 ialah satu teras penuh, seperti yang ditunjukkan docker stats.",
+  "idle.net": "Trafik di bawah (Mbit/s)",
+  "idle.quiet": "Sekurang-kurangnya (min)",
+  "idle.quietHint": "Berapa lama CPU dan trafik mesti kekal di bawah kedua-dua had.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Pemantauan (Prometheus)",
@@ -1956,6 +1971,7 @@ const ms: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Memulihkan {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Menyandarkan semua {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Muat naik luar tapak: {domain} …",
+  "activityLog.lineWaitingIdle": "Sandaran {name} menunggu senyap: {reason}. Bermula selewat-lewatnya pada {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Muat naik luar tapak: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Muat naik luar tapak: {domain} … {percent}% keseluruhan (snapshot {index} daripada {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Muat naik luar tapak: {domain} … {percent}% keseluruhan (snapshot {index} daripada {total}) · {duration}",
@@ -2258,6 +2274,7 @@ const ms: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Penyulitan eksport",
   "settingsIO.group.anomalies": "Pengesanan anomali",
   "settingsIO.group.streaming": "Utamakan penstriman",
+  "settingsIO.group.idle": "Senyap sebelum sandaran",
 
   // Backup order
   "backupOrder.title": "Susunan sandaran",

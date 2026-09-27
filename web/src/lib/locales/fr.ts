@@ -900,6 +900,21 @@ const fr: Partial<Translations> = {
   "streaming.limitHint": "Si la limite normale est plus basse, elle reste.",
   "streaming.hold": "Retour à la normale après (min)",
   "streaming.holdHint": "Durée pendant laquelle le trafic doit rester sous le seuil avant le retour de la limite normale.",
+  "idle.toggle": "Attendre que l'application soit au repos",
+  "idle.toggleHint": "Une sauvegarde planifiée de ce conteneur attend tant que l'application est occupée et démarre dès qu'elle est au repos, ou quand l'attente est écoulée. Un serveur multimédia est au repos quand il ne diffuse pas, toute autre application quand le CPU et le trafic restent bas (Paramètres, Plannings). Les sauvegardes manuelles n'attendent jamais.",
+  "idle.maxHours": "Attendre au plus (heures)",
+  "idle.waiting": "Attend le repos : {reason}. Démarre au plus tard à {time}.",
+  "idle.reasonStreaming": "un flux est en cours",
+  "idle.reasonCpu": "le CPU est occupé",
+  "idle.reasonNetwork": "le réseau est occupé",
+  "idle.reasonMeasuring": "mesure en cours",
+  "idle.title": "Repos avant la sauvegarde",
+  "idle.hint": "Quand une application compte comme au repos pour un conteneur dont la sauvegarde planifiée l'attend. Un serveur multimédia est au repos quand il ne diffuse pas. Pour un conteneur sur le réseau de l'hôte, seul le CPU compte.",
+  "idle.cpu": "CPU sous (% d'un cœur)",
+  "idle.cpuHint": "100 correspond à un cœur entier, comme l'affiche docker stats.",
+  "idle.net": "Trafic sous (Mbit/s)",
+  "idle.quiet": "Pendant au moins (min)",
+  "idle.quietHint": "Durée pendant laquelle le CPU et le trafic doivent rester sous les deux limites.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Surveillance (Prometheus)",
@@ -1743,6 +1758,7 @@ const fr: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Restauration de {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Sauvegarde de tous les {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Envoi hors site : {domain} …",
+  "activityLog.lineWaitingIdle": "La sauvegarde de {name} attend le repos : {reason}. Démarre au plus tard à {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Envoi hors site : {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Envoi hors site : {domain} … {percent} % au total (snapshot {index} sur {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Envoi hors site : {domain} … {percent} % au total (snapshot {index} sur {total}) · {duration}",
@@ -2088,6 +2104,7 @@ const fr: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Chiffrement des exports",
   "settingsIO.group.anomalies": "Détection d'anomalies",
   "settingsIO.group.streaming": "Le streaming d'abord",
+  "settingsIO.group.idle": "Repos avant la sauvegarde",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Tableau de bord récepteur",

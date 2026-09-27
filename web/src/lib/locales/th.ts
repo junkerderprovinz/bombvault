@@ -923,6 +923,21 @@ const th: Partial<Translations> = {
   "streaming.limitHint": "ถ้าขีดจำกัดปกติต่ำกว่า จะใช้ค่านั้นต่อ",
   "streaming.hold": "กลับสู่ปกติหลังจาก (นาที)",
   "streaming.holdHint": "ระยะเวลาที่ทราฟฟิกต้องอยู่ต่ำกว่าเกณฑ์ก่อนที่ขีดจำกัดปกติจะกลับมา",
+  "idle.toggle": "รอจนกว่าแอปจะว่าง",
+  "idle.toggleHint": "การสำรองข้อมูลตามกำหนดเวลาของคอนเทนเนอร์นี้จะรอขณะที่แอปกำลังยุ่ง และเริ่มเมื่อแอปว่างหรือเมื่อหมดเวลารอ เซิร์ฟเวอร์สื่อว่างเมื่อไม่ได้สตรีม แอปอื่นว่างเมื่อ CPU และทราฟฟิกยังต่ำ (การตั้งค่า, กำหนดการ) การสำรองข้อมูลด้วยตนเองไม่รอเลย",
+  "idle.maxHours": "รอนานสุด (ชั่วโมง)",
+  "idle.waiting": "รอให้ว่าง: {reason} เริ่มไม่เกิน {time}",
+  "idle.reasonStreaming": "กำลังสตรีม",
+  "idle.reasonCpu": "CPU ไม่ว่าง",
+  "idle.reasonNetwork": "เครือข่ายไม่ว่าง",
+  "idle.reasonMeasuring": "ยังวัดอยู่",
+  "idle.title": "ความว่างก่อนสำรองข้อมูล",
+  "idle.hint": "เงื่อนไขที่แอปถือว่าว่าง สำหรับคอนเทนเนอร์ที่การสำรองข้อมูลตามกำหนดเวลารอสิ่งนี้ เซิร์ฟเวอร์สื่อว่างเมื่อไม่ได้สตรีม สำหรับคอนเทนเนอร์บนเครือข่ายโฮสต์จะนับเฉพาะ CPU",
+  "idle.cpu": "CPU ต่ำกว่า (% ของหนึ่งคอร์)",
+  "idle.cpuHint": "100 คือหนึ่งคอร์เต็ม ตามที่ docker stats แสดง",
+  "idle.net": "ทราฟฟิกต่ำกว่า (Mbit/s)",
+  "idle.quiet": "อย่างน้อย (นาที)",
+  "idle.quietHint": "ระยะเวลาที่ CPU และทราฟฟิกต้องอยู่ต่ำกว่าทั้งสองขีดจำกัด",
 
   // Monitoring (Prometheus)
   "settings.metrics": "การมอนิเตอร์ (Prometheus)",
@@ -1746,6 +1761,7 @@ const th: Partial<Translations> = {
   "activityLog.lineRestoringItem": "กำลังกู้คืน {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "กำลังสำรองข้อมูลทั้งหมดของ {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "กำลังอัปโหลดนอกสถานที่ {domain} …",
+  "activityLog.lineWaitingIdle": "การสำรองข้อมูลของ {name} รอให้ว่าง: {reason} เริ่มไม่เกิน {time}",
   "activityLog.lineOffsiteRunningWithDuration": "กำลังอัปโหลดนอกสถานที่ {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "กำลังอัปโหลดนอกสถานที่ {domain} … {percent}% โดยรวม (สแนปช็อต {index} จาก {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "กำลังอัปโหลดนอกสถานที่ {domain} … {percent}% โดยรวม (สแนปช็อต {index} จาก {total}) · {duration}",
@@ -2091,6 +2107,7 @@ const th: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "การเข้ารหัสการส่งออก",
   "settingsIO.group.anomalies": "การตรวจจับความผิดปกติ",
   "settingsIO.group.streaming": "สตรีมมิงมาก่อน",
+  "settingsIO.group.idle": "ความว่างก่อนสำรองข้อมูล",
 
   // Receiver dashboard
   "settings.receiverEnabled": "แดชบอร์ดตัวรับ",

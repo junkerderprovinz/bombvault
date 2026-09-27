@@ -912,6 +912,21 @@ const zh: Partial<Translations> = {
   "streaming.limitHint": "如果常规限制更低，则保持常规限制。",
   "streaming.hold": "恢复常规前等待 (分钟)",
   "streaming.holdHint": "流量需要低于阈值多久，常规限制才会恢复。",
+  "idle.toggle": "等待应用空闲",
+  "idle.toggleHint": "此容器的计划备份会在应用繁忙时等待，并在应用空闲或等待时间结束时开始。媒体服务器在未串流时视为空闲，其他应用在 CPU 和流量保持较低时视为空闲（设置，计划）。手动备份从不等待。",
+  "idle.maxHours": "最长等待 (小时)",
+  "idle.waiting": "等待空闲：{reason}。最迟于 {time} 开始。",
+  "idle.reasonStreaming": "正在串流",
+  "idle.reasonCpu": "CPU 繁忙",
+  "idle.reasonNetwork": "网络繁忙",
+  "idle.reasonMeasuring": "仍在测量",
+  "idle.title": "备份前空闲",
+  "idle.hint": "对于计划备份需要等待空闲的容器，应用何时算作空闲。媒体服务器在未串流时空闲。使用主机网络的容器只看 CPU。",
+  "idle.cpu": "CPU 低于 (单核 %)",
+  "idle.cpuHint": "100 表示一个完整的核心，与 docker stats 的显示一致。",
+  "idle.net": "流量低于 (Mbit/s)",
+  "idle.quiet": "至少持续 (分钟)",
+  "idle.quietHint": "CPU 和流量需要同时低于两个限制多长时间。",
 
   // Monitoring (Prometheus)
   "settings.metrics": "监控 (Prometheus)",
@@ -1735,6 +1750,7 @@ const zh: Partial<Translations> = {
   "activityLog.lineRestoringItem": "正在还原 {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "正在备份所有 {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "异地上传：{domain} …",
+  "activityLog.lineWaitingIdle": "{name} 的备份正在等待空闲：{reason}。最迟于 {time} 开始。",
   "activityLog.lineOffsiteRunningWithDuration": "异地上传：{domain} …（{duration}）",
   "activityLog.lineOffsiteRunningSnapshotPercent": "异地上传：{domain} … 总进度 {percent}%（快照 {index}/{total}）",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "异地上传：{domain} … 总进度 {percent}%（快照 {index}/{total}，{duration}）",
@@ -2080,6 +2096,7 @@ const zh: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "导出加密",
   "settingsIO.group.anomalies": "异常检测",
   "settingsIO.group.streaming": "串流优先",
+  "settingsIO.group.idle": "备份前空闲",
 
   // Receiver dashboard
   "settings.receiverEnabled": "接收端仪表板",

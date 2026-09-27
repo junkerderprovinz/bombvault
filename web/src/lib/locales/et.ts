@@ -549,6 +549,21 @@ const et: Partial<Translations> = {
   "streaming.limitHint": "Kui tavaline piirang on madalam, jääb see kehtima.",
   "streaming.hold": "Tagasi tavapärasele pärast (min)",
   "streaming.holdHint": "Kui kaua peab liiklus jääma läve alla, enne kui tavaline piirang naaseb.",
+  "idle.toggle": "Oota, kuni rakendus on jõude",
+  "idle.toggleHint": "Selle konteineri ajastatud varukoopia ootab, kuni rakendus on hõivatud, ja algab, kui see on jõude või ooteaeg läbi saab. Meediaserver on jõude, kui see ei voogedasta, iga teine rakendus, kui protsessor ja liiklus püsivad madalal (Seaded, Ajakavad). Käsitsi varukoopiad ei oota kunagi.",
+  "idle.maxHours": "Oota kõige rohkem (tundi)",
+  "idle.waiting": "Ootab jõudeolekut: {reason}. Algab hiljemalt kell {time}.",
+  "idle.reasonStreaming": "voog käib",
+  "idle.reasonCpu": "protsessor on hõivatud",
+  "idle.reasonNetwork": "võrk on hõivatud",
+  "idle.reasonMeasuring": "mõõtmine käib veel",
+  "idle.title": "Jõudeolek enne varundust",
+  "idle.hint": "Millal rakendus loetakse jõudeolekus olevaks konteineri jaoks, mille ajastatud varukoopia seda ootab. Meediaserver on jõude, kui see ei voogedasta. Hosti võrgus oleva konteineri puhul loeb ainult protsessor.",
+  "idle.cpu": "Protsessor alla (% tuumast)",
+  "idle.cpuHint": "100 on üks terve tuum, nagu docker stats seda näitab.",
+  "idle.net": "Liiklus alla (Mbit/s)",
+  "idle.quiet": "Vähemalt (min)",
+  "idle.quietHint": "Kui kaua peavad protsessor ja liiklus jääma mõlema piiri alla.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Jälgimine (Prometheus)",
@@ -1956,6 +1971,7 @@ const et: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Taastatakse {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Varundatakse kõik {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Väline üleslaadimine: {domain} …",
+  "activityLog.lineWaitingIdle": "Konteineri {name} varukoopia ootab jõudeolekut: {reason}. Algab hiljemalt kell {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Väline üleslaadimine: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Väline üleslaadimine: {domain} … {percent}% kokku (hetktõmmis {index}/{total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Väline üleslaadimine: {domain} … {percent}% kokku (hetktõmmis {index}/{total}) · {duration}",
@@ -2258,6 +2274,7 @@ const et: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Ekspordi krüpteering",
   "settingsIO.group.anomalies": "Kõrvalekallete tuvastamine",
   "settingsIO.group.streaming": "Voogedastus eelisjärjekorras",
+  "settingsIO.group.idle": "Jõudeolek enne varundust",
 
   // Backup order
   "backupOrder.title": "Varunduse järjekord",

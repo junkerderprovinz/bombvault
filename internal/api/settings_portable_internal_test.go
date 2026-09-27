@@ -979,10 +979,11 @@ func TestImportKeepsAdditionalTargetsLeftOnThePrimarySortOrder(t *testing.T) {
 	}
 }
 
-func TestSettingsExportImportCarriesTheStreamingCard(t *testing.T) {
+func TestSettingsExportImportCarriesTheStreamingAndIdleCards(t *testing.T) {
 	src, srcStore := newPortableHandler(t, appKeyA)
 	seedSource(t, src, srcStore)
-	want := store.TrafficSettings{StreamThrottle: true, MediaServers: []string{"plex"}, StreamMbit: 6, StreamLimitKiB: 300, StreamHoldMin: 9}
+	want := store.TrafficSettings{StreamThrottle: true, MediaServers: []string{"plex"}, StreamMbit: 6, StreamLimitKiB: 300, StreamHoldMin: 9,
+		IdleCPUPct: 30, IdleNetMbit: 2, IdleQuietMin: 7}
 	if err := srcStore.SetTrafficSettings(want); err != nil {
 		t.Fatal(err)
 	}
@@ -994,8 +995,8 @@ func TestSettingsExportImportCarriesTheStreamingCard(t *testing.T) {
 	dst, dstStore := newPortableHandler(t, appKeyB)
 	preview := doImport(t, dst, body, "")
 	groups := preview["summary"].(map[string]any)["settingsGroups"].([]any)
-	if !slices.Contains(groups, any("streaming")) {
-		t.Fatalf("the preview does not name the streaming card: %v", groups)
+	if !slices.Contains(groups, any("streaming")) || !slices.Contains(groups, any("idle")) {
+		t.Fatalf("the preview does not name the streaming and idle cards: %v", groups)
 	}
 	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
 		t.Fatalf("apply failed: %v", env)
@@ -1009,7 +1010,7 @@ func TestSettingsExportImportCarriesTheStreamingCard(t *testing.T) {
 	}
 }
 
-func TestAFileWithoutTheStreamingCardLeavesItAlone(t *testing.T) {
+func TestAFileWithoutTheStreamingAndIdleCardsLeavesThemAlone(t *testing.T) {
 	src, srcStore := newPortableHandler(t, appKeyA)
 	seedSource(t, src, srcStore)
 	body, _ := doExport(t, src, "")
@@ -1018,10 +1019,12 @@ func TestAFileWithoutTheStreamingCardLeavesItAlone(t *testing.T) {
 		t.Fatal(err)
 	}
 	delete(raw, "streaming")
+	delete(raw, "idle")
 	old, _ := json.Marshal(raw)
 
 	dst, dstStore := newPortableHandler(t, appKeyB)
-	kept := store.TrafficSettings{StreamThrottle: true, MediaServers: []string{"jellyfin"}, StreamMbit: 3, StreamLimitKiB: 100, StreamHoldMin: 2}
+	kept := store.TrafficSettings{StreamThrottle: true, MediaServers: []string{"jellyfin"}, StreamMbit: 3, StreamLimitKiB: 100, StreamHoldMin: 2,
+		IdleCPUPct: 40, IdleNetMbit: 5, IdleQuietMin: 4}
 	if err := dstStore.SetTrafficSettings(kept); err != nil {
 		t.Fatal(err)
 	}
@@ -1030,6 +1033,6 @@ func TestAFileWithoutTheStreamingCardLeavesItAlone(t *testing.T) {
 	}
 	got, _ := dstStore.TrafficSettings()
 	if !reflect.DeepEqual(got, kept) {
-		t.Fatalf("an older file changed the streaming card: %+v", got)
+		t.Fatalf("an older file changed the streaming and idle cards: %+v", got)
 	}
 }

@@ -920,6 +920,21 @@ const fi: Partial<Translations> = {
   "streaming.limitHint": "Jos tavallinen raja on alempi, se pysyy.",
   "streaming.hold": "Takaisin normaaliin (min) jälkeen",
   "streaming.holdHint": "Kuinka kauan liikenteen on pysyttävä kynnyksen alla ennen kuin tavallinen raja palaa.",
+  "idle.toggle": "Odota, kunnes sovellus on joutilas",
+  "idle.toggleHint": "Tämän kontin ajastettu varmuuskopio odottaa, kun sovellus on kiireinen, ja alkaa, kun se on joutilas tai kun odotusaika päättyy. Mediapalvelin on joutilas, kun se ei suoratoista, muu sovellus, kun suoritin ja liikenne pysyvät alhaisina (Asetukset, Aikataulut). Käsin tehdyt varmuuskopiot eivät koskaan odota.",
+  "idle.maxHours": "Odota enintään (tuntia)",
+  "idle.waiting": "Odottaa joutilaisuutta: {reason}. Alkaa viimeistään klo {time}.",
+  "idle.reasonStreaming": "suoratoisto on käynnissä",
+  "idle.reasonCpu": "suoritin on kiireinen",
+  "idle.reasonNetwork": "verkko on kiireinen",
+  "idle.reasonMeasuring": "mittaus on vielä kesken",
+  "idle.title": "Joutilaisuus ennen varmuuskopiota",
+  "idle.hint": "Milloin sovellus lasketaan joutilaaksi kontille, jonka ajastettu varmuuskopio odottaa sitä. Mediapalvelin on joutilas, kun se ei suoratoista. Isännän verkossa olevalle kontille lasketaan vain suoritin.",
+  "idle.cpu": "Suoritin alle (% ytimestä)",
+  "idle.cpuHint": "100 on yksi kokonainen ydin, kuten docker stats sen näyttää.",
+  "idle.net": "Liikenne alle (Mbit/s)",
+  "idle.quiet": "Vähintään (min)",
+  "idle.quietHint": "Kuinka kauan suorittimen ja liikenteen on pysyttävä kummankin rajan alla.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Valvonta (Prometheus)",
@@ -1743,6 +1758,7 @@ const fi: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Palautetaan {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Varmuuskopioidaan kaikki {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Etälähetys: {domain} …",
+  "activityLog.lineWaitingIdle": "Kontin {name} varmuuskopio odottaa joutilaisuutta: {reason}. Alkaa viimeistään klo {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Etälähetys: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Etälähetys: {domain} … {percent} % kaikkiaan (snapshot {index}/{total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Etälähetys: {domain} … {percent} % kaikkiaan (snapshot {index}/{total}) · {duration}",
@@ -2088,6 +2104,7 @@ const fi: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Vientien salaus",
   "settingsIO.group.anomalies": "Poikkeamien tunnistus",
   "settingsIO.group.streaming": "Suoratoisto ensin",
+  "settingsIO.group.idle": "Joutilaisuus ennen varmuuskopiota",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Vastaanottimen kojelauta",

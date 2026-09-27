@@ -912,6 +912,21 @@ const vi: Partial<Translations> = {
   "streaming.limitHint": "Nếu giới hạn thường thấp hơn, giới hạn đó vẫn giữ.",
   "streaming.hold": "Trở lại bình thường sau (phút)",
   "streaming.holdHint": "Lưu lượng phải ở dưới ngưỡng bao lâu trước khi giới hạn thường quay lại.",
+  "idle.toggle": "Chờ đến khi ứng dụng rảnh",
+  "idle.toggleHint": "Bản sao lưu theo lịch của container này chờ khi ứng dụng đang bận và bắt đầu ngay khi rảnh, hoặc khi hết thời gian chờ. Máy chủ media rảnh khi không phát trực tuyến, ứng dụng khác rảnh khi CPU và lưu lượng giữ ở mức thấp (Cài đặt, Lịch trình). Sao lưu thủ công không bao giờ chờ.",
+  "idle.maxHours": "Chờ tối đa (giờ)",
+  "idle.waiting": "Đang chờ rảnh: {reason}. Bắt đầu muộn nhất lúc {time}.",
+  "idle.reasonStreaming": "đang phát trực tuyến",
+  "idle.reasonCpu": "CPU đang bận",
+  "idle.reasonNetwork": "mạng đang bận",
+  "idle.reasonMeasuring": "vẫn đang đo",
+  "idle.title": "Rảnh trước khi sao lưu",
+  "idle.hint": "Khi nào một ứng dụng được coi là rảnh đối với container có bản sao lưu theo lịch chờ điều đó. Máy chủ media rảnh khi không phát trực tuyến. Với container trên mạng host chỉ tính CPU.",
+  "idle.cpu": "CPU dưới (% một lõi)",
+  "idle.cpuHint": "100 là một lõi đầy đủ, như docker stats hiển thị.",
+  "idle.net": "Lưu lượng dưới (Mbit/s)",
+  "idle.quiet": "Trong ít nhất (phút)",
+  "idle.quietHint": "CPU và lưu lượng phải ở dưới cả hai giới hạn trong bao lâu.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Giám sát (Prometheus)",
@@ -1735,6 +1750,7 @@ const vi: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Đang khôi phục {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Đang sao lưu tất cả {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Đang tải lên ngoài site: {domain} …",
+  "activityLog.lineWaitingIdle": "Bản sao lưu của {name} đang chờ rảnh: {reason}. Bắt đầu muộn nhất lúc {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Đang tải lên ngoài site: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Đang tải lên ngoài site: {domain} … {percent}% tổng thể (ảnh chụp nhanh {index}/{total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Đang tải lên ngoài site: {domain} … {percent}% tổng thể (ảnh chụp nhanh {index}/{total}) · {duration}",
@@ -2080,6 +2096,7 @@ const vi: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Mã hóa xuất",
   "settingsIO.group.anomalies": "Phát hiện bất thường",
   "settingsIO.group.streaming": "Ưu tiên phát trực tuyến",
+  "settingsIO.group.idle": "Rảnh trước khi sao lưu",
 
   // Receiver dashboard
   "settings.receiverEnabled": "Bảng điều khiển bộ nhận",

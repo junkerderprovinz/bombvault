@@ -549,6 +549,21 @@ const fa: Partial<Translations> = {
   "streaming.limitHint": "اگر محدودیت عادی پایین‌تر باشد، همان می‌ماند.",
   "streaming.hold": "بازگشت به حالت عادی پس از (دقیقه)",
   "streaming.holdHint": "ترافیک چه مدت باید زیر آستانه بماند تا محدودیت عادی برگردد.",
+  "idle.toggle": "صبر تا بیکار شدن برنامه",
+  "idle.toggleHint": "پشتیبان زمان‌بندی‌شده این کانتینر تا وقتی برنامه مشغول است صبر می‌کند و وقتی بیکار شد یا زمان انتظار تمام شد شروع می‌شود. سرور رسانه وقتی استریم نمی‌کند بیکار است و هر برنامه دیگر وقتی پردازنده و ترافیک پایین بمانند (تنظیمات، زمان‌بندی‌ها). پشتیبان‌های دستی هرگز صبر نمی‌کنند.",
+  "idle.maxHours": "حداکثر صبر (ساعت)",
+  "idle.waiting": "در انتظار بیکاری: {reason}. حداکثر تا {time} شروع می‌شود.",
+  "idle.reasonStreaming": "یک استریم در جریان است",
+  "idle.reasonCpu": "پردازنده مشغول است",
+  "idle.reasonNetwork": "شبکه مشغول است",
+  "idle.reasonMeasuring": "هنوز در حال اندازه‌گیری",
+  "idle.title": "بیکاری پیش از پشتیبان",
+  "idle.hint": "چه وقت یک برنامه برای کانتینری که پشتیبان زمان‌بندی‌شده‌اش منتظر آن است بیکار حساب می‌شود. سرور رسانه وقتی استریم نمی‌کند بیکار است. برای کانتینر روی شبکه میزبان فقط پردازنده حساب می‌شود.",
+  "idle.cpu": "پردازنده کمتر از (% یک هسته)",
+  "idle.cpuHint": "100 یعنی یک هسته کامل، همان‌طور که docker stats نشان می‌دهد.",
+  "idle.net": "ترافیک کمتر از (Mbit/s)",
+  "idle.quiet": "دست‌کم به مدت (دقیقه)",
+  "idle.quietHint": "پردازنده و ترافیک چه مدت باید زیر هر دو حد بمانند.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "نظارت (Prometheus)",
@@ -1956,6 +1971,7 @@ const fa: Partial<Translations> = {
   "activityLog.lineRestoringItem": "در حال بازیابی {name} … {percent}٪",
   "activityLog.lineBackingUpBatch": "در حال پشتیبان‌گیری از همه {domain} … {percent}٪",
   "activityLog.lineOffsiteRunning": "آپلود خارج از محل: {domain} …",
+  "activityLog.lineWaitingIdle": "پشتیبان {name} در انتظار بیکاری است: {reason}. حداکثر تا {time} شروع می‌شود.",
   "activityLog.lineOffsiteRunningWithDuration": "آپلود خارج از محل: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "آپلود خارج از محل: {domain} … {percent}٪ در کل (اسنپ‌شات {index} از {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "آپلود خارج از محل: {domain} … {percent}٪ در کل (اسنپ‌شات {index} از {total}) · {duration}",
@@ -2258,6 +2274,7 @@ const fa: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "رمزنگاری خروجی‌گیری",
   "settingsIO.group.anomalies": "تشخیص ناهنجاری",
   "settingsIO.group.streaming": "اول استریم",
+  "settingsIO.group.idle": "بیکاری پیش از پشتیبان",
 
   // Backup order
   "backupOrder.title": "ترتیب پشتیبان‌گیری",

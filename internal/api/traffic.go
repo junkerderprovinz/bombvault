@@ -100,9 +100,13 @@ func (s *Service) pollTraffic(ctx context.Context, sr statsReader, now time.Time
 	}
 	st := s.trafficState()
 	servers := s.mediaServers(ctx, cfg, now)
-	var watched []string
+	watched := s.idleWaitContainers()
 	if cfg.StreamThrottle {
-		watched = append(watched, servers...)
+		for _, n := range servers {
+			if !slices.Contains(watched, n) {
+				watched = append(watched, n)
+			}
+		}
 	}
 	for _, name := range watched {
 		sctx, cancel := context.WithTimeout(ctx, 5*time.Second)

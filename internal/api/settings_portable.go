@@ -57,9 +57,10 @@ type settingsExport struct {
 	OffsiteTargets []offsiteTargetView `json:"offsiteTargets"`
 	NamedRepos     []offsiteTargetView `json:"namedRepos,omitempty"`
 	Credentials    *exportCredentials  `json:"credentials,omitempty"`
-	// Streaming is the "Streaming first" card, absent from files written
-	// before it existed.
+	// Streaming and Idle are the "Streaming first" and "Idle before backup"
+	// cards, absent from files written before they existed.
 	Streaming *streamingView `json:"streaming,omitempty"`
+	Idle      *idleView      `json:"idle,omitempty"`
 	// predatesZFS is set when the file carries no zfsEnabled key: it comes from
 	// a build without the ZFS domain, so its empty ZFS fields say nothing about
 	// the ZFS setup of the instance it is applied to.
@@ -265,6 +266,7 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		OffsiteTargets: offsiteTargetsToViews(targets),
 		NamedRepos:     offsiteTargetsToViews(namedRepos),
 		Streaming:      streamingToView(traffic),
+		Idle:           idleToView(traffic),
 	}
 
 	if withCredentials {
@@ -685,6 +687,11 @@ func validateExport(exp settingsExport, mountRoot string) string {
 			return "invalid streaming settings: " + err.Error()
 		}
 	}
+	if exp.Idle != nil {
+		if err := validateIdle(*exp.Idle); err != nil {
+			return "invalid idle settings: " + err.Error()
+		}
+	}
 	return ""
 }
 
@@ -722,6 +729,12 @@ func exportGroups(exp settingsExport) []string {
 		d := store.DefaultTrafficSettings()
 		if v.Enabled || !v.MediaServersAuto || v.ThresholdMbit != d.StreamMbit || v.LimitKiB != d.StreamLimitKiB || v.HoldMin != d.StreamHoldMin {
 			groups = append(groups, "streaming")
+		}
+	}
+	if v := exp.Idle; v != nil {
+		d := store.DefaultTrafficSettings()
+		if v.CPUPct != d.IdleCPUPct || v.NetMbit != d.IdleNetMbit || v.QuietMin != d.IdleQuietMin {
+			groups = append(groups, "idle")
 		}
 	}
 	return groups
@@ -844,12 +857,18 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 		}
 	}
 
-	if exp.Streaming != nil {
+	if exp.Streaming != nil || exp.Idle != nil {
 		cur, err := h.store.TrafficSettings()
 		if err != nil {
 			return err
 		}
-		if err := h.store.SetTrafficSettings(applyStreamingView(cur, *exp.Streaming)); err != nil {
+		if exp.Streaming != nil {
+			cur = applyStreamingView(cur, *exp.Streaming)
+		}
+		if exp.Idle != nil {
+			cur = applyIdleView(cur, *exp.Idle)
+		}
+		if err := h.store.SetTrafficSettings(cur); err != nil {
 			return err
 		}
 	}

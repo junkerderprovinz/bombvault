@@ -27,6 +27,7 @@ type trafficDocker struct {
 	tx    map[string]uint64
 	cpu   map[string]uint64
 	down  map[string]bool
+	reads map[string]int
 }
 
 func (d *trafficDocker) List(context.Context) ([]dockercli.ContainerInfo, error) {
@@ -36,6 +37,7 @@ func (d *trafficDocker) List(context.Context) ([]dockercli.ContainerInfo, error)
 func (d *trafficDocker) Self(context.Context) (string, error) { return "bombvault", nil }
 
 func (d *trafficDocker) Stats(_ context.Context, name string) (traffic.Sample, error) {
+	d.reads[name]++
 	if d.down[name] {
 		return traffic.Sample{}, errors.New("no such container")
 	}
@@ -52,9 +54,10 @@ func newTrafficService(t *testing.T) (*Service, *store.Repo, *trafficDocker) {
 			{Name: "db", Image: "postgres:16"},
 			{Name: "bombvault", Image: "junkerderprovinz/bombvault"},
 		},
-		tx:   map[string]uint64{},
-		cpu:  map[string]uint64{},
-		down: map[string]bool{},
+		tx:    map[string]uint64{},
+		cpu:   map[string]uint64{},
+		down:  map[string]bool{},
+		reads: map[string]int{},
 	}
 	s.docker = d
 	return s, st, d

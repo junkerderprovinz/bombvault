@@ -549,6 +549,21 @@ const sr: Partial<Translations> = {
   "streaming.limitHint": "Ако је уобичајено ограничење ниже, оно остаје.",
   "streaming.hold": "Назад на уобичајено после (мин)",
   "streaming.holdHint": "Колико дуго саобраћај мора остати испод прага пре него што се врати уобичајено ограничење.",
+  "idle.toggle": "Сачекај да апликација мирује",
+  "idle.toggleHint": "Заказана резервна копија овог контејнера чека док је апликација заузета и почиње чим мирује или кад чекање истекне. Медијски сервер мирује кад не стримује, свака друга апликација кад CPU и саобраћај остану ниски (Подешавања, Распореди). Ручне копије никад не чекају.",
+  "idle.maxHours": "Чекај највише (сати)",
+  "idle.waiting": "Чека мировање: {reason}. Почиње најкасније у {time}.",
+  "idle.reasonStreaming": "стриминг је у току",
+  "idle.reasonCpu": "CPU је заузет",
+  "idle.reasonNetwork": "мрежа је заузета",
+  "idle.reasonMeasuring": "још се мери",
+  "idle.title": "Мировање пре копије",
+  "idle.hint": "Када се апликација сматра да мирује за контејнер чија заказана копија то чека. Медијски сервер мирује кад не стримује. За контејнер на мрежи домаћина рачуна се само CPU.",
+  "idle.cpu": "CPU испод (% језгра)",
+  "idle.cpuHint": "100 је једно цело језгро, како га приказује docker stats.",
+  "idle.net": "Саобраћај испод (Mbit/s)",
+  "idle.quiet": "Бар (мин)",
+  "idle.quietHint": "Колико дуго CPU и саобраћај морају остати испод обе границе.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Надзор (Prometheus)",
@@ -1940,6 +1955,7 @@ const sr: Partial<Translations> = {
   "activityLog.lineRestoringItem": "Враћање {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Израда резервних копија за све {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Слање на спољну копију — {domain} …",
+  "activityLog.lineWaitingIdle": "Копија {name} чека мировање: {reason}. Почиње најкасније у {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Слање на спољну копију — {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Слање на спољну копију — {domain} … {percent}% укупно (снимак {index} од {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Слање на спољну копију — {domain} … {percent}% укупно (снимак {index} од {total}) · {duration}",
@@ -2242,6 +2258,7 @@ const sr: Partial<Translations> = {
   "settingsIO.group.exportEncryption": "Шифровање извоза",
   "settingsIO.group.anomalies": "Откривање аномалија",
   "settingsIO.group.streaming": "Прво стриминг",
+  "settingsIO.group.idle": "Мировање пре копије",
 
   // Backup order (#119)
   "backupOrder.title": "Редослед резервног копирања",

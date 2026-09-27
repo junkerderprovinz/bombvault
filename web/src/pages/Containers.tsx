@@ -20,6 +20,7 @@ import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
+import { IdleWaitLine, IdleWaitRow } from "../components/IdleWaitRow";
 import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
 import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
@@ -2507,7 +2508,9 @@ export function ContainerRow({
               databaseWarn={updateWarnKey(container)}
               t={t}
             />
+            <IdleWaitRow name={container.name} initial={container.idleWaitHours ?? 0} />
           </Advanced>
+          <IdleWaitLine name={container.name} />
         </div>
       </div>
 
