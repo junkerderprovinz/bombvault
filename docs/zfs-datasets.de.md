@@ -63,6 +63,7 @@ Ein Container kann gleichzeitig auf dieser Liste und auf der Seite **Container**
 
 - **In das Dataset zurückschreiben.** Dateien aus dem Backup werden in den Mountpoint des Datasets geschrieben. Gleichnamige Dateien werden überschrieben, andere bleiben liegen. Das Dataset selbst wird nie zurückgerollt oder ersetzt. BombVault prüft, ob das Dataset eingehängt, sichtbar und beschreibbar ist, einmal vor dem Start und noch einmal direkt vor dem Schreiben. Wo ein Unter-Dataset darin eingehängt ist, wird nichts geschrieben: Das Unter-Dataset behält seine Dateien, seinen Besitzer und seine Rechte und wird aus seinem eigenen Backup wiederhergestellt.
 - **In einen Ordner wiederherstellen.** Wähle einen Ordner unter `/mnt`. BombVault prüft, ob der Ordner auf einem eingehängten Pool oder einer Freigabe liegt und ob genug Platz frei ist. Das geht ohne SSH-Verbindung und auch für Datasets, die es nicht mehr gibt.
+- **In ein neues Dataset.** Gib ein Dataset an, das es noch nicht gibt. BombVault legt es mit den ZFS-Eigenschaften aus dem Backup an und stellt dort hinein wieder her, siehe [Als neues Dataset wiederherstellen](#new-dataset).
 - **Dateien auswählen** (Erweitert): nur die Dateien und Ordner, die du auswählst, zurück in das Dataset schreiben.
 - **Alle Datasets dieses Backups** (Erweitert): jedes Dataset des Baums in einen eigenen Unterordner des gewählten Ordners. Datasets, die in diesem Backup übersprungen wurden, werden genannt.
 - **Von einem anderen Server:** Die Seite **Wiederherstellung** stellt aus dem Repository eines anderen BombVault wieder her, immer in einen Ordner: alle Datasets eines Backups, jedes in einen eigenen Unterordner, oder ein Dataset des Baums, ganz oder ausgewählte Dateien.
@@ -79,27 +80,23 @@ Um nach einer Wiederherstellung zurückzugehen, kopiere einzelne Dateien aus `.z
 
 ### Als neues Dataset wiederherstellen {#new-dataset}
 
-BombVault legt keine Datasets an. Lege es auf dem Server mit den gewünschten Eigenschaften an und stelle dann in einen Ordner wieder her, der sein Mountpoint ist:
+BombVault speichert mit jedem Backup die lokal gesetzten ZFS-Eigenschaften jedes Datasets: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity und deine eigenen Benutzereigenschaften. Geerbte und schreibgeschützte Werte bleiben weg, weil sie von selbst zurückkommen. Backups aus der Zeit, bevor BombVault sie gespeichert hat, haben keine.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-und stelle in BombVault in den Ordner `cache/appdata-restored` unter `/mnt` wieder her.
+- **In ein neues Dataset** ruft `zfs create` mit jeder gespeicherten Eigenschaft auf. casesensitivity, normalization und utf8only lassen sich nur so setzen. Der Mountpoint bleibt weg, damit die Kopie nicht mit dem Original kollidiert, ebenso `canmount`, `readonly` und die Verschlüsselung, damit die Wiederherstellung schreiben kann. Ein neues Dataset unter einem verschlüsselten übernimmt dessen Verschlüsselung. Das Dataset darüber muss existieren. Schlägt nach dem Anlegen etwas fehl, bleibt das neue Dataset auf dem Server, weil BombVault nie ein Dataset zerstört.
+- **In das Dataset zurückschreiben** zeigt die gespeicherten Eigenschaften neben der Wiederherstellung. **Diese Eigenschaften auch setzen** setzt die, die ein bestehendes Dataset noch annimmt, bevor eine Datei geschrieben wird. Ohne diesen Schalter behält das Dataset seine Einstellungen.
 
 ## Was im Backup steckt {#contents}
 
-Im Backup: die Dateien und Ordner jedes gesicherten Datasets, mit Besitz, Rechten, Zeitstempeln und erweiterten Attributen, so wie restic sie speichert.
+Im Backup: die Dateien und Ordner jedes gesicherten Datasets, mit Besitz, Rechten, Zeitstempeln und erweiterten Attributen, so wie restic sie speichert und die lokal gesetzten ZFS-Eigenschaften jedes Datasets.
 
 Nicht im Backup:
 
-- die ZFS-Eigenschaften der Datasets (compression, recordsize, quota, mountpoint und der Rest);
 - Besitzer und Rechte des obersten Ordners jedes Datasets selbst (alles darunter ist enthalten). Eine Wiederherstellung in das Dataset lässt den vorhandenen obersten Ordner, wie er ist, eine Wiederherstellung in einen Ordner legt ihn mit den Rechten `0755` an;
 - vorhandene ZFS-Snapshots;
 - Unter-Datasets, die übersprungen oder ausgelassen wurden;
 - Volumes.
 
-Um auf einen neuen Pool wiederherzustellen, lege zuerst die Datasets mit den gewünschten Eigenschaften an. Ob NFSv4-ACLs, wie TrueNAS sie auf SMB-Datasets nutzt, so zurückkommen, wie du es erwartest, ist noch nicht geprüft. Teste eine Wiederherstellung mit deinen eigenen Daten, bevor du dich darauf verlässt.
+Um auf einen neuen Pool wiederherzustellen, lege den Pool an und stelle jedes Dataset in ein neues Dataset wieder her. Ob NFSv4-ACLs, wie TrueNAS sie auf SMB-Datasets nutzt, so zurückkommen, wie du es erwartest, ist noch nicht geprüft. Teste eine Wiederherstellung mit deinen eigenen Daten, bevor du dich darauf verlässt.
 
 ## Verschlüsselte Datasets {#encryption}
 
@@ -180,6 +177,10 @@ Die Seite, der Laufverlauf und die Benachrichtigungen nennen ein Problem mit ein
 | `not-enough-space` | Am Ziel ist nicht genug Platz frei. | Schaffe Platz oder wähle einen anderen Ordner. |
 | `safety-snapshot-failed` | Der Sicherheits-Snapshot ließ sich nicht anlegen, deshalb wurde nichts wiederhergestellt. | Die Details zeigen die Meldung von zfs. |
 | `safety-name-too-long` | Der Dataset-Name ist zu lang für einen Sicherheits-Snapshot. | Schalte den Sicherheits-Snapshot ab, oder stelle in einen Ordner wieder her. |
+| `dataset-exists` | Ein Dataset mit diesem Namen gibt es schon. | Wähle einen neuen Namen, oder stelle in das Dataset selbst wieder her. |
+| `create-failed` | Das neue Dataset konnte nicht angelegt werden. | Die Details zeigen die Meldung von zfs. Prüfe, ob das Dataset darüber existiert. |
+| `new-dataset-not-visible` | Das neue Dataset wurde angelegt, aber BombVault sieht es nicht, deshalb wurde nichts wiederhergestellt. | Das Dataset bleibt auf dem Server. Hänge es unterhalb des Host-Data-Pfads ein und stelle dort hinein wieder her. |
+| `set-properties-failed` | Die gespeicherten Eigenschaften konnten nicht gesetzt werden, deshalb wurde nichts wiederhergestellt. | Die Details zeigen die Meldung von zfs. |
 
 ### Prüfen, was der Container sieht {#mountinfo}
 
@@ -201,6 +202,8 @@ Jede Zeile ist ein Mount im Container. Die Zeile eines Datasets zeigt seinen Pfa
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Eine Wiederherstellung in ein neues Dataset braucht zusätzlich `create` auf dem Dataset darüber, und das Setzen gespeicherter Eigenschaften braucht die Rechte für diese Eigenschaften.
 
   Eine SSH-Sitzung ohne root hat unter TrueNAS `/usr/sbin` nicht im Pfad; BombVault ruft dann direkt `/usr/sbin/zfs` auf.
 - **Host Data** der App muss ein Host-Pfad oberhalb der Datasets sein, zum Beispiel `/mnt/tank`, kein ixVolume. Mit einem Host-Pfad reicht die App neue Mounts des Hosts an BombVault weiter (`rslave`), und das braucht der Snapshot-Zugriff.

@@ -63,6 +63,7 @@ En container kan stå på denne listen og på siden **Kontainere** samtidig. Dat
 
 - **Gjenopprett inn i datasettet.** Filer fra sikkerhetskopien skrives inn i datasettets monteringspunkt. Filer med samme navn overskrives, andre blir liggende. Datasettet rulles aldri tilbake eller erstattes. BombVault sjekker at datasettet er montert, synlig og skrivbart, én gang før det starter og igjen rett før det skriver. Der et underdatasett er montert inni det, skrives ingenting: Underdatasettet beholder filene, eieren og tillatelsene sine og gjenopprettes fra sin egen sikkerhetskopi.
 - **Gjenopprett til en mappe.** Velg en mappe under `/mnt`. BombVault sjekker at mappen ligger på en montert pool eller deling, og at det er nok ledig plass. Dette virker uten SSH-forbindelsen og for datasett som ikke lenger finnes.
+- **Til et nytt datasett.** Oppgi et datasett som ikke finnes ennå. BombVault oppretter det med ZFS-egenskapene fra sikkerhetskopien og gjenoppretter inn i det, se [Gjenopprette som nytt datasett](#new-dataset).
 - **Velg filer** (avansert): skriv bare filene og mappene du velger tilbake i datasettet.
 - **Alle datasett i denne sikkerhetskopien** (avansert): hvert datasett i treet i sin egen undermappe av mappen du velger. Datasett som ble hoppet over i den sikkerhetskopien, nevnes.
 - **Fra en annen server:** Siden **Gjenoppretting** gjenoppretter fra en annen BombVaults repository, alltid til en mappe: alle datasett i én sikkerhetskopi, hvert i sin egen undermappe, eller ett datasett i treet, helt eller valgte filer.
@@ -79,27 +80,23 @@ For å gå tilbake etter en gjenoppretting kopierer du enkeltfiler fra `.zfs/sna
 
 ### Gjenopprette som nytt datasett {#new-dataset}
 
-BombVault oppretter ikke datasett. Opprett det på serveren med egenskapene du vil ha, og gjenopprett så til en mappe som er monteringspunktet:
+BombVault lagrer med hver sikkerhetskopi de lokalt satte ZFS-egenskapene til hvert datasett: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity og dine egne brukeregenskaper. Arvede og skrivebeskyttede verdier utelates, fordi de kommer tilbake av seg selv. Sikkerhetskopier fra før BombVault lagret dem, har ingen.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-og gjenopprett i BombVault til mappen `cache/appdata-restored` under `/mnt`.
+- **Til et nytt datasett** kjører `zfs create` med hver lagrede egenskap. casesensitivity, normalization og utf8only kan bare settes slik. Monteringspunktet utelates så kopien ikke kolliderer med originalen, det samme gjelder `canmount`, `readonly` og krypteringen, så gjenopprettingen kan skrive. Et nytt datasett under et kryptert overtar krypteringen. Datasettet over må finnes. Hvis noe feiler etter at det er opprettet, blir det nye datasettet liggende på serveren, fordi BombVault aldri ødelegger et datasett.
+- **Gjenopprett inn i datasettet** viser de lagrede egenskapene ved siden av gjenopprettingen. **Sett også disse egenskapene** setter de som et eksisterende datasett fortsatt tar imot, før noen fil skrives. Uten den bryteren beholder datasettet innstillingene sine.
 
 ## Hva sikkerhetskopien inneholder {#contents}
 
-I sikkerhetskopien: filene og mappene i hvert sikkerhetskopierte datasett, med eier, tillatelser, tidsstempler og utvidede attributter slik restic lagrer dem.
+I sikkerhetskopien: filene og mappene i hvert sikkerhetskopierte datasett, med eier, tillatelser, tidsstempler og utvidede attributter slik restic lagrer dem, og de lokalt satte ZFS-egenskapene til hvert datasett.
 
 Ikke i sikkerhetskopien:
 
-- datasettenes ZFS-egenskaper (compression, recordsize, quota, mountpoint og resten);
 - eier og tillatelser for selve den øverste mappen i hvert datasett (alt under den er med). En gjenoppretting inn i datasettet lar den eksisterende øverste mappen være som den er, en gjenoppretting til en mappe oppretter den med tillatelsene `0755`;
 - eksisterende ZFS-øyeblikksbilder;
 - underdatasett som ble hoppet over eller utelatt;
 - volumer.
 
-For å gjenopprette til en ny pool oppretter du først datasettene med egenskapene du vil ha. Om NFSv4-ACL-er, slik TrueNAS bruker dem på SMB-datasett, kommer tilbake slik du forventer, er ikke kontrollert ennå, så test en gjenoppretting med dine egne data før du stoler på dem.
+For å gjenopprette til en ny pool oppretter du poolen og gjenoppretter hvert datasett til et nytt datasett. Om NFSv4-ACL-er, slik TrueNAS bruker dem på SMB-datasett, kommer tilbake slik du forventer, er ikke kontrollert ennå, så test en gjenoppretting med dine egne data før du stoler på dem.
 
 ## Krypterte datasett {#encryption}
 
@@ -180,6 +177,10 @@ Siden, kjøringshistorikken og varslene nevner et problem med en av disse kodene
 | `not-enough-space` | Ikke nok ledig plass på målet. | Frigjør plass, eller velg en annen mappe. |
 | `safety-snapshot-failed` | Sikkerhetsøyeblikksbildet kunne ikke tas, så ingenting ble gjenopprettet. | Detaljene viser meldingen fra zfs. |
 | `safety-name-too-long` | Datasettnavnet er for langt for et sikkerhetsøyeblikksbilde. | Slå av sikkerhetsøyeblikksbildet, eller gjenopprett til en mappe. |
+| `dataset-exists` | Det finnes allerede et dataset med dette navnet. | Velg et nytt navn, eller gjenopprett inn i selve datasettet. |
+| `create-failed` | Det nye datasettet kunne ikke opprettes. | Detaljene viser meldingen fra zfs. Sjekk at datasettet over finnes. |
+| `new-dataset-not-visible` | Det nye datasettet ble opprettet, men BombVault ser det ikke, så ingenting ble gjenopprettet. | Datasettet blir på serveren. Monter det under Host Data-stien og gjenopprett inn i det. |
+| `set-properties-failed` | De lagrede egenskapene kunne ikke settes, så ingenting ble gjenopprettet. | Detaljene viser meldingen fra zfs. |
 
 ### Sjekke hva containeren ser {#mountinfo}
 
@@ -201,6 +202,8 @@ Hver linje er en montering inne i containeren. Linjen for et datasett viser stie
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Gjenoppretting til et nytt datasett trenger i tillegg `create` på datasettet over, og å sette lagrede egenskaper trenger rettigheter til de egenskapene.
 
   En SSH-økt uten root på TrueNAS har ikke `/usr/sbin` i stien; BombVault kaller da `/usr/sbin/zfs` direkte.
 - Appens **Host Data** må være en vertssti over datasettene, for eksempel `/mnt/tank`, ikke et ixVolume. Med en vertssti sender appen vertens nye monteringer videre til BombVault (`rslave`), og det trenger tilgang til øyeblikksbilder.

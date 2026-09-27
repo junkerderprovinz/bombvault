@@ -63,6 +63,7 @@ Mở **Bản sao lưu** trên mục, chọn bản sao lưu, rồi chọn tập d
 
 - **Khôi phục vào chính tập dữ liệu.** Tệp từ bản sao lưu được ghi vào điểm gắn kết của tập dữ liệu. Tệp cùng tên bị ghi đè, các tệp khác giữ nguyên. Tập dữ liệu không bao giờ bị quay lui hay thay thế. BombVault kiểm tra rằng tập dữ liệu đã được gắn kết, nhìn thấy được và ghi được, một lần trước khi bắt đầu và một lần nữa ngay trước khi ghi. Chỗ nào có tập con được gắn kết bên trong thì không ghi gì: tập con giữ nguyên tệp, chủ sở hữu và quyền của nó, và được khôi phục từ bản sao lưu riêng.
 - **Khôi phục vào một thư mục.** Chọn một thư mục dưới `/mnt`. BombVault kiểm tra rằng thư mục nằm trên một pool hoặc share đã gắn kết và còn đủ dung lượng trống. Cách này hoạt động mà không cần kết nối SSH và cho cả tập dữ liệu không còn tồn tại.
+- **Vào một tập dữ liệu mới.** Đặt tên một tập dữ liệu chưa tồn tại. BombVault tạo nó với các thuộc tính ZFS lưu trong bản sao lưu và khôi phục vào đó, xem [Khôi phục thành tập dữ liệu mới](#new-dataset).
 - **Chọn tệp** (nâng cao): chỉ ghi lại vào tập dữ liệu những tệp và thư mục bạn chọn.
 - **Mọi tập dữ liệu của bản sao lưu này** (nâng cao): mỗi tập dữ liệu của cây vào thư mục con riêng trong thư mục bạn chọn. Các tập dữ liệu bị bỏ qua trong bản sao lưu đó sẽ được nêu tên.
 - **Từ máy chủ khác:** trang **Khôi phục** khôi phục từ kho của một BombVault khác, luôn vào một thư mục: mọi tập dữ liệu của một bản sao lưu, mỗi tập vào thư mục con riêng, hoặc một tập dữ liệu của cây, toàn bộ hoặc các tệp đã chọn.
@@ -79,27 +80,23 @@ BombVault không bao giờ tự xóa ảnh chụp an toàn. Mục liệt kê ch�
 
 ### Khôi phục thành tập dữ liệu mới {#new-dataset}
 
-BombVault không tạo tập dữ liệu. Hãy tạo nó trên máy chủ với các thuộc tính bạn muốn, rồi khôi phục vào thư mục là điểm gắn kết của nó:
+BombVault lưu cùng mỗi bản sao lưu các thuộc tính ZFS đặt cục bộ của từng tập dữ liệu: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity và các thuộc tính người dùng của riêng bạn. Giá trị kế thừa và giá trị chỉ đọc được bỏ qua, vì chúng tự quay lại. Các bản sao lưu từ trước khi BombVault lưu chúng không có thuộc tính nào.
 
-```
-zfs create -o compression=lz4 cache/appdata-restored
-```
-
-và trong BombVault hãy khôi phục vào thư mục `cache/appdata-restored` dưới `/mnt`.
+- **Vào một tập dữ liệu mới** chạy `zfs create` với mọi thuộc tính đã lưu. casesensitivity, normalization và utf8only chỉ đặt được theo cách này. Điểm gắn kết được bỏ qua để bản sao không đụng bản gốc, cũng như `canmount`, `readonly` và thiết lập mã hóa, để việc khôi phục ghi được. Một tập dữ liệu mới nằm dưới tập được mã hóa sẽ nhận mã hóa của nó. Tập dữ liệu phía trên phải tồn tại. Nếu có gì thất bại sau khi tạo, tập dữ liệu mới vẫn ở trên máy chủ, vì BombVault không bao giờ hủy một tập dữ liệu.
+- **Khôi phục vào chính tập dữ liệu** hiển thị các thuộc tính đã lưu bên cạnh việc khôi phục. **Đặt cả các thuộc tính này** đặt những thuộc tính mà tập dữ liệu có sẵn vẫn nhận, trước khi ghi bất kỳ tệp nào. Không có công tắc này, tập dữ liệu giữ nguyên thiết lập của nó.
 
 ## Bản sao lưu gồm những gì {#contents}
 
-Có trong bản sao lưu: tệp và thư mục của mọi tập dữ liệu được sao lưu, cùng chủ sở hữu, quyền, dấu thời gian và thuộc tính mở rộng như restic lưu.
+Có trong bản sao lưu: tệp và thư mục của mọi tập dữ liệu được sao lưu, cùng chủ sở hữu, quyền, dấu thời gian và thuộc tính mở rộng như restic lưu, cùng các thuộc tính ZFS đặt cục bộ của từng tập dữ liệu.
 
 Không có trong bản sao lưu:
 
-- các thuộc tính ZFS của tập dữ liệu (compression, recordsize, quota, mountpoint và các thuộc tính khác);
 - chủ sở hữu và quyền của chính thư mục trên cùng của mỗi tập dữ liệu (mọi thứ bên dưới đều có). Khôi phục vào chính tập dữ liệu giữ nguyên thư mục trên cùng hiện có, khôi phục vào một thư mục sẽ tạo nó với quyền `0755`;
 - các ảnh chụp ZFS hiện có;
 - các tập con bị bỏ qua hoặc bị loại trừ;
 - ổ đĩa ảo.
 
-Để khôi phục sang một pool mới, hãy tạo các tập dữ liệu với thuộc tính mong muốn trước. Việc NFSv4 ACL, theo cách TrueNAS dùng trên tập dữ liệu SMB, có trở lại như bạn mong đợi hay không vẫn chưa được kiểm chứng, nên hãy thử khôi phục với dữ liệu của chính bạn trước khi dựa vào chúng.
+Để khôi phục sang một pool mới, hãy tạo pool rồi khôi phục từng tập dữ liệu vào một tập dữ liệu mới. Việc NFSv4 ACL, theo cách TrueNAS dùng trên tập dữ liệu SMB, có trở lại như bạn mong đợi hay không vẫn chưa được kiểm chứng, nên hãy thử khôi phục với dữ liệu của chính bạn trước khi dựa vào chúng.
 
 ## Tập dữ liệu được mã hóa {#encryption}
 
@@ -180,6 +177,10 @@ Trang, lịch sử chạy và thông báo nêu một vấn đề bằng một tr
 | `not-enough-space` | Không đủ dung lượng trống tại đích. | Giải phóng dung lượng hoặc chọn thư mục khác. |
 | `safety-snapshot-failed` | Không chụp được ảnh chụp an toàn, nên không có gì được khôi phục. | Phần chi tiết hiển thị thông báo của zfs. |
 | `safety-name-too-long` | Tên tập dữ liệu quá dài cho một ảnh chụp an toàn. | Tắt ảnh chụp an toàn, hoặc khôi phục vào một thư mục. |
+| `dataset-exists` | Đã có một tập dữ liệu tên này. | Chọn tên mới, hoặc khôi phục vào chính tập dữ liệu đó. |
+| `create-failed` | Không tạo được tập dữ liệu mới. | Phần chi tiết cho thấy thông báo của zfs. Kiểm tra tập dữ liệu phía trên có tồn tại không. |
+| `new-dataset-not-visible` | Tập dữ liệu mới đã được tạo nhưng BombVault không thấy nó, nên chưa khôi phục gì. | Tập dữ liệu vẫn còn trên máy chủ. Gắn nó dưới đường dẫn Host Data rồi khôi phục vào đó. |
+| `set-properties-failed` | Không đặt được các thuộc tính đã lưu, nên chưa khôi phục gì. | Phần chi tiết hiển thị thông báo của zfs. |
 
 ### Kiểm tra những gì container nhìn thấy {#mountinfo}
 
@@ -201,6 +202,8 @@ Mỗi dòng là một lần gắn kết bên trong container. Dòng của một 
   ```
   zfs allow <user> snapshot,destroy,mount <dataset>
   ```
+
+  Khôi phục vào một tập dữ liệu mới còn cần quyền `create` trên tập dữ liệu phía trên, và đặt các thuộc tính đã lưu cần quyền đối với các thuộc tính đó.
 
   Phiên SSH không phải root trên TrueNAS không có `/usr/sbin` trong đường dẫn; khi đó BombVault gọi trực tiếp `/usr/sbin/zfs`.
 - **Host Data** của ứng dụng phải là một đường dẫn máy chủ nằm trên các tập dữ liệu, ví dụ `/mnt/tank`, không phải ixVolume. Với đường dẫn máy chủ, ứng dụng chuyển các lần gắn kết mới của máy chủ tới BombVault (`rslave`), và đó chính là điều quyền truy cập ảnh chụp cần.
