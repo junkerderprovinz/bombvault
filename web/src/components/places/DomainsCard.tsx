@@ -13,7 +13,7 @@ import {
 } from "../../lib/places";
 import { subscribeOffsiteTargets } from "../../lib/useOffsiteTargets";
 
-interface DomainRows {
+interface DomainRowsState {
   rows: DomainRow[] | null;
   places: Place[];
   unplaced: UnplacedRow[];
@@ -24,8 +24,8 @@ interface DomainRows {
  *  the places it names, and again after every write they depend on. The newest
  *  read wins, and reload resolves once it has landed, which is when a row lets
  *  go of a choice it was holding. */
-function useDomainRows(): DomainRows & { reload: () => Promise<void> } {
-  const [state, setState] = useState<DomainRows>({ rows: null, places: [], unplaced: [], failed: false });
+function useDomainRows(): DomainRowsState & { reload: () => Promise<void> } {
+  const [state, setState] = useState<DomainRowsState>({ rows: null, places: [], unplaced: [], failed: false });
   const seq = useRef(0);
   const newest = useRef<Promise<void>>(Promise.resolve());
 
