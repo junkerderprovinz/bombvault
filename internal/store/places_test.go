@@ -3,6 +3,7 @@ package store_test
 import (
 	"database/sql"
 	"errors"
+	"maps"
 	"reflect"
 	"slices"
 	"testing"
@@ -455,36 +456,206 @@ func TestADirectRepositoryFollowsItsPlaceAndKeepsItsCredentials(t *testing.T) {
 	checkPlacedAddresses(t, r)
 }
 
-func TestASwitchedOffRowStaysOffWhileItsPlaceStaysOn(t *testing.T) {
+// switchesAt maps each row at the place to whether it is on.
+func switchesAt(t *testing.T, r *store.Repo, placeID string) map[string]bool {
+	t.Helper()
+	rows, err := r.PlaceRows(placeID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	on := map[string]bool{}
+	for _, row := range rows {
+		on[row.ID] = row.Enabled
+	}
+	return on
+}
+
+func TestAPlaceSwitchedBackOnBringsBackOnlyTheRowsItSwitchedOff(t *testing.T) {
 	r, db := placesRepo(t)
 	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
 	containers := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: addressAt(t, bucket, "containers", ""), Enabled: true})
+	direct, err := r.CreateCompanionRepo(containers.ID, "B2 direct", addressAt(t, bucket, "containers", "-direct"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	flash := upsertRow(t, r, store.OffsiteTarget{Domain: "flash", Name: "B2", Repo: addressAt(t, bucket, "flash", ""), Enabled: false})
 	attachRow(t, db, containers.ID, bucket.ID, "containers", "")
+	attachRow(t, db, direct.ID, bucket.ID, "containers", "-direct")
 	attachRow(t, db, flash.ID, bucket.ID, "flash", "")
-	enabled := func(id string) bool {
-		t.Helper()
-		row, _, err := r.GetOffsiteTarget(id)
-		if err != nil {
-			t.Fatal(err)
-		}
-		return row.Enabled
-	}
+	own := map[string]bool{containers.ID: true, direct.ID: true, flash.ID: false}
+	off := map[string]bool{containers.ID: false, direct.ID: false, flash.ID: false}
 
 	bucket.RetentionKeepDaily = 90
 	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
-	if !enabled(containers.ID) || enabled(flash.ID) {
-		t.Fatal("an edit of the place switched a row on or off")
+	if got := switchesAt(t, r, bucket.ID); !maps.Equal(got, own) {
+		t.Fatalf("after an edit of the place the rows are %v, want %v", got, own)
 	}
+	for range 2 {
+		bucket.Enabled = false
+		bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+		if got := switchesAt(t, r, bucket.ID); !maps.Equal(got, off) {
+			t.Fatalf("with the place off the rows are %v, want every one off", got)
+		}
+		bucket.Enabled = true
+		bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+		if got := switchesAt(t, r, bucket.ID); !maps.Equal(got, own) {
+			t.Fatalf("with the place back on the rows are %v, want %v", got, own)
+		}
+	}
+}
+
+func TestARowSavedWhileItsPlaceIsOffKeepsItsOwnSwitch(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	renamed := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: addressAt(t, bucket, "containers", ""), Enabled: true})
+	switched := upsertRow(t, r, store.OffsiteTarget{Domain: "flash", Name: "B2", Repo: addressAt(t, bucket, "flash", ""), Enabled: true})
+	direct, err := r.CreateCompanionRepo(renamed.ID, "B2 direct", addressAt(t, bucket, "containers", "-direct"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	attachRow(t, db, renamed.ID, bucket.ID, "containers", "")
+	attachRow(t, db, switched.ID, bucket.ID, "flash", "")
+	attachRow(t, db, direct.ID, bucket.ID, "containers", "-direct")
 	bucket.Enabled = false
 	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
-	if enabled(containers.ID) || enabled(flash.ID) {
-		t.Fatal("a place switched off left a row on")
+	stored := func(id string) store.OffsiteTarget {
+		t.Helper()
+		rows, err := r.PlaceRows(bucket.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		i := slices.IndexFunc(rows, func(row store.OffsiteTarget) bool { return row.ID == id })
+		if i < 0 {
+			t.Fatalf("row %s is not at %s", id, bucket.Name)
+		}
+		return rows[i]
+	}
+
+	row := stored(renamed.ID)
+	row.Name = "B2 renamed"
+	upsertRow(t, r, row)
+	for _, id := range []string{switched.ID, direct.ID} {
+		row = stored(id)
+		row.Enabled = true
+		upsertRow(t, r, row)
+		row.Enabled = false
+		upsertRow(t, r, row)
 	}
 	bucket.Enabled = true
 	mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
-	if !enabled(containers.ID) || !enabled(flash.ID) {
-		t.Fatal("a place switched back on left a row off")
+
+	want := map[string]bool{renamed.ID: true, switched.ID: false, direct.ID: false}
+	if got := switchesAt(t, r, bucket.ID); !maps.Equal(got, want) {
+		t.Fatalf("with the place back on the rows are %v, want the renamed one on and the ones switched off off", got)
+	}
+}
+
+func TestSavingAnUnchangedSwitchedOffPlaceWritesNothing(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	on := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: addressAt(t, bucket, "containers", ""), Enabled: true})
+	off := upsertRow(t, r, store.OffsiteTarget{Domain: "flash", Name: "B2", Repo: addressAt(t, bucket, "flash", ""), Enabled: false})
+	attachRow(t, db, on.ID, bucket.ID, "containers", "")
+	attachRow(t, db, off.ID, bucket.ID, "flash", "")
+
+	for _, enabled := range []bool{false, true} {
+		bucket.Enabled = enabled
+		bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+		changes := totalChanges(t, db)
+		mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+		if n := totalChanges(t, db) - changes; n != 0 {
+			t.Fatalf("saving an unchanged place that is on=%v wrote %d rows", enabled, n)
+		}
+	}
+}
+
+func TestAPrimaryRowComesOnWithItsHomePlace(t *testing.T) {
+	r, _ := placesRepo(t)
+	if _, err := r.UpsertPrimaryRemoteTarget("vms", store.OffsiteTarget{Repo: "rest:http://old:8000/vms", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	tower := restPlace()
+	tower.Enabled = false
+	tower = mustWritePlace(t, r, store.PlaceWrite{Place: tower, HomeDomains: map[string]string{"containers": "", "vms": ""}})
+	primaries := func() map[string]bool {
+		t.Helper()
+		on := map[string]bool{}
+		for _, d := range []string{"containers", "vms"} {
+			row, found, err := r.PrimaryRemoteTarget(d)
+			if err != nil || !found || row.PlaceID != tower.ID {
+				t.Fatalf("primary row of %s = %+v, %v, %v, want one at %s", d, row, found, err, tower.Name)
+			}
+			on[d] = row.Enabled
+		}
+		return on
+	}
+	if got := primaries(); got["containers"] || got["vms"] {
+		t.Fatalf("primary rows at a place that is off = %v, want both off", got)
+	}
+	tower.Enabled = true
+	mustWritePlace(t, r, store.PlaceWrite{Place: tower})
+	if got := primaries(); !got["containers"] || !got["vms"] {
+		t.Fatalf("primary rows with their place back on = %v, want both on", got)
+	}
+}
+
+func TestARowThatLeavesItsSwitchedOffPlaceLeavesItsMarkThere(t *testing.T) {
+	for name, leave := range map[string]func(t *testing.T, r *store.Repo, db *sql.DB, rowID, placeID string) error{
+		"detached": func(t *testing.T, _ *store.Repo, db *sql.DB, rowID, _ string) error {
+			return runTx(t, db, func(tx *sql.Tx) error { return store.DetachRowTx(tx, rowID) })
+		},
+		"moved through an old route": func(_ *testing.T, r *store.Repo, _ *sql.DB, rowID, _ string) error {
+			_, err := r.SetNamedRepoLocationIfUnused(rowID, "s3:https://s3.example.com/other/container-direct", true)
+			return err
+		},
+		"its place removed": func(_ *testing.T, r *store.Repo, _ *sql.DB, _, placeID string) error {
+			_, err := r.DeletePlaceIfUnused(placeID)
+			return err
+		},
+		"every place dropped": func(_ *testing.T, r *store.Repo, _ *sql.DB, _, _ string) error {
+			return r.DropPlaces()
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			r, db := placesRepo(t)
+			bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+			target := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "Other", Repo: "s3:https://s3.example.com/other/container", Enabled: true})
+			direct, err := r.CreateCompanionRepo(target.ID, "B2 direct", addressAt(t, bucket, "containers", "-direct"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			attachRow(t, db, direct.ID, bucket.ID, "containers", "-direct")
+			bucket.Enabled = false
+			mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+			if got, err := r.GetNamedRepo(direct.ID); err != nil || got.Enabled || !got.OffWithPlace {
+				t.Fatalf("direct repository at a place that is off = %+v, %v, want it off and marked", got, err)
+			}
+
+			if err := leave(t, r, db, direct.ID, bucket.ID); err != nil {
+				t.Fatal(err)
+			}
+			if got, err := r.GetNamedRepo(direct.ID); err != nil || got.PlaceID != "" || got.OffWithPlace {
+				t.Fatalf("direct repository = %+v, %v, want it at no place without the mark", got, err)
+			}
+		})
+	}
+}
+
+func TestARowThatLeavesASwitchedOffPlaceStaysOffAtTheNextOne(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	row := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: addressAt(t, bucket, "containers", ""), Enabled: true})
+	attachRow(t, db, row.ID, bucket.ID, "containers", "")
+	bucket.Enabled = false
+	mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	tower := mustWritePlace(t, r, store.PlaceWrite{Place: restPlace()})
+
+	if _, err := r.AdoptRow(row.ID, tower.ID, "containers", ""); err != nil {
+		t.Fatal(err)
+	}
+	mustWritePlace(t, r, store.PlaceWrite{Place: tower})
+	if got := switchesAt(t, r, tower.ID); got[row.ID] {
+		t.Fatal("a row that came off at its old place was switched on by the next one")
 	}
 }
 
