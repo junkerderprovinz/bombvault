@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
@@ -133,6 +134,10 @@ type restoreScope struct {
 	fixedNeed int64
 	fixedAt   string
 	download  bool
+	// images are the disks a changed-block VM restore rebuilds from their
+	// segments. restic has no dry run for that, so the plan names each file
+	// and counts it at the most it can take.
+	images []backup.VMRestoreImage
 }
 
 // CheckRestore runs the pre-flight checks for a restore and, when they get
@@ -417,6 +422,15 @@ func containerScope(plan containerRestorePlan, name string) restoreScope {
 // The NVRAM and TPM state travel over SSH and have no dry run.
 func vmScope(plan vmRestorePlan, name string) restoreScope {
 	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, inPlace: true, vmName: name, vmXML: plan.domainXML}
+	if len(plan.images) > 0 {
+		sc.images = plan.images
+		for _, img := range plan.images {
+			if dir := path.Dir(img.Target); !slices.Contains(sc.written, dir) {
+				sc.written = append(sc.written, dir)
+			}
+		}
+		return sc
+	}
 	if len(plan.restoreDirs) > 0 {
 		for _, d := range plan.restoreDirs {
 			sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: plan.snapshotID, Subtree: d.Subtree, Target: d.Target})

@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
@@ -148,7 +149,28 @@ func (s *Service) previewRestore(ctx context.Context, sc restoreScope) (RestoreP
 		}
 		break
 	}
+	for _, img := range sc.images {
+		if _, err := os.Lstat(img.Target); err == nil {
+			plan.Changed++
+			add(img.Target, changeChanged)
+		} else {
+			plan.Added++
+			add(img.Target, changeAdded)
+		}
+		need[path.Dir(img.Target)] += blockImageCeiling(img.Disk)
+	}
 	return plan, need, nil
+}
+
+// blockImageCeiling is the most a rebuilt disk image takes beside the one it
+// replaces: the raw image at the guest's full size, and a converted copy of
+// the same size for any other format. Holes and qcow2's own packing usually
+// leave it far below that.
+func blockImageCeiling(d backup.BlocksDisk) int64 {
+	if d.Format != "" && d.Format != "raw" {
+		return 2 * d.Size
+	}
+	return d.Size
 }
 
 // spaceLine compares what the restore writes with the free space of each
@@ -167,7 +189,7 @@ func (s *Service) spaceLine(sc restoreScope, need map[string]int64, incomplete b
 			return line
 		}
 		need = map[string]int64{sc.fixedAt: sc.fixedNeed}
-	case len(sc.steps) == 0:
+	case len(sc.steps) == 0 && len(sc.images) == 0:
 		line.Status, line.Reason = lineSkip, reasonNothing
 		return line
 	}
@@ -188,6 +210,12 @@ func (s *Service) spaceLine(sc restoreScope, need map[string]int64, incomplete b
 	}
 	line.Status = lineOK
 	for _, v := range volumes {
+		// A disk image counted at its ceiling that does not fit may still fit
+		// once its holes are left out, so that shortfall does not block.
+		if v.need > v.free && len(sc.images) > 0 {
+			line.Status, line.Reason = lineSkip, reasonUnmeasured
+			return line
+		}
 		if v.need > v.free {
 			line.Status, line.Reason = lineFail, reasonShort
 			line.Need, line.Free = v.need, v.free
