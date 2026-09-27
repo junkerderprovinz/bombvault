@@ -309,6 +309,9 @@ type domainXML struct {
 			Target struct {
 				Dev string `xml:"dev,attr"`
 			} `xml:"target"`
+			Driver struct {
+				Type string `xml:"type,attr"`
+			} `xml:"driver"`
 			ReadOnly *struct{} `xml:"readonly"`
 		} `xml:"disk"`
 		TPM *tpmXML `xml:"tpm"`
@@ -336,7 +339,7 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 		switch {
 		case writable:
 			disks = append(disks, disk.Source.File)
-			diskRefs = append(diskRefs, DiskRef{Dev: disk.Target.Dev, Source: disk.Source.File})
+			diskRefs = append(diskRefs, DiskRef{Dev: disk.Target.Dev, Source: disk.Source.File, Format: disk.Driver.Type})
 			if device == "" {
 				device = disk.Target.Dev // the blockcommit target
 			}
