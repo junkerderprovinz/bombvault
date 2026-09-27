@@ -5317,6 +5317,40 @@ func (h *Handler) handleRestoreFlashPlugin(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
+// handleScanAppdataBackup lists the archives of an Appdata.Backup folder and
+// what an import would do with each. POST /api/import/appdata-backup/scan
+func (h *Handler) handleScanAppdataBackup(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Path string `json:"path"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	archives, err := h.svc.ScanAppdataBackup(r.Context(), body.Path)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"archives": archives}))
+}
+
+// handleImportAppdataBackup imports every new archive of an Appdata.Backup
+// folder in the background. POST /api/import/appdata-backup
+func (h *Handler) handleImportAppdataBackup(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Path string `json:"path"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	n, err := h.svc.StartImportAppdataBackup(r.Context(), body.Path)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "archives": n}))
+}
+
 func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.vmNameParam(w, r)
 	if !ok {

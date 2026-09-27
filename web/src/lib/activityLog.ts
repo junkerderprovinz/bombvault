@@ -156,7 +156,7 @@ function formatBytesShort(n: number): string {
 type ParsedKey =
   | { scope: "item"; domain: "container" | "vm" | "files" | "zfs" | "flash" | "config"; name: string }
   | { scope: "batch"; domain: string }
-  | { scope: "offsite" | "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export"; domain: string };
+  | { scope: "offsite" | "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export" | "import"; domain: string };
 
 /**
  * parseProgressKey decodes a live SSE progress key; progress.ts documents the
@@ -179,6 +179,7 @@ function parseProgressKey(key: string): ParsedKey | null {
   if (key.startsWith("drdrill:")) return { scope: "drdrill", domain: key.slice("drdrill:".length) };
   if (key.startsWith("tamper:")) return { scope: "tamper", domain: key.slice("tamper:".length) };
   if (key.startsWith("export:")) return { scope: "export", domain: key.slice("export:".length) };
+  if (key.startsWith("import:")) return { scope: "import", domain: key.slice("import:".length) };
   return null;
 }
 
@@ -226,13 +227,14 @@ function domainOpSignature(kind: string, domain: string): string {
 
 /** Live-line text per domain-scoped operation. The export line takes no
  *  {domain}: the flash ZIP export is flash-only, so its text names flash. */
-const DOMAIN_OP_RUNNING_KEYS: Record<"prune" | "verify" | "drill" | "drdrill" | "tamper" | "export", string> = {
+const DOMAIN_OP_RUNNING_KEYS: Record<"prune" | "verify" | "drill" | "drdrill" | "tamper" | "export" | "import", string> = {
   prune: "activityLog.linePruneRunning",
   verify: "activityLog.lineVerifyRunning",
   drill: "activityLog.lineDrillRunning",
   drdrill: "activityLog.lineDRDrillRunning",
   tamper: "activityLog.lineTamperRunning",
   export: "activityLog.lineExportRunning",
+  import: "activityLog.lineImportRunning",
 };
 
 /**
@@ -349,7 +351,7 @@ function buildLiveLines(
     const opSig = domainOpSignature(parsed.scope, domain);
     if (!keep(opSig)) continue;
     signatures.add(opSig);
-    lines.push({ id: `live:${key}`, runId: stillRunning.get(opSig), atMs: state.lastSeen, status: "running", text, domain, kind: parsed.scope, live: true });
+    lines.push({ id: `live:${key}`, runId: stillRunning.get(opSig), atMs: state.lastSeen, status: "running", text, domain, kind: parsed.scope === "import" ? "backup" : parsed.scope, live: true });
   }
 
   return { lines, signatures };
@@ -463,6 +465,14 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
       : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
   }
 
+  if (run.kind === "import") {
+    return run.status === "success"
+      ? { status: "success", text: resolveName("activityLog.lineImportSuccess", { name, bytes: formatBytesShort(run.bytes), duration }) }
+      : run.status === "failed"
+        ? { status: "failed", text: resolveName("activityLog.lineImportFailed", { name, error: reasonText(run.error, resolveName) }) }
+        : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
+  }
+
   if (run.kind === "restore") {
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineRestoreSuccess", { name, duration }) }
@@ -499,6 +509,8 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
 function asLogKind(kind: string): LogKind {
   if (kind === "dbdumpsave" || kind === "dbimport") return "restore";
   if (kind === "dbdump") return "dbdump";
+  // An import writes restore points, which is what the backup filter finds.
+  if (kind === "import") return "backup";
   if (
     kind === "backup" ||
     kind === "restore" ||

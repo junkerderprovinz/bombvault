@@ -6069,6 +6069,10 @@ func (f *fakeResticEngine) Diff(_ context.Context, _, snap1, snap2 string, _ res
 	return f.diffResult, nil
 }
 
+func (f *fakeResticEngine) ImportDir(context.Context, string, string, []string, time.Time, restic.Mode) (restic.Summary, error) {
+	return restic.Summary{}, errors.New("fakeResticEngine does not import")
+}
+
 func (f *fakeResticEngine) TagAdd(_ context.Context, _, snapID string, tags []string, _ restic.Mode) error {
 	f.taggedSnaps = append(f.taggedSnaps, snapID+":"+strings.Join(tags, ","))
 	f.callLog = append(f.callLog, "TagAdd")

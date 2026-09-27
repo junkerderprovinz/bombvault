@@ -2722,6 +2722,26 @@ export function listFlashPlugins(snapshotId: string, source?: string): Promise<O
   return fetchJSON(`/api/flash/plugins?snapshot=${encodeURIComponent(snapshotId)}${srcParam(source, "&")}`);
 }
 
+export interface AppdataBackupArchive {
+  folder: string;
+  container: string;
+  file: string;
+  size: number;
+  /** When the plugin made the backup, in seconds. */
+  time: number;
+  status: "new" | "imported" | "no-container" | "not-backed-up";
+}
+
+/** POST /api/import/appdata-backup/scan: what an Appdata.Backup folder holds. */
+export function scanAppdataBackup(path: string): Promise<OkEnvelope & { archives?: AppdataBackupArchive[] }> {
+  return fetchJSON("/api/import/appdata-backup/scan", { method: "POST", body: JSON.stringify({ path }) });
+}
+
+/** POST /api/import/appdata-backup: imports every new archive in the background. */
+export function importAppdataBackup(path: string): Promise<OkEnvelope & { started?: boolean; archives?: number }> {
+  return fetchJSON("/api/import/appdata-backup", { method: "POST", body: JSON.stringify({ path }) });
+}
+
 /** POST /api/flash/plugins/restore: writes one plugin back into the live flash. */
 export function restoreFlashPlugin(
   snapshot: string,
