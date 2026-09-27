@@ -119,6 +119,7 @@ export default [
             "Recovery.tsx": "PAGE_SHELL_RESPONSIVE",
             "Files.tsx": "PAGE_SHELL_RESPONSIVE",
             "Flash.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Config.tsx": "PAGE_SHELL_RESPONSIVE",
             // Not a routed page: Layout renders it in place of the app shell
             // while auth is blocked.
             "Login.tsx": null,

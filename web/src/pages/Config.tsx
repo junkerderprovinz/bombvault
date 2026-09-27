@@ -9,7 +9,7 @@ import {
 } from "../lib/api";
 import type { Snapshot, Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { PAGE_SHELL } from "../lib/pageShell";
+import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
@@ -236,7 +236,7 @@ function ConfigSnapshotRow({
         preselected ? " bg-carbon-surface2 px-2 rounded-control" : ""
       }`}
     >
-      <div className="flex items-center gap-3 text-sm">
+      <div className="flex items-center gap-3 text-sm max-md:flex-wrap">
         <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
@@ -256,7 +256,7 @@ function ConfigSnapshotRow({
           tone="accent"
           onClick={() => void handleDelete()}
           disabled={deleting}
-          className={`shrink-0${shake ? " glim-shake" : ""}`}
+          className={`max-md:ms-auto shrink-0${shake ? " glim-shake" : ""}`}
         />
       </div>
       {confirmDialog}
@@ -324,7 +324,7 @@ export function Config() {
   }, [source, reloadTick]);
 
   return (
-    <div className={PAGE_SHELL}>
+    <div className={PAGE_SHELL_RESPONSIVE}>
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold text-carbon-text">{t("config.title")}</h1>
@@ -391,7 +391,7 @@ export function Config() {
           </Badge>
         </h2>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 max-md:flex-wrap">
           <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
             {t("source.label")}
             <InfoBubble tip={t("source.hint")} />
