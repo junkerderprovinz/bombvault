@@ -28,6 +28,7 @@
 // (settings, SSE progress, the save PATCH round-trip) rides the real server;
 // the PATCH is fulfilled too so the harness DB stays untouched by a spec.
 import { expect, test, type Page } from "@playwright/test";
+import { PLACEMENT } from "./placement";
 
 // The two device projects from playwright.config.ts. Everything else is a
 // desktop project.
@@ -57,6 +58,7 @@ const CONTAINERS_BODY = {
       lastUpdateCheck: 0,
       lastUpdateResult: "",
       stack: "",
+      placement: PLACEMENT,
     },
   ],
 };

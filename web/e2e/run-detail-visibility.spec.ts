@@ -34,6 +34,7 @@
 // sheet's own flows; the machinery proven here (this hook +
 // lib/useVisibilityGate.ts) is the same machinery that sheet consumer uses.
 import { expect, test, type Page } from "@playwright/test";
+import { PLACEMENT } from "./placement";
 
 // The two device projects from playwright.config.ts. Everything else is a
 // desktop project.
@@ -58,6 +59,7 @@ const CONTAINERS_BODY = {
       postHook: "",
       stopContainers: [],
       excludes: [],
+      placement: PLACEMENT,
     },
   ],
 };

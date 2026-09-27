@@ -13,6 +13,7 @@
 // The display-prefs abort keeps the English labels whatever order the
 // workers boot in.
 import { expect, test, type Page } from "@playwright/test";
+import { PLACEMENT } from "./placement";
 
 // The two device projects from playwright.config.ts; everything else is a
 // desktop project (desktop-untouched.spec.ts's branching pattern).
@@ -34,6 +35,7 @@ function vmPayload(i: number, overrides: Record<string, unknown> = {}) {
     includeInSchedule: true,
     lastBackup: null,
     lastBackupStarted: null,
+    placement: PLACEMENT,
     ...overrides,
   };
 }
@@ -506,12 +508,12 @@ test("desktop /vms: Discover stays in the header while VM backups are off", asyn
 test("mobile /vms: a restore link from the anomalies page opens that VM with its backups", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone detail is this test's surface");
   await stageVmsDomain(page, [vmPayload(0), vmPayload(1)]);
-  await page.route("**/api/vms/*/snapshots*", (route) => route.fulfill({ json: { ok: true, snapshots: [] } }));
-  const snapshots = page.waitForRequest(/\/api\/vms\/id-01\/snapshots/);
+  await page.route("**/api/items/vms/*/timeline*", (route) => route.fulfill({ json: { ok: true, places: [], rows: [] } }));
+  const timeline = page.waitForRequest(/\/api\/items\/vms\/id-01\/timeline/);
 
   await page.goto("/vms?restore=snap-9&at=1700000000&item=id-01");
 
   await expect(page.getByRole("heading", { level: 2, name: "vm-01" })).toBeVisible();
   await expect(page.getByRole("button", { name: /^vm-00/ })).toHaveCount(0);
-  await snapshots;
+  await timeline;
 });

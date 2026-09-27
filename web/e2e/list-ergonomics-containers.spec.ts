@@ -38,6 +38,7 @@
 // activity-log scenarios travel with the log's own PR: the log itself
 // shipped in the first PR without them.
 import { expect, test, type Page } from "@playwright/test";
+import { PLACEMENT } from "./placement";
 
 // The two device projects from playwright.config.ts; everything else is a
 // desktop project (desktop-untouched.spec.ts's branching pattern).
@@ -68,6 +69,7 @@ function containerPayload(i: number, overrides: Record<string, unknown> = {}) {
     lastUpdateCheck: 0,
     lastUpdateResult: "",
     stack: "",
+    placement: PLACEMENT,
     ...overrides,
   };
 }
@@ -379,12 +381,12 @@ test("every rendered card clears the 44px touch floor", async ({ page }, testInf
 test("a restore link from the anomalies page opens that container with its backups", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile presentation only");
   await stageContainersDomain(page, containerList(3));
-  await page.route("**/api/containers/*/snapshots*", (route) => route.fulfill({ json: { ok: true, snapshots: [] } }));
-  const snapshots = page.waitForRequest(/\/api\/containers\/svc-01\/snapshots/);
+  await page.route("**/api/items/containers/*/timeline*", (route) => route.fulfill({ json: { ok: true, places: [], rows: [] } }));
+  const timeline = page.waitForRequest(/\/api\/items\/containers\/svc-01\/timeline/);
 
   await page.goto("/containers?restore=snap-9&at=1700000000&item=svc-01");
 
   await expect(page.getByRole("heading", { level: 2, name: "svc-01" })).toBeVisible();
   await expect(page.getByRole("button", { name: /^svc-00/ })).toHaveCount(0);
-  await snapshots;
+  await timeline;
 });
