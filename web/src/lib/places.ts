@@ -287,8 +287,9 @@ export function testPlace(id: string): Promise<OkEnvelope & ProbeResult> {
   return post(placePath(id, "/test"));
 }
 
-/** Sends a harmless delete to every domain path and copy at the place. A
- *  folder on this server is refused, since nothing can keep it from deletion. */
+/** Sends a harmless delete to every domain path and switched-on copy at the
+ *  place. A folder on this server is refused, since nothing can keep it from
+ *  deletion. */
 export function tamperTestPlace(id: string): Promise<PlaceRefusal & TamperVerdict> {
   return post(placePath(id, "/tamper-test"));
 }
