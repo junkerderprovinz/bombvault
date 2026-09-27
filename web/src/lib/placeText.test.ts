@@ -10,6 +10,7 @@ describe("placeErrorText", () => {
       "place-name-taken",
       "place-home-domain",
       "place-is-repository",
+      "place-folder-blank",
       "place-domain-unavailable",
       "place-address-taken",
       "place-off",

@@ -32,6 +32,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "place-name-taken": "places.error.nameTaken",
   "place-home-domain": "places.error.homeDomain",
   "place-is-repository": "places.error.isRepository",
+  "place-folder-blank": "places.error.folderBlank",
   "place-domain-unavailable": "places.error.domainUnavailable",
   "place-address-taken": "places.error.addressTaken",
   "place-off": "places.error.off",
