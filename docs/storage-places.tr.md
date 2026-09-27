@@ -27,12 +27,12 @@ Her konum bir satırdır; satırda sağlayıcısı, ne için kullanıldığı ve
 
 - **Genel**: ad, konumu açıp kapatan anahtar, adres ve kendiniz çalıştırdığınız bir cihaz için **Cihaz nerede?** (bkz. [Bina dışında](#off-the-premises)).
 - **Saklama**: son-tut, günlük, haftalık ve aylık; konumdaki her depo için. Yeni bir konum varsayılan kurallarla başlar; her kuralı sıfır olan bir konum hiçbir şeyi kırpmaz.
-- **Koruma**: **Append-only** anahtarı. Append-only'yi karşı tarafın uygulaması gerekir; anahtar açıkken BombVault orada asla budama ya da silme yapmaz. Append-only açık bir rest-server'da **Append-only'yi test et**, konumun depoladığı ya da kopyaladığı her etki alanı için kurcalama testini çalıştırır ve *silme reddedildi* ya da *silme kabul edildi* gösterir (bkz. [Site dışı ve kurtarma](offsite-recovery.md)). Bu bölüm yalnızca uzak konumlarda vardır, çünkü bu makinedeki hiçbir şey yerel bir deponun silinmesini engelleyemez.
+- **Koruma**: **Append-only** anahtarı. Append-only'yi karşı tarafın uygulaması gerekir; anahtar açıkken BombVault orada asla budama ya da silme yapmaz. Append-only açık bir rest-server'da **Append-only'yi test et**, konumdaki her etki alanı yolu, açık kopya ve depo için kurcalama testini çalıştırır ve tüm konum için tek bir yanıt gösterir: *silme reddedildi* ya da *silme kabul edildi* (bkz. [Site dışı ve kurtarma](offsite-recovery.md)). Bu bölüm yalnızca uzak konumlarda vardır, çünkü bu makinedeki hiçbir şey yerel bir deponun silinmesini engelleyemez.
 - **Erişim**: kimlik bilgileri ve S3 için depolama sınıfı. Ortak kimlik bilgilerini kullanan bir konum, ilk değişiklikte kendine ait bir küme alır. Konumdaki doğrudan bir depoyu yeni kimlik bilgileri açamıyorsa o depo eskilerini korur ve yanıt bunu belirtir. Klasör, SFTP ve rclone konumlarında bu bölüm yoktur.
 - **Sınırlar**: yükleme ve indirme hızı ile büyüme bütçesi.
 - **Klasörler**: her etki alanı için, klasörünün adıyla birlikte bir anahtar. Burada kapatılan bir etki alanı bu konumu seçemez.
 
-Saklamayı düşürmek ya da append-only'yi kapatmak önce sorar ve bunun kaç ögeyi etkilediğini söyler. Bir konumu kapatmak oradaki her depoyu kapatır; bir etki alanının depolandığı konum kapatılamaz.
+Saklamayı düşürmek önce sorar ve bunun kaç ögeyi etkilediğini söyler; append-only'yi kapatmak önce sorar ve konumdaki kaç deponun bu korumayı kaybettiğini söyler. Bir konumu kapatmak oradaki her depoyu kapatır; bir etki alanının depolandığı konum kapatılamaz.
 
 ## Alanlar kartı {#domains}
 
@@ -57,7 +57,7 @@ Bir konum ancak hiçbir şey onu kullanmıyorken kaldırılabilir: orada hiçbir
 
 ## Konumu olmayanlar {#without-a-place}
 
-Konum artı klasör biçimine uymayan bir adres çalışmaya devam eder ve adresiyle birlikte **Konumu olmayanlar** altında listelenir. restic'in kendi `b2:`, `gs:` ve `swift:` adresleri bunlar arasındadır. **Konuma ata**, böyle bir satırı [adres değiştirme](#addresses) ile aynı testten sonra bir konuma bağlar. Konumu olmayan bir kopyalama hedefi ayrıca etki alanının satırında, çiplerin yanında adıyla gösterilir ve kopyalamaya devam eder.
+Konum artı klasör biçimine uymayan bir adres çalışmaya devam eder ve adresiyle birlikte **Konumu olmayanlar** altında listelenir. restic'in kendi `b2:`, `gs:` ve `swift:` adresleri bunlar arasındadır. **Konuma ata**, böyle bir satırı [adres değiştirme](#addresses) ile aynı testten sonra bir konuma bağlar. Konumu olmayan bir kopyalama hedefi ayrıca etki alanının satırında, çiplerin yanında adıyla gösterilir ve kopyalamaya devam eder. Oradaki uzak bir satırın kendi **Append-only** anahtarı vardır ve onu kapatmak, o adreste yedek tutan öge sayısıyla önce sorar. Doğrudan bir depo, hedefinin anahtarını izler.
 
 ## Bina dışında {#off-the-premises}
 

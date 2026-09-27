@@ -63,7 +63,7 @@ Egy távoli tárhelyen tárolt tartomány ugyanúgy a másolatainak forrása, mi
 
 Jelölj egy telephelyen kívüli tárolót append-only-ként, hogy a zsarolóvírus vagy egy feltört hoszt ne tudja törölni vagy átírni a mentéseidet. A túloldal (egy `restic/rest-server` `--append-only` módban futva) **érvényesíti**. A BombVault csak **ellenőrzi**, és soha nem mutat zöldet pusztán egy konfigurációs állítás alapján.
 
-A **Tárhely hozzáadása** ablak egy beilleszthető receptet tartalmaz egy append-only módú rest-serverhez, egy felhasználóval ennek a BombVaultnak. Egy rest-server tárhelyen, amelyen az **Append-only** be van kapcsolva, a tárhely részleteiben az **Append-only tesztelése** lefuttatja a manipulációs tesztet minden tartományra, amelyet a tárhely tárol vagy másol, így az append-only telephelyen kívüli mentés elérhető a konfigok kézi szerkesztése nélkül.
+A **Tárhely hozzáadása** ablak egy beilleszthető receptet tartalmaz egy append-only módú rest-serverhez, egy felhasználóval ennek a BombVaultnak. Egy rest-server tárhelyen, amelyen az **Append-only** be van kapcsolva, a tárhely részleteiben az **Append-only tesztelése** lefuttatja a manipulációs tesztet a tárhely minden tartományútvonalán, bekapcsolt másolatán és tárolóján, és egyetlen választ ad a tárhelyre, így az append-only telephelyen kívüli mentés elérhető a konfigok kézi szerkesztése nélkül.
 
 !!! note "A `/locks/` alatti sikeres törlés várt viselkedés"
     Az append-only nem azt jelenti, hogy semmit sem lehet többé törölni. A resticnek fel kell vennie és el kell engednie a saját zárait, ezért a `/locks/` szándékosan írható és törölhető marad. A pillanatfelvételek és a mögöttük lévő adatok, vagyis pontosan az, amit egy zsarolóvírus célba venne, nem távolíthatók el. Ha magad próbálod ki a túloldalt, a `/locks/` alatt sikeres törlés helyes viselkedés, nem rés a védelemben.
@@ -81,12 +81,14 @@ A BombVault időnként bizonyítja az append-only garanciát azzal, hogy tényle
 
 Egy valódi védett-védtelen átbillenés egyetlen riasztást indít.
 
+Egy tárhelyen az **Append-only tesztelése** minden ott lévő tartományútvonalat, bekapcsolt másolatot és tárolót a saját hitelesítő adataival próbál meg, és az eredményeket egyetlen válaszba vonja össze: egyetlen tároló, amely elfogad egy törlést, az egész tárhelyet *törlések elfogadva* állapotba teszi.
+
 ## DR-próbák
 
 A BombVault kétféle szintű bizonyítékot kínál arra, hogy a mentéseid ténylegesen visszaállíthatók, nem csak jelen vannak.
 
 - **Visszaállítás-ellenőrző próbák (helyi).** A BombVault időnként lefuttatja a `restic check --read-data-subset` parancsot (korlátozva, soha nem egy lemezt megtöltő teljes visszaállítás), és tartományonként *utoljára visszaállíthatónak igazolva* jelvényt mutat. Az ütem a Beállítások, Ütemezések alatt él; a jelvény a Beállítások, Integritás alatt.
-- **DR-próbák (telephelyen kívüli).** A BombVault visszaállít egy valódi célt a telephelyen kívüli tárolóból egy eldobható homokozóba, ellenőrzi fájlról fájlra és bájtról bájtra, majd feltakarít. Ez bizonyítja, hogy telephelyen kívülről helyre tudsz állni, nem csak azt, hogy a tároló válaszol.
+- **DR-próbák (telephelyen kívüli).** A BombVault visszaállít egy valódi célt a telephelyen kívüli tárolóból egy eldobható homokozóba, ellenőrzi fájlról fájlra és bájtról bájtra, majd feltakarít. Ez bizonyítja, hogy telephelyen kívülről helyre tudsz állni, nem csak azt, hogy a tároló válaszol. Csak a másik helyszínen lévő tárhelyeken fut próba, mert egy ugyanabban az épületben lévő másolat semmit sem bizonyít az épület elvesztéséről. Egy több ilyen tárhelyre másolt tartomány ütemezett futásonként sorra egyiken próbálódik, és az irányítópult megnevezi az utolsó próba tárhelyét.
 
 A **zsarolóvírus-védelmi eredménytábla** az irányítópulton mindezt tartományonkénti zöld / sárga / piros helyzetté gyűjti össze, egy korral bélyegzett ellenőrzőlistával (telephelyen kívüli beállítva, append-only igazolva, replikáció naprakész, visszaállítási próba sikeres, titkosítás be, nyesési stratégia beállítva). Minden piros sor mélyhivatkozással a javításra mutat, és a kártya csak igazolt tényeken vált valaha is zöldre.
 
@@ -124,7 +126,7 @@ Két gép: a **TOWER** futtatja a konténereket és küldi a mentéseket, a **VA
 
 Az útvonal első szakasza a htpasswd felhasználó, itt `tower`, és minden tartomány alatta kapja a saját mappáját, például `rest:http://VAULT:8000/tower/container`. A **Hol van az eszköz?** kérdésre válaszolj a **Másik helyszínen** lehetőséggel, kattints a **Hozzáadás** gombra, és pipáld be a tárhelyet a **Másolva ide** alatt azoknál a tartományoknál, amelyeknek oda kell kerülniük.
 
-**3. A TOWER gépen kapcsold be az Append-only módot** a tárhely részleteiben a **Védelem** alatt, majd kattints az **Append-only tesztelése** gombra. A teszt minden tartományra lefut, amelyet a tárhely tárol vagy másol, és mindegyiknek *törlések elutasítva* eredményt kell adnia. Mit jelentenek a válaszok:
+**3. A TOWER gépen kapcsold be az Append-only módot** a tárhely részleteiben a **Védelem** alatt, majd kattints az **Append-only tesztelése** gombra. A teszt a tárhely minden tartományútvonalát, másolatát és tárolóját megpróbálja, és egyetlen választ ad a tárhelyre, amelynek *törlések elutasítva* eredménynek kell lennie. Mit jelentenek a válaszok:
 
 | Eredmény | Mi történt |
 | --- | --- |
@@ -145,9 +147,9 @@ Az útvonal első szakasza a htpasswd felhasználó, itt `tower`, és minden tar
 
 Egy dedikált **Helyreállítás** fül egy helyen végigvezet egy friss vagy újraépített telepítést a katasztrófaeseten:
 
-1. **Először visszaállítja a BombVault saját beállításait**, így a mentési útvonalak, telephelyen kívüli célok és hitelesítő adatok, amelyekre a folyamat többi része szüksége van, előre kitöltve jelennek meg (a Docker socketen keresztüli önújraindítással alkalmazva, így az élő beállítás-adatbázis soha nem íródik felül nyitott handle alatt).
-2. **Ellenőrzi, hogy a BombVault olvasni tudja-e a mentéseidet** (a titkosításikulcs-buktató előre).
-3. Lehetővé teszi, hogy **rámutass a meglévő tárolódra**: egy helyi mappára, vagy egy távoli tárhelyre, amelyet ugyanazzal a **Tárhely hozzáadása** ablakkal csatlakoztatsz, mint a Beállítások, Tárolás alatt.
+1. **Ellenőrzi, hogy a BombVault olvasni tudja-e a mentéseidet** (a titkosításikulcs-buktató előre).
+2. **Visszaállítja a BombVault saját beállításait**, így a mentési útvonalak, telephelyen kívüli célok és hitelesítő adatok, amelyekre a folyamat többi része szüksége van, előre kitöltve jelennek meg. A beállítás-mentést abból a tárhelyből olvassa, amelyet az Önmentés sora a **Tárolva itt** alatt megnevez, vagy az Önmentés **Másolva ide** alatti másolatából, és a tárhelyet a címével együtt mutatja; ha másik tárhelyről olvasnál, előbb módosítsd az Önmentés sorát a 3. lépésben. A visszaállítás a Docker socketen keresztüli önújraindítással érvényesül, így az élő beállítás-adatbázis soha nem íródik felül nyitott handle alatt.
+3. **Csatolja a meglévő mentéseidet** a Tartományok kártya sorain keresztül: minden tartomány sorában válaszd ki a **Tárolva itt** alatt azt a tárhelyet, ahol a mentései vannak, a **Másolva ide** alatt pedig azokat a tárhelyeket, amelyek a másolatait őrzik. Egy tárhelyet, amelyet még egyik sor sem kínál, például egy megosztást, szervert vagy felhős bucketet, a **Tárhely hozzáadása** ablakkal csatlakoztatsz, ugyanazzal, mint a Beállítások, Tárolás alatt. A **Csatlakozás és előnézet** ezután ellenőrzi, hogy a mentések olvashatók-e.
 4. **Felfedezi** a benne tárolt konténereket, VM-eket és fájlkészleteket.
 5. **Mindet visszaállítja** (leállítva hagyva, így te indítod el őket szándékosan), a helyreállítási csomagoddal egy kattintásnyira.
 

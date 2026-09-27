@@ -63,7 +63,7 @@ Un dominio almacenado en un lugar remoto es el origen de sus copias, igual que u
 
 Marca un repo externo como append-only para que el ransomware, o un host comprometido, no puedan eliminar ni reescribir tus copias. El otro extremo (un `restic/rest-server` ejecutándose en modo `--append-only`) lo **impone**. BombVault solo lo **verifica** y nunca muestra verde basándose únicamente en una afirmación de configuración.
 
-La ventana **Añadir lugar** incluye una receta lista para pegar para un rest-server en modo append-only, con un usuario para este BombVault. En un lugar rest-server con **Append-only** activado, **Probar append-only** en los detalles del lugar ejecuta la prueba de manipulación para cada dominio que el lugar almacena o copia, de modo que el externo append-only es alcanzable sin editar configuraciones a mano.
+La ventana **Añadir lugar** incluye una receta lista para pegar para un rest-server en modo append-only, con un usuario para este BombVault. En un lugar rest-server con **Append-only** activado, **Probar append-only** en los detalles del lugar ejecuta la prueba de manipulación contra cada ruta de dominio, copia activada y repositorio del lugar y da una sola respuesta para el lugar, de modo que el externo append-only es alcanzable sin editar configuraciones a mano.
 
 !!! note "Un borrado correcto en `/locks/` es lo esperado"
     Append-only no significa que ya no se pueda borrar nada. restic tiene que tomar y liberar sus propios bloqueos, así que `/locks/` sigue siendo escribible y borrable a propósito. Las instantáneas y los datos que hay detrás, que es justo lo que buscaría un ransomware, no se pueden eliminar. Si compruebas tú mismo el lado remoto, un borrado que funcione bajo `/locks/` es el comportamiento correcto y no un agujero.
@@ -81,12 +81,14 @@ BombVault demuestra periódicamente la garantía append-only intentando realment
 
 Un cambio real de protegido a no protegido dispara una única alerta.
 
+En un lugar, **Probar append-only** sondea cada ruta de dominio, copia activada y repositorio que hay allí con sus propias credenciales y reúne los veredictos en una sola respuesta: basta un repositorio que acepte un borrado para que todo el lugar quede en *borrado aceptado*.
+
 ## Ensayos de DR
 
 BombVault ofrece dos niveles de prueba de que tus copias son realmente restaurables, no solo de que están presentes.
 
 - **Ensayos de verificación de restauración (local).** BombVault ejecuta periódicamente `restic check --read-data-subset` (acotado, nunca una restauración completa que llene el disco) y muestra una insignia de *restaurable verificado por última vez* por dominio. La cadencia vive en Ajustes, Calendarios; la insignia en Ajustes, Integridad.
-- **Ensayos de DR (externo).** BombVault restaura un objetivo real desde el repo externo en un entorno de pruebas desechable, lo verifica archivo por archivo y byte por byte, y luego limpia. Esto demuestra que puedes recuperarte desde el externo, no solo que el repo responde.
+- **Ensayos de DR (externo).** BombVault restaura un objetivo real desde el repo externo en un entorno de pruebas desechable, lo verifica archivo por archivo y byte por byte, y luego limpia. Esto demuestra que puedes recuperarte desde el externo, no solo que el repo responde. Solo se ensayan los lugares en otro sitio, porque una copia en la misma casa no demuestra nada ante la pérdida de la casa. Un dominio copiado a varios de ellos se ensaya contra uno en cada ejecución programada, por turnos, y el Panel indica el lugar del último ensayo.
 
 El **cuadro de mando de protección contra ransomware** en el Panel lo resume en una postura verde / ámbar / rojo por dominio, con una lista de comprobación con marca de antigüedad (externo configurado, append-only verificado, replicación al día, ensayo de restauración superado, cifrado activado, estrategia de poda definida). Cada fila roja enlaza directamente con la solución, y la tarjeta solo se pone verde con hechos verificados.
 
@@ -124,7 +126,7 @@ Dos equipos: **TOWER** ejecuta los contenedores y envía las copias, **VAULT** l
 
 El primer segmento de la ruta es el usuario htpasswd, aquí `tower`, y cada dominio recibe su carpeta debajo, por ejemplo `rest:http://VAULT:8000/tower/container`. Responde a **¿Dónde está el dispositivo?** con **En otro sitio**, haz clic en **Añadir** y marca el lugar en **Copiado a** para los dominios que deban ir allí.
 
-**3. En TOWER, activa Append-only** en **Protección**, en los detalles del lugar, y haz clic en **Probar append-only**. La prueba se ejecuta para cada dominio que el lugar almacena o copia, y cada una debe decir *borrado rechazado*. Qué significan las respuestas:
+**3. En TOWER, activa Append-only** en **Protección**, en los detalles del lugar, y haz clic en **Probar append-only**. La prueba sondea cada ruta de dominio, copia y repositorio del lugar y da una sola respuesta para el lugar, que debe ser *borrado rechazado*. Qué significan las respuestas:
 
 | Resultado | Qué ocurrió |
 | --- | --- |
@@ -145,9 +147,9 @@ El primer segmento de la ruta es el usuario htpasswd, aquí `tower`, y cada domi
 
 Una pestaña **Recuperación** dedicada guía una instalación nueva o reconstruida a través del caso de desastre, en un solo lugar:
 
-1. **Restaura primero los propios ajustes de BombVault**, de modo que las rutas de copia, los destinos externos y las credenciales que necesita el resto del flujo vengan rellenados de antemano (aplicado mediante un autoreinicio a través del socket de Docker, de modo que la base de datos de ajustes en ejecución nunca se sobrescribe bajo un descriptor abierto).
-2. **Comprueba que BombVault puede leer tus copias** (la trampa de la clave de cifrado por adelantado).
-3. Te permite **apuntar a tu repo existente**: una carpeta local, o un lugar remoto conectado mediante la misma ventana **Añadir lugar** que en Ajustes, Almacenamiento.
+1. **Comprueba que BombVault puede leer tus copias** (la trampa de la clave de cifrado por adelantado).
+2. **Restaura los propios ajustes de BombVault**, de modo que las rutas de copia, los destinos externos y las credenciales que necesita el resto del flujo vengan rellenados de antemano. Lee la copia de configuración del lugar que la fila Autocopia indica en **Almacenado en**, o de la copia de la Autocopia en **Copiado a**, y muestra ese lugar con su dirección; para leer de otro lugar, cambia primero la fila Autocopia en el paso 3. La restauración se aplica mediante un autoreinicio a través del socket de Docker, de modo que la base de datos de ajustes en ejecución nunca se sobrescribe bajo un descriptor abierto.
+3. **Adjunta tus copias existentes** mediante las filas de la tarjeta Dominios: en la fila de cada dominio, elige en **Almacenado en** el lugar donde están sus copias de seguridad y en **Copiado a** los lugares que guardan sus copias. Un lugar que ninguna fila ofrece todavía, como un recurso compartido, un servidor o un bucket en la nube, se conecta con **Añadir lugar**, la misma ventana que en Ajustes, Almacenamiento. Después, **Conectar y previsualizar** comprueba que las copias se pueden leer.
 4. **Descubre** los contenedores, VMs y conjuntos de archivos almacenados en él.
 5. **Los restaura todos** (dejados detenidos, para que los inicies deliberadamente), con tu kit de recuperación a un clic de distancia.
 

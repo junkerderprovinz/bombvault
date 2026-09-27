@@ -84,7 +84,7 @@ Off-site-kopier går til lagringssteder. Tilføj stedet på **Indstillinger, Lag
 
 ## Bærbare indstillinger (eksportér og importér) {#portable-settings-export-and-import}
 
-Kortet **Eksportér og importér indstillinger** på Indstillinger-siden skriver hele din BombVault-konfiguration (domæneindstillinger, lagringssteder, tidsplaner, notifikationer) til en bærbar JSON-fil, du kan importere på en anden instans, så et flyt til en ny boks eller kloning af en opsætning ikke betyder at genindtaste alt manuelt. Import viser en forhåndsvisning og beder om bekræftelse, og den rører aldrig dine sikkerhedskopidata eller -historik.
+Kortet **Eksportér og importér indstillinger** på Indstillinger-siden skriver hele din BombVault-konfiguration (domæneindstillinger, lagringssteder, tidsplaner, notifikationer) til en bærbar JSON-fil, du kan importere på en anden instans, så et flyt til en ny boks eller kloning af en opsætning ikke betyder at genindtaste alt manuelt. Import viser en forhåndsvisning og beder om bekræftelse, og den rører aldrig dine sikkerhedskopidata eller -historik. Forhåndsvisningen tæller lagringsstederne i filen og, med legitimationsoplysningerne, legitimationssættene; for en ældre fil uden steder bygger BombVault dem ud fra de importerede indstillinger.
 
 !!! warning "Eksporten kan indeholde legitimationsoplysninger"
     Du vælger, om legitimationsoplysningerne til dine steder og notifikationer skal medtages i filen. Med legitimationsoplysninger medtaget er eksporten lige så følsom som dit gendannelseskit, så opbevar den et sikkert sted. Uden dem indeholder filen kun ikke-hemmelige indstillinger.

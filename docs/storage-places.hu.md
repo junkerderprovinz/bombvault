@@ -27,12 +27,12 @@ Minden tárhely egy sor a szolgáltatójával, azzal, hogy mire szolgál, és az
 
 - **Általános**: a név, a tárhelyet be- és kikapcsoló kapcsoló, a cím, és saját üzemeltetésű eszköznél a **Hol van az eszköz?** kérdés (lásd: [Az épületen kívül](#off-the-premises)).
 - **Megőrzés**: utolsók megtartása, napi, heti és havi, a tárhely minden tárolójára. Egy új tárhely az alapértelmezett szabályokkal indul; az a tárhely, amelynek minden szabálya nulla, soha nem vág vissza semmit.
-- **Védelem**: az **Append-only** kapcsoló. Az append-only módot a túloldalnak kell kikényszerítenie; bekapcsolt kapcsolóval a BombVault ott soha nem nyes és nem töröl. Ha egy rest-serveren be van kapcsolva az append-only, az **Append-only tesztelése** lefuttatja a manipulációs tesztet minden tartományra, amelyet a tárhely tárol vagy másol, és *törlések elutasítva* vagy *törlések elfogadva* eredményt mutat (lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md)). Ez a szakasz csak a távoli tárhelyeknél van meg, mert ezen a gépen semmi sem akadályozhatja meg egy helyi tároló törlését.
+- **Védelem**: az **Append-only** kapcsoló. Az append-only módot a túloldalnak kell kikényszerítenie; bekapcsolt kapcsolóval a BombVault ott soha nem nyes és nem töröl. Ha egy rest-serveren be van kapcsolva az append-only, az **Append-only tesztelése** lefuttatja a manipulációs tesztet a tárhely minden tartományútvonalán, bekapcsolt másolatán és tárolóján, és egyetlen választ mutat az egész tárhelyre, *törlések elutasítva* vagy *törlések elfogadva* (lásd: [Telephelyen kívüli mentés és helyreállítás](offsite-recovery.md)). Ez a szakasz csak a távoli tárhelyeknél van meg, mert ezen a gépen semmi sem akadályozhatja meg egy helyi tároló törlését.
 - **Hozzáférés**: a hitelesítő adatok, S3-nál pedig a tárolási osztály is. A közös hitelesítő adatokat használó tárhely az első módosításkor saját készletet kap. Ha az új hitelesítő adatok nem tudnak megnyitni egy közvetlen tárolót a tárhelyen, az megtartja a régieket, és a válasz ezt jelzi. A mappa-, SFTP- és rclone-tárhelyeknek nincs ilyen szakaszuk.
 - **Korlátok**: a fel- és letöltési sebesség, valamint a növekedési keret.
 - **Mappák**: tartományonként egy kapcsoló, a mappája nevével. Az itt kikapcsolt tartomány nem választhatja a tárhelyet.
 
-A megőrzés csökkentése vagy az append-only kikapcsolása előbb rákérdez, és megmondja, hány elemet érint. Egy tárhely kikapcsolása a rajta lévő összes tárolót kikapcsolja; az a tárhely, amelyen egy tartomány tárolódik, nem kapcsolható ki.
+A megőrzés csökkentése előbb rákérdez, és megmondja, hány elemet érint; az append-only kikapcsolása előbb rákérdez, és megmondja, a tárhely hány tárolója veszíti el. Egy tárhely kikapcsolása a rajta lévő összes tárolót kikapcsolja; az a tárhely, amelyen egy tartomány tárolódik, nem kapcsolható ki.
 
 ## A Tartományok kártya {#domains}
 
@@ -57,7 +57,7 @@ Egy tárhely csak akkor távolítható el, ha semmi sem használja: egyetlen tar
 
 ## Tárhely nélkül {#without-a-place}
 
-Az a cím, amely nem illik a tárhely plusz mappa formába, továbbra is működik, és a **Tárhely nélkül** alatt szerepel, a címével együtt. Ide tartoznak a natív `b2:`, `gs:` és `swift:` címek is. A **Hozzárendelés tárhelyhez** egy ilyen sort egy tárhelyhez kapcsol, ugyanazzal a teszttel, mint a [cím módosítása](#addresses). A tárhely nélküli másolási célt a tartománya sora is megnevezi, a chipek mellett, és a cél továbbra is másol.
+Az a cím, amely nem illik a tárhely plusz mappa formába, továbbra is működik, és a **Tárhely nélkül** alatt szerepel, a címével együtt. Ide tartoznak a natív `b2:`, `gs:` és `swift:` címek is. A **Hozzárendelés tárhelyhez** egy ilyen sort egy tárhelyhez kapcsol, ugyanazzal a teszttel, mint a [cím módosítása](#addresses). A tárhely nélküli másolási célt a tartománya sora is megnevezi, a chipek mellett, és a cél továbbra is másol. Az ottani távoli sornak saját **Append-only** kapcsolója van, és a kikapcsolása előbb rákérdez, megadva, hány elem tart mentéseket ezen a címen. A közvetlen tároló a célja kapcsolóját követi.
 
 ## Az épületen kívül {#off-the-premises}
 

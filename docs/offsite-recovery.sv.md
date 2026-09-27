@@ -63,7 +63,7 @@ En domän som sparas på en fjärransluten lagringsplats är källan till sina k
 
 Flagga ett off-site-repo append-only så att ransomware, eller en komprometterad värd, inte kan radera eller skriva om dina säkerhetskopior. Den bortre sidan (en `restic/rest-server` som körs i `--append-only`-läge) **upprätthåller** det. BombVault **verifierar** det bara och visar aldrig grönt enbart på ett konfigurationspåstående.
 
-Fönstret **Lägg till lagringsplats** har ett recept, färdigt att klistra in, för en rest-server i append-only-läge, med en användare för den här BombVault-instansen. På en rest-server-lagringsplats med **Append-only** påslaget kör **Testa append-only** i lagringsplatsens detaljer manipulationstestet för varje domän som lagringsplatsen sparar eller kopierar, så att append-only off-site är nåbar utan att handredigera konfigurationer.
+Fönstret **Lägg till lagringsplats** har ett recept, färdigt att klistra in, för en rest-server i append-only-läge, med en användare för den här BombVault-instansen. På en rest-server-lagringsplats med **Append-only** påslaget kör **Testa append-only** i lagringsplatsens detaljer manipulationstestet mot varje domänsökväg, påslagen kopia och repo på lagringsplatsen och ger ett svar för hela lagringsplatsen, så att append-only off-site är nåbar utan att handredigera konfigurationer.
 
 !!! note "En lyckad radering under `/locks/` är förväntad"
     Append-only betyder inte att ingenting längre kan raderas. restic måste ta och släppa sina egna lås, så `/locks/` förblir avsiktligt skrivbar och raderbar. Ögonblicksbilder och datan bakom dem, alltså precis det som utpressningsprogram skulle gå efter, går inte att ta bort. Testar du motparten själv är en radering som lyckas under `/locks/` korrekt beteende och inte ett hål i skyddet.
@@ -81,12 +81,14 @@ BombVault bevisar regelbundet append-only-garantin genom att faktiskt försöka 
 
 En verklig skyddad-till-oskyddad-vändning avfyrar ett enda larm.
 
+På en lagringsplats provar **Testa append-only** varje domänsökväg, påslagen kopia och repo där med dess egna uppgifter och slår ihop utslagen till ett svar: ett enda repo som accepterar en radering gör hela lagringsplatsen till *radering tillåten*.
+
 ## DR-övningar
 
 BombVault erbjuder två nivåer av bevis på att dina säkerhetskopior faktiskt går att återställa, inte bara finns.
 
 - **Återställningsverifieringsövningar (lokala).** BombVault kör regelbundet `restic check --read-data-subset` (avgränsad, aldrig en diskfyllande fullständig återställning) och visar en *senast verifierad återställbar*-märkning per domän. Kadensen finns under Inställningar, Scheman; märkningen under Inställningar, Integritet.
-- **DR-övningar (off-site).** BombVault återställer ett verkligt mål från off-site-repot till en engångssandlåda, verifierar det fil-för-fil och byte-för-byte, och städar sedan upp. Detta bevisar att du kan återhämta dig från off-site, inte bara att repot svarar.
+- **DR-övningar (off-site).** BombVault återställer ett verkligt mål från off-site-repot till en engångssandlåda, verifierar det fil-för-fil och byte-för-byte, och städar sedan upp. Detta bevisar att du kan återhämta dig från off-site, inte bara att repot svarar. Bara lagringsplatser på en annan plats övas, eftersom en kopia i samma hus inte bevisar något om att förlora huset. En domän som kopieras till flera av dem övas mot en per schemalagd körning, i tur och ordning, och Översikten namnger lagringsplatsen för den senaste övningen.
 
 **Poängkortet för ransomware-skydd** på Översikten rullar upp detta i en grön / gul / röd hållning per domän, med en åldersstämplad checklista (off-site konfigurerat, append-only verifierat, replikering aktuell, återställningsövning godkänd, kryptering på, rensningsstrategi satt). Varje röd rad djuplänkar till åtgärden, och kortet blir grönt endast på verifierade fakta.
 
@@ -124,7 +126,7 @@ Två maskiner: **TOWER** kör containrarna och skickar säkerhetskopiorna, **VAU
 
 Första segmentet i sökvägen är htpasswd-användaren, här `tower`, och varje domän får sin mapp under den, till exempel `rest:http://VAULT:8000/tower/container`. Svara **På en annan plats** på **Var står enheten?**, klicka på **Lägg till** och kryssa i lagringsplatsen under **Kopierad till** för de domäner som ska dit.
 
-**3. Slå på Append-only på TOWER** under **Skydd** i lagringsplatsens detaljer, och klicka sedan på **Testa append-only**. Testet körs för varje domän som lagringsplatsen sparar eller kopierar, och för varje domän måste det säga *radering nekad*. Vad svaren betyder:
+**3. Slå på Append-only på TOWER** under **Skydd** i lagringsplatsens detaljer, och klicka sedan på **Testa append-only**. Testet provar varje domänsökväg, kopia och repo på lagringsplatsen och ger ett svar för lagringsplatsen, som måste vara *radering nekad*. Vad svaren betyder:
 
 | Resultat | Vad som hände |
 | --- | --- |
@@ -145,9 +147,9 @@ Första segmentet i sökvägen är htpasswd-användaren, här `tower`, och varje
 
 En dedikerad **Återställning**-flik lotsar en ny eller ombyggd installation genom katastrofscenariot, på ett ställe:
 
-1. **Återställer BombVaults egna inställningar först**, så att säkerhetskopiesökvägarna, off-site-målen och uppgifterna som resten av flödet behöver kommer förifyllda (tillämpade via en självomstart över Docker-socketen, så att den körande inställningsdatabasen aldrig skrivs över under ett öppet handtag).
-2. **Kontrollerar att BombVault kan läsa dina säkerhetskopior** (krypteringsnyckel-fällan direkt).
-3. Låter dig **peka mot ditt befintliga repo**: en lokal mapp, eller en fjärransluten lagringsplats som ansluts via samma fönster **Lägg till lagringsplats** som under Inställningar, Lagring.
+1. **Kontrollerar att BombVault kan läsa dina säkerhetskopior** (krypteringsnyckel-fällan direkt).
+2. **Återställer BombVaults egna inställningar**, så att säkerhetskopiesökvägarna, off-site-målen och uppgifterna som resten av flödet behöver kommer förifyllda. Den läser inställningssäkerhetskopian från lagringsplatsen som raden Auto-säkerhetskopia anger under **Sparad i**, eller från Auto-säkerhetskopians kopia under **Kopierad till**, och visar den lagringsplatsen med sin adress; för att läsa från en annan lagringsplats, ändra först raden Auto-säkerhetskopia i steg 3. Återställningen tillämpas via en självomstart över Docker-socketen, så att den körande inställningsdatabasen aldrig skrivs över under ett öppet handtag.
+3. **Ansluter dina befintliga säkerhetskopior** via raderna på kortet **Domäner**: på varje domäns rad väljer du lagringsplatsen där dess säkerhetskopior ligger under **Sparad i** och lagringsplatserna med dess kopior under **Kopierad till**. En lagringsplats som ingen rad erbjuder än, till exempel en utdelning, en server eller en molnbucket, ansluts med **Lägg till lagringsplats**, samma fönster som under Inställningar, Lagring. **Anslut och förhandsgranska** kontrollerar sedan att säkerhetskopiorna går att läsa.
 4. **Identifierar** containrarna, VM:arna och filuppsättningarna lagrade i det.
 5. **Återställer dem alla** (lämnade stoppade, så att du startar dem medvetet), med ditt återställningskit ett klick bort.
 

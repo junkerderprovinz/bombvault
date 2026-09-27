@@ -84,7 +84,7 @@ Các bản sao off-site được gửi đến các điểm lưu trữ. Thêm đi
 
 ## Cài đặt di động (xuất và nhập) {#portable-settings-export-and-import}
 
-Thẻ **Xuất và nhập cài đặt** trên trang Settings ghi toàn bộ cấu hình BombVault của bạn (cài đặt miền, điểm lưu trữ, lịch trình, thông báo) ra một tệp JSON di động mà bạn có thể nhập trên một phiên bản khác, nên chuyển sang một máy mới hay nhân bản một thiết lập không có nghĩa là nhập lại mọi thứ bằng tay. Việc nhập hiển thị một bản xem trước và hỏi xác nhận, và nó không bao giờ đụng đến dữ liệu hay lịch sử sao lưu của bạn.
+Thẻ **Xuất và nhập cài đặt** trên trang Settings ghi toàn bộ cấu hình BombVault của bạn (cài đặt miền, điểm lưu trữ, lịch trình, thông báo) ra một tệp JSON di động mà bạn có thể nhập trên một phiên bản khác, nên chuyển sang một máy mới hay nhân bản một thiết lập không có nghĩa là nhập lại mọi thứ bằng tay. Việc nhập hiển thị một bản xem trước và hỏi xác nhận, và nó không bao giờ đụng đến dữ liệu hay lịch sử sao lưu của bạn. Bản xem trước đếm các điểm lưu trữ trong tệp và, khi có thông tin đăng nhập, cả các bộ thông tin xác thực; với một tệp cũ hơn không có điểm lưu trữ, BombVault dựng chúng từ cài đặt đã nhập.
 
 !!! warning "Bản xuất có thể chứa thông tin đăng nhập"
     Bạn chọn có bao gồm thông tin đăng nhập của các điểm lưu trữ và thông báo trong tệp hay không. Khi có kèm thông tin đăng nhập, bản xuất nhạy cảm như bộ khôi phục của bạn, nên hãy cất giữ nó ở nơi an toàn. Không có chúng, tệp chỉ chứa các cài đặt không bí mật.

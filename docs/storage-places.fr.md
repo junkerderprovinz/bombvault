@@ -27,12 +27,12 @@ Chaque lieu est une ligne avec son fournisseur, ce à quoi il sert et son dernie
 
 - **Général** : le nom, l'interrupteur qui active et désactive le lieu, l'adresse et, pour un appareil que vous gérez vous-même, **Où se trouve l'appareil ?** (voir [Hors des locaux](#off-the-premises)).
 - **Rétention** : conserver les derniers, quotidiens, hebdomadaires et mensuels, pour chaque dépôt du lieu. Un nouveau lieu démarre avec les règles par défaut ; un lieu dont toutes les règles sont à zéro ne rogne jamais.
-- **Protection** : l'interrupteur **Append-only**. C'est l'autre bout qui doit imposer l'append-only ; interrupteur activé, BombVault n'élague et ne supprime jamais rien là-bas. Sur un rest-server avec append-only activé, **Tester append-only** lance le test de sabotage pour chaque domaine que le lieu stocke ou copie et affiche *suppressions refusées* ou *suppressions acceptées* (voir [Sauvegarde hors site et récupération](offsite-recovery.md)). Seuls les lieux distants ont cette section, car rien sur cette machine ne peut empêcher la suppression d'un dépôt local.
+- **Protection** : l'interrupteur **Append-only**. C'est l'autre bout qui doit imposer l'append-only ; interrupteur activé, BombVault n'élague et ne supprime jamais rien là-bas. Sur un rest-server avec append-only activé, **Tester append-only** lance le test de sabotage sur chaque chemin de domaine, copie activée et dépôt du lieu et affiche une seule réponse pour tout le lieu, *suppressions refusées* ou *suppressions acceptées* (voir [Sauvegarde hors site et récupération](offsite-recovery.md)). Seuls les lieux distants ont cette section, car rien sur cette machine ne peut empêcher la suppression d'un dépôt local.
 - **Accès** : les identifiants et, pour S3, la classe de stockage. Un lieu qui utilise les identifiants partagés reçoit son propre ensemble à la première modification. Un dépôt direct du lieu que les nouveaux identifiants ne peuvent pas ouvrir garde les anciens, et la réponse le signale. Les lieux de type dossier, SFTP et rclone n'ont pas cette section.
 - **Limites** : le débit d'envoi et de téléchargement et le budget de croissance.
 - **Dossiers** : un interrupteur par domaine, avec le nom de son dossier. Un domaine désactivé ici ne peut pas choisir le lieu.
 
-Baisser la rétention ou désactiver l'append-only demande d'abord confirmation et indique combien d'éléments sont concernés. Désactiver un lieu désactive chaque dépôt qui s'y trouve ; un lieu dans lequel un domaine est stocké ne peut pas être désactivé.
+Baisser la rétention demande d'abord confirmation et indique combien d'éléments sont concernés ; désactiver l'append-only demande d'abord confirmation et indique combien de dépôts du lieu le perdent. Désactiver un lieu désactive chaque dépôt qui s'y trouve ; un lieu dans lequel un domaine est stocké ne peut pas être désactivé.
 
 ## La carte Domaines {#domains}
 
@@ -57,7 +57,7 @@ Un lieu ne peut être retiré que tant que rien ne l'utilise : aucun domaine n'y
 
 ## Sans lieu {#without-a-place}
 
-Une adresse qui ne correspond pas à la forme d'un lieu plus un dossier continue de fonctionner et apparaît sous **Sans lieu**, avec son adresse. Les adresses natives `b2:`, `gs:` et `swift:` en font partie. **Attribuer à un lieu** rattache une telle ligne à un lieu, après le même test que pour [changer une adresse](#addresses). Une cible de copie sans lieu est aussi nommée sur la ligne de son domaine, à côté des chips, et continue de copier.
+Une adresse qui ne correspond pas à la forme d'un lieu plus un dossier continue de fonctionner et apparaît sous **Sans lieu**, avec son adresse. Les adresses natives `b2:`, `gs:` et `swift:` en font partie. **Attribuer à un lieu** rattache une telle ligne à un lieu, après le même test que pour [changer une adresse](#addresses). Une cible de copie sans lieu est aussi nommée sur la ligne de son domaine, à côté des chips, et continue de copier. Une ligne distante y a son propre interrupteur **Append-only**, et le désactiver demande d'abord confirmation avec le nombre d'éléments qui gardent des sauvegardes à cette adresse. Un dépôt direct suit l'interrupteur de sa cible.
 
 ## Hors des locaux {#off-the-premises}
 

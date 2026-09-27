@@ -63,7 +63,7 @@ Et domæne gemt på et fjernt sted er kilden til sine kopier ligesom et lokalt; 
 
 Flag et off-site-repo append-only, så ransomware eller en kompromitteret vært ikke kan slette eller omskrive dine sikkerhedskopier. Den anden side (en `restic/rest-server`, der kører i `--append-only`-tilstand) **håndhæver** det. BombVault **verificerer** det kun altid og viser aldrig grønt alene på en konfigurationspåstand.
 
-Vinduet **Tilføj sted** har en opskrift, klar til at indsætte, på en rest-server i append-only-tilstand med én bruger til denne BombVault. På et rest-server-sted med **Append-only** slået til kører **Test append-only-beskyttelse** i stedets detaljer manipulationstesten for hvert domæne, stedet gemmer eller kopierer, så append-only off-site er tilgængelig uden manuel redigering af configs.
+Vinduet **Tilføj sted** har en opskrift, klar til at indsætte, på en rest-server i append-only-tilstand med én bruger til denne BombVault. På et rest-server-sted med **Append-only** slået til kører **Test append-only-beskyttelse** i stedets detaljer manipulationstesten mod hver domænesti, hver slået-til kopi og hvert arkiv på stedet og giver ét svar for stedet, så append-only off-site er tilgængelig uden manuel redigering af configs.
 
 !!! note "En vellykket sletning under `/locks/` er forventet"
     Append-only betyder ikke, at intet længere kan slettes. restic skal tage og frigive sine egne låse, så `/locks/` forbliver bevidst skrivbar og sletbar. Snapshots og dataene bag dem, altså præcis det ransomware ville gå efter, kan ikke fjernes. Tester du selv modparten, er en sletning der lykkes under `/locks/` korrekt adfærd og ikke et hul i beskyttelsen.
@@ -81,12 +81,14 @@ BombVault beviser periodisk append-only-garantien ved faktisk at forsøge en sle
 
 En reel beskyttet-til-ubeskyttet-vending udløser én enkelt advarsel.
 
+På et sted afprøver **Test append-only-beskyttelse** hver domænesti, hver slået-til kopi og hvert arkiv der med deres egne legitimationsoplysninger og samler resultaterne i ét svar: et enkelt arkiv, der accepterer en sletning, gør hele stedet til *sletninger accepteret*.
+
 ## DR-øvelser
 
 BombVault tilbyder to niveauer af bevis for, at dine sikkerhedskopier faktisk kan gendannes, ikke bare er til stede.
 
 - **Gendannelses-verifikationsøvelser (lokal).** BombVault kører periodisk `restic check --read-data-subset` (afgrænset, aldrig en disk-fyldende fuld gendannelse) og viser et *sidst verificeret gendannelig*-badge pr. domæne. Kadencen lever på Indstillinger, Tidsplaner; badge't på Indstillinger, Integritet.
-- **DR-øvelser (off-site).** BombVault gendanner et rigtigt mål fra off-site-repoet ind i en engangs-sandkasse, verificerer det fil-for-fil og byte-for-byte, og rydder så op. Dette beviser, at du kan gendanne fra off-site, ikke bare at repoet svarer.
+- **DR-øvelser (off-site).** BombVault gendanner et rigtigt mål fra off-site-repoet ind i en engangs-sandkasse, verificerer det fil-for-fil og byte-for-byte, og rydder så op. Dette beviser, at du kan gendanne fra off-site, ikke bare at repoet svarer. Kun steder på en anden lokation øves, fordi en kopi i samme hus intet beviser om at miste huset. Et domæne, der kopieres til flere af dem, øves mod ét pr. planlagt kørsel, på skift, og Oversigten nævner stedet for den seneste øvelse.
 
 **Ransomware-beskyttelses-scorekortet** på Oversigten samler dette til en grøn / gul / rød position pr. domæne, med en aldersstemplet tjekliste (off-site konfigureret, append-only verificeret, replikering aktuel, gendannelsesøvelse bestået, kryptering til, beskæringsstrategi sat). Hver rød række dyb-linker til rettelsen, og kortet bliver kun nogensinde grønt på verificerede fakta.
 
@@ -124,7 +126,7 @@ To maskiner: **TOWER** kører containerne og sender sikkerhedskopierne, **VAULT*
 
 Første led i stien er htpasswd-brugeren, her `tower`, og hvert domæne får sin mappe under den, for eksempel `rest:http://VAULT:8000/tower/container`. Besvar **Hvor står enheden?** med **På en anden lokation**, klik på **Tilføj**, og sæt flueben ved stedet under **Kopieret til** for de domæner, der skal derhen.
 
-**3. Slå Append-only til på TOWER** under **Beskyttelse** i stedets detaljer, og klik derefter på **Test append-only-beskyttelse**. Testen kører for hvert domæne, stedet gemmer eller kopierer, og hvert domæne skal vise *sletninger afvist*. Hvad svarene betyder:
+**3. Slå Append-only til på TOWER** under **Beskyttelse** i stedets detaljer, og klik derefter på **Test append-only-beskyttelse**. Testen afprøver hver domænesti, hver kopi og hvert arkiv på stedet og giver ét svar for stedet, som skal være *sletninger afvist*. Hvad svarene betyder:
 
 | Resultat | Hvad der skete |
 | --- | --- |
@@ -145,9 +147,9 @@ Første led i stien er htpasswd-brugeren, her `tower`, og hvert domæne får sin
 
 En dedikeret **Recovery**-fane fører en frisk eller genopbygget installation gennem katastrofetilfældet, ét sted:
 
-1. **Gendanner BombVaults egne indstillinger først**, så de sikkerhedskopi-stier, off-site-destinationer og legitimationsoplysninger, resten af forløbet har brug for, er forudfyldte (anvendt via en selv-genstart over Docker-socket'en, så den kørende indstillingsdatabase aldrig overskrives under et åbent handle).
-2. **Tjekker, at BombVault kan læse dine sikkerhedskopier** (krypteringsnøgle-faldgruben på forkant).
-3. Lader dig **pege mod dit eksisterende repo**: en lokal mappe eller et fjernt sted, der er forbundet via det samme vindue **Tilføj sted** som på Indstillinger, Lagring.
+1. **Tjekker, at BombVault kan læse dine sikkerhedskopier** (krypteringsnøgle-faldgruben på forkant).
+2. **Gendanner BombVaults egne indstillinger**, så de sikkerhedskopi-stier, off-site-destinationer og legitimationsoplysninger, resten af forløbet har brug for, er forudfyldte. Indstillingssikkerhedskopien læses fra det sted, som rækken Auto-sikkerhedskopi angiver under **Gemt på**, eller fra Auto-sikkerhedskopiens kopi under **Kopieret til**, og stedet vises med sin adresse; vil du læse fra et andet sted, så ændr først rækken Auto-sikkerhedskopi i trin 3. Gendannelsen anvendes via en selv-genstart over Docker-socket'en, så den kørende indstillingsdatabase aldrig overskrives under et åbent handle.
+3. **Tilknytter dine eksisterende sikkerhedskopier** via rækkerne på kortet Domæner: i hvert domænes række vælger du stedet, hvor dets sikkerhedskopier ligger, under **Gemt på** og stederne med dets kopier under **Kopieret til**. Et sted, som ingen række tilbyder endnu, for eksempel en deling, en server eller en cloud-bucket, forbindes med **Tilføj sted**, det samme vindue som på Indstillinger, Lagring. **Opret forbindelse & forhåndsvis** tjekker derefter, at sikkerhedskopierne kan læses.
 4. **Opdager** de containere, VM'er og filsæt, der er gemt i det.
 5. **Gendanner dem alle** (efterladt stoppet, så du starter dem bevidst), med dit gendannelseskit et klik væk.
 

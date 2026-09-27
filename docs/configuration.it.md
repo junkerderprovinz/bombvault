@@ -84,7 +84,7 @@ Le copie off-site vanno nei luoghi di archiviazione. Aggiungi il luogo in **Impo
 
 ## Impostazioni portatili (esporta e importa) {#portable-settings-export-and-import}
 
-La scheda **Esporta e importa impostazioni** nella pagina Impostazioni scrive l'intera configurazione BombVault (impostazioni di dominio, luoghi di archiviazione, calendari, notifiche) in un file JSON portatile che puoi importare su un'altra istanza, così passare a una nuova macchina o clonare una configurazione non significa reinserire tutto a mano. L'importazione mostra un'anteprima e chiede conferma, e non tocca mai i tuoi dati di backup o la cronologia.
+La scheda **Esporta e importa impostazioni** nella pagina Impostazioni scrive l'intera configurazione BombVault (impostazioni di dominio, luoghi di archiviazione, calendari, notifiche) in un file JSON portatile che puoi importare su un'altra istanza, così passare a una nuova macchina o clonare una configurazione non significa reinserire tutto a mano. L'importazione mostra un'anteprima e chiede conferma, e non tocca mai i tuoi dati di backup o la cronologia. L'anteprima conta i luoghi di archiviazione nel file e, con le credenziali, i set di credenziali; per un file più vecchio senza luoghi, BombVault li ricava dalle impostazioni importate.
 
 !!! warning "L'esportazione può contenere credenziali"
     Scegli tu se includere nel file le credenziali dei tuoi luoghi e delle notifiche. Con le credenziali incluse, l'esportazione è sensibile quanto il tuo kit di ripristino, quindi conservala in un luogo sicuro. Senza di esse, il file contiene solo impostazioni non segrete.

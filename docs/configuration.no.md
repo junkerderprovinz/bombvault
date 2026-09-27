@@ -84,7 +84,7 @@ Eksterne kopier går til lagringssteder. Legg til lagringsstedet på **Innstilli
 
 ## Portable innstillinger (eksporter og importer) {#portable-settings-export-and-import}
 
-Kortet **Eksporter og importer innstillinger** på Innstillinger-siden skriver hele BombVault-konfigurasjonen din (domeneinnstillinger, lagringssteder, tidsplaner, varsler) til en portabel JSON-fil du kan importere på en annen instans, så å flytte til en ny boks eller klone et oppsett ikke betyr å taste inn alt på nytt for hånd. Import viser en forhåndsvisning og ber om bekreftelse, og den rører aldri sikkerhetskopidataene eller -historikken din.
+Kortet **Eksporter og importer innstillinger** på Innstillinger-siden skriver hele BombVault-konfigurasjonen din (domeneinnstillinger, lagringssteder, tidsplaner, varsler) til en portabel JSON-fil du kan importere på en annen instans, så å flytte til en ny boks eller klone et oppsett ikke betyr å taste inn alt på nytt for hånd. Import viser en forhåndsvisning og ber om bekreftelse, og den rører aldri sikkerhetskopidataene eller -historikken din. Forhåndsvisningen teller lagringsstedene i filen og, med legitimasjonen, legitimasjonssettene; for en eldre fil uten lagringssteder bygger BombVault dem fra de importerte innstillingene.
 
 !!! warning "Eksporten kan inneholde legitimasjon"
     Du velger om du vil inkludere legitimasjonen til lagringsstedene og varslene dine i filen. Med legitimasjon inkludert er eksporten like sensitiv som gjenopprettingssettet ditt, så oppbevar den et trygt sted. Uten dem inneholder filen kun ikke-hemmelige innstillinger.

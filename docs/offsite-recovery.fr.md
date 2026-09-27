@@ -63,7 +63,7 @@ Un domaine stocké dans un lieu distant est la source de ses copies, comme un do
 
 Marquez un dépôt hors site en append-only afin qu'un rançongiciel, ou un hôte compromis, ne puisse ni supprimer ni réécrire vos sauvegardes. Le côté distant (un `restic/rest-server` s'exécutant en mode `--append-only`) l'**impose**. BombVault ne fait que le **vérifier** et n'affiche jamais du vert sur la seule foi d'une déclaration de configuration.
 
-La fenêtre **Ajouter un lieu** contient une recette prête à coller pour un rest-server en mode append-only, avec un utilisateur pour ce BombVault. Sur un lieu rest-server avec **Append-only** activé, **Tester append-only** dans les détails du lieu lance le test de sabotage pour chaque domaine que le lieu stocke ou copie, de sorte que le hors site append-only soit accessible sans édition manuelle des configs.
+La fenêtre **Ajouter un lieu** contient une recette prête à coller pour un rest-server en mode append-only, avec un utilisateur pour ce BombVault. Sur un lieu rest-server avec **Append-only** activé, **Tester append-only** dans les détails du lieu lance le test de sabotage sur chaque chemin de domaine, copie activée et dépôt du lieu et donne une seule réponse pour le lieu, de sorte que le hors site append-only soit accessible sans édition manuelle des configs.
 
 !!! note "Une suppression réussie sous `/locks/` est attendue"
     Append-only ne signifie pas que plus rien ne peut être supprimé. restic doit poser et relâcher ses propres verrous, `/locks/` reste donc volontairement accessible en écriture et en suppression. Les snapshots et les données derrière eux, précisément ce que viserait un rançongiciel, ne peuvent pas être supprimés. Si vous sondez vous-même le serveur distant, une suppression qui réussit sous `/locks/` est le comportement correct et non une faille.
@@ -81,12 +81,14 @@ BombVault prouve périodiquement la garantie append-only en tentant réellement 
 
 Un vrai basculement de protégé à non protégé déclenche une alerte unique.
 
+Sur un lieu, **Tester append-only** sonde chaque chemin de domaine, copie activée et dépôt qui s'y trouvent avec leurs propres identifiants et regroupe les verdicts en une seule réponse : un seul dépôt qui accepte une suppression fait passer tout le lieu en *suppressions acceptées*.
+
 ## Essais de reprise après sinistre
 
 BombVault offre deux niveaux de preuve que vos sauvegardes sont réellement restaurables, pas seulement présentes.
 
 - **Essais de vérification de restaurabilité (local).** BombVault exécute périodiquement `restic check --read-data-subset` (borné, jamais une restauration complète qui remplirait le disque) et affiche un badge *dernière restaurabilité vérifiée* par domaine. La cadence vit dans Paramètres, Plannings ; le badge dans Paramètres, Intégrité.
-- **Essais de reprise après sinistre (hors site).** BombVault restaure une vraie cible depuis le dépôt hors site dans un bac à sable jetable, la vérifie fichier par fichier et octet par octet, puis nettoie. Cela prouve que vous pouvez récupérer depuis le hors site, pas seulement que le dépôt répond.
+- **Essais de reprise après sinistre (hors site).** BombVault restaure une vraie cible depuis le dépôt hors site dans un bac à sable jetable, la vérifie fichier par fichier et octet par octet, puis nettoie. Cela prouve que vous pouvez récupérer depuis le hors site, pas seulement que le dépôt répond. Seuls les lieux situés sur un autre site sont exercés, car une copie dans les mêmes locaux ne prouve rien sur la perte des locaux. Un domaine copié vers plusieurs d'entre eux est exercé sur l'un d'eux à chaque exécution planifiée, à tour de rôle, et le tableau de bord indique le lieu du dernier essai.
 
 Le **tableau de bord de protection contre les rançongiciels** du tableau de bord synthétise cela en une posture verte / orange / rouge par domaine, avec une liste de contrôle horodatée (hors site configuré, append-only vérifié, réplication à jour, essai de restauration réussi, chiffrement activé, stratégie d'élagage définie). Chaque ligne rouge renvoie directement au correctif, et la carte ne passe au vert que sur des faits vérifiés.
 
@@ -124,7 +126,7 @@ Deux machines : **TOWER** fait tourner les conteneurs et envoie les sauvegardes,
 
 Le premier segment du chemin est l'utilisateur htpasswd, ici `tower`, et chaque domaine reçoit son dossier en dessous, par exemple `rest:http://VAULT:8000/tower/container`. Répondez à **Où se trouve l'appareil ?** par **Sur un autre site**, cliquez sur **Ajouter**, et cochez le lieu sous **Copié vers** pour les domaines qui doivent y aller.
 
-**3. Sur TOWER, activez Append-only** sous **Protection** dans les détails du lieu, puis cliquez sur **Tester append-only**. Le test s'exécute pour chaque domaine que le lieu stocke ou copie, et chacun doit indiquer *suppressions refusées*. Ce que signifient les réponses :
+**3. Sur TOWER, activez Append-only** sous **Protection** dans les détails du lieu, puis cliquez sur **Tester append-only**. Le test sonde chaque chemin de domaine, copie et dépôt du lieu et donne une seule réponse pour le lieu, qui doit être *suppressions refusées*. Ce que signifient les réponses :
 
 | Résultat | Ce qui s'est passé |
 | --- | --- |
@@ -145,9 +147,9 @@ Le premier segment du chemin est l'utilisateur htpasswd, ici `tower`, et chaque 
 
 Un onglet **Récupération** dédié accompagne une installation neuve ou reconstruite à travers le cas de sinistre, au même endroit :
 
-1. **Restaure d'abord les propres réglages de BombVault**, afin que les chemins de sauvegarde, les cibles hors site et les identifiants dont le reste du flux a besoin soient pré-remplis (appliqué via un auto-redémarrage sur le socket Docker, de sorte que la base de réglages active n'est jamais écrasée sous un handle ouvert).
-2. **Vérifie que BombVault peut lire vos sauvegardes** (le piège de la clé de chiffrement en amont).
-3. Vous laisse **pointer vers votre dépôt existant** : un dossier local, ou un lieu distant connecté via la même fenêtre **Ajouter un lieu** que dans Paramètres, Stockage.
+1. **Vérifie que BombVault peut lire vos sauvegardes** (le piège de la clé de chiffrement en amont).
+2. **Restaure les propres réglages de BombVault**, afin que les chemins de sauvegarde, les cibles hors site et les identifiants dont le reste du flux a besoin soient pré-remplis. Il lit la sauvegarde des réglages depuis le lieu que la ligne Auto-sauvegarde indique sous **Stocké dans**, ou depuis la copie de l'Auto-sauvegarde sous **Copié vers**, et affiche ce lieu avec son adresse ; pour lire depuis un autre lieu, modifiez d'abord la ligne Auto-sauvegarde à l'étape 3. La restauration est appliquée via un auto-redémarrage sur le socket Docker, de sorte que la base de réglages active n'est jamais écrasée sous un handle ouvert.
+3. **Rattache vos sauvegardes existantes** via les lignes de la carte Domaines : sur la ligne de chaque domaine, choisissez sous **Stocké dans** le lieu où se trouvent ses sauvegardes et sous **Copié vers** les lieux qui contiennent ses copies. Un lieu qu'aucune ligne ne propose encore, comme un partage, un serveur ou un bucket cloud, se connecte avec **Ajouter un lieu**, la même fenêtre que dans Paramètres, Stockage. **Connexion et aperçu** vérifie ensuite que les sauvegardes sont lisibles.
 4. **Découvre** les conteneurs, VMs et jeux de fichiers qui y sont stockés.
 5. **Les restaure tous** (laissés arrêtés, afin que vous les démarriez délibérément), avec votre kit de récupération à un clic.
 

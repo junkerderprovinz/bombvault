@@ -63,7 +63,7 @@ Een domein op een externe plek is net als een lokaal domein de bron van zijn kop
 
 Vlag een off-site repo als append-only zodat ransomware, of een gecompromitteerde host, je back-ups niet kan verwijderen of herschrijven. De andere kant (een `restic/rest-server` in `--append-only`-modus) **dwingt** het af. BombVault **verifieert** het alleen en toont nooit groen op basis van louter een configuratie-claim.
 
-Het venster **Plek toevoegen** bevat een kant-en-klaar recept voor een rest-server in append-only-modus, met één gebruiker voor deze BombVault. Bij een rest-server-plek met **Append-only** aan voert **Op append-only testen** in de details van de plek de tamper-test uit voor elk domein dat de plek opslaat of kopieert, zodat append-only off-site bereikbaar is zonder configs met de hand te bewerken.
+Het venster **Plek toevoegen** bevat een kant-en-klaar recept voor een rest-server in append-only-modus, met één gebruiker voor deze BombVault. Bij een rest-server-plek met **Append-only** aan voert **Op append-only testen** in de details van de plek de tamper-test uit tegen elk domeinpad, elke ingeschakelde kopie en elke repository op de plek en geeft één antwoord voor de plek, zodat append-only off-site bereikbaar is zonder configs met de hand te bewerken.
 
 !!! note "Een geslaagde verwijdering onder `/locks/` is verwacht"
     Append-only betekent niet dat er niets meer verwijderd kan worden. restic moet zijn eigen locks zetten en weer vrijgeven, dus `/locks/` blijft met opzet schrijfbaar en verwijderbaar. Snapshots en de data erachter, precies waar ransomware op mikt, kunnen niet worden verwijderd. Als je de andere kant zelf test, is een geslaagde verwijdering onder `/locks/` correct gedrag en geen gat in de bescherming.
@@ -81,12 +81,14 @@ BombVault bewijst periodiek de append-only-garantie door daadwerkelijk een verwi
 
 Een echte omslag van beschermd naar onbeschermd vuurt één enkele waarschuwing af.
 
+Op een plek test **Op append-only testen** elk domeinpad, elke ingeschakelde kopie en elke repository daar met hun eigen inloggegevens en voegt de oordelen samen tot één antwoord: accepteert één enkele repository een verwijdering, dan krijgt de hele plek *verwijderen toegestaan*.
+
 ## DR-oefeningen
 
 BombVault biedt twee niveaus van bewijs dat je back-ups daadwerkelijk herstelbaar zijn, niet alleen aanwezig.
 
 - **Herstelverificatie-oefeningen (lokaal).** BombVault draait periodiek `restic check --read-data-subset` (begrensd, nooit een schijfvullend volledig herstel) en toont een badge *laatst geverifieerd herstelbaar* per domein. De cadans staat op Instellingen, Planningen; de badge op Instellingen, Integriteit.
-- **DR-oefeningen (off-site).** BombVault herstelt een echt doel vanuit de off-site repo in een wegwerp-sandbox, verifieert het bestand-voor-bestand en byte-voor-byte, en ruimt daarna op. Dit bewijst dat je vanaf off-site kunt herstellen, niet alleen dat de repo antwoordt.
+- **DR-oefeningen (off-site).** BombVault herstelt een echt doel vanuit de off-site repo in een wegwerp-sandbox, verifieert het bestand-voor-bestand en byte-voor-byte, en ruimt daarna op. Dit bewijst dat je vanaf off-site kunt herstellen, niet alleen dat de repo antwoordt. Alleen plekken op een andere locatie worden getest, want een kopie in hetzelfde huis bewijst niets over het verlies van dat huis. Een domein dat naar meerdere daarvan wordt gekopieerd, wordt per geplande run tegen één ervan getest, om de beurt, en het Dashboard noemt de plek van de laatste oefening.
 
 De **ransomwarebeschermings-scorecard** op het Dashboard vat dit samen tot een groene / oranje / rode houding per domein, met een van datum voorziene checklist (off-site geconfigureerd, append-only geverifieerd, replicatie actueel, hersteloefening geslaagd, versleuteling aan, prune-strategie ingesteld). Elke rode rij linkt diep door naar de fix, en de kaart wordt alleen groen op geverifieerde feiten.
 
@@ -124,7 +126,7 @@ Twee machines: **TOWER** draait de containers en stuurt de back-ups, **VAULT** o
 
 Het eerste padsegment is de htpasswd-gebruiker, hier `tower`, en elk domein krijgt zijn map daaronder, bijvoorbeeld `rest:http://VAULT:8000/tower/container`. Beantwoord **Waar staat het apparaat?** met **Op een andere locatie**, klik op **Toevoegen**, en vink de plek aan onder **Gekopieerd naar** bij de domeinen die daarheen moeten.
 
-**3. Zet op TOWER Append-only aan** onder **Bescherming** in de details van de plek, en klik daarna op **Op append-only testen**. De test draait voor elk domein dat de plek opslaat of kopieert, en elk moet *verwijderen geweigerd* melden. Wat de antwoorden betekenen:
+**3. Zet op TOWER Append-only aan** onder **Bescherming** in de details van de plek, en klik daarna op **Op append-only testen**. De test controleert elk domeinpad, elke kopie en elke repository op de plek en geeft één antwoord voor de plek, en dat moet *verwijderen geweigerd* zijn. Wat de antwoorden betekenen:
 
 | Resultaat | Wat er gebeurde |
 | --- | --- |
@@ -145,9 +147,9 @@ Het eerste padsegment is de htpasswd-gebruiker, hier `tower`, en elk domein krij
 
 Een speciaal tabblad **Herstel** leidt een verse of herbouwde installatie op één plek door het noodgeval:
 
-1. **Herstelt eerst BombVaults eigen instellingen**, zodat de back-uppaden, off-site doelen en inloggegevens die de rest van de flow nodig heeft al zijn ingevuld (toegepast via een self-restart over de Docker-socket, zodat de live instellingendatabase nooit onder een open handle wordt overschreven).
-2. **Controleert of BombVault je back-ups kan lezen** (het encryptiesleutel-addertje vooraf).
-3. Laat je **wijzen naar je bestaande repo**: een lokale map, of een externe plek die je verbindt via hetzelfde venster **Plek toevoegen** als op Instellingen, Opslag.
+1. **Controleert of BombVault je back-ups kan lezen** (het encryptiesleutel-addertje vooraf).
+2. **Herstelt BombVaults eigen instellingen**, zodat de back-uppaden, off-site doelen en inloggegevens die de rest van de flow nodig heeft al zijn ingevuld. De instellingen-back-up wordt gelezen van de plek die de rij Zelf-back-up onder **Opgeslagen in** noemt, of van de kopie van de Zelf-back-up onder **Gekopieerd naar**, en de stap toont die plek met haar adres. Wil je van een andere plek lezen, wijzig dan eerst de rij Zelf-back-up in stap 3. Het herstel wordt toegepast via een self-restart over de Docker-socket, zodat de live instellingendatabase nooit onder een open handle wordt overschreven.
+3. **Koppelt je bestaande back-ups** via de rijen van de kaart Domeinen: kies op de rij van elk domein onder **Opgeslagen in** de plek waar de back-ups staan en onder **Gekopieerd naar** de plekken met de kopieën. Een plek die nog geen rij aanbiedt, zoals een share, een server of een cloudbucket, verbind je met **Plek toevoegen**, hetzelfde venster als op Instellingen, Opslag. **Verbinden & voorbeeld** controleert daarna of de back-ups te lezen zijn.
 4. **Ontdekt** de containers, VM's en bestandssets die erin zijn opgeslagen.
 5. **Herstelt ze allemaal** (gestopt gelaten, zodat je ze bewust start), met je herstelkit één klik weg.
 

@@ -84,7 +84,7 @@ As cópias externas vão para lugares de armazenamento. Adicione o lugar em **De
 
 ## Definições portáteis (exportar e importar) {#portable-settings-export-and-import}
 
-O cartão **Exportar e importar definições** na página Definições escreve toda a sua configuração BombVault (definições de domínio, lugares de armazenamento, agendamentos, notificações) para um ficheiro JSON portátil que pode importar noutra instância, para que mudar para uma máquina nova ou clonar uma configuração não signifique reintroduzir tudo à mão. A importação mostra uma pré-visualização e pede confirmação, e nunca toca nos seus dados ou histórico de backup.
+O cartão **Exportar e importar definições** na página Definições escreve toda a sua configuração BombVault (definições de domínio, lugares de armazenamento, agendamentos, notificações) para um ficheiro JSON portátil que pode importar noutra instância, para que mudar para uma máquina nova ou clonar uma configuração não signifique reintroduzir tudo à mão. A importação mostra uma pré-visualização e pede confirmação, e nunca toca nos seus dados ou histórico de backup. A pré-visualização conta os lugares de armazenamento no ficheiro e, com as credenciais, os conjuntos de credenciais; num ficheiro mais antigo sem lugares, o BombVault cria-os a partir das definições importadas.
 
 !!! warning "A exportação pode conter credenciais"
     Escolhe se inclui no ficheiro as credenciais dos seus lugares e das notificações. Com as credenciais incluídas, a exportação é tão sensível como o seu kit de recuperação, por isso guarde-a num local seguro. Sem elas, o ficheiro contém apenas definições não secretas.

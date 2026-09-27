@@ -27,12 +27,12 @@ Hvert sted er en række med sin udbyder, hvad det bruges til, og sin seneste tes
 
 - **Generelt**: navnet, kontakten, der slår stedet til og fra, adressen og, for en enhed du selv driver, **Hvor står enheden?** (se [Uden for bygningen](#off-the-premises)).
 - **Opbevaring**: behold seneste, daglige, ugentlige og månedlige, for hvert arkiv på stedet. Et nyt sted starter med standardreglerne; et sted, hvor alle regler står på nul, beskærer aldrig noget.
-- **Beskyttelse**: kontakten **Append-only**. Den anden ende skal selv håndhæve append-only; med kontakten slået til beskærer og sletter BombVault aldrig noget der. På en rest-server med append-only slået til kører **Test append-only-beskyttelse** manipulationstesten for hvert domæne, stedet gemmer eller kopierer, og viser *sletninger afvist* eller *sletninger accepteret* (se [Off-site og gendannelse](offsite-recovery.md)). Kun fjerne steder har dette afsnit, fordi intet på denne maskine kan forhindre, at et lokalt arkiv bliver slettet.
+- **Beskyttelse**: kontakten **Append-only**. Den anden ende skal selv håndhæve append-only; med kontakten slået til beskærer og sletter BombVault aldrig noget der. På en rest-server med append-only slået til kører **Test append-only-beskyttelse** manipulationstesten mod hver domænesti, hver slået-til kopi og hvert arkiv på stedet og viser ét svar for hele stedet, *sletninger afvist* eller *sletninger accepteret* (se [Off-site og gendannelse](offsite-recovery.md)). Kun fjerne steder har dette afsnit, fordi intet på denne maskine kan forhindre, at et lokalt arkiv bliver slettet.
 - **Adgang**: legitimationsoplysningerne og, for S3, lagringsklassen. Et sted, der bruger de fælles legitimationsoplysninger, får sit eget sæt ved første ændring. Et direkte arkiv på stedet, som de nye legitimationsoplysninger ikke kan åbne, beholder de gamle, og svaret siger det. Mappe-, SFTP- og rclone-steder har ikke dette afsnit.
 - **Grænser**: upload- og downloadhastigheden og vækstbudgettet.
 - **Mapper**: én kontakt pr. domæne med navnet på dets mappe. Et domæne, der er slået fra her, kan ikke vælge stedet.
 
-Sænker du opbevaringen eller slår append-only fra, spørger BombVault først og siger, hvor mange elementer det berører. Slår du et sted fra, slås alle arkiver på det fra; et sted, som et domæne gemmes på, kan ikke slås fra.
+Sænker du opbevaringen, spørger BombVault først og siger, hvor mange elementer det berører; slår du append-only fra, spørger BombVault først og siger, hvor mange arkiver på stedet mister det. Slår du et sted fra, slås alle arkiver på det fra; et sted, som et domæne gemmes på, kan ikke slås fra.
 
 ## Kortet Domæner {#domains}
 
@@ -57,7 +57,7 @@ Et sted kan kun fjernes, så længe intet bruger det: intet domæne gemmes der, 
 
 ## Uden sted {#without-a-place}
 
-En adresse, der ikke passer til formen et sted plus en mappe, fungerer fortsat og står under **Uden sted** med sin adresse. Native `b2:`-, `gs:`- og `swift:`-adresser hører til dem. **Knyt til sted** knytter en sådan række til et sted efter den samme test som ved [ændring af en adresse](#addresses). Et kopimål uden sted står også i sit domænes række ved siden af chippene og bliver ved med at kopiere.
+En adresse, der ikke passer til formen et sted plus en mappe, fungerer fortsat og står under **Uden sted** med sin adresse. Native `b2:`-, `gs:`- og `swift:`-adresser hører til dem. **Knyt til sted** knytter en sådan række til et sted efter den samme test som ved [ændring af en adresse](#addresses). Et kopimål uden sted står også i sit domænes række ved siden af chippene og bliver ved med at kopiere. En fjern række under **Uden sted** har sin egen **Append-only**-kontakt, og slår du den fra, spørger BombVault først og nævner antallet af elementer, der har sikkerhedskopier på den adresse. Et direkte arkiv følger kontakten for sit mål.
 
 ## Uden for bygningen {#off-the-premises}
 

@@ -84,7 +84,7 @@ Copiile off-site ajung în locuri de stocare. Adaugă locul în **Setări, Stoca
 
 ## Setări portabile (export și import) {#portable-settings-export-and-import}
 
-Cardul **Export și import setări** de pe pagina Setări scrie întreaga ta configurație BombVault (setări de domeniu, locuri de stocare, programări, notificări) într-un fișier JSON portabil pe care îl poți importa pe o altă instanță, astfel încât mutarea pe o stație nouă sau clonarea unei configurații să nu însemne reintroducerea totul manual. Importul arată o previzualizare și cere confirmare și nu îți atinge niciodată datele sau istoricul de backup.
+Cardul **Export și import setări** de pe pagina Setări scrie întreaga ta configurație BombVault (setări de domeniu, locuri de stocare, programări, notificări) într-un fișier JSON portabil pe care îl poți importa pe o altă instanță, astfel încât mutarea pe o stație nouă sau clonarea unei configurații să nu însemne reintroducerea totul manual. Importul arată o previzualizare și cere confirmare și nu îți atinge niciodată datele sau istoricul de backup. Previzualizarea numără locurile de stocare din fișier și, împreună cu credențialele, seturile de credențiale; pentru un fișier mai vechi fără locuri, BombVault le construiește din setările importate.
 
 !!! warning "Exportul poate conține credențiale"
     Alegi dacă incluzi în fișier credențialele locurilor și ale notificărilor tale. Cu credențialele incluse, exportul este la fel de sensibil ca kitul tău de recuperare, deci păstrează-l undeva în siguranță. Fără ele, fișierul conține doar setări nesecrete.

@@ -27,12 +27,12 @@ Jokainen paikka on rivi, jossa näkyvät sen palveluntarjoaja, mihin sitä käyt
 
 - **Yleiset**: nimi, kytkin, joka kytkee paikan päälle ja pois, osoite sekä itse ylläpitämälle laitteelle **Missä laite on?** (katso [Rakennuksen ulkopuolella](#off-the-premises)).
 - **Säilytys**: säilytä viimeiset, päivittäin, viikoittain ja kuukausittain, jokaiselle paikan arkistolle. Uusi paikka alkaa oletussäännöillä; paikka, jonka jokainen sääntö on nolla, ei koskaan karsi mitään.
-- **Suojaus**: **Append-only**-kytkin. Vastapuolen on itse valvottava append-only-tilaa; kun kytkin on päällä, BombVault ei koskaan karsi eikä poista siellä mitään. Kun rest-serverissä on append-only päällä, **Testaa append-only** ajaa peukalointitestin jokaiselle toimialueelle, joka tallennetaan tai kopioidaan paikkaan, ja näyttää *poistot torjutaan* tai *poistot sallitaan* (katso [Etäsijainti ja palautus](offsite-recovery.md)). Tämä osio on vain etäpaikoilla, koska mikään tällä koneella ei voi estää paikallisen arkiston poistamista.
+- **Suojaus**: **Append-only**-kytkin. Vastapuolen on itse valvottava append-only-tilaa; kun kytkin on päällä, BombVault ei koskaan karsi eikä poista siellä mitään. Kun rest-serverissä on append-only päällä, **Testaa append-only** ajaa peukalointitestin jokaista paikan toimialuepolkua, päälle kytkettyä kopiota ja arkistoa vastaan ja näyttää koko paikalle yhden vastauksen, *poistot torjutaan* tai *poistot sallitaan* (katso [Etäsijainti ja palautus](offsite-recovery.md)). Tämä osio on vain etäpaikoilla, koska mikään tällä koneella ei voi estää paikallisen arkiston poistamista.
 - **Pääsy**: tunnukset ja S3:lle tallennusluokka. Paikka, joka käyttää jaettuja tunnuksia, saa ensimmäisellä muutoksella omat tunnuksensa. Paikan suora arkisto, jota uudet tunnukset eivät avaa, säilyttää vanhat, ja vastaus kertoo sen. Kansio-, SFTP- ja rclone-paikoilla tätä osiota ei ole.
 - **Rajoitukset**: lähetys- ja latausnopeus sekä kasvubudjetti.
 - **Kansiot**: yksi kytkin kutakin toimialuetta kohden, sen kansion nimen kera. Toimialue, joka on kytketty tässä pois, ei voi valita paikkaa.
 
-Säilytyksen pienentäminen tai append-only-tilan kytkeminen pois kysyy ensin ja kertoo, kuinka moneen kohteeseen se vaikuttaa. Paikan kytkeminen pois kytkee pois jokaisen sen arkiston; paikkaa, johon jokin toimialue tallennetaan, ei voi kytkeä pois.
+Säilytyksen pienentäminen kysyy ensin ja kertoo, kuinka moneen kohteeseen se vaikuttaa; append-only-tilan kytkeminen pois kysyy ensin ja kertoo, kuinka moni paikan arkisto menettää sen. Paikan kytkeminen pois kytkee pois jokaisen sen arkiston; paikkaa, johon jokin toimialue tallennetaan, ei voi kytkeä pois.
 
 ## Toimialueet-kortti {#domains}
 
@@ -57,7 +57,7 @@ Paikan voi poistaa vain, kun mikään ei käytä sitä: mitään toimialuetta ei
 
 ## Ilman paikkaa {#without-a-place}
 
-Osoite, joka ei sovi muotoon paikka plus kansio, toimii edelleen ja näkyy osoitteineen kohdassa **Ilman paikkaa**. Natiivit `b2:`-, `gs:`- ja `swift:`-osoitteet kuuluvat näihin. **Liitä paikkaan** liittää tällaisen rivin paikkaan saman testin jälkeen kuin [osoitteen muuttamisessa](#addresses). Kopiointikohde ilman paikkaa mainitaan myös toimialueensa rivillä chipien vieressä, ja se jatkaa kopiointia.
+Osoite, joka ei sovi muotoon paikka plus kansio, toimii edelleen ja näkyy osoitteineen kohdassa **Ilman paikkaa**. Natiivit `b2:`-, `gs:`- ja `swift:`-osoitteet kuuluvat näihin. **Liitä paikkaan** liittää tällaisen rivin paikkaan saman testin jälkeen kuin [osoitteen muuttamisessa](#addresses). Kopiointikohde ilman paikkaa mainitaan myös toimialueensa rivillä chipien vieressä, ja se jatkaa kopiointia. Etärivillä on siellä oma **Append-only**-kytkimensä, ja sen kytkeminen pois kysyy ensin ja kertoo, kuinka moni kohde säilyttää varmuuskopioita siinä osoitteessa. Suora arkisto seuraa kohteensa kytkintä.
 
 ## Rakennuksen ulkopuolella {#off-the-premises}
 

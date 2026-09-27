@@ -27,12 +27,12 @@ Každé místo je řádek s poskytovatelem, s tím, k čemu slouží, a s posled
 
 - **Obecné**: název, přepínač, který místo zapíná a vypíná, adresa a u zařízení, které provozujete sami, **Kde je zařízení?** (viz [Mimo objekt](#off-the-premises)).
 - **Uchovávání**: keep-last, denní, týdenní a měsíční, pro každý repozitář na místě. Nové místo začíná s výchozími pravidly; místo se všemi pravidly na nule nikdy nic neprořezává.
-- **Ochrana**: přepínač **Append-only**. Append-only musí vynucovat druhá strana; se zapnutým přepínačem tam BombVault nikdy neprořezává ani nemaže. Na rest-serveru se zapnutým append-only spustí **Otestovat append-only** test odolnosti pro každou doménu, kterou místo ukládá nebo kopíruje, a ukáže *mazání odmítnuto* nebo *mazání přijato* (viz [Mimo lokalitu a obnova](offsite-recovery.md)). Tuto sekci mají jen vzdálená místa, protože nic na tomto stroji nemůže zabránit smazání místního repozitáře.
+- **Ochrana**: přepínač **Append-only**. Append-only musí vynucovat druhá strana; se zapnutým přepínačem tam BombVault nikdy neprořezává ani nemaže. Na rest-serveru se zapnutým append-only spustí **Otestovat append-only** test odolnosti proti každé cestě domény, zapnuté kopii a repozitáři na místě a ukáže jednu odpověď za celé místo, *mazání odmítnuto* nebo *mazání přijato* (viz [Mimo lokalitu a obnova](offsite-recovery.md)). Tuto sekci mají jen vzdálená místa, protože nic na tomto stroji nemůže zabránit smazání místního repozitáře.
 - **Přístup**: přihlašovací údaje a u S3 třída úložiště. Místo, které používá sdílené přihlašovací údaje, dostane při první změně vlastní sadu. Přímý repozitář na místě, který nové údaje neotevřou, si ponechá staré a odpověď to oznámí. Místa typu složka, SFTP a rclone tuto sekci nemají.
 - **Limity**: rychlost nahrávání a stahování a rozpočet růstu.
 - **Složky**: jeden přepínač na doménu, s názvem její složky. Doména, která je tu vypnutá, si místo nemůže zvolit.
 
-Snížení uchovávání nebo vypnutí append-only se nejdřív zeptá a řekne, kolika položek se to týká. Vypnutí místa vypne každý repozitář na něm; místo, na kterém je uložena některá doména, vypnout nelze.
+Snížení uchovávání se nejdřív zeptá a řekne, kolika položek se to týká; vypnutí append-only se nejdřív zeptá a řekne, kolik repozitářů na místě o ně přijde. Vypnutí místa vypne každý repozitář na něm; místo, na kterém je uložena některá doména, vypnout nelze.
 
 ## Karta Domény {#domains}
 
@@ -57,7 +57,7 @@ Místo lze odebrat, jen dokud ho nic nepoužívá: žádná doména na něm nen�
 
 ## Bez místa {#without-a-place}
 
-Adresa, která neodpovídá tvaru místa se složkou, dál funguje a je uvedena pod **Bez místa**, se svou adresou. Patří k nim nativní adresy `b2:`, `gs:` a `swift:`. **Přiřadit k místu** připojí takový řádek k místu, po stejném testu jako při [změně adresy](#addresses). Cíl kopií bez místa je také uveden na řádku své domény, vedle čipů, a kopíruje dál.
+Adresa, která neodpovídá tvaru místa se složkou, dál funguje a je uvedena pod **Bez místa**, se svou adresou. Patří k nim nativní adresy `b2:`, `gs:` a `swift:`. **Přiřadit k místu** připojí takový řádek k místu, po stejném testu jako při [změně adresy](#addresses). Cíl kopií bez místa je také uveden na řádku své domény, vedle čipů, a kopíruje dál. Vzdálený řádek pod **Bez místa** má vlastní přepínač **Append-only** a jeho vypnutí se nejdřív zeptá s počtem položek, které mají na té adrese zálohy. Přímý repozitář se řídí přepínačem svého cíle.
 
 ## Mimo objekt {#off-the-premises}
 

@@ -63,7 +63,7 @@ Etäpaikkaan tallennettu toimialue on kopioidensa lähde samoin kuin paikallinen
 
 Merkitse etärepo append-only-tilaan, jotta kiristysohjelma, tai vaarantunut isäntä, ei voi poistaa tai uudelleenkirjoittaa varmuuskopioitasi. Vastapuoli (`restic/rest-server`, joka pyörii `--append-only`-tilassa) **valvoo** sitä. BombVault vain aina **todentaa** sen eikä koskaan näytä vihreää pelkän kokoonpanoväitteen perusteella.
 
-**Lisää paikka** -ikkunassa on valmis liitettävä ohje append-only-tilassa toimivalle rest-serverille, jossa on yksi käyttäjä tälle BombVaultille. Kun rest-server-paikassa on **Append-only** päällä, paikan tietojen **Testaa append-only** ajaa peukalointitestin jokaiselle toimialueelle, joka tallennetaan tai kopioidaan paikkaan, joten append-only-etäsijainti on tavoitettavissa ilman määritysten käsin muokkaamista.
+**Lisää paikka** -ikkunassa on valmis liitettävä ohje append-only-tilassa toimivalle rest-serverille, jossa on yksi käyttäjä tälle BombVaultille. Kun rest-server-paikassa on **Append-only** päällä, paikan tietojen **Testaa append-only** ajaa peukalointitestin jokaista paikan toimialuepolkua, päälle kytkettyä kopiota ja arkistoa vastaan ja antaa paikalle yhden vastauksen, joten append-only-etäsijainti on tavoitettavissa ilman määritysten käsin muokkaamista.
 
 !!! note "Onnistunut poisto polussa `/locks/` on odotettua"
     Append-only ei tarkoita, ettei mitään voisi enää poistaa. resticin on otettava ja vapautettava omat lukkonsa, joten `/locks/` pysyy tarkoituksella kirjoitettavana ja poistettavana. Tilannevedoksia ja niiden takana olevaa dataa, eli juuri sitä mihin kiristysohjelma tähtäisi, ei voi poistaa. Jos koettelet vastapuolta itse, onnistunut poisto polussa `/locks/` on oikea toiminta eikä aukko suojauksessa.
@@ -81,12 +81,14 @@ BombVault todistaa ajoittain append-only-takuun tosiasiallisesti yrittämällä 
 
 Todellinen suojatusta suojaamattomaksi -kääntyminen laukaisee yhden hälytyksen.
 
+Paikassa **Testaa append-only** koettelee jokaista siellä olevaa toimialuepolkua, päälle kytkettyä kopiota ja arkistoa niiden omilla tunnuksilla ja yhdistää tulokset yhdeksi vastaukseksi: yksikin arkisto, joka hyväksyy poiston, tekee koko paikasta *poistot sallitaan*.
+
 ## DR-harjoitukset
 
 BombVault tarjoaa kaksi tasoa todisteita siitä, että varmuuskopiosi ovat tosiasiassa palautuskelpoisia, eivät vain olemassa.
 
 - **Palautuksen tarkistusharjoitukset (paikallinen).** BombVault ajaa ajoittain `restic check --read-data-subset` (rajattu, ei koskaan levyn täyttävää täyspalautusta) ja näyttää *viimeksi todennettu palautuskelpoiseksi* -merkin per toimialue. Tahti asuu kohdassa Asetukset, Aikataulut; merkki kohdassa Asetukset, Eheys.
-- **DR-harjoitukset (etä).** BombVault palauttaa oikean kohteen etärepositoriosta kertakäyttöiseen hiekkalaatikkoon, tarkistaa sen tiedosto tiedostolta ja tavu tavulta, ja siivoaa sitten. Tämä todistaa, että voit toipua etäsijainnista, ei vain että repo vastaa.
+- **DR-harjoitukset (etä).** BombVault palauttaa oikean kohteen etärepositoriosta kertakäyttöiseen hiekkalaatikkoon, tarkistaa sen tiedosto tiedostolta ja tavu tavulta, ja siivoaa sitten. Tämä todistaa, että voit toipua etäsijainnista, ei vain että repo vastaa. Vain toisessa rakennuksessa olevia paikkoja harjoitellaan, koska kopio samassa rakennuksessa ei todista mitään rakennuksen menettämisestä. Toimialue, joka kopioidaan useaan niistä, harjoitellaan jokaisella ajastetulla ajolla yhtä niistä vastaan vuorotellen, ja Kojelauta näyttää viimeisimmän harjoituksen paikan.
 
 **Kiristysohjelmasuojan tuloskortti** Kojelaudalla kokoaa tämän vihreä / keltainen / punainen -asennoksi per toimialue, iällä leimatun tarkistuslistan kera (etäsijainti määritetty, append-only todennettu, replikointi ajan tasalla, palautusharjoitus läpäisty, salaus päällä, karsintastrategia asetettu). Jokainen punainen rivi linkittää syvälle korjaukseen, ja kortti muuttuu vihreäksi vain todennettujen tosiasioiden perusteella.
 
@@ -124,7 +126,7 @@ Kaksi konetta: **TOWER** ajaa kontit ja lähettää varmuuskopiot, **VAULT** ott
 
 Polun ensimmäinen osa on htpasswd-käyttäjä, tässä `tower`, ja jokainen toimialue saa kansionsa sen alle, esimerkiksi `rest:http://VAULT:8000/tower/container`. Vastaa kysymykseen **Missä laite on?** valitsemalla **Toisessa rakennuksessa**, napsauta **Lisää** ja rastita paikka kohdassa **Kopiointikohteet** niille toimialueille, joiden kopiot kuuluvat sinne.
 
-**3. Kytke TOWERissa Append-only päälle** paikan tietojen kohdassa **Suojaus** ja napsauta sitten **Testaa append-only**. Testi ajetaan jokaiselle toimialueelle, joka tallennetaan tai kopioidaan paikkaan, ja jokaisen tuloksen on oltava *poistot torjutaan*. Mitä vastaukset tarkoittavat:
+**3. Kytke TOWERissa Append-only päälle** paikan tietojen kohdassa **Suojaus** ja napsauta sitten **Testaa append-only**. Testi koettelee jokaista paikan toimialuepolkua, kopiota ja arkistoa ja antaa paikalle yhden vastauksen, jonka on oltava *poistot torjutaan*. Mitä vastaukset tarkoittavat:
 
 | Tulos | Mitä tapahtui |
 | --- | --- |
@@ -145,9 +147,9 @@ Polun ensimmäinen osa on htpasswd-käyttäjä, tässä `tower`, ja jokainen toi
 
 Erillinen **Palautus**-välilehti opastaa tuoreen tai uudelleenrakennetun asennuksen läpi katastrofitilanteen, yhdessä paikassa:
 
-1. **Palauttaa BombVaultin omat asetukset ensin**, jotta varmuuskopiopolut, etäkohteet ja tunnukset, joita muu kulku tarvitsee, tulevat esitäytettyinä (sovellettuna itsensä uudelleenkäynnistyksellä Docker-soketin yli, joten käynnissä olevaa asetustietokantaa ei koskaan ylikirjoiteta avoimen kahvan alla).
-2. **Tarkistaa, että BombVault voi lukea varmuuskopiosi** (salausavaimen kompastuskivi heti alkuun).
-3. Antaa sinun **osoittaa olemassa olevaan repoosi**: paikalliseen kansioon tai etäpaikkaan, joka yhdistetään samalla **Lisää paikka** -ikkunalla kuin kohdassa Asetukset, Tallennustila.
+1. **Tarkistaa, että BombVault voi lukea varmuuskopiosi** (salausavaimen kompastuskivi heti alkuun).
+2. **Palauttaa BombVaultin omat asetukset**, jotta varmuuskopiopolut, etäkohteet ja tunnukset, joita muu kulku tarvitsee, tulevat esitäytettyinä. Se lukee asetusten varmuuskopion paikasta, jonka Itsevarmuuskopio-rivi nimeää kohdassa **Tallennuspaikka**, tai Itsevarmuuskopion kopiosta kohdassa **Kopiointikohteet**, ja näyttää paikan osoitteineen; jos haluat lukea toisesta paikasta, muuta ensin Itsevarmuuskopio-riviä vaiheessa 3. Palautus sovelletaan itsensä uudelleenkäynnistyksellä Docker-soketin yli, joten käynnissä olevaa asetustietokantaa ei koskaan ylikirjoiteta avoimen kahvan alla.
+3. **Liittää olemassa olevat varmuuskopiosi** Toimialueet-kortin rivien kautta: valitse kunkin toimialueen rivillä kohdassa **Tallennuspaikka** paikka, jossa sen varmuuskopiot ovat, ja kohdassa **Kopiointikohteet** paikat, joissa sen kopiot ovat. Paikka, jota mikään rivi ei vielä tarjoa, kuten jako, palvelin tai pilvisäilö, yhdistetään **Lisää paikka** -ikkunalla, samalla kuin kohdassa Asetukset, Tallennustila. **Yhdistä ja esikatsele** tarkistaa sitten, että varmuuskopiot voidaan lukea.
 4. **Tunnistaa** siihen tallennetut kontit, virtuaalikoneet ja tiedostojoukot.
 5. **Palauttaa ne kaikki** (jätettynä pysäytetyiksi, jotta käynnistät ne harkiten), palautuspakettisi yhden napsautuksen päässä.
 

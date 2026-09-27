@@ -84,7 +84,7 @@ Les copies hors site vont vers des lieux de stockage. Ajoutez le lieu dans **Par
 
 ## Réglages portables (exporter et importer) {#portable-settings-export-and-import}
 
-La carte **Exporter et importer les réglages** sur la page Paramètres écrit toute votre configuration BombVault (réglages de domaine, lieux de stockage, plannings, notifications) dans un fichier JSON portable que vous pouvez importer sur une autre instance, de sorte que migrer vers une nouvelle machine ou cloner une configuration ne signifie pas tout ressaisir à la main. L'import affiche un aperçu et demande confirmation, et ne touche jamais à vos données ou votre historique de sauvegarde.
+La carte **Exporter et importer les réglages** sur la page Paramètres écrit toute votre configuration BombVault (réglages de domaine, lieux de stockage, plannings, notifications) dans un fichier JSON portable que vous pouvez importer sur une autre instance, de sorte que migrer vers une nouvelle machine ou cloner une configuration ne signifie pas tout ressaisir à la main. L'import affiche un aperçu et demande confirmation, et ne touche jamais à vos données ou votre historique de sauvegarde. L'aperçu compte les lieux de stockage du fichier et, avec les identifiants, les ensembles d'identifiants ; pour un fichier plus ancien sans lieux, BombVault les construit à partir des réglages importés.
 
 !!! warning "L'export peut contenir des identifiants"
     Vous choisissez d'inclure ou non dans le fichier les identifiants de vos lieux et des notifications. Avec les identifiants inclus, l'export est aussi sensible que votre kit de récupération, conservez-le donc en lieu sûr. Sans eux, le fichier ne contient que des réglages non secrets.

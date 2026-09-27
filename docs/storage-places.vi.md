@@ -27,12 +27,12 @@ Mỗi điểm lưu trữ là một hàng hiển thị nhà cung cấp, việc n�
 
 - **Chung**: tên, công tắc bật và tắt điểm lưu trữ, địa chỉ và, với một thiết bị bạn tự vận hành, **Thiết bị nằm ở đâu?** (xem [Ngoài cơ sở](#off-the-premises)).
 - **Lưu giữ**: giữ gần nhất, hằng ngày, hằng tuần và hằng tháng, cho mọi kho tại điểm lưu trữ. Một điểm lưu trữ mới bắt đầu với các quy tắc mặc định; một điểm lưu trữ có mọi quy tắc bằng 0 thì không bao giờ cắt bớt.
-- **Bảo vệ**: công tắc **Append-only**. Phía bên kia phải tự thực thi append-only; khi bật công tắc, BombVault không bao giờ dọn bớt hay xóa gì ở đó. Tại một rest-server có bật append-only, **Kiểm tra append-only** chạy bài kiểm tra can thiệp cho từng miền được lưu hoặc được sao chép tại điểm lưu trữ, và hiển thị *xóa bị từ chối* hoặc *xóa được chấp nhận* (xem [Off-site & khôi phục](offsite-recovery.md)). Chỉ các điểm lưu trữ từ xa mới có mục này, vì không gì trên máy này có thể ngăn một kho cục bộ bị xóa.
+- **Bảo vệ**: công tắc **Append-only**. Phía bên kia phải tự thực thi append-only; khi bật công tắc, BombVault không bao giờ dọn bớt hay xóa gì ở đó. Tại một rest-server có bật append-only, **Kiểm tra append-only** chạy bài kiểm tra can thiệp với mọi đường dẫn miền, bản sao đang bật và kho tại điểm lưu trữ, và hiển thị một câu trả lời cho cả điểm lưu trữ, *xóa bị từ chối* hoặc *xóa được chấp nhận* (xem [Off-site & khôi phục](offsite-recovery.md)). Chỉ các điểm lưu trữ từ xa mới có mục này, vì không gì trên máy này có thể ngăn một kho cục bộ bị xóa.
 - **Truy cập**: thông tin đăng nhập và, với S3, lớp lưu trữ. Một điểm lưu trữ dùng thông tin đăng nhập chung sẽ nhận một bộ riêng ở lần thay đổi đầu tiên. Một kho trực tiếp tại điểm lưu trữ mà thông tin đăng nhập mới không mở được sẽ giữ bộ cũ, và phản hồi sẽ cho biết điều đó. Các điểm lưu trữ dạng thư mục, SFTP và rclone không có mục này.
 - **Giới hạn**: tốc độ tải lên và tải xuống, cùng ngân sách tăng trưởng.
 - **Thư mục**: một công tắc cho mỗi miền, kèm tên thư mục của miền đó. Một miền bị tắt ở đây thì không thể chọn điểm lưu trữ này.
 
-Giảm mức lưu giữ hoặc tắt append-only sẽ hỏi trước và cho biết có bao nhiêu mục bị ảnh hưởng. Tắt một điểm lưu trữ sẽ tắt mọi kho tại đó; một điểm lưu trữ đang lưu một miền thì không thể tắt.
+Giảm mức lưu giữ sẽ hỏi trước và cho biết có bao nhiêu mục bị ảnh hưởng; tắt append-only sẽ hỏi trước và cho biết có bao nhiêu kho tại điểm lưu trữ mất nó. Tắt một điểm lưu trữ sẽ tắt mọi kho tại đó; một điểm lưu trữ đang lưu một miền thì không thể tắt.
 
 ## Thẻ Miền {#domains}
 
@@ -57,7 +57,7 @@ Một điểm lưu trữ chỉ có thể được gỡ bỏ khi không có gì d
 
 ## Không có điểm lưu trữ {#without-a-place}
 
-Một địa chỉ không khớp với dạng một điểm lưu trữ cộng một thư mục vẫn tiếp tục hoạt động và được liệt kê dưới **Không có điểm lưu trữ**, kèm địa chỉ của nó. Các địa chỉ `b2:`, `gs:` và `swift:` gốc thuộc nhóm này. **Gán vào điểm lưu trữ** gắn một hàng như vậy vào một điểm lưu trữ, sau cùng bài kiểm tra như khi [đổi địa chỉ](#addresses). Một đích sao chép không có điểm lưu trữ cũng được nêu tên trên hàng của miền nó thuộc về, cạnh các chip, và vẫn tiếp tục sao chép.
+Một địa chỉ không khớp với dạng một điểm lưu trữ cộng một thư mục vẫn tiếp tục hoạt động và được liệt kê dưới **Không có điểm lưu trữ**, kèm địa chỉ của nó. Các địa chỉ `b2:`, `gs:` và `swift:` gốc thuộc nhóm này. **Gán vào điểm lưu trữ** gắn một hàng như vậy vào một điểm lưu trữ, sau cùng bài kiểm tra như khi [đổi địa chỉ](#addresses). Một đích sao chép không có điểm lưu trữ cũng được nêu tên trên hàng của miền nó thuộc về, cạnh các chip, và vẫn tiếp tục sao chép. Một hàng từ xa ở đó có công tắc **Append-only** riêng, và tắt nó sẽ hỏi trước kèm số mục đang giữ bản sao lưu ở địa chỉ đó. Một kho trực tiếp đi theo công tắc của đích của nó.
 
 ## Ngoài cơ sở {#off-the-premises}
 

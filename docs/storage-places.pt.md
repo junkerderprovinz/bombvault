@@ -27,12 +27,12 @@ Cada lugar é uma linha com o seu provedor, aquilo para que é usado e o seu úl
 
 - **Geral**: o nome, o interruptor que liga e desliga o lugar, o endereço e, para um dispositivo que mantém por conta própria, **Onde está o dispositivo?** (consulte [Fora das instalações](#off-the-premises)).
 - **Retenção**: manter os últimos, diários, semanais e mensais, para cada repositório no lugar. Um lugar novo começa com as regras predefinidas; um lugar com todas as regras a zero nunca apara.
-- **Proteção**: o interruptor **Append-only**. O outro lado tem de impor o append-only; com o interruptor ligado, o BombVault nunca poda nem apaga lá. Num rest-server com append-only ligado, **Testar append-only** corre o teste de adulteração para cada domínio que o lugar guarda ou copia e mostra *eliminações recusadas* ou *eliminações aceites* (consulte [Externo e recuperação](offsite-recovery.md)). Só os lugares remotos têm esta secção, porque nada nesta máquina consegue impedir que um repositório local seja apagado.
+- **Proteção**: o interruptor **Append-only**. O outro lado tem de impor o append-only; com o interruptor ligado, o BombVault nunca poda nem apaga lá. Num rest-server com append-only ligado, **Testar append-only** corre o teste de adulteração contra cada caminho de domínio, cada cópia ligada e cada repositório no lugar e mostra uma única resposta para o lugar inteiro, *eliminações recusadas* ou *eliminações aceites* (consulte [Externo e recuperação](offsite-recovery.md)). Só os lugares remotos têm esta secção, porque nada nesta máquina consegue impedir que um repositório local seja apagado.
 - **Acesso**: as credenciais e, no S3, a classe de armazenamento. Um lugar que usa as credenciais partilhadas recebe um conjunto próprio na primeira alteração. Um repositório direto no lugar que as credenciais novas não conseguem abrir mantém as antigas, e a resposta di-lo. Os lugares de pasta, SFTP e rclone não têm esta secção.
 - **Limites**: a taxa de envio e de receção e o orçamento de crescimento.
 - **Pastas**: um interruptor por domínio, com o nome da sua pasta. Um domínio desligado aqui não pode escolher o lugar.
 
-Reduzir a retenção ou desligar o append-only pede confirmação e diz quantos itens isso afeta. Desligar um lugar desliga todos os repositórios nele; um lugar onde um domínio está guardado não pode ser desligado.
+Reduzir a retenção pede confirmação e diz quantos itens isso afeta; desligar o append-only pede confirmação e diz quantos repositórios no lugar perdem essa proteção. Desligar um lugar desliga todos os repositórios nele; um lugar onde um domínio está guardado não pode ser desligado.
 
 ## O cartão Domínios {#domains}
 
@@ -57,7 +57,7 @@ Um lugar só pode ser removido enquanto nada o usa: nenhum domínio está guarda
 
 ## Sem lugar {#without-a-place}
 
-Um endereço que não encaixa na forma de um lugar mais uma pasta continua a funcionar e aparece em **Sem lugar**, com o seu endereço. Os endereços nativos `b2:`, `gs:` e `swift:` estão entre eles. **Atribuir a um lugar** associa essa linha a um lugar, depois do mesmo teste que ao [mudar um endereço](#addresses). Um destino de cópia sem lugar também aparece na linha do seu domínio, ao lado dos chips, e continua a copiar.
+Um endereço que não encaixa na forma de um lugar mais uma pasta continua a funcionar e aparece em **Sem lugar**, com o seu endereço. Os endereços nativos `b2:`, `gs:` e `swift:` estão entre eles. **Atribuir a um lugar** associa essa linha a um lugar, depois do mesmo teste que ao [mudar um endereço](#addresses). Um destino de cópia sem lugar também aparece na linha do seu domínio, ao lado dos chips, e continua a copiar. Uma linha remota ali tem o seu próprio interruptor **Append-only**, e desligá-lo pede confirmação primeiro, com o número de itens que guardam backups nesse endereço. Um repositório direto segue o interruptor do seu destino.
 
 ## Fora das instalações {#off-the-premises}
 

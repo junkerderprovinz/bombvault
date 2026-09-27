@@ -63,7 +63,7 @@ Doména uložená na vzdáleném místě je zdrojem svých kopií stejně jako m
 
 Označte repozitář mimo lokalitu jako append-only, aby ransomware nebo kompromitovaný hostitel nemohl smazat nebo přepsat vaše zálohy. Druhá strana (`restic/rest-server` běžící v režimu `--append-only`) to **vynucuje**. BombVault to pouze **ověřuje** a nikdy nezobrazí zelenou jen na základě konfiguračního tvrzení.
 
-Okno **Přidat místo** obsahuje recept připravený ke vložení pro rest-server v režimu append-only s jedním uživatelem pro tento BombVault. Na místě typu rest-server se zapnutým **Append-only** spustí **Otestovat append-only** v podrobnostech místa test odolnosti pro každou doménu, kterou místo ukládá nebo kopíruje, takže append-only mimo lokalitu je dosažitelné bez ručního editování konfigurací.
+Okno **Přidat místo** obsahuje recept připravený ke vložení pro rest-server v režimu append-only s jedním uživatelem pro tento BombVault. Na místě typu rest-server se zapnutým **Append-only** spustí **Otestovat append-only** v podrobnostech místa test odolnosti proti každé cestě domény, zapnuté kopii a repozitáři na místě a dá jednu odpověď za celé místo, takže append-only mimo lokalitu je dosažitelné bez ručního editování konfigurací.
 
 !!! note "Úspěšné smazání v `/locks/` je očekávané"
     Append-only neznamená, že už nelze nic smazat. restic musí zakládat a uvolňovat vlastní zámky, proto `/locks/` záměrně zůstává zapisovatelný a smazatelný. Snapshoty a data za nimi, tedy přesně to, na co by mířil ransomware, odstranit nelze. Pokud si vzdálenou stranu ověříš sám, úspěšné smazání v `/locks/` je správné chování, ne díra v ochraně.
@@ -81,12 +81,14 @@ BombVault pravidelně dokazuje záruku append-only tím, že skutečně zkusí m
 
 Skutečný přechod z chráněno na nechráněno spustí jediné upozornění.
 
+Na místě **Otestovat append-only** vyzkouší každou cestu domény, zapnutou kopii a repozitář s jejich vlastními přihlašovacími údaji a složí výsledky do jedné odpovědi: stačí jediný repozitář, který smazání přijme, a celé místo je *mazání přijato*.
+
 ## Cvičné obnovy po havárii
 
 BombVault nabízí dvě úrovně důkazu, že vaše zálohy jsou skutečně obnovitelné, nejen přítomné.
 
 - **Cvičné obnovy s ověřením (místní).** BombVault pravidelně spouští `restic check --read-data-subset` (omezené, nikdy plná obnova zaplňující disk) a zobrazuje odznak *naposledy ověřeno jako obnovitelné* na doménu. Kadence žije v Nastavení, Plány; odznak v Nastavení, Integrita.
-- **Cvičné obnovy po havárii (mimo lokalitu).** BombVault obnoví skutečný cíl z repozitáře mimo lokalitu do jednorázového sandboxu, ověří jej soubor po souboru a bajt po bajtu, poté ukliďte. To dokazuje, že umíte obnovit z mimo lokalitu, nejen že repozitář odpovídá.
+- **Cvičné obnovy po havárii (mimo lokalitu).** BombVault obnoví skutečný cíl z repozitáře mimo lokalitu do jednorázového sandboxu, ověří jej soubor po souboru a bajt po bajtu, poté ukliďte. To dokazuje, že umíte obnovit z mimo lokalitu, nejen že repozitář odpovídá. Cvičí se jen místa v jiné lokalitě, protože kopie ve stejném domě nic nedokazuje pro případ ztráty domu. Doména kopírovaná na více z nich se při každém plánovaném běhu cvičí proti jednomu, postupně, a Přehled uvádí místo posledního cvičení.
 
 **Vysvědčení ochrany proti ransomwaru** na Přehledu to shrne do zeleného / oranžového / červeného postoje na doménu, s kontrolním seznamem s věkovou značkou (mimo lokalitu nakonfigurováno, append-only ověřeno, replikace aktuální, cvičná obnova prošla, šifrování zapnuto, strategie prořezávání nastavena). Každý červený řádek odkazuje přímo na opravu a karta se rozsvítí zeleně jen na ověřených faktech.
 
@@ -124,7 +126,7 @@ Dva stroje: **TOWER** provozuje kontejnery a posílá zálohy, **VAULT** je při
 
 První část cesty je uživatel htpasswd, zde `tower`, a každá doména pod ním dostane svou složku, například `rest:http://VAULT:8000/tower/container`. Na **Kde je zařízení?** odpovězte **V jiné lokalitě**, klikněte na **Přidat** a zaškrtněte místo pod **Kopírováno do** u domén, které tam mají jít.
 
-**3. Na TOWER zapněte Append-only** v části **Ochrana** v podrobnostech místa a pak klikněte na **Otestovat append-only**. Test proběhne pro každou doménu, kterou místo ukládá nebo kopíruje, a každá musí hlásit *mazání odmítnuto*. Co odpovědi znamenají:
+**3. Na TOWER zapněte Append-only** v části **Ochrana** v podrobnostech místa a pak klikněte na **Otestovat append-only**. Test vyzkouší každou cestu domény, kopii a repozitář na místě a dá jednu odpověď za místo, která musí být *mazání odmítnuto*. Co odpovědi znamenají:
 
 | Výsledek | Co se stalo |
 | --- | --- |
@@ -145,9 +147,9 @@ První část cesty je uživatel htpasswd, zde `tower`, a každá doména pod n�
 
 Vyhrazená záložka **Obnova** provede čistou nebo znovu sestavenou instalaci havarijním případem, na jednom místě:
 
-1. **Nejprve obnoví vlastní nastavení BombVaultu**, takže zálohovací cesty, cíle mimo lokalitu a přihlašovací údaje, které zbytek postupu potřebuje, přijdou předvyplněné (aplikováno přes sebe-restart přes Docker socket, takže se živá databáze nastavení nikdy nepřepisuje pod otevřeným handlem).
-2. **Zkontroluje, že BombVault umí číst vaše zálohy** (zádrhel se šifrovacím klíčem hned zkraje).
-3. Nechá vás **nasměrovat na váš existující repozitář**: místní složku, nebo vzdálené místo připojené přes stejné okno **Přidat místo** jako v Nastavení, Úložiště.
+1. **Zkontroluje, že BombVault umí číst vaše zálohy** (zádrhel se šifrovacím klíčem hned zkraje).
+2. **Obnoví vlastní nastavení BombVaultu**, takže zálohovací cesty, cíle mimo lokalitu a přihlašovací údaje, které zbytek postupu potřebuje, přijdou předvyplněné. Zálohu nastavení čte z místa, které řádek Autozáloha uvádí pod **Uloženo v**, nebo z kopie Autozálohy pod **Kopírováno do**, a ukáže to místo s jeho adresou; chcete-li číst z jiného místa, nejdřív změňte řádek Autozáloha v kroku 3. Obnova se aplikuje přes sebe-restart přes Docker socket, takže se živá databáze nastavení nikdy nepřepisuje pod otevřeným handlem.
+3. **Připojí vaše existující zálohy** přes řádky karty Domény: na řádku každé domény zvolte pod **Uloženo v** místo, kde leží její zálohy, a pod **Kopírováno do** místa s jejími kopiemi. Místo, které zatím žádný řádek nenabízí, třeba sdílenou složku, server nebo cloudový bucket, připojíte přes **Přidat místo**, stejné okno jako v Nastavení, Úložiště. **Připojit a zobrazit náhled** pak ověří, že zálohy jdou přečíst.
 4. **Objeví** kontejnery, VM a sady souborů v něm uložené.
 5. **Obnoví je všechny** (ponechané zastavené, takže je spustíte záměrně), s vaší sadou pro obnovu na jedno kliknutí.
 

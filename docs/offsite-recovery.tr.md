@@ -63,7 +63,7 @@ Uzak bir konumda depolanan bir etki alanı da, yerel bir etki alanı gibi, kopya
 
 Fidye yazılımı ya da ele geçirilmiş bir host yedeklerinizi silemesin veya yeniden yazamasın diye bir site dışı depoyu yalnızca ekleme olarak işaretleyin. Karşı taraf (`--append-only` modunda çalışan bir `restic/rest-server`) bunu **uygular**. BombVault yalnızca bunu **doğrular** ve asla yalnızca bir yapılandırma iddiası üzerine yeşil göstermez.
 
-**Konum ekle** penceresi, bu BombVault için tek kullanıcılı, append-only modunda çalışan bir rest-server için yapıştırmaya hazır bir tarif taşır. **Append-only** açık bir rest-server konumunda, konumun ayrıntılarındaki **Append-only'yi test et**, konumun depoladığı ya da kopyaladığı her etki alanı için kurcalama testini çalıştırır; böylece yalnızca ekleme site dışına yapılandırmaları elle düzenlemeden ulaşılabilir.
+**Konum ekle** penceresi, bu BombVault için tek kullanıcılı, append-only modunda çalışan bir rest-server için yapıştırmaya hazır bir tarif taşır. **Append-only** açık bir rest-server konumunda, konumun ayrıntılarındaki **Append-only'yi test et**, konumdaki her etki alanı yolu, açık kopya ve depo için kurcalama testini çalıştırır ve konum için tek bir yanıt verir; böylece yalnızca ekleme site dışına yapılandırmaları elle düzenlemeden ulaşılabilir.
 
 !!! note "`/locks/` altında başarılı bir silme beklenen davranıştır"
     Append-only, artık hiçbir şeyin silinemeyeceği anlamına gelmez. restic kendi kilitlerini alıp bırakmak zorundadır, bu yüzden `/locks/` bilerek yazılabilir ve silinebilir kalır. Anlık görüntüler ve arkasındaki veriler, yani fidye yazılımının hedefi tam olarak budur, kaldırılamaz. Uzak tarafı kendin denersen, `/locks/` altında başarılı olan bir silme doğru davranıştır ve korumada bir delik değildir.
@@ -81,12 +81,14 @@ BombVault, yalnızca ekleme garantisini, site dışı depoya karşı var olmayan
 
 Gerçek bir korunuyordan-korunmuyora dönüş tek bir uyarı tetikler.
 
+Bir konumda **Append-only'yi test et**, oradaki her etki alanı yolunu, açık kopyayı ve depoyu kendi kimlik bilgileriyle yoklar ve sonuçları tek bir yanıtta birleştirir: silmeyi kabul eden tek bir depo bile tüm konumu *silme kabul edildi* yapar.
+
 ## DR tatbikatları
 
 BombVault, yedeklerinizin yalnızca mevcut değil, gerçekten geri yüklenebilir olduğuna dair iki düzeyde kanıt sunar.
 
 - **Geri yükleme doğrulama tatbikatları (yerel).** BombVault periyodik olarak `restic check --read-data-subset` çalıştırır (sınırlı, asla diski dolduran tam bir geri yükleme değil) ve etki alanı başına bir *son doğrulanan geri yüklenebilir* rozeti gösterir. Sıklık Ayarlar, Zamanlamalar'da; rozet Ayarlar, Bütünlük'te yer alır.
-- **DR tatbikatları (site dışı).** BombVault gerçek bir hedefi site dışı depodan tek kullanımlık bir korumalı alana geri yükler, onu dosya-dosya ve bayt-bayt doğrular, ardından temizler. Bu, deponun yalnızca yanıt verdiğini değil, site dışından kurtarabildiğinizi kanıtlar.
+- **DR tatbikatları (site dışı).** BombVault gerçek bir hedefi site dışı depodan tek kullanımlık bir korumalı alana geri yükler, onu dosya-dosya ve bayt-bayt doğrular, ardından temizler. Bu, deponun yalnızca yanıt verdiğini değil, site dışından kurtarabildiğinizi kanıtlar. Yalnızca başka bir yerdeki konumlarda tatbikat yapılır, çünkü aynı binadaki bir kopya binanın kaybı hakkında hiçbir şey kanıtlamaz. Bunlardan birkaçına kopyalanan bir etki alanı, her zamanlanmış çalıştırmada sırayla bunlardan biriyle tatbikat yapar ve Kontrol Paneli son tatbikatın konumunu gösterir.
 
 Kontrol Paneli'ndeki **fidye yazılımı koruması karnesi** bunu etki alanı başına yeşil / sarı / kırmızı bir duruşa, yaş damgalı bir kontrol listesiyle (site dışı yapılandırıldı, yalnızca ekleme doğrulandı, çoğaltma güncel, geri yükleme tatbikatı geçti, şifreleme açık, budama stratejisi ayarlandı) toplar. Her kırmızı satır düzeltmeye derin bağlantı verir ve kart yalnızca doğrulanmış gerçekler üzerine yeşile döner.
 
@@ -124,7 +126,7 @@ Yukarıda parçalar anlatılıyor. Burada gerçek değerlerle tek bir eksiksiz k
 
 Yolun ilk parçası htpasswd kullanıcısıdır, burada `tower`; her etki alanı klasörünü onun altında alır, örneğin `rest:http://VAULT:8000/tower/container`. **Cihaz nerede?** sorusunu **Başka bir yerde** ile yanıtlayın, **Ekle**'ye tıklayın ve oraya gitmesi gereken etki alanları için konumu **Kopyalama hedefleri** altında işaretleyin.
 
-**3. TOWER üzerinde Append-only'yi açın.** Bunu konumun ayrıntılarında **Koruma** altında yapın, sonra **Append-only'yi test et**'e tıklayın. Test, konumun depoladığı ya da kopyaladığı her etki alanı için çalışır ve her biri *silme reddedildi* demelidir. Yanıtların anlamı:
+**3. TOWER üzerinde Append-only'yi açın.** Bunu konumun ayrıntılarında **Koruma** altında yapın, sonra **Append-only'yi test et**'e tıklayın. Test, konumdaki her etki alanı yolunu, kopyayı ve depoyu yoklar ve konum için tek bir yanıt verir; bu yanıt *silme reddedildi* olmalıdır. Yanıtların anlamı:
 
 | Sonuç | Ne oldu |
 | --- | --- |
@@ -145,9 +147,9 @@ Yolun ilk parçası htpasswd kullanıcısıdır, burada `tower`; her etki alanı
 
 Özel bir **Kurtarma** sekmesi, sıfırdan ya da yeniden oluşturulmuş bir kurulumu felaket durumundan tek bir yerde geçirir:
 
-1. **Önce BombVault'un kendi ayarlarını geri yükler**, böylece akışın geri kalanının ihtiyaç duyduğu yedekleme yolları, site dışı hedefler ve kimlik bilgileri önceden doldurulmuş gelir (Docker soketi üzerinden bir öz yeniden başlatma ile uygulanır, böylece canlı ayar veritabanı açık bir tanıtıcı altında asla üzerine yazılmaz).
-2. **BombVault'un yedeklerinizi okuyabildiğini denetler** (şifreleme anahtarı tuzağı en başta).
-3. **Mevcut deponuza yönlendirmenize** izin verir: yerel bir klasör ya da Ayarlar, Depolama'dakiyle aynı **Konum ekle** penceresiyle bağlanan uzak bir konum.
+1. **BombVault'un yedeklerinizi okuyabildiğini denetler** (şifreleme anahtarı tuzağı en başta).
+2. **BombVault'un kendi ayarlarını geri yükler**, böylece akışın geri kalanının ihtiyaç duyduğu yedekleme yolları, site dışı hedefler ve kimlik bilgileri önceden doldurulmuş gelir. Ayar yedeğini, Öz yedek satırının **Depolama konumu** altında belirttiği konumdan ya da Öz yedeğin **Kopyalama hedefleri** altındaki kopyasından okur ve o konumu adresiyle gösterir; başka bir konumdan okumak için önce 3. adımdaki Öz yedek satırını değiştirin. Geri yükleme Docker soketi üzerinden bir öz yeniden başlatma ile uygulanır, böylece canlı ayar veritabanı açık bir tanıtıcı altında asla üzerine yazılmaz.
+3. **Mevcut yedeklerinizi bağlar**, bunu **Alanlar** kartının satırları üzerinden yapar: her etki alanının satırında, yedeklerinin bulunduğu konumu **Depolama konumu** altında, kopyalarını tutan konumları da **Kopyalama hedefleri** altında seçin. Henüz hiçbir satırın sunmadığı bir konum, örneğin bir paylaşım, bir sunucu ya da bir bulut bucket'ı, Ayarlar, Depolama'dakiyle aynı pencere olan **Konum ekle** ile bağlanır. Ardından **Bağlan ve önizle** yedeklerin okunabildiğini denetler.
 4. İçinde saklanan konteynerleri, VM'leri ve dosya kümelerini **keşfeder**.
 5. **Hepsini geri yükler** (durdurulmuş bırakılır, böylece onları kasıtlı olarak başlatırsınız), kurtarma kitiniz bir tık ötede.
 

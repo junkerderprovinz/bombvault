@@ -27,12 +27,12 @@ Każde miejsce to wiersz z dostawcą, informacją, do czego jest używane, oraz 
 
 - **Ogólne**: nazwa, przełącznik, który włącza i wyłącza miejsce, adres oraz, dla urządzenia, które prowadzisz sam, **Gdzie stoi urządzenie?** (zobacz [Poza obiektem](#off-the-premises)).
 - **Retencja**: keep-last, dzienne, tygodniowe i miesięczne, dla każdego repozytorium w tym miejscu. Nowe miejsce zaczyna z domyślnymi regułami; miejsce ze wszystkimi regułami na zero nigdy niczego nie przycina.
-- **Ochrona**: przełącznik **Append-only**. Append-only musi wymuszać druga strona; przy włączonym przełączniku BombVault nigdy niczego tam nie przycina ani nie usuwa. Na rest-serverze z włączonym append-only **Sprawdź append-only** uruchamia tamper test dla każdej domeny, którą miejsce przechowuje lub kopiuje, i pokazuje *usuwanie odrzucane* albo *usuwanie dozwolone* (zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md)). Tę sekcję mają tylko miejsca zdalne, bo nic na tej maszynie nie może zapobiec usunięciu lokalnego repozytorium.
+- **Ochrona**: przełącznik **Append-only**. Append-only musi wymuszać druga strona; przy włączonym przełączniku BombVault nigdy niczego tam nie przycina ani nie usuwa. Na rest-serverze z włączonym append-only **Sprawdź append-only** uruchamia tamper test dla każdej ścieżki domeny, każdej włączonej kopii i każdego repozytorium w tym miejscu i pokazuje jedną odpowiedź dla całego miejsca: *usuwanie odrzucane* albo *usuwanie dozwolone* (zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md)). Tę sekcję mają tylko miejsca zdalne, bo nic na tej maszynie nie może zapobiec usunięciu lokalnego repozytorium.
 - **Dostęp**: poświadczenia oraz, dla S3, klasa pamięci. Miejsce, które używa wspólnych poświadczeń, przy pierwszej zmianie dostaje własny zestaw. Repozytorium bezpośrednie w tym miejscu, którego nowe poświadczenia nie mogą otworzyć, zachowuje stare, a odpowiedź o tym informuje. Miejsca typu folder, SFTP i rclone nie mają tej sekcji.
 - **Limity**: tempo wysyłania i pobierania oraz budżet wzrostu.
 - **Foldery**: jeden przełącznik na domenę, z nazwą jej folderu. Domena wyłączona tutaj nie może wybrać tego miejsca.
 
-Skrócenie przechowywania lub wyłączenie append-only najpierw pyta o zgodę i mówi, ilu elementów to dotyczy. Wyłączenie miejsca wyłącza każde repozytorium w nim; miejsca, w którym przechowywana jest domena, nie da się wyłączyć.
+Skrócenie przechowywania najpierw pyta o zgodę i mówi, ilu elementów to dotyczy; wyłączenie append-only najpierw pyta o zgodę i mówi, ile repozytoriów w tym miejscu straci ochronę. Wyłączenie miejsca wyłącza każde repozytorium w nim; miejsca, w którym przechowywana jest domena, nie da się wyłączyć.
 
 ## Karta Domeny {#domains}
 
@@ -57,7 +57,7 @@ Miejsce można usunąć tylko wtedy, gdy nic go nie używa: żadna domena nie je
 
 ## Bez miejsca {#without-a-place}
 
-Adres, który nie pasuje do postaci miejsca z folderem, działa dalej i jest wymieniony pod **Bez miejsca**, razem ze swoim adresem. Należą do nich natywne adresy `b2:`, `gs:` i `swift:`. **Przypisz do miejsca** dołącza taki wiersz do miejsca po tym samym teście co przy [zmianie adresu](#addresses). Cel kopii bez miejsca jest też wymieniony w wierszu swojej domeny, obok znaczników, i kopiuje dalej.
+Adres, który nie pasuje do postaci miejsca z folderem, działa dalej i jest wymieniony pod **Bez miejsca**, razem ze swoim adresem. Należą do nich natywne adresy `b2:`, `gs:` i `swift:`. **Przypisz do miejsca** dołącza taki wiersz do miejsca po tym samym teście co przy [zmianie adresu](#addresses). Cel kopii bez miejsca jest też wymieniony w wierszu swojej domeny, obok znaczników, i kopiuje dalej. Zdalny wiersz ma tam własny przełącznik **Append-only**, a jego wyłączenie najpierw pyta o zgodę i podaje liczbę elementów, które trzymają kopie pod tym adresem. Repozytorium bezpośrednie idzie za przełącznikiem swojego celu.
 
 ## Poza obiektem {#off-the-premises}
 

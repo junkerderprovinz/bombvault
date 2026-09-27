@@ -27,12 +27,12 @@ Varje lagringsplats är en rad med sin leverantör, vad den används till och de
 
 - **Allmänt**: namnet, omkopplaren som slår på och av lagringsplatsen, adressen och, för en enhet du själv driver, **Var står enheten?** (se [Utanför lokalerna](#off-the-premises)).
 - **Kvarhållning**: keep-last, daglig, veckovis och månadsvis, för varje arkiv på lagringsplatsen. En ny lagringsplats börjar med standardreglerna; en lagringsplats där varje regel står på noll trimmar aldrig.
-- **Skydd**: omkopplaren **Append-only**. Den bortre sidan måste upprätthålla append-only; med omkopplaren på rensar eller raderar BombVault aldrig något där. På en rest-server med append-only på kör **Testa append-only** manipulationstestet för varje domän som lagringsplatsen sparar eller kopierar och visar *radering nekad* eller *radering tillåten* (se [Off-site och återställning](offsite-recovery.md)). Bara fjärranslutna lagringsplatser har det här avsnittet, eftersom ingenting på den här maskinen kan hindra att ett lokalt arkiv raderas.
+- **Skydd**: omkopplaren **Append-only**. Den bortre sidan måste upprätthålla append-only; med omkopplaren på rensar eller raderar BombVault aldrig något där. På en rest-server med append-only på kör **Testa append-only** manipulationstestet mot varje domänsökväg, påslagen kopia och arkiv på lagringsplatsen och visar ett svar för hela lagringsplatsen, *radering nekad* eller *radering tillåten* (se [Off-site och återställning](offsite-recovery.md)). Bara fjärranslutna lagringsplatser har det här avsnittet, eftersom ingenting på den här maskinen kan hindra att ett lokalt arkiv raderas.
 - **Åtkomst**: inloggningsuppgifterna och, för S3, lagringsklassen. En lagringsplats som använder de gemensamma inloggningsuppgifterna får en egen uppsättning vid den första ändringen. Ett direkt arkiv på lagringsplatsen som de nya uppgifterna inte kan öppna behåller de gamla, och svaret säger det. Mapp-, SFTP- och rclone-lagringsplatser har inget sådant avsnitt.
 - **Gränser**: uppladdnings- och nedladdningshastigheten och tillväxtbudgeten.
 - **Mappar**: en omkopplare per domän, med namnet på dess mapp. En domän som är avstängd här kan inte välja lagringsplatsen.
 
-Att sänka retentionen eller stänga av append-only frågar först och säger hur många objekt det berör. Att stänga av en lagringsplats stänger av varje arkiv på den; en lagringsplats som en domän sparas på kan inte stängas av.
+Att sänka retentionen frågar först och säger hur många objekt det berör; att stänga av append-only frågar först och säger hur många arkiv på lagringsplatsen som förlorar det. Att stänga av en lagringsplats stänger av varje arkiv på den; en lagringsplats som en domän sparas på kan inte stängas av.
 
 ## Kortet Domäner {#domains}
 
@@ -57,7 +57,7 @@ En lagringsplats kan bara tas bort så länge ingenting använder den: ingen dom
 
 ## Utan lagringsplats {#without-a-place}
 
-En adress som inte passar formen lagringsplats plus mapp fortsätter att fungera och listas under **Utan lagringsplats**, med sin adress. Bland dem finns native `b2:`-, `gs:`- och `swift:`-adresser. **Koppla till lagringsplats** kopplar en sådan rad till en lagringsplats, efter samma test som vid [ändring av en adress](#addresses). Ett kopieringsmål utan lagringsplats nämns också på domänens rad, bredvid chippen, och fortsätter att kopiera.
+En adress som inte passar formen lagringsplats plus mapp fortsätter att fungera och listas under **Utan lagringsplats**, med sin adress. Bland dem finns native `b2:`-, `gs:`- och `swift:`-adresser. **Koppla till lagringsplats** kopplar en sådan rad till en lagringsplats, efter samma test som vid [ändring av en adress](#addresses). Ett kopieringsmål utan lagringsplats nämns också på domänens rad, bredvid chippen, och fortsätter att kopiera. En fjärrad där har sin egen **Append-only**-omkopplare, och att stänga av den frågar först med antalet objekt som har säkerhetskopior på den adressen. Ett direkt arkiv följer omkopplaren för sitt mål.
 
 ## Utanför lokalerna {#off-the-premises}
 

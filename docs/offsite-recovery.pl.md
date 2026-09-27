@@ -63,7 +63,7 @@ Domena przechowywana w miejscu zdalnym jest źródłem swoich kopii tak samo jak
 
 Oznacz repozytorium poza siedzibą jako append-only, aby ransomware lub skompromitowany host nie mogły usunąć ani nadpisać Twoich kopii. Druga strona (`restic/rest-server` działający w trybie `--append-only`) **wymusza** to. BombVault jedynie to **weryfikuje** i nigdy nie pokazuje zielonego na podstawie samej deklaracji konfiguracji.
 
-Okno **Dodaj miejsce** zawiera gotowy do wklejenia przepis na rest-server w trybie append-only, z jednym użytkownikiem dla tego BombVault. W miejscu typu rest-server z włączonym **Append-only** przycisk **Sprawdź append-only** w szczegółach miejsca uruchamia tamper test dla każdej domeny, którą miejsce przechowuje lub kopiuje, więc kopia poza siedzibą w trybie append-only jest osiągalna bez ręcznej edycji konfiguracji.
+Okno **Dodaj miejsce** zawiera gotowy do wklejenia przepis na rest-server w trybie append-only, z jednym użytkownikiem dla tego BombVault. W miejscu typu rest-server z włączonym **Append-only** przycisk **Sprawdź append-only** w szczegółach miejsca uruchamia tamper test dla każdej ścieżki domeny, każdej włączonej kopii i każdego repozytorium w tym miejscu i daje jedną odpowiedź dla całego miejsca, więc kopia poza siedzibą w trybie append-only jest osiągalna bez ręcznej edycji konfiguracji.
 
 !!! note "Udane usunięcie w `/locks/` jest oczekiwane"
     Append-only nie oznacza, że nic już nie da się usunąć. restic musi zakładać i zwalniać własne blokady, więc `/locks/` celowo pozostaje zapisywalny i usuwalny. Migawki i stojące za nimi dane, czyli dokładnie to, na co celowałoby ransomware, nie dają się usunąć. Jeśli sam sprawdzisz zdalną stronę, udane usunięcie w `/locks/` jest poprawnym zachowaniem, a nie luką.
@@ -81,12 +81,14 @@ BombVault okresowo dowodzi gwarancji append-only, faktycznie próbując usunięc
 
 Prawdziwe przejście z chronionego do niechronionego wyzwala pojedynczy alert.
 
+W miejscu **Sprawdź append-only** bada każdą ścieżkę domeny, każdą włączoną kopię i każde repozytorium z ich własnymi poświadczeniami i łączy werdykty w jedną odpowiedź: jeśli choć jedno repozytorium przyjmie usunięcie, całe miejsce dostaje *usuwanie dozwolone*.
+
 ## Próby DR
 
 BombVault oferuje dwa poziomy dowodu, że Twoje kopie są faktycznie przywracalne, a nie tylko obecne.
 
 - **Próby weryfikacji przywracalności (lokalne).** BombVault okresowo uruchamia `restic check --read-data-subset` (ograniczone, nigdy zapełniające dysk pełne przywracanie) i pokazuje odznakę *ostatnio zweryfikowano przywracalność* per domena. Kadencja znajduje się w Ustawienia, Harmonogramy; odznaka w Ustawienia, Integralność.
-- **Próby DR (poza siedzibą).** BombVault przywraca prawdziwy cel z repozytorium poza siedzibą do jednorazowej piaskownicy, weryfikuje go plik po pliku i bajt po bajcie, a następnie sprząta. To dowodzi, że możesz odzyskać z kopii poza siedzibą, a nie tylko że repozytorium odpowiada.
+- **Próby DR (poza siedzibą).** BombVault przywraca prawdziwy cel z repozytorium poza siedzibą do jednorazowej piaskownicy, weryfikuje go plik po pliku i bajt po bajcie, a następnie sprząta. To dowodzi, że możesz odzyskać z kopii poza siedzibą, a nie tylko że repozytorium odpowiada. Próby obejmują tylko miejsca w innej lokalizacji, bo kopia w tym samym budynku nie dowodzi niczego na wypadek utraty budynku. Domena kopiowana do kilku takich miejsc przechodzi próbę w jednym z nich przy każdym zaplanowanym uruchomieniu, po kolei, a panel podaje miejsce ostatniej próby.
 
 **Karta wyników ochrony przed ransomware** na panelu zbiera to w postawę zielony / bursztynowy / czerwony per domena, z listą kontrolną ze znacznikiem wieku (skonfigurowano poza siedzibą, zweryfikowano append-only, replikacja aktualna, próba przywracania zaliczona, szyfrowanie włączone, ustawiono strategię przycinania). Każdy czerwony wiersz linkuje bezpośrednio do naprawy, a karta przechodzi na zielony tylko na podstawie zweryfikowanych faktów.
 
@@ -124,7 +126,7 @@ Dwie maszyny: **TOWER** uruchamia kontenery i wysyła kopie, **VAULT** je przyjm
 
 Pierwszy segment ścieżki to użytkownik htpasswd, tutaj `tower`, a każda domena dostaje pod nim swój folder, na przykład `rest:http://VAULT:8000/tower/container`. Na pytanie **Gdzie stoi urządzenie?** odpowiedz **W innej lokalizacji**, kliknij **Dodaj** i zaznacz miejsce pod **Kopiowane do** dla domen, które mają tam trafiać.
 
-**3. Na TOWER włącz Append-only** w sekcji **Ochrona** w szczegółach miejsca, a potem kliknij **Sprawdź append-only**. Test uruchamia się dla każdej domeny, którą miejsce przechowuje lub kopiuje, i każda musi zgłosić *usuwanie odrzucane*. Co znaczą odpowiedzi:
+**3. Na TOWER włącz Append-only** w sekcji **Ochrona** w szczegółach miejsca, a potem kliknij **Sprawdź append-only**. Test bada każdą ścieżkę domeny, każdą kopię i każde repozytorium w tym miejscu i daje jedną odpowiedź dla całego miejsca, która musi brzmieć *usuwanie odrzucane*. Co znaczą odpowiedzi:
 
 | Wynik | Co się stało |
 | --- | --- |
@@ -145,9 +147,9 @@ Pierwszy segment ścieżki to użytkownik htpasswd, tutaj `tower`, a każda dome
 
 Dedykowana zakładka **Odzyskiwanie** prowadzi świeżą lub odbudowaną instalację przez przypadek awarii, w jednym miejscu:
 
-1. **Najpierw przywraca własne ustawienia BombVault**, więc ścieżki kopii, cele poza siedzibą i poświadczenia, których potrzebuje reszta przepływu, są wstępnie wypełnione (stosowane przez samodzielny restart przez gniazdo Docker, więc działająca baza ustawień nigdy nie jest nadpisywana pod otwartym uchwytem).
-2. **Sprawdza, czy BombVault może odczytać Twoje kopie** (pułapka klucza szyfrowania od razu na wstępie).
-3. Pozwala Ci **wskazać istniejące repozytorium**: lokalny folder albo miejsce zdalne podłączone przez to samo okno **Dodaj miejsce** co w Ustawienia, Magazyn.
+1. **Sprawdza, czy BombVault może odczytać Twoje kopie** (pułapka klucza szyfrowania od razu na wstępie).
+2. **Przywraca własne ustawienia BombVault**, więc ścieżki kopii, cele poza siedzibą i poświadczenia, których potrzebuje reszta przepływu, są wstępnie wypełnione. Kopia ustawień jest odczytywana z miejsca, które wiersz Autokopia podaje w **Przechowywane w**, albo z kopii Autokopii w **Kopiowane do**, a krok pokazuje to miejsce z jego adresem. Aby czytać z innego miejsca, najpierw zmień wiersz Autokopia w kroku 3. Przywracanie jest stosowane przez samodzielny restart przez gniazdo Docker, więc działająca baza ustawień nigdy nie jest nadpisywana pod otwartym uchwytem.
+3. **Podłącza Twoje istniejące kopie** przez wiersze karty Domeny: w wierszu każdej domeny wybierasz w **Przechowywane w** miejsce, w którym leżą jej kopie zapasowe, a w **Kopiowane do** miejsca z jej kopiami. Miejsce, którego nie oferuje jeszcze żaden wiersz, na przykład udział sieciowy, serwer albo zasobnik w chmurze, podłączasz przez **Dodaj miejsce**, to samo okno co w Ustawienia, Magazyn. **Połącz i wyświetl podgląd** sprawdza potem, czy kopie da się odczytać.
 4. **Odkrywa** kontenery, VM i zestawy plików w nim przechowywane.
 5. **Przywraca je wszystkie** (pozostawiając zatrzymanymi, więc uruchamiasz je świadomie), z Twoim zestawem odzyskiwania o jedno kliknięcie stąd.
 

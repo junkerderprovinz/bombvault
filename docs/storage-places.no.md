@@ -27,12 +27,12 @@ Hvert lagringssted er en rad med leverandøren, hva det brukes til, og siste tes
 
 - **Generelt**: navnet, bryteren som slår lagringsstedet av og på, adressen og, for en enhet du drifter selv, **Hvor står enheten?** (se [Utenfor bygningen](#off-the-premises)).
 - **Oppbevaring**: keep-last, daglig, ukentlig og månedlig, for hvert depot på lagringsstedet. Et nytt lagringssted starter med standardreglene; et lagringssted der hver regel står på null, trimmer aldri.
-- **Beskyttelse**: bryteren **Append-only**. Motparten må håndheve append-only; med bryteren på beskjærer og sletter BombVault aldri noe der. På en rest-server med append-only på kjører **Sjekk append-only** tamper-testen for hvert domene lagringsstedet lagrer eller kopierer, og viser *sletting avvist* eller *sletting godtatt* (se [Ekstern lagring og gjenoppretting](offsite-recovery.md)). Bare eksterne lagringssteder har denne delen, fordi ingenting på denne boksen kan hindre at et lokalt depot blir slettet.
+- **Beskyttelse**: bryteren **Append-only**. Motparten må håndheve append-only; med bryteren på beskjærer og sletter BombVault aldri noe der. På en rest-server med append-only på kjører **Sjekk append-only** tamper-testen mot hver domenesti, hver påslått kopi og hvert depot på lagringsstedet, og viser ett svar for hele lagringsstedet: *sletting avvist* eller *sletting godtatt* (se [Ekstern lagring og gjenoppretting](offsite-recovery.md)). Bare eksterne lagringssteder har denne delen, fordi ingenting på denne boksen kan hindre at et lokalt depot blir slettet.
 - **Tilgang**: legitimasjonen og, for S3, lagringsklassen. Et lagringssted som bruker den delte legitimasjonen, får et eget sett ved første endring. Et direkte depot på lagringsstedet som den nye legitimasjonen ikke kan åpne, beholder den gamle, og svaret sier fra om det. Mappe-, SFTP- og rclone-lagringssteder har ingen slik del.
 - **Grenser**: opplastings- og nedlastingshastigheten og vekstbudsjettet.
 - **Mapper**: én bryter per domene, med navnet på mappen. Et domene som er slått av her, kan ikke velge lagringsstedet.
 
-Å senke oppbevaringen eller slå av append-only spør først og sier hvor mange elementer det gjelder. Å slå av et lagringssted slår av hvert depot på det; et lagringssted som et domene er lagret på, kan ikke slås av.
+Å senke oppbevaringen spør først og sier hvor mange elementer det gjelder; å slå av append-only spør først og sier hvor mange depoter på lagringsstedet som mister beskyttelsen. Å slå av et lagringssted slår av hvert depot på det; et lagringssted som et domene er lagret på, kan ikke slås av.
 
 ## Domener-kortet {#domains}
 
@@ -57,7 +57,7 @@ Et lagringssted kan bare fjernes så lenge ingenting bruker det: ingen domener e
 
 ## Uten lagringssted {#without-a-place}
 
-En adresse som ikke passer i formen lagringssted pluss mappe, fortsetter å fungere og står oppført under **Uten lagringssted**, med adressen sin. Native `b2:`-, `gs:`- og `swift:`-adresser er blant dem. **Knytt til lagringssted** knytter en slik rad til et lagringssted, etter den samme testen som ved [endring av en adresse](#addresses). Et kopimål uten lagringssted nevnes også på domenets rad, ved siden av chipene, og fortsetter å kopiere.
+En adresse som ikke passer i formen lagringssted pluss mappe, fortsetter å fungere og står oppført under **Uten lagringssted**, med adressen sin. Native `b2:`-, `gs:`- og `swift:`-adresser er blant dem. **Knytt til lagringssted** knytter en slik rad til et lagringssted, etter den samme testen som ved [endring av en adresse](#addresses). Et kopimål uten lagringssted nevnes også på domenets rad, ved siden av chipene, og fortsetter å kopiere. En ekstern rad der har sin egen **Append-only**-bryter, og å slå den av spør først og oppgir hvor mange elementer som har sikkerhetskopier på den adressen. Et direkte depot følger bryteren til målet sitt.
 
 ## Utenfor bygningen {#off-the-premises}
 

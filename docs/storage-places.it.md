@@ -27,12 +27,12 @@ Ogni luogo è una riga con il suo provider, l'uso che se ne fa e l'ultima prova 
 
 - **Generale**: il nome, l'interruttore che attiva e disattiva il luogo, l'indirizzo e, per un dispositivo che gestisci tu, **Dove si trova il dispositivo?** (vedi [Fuori sede](#off-the-premises)).
 - **Conservazione**: ultimi, giornalieri, settimanali e mensili, per ogni repository del luogo. Un nuovo luogo parte con le regole predefinite; un luogo con tutte le regole a zero non taglia mai.
-- **Protezione**: l'interruttore **Append-only**. È l'altro lato a dover imporre l'append-only; con l'interruttore attivo, BombVault non pota né elimina mai nulla lì. Su un rest-server con append-only attivo, **Verifica append-only** esegue il test di manomissione per ogni dominio che il luogo salva o copia e mostra *eliminazione rifiutata* o *eliminazione accettata* (vedi [Off-site e ripristino](offsite-recovery.md)). Solo i luoghi remoti hanno questa sezione, perché nulla su questa macchina può impedire che un repository locale venga eliminato.
+- **Protezione**: l'interruttore **Append-only**. È l'altro lato a dover imporre l'append-only; con l'interruttore attivo, BombVault non pota né elimina mai nulla lì. Su un rest-server con append-only attivo, **Verifica append-only** esegue il test di manomissione su ogni percorso di dominio, copia attiva e repository del luogo e mostra un'unica risposta per l'intero luogo, *eliminazione rifiutata* o *eliminazione accettata* (vedi [Off-site e ripristino](offsite-recovery.md)). Solo i luoghi remoti hanno questa sezione, perché nulla su questa macchina può impedire che un repository locale venga eliminato.
 - **Accesso**: le credenziali e, per S3, la classe di archiviazione. Un luogo che usa le credenziali condivise riceve un set proprio alla prima modifica. Un repository diretto del luogo che le nuove credenziali non riescono ad aprire mantiene quelle vecchie, e la risposta lo segnala. I luoghi di tipo cartella, SFTP e rclone non hanno questa sezione.
 - **Limiti**: la velocità di upload e di download e il budget di crescita.
 - **Cartelle**: un interruttore per dominio, con il nome della sua cartella. Un dominio disattivato qui non può scegliere il luogo.
 
-Ridurre la conservazione o disattivare l'append-only chiede prima conferma e indica quanti elementi riguarda. Disattivare un luogo disattiva ogni repository che contiene; un luogo in cui è salvato un dominio non si può disattivare.
+Ridurre la conservazione chiede prima conferma e indica quanti elementi riguarda; disattivare l'append-only chiede prima conferma e indica quanti repository del luogo lo perdono. Disattivare un luogo disattiva ogni repository che contiene; un luogo in cui è salvato un dominio non si può disattivare.
 
 ## La scheda Domini {#domains}
 
@@ -57,7 +57,7 @@ Un luogo si può rimuovere solo finché nulla lo usa: nessun dominio è salvato 
 
 ## Senza luogo {#without-a-place}
 
-Un indirizzo che non rientra nella forma di un luogo più una cartella continua a funzionare ed è elencato in **Senza luogo**, con il suo indirizzo. Tra questi ci sono gli indirizzi nativi `b2:`, `gs:` e `swift:`. **Assegna a un luogo** collega una riga del genere a un luogo, dopo la stessa verifica di quando [cambi un indirizzo](#addresses). Una destinazione di copia senza luogo compare anche sulla riga del suo dominio, accanto ai chip, e continua a copiare.
+Un indirizzo che non rientra nella forma di un luogo più una cartella continua a funzionare ed è elencato in **Senza luogo**, con il suo indirizzo. Tra questi ci sono gli indirizzi nativi `b2:`, `gs:` e `swift:`. **Assegna a un luogo** collega una riga del genere a un luogo, dopo la stessa verifica di quando [cambi un indirizzo](#addresses). Una destinazione di copia senza luogo compare anche sulla riga del suo dominio, accanto ai chip, e continua a copiare. Lì una riga remota ha il suo interruttore **Append-only**, e disattivarlo chiede prima conferma indicando quanti elementi conservano backup a quell'indirizzo. Un repository diretto segue l'interruttore della sua destinazione.
 
 ## Fuori sede {#off-the-premises}
 

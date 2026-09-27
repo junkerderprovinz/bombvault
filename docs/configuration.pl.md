@@ -84,7 +84,7 @@ Kopie poza siedzibą trafiają do miejsc przechowywania. Dodaj miejsce w **Ustaw
 
 ## Przenośne ustawienia (eksport i import) {#portable-settings-export-and-import}
 
-Karta **Eksport i import ustawień** na stronie Ustawienia zapisuje całą Twoją konfigurację BombVault (ustawienia domen, miejsca przechowywania, harmonogramy, powiadomienia) do przenośnego pliku JSON, który możesz zaimportować na innej instancji, więc przeniesienie na nową maszynę lub sklonowanie konfiguracji nie oznacza ponownego wpisywania wszystkiego ręcznie. Import pokazuje podgląd i prosi o potwierdzenie oraz nigdy nie narusza Twoich danych ani historii kopii.
+Karta **Eksport i import ustawień** na stronie Ustawienia zapisuje całą Twoją konfigurację BombVault (ustawienia domen, miejsca przechowywania, harmonogramy, powiadomienia) do przenośnego pliku JSON, który możesz zaimportować na innej instancji, więc przeniesienie na nową maszynę lub sklonowanie konfiguracji nie oznacza ponownego wpisywania wszystkiego ręcznie. Import pokazuje podgląd i prosi o potwierdzenie oraz nigdy nie narusza Twoich danych ani historii kopii. Podgląd liczy miejsca przechowywania w pliku, a z poświadczeniami także zestawy poświadczeń; dla starszego pliku bez miejsc BombVault tworzy je z zaimportowanych ustawień.
 
 !!! warning "Eksport może zawierać poświadczenia"
     Sam decydujesz, czy dołączyć do pliku poświadczenia swoich miejsc i powiadomień. Z dołączonymi poświadczeniami eksport jest tak samo wrażliwy jak Twój zestaw odzyskiwania, więc przechowuj go w bezpiecznym miejscu. Bez nich plik zawiera tylko niesekretne ustawienia.

@@ -84,7 +84,7 @@ Kopie mimo lokalitu míří na úložná místa. Místo přidejte v **Nastavení
 
 ## Přenositelná nastavení (export a import) {#portable-settings-export-and-import}
 
-Karta **Export a import nastavení** na stránce Nastavení zapíše celou vaši konfiguraci BombVaultu (nastavení domén, úložná místa, plány, oznámení) do přenosného souboru JSON, který můžete importovat na jiné instanci, takže přechod na nový stroj nebo klonování sestavy neznamená znovu vše zadávat ručně. Import zobrazí náhled a požádá o potvrzení a nikdy se nedotkne vašich zálohovaných dat ani historie.
+Karta **Export a import nastavení** na stránce Nastavení zapíše celou vaši konfiguraci BombVaultu (nastavení domén, úložná místa, plány, oznámení) do přenosného souboru JSON, který můžete importovat na jiné instanci, takže přechod na nový stroj nebo klonování sestavy neznamená znovu vše zadávat ručně. Import zobrazí náhled a požádá o potvrzení a nikdy se nedotkne vašich zálohovaných dat ani historie. Náhled spočítá úložná místa v souboru a s přihlašovacími údaji i sady přihlašovacích údajů; u staršího souboru bez míst je BombVault sestaví z importovaného nastavení.
 
 !!! warning "Export může obsahovat přihlašovací údaje"
     Vy zvolíte, zda do souboru zahrnout přihlašovací údaje vašich míst a oznámení. Se zahrnutými přihlašovacími údaji je export stejně citlivý jako vaše sada pro obnovu, takže jej uložte na bezpečné místo. Bez nich soubor obsahuje jen netajná nastavení.

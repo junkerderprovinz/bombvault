@@ -84,7 +84,7 @@ Etäkopiot menevät tallennuspaikkoihin. Lisää paikka kohdassa **Asetukset, Ta
 
 ## Siirrettävät asetukset (vienti ja tuonti) {#portable-settings-export-and-import}
 
-**Vie ja tuo asetukset** -kortti Asetukset-sivulla kirjoittaa koko BombVault-kokoonpanosi (toimialueasetukset, tallennuspaikat, aikataulut, ilmoitukset) siirrettävään JSON-tiedostoon, jonka voit tuoda toiseen instanssiin, joten uuteen laatikkoon siirtyminen tai kokoonpanon kloonaus ei tarkoita kaiken syöttämistä uudelleen käsin. Tuonti näyttää esikatselun ja pyytää vahvistusta, eikä se koskaan kosketa varmuuskopiodataasi tai historiaasi.
+**Vie ja tuo asetukset** -kortti Asetukset-sivulla kirjoittaa koko BombVault-kokoonpanosi (toimialueasetukset, tallennuspaikat, aikataulut, ilmoitukset) siirrettävään JSON-tiedostoon, jonka voit tuoda toiseen instanssiin, joten uuteen laatikkoon siirtyminen tai kokoonpanon kloonaus ei tarkoita kaiken syöttämistä uudelleen käsin. Tuonti näyttää esikatselun ja pyytää vahvistusta, eikä se koskaan kosketa varmuuskopiodataasi tai historiaasi. Esikatselu laskee tiedoston tallennuspaikat ja, kun tunnukset ovat mukana, kirjautumistietojoukot; vanhemmalle tiedostolle, jossa paikkoja ei ole, BombVault muodostaa ne tuoduista asetuksista.
 
 !!! warning "Vienti voi sisältää tunnuksia"
     Valitset itse, sisällytetäänkö paikkojesi ja ilmoitustesi tunnukset tiedostoon. Tunnusten kanssa vienti on yhtä arkaluontoinen kuin palautuspakettisi, joten säilytä se turvallisessa paikassa. Ilman niitä tiedosto sisältää vain salaamattomat asetukset.

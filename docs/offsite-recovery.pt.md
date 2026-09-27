@@ -63,7 +63,7 @@ Um domínio guardado num lugar remoto é a origem das suas cópias, tal como um 
 
 Marque um repo externo como append-only para que ransomware, ou um host comprometido, não possa eliminar ou reescrever os seus backups. O lado remoto (um `restic/rest-server` a correr em modo `--append-only`) **impõe-no**. O BombVault apenas o **verifica** e nunca mostra verde só com base numa afirmação de configuração.
 
-A janela **Adicionar lugar** traz uma receita pronta a colar para um rest-server em modo append-only, com um utilizador para este BombVault. Num lugar rest-server com **Append-only** ligado, **Testar append-only** nos detalhes do lugar corre o teste de adulteração para cada domínio que o lugar guarda ou copia, para que o externo append-only seja alcançável sem editar configs à mão.
+A janela **Adicionar lugar** traz uma receita pronta a colar para um rest-server em modo append-only, com um utilizador para este BombVault. Num lugar rest-server com **Append-only** ligado, **Testar append-only** nos detalhes do lugar corre o teste de adulteração contra cada caminho de domínio, cada cópia ligada e cada repositório no lugar e dá uma única resposta para o lugar, para que o externo append-only seja alcançável sem editar configs à mão.
 
 !!! note "Uma exclusão bem-sucedida em `/locks/` é esperada"
     Append-only não significa que nada mais possa ser removido. O restic precisa criar e liberar os próprios bloqueios, por isso `/locks/` continua gravável e removível de propósito. Os snapshots e os dados por trás deles, exatamente o alvo de um ransomware, não podem ser removidos. Se você mesmo testar o lado remoto, uma exclusão bem-sucedida em `/locks/` é o comportamento correto e não uma falha.
@@ -81,12 +81,14 @@ O BombVault prova periodicamente a garantia append-only tentando de facto uma el
 
 Uma inversão real de protegido-para-desprotegido dispara um único alerta.
 
+Num lugar, **Testar append-only** testa cada caminho de domínio, cada cópia ligada e cada repositório lá com as respetivas credenciais e junta os veredictos numa única resposta: basta um repositório aceitar uma eliminação para o lugar inteiro ficar *eliminações aceites*.
+
 ## Ensaios de DR
 
 O BombVault oferece dois níveis de prova de que os seus backups são de facto restauráveis, não apenas presentes.
 
 - **Ensaios de verificação de restauro (local).** O BombVault corre periodicamente `restic check --read-data-subset` (limitado, nunca um restauro completo que enche o disco) e mostra um selo *último verificado como restaurável* por domínio. A cadência vive em Definições, Agendamentos; o selo em Definições, Integridade.
-- **Ensaios de DR (externo).** O BombVault restaura um alvo real do repo externo para uma sandbox descartável, verifica-o ficheiro a ficheiro e byte a byte, e depois limpa. Isto prova que consegue recuperar do externo, não apenas que o repo responde.
+- **Ensaios de DR (externo).** O BombVault restaura um alvo real do repo externo para uma sandbox descartável, verifica-o ficheiro a ficheiro e byte a byte, e depois limpa. Isto prova que consegue recuperar do externo, não apenas que o repo responde. Só são ensaiados lugares noutro local, porque uma cópia na mesma casa não prova nada sobre perder a casa. Um domínio copiado para vários deles é ensaiado contra um por cada execução agendada, à vez, e o Painel indica o lugar do último ensaio.
 
 O **scorecard de proteção contra ransomware** no Painel resume isto numa postura verde / âmbar / vermelha por domínio, com uma checklist com marca de idade (externo configurado, append-only verificado, replicação atual, ensaio de restauro passado, encriptação ligada, estratégia de poda definida). Cada linha vermelha liga diretamente à correção, e o cartão só fica verde com factos verificados.
 
@@ -124,7 +126,7 @@ Duas máquinas: **TOWER** executa os contentores e envia as cópias, **VAULT** r
 
 O primeiro segmento do caminho é o utilizador htpasswd, aqui `tower`, e cada domínio recebe a sua pasta por baixo dele, por exemplo `rest:http://VAULT:8000/tower/container`. Responda a **Onde está o dispositivo?** com **Noutro local**, clique em **Adicionar** e marque o lugar em **Copiado para** nos domínios que devem ir para lá.
 
-**3. No TOWER, ligue Append-only** em **Proteção** nos detalhes do lugar e depois clique em **Testar append-only**. O teste corre para cada domínio que o lugar guarda ou copia, e cada um tem de dizer *eliminações recusadas*. O que significam as respostas:
+**3. No TOWER, ligue Append-only** em **Proteção** nos detalhes do lugar e depois clique em **Testar append-only**. O teste verifica cada caminho de domínio, cada cópia e cada repositório no lugar e dá uma única resposta para o lugar, que tem de ser *eliminações recusadas*. O que significam as respostas:
 
 | Resultado | O que aconteceu |
 | --- | --- |
@@ -145,9 +147,9 @@ O primeiro segmento do caminho é o utilizador htpasswd, aqui `tower`, e cada do
 
 Um separador **Recuperação** dedicado acompanha uma instalação de raiz ou reconstruída pelo caso de desastre, num só lugar:
 
-1. **Restaura primeiro as próprias definições do BombVault**, para que os caminhos de backup, os destinos externos e as credenciais de que o resto do fluxo precisa venham pré-preenchidos (aplicado através de um reinício automático sobre o socket Docker, para que a base de dados de definições em execução nunca seja sobrescrita sob um handle aberto).
-2. **Verifica que o BombVault consegue ler os seus backups** (o senão da chave de encriptação logo à partida).
-3. Deixa-o **apontar para o seu repo existente**: uma pasta local, ou um lugar remoto ligado através da mesma janela **Adicionar lugar** que em Definições, Armazenamento.
+1. **Verifica que o BombVault consegue ler os seus backups** (o senão da chave de encriptação logo à partida).
+2. **Restaura as próprias definições do BombVault**, para que os caminhos de backup, os destinos externos e as credenciais de que o resto do fluxo precisa venham pré-preenchidos. O backup de definições é lido do lugar que a linha Auto-backup indica em **Guardado em**, ou da cópia do Auto-backup em **Copiado para**, e o passo mostra esse lugar com o seu endereço; para ler de outro lugar, altere primeiro a linha Auto-backup no passo 3. O restauro é aplicado através de um reinício automático sobre o socket Docker, para que a base de dados de definições em execução nunca seja sobrescrita sob um handle aberto.
+3. **Anexa os seus backups existentes** através das linhas do cartão Domínios: na linha de cada domínio, escolha em **Guardado em** o lugar onde estão os backups dele e em **Copiado para** os lugares que guardam as cópias. Um lugar que ainda nenhuma linha oferece, como uma partilha, um servidor ou um bucket na nuvem, liga-se com **Adicionar lugar**, a mesma janela que em Definições, Armazenamento. **Ligar e pré-visualizar** verifica depois se os backups podem ser lidos.
 4. **Descobre** os containers, VMs e conjuntos de ficheiros nele armazenados.
 5. **Restaura-os todos** (deixados parados, para que os inicie deliberadamente), com o seu kit de recuperação a um clique de distância.
 

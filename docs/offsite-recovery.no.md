@@ -63,7 +63,7 @@ Et domene som er lagret på et eksternt lagringssted, er kilden til kopiene sine
 
 Flagg et eksternt repo append-only så løsepengevirus, eller en kompromittert host, ikke kan slette eller skrive om sikkerhetskopiene dine. Den andre siden (en `restic/rest-server` som kjører i `--append-only`-modus) **håndhever** det. BombVault kun **verifiserer** det og viser aldri grønt på en konfigurasjonspåstand alene.
 
-Vinduet **Legg til lagringssted** har en oppskrift, klar til å lime inn, på en rest-server i append-only-modus, med én bruker for denne BombVault. På et rest-server-lagringssted med **Append-only** på kjører **Sjekk append-only** i detaljene til lagringsstedet tamper-testen for hvert domene lagringsstedet lagrer eller kopierer, så append-only ekstern er tilgjengelig uten å håndredigere konfigurasjoner.
+Vinduet **Legg til lagringssted** har en oppskrift, klar til å lime inn, på en rest-server i append-only-modus, med én bruker for denne BombVault. På et rest-server-lagringssted med **Append-only** på kjører **Sjekk append-only** i detaljene til lagringsstedet tamper-testen mot hver domenesti, hver påslått kopi og hvert depot på lagringsstedet og gir ett svar for lagringsstedet, så append-only ekstern er tilgjengelig uten å håndredigere konfigurasjoner.
 
 !!! note "En vellykket sletting under `/locks/` er forventet"
     Append-only betyr ikke at ingenting kan slettes lenger. restic må ta og frigi sine egne låser, så `/locks/` forblir bevisst skrivbar og slettbar. Øyeblikksbilder og dataene bak dem, altså nettopp det løsepengevirus ville gå etter, kan ikke fjernes. Tester du motparten selv, er en sletting som lykkes under `/locks/` korrekt oppførsel og ikke et hull i beskyttelsen.
@@ -81,12 +81,14 @@ BombVault beviser jevnlig append-only-garantien ved faktisk å forsøke en slett
 
 En ekte beskyttet-til-ubeskyttet-vending utløser et enkelt varsel.
 
+På et lagringssted sjekker **Sjekk append-only** hver domenesti, hver påslått kopi og hvert depot der med deres egen legitimasjon og slår dommene sammen til ett svar: godtar ett eneste depot en sletting, blir hele lagringsstedet *sletting godtatt*.
+
 ## DR-øvelser
 
 BombVault tilbyr to nivåer av bevis for at sikkerhetskopiene dine faktisk er gjenopprettbare, ikke bare til stede.
 
 - **Gjenopprettingsverifiseringsøvelser (lokale).** BombVault kjører jevnlig `restic check --read-data-subset` (avgrenset, aldri en disk-fyllende full gjenoppretting) og viser et *sist verifisert gjenopprettbar*-merke per domene. Kadensen ligger på Innstillinger, Tidsplaner; merket på Innstillinger, Integritet.
-- **DR-øvelser (ekstern).** BombVault gjenoppretter et ekte mål fra det eksterne repoet inn i en engangs-sandkasse, verifiserer det fil-for-fil og byte-for-byte, og rydder deretter opp. Dette beviser at du kan komme deg tilbake fra ekstern, ikke bare at repoet svarer.
+- **DR-øvelser (ekstern).** BombVault gjenoppretter et ekte mål fra det eksterne repoet inn i en engangs-sandkasse, verifiserer det fil-for-fil og byte-for-byte, og rydder deretter opp. Dette beviser at du kan komme deg tilbake fra ekstern, ikke bare at repoet svarer. Bare lagringssteder på en annen lokasjon øves mot, for en kopi i samme hus beviser ingenting om å miste huset. Et domene som kopieres til flere av dem, øves mot ett per planlagte kjøring, etter tur, og Dashboardet viser lagringsstedet for den siste øvelsen.
 
 **Poengkortet for løsepengevirusbeskyttelse** på Dashboardet ruller dette opp i en grønn / gul / rød holdning per domene, med en aldersstemplet sjekkliste (ekstern konfigurert, append-only verifisert, replikering oppdatert, gjenopprettingsøvelse bestått, kryptering på, beskjæringsstrategi satt). Hver rød rad dyplenker til fiksen, og kortet blir bare grønt på verifiserte fakta.
 
@@ -124,7 +126,7 @@ To maskiner: **TOWER** kjører containerne og sender sikkerhetskopiene, **VAULT*
 
 Første ledd i stien er htpasswd-brukeren, her `tower`, og hvert domene får mappen sin under den, for eksempel `rest:http://VAULT:8000/tower/container`. Svar **På en annen lokasjon** på **Hvor står enheten?**, klikk **Legg til**, og huk av lagringsstedet under **Kopiert til** for domenene som skal dit.
 
-**3. Slå på Append-only på TOWER** under **Beskyttelse** i detaljene til lagringsstedet, og klikk **Sjekk append-only**. Testen kjører for hvert domene lagringsstedet lagrer eller kopierer, og hvert av dem må si *sletting avvist*. Hva svarene betyr:
+**3. Slå på Append-only på TOWER** under **Beskyttelse** i detaljene til lagringsstedet, og klikk **Sjekk append-only**. Testen sjekker hver domenesti, hver kopi og hvert depot på lagringsstedet og gir ett svar for lagringsstedet, og det må være *sletting avvist*. Hva svarene betyr:
 
 | Resultat | Hva som skjedde |
 | --- | --- |
@@ -145,9 +147,9 @@ Første ledd i stien er htpasswd-brukeren, her `tower`, og hvert domene får map
 
 En egen **Gjenoppretting**-fane leder en ny eller gjenoppbygd installasjon gjennom katastrofetilfellet, på ett sted:
 
-1. **Gjenoppretter BombVaults egne innstillinger først**, så sikkerhetskopistiene, eksterne målene og legitimasjonen resten av flyten trenger, kommer forhåndsutfylt (brukt via en selv-omstart over Docker-socketen, så den kjørende innstillingsdatabasen aldri overskrives under en åpen handle).
-2. **Sjekker at BombVault kan lese sikkerhetskopiene dine** (krypteringsnøkkel-fellen først).
-3. Lar deg **peke mot ditt eksisterende repo**: en lokal mappe, eller et eksternt lagringssted som kobles til via det samme vinduet **Legg til lagringssted** som på Innstillinger, Lagring.
+1. **Sjekker at BombVault kan lese sikkerhetskopiene dine** (krypteringsnøkkel-fellen først).
+2. **Gjenoppretter BombVaults egne innstillinger**, så sikkerhetskopistiene, eksterne målene og legitimasjonen resten av flyten trenger, kommer forhåndsutfylt. Innstillings-sikkerhetskopien leses fra lagringsstedet som raden Auto-sikkerhetskopi nevner under **Lagret på**, eller fra Auto-sikkerhetskopiens kopi under **Kopiert til**, og trinnet viser det lagringsstedet med adressen. For å lese fra et annet lagringssted endrer du først raden Auto-sikkerhetskopi i trinn 3. Gjenopprettingen brukes via en selv-omstart over Docker-socketen, så den kjørende innstillingsdatabasen aldri overskrives under en åpen handle.
+3. **Kobler til de eksisterende sikkerhetskopiene dine** via radene på Domener-kortet: på raden til hvert domene velger du under **Lagret på** lagringsstedet der sikkerhetskopiene ligger, og under **Kopiert til** lagringsstedene med kopiene. Et lagringssted som ingen rad tilbyr ennå, for eksempel en delt mappe, en server eller en skybøtte, kobles til med **Legg til lagringssted**, det samme vinduet som på Innstillinger, Lagring. **Koble til og forhåndsvis** sjekker deretter at sikkerhetskopiene kan leses.
 4. **Oppdager** containerne, VM-ene og filsettene lagret i det.
 5. **Gjenoppretter dem alle** (la stå stoppet, så du starter dem bevisst), med gjenopprettingssettet ditt ett klikk unna.
 
