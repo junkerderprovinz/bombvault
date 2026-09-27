@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -125,5 +126,17 @@ func TestAHomeAssistantButtonStartsUnderTheSharedLimits(t *testing.T) {
 	}
 	if run.Status == "failed" && st.Status != "failed" {
 		t.Fatalf("overall status %q after a failed backup", st.Status)
+	}
+}
+
+func TestTheRunningSensorNamesTheDomainOfAWholeDomainRun(t *testing.T) {
+	h, _, _, _ := newMCPGateHandler(t)
+	h.svc.progress = progress.NewStore()
+	if got := h.haRunning(); got != "idle" {
+		t.Fatalf("an idle server reads %q", got)
+	}
+	h.svc.progress.Publish(progress.Event{Key: "batch:files", Phase: "backup", Percent: 40, Active: true})
+	if got := h.haRunning(); got != "files: backup 40%" {
+		t.Fatalf("a whole-domain run reads %q", got)
 	}
 }

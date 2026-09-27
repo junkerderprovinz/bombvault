@@ -110,12 +110,16 @@ func (t Topics) entities(dev Device, domains []string, buttons bool) []entity {
 		out = append(out,
 			sensor(d+"_last_backup", title+" last backup", "{{ value_json."+d+".last_backup }}", map[string]any{"device_class": "timestamp"}),
 			sensor(d+"_last_result", title+" last result", "{{ value_json."+d+".last_result }}", map[string]any{"icon": "mdi:check-circle-outline"}),
-			sensor(d+"_free_space", title+" repository free space", "{{ value_json."+d+".free_bytes }}", map[string]any{
-				"device_class":                  "data_size",
-				"unit_of_measurement":           "B",
-				"suggested_unit_of_measurement": "GB",
-				"state_class":                   "measurement",
-			}),
+			// MQTT sensors ignore suggested_unit_of_measurement, so the
+			// template converts to GB itself.
+			sensor(d+"_free_space", title+" repository free space",
+				"{{ none if value_json."+d+".free_bytes is none else (value_json."+d+".free_bytes / 1e9) | round(1) }}",
+				map[string]any{
+					"device_class":                "data_size",
+					"unit_of_measurement":         "GB",
+					"suggested_display_precision": 1,
+					"state_class":                 "measurement",
+				}),
 		)
 		if buttons {
 			out = append(out, entity{component: "button", object: d + "_backup", config: map[string]any{

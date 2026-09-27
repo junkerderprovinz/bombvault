@@ -152,7 +152,9 @@ func (h *Handler) haRunning() string {
 	slices.SortFunc(items, func(a, b ActivityItem) int {
 		return cmp.Or(cmp.Compare(a.Domain, b.Domain), cmp.Compare(a.Item, b.Item))
 	})
-	line := fmt.Sprintf("%s: %s %d%%", items[0].Item, items[0].Phase, int(items[0].Percent))
+	// A whole-domain run reports its domain and no item.
+	first := items[0]
+	line := fmt.Sprintf("%s: %s %d%%", cmp.Or(first.Item, first.Domain), first.Phase, int(first.Percent))
 	if len(items) > 1 {
 		line += fmt.Sprintf(" (+%d)", len(items)-1)
 	}
