@@ -659,6 +659,14 @@ const fi: Partial<Translations> = {
   "flash.download": "Lataa (.zip)",
   "flash.restoreNote": "Palautus lataa tilannevedoksesta ZIP-tiedoston. Käynnissä olevaan /boot-osioon ei kosketa. Vie .zip suoraan Unraidin USB-luojaan tai pura se uudelle USB-tikulle flashin uudelleenrakentamiseksi.",
   "flash.none": "Ei vielä flash-varmuuskopioita. Suorita varmuuskopio yllä.",
+  "flash.plugins": "Liitännäiset",
+  "flash.pluginsTitle": "Tämän varmuuskopion liitännäiset",
+  "flash.pluginsHint": "Palauttaa yhden liitännäisen käytössä olevalle flash-tikulle: sen .plg-tiedoston, sen kansion config/plugins-kansiossa ja pakettitiedostot, jotka tässä varmuuskopiossa ovat. Unraid asentaa sen seuraavassa käynnistyksessä tai heti kohdasta Plugins, Install Plugin.",
+  "flash.pluginsNone": "Tässä varmuuskopiossa ei ole liitännäisiä.",
+  "flash.pluginsFailed": "Liitännäisiä ei voitu lukea.",
+  "flash.pluginRestore": "Palauta",
+  "flash.pluginRestoreConfirm": "Kirjoitetaanko {name} tästä varmuuskopiosta flash-tikulle? Samannimiset tiedostot korvataan, kaikki muu jää.",
+  "flash.pluginRestored": "{name} on taas flash-tikulla. Unraid asentaa sen seuraavassa käynnistyksessä tai heti kohdasta Plugins, Install Plugin tiedostolla /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Viennin ja tietovaraston salaus",

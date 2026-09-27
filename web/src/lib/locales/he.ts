@@ -659,6 +659,14 @@ const he: Partial<Translations> = {
   "flash.download": "הורדה (.zip)",
   "flash.restoreNote": "השחזור מוריד קובץ ZIP של התמונה. ה‑/boot הפעיל לעולם לא נוגעים בו. גררו את ה‑.zip ישירות אל יוצר ה‑USB של Unraid, או חלצו אותו ל‑USB חדש כדי לבנות מחדש את ה‑flash.",
   "flash.none": "אין עדיין גיבויי flash. הרץ גיבוי למעלה.",
+  "flash.plugins": "תוספים",
+  "flash.pluginsTitle": "תוספים בגיבוי הזה",
+  "flash.pluginsHint": "מחזיר תוסף אחד לכונן הפלאש הפעיל: קובץ ה-.plg שלו, התיקייה שלו תחת config/plugins וקובצי החבילות שהגיבוי הזה מכיל. Unraid מתקין אותו באתחול הבא, או מיד דרך Plugins, Install Plugin.",
+  "flash.pluginsNone": "הגיבוי הזה לא מכיל תוספים.",
+  "flash.pluginsFailed": "לא ניתן לקרוא את התוספים.",
+  "flash.pluginRestore": "שחזור",
+  "flash.pluginRestoreConfirm": "לכתוב את {name} מהגיבוי הזה לכונן הפלאש? קבצים באותו שם יוחלפו, כל השאר נשאר.",
+  "flash.pluginRestored": "{name} חזר לכונן הפלאש. Unraid מתקין אותו באתחול הבא, או מיד דרך Plugins, Install Plugin עם /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "הצפנת ייצוא ומאגר",

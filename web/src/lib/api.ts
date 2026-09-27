@@ -2709,6 +2709,31 @@ export function flashDownloadURL(snapshotId: string, source?: string): string {
   return `/api/flash/download?snapshot=${encodeURIComponent(snapshotId)}${srcParam(source, "&")}`;
 }
 
+export interface FlashPlugin {
+  name: string;
+  version: string;
+  size: number;
+  /** Package files outside the plugin folder, as paths below /boot. */
+  packages: string[];
+}
+
+/** GET /api/flash/plugins: the plugins one flash backup holds. */
+export function listFlashPlugins(snapshotId: string, source?: string): Promise<OkEnvelope & { plugins?: FlashPlugin[] }> {
+  return fetchJSON(`/api/flash/plugins?snapshot=${encodeURIComponent(snapshotId)}${srcParam(source, "&")}`);
+}
+
+/** POST /api/flash/plugins/restore: writes one plugin back into the live flash. */
+export function restoreFlashPlugin(
+  snapshot: string,
+  name: string,
+  source?: string
+): Promise<OkEnvelope & { started?: boolean }> {
+  return fetchJSON("/api/flash/plugins/restore", {
+    method: "POST",
+    body: JSON.stringify({ snapshot, name, source, confirm: true }),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Config API (singleton domain — BombVault's OWN settings self-backup)
 // ---------------------------------------------------------------------------

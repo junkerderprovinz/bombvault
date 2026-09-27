@@ -651,6 +651,14 @@ const pl: Partial<Translations> = {
   "flash.download": "Pobierz (.zip)",
   "flash.restoreNote": "Przywracanie pobiera ZIP migawki. Działający /boot nigdy nie jest naruszany. Wrzuć .zip bezpośrednio do kreatora USB Unraid lub rozpakuj go na nowy nośnik USB, aby odtworzyć flash.",
   "flash.none": "Brak kopii Flash. Utwórz kopię powyżej.",
+  "flash.plugins": "Wtyczki",
+  "flash.pluginsTitle": "Wtyczki w tej kopii",
+  "flash.pluginsHint": "Przywraca jedną wtyczkę na działający pendrive: jej plik .plg, jej folder w config/plugins i pliki pakietów, które ma ta kopia. Unraid zainstaluje ją przy następnym starcie albo od razu w Plugins, Install Plugin.",
+  "flash.pluginsNone": "Ta kopia nie zawiera wtyczek.",
+  "flash.pluginsFailed": "Nie udało się odczytać wtyczek.",
+  "flash.pluginRestore": "Przywróć",
+  "flash.pluginRestoreConfirm": "Zapisać {name} z tej kopii na pendrive? Pliki o tej samej nazwie zostaną zastąpione, reszta zostaje.",
+  "flash.pluginRestored": "{name} jest z powrotem na pendrivie. Unraid zainstaluje ją przy następnym starcie albo od razu w Plugins, Install Plugin z /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Szyfrowanie eksportu i repozytorium",

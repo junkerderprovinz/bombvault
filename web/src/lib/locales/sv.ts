@@ -659,6 +659,14 @@ const sv: Partial<Translations> = {
   "flash.download": "Ladda ner (.zip)",
   "flash.restoreNote": "Återställning laddar ner en ZIP av ögonblicksbilden. Den körande /boot rörs aldrig. Lägg .zip-filen direkt i Unraids USB-skapare, eller packa upp den på ett nytt USB-minne för att bygga om din flash.",
   "flash.none": "Inga flash-säkerhetskopior än. Kör en säkerhetskopiering ovan.",
+  "flash.plugins": "Plugins",
+  "flash.pluginsTitle": "Plugins i den här säkerhetskopian",
+  "flash.pluginsHint": "Lägger tillbaka ett enda plugin på flashminnet som används: dess .plg-fil, dess mapp under config/plugins och paketfilerna som den här kopian innehåller. Unraid installerar det vid nästa start, eller direkt under Plugins, Install Plugin.",
+  "flash.pluginsNone": "Den här säkerhetskopian innehåller inga plugins.",
+  "flash.pluginsFailed": "Det gick inte att läsa pluginen.",
+  "flash.pluginRestore": "Återställ",
+  "flash.pluginRestoreConfirm": "Skriva {name} från den här kopian till flashminnet? Filer med samma namn ersätts, allt annat blir kvar.",
+  "flash.pluginRestored": "{name} finns på flashminnet igen. Unraid installerar det vid nästa start, eller direkt under Plugins, Install Plugin med /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Export- och repositorykryptering",

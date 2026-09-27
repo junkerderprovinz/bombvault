@@ -652,6 +652,14 @@ const ko: Partial<Translations> = {
   "flash.download": "다운로드 (.zip)",
   "flash.restoreNote": "복원은 스냅샷의 ZIP을 다운로드합니다. 실행 중인 /boot은 절대 건드리지 않습니다. .zip을 Unraid USB 작성기에 바로 넣거나 새 USB에 압축 해제하여 플래시를 다시 구성하세요.",
   "flash.none": "아직 플래시 백업이 없습니다. 위에서 백업을 실행하세요.",
+  "flash.plugins": "플러그인",
+  "flash.pluginsTitle": "이 백업의 플러그인",
+  "flash.pluginsHint": "플러그인 하나를 실행 중인 플래시에 되돌립니다. .plg 파일, config/plugins 아래의 폴더, 이 백업에 있는 패키지 파일이 대상입니다. Unraid는 다음 부팅 때 설치하거나, Plugins, Install Plugin에서 바로 설치합니다.",
+  "flash.pluginsNone": "이 백업에는 플러그인이 없습니다.",
+  "flash.pluginsFailed": "플러그인을 읽지 못했습니다.",
+  "flash.pluginRestore": "복원",
+  "flash.pluginRestoreConfirm": "이 백업의 {name}을(를) 플래시에 쓸까요? 이름이 같은 파일은 바뀌고 나머지는 그대로 남습니다.",
+  "flash.pluginRestored": "{name}이(가) 플래시에 돌아왔습니다. Unraid는 다음 부팅 때 설치하거나, Plugins, Install Plugin에서 /boot/config/plugins/{name}.plg로 바로 설치합니다.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "내보내기 및 저장소 암호화",

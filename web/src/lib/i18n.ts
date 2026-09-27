@@ -1529,6 +1529,14 @@ export const en = {
   "flash.download": "Download (.zip)",
   "flash.restoreNote": "Restore downloads a ZIP of the snapshot. The running /boot is never touched. Drop the .zip straight into the Unraid USB creator, or unzip it onto a fresh USB to rebuild your flash.",
   "flash.none": "No flash backups yet. Run a backup above.",
+  "flash.plugins": "Plugins",
+  "flash.pluginsTitle": "Plugins in this backup",
+  "flash.pluginsHint": "Puts one plugin back into the running flash: its .plg file, its folder under config/plugins and the package files this backup holds. Unraid installs it on the next boot, or right away under Plugins, Install Plugin.",
+  "flash.pluginsNone": "This backup holds no plugins.",
+  "flash.pluginsFailed": "Could not read the plugins.",
+  "flash.pluginRestore": "Restore",
+  "flash.pluginRestoreConfirm": "Write {name} from this backup into the flash? Files with the same name are replaced, everything else stays.",
+  "flash.pluginRestored": "{name} is back on the flash. Unraid installs it on the next boot, or right away under Plugins, Install Plugin with /boot/config/plugins/{name}.plg.",
   // Merged card (GlimStone follow-up round, Paths & Storage tab rework, merge
   // B) — the flash zip export, plain-export encryption, and the restic
   // repositories' own encryption all sit under one roof: how backup exports
@@ -4140,6 +4148,14 @@ export const de: Translations = {
   "flash.download": "Download (.zip)",
   "flash.restoreNote": "Restore lädt ein ZIP des Snapshots herunter. Der laufende /boot wird nie angefasst. Das .zip direkt in den Unraid-USB-Creator geben oder auf einen frischen USB-Stick entpacken, um deinen Flash neu aufzubauen.",
   "flash.none": "Noch keine Flash-Backups. Oben eines starten.",
+  "flash.plugins": "Plugins",
+  "flash.pluginsTitle": "Plugins in diesem Backup",
+  "flash.pluginsHint": "Legt ein einzelnes Plugin zurück in den laufenden Flash: seine .plg-Datei, seinen Ordner unter config/plugins und die Paketdateien, die dieses Backup enthält. Unraid installiert es beim nächsten Start oder sofort unter Plugins, Install Plugin.",
+  "flash.pluginsNone": "Dieses Backup enthält keine Plugins.",
+  "flash.pluginsFailed": "Die Plugins konnten nicht gelesen werden.",
+  "flash.pluginRestore": "Wiederherstellen",
+  "flash.pluginRestoreConfirm": "{name} aus diesem Backup in den Flash schreiben? Dateien gleichen Namens werden ersetzt, alles andere bleibt.",
+  "flash.pluginRestored": "{name} liegt wieder auf dem Flash. Unraid installiert es beim nächsten Start oder sofort unter Plugins, Install Plugin mit /boot/config/plugins/{name}.plg.",
   "settings.exportsEncryptionTitle": "Export- und Repository-Verschlüsselung",
   "settings.exportsEncryptionHint": "Einstellungen für die Verschlüsselung der Plain-Export-Artefakte und die Verschlüsselung der restic-Repositories selbst.",
   // Geplanter Flash-ZIP-Export (#28): ein einfaches .zip, das nach jedem Flash-Backup in einen Ordner geschrieben wird.

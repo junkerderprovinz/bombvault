@@ -659,6 +659,14 @@ const da: Partial<Translations> = {
   "flash.download": "Download (.zip)",
   "flash.restoreNote": "Gendannelse downloader en ZIP af snapshottet. Den kørende /boot røres aldrig. Læg .zip-filen direkte i Unraids USB-creator, eller pak den ud på et nyt USB-stik for at genopbygge din flash.",
   "flash.none": "Ingen flash-sikkerhedskopier endnu. Kør en sikkerhedskopiering ovenfor.",
+  "flash.plugins": "Plugins",
+  "flash.pluginsTitle": "Plugins i denne sikkerhedskopi",
+  "flash.pluginsHint": "Lægger et enkelt plugin tilbage på det kørende flashdrev: dets .plg-fil, dets mappe under config/plugins og de pakkefiler, denne kopi indeholder. Unraid installerer det ved næste opstart, eller med det samme under Plugins, Install Plugin.",
+  "flash.pluginsNone": "Denne sikkerhedskopi indeholder ingen plugins.",
+  "flash.pluginsFailed": "Plugins kunne ikke læses.",
+  "flash.pluginRestore": "Gendan",
+  "flash.pluginRestoreConfirm": "Skriv {name} fra denne kopi til flashdrevet? Filer med samme navn bliver erstattet, alt andet bliver.",
+  "flash.pluginRestored": "{name} er tilbage på flashdrevet. Unraid installerer det ved næste opstart, eller med det samme under Plugins, Install Plugin med /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Eksport- og repositorykryptering",

@@ -659,6 +659,14 @@ const hu: Partial<Translations> = {
   "flash.download": "Letöltés (.zip)",
   "flash.restoreNote": "A visszaállítás letölti a pillanatkép ZIP-fájlját. A futó /boot-ot soha nem érinti. Húzd a .zip-et közvetlenül az Unraid USB-készítőjébe, vagy csomagold ki egy új USB-re a flash újraépítéséhez.",
   "flash.none": "Még nincs flash mentés. Indítson egyet fent.",
+  "flash.plugins": "Bővítmények",
+  "flash.pluginsTitle": "Bővítmények ebben a mentésben",
+  "flash.pluginsHint": "Egyetlen bővítményt tesz vissza a futó flash-re: a .plg fájlját, a mappáját a config/plugins alatt és a csomagfájlokat, amelyek ebben a mentésben vannak. Az Unraid a következő indításkor telepíti, vagy azonnal a Plugins, Install Plugin alatt.",
+  "flash.pluginsNone": "Ebben a mentésben nincs bővítmény.",
+  "flash.pluginsFailed": "A bővítmények nem olvashatók.",
+  "flash.pluginRestore": "Visszaállítás",
+  "flash.pluginRestoreConfirm": "Kiírod a(z) {name} bővítményt ebből a mentésből a flash-re? Az azonos nevű fájlok lecserélődnek, minden más marad.",
+  "flash.pluginRestored": "A(z) {name} újra a flash-en van. Az Unraid a következő indításkor telepíti, vagy azonnal a Plugins, Install Plugin alatt ezzel: /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Export- és tárolótitkosítás",

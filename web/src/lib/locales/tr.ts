@@ -659,6 +659,14 @@ const tr: Partial<Translations> = {
   "flash.download": "İndir (.zip)",
   "flash.restoreNote": "Geri yükleme, anlık görüntünün ZIP'ini indirir. Çalışan /boot'a asla dokunulmaz. .zip dosyasını doğrudan Unraid USB oluşturucuya bırakın veya flash'ınızı yeniden oluşturmak için yeni bir USB'ye çıkarın.",
   "flash.none": "Henüz flash yedeği yok. Yukarıdan bir yedekleme çalıştırın.",
+  "flash.plugins": "Eklentiler",
+  "flash.pluginsTitle": "Bu yedekteki eklentiler",
+  "flash.pluginsHint": "Tek bir eklentiyi çalışan flash belleğe geri koyar: .plg dosyasını, config/plugins altındaki klasörünü ve bu yedekte bulunan paket dosyalarını. Unraid onu bir sonraki açılışta ya da hemen Plugins, Install Plugin altında kurar.",
+  "flash.pluginsNone": "Bu yedekte eklenti yok.",
+  "flash.pluginsFailed": "Eklentiler okunamadı.",
+  "flash.pluginRestore": "Geri yükle",
+  "flash.pluginRestoreConfirm": "{name} bu yedekten flash belleğe yazılsın mı? Aynı adlı dosyalar değiştirilir, geri kalan her şey kalır.",
+  "flash.pluginRestored": "{name} yeniden flash bellekte. Unraid onu bir sonraki açılışta ya da hemen Plugins, Install Plugin altında /boot/config/plugins/{name}.plg ile kurar.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Dışa Aktarma ve Depo Şifrelemesi",

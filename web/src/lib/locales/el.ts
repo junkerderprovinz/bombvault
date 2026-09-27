@@ -659,6 +659,14 @@ const el: Partial<Translations> = {
   "flash.download": "Λήψη (.zip)",
   "flash.restoreNote": "Η επαναφορά κατεβάζει ένα ZIP του στιγμιότυπου. Το /boot που εκτελείται δεν αγγίζεται ποτέ. Ρίξτε το .zip απευθείας στο εργαλείο δημιουργίας USB του Unraid ή αποσυμπιέστε το σε ένα νέο USB για να αναδημιουργήσετε το flash.",
   "flash.none": "Δεν υπάρχουν ακόμα αντίγραφα flash. Εκτελέστε ένα αντίγραφο παραπάνω.",
+  "flash.plugins": "Πρόσθετα",
+  "flash.pluginsTitle": "Πρόσθετα σε αυτό το αντίγραφο",
+  "flash.pluginsHint": "Επαναφέρει ένα μόνο πρόσθετο στο flash που τρέχει: το αρχείο .plg, τον φάκελό του στο config/plugins και τα αρχεία πακέτων που περιέχει αυτό το αντίγραφο. Το Unraid το εγκαθιστά στην επόμενη εκκίνηση ή αμέσως από Plugins, Install Plugin.",
+  "flash.pluginsNone": "Αυτό το αντίγραφο δεν περιέχει πρόσθετα.",
+  "flash.pluginsFailed": "Δεν ήταν δυνατή η ανάγνωση των πρόσθετων.",
+  "flash.pluginRestore": "Επαναφορά",
+  "flash.pluginRestoreConfirm": "Να γραφτεί το {name} από αυτό το αντίγραφο στο flash; Τα αρχεία με το ίδιο όνομα αντικαθίστανται, όλα τα άλλα μένουν.",
+  "flash.pluginRestored": "Το {name} είναι ξανά στο flash. Το Unraid το εγκαθιστά στην επόμενη εκκίνηση ή αμέσως από Plugins, Install Plugin με /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Κρυπτογράφηση Εξαγωγής & Αποθετηρίου",

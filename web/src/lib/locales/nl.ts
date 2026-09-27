@@ -653,6 +653,14 @@ const nl: Partial<Translations> = {
   "flash.download": "Downloaden (.zip)",
   "flash.restoreNote": "Herstel downloadt een ZIP van de snapshot. De actieve /boot wordt nooit aangeraakt. Zet de .zip rechtstreeks in de Unraid USB-creator, of pak hem uit op een nieuwe USB om je flash opnieuw op te bouwen.",
   "flash.none": "Nog geen flash-back-ups. Maak er hierboven een.",
+  "flash.plugins": "Plug-ins",
+  "flash.pluginsTitle": "Plug-ins in deze back-up",
+  "flash.pluginsHint": "Zet één plug-in terug op de draaiende flash: het .plg-bestand, de map onder config/plugins en de pakketbestanden die deze back-up bevat. Unraid installeert hem bij de volgende start, of meteen via Plugins, Install Plugin.",
+  "flash.pluginsNone": "Deze back-up bevat geen plug-ins.",
+  "flash.pluginsFailed": "De plug-ins konden niet worden gelezen.",
+  "flash.pluginRestore": "Herstellen",
+  "flash.pluginRestoreConfirm": "{name} uit deze back-up naar de flash schrijven? Bestanden met dezelfde naam worden vervangen, de rest blijft.",
+  "flash.pluginRestored": "{name} staat weer op de flash. Unraid installeert hem bij de volgende start, of meteen via Plugins, Install Plugin met /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Export- en repositoryversleuteling",

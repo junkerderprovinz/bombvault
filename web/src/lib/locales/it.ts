@@ -659,6 +659,14 @@ const it: Partial<Translations> = {
   "flash.download": "Scarica (.zip)",
   "flash.restoreNote": "Il ripristino scarica uno ZIP dello snapshot. Il /boot in esecuzione non viene mai toccato. Trascina il .zip direttamente nel creatore USB di Unraid, oppure estrailo su una chiavetta USB nuova per ricostruire il flash.",
   "flash.none": "Ancora nessun backup del flash. Avviane uno sopra.",
+  "flash.plugins": "Plugin",
+  "flash.pluginsTitle": "Plugin in questo backup",
+  "flash.pluginsHint": "Rimette un singolo plugin nella chiavetta in uso: il suo file .plg, la sua cartella in config/plugins e i file dei pacchetti presenti in questo backup. Unraid lo installa al prossimo avvio, oppure subito da Plugins, Install Plugin.",
+  "flash.pluginsNone": "Questo backup non contiene plugin.",
+  "flash.pluginsFailed": "Impossibile leggere i plugin.",
+  "flash.pluginRestore": "Ripristina",
+  "flash.pluginRestoreConfirm": "Scrivere {name} da questo backup nella chiavetta? I file con lo stesso nome vengono sostituiti, tutto il resto rimane.",
+  "flash.pluginRestored": "{name} è di nuovo nella chiavetta. Unraid lo installa al prossimo avvio, oppure subito da Plugins, Install Plugin con /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Cifratura di esportazione e repository",

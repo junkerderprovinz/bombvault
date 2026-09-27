@@ -656,6 +656,14 @@ const ro: Partial<Translations> = {
   "flash.download": "Descarcă (.zip)",
   "flash.restoreNote": "Restaurarea descarcă un ZIP al instantaneului. /boot-ul în execuție nu este atins niciodată. Pune .zip-ul direct în creatorul USB Unraid sau dezarhivează-l pe un USB nou pentru a reconstrui flash-ul.",
   "flash.none": "Încă nicio copie de rezervă flash. Rulați un backup mai sus.",
+  "flash.plugins": "Pluginuri",
+  "flash.pluginsTitle": "Pluginuri în acest backup",
+  "flash.pluginsHint": "Pune un singur plugin înapoi pe stickul în funcțiune: fișierul .plg, dosarul său din config/plugins și fișierele de pachet pe care le conține acest backup. Unraid îl instalează la următoarea pornire sau imediat din Plugins, Install Plugin.",
+  "flash.pluginsNone": "Acest backup nu conține pluginuri.",
+  "flash.pluginsFailed": "Pluginurile nu au putut fi citite.",
+  "flash.pluginRestore": "Restaurează",
+  "flash.pluginRestoreConfirm": "Scrii {name} din acest backup pe stick? Fișierele cu același nume sunt înlocuite, restul rămâne.",
+  "flash.pluginRestored": "{name} este din nou pe stick. Unraid îl instalează la următoarea pornire sau imediat din Plugins, Install Plugin cu /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Criptarea exportului și a depozitului",

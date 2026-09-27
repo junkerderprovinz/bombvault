@@ -654,6 +654,14 @@ const uk: Partial<Translations> = {
   "flash.download": "Завантажити (.zip)",
   "flash.restoreNote": "Відновлення завантажує ZIP знімка — робочий /boot ніколи не зачіпається. Передайте .zip прямо у створювач USB Unraid або розпакуйте його на нову флешку, щоб відтворити flash.",
   "flash.none": "Копій Flash ще немає — створіть копію вище.",
+  "flash.plugins": "Плагіни",
+  "flash.pluginsTitle": "Плагіни в цій копії",
+  "flash.pluginsHint": "Повертає один плагін на робочу флешку: його файл .plg, його теку в config/plugins і файли пакетів, які є в цій копії. Unraid встановить його під час наступного завантаження або одразу через Plugins, Install Plugin.",
+  "flash.pluginsNone": "У цій копії немає плагінів.",
+  "flash.pluginsFailed": "Не вдалося прочитати плагіни.",
+  "flash.pluginRestore": "Відновити",
+  "flash.pluginRestoreConfirm": "Записати {name} з цієї копії на флешку? Файли з тією самою назвою буде замінено, усе інше залишиться.",
+  "flash.pluginRestored": "{name} знову на флешці. Unraid встановить його під час наступного завантаження або одразу через Plugins, Install Plugin з /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Шифрування експорту та репозиторію",

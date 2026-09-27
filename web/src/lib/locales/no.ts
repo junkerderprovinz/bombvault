@@ -656,6 +656,14 @@ const no: Partial<Translations> = {
   "flash.download": "Last ned (.zip)",
   "flash.restoreNote": "Gjenoppretting laster ned en ZIP av øyeblikksbildet. Den kjørende /boot røres aldri. Legg .zip-filen rett inn i Unraids USB-creator, eller pakk den ut på en ny USB for å bygge opp flashen på nytt.",
   "flash.none": "Ingen flash-sikkerhetskopier ennå. Kjør en sikkerhetskopiering ovenfor.",
+  "flash.plugins": "Programtillegg",
+  "flash.pluginsTitle": "Programtillegg i denne sikkerhetskopien",
+  "flash.pluginsHint": "Legger ett programtillegg tilbake på flashminnet som er i bruk: .plg-filen, mappen under config/plugins og pakkefilene denne kopien inneholder. Unraid installerer det ved neste oppstart, eller med en gang under Plugins, Install Plugin.",
+  "flash.pluginsNone": "Denne sikkerhetskopien inneholder ingen programtillegg.",
+  "flash.pluginsFailed": "Klarte ikke å lese programtilleggene.",
+  "flash.pluginRestore": "Gjenopprett",
+  "flash.pluginRestoreConfirm": "Skrive {name} fra denne kopien til flashminnet? Filer med samme navn erstattes, alt annet blir.",
+  "flash.pluginRestored": "{name} er tilbake på flashminnet. Unraid installerer det ved neste oppstart, eller med en gang under Plugins, Install Plugin med /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Eksport- og repositorykryptering",

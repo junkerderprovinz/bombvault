@@ -652,6 +652,14 @@ const vi: Partial<Translations> = {
   "flash.download": "Tải xuống (.zip)",
   "flash.restoreNote": "Khôi phục sẽ tải về một tệp ZIP của ảnh chụp. Phân vùng /boot đang chạy không bao giờ bị đụng đến. Thả tệp .zip thẳng vào trình tạo USB của Unraid, hoặc giải nén nó vào một USB mới để dựng lại flash.",
   "flash.none": "Chưa có bản sao lưu flash nào. Chạy một bản sao lưu ở trên.",
+  "flash.plugins": "Plugin",
+  "flash.pluginsTitle": "Plugin trong bản sao lưu này",
+  "flash.pluginsHint": "Đưa một plugin trở lại flash đang chạy: tệp .plg, thư mục của nó trong config/plugins và các tệp gói mà bản sao lưu này có. Unraid cài đặt nó ở lần khởi động tiếp theo, hoặc ngay trong Plugins, Install Plugin.",
+  "flash.pluginsNone": "Bản sao lưu này không có plugin nào.",
+  "flash.pluginsFailed": "Không đọc được các plugin.",
+  "flash.pluginRestore": "Khôi phục",
+  "flash.pluginRestoreConfirm": "Ghi {name} từ bản sao lưu này vào flash? Tệp cùng tên sẽ bị thay thế, mọi thứ khác giữ nguyên.",
+  "flash.pluginRestored": "{name} đã trở lại flash. Unraid cài đặt nó ở lần khởi động tiếp theo, hoặc ngay trong Plugins, Install Plugin với /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Mã hóa Xuất & Kho lưu trữ",

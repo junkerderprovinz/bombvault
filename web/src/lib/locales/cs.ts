@@ -657,6 +657,14 @@ const cs: Partial<Translations> = {
   "flash.download": "Stáhnout (.zip)",
   "flash.restoreNote": "Obnovení stáhne ZIP snímku. Běžící /boot se nikdy nezmění. Vložte .zip přímo do nástroje Unraid USB creator, nebo jej rozbalte na nový USB disk a obnovte tak flash.",
   "flash.none": "Zatím žádné zálohy Flash. Spusťte zálohu výše.",
+  "flash.plugins": "Pluginy",
+  "flash.pluginsTitle": "Pluginy v této záloze",
+  "flash.pluginsHint": "Vrátí jeden plugin na běžící flash: jeho soubor .plg, jeho složku v config/plugins a soubory balíčků, které tato záloha obsahuje. Unraid ho nainstaluje při příštím startu, nebo hned v Plugins, Install Plugin.",
+  "flash.pluginsNone": "Tato záloha neobsahuje žádné pluginy.",
+  "flash.pluginsFailed": "Pluginy se nepodařilo načíst.",
+  "flash.pluginRestore": "Obnovit",
+  "flash.pluginRestoreConfirm": "Zapsat {name} z této zálohy na flash? Soubory se stejným názvem se nahradí, vše ostatní zůstane.",
+  "flash.pluginRestored": "{name} je zpět na flashi. Unraid ho nainstaluje při příštím startu, nebo hned v Plugins, Install Plugin s /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Šifrování exportu a repozitáře",

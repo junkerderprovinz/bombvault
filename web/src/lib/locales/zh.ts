@@ -652,6 +652,14 @@ const zh: Partial<Translations> = {
   "flash.download": "下载 (.zip)",
   "flash.restoreNote": "恢复会下载快照的 ZIP，运行中的 /boot 绝不会被改动。把 .zip 直接放进 Unraid USB 创建器，或解压到全新 U 盘以重建你的 flash。",
   "flash.none": "尚无 Flash 备份。请在上方运行一次备份。",
+  "flash.plugins": "插件",
+  "flash.pluginsTitle": "此备份中的插件",
+  "flash.pluginsHint": "把单个插件放回正在运行的闪存盘：它的 .plg 文件、config/plugins 下的文件夹，以及此备份中的软件包文件。Unraid 会在下次启动时安装它，或在 Plugins、Install Plugin 中立即安装。",
+  "flash.pluginsNone": "此备份中没有插件。",
+  "flash.pluginsFailed": "无法读取插件。",
+  "flash.pluginRestore": "恢复",
+  "flash.pluginRestoreConfirm": "要把此备份中的 {name} 写入闪存盘吗？同名文件会被替换，其余内容保持不变。",
+  "flash.pluginRestored": "{name} 已回到闪存盘。Unraid 会在下次启动时安装它，或在 Plugins、Install Plugin 中使用 /boot/config/plugins/{name}.plg 立即安装。",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "导出与仓库加密",

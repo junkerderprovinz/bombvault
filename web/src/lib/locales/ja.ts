@@ -652,6 +652,14 @@ const ja: Partial<Translations> = {
   "flash.download": "ダウンロード (.zip)",
   "flash.restoreNote": "復元はスナップショットの ZIP をダウンロードします。実行中の /boot には一切触れません。.zip をそのまま Unraid の USB クリエーターに入れるか、新しい USB に展開してフラッシュを再構築してください。",
   "flash.none": "フラッシュバックアップはまだありません。上でバックアップを実行してください。",
+  "flash.plugins": "プラグイン",
+  "flash.pluginsTitle": "このバックアップのプラグイン",
+  "flash.pluginsHint": "プラグインを1つだけ稼働中のフラッシュに戻します。.plg ファイル、config/plugins 以下のフォルダー、このバックアップにあるパッケージファイルが対象です。Unraid は次回の起動時に、または Plugins、Install Plugin からすぐにインストールします。",
+  "flash.pluginsNone": "このバックアップにはプラグインがありません。",
+  "flash.pluginsFailed": "プラグインを読み込めませんでした。",
+  "flash.pluginRestore": "復元",
+  "flash.pluginRestoreConfirm": "このバックアップの {name} をフラッシュに書き込みますか？同じ名前のファイルは置き換えられ、それ以外はそのまま残ります。",
+  "flash.pluginRestored": "{name} をフラッシュに戻しました。Unraid は次回の起動時に、または Plugins、Install Plugin で /boot/config/plugins/{name}.plg を指定するとすぐにインストールします。",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "エクスポートとリポジトリの暗号化",

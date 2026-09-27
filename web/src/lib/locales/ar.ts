@@ -659,6 +659,14 @@ const ar: Partial<Translations> = {
   "flash.download": "تنزيل (.zip)",
   "flash.restoreNote": "يقوم الاستعادة بتنزيل ملف ZIP للقطة. لا يتم المساس بـ /boot قيد التشغيل أبدًا. ضع ملف .zip مباشرة في أداة إنشاء USB من Unraid، أو فك ضغطه على USB جديد لإعادة بناء الفلاش.",
   "flash.none": "لا توجد نسخ احتياطية للفلاش بعد. شغّل نسخاً احتياطياً أعلاه.",
+  "flash.plugins": "الإضافات",
+  "flash.pluginsTitle": "الإضافات في هذه النسخة",
+  "flash.pluginsHint": "يعيد إضافة واحدة إلى ذاكرة الفلاش العاملة: ملف .plg الخاص بها ومجلدها ضمن config/plugins وملفات الحزم الموجودة في هذه النسخة. يثبّتها Unraid عند الإقلاع التالي، أو فورًا من Plugins، Install Plugin.",
+  "flash.pluginsNone": "لا تحتوي هذه النسخة على إضافات.",
+  "flash.pluginsFailed": "تعذّرت قراءة الإضافات.",
+  "flash.pluginRestore": "استعادة",
+  "flash.pluginRestoreConfirm": "هل تريد كتابة {name} من هذه النسخة إلى ذاكرة الفلاش؟ تُستبدل الملفات التي تحمل الاسم نفسه، ويبقى كل ما عداها.",
+  "flash.pluginRestored": "عادت {name} إلى ذاكرة الفلاش. يثبّتها Unraid عند الإقلاع التالي، أو فورًا من Plugins، Install Plugin باستخدام /boot/config/plugins/{name}.plg.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "تشفير التصدير والمستودع",

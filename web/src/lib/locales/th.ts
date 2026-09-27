@@ -659,6 +659,14 @@ const th: Partial<Translations> = {
   "flash.download": "ดาวน์โหลด (.zip)",
   "flash.restoreNote": "การกู้คืนจะดาวน์โหลดไฟล์ ZIP ของสแนปช็อต /boot ที่กำลังทำงานจะไม่ถูกแตะต้อง วางไฟล์ .zip ลงในตัวสร้าง USB ของ Unraid โดยตรง หรือแตกไฟล์ลงใน USB ใหม่เพื่อสร้างแฟลชของคุณใหม่",
   "flash.none": "ยังไม่มีการสำรองข้อมูลแฟลช เรียกใช้การสำรองข้อมูลด้านบน",
+  "flash.plugins": "ปลั๊กอิน",
+  "flash.pluginsTitle": "ปลั๊กอินในข้อมูลสำรองนี้",
+  "flash.pluginsHint": "นำปลั๊กอินหนึ่งตัวกลับไปยังแฟลชที่กำลังใช้งาน ได้แก่ ไฟล์ .plg โฟลเดอร์ใต้ config/plugins และไฟล์แพ็กเกจที่มีในข้อมูลสำรองนี้ Unraid จะติดตั้งในการบูตครั้งถัดไป หรือทันทีที่ Plugins, Install Plugin",
+  "flash.pluginsNone": "ข้อมูลสำรองนี้ไม่มีปลั๊กอิน",
+  "flash.pluginsFailed": "อ่านปลั๊กอินไม่ได้",
+  "flash.pluginRestore": "กู้คืน",
+  "flash.pluginRestoreConfirm": "เขียน {name} จากข้อมูลสำรองนี้ลงแฟลชหรือไม่ ไฟล์ที่ชื่อเดียวกันจะถูกแทนที่ ส่วนอื่นยังอยู่เหมือนเดิม",
+  "flash.pluginRestored": "{name} กลับมาอยู่บนแฟลชแล้ว Unraid จะติดตั้งในการบูตครั้งถัดไป หรือทันทีที่ Plugins, Install Plugin ด้วย /boot/config/plugins/{name}.plg",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "การเข้ารหัสการส่งออกและที่เก็บข้อมูล",
