@@ -83,7 +83,13 @@ export function ItemScheduleOverride({
             of cadenceLabel: an absent override means the item inherits its
             domain schedule, which is not the same as "nothing scheduled". */}
         <ScheduleBadge status={active ? "active" : "off"} label={summary} />
-        <Badge as="button" onClick={() => setOpen((o) => !o)} tone="neutral" size="small">
+        <Badge
+          as="button"
+          onClick={() => setOpen((o) => !o)}
+          tone="neutral"
+          size="small"
+          className="pointer-coarse:h-(--btn-h) pointer-coarse:px-3"
+        >
           {open ? t("common.close") : t("schedule.overrideEdit")}
         </Badge>
       </div>

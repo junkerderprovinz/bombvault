@@ -148,19 +148,12 @@ func (s *Service) retentionTagsFor(ctx context.Context, repo string, mode restic
 	return tags, true
 }
 
-// forgetWithLockHeal runs a ForgetPolicy pass after clearing a genuinely
-// stale lock with plain `restic unlock` (removeAll=false), which applies
-// restic's own staleness rules: a dead PID on this host, or any lock past
-// restic's ~30-minute age threshold. forget needs an exclusive lock, so even
-// a stale non-exclusive lock, which lets backups keep succeeding, would block
-// every retention pass, and one orphan would fail a whole night's retention
-// across all items. A live lock is not force-removed (see the body); it has
-// the same bounded prior-incarnation hostname gap noted on CheckDomain.
+// forgetWithLockHeal runs a ForgetPolicy pass after clearing stale locks with
+// unlockStale. forget needs an exclusive lock, so a single stale non-exclusive
+// lock, which backups work around, would otherwise block every retention pass.
 func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, prune bool) error {
-	// A live or concurrent lock is not force-removed: reads run --no-lock,
-	// writes are serialized under the domain lock, and forget passes
-	// --retry-lock to wait out a transient cross-process lock. Force-removing a
-	// live lock cannot fix a live holder and endangers a running operation.
+	// unlockStale leaves the locks of this process's own restic runs alone, and
+	// forget passes --retry-lock to wait them out.
 	s.unlockStale(ctx, repo, mode)
 	return s.engine.ForgetPolicy(ctx, repo, p, mode, tags, prune)
 }

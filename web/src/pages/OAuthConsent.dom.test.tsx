@@ -175,3 +175,14 @@ describe("the OAuth consent page", () => {
     expect(assign).not.toHaveBeenCalled();
   });
 });
+
+// jsdom lays nothing out, so this pins the class the touch sizing rests on.
+describe("the OAuth consent page on a touch screen", () => {
+  it("gives Deny and Allow a finger-sized height", async () => {
+    getOAuthConsent.mockResolvedValue(info());
+    render(<OAuthConsent />);
+    const allow = await screen.findByRole("button", { name: en["oauth.accept"] });
+    const deny = screen.getByRole("button", { name: en["oauth.decline"] });
+    for (const button of [allow, deny]) expect(button.className).toContain("pointer-coarse:[--btn-h:2.75rem]");
+  });
+});

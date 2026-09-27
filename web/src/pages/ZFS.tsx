@@ -18,7 +18,7 @@ import type { ZFSDatasetView, ZFSHostDataset } from "../lib/api";
 import { hueVars } from "../lib/appearance";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT } from "../lib/i18n";
-import { PAGE_SHELL } from "../lib/pageShell";
+import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { anyActive, busyPhraseKey, useProgress } from "../lib/progress";
 import { useRestoreRequest } from "../lib/restoreRequest";
 import { useToast } from "../lib/toast";
@@ -127,14 +127,14 @@ export function ZFS() {
   const showEmptyState = !loading && error === null && items.length === 0;
 
   return (
-    <div className={PAGE_SHELL}>
+    <div className={PAGE_SHELL_RESPONSIVE}>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold text-carbon-text">{t("zfs.title")}</h1>
           <p className="mt-1 text-sm text-carbon-textSub">{t("zfs.subtitle")}</p>
           <div className="mt-2"><OffsiteIndicator domain="zfs" /></div>
         </div>
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap md:shrink-0 max-md:w-full">
           <Button
             key={shakeDiscover}
             label={t("containers.discover")}
@@ -219,7 +219,7 @@ export function ZFS() {
       )}
 
       {notInItem > 0 && (
-        <p className="flex items-center gap-2 text-xs text-carbon-textMuted">
+        <p className="flex flex-wrap items-center gap-2 text-xs text-carbon-textMuted">
           {t("zfs.notInItem", notInItem)}
           <Button
             label={t("zfs.addDatasets")}

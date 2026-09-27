@@ -13,7 +13,8 @@ const sl: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Lastna varnostna kopija",
   "nav.settings": "Nastavitve",
-  "nav.menu": "Meni",
+  "nav.more": "Več",
+  "nav.mobileNavigation": "Mobilna navigacija",
 
   // Mode toggle
   "about.title": "O programu BombVault",
@@ -294,6 +295,9 @@ const sl: Partial<Translations> = {
   "run.colStarted": "Začeto",
   "run.colFinished": "Končano",
   "run.colContainer": "Vsebnik",
+  "home.newBackupConfirm": "Želite zdaj začeti varnostno kopijo vseh omogočenih področij? Vsebniki se med delom njihove varnostne kopije enega za drugim ustavijo in znova zaženejo.",
+  "run.statVolume": "Količina podatkov",
+  "run.statSnapshot": "Posnetek",
 
   // Settings
   "settings.title": "Nastavitve",
@@ -686,6 +690,9 @@ const sl: Partial<Translations> = {
   "settings.labels.buttons": "Gumbi",
   "settings.labels.sidebar": "Stranska vrstica",
   "settings.labels.tabs": "Zavihki",
+  "settings.labels.bottombar": "Spodnja vrstica",
+  "settings.axisBottombarHint": "Vpliva samo na postavitev telefona.",
+  "settings.axisSidebarHint": "Vpliva samo na namizno postavitev.",
   "settings.labels.mode.text": "Besedilo",
   "settings.labels.mode.textGlyph": "Besedilo in simbol",
   "settings.labels.mode.glyph": "Simbol",
@@ -729,6 +736,7 @@ const sl: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Stanje zaščite",
   "dashboard.noOffsite": "Ni kopije zunaj lokacije",
+  "dashboard.statusLoadFailed": "Stanja ni bilo mogoče naložiti",
   "dashboard.neverExcluded": "Ni načrtovano",
   "dashboard.neverExcludedTitle": "Namenoma izpuščeno iz urnika, zato tu ni ničesar za varnostno kopiranje.",
   "dashboard.neverSelf": "Lastni vsebnik",
@@ -1070,6 +1078,10 @@ const sl: Partial<Translations> = {
   "common.restoring": "Obnavljanje…",
   "common.done": "Končano",
   "common.close": "Zapri",
+  "common.expand": "Razpri",
+  "common.collapse": "Zapri",
+  "common.back": "Nazaj",
+  "common.loadMore": "Naloži več",
   "common.loadingBackups": "Nalaganje varnostnih kopij…",
   "common.saving": "Shranjevanje…",
   "common.restoreRunning": "Obnovitev teče…",

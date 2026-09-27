@@ -3,7 +3,7 @@ import { getAuth, getSettings, importSettingsApply, listContainers, listFileSets
 import { useAnomalySummary } from "../lib/useAnomalies";
 import { pushSaveWarnings } from "../lib/placementCodes";
 import { getLabelMode, type ControlAxis, type LabelMode } from "../lib/controls";
-import { PAGE_SHELL_TABBED } from "../lib/pageShell";
+import { PAGE_SHELL_TABBED_RESPONSIVE } from "../lib/pageShell";
 import { Button } from "../components/Button";
 import { useReveal } from "../lib/useReveal";
 import type { Settings, Container, VM, FileSetView, RegistryAuthEntry, ZFSDatasetView } from "../lib/api";
@@ -548,10 +548,13 @@ export function SettingsPage() {
   // #178: the three label modes, mirrored into local state so the selectors
   // show the current choice; the controls themselves read through
   // useLabelMode, which the labelModeChanged() call below wakes.
+  // renders one selector per CONTROL_AXES entry, so the mobile bottom bar's
+  // axis appears here the same way the other three do.
   const [labelModes, setLabelModes] = useState<Record<ControlAxis, LabelMode>>(() => ({
     buttons: getLabelMode("buttons"),
     sidebar: getLabelMode("sidebar"),
     tabs: getLabelMode("tabs"),
+    bottombar: getLabelMode("bottombar"),
   }));
 
   // Rainbow state (GlimStone form-engine Phase 2, Task 1) — synced from/to
@@ -1733,10 +1736,10 @@ export function SettingsPage() {
     // wrapper's own comment for why `flex-1` produces exactly that
     // fill-or-grow behaviour with no separate min-height override needed.
     //
-    // PAGE_SHELL_TABBED — the ONE stated exception to the app-wide page width
+    // PAGE_SHELL_TABBED_RESPONSIVE is the one stated exception to the app-wide page width
     // (jdp live-review, "Können wir die nicht überall gleich breit machen?").
     // Every other page now renders at PAGE_SHELL's 1152px; this root keeps the
-    // shared 40px rhythm but deliberately has NO max-width, and that is not an
+    // shared 40px desktop rhythm but has no max-width, and that is not an
     // oversight. Measured live before deciding: capping this root at 1152px
     // caps the tab Selector strip inside it too, and the strip (`size="lg"` +
     // `equalWidth`, every segment as wide as the widest) no longer fits on one
@@ -1751,7 +1754,7 @@ export function SettingsPage() {
     // or step `size` down from "lg"), after which this page could join the
     // shared cap. That is a change to a deliberate prior decision, so it is
     // flagged for jdp rather than taken here. See lib/pageShell.ts.
-    <div className={PAGE_SHELL_TABBED}>
+    <div className={PAGE_SHELL_TABBED_RESPONSIVE}>
       {/* Heading + tab strip, grouped in their own gap-6 column (GlimStone
           follow-up pass, live-review round — the width-mismatch fix below
           needed a wrapper here to isolate this pair's own 24px gap from the
@@ -1765,7 +1768,7 @@ export function SettingsPage() {
           at the page's own full width, un-capped — Settings.tsx was the one
           page that swept its heading into the same narrow column as its
           form content, which that pass undid to match that convention. */}
-      <div className="flex flex-col gap-6">
+      <div className="@container flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold text-carbon-text">
           {t("settings.title")}
@@ -1785,8 +1788,9 @@ export function SettingsPage() {
 
           self-start keeps the wrapper at the strip's own width: as a child of
           a flex column it would stretch to the column, and the measurement
-          would read the column instead of the strip. */}
-      <div ref={setTabStripEl} className="inline-flex self-start max-w-full">
+          would read the column instead of the strip. Below 48rem the strip is
+          a grid as wide as the column, so there the wrapper stretches. */}
+      <div ref={setTabStripEl} className="inline-flex self-start max-w-full max-md:self-stretch">
       <Selector
         items={([
           ["general", t("settings.tab.general")],
@@ -1837,9 +1841,21 @@ export function SettingsPage() {
         // The rail's own row width, via the shared token — "gleich groß wie die
         // tabs in der sidebar" is a promise, and a promise needs one number,
         // not two that happen to agree today. It also gives the longest label
-        // ("Benachrichtigungen") the 16px it was missing, which is why that tab
-        // clipped its own text in reactive mode.
-        segmentWidth="var(--nav-row-w)"
+        // ("Benachrichtigungen") the 16px it was missing, which is why that
+        // tab clipped its own text in reactive mode.
+        segmentWidth="var(--settings-tab-seg-w)"
+        // The desktop arm of that token, as a Tailwind variant so the 48rem
+        // number stays in lib/useMediaQuery.ts. Above the breakpoint every tab
+        // is the rail's row box again.
+        //
+        // Below it the strip is a grid over the column, where the phone arm
+        // (index.css) lets each tab fill its cell. Six columns while a tab
+        // keeps 44px, which takes 17.75rem with the five gaps; on a narrower
+        // column three, so the tabs sit three over three instead of five over
+        // a lone sixth. No cell holds the German labels, which would show a
+        // letter and an ellipsis, so the glyph stands alone and the label
+        // stays the tab's accessible name.
+        className="md:[--settings-tab-seg-w:var(--nav-row-w)] max-md:grid max-md:flex-1 max-md:grid-cols-3 max-md:@min-[17.75rem]:grid-cols-6 max-md:[&_.truncate]:sr-only"
       />
       </div>
       </div>
@@ -1917,7 +1933,7 @@ export function SettingsPage() {
           rather than sitting fixed over top of it. */}
       <div
         key={tab}
-        className="flex flex-col gap-10 glim-tab-slide flex-1"
+        className="flex flex-col gap-6 md:gap-10 glim-tab-slide flex-1"
         style={{ maxWidth: tabStripWidth ?? undefined, "--tab-dir": tabDir } as CSSProperties}
       >
       {confirmDialog}

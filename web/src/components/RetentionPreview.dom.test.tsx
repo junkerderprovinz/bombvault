@@ -197,3 +197,22 @@ describe("RetentionPreview", () => {
     await waitFor(() => expect(screen.getByText(/no backups yet/)).toBeTruthy());
   });
 });
+
+// jsdom lays nothing out, so this pins the classes the phone layout rests on.
+describe("RetentionPreview at phone width", () => {
+  it("keeps the button inside the card and wraps a repository's note under its name", async () => {
+    previewRetention.mockResolvedValue({
+      ok: true,
+      preview: {
+        policy: { on: true, keepLast: 5, keepDaily: 0, keepWeekly: 0, keepMonthly: 0 },
+        repos: [{ name: "Hetzner storage box", appendOnly: true, items: [] }],
+      },
+    });
+    renderPanel();
+    const show = screen.getByRole("button", { name: new RegExp(en["retentionPreview.show"], "i") });
+    expect(show.className).toContain("glim-btn-wrap");
+    fireEvent.click(show);
+    const note = await screen.findByText(en["retentionPreview.appendOnly"]);
+    expect(note.parentElement!.className).toContain("flex-wrap");
+  });
+});

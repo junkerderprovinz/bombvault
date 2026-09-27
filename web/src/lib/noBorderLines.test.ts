@@ -253,6 +253,7 @@ describe("focus", () => {
   const FIELD_FOCUS = /\bglim-field-focus(?:-well)?\b/;
   const ALLOWED_OUTLINE_NONE: Record<string, string> = {
     "components/NumberField.tsx": "the stepper arrows are never focused (tabIndex -1); the field around them is",
+    "components/Toggle.tsx": "the switch grows to the touch floor on a coarse pointer, so its ring sits on the visible pill instead",
   };
 
   it("takes the ring off nothing but a field", () => {

@@ -106,19 +106,22 @@ interface SelectorCommon {
  * colours at the default offset; pages/settings/hueOffsets.test.ts requires
  * every hued selector in that tree to take its offset from here.
  *
- * The palette has eight colours and the tree thirteen selectors, so some starts
- * are shared, always between selectors on different tabs: `drillKind`
- * (Integrity) and the domain rows (Storage) reuse starts of the Appearance
- * tab, and `mcpClient` (System) shares `notifyOn`'s (Notifications).
+ * There are more selectors than the palette has colours, so some share a
+ * start: `drillKind` and the domain rows with rows of General, and `theme`,
+ * `notifyOn` and `mcpClient` the last colour. `theme` sits in General,
+ * `notifyOn` in Notifications, the domain rows in Storage and the client
+ * picker in a dialog from System, so none of them is on screen with another.
+ * General spends all eight positions, so a selector added there has no free
+ * start and the table needs rethinking rather than another entry.
  */
 export const HUE_OFFSET = {
   tabs: 0,
-  /** The three label-mode rows take +0..2 by axis, so the block reads as one
-   *  group. */
+  /** One row per control axis, each a colour further along, so the block reads
+   *  as one group. */
   labels: 1,
-  shape: 4,
-  motion: 5,
-  theme: 6,
+  shape: 5,
+  motion: 6,
+  theme: 7,
   notifyOn: 7,
   drillKind: 1,
   /** The chips of the domain rows on the Storage tab, +3 per row. */
@@ -157,10 +160,12 @@ const SIZE: Record<
 /**
  * segmentPadding gives a segment with a glyph, or any segment of a strip beside
  * a button, the button height, since a box sized by its text comes out shorter
- * than the controls around it. Text-only strips keep the compact padding.
+ * than the controls around it. Text-only strips keep the compact padding, and
+ * grow to the button height only under a coarse pointer, where a 20px pill is
+ * too small to hit.
  */
 function segmentPadding(size: SelectorSize, hasGlyph: boolean, buttonHeight: boolean): string {
-  return hasGlyph || buttonHeight ? SIZE[size].glyphPadding : SIZE[size].padding;
+  return hasGlyph || buttonHeight ? SIZE[size].glyphPadding : `${SIZE[size].padding} pointer-coarse:min-h-(--btn-h)`;
 }
 
 // MIN_PINNED_WIDTH is the narrowest a pinned segment gets. The shared floor

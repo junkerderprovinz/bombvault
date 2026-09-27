@@ -1109,9 +1109,12 @@ func isRepoUninitialized(err error) bool {
 		containsAny(msg, repoAbsenceMarkers) && !containsAny(msg, transportFailureMarkers)
 }
 
-// unlockStale clears stale locks, best-effort (plain restic unlock: only
-// locks from dead processes or old enough, never an active concurrent
-// lock). Logged, never fatal.
+// unlockStale clears the locks restic calls stale and the ones an earlier run
+// of BombVault on this host left in a local repository (see restic.Unlock).
+// That second rule assumes BombVault is the only writer of a local repository:
+// every install uses the hostname bombvault, so a second instance sharing the
+// path cannot be told from an earlier run and its held lock can go. Logged,
+// never fatal.
 func (s *Service) unlockStale(ctx context.Context, repo string, mode restic.Mode) {
 	if err := s.engine.Unlock(ctx, repo, false, mode); err != nil {
 		log.Printf("api: stale-unlock failed (continuing): %v", err)

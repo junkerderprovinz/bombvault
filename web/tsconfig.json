@@ -30,5 +30,11 @@
   // program has no node types on purpose - the app never touches a filesystem.
   // The suffix exists so this stays a RULE instead of a filename in a list that
   // grows one entry per helper.
+  //
+  // The Playwright harness type-checks as its OWN program
+  // (tsconfig.harness.json): node types are legitimate there and nowhere
+  // else, and a single merged program would let @types/node's timer globals
+  // shadow the DOM's inside src/. `npm run build` and `npm run typecheck` run
+  // both programs, so the specs gate exactly like the app does.
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.testsupport.ts"]
 }

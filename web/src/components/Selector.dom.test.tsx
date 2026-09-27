@@ -234,6 +234,23 @@ describe("Selector hue opt-out", () => {
   });
 });
 
+describe("Selector under a coarse pointer", () => {
+  it("grows a text segment to the button height, which a glyph segment has already", () => {
+    render(
+      <Selector
+        items={[ITEMS[0], { id: "g", label: "Glyph", icon: <svg /> }]}
+        label="Test strip"
+        active="a"
+        onChange={() => {}}
+      />
+    );
+    expect(screen.getByRole("tab", { name: "Alpha" }).className).toContain("pointer-coarse:min-h-(--btn-h)");
+    const glyph = screen.getByRole("tab", { name: "Glyph" }).className;
+    expect(glyph).toContain("glim-seg-btn");
+    expect(glyph).not.toContain("pointer-coarse:min-h-(--btn-h)");
+  });
+});
+
 describe("Selector equalWidth", () => {
   it("default (equalWidth unset) keeps content-hugging chips, flex-wrap, no flex-1", () => {
     render(<OneOfThree />);
@@ -422,7 +439,7 @@ describe("Selector variant=\"well\" at both scales", () => {
     }
   });
 
-  it("the two scales differ only in whether segments are pinned", () => {
+  it("the two scales differ only in pinning", () => {
     render(<Selector items={ITEMS} label="Small" active="a" onChange={() => {}} variant="well" />);
     const smallList = screen.getByRole("tablist").className;
     const smallTab = (screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).className;
@@ -433,14 +450,24 @@ describe("Selector variant=\"well\" at both scales", () => {
 
     expect(bigList).toBe(smallList);
 
-    // The segment differs only by the pinning classes.
+    // The segment differs by two sanctioned riders: the pinning classes the
+    // big scale carries, and the touch height of the small one, which the big
+    // scale's fixed height already clears. They are stripped before the
+    // byte-identity compare, so the guard keeps catching any third divergence.
     const PIN = ["flex-none", "justify-center", "text-center", "h-[var(--badge-md)]"];
-    const strip = (s: string) => s.split(/\s+/).filter((c) => !PIN.includes(c)).join(" ");
+    const TOUCH = "pointer-coarse:min-h-(--btn-h)";
+    const strip = (s: string) =>
+      s
+        .split(/\s+/)
+        .filter((c) => !PIN.includes(c) && c !== TOUCH)
+        .join(" ");
     expect(strip(bigTab)).toBe(strip(smallTab));
     for (const c of PIN) {
       expect(bigTab.split(/\s+/)).toContain(c);
       expect(smallTab.split(/\s+/)).not.toContain(c);
     }
+    expect(smallTab.split(/\s+/)).toContain(TOUCH);
+    expect(bigTab.split(/\s+/)).not.toContain(TOUCH);
   });
 
   it("without equalWidth a \"well\" strip hugs its content, with no pinned width or fixed height", () => {

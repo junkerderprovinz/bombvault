@@ -72,7 +72,9 @@ export function AnomalyCard({
                   {t("anomaly.settings.notifyMuted")}{" "}
                   {/* A hash link, because the settings page switches tabs on
                       hashchange and a router navigation does not fire one. */}
-                  <a href="#notifications" className="text-accentText hover:underline">
+                  {/* An inline box's padding does not move the lines, so it
+                      only widens the target. */}
+                  <a href="#notifications" className="text-accentText hover:underline pointer-coarse:py-1.5">
                     {t("anomaly.settings.openNotifications")}
                   </a>
                 </p>
@@ -122,7 +124,10 @@ export function AnomalyCard({
       )}
 
       {/* Stays with the switch off: earlier findings are still on the page. */}
-      <Link to="/anomalies" className="w-fit text-sm text-accentText hover:underline">
+      <Link
+        to="/anomalies"
+        className="w-fit text-sm text-accentText hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-(--btn-h) pointer-coarse:items-center"
+      >
         {t("anomaly.settings.openPage")}
       </Link>
     </Card>

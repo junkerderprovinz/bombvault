@@ -95,12 +95,14 @@ export function RecentRunsList({
         const line = (
           <>
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass(run.status)}`} />
-            <span className="text-carbon-textSub whitespace-nowrap">
-              {formatTs(run.startedAt)}
+            {/* On a phone the range breaks at the arrow, never inside a time. */}
+            <span className="text-carbon-textSub whitespace-nowrap max-md:whitespace-normal">
+              <span className="whitespace-nowrap">{formatTs(run.startedAt)}</span>
               {run.finishedAt != null && (
                 <>
                   {" "}
-                  <span className="inline-block rtl:-scale-x-100">→</span> {formatTs(run.finishedAt)}
+                  <span className="inline-block rtl:-scale-x-100">→</span>{" "}
+                  <span className="whitespace-nowrap">{formatTs(run.finishedAt)}</span>
                 </>
               )}
             </span>
@@ -127,7 +129,7 @@ export function RecentRunsList({
                 type="button"
                 aria-expanded={open}
                 onClick={() => setOpenRun(open ? "" : run.id)}
-                className="flex items-center gap-2 text-caption text-start hover:text-carbon-text"
+                className="flex items-center gap-2 text-caption text-start hover:text-carbon-text pointer-coarse:min-h-11"
               >
                 {line}
               </button>

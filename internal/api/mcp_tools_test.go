@@ -184,7 +184,7 @@ func TestMCPReadToolsOnEmptyInstall(t *testing.T) {
 		"get_status":          {"domains", "nextRuns"},
 		"get_coverage":        {"domains"},
 		"get_activity":        {"running"},
-		"get_storage_stats":   {"samples"},
+		"get_storage_stats":   {"samples", "repositories"},
 		"list_items":          {"domains"},
 		"list_runs":           {"runs"},
 		"list_restore_points": {"restorePoints"},

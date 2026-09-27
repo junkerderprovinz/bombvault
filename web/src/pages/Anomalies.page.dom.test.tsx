@@ -239,6 +239,18 @@ describe("the findings tab's filters", () => {
     });
     expect(getAnomalies.mock.calls.at(-1)![0]!.scope).toBeUndefined();
   });
+
+  // jsdom lays nothing out, so this pins the classes the phone layout rests on.
+  it("breaks a long item name inside its chip and gives the chip's remove control a touch-sized target", async () => {
+    const name = "nextcloud_aio_nextcloud_database";
+    getAnomalies.mockImplementation(() => page([finding({ targetId: "tg-long", name })]));
+    await renderPage("/anomalies?scope=item:tg-long");
+    const text = screen.getByText(en["anomaly.filter.itemChip"].replace("{name}", name));
+    expect(text.className).toContain("wrap-anywhere");
+    expect(text.parentElement!.className).toContain("max-w-full");
+    const remove = screen.getByRole("button", { name: en["anomaly.filter.removeChip"] });
+    expect(remove.className).toContain("pointer-coarse:after:-inset-3.5");
+  });
 });
 
 describe("the findings tab's empty states", () => {
@@ -652,4 +664,40 @@ it("draws no native select on either tab", async () => {
   });
   expect(screen.getByRole("combobox", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
   expect(container.querySelectorAll("select")).toHaveLength(0);
+});
+
+// jsdom lays nothing out, so these pin the classes the phone layout rests on.
+describe("the findings tab at phone width", () => {
+  it("gives the note field a line of its own and lets the bulk labels wrap", async () => {
+    getAnomalies.mockImplementation(() => page([finding({ name: "plex" })]));
+    await renderPage();
+    const bar = screen.getByRole("group", { name: en["anomaly.bulk.selected"].replace("{n}", "0") });
+    const note = within(bar).getByRole("textbox", { name: en["anomaly.notePlaceholder"] });
+    expect(note.className).toContain("max-md:basis-full");
+    expect(note.className).toContain("max-md:min-w-0");
+    for (const key of ["anomaly.bulk.clearSelection", "anomaly.action.expected", "anomaly.action.acknowledge"] as const) {
+      expect(within(bar).getByRole("button", { name: en[key] }).className).toContain("glim-btn-wrap");
+    }
+  });
+
+  it("gives the small controls a finger-sized target under a touch pointer", async () => {
+    getAnomalies.mockImplementation(() => page([finding({ name: "plex" })]));
+    await renderPage();
+    const box = screen.getByRole("checkbox", { name: en["common.selectItem"].replace("{name}", "plex") });
+    expect(box.closest("label")?.className).toContain("pointer-coarse:after:-inset-3.5");
+    const all = screen.getByRole("checkbox", { name: en["anomaly.bulk.selectAll"] });
+    expect(all.closest("label")?.className).toContain("pointer-coarse:min-h-11");
+    expect(screen.getByRole("button", { name: en["anomaly.action.details"] }).className).toContain(
+      "pointer-coarse:min-h-11"
+    );
+  });
+});
+
+describe("the items tab at phone width", () => {
+  it("breaks an item name without spaces instead of running out of the card", async () => {
+    getAnomalyItems.mockResolvedValue({ ok: true, items: [item({ name: "nextcloud_aio_nextcloud_database" })] });
+    await renderPage("/anomalies#items");
+    const name = await screen.findByText("nextcloud_aio_nextcloud_database", { selector: "span" });
+    expect(name.className).toContain("wrap-anywhere");
+  });
 });

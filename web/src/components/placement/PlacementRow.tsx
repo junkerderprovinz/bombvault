@@ -185,7 +185,9 @@ export function PlacementRow({
           <span className="pt-1.5 text-xs text-statusWarn">{t("placement.unreadable")}</span>
         ) : (
           options && (
-            <div key={shake + placeShake} className={`min-w-0 flex-1${shake + placeShake ? " glim-shake" : ""}`}>
+            // Beside the label a phone leaves the bar too narrow for its three
+            // segments, so there it takes a line of its own.
+            <div key={shake + placeShake} className={`min-w-0 flex-1 max-md:basis-full${shake + placeShake ? " glim-shake" : ""}`}>
               <PlacementBar
                 view={shown}
                 options={options}

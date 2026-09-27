@@ -33,8 +33,29 @@ export function getResolvedTheme(): ResolvedTheme {
   return resolve(getTheme());
 }
 
+// The browser-chrome color (mobile address bar / task switcher) per resolved
+// theme; mirrors --carbon-bg's dark/light values, paired with index.html's
+// static <meta name="theme-color" content="#161616"> fallback the same way
+// this file's STORAGE_KEY/resolution logic is paired with index.html's inline
+// FOUC script (see the header above: "Keep the two in sync"): the static value
+// is what shows before js runs, paint() takes over on every theme application,
+// and the two sets of values must change together.
+const THEME_COLOR: Record<ResolvedTheme, string> = {
+  dark: "#161616",
+  light: "#f4f4f4",
+};
+
 function paint(theme: Theme): void {
-  document.documentElement.setAttribute("data-theme", resolve(theme));
+  const resolved = resolve(theme);
+  document.documentElement.setAttribute("data-theme", resolved);
+  // Mirror into the live meta theme-color tag. paint() is the single
+  // application choke point; setTheme, applyStoredTheme and the system-flip
+  // listener all funnel through it; so this one write covers every path.
+  // Null-guarded with ?. : jsdom test environments have no index.html head,
+  // so the meta tag may not exist.
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute("content", THEME_COLOR[resolved]);
 }
 
 export function setTheme(theme: Theme): void {

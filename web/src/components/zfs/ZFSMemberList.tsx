@@ -76,10 +76,10 @@ export function ZFSMemberList({
         return (
           <li
             key={m.dataset}
-            className="flex items-center gap-2 text-xs"
+            className="flex items-center gap-2 text-xs max-md:flex-wrap"
             style={{ paddingInlineStart: `${depthOf(m.relPath) * 12}px` }}
           >
-            <span dir="ltr" className="font-mono text-carbon-textSub text-start truncate">
+            <span dir="ltr" className="font-mono text-carbon-textSub text-start truncate max-md:whitespace-normal max-md:wrap-anywhere">
               {m.relPath === "" ? root : m.relPath}
             </span>
             {m.isNew && (

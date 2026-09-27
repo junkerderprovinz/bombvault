@@ -2,10 +2,13 @@ import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObjec
 import { createPortal } from "react-dom";
 import type { ButtonTone } from "../components/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { ConfirmSheet } from "../components/mobile/ConfirmSheet";
 import { useT, type TranslationKey } from "./i18n";
+import { useIsDesktop } from "./useMediaQuery";
 
-// useConfirm replaces window.confirm() with ConfirmDialog. It keeps the
-// one-string-in, boolean-out shape, only async:
+// useConfirm replaces window.confirm(): ConfirmDialog at desktop widths,
+// ConfirmSheet below the breakpoint. It keeps the one-string-in, boolean-out
+// shape, only async:
 //
 //   const { confirm, confirmDialog } = useConfirm();
 //   if (!(await confirm(t("x.deleteConfirm"), { confirmKey: "x.delete" }))) return;
@@ -56,6 +59,13 @@ export function focusableElements(root: HTMLElement): HTMLElement[] {
 
 export function useConfirm() {
   const { t } = useT();
+  // The presentation half swaps at the one width breakpoint; ConfirmDialog
+  // (the desktop card) at/above 48rem, ConfirmSheet (the bottom sheet, safe
+  // cancel stacked above the confirm in the thumb-default bottom slot) below
+  // it.
+  // Nothing else about the contract moves: same confirm() promise, same
+  // settle paths, same translated strings, zero per-call-site changes.
+  const isDesktop = useIsDesktop();
   const [pending, setPending] = useState<PendingConfirm | null>(null);
   const [typed, setTyped] = useState("");
   const queue = useRef<PendingConfirm[]>([]);
@@ -121,26 +131,32 @@ export function useConfirm() {
     );
 
   // An ancestor with a CSS transform (e.g. .glim-page-enter) would confine a
-  // position: fixed backdrop to its own box, so the dialog goes to <body>.
-  // Each question mounts afresh, so the next one starts on Cancel rather than
-  // on the button that answered the last.
-  const confirmDialog = pending
+  // position: fixed backdrop to its own box, so the dialog goes to <body>. The
+  // sheet gets no dialogRef because BottomSheet owns Escape and the Tab trap,
+  // and useDialogKeys leaves a window it has no card for alone. Each question
+  // mounts afresh, so the next one starts on Cancel rather than on the button
+  // that answered the last.
+  const surface = pending && {
+    title: t("confirmDialog.title"),
+    message: pending.message,
+    confirmLabel: pending.confirmLabel ?? t(pending.confirmKey ?? "common.confirm"),
+    confirmLabelKey: pending.confirmLabelKey ?? pending.confirmKey ?? "common.confirm",
+    cancelLabel: pending.cancelLabel ?? t("common.cancel"),
+    extra,
+    confirmDisabled: locked,
+    confirmTone: pending.confirmTone,
+    cancelTone: pending.cancelTone,
+    onConfirm: () => settle(true),
+    onCancel: () => settle(false),
+  };
+  const confirmDialog =
+    pending && surface
     ? createPortal(
-        <ConfirmDialog
-          key={pending.id}
-          ref={dialogRef}
-          title={t("confirmDialog.title")}
-          message={pending.message}
-          confirmLabel={pending.confirmLabel ?? t(pending.confirmKey ?? "common.confirm")}
-          confirmLabelKey={pending.confirmLabelKey ?? pending.confirmKey ?? "common.confirm"}
-          cancelLabel={pending.cancelLabel ?? t("common.cancel")}
-          extra={extra}
-          confirmDisabled={locked}
-          confirmTone={pending.confirmTone}
-          cancelTone={pending.cancelTone}
-          onConfirm={() => settle(true)}
-          onCancel={() => settle(false)}
-        />,
+        isDesktop ? (
+          <ConfirmDialog key={pending.id} ref={dialogRef} {...surface} />
+        ) : (
+          <ConfirmSheet key={pending.id} {...surface} />
+        ),
         document.body
       )
     : null;

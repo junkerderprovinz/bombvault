@@ -13,7 +13,8 @@ const fa: Partial<Translations> = {
   "nav.flash": "فلش",
   "nav.config": "پشتیبان‌گیری خودکار",
   "nav.settings": "تنظیمات",
-  "nav.menu": "منو",
+  "nav.more": "بیشتر",
+  "nav.mobileNavigation": "ناوبری موبایل",
 
   // Mode toggle
   "about.title": "درباره BombVault",
@@ -294,6 +295,9 @@ const fa: Partial<Translations> = {
   "run.colStarted": "شروع",
   "run.colFinished": "پایان",
   "run.colContainer": "کانتینر",
+  "home.newBackupConfirm": "شروع پشتیبان‌گیری از همه بخش‌های فعال اکنون؟ کانتینرها یکی‌یکی هنگام اجرای پشتیبان‌گیری‌شان متوقف و دوباره راه‌اندازی می‌شوند.",
+  "run.statVolume": "حجم داده‌ها",
+  "run.statSnapshot": "اسنپ‌شات",
 
   // Settings
   "settings.title": "تنظیمات",
@@ -689,6 +693,9 @@ const fa: Partial<Translations> = {
   "settings.labels.buttons": "دکمه‌ها",
   "settings.labels.sidebar": "نوار کناری",
   "settings.labels.tabs": "زبانه‌ها",
+  "settings.labels.bottombar": "نوار پایینی",
+  "settings.axisBottombarHint": "فقط بر چیدمان گوشی تأثیر می‌گذارد.",
+  "settings.axisSidebarHint": "فقط بر چیدمان دسکتاپ تأثیر می‌گذارد.",
   "settings.labels.mode.text": "متن",
   "settings.labels.mode.textGlyph": "متن و نماد",
   "settings.labels.mode.glyph": "نماد",
@@ -732,6 +739,7 @@ const fa: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "وضعیت محافظت",
   "dashboard.noOffsite": "بدون نسخه خارج از محل",
+  "dashboard.statusLoadFailed": "بارگذاری وضعیت ممکن نشد",
   "dashboard.neverExcluded": "زمان‌بندی نشده",
   "dashboard.neverExcludedTitle": "به‌عمد از زمان‌بندی کنار گذاشته شده، پس اینجا چیزی برای پشتیبان‌گیری نیست.",
   "dashboard.neverSelf": "کانتینر خودش",
@@ -1076,6 +1084,10 @@ const fa: Partial<Translations> = {
   "common.restoring": "در حال بازیابی…",
   "common.done": "انجام شد",
   "common.close": "بستن",
+  "common.expand": "باز کردن",
+  "common.collapse": "بستن",
+  "common.back": "بازگشت",
+  "common.loadMore": "بارگیری بیشتر",
   "common.loadingBackups": "در حال بارگذاری پشتیبان‌ها…",
   "common.saving": "در حال ذخیره…",
   "common.restoreRunning": "یک بازیابی در حال اجراست…",

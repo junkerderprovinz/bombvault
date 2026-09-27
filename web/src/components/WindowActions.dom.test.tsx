@@ -299,13 +299,18 @@ const WINDOWS: Shown[] = [
   },
 ];
 
+// The phone sheet stacks its actions full width in a footer its callers fill,
+// under the thumb, so a row aligned to the end does not apply to it.
+const SHEETS = new Set(["components/mobile/BottomSheet.tsx"]);
+
 /** Every file that renders a modal window, with how many it renders. A
  *  selector that looks for windows, such as useDialogKeys', renders none. */
 function windowFiles(): Map<string, number> {
   const found = new Map<string, number>();
   for (const file of walkTsx(SRC)) {
     const count = blankComments(readSource(file)).match(/\saria-modal="true"/g)?.length ?? 0;
-    if (count > 0) found.set(relative(SRC, file).replace(/\\/g, "/"), count);
+    const name = relative(SRC, file).replace(/\\/g, "/");
+    if (count > 0 && !SHEETS.has(name)) found.set(name, count);
   }
   return found;
 }

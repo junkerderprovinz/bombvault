@@ -99,7 +99,7 @@ export function Timeline({
       {pending.map((p) => (
         <div
           key={p.place}
-          className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-textMuted"
+          className="flex items-center gap-2 max-md:flex-wrap rounded-control bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-textMuted"
         >
           <span>
             {t(p.state === "unreadable" ? "timeline.unreadable" : "timeline.unchecked").replace(

@@ -508,10 +508,12 @@ export function EverythingSection({
             />
             {settings.everythingPreHookSet && (
               <Badge
+                as="button"
                 tone="active"
                 size="small"
                 hueIndex={hueIndex}
                 onClick={() => update({ everythingPreHook: "", everythingPreHookClear: true })}
+                className="pointer-coarse:h-(--btn-h) pointer-coarse:px-3"
               >
                 {t("offsite.targets.remove")}
               </Badge>
@@ -532,10 +534,12 @@ export function EverythingSection({
             />
             {settings.everythingPostHookSet && (
               <Badge
+                as="button"
                 tone="active"
                 size="small"
                 hueIndex={hueIndex}
                 onClick={() => update({ everythingPostHook: "", everythingPostHookClear: true })}
+                className="pointer-coarse:h-(--btn-h) pointer-coarse:px-3"
               >
                 {t("offsite.targets.remove")}
               </Badge>

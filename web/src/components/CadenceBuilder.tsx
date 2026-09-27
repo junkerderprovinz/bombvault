@@ -315,7 +315,9 @@ export function CadenceBuilder({
               const n = parseInt(e.target.value, 10);
               if (!isNaN(n) && n >= 1) update({ intervalDays: n });
             }}
-            className={`${inputCls} w-20`}
+            // A coarse pointer puts the steppers side by side, 64px of the
+            // field, so it widens to keep three digits in view.
+            className={`${inputCls} w-20 pointer-coarse:w-32`}
           />
           <span className="text-xs text-carbon-textMuted group-disabled:opacity-50">{t("cadence.daysUnit")}</span>
         </div>
@@ -385,7 +387,7 @@ function CronEditor({
           autoCapitalize="off"
           autoCorrect="off"
           dir="ltr"
-          className={`${inputCls} font-mono w-56 max-w-full text-start`}
+          className={`${inputCls} font-mono w-56 min-w-0 max-w-full text-start`}
         />
       </div>
 
@@ -407,7 +409,7 @@ function CronEditor({
           <button
             key={ex.expr}
             onClick={() => onChange(ex.expr)}
-            className="self-start rounded-pill px-1.5 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+            className="self-start rounded-pill px-1.5 py-0.5 pointer-coarse:min-h-(--btn-h) text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
             <code dir="ltr" className="font-mono text-carbon-text text-start">{ex.expr}</code>
             <span className="ms-2">{t(ex.key)}</span>

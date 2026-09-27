@@ -4,6 +4,7 @@ import { ThemeCard } from "../ThemeCard";
 import { CONTROL_AXES, LABEL_MODES, setLabelMode, type LabelMode } from "../../../lib/controls";
 import { labelModeChanged } from "../../../lib/useLabelMode";
 import { Badge } from "../../../components/Badge";
+import { InfoBubble } from "../../../components/InfoBubble";
 import { useT, type TranslationKey } from "../../../lib/i18n";
 import { tLtr } from "../../../lib/ltrFragments";
 import { ColorPickerSwatch } from "../../../components/ColorPickerPopover";
@@ -254,15 +255,20 @@ export function GeneralTab({
         />
       </Card>
 
-      {/* Three axes rather than one switch, because the right answer differs
-          per axis: a sidebar reduced to glyphs narrows the whole page, tabs
-          do not, and action buttons are a density preference. */}
+      {/* One selector per chrome surface rather than one switch, because the
+          right answer differs: a rail reduced to glyphs narrows the whole
+          page, tabs do not, and action buttons are a density preference. */}
       <Card title={t("settings.labels")} hint={t("settings.labelsHint")} hueIndex={nextHue()}>
         <div className="flex flex-col gap-4">
           {CONTROL_AXES.map((axis, axisIndex) => (
             <div key={axis} className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">
+              <span className="flex items-center gap-1 text-xs text-carbon-textSub">
                 {t(`settings.labels.${axis}` as TranslationKey)}
+                {/* Layout mounts the rail or the bar, never both, so each of
+                    those two rows is dead on the other width and says so.
+                    Buttons and tabs need no hint: they answer everywhere. */}
+                {axis === "bottombar" && <InfoBubble tip={t("settings.axisBottombarHint")} />}
+                {axis === "sidebar" && <InfoBubble tip={t("settings.axisSidebarHint")} />}
               </span>
               <Selector
                 items={LABEL_MODES.map((m) => ({

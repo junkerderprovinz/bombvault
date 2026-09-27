@@ -3,7 +3,7 @@ import { hueVars } from "../lib/appearance";
 import { backupConfigNow, getSettings, putSettings } from "../lib/api";
 import type { Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { PAGE_SHELL } from "../lib/pageShell";
+import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
@@ -204,7 +204,7 @@ export function Config() {
   }, []);
 
   return (
-    <div className={PAGE_SHELL}>
+    <div className={PAGE_SHELL_RESPONSIVE}>
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold text-carbon-text">{t("config.title")}</h1>

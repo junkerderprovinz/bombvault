@@ -29,6 +29,10 @@ function findOneButton(tree: unknown): ElementNode {
   return btns[0];
 }
 
+function track(tree: unknown): ElementNode {
+  return findOneButton(tree).props?.children as ElementNode;
+}
+
 function visibleText(node: unknown): string {
   if (node == null || typeof node === "boolean") return "";
   if (typeof node === "string" || typeof node === "number") return String(node);
@@ -61,23 +65,30 @@ describe("Toggle", () => {
     const btn = findOneButton(tree);
     expect(btn.props.role).toBe("switch");
     expect(btn.props["aria-checked"]).toBe(true);
-    expect(btn.props.className).toContain("bg-accent");
-    expect(btn.props.className).not.toContain("bg-carbon-surface3");
+    expect(track(tree).props?.className).toContain("bg-accent");
+    expect(track(tree).props?.className).not.toContain("bg-carbon-surface3");
   });
 
   it("renders the off state with the neutral track", () => {
     const tree = Toggle({ checked: false, onChange: () => {}, label: "X" });
     const btn = findOneButton(tree);
     expect(btn.props["aria-checked"]).toBe(false);
-    expect(btn.props.className).toContain("bg-carbon-surface3");
-    expect(btn.props.className).not.toContain("bg-accent");
+    expect(track(tree).props?.className).toContain("bg-carbon-surface3");
+    expect(track(tree).props?.className).not.toContain("bg-accent");
+  });
+
+  it("keeps the track at switch size while the button grows to the control height under touch", () => {
+    const tree = Toggle({ checked: false, onChange: () => {}, label: "X" });
+    expect(findOneButton(tree).props.className).toContain("pointer-coarse:h-(--btn-h)");
+    expect(track(tree).props?.className).toContain("h-5 w-9");
+    expect(track(tree).props?.className).not.toContain("pointer-coarse:");
   });
 
   it("slides the thumb between the off and on x-offsets", () => {
-    const offThumb = findOneButton(Toggle({ checked: false, onChange: () => {}, label: "X" })).props.children;
-    const onThumb = findOneButton(Toggle({ checked: true, onChange: () => {}, label: "X" })).props.children;
-    expect(offThumb.props.className).toContain("translate-x-[3px]");
-    expect(onThumb.props.className).toContain("translate-x-[18px]");
+    const offThumb = track(Toggle({ checked: false, onChange: () => {}, label: "X" })).props?.children as ElementNode;
+    const onThumb = track(Toggle({ checked: true, onChange: () => {}, label: "X" })).props?.children as ElementNode;
+    expect(offThumb.props?.className).toContain("translate-x-[3px]");
+    expect(onThumb.props?.className).toContain("translate-x-[18px]");
   });
 
   it("propagates disabled to the underlying control", () => {

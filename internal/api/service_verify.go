@@ -35,14 +35,11 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 		return err
 	}
 	skipped = append(skipped, missing...)
-	// Hold the in-process domain lock for the whole verify so no other
-	// BombVault op (backup, prune, replicate) runs against this repo during
-	// the check. If one already holds it, report a clean "busy" instead of
-	// colliding on restic's repo lock. This rules out BombVault itself as the
-	// source of a lock the check hits, but not a live restic process (a manual
-	// or external invocation); that is a real, live lock, not an orphan, and
-	// it is left alone below (waited out by --retry-lock in the engine, never
-	// force-removed).
+	// Hold the in-process domain lock for the whole verify so no other op of this
+	// domain runs against the repo while it is checked, and report "busy" when one
+	// already holds it. A named repository can also serve another domain, whose
+	// ops this lock does not stop; their locks are waited out by --retry-lock, as
+	// is a restic started by hand.
 	unlock, ok := s.tryLockDomainFor(domain, "verify")
 	if !ok {
 		return errDomainBusy
@@ -80,17 +77,12 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 		}
 	}()
 
-	// Clear a genuinely stale orphan before `restic check` takes its lock:
-	// unlockStale runs plain `restic unlock`, which removes only locks restic
-	// itself deems stale (a dead PID on this host, or any lock past restic's
-	// ~30-minute age threshold). A live or concurrent lock is never
-	// force-removed: the domain lock is held for the whole verify, so no other
-	// BombVault op can collide, and `restic check` passes --retry-lock to wait
-	// out a transient cross-process lock. A known, bounded gap: an orphan from
-	// a prior container incarnation carries that container's random hostname,
-	// so restic can't PID-probe it and calls it stale only at ~30 minutes old;
-	// until then check fails "already locked" (it heals itself, or a manual
-	// Unlock clears it). A stable container hostname would close this.
+	// Clear an interrupted run's lock before `restic check` takes its own:
+	// unlockStale removes locks restic calls stale and the ones an earlier run of
+	// BombVault on this host left behind, on the assumption that BombVault is
+	// the only writer of a local repository (see unlockStale). A lock under
+	// another hostname waits for restic's 30-minute rule; --retry-lock waits
+	// out a short one.
 	//
 	// Each repository in turn, under the one domain lock. The first failure is
 	// the answer: a domain whose data is spread over a domain repository and

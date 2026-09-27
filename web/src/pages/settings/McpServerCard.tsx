@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge, type BadgeSize } from "../../components/Badge";
 import { Button } from "../../components/Button";
-import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { ConfirmPrompt } from "../../components/ConfirmPrompt";
 import { IconDisclosure } from "../../components/IconDisclosure";
 import { InfoBubble } from "../../components/InfoBubble";
 import { RevealInput } from "../../components/RevealInput";
@@ -115,6 +115,10 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
   const [lists, setLists] = useState(0);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
+  // The phone's confirm sheet stays tappable while a call runs, and busy
+  // reaches the card's buttons only with the next render, so a second tap
+  // would run the call twice.
+  const inFlight = useRef(false);
   const [fresh, setFresh] = useState<FreshKey | null>(null);
   const [keyVisible, setKeyVisible] = useState(true);
   const [dialog, setDialog] = useState<McpClient | null>(null);
@@ -215,6 +219,8 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
     call: () => Promise<T>,
     okMessage: string
   ): Promise<T | null> {
+    if (inFlight.current) return null;
+    inFlight.current = true;
     setBusy(true);
     try {
       const res = await call();
@@ -232,6 +238,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       bumpShake(id);
       return null;
     } finally {
+      inFlight.current = false;
       setBusy(false);
       setPending(null);
     }
@@ -404,7 +411,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                   tone="subtle"
                   onClick={() => setPending({ kind: "certificate" })}
                   disabled={busy}
-                  className={shake.certificate ? "glim-shake" : ""}
+                  className={`glim-btn-wrap${shake.certificate ? " glim-shake" : ""}`}
                   hueIndex={hueIndex}
                 />
               )}
@@ -530,7 +537,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                 <li key={k.id} className="glim-tile flex flex-col gap-3 rounded-card p-3">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex min-w-0 flex-col gap-1">
-                      <div className="flex min-w-0 items-center gap-2">
+                      <div className="flex min-w-0 items-center gap-2 max-md:flex-wrap">
                         {renaming === k.id ? (
                           <input
                             autoFocus
@@ -554,7 +561,9 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                             <span className="glim-client-mark" aria-hidden="true">
                               <ClientMark client={clientById(k.client)} forKey />
                             </span>
-                            <span className="truncate text-sm text-carbon-text">{k.label}</span>
+                            <span className="truncate text-sm text-carbon-text max-md:min-w-24 max-md:flex-1 max-md:whitespace-normal max-md:wrap-anywhere">
+                              {k.label}
+                            </span>
                             <Button
                               label={t("common.edit")}
                               labelKey="common.edit"
@@ -586,7 +595,9 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                               </>
                             )}
                           </span>
-                          <span className="text-xs text-carbon-textMuted">
+                          {/* An IPv6 address has no break opportunity and runs
+                              past a phone's tile. */}
+                          <span className="text-xs text-carbon-textMuted max-md:wrap-anywhere">
                             {k.lastUsedAt === 0
                               ? t("mcp.keyNeverUsed")
                               : k.lastUsedFrom === ""
@@ -652,7 +663,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                 type="button"
                 onClick={() => setRevokedOpen((v) => !v)}
                 aria-expanded={revokedOpen}
-                className="flex items-center gap-1.5 self-start text-xs text-carbon-textSub hover:text-carbon-text"
+                className="flex items-center gap-1.5 self-start text-xs text-carbon-textSub hover:text-carbon-text pointer-coarse:min-h-(--btn-h)"
               >
                 <IconDisclosure open={revokedOpen} />
                 {t("mcp.revokedList", revoked.length)}
@@ -730,7 +741,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       )}
 
       {pending?.kind === "certificate" && (
-        <ConfirmDialog
+        <ConfirmPrompt
           title={t("mcp.certAddTitle").replace("{host}", host)}
           message={t("mcp.certAddConfirm").replace("{host}", host)}
           confirmLabel={t("mcp.certAddAddress")}
@@ -744,7 +755,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       )}
 
       {pending?.kind === "rotate" && (
-        <ConfirmDialog
+        <ConfirmPrompt
           title={t("mcp.rotateTitle")}
           message={t("mcp.rotateConfirm").replace("{name}", pending.item.label)}
           confirmLabel={t("mcp.rotate")}
@@ -756,7 +767,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       )}
 
       {pending?.kind === "revoke" && (
-        <ConfirmDialog
+        <ConfirmPrompt
           title={t("mcp.revokeTitle")}
           message={t("mcp.revokeConfirm").replace("{name}", pending.item.label)}
           confirmLabel={t("mcp.revoke")}
@@ -770,7 +781,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       )}
 
       {pending?.kind === "purge" && (
-        <ConfirmDialog
+        <ConfirmPrompt
           title={t("mcp.purgeTitle")}
           message={t("mcp.purgeConfirm").replace("{name}", pending.item.label)}
           confirmLabel={t("common.delete")}

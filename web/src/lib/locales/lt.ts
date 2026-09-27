@@ -13,7 +13,8 @@ const lt: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Savarankiška atsarga",
   "nav.settings": "Nustatymai",
-  "nav.menu": "Meniu",
+  "nav.more": "Daugiau",
+  "nav.mobileNavigation": "Mobilioji navigacija",
 
   // Mode toggle
   "about.title": "Apie BombVault",
@@ -294,6 +295,9 @@ const lt: Partial<Translations> = {
   "run.colStarted": "Pradėta",
   "run.colFinished": "Baigta",
   "run.colContainer": "Konteineris",
+  "home.newBackupConfirm": "Pradėti dabar visų įjungtų sričių atsarginę kopiją? Konteineriai sustabdomi ir paleidžiami iš naujo po vieną, kol vyksta jų atsarginė kopija.",
+  "run.statVolume": "Duomenų apimtis",
+  "run.statSnapshot": "Momentinė kopija",
 
   // Settings
   "settings.title": "Nustatymai",
@@ -689,6 +693,9 @@ const lt: Partial<Translations> = {
   "settings.labels.buttons": "Mygtukai",
   "settings.labels.sidebar": "Šoninė juosta",
   "settings.labels.tabs": "Kortelės",
+  "settings.labels.bottombar": "Apatinė juosta",
+  "settings.axisBottombarHint": "Taikoma tik telefono išdėstymui.",
+  "settings.axisSidebarHint": "Taikoma tik kompiuterio išdėstymui.",
   "settings.labels.mode.text": "Tekstas",
   "settings.labels.mode.textGlyph": "Tekstas ir simbolis",
   "settings.labels.mode.glyph": "Simbolis",
@@ -732,6 +739,7 @@ const lt: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Apsaugos būsena",
   "dashboard.noOffsite": "Nėra kopijos kitoje vietoje",
+  "dashboard.statusLoadFailed": "Nepavyko įkelti būsenos",
   "dashboard.neverExcluded": "Nesuplanuota",
   "dashboard.neverExcludedTitle": "Sąmoningai palikta už tvarkaraščio ribų, tad čia nėra ko kurti atsarginės kopijos.",
   "dashboard.neverSelf": "Savas konteineris",
@@ -1076,6 +1084,10 @@ const lt: Partial<Translations> = {
   "common.restoring": "Atkuriama…",
   "common.done": "Atlikta",
   "common.close": "Uždaryti",
+  "common.expand": "Išskleisti",
+  "common.collapse": "Suskleisti",
+  "common.back": "Atgal",
+  "common.loadMore": "Įkelti daugiau",
   "common.loadingBackups": "Įkeliamos atsarginės kopijos…",
   "common.saving": "Saugoma…",
   "common.restoreRunning": "Vykdomas atkūrimas…",

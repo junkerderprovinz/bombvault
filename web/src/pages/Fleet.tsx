@@ -26,7 +26,7 @@ import { MeshOfferRow } from "../components/MeshOfferRow";
 import { IconDisclosure } from "../components/IconDisclosure";
 import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
-import { PAGE_SHELL, PAGE_SHELL_TABBED } from "../lib/pageShell";
+import { PAGE_SHELL_RESPONSIVE, PAGE_SHELL_TABBED_RESPONSIVE } from "../lib/pageShell";
 import { domainName } from "../lib/placeText";
 import { PLACE_DOMAINS } from "../lib/places";
 import { SelectField } from "../components/SelectField";
@@ -334,13 +334,13 @@ function FleetPeerCard({
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-carbon-text text-sm truncate">
+            <span className="font-semibold text-carbon-text text-sm truncate max-md:whitespace-normal max-md:wrap-break-word">
               {peer.lastPollInstanceName || peer.name}
             </span>
             {!peer.enabled && <Badge tone="neutral">{t("fleet.monitoringOff")}</Badge>}
             <Badge tone={pollTone}>{pollLabel}</Badge>
           </div>
-          <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start">{peer.url}</p>
+          <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start max-md:whitespace-normal max-md:break-all">{peer.url}</p>
         </div>
         {/* api.Version already starts with "v". */}
         {peer.lastPollVersion && (
@@ -372,7 +372,7 @@ function FleetPeerCard({
           }`}
         />
 
-        <div className="ms-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-2 flex-wrap max-md:w-full max-md:justify-end">
           <Button
             label={t("fleet.mesh.proposeButton")}
             labelKey="fleet.mesh.proposeButton"
@@ -642,7 +642,7 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
   const nextHue = () => hueSeq++;
 
   return (
-    <div className={embedded ? PAGE_SHELL_TABBED : PAGE_SHELL}>
+    <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           {!embedded && <h1 className="text-2xl font-semibold text-carbon-text">{t("fleet.title")}</h1>}

@@ -20,7 +20,8 @@ import type {
 } from "../lib/api";
 import { dbDumpNameOf, isDbDumpIdentity } from "../lib/dbdump";
 import { useT } from "../lib/i18n";
-import { PAGE_SHELL, PAGE_SHELL_TABBED } from "../lib/pageShell";
+import { useIsDesktop } from "../lib/useMediaQuery";
+import { PAGE_SHELL_RESPONSIVE, PAGE_SHELL_TABBED_RESPONSIVE } from "../lib/pageShell";
 import { relativeTime } from "../lib/reltime";
 import { humanBytes } from "../lib/forecast";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
@@ -61,6 +62,7 @@ function InventoryPanel({ repo, t }: { repo: ReceivedRepoStatus; t: T }) {
   const [inv, setInv] = useState<ReceiverInventory | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isDesktop = useIsDesktop();
 
   useEffect(() => {
     let active = true;
@@ -91,6 +93,34 @@ function InventoryPanel({ repo, t }: { repo: ReceivedRepoStatus; t: T }) {
   }
   if (!inv || inv.sources.length === 0) {
     return <p className="py-3 text-xs text-carbon-textMuted">{t("receiver.inventoryEmpty")}</p>;
+  }
+
+  // Four columns do not fit a phone's card, and a table that scrolls sideways
+  // hides the date and the size, so there each source is a short block.
+  if (!isDesktop) {
+    const { sources, ...totals } = inv;
+    const rows = [
+      ...sources.map((s) => ({ ...s, name: itemLabel(s.item, t) })),
+      { ...totals, name: t("receiver.total"), host: "" },
+    ];
+    return (
+      <ul className="mt-2 flex flex-col gap-1 text-xs">
+        {rows.map((r, i) => (
+          <li key={`${r.host}/${r.name}/${i}`} className="rounded-control bg-carbon-surface2 px-2 py-1.5">
+            <p className="text-carbon-text wrap-anywhere">
+              <span className="font-medium">{r.name}</span>
+              {r.host && <span className="text-carbon-textMuted"> · {r.host}</span>}
+            </p>
+            <p className="text-carbon-textSub">
+              {t("receiver.snapshotsCount", r.snapshotCount)} · <span className="font-mono">{humanBytes(r.totalSize)}</span>
+            </p>
+            <p className="text-carbon-textMuted">
+              {t("receiver.colLastReceived")}: {fmtReceived(r.lastReceived, t)}
+            </p>
+          </li>
+        ))}
+      </ul>
+    );
   }
 
   return (
@@ -218,9 +248,9 @@ function ReceivedRepoCard({
       className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row"
     >
       <div className="flex items-start gap-3 flex-wrap">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 max-md:basis-full">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-carbon-text text-sm truncate">{repo.name}</span>
+            <span className="font-semibold text-carbon-text text-sm truncate max-md:whitespace-normal max-md:wrap-break-word">{repo.name}</span>
             {!repo.enabled && <Badge tone="neutral">{t("receiver.monitoringOff")}</Badge>}
             {repo.enabled &&
               (repo.reachable ? (
@@ -230,10 +260,10 @@ function ReceivedRepoCard({
               ))}
             <Badge tone={checkTone}>{checkLabel}</Badge>
           </div>
-          <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start">{repo.repo}</p>
+          <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start max-md:whitespace-normal max-md:break-all">{repo.repo}</p>
         </div>
 
-        <div className="text-end shrink-0">
+        <div className="text-end shrink-0 max-md:text-start">
           <p className="text-xs text-carbon-textMuted">{t("receiver.lastReceived")}</p>
           <p className="text-xs text-carbon-textSub">{fmtReceived(repo.lastReceived, t)}</p>
           <p className="text-xs text-carbon-textMuted mt-0.5">
@@ -277,7 +307,7 @@ function ReceivedRepoCard({
           label={t("receiver.deepCheck")}
         />
 
-        <div className="ms-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-2 flex-wrap max-md:w-full max-md:justify-end">
           <Button
             label={t("receiver.details")}
             labelKey="receiver.details"
@@ -584,7 +614,7 @@ export function Receiver({ embedded = false }: { embedded?: boolean } = {}) {
   const showEmptyState = !loading && !error && repos.length === 0;
 
   return (
-    <div className={embedded ? PAGE_SHELL_TABBED : PAGE_SHELL}>
+    <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           {!embedded && <h1 className="text-2xl font-semibold text-carbon-text">{t("receiver.title")}</h1>}

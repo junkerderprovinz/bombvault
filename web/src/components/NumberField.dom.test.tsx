@@ -98,3 +98,18 @@ describe("NumberField, the wrapper", () => {
     expect(wrap.className).toContain("max-w-full");
   });
 });
+
+// jsdom lays nothing out, so this pins the classes the touch layout rests on.
+describe("NumberField, the steppers under a coarse pointer", () => {
+  it("sit side by side at the field's full height, with the padding widened to match", () => {
+    render(<NumberField defaultValue={5} aria-label="n" />);
+    const input = screen.getByLabelText("n") as HTMLInputElement;
+    const arrows = input.nextElementSibling!;
+    expect(input.className).toContain("pointer-coarse:pe-16!");
+    expect(arrows.className).toContain("pointer-coarse:flex-row");
+    for (const button of arrows.querySelectorAll("button")) {
+      expect(button.className).toContain("pointer-coarse:h-full");
+      expect(button.className).toContain("pointer-coarse:w-8");
+    }
+  });
+});

@@ -98,12 +98,109 @@ func (s *Service) StorageForecast(domain, source string, stats []store.RepoStat)
 			f.FreeBytes = &freeBytes
 		}
 	}
-	if f.GrowthBytesPerWeek != nil && *f.GrowthBytesPerWeek > 0 && f.FreeBytes != nil {
-		weeks := math.Round(float64(*f.FreeBytes)/float64(*f.GrowthBytesPerWeek)*10) / 10
-		f.WeeksToFull = &weeks
+	if f.GrowthBytesPerWeek != nil && f.FreeBytes != nil {
+		if weeks, ok := weeksToFull(*f.FreeBytes, *f.GrowthBytesPerWeek); ok {
+			f.WeeksToFull = &weeks
+		}
 	}
 	if f.GrowthBytesPerWeek == nil && f.FreeBytes == nil {
 		return nil
 	}
 	return &f
+}
+
+// weeksToFull is how long the free space lasts at the given growth, to one
+// decimal. It is known only while the repository grows.
+func weeksToFull(freeBytes, growthPerWeek int64) (float64, bool) {
+	if growthPerWeek <= 0 {
+		return 0, false
+	}
+	return math.Round(float64(freeBytes)/float64(growthPerWeek)*10) / 10, true
+}
+
+// repoCapacity is the room on the disk or remote one repository sits on. A
+// nil figure is unknown, and At is when it was read.
+type repoCapacity struct {
+	Name    string
+	Primary bool
+	Offsite bool
+	Remote  bool
+	At      *int64
+	Free    *int64
+	Used    *int64
+	Total   *int64
+}
+
+// repoCapacities reads the room around every repository a domain writes to,
+// its items' own ones first and then the off-site targets it copies to. A
+// local disk is asked on the spot. A remote comes from the capacity rule's last
+// stored reading, since asking it again is an API call against somebody else's
+// service.
+func (s *Service) repoCapacities(domain string) []repoCapacity {
+	settings, repos, _, err := s.domainReposForOp(domain, "local")
+	if err != nil {
+		return nil
+	}
+	targets := s.offsiteReplicationTargets(domain, settings)
+	var readings map[string]store.VolumeSample
+	out := make([]repoCapacity, 0, len(repos)+len(targets))
+	measure := func(c repoCapacity, loc string) repoCapacity {
+		c.Remote = restic.IsRemoteRepo(loc)
+		switch {
+		case !c.Remote:
+			// A folder with no repository in it yet may not be on the disk the
+			// repository will be on.
+			if localRepoMissing(loc) {
+				break
+			}
+			if res, sErr := s.diskStatFn()(loc); sErr == nil {
+				now := s.anomalies.nowUnix()
+				free, used, total := clampToInt64(res.Free), clampToInt64(res.Used), clampToInt64(res.Total)
+				c.At, c.Free, c.Used, c.Total = &now, &free, &used, &total
+			}
+		case isRcloneLocation(loc):
+			if readings == nil {
+				readings = s.newestVolumeReadings()
+			}
+			if v, ok := readings["remote:"+repoLocationKey(loc)]; ok {
+				c.At, c.Free, c.Total = &v.At, &v.FreeBytes, v.TotalBytes
+				if v.TotalBytes != nil {
+					used := *v.TotalBytes - v.FreeBytes
+					c.Used = &used
+				}
+			}
+		}
+		return c
+	}
+	for _, ref := range repos {
+		out = append(out, measure(repoCapacity{Name: s.refName(ref), Primary: ref.Own}, ref.Loc))
+	}
+	for _, t := range targets {
+		c := repoCapacity{Name: scrubSafeName(t.Name), Offsite: true}
+		loc, rErr := s.resolveRepo(t.Repo)
+		if rErr != nil {
+			c.Remote = restic.IsRemoteRepo(t.Repo)
+			out = append(out, c)
+			continue
+		}
+		if c.Name == "" {
+			c.Name = shortRepoName(loc)
+		}
+		out = append(out, measure(c, loc))
+	}
+	return out
+}
+
+// newestVolumeReadings is the last stored reading of every volume inside the
+// capacity rule's window.
+func (s *Service) newestVolumeReadings() map[string]store.VolumeSample {
+	newest := map[string]store.VolumeSample{}
+	samples, err := s.store.ListVolumeSamples(s.anomalies.nowUnix() - capacityWindowDays*86400)
+	if err != nil {
+		return newest
+	}
+	for _, v := range samples {
+		newest[v.Volume] = v // oldest first, so the last one stays
+	}
+	return newest
 }

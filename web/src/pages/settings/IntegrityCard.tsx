@@ -452,7 +452,7 @@ export function IntegrityCard({
                       ? kind === "dr" ? t("drill.runningDR") : t("verify.running")
                       : kind === "dr" ? t("drill.drNote") : t("verify.hint")
                   }
-                  className={shake[dKey] ? "glim-shake" : ""}
+                  className={`glim-btn-wrap${shake[dKey] ? " glim-shake" : ""}`}
                 />
                 {state[dKey] === "ok" && (
                   <span className="inline-flex items-center gap-1 text-sm text-statusOk">

@@ -74,6 +74,12 @@ describe("PlacementRow", () => {
     expect(screen.getByText("fixed since the first backup")).toBeTruthy();
   });
 
+  // jsdom lays nothing out, so this pins the class the phone layout rests on.
+  it("gives the bar a line of its own under the label on a phone", async () => {
+    renderRow(placementView());
+    expect((await segment("Local")).closest('[class*="max-md:basis-full"]')).not.toBeNull();
+  });
+
   it("stands on Local with both other segments locked when the domain has no target", async () => {
     const locks = { "local-offsite": "no-target", "offsite-only": "no-target" } as const;
     fake.reply("getPlacementOptions", { ok: true, options: placementOptions({ targets: [], sendTo: [], segmentLocks: locks }) });

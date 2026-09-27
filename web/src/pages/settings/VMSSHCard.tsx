@@ -80,7 +80,9 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-xs text-carbon-textMuted">{tLtr(t, "vm.ssh.publicKey")}</span>
-          <div className="flex items-start gap-2">
+          {/* On a phone the copy buttons go under their blocks, which beside
+              them shrink to a few characters a line. */}
+          <div className="flex items-start gap-2 max-md:flex-col">
             <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
               {pub || "—"}
             </code>
@@ -107,7 +109,7 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
             <li>{t("vm.ssh.step2")}</li>
             <li>{t("vm.ssh.step3")}</li>
           </ol>
-          <div className="flex items-start gap-2">
+          <div className="flex items-start gap-2 max-md:flex-col max-md:items-stretch">
             <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
             <Button
               label={t("vm.ssh.copyCmd")}
@@ -117,7 +119,7 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
               onClick={() => void handleCopyCmd()}
               disabled={!pub}
               hueIndex={hueIndex}
-              className={"shrink-0"}
+              className="shrink-0 max-md:self-start"
             />
           </div>
           <Badge
@@ -127,7 +129,9 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
             rel="noreferrer"
             tone="neutral"
             size="small"
-            className="self-start"
+            // Under a coarse pointer the chip becomes a tap target, and its
+            // label may wrap there.
+            className="self-start pointer-coarse:h-auto pointer-coarse:min-h-(--btn-h) pointer-coarse:py-1 pointer-coarse:leading-tight"
           >
             {t("vm.ssh.guide")} →
           </Badge>

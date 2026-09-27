@@ -2761,10 +2761,21 @@ func (r Restic) ForgetPreview(ctx context.Context, repo string, p RetentionPolic
 }
 
 // Unlock removes locks from the repo (`restic unlock`). removeAll clears ALL
-// locks, not just stale ones — safe because BombVault is the sole writer.
+// locks, not just stale ones, which is safe because BombVault is the sole writer.
+// Without it, the locks an earlier run of BombVault left in a local repository
+// go first. restic cannot always tell them from held ones (see orphanLock),
+// and it probes a lock's owner by sending SIGHUP to its PID, which after a
+// restart may belong to any process, BombVault included. removeOrphanLocks
+// relies on BombVault being the only writer of a local repository.
 func (r Restic) Unlock(ctx context.Context, repo string, removeAll bool, m Mode) error {
-	_, err := r.run(ctx, UnlockArgs(repo, removeAll, m), m)
-	return err
+	var orphanErr error
+	if !removeAll {
+		orphanErr = r.removeOrphanLocks(ctx, repo, m, processStart)
+	}
+	if _, err := r.run(ctx, UnlockArgs(repo, removeAll, m), m); err != nil {
+		return err
+	}
+	return orphanErr
 }
 
 // Prune reclaims repository space freed by forgotten snapshots (`restic prune`).
