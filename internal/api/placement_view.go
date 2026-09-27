@@ -68,7 +68,11 @@ func (s *Service) placementViews(ctx context.Context, settings store.Settings, d
 		return nil, err
 	}
 	named := namedReposByID(repos)
-	locks := domainSegmentLocks(p, s.sendToOptions(settings, p, repos, named))
+	x, err := s.readPlaceIndex()
+	if err != nil {
+		return nil, err
+	}
+	locks := domainSegmentLocks(p, s.sendToOptions(settings, p, repos, named, x))
 	views := make(map[string]placementView, len(items))
 	for _, it := range items {
 		views[it.Key] = s.itemPlacementView(settings, p, named, locks, it)

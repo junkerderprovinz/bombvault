@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -18,11 +19,13 @@ type excludedItem struct {
 }
 
 type homeOption struct {
-	ID       string   `json:"id"` // "" = domain path
+	ID       string   `json:"id"` // "" = domain path, or with kind local a place's repository made when first chosen
 	Name     string   `json:"name"`
 	Location string   `json:"location"` // as stored, never resolved
 	Kind     homeKind `json:"kind"`     // domain, domain-remote, local
 	Scheme   string   `json:"scheme"`   // domain-remote: s3, b2, rest, sftp, ...
+	PlaceID  string   `json:"placeId"`  // the place it lies at, "" for a row without one
+	Provider string   `json:"provider"` // that place's provider, for its mark
 }
 
 type targetOption struct {
@@ -32,14 +35,18 @@ type targetOption struct {
 	Primary    bool   `json:"primary"` // sort_order 0
 	AppendOnly bool   `json:"appendOnly"`
 	Hint       string `json:"hint"` // "" | "creds-differ": the remote domain path's credentials clash with the target's
+	PlaceID    string `json:"placeId"`
+	Provider   string `json:"provider"`
 }
 
 type sendToOption struct {
 	Kind     homeKind `json:"kind"`     // direct | remote
-	RepoID   string   `json:"repoId"`   // "" while the direct repository does not exist yet
+	RepoID   string   `json:"repoId"`   // "" while the repository does not exist yet
 	TargetID string   `json:"targetId"` // direct only
 	Name     string   `json:"name"`
 	Location string   `json:"location"`
+	PlaceID  string   `json:"placeId"`
+	Provider string   `json:"provider"`
 }
 
 type placementOptions struct {
@@ -79,24 +86,51 @@ func (s *Service) placementOptionsFor(domain string) (placementOptions, error) {
 		opts.Unreadable = true
 		return opts, nil
 	}
+	x, err := s.readPlaceIndex()
+	if err != nil {
+		return placementOptions{}, err
+	}
 	opts.Paused = p.State.Paused()
-	opts.Homes = s.homeOptions(settings, domain, repos, named)
-	opts.Targets = s.targetOptions(settings, p, named)
-	opts.SendTo = s.sendToOptions(settings, p, repos, named)
+	opts.Homes = s.homeOptions(settings, p, repos, named, x)
+	opts.Targets = s.targetOptions(settings, p, named, x)
+	opts.SendTo = s.sendToOptions(settings, p, repos, named, x)
 	opts.SegmentLocks = domainSegmentLocks(p, opts.SendTo)
 	return opts, nil
 }
 
-func (s *Service) homeOptions(settings store.Settings, domain string, repos []store.OffsiteTarget, named map[string]store.OffsiteTarget) []homeOption {
-	path := domainPathRaw(domain, settings)
-	domainHome := homeOption{Location: path, Kind: s.homeKindOf(settings, domain, "", named)}
+// homeOptions offer the domain path at its home place, the enabled local
+// named repositories serving the domain, and every other local place without
+// a target of the domain, whose repository is made when it is first chosen.
+// A local place with a target of the domain goes under "Send to", as the
+// direct repository beside that target.
+func (s *Service) homeOptions(settings store.Settings, p placementRead, repos []store.OffsiteTarget, named map[string]store.OffsiteTarget, x placeIndex) []homeOption {
+	path := domainPathRaw(p.Domain, settings)
+	home := x.homes[p.Domain]
+	domainHome := homeOption{Name: x.byID[home].Name, Location: path, Kind: s.homeKindOf(settings, p.Domain, "", named),
+		PlaceID: home, Provider: x.provider(home)}
 	if domainHome.Kind == homeDomainRemote {
 		domainHome.Scheme, _, _ = strings.Cut(path, ":")
 	}
 	homes := []homeOption{domainHome}
+	offered := map[string]bool{home: true}
 	for _, r := range repos {
-		if r.Enabled && s.homeKindOf(settings, domain, r.ID, named) == homeLocal {
-			homes = append(homes, homeOption{ID: r.ID, Name: r.Name, Location: r.Repo, Kind: homeLocal})
+		if !servesDomain(r, p.Domain) || s.homeKindOf(settings, p.Domain, r.ID, named) != homeLocal {
+			continue
+		}
+		// Choosing a place picks its repository there, so a place whose
+		// repository is switched off is not offered in its stead.
+		offered[r.PlaceID] = true
+		if r.Enabled {
+			homes = append(homes, homeOption{ID: r.ID, Name: x.name(r.PlaceID, r.Name), Location: r.Repo, Kind: homeLocal,
+				PlaceID: r.PlaceID, Provider: x.provider(r.PlaceID)})
+		}
+	}
+	for _, pl := range x.all {
+		if !pl.Enabled || pl.Kind != string(places.KindLocal) || offered[pl.ID] || targetsAt(p.Targets, pl.ID) {
+			continue
+		}
+		if addr, ok := store.PlaceAddress(pl, p.Domain, ""); ok {
+			homes = append(homes, homeOption{Name: pl.Name, Location: addr, Kind: homeLocal, PlaceID: pl.ID, Provider: pl.Provider})
 		}
 	}
 	return homes
@@ -106,7 +140,7 @@ func (s *Service) homeOptions(settings store.Settings, domain string, repos []st
 // repositories from one environment, so a remote domain path whose variables
 // clash with a target's makes that target's copy fail, and the chip says so
 // beforehand. copyMode applies the same rule to the copy itself.
-func (s *Service) targetOptions(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget) []targetOption {
+func (s *Service) targetOptions(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, x placeIndex) []targetOption {
 	path := domainPathRaw(p.Domain, settings)
 	remote := s.homeKindOf(settings, p.Domain, "", named) == homeDomainRemote
 	var pathEnv []string
@@ -115,7 +149,8 @@ func (s *Service) targetOptions(settings store.Settings, p placementRead, named 
 	}
 	out := make([]targetOption, 0, len(p.Targets))
 	for _, t := range p.Targets {
-		o := targetOption{ID: t.ID, Name: placementTargetName(t), Enabled: t.Enabled, Primary: t.SortOrder == 0, AppendOnly: t.Immutable}
+		o := targetOption{ID: t.ID, Name: x.name(t.PlaceID, placementTargetName(t)), Enabled: t.Enabled, Primary: t.SortOrder == 0,
+			AppendOnly: t.Immutable, PlaceID: t.PlaceID, Provider: x.provider(t.PlaceID)}
 		if remote {
 			if _, ok := copyNeeds(t.Repo, s.offsiteModeForTarget(settings, t).Env, path, pathEnv); !ok {
 				o.Hint = "creds-differ"
@@ -126,7 +161,11 @@ func (s *Service) targetOptions(settings store.Settings, p placementRead, named 
 	return out
 }
 
-func (s *Service) sendToOptions(settings store.Settings, p placementRead, repos []store.OffsiteTarget, named map[string]store.OffsiteTarget) []sendToOption {
+// sendToOptions offer the direct repository beside each enabled target, the
+// enabled remote named repositories serving the domain, and every other
+// remote place without a target of the domain, whose repository is made when
+// it is first chosen.
+func (s *Service) sendToOptions(settings store.Settings, p placementRead, repos []store.OffsiteTarget, named map[string]store.OffsiteTarget, x placeIndex) []sendToOption {
 	companions := map[string]store.OffsiteTarget{}
 	for _, r := range repos {
 		if r.CompanionOf != "" {
@@ -139,14 +178,74 @@ func (s *Service) sendToOptions(settings store.Settings, p placementRead, repos 
 		if has && !d.Enabled {
 			continue
 		}
-		out = append(out, sendToOption{Kind: homeDirect, RepoID: d.ID, TargetID: t.ID, Name: placementTargetName(t), Location: d.Repo})
+		out = append(out, sendToOption{Kind: homeDirect, RepoID: d.ID, TargetID: t.ID, Name: x.name(t.PlaceID, placementTargetName(t)),
+			Location: d.Repo, PlaceID: t.PlaceID, Provider: x.provider(t.PlaceID)})
 	}
+	offered := map[string]bool{x.homes[p.Domain]: true}
 	for _, r := range repos {
-		if r.Enabled && s.homeKindOf(settings, p.Domain, r.ID, named) == homeRemote {
-			out = append(out, sendToOption{Kind: homeRemote, RepoID: r.ID, Name: r.Name, Location: r.Repo})
+		if !servesDomain(r, p.Domain) || s.homeKindOf(settings, p.Domain, r.ID, named) != homeRemote {
+			continue
+		}
+		offered[r.PlaceID] = true
+		if r.Enabled {
+			out = append(out, sendToOption{Kind: homeRemote, RepoID: r.ID, Name: x.name(r.PlaceID, r.Name), Location: r.Repo,
+				PlaceID: r.PlaceID, Provider: x.provider(r.PlaceID)})
+		}
+	}
+	for _, pl := range x.all {
+		if !pl.Enabled || pl.Kind == string(places.KindLocal) || offered[pl.ID] || targetsAt(p.Targets, pl.ID) {
+			continue
+		}
+		if addr, ok := store.PlaceAddress(pl, p.Domain, ""); ok {
+			out = append(out, sendToOption{Kind: homeRemote, Name: pl.Name, Location: addr, PlaceID: pl.ID, Provider: pl.Provider})
 		}
 	}
 	return out
+}
+
+// placeIndex is the places one options answer reads, once.
+type placeIndex struct {
+	all   []store.Place
+	byID  map[string]store.Place
+	homes map[string]string // domain -> home place id
+}
+
+func (s *Service) readPlaceIndex() (placeIndex, error) {
+	all, err := s.store.ListPlaces()
+	if err != nil {
+		return placeIndex{}, err
+	}
+	homes, err := s.store.DomainPlaces()
+	if err != nil {
+		return placeIndex{}, err
+	}
+	x := placeIndex{all: all, byID: make(map[string]store.Place, len(all)), homes: homes}
+	for _, p := range all {
+		x.byID[p.ID] = p
+	}
+	return x, nil
+}
+
+func (x placeIndex) provider(placeID string) string { return x.byID[placeID].Provider }
+
+// name is what an option at a place is called: the place's name, which the
+// Storage tab shows too, or fallback for a row without a place.
+func (x placeIndex) name(placeID, fallback string) string {
+	if p, ok := x.byID[placeID]; ok {
+		return p.Name
+	}
+	return fallback
+}
+
+// servesDomain reports whether a named repository may hold the domain's items:
+// one made at a place for another domain belongs to that domain.
+func servesDomain(r store.OffsiteTarget, domain string) bool {
+	return r.PlaceDomain == "" || r.PlaceDomain == domain
+}
+
+// targetsAt reports whether one of the domain's targets lies at the place.
+func targetsAt(targets []store.OffsiteTarget, placeID string) bool {
+	return slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool { return t.PlaceID == placeID })
 }
 
 func (h *Handler) handlePlacementOptions(w http.ResponseWriter, r *http.Request) {

@@ -25,6 +25,8 @@ var (
 	errPlaceFolderBlank         = errors.New("a folder needs a name, since only a place that is itself a repository keeps a domain at its base")
 	errPlaceAddressTaken        = errors.New("a repository of this domain already lies at that address")
 	errPlaceOff                 = errors.New("this place is switched off")
+	errPlaceKeepsLess           = errors.New("the place keeps fewer snapshots than this repository does now, and its next prune would forget the rest; raise the place's retention first")
+	errPlaceAppendOnlyOff       = errors.New("this repository is append-only and the place is not, so joining it would let a prune delete its snapshots")
 	errPlaceNameMissing         = errors.New("a place needs a name")
 	errPlaceUnasked             = errors.New("say where the device stands: here or at another site")
 	errUnknownProvider          = errors.New("that is not a provider this server can connect")
@@ -1121,7 +1123,8 @@ func (s *Service) testPlace(ctx context.Context, id string) (places.ProbeResult,
 			continue
 		}
 		probed[r.Repo] = true
-		if at := s.probeFolder(ctx, r.Repo, mode); at.problem != nil {
+		// A direct repository may still run on credentials the place has left.
+		if at := s.probeFolder(ctx, r.Repo, s.rowMode(settings, r)); at.problem != nil {
 			fail(at.problem.Message)
 		}
 	}
