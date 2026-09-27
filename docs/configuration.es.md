@@ -84,7 +84,7 @@ Las copias externas van a lugares de almacenamiento. Añade el lugar en **Ajuste
 
 ## Ajustes portátiles (exportar e importar) {#portable-settings-export-and-import}
 
-La tarjeta **Exportar e importar ajustes** en la página de Ajustes escribe toda tu configuración de BombVault (ajustes de dominio, lugares de almacenamiento, calendarios, notificaciones) en un archivo JSON portátil que puedes importar en otra instancia, para que cambiar de máquina o clonar una instalación no signifique volver a introducirlo todo a mano. La importación muestra una vista previa y pide confirmación, y nunca toca tus datos de copia ni tu historial.
+La tarjeta **Exportar e importar ajustes** en la página de Ajustes escribe toda tu configuración de BombVault (ajustes de dominio, lugares de almacenamiento, calendarios, notificaciones) en un archivo JSON portátil que puedes importar en otra instancia, para que cambiar de máquina o clonar una instalación no signifique volver a introducirlo todo a mano. La importación muestra una vista previa y pide confirmación, y nunca toca tus datos de copia ni tu historial. La vista previa cuenta los lugares de almacenamiento del archivo y, con las credenciales, los conjuntos de credenciales; para un archivo antiguo sin lugares, BombVault los crea a partir de los ajustes importados.
 
 !!! warning "La exportación puede contener credenciales"
     Tú eliges si incluir en el archivo las credenciales de tus lugares y de las notificaciones. Con las credenciales incluidas, la exportación es tan sensible como tu kit de recuperación, así que guárdala en un lugar seguro. Sin ellas, el archivo contiene solo ajustes no secretos.

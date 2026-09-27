@@ -84,7 +84,7 @@ Off-site kopieën gaan naar opslagplekken. Voeg de plek toe op **Instellingen, O
 
 ## Portable instellingen (exporteren en importeren) {#portable-settings-export-and-import}
 
-De kaart **Instellingen exporteren en importeren** op de Instellingen-pagina schrijft je hele BombVault-configuratie (domeininstellingen, opslagplekken, planningen, meldingen) naar een portable JSON-bestand dat je op een andere instantie kunt importeren, zodat verhuizen naar een nieuwe machine of een setup klonen niet betekent dat je alles met de hand opnieuw invoert. Import toont een voorbeeld en vraagt om bevestiging, en raakt nooit je back-updata of historie aan.
+De kaart **Instellingen exporteren en importeren** op de Instellingen-pagina schrijft je hele BombVault-configuratie (domeininstellingen, opslagplekken, planningen, meldingen) naar een portable JSON-bestand dat je op een andere instantie kunt importeren, zodat verhuizen naar een nieuwe machine of een setup klonen niet betekent dat je alles met de hand opnieuw invoert. Import toont een voorbeeld en vraagt om bevestiging, en raakt nooit je back-updata of historie aan. Het voorbeeld telt de opslagplekken in het bestand en, met de inloggegevens erbij, de referentiesets; bij een ouder bestand zonder plekken bouwt BombVault ze op uit de geïmporteerde instellingen.
 
 !!! warning "De export kan inloggegevens bevatten"
     Je kiest of je de inloggegevens van je plekken en meldingen in het bestand meeneemt. Met inloggegevens erbij is de export net zo gevoelig als je herstelkit, dus bewaar hem ergens veilig. Zonder die bevat het bestand alleen niet-geheime instellingen.

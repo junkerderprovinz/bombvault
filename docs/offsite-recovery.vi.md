@@ -63,7 +63,7 @@ Một miền được lưu ở điểm lưu trữ từ xa là nguồn của các
 
 Đánh dấu một kho off-site là append-only để ransomware, hoặc một máy chủ bị xâm nhập, không thể xóa hay ghi lại các bản sao lưu của bạn. Phía bên kia (một `restic/rest-server` chạy ở chế độ `--append-only`) **thực thi** điều đó. BombVault chỉ luôn **xác minh** nó và không bao giờ hiển thị xanh chỉ dựa trên một tuyên bố cấu hình.
 
-Cửa sổ **Thêm điểm lưu trữ** kèm một công thức sẵn sàng để dán cho một rest-server ở chế độ append-only, với một người dùng cho BombVault này. Tại một điểm lưu trữ rest-server có bật **Append-only**, **Kiểm tra append-only** trong phần chi tiết của điểm lưu trữ chạy bài kiểm tra can thiệp cho từng miền được lưu hoặc được sao chép tại đó, nên off-site append-only là điều có thể đạt được mà không cần chỉnh sửa cấu hình bằng tay.
+Cửa sổ **Thêm điểm lưu trữ** kèm một công thức sẵn sàng để dán cho một rest-server ở chế độ append-only, với một người dùng cho BombVault này. Tại một điểm lưu trữ rest-server có bật **Append-only**, **Kiểm tra append-only** trong phần chi tiết của điểm lưu trữ chạy bài kiểm tra can thiệp với mọi đường dẫn miền, bản sao đang bật và kho tại điểm lưu trữ, rồi đưa ra một câu trả lời cho cả điểm lưu trữ, nên off-site append-only là điều có thể đạt được mà không cần chỉnh sửa cấu hình bằng tay.
 
 !!! note "Xóa thành công dưới `/locks/` là hành vi mong đợi"
     Append-only không có nghĩa là không còn xóa được gì nữa. restic phải tự tạo và giải phóng khóa của nó, nên `/locks/` cố ý vẫn ghi và xóa được. Các snapshot và dữ liệu phía sau chúng, tức đúng thứ mà mã độc tống tiền nhắm tới, không thể bị xóa. Nếu bạn tự kiểm tra phía xa, một thao tác xóa thành công dưới `/locks/` là hành vi đúng chứ không phải lỗ hổng bảo vệ.
@@ -81,12 +81,14 @@ BombVault định kỳ chứng minh bảo đảm append-only bằng cách thực
 
 Một lần lật thực sự từ được-bảo-vệ sang không-được-bảo-vệ sẽ kích một cảnh báo duy nhất.
 
+Tại một điểm lưu trữ, **Kiểm tra append-only** dò từng đường dẫn miền, bản sao đang bật và kho ở đó bằng thông tin đăng nhập riêng của nó rồi gộp các kết luận thành một câu trả lời: chỉ cần một kho chấp nhận việc xóa là cả điểm lưu trữ thành *xóa được chấp nhận*.
+
 ## Diễn tập DR
 
 BombVault cung cấp hai cấp độ bằng chứng rằng các bản sao lưu của bạn thực sự khôi phục được, không chỉ hiện diện.
 
 - **Diễn tập xác minh khôi phục (cục bộ).** BombVault định kỳ chạy `restic check --read-data-subset` (có giới hạn, không bao giờ là một lần khôi phục toàn bộ làm đầy đĩa) và hiển thị một huy hiệu *xác minh khôi phục được lần cuối* cho mỗi miền. Nhịp độ nằm trên Settings, Schedules; huy hiệu trên Settings, Integrity.
-- **Diễn tập DR (off-site).** BombVault khôi phục một đích thực từ kho off-site vào một hộp cát dùng một lần, xác minh nó từng tập tin và từng byte, rồi dọn dẹp. Điều này chứng minh bạn có thể khôi phục từ off-site, không chỉ là kho phản hồi.
+- **Diễn tập DR (off-site).** BombVault khôi phục một đích thực từ kho off-site vào một hộp cát dùng một lần, xác minh nó từng tập tin và từng byte, rồi dọn dẹp. Điều này chứng minh bạn có thể khôi phục từ off-site, không chỉ là kho phản hồi. Chỉ các điểm lưu trữ ở địa điểm khác mới được diễn tập, vì một bản sao trong cùng ngôi nhà không chứng minh được gì khi mất cả ngôi nhà. Một miền được sao chép tới nhiều điểm như vậy sẽ lần lượt được diễn tập với một điểm mỗi lần chạy theo lịch, và bảng điều khiển ghi tên điểm lưu trữ của lần diễn tập gần nhất.
 
 **Bảng điểm bảo vệ chống ransomware** trên bảng điều khiển gom điều này thành một thế phòng thủ xanh / hổ phách / đỏ cho mỗi miền, với một danh sách kiểm tra có đóng dấu tuổi (off-site đã cấu hình, append-only đã xác minh, nhân bản hiện thời, diễn tập khôi phục đã qua, mã hóa đã bật, chiến lược dọn bớt đã đặt). Mỗi hàng đỏ liên kết sâu tới bản sửa, và thẻ chỉ bao giờ chuyển xanh dựa trên các sự thật đã xác minh.
 
@@ -124,7 +126,7 @@ Hai máy: **TOWER** chạy các container và gửi bản sao lưu, **VAULT** nh
 
 Đoạn đầu của đường dẫn là người dùng htpasswd, ở đây là `tower`, và mỗi miền có thư mục riêng bên dưới, ví dụ `rest:http://VAULT:8000/tower/container`. Trả lời **Thiết bị nằm ở đâu?** bằng **Ở một địa điểm khác**, nhấp **Thêm**, rồi đánh dấu điểm lưu trữ dưới **Sao chép đến** cho các miền cần gửi đến đó.
 
-**3. Trên TOWER, bật Append-only** dưới **Bảo vệ** trong phần chi tiết của điểm lưu trữ, rồi nhấp **Kiểm tra append-only**. Bài kiểm tra chạy cho từng miền được lưu hoặc được sao chép tại điểm lưu trữ, và mỗi miền phải báo *xóa bị từ chối*. Ý nghĩa các kết quả:
+**3. Trên TOWER, bật Append-only** dưới **Bảo vệ** trong phần chi tiết của điểm lưu trữ, rồi nhấp **Kiểm tra append-only**. Bài kiểm tra dò mọi đường dẫn miền, bản sao và kho tại điểm lưu trữ và đưa ra một câu trả lời cho điểm lưu trữ, câu trả lời đó phải là *xóa bị từ chối*. Ý nghĩa các kết quả:
 
 | Kết quả | Điều đã xảy ra |
 | --- | --- |
@@ -145,9 +147,9 @@ Hai máy: **TOWER** chạy các container và gửi bản sao lưu, **VAULT** nh
 
 Một tab **Recovery** chuyên biệt dẫn một bản cài đặt mới hoặc được dựng lại đi qua tình huống thảm họa, ở một nơi:
 
-1. **Khôi phục cài đặt của chính BombVault trước**, nên các đường dẫn sao lưu, đích off-site và thông tin đăng nhập mà phần còn lại của quy trình cần được điền sẵn (áp dụng qua một lần tự khởi động lại thông qua Docker socket, nên cơ sở dữ liệu cài đặt đang chạy không bao giờ bị ghi đè dưới một handle đang mở).
-2. **Kiểm tra BombVault có thể đọc các bản sao lưu của bạn** (điểm mắc kẹt về khóa mã hóa ngay từ đầu).
-3. Cho bạn **trỏ tới kho hiện có của bạn**: một thư mục cục bộ, hoặc một điểm lưu trữ từ xa được kết nối qua cùng cửa sổ **Thêm điểm lưu trữ** như trên Cài đặt, Lưu trữ.
+1. **Kiểm tra BombVault có thể đọc các bản sao lưu của bạn** (điểm mắc kẹt về khóa mã hóa ngay từ đầu).
+2. **Khôi phục cài đặt của chính BombVault**, nên các đường dẫn sao lưu, đích off-site và thông tin đăng nhập mà phần còn lại của quy trình cần được điền sẵn. Nó đọc bản sao lưu cài đặt từ điểm lưu trữ mà hàng Tự sao lưu ghi ở **Lưu tại**, hoặc từ bản sao của Tự sao lưu ở **Sao chép đến**, và hiển thị điểm lưu trữ đó kèm địa chỉ; để đọc từ một điểm lưu trữ khác, hãy đổi hàng Tự sao lưu ở bước 3 trước. Việc khôi phục được áp dụng qua một lần tự khởi động lại thông qua Docker socket, nên cơ sở dữ liệu cài đặt đang chạy không bao giờ bị ghi đè dưới một handle đang mở.
+3. **Gắn các bản sao lưu hiện có của bạn** qua các hàng của thẻ **Miền**: trên hàng của mỗi miền, chọn điểm lưu trữ chứa các bản sao lưu của nó ở **Lưu tại** và các điểm lưu trữ giữ bản sao của nó ở **Sao chép đến**. Một điểm lưu trữ chưa có hàng nào đưa ra, chẳng hạn một thư mục chia sẻ, một máy chủ hay một bucket đám mây, được kết nối bằng **Thêm điểm lưu trữ**, cùng cửa sổ như trên Cài đặt, Lưu trữ. Sau đó **Kết nối và xem trước** kiểm tra rằng các bản sao lưu đọc được.
 4. **Khám phá** các container, VM và bộ tập tin được lưu trong đó.
 5. **Khôi phục tất cả chúng** (để nguyên trạng thái dừng, nên bạn khởi động chúng một cách có chủ đích), với bộ khôi phục của bạn chỉ cách một cú nhấp.
 

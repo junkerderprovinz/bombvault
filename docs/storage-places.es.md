@@ -27,12 +27,12 @@ Cada lugar es una fila con su proveedor, para qué se usa y su última prueba o 
 
 - **General**: el nombre, el interruptor que activa y desactiva el lugar, la dirección y, para un dispositivo que gestionas tú, **¿Dónde está el dispositivo?** (consulta [Fuera del local](#off-the-premises)).
 - **Retención**: conservar últimas, diarias, semanales y mensuales, para cada repositorio del lugar. Un lugar nuevo empieza con las reglas predeterminadas; un lugar con todas las reglas a cero nunca recorta.
-- **Protección**: el interruptor **Append-only**. El otro extremo tiene que imponer el append-only; con el interruptor activado, BombVault nunca poda ni borra allí. En un rest-server con append-only activado, **Probar append-only** ejecuta la prueba de manipulación para cada dominio que el lugar almacena o copia y muestra *borrado rechazado* o *borrado aceptado* (consulta [Copia externa y recuperación](offsite-recovery.md)). Solo los lugares remotos tienen esta sección, porque nada en esta máquina puede impedir que se borre un repositorio local.
+- **Protección**: el interruptor **Append-only**. El otro extremo tiene que imponer el append-only; con el interruptor activado, BombVault nunca poda ni borra allí. En un rest-server con append-only activado, **Probar append-only** ejecuta la prueba de manipulación contra cada ruta de dominio, copia activada y repositorio del lugar y muestra una sola respuesta para todo el lugar, *borrado rechazado* o *borrado aceptado* (consulta [Copia externa y recuperación](offsite-recovery.md)). Solo los lugares remotos tienen esta sección, porque nada en esta máquina puede impedir que se borre un repositorio local.
 - **Acceso**: las credenciales y, para S3, la clase de almacenamiento. Un lugar que usa las credenciales compartidas recibe un conjunto propio con el primer cambio. Un repositorio directo del lugar que las credenciales nuevas no pueden abrir conserva las antiguas, y la respuesta lo dice. Los lugares de carpeta, SFTP y rclone no tienen esta sección.
 - **Límites**: la velocidad de subida y de bajada y el presupuesto de crecimiento.
 - **Carpetas**: un interruptor por dominio, con el nombre de su carpeta. Un dominio desactivado aquí no puede elegir el lugar.
 
-Bajar la retención o desactivar el append-only pide confirmación y dice a cuántos elementos afecta. Desactivar un lugar desactiva todos sus repositorios; un lugar en el que se almacena un dominio no se puede desactivar.
+Bajar la retención pide confirmación y dice a cuántos elementos afecta; desactivar el append-only pide confirmación y dice cuántos repositorios del lugar lo pierden. Desactivar un lugar desactiva todos sus repositorios; un lugar en el que se almacena un dominio no se puede desactivar.
 
 ## La tarjeta Dominios {#domains}
 
@@ -57,7 +57,7 @@ Un lugar solo se puede quitar mientras nada lo usa: ningún dominio se almacena 
 
 ## Sin lugar {#without-a-place}
 
-Una dirección que no encaja en la forma de un lugar más una carpeta sigue funcionando y aparece en **Sin lugar**, con su dirección. Entre ellas están las direcciones nativas `b2:`, `gs:` y `swift:`. **Asignar a un lugar** vincula esa fila a un lugar, tras la misma prueba que al [cambiar una dirección](#addresses). Un destino de copia sin lugar también aparece en la fila de su dominio, junto a los chips, y sigue copiando.
+Una dirección que no encaja en la forma de un lugar más una carpeta sigue funcionando y aparece en **Sin lugar**, con su dirección. Entre ellas están las direcciones nativas `b2:`, `gs:` y `swift:`. **Asignar a un lugar** vincula esa fila a un lugar, tras la misma prueba que al [cambiar una dirección](#addresses). Un destino de copia sin lugar también aparece en la fila de su dominio, junto a los chips, y sigue copiando. Una fila remota de esa lista tiene su propio interruptor **Append-only**, y desactivarlo pide confirmación con el número de elementos que tienen copias en esa dirección. Un repositorio directo sigue el interruptor de su destino.
 
 ## Fuera del local {#off-the-premises}
 

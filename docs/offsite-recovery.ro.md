@@ -63,7 +63,7 @@ Un domeniu stocat într-un loc la distanță este sursa copiilor lui, la fel ca 
 
 Marchează un depozit off-site ca append-only astfel încât ransomware-ul, sau o gazdă compromisă, să nu poată șterge sau rescrie backupurile tale. Partea îndepărtată (un `restic/rest-server` rulând în mod `--append-only`) **o impune**. BombVault doar **o verifică** și nu arată niciodată verde doar pe baza unei afirmații de configurare.
 
-Fereastra **Adaugă loc** conține o rețetă gata de lipit pentru un rest-server în mod append-only, cu un utilizator pentru acest BombVault. La un loc rest-server cu **Append-only** pornit, **Testează append-only** din detaliile locului rulează testul de manipulare pentru fiecare domeniu stocat sau copiat în acel loc, astfel încât off-site-ul append-only este accesibil fără editarea manuală a configurațiilor.
+Fereastra **Adaugă loc** conține o rețetă gata de lipit pentru un rest-server în mod append-only, cu un utilizator pentru acest BombVault. La un loc rest-server cu **Append-only** pornit, **Testează append-only** din detaliile locului rulează testul de manipulare pe fiecare cale de domeniu, fiecare copie pornită și fiecare depozit din acel loc și dă un singur răspuns pentru loc, astfel încât off-site-ul append-only este accesibil fără editarea manuală a configurațiilor.
 
 !!! note "O ștergere reușită sub `/locks/` este așteptată"
     Append-only nu înseamnă că nu se mai poate șterge nimic. restic trebuie să își creeze și să își elibereze propriile blocaje, așa că `/locks/` rămâne intenționat inscriptibil și șterjibil. Instantaneele și datele din spatele lor, adică exact ținta unui ransomware, nu pot fi eliminate. Dacă testezi singur partea de la distanță, o ștergere reușită sub `/locks/` este comportament corect și nu o breșă.
@@ -81,12 +81,14 @@ BombVault dovedește periodic garanția append-only încercând efectiv o șterg
 
 O trecere reală de la protejat la neprotejat declanșează o singură alertă.
 
+La un loc, **Testează append-only** verifică fiecare cale de domeniu, fiecare copie pornită și fiecare depozit de acolo cu propriile credențiale și adună verdictele într-un singur răspuns: dacă un singur depozit acceptă o ștergere, întregul loc primește *ștergeri acceptate*.
+
 ## Exerciții DR
 
 BombVault oferă două niveluri de dovadă că backupurile tale sunt efectiv restaurabile, nu doar prezente.
 
 - **Exerciții de verificare a restaurării (local).** BombVault rulează periodic `restic check --read-data-subset` (mărginit, niciodată o restaurare completă care umple discul) și arată o insignă *ultima dată verificat ca restaurabil* per domeniu. Cadența se află în Setări, Programări; insigna în Setări, Integritate.
-- **Exerciții DR (off-site).** BombVault restaurează o țintă reală din depozitul off-site într-un sandbox de unică folosință, o verifică fișier cu fișier și octet cu octet, apoi curăță. Aceasta dovedește că poți recupera din off-site, nu doar că depozitul răspunde.
+- **Exerciții DR (off-site).** BombVault restaurează o țintă reală din depozitul off-site într-un sandbox de unică folosință, o verifică fișier cu fișier și octet cu octet, apoi curăță. Aceasta dovedește că poți recupera din off-site, nu doar că depozitul răspunde. Exercițiile rulează doar pe locuri dintr-o altă locație, pentru că o copie din aceeași casă nu dovedește nimic despre pierderea casei. Un domeniu copiat în mai multe astfel de locuri este exersat pe câte unul la fiecare rulare programată, pe rând, iar panoul principal arată locul ultimului exercițiu.
 
 **Fișa de evaluare a protecției împotriva ransomware** de pe panoul principal rezumă acestea într-o postură verde / galben / roșu per domeniu, cu o listă de verificare marcată cu vârsta (off-site configurat, append-only verificat, replicare curentă, exercițiu de restaurare trecut, criptare activată, strategie de curățare setată). Fiecare rând roșu are link direct către remediu, iar cardul devine verde doar pe fapte verificate.
 
@@ -124,7 +126,7 @@ Două mașini: **TOWER** rulează containerele și trimite copiile, **VAULT** le
 
 Primul segment al căii este utilizatorul htpasswd, aici `tower`, iar fiecare domeniu își primește folderul sub el, de exemplu `rest:http://VAULT:8000/tower/container`. Răspunde la **Unde se află dispozitivul?** cu **Într-o altă locație**, apasă **Adaugă** și bifează locul la **Copiat în** pentru domeniile care trebuie să ajungă acolo.
 
-**3. Pe TOWER, pornește Append-only** la **Protecție** în detaliile locului, apoi apasă **Testează append-only**. Testul rulează pentru fiecare domeniu stocat sau copiat în acel loc, iar fiecare trebuie să spună *ștergeri refuzate*. Ce înseamnă răspunsurile:
+**3. Pe TOWER, pornește Append-only** la **Protecție** în detaliile locului, apoi apasă **Testează append-only**. Testul verifică fiecare cale de domeniu, fiecare copie și fiecare depozit din acel loc și dă un singur răspuns pentru loc, care trebuie să fie *ștergeri refuzate*. Ce înseamnă răspunsurile:
 
 | Rezultat | Ce s-a întâmplat |
 | --- | --- |
@@ -145,9 +147,9 @@ Primul segment al căii este utilizatorul htpasswd, aici `tower`, iar fiecare do
 
 O filă dedicată **Recuperare** conduce o instalare nouă sau reconstruită prin cazul de dezastru, într-un singur loc:
 
-1. **Restaurează mai întâi propriile setări ale BombVault**, astfel încât căile de backup, țintele off-site și credențialele de care restul fluxului are nevoie să fie precompletate (aplicate printr-o auto-repornire peste socket-ul Docker, astfel încât baza de date de setări în execuție să nu fie niciodată suprascrisă sub un handle deschis).
-2. **Verifică dacă BombVault poate citi backupurile tale** (capcana cheii de criptare, în față).
-3. Îți permite să **îndrepți către depozitul tău existent**: un folder local sau un loc la distanță conectat prin aceeași fereastră **Adaugă loc** ca în Setări, Stocare.
+1. **Verifică dacă BombVault poate citi backupurile tale** (capcana cheii de criptare, în față).
+2. **Restaurează propriile setări ale BombVault**, astfel încât căile de backup, țintele off-site și credențialele de care restul fluxului are nevoie să fie precompletate. Backupul de setări este citit din locul pe care rândul Auto-backup îl numește la **Stocat în** sau din copia Auto-backup de la **Copiat în**, iar pasul arată acel loc cu adresa lui; ca să citești din alt loc, schimbă mai întâi rândul Auto-backup în pasul 3. Restaurarea este aplicată printr-o auto-repornire peste socket-ul Docker, astfel încât baza de date de setări în execuție să nu fie niciodată suprascrisă sub un handle deschis.
+3. **Atașează backupurile tale existente** prin rândurile cardului Domenii: pe rândul fiecărui domeniu alegi la **Stocat în** locul în care se află backupurile lui și la **Copiat în** locurile care îi păstrează copiile. Un loc pe care încă nu îl oferă niciun rând, cum ar fi un share, un server sau un bucket în cloud, îl conectezi cu **Adaugă loc**, aceeași fereastră ca în Setări, Stocare. **Conectează și previzualizează** verifică apoi dacă backupurile pot fi citite.
 4. **Descoperă** containerele, VM-urile și seturile de fișiere stocate în el.
 5. **Le restaurează pe toate** (lăsate oprite, ca să le pornești deliberat), cu kitul tău de recuperare la un clic distanță.
 

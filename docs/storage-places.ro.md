@@ -27,12 +27,12 @@ Fiecare loc este un rând cu furnizorul lui, cu ce este folosit și cu ultimul t
 
 - **General**: numele, comutatorul care pornește și oprește locul, adresa și, pentru un dispozitiv pe care îl administrezi tu, **Unde se află dispozitivul?** (vezi [În afara sediului](#off-the-premises)).
 - **Retenție**: keep-last, zilnic, săptămânal și lunar, pentru fiecare depozit din acel loc. Un loc nou pornește cu regulile implicite; un loc cu toate regulile la zero nu curăță niciodată nimic.
-- **Protecție**: comutatorul **Append-only**. Partea îndepărtată trebuie să impună append-only; cu comutatorul pornit, BombVault nu curăță și nu șterge niciodată nimic acolo. La un rest-server cu append-only pornit, **Testează append-only** rulează testul de manipulare pentru fiecare domeniu stocat sau copiat în acel loc și arată *ștergeri refuzate* sau *ștergeri acceptate* (vezi [Off-site și recuperare](offsite-recovery.md)). Doar locurile la distanță au această secțiune, pentru că nimic de pe această mașină nu poate împiedica ștergerea unui depozit local.
+- **Protecție**: comutatorul **Append-only**. Partea îndepărtată trebuie să impună append-only; cu comutatorul pornit, BombVault nu curăță și nu șterge niciodată nimic acolo. La un rest-server cu append-only pornit, **Testează append-only** rulează testul de manipulare pe fiecare cale de domeniu, fiecare copie pornită și fiecare depozit din acel loc și arată un singur răspuns pentru tot locul, *ștergeri refuzate* sau *ștergeri acceptate* (vezi [Off-site și recuperare](offsite-recovery.md)). Doar locurile la distanță au această secțiune, pentru că nimic de pe această mașină nu poate împiedica ștergerea unui depozit local.
 - **Acces**: datele de acces și, pentru S3, clasa de stocare. Un loc care folosește datele de acces comune primește un set propriu la prima modificare. Un depozit direct din acel loc pe care noile date de acces nu îl pot deschide le păstrează pe cele vechi, iar răspunsul spune asta. Locurile de tip folder, SFTP și rclone nu au această secțiune.
 - **Limite**: rata de încărcare și de descărcare și bugetul de creștere.
 - **Foldere**: câte un comutator pentru fiecare domeniu, cu numele folderului lui. Un domeniu oprit aici nu poate alege locul.
 
-Scăderea retenției sau oprirea append-only întreabă mai întâi și spune câte elemente sunt afectate. Oprirea unui loc oprește fiecare depozit din el; un loc în care este stocat un domeniu nu poate fi oprit.
+Scăderea retenției întreabă mai întâi și spune câte elemente sunt afectate; oprirea append-only întreabă mai întâi și spune câte depozite din acel loc pierd protecția. Oprirea unui loc oprește fiecare depozit din el; un loc în care este stocat un domeniu nu poate fi oprit.
 
 ## Cardul Domenii {#domains}
 
@@ -57,7 +57,7 @@ Un loc poate fi eliminat doar cât timp nu îl folosește nimic: niciun domeniu 
 
 ## Fără loc {#without-a-place}
 
-O adresă care nu se potrivește cu forma unui loc plus un folder funcționează în continuare și apare la **Fără loc**, cu adresa ei. Printre ele se află adresele native `b2:`, `gs:` și `swift:`. **Atribuie unui loc** leagă un astfel de rând de un loc, după același test ca la [schimbarea unei adrese](#addresses). O țintă de copiere fără loc apare și pe rândul domeniului ei, lângă chipuri, și continuă să copieze.
+O adresă care nu se potrivește cu forma unui loc plus un folder funcționează în continuare și apare la **Fără loc**, cu adresa ei. Printre ele se află adresele native `b2:`, `gs:` și `swift:`. **Atribuie unui loc** leagă un astfel de rând de un loc, după același test ca la [schimbarea unei adrese](#addresses). O țintă de copiere fără loc apare și pe rândul domeniului ei, lângă chipuri, și continuă să copieze. Un rând la distanță de acolo are propriul comutator **Append-only**, iar oprirea lui întreabă mai întâi, cu numărul de elemente care păstrează backupuri la acea adresă. Un depozit direct urmează comutatorul țintei sale.
 
 ## În afara sediului {#off-the-premises}
 

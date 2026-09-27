@@ -63,7 +63,7 @@ Un dominio salvato in un luogo remoto è la sorgente delle sue copie come uno lo
 
 Contrassegna un repo off-site come append-only così ransomware, o un host compromesso, non possano eliminare o riscrivere i tuoi backup. L'altro lato (un `restic/rest-server` in esecuzione in modalità `--append-only`) lo **impone**. BombVault lo **verifica** soltanto e non mostra mai verde sulla sola affermazione di una configurazione.
 
-La finestra **Aggiungi luogo** contiene una ricetta pronta da incollare per un rest-server in modalità append-only, con un utente per questo BombVault. In un luogo rest-server con **Append-only** attivo, **Verifica append-only** nei dettagli del luogo esegue il tamper test per ogni dominio che il luogo salva o copia, così l'off-site append-only è raggiungibile senza modificare a mano le configurazioni.
+La finestra **Aggiungi luogo** contiene una ricetta pronta da incollare per un rest-server in modalità append-only, con un utente per questo BombVault. In un luogo rest-server con **Append-only** attivo, **Verifica append-only** nei dettagli del luogo esegue il tamper test su ogni percorso di dominio, copia attiva e repository del luogo e dà un'unica risposta per il luogo, così l'off-site append-only è raggiungibile senza modificare a mano le configurazioni.
 
 !!! note "Una cancellazione riuscita sotto `/locks/` è prevista"
     Append-only non significa che non si possa più cancellare nulla. restic deve prendere e rilasciare i propri lock, quindi `/locks/` resta scrivibile e cancellabile di proposito. Gli snapshot e i dati che stanno dietro, cioè proprio ciò che un ransomware cercherebbe, non possono essere rimossi. Se sondi tu stesso il lato remoto, una cancellazione che riesce sotto `/locks/` è il comportamento corretto e non una falla.
@@ -81,12 +81,14 @@ BombVault dimostra periodicamente la garanzia append-only tentando effettivament
 
 Un reale passaggio da protetto a non protetto fa scattare un unico avviso.
 
+In un luogo, **Verifica append-only** sonda ogni percorso di dominio, copia attiva e repository presenti con le loro credenziali e riunisce i verdetti in un'unica risposta: basta un solo repository che accetta un'eliminazione perché l'intero luogo risulti *eliminazione accettata*.
+
 ## Esercitazioni DR
 
 BombVault offre due livelli di prova che i tuoi backup siano effettivamente ripristinabili, non solo presenti.
 
 - **Esercitazioni di verifica del ripristino (locali).** BombVault esegue periodicamente `restic check --read-data-subset` (limitato, mai un ripristino completo che riempie il disco) e mostra un badge *ultima ripristinabilità verificata* per dominio. La cadenza risiede su Impostazioni, Calendari; il badge su Impostazioni, Integrità.
-- **Esercitazioni DR (off-site).** BombVault ripristina una destinazione reale dal repo off-site in una sandbox usa e getta, la verifica file per file e byte per byte, poi ripulisce. Questo dimostra che puoi recuperare da off-site, non solo che il repo risponde.
+- **Esercitazioni DR (off-site).** BombVault ripristina una destinazione reale dal repo off-site in una sandbox usa e getta, la verifica file per file e byte per byte, poi ripulisce. Questo dimostra che puoi recuperare da off-site, non solo che il repo risponde. Vengono esercitati solo i luoghi in un altro sito, perché una copia nella stessa casa non dimostra nulla sulla perdita della casa. Un dominio copiato su più di essi viene esercitato su uno per ogni esecuzione pianificata, a turno, e la Dashboard indica il luogo dell'ultima esercitazione.
 
 La **scorecard della protezione dal ransomware** sulla Dashboard riassume tutto questo in una postura verde / ambra / rossa per dominio, con una checklist con marca temporale (off-site configurato, append-only verificato, replica aggiornata, esercitazione di ripristino superata, cifratura attiva, strategia di pota impostata). Ogni riga rossa collega direttamente alla soluzione, e la scheda diventa verde solo su fatti verificati.
 
@@ -124,7 +126,7 @@ Due macchine: **TOWER** esegue i container e invia i backup, **VAULT** li riceve
 
 Il primo segmento del percorso è l'utente htpasswd, qui `tower`, e ogni dominio riceve la sua cartella al di sotto, per esempio `rest:http://VAULT:8000/tower/container`. Rispondi a **Dove si trova il dispositivo?** con **In un altro sito**, clicca **Aggiungi** e spunta il luogo in **Copiato su** per i domini che devono andare lì.
 
-**3. Su TOWER, attiva Append-only** in **Protezione** nei dettagli del luogo, poi clicca **Verifica append-only**. Il test viene eseguito per ogni dominio che il luogo salva o copia, e ognuno deve dire *eliminazione rifiutata*. Cosa significano le risposte:
+**3. Su TOWER, attiva Append-only** in **Protezione** nei dettagli del luogo, poi clicca **Verifica append-only**. Il test sonda ogni percorso di dominio, copia e repository del luogo e dà un'unica risposta per il luogo, che deve essere *eliminazione rifiutata*. Cosa significano le risposte:
 
 | Risultato | Cosa è successo |
 | --- | --- |
@@ -145,9 +147,9 @@ Il primo segmento del percorso è l'utente htpasswd, qui `tower`, e ogni dominio
 
 Una scheda **Ripristino** dedicata accompagna un'installazione pulita o ricostruita attraverso il caso di disastro, in un unico posto:
 
-1. **Ripristina prima le impostazioni di BombVault stesso**, così i percorsi di backup, le destinazioni off-site e le credenziali di cui il resto del flusso ha bisogno risultano precompilati (applicato tramite un auto-riavvio sul socket Docker, così il database delle impostazioni in esecuzione non viene mai sovrascritto sotto un handle aperto).
-2. **Verifica che BombVault possa leggere i tuoi backup** (l'insidia della chiave di crittografia messa in primo piano).
-3. Ti permette di **puntare al tuo repo esistente**: una cartella locale, oppure un luogo remoto collegato tramite la stessa finestra **Aggiungi luogo** di Impostazioni, Archiviazione.
+1. **Verifica che BombVault possa leggere i tuoi backup** (l'insidia della chiave di crittografia messa in primo piano).
+2. **Ripristina le impostazioni di BombVault stesso**, così i percorsi di backup, le destinazioni off-site e le credenziali di cui il resto del flusso ha bisogno risultano precompilati. Legge il backup delle impostazioni dal luogo che la riga Auto-backup indica in **Salvato su**, oppure dalla copia dell'Auto-backup in **Copiato su**, e mostra quel luogo con il suo indirizzo; per leggere da un altro luogo, modifica prima la riga Auto-backup al passaggio 3. Il ripristino viene applicato tramite un auto-riavvio sul socket Docker, così il database delle impostazioni in esecuzione non viene mai sovrascritto sotto un handle aperto.
+3. **Collega i tuoi backup esistenti** tramite le righe della scheda Domini: nella riga di ogni dominio, scegli in **Salvato su** il luogo in cui si trovano i suoi backup e in **Copiato su** i luoghi che contengono le sue copie. Un luogo che nessuna riga offre ancora, come una condivisione, un server o un bucket cloud, si collega con **Aggiungi luogo**, la stessa finestra di Impostazioni, Archiviazione. **Connetti e anteprima** controlla poi che i backup si possano leggere.
 4. **Scopre** i container, le VM e i set di file memorizzati al suo interno.
 5. **Li ripristina tutti** (lasciati fermi, così li avvii deliberatamente), con il tuo kit di ripristino a un clic di distanza.
 

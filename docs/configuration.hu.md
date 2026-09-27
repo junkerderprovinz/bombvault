@@ -84,7 +84,7 @@ A telephelyen kívüli másolatok tárhelyekre kerülnek. Add hozzá a tárhelye
 
 ## Hordozható beállítások (exportálás és importálás) {#portable-settings-export-and-import}
 
-Az **Exportálás és importálás beállítások** kártya a Beállítások oldalon a teljes BombVault-konfigurációdat (tartománybeállítások, tárhelyek, ütemezések, értesítések) egy hordozható JSON-fájlba írja, amelyet egy másik példányon importálhatsz, így egy új gépre költözés vagy egy beállítás klónozása nem jelenti azt, hogy mindent kézzel kell újra beírni. Az importálás előnézetet mutat és megerősítést kér, és soha nem érinti a mentési adataidat vagy előzményeidet.
+Az **Exportálás és importálás beállítások** kártya a Beállítások oldalon a teljes BombVault-konfigurációdat (tartománybeállítások, tárhelyek, ütemezések, értesítések) egy hordozható JSON-fájlba írja, amelyet egy másik példányon importálhatsz, így egy új gépre költözés vagy egy beállítás klónozása nem jelenti azt, hogy mindent kézzel kell újra beírni. Az importálás előnézetet mutat és megerősítést kér, és soha nem érinti a mentési adataidat vagy előzményeidet. Az előnézet megszámolja a fájlban lévő tárhelyeket, a hitelesítő adatokkal együtt pedig a hitelesítő adatkészleteket is; egy régebbi, tárhelyek nélküli fájlnál a BombVault az importált beállításokból hozza létre őket.
 
 !!! warning "Az export hitelesítő adatokat tartalmazhat"
     Te választod meg, hogy belefoglalod-e a fájlba a tárhelyeid és az értesítéseid hitelesítő adatait. A hitelesítő adatokkal együtt az export olyan érzékeny, mint a helyreállítási csomagod, ezért tárold biztonságos helyen. Nélkülük a fájl csak nem-titkos beállításokat tartalmaz.

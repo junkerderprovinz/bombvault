@@ -27,12 +27,12 @@ Elke plek is een rij met de provider, waarvoor de plek wordt gebruikt en de laat
 
 - **Algemeen**: de naam, de schakelaar die de plek aan- en uitzet, het adres en, bij een apparaat dat je zelf beheert, **Waar staat het apparaat?** (zie [Buiten het pand](#off-the-premises)).
 - **Bewaarbeleid**: keep-last, dagelijks, wekelijks en maandelijks, voor elke repository op de plek. Een nieuwe plek begint met de standaardregels; een plek waar elke regel op nul staat, trimt nooit.
-- **Bescherming**: de schakelaar **Append-only**. De andere kant moet append-only afdwingen; staat de schakelaar aan, dan schoont BombVault daar nooit iets op en verwijdert het er nooit iets. Bij een rest-server met append-only aan voert **Op append-only testen** de tamper-test uit voor elk domein dat de plek opslaat of kopieert, en toont *verwijderen geweigerd* of *verwijderen toegestaan* (zie [Off-site en herstel](offsite-recovery.md)). Alleen externe plekken hebben dit onderdeel, omdat niets op deze machine kan voorkomen dat een lokale repository wordt verwijderd.
+- **Bescherming**: de schakelaar **Append-only**. De andere kant moet append-only afdwingen; staat de schakelaar aan, dan schoont BombVault daar nooit iets op en verwijdert het er nooit iets. Bij een rest-server met append-only aan voert **Op append-only testen** de tamper-test uit tegen elk domeinpad, elke ingeschakelde kopie en elke repository op de plek, en toont één antwoord voor de hele plek: *verwijderen geweigerd* of *verwijderen toegestaan* (zie [Off-site en herstel](offsite-recovery.md)). Alleen externe plekken hebben dit onderdeel, omdat niets op deze machine kan voorkomen dat een lokale repository wordt verwijderd.
 - **Toegang**: de inloggegevens en, bij S3, de opslagklasse. Een plek die de gedeelde inloggegevens gebruikt, krijgt bij de eerste wijziging een eigen set. Een directe repository op de plek die de nieuwe inloggegevens niet kunnen openen, houdt de oude, en het antwoord meldt dat. Map-, SFTP- en rclone-plekken hebben dit onderdeel niet.
 - **Limieten**: de upload- en downloadsnelheid en het groeibudget.
 - **Mappen**: één schakelaar per domein, met de naam van de map. Een domein dat hier is uitgeschakeld, kan de plek niet kiezen.
 
-De retentie verlagen of append-only uitschakelen vraagt eerst om bevestiging en zegt hoeveel items dat raakt. Een plek uitschakelen schakelt elke repository op die plek uit; een plek waarin een domein is opgeslagen, kan niet worden uitgeschakeld.
+De retentie verlagen vraagt eerst om bevestiging en zegt hoeveel items dat raakt; append-only uitschakelen vraagt eerst om bevestiging en zegt hoeveel repository's op de plek die bescherming verliezen. Een plek uitschakelen schakelt elke repository op die plek uit; een plek waarin een domein is opgeslagen, kan niet worden uitgeschakeld.
 
 ## De kaart Domeinen {#domains}
 
@@ -57,7 +57,7 @@ Een plek kan alleen worden verwijderd zolang niets de plek gebruikt: er is daar 
 
 ## Zonder plek {#without-a-place}
 
-Een adres dat niet past in de vorm van een plek plus een map, blijft werken en staat met zijn adres onder **Zonder plek**. Native `b2:`-, `gs:`- en `swift:`-adressen horen daarbij. **Aan plek toewijzen** koppelt zo'n rij aan een plek, na dezelfde test als bij [een adres wijzigen](#addresses). Een kopieerdoel zonder plek staat ook op de rij van zijn domein, naast de chips, en blijft kopiëren.
+Een adres dat niet past in de vorm van een plek plus een map, blijft werken en staat met zijn adres onder **Zonder plek**. Native `b2:`-, `gs:`- en `swift:`-adressen horen daarbij. **Aan plek toewijzen** koppelt zo'n rij aan een plek, na dezelfde test als bij [een adres wijzigen](#addresses). Een kopieerdoel zonder plek staat ook op de rij van zijn domein, naast de chips, en blijft kopiëren. Een externe rij daar heeft een eigen schakelaar **Append-only**, en die uitschakelen vraagt eerst om bevestiging met het aantal items dat back-ups op dat adres bewaart. Een directe repository volgt de schakelaar van zijn doel.
 
 ## Buiten het pand {#off-the-premises}
 

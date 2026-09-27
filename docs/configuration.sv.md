@@ -84,7 +84,7 @@ Off-site-kopior går till lagringsplatser. Lägg till lagringsplatsen under **In
 
 ## Portabla inställningar (exportera och importera) {#portable-settings-export-and-import}
 
-Kortet **Exportera och importera inställningar** på Inställningar-sidan skriver hela din BombVault-konfiguration (domäninställningar, lagringsplatser, scheman, aviseringar) till en portabel JSON-fil som du kan importera på en annan instans, så att en flytt till en ny box eller kloning av en uppsättning inte innebär att allt måste matas in på nytt för hand. Import visar en förhandsgranskning och ber om bekräftelse, och den rör aldrig dina säkerhetskopieringsdata eller historik.
+Kortet **Exportera och importera inställningar** på Inställningar-sidan skriver hela din BombVault-konfiguration (domäninställningar, lagringsplatser, scheman, aviseringar) till en portabel JSON-fil som du kan importera på en annan instans, så att en flytt till en ny box eller kloning av en uppsättning inte innebär att allt måste matas in på nytt för hand. Import visar en förhandsgranskning och ber om bekräftelse, och den rör aldrig dina säkerhetskopieringsdata eller historik. Förhandsgranskningen räknar lagringsplatserna i filen och, med uppgifterna, autentiseringsuppsättningarna; för en äldre fil utan lagringsplatser bygger BombVault dem från de importerade inställningarna.
 
 !!! warning "Exporten kan innehålla uppgifter"
     Du väljer om inloggningsuppgifterna för dina lagringsplatser och aviseringar ska inkluderas i filen. Med uppgifter inkluderade är exporten lika känslig som ditt återställningskit, så förvara den på en säker plats. Utan dem innehåller filen endast icke-hemliga inställningar.
