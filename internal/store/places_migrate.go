@@ -59,6 +59,9 @@ func (r *Repo) ApplyPlacesMigration(migrated []MigratedPlace) error {
 					return err
 				}
 			}
+			if err := markOffWithPlaceTx(tx, p); err != nil {
+				return err
+			}
 			for _, d := range m.HomeDomains {
 				if addr, offered := places.Address(p.Base, p.Folders, d, ""); !offered || addr != paths[d] {
 					return fmt.Errorf("the %s path changed while the places were planned", d)

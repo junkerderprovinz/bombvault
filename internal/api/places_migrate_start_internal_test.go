@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -37,6 +38,26 @@ func TestThePlacesMigrationRunsOnceAndMarksTheDatabase(t *testing.T) {
 	}
 	if row, _, err := f.st.GetOffsiteTarget(later.ID); err != nil || row.PlaceID != "" {
 		t.Fatalf("a target added after the move = %+v, %v, want it left alone", row, err)
+	}
+}
+
+func TestASwitchedOffTargetComesOnWithTheSwitchedOffPlaceTheMoveGaveIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "s3:https://s3.us-west-004.backblazeb2.com/bv/containers")
+	b2.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(b2); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.MigrateToPlaces(); err != nil {
+		t.Fatal(err)
+	}
+	placed := f.storedTarget(b2.ID)
+
+	if res := f.do(http.MethodPatch, "/api/places/"+placed.PlaceID, map[string]any{"enabled": true}); res["ok"] != true {
+		t.Fatalf("PATCH = %v", res)
+	}
+	if row := f.storedTarget(b2.ID); !row.Enabled {
+		t.Fatalf("B2 = %+v, want it on with its place", row)
 	}
 }
 

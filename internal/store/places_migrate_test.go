@@ -160,6 +160,37 @@ func TestApplyPlacesMigrationWritesNothingWhenADomainPathMovedSinceThePlan(t *te
 	assertNothingMigrated(t, r, b2.ID)
 }
 
+// A migrated place is off only when every row on it was, and nothing says which
+// switch turned them off, so they go with the place as migration 127 has it.
+func TestARowOffAtAMigratedPlaceThatIsOffComesOnWithIt(t *testing.T) {
+	r, b2, nas := placesMigrationScene(t)
+	b2.Enabled = false
+	if _, err := r.UpsertOffsiteTarget(b2); err != nil {
+		t.Fatal(err)
+	}
+	plan := migrationFor(b2, nas)
+	plan[1].Place.Enabled = false
+	if err := r.ApplyPlacesMigration(plan); err != nil {
+		t.Fatal(err)
+	}
+	row, _, err := r.GetOffsiteTarget(b2.ID)
+	if err != nil || !row.OffWithPlace {
+		t.Fatalf("B2 = %+v, %v, want it marked off with its place", row, err)
+	}
+
+	p, err := r.GetPlace(row.PlaceID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p.Enabled = true
+	if _, err := r.WritePlace(store.PlaceWrite{Place: p}); err != nil {
+		t.Fatal(err)
+	}
+	if row, _, err := r.GetOffsiteTarget(b2.ID); err != nil || !row.Enabled || row.OffWithPlace {
+		t.Fatalf("B2 after its place came on = %+v, %v, want it on", row, err)
+	}
+}
+
 func TestApplyPlacesMigrationRunsOnce(t *testing.T) {
 	r, b2, nas := placesMigrationScene(t)
 	if err := r.ApplyPlacesMigration(migrationFor(b2, nas)); err != nil {
