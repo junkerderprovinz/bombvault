@@ -694,7 +694,7 @@ const sv: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Ta bort alla säkerhetskopior",
-  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "Ta bort ALLA lokala säkerhetskopior av denna VM? Ögonblicksbilderna tas bort permanent och det lokala arkivet rensas. Kopior på externa mål finns kvar. Detta kan inte ångras.",
   "snapshots.deletingAll": "Tar bort…",
 
   // Snapshot tags + compare (diff)
@@ -1128,7 +1128,7 @@ const sv: Partial<Translations> = {
   "files.noPathHint": "Återuppbyggd från säkerhetskopior utan mapp. Ange en mapp för att säkerhetskopiera igen. Återställning till en mapp fungerar redan.",
   "files.deleteSet": "Ta bort mappuppsättning",
   "files.deleteSetConfirm": "Ta bort denna mappuppsättning från listan? Dess säkerhetskopior tas inte bort och kan återupptäckas senare.",
-  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "Ta bort ALLA lokala säkerhetskopior av denna mappuppsättning? Ögonblicksbilderna tas bort permanent, det lokala repositoriet rensas och uppsättningen glöms. Kopior på externa mål finns kvar, utan någon uppsättning som känner till dem. Detta kan inte ångras.",
   "files.restoreOriginal": "Återställ till ursprunglig plats",
   "files.restoreOriginalConfirm": "Återställa denna säkerhetskopia över uppsättningens mapp? Befintliga filer skrivs över.",
   "files.restoreToFolder": "Återställ till en mapp",

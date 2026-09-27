@@ -687,7 +687,7 @@ const zh: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "删除所有备份",
-  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "删除此虚拟机的所有本地备份？快照将被永久移除，并对本地仓库执行清理。异地目标上的副本会保留。此操作无法撤销。",
   "snapshots.deletingAll": "删除中…",
 
   // Snapshot tags + compare (diff)
@@ -1121,7 +1121,7 @@ const zh: Partial<Translations> = {
   "files.noPathHint": "从没有文件夹信息的备份中重建。设置文件夹后即可再次备份。恢复到文件夹现在就可用。",
   "files.deleteSet": "删除文件夹集",
   "files.deleteSetConfirm": "从列表中移除此文件夹集？其备份不会被删除，之后可以重新发现。",
-  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "删除此文件夹集的所有本地备份？快照将被永久移除，本地仓库将被清理，文件夹集将被遗忘。异地目标上的副本会保留，但不再有任何文件夹集知道它们。此操作无法撤销。",
   "files.restoreOriginal": "恢复到原始位置",
   "files.restoreOriginalConfirm": "将此备份恢复到文件集的文件夹上？现有文件将被覆盖。",
   "files.restoreToFolder": "恢复到文件夹",

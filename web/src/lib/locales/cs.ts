@@ -692,7 +692,7 @@ const cs: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Smazat všechny zálohy",
-  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "Smazat VŠECHNY místní zálohy tohoto VM? Snímky budou trvale odstraněny a místní repozitář bude vyčištěn. Kopie ve vzdálených cílech zůstanou. Tuto akci nelze vrátit zpět.",
   "snapshots.deletingAll": "Mazání…",
 
   // Snapshot tags + compare (diff)
@@ -1126,7 +1126,7 @@ const cs: Partial<Translations> = {
   "files.noPathHint": "Obnoveno ze záloh bez složky. Nastavte složku, aby se sada znovu zálohovala. Obnova do složky funguje už teď.",
   "files.deleteSet": "Smazat sadu složek",
   "files.deleteSetConfirm": "Odebrat tuto sadu složek ze seznamu? Její zálohy se nesmažou a lze je později znovu objevit.",
-  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "Smazat VŠECHNY místní zálohy této sady složek? Snímky budou trvale odstraněny, místní repozitář vyčištěn a sada zapomenuta. Kopie ve vzdálených cílech zůstanou, ale žádná sada o nich už nebude vědět. Nelze vrátit zpět.",
   "files.restoreOriginal": "Obnovit na původní místo",
   "files.restoreOriginalConfirm": "Obnovit tuto zálohu přes složku sady? Stávající soubory budou přepsány.",
   "files.restoreToFolder": "Obnovit do složky",

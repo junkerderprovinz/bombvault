@@ -694,7 +694,7 @@ const da: Partial<Translations> = {
 
   // Backups extra (delete all + diff)
   "snapshots.deleteAll": "Slet alle sikkerhedskopier",
-  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "Slet ALLE lokale sikkerhedskopier af denne VM? Øjebliksbillederne fjernes permanent og det lokale repositorie beskæres. Kopier på eksterne mål bliver. Kan ikke fortrydes.",
   "snapshots.deletingAll": "Sletter…",
 
   // Snapshot tags + compare (diff)
@@ -1128,7 +1128,7 @@ const da: Partial<Translations> = {
   "files.noPathHint": "Genopbygget fra sikkerhedskopier uden mappe. Angiv en mappe for at sikkerhedskopiere igen. Gendannelse til en mappe virker allerede.",
   "files.deleteSet": "Slet mappesæt",
   "files.deleteSetConfirm": "Fjerne dette mappesæt fra listen? Dets sikkerhedskopier slettes ikke og kan genopdages senere.",
-  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "Slet ALLE lokale sikkerhedskopier af dette mappesæt? Øjebliksbillederne fjernes permanent, det lokale repositorie beskæres, og sættet glemmes. Kopier på eksterne mål bliver, uden et sæt der kender dem. Kan ikke fortrydes.",
   "files.restoreOriginal": "Gendan på oprindelig placering",
   "files.restoreOriginalConfirm": "Gendanne denne sikkerhedskopi oven i sættets mappe? Eksisterende filer overskrives.",
   "files.restoreToFolder": "Gendan til en mappe",

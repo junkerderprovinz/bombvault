@@ -694,7 +694,7 @@ const th: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "ลบการสำรองข้อมูลทั้งหมด",
-  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "ลบการสำรองข้อมูลในเครื่องทั้งหมดของ VM นี้? สแนปช็อตจะถูกลบอย่างถาวรและรีพอสิทอรีในเครื่องจะถูกตัดทิ้ง สำเนาที่เป้าหมายนอกสถานที่ยังคงอยู่ ไม่สามารถเลิกทำได้",
   "snapshots.deletingAll": "กำลังลบ…",
 
   // Snapshot tags + compare (diff)
@@ -1131,7 +1131,7 @@ const th: Partial<Translations> = {
   "files.noPathHint": "สร้างขึ้นใหม่จากการสำรองข้อมูลโดยไม่มีโฟลเดอร์ กำหนดโฟลเดอร์เพื่อสำรองข้อมูลอีกครั้ง การกู้คืนไปยังโฟลเดอร์ใช้งานได้แล้ว",
   "files.deleteSet": "ลบชุดโฟลเดอร์",
   "files.deleteSetConfirm": "นำชุดโฟลเดอร์นี้ออกจากรายการ? การสำรองข้อมูลของมันจะไม่ถูกลบและสามารถค้นพบใหม่ได้ภายหลัง",
-  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "ลบการสำรองข้อมูลในเครื่องทั้งหมดของชุดโฟลเดอร์นี้? สแนปช็อตจะถูกลบอย่างถาวร รีพอสิทอรีในเครื่องจะถูกตัดทิ้ง และชุดจะถูกลืม สำเนาที่เป้าหมายนอกสถานที่ยังคงอยู่ แต่ไม่มีชุดใดรู้จักสำเนาเหล่านั้นอีก ไม่สามารถเลิกทำได้",
   "files.restoreOriginal": "กู้คืนไปยังตำแหน่งเดิม",
   "files.restoreOriginalConfirm": "กู้คืนการสำรองข้อมูลนี้ทับโฟลเดอร์ของชุด? ไฟล์ที่มีอยู่จะถูกเขียนทับ",
   "files.restoreToFolder": "กู้คืนไปยังโฟลเดอร์",

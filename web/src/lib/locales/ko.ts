@@ -687,7 +687,7 @@ const ko: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "모든 백업 삭제",
-  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "이 VM의 로컬 백업을 모두 삭제하시겠습니까? 스냅샷이 영구적으로 제거되고 로컬 저장소가 정리됩니다. 오프사이트 대상에 있는 사본은 남습니다. 되돌릴 수 없습니다.",
   "snapshots.deletingAll": "삭제 중…",
 
   // Snapshot tags + compare (diff)
@@ -1121,7 +1121,7 @@ const ko: Partial<Translations> = {
   "files.noPathHint": "폴더 정보 없이 백업에서 재구성되었습니다. 다시 백업하려면 폴더를 설정하세요. 폴더로 복원은 지금도 가능합니다.",
   "files.deleteSet": "폴더 세트 삭제",
   "files.deleteSetConfirm": "이 폴더 세트를 목록에서 제거할까요? 백업은 삭제되지 않으며 나중에 다시 발견할 수 있습니다.",
-  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "이 폴더 세트의 로컬 백업을 모두 삭제할까요? 스냅샷이 영구적으로 제거되고 로컬 저장소가 정리되며 세트는 잊혀집니다. 오프사이트 대상에 있는 사본은 남지만, 그 사본을 아는 세트는 더 이상 없습니다. 되돌릴 수 없습니다.",
   "files.restoreOriginal": "원래 위치로 복원",
   "files.restoreOriginalConfirm": "이 백업을 세트의 폴더 위에 복원할까요? 기존 파일을 덮어씁니다.",
   "files.restoreToFolder": "폴더로 복원",

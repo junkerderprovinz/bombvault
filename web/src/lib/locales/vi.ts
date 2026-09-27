@@ -687,7 +687,7 @@ const vi: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Xóa tất cả bản sao lưu",
-  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "Xóa TẤT CẢ bản sao lưu cục bộ của VM này? Các snapshot bị xóa vĩnh viễn và kho cục bộ được dọn bớt. Các bản sao ở đích ngoại vi vẫn được giữ lại. Không thể hoàn tác.",
   "snapshots.deletingAll": "Đang xóa…",
 
   // Snapshot tags + compare (diff)
@@ -1121,7 +1121,7 @@ const vi: Partial<Translations> = {
   "files.noPathHint": "Được dựng lại từ các bản sao lưu mà không có thư mục. Đặt một thư mục để sao lưu lại. Khôi phục vào thư mục đã hoạt động ngay.",
   "files.deleteSet": "Xóa bộ thư mục",
   "files.deleteSetConfirm": "Gỡ bộ thư mục này khỏi danh sách? Các bản sao lưu của nó không bị xóa và có thể được phát hiện lại sau.",
-  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "Xóa TẤT CẢ bản sao lưu cục bộ của bộ thư mục này? Các snapshot bị xóa vĩnh viễn, kho cục bộ được dọn bớt và bộ sẽ bị quên. Các bản sao ở đích ngoại vi vẫn được giữ lại, nhưng không còn bộ nào biết đến chúng. Không thể hoàn tác.",
   "files.restoreOriginal": "Khôi phục về vị trí gốc",
   "files.restoreOriginalConfirm": "Khôi phục bản sao lưu này đè lên thư mục của bộ? Các tập tin hiện có sẽ bị ghi đè.",
   "files.restoreToFolder": "Khôi phục vào một thư mục",

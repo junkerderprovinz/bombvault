@@ -767,7 +767,7 @@ const nl: Partial<Translations> = {
 
   // Backups (delete all)
   "snapshots.deleteAll": "Alle back-ups verwijderen",
-  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "ALLE lokale back-ups van deze VM verwijderen? De snapshots worden permanent verwijderd en de lokale repository wordt opgeschoond. Kopieën op off-site bestemmingen blijven. Kan niet ongedaan worden gemaakt.",
   "snapshots.deletingAll": "Verwijderen…",
 
   // Restore to folder
@@ -1125,7 +1125,7 @@ const nl: Partial<Translations> = {
   "files.noPathHint": "Opnieuw opgebouwd uit back-ups zonder map. Stel een map in om weer te back-uppen. Herstellen naar een map werkt nu al.",
   "files.deleteSet": "Mappenset verwijderen",
   "files.deleteSetConfirm": "Deze mappenset uit de lijst verwijderen? De back-ups worden niet verwijderd en kunnen later opnieuw worden ontdekt.",
-  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "ALLE lokale back-ups van deze mappenset verwijderen? De snapshots worden permanent verwijderd, de lokale repository wordt opgeschoond en de set wordt vergeten. Kopieën op off-site bestemmingen blijven, zonder set die ze nog kent. Kan niet ongedaan worden gemaakt.",
   "files.restoreOriginal": "Herstellen op oorspronkelijke locatie",
   "files.restoreOriginalConfirm": "Deze back-up over de map van de set herstellen? Bestaande bestanden worden overschreven.",
   "files.restoreToFolder": "Herstellen naar een map",

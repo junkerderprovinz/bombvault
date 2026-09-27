@@ -694,7 +694,7 @@ const ar: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "حذف جميع النسخ الاحتياطية",
-  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "حذف جميع النسخ الاحتياطية المحلية لهذا الـ VM؟ تُزال اللقطات نهائياً ويُقلَّم المستودع المحلي. تبقى النسخ الموجودة على الأهداف الخارجية. لا يمكن التراجع.",
   "snapshots.deletingAll": "جارٍ الحذف…",
 
   // Snapshot tags + compare (diff)
@@ -1131,7 +1131,7 @@ const ar: Partial<Translations> = {
   "files.noPathHint": "أُعيد بناؤه من النسخ الاحتياطية دون مجلد. حدِّد مجلداً لنسخه احتياطياً من جديد. الاستعادة إلى مجلد تعمل بالفعل.",
   "files.deleteSet": "حذف مجموعة المجلدات",
   "files.deleteSetConfirm": "إزالة مجموعة المجلدات هذه من القائمة؟ لن تُحذف نسخها الاحتياطية ويمكن اكتشافها مجدداً لاحقاً.",
-  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "حذف جميع النسخ الاحتياطية المحلية لمجموعة المجلدات هذه؟ تُزال اللقطات نهائياً ويُقلَّم المستودع المحلي وتُنسى المجموعة. تبقى النسخ الموجودة على الأهداف الخارجية، دون مجموعة تعرفها. لا يمكن التراجع.",
   "files.restoreOriginal": "الاستعادة إلى الموقع الأصلي",
   "files.restoreOriginalConfirm": "استعادة هذه النسخة الاحتياطية فوق مجلد المجموعة؟ سيتم استبدال الملفات الموجودة.",
   "files.restoreToFolder": "الاستعادة إلى مجلد",
