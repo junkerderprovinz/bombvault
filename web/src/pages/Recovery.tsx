@@ -16,7 +16,7 @@ import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { AddPlaceDialog } from "../components/places/AddPlaceDialog";
 import { DomainRows } from "../components/places/DomainsCard";
-import { PlaceLine, useSelfBackupPlaces } from "../components/recovery/SelfBackupPlace";
+import { CopyPicker, PlaceLine, useSelfBackupPlaces } from "../components/recovery/SelfBackupPlace";
 import { ToggleRow } from "./settings/shared";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { fireAndWaitRun } from "../lib/backupWatch";
@@ -1187,6 +1187,9 @@ export default function Recovery() {
   // since a place owns the config path and a typed one would never be stored.
   const [configSource, setConfigSource] = useState<RepoSource>("local");
   const selfBackup = useSelfBackupPlaces();
+  const [chosenCopy, setChosenCopy] = useState("");
+  const copies = selfBackup?.copies ?? [];
+  const copy = copies.find((c) => c.targetId === chosenCopy) ?? copies[0];
   type ConfigPhase = "idle" | "staging" | "restarting" | "manual" | "reload" | "error";
   const [configPhase, setConfigPhase] = useState<ConfigPhase>("idle");
   const [configError, setConfigError] = useState<string | null>(null);
@@ -1307,10 +1310,10 @@ export default function Recovery() {
   }, [settings, checkReadable, runEncryptionDetect, push, t]);
 
   // restoreOwnConfig stages a restore of BombVault's own settings from the
-  // Self-Backup's place, or from its copy, and follows the restart that
-  // applies it: with autoRestart it waits for the app and reloads, otherwise it
-  // shows the manual restart instruction.
-  const copyId = selfBackup?.copy?.targetId;
+  // Self-Backup's place, or from the copy chosen in the step, and follows the
+  // restart that applies it: with autoRestart it waits for the app and reloads,
+  // otherwise it shows the manual restart instruction.
+  const copyId = copy?.targetId;
   const restoreOwnConfig = useCallback(async () => {
     if (configSource === "offsite" && !copyId) return;
     setConfigPhase("staging");
@@ -1604,13 +1607,14 @@ export default function Recovery() {
                     />
                     <p className="text-xs text-carbon-textMuted leading-relaxed">{t("recovery.configOtherHome")}</p>
                   </>
-                ) : selfBackup?.copy ? (
+                ) : copy ? (
                   <>
-                    <PlaceLine
+                    <CopyPicker
                       label={t("storageDomains.copiedTo")}
-                      place={selfBackup.copy.place}
-                      name={selfBackup.copy.place?.name ?? selfBackup.copy.name}
-                      address={settings.configOffsite}
+                      copies={copies}
+                      value={copy}
+                      onChange={setChosenCopy}
+                      disabled={configBusy}
                     />
                     <p className="text-xs text-carbon-textMuted leading-relaxed">{t("recovery.configOtherCopy")}</p>
                   </>

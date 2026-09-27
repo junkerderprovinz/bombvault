@@ -1,18 +1,36 @@
 import { useEffect, useState } from "react";
 import { PlaceMark } from "../placeMarks";
-import { listOffsiteTargets } from "../../lib/api";
+import { SelectField } from "../SelectField";
+import { listOffsiteTargets, type OffsiteTarget } from "../../lib/api";
 import { listPlaces, subscribePlaces, type Place } from "../../lib/places";
 import { subscribeOffsiteTargets } from "../../lib/useOffsiteTargets";
+
+export interface SelfBackupCopy {
+  targetId: string;
+  name: string;
+  repo: string;
+  place?: Place;
+}
 
 export interface SelfBackupPlaces {
   /** The place the Self-Backup row names as Stored in. */
   home?: Place;
-  /** The target the Self-Backup's off-site field stands for, and its place. */
-  copy?: { targetId: string; name: string; place?: Place };
+  copies: SelfBackupCopy[];
 }
 
-/** useSelfBackupPlaces reads where the Self-Backup lies and where its first
- *  copy goes, again after every write to a place or a target. Null until the
+/** selfBackupCopies lists the switched-on Self-Backup targets, those at
+ *  another site first: a recovery usually starts because this site is gone. */
+export function selfBackupCopies(targets: OffsiteTarget[], places: Place[]): SelfBackupCopy[] {
+  const copies = targets
+    .filter((x) => x.enabled)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((x) => ({ targetId: x.id, name: x.name, repo: x.repo, place: places.find((p) => p.id === x.placeId) }));
+  const away = (c: SelfBackupCopy) => (c.place?.offPremises ? 0 : 1);
+  return copies.sort((a, b) => away(a) - away(b));
+}
+
+/** useSelfBackupPlaces reads where the Self-Backup lies and where it is
+ *  copied to, again after every write to a place or a target. Null until the
  *  first read lands. */
 export function useSelfBackupPlaces(): SelfBackupPlaces | null {
   const [state, setState] = useState<SelfBackupPlaces | null>(null);
@@ -24,14 +42,13 @@ export function useSelfBackupPlaces(): SelfBackupPlaces | null {
         .then(([p, o]) => {
           if (mine !== seq) return;
           const places = p.ok ? (p.places ?? []) : [];
-          const field = (o.ok ? (o.targets ?? []) : []).find((x) => x.sortOrder === 0);
           setState({
             home: places.find((x) => x.usage.homeDomains.includes("config")),
-            copy: field && { targetId: field.id, name: field.name, place: places.find((x) => x.id === field.placeId) },
+            copies: selfBackupCopies(o.ok ? (o.targets ?? []) : [], places),
           });
         })
         .catch(() => {
-          if (mine === seq) setState({});
+          if (mine === seq) setState({ copies: [] });
         });
     };
     load();
@@ -62,6 +79,45 @@ export function PlaceLine({ label, place, name, address }: { label: string; plac
           {address}
         </span>
       )}
+    </div>
+  );
+}
+
+/** CopyPicker shows the Self-Backup's copies to restore from, as a PlaceLine
+ *  for one and as a choice for several, with the chosen copy's address. */
+export function CopyPicker({
+  label,
+  copies,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  copies: SelfBackupCopy[];
+  value: SelfBackupCopy;
+  onChange: (targetId: string) => void;
+  disabled?: boolean;
+}) {
+  const name = (c: SelfBackupCopy) => c.place?.name ?? (c.name || c.repo);
+  if (copies.length < 2) return <PlaceLine label={label} place={value.place} name={name(value)} address={value.repo} />;
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-xs text-carbon-textSub">{label}</span>
+      <SelectField
+        label={label}
+        value={value.targetId}
+        onChange={onChange}
+        disabled={disabled}
+        options={copies.map((c) => ({
+          value: c.targetId,
+          label: name(c),
+          glyph: c.place && <PlaceMark provider={c.place.provider} />,
+        }))}
+        className="self-start rounded-control bg-carbon-surface2 px-2 py-1.5 text-sm text-carbon-text glim-field-focus"
+      />
+      <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">
+        {value.repo}
+      </span>
     </div>
   );
 }

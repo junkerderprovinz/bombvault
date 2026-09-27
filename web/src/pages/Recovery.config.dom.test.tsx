@@ -26,8 +26,8 @@ const stored = {
 const puts: Settings[] = [];
 const restores: [string, string | undefined][] = [];
 
-function place(id: string, name: string, provider: string, homeDomains: string[]): Place {
-  return { id, name, provider, enabled: true, folders: {}, usage: { homeDomains } } as unknown as Place;
+function place(id: string, name: string, provider: string, homeDomains: string[], offPremises = false): Place {
+  return { id, name, provider, enabled: true, offPremises, folders: {}, usage: { homeDomains } } as unknown as Place;
 }
 
 let places: Place[] = [];
@@ -125,8 +125,8 @@ describe("Recovery's own-settings restore", () => {
   it("restores from the Self-Backup's copy it shows", async () => {
     stored.configOffsite = "b2:bucket/config";
     configTargets = [
-      { id: "t-hz", name: "Hetzner", sortOrder: 1, placeId: "", enabled: true } as OffsiteTarget,
-      { id: "t-b2", name: "B2 target", sortOrder: 0, placeId: "p-b2", enabled: true } as OffsiteTarget,
+      { id: "t-hz", name: "Hetzner", repo: "sftp:hz:/config", sortOrder: 1, placeId: "", enabled: false } as OffsiteTarget,
+      { id: "t-b2", name: "B2 target", repo: "b2:bucket/config", sortOrder: 0, placeId: "p-b2", enabled: true } as OffsiteTarget,
     ];
     await renderPage();
     await offsite();
@@ -136,6 +136,41 @@ describe("Recovery's own-settings restore", () => {
     expect(within(step).getByText(en["recovery.configOtherCopy"])).toBeTruthy();
     await restore();
     expect(restores).toEqual([["latest", "offsite:t-b2"]]);
+  });
+
+  it("finds a copy that is not the Self-Backup's off-site field and offers the one at another site first", async () => {
+    places = [...places, place("p-s3", "S3", "minio", [], true)];
+    configTargets = [
+      { id: "t-nas", name: "NAS", repo: "remotes/nas/config", sortOrder: 1, placeId: "", enabled: true } as OffsiteTarget,
+      { id: "t-s3", name: "S3 target", repo: "s3:http://minio/bv/config", sortOrder: 2, placeId: "p-s3", enabled: true } as OffsiteTarget,
+    ];
+    await renderPage();
+    await offsite();
+    const step = configStep();
+    expect(within(step).queryByText(en["recovery.configNoCopy"])).toBeNull();
+    expect(within(step).getByText("s3:http://minio/bv/config")).toBeTruthy();
+    await restore();
+    expect(restores).toEqual([["latest", "offsite:t-s3"]]);
+  });
+
+  it("restores from the copy the user picks", async () => {
+    places = [...places, place("p-s3", "S3", "minio", [], true)];
+    configTargets = [
+      { id: "t-s3", name: "S3 target", repo: "s3:http://minio/bv/config", sortOrder: 1, placeId: "p-s3", enabled: true } as OffsiteTarget,
+      { id: "t-nas", name: "NAS", repo: "remotes/nas/config", sortOrder: 2, placeId: "", enabled: true } as OffsiteTarget,
+    ];
+    await renderPage();
+    await offsite();
+    const step = configStep();
+    await act(async () => {
+      fireEvent.click(within(step).getByRole("combobox", { name: en["storageDomains.copiedTo"] }));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("option", { name: "NAS" }));
+    });
+    expect(within(step).getByText("remotes/nas/config")).toBeTruthy();
+    await restore();
+    expect(restores).toEqual([["latest", "offsite:t-nas"]]);
   });
 
   it("says where to add a copy and restores nothing off-site while the Self-Backup has none", async () => {
