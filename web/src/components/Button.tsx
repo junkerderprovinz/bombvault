@@ -27,7 +27,7 @@ const STAGE_CLASS: Record<WidthStage, string> = {
  * background set in `className` next to `tone` wins or loses by stylesheet
  * order, so the class list reads right and the button paints wrong.
  */
-export type ButtonTone = "accent" | "neutral" | "subtle" | "danger" | "warn";
+export type ButtonTone = "accent" | "neutral" | "subtle" | "ok" | "danger" | "warn";
 
 /**
  * "chip" is the remove control inside a pill (a selected path, a stop-hook
@@ -42,13 +42,14 @@ export type ButtonTone = "accent" | "neutral" | "subtle" | "danger" | "warn";
  */
 export type ButtonVariant = "default" | "chip" | "icon";
 
-// danger and warn put carbon-background ink on the solid status tokens: in both
-// themes the solid fail/warn values sit at the opposite lightness to the
+// ok, danger and warn put carbon-background ink on the solid status tokens: in
+// both themes the solid status values sit at the opposite lightness to the
 // background, so one ink reads on both.
 const TONE_CLASS: Record<ButtonTone, string> = {
   accent: "bg-accent text-accentContrast hover:opacity-90",
   neutral: "bg-carbon-surface3 text-carbon-text hover:bg-carbon-hoverRaised",
   subtle: "bg-carbon-surface2 text-carbon-text hover:bg-carbon-surface3",
+  ok: "bg-statusOkSolid text-carbon-background hover:opacity-90",
   danger: "bg-statusFailSolid text-carbon-background hover:opacity-90",
   warn: "bg-statusWarnSolid text-carbon-background hover:opacity-90",
 };
@@ -58,6 +59,7 @@ const TONE_INK: Record<ButtonTone, string> = {
   accent: "text-accentContrast",
   neutral: "text-carbon-text",
   subtle: "text-carbon-text",
+  ok: "text-carbon-background",
   danger: "text-carbon-background",
   warn: "text-carbon-background",
 };

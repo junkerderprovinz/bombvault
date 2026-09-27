@@ -185,6 +185,7 @@ it("resolves each tone to its own fill", () => {
   for (const [tone, expected] of [
     ["accent", "bg-accent"],
     ["neutral", "bg-carbon-surface3"],
+    ["ok", "bg-statusOkSolid"],
     ["danger", "bg-statusFailSolid"],
     ["warn", "bg-statusWarnSolid"],
   ] as const) {
