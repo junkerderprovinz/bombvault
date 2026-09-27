@@ -77,7 +77,7 @@ export const CHECK_LINE_LABEL: Record<CheckLine["id"], TranslationKey> = {
  * restoreBlockReason says why Start is locked, for the (i) in the button, or
  * undefined when the check lets the restore start.
  */
-export function restoreBlockReason(check: RestoreCheck, t: (key: TranslationKey) => string): string | undefined {
+export function restoreBlockReason(check: Pick<RestoreCheck, "state">, t: (key: TranslationKey) => string): string | undefined {
   const { state } = check;
   switch (state.phase) {
     case "idle":
@@ -98,7 +98,7 @@ export function restoreBlockReason(check: RestoreCheck, t: (key: TranslationKey)
  * checkRestoreOnce asks for one check, for a row action that has no room to
  * show a running one. A failed request becomes the error state.
  */
-export async function checkRestoreOnce(req: RestoreCheckRequest): Promise<RestoreCheck> {
+export async function checkRestoreOnce(req: RestoreCheckRequest): Promise<Pick<RestoreCheck, "state" | "ready">> {
   let state: RestoreCheckState;
   try {
     const res = await checkRestore(req);
@@ -106,5 +106,5 @@ export async function checkRestoreOnce(req: RestoreCheckRequest): Promise<Restor
   } catch (e) {
     state = { phase: "error", error: e instanceof Error ? e.message : String(e) };
   }
-  return { state, ready: state.phase === "done" && state.result.ready === true, recheck: () => undefined };
+  return { state, ready: state.phase === "done" && state.result.ready === true };
 }

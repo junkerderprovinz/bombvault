@@ -5,7 +5,7 @@
 // dialog with a folder picker and one exclude pattern per line.
 
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { restoreBlockReason, useRestoreCheck } from "../lib/useRestoreCheck";
+import { checkRestoreOnce, restoreBlockReason, useRestoreCheck } from "../lib/useRestoreCheck";
 import { RestoreCheckPanel } from "../components/restore/RestoreCheckPanel";
 import { createPortal } from "react-dom";
 import {
@@ -380,20 +380,32 @@ function FileSetRestoreControl({
   const prog = useProgress()[progressKey];
   const blockedByOther = otherActive.active && !isPending;
   const { confirm, confirmDialog } = useConfirm();
-  const check = useRestoreCheck(
-    dest === "original" || (dest === "folder" && targetPath.trim())
-      ? { kind: "fileSet", name: set.id, snapshotId, source, targetPath: dest === "folder" ? targetPath.trim() : "" }
-      : null
-  );
-  const idle = isPending || state.phase === "success";
+  const [checking, setChecking] = useState(false);
 
   // An old result would describe another destination, so a new choice clears
   // it (a no-op while a restore runs).
   useEffect(() => reset(), [dest, targetPath, reset]);
 
+  // Every snapshot row carries this control, so the pre-flight check runs on
+  // the click rather than for each row. In place it always asks; into a folder
+  // it only speaks up when the restore cannot work.
   async function handleRestore() {
-    if (dest === "original" && !(await confirm(t("files.restoreOriginalConfirm")))) return;
     if (dest === "folder" && targetPath.trim() === "") return;
+    setChecking(true);
+    const check = await checkRestoreOnce({
+      kind: "fileSet",
+      name: set.id,
+      snapshotId,
+      source,
+      targetPath: dest === "folder" ? targetPath.trim() : "",
+    });
+    setChecking(false);
+    const refusal = restoreBlockReason(check, t);
+    const question = dest === "original" ? t("files.restoreOriginalConfirm") : refusal;
+    if (question !== undefined) {
+      const extra = <RestoreCheckPanel check={check} t={t} />;
+      if (!(await confirm(question, { extra, confirmBlocked: refusal }))) return;
+    }
     void fire();
   }
 
@@ -425,10 +437,9 @@ function FileSetRestoreControl({
             labelKey="snapshots.restore"
             tone="accent"
             onClick={() => void handleRestore()}
-            disabled={isPending || blockedByOther || (dest === "folder" && targetPath.trim() === "") || !check.ready}
-            busy={isPending}
+            disabled={isPending || checking || blockedByOther || (dest === "folder" && targetPath.trim() === "")}
+            busy={isPending || checking}
             title={isPending ? t("common.restoring") : undefined}
-            hint={idle ? undefined : restoreBlockReason(check, t)}
             className="shrink-0"
           />
         )}
@@ -450,7 +461,6 @@ function FileSetRestoreControl({
           onChange={setTargetPath}
         />
       )}
-      {dest !== "select" && !idle && <RestoreCheckPanel check={check} t={t} />}
       {dest !== "select" && (
         <RestoreProgress
           state={state}
