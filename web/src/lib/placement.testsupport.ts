@@ -150,7 +150,7 @@ export function placementObserved(over?: Partial<PlacementObserved>): PlacementO
   return {
     noBackup: false,
     places: [
-      observedPlace({ place: "local", label: "", count: 0, latest: 1_758_166_800, seenAt: 1_758_166_800 }),
+      observedPlace({ place: "local", label: "", count: 3, latest: 1_758_166_800, seenAt: 1_758_166_800 }),
       observedPlace(),
     ],
     sites: 2,

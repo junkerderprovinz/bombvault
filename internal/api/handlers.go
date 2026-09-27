@@ -656,6 +656,9 @@ type containerView struct {
 	// DumpOnly: the repositories hold database dumps of this container and no
 	// files backup, so restoring it alone brings back an empty database.
 	DumpOnly bool `json:"dumpOnly"`
+	// homeBackups is how many backups the listing found at the container's
+	// home, nil when the home was not listed.
+	homeBackups *int
 }
 
 // lastDBDumpView is the container's most recent dump attempt. Error carries the
@@ -773,6 +776,9 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		}
 		unlisted := snapTimesFailed || h.svc.primaryRepoIsRemote(settings, "containers", c.Name)
 		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[c.Name].Newest(), unlisted)
+		if !unlisted {
+			v.homeBackups = new(snapTimes[c.Name].Count)
+		}
 		own := v.LastBackup != nil
 		hasOwnBackup[c.Name] = own
 		if !own {
@@ -841,11 +847,14 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		run, _ := h.store.LastSuccessfulBackup(t.ID)
 		unlisted := snapTimesFailed || h.svc.primaryRepoIsRemote(settings, "containers", t.ContainerName)
 		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.ContainerName].Newest(), unlisted)
+		if !unlisted {
+			v.homeBackups = new(snapTimes[t.ContainerName].Count)
+		}
 		views = append(views, v)
 	}
 	items := make([]placementItem, 0, len(views))
 	for _, v := range views {
-		it := placementItem{Key: v.Name, Identity: "container:" + v.Name, Stack: v.Stack}
+		it := placementItem{Key: v.Name, Identity: "container:" + v.Name, Stack: v.Stack, HomeBackups: v.homeBackups}
 		if t, ok := byName[v.Name]; ok {
 			it.Home = store.HomeState{Exists: true, Repo: t.Repo, Choice: t.RepoChosen}
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
@@ -5159,7 +5168,7 @@ func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
 	}
 	items := make([]placementItem, 0, len(views))
 	for _, v := range views {
-		it := placementItem{Key: v.LibvirtName, Identity: "vm:" + v.LibvirtName}
+		it := placementItem{Key: v.LibvirtName, Identity: "vm:" + v.LibvirtName, HomeBackups: v.homeBackups}
 		if t, ok := byName[v.LibvirtName]; ok {
 			it.Home = store.HomeState{Exists: true, Repo: t.Repo, Choice: t.RepoChosen}
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
@@ -5749,7 +5758,8 @@ func (h *Handler) handleListFileSets(w http.ResponseWriter, r *http.Request) {
 		fs := byID[v.ID]
 		it := placementItem{
 			Key: v.ID, Identity: "fileset:" + v.Name,
-			Home: store.HomeState{Exists: true, Repo: fs.Repo, Choice: fs.RepoChosen},
+			Home:        store.HomeState{Exists: true, Repo: fs.Repo, Choice: fs.RepoChosen},
+			HomeBackups: v.homeBackups,
 		}
 		if run, _ := h.store.LastSuccessfulBackup(v.ID); run != nil {
 			it.LastSuccess = run.StartedAt

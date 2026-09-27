@@ -85,3 +85,65 @@ func TestTheContainerAndVMListsReadNoRemoteRepository(t *testing.T) {
 		t.Fatalf("win11's last backup = %v, want the run's", got)
 	}
 }
+
+// homePlaceOf returns the local place of a row's observed placement.
+func homePlaceOf(t *testing.T, res map[string]any, key, name string) map[string]any {
+	t.Helper()
+	rows, _ := res[key].([]any)
+	for _, r := range rows {
+		row, _ := r.(map[string]any)
+		if row["name"] != name {
+			continue
+		}
+		placement, _ := row["placement"].(map[string]any)
+		observed, _ := placement["observed"].(map[string]any)
+		places, _ := observed["places"].([]any)
+		for _, p := range places {
+			if place, _ := p.(map[string]any); place["place"] == "local" {
+				return place
+			}
+		}
+	}
+	t.Fatalf("%s has no local place for %s: %v", key, name, res[key])
+	return nil
+}
+
+func TestTheHomePlaceCountsTheBackupsTheListingFound(t *testing.T) {
+	f := newPlacementFixture(t)
+	const remote = "rest:http://rest.example:8000/files-direct"
+	cloud := f.namedRepo("Cloud", remote)
+	a := f.fileSet("A", "")
+	e := f.fileSet("E", cloud.ID)
+	f.hold(f.domainPath("files"),
+		snap("a1", 1_700_000_100, "fileset:A"), snap("a2", 1_700_000_200, "fileset:A"), snap("a3", 1_700_000_300, "fileset:A"))
+	f.backupRun(a.ID, 1_700_000_300)
+	f.backupRun(e.ID, 1_700_000_300)
+
+	res := f.do(http.MethodGet, "/api/files", nil)
+	if got := homePlaceOf(t, res, "fileSets", "A")["count"]; got != float64(3) {
+		t.Fatalf("A's home counts %v, want 3", got)
+	}
+	if got, ok := homePlaceOf(t, res, "fileSets", "E")["count"]; !ok || got != nil {
+		t.Fatalf("E's home counts %v, want null: its remote home is not listed", got)
+	}
+}
+
+func TestTheContainerAndVMHomePlacesCountTheirBackups(t *testing.T) {
+	f := newPlacementFixture(t)
+	nginx := f.container("nginx", "")
+	f.dock.installed["nginx"] = true
+	win := f.vm("win11", "")
+	f.virsh.defined = []string{"win11"}
+	f.hold(f.domainPath("containers"), snap("n1", 1_700_000_100, "container:nginx"), snap("n2", 1_700_000_200, "container:nginx"),
+		snap("d1", 1_700_000_200, "dbdump:nginx"))
+	f.hold(f.domainPath("vms"), snap("w1", 1_700_000_100, "vm:win11"))
+	f.backupRun(nginx.ID, 1_700_000_200)
+	f.backupRun(win.ID, 1_700_000_100)
+
+	if got := homePlaceOf(t, f.do(http.MethodGet, "/api/containers", nil), "containers", "nginx")["count"]; got != float64(3) {
+		t.Fatalf("nginx's home counts %v, want its two backups and its dump", got)
+	}
+	if got := homePlaceOf(t, f.do(http.MethodGet, "/api/vms", nil), "vms", "win11")["count"]; got != float64(1) {
+		t.Fatalf("win11's home counts %v, want 1", got)
+	}
+}

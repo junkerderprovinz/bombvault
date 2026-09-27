@@ -546,7 +546,7 @@ func TestATakenOverCardCountsTheCopiesItsTargetHolds(t *testing.T) {
 	if o.Sites != 2 || o.Rule321 != "met" {
 		t.Fatalf("observed = %+v, want two sites, 3-2-1 met", o)
 	}
-	if got := placeAt(o, "offsite:"+b2.ID); got.State != "counts" || got.Count != 20 {
+	if got := placeAt(o, "offsite:"+b2.ID); got.State != "counts" || *got.Count != 20 {
 		t.Fatalf("B2 = %+v, want the 20 copies counted", got)
 	}
 }

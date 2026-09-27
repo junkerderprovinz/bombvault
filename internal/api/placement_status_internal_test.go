@@ -147,8 +147,8 @@ func TestObservedCountsAFreshCopyAtTheTarget(t *testing.T) {
 	if o.Sites != 2 || o.Rule321 != "met" || o.Tone != "ok" {
 		t.Fatalf("observed = %+v, want two sites, 3-2-1 met", o)
 	}
-	want := observedPlace{Place: "offsite:" + b2.ID, Label: "B2", Count: 20, Latest: now - 2*hour, SeenAt: now - hour, State: "counts", Counts: true}
-	if got := placeAt(o, "offsite:"+b2.ID); got != want {
+	want := observedPlace{Place: "offsite:" + b2.ID, Label: "B2", Count: new(20), Latest: now - 2*hour, SeenAt: now - hour, State: "counts", Counts: true}
+	if got := placeAt(o, "offsite:"+b2.ID); !reflect.DeepEqual(got, want) {
 		t.Fatalf("B2 = %+v, want %+v", got, want)
 	}
 }
@@ -220,8 +220,8 @@ func TestObservedSaysATargetHoldsNoCopyOfTheItemYet(t *testing.T) {
 	f.listing("containers", b2.ID, now-hour, copiesRow("container:plex", 20, now-2*hour))
 
 	o := f.cardOf("containers", "nginx", now-2*hour).Observed
-	want := observedPlace{Place: "offsite:" + b2.ID, Label: "B2", State: "no-copy"}
-	if got := placeAt(o, "offsite:"+b2.ID); got != want {
+	want := observedPlace{Place: "offsite:" + b2.ID, Label: "B2", Count: new(0), State: "no-copy"}
+	if got := placeAt(o, "offsite:"+b2.ID); !reflect.DeepEqual(got, want) {
 		t.Fatalf("B2 = %+v, want %+v", got, want)
 	}
 	if o.Sites != 1 || o.Rule321 != "one-copy" || o.Tone != "warn" {

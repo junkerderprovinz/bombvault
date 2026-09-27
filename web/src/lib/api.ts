@@ -2466,7 +2466,8 @@ export interface PlacementPlan {
 export interface ObservedPlace {
   place: string;
   label: string;
-  count: number;
+  /** null for a home the list did not read. */
+  count: number | null;
   latest: number;
   seenAt: number;
   stale: boolean;

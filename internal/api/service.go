@@ -7748,10 +7748,12 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 }
 
 // ContainerSnapshotTimes is what the repositories hold for one container: the
-// unix time of its newest files snapshot and of its newest database dump.
+// unix time of its newest files snapshot and of its newest database dump, and
+// how many snapshots of either kind there are.
 type ContainerSnapshotTimes struct {
 	Files int64
 	Dump  int64
+	Count int
 }
 
 // Newest is the time of this container's most recent snapshot of either kind.
@@ -7787,6 +7789,7 @@ func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]Co
 	err := s.eachBackupTime(ctx, "containers", "container", idToName, []string{"container:", dbDumpIdentityPrefix},
 		func(prefix, name string, unix int64) {
 			times := out[name]
+			times.Count++
 			if prefix == dbDumpIdentityPrefix {
 				times.Dump = max(times.Dump, unix)
 			} else {
@@ -7800,16 +7803,23 @@ func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]Co
 	return out, nil
 }
 
+// NameBackups is what the repositories hold under one name: the unix time of
+// its newest snapshot and how many there are.
+type NameBackups struct {
+	Newest int64
+	Count  int
+}
+
 // LatestFileSetBackupTimes is LatestContainerBackupTimes for the folder sets.
 // A set's name is fixed once it has backups, so no former name folds into it;
 // backups left under a name no set carries any more come back as their own set
 // through Discover.
-func (s *Service) LatestFileSetBackupTimes(ctx context.Context) (map[string]int64, error) {
+func (s *Service) LatestFileSetBackupTimes(ctx context.Context) (map[string]NameBackups, error) {
 	return s.latestBackupTimes(ctx, "files", "fileset", "fileset:", nil)
 }
 
 // LatestVMBackupTimes is LatestContainerBackupTimes for the VMs domain.
-func (s *Service) LatestVMBackupTimes(ctx context.Context) (map[string]int64, error) {
+func (s *Service) LatestVMBackupTimes(ctx context.Context) (map[string]NameBackups, error) {
 	idToName := map[string]string{}
 	if targets, tErr := s.store.ListVMTargets(); tErr != nil {
 		log.Printf("api: last-backup times: listing VM targets for alias fold: %v; leaving every tag as its own identity", tErr)
@@ -7821,12 +7831,12 @@ func (s *Service) LatestVMBackupTimes(ctx context.Context) (map[string]int64, er
 	return s.latestBackupTimes(ctx, "vms", "vm", "vm:", idToName)
 }
 
-// latestBackupTimes keeps, per name, the newest time under that name's tag,
-// for a domain whose items have one identity each.
-func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain, prefix string, idToName map[string]string) (map[string]int64, error) {
-	out := map[string]int64{}
+// latestBackupTimes keeps, per name, the newest time under that name's tag and
+// how many snapshots carry it, for a domain whose items have one identity each.
+func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain, prefix string, idToName map[string]string) (map[string]NameBackups, error) {
+	out := map[string]NameBackups{}
 	err := s.eachBackupTime(ctx, domain, aliasDomain, idToName, []string{prefix}, func(_, name string, unix int64) {
-		out[name] = max(out[name], unix)
+		out[name] = NameBackups{Newest: max(out[name].Newest, unix), Count: out[name].Count + 1}
 	})
 	if err != nil {
 		return nil, err
@@ -11506,6 +11516,9 @@ type VMView struct {
 	AliasConflicts []string `json:"aliasConflicts"`
 	// Aliases are the libvirt names this entry had before, oldest link first.
 	Aliases []string `json:"aliases"`
+	// homeBackups is how many backups the listing found at the VM's home, nil
+	// when the home was not listed.
+	homeBackups *int
 }
 
 // vmUUID returns tg's libvirt UUID. An empty column is filled from the saved
@@ -11602,7 +11615,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	// has backups under its own name; a failed read keeps that pass from
 	// guessing, as on the container list. With no VM and no entry there is
 	// nothing to date.
-	var snapTimes map[string]int64
+	var snapTimes map[string]NameBackups
 	snapTimesFailed := false
 	if len(infos) > 0 || len(targets) > 0 {
 		if m, sErr := s.LatestVMBackupTimes(ctx); sErr != nil {
@@ -11633,7 +11646,10 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 			run, _ = s.store.LastSuccessfulBackup(t.ID)
 		}
 		unlisted := snapTimesFailed || s.primaryRepoIsRemote(settings, "vms", vm.Name)
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[vm.Name], unlisted)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[vm.Name].Newest, unlisted)
+		if !unlisted {
+			v.homeBackups = new(snapTimes[vm.Name].Count)
+		}
 		own := v.LastBackup != nil
 		hasOwnBackup[vm.Name] = own
 		if !own {
@@ -11660,7 +11676,10 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		v := VMView{Name: t.Name, LibvirtName: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence, AliasConflicts: aliasConflicts.of(t.ID), Aliases: formerNames.of(t.ID)}
 		run, _ := s.store.LastSuccessfulBackup(t.ID)
 		unlisted := snapTimesFailed || s.primaryRepoIsRemote(settings, "vms", t.Name)
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.Name], unlisted)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.Name].Newest, unlisted)
+		if !unlisted {
+			v.homeBackups = new(snapTimes[t.Name].Count)
+		}
 		views = append(views, v)
 	}
 	return views, nil
@@ -13475,6 +13494,9 @@ type FileSetView struct {
 	// that looks most sensible silently protects nothing).
 	EffectiveSchedule schedule.EffectiveSchedule `json:"effectiveSchedule"`
 	Placement         placementView              `json:"placement"`
+	// homeBackups is how many backups the listing found at the set's home, nil
+	// when the home was not listed.
+	homeBackups *int
 }
 
 // ListFileSetViews returns all configured file sets with their last-backup
@@ -13491,7 +13513,7 @@ func (s *Service) ListFileSetViews(ctx context.Context) ([]FileSetView, error) {
 		return nil, fmt.Errorf("read settings: %w", err)
 	}
 	// Dated from the backups a set owns, as on the container and VM lists.
-	var snapTimes map[string]int64
+	var snapTimes map[string]NameBackups
 	snapTimesFailed := false
 	if len(sets) > 0 {
 		if m, sErr := s.LatestFileSetBackupTimes(ctx); sErr != nil {
@@ -13532,8 +13554,11 @@ func (s *Service) ListFileSetViews(ctx context.Context) ([]FileSetView, error) {
 		v.SelectedPaths = set.SelectedPaths
 		run, _ := s.store.LastSuccessfulBackup(set.ID)
 		unlisted := snapTimesFailed || restic.IsRemoteRepo(v.RepoEffective)
-		if finished, _ := lastBackupDate(run, snapTimes[set.Name], unlisted); finished != nil {
+		if finished, _ := lastBackupDate(run, snapTimes[set.Name].Newest, unlisted); finished != nil {
 			v.LastBackup = *finished
+		}
+		if !unlisted {
+			v.homeBackups = new(snapTimes[set.Name].Count)
 		}
 		if resolved, rErr := paths.Resolve(s.cfg.HostMountRoot, set.Path); rErr == nil {
 			if _, statErr := os.Stat(resolved); statErr == nil { //nolint:gosec // G703: resolved is containment-validated under the host mount root

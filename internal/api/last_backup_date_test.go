@@ -326,10 +326,10 @@ func TestLatestVMBackupTimesFoldsAlias(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LatestVMBackupTimes: %v", err)
 	}
-	if got := times["win11"]; got != unixOf(t, "2024-03-01T00:00:00Z") {
+	if got := times["win11"].Newest; got != unixOf(t, "2024-03-01T00:00:00Z") {
 		t.Fatalf("win11 = %d, want the newest backup from before the link", got)
 	}
-	if got := times["windows-11"]; got != unixOf(t, "2024-09-01T00:00:00Z") {
+	if got := times["windows-11"].Newest; got != unixOf(t, "2024-09-01T00:00:00Z") {
 		t.Fatalf("windows-11 = %d, want the backup made under that name after the link", got)
 	}
 }

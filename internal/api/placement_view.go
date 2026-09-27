@@ -52,6 +52,7 @@ type placementItem struct {
 	Home        store.HomeState
 	LastSuccess int64
 	Stack       string // compose project of a container, "" otherwise
+	HomeBackups *int   // what a listing of the home found, nil when it was not listed
 }
 
 // placementViews builds the block for every item of a list in one pass: one
