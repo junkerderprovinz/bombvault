@@ -496,3 +496,24 @@ func TestCheckRestoreStackWithoutBackupsIsAnError(t *testing.T) {
 		t.Fatal("a stack with no backed-up member has nothing to check")
 	}
 }
+
+func TestCheckRestoreDoesNotCountAnEmptyFolderThatIsAlreadyThere(t *testing.T) {
+	f := newCheckFixture(t)
+	if err := os.MkdirAll(f.appdata+"/shared", 0o750); err != nil {
+		t.Fatal(err)
+	}
+	f.eng.preview = map[string][]restic.PreviewItem{f.appdata: {{Action: "restored", Item: "/shared"}}}
+	res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"})
+	if res.Plan.Added != 0 || len(res.Plan.Files) != 0 {
+		t.Fatalf("plan = %+v", res.Plan)
+	}
+}
+
+func TestCheckRestoreShowsTheFreeSpaceWhenNothingGrows(t *testing.T) {
+	f := newCheckFixture(t)
+	f.eng.preview = map[string][]restic.PreviewItem{f.appdata: {{Action: "unchanged", Item: "/same", Size: 7}}}
+	res := f.check(t, RestoreCheckRequest{Kind: checkContainer, Name: "plex", SnapshotID: "aaaa1111"})
+	if c := lineOf(t, res, lineSpace); c.Status != lineOK || c.Need != 0 || c.Free != 1<<30 {
+		t.Fatalf("space = %+v", c)
+	}
+}

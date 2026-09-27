@@ -62,7 +62,7 @@ const FIELD_LABEL: Record<DefinitionChange["field"], TranslationKey> = {
 };
 
 function lineText(c: CheckLine, t: T): string {
-  if (c.id === "space" && (c.status === "ok" || c.reason === "short") && c.need !== undefined) {
+  if (c.id === "space" && (c.status === "ok" || c.reason === "short") && c.free !== undefined) {
     return t("restoreCheck.space")
       .replace("{need}", humanBytes(c.need ?? 0))
       .replace("{free}", humanBytes(c.free ?? 0));

@@ -113,6 +113,10 @@ func (s *Service) previewRestore(ctx context.Context, sc restoreScope) (RestoreP
 	pctx, cancel := context.WithTimeout(ctx, budget)
 	defer cancel()
 	for _, st := range sc.steps {
+		// A target the restore adds nothing to still gets its free space shown.
+		if _, ok := need[st.Target]; !ok {
+			need[st.Target] = 0
+		}
 		dirs := map[string]bool{}
 		err := s.engine.RestorePreview(pctx, sc.ref.repo, st, sc.ref.mode, func(it restic.PreviewItem) {
 			p := path.Join(st.Target, filepath.ToSlash(it.Item))
@@ -124,6 +128,11 @@ func (s *Service) previewRestore(ctx context.Context, sc restoreScope) (RestoreP
 			}
 			switch it.Action {
 			case "restored":
+				// restic reports every directory it passes as restored, and an
+				// empty one has no contents to give it away.
+				if fi, err := os.Lstat(p); err == nil && fi.IsDir() {
+					return
+				}
 				plan.Added++
 				need[st.Target] += it.Size
 				add(p, changeAdded)
@@ -201,7 +210,7 @@ func (s *Service) spaceLine(sc restoreScope, need map[string]int64, incomplete b
 			line.Need, line.Free = v.need, v.free
 			return line
 		}
-		if v.need > line.Need {
+		if v.need > line.Need || line.Free == 0 {
 			line.Need, line.Free = v.need, v.free
 		}
 	}
