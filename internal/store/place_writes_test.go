@@ -48,6 +48,16 @@ func TestAdoptingARowMovesItOntoThePlaceAndAttachesIt(t *testing.T) {
 	if _, err := r.AdoptRow("nosuchrow", p.ID, "vms", ""); !errors.Is(err, sql.ErrNoRows) {
 		t.Fatalf("AdoptRow of an unknown row = %v, want sql.ErrNoRows", err)
 	}
+	primary, err := r.UpsertPrimaryRemoteTarget("vms", store.OffsiteTarget{Repo: "s3:https://s3.example.com/path/vms", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.AdoptRow(primary.ID, p.ID, "vms", ""); !errors.Is(err, sql.ErrNoRows) {
+		t.Fatalf("AdoptRow of a primary row = %v, want sql.ErrNoRows", err)
+	}
+	if got, found, err := r.PrimaryRemoteTarget("vms"); err != nil || !found || got.Repo != primary.Repo || got.PlaceID != "" {
+		t.Fatalf("primary row = %+v, %v, %v, want it where it was", got, found, err)
+	}
 }
 
 func b2PlaceIn(t *testing.T, r *store.Repo) store.Place {
@@ -77,6 +87,23 @@ func TestAChipWritesItsNewTargetAndTheSkipTogether(t *testing.T) {
 	}
 	if s, err := r.GetSettings(); err != nil || s.ContainersOffsite != row.Repo || !s.ContainersOffsiteImmutable {
 		t.Fatalf("the field = %q %v, %v, want the new target", s.ContainersOffsite, s.ContainersOffsiteImmutable, err)
+	}
+}
+
+func TestAChipWhoseSkipIsRefusedWritesNoTargetEither(t *testing.T) {
+	r := newRepo(t)
+	p := b2PlaceIn(t, r)
+	skip := []string{store.SkipAll, "t-old"}
+
+	if _, err := r.WriteDomainCopies(store.DomainCopiesWrite{Domain: "containers", PlaceID: p.ID, Skip: &skip}); err == nil {
+		t.Fatal("a skip that names every target and one more was written")
+	}
+
+	if rows, err := r.PlaceRows(p.ID); err != nil || len(rows) != 0 {
+		t.Fatalf("rows at the place = %+v, %v, want the new target rolled back", rows, err)
+	}
+	if s, err := r.GetSettings(); err != nil || s.ContainersOffsite != "" {
+		t.Fatalf("the field = %q, %v, want it empty", s.ContainersOffsite, err)
 	}
 }
 

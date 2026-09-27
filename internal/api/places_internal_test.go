@@ -121,6 +121,17 @@ func TestAPlaceFormFillsACredentialSetTheWayItsKindReadsIt(t *testing.T) {
 	}
 }
 
+func TestEveryCredentialOfAPlaceTravelsIntoItsSetAndBack(t *testing.T) {
+	var c places.Creds
+	v := reflect.ValueOf(&c).Elem()
+	for i := range v.NumField() {
+		v.Field(i).SetString(v.Type().Field(i).Name)
+	}
+	if got := placeCredsOf(withPlaceCreds(CloudCredSet{}, c)); got != c {
+		t.Fatalf("round trip = %+v\nwant %+v", got, c)
+	}
+}
+
 func TestAPlaceFormKeepsWhatItLeavesBlank(t *testing.T) {
 	stored := CloudCredSet{ID: "b2", Name: "B2", Kind: "s3",
 		CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1", S3Region: "us-west-004", S3StorageClass: "STANDARD"}}
@@ -418,6 +429,39 @@ func TestAddingACloudPlaceKeepsItsKeysInASetOfItsOwn(t *testing.T) {
 	creds := res["place"].(map[string]any)["creds"].(map[string]any)
 	if creds["shared"] != false || !reflect.DeepEqual(creds["set"], []any{"secret"}) || creds["fields"].(map[string]any)["keyId"] != "AKIA1" {
 		t.Fatalf("creds = %v, want the key id and no secret", creds)
+	}
+}
+
+func TestANewPlaceStartsFromTheGlobalRulesOfItsKind(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.settings(func(s *store.Settings) {
+		s.RetentionKeepLast, s.OffsiteRetentionKeepLast = 5, 3
+		s.OffsiteLimitUpload, s.OffsiteLimitDownload, s.OffsiteGrowthBudgetGB = 100, 200, 50
+	})
+	f.probeAnswers(places.ProbeResult{OK: true, Fields: map[string]string{"bucket": "bv-eu"}})
+
+	for _, body := range []map[string]any{
+		{"provider": "unraid-folder", "fields": map[string]string{"path": "nas"}, "name": "NAS"},
+		{"provider": "gcs", "fields": map[string]string{"keyId": "K", "secret": "S"}, "name": "GCS"},
+	} {
+		if res := f.do(http.MethodPost, "/api/places", body); res["ok"] != true {
+			t.Fatalf("POST %v = %v", body["name"], res)
+		}
+	}
+
+	byName := map[string]store.Place{}
+	for _, p := range placesOf(t, f) {
+		byName[p.Name] = p
+	}
+	if nas := byName["NAS"]; nas.RetentionKeepLast != 5 || nas.LimitUpload != 0 || nas.GrowthBudgetGB != 0 {
+		t.Errorf("NAS = %+v, want the local rule and no caps", nas)
+	}
+	gcs := byName["GCS"]
+	if gcs.RetentionKeepLast != 3 || gcs.LimitUpload != 100 || gcs.LimitDownload != 200 || gcs.GrowthBudgetGB != 50 {
+		t.Errorf("GCS = %+v, want the off-site rule, caps and budget", gcs)
+	}
+	if !strings.Contains(gcs.Base, "/bv-eu") {
+		t.Errorf("GCS base = %q, want the bucket the probe found", gcs.Base)
 	}
 }
 

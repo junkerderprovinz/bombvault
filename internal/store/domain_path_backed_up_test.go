@@ -51,6 +51,32 @@ func TestADomainPathCountsOnlyBackupsWrittenToIt(t *testing.T) {
 	}
 }
 
+func TestAVMOrFolderSetWithARepositoryOfItsOwnLeavesTheDomainPathUnused(t *testing.T) {
+	r := newRepo(t)
+	vm, err := r.UpsertVMTarget(store.VMTarget{Name: "Windows 11", Repo: "nas-repo", RepoChosen: store.RepoChosen})
+	if err != nil {
+		t.Fatal(err)
+	}
+	set, err := r.CreateFileSet(store.FileSet{Name: "Docs", Path: "docs", Enabled: true, Repo: "nas-repo", RepoChosen: store.RepoChosen})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []string{vm.ID, set.ID} {
+		run, err := r.StartRun(id, "backup")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := r.FinishRun(run, "success", "", 0, ""); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, domain := range []string{"vms", "files"} {
+		if backed, err := r.DomainPathBackedUp(domain); err != nil || backed {
+			t.Errorf("%s = %v, %v, want false", domain, backed, err)
+		}
+	}
+}
+
 func TestADomainPathOfVMsAndFolderSetsCountsTheirOwnRuns(t *testing.T) {
 	r := newRepo(t)
 	vm, err := r.UpsertVMTarget(store.VMTarget{Name: "Windows 11"})

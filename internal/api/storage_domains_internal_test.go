@@ -453,6 +453,28 @@ func TestAStaleStoredInAnswerIsRefused(t *testing.T) {
 	}
 }
 
+func TestAStoredInAnswerWithStaleNumbersIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	f.container("nginx", "")
+	f.openContainer("plex")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+	pv := f.homePreview("containers", nas.ID)
+	f.openContainer("immich")
+
+	res := f.putHome("containers", nas.ID, pv, false)
+
+	fresh, _ := res["preview"].(map[string]any)
+	impact, _ := fresh["impact"].(map[string]any)
+	if res["ok"] != false || res["code"] != "stale" || impact["openTakeHome"] != float64(2) {
+		t.Fatalf("PUT = %v, want stale with plex and immich counted", res)
+	}
+	if d, found, err := f.st.PlacementDefaultFor("containers"); err != nil || (found && d.Home != "") {
+		t.Fatalf("default = %+v, %v, %v, want it unchanged", d, found, err)
+	}
+}
+
 func TestADefaultThatMovesDuringTheWriteAnswersStaleWithTheFreshPreview(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
