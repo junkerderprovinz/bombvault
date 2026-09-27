@@ -229,13 +229,13 @@ func TestAFailedCopyRunToAPlaceOutranksAnEarlierSuccess(t *testing.T) {
 	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
 	target := f.placeTarget(b2, "vms", "")
 	lastTest := func() any { return placeByName(t, f.do(http.MethodGet, "/api/places", nil), "B2")["lastTest"] }
-	run := func(at int64, ok bool) {
+	run := func(id string, at int64, errText string) {
 		t.Helper()
-		id, err := f.st.RecordOffsiteRunForTarget("vms", target.ID, at)
+		row, err := f.st.RecordOffsiteRunForTarget("vms", id, at)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := f.st.FinishOffsiteRun(id, ok, ""); err != nil {
+		if err := f.st.FinishOffsiteRun(row, errText == "", errText); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -243,13 +243,43 @@ func TestAFailedCopyRunToAPlaceOutranksAnEarlierSuccess(t *testing.T) {
 	if got := lastTest(); got != nil {
 		t.Fatalf("lastTest before any run = %v", got)
 	}
-	run(100, true)
+	run(target.ID, 100, "")
 	if got := lastTest(); !reflect.DeepEqual(got, map[string]any{"at": float64(100), "ok": true, "source": "run"}) {
 		t.Fatalf("lastTest after a success = %v", got)
 	}
-	run(200, false)
-	if got := lastTest(); !reflect.DeepEqual(got, map[string]any{"at": float64(200), "ok": false, "source": "run"}) {
+	run(target.ID, 200, "timeout")
+	if got := lastTest(); !reflect.DeepEqual(got, map[string]any{"at": float64(200), "ok": false, "error": "timeout", "source": "run"}) {
 		t.Fatalf("lastTest after a failure = %v", got)
+	}
+	run(target.ID, 300, "connection refused")
+	if got := lastTest(); !reflect.DeepEqual(got, map[string]any{"at": float64(300), "ok": false, "error": "connection refused", "source": "run"}) {
+		t.Fatalf("lastTest after a second failure = %v, want the newest with its reason", got)
+	}
+}
+
+func TestTheNewestFailureAmongAPlacesTargetsIsItsLastRun(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	vms := f.placeTarget(b2, "vms", "")
+	flash := f.placeTarget(b2, "flash", "")
+	for _, r := range []struct {
+		domain, id string
+		at         int64
+		errText    string
+	}{{"vms", vms.ID, 100, "timeout"}, {"flash", flash.ID, 300, "access denied"}} {
+		row, err := f.st.RecordOffsiteRunForTarget(r.domain, r.id, r.at)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := f.st.FinishOffsiteRun(row, false, r.errText); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	got := placeByName(t, f.do(http.MethodGet, "/api/places", nil), "B2")["lastTest"]
+
+	if !reflect.DeepEqual(got, map[string]any{"at": float64(300), "ok": false, "error": "access denied", "source": "run"}) {
+		t.Fatalf("lastTest = %v, want the flash failure at 300", got)
 	}
 }
 

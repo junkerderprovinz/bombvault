@@ -276,3 +276,24 @@ func (r *Repo) FirstOffsiteFailureAfter(targetID string, since int64) (int64, er
 	}
 	return at.Int64, nil
 }
+
+// LatestOffsiteFailureAfter returns the newest finished, failed run to the
+// target that began after since, with its error, leaving out the runs
+// FirstOffsiteFailureAfter leaves out. The bool is false when there is none.
+func (r *Repo) LatestOffsiteFailureAfter(targetID string, since int64) (OffsiteRun, bool, error) {
+	var run OffsiteRun
+	err := r.db.QueryRow(`
+		SELECT domain, started_at, finished_at, error FROM offsite_runs
+		 WHERE offsite_target_id = ? AND started_at > ?
+		   AND finished_at IS NOT NULL AND ok = 0 AND error <> ?
+		 ORDER BY started_at DESC, rowid DESC
+		 LIMIT 1`,
+		targetID, since, ReasonCopyRulesUnreadable).Scan(&run.Domain, &run.StartedAt, &run.FinishedAt, &run.Error)
+	if errors.Is(err, sql.ErrNoRows) {
+		return OffsiteRun{}, false, nil
+	}
+	if err != nil {
+		return OffsiteRun{}, false, fmt.Errorf("LatestOffsiteFailureAfter: %w", err)
+	}
+	return run, true, nil
+}
