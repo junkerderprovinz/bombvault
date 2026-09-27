@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import type { DefaultRow } from "../../lib/api";
 import {
+  accentButtons,
   defaultImpact,
   defaultRow,
   namedRepo,
@@ -57,6 +58,7 @@ describe("PlacementDefaultsCard", () => {
     fireEvent.click(within(row).getByRole("button", { name: "Local" }));
     const dialog = await screen.findByRole("dialog");
     expect(dialog.textContent).toContain("Items and project folders that B2 no longer gets: 15. Copies that stay there: 210.");
+    expect(accentButtons(dialog)).toEqual(["Confirm"]);
     fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
     await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toEqual([["containers", { skip: ["*"] }, impact]]));
     expect(fake.callsTo("previewPlacementDefault")).toEqual([["containers", { skip: ["*"] }]]);
@@ -106,6 +108,7 @@ describe("PlacementDefaultsCard", () => {
       "New items in Containers take NAS Keller · mounted at their first backup. Items with a location keep it."
     );
     expect(dialog.textContent).toContain("Items without a location that take NAS Keller · mounted at their first backup: 3.");
+    expect(accentButtons(dialog)).toEqual(["Set"]);
     fireEvent.click(within(dialog).getByRole("button", { name: "Set" }));
     await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toEqual([["containers", { home: "repo-nas" }, impact]]));
   });
@@ -162,6 +165,7 @@ describe("PlacementDefaultsCard", () => {
     expect(dialog.textContent).toContain("At the next run, this is copied:");
     expect(dialog.textContent).toContain("Items and project folders: 15");
     expect(dialog.textContent).toContain("Names in the backups without an entry here. Ticked ones are left out:");
+    expect(accentButtons(dialog)).toEqual(["Confirm default"]);
     fireEvent.click(within(dialog).getByRole("switch", { name: "plex, snapshots: 12" }));
     fireEvent.click(within(dialog).getByRole("button", { name: "Confirm default" }));
     await waitFor(() => expect(fake.callsTo("confirmPlacementDefault")).toEqual([["containers", ["container:plex"]]]));
@@ -185,6 +189,7 @@ describe("PlacementDefaultsCard", () => {
     expect(dialog.textContent).toContain("Losing their own choice: nginx");
     expect(dialog.textContent).toContain("Stay as they are, they have backups: plex");
     expect(dialog.textContent).toContain("B2: about 15");
+    expect(accentButtons(dialog)).toEqual(["Confirm"]);
     fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
     await waitFor(() => expect(fake.callsTo("applyPlacementDefault")).toEqual([["containers", ["nginx", "redis"]]]));
     expect(await screen.findByText("Changed in the meantime and left alone: redis")).toBeTruthy();

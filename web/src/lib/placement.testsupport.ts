@@ -358,3 +358,10 @@ export function wheel(el: Element, notches: number): void {
     fireEvent.wheel(el, { deltaY: 100 });
   }
 }
+
+/** The text of every button in `root` drawn with the accent fill. */
+export function accentButtons(root: HTMLElement): string[] {
+  return Array.from(root.querySelectorAll("button"))
+    .filter((b) => b.className.includes("bg-accent"))
+    .map((b) => b.textContent ?? "");
+}

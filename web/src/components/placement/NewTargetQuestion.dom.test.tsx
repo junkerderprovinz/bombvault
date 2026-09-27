@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import type { NewTargetAnswer, NewTargetQuestion } from "./NewTargetQuestion";
-import { renderWithProviders, targetPreview } from "../../lib/placement.testsupport";
+import { accentButtons, renderWithProviders, targetPreview } from "../../lib/placement.testsupport";
 
 const fake = await vi.hoisted(async () => (await import("../../lib/placement.testsupport")).createPlacementApi());
 
@@ -45,6 +45,7 @@ describe("the new target question", () => {
     expect(dialog.textContent).toContain("Items and project folders: 15");
     expect(dialog.textContent).toContain("Snapshots: up to 420");
     expect(dialog.textContent).not.toContain("Size:");
+    expect(accentButtons(dialog)).toEqual(["Confirm"]);
     expect(fake.callsTo("getNewTargetPreview")).toEqual([["containers", "b2:bucket:containers", undefined]]);
   });
 
@@ -97,6 +98,7 @@ describe("the new target question", () => {
     const onAnswer = askWith();
     const dialog = await screen.findByRole("dialog");
     expect(dialog.textContent).toContain("The placement rules could not be read, so nothing is copied until they can.");
+    expect(accentButtons(dialog)).toEqual(["Confirm"]);
     fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
     await waitFor(() => expect(onAnswer).toHaveBeenCalledWith({ go: true, alsoExclude: null }));
   });

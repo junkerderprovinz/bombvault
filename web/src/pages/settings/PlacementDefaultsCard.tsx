@@ -178,7 +178,9 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
       ) : undefined;
     return confirm(
       lead,
-      home !== undefined ? { extra, confirmLabel: t("placement.saveHome"), confirmLabelKey: "placement.saveHome" } : { extra }
+      home !== undefined
+        ? { extra, confirmLabel: t("placement.saveHome"), confirmLabelKey: "placement.saveHome", cancelTone: "neutral" }
+        : { extra, cancelTone: "neutral" }
     );
   }
 
@@ -241,7 +243,7 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
           {uploads.length > 0 && <UploadLines added={uploads} />}
         </div>
       );
-      if (!(await confirm(t("placementDefaults.applyAsk").replace("{n}", String(reset.length)), { extra }))) return;
+      if (!(await confirm(t("placementDefaults.applyAsk").replace("{n}", String(reset.length)), { extra, cancelTone: "neutral" }))) return;
       const res = await applyPlacementDefault(row.domain, reset.map((c) => c.key));
       if (!res.ok) {
         push(res.code === "domain-busy" ? t("placementDefaults.applyBusy") : placementErrorText(t, lang, res, "settings.error"), "fail");
@@ -274,6 +276,7 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
         extra,
         confirmLabel: t("placementDefaults.confirm"),
         confirmLabelKey: "placementDefaults.confirm",
+        cancelTone: "neutral",
       });
       if (!go) return;
       const res = await confirmPlacementDefault(row.domain, excluded);

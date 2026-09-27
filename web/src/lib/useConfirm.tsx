@@ -36,6 +36,8 @@ export interface ConfirmOptions {
   requirePrompt?: string;
   /** Surface of the confirm button; a delete that leaves Cancel the one accent passes "neutral". */
   confirmTone?: ButtonTone;
+  /** Surface of Cancel; a question whose answer is the one accent passes "neutral". */
+  cancelTone?: ButtonTone;
 }
 
 interface PendingConfirm extends ConfirmOptions {
@@ -119,6 +121,7 @@ export function useConfirm() {
           extra={extra}
           confirmDisabled={locked}
           confirmTone={pending.confirmTone}
+          cancelTone={pending.cancelTone}
           onConfirm={() => settle(true)}
           onCancel={() => settle(false)}
         />,

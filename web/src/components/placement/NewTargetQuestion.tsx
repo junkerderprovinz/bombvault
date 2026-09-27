@@ -127,11 +127,11 @@ export function useNewTargetQuestion(): {
       const preview = res.preview;
       if (!res.ok || !preview) {
         const reason = <p className="text-sm text-carbon-textSub">{placementErrorText(t, lang, res, "settings.error")}</p>;
-        return (await confirm(intro, { extra: reason })) ? { go: true, alsoExclude: null } : { go: false };
+        return (await confirm(intro, { extra: reason, cancelTone: "neutral" })) ? { go: true, alsoExclude: null } : { go: false };
       }
       let chosen = NOTHING;
       const extra = <ExclusionChoice domain={domain} target={q.name} preview={preview} onChoice={(next) => (chosen = next)} />;
-      if (!(await confirm(intro, { extra }))) return { go: false };
+      if (!(await confirm(intro, { extra, cancelTone: "neutral" }))) return { go: false };
       return { go: true, alsoExclude: chosen.identities.length > 0 || chosen.default ? chosen : null };
     },
     [confirm, t, lang]
