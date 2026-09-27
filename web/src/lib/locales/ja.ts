@@ -775,7 +775,7 @@ const ja: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "バックアップをすべて削除",
-  "snapshots.deleteAllConfirm": "Delete all local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "このVMのローカルバックアップをすべて削除しますか？スナップショットは完全に削除され、ローカルリポジトリは整理されます。オフサイトの宛先にあるコピーは残ります。元に戻せません。",
   "snapshots.deletingAll": "削除中…",
 
   // Snapshot tags + compare (diff)
@@ -1406,7 +1406,7 @@ const ja: Partial<Translations> = {
   "files.noPathHint": "フォルダー情報なしでバックアップから再構築されました。再びバックアップするにはフォルダーを設定してください。フォルダーへの復元は今すぐ使えます。",
   "files.deleteSet": "フォルダーセットを削除",
   "files.deleteSetConfirm": "このフォルダーセットを一覧から削除しますか？バックアップは削除されず、後で再発見できます。",
-  "files.deleteBackupsConfirm": "Delete all local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "このフォルダーセットのローカルバックアップをすべて削除しますか？スナップショットは完全に削除され、ローカルリポジトリは整理され、セットは忘れられます。オフサイトの宛先にあるコピーは残りますが、それを把握するセットはなくなります。元に戻せません。",
   "files.restoreOriginal": "元の場所に復元",
   "files.restoreOriginalConfirm": "このバックアップをセットのフォルダーに上書き復元しますか？既存のファイルは上書きされます。",
   "files.restoreToFolder": "フォルダーに復元",

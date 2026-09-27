@@ -775,7 +775,7 @@ const pl: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Usuń wszystkie kopie zapasowe",
-  "snapshots.deleteAllConfirm": "Delete all local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "Usunąć wszystkie lokalne kopie zapasowe tej maszyny? Migawki zostaną trwale usunięte, a lokalne repozytorium oczyszczone. Kopie w celach poza siedzibą pozostaną. Tego nie można cofnąć.",
   "snapshots.deletingAll": "Usuwanie…",
 
   // Snapshot tags + compare (diff)
@@ -1409,7 +1409,7 @@ const pl: Partial<Translations> = {
   "files.noPathHint": "Odbudowany z kopii zapasowych bez folderu. Ustaw folder, aby znów tworzyć kopie. Przywracanie do folderu działa już teraz.",
   "files.deleteSet": "Usuń zestaw folderów",
   "files.deleteSetConfirm": "Usunąć ten zestaw folderów z listy? Jego kopie zapasowe nie zostaną usunięte i można je później odkryć ponownie.",
-  "files.deleteBackupsConfirm": "Delete all local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "Usunąć wszystkie lokalne kopie zapasowe tego zestawu folderów? Migawki zostaną trwale usunięte, lokalne repozytorium oczyszczone, a zestaw zapomniany. Kopie w celach poza siedzibą pozostaną, ale żaden zestaw nie będzie o nich wiedział. Tego nie można cofnąć.",
   "files.restoreOriginal": "Przywróć do oryginalnej lokalizacji",
   "files.restoreOriginalConfirm": "Przywrócić tę kopię na folder zestawu? Istniejące pliki zostaną nadpisane.",
   "files.restoreToFolder": "Przywróć do folderu",

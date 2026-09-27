@@ -780,7 +780,7 @@ const pt: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Eliminar todos os backups",
-  "snapshots.deleteAllConfirm": "Delete all local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "Eliminar todos os backups locais desta VM? Os instantâneos são removidos permanentemente e o repositório local é limpo. As cópias nos destinos externos mantêm-se. A ação não pode ser revertida.",
   "snapshots.deletingAll": "A eliminar…",
 
   // Snapshot tags + compare (diff)
@@ -1414,7 +1414,7 @@ const pt: Partial<Translations> = {
   "files.noPathHint": "Reconstruído a partir dos backups sem pasta. Defina uma pasta para voltar a fazer backup. Restaurar para uma pasta já funciona.",
   "files.deleteSet": "Eliminar conjunto de pastas",
   "files.deleteSetConfirm": "Remover este conjunto de pastas da lista? Os seus backups não são eliminados e podem ser redescobertos mais tarde.",
-  "files.deleteBackupsConfirm": "Delete all local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "Eliminar todos os backups locais deste conjunto de pastas? Os instantâneos são removidos permanentemente, o repositório local é limpo e o conjunto é esquecido. As cópias nos destinos externos mantêm-se, sem nenhum conjunto que as conheça. A ação não pode ser revertida.",
   "files.restoreOriginal": "Restaurar no local original",
   "files.restoreOriginalConfirm": "Restaurar este backup sobre a pasta do conjunto? Os ficheiros existentes serão sobrescritos.",
   "files.restoreToFolder": "Restaurar para uma pasta",

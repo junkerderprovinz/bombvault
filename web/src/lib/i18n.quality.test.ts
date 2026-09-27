@@ -42,11 +42,6 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   // within the language decides, not whether the string looks English.
   "stack.members",
 
-  // A handful of confirm dialogs outside the placement family still carry an
-  // English placeholder. Not covered by the stricter placement guard below.
-  "snapshots.deleteAllConfirm",
-  "files.deleteBackupsConfirm",
-
   // "direct" reads the same in fr, nl and ro as in English.
   "placement.homeDirect",
 ]);

@@ -783,7 +783,7 @@ const fr: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Supprimer toutes les sauvegardes",
-  "snapshots.deleteAllConfirm": "Delete all local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "Supprimer toutes les sauvegardes locales de cette VM ? Les instantanés sont supprimés définitivement et le dépôt local est nettoyé. Les copies sur les cibles hors site sont conservées. Cette action est irréversible.",
   "snapshots.deletingAll": "Suppression…",
 
   // Snapshot tags + compare (diff)
@@ -1414,7 +1414,7 @@ const fr: Partial<Translations> = {
   "files.noPathHint": "Reconstruit depuis les sauvegardes sans dossier. Définissez un dossier pour le sauvegarder à nouveau. La restauration dans un dossier fonctionne déjà.",
   "files.deleteSet": "Supprimer le jeu de dossiers",
   "files.deleteSetConfirm": "Retirer ce jeu de dossiers de la liste ? Ses sauvegardes ne sont pas supprimées et pourront être redécouvertes plus tard.",
-  "files.deleteBackupsConfirm": "Delete all local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "Supprimer toutes les sauvegardes locales de ce jeu de dossiers ? Les instantanés sont supprimés définitivement, le dépôt local est nettoyé et le jeu est oublié. Les copies sur les cibles hors site sont conservées, sans plus aucun jeu qui les connaisse. Cette action est irréversible.",
   "files.restoreOriginal": "Restaurer à l'emplacement d'origine",
   "files.restoreOriginalConfirm": "Restaurer cette sauvegarde par-dessus le dossier du jeu ? Les fichiers existants seront écrasés.",
   "files.restoreToFolder": "Restaurer dans un dossier",

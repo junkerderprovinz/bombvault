@@ -780,7 +780,7 @@ const no: Partial<Translations> = {
 
   // Backups (delete all)
   "snapshots.deleteAll": "Slett alle sikkerhetskopier",
-  "snapshots.deleteAllConfirm": "Delete all local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "Slette alle lokale sikkerhetskopier av denne VM-en? Snapshotene fjernes permanent, og det lokale repositoriet ryddes. Kopier på eksterne mål beholdes. Dette kan ikke angres.",
   "snapshots.deletingAll": "Sletter…",
 
   // Snapshot tags + compare (diff)
@@ -1414,7 +1414,7 @@ const no: Partial<Translations> = {
   "files.noPathHint": "Gjenoppbygd fra sikkerhetskopier uten mappe. Angi en mappe for å sikkerhetskopiere igjen. Gjenoppretting til en mappe virker allerede.",
   "files.deleteSet": "Slett mappesett",
   "files.deleteSetConfirm": "Fjerne dette mappesettet fra listen? Sikkerhetskopiene slettes ikke og kan gjenoppdages senere.",
-  "files.deleteBackupsConfirm": "Delete all local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "Slette alle lokale sikkerhetskopier av dette mappesettet? Snapshotene fjernes permanent, det lokale repositoriet ryddes, og settet glemmes. Kopier på eksterne mål beholdes, uten noe sett som kjenner dem. Dette kan ikke angres.",
   "files.restoreOriginal": "Gjenopprett til opprinnelig plassering",
   "files.restoreOriginalConfirm": "Gjenopprette denne sikkerhetskopien over settets mappe? Eksisterende filer overskrives.",
   "files.restoreToFolder": "Gjenopprett til en mappe",

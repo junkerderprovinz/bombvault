@@ -783,7 +783,7 @@ const he: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "מחק את כל הגיבויים",
-  "snapshots.deleteAllConfirm": "Delete all local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "למחוק את כל הגיבויים המקומיים של המכונה הווירטואלית הזו? התצלומים יוסרו לצמיתות והמאגר המקומי ינוקה. העותקים ביעדים מחוץ לאתר נשארים. לא ניתן לבטל פעולה זו.",
   "snapshots.deletingAll": "מוחק…",
 
   // Snapshot tags + compare (diff)
@@ -1414,7 +1414,7 @@ const he: Partial<Translations> = {
   "files.noPathHint": "שוחזר מגיבויים ללא תיקייה. הגדר תיקייה כדי לגבות שוב. שחזור לתיקייה עובד כבר עכשיו.",
   "files.deleteSet": "מחק ערכת תיקיות",
   "files.deleteSetConfirm": "להסיר את ערכת התיקיות הזו מהרשימה? הגיבויים שלה לא יימחקו וניתן לגלות אותם מחדש מאוחר יותר.",
-  "files.deleteBackupsConfirm": "Delete all local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "למחוק את כל הגיבויים המקומיים של ערכת התיקיות הזו? התצלומים יוסרו לצמיתות, המאגר המקומי ינוקה והערכה תישכח. העותקים ביעדים מחוץ לאתר נשארים, בלי ערכה שמכירה אותם. לא ניתן לבטל פעולה זו.",
   "files.restoreOriginal": "שחזור למיקום המקורי",
   "files.restoreOriginalConfirm": "לשחזר גיבוי זה על גבי תיקיית הערכה? קבצים קיימים יידרסו.",
   "files.restoreToFolder": "שחזור לתיקייה",

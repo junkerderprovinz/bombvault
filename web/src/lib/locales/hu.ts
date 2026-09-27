@@ -783,7 +783,7 @@ const hu: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Összes mentés törlése",
-  "snapshots.deleteAllConfirm": "Delete all local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "Törli a VM összes helyi biztonsági mentését? A pillanatképek véglegesen törlődnek, a helyi tároló pedig kitakarítódik. A telephelyen kívüli célokon lévő másolatok megmaradnak. Ezt nem lehet visszavonni.",
   "snapshots.deletingAll": "Törlés…",
 
   // Snapshot tags + compare (diff)
@@ -1417,7 +1417,7 @@ const hu: Partial<Translations> = {
   "files.noPathHint": "Mappa nélkül, mentésekből újjáépítve. Állíts be egy mappát az újbóli mentéshez. A mappába való visszaállítás már most működik.",
   "files.deleteSet": "Mappakészlet törlése",
   "files.deleteSetConfirm": "Eltávolítod ezt a mappakészletet a listáról? A mentései nem törlődnek, és később újra felfedezhetők.",
-  "files.deleteBackupsConfirm": "Delete all local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "Törlöd ennek a mappakészletnek az összes helyi mentését? A pillanatképek véglegesen törlődnek, a helyi tároló kitakarítódik, a készletet pedig elfelejti a rendszer. A telephelyen kívüli célokon lévő másolatok megmaradnak, de egyetlen készlet sem tud róluk. Ezt nem lehet visszavonni.",
   "files.restoreOriginal": "Visszaállítás az eredeti helyre",
   "files.restoreOriginalConfirm": "Visszaállítod ezt a mentést a készlet mappájára? A meglévő fájlok felülíródnak.",
   "files.restoreToFolder": "Visszaállítás mappába",

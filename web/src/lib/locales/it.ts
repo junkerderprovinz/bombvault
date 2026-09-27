@@ -783,7 +783,7 @@ const it: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Elimina tutti i backup",
-  "snapshots.deleteAllConfirm": "Delete all local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "Eliminare tutti i backup locali di questa VM? Gli snapshot vengono rimossi definitivamente e il repository locale viene ripulito. Le copie sulle destinazioni off-site restano. L'operazione non è reversibile.",
   "snapshots.deletingAll": "Eliminazione…",
 
   // Snapshot tags + compare (diff)
@@ -1414,7 +1414,7 @@ const it: Partial<Translations> = {
   "files.noPathHint": "Ricostruito dai backup senza cartella. Imposta una cartella per eseguirne di nuovo il backup. Il ripristino in una cartella funziona già.",
   "files.deleteSet": "Elimina set di cartelle",
   "files.deleteSetConfirm": "Rimuovere questo set di cartelle dall'elenco? I suoi backup non vengono eliminati e potranno essere riscoperti in seguito.",
-  "files.deleteBackupsConfirm": "Delete all local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "Eliminare tutti i backup locali di questo set di cartelle? Gli snapshot vengono rimossi definitivamente, il repository locale viene ripulito e il set viene dimenticato. Le copie sulle destinazioni off-site restano, senza più alcun set che le conosca. L'operazione non è reversibile.",
   "files.restoreOriginal": "Ripristina nella posizione originale",
   "files.restoreOriginalConfirm": "Ripristinare questo backup sopra la cartella del set? I file esistenti verranno sovrascritti.",
   "files.restoreToFolder": "Ripristina in una cartella",

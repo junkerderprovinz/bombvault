@@ -783,7 +783,7 @@ const fi: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Poista kaikki varmuuskopiot",
-  "snapshots.deleteAllConfirm": "Delete all local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "Poistetaanko kaikki tämän VM:n paikalliset varmuuskopiot? Tilannekuvat poistetaan pysyvästi ja paikallinen arkisto siivotaan. Etäkohteissa olevat kopiot säilyvät. Tätä ei voi perua.",
   "snapshots.deletingAll": "Poistetaan…",
 
   // Snapshot tags + compare (diff)
@@ -1414,7 +1414,7 @@ const fi: Partial<Translations> = {
   "files.noPathHint": "Rakennettu uudelleen varmuuskopioista ilman kansiota. Aseta kansio, jotta varmuuskopiointi onnistuu taas. Palautus kansioon toimii jo nyt.",
   "files.deleteSet": "Poista kansiojoukko",
   "files.deleteSetConfirm": "Poistetaanko tämä kansiojoukko luettelosta? Sen varmuuskopioita ei poisteta, ja ne voi löytää myöhemmin uudelleen.",
-  "files.deleteBackupsConfirm": "Delete all local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "Poistetaanko kaikki tämän kansiojoukon paikalliset varmuuskopiot? Tilannekuvat poistetaan pysyvästi, paikallinen arkisto siivotaan ja joukko unohdetaan. Etäkohteissa olevat kopiot säilyvät, mutta mikään joukko ei enää tunne niitä. Tätä ei voi perua.",
   "files.restoreOriginal": "Palauta alkuperäiseen sijaintiin",
   "files.restoreOriginalConfirm": "Palautetaanko tämä varmuuskopio joukon kansion päälle? Olemassa olevat tiedostot korvataan.",
   "files.restoreToFolder": "Palauta kansioon",

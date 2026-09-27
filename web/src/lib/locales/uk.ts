@@ -778,7 +778,7 @@ const uk: Partial<Translations> = {
 
   // Snapshots — delete all
   "snapshots.deleteAll": "Видалити всі резервні копії",
-  "snapshots.deleteAllConfirm": "Delete all local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "Видалити всі локальні резервні копії цієї ВМ? Знімки будуть безповоротно видалені, а локальний репозиторій почищено. Копії у віддалених цілях залишаться. Це не скасувати.",
   "snapshots.deletingAll": "Видалення…",
 
   // Snapshot tags + compare (diff)
@@ -1409,7 +1409,7 @@ const uk: Partial<Translations> = {
   "files.noPathHint": "Відновлено з резервних копій без папки. Задайте папку, щоб знову створювати копії — відновлення до папки вже працює.",
   "files.deleteSet": "Видалити набір папок",
   "files.deleteSetConfirm": "Видалити цей набір папок зі списку? Його резервні копії не видаляються, і їх можна буде знайти знову пізніше.",
-  "files.deleteBackupsConfirm": "Delete all local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "Видалити всі локальні резервні копії цього набору папок? Знімки будуть безповоротно видалені, локальний репозиторій почищено, а набір забуто. Копії у віддалених цілях залишаться, але жоден набір більше не знатиме про них. Це не скасувати.",
   "files.restoreOriginal": "Відновити до початкового розташування",
   "files.restoreOriginalConfirm": "Відновити цю резервну копію поверх папки набору? Наявні файли буде перезаписано.",
   "files.restoreToFolder": "Відновити до папки",

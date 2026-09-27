@@ -783,7 +783,7 @@ const el: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Διαγραφή όλων των αντιγράφων",
-  "snapshots.deleteAllConfirm": "Delete all local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
+  "snapshots.deleteAllConfirm": "Διαγραφή όλων των τοπικών αντιγράφων αυτής της VM; Τα στιγμιότυπα αφαιρούνται μόνιμα και το τοπικό αποθετήριο καθαρίζεται. Τα αντίγραφα στους προορισμούς εκτός τόπου παραμένουν. Αυτό δεν αναιρείται.",
   "snapshots.deletingAll": "Διαγραφή…",
 
   // Snapshot tags + compare (diff)
@@ -1414,7 +1414,7 @@ const el: Partial<Translations> = {
   "files.noPathHint": "Ανακατασκευάστηκε από αντίγραφα χωρίς φάκελο. Ορίστε έναν φάκελο για να δημιουργούνται ξανά αντίγραφα. Η επαναφορά σε φάκελο λειτουργεί ήδη.",
   "files.deleteSet": "Διαγραφή συνόλου φακέλων",
   "files.deleteSetConfirm": "Αφαίρεση αυτού του συνόλου φακέλων από τη λίστα; Τα αντίγραφά του δεν διαγράφονται και μπορούν να ανακαλυφθούν ξανά αργότερα.",
-  "files.deleteBackupsConfirm": "Delete all local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
+  "files.deleteBackupsConfirm": "Διαγραφή όλων των τοπικών αντιγράφων αυτού του συνόλου φακέλων; Τα στιγμιότυπα αφαιρούνται μόνιμα, το τοπικό αποθετήριο καθαρίζεται και το σύνολο ξεχνιέται. Τα αντίγραφα στους προορισμούς εκτός τόπου παραμένουν, χωρίς κανένα σύνολο που να τα γνωρίζει. Αυτό δεν αναιρείται.",
   "files.restoreOriginal": "Επαναφορά στην αρχική θέση",
   "files.restoreOriginalConfirm": "Επαναφορά αυτού του αντιγράφου πάνω από τον φάκελο του συνόλου; Τα υπάρχοντα αρχεία θα αντικατασταθούν.",
   "files.restoreToFolder": "Επαναφορά σε φάκελο",
