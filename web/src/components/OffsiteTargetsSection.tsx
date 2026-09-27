@@ -351,7 +351,7 @@ export function OffsiteTargetsSection({
       {targets.map((tgt) => (
         <div
           key={tgt.id}
-          className="glim-tile flex items-start justify-between gap-3 rounded-card p-3"
+          className="glim-tile flex items-start justify-between gap-3 rounded-card p-3 max-md:flex-col"
         >
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{tgt.name || tgt.repo}</span>
@@ -375,7 +375,9 @@ export function OffsiteTargetsSection({
               )}
             </span>
           </div>
-          <div className="flex shrink-0 items-start gap-2">
+          {/* On a phone the actions move under the name, which otherwise
+              shrinks to a column one character wide beside them. */}
+          <div className="flex shrink-0 flex-wrap items-start gap-2">
             <TargetTestButton id={tgt.id} t={t} hueIndex={hueIndex} />
             <Button
               label={t("offsite.targets.edit")}

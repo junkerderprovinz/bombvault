@@ -270,7 +270,7 @@ function DumpRow({
               onClick={() => void handleDownload()}
               disabled={preparing}
               busy={preparing}
-              className="shrink-0"
+              className="shrink-0 glim-btn-wrap"
             />
             <Advanced>
               <Button
@@ -282,7 +282,7 @@ function DumpRow({
                 disabled={saving}
                 busy={saving}
                 title={saving ? t("dbdump.busySaving") : undefined}
-                className="shrink-0"
+                className="shrink-0 glim-btn-wrap"
               />
             </Advanced>
             {importable && (
@@ -296,7 +296,7 @@ function DumpRow({
                 disabled={importing}
                 busy={importing}
                 title={importing ? t("dbdump.busyImporting") : undefined}
-                className={`shrink-0${shake ? " glim-shake" : ""}`}
+                className={`shrink-0 glim-btn-wrap${shake ? " glim-shake" : ""}`}
               />
             )}
           </>
@@ -309,7 +309,7 @@ function DumpRow({
           tone="accent"
           onClick={() => void handleDelete()}
           disabled={deleting}
-          className="shrink-0"
+          className="shrink-0 glim-btn-wrap"
         />
       </div>
 

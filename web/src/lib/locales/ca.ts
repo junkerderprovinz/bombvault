@@ -13,7 +13,8 @@ const ca: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Autocòpia",
   "nav.settings": "Configuració",
-  "nav.menu": "Menú",
+  "nav.more": "Més",
+  "nav.mobileNavigation": "Navegació mòbil",
 
   // Mode toggle
   "about.title": "Quant a BombVault",
@@ -293,6 +294,9 @@ const ca: Partial<Translations> = {
   "run.colStarted": "Iniciat",
   "run.colFinished": "Finalitzat",
   "run.colContainer": "Contenidor",
+  "home.newBackupConfirm": "Vols iniciar una còpia de seguretat de tots els dominis activats ara? Els contenidors s'aturen i es reinicien d'un en un mentre s'executa la seva còpia.",
+  "run.statVolume": "Volum de dades",
+  "run.statSnapshot": "Instantània",
 
   // Settings
   "settings.title": "Configuració",
@@ -798,6 +802,9 @@ const ca: Partial<Translations> = {
   "settings.labels.buttons": "Botons",
   "settings.labels.sidebar": "Barra lateral",
   "settings.labels.tabs": "Pestanyes",
+  "settings.labels.bottombar": "Barra inferior",
+  "settings.axisBottombarHint": "Només afecta la disposició del telèfon.",
+  "settings.axisSidebarHint": "Només afecta la disposició d'escriptori.",
   "settings.labels.mode.text": "Text",
   "settings.labels.mode.textGlyph": "Text i símbol",
   "settings.labels.mode.glyph": "Símbol",
@@ -841,6 +848,7 @@ const ca: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Estat de protecció",
   "dashboard.noOffsite": "Cap còpia externa",
+  "dashboard.statusLoadFailed": "No s'ha pogut carregar l'estat",
   "dashboard.neverExcluded": "No programat",
   "dashboard.neverExcludedTitle": "Deixat fora de la planificació a propòsit, així que aquí no hi ha res per copiar.",
   "dashboard.neverSelf": "Contenidor propi",
@@ -1185,6 +1193,10 @@ const ca: Partial<Translations> = {
   "common.restoring": "Restaurant…",
   "common.done": "Fet",
   "common.close": "Tanca",
+  "common.expand": "Desplega",
+  "common.collapse": "Replega",
+  "common.back": "Enrere",
+  "common.loadMore": "Carrega'n més",
   "common.loadingBackups": "Carregant còpies…",
   "common.saving": "Desant…",
   "common.restoreRunning": "S'està executant una restauració…",

@@ -371,3 +371,20 @@ describe("DatabaseDumpRow", () => {
     expect(toggle().getAttribute("aria-checked")).toBe("true");
   });
 });
+
+// jsdom lays nothing out, so this pins the class the phone layout rests on.
+describe("DatabaseDumpRow at phone width", () => {
+  it("breaks a failed dump's message anywhere so it stays on the card", () => {
+    renderRow({
+      lastDbDump: {
+        at: 1_700_000_000,
+        status: "failed",
+        bytes: 0,
+        error: 'connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed',
+      },
+    });
+    const line = screen.getByText(/s\.PGSQL\.5432/, { selector: "span" }).closest("p")!;
+    expect(line.className).toContain("wrap-anywhere");
+    expect(line.className).toContain("min-w-0");
+  });
+});

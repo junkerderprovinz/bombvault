@@ -1806,22 +1806,12 @@ func (s *Service) retentionTagsFor(ctx context.Context, repo string, mode restic
 	return tags, true
 }
 
-// forgetWithLockHeal runs a ForgetPolicy pass, clearing a genuine stale orphan
-// lock first with plain `restic unlock` (removeAll=false) — restic's own stale
-// detection: a dead PID on THIS host, or any lock past restic's ~30-min age
-// threshold. forget needs an EXCLUSIVE lock, so even a stale NON-exclusive lock —
-// which lets backups keep succeeding — blocks every retention pass: one orphan
-// used to fail a whole night's retentions across all items. A live lock is NOT
-// force-removed (see the body); it carries the same bounded prior-incarnation
-// hostname gap noted on CheckDomain.
+// forgetWithLockHeal runs a ForgetPolicy pass after clearing stale locks with
+// unlockStale. forget needs an exclusive lock, so a single stale non-exclusive
+// lock, which backups work around, would otherwise block every retention pass.
 func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, prune bool) error {
-	// Clear a genuine stale orphan (a dead-PID lock from a crashed run on this
-	// host) before forget, which needs an exclusive lock. A live/concurrent lock
-	// is NOT force-removed: reads run --no-lock, writes are serialized under the
-	// domain lock, and forget itself passes --retry-lock to wait out a transient
-	// cross-process lock (see the repo-lock-serialization plan). Force-removing a
-	// live lock (the old #94 heal) could not fix a live holder and endangered a
-	// running op, so it was removed.
+	// unlockStale leaves the locks of this process's own restic runs alone, and
+	// forget passes --retry-lock to wait them out.
 	s.unlockStale(ctx, repo, mode)
 	return s.engine.ForgetPolicy(ctx, repo, p, mode, tags, prune)
 }
@@ -15211,13 +15201,11 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 		return err
 	}
 	skipped = append(skipped, missing...)
-	// Hold the in-process domain lock for the whole verify so no other BombVault op
-	// (backup / prune / replicate) runs against this repo while we check it. If one
-	// already holds it, report a clean "busy" instead of colliding on restic's repo
-	// lock. This rules out BombVault itself as the source of a lock check hits, but
-	// NOT a genuinely live restic process (e.g. a manual/external invocation) — that
-	// case is a real, live lock, not an orphan, and is deliberately left alone below
-	// (waited out by --retry-lock in the engine, never force-removed).
+	// Hold the in-process domain lock for the whole verify so no other op of this
+	// domain runs against the repo while it is checked, and report "busy" when one
+	// already holds it. A named repository can also serve another domain, whose
+	// ops this lock does not stop; their locks are waited out by --retry-lock, as
+	// is a restic started by hand.
 	unlock, ok := s.tryLockDomainFor(domain, "verify")
 	if !ok {
 		return errDomainBusy
@@ -15255,17 +15243,12 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 		}
 	}()
 
-	// Clear a GENUINE stale orphan before `restic check` takes its lock: unlockStale
-	// runs plain `restic unlock`, which removes only locks restic itself deems stale
-	// (a dead PID on THIS host, or any lock past restic's ~30-min age threshold). A
-	// live/concurrent lock is never force-removed: we hold the domain lock for the
-	// whole verify, so no other BombVault op can collide, and `restic check` passes
-	// --retry-lock to wait out a transient cross-process lock instead of racing it.
-	// KNOWN BOUNDED GAP: an orphan from a PRIOR container incarnation carries that
-	// container's random hostname, so restic can't PID-probe it and won't call it
-	// stale until it is ~30 min old; until then check fails "already locked" (it
-	// self-heals, or a manual Unlock clears it). A stable container hostname closes
-	// this — see the repo-lock-serialization plan.
+	// Clear an interrupted run's lock before `restic check` takes its own:
+	// unlockStale removes locks restic calls stale and the ones an earlier run of
+	// BombVault on this host left behind, on the assumption that BombVault is
+	// the only writer of a local repository (see unlockStale). A lock under
+	// another hostname waits for restic's 30-minute rule; --retry-lock waits
+	// out a short one.
 	//
 	// Each repository in turn, under the one domain lock. The first failure is
 	// the answer: a domain whose data is spread over a domain repository and one
@@ -16321,8 +16304,11 @@ func isRepoUninitialized(err error) bool {
 		containsAny(msg, repoAbsenceMarkers) && !containsAny(msg, transportFailureMarkers)
 }
 
-// unlockStale best-effort clears stale locks (plain restic unlock: only locks
-// from dead processes or old enough — never an active concurrent lock). Logged,
+// unlockStale clears the locks restic calls stale and the ones an earlier run
+// of BombVault on this host left in a local repository (see restic.Unlock).
+// That second rule assumes BombVault is the only writer of a local repository:
+// every install uses the hostname bombvault, so a second instance sharing the
+// path cannot be told from an earlier run and its held lock can go. Logged,
 // never fatal.
 func (s *Service) unlockStale(ctx context.Context, repo string, mode restic.Mode) {
 	if err := s.engine.Unlock(ctx, repo, false, mode); err != nil {

@@ -204,6 +204,9 @@ export function OAuthConsent() {
               <p className="text-xs text-carbon-textMuted">
                 {t("oauth.returnsTo").replace("{host}", client.redirectHost)}
               </p>
+              {/* The page is often opened on a phone, straight from the
+                  assistant, so under a touch pointer both answers get a 44px
+                  height. */}
               <div className="flex flex-wrap items-center justify-end gap-3">
                 <Button
                   label={t("oauth.decline")}
@@ -212,6 +215,7 @@ export function OAuthConsent() {
                   onClick={() => void answer(false)}
                   disabled={busy !== null}
                   busy={busy === "deny"}
+                  className="pointer-coarse:[--btn-h:2.75rem]"
                 />
                 <Button
                   label={t("oauth.accept")}
@@ -220,6 +224,7 @@ export function OAuthConsent() {
                   onClick={() => void answer(true)}
                   disabled={busy !== null || info.limitReached === true || !armed}
                   busy={busy === "allow"}
+                  className="pointer-coarse:[--btn-h:2.75rem]"
                 />
               </div>
             </div>

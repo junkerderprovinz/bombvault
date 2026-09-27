@@ -322,7 +322,7 @@ export function ZFSDatasetTree({
             if (el) rowRefs.current.set(entry.dataset, el);
             else rowRefs.current.delete(entry.dataset);
           }}
-          className="flex min-h-8 items-center gap-2 text-xs text-carbon-textSub"
+          className="flex min-h-8 items-center gap-2 text-xs text-carbon-textSub max-md:flex-wrap max-md:py-1.5"
           style={indent}
           onFocus={() => setFocusName(entry.dataset)}
           onClick={expandable ? () => toggleOpen(node) : undefined}
@@ -340,7 +340,7 @@ export function ZFSDatasetTree({
               </svg>
             )}
           </span>
-          <span className="flex min-w-0 flex-col">
+          <span className="flex min-w-0 flex-col max-md:basis-[calc(100%-1.5rem)]">
             <span dir="ltr" className="font-mono truncate text-start text-carbon-text" title={entry.dataset}>
               {node.depth === 0 ? entry.dataset : baseOf(entry.dataset)}
             </span>
@@ -348,7 +348,7 @@ export function ZFSDatasetTree({
               {entry.hostMountpoint}
             </span>
           </span>
-          <span className="text-caption text-carbon-textMuted shrink-0" title={humanBytes(entry.used)}>
+          <span className="text-caption text-carbon-textMuted shrink-0 max-md:ms-6" title={humanBytes(entry.used)}>
             {t("zfs.add.size").replace("{size}", humanBytes(entry.referenced))}
           </span>
           {entry.encrypted && (
@@ -391,7 +391,9 @@ export function ZFSDatasetTree({
       role="tree"
       aria-label={t("nav.zfs")}
       onKeyDown={handleKeyDown}
-      className="h-[clamp(12rem,45vh,28rem)] overflow-y-auto"
+      // A phone has no hover for a name's title, so its names and mountpoints
+      // wrap instead of ending in an ellipsis.
+      className="h-[clamp(12rem,45vh,28rem)] overflow-y-auto max-md:[&_.truncate]:whitespace-normal max-md:[&_.truncate]:wrap-anywhere"
     >
       {roots.length === 0 && (
         <div role="presentation">

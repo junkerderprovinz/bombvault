@@ -169,9 +169,11 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
             key={r.id}
             className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2"
           >
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 max-md:basis-full">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-carbon-text font-semibold truncate">{r.name}</span>
+                <span className="text-sm text-carbon-text font-semibold truncate max-md:whitespace-normal max-md:wrap-anywhere">
+                  {r.name}
+                </span>
                 {/* A negative count means the server could not read it. That is
                     treated as IN USE everywhere below: an unknown answer must
                     not be the one that unlocks deleting. A direct repository
@@ -201,7 +203,9 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-carbon-textSub font-mono truncate" dir="ltr">
+              {/* On a phone the address wraps: cut to the column, the part
+                  that tells two buckets apart is the part that goes. */}
+              <p className="text-xs text-carbon-textSub font-mono truncate max-md:whitespace-normal max-md:wrap-anywhere" dir="ltr">
                 {r.repo}
               </p>
             </div>

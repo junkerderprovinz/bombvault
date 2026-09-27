@@ -185,6 +185,25 @@ describe("RevealInput", () => {
     }
   });
 
+  it("widens the eye and its reserved padding together under a coarse pointer", () => {
+    const tree = RevealInput({
+      visible: false,
+      onToggleVisible: noop,
+      showLabel: "Show value",
+      hideLabel: "Hide value",
+      value: "",
+      onChange: noop,
+    });
+    const input = findOne(tree, "input").props.className as string;
+    const btn = findOne(tree, "button").props.className as string;
+    expect(btn).toContain("pointer-coarse:w-11");
+    expect(btn).toContain("pointer-coarse:h-full");
+    expect(input).toContain("pointer-coarse:pr-11!");
+    expect(btn).toContain("pointer-coarse:right-0");
+    expect(input).toContain("rtl:pointer-coarse:pl-11!");
+    expect(btn).toContain("rtl:pointer-coarse:left-0!");
+  });
+
   it("puts wrapperClassName on the outer box, not the input", () => {
     const tree = RevealInput({
       visible: false,

@@ -269,7 +269,7 @@ export function ZFSAddDialog({ onClose, onAdded }: { onClose: () => void; onAdde
                     onChange={setRepo}
                   />
 
-                  <div className="flex items-center justify-end gap-2 pt-1">
+                  <div className="flex items-center justify-end gap-2 pt-1 max-md:flex-wrap">
                     <Button
                       label={t("files.cancel")}
                       labelKey="files.cancel"

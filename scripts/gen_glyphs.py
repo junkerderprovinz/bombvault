@@ -237,15 +237,6 @@ ANOMALY_COLUMNS = (
 )
 ANOMALY_BOX = "0 0 14 14"
 
-# The rail folded away on a narrow window: three bars with the anomaly
-# columns' caps, laid flat.
-MENU_BARS = (
-    '<rect x="1.4" y="2.4" width="11.2" height="2.2" rx="1.1" />'
-    '<rect x="1.4" y="5.9" width="11.2" height="2.2" rx="1.1" />'
-    '<rect x="1.4" y="9.4" width="11.2" height="2.2" rx="1.1" />'
-)
-MENU_BOX = "0 0 14 14"
-
 # Taking a credential away. IconShieldOff already means switching two-factor
 # off, a protection going down, which is not what revoking a key does. So this
 # is IconKey's own drawing on the same grid with a bar across it, and a gap cut
@@ -296,8 +287,11 @@ EXTRA_NAV = [
              (3.0, 1.0, 18.0, 22.0), "integrity"),
     imported("IconTabStorage", "Paths and storage tab", "0 0 448 512",
              (0.0, 0.0, 448.0, 512.0), "storage"),
+    # The bottom bar's More slot. Three equal dots on the text baseline: the
+    # mark every platform uses for "there is more".
+    ("IconEllipsis", "More, the overflow destination", "1.4 1.4 11.2 11.2",
+     '<circle cx="2.5" cy="7" r="1.1" /><circle cx="7" cy="7" r="1.1" /><circle cx="11.5" cy="7" r="1.1" />'),
     ("IconAnomalies", "Anomalies, a backup that does not fit its history", ANOMALY_BOX, ANOMALY_COLUMNS),
-    ("IconMenu", "Menu, the navigation rail on a narrow window", MENU_BOX, MENU_BARS),
 ]
 
 # IconCancel is the same cross as IconClose, so the app has one X.

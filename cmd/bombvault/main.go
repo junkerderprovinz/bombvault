@@ -48,6 +48,7 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "dbdump-stream" {
 		os.Exit(runDBDumpStream(context.Background(), os.Args[2:], os.Stdout, os.Stderr, defaultDBDumpDeps()))
 	}
+	ignoreHangup()
 	if err := run(); err != nil {
 		log.Printf("fatal: %v", err)
 		os.Exit(1)

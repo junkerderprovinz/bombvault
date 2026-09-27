@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { backupNow } from "../lib/api";
+import { backupNow, type Run } from "../lib/api";
 import { useBackupWatch } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";
 import { busyPhraseKey, type ProgressStage, type ProgressState } from "../lib/progress";
@@ -22,13 +22,19 @@ interface BackupButtonProps {
   running?: { active: boolean; phase?: string; stage?: ProgressStage };
   /** This container's own live progress, for the step the busy hint names. */
   progress?: ProgressState;
+  /** The correlated run, reported by useBackupWatch the moment the
+   *  baseline-id match identifies it (and on each later poll, with the
+   *  refreshed record). The mobile container detail deep-links the
+   *  RunDetailSheet into the live run at that moment; desktop callers omit
+   *  it (BackupButton.dom.test.tsx pins that). */
+  onRunCorrelated?: (run: Run) => void;
 }
 
 // Per-browser acknowledgement of the stop warning. Storage keys keep the bv-
 // prefix, since renaming one resets every user's stored state.
 const STOP_ACK_KEY = "bv-container-stop-ack";
 
-export function BackupButton({ name, t, onBackedUp, running, progress }: BackupButtonProps) {
+export function BackupButton({ name, t, onBackedUp, running, progress, onRunCorrelated }: BackupButtonProps) {
   // The server runs the backup detached and answers at once; the outcome comes
   // from the progress stream and the recorded run. Awaiting the backup itself
   // would break when the container is the proxy this UI runs through.
@@ -37,6 +43,7 @@ export function BackupButton({ name, t, onBackedUp, running, progress }: BackupB
     start: () => backupNow(name),
     matchRun: (r) => r.domain === "container" && r.target === name,
     onDone: onBackedUp,
+    onRun: onRunCorrelated,
   });
   const blockedByOther = !!running?.active && !isPending;
   const { push } = useToast();

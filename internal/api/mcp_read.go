@@ -221,9 +221,32 @@ func (h *Handler) toolGetStorageStats(ctx context.Context, req *mcp.CallToolRequ
 		return h.mcpFailure(ctx, "get_storage_stats", err), nil
 	}
 
-	var growth any
+	capacities := h.svc.repoCapacities(in.Domain)
+	repositories := make([]map[string]any, 0, len(capacities))
+	var primaryFree *int64
+	for _, c := range capacities {
+		if c.Primary {
+			primaryFree = c.Free
+		}
+		repositories = append(repositories, map[string]any{
+			"name":       c.Name,
+			"primary":    c.Primary,
+			"remote":     c.Remote,
+			"at":         c.At,
+			"usedBytes":  c.Used,
+			"freeBytes":  c.Free,
+			"totalBytes": c.Total,
+		})
+	}
+
+	var growth, weeks any
 	if rate, ok := growthBytesPerWeek(stats, time.Now()); ok {
 		growth = rate
+		if primaryFree != nil {
+			if w, known := weeksToFull(*primaryFree, rate); known {
+				weeks = w
+			}
+		}
 	}
 	samples := make([]map[string]any, 0, len(stats))
 	for i := len(stats) - 1; i >= 0; i-- {
@@ -240,6 +263,8 @@ func (h *Handler) toolGetStorageStats(ctx context.Context, req *mcp.CallToolRequ
 		"domain":             in.Domain,
 		"samples":            samples,
 		"growthBytesPerWeek": growth,
+		"weeksToFull":        weeks,
+		"repositories":       repositories,
 	}), nil
 }
 

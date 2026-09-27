@@ -50,14 +50,15 @@ function VersionLink({ label, version, repo }: { label: string; version: string;
   }
   return (
     // No underline, as on KnightLoader's About card; the hover colour is the
-    // affordance.
+    // affordance. Under a coarse pointer the padding widens the target and the
+    // negative margin takes it back, so the caption line keeps its height.
     <span className="text-carbon-textMuted">
       {label}{" "}
       <a
         href={`${repo}/releases/tag/${encodeURIComponent(tag)}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="font-mono tabular-nums text-carbon-textMuted no-underline hover:text-carbon-text"
+        className="font-mono tabular-nums text-carbon-textMuted no-underline hover:text-carbon-text pointer-coarse:inline-block pointer-coarse:-m-2.5 pointer-coarse:p-2.5"
       >
         {version}
       </a>

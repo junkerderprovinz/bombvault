@@ -2,17 +2,10 @@
 // A failed dump is a failure of its own: it must raise the error count without
 // hiding the container's failed backup, and nothing that happens to the dump
 // afterwards, neither saving it to a folder nor importing it, may clear it.
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
 import type { Run } from "../lib/api";
-
-const listRuns = vi.fn();
-
-vi.mock("../lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../lib/api")>();
-  return { ...actual, listRuns: () => listRuns() };
-});
 
 const { RunsCard, unresolvedErrorCount } = await import("./Dashboard");
 
@@ -38,7 +31,13 @@ function run(over: Partial<Run> = {}): Run {
   };
 }
 
-beforeEach(() => listRuns.mockReset());
+function renderHistory(runs: Run[]) {
+  render(
+    <I18nProvider>
+      <RunsCard t={t} dense={false} runs={runs} loading={false} failed={false} refreshRuns={() => {}} />
+    </I18nProvider>
+  );
+}
 afterEach(cleanup);
 
 describe("the error count", () => {
@@ -77,23 +76,15 @@ describe("the error count", () => {
 
 describe("the run history", () => {
   it("reads the note of a successful run and warns where the note warns", async () => {
-    listRuns.mockResolvedValue({
-      ok: true,
-      runs: [
-        run({ id: "a", kind: "dbdump", status: "success", error: "database dump covers one database only" }),
-        run({
-          id: "b",
-          kind: "dbimport",
-          status: "success",
-          error: "database imported; the previous data folder was kept: /mnt/user/appdata/pg.old",
-        }),
-      ],
-    });
-    render(
-      <I18nProvider>
-        <RunsCard t={t} />
-      </I18nProvider>
-    );
+    renderHistory([
+      run({ id: "a", kind: "dbdump", status: "success", error: "database dump covers one database only" }),
+      run({
+        id: "b",
+        kind: "dbimport",
+        status: "success",
+        error: "database imported; the previous data folder was kept: /mnt/user/appdata/pg.old",
+      }),
+    ]);
 
     const warned = await screen.findByText(en["runReason.dbdumpOneDatabase"]);
     expect(warned.className).toContain("text-statusWarn");
@@ -104,12 +95,7 @@ describe("the run history", () => {
   });
 
   it("gives the kind column room for the longest label", async () => {
-    listRuns.mockResolvedValue({ ok: true, runs: [run({ kind: "dbdump", status: "success", error: "" })] });
-    render(
-      <I18nProvider>
-        <RunsCard t={t} />
-      </I18nProvider>
-    );
+    renderHistory([run({ kind: "dbdump", status: "success", error: "" })]);
 
     const kind = await screen.findByText(en["run.kindDbDump"]);
     await waitFor(() => expect(kind.className).toContain("break-words"));

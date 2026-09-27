@@ -11,7 +11,9 @@ import (
 // diskStatResult is how much room a filesystem has and which volume it shares
 // that room with.
 type diskStatResult struct {
-	Free, Total uint64
+	// Free is what an unprivileged writer can still use. Used leaves out the
+	// blocks reserved for root, so Used and Free need not add up to Total.
+	Free, Used, Total uint64
 	// Volume groups the repositories that draw on the same free space:
 	// "dev:<device in hex>", or "pool:<name>" for a dataset of a ZFS pool.
 	Volume string
@@ -24,10 +26,7 @@ func diskStat(path string) (diskStatResult, error) {
 		return diskStatResult{}, err
 	}
 	var res diskStatResult
-	if fs.Bsize > 0 {
-		res.Free = fs.Bavail * uint64(fs.Bsize)
-		res.Total = fs.Blocks * uint64(fs.Bsize)
-	}
+	res.Free, res.Used, res.Total = statfsRoom(&fs)
 	var st syscall.Stat_t
 	if err := syscall.Stat(path, &st); err != nil {
 		return diskStatResult{}, err
@@ -47,4 +46,13 @@ func diskStat(path string) (diskStatResult, error) {
 func diskFreeBytes(path string) (uint64, error) {
 	res, err := diskStat(path)
 	return res.Free, err
+}
+
+// statfsRoom turns the block counts of a statfs answer into bytes.
+func statfsRoom(fs *syscall.Statfs_t) (free, used, total uint64) {
+	if fs.Bsize <= 0 {
+		return 0, 0, 0
+	}
+	size := uint64(fs.Bsize)
+	return fs.Bavail * size, (fs.Blocks - fs.Bfree) * size, fs.Blocks * size
 }

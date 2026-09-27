@@ -267,7 +267,13 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         </label>
       )}
 
-      <div className="flex items-center gap-2">
+      {/* The path input refuses to shrink below its intrinsic width (~192px),
+          so on a narrow column the row overflowed and the trigger landed on
+          neighbouring controls, here and in every other call site of this
+          shared component. Under 48rem the input takes the whole line and the
+          trigger wraps below it; the single-line row stays the desktop
+          layout. */}
+      <div className="flex items-center gap-2 max-md:flex-wrap">
         <input
           type="text"
           value={value}
@@ -275,7 +281,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           spellCheck={false}
           placeholder={placeholder ?? "user/appdata"}
           dir="ltr"
-          className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
+          className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start max-md:min-w-full"
         />
         <Button
           label={t("folder.browseTitle")}

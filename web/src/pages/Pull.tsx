@@ -15,7 +15,7 @@ import {
 } from "../lib/api";
 import type { PullSourceView, PullSourceInput } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { PAGE_SHELL, PAGE_SHELL_TABBED } from "../lib/pageShell";
+import { PAGE_SHELL_RESPONSIVE, PAGE_SHELL_TABBED_RESPONSIVE } from "../lib/pageShell";
 import { relativeTime } from "../lib/reltime";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { NumberField } from "../components/NumberField";
@@ -109,7 +109,7 @@ function PullSourceCard({
       style={hueVars(index) as CSSProperties}
     >
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div className="min-w-0">
+        <div className="min-w-0 max-md:basis-full">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium text-carbon-text">{source.name}</span>
             <Badge tone={verdict.tone}>{verdict.label}</Badge>
@@ -121,7 +121,7 @@ function PullSourceCard({
             {source.repo}
           </p>
         </div>
-        <div className="text-end text-xs text-carbon-textMuted shrink-0">
+        <div className="text-end text-xs text-carbon-textMuted shrink-0 max-md:text-start">
           <div>
             {t("pull.lastPull")}:{" "}
             {source.lastPullAt === 0 ? "-" : relativeTime(t, source.lastPullAt)}
@@ -388,7 +388,7 @@ function PullDialog({
             onChange={setEnabled}
           />
 
-          <div className="flex items-center justify-end gap-2 pt-1">
+          <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
             <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onClose} />
             <Button
               key={shake || 0}
@@ -441,7 +441,7 @@ export function Pull({ embedded = false }: { embedded?: boolean } = {}) {
   const showEmptyState = !loading && error === null && sources.length === 0;
 
   return (
-    <div className={embedded ? PAGE_SHELL_TABBED : PAGE_SHELL}>
+    <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           {!embedded && <h1 className="text-2xl font-semibold text-carbon-text">{t("pull.title")}</h1>}

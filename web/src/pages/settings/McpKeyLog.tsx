@@ -47,7 +47,10 @@ function outcomeText(t: T, e: McpKeyEvent): string {
 
 function RunLink({ id, t }: { id: string; t: T }) {
   return (
-    <Link to={`/dashboard?run=${encodeURIComponent(id)}`} className="text-xs text-accentText hover:underline">
+    <Link
+      to={`/dashboard?run=${encodeURIComponent(id)}`}
+      className="text-xs text-accentText hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-(--btn-h) pointer-coarse:items-center"
+    >
       {t("mcp.logShowRun")}
     </Link>
   );
@@ -129,7 +132,7 @@ export function McpKeyLog({ keyId, used, t }: { keyId: string; used: boolean; t:
                 <li key={`${e.at}:${i}`} className="flex flex-wrap items-center gap-x-2 text-xs">
                   <span className="text-carbon-textMuted tabular-nums">{formatTs(e.at)}</span>
                   {e.tool ? (
-                    <span dir="ltr" className="font-mono text-carbon-text">
+                    <span dir="ltr" className="min-w-0 font-mono text-carbon-text wrap-anywhere">
                       {e.tool}
                     </span>
                   ) : (

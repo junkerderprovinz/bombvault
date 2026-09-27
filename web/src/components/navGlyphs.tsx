@@ -435,6 +435,22 @@ export function IconTabStorage() {
   );
 }
 
+/** More, the overflow destination. */
+export function IconEllipsis() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="1.4 1.4 11.2 11.2"
+      fill="currentColor"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      <circle cx="2.5" cy="7" r="1.1" /><circle cx="7" cy="7" r="1.1" /><circle cx="11.5" cy="7" r="1.1" />
+    </svg>
+  );
+}
+
 /** Anomalies, a backup that does not fit its history. */
 export function IconAnomalies() {
   return (
@@ -447,22 +463,6 @@ export function IconAnomalies() {
       aria-hidden="true"
     >
       <rect x="1.4" y="8.6" width="2.2" height="4" rx="1.1" /><rect x="4.4" y="7.4" width="2.2" height="5.2" rx="1.1" /><rect x="7.4" y="1.4" width="2.2" height="11.2" rx="1.1" /><rect x="10.4" y="8" width="2.2" height="4.6" rx="1.1" />
-    </svg>
-  );
-}
-
-/** Menu, the navigation rail on a narrow window. */
-export function IconMenu() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 14 14"
-      fill="currentColor"
-      className="shrink-0"
-      aria-hidden="true"
-    >
-      <rect x="1.4" y="2.4" width="11.2" height="2.2" rx="1.1" /><rect x="1.4" y="5.9" width="11.2" height="2.2" rx="1.1" /><rect x="1.4" y="9.4" width="11.2" height="2.2" rx="1.1" />
     </svg>
   );
 }

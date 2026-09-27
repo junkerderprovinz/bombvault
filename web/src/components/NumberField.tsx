@@ -9,6 +9,10 @@
 // for `<NumberField` and keeps its own onChange, clamping and debouncing
 // included. stepUp() fires no event, so the steppers replay the new value
 // through setValueLikeAUser for that onChange to run.
+//
+// Under a coarse pointer two 11px arrows stacked in a 32px field are too small
+// to hit, so they sit side by side, each taking the field's full height and a
+// 32px strip, and the padding widens to match. The glyphs keep their size.
 
 import { useCallback, useEffect, useRef, useState, type InputHTMLAttributes } from "react";
 
@@ -120,13 +124,13 @@ export function NumberField({ className = "", wrapperClassName = "", ...rest }: 
         ref={ref}
         type="number"
         // pe-8 keeps the digits clear of the arrows.
-        className={`glim-num pe-8 ${className}`}
+        className={`glim-num pe-8 pointer-coarse:pe-16! ${className}`}
       />
       {/* Hidden and unfocusable: the input already exposes the value, the
           range and the arrow keys. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-px end-1.5 flex flex-col justify-center gap-px"
+        className="pointer-events-none absolute inset-y-px end-1.5 flex flex-col justify-center gap-px pointer-coarse:end-0 pointer-coarse:flex-row pointer-coarse:gap-0"
       >
         {([1, -1] as const).map((direction) => {
           const enabled = direction > 0 ? ends.up : ends.down;
@@ -139,7 +143,7 @@ export function NumberField({ className = "", wrapperClassName = "", ...rest }: 
               // No title: nobody reaches these by keyboard or screen reader, so
               // it would only paint the OS tooltip the icon-badge rule forbids.
               // No background, so the arrows stay part of the field.
-              className="pointer-events-auto flex h-[11px] w-[14px] items-center justify-center border-0 bg-transparent p-0 text-carbon-textMuted transition-colors hover:text-carbon-text disabled:opacity-35 disabled:hover:text-carbon-textMuted focus:outline-none"
+              className="pointer-events-auto flex h-[11px] w-[14px] pointer-coarse:h-full pointer-coarse:w-8 items-center justify-center border-0 bg-transparent p-0 text-carbon-textMuted transition-colors hover:text-carbon-text disabled:opacity-35 disabled:hover:text-carbon-textMuted focus:outline-none"
               // Keep the caret in the field: a mousedown here would move focus
               // and a field that saves on blur would fire on every click.
               onMouseDown={(e) => e.preventDefault()}

@@ -120,14 +120,16 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
       )}
 
       {sets.map((s) => (
-        <div key={s.id} className="flex items-start justify-between gap-3 rounded-card bg-carbon-surface2 p-3">
+        // On a phone the actions go under the name, which beside them shrinks
+        // to a column one character wide.
+        <div key={s.id} className="flex items-start justify-between gap-3 rounded-card bg-carbon-surface2 p-3 max-md:flex-col">
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{s.name}</span>
             <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">
               {s.s3KeyId || s.restUser || "—"}
             </span>
           </div>
-          <div className="flex shrink-0 items-start gap-2">
+          <div className="flex shrink-0 flex-wrap items-start gap-2">
             <Button
               label={t("offsite.targets.edit")}
               labelKey="offsite.targets.edit"

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -260,5 +261,180 @@ func TestMCPRestorePointsCancelledClientIsNotATimeout(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("the cancelled listing never came back")
+	}
+}
+
+// The storage card tells the operator how much room each repository has left,
+// so the tool has to say the same: the local disk asked on the spot, an rclone
+// remote from its last stored reading, and a backend that answers no capacity
+// question as unknown rather than as zero.
+func TestMCPStorageStatsReportsTheRoomAroundEachRepository(t *testing.T) {
+	h, _, repo, _ := newMCPGateHandler(t)
+	settings, err := repo.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersEnabled = true
+	settings.ContainersPath = "backups/containers"
+	if err := repo.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	initLocalRepo(t, filepath.Join(h.cfg.HostMountRoot, "backups", "containers"))
+	h.svc.diskStat = func(string) (diskStatResult, error) {
+		return diskStatResult{Volume: "dev:801", Free: 50_000_000, Used: 30_000_000, Total: 80_000_000}, nil
+	}
+
+	const remote = "rclone:gdrive:bombvault"
+	for i, row := range []store.OffsiteTarget{
+		{ID: "cloud", Name: "Cloud", Repo: remote, Role: store.RoleRepo, Enabled: true},
+		{ID: "nas", Name: "NAS", Repo: "sftp:backup@nas:/bombvault", Role: store.RoleRepo, Enabled: true},
+	} {
+		if _, err := repo.UpsertOffsiteTarget(row); err != nil {
+			t.Fatal(err)
+		}
+		name := []string{"Nextcloud", "Immich"}[i]
+		if _, err := repo.UpsertTarget(store.Target{ContainerName: name, IncludeInSchedule: true}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := repo.WritePlacement(store.ItemRef{Domain: "containers", Key: name}, &store.HomeWrite{Repo: row.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
+			t.Fatal(err)
+		}
+	}
+	now := time.Now().Unix()
+	remoteTotal := int64(8_000_000_000)
+	for _, sample := range []store.VolumeSample{
+		{Volume: "remote:" + repoLocationKey(remote), At: now - 7200, FreeBytes: 3_000_000_000, TotalBytes: &remoteTotal, Source: "rclone"},
+		{Volume: "remote:" + repoLocationKey(remote), At: now - 3600, FreeBytes: 2_000_000_000, TotalBytes: &remoteTotal, Source: "rclone"},
+	} {
+		if err := repo.AddVolumeSample(sample); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	const week = int64(7 * 86400)
+	for _, sample := range []store.RepoStat{
+		{At: now - 2*week, RawSize: 1_000_000},
+		{At: now, RawSize: 3_000_000},
+	} {
+		sample.Domain, sample.Source = "containers", "local"
+		if err := repo.AddRepoStat(sample); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	ctx := withMCPCaller(context.Background(), mcpCaller{KeyID: "0b7e", Hint: "x9Qa"})
+	res, _ := h.toolGetStorageStats(ctx, &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
+		Name:      "get_storage_stats",
+		Arguments: json.RawMessage(`{"domain":"containers"}`),
+	}})
+	out := mcpStructured(t, res)
+
+	// Fifty million bytes free and a million more each week.
+	if got := out["weeksToFull"]; got != float64(50) {
+		t.Fatalf("weeksToFull = %v, want 50", got)
+	}
+	repos, _ := out["repositories"].([]any)
+	if len(repos) != 3 {
+		t.Fatalf("repositories = %v, want the domain's own and the two named ones", out["repositories"])
+	}
+	want := []map[string]any{
+		{"name": "folder containers", "primary": true, "remote": false,
+			"usedBytes": float64(30_000_000), "freeBytes": float64(50_000_000), "totalBytes": float64(80_000_000)},
+		{"name": "Cloud", "primary": false, "remote": true, "at": float64(now - 3600),
+			"usedBytes": float64(6_000_000_000), "freeBytes": float64(2_000_000_000), "totalBytes": float64(8_000_000_000)},
+		{"name": "NAS", "primary": false, "remote": true, "at": nil,
+			"usedBytes": nil, "freeBytes": nil, "totalBytes": nil},
+	}
+	for i, fields := range want {
+		got, _ := repos[i].(map[string]any)
+		for field, value := range fields {
+			if got[field] != value {
+				t.Fatalf("repositories[%d].%s = %v, want %v (%v)", i, field, got[field], value, got)
+			}
+		}
+	}
+	if at, _ := repos[0].(map[string]any)["at"].(float64); int64(at) < now {
+		t.Fatalf("the local disk was not read on the spot: at = %v", at)
+	}
+	for _, r := range repos {
+		for _, field := range []string{"usedBytes", "freeBytes", "totalBytes", "at"} {
+			if _, ok := r.(map[string]any)[field]; !ok {
+				t.Fatalf("%v leaves out %s instead of sending null", r, field)
+			}
+		}
+	}
+	if text, _ := json.Marshal(out); strings.Contains(string(text), "gdrive") || strings.Contains(string(text), "backup@nas") {
+		t.Fatalf("the answer carries a repository location: %s", text)
+	}
+}
+
+// initLocalRepo leaves the marker localRepoMissing looks for.
+func initLocalRepo(t *testing.T, dir string) {
+	t.Helper()
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// ownStorageStats calls get_storage_stats for the containers domain, kept in
+// backups/containers, and returns what it says about that one repository.
+func ownStorageStats(t *testing.T, h *Handler) map[string]any {
+	t.Helper()
+	settings, err := h.svc.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersEnabled = true
+	settings.ContainersPath = "backups/containers"
+	if err := h.svc.store.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	ctx := withMCPCaller(context.Background(), mcpCaller{KeyID: "0b7e", Hint: "x9Qa"})
+	res, _ := h.toolGetStorageStats(ctx, &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
+		Name:      "get_storage_stats",
+		Arguments: json.RawMessage(`{"domain":"containers"}`),
+	}})
+	repos, _ := mcpStructured(t, res)["repositories"].([]any)
+	if len(repos) != 1 {
+		t.Fatalf("repositories = %v, want the domain's own", repos)
+	}
+	got, _ := repos[0].(map[string]any)
+	return got
+}
+
+// A filesystem keeps blocks back for root. They are neither free to the backup
+// nor filled by anything, so they do not count as used.
+func TestMCPStorageStatsLeavesReservedBlocksOutOfUsed(t *testing.T) {
+	h, _, _, _ := newMCPGateHandler(t)
+	initLocalRepo(t, filepath.Join(h.cfg.HostMountRoot, "backups", "containers"))
+	h.svc.diskStat = func(string) (diskStatResult, error) {
+		return diskStatResult{Volume: "dev:801", Free: 50_000_000, Used: 25_000_000, Total: 80_000_000}, nil
+	}
+	got := ownStorageStats(t, h)
+	if got["usedBytes"] != float64(25_000_000) {
+		t.Fatalf("usedBytes = %v, want 25000000 (%v)", got["usedBytes"], got)
+	}
+}
+
+// A folder with no repository in it yet says nothing about the disk the
+// repository will be on, so the figures stay unknown.
+func TestMCPStorageStatsLeavesAMissingLocalRepositoryUnknown(t *testing.T) {
+	h, _, _, _ := newMCPGateHandler(t)
+	probes := 0
+	h.svc.diskStat = func(string) (diskStatResult, error) {
+		probes++
+		return diskStatResult{Volume: "dev:801", Free: 50_000_000, Used: 30_000_000, Total: 80_000_000}, nil
+	}
+	got := ownStorageStats(t, h)
+	for _, field := range []string{"usedBytes", "freeBytes", "totalBytes", "at"} {
+		if v, ok := got[field]; !ok || v != nil {
+			t.Fatalf("%s = %v, want null (%v)", field, v, got)
+		}
+	}
+	if probes != 0 {
+		t.Fatalf("the disk was asked %d times about a repository that does not exist", probes)
 	}
 }
