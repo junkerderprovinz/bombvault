@@ -1,5 +1,4 @@
-// ---------------------------------------------------------------------------
-// Run-detail visibility e2e — the background/return gate.
+// Run-detail visibility e2e: the background/return gate.
 //
 // What is proven HERE, on the real binary in real device emulation: the
 // backupWatch half of the gate. The "Back up now" flow on the REAL Containers
@@ -7,34 +6,33 @@
 // the real browser's Page Visibility state, and this spec pins the contract:
 //
 //   1. while visible, the chain polls /api/runs on its 2s cadence,
-//   2. while the page is HIDDEN, the chain stops scheduling — zero requests
+//   2. while the page is hidden, the chain stops scheduling: zero requests
 //      over multiple missed intervals,
-//   3. on RETURN, the watch's FIRST act is the listRuns refetch (the
-//      baseline-id reconcile — "refetch FIRST, then resume"), and
+//   3. on return, the watch's first act is the listRuns refetch (the
+//      baseline-id reconcile, "refetch first, then resume"), and
 //      a run that finished while hidden resolves from that refetched server
 //      record (the success toast with the recorded snapshot id), never from
 //      a client clock.
 //
-// Harness honesty — what is mocked and why: the e2e
+// Harness honesty: what is mocked and why. The e2e
 // webServer is the real bombvault binary over a wiped fresh DB, but the
 // harness has no Docker, so a fresh DB can never contain a container and no
-// real run can ever fire. The CONTAINER DOMAIN and the RUNS LIST are
-// therefore fulfilled at the Playwright route layer — the SPA, its fetches,
+// real run can ever fire. The container domain and the runs list are
+// therefore fulfilled at the Playwright route layer: the SPA, its fetches,
 // the binary, the SSE channel and every route shape are real; only the
 // staged payloads are fake, mirroring the Go JSON shapes field-for-field
-// (api.ts). /api/runs is requested ONLY by the watch chain on this page (the
-// dashboard's ActivityLog is not mounted here), so the request count IS the
+// (api.ts). /api/runs is requested only by the watch chain on this page (the
+// dashboard's ActivityLog is not mounted here), so the request count is the
 // poll chain's heartbeat.
 //
 // SCOPE NOTE: this branch hosts RunDetailSheet component-locally in the
-// Containers page's stacked detail (no route — router.tsx is frozen), so the
+// Containers page's stacked detail (no route: router.tsx is frozen), so the
 // live-section half of the gate is reachable from this page; it is pinned at
 // the component level by RunDetailSheet.dom.test.tsx (real progress.ts
 // singleton across a real EventSource boundary, real visibilitychange). The
 // sheet's own background/return e2e travels with the PR that ports the
 // sheet's own flows; the machinery proven here (this hook +
 // lib/useVisibilityGate.ts) is the same machinery that sheet consumer uses.
-// ---------------------------------------------------------------------------
 import { expect, test, type Page } from "@playwright/test";
 
 // The two device projects from playwright.config.ts. Everything else is a
@@ -100,7 +98,7 @@ function runsBody() {
   return [runsPhase === "running" ? RUNNING_RUN : DONE_RUN];
 }
 
-// Shadow document.visibilityState and announce it — the same drive a real
+// Shadow document.visibilityState and announce it: the same drive a real
 // tab switch gives the app (headless pages never actually background).
 async function setPageVisibility(page: Page, state: "visible" | "hidden") {
   await page.evaluate((s) => {
@@ -109,7 +107,6 @@ async function setPageVisibility(page: Page, state: "visible" | "hidden") {
   }, state);
 }
 
-// ---------------------------------------------------------------------------
 
 test("hidden page stops the run poll; return refetches first and reconciles the finished run", async ({
   page,
@@ -119,7 +116,7 @@ test("hidden page stops the run poll; return refetches first and reconciles the 
     "mobile-only: the gate targets the phone background/return story"
   );
 
-  // #197's one-time stop-warning ack — a real second-time user's browser
+  // #197's one-time stop-warning ack: a real second-time user's browser
   // state, so the flow under test is fire() and not the confirm sheet.
   await page.addInitScript(() => {
     try {
@@ -129,8 +126,8 @@ test("hidden page stops the run poll; return refetches first and reconciles the 
     }
   });
 
-  // The watch chain's heartbeat: /api/runs is requested ONLY by backupWatch
-  // on this page, so the Node-side counter IS the chain's schedule.
+  // The watch chain's heartbeat: /api/runs is requested only by backupWatch
+  // on this page, so the Node-side counter is the chain's schedule.
   let runsRequests = 0;
   let lastRunsRequestAt = 0;
   await page.route("**/api/display-prefs*", (route) => route.abort());
@@ -159,14 +156,14 @@ test("hidden page stops the run poll; return refetches first and reconciles the 
   await fired;
   runsPhase = "running";
 
-  // 1. Visible: the chain is alive — baseline + at least two poll hops at
+  // 1. Visible: the chain is alive, baseline + at least two poll hops at
   //    the 2s cadence (first hop fires ~600ms after the POST).
   await expect
     .poll(() => runsRequests, { timeout: 15_000, message: "poll chain never ran while visible" })
     .toBeGreaterThanOrEqual(3);
 
   // 2. Hidden: the chain stops scheduling. One hop may already have been
-  //    scheduled when the page hid — let it land, then demand silence across
+  //    scheduled when the page hid; let it land, then demand silence across
   //    more than two missed intervals.
   await setPageVisibility(page, "hidden");
   await page.waitForTimeout(2_600);
@@ -177,7 +174,7 @@ test("hidden page stops the run poll; return refetches first and reconciles the 
     "the poll chain kept firing while the page was hidden (visibility gate missing)"
   ).toBe(hiddenCount);
 
-  // 3. Return: the watch refetches FIRST — the immediate listRuns call is
+  // 3. Return: the watch refetches first: the immediate listRuns call is
   //    the reconcile (baseline-id match), not a resumed timer waiting out
   //    its interval. The staged run finished while hidden; that refetch must
   //    resolve the watch from the server record.
@@ -193,7 +190,7 @@ test("hidden page stops the run poll; return refetches first and reconciles the 
   ).toBeLessThan(1_500);
 
   // The reconciled outcome, through the real watch -> BackupButton surface:
-  // the success toast carries the recorded snapshot id's mono slice — read
+  // the success toast carries the recorded snapshot id's mono slice, read
   // from the refetched run, never extrapolated.
   await expect(page.getByText("Done · 0f1e2d3c")).toBeVisible();
 });

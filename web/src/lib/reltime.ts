@@ -21,12 +21,15 @@ export function relativeTime(t: T, unix: number): string {
   return t("time.daysAgo", n);
 }
 
+/** NO_VALUE is the mark a table cell or tile shows for a missing value. */
+export const NO_VALUE = "—";
+
 /**
  * formatTs renders a unix timestamp as a localized date and time, or a dash
  * when the value is missing.
  */
 export function formatTs(unix: number | null | undefined): string {
-  if (!unix) return "—";
+  if (!unix) return NO_VALUE;
   return new Date(unix * 1000).toLocaleString();
 }
 

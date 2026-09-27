@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // BottomNav; the mobile bottom bar.
 //
 // Below the 48rem breakpoint this is the desktop Sidebar's counterpart, and
@@ -76,7 +75,6 @@
 // duplicate history entry. The scroller is Layout's <main id="bv-main">, so
 // the mechanism is passed down from Layout as a prop and nothing here queries
 // the DOM for it.
-// ---------------------------------------------------------------------------
 import { useState, type CSSProperties, type MouseEvent } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import type { Settings } from "../../lib/api";

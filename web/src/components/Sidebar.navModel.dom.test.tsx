@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
 // Sidebar <-> navModel registry consistency.
 //
 // Sidebar's header comment says the rail derives from the one ordered nav
@@ -24,7 +23,6 @@
 // registry's labelKey/icon for the same route; each lane of the triple is
 // read from a different field, so swapping labelKey/icon between two
 // registry entries, or retyping the rail's literals, goes red here.
-// ---------------------------------------------------------------------------
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";

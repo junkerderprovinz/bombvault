@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // DESKTOP_QUERY; the fragile-pair guard between the one js breakpoint
 // literal and Tailwind's CSS md: variants.
 //
@@ -17,7 +16,6 @@
 // The file also owns the pointer-capability axis; the second describe below
 // pins that literal and re-asserts the one-width-literal rule the touch work
 // depends on.
-// ---------------------------------------------------------------------------
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -77,7 +75,6 @@ describe("DESKTOP_QUERY stays the one breakpoint literal", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // POINTER_COARSE_QUERY; the pointer-capability axis.
 //
 // The same fragile-literal discipline as the width guard above, applied to
@@ -87,7 +84,6 @@ describe("DESKTOP_QUERY stays the one breakpoint literal", () => {
 // `(pointer: coarse)`-keyed interaction mode drifting into a width-keyed one
 // would hand landscape phones (>=48rem, still coarse-pointer) the desktop
 // tree; a second width literal here would fork the chrome axis.
-// ---------------------------------------------------------------------------
 const COARSE_LITERAL = /pointer:\s*coarse/;
 
 describe("POINTER_COARSE_QUERY stays the one pointer-capability literal", () => {

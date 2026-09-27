@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // Narrow-viewport backstop: the UI-considerations long-text row,
 // operationalized.
 //
@@ -37,7 +36,6 @@
 // editor header, the populated guided-restore step 5) carry their narrow
 // sweeps beside their own treatments, in the specs where the surfaces they
 // guard actually exist.
-// ---------------------------------------------------------------------------
 import { expect, test, type Page } from "@playwright/test";
 
 // The two device projects from playwright.config.ts, the backstop targets
@@ -178,7 +176,6 @@ for (const locale of locales) {
   }
 }
 
-// ---------------------------------------------------------------------------
 // Helpers shared by the geometry sweeps below, the measurement approach in
 // full, so any sweep that later joins this file inherits the exact same
 // contracts (and tolerances, and nothing looser).
@@ -197,7 +194,6 @@ for (const locale of locales) {
 // Data honesty: the Dashboard sweep stages its read models at the route
 // layer (Go JSON shapes field-for-field): the log block needs runs to render
 // rows, impossible on a fresh DB.
-// ---------------------------------------------------------------------------
 
 /** Let layout settle before any geometry read, in three steps: web-font swap
  *  changes text metrics for a frame; the entrance/tab-slide animations
@@ -401,7 +397,6 @@ for (const locale of locales) {
   }
 }
 
-// ---------------------------------------------------------------------------
 // The landscape boundary: one proof, two viewports, the seeded-locale boot
 // reused with real landscape heights. The mobile-chrome query is width-only
 // ("min-width: 48rem"): 740px stays mobile, 844x390,
@@ -410,7 +405,6 @@ for (const locale of locales) {
 // supply the base device context, and setViewportSize overrides it either
 // way. The needles are the chrome itself (bottom nav vs desktop Sidebar),
 // the surfaces every width owns, independent of any page's data.
-// ---------------------------------------------------------------------------
 
 test("landscape 740x360: below 48rem the mobile chrome owns the shell", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the boundary pair rides the mobile projects");
@@ -434,7 +428,6 @@ test("landscape 844x390: at >=48rem the desktop chrome owns the shell", async ({
   await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
 });
 
-// ---------------------------------------------------------------------------
 // The Settings tab strip at phone widths.
 // The strip pins every segment to the sidebar row-box width (--nav-row-w,
 // 200px) on desktop, and that pin on a 390px phone wrapped its seven flex-none
@@ -445,7 +438,6 @@ test("landscape 844x390: at >=48rem the desktop chrome owns the shell", async ({
 // 44px, and a row that spans the column. English on purpose: the cells do not
 // follow the labels, so the strip behaves the same in every locale, and en
 // keeps the assertion on that mechanism rather than on a locale's typography.
-// ---------------------------------------------------------------------------
 
 async function assertStrip(page: Page, width: number, perRow: number[]): Promise<void> {
   const strip = page.getByRole("tablist", { name: "Settings" });

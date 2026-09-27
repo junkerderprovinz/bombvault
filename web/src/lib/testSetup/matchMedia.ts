@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // Vitest setup; guarded desktop-default window.matchMedia stub.
 //
 // jsdom does not implement window.matchMedia, and lib/theme.ts's
@@ -21,7 +20,6 @@
 // (e.g. prefers-color-scheme) false; the same desktop-default answer
 // useIsDesktop's windowless snapshot gives, so the existing jsdom suites keep
 // asserting the desktop layout they were written against.
-// ---------------------------------------------------------------------------
 type ChangeListener = (event: MediaQueryListEvent) => void;
 
 function stubbedMatchMedia(query: string): MediaQueryList {

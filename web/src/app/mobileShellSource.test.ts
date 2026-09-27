@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // Mobile shell source contract; the viewport correctness guard suite.
 //
 // The viewport contract is mostly declarative; custom properties, a meta
@@ -27,7 +26,6 @@
 //     source order, not rendered DOM.
 //
 // Node environment, no DOM: this reads source text, it does not render.
-// ---------------------------------------------------------------------------
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -482,7 +480,6 @@ describe("the chrome testids live in the mobile component sources", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Filled-tab contract; the bottom bar's active tab is
 // filled, not accent-coloured text.
 //
@@ -504,7 +501,6 @@ describe("the chrome testids live in the mobile component sources", () => {
 // BottomNav text, comments included rather than stripped,
 // which is exactly why the component's own comments paraphrase the retired
 // treatments instead of citing the literals.
-// ---------------------------------------------------------------------------
 describe("Filled tab; the active bottom-bar slot is a filled accent surface, not coloured text", () => {
   it("is reading the real BottomNav source (self-guard)", () => {
     expect(

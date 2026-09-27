@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // Use media query; the one breakpoint hook (and the one home of the desktop
 // breakpoint literal), plus the one pointer-capability hook.
 //
@@ -32,7 +31,6 @@
 // listener-in-effect hook can produce). The subscribe/unsubscribe shape
 // mirrors onSystemThemeChange in theme.ts; addEventListener with the
 // deprecated addListener/removeListener fallback for Safari < 14.
-// ---------------------------------------------------------------------------
 import { useSyncExternalStore } from "react";
 
 /** Tailwind's md breakpoint, as a media query. The only place this literal
@@ -79,11 +77,9 @@ export function useIsDesktop(): boolean {
   return useSyncExternalStore(subscribe, getSnapshot, () => true);
 }
 
-// ---------------------------------------------------------------------------
 // Pointer-capability axis; an additive twin of the width hook above, same
 // lazy-MediaQueryList / useSyncExternalStore / Safari<14 shape, over a second
 // module-level list so the two queries can never share state.
-// ---------------------------------------------------------------------------
 
 /** The pointer-capability media query: true when the primary pointing device
  *  has no fine pointer (finger, stylus-as-touch). The only other input-axis

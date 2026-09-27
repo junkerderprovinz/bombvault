@@ -298,9 +298,9 @@ function VMBackupButton({
    *  while another one runs, but never because of its own (isPending). */
   running?: { active: boolean; phase?: string };
   /** Optional correlated-run deep-link. useBackupWatch's `onRun` fires on
-   *  EVERY poll with the baseline-id-correlated run; the mobile card host
+   *  every poll with the baseline-id-correlated run; the mobile card host
    *  feeds it the block's component-local RunDetailSheet (with the dismissed
-   *  latch — the same mechanism Containers.tsx's mobile detail hosts).
+   *  latch, the same mechanism Containers.tsx's mobile detail hosts).
    *  Desktop callers omit it and stay byte-identical, exactly as
    *  BackupButton.tsx's own passthrough pins. */
   onRunCorrelated?: (run: Run) => void;
@@ -1301,9 +1301,9 @@ function VMBackupOrderPanel({
 
 export function VMs() {
   const { t } = useT();
-  // ONE responsive layout (the Dashboard.tsx/Containers.tsx rewrite pattern):
+  // One responsive layout (the Dashboard.tsx/Containers.tsx rewrite pattern):
   // every block below is JSX-gated on `isDesktop` or `!isDesktop`, so exactly
-  // one face of the page ever mounts — there is no CSS-hidden twin. The
+  // one face of the page ever mounts: there is no CSS-hidden twin. The
   // dual-block shape this page's mobile port arrived in (hidden-by-utility
   // wrappers over a second mobile gate) double-rendered the list and kept a
   // hidden DOM copy in sync for nothing; killing it is the point of the
@@ -1573,15 +1573,15 @@ export function VMs() {
         </div>
       )}
 
-      {/* VM backup-order panel (#119, VMs) — advanced, DESKTOP-ONLY: a
+      {/* VM backup-order panel (#119, VMs), advanced and desktop-only: a
           drag-reorder editor has no phone face (mobile edits each VM's
           schedule on the card's own sheet instead), and the phone never
-          mounts it — exactly one face per width.
+          mounts it, exactly one face per width.
           `advanced ? nextHue() : undefined`, not a bare `nextHue()` inside
           <Advanced>: a JSX child's own props (this `hueIndex` expression
           included) evaluate eagerly as part of building the <Advanced>
           element itself, before <Advanced> ever runs its own `advanced &&
-          when` check — so an unconditional `nextHue()` here would burn a
+          when` check, so an unconditional `nextHue()` here would burn a
           slot every render regardless of whether the panel actually paints,
           landing the not-installed section's own notch below one index late
           whenever Advanced mode is off. Gating on the same `advanced` flag
@@ -1595,8 +1595,8 @@ export function VMs() {
       )}
 
       {/* Controls: Filters popover (search + schedule/backup filters + sort) + select-all.
-          Desktop face — below the breakpoint the mobile block's ListToolbar
-          carries the SAME state (search/chips/sort) on the shared primitives.
+          Desktop face: below the breakpoint the mobile block's ListToolbar
+          carries the same state (search/chips/sort) on the shared primitives.
           One predicate, two presentations; the `isDesktop` gate mounts exactly
           one of them per width. */}
       {isDesktop && !loading && vms.length > 0 && (
@@ -1657,10 +1657,10 @@ export function VMs() {
         />
       )}
 
-      {/* Live VMs — the desktop list, JSX-gated: at >=48rem this is the list;
+      {/* Live VMs: the desktop list, JSX-gated: at >=48rem this is the list;
           below it the phone gets the card list in the mobile block instead and
           these full row cards (with their inline editors' weight) never mount
-          at all — the point of the gate, versus a CSS-hidden second copy. */}
+          at all, the point of the gate, versus a CSS-hidden second copy. */}
       {isDesktop && !loading && live.length > 0 && (
         <div className="flex flex-col gap-3 glim-content-fade">
           {live.map((v, i) => (
@@ -1681,8 +1681,8 @@ export function VMs() {
         </div>
       )}
 
-      {/* Orphan VMs — no longer defined on the host but still have backups.
-          Desktop face — the phone's card list renders its own not-installed
+      {/* Orphan VMs: no longer defined on the host but still have backups.
+          Desktop face: the phone's card list renders its own not-installed
           section inline (see the mobile block below). */}
       {isDesktop && !loading && orphans.length > 0 && (
         <div className="flex flex-col gap-3 glim-content-fade">

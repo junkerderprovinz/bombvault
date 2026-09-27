@@ -5,7 +5,6 @@ import { Button } from "../Button";
 import { IconClose } from "../navGlyphs";
 import { useT } from "../../lib/i18n";
 
-// ---------------------------------------------------------------------------
 // BottomSheet; the mobile bottom-sheet primitive.
 //
 // lib/useConfirm.tsx's stateful mechanism re-expressed as a bottom-anchored
@@ -25,7 +24,6 @@ import { useT } from "../../lib/i18n";
 // sheet. The scrim is `aria-hidden` instead, and panel and scrim are
 // siblings (a DOM child of an aria-hidden element is hidden from
 // assistive technology).
-// ---------------------------------------------------------------------------
 
 export interface BottomSheetProps {
   /** Whether the sheet is open. The caller owns the state; every close path calls onClose. */

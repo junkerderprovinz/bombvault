@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
 // Dashboard phone recent-runs block: the four states of the runs read.
 //
 // The block answers "what has backed up lately?" so it may only state
@@ -16,7 +15,6 @@
 // The page renders through the real components against a mocked api module,
 // with the desktop media query held at "phone"; jsdom otherwise answers
 // desktop and the phone surface would never mount.
-// ---------------------------------------------------------------------------
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";

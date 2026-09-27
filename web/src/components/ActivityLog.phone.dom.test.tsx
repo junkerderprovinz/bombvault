@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
 // Activity log line structure at phone width.
 //
 // The assertion is structural rather than a measurement: an overflow metric
@@ -12,7 +11,6 @@
 // mid-word). The message wraps at word boundaries (wrap-break-word) and
 // break-all must not appear anywhere in the log. The desktop face keeps the
 // one-line row the phone change must not touch.
-// ---------------------------------------------------------------------------
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { I18nProvider } from "../lib/i18n";

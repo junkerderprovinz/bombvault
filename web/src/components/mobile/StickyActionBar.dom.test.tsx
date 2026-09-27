@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
 // StickyActionBar dom tests; the chrome contract of the shared sticky-in-flow
 // bar. Assert class, not computed layout; jsdom has no layout engine, so
 // "sticky works" is pinned as (a) the sticky/bottom-0 classes present and (b)
@@ -7,7 +6,6 @@
 // plus the chrome contract it shares with the BottomNav precedent (sidebar
 // surface, safe-area bottom padding), including the absence of a top
 // hairline: surfaces in this app are told apart by shade.
-// ---------------------------------------------------------------------------
 
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
@@ -52,7 +50,7 @@ describe("StickyActionBar", () => {
     // bar sits on the page it overlays.
     expect(bar.className).not.toContain("border-t");
     expect(bar.className).not.toContain("border-carbon-border");
-    // Plain pb-3, and deliberately NO safe-area inset: the bar is sticky
+    // Plain pb-3, with no safe-area inset: the bar is sticky
     // inside main#bv-main, and BottomNav, main's flex sibling below it,
     // owns the home-indicator inset on its own host, so the bar never
     // reaches the screen edge. Reserving the inset here made the bar 22px

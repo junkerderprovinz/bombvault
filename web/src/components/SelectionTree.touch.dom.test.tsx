@@ -1,32 +1,30 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// SelectionTree TOUCH-MODE twins — the interaction-layer
-// contract of `interactionMode="touch"`, pinned against the SAME component
-// the desktop suites exercise (never a fork: the whole point is that this
-// mode is a prop on the ONE tree).
+// SelectionTree touch-mode twins: the interaction-layer
+// contract of `interactionMode="touch"`, pinned against the same component
+// the desktop suites exercise (never a fork: this mode is simply a prop on
+// the one tree).
 //
 // What these tests own that the desktop suites do not:
-//   - tap-to-toggle: a row click toggles through onToggle (the ONE toggle
-//     pipeline) instead of expanding — and two taps ROUND-TRIP the check,
+//   - tap-to-toggle: a row click toggles through onToggle (the one toggle
+//     pipeline) instead of expanding, and two taps round-trip the check,
 //     the executable refutation of the checkbox double-fire hazard (research
 //     Pitfall 1: a second, live toggle surface under the row would make two
 //     taps a no-op).
-//   - the chevron is a real, labelled >=44x44 button that expands WITHOUT
-//     toggling — the dedicated-zone half of the touch contract (expand and
+//   - the chevron is a real, labelled >=44x44 button that expands without
+//     toggling, the dedicated-zone half of the touch contract (expand and
 //     check never share a hit area).
 //   - the checkbox is purely presentational: pointer-events-none so real
-//     taps fall through to the row, and no onChange — clicking the input
+//     taps fall through to the row, and no onChange: clicking the input
 //     itself toggles nothing.
-//   - the pointer default is UNTOUCHED: without the prop the row click
-//     expands (never toggles) and the checkbox stays the live control —
+//   - the pointer default is untouched: without the prop the row click
+//     expands (never toggles) and the checkbox stays the live control,
 //     the byte-identical-desktop guarantee in its most observable form.
 //
 // Harness: the direct-render TreeHarness shape from SelectionTree.dom
 // .test.tsx, but with a STATEFUL includes mirror on the harness side so a
 // tap's optimistic round-trip is real state arithmetic, not a spy count.
-// jsdom has no scrollIntoView — stubbed, same as the keyboard suite
+// jsdom has no scrollIntoView: stubbed, same as the keyboard suite
 // (focusNode calls it on every tap).
-// ---------------------------------------------------------------------------
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
@@ -34,7 +32,7 @@ import { I18nProvider } from "../lib/i18n";
 import type { BrowseResponse, MountInfo } from "../lib/api";
 
 let browseCalls: string[] = [];
-// Paths the mocked server refuses to read — drives the error-notice branch
+// Paths the mocked server refuses to read: drives the error-notice branch
 // (the retry Button's >=44px touch sizing) without a second mock shape.
 const rejectPaths = new Set<string>();
 
@@ -112,7 +110,7 @@ function TouchHarness({
   );
 }
 
-/** The DESKTOP control harness: no interactionMode prop at all — the default
+/** The desktop control harness: no interactionMode prop at all, the default
  *  the Files-page mount (and every existing caller) rides. */
 function PointerHarness({ taps }: { taps: string[] }) {
   return (
@@ -181,8 +179,8 @@ describe("SelectionTree touch mode: tap-to-toggle", () => {
     });
     expect(screen.getByRole("treeitem", { name }).getAttribute("aria-checked")).toBe("true");
 
-    // Two taps, two toggles — the double-fire hazard (Pitfall 1) would land
-    // back on "true" after the FIRST tap, i.e. zero net change per tap.
+    // Two taps, two toggles: the double-fire hazard (Pitfall 1) would land
+    // back on "true" after the first tap, i.e. zero net change per tap.
     expect(taps).toEqual([MOUNT, MOUNT]);
   });
 
@@ -205,7 +203,7 @@ describe("SelectionTree touch mode: tap-to-toggle", () => {
       </I18nProvider>,
     );
 
-    // An unreachable mount renders with NO tap handler at all — the same
+    // An unreachable mount renders with no tap handler at all: the same
     // rule Space obeys (`!spec.unreachable && !busyPaths?.has(...)`) is the
     // rule the finger obeys (one guard, one toggle semantics).
     await act(async () => {
@@ -221,11 +219,11 @@ describe("SelectionTree touch mode: the chevron zone", () => {
     renderTouch(taps);
 
     const row = screen.getByRole("treeitem", { name: /appdata\/plex/ });
-    // (4) The chevron EXISTS as a real control with an accessible name —
+    // (4) The chevron exists as a real control with an accessible name:
     // the desktop glyph is aria-hidden decoration; the touch button is
     // announced. The carried 06-UI-REVIEW fix 3b: the name composes the
-    // row's HOST PATH with the action word ("{path} Expand", the wave-1
-    // common.expand key) — the action alone names no row.
+    // row's host path with the action word ("{path} Expand", the wave-1
+    // common.expand key), the action alone names no row.
     const chevron = within(row).getByRole("button", { name: `${MOUNT} Expand` });
     expect(row.getAttribute("aria-expanded")).toBe("false");
 
@@ -236,10 +234,10 @@ describe("SelectionTree touch mode: the chevron zone", () => {
     // Expansion happened through the lazy browse…
     expect(browseCalls).toEqual(["user/appdata/plex"]);
     expect(screen.getByRole("treeitem", { name: /appdata\/plex/ }).getAttribute("aria-expanded")).toBe("true");
-    // …and the check did NOT move: the two gestures never share a pipeline.
+    // …and the check did not move: the two gestures never share a pipeline.
     expect(taps).toEqual([]);
     expect(screen.getByRole("treeitem", { name: /appdata\/plex/ }).getAttribute("aria-checked")).toBe("true");
-    // The name follows the state ("{path} Collapse" once open) — same key
+    // The name follows the state ("{path} Collapse" once open), same key
     // pair the chevron is labelled from.
     expect(
       within(screen.getByRole("treeitem", { name: /appdata\/plex/ })).getByRole("button", { name: `${MOUNT} Collapse` }),
@@ -259,7 +257,7 @@ describe("SelectionTree touch mode: the checkbox is purely presentational (Pitfa
     expect(box.className).toContain("pointer-events-none");
 
     // …and the DOM-level half: with onChange unwired, even a synthetic click
-    // on the input (stopPropagation kept) toggles nothing — no dead zone and
+    // on the input (stopPropagation kept) toggles nothing: no dead zone and
     // no second pipeline.
     await act(async () => {
       fireEvent.click(box);
@@ -279,7 +277,7 @@ describe("SelectionTree pointer default is untouched", () => {
     );
 
     const row = screen.getByRole("treeitem", { name: /appdata\/plex/ });
-    // No chevron button on the desktop tree — the glyph is aria-hidden.
+    // No chevron button on the desktop tree: the glyph is aria-hidden.
     expect(within(row).queryByRole("button", { name: /expand/i })).toBeNull();
 
     await act(async () => {
@@ -288,7 +286,7 @@ describe("SelectionTree pointer default is untouched", () => {
     // Desktop semantics: the row click EXPANDED…
     expect(browseCalls).toEqual(["user/appdata/plex"]);
     expect(screen.getByRole("treeitem", { name: /appdata\/plex/ }).getAttribute("aria-expanded")).toBe("true");
-    // …and did NOT toggle.
+    // …and did not toggle.
     expect(taps).toEqual([]);
 
     // The checkbox is still the live toggle (no pointer-events-none, real
@@ -319,7 +317,7 @@ describe("SelectionTree touch mode: roving-on-tap (Pitfall 2)", () => {
     expect(rowA.getAttribute("tabindex")).toBe("0");
     expect(rowB.getAttribute("tabindex")).toBe("-1");
 
-    // …a tap on B moves it there — focusNode (setFocusPath + scrollIntoView +
+    // …a tap on B moves it there: focusNode (setFocusPath + scrollIntoView +
     // focus), the exact primitive the arrow keys use, never a re-implementation.
     await act(async () => {
       fireEvent.click(rowB);
@@ -330,7 +328,7 @@ describe("SelectionTree touch mode: roving-on-tap (Pitfall 2)", () => {
     expect(taps).toEqual([MOUNT_B]);
 
     // …and the keyboard now agrees with the finger: Space acts on B through
-    // the UNTOUCHED APG handler (no edits to the key map for this to work —
+    // the untouched APG handler (no edits to the key map for this to work:
     // that is the whole roving-tabindex point).
     await act(async () => {
       fireEvent.keyDown(rowB, { key: " " });
@@ -351,7 +349,7 @@ describe("SelectionTree touch mode: full-row >=44px targets", () => {
     expect(row.className).toContain("touch-manipulation");
     expect(row.className).toContain("select-none");
     expect(row.className).toContain("text-sm");
-    // 44px REPLACES the depth min-heights on touch — never stacks with them.
+    // 44px replaces the depth min-heights on touch, never stacks with them.
     expect(row.className).not.toContain("min-h-8");
     expect(row.className).not.toContain("min-h-7");
   });
@@ -372,7 +370,7 @@ describe("SelectionTree touch mode: full-row >=44px targets", () => {
     expect(root.className).not.toContain("select-none");
 
     // Depth-n register: expand the root (desktop row click) and the child
-    // row carries min-h-7 — the desktop ladder is intact.
+    // row carries min-h-7, the desktop ladder is intact.
     await act(async () => {
       fireEvent.click(root);
     });
@@ -401,8 +399,8 @@ describe("SelectionTree touch mode: the retry notice control is a >=44px tap tar
     expect(retry.className).toContain("min-h-[2.75rem]");
     expect(screen.getByText("Could not read directory")).toBeTruthy();
 
-    // Pointer control: the SAME failure renders the SAME notice with the
-    // control at its engine size — the touch bump is interaction-mode-only.
+    // Pointer control: the same failure renders the same notice with the
+    // control at its engine size, the touch bump is interaction-mode-only.
     cleanup();
     render(
       <I18nProvider>

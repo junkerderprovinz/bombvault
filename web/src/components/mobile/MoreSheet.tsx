@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // MoreSheet; the mobile "More" sheet.
 //
 // The desktop rail's overflow surface, re-expressed for the thumb: the
@@ -44,7 +43,6 @@
 // (best-effort logout, then a location reload, which is what puts the login
 // screen back). Gated by the same authEnabled flag as the desktop footer,
 // so an instance without a password offers the row on neither surface.
-// ---------------------------------------------------------------------------
 import { NavLink, useLocation } from "react-router-dom";
 import type { CSSProperties } from "react";
 import type { Settings } from "../../lib/api";

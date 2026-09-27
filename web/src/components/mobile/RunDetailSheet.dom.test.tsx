@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
 // RunDetailSheet; jsdom behavior proofs for the phone run-detail sheet.
 //
 // The sheet is a pure view over a Run record composed entirely from existing
@@ -24,11 +23,11 @@
 // implement EventSource, and the live-section test drives the real
 // lib/progress.ts singleton through `source.onmessage`, exactly the path a
 // backend push takes. Nothing about the component under test is stubbed.
-// ---------------------------------------------------------------------------
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { RunDetailSheet } from "./RunDetailSheet";
 import { en, I18nProvider } from "../../lib/i18n";
+import { NO_VALUE } from "../../lib/reltime";
 import type { Run } from "../../lib/api";
 
 // The two file-listing endpoints are replaced with manually-resolved
@@ -137,7 +136,7 @@ beforeEach(() => {
   instances.length = 0;
   listingControl.pending.length = 0;
   apiControl.pending.length = 0;
-  // @ts-expect-error -- test-only global stub; jsdom has no EventSource
+  // @ts-expect-error: test-only global stub; jsdom has no EventSource
   global.EventSource = FakeEventSource;
 });
 
@@ -162,7 +161,6 @@ function setPageVisibility(state: "visible" | "hidden"): void {
   });
 }
 
-// ---------------------------------------------------------------------------
 
 describe("RunDetailSheet", () => {
   it("composes the title from the shared helpers; kind + target, no new title key", () => {
@@ -332,7 +330,7 @@ describe("RunDetailSheet", () => {
     );
     // Exactly two placeholder marks: volume + snapshot. The duration tile
     // still shows the real duration (finishedAt is present).
-    const placeholders = screen.getAllByText("—");
+    const placeholders = screen.getAllByText(NO_VALUE);
     expect(placeholders.length).toBe(2);
     for (const p of placeholders) {
       expect(p.className).toContain("text-carbon-textMuted");
@@ -388,7 +386,7 @@ describe("RunDetailSheet", () => {
     // The duration tile degrades to the muted absent-data mark; never blank.
     // (The completion-time span carries the same mark for a null finishedAt;
     // what matters here is that the duration tile's mark is the muted one.)
-    const marks = screen.getAllByText("—");
+    const marks = screen.getAllByText(NO_VALUE);
     expect(marks.length).toBeGreaterThanOrEqual(2);
     expect(marks.every((m) => m.className.includes("text-carbon-textMuted"))).toBe(true);
   });

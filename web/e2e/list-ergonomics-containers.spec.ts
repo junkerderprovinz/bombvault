@@ -1,33 +1,32 @@
-// ---------------------------------------------------------------------------
-// List ergonomics e2e — retrofits onto the EXISTING long list: the Containers
+// List ergonomics e2e retrofits onto the existing long list: the Containers
 // mobile card list. Six scenarios:
 //
-//   a. the ListToolbar search drives the page's ONE shared filter state —
+//   a. the ListToolbar search drives the page's one shared filter state:
 //      narrowing, the honest no-match card when nothing survives, and the
-//      window RESET when the search clears (useLoadMore's reset-on-identity),
-//   b. the constant 20-row window → Load more → 40 → the button honestly
+//      window reset when the search clears (useLoadMore's reset-on-identity),
+//   b. the constant 20-row window → Load more → 40 → the button
 //      disappears when hasMore goes false,
-//   c. NO auto-load: scrolling to the very bottom never appends rows — the
+//   c. no auto-load: scrolling to the very bottom never appends rows; the
 //      button is the only way the window grows (lib/useLoadMore.ts's ban on
 //      observers/scroll listeners, proven from the outside here),
-//   d. the toolbar is sticky-IN-FLOW (computed position "sticky", never
-//      "fixed" — the StickyActionBar discipline) and its chips switch the
+//   d. the toolbar is sticky-in-flow (computed position "sticky", never
+//      "fixed": the StickyActionBar discipline) and its chips switch the
 //      rendered section,
 //   e. every rendered card clears the 44px touch floor (bounding-box proof,
 //      not a class-name assertion).
 //
-// Harness honesty — the same discipline touch-tree.spec.ts uses: the e2e
+// Harness honesty follows the same discipline touch-tree.spec.ts uses: the e2e
 // webServer is the real bombvault binary over a wiped fresh DB, but the
 // harness has no Docker, so a fresh DB can never hold a container. The
-// container and settings domains are fulfilled at the Playwright route layer
-// — the SPA, its fetches, the binary and every route shape are real; only
+// container and settings domains are fulfilled at the Playwright route layer:
+// the SPA, its fetches, the binary and every route shape are real; only
 // the staged payloads are fake, mirroring the Go JSON shapes field-for-field
 // (api.ts). The display-prefs abort keeps the harness default English labels
-// regardless of worker order (the boot-look cut — mobile-shell.spec.ts's
+// regardless of worker order (the boot-look cut, mobile-shell.spec.ts's
 // bootWithoutServerLook).
 //
 // Mobile projects only: the desktop invariant (unchanged above 48rem) is
-// held two ways on this layout — by construction (the page renders ONE face;
+// held two ways on this layout: by construction (the page renders one face;
 // the phone card list is JSX-gated out of the desktop DOM, a fact pinned by
 // the page source guard in src/pages/containersMobileSource.test.ts) and
 // from the outside (desktop-untouched.spec.ts's Containers battery asserts
@@ -36,9 +35,8 @@
 // SCOPE NOTE: this file is the Containers slice of the upstream ergonomics
 // suite. The Files sets-list scenarios (and the German-labels set-editor
 // wrap sweep that rides with them) travel with the Files PR; the Dashboard
-// activity-log scenarios travel with the log's own PR — the log itself
+// activity-log scenarios travel with the log's own PR: the log itself
 // shipped in the first PR without them.
-// ---------------------------------------------------------------------------
 import { expect, test, type Page } from "@playwright/test";
 
 // The two device projects from playwright.config.ts; everything else is a
@@ -78,7 +76,7 @@ function containerList(count: number, overrides: (i: number) => Record<string, u
   return Array.from({ length: count }, (_, i) => containerPayload(i, overrides(i)));
 }
 
-// GET /api/settings — mirrors the Settings interface field-for-field; callers
+// GET /api/settings: mirrors the Settings interface field-for-field; callers
 // override only the fields a scenario needs.
 function settingsBody(settingsOverrides: Record<string, unknown> = {}) {
   return {
@@ -178,7 +176,7 @@ function settingsBody(settingsOverrides: Record<string, unknown> = {}) {
 /** Route-level staging of the container domain (the harness honesty rules in
  *  the header). Every rendered card fetches its mounts meta
  *  (MobileContainerCard's ticked-count line), so the mounts route is a
- *  wildcard fulfilled with an EMPTY mount set — "0 paths", honest, and no
+ *  wildcard fulfilled with an empty mount set ("0 paths"), honest, and no
  *  per-fixture route spam. The PATCH drain is fulfilled so the wiped harness
  *  DB never sees a spec-driven write. */
 async function stageContainersDomain(
@@ -207,15 +205,15 @@ async function stageContainersDomain(
 
 // --- locators ----------------------------------------------------------------
 
-// BOTH search inputs (desktop FilterPopover + mobile ListToolbar) share the
-// containers.searchPlaceholder key — the shared state IS the point — so the
+// Both search inputs (desktop FilterPopover + mobile ListToolbar) share the
+// containers.searchPlaceholder key: the shared state is the point, so the
 // visible-only filter is what selects the phone's toolbar input.
 function toolbarSearch(page: Page) {
   return page.getByPlaceholder("Search containers…").filter({ visible: true });
 }
 
 /** The ListToolbar root: the input's SECOND div ancestor (input → the toolbar's
- *  inner flex column → the sticky chrome div). Structural, not class-based —
+ *  inner flex column → the sticky chrome div). Structural, not class-based:
  *  the position assertion below is exactly the thing a class lookup would
  *  prejudge. */
 function toolbarRoot(page: Page) {
@@ -250,8 +248,8 @@ test("toolbar search filters the shared state, shows the no-match card, and rese
   await expect(cards(page)).toHaveCount(10);
   await expect(page.getByRole("button", { name: "Load more" })).toHaveCount(0);
 
-  // Zero matches: the honest no-match card — the same filter.noMatch copy the
-  // desktop face renders — never a blank column, and the toolbar stays
+  // Zero matches: the honest no-match card (the same filter.noMatch copy the
+  // desktop face renders), never a blank column, and the toolbar stays
   // reachable so the filter is clearable. Visible-only keeps the locator on
   // the card that is actually on screen.
   await search.fill("zzz-nothing");
@@ -276,7 +274,7 @@ test("load-more window: 20 rows, Load more extends to 40, then the button is hon
   // The summary line survives the retrofit (same derived copy as before).
   await expect(page.getByText("40 Containers · 40 Scheduled")).toBeVisible();
 
-  // Initial constant window: 20 of 40; the tail is NOT in the DOM.
+  // Initial constant window: 20 of 40; the tail is not in the DOM.
   await expect(cards(page)).toHaveCount(20);
   await expect(page.getByText("svc-39", { exact: true }).filter({ visible: true })).toHaveCount(0);
 
@@ -286,7 +284,7 @@ test("load-more window: 20 rows, Load more extends to 40, then the button is hon
 
   await expect(cards(page)).toHaveCount(40);
   await expect(page.getByText("svc-39", { exact: true }).filter({ visible: true })).toBeVisible();
-  // Exhausted: hasMore is the ONLY signal the button may gate on — no rows
+  // Exhausted: hasMore is the only signal the button may gate on; no rows
   // beyond the window, no button.
   await expect(loadMore).toHaveCount(0);
 });
@@ -297,14 +295,14 @@ test("no auto-load: scrolling to the bottom never grows the window", async ({ pa
   await page.goto("/containers");
   await expect(cards(page)).toHaveCount(20);
 
-  // Bottom of the scroller, three times, with settle time — the pattern an
+  // Bottom of the scroller, three times, with settle time: the pattern an
   // IntersectionObserver-driven list would have answered with rows 21+.
   for (let i = 0; i < 3; i++) {
     await scrollMainToBottom(page);
     await page.waitForTimeout(300);
   }
 
-  // Still 20, and the button is still the ONLY way forward.
+  // Still 20, and the button is still the only way forward.
   await expect(cards(page)).toHaveCount(20);
   await expect(page.getByRole("button", { name: "Load more" })).toBeVisible();
 });
@@ -324,7 +322,7 @@ test("toolbar is sticky-in-flow (never fixed) and its chips switch the rendered 
   await stageContainersDomain(page, mixed);
   await page.goto("/containers");
 
-  // Sticky-IN-FLOW: the computed position is "sticky" — never "fixed", which
+  // Sticky-in-flow: the computed position is "sticky", never "fixed", which
   // would fight the visualViewport keyboard mechanism (the StickyActionBar
   // discipline ListToolbar documents).
   const toolbar = toolbarRoot(page);
@@ -337,14 +335,14 @@ test("toolbar is sticky-in-flow (never fixed) and its chips switch the rendered 
   await expect(allCards).toHaveCount(7);
   await expect(page.getByRole("button", { name: /^ghost-/ })).toHaveCount(4);
 
-  // Chip tap switches the section — same state, two presentations (the chips
-  // are the page's OWN FilterControl, not a parallel mobile copy).
+  // Chip tap switches the section: same state, two presentations (the chips
+  // are the page's own FilterControl, not a parallel mobile copy).
   await toolbar.getByRole("tab", { name: "Not installed" }).tap();
   await expect(page.getByRole("button", { name: /^ghost-/ })).toHaveCount(4);
   await expect(page.getByRole("button", { name: /^plex/ })).toHaveCount(0);
   // The section heading via its Badge text: the h2 itself is the zero-geometry
   // positioning box of the overlapping Badge-heading pattern, which Playwright
-  // computes as hidden even though the Badge shows — so the text locator must
+  // computes as hidden even though the Badge shows, so the text locator must
   // be visible-only to resolve to the rendered Badge.
   await expect(page.getByText("Not installed (backups only)").filter({ visible: true })).toBeVisible();
 
@@ -352,7 +350,7 @@ test("toolbar is sticky-in-flow (never fixed) and its chips switch the rendered 
   await expect(page.getByRole("button", { name: /^ghost-/ })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /^plex/ })).toHaveCount(1);
 
-  // Scoped to the installed-toggle's own tablist — the Schedule/Backup chip
+  // Scoped to the installed-toggle's own tablist: the Schedule/Backup chip
   // groups each carry their own "All" tab with the same role.
   await toolbar
     .getByRole("tablist", { name: "Filter" })

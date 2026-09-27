@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // Run display; the shared run-presentation helpers.
 //
 // Five helpers: the run target labels (runDomainLabel, isDomainOpRunKind,
@@ -24,13 +23,11 @@
 // lib/navModel.ts imports icon components from components/navGlyphs, the
 // documented load-bearing exception; this is that exception in its weakest
 // possible form (a type position only, gone in the emitted JS).
-// ---------------------------------------------------------------------------
 import type { Run } from "./api";
 import type { useT } from "./i18n";
 // Type-only import; see the layering note in the header comment.
 import type { BadgeTone } from "../components/Badge";
 
-// ---------------------------------------------------------------------------
 // Run kind/target label helpers; shared by every surface that renders a
 // Run's kind and target (dashboard RunsCard, SummaryTier's "Last result"
 // cell, the RunDetailSheet). A prune/verify run's targetId is the domain
@@ -41,7 +38,6 @@ import type { BadgeTone } from "../components/Badge";
 // through to the generic backup/restore/update display (which would
 // otherwise show it mislabeled as "Restore" with a blank/truncated target;
 // #run-activity-log finding 1).
-// ---------------------------------------------------------------------------
 
 export function runDomainLabel(t: ReturnType<typeof useT>["t"], domain: string): string {
   switch (domain) {
@@ -90,7 +86,6 @@ export function runTargetText(t: ReturnType<typeof useT>["t"], run: Run): string
   return run.target || `${run.targetId.slice(0, 12)}…`;
 }
 
-// ---------------------------------------------------------------------------
 // Status chip. statusTone maps a raw status string to the shared Badge's
 // tone, statusLabel maps the same string to translated, badge-length text,
 // and every call site renders the pair together:
@@ -115,7 +110,6 @@ export function runTargetText(t: ReturnType<typeof useT>["t"], run: Run): string
 // --accent-text is derived from the accent the user picked. Recolouring warn
 // off Carbon's yellow token, changing the default accent or giving Badge an
 // icon system all reach well past a contrast fix, so it stays as it is.
-// ---------------------------------------------------------------------------
 
 export function statusTone(status: string): BadgeTone {
   switch (status.toLowerCase()) {
