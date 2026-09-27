@@ -143,6 +143,23 @@ describe("AddPlaceDialog", () => {
     expect(within(dialog()).getByLabelText(en["places.field.secret"])).toHaveProperty("value", "s3cret");
   });
 
+  it("closes an open info bubble on Escape and keeps what was typed", async () => {
+    const { onClose } = await open();
+    await click(tile("Wasabi"));
+    const secret = within(dialog()).getByLabelText(en["places.field.secret"]);
+    fireEvent.change(secret, { target: { value: "s3cret" } });
+    fireEvent.mouseEnter(within(dialog()).getByLabelText(en["places.intro.s3Cloud"]));
+    expect(screen.getByRole("tooltip").textContent).toBe(en["places.intro.s3Cloud"]);
+
+    fireEvent.keyDown(secret, { key: "Escape" });
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(secret).toHaveProperty("value", "s3cret");
+
+    fireEvent.keyDown(secret, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it("closes once the place is added, and says where to choose it", async () => {
     const changed = vi.fn();
     window.addEventListener(PLACES_CHANGED, changed);

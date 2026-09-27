@@ -107,18 +107,23 @@ export function useTipBubble(tip?: string, disabled = false): TipBubble {
     bubble.style.top = `${top}px`;
   }, [shown]);
 
-  // Close on scroll so the bubble never drifts away from its trigger.
+  // Close on scroll so the bubble never drifts away from its trigger. Escape is
+  // the bubble's first: captured on window, ahead of the document listeners of
+  // every window and popover, and stopped there, so the window under it keeps
+  // what was typed into it.
   useEffect(() => {
     if (!shown) return;
     const onScroll = () => hide();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") hide();
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      hide();
     };
     window.addEventListener("scroll", onScroll, true);
-    window.addEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
     return () => {
       window.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keydown", onKey, true);
     };
   }, [shown]);
 

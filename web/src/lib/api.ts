@@ -342,6 +342,9 @@ export interface ImportSettingsSummary {
   /** null when the file lacks the block and the table stays as it is. */
   placementDefaults: number | null;
   copyRules: number | null;
+  /** null for a file from before storage places; the apply builds them from
+   *  the imported settings. */
+  places: number | null;
   /** Targets the file adds, with what each would receive at its first run. */
   newTargets: NewTargetPreview[];
   credentials: {
@@ -349,6 +352,8 @@ export interface ImportSettingsSummary {
     cloud: boolean;
     rclone: boolean;
     notify: boolean;
+    /** The sets the file adds; stored sets it does not carry stay. */
+    credSets: number;
   };
   settingsGroups: string[];
 }

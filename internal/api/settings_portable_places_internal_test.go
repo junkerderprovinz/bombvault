@@ -348,8 +348,8 @@ func TestImportAddsTheFilesCredentialSetsAndKeepsTheOthers(t *testing.T) {
 
 	preview := doImport(t, dst, body, "")
 	summary, _ := preview["summary"].(map[string]any)
-	if creds, _ := summary["credentials"].(map[string]any); creds["credSets"] != true {
-		t.Fatalf("preview = %v, want the credential sets reported", preview)
+	if creds, _ := summary["credentials"].(map[string]any); creds["credSets"] != float64(1) {
+		t.Fatalf("preview = %v, want the one credential set counted", preview)
 	}
 	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
 		t.Fatalf("apply failed: %v", env)

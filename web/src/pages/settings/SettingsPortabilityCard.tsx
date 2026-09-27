@@ -256,6 +256,10 @@ export function SettingsPortabilityCard({
                 <dd className="font-mono text-end wrap-break-word">{preview.appVersion || "-"}</dd>
               </div>
               <div className="flex justify-between gap-3">
+                <dt className="text-carbon-textMuted">{t("places.title")}</dt>
+                <dd className="text-end">{preview.places ?? t("settingsIO.previewPlacesBuilt")}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewOffsiteTargets")}</dt>
                 <dd dir="ltr" className="font-mono text-start">{preview.offsiteTargets}</dd>
               </div>
@@ -274,9 +278,11 @@ export function SettingsPortabilityCard({
               <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewCredentials")}</dt>
                 <dd className="text-end">
-                  {preview.credentials.present
-                    ? t("settingsIO.previewCredsIncluded")
-                    : t("settingsIO.previewCredsNotIncluded")}
+                  {!preview.credentials.present
+                    ? t("settingsIO.previewCredsNotIncluded")
+                    : preview.credentials.credSets > 0
+                      ? t("settingsIO.previewCredsWithSets", preview.credentials.credSets)
+                      : t("settingsIO.previewCredsIncluded")}
                 </dd>
               </div>
               <div className="flex justify-between gap-3">
