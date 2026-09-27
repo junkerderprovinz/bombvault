@@ -400,38 +400,7 @@ export function StorageTab({
       {/* ------------------------------------------------------------------ */}
       <Card title={t("settings.exportsEncryptionTitle")} hint={t("settings.exportsEncryptionHint")} hueIndex={nextHue()}>
         {/* Plain-export encryption (age) -------------------------------------- */}
-        {/* No `border-t` divider against Repository encryption below it (jdp,
-            live review: "die Linien dazwischen weg"), the Card's own `gap-4`
-            between direct children already separates the two sub-sections,
-            same spacing-only convention as the Colors Card's own accent/
-            rainbow halves and its own rainbow ToggleRow trio
-            (settings.rainbow/-Reactive/-Rotate) elsewhere in this file, none
-            of which ever had a rule line between their parts either. (A
-            THIRD sub-section, Flash-ZIP-Export, used to sit above this one,
-            see this Card's own header comment for where it moved.) */}
         <div className="flex flex-col gap-3">
-          {/* No more standalone <h3> sub-heading (jdp, live-review: "Export
-              und Verschlüsselung: Texte normal formatieren, es sind keine
-              Überschriften mehr"), this sub-section is now JUST a single
-              ToggleRow with an optional conditional block beneath it, not a
-              heading introducing its own block of content, so it shouldn't
-              LOOK like one either. `hideLabel` is gone below: the row's own
-              native `label` (ToggleRow's plain `text-sm text-carbon-text`
-              span, the same normal weight every other row's own caption in
-              this app already uses, not the bold/uppercase/tracking-widest
-              heading treatment the removed `<h3>` had) is now this
-              sub-section's only visible caption. `export.encrypt.title` (the
-              old heading's own text, "Encrypt plain exports"/"Plain-Exporte
-              verschlüsseln") is retired, the ToggleRow's own
-              `export.encrypt.enable` label already names the same action
-              ("Encrypt exports with age"/"Exporte mit age verschlüsseln")
-              and is the one text a screen reader announces for this switch
-              either way, so keeping both would be two competing captions for
-              one control. The old heading's own three-sentence InfoBubble
-              tip (what age is, what enabling it does) moves onto the
-              ToggleRow's own `hint` unchanged, the same content, now
-              anchored to the control it actually describes instead of a
-              heading standing in front of it. */}
           <ToggleRow
             label={t("export.encrypt.enable")}
             hint={`${t("export.encrypt.hint")} ${t("export.encrypt.ageInfo")} ${t("export.encrypt.enableHint")}`}
@@ -444,17 +413,8 @@ export function StorageTab({
           {settings.exportEncryptEnabled && (
             <label className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">{t("export.encrypt.recipients")}</span>
-              {/* Live-review round 3 sweep: export.encrypt.recipientsHint below
-                  (the "one per line, age1.../SSH key format" caption on the
-                  textarea) is left as permanent text on purpose, the same
-                  "genuine toss-up" carve-out settings.offsiteHint documents
-                  further up this file, it names the exact accepted KEY
-                  SYNTAX for a multi-line field someone fills in by pasting one
-                  key per line, which reads as reference to consult while
-                  composing the list rather than a one-time "what does this
-                  toggle do" explainer (that half is already covered by
-                  export.encrypt.enableHint, now folded into the sub-heading's
-                  own InfoBubble above). Flagged, not force-converted. */}
+              {/* The recipients hint stays visible because it names the key
+                  syntax someone checks while pasting one key per line. */}
               <textarea
                 value={settings.exportAgeRecipients}
                 spellCheck={false}

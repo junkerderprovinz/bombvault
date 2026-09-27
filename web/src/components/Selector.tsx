@@ -65,8 +65,8 @@ interface SelectorCommon {
    *  its neighbours, and the dense strips should stay short. */
   buttonHeight?: boolean;
   /** Colour each segment by its position in the rainbow palette. Default true.
-   *  Turn it off where the position means nothing, such as a single-item strip
-   *  (Recovery's StepDisclosure), not for looks. */
+   *  Turn it off where the position means nothing, such as a single-item
+   *  strip, not for looks. */
   hue?: boolean;
   /** Where this strip starts in the rainbow palette. Default 0. Strips stacked
    *  on one page would otherwise repeat each column's colour straight down, so
