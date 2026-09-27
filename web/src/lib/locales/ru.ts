@@ -2188,6 +2188,7 @@ const ru: Partial<Translations> = {
   "schedule.overrideHint": "Пусто использует расписание категории.",
   "schedule.overrideSaved": "Переопределение сохранено",
   "run.kindExport": "Экспорт",
+  "run.kindImport": "Импорт",
   "run.kindDRDrill": "DR-проверка",
   "run.kindDbDump": "Дамп базы данных",
   "run.kindDbDumpSave": "Дамп сохранён",

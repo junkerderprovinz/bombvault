@@ -339,6 +339,7 @@ const fa: Partial<Translations> = {
   "run.kindRestore": "بازیابی",
   "run.kindUpdate": "به‌روزرسانی",
   "run.kindExport": "خروجی‌گیری",
+  "run.kindImport": "درون‌ریزی",
   "run.kindDRDrill": "بررسی DR",
   "run.kindDbDump": "تخلیهٔ پایگاه داده",
   "run.kindDbDumpSave": "تخلیه ذخیره شد",

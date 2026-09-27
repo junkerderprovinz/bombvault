@@ -2196,6 +2196,7 @@ const hu: Partial<Translations> = {
   "schedule.overrideHint": "Üresen a kategória ütemezését használja.",
   "schedule.overrideSaved": "Felülírás elmentve",
   "run.kindExport": "Exportálás",
+  "run.kindImport": "Importálás",
   "run.kindDRDrill": "DR-ellenőrzés",
   "run.kindDbDump": "Adatbázismentés",
   "run.kindDbDumpSave": "Mentés eltárolva",

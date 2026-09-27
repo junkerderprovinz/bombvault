@@ -339,6 +339,7 @@ const bg: Partial<Translations> = {
   "run.kindRestore": "Възстановяване",
   "run.kindUpdate": "Обновление",
   "run.kindExport": "Експорт",
+  "run.kindImport": "Импорт",
   "run.kindDRDrill": "DR проверка",
   "run.kindDbDump": "Дъмп на база данни",
   "run.kindDbDumpSave": "Дъмпът е запазен",

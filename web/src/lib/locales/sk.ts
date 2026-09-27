@@ -339,6 +339,7 @@ const sk: Partial<Translations> = {
   "run.kindRestore": "Obnovenie",
   "run.kindUpdate": "Aktualizácia",
   "run.kindExport": "Export",
+  "run.kindImport": "Import",
   "run.kindDRDrill": "DR test",
   "run.kindDbDump": "Výpis databázy",
   "run.kindDbDumpSave": "Výpis uložený",

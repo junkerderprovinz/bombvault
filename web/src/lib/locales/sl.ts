@@ -339,6 +339,7 @@ const sl: Partial<Translations> = {
   "run.kindRestore": "Obnovitev",
   "run.kindUpdate": "Posodobitev",
   "run.kindExport": "Izvoz",
+  "run.kindImport": "Uvoz",
   "run.kindDRDrill": "DR preverjanje",
   "run.kindDbDump": "Izvoz podatkovne baze",
   "run.kindDbDumpSave": "Izvoz shranjen",

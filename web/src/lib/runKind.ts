@@ -29,6 +29,8 @@ export function runKindLabel(t: T, kind: string): string {
       return t("activityLog.jobTamper");
     case "export":
       return t("run.kindExport");
+    case "import":
+      return t("run.kindImport");
     case "dbdump":
       return t("run.kindDbDump");
     case "dbdumpsave":

@@ -2193,6 +2193,7 @@ const it: Partial<Translations> = {
   "schedule.overrideHint": "Vuoto usa la pianificazione della categoria.",
   "schedule.overrideSaved": "Sovrascrittura salvata",
   "run.kindExport": "Esportazione",
+  "run.kindImport": "Importazione",
   "run.kindDRDrill": "Controllo DR",
   "run.kindDbDump": "Dump del database",
   "run.kindDbDumpSave": "Dump salvato",

@@ -2193,6 +2193,7 @@ const fr: Partial<Translations> = {
   "schedule.overrideHint": "Vide utilise le planning de la catégorie.",
   "schedule.overrideSaved": "Remplacement enregistré",
   "run.kindExport": "Export",
+  "run.kindImport": "Import",
   "run.kindDRDrill": "Contrôle DR",
   "run.kindDbDump": "Dump de base de données",
   "run.kindDbDumpSave": "Dump enregistré",

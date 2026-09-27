@@ -2190,6 +2190,7 @@ const nl: Partial<Translations> = {
   "schedule.overrideHint": "Leeg gebruikt het categorieschema.",
   "schedule.overrideSaved": "Overschrijving opgeslagen",
   "run.kindExport": "Export",
+  "run.kindImport": "Import",
   "run.kindDRDrill": "DR-controle",
   "run.kindDbDump": "Databasedump",
   "run.kindDbDumpSave": "Dump opgeslagen",

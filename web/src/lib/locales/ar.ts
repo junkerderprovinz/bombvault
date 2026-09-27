@@ -2196,6 +2196,7 @@ const ar: Partial<Translations> = {
   "schedule.overrideHint": "الفراغ يستخدم جدول الفئة.",
   "schedule.overrideSaved": "تم حفظ التجاوز",
   "run.kindExport": "تصدير",
+  "run.kindImport": "استيراد",
   "run.kindDRDrill": "فحص التعافي من الكوارث",
   "run.kindDbDump": "تفريغ قاعدة بيانات",
   "run.kindDbDumpSave": "حُفظ التفريغ",

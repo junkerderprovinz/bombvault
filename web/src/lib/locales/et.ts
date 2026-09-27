@@ -339,6 +339,7 @@ const et: Partial<Translations> = {
   "run.kindRestore": "Taastamine",
   "run.kindUpdate": "Uuendus",
   "run.kindExport": "Eksport",
+  "run.kindImport": "Import",
   "run.kindDRDrill": "DR-kontroll",
   "run.kindDbDump": "Andmebaasi tõmmis",
   "run.kindDbDumpSave": "Tõmmis salvestatud",

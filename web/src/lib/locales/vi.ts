@@ -2185,6 +2185,7 @@ const vi: Partial<Translations> = {
   "schedule.overrideHint": "Để trống sẽ dùng lịch trình của nhóm.",
   "schedule.overrideSaved": "Đã lưu ghi đè",
   "run.kindExport": "Xuất",
+  "run.kindImport": "Nhập",
   "run.kindDRDrill": "Kiểm tra DR",
   "run.kindDbDump": "Kết xuất cơ sở dữ liệu",
   "run.kindDbDumpSave": "Đã lưu bản kết xuất",

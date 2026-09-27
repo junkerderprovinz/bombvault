@@ -2188,6 +2188,7 @@ const pl: Partial<Translations> = {
   "schedule.overrideHint": "Puste używa harmonogramu kategorii.",
   "schedule.overrideSaved": "Zastąpienie zapisane",
   "run.kindExport": "Eksport",
+  "run.kindImport": "Import",
   "run.kindDRDrill": "Kontrola DR",
   "run.kindDbDump": "Zrzut bazy danych",
   "run.kindDbDumpSave": "Zrzut zapisany",

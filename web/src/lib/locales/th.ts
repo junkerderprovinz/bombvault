@@ -2196,6 +2196,7 @@ const th: Partial<Translations> = {
   "schedule.overrideHint": "เว้นว่างจะใช้กำหนดการของหมวดหมู่",
   "schedule.overrideSaved": "บันทึกการแทนที่แล้ว",
   "run.kindExport": "ส่งออก",
+  "run.kindImport": "นำเข้า",
   "run.kindDRDrill": "การตรวจสอบ DR",
   "run.kindDbDump": "ดัมป์ฐานข้อมูล",
   "run.kindDbDumpSave": "บันทึกดัมป์แล้ว",

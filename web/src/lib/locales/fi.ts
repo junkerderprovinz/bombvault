@@ -2193,6 +2193,7 @@ const fi: Partial<Translations> = {
   "schedule.overrideHint": "Tyhjä käyttää luokan aikataulua.",
   "schedule.overrideSaved": "Ohitus tallennettu",
   "run.kindExport": "Vienti",
+  "run.kindImport": "Tuonti",
   "run.kindDRDrill": "DR-tarkistus",
   "run.kindDbDump": "Tietokantavedos",
   "run.kindDbDumpSave": "Vedos tallennettu",

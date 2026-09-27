@@ -2188,6 +2188,7 @@ const uk: Partial<Translations> = {
   "schedule.overrideHint": "Порожнє використовує розклад категорії.",
   "schedule.overrideSaved": "Перевизначення збережено",
   "run.kindExport": "Експорт",
+  "run.kindImport": "Імпорт",
   "run.kindDRDrill": "DR-перевірка",
   "run.kindDbDump": "Дамп бази даних",
   "run.kindDbDumpSave": "Дамп збережено",

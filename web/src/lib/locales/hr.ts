@@ -339,6 +339,7 @@ const hr: Partial<Translations> = {
   "run.kindRestore": "Vraćanje",
   "run.kindUpdate": "Ažuriranje",
   "run.kindExport": "Izvoz",
+  "run.kindImport": "Uvoz",
   "run.kindDRDrill": "DR provjera",
   "run.kindDbDump": "Ispis baze podataka",
   "run.kindDbDumpSave": "Ispis spremljen",

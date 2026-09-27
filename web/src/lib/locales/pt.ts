@@ -2193,6 +2193,7 @@ const pt: Partial<Translations> = {
   "schedule.overrideHint": "Vazio usa o agendamento da categoria.",
   "schedule.overrideSaved": "Substituição salva",
   "run.kindExport": "Exportação",
+  "run.kindImport": "Importação",
   "run.kindDRDrill": "Verificação DR",
   "run.kindDbDump": "Dump da base de dados",
   "run.kindDbDumpSave": "Dump guardado",
