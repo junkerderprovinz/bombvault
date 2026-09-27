@@ -88,7 +88,7 @@ At a place, **Test append-only** probes each domain path, switched-on copy and r
 BombVault offers two levels of proof that your backups are actually restorable, not just present.
 
 - **Restore-verification drills (local).** BombVault periodically runs `restic check --read-data-subset` (bounded, never a disk-filling full restore) and shows a *last verified restorable* badge per domain. The cadence lives on Settings, Schedules; the badge on Settings, Integrity.
-- **DR drills (off-site).** BombVault restores a real target from the off-site repo into a throwaway sandbox, verifies it file-for-file and byte-for-byte, then cleans up. This proves you can recover from off-site, not just that the repo answers. A domain copied to several places is drilled against one of them per scheduled run, in turn, and the Dashboard names the place of the last drill.
+- **DR drills (off-site).** BombVault restores a real target from the off-site repo into a throwaway sandbox, verifies it file-for-file and byte-for-byte, then cleans up. This proves you can recover from off-site, not just that the repo answers. Only places at another site are drilled, since a copy in the same house proves nothing about losing the house. A domain copied to several of them is drilled against one per scheduled run, in turn, and the Dashboard names the place of the last drill.
 
 The **ransomware-protection scorecard** on the Dashboard rolls this up into a green / amber / red posture per domain, with an age-stamped checklist (off-site configured, append-only verified, replication current, restore drill passed, encryption on, prune strategy set). Every red row deep-links to the fix, and the card only ever goes green on verified facts.
 

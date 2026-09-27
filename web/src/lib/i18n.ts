@@ -626,7 +626,7 @@ export const en = {
 
   // Off-site DR opt-out (#37)
   "settings.offsiteDrills": "Scheduled off-site DR drill",
-  "settings.offsiteDrillsHelp": "Restores the full off-site snapshot on the drill schedule to prove remote recovery. This re-downloads the whole backup each run, which costs egress on metered clouds (for example Backblaze B2). Turn off to keep only the free local integrity check and run the off-site DR check manually. A domain copied to several places drills one of them per run, in turn.",
+  "settings.offsiteDrillsHelp": "Restores the full off-site snapshot on the drill schedule to prove remote recovery. This re-downloads the whole backup each run, which costs egress on metered clouds (for example Backblaze B2). Turn off to keep only the free local integrity check and run the off-site DR check manually. A domain copied to several places at another site drills one of them per run, in turn; a place in the same house is not drilled.",
   "drill.manualOnly": "Off-site DR: manual only",
   "drill.manualOnlyTitle": "Scheduled off-site DR drill is off. Run the off-site check manually with the button.",
 
@@ -2820,7 +2820,7 @@ export const de: Translations = {
 
   // Off-site DR opt-out (#37)
   "settings.offsiteDrills": "Geplanter Off-site-DR-Test",
-  "settings.offsiteDrillsHelp": "Stellt den vollständigen Off-site-Snapshot nach dem Test-Zeitplan wieder her, um die Wiederherstellung aus der Ferne zu beweisen. Dabei wird bei jedem Lauf das gesamte Backup erneut heruntergeladen, was bei kostenpflichtigen Clouds (zum Beispiel Backblaze B2) Egress-Kosten verursacht. Schalte ihn aus, um nur die kostenlose lokale Integritätsprüfung zu behalten und die Off-site-DR-Prüfung manuell auszuführen. Bei einer Domäne mit mehreren Kopie-Orten ist pro Lauf einer davon an der Reihe.",
+  "settings.offsiteDrillsHelp": "Stellt den vollständigen Off-site-Snapshot nach dem Test-Zeitplan wieder her, um die Wiederherstellung aus der Ferne zu beweisen. Dabei wird bei jedem Lauf das gesamte Backup erneut heruntergeladen, was bei kostenpflichtigen Clouds (zum Beispiel Backblaze B2) Egress-Kosten verursacht. Schalte ihn aus, um nur die kostenlose lokale Integritätsprüfung zu behalten und die Off-site-DR-Prüfung manuell auszuführen. Bei einer Domäne mit mehreren Kopie-Orten an einem anderen Standort ist pro Lauf einer davon an der Reihe; ein Ort im selben Haus wird nicht geprüft.",
   "drill.manualOnly": "Off-site-DR: nur manuell",
   "drill.manualOnlyTitle": "Der geplante Off-site-DR-Test ist aus. Führe die Off-site-Prüfung manuell über den Button aus.",
 
