@@ -249,6 +249,8 @@ func (s *Service) adoptRow(ctx context.Context, placeID string, body adoptBody) 
 	if _, err := s.store.AdoptRow(row.ID, p.ID, domain, suffix); err != nil {
 		return err
 	}
+	// Writing the place again mirrors its credentials, rules and switches onto
+	// the row it just took.
 	_, err = s.writePlace(store.PlaceWrite{Place: p}, nil)
 	return err
 }
