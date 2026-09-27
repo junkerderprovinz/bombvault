@@ -75,10 +75,10 @@ func TestAnImportIsCheckedAgainstTheRowsTheApplyKEEPS(t *testing.T) {
 // TestTheImportGuardDoesNotRewriteTheFileItValidates pins that the validator
 // leaves its input alone.
 //
-// The export travels on to summarizeExport and applyImport. Pinning an in-use
-// row's location in place made `t.Repo != wanted` false in replaceNamedRepos, so
-// the apply's own "its location was not moved" notice became
-// unreachable - the one line that says part of the file was ignored.
+// The export travels on to summarizeExport and applyImport, and the apply's
+// "its location was not moved" notice, the one line that says part of the
+// file was ignored, depends on the file keeping its own location for the
+// in-use row.
 func TestTheImportGuardDoesNotRewriteTheFileItValidates(t *testing.T) {
 	h, st := newPortableHandler(t, appKeyA)
 	r := seedNamedRepoInUse(t, st, "Cold", "backups/cold")
