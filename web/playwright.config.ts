@@ -81,6 +81,7 @@ const testMatch = [
   "flash-phone.spec.ts",
   "config-phone.spec.ts",
   "anomalies-phone.spec.ts",
+  "dashboard-phone.spec.ts",
   "zfs-phone.spec.ts",
   "instances-phone.spec.ts",
   "settings-phone.spec.ts",

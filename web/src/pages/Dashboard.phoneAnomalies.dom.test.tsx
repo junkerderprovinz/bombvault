@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
-// The anomalies card on the phone Home. Open critical and warning findings are
-// what a phone is opened for, so while any are open the card leads the column;
-// otherwise it waits below storage. Either way the hues run down the column in
-// order, as static positions, and the card appears once.
+// The order of the phone Home. Open critical and warning findings are what a
+// phone is opened for, so while any are open the anomalies card leads the
+// column; otherwise it waits below storage. The safety cards follow it, with
+// ransomware protection only in the advanced view, as on the desktop. Either
+// way the hues run down the column in order, as static positions, and every
+// card appears once.
 //
 // The desktop media query is held at "phone"; jsdom otherwise answers desktop
 // and the phone surface would never mount.
@@ -14,17 +16,34 @@ import { ToastProvider } from "../lib/toast";
 import { AdvancedProvider } from "../lib/advanced";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { DESKTOP_QUERY } from "../lib/useMediaQuery";
-import type { AnomalySummary } from "../lib/api";
+import type { AnomalySummary, DomainStatus } from "../lib/api";
 import { Dashboard } from "./Dashboard";
 
 const getAnomalySummary = vi.fn();
+
+// One domain with an off-site posture, or the ransomware card has nothing to
+// show and renders nothing.
+const protectedDomain = {
+  domain: "containers",
+  enabled: true,
+  schedule: "daily 03:00",
+  status: "ok",
+  offsiteConfigured: true,
+  protection: "green",
+  tamperState: "ok",
+  replicationState: "ok",
+  drillState: "ok",
+  encryptionOn: true,
+  pruneStrategySet: true,
+} as DomainStatus;
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
     listRuns: () => Promise.resolve({ ok: true, runs: [] }),
-    getStatus: () => Promise.resolve({ ok: true, domains: [] }),
+    getStatus: () => Promise.resolve({ ok: true, domains: [protectedDomain] }),
+    getCoverage: () => Promise.resolve({ ok: true, coverage: { domains: [], total: 4, protected: 4 } }),
     getScheduleNext: () => Promise.resolve([]),
     getStats: () => Promise.resolve({ ok: false }),
     listContainers: () => Promise.resolve({ ok: true, containers: [] }),
@@ -61,11 +80,13 @@ beforeEach(() => {
     }
   );
   desktopMatches = false;
+  localStorage.setItem("bombvault.advanced", "1");
 });
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  localStorage.removeItem("bombvault.advanced");
 });
 
 function summary(open: AnomalySummary["open"]): AnomalySummary {
@@ -109,6 +130,9 @@ function column(): { title: string; hue: string }[] {
     en["dashboard.summaryNextBackup"],
     en["dashboard.recentRuns"],
     en["dashboard.storageTitle"],
+    en["ransomware.title"],
+    en["dashboard.protectionTitle"],
+    en["coverage.title"],
     en["activityLog.title"],
   ];
   return screen
@@ -121,26 +145,45 @@ function column(): { title: string; hue: string }[] {
     }));
 }
 
-describe("the phone Home's anomalies card", () => {
-  it("leads the column while a critical or warning finding is open", async () => {
+const safetyCards = [
+  { title: en["ransomware.title"], hue: "var(--rb-4)" },
+  { title: en["dashboard.protectionTitle"], hue: "var(--rb-5)" },
+  { title: en["coverage.title"], hue: "var(--rb-6)" },
+  { title: en["activityLog.title"], hue: "var(--rb-7)" },
+];
+
+describe("the phone Home's order", () => {
+  it("leads with the anomalies card while a critical or warning finding is open", async () => {
     await renderHome({ critical: 1, warning: 2, info: 0 });
     expect(column()).toEqual([
       { title: en["anomaly.title"], hue: "var(--rb-0)" },
       { title: en["dashboard.summaryNextBackup"], hue: "var(--rb-1)" },
       { title: en["dashboard.recentRuns"], hue: "var(--rb-2)" },
       { title: en["dashboard.storageTitle"], hue: "var(--rb-3)" },
-      { title: en["activityLog.title"], hue: "var(--rb-4)" },
+      ...safetyCards,
     ]);
   });
 
-  it("sits below storage when only notes are open", async () => {
+  it("keeps the anomalies card below storage when only notes are open", async () => {
     await renderHome({ critical: 0, warning: 0, info: 3 });
     expect(column()).toEqual([
       { title: en["dashboard.summaryNextBackup"], hue: "var(--rb-0)" },
       { title: en["dashboard.recentRuns"], hue: "var(--rb-1)" },
       { title: en["dashboard.storageTitle"], hue: "var(--rb-2)" },
       { title: en["anomaly.title"], hue: "var(--rb-3)" },
-      { title: en["activityLog.title"], hue: "var(--rb-4)" },
+      ...safetyCards,
+    ]);
+  });
+
+  it("leaves ransomware protection to the advanced view and keeps the other hues in place", async () => {
+    localStorage.removeItem("bombvault.advanced");
+    await renderHome({ critical: 0, warning: 0, info: 0 });
+    expect(column()).toEqual([
+      { title: en["dashboard.summaryNextBackup"], hue: "var(--rb-0)" },
+      { title: en["dashboard.recentRuns"], hue: "var(--rb-1)" },
+      { title: en["dashboard.storageTitle"], hue: "var(--rb-2)" },
+      { title: en["anomaly.title"], hue: "var(--rb-3)" },
+      ...safetyCards.slice(1),
     ]);
   });
 });
