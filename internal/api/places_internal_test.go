@@ -224,6 +224,23 @@ func TestThePlacesListShowsCredentialsWithoutTheirSecrets(t *testing.T) {
 	}
 }
 
+func TestAPlaceNamingAMissingSetShowsTheSharedCredentialsItRunsOn(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCreds(CloudCreds{S3KeyID: "shared-key", S3Secret: "shared-secret"}); err != nil {
+		t.Fatal(err)
+	}
+	b2 := s3Place("B2", "s3:https://s3.example.com/bucket")
+	b2.CredsRef = "gone"
+	f.storePlace(b2)
+
+	got := placeByName(t, f.do(http.MethodGet, "/api/places", nil), "B2")["creds"]
+
+	want := map[string]any{"shared": true, "fields": map[string]any{"keyId": "shared-key"}, "set": []any{"secret"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("creds = %v, want %v", got, want)
+	}
+}
+
 func TestAFailedCopyRunToAPlaceOutranksAnEarlierSuccess(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
