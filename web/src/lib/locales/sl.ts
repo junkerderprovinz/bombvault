@@ -259,6 +259,7 @@ const sl: Partial<Translations> = {
   "restoreCheck.waiting": "Preverjanja še tečejo.",
   "restoreCheck.blockedError": "Preverjanj ni bilo mogoče zagnati, zato obnovitev ostane zaklenjena.",
   "restoreCheck.blockedBy": "Zaklenjeno, ker to preverjanje ni uspelo: {line}.",
+  "restoreCheck.blockedMember": "Zaklenjeno, ker preverjanje za {name} ni uspelo: {line}.",
   "restoreCheck.line.repository": "Repozitorij dosegljiv",
   "restoreCheck.line.key": "Berljivo s shranjenim ključem",
   "restoreCheck.line.snapshot": "Obnovitvena točka obstaja",

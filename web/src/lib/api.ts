@@ -840,8 +840,10 @@ export interface RestoreCheckRequest {
     | "foreign"
     | "flash"
     | "config"
-    | "dbImport";
-  /** The container, the VM, the file set id, the ZFS item id or the foreign item. */
+    | "dbImport"
+    | "stack";
+  /** The container, the VM, the file set id, the ZFS item id, the compose
+   *  project of a stack or the foreign item. */
   name?: string;
   snapshotId?: string;
   source?: string;
@@ -893,10 +895,20 @@ export interface RestorePlan {
   shared: { path: string; containers: string[] }[];
 }
 
+/** The check of one container of a stack restore. */
+export interface StackMemberCheck {
+  name: string;
+  ready: boolean;
+  checks: CheckLine[];
+  plan?: RestorePlan | null;
+}
+
 export interface RestoreCheckResponse extends OkEnvelope {
   ready?: boolean;
-  checks?: CheckLine[];
+  checks?: CheckLine[] | null;
   plan?: RestorePlan | null;
+  /** A stack answers per member instead of with checks of its own. */
+  members?: StackMemberCheck[] | null;
 }
 
 /**

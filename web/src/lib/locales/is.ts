@@ -259,6 +259,7 @@ const is: Partial<Translations> = {
   "restoreCheck.waiting": "Athuganirnar eru enn í gangi.",
   "restoreCheck.blockedError": "Ekki tókst að keyra athuganirnar, svo endurheimtin helst læst.",
   "restoreCheck.blockedBy": "Læst vegna þess að þessi athugun mistókst: {line}.",
+  "restoreCheck.blockedMember": "Læst vegna þess að athugun fyrir {name} mistókst: {line}.",
   "restoreCheck.line.repository": "Hægt að ná í geymslu",
   "restoreCheck.line.key": "Læsilegt með vistaða lyklinum",
   "restoreCheck.line.snapshot": "Endurheimtarpunktur til staðar",

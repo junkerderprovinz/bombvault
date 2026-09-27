@@ -202,6 +202,7 @@ const zh: Partial<Translations> = {
   "restoreCheck.waiting": "检查仍在进行。",
   "restoreCheck.blockedError": "无法运行检查，因此恢复保持锁定。",
   "restoreCheck.blockedBy": "因此项检查失败而锁定：{line}。",
+  "restoreCheck.blockedMember": "因 {name} 的一项检查失败而锁定：{line}。",
   "restoreCheck.line.repository": "仓库可访问",
   "restoreCheck.line.key": "可用已保存的密钥读取",
   "restoreCheck.line.snapshot": "恢复点存在",

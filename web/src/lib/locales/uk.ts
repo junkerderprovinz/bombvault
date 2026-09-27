@@ -201,6 +201,7 @@ const uk: Partial<Translations> = {
   "restoreCheck.waiting": "Перевірки ще тривають.",
   "restoreCheck.blockedError": "Не вдалося виконати перевірки, тому відновлення заблоковане.",
   "restoreCheck.blockedBy": "Заблоковано, бо не пройдено перевірку: {line}.",
+  "restoreCheck.blockedMember": "Заблоковано, бо для {name} не пройдено перевірку: {line}.",
   "restoreCheck.line.repository": "Репозиторій доступний",
   "restoreCheck.line.key": "Читається збереженим ключем",
   "restoreCheck.line.snapshot": "Точка відновлення є",

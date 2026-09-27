@@ -202,6 +202,7 @@ const cs: Partial<Translations> = {
   "restoreCheck.waiting": "Kontroly ještě běží.",
   "restoreCheck.blockedError": "Kontroly se nepodařilo spustit, obnova proto zůstává zamčená.",
   "restoreCheck.blockedBy": "Zamčeno, protože tato kontrola selhala: {line}.",
+  "restoreCheck.blockedMember": "Zamčeno, protože kontrola pro {name} selhala: {line}.",
   "restoreCheck.line.repository": "Repozitář dostupný",
   "restoreCheck.line.key": "Čitelné uloženým klíčem",
   "restoreCheck.line.snapshot": "Bod obnovy existuje",

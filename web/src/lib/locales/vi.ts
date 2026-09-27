@@ -202,6 +202,7 @@ const vi: Partial<Translations> = {
   "restoreCheck.waiting": "Việc kiểm tra vẫn đang chạy.",
   "restoreCheck.blockedError": "Không chạy được kiểm tra nên việc khôi phục vẫn bị khóa.",
   "restoreCheck.blockedBy": "Bị khóa vì kiểm tra này thất bại: {line}.",
+  "restoreCheck.blockedMember": "Bị khóa vì một kiểm tra của {name} thất bại: {line}.",
   "restoreCheck.line.repository": "Truy cập được kho",
   "restoreCheck.line.key": "Đọc được bằng khóa đã lưu",
   "restoreCheck.line.snapshot": "Có điểm khôi phục",

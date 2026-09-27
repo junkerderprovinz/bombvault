@@ -259,6 +259,7 @@ const lv: Partial<Translations> = {
   "restoreCheck.waiting": "Pārbaudes vēl notiek.",
   "restoreCheck.blockedError": "Pārbaudes neizdevās palaist, tāpēc atjaunošana paliek bloķēta.",
   "restoreCheck.blockedBy": "Bloķēts, jo šī pārbaude neizdevās: {line}.",
+  "restoreCheck.blockedMember": "Bloķēts, jo neizdevās {name} pārbaude: {line}.",
   "restoreCheck.line.repository": "Repozitorijs sasniedzams",
   "restoreCheck.line.key": "Nolasāms ar saglabāto atslēgu",
   "restoreCheck.line.snapshot": "Atjaunošanas punkts ir",

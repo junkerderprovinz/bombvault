@@ -202,6 +202,7 @@ const fi: Partial<Translations> = {
   "restoreCheck.waiting": "Tarkistukset ovat vielä käynnissä.",
   "restoreCheck.blockedError": "Tarkistuksia ei voitu suorittaa, joten palautus pysyy lukittuna.",
   "restoreCheck.blockedBy": "Lukittu, koska tämä tarkistus epäonnistui: {line}.",
+  "restoreCheck.blockedMember": "Lukittu, koska kohteen {name} tarkistus epäonnistui: {line}.",
   "restoreCheck.line.repository": "Repository tavoitettavissa",
   "restoreCheck.line.key": "Luettavissa tallennetulla avaimella",
   "restoreCheck.line.snapshot": "Palautuspiste olemassa",

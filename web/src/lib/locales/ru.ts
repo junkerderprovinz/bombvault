@@ -200,6 +200,7 @@ const ru: Partial<Translations> = {
   "restoreCheck.waiting": "Проверки ещё идут.",
   "restoreCheck.blockedError": "Не удалось выполнить проверки, поэтому восстановление заблокировано.",
   "restoreCheck.blockedBy": "Заблокировано, потому что не пройдена проверка: {line}.",
+  "restoreCheck.blockedMember": "Заблокировано, потому что для {name} не пройдена проверка: {line}.",
   "restoreCheck.line.repository": "Репозиторий доступен",
   "restoreCheck.line.key": "Читается сохранённым ключом",
   "restoreCheck.line.snapshot": "Точка восстановления есть",

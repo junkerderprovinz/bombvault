@@ -259,6 +259,7 @@ const gl: Partial<Translations> = {
   "restoreCheck.waiting": "As comprobacións aínda están en curso.",
   "restoreCheck.blockedError": "As comprobacións non se puideron executar, así que a restauración segue bloqueada.",
   "restoreCheck.blockedBy": "Bloqueado porque fallou esta comprobación: {line}.",
+  "restoreCheck.blockedMember": "Bloqueado porque fallou unha comprobación de {name}: {line}.",
   "restoreCheck.line.repository": "Repositorio accesible",
   "restoreCheck.line.key": "Lexible coa chave gardada",
   "restoreCheck.line.snapshot": "Punto de restauración presente",

@@ -202,6 +202,7 @@ const es: Partial<Translations> = {
   "restoreCheck.waiting": "Las comprobaciones siguen en curso.",
   "restoreCheck.blockedError": "Las comprobaciones no pudieron ejecutarse, así que la restauración sigue bloqueada.",
   "restoreCheck.blockedBy": "Bloqueado porque falló esta comprobación: {line}.",
+  "restoreCheck.blockedMember": "Bloqueado porque falló una comprobación de {name}: {line}.",
   "restoreCheck.line.repository": "Repositorio accesible",
   "restoreCheck.line.key": "Legible con la clave guardada",
   "restoreCheck.line.snapshot": "Punto de restauración presente",

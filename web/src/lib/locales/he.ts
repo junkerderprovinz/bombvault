@@ -202,6 +202,7 @@ const he: Partial<Translations> = {
   "restoreCheck.waiting": "הבדיקות עדיין רצות.",
   "restoreCheck.blockedError": "לא ניתן היה להריץ את הבדיקות, ולכן השחזור נשאר נעול.",
   "restoreCheck.blockedBy": "נעול כי הבדיקה הזו נכשלה: {line}.",
+  "restoreCheck.blockedMember": "נעול כי בדיקה של {name} נכשלה: {line}.",
   "restoreCheck.line.repository": "המאגר נגיש",
   "restoreCheck.line.key": "קריא עם המפתח השמור",
   "restoreCheck.line.snapshot": "נקודת השחזור קיימת",

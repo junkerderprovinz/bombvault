@@ -202,6 +202,7 @@ const sv: Partial<Translations> = {
   "restoreCheck.waiting": "Kontrollerna körs fortfarande.",
   "restoreCheck.blockedError": "Kontrollerna kunde inte köras, så återställningen förblir låst.",
   "restoreCheck.blockedBy": "Låst eftersom den här kontrollen misslyckades: {line}.",
+  "restoreCheck.blockedMember": "Låst eftersom en kontroll för {name} misslyckades: {line}.",
   "restoreCheck.line.repository": "Repository nåbart",
   "restoreCheck.line.key": "Läsbart med den sparade nyckeln",
   "restoreCheck.line.snapshot": "Återställningspunkt finns",

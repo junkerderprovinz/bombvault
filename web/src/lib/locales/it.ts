@@ -202,6 +202,7 @@ const it: Partial<Translations> = {
   "restoreCheck.waiting": "I controlli sono ancora in corso.",
   "restoreCheck.blockedError": "I controlli non sono riusciti a partire, quindi il ripristino resta bloccato.",
   "restoreCheck.blockedBy": "Bloccato perché questo controllo è fallito: {line}.",
+  "restoreCheck.blockedMember": "Bloccato perché un controllo è fallito per {name}: {line}.",
   "restoreCheck.line.repository": "Repository raggiungibile",
   "restoreCheck.line.key": "Leggibile con la chiave salvata",
   "restoreCheck.line.snapshot": "Punto di ripristino presente",

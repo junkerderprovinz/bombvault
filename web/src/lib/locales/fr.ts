@@ -202,6 +202,7 @@ const fr: Partial<Translations> = {
   "restoreCheck.waiting": "Les vérifications sont encore en cours.",
   "restoreCheck.blockedError": "Les vérifications n'ont pas pu s'exécuter, la restauration reste donc verrouillée.",
   "restoreCheck.blockedBy": "Verrouillé car cette vérification a échoué : {line}.",
+  "restoreCheck.blockedMember": "Verrouillé car une vérification a échoué pour {name} : {line}.",
   "restoreCheck.line.repository": "Dépôt joignable",
   "restoreCheck.line.key": "Lisible avec la clé enregistrée",
   "restoreCheck.line.snapshot": "Point de restauration présent",

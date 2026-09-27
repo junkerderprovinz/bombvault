@@ -1405,7 +1405,7 @@ func (h *Handler) handleRestoreCheck(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"ready": res.Ready, "checks": res.Checks, "plan": res.Plan}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"ready": res.Ready, "checks": res.Checks, "plan": res.Plan, "members": res.Members}))
 }
 
 // handleBackupCancel cancels an in-flight BACKUP by its progress key

@@ -200,6 +200,7 @@ const pl: Partial<Translations> = {
   "restoreCheck.waiting": "Sprawdzanie jeszcze trwa.",
   "restoreCheck.blockedError": "Nie udało się uruchomić sprawdzenia, więc przywracanie pozostaje zablokowane.",
   "restoreCheck.blockedBy": "Zablokowane, bo to sprawdzenie nie powiodło się: {line}.",
+  "restoreCheck.blockedMember": "Zablokowane, bo sprawdzenie dla {name} nie powiodło się: {line}.",
   "restoreCheck.line.repository": "Repozytorium osiągalne",
   "restoreCheck.line.key": "Czytelne zapisanym kluczem",
   "restoreCheck.line.snapshot": "Punkt przywracania istnieje",

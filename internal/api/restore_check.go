@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"slices"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -39,11 +41,12 @@ const (
 	checkFlash          = "flash"
 	checkConfig         = "config"
 	checkDBImport       = "dbImport"
+	checkStack          = "stack"
 )
 
 // RestoreCheckRequest describes a restore with what its own endpoint takes.
-// Name is the container, the VM, the file set id, the ZFS item id or, for a
-// foreign restore, the item.
+// Name is the container, the VM, the file set id, the ZFS item id, the compose
+// project of a stack or, for a foreign restore, the item.
 type RestoreCheckRequest struct {
 	Kind       string            `json:"kind"`
 	Name       string            `json:"name"`
@@ -92,8 +95,18 @@ type CheckLine struct {
 }
 
 // RestoreCheck is the answer to a check: the checklist, whether the restore
-// may start, and what it would do.
+// may start, and what it would do. A stack answers with one entry per member
+// instead of a checklist of its own.
 type RestoreCheck struct {
+	Ready   bool               `json:"ready"`
+	Checks  []CheckLine        `json:"checks"`
+	Plan    *RestorePlan       `json:"plan,omitempty"`
+	Members []StackMemberCheck `json:"members,omitempty"`
+}
+
+// StackMemberCheck is the check of one container of a stack restore.
+type StackMemberCheck struct {
+	Name   string       `json:"name"`
 	Ready  bool         `json:"ready"`
 	Checks []CheckLine  `json:"checks"`
 	Plan   *RestorePlan `json:"plan,omitempty"`
@@ -127,6 +140,8 @@ type restoreScope struct {
 // never takes the single-flight guard.
 func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (RestoreCheck, error) {
 	switch req.Kind {
+	case checkStack:
+		return s.checkStack(ctx, req)
 	case checkContainer, checkContainerFiles, checkContainerTo, checkVM, checkFileSet, checkFileSetFiles,
 		checkZFS, checkForeign, checkFlash, checkConfig, checkDBImport:
 	default:
@@ -185,6 +200,48 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 		}
 	}
 	return out, nil
+}
+
+// checkStack checks every member the stack restore would restore, each from
+// its latest backup the way RestoreStack takes it. The members share the time
+// budget of one check, and a folder two members share is left out of the
+// warning, since the restore takes both down together.
+func (s *Service) checkStack(ctx context.Context, req RestoreCheckRequest) (RestoreCheck, error) {
+	members, err := s.prepareRestoreStack(req.Name, req.Source, true)
+	if err != nil {
+		return RestoreCheck{}, err
+	}
+	names := make([]string, len(members))
+	for i, m := range members {
+		names[i] = m.name
+	}
+	budget := max(previewBudget/time.Duration(len(members)), minMemberBudget)
+	out := RestoreCheck{Ready: true, Members: make([]StackMemberCheck, 0, len(members))}
+	for _, m := range members {
+		res, err := s.CheckRestore(withPreviewBudget(ctx, budget), RestoreCheckRequest{Kind: checkContainer, Name: m.name, SnapshotID: "latest", Source: req.Source})
+		if err != nil {
+			return RestoreCheck{}, err
+		}
+		if res.Plan != nil {
+			res.Plan.Shared = withoutContainers(res.Plan.Shared, names)
+		}
+		out.Members = append(out.Members, StackMemberCheck{Name: m.name, Ready: res.Ready, Checks: res.Checks, Plan: res.Plan})
+		out.Ready = out.Ready && res.Ready
+	}
+	return out, nil
+}
+
+// withoutContainers drops the named containers from each shared folder, and a
+// folder no other container is left on.
+func withoutContainers(shared []SharedFolder, names []string) []SharedFolder {
+	out := shared[:0]
+	for _, f := range shared {
+		f.Containers = slices.DeleteFunc(f.Containers, func(c string) bool { return slices.Contains(names, c) })
+		if len(f.Containers) > 0 {
+			out = append(out, f)
+		}
+	}
+	return out
 }
 
 // probeLines reads `restic cat config`: a wrong key still proves the

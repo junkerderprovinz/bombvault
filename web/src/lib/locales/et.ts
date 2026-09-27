@@ -259,6 +259,7 @@ const et: Partial<Translations> = {
   "restoreCheck.waiting": "Kontrollid alles käivad.",
   "restoreCheck.blockedError": "Kontrolle ei õnnestunud käivitada, seega jääb taastamine lukku.",
   "restoreCheck.blockedBy": "Lukus, sest see kontroll ebaõnnestus: {line}.",
+  "restoreCheck.blockedMember": "Lukus, sest {name} kontroll ebaõnnestus: {line}.",
   "restoreCheck.line.repository": "Hoidla kättesaadav",
   "restoreCheck.line.key": "Loetav salvestatud võtmega",
   "restoreCheck.line.snapshot": "Taastepunkt olemas",

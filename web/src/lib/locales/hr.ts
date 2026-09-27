@@ -259,6 +259,7 @@ const hr: Partial<Translations> = {
   "restoreCheck.waiting": "Provjere još traju.",
   "restoreCheck.blockedError": "Provjere se nisu mogle pokrenuti, pa vraćanje ostaje zaključano.",
   "restoreCheck.blockedBy": "Zaključano jer ova provjera nije uspjela: {line}.",
+  "restoreCheck.blockedMember": "Zaključano jer provjera za {name} nije uspjela: {line}.",
   "restoreCheck.line.repository": "Repozitorij dostupan",
   "restoreCheck.line.key": "Čitljivo spremljenim ključem",
   "restoreCheck.line.snapshot": "Točka vraćanja postoji",

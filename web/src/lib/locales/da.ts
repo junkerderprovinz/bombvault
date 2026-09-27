@@ -202,6 +202,7 @@ const da: Partial<Translations> = {
   "restoreCheck.waiting": "Tjekkene kører stadig.",
   "restoreCheck.blockedError": "Tjekkene kunne ikke køre, så gendannelsen forbliver låst.",
   "restoreCheck.blockedBy": "Låst, fordi dette tjek fejlede: {line}.",
+  "restoreCheck.blockedMember": "Låst, fordi et tjek for {name} fejlede: {line}.",
   "restoreCheck.line.repository": "Repository kan nås",
   "restoreCheck.line.key": "Kan læses med den gemte nøgle",
   "restoreCheck.line.snapshot": "Gendannelsespunkt findes",

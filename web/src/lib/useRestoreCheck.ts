@@ -87,6 +87,11 @@ export function restoreBlockReason(check: Pick<RestoreCheck, "state">, t: (key: 
     case "error":
       return t("restoreCheck.blockedError");
     case "done": {
+      for (const m of state.result.members ?? []) {
+        const line = m.checks.find((c) => c.status === "fail");
+        if (line)
+          return t("restoreCheck.blockedMember").replace("{name}", m.name).replace("{line}", t(CHECK_LINE_LABEL[line.id]));
+      }
       const failed = state.result.checks?.find((c) => c.status === "fail");
       if (!failed) return undefined;
       return t("restoreCheck.blockedBy").replace("{line}", t(CHECK_LINE_LABEL[failed.id]));

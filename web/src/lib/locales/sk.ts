@@ -259,6 +259,7 @@ const sk: Partial<Translations> = {
   "restoreCheck.waiting": "Kontroly ešte bežia.",
   "restoreCheck.blockedError": "Kontroly sa nepodarilo spustiť, obnova preto ostáva zamknutá.",
   "restoreCheck.blockedBy": "Zamknuté, pretože táto kontrola zlyhala: {line}.",
+  "restoreCheck.blockedMember": "Zamknuté, pretože kontrola pre {name} zlyhala: {line}.",
   "restoreCheck.line.repository": "Repozitár dostupný",
   "restoreCheck.line.key": "Čitateľné uloženým kľúčom",
   "restoreCheck.line.snapshot": "Bod obnovy existuje",

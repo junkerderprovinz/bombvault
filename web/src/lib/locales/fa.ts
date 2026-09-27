@@ -259,6 +259,7 @@ const fa: Partial<Translations> = {
   "restoreCheck.waiting": "بررسی‌ها هنوز در جریان‌اند.",
   "restoreCheck.blockedError": "بررسی‌ها اجرا نشدند، پس بازیابی قفل می‌ماند.",
   "restoreCheck.blockedBy": "قفل است چون این بررسی ناموفق بود: {line}.",
+  "restoreCheck.blockedMember": "قفل است چون یک بررسی برای {name} ناموفق بود: {line}.",
   "restoreCheck.line.repository": "مخزن در دسترس",
   "restoreCheck.line.key": "خواندنی با کلید ذخیره‌شده",
   "restoreCheck.line.snapshot": "نقطهٔ بازیابی موجود",

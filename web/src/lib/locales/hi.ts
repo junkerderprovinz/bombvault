@@ -259,6 +259,7 @@ const hi: Partial<Translations> = {
   "restoreCheck.waiting": "जाँच अभी चल रही है।",
   "restoreCheck.blockedError": "जाँच नहीं चल सकी, इसलिए रीस्टोर बंद रहता है।",
   "restoreCheck.blockedBy": "बंद है क्योंकि यह जाँच विफल रही: {line}.",
+  "restoreCheck.blockedMember": "बंद है क्योंकि {name} की एक जाँच विफल रही: {line}.",
   "restoreCheck.line.repository": "रिपॉज़िटरी पहुँच में",
   "restoreCheck.line.key": "सहेजी गई कुंजी से पढ़ने योग्य",
   "restoreCheck.line.snapshot": "रीस्टोर पॉइंट मौजूद",

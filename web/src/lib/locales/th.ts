@@ -202,6 +202,7 @@ const th: Partial<Translations> = {
   "restoreCheck.waiting": "การตรวจยังทำงานอยู่",
   "restoreCheck.blockedError": "เรียกใช้การตรวจไม่ได้ การกู้คืนจึงยังล็อกอยู่",
   "restoreCheck.blockedBy": "ล็อกอยู่เพราะการตรวจนี้ไม่ผ่าน: {line}",
+  "restoreCheck.blockedMember": "ล็อกอยู่เพราะการตรวจของ {name} ไม่ผ่าน: {line}",
   "restoreCheck.line.repository": "เข้าถึงคลังได้",
   "restoreCheck.line.key": "อ่านได้ด้วยคีย์ที่บันทึกไว้",
   "restoreCheck.line.snapshot": "มีจุดกู้คืน",

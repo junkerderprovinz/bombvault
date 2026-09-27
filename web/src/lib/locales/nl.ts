@@ -200,6 +200,7 @@ const nl: Partial<Translations> = {
   "restoreCheck.waiting": "De controles lopen nog.",
   "restoreCheck.blockedError": "De controles konden niet draaien, dus het herstel blijft vergrendeld.",
   "restoreCheck.blockedBy": "Vergrendeld omdat deze controle mislukte: {line}.",
+  "restoreCheck.blockedMember": "Vergrendeld omdat een controle voor {name} mislukte: {line}.",
   "restoreCheck.line.repository": "Repository bereikbaar",
   "restoreCheck.line.key": "Leesbaar met de opgeslagen sleutel",
   "restoreCheck.line.snapshot": "Herstelpunt aanwezig",

@@ -259,6 +259,7 @@ const bg: Partial<Translations> = {
   "restoreCheck.waiting": "Проверките още вървят.",
   "restoreCheck.blockedError": "Проверките не можаха да се изпълнят, затова възстановяването остава заключено.",
   "restoreCheck.blockedBy": "Заключено, защото тази проверка е неуспешна: {line}.",
+  "restoreCheck.blockedMember": "Заключено, защото проверка за {name} е неуспешна: {line}.",
   "restoreCheck.line.repository": "Хранилището е достъпно",
   "restoreCheck.line.key": "Четимо със запазения ключ",
   "restoreCheck.line.snapshot": "Точката за възстановяване е налична",

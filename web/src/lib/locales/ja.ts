@@ -202,6 +202,7 @@ const ja: Partial<Translations> = {
   "restoreCheck.waiting": "確認はまだ実行中です。",
   "restoreCheck.blockedError": "確認を実行できなかったため、復元はロックされたままです。",
   "restoreCheck.blockedBy": "この確認が失敗したためロックされています: {line}。",
+  "restoreCheck.blockedMember": "{name} の確認が失敗したためロックされています: {line}。",
   "restoreCheck.line.repository": "リポジトリに到達可能",
   "restoreCheck.line.key": "保存済みの鍵で読める",
   "restoreCheck.line.snapshot": "復元ポイントがある",

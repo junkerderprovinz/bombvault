@@ -85,6 +85,7 @@ export function RestoreCheckPanel({
   if (state.phase === "idle") return null;
   const lines = state.phase === "done" ? (state.result.checks ?? []) : [];
   const plan = state.phase === "done" ? state.result.plan : null;
+  const members = state.phase === "done" ? (state.result.members ?? []) : [];
 
   return (
     <section
@@ -114,23 +115,36 @@ export function RestoreCheckPanel({
       {state.phase === "error" && (
         <p className="text-sm text-statusFail">{t("restoreCheck.failed").replace("{error}", state.error)}</p>
       )}
-      {lines.length > 0 && (
-        <ul className="flex flex-col gap-1.5">
-          {lines.map((c) => (
-            <li key={c.id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
-              <Badge tone={STATUS_TONE[c.status]} size="small" shape="pill">
-                {t(STATUS_LABEL[c.status])}
-              </Badge>
-              <span className="text-carbon-text">{t(CHECK_LINE_LABEL[c.id])}</span>
-              {lineText(c, t) && (
-                <span className="min-w-0 wrap-break-word text-caption text-carbon-textMuted">{lineText(c, t)}</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+      {lines.length > 0 && <CheckLines lines={lines} t={t} />}
       {plan && <PlanView plan={plan} t={t} />}
+      {members.map((m) => (
+        <div key={m.name} className="flex flex-col gap-2 border-t border-carbon-border pt-2">
+          <h5 className="font-mono text-sm font-semibold text-carbon-text" dir="ltr">
+            {m.name}
+          </h5>
+          <CheckLines lines={m.checks} t={t} />
+          {m.plan && <PlanView plan={m.plan} t={t} />}
+        </div>
+      ))}
     </section>
+  );
+}
+
+function CheckLines({ lines, t }: { lines: CheckLine[]; t: T }) {
+  return (
+    <ul className="flex flex-col gap-1.5">
+      {lines.map((c) => (
+        <li key={c.id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
+          <Badge tone={STATUS_TONE[c.status]} size="small" shape="pill">
+            {t(STATUS_LABEL[c.status])}
+          </Badge>
+          <span className="text-carbon-text">{t(CHECK_LINE_LABEL[c.id])}</span>
+          {lineText(c, t) && (
+            <span className="min-w-0 wrap-break-word text-caption text-carbon-textMuted">{lineText(c, t)}</span>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 

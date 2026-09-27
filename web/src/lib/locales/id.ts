@@ -259,6 +259,7 @@ const id: Partial<Translations> = {
   "restoreCheck.waiting": "Pemeriksaan masih berjalan.",
   "restoreCheck.blockedError": "Pemeriksaan tidak dapat dijalankan, jadi pemulihan tetap terkunci.",
   "restoreCheck.blockedBy": "Terkunci karena pemeriksaan ini gagal: {line}.",
+  "restoreCheck.blockedMember": "Terkunci karena pemeriksaan untuk {name} gagal: {line}.",
   "restoreCheck.line.repository": "Repositori dapat dijangkau",
   "restoreCheck.line.key": "Terbaca dengan kunci tersimpan",
   "restoreCheck.line.snapshot": "Titik pemulihan ada",

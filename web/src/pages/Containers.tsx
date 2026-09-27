@@ -53,6 +53,8 @@ import { useDebouncedSave } from "../lib/useDebouncedSave";
 import { IconSearch } from "../components/glyphs";
 
 import { Toggle } from "../components/Toggle";
+import { checkRestoreOnce, restoreBlockReason } from "../lib/useRestoreCheck";
+import { RestoreCheckPanel } from "../components/restore/RestoreCheckPanel";
 type T = ReturnType<typeof useT>["t"];
 
 // ---------------------------------------------------------------------------
@@ -2763,7 +2765,7 @@ const STACK_DONE_GRACE_MS = 8000;
 // only acks {started:true} and carries no member results), so on start the card
 // shows a sticky "restore started" hint; per-member outcomes land in the run
 // history. Synchronous validation errors (empty stack, busy, …) show inline.
-function StackCard({
+export function StackCard({
   group,
   onRestored,
   t,
@@ -2833,7 +2835,12 @@ function StackCard({
     const question = live.length
       ? `${t("stack.restoreConfirm")} ${t("dbdump.stackRestoreWarn", live.length).replace("{names}", listSeparated(lang, live))}`
       : t("stack.restoreConfirm");
-    if (!(await confirm(question))) return;
+    setBusy(true);
+    const check = await checkRestoreOnce({ kind: "stack", name: group.project, source });
+    setBusy(false);
+    const refusal = restoreBlockReason(check, t);
+    const extra = <RestoreCheckPanel check={check} t={t} />;
+    if (!(await confirm(question, { extra, confirmBlocked: refusal }))) return;
     setBusy(true);
     setStarted(false);
     setFinished(false);

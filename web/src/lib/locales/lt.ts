@@ -259,6 +259,7 @@ const lt: Partial<Translations> = {
   "restoreCheck.waiting": "Patikros dar vyksta.",
   "restoreCheck.blockedError": "Patikrų nepavyko paleisti, todėl atkūrimas lieka užrakintas.",
   "restoreCheck.blockedBy": "Užrakinta, nes nepavyko ši patikra: {line}.",
+  "restoreCheck.blockedMember": "Užrakinta, nes nepavyko {name} patikra: {line}.",
   "restoreCheck.line.repository": "Saugykla pasiekiama",
   "restoreCheck.line.key": "Skaitoma išsaugotu raktu",
   "restoreCheck.line.snapshot": "Atkūrimo taškas yra",

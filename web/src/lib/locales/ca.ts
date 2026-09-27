@@ -259,6 +259,7 @@ const ca: Partial<Translations> = {
   "restoreCheck.waiting": "Les comprovacions encara s'estan executant.",
   "restoreCheck.blockedError": "Les comprovacions no s'han pogut executar, així que la restauració continua bloquejada.",
   "restoreCheck.blockedBy": "Bloquejat perquè ha fallat aquesta comprovació: {line}.",
+  "restoreCheck.blockedMember": "Bloquejat perquè ha fallat una comprovació de {name}: {line}.",
   "restoreCheck.line.repository": "Repositori accessible",
   "restoreCheck.line.key": "Llegible amb la clau desada",
   "restoreCheck.line.snapshot": "Punt de restauració present",

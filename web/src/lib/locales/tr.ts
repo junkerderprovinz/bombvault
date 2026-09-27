@@ -202,6 +202,7 @@ const tr: Partial<Translations> = {
   "restoreCheck.waiting": "Denetimler hâlâ sürüyor.",
   "restoreCheck.blockedError": "Denetimler çalıştırılamadı, bu yüzden geri yükleme kilitli kalıyor.",
   "restoreCheck.blockedBy": "Bu denetim başarısız olduğu için kilitli: {line}.",
+  "restoreCheck.blockedMember": "{name} için bir denetim başarısız olduğu için kilitli: {line}.",
   "restoreCheck.line.repository": "Depoya erişilebiliyor",
   "restoreCheck.line.key": "Kayıtlı anahtarla okunabiliyor",
   "restoreCheck.line.snapshot": "Geri yükleme noktası mevcut",

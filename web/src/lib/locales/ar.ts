@@ -202,6 +202,7 @@ const ar: Partial<Translations> = {
   "restoreCheck.waiting": "ما زالت عمليات التحقق جارية.",
   "restoreCheck.blockedError": "تعذر تشغيل عمليات التحقق، لذا تبقى الاستعادة مقفلة.",
   "restoreCheck.blockedBy": "مقفل لأن هذا التحقق فشل: {line}.",
+  "restoreCheck.blockedMember": "مقفل لأن فحصًا لـ {name} فشل: {line}.",
   "restoreCheck.line.repository": "المستودع متاح",
   "restoreCheck.line.key": "قابل للقراءة بالمفتاح المحفوظ",
   "restoreCheck.line.snapshot": "نقطة الاستعادة موجودة",

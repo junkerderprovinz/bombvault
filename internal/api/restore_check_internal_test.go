@@ -440,3 +440,59 @@ func TestCheckRestoreZFSTakesNoSafetySnapshot(t *testing.T) {
 		t.Fatalf("excludes = %v", check.steps[0].Excludes)
 	}
 }
+
+// stackFixture puts plex and a second backed-up container, plexdb, into the
+// compose project "media". plexdb binds a folder inside plex's appdata.
+func stackFixture(t *testing.T) *checkFixture {
+	t.Helper()
+	f := newCheckFixture(t)
+	root := f.svc.cfg.HostMountRoot
+	for _, name := range []string{"plex", "plexdb"} {
+		in := model.Inspect{Name: name, Config: model.Config{Image: "img/" + name + ":1", Labels: map[string]string{"com.docker.compose.project": "media"}}}
+		def, err := json.Marshal(containerDefinition{Inspect: in})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := f.svc.store.UpsertTarget(store.Target{ContainerName: name, AppdataPaths: []string{root + "/appdata/" + name}, Definition: string(def)}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	f.eng.snaps = append(f.eng.snaps, restic.Snapshot{ID: "cccc3333", Tags: []string{"container:plexdb"}, Paths: []string{root + "/appdata/plexdb"}})
+	f.docker.list = append(f.docker.list, dockercli.ContainerInfo{Name: "plexdb", Mounts: []dockercli.MountPoint{{Source: "/mnt/user/appdata/plex/db", Destination: "/db"}}})
+	return f
+}
+
+func TestCheckRestoreStackChecksEveryMember(t *testing.T) {
+	f := stackFixture(t)
+	f.free = 150
+	f.eng.preview = map[string][]restic.PreviewItem{
+		f.appdata: {{Action: "restored", Item: "/a", Size: 100}},
+		f.svc.cfg.HostMountRoot + "/appdata/plexdb": {{Action: "restored", Item: "/b", Size: 200}},
+	}
+	res := f.check(t, RestoreCheckRequest{Kind: checkStack, Name: "media"})
+	if len(res.Members) != 2 || res.Members[0].Name != "plex" || res.Members[1].Name != "plexdb" {
+		t.Fatalf("members = %+v", res.Members)
+	}
+	if !res.Members[0].Ready || res.Members[1].Ready || res.Ready {
+		t.Fatalf("plex fits and plexdb does not, so the stack is not ready: %+v", res)
+	}
+	if c := lineOf(t, RestoreCheck{Checks: res.Members[1].Checks}, lineSpace); c.Reason != reasonShort {
+		t.Fatalf("plexdb space = %+v", c)
+	}
+}
+
+func TestCheckRestoreStackLeavesItsOwnMembersOutOfTheSharedFolders(t *testing.T) {
+	f := stackFixture(t)
+	res := f.check(t, RestoreCheckRequest{Kind: checkStack, Name: "media"})
+	shared := res.Members[0].Plan.Shared
+	if len(shared) != 1 || !slices.Equal(shared[0].Containers, []string{"nextcloud-db"}) {
+		t.Fatalf("plex shared = %+v, want only nextcloud-db", shared)
+	}
+}
+
+func TestCheckRestoreStackWithoutBackupsIsAnError(t *testing.T) {
+	f := newCheckFixture(t)
+	if _, err := f.svc.CheckRestore(context.Background(), RestoreCheckRequest{Kind: checkStack, Name: "nothing", Source: "local"}); err == nil {
+		t.Fatal("a stack with no backed-up member has nothing to check")
+	}
+}

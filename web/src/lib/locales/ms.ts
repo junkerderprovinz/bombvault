@@ -259,6 +259,7 @@ const ms: Partial<Translations> = {
   "restoreCheck.waiting": "Semakan masih berjalan.",
   "restoreCheck.blockedError": "Semakan tidak dapat dijalankan, jadi pemulihan kekal terkunci.",
   "restoreCheck.blockedBy": "Terkunci kerana semakan ini gagal: {line}.",
+  "restoreCheck.blockedMember": "Terkunci kerana semakan untuk {name} gagal: {line}.",
   "restoreCheck.line.repository": "Repositori boleh dicapai",
   "restoreCheck.line.key": "Boleh dibaca dengan kunci tersimpan",
   "restoreCheck.line.snapshot": "Titik pemulihan wujud",

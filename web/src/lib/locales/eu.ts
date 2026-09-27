@@ -259,6 +259,7 @@ const eu: Partial<Translations> = {
   "restoreCheck.waiting": "Egiaztapenak martxan daude oraindik.",
   "restoreCheck.blockedError": "Ezin izan dira egiaztapenak exekutatu, beraz leheneratzea blokeatuta geratzen da.",
   "restoreCheck.blockedBy": "Blokeatuta, egiaztapen honek huts egin duelako: {line}.",
+  "restoreCheck.blockedMember": "Blokeatuta, {name}(e)n egiaztapen batek huts egin duelako: {line}.",
   "restoreCheck.line.repository": "Biltegia eskuragarri",
   "restoreCheck.line.key": "Gordetako gakoarekin irakurgarria",
   "restoreCheck.line.snapshot": "Leheneratze-puntua badago",

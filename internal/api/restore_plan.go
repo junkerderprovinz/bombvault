@@ -24,6 +24,17 @@ import (
 // to walk in that time gets a partial plan that says so.
 var previewBudget = 30 * time.Second
 
+// minMemberBudget is the least a stack member gets of the budget it shares.
+const minMemberBudget = 5 * time.Second
+
+type previewBudgetKey struct{}
+
+// withPreviewBudget gives the dry runs of one check a budget other than the
+// default, for a check that is one of several answering a single request.
+func withPreviewBudget(ctx context.Context, d time.Duration) context.Context {
+	return context.WithValue(ctx, previewBudgetKey{}, d)
+}
+
 // planListCap is how many paths of each kind of change the plan lists.
 const planListCap = 200
 
@@ -95,7 +106,11 @@ func (s *Service) previewRestore(ctx context.Context, sc restoreScope) (RestoreP
 		listed[change]++
 		plan.Files = append(plan.Files, PlanFile{Path: s.toHostPath(p), Change: change})
 	}
-	pctx, cancel := context.WithTimeout(ctx, previewBudget)
+	budget := previewBudget
+	if d, ok := ctx.Value(previewBudgetKey{}).(time.Duration); ok {
+		budget = d
+	}
+	pctx, cancel := context.WithTimeout(ctx, budget)
 	defer cancel()
 	for _, st := range sc.steps {
 		dirs := map[string]bool{}

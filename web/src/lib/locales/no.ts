@@ -201,6 +201,7 @@ const no: Partial<Translations> = {
   "restoreCheck.waiting": "Sjekkene kjører fortsatt.",
   "restoreCheck.blockedError": "Sjekkene kunne ikke kjøre, så gjenopprettingen forblir låst.",
   "restoreCheck.blockedBy": "Låst fordi denne sjekken feilet: {line}.",
+  "restoreCheck.blockedMember": "Låst fordi en sjekk for {name} feilet: {line}.",
   "restoreCheck.line.repository": "Repository kan nås",
   "restoreCheck.line.key": "Kan leses med den lagrede nøkkelen",
   "restoreCheck.line.snapshot": "Gjenopprettingspunkt finnes",

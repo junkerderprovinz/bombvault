@@ -202,6 +202,7 @@ const ko: Partial<Translations> = {
   "restoreCheck.waiting": "확인이 아직 진행 중입니다.",
   "restoreCheck.blockedError": "확인을 실행하지 못해 복원이 잠긴 상태로 남습니다.",
   "restoreCheck.blockedBy": "이 확인이 실패해서 잠겼습니다: {line}.",
+  "restoreCheck.blockedMember": "{name}의 확인이 실패해서 잠겼습니다: {line}.",
   "restoreCheck.line.repository": "저장소 연결 가능",
   "restoreCheck.line.key": "저장된 키로 읽기 가능",
   "restoreCheck.line.snapshot": "복원 지점 있음",

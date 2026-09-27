@@ -201,6 +201,7 @@ const ro: Partial<Translations> = {
   "restoreCheck.waiting": "Verificările încă rulează.",
   "restoreCheck.blockedError": "Verificările nu au putut rula, așa că restaurarea rămâne blocată.",
   "restoreCheck.blockedBy": "Blocat pentru că această verificare a eșuat: {line}.",
+  "restoreCheck.blockedMember": "Blocat pentru că o verificare pentru {name} a eșuat: {line}.",
   "restoreCheck.line.repository": "Depozit accesibil",
   "restoreCheck.line.key": "Lizibil cu cheia salvată",
   "restoreCheck.line.snapshot": "Punct de restaurare prezent",

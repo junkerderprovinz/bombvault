@@ -202,6 +202,7 @@ const hu: Partial<Translations> = {
   "restoreCheck.waiting": "Az ellenőrzések még futnak.",
   "restoreCheck.blockedError": "Az ellenőrzéseket nem sikerült futtatni, ezért a visszaállítás zárolva marad.",
   "restoreCheck.blockedBy": "Zárolva, mert ez az ellenőrzés sikertelen: {line}.",
+  "restoreCheck.blockedMember": "Zárolva, mert a(z) {name} egyik ellenőrzése sikertelen: {line}.",
   "restoreCheck.line.repository": "Tároló elérhető",
   "restoreCheck.line.key": "Olvasható a mentett kulccsal",
   "restoreCheck.line.snapshot": "Visszaállítási pont megvan",

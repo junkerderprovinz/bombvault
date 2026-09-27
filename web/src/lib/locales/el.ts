@@ -202,6 +202,7 @@ const el: Partial<Translations> = {
   "restoreCheck.waiting": "Οι έλεγχοι τρέχουν ακόμη.",
   "restoreCheck.blockedError": "Οι έλεγχοι δεν μπόρεσαν να εκτελεστούν, οπότε η επαναφορά μένει κλειδωμένη.",
   "restoreCheck.blockedBy": "Κλειδωμένο επειδή απέτυχε αυτός ο έλεγχος: {line}.",
+  "restoreCheck.blockedMember": "Κλειδωμένο επειδή απέτυχε ένας έλεγχος για το {name}: {line}.",
   "restoreCheck.line.repository": "Αποθετήριο προσβάσιμο",
   "restoreCheck.line.key": "Αναγνώσιμο με το αποθηκευμένο κλειδί",
   "restoreCheck.line.snapshot": "Σημείο επαναφοράς διαθέσιμο",
