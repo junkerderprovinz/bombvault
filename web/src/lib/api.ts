@@ -2422,6 +2422,52 @@ export function getSpike(): Promise<SpikeResponse> {
 }
 
 /** The newest runs. `run` adds that one run when it is older than the rest. */
+/** One row of a folder in a size breakdown. open marks a folder that can
+ *  be opened in turn. */
+export interface BreakdownEntry {
+  name: string;
+  dir?: boolean;
+  size: number;
+  files: number;
+  added: number;
+  open?: boolean;
+}
+
+/** One folder of an item's newest backup. size is what its files take before
+ *  deduplication and compression, added what the latest backup brought in
+ *  new or changed; first means there was no earlier backup. */
+export interface SizeBreakdown {
+  state: "ready" | "running" | "failed" | "none";
+  error?: string;
+  snapshot?: string;
+  time?: string;
+  first?: boolean;
+  partial?: boolean;
+  root?: string;
+  path: string;
+  size: number;
+  files: number;
+  added: number;
+  children: BreakdownEntry[];
+  other?: { count: number; size: number; files: number; added: number };
+}
+
+export type BreakdownDomain = "containers" | "vms" | "files";
+
+/** GET /api/breakdown: the size by folder of an item's newest backup. item is
+ *  a container or VM name, or a folder set's id. The first call starts the
+ *  work and answers with state "running". */
+export function getSizeBreakdown(
+  domain: BreakdownDomain,
+  item: string,
+  path: string,
+  retry = false
+): Promise<{ ok: boolean; error?: string; breakdown?: SizeBreakdown }> {
+  const q = new URLSearchParams({ domain, item, path });
+  if (retry) q.set("retry", "1");
+  return fetchJSON(`/api/breakdown?${q.toString()}`);
+}
+
 export function listRuns(run?: string): Promise<ListRunsResponse> {
   return fetchJSON(run ? `/api/runs?run=${encodeURIComponent(run)}` : "/api/runs");
 }

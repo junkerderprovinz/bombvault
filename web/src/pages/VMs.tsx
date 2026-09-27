@@ -14,6 +14,7 @@ import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { RecentRunsList } from "../components/RecentRunsList";
+import { SizeBreakdown } from "../components/SizeBreakdown";
 import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconVM, IconRestore, IconTrash, IconBackupNow, IconDownload, IconPower, IconLive } from "../components/Sidebar";
@@ -601,6 +602,7 @@ function VMRestorePanel({
               )}
           </div>
           <RecentRunsList name={name} domain="vm" t={t} />
+          <SizeBreakdown domain="vms" item={name} t={t} />
           {loading && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}

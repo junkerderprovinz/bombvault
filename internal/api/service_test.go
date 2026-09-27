@@ -5527,13 +5527,19 @@ type fakeResticEngine struct {
 	lsStreamErr     error
 	lsStreamCalls   int
 	lsStreamHook    func(ctx context.Context, onEntry func(restic.FileEntry)) error
-	statsCalls      []string // --mode value of each Stats call
-	statsErr        error
-	diffResult      restic.DiffResult // returned by Diff
-	diffPairs       []string          // "snap1->snap2" of each Diff call
-	taggedSnaps     []string          // "snapID:tag,tag" of each TagAdd call
-	callLog         []string          // ordered method-call log (Unlock/TagAdd/CheckData/RestoreInclude) for ordering assertions
-	forgetPruned    bool              // prune flag of the last Forget call
+	// The size breakdown reads its own listing and diff, so the other
+	// listings' fixtures cannot leak into it.
+	noLockEntries []restic.FileEntry
+	diffChanges   []restic.DiffChange
+	breakdownErr  error
+	diffCalls     int
+	statsCalls    []string // --mode value of each Stats call
+	statsErr      error
+	diffResult    restic.DiffResult // returned by Diff
+	diffPairs     []string          // "snap1->snap2" of each Diff call
+	taggedSnaps   []string          // "snapID:tag,tag" of each TagAdd call
+	callLog       []string          // ordered method-call log (Unlock/TagAdd/CheckData/RestoreInclude) for ordering assertions
+	forgetPruned  bool              // prune flag of the last Forget call
 	// DR-drill knobs. statsRestoreSizeErr fails StatsRestoreSize; statsRestoreBytes
 	// (non-zero) overrides the byte total it reports so a test can force a
 	// verification mismatch. Absent overrides, StatsRestoreSize derives files+bytes
@@ -5903,6 +5909,24 @@ func (f *fakeResticEngine) LsStream(ctx context.Context, _, _ string, _ restic.M
 	}
 	for _, e := range f.lsStreamEntries {
 		onEntry(e)
+	}
+	return nil
+}
+
+func (f *fakeResticEngine) LsStreamNoLock(_ context.Context, _, _ string, _ restic.Mode, onEntry func(restic.FileEntry)) error {
+	if f.breakdownErr != nil {
+		return f.breakdownErr
+	}
+	for _, e := range f.noLockEntries {
+		onEntry(e)
+	}
+	return nil
+}
+
+func (f *fakeResticEngine) DiffStream(_ context.Context, _, _, _ string, _ restic.Mode, onChange func(restic.DiffChange)) error {
+	f.diffCalls++
+	for _, c := range f.diffChanges {
+		onChange(c)
 	}
 	return nil
 }

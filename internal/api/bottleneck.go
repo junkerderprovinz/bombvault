@@ -48,6 +48,7 @@ func (s *Service) runEnded(ev store.RunFinished) {
 	if ev.RunID == "" {
 		return
 	}
+	go s.refreshBreakdownAfter(ev.RunID)
 	sum, ok := s.load.End(ev.RunID)
 	if !ok {
 		return

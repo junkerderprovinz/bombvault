@@ -2137,6 +2137,24 @@ CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expi
 		alreadySatisfied: columnPresent("runs", "load_summary"),
 		sql:              `ALTER TABLE runs ADD COLUMN load_summary TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// The size of each folder in a backup and what the backup added, one
+		// row per item and snapshot. Rows are built from the repository and
+		// can be dropped at any time; the newest few per item are kept.
+		version: insightMigration + 2,
+		name:    "size_breakdowns",
+		sql: `CREATE TABLE IF NOT EXISTS size_breakdowns (
+  target_id   TEXT    NOT NULL,
+  snapshot_id TEXT    NOT NULL,
+  domain      TEXT    NOT NULL,
+  parent_id   TEXT    NOT NULL DEFAULT '',
+  created_at  INTEGER NOT NULL,
+  partial     INTEGER NOT NULL DEFAULT 0,
+  tree        TEXT    NOT NULL,
+  PRIMARY KEY (target_id, snapshot_id)
+);
+CREATE INDEX IF NOT EXISTS idx_size_breakdowns_target ON size_breakdowns(target_id, created_at);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
