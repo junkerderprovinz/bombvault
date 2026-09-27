@@ -55,7 +55,7 @@ Minden kulcsnak saját csempéje van a kártyán. Mutatja a kulcs nevét, hogy i
 
 A csempe a neve mellett annak a kliensnek a jelét mutatja, amelyhez a kulcs készült. Az **Egyéb kliens** gombon át, vagy a kliensek listája előtt készült kulcsnál helyette egy kulcs látszik.
 
-A csempe **Napló** gombja megnyitja, mit csinált a kulcs. Elöl az általa indított mentések állnak, mindegyik az állapotával és egy hivatkozással a futásra az irányítópult tevékenységnaplójában. Alattuk a hívásai, a legújabb elöl, az eszközzel és a hívás kimenetelével. Az elutasítás megmondja az okát: a kulcs csak olvashat, a megőrzésvédelem visszatartotta a mentést, már futott egy másik mentés, az elemet néhány perce mentették MCP-n keresztül, vagy a kulcs túl sok kérést küldött. A megszakítás arra a futásra hivatkozik, amelyről szólt.
+A csempe **Napló** gombja megnyitja, mit csinált a kulcs. Elöl az általa indított mentések állnak, mindegyik az állapotával és egy hivatkozással a futásra az irányítópult tevékenységnaplójában. Alattuk a hívásai, a legújabb elöl, az eszközzel és a hívás kimenetelével. Az elutasítás megmondja az okát: a kulcs csak olvashat, a megőrzésvédelem visszatartotta a mentést, már futott egy másik mentés, az elem mentését néhány perce a webes felületen kívülről indították, vagy a kulcs túl sok kérést küldött. A megszakítás arra a futásra hivatkozik, amelyről szólt.
 
 A BombVault kulcsonként legfeljebb 30 napig őrzi a bejegyzéseket: a legújabb 500 sikeres indítást és megszakítást, mellettük pedig a legújabb 200 egyéb hívást (olvasások, elutasítások és hibák), így egy futó mentést újra és újra lekérdező vagy egy elutasított hívással újra és újra próbálkozó asszisztens nem tudja kiszorítani a naplóból a mentés indítását. Minden hívásnál az eszközt, a kimenetelt és a megszakítás által megnevezett futást tárolja. Soha nem tárolja, amit az asszisztens küldött, sem a kulcsot vagy az ujjlenyomatát. A diagnosztikai csomag csak megszámolja a bejegyzéseket, a beállítások exportja pedig kihagyja őket.
 
@@ -257,7 +257,7 @@ Mindaz, amit egy asszisztens elolvas, a mögötte álló MI-szolgáltatóhoz ker
 | `429` | Túl sok hibás kulcs erről a címről, vagy egy kulccsal több mint 120 kérés percenként. Várj egy percet, és nézd meg, nem ragadt-e az asszisztens egy ciklusba. |
 | "certificate", "self-signed" vagy "unable to verify" szövegű hibák | A kliens nem bízik a BombVault tanúsítványában. Lásd [TLS és tanúsítványok](#tls). |
 | `busy` | Egy másik mentés vagy karbantartási feladat foglalja a tartományt. Próbáld újra, ha végzett. |
-| `cooldown` | Ezt az elemet, ezt a tartományt vagy a Backup Everythinget kevesebb mint 15 perce indították MCP-n keresztül. |
+| `cooldown` | Ezt az elemet, ezt a tartományt vagy a Backup Everythinget kevesebb mint 15 perce indították a webes felületen kívülről. |
 | `retention_guard` | Még egy MCP-mentés után "az utolsó N megtartása" ablakban csak MCP-ből származó visszaállítási pontok maradnának, vagy az elem az elmúlt 24 órában már 4 mentést kapott MCP-n keresztül, a sikertelenekkel és a megszakítottakkal együtt. Az első esetben a következő ütemezett mentés helyet csinál, a másodikban az elem a legrégebbi ilyen mentés után 24 órával lesz újra szabad. A webes felületen bármikor elindíthatod. |
 | `rate_limited` | A kulcs elhasználta az erre az órára jutó 12 indítását. |
 | `not_permitted` indításnál | A kulcs csak olvashat. Kapcsold be az **Mentések indításának engedélyezése** kapcsolót a kártyán; újracsatlakozás nem kell. Megszakításnál azt jelenti, hogy a futást nem ez a kulcs indította. |

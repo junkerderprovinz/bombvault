@@ -55,7 +55,7 @@ Hver nøgle har sit eget felt på kortet. Det viser nøglens navn, om den må st
 
 Ved siden af navnet viser feltet logoet for den klient, nøglen blev lavet til. En nøgle lavet via **Anden klient**, eller før kortet viste klienter, viser en nøgle i stedet.
 
-**Log** på et felt viser, hvad nøglen har gjort. Først kommer de sikkerhedskopier, den startede, hver med sin status og et link til kørslen i aktivitetsloggen på dashboardet. Under dem står dens kald, nyeste først, med værktøjet og hvad der blev af kaldet. En afvisning siger hvorfor: nøglen må kun læse, opbevaringsværnet holdt sikkerhedskopien tilbage, en anden sikkerhedskopi kørte allerede, elementet blev sikkerhedskopieret via MCP for få minutter siden, eller nøglen sendte for mange forespørgsler. En annullering linker til den kørsel, den handlede om.
+**Log** på et felt viser, hvad nøglen har gjort. Først kommer de sikkerhedskopier, den startede, hver med sin status og et link til kørslen i aktivitetsloggen på dashboardet. Under dem står dens kald, nyeste først, med værktøjet og hvad der blev af kaldet. En afvisning siger hvorfor: nøglen må kun læse, opbevaringsværnet holdt sikkerhedskopien tilbage, en anden sikkerhedskopi kørte allerede, en sikkerhedskopi af elementet blev startet uden for brugerfladen for få minutter siden, eller nøglen sendte for mange forespørgsler. En annullering linker til den kørsel, den handlede om.
 
 BombVault gemmer hver nøgles poster i op til 30 dage: de nyeste 500 vellykkede starter og annulleringer og ved siden af dem de nyeste 200 øvrige kald (læsninger, afvisninger og fejl), så en assistent, der gentagne gange spørger til en kørende sikkerhedskopi eller prøver et afvist kald igen og igen, ikke kan skubbe dens start ud af loggen. For hvert kald gemmer det værktøjet, resultatet og den kørsel, en annullering nævnte. Det gemmer aldrig, hvad assistenten sendte, og aldrig nøglen eller dens fingeraftryk. Diagnosepakken tæller kun posterne, og en eksport af indstillingerne udelader dem.
 
@@ -257,7 +257,7 @@ Det, en assistent læser, går til AI-udbyderen bag den: navne på elementer, ti
 | `429` | For mange forkerte nøgler fra denne adresse, eller mere end 120 forespørgsler i minuttet med én nøgle. Vent et minut, og tjek om assistenten sidder fast i en løkke. |
 | Fejl med "certificate", "self-signed" eller "unable to verify" | Klienten stoler ikke på BombVaults certifikat. Se [TLS og certifikater](#tls). |
 | `busy` | En anden sikkerhedskopi eller en vedligeholdelsesopgave optager domænet. Prøv igen, når den er færdig. |
-| `cooldown` | Dette element, dette domæne eller Backup Everything blev startet via MCP for mindre end 15 minutter siden. |
+| `cooldown` | Dette element, dette domæne eller Backup Everything blev startet uden for brugerfladen for mindre end 15 minutter siden. |
 | `retention_guard` | Endnu en MCP-sikkerhedskopi ville kun efterlade gendannelsespunkter fra MCP i et vindue med "behold de sidste N", eller elementet har allerede fået 4 sikkerhedskopier via MCP inden for de sidste 24 timer, mislykkede og annullerede medregnet. I det første tilfælde giver den næste planlagte sikkerhedskopi plads, i det andet er elementet fri igen 24 timer efter den ældste af dem. Du kan altid starte den i webgrænsefladen. |
 | `rate_limited` | Nøglen har brugt sine 12 starter for denne time. |
 | `not_permitted` ved en start | Nøglen må kun læse. Slå **Tillad at starte sikkerhedskopier** til i kortet; ny forbindelse er ikke nødvendig. Ved en annullering betyder det, at denne nøgle ikke startede kørslen. |

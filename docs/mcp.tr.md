@@ -55,7 +55,7 @@ Her anahtarın kartta kendi kutucuğu vardır. Kutucuk anahtarın adını, yedek
 
 Kutucuk, adın yanında anahtarın oluşturulduğu istemcinin logosunu gösterir. **Başka istemci** üzerinden ya da kart istemcileri listelemeden önce oluşturulmuş bir anahtar bunun yerine bir anahtar simgesi gösterir.
 
-Kutucuktaki **Günlük**, o anahtarın yaptıklarını açar. Önce başlattığı yedeklemeler gelir; her biri durumuyla ve panodaki etkinlik günlüğünde o çalıştırmaya giden bir bağlantıyla. Altında çağrıları vardır, en yenisi önce, aracı ve çağrının sonucuyla. Bir ret nedenini söyler: anahtar yalnızca okuyabilir, saklama koruması yedeklemeyi durdurdu, başka bir yedekleme zaten çalışıyordu, öğe birkaç dakika önce MCP üzerinden yedeklendi ya da anahtar çok fazla istek gönderdi. Bir iptal, ilgili çalıştırmaya bağlantı verir.
+Kutucuktaki **Günlük**, o anahtarın yaptıklarını açar. Önce başlattığı yedeklemeler gelir; her biri durumuyla ve panodaki etkinlik günlüğünde o çalıştırmaya giden bir bağlantıyla. Altında çağrıları vardır, en yenisi önce, aracı ve çağrının sonucuyla. Bir ret nedenini söyler: anahtar yalnızca okuyabilir, saklama koruması yedeklemeyi durdurdu, başka bir yedekleme zaten çalışıyordu, öğenin yedeklemesi birkaç dakika önce web arayüzünün dışından başlatıldı ya da anahtar çok fazla istek gönderdi. Bir iptal, ilgili çalıştırmaya bağlantı verir.
 
 BombVault her anahtarın kayıtlarını en fazla 30 gün saklar: en yeni 500 başarılı başlatma ve iptali, bunların yanında da en yeni 200 diğer çağrıyı (okumalar, retler ve hatalar). Böylece süren bir yedeklemeyi tekrar tekrar sorgulayan ya da reddedilen bir çağrıyı tekrar tekrar deneyen bir asistan, o yedeklemenin başlatılmasını günlükten dışarı itemez. Her çağrı için aracı, sonucu ve bir iptalin andığı çalıştırmayı kaydeder. Asistanın gönderdiğini, anahtarı ya da parmak izini asla kaydetmez. Tanılama paketi kayıtları yalnızca sayar, ayar dışa aktarımı ise onları dışarıda bırakır.
 
@@ -257,7 +257,7 @@ Bir asistanın okuduğu her şey arkasındaki yapay zekâ sağlayıcısına gide
 | `429` | Bu adresten çok fazla yanlış anahtar ya da tek anahtarla dakikada 120'den fazla istek. Bir dakika bekleyin ve asistanın bir döngüye takılıp takılmadığını kontrol edin. |
 | "certificate", "self-signed" ya da "unable to verify" içeren hatalar | İstemci BombVault'un sertifikasına güvenmiyor. Bkz. [TLS ve sertifikalar](#tls). |
 | `busy` | O alanı başka bir yedekleme ya da bakım işi tutuyor. Bittiğinde yeniden deneyin. |
-| `cooldown` | Bu öğe, bu alan ya da Backup Everything 15 dakikadan kısa süre önce MCP üzerinden başlatıldı. |
+| `cooldown` | Bu öğe, bu alan ya da Backup Everything 15 dakikadan kısa süre önce web arayüzünün dışından başlatıldı. |
 | `retention_guard` | Bir MCP yedeği daha, "son N taneyi tut" penceresinde yalnızca MCP'den gelen geri yükleme noktaları bırakırdı ya da öğe son 24 saatte MCP üzerinden zaten 4 yedek aldı; başarısız ve iptal edilenler de sayılır. İlk durumda bir sonraki zamanlanmış yedekleme yer açar, ikincisinde öğe bu yedeklerin en eskisinden 24 saat sonra yeniden serbest kalır. Web arayüzünden her zaman başlatabilirsiniz. |
 | `rate_limited` | Anahtar bu saat için 12 başlatmasını kullandı. |
 | Başlatmada `not_permitted` | Anahtar yalnızca okuyabilir. Kartta **Yedekleme başlatmaya izin ver** seçeneğini açın; yeniden bağlanmak gerekmez. İptalde, çalıştırmanın bu anahtar tarafından başlatılmadığı anlamına gelir. |

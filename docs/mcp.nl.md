@@ -55,7 +55,7 @@ Elke sleutel heeft een eigen tegel op de kaart. Die toont de naam van de sleutel
 
 Naast de naam toont de tegel het logo van de client waarvoor de sleutel is gemaakt. Een sleutel die via **Andere client** is gemaakt, of voordat de kaart clients opsomde, toont in plaats daarvan een sleutel.
 
-**Logboek** op een tegel opent wat die sleutel deed. Eerst komen de back-ups die hij startte, elk met zijn stand en een link naar die run in het activiteitenlogboek op het dashboard. Daaronder staan zijn aanroepen, nieuwste eerst, met de tool en wat er van de aanroep werd. Een weigering zegt waarom: de sleutel mag alleen lezen, de bewaarbeveiliging hield de back-up tegen, er liep al een andere back-up, het item is een paar minuten geleden via MCP geback-upt, of de sleutel stuurde te veel verzoeken. Een annulering linkt naar de run waar het om ging.
+**Logboek** op een tegel opent wat die sleutel deed. Eerst komen de back-ups die hij startte, elk met zijn stand en een link naar die run in het activiteitenlogboek op het dashboard. Daaronder staan zijn aanroepen, nieuwste eerst, met de tool en wat er van de aanroep werd. Een weigering zegt waarom: de sleutel mag alleen lezen, de bewaarbeveiliging hield de back-up tegen, er liep al een andere back-up, een back-up van het item is een paar minuten geleden buiten de webinterface gestart, of de sleutel stuurde te veel verzoeken. Een annulering linkt naar de run waar het om ging.
 
 BombVault bewaart de regels van elke sleutel hooguit 30 dagen: de nieuwste 500 geslaagde starts en annuleringen en daarnaast de nieuwste 200 overige aanroepen (leesacties, weigeringen en fouten), zodat een assistent die een lopende back-up steeds opnieuw opvraagt of een geweigerde aanroep steeds opnieuw probeert de start ervan niet uit het logboek kan drukken. Per aanroep bewaart het de tool, de uitkomst en de run die een annulering noemde. Wat de assistent stuurde bewaart het nooit, en de sleutel of zijn vingerafdruk evenmin. Het diagnosepakket telt de regels alleen, en een export van de instellingen laat ze weg.
 
@@ -257,7 +257,7 @@ Wat een assistent leest, gaat naar de AI-aanbieder erachter: namen van items, pl
 | `429` | Te veel verkeerde sleutels vanaf dit adres, of meer dan 120 verzoeken per minuut met één sleutel. Wacht een minuut en kijk of de assistent in een lus zit. |
 | Fouten met "certificate", "self-signed" of "unable to verify" | De client vertrouwt het certificaat van BombVault niet. Zie [TLS en certificaten](#tls). |
 | `busy` | Een andere back-up of een onderhoudstaak bezet dat domein. Probeer het opnieuw als die klaar is. |
-| `cooldown` | Dit item, dit domein of Backup Everything is minder dan 15 minuten geleden via MCP gestart. |
+| `cooldown` | Dit item, dit domein of Backup Everything is minder dan 15 minuten geleden buiten de webinterface gestart. |
 | `retention_guard` | Nog een MCP-back-up zou in een venster "laatste N bewaren" alleen herstelpunten uit MCP overlaten, of het item heeft in de afgelopen 24 uur al 4 back-ups via MCP gehad, mislukte en afgebroken meegeteld. In het eerste geval maakt de volgende geplande back-up ruimte, in het tweede is het item 24 uur na de oudste van die back-ups weer vrij. In beide gevallen kun je hem in de webinterface starten. |
 | `rate_limited` | De sleutel heeft zijn 12 starts voor dit uur opgebruikt. |
 | `not_permitted` bij een start | De sleutel mag alleen lezen. Zet **Back-ups laten starten** aan in de kaart; een nieuwe verbinding is niet nodig. Bij een annulering betekent het dat deze sleutel de run niet heeft gestart. |

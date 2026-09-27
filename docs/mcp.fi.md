@@ -55,7 +55,7 @@ Jokaisella avaimella on kortilla oma ruutunsa. Siinä näkyy avaimen nimi, saako
 
 Nimen vieressä ruutu näyttää sen asiakasohjelman merkin, jolle avain luotiin. Kohdan **Muu asiakasohjelma** kautta tai ennen asiakasohjelmien luetteloa luotu avain näyttää sen sijaan avaimen.
 
-Ruudun **Loki** avaa sen, mitä avain on tehnyt. Ensin tulevat sen käynnistämät varmuuskopiot, kukin tilansa kanssa ja linkillä ajoon kojelaudan toimintalokissa. Niiden alla ovat sen kutsut uusin ensin, työkalu ja kutsun lopputulos. Hylkäys kertoo syyn: avain saa vain lukea, säilytyssuoja pidätti varmuuskopion, toinen varmuuskopiointi oli jo käynnissä, kohde varmuuskopioitiin MCP:n kautta muutama minuutti sitten, tai avain lähetti liian monta pyyntöä. Peruutus linkittää ajoon, jota se koski.
+Ruudun **Loki** avaa sen, mitä avain on tehnyt. Ensin tulevat sen käynnistämät varmuuskopiot, kukin tilansa kanssa ja linkillä ajoon kojelaudan toimintalokissa. Niiden alla ovat sen kutsut uusin ensin, työkalu ja kutsun lopputulos. Hylkäys kertoo syyn: avain saa vain lukea, säilytyssuoja pidätti varmuuskopion, toinen varmuuskopiointi oli jo käynnissä, kohteen varmuuskopiointi käynnistettiin käyttöliittymän ulkopuolelta muutama minuutti sitten, tai avain lähetti liian monta pyyntöä. Peruutus linkittää ajoon, jota se koski.
 
 BombVault säilyttää kunkin avaimen merkinnät enintään 30 päivää: 500 uusinta onnistunutta käynnistystä ja peruutusta sekä niiden rinnalla 200 uusinta muuta kutsua (luvut, hylkäykset ja virheet), joten avustaja, joka kyselee käynnissä olevaa varmuuskopiointia tai yrittää hylättyä kutsua yhä uudelleen, ei voi työntää sen käynnistystä pois lokista. Jokaisesta kutsusta se tallentaa työkalun, lopputuloksen ja peruutuksen nimeämän ajon. Se ei koskaan tallenna sitä, mitä avustaja lähetti, eikä avainta tai sen sormenjälkeä. Diagnostiikkapaketti vain laskee merkinnät, ja asetusten vienti jättää ne pois.
 
@@ -257,7 +257,7 @@ Kaikki, mitä avustaja lukee, menee sen takana olevalle tekoälypalvelun tarjoaj
 | `429` | Liian monta väärää avainta tästä osoitteesta, tai yli 120 pyyntöä minuutissa yhdellä avaimella. Odota minuutti ja tarkista, onko avustaja jumissa silmukassa. |
 | Virheet, joissa lukee "certificate", "self-signed" tai "unable to verify" | Asiakasohjelma ei luota BombVaultin varmenteeseen. Katso [TLS ja varmenteet](#tls). |
 | `busy` | Toinen varmuuskopio tai ylläpitotehtävä varaa toimialueen. Yritä uudelleen, kun se on valmis. |
-| `cooldown` | Tämä kohde, tämä toimialue tai Backup Everything käynnistettiin MCP:n kautta alle 15 minuuttia sitten. |
+| `cooldown` | Tämä kohde, tämä toimialue tai Backup Everything käynnistettiin käyttöliittymän ulkopuolelta alle 15 minuuttia sitten. |
 | `retention_guard` | Vielä yksi MCP-varmuuskopio jättäisi "säilytä viimeiset N" -ikkunaan vain MCP:n tekemiä palautuspisteitä, tai kohde on jo saanut 4 varmuuskopiota MCP:n kautta viimeisten 24 tunnin aikana, epäonnistuneet ja perutut mukaan lukien. Ensimmäisessä tapauksessa seuraava ajastettu varmuuskopio tekee tilaa, toisessa kohde vapautuu 24 tuntia vanhimman niistä jälkeen. Verkkokäyttöliittymästä voit käynnistää sen milloin tahansa. |
 | `rate_limited` | Avain on käyttänyt tämän tunnin 12 käynnistystään. |
 | `not_permitted` käynnistyksessä | Avain saa vain lukea. Kytke **Salli varmuuskopioiden käynnistys** päälle kortissa; uutta yhteyttä ei tarvita. Peruutuksessa se tarkoittaa, että tämä avain ei käynnistänyt ajoa. |
