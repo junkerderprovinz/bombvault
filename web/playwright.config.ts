@@ -83,6 +83,7 @@ const testMatch = [
   "zfs-phone.spec.ts",
   "instances-phone.spec.ts",
   "settings-phone.spec.ts",
+  "selector-span.spec.ts",
 ];
 
 for (const spec of testMatch) {
