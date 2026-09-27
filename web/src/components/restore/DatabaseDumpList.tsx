@@ -22,6 +22,7 @@ import { useT } from "../../lib/i18n";
 import { useProgress } from "../../lib/progress";
 import { isWarningNote, RunReasonText } from "../../lib/runReason";
 import { useConfirm } from "../../lib/useConfirm";
+import { checkRestoreOnce, restoreBlockReason } from "../../lib/useRestoreCheck";
 import { useToast } from "../../lib/toast";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
 import { Badge } from "../Badge";
@@ -31,6 +32,7 @@ import { InfoBubble } from "../InfoBubble";
 import { SelectField } from "../SelectField";
 import { IconDatabase, IconDownload, IconRestore, IconTrash } from "../navGlyphs";
 import { MissingRestorePoint, restorePointOf } from "./MissingRestorePoint";
+import { RestoreCheckPanel } from "./RestoreCheckPanel";
 import { RestoreProgress } from "./RestoreProgress";
 
 type T = ReturnType<typeof useT>["t"];
@@ -126,6 +128,7 @@ function DumpRow({
   const [deleting, setDeleting] = useState(false);
   const [shake, setShake] = useState(0);
   const [saveOpen, setSaveOpen] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [folder, setFolder] = useState(defaultFolder);
   const [savedPath, setSavedPath] = useState("");
 
@@ -202,7 +205,12 @@ function DumpRow({
     if (importStops.length > 0) {
       asked += " " + t("dbdump.importStops", importStops.length).replace("{apps}", importStops.join(", "));
     }
-    if (!(await confirm(asked, { confirmKey: "dbdump.import" }))) return;
+    setChecking(true);
+    const check = await checkRestoreOnce({ kind: "dbImport", name: containerName, snapshotId: dump.id, source });
+    setChecking(false);
+    const extra = <RestoreCheckPanel check={check} t={t} />;
+    const confirmBlocked = restoreBlockReason(check, t);
+    if (!(await confirm(asked, { confirmKey: "dbdump.import", extra, confirmBlocked }))) return;
     void fireImport();
   }
 
@@ -293,8 +301,8 @@ function DumpRow({
                 glyph={<IconDatabase />}
                 tone="accent"
                 onClick={() => void handleImport()}
-                disabled={importing}
-                busy={importing}
+                disabled={importing || checking}
+                busy={importing || checking}
                 title={importing ? t("dbdump.busyImporting") : undefined}
                 className={`shrink-0${shake ? " glim-shake" : ""}`}
               />

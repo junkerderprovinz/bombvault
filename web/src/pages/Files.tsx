@@ -5,6 +5,8 @@
 // dialog with a folder picker and one exclude pattern per line.
 
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { restoreBlockReason, useRestoreCheck } from "../lib/useRestoreCheck";
+import { RestoreCheckPanel } from "../components/restore/RestoreCheckPanel";
 import { createPortal } from "react-dom";
 import {
   listFileSets,
@@ -228,6 +230,12 @@ function FileSetFileBrowser({
   });
   const prog = useProgress()[progressKey];
   const blockedByOther = otherActive.active && !isPending;
+  const check = useRestoreCheck(
+    selected.size > 0 && folder.trim()
+      ? { kind: "fileSetFiles", name: set.id, snapshotId, source, paths: [...selected], targetPath: folder.trim() }
+      : null
+  );
+  const idle = isPending || state.phase === "success";
 
   useEffect(() => {
     setLoading(true);
@@ -287,6 +295,7 @@ function FileSetFileBrowser({
             hostMountRoot={hostMountRoot}
             onChange={pickFolder}
           />
+          {!idle && <RestoreCheckPanel check={check} t={t} />}
           <div className="flex items-center gap-2">
             <Button
               label={t("files.restoreSelected").replace("{n}", String(count))}
@@ -294,9 +303,10 @@ function FileSetFileBrowser({
               glyph={<IconRestore />}
               tone="accent"
               onClick={handleRestoreSelected}
-              disabled={isPending || blockedByOther || !folder.trim()}
+              disabled={isPending || blockedByOther || !folder.trim() || !check.ready}
               busy={isPending}
               title={isPending ? t("common.restoring") : undefined}
+              hint={idle ? undefined : restoreBlockReason(check, t)}
               className="shrink-0"
             />
             {blockedByOther && (
@@ -370,6 +380,12 @@ function FileSetRestoreControl({
   const prog = useProgress()[progressKey];
   const blockedByOther = otherActive.active && !isPending;
   const { confirm, confirmDialog } = useConfirm();
+  const check = useRestoreCheck(
+    dest === "original" || (dest === "folder" && targetPath.trim())
+      ? { kind: "fileSet", name: set.id, snapshotId, source, targetPath: dest === "folder" ? targetPath.trim() : "" }
+      : null
+  );
+  const idle = isPending || state.phase === "success";
 
   // An old result would describe another destination, so a new choice clears
   // it (a no-op while a restore runs).
@@ -409,9 +425,10 @@ function FileSetRestoreControl({
             labelKey="snapshots.restore"
             tone="accent"
             onClick={() => void handleRestore()}
-            disabled={isPending || blockedByOther || (dest === "folder" && targetPath.trim() === "")}
+            disabled={isPending || blockedByOther || (dest === "folder" && targetPath.trim() === "") || !check.ready}
             busy={isPending}
             title={isPending ? t("common.restoring") : undefined}
+            hint={idle ? undefined : restoreBlockReason(check, t)}
             className="shrink-0"
           />
         )}
@@ -433,6 +450,7 @@ function FileSetRestoreControl({
           onChange={setTargetPath}
         />
       )}
+      {dest !== "select" && !idle && <RestoreCheckPanel check={check} t={t} />}
       {dest !== "select" && (
         <RestoreProgress
           state={state}

@@ -66,6 +66,8 @@ import {
 } from "../lib/api";
 import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { useConfirm } from "../lib/useConfirm";
+import { checkRestoreOnce, restoreBlockReason } from "../lib/useRestoreCheck";
+import { RestoreCheckPanel } from "../components/restore/RestoreCheckPanel";
 import { useToast } from "../lib/toast";
 import { Toggle } from "../components/Toggle";
 
@@ -261,6 +263,7 @@ function FileSetRecoveryRow({
   const [target, setTarget] = useState("");
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  const { confirm, confirmDialog } = useConfirm();
   // Bumped per failure and used as the button key, so the shake replays.
   const [shake, setShake] = useState(0);
 
@@ -279,6 +282,12 @@ function FileSetRecoveryRow({
         return;
       }
       const latest = list.reduce((a, b) => (new Date(a.time) > new Date(b.time) ? a : b));
+      const check = await checkRestoreOnce({ kind: "fileSet", name: set.id, snapshotId: latest.id, targetPath: target.trim() });
+      const blocked = restoreBlockReason(check, t);
+      if (blocked !== undefined) {
+        await confirm(blocked, { extra: <RestoreCheckPanel check={check} t={t} />, confirmBlocked: blocked });
+        return;
+      }
       const res = await fireAndWaitRun({
         kind: "restore",
         matchRun: (r) => r.domain === "files" && r.target === set.name,
@@ -330,6 +339,7 @@ function FileSetRecoveryRow({
         hostMountRoot={hostMountRoot}
         onChange={setTarget}
       />
+      {confirmDialog}
     </div>
   );
 }
@@ -523,11 +533,29 @@ function ForeignItemRow({
     if (busy || blocked) return;
     if (needsTarget && target.trim() === "") return;
     if (subsetActive && selected.size === 0) return;
+    setBusy(true);
+    const check = await checkRestoreOnce({
+      kind: "foreign",
+      session,
+      domain,
+      name: restoreItem,
+      snapshotId: snapshot,
+      targetPath: target.trim(),
+      paths: subsetActive ? [...selected] : undefined,
+      overwrite: domain === "containers" ? overwrite : undefined,
+      wholeTree: domain === "zfs" ? zfsDataset === "" : undefined,
+    });
+    setBusy(false);
+    const refusal = restoreBlockReason(check, t);
     // An unreadable local inventory gets a "could not verify" confirm rather
     // than claiming the item exists.
-    if (existsLocally) {
-      const key = collisionKnown ? "recovery.foreignExistsConfirm" : "recovery.foreignUnverifiedConfirm";
-      if (!(await confirm(t(key).replace("{name}", item.name)))) return;
+    const collision = existsLocally
+      ? t(collisionKnown ? "recovery.foreignExistsConfirm" : "recovery.foreignUnverifiedConfirm").replace("{name}", item.name)
+      : undefined;
+    const question = collision ?? refusal;
+    if (question !== undefined) {
+      const extra = <RestoreCheckPanel check={check} t={t} />;
+      if (!(await confirm(question, { extra, confirmBlocked: refusal }))) return;
     }
     setBusy(true);
     onBusyChange(true);
@@ -1618,6 +1646,22 @@ export default function Recovery() {
         return;
       }
       setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
+      const check = await checkRestoreOnce({
+        kind: "config",
+        snapshotId: "latest",
+        source: configSource === "offsite" ? "offsite" : undefined,
+      });
+      const blocked = restoreBlockReason(check, t);
+      if (blocked !== undefined) {
+        const failed = check.state.phase === "done" ? check.state.result.checks?.find((c) => c.status === "fail") : undefined;
+        const detail = check.state.phase === "error" ? check.state.error : failed?.detail;
+        const message = failed?.id === "key" ? t("recovery.appKeyRemedy") : [blocked, detail].filter(Boolean).join(" ");
+        setConfigError(message);
+        setConfigPhase("error");
+        push(message, "fail");
+        setConfigShake((n) => n + 1);
+        return;
+      }
       const res = await restoreConfig("latest", configSource === "offsite" ? "offsite" : undefined);
       if (!res.ok) {
         const message = isKeyMismatch(res.error) ? t("recovery.appKeyRemedy") : res.error ?? t("settings.error");

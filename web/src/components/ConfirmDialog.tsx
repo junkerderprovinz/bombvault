@@ -29,6 +29,9 @@ export interface ConfirmDialogProps {
   /** A slot under the message for a control the action needs an answer to,
    *  such as a switch for "also remove X". Keep it to a switch or two. */
   extra?: ReactNode;
+  /** Why the action cannot go ahead. Set, it disables Confirm and becomes
+   *  the (i) in the button. */
+  confirmBlocked?: string;
   onConfirm: () => void;
   onCancel: () => void;
   /** The dialog card's root DOM node, for useConfirm.tsx's focus trap. */
@@ -42,6 +45,7 @@ export function ConfirmDialog({
   cancelLabel,
   confirmGlyph,
   extra,
+  confirmBlocked,
   onConfirm,
   onCancel,
   ref,
@@ -100,6 +104,8 @@ export function ConfirmDialog({
             glyph={confirmGlyph}
             tone="accent"
             onClick={onConfirm}
+            disabled={confirmBlocked !== undefined}
+            hint={confirmBlocked}
           />
         </div>
       </div>
