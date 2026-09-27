@@ -990,6 +990,60 @@ func (p RetentionPolicy) Any() bool {
 	return p.KeepLast > 0 || p.KeepDaily > 0 || p.KeepWeekly > 0 || p.KeepMonthly > 0
 }
 
+// Forgets returns the ids restic forget removes from snaps under p when they
+// form one group, by the rules of restic's ApplyPolicy. ok is false when that
+// cannot be known: a time that does not parse, or two snapshots of the same
+// instant, which restic orders by its own listing.
+func (p RetentionPolicy) Forgets(snaps []Snapshot) (removed map[string]bool, ok bool) {
+	type dated struct {
+		Snapshot
+		at time.Time
+	}
+	list := make([]dated, 0, len(snaps))
+	for _, sn := range snaps {
+		t, err := time.Parse(time.RFC3339Nano, sn.Time)
+		if err != nil {
+			return nil, false
+		}
+		list = append(list, dated{sn, t})
+	}
+	slices.SortFunc(list, func(a, b dated) int { return b.at.Compare(a.at) })
+	for i := 1; i < len(list); i++ {
+		if list[i].at.Equal(list[i-1].at) {
+			return nil, false
+		}
+	}
+	buckets := []struct {
+		count  int
+		bucket func(t time.Time, nr int) int
+		last   int
+	}{
+		{p.KeepLast, func(_ time.Time, nr int) int { return nr }, -1},
+		{p.KeepDaily, func(t time.Time, _ int) int { return t.Year()*10000 + int(t.Month())*100 + t.Day() }, -1},
+		{p.KeepWeekly, func(t time.Time, _ int) int { y, w := t.ISOWeek(); return y*100 + w }, -1},
+		{p.KeepMonthly, func(t time.Time, _ int) int { return t.Year()*100 + int(t.Month()) }, -1},
+	}
+	removed = map[string]bool{}
+	for nr, sn := range list {
+		keep := !p.Direct && slices.Contains(sn.Tags, DirectTag)
+		for i := range buckets {
+			b := &buckets[i]
+			if b.count <= 0 {
+				continue
+			}
+			// A bucket with counts left also keeps the oldest snapshot.
+			if v := b.bucket(sn.at, nr); v != b.last || nr == len(list)-1 {
+				keep, b.last = true, v
+				b.count--
+			}
+		}
+		if !keep {
+			removed[sn.ID] = true
+		}
+	}
+	return removed, true
+}
+
 // ForgetGroup is one entry of `restic forget --json`: the snapshots a keep
 // policy would KEEP and those it would REMOVE, for one selection group. With
 // the tag-scoped, ungrouped selection BombVault uses (see ForgetPolicyArgs)

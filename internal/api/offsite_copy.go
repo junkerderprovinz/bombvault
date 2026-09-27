@@ -210,8 +210,13 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 		if !c.whole {
 			held = append(held, c.send...)
 		}
-		total += len(c.send)
 		plan = append(plan, c)
+	}
+	if dstErr == nil {
+		s.leaveOutWhatTheTargetForgets(plan, dst, target)
+	}
+	for _, c := range plan {
+		total += len(c.send)
 	}
 	if dstErr != nil {
 		total = 0 // unknown; the progress shows no "of N"
@@ -280,6 +285,83 @@ func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mod
 		c.send = snaps // the target could not be read: every id, and restic skips what it holds
 	}
 	return c, nil
+}
+
+// leaveOutWhatTheTargetForgets drops from each send what the target's
+// keep-policy removes right after the copy. A snapshot the target aged out is
+// otherwise pending again at every pass, uploaded and forgotten once more. A
+// whole source that loses a snapshot this way hands restic its ids instead.
+func (s *Service) leaveOutWhatTheTargetForgets(plan []sourceCopy, dst []restic.Snapshot, target store.OffsiteTarget) {
+	p := targetOffsiteRetentionPolicy(target)
+	if !p.Any() || target.Immutable {
+		return
+	}
+	after := slices.Clone(dst)
+	seen := map[string]bool{}
+	for _, sn := range dst {
+		seen[restic.Identity(sn)] = true
+	}
+	for _, c := range plan {
+		for _, sn := range c.send {
+			if !seen[restic.Identity(sn)] {
+				seen[restic.Identity(sn)] = true
+				after = append(after, sn)
+			}
+		}
+	}
+	forgotten := s.forgottenByPolicy(after, p)
+	if len(forgotten) == 0 {
+		return
+	}
+	for i := range plan {
+		c := &plan[i]
+		kept := slices.DeleteFunc(slices.Clone(c.send), func(sn restic.Snapshot) bool { return forgotten[sn.ID] })
+		if len(kept) < len(c.send) {
+			c.send, c.whole = kept, false
+		}
+	}
+}
+
+// forgottenByPolicy predicts the per-item forget ageTarget runs: the ids p
+// removes from snaps, grouped the way applyRetentionToTags groups them. A held
+// group, and one sharing a snapshot with another group, whose outcome depends
+// on the order the forgets run in, removes nothing here.
+func (s *Service) forgottenByPolicy(snaps []restic.Snapshot, p restic.RetentionPolicy) map[string]bool {
+	held, err := s.anomalies.HeldIdentityTags()
+	if err != nil {
+		return nil
+	}
+	groups, _ := s.foldAliasedIdentityTags(identityTags(snaps), snaps)
+	groupOf := map[string]int{}
+	for i, g := range groups {
+		for _, tag := range g {
+			groupOf[tag] = i
+		}
+	}
+	members := make([][]restic.Snapshot, len(groups))
+	shared := make([]bool, len(groups))
+	for _, sn := range snaps {
+		in := map[int]bool{}
+		for _, tag := range sn.Tags {
+			if i, ok := groupOf[tag]; ok {
+				in[i] = true
+			}
+		}
+		for i := range in {
+			members[i] = append(members[i], sn)
+			shared[i] = shared[i] || len(in) > 1
+		}
+	}
+	out := map[string]bool{}
+	for i, g := range groups {
+		if shared[i] || held.holdsAny(g) {
+			continue
+		}
+		if removed, ok := p.Forgets(members[i]); ok {
+			maps.Copy(out, removed)
+		}
+	}
+	return out
 }
 
 // copyInChunks hands restic the snapshots in blocks of copyChunkSize and returns
