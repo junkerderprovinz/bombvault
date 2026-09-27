@@ -142,7 +142,7 @@ function BreakdownRows({ data, onOpen, t }: { data: Breakdown; onOpen: (name: st
     <ul className="flex flex-col gap-1.5">
       {data.children.map((c) => (
         <li key={c.name} className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-2">
             {c.open ? (
               <Button
                 label={c.name}
@@ -151,16 +151,16 @@ function BreakdownRows({ data, onOpen, t }: { data: Breakdown; onOpen: (name: st
                 tone="subtle"
                 onClick={() => onOpen(c.name)}
                 keepLabel
-                className="min-w-0 !justify-start"
+                className="min-w-[8rem] !justify-start"
               />
             ) : (
-              <span dir="ltr" className="min-w-0 flex-1 truncate font-mono text-caption text-carbon-text text-start">
+              <span dir="ltr" className="min-w-[8rem] flex-1 truncate font-mono text-caption text-carbon-text text-start">
                 {c.name}
               </span>
             )}
             <span className="ms-auto shrink-0 tabular-nums text-caption text-carbon-text">{humanBytes(c.size)}</span>
             {c.added > 0 && (
-              <span className="shrink-0 tabular-nums text-caption text-statusWarn">
+              <span className="shrink-0 tabular-nums text-caption text-accentText">
                 {t("breakdown.new").replace("{size}", humanBytes(c.added))}
               </span>
             )}
@@ -174,7 +174,7 @@ function BreakdownRows({ data, onOpen, t }: { data: Breakdown; onOpen: (name: st
             <span>{t("breakdown.more", data.other.count)}</span>
             <span className="ms-auto tabular-nums">{humanBytes(data.other.size)}</span>
             {data.other.added > 0 && (
-              <span className="tabular-nums text-statusWarn">
+              <span className="tabular-nums text-accentText">
                 {t("breakdown.new").replace("{size}", humanBytes(data.other.added))}
               </span>
             )}
@@ -187,15 +187,15 @@ function BreakdownRows({ data, onOpen, t }: { data: Breakdown; onOpen: (name: st
 }
 
 // SizeBar draws a row's share of the largest row, with the part the latest
-// backup added at its start. It repeats the figures beside it, so screen
-// readers skip it.
+// backup changed in the accent at its start. It repeats the figures beside it,
+// so screen readers skip it.
 function SizeBar({ size, added, largest }: { size: number; added: number; largest: number }) {
   const width = (100 * size) / largest;
   const addedWidth = size > 0 ? (100 * Math.min(added, size)) / size : 0;
   return (
     <div aria-hidden className="h-1.5 rounded-pill bg-carbon-surface2 overflow-hidden">
-      <div className="h-full rounded-pill bg-accent flex overflow-hidden" style={{ width: `${width}%` }}>
-        <div className="h-full bg-statusWarnSolid" style={{ width: `${addedWidth}%` }} />
+      <div className="h-full rounded-pill bg-carbon-textMuted flex overflow-hidden" style={{ width: `${width}%` }}>
+        <div className="h-full bg-accent" style={{ width: `${addedWidth}%` }} />
       </div>
     </div>
   );
