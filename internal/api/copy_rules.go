@@ -292,8 +292,9 @@ func (s *Service) checkCopies(settings store.Settings, p placementRead, named ma
 	return nil
 }
 
-// droppedTargets lists the targets in before that after leaves out, with the
-// copies they keep. Copies stays nil for a target never listed for the domain.
+// droppedTargets lists the targets in before that after leaves out and that
+// keep copies of the item. Copies stays nil for a target never listed for the
+// domain, which may hold some; one whose listing counted none loses nothing.
 func (s *Service) droppedTargets(domain, identity string, before, after []store.OffsiteTarget) ([]droppedTarget, error) {
 	out := []droppedTarget{}
 	observed, err := s.store.ItemCopiesFor(domain, identity)
@@ -315,6 +316,9 @@ func (s *Service) droppedTargets(domain, identity string, before, after []store.
 				if c.TargetID == t.ID {
 					n = c.SnapshotCount
 				}
+			}
+			if n == 0 {
+				continue
 			}
 			d.Copies = &n
 		}
@@ -377,8 +381,12 @@ func (l sourceListing) uploadEstimate(identity string, observed []store.ItemCopi
 
 // previewPlacement answers what a change would do without writing it: the
 // targets that would get this item's history, at about how many snapshots, and
-// the targets that would stop getting it, with the copies they keep.
+// the targets that would stop getting it, with the copies they keep. A change
+// the PATCH refuses is refused here the same way.
 func (s *Service) previewPlacement(ctx context.Context, item store.ItemRef, change placementChange) ([]uploadEstimate, []droppedTarget, error) {
+	if err := s.checkPlacementChange(ctx, item, change); err != nil {
+		return nil, nil, err
+	}
 	home, copies, err := placementWrites(change)
 	if err != nil {
 		return nil, nil, err
@@ -405,11 +413,6 @@ func (s *Service) previewPlacement(ctx context.Context, item store.ItemRef, chan
 	}
 	beforeRepo, _ := p.effectiveHome(read)
 	afterRepo, _ := p.effectiveHome(next)
-	if copies != nil {
-		if err := s.checkCopies(settings, p, named, afterRepo, *copies); err != nil {
-			return nil, nil, err
-		}
-	}
 	identity, err := s.itemIdentity(item)
 	if err != nil {
 		return nil, nil, err

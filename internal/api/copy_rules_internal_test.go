@@ -381,3 +381,48 @@ func TestMalformedItemPathsAre400(t *testing.T) {
 		}
 	}
 }
+
+func TestThePreviewRefusesWhatThePatchRefuses(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("files", "S3", "s3:minio/bucket/files")
+	d := f.fileSet("D", "")
+	f.backupRun(d.ID, 1_700_000_000)
+	body := map[string]any{"home": map[string]any{"repo": "x"}}
+
+	preview := f.do(http.MethodPost, "/api/items/files/"+d.ID+"/placement/preview", body)
+	patch := f.do(http.MethodPatch, "/api/files/sets/"+d.ID, body)
+	if patch["ok"] != false || patch["code"] == nil {
+		t.Fatalf("PATCH = %v, want a coded refusal", patch)
+	}
+	if preview["ok"] != false || preview["code"] != patch["code"] {
+		t.Fatalf("preview = %v, want the PATCH's refusal %v", preview, patch["code"])
+	}
+}
+
+func TestThePreviewNamesOnlyTargetsThatLoseCopies(t *testing.T) {
+	f := newPlacementFixture(t)
+	s3 := f.target("files", "S3", "s3:minio/bucket/files")
+	rest := f.target("files", "rest", "rest:http://rest.example:8000/files")
+	sftp := f.target("files", "sftp", "sftp:u@box:/files")
+	e := f.fileSet("E", "")
+	f.fileSet("A", "")
+	f.listing("files", s3.ID, 500, copiesRow("fileset:A", 2, 400))
+	f.listing("files", rest.ID, 500, copiesRow("fileset:E", 1, 400))
+
+	res := f.do(http.MethodPost, "/api/items/files/"+e.ID+"/placement/preview", map[string]any{"copies": map[string]any{"skip": []string{store.SkipAll}}})
+	dropped, _ := res["dropped"].([]any)
+	if res["ok"] != true || len(dropped) != 2 {
+		t.Fatalf("preview = %v, want rest, which holds a copy, and sftp, never listed", res)
+	}
+	byID := map[string]any{}
+	for _, d := range dropped {
+		row := d.(map[string]any)
+		byID[row["targetId"].(string)] = row["copies"]
+	}
+	if byID[rest.ID] != float64(1) || byID[sftp.ID] != nil {
+		t.Fatalf("dropped = %v, want rest keeping 1 and sftp unknown", dropped)
+	}
+	if _, listed := byID[s3.ID]; listed {
+		t.Fatalf("dropped = %v names S3, which holds nothing of E", dropped)
+	}
+}
