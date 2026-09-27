@@ -201,6 +201,13 @@ func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.Prob
 	case err != nil:
 		return failedProbe(res, err)
 	}
+	// A new WebDAV place is reached through a remote named after the id it
+	// gets when it is added, so the address probed here is not the one it will
+	// have, and the answer names none.
+	shown := pr.base
+	if fresh && pr.provider.Kind == places.KindWebDAV {
+		shown = ""
+	}
 	mode := s.probeMode(settings, pr)
 	if pr.provider.Kind == places.KindLocal {
 		if err := s.localPlaceReady(pr); err != nil {
@@ -211,7 +218,7 @@ func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.Prob
 	// place whose address holds one already is offered as that repository.
 	if fresh {
 		if at := s.probeFolder(ctx, pr.base, mode); at.state == places.FolderRepository {
-			res.OK, res.Base = true, pr.base
+			res.OK, res.Base = true, shown
 			res.RepoIDs = map[string]string{"": at.repoID}
 			res.Facts = append(res.Facts, places.ProbeFact{Key: places.FactBaseIsRepository})
 			return res, nil
@@ -221,7 +228,7 @@ func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.Prob
 		}
 	}
 	found := s.probeFolders(ctx, pr.base, pr.folders, mode)
-	found.Fields, found.Buckets, found.Facts = res.Fields, res.Buckets, res.Facts
+	found.Base, found.Fields, found.Buckets, found.Facts = shown, res.Fields, res.Buckets, res.Facts
 	return found, nil
 }
 

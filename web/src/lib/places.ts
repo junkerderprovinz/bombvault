@@ -135,7 +135,8 @@ export interface ProbeRequest {
 }
 
 export interface ProbeResult {
-  /** The address the server built; absent while a bucket is still to be chosen. */
+  /** The address the server built; absent while a bucket is still to be
+   *  chosen, and for a new WebDAV place, whose remote is named when it is added. */
   base?: string;
   /** The form as the probe completed it, without secrets. */
   fields?: Record<string, string>;

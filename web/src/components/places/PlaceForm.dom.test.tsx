@@ -86,6 +86,12 @@ const SFTP: CatalogProvider = {
   defaultPort: 22,
   fields: [{ key: "host" }, { key: "port", optional: true }, { key: "user" }, { key: "path", optional: true }],
 };
+const NEXTCLOUD: CatalogProvider = {
+  id: "nextcloud",
+  group: "self",
+  kind: "webdav",
+  fields: [{ key: "url" }, { key: "user" }, { key: "password", secret: true }, { key: "path", optional: true }],
+};
 const AZURE: CatalogProvider = {
   id: "azure",
   group: "cloud",
@@ -390,6 +396,25 @@ describe("PlaceForm add", () => {
       fireEvent.click(button("places.form.add"));
     });
     expect(creates[0]!.folders).toEqual({ containers: "", vms: "", flash: "", config: "", files: "" });
+  });
+
+  it("adds a Nextcloud whose probe names no address yet", async () => {
+    probeAnswer = { ok: true, folders: { containers: "empty" } };
+    await form(NEXTCLOUD);
+    await testConnection();
+    fireEvent.click(screen.getByRole("tab", { name: en["places.form.away"] }));
+    await act(async () => {
+      fireEvent.click(button("places.form.add"));
+    });
+    expect(creates[0]).toMatchObject({ provider: "nextcloud", name: "Nextcloud" });
+  });
+
+  it("adds a Nextcloud folder that is a repository, with no address named", async () => {
+    probeAnswer = { ok: true, repoIds: { "": "r1" }, facts: [{ key: "places.probe.baseIsRepository" }] };
+    await form(NEXTCLOUD);
+    await testConnection();
+    fireEvent.click(screen.getByRole("tab", { name: en["places.form.away"] }));
+    expect(button("places.form.add")).toHaveProperty("disabled", false);
   });
 
   it("says why an add was refused and shakes the button", async () => {

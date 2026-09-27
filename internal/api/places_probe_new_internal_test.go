@@ -124,8 +124,10 @@ func TestANextcloudIsProbedThroughARemoteFromTheEnvironment(t *testing.T) {
 	eng := newEnvEngine(f)
 	res := probeOf(t, f, "nextcloud", map[string]string{"url": "https://cloud.example.com", "user": "anna", "password": "app-pass", "path": "bombvault"})
 	base := "rclone:" + places.RemoteName("probe") + ":bombvault"
-	if res.Base != base {
-		t.Fatalf("base = %q, want %q", res.Base, base)
+	// The remote a new place is reached through is named after the id it gets
+	// when it is added, so the probe's own address is not shown.
+	if res.Base != "" || res.Folders["containers"] == "" {
+		t.Fatalf("probe = %+v, want the folders and no address", res)
 	}
 	want := []string{
 		"RCLONE_CONFIG_BVPPROBE_TYPE=webdav",
@@ -136,6 +138,16 @@ func TestANextcloudIsProbedThroughARemoteFromTheEnvironment(t *testing.T) {
 	}
 	if env := eng.env(base + "/container"); !slices.Equal(env, want) {
 		t.Fatalf("env = %v\nwant %v", env, want)
+	}
+}
+
+func TestANextcloudFolderThatIsARepositoryIsOfferedWithoutAnAddress(t *testing.T) {
+	f := newPlacementFixture(t)
+	eng := newEnvEngine(f)
+	eng.ids["rclone:"+places.RemoteName("probe")+":bombvault"] = "id-dav"
+	res := probeOf(t, f, "nextcloud", map[string]string{"url": "https://cloud.example.com", "user": "anna", "password": "app-pass", "path": "bombvault"})
+	if !res.OK || res.Base != "" || res.RepoIDs[""] != "id-dav" {
+		t.Fatalf("probe = %+v, want the repository and no address", res)
 	}
 }
 

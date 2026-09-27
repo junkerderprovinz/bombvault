@@ -195,7 +195,10 @@ export function PlaceForm({
 
   const typed = JSON.stringify(fields);
   const fresh = probe !== null && probedWith === typed ? probe : null;
-  const ready = fresh?.ok === true && !!fresh.base;
+  // An answer that lists buckets or containers alone waits for one to be
+  // chosen. A new WebDAV place has folders or a repository and no address,
+  // since its remote is named when the place is added.
+  const ready = fresh?.ok === true && (!!fresh.base || !!fresh.folders || !!fresh.repoIds);
   const asks = provider.offPremises === undefined;
   const waitsFor: TranslationKey | null = !ready
     ? "places.form.testFirst"
