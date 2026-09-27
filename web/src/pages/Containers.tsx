@@ -1793,6 +1793,7 @@ function MobileContainerDetail({
       badges={
         <>
           <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
+          <ContainerChangeNotice changes={container.changedSinceBackup} t={t} />
           {installed ? (
             <Badge tone={stateTone(container.state)}>{stateLabel(t, container.state)}</Badge>
           ) : (
