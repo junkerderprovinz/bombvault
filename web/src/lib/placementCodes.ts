@@ -1,5 +1,6 @@
 import type { OkEnvelope, RefusalTarget, SaveWarning, TargetUse } from "./api";
 import type { TranslationKey, useT } from "./i18n";
+import { tLtr } from "./ltrFragments";
 import type { ToastSeverity } from "./toastEngine";
 
 type T = ReturnType<typeof useT>["t"];
@@ -70,7 +71,7 @@ export function placementErrorText(t: T, lang: string, res: PlacementRefusal, fa
     return t("placementCode.directRepo").replace("{target}", res.target.name);
   }
   const key = res.code ? CODE_KEYS[res.code] : undefined;
-  if (key) return t(key);
+  if (key) return tLtr(t, key);
   return res.error ?? t(fallback);
 }
 
