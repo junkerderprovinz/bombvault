@@ -2,13 +2,16 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"maps"
 	"net/http"
 	"reflect"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -941,5 +944,87 @@ func TestAnImportThatCannotRebuildThePlacesLeavesTheInstanceWithoutThem(t *testi
 	}
 	if len(targets) != 1 || targets[0].PlaceID == "" {
 		t.Errorf("targets = %+v, want the imported B2 target on a place after a later move", targets)
+	}
+}
+
+// olderFileFor exports src without its places, the file an instance on places
+// rebuilds them from, as the apply reads it.
+func olderFileFor(t *testing.T, src *placementFixture) settingsExport {
+	t.Helper()
+	raw := src.do(http.MethodGet, "/api/settings/export", nil)
+	delete(raw, "places")
+	delete(raw, "storageDomainPlaces")
+	b, err := json.Marshal(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var exp settingsExport
+	if err := json.Unmarshal(b, &exp); err != nil {
+		t.Fatal(err)
+	}
+	return exp
+}
+
+func TestAnImportWaitsForAPlaceEditInProgress(t *testing.T) {
+	src := newPlacementFixture(t)
+	src.target("containers", "B2", b2Base+"/container")
+	exp := olderFileFor(t, src)
+
+	dst := newPlacementFixture(t)
+	if err := dst.svc.MigrateToPlaces(); err != nil {
+		t.Fatal(err)
+	}
+	before, err := dst.st.ListPlaces()
+	if err != nil || len(before) == 0 {
+		t.Fatalf("places = %+v, %v, want the migrated ones", before, err)
+	}
+	dst.svc.placeEditMu.Lock()
+	done := make(chan error, 1)
+	go func() { done <- dst.h.applyImport(context.Background(), exp) }()
+	select {
+	case err := <-done:
+		t.Fatalf("an import went ahead during a place edit: %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+	if now, err := dst.st.ListPlaces(); err != nil || len(now) != len(before) {
+		t.Errorf("places during the edit = %+v, %v, want them untouched", now, err)
+	}
+	dst.svc.placeEditMu.Unlock()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the import never finished")
+	}
+}
+
+func TestTwoImportsAtOnceBothRebuildThePlaces(t *testing.T) {
+	src := newPlacementFixture(t)
+	src.target("containers", "B2", b2Base+"/container")
+	exp := olderFileFor(t, src)
+
+	dst := newPlacementFixture(t)
+	if err := dst.svc.MigrateToPlaces(); err != nil {
+		t.Fatal(err)
+	}
+	var wg sync.WaitGroup
+	errs := make([]error, 2)
+	for i := range errs {
+		wg.Go(func() { errs[i] = dst.h.applyImport(context.Background(), exp) })
+	}
+	wg.Wait()
+	for i, err := range errs {
+		if err != nil {
+			t.Errorf("import %d: %v", i+1, err)
+		}
+	}
+	targets, err := dst.st.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(targets) != 1 || targets[0].PlaceID == "" {
+		t.Errorf("targets = %+v, want the imported B2 target on a place", targets)
 	}
 }

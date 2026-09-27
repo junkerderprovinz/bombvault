@@ -364,7 +364,8 @@ type Service struct {
 	// notification fires. confirmDefault, moveFileSetRule and an item PATCH's
 	// writeItemPlacement each hold it for one read-then-write of their own, so a
 	// PATCH's home and copies land as a single atomic step and another PATCH to
-	// the same item never lands in between.
+	// the same item never lands in between. A caller that needs placeEditMu as
+	// well takes that one first.
 	placementMu sync.Mutex
 
 	// listingMu guards listing, the (domain, target) pairs being listed in the
@@ -381,7 +382,8 @@ type Service struct {
 	// placeEditMu holds an edit or a removal of a place from its read to its
 	// write. An address change probes in between, and without it a setting
 	// saved meanwhile would be written back to its old value, or a place
-	// removed meanwhile written back whole. It is taken before credSetsMu.
+	// removed meanwhile written back whole. It is taken before placementMu and
+	// before credSetsMu.
 	placeEditMu sync.Mutex
 
 	// placeProber is the place probe seam: nil uses ProbePlace; tests inject a

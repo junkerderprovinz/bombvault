@@ -761,6 +761,10 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	if err != nil {
 		return fmt.Errorf("the settings were not imported: %w", err)
 	}
+	// From the read of the places to their rebuild, so no place edit writes a
+	// place back over the import and a second import waits for this rebuild.
+	h.svc.placeEditMu.Lock()
+	defer h.svc.placeEditMu.Unlock()
 	// Read before the drop: a place whose base arrives redacted keeps the base
 	// it has here under the same id. A file without places rebuilds them only
 	// on an instance that was on places, since moving an instance onto places
