@@ -428,7 +428,9 @@ func run() error {
 	// A scheduled container whose app is busy waits outside its run, and is
 	// backed up on its own once the app is idle or the wait is over.
 	scheduler.SetIdleHold(svc.HoldForIdle)
-	svc.SetHeldContainerRun(scheduler.RunContainerNow)
+	svc.SetHeldContainerRun(scheduler.RunContainersNow)
+	// Waits a restart cut short go on with their own deadline.
+	svc.ResumeIdleWaits()
 	// #95: batched off-site replication for scheduled multi-item domains. After the
 	// whole backup loop the domain is replicated ONCE (the per-item inline copy is
 	// suppressed via WithBulkReplicateSuppressed above), so a high-latency off-site

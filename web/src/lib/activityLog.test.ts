@@ -923,19 +923,26 @@ describe("buildLogLines off-site copy slowed for a stream", () => {
 describe("buildLogLines backups waiting for an idle app", () => {
   it("shows a waiting backup with its reason and deadline, filed under its domain", () => {
     const lines = buildLogLines([], {}, [], resolveName, 5_000_000, 5_000_000, [
-      { domain: "containers", name: "plex", reason: "streaming", since: 4_000, deadline: 7_200 },
+      { domain: "containers", name: "plex", busy: "plex", reason: "streaming", since: 4_000, deadline: 7_200 },
     ]);
     const wait = lines.find((l) => l.id === "wait:containers:plex");
-    expect(wait?.text).toContain("activityLog.lineWaitingIdle name=plex reason=idle.reasonStreaming time=");
+    expect(wait?.text).toMatch(/^activityLog\.lineWaitingIdle name=plex .*reason=idle\.reasonStreaming time=/);
     expect(wait?.domain).toBe("containers");
     expect(wait?.kind).toBe("backup");
     expect(wait?.atMs).toBe(4_000_000);
   });
 
+  it("names the stack and the busy member for a container that waits with its stack", () => {
+    const lines = buildLogLines([], {}, [], resolveName, 5_000_000, 5_000_000, [
+      { domain: "containers", name: "immich-db", stack: "immich", busy: "immich-server", reason: "cpu", since: 4_000, deadline: 7_200 },
+    ]);
+    expect(lines[0].text).toContain("activityLog.lineWaitingIdleStack name=immich-db stack=immich busy=immich-server reason=idle.reasonCpu");
+  });
+
   it("keeps the next-run line next to a waiting backup", () => {
     const next: ScheduleNext[] = [{ job: "backup", domain: "vms", next: new Date(6_000_000).toISOString() }];
     const lines = buildLogLines([], {}, next, resolveName, 5_000_000, 5_000_000, [
-      { domain: "containers", name: "db", reason: "cpu", since: 4_000, deadline: 7_200 },
+      { domain: "containers", name: "db", busy: "db", reason: "cpu", since: 4_000, deadline: 7_200 },
     ]);
     expect(lines.map((l) => l.id)).toEqual(["wait:containers:db", "idle-next"]);
   });

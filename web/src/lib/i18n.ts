@@ -663,8 +663,10 @@ export const en = {
   "streaming.holdHint": "How long the traffic has to stay below the threshold before the normal limit comes back.",
   "idle.toggle": "Wait until the app is idle",
   "idle.toggleHint": "A scheduled backup of this container waits while the app is busy and starts once it is idle, or when the wait is over. A media server is idle when it isn't streaming, any other app when CPU and traffic stay low (Settings, Schedules). Manual backups never wait.",
+  "idle.stackHint": "The members of a compose stack due in the same run wait together, so they back up for one restore point with their project folder.",
   "idle.maxHours": "Wait at most (hours)",
   "idle.waiting": "Waits for idle: {reason}. Starts by {time} at the latest.",
+  "idle.waitingStack": "Waits with stack {stack}: {busy}, {reason}. Starts by {time} at the latest.",
   "idle.reasonStreaming": "a stream is running",
   "idle.reasonCpu": "CPU is busy",
   "idle.reasonNetwork": "network is busy",
@@ -2334,6 +2336,7 @@ export const en = {
   "activityLog.lineBackingUpBatch": "Backing up all {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-site upload: {domain} …",
   "activityLog.lineWaitingIdle": "Backup of {name} waits for idle: {reason}. Starts by {time} at the latest.",
+  "activityLog.lineWaitingIdleStack": "Backup of {name} waits with stack {stack}: {busy}, {reason}. Starts by {time} at the latest.",
   // Issue #159: the {duration}-carrying sibling of lineOffsiteRunning, used
   // once the live progress event's startedAt is known (see activityLog.ts's
   // buildLiveLines) but no live per-snapshot percentage is available yet.
@@ -3432,8 +3435,10 @@ export const de: Translations = {
   "streaming.holdHint": "So lange muss der Verkehr unter der Schwelle bleiben, bevor die normale Grenze zurückkommt.",
   "idle.toggle": "Warten, bis die App ruht",
   "idle.toggleHint": "Ein geplantes Backup dieses Containers wartet, solange die App beschäftigt ist, und startet, sobald sie ruht, oder wenn die Wartezeit um ist. Ein Mediaserver ruht, wenn er nicht streamt, jede andere App, wenn CPU und Verkehr niedrig bleiben (Einstellungen, Zeitpläne). Manuelle Backups warten nie.",
+  "idle.stackHint": "Die Mitglieder eines Compose-Stacks, die im selben Lauf dran sind, warten gemeinsam, damit sie mit ihrem Projektordner einen gemeinsamen Wiederherstellungspunkt bekommen.",
   "idle.maxHours": "Höchstens warten (Stunden)",
   "idle.waiting": "Wartet auf Ruhe: {reason}. Startet spätestens um {time}.",
+  "idle.waitingStack": "Wartet mit Stack {stack}: {busy}, {reason}. Startet spätestens um {time}.",
   "idle.reasonStreaming": "ein Stream läuft",
   "idle.reasonCpu": "CPU ist beschäftigt",
   "idle.reasonNetwork": "Netz ist beschäftigt",
@@ -4909,6 +4914,7 @@ export const de: Translations = {
   "activityLog.lineBackingUpBatch": "Sichere alle {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-Site-Upload: {domain} …",
   "activityLog.lineWaitingIdle": "Backup von {name} wartet auf Ruhe: {reason}. Startet spätestens um {time}.",
+  "activityLog.lineWaitingIdleStack": "Backup von {name} wartet mit Stack {stack}: {busy}, {reason}. Startet spätestens um {time}.",
   "activityLog.lineOffsiteRunningWithDuration": "Off-Site-Upload: {domain} … ({duration})",
   "activityLog.lineOffsiteRunningSnapshotPercent": "Off-Site-Upload: {domain} … {percent} % gesamt (Snapshot {index} von {total})",
   "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-Site-Upload: {domain} … {percent} % gesamt (Snapshot {index} von {total}) · {duration}",

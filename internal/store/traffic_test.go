@@ -109,3 +109,36 @@ func TestAContainerWithoutBackupsCanWaitForIdle(t *testing.T) {
 		t.Fatalf("hours = %v", got)
 	}
 }
+
+func TestHeldBackupGroupsSurviveAReopenAndCanBeCleared(t *testing.T) {
+	r := newRepo(t)
+	g := store.IdleWaitGroup{Key: "stack:immich", Stack: "immich", Members: []string{"immich-server", "immich-db"}, Trigger: "domain", Since: 100, Deadline: 7300}
+	if err := r.SaveIdleWaitGroup(g); err != nil {
+		t.Fatal(err)
+	}
+	g.Members = append(g.Members, "immich-ml")
+	if err := r.SaveIdleWaitGroup(g); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SaveIdleWaitGroup(store.IdleWaitGroup{Key: "plex", Members: []string{"plex"}, Trigger: "item", Since: 50, Deadline: 3650}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.ListIdleWaitGroups()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []store.IdleWaitGroup{
+		{Key: "plex", Members: []string{"plex"}, Trigger: "item", Since: 50, Deadline: 3650},
+		g,
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %+v\nwant %+v", got, want)
+	}
+	if err := r.DeleteIdleWaitGroup("plex"); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = r.ListIdleWaitGroups()
+	if len(got) != 1 || got[0].Key != "stack:immich" {
+		t.Fatalf("after delete: %+v", got)
+	}
+}

@@ -607,8 +607,10 @@ function buildWaitLines(waits: IdleWait[], resolveName: ResolveName): LogLine[] 
     id: `wait:${w.domain}:${w.name}`,
     atMs: w.since * 1000,
     status: "info",
-    text: resolveName("activityLog.lineWaitingIdle", {
+    text: resolveName(w.stack ? "activityLog.lineWaitingIdleStack" : "activityLog.lineWaitingIdle", {
       name: w.name,
+      stack: w.stack ?? "",
+      busy: w.busy,
       reason: resolveName(IDLE_REASON_KEYS[w.reason] ?? IDLE_REASON_KEYS.measuring),
       time: formatClockTime(w.deadline, false),
     }),

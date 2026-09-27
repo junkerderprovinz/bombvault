@@ -56,14 +56,22 @@ it("switching the wait on starts at four hours and off stores zero", async () =>
 });
 
 it("names the reason a scheduled backup is waiting", async () => {
-  waiting = [{ domain: "containers", name: "plex", reason: "streaming", since: 1, deadline: 7200 }];
+  waiting = [{ domain: "containers", name: "plex", busy: "plex", reason: "streaming", since: 1, deadline: 7200 }];
   await show(<IdleWaitLine name="plex" />);
   const line = await screen.findByText(new RegExp(en["idle.reasonStreaming"]));
   expect(line.textContent).toMatch(/^[^{}]+$/);
 });
 
+it("says a stack member waits for another member of its stack", async () => {
+  waiting = [{ domain: "containers", name: "immich-db", stack: "immich", busy: "immich-server", reason: "cpu", since: 1, deadline: 7200 }];
+  await show(<IdleWaitLine name="immich-db" />);
+  const line = await screen.findByText(/immich-server/);
+  expect(line.textContent).toContain("immich");
+  expect(line.textContent).toMatch(/^[^{}]+$/);
+});
+
 it("stays empty for a card that is not waiting", async () => {
-  waiting = [{ domain: "containers", name: "other", reason: "cpu", since: 1, deadline: 7200 }];
+  waiting = [{ domain: "containers", name: "other", busy: "other", reason: "cpu", since: 1, deadline: 7200 }];
   await show(<IdleWaitLine name="plex" />);
   expect(screen.queryByText(new RegExp(en["idle.reasonCpu"]))).toBeNull();
 });

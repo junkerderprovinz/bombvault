@@ -419,7 +419,7 @@ type Service struct {
 	// back; see idle_wait.go.
 	waitsOnce sync.Once
 	idleWaits *idleWaits
-	heldRun   func(name string)
+	heldRun   func(names []string)
 
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on

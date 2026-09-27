@@ -2498,6 +2498,10 @@ export type IdleReason = "streaming" | "cpu" | "network" | "measuring";
 export interface IdleWait {
   domain: string;
   name: string;
+  /** The compose project whose members wait together; absent for a container
+   *  that waits alone. busy names the member whose app holds the wait. */
+  stack?: string;
+  busy: string;
   reason: IdleReason;
   since: number;
   deadline: number;

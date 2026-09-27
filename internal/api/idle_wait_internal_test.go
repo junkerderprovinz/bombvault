@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -41,6 +42,12 @@ func loadUntil(s *Service, d *trafficDocker, name string, polls int, cpu, tx uin
 	}
 }
 
+// hold offers one container to HoldForIdle as a domain run would and reports
+// whether it was taken.
+func hold(s *Service, tg store.Target, run func()) bool {
+	return len(s.HoldForIdle([]store.Target{tg}, "domain", func([]string) { run() })) > 0
+}
+
 func fastIdleCheck(t *testing.T) {
 	t.Helper()
 	old := idleCheck
@@ -63,7 +70,7 @@ func TestAContainerWithoutAWaitIsNeverHeld(t *testing.T) {
 	s, st, d := newTrafficService(t)
 	tg := idleTarget(t, st, "db", 0)
 	load(s, d, "db", 20, 9e9, 0)
-	if s.HoldForIdle(tg, func() {}) {
+	if hold(s, tg, func() {}) {
 		t.Fatal("a container without a wait was held")
 	}
 }
@@ -86,7 +93,7 @@ func TestABusyAppIsHeldAndItsWaitIsListed(t *testing.T) {
 	tg := idleTarget(t, st, "db", 2)
 	load(s, d, "db", 20, 9e9, 0)
 	before := time.Now().Unix()
-	if !s.HoldForIdle(tg, func() {}) {
+	if !hold(s, tg, func() {}) {
 		t.Fatal("a busy app was not held")
 	}
 	waits := s.IdleWaits()
@@ -96,7 +103,7 @@ func TestABusyAppIsHeldAndItsWaitIsListed(t *testing.T) {
 	if got := waits[0].Deadline - waits[0].Since; got != 2*3600 || waits[0].Since < before {
 		t.Fatalf("wait %+v does not end two hours after it began", waits[0])
 	}
-	if !s.HoldForIdle(tg, func() { t.Error("a second fire ran its own backup") }) {
+	if !hold(s, tg, func() { t.Error("a second fire ran its own backup") }) {
 		t.Fatal("a second fire for a waiting container was not absorbed")
 	}
 	if len(s.IdleWaits()) != 1 {
@@ -108,7 +115,7 @@ func TestAnIdleAppIsNotHeld(t *testing.T) {
 	s, st, d := newTrafficService(t)
 	tg := idleTarget(t, st, "db", 2)
 	load(s, d, "db", 20, 1e8, 1000)
-	if s.HoldForIdle(tg, func() {}) {
+	if hold(s, tg, func() {}) {
 		t.Fatalf("an idle app was held: %+v", s.IdleWaits())
 	}
 }
@@ -120,7 +127,7 @@ func TestAStreamingMediaServerWaitsUntilTheStreamCountsAsOver(t *testing.T) {
 	// The stream ended two minutes ago, inside the five-minute hold.
 	loadUntil(s, d, "plex", 4, 0, 5_000_000, time.Now().Add(-2*time.Minute))
 	var ran atomic.Bool
-	if !s.HoldForIdle(tg, func() { ran.Store(true) }) {
+	if !hold(s, tg, func() { ran.Store(true) }) {
 		t.Fatal("a streaming media server was not held")
 	}
 	if w := s.IdleWaits(); len(w) != 1 || w[0].Reason != "streaming" {
@@ -148,9 +155,10 @@ func TestABackupStillBusyAtItsDeadlineStartsAnyway(t *testing.T) {
 	tg := idleTarget(t, st, "db", 1)
 	load(s, d, "db", 20, 9e9, 0)
 	var ran atomic.Bool
-	item := &IdleWait{Domain: "containers", Name: "db", Since: time.Now().Unix(), Deadline: time.Now().Unix() - 1}
-	s.waits().items["db"] = item
-	go s.waitForIdle(tg.ID, item, func() { ran.Store(true) })
+	g := &idleGroup{IdleWaitGroup: store.IdleWaitGroup{Key: "db", Members: []string{tg.ContainerName}, Since: time.Now().Unix(), Deadline: time.Now().Unix() - 1},
+		run: func([]string) { ran.Store(true) }}
+	s.waits().groups["db"] = g
+	go s.waitForIdle(g)
 	waitFor(t, "the backup at the deadline", ran.Load)
 }
 
@@ -160,7 +168,7 @@ func TestSwitchingTheWaitOffStartsTheHeldBackup(t *testing.T) {
 	tg := idleTarget(t, st, "db", 3)
 	load(s, d, "db", 20, 9e9, 0)
 	var ran atomic.Bool
-	if !s.HoldForIdle(tg, func() { ran.Store(true) }) {
+	if !hold(s, tg, func() { ran.Store(true) }) {
 		t.Fatal("not held")
 	}
 	if err := st.SetIdleWaitHours(tg.ID, 0); err != nil {
@@ -174,7 +182,7 @@ func TestOnlyAScheduledEverythingPassHoldsBusyApps(t *testing.T) {
 	tg := idleTarget(t, st, "db", 2)
 	load(s, d, "db", 20, 9e9, 0)
 	var held []string
-	s.SetHeldContainerRun(func(name string) { held = append(held, name) })
+	s.SetHeldContainerRun(func(names []string) { held = append(held, names...) })
 
 	manual := s.holdEverythingContainers(context.Background(), []store.Target{tg})
 	if len(manual) != 1 {
@@ -239,7 +247,7 @@ func TestScheduleWaitingListsTheWaits(t *testing.T) {
 	s, st, d := newTrafficService(t)
 	tg := idleTarget(t, st, "db", 2)
 	load(s, d, "db", 20, 9e9, 0)
-	s.HoldForIdle(tg, func() {})
+	hold(s, tg, func() {})
 	h := &Handler{store: st, svc: s}
 	rec := httptest.NewRecorder()
 	h.handleScheduleWaiting(rec, httptest.NewRequest(http.MethodGet, "/api/schedule/waiting", nil))
@@ -250,5 +258,155 @@ func TestScheduleWaitingListsTheWaits(t *testing.T) {
 	}
 	if !slices.Contains([]string{"cpu"}, waits[0].(map[string]any)["reason"].(string)) {
 		t.Fatalf("reason = %v", waits[0])
+	}
+}
+
+// stack puts containers into one compose project as Docker lists them.
+func stack(d *trafficDocker, project string, names ...string) {
+	for _, n := range names {
+		d.infos = append(d.infos, dockercli.ContainerInfo{Name: n, Image: "alpine", Stack: project})
+	}
+}
+
+func TestABusyMemberHoldsItsWholeStackUnderOneDeadline(t *testing.T) {
+	s, st, d := newTrafficService(t)
+	stack(d, "immich", "immich-server", "immich-db")
+	server := idleTarget(t, st, "immich-server", 3)
+	db := idleTarget(t, st, "immich-db", 0)
+	lone := idleTarget(t, st, "radarr", 0)
+	load(s, d, "immich-server", 20, 9e9, 0)
+
+	held := s.HoldForIdle([]store.Target{server, db, lone}, "domain", func([]string) {})
+	if !slices.Equal(held, []string{"immich-server", "immich-db"}) {
+		t.Fatalf("held %v, want both stack members and not radarr", held)
+	}
+	waits := s.IdleWaits()
+	if len(waits) != 2 {
+		t.Fatalf("waits = %+v", waits)
+	}
+	for _, w := range waits {
+		if w.Stack != "immich" || w.Busy != "immich-server" || w.Reason != "cpu" || w.Deadline-w.Since != 3*3600 {
+			t.Fatalf("wait %+v", w)
+		}
+	}
+}
+
+func TestALaterFireOfAStackMemberJoinsTheWaitingStack(t *testing.T) {
+	s, st, d := newTrafficService(t)
+	stack(d, "immich", "immich-server", "immich-ml")
+	server := idleTarget(t, st, "immich-server", 3)
+	ml := idleTarget(t, st, "immich-ml", 0)
+	load(s, d, "immich-server", 20, 9e9, 0)
+	var ran [][]string
+	s.HoldForIdle([]store.Target{server}, "item", func(names []string) { ran = append(ran, names) })
+	if held := s.HoldForIdle([]store.Target{ml}, "item", func([]string) { t.Error("the second fire runs on its own") }); !slices.Equal(held, []string{"immich-ml"}) {
+		t.Fatalf("held %v", held)
+	}
+	groups, _ := st.ListIdleWaitGroups()
+	if len(groups) != 1 || !slices.Equal(groups[0].Members, []string{"immich-server", "immich-ml"}) {
+		t.Fatalf("stored %+v", groups)
+	}
+}
+
+func TestAWaitIsStoredWhileItLastsAndClearedWhenItRuns(t *testing.T) {
+	fastIdleCheck(t)
+	s, st, d := newTrafficService(t)
+	tg := idleTarget(t, st, "db", 2)
+	load(s, d, "db", 20, 9e9, 0)
+	var ran atomic.Bool
+	if !hold(s, tg, func() { ran.Store(true) }) {
+		t.Fatal("not held")
+	}
+	groups, _ := st.ListIdleWaitGroups()
+	if len(groups) != 1 || groups[0].Trigger != "domain" || !slices.Equal(groups[0].Members, []string{"db"}) {
+		t.Fatalf("stored %+v", groups)
+	}
+	// Raising the CPU limit makes the busy readings count as idle.
+	cfg, _ := st.TrafficSettings()
+	cfg.IdleCPUPct = 1000
+	if err := st.SetTrafficSettings(cfg); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "the held backup", ran.Load)
+	if groups, _ := st.ListIdleWaitGroups(); len(groups) != 0 {
+		t.Fatalf("still stored after it ran: %+v", groups)
+	}
+}
+
+func TestAWaitResumesAfterARestartWithItsDeadline(t *testing.T) {
+	fastIdleCheck(t)
+	s, st, d := newTrafficService(t)
+	idleTarget(t, st, "db", 2)
+	deadline := time.Now().Add(90 * time.Minute).Unix()
+	if err := st.SaveIdleWaitGroup(store.IdleWaitGroup{Key: "db", Members: []string{"db"}, Trigger: "domain", Since: 1, Deadline: deadline}); err != nil {
+		t.Fatal(err)
+	}
+	load(s, d, "db", 20, 9e9, 0)
+	ran := make(chan []string, 1)
+	s.SetHeldContainerRun(func(names []string) { ran <- names })
+	s.ResumeIdleWaits()
+	w := s.IdleWaits()
+	if len(w) != 1 || w[0].Deadline != deadline || w[0].Since != 1 {
+		t.Fatalf("resumed waits = %+v", w)
+	}
+	time.Sleep(100 * time.Millisecond)
+	select {
+	case <-ran:
+		t.Fatal("the resumed backup ran while the app was busy")
+	default:
+	}
+	cfg, _ := st.TrafficSettings()
+	cfg.IdleCPUPct = 1000
+	if err := st.SetTrafficSettings(cfg); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case names := <-ran:
+		if !slices.Equal(names, []string{"db"}) {
+			t.Fatalf("ran %v", names)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the resumed backup never ran")
+	}
+}
+
+func TestAWaitThatEndedDuringTheRestartRunsAtOnce(t *testing.T) {
+	s, st, _ := newTrafficService(t)
+	idleTarget(t, st, "db", 2)
+	if err := st.SaveIdleWaitGroup(store.IdleWaitGroup{Key: "db", Members: []string{"db"}, Since: 1, Deadline: time.Now().Unix() - 60}); err != nil {
+		t.Fatal(err)
+	}
+	var ran atomic.Bool
+	s.SetHeldContainerRun(func([]string) { ran.Store(true) })
+	s.ResumeIdleWaits()
+	waitFor(t, "the overdue backup", ran.Load)
+	if groups, _ := st.ListIdleWaitGroups(); len(groups) != 0 {
+		t.Fatalf("still stored: %+v", groups)
+	}
+}
+
+func TestAContainerTakenOffTheScheduleIsDroppedFromItsResumedWait(t *testing.T) {
+	s, st, _ := newTrafficService(t)
+	idleTarget(t, st, "db", 2)
+	idleTarget(t, st, "app", 2)
+	if err := st.SetInclude("app", false); err != nil {
+		t.Fatal(err)
+	}
+	for _, g := range []store.IdleWaitGroup{
+		{Key: "stack:x", Stack: "x", Members: []string{"db", "app"}, Since: 1, Deadline: time.Now().Unix() + 3600},
+		{Key: "gone", Members: []string{"gone"}, Since: 1, Deadline: time.Now().Unix() + 3600},
+	} {
+		if err := st.SaveIdleWaitGroup(g); err != nil {
+			t.Fatal(err)
+		}
+	}
+	s.SetHeldContainerRun(func(names []string) { t.Errorf("ran %v", names) })
+	s.ResumeIdleWaits()
+	if w := s.IdleWaits(); len(w) != 1 || w[0].Name != "db" {
+		t.Fatalf("waits = %+v, want db alone", w)
+	}
+	groups, _ := st.ListIdleWaitGroups()
+	if len(groups) != 1 || !slices.Equal(groups[0].Members, []string{"db"}) {
+		t.Fatalf("stored %+v", groups)
 	}
 }

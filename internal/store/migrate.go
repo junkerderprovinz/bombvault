@@ -2153,6 +2153,20 @@ ALTER TABLE traffic_settings ADD COLUMN idle_quiet_min INTEGER NOT NULL DEFAULT 
   hours     INTEGER NOT NULL
 );`,
 	},
+	{
+		// The scheduled backups waiting for an idle app, so a restart resumes
+		// them. members is a JSON list of container names.
+		version: trafficMigration + 3,
+		name:    "idle_wait_groups",
+		sql: `CREATE TABLE IF NOT EXISTS idle_wait_groups (
+  key      TEXT PRIMARY KEY,
+  stack    TEXT NOT NULL DEFAULT '',
+  members  TEXT NOT NULL,
+  trigger  TEXT NOT NULL DEFAULT '',
+  since    INTEGER NOT NULL,
+  deadline INTEGER NOT NULL
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,

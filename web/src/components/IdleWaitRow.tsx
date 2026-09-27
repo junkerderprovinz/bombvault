@@ -76,7 +76,7 @@ export function IdleWaitRow({ name, initial }: { name: string; initial: number }
     <div className="flex flex-col items-end gap-1">
       <ToggleRow
         label={t("idle.toggle")}
-        hint={t("idle.toggleHint")}
+        hint={`${t("idle.toggleHint")} ${t("idle.stackHint")}`}
         checked={hours > 0}
         onChange={(v) => void toggle(v)}
         disabled={busy}
@@ -106,7 +106,9 @@ export function IdleWaitLine({ name }: { name: string }) {
   if (!wait) return null;
   return (
     <p className="text-xs text-statusWarn text-end" role="status">
-      {t("idle.waiting")
+      {t(wait.stack ? "idle.waitingStack" : "idle.waiting")
+        .replace("{stack}", wait.stack ?? "")
+        .replace("{busy}", wait.busy)
         .replace("{reason}", t(IDLE_REASON_KEYS[wait.reason] ?? IDLE_REASON_KEYS.measuring))
         .replace("{time}", formatClockTime(wait.deadline, false))}
     </p>
