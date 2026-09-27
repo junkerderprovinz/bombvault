@@ -2562,7 +2562,7 @@ export function ExcludesEditor({
         {assistOpen && (
           <div className="flex flex-col gap-2">
             <p className="text-xs text-carbon-textMuted">{t("excludes.assistHint")}</p>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {/* Colour-engine integration (same fix/reasoning as
                   FoldersEditor's "Hinzufügen" button above): was the one
                   plain grey `bg-carbon-surface2` button in this
