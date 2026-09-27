@@ -1391,6 +1391,23 @@ func (h *Handler) handleRestoreCancel(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": cancelled})
 }
 
+// handleRestoreCheck runs the pre-flight checks of a restore and returns its
+// plan. The body describes the restore the way its own endpoint takes it.
+// POST /api/restore/check
+func (h *Handler) handleRestoreCheck(w http.ResponseWriter, r *http.Request) {
+	var req RestoreCheckRequest
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	req.Source = normalizeSource(req.Source)
+	res, err := h.svc.CheckRestore(r.Context(), req)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"ready": res.Ready, "checks": res.Checks, "plan": res.Plan}))
+}
+
 // handleBackupCancel cancels an in-flight BACKUP by its progress key
 // (POST /api/backup/cancel {key}), the counterpart of handleRestoreCancel
 // above (#200).

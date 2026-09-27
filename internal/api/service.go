@@ -199,6 +199,9 @@ type ResticEngine interface {
 	// snapshot (`restic stats --mode restore-size <snap>`). The DR drill compares it
 	// against an on-disk walk of the restored sandbox.
 	StatsRestoreSize(ctx context.Context, repo, snapshotID string, m restic.Mode) (files int, bytes int64, err error)
+	// RestorePreview runs one restore step as a dry run and reports each
+	// file it would write, replace, leave or find beyond the snapshot.
+	RestorePreview(ctx context.Context, repo string, step restic.PreviewStep, m restic.Mode, onItem func(restic.PreviewItem)) error
 	// Diff compares two snapshots (restic diff --json) and returns the summary
 	// counts + byte totals (what changed between two backups).
 	Diff(ctx context.Context, repo, snap1, snap2 string, m restic.Mode) (restic.DiffResult, error)
@@ -9194,8 +9197,10 @@ func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapsho
 		if err != nil {
 			return filesRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}
-		if err := paths.EnsureDir(t); err != nil {
-			return filesRestorePlan{}, fmt.Errorf("create target folder: %w", err)
+		if !isPlanOnly(ctx) {
+			if err := paths.EnsureDir(t); err != nil {
+				return filesRestorePlan{}, fmt.Errorf("create target folder: %w", err)
+			}
 		}
 		target = t
 		resolved = t
@@ -9551,8 +9556,10 @@ func (s *Service) prepareRestoreToPath(ctx context.Context, name, source, snapsh
 	}
 
 	// Create the target dir ONLY after containment passed.
-	if err := paths.EnsureDir(target); err != nil {
-		return toPathRestorePlan{}, fmt.Errorf("create target folder: %w", err)
+	if !isPlanOnly(ctx) {
+		if err := paths.EnsureDir(target); err != nil {
+			return toPathRestorePlan{}, fmt.Errorf("create target folder: %w", err)
+		}
 	}
 	return toPathRestorePlan{
 		repo:       repo,
@@ -12433,7 +12440,7 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	}
 
 	// Pin the host key before the orchestrator's virsh-over-SSH calls.
-	if s.ssh != nil {
+	if s.ssh != nil && !isPlanOnly(ctx) {
 		if err := s.ssh.EnsureKnownHost(ctx); err != nil {
 			return vmRestorePlan{}, fmt.Errorf("restore vm: ssh: %w", err)
 		}
@@ -13930,7 +13937,7 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 	// readable (0o755) variant: the restore target lives on a user-visible / synced
 	// share, so the operator's non-root SMB user must be able to read what root
 	// restored there (see EnsureDirReadable).
-	if plan.target != "" {
+	if plan.target != "" && !isPlanOnly(ctx) {
 		if err := paths.EnsureDirReadable(plan.target); err != nil {
 			return fileSetRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 		}
@@ -14073,7 +14080,7 @@ func (s *Service) prepareRestoreFileSetFiles(ctx context.Context, id, source, sn
 	if err != nil {
 		return fileSetFilesRestorePlan{}, err
 	}
-	return s.buildFileSetFilesPlan(snaps, snapshotID, set.ID, set.Name, repo, s.repoModeFor(settings, "files", source, repo), filePaths, targetSubPath)
+	return s.buildFileSetFilesPlan(ctx, snaps, snapshotID, set.ID, set.Name, repo, s.repoModeFor(settings, "files", source, repo), filePaths, targetSubPath)
 }
 
 // buildFileSetFilesPlan builds a validated selective plan from ALREADY resolved
@@ -14092,7 +14099,7 @@ func (s *Service) prepareRestoreFileSetFiles(ctx context.Context, id, source, sn
 // and, when the snapshot has a backed-up root, every selected path must sit within
 // that subtree (a traversal guard: the selection feeds --include patterns). The
 // target dir is created (EnsureDirReadable, 0o755) only AFTER all containment passes.
-func (s *Service) buildFileSetFilesPlan(snaps []restic.Snapshot, snapshotID, setID, setName, repo string, mode restic.Mode, filePaths []string, targetSubPath string) (fileSetFilesRestorePlan, error) {
+func (s *Service) buildFileSetFilesPlan(ctx context.Context, snaps []restic.Snapshot, snapshotID, setID, setName, repo string, mode restic.Mode, filePaths []string, targetSubPath string) (fileSetFilesRestorePlan, error) {
 	if !backup.ValidSnapshotID(snapshotID) {
 		return fileSetFilesRestorePlan{}, backup.ErrInvalidSnapshotID
 	}
@@ -14161,7 +14168,7 @@ func (s *Service) buildFileSetFilesPlan(snaps []restic.Snapshot, snapshotID, set
 	// Create the alternate target dir ONLY after every validation passed — readable
 	// (0o755) variant, so the operator's non-root SMB user can read what root
 	// restored to the synced share (see EnsureDirReadable / the v6.0.0 files fix).
-	if plan.target != "" {
+	if plan.target != "" && !isPlanOnly(ctx) {
 		if err := paths.EnsureDirReadable(plan.target); err != nil {
 			return fileSetFilesRestorePlan{}, fmt.Errorf("create target folder: %w", err)
 		}

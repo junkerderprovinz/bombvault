@@ -5518,6 +5518,11 @@ type fakeResticEngine struct {
 	checkDataPct    []int    // subset percent of each CheckData call
 	checkDataErr    error    // returned by CheckData (drill outcome)
 	unlockErr       error
+	// previewItems is what RestorePreview reports for a step, by its target;
+	// previewSteps records every step it ran and previewHook replaces it.
+	previewItems map[string][]restic.PreviewItem
+	previewSteps []restic.PreviewStep
+	previewHook  func(ctx context.Context, step restic.PreviewStep) error
 	// Exclusion-assistant snapshot feeder. lsStreamEntries is what LsStream emits
 	// node by node; lsStreamErr fails the first call only, like lsErr does for
 	// Ls; lsStreamCalls counts calls for the cache assertions; lsStreamHook, when
@@ -6045,6 +6050,17 @@ func (f *fakeResticEngine) Stats(_ context.Context, _, mode string, _ restic.Mod
 		return restic.StatsResult{TotalSize: raw, BlobCount: 10}, nil
 	}
 	return restic.StatsResult{TotalSize: 5000, FileCount: 50}, nil
+}
+
+func (f *fakeResticEngine) RestorePreview(ctx context.Context, _ string, step restic.PreviewStep, _ restic.Mode, onItem func(restic.PreviewItem)) error {
+	f.previewSteps = append(f.previewSteps, step)
+	if f.previewHook != nil {
+		return f.previewHook(ctx, step)
+	}
+	for _, it := range f.previewItems[step.Target] {
+		onItem(it)
+	}
+	return nil
 }
 
 func (f *fakeResticEngine) StatsRestoreSize(_ context.Context, _, _ string, _ restic.Mode) (int, int64, error) {
