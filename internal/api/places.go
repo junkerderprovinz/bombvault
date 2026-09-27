@@ -129,7 +129,7 @@ type PlaceView struct {
 }
 
 // UnplacedRow is a repository or domain path whose address fits no place. It
-// works as before and waits in the group without a place.
+// keeps working at its stored address and waits in the group without a place.
 type UnplacedRow struct {
 	RowID  string `json:"rowId"`  // "" for a domain's own path
 	Domain string `json:"domain"` // "" for a named repository, which no domain owns
