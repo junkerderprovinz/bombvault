@@ -1890,7 +1890,9 @@ function MobileContainerDetail({
               databaseWarn={updateWarnKey(container)}
               t={t}
             />
+            <IdleWaitRow name={container.name} initial={container.idleWaitHours ?? 0} />
           </Advanced>
+          <IdleWaitLine name={container.name} />
         </div>
       )}
       {/* The same editor the desktop row expands: one tree, one queue, zero
