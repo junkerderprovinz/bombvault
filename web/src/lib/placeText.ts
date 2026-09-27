@@ -36,6 +36,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "place-domain-unavailable": "places.error.domainUnavailable",
   "place-address-taken": "places.error.addressTaken",
   "place-off": "places.error.off",
+  "place-repo-shared": "places.error.repoShared",
   "place-no-append-only": "places.error.noAppendOnly",
   "place-nothing-to-test": "places.error.nothingToTest",
   "place-keeps-less": "places.error.keepsLess",

@@ -286,6 +286,45 @@ func TestANamedRepositoryJoinsAPlaceAtTheFolderOfItsDomain(t *testing.T) {
 	}
 }
 
+func TestANamedRepositoryAnotherDomainUsesIsNotTakenIntoOneDomainsFolder(t *testing.T) {
+	for _, other := range []string{"item", "default"} {
+		t.Run(other, func(t *testing.T) {
+			f := newPlacementFixture(t)
+			nas := f.storePlace(localPlace("NAS", "nas"))
+			old := f.namedRepo("Old NAS", "nas/containers")
+			f.container("nginx", old.ID)
+			if other == "item" {
+				f.vm("win11", old.ID)
+			} else {
+				f.setDefault("vms", old.ID)
+			}
+
+			res := f.adopt(nas.ID, old.ID, "containers")
+
+			if res["ok"] != false || res["code"] != "place-repo-shared" {
+				t.Fatalf("adopt = %v, want place-repo-shared", res)
+			}
+			if row, err := f.st.GetNamedRepo(old.ID); err != nil || row.PlaceID != "" {
+				t.Fatalf("row = %+v, %v, want it without a place", row, err)
+			}
+		})
+	}
+}
+
+func TestANamedRepositoryOnlyItsDomainUsesJoinsThatDomainsFolder(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	old := f.namedRepo("Old NAS", "nas/containers")
+	f.container("nginx", old.ID)
+	f.setDefault("containers", old.ID)
+
+	res := f.adopt(nas.ID, old.ID, "containers")
+
+	if row, err := f.st.GetNamedRepo(old.ID); res["ok"] != true || err != nil || row.PlaceID != nas.ID || row.PlaceDomain != "containers" {
+		t.Fatalf("adopt = %v; row %+v, %v", res, row, err)
+	}
+}
+
 func TestARepositoryAdoptedAtAPlaceThatIsItselfOneServesEveryDomain(t *testing.T) {
 	f := newPlacementFixture(t)
 	p := s3Place("B2 root", "s3:https://s3.example.com/bucket")
