@@ -464,9 +464,8 @@ function VMRestorePanel({
       });
   }
 
-  // Closed renders nothing at all: the trigger lives in VMRow now, so there
-  // is no header left to keep painting. Mirrors components/RestorePanel.tsx's
-  // own `if (!open) return null`.
+  // Closed renders nothing at all: the trigger lives in VMRow, as it does for
+  // components/RestorePanel.tsx.
   if (!open) return null;
 
   return (
@@ -1170,10 +1169,12 @@ export function VMs() {
     void loadVMs().finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
+  // loadVMs is stable for this page's lifetime; as a dependency it would
+  // subscribe again on every render.
   useEffect(() => {
     const offs = [subscribeRepos(() => void loadVMs()), subscribePlacement(() => void loadVMs())];
     return () => offs.forEach((off) => off());
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- loadVMs is stable for this page's lifetime; adding it would re-run the effect on every render
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function placeVM(libvirtName: string, next: PlacementView) {
     setVMs((prev) => prev.map((v) => (v.libvirtName === libvirtName ? { ...v, placement: next } : v)));

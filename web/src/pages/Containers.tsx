@@ -3425,10 +3425,12 @@ export function Containers() {
     void loadContainers().finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
+  // loadContainers is stable for this page's lifetime; as a dependency it would
+  // subscribe again on every render.
   useEffect(() => {
     const offs = [subscribeRepos(() => void loadContainers()), subscribePlacement(() => void loadContainers())];
     return () => offs.forEach((off) => off());
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- loadContainers is stable for this page's lifetime; adding it would re-run the effect on every render
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function placeContainer(name: string, next: PlacementView) {
     setContainers((prev) => prev.map((c) => (c.name === name ? { ...c, placement: next } : c)));
