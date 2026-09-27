@@ -1,6 +1,6 @@
 # Speicherorte
 
-Ein Speicherort ist eine Stelle, an der BombVault Backups ablegt: ein Ordner auf diesem Unraid, eine Freigabe auf einem NAS, ein Bucket bei einem Cloud-Anbieter, ein rest-server, ein SFTP-Konto oder eine Nextcloud. Jeden Ort verbindest du einmal, unter **Einstellungen, Speicher**, und seine Zugangsdaten, seine Aufbewahrung, sein Schutz und sein Standort gehören zu ihm. Die fünf Bereiche (Container, VMs, der Flash, BombVaults eigene Konfiguration und Ordner-Sets) wählen dann unter diesen Orten: wo jeder Bereich gespeichert wird und wohin er kopiert wird.
+Ein Speicherort ist eine Stelle, an der BombVault Backups ablegt: ein Ordner auf diesem Unraid, eine Freigabe auf einem NAS, ein Bucket bei einem Cloud-Anbieter, ein rest-server, ein SFTP-Konto oder eine Nextcloud. Jeden Ort verbindest du einmal, unter **Einstellungen, Speicher**, und seine Zugangsdaten, seine Aufbewahrung, sein Schutz und sein Standort gehören zu ihm. Die Bereiche (Container, VMs, der Flash, BombVaults eigene Konfiguration, Ordner-Sets und ZFS-Datasets) wählen dann unter diesen Orten: wo jeder Bereich gespeichert wird und wohin er kopiert wird. Die ZFS-Datasets haben ihre Zeile auf der Karte Domänen, solange der Bereich ZFS eingeschaltet ist.
 
 ## Einen Ort hinzufügen {#add-a-place}
 
@@ -15,7 +15,7 @@ Ein neuer Ort wird noch von keinem Bereich benutzt. Wähl ihn auf der [Karte Dom
 
 ## Ordner {#folders}
 
-Ein Ort hat einen Ordner pro Bereich: `container`, `vms`, `flash`, `config` und `files`, dieselben Namen wie bei den voreingestellten Backup-Orten. Die Ordner stehen in den Details des Ortes und lassen sich dort umbenennen (siehe [Eine Adresse ändern](#addresses)). Ein Bereich ohne Ordner an einem Ort kann diesen Ort nicht wählen.
+Ein Ort hat einen Ordner pro Bereich: `container`, `vms`, `flash`, `config`, `files` und `zfs`, dieselben Namen wie bei den voreingestellten Backup-Orten. Die Ordner stehen in den Details des Ortes und lassen sich dort umbenennen (siehe [Eine Adresse ändern](#addresses)). Ein Bereich ohne Ordner an einem Ort kann diesen Ort nicht wählen.
 
 Nutzt ein Bereich einen Ort in beiden Rollen, bekommt die zweite Rolle eine Endung, und die erste behält ihren Ordner. Ein Ort, der schon die Kopien eines Bereichs empfängt, legt die direkt dorthin gesendeten Elemente in `<folder>-direct` ab; ein Ort, an dem ein Bereich schon gespeichert ist, empfängt dessen Kopien in `<folder>-copies`.
 

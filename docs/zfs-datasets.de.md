@@ -15,7 +15,7 @@ Schalte die Domäne unter **Einstellungen, Allgemein** ein (ZFS-Datasets). Die Z
 
 ## Elemente und Unter-Datasets {#items-and-children}
 
-Öffne auf der ZFS-Seite **Datasets hinzufügen**. Die Liste kommt vom Server. Wähle das Dataset ganz oben in dem, was gesichert werden soll, zum Beispiel `cache/appdata`, und das Element umfasst dieses Dataset und jedes darunter.
+Öffne auf der ZFS-Seite **Datasets hinzufügen**. Die Liste kommt vom Server. Wähle das Dataset ganz oben in dem, was gesichert werden soll, zum Beispiel `cache/appdata`, und das Element umfasst dieses Dataset und jedes darunter. Seine Backups landen dort, wo die ZFS-Zeile der Karte Domänen unter **Einstellungen, Speicher** sie speichert, und werden an die Orte kopiert, die dort unter **Kopiert nach** angehakt sind; ein Element kann im Dialog stattdessen ein eigenes Repository nennen.
 
 - **Neue Unter-Datasets kommen von selbst dazu.** Ein Dataset, das später unter dem Element angelegt wird, wird beim nächsten Lauf gesichert, und dieser Lauf nennt es als neu. Sein erstes Backup liest es einmal vollständig, danach werden nur Änderungen gelesen.
 - **Einzelne Unter-Datasets lassen sich auslassen.** Schalte eines in den Einstellungen des Elements ab, dann bleibt es samt allem darunter draußen. Ein ausgelassenes Unter-Dataset, das es auf dem Server nicht mehr gibt, wird so markiert und lässt sich aus der Liste entfernen.

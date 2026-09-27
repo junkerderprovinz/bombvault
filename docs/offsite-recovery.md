@@ -61,11 +61,11 @@ A domain stored in a remote place is the source of its copies like a local one; 
 
 ### SMB and WebDAV without a host mount {#smb-webdav}
 
-Settings, Off-site, rclone has a form for a Windows or Samba share and for a WebDAV server (Nextcloud, ownCloud, SharePoint or any other). Fill in a short name, the host and share (SMB) or the URL and server type (WebDAV), the user and the password, and BombVault writes the rclone section for you. rclone obscures the password itself before it is stored; adding a destination with a name that already exists replaces that section instead of adding a second one.
+The rclone form of the **Add place** window has a form for a Windows or Samba share and for a WebDAV server (Nextcloud, ownCloud, SharePoint or any other). Fill in a short name, the host and share (SMB) or the URL and server type (WebDAV), the user and the password, and BombVault writes the rclone section for you. rclone obscures the password itself before it is stored; adding a destination with a name that already exists replaces that section instead of adding a second one.
 
-The form answers with the finished location, for example `rclone:nas:backups`. Put that into a Backup Path or an off-site destination and add a sub-folder if you want one (`rclone:nas:backups/bombvault`). The share is the first path segment, not part of the name.
+The new remote then shows in the form's list of remotes, where you pick it for the place. The share is the first path segment, not part of the name.
 
-This is the better route than mounting the share on Unraid: restic advises against keeping a repository on a mounted CIFS share, and here nothing is mounted. NFS is not in the form because neither restic nor rclone has an NFS backend; for NFS, mount the export on the host and point a Backup Path at it.
+This is the better route than mounting the share on Unraid: restic advises against keeping a repository on a mounted CIFS share, and here nothing is mounted. NFS is not in the form because neither restic nor rclone has an NFS backend; for NFS, mount the export on the host and add it as a place with **Other share**.
 
 ## Immutable (append-only) off-site
 

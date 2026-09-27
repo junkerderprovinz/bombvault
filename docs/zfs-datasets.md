@@ -15,7 +15,7 @@ Switch the domain on under **Settings, General** (ZFS datasets). The ZFS page th
 
 ## Items and child datasets {#items-and-children}
 
-Open **Add datasets** on the ZFS page. The list comes from the server. Pick the dataset at the top of what you want backed up, for example `cache/appdata`, and the item covers it and every dataset below it.
+Open **Add datasets** on the ZFS page. The list comes from the server. Pick the dataset at the top of what you want backed up, for example `cache/appdata`, and the item covers it and every dataset below it. Its backups go where the ZFS row of the Domains card on **Settings, Storage** stores them, and are copied to the places ticked there under **Copied to**; an item can name a repository of its own in the dialog instead.
 
 - **New child datasets join on their own.** A dataset created below the item later is backed up with the next run, and that run names it as new. Its first backup reads it in full once; after that only changes are read.
 - **You can leave single children out.** Switch a child off in the item's settings and it is left out together with everything below it. A left-out child that no longer exists on the server is marked as such and can be removed from the list.

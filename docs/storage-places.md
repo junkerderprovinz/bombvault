@@ -1,6 +1,6 @@
 # Storage places
 
-A storage place is somewhere BombVault keeps backups: a folder on this Unraid, a share on a NAS, a bucket at a cloud provider, a rest-server, an SFTP account or a Nextcloud. You connect each place once, on **Settings, Storage**, and its credentials, retention, protection and location belong to it. The five domains (containers, VMs, the flash, BombVault's own configuration and folder sets) then choose from the places: where each domain is stored and where it is copied.
+A storage place is somewhere BombVault keeps backups: a folder on this Unraid, a share on a NAS, a bucket at a cloud provider, a rest-server, an SFTP account or a Nextcloud. You connect each place once, on **Settings, Storage**, and its credentials, retention, protection and location belong to it. The domains (containers, VMs, the flash, BombVault's own configuration, folder sets and ZFS datasets) then choose from the places: where each domain is stored and where it is copied. The ZFS datasets have their row on the Domains card while the ZFS domain is switched on.
 
 ## Adding a place {#add-a-place}
 
@@ -15,7 +15,7 @@ A new place is not used by any domain yet. Choose it under **Stored in** or **Co
 
 ## Folders {#folders}
 
-A place keeps one folder per domain: `container`, `vms`, `flash`, `config` and `files`, the names the default backup locations use. The folders are listed in the place's details and can be renamed there (see [Changing an address](#addresses)). A domain without a folder at a place cannot choose that place.
+A place keeps one folder per domain: `container`, `vms`, `flash`, `config`, `files` and `zfs`, the names the default backup locations use. The folders are listed in the place's details and can be renamed there (see [Changing an address](#addresses)). A domain without a folder at a place cannot choose that place.
 
 When a domain uses a place in both roles, the second role gets a suffix and the first keeps its folder. A place that already receives a domain's copies stores the items sent straight to it in `<folder>-direct`; a place that already stores a domain receives its copies in `<folder>-copies`.
 
