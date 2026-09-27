@@ -37,10 +37,14 @@ export function Layout() {
   const [whatsNewVersion, setWhatsNewVersion] = useState<string | null>(null);
   const location = useLocation();
   const { t } = useT();
-  // The page the rail was opened on below the sm breakpoint. Choosing a page
-  // changes the path, which closes it without an effect.
-  const [railOpenedOn, setRailOpenedOn] = useState<string | null>(null);
-  const railOpen = railOpenedOn === location.pathname;
+  // The rail below the sm breakpoint closes on every navigation, reset during
+  // render rather than in an effect so it never paints open on the new page.
+  const [railOpen, setRailOpen] = useState(false);
+  const [railLocation, setRailLocation] = useState(location.key);
+  if (railLocation !== location.key) {
+    setRailLocation(location.key);
+    setRailOpen(false);
+  }
 
   // Runs on mount and again after a successful login.
   const checkAuth = useCallback(() => {
@@ -167,7 +171,7 @@ export function Layout() {
           <div
             data-testid="rail-backdrop"
             className="glim-modal-backdrop fixed inset-0 z-30 sm:hidden"
-            onClick={() => setRailOpenedOn(null)}
+            onClick={() => setRailOpen(false)}
           />
         )}
         <div className={`flex shrink-0 ${railOpen ? "max-sm:fixed max-sm:inset-y-4 max-sm:start-4 max-sm:z-40 max-sm:rounded-card max-sm:bg-carbon-surface max-sm:shadow-2xl" : "max-sm:hidden"}`}>
@@ -188,7 +192,7 @@ export function Layout() {
                 labelKey="nav.menu"
                 glyph={<IconMenu />}
                 ariaExpanded={railOpen}
-                onClick={() => setRailOpenedOn(railOpen ? null : location.pathname)}
+                onClick={() => setRailOpen(!railOpen)}
               />
             </div>
             <Outlet />

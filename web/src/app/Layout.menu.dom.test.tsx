@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
+import { Link, MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 
 vi.mock("../lib/api", () => ({
   getAuth: async () => ({ ok: true, enabled: false, authed: true }),
@@ -27,13 +27,26 @@ import { Layout } from "./Layout";
 
 afterEach(cleanup);
 
+function Folders() {
+  const navigate = useNavigate();
+  return (
+    <>
+      <p>folders</p>
+      <Link to="/dashboard">to the dashboard</Link>
+      <button type="button" onClick={() => navigate(-1)}>
+        back
+      </button>
+    </>
+  );
+}
+
 function renderLayout() {
   render(
     <MemoryRouter initialEntries={["/dashboard"]}>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<p>dashboard</p>} />
-          <Route path="/files" element={<p>folders</p>} />
+          <Route path="/files" element={<Folders />} />
         </Route>
       </Routes>
     </MemoryRouter>
@@ -65,6 +78,16 @@ describe("the rail on a narrow window", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Menu" }).getAttribute("aria-expanded")).toBe("false")
     );
+  });
+
+  it.each(["to the dashboard", "back"])("stays closed on the page it was opened on after %s", async (way) => {
+    renderLayout();
+    fireEvent.click(await screen.findByRole("button", { name: "Menu" }));
+    fireEvent.click(screen.getByRole("link", { name: "Folders" }));
+    fireEvent.click(await screen.findByText(way));
+    expect(await screen.findByText("dashboard")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Menu" }).getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByTestId("rail-backdrop")).toBeNull();
   });
 
   it("closes on a click beside it", async () => {
