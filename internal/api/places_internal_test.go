@@ -332,7 +332,7 @@ func TestRowsWithoutAPlaceWaitInTheirOwnGroup(t *testing.T) {
 
 func TestThePlacesListKeepsPasswordsInAddressesToItself(t *testing.T) {
 	f := newPlacementFixture(t)
-	p := store.Place{Name: "Tower", Provider: "rest-server", Kind: string(places.KindREST), Base: "rest:https://bv:hunter2@tower.lan:8000",
+	p := store.Place{Name: "Tower", Provider: "rest-server", Kind: string(places.KindREST), Base: "rest:https://bv:hunter2@tower.lan:8000", //nolint:gosec // G101: test fixture credential, not a real secret
 		Folders: map[string]string{"vms": "vms"}, OffPremises: true, Enabled: true}
 	f.storePlace(p)
 	loose := f.target("containers", "Old", "rest:https://bv:hunter2@old.lan:8000/containers")
