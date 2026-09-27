@@ -423,6 +423,33 @@ func TestARepositoryPlaceServingAnotherDomainIsNotOffered(t *testing.T) {
 	}
 }
 
+func TestATargetAtABucketRootOffersNoDirectRepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	root := s3Place("B2 root", "s3:https://s3.example.com/bucket")
+	root.Folders = map[string]string{"containers": ""}
+	root = f.storePlace(root)
+	f.placeTarget(root, "containers", "")
+
+	if sendTo := rowsOf(f.options("containers")["sendTo"]); len(sendTo) != 0 {
+		t.Fatalf("sendTo = %v, want nothing, since the bucket root holds no second repository", sendTo)
+	}
+}
+
+func TestATargetBesideTheDomainsRepositoryIsOfferedAsThatRepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	repo, err := f.st.CreatePlaceRepo(b2.ID, "containers", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.placeTarget(b2, "containers", "-copies")
+
+	sendTo := rowsOf(f.options("containers")["sendTo"])
+	if len(sendTo) != 1 || sendTo[0]["kind"] != "remote" || sendTo[0]["repoId"] != repo.ID {
+		t.Fatalf("sendTo = %v, want B2 once, as its repository", sendTo)
+	}
+}
+
 func TestAPlaceWhoseRepositoryIsSwitchedOffIsNotOfferedInItsStead(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.storePlace(localPlace("NAS", "nas"))
