@@ -175,6 +175,14 @@
   --sticky-action-h: calc(4.5rem + var(--safe-area-bottom));
 }
 
+/* A page starts on the rail's top line. One that opens with a card starts at
+   the card's badge, which stands half its 22px above the card, or the badge
+   would be cut off at the top of the column. */
+.glim-page-enter > .glim-notch-card:first-child,
+.glim-page-enter > :first-child > .glim-notch-card:first-child {
+  margin-top: 11px;
+}
+
 /* The one raised surface, from GlimStone. Never nested: one elevation. */
 .glim-card {
   background-color: var(--carbon-surface);

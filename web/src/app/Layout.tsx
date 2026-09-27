@@ -264,10 +264,10 @@ export function Layout() {
           columns so a short page can fill the height and push a footer to the
           bottom (Settings does this with AboutFooter); other pages render at
           their natural height. */}
-      {/* The page padding lives inside the scroll container. There is none
-          at the bottom, so at the end of a scroll the last card ends level
-          with the rail instead of 24px above it. */}
-      <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col p-6 pb-0">
+      {/* The page padding lives inside the scroll container, at the sides
+          only: the first row starts on the rail's top line, and the last card
+          ends level with the rail instead of 24px above it. */}
+      <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col px-6 pt-0 pb-0">
         <Outlet />
       </div>
     </main>
@@ -303,7 +303,7 @@ export function Layout() {
   // The gutter sits on the frame around the rail and the content, so one value
   // spaces both from the window edge and from each other. It is GlimStone's
   // --page-gutter (1rem, `p-4`), the same in every app that uses the design
-  // language. The content's 1.5rem padding is a separate distance on top.
+  // language. The content's 1.5rem side padding is a separate distance.
   //
   // The shell root uses `h-dvh` so it tracks the visual viewport as mobile
   // browser chrome collapses and expands; on desktop dvh equals the viewport
