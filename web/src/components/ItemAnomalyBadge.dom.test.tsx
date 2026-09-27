@@ -50,7 +50,7 @@ describe("ItemAnomalyBadge", () => {
   it("links the open count to the item's own findings", () => {
     renderBadge({ item: item({ open: { critical: 1, warning: 2, info: 0 } }) });
     const link = screen.getByRole("link", { name: /Open anomalies for plex: 3/ });
-    expect(link.getAttribute("href")).toBe("/anomalies?scope=item:tg-1#findings");
+    expect(link.getAttribute("href")).toBe("/anomalies?scope=item:tg-1");
     expect(link.textContent).toContain("3");
   });
 

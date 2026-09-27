@@ -128,7 +128,7 @@ function DatasetAnomalies({
     <>
       {open > 0 && worst && targetId && (
         <Link
-          to={`/anomalies?scope=item:${encodeURIComponent(targetId)}#findings`}
+          to={`/anomalies?scope=item:${encodeURIComponent(targetId)}`}
           aria-label={t("anomaly.itemBadgeAria").replace("{name}", dataset).replace("{n}", open.toLocaleString())}
         >
           <Badge tone={anomalySeverityTone(worst)} size="small" shape="pill">

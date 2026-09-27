@@ -164,7 +164,7 @@ describe("ZFS page anomalies", () => {
   it("counts a dataset's findings beside the item and marks the dataset in the tree", async () => {
     await renderPage();
     const itemBadge = await screen.findByRole("link", { name: badgeLabel(ROOT, 1) });
-    expect(itemBadge.getAttribute("href")).toBe("/anomalies?scope=item:z1#findings");
+    expect(itemBadge.getAttribute("href")).toBe("/anomalies?scope=item:z1");
 
     fireEvent.click(screen.getByRole("button", { name: countText(en["zfs.membersSummary"], "en", 2) }));
     const childLine = screen.getByRole("link", { name: badgeLabel(CHILD, 1) }).closest("li") as HTMLElement;
