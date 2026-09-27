@@ -717,7 +717,7 @@ function FileSetRestorePanel({
 
       {open && (
         <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
-          <div className="flex items-center gap-2 py-2 border-b border-carbon-border">
+          <div className="flex flex-wrap items-center gap-2 py-2 border-b border-carbon-border">
               {/* The source toggle and its hint are advanced; basic mode uses local. */}
               <Advanced>
                 <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
