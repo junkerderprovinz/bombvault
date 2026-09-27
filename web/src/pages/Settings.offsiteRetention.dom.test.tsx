@@ -153,7 +153,9 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("the off-site retention card beside a used direct repository", () => {
+// Each test renders the whole Settings page, which can take past five seconds
+// when the suite runs in parallel.
+describe("the off-site retention card beside a used direct repository", { timeout: 15000 }, () => {
   it("asks before keeping less and puts the saved value back when told no", async () => {
     await renderOffsiteTab();
     await typeKeepLast("3");
