@@ -2425,6 +2425,9 @@ type DomainStatusEntry struct {
 	// so carrying them unconditionally is safe.
 	VerifiedDetail string `json:"verifiedDetail"`
 	DrillDetail    string `json:"drillDetail"`
+	// LastStartTest is the newest start test of any container, only on the
+	// containers row.
+	LastStartTest *store.StartTest `json:"lastStartTest,omitempty"`
 
 	// Ransomware-protection scorecard facts (Task 8): whether the domain has an
 	// off-site copy, whether it is flagged append-only (immutable), and the
@@ -2775,6 +2778,17 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		{zfsDomain, settings.ZFSEnabled, settings.ZFSSchedule, s.store.LastSuccessfulZFSBackup},
 	}
 
+	startTests, err := s.store.LatestStartTests()
+	if err != nil {
+		return nil, fmt.Errorf("start tests: %w", err)
+	}
+	var lastStartTest *store.StartTest
+	for _, t := range startTests {
+		if lastStartTest == nil || t.At > lastStartTest.At {
+			lastStartTest = &t
+		}
+	}
+
 	out := make([]DomainStatusEntry, 0, len(domains))
 	for _, d := range domains {
 		last, lErr := d.lastFn()
@@ -2916,6 +2930,9 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			EncryptionOn:          settings.EncryptionEnabled,
 			PruneStrategySet:      pruneStrategySet,
 		})
+		if d.name == "containers" {
+			out[len(out)-1].LastStartTest = lastStartTest
+		}
 	}
 	return out, nil
 }
@@ -15234,6 +15251,10 @@ func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind stri
 		return s.runSubsetDrill(ctx, domain, source, wait)
 	case "dr":
 		return s.runDRDrill(ctx, domain, source, wait)
+	case "start":
+		// A start test records its own row, per container rather than per
+		// domain, so there is no drill to hand back.
+		return store.RestoreDrill{}, s.runScheduledStartTest(ctx)
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown drill kind %q", kind)
 	}

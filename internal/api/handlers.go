@@ -2216,6 +2216,8 @@ type settingsView struct {
 	// OffsiteDrillsEnabled gates ONLY the scheduled off-site DR drill (#37); the
 	// local subset check + the manual DR button are unaffected. Default on.
 	OffsiteDrillsEnabled bool `json:"offsiteDrillsEnabled"`
+	// StartTestEnabled adds a container start test to the scheduled drills.
+	StartTestEnabled bool `json:"startTestEnabled"`
 	// RecoveryKitAck dismisses the dashboard nag once the user has downloaded +
 	// safely stored the encryption-key recovery kit.
 	RecoveryKitAck bool `json:"recoveryKitAck"`
@@ -2416,6 +2418,7 @@ func toView(s store.Settings) settingsView {
 		DrillsSchedule:              s.DrillsSchedule,
 		DrillsSubsetPct:             s.DrillsSubsetPct,
 		OffsiteDrillsEnabled:        s.OffsiteDrillsEnabled,
+		StartTestEnabled:            s.StartTestEnabled,
 		RecoveryKitAck:              s.RecoveryKitAck,
 		ContainersOffsiteImmutable:  s.ContainersOffsiteImmutable,
 		VMsOffsiteImmutable:         s.VMsOffsiteImmutable,
@@ -2950,6 +2953,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.DrillsSchedule = v.DrillsSchedule
 		cur.DrillsSubsetPct = max(1, min(100, v.DrillsSubsetPct))
 		cur.OffsiteDrillsEnabled = v.OffsiteDrillsEnabled
+		cur.StartTestEnabled = v.StartTestEnabled
 		cur.RecoveryKitAck = v.RecoveryKitAck
 		cur.TamperTestSchedule = v.TamperTestSchedule
 		cur.DRDrillTarget = strings.TrimSpace(v.DRDrillTarget)

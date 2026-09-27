@@ -157,7 +157,7 @@ type ParsedKey =
   | { scope: "item"; domain: "container" | "vm" | "files" | "zfs" | "flash" | "config"; name: string }
   | { scope: "batch"; domain: string }
   | { scope: "offsite" | "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export"; domain: string }
-  | { scope: "check"; domain: string; name: string };
+  | { scope: "check"; check: "probe" | "start"; domain: string; name: string };
 
 /**
  * parseProgressKey decodes a live SSE progress key; progress.ts documents the
@@ -184,7 +184,10 @@ function parseProgressKey(key: string): ParsedKey | null {
   if (key.startsWith("probe:")) {
     const rest = key.slice("probe:".length);
     const at = rest.indexOf(":");
-    if (at > 0) return { scope: "check", domain: rest.slice(0, at), name: rest.slice(at + 1) };
+    if (at > 0) return { scope: "check", check: "probe", domain: rest.slice(0, at), name: rest.slice(at + 1) };
+  }
+  if (key.startsWith("starttest:")) {
+    return { scope: "check", check: "start", domain: "containers", name: key.slice("starttest:".length) };
   }
   return null;
 }
@@ -350,11 +353,12 @@ function buildLiveLines(
     }
 
     if (parsed.scope === "check") {
-      // A probe records no run, so staleness is all there is to end it.
+      // A probe or start test records no run, so staleness is all there is
+      // to end it.
       if (!keep(null)) continue;
       const domain = normalizeDomain(parsed.domain);
       const name = parsed.domain === "flash" || parsed.domain === "config" ? domainLabel(resolveName, domain) : parsed.name;
-      const text = resolveName("activityLog.lineProbeRunning", { name });
+      const text = resolveName(parsed.check === "start" ? "activityLog.lineStartTestRunning" : "activityLog.lineProbeRunning", { name });
       lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind: "drill", live: true });
       continue;
     }

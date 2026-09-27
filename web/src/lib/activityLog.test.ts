@@ -914,3 +914,14 @@ describe("buildLogLines live restore probe", () => {
     expect(line.text).toBe("activityLog.lineProbeRunning name=activityLog.domainFlash");
   });
 });
+
+describe("buildLogLines live start test", () => {
+  it("names the container being start-tested", () => {
+    const progress: ProgressMap = {
+      "starttest:whoami": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
+    };
+    const [line] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(line.domain).toBe("containers");
+    expect(line.text).toBe("activityLog.lineStartTestRunning name=whoami");
+  });
+});

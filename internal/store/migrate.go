@@ -2140,6 +2140,32 @@ CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expi
 );
 CREATE INDEX IF NOT EXISTS idx_item_probes_target ON item_probes(target_id, at);`,
 	},
+	{
+		// One start test of one container: its backup restored into an
+		// isolated copy, started and checked, then removed again.
+		version: verifyMigrationBase + 1,
+		name:    "start_tests",
+		sql: `CREATE TABLE IF NOT EXISTS start_tests (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  target_id   TEXT    NOT NULL,
+  container   TEXT    NOT NULL,
+  at          INTEGER NOT NULL,
+  ok          INTEGER NOT NULL,
+  detail      TEXT    NOT NULL DEFAULT '',
+  method      TEXT    NOT NULL DEFAULT '',
+  duration_ms INTEGER NOT NULL DEFAULT 0,
+  trigger     TEXT    NOT NULL DEFAULT 'manual'
+);
+CREATE INDEX IF NOT EXISTS idx_start_tests_target ON start_tests(target_id, at);`,
+	},
+	{
+		// Off by default: a start test starts containers, which nobody should
+		// find happening without having asked for it.
+		version:          verifyMigrationBase + 2,
+		name:             "settings_start_test_enabled",
+		alreadySatisfied: columnPresent("settings", "start_test_enabled"),
+		sql:              `ALTER TABLE settings ADD COLUMN start_test_enabled INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,

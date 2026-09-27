@@ -1110,6 +1110,25 @@ export function ProtectionCard({
                     </>
                   )}
                 </div>
+                {/* The newest start test of any container, beside the
+                    verification row it belongs with. */}
+                {!off && d.lastStartTest && (
+                  <div className="flex flex-wrap items-center gap-2 ps-1">
+                    <Badge
+                      tone={d.lastStartTest.ok ? "ok" : "fail"}
+                      wrap
+                      className="max-w-full"
+                      title={[d.lastStartTest.detail, formatTs(d.lastStartTest.at)].filter(Boolean).join(" · ")}
+                    >
+                      {d.lastStartTest.ok ? "✓" : "✗"}{" "}
+                      {t(d.lastStartTest.ok ? "dashboard.startTestOk" : "dashboard.startTestFailed").replace(
+                        "{name}",
+                        d.lastStartTest.container
+                      )}{" "}
+                      · {relativeTime(t, d.lastStartTest.at)}
+                    </Badge>
+                  </div>
+                )}
                 {/* Manual off-site DR: the "Run off-site DR check" button is always
                     reachable for a configured domain (so a manual run works when
                     opted out AND when currently green), while the red WHICH-check +

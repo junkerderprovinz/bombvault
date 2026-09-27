@@ -629,6 +629,11 @@ func mapInspect(resp container.InspectResponse) model.Inspect {
 			User:   resp.Config.User,
 			Labels: resp.Config.Labels, // SEC/Unraid: keep net.unraid.docker.* labels
 		}
+		if hc := resp.Config.Healthcheck; hc != nil && len(hc.Test) > 0 {
+			out.Config.Healthcheck = &model.Healthcheck{
+				Test: hc.Test, Interval: hc.Interval, Timeout: hc.Timeout, StartPeriod: hc.StartPeriod, Retries: hc.Retries,
+			}
+		}
 	}
 	for _, m := range resp.Mounts {
 		out.Mounts = append(out.Mounts, model.Mount{
@@ -751,6 +756,11 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 		Cmd:    in.Config.Cmd,
 		User:   in.Config.User,
 		Labels: in.Config.Labels,
+	}
+	if hc := in.Config.Healthcheck; hc != nil {
+		cfg.Healthcheck = &container.HealthConfig{
+			Test: hc.Test, Interval: hc.Interval, Timeout: hc.Timeout, StartPeriod: hc.StartPeriod, Retries: hc.Retries,
+		}
 	}
 
 	hc := in.HostConfig

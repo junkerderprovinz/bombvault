@@ -296,6 +296,8 @@ export interface Settings {
   /** Scheduled off-site DR drill; default on. When off, only the manual
    *  off-site DR button runs (the free local integrity check still runs). */
   offsiteDrillsEnabled: boolean;
+  /** Adds a container start test to every scheduled restore check. */
+  startTestEnabled: boolean;
   drillsSchedule: string;
   drillsSubsetPct: number;
   /** True once the user has downloaded + safely stored the encryption recovery
@@ -489,6 +491,8 @@ export interface DomainStatus {
   lastVerifiedOK: boolean; // whether that last drill passed
   verifiedDetail: string; // scrubbed reason of the last LOCAL subset drill; "" on success
   drillDetail: string; // scrubbed reason of the last OFF-SITE DR drill; "" on success
+  /** The newest start test of any container, on the containers row only. */
+  lastStartTest?: StartTest;
   // Ransomware-protection scorecard facts (v4). Protection is the red/amber/green
   // aggregate; "" for a disabled domain (the dashboard card renders nothing for it).
   offsiteConfigured: boolean; // an off-site repo is configured for this domain
@@ -1973,6 +1977,23 @@ export interface ItemProbe {
   trigger: "first" | "manual";
 }
 
+/** One start test of one container: its backup restored into an isolated
+ *  copy, started and checked. */
+export interface StartTest {
+  targetId: string;
+  container: string;
+  at: number;
+  ok: boolean;
+  detail: string;
+  /** How the copy was judged: its healthcheck, its port, or staying up. */
+  method: "health" | "tcp" | "running" | "";
+  durationMs: number;
+  trigger: "schedule" | "manual";
+}
+
+/** Why a container cannot be start-tested. */
+export type StartTestBlocked = "host-network" | "privileged" | "devices" | "host-namespace" | "depends-on" | "no-definition";
+
 /** What the item cards show about the checks of one item. `domain` and `name`
  *  are the ones the anomaly list uses. */
 export interface ItemChecks {
@@ -1980,11 +2001,20 @@ export interface ItemChecks {
   domain: string;
   name: string;
   probe?: ItemProbe;
+  startTest?: StartTest;
+  startTestBlocked?: StartTestBlocked;
 }
 
 /** GET /api/checks/items: the newest check results of every item. */
 export function getItemChecks(): Promise<{ ok: boolean; items?: ItemChecks[]; error?: string }> {
   return fetchJSON("/api/checks/items");
+}
+
+/** POST /api/checks/starttest/{id}: a start test of the container, run now. */
+export function runStartTest(
+  targetId: string
+): Promise<{ ok: boolean; startTest?: StartTest; blocked?: StartTestBlocked; error?: string }> {
+  return fetchJSON(`/api/checks/starttest/${encodeURIComponent(targetId)}`, { method: "POST" });
 }
 
 /** POST /api/checks/probe/{id}: a restore probe of the item's newest backup. */

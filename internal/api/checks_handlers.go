@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"slices"
 	"strings"
@@ -16,6 +17,10 @@ type itemChecks struct {
 	Domain   string           `json:"domain"`
 	Name     string           `json:"name"`
 	Probe    *store.ItemProbe `json:"probe,omitempty"`
+	// StartTest and StartTestBlocked are for containers only: the newest
+	// start test, and why the container cannot be tested when it cannot.
+	StartTest        *store.StartTest `json:"startTest,omitempty"`
+	StartTestBlocked string           `json:"startTestBlocked,omitempty"`
 }
 
 // ItemChecks returns every item with the newest results of its checks.
@@ -28,11 +33,26 @@ func (s *Service) ItemChecks() ([]itemChecks, error) {
 	if err != nil {
 		return nil, err
 	}
+	tests, err := s.store.LatestStartTests()
+	if err != nil {
+		return nil, err
+	}
+	targets, err := s.store.ListTargets()
+	if err != nil {
+		return nil, err
+	}
+	blocked := make(map[string]string, len(targets))
+	for _, tg := range targets {
+		_, blocked[tg.ID] = startTestRecipe(tg)
+	}
 	out := []itemChecks{}
 	for id, ref := range refs {
-		row := itemChecks{TargetID: id, Domain: ref.Domain, Name: ref.Name}
+		row := itemChecks{TargetID: id, Domain: ref.Domain, Name: ref.Name, StartTestBlocked: blocked[id]}
 		if p, ok := probes[id]; ok {
 			row.Probe = &p
+		}
+		if t, ok := tests[id]; ok {
+			row.StartTest = &t
 		}
 		out = append(out, row)
 	}
@@ -59,4 +79,20 @@ func (h *Handler) handleProbeItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"probe": probe}))
+}
+
+// handleStartTest answers POST /api/checks/starttest/{id}: a start test of the
+// container, run now.
+func (h *Handler) handleStartTest(w http.ResponseWriter, r *http.Request) {
+	test, err := h.svc.RunStartTest(r.Context(), r.PathValue("id"))
+	if err != nil {
+		body := failEnvelope(err)
+		var blocked startTestBlocked
+		if errors.As(err, &blocked) {
+			body["blocked"] = blocked.Code
+		}
+		writeJSON(w, http.StatusOK, body)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"startTest": test}))
 }

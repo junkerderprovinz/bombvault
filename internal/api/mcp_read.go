@@ -86,6 +86,11 @@ func (h *Handler) toolGetStatus(ctx context.Context, _ *mcp.CallToolRequest) (*m
 	for i := range domains {
 		domains[i].VerifiedDetail = mcpScrubText(domains[i].VerifiedDetail)
 		domains[i].DrillDetail = mcpScrubText(domains[i].DrillDetail)
+		if t := domains[i].LastStartTest; t != nil {
+			scrubbed := *t
+			scrubbed.Detail = mcpScrubText(t.Detail)
+			domains[i].LastStartTest = &scrubbed
+		}
 	}
 
 	next := []schedule.NextRun{}
@@ -272,20 +277,32 @@ type mcpDatabase struct {
 // same reason: a ZFS item that was never checked reports an empty code, and no
 // other item has a check at all.
 type mcpItemView struct {
-	ID                  string       `json:"id"`
-	Name                string       `json:"name"`
-	Installed           *bool        `json:"installed,omitempty"`
-	Included            bool         `json:"included"`
-	Paused              bool         `json:"paused"`
-	Schedule            string       `json:"schedule"`
-	LastCheckCode       *string      `json:"lastCheckCode,omitempty"`
-	Stops               mcpStops     `json:"stops"`
-	LastDurationSeconds int64        `json:"lastDurationSeconds"`
-	LastSuccessAt       int64        `json:"lastSuccessAt"`
-	LastRunAt           int64        `json:"lastRunAt"`
-	LastRunStatus       string       `json:"lastRunStatus"`
-	Database            *mcpDatabase `json:"database,omitempty"`
-	RestoreCheck        *mcpProbe    `json:"restoreCheck,omitempty"`
+	ID                  string        `json:"id"`
+	Name                string        `json:"name"`
+	Installed           *bool         `json:"installed,omitempty"`
+	Included            bool          `json:"included"`
+	Paused              bool          `json:"paused"`
+	Schedule            string        `json:"schedule"`
+	LastCheckCode       *string       `json:"lastCheckCode,omitempty"`
+	Stops               mcpStops      `json:"stops"`
+	LastDurationSeconds int64         `json:"lastDurationSeconds"`
+	LastSuccessAt       int64         `json:"lastSuccessAt"`
+	LastRunAt           int64         `json:"lastRunAt"`
+	LastRunStatus       string        `json:"lastRunStatus"`
+	Database            *mcpDatabase  `json:"database,omitempty"`
+	RestoreCheck        *mcpProbe     `json:"restoreCheck,omitempty"`
+	StartTest           *mcpStartTest `json:"startTest,omitempty"`
+}
+
+// mcpStartTest is the newest start test of a container, or why it cannot be
+// tested.
+type mcpStartTest struct {
+	At              int64  `json:"at,omitempty"`
+	OK              bool   `json:"ok"`
+	Detail          string `json:"detail,omitempty"`
+	Method          string `json:"method,omitempty"`
+	DurationSeconds int64  `json:"durationSeconds,omitempty"`
+	NotTestable     string `json:"notTestable,omitempty"`
 }
 
 // mcpProbe is the newest restore probe of an item: a sample of its newest
@@ -449,6 +466,11 @@ func (h *Handler) mcpItems(ctx context.Context, settings store.Settings, domain 
 			if p, ok := probes[rows[i].ID]; ok {
 				rows[i].RestoreCheck = &mcpProbe{At: p.At, OK: p.OK, Detail: mcpScrubText(p.Detail), Trigger: p.Trigger}
 			}
+		}
+	}
+	if rows := items["containers"]; len(rows) > 0 {
+		if err := h.mcpStartTests(rows); err != nil {
+			return nil, nil, err
 		}
 	}
 	return items, known, nil
@@ -1129,4 +1151,32 @@ func mcpRunRow(v runView) map[string]any {
 		"startedVia":      v.StartedVia,
 		"startedViaLabel": v.StartedViaLabel,
 	}
+}
+
+// mcpStartTests fills in the start test of every container row.
+func (h *Handler) mcpStartTests(rows []mcpItemView) error {
+	tests, err := h.store.LatestStartTests()
+	if err != nil {
+		return err
+	}
+	targets, err := h.store.ListTargets()
+	if err != nil {
+		return err
+	}
+	byID := make(map[string]store.Target, len(targets))
+	for _, tg := range targets {
+		byID[tg.ID] = tg
+	}
+	for i := range rows {
+		if t, ok := tests[rows[i].ID]; ok {
+			rows[i].StartTest = &mcpStartTest{
+				At: t.At, OK: t.OK, Detail: mcpScrubText(t.Detail), Method: t.Method, DurationSeconds: t.DurationMS / 1000,
+			}
+			continue
+		}
+		if _, blocked := startTestRecipe(byID[rows[i].ID]); blocked != "" && blocked != "no-definition" {
+			rows[i].StartTest = &mcpStartTest{NotTestable: blocked}
+		}
+	}
+	return nil
 }

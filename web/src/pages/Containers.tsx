@@ -2549,7 +2549,7 @@ export function ContainerRow({
           content, wrapping onto its own line at narrow widths via the same
           `flex-wrap` this row already needs for the chips themselves. */}
       {!container.self && (
-        <ItemChecksLine checks={checks} hasBackup={container.lastBackup != null} onChanged={onChecksChanged} />
+        <ItemChecksLine checks={checks} hasBackup={container.lastBackup != null} onChanged={onChecksChanged} startTest />
       )}
 
       <div className="flex flex-col gap-2">

@@ -9,7 +9,7 @@ import { useProgress } from "./progress";
 
 /** The progress keys a check runs under; see internal/api item_probe.go. */
 export function isCheckKey(key: string): boolean {
-  return key.startsWith("probe:");
+  return key.startsWith("probe:") || key.startsWith("starttest:");
 }
 
 export interface ItemChecksState {

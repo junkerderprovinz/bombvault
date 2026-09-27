@@ -1626,6 +1626,7 @@ export function SettingsPage() {
     | "catchUpMissed"
     | "drillsEnabled"
     | "offsiteDrillsEnabled"
+    | "startTestEnabled"
     | "restartHealthWait";
   const [schedFieldBusy, setSchedFieldBusy] = useState<Partial<Record<ScheduleBoolKey, boolean>>>({});
   const [schedFieldShake, setSchedFieldShake] = useState<Partial<Record<ScheduleBoolKey, number>>>({});
@@ -2344,7 +2345,7 @@ export function SettingsPage() {
   // debounce like every other cadence/text field in this tab.
   function scheduleUpdate(patch: Partial<Settings>) {
     for (const [key, value] of Object.entries(patch) as [keyof Settings, Settings[keyof Settings]][]) {
-      if (key === "drillsEnabled" || key === "offsiteDrillsEnabled") {
+      if (key === "drillsEnabled" || key === "offsiteDrillsEnabled" || key === "startTestEnabled") {
         void autoSaveScheduleField(key, value as boolean);
       } else {
         scheduleField(key, value);
