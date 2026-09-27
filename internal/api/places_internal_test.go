@@ -148,15 +148,15 @@ func TestThePlacesListShowsWhatEachPlaceIsUsedForFromTheDatabaseAlone(t *testing
 
 	unraid := placeByName(t, res, "Unraid")
 	usage := unraid["usage"].(map[string]any)
-	if !reflect.DeepEqual(usage["homeDomains"], []any{"containers", "vms", "files"}) {
-		t.Errorf("Unraid homeDomains = %v", usage["homeDomains"])
+	if !reflect.DeepEqual(usage["homeDomains"], []any{"containers", "vms", "files"}) || usage["repositories"] != float64(3) {
+		t.Errorf("Unraid usage = %v, want three domain paths", usage)
 	}
 	if locked := unraid["locked"].(map[string]any); locked["containers"] != true || locked["vms"] != false {
 		t.Errorf("Unraid locked = %v, want containers only", locked)
 	}
 	cloud := placeByName(t, res, "B2")
 	usage = cloud["usage"].(map[string]any)
-	if !reflect.DeepEqual(usage["copyDomains"], []any{"containers"}) || usage["copies"] != float64(4) {
+	if !reflect.DeepEqual(usage["copyDomains"], []any{"containers"}) || usage["copies"] != float64(4) || usage["repositories"] != float64(1) {
 		t.Errorf("B2 usage = %v, want copies of containers, 4 snapshots", usage)
 	}
 	if locked := cloud["locked"].(map[string]any); locked["containers"] != true || locked["vms"] != false {

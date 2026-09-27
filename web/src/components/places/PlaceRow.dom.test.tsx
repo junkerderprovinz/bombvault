@@ -50,7 +50,7 @@ function place(over: Partial<Place> = {}): Place {
     growthBudgetGb: 0,
     enabled: true,
     sortOrder: 0,
-    usage: { homeDomains: ["containers", "vms"], defaults: [], copyDomains: ["flash"], items: 2, copies: 0 },
+    usage: { homeDomains: ["containers", "vms"], defaults: [], copyDomains: ["flash"], items: 2, copies: 0, repositories: 0 },
     locked: { containers: true },
     repository: false,
     creds: { shared: false, fields: {}, set: [] },
@@ -89,7 +89,7 @@ describe("PlaceRow", () => {
   });
 
   it("says a place is unused and untested", () => {
-    row(place({ offPremises: false, usage: { homeDomains: [], defaults: [], copyDomains: [], items: 0, copies: 0 } }));
+    row(place({ offPremises: false, usage: { homeDomains: [], defaults: [], copyDomains: [], items: 0, copies: 0, repositories: 0 } }));
     expect(screen.getByText(en["places.row.unused"])).toBeTruthy();
     expect(screen.getByText(en["places.row.untested"])).toBeTruthy();
     expect(screen.queryByText(en["places.row.otherSite"])).toBeNull();
@@ -150,7 +150,7 @@ describe("PlaceRow", () => {
   });
 
   it("asks before it removes, naming the copies that stay", async () => {
-    row(place({ usage: { homeDomains: [], defaults: [], copyDomains: ["flash"], items: 0, copies: 4 } }));
+    row(place({ usage: { homeDomains: [], defaults: [], copyDomains: ["flash"], items: 0, copies: 4, repositories: 0 } }));
     await act(async () => {
       fireEvent.click(button("places.row.remove"));
     });

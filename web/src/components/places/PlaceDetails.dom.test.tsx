@@ -54,7 +54,7 @@ function place(over: Partial<Place> = {}): Place {
     growthBudgetGb: 0,
     enabled: true,
     sortOrder: 0,
-    usage: { homeDomains: [], defaults: [], copyDomains: [], items: 0, copies: 0 },
+    usage: { homeDomains: [], defaults: [], copyDomains: [], items: 0, copies: 0, repositories: 0 },
     locked: { containers: false, vms: false },
     repository: false,
     creds: { shared: false, fields: { keyId: "k1", region: "eu" }, set: ["secret"] },
@@ -179,7 +179,7 @@ describe("PlaceDetails saving", () => {
   });
 
   it("asks before this place keeps fewer snapshots where items back up to it", async () => {
-    details(place({ usage: { homeDomains: [], defaults: [], copyDomains: [], items: 3, copies: 0 } }));
+    details(place({ usage: { homeDomains: [], defaults: [], copyDomains: [], items: 3, copies: 0, repositories: 0 } }));
     fireEvent.change(input(en["places.details.keepLast"]), { target: { value: "3" } });
     await settle(800);
     const ask = screen.getByRole("dialog");
@@ -192,7 +192,7 @@ describe("PlaceDetails saving", () => {
   });
 
   it("asks once for retention changed in several fields and saves them together", async () => {
-    details(place({ usage: { homeDomains: [], defaults: [], copyDomains: [], items: 3, copies: 0 } }));
+    details(place({ usage: { homeDomains: [], defaults: [], copyDomains: [], items: 3, copies: 0, repositories: 0 } }));
     fireEvent.change(input(en["places.details.keepLast"]), { target: { value: "3" } });
     await settle(300);
     fireEvent.change(input(en["places.details.keepDaily"]), { target: { value: "5" } });
@@ -205,7 +205,7 @@ describe("PlaceDetails saving", () => {
   });
 
   it("takes back every retention field when the question is declined", async () => {
-    details(place({ usage: { homeDomains: [], defaults: [], copyDomains: [], items: 3, copies: 0 } }));
+    details(place({ usage: { homeDomains: [], defaults: [], copyDomains: [], items: 3, copies: 0, repositories: 0 } }));
     fireEvent.change(input(en["places.details.keepLast"]), { target: { value: "3" } });
     await settle(300);
     fireEvent.change(input(en["places.details.keepDaily"]), { target: { value: "9" } });
@@ -262,7 +262,7 @@ describe("PlaceDetails sections", () => {
         kind: "rest",
         provider: "rest-server",
         immutable: true,
-        usage: { homeDomains: [], defaults: [], copyDomains: ["containers"], items: 0, copies: 4 },
+        usage: { homeDomains: [], defaults: [], copyDomains: ["containers"], items: 0, copies: 4, repositories: 0 },
         creds: { shared: false, fields: { user: "tower" }, set: ["password"] },
       }),
       undefined
@@ -275,13 +275,13 @@ describe("PlaceDetails sections", () => {
     expect(screen.getByText(en["places.details.tamperProtected"])).toBeTruthy();
   });
 
-  it("names the items that back up here before append-only goes off", async () => {
+  it("counts the repositories append-only guards here before it goes off, copies with no item among them", async () => {
     details(
       place({
         kind: "rest",
         provider: "rest-server",
         immutable: true,
-        usage: { homeDomains: ["vms"], defaults: [], copyDomains: [], items: 2, copies: 0 },
+        usage: { homeDomains: ["vms"], defaults: [], copyDomains: ["containers"], items: 0, copies: 4, repositories: 2 },
         creds: { shared: false, fields: { user: "tower" }, set: ["password"] },
       }),
       undefined
@@ -304,7 +304,7 @@ describe("PlaceDetails sections", () => {
         kind: "rest",
         provider: "rest-server",
         immutable: true,
-        usage: { homeDomains: [], defaults: [], copyDomains: ["vms"], items: 0, copies: 0 },
+        usage: { homeDomains: [], defaults: [], copyDomains: ["vms"], items: 0, copies: 0, repositories: 0 },
         creds: { shared: false, fields: { user: "tower" }, set: ["password"] },
       }),
       undefined
@@ -329,7 +329,7 @@ describe("PlaceDetails sections", () => {
         kind: "rest",
         provider: "rest-server",
         immutable: true,
-        usage: { homeDomains: ["vms"], defaults: [], copyDomains: ["containers"], items: 1, copies: 1 },
+        usage: { homeDomains: ["vms"], defaults: [], copyDomains: ["containers"], items: 1, copies: 1, repositories: 0 },
         creds: { shared: false, fields: { user: "tower" }, set: ["password"] },
       }),
       undefined

@@ -252,8 +252,8 @@ export function PlaceDetails({
   }
 
   async function setAppendOnly(on: boolean) {
-    const items = place.usage.items;
-    if (!on && items > 0 && !(await confirm(t("places.details.appendOnlyOffAsk", items)))) return;
+    const repos = place.usage.repositories;
+    if (!on && repos > 0 && !(await confirm(t("places.details.appendOnlyOffAsk", repos)))) return;
     saveAtOnce("immutable", on);
   }
 

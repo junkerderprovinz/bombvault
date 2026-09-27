@@ -58,7 +58,7 @@ function place(id: string, name: string, provider: string): Place {
     growthBudgetGb: 0,
     enabled: true,
     sortOrder: 0,
-    usage: { homeDomains: [], defaults: [], copyDomains: [], items: 0, copies: 0 },
+    usage: { homeDomains: [], defaults: [], copyDomains: [], items: 0, copies: 0, repositories: 0 },
     locked: {},
     repository: false,
     creds: { shared: false, fields: {}, set: [] },
