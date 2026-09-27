@@ -78,6 +78,7 @@ const testMatch = [
   "destination-vms.spec.ts",
   "recovery-phone.spec.ts",
   "files-phone.spec.ts",
+  "flash-phone.spec.ts",
 ];
 
 for (const spec of testMatch) {

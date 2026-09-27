@@ -3,7 +3,7 @@ import { hueVars } from "../lib/appearance";
 import { backupFlashNow, listFlashSnapshots, flashDownloadURL, deleteSnapshot } from "../lib/api";
 import type { Snapshot } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { PAGE_SHELL } from "../lib/pageShell";
+import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
@@ -165,7 +165,7 @@ function FlashSnapshotRow({
         preselected ? " bg-carbon-surface2 px-2 rounded-control" : ""
       }`}
     >
-      <div className="flex items-center gap-3 text-sm">
+      <div className="flex items-center gap-3 text-sm max-md:flex-wrap max-md:justify-end">
         <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
@@ -254,7 +254,7 @@ export function Flash() {
   return (
     // The OffsiteIndicator sits inside the heading div, so the shell gap alone
     // spaces the heading and the cards.
-    <div className={PAGE_SHELL}>
+    <div className={PAGE_SHELL_RESPONSIVE}>
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold text-carbon-text">{t("flash.title")}</h1>

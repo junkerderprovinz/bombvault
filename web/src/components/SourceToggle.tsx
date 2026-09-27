@@ -85,7 +85,7 @@ export function SourceToggle({
             value: offsiteTargetSource(target, i),
             label: offsiteTargetLabel(target),
           }))}
-          className="rounded-control bg-carbon-surface2 text-carbon-text text-xs px-2 py-1 disabled:opacity-50 glim-field-focus"
+          className="rounded-control bg-carbon-surface2 text-carbon-text text-xs px-2 py-1 pointer-coarse:min-h-(--btn-h) disabled:opacity-50 glim-field-focus"
         />
       )}
     </span>
