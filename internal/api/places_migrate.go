@@ -205,10 +205,15 @@ type placesMigrationInput struct {
 type plannedPlace struct {
 	store.MigratedPlace
 	traits       placeTraits
-	home         bool // made for domain paths, which take no default folders
+	serverNamed  bool // named after its host, until a target joins it
 	repository   bool // one repository by itself, so nothing goes under it
 	singleDomain bool // its credentials belong to one domain
 }
+
+// targetPlace reports whether targets went to the place, whether or not a
+// domain path made it first. Named repositories join later, so until then
+// every row is a target.
+func (pl *plannedPlace) targetPlace() bool { return len(pl.Rows) > 0 }
 
 // placesPlan is what the migration writes and what it leaves without a place.
 type placesPlan struct {
@@ -270,6 +275,7 @@ func (p *placesPlanner) planDomainPaths() {
 		}
 		if pl == nil {
 			pl = p.add(name, sp, traits, true)
+			pl.serverNamed = sp.kind != places.KindLocal
 		}
 		pl.Place.Folders[d] = sp.folder
 		pl.HomeDomains = append(pl.HomeDomains, d)
@@ -302,6 +308,9 @@ func (p *placesPlanner) planTargets() {
 		if pl == nil {
 			pl = p.add(placementTargetName(t), sp, traits, false)
 		}
+		if pl.serverNamed {
+			p.rename(pl, placementTargetName(t))
+		}
 		pl.Place.Folders[t.Domain] = sp.folder
 		pl.Place.Enabled = pl.Place.Enabled || t.Enabled
 		pl.Rows = append(pl.Rows, store.PlaceRowRef{RowID: t.ID, Domain: t.Domain, Repo: t.Repo})
@@ -317,7 +326,7 @@ func (p *placesPlanner) planTargets() {
 func (p *placesPlanner) markSingleDomainPlaces() {
 	var targets []*plannedPlace
 	for _, pl := range p.planned {
-		if !pl.home && !pl.repository {
+		if pl.targetPlace() && !pl.repository {
 			targets = append(targets, pl)
 		}
 	}
@@ -350,6 +359,11 @@ func (p *placesPlanner) domainUser(pl *plannedPlace) bool {
 			return false
 		}
 	}
+	for _, d := range pl.HomeDomains {
+		if d != domain {
+			return false
+		}
+	}
 	return p.credsFor(pl.traits.credsRef).RESTUser == "bombvault-"+domain
 }
 
@@ -365,12 +379,13 @@ func (p *placesPlanner) credsFor(ref string) CloudCreds {
 // addDefaultFolders lets a target place offer the domains it has no folder for
 // yet, under the usual folder names, so flash can be copied into the same
 // bucket with one click. A folder whose address would meet one in use is left
-// out, and home places, repository places and single-domain places get none.
+// out, and places without targets, repository places and single-domain places
+// get none.
 func (p *placesPlanner) addDefaultFolders() {
 	inUse := p.knownAddresses()
 	defaults := places.DefaultFolders()
 	for _, pl := range p.planned {
-		if pl.home || pl.repository || pl.singleDomain {
+		if !pl.targetPlace() || pl.repository || pl.singleDomain {
 			continue
 		}
 		for _, d := range places.Domains {
@@ -528,7 +543,7 @@ func (pl *plannedPlace) addresses() []string {
 // a home place is on from the start, because a domain path cannot be
 // switched off.
 func (p *placesPlanner) add(name string, sp placeSplit, traits placeTraits, home bool) *plannedPlace {
-	pl := &plannedPlace{traits: traits, home: home, repository: sp.folder == ""}
+	pl := &plannedPlace{traits: traits, repository: sp.folder == ""}
 	pl.Place = store.Place{
 		Name:                 p.uniqueName(name),
 		Provider:             p.provider(sp.kind, sp.base, traits.credsRef),
@@ -550,6 +565,14 @@ func (p *placesPlanner) add(name string, sp placeSplit, traits placeTraits, home
 	}
 	p.planned = append(p.planned, pl)
 	return pl
+}
+
+// rename gives a place the name want, or want with a number, and frees the
+// name it had.
+func (p *placesPlanner) rename(pl *plannedPlace, want string) {
+	delete(p.names, strings.ToLower(pl.Place.Name))
+	pl.Place.Name = p.uniqueName(want)
+	pl.serverNamed = false
 }
 
 // uniqueName hands out want, or want with the first free number after it,

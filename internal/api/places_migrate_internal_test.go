@@ -526,6 +526,31 @@ func TestHomeAndRepositoryPlacesGetNoDefaultFolders(t *testing.T) {
 	}
 }
 
+func TestARemoteHomePlaceATargetJoinsIsNamedAfterItAndOffersEveryDomain(t *testing.T) {
+	in := migrationInput()
+	in.settings.FlashPath = "rest:http://nas:8000/bvp/flash"
+	files := offsiteRow("rest", "files", "bvp rest", "rest:http://nas:8000/bvp/files", 1)
+	files.RetentionKeepLast = 5
+	in.targets = []store.OffsiteTarget{files}
+	plan := planPlaces(in)
+	m, _, _ := placeOfRow(plan, "rest")
+	want := map[string]string{"flash": "flash", "files": "files", "containers": "container", "vms": "vms", "config": "config"}
+	if m.Place.Name != "bvp rest" || !slices.Equal(m.HomeDomains, []string{"flash"}) || !maps.Equal(m.Place.Folders, want) {
+		t.Fatalf("place = %+v, want it named after the target, home to flash, with every domain", m)
+	}
+	if slices.Contains(placeNames(plan), "nas:8000") {
+		t.Fatalf("places = %q, want no place named after the server", placeNames(plan))
+	}
+}
+
+func TestARemoteHomePlaceKeepsItsServerNameWithoutATarget(t *testing.T) {
+	in := migrationInput()
+	in.settings.FlashPath = "rest:http://nas:8000/bvp/flash"
+	if got := placeNamed(t, planPlaces(in), "nas:8000").Place.Folders; !maps.Equal(got, map[string]string{"flash": "flash"}) {
+		t.Fatalf("folders = %v, want the domain path alone", got)
+	}
+}
+
 // directRow is target's direct repository at repo, with every mirrored field
 // the target has, the way CreateCompanionRepo writes it.
 func directRow(id, name, repo string, target store.OffsiteTarget) store.OffsiteTarget {
