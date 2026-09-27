@@ -319,6 +319,25 @@ func TestRowsWithoutAPlaceWaitInTheirOwnGroup(t *testing.T) {
 	}
 }
 
+func TestThePlacesListKeepsPasswordsInAddressesToItself(t *testing.T) {
+	f := newPlacementFixture(t)
+	p := store.Place{Name: "Tower", Provider: "rest-server", Kind: string(places.KindREST), Base: "rest:https://bv:hunter2@tower.lan:8000",
+		Folders: map[string]string{"vms": "vms"}, OffPremises: true, Enabled: true}
+	f.storePlace(p)
+	loose := f.target("containers", "Old", "rest:https://bv:hunter2@old.lan:8000/containers")
+
+	res := f.do(http.MethodGet, "/api/places", nil)
+
+	if got := placeByName(t, res, "Tower")["base"]; got != "rest:https://[redacted]@tower.lan:8000" {
+		t.Errorf("base = %v, want the password left out", got)
+	}
+	rows := rowsOf(res["unplaced"])
+	i := slices.IndexFunc(rows, func(r map[string]any) bool { return r["rowId"] == loose.ID })
+	if i < 0 || rows[i]["repo"] != "rest:https://[redacted]@old.lan:8000/containers" || rows[i]["protectable"] != true {
+		t.Errorf("unplaced = %v, want the old target without its password", rows)
+	}
+}
+
 func TestTheCatalogRouteServesEveryProviderInTileOrder(t *testing.T) {
 	f := newPlacementFixture(t)
 	providers := rowsOf(f.do(http.MethodGet, "/api/places/catalog", nil)["providers"])

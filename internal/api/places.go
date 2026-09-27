@@ -138,7 +138,7 @@ type UnplacedRow struct {
 	Domain string `json:"domain"` // "" for a named repository, which no domain owns
 	Role   string `json:"role"`   // "path", "target", "repository" or "direct"
 	Name   string `json:"name"`
-	Repo   string `json:"repo"` // as stored
+	Repo   string `json:"repo"` // as stored, without a password it carries
 	// Immutable is the row's append-only flag. A domain path keeps it on its
 	// domain's primary row, which guards the path only while it is remote.
 	Immutable   bool `json:"immutable"`
@@ -231,7 +231,7 @@ func (s *Service) placeViews() ([]PlaceView, []UnplacedRow, error) {
 func (s *Service) placeView(d placeData, p store.Place) (PlaceView, error) {
 	rows := d.rows[p.ID]
 	v := PlaceView{
-		ID: p.ID, Name: p.Name, Provider: p.Provider, Kind: p.Kind, Base: p.Base, Folders: map[string]string{},
+		ID: p.ID, Name: p.Name, Provider: p.Provider, Kind: p.Kind, Base: scrubRepoLocation(p.Base), Folders: map[string]string{},
 		OffPremises: p.OffPremises, StorageClass: p.StorageClass, Immutable: p.Immutable,
 		RetentionKeepLast: p.RetentionKeepLast, RetentionKeepDaily: p.RetentionKeepDaily,
 		RetentionKeepWeekly: p.RetentionKeepWeekly, RetentionKeepMonthly: p.RetentionKeepMonthly,
@@ -436,6 +436,7 @@ func (s *Service) unplacedRows(d placeData) ([]UnplacedRow, error) {
 	}
 	for i := range out {
 		out[i].Protectable = protectable(out[i])
+		out[i].Repo = scrubRepoLocation(out[i].Repo)
 	}
 	return out, nil
 }
