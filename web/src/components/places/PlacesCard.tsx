@@ -5,6 +5,7 @@ import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import { SelectField } from "../SelectField";
+import { Toggle } from "../Toggle";
 import { PlaceMark } from "../placeMarks";
 import { Card } from "../../pages/settings/shared";
 import { useT, type TranslationKey } from "../../lib/i18n";
@@ -14,11 +15,13 @@ import {
   adoptRow,
   listPlaces,
   placesChanged,
+  setUnplacedAppendOnly,
   subscribePlaces,
   type Place,
   type UnplacedRow,
 } from "../../lib/places";
 import { useToast } from "../../lib/toast";
+import { useConfirm } from "../../lib/useConfirm";
 import { usePlacesCatalog } from "../../lib/usePlacesCatalog";
 
 // Everything the card shows comes from the database, so opening the Storage
@@ -32,6 +35,41 @@ const ROLE_KEYS: Record<UnplacedRow["role"], TranslationKey> = {
 };
 
 const PICK_CLASS = "rounded-control bg-carbon-surface3 px-3 py-1.5 text-sm text-carbon-text glim-field-focus-well";
+
+function AppendOnlySwitch({ row }: { row: UnplacedRow }) {
+  const { t, lang } = useT();
+  const { push } = useToast();
+  const { confirm, confirmDialog } = useConfirm();
+  const [on, setOn] = useState(row.immutable);
+  const [shake, setShake] = useState(0);
+
+  async function flip(next: boolean) {
+    if (!next && row.items > 0 && !(await confirm(t("places.unplaced.appendOnlyOffAsk", row.items)))) return;
+    setOn(next);
+    try {
+      const res = await setUnplacedAppendOnly(row.rowId, row.domain, next);
+      if (res.ok) {
+        placesChanged();
+        return;
+      }
+      push(placeErrorText(t, lang, res, "common.actionFailed"), "fail");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("common.actionFailed"), "fail");
+    }
+    setOn(!next);
+    setShake((n) => n + 1);
+  }
+
+  return (
+    <>
+      {confirmDialog}
+      <span key={shake} className={`flex items-center gap-1.5 self-center ${shake ? "glim-shake" : ""}`}>
+        <Toggle label={t("places.details.appendOnly")} checked={on} onChange={(v) => void flip(v)} />
+        <InfoBubble tip={t("places.details.appendOnlyHint")} />
+      </span>
+    </>
+  );
+}
 
 function UnplacedRowView({ row, places }: { row: UnplacedRow; places: Place[] }) {
   const { t, lang } = useT();
@@ -80,6 +118,7 @@ function UnplacedRowView({ row, places }: { row: UnplacedRow; places: Place[] })
           {row.repo}
         </span>
       </div>
+      {row.protectable && <AppendOnlySwitch key={String(row.immutable)} row={row} />}
       <div className="flex flex-col gap-1.5">
         <label htmlFor={`${id}-place`} className="text-xs text-carbon-textSub">
           {t("places.unplaced.place")}
