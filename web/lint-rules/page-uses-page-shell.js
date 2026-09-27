@@ -158,9 +158,14 @@ export default {
       return out;
     }
 
-    // The two shells lib/pageShell.ts exports, listed here because a rule only
+    // The shells lib/pageShell.ts exports, listed here because a rule only
     // sees one file's AST.
-    const SHARED_SHELLS = ["PAGE_SHELL", "PAGE_SHELL_TABBED"];
+    const SHARED_SHELLS = [
+      "PAGE_SHELL",
+      "PAGE_SHELL_TABBED",
+      "PAGE_SHELL_RESPONSIVE",
+      "PAGE_SHELL_TABBED_RESPONSIVE",
+    ];
 
     function usesShell(returnStatement) {
       const arg = returnStatement.argument;

@@ -49,3 +49,10 @@ export const PAGE_SHELL_RESPONSIVE = "flex flex-col gap-6 md:gap-10 max-w-6xl";
  * or using a smaller size, would let Settings use PAGE_SHELL.
  */
 export const PAGE_SHELL_TABBED = "flex flex-col gap-10 flex-1";
+
+/**
+ * PAGE_SHELL_TABBED with the phone rhythm of PAGE_SHELL_RESPONSIVE, for a tab
+ * panel whose host page steps down to 24px below 48rem. Without it the panel
+ * would keep 40px gaps inside a page that has dropped them.
+ */
+export const PAGE_SHELL_TABBED_RESPONSIVE = "flex flex-col gap-6 md:gap-10 flex-1";

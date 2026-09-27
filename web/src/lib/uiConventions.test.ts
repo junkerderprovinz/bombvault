@@ -192,6 +192,12 @@ ruleTester.run("page-uses-page-shell", rules["page-uses-page-shell"], {
       filename: PAGE,
       options: shellOptions,
     },
+    // The same pick for a tab panel on the phone rhythm.
+    {
+      code: `export function Fleet({ embedded }) { return <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}><h1 /></div>; }`,
+      filename: PAGE,
+      options: [{ exceptions: { "Fleet.tsx": "PAGE_SHELL_RESPONSIVE" } }],
+    },
     // Login is exempt: it never sits under <Outlet />.
     { code: `export function LoginPage() { return <div className="w-full max-w-sm"><h1 /></div>; }`, filename: LOGIN, options: shellOptions },
     // Components outside src/pages are not pages.
@@ -249,6 +255,13 @@ export default Fleet;`,
     {
       // A root without the shell.
       code: `export function Fleet() { return <div className="space-y-4"><h1 /></div>; }`,
+      filename: PAGE,
+      options: shellOptions,
+      errors: [{ messageId: "notShelled" }],
+    },
+    {
+      // The responsive tab-panel shell on a page whose own shell is the plain one.
+      code: `export function Fleet({ embedded }) { return <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}><h1 /></div>; }`,
       filename: PAGE,
       options: shellOptions,
       errors: [{ messageId: "notShelled" }],
