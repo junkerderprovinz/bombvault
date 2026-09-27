@@ -634,6 +634,9 @@ type containerView struct {
 	// DumpOnly: the repositories hold database dumps of this container and no
 	// files backup, so restoring it alone brings back an empty database.
 	DumpOnly bool `json:"dumpOnly"`
+	// ChangedSinceBackup is how the container differs from its last good
+	// backup: image, ports, variables by name and volumes.
+	ChangedSinceBackup []DefinitionChange `json:"changedSinceBackup,omitempty"`
 }
 
 // lastDBDumpView is the container's most recent dump attempt. Error carries the
@@ -702,6 +705,11 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		snapTimes = m
 	}
 
+	shapes, shErr := h.store.BackedUpShapes()
+	if shErr != nil {
+		log.Printf("api: list containers: change notice: %v", shErr)
+	}
+
 	views := make([]containerView, 0, len(infos)+len(targets))
 	viewIndex := make(map[string]int, len(infos)) // live rows only, for the rename-suggestion backfill below
 	hasOwnBackup := make(map[string]bool, len(infos))
@@ -751,6 +759,9 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			run, _ = h.store.LastSuccessfulBackup(t.ID)
 		}
 		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[c.Name].Newest(), snapTimesFailed)
+		if t, ok := byName[c.Name]; ok && !v.Self && (run != nil || shapes[t.ID] != "") {
+			v.ChangedSinceBackup = h.svc.changesSinceBackup(r.Context(), c, t, shapes[t.ID])
+		}
 		own := v.LastBackup != nil
 		hasOwnBackup[c.Name] = own
 		if !own {

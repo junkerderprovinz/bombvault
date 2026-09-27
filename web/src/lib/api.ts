@@ -87,6 +87,20 @@ export interface Container {
   /** The repositories hold dumps of this container and no files backup, so
    *  restoring it alone brings back an empty database. */
   dumpOnly: boolean;
+  /** How the container differs from its last good backup. Absent when it
+   *  was not recreated since. */
+  changedSinceBackup?: ContainerChange[];
+}
+
+/** One way a container differs from its last good backup: added is in the
+ *  backup only, removed there now only, updated an image pulled again under
+ *  the same name. A variable carries its name, never its value. */
+export interface ContainerChange {
+  field: "image" | "port" | "env" | "volume";
+  name?: string;
+  change: "added" | "changed" | "removed" | "updated";
+  backup?: string;
+  now?: string;
 }
 
 /** The engines BombVault can dump; "" for a container that is not a database. */

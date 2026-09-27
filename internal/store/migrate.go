@@ -2119,6 +2119,15 @@ CREATE TABLE IF NOT EXISTS mcp_oauth_tokens (
 CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_grant ON mcp_oauth_tokens(grant_id, kind);
 CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expires_at);`,
 	},
+	{
+		// What a container looked like when its last backup succeeded, so the
+		// card can say what changed since. The definition cannot serve: it is
+		// written before restic runs, so a failed backup would replace it.
+		version:          insightMigration,
+		name:             "targets_backed_up_shape",
+		alreadySatisfied: columnPresent("targets", "backed_up_shape"),
+		sql:              `ALTER TABLE targets ADD COLUMN backed_up_shape TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2154,6 +2163,10 @@ const mcpActivityMigration = 148
 
 // mcpOAuthMigration numbers the OAuth sign-in of the MCP endpoint.
 const mcpOAuthMigration = mcpActivityMigration + 4
+
+// insightMigration numbers the migrations behind the change notice, the load
+// summary of a run and the size breakdown.
+const insightMigration = 190
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.
