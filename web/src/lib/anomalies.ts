@@ -7,7 +7,6 @@
 // are the only thing a test has to stand up.
 
 import type {
-  AnomalyDetector,
   AnomalyItem,
   AnomalySeverity,
   AnomalyState,
@@ -44,15 +43,6 @@ export const ANOMALY_STATE_LABEL: Record<AnomalyState, TranslationKey> = {
   resolved: "anomaly.state.resolved",
   acknowledged: "anomaly.state.acknowledged",
   expected: "anomaly.state.expected",
-};
-
-export const ANOMALY_DETECTOR_LABEL: Record<AnomalyDetector, TranslationKey> = {
-  new_data: "anomaly.detector.newData",
-  source: "anomaly.detector.source",
-  duration: "anomaly.detector.duration",
-  reliability: "anomaly.detector.reliability",
-  integrity: "anomaly.detector.integrity",
-  capacity: "anomaly.detector.capacity",
 };
 
 /** The three presets. The empty setting, "follow the global one", is not a
@@ -99,11 +89,6 @@ export const ANOMALY_DOMAIN_LABEL: Record<string, TranslationKey> = {
 
 export function anomalySeverityTone(severity: AnomalySeverity): BadgeTone {
   return SEVERITY_TONE[severity] ?? "neutral";
-}
-
-export function anomalyDetectorLabel(detector: AnomalyDetector, t: TranslateAnomaly): string {
-  const key = ANOMALY_DETECTOR_LABEL[detector];
-  return key ? t(key) : detector;
 }
 
 /**
@@ -366,4 +351,196 @@ export function anomalySentence(a: AnomalyView, t: TranslateAnomaly, locale = "e
     default:
       return fill(t("anomaly.sentence.unknown"), { name });
   }
+}
+
+/**
+ * anomalyShortLine is a finding as one line under its item's heading: the
+ * same facts as anomalySentence without the name the heading already shows. A
+ * dump or a dataset is named by `series`, which the line shows in front.
+ */
+export function anomalyShortLine(
+  a: AnomalyView,
+  t: TranslateAnomaly,
+  locale = "en"
+): { series: string; text: string } {
+  const d = a.details;
+  const series = a.scopeKind === "dump" ? t("anomaly.items.dumpSeries") : a.scopeKind === "zfsds" ? a.part : "";
+  const line = (key: TranslationKey, params: Record<string, string> = {}) => ({ series, text: fill(t(key), params) });
+
+  switch (a.metric) {
+    case "new_data":
+      return line("anomaly.short.newData", { bytes: bytes(a.observed), typical: bytes(numberOf(d, "refBytes")) });
+    case "new_data_rewrite":
+      return line(d.allFilesNew ? "anomaly.short.newDataRenamed" : "anomaly.short.newDataRewrite", {
+        bytes: bytes(a.observed),
+        source: bytes(numberOf(d, "sourceBytes")),
+      });
+    case "new_data_full":
+      return line("anomaly.short.newDataFull", { bytes: bytes(a.observed) });
+    case "source_bytes_shrink":
+      return line(
+        shrinkKey(d, "anomaly.short.sourceCollapse", "anomaly.short.sourceDrain", "anomaly.short.shrink"),
+        levelParams(a)
+      );
+    case "dump_bytes_shrink":
+      return line(d.collapse || d.drain ? "anomaly.short.sourceCollapse" : "anomaly.short.shrink", levelParams(a));
+    case "source_bytes_growth":
+    case "dump_bytes_growth":
+      return line("anomaly.short.growth", levelParams(a));
+    case "source_files_shrink":
+      return line(d.collapse || d.drain ? "anomaly.short.filesCollapse" : "anomaly.short.filesShrink", countParams(a));
+    case "duration_slower":
+    case "dump_duration_slower":
+      return line("anomaly.short.duration", durationParams(a));
+    case "failure_streak":
+    case "dump_failure_streak":
+      return line("anomaly.short.failureStreak", { count: count(a.observed) });
+    case "flaky":
+    case "dump_flaky":
+      return line("anomaly.short.flaky", {
+        failed: count(numberOf(d, "failed")),
+        total: count(numberOf(d, "total")),
+      });
+    case "drill_subset":
+      return line("anomaly.short.drill");
+    case "drill_dr":
+      return line("anomaly.short.drillDr");
+    case "capacity_eta":
+      return line("anomaly.short.capacityEta", { time: anomalyTimeSpan(a.observed, t, locale) });
+    case "capacity_low":
+      return line("anomaly.short.capacityLow", {
+        free: bytes(numberOf(d, "freeBytes")),
+        percent: count(a.observed * 100),
+      });
+    default:
+      return line("anomaly.short.unknown");
+  }
+}
+
+/** The item's own page, for the links out of a finding. */
+const DOMAIN_PATH: Record<string, string> = {
+  container: "/containers",
+  containers: "/containers",
+  vm: "/vms",
+  vms: "/vms",
+  files: "/files",
+  zfs: "/zfs",
+  flash: "/flash",
+  config: "/config",
+};
+
+export function anomalyItemPath(a: AnomalyView): string | undefined {
+  return DOMAIN_PATH[a.domain];
+}
+
+/**
+ * anomalyRestorePath opens the item's page on the last good backup of a
+ * finding about lost data. The item names the row on a page that lists many;
+ * flash and config have no name and need none.
+ */
+export function anomalyRestorePath(a: AnomalyView): string | null {
+  const itemPath = DOMAIN_PATH[a.domain];
+  if (!itemPath || !a.lastGood) return null;
+  const params = new URLSearchParams({ restore: a.lastGood.snapshotId, at: String(a.lastGood.at) });
+  if (a.name) params.set("item", a.name);
+  if (a.scopeKind === "zfsds") params.set("dataset", a.part);
+  if (a.scopeKind === "dump") params.set("dump", "1");
+  return `${itemPath}?${params.toString()}`;
+}
+
+const DRILL_METRICS = new Set(["drill_subset", "drill_dr"]);
+const DURATION_METRICS = new Set(["duration_slower", "dump_duration_slower"]);
+const COUNT_METRICS = new Set(["source_files_shrink", "failure_streak", "dump_failure_streak", "flaky", "dump_flaky"]);
+
+// The statistics the detector stored, in the order they explain the finding.
+const DETAIL_LABEL: [string, TranslationKey][] = [
+  ["median", "anomaly.detail.median"],
+  ["mad", "anomaly.detail.mad"],
+  ["z", "anomaly.detail.z"],
+  ["refBytes", "anomaly.detail.refBytes"],
+  ["refRate", "anomaly.detail.refRate"],
+  ["etaGrowthDays", "anomaly.detail.etaGrowth"],
+  ["etaFreeDays", "anomaly.detail.etaFree"],
+  ["slopePerDay", "anomaly.detail.slope"],
+];
+
+/** A metric's numbers in the unit the detector measured them in. */
+function metricValue(a: AnomalyView, value: number, t: TranslateAnomaly, locale: string): string {
+  if (a.metric === "capacity_eta") return anomalyTimeSpan(value, t, locale);
+  if (DURATION_METRICS.has(a.metric)) return isolateLtr(formatMillis(value));
+  if (COUNT_METRICS.has(a.metric)) return count(value);
+  if (a.metric === "capacity_low") return isolateLtr(`${Math.round(value * 100)}%`);
+  return bytes(value);
+}
+
+export type AnomalyFigure = [label: string, value: string];
+
+/**
+ * anomalyFigures splits a finding's numbers into the few its opened line
+ * shows and the rest, which only someone checking the detector's arithmetic
+ * wants to read.
+ */
+export function anomalyFigures(
+  a: AnomalyView,
+  t: TranslateAnomaly,
+  locale: string,
+  formatTime: (unix: number) => string
+): { main: AnomalyFigure[]; more: AnomalyFigure[] } {
+  const main: AnomalyFigure[] = [];
+  const more: AnomalyFigure[] = [];
+  if (DRILL_METRICS.has(a.metric)) {
+    main.push([t("anomaly.detail.checksCompared"), count(a.samples)]);
+  } else {
+    main.push([t("anomaly.detail.observed"), metricValue(a, a.observed, t, locale)]);
+    if (a.expected > 0) main.push([t("anomaly.detail.expected"), metricValue(a, a.expected, t, locale)]);
+    if (a.threshold > 0) more.push([t("anomaly.detail.threshold"), metricValue(a, a.threshold, t, locale)]);
+    more.push([
+      t(a.scopeKind === "volume" ? "anomaly.detail.samplesDisk" : "anomaly.detail.samples"),
+      count(a.samples),
+    ]);
+  }
+  main.push([t("anomaly.detail.firstSeen"), formatTime(a.firstSeenAt)]);
+  const sensitivity = ANOMALY_SENSITIVITY_LABEL[a.sensitivity];
+  if (sensitivity) more.push([t("anomaly.detail.sensitivity"), t(sensitivity)]);
+  more.push([t("anomaly.detail.lastSeen"), formatTime(a.lastSeenAt)]);
+  if (a.occurrences > 1) more.push([t("anomaly.detail.occurrences"), count(a.occurrences)]);
+  for (const [key, labelKey] of DETAIL_LABEL) {
+    const value = a.details[key];
+    if (typeof value !== "number") continue;
+    if (key === "z") more.push([t(labelKey), value.toFixed(1)]);
+    // The detector measures a rate per second; an hour is the span a reader
+    // can picture for a backup.
+    else if (key === "refRate") more.push([t(labelKey), bytes(value * 3600)]);
+    else if (key === "refBytes" || key === "slopePerDay") more.push([t(labelKey), bytes(value)]);
+    else more.push([t(labelKey), metricValue(a, value, t, locale)]);
+  }
+  return { main, more };
+}
+
+/** The open findings one card shows: an item with its dump and datasets, one
+ *  restore check series, or one disk. */
+export interface AnomalyGroup {
+  key: string;
+  findings: AnomalyView[];
+  worst: AnomalySeverity;
+}
+
+/** A finding of an item, its dump or its datasets carries the item's target
+ *  id; a restore check or a disk has none and is a series of its own. */
+export function anomalyGroupKey(a: AnomalyView): string {
+  return a.targetId || `${a.scopeKind}:${a.scopeId}`;
+}
+
+/** Cards in the order a reader should get to them: the worst first, and among
+ *  equals the one with the newest finding. */
+export function groupAnomalies(list: AnomalyView[]): AnomalyGroup[] {
+  const byKey = new Map<string, AnomalyView[]>();
+  for (const a of sortOpenAnomalies(list)) {
+    const key = anomalyGroupKey(a);
+    byKey.set(key, [...(byKey.get(key) ?? []), a]);
+  }
+  const newest = (g: AnomalyGroup) => Math.max(...g.findings.map((a) => a.lastSeenAt));
+  return [...byKey.entries()]
+    .map(([key, findings]) => ({ key, findings, worst: findings[0].severity }))
+    .sort((a, b) => SEVERITY_RANK[a.worst] - SEVERITY_RANK[b.worst] || newest(b) - newest(a));
 }

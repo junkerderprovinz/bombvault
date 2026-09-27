@@ -662,7 +662,6 @@ export function AnomaliesCard({
               key={a.id}
               a={a}
               t={t}
-              compact
               onAcknowledge={onAcknowledge}
               onExpected={onExpected}
             />

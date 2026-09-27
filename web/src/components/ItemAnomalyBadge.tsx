@@ -34,7 +34,7 @@ export function ItemAnomalyBadge({
   if (open > 0 && worst) {
     return (
       <Link
-        to={`/anomalies?scope=item:${encodeURIComponent(item.targetId)}#findings`}
+        to={`/anomalies?scope=item:${encodeURIComponent(item.targetId)}`}
         aria-label={t("anomaly.itemBadgeAria")
           .replace("{name}", item.name || anomalyDomainsLabel(item.domain, t))
           .replace("{n}", open.toLocaleString())}
