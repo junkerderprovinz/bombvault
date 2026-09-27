@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { accentButtons } from "../../lib/placement.testsupport";
 import { I18nProvider, countText, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import type { CopiesPreview, DomainRow, HomePreview, Place, UnplacedRow } from "../../lib/places";
@@ -230,6 +231,7 @@ describe("DomainsCard", () => {
         en["storageDomains.homePlaceAsk"].replace("{domain}", "Containers").replace("{place}", "NAS Keller")
       )
     ).toBeTruthy();
+    expect(accentButtons(dialog())).toEqual([en["placement.saveHome"]]);
     const reads = domainReads;
     await answer(en["placement.saveHome"]);
     expect(homeBodies).toEqual([
@@ -371,6 +373,7 @@ describe("DomainsCard copies", () => {
     await tick("Containers", "NAS Keller");
     expect(within(dialog()).getByText(en["newTarget.intro"].replace("{target}", "NAS Keller"))).toBeTruthy();
     expect(within(dialog()).getByText(en["newTarget.itemsContainers"].replace("{n}", "7"))).toBeTruthy();
+    expect(accentButtons(dialog())).toEqual([en["common.confirm"]]);
     expect(chip("Containers", "NAS Keller").getAttribute("aria-pressed")).toBe("true");
     await answer(en["common.confirm"]);
     expect(copiesBodies).toEqual([{ placeId: "p-nas", on: true, expect: copies({ newTarget }) }]);
@@ -492,6 +495,7 @@ describe("DomainsCard pause and copy now", () => {
       fireEvent.click(within(rowOf("Containers")).getByRole("button", { name: en["placementDefaults.confirm"] }));
     });
     expect(within(dialog()).getByText(en["placementDefaults.confirmAsk"])).toBeTruthy();
+    expect(accentButtons(dialog())).toEqual([en["placementDefaults.confirm"]]);
     expect(within(dialog()).getByText("B2")).toBeTruthy();
     fireEvent.click(
       within(dialog()).getByRole("switch", {

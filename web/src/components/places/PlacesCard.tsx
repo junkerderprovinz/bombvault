@@ -44,7 +44,7 @@ function AppendOnlySwitch({ row }: { row: UnplacedRow }) {
   const [shake, setShake] = useState(0);
 
   async function flip(next: boolean) {
-    if (!next && row.items > 0 && !(await confirm(t("places.unplaced.appendOnlyOffAsk", row.items)))) return;
+    if (!next && row.items > 0 && !(await confirm(t("places.unplaced.appendOnlyOffAsk", row.items), { cancelTone: "neutral" }))) return;
     setOn(next);
     try {
       const res = await setUnplacedAppendOnly(row.rowId, row.domain, next);

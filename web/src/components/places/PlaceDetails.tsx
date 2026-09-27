@@ -247,7 +247,7 @@ export function PlaceDetails({
         push(t("places.details.retentionUnsaved").replace("{name}", now.name), "warn");
         return;
       }
-      if (asks && !(await confirm(t("places.details.retentionLowerAsk", now.usage.items)))) {
+      if (asks && !(await confirm(t("places.details.retentionLowerAsk", now.usage.items), { cancelTone: "neutral" }))) {
         setDraft((d) => {
           const back = { ...d };
           for (const k of RETENTION_KEYS) back[k] = now[k];
@@ -266,7 +266,7 @@ export function PlaceDetails({
 
   async function setAppendOnly(on: boolean) {
     const repos = place.usage.repositories;
-    if (!on && repos > 0 && !(await confirm(t("places.details.appendOnlyOffAsk", repos)))) return;
+    if (!on && repos > 0 && !(await confirm(t("places.details.appendOnlyOffAsk", repos), { cancelTone: "neutral" }))) return;
     saveAtOnce("immutable", on);
   }
 

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { accentButtons } from "../../lib/placement.testsupport";
 import { I18nProvider, countText, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import { PLACES_CHANGED, type Place } from "../../lib/places";
@@ -156,6 +157,7 @@ describe("PlaceRow", () => {
     });
     const ask = screen.getByRole("dialog");
     expect(within(ask).getByText(countText(en["places.row.removeAskCopies"], "en", 4).replace("{name}", "NAS Keller"))).toBeTruthy();
+    expect(accentButtons(ask)).toEqual([en["places.row.remove"]]);
     await act(async () => {
       fireEvent.click(within(ask).getByRole("button", { name: en["places.row.remove"] }));
     });

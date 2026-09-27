@@ -80,7 +80,7 @@ export function PlaceRow({
       place.usage.copies > 0
         ? t("places.row.removeAskCopies", place.usage.copies).replace("{name}", () => place.name)
         : t("places.row.removeAsk").replace("{name}", () => place.name);
-    if (!(await confirm(question, { confirmKey: "places.row.remove" }))) return;
+    if (!(await confirm(question, { confirmKey: "places.row.remove", cancelTone: "neutral" }))) return;
     setRemoving(true);
     try {
       const res = await deletePlace(place.id);

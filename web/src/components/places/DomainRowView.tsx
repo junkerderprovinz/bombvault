@@ -197,13 +197,13 @@ export function DomainRowView({
     const fill = (key: "storageDomains.homePlaceAsk" | "storageDomains.homeMoveAsk") =>
       t(key).replace("{domain}", () => domain).replace("{place}", () => place);
     if (p.mode === "home-place") {
-      return (await confirm(fill("storageDomains.homePlaceAsk"), { confirmKey: "placement.saveHome" }))
+      return (await confirm(fill("storageDomains.homePlaceAsk"), { confirmKey: "placement.saveHome", cancelTone: "neutral" }))
         ? { applyToOpen: false }
         : null;
     }
     if (p.mode === "home-move") {
       const extra = p.backups > 0 ? <Lines lines={[t("storageDomains.homeMoveStays", p.backups)]} /> : undefined;
-      return (await confirm(fill("storageDomains.homeMoveAsk"), { confirmKey: "placement.saveHome", extra }))
+      return (await confirm(fill("storageDomains.homeMoveAsk"), { confirmKey: "placement.saveHome", extra, cancelTone: "neutral" }))
         ? { applyToOpen: false }
         : null;
     }
@@ -221,7 +221,7 @@ export function DomainRowView({
       </div>
     );
     const question = t("placementDefaults.confirmHome").replace("{domain}", () => domain).replace("{home}", () => place);
-    return (await confirm(question, { confirmKey: "placement.saveHome", extra })) ? { applyToOpen } : null;
+    return (await confirm(question, { confirmKey: "placement.saveHome", extra, cancelTone: "neutral" })) ? { applyToOpen } : null;
   }
 
   async function chooseHome(placeId: string) {
@@ -264,14 +264,15 @@ export function DomainRowView({
       if (p.newTarget) {
         return confirm(t("newTarget.intro").replace("{target}", () => place), {
           extra: <NewTargetPreviewLines domain={row.domain} target={place} preview={p.newTarget} />,
+          cancelTone: "neutral",
         });
       }
       const lead = lines.shift();
-      return lead === undefined ? true : confirm(lead, { extra: extra() });
+      return lead === undefined ? true : confirm(lead, { extra: extra(), cancelTone: "neutral" });
     }
     if (isPlacementDomain(row.domain)) lines.push(t("storageDomains.copiesOffOwnChoice"));
     const question = t("storageDomains.copiesOffAsk").replace("{place}", () => place).replace("{domain}", () => domain);
-    return confirm(question, { extra: extra() });
+    return confirm(question, { extra: extra(), cancelTone: "neutral" });
   }
 
   async function toggleChip(placeId: string, on: boolean) {
@@ -314,7 +315,7 @@ export function DomainRowView({
       const extra = (
         <ConfirmLines domain={d} targets={preview.targets ?? []} unmatched={preview.unmatched ?? []} onExclude={(ids) => (excluded = ids)} />
       );
-      if (!(await confirm(t("placementDefaults.confirmAsk"), { confirmKey: "placementDefaults.confirm", extra }))) return;
+      if (!(await confirm(t("placementDefaults.confirmAsk"), { confirmKey: "placementDefaults.confirm", extra, cancelTone: "neutral" }))) return;
       const res = await confirmPlacementDefault(d, excluded);
       if (!res.ok) return refused(res, "confirm");
       push(t("placementDefaults.confirmed"), "success");
