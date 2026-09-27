@@ -560,6 +560,26 @@ func TestPlainExportRedactsCredentialInsideRepoLocation(t *testing.T) {
 	}
 }
 
+func TestPlainExportRedactsTheObscuredPasswordOfAnRcloneLocation(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	const obscured = "Zm9vYmFyT2JzY3VyZWQ"
+	tg, found, err := srcStore.GetOffsiteTarget("tgt-1")
+	if err != nil || !found {
+		t.Fatalf("test setup: off-site target tgt-1 found %v, %v", found, err)
+	}
+	tg.Repo = "rclone::webdav,url='https://cloud.example.com/dav',user=anna,pass=" + obscured + ":bv"
+	if _, err := srcStore.UpsertOffsiteTarget(tg); err != nil {
+		t.Fatal(err)
+	}
+
+	body, _ := doExport(t, src, "")
+
+	if bytes.Contains(body, []byte(obscured)) {
+		t.Fatalf("the plain export carried the obscured rclone password:\n%s", body)
+	}
+}
+
 // Applying a plain export must not replace a working location on the destination
 // with the redacted one, which would quietly break its off-site replication.
 func TestImportKeepsWorkingLocationWhenFileArrivesRedacted(t *testing.T) {
@@ -644,6 +664,10 @@ func TestScrubRepoLocationLeavesCredentialFreeLocationsAlone(t *testing.T) {
 		"sftp://u123456@u123456.your-storagebox.de:23//bv/vms",
 		"rclone::webdav,url='https://cloud.example.com/dav':bv",
 		"rclone::webdav,url='https://anna@cloud.example.com/dav':bv",
+		// An "@" in the path after a port is no userinfo.
+		"rest:https://host:8000/repo@2",
+		"rest:http://192.168.1.2:8000/bv@home/containers",
+		"rclone::webdav,url='https://cloud.example.com:8443/dav/a@b':bv",
 	} {
 		if got := scrubRepoLocation(loc); got != loc {
 			t.Fatalf("scrubRepoLocation(%q) = %q, want it untouched", loc, got)
@@ -659,9 +683,17 @@ func TestScrubRepoLocationKeepsTheSchemeWhenItDropsThePassword(t *testing.T) {
 		// An rclone connection string quotes the URL it carries.
 		{"rclone::webdav,url='https://anna:secret@cloud.example.com/dav':bv", "rclone::webdav,url='https://[redacted]@cloud.example.com/dav':bv"},
 		{`rclone::webdav,url="https://anna:se/cret@cloud.example.com/dav":bv`, `rclone::webdav,url="https://[redacted]@cloud.example.com/dav":bv`},
+		{"rest:https://backupuser:hunter2@host:8000/repo@2", "rest:https://[redacted]@host:8000/repo@2"},
+		// rclone only obscures a pass= parameter, which anyone can reverse.
+		{"rclone::webdav,url='https://cloud.example.com/dav',user=anna,pass=3xObScUrEd:bv", "rclone::webdav,url='https://cloud.example.com/dav',user=anna,pass=[redacted]:bv"},
+		{"rclone::sftp,host=nas.lan,user=bv,pass='x,y:z',key_file_pass=AbC:bv", "rclone::sftp,host=nas.lan,user=bv,pass=[redacted],key_file_pass=[redacted]:bv"},
 	} {
-		if got := scrubRepoLocation(c.in); got != c.want {
+		got := scrubRepoLocation(c.in)
+		if got != c.want {
 			t.Errorf("scrubRepoLocation(%q) = %q, want %q", c.in, got, c.want)
+		}
+		if !locationRedacted(got) {
+			t.Errorf("locationRedacted(%q) = false, want the import to know it arrived redacted", got)
 		}
 	}
 }

@@ -90,11 +90,15 @@ func buildSettingsView(s store.Settings) settingsView {
 	return v
 }
 
-// redactedLocationMarker replaces the "user:pass@" userinfo of a repo location on
-// the plain export path (scrubRepoLocation). The import recognises it and keeps
-// a working location here in its place where importedLocation or
-// restoredLocation says so.
-const redactedLocationMarker = "[redacted]@"
+// redactedValue replaces a secret in a repo location on the plain export path
+// (scrubRepoLocation): the "user:pass" of its userinfo, which leaves
+// redactedLocationMarker, or the value of an rclone password parameter. The
+// import recognises it and keeps a working location here in its place where
+// importedLocation or restoredLocation says so.
+const (
+	redactedValue          = "[redacted]"
+	redactedLocationMarker = redactedValue + "@"
+)
 
 // scrubRepoLocation takes the password out of a restic repo location and keeps
 // the rest, scheme included, so the location still names its destination. A
@@ -106,17 +110,29 @@ const redactedLocationMarker = "[redacted]@"
 // locations, and leaves a userinfo without a password alone: the sftp short
 // form sftp:user@host:/repo holds a login name, and redacting that would turn
 // a working location into one the operator has to retype. urlPasswordRe then
-// reaches the URLs repoUserinfoRe stops short of.
+// reaches the URLs repoUserinfoRe stops short of, and rclonePassRe the
+// password parameters of an rclone connection string, which rclone only
+// obscures.
 func scrubRepoLocation(loc string) string {
 	loc = repoUserinfoRe.ReplaceAllStringFunc(loc, func(match string) string {
 		m := repoUserinfoRe.FindStringSubmatch(match)
 		scheme := m[1] + ":" + m[2]
-		if !strings.Contains(match[len(scheme):], ":") {
+		userinfo := match[len(scheme) : len(match)-1]
+		if !strings.Contains(userinfo, ":") || hostPortPathRe.MatchString(userinfo) {
 			return match
 		}
 		return scheme + redactedLocationMarker
 	})
-	return urlPasswordRe.ReplaceAllString(loc, "//"+redactedLocationMarker)
+	loc = urlPasswordRe.ReplaceAllStringFunc(loc, func(match string) string {
+		if hostPortPathRe.MatchString(match[2 : len(match)-1]) {
+			return match
+		}
+		return "//" + redactedLocationMarker
+	})
+	if strings.HasPrefix(loc, "rclone:") {
+		loc = rclonePassRe.ReplaceAllString(loc, "${1}"+redactedValue)
+	}
+	return loc
 }
 
 // urlPasswordRe matches the "user:password@" of a URL anywhere in a location,
@@ -124,10 +140,19 @@ func scrubRepoLocation(loc string) string {
 // stops at the quote. Like repoUserinfoRe, it lets the password hold "/".
 var urlPasswordRe = regexp.MustCompile(`//[^@\s"'/]*:[^@\s"']*@`)
 
+// hostPortPathRe matches what those two patterns take for "user:password"
+// when it is a host and port followed by a path that holds the "@", as in
+// rest:https://host:8000/repo@2.
+var hostPortPathRe = regexp.MustCompile(`^[^:/]*:\d*/`)
+
+// rclonePassRe matches a password parameter of an rclone connection string
+// with its value, quoted or not.
+var rclonePassRe = regexp.MustCompile(`([,:]\w*pass(?:word)?=)('(?:[^']|'')*'|"(?:[^"]|"")*"|[^,:]*)`)
+
 // locationRedacted reports whether a repo location reached the import with its
 // embedded credential already stripped by a plain export.
 func locationRedacted(loc string) bool {
-	return strings.Contains(loc, redactedLocationMarker)
+	return strings.Contains(loc, redactedValue)
 }
 
 // redactExportLocations strips URL-embedded credentials out of every repo
