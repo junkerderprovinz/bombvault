@@ -337,3 +337,33 @@ func TestAProjectFolderCopiedOnlyInTheHouseIsNoOffsiteCopy(t *testing.T) {
 		t.Fatal("with the NAS at another site, the project folder's copy there is off site")
 	}
 }
+
+func TestThePruneStrategyComesFromTheCopyTargets(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.settings(func(s *store.Settings) { s.OffsiteRetentionKeepDaily = 7 })
+	garage := f.storePlace(restPlace("Garage", "http://garage:8000"))
+	garage.Immutable = false
+	garage = f.storePlace(garage)
+	f.placeTarget(garage, "containers", "")
+	if f.domainStatus("containers").PruneStrategySet {
+		t.Fatal("a copy place that keeps everything counts as a prune strategy through the old global keep-policy")
+	}
+
+	f.settings(func(s *store.Settings) { s.OffsiteRetentionKeepDaily = 0 })
+	garage.RetentionKeepDaily = 7
+	f.storePlace(garage)
+	if !f.domainStatus("containers").PruneStrategySet {
+		t.Fatal("a copy place keeping 7 daily snapshots does not count as a prune strategy")
+	}
+
+	friend := f.storePlace(s3Place("Friend", "s3:https://s3.example.com/friend"))
+	f.placeTarget(friend, "containers", "")
+	if f.domainStatus("containers").PruneStrategySet {
+		t.Fatal("a second copy place that keeps everything is covered by the first place's keep-policy")
+	}
+	friend.GrowthBudgetGB = 500
+	f.storePlace(friend)
+	if !f.domainStatus("containers").PruneStrategySet {
+		t.Fatal("a copy place with a growth budget does not count as a prune strategy")
+	}
+}

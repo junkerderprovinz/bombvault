@@ -350,6 +350,21 @@ func replicationRank(state string) int {
 	return 0
 }
 
+// everyTargetLimitsGrowth reports whether a domain copies somewhere and every
+// copy target keeps its growth in check: the far side prunes itself
+// (append-only), a keep-policy ages it, or a growth budget alarms. Places
+// write these onto their target rows, and a target made from the settings
+// carries the global ones.
+func everyTargetLimitsGrowth(targets []store.OffsiteTarget) bool {
+	for _, t := range targets {
+		keeps := t.RetentionKeepLast + t.RetentionKeepDaily + t.RetentionKeepWeekly + t.RetentionKeepMonthly
+		if !t.Immutable && t.GrowthBudgetGB <= 0 && keeps <= 0 {
+			return false
+		}
+	}
+	return len(targets) > 0
+}
+
 // protectionLevel aggregates a domain's ransomware-protection posture into a
 // red/amber/green chip. The far side enforces immutability, so this never
 // goes green on configuration claims alone:
@@ -640,14 +655,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		drillsOffSite := copiesOffSite &&
 			len(offSiteTargets(schedule.DrillTargets(settings, d.name, s.offsiteTargetsFor(d.name)), sites)) > 0
 
-		// An off-site retention strategy is "configured" when the far side prunes
-		// (immutable), a growth budget is set, or an off-site keep policy is set.
-		pruneStrategySet := offsiteImmutable ||
-			settings.OffsiteGrowthBudgetGB > 0 ||
-			settings.OffsiteRetentionKeepLast > 0 ||
-			settings.OffsiteRetentionKeepDaily > 0 ||
-			settings.OffsiteRetentionKeepWeekly > 0 ||
-			settings.OffsiteRetentionKeepMonthly > 0
+		pruneStrategySet := offsiteImmutable || everyTargetLimitsGrowth(s.offsiteReplicationTargets(d.name, settings))
 
 		out = append(out, DomainStatusEntry{
 			Domain:                d.name,
