@@ -222,8 +222,7 @@ export function NotifyCard({
           // lighting no segment at all.
           active={cfg.on || "never"}
           onChange={(id) => setImmediate("on", id)}
-          variant="well"
-          className={fieldShake.on ? "glim-shake" : undefined}
+          className={`flex-1${fieldShake.on ? " glim-shake" : ""}`}
         />
       </div>
 

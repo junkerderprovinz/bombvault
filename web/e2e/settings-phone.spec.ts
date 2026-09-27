@@ -6,8 +6,8 @@
 // arrangements that change on a phone: target and credential rows put their
 // actions under the name, repository and passkey rows wrap instead of cutting,
 // the every-N-days field keeps three digits clear of its steppers, and the MCP
-// card's confirmations come up as a sheet. On the desktop: the
-// 40px rhythm and the unchanged strip of seven 200px tabs. German, because its
+// card's confirmations come up as a sheet. On the desktop: the 40px rhythm and
+// a strip of tabs that spans the column in even rows. German, because its
 // labels run longest; advanced mode on, so every expert control is there too.
 import { expect, test, type Page } from "@playwright/test";
 
@@ -385,13 +385,12 @@ async function gaps(page: Page): Promise<string[]> {
     .evaluate((root) => [getComputedStyle(root).rowGap, getComputedStyle(root.children[1]).rowGap]);
 }
 
-async function tabRows(page: Page): Promise<{ perRow: number[]; widths: number[] }> {
+async function tabRows(page: Page): Promise<{ perRow: number[] }> {
   return page.getByRole("tablist", { name: "Einstellungen" }).evaluate((strip) => {
     const boxes = [...strip.querySelectorAll('[role="tab"]')].map((tab) => tab.getBoundingClientRect());
     const tops = [...new Set(boxes.map((b) => Math.round(b.top)))];
     return {
       perRow: tops.map((top) => boxes.filter((b) => Math.round(b.top) === top).length),
-      widths: boxes.map((b) => Math.round(b.width)),
     };
   });
 }
@@ -475,7 +474,7 @@ test("settings on a phone: each tab shows its glyph alone and keeps its name", a
     expect(box.width, `the ${name} tab is narrower than a fingertip`).toBeGreaterThanOrEqual(43.5);
     // The label is there for the accessible name only; shown, it would be a
     // letter and an ellipsis.
-    const label = tab.locator("span.truncate");
+    const label = tab.locator("[data-sel-label]");
     expect(await label.evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
   }
 });
@@ -565,18 +564,28 @@ test("settings system on a phone: passkeys wrap and the MCP confirmations come u
   expect(box.y + box.height).toBeLessThanOrEqual(800);
 });
 
-test("settings on the desktop keeps the 40px rhythm and the strip of 200px tabs", async ({ page }, testInfo) => {
+test("settings on the desktop keeps the 40px rhythm and a strip that spans the column", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await openTab(page, testInfo.project.use.viewport!.width, "general", "Allgemein");
 
   expect(await gaps(page)).toEqual(["40px", "40px"]);
-  const { widths } = await tabRows(page);
-  expect(widths).toEqual(Array(7).fill(200));
+  const { perRow } = await tabRows(page);
+  expect(perRow.reduce((a, b) => a + b, 0)).toBe(7);
+  expect(Math.max(...perRow) - Math.min(...perRow), "the rows are as even as seven allow").toBeLessThanOrEqual(1);
   for (const [, name] of TABS) {
-    const label = page.getByRole("tab", { name, exact: true }).locator("span.truncate");
-    expect(await label.evaluate((el) => el.getBoundingClientRect().width), `the ${name} label is hidden`).toBeGreaterThan(1);
+    const label = page.getByRole("tab", { name, exact: true }).locator("[data-sel-label]");
+    const fits = await label.evaluate((el) => el.getBoundingClientRect().width > 1 && el.scrollWidth <= el.clientWidth);
+    expect(fits, `the ${name} label is hidden or cut`).toBe(true);
   }
-  // The strip hugs its tabs rather than spanning the column.
+  // The strip spans the column the cards below share.
   const strip = page.getByRole("tablist", { name: "Einstellungen" });
-  expect(await strip.evaluate((el) => getComputedStyle(el).display)).toBe("flex");
+  const span = await strip.evaluate((el) => {
+    const column = el.parentElement!;
+    const style = getComputedStyle(column);
+    return {
+      strip: el.getBoundingClientRect().width,
+      column: column.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+    };
+  });
+  expect(Math.abs(span.strip - span.column)).toBeLessThanOrEqual(1);
 });

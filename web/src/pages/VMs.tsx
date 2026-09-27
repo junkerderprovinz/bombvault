@@ -120,7 +120,7 @@ function SortControl({
       <Selector
         items={(["name", "status"] as SortKey[]).map((k) => ({ id: k, label: t(SORT_KEYS[k]) }))}
         label={t("sort.label")}
-        variant="well"
+        inline
         select="one"
         active={value}
         onChange={(id) => onChange(id as SortKey)}
@@ -215,6 +215,7 @@ function VMMethodSelect({
       size="sm"
       select="one"
       equalWidth
+      inline
       disabled={busy}
       active={method}
       onChange={(id) => void handleChange(id)}
@@ -579,7 +580,7 @@ function VMRestorePanel({
                   {t("source.label")}
                   <InfoBubble tip={t("source.hint")} />
                 </span>
-                <SourceToggle source={source} onChange={setSource} disabled={loading} domain="vms" />
+                <SourceToggle source={source} onChange={setSource} disabled={loading} domain="vms" inline />
               </Advanced>
               {snapshots.length > 0 && (
                 // Neutral, with no red of its own, like the same control in
@@ -827,6 +828,8 @@ export function VMRow({
           <Selector
             items={[{ id: "backups", label: t("snapshots.title") }]}
             label={t("containers.sectionsLabel")}
+            variant="chip"
+            inline
             select="many"
             active={openSections}
             buttonHeight
@@ -2266,6 +2269,8 @@ function MobileVMDetail({
           <Selector
             items={[{ id: "backups", label: t("snapshots.title") }]}
             label={t("containers.sectionsLabel")}
+            variant="chip"
+            inline
             select="many"
             active={openSections}
             buttonHeight

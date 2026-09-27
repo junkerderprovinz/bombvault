@@ -108,24 +108,22 @@ export function Instances() {
       </div>
 
       {visible.length > 1 && (
-        <div className="inline-flex self-start max-w-full">
-          <Selector
-            items={visible.map((k) => ({
-              id: k,
-              label: tabLabel[k],
-              icon: TAB_ICON[k],
-              title: tabLabel[k],
-            }))}
-            label={t("instances.title")}
-            select="one"
-            active={active}
-            onChange={(id) => {
-              if (isTab(id)) choose(id);
-            }}
-            size="lg"
-            equalWidth
-          />
-        </div>
+        <Selector
+          items={visible.map((k) => ({
+            id: k,
+            label: tabLabel[k],
+            icon: TAB_ICON[k],
+            title: tabLabel[k],
+          }))}
+          label={t("instances.title")}
+          select="one"
+          active={active}
+          onChange={(id) => {
+            if (isTab(id)) choose(id);
+          }}
+          size="lg"
+          equalWidth
+        />
       )}
 
       {/* Keyed on the tab so the slide replays on every switch, with --tab-dir

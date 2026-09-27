@@ -399,6 +399,7 @@ function FileSetRestoreControl({
           select="one"
           active={dest}
           buttonHeight
+          inline
           onChange={(id) => setDest(id as RestoreDest)}
           disabled={isPending}
         />
@@ -691,7 +692,7 @@ function FileSetRestorePanel({
                   {t("source.label")}
                   <InfoBubble tip={t("source.hint")} />
                 </span>
-                <SourceToggle source={source} onChange={setSource} disabled={loading} domain="files" />
+                <SourceToggle source={source} onChange={setSource} disabled={loading} domain="files" inline />
               </Advanced>
               {/* Delete-all acts on the local repository and forgets the set,
                   so it only shows with the local source. */}

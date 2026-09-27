@@ -304,7 +304,6 @@ function Card({
   title,
   hint,
   children,
-  action,
   hueIndex,
 }: {
   title: string;
@@ -312,7 +311,6 @@ function Card({
    *  the title, as on the Settings cards. */
   hint?: string;
   children: React.ReactNode;
-  action?: React.ReactNode;
   /** Rainbow position for THIS Card's own heading notch — GlimStone
    *  follow-up pass, jdp's live review of this page specifically: "Dashboard:
    *  Cardtitelbadges sind falsch platziert. Alle sind nicht im
@@ -388,13 +386,6 @@ function Card({
         </Badge>
       </h2>
       <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4 overflow-hidden">
-        {/* action used to share a `justify-between` row with the <h2> above,
-            pinned to the row's far end opposite the title. Now that the
-            title lives outside this div entirely, `justify-end` replaces
-            `justify-between` (which needs 2+ items to do anything — with
-            only `action` left in the row, `justify-between` would dock it
-            to the START instead of the end it always visually occupied). */}
-        {action && <div className="flex justify-end">{action}</div>}
         {children}
       </div>
     </div>
@@ -1697,7 +1688,7 @@ function mondayIndex(d: Date): number {
   return (d.getDay() + 6) % 7;
 }
 
-function HealthHeatmapCard({
+export function HealthHeatmapCard({
   t,
   selectedDay,
   onSelectDay,
@@ -1782,41 +1773,23 @@ function HealthHeatmapCard({
     }
   };
 
-  // REVERSED (jdp, live-review, extremely emphatic — "Es soll immer alles in
-  // die Farb- und Formengine integriert werden!! IMMER!!"): this used to
-  // carry `hue={false}`, justified as "a small, fixed set of 5 where each
-  // entry already has its own durable identity, and a 5-way rainbow strip
-  // competing with the heatmap's own fixed red/green state hues would hurt
-  // legibility for no tracking benefit." That reasoning is exactly the kind
-  // of self-authored aesthetic exception jdp has now ruled out categorically
-  // — a plausible-sounding taste judgement is never grounds to unilaterally
-  // exclude a control from the colour engine, no matter how reasonable it
-  // reads in isolation. This strip is a genuine "select one of several"
-  // Selector like every other hue-enabled one in this app, so it gets the
-  // same default `hue` (true) as the rest — no opt-out prop at all now.
-  //   KNOWN COINCIDENCE, not a reason to exclude: RAINBOW[0] (#FF8389) and
-  // RAINBOW[3] (#6FDC8C) happen to match this page's own fixed --status-fail/
-  // --status-ok hues in dark theme (see lib/appearance.ts's own documented
-  // KNOWN LIMITATION for the full writeup) — a coincidence, not a WCAG
-  // failure (every cell still carries its own count as text, not colour
-  // alone), and not grounds for a fresh opt-out either.
-  const toggle = (
-    <Selector
-      items={(["containers", "vms", "flash", "config", "files", "zfs"] as HeatDomain[]).map((d) => ({
-        id: d,
-        label: domainLabel(d),
-      }))}
-      label={t("dashboard.healthTitle")}
-      select="one"
-      active={domain}
-      onChange={(id) => setDomain(id as HeatDomain)}
-      size="sm"
-      plain
-    />
-  );
-
   return (
-    <Card title={t("dashboard.healthTitle")} action={toggle} hueIndex={hueIndex}>
+    <Card title={t("dashboard.healthTitle")} hueIndex={hueIndex}>
+      {/* Hued like every other selector. Two rainbow positions match the
+          grid's fail and ok colours in the dark theme, which is harmless:
+          every cell says its counts in text as well. */}
+      <Selector
+        items={(["containers", "vms", "flash", "config", "files", "zfs"] as HeatDomain[]).map((d) => ({
+          id: d,
+          label: domainLabel(d),
+        }))}
+        label={t("dashboard.healthTitle")}
+        select="one"
+        active={domain}
+        onChange={(id) => setDomain(id as HeatDomain)}
+        size="lg"
+        equalWidth
+      />
       {loading && (
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}

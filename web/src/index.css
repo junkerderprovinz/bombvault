@@ -112,11 +112,7 @@
      its neighbours, not top-aligned. */
   --btn-h-key: 2.5rem;
 
-  /* The nav rail's row box, which page-level tab strips match. 200px is the
-     rail's `w-56` minus its `p-3` on both sides; 43px is `py-2.5` around a 15px
-     line box. It does not follow the rail into glyph mode, because a settings
-     tab matches the row box, not the rail's label mode. */
-  --nav-row-w: 12.5rem;
+  /* The nav rail's row height: `py-2.5` around a 15px line box. */
   --nav-row-h: 2.6875rem;
   --btn-pad-x: 0.875rem;
   --btn-gap: 0.5rem;
@@ -125,16 +121,6 @@
   --btn-w-sm: 8rem;
   --btn-w-md: 11.5rem;
   --btn-w-lg: 15rem;
-}
-
-/* The phone arm of --settings-tab-seg-w. The desktop arm is the --nav-row-w
-   pin, and the element carries it as a `md:` override (Settings.tsx), so the
-   48rem literal stays in the one place that owns it (lib/useMediaQuery.ts)
-   rather than being written a second time here. Below 48rem the strip is a
-   grid over the page column, so a tab takes its cell's width and the row
-   always spans the column, whatever a scrollbar takes from it. */
-:root {
-  --settings-tab-seg-w: auto;
 }
 
 /* Safe-area insets; the three edges a device's own hardware claims (side
