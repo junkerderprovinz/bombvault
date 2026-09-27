@@ -11,6 +11,7 @@ import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
 import type { RestoreRequest } from "../../lib/restoreRequest";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
 import { useConfirm } from "../../lib/useConfirm";
+import { restoreBlockReason, useRestoreCheck } from "../../lib/useRestoreCheck";
 import { useToast } from "../../lib/toast";
 import { zfsCodeSentence, zfsMemberKey } from "../../lib/zfsCodes";
 import { Badge } from "../Badge";
@@ -19,6 +20,7 @@ import { FolderBrowser } from "../FolderBrowser";
 import { IconDisclosure } from "../IconDisclosure";
 import { InfoBubble } from "../InfoBubble";
 import { MissingRestorePoint, nearestRestorePoint } from "../restore/MissingRestorePoint";
+import { RestoreCheckPanel } from "../restore/RestoreCheckPanel";
 import { RestoreProgress } from "../restore/RestoreProgress";
 import { Selector, type SelectorItem } from "../Selector";
 import { SelectField } from "../SelectField";
@@ -198,6 +200,29 @@ export function ZFSRestorePanel({
   const prog = progressMap[progressKey];
   const otherActive = anyActive(progressMap);
   const blockedByOther = otherActive.active && !isPending;
+  const complete =
+    open &&
+    stamp !== "" &&
+    (active !== "folder" || targetPath.trim() !== "") &&
+    (active !== "select" || picked.size > 0);
+  const check = useRestoreCheck(
+    complete
+      ? {
+          kind: "zfs",
+          name: item.id,
+          source,
+          zfs: {
+            stamp,
+            dataset: wholeTree ? "" : dataset,
+            wholeTree,
+            paths: active === "select" ? [...picked] : [],
+            targetPath: active === "folder" ? targetPath.trim() : "",
+            confirm: true,
+          },
+        }
+      : null
+  );
+  const idle = isPending || state.phase === "success";
 
   useEffect(() => {
     reset();
@@ -368,9 +393,10 @@ export function ZFSRestorePanel({
                   glyph={<IconRestore />}
                   tone="accent"
                   onClick={() => void handleRestore()}
-                  disabled={isPending || blockedByOther || (active === "select" && picked.size === 0)}
+                  disabled={isPending || blockedByOther || (active === "select" && picked.size === 0) || !check.ready}
                   busy={isPending}
                   title={isPending ? t("common.restoring") : undefined}
+                  hint={idle ? undefined : restoreBlockReason(check, t)}
                   className="shrink-0"
                 />
                 {blockedByOther && (
@@ -429,6 +455,8 @@ export function ZFSRestorePanel({
                   )}
                 </div>
               )}
+
+              {!idle && <RestoreCheckPanel check={check} t={t} />}
 
               {ack && (
                 <div className="flex flex-col gap-1">

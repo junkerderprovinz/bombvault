@@ -7,9 +7,13 @@
 // "cancelled" instead of success, and through RestoreProgress to
 // RestoreCancelButton, which sets it on a successful cancel. Both must see the
 // same ref.
+//
+// The pre-flight check runs while the control is shown. A row action has no
+// room for it, so there it runs on the click and its answer goes into the
+// confirm modal.
 
-import { useRef, useState, type ReactNode } from "react";
-import { restore, restoreVM } from "../../lib/api";
+import { useMemo, useRef, useState, type ReactNode } from "react";
+import { restore, restoreVM, type RestoreCheckRequest } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
 import { useBackupWatch } from "../../lib/backupWatch";
 import { useProgress, busyPhraseKey } from "../../lib/progress";
@@ -19,6 +23,8 @@ import { Button } from "../Button";
 import { IconRestore } from "../Sidebar";
 import { useConfirm } from "../../lib/useConfirm";
 import { Toggle } from "../Toggle";
+import { checkRestoreOnce, restoreBlockReason, useRestoreCheck } from "../../lib/useRestoreCheck";
+import { RestoreCheckPanel } from "./RestoreCheckPanel";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -90,6 +96,12 @@ export function RestoreAction({
   // leaveStopped overrides the captured run-state so an in-place restore
   // recreates the target without starting it (rebuild a stack member by member).
   const [leaveStopped, setLeaveStopped] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const checkReq = useMemo<RestoreCheckRequest>(
+    () => ({ kind: domain, name, snapshotId, source }),
+    [domain, name, snapshotId, source]
+  );
+  const check = useRestoreCheck(iconBadge ? null : checkReq);
 
   const progressKey = `${domain}:${name}`;
   const cancelledRef = useRef(false);
@@ -110,13 +122,28 @@ export function RestoreAction({
 
   async function handleRestore() {
     if (requireConfirm && !confirmed) return;
-    if (confirmMessage && !(await confirm(confirmMessage))) return;
+    if (iconBadge) {
+      setChecking(true);
+      const answered = await checkRestoreOnce(checkReq);
+      setChecking(false);
+      const blocked = restoreBlockReason(answered, t);
+      const message = confirmMessage ?? blocked;
+      if (message !== undefined) {
+        const ok = await confirm(message, {
+          extra: <RestoreCheckPanel check={answered} t={t} />,
+          confirmBlocked: blocked,
+        });
+        if (!ok) return;
+      }
+    } else if (confirmMessage && !(await confirm(confirmMessage))) return;
     void fire();
   }
 
   // Both trigger shapes share this and handleRestore, so a row action and a
   // form submit cannot disagree on whether a restore may run.
-  const triggerDisabled = (requireConfirm && !confirmed) || isPending || blockedByOther || done;
+  const triggerDisabled =
+    (requireConfirm && !confirmed) || isPending || blockedByOther || done || checking || (!iconBadge && !check.ready);
+  const blockReason = iconBadge || isPending || done ? undefined : restoreBlockReason(check, t);
   // The icon badge is the row's last child, pushed to the far edge by ms-auto,
   // so the busy phrase goes before it.
   const busyHint =
@@ -132,7 +159,7 @@ export function RestoreAction({
       tone="accent"
       onClick={() => void handleRestore()}
       disabled={triggerDisabled}
-      busy={isPending}
+      busy={isPending || checking}
       className="ms-auto shrink-0"
     />
   ) : (
@@ -144,6 +171,7 @@ export function RestoreAction({
       disabled={triggerDisabled}
       busy={isPending}
       title={isPending ? t("common.restoring") : undefined}
+      hint={blockReason}
       className="shrink-0"
     />
   );
@@ -151,6 +179,7 @@ export function RestoreAction({
   return (
     <div className="flex flex-col gap-2">
       {confirmDialog}
+      {!iconBadge && !isPending && !done && <RestoreCheckPanel check={check} t={t} />}
       <div className="flex items-center gap-3 flex-wrap">
         {leading}
         {requireConfirm && (

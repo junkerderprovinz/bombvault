@@ -42,6 +42,18 @@ vi.mock("../../lib/api", async (importOriginal) => {
     listRuns: () => Promise.resolve({ ok: true, runs: [] }),
     listOffsiteTargets: () => Promise.resolve({ ok: true, targets: [] }),
     browse: () => Promise.resolve({ ok: true, dirs: [] }),
+    checkRestore: () =>
+      Promise.resolve({
+        ok: true,
+        ready: true,
+        checks: [
+          { id: "repository", status: "ok" },
+          { id: "key", status: "ok" },
+          { id: "snapshot", status: "ok" },
+          { id: "space", status: "ok", need: 1, free: 2 },
+        ],
+        plan: null,
+      }),
   };
 });
 
@@ -128,11 +140,12 @@ function renderPanel(view = item(), host = new Map<string, ZFSHostDataset>()) {
   );
 }
 
-/** Opens the panel and waits for the restore points. */
+/** Opens the panel and waits for the restore points and the pre-flight check. */
 async function openPanel(view = item(), host = new Map<string, ZFSHostDataset>()) {
   const rendered = renderPanel(view, host);
   fireEvent.click(screen.getByRole("button", { name: en["snapshots.title"] }));
   await screen.findByRole("combobox", { name: en["zfs.restore.dataset"] });
+  await screen.findByText(en["restoreCheck.line.space"]);
   return rendered;
 }
 
