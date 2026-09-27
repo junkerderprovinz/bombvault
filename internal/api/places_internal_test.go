@@ -599,8 +599,8 @@ func TestADeviceHasToBeToldWhereItStands(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.probeAnswers(places.ProbeResult{OK: true, Base: "remotes/syno/bombvault"})
 	body := map[string]any{"provider": "synology", "name": "Synology", "fields": map[string]string{"path": "remotes/syno/bombvault"}}
-	if res := f.do(http.MethodPost, "/api/places", body); res["ok"] != false || res["code"] != nil {
-		t.Fatalf("POST without the answer = %v, want a plain refusal", res)
+	if res := f.do(http.MethodPost, "/api/places", body); res["ok"] != false || res["code"] != "place-unasked" {
+		t.Fatalf("POST without the answer = %v, want place-unasked", res)
 	}
 	body["offPremises"] = true
 	if res := f.do(http.MethodPost, "/api/places", body); res["ok"] != true || res["place"].(map[string]any)["offPremises"] != true {
