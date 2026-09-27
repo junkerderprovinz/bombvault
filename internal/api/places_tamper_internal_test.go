@@ -138,7 +138,7 @@ func TestAMovedDomainPathWithoutAPrimaryRowIsProbedWithoutKeepingAVerdict(t *tes
 	}
 }
 
-func TestAPlaceTamperTestLeavesADirectRepositoryThereAlone(t *testing.T) {
+func TestAPlaceTamperTestProbesADirectRepositoryThereToo(t *testing.T) {
 	var seen []string
 	server := httptest.NewServer(deleteRecorder(http.StatusForbidden, &seen))
 	defer server.Close()
@@ -151,12 +151,30 @@ func TestAPlaceTamperTestLeavesADirectRepositoryThereAlone(t *testing.T) {
 	if res := f.tamperTestPlace(garage.ID); res["ok"] != true || res["protected"] != true {
 		t.Fatalf("answer = %v", res)
 	}
-	if len(seen) != 2 || slices.ContainsFunc(seen, func(p string) bool { return strings.Contains(p, directSuffix) }) {
-		t.Fatalf("probes = %v, want the copy's two and none at its direct repository", seen)
+	atDirect := slices.DeleteFunc(slices.Clone(seen), func(p string) bool { return !strings.Contains(p, directSuffix) })
+	if len(seen) != 4 || len(atDirect) != 2 {
+		t.Fatalf("probes = %v, want two at the copy and two at its direct repository", seen)
 	}
 }
 
-func TestARepositoryPlaceHasNothingToTamperTest(t *testing.T) {
+func TestAPlaceThatIsARepositoryIsTamperTested(t *testing.T) {
+	var seen []string
+	server := httptest.NewServer(deleteRecorder(http.StatusOK, &seen))
+	defer server.Close()
+	f := newPlacementFixture(t)
+	p := restPlace("Vault", server.URL+"/vault")
+	p.Folders = map[string]string{"containers": "", "vms": "", "files": ""}
+	vault := f.storePlace(p)
+	f.linkRow(f.namedRepo("Vault", vault.Base).ID, vault, "", "")
+
+	res := f.tamperTestPlace(vault.ID)
+
+	if res["ok"] != true || res["testable"] != true || res["protected"] != false || len(seen) != 2 {
+		t.Fatalf("answer = %v, probes %v, want deletes accepted at the vault", res, seen)
+	}
+}
+
+func TestASwitchedOffRepositoryAtAPlaceIsNotTamperTested(t *testing.T) {
 	var seen []string
 	server := httptest.NewServer(deleteRecorder(http.StatusForbidden, &seen))
 	defer server.Close()
@@ -164,7 +182,16 @@ func TestARepositoryPlaceHasNothingToTamperTest(t *testing.T) {
 	p := restPlace("Vault", server.URL+"/vault")
 	p.Folders = map[string]string{"containers": "", "vms": "", "files": ""}
 	vault := f.storePlace(p)
-	f.linkRow(f.namedRepo("Vault", vault.Base).ID, vault, "", "")
+	repo := f.namedRepo("Vault", vault.Base)
+	f.linkRow(repo.ID, vault, "", "")
+	repo, err := f.st.GetNamedRepo(repo.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(repo); err != nil {
+		t.Fatal(err)
+	}
 
 	if res := f.tamperTestPlace(vault.ID); res["ok"] != false || res["code"] != "place-nothing-to-test" || len(seen) != 0 {
 		t.Fatalf("answer = %v, probes %v, want place-nothing-to-test without a probe", res, seen)

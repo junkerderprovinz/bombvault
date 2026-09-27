@@ -164,9 +164,9 @@ func (f *tamperFold) verdict() (TamperVerdict, error) {
 }
 
 // RunPlaceTamperTest folds the verdicts of the repositories at one place: the
-// path of each domain it is home to and each enabled copy it holds. Copies at
-// other places play no part, so a second server without append-only does not
-// speak for this one.
+// path of each domain it is home to, each enabled copy and each enabled named
+// or direct repository it holds. Copies at other places play no part, so a
+// second server without append-only does not speak for this one.
 func (s *Service) RunPlaceTamperTest(ctx context.Context, id string) (TamperVerdict, error) {
 	p, err := s.store.GetPlace(id)
 	if err != nil {
@@ -182,54 +182,64 @@ func (s *Service) RunPlaceTamperTest(ctx context.Context, id string) (TamperVerd
 	if err != nil {
 		return TamperVerdict{}, fmt.Errorf("read settings: %w", err)
 	}
-	repos, err := s.placeTamperRepos(id, settings)
+	byDomain, named, err := s.placeTamperRepos(id, settings)
 	if err != nil {
 		return TamperVerdict{}, err
 	}
-	if len(repos) == 0 {
+	if len(byDomain) == 0 && len(named) == 0 {
 		return TamperVerdict{}, errPlaceNothingToTest
 	}
 	var fold tamperFold
 	for _, d := range places.Domains {
-		if len(repos[d]) > 0 {
-			fold.add(s.tamperTestPlaceDomain(ctx, settings, d, repos[d]))
+		if len(byDomain[d]) > 0 {
+			fold.add(s.tamperTestPlaceDomain(ctx, settings, d, byDomain[d]))
 		}
+	}
+	for _, r := range named {
+		creds, _ := s.decodeCloudFor(settings, r.CredsRef)
+		fold.add(probeDeletes(ctx, r.Repo, creds))
 	}
 	return fold.verdict()
 }
 
-// placeTamperRepos lists by domain what a place test probes: the path of each
+// placeTamperRepos lists what a place test probes: by domain the path of each
 // domain whose home the place is, carrying the domain's primary row, and each
-// enabled copy there. The move onto places leaves a primary row off its home
-// place, so the row is looked up by domain. Named and direct repositories
-// have no domain to keep a verdict under.
-func (s *Service) placeTamperRepos(id string, settings store.Settings) (map[string][]store.OffsiteTarget, error) {
+// enabled copy there, then the enabled named and direct repositories. The
+// move onto places leaves a primary row off its home place, so the row is
+// looked up by domain. A named or direct repository has no domain to keep a
+// verdict under, so it is probed without one.
+func (s *Service) placeTamperRepos(id string, settings store.Settings) (map[string][]store.OffsiteTarget, []store.OffsiteTarget, error) {
 	homes, err := s.store.DomainPlaces()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	repos := map[string][]store.OffsiteTarget{}
+	byDomain := map[string][]store.OffsiteTarget{}
 	for _, d := range places.Domains {
 		if homes[d] != id {
 			continue
 		}
 		path, _, err := s.store.PrimaryRemoteTarget(d)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		path.Domain, path.Repo = d, domainPathRaw(d, settings)
-		repos[d] = append(repos[d], path)
+		byDomain[d] = append(byDomain[d], path)
 	}
 	rows, err := s.store.PlaceRows(id)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	var named []store.OffsiteTarget
 	for _, r := range rows {
-		if r.Role == store.RoleOffsite && r.Enabled {
-			repos[r.Domain] = append(repos[r.Domain], r)
+		switch {
+		case !r.Enabled:
+		case r.Role == store.RoleOffsite:
+			byDomain[r.Domain] = append(byDomain[r.Domain], r)
+		case r.Role == store.RoleRepo:
+			named = append(named, r)
 		}
 	}
-	return repos, nil
+	return byDomain, named, nil
 }
 
 // tamperTestPlaceDomain probes one domain's repositories at a place, each
