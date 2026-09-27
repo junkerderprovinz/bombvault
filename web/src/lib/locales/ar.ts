@@ -2006,7 +2006,7 @@ const ar: Partial<Translations> = {
   "api.noPasswordWarning": "لم تُضبط كلمة مرور للدخول، لذا فإن واجهة الويب هذه مفتوحة لكل من في شبكتك، ومن يستطيع فتحها يستطيع أيضًا إنشاء رمز.",
   "api.needsPasswordForHost": "فُتحت هذه الصفحة باسم {host}. بدون كلمة مرور للدخول، لا يمكن إنشاء الرموز واستبدالها إلا من عنوان IP أو اسم محلي مثل tower أو tower.local. اضبط كلمة مرور للدخول، أو افتح BombVault عبر عنوانه المحلي.",
   "api.labelLabel": "اسم الرمز",
-  "api.labelPlaceholder": "Home Assistant على Raspberry Pi",
+  "api.labelPlaceholder": "سكربت الحالة الليلي",
   "api.allowStartHint": "مع تفعيل هذا، يستطيع الرمز بدء نسخ عنصر واحد أو مجال كامل أو Backup Everything، وإلغاء ما بدأه: {n} على الأكثر في الساعة، وبفارق {minutes} دقيقة للعنصر نفسه، و{perDay} للعنصر الواحد يوميًا. النسخ الاحتياطي يوقف الحاويات العاملة حتى ينتهي. وبدونه يستطيع الرمز القراءة فقط.",
   "api.createToken": "إنشاء رمز",
   "api.created": "أُنشئ الرمز",

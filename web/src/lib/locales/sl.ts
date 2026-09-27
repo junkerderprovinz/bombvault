@@ -2211,7 +2211,7 @@ const sl: Partial<Translations> = {
   "api.noPasswordWarning": "Geslo za prijavo ni nastavljeno, zato je ta spletni vmesnik odprt za vse v tvojem omrežju, in kdor ga lahko odpre, lahko tudi ustvari žeton.",
   "api.needsPasswordForHost": "Ta stran je bila odprta kot {host}. Brez gesla za prijavo je žetone mogoče ustvarjati in zamenjati samo z naslova IP ali krajevnega imena, kot je tower ali tower.local. Nastavi geslo za prijavo ali odpri BombVault prek njegovega krajevnega naslova.",
   "api.labelLabel": "Ime žetona",
-  "api.labelPlaceholder": "Home Assistant na Piju",
+  "api.labelPlaceholder": "Nočni skript stanja",
   "api.allowStartHint": "Ko je to vklopljeno, lahko žeton zažene kopiranje ene postavke, celotnega področja ali Backup Everything in prekine kopiranja, ki jih je sam zagnal: največ {n} na uro, z razmikom {minutes} minut za isto postavko in {perDay} na postavko dnevno. Kopiranje ustavi delujoče vsebnike, dokler se ne konča. Brez tega lahko žeton samo bere.",
   "api.createToken": "Ustvari žeton",
   "api.created": "Žeton ustvarjen",

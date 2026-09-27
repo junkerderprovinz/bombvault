@@ -2001,7 +2001,7 @@ const cs: Partial<Translations> = {
   "api.noPasswordWarning": "Není nastavené přihlašovací heslo, takže je toto webové rozhraní otevřené všem ve tvé síti a kdo ho otevře, může také vytvořit token.",
   "api.needsPasswordForHost": "Tato stránka byla otevřena jako {host}. Bez přihlašovacího hesla lze tokeny vytvářet a nahrazovat jen z IP adresy nebo z místního jména jako tower či tower.local. Nastav přihlašovací heslo, nebo otevři BombVault přes jeho místní adresu.",
   "api.labelLabel": "Název tokenu",
-  "api.labelPlaceholder": "Home Assistant na Pi",
+  "api.labelPlaceholder": "Noční stavový skript",
   "api.allowStartHint": "Se zapnutou volbou může token zálohovat jednu položku, celou oblast nebo Backup Everything a rušit zálohy, které sám spustil: nejvýše {n} za hodinu, s odstupem {minutes} minut u téže položky a {perDay} na položku za den. Záloha zastaví běžící kontejnery, dokud neskončí. Bez ní může token jen číst.",
   "api.createToken": "Vytvořit token",
   "api.created": "Token vytvořen",

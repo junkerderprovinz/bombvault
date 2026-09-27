@@ -2006,7 +2006,7 @@ const hu: Partial<Translations> = {
   "api.noPasswordWarning": "Nincs beállítva belépési jelszó, így ez a webes felület mindenki előtt nyitva áll a hálózatodon, és aki meg tudja nyitni, tokent is tud létrehozni.",
   "api.needsPasswordForHost": "Ez az oldal {host} néven nyílt meg. Belépési jelszó nélkül tokent csak IP-címről vagy helyi névről, például tower vagy tower.local, lehet létrehozni és cserélni. Állíts be belépési jelszót, vagy nyisd meg a BombVaultot a helyi címén.",
   "api.labelLabel": "A token neve",
-  "api.labelPlaceholder": "Home Assistant a Pi-n",
+  "api.labelPlaceholder": "Éjszakai állapotszkript",
   "api.allowStartHint": "Bekapcsolva a token elindíthatja egy elem, egy teljes terület vagy a Backup Everything mentését, és megszakíthatja az általa indított mentéseket: óránként legfeljebb {n}, ugyanarra az elemre {minutes} perc szünettel, elemenként naponta {perDay}. A mentés a futó konténereket leállítja, amíg be nem fejeződik. Kikapcsolva a token csak olvasni tud.",
   "api.createToken": "Token létrehozása",
   "api.created": "Token létrehozva",

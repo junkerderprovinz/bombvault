@@ -2227,7 +2227,7 @@ const eu: Partial<Translations> = {
   "api.noPasswordWarning": "Ez dago sarbide pasahitzik ezarrita, beraz web interfaze hau zure sareko guztientzat irekita dago, eta ireki dezakeenak token bat ere sor dezake.",
   "api.needsPasswordForHost": "Orri hau {host} gisa ireki da. Sarbide pasahitzik gabe, tokenak IP helbide batetik edo tower edo tower.local bezalako izen lokal batetik baino ezin dira sortu eta ordeztu. Ezarri sarbide pasahitz bat, edo ireki BombVault bere helbide lokaletik.",
   "api.labelLabel": "Tokenaren izena",
-  "api.labelPlaceholder": "Home Assistant Pi-an",
+  "api.labelPlaceholder": "Gaueko egoera-scripta",
   "api.allowStartHint": "Hau piztuta, tokenak elementu bat, domeinu oso bat edo Backup Everything abiaraz dezake, eta berak abiarazitako babeskopiak bertan behera utzi: gehienez {n} orduko, elementu beraren kasuan {minutes} minutuko tartearekin eta {perDay} elementu bakoitzeko egunean. Babeskopiak martxan dauden edukiontziak gelditzen ditu amaitu arte. Hau gabe, tokenak irakurri baino ezin du.",
   "api.createToken": "Sortu tokena",
   "api.created": "Tokena sortuta",

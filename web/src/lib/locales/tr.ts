@@ -2003,7 +2003,7 @@ const tr: Partial<Translations> = {
   "api.noPasswordWarning": "Giriş parolası ayarlanmamış, bu yüzden bu web arayüzü ağındaki herkese açık ve onu açabilen herkes belirteç de oluşturabilir.",
   "api.needsPasswordForHost": "Bu sayfa {host} olarak açıldı. Giriş parolası olmadan belirteçler yalnızca bir IP adresinden ya da tower veya tower.local gibi yerel bir addan oluşturulup değiştirilebilir. Bir giriş parolası belirle ya da BombVault'u yerel adresinden aç.",
   "api.labelLabel": "Belirtecin adı",
-  "api.labelPlaceholder": "Pi'deki Home Assistant",
+  "api.labelPlaceholder": "Gece durum betiği",
   "api.allowStartHint": "Bu açıkken belirteç tek bir öğenin, bütün bir alanın ya da Backup Everything'in yedeğini başlatabilir ve kendi başlattığı yedeklemeleri iptal edebilir: saatte en çok {n}, aynı öğe için {minutes} dakika arayla ve öğe başına günde {perDay}. Yedekleme bitene kadar çalışan konteynerleri durdurur. Kapalıyken belirteç yalnızca okuyabilir.",
   "api.createToken": "Belirteç oluştur",
   "api.created": "Belirteç oluşturuldu",

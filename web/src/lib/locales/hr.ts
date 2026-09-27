@@ -2227,7 +2227,7 @@ const hr: Partial<Translations> = {
   "api.noPasswordWarning": "Lozinka za prijavu nije postavljena, pa je ovo web sučelje otvoreno svima na tvojoj mreži, a tko ga može otvoriti može i stvoriti token.",
   "api.needsPasswordForHost": "Ova je stranica otvorena kao {host}. Bez lozinke za prijavu tokeni se mogu stvarati i zamjenjivati samo s IP adrese ili lokalnog imena poput tower ili tower.local. Postavi lozinku za prijavu ili otvori BombVault preko njegove lokalne adrese.",
   "api.labelLabel": "Naziv tokena",
-  "api.labelPlaceholder": "Home Assistant na Piju",
+  "api.labelPlaceholder": "Noćna skripta stanja",
   "api.allowStartHint": "Uz ovo uključeno token može pokrenuti kopiranje jedne stavke, cijelog područja ili Backup Everything i prekinuti kopiranja koja je sam pokrenuo: najviše {n} na sat, uz razmak od {minutes} minuta za istu stavku i {perDay} po stavci dnevno. Kopiranje zaustavlja pokrenute kontejnere dok ne završi. Bez toga token može samo čitati.",
   "api.createToken": "Stvori token",
   "api.created": "Token stvoren",

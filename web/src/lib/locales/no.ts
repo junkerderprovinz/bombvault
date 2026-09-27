@@ -2003,7 +2003,7 @@ const no: Partial<Translations> = {
   "api.noPasswordWarning": "Det er ikke satt noe innloggingspassord, så dette nettgrensesnittet er åpent for alle på nettverket ditt, og den som kan åpne det, kan også lage et token.",
   "api.needsPasswordForHost": "Denne siden ble åpnet som {host}. Uten innloggingspassord kan tokener bare lages og byttes fra en IP-adresse eller et lokalt navn som tower eller tower.local. Sett et innloggingspassord, eller åpne BombVault på den lokale adressen.",
   "api.labelLabel": "Navn på tokenet",
-  "api.labelPlaceholder": "Home Assistant på Pi-en",
+  "api.labelPlaceholder": "Nattlig statusskript",
   "api.allowStartHint": "Med dette på kan tokenet starte sikkerhetskopi av ett element, av et helt område eller av Backup Everything, og avbryte kopiene det selv har startet: høyst {n} i timen, {minutes} minutter mellom hver for samme element og {perDay} per element per dag. En sikkerhetskopi stopper containere som kjører til den er ferdig. Uten dette kan tokenet bare lese.",
   "api.createToken": "Lag token",
   "api.created": "Token laget",

@@ -2227,7 +2227,7 @@ const ca: Partial<Translations> = {
   "api.noPasswordWarning": "No hi ha cap contrasenya d'accés, de manera que aquesta interfície web és oberta a tothom de la teva xarxa, i qui la pugui obrir també pot crear un testimoni.",
   "api.needsPasswordForHost": "Aquesta pàgina s'ha obert com a {host}. Sense contrasenya d'accés, els testimonis només es poden crear i substituir des d'una adreça IP o un nom local com tower o tower.local. Defineix una contrasenya d'accés o obre el BombVault per la seva adreça local.",
   "api.labelLabel": "Nom del testimoni",
-  "api.labelPlaceholder": "Home Assistant a la Pi",
+  "api.labelPlaceholder": "Script d'estat nocturn",
   "api.allowStartHint": "Amb això activat, el testimoni pot iniciar la còpia d'un element, d'un domini sencer o de Backup Everything, i cancel·lar les còpies que ha iniciat: com a màxim {n} per hora, amb {minutes} minuts de separació per al mateix element i {perDay} per element i dia. Una còpia atura els contenidors en marxa fins que acaba. Sense això, el testimoni només pot llegir.",
   "api.createToken": "Crea el testimoni",
   "api.created": "Testimoni creat",

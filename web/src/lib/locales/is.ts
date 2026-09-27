@@ -2227,7 +2227,7 @@ const is: Partial<Translations> = {
   "api.noPasswordWarning": "Ekkert innskráningarlykilorð er sett, svo þetta vefviðmót er opið öllum á netinu þínu, og sá sem getur opnað það getur líka búið til tákn.",
   "api.needsPasswordForHost": "Þessi síða var opnuð sem {host}. Án innskráningarlykilorðs er aðeins hægt að búa til og skipta um tákn frá IP-tölu eða staðbundnu heiti eins og tower eða tower.local. Settu innskráningarlykilorð eða opnaðu BombVault á staðbundna vistfanginu.",
   "api.labelLabel": "Heiti tákns",
-  "api.labelPlaceholder": "Home Assistant á Pi-tölvunni",
+  "api.labelPlaceholder": "Næturstöðuskrifta",
   "api.allowStartHint": "Með þetta kveikt getur táknið afritað eitt atriði, heilt svið eða Backup Everything og hætt við afritanir sem það ræsti sjálft: mest {n} á klukkustund, með {minutes} mínútna bili fyrir sama atriði og {perDay} á atriði á dag. Afritun stöðvar gáma í gangi þar til henni lýkur. Án þess getur táknið aðeins lesið.",
   "api.createToken": "Búa til tákn",
   "api.created": "Tákn búið til",

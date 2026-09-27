@@ -2227,7 +2227,7 @@ const lv: Partial<Translations> = {
   "api.noPasswordWarning": "Pieteikšanās parole nav iestatīta, tāpēc šī tīmekļa saskarne ir atvērta visiem tavā tīklā, un kurš to var atvērt, var arī izveidot marķieri.",
   "api.needsPasswordForHost": "Šī lapa atvērta kā {host}. Bez pieteikšanās paroles marķierus var izveidot un nomainīt tikai no IP adreses vai vietēja nosaukuma, piemēram tower vai tower.local. Iestati pieteikšanās paroli vai atver BombVault pa tā vietējo adresi.",
   "api.labelLabel": "Marķiera nosaukums",
-  "api.labelPlaceholder": "Home Assistant uz Pi",
+  "api.labelPlaceholder": "Nakts statusa skripts",
   "api.allowStartHint": "Kad tas ir ieslēgts, marķieris var sākt viena vienuma, veselas jomas vai Backup Everything kopēšanu un atcelt tās kopijas, ko pats sācis: ne vairāk kā {n} stundā, tam pašam vienumam ar {minutes} minūšu atstarpi un {perDay} vienam vienumam dienā. Kopēšana aptur strādājošos konteinerus, līdz tā beidzas. Bez tā marķieris var tikai lasīt.",
   "api.createToken": "Izveidot marķieri",
   "api.created": "Marķieris izveidots",

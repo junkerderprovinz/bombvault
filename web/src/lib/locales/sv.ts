@@ -2003,7 +2003,7 @@ const sv: Partial<Translations> = {
   "api.noPasswordWarning": "Inget inloggningslösenord är satt, så det här webbgränssnittet är öppet för alla i ditt nätverk, och den som kan öppna det kan också skapa ett token.",
   "api.needsPasswordForHost": "Den här sidan öppnades som {host}. Utan inloggningslösenord går token bara att skapa och byta från en IP-adress eller ett lokalt namn som tower eller tower.local. Sätt ett inloggningslösenord eller öppna BombVault på dess lokala adress.",
   "api.labelLabel": "Tokenets namn",
-  "api.labelPlaceholder": "Home Assistant på Pi:n",
+  "api.labelPlaceholder": "Nattligt statusskript",
   "api.allowStartHint": "Med det här på kan tokenet starta en säkerhetskopia av ett objekt, av ett helt område eller av Backup Everything, och avbryta de kopior det själv startat: högst {n} i timmen, {minutes} minuter mellan varje för samma objekt och {perDay} per objekt och dag. En säkerhetskopia stoppar körande containrar tills den är klar. Utan det kan tokenet bara läsa.",
   "api.createToken": "Skapa token",
   "api.created": "Token skapat",

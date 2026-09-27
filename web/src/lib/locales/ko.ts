@@ -1995,7 +1995,7 @@ const ko: Partial<Translations> = {
   "api.noPasswordWarning": "로그인 비밀번호가 설정되어 있지 않아 이 웹 화면은 네트워크의 모든 사람에게 열려 있고, 열 수 있는 사람은 토큰도 만들 수 있습니다.",
   "api.needsPasswordForHost": "이 페이지는 {host}(으)로 열렸습니다. 로그인 비밀번호가 없으면 토큰은 IP 주소나 tower, tower.local 같은 로컬 이름에서만 만들고 교체할 수 있습니다. 로그인 비밀번호를 설정하거나 BombVault를 로컬 주소로 여세요.",
   "api.labelLabel": "토큰 이름",
-  "api.labelPlaceholder": "Pi의 Home Assistant",
+  "api.labelPlaceholder": "야간 상태 스크립트",
   "api.allowStartHint": "이 설정을 켜면 토큰이 항목 하나, 영역 전체 또는 Backup Everything의 백업을 시작하고 자신이 시작한 백업을 취소할 수 있습니다. 시간당 최대 {n}회, 같은 항목은 {minutes}분 간격, 항목당 하루 {perDay}회입니다. 백업은 끝날 때까지 실행 중인 컨테이너를 멈춥니다. 끄면 토큰은 읽기만 할 수 있습니다.",
   "api.createToken": "토큰 만들기",
   "api.created": "토큰을 만들었습니다",

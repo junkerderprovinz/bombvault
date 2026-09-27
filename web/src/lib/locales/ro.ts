@@ -2006,7 +2006,7 @@ const ro: Partial<Translations> = {
   "api.noPasswordWarning": "Nu este setată nicio parolă de conectare, așa că această interfață web e deschisă tuturor din rețeaua ta, iar cine o poate deschide poate crea și un token.",
   "api.needsPasswordForHost": "Pagina aceasta a fost deschisă ca {host}. Fără parolă de conectare, tokenurile pot fi create și înlocuite doar de la o adresă IP sau de la un nume local precum tower ori tower.local. Setează o parolă de conectare sau deschide BombVault prin adresa lui locală.",
   "api.labelLabel": "Numele tokenului",
-  "api.labelPlaceholder": "Home Assistant pe Pi",
+  "api.labelPlaceholder": "Script de stare de noapte",
   "api.allowStartHint": "Cu asta pornit, tokenul poate porni copia unui element, a unui domeniu întreg sau a Backup Everything și poate anula copiile pornite de el: cel mult {n} pe oră, la {minutes} minute distanță pentru același element și {perDay} pe element pe zi. O copie oprește containerele care rulează până se termină. Fără asta, tokenul poate doar să citească.",
   "api.createToken": "Creează tokenul",
   "api.created": "Token creat",

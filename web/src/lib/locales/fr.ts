@@ -2003,7 +2003,7 @@ const fr: Partial<Translations> = {
   "api.noPasswordWarning": "Aucun mot de passe de connexion n'est défini, donc cette interface web est ouverte à tout le monde sur ton réseau, et qui peut l'ouvrir peut aussi créer un jeton.",
   "api.needsPasswordForHost": "Cette page a été ouverte sous {host}. Sans mot de passe de connexion, les jetons ne peuvent être créés et remplacés que depuis une adresse IP ou un nom local comme tower ou tower.local. Définis un mot de passe de connexion ou ouvre BombVault par son adresse locale.",
   "api.labelLabel": "Nom du jeton",
-  "api.labelPlaceholder": "Home Assistant sur le Pi",
+  "api.labelPlaceholder": "Script d'état nocturne",
   "api.allowStartHint": "Avec cette option, le jeton peut lancer la sauvegarde d'un élément, d'un domaine entier ou de Backup Everything, et annuler les sauvegardes qu'il a lancées : au plus {n} par heure, {minutes} minutes d'écart pour le même élément et {perDay} par élément et par jour. Une sauvegarde arrête les conteneurs en marche jusqu'à la fin. Sans elle, le jeton ne peut que lire.",
   "api.createToken": "Créer le jeton",
   "api.created": "Jeton créé",

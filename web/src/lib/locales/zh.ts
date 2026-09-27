@@ -1995,7 +1995,7 @@ const zh: Partial<Translations> = {
   "api.noPasswordWarning": "尚未设置登录密码，所以这个网页界面对你网络中的所有人开放，能打开它的人也能创建令牌。",
   "api.needsPasswordForHost": "本页面以 {host} 打开。没有登录密码时，只能从 IP 地址或 tower、tower.local 这类本地名称创建和更换令牌。请设置登录密码，或用本地地址打开 BombVault。",
   "api.labelLabel": "令牌名称",
-  "api.labelPlaceholder": "Pi 上的 Home Assistant",
+  "api.labelPlaceholder": "夜间状态脚本",
   "api.allowStartHint": "打开后，令牌可以启动单个项目、整个领域或 Backup Everything 的备份，并取消自己启动的备份：每小时最多 {n} 次，同一项目间隔 {minutes} 分钟，每个项目每天 {perDay} 次。备份会停止正在运行的容器，直到完成。关闭时，令牌只能读取。",
   "api.createToken": "创建令牌",
   "api.created": "令牌已创建",

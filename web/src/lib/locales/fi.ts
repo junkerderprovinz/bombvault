@@ -2003,7 +2003,7 @@ const fi: Partial<Translations> = {
   "api.noPasswordWarning": "Kirjautumissalasanaa ei ole asetettu, joten tämä käyttöliittymä on auki kaikille verkossasi, ja se joka voi avata sen voi myös luoda tokenin.",
   "api.needsPasswordForHost": "Tämä sivu avattiin nimellä {host}. Ilman kirjautumissalasanaa tokeneita voi luoda ja vaihtaa vain IP-osoitteesta tai paikallisesta nimestä kuten tower tai tower.local. Aseta kirjautumissalasana tai avaa BombVault sen paikallisesta osoitteesta.",
   "api.labelLabel": "Tokenin nimi",
-  "api.labelPlaceholder": "Home Assistant Pi:llä",
+  "api.labelPlaceholder": "Yöllinen tilaskripti",
   "api.allowStartHint": "Tämän ollessa päällä token voi varmuuskopioida yhden kohteen, kokonaisen alueen tai Backup Everythingin ja keskeyttää itse käynnistämänsä kopiot: enintään {n} tunnissa, saman kohteen kohdalla {minutes} minuutin välein ja {perDay} kohdetta kohti päivässä. Varmuuskopio pysäyttää käynnissä olevat kontit, kunnes se on valmis. Ilman tätä token voi vain lukea.",
   "api.createToken": "Luo token",
   "api.created": "Token luotu",

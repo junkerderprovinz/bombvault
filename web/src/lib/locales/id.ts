@@ -2227,7 +2227,7 @@ const id: Partial<Translations> = {
   "api.noPasswordWarning": "Kata sandi masuk belum diatur, jadi antarmuka web ini terbuka untuk semua orang di jaringanmu, dan siapa pun yang bisa membukanya juga bisa membuat token.",
   "api.needsPasswordForHost": "Halaman ini dibuka sebagai {host}. Tanpa kata sandi masuk, token hanya bisa dibuat dan diganti dari alamat IP atau nama lokal seperti tower atau tower.local. Atur kata sandi masuk, atau buka BombVault lewat alamat lokalnya.",
   "api.labelLabel": "Nama token",
-  "api.labelPlaceholder": "Home Assistant di Pi",
+  "api.labelPlaceholder": "Skrip status malam",
   "api.allowStartHint": "Dengan ini aktif, token dapat mencadangkan satu item, satu domain penuh, atau Backup Everything, dan membatalkan pencadangan yang ia mulai: paling banyak {n} per jam, berjarak {minutes} menit untuk item yang sama, dan {perDay} per item per hari. Pencadangan menghentikan kontainer yang berjalan sampai selesai. Tanpa ini, token hanya bisa membaca.",
   "api.createToken": "Buat token",
   "api.created": "Token dibuat",

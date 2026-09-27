@@ -2003,7 +2003,7 @@ const he: Partial<Translations> = {
   "api.noPasswordWarning": "לא הוגדרה סיסמת כניסה, ולכן הממשק הזה פתוח לכל מי שברשת שלך, ומי שיכול לפתוח אותו יכול גם ליצור אסימון.",
   "api.needsPasswordForHost": "הדף הזה נפתח בשם {host}. בלי סיסמת כניסה אפשר ליצור ולהחליף אסימונים רק מכתובת IP או משם מקומי כמו tower או tower.local. הגדר סיסמת כניסה, או פתח את BombVault בכתובת המקומית שלו.",
   "api.labelLabel": "שם האסימון",
-  "api.labelPlaceholder": "Home Assistant על ה-Pi",
+  "api.labelPlaceholder": "סקריפט מצב לילי",
   "api.allowStartHint": "כשזה דלוק, האסימון יכול לגבות פריט אחד, תחום שלם או Backup Everything, ולבטל גיבויים שהוא עצמו התחיל: לכל היותר {n} בשעה, בהפרש של {minutes} דקות לאותו פריט ו-{perDay} לפריט ביום. גיבוי עוצר מכולות שרצות עד שהוא מסתיים. בלי זה האסימון יכול רק לקרוא.",
   "api.createToken": "צור אסימון",
   "api.created": "האסימון נוצר",

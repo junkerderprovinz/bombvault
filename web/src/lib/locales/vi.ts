@@ -1995,7 +1995,7 @@ const vi: Partial<Translations> = {
   "api.noPasswordWarning": "Chưa đặt mật khẩu đăng nhập, nên giao diện web này mở cho mọi người trong mạng của bạn, và ai mở được nó cũng tạo được mã thông báo.",
   "api.needsPasswordForHost": "Trang này được mở dưới tên {host}. Khi chưa có mật khẩu đăng nhập, mã thông báo chỉ có thể được tạo và thay từ một địa chỉ IP hoặc một tên nội bộ như tower hay tower.local. Hãy đặt mật khẩu đăng nhập, hoặc mở BombVault bằng địa chỉ nội bộ của nó.",
   "api.labelLabel": "Tên mã thông báo",
-  "api.labelPlaceholder": "Home Assistant trên Pi",
+  "api.labelPlaceholder": "Script trạng thái ban đêm",
   "api.allowStartHint": "Khi bật, mã thông báo có thể bắt đầu sao lưu một mục, cả một miền hoặc Backup Everything, và hủy những bản sao lưu do chính nó bắt đầu: nhiều nhất {n} lần mỗi giờ, cách nhau {minutes} phút với cùng một mục và {perDay} lần mỗi mục mỗi ngày. Bản sao lưu dừng các container đang chạy cho tới khi xong. Khi tắt, mã thông báo chỉ đọc được.",
   "api.createToken": "Tạo mã thông báo",
   "api.created": "Đã tạo mã thông báo",

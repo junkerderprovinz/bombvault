@@ -2227,7 +2227,7 @@ const et: Partial<Translations> = {
   "api.noPasswordWarning": "Sisselogimisparooli ei ole määratud, seega on see veebiliides avatud kõigile sinu võrgus, ja kes selle avada saab, saab ka loa luua.",
   "api.needsPasswordForHost": "See leht avati nimega {host}. Ilma sisselogimisparoolita saab lube luua ja asendada ainult IP-aadressilt või kohalikult nimelt nagu tower või tower.local. Määra sisselogimisparool või ava BombVault tema kohalikult aadressilt.",
   "api.labelLabel": "Loa nimi",
-  "api.labelPlaceholder": "Home Assistant Pi-l",
+  "api.labelPlaceholder": "Öine olekuskript",
   "api.allowStartHint": "Kui see on sees, saab luba varundada ühe üksuse, terve valdkonna või Backup Everythingi ja katkestada varundusi, mille see ise käivitas: kõige rohkem {n} tunnis, sama üksuse puhul {minutes} minuti vahega ja {perDay} üksuse kohta päevas. Varundus peatab töötavad konteinerid, kuni see lõpeb. Ilma selleta saab luba ainult lugeda.",
   "api.createToken": "Loo luba",
   "api.created": "Luba loodud",

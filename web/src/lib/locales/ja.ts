@@ -1995,7 +1995,7 @@ const ja: Partial<Translations> = {
   "api.noPasswordWarning": "ログインパスワードが設定されていないため、このウェブ画面はネットワーク上の誰にでも開いており、開ける人はトークンも作成できます。",
   "api.needsPasswordForHost": "このページは {host} として開かれました。ログインパスワードがない場合、トークンの作成と交換は IP アドレスか tower、tower.local のようなローカル名からのみ行えます。ログインパスワードを設定するか、BombVault をローカルアドレスから開いてください。",
   "api.labelLabel": "トークンの名前",
-  "api.labelPlaceholder": "Pi 上の Home Assistant",
+  "api.labelPlaceholder": "夜間の状態確認スクリプト",
   "api.allowStartHint": "これをオンにすると、トークンは 1 件の項目、領域全体、または Backup Everything のバックアップを開始し、自分が開始したバックアップを中止できます。上限は 1 時間あたり {n} 件、同じ項目は {minutes} 分間隔、1 項目あたり 1 日 {perDay} 件です。バックアップは終わるまで稼働中のコンテナを停止します。オフの場合、トークンは読み取りだけできます。",
   "api.createToken": "トークンを作成",
   "api.created": "トークンを作成しました",

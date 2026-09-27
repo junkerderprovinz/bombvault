@@ -2000,7 +2000,7 @@ const nl: Partial<Translations> = {
   "api.noPasswordWarning": "Er is geen inlogwachtwoord ingesteld, dus deze webinterface staat open voor iedereen op je netwerk, en wie hem kan openen, kan ook een token aanmaken.",
   "api.needsPasswordForHost": "Deze pagina is geopend als {host}. Zonder inlogwachtwoord kunnen tokens alleen worden aangemaakt en vervangen vanaf een IP-adres of een lokale naam zoals tower of tower.local. Stel een inlogwachtwoord in of open BombVault op zijn lokale adres.",
   "api.labelLabel": "Naam van het token",
-  "api.labelPlaceholder": "Home Assistant op de Pi",
+  "api.labelPlaceholder": "Nachtelijk statusscript",
   "api.allowStartHint": "Met dit aan kan het token een item, een heel domein of Backup Everything laten back-uppen en de back-ups afbreken die het zelf gestart heeft: hoogstens {n} per uur, {minutes} minuten tussenruimte voor hetzelfde item en {perDay} per item per dag. Een back-up legt draaiende containers stil tot hij klaar is. Zonder dit kan het token alleen lezen.",
   "api.createToken": "Token aanmaken",
   "api.created": "Token aangemaakt",

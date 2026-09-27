@@ -2227,7 +2227,7 @@ const gl: Partial<Translations> = {
   "api.noPasswordWarning": "Non hai contrasinal de acceso, así que esta interface web está aberta a todos na túa rede, e quen a poida abrir tamén pode crear un testemuño.",
   "api.needsPasswordForHost": "Esta páxina abriuse como {host}. Sen contrasinal de acceso, os testemuños só se poden crear e substituír desde un enderezo IP ou un nome local como tower ou tower.local. Define un contrasinal de acceso ou abre BombVault polo seu enderezo local.",
   "api.labelLabel": "Nome do testemuño",
-  "api.labelPlaceholder": "Home Assistant na Pi",
+  "api.labelPlaceholder": "Script de estado nocturno",
   "api.allowStartHint": "Con isto activado, o testemuño pode iniciar a copia dun elemento, dun dominio enteiro ou de Backup Everything, e cancelar as copias que iniciou: como moito {n} por hora, con {minutes} minutos de separación para o mesmo elemento e {perDay} por elemento e día. Unha copia detén os contedores en marcha ata que remata. Sen isto, o testemuño só pode ler.",
   "api.createToken": "Crear testemuño",
   "api.created": "Testemuño creado",

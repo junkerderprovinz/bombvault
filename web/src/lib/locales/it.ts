@@ -2003,7 +2003,7 @@ const it: Partial<Translations> = {
   "api.noPasswordWarning": "Non è impostata alcuna password di accesso, quindi questa interfaccia web è aperta a tutti sulla tua rete, e chi può aprirla può anche creare un token.",
   "api.needsPasswordForHost": "Questa pagina è stata aperta come {host}. Senza password di accesso, i token si possono creare e sostituire solo da un indirizzo IP o da un nome locale come tower o tower.local. Imposta una password di accesso o apri BombVault dal suo indirizzo locale.",
   "api.labelLabel": "Nome del token",
-  "api.labelPlaceholder": "Home Assistant sul Pi",
+  "api.labelPlaceholder": "Script di stato notturno",
   "api.allowStartHint": "Con questa opzione attiva il token può avviare il backup di un elemento, di un intero dominio o di Backup Everything, e annullare i backup che ha avviato: al massimo {n} all'ora, a {minutes} minuti di distanza per lo stesso elemento e {perDay} per elemento al giorno. Un backup ferma i container in esecuzione finché non termina. Senza, il token può solo leggere.",
   "api.createToken": "Crea token",
   "api.created": "Token creato",

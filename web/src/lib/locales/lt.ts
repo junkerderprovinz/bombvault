@@ -2227,7 +2227,7 @@ const lt: Partial<Translations> = {
   "api.noPasswordWarning": "Prisijungimo slaptažodis nenustatytas, tad ši saityno sąsaja atvira visiems tavo tinkle, o kas gali ją atverti, gali ir susikurti žetoną.",
   "api.needsPasswordForHost": "Šis puslapis atvertas kaip {host}. Be prisijungimo slaptažodžio žetonus kurti ir keisti galima tik iš IP adreso arba vietinio vardo, pavyzdžiui tower ar tower.local. Nustatyk prisijungimo slaptažodį arba atverk BombVault jo vietiniu adresu.",
   "api.labelLabel": "Žetono pavadinimas",
-  "api.labelPlaceholder": "Home Assistant Pi kompiuteryje",
+  "api.labelPlaceholder": "Naktinis būsenos scenarijus",
   "api.allowStartHint": "Kai tai įjungta, žetonas gali paleisti vieno elemento, visos srities arba Backup Everything kopijavimą ir nutraukti tuos kopijavimus, kuriuos pats paleido: daugiausia {n} per valandą, to paties elemento kas {minutes} minutes ir {perDay} vienam elementui per dieną. Kopijavimas sustabdo veikiančius konteinerius, kol baigsis. Be to žetonu galima tik skaityti.",
   "api.createToken": "Sukurti žetoną",
   "api.created": "Žetonas sukurtas",
