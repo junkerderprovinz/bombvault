@@ -221,12 +221,12 @@ func TestPutWithStaleNumbersIsRefusedWithTheNewOnes(t *testing.T) {
 	}
 }
 
-// TestASecondTabsHomeChangeIsRefusedOnceTheFirstHasLanded pins the gap
-// sameCounts left open: a home-only change with no skip in the body always
-// answers an empty impact regardless of which home it names, so two tabs
-// that each preview a different home from the same starting point see the
-// identical (empty) numbers. Comparing only those numbers would let the
-// second tab's PUT win silently over the first's.
+// TestASecondTabsHomeChangeIsRefusedOnceTheFirstHasLanded checks the home as
+// well as the numbers. A home-only change with no skip in the body answers an
+// empty impact whichever home it names, so two tabs that each preview a
+// different home from the same starting point see the same empty numbers.
+// Comparing only those would let the second tab's PUT win silently over the
+// first's.
 func TestASecondTabsHomeChangeIsRefusedOnceTheFirstHasLanded(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS", "nas")
@@ -708,9 +708,9 @@ func TestConfirmPlacementIsIdempotentOnADomainNeverPaused(t *testing.T) {
 	}
 }
 
-// TestASecondConfirmationWritesItsExclusion pins the fix: the confirm route is
-// the only way an exclusion rule is written, so a domain that is already
-// confirmed must not silently drop what a later confirmation asks to exclude.
+// TestASecondConfirmationWritesItsExclusion covers a domain that is already
+// confirmed. The confirm route is the only way an exclusion rule is written,
+// so such a domain must not drop what a later confirmation asks to exclude.
 func TestASecondConfirmationWritesItsExclusion(t *testing.T) {
 	f, _ := pausedContainers(t)
 	if res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{"exclude": []string{"container:old-app"}}); res["ok"] != true {

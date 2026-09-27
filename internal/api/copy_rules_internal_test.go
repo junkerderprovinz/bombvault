@@ -219,9 +219,9 @@ func TestVMAndFileSetRoutesTakeCopies(t *testing.T) {
 	waitForListings(t, f)
 }
 
-// TestCopiesOnlyPATCHSurvivesTheHomeGuards pins the part's headline rule:
-// copies may change at any time, even on an item with backups and while a
-// backup holds the domain, because only a home change is ever refused then.
+// TestCopiesOnlyPATCHSurvivesTheHomeGuards pins that copies may change at any
+// time, even on an item with backups and while a backup holds the domain,
+// because only a home change is ever refused then.
 func TestCopiesOnlyPATCHSurvivesTheHomeGuards(t *testing.T) {
 	f := newPlacementFixture(t)
 	web := f.container("web", "")

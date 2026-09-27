@@ -672,7 +672,7 @@ function SnapshotActions({
   // Basic mode offers only the in-place restore.
   const [mode, setMode] = useState<RestoreMode>("inPlace");
   const effectiveMode: RestoreMode = advanced ? mode : "inPlace";
-  // Group name so the three radios are mutually exclusive PER row.
+  // One radio group per row.
   const radioName = `restore-mode-${pick.row.key}`;
 
   return (
@@ -820,8 +820,6 @@ export function RestorePanel({
   containerRunning = false,
   importStops,
 }: RestorePanelProps) {
-  // Restore-to-folder needs the default folder + host mount root to seed the
-  // FolderBrowser. Fetched once the panel is opened (not on mount).
   const [restoreFolder, setRestoreFolder] = useState(DEFAULT_RESTORE_FOLDER);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
   // The dumps are listed from one source at a time, and held here as well as

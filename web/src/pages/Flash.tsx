@@ -197,10 +197,7 @@ export function Flash() {
         </div>
       </div>
 
-      {/* Restore card. `glim-notch-card`: see Settings.tsx's Card() for the
-          reasoning. `.glim-hue`: same hueIndex={1} the Badge already uses;
-          FlashDownload's badge inherits it via the ordinary custom-property
-          cascade, so it passes no hueIndex of its own. */}
+      {/* The snapshot rows' badges take this card's hue through the cascade. */}
       <div
         className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-5 flex flex-col gap-4"
         style={hueVars(1) as CSSProperties}

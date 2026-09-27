@@ -762,12 +762,12 @@ export function FileSetDialog({
           <p className="text-caption text-carbon-textMuted">{t("files.excludesHint")}</p>
         </div>
 
-        {/* ToggleRow, not a bare Toggle: every setting row in this app puts
-            the words at the start and the switch at the end. */}
         {/* A new set has no card yet, so its placement is chosen here; an
             existing set changes it on its card. */}
         {!initial && <PlacementDraft value={placement} onChange={setPlacement} />}
 
+        {/* ToggleRow, not a bare Toggle: every setting row in this app puts
+            the words at the start and the switch at the end. */}
         <ToggleRow checked={enabled} onChange={setEnabled} label={t("files.enabled")} />
 
         <div className="flex items-center justify-end gap-2 pt-1">

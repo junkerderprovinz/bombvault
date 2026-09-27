@@ -17,8 +17,7 @@ import {
   timelineRow,
 } from "../lib/placement.testsupport";
 
-// useProgress() (lib/progress.ts) opens a real EventSource on mount; jsdom
-// does not implement it.
+// useProgress() opens an EventSource on mount, which jsdom lacks.
 stubEventSource();
 
 vi.mock("../lib/api", async () => {

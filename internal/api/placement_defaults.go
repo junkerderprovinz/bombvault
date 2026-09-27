@@ -178,7 +178,7 @@ func (s *Service) defaultRowFor(settings store.Settings, named map[string]store.
 // make the card slow to the same degree the button's own check is expensive
 // per item it actually touches. The name says what it counts: a row Discover
 // rebuilt has snapshots but no recorded run, so it lands here too, and the
-// apply button still refuses it as has-backups when asked to reset it - the
+// apply button still refuses it as has-backups when asked to reset it. The
 // two never claimed the same thing, so they cannot disagree.
 func (s *Service) defaultCountsFor(p placementRead) (defaultCounts, error) {
 	var c defaultCounts

@@ -169,8 +169,8 @@ func TestDiscoverLeavesAnOpenRowAloneWhileABackupHoldsTheDomain(t *testing.T) {
 
 // TestDiscoverLeavesANewRowOpenWhileABackupHoldsTheDomain is the other half
 // of TestDiscoverLeavesAnOpenRowAloneWhileABackupHoldsTheDomain: a row
-// Discover CREATES, not one it finds already sitting open, must not get its
-// home straight through the insert while a backup holds the domain.
+// Discover creates, rather than one it finds already sitting open, must not get
+// its home straight through the insert while a backup holds the domain.
 func TestDiscoverLeavesANewRowOpenWhileABackupHoldsTheDomain(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS", "nas")

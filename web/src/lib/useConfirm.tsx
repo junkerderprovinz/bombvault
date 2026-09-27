@@ -74,11 +74,8 @@ export function useConfirm() {
     if (trigger && document.contains(trigger)) trigger.focus();
   }, []);
 
-  // Escape (works no matter where focus currently is) + the Tab/Shift+Tab
-  // focus trap, both only while a confirmation is actually showing. Shared
-  // with the direct window (see useDialogKeys below) so it isn't a copy.
-  // dismiss is also for a caller whose question stopped making sense while
-  // the dialog was open.
+  // For a caller whose question stopped making sense while the dialog was
+  // open, and for Escape.
   const dismiss = useCallback(() => settle(false), [settle]);
   useDialogKeys(pending !== null, dialogRef, dismiss);
 
