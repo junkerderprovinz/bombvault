@@ -169,22 +169,26 @@ export function AnomalyRow({
   return (
     <div className="flex items-start gap-2">
       {selectable && (
-        <input
-          type="checkbox"
-          checked={selected}
-          disabled={!isOpen}
-          onChange={(e) => onSelect?.(a.id, e.target.checked)}
-          aria-label={t("common.selectItem").replace("{name}", label)}
-          className="mt-1 h-4 w-4 shrink-0 cursor-pointer"
-          style={{ accentColor: "var(--accent)" }}
-        />
+        // A checkbox draws no ::after, so under a touch pointer the label
+        // around it widens the target to 44px; a tap on a label ticks its box.
+        <label className="relative mt-1 flex shrink-0 pointer-coarse:after:absolute pointer-coarse:after:-inset-3.5 pointer-coarse:after:content-['']">
+          <input
+            type="checkbox"
+            checked={selected}
+            disabled={!isOpen}
+            onChange={(e) => onSelect?.(a.id, e.target.checked)}
+            aria-label={t("common.selectItem").replace("{name}", label)}
+            className="h-4 w-4 cursor-pointer"
+            style={{ accentColor: "var(--accent)" }}
+          />
+        </label>
       )}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <Badge tone={anomalySeverityTone(a.severity)} size="small">
             {t(ANOMALY_SEVERITY_LABEL[a.severity])}
           </Badge>
-          <span className="min-w-0 text-sm text-carbon-text">{anomalySentence(a, t, lang)}</span>
+          <span className="min-w-0 text-sm text-carbon-text wrap-anywhere">{anomalySentence(a, t, lang)}</span>
           <span className="text-xs text-carbon-textSub">{relativeTime(t, a.lastSeenAt)}</span>
           {a.occurrences > 1 && (
             <span className="text-xs text-carbon-textSub">
@@ -238,6 +242,7 @@ export function AnomalyRow({
                 onClick={() => void run(onAcknowledge, "anomaly.action.acknowledge")}
                 disabled={busy}
                 hint={t("anomaly.acknowledgeHint")}
+                className="glim-btn-wrap"
               />
             )}
             {onExpected && a.expectable && (
@@ -247,6 +252,7 @@ export function AnomalyRow({
                 onClick={() => void run(onExpected, "anomaly.action.expected")}
                 disabled={busy}
                 hint={t("anomaly.expectedHint")}
+                className="glim-btn-wrap"
               />
             )}
           </div>
@@ -258,7 +264,7 @@ export function AnomalyRow({
               type="button"
               onClick={() => setOpen(!open)}
               aria-expanded={open}
-              className="flex w-fit items-center gap-1 text-xs text-carbon-textSub hover:text-carbon-text"
+              className="flex w-fit items-center gap-1 text-xs text-carbon-textSub hover:text-carbon-text pointer-coarse:min-h-11"
             >
               <IconDisclosure open={open} />
               {t("anomaly.action.details")}

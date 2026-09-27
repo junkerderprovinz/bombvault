@@ -128,3 +128,23 @@ describe("CoverageCard", () => {
     expect(screen.getByText(en["coverage.allProtected"])).toBeTruthy();
   });
 });
+
+// jsdom lays nothing out, so this pins the class the phone layout rests on.
+describe("CoverageCard at phone width", () => {
+  it("breaks a name without spaces instead of running out of the card", () => {
+    renderCard({
+      total: 1,
+      protected: 0,
+      domains: [
+        {
+          domain: "containers",
+          enabled: true,
+          total: 1,
+          protected: 0,
+          unprotected: [{ name: "nextcloud_aio_borgbackup_helper", reason: "not-set-up", neverBackedUp: true }],
+        },
+      ],
+    });
+    expect(screen.getByText("nextcloud_aio_borgbackup_helper").className).toContain("wrap-anywhere");
+  });
+});

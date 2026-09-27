@@ -19,13 +19,20 @@
 //     tip bubble (lib/useTipBubble), the sidebar's mechanism; the native
 //     title attribute is retired.
 // ---------------------------------------------------------------------------
-import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { I18nProvider } from "../../lib/i18n";
 import { hueVars } from "../../lib/appearance";
-import type { Settings } from "../../lib/api";
+import { AnomalyProvider } from "../../lib/useAnomalies";
+import type { AnomalySummary, Settings } from "../../lib/api";
+
+const getAnomalySummary = vi.fn();
+vi.mock("../../lib/api", async (orig) => ({
+  ...(await orig<Record<string, unknown>>()),
+  getAnomalySummary: () => getAnomalySummary(),
+}));
 
 function draw(path: string, settings: Settings | null = null) {
   return render(
@@ -243,5 +250,60 @@ describe("BottomNav label axis (bottombar)", () => {
       // carries the per-label width var the CSS formula consumes.
       expect(slot.style.getPropertyValue("--reactive-chars")).not.toBe("");
     }
+  });
+});
+
+describe("BottomNav's More trigger and open findings", () => {
+  function summary(open: AnomalySummary["open"]): AnomalySummary {
+    return {
+      enabled: true,
+      ready: true,
+      generation: 1,
+      open,
+      recoveredCritical: 0,
+      learningItems: 0,
+      retentionHeld: 0,
+      evalErrors: 0,
+      notifyMuted: false,
+      backfill: { slots: 0, done: 0, failed: 0, filled: 0, withoutSummary: 0 },
+      unmeasuredVolumes: [],
+    };
+  }
+
+  async function drawWithFindings(open: AnomalySummary["open"], anomalyEnabled = true) {
+    getAnomalySummary.mockResolvedValue({ ok: true, summary: summary(open) });
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <I18nProvider>
+          <AnomalyProvider>
+            <BottomNav settings={{ anomalyEnabled } as Settings} authEnabled={false} scrollMainToTop={() => undefined} />
+          </AnomalyProvider>
+        </I18nProvider>
+      </MemoryRouter>,
+    );
+    await act(async () => {});
+    return within(bar()).getByRole("button", { name: "More" });
+  }
+
+  it("marks the trigger in the fail tone while a critical finding is open", async () => {
+    const more = await drawWithFindings({ critical: 1, warning: 2, info: 0 });
+    const dot = within(more).getByTestId("more-anomaly-dot");
+    expect(dot.className).toContain("bg-statusFailSolid");
+    expect(dot.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("marks it in the warning tone when only warnings are open", async () => {
+    const more = await drawWithFindings({ critical: 0, warning: 2, info: 0 });
+    expect(within(more).getByTestId("more-anomaly-dot").className).toContain("bg-statusWarnSolid");
+  });
+
+  it("leaves it unmarked for notes alone", async () => {
+    const more = await drawWithFindings({ critical: 0, warning: 0, info: 3 });
+    expect(within(more).queryByTestId("more-anomaly-dot")).toBeNull();
+  });
+
+  it("leaves it unmarked while detection is off, since the sheet has no Anomalies row then", async () => {
+    const more = await drawWithFindings({ critical: 1, warning: 0, info: 0 }, false);
+    expect(within(more).queryByTestId("more-anomaly-dot")).toBeNull();
   });
 });

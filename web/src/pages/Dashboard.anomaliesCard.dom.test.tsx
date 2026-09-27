@@ -279,3 +279,27 @@ describe("the card's data", () => {
     expect(getAnomalies.mock.calls[1][0]).toMatchObject({ cursor: "c1" });
   });
 });
+
+// jsdom lays nothing out, so these pin the classes the phone layout rests on.
+describe("AnomaliesCard at phone width", () => {
+  it("breaks a name without spaces instead of running out of the card", () => {
+    renderCard({
+      summary: summary({ open: { critical: 1, warning: 0, info: 0 } }),
+      open: [finding({ name: "immich_machine_learning_server" })],
+    });
+    const sentence = screen.getByText(/immich_machine_learning_server/, { selector: "span.text-sm" });
+    expect(sentence.className).toContain("wrap-anywhere");
+  });
+
+  it("lets an action's label wrap instead of cutting it short", () => {
+    renderCard({
+      summary: summary({ open: { critical: 1, warning: 0, info: 0 } }),
+      open: [finding()],
+      onAcknowledge: vi.fn(),
+      onExpected: vi.fn(),
+    });
+    for (const key of ["anomaly.action.acknowledge", "anomaly.action.expected"] as const) {
+      expect(screen.getByRole("button", { name: en[key] }).className).toContain("glim-btn-wrap");
+    }
+  });
+});

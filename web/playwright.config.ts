@@ -80,6 +80,7 @@ const testMatch = [
   "files-phone.spec.ts",
   "flash-phone.spec.ts",
   "config-phone.spec.ts",
+  "anomalies-phone.spec.ts",
 ];
 
 for (const spec of testMatch) {

@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect, type CSSProperties } from "react";
 import { logout, type Settings } from "../lib/api";
 import { Badge, type BadgeTone } from "./Badge";
-import { useAnomalySummary } from "../lib/useAnomalies";
+import { useLoudAnomalies } from "../lib/useAnomalies";
 import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { hueVars } from "../lib/appearance";
@@ -294,8 +294,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
   const fleetEnabled = settings?.fleetEnabled ?? false;
   const pullEnabled = settings?.pullEnabled ?? false;
   const anomaliesEnabled = settings?.anomalyEnabled ?? false;
-  const { summary } = useAnomalySummary();
-  const loudAnomalies = summary ? summary.open.critical + summary.open.warning : 0;
+  const loudAnomalies = useLoudAnomalies();
 
   // The brand block is GlimStone's: the mark centred above the name, smaller
   // and without the name in the narrow rail. The button's aria-label names it
@@ -499,9 +498,9 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
                   icon={<IconAnomalies />}
                   hueIndex={nextHue()}
                   count={{
-                    value: loudAnomalies,
-                    tone: summary && summary.open.critical > 0 ? "fail" : "warn",
-                    label: t("anomaly.navCountAria").replace("{n}", loudAnomalies.toLocaleString()),
+                    value: loudAnomalies.count,
+                    tone: loudAnomalies.tone,
+                    label: t("anomaly.navCountAria").replace("{n}", loudAnomalies.count.toLocaleString()),
                   }}
                 />
               )}

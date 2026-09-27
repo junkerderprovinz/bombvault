@@ -34,6 +34,10 @@
 // <main id="bv-main"> scroll, passed down through BottomNav, so this file
 // never queries the DOM for the scroller itself.
 //
+// The Anomalies row carries the rail's count of open critical and warning
+// findings, in the same badge, since this sheet is where a phone keeps that
+// row.
+//
 // Sign-out: the sidebar footer's row re-expressed at the bottom of the
 // sheet, visually muted (muted text token, power glyph) and with no
 // confirmation; the exact Sidebar signOut mechanism copied verbatim
@@ -49,6 +53,8 @@ import { useT } from "../../lib/i18n";
 import { useAdvanced } from "../../lib/advanced";
 import { hueVars } from "../../lib/appearance";
 import { moreDestinations } from "../../lib/navModel";
+import { useLoudAnomalies } from "../../lib/useAnomalies";
+import { Badge } from "../Badge";
 import { IconSignOut } from "../glyphs";
 import { IconViewAdvanced, IconViewSimple } from "../navGlyphs";
 import { BottomSheet } from "./BottomSheet";
@@ -85,6 +91,7 @@ export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTo
   const location = useLocation();
   const { advanced, setAdvanced } = useAdvanced();
   const rows = moreDestinations(settings);
+  const loudAnomalies = useLoudAnomalies();
 
   // The Sidebar footer's signOut, copied verbatim (Sidebar.tsx): best-effort
   // logout; a failed call must never trap the user in a signed-out UI;
@@ -143,6 +150,17 @@ export function MoreSheet({ open, onClose, settings, authEnabled, scrollMainToTo
                 <Icon />
               </span>
               <span className="min-w-0 truncate">{t(d.labelKey)}</span>
+              {d.to === "/anomalies" && loudAnomalies.count > 0 && (
+                <Badge
+                  tone={loudAnomalies.tone}
+                  size="small"
+                  shape="pill"
+                  ariaLabel={t("anomaly.navCountAria").replace("{n}", loudAnomalies.count.toLocaleString())}
+                  className="ms-auto shrink-0"
+                >
+                  {loudAnomalies.count}
+                </Badge>
+              )}
             </NavLink>
           );
         })}

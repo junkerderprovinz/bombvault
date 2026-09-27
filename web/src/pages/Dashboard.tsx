@@ -36,7 +36,7 @@ import { AnomalyRow, type AnomalyAction } from "../components/AnomalyRow";
 import { RunAnomalyBadge } from "../components/RunAnomalyBadge";
 import { InfoBubble } from "../components/InfoBubble";
 import { ANOMALY_CHANGED_EVENT, sortOpenAnomalies } from "../lib/anomalies";
-import { useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
+import { useAnomalySummary, useLoudAnomalies, useOpenAnomalies } from "../lib/useAnomalies";
 import { Badge } from "../components/Badge";
 import { IconPencil, IconBackupNow } from "../components/Sidebar";
 import { IconTipButton } from "../components/IconTipButton";
@@ -569,7 +569,7 @@ export function CoverageCard({
           <ul className="flex flex-col gap-1">
             {rows.map((r) => (
               <li key={r.domain + ":" + r.name} className="flex flex-wrap items-baseline gap-x-2">
-                <span className="text-sm text-carbon-text">{r.name}</span>
+                <span className="min-w-0 text-sm text-carbon-text wrap-anywhere">{r.name}</span>
                 <span className="inline-flex items-center gap-1 text-xs text-carbon-textSub">
                   {t(reasonKey[r.reason] ?? "coverage.reason.noSchedule")}
                   {r.code && <InfoBubble tip={skippedTip(r.code)} />}
@@ -2647,10 +2647,12 @@ function WorstRpoHealthLine({
 // Below the 48rem breakpoint the desktop customizable block grid is replaced
 // by these blocks in a fixed order: identity (the page header above), next
 // run (NextRunCard dense), recent runs (RunsCard dense), repo health
-// (StorageCard dense), the self-contained ActivityLog card, and the
-// thumb-zone trigger that joins the page column's last child (the
-// StickyActionBar below). Each block is the desktop block of the same name at
-// its second density; one component per card, two faces (`dense`), so a
+// (StorageCard dense), the anomalies card, the self-contained ActivityLog
+// card, and the thumb-zone trigger that joins the page column's last child
+// (the StickyActionBar below). While a critical or warning finding is open the
+// anomalies card moves to the top, because that is what a phone is opened
+// for. Each block is the desktop block of the same name at its second
+// density; one component per card, two faces (`dense`), so a
 // derivation or a fix lands on both faces in one place instead of drifting
 // between a desktop card and a private per-density phone copy (the previous
 // trio of phone-only cards drifted on exactly this seam). The phone density
@@ -2660,8 +2662,9 @@ function WorstRpoHealthLine({
 // scheduleNext, statusDomains) or the same endpoint a desktop card already
 // reads; zero new endpoints.
 //
-// Phone hues are static literals (0/1/2 on the section roots, 3 on the
-// activity-log card, and per-row positions inside a block's list), unlike the
+// Phone hues are static literals (0 to 3 down the column, shifted by one when
+// the anomalies card leads, 4 on the activity-log card, and per-row positions
+// inside a block's list), unlike the
 // desktop grid's running `nextHue()` counter: the phone order is fixed (not
 // user-customizable), so a static position is honest, and the phone faces
 // never render inside the desktop counter's pass; the desktop counter must
@@ -2909,12 +2912,14 @@ export function Dashboard() {
   const { t } = useT();
   const { advanced } = useAdvanced();
   // The phone surface switch. Below the 48rem breakpoint the page renders the
-  // four glanceable Home blocks instead of the desktop customizable grid;
+  // glanceable Home blocks instead of the desktop customizable grid;
   // each face JSX-gated (see the Mobile Home blocks banner above for why a
   // CSS-hidden grid would double the phone's fetches). jsdom's matchMedia
   // answers desktop, so the mobile blocks stay e2e-only and every existing
   // dom test sees the desktop page.
   const isDesktop = useIsDesktop();
+  const anomaliesLead = useLoudAnomalies().count > 0;
+  const lead = anomaliesLead ? 1 : 0;
 
   // Component-local run-sheet host (the Containers.tsx contract): the
   // recent-run rows open the shared RunDetailSheet for their own record here;
@@ -3607,27 +3612,29 @@ export function Dashboard() {
           child (the StickyActionBar below). */}
       {!isDesktop && (
         <div className="flex flex-col gap-4">
-          <NextRunCard dense t={t} hueIndex={0} scheduleNext={scheduleNext} domains={statusDomains} loading={statusLoading} />
+          {anomaliesLead && <AnomaliesBlock t={t} hueIndex={0} />}
+          <NextRunCard dense t={t} hueIndex={lead} scheduleNext={scheduleNext} domains={statusDomains} loading={statusLoading} />
           <RunsCard
             dense
             t={t}
-            hueIndex={1}
+            hueIndex={lead + 1}
             runs={runs}
             loading={!runsReady}
             failed={runsFailed}
             refreshRuns={refreshRuns}
             onOpenRun={openRun}
           />
-          <StorageCard dense t={t} hueIndex={2} domains={statusDomains} statusLoading={statusLoading} statusFailed={statusFailed} />
+          <StorageCard dense t={t} hueIndex={lead + 2} domains={statusDomains} statusLoading={statusLoading} statusFailed={statusFailed} />
+          {!anomaliesLead && <AnomaliesBlock t={t} hueIndex={3} />}
           {/* The activity log reaches mobile here; the component is
               self-contained (own card chrome + heading, per its header
               comment), so the mount is one line. hueIndex is the block's
-              static slot in the phone column's rotation (3, after next run /
-              recent runs / repo storage), never a draw from the desktop
-              grid's nextHue() counter, which must not observe a phone-only
-              draw. dayFilter stays shared: a heatmap tap narrows both
-              presentations because they render the same state. */}
-          <ActivityLog dayFilter={logDayFilter} onClearDayFilter={() => setLogDayFilter(null)} hueIndex={3} />
+              static slot in the phone column's rotation (4, after the four
+              cards above it), never a draw from the desktop grid's nextHue()
+              counter, which must not observe a phone-only draw. dayFilter
+              stays shared: a heatmap tap narrows both presentations because
+              they render the same state. */}
+          <ActivityLog dayFilter={logDayFilter} onClearDayFilter={() => setLogDayFilter(null)} hueIndex={4} />
         </div>
       )}
 

@@ -173,6 +173,20 @@ export function useAnomalySummary(): AnomalySummaryState {
 }
 
 /**
+ * useLoudAnomalies is the figure the navigation shows beside Anomalies: the
+ * open critical and warning findings, in the tone of the worst of them. Notes
+ * are left to the page.
+ */
+export function useLoudAnomalies(): { count: number; tone: "fail" | "warn" } {
+  const { summary } = useAnomalySummary();
+  if (!summary) return { count: 0, tone: "warn" };
+  return {
+    count: summary.open.critical + summary.open.warning,
+    tone: summary.open.critical > 0 ? "fail" : "warn",
+  };
+}
+
+/**
  * useOpenAnomalies reads every open finding, following the cursor to the end:
  * badges and counts are drawn from this list, so a page cut at 500 would show
  * an item as clean.

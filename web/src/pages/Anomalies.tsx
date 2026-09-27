@@ -42,7 +42,7 @@ import {
 } from "../lib/anomalies";
 import { humanBytes } from "../lib/forecast";
 import { useT, type TranslationKey } from "../lib/i18n";
-import { PAGE_SHELL } from "../lib/pageShell";
+import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { formatMillis, formatTs } from "../lib/reltime";
 import { isolateLtr } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
@@ -161,7 +161,7 @@ export function Anomalies() {
   }
 
   return (
-    <div className={PAGE_SHELL}>
+    <div className={PAGE_SHELL_RESPONSIVE}>
       <div>
         <h1 className="text-2xl font-semibold text-carbon-text">{t("anomaly.title")}</h1>
         <p className="mt-1 text-sm text-carbon-textSub">{t("anomaly.pageSubtitle")}</p>
@@ -424,13 +424,16 @@ function FindingsTab({ t, byTarget }: { t: T; byTarget: Map<string, AnomalyItem>
           options={domainOptions}
         />
         {scopeTarget && (
-          <span className="inline-flex items-center gap-1 rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text">
-            {t("anomaly.filter.itemChip").replace("{name}", scopeName)}
+          <span className="inline-flex max-w-full items-center gap-1 rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text">
+            <span className="min-w-0 wrap-anywhere">{t("anomaly.filter.itemChip").replace("{name}", scopeName)}</span>
+            {/* The only way back to every item, so under a touch pointer an
+                ::after widens the 18px chip to 46px. */}
             <Button
               label={t("anomaly.filter.removeChip")}
               labelKey="anomaly.filter.removeChip"
               variant="chip"
               onClick={clearScope}
+              className="relative shrink-0 pointer-coarse:after:absolute pointer-coarse:after:-inset-3.5 pointer-coarse:after:content-['']"
             />
           </span>
         )}
@@ -467,7 +470,7 @@ function FindingsTab({ t, byTarget }: { t: T; byTarget: Map<string, AnomalyItem>
               aria-labelledby={countId}
               className="flex flex-wrap items-center gap-3 rounded-card bg-carbon-surface2 px-3 py-2"
             >
-              <label className="flex cursor-pointer items-center gap-2 text-xs text-carbon-textSub">
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-carbon-textSub pointer-coarse:min-h-11">
                 <input
                   type="checkbox"
                   checked={allSelected}
@@ -488,19 +491,21 @@ function FindingsTab({ t, byTarget }: { t: T; byTarget: Map<string, AnomalyItem>
                 onChange={(e) => setNote(e.target.value)}
                 placeholder={t("anomaly.notePlaceholder")}
                 aria-label={t("anomaly.notePlaceholder")}
-                className="min-w-40 flex-1 rounded-control bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
+                className="min-w-40 flex-1 rounded-control bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text glim-field-focus max-md:min-w-0 max-md:basis-full"
               />
               <Button
                 label={t("anomaly.bulk.clearSelection")}
                 labelKey="anomaly.bulk.clearSelection"
                 onClick={() => setSelected(new Set())}
                 disabled={busy || selected.size === 0}
+                className="glim-btn-wrap"
               />
               <Button
                 label={t("anomaly.action.expected")}
                 labelKey="anomaly.action.expected"
                 onClick={() => void bulk(markAnomaliesExpected, "anomaly.action.expected")}
                 disabled={busy || !chosen.some((a) => a.expectable)}
+                className="glim-btn-wrap"
               />
               <Button
                 label={t("anomaly.action.acknowledge")}
@@ -508,6 +513,7 @@ function FindingsTab({ t, byTarget }: { t: T; byTarget: Map<string, AnomalyItem>
                 tone="accent"
                 onClick={() => void bulk(acknowledgeAnomalies, "anomaly.action.acknowledge")}
                 disabled={busy || selected.size === 0}
+                className="glim-btn-wrap"
               />
             </div>
           )}
@@ -541,7 +547,7 @@ function FindingsTab({ t, byTarget }: { t: T; byTarget: Map<string, AnomalyItem>
 function SeriesLine({ t, label, series }: { t: T; label: string; series: AnomalySeriesInfo }) {
   return (
     <div className="flex flex-wrap items-baseline gap-x-3 ps-4 text-xs text-carbon-textSub">
-      <span className="text-carbon-text">{label}</span>
+      <span className="min-w-0 text-carbon-text wrap-anywhere">{label}</span>
       <span>{anomalyLearningText(t, series.learning.samples, series.learning.needed, false)}</span>
       {series.typical.sourceBytes !== null && series.typical.resticMs !== null && (
         <span>
@@ -658,7 +664,7 @@ function ItemRow({
   return (
     <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 px-3 py-2">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span className="text-sm text-carbon-text">{item.name}</span>
+        <span className="min-w-0 text-sm text-carbon-text wrap-anywhere">{item.name}</span>
         {!item.scheduled ? (
           <span className="text-xs text-carbon-textSub">{t("anomaly.items.notScheduled")}</span>
         ) : (
@@ -721,7 +727,7 @@ function ItemRow({
             {/* An expectation of a dump or a dataset says which series it
                 belongs to, or it would read as the item's own. */}
             {e.scopeKind === "zfsds" && (
-              <span dir="ltr" className="font-mono text-carbon-text text-start">
+              <span dir="ltr" className="min-w-0 font-mono text-carbon-text text-start wrap-anywhere">
                 {e.part}
               </span>
             )}

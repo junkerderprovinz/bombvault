@@ -218,6 +218,37 @@
 .glim-btn-md { min-width: var(--btn-w-md); }
 .glim-btn-lg { min-width: var(--btn-w-lg); }
 
+/* For a button whose words are the only thing that tells it from its
+   neighbours. Below 48rem the column can be narrower than the label, so the
+   label wraps onto a second line instead of ending in an ellipsis, and the
+   button stays inside its row. The width stage is a desktop floor; kept here it
+   would push the button past a phone's edge. */
+@media (width < 48rem) {
+  .glim-btn.glim-btn-wrap {
+    height: auto;
+    min-height: var(--btn-h);
+    min-width: 0;
+    max-width: 100%;
+    padding-block: 0.375rem;
+  }
+
+  /* Less padding leaves the words room. HintSlot places its (i) by the same
+     variable from the span around the button, so the span takes it too. */
+  .glim-btn.glim-btn-wrap,
+  span:has(> .glim-btn.glim-btn-wrap) {
+    --btn-pad-x: 0.625rem;
+  }
+
+  /* A word wider than the button is hyphenated in the page's language, and
+     split without a hyphen only where no dictionary exists. */
+  .glim-btn-wrap .glim-btn-label {
+    white-space: normal;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    text-align: start;
+  }
+}
+
 /* The remove control inside a pill (Button variant="chip"). No width stage and
    no button height: it has to fit inside a 0.75rem-text pill. It takes the
    pill's ink instead of painting its own surface, so it works on an accent pill
