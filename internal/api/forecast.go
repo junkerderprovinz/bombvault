@@ -123,6 +123,7 @@ func weeksToFull(freeBytes, growthPerWeek int64) (float64, bool) {
 type repoCapacity struct {
 	Name    string
 	Primary bool
+	Offsite bool
 	Remote  bool
 	At      *int64
 	Free    *int64
@@ -130,36 +131,38 @@ type repoCapacity struct {
 	Total   *int64
 }
 
-// repoCapacities reads the room around every repository a domain writes to. A
+// repoCapacities reads the room around every repository a domain writes to,
+// its items' own ones first and then the off-site targets it copies to. A
 // local disk is asked on the spot. A remote comes from the capacity rule's last
 // stored reading, since asking it again is an API call against somebody else's
 // service.
 func (s *Service) repoCapacities(domain string) []repoCapacity {
-	_, repos, _, err := s.domainReposForOp(domain, "local")
+	settings, repos, _, err := s.domainReposForOp(domain, "local")
 	if err != nil {
 		return nil
 	}
+	targets := s.offsiteReplicationTargets(domain, settings)
 	var readings map[string]store.VolumeSample
-	out := make([]repoCapacity, 0, len(repos))
-	for _, ref := range repos {
-		c := repoCapacity{Name: s.refName(ref), Primary: ref.Own, Remote: restic.IsRemoteRepo(ref.Loc)}
+	out := make([]repoCapacity, 0, len(repos)+len(targets))
+	measure := func(c repoCapacity, loc string) repoCapacity {
+		c.Remote = restic.IsRemoteRepo(loc)
 		switch {
 		case !c.Remote:
 			// A folder with no repository in it yet may not be on the disk the
 			// repository will be on.
-			if localRepoMissing(ref.Loc) {
+			if localRepoMissing(loc) {
 				break
 			}
-			if res, sErr := s.diskStatFn()(ref.Loc); sErr == nil {
+			if res, sErr := s.diskStatFn()(loc); sErr == nil {
 				now := s.anomalies.nowUnix()
 				free, used, total := clampToInt64(res.Free), clampToInt64(res.Used), clampToInt64(res.Total)
 				c.At, c.Free, c.Used, c.Total = &now, &free, &used, &total
 			}
-		case isRcloneLocation(ref.Loc):
+		case isRcloneLocation(loc):
 			if readings == nil {
 				readings = s.newestVolumeReadings()
 			}
-			if v, ok := readings["remote:"+repoLocationKey(ref.Loc)]; ok {
+			if v, ok := readings["remote:"+repoLocationKey(loc)]; ok {
 				c.At, c.Free, c.Total = &v.At, &v.FreeBytes, v.TotalBytes
 				if v.TotalBytes != nil {
 					used := *v.TotalBytes - v.FreeBytes
@@ -167,7 +170,23 @@ func (s *Service) repoCapacities(domain string) []repoCapacity {
 				}
 			}
 		}
-		out = append(out, c)
+		return c
+	}
+	for _, ref := range repos {
+		out = append(out, measure(repoCapacity{Name: s.refName(ref), Primary: ref.Own}, ref.Loc))
+	}
+	for _, t := range targets {
+		c := repoCapacity{Name: scrubSafeName(t.Name), Offsite: true}
+		loc, rErr := s.resolveRepo(t.Repo)
+		if rErr != nil {
+			c.Remote = restic.IsRemoteRepo(t.Repo)
+			out = append(out, c)
+			continue
+		}
+		if c.Name == "" {
+			c.Name = shortRepoName(loc)
+		}
+		out = append(out, measure(c, loc))
 	}
 	return out
 }

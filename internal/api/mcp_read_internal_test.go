@@ -368,6 +368,70 @@ func TestMCPStorageStatsReportsTheRoomAroundEachRepository(t *testing.T) {
 	}
 }
 
+// A container kept straight at a target sits in that target's direct
+// repository, and every container is copied to the targets, so the report
+// covers both.
+func TestMCPStorageStatsListsDirectRepositoriesAndTargets(t *testing.T) {
+	h, _, repo, _ := newMCPGateHandler(t)
+	settings, err := repo.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersEnabled = true
+	settings.ContainersPath = "backups/containers"
+	if err := repo.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	initLocalRepo(t, filepath.Join(h.cfg.HostMountRoot, "backups", "containers"))
+	usb := filepath.Join(h.cfg.HostMountRoot, "usb", "containers")
+	initLocalRepo(t, usb)
+	h.svc.diskStat = func(path string) (diskStatResult, error) {
+		if strings.Contains(path, "usb") {
+			return diskStatResult{Volume: "dev:811", Free: 7_000_000, Used: 1_000_000, Total: 8_000_000}, nil
+		}
+		return diskStatResult{Volume: "dev:801", Free: 50_000_000, Used: 30_000_000, Total: 80_000_000}, nil
+	}
+
+	cloud, err := repo.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Cloud", Repo: "s3:s3.example.com/bkt/containers", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "USB", Repo: usb, SortOrder: 1, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	direct, err := repo.CreateCompanionRepo(cloud.ID, "Cloud direct", "s3:s3.example.com/bkt/direct")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.WritePlacement(store.ItemRef{Domain: "containers", Key: "Immich"}, &store.HomeWrite{Repo: direct.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := withMCPCaller(context.Background(), mcpCaller{KeyID: "0b7e", Hint: "x9Qa"})
+	res, _ := h.toolGetStorageStats(ctx, &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
+		Name:      "get_storage_stats",
+		Arguments: json.RawMessage(`{"domain":"containers"}`),
+	}})
+	repos, _ := mcpStructured(t, res)["repositories"].([]any)
+	want := []map[string]any{
+		{"name": "folder containers", "primary": true, "offsite": false, "remote": false, "freeBytes": float64(50_000_000)},
+		{"name": "Cloud direct", "primary": false, "offsite": false, "remote": true, "freeBytes": nil},
+		{"name": "Cloud", "primary": false, "offsite": true, "remote": true, "freeBytes": nil},
+		{"name": "USB", "primary": false, "offsite": true, "remote": false, "freeBytes": float64(7_000_000)},
+	}
+	if len(repos) != len(want) {
+		t.Fatalf("repositories = %v, want the domain's own, the direct one and both targets", repos)
+	}
+	for i, fields := range want {
+		got, _ := repos[i].(map[string]any)
+		for field, value := range fields {
+			if got[field] != value {
+				t.Fatalf("repositories[%d].%s = %v, want %v (%v)", i, field, got[field], value, got)
+			}
+		}
+	}
+}
+
 // initLocalRepo leaves the marker localRepoMissing looks for.
 func initLocalRepo(t *testing.T, dir string) {
 	t.Helper()
