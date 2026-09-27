@@ -262,7 +262,8 @@ export function OffsiteWizard({
     settings.offsiteRetentionKeepLast +
     settings.offsiteRetentionKeepDaily +
     settings.offsiteRetentionKeepWeekly +
-    settings.offsiteRetentionKeepMonthly;
+    settings.offsiteRetentionKeepMonthly +
+    settings.offsiteRetentionKeepYearly;
   const pruneMode: "farside" | "policy" | "none" = immutable
     ? "farside"
     : keepTotal > 0
@@ -874,7 +875,8 @@ export function OffsiteWizard({
                     .replace("{last}", String(settings.offsiteRetentionKeepLast))
                     .replace("{daily}", String(settings.offsiteRetentionKeepDaily))
                     .replace("{weekly}", String(settings.offsiteRetentionKeepWeekly))
-                    .replace("{monthly}", String(settings.offsiteRetentionKeepMonthly))}
+                    .replace("{monthly}", String(settings.offsiteRetentionKeepMonthly))
+                    .replace("{yearly}", String(settings.offsiteRetentionKeepYearly))}
                 </span>
                 <span className="text-xs text-carbon-textMuted">{t("offsite.prune.editedElsewhere")}</span>
               </>

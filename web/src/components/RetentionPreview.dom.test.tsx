@@ -47,7 +47,7 @@ describe("RetentionPreview", () => {
     previewRetention.mockResolvedValue({
       ok: true,
       preview: {
-        policy: { on: true, keepLast: 1, keepDaily: 0, keepWeekly: 0, keepMonthly: 0 },
+        policy: { on: true, keepLast: 1, keepDaily: 0, keepWeekly: 0, keepMonthly: 0, keepYearly: 0 },
         repos: [
           {
             name: "Containers",
@@ -80,7 +80,7 @@ describe("RetentionPreview", () => {
     previewRetention.mockResolvedValue({
       ok: true,
       preview: {
-        policy: { on: false, keepLast: 0, keepDaily: 0, keepWeekly: 0, keepMonthly: 0 },
+        policy: { on: false, keepLast: 0, keepDaily: 0, keepWeekly: 0, keepMonthly: 0, keepYearly: 0 },
         repos: [{ name: "Containers", appendOnly: false, items: [] }],
       },
     });
@@ -98,7 +98,7 @@ describe("RetentionPreview", () => {
     previewRetention.mockResolvedValue({
       ok: true,
       preview: {
-        policy: { on: true, keepLast: 5, keepDaily: 0, keepWeekly: 0, keepMonthly: 0 },
+        policy: { on: true, keepLast: 5, keepDaily: 0, keepWeekly: 0, keepMonthly: 0, keepYearly: 0 },
         repos: [{ name: "Cold archive", appendOnly: true, items: [] }],
       },
     });
@@ -114,7 +114,7 @@ describe("RetentionPreview", () => {
     previewRetention.mockResolvedValue({
       ok: true,
       preview: {
-        policy: { on: true, keepLast: 5, keepDaily: 0, keepWeekly: 0, keepMonthly: 0 },
+        policy: { on: true, keepLast: 5, keepDaily: 0, keepWeekly: 0, keepMonthly: 0, keepYearly: 0 },
         repos: [{ name: "Containers", appendOnly: false, items: [] }],
         skipped: ["Cold archive (it was there before and is not reachable now)"],
       },
@@ -156,7 +156,7 @@ describe("RetentionPreview", () => {
     previewRetention.mockResolvedValue({
       ok: true,
       preview: {
-        policy: { on: true, keepLast: 1, keepDaily: 0, keepWeekly: 0, keepMonthly: 0 },
+        policy: { on: true, keepLast: 1, keepDaily: 0, keepWeekly: 0, keepMonthly: 0, keepYearly: 0 },
         repos: [
           {
             name: "Containers",

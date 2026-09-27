@@ -998,3 +998,32 @@ func TestAnEmptyContainerRowCanStillBeCleared(t *testing.T) {
 		t.Errorf("nothing should have been forgotten, got %v", eng.forgotRepos)
 	}
 }
+
+func TestTheCopyWritesWithTheDestinationsCompression(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "1111aaaa", Tags: []string{"container:plex"}},
+	}}
+	svc, st, _, _ := twoRepoDomain(t, eng)
+	dest := "rest:http://192.168.1.2:8000/containers"
+	eng.snapsByRepo = map[string][]restic.Snapshot{dest: nil}
+
+	if _, err := st.MutateSettings(func(s *store.Settings) error {
+		s.ContainersOffsite = dest
+		s.SetCompression("containers", "off")
+		s.SetCompression("offsite:containers", "max")
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if len(eng.copiedModes) == 0 {
+		t.Fatal("nothing was copied, so this test measured nothing")
+	}
+	for i, m := range eng.copiedModes {
+		if m.Compression != restic.CompressionMax {
+			t.Errorf("copy %d wrote with %q; the destination is the repository being written, want max", i, m.Compression)
+		}
+	}
+}

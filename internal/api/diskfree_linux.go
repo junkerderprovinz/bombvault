@@ -3,6 +3,7 @@
 package api
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"syscall"
@@ -17,6 +18,8 @@ type diskStatResult struct {
 	// Volume groups the repositories that draw on the same free space:
 	// "dev:<device in hex>", or "pool:<name>" for a dataset of a ZFS pool.
 	Volume string
+	// FSType is the type of the mount holding the path, such as cifs or nfs4.
+	FSType string
 }
 
 // diskStat measures the filesystem containing path and names its volume.
@@ -32,11 +35,11 @@ func diskStat(path string) (diskStatResult, error) {
 		return diskStatResult{}, err
 	}
 	res.Volume = fmt.Sprintf("dev:%x", st.Dev)
-	if mounts, err := os.Open(mountinfoPath); err == nil { //nolint:gosec // G304: mountinfoPath is a fixed package var, overridden only by tests
-		defer mounts.Close() //nolint:errcheck // read-only
-		if pool, ok := zfsPoolAt(mounts, path); ok {
+	if mounts, err := os.ReadFile(mountinfoPath); err == nil {
+		if pool, ok := zfsPoolAt(bytes.NewReader(mounts), path); ok {
 			res.Volume = "pool:" + pool
 		}
+		res.FSType = fsTypeAt(bytes.NewReader(mounts), path)
 	}
 	return res, nil
 }

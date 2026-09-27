@@ -87,6 +87,7 @@ func (s *Service) primaryModeFor(settings store.Settings, domain, repo string) r
 	// pointed at b2:bucket/cold with the keys saved for the domain's s3: primary.
 	if named, ok := s.namedRepoForLocation(repo); ok {
 		mode.Limits = restic.Limits{UploadKBps: named.LimitUpload, DownloadKBps: named.LimitDownload}
+		mode.Compression = storedCompression(named.Compression)
 		if restic.IsRemoteRepo(repo) {
 			mode = s.applyTargetCreds(mode, settings, named)
 			// As in offsiteModeForTarget, the row's own storage class beats the
@@ -98,6 +99,7 @@ func (s *Service) primaryModeFor(settings store.Settings, domain, repo string) r
 		return mode
 	}
 	mode.Limits = s.primaryLimitsFor(domain, repo)
+	mode.Compression = storedCompression(settings.CompressionFor(domain))
 	if !restic.IsRemoteRepo(repo) {
 		return mode
 	}

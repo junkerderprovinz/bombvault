@@ -272,10 +272,16 @@ export interface Settings {
   retentionKeepDaily: number;
   retentionKeepWeekly: number;
   retentionKeepMonthly: number;
+  retentionKeepYearly: number;
+  /** restic's --compression per repository: a domain name for its own
+   *  repository, "offsite:<domain>" for its primary off-site destination. The
+   *  server sends every key. */
+  compression: Record<string, Compression>;
   offsiteRetentionKeepLast: number;
   offsiteRetentionKeepDaily: number;
   offsiteRetentionKeepWeekly: number;
   offsiteRetentionKeepMonthly: number;
+  offsiteRetentionKeepYearly: number;
   offsiteLimitUpload: number;
   /** CPU threads each restic child may use, as GOMAXPROCS. 0 = every core,
    *  restic's own default ([558], issue #189). */
@@ -2042,6 +2048,7 @@ export type RetentionPreview = {
     keepDaily: number;
     keepWeekly: number;
     keepMonthly: number;
+    keepYearly: number;
   };
   repos: RetentionPreviewRepo[];
   skipped?: string[] | null;
@@ -2259,6 +2266,8 @@ export interface OffsiteTarget {
   retentionKeepDaily: number;
   retentionKeepWeekly: number;
   retentionKeepMonthly: number;
+  retentionKeepYearly: number;
+  compression: Compression;
   limitUpload: number;
   limitDownload: number;
   growthBudgetGb: number;
@@ -2289,7 +2298,11 @@ export interface NamedRepo {
   immutable: boolean;
   enabled: boolean;
   inUse: number;
+  compression: Compression;
 }
+
+/** restic's --compression mode. "auto" is restic's own default. */
+export type Compression = "off" | "auto" | "max";
 
 /** GET /api/repos — every named repository, in picker order. */
 export function listRepos(): Promise<OkEnvelope & { repos?: NamedRepo[] }> {
@@ -2473,6 +2486,10 @@ export interface StorageForecast {
   growthBytesPerWeek?: number;
   freeBytes?: number;
   weeksToFull?: number;
+  /** What measured freeBytes: statfs, smb, nfs, rclone or sftp. */
+  capacitySource?: string;
+  /** The backend cannot report its free space at all (S3, B2, REST). */
+  capacityUnsupported?: boolean;
 }
 
 export interface StatsResponse {

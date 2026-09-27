@@ -198,3 +198,72 @@ func TestDiskFreeBytesPlatform(t *testing.T) {
 		t.Fatal("a writable temp dir must report free space")
 	}
 }
+
+func setContainersPath(t *testing.T, svc *Service, loc string) {
+	t.Helper()
+	if _, err := svc.store.MutateSettings(func(s *store.Settings) error {
+		s.ContainersPath = loc
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestStorageForecastReadsARemoteRepositorysLastReading(t *testing.T) {
+	svc := forecastTestService(t, func(string) (uint64, error) {
+		t.Fatal("a remote repository has no local filesystem to ask")
+		return 0, nil
+	})
+	loc := "sftp:backup@nas.lan:/srv/restic"
+	setContainersPath(t, svc, loc)
+	now := time.Now().Unix()
+	const day = int64(86400)
+	total := int64(8 << 30)
+	for _, v := range []store.VolumeSample{
+		{Volume: remoteVolumeKey(loc), At: now - 20*day, FreeBytes: 7 << 30, TotalBytes: &total, Source: "sftp"},
+		{Volume: remoteVolumeKey(loc), At: now - day, FreeBytes: 4 << 30, TotalBytes: &total, Source: "sftp"},
+		{Volume: remoteVolumeKey("rclone:other:x"), At: now, FreeBytes: 1, Source: "rclone"},
+	} {
+		if err := svc.store.AddVolumeSample(v); err != nil {
+			t.Fatal(err)
+		}
+	}
+	stats := []store.RepoStat{{At: now - 7*day, RawSize: 10 << 30}, {At: now, RawSize: 11 << 30}}
+
+	f := svc.StorageForecast("containers", "local", stats)
+	if f == nil || f.FreeBytes == nil || *f.FreeBytes != 4<<30 {
+		t.Fatalf("forecast = %+v, want the newest reading of this repository's volume", f)
+	}
+	if f.CapacitySource != "sftp" || f.WeeksToFull == nil || *f.WeeksToFull != 4 {
+		t.Fatalf("source %q, weeksToFull %v, want sftp and 4", f.CapacitySource, f.WeeksToFull)
+	}
+}
+
+func TestStorageForecastIgnoresAStaleRemoteReading(t *testing.T) {
+	svc := forecastTestService(t, func(string) (uint64, error) { return 0, nil })
+	loc := "rclone:box:bv"
+	setContainersPath(t, svc, loc)
+	if err := svc.store.AddVolumeSample(store.VolumeSample{
+		Volume: remoteVolumeKey(loc), At: time.Now().Unix() - 10*86400, FreeBytes: 1 << 30, Source: "rclone",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if f := svc.StorageForecast("containers", "local", nil); f != nil {
+		t.Fatalf("a ten-day-old reading is no answer about today, got %+v", f)
+	}
+}
+
+func TestStorageForecastSaysWhenABackendReportsNoSpace(t *testing.T) {
+	svc := forecastTestService(t, func(string) (uint64, error) { return 0, nil })
+	setContainersPath(t, svc, "s3:https://s3.example.com/bucket/containers")
+	now := time.Now().Unix()
+	stats := []store.RepoStat{{At: now - 7*86400, RawSize: 10 << 30}, {At: now, RawSize: 11 << 30}}
+
+	f := svc.StorageForecast("containers", "local", stats)
+	if f == nil || !f.CapacityUnsupported || f.FreeBytes != nil || f.GrowthBytesPerWeek == nil {
+		t.Fatalf("forecast = %+v, want the growth only, marked as a backend without free space", f)
+	}
+	if f := svc.StorageForecast("containers", "local", nil); f == nil || !f.CapacityUnsupported {
+		t.Fatalf("with no growth yet the answer must still say why there is no free space, got %+v", f)
+	}
+}

@@ -253,3 +253,30 @@ func TestUpdateOffsiteTargetKeepsThePrimaryInItsDomain(t *testing.T) {
 		t.Fatalf("a refused update changed the primary: %+v", got)
 	}
 }
+
+func TestOffsiteTargetKeepsItsYearlyRule(t *testing.T) {
+	h, st := newCRUDHandler(t)
+
+	body, _ := json.Marshal(offsiteTargetView{Domain: "vms", Name: "Archive", Repo: "s3:archive", RetentionKeepYearly: 6, Enabled: true, SortOrder: 1})
+	rec := httptest.NewRecorder()
+	h.handleCreateOffsiteTarget(rec, jsonReq(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
+	env := decodeEnvelope(t, rec)
+	if env["ok"] != true {
+		t.Fatalf("create not ok: %v", env)
+	}
+	created := env["target"].(map[string]any)
+	if created["retentionKeepYearly"] != float64(6) {
+		t.Fatalf("retentionKeepYearly = %v, want 6", created["retentionKeepYearly"])
+	}
+	stored, ok, err := st.GetOffsiteTarget(created["id"].(string))
+	if err != nil || !ok {
+		t.Fatalf("GetOffsiteTarget: ok=%v err=%v", ok, err)
+	}
+	if got := targetOffsiteRetentionPolicy(stored); got.KeepYearly != 6 {
+		t.Fatalf("the destination's policy keeps %d years, want 6", got.KeepYearly)
+	}
+
+	if got := (offsiteTargetView{RetentionKeepYearly: -3}).toStoreTarget(); got.RetentionKeepYearly != 0 {
+		t.Fatalf("a negative yearly count must floor at 0, got %d", got.RetentionKeepYearly)
+	}
+}

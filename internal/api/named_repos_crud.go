@@ -50,6 +50,8 @@ type namedRepoView struct {
 	// short-circuited past it on a local path.
 	Immutable bool `json:"immutable"`
 	Enabled   bool `json:"enabled"`
+	// Compression is restic's --compression for backups written here.
+	Compression string `json:"compression"`
 	// InUse is how many containers, VMs and folder sets currently point here.
 	// The interface needs it to explain why a repository cannot be deleted
 	// BEFORE the attempt, rather than only in the error afterwards.
@@ -73,6 +75,7 @@ func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
 			ID: t.ID, Name: t.Name, Repo: t.Repo, CredsRef: t.CredsRef,
 			StorageClass: t.StorageClass, LimitUpload: t.LimitUpload,
 			LimitDownload: t.LimitDownload, Immutable: t.Immutable, Enabled: t.Enabled, InUse: n,
+			Compression: normalizedCompression(t.Compression),
 		})
 	}
 	return out
@@ -101,6 +104,7 @@ type namedRepoBody struct {
 	LimitDownload *int    `json:"limitDownload"`
 	Immutable     *bool   `json:"immutable"`
 	Enabled       *bool   `json:"enabled"`
+	Compression   *string `json:"compression"`
 }
 
 // applyTo merges the sent fields onto a row.
@@ -139,6 +143,9 @@ func (b namedRepoBody) applyTo(t *store.OffsiteTarget) {
 	}
 	if b.Enabled != nil {
 		t.Enabled = *b.Enabled
+	}
+	if b.Compression != nil {
+		t.Compression = strings.ToLower(strings.TrimSpace(*b.Compression))
 	}
 }
 
@@ -195,6 +202,9 @@ func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass bool) erro
 	// shared with the settings import so the two cannot disagree.
 	if msg := staticNamedRepoRefusals(t.Repo, h.cfg.HostMountRoot); msg != "" {
 		return errors.New(msg)
+	}
+	if _, err := restic.ParseCompression(t.Compression); err != nil {
+		return err
 	}
 	// The same class whitelist the off-site destinations are held to. The field is
 	// applied to restic's -o s3.storage-class now, so an unsupported value stops
