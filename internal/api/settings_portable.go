@@ -869,17 +869,20 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 		return err
 	}
 	h.svc.syncAllPrimaryOffsiteTargets(s)
-	if h.scheduler != nil {
-		if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
-			return err
-		}
-	}
+	// The places are rebuilt before the reload, so a reload that fails leaves
+	// no instance that had places on none.
+	var placesErr error
 	if rebuild {
 		if err := h.svc.MigrateToPlaces(); err != nil {
-			return fmt.Errorf("the settings were imported, but the storage places could not be built from them, so this instance runs without places: %w", err)
+			placesErr = fmt.Errorf("the settings were imported, but the storage places could not be built from them, so this instance runs without places: %w", err)
 		}
 	}
-	return nil
+	if h.scheduler != nil {
+		if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
+			return errors.Join(placesErr, err)
+		}
+	}
+	return placesErr
 }
 
 // installedForImport reads the containers and VMs installed on the host when
