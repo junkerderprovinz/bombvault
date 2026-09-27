@@ -657,7 +657,7 @@ const tr: Partial<Translations> = {
   "flash.backupNow": "Flash'ı şimdi yedekle",
   "flash.backingUp": "Yedekleniyor…",
   "flash.download": "İndir (.zip)",
-  "flash.restoreNote": "Geri yükleme, anlık görüntünün ZIP'ini indirir. Çalışan /boot'a asla dokunulmaz. .zip dosyasını doğrudan Unraid USB oluşturucuya bırakın veya flash'ınızı yeniden oluşturmak için yeni bir USB'ye çıkarın.",
+  "flash.restoreNote": "Geri yükleme, anlık görüntünün ZIP'ini indirir. Çalışan /boot'a asla dokunulmaz. .zip dosyasını doğrudan Unraid USB oluşturucuya bırakın veya flash'ınızı yeniden oluşturmak için yeni bir USB'ye çıkarın. İstisna, Eklentiler altından tek bir eklentiyi geri yüklemektir: o eklenti çalışan flash'a geri yazılır.",
   "flash.none": "Henüz flash yedeği yok. Yukarıdan bir yedekleme çalıştırın.",
   "flash.plugins": "Eklentiler",
   "flash.pluginsTitle": "Bu yedekteki eklentiler",

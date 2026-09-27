@@ -1263,7 +1263,7 @@ const is: Partial<Translations> = {
   "flash.backupNow": "Afrita Flash núna",
   "flash.backingUp": "Afrita…",
   "flash.download": "Sækja (.zip)",
-  "flash.restoreNote": "Endurheimt sækir ZIP-skrá af snapshottinu. Ekki er hróflað við /boot í keyrslu. Settu .zip beint í Unraid USB-smíðatólið, eða dpakkaðu því á nýtt USB til að endurbyggja Flash-ið þitt.",
+  "flash.restoreNote": "Endurheimt sækir ZIP-skrá af snapshottinu. Ekki er hróflað við /boot í keyrslu. Settu .zip beint í Unraid USB-smíðatólið, eða dpakkaðu því á nýtt USB til að endurbyggja Flash-ið þitt. Undantekningin er endurheimt einnar viðbótar undir Viðbætur: hún er skrifuð aftur á Flash-ið í keyrslu.",
   "flash.none": "Engin Flash-afrit ennþá. Keyrðu eitt hér að ofan.",
   "flash.plugins": "Viðbætur",
   "flash.pluginsTitle": "Viðbætur í þessu afriti",

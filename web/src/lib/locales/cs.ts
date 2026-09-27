@@ -655,7 +655,7 @@ const cs: Partial<Translations> = {
   "flash.backupNow": "Zálohovat Flash nyní",
   "flash.backingUp": "Zálohuji…",
   "flash.download": "Stáhnout (.zip)",
-  "flash.restoreNote": "Obnovení stáhne ZIP snímku. Běžící /boot se nikdy nezmění. Vložte .zip přímo do nástroje Unraid USB creator, nebo jej rozbalte na nový USB disk a obnovte tak flash.",
+  "flash.restoreNote": "Obnovení stáhne ZIP snímku. Běžící /boot se nikdy nezmění. Vložte .zip přímo do nástroje Unraid USB creator, nebo jej rozbalte na nový USB disk a obnovte tak flash. Výjimkou je obnovení jednoho pluginu v části Pluginy: ten se zapíše zpět do běžícího flashe.",
   "flash.none": "Zatím žádné zálohy Flash. Spusťte zálohu výše.",
   "flash.plugins": "Pluginy",
   "flash.pluginsTitle": "Pluginy v této záloze",

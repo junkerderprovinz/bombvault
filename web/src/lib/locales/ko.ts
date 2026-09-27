@@ -650,7 +650,7 @@ const ko: Partial<Translations> = {
   "flash.backupNow": "지금 플래시 백업",
   "flash.backingUp": "백업 중…",
   "flash.download": "다운로드 (.zip)",
-  "flash.restoreNote": "복원은 스냅샷의 ZIP을 다운로드합니다. 실행 중인 /boot은 절대 건드리지 않습니다. .zip을 Unraid USB 작성기에 바로 넣거나 새 USB에 압축 해제하여 플래시를 다시 구성하세요.",
+  "flash.restoreNote": "복원은 스냅샷의 ZIP을 다운로드합니다. 실행 중인 /boot은 절대 건드리지 않습니다. .zip을 Unraid USB 작성기에 바로 넣거나 새 USB에 압축 해제하여 플래시를 다시 구성하세요. 예외는 플러그인에서 플러그인 하나를 복원하는 경우로, 해당 플러그인은 실행 중인 플래시에 다시 기록됩니다.",
   "flash.none": "아직 플래시 백업이 없습니다. 위에서 백업을 실행하세요.",
   "flash.plugins": "플러그인",
   "flash.pluginsTitle": "이 백업의 플러그인",

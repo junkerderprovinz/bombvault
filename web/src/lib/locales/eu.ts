@@ -1263,7 +1263,7 @@ const eu: Partial<Translations> = {
   "flash.backupNow": "Egin Flash-en babeskopia orain",
   "flash.backingUp": "Babeskopia egiten…",
   "flash.download": "Deskargatu (.zip)",
-  "flash.restoreNote": "Berrezarpenak argazkiaren ZIP bat deskargatzen du. Exekutatzen ari den /boot ez da inoiz ukitzen. Jarri .zip zuzenean Unraid USB sortzailean, edo deskonprimitu USB berri batean zure Flash berreraikitzeko.",
+  "flash.restoreNote": "Berrezarpenak argazkiaren ZIP bat deskargatzen du. Exekutatzen ari den /boot ez da inoiz ukitzen. Jarri .zip zuzenean Unraid USB sortzailean, edo deskonprimitu USB berri batean zure Flash berreraikitzeko. Salbuespena Pluginak ataletik plugin bakar bat berrezartzea da: exekutatzen ari den Flash-era idazten da berriro.",
   "flash.none": "Oraindik ez dago Flash babeskopiarik. Abiarazi bat goian.",
   "flash.plugins": "Pluginak",
   "flash.pluginsTitle": "Babeskopia honetako pluginak",

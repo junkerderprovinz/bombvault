@@ -654,7 +654,7 @@ const no: Partial<Translations> = {
   "flash.backupNow": "Sikkerhetskopier flash nå",
   "flash.backingUp": "Sikkerhetskopierer…",
   "flash.download": "Last ned (.zip)",
-  "flash.restoreNote": "Gjenoppretting laster ned en ZIP av øyeblikksbildet. Den kjørende /boot røres aldri. Legg .zip-filen rett inn i Unraids USB-creator, eller pakk den ut på en ny USB for å bygge opp flashen på nytt.",
+  "flash.restoreNote": "Gjenoppretting laster ned en ZIP av øyeblikksbildet. Den kjørende /boot røres aldri. Legg .zip-filen rett inn i Unraids USB-creator, eller pakk den ut på en ny USB for å bygge opp flashen på nytt. Unntaket er å gjenopprette ett enkelt programtillegg under Programtillegg: det skrives tilbake til den kjørende flashen.",
   "flash.none": "Ingen flash-sikkerhetskopier ennå. Kjør en sikkerhetskopiering ovenfor.",
   "flash.plugins": "Programtillegg",
   "flash.pluginsTitle": "Programtillegg i denne sikkerhetskopien",

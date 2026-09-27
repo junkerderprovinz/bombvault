@@ -1263,7 +1263,7 @@ const hr: Partial<Translations> = {
   "flash.backupNow": "Sigurnosno kopiraj Flash sada",
   "flash.backingUp": "Izrada sigurnosne kopije…",
   "flash.download": "Preuzmi (.zip)",
-  "flash.restoreNote": "Vraćanje preuzima ZIP snimke. Pokrenuti /boot nikad se ne dira. Stavite .zip izravno u Unraid USB alat za izradu, ili ga raspakirajte na novi USB kako biste ponovno izgradili svoj Flash.",
+  "flash.restoreNote": "Vraćanje preuzima ZIP snimke. Pokrenuti /boot nikad se ne dira. Stavite .zip izravno u Unraid USB alat za izradu, ili ga raspakirajte na novi USB kako biste ponovno izgradili svoj Flash. Iznimka je vraćanje jednog dodatka iz Dodataka: on se ponovno zapisuje na pokrenuti Flash.",
   "flash.none": "Još nema Flash sigurnosnih kopija. Pokrenite jednu iznad.",
   "flash.plugins": "Dodaci",
   "flash.pluginsTitle": "Dodaci u ovoj sigurnosnoj kopiji",

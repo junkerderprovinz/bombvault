@@ -651,7 +651,7 @@ const nl: Partial<Translations> = {
   "flash.backupNow": "Flash nu back-uppen",
   "flash.backingUp": "Back-up maken…",
   "flash.download": "Downloaden (.zip)",
-  "flash.restoreNote": "Herstel downloadt een ZIP van de snapshot. De actieve /boot wordt nooit aangeraakt. Zet de .zip rechtstreeks in de Unraid USB-creator, of pak hem uit op een nieuwe USB om je flash opnieuw op te bouwen.",
+  "flash.restoreNote": "Herstel downloadt een ZIP van de snapshot. De actieve /boot wordt nooit aangeraakt. Zet de .zip rechtstreeks in de Unraid USB-creator, of pak hem uit op een nieuwe USB om je flash opnieuw op te bouwen. De uitzondering is één plug-in herstellen onder Plug-ins: die wordt teruggeschreven naar de actieve flash.",
   "flash.none": "Nog geen flash-back-ups. Maak er hierboven een.",
   "flash.plugins": "Plug-ins",
   "flash.pluginsTitle": "Plug-ins in deze back-up",

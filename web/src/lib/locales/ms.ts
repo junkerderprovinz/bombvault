@@ -1263,7 +1263,7 @@ const ms: Partial<Translations> = {
   "flash.backupNow": "Sandarkan flash sekarang",
   "flash.backingUp": "Menyandarkan…",
   "flash.download": "Muat turun (.zip)",
-  "flash.restoreNote": "Pemulihan memuat turun ZIP snapshot. /boot yang sedang berjalan tidak sekali-kali disentuh. Letakkan .zip terus ke dalam pencipta USB Unraid, atau nyahzipkannya pada USB baharu untuk membina semula Flash anda.",
+  "flash.restoreNote": "Pemulihan memuat turun ZIP snapshot. /boot yang sedang berjalan tidak sekali-kali disentuh. Letakkan .zip terus ke dalam pencipta USB Unraid, atau nyahzipkannya pada USB baharu untuk membina semula Flash anda. Pengecualiannya ialah memulihkan satu pemalam daripada Pemalam: ia ditulis semula ke Flash yang sedang berjalan.",
   "flash.none": "Belum ada sandaran Flash. Jalankan satu di atas.",
   "flash.plugins": "Pemalam",
   "flash.pluginsTitle": "Pemalam dalam sandaran ini",

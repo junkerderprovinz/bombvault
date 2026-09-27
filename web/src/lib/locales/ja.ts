@@ -650,7 +650,7 @@ const ja: Partial<Translations> = {
   "flash.backupNow": "今すぐフラッシュをバックアップ",
   "flash.backingUp": "バックアップ中…",
   "flash.download": "ダウンロード (.zip)",
-  "flash.restoreNote": "復元はスナップショットの ZIP をダウンロードします。実行中の /boot には一切触れません。.zip をそのまま Unraid の USB クリエーターに入れるか、新しい USB に展開してフラッシュを再構築してください。",
+  "flash.restoreNote": "復元はスナップショットの ZIP をダウンロードします。実行中の /boot には一切触れません。.zip をそのまま Unraid の USB クリエーターに入れるか、新しい USB に展開してフラッシュを再構築してください。例外はプラグインから単一のプラグインを復元する場合で、そのプラグインは実行中のフラッシュに書き戻されます。",
   "flash.none": "フラッシュバックアップはまだありません。上でバックアップを実行してください。",
   "flash.plugins": "プラグイン",
   "flash.pluginsTitle": "このバックアップのプラグイン",

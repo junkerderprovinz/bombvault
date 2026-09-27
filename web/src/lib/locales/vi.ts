@@ -650,7 +650,7 @@ const vi: Partial<Translations> = {
   "flash.backupNow": "Sao lưu flash ngay",
   "flash.backingUp": "Đang sao lưu…",
   "flash.download": "Tải xuống (.zip)",
-  "flash.restoreNote": "Khôi phục sẽ tải về một tệp ZIP của ảnh chụp. Phân vùng /boot đang chạy không bao giờ bị đụng đến. Thả tệp .zip thẳng vào trình tạo USB của Unraid, hoặc giải nén nó vào một USB mới để dựng lại flash.",
+  "flash.restoreNote": "Khôi phục sẽ tải về một tệp ZIP của ảnh chụp. Phân vùng /boot đang chạy không bao giờ bị đụng đến. Thả tệp .zip thẳng vào trình tạo USB của Unraid, hoặc giải nén nó vào một USB mới để dựng lại flash. Ngoại lệ là khôi phục một plugin riêng lẻ trong Plugin: plugin đó được ghi lại vào flash đang chạy.",
   "flash.none": "Chưa có bản sao lưu flash nào. Chạy một bản sao lưu ở trên.",
   "flash.plugins": "Plugin",
   "flash.pluginsTitle": "Plugin trong bản sao lưu này",

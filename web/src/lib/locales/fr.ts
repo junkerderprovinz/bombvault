@@ -657,7 +657,7 @@ const fr: Partial<Translations> = {
   "flash.backupNow": "Sauvegarder le flash",
   "flash.backingUp": "Sauvegarde…",
   "flash.download": "Télécharger (.zip)",
-  "flash.restoreNote": "La restauration télécharge un ZIP de l'instantané : le /boot en cours d'exécution n'est jamais touché. Glissez le .zip directement dans le créateur de clé USB d'Unraid, ou décompressez-le sur une clé USB neuve pour reconstruire votre flash.",
+  "flash.restoreNote": "La restauration télécharge un ZIP de l'instantané : le /boot en cours d'exécution n'est jamais touché. Glissez le .zip directement dans le créateur de clé USB d'Unraid, ou décompressez-le sur une clé USB neuve pour reconstruire votre flash. Seule exception : la restauration d'un plugin depuis Plugins, qui le réécrit dans le flash en cours d'exécution.",
   "flash.none": "Aucune sauvegarde flash pour l'instant, lancez-en une ci-dessus.",
   "flash.plugins": "Plugins",
   "flash.pluginsTitle": "Plugins de cette sauvegarde",

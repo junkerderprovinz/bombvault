@@ -1258,7 +1258,7 @@ const sl: Partial<Translations> = {
   "flash.backupNow": "Naredi varnostno kopijo Flasha zdaj",
   "flash.backingUp": "Izdelovanje varnostne kopije…",
   "flash.download": "Prenesi (.zip)",
-  "flash.restoreNote": "Obnovitev prenese ZIP posnetka. Delujoč /boot ostane nedotaknjen. Datoteko .zip spusti neposredno v Unraidov ustvarjalnik USB-jev ali jo razširi na nov USB, da znova zgradiš svoj Flash.",
+  "flash.restoreNote": "Obnovitev prenese ZIP posnetka. Delujoč /boot ostane nedotaknjen. Datoteko .zip spusti neposredno v Unraidov ustvarjalnik USB-jev ali jo razširi na nov USB, da znova zgradiš svoj Flash. Izjema je obnovitev posameznega vtičnika v razdelku Vtičniki: ta se zapiše nazaj na delujoč Flash.",
   "flash.none": "Še ni varnostnih kopij Flasha. Zgoraj zaženi varnostno kopiranje.",
   "flash.plugins": "Vtičniki",
   "flash.pluginsTitle": "Vtičniki v tej varnostni kopiji",

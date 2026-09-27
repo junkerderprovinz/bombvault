@@ -1263,7 +1263,7 @@ const lv: Partial<Translations> = {
   "flash.backupNow": "Dublēt Flash tagad",
   "flash.backingUp": "Dublē…",
   "flash.download": "Lejupielādēt (.zip)",
-  "flash.restoreNote": "Atjaunošana lejupielādē momentuzņēmuma ZIP. Darbojošais /boot nekad netiek skarts. Ievietojiet .zip tieši Unraid USB izveidotājā vai izpakojiet to jaunā USB, lai atjaunotu savu Flash.",
+  "flash.restoreNote": "Atjaunošana lejupielādē momentuzņēmuma ZIP. Darbojošais /boot nekad netiek skarts. Ievietojiet .zip tieši Unraid USB izveidotājā vai izpakojiet to jaunā USB, lai atjaunotu savu Flash. Izņēmums ir viena spraudņa atjaunošana sadaļā Spraudņi: tas tiek ierakstīts atpakaļ darbojošajā Flash.",
   "flash.none": "Vēl nav Flash rezerves kopiju. Palaidiet vienu iepriekš.",
   "flash.plugins": "Spraudņi",
   "flash.pluginsTitle": "Spraudņi šajā dublējumā",

@@ -654,7 +654,7 @@ const ro: Partial<Translations> = {
   "flash.backupNow": "Copiază flash-ul acum",
   "flash.backingUp": "Se copiază…",
   "flash.download": "Descarcă (.zip)",
-  "flash.restoreNote": "Restaurarea descarcă un ZIP al instantaneului. /boot-ul în execuție nu este atins niciodată. Pune .zip-ul direct în creatorul USB Unraid sau dezarhivează-l pe un USB nou pentru a reconstrui flash-ul.",
+  "flash.restoreNote": "Restaurarea descarcă un ZIP al instantaneului. /boot-ul în execuție nu este atins niciodată. Pune .zip-ul direct în creatorul USB Unraid sau dezarhivează-l pe un USB nou pentru a reconstrui flash-ul. Excepția este restaurarea unui singur plugin din Pluginuri: acesta este scris înapoi pe flash-ul în execuție.",
   "flash.none": "Încă nicio copie de rezervă flash. Rulați un backup mai sus.",
   "flash.plugins": "Pluginuri",
   "flash.pluginsTitle": "Pluginuri în acest backup",

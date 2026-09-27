@@ -1263,7 +1263,7 @@ const id: Partial<Translations> = {
   "flash.backupNow": "Cadangkan flash sekarang",
   "flash.backingUp": "Mencadangkan…",
   "flash.download": "Unduh (.zip)",
-  "flash.restoreNote": "Pemulihan mengunduh ZIP dari snapshot. /boot yang sedang berjalan tidak pernah disentuh. Masukkan .zip langsung ke pembuat USB Unraid, atau ekstrak ke USB baru untuk membangun kembali flash Anda.",
+  "flash.restoreNote": "Pemulihan mengunduh ZIP dari snapshot. /boot yang sedang berjalan tidak pernah disentuh. Masukkan .zip langsung ke pembuat USB Unraid, atau ekstrak ke USB baru untuk membangun kembali flash Anda. Pengecualiannya adalah memulihkan satu plugin dari Plugin: plugin itu ditulis kembali ke flash yang sedang berjalan.",
   "flash.none": "Belum ada cadangan flash. Jalankan satu di atas.",
   "flash.plugins": "Plugin",
   "flash.pluginsTitle": "Plugin dalam cadangan ini",

@@ -657,7 +657,7 @@ const hu: Partial<Translations> = {
   "flash.backupNow": "Flash mentése most",
   "flash.backingUp": "Mentés…",
   "flash.download": "Letöltés (.zip)",
-  "flash.restoreNote": "A visszaállítás letölti a pillanatkép ZIP-fájlját. A futó /boot-ot soha nem érinti. Húzd a .zip-et közvetlenül az Unraid USB-készítőjébe, vagy csomagold ki egy új USB-re a flash újraépítéséhez.",
+  "flash.restoreNote": "A visszaállítás letölti a pillanatkép ZIP-fájlját. A futó /boot-ot soha nem érinti. Húzd a .zip-et közvetlenül az Unraid USB-készítőjébe, vagy csomagold ki egy új USB-re a flash újraépítéséhez. Kivétel egyetlen bővítmény visszaállítása a Bővítmények alatt: az visszakerül a futó flashre.",
   "flash.none": "Még nincs flash mentés. Indítson egyet fent.",
   "flash.plugins": "Bővítmények",
   "flash.pluginsTitle": "Bővítmények ebben a mentésben",

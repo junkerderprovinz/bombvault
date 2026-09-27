@@ -1263,7 +1263,7 @@ const et: Partial<Translations> = {
   "flash.backupNow": "Varunda flash kohe",
   "flash.backingUp": "Varundamine…",
   "flash.download": "Laadi alla (.zip)",
-  "flash.restoreNote": "Taastamine laadib alla hetktõmmise ZIP-faili. Töötavat /boot-i ei puudutata kunagi. Pane .zip otse Unraidi USB-looja sisse või paki see lahti uuel USB-l, et oma flash uuesti üles ehitada.",
+  "flash.restoreNote": "Taastamine laadib alla hetktõmmise ZIP-faili. Töötavat /boot-i ei puudutata kunagi. Pane .zip otse Unraidi USB-looja sisse või paki see lahti uuel USB-l, et oma flash uuesti üles ehitada. Erand on üksiku plugina taastamine jaotises Pluginad: see kirjutatakse tagasi töötavale flashile.",
   "flash.none": "Flashi varundusi pole veel. Käivita üks ülalpool.",
   "flash.plugins": "Pluginad",
   "flash.pluginsTitle": "Selle varukoopia pluginad",

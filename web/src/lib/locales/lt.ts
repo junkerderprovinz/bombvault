@@ -1263,7 +1263,7 @@ const lt: Partial<Translations> = {
   "flash.backupNow": "Kopijuoti Flash dabar",
   "flash.backingUp": "Kopijuojama…",
   "flash.download": "Atsisiųsti (.zip)",
-  "flash.restoreNote": "Atkūrimas atsisiunčia momentinės kopijos ZIP. Veikiantis /boot niekada nekeičiamas. Įdėkite .zip tiesiai į Unraid USB kūrimo įrankį arba išpakuokite jį į naują USB, kad atkurtumėte savo Flash.",
+  "flash.restoreNote": "Atkūrimas atsisiunčia momentinės kopijos ZIP. Veikiantis /boot niekada nekeičiamas. Įdėkite .zip tiesiai į Unraid USB kūrimo įrankį arba išpakuokite jį į naują USB, kad atkurtumėte savo Flash. Išimtis yra vieno papildinio atkūrimas iš Papildiniai: jis įrašomas atgal į veikiantį Flash.",
   "flash.none": "Flash atsarginių kopijų dar nėra. Paleiskite vieną aukščiau.",
   "flash.plugins": "Papildiniai",
   "flash.pluginsTitle": "Papildiniai šioje atsarginėje kopijoje",

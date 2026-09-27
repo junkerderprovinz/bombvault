@@ -657,7 +657,7 @@ const it: Partial<Translations> = {
   "flash.backupNow": "Backup del flash ora",
   "flash.backingUp": "Backup in corso…",
   "flash.download": "Scarica (.zip)",
-  "flash.restoreNote": "Il ripristino scarica uno ZIP dello snapshot. Il /boot in esecuzione non viene mai toccato. Trascina il .zip direttamente nel creatore USB di Unraid, oppure estrailo su una chiavetta USB nuova per ricostruire il flash.",
+  "flash.restoreNote": "Il ripristino scarica uno ZIP dello snapshot. Il /boot in esecuzione non viene mai toccato. Trascina il .zip direttamente nel creatore USB di Unraid, oppure estrailo su una chiavetta USB nuova per ricostruire il flash. L'eccezione è il ripristino di un singolo plugin da Plugin: viene riscritto nel flash in esecuzione.",
   "flash.none": "Ancora nessun backup del flash. Avviane uno sopra.",
   "flash.plugins": "Plugin",
   "flash.pluginsTitle": "Plugin in questo backup",

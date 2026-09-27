@@ -1263,7 +1263,7 @@ const ca: Partial<Translations> = {
   "flash.backupNow": "Fes còpia del Flash ara",
   "flash.backingUp": "Fent còpia…",
   "flash.download": "Descarrega (.zip)",
-  "flash.restoreNote": "Restaurar descarrega un ZIP de l'instantani. El /boot en execució mai es toca. Posa el .zip directament al creador de USB d'Unraid, o descomprimeix-lo en un USB nou per reconstruir el teu Flash.",
+  "flash.restoreNote": "Restaurar descarrega un ZIP de l'instantani. El /boot en execució mai es toca. Posa el .zip directament al creador de USB d'Unraid, o descomprimeix-lo en un USB nou per reconstruir el teu Flash. L'excepció és restaurar un sol connector des de Connectors: s'escriu de nou al Flash en execució.",
   "flash.none": "Encara no hi ha còpies de Flash. Engega'n una a dalt.",
   "flash.plugins": "Connectors",
   "flash.pluginsTitle": "Connectors d'aquesta còpia",

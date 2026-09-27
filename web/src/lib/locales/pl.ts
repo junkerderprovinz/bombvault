@@ -649,7 +649,7 @@ const pl: Partial<Translations> = {
   "flash.backupNow": "Utwórz kopię Flash teraz",
   "flash.backingUp": "Tworzenie kopii…",
   "flash.download": "Pobierz (.zip)",
-  "flash.restoreNote": "Przywracanie pobiera ZIP migawki. Działający /boot nigdy nie jest naruszany. Wrzuć .zip bezpośrednio do kreatora USB Unraid lub rozpakuj go na nowy nośnik USB, aby odtworzyć flash.",
+  "flash.restoreNote": "Przywracanie pobiera ZIP migawki. Działający /boot nigdy nie jest naruszany. Wrzuć .zip bezpośrednio do kreatora USB Unraid lub rozpakuj go na nowy nośnik USB, aby odtworzyć flash. Wyjątkiem jest przywrócenie pojedynczej wtyczki w sekcji Wtyczki: zostaje ona zapisana z powrotem na działający flash.",
   "flash.none": "Brak kopii Flash. Utwórz kopię powyżej.",
   "flash.plugins": "Wtyczki",
   "flash.pluginsTitle": "Wtyczki w tej kopii",

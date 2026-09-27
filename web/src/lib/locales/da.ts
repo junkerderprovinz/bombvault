@@ -657,7 +657,7 @@ const da: Partial<Translations> = {
   "flash.backupNow": "Sikkerhedskopier flash nu",
   "flash.backingUp": "Sikkerhedskopierer…",
   "flash.download": "Download (.zip)",
-  "flash.restoreNote": "Gendannelse downloader en ZIP af snapshottet. Den kørende /boot røres aldrig. Læg .zip-filen direkte i Unraids USB-creator, eller pak den ud på et nyt USB-stik for at genopbygge din flash.",
+  "flash.restoreNote": "Gendannelse downloader en ZIP af snapshottet. Den kørende /boot røres aldrig. Læg .zip-filen direkte i Unraids USB-creator, eller pak den ud på et nyt USB-stik for at genopbygge din flash. Undtagelsen er at gendanne et enkelt plugin under Plugins: det skrives tilbage på den kørende flash.",
   "flash.none": "Ingen flash-sikkerhedskopier endnu. Kør en sikkerhedskopiering ovenfor.",
   "flash.plugins": "Plugins",
   "flash.pluginsTitle": "Plugins i denne sikkerhedskopi",

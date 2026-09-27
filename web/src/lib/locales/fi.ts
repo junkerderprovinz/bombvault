@@ -657,7 +657,7 @@ const fi: Partial<Translations> = {
   "flash.backupNow": "Varmuuskopioi flash nyt",
   "flash.backingUp": "Varmuuskopioidaan…",
   "flash.download": "Lataa (.zip)",
-  "flash.restoreNote": "Palautus lataa tilannevedoksesta ZIP-tiedoston. Käynnissä olevaan /boot-osioon ei kosketa. Vie .zip suoraan Unraidin USB-luojaan tai pura se uudelle USB-tikulle flashin uudelleenrakentamiseksi.",
+  "flash.restoreNote": "Palautus lataa tilannevedoksesta ZIP-tiedoston. Käynnissä olevaan /boot-osioon ei kosketa. Vie .zip suoraan Unraidin USB-luojaan tai pura se uudelle USB-tikulle flashin uudelleenrakentamiseksi. Poikkeus on yksittäisen liitännäisen palautus kohdasta Liitännäiset: se kirjoitetaan takaisin käynnissä olevaan flashiin.",
   "flash.none": "Ei vielä flash-varmuuskopioita. Suorita varmuuskopio yllä.",
   "flash.plugins": "Liitännäiset",
   "flash.pluginsTitle": "Tämän varmuuskopion liitännäiset",

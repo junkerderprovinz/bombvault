@@ -657,7 +657,7 @@ const sv: Partial<Translations> = {
   "flash.backupNow": "Säkerhetskopiera flash nu",
   "flash.backingUp": "Säkerhetskopierar…",
   "flash.download": "Ladda ner (.zip)",
-  "flash.restoreNote": "Återställning laddar ner en ZIP av ögonblicksbilden. Den körande /boot rörs aldrig. Lägg .zip-filen direkt i Unraids USB-skapare, eller packa upp den på ett nytt USB-minne för att bygga om din flash.",
+  "flash.restoreNote": "Återställning laddar ner en ZIP av ögonblicksbilden. Den körande /boot rörs aldrig. Lägg .zip-filen direkt i Unraids USB-skapare, eller packa upp den på ett nytt USB-minne för att bygga om din flash. Undantaget är att återställa ett enskilt plugin under Plugins: det skrivs tillbaka till den körande flashen.",
   "flash.none": "Inga flash-säkerhetskopior än. Kör en säkerhetskopiering ovan.",
   "flash.plugins": "Plugins",
   "flash.pluginsTitle": "Plugins i den här säkerhetskopian",

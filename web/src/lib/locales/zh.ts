@@ -650,7 +650,7 @@ const zh: Partial<Translations> = {
   "flash.backupNow": "立即备份 Flash",
   "flash.backingUp": "备份中…",
   "flash.download": "下载 (.zip)",
-  "flash.restoreNote": "恢复会下载快照的 ZIP，运行中的 /boot 绝不会被改动。把 .zip 直接放进 Unraid USB 创建器，或解压到全新 U 盘以重建你的 flash。",
+  "flash.restoreNote": "恢复会下载快照的 ZIP，运行中的 /boot 绝不会被改动。把 .zip 直接放进 Unraid USB 创建器，或解压到全新 U 盘以重建你的 flash。唯一的例外是在插件中恢复单个插件，它会被写回运行中的 flash。",
   "flash.none": "尚无 Flash 备份。请在上方运行一次备份。",
   "flash.plugins": "插件",
   "flash.pluginsTitle": "此备份中的插件",

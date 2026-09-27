@@ -1263,7 +1263,7 @@ const gl: Partial<Translations> = {
   "flash.backupNow": "Facer copia do Flash agora",
   "flash.backingUp": "Copiando…",
   "flash.download": "Descargar (.zip)",
-  "flash.restoreNote": "Restaurar descarga un ZIP da instantánea. O /boot en execución nunca se toca. Pon o .zip directamente no creador de USB de Unraid, ou descomprímeo nun USB novo para reconstruír o teu Flash.",
+  "flash.restoreNote": "Restaurar descarga un ZIP da instantánea. O /boot en execución nunca se toca. Pon o .zip directamente no creador de USB de Unraid, ou descomprímeo nun USB novo para reconstruír o teu Flash. A excepción é restaurar un só complemento desde Complementos: escríbese de novo no Flash en execución.",
   "flash.none": "Aínda non hai copias de Flash. Inicia unha arriba.",
   "flash.plugins": "Complementos",
   "flash.pluginsTitle": "Complementos desta copia",

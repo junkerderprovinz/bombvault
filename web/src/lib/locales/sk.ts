@@ -1263,7 +1263,7 @@ const sk: Partial<Translations> = {
   "flash.backupNow": "Zálohovať Flash teraz",
   "flash.backingUp": "Zálohuje sa…",
   "flash.download": "Stiahnuť (.zip)",
-  "flash.restoreNote": "Obnovenie stiahne ZIP snímky. Bežiace /boot sa nikdy nedotkne. Vložte .zip priamo do nástroja na tvorbu USB Unraid, alebo ho rozbaľte na nové USB, aby ste znova zostavili svoj Flash.",
+  "flash.restoreNote": "Obnovenie stiahne ZIP snímky. Bežiace /boot sa nikdy nedotkne. Vložte .zip priamo do nástroja na tvorbu USB Unraid, alebo ho rozbaľte na nové USB, aby ste znova zostavili svoj Flash. Výnimkou je obnovenie jedného pluginu v časti Pluginy: zapíše sa späť do bežiaceho flashu.",
   "flash.none": "Zatiaľ žiadne zálohy Flash. Spustite jednu vyššie.",
   "flash.plugins": "Pluginy",
   "flash.pluginsTitle": "Pluginy v tejto zálohe",

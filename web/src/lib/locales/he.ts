@@ -657,7 +657,7 @@ const he: Partial<Translations> = {
   "flash.backupNow": "גבה flash עכשיו",
   "flash.backingUp": "מגבה…",
   "flash.download": "הורדה (.zip)",
-  "flash.restoreNote": "השחזור מוריד קובץ ZIP של התמונה. ה‑/boot הפעיל לעולם לא נוגעים בו. גררו את ה‑.zip ישירות אל יוצר ה‑USB של Unraid, או חלצו אותו ל‑USB חדש כדי לבנות מחדש את ה‑flash.",
+  "flash.restoreNote": "השחזור מוריד קובץ ZIP של התמונה. ה‑/boot הפעיל לעולם לא נוגעים בו. גררו את ה‑.zip ישירות אל יוצר ה‑USB של Unraid, או חלצו אותו ל‑USB חדש כדי לבנות מחדש את ה‑flash. החריג הוא שחזור של תוסף יחיד מתוך תוספים: הוא נכתב בחזרה ל-flash הפעיל.",
   "flash.none": "אין עדיין גיבויי flash. הרץ גיבוי למעלה.",
   "flash.plugins": "תוספים",
   "flash.pluginsTitle": "תוספים בגיבוי הזה",
