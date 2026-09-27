@@ -243,7 +243,20 @@ for (const width of [320, 360]) {
     await page.getByRole("button", { name: "Löschen" }).first().click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByText("Dieses Backup löschen?", { exact: false })).toBeVisible();
-    await settle(page);
+    // WebKit reports the sheet visible before it slides in, so wait until its
+    // answers are on screen and have held still for three frames.
+    await dialog.evaluate(async (sheet) => {
+      const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+      let last = "";
+      for (let still = 0; still < 3; ) {
+        await frame();
+        const boxes = [...sheet.querySelectorAll("button")].map((b) => b.getBoundingClientRect());
+        const now = JSON.stringify(boxes.map((r) => [r.top, r.bottom]));
+        const onScreen = boxes.every((r) => r.top >= 0 && r.bottom <= innerHeight);
+        still = now === last && onScreen ? still + 1 : 0;
+        last = now;
+      }
+    });
     for (const name of ["Abbrechen", "Löschen"]) {
       const box = (await dialog.getByRole("button", { name, exact: true }).boundingBox())!;
       expect(box.x, `${name} starts off screen`).toBeGreaterThanOrEqual(0);
