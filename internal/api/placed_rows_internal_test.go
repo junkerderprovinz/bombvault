@@ -435,3 +435,48 @@ func TestTheOffsiteFieldOnAPlacedTargetsAddressFollowsThePlace(t *testing.T) {
 		})
 	}
 }
+
+func TestTheOldRoutesCannotChangeWhatAPlaceSetsOnItsRows(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(bucketAt("B2", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(b2, "vms", "")
+	repo := f.namedRepo("B2 files", "s3:https://s3.example.com/bucket/files")
+	f.linkRow(repo.ID, b2, "files", "")
+	repo, _ = f.st.GetNamedRepo(repo.ID)
+
+	body := map[string]any{"domain": "vms", "name": "B2", "repo": target.Repo, "immutable": true,
+		"retentionKeepDaily": 30, "enabled": true}
+	if res := f.do(http.MethodPut, "/api/offsite/targets/"+target.ID, body); res["ok"] != false || res["code"] != "place-owned-field" {
+		t.Fatalf("PUT append-only on a placed target = %v, want place-owned-field", res)
+	}
+	if got := f.storedTarget(target.ID); got != target {
+		t.Fatalf("target = %+v after the refusal, want %+v", got, target)
+	}
+	if res := f.do(http.MethodPatch, "/api/repos/"+repo.ID, map[string]any{"immutable": true}); res["ok"] != false || res["code"] != "place-owned-field" {
+		t.Fatalf("PATCH append-only on a placed repository = %v, want place-owned-field", res)
+	}
+	if got, _ := f.st.GetNamedRepo(repo.ID); got != repo {
+		t.Fatalf("repository = %+v after the refusal, want %+v", got, repo)
+	}
+}
+
+func TestADomainPathAtAPlaceKeepsItsSafetySettingsFromTheOldRoutes(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(bucketAt("B2", "s3:https://s3.example.com/bucket"), "containers")
+	before, found, err := f.st.PrimaryRemoteTarget("containers")
+	if err != nil || !found {
+		t.Fatalf("primary row = %v, %v, want one", found, err)
+	}
+
+	res := f.do(http.MethodPut, "/api/settings/primary-remote/containers", map[string]any{"immutable": true})
+	if res["ok"] != false || res["code"] != "place-owned-field" {
+		t.Fatalf("PUT = %v, want place-owned-field", res)
+	}
+	res = f.do(http.MethodDelete, "/api/settings/primary-remote/containers", nil)
+	if res["ok"] != false || res["code"] != "place-owned-field" {
+		t.Fatalf("DELETE = %v, want place-owned-field", res)
+	}
+	if got, found, err := f.st.PrimaryRemoteTarget("containers"); err != nil || !found || got != before {
+		t.Fatalf("primary row = %+v, %v, %v, want it as the place wrote it", got, found, err)
+	}
+}

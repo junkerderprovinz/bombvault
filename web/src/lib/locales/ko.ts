@@ -1525,6 +1525,7 @@ const ko: Partial<Translations> = {
   "places.error.keepsLess": "이 장소가 보관하는 스냅샷 수가 지금 저장소에 있는 것보다 적어, 다음 정리 때 나머지가 지워집니다. 먼저 장소의 보존 설정을 늘리세요.",
   "places.error.appendOnlyOff": "이 저장소는 append-only인데 장소는 그렇지 않아, 그곳에서 정리하면 스냅샷이 삭제될 수 있습니다. 먼저 장소에서 append-only를 켜세요.",
   "places.error.restPathDeep": "rest-server는 저장소를 최대 두 단계 깊이까지만 만들며, 각 도메인은 이 폴더 아래에 자체 폴더를 갖습니다. 슬래시 없이 폴더 하나만 입력하세요.",
+  "places.error.ownedField": "이 값은 장소가 정합니다. 설정 → 스토리지에서 장소의 세부 정보를 열고 변경하세요.",
   "places.error.locationEstablished": "이전 주소에 백업이 있고({domains}의 스냅샷 {n}개), 새 주소에는 같은 저장소가 없습니다.",
   "places.error.locationEstablishedPlain": "이전 주소에 백업이 있고, 새 주소에는 같은 저장소가 없습니다.",
   "places.error.probeFailed": "연결 테스트에 실패했습니다: {reason}",

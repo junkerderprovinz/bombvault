@@ -214,13 +214,17 @@ func (s *Service) PrimaryRemoteConfig(domain string) (store.OffsiteTarget, bool,
 }
 
 // SetPrimaryRemoteConfig saves a domain's remote-primary safety settings. It
-// refuses when the current backup path is not remote, where the settings would
-// do nothing, and takes Repo from the live path. Enabled is always set, since
-// the path is remote and in use; a primary row goes off only through its
-// domain's home place.
+// refuses when the domain has a home place, which writes them, and when the
+// current backup path is not remote, where the settings would do nothing. It
+// takes Repo from the live path. Enabled is always set, since the path is
+// remote and in use; a primary row goes off only through its domain's home
+// place.
 func (s *Service) SetPrimaryRemoteConfig(domain string, cfg store.OffsiteTarget) (store.OffsiteTarget, error) {
 	if !validOffsiteDomain(domain) {
 		return store.OffsiteTarget{}, fmt.Errorf("unknown domain %q", domain)
+	}
+	if err := s.refuseHomePlaceDomain(domain); err != nil {
+		return store.OffsiteTarget{}, err
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -239,12 +243,29 @@ func (s *Service) SetPrimaryRemoteConfig(domain string, cfg store.OffsiteTarget)
 }
 
 // ClearPrimaryRemoteConfig removes a domain's remote-primary safety settings.
-// Clearing settings that do not exist is not an error.
+// Clearing settings that do not exist is not an error; clearing those of a
+// domain with a home place is.
 func (s *Service) ClearPrimaryRemoteConfig(domain string) error {
 	if !validOffsiteDomain(domain) {
 		return fmt.Errorf("unknown domain %q", domain)
 	}
+	if err := s.refuseHomePlaceDomain(domain); err != nil {
+		return err
+	}
 	return s.store.DeletePrimaryRemoteTarget(domain)
+}
+
+// refuseHomePlaceDomain fails with store.ErrPlaceOwnedField when domain has a
+// home place, which writes the primary row itself.
+func (s *Service) refuseHomePlaceDomain(domain string) error {
+	homes, err := s.store.DomainPlaces()
+	if err != nil {
+		return err
+	}
+	if homes[domain] != "" {
+		return store.ErrPlaceOwnedField
+	}
+	return nil
 }
 
 // TestPrimaryRepo probes a domain's current backup path the way TestOffsite
@@ -347,7 +368,7 @@ func (h *Handler) handleSetPrimaryRemote(w http.ResponseWriter, r *http.Request)
 		CredsRef:       v.CredsRef,
 	})
 	if err != nil {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error()})
+		placementFail(w, err, nil)
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"config": primaryRemoteToView(stored, true)}))
@@ -361,7 +382,7 @@ func (h *Handler) handleDeletePrimaryRemote(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if err := h.svc.ClearPrimaryRemoteConfig(domain); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		placementFail(w, err, nil)
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))

@@ -1552,6 +1552,7 @@ const lt: Partial<Translations> = {
   "places.error.keepsLess": "Ši saugojimo vieta saugo mažiau momentinių kopijų, nei saugykla turi dabar, ir kitas valymas pamirštų likusias. Pirma padidink saugojimo vietos saugojimo taisykles.",
   "places.error.appendOnlyOff": "Ši saugykla veikia tik pridėjimo režimu, o saugojimo vieta ne, todėl valymas ten galėtų ištrinti jos momentines kopijas. Pirma įjunk tik pridėjimo režimą saugojimo vietoje.",
   "places.error.restPathDeep": "rest-server kuria saugyklas ne giliau kaip dviem lygiais, o kiekviena sritis po šiuo aplanku gauna savo aplanką. Įvesk vieną aplanką, be pasvirojo brūkšnio.",
+  "places.error.ownedField": "Šią reikšmę nustato saugojimo vieta. Pakeisk ją saugojimo vietos išsamioje informacijoje skiltyje Nustatymai, Saugykla.",
   "places.error.locationEstablished": "one=Senuoju adresu yra atsarginių kopijų ({domains}: {n} momentinė kopija), o naujuoju adresu nėra tos pačios saugyklos.|few=Senuoju adresu yra atsarginių kopijų ({domains}: {n} momentinės kopijos), o naujuoju adresu nėra tos pačios saugyklos.|many=Senuoju adresu yra atsarginių kopijų ({domains}: {n} momentinės kopijos), o naujuoju adresu nėra tos pačios saugyklos.|other=Senuoju adresu yra atsarginių kopijų ({domains}: {n} momentinių kopijų), o naujuoju adresu nėra tos pačios saugyklos.",
   "places.error.locationEstablishedPlain": "Senuoju adresu yra atsarginių kopijų, o naujuoju adresu nėra tos pačios saugyklos.",
   "places.error.probeFailed": "Ryšio patikra nepavyko: {reason}",

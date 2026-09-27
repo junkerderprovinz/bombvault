@@ -149,8 +149,10 @@ const primaryRowName = "Primary (remote)"
 // The place columns are written for a new row only. A stored row keeps its
 // place, which AttachRowTx and DetachRowTx set, unless this write gives it
 // another address: then it leaves the place, which does not spell the new
-// address. A write that switches the row on or off is the row's own choice,
-// so it drops the mark of a place that switched the row off.
+// address. Short of that, a write that changes a value the place sets fails
+// with ErrPlaceOwnedField, since the next write of the place would undo it.
+// A write that switches the row on or off is the row's own choice, so it
+// drops the mark of a place that switched the row off.
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
@@ -169,10 +171,16 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
-	var companionOf string
-	err = tx.QueryRow(`SELECT companion_of FROM offsite_targets WHERE id = ? AND role = ?`, t.ID, t.Role).Scan(&companionOf)
+	stored, err := scanOffsiteTarget(tx.QueryRow(`SELECT `+offsiteTargetCols+`
+		FROM offsite_targets WHERE id = ? AND role = ?`, t.ID, t.Role))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+	}
+	companionOf := stored.CompanionOf
+	if stored.PlaceID != "" && companionOf == "" && stored.Repo == t.Repo {
+		if fields := placeOwnedChanges(stored, t); len(fields) > 0 {
+			return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget %s: %w", strings.Join(fields, ", "), ErrPlaceOwnedField)
+		}
 	}
 	if err := detachMovedRowTx(tx, t.ID, t.Role, t.Repo); err != nil {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)

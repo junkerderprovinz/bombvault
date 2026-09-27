@@ -20,6 +20,7 @@ describe("placeErrorText", () => {
       "place-keeps-less",
       "place-append-only-off",
       "place-rest-path-deep",
+      "place-owned-field",
     ]) {
       const text = placeErrorText(t, "en", { ok: false, code, error: "server text" }, "settings.error");
       expect(text, code).not.toBe("server text");

@@ -1535,6 +1535,7 @@ const ro: Partial<Translations> = {
   "places.error.keepsLess": "Acest loc păstrează mai puține instantanee decât are acum depozitul, iar următoarea curățare ar uita restul. Mărește mai întâi retenția locului.",
   "places.error.appendOnlyOff": "Acest depozit este append-only, iar locul nu, așa că o curățare acolo i-ar putea șterge instantaneele. Activează mai întâi append-only pentru acest loc.",
   "places.error.restPathDeep": "rest-server creează depozite cel mult la două niveluri adâncime, iar fiecare domeniu primește propriul folder sub acesta. Introdu un singur folder, fără bară oblică.",
+  "places.error.ownedField": "Această valoare o stabilește locul. Schimb-o în detaliile locului din Setări, Stocare.",
   "places.error.locationEstablished": "one=La vechea adresă se află copii de siguranță ({n} instantaneu din {domains}), iar cea nouă nu conține același depozit.|few=La vechea adresă se află copii de siguranță ({n} instantanee din {domains}), iar cea nouă nu conține același depozit.|other=La vechea adresă se află copii de siguranță ({n} de instantanee din {domains}), iar cea nouă nu conține același depozit.",
   "places.error.locationEstablishedPlain": "La vechea adresă se află copii de siguranță, iar cea nouă nu conține același depozit.",
   "places.error.probeFailed": "Testul de conexiune a eșuat: {reason}",

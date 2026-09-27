@@ -100,6 +100,9 @@ var (
 	ErrPlaceNotFound  = errors.New("place not found")
 	ErrPlaceNameTaken = errors.New("place name taken")
 	ErrPlaceInUse     = errors.New("place in use")
+
+	// ErrPlaceOwnedField refuses a row edit of a value the row's place writes.
+	ErrPlaceOwnedField = errors.New("the storage place of this row sets this value; change it in the place's details")
 )
 
 var errPlaceIncomplete = errors.New("a place needs a name and a base address")
@@ -441,6 +444,24 @@ func placedChanges(p Place, row OffsiteTarget, addr string) ([]string, []any) {
 	add("enabled", row.Enabled != on, boolInt(on))
 	add("off_with_place", row.OffWithPlace != marked, boolInt(marked))
 	return set, vals
+}
+
+// placeOwnedChanges names the columns a place sets that t would change on
+// stored, a row at that place.
+func placeOwnedChanges(stored, t OffsiteTarget) []string {
+	p := Place{CredsRef: t.CredsRef, StorageClass: t.StorageClass, Immutable: t.Immutable,
+		RetentionKeepLast: t.RetentionKeepLast, RetentionKeepDaily: t.RetentionKeepDaily,
+		RetentionKeepWeekly: t.RetentionKeepWeekly, RetentionKeepMonthly: t.RetentionKeepMonthly,
+		LimitUpload: t.LimitUpload, LimitDownload: t.LimitDownload, GrowthBudgetGB: t.GrowthBudgetGB,
+		OffPremises: t.OffPremises, Enabled: stored.Enabled}
+	set, _ := placedChanges(p, stored, stored.Repo)
+	var cols []string
+	for _, s := range set {
+		if col := strings.TrimSuffix(s, " = ?"); col != "enabled" && col != "off_with_place" {
+			cols = append(cols, col)
+		}
+	}
+	return cols
 }
 
 // mirrorPlaceSettingsTx writes p into the settings row s: the path of every

@@ -375,7 +375,7 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 	}
 	saved, err := h.store.UpsertOffsiteTarget(row)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		placementFail(w, err, nil)
 		return
 	}
 	if moving {

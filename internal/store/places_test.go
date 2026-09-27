@@ -139,15 +139,66 @@ func TestAPlainSaveKeepsARowAtItsPlace(t *testing.T) {
 	attachRow(t, db, direct.ID, "p-b2", "containers", "-direct")
 
 	upsertRow(t, r, store.OffsiteTarget{ID: target.ID, Domain: "containers", Name: "B2 renamed", Repo: target.Repo,
-		RetentionKeepDaily: 14, Enabled: true})
+		Schedule: "daily", Enabled: false})
 
 	got, _, err := r.GetOffsiteTarget(target.ID)
-	if err != nil || got.Name != "B2 renamed" || got.RetentionKeepDaily != 14 || got.PlaceID != "p-b2" || got.PlaceDomain != "containers" {
+	if err != nil || got.Name != "B2 renamed" || got.Schedule != "daily" || got.Enabled || got.PlaceID != "p-b2" || got.PlaceDomain != "containers" {
 		t.Fatalf("target = %+v, %v, want the new fields at its place", got, err)
 	}
 	companion, _, err := r.CompanionFor(target.ID)
-	if err != nil || companion.RetentionKeepDaily != 14 || companion.PlaceID != "p-b2" || companion.PlaceSuffix != "-direct" {
-		t.Fatalf("direct repository = %+v, %v, want the mirrored retention at its place", companion, err)
+	if err != nil || companion.PlaceID != "p-b2" || companion.PlaceSuffix != "-direct" {
+		t.Fatalf("direct repository = %+v, %v, want it at its place", companion, err)
+	}
+}
+
+func TestASaveCannotChangeWhatTheRowsPlaceWrites(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	target := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: addressAt(t, bucket, "containers", ""), Enabled: true})
+	named := upsertRow(t, r, store.OffsiteTarget{Role: store.RoleRepo, Name: "B2 files", Repo: addressAt(t, bucket, "files", ""), Enabled: true})
+	attachRow(t, db, target.ID, bucket.ID, "containers", "")
+	attachRow(t, db, named.ID, bucket.ID, "files", "")
+	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	target, _, _ = r.GetOffsiteTarget(target.ID)
+	named, _ = r.GetNamedRepo(named.ID)
+
+	edits := map[string]func(*store.OffsiteTarget){
+		"credentials":   func(o *store.OffsiteTarget) { o.CredsRef = "set-other" },
+		"storage class": func(o *store.OffsiteTarget) { o.StorageClass = "GLACIER" },
+		"append-only":   func(o *store.OffsiteTarget) { o.Immutable = true },
+		"keep last":     func(o *store.OffsiteTarget) { o.RetentionKeepLast = 1 },
+		"keep daily":    func(o *store.OffsiteTarget) { o.RetentionKeepDaily = 0 },
+		"keep weekly":   func(o *store.OffsiteTarget) { o.RetentionKeepWeekly = 2 },
+		"keep monthly":  func(o *store.OffsiteTarget) { o.RetentionKeepMonthly = 3 },
+		"upload limit":  func(o *store.OffsiteTarget) { o.LimitUpload = 1 },
+		"download":      func(o *store.OffsiteTarget) { o.LimitDownload = 1 },
+		"budget":        func(o *store.OffsiteTarget) { o.GrowthBudgetGB = 1 },
+	}
+	for name, edit := range edits {
+		for _, row := range []store.OffsiteTarget{target, named} {
+			changed := row
+			edit(&changed)
+			if _, err := r.UpsertOffsiteTarget(changed); !errors.Is(err, store.ErrPlaceOwnedField) {
+				t.Errorf("%s of %s: err = %v, want ErrPlaceOwnedField", name, row.Name, err)
+			}
+		}
+	}
+	offSite := named
+	offSite.OffPremises = false
+	if _, err := r.UpsertOffsiteTarget(offSite); !errors.Is(err, store.ErrPlaceOwnedField) {
+		t.Errorf("site of %s: err = %v, want ErrPlaceOwnedField", named.Name, err)
+	}
+	if got, _, _ := r.GetOffsiteTarget(target.ID); got != target {
+		t.Fatalf("target = %+v after refused saves, want %+v", got, target)
+	}
+	if got, _ := r.GetNamedRepo(named.ID); got != named {
+		t.Fatalf("named repository = %+v after refused saves, want %+v", got, named)
+	}
+
+	moved := target
+	moved.Repo, moved.Immutable = "s3:https://s3.example.com/elsewhere/container", true
+	if got := upsertRow(t, r, moved); got.PlaceID != "" || !got.Immutable {
+		t.Fatalf("a moved target = %+v, want it off its place with its own append-only flag", got)
 	}
 }
 

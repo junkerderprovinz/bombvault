@@ -326,7 +326,7 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	t.CreatedAt = existing.CreatedAt
 	stored, err := h.store.UpsertOffsiteTarget(t)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		placementFail(w, err, nil)
 		return
 	}
 	if v.AlsoExclude != nil {

@@ -1552,6 +1552,7 @@ const id: Partial<Translations> = {
   "places.error.keepsLess": "Tempat ini menyimpan lebih sedikit snapshot daripada yang ada di repositori sekarang, dan pemangkasan berikutnya akan melupakan sisanya. Naikkan dulu retensi tempat ini.",
   "places.error.appendOnlyOff": "Repositori ini append-only sedangkan tempatnya tidak, jadi pemangkasan di sana dapat menghapus snapshot-nya. Aktifkan dulu append-only di tempat ini.",
   "places.error.restPathDeep": "rest-server membuat repositori paling dalam dua tingkat, dan setiap domain mendapat folder sendiri di bawah folder ini. Masukkan satu folder saja, tanpa garis miring.",
+  "places.error.ownedField": "Nilai ini ditentukan oleh tempat. Ubah di detail tempat di Pengaturan, Penyimpanan.",
   "places.error.locationEstablished": "Ada cadangan di alamat lama ({n} snapshot dari {domains}), dan alamat baru tidak berisi repositori yang sama.",
   "places.error.locationEstablishedPlain": "Ada cadangan di alamat lama, dan alamat baru tidak berisi repositori yang sama.",
   "places.error.probeFailed": "Uji koneksi gagal: {reason}",
