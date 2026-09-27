@@ -51,11 +51,10 @@ func (r *Repo) ReplacePlaces(in PlacesImport) error {
 				return fmt.Errorf("ReplacePlaces: %w", err)
 			}
 		}
-		// The file does not say which switch turned a row off, so a row off
-		// at a place that is off goes with the place, as on upgrade.
-		if _, err := tx.Exec(`UPDATE offsite_targets SET off_with_place = 1
-			WHERE enabled = 0 AND place_id IN (SELECT id FROM storage_places WHERE enabled = 0)`); err != nil {
-			return fmt.Errorf("ReplacePlaces marks: %w", err)
+		for _, p := range in.Places {
+			if err := markOffWithPlaceTx(tx, p); err != nil {
+				return fmt.Errorf("ReplacePlaces: %w", err)
+			}
 		}
 		if _, err := tx.Exec(`UPDATE settings SET places_migrated = ? WHERE id = 1`, now); err != nil {
 			return fmt.Errorf("ReplacePlaces mark: %w", err)
@@ -79,6 +78,19 @@ func (r *Repo) DropPlaces() error {
 		}
 		return nil
 	})
+}
+
+// markOffWithPlaceTx marks the rows that are off at p when p is off. Nothing
+// says which switch turned such a row off, so it goes with the place, as on
+// upgrade.
+func markOffWithPlaceTx(tx *sql.Tx, p Place) error {
+	if p.Enabled {
+		return nil
+	}
+	if _, err := tx.Exec(`UPDATE offsite_targets SET off_with_place = 1 WHERE enabled = 0 AND place_id = ?`, p.ID); err != nil {
+		return fmt.Errorf("mark the rows off with %s: %w", p.Name, err)
+	}
+	return nil
 }
 
 func dropPlacesTx(tx *sql.Tx) error {
