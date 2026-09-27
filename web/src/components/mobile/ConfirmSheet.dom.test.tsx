@@ -130,6 +130,28 @@ describe("ConfirmSheet (the mobile presentation, direct)", () => {
     expect(body.querySelector("button")).toBeNull();
   });
 
+  it("holds the confirm back while the action is blocked", () => {
+    const onConfirm = vi.fn();
+    render(
+      <I18nProvider>
+        <ConfirmSheet
+          title={en["confirmDialog.title"]}
+          message={MESSAGE}
+          confirmLabel="Delete it"
+          cancelLabel={en["common.cancel"]}
+          confirmBlocked="The repository cannot be read."
+          onConfirm={onConfirm}
+          onCancel={vi.fn()}
+        />
+      </I18nProvider>,
+    );
+    const confirmButton = screen.getByRole("button", { name: /Delete it/ });
+    expect((confirmButton as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(confirmButton);
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("The repository cannot be read.")).toBeTruthy();
+  });
+
   it("carries no close control and starts focus on cancel, never on the destructive one", () => {
     renderSheet();
     // The footer answers, so the header has no second way to cancel and

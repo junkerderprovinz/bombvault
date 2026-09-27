@@ -145,6 +145,7 @@ export function useConfirm() {
             confirmLabelKey={pending.confirmKey ?? "common.confirm"}
             cancelLabel={pending.cancelLabel ?? t("common.cancel")}
             extra={pending.extra}
+            confirmBlocked={pending.confirmBlocked}
             onConfirm={() => settle(true)}
             onCancel={() => settle(false)}
           />
