@@ -376,3 +376,90 @@ func TestRcloneAboutTakesTheRemoteAsAPositional(t *testing.T) {
 		}
 	}
 }
+
+func TestCapacityReachesSFTPAndNetworkShares(t *testing.T) {
+	sftp := func(f *capacityFixture, err error) *int {
+		calls := 0
+		f.svc.sftpAbout = func(_ context.Context, repo string) (aboutResult, error) {
+			calls++
+			if repo != "sftp:backup@nas.lan:/srv/restic" {
+				t.Errorf("probed %q", repo)
+			}
+			if err != nil {
+				return aboutResult{}, err
+			}
+			total := int64(4) << 40
+			return aboutResult{Free: 1 << 40, Total: &total}, nil
+		}
+		return &calls
+	}
+
+	t.Run("an SFTP repository is read over ssh every six hours", func(t *testing.T) {
+		f := newCapacityFixture(t)
+		calls := sftp(f, nil)
+		f.namedRepo(t, "nas", "sftp:backup@nas.lan:/srv/restic")
+		f.svc.sampleVolumesFor(context.Background(), "containers")
+		f.now += 3601
+		f.svc.sampleVolumesFor(context.Background(), "containers")
+		if *calls != 1 {
+			t.Fatalf("the server was asked %d times within six hours, want once", *calls)
+		}
+		found := false
+		for _, s := range f.samples(t) {
+			if s.Source == "sftp" {
+				found = true
+				if s.FreeBytes != 1<<40 || s.TotalBytes == nil || *s.TotalBytes != 4<<40 {
+					t.Fatalf("the server's answer did not reach the sample: %+v", s)
+				}
+			}
+		}
+		if !found {
+			t.Fatal("no reading from the SFTP server")
+		}
+	})
+
+	t.Run("an SFTP server without statvfs is named, not skipped", func(t *testing.T) {
+		f := newCapacityFixture(t)
+		sftp(f, errAboutUnsupported)
+		f.namedRepo(t, "nas", "sftp:backup@nas.lan:/srv/restic")
+		f.svc.sampleVolumesFor(context.Background(), "containers")
+		if err := f.e.rebuildCache(); err != nil {
+			t.Fatal(err)
+		}
+		if got := f.e.summary().UnmeasuredVolumes; len(got) != 1 || !strings.Contains(got[0], "Nas") {
+			t.Fatalf("unmeasured volumes = %v, want the SFTP repository", got)
+		}
+	})
+
+	t.Run("an SMB or NFS mount records what it is", func(t *testing.T) {
+		for fsType, want := range map[string]string{"cifs": "smb", "smb3": "smb", "nfs4": "nfs", "xfs": "statfs"} {
+			f := newCapacityFixture(t)
+			f.svc.diskStat = func(string) (diskStatResult, error) {
+				return diskStatResult{Volume: "dev:2c", Free: 5 << 30, Total: 10 << 30, FSType: fsType}, nil
+			}
+			f.svc.sampleVolumesFor(context.Background(), "containers")
+			got := f.samples(t)
+			if len(got) != 1 || got[0].Source != want {
+				t.Fatalf("%s: samples %+v, want source %q", fsType, got, want)
+			}
+		}
+	})
+}
+
+func TestFSTypeIsTheDeepestMountsType(t *testing.T) {
+	const mounts = `1 0 0:1 / / rw - overlay overlay rw
+25 1 0:24 / /host/user rw,relatime shared:9 - fuse.shfs shfs rw
+44 25 0:44 / /host/user/remotes/NAS_backup rw,relatime shared:31 - cifs //nas/backup rw,vers=3.1.1
+45 25 0:45 / /host/user/remotes/nfs\040share rw,relatime shared:33 - nfs4 nas:/export rw
+`
+	for target, want := range map[string]string{
+		"/host/user/remotes/NAS_backup/restic/containers": "cifs",
+		"/host/user/remotes/nfs share/restic":             "nfs4",
+		"/host/user/backups":                              "fuse.shfs",
+		"/config":                                         "overlay",
+	} {
+		if got := fsTypeAt(strings.NewReader(mounts), target); got != want {
+			t.Errorf("%s: %q, want %q", target, got, want)
+		}
+	}
+}

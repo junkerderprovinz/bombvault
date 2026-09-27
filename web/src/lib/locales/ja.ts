@@ -1099,6 +1099,8 @@ const ja: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "リポジトリのボリュームは約 1 週間で満杯になります",
   "dashboard.forecastFullOverYear": "リポジトリのボリュームが満杯になるまで 1 年以上",
   "dashboard.forecastFree": "空き {bytes}",
+  "dashboard.forecastFreeUnknown": "空き容量は不明",
+  "dashboard.forecastFreeUnknownInfo": "S3、B2、REST サーバーは残り容量を報告しないため、増加量だけを表示します。容量上限は事業者側で確認してください。",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "所要時間",

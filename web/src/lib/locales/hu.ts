@@ -1110,6 +1110,8 @@ const hu: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "A tároló kötete ~1 hét múlva megtelik",
   "dashboard.forecastFullOverYear": "A tároló kötete több mint egy év múlva telik meg",
   "dashboard.forecastFree": "{bytes} szabad",
+  "dashboard.forecastFreeUnknown": "Szabad hely ismeretlen",
+  "dashboard.forecastFreeUnknownInfo": "Az S3, B2 és REST kiszolgálók nem jelentik, mennyi hely maradt, ezért csak a növekedés látszik. Figyeld a szolgáltató saját kvótáját.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Időtartam",

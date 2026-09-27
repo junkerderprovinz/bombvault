@@ -1106,6 +1106,8 @@ const ro: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Volumul depozitului se umple în ~1 săptămână",
   "dashboard.forecastFullOverYear": "Volumul depozitului se umple în > 1 an",
   "dashboard.forecastFree": "{bytes} liberi",
+  "dashboard.forecastFreeUnknown": "Spațiu liber necunoscut",
+  "dashboard.forecastFreeUnknownInfo": "Serverele S3, B2 și REST nu raportează cât spațiu a rămas, așa că se afișează doar creșterea. Urmărește cota la furnizor.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Durată",

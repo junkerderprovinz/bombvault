@@ -1107,6 +1107,8 @@ const he: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "נפח המאגר יתמלא בעוד כשבוע",
   "dashboard.forecastFullOverYear": "נפח המאגר יתמלא בעוד יותר משנה",
   "dashboard.forecastFree": "{bytes} פנויים",
+  "dashboard.forecastFreeUnknown": "המקום הפנוי אינו ידוע",
+  "dashboard.forecastFreeUnknownInfo": "שרתי S3, B2 ו-REST אינם מדווחים כמה מקום נשאר, ולכן מוצגת רק הגדילה. עקוב אחרי המכסה אצל הספק עצמו.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "משך",

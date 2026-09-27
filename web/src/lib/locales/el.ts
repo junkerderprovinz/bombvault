@@ -1127,6 +1127,8 @@ const el: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Ο τόμος του αποθετηρίου θα γεμίσει σε ~1 εβδομάδα",
   "dashboard.forecastFullOverYear": "Ο τόμος του αποθετηρίου θα γεμίσει σε > 1 έτος",
   "dashboard.forecastFree": "{bytes} ελεύθερα",
+  "dashboard.forecastFreeUnknown": "Ελεύθερος χώρος άγνωστος",
+  "dashboard.forecastFreeUnknownInfo": "Οι διακομιστές S3, B2 και REST δεν αναφέρουν πόσος χώρος απομένει, οπότε εμφανίζεται μόνο η αύξηση. Παρακολουθήστε το όριο στον ίδιο τον πάροχο.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Διάρκεια",

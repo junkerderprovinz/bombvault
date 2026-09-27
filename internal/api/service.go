@@ -292,6 +292,7 @@ type Service struct {
 	// binary. Accessed via diskStatFn and rcloneAboutFn.
 	diskStat    func(path string) (diskStatResult, error)
 	rcloneAbout func(ctx context.Context, remote string) (aboutResult, error)
+	sftpAbout   func(ctx context.Context, repo string) (aboutResult, error)
 	// dirNonEmptyProbe is the container-restore overwrite guard's "does this
 	// destination already hold data" seam: nil uses the real filesystem
 	// (dirNonEmpty); tests inject a fake. Accessed via dirNonEmptyFn.
@@ -3361,7 +3362,7 @@ func (s *Service) sampleVolumesFor(ctx context.Context, domain string) {
 }
 
 // errVolumeUnmeasurable is a repository this box cannot ask about at all: S3,
-// B2, a REST server or SFTP answer no capacity question.
+// B2 and a REST server answer no capacity question.
 var errVolumeUnmeasurable = errors.New("this backend reports no capacity")
 
 // probeVolume measures one repository, or returns nil when the volume it sits
@@ -3382,28 +3383,35 @@ func (s *Service) probeVolume(ctx context.Context, ref domainRepoRef,
 		}
 		total := clampToInt64(res.Total)
 		return &store.VolumeSample{
-			Volume: res.Volume, At: now, Source: "statfs",
+			Volume: res.Volume, At: now, Source: volumeSource(res.FSType),
 			FreeBytes: clampToInt64(res.Free), TotalBytes: &total,
 		}, nil
 	}
-	if !isRcloneLocation(ref.Loc) {
+	source := remoteVolumeSource(ref.Loc)
+	if source == "" {
 		return nil, errVolumeUnmeasurable
 	}
-	volume := "remote:" + repoLocationKey(ref.Loc)
+	volume := remoteVolumeKey(ref.Loc)
 	if now-seen[volume] < volumeSampleRemoteEvery {
 		return nil, nil
 	}
-	remote, err := rcloneRemoteOf(ref.Loc)
-	if err != nil {
-		return nil, err
+	var probe func() (aboutResult, error)
+	if source == "sftp" {
+		probe = func() (aboutResult, error) { return s.sftpAboutFn()(ctx, ref.Loc) }
+	} else {
+		remote, err := rcloneRemoteOf(ref.Loc)
+		if err != nil {
+			return nil, err
+		}
+		probe = func() (aboutResult, error) { return s.rcloneAboutFn()(ctx, remote) }
 	}
 	s.anomalies.noteVolumeProbe(volume, now)
-	about, err := s.rcloneAboutFn()(ctx, remote)
+	about, err := probe()
 	if err != nil {
 		return nil, err
 	}
 	return &store.VolumeSample{
-		Volume: volume, At: now, Source: "rclone",
+		Volume: volume, At: now, Source: source,
 		FreeBytes: about.Free, TotalBytes: about.Total,
 	}, nil
 }

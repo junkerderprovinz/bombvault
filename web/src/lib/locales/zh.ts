@@ -1119,6 +1119,8 @@ const zh: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "仓库卷约 1 周后将满",
   "dashboard.forecastFullOverYear": "仓库卷一年以上才会满",
   "dashboard.forecastFree": "剩余 {bytes}",
+  "dashboard.forecastFreeUnknown": "可用空间未知",
+  "dashboard.forecastFreeUnknownInfo": "S3、B2 和 REST 服务器不报告剩余空间，因此只显示增长。请在服务商处留意配额。",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "时长",

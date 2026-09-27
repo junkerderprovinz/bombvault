@@ -2054,6 +2054,15 @@ function StorageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueInde
                     )}
                     {forecastLine.projection && forecastLine.free ? " · " : ""}
                     {forecastLine.free}
+                    {forecastLine.freeUnknown && (
+                      <>
+                        {forecastLine.growth ? " · " : ""}
+                        <span className="inline-flex items-center gap-1 align-middle">
+                          {forecastLine.freeUnknown}
+                          <InfoBubble tip={forecastLine.freeUnknownTip ?? ""} />
+                        </span>
+                      </>
+                    )}
                   </p>
                 )}
               </div>

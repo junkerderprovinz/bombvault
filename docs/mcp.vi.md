@@ -13,7 +13,7 @@ BombVault có sẵn một máy chủ cho Model Context Protocol (MCP), giao th�
 | `list_runs` | Lịch sử chạy, mới nhất trước, lọc được theo miền, mục, trạng thái, loại và thời gian | đọc |
 | `list_restore_points` | Các điểm khôi phục của một mục trong kho chính của nó, và với container thì có cả các bản dump cơ sở dữ liệu; một dataset ZFS có một điểm khôi phục cho mỗi lần sao lưu, kèm snapshot của mọi dataset bên dưới nó | đọc |
 | `get_activity` | Những gì đang chạy ngay lúc này, kèm giai đoạn và phần trăm | đọc |
-| `get_storage_stats` | Lịch sử dung lượng kho chính của một miền và mức tăng mỗi tuần | đọc |
+| `get_storage_stats` | Lịch sử dung lượng kho chính của một miền và mức tăng mỗi tuần, kèm dung lượng trống và số tuần đến khi đầy nếu đo được ổ chứa | đọc |
 | `list_anomalies` | Những bất thường mà BombVault nhận thấy trong các bản sao lưu, lọc được theo trạng thái, mức độ nghiêm trọng và miền, kèm bản tóm tắt những mục còn mở | đọc |
 | `get_anomaly` | Một trong các phát hiện đó, kèm ghi chú để lại khi xác nhận | đọc |
 | `start_backup` | Sao lưu ngay một mục | bắt đầu |

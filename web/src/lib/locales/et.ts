@@ -1022,6 +1022,8 @@ const et: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Hoidla maht saab täis ~1 nädala pärast",
   "dashboard.forecastFullOverYear": "Hoidla maht saab täis rohkem kui 1 aasta pärast",
   "dashboard.forecastFree": "{bytes} vaba",
+  "dashboard.forecastFreeUnknown": "Vaba ruum teadmata",
+  "dashboard.forecastFreeUnknownInfo": "S3-, B2- ja REST-serverid ei teata, kui palju ruumi on alles, seega näidatakse ainult kasvu. Jälgi teenusepakkuja enda kvooti.",
 
   // Domain filters + dashboard duration
   "dashboard.duration": "Kestus",

@@ -1099,6 +1099,8 @@ const ko: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "약 1주 후 저장소 볼륨이 가득 찹니다",
   "dashboard.forecastFullOverYear": "저장소 볼륨이 가득 차기까지 1년 이상 남음",
   "dashboard.forecastFree": "{bytes} 여유",
+  "dashboard.forecastFreeUnknown": "여유 공간 알 수 없음",
+  "dashboard.forecastFreeUnknownInfo": "S3, B2, REST 서버는 남은 공간을 알려 주지 않아 증가량만 표시됩니다. 제공업체의 할당량을 직접 확인하세요.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "소요 시간",

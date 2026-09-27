@@ -13,7 +13,7 @@ BombVault are un server integrat pentru Model Context Protocol (MCP), protocolul
 | `list_runs` | Istoricul rulărilor, cele mai noi primele, filtrabil după domeniu, element, stare, tip și timp | citire |
 | `list_restore_points` | Punctele de restaurare ale unui element din depozitul lui principal și, pentru un container, dumpurile lui de baze de date; un set de date ZFS are câte un punct de restaurare pentru fiecare copie, cu un snapshot al fiecărui set de date de sub el | citire |
 | `get_activity` | Ce rulează chiar acum, cu fază și procent | citire |
-| `get_storage_stats` | Istoricul de dimensiune al depozitului principal al unui domeniu și creșterea lui pe săptămână | citire |
+| `get_storage_stats` | Istoricul de dimensiune al depozitului principal al unui domeniu și creșterea lui pe săptămână, cu spațiul liber și săptămânile până la umplere acolo unde volumul poate fi măsurat | citire |
 | `list_anomalies` | Anomaliile observate de BombVault în copii, filtrabile după stare, gravitate și domeniu, cu un rezumat al celor deschise | citire |
 | `get_anomaly` | Una dintre aceste constatări, cu nota lăsată la confirmarea ei | citire |
 | `start_backup` | Face imediat copia unui element | pornire |

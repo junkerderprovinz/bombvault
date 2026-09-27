@@ -1127,6 +1127,8 @@ const tr: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Depo birimi ~1 hafta içinde dolacak",
   "dashboard.forecastFullOverYear": "Depo birimi 1 yıldan uzun sürede dolacak",
   "dashboard.forecastFree": "{bytes} boş",
+  "dashboard.forecastFreeUnknown": "Boş alan bilinmiyor",
+  "dashboard.forecastFreeUnknownInfo": "S3, B2 ve REST sunucuları ne kadar yer kaldığını bildirmez, bu yüzden yalnızca büyüme gösterilir. Kotayı sağlayıcının kendisinde takip edin.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Süre",

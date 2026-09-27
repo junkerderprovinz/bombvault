@@ -1020,6 +1020,8 @@ const sr: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Простор репозиторијума пун за ~1 недељу",
   "dashboard.forecastFullOverYear": "Простор репозиторијума пун за > 1 годину",
   "dashboard.forecastFree": "{bytes} слободно",
+  "dashboard.forecastFreeUnknown": "Слободан простор непознат",
+  "dashboard.forecastFreeUnknownInfo": "Сервери S3, B2 и REST не јављају колико простора је остало, па се приказује само раст. Пратите квоту код самог добављача.",
 
   // Domain filters + dashboard duration
   "dashboard.duration": "Трајање",

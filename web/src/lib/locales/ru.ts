@@ -1098,6 +1098,8 @@ const ru: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Том репозитория заполнится через ~1 нед.",
   "dashboard.forecastFullOverYear": "Том репозитория заполнится более чем через год",
   "dashboard.forecastFree": "{bytes} свободно",
+  "dashboard.forecastFreeUnknown": "Свободное место неизвестно",
+  "dashboard.forecastFreeUnknownInfo": "Серверы S3, B2 и REST не сообщают, сколько места осталось, поэтому показан только рост. Следите за квотой у самого провайдера.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Длительность",

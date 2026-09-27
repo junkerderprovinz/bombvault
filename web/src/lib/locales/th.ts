@@ -1130,6 +1130,8 @@ const th: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "โวลุ่มของที่เก็บจะเต็มในอีก ~1 สัปดาห์",
   "dashboard.forecastFullOverYear": "โวลุ่มของที่เก็บจะเต็มในอีกกว่า 1 ปี",
   "dashboard.forecastFree": "ว่าง {bytes}",
+  "dashboard.forecastFreeUnknown": "ไม่ทราบพื้นที่ว่าง",
+  "dashboard.forecastFreeUnknownInfo": "เซิร์ฟเวอร์ S3, B2 และ REST ไม่รายงานว่าเหลือพื้นที่เท่าไร จึงแสดงเฉพาะการเติบโต ควรติดตามโควตาที่ผู้ให้บริการเอง",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "ระยะเวลา",

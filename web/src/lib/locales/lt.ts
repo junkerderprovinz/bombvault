@@ -1022,6 +1022,8 @@ const lt: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Saugyklos tomas prisipildys per ~1 savaitę",
   "dashboard.forecastFullOverYear": "Saugyklos tomas prisipildys po daugiau nei 1 metų",
   "dashboard.forecastFree": "{bytes} laisva",
+  "dashboard.forecastFreeUnknown": "Laisva vieta nežinoma",
+  "dashboard.forecastFreeUnknownInfo": "S3, B2 ir REST serveriai nepraneša, kiek vietos liko, todėl rodomas tik augimas. Stebėkite kvotą pas patį teikėją.",
 
   // Domain filters + dashboard duration
   "dashboard.duration": "Trukmė",

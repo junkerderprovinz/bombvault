@@ -1103,6 +1103,8 @@ const no: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Repo-volumet fullt om ~1 uke",
   "dashboard.forecastFullOverYear": "Repo-volumet fullt om > 1 år",
   "dashboard.forecastFree": "{bytes} ledig",
+  "dashboard.forecastFreeUnknown": "Ledig plass ukjent",
+  "dashboard.forecastFreeUnknownInfo": "S3-, B2- og REST-servere oppgir ikke hvor mye plass som er igjen, så bare veksten vises. Følg med på kvoten hos leverandøren selv.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Varighet",

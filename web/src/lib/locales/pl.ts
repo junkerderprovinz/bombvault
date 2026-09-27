@@ -1098,6 +1098,8 @@ const pl: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Wolumen repozytorium zapełni się za ~1 tydzień",
   "dashboard.forecastFullOverYear": "Wolumen repozytorium zapełni się za > 1 rok",
   "dashboard.forecastFree": "{bytes} wolne",
+  "dashboard.forecastFreeUnknown": "Wolne miejsce nieznane",
+  "dashboard.forecastFreeUnknownInfo": "Serwery S3, B2 i REST nie podają, ile miejsca zostało, więc widać tylko przyrost. Pilnuj limitu u samego dostawcy.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Czas trwania",

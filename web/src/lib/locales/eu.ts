@@ -1022,6 +1022,8 @@ const eu: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Biltegiaren bolumena ~aste 1ean beteko da",
   "dashboard.forecastFullOverYear": "Biltegiaren bolumena urte 1 baino gehiagotan beteko da",
   "dashboard.forecastFree": "{bytes} libre",
+  "dashboard.forecastFreeUnknown": "Leku librea ezezaguna",
+  "dashboard.forecastFreeUnknownInfo": "S3, B2 eta REST zerbitzariek ez dute jakinarazten zenbat leku geratzen den, beraz hazkundea bakarrik erakusten da. Begiratu hornitzailearen kuota.",
 
   // Domain filters + dashboard duration
   "dashboard.duration": "Iraupena",

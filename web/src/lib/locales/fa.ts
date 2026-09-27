@@ -1022,6 +1022,8 @@ const fa: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "حجم مخزن حدود ۱ هفته دیگر پر می‌شود",
   "dashboard.forecastFullOverYear": "حجم مخزن بیش از ۱ سال دیگر پر می‌شود",
   "dashboard.forecastFree": "{bytes} آزاد",
+  "dashboard.forecastFreeUnknown": "فضای آزاد نامعلوم",
+  "dashboard.forecastFreeUnknownInfo": "سرورهای S3، B2 و REST گزارش نمی‌دهند چقدر فضا باقی مانده است، پس فقط رشد نمایش داده می‌شود. سهمیه را در خود ارائه‌دهنده زیر نظر داشته باشید.",
 
   // Domain filters + dashboard duration
   "dashboard.duration": "مدت زمان",

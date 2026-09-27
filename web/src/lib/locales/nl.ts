@@ -1100,6 +1100,8 @@ const nl: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Repo-volume vol over ~1 week",
   "dashboard.forecastFullOverYear": "Repo-volume vol over > 1 jaar",
   "dashboard.forecastFree": "{bytes} vrij",
+  "dashboard.forecastFreeUnknown": "Vrije ruimte onbekend",
+  "dashboard.forecastFreeUnknownInfo": "S3-, B2- en REST-servers melden niet hoeveel ruimte er over is, dus alleen de groei wordt getoond. Houd het quotum bij de aanbieder zelf in de gaten.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Duur",

@@ -1022,6 +1022,8 @@ const ms: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Volum repositori akan penuh dalam ~1 minggu",
   "dashboard.forecastFullOverYear": "Volum repositori akan penuh dalam > 1 tahun",
   "dashboard.forecastFree": "{bytes} bebas",
+  "dashboard.forecastFreeUnknown": "Ruang kosong tidak diketahui",
+  "dashboard.forecastFreeUnknownInfo": "Pelayan S3, B2 dan REST tidak melaporkan baki ruang, jadi hanya pertumbuhan yang ditunjukkan. Pantau kuota di pihak penyedia sendiri.",
 
   // Domain filters + dashboard duration
   "dashboard.duration": "Tempoh",

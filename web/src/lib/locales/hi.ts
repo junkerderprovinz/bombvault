@@ -1022,6 +1022,8 @@ const hi: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "रिपॉज़िटरी वॉल्यूम लगभग 1 सप्ताह में भर जाएगा",
   "dashboard.forecastFullOverYear": "रिपॉज़िटरी वॉल्यूम 1 साल से अधिक में भरेगा",
   "dashboard.forecastFree": "{bytes} खाली",
+  "dashboard.forecastFreeUnknown": "खाली जगह अज्ञात",
+  "dashboard.forecastFreeUnknownInfo": "S3, B2 और REST सर्वर यह नहीं बताते कि कितनी जगह बची है, इसलिए केवल वृद्धि दिखाई जाती है। प्रदाता के अपने कोटा पर नज़र रखें।",
 
   // Domain filters + dashboard duration
   "dashboard.duration": "अवधि",

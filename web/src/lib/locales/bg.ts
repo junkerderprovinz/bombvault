@@ -1022,6 +1022,8 @@ const bg: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Обемът на хранилището ще се напълни след ~1 седмица",
   "dashboard.forecastFullOverYear": "Обемът на хранилището ще се напълни след > 1 година",
   "dashboard.forecastFree": "{bytes} свободни",
+  "dashboard.forecastFreeUnknown": "Свободното място е неизвестно",
+  "dashboard.forecastFreeUnknownInfo": "Сървърите S3, B2 и REST не съобщават колко място остава, затова се показва само растежът. Следи квотата при самия доставчик.",
 
   // Domain filters + dashboard duration
   "dashboard.duration": "Продължителност",

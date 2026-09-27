@@ -1130,6 +1130,8 @@ const ar: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "ستمتلئ وحدة تخزين المستودع خلال أسبوع واحد تقريبًا",
   "dashboard.forecastFullOverYear": "ستمتلئ وحدة تخزين المستودع بعد أكثر من عام",
   "dashboard.forecastFree": "{bytes} متاحة",
+  "dashboard.forecastFreeUnknown": "المساحة الحرة غير معروفة",
+  "dashboard.forecastFreeUnknownInfo": "لا تُبلغ خوادم S3 وB2 وREST عن المساحة المتبقية، لذا يظهر النمو فقط. راقب الحصة لدى مزوّد الخدمة نفسه.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "المدة",

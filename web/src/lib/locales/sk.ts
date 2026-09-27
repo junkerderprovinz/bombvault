@@ -1022,6 +1022,8 @@ const sk: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Objem repozitára bude plný o ~1 týždeň",
   "dashboard.forecastFullOverYear": "Objem repozitára bude plný o viac ako 1 rok",
   "dashboard.forecastFree": "{bytes} voľné",
+  "dashboard.forecastFreeUnknown": "Voľné miesto neznáme",
+  "dashboard.forecastFreeUnknownInfo": "Servery S3, B2 a REST nehlásia, koľko miesta zostáva, preto sa zobrazuje len rast. Sledujte kvótu priamo u poskytovateľa.",
 
   // Domain filters + dashboard duration
   "dashboard.duration": "Trvanie",

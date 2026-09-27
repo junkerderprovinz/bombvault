@@ -1125,6 +1125,8 @@ const es: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Volumen del repositorio lleno en ~1 semana",
   "dashboard.forecastFullOverYear": "Volumen del repositorio lleno en > 1 año",
   "dashboard.forecastFree": "{bytes} libres",
+  "dashboard.forecastFreeUnknown": "Espacio libre desconocido",
+  "dashboard.forecastFreeUnknownInfo": "Los servidores S3, B2 y REST no informan de cuánto espacio queda, así que solo se muestra el crecimiento. Vigila la cuota del propio proveedor.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Duración",

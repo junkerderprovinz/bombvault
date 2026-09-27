@@ -1022,6 +1022,8 @@ const gl: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "O volume do repositorio encherase en ~1 semana",
   "dashboard.forecastFullOverYear": "O volume do repositorio encherase en máis de 1 ano",
   "dashboard.forecastFree": "{bytes} libres",
+  "dashboard.forecastFreeUnknown": "Espazo libre descoñecido",
+  "dashboard.forecastFreeUnknownInfo": "Os servidores S3, B2 e REST non informan de canto espazo queda, así que só se amosa o crecemento. Vixía a cota do propio provedor.",
 
   // Domain filters + dashboard duration
   "dashboard.duration": "Duración",

@@ -1119,6 +1119,8 @@ const vi: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Ổ chứa kho lưu trữ sẽ đầy sau ~1 tuần",
   "dashboard.forecastFullOverYear": "Ổ chứa kho lưu trữ sẽ đầy sau hơn 1 năm",
   "dashboard.forecastFree": "Còn trống {bytes}",
+  "dashboard.forecastFreeUnknown": "Không rõ dung lượng trống",
+  "dashboard.forecastFreeUnknownInfo": "Máy chủ S3, B2 và REST không báo còn bao nhiêu dung lượng, nên chỉ hiển thị mức tăng. Hãy theo dõi hạn mức ở chính nhà cung cấp.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Thời lượng",

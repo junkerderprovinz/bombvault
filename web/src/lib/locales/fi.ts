@@ -1127,6 +1127,8 @@ const fi: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Repon taltio täynnä ~1 viikon kuluttua",
   "dashboard.forecastFullOverYear": "Repon taltio täynnä yli vuoden päästä",
   "dashboard.forecastFree": "{bytes} vapaana",
+  "dashboard.forecastFreeUnknown": "Vapaa tila tuntematon",
+  "dashboard.forecastFreeUnknownInfo": "S3-, B2- ja REST-palvelimet eivät kerro, paljonko tilaa on jäljellä, joten vain kasvu näytetään. Seuraa palveluntarjoajan omaa kiintiötä.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Kesto",

@@ -13,7 +13,7 @@ BombVault bringt einen Server für das Model Context Protocol (MCP) mit. Über d
 | `list_runs` | Laufverlauf, neueste zuerst, filterbar nach Domäne, Element, Status, Art und Zeit | lesen |
 | `list_restore_points` | Wiederherstellungspunkte eines Elements aus seinem primären Repository, bei einem Container auch seine Datenbank-Dumps; ein ZFS-Dataset bekommt einen Wiederherstellungspunkt je Backup, mit einem Snapshot jedes Datasets darunter | lesen |
 | `get_activity` | Was gerade läuft, mit Phase und Prozentangabe | lesen |
-| `get_storage_stats` | Größenverlauf des primären Repositorys einer Domäne und sein Wachstum pro Woche | lesen |
+| `get_storage_stats` | Größenverlauf des primären Repositorys einer Domäne und sein Wachstum pro Woche, mit freiem Platz und Wochen bis voll, wo sich das Volume messen lässt | lesen |
 | `list_anomalies` | Anomalien, die BombVault in den Backups bemerkt hat, filterbar nach Zustand, Schweregrad und Domäne, mit einer Übersicht über das, was offen ist | lesen |
 | `get_anomaly` | Einer dieser Funde, mit der Notiz, die beim Quittieren hinterlassen wurde | lesen |
 | `start_backup` | Sichert ein Element sofort | starten |

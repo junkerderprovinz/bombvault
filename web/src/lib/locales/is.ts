@@ -1022,6 +1022,8 @@ const is: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Geymslurými fyllist eftir ~1 viku",
   "dashboard.forecastFullOverYear": "Geymslurými fyllist eftir meira en 1 ár",
   "dashboard.forecastFree": "{bytes} laust",
+  "dashboard.forecastFreeUnknown": "Laust pláss óþekkt",
+  "dashboard.forecastFreeUnknownInfo": "S3-, B2- og REST-þjónar gefa ekki upp hve mikið pláss er eftir, svo aðeins vöxturinn sést. Fylgstu með kvótanum hjá þjónustuaðilanum sjálfum.",
 
   // Domain filters + dashboard duration
   "dashboard.duration": "Tímalengd",

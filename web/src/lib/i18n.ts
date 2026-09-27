@@ -1254,6 +1254,8 @@ export const en = {
   "dashboard.forecastFullOneWeek": "Repo volume full in ~1 week",
   "dashboard.forecastFullOverYear": "Repo volume full in > 1 year",
   "dashboard.forecastFree": "{bytes} free",
+  "dashboard.forecastFreeUnknown": "Free space unknown",
+  "dashboard.forecastFreeUnknownInfo": "S3, B2 and REST servers do not report how much room is left, so only the growth is shown. Keep an eye on the provider's own quota.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Duration",
@@ -3883,6 +3885,8 @@ export const de: Translations = {
   "dashboard.forecastFullOneWeek": "Repo-Volume voll in ~1 Woche",
   "dashboard.forecastFullOverYear": "Repo-Volume voll in > 1 Jahr",
   "dashboard.forecastFree": "{bytes} frei",
+  "dashboard.forecastFreeUnknown": "Freier Platz unbekannt",
+  "dashboard.forecastFreeUnknownInfo": "S3, B2 und REST-Server melden nicht, wie viel Platz noch frei ist, darum steht hier nur das Wachstum. Behalte das Kontingent beim Anbieter selbst im Blick.",
 
   // Domain filters + dashboard duration (#39/#40/#41)
   "dashboard.duration": "Dauer",

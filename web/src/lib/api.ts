@@ -2486,6 +2486,10 @@ export interface StorageForecast {
   growthBytesPerWeek?: number;
   freeBytes?: number;
   weeksToFull?: number;
+  /** What measured freeBytes: statfs, smb, nfs, rclone or sftp. */
+  capacitySource?: string;
+  /** The backend cannot report its free space at all (S3, B2, REST). */
+  capacityUnsupported?: boolean;
 }
 
 export interface StatsResponse {

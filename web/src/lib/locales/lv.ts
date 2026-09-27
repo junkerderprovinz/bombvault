@@ -1022,6 +1022,8 @@ const lv: Partial<Translations> = {
   "dashboard.forecastFullOneWeek": "Repozitorija apjoms būs pilns pēc ~1 nedēļas",
   "dashboard.forecastFullOverYear": "Repozitorija apjoms būs pilns pēc vairāk nekā 1 gada",
   "dashboard.forecastFree": "{bytes} brīvi",
+  "dashboard.forecastFreeUnknown": "Brīvā vieta nezināma",
+  "dashboard.forecastFreeUnknownInfo": "S3, B2 un REST serveri neziņo, cik vietas atlicis, tāpēc redzams tikai pieaugums. Sekojiet kvotai pie paša pakalpojuma sniedzēja.",
 
   // Domain filters + dashboard duration
   "dashboard.duration": "Ilgums",

@@ -221,9 +221,21 @@ func (h *Handler) toolGetStorageStats(ctx context.Context, req *mcp.CallToolRequ
 		return h.mcpFailure(ctx, "get_storage_stats", err), nil
 	}
 
-	var growth any
-	if rate, ok := growthBytesPerWeek(stats, time.Now()); ok {
-		growth = rate
+	out := map[string]any{"domain": in.Domain, "growthBytesPerWeek": nil}
+	if f := h.svc.StorageForecast(in.Domain, "local", stats); f != nil {
+		if f.GrowthBytesPerWeek != nil {
+			out["growthBytesPerWeek"] = *f.GrowthBytesPerWeek
+		}
+		if f.FreeBytes != nil {
+			out["freeBytes"] = *f.FreeBytes
+			out["capacitySource"] = f.CapacitySource
+		}
+		if f.WeeksToFull != nil {
+			out["weeksToFull"] = *f.WeeksToFull
+		}
+		if f.CapacityUnsupported {
+			out["capacityUnsupported"] = true
+		}
 	}
 	samples := make([]map[string]any, 0, len(stats))
 	for i := len(stats) - 1; i >= 0; i-- {
@@ -235,12 +247,9 @@ func (h *Handler) toolGetStorageStats(ctx context.Context, req *mcp.CallToolRequ
 		})
 	}
 
+	out["samples"] = samples
 	h.logMCPCall(ctx, "get_storage_stats", "ok")
-	return mcpOK(map[string]any{
-		"domain":             in.Domain,
-		"samples":            samples,
-		"growthBytesPerWeek": growth,
-	}), nil
+	return mcpOK(out), nil
 }
 
 // mcpStops is what a backup of one item takes down, read from stored settings
