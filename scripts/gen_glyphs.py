@@ -32,6 +32,8 @@ ACTION = [
     ("IconStop", "entertainment/button-stop.svg", "Stop or abort"),
     ("IconBack", "interface-essential/move-left.svg", "Back or previous"),
     ("IconForward", "interface-essential/move-right.svg", "Next, continue or forward"),
+    # An arrow landing on a line: the end of a list, where the newest entry is.
+    ("IconLatest", "interface-essential/arrow-down-2.svg", "Jump to the newest entry"),
     ("IconSelectAll", "interface-essential/check-square.svg", "Select all"),
     ("IconClearSelection", "interface-essential/subtract-square.svg", "Clear the selection"),
     ("IconKey", "interface-essential/key.svg", "Credentials"),
