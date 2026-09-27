@@ -771,7 +771,8 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.ScheduleCadence = t.ScheduleCadence
 			run, _ = h.store.LastSuccessfulBackup(t.ID)
 		}
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[c.Name].Newest(), snapTimesFailed)
+		unlisted := snapTimesFailed || h.svc.primaryRepoIsRemote(settings, "containers", c.Name)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[c.Name].Newest(), unlisted)
 		own := v.LastBackup != nil
 		hasOwnBackup[c.Name] = own
 		if !own {
@@ -838,7 +839,8 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		// everything.
 		v.DumpOnly = snapTimes[t.ContainerName].DumpOnly()
 		run, _ := h.store.LastSuccessfulBackup(t.ID)
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.ContainerName].Newest(), snapTimesFailed)
+		unlisted := snapTimesFailed || h.svc.primaryRepoIsRemote(settings, "containers", t.ContainerName)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.ContainerName].Newest(), unlisted)
 		views = append(views, v)
 	}
 	items := make([]placementItem, 0, len(views))
@@ -861,8 +863,8 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 
 // lastBackupDate is the newest backup an entry owns, so a card's date agrees
 // with the list of backups under it. newest is when that backup was taken, 0
-// for none. The run stands in only while the repository could not be listed,
-// because an unreachable repository must not read as "never backed up". The
+// for none. The run stands in when the repository was not listed, remote or
+// unreachable, because that must not read as "never backed up". The
 // start time comes from the run that wrote that backup and from no other,
 // since the dashboard measures a duration from the pair.
 func lastBackupDate(run *store.Run, newest int64, unreadable bool) (finished, started *int64) {

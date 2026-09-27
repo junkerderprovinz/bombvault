@@ -7834,10 +7834,10 @@ func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain, pr
 	return out, nil
 }
 
-// eachBackupTime reads one snapshot listing per repository of domain and calls
-// fn for every snapshot carrying one of prefixes, with the prefix, the name
-// the tag folds to and the snapshot's unix time. idToName carries the current
-// name of every entry, for the alias fold.
+// eachBackupTime reads one snapshot listing per local repository of domain and
+// calls fn for every snapshot carrying one of prefixes, with the prefix, the
+// name the tag folds to and the snapshot's unix time. idToName carries the
+// current name of every entry, for the alias fold.
 func (s *Service) eachBackupTime(ctx context.Context, domain, aliasDomain string, idToName map[string]string, prefixes []string, fn func(prefix, name string, unix int64)) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -7859,14 +7859,13 @@ func (s *Service) eachBackupTime(ctx context.Context, domain, aliasDomain string
 		return err
 	}
 	for _, repo := range repos {
-		if localRepoMissing(repo.Loc) {
+		// A list never opens a remote repository; its items are dated from their
+		// runs instead.
+		if localRepoMissing(repo.Loc) || restic.IsRemoteRepo(repo.Loc) {
 			continue
 		}
-		// Per repository, like every other reader. The shared mode was used here
-		// for all of them, so a container on a REMOTE named repository with its
-		// own credentials could not be listed at all - and the dashboard then said
-		// it had never been backed up, which is the most alarming sentence a backup
-		// tool has.
+		// Per repository, like every other reader: a named repository has its own
+		// mode.
 		all, lErr := s.listSnapshots(ctx, repo.Loc, s.primaryModeFor(settings, domain, repo.Loc))
 		if lErr != nil {
 			// One unreachable repository must not blank the whole column: the
@@ -11633,7 +11632,8 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 			v.ScheduleCadence = t.ScheduleCadence
 			run, _ = s.store.LastSuccessfulBackup(t.ID)
 		}
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[vm.Name], snapTimesFailed)
+		unlisted := snapTimesFailed || s.primaryRepoIsRemote(settings, "vms", vm.Name)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[vm.Name], unlisted)
 		own := v.LastBackup != nil
 		hasOwnBackup[vm.Name] = own
 		if !own {
@@ -11659,7 +11659,8 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	for _, t := range orphanTargets {
 		v := VMView{Name: t.Name, LibvirtName: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence, AliasConflicts: aliasConflicts.of(t.ID), Aliases: formerNames.of(t.ID)}
 		run, _ := s.store.LastSuccessfulBackup(t.ID)
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.Name], snapTimesFailed)
+		unlisted := snapTimesFailed || s.primaryRepoIsRemote(settings, "vms", t.Name)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.Name], unlisted)
 		views = append(views, v)
 	}
 	return views, nil
@@ -13530,7 +13531,8 @@ func (s *Service) ListFileSetViews(ctx context.Context) ([]FileSetView, error) {
 		// nil so omitempty drops the key (the NULL legacy switch).
 		v.SelectedPaths = set.SelectedPaths
 		run, _ := s.store.LastSuccessfulBackup(set.ID)
-		if finished, _ := lastBackupDate(run, snapTimes[set.Name], snapTimesFailed); finished != nil {
+		unlisted := snapTimesFailed || restic.IsRemoteRepo(v.RepoEffective)
+		if finished, _ := lastBackupDate(run, snapTimes[set.Name], unlisted); finished != nil {
 			v.LastBackup = *finished
 		}
 		if resolved, rErr := paths.Resolve(s.cfg.HostMountRoot, set.Path); rErr == nil {
