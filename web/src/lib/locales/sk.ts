@@ -1551,6 +1551,7 @@ const sk: Partial<Translations> = {
   "places.error.nothingToTest": "Na tomto mieste nie je uložená ani kopírovaná žiadna doména, preto nie je čo testovať.",
   "places.error.keepsLess": "Toto miesto uchováva menej snímok, než má teraz repozitár, a jeho ďalšie čistenie by zvyšok odstránilo. Najprv zvýš uchovávanie miesta.",
   "places.error.appendOnlyOff": "Tento repozitár je append-only a miesto nie, takže čistenie tam by mohlo zmazať jeho snímky. Najprv zapni append-only na mieste.",
+  "places.error.restPathDeep": "rest-server vytvára repozitáre najviac dve úrovne hlboko a každá doména dostane pod týmto priečinkom vlastný priečinok. Zadaj jediný priečinok, bez lomky.",
   "places.error.locationEstablished": "one=Na starej adrese ležia zálohy ({n} snímka pre {domains}) a na novej nie je ten istý repozitár.|few=Na starej adrese ležia zálohy ({n} snímky pre {domains}) a na novej nie je ten istý repozitár.|many=Na starej adrese ležia zálohy ({n} snímky pre {domains}) a na novej nie je ten istý repozitár.|other=Na starej adrese ležia zálohy ({n} snímok pre {domains}) a na novej nie je ten istý repozitár.",
   "places.error.locationEstablishedPlain": "Na starej adrese ležia zálohy a na novej nie je ten istý repozitár.",
   "places.error.probeFailed": "Test pripojenia zlyhal: {reason}",

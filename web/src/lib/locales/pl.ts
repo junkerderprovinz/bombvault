@@ -1526,6 +1526,7 @@ const pl: Partial<Translations> = {
   "places.error.nothingToTest": "W tym miejscu nie jest przechowywana ani do niego kopiowana żadna domena, więc nie ma czego sprawdzać.",
   "places.error.keepsLess": "To miejsce zachowuje mniej migawek, niż repozytorium ma teraz, a następne przycinanie zapomniałoby o reszcie. Najpierw zwiększ retencję miejsca.",
   "places.error.appendOnlyOff": "To repozytorium jest append-only, a miejsce nie, więc przycinanie tam mogłoby usunąć jego migawki. Najpierw włącz append-only w miejscu.",
+  "places.error.restPathDeep": "rest-server tworzy repozytoria najwyżej dwa poziomy w głąb, a każda domena dostaje pod tym folderem własny folder. Wpisz jeden folder, bez ukośnika.",
   "places.error.locationEstablished": "one=Pod starym adresem znajdują się kopie zapasowe ({domains}: {n} migawka), a pod nowym nie ma tego samego repozytorium.|few=Pod starym adresem znajdują się kopie zapasowe ({domains}: {n} migawki), a pod nowym nie ma tego samego repozytorium.|many=Pod starym adresem znajdują się kopie zapasowe ({domains}: {n} migawek), a pod nowym nie ma tego samego repozytorium.|other=Pod starym adresem znajdują się kopie zapasowe ({domains}: {n} migawek), a pod nowym nie ma tego samego repozytorium.",
   "places.error.locationEstablishedPlain": "Pod starym adresem znajdują się kopie zapasowe, a pod nowym nie ma tego samego repozytorium.",
   "places.error.probeFailed": "Test połączenia nie powiódł się: {reason}",

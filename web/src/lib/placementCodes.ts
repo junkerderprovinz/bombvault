@@ -44,6 +44,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "place-nothing-to-test": "places.error.nothingToTest",
   "place-keeps-less": "places.error.keepsLess",
   "place-append-only-off": "places.error.appendOnlyOff",
+  "place-rest-path-deep": "places.error.restPathDeep",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {

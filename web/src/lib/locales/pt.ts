@@ -1531,6 +1531,7 @@ const pt: Partial<Translations> = {
   "places.error.nothingToTest": "Nenhum domínio é guardado ou copiado neste lugar, por isso não há nada para testar.",
   "places.error.keepsLess": "Este lugar mantém menos instantâneos do que o repositório tem agora, e a próxima poda esqueceria os restantes. Aumenta primeiro a retenção do lugar.",
   "places.error.appendOnlyOff": "Este repositório é append-only e o lugar não, por isso uma poda lá poderia apagar os instantâneos dele. Liga primeiro o append-only no lugar.",
+  "places.error.restPathDeep": "O rest-server cria repositórios no máximo a dois níveis de profundidade, e cada domínio recebe a sua própria pasta dentro desta. Escreve uma só pasta, sem barra.",
   "places.error.locationEstablished": "one=Há backups no endereço antigo ({n} instantâneo de {domains}) e o novo não contém o mesmo repositório.|many=Há backups no endereço antigo ({n} de instantâneos de {domains}) e o novo não contém o mesmo repositório.|other=Há backups no endereço antigo ({n} instantâneos de {domains}) e o novo não contém o mesmo repositório.",
   "places.error.locationEstablishedPlain": "Há backups no endereço antigo e o novo não contém o mesmo repositório.",
   "places.error.probeFailed": "O teste de ligação falhou: {reason}",

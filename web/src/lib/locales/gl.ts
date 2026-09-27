@@ -1551,6 +1551,7 @@ const gl: Partial<Translations> = {
   "places.error.nothingToTest": "Neste lugar non se garda nin se copia ningún dominio, así que non hai nada que probar.",
   "places.error.keepsLess": "Este lugar conserva menos instantáneas das que ten agora o repositorio, e a súa próxima limpeza esquecería o resto. Aumenta primeiro a retención do lugar.",
   "places.error.appendOnlyOff": "Este repositorio é append-only e o lugar non, así que unha limpeza alí podería borrar as súas instantáneas. Activa primeiro append-only no lugar.",
+  "places.error.restPathDeep": "rest-server crea repositorios como moito a dous niveis de profundidade, e cada dominio recibe o seu propio cartafol dentro deste. Escribe un só cartafol, sen barra.",
   "places.error.locationEstablished": "one=Hai copias no enderezo antigo ({n} instantánea de {domains}), e o novo non contén o mesmo repositorio.|other=Hai copias no enderezo antigo ({n} instantáneas de {domains}), e o novo non contén o mesmo repositorio.",
   "places.error.locationEstablishedPlain": "Hai copias no enderezo antigo, e o novo non contén o mesmo repositorio.",
   "places.error.probeFailed": "A proba de conexión fallou: {reason}",

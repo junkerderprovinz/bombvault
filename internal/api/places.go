@@ -909,6 +909,9 @@ func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody
 		if next.Base, err = places.Base(provider, body.Address, p.ID); err != nil {
 			return store.Place{}, nil, err
 		}
+		if next.Base != p.Base && provider.Kind == places.KindREST && restPathDeep(body.Address) && !placeIsRepository(p, rows) {
+			return store.Place{}, nil, errRESTPathDeep
+		}
 		if next.Base != p.Base && provider.Kind == places.KindLocal {
 			if err := s.localPlaceReady(placeProbe{provider: provider, base: next.Base}); err != nil {
 				return store.Place{}, nil, probeRefusal(err)

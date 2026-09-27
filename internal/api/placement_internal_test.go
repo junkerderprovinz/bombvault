@@ -273,6 +273,7 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errPlaceNothingToTest:           "place-nothing-to-test",
 		errPlaceKeepsLess:               "place-keeps-less",
 		errPlaceAppendOnlyOff:           "place-append-only-off",
+		errRESTPathDeep:                 "place-rest-path-deep",
 	}
 	if len(placementCodes) != len(want) {
 		t.Fatalf("placementCodes has %d rows, want %d: a sentinel is missing its row or its test", len(placementCodes), len(want))

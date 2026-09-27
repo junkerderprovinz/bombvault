@@ -1529,6 +1529,7 @@ const cs: Partial<Translations> = {
   "places.error.nothingToTest": "Na tomto místě se neukládá ani nekopíruje žádná doména, takže není co testovat.",
   "places.error.keepsLess": "Toto místo uchovává méně snímků, než má repozitář teď, a jeho příští čištění by zbytek zapomnělo. Nejdřív zvyš uchovávání místa.",
   "places.error.appendOnlyOff": "Tento repozitář je append-only, ale místo ne, takže čištění tam by mohlo smazat jeho snímky. Nejdřív na místě zapni append-only.",
+  "places.error.restPathDeep": "rest-server vytváří repozitáře nejvýše dvě úrovně hluboko a každá doména dostane pod touto složkou vlastní složku. Zadej jedinou složku, bez lomítka.",
   "places.error.locationEstablished": "one=Na staré adrese leží zálohy ({domains}: {n} snímek) a na nové neleží tentýž repozitář.|few=Na staré adrese leží zálohy ({domains}: {n} snímky) a na nové neleží tentýž repozitář.|many=Na staré adrese leží zálohy ({domains}: {n} snímku) a na nové neleží tentýž repozitář.|other=Na staré adrese leží zálohy ({domains}: {n} snímků) a na nové neleží tentýž repozitář.",
   "places.error.locationEstablishedPlain": "Na staré adrese leží zálohy a na nové neleží tentýž repozitář.",
   "places.error.probeFailed": "Test připojení selhal: {reason}",

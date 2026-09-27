@@ -1524,6 +1524,7 @@ const ja: Partial<Translations> = {
   "places.error.nothingToTest": "この保存場所に保存またはコピーされているドメインがないため、テストするものがありません。",
   "places.error.keepsLess": "この保存場所が保持するスナップショットはリポジトリの現在の数より少ないため、次回の整理で残りが削除されます。先に保存場所の保持を増やしてください。",
   "places.error.appendOnlyOff": "このリポジトリは append-only ですが保存場所はそうではないため、そこで整理するとスナップショットが削除されるおそれがあります。先に保存場所で append-only をオンにしてください。",
+  "places.error.restPathDeep": "rest-server はリポジトリを最大 2 階層の深さまでしか作成できず、各ドメインはこのフォルダーの下に専用のフォルダーを持ちます。スラッシュを含まない 1 つのフォルダーを入力してください。",
   "places.error.locationEstablished": "古いアドレスにバックアップがあり（{domains} のスナップショット {n} 件）、新しいアドレスには同じリポジトリがありません。",
   "places.error.locationEstablishedPlain": "古いアドレスにバックアップがあり、新しいアドレスには同じリポジトリがありません。",
   "places.error.probeFailed": "接続テストに失敗しました：{reason}",

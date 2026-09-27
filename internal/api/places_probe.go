@@ -23,6 +23,17 @@ import (
 // cannot take a repository.
 var errPlaceProbeFailed = errors.New("the connection test failed")
 
+// errRESTPathDeep refuses a rest-server path of more than one folder. The
+// server creates repositories at most two levels deep, and a place keeps each
+// domain in a folder below its path, so the first copy there would fail.
+var errRESTPathDeep = fmt.Errorf("%w: rest-server creates repositories at most two levels deep, so the folder can only be one name", errPlaceProbeFailed)
+
+// restPathDeep reports whether a rest-server form's path leaves no room for a
+// domain's folder below it.
+func restPathDeep(fields map[string]string) bool {
+	return strings.Contains(strings.Trim(strings.TrimSpace(fields["path"]), "/"), "/")
+}
+
 // folderProbe is what one address holds.
 type folderProbe struct {
 	state   places.FolderState
@@ -204,6 +215,9 @@ func (s *Service) ProbePlace(ctx context.Context, req ProbeRequest) (places.Prob
 			res.RepoIDs = map[string]string{"": at.repoID}
 			res.Facts = append(res.Facts, places.ProbeFact{Key: places.FactBaseIsRepository})
 			return res, nil
+		}
+		if pr.provider.Kind == places.KindREST && restPathDeep(pr.fields) {
+			return failedProbe(res, errRESTPathDeep)
 		}
 	}
 	found := s.probeFolders(ctx, pr.base, pr.folders, mode)

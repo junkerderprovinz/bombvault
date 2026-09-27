@@ -1551,6 +1551,7 @@ const hr: Partial<Translations> = {
   "places.error.nothingToTest": "Na ovom mjestu nijedna domena nije pohranjena ni kopirana, pa nema što testirati.",
   "places.error.keepsLess": "Ovo mjesto zadržava manje snimki nego što ih repozitorij sada ima, a njegovo sljedeće čišćenje zaboravilo bi ostatak. Najprije povećaj zadržavanje mjesta.",
   "places.error.appendOnlyOff": "Ovaj repozitorij ima samo-dodavanje, a mjesto nema, pa bi čišćenje ondje moglo izbrisati njegove snimke. Najprije uključi samo-dodavanje na mjestu.",
+  "places.error.restPathDeep": "rest-server stvara repozitorije najviše dvije razine duboko, a svaka domena dobiva vlastitu mapu ispod ove. Upiši jednu mapu, bez kose crte.",
   "places.error.locationEstablished": "one=Na staroj adresi leže sigurnosne kopije ({domains}: {n} snimka), a na novoj adresi nije isti repozitorij.|few=Na staroj adresi leže sigurnosne kopije ({domains}: {n} snimke), a na novoj adresi nije isti repozitorij.|other=Na staroj adresi leže sigurnosne kopije ({domains}: {n} snimki), a na novoj adresi nije isti repozitorij.",
   "places.error.locationEstablishedPlain": "Na staroj adresi leže sigurnosne kopije, a na novoj adresi nije isti repozitorij.",
   "places.error.probeFailed": "Test veze nije uspio: {reason}",

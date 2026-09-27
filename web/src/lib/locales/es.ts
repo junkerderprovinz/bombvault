@@ -1529,6 +1529,7 @@ const es: Partial<Translations> = {
   "places.error.nothingToTest": "Ningún dominio se almacena ni se copia en este lugar, así que no hay nada que probar.",
   "places.error.keepsLess": "Este lugar conserva menos instantáneas de las que tiene ahora el repositorio, y su próxima poda olvidaría el resto. Aumenta primero la retención del lugar.",
   "places.error.appendOnlyOff": "Este repositorio es append-only y el lugar no, así que una poda allí podría borrar sus instantáneas. Activa primero append-only en el lugar.",
+  "places.error.restPathDeep": "rest-server crea repositorios como mucho a dos niveles de profundidad, y cada dominio recibe su propia carpeta dentro de esta. Escribe una sola carpeta, sin barra.",
   "places.error.locationEstablished": "one=Hay copias de seguridad en la dirección antigua ({n} instantánea de {domains}) y la nueva no contiene el mismo repositorio.|many=Hay copias de seguridad en la dirección antigua ({n} de instantáneas de {domains}) y la nueva no contiene el mismo repositorio.|other=Hay copias de seguridad en la dirección antigua ({n} instantáneas de {domains}) y la nueva no contiene el mismo repositorio.",
   "places.error.locationEstablishedPlain": "Hay copias de seguridad en la dirección antigua y la nueva no contiene el mismo repositorio.",
   "places.error.probeFailed": "La prueba de conexión ha fallado: {reason}",

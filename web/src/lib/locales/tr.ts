@@ -1531,6 +1531,7 @@ const tr: Partial<Translations> = {
   "places.error.nothingToTest": "Bu konumda hiçbir alan depolanmıyor ya da kopyalanmıyor, bu yüzden test edilecek bir şey yok.",
   "places.error.keepsLess": "Bu konum, deponun şu an sahip olduğundan daha az anlık görüntü tutuyor ve bir sonraki budama geri kalanını unutur. Önce konumun saklama ayarını yükselt.",
   "places.error.appendOnlyOff": "Bu depo append-only, konum ise değil; bu yüzden oradaki bir budama deponun anlık görüntülerini silebilir. Önce konumda append-only'yi aç.",
+  "places.error.restPathDeep": "rest-server depoları en fazla iki seviye derinlikte oluşturur ve her alan bunun altında kendi klasörünü alır. Eğik çizgi olmadan tek bir klasör gir.",
   "places.error.locationEstablished": "Eski adreste yedekler var ({domains} için {n} anlık görüntü) ve yeni adreste aynı depo yok.",
   "places.error.locationEstablishedPlain": "Eski adreste yedekler var ve yeni adreste aynı depo yok.",
   "places.error.probeFailed": "Bağlantı testi başarısız oldu: {reason}",
