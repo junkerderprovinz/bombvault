@@ -28,6 +28,8 @@ type probeEngine struct {
 	dumpErr  error
 	target   string
 	calls    []string
+	// dumps are whole files DumpRaw hands back instead of an endless stream.
+	dumps map[string][]byte
 }
 
 func (e *probeEngine) Unlock(_ context.Context, _ string, removeAll bool, _ restic.Mode) error {
@@ -66,6 +68,10 @@ func (e *probeEngine) DumpRaw(_ context.Context, _, _, path string, w io.Writer,
 	e.dumped = append(e.dumped, path)
 	if e.dumpErr != nil {
 		return e.dumpErr
+	}
+	if body, ok := e.dumps[path]; ok {
+		_, err := w.Write(body)
+		return err
 	}
 	buf := make([]byte, 1<<20)
 	for {
@@ -266,5 +272,61 @@ func TestItemProbeClearsStaleLocksBeforeItReads(t *testing.T) {
 	}
 	if len(eng.calls) < 2 || eng.calls[0] != "Unlock(removeAll=false)" || eng.calls[1] != "RestoreVerify" {
 		t.Fatalf("calls = %v, want only stale locks cleared before the restore", eng.calls)
+	}
+}
+
+// vmProbeService is a probe of VM win11 whose newest backup is a changed-block
+// snapshot of one 25-byte disk in 10-byte segments.
+func vmProbeService(t *testing.T, segments ...restic.FileEntry) (*Service, *probeEngine, string) {
+	t.Helper()
+	manifest := `{"version":1,"checkpoint":"bombvault-1","disks":[{"dev":"vda","path":"/domains/win11/vdisk1.img","format":"qcow2","size":25,"segment":10}]}`
+	eng := &probeEngine{
+		entries: append([]restic.FileEntry{fileEntry("/bombvault-vm.json", int64(len(manifest)))}, segments...),
+		dumps:   map[string][]byte{"/bombvault-vm.json": []byte(manifest)},
+	}
+	s, _ := newProbeService(t, eng)
+	vm, err := s.store.UpsertVMTarget(store.VMTarget{Name: "win11", Method: "graceful"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	recordBackup(t, s.store, vm.ID, "abcd1234")
+	return s, eng, vm.ID
+}
+
+func TestItemProbePassesAChangedBlockSnapshotWithEverySegment(t *testing.T) {
+	s, eng, id := vmProbeService(t,
+		fileEntry("/vda/00000000", 10), fileEntry("/vda/00000001", 10), fileEntry("/vda/00000002", 5))
+	rec, err := s.ProbeItem(context.Background(), id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !rec.OK || rec.Files != 4 || len(eng.restores) != 1 {
+		t.Fatalf("probe = %+v restores=%v, want the segments and the manifest read back", rec, eng.restores)
+	}
+}
+
+func TestItemProbeFailsAChangedBlockSnapshotMissingASegment(t *testing.T) {
+	s, eng, id := vmProbeService(t, fileEntry("/vda/00000000", 10), fileEntry("/vda/00000002", 5))
+	rec, err := s.ProbeItem(context.Background(), id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.OK || !strings.Contains(rec.Detail, "2 of 3 segments") {
+		t.Fatalf("probe = %+v, want a failure naming the missing segment", rec)
+	}
+	if len(eng.restores) != 0 {
+		t.Fatalf("a disk that cannot be put back together needs no sample: %v", eng.restores)
+	}
+}
+
+func TestItemProbeFailsAChangedBlockSnapshotWithAShortSegment(t *testing.T) {
+	s, _, id := vmProbeService(t,
+		fileEntry("/vda/00000000", 10), fileEntry("/vda/00000001", 4), fileEntry("/vda/00000002", 5))
+	rec, err := s.ProbeItem(context.Background(), id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.OK || !strings.Contains(rec.Detail, "holds 4 bytes, want 10") {
+		t.Fatalf("probe = %+v, want a failure naming the short segment", rec)
 	}
 }
