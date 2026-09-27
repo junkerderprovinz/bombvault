@@ -84,7 +84,7 @@ Off-site-Kopien gehen an Speicherorte. Leg den Ort unter **Einstellungen, Speich
 
 ## Portable Einstellungen (Export und Import) {#portable-settings-export-and-import}
 
-Die Karte **Einstellungen exportieren und importieren** auf der Einstellungsseite schreibt deine gesamte BombVault-Konfiguration (Bereichseinstellungen, Speicherorte, Zeitpläne, Benachrichtigungen) in eine portable JSON-Datei, die du auf einer anderen Instanz importieren kannst, sodass ein Umzug auf eine neue Box oder das Klonen eines Setups nicht bedeutet, alles von Hand neu einzugeben. Der Import zeigt eine Vorschau und fragt nach Bestätigung und rührt niemals deine Backup-Daten oder -Historie an.
+Die Karte **Einstellungen exportieren und importieren** auf der Einstellungsseite schreibt deine gesamte BombVault-Konfiguration (Bereichseinstellungen, Speicherorte, Zeitpläne, Benachrichtigungen) in eine portable JSON-Datei, die du auf einer anderen Instanz importieren kannst, sodass ein Umzug auf eine neue Box oder das Klonen eines Setups nicht bedeutet, alles von Hand neu einzugeben. Der Import zeigt eine Vorschau und fragt nach Bestätigung und rührt niemals deine Backup-Daten oder -Historie an. Die Vorschau zählt die Speicherorte in der Datei und, wenn die Zugangsdaten dabei sind, die Zugangsdaten-Sätze; für eine ältere Datei ohne Speicherorte baut BombVault sie aus den importierten Einstellungen auf.
 
 !!! warning "Der Export kann Zugangsdaten enthalten"
     Du wählst, ob die Zugangsdaten deiner Orte und Benachrichtigungen in der Datei enthalten sein sollen. Mit enthaltenen Zugangsdaten ist der Export so sensibel wie dein Recovery-Kit, also bewahre ihn an einem sicheren Ort auf. Ohne sie hält die Datei nur nicht-geheime Einstellungen.
