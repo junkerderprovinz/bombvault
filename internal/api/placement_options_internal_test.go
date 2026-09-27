@@ -395,6 +395,34 @@ func TestARepositoryOfAnotherDomainIsNotOffered(t *testing.T) {
 	}
 }
 
+// A place that is itself one repository takes no second role, so a domain is
+// offered only what POST /api/places/{id}/repo would make for it.
+func TestARepositoryPlaceServingAnotherDomainIsNotOffered(t *testing.T) {
+	f := newPlacementFixture(t)
+	pool := localPlace("Pool", "pool")
+	pool.Folders = map[string]string{"containers": "", "vms": ""}
+	pool = f.storePlace(pool, "containers")
+	root := s3Place("B2 root", "s3:https://s3.example.com/bucket")
+	root.Folders = map[string]string{"containers": "", "vms": ""}
+	root = f.storePlace(root)
+	f.placeTarget(root, "containers", "")
+
+	opts := f.options("vms")
+
+	atRepositoryPlace := func(o map[string]any) bool { return o["placeId"] == pool.ID || o["placeId"] == root.ID }
+	if homes := rowsOf(opts["homes"]); slices.ContainsFunc(homes, atRepositoryPlace) {
+		t.Errorf("homes = %v, want Pool left out", homes)
+	}
+	if sendTo := rowsOf(opts["sendTo"]); slices.ContainsFunc(sendTo, atRepositoryPlace) {
+		t.Errorf("sendTo = %v, want B2 root left out", sendTo)
+	}
+	for _, id := range []string{pool.ID, root.ID} {
+		if res := f.placeRepo(id, "vms"); res["ok"] != false || res["code"] != "place-is-repository" {
+			t.Errorf("POST repo = %v, want place-is-repository as the options say", res)
+		}
+	}
+}
+
 func TestAPlaceWhoseRepositoryIsSwitchedOffIsNotOfferedInItsStead(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.storePlace(localPlace("NAS", "nas"))

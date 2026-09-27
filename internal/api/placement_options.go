@@ -126,7 +126,7 @@ func (s *Service) homeOptions(settings store.Settings, p placementRead, repos []
 		}
 	}
 	for _, pl := range x.all {
-		if !pl.Enabled || pl.Kind != string(places.KindLocal) || offered[pl.ID] || targetsAt(p.Targets, pl.ID) {
+		if !pl.Enabled || pl.Kind != string(places.KindLocal) || offered[pl.ID] || x.taken[pl.ID] || targetsAt(p.Targets, pl.ID) {
 			continue
 		}
 		if addr, ok := store.PlaceAddress(pl, p.Domain, ""); ok {
@@ -193,7 +193,7 @@ func (s *Service) sendToOptions(settings store.Settings, p placementRead, repos 
 		}
 	}
 	for _, pl := range x.all {
-		if !pl.Enabled || pl.Kind == string(places.KindLocal) || offered[pl.ID] || targetsAt(p.Targets, pl.ID) {
+		if !pl.Enabled || pl.Kind == string(places.KindLocal) || offered[pl.ID] || x.taken[pl.ID] || targetsAt(p.Targets, pl.ID) {
 			continue
 		}
 		if addr, ok := store.PlaceAddress(pl, p.Domain, ""); ok {
@@ -208,6 +208,7 @@ type placeIndex struct {
 	all   []store.Place
 	byID  map[string]store.Place
 	homes map[string]string // domain -> home place id
+	taken map[string]bool   // places that are one repository serving something already, as placeRepoFor judges them
 }
 
 func (s *Service) readPlaceIndex() (placeIndex, error) {
@@ -219,9 +220,14 @@ func (s *Service) readPlaceIndex() (placeIndex, error) {
 	if err != nil {
 		return placeIndex{}, err
 	}
-	x := placeIndex{all: all, byID: make(map[string]store.Place, len(all)), homes: homes}
+	x := placeIndex{all: all, byID: make(map[string]store.Place, len(all)), homes: homes, taken: map[string]bool{}}
 	for _, p := range all {
 		x.byID[p.ID] = p
+		rows, err := s.store.PlaceRows(p.ID)
+		if err != nil {
+			return placeIndex{}, err
+		}
+		x.taken[p.ID] = repositoryTaken(p, rows, homes)
 	}
 	return x, nil
 }
