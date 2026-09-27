@@ -717,8 +717,10 @@
      GlimStone's; the ring derives from the accent. */
   --elevation: 0 1px 2px rgba(0, 0, 0, .40), 0 18px 40px -24px rgba(0, 0, 0, .85);
   --hairline: inset 0 1px 0 rgba(255, 255, 255, .045);
-  /* The scrim behind a floating window. */
-  --glim-scrim: rgba(0, 0, 0, .65);
+  /* The ground behind a floating window, and the blur that takes the page's
+     detail away beneath it. */
+  --glim-scrim: rgba(0, 0, 0, .72);
+  --glim-scrim-blur: 6px;
   --focus-ring: rgba(252, 196, 25, .55);
 
   /* A copy of --focus-ring under its own name, for the rainbow block's
@@ -879,7 +881,7 @@
   /* Elevation and hairline from the reference. */
   --elevation: 0 1px 2px rgba(0, 0, 0, .06), 0 16px 36px -26px rgba(0, 0, 0, .35);
   --hairline: inset 0 0 0 1px rgba(0, 0, 0, .05);
-  --glim-scrim: rgba(0, 0, 0, .55);
+  --glim-scrim: rgba(0, 0, 0, .62);
 
   /* Carbon's light status tones. Text keeps at least 4.5:1 on white, #f4f4f4
      and its own chip tint, solids at least 3:1 as graphics. Chips use the
@@ -952,7 +954,7 @@
     /* The light-only values, restated because this selector inherits nothing
        from [data-theme="light"]. The ok, fail, warn and neutral status tones
        are not restated and fall through to their dark values here. */
-    --glim-scrim: rgba(0, 0, 0, .55);
+    --glim-scrim: rgba(0, 0, 0, .62);
     --focus-ring: rgba(142, 106, 0, .85);
     --focus-ring-flat: rgba(142, 106, 0, .85);
     --field-focus-ring: rgba(142, 106, 0, 1);
@@ -2393,9 +2395,19 @@ body {
    it. */
 .glim-check-draw { stroke-dasharray: 1; stroke-dashoffset: 0; }
 
-/* The scrim is painted whatever the motion settings: darkening the page is
-   what puts a window in front, not motion. Only its fade is gated. */
-.glim-modal-backdrop { background-color: var(--glim-scrim); }
+/* The scrim and the blur are painted whatever the motion settings: they are
+   what puts a window in front, not motion. Only the fade is gated. The blur
+   takes the page's detail away and the scrim its contrast, so the window is
+   the one thing left to read. A system that asks for less transparency keeps
+   the darkening without the blur. */
+.glim-modal-backdrop {
+  background-color: var(--glim-scrim);
+  -webkit-backdrop-filter: blur(var(--glim-scrim-blur));
+  backdrop-filter: blur(var(--glim-scrim-blur));
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root { --glim-scrim-blur: 0px; }
+}
 
 @media (prefers-reduced-motion: no-preference) {
   /* The press: every button sinks a little under the pointer. `:active` also
