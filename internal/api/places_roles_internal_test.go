@@ -366,6 +366,113 @@ func TestAnAdoptionWaitsForAnEditInProgress(t *testing.T) {
 	}
 }
 
+// keepLocally sets the rule the rows without a place age by.
+func (f *placementFixture) keepLocally(last int) {
+	f.t.Helper()
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	settings.RetentionKeepLast = last
+	if err := f.st.UpdateSettings(settings); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
+func TestARowIsNotAdoptedByAPlaceThatKeepsFewerSnapshots(t *testing.T) {
+	for _, c := range []struct {
+		name string
+		row  func(f *placementFixture, b2 store.Place) (store.OffsiteTarget, string)
+	}{
+		{"named repository", func(f *placementFixture, _ store.Place) (store.OffsiteTarget, string) {
+			f.keepLocally(30)
+			return f.namedRepo("Old B2", "s3:https://s3.example.com/bucket/container"), "containers"
+		}},
+		{"target", func(f *placementFixture, _ store.Place) (store.OffsiteTarget, string) {
+			loose := f.target("containers", "Old B2", "s3:https://s3.example.com/bucket/container")
+			loose.RetentionKeepLast = 30
+			loose, err := f.st.UpsertOffsiteTarget(loose)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return loose, ""
+		}},
+		{"direct repository", func(f *placementFixture, b2 store.Place) (store.OffsiteTarget, string) {
+			direct := f.direct(f.placeTarget(b2, "containers", ""))
+			if _, err := f.db.Exec(`UPDATE offsite_targets SET retention_keep_last = 30 WHERE id = ?`, direct.ID); err != nil {
+				t.Fatal(err)
+			}
+			return direct, ""
+		}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			f := newPlacementFixture(t)
+			p := s3Place("B2", "s3:https://s3.example.com/bucket")
+			p.RetentionKeepLast = 3
+			b2 := f.storePlace(p)
+			row, domain := c.row(f, b2)
+
+			if res := f.adopt(b2.ID, row.ID, domain); res["ok"] != false || res["code"] != "place-keeps-less" {
+				t.Fatalf("adopt = %v, want place-keeps-less", res)
+			}
+			after, found, err := f.st.GetOffsiteTarget(row.ID)
+			if !found {
+				after, err = f.st.GetNamedRepo(row.ID)
+			}
+			if err != nil || after.PlaceID != "" || after.RetentionKeepLast == p.RetentionKeepLast {
+				t.Fatalf("row = %+v, %v, want it without a place and on its old rules", after, err)
+			}
+		})
+	}
+}
+
+func TestADomainPathIsNotAdoptedByAPlaceThatKeepsFewerSnapshots(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.keepLocally(30)
+	p := localPlace("Unraid", "user/bombvault")
+	p.RetentionKeepLast = 3
+	bv := f.storePlace(p)
+
+	if res := f.adopt(bv.ID, "", "flash"); res["ok"] != false || res["code"] != "place-keeps-less" {
+		t.Fatalf("adopt = %v, want place-keeps-less", res)
+	}
+	if homes, err := f.st.DomainPlaces(); err != nil || homes["flash"] != "" {
+		t.Fatalf("homes = %v, %v, want flash without a home place", homes, err)
+	}
+}
+
+func TestAnAppendOnlyRepositoryIsNotAdoptedByAPlaceWithoutIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	named := f.namedRepo("Old B2", "s3:https://s3.example.com/bucket/container")
+	if _, err := f.db.Exec(`UPDATE offsite_targets SET immutable = 1 WHERE id = ?`, named.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	if res := f.adopt(b2.ID, named.ID, "containers"); res["ok"] != false || res["code"] != "place-append-only-off" {
+		t.Fatalf("adopt = %v, want place-append-only-off", res)
+	}
+	if row, err := f.st.GetNamedRepo(named.ID); err != nil || row.PlaceID != "" || !row.Immutable {
+		t.Fatalf("row = %+v, %v, want it append-only and without a place", row, err)
+	}
+}
+
+func TestARepositoryAdoptedByAPlaceThatKeepsMoreTakesItsRules(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.keepLocally(3)
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.RetentionKeepLast, p.Immutable = 30, true
+	b2 := f.storePlace(p)
+	named := f.namedRepo("Old B2", "s3:https://s3.example.com/bucket/container")
+
+	res := f.adopt(b2.ID, named.ID, "containers")
+
+	row, err := f.st.GetNamedRepo(named.ID)
+	if res["ok"] != true || err != nil || row.PlaceID != b2.ID || row.RetentionKeepLast != 30 || !row.Immutable {
+		t.Fatalf("adopt = %v; row %+v, %v, want the place's rules", res, row, err)
+	}
+}
+
 func TestADirectRepositoryOnCredentialsOfItsOwnJoinsItsTargetsPlaceUnopened(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))

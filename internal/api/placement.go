@@ -57,6 +57,8 @@ var placementCodes = []struct {
 	{store.ErrPlaceDomainUnavailable, "place-domain-unavailable"},
 	{errPlaceAddressTaken, "place-address-taken"},
 	{errPlaceOff, "place-off"},
+	{errPlaceKeepsLess, "place-keeps-less"},
+	{errPlaceAppendOnlyOff, "place-append-only-off"},
 
 	{errPlacementUnreadable, "placement-unreadable"},
 	{errInvalidPlacement, "invalid-placement"},
@@ -371,15 +373,21 @@ func (s *Service) retentionPolicyForRef(settings store.Settings, domain string, 
 			return restic.RetentionPolicy{}
 		}
 		if ok {
-			return restic.RetentionPolicy{
-				KeepLast:    place.RetentionKeepLast,
-				KeepDaily:   place.RetentionKeepDaily,
-				KeepWeekly:  place.RetentionKeepWeekly,
-				KeepMonthly: place.RetentionKeepMonthly,
-			}
+			return placeRetentionPolicy(place)
 		}
 	}
 	return s.retentionPolicy(settings)
+}
+
+// placeRetentionPolicy is the keep-policy a place mirrors onto its rows and
+// gives the domain paths it is home to.
+func placeRetentionPolicy(p store.Place) restic.RetentionPolicy {
+	return restic.RetentionPolicy{
+		KeepLast:    p.RetentionKeepLast,
+		KeepDaily:   p.RetentionKeepDaily,
+		KeepWeekly:  p.RetentionKeepWeekly,
+		KeepMonthly: p.RetentionKeepMonthly,
+	}
 }
 
 // domainHomePlace is the place a domain path lies at, and false for a domain

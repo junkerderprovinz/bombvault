@@ -267,6 +267,8 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		store.ErrPlaceDomainUnavailable: "place-domain-unavailable",
 		errPlaceAddressTaken:            "place-address-taken",
 		errPlaceOff:                     "place-off",
+		errPlaceKeepsLess:               "place-keeps-less",
+		errPlaceAppendOnlyOff:           "place-append-only-off",
 	}
 	if len(placementCodes) != len(want) {
 		t.Fatalf("placementCodes has %d rows, want %d: a sentinel is missing its row or its test", len(placementCodes), len(want))
