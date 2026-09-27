@@ -37,6 +37,8 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "place-off": "places.error.off",
   "place-no-append-only": "places.error.noAppendOnly",
   "place-nothing-to-test": "places.error.nothingToTest",
+  "place-keeps-less": "places.error.keepsLess",
+  "place-append-only-off": "places.error.appendOnlyOff",
 };
 
 function holdersText(t: T, lang: string, h: PlaceHolders): string {
