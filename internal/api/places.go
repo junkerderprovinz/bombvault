@@ -314,10 +314,11 @@ func placeIsRepository(p store.Place, rows []store.OffsiteTarget) bool {
 	})
 }
 
-// placeLastRun is what the copy runs to the place's targets last said: a
-// failure after a target's last success wins over every success.
+// placeLastRun is what the copy runs to the place's targets last said: the
+// newest failure after a target's last success, with its reason, wins over
+// every success.
 func (s *Service) placeLastRun(rows []store.OffsiteTarget) (*PlaceTestStatus, error) {
-	var last *PlaceTestStatus
+	var ok, failed *PlaceTestStatus
 	for _, r := range rows {
 		if r.Role != store.RoleOffsite {
 			continue
@@ -326,18 +327,21 @@ func (s *Service) placeLastRun(rows []store.OffsiteTarget) (*PlaceTestStatus, er
 		if err != nil {
 			return nil, err
 		}
-		failedAt, err := s.store.FirstOffsiteFailureAfter(r.ID, run.StartedAt)
+		failure, hasFailure, err := s.store.LatestOffsiteFailureAfter(r.ID, run.StartedAt)
 		if err != nil {
 			return nil, err
 		}
 		switch {
-		case failedAt > 0:
-			return &PlaceTestStatus{At: failedAt, Source: "run"}, nil
-		case found && (last == nil || run.StartedAt > last.At):
-			last = &PlaceTestStatus{At: run.StartedAt, OK: true, Source: "run"}
+		case hasFailure && (failed == nil || failure.StartedAt > failed.At):
+			failed = &PlaceTestStatus{At: failure.StartedAt, Error: failure.Error, Source: "run"}
+		case found && (ok == nil || run.StartedAt > ok.At):
+			ok = &PlaceTestStatus{At: run.StartedAt, OK: true, Source: "run"}
 		}
 	}
-	return last, nil
+	if failed != nil {
+		return failed, nil
+	}
+	return ok, nil
 }
 
 // placeLastTest is the newer of the place's last test in this process and
