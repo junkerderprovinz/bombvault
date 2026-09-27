@@ -175,7 +175,7 @@ func (s *Service) sendToOptions(settings store.Settings, p placementRead, repos 
 	out := []sendToOption{}
 	for _, t := range p.enabledTargets() {
 		d, has := companions[t.ID]
-		if has && !d.Enabled {
+		if (has && !d.Enabled) || (!has && t.PlaceID != "" && !x.makesDirect(t.PlaceID, p.Domain)) {
 			continue
 		}
 		out = append(out, sendToOption{Kind: homeDirect, RepoID: d.ID, TargetID: t.ID, Name: x.name(t.PlaceID, placementTargetName(t)),
@@ -209,6 +209,17 @@ type placeIndex struct {
 	byID  map[string]store.Place
 	homes map[string]string // domain -> home place id
 	taken map[string]bool   // places that are one repository serving something already, as placeRepoFor judges them
+	rows  map[string][]store.OffsiteTarget
+}
+
+// makesDirect reports whether choosing a target's direct repository at the
+// place makes one, as placeRepoFor judges it. A place that is itself a
+// repository holds no second one, and a repository of the domain already
+// there is offered on its own.
+func (x placeIndex) makesDirect(placeID, domain string) bool {
+	p, rows := x.byID[placeID], x.rows[placeID]
+	a := domainAt(p, rows, x.homes[domain], domain)
+	return !a.home && a.repo == nil && !placeIsRepository(p, rows)
 }
 
 func (s *Service) readPlaceIndex() (placeIndex, error) {
@@ -220,13 +231,14 @@ func (s *Service) readPlaceIndex() (placeIndex, error) {
 	if err != nil {
 		return placeIndex{}, err
 	}
-	x := placeIndex{all: all, byID: make(map[string]store.Place, len(all)), homes: homes, taken: map[string]bool{}}
+	x := placeIndex{all: all, byID: make(map[string]store.Place, len(all)), homes: homes, taken: map[string]bool{}, rows: map[string][]store.OffsiteTarget{}}
 	for _, p := range all {
 		x.byID[p.ID] = p
 		rows, err := s.store.PlaceRows(p.ID)
 		if err != nil {
 			return placeIndex{}, err
 		}
+		x.rows[p.ID] = rows
 		x.taken[p.ID] = repositoryTaken(p, rows, homes)
 	}
 	return x, nil
