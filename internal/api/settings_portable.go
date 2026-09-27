@@ -72,19 +72,19 @@ type settingsExport struct {
 	Credentials         *exportCredentials `json:"credentials,omitempty"`
 }
 
-// buildSettingsView returns the export's settings block: the user-facing view with
-// the per-instance state fields (recovery-kit ack, registry-auth list) cleared, so
-// the file carries only the portable configuration. Secrets (metrics/widget tokens)
-// are already blanked by toView, and auth/session/encrypted-blob fields are not part
-// of settingsView at all.
+// buildSettingsView is the export's settings block: the view the settings page
+// edits, without what belongs to this instance alone, the recovery-kit
+// acknowledgement and the registry logins with their tokens. toView already
+// blanks the metrics and widget tokens, and the auth, session and encrypted
+// fields are not part of the view.
 func buildSettingsView(s store.Settings) settingsView {
 	v := toView(s)
-	v.RecoveryKitAck = false // per-instance dashboard-nag state, not portable config
-	v.RegistryAuths = nil    // secret token blobs are out of scope for the portable file
-	// The Backup Everything hook commands are host-local and are never installed
-	// by an import (mergeImportedSettings), so carrying them would only leak what
-	// they contain — typically a dead-man's-switch ping whose URL IS its secret
-	// (https://hc-ping.com/<uuid>) — into a file that gets mailed around.
+	v.RecoveryKitAck = false
+	v.RegistryAuths = nil
+	// An import never installs the Backup Everything hooks, and a hook is often
+	// a dead-man's-switch ping whose URL is itself the secret
+	// (https://hc-ping.com/<uuid>), so a file that gets mailed around leaves
+	// them out.
 	v.EverythingPreHook = ""
 	v.EverythingPostHook = ""
 	return v
@@ -432,14 +432,12 @@ func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 // decodeExport reads the request body as a settingsExport. Unlike decodeBody it
-// tolerates unknown (future) fields so a newer file with the same schemaVersion is
-// not rejected outright, but it still rejects a syntactically malformed body.
+// accepts fields it does not know, so a newer file of the same schema version
+// still reads, but it refuses a malformed body.
 func decodeExport(w http.ResponseWriter, r *http.Request) (settingsExport, bool) {
 	var exp settingsExport
-	// decodeBody's twin needs decodeBody's guard. This is the most powerful write
-	// in the API — it replaces the entire configuration — and having its own copy
-	// of the decode logic is exactly how it came to be missing the check the
-	// ordinary settings PUT has.
+	// The import replaces the whole configuration, so it needs the guard
+	// decodeBody gives every other write.
 	if !crossOriginGuard(w, r) {
 		return exp, false
 	}
@@ -447,9 +445,9 @@ func decodeExport(w http.ResponseWriter, r *http.Request) (settingsExport, bool)
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "missing request body"})
 		return exp, false
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, 4<<20) // 4 MiB — a config file, not a data blob
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<20) // a settings file, not a data blob
 	if err := json.NewDecoder(r.Body).Decode(&exp); err != nil {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "empty import file"})
 			return exp, false
 		}
@@ -707,9 +705,8 @@ func validateExport(exp settingsExport, mountRoot string) string {
 	return ""
 }
 
-// exportCadences lists every schedule string carried in a settings view. It must
-// stay in step with the parse-validation loop in handlePutSettings — a cadence
-// missing here imports without ever being checked for grammar.
+// exportCadences lists every schedule a settings view carries. It follows the
+// parse check in handlePutSettings: a cadence left out here imports unchecked.
 func exportCadences(v settingsView) []string {
 	return []string{
 		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule,
@@ -749,9 +746,9 @@ func credsPresence(c *exportCredentials) importCredsPresence {
 	}
 }
 
-// settingsGroups names the setting groups the imported view carries a value for,
-// so the preview can tell the user which areas an apply would populate. It is
-// descriptive only — an apply writes the whole settings block regardless.
+// settingsGroups names the groups of settings the imported view carries a value
+// for, so the preview can say which areas an apply fills. It only describes: an
+// apply writes the whole settings block either way.
 func settingsGroups(v settingsView) []string {
 	var groups []string
 	add := func(name string, on bool) {
@@ -763,9 +760,8 @@ func settingsGroups(v settingsView) []string {
 		v.ContainersPath != "" || v.VMsPath != "" || v.FlashPath != "" || v.ConfigPath != "" || v.FilesPath != "")
 	add("schedules", v.ContainersSchedule != "" || v.VMsSchedule != "" || v.FlashSchedule != "" ||
 		v.ConfigSchedule != "" || v.FilesSchedule != "")
-	// The whole-server pass is its own area, not part of "schedules": it is the
-	// one setting an apply can switch ON for a box that never ran it, so the
-	// preview has to name it.
+	// The whole-server pass is an area of its own: it is the one setting an
+	// apply can switch on for a server that never ran it, so the preview names it.
 	add("everything", v.EverythingSchedule != "")
 	add("retention", v.RetentionKeepLast > 0 || v.RetentionKeepDaily > 0 || v.RetentionKeepWeekly > 0 || v.RetentionKeepMonthly > 0 ||
 		v.OffsiteRetentionKeepLast > 0 || v.OffsiteRetentionKeepDaily > 0 || v.OffsiteRetentionKeepWeekly > 0 || v.OffsiteRetentionKeepMonthly > 0)
@@ -1000,20 +996,18 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 	return nil
 }
 
-// replaceNamedRepos does for the per-item repositories (#204) what
-// replaceOffsiteTargets does for the destinations: drop the current rows and
-// re-insert the imported set, each keeping its id so the items that name it
-// still find it.
+// replaceNamedRepos does for the named repositories (#204) what
+// replaceOffsiteTargets does for the targets: it drops the current rows and
+// inserts the file's, each under its own id, so the items that name one still
+// find it.
 //
-// A repository still IN USE is kept when the file does not carry it. Deleting it
-// would put those items silently back on their domain repository and send their
-// next backup somewhere else, which is exactly the failure the delete endpoint
-// refuses outright; an import must not be the way around that refusal.
+// A repository in use stays when the file leaves it out. Deleting it would put
+// its items back on their domain path and send their next backup elsewhere,
+// which the delete route refuses, and an import must not get around that.
 //
-// A row the file introduces may become a target's direct repository again,
-// through importedLink; an existing row keeps its own link no matter what
-// the file says, since the upsert below never rewrites companion_of for an
-// id that is already stored.
+// A row the file adds may become a target's direct repository again through
+// importedLink. A row that is already here keeps its link whatever the file
+// says, since the upsert never rewrites companion_of of a stored id.
 func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 	current, err := h.store.ListNamedRepos()
 	if err != nil {
@@ -1029,8 +1023,7 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 		if imported[t.ID] {
 			continue // replaced below, id and all
 		}
-		// The same count-and-delete transaction the DELETE endpoint uses, so the
-		// import cannot become the way around its refusal.
+		// The delete route's own count-and-delete transaction.
 		use, dErr := h.store.DeleteNamedRepoIfUnused(t.ID)
 		if errors.Is(dErr, store.ErrDirectRepo) {
 			log.Printf("api: settings import: repository %q is the direct repository of a target here, so it stays", t.Name) //nolint:gosec // G706: the name is %q-quoted
@@ -1060,12 +1053,11 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 				t.OffPremises = restic.IsRemoteRepo(wanted)
 			}
 		}
-		// The LOCATION is written through the guarded transaction, exactly as the
-		// delete half is. Writing it straight through the upsert made an import the
-		// way around the refusal the PATCH endpoint exists to enforce: everything
-		// already written stays where it is, so a moved location makes the next
-		// backup succeed into an empty repository. The rest of the row - name,
-		// limits, flags - moves no data and takes the ordinary upsert.
+		// The location goes through the guarded transaction, like the delete
+		// above, as the PATCH route requires: backups already written stay where
+		// they are, so a moved location would have the next backup succeed into
+		// an empty repository. Name, limits and flags move no data and take the
+		// upsert.
 		t.Repo = stored[t.ID].Repo
 		if t.Repo == "" {
 			t.Repo = wanted // a row this instance does not have yet: nothing to move
@@ -1109,7 +1101,7 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 			return mErr
 		}
 		if use.InUse() {
-			log.Printf("api: settings import: repository %q is in use here (items: %d, defaults: %s), so its location was NOT moved to the one in the file; the backups already written stay where they are", t.Name, use.Items, strings.Join(use.DefaultDomains, ", ")) //nolint:gosec // G706: the name is %q-quoted
+			log.Printf("api: settings import: repository %q is in use here (items: %d, defaults: %s), so its location was not moved to the one in the file; the backups already written stay where they are", t.Name, use.Items, strings.Join(use.DefaultDomains, ", ")) //nolint:gosec // G706: the name is %q-quoted
 		}
 	}
 	return nil
@@ -1322,8 +1314,9 @@ func cloudCredsMeaningful(c CloudCreds) bool {
 	return c != CloudCreds{}
 }
 
-// notifyMeaningful reports whether a notify config carries any channel or policy —
-// i.e. whether storing it would do anything (SetNotifyConfig clears an empty one).
+// notifyMeaningful reports whether a notify config carries a channel or a
+// policy, which is whether storing it would do anything: SetNotifyConfig clears
+// an empty one.
 func notifyMeaningful(c notify.Config) bool {
 	return c.Configured() || (c.On != "" && c.On != "never")
 }
