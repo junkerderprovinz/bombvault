@@ -176,6 +176,55 @@ func TestTheStatusNamesTheTargetOfTheLastDRDrill(t *testing.T) {
 	}
 }
 
+// The scheduled DR drill takes a domain's targets in turn, so the newest drill
+// speaks for one target only.
+func TestTheDRDrillVerdictIsTheWorstOfEachTargetsLatestDrill(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("flash", "B2", "s3:b2/flash")
+	hetzner := f.target("flash", "Hetzner", "sftp:u1@hetzner:/flash")
+	drill := func(target string, at int64, detail string) {
+		t.Helper()
+		d := store.RestoreDrill{Domain: "flash", Source: "offsite", Kind: "dr", At: at, OK: detail == "", Detail: detail, TargetID: target}
+		if err := f.st.AddRestoreDrill(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+	drill(b2.ID, 100, "verification mismatch")
+	drill(hetzner.ID, 200, "")
+
+	d := f.domainStatus("flash")
+	if d.LastDRDrillOK || d.LastDRDrillAt != 100 || d.DrillTarget != "B2" || d.DrillDetail != "verification mismatch" {
+		t.Fatalf("drill = ok %v at %d on %q (%q), want the B2 failure at 100", d.LastDRDrillOK, d.LastDRDrillAt, d.DrillTarget, d.DrillDetail)
+	}
+
+	drill(b2.ID, 300, "")
+	if d := f.domainStatus("flash"); !d.LastDRDrillOK || d.LastDRDrillAt != 300 || d.DrillTarget != "B2" {
+		t.Fatalf("drill = ok %v at %d on %q, want the passing B2 drill at 300", d.LastDRDrillOK, d.LastDRDrillAt, d.DrillTarget)
+	}
+}
+
+func TestADRDrillOfASwitchedOffTargetDoesNotSetTheVerdict(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("flash", "B2", "s3:b2/flash")
+	hetzner := f.target("flash", "Hetzner", "sftp:u1@hetzner:/flash")
+	for _, d := range []store.RestoreDrill{
+		{Domain: "flash", Source: "offsite", Kind: "dr", At: 100, Detail: "verification mismatch", TargetID: b2.ID},
+		{Domain: "flash", Source: "offsite", Kind: "dr", At: 200, OK: true, TargetID: hetzner.ID},
+	} {
+		if err := f.st.AddRestoreDrill(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+	b2.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(b2); err != nil {
+		t.Fatal(err)
+	}
+
+	if d := f.domainStatus("flash"); !d.LastDRDrillOK || d.DrillTarget != "Hetzner" {
+		t.Fatalf("drill = ok %v on %q, want the Hetzner drill", d.LastDRDrillOK, d.DrillTarget)
+	}
+}
+
 func TestAProjectFolderCopiedOnlyInTheHouseIsNoOffsiteCopy(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.target("containers", "B2", "b2:bucket:containers")

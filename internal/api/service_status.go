@@ -43,6 +43,30 @@ func (s *Service) aggregateTamper(domain string) (had, protected bool, at int64)
 	return had, protected, at
 }
 
+// latestDRDrill is the DR drill a domain's card shows. The scheduled drill
+// takes the domain's targets in turn, so with several the newest failure
+// among each one's latest drill wins over the newest drill. Best-effort like
+// the other status reads: a store error leaves the drill out.
+func (s *Service) latestDRDrill(domain string) (store.RestoreDrill, bool) {
+	targets := s.offsiteTargetsFor(domain)
+	if len(targets) <= 1 {
+		dr, found, err := s.store.LatestRestoreDrillKind(domain, "offsite", "dr")
+		return dr, err == nil && found
+	}
+	var out store.RestoreDrill
+	found := false
+	for _, t := range targets {
+		dr, ok, err := s.store.LatestDRDrillForTarget(domain, t.ID)
+		if err != nil || !ok {
+			continue
+		}
+		if !found || (dr.OK == out.OK && dr.At > out.At) || (!dr.OK && out.OK) {
+			out, found = dr, true
+		}
+	}
+	return out, found
+}
+
 // aggregateReplicationCurrency folds a domain's last-successful-replication
 // currency worst-of across its off-site destinations: ok only when every
 // destination has landed a successful copy, and at is the oldest of those,
@@ -555,7 +579,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		var lastDRDrillAt int64
 		var lastDRDrillOK bool
 		var drDetail, drTarget string
-		if dr, found, drErr := s.store.LatestRestoreDrillKind(d.name, "offsite", "dr"); drErr == nil && found {
+		if dr, found := s.latestDRDrill(d.name); found {
 			lastDRDrillAt = dr.At
 			lastDRDrillOK = dr.OK
 			drDetail = dr.Detail

@@ -84,6 +84,25 @@ func (r *Repo) LatestRestoreDrillKind(domain, source, kind string) (RestoreDrill
 	return d, true, nil
 }
 
+// LatestDRDrillForTarget returns the most recent off-site DR drill of a domain
+// against one target. The bool is false when that target was never drilled.
+func (r *Repo) LatestDRDrillForTarget(domain, targetID string) (RestoreDrill, bool, error) {
+	row := r.db.QueryRow(`
+		SELECT domain, source, at, ok, detail, kind, offsite_target_id
+		FROM restore_drills
+		WHERE domain = ? AND source = 'offsite' AND kind = 'dr' AND offsite_target_id = ?
+		ORDER BY at DESC
+		LIMIT 1`, domain, targetID)
+	d, err := scanRestoreDrill(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return RestoreDrill{}, false, nil
+	}
+	if err != nil {
+		return RestoreDrill{}, false, fmt.Errorf("LatestDRDrillForTarget: %w", err)
+	}
+	return d, true, nil
+}
+
 // ListRestoreDrills returns up to limit drills for a domain and source, newest
 // first. A limit of 0 or less falls back to defaultRestoreDrillLimit.
 func (r *Repo) ListRestoreDrills(domain, source string, limit int) ([]RestoreDrill, error) {
