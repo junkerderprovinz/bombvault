@@ -75,7 +75,8 @@ describe("the import preview and placement", () => {
     const off = subscribePlacement(seen);
     const applyImport = await pickFile();
     const block = screen.getByText("New target Hetzner for VMs").parentElement as HTMLElement;
-    expect(block.textContent).toContain("Items and project folders: 15");
+    expect(block.textContent).toContain("Items: 15");
+    expect(block.textContent).not.toContain("project folders");
     fireEvent.click(within(block).getByRole("switch", { name: "Leave these out here too" }));
     fireEvent.click(screen.getByRole("button", { name: "Replace settings" }));
     await waitFor(() =>

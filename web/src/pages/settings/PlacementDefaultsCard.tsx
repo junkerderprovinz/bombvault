@@ -17,6 +17,7 @@ import {
   type DefaultImpact,
   type DefaultRow,
   type OkEnvelope,
+  type PlacementDomain,
   type PlacementOptions,
   type SegmentId,
   type SendToOption,
@@ -44,14 +45,16 @@ const COUNT_KEYS: [keyof DefaultRow["counts"], TranslationKey][] = [
   ["chosenNoRun", "placementDefaults.countChosenNoRun"],
 ];
 
-function impactLines(t: T, lang: string, impact: DefaultImpact, home: string): string[] {
+// Only containers have project folders, so only their questions name them.
+function impactLines(t: T, lang: string, domain: PlacementDomain, impact: DefaultImpact, home: string): string[] {
+  const containers = domain === "containers";
   const uncheckable = (names: string[]) => t("placement.uncheckable").replace("{list}", () => formatList(lang, names));
   const lines: string[] = [];
   for (const d of impact.dropped) {
     lines.push(
       d.unknown
-        ? t("placementDefaults.dropAskUnknown").replace(/\{target\}/g, () => d.name).replace("{n}", String(d.items))
-        : t("placementDefaults.dropAsk")
+        ? t(containers ? "placementDefaults.dropAskUnknownContainers" : "placementDefaults.dropAskUnknown").replace(/\{target\}/g, () => d.name).replace("{n}", String(d.items))
+        : t(containers ? "placementDefaults.dropAskContainers" : "placementDefaults.dropAsk")
             .replace("{target}", () => d.name)
             .replace("{n}", String(d.items))
             .replace("{copies}", String(d.snapshots))
@@ -60,7 +63,7 @@ function impactLines(t: T, lang: string, impact: DefaultImpact, home: string): s
   }
   for (const a of impact.added) {
     lines.push(
-      t("placementDefaults.addAsk")
+      t(containers ? "placementDefaults.addAskContainers" : "placementDefaults.addAsk")
         .replace("{target}", () => a.name)
         .replace("{n}", String(a.items))
         .replace("{snapshots}", String(a.snapshots))
@@ -89,10 +92,12 @@ function sumUploads(uploads: UploadEstimate[]): UploadEstimate[] {
 }
 
 function ConfirmLines({
+  domain,
   targets,
   unmatched,
   onExclude,
 }: {
+  domain: PlacementDomain;
   targets: TargetPreviewRow[];
   unmatched: UnmatchedName[];
   onExclude: (identities: string[]) => void;
@@ -109,7 +114,7 @@ function ConfirmLines({
       {targets.map((row) => (
         <div key={row.targetId} className="flex flex-col gap-1">
           <p className="text-sm text-carbon-text">{row.name}</p>
-          <NewTargetPreviewLines target={row.name} preview={row.preview} />
+          <NewTargetPreviewLines domain={domain} target={row.name} preview={row.preview} />
         </div>
       ))}
       {unmatched.length > 0 && (
@@ -157,7 +162,7 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
   // agreed asks when a change moves the location or changes what a target
   // receives. A change that does neither is saved without a question.
   async function agreed(impact: DefaultImpact, home: string | undefined): Promise<boolean> {
-    const lines = impactLines(t, lang, impact, homeName(home ?? row.home));
+    const lines = impactLines(t, lang, row.domain, impact, homeName(home ?? row.home));
     const lead =
       home !== undefined
         ? t("placementDefaults.confirmHome").replace("{domain}", () => domain).replace("{home}", () => homeName(home))
@@ -263,7 +268,7 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
       }
       let excluded: string[] = [];
       const extra = (
-        <ConfirmLines targets={preview.targets ?? []} unmatched={preview.unmatched ?? []} onExclude={(ids) => (excluded = ids)} />
+        <ConfirmLines domain={row.domain} targets={preview.targets ?? []} unmatched={preview.unmatched ?? []} onExclude={(ids) => (excluded = ids)} />
       );
       const go = await confirm(t("placementDefaults.confirmAsk"), {
         extra,

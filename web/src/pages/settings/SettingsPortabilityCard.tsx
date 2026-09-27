@@ -316,6 +316,7 @@ export function SettingsPortabilityCard({
                     .replace("{domain}", () => domainLabel(t, target.domain))}
                 </span>
                 <NewTargetPreviewLines
+                  domain={target.domain}
                   target={target.name}
                   preview={target.preview}
                   exclusion={exclusions[target.id]}

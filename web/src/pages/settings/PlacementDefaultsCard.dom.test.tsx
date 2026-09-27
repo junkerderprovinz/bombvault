@@ -62,6 +62,21 @@ describe("PlacementDefaultsCard", () => {
     expect(fake.callsTo("previewPlacementDefault")).toEqual([["containers", { skip: ["*"] }]]);
   });
 
+  it("words the question for folder sets without project folders", async () => {
+    const impact = defaultImpact({
+      dropped: [targetImpact({ items: 3, snapshots: 6 })],
+      added: [targetImpact({ targetId: "t-hz", name: "Hetzner", items: 3, snapshots: 9 })],
+    });
+    fake.reply("previewPlacementDefault", { ok: true, impact });
+    renderWithProviders(<PlacementDefaultsCard />);
+    const row = await screen.findByRole("region", { name: "Folders" });
+    fireEvent.click(await within(row).findByRole("button", { name: "Local" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain("Items that B2 no longer gets: 3. Copies that stay there: 6.");
+    expect(dialog.textContent).toContain("Items that Hetzner gets from now on: 3.");
+    expect(dialog.textContent).not.toContain("project folders");
+  });
+
   it("asks again with the new numbers when they changed in the meantime", async () => {
     const first = defaultImpact({ dropped: [targetImpact({ items: 15, snapshots: 210 })] });
     const second = defaultImpact({ dropped: [targetImpact({ items: 16, snapshots: 230 })] });

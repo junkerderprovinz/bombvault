@@ -2078,11 +2078,14 @@ export const en = {
     "{home} is switched off. Items without a location are not backed up until it is on again or the default changes.",
   "placementDefaults.homeMissing": "The default points at a repository that no longer exists. Items without a location are not backed up.",
   "placementDefaults.confirmHome": "New items in {domain} take {home} at their first backup. Items with a location keep it.",
-  "placementDefaults.dropAsk": "Items and project folders that {target} no longer gets: {n}. Copies that stay there: {copies}.",
-  "placementDefaults.dropAskUnknown":
+  "placementDefaults.dropAskContainers": "Items and project folders that {target} no longer gets: {n}. Copies that stay there: {copies}.",
+  "placementDefaults.dropAsk": "Items that {target} no longer gets: {n}. Copies that stay there: {copies}.",
+  "placementDefaults.dropAskUnknownContainers":
     "Items and project folders that {target} no longer gets: {n}. {target} was never listed for this domain, so how many copies stay there is not known yet.",
-  "placementDefaults.addAsk":
+  "placementDefaults.dropAskUnknown": "Items that {target} no longer gets: {n}. {target} was never listed for this domain, so how many copies stay there is not known yet.",
+  "placementDefaults.addAskContainers":
     "Items and project folders that {target} gets from now on: {n}. Snapshots uploaded at the next run: at most {snapshots}.",
+  "placementDefaults.addAsk": "Items that {target} gets from now on: {n}. Snapshots uploaded at the next run: at most {snapshots}.",
   "placementDefaults.openTakeHome": "Items without a location that take {home} at their first backup: {n}.",
   "placementDefaults.apply": "Apply to items without backups",
   "placementDefaults.applyAsk": "Location and copies go back to the default for these items: {n}.",
@@ -2104,7 +2107,8 @@ export const en = {
   // New target
   "newTarget.intro": "At its first run {target} receives every item not set to Local.",
   "newTarget.moved": "The new location of {target} receives the whole history.",
-  "newTarget.items": "Items and project folders: {n}",
+  "newTarget.itemsContainers": "Items and project folders: {n}",
+  "newTarget.items": "Items: {n}",
   "newTarget.snapshots": "Snapshots: up to {n}",
   "newTarget.size": "Size: up to {size}",
   "newTarget.formerly": "Left out of other targets so far: {list}",
@@ -4832,11 +4836,14 @@ export const de: Translations = {
     "{home} ist ausgeschaltet. Einträge ohne Ort werden nicht gesichert, bis es wieder an ist oder die Vorgabe sich ändert.",
   "placementDefaults.homeMissing": "Die Vorgabe zeigt auf ein Repository, das es nicht mehr gibt. Einträge ohne Ort werden nicht gesichert.",
   "placementDefaults.confirmHome": "Neue Einträge unter {domain} übernehmen {home} bei ihrem ersten Backup. Einträge mit eingetragenem Ort behalten ihn.",
-  "placementDefaults.dropAsk": "Einträge und Projektordner, die {target} nicht mehr bekommt: {n}. Kopien, die dort bleiben: {copies}.",
-  "placementDefaults.dropAskUnknown":
+  "placementDefaults.dropAskContainers": "Einträge und Projektordner, die {target} nicht mehr bekommt: {n}. Kopien, die dort bleiben: {copies}.",
+  "placementDefaults.dropAsk": "Einträge, die {target} nicht mehr bekommt: {n}. Kopien, die dort bleiben: {copies}.",
+  "placementDefaults.dropAskUnknownContainers":
     "Einträge und Projektordner, die {target} nicht mehr bekommt: {n}. {target} wurde für diese Domäne noch nie gelistet, wie viele Kopien dort bleiben, ist noch nicht bekannt.",
-  "placementDefaults.addAsk":
+  "placementDefaults.dropAskUnknown": "Einträge, die {target} nicht mehr bekommt: {n}. {target} wurde für diese Domäne noch nie gelistet, wie viele Kopien dort bleiben, ist noch nicht bekannt.",
+  "placementDefaults.addAskContainers":
     "Einträge und Projektordner, die {target} ab jetzt bekommt: {n}. Beim nächsten Lauf hochgeladene Snapshots: höchstens {snapshots}.",
+  "placementDefaults.addAsk": "Einträge, die {target} ab jetzt bekommt: {n}. Beim nächsten Lauf hochgeladene Snapshots: höchstens {snapshots}.",
   "placementDefaults.openTakeHome": "Einträge ohne Ort, die bei ihrem ersten Backup {home} übernehmen: {n}.",
   "placementDefaults.apply": "Auf Einträge ohne Backups anwenden",
   "placementDefaults.applyAsk": "Ort und Kopien gehen bei diesen Einträgen auf die Vorgabe zurück: {n}.",
@@ -4858,7 +4865,8 @@ export const de: Translations = {
   // New target
   "newTarget.intro": "Beim ersten Lauf bekommt {target} jeden Eintrag, der nicht auf Lokal steht.",
   "newTarget.moved": "Der neue Ort von {target} bekommt den ganzen Verlauf.",
-  "newTarget.items": "Einträge und Projektordner: {n}",
+  "newTarget.itemsContainers": "Einträge und Projektordner: {n}",
+  "newTarget.items": "Einträge: {n}",
   "newTarget.snapshots": "Snapshots: bis zu {n}",
   "newTarget.size": "Größe: bis zu {size}",
   "newTarget.formerly": "Bisher bei anderen Zielen ausgenommen: {list}",
