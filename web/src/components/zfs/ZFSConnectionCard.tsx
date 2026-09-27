@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { getVMSSH, zfsConnection } from "../../lib/api";
 import type { ZFSConnectionResult } from "../../lib/api";
@@ -10,6 +10,8 @@ import { useToast } from "../../lib/toast";
 import { zfsCodeSentence, zfsFixKey } from "../../lib/zfsCodes";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
+import { TestButton } from "../TestButton";
+import { useTestVerdict } from "../../lib/useTestVerdict";
 import { IconDisclosure } from "../IconDisclosure";
 import { InfoBubble } from "../InfoBubble";
 import { IconCopy } from "../Sidebar";
@@ -18,6 +20,10 @@ import { IconCopy } from "../Sidebar";
 // server, so the card hands out the key and the command itself. The Settings
 // SSH card is hidden for a basic-mode user who backs up no VMs.
 const NEEDS_KEY = new Set(["ssh-auth", "host-placeholder", "ssh-unreachable"]);
+
+// Codes under which zfs commands reach the server. A missing mount propagation
+// still lets them run; the card says what it costs.
+const CONNECTED = new Set(["ok", "host-fallback", "propagation-missing"]);
 
 /** ZFSConnectionCard reports whether zfs commands reach the server, and what
  *  to do when they do not. */
@@ -29,15 +35,28 @@ export function ZFSConnectionCard() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [publicKey, setPublicKey] = useState("");
 
-  const test = useCallback(() => {
+  // The card's own sentences above the button give the reason, so the verdict
+  // carries none.
+  const check = useTestVerdict(null, t("common.networkError"));
+  function test(clicked: boolean) {
     setTesting(true);
-    zfsConnection()
-      .then(setResult)
-      .catch(() => setResult(null))
-      .finally(() => setTesting(false));
-  }, []);
+    void check.run(async () => {
+      try {
+        const r = await zfsConnection();
+        setResult(r);
+        return { ok: CONNECTED.has(r.code) };
+      } catch (e) {
+        setResult(null);
+        throw e;
+      } finally {
+        setTesting(false);
+      }
+    }, clicked);
+  }
 
-  useEffect(test, [test]);
+  // A test nobody clicked does not shake the button.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => test(false), []);
 
   const code = result?.code ?? "";
   const needsKey = NEEDS_KEY.has(code);
@@ -56,7 +75,7 @@ export function ZFSConnectionCard() {
     else push(t("vm.ssh.copyFailed"), "fail");
   }
 
-  const connected = code === "ok" || code === "host-fallback" || code === "propagation-missing";
+  const connected = CONNECTED.has(code);
   const fixKey = zfsFixKey(code);
   const authorizeCmd = authorizeCommand(publicKey);
 
@@ -72,14 +91,14 @@ export function ZFSConnectionCard() {
       {testing && <p className="text-sm text-carbon-textMuted">{t("zfs.connection.testing")}</p>}
 
       {!testing && !result && (
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-col gap-2">
           <p className="text-sm text-statusFail">{t("common.networkError")}</p>
-          <Button
+          <TestButton
             label={t("zfs.connection.test")}
             labelKey="zfs.connection.test"
-            tone="neutral"
-            onClick={test}
-            className="ms-auto"
+            test={check}
+            onClick={() => test(true)}
+            className="self-end"
           />
         </div>
       )}
@@ -174,11 +193,11 @@ export function ZFSConnectionCard() {
           )}
 
           <div className="flex justify-end">
-            <Button
+            <TestButton
               label={t("zfs.connection.test")}
               labelKey="zfs.connection.test"
-              tone="neutral"
-              onClick={test}
+              test={check}
+              onClick={() => test(true)}
             />
           </div>
         </div>

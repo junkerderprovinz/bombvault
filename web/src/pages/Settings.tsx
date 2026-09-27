@@ -35,6 +35,9 @@ import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 // everyN for them on the server.
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
+import { TestButton, VerdictLine } from "../components/TestButton";
+import { useTestVerdict } from "../lib/useTestVerdict";
+import { offsiteVerdict } from "../lib/offsiteVerdict";
 import { EffectiveScheduleLine } from "../components/EffectiveScheduleLine";
 import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
 import { Toggle } from "../components/Toggle";
@@ -240,65 +243,69 @@ function ReplicateNowButton({
   );
 }
 
-// TestConnectionButton probes a domain's off-site repo (reachable / initialised)
-// without modifying it, showing the verdict inline — so the user can verify the
-// configured location before relying on it.
-// GlimStone follow-up round: converted to a square icon-only badge (IconCheckCircle)
-// the same way as ReplicateNowButton above — see that function's own comment for
-// the full "coloured text -> neutral glyph, wash -> solid fill" writeup;
-// the multiTarget-dependent "Test connection"/"Test PRIMARY connection" swap
-// survives unchanged, just as `tip` content instead of visible text.
-function TestConnectionButton({
+// OffsiteDomainBar heads a domain's off-site card: the connection test,
+// replicate now and the setup switch, with the test's verdict line above them.
+function OffsiteDomainBar({
   domain,
+  label,
+  repo,
+  wizardOpen,
+  onToggleWizard,
   t,
   hueIndex,
 }: {
   domain: OffsiteDomain;
+  label: string;
+  repo: string;
+  wizardOpen: boolean;
+  onToggleWizard: () => void;
   t: ReturnType<typeof useT>["t"];
-  /** See ReplicateNowButton's own doc above — identical offsite-tab
-   *  card-split follow-up, same enclosing Card's hueIndex threaded through,
-   *  same tone="active" reasoning. */
   hueIndex?: number;
 }) {
-  const { push } = useToast();
-  const [busy, setBusy] = useState(false);
-  // This button probes the PRIMARY target only. Once a domain has more than one
-  // off-site copy, say so on the label — an unqualified "Test connection" going
-  // green while a second destination was broken is exactly what issue #138
-  // reported. Each additional target has its own button in OffsiteTargetsSection.
+  // The test probes the primary target only, and each additional target has
+  // its own Test in OffsiteTargetsSection (#138). With more than one
+  // destination the tooltip says so; as a label it would change the button's
+  // width the moment a second destination is added.
   const multiTarget = useOffsiteTargets(domain).length > 1;
-  async function go() {
-    setBusy(true);
-    try {
-      const r = await testOffsite(domain);
-      if (r.ok && r.reachable && r.initialized) {
-        push(t("offsite.testOk"), "success");
-      } else if (r.ok && r.reachable) {
-        push(t("offsite.testUninitialized"), "warn");
-      } else {
-        push(r.error ?? t("offsite.testFailed"), "fail");
-      }
-    } catch (e) {
-      push(e instanceof Error ? e.message : t("offsite.testFailed"), "fail");
-    } finally {
-      setBusy(false);
-    }
-  }
+  // Opening the wizard counts as a change: credentials edited there are not
+  // part of `repo`.
+  const test = useTestVerdict([repo, wizardOpen], t("offsite.testFailed"));
   return (
-    <Button
-      label={t("offsite.test")}
-      labelKey="offsite.test"
-      glyph={<IconCheckCircle />}
-      tone="accent"
-      hueIndex={hueIndex}
-      onClick={() => void go()}
-      disabled={busy}
-      busy={busy}
-      // With several destinations this button probes the PRIMARY one, which is
-      // worth saying but is not a different button: as a label it would change
-      // this control's width the moment a second destination is added.
-      title={multiTarget ? t("offsite.testPrimary") : undefined}
-    />
+    <>
+      <VerdictLine verdict={test.verdict} />
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-carbon-textSub">{label}</span>
+        <span className="inline-flex items-center gap-2">
+          {repo && !wizardOpen && (
+            <>
+              <TestButton
+                label={t("offsite.test")}
+                labelKey="offsite.test"
+                glyph={<IconCheckCircle />}
+                tone="accent"
+                hueIndex={hueIndex}
+                test={test}
+                onClick={() => void test.run(async () => offsiteVerdict(await testOffsite(domain), t))}
+                title={multiTarget ? t("offsite.testPrimary") : undefined}
+              />
+              <ReplicateNowButton domain={domain} t={t} hueIndex={hueIndex} />
+            </>
+          )}
+          {/* The one place a swapping label is right: open and close are
+              two different actions with two different glyphs, not one
+              action reporting its state. Both names are short enough to
+              share a width stage, so the control does not jump. */}
+          <Button
+            label={wizardOpen ? t("offsite.wizard.close") : t("offsite.wizard.setup")}
+            labelKey={wizardOpen ? "offsite.wizard.close" : "offsite.wizard.setup"}
+            glyph={wizardOpen ? <IconClose /> : <IconGear />}
+            tone="accent"
+            hueIndex={hueIndex}
+            onClick={onToggleWizard}
+          />
+        </span>
+      </div>
+    </>
   );
 }
 
@@ -3886,40 +3893,15 @@ export function SettingsPage() {
             <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
           )}
           <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-carbon-textSub">{t(label)}</span>
-              <span className="inline-flex items-center gap-2">
-                {settings[repoKey] && !wizardOpen && (
-                  <>
-                    <TestConnectionButton domain={domain} t={t} hueIndex={hueIdx} />
-                    <ReplicateNowButton domain={domain} t={t} hueIndex={hueIdx} />
-                  </>
-                )}
-                {/* GlimStone follow-up round (jdp, live review: "Können wir die
-                    Buttons in quadratische Badges mit Glyphen umwandeln?") — a
-                    square icon-only badge, IconGear when the wizard is closed
-                    (offering to open setup) swapping to IconClose when it's
-                    open, the exact same open/closed condition that used to
-                    swap the button's own visible text between
-                    "Einrichten…"/"Schließen". Both strings survive unchanged
-                    as the `tip` tooltip's content instead — see
-                    ReplicateNowButton's own comment above for the full
-                    "coloured text -> neutral glyph, wash -> solid fill"
-                    writeup this shares. */}
-                {/* The one place a swapping label is right: open and close are
-                    two different actions with two different glyphs, not one
-                    action reporting its state. Both names are short enough to
-                    share a width stage, so the control does not jump. */}
-                <Button
-                  label={wizardOpen ? t("offsite.wizard.close") : t("offsite.wizard.setup")}
-                  labelKey={wizardOpen ? "offsite.wizard.close" : "offsite.wizard.setup"}
-                  glyph={wizardOpen ? <IconClose /> : <IconGear />}
-                  tone="accent"
-                  hueIndex={hueIdx}
-                  onClick={() => setOffsiteWizard(wizardOpen ? null : domain)}
-                />
-              </span>
-            </div>
+            <OffsiteDomainBar
+              domain={domain}
+              label={t(label)}
+              repo={settings[repoKey]}
+              wizardOpen={wizardOpen}
+              onToggleWizard={() => setOffsiteWizard(wizardOpen ? null : domain)}
+              t={t}
+              hueIndex={hueIdx}
+            />
             {wizardOpen ? (
               <OffsiteWizard
                 domain={domain}

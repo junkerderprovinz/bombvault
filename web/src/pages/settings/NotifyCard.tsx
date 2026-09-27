@@ -1,4 +1,4 @@
-import { Button } from "../../components/Button";
+import { TestButton, VerdictLine } from "../../components/TestButton";
 import { NumberField } from "../../components/NumberField";
 import { SelectField } from "../../components/SelectField";
 import { Card, ToggleRow, type SaveState } from "./shared";
@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import { useReveal } from "../../lib/useReveal";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
+import { useTestVerdict } from "../../lib/useTestVerdict";
 
 // emptyNotify is the default notification config shown before the saved one loads.
 const emptyNotify: NotifyConfig = {
@@ -176,17 +177,13 @@ export function NotifyCard({
     });
   }
 
-  async function handleTest() {
-    try {
+  // The test sends to the form as it stands, so any edit drops its verdict.
+  const test = useTestVerdict(cfg, t("settings.error"));
+  function handleTest() {
+    void test.run(async () => {
       const r = await testNotify(cfg);
-      if (r.ok) {
-        push(t("notify.tested"), "success");
-      } else {
-        push(r.error ?? t("settings.error"), "fail");
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("settings.error"), "fail");
-    }
+      return r.ok ? { ok: true } : { ok: false, reason: r.error ?? t("settings.error") };
+    });
   }
 
   const inputCls =
@@ -270,14 +267,17 @@ export function NotifyCard({
 
       {/* Test lives on this card rather than the channels card so it still
           works with Advanced off. */}
+      <VerdictLine verdict={test.verdict} />
       <div className="flex items-center gap-3 pt-1 flex-wrap">
-        <Button
+        <TestButton
           label={t("notify.test")}
           labelKey="notify.test"
+          words="delivery"
           // Sending a test is what tells you a channel is wired up, so it
           // carries the card.
           tone="accent"
-          onClick={() => void handleTest()}
+          test={test}
+          onClick={handleTest}
         />
       </div>
     </Card>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { OffsiteTarget } from "../lib/api";
 import {
   listOffsiteTargets,
@@ -19,6 +19,9 @@ import { Button } from "./Button";
 import { IconAdd } from "./Sidebar";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
+import { offsiteVerdict } from "../lib/offsiteVerdict";
+import { useTestVerdict } from "../lib/useTestVerdict";
+import { VerdictLine, verdictGlyph, verdictKey } from "./TestButton";
 
 // The badges and the Test, Edit and Remove buttons of a target row share one
 // size, so spans and buttons in the row have the same height. Medium is the
@@ -70,48 +73,53 @@ function emptyDraft(domain: Domain): OffsiteTarget {
   };
 }
 
-// TargetTestButton probes one additional target. The primary editor's "Test
-// connection" probes only the primary.
-function TargetTestButton({ id, t }: { id: string; t: T }) {
-  const { push } = useToast();
-  const [busy, setBusy] = useState(false);
-  // Bumped on a failure to replay the shake. A reachable but uninitialised
-  // repo is a warning, not a failure, and does not shake.
-  const [shake, setShake] = useState(0);
-
-  async function go() {
-    setBusy(true);
-    try {
-      const r = await testOffsiteTarget(id);
-      if (r.ok && r.reachable && r.initialized) {
-        push(t("offsite.testOk"), "success");
-      } else if (r.ok && r.reachable) {
-        push(t("offsite.testUninitialized"), "warn");
-      } else {
-        push(r.error ?? t("offsite.testFailed"), "fail");
-        setShake((n) => n + 1);
-      }
-    } catch (e) {
-      push(e instanceof Error ? e.message : t("offsite.testFailed"), "fail");
-      setShake((n) => n + 1);
-    } finally {
-      setBusy(false);
-    }
-  }
-
+// TargetRow shows one additional target with its own connection test, which
+// probes this target alone; the primary editor's Test connection probes only
+// the primary. `children` are the row's other actions.
+function TargetRow({ tgt, t, children }: { tgt: OffsiteTarget; t: T; children: ReactNode }) {
+  const test = useTestVerdict([tgt.repo, tgt.credsRef, tgt.storageClass], t("offsite.testFailed"));
+  const { verdict, running, shake, shaking } = test;
   return (
-    <Badge
-      key={shake}
-      as="button"
-      tone="neutral"
-      size={ROW_BADGE_SIZE}
-      onClick={() => void go()}
-      disabled={busy}
-      title={t("offsite.test")}
-      className={shake ? `${ROW_ACTION} glim-shake` : ROW_ACTION}
-    >
-      {busy ? t("offsite.testing") : t("offsite.targets.test")}
-    </Badge>
+    <div className="glim-tile flex items-start justify-between gap-3 rounded-card p-3 max-md:flex-col">
+      <div className="flex min-w-0 flex-col gap-1">
+        <span className="text-sm text-carbon-text truncate">{tgt.name || tgt.repo}</span>
+        <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">{tgt.repo}</span>
+        {/* A long repo can squeeze this column until the chip labels wrap
+            to several lines; without `wrap` the tinted background would
+            stay one line tall. */}
+        <span className="flex flex-wrap gap-2">
+          <Badge tone="neutral" size={ROW_BADGE_SIZE} wrap className="glim-tile-raise">
+            {tgt.storageClass || t("cloud.storageClass.default")}
+          </Badge>
+          {tgt.immutable && (
+            <Badge tone="ok" size={ROW_BADGE_SIZE} wrap>
+              {t("offsite.immutable")}
+            </Badge>
+          )}
+        </span>
+        <VerdictLine verdict={verdict} />
+      </div>
+      {/* On a phone the actions move under the name, which otherwise
+          shrinks to a column one character wide beside them. */}
+      <div className="flex shrink-0 flex-wrap items-start gap-2">
+        {/* The row's actions are chips, so the verdict takes the chip's own
+            status tones rather than a button's solid fill. */}
+        <Badge
+          key={shake}
+          as="button"
+          tone={verdict ? (verdict.ok ? "ok" : "fail") : "neutral"}
+          size={ROW_BADGE_SIZE}
+          onClick={() => void test.run(async () => offsiteVerdict(await testOffsiteTarget(tgt.id), t))}
+          disabled={running}
+          title={t("offsite.test")}
+          className={shaking ? `${ROW_ACTION} glim-shake` : ROW_ACTION}
+        >
+          {verdict && verdictGlyph(verdict)}
+          {running ? t("offsite.testing") : verdict ? t(verdictKey(verdict, "connection")) : t("offsite.targets.test")}
+        </Badge>
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -278,61 +286,36 @@ export function OffsiteTargetsSection({
 
       {/* Existing additional targets */}
       {targets.map((tgt) => (
-        <div
-          key={tgt.id}
-          className="glim-tile flex items-start justify-between gap-3 rounded-card p-3 max-md:flex-col"
-        >
-          <div className="flex min-w-0 flex-col gap-1">
-            <span className="text-sm text-carbon-text truncate">{tgt.name || tgt.repo}</span>
-            <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">{tgt.repo}</span>
-            {/* A long repo can squeeze this column until the chip labels wrap
-                to several lines; without `wrap` the tinted background would
-                stay one line tall. */}
-            <span className="flex flex-wrap gap-2">
-              <Badge tone="neutral" size={ROW_BADGE_SIZE} wrap className="glim-tile-raise">
-                {tgt.storageClass || t("cloud.storageClass.default")}
-              </Badge>
-              {tgt.immutable && (
-                <Badge tone="ok" size={ROW_BADGE_SIZE} wrap>
-                  {t("offsite.immutable")}
-                </Badge>
-              )}
-            </span>
-          </div>
-          {/* On a phone the actions move under the name, which otherwise
-              shrinks to a column one character wide beside them. */}
-          <div className="flex shrink-0 flex-wrap items-start gap-2">
-            <TargetTestButton id={tgt.id} t={t} />
-            <Badge as="button" tone="neutral" size={ROW_BADGE_SIZE} onClick={() => openEdit(tgt)} className={ROW_ACTION}>
-              {t("offsite.targets.edit")}
+        <TargetRow key={tgt.id} tgt={tgt} t={t}>
+          <Badge as="button" tone="neutral" size={ROW_BADGE_SIZE} onClick={() => openEdit(tgt)} className={ROW_ACTION}>
+            {t("offsite.targets.edit")}
+          </Badge>
+          {/* Neutral like Edit, not red. The two-click confirm, whose label
+              changes, is what guards the removal. */}
+          {confirmRemove === tgt.id ? (
+            <Badge
+              key={removeShake}
+              as="button"
+              tone="neutral"
+              size={ROW_BADGE_SIZE}
+              onClick={() => void remove(tgt.id)}
+              disabled={removingId === tgt.id}
+              className={removeShake ? `${ROW_ACTION} glim-shake` : ROW_ACTION}
+            >
+              {removingId === tgt.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
             </Badge>
-            {/* Neutral like Edit, not red. The two-click confirm, whose label
-                changes, is what guards the removal. */}
-            {confirmRemove === tgt.id ? (
-              <Badge
-                key={removeShake}
-                as="button"
-                tone="neutral"
-                size={ROW_BADGE_SIZE}
-                onClick={() => void remove(tgt.id)}
-                disabled={removingId === tgt.id}
-                className={removeShake ? `${ROW_ACTION} glim-shake` : ROW_ACTION}
-              >
-                {removingId === tgt.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
-              </Badge>
-            ) : (
-              <Badge
-                as="button"
-                tone="neutral"
-                size={ROW_BADGE_SIZE}
-                onClick={() => setConfirmRemove(tgt.id)}
-                className={ROW_ACTION}
-              >
-                {t("offsite.targets.remove")}
-              </Badge>
-            )}
-          </div>
-        </div>
+          ) : (
+            <Badge
+              as="button"
+              tone="neutral"
+              size={ROW_BADGE_SIZE}
+              onClick={() => setConfirmRemove(tgt.id)}
+              className={ROW_ACTION}
+            >
+              {t("offsite.targets.remove")}
+            </Badge>
+          )}
+        </TargetRow>
       ))}
 
       {/* Editor form (new or edit) */}

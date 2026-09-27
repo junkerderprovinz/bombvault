@@ -57,16 +57,26 @@ it("reads as connected when SSH works and only libvirt is missing", async () => 
   testAnswer = { ok: true, libvirt: false, libvirtError: "virsh: command not found" };
   await runTest();
   expect(await screen.findByText(en["vm.ssh.testNoLibvirt"])).toBeTruthy();
-  expect(screen.queryByText(en["vm.ssh.testFail"])).toBeNull();
+  expect(screen.getByRole("button", { name: en["verdict.connected"] })).toBeTruthy();
 });
 
-it("says libvirt is reachable when it is", async () => {
+it("turns the button green with Connected and a check when the link works", async () => {
   await runTest();
-  expect(await screen.findByText(en["vm.ssh.testOk"])).toBeTruthy();
+  const button = await screen.findByRole("button", { name: en["verdict.connected"] });
+  expect(button.className).toContain("bg-statusOkSolid");
+  expect(button.querySelector(".glim-check-draw")).not.toBeNull();
+  expect(button.className).not.toContain("glim-shake");
+  expect(screen.queryByText(en["vm.ssh.testNoLibvirt"])).toBeNull();
 });
 
-it("fails when the SSH link itself fails", async () => {
+it("turns the button red with Not connected and a cross, shakes it and gives the reason above", async () => {
   testAnswer = { ok: false, error: "Permission denied (publickey)" };
   await runTest();
-  expect(await screen.findAllByText(en["vm.ssh.testFail"])).not.toHaveLength(0);
+  const button = await screen.findByRole("button", { name: en["verdict.notConnected"] });
+  expect(button.className).toContain("bg-statusFailSolid");
+  expect(button.className).toContain("glim-shake");
+  expect(button.querySelector(".glim-check-draw")).toBeNull();
+  expect(button.querySelector('svg[viewBox="2 2 10 10"]')).not.toBeNull();
+  const reason = screen.getByText("Permission denied (publickey)");
+  expect(reason.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });

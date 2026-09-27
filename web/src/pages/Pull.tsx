@@ -29,6 +29,8 @@ import { useCloudCredSets } from "../lib/useCloudCredSets";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
+import { TestButton, VerdictLine } from "../components/TestButton";
+import { useTestVerdict } from "../lib/useTestVerdict";
 import { ToggleRow } from "./settings/shared";
 
 type T = ReturnType<typeof useT>["t"];
@@ -78,14 +80,12 @@ function PullSourceCard({
     }
   }
 
-  async function handleTest() {
-    setBusy(true);
-    try {
+  const test = useTestVerdict([source.repo, source.credsRef, source.domain], t("pull.pullFailed"));
+  function handleTest() {
+    void test.run(async () => {
       const res = await testPullSource(source.id);
-      push(res.ok ? t("pull.testOk") : (res.error ?? t("pull.pullFailed")), res.ok ? "success" : "fail");
-    } finally {
-      setBusy(false);
-    }
+      return res.ok ? { ok: true } : { ok: false, reason: res.error ?? t("pull.pullFailed") };
+    });
   }
 
   async function handleRemove() {
@@ -138,21 +138,23 @@ function PullSourceCard({
         <p className="text-xs text-statusFail wrap-break-word">{source.lastPullError}</p>
       )}
 
+      <VerdictLine verdict={test.verdict} />
+
       <div className="flex items-center gap-2 flex-wrap">
         <Button
           label={t("pull.pullNow")}
           labelKey="pull.pullNow"
           tone="accent"
           onClick={() => void handlePull()}
-          disabled={busy || !source.enabled}
+          disabled={busy || test.running || !source.enabled}
           busy={busy}
           hueIndex={index}
         />
-        <Button
+        <TestButton
           label={t("offsite.test")}
           labelKey="offsite.test"
-          tone="neutral"
-          onClick={() => void handleTest()}
+          test={test}
+          onClick={handleTest}
           disabled={busy}
           hueIndex={index}
         />
