@@ -38,14 +38,17 @@ describe("StickyActionBar", () => {
     expect(bar.className).not.toMatch(/(^|\s)fixed(\s|$)/);
   });
 
-  it("carries the chrome classes; sidebar surface, no hairline of its own, plain 12px bottom padding", () => {
+  it("carries the chrome classes; page-colour band, no hairline of its own, plain 12px bottom padding", () => {
     const { container } = render(
       <StickyActionBar>
         <div>row</div>
       </StickyActionBar>
     );
     const bar = container.firstElementChild as HTMLElement;
-    expect(bar.className).toContain("bg-carbon-sidebar");
+    // The band has the page colour, so the action stands on its own above
+    // the BottomNav card rather than reading as the edge of a card.
+    expect(bar.className).toContain("bg-carbon-background");
+    expect(bar.className).not.toContain("bg-carbon-sidebar");
     // No top hairline: surfaces in this app are told apart by shade, and the
     // bar sits on the page it overlays.
     expect(bar.className).not.toContain("border-t");
@@ -54,8 +57,7 @@ describe("StickyActionBar", () => {
     // inside main#bv-main, and BottomNav, main's flex sibling below it,
     // owns the home-indicator inset on its own host, so the bar never
     // reaches the screen edge. Reserving the inset here made the bar 22px
-    // taller than every other phone chrome row on devices that have one
-    // on devices that have one.
+    // taller than every other phone chrome row on devices that have one.
     expect(bar.className).toContain("pb-3");
     expect(bar.className).not.toContain("safe-area-bottom");
   });

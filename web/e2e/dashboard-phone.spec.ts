@@ -277,6 +277,27 @@ test("the safety cards on a phone: their controls are big enough to tap", async 
   }
 });
 
+test("the Backup Everything bar stands on the page colour, not on a card-coloured band", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the bar exists below the breakpoint");
+  await stage(page, 360);
+  await openHome(page);
+
+  const colours = await page
+    .getByRole("button", { name: "Gesamt-Backup" })
+    .evaluate((button) => {
+      const band = button.closest(".sticky") as HTMLElement;
+      const shell = document.getElementById("bv-main")!.closest(".bg-carbon-background") as HTMLElement;
+      const card = document.querySelector("#bv-main h2")!.parentElement as HTMLElement;
+      return {
+        band: getComputedStyle(band).backgroundColor,
+        page: getComputedStyle(shell).backgroundColor,
+        card: getComputedStyle(card).backgroundColor,
+      };
+    });
+  expect(colours.band).toBe(colours.page);
+  expect(colours.band).not.toBe(colours.card);
+});
+
 // The desktop grid in its default layout with the advanced view on. The
 // recovery-kit banner above the grid comes and goes with the kit, so the list
 // starts at the grid.

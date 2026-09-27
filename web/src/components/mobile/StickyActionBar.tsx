@@ -16,8 +16,10 @@
 // keep new page wrappers clean (.glim-page-enter, the per-route wrapper
 // Layout renders, is verified clean).
 //
-// Chrome mirrors the BottomNav precedent (BottomNav.tsx): sidebar surface,
-// 12px padding above and below. The bar carries no safe-area inset, and
+// The band behind the action has the page colour, so the button stands on
+// its own above the BottomNav card instead of reading as the bottom edge of
+// whichever card scrolls under it; the band still hides those rows. 12px
+// padding above and below. The bar carries no safe-area inset, and
 // never will: it is sticky inside main#bv-main, and BottomNav, main's flex
 // sibling below it, owns the home-indicator inset on its own host, so the
 // bar never reaches the screen edge. Reserving the inset here only made the
@@ -36,7 +38,7 @@ import type { ReactNode } from "react";
 export function StickyActionBar({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`sticky bottom-0 z-10 bg-carbon-sidebar pt-3 pb-3 ${className}`}
+      className={`sticky bottom-0 z-10 bg-carbon-background pt-3 pb-3 ${className}`}
     >
       {/* Rows stack: count/busy row, then the primary action, then the
           plain-language second row (the save-bar anatomy). */}

@@ -143,6 +143,38 @@ test("the More sheet opens with the fresh-DB registry and closes via all three p
   expect(focusInsideDialog).toBe(true);
 });
 
+test("the More sheet floats as a card above the screen edges, like the bar", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the More trigger exists below the breakpoint");
+  await bootWithoutServerLook(page);
+  await page.getByTestId("bottom-nav").getByRole("button", { name: "More" }).click();
+  const panel = page.getByRole("dialog");
+  await expect(panel).toBeVisible();
+
+  // The panel slides up, so it is measured once it has held still.
+  const geometry = await panel.evaluate(async (el) => {
+    const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    let last = "";
+    for (let still = 0; still < 3; ) {
+      await frame();
+      const now = JSON.stringify(el.getBoundingClientRect());
+      still = now === last ? still + 1 : 0;
+      last = now;
+    }
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    return {
+      left: r.left,
+      right: innerWidth - r.right,
+      bottom: innerHeight - r.bottom,
+      corners: [cs.borderTopLeftRadius, cs.borderBottomLeftRadius, cs.borderBottomRightRadius].map(parseFloat),
+    };
+  });
+  expect(geometry.left, "the sheet touches the left edge").toBeGreaterThanOrEqual(15.5);
+  expect(geometry.right, "the sheet touches the right edge").toBeGreaterThanOrEqual(15.5);
+  expect(geometry.bottom, "the sheet sits on the bottom edge").toBeGreaterThanOrEqual(7.5);
+  for (const corner of geometry.corners) expect(corner, "a corner of the sheet is square").toBeGreaterThan(0);
+});
+
 test("sign-out parity: the fresh DB shows the row on neither chrome surface", async ({ page }, testInfo) => {
   await bootWithoutServerLook(page);
   if (MOBILE_PROJECTS.has(testInfo.project.name)) {
