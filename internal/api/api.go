@@ -292,7 +292,6 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/settings/primary-remote/{domain}", h.handleSetPrimaryRemote)
 	mux.HandleFunc("DELETE /api/settings/primary-remote/{domain}", h.handleDeletePrimaryRemote)
 	mux.HandleFunc("POST /api/settings/primary-remote/{domain}/test", h.handleTestPrimaryRemote)
-	mux.HandleFunc("POST /api/settings/primary-remote/{domain}/tamper-test", h.handlePrimaryRemoteTamperTest)
 	mux.HandleFunc("GET /api/spike", h.handleSpikeCached)
 	mux.HandleFunc("POST /api/spike", h.handleSpikeFresh)
 	mux.HandleFunc("POST /api/discover", h.handleDiscover)

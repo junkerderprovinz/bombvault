@@ -21,7 +21,7 @@ import (
 // offsiteModeForTarget and runTamperTestForTarget work on it unchanged.
 //
 // The row's Repo is a snapshot of the path from the last save and plays no part
-// in resolving the backup path. TestPrimaryRepo and RunPrimaryTamperTest
+// in resolving the backup path. TestPrimaryRepo and a place's tamper test
 // replace it with the live path before probing.
 
 // domainPathRaw returns the backup path configured for domain as typed: a
@@ -205,7 +205,7 @@ func (s *Service) primaryAppendOnly(domain, repo string) appendOnlyFlag {
 }
 
 // PrimaryRemoteConfig returns the domain's saved remote-primary safety
-// settings for the Remote dialog; ok is false when none have been saved.
+// settings; ok is false when none have been saved.
 func (s *Service) PrimaryRemoteConfig(domain string) (store.OffsiteTarget, bool, error) {
 	if !validOffsiteDomain(domain) {
 		return store.OffsiteTarget{}, false, fmt.Errorf("unknown domain %q", domain)
@@ -278,42 +278,6 @@ func (s *Service) TestPrimaryRepo(ctx context.Context, domain string) (reachable
 	return s.probeOffsiteRepo(ctx, repo, mode)
 }
 
-// RunPrimaryTamperTest runs RunTamperTest's append-only probe (two harmless
-// DELETEs of objects that cannot exist) against a domain's remote primary. It
-// needs a saved safety row so the verdict has a target id of its own, rather
-// than an empty one that could collide with the off-site verdict.
-func (s *Service) RunPrimaryTamperTest(ctx context.Context, domain string) (verdict TamperVerdict, err error) {
-	if !validOffsiteDomain(domain) {
-		return TamperVerdict{}, fmt.Errorf("unknown domain %q", domain)
-	}
-	// The off-site test probes a different target, but sharing its lock keeps
-	// two tamper tests of one domain from racing their run and progress rows.
-	defer s.lockTamper(domain)()
-	tkey := "tamper:primary:" + domain
-	_, startedAt := s.progBegin(ctx, tkey, "maintenance")
-	defer func() { s.progEnd(tkey, "maintenance", err == nil, startedAt) }()
-
-	settings, err := s.store.GetSettings()
-	if err != nil {
-		return TamperVerdict{}, fmt.Errorf("read settings: %w", err)
-	}
-	loc := domainPathRaw(domain, settings)
-	if loc == "" || !restic.IsRemoteRepo(loc) {
-		return TamperVerdict{}, errors.New("this domain's backup path is not a remote repository")
-	}
-	target, ok := s.primaryRemoteTarget(domain)
-	if !ok {
-		return TamperVerdict{}, errors.New("save the remote-primary safety settings (with append-only on) before running a tamper test")
-	}
-	target.Repo = loc
-
-	runID := s.startTamperRun(domain)
-	defer func() { s.finishTamperRun(runID, domain, verdict, err) }()
-
-	creds, _ := s.decodeCloud(settings)
-	return s.runTamperTestForTarget(ctx, domain, target, creds)
-}
-
 // handlePrimaryRemoteDomain validates the {domain} path value of the
 // primary-remote handlers and writes the error response when it is invalid.
 func handlePrimaryRemoteDomain(w http.ResponseWriter, r *http.Request) (string, bool) {
@@ -326,7 +290,7 @@ func handlePrimaryRemoteDomain(w http.ResponseWriter, r *http.Request) (string, 
 }
 
 // primaryRemoteView holds the fields of a domain's remote-primary safety
-// settings that the Remote dialog edits.
+// settings that GET and PUT /api/settings/primary-remote/{domain} carry.
 type primaryRemoteView struct {
 	Configured     bool   `json:"configured"`
 	Repo           string `json:"repo"`
@@ -418,24 +382,5 @@ func (h *Handler) handleTestPrimaryRemote(w http.ResponseWriter, r *http.Request
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"reachable":   reachable,
 		"initialized": initialized,
-	}))
-}
-
-// handlePrimaryRemoteTamperTest runs an active append-only probe against a
-// domain's remote primary. POST /api/settings/primary-remote/{domain}/tamper-test
-func (h *Handler) handlePrimaryRemoteTamperTest(w http.ResponseWriter, r *http.Request) {
-	domain, ok := handlePrimaryRemoteDomain(w, r)
-	if !ok {
-		return
-	}
-	verdict, err := h.svc.RunPrimaryTamperTest(r.Context(), domain)
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"testable":  verdict.Testable,
-		"protected": verdict.Protected,
-		"detail":    verdict.Detail,
 	}))
 }
