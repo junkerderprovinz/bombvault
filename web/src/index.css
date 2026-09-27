@@ -489,54 +489,36 @@
   transform-origin: center;
 }
 
-/* The reveal animates per motion level and only inside the OS gate; with
-   reduced motion the words simply appear. */
+/* Under reduced motion the words simply appear. Every level runs the same
+   reveal with its own numbers: the width opens along the level's curve, which
+   overshoots from wild up, while the text slides in and unsquashes from the
+   level's shift and squash, which subtle sets to nothing. */
 @media (prefers-reduced-motion: no-preference) {
-  /* Subtle: the words widen and fade in on one easing, with no overshoot. */
-  :root[data-motion="subtle"] .glim-label-reactive {
+  .glim-label-reactive {
     transition:
-      max-width 160ms cubic-bezier(0.22, 0.61, 0.36, 1),
-      opacity 120ms ease-out,
-      margin-inline-start 160ms cubic-bezier(0.22, 0.61, 0.36, 1);
-  }
-
-  /* The lively levels: the box springs past its target and settles (the
-     overshoot is in the easing, so only the label's width bounces) while the
-     text slides in from the left and unsquashes.
-
-     The selector names the quiet levels rather than `wild`, so storm, a
-     missing attribute and any livelier level added later get this too. */
-  :root:not([data-motion="subtle"]):not([data-motion="off"]) .glim-label-reactive {
-    transition:
-      max-width 320ms cubic-bezier(0.34, 1.56, 0.64, 1),
-      opacity 180ms ease-out,
-      margin-inline-start 320ms cubic-bezier(0.34, 1.56, 0.64, 1),
-      transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
-    transform: translateX(-0.4rem) scaleX(0.82);
+      max-width var(--motion-label-dur) var(--motion-label-ease),
+      opacity calc(var(--motion-label-dur) * 0.6) ease-out,
+      margin-inline-start var(--motion-label-dur) var(--motion-label-ease),
+      transform var(--motion-label-dur) var(--motion-label-ease);
+    transform: translateX(var(--motion-label-shift)) scaleX(var(--motion-label-squash));
   }
 
   /* Every revealed state gets the resting transform back, `.glim-active`
-     included; without it the active tab's words would sit 6.4px too close to
-     the glyph and squashed to 82%. This list names the same states as the
-     reveal rule above. The two cannot merge because only this one sits inside
-     the motion gate. */
-  :root:not([data-motion="subtle"]):not([data-motion="off"]) .glim-reactive.glim-active .glim-label-reactive,
-  :root:not([data-motion="subtle"]):not([data-motion="off"]) .glim-reactive:hover .glim-label-reactive,
-  :root:not([data-motion="subtle"]):not([data-motion="off"]) .glim-reactive:focus-visible .glim-label-reactive,
-  :root:not([data-motion="subtle"]):not([data-motion="off"]) .glim-reactive:focus-within .glim-label-reactive {
+     included, or the active tab's words would sit displaced and squashed. This
+     list names the same states as the reveal rule above, which cannot hold it
+     because only this one sits inside the motion gate. */
+  .glim-reactive.glim-active .glim-label-reactive,
+  .glim-reactive:hover .glim-label-reactive,
+  .glim-reactive:focus-visible .glim-label-reactive,
+  .glim-reactive:focus-within .glim-label-reactive {
     transform: translateX(0) scaleX(1);
   }
 }
 
-/* The coarse-pointer companion reset; the pair the two guard comments above
-   exist to keep together. The `(pointer: coarse)` block before the gate
-   reveals reactive labels at rest; in the lively motion levels that revealed
-   label would otherwise sit 6.4px displaced and squashed to 82%, the exact
-   revealed-but-still-displaced shape the `.glim-active` repair already fixed.
-   Same combined query and same selector shape as the reset list above, so the
-   at-rest coarse reveal reads like any other reveal state. */
+/* The coarse pointer's reveal at rest is a reveal state too, so it takes the
+   resting transform back as the list above does. */
 @media (prefers-reduced-motion: no-preference) and (pointer: coarse) {
-  :root:not([data-motion="subtle"]):not([data-motion="off"]) .glim-label-reactive {
+  .glim-label-reactive {
     transform: translateX(0) scaleX(1);
   }
 }
@@ -1917,18 +1899,32 @@ body {
   --motion-quake-step: 70ms;
 
   /* The other animations, each described where it is defined:
-     shape    border-radius transition when data-shape changes
-     pulse    glow and scale of the save-success pulse
+     control  every ordinary transition: hovers, colour fades, open and close
+     modal    a window's entrance, its duration and how far it rises
+     label    the reactive label's reveal: duration, curve, slide and squash
+     shape    the radius morph when data-shape changes
+     confirm  glow and scale of the success swell
      stagger  per-row entrance delay, its cap, and the row's own duration
      wipe     page-wide colour transition when data-rainbow changes
      check    stroke draw of a checkmark
      content  fade-in of content replacing its loading placeholder
-     tab      slide of a Settings tab change */
+     tab      slide of a Settings tab change
+     wiggle   the rock of every item in a list being reordered */
+  --motion-control-dur: 150ms;
+
+  --motion-modal-dur: 260ms;
+  --motion-modal-travel: 10px;
+
+  --motion-label-dur: 320ms;
+  --motion-label-ease: cubic-bezier(.34, 1.56, .64, 1);
+  --motion-label-shift: -0.4rem;
+  --motion-label-squash: .82;
+
   --motion-shape-dur: 260ms;
   --motion-shape-ease: cubic-bezier(.2, .6, .2, 1);
 
-  --motion-pulse-scale: 1;                /* multiplies glim-pulse's glow spread + scale delta */
-  --motion-pulse-dur: 420ms;
+  --motion-confirm-scale: 1;              /* multiplies glim-confirm's glow spread and scale delta */
+  --motion-confirm-dur: 420ms;
 
   --motion-stagger-step: 30ms;            /* per-row delay increment */
   --motion-stagger-cap: 480ms;            /* max delay any row in a list can reach */
@@ -1943,6 +1939,13 @@ body {
 
   --motion-tab-travel: 18px;
   --motion-tab-dur: 220ms;
+
+  --motion-wiggle-dur: 280ms;
+  --motion-wiggle-angle: .6deg;
+
+  /* The drag lift's scale and landing ("Reordering by dragging"). */
+  --drag-lift-scale: 1.03;
+  --drag-settle-dur: 220ms;
 }
 
 :root[data-motion="storm"] {
@@ -1977,11 +1980,21 @@ body {
   --motion-quake-dur: 640ms;
   --motion-quake-step: 65ms;
 
+  --motion-control-dur: 300ms;
+
+  --motion-modal-dur: 420ms;
+  --motion-modal-travel: 18px;
+
+  --motion-label-dur: 480ms;
+  --motion-label-ease: cubic-bezier(.22, 1.94, .45, 1);
+  --motion-label-shift: -0.6rem;
+  --motion-label-squash: .7;
+
   --motion-shape-dur: 460ms;
   --motion-shape-ease: cubic-bezier(.22, 1.94, .45, 1);
 
-  --motion-pulse-scale: 1.9;
-  --motion-pulse-dur: 700ms;
+  --motion-confirm-scale: 1.9;
+  --motion-confirm-dur: 700ms;
 
   --motion-stagger-step: 55ms;
   /* At 55ms a step, a fifty-row list would otherwise stagger for nearly three
@@ -2000,6 +2013,12 @@ body {
 
   --motion-tab-travel: 34px;
   --motion-tab-dur: 380ms;
+
+  --motion-wiggle-dur: 220ms;
+  --motion-wiggle-angle: 1deg;
+
+  --drag-lift-scale: 1.06;
+  --drag-settle-dur: 400ms;
 }
 
 :root[data-motion="subtle"] {
@@ -2029,10 +2048,21 @@ body {
   --motion-quake-dur: 400ms;
   --motion-quake-step: 50ms;
 
+  --motion-control-dur: 80ms;
+
+  /* The window only fades. */
+  --motion-modal-dur: 150ms;
+  --motion-modal-travel: 0px;
+
+  --motion-label-dur: 160ms;
+  --motion-label-ease: cubic-bezier(.22, .61, .36, 1);
+  --motion-label-shift: 0rem;
+  --motion-label-squash: 1;
+
   --motion-shape-dur: 140ms;
 
-  --motion-pulse-scale: .5;
-  --motion-pulse-dur: 260ms;
+  --motion-confirm-scale: .5;
+  --motion-confirm-dur: 260ms;
 
   --motion-stagger-step: 15ms;
   --motion-stagger-cap: 200ms;
@@ -2046,6 +2076,12 @@ body {
 
   --motion-tab-travel: 10px;
   --motion-tab-dur: 130ms;
+
+  --motion-wiggle-dur: 360ms;
+  --motion-wiggle-angle: .3deg;
+
+  --drag-lift-scale: 1.015;
+  --drag-settle-dur: 130ms;
 }
 
 :root[data-motion="off"] {
@@ -2085,10 +2121,20 @@ body {
 
   /* Durations collapse to zero, so each end state paints at once, and a zero
      stagger step and cap make every row delay zero. */
+  --motion-control-dur: 0s;
+
+  --motion-modal-dur: 0ms;
+  --motion-modal-travel: 0px;
+
+  --motion-label-dur: 0ms;
+  --motion-label-ease: linear;
+  --motion-label-shift: 0rem;
+  --motion-label-squash: 1;
+
   --motion-shape-dur: 0ms;
 
-  --motion-pulse-scale: 0;
-  --motion-pulse-dur: 0ms;
+  --motion-confirm-scale: 0;
+  --motion-confirm-dur: 0ms;
 
   --motion-stagger-step: 0ms;
   --motion-stagger-cap: 0ms;
@@ -2102,16 +2148,20 @@ body {
 
   --motion-tab-travel: 0px;
   --motion-tab-dur: 0ms;
+
+  /* A long period rather than none, with no angle, so nothing moves. */
+  --motion-wiggle-dur: 400ms;
+  --motion-wiggle-angle: 0deg;
+
+  /* The lift keeps its shadow and its gap: it is a state, not motion. */
+  --drag-lift-scale: 1;
+  --drag-settle-dur: 0ms;
 }
 
 /* The motion level reaches ordinary transitions too: hovers, colour fades,
    open and close. "off" uses !important because it has to beat a utility that
    set its own duration, and at that level there is nothing to preserve.
    "subtle" does not, so a component with its own timing keeps its number. */
-:root { --motion-control-dur: 150ms; }
-:root[data-motion="storm"] { --motion-control-dur: 300ms; }
-:root[data-motion="subtle"] { --motion-control-dur: 80ms; }
-:root[data-motion="off"] { --motion-control-dur: 0s; }
 :root[data-motion="off"] * { transition-duration: 0s !important; }
 :root[data-motion="subtle"] .transition,
 :root[data-motion="subtle"] .transition-colors,
@@ -2239,15 +2289,14 @@ body {
   to   { opacity: 1; transform: none; }
 }
 
-/* Dialog entrance; reduced motion gets a plain fade. The 2% scale is safe
-   here: a scaling ancestor is resampled together with anything animating
-   inside it, and none of the four dialogs using .glim-modal-card
-   (ConfirmDialog, CryptoDonateDialog, ErrorDetailPanel, WhatsNewDialog)
-   animates anything during these 260ms. A dialog that gains a staggered list,
-   a pulse or a live dot needs this revisited. */
+/* A window's entrance: the card rises a short way and settles, and at subtle
+   it only fades, since its travel is nothing. No scale, since a scaled
+   ancestor makes every animated child inside it resample, and it ends at
+   `none`, since a leftover transform makes the card the containing block of
+   anything fixed inside it. Reduced motion gets a plain fade. */
 @keyframes glim-modal-in {
-  from { opacity: 0; transform: translateY(10px) scale(.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(var(--motion-modal-travel, 10px)); }
+  to   { opacity: 1; transform: none; }
 }
 
 /* A short, decaying horizontal shake that says "the backend said no" without
@@ -2263,14 +2312,15 @@ body {
   80%      { transform: translateX(calc(var(--motion-shake-scale, 1) * 2px)); }
 }
 
-/* The success pulse, glim-shake's gentle sibling: a soft glow ring and a small
-   pop. It uses --accent-soft, so a hued row pulses in its own colour. Replayed
-   like the shake, through ToggleRow's `pulseNonce`; a save gets one or the
-   other. */
-@keyframes glim-pulse {
-  0%   { box-shadow: 0 0 0 0 var(--accent-soft); transform: scale(1); }
-  40%  { box-shadow: 0 0 0 calc(var(--motion-pulse-scale, 1) * 6px) var(--accent-soft); transform: scale(calc(1 + var(--motion-pulse-scale, 1) * .05)); }
-  100% { box-shadow: 0 0 0 0 var(--accent-soft); transform: scale(1); }
+/* The success swell, glim-shake's gentle sibling: a soft glow ring and a small
+   pop. It uses --accent-soft, so a hued row swells in its own colour, and
+   `scale` rather than `transform`, so it composes with a transform the element
+   already has. Replayed like the shake, through ToggleRow's `pulseNonce`; a
+   save gets one or the other. */
+@keyframes glim-confirm {
+  0%   { box-shadow: 0 0 0 0 var(--accent-soft); scale: 1; }
+  40%  { box-shadow: 0 0 0 calc(var(--motion-confirm-scale, 1) * 6px) var(--accent-soft); scale: calc(1 + var(--motion-confirm-scale, 1) * .05); }
+  100% { box-shadow: 0 0 0 0 var(--accent-soft); scale: 1; }
 }
 
 /* Staggered row entrance. Each row sets --row-i inline from the `index` the
@@ -2309,6 +2359,59 @@ body {
 @keyframes glim-tab-slide {
   from { transform: translateX(calc(var(--tab-dir, 1) * var(--tab-dir-sign, 1) * var(--motion-tab-travel, 18px))); }
   to   { transform: none; }
+}
+
+/* Every item of a list that is being reordered rocks, a sign that the whole
+   list is editable. `rotate` composes with the drag's `translate` and
+   `scale`. */
+@keyframes glim-wiggle {
+  from { rotate: calc(var(--motion-wiggle-angle, .6deg) * -1); }
+  to   { rotate: var(--motion-wiggle-angle, .6deg); }
+}
+
+/* Registering the radius tokens as lengths lets them transition on the root,
+   so every corner that reads them follows without a transition of its own,
+   which would fight each element's other transitions for the shorthand. */
+@property --radius-card { syntax: '<length>'; inherits: true; initial-value: 0px; }
+@property --radius-control { syntax: '<length>'; inherits: true; initial-value: 0px; }
+@property --radius-pill { syntax: '<length>'; inherits: true; initial-value: 0px; }
+
+/* The drag lift ("Reordering by dragging"). The held item floats under the
+   pointer (.glim-drag-lift), the others slide aside while it passes
+   (.glim-drag-shift), and on release it slides into the gap they left
+   (.glim-drag-settle). lib/dragLift.ts sets only each item's `translate`. The
+   lift is a state rather than motion, so its shadow stays at every level; the
+   scale and the slide are dials above. Each class is doubled to outrank a
+   component's own transition utility. */
+:root {
+  /* The card elevation alone barely shows under something one row tall. */
+  --drag-lift-shadow: 0 10px 22px -8px rgba(0, 0, 0, .45), var(--elevation);
+  --drag-lift-z: 1;
+  --drag-settle-ease: var(--motion-page-ease, ease);
+}
+.glim-drag-lift.glim-drag-lift {
+  position: relative;
+  z-index: var(--drag-lift-z);
+  scale: var(--drag-lift-scale);
+  box-shadow: var(--drag-lift-shadow);
+  cursor: grabbing;
+  /* No `translate` here, so the item keeps up with the pointer. */
+  transition:
+    scale var(--drag-settle-dur) var(--drag-settle-ease),
+    box-shadow var(--drag-settle-dur) var(--drag-settle-ease);
+}
+/* Still above its neighbours while it lands, or it slides under the next one
+   on the way. */
+.glim-drag-settle.glim-drag-settle {
+  position: relative;
+  z-index: var(--drag-lift-z);
+  transition:
+    translate var(--drag-settle-dur) var(--drag-settle-ease),
+    scale var(--drag-settle-dur) var(--drag-settle-ease),
+    box-shadow var(--drag-settle-dur) var(--drag-settle-ease);
+}
+.glim-drag-shift.glim-drag-shift {
+  transition: translate var(--drag-settle-dur) var(--drag-settle-ease);
 }
 
 /* The logo mark holds the <img> and, during the boom, the fragment grid. The
@@ -2492,28 +2595,32 @@ body {
 
   .glim-toast { animation: glim-toast-in var(--motion-toast-dur, 220ms) var(--motion-toast-ease, cubic-bezier(.2, .6, .2, 1)) both; }
 
-  /* Dialog entrances keep fixed timings and do not follow data-motion. */
-  .glim-modal-backdrop {
-    animation: glim-fade-in 200ms ease both;
-  }
-  .glim-modal-card { animation: glim-modal-in 260ms cubic-bezier(.2, .6, .2, 1) both; }
+  /* A flat ease-out rather than --motion-page-ease, whose overshoot reads as
+     a bounce on a window. */
+  .glim-modal-backdrop { animation: glim-fade-in var(--motion-modal-dur) ease both; }
+  .glim-modal-card { animation: glim-modal-in var(--motion-modal-dur) cubic-bezier(.2, .6, .2, 1) both; }
 
   /* A zero-amplitude shake would be invisible, so "off" swaps in the fade
      pulse the reduced-motion block uses. */
   .glim-shake { animation: glim-shake var(--motion-shake-dur, 360ms) ease-in-out; }
   :root[data-motion="off"] .glim-shake { animation: glim-egg-fade-pulse 300ms ease-in-out; }
 
-  /* Shape changes animate the radius utilities. lib/shape.ts adds
-     .glim-shape-transitions to <html> two frames after the first paint, so
-     initial radii never animate, and never removes it: every later change is
-     a live one. Cheap enough to stay on, unlike the colour wipe. */
-  .glim-shape-transitions .rounded-card,
-  .glim-shape-transitions .rounded-control,
-  .glim-shape-transitions .rounded-pill {
-    transition: border-radius var(--motion-shape-dur, 260ms) var(--motion-shape-ease, cubic-bezier(.2, .6, .2, 1));
+  /* The shape morph. lib/shape.ts adds .glim-shape-transitions to <html> two
+     frames after the first paint, so the first radii never animate, and never
+     removes it: every later change is a live one. */
+  :root.glim-shape-transitions {
+    transition:
+      --radius-card var(--motion-shape-dur) var(--motion-shape-ease),
+      --radius-control var(--motion-shape-dur) var(--motion-shape-ease),
+      --radius-pill var(--motion-shape-dur) var(--motion-shape-ease);
   }
 
-  .glim-pulse { animation: glim-pulse var(--motion-pulse-dur, 420ms) ease-out; }
+  .glim-confirm { animation: glim-confirm var(--motion-confirm-dur) ease-out; }
+
+  /* Every item but the held one, which floats under the pointer instead. */
+  .glim-drag-armed > :not(.glim-drag-lift) {
+    animation: glim-wiggle var(--motion-wiggle-dur) ease-in-out infinite alternate;
+  }
 
   .glim-stagger-row {
     /* ease-out rather than --motion-page-ease, which springs; see glim-row-in. */
@@ -2528,11 +2635,8 @@ body {
      colour channel a hued element can change gets the same duration, so
      nothing lags.
 
-     The doubled class is a specificity bump to (0,2,0), tying the
-     `.glim-shape-transitions .rounded-*` rules: `transition` is a shorthand,
-     and at (0,1,0) this rule would lose all six properties on every rounded
-     control. Coming later settles the tie. A shape change during an active
-     wipe loses its radius transition on those elements, which is accepted. */
+     The doubled class wins a tie with a component's own transition
+     shorthand. */
   .glim-colour-wipe,
   .glim-colour-wipe.glim-colour-wipe * {
     transition:
@@ -2585,6 +2689,12 @@ body {
      opacity pulse despite its name. */
   :root:not([data-motion="storm"]) .glim-shake { animation: glim-egg-fade-pulse 300ms ease-in-out; }
 
+  /* The lift keeps its shadow and its gap, and neither scales nor slides. */
+  :root:not([data-motion="storm"]) {
+    --drag-lift-scale: 1;
+    --drag-settle-dur: 0ms;
+  }
+
   /* Storm, restored with the no-preference block's rules. Exempting it
      without this would leave these elements with no animation at all. The
      rules read the tokens, so the numbers still come from
@@ -2617,8 +2727,8 @@ body {
       glim-page-in var(--motion-page-dur, 320ms) var(--motion-page-ease, cubic-bezier(.2, .6, .2, 1)) both,
       glim-fade-in var(--motion-page-dur, 320ms) ease-out both;
   }
-  :root[data-motion="storm"] .glim-modal-backdrop { animation: glim-fade-in 200ms ease both; }
-  :root[data-motion="storm"] .glim-modal-card { animation: glim-modal-in 260ms cubic-bezier(.2, .6, .2, 1) both; }
+  :root[data-motion="storm"] .glim-modal-backdrop { animation: glim-fade-in var(--motion-modal-dur) ease both; }
+  :root[data-motion="storm"] .glim-modal-card { animation: glim-modal-in var(--motion-modal-dur) cubic-bezier(.2, .6, .2, 1) both; }
   :root[data-motion="storm"] .glim-toast {
     animation: glim-toast-in var(--motion-toast-dur, 220ms) var(--motion-toast-ease, cubic-bezier(.2, .6, .2, 1)) both;
   }
