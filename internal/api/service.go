@@ -1308,8 +1308,13 @@ func (s *Service) fileSetRepoFor(settings store.Settings, set store.FileSet, sou
 // set's id, and nothing for flash and config. A location that does not resolve
 // counts as not remote.
 func (s *Service) primaryRepoIsRemote(settings store.Settings, domain, item string) bool {
-	var repo string
-	var err error
+	repo, err := s.primaryRepo(settings, domain, item)
+	return err == nil && restic.IsRemoteRepo(repo)
+}
+
+// primaryRepo resolves the repository an item backs up to, item as for
+// primaryRepoIsRemote.
+func (s *Service) primaryRepo(settings store.Settings, domain, item string) (repo string, err error) {
 	switch domain {
 	case "containers":
 		repo, err = s.containerRepoForName(settings, item, "local")
@@ -1328,7 +1333,7 @@ func (s *Service) primaryRepoIsRemote(settings store.Settings, domain, item stri
 	default:
 		repo, err = s.repoFor(settings, domain, "local")
 	}
-	return err == nil && restic.IsRemoteRepo(repo)
+	return repo, err
 }
 
 // flashZipExportDir resolves the operator-configured output folder for the
@@ -7749,12 +7754,10 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 }
 
 // ContainerSnapshotTimes is what the repositories hold for one container: the
-// unix time of its newest files snapshot and of its newest database dump, and
-// how many snapshots of either kind there are.
+// unix time of its newest files snapshot and of its newest database dump.
 type ContainerSnapshotTimes struct {
 	Files int64
 	Dump  int64
-	Count int
 }
 
 // Newest is the time of this container's most recent snapshot of either kind.
@@ -7775,7 +7778,7 @@ func (c ContainerSnapshotTimes) DumpOnly() bool {
 // than from the run history, so it agrees with the list of backups under it:
 // an entry rebuilt by Discover has no run at all (#44), and a run stays with
 // the entry while a backup stays with the name it was written under.
-func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]ContainerSnapshotTimes, error) {
+func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]ContainerSnapshotTimes, backupCounts, error) {
 	// When the targets cannot be read nothing folds, and each old name keeps
 	// its own date.
 	idToName := map[string]string{}
@@ -7787,10 +7790,9 @@ func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]Co
 		}
 	}
 	out := map[string]ContainerSnapshotTimes{}
-	err := s.eachBackupTime(ctx, "containers", "container", idToName, []string{"container:", dbDumpIdentityPrefix},
+	counts, err := s.eachBackupTime(ctx, "containers", "container", idToName, []string{"container:", dbDumpIdentityPrefix},
 		func(prefix, name string, unix int64) {
 			times := out[name]
-			times.Count++
 			if prefix == dbDumpIdentityPrefix {
 				times.Dump = max(times.Dump, unix)
 			} else {
@@ -7799,28 +7801,21 @@ func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]Co
 			out[name] = times
 		})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return out, nil
-}
-
-// NameBackups is what the repositories hold under one name: the unix time of
-// its newest snapshot and how many there are.
-type NameBackups struct {
-	Newest int64
-	Count  int
+	return out, counts, nil
 }
 
 // LatestFileSetBackupTimes is LatestContainerBackupTimes for the folder sets.
 // A set's name is fixed once it has backups, so no former name folds into it;
 // backups left under a name no set carries any more come back as their own set
 // through Discover.
-func (s *Service) LatestFileSetBackupTimes(ctx context.Context) (map[string]NameBackups, error) {
+func (s *Service) LatestFileSetBackupTimes(ctx context.Context) (map[string]int64, backupCounts, error) {
 	return s.latestBackupTimes(ctx, "files", "fileset", "fileset:", nil)
 }
 
 // LatestVMBackupTimes is LatestContainerBackupTimes for the VMs domain.
-func (s *Service) LatestVMBackupTimes(ctx context.Context) (map[string]NameBackups, error) {
+func (s *Service) LatestVMBackupTimes(ctx context.Context) (map[string]int64, backupCounts, error) {
 	idToName := map[string]string{}
 	if targets, tErr := s.store.ListVMTargets(); tErr != nil {
 		log.Printf("api: last-backup times: listing VM targets for alias fold: %v; leaving every tag as its own identity", tErr)
@@ -7832,27 +7827,42 @@ func (s *Service) LatestVMBackupTimes(ctx context.Context) (map[string]NameBacku
 	return s.latestBackupTimes(ctx, "vms", "vm", "vm:", idToName)
 }
 
-// latestBackupTimes keeps, per name, the newest time under that name's tag and
-// how many snapshots carry it, for a domain whose items have one identity each.
-func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain, prefix string, idToName map[string]string) (map[string]NameBackups, error) {
-	out := map[string]NameBackups{}
-	err := s.eachBackupTime(ctx, domain, aliasDomain, idToName, []string{prefix}, func(_, name string, unix int64) {
-		out[name] = NameBackups{Newest: max(out[name].Newest, unix), Count: out[name].Count + 1}
+// latestBackupTimes keeps, per name, the newest time under that name's tag, for
+// a domain whose items have one identity each.
+func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain, prefix string, idToName map[string]string) (map[string]int64, backupCounts, error) {
+	out := map[string]int64{}
+	counts, err := s.eachBackupTime(ctx, domain, aliasDomain, idToName, []string{prefix}, func(_, name string, unix int64) {
+		out[name] = max(out[name], unix)
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return out, nil
+	return out, counts, nil
+}
+
+// backupCounts holds, per local repository that was listed, how many snapshots
+// each name has there.
+type backupCounts map[string]map[string]int
+
+// at is how many snapshots name has in repo, nil when repo was not listed.
+func (c backupCounts) at(repo, name string) *int {
+	for loc, names := range c {
+		if sameRepoLocation(loc, repo) {
+			return new(names[name])
+		}
+	}
+	return nil
 }
 
 // eachBackupTime reads one snapshot listing per local repository of domain and
 // calls fn for every snapshot carrying one of prefixes, with the prefix, the
 // name the tag folds to and the snapshot's unix time. idToName carries the
-// current name of every entry, for the alias fold.
-func (s *Service) eachBackupTime(ctx context.Context, domain, aliasDomain string, idToName map[string]string, prefixes []string, fn func(prefix, name string, unix int64)) error {
+// current name of every entry, for the alias fold. The same calls are counted
+// per repository it could list.
+func (s *Service) eachBackupTime(ctx context.Context, domain, aliasDomain string, idToName map[string]string, prefixes []string, fn func(prefix, name string, unix int64)) (backupCounts, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return fmt.Errorf("read settings: %w", err)
+		return nil, fmt.Errorf("read settings: %w", err)
 	}
 	// EVERY repository this domain's containers write to, not just the domain's
 	// own (#204). A container pointed at a named repository keeps its snapshots
@@ -7867,8 +7877,9 @@ func (s *Service) eachBackupTime(ctx context.Context, domain, aliasDomain string
 	// answers "shared" when it cannot tell.
 	repos, _, err := s.domainReposInUse(settings, domain)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	counts := backupCounts{}
 	for _, repo := range repos {
 		// A list never opens a remote repository; its items are dated from their
 		// runs instead.
@@ -7886,6 +7897,8 @@ func (s *Service) eachBackupTime(ctx context.Context, domain, aliasDomain string
 			log.Printf("api: last-backup times: repository unreadable, skipping: %v", lErr)
 			continue
 		}
+		names := map[string]int{}
+		counts[repo.Loc] = names
 		for _, snap := range all {
 			ts, perr := time.Parse(time.RFC3339Nano, snap.Time)
 			if perr != nil {
@@ -7908,12 +7921,13 @@ func (s *Service) eachBackupTime(ctx context.Context, domain, aliasDomain string
 							name = cur
 						}
 					}
+					names[name]++
 					fn(prefix, name, unix)
 				}
 			}
 		}
 	}
-	return nil
+	return counts, nil
 }
 
 // domainReposForOp is domainRepoSource for an operation that has to reach ALL of
@@ -11616,14 +11630,15 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	// has backups under its own name; a failed read keeps that pass from
 	// guessing, as on the container list. With no VM and no entry there is
 	// nothing to date.
-	var snapTimes map[string]NameBackups
+	var snapTimes map[string]int64
+	var homeCounts backupCounts
 	snapTimesFailed := false
 	if len(infos) > 0 || len(targets) > 0 {
-		if m, sErr := s.LatestVMBackupTimes(ctx); sErr != nil {
+		if m, c, sErr := s.LatestVMBackupTimes(ctx); sErr != nil {
 			log.Printf("api: list vms: latest backup times: %v", sErr)
 			snapTimesFailed = true
 		} else {
-			snapTimes = m
+			snapTimes, homeCounts = m, c
 		}
 	}
 
@@ -11646,11 +11661,10 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 			v.ScheduleCadence = t.ScheduleCadence
 			run, _ = s.store.LastSuccessfulBackup(t.ID)
 		}
-		unlisted := snapTimesFailed || s.primaryRepoIsRemote(settings, "vms", vm.Name)
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[vm.Name].Newest, unlisted)
-		if !unlisted {
-			v.homeBackups = new(snapTimes[vm.Name].Count)
-		}
+		home, hErr := s.primaryRepo(settings, "vms", vm.Name)
+		unlisted := snapTimesFailed || (hErr == nil && restic.IsRemoteRepo(home))
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[vm.Name], unlisted)
+		v.homeBackups = homeCounts.at(home, vm.Name)
 		own := v.LastBackup != nil
 		hasOwnBackup[vm.Name] = own
 		if !own {
@@ -11676,11 +11690,10 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	for _, t := range orphanTargets {
 		v := VMView{Name: t.Name, LibvirtName: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence, AliasConflicts: aliasConflicts.of(t.ID), Aliases: formerNames.of(t.ID)}
 		run, _ := s.store.LastSuccessfulBackup(t.ID)
-		unlisted := snapTimesFailed || s.primaryRepoIsRemote(settings, "vms", t.Name)
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.Name].Newest, unlisted)
-		if !unlisted {
-			v.homeBackups = new(snapTimes[t.Name].Count)
-		}
+		home, hErr := s.primaryRepo(settings, "vms", t.Name)
+		unlisted := snapTimesFailed || (hErr == nil && restic.IsRemoteRepo(home))
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.Name], unlisted)
+		v.homeBackups = homeCounts.at(home, t.Name)
 		views = append(views, v)
 	}
 	return views, nil
@@ -13514,14 +13527,15 @@ func (s *Service) ListFileSetViews(ctx context.Context) ([]FileSetView, error) {
 		return nil, fmt.Errorf("read settings: %w", err)
 	}
 	// Dated from the backups a set owns, as on the container and VM lists.
-	var snapTimes map[string]NameBackups
+	var snapTimes map[string]int64
+	var homeCounts backupCounts
 	snapTimesFailed := false
 	if len(sets) > 0 {
-		if m, sErr := s.LatestFileSetBackupTimes(ctx); sErr != nil {
+		if m, c, sErr := s.LatestFileSetBackupTimes(ctx); sErr != nil {
 			log.Printf("api: list file sets: latest backup times: %v", sErr)
 			snapTimesFailed = true
 		} else {
-			snapTimes = m
+			snapTimes, homeCounts = m, c
 		}
 	}
 	views := make([]FileSetView, 0, len(sets))
@@ -13555,12 +13569,10 @@ func (s *Service) ListFileSetViews(ctx context.Context) ([]FileSetView, error) {
 		v.SelectedPaths = set.SelectedPaths
 		run, _ := s.store.LastSuccessfulBackup(set.ID)
 		unlisted := snapTimesFailed || restic.IsRemoteRepo(v.RepoEffective)
-		if finished, _ := lastBackupDate(run, snapTimes[set.Name].Newest, unlisted); finished != nil {
+		if finished, _ := lastBackupDate(run, snapTimes[set.Name], unlisted); finished != nil {
 			v.LastBackup = *finished
 		}
-		if !unlisted {
-			v.homeBackups = new(snapTimes[set.Name].Count)
-		}
+		v.homeBackups = homeCounts.at(v.RepoEffective, set.Name)
 		if resolved, rErr := paths.Resolve(s.cfg.HostMountRoot, set.Path); rErr == nil {
 			if _, statErr := os.Stat(resolved); statErr == nil { //nolint:gosec // G703: resolved is containment-validated under the host mount root
 				v.PathExists = true

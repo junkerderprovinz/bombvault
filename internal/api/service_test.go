@@ -7992,7 +7992,7 @@ func TestLatestContainerBackupTimesFoldsAlias(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	times, err := svc.LatestContainerBackupTimes(context.Background())
+	times, _, err := svc.LatestContainerBackupTimes(context.Background())
 	if err != nil {
 		t.Fatalf("LatestContainerBackupTimes: %v", err)
 	}
@@ -8038,7 +8038,7 @@ func TestLatestContainerBackupTimesDoesNotStealReusedAliasName(t *testing.T) {
 			t.Fatal(err)
 		}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{snaps: snaps})
-		times, err := svc.LatestContainerBackupTimes(context.Background())
+		times, _, err := svc.LatestContainerBackupTimes(context.Background())
 		if err != nil {
 			t.Fatalf("LatestContainerBackupTimes: %v", err)
 		}

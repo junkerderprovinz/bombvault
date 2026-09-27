@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"testing"
 
@@ -145,5 +146,39 @@ func TestTheContainerAndVMHomePlacesCountTheirBackups(t *testing.T) {
 	}
 	if got := homePlaceOf(t, f.do(http.MethodGet, "/api/vms", nil), "vms", "win11")["count"]; got != float64(1) {
 		t.Fatalf("win11's home counts %v, want 1", got)
+	}
+}
+
+func TestTheHomePlaceCountsOnlyTheBackupsAtTheHome(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	a := f.fileSet("A", "")
+	f.fileSet("C", nas.ID)
+	f.hold(f.domainPath("files"), snap("a1", 1_700_000_100, "fileset:A"), snap("a2", 1_700_000_200, "fileset:A"))
+	f.hold(f.root+"/nas", snap("x1", 1_700_000_100, "fileset:A"), snap("c1", 1_700_000_100, "fileset:C"))
+	f.backupRun(a.ID, 1_700_000_200)
+
+	if got := homePlaceOf(t, f.do(http.MethodGet, "/api/files", nil), "fileSets", "A")["count"]; got != float64(2) {
+		t.Fatalf("A's home counts %v, want the two backups in the domain path", got)
+	}
+}
+
+func TestAHomeThatCouldNotBeListedCountsNull(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	a := f.fileSet("A", "")
+	c := f.fileSet("C", nas.ID)
+	f.hold(f.domainPath("files"), snap("a1", 1_700_000_100, "fileset:A"))
+	f.hold(f.root+"/nas", snap("c1", 1_700_000_100, "fileset:C"))
+	f.eng.listErr[f.domainPath("files")] = errors.New("locked")
+	f.backupRun(a.ID, 1_700_000_100)
+	f.backupRun(c.ID, 1_700_000_100)
+
+	res := f.do(http.MethodGet, "/api/files", nil)
+	if got, ok := homePlaceOf(t, res, "fileSets", "A")["count"]; !ok || got != nil {
+		t.Fatalf("A's home counts %v, want null: its home could not be listed", got)
+	}
+	if got := homePlaceOf(t, res, "fileSets", "C")["count"]; got != float64(1) {
+		t.Fatalf("C's home counts %v, want 1", got)
 	}
 }

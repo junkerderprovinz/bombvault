@@ -719,12 +719,13 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	// container has backups under its own name; snapTimesFailed keeps that pass
 	// from guessing off a partial read.
 	var snapTimes map[string]ContainerSnapshotTimes
+	var homeCounts backupCounts
 	snapTimesFailed := false
-	if m, sErr := h.svc.LatestContainerBackupTimes(r.Context()); sErr != nil {
+	if m, c, sErr := h.svc.LatestContainerBackupTimes(r.Context()); sErr != nil {
 		log.Printf("api: list containers: latest backup times: %v", sErr)
 		snapTimesFailed = true
 	} else {
-		snapTimes = m
+		snapTimes, homeCounts = m, c
 	}
 
 	views := make([]containerView, 0, len(infos)+len(targets))
@@ -774,11 +775,10 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.ScheduleCadence = t.ScheduleCadence
 			run, _ = h.store.LastSuccessfulBackup(t.ID)
 		}
-		unlisted := snapTimesFailed || h.svc.primaryRepoIsRemote(settings, "containers", c.Name)
+		home, hErr := h.svc.primaryRepo(settings, "containers", c.Name)
+		unlisted := snapTimesFailed || (hErr == nil && restic.IsRemoteRepo(home))
 		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[c.Name].Newest(), unlisted)
-		if !unlisted {
-			v.homeBackups = new(snapTimes[c.Name].Count)
-		}
+		v.homeBackups = homeCounts.at(home, c.Name)
 		own := v.LastBackup != nil
 		hasOwnBackup[c.Name] = own
 		if !own {
@@ -845,11 +845,10 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		// everything.
 		v.DumpOnly = snapTimes[t.ContainerName].DumpOnly()
 		run, _ := h.store.LastSuccessfulBackup(t.ID)
-		unlisted := snapTimesFailed || h.svc.primaryRepoIsRemote(settings, "containers", t.ContainerName)
+		home, hErr := h.svc.primaryRepo(settings, "containers", t.ContainerName)
+		unlisted := snapTimesFailed || (hErr == nil && restic.IsRemoteRepo(home))
 		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.ContainerName].Newest(), unlisted)
-		if !unlisted {
-			v.homeBackups = new(snapTimes[t.ContainerName].Count)
-		}
+		v.homeBackups = homeCounts.at(home, t.ContainerName)
 		views = append(views, v)
 	}
 	items := make([]placementItem, 0, len(views))
