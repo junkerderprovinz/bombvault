@@ -443,7 +443,7 @@ func (h *Handler) handleRestoreZFS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"started": true, "target": ack.Target, "safetySnapshot": ack.SafetySnapshot,
+		"started": true, "target": ack.Target, "safetySnapshot": ack.SafetySnapshot, "created": ack.Created,
 	}))
 }
 
