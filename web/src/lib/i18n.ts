@@ -2587,7 +2587,7 @@ export const de: Translations = {
   "settings.encryptionPasswordWhere":
     "Dieses Passwort tippst du nie: BombVault leitet es bei jedem Aufruf aus dem APP_KEY ab. Der Wert selbst steht in deinem Wiederherstellungspaket als abgeleitetes restic-Passwort, und genau den brauchst du, um restic von Hand auf ein Repository loszulassen.",
   "settings.encryptionHint":
-    "Die Verschlüsselung wird beim Anlegen eines Repositorys festgelegt, diese Einstellung entscheidet also nur über NEUE Repositorys. Bei einem bereits vorhandenen Repository liest BombVault den Modus direkt am Repository ab. Siehe Seite „Wiederherstellung“. Änderst du das gegen ein bestehendes Repository, kann restic es schlicht nicht mehr öffnen.",
+    "Die Verschlüsselung wird beim Anlegen eines Repositorys festgelegt, diese Einstellung entscheidet also nur über NEUE Repositories. Bei einem bereits vorhandenen Repository liest BombVault den Modus direkt am Repository ab. Siehe Seite „Wiederherstellung“. Änderst du das gegen ein bestehendes Repository, kann restic es schlicht nicht mehr öffnen.",
 
   // Encryption-key recovery kit
   "recovery.title": "Wiederherstellungs-Kit",
@@ -3529,7 +3529,7 @@ export const de: Translations = {
   "recovery.encAbsent": "An diesen Orten liegt noch kein Backup-Repository, es gibt also nichts zu erkennen. Deine Wahl unten entscheidet, wie es angelegt wird.",
   "recovery.encUnknown": "Noch nicht feststellbar: Die Repositories liessen sich nicht öffnen, ihr Verschlüsselungsmodus ist damit unbekannt. Korrigiere den Ort oben und prüfe erneut, oder stelle ihn selbst ein, wenn du ihn kennst.",
   "recovery.encConflict": "Deine Repositories widersprechen sich: Einige sind verschlüsselt, andere nicht. Eine Einstellung kann nicht beide öffnen. Richte den Ausreisser auf einen neuen, leeren Ort aus oder stelle nur aus dem passenden Satz wieder her.",
-  "recovery.encUnconfigured": "Noch kein Backup-Ort eingetragen. Wähle in den Zeilen unten als „Gespeichert in“, wo die Backups jeder Domäne liegen, oder verbinde ihren Ort mit „Ort hinzufügen“, dann „Verbinden & prüfen“.",
+  "recovery.encUnconfigured": "Noch kein Backup-Ort eingetragen. Wähle in den Zeilen unten als „Gespeichert in“, wo die Backups jeder Domäne liegen, oder verbinde ihren Ort mit „Ort hinzufügen“ und klicke dann auf „Verbinden & prüfen“.",
   "recovery.encDetectHint":
     "Verschlüsselung ist keine Vorliebe: Ein Repository wird entweder mit Passwort (aus deinem APP_KEY abgeleitet) oder ohne angelegt, und das ändert sich danach nie mehr. BombVault öffnet die eingetragenen Repositories, um zu sehen, was davon zutrifft. Auf einer frischen Kiste musst du also nicht raten. Ein Repository, das nicht erreichbar ist, gilt als unbekannt, niemals als unverschlüsselt.",
   "recovery.encStateEncrypted": "verschlüsselt",
@@ -4191,7 +4191,7 @@ export const de: Translations = {
   "places.details.protection": "Schutz",
   "places.details.appendOnly": "Append-only",
   "places.details.appendOnlyHint": "Von diesem Server aus darf dort nichts gelöscht oder aufgeräumt werden. Am besten mit einem Server, der selbst Löschen verweigert, etwa rest-server mit --append-only.",
-  "places.details.appendOnlyOffAsk": "one=Ohne append-only lässt sich das Repository an diesem Ort von hier aus aufräumen und löschen. Trotzdem ausschalten?|other=Ohne append-only lassen sich die {n} Repositorys an diesem Ort von hier aus aufräumen und löschen. Trotzdem ausschalten?",
+  "places.details.appendOnlyOffAsk": "one=Ohne append-only lässt sich das Repository an diesem Ort von hier aus aufräumen und löschen. Trotzdem ausschalten?|other=Ohne append-only lassen sich die {n} Repositories an diesem Ort von hier aus aufräumen und löschen. Trotzdem ausschalten?",
   "places.details.tamperTest": "Auf append-only prüfen",
   "places.details.tamperProtected": "Löschen verweigert",
   "places.details.tamperOpen": "Löschen möglich",
