@@ -572,6 +572,25 @@ func TestEditingAPlaceMirrorsIntoTheRowsItHolds(t *testing.T) {
 	}
 }
 
+func TestAnEditKeepsWhereAProviderSaysItsPlaceStands(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(localPlace("Unraid", "backups"))
+	b2 := s3Place("B2", "s3:https://s3.example.com/bucket")
+	b2.Provider = "b2"
+	b2 = f.storePlace(b2)
+	for _, c := range []struct {
+		p    store.Place
+		sent bool
+	}{{unraid, true}, {b2, false}} {
+		if res := f.do(http.MethodPatch, "/api/places/"+c.p.ID, map[string]any{"offPremises": c.sent}); res["ok"] != true {
+			t.Fatalf("PATCH %s = %v", c.p.Name, res)
+		}
+		if got, err := f.st.GetPlace(c.p.ID); err != nil || got.OffPremises != c.p.OffPremises {
+			t.Errorf("%s off the premises = %v, %v, want %v as its provider says", c.p.Name, got.OffPremises, err, c.p.OffPremises)
+		}
+	}
+}
+
 func TestAStorageClassARestoreCannotReadIsRefused(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
