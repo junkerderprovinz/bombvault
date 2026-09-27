@@ -74,6 +74,31 @@ func TestReplicateOffsiteFirstOverBudgetAlarms(t *testing.T) {
 	}
 }
 
+// A place writes its budget onto its target rows only, so a domain copying to
+// one place alarms by that row's budget.
+func TestReplicateOffsiteToOneTargetAlarmsByItsOwnBudget(t *testing.T) {
+	url, hits := webhookCounter(t)
+	eng := &fakeResticEngine{
+		snaps:        []restic.Snapshot{{ID: "aaaa1111bbbb2222"}},
+		rawSizeBytes: 2 * 1024 * 1024 * 1024,
+	}
+	svc, st := offsiteReplTestService(t, eng)
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "flash", Name: "Garage",
+		Repo: "rest:http://192.168.1.2:8000/flash", GrowthBudgetGB: 1, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: url}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.ReplicateOffsite(context.Background(), "flash"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if atomic.LoadInt32(hits) == 0 {
+		t.Fatal("a copy over the target's own budget did not alarm")
+	}
+}
+
 // latestRunOfKind returns the newest run of the given kind and fails the test
 // when there is none.
 func latestRunOfKind(t *testing.T, st *store.Repo, kind string) store.Run {

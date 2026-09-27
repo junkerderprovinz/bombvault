@@ -617,21 +617,21 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	// space, only BombVault's own growth, so the budget is a detection aid, not
 	// a hard cap.
 	//
-	// With a single destination the budget stays on the domain path: the size
-	// is sampled under source "offsite", the global OffsiteGrowthBudgetGB
-	// drives it, and the latch is keyed by domain. With 2+ destinations each
-	// carries its own budget: the size is sampled under the per-target source
-	// ("offsite:<id>"), the threshold is the target's GrowthBudgetGB, and the
-	// latch is keyed by (domain,targetID).
+	// The threshold is the target's GrowthBudgetGB, which its place writes, or
+	// for a target made from the settings the global budget. With a single
+	// destination the size is sampled under source "offsite" and the latch is
+	// keyed by domain; with 2+ destinations the size is sampled under the
+	// per-target source ("offsite:<id>") and the latch is keyed by
+	// (domain,targetID).
 	if !multiTarget {
-		if settings.OffsiteGrowthBudgetGB > 0 {
+		if target.GrowthBudgetGB > 0 {
 			if serr := s.CollectStats(ctx, domain, "offsite"); serr != nil {
 				log.Printf("api: offsite %s: budget size sample failed (replica is safe): %v", domain, serr) //nolint:gosec // G706: domain is a fixed literal
 			}
 		} else {
 			s.CollectStatsAsync(domain, "offsite")
 		}
-		s.checkOffsiteBudget(ctx, domain, settings)
+		s.checkOffsiteBudget(ctx, domain, target.GrowthBudgetGB)
 		if copyErr != nil {
 			err = copyErr
 			return err
@@ -684,13 +684,13 @@ func (s *Service) checkOffsiteBudgetForTarget(ctx context.Context, domain string
 }
 
 // checkOffsiteBudget compares the latest sampled off-site repo size for a domain
-// against the configured growth budget (OffsiteGrowthBudgetGB, 0 = off) and fires
+// with a single destination against that destination's budgetGB (0 = off) and fires
 // a notification once on each false→true crossing. The latch (offsiteOverBudget)
 // clears when growth drops back under budget so a later breach re-alarms. It reads
 // the newest repo_stats row for domain+source="offsite"; if none exists yet (the
 // async sample hasn't landed on the very first replication) it simply skips.
-func (s *Service) checkOffsiteBudget(ctx context.Context, domain string, settings store.Settings) {
-	s.checkGrowthBudget(ctx, domain, "offsite", domain, settings.OffsiteGrowthBudgetGB, "off-site")
+func (s *Service) checkOffsiteBudget(ctx context.Context, domain string, budgetGB int) {
+	s.checkGrowthBudget(ctx, domain, "offsite", domain, budgetGB, "off-site")
 }
 
 // checkPrimaryRemoteBudget is checkOffsiteBudget's counterpart for a
