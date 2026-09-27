@@ -10,6 +10,12 @@ vi.mock("../../lib/api", async (importOriginal) => ({
   ...fake.api,
 }));
 
+let desktop = true;
+vi.mock("../../lib/useMediaQuery", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/useMediaQuery")>()),
+  useIsDesktop: () => desktop,
+}));
+
 const { DirectRepoDialog } = await import("./DirectRepoDialog");
 
 const target = { id: "t-b2", name: "B2" };
@@ -22,8 +28,31 @@ function renderDialog(mode: "create" | "remember" = "create") {
 }
 
 describe("DirectRepoDialog", () => {
-  beforeEach(() => fake.reset());
+  beforeEach(() => {
+    fake.reset();
+    desktop = true;
+  });
   afterEach(cleanup);
+
+  it("asks in the bottom sheet on a phone", async () => {
+    desktop = false;
+    const { onDone, onClose } = renderDialog();
+    await screen.findByDisplayValue("b2:bucket:containers-direct");
+    expect(screen.getByRole("dialog").className).not.toContain("glim-modal-card");
+    expect(screen.getByRole("button", { name: "Cancel" }).className).toContain("w-full");
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Create and use" }));
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+  });
+
+  it("closes on Escape once on the desktop", async () => {
+    const { onClose } = renderDialog();
+    await screen.findByDisplayValue("b2:bucket:containers-direct");
+    expect(screen.getByRole("dialog").className).toContain("glim-modal-card");
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledOnce();
+  });
 
   it("fills only the button that creates the repository", async () => {
     renderDialog();

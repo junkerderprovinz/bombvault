@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../Button";
 import { ConfirmDialog } from "../ConfirmDialog";
+import { ConfirmSheet } from "../mobile/ConfirmSheet";
 import {
   createDirectRepo,
   getDirectRepo,
@@ -14,6 +15,7 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { useToast } from "../../lib/toast";
 import { useDialogKeys } from "../../lib/useConfirm";
+import { useIsDesktop } from "../../lib/useMediaQuery";
 import { reposChanged } from "../../lib/useNamedRepos";
 
 export type DirectRepoResult =
@@ -51,7 +53,8 @@ export function DirectRepoDialog({
   const [note, setNote] = useState<DirectSuggestion["note"]>("");
   const [result, setResult] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
-  useDialogKeys(true, dialogRef, onClose);
+  const isDesktop = useIsDesktop();
+  useDialogKeys(isDesktop, dialogRef, onClose);
 
   useEffect(() => {
     let alive = true;
@@ -117,54 +120,55 @@ export function DirectRepoDialog({
     onDone({ kind: "created", repo: r.repo });
   }
 
-  return createPortal(
-    <ConfirmDialog
-      ref={dialogRef}
-      title={withTarget(t("directRepo.title"))}
-      message={withTarget(t("directRepo.intro"))}
-      confirmLabel={t("directRepo.addAndUse")}
-      confirmLabelKey="directRepo.addAndUse"
-      cancelLabel={t("common.cancel")}
-      cancelTone="neutral"
-      extra={
-        <div className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-            {t("repos.name")}
-            <input value={name} onChange={(e) => setName(e.target.value)} spellCheck={false} autoComplete="off" className={FIELD} />
-          </label>
-          <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-            {t("repos.location")}
-            <input
-              value={location}
-              onChange={(e) => {
-                locationTouched.current = true;
-                setLocation(e.target.value);
-                setResult(null);
-              }}
-              spellCheck={false}
-              autoComplete="off"
-              dir="ltr"
-              className={`${FIELD} font-mono text-start`}
-            />
-          </label>
-          {note !== "" && <p className="text-xs text-carbon-textSub">{withTarget(t(NOTE_KEYS[note]))}</p>}
-          {mode === "remember" && <p className="text-xs text-carbon-textMuted">{t("directRepo.draftNote")}</p>}
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              label={t("directRepo.test")}
-              labelKey="directRepo.test"
-              tone="neutral"
-              onClick={() => void test()}
-              busy={testing}
-              disabled={testing || location.trim() === ""}
-            />
-            {result && <span className="text-xs text-carbon-textSub">{result}</span>}
-          </div>
+  const surface = {
+    title: withTarget(t("directRepo.title")),
+    message: withTarget(t("directRepo.intro")),
+    confirmLabel: t("directRepo.addAndUse"),
+    confirmLabelKey: "directRepo.addAndUse",
+    cancelLabel: t("common.cancel"),
+    cancelTone: "neutral" as const,
+    extra: (
+      <div className="flex flex-col gap-3">
+        <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
+          {t("repos.name")}
+          <input value={name} onChange={(e) => setName(e.target.value)} spellCheck={false} autoComplete="off" className={FIELD} />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
+          {t("repos.location")}
+          <input
+            value={location}
+            onChange={(e) => {
+              locationTouched.current = true;
+              setLocation(e.target.value);
+              setResult(null);
+            }}
+            spellCheck={false}
+            autoComplete="off"
+            dir="ltr"
+            className={`${FIELD} font-mono text-start`}
+          />
+        </label>
+        {note !== "" && <p className="text-xs text-carbon-textSub">{withTarget(t(NOTE_KEYS[note]))}</p>}
+        {mode === "remember" && <p className="text-xs text-carbon-textMuted">{t("directRepo.draftNote")}</p>}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            label={t("directRepo.test")}
+            labelKey="directRepo.test"
+            tone="neutral"
+            onClick={() => void test()}
+            busy={testing}
+            disabled={testing || location.trim() === ""}
+          />
+          {result && <span className="text-xs text-carbon-textSub">{result}</span>}
         </div>
-      }
-      onConfirm={() => void confirm()}
-      onCancel={onClose}
-    />,
+      </div>
+    ),
+    onConfirm: () => void confirm(),
+    onCancel: onClose,
+  };
+  // The sheet takes no ref: BottomSheet handles Escape and the Tab trap itself.
+  return createPortal(
+    isDesktop ? <ConfirmDialog ref={dialogRef} {...surface} /> : <ConfirmSheet {...surface} />,
     document.body
   );
 }
