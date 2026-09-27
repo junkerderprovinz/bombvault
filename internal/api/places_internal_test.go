@@ -398,6 +398,35 @@ func TestAddingAFolderPlaceWritesItWithoutCredentials(t *testing.T) {
 	}
 }
 
+// An import drops every place before it writes them back, so a place added
+// in between would be dropped with them.
+func TestAddingAPlaceWaitsForAnImportOrEdit(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.probeAnswers(places.ProbeResult{OK: true, Base: "nas"})
+	f.svc.placeEditMu.Lock()
+	done := make(chan map[string]any, 1)
+	go func() {
+		done <- f.do(http.MethodPost, "/api/places", map[string]any{
+			"provider": "unraid-folder", "fields": map[string]string{"path": "nas"}, "name": "NAS",
+		})
+	}()
+	select {
+	case res := <-done:
+		f.svc.placeEditMu.Unlock()
+		t.Fatalf("a place was added during an edit: %v", res)
+	case <-time.After(100 * time.Millisecond):
+	}
+	f.svc.placeEditMu.Unlock()
+	select {
+	case res := <-done:
+		if res["ok"] != true {
+			t.Fatalf("POST /api/places = %v", res)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the place was never added")
+	}
+}
+
 func TestAddingACloudPlaceKeepsItsKeysInASetOfItsOwn(t *testing.T) {
 	f := newPlacementFixture(t)
 	base := "s3:https://s3.eu-central-1.wasabisys.com/bv"

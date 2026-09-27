@@ -544,6 +544,10 @@ func (s *Service) createPlace(ctx context.Context, body createPlaceBody) (store.
 	if err != nil {
 		return store.Place{}, err
 	}
+	// An import drops and rebuilds every place under this lock, and would drop
+	// a place written in between.
+	s.placeEditMu.Lock()
+	defer s.placeEditMu.Unlock()
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return store.Place{}, err
