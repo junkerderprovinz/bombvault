@@ -42,20 +42,24 @@ function PluginRow({ plugin, snapshotId, source, t }: { plugin: FlashPlugin; sna
   }
 
   return (
-    <div className="flex items-center gap-3 py-1 text-xs">
-      <span dir="ltr" className="min-w-0 flex-1 truncate text-start font-mono text-carbon-text">{plugin.name}</span>
-      <span dir="ltr" className="text-carbon-textSub">{plugin.version}</span>
-      <span className="w-16 text-end text-carbon-textSub">{humanBytes(plugin.size)}</span>
-      <Button
-        key={shake}
-        label={t("flash.pluginRestore")}
-        labelKey="flash.pluginRestore"
-        tone="accent"
-        onClick={() => void handleRestore()}
-        disabled={isPending}
-        busy={isPending}
-        className={`shrink-0${shake ? " glim-shake" : ""}`}
-      />
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1 text-xs">
+      {/* On a phone the name keeps a line of its own, so the row's figures
+          and button cannot squeeze it to nothing. */}
+      <span dir="ltr" className="min-w-0 flex-1 basis-40 truncate text-start font-mono text-carbon-text">{plugin.name}</span>
+      <div className="ms-auto flex items-center gap-3">
+        <span dir="ltr" className="text-carbon-textSub">{plugin.version}</span>
+        <span className="w-16 text-end text-carbon-textSub">{humanBytes(plugin.size)}</span>
+        <Button
+          key={shake}
+          label={t("flash.pluginRestore")}
+          labelKey="flash.pluginRestore"
+          tone="accent"
+          onClick={() => void handleRestore()}
+          disabled={isPending}
+          busy={isPending}
+          className={`shrink-0${shake ? " glim-shake" : ""}`}
+        />
+      </div>
       {confirmDialog}
     </div>
   );
