@@ -1291,6 +1291,34 @@ func TestTestingAPlaceOpensARowUnderAnotherEnding(t *testing.T) {
 	}
 }
 
+func TestTestingAPlaceOpensADirectRepositoryWithItsOwnCredentials(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "b2-set", Name: "B2", CloudCreds: CloudCreds{S3KeyID: "k2", S3Secret: "s2"}},
+		{ID: "old-set", Name: "B2 before", CloudCreds: CloudCreds{S3KeyID: "k1", S3Secret: "s1"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	p := s3Place("B2", "s3:https://s3.example.com/bucket")
+	p.Folders, p.CredsRef = map[string]string{"containers": "container"}, "b2-set"
+	b2 := f.storePlace(p)
+	target := f.placeTarget(b2, "containers", "")
+	direct := f.direct(target)
+	f.linkRow(direct.ID, b2, "containers", "-direct")
+	if _, err := f.db.Exec(`UPDATE offsite_targets SET creds_ref = 'old-set' WHERE id = ?`, direct.ID); err != nil {
+		t.Fatal(err)
+	}
+	f.eng.ids[target.Repo], f.eng.ids[direct.Repo] = "r-ct", "r-direct"
+	f.eng.keys[direct.Repo] = "AWS_ACCESS_KEY_ID=k1"
+	f.eng.openErr[direct.Repo] = errors.New("Access Denied")
+
+	res := f.do(http.MethodPost, "/api/places/"+b2.ID+"/test", nil)
+
+	if res["ok"] != true || f.eng.opened[direct.Repo] == 0 {
+		t.Fatalf("POST test = %v, opened %v, want the direct repository opened on its own key", res, f.eng.opened)
+	}
+}
+
 func TestAPassedTestOutranksAnOlderFailedRun(t *testing.T) {
 	f := newPlacementFixture(t)
 	p := s3Place("B2", "s3:https://s3.example.com/bucket")

@@ -588,6 +588,11 @@ func (s *Service) applyDefault(ctx context.Context, domain string, keys []string
 		return nil, nil, errPlacementBusy
 	}
 	defer unlock()
+	return s.applyDefaultLocked(ctx, domain, keys)
+}
+
+// applyDefaultLocked is applyDefault for a caller that holds the domain lock.
+func (s *Service) applyDefaultLocked(ctx context.Context, domain string, keys []string) ([]string, []keptItem, error) {
 	s.placementMu.Lock()
 	defer s.placementMu.Unlock()
 

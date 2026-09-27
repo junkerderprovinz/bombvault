@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/places"
@@ -161,8 +162,8 @@ func TestOptionsOfferTheDomainPathThenMountedRepositories(t *testing.T) {
 
 	homes := rowsOf(f.options("vms")["homes"])
 	want := []map[string]any{
-		{"id": "", "name": "", "location": settings.VMsPath, "kind": "domain", "scheme": ""},
-		{"id": nas.ID, "name": "NAS Keller", "location": "nas", "kind": "local", "scheme": ""},
+		{"id": "", "name": "", "location": settings.VMsPath, "kind": "domain", "scheme": "", "placeId": "", "provider": ""},
+		{"id": nas.ID, "name": "NAS Keller", "location": "nas", "kind": "local", "scheme": "", "placeId": "", "provider": ""},
 	}
 	if !reflect.DeepEqual(homes, want) {
 		t.Fatalf("homes = %v, want %v", homes, want)
@@ -260,9 +261,9 @@ func TestSendToOffersEachTargetsDirectRepositoryThenRemoteOnes(t *testing.T) {
 
 	got := rowsOf(f.options("containers")["sendTo"])
 	want := []map[string]any{
-		{"kind": "direct", "repoId": "", "targetId": b2.ID, "name": "B2", "location": ""},
-		{"kind": "direct", "repoId": direct.ID, "targetId": hz.ID, "name": "Hetzner", "location": direct.Repo},
-		{"kind": "remote", "repoId": box.ID, "targetId": "", "name": "Storagebox", "location": "sftp:u1@box.example:/bv"},
+		{"kind": "direct", "repoId": "", "targetId": b2.ID, "name": "B2", "location": "", "placeId": "", "provider": ""},
+		{"kind": "direct", "repoId": direct.ID, "targetId": hz.ID, "name": "Hetzner", "location": direct.Repo, "placeId": "", "provider": ""},
+		{"kind": "remote", "repoId": box.ID, "targetId": "", "name": "Storagebox", "location": "sftp:u1@box.example:/bv", "placeId": "", "provider": ""},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("sendTo = %v, want %v", got, want)
@@ -316,5 +317,104 @@ func TestOptionsForAnotherDomainAreABadRequest(t *testing.T) {
 	f.h.Router().ServeHTTP(rec, jsonReq(http.MethodGet, "/api/placement/options?domain=flash", nil))
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want 400", rec.Code)
+	}
+}
+
+func TestEveryOptionNamesItsPlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	unraid := f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(b2, "containers", "")
+
+	opts := f.options("containers")
+
+	homes := rowsOf(opts["homes"])
+	if homes[0]["id"] != "" || homes[0]["placeId"] != unraid.ID || homes[0]["provider"] != "unraid-folder" {
+		t.Errorf("domain path option = %v", homes[0])
+	}
+	targets := rowsOf(opts["targets"])
+	if len(targets) != 1 || targets[0]["id"] != target.ID || targets[0]["placeId"] != b2.ID || targets[0]["provider"] != "s3-other" {
+		t.Errorf("targets = %v", targets)
+	}
+	sendTo := rowsOf(opts["sendTo"])
+	if len(sendTo) != 1 || sendTo[0]["kind"] != "direct" || sendTo[0]["targetId"] != target.ID || sendTo[0]["placeId"] != b2.ID {
+		t.Errorf("sendTo = %v, want only the direct repository beside B2", sendTo)
+	}
+}
+
+func TestAnOptionAtAPlaceIsNamedAfterThePlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(b2, "containers", "")
+	target.Name = "containers-offsite"
+	if _, err := f.st.UpsertOffsiteTarget(target); err != nil {
+		t.Fatal(err)
+	}
+	opts := f.options("containers")
+	if targets := rowsOf(opts["targets"]); len(targets) != 1 || targets[0]["name"] != "B2" {
+		t.Errorf("targets = %v, want the target named after its place", targets)
+	}
+	if sendTo := rowsOf(opts["sendTo"]); len(sendTo) != 1 || sendTo[0]["name"] != "B2" {
+		t.Errorf("sendTo = %v, want the direct repository named after its place", sendTo)
+	}
+}
+
+func TestALocalPlaceIsOfferedAsAHomeBeforeItHoldsARepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	homes := rowsOf(f.options("containers")["homes"])
+	i := slices.IndexFunc(homes, func(h map[string]any) bool { return h["placeId"] == nas.ID })
+	if i < 0 || homes[i]["id"] != "" || homes[i]["kind"] != "local" || homes[i]["location"] != "nas/containers" {
+		t.Fatalf("homes = %v, want NAS offered before its repository exists", homes)
+	}
+}
+
+func TestARemotePlaceIsOfferedToSendToBeforeItHoldsARepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.storePlace(localPlace("Unraid", "backups"), "containers", "vms", "files")
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	sendTo := rowsOf(f.options("containers")["sendTo"])
+	if len(sendTo) != 1 || sendTo[0]["kind"] != "remote" || sendTo[0]["repoId"] != "" || sendTo[0]["placeId"] != b2.ID ||
+		sendTo[0]["location"] != "s3:https://s3.example.com/bucket/container" {
+		t.Fatalf("sendTo = %v, want B2 as a repository made on first choice", sendTo)
+	}
+}
+
+func TestARepositoryOfAnotherDomainIsNotOffered(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	vms, err := f.st.CreatePlaceRepo(nas.ID, "vms", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	homes := rowsOf(f.options("containers")["homes"])
+	if slices.ContainsFunc(homes, func(h map[string]any) bool { return h["id"] == vms.ID }) {
+		t.Fatalf("homes = %v, want the VMs repository left out", homes)
+	}
+}
+
+func TestAPlaceWhoseRepositoryIsSwitchedOffIsNotOfferedInItsStead(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.storePlace(localPlace("NAS", "nas"))
+	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	for _, p := range []store.Place{nas, b2} {
+		repo, err := f.st.CreatePlaceRepo(p.ID, "containers", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		repo.Enabled = false
+		if _, err := f.st.UpsertOffsiteTarget(repo); err != nil {
+			t.Fatal(err)
+		}
+	}
+	opts := f.options("containers")
+	atPlace := func(o map[string]any) bool { return o["placeId"] == nas.ID || o["placeId"] == b2.ID }
+	if homes := rowsOf(opts["homes"]); slices.ContainsFunc(homes, atPlace) {
+		t.Errorf("homes = %v, want neither NAS nor its switched-off repository", homes)
+	}
+	if sendTo := rowsOf(opts["sendTo"]); slices.ContainsFunc(sendTo, atPlace) {
+		t.Errorf("sendTo = %v, want neither B2 nor its switched-off repository", sendTo)
 	}
 }
