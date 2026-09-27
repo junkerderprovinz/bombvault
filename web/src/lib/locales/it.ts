@@ -1533,6 +1533,7 @@ const it: Partial<Translations> = {
   "places.error.appendOnlyOff": "Questo repository è append-only e il luogo no, quindi una potatura lì potrebbe eliminarne gli snapshot. Attiva prima append-only nel luogo.",
   "places.error.restPathDeep": "rest-server crea repository al massimo a due livelli di profondità, e ogni dominio riceve una propria cartella sotto questa. Inserisci una sola cartella, senza barra.",
   "places.error.ownedField": "Questo valore lo stabilisce il luogo. Modificalo nei dettagli del luogo in Impostazioni, Archiviazione.",
+  "places.error.unknownProvider": "Questo server non può connettersi a quel tipo di archiviazione.",
   "places.error.locationEstablished": "one=All'indirizzo vecchio ci sono dei backup ({n} snapshot di {domains}) e quello nuovo non contiene lo stesso repository.|many=All'indirizzo vecchio ci sono dei backup ({n} snapshot di {domains}) e quello nuovo non contiene lo stesso repository.|other=All'indirizzo vecchio ci sono dei backup ({n} snapshot di {domains}) e quello nuovo non contiene lo stesso repository.",
   "places.error.locationEstablishedPlain": "All'indirizzo vecchio ci sono dei backup e quello nuovo non contiene lo stesso repository.",
   "places.error.probeFailed": "La prova di connessione non è riuscita: {reason}",

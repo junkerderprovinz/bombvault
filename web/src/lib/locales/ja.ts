@@ -1526,6 +1526,7 @@ const ja: Partial<Translations> = {
   "places.error.appendOnlyOff": "このリポジトリは append-only ですが保存場所はそうではないため、そこで整理するとスナップショットが削除されるおそれがあります。先に保存場所で append-only をオンにしてください。",
   "places.error.restPathDeep": "rest-server はリポジトリを最大 2 階層の深さまでしか作成できず、各ドメインはこのフォルダーの下に専用のフォルダーを持ちます。スラッシュを含まない 1 つのフォルダーを入力してください。",
   "places.error.ownedField": "この値は保存場所が決めます。設定 → ストレージ で保存場所の詳細を開いて変更してください。",
+  "places.error.unknownProvider": "このサーバーはその種類のストレージに接続できません。",
   "places.error.locationEstablished": "古いアドレスにバックアップがあり（{domains} のスナップショット {n} 件）、新しいアドレスには同じリポジトリがありません。",
   "places.error.locationEstablishedPlain": "古いアドレスにバックアップがあり、新しいアドレスには同じリポジトリがありません。",
   "places.error.probeFailed": "接続テストに失敗しました：{reason}",

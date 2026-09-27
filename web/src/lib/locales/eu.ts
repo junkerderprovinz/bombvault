@@ -1553,6 +1553,7 @@ const eu: Partial<Translations> = {
   "places.error.appendOnlyOff": "Biltegi hau gehitu-soilik da eta lekua ez, beraz han egindako garbiketa batek bere argazkiak ezaba litzake. Piztu lehenik gehitu-soilik lekuan.",
   "places.error.restPathDeep": "rest-server-ek gehienez bi mailako sakoneran sortzen ditu biltegiak, eta domeinu bakoitzak bere karpeta du honen azpian. Idatzi karpeta bakar bat, barrarik gabe.",
   "places.error.ownedField": "Balio hau lekuak ezartzen du. Aldatu lekuaren xehetasunetan, Ezarpenak, Biltegiratzea atalean.",
+  "places.error.unknownProvider": "Zerbitzari hau ezin da biltegiratze mota horretara konektatu.",
   "places.error.locationEstablished": "one=Helbide zaharrean babeskopiak daude ({domains}: {n} argazki), eta berrian ez dago biltegi bera.|other=Helbide zaharrean babeskopiak daude ({domains}: {n} argazki), eta berrian ez dago biltegi bera.",
   "places.error.locationEstablishedPlain": "Helbide zaharrean babeskopiak daude, eta berrian ez dago biltegi bera.",
   "places.error.probeFailed": "Konexio-probak huts egin du: {reason}",

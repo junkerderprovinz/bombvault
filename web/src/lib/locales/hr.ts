@@ -1553,6 +1553,7 @@ const hr: Partial<Translations> = {
   "places.error.appendOnlyOff": "Ovaj repozitorij ima samo-dodavanje, a mjesto nema, pa bi čišćenje ondje moglo izbrisati njegove snimke. Najprije uključi samo-dodavanje na mjestu.",
   "places.error.restPathDeep": "rest-server stvara repozitorije najviše dvije razine duboko, a svaka domena dobiva vlastitu mapu ispod ove. Upiši jednu mapu, bez kose crte.",
   "places.error.ownedField": "Ovu vrijednost određuje mjesto. Promijenite je u detaljima mjesta pod Postavke → Pohrana.",
+  "places.error.unknownProvider": "Ovaj se poslužitelj ne može povezati s tom vrstom pohrane.",
   "places.error.locationEstablished": "one=Na staroj adresi leže sigurnosne kopije ({domains}: {n} snimka), a na novoj adresi nije isti repozitorij.|few=Na staroj adresi leže sigurnosne kopije ({domains}: {n} snimke), a na novoj adresi nije isti repozitorij.|other=Na staroj adresi leže sigurnosne kopije ({domains}: {n} snimki), a na novoj adresi nije isti repozitorij.",
   "places.error.locationEstablishedPlain": "Na staroj adresi leže sigurnosne kopije, a na novoj adresi nije isti repozitorij.",
   "places.error.probeFailed": "Test veze nije uspio: {reason}",

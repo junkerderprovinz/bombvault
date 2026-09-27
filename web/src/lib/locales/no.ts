@@ -1533,6 +1533,7 @@ const no: Partial<Translations> = {
   "places.error.appendOnlyOff": "Dette depotet er append-only, men lagringsstedet er det ikke, så en opprydding der kan slette øyeblikksbildene. Slå på append-only på lagringsstedet først.",
   "places.error.restPathDeep": "rest-server oppretter depoter høyst to nivåer dypt, og hvert domene får sin egen mappe under denne. Skriv inn én mappe, uten skråstrek.",
   "places.error.ownedField": "Lagringsstedet bestemmer denne verdien. Endre den i detaljene til lagringsstedet under Innstillinger, Lagring.",
+  "places.error.unknownProvider": "Denne serveren kan ikke koble til den typen lagring.",
   "places.error.locationEstablished": "one=Det ligger sikkerhetskopier på den gamle adressen ({n} øyeblikksbilde av {domains}), og den nye inneholder ikke det samme depotet.|other=Det ligger sikkerhetskopier på den gamle adressen ({n} øyeblikksbilder av {domains}), og den nye inneholder ikke det samme depotet.",
   "places.error.locationEstablishedPlain": "Det ligger sikkerhetskopier på den gamle adressen, og den nye inneholder ikke det samme depotet.",
   "places.error.probeFailed": "Tilkoblingstesten mislyktes: {reason}",

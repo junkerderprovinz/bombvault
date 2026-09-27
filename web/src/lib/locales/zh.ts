@@ -1526,6 +1526,7 @@ const zh: Partial<Translations> = {
   "places.error.appendOnlyOff": "此存储库是 append-only，而存储位置不是，因此在那里清理可能会删除它的快照。请先在存储位置上开启 append-only。",
   "places.error.restPathDeep": "rest-server 最多只能在两层深度内创建存储库，而每个域都会在此文件夹下拥有自己的文件夹。请输入单个文件夹，不要包含斜杠。",
   "places.error.ownedField": "此值由存储位置决定。请在“设置”的“存储”中该存储位置的详情里修改。",
+  "places.error.unknownProvider": "此服务器无法连接到这种存储。",
   "places.error.locationEstablished": "旧地址上已有备份（{domains} 的 {n} 个快照），而新地址上不是同一个存储库。",
   "places.error.locationEstablishedPlain": "旧地址上已有备份，而新地址上不是同一个存储库。",
   "places.error.probeFailed": "连接测试失败：{reason}",

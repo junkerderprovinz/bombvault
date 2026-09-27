@@ -1533,6 +1533,7 @@ const tr: Partial<Translations> = {
   "places.error.appendOnlyOff": "Bu depo append-only, konum ise değil; bu yüzden oradaki bir budama deponun anlık görüntülerini silebilir. Önce konumda append-only'yi aç.",
   "places.error.restPathDeep": "rest-server depoları en fazla iki seviye derinlikte oluşturur ve her alan bunun altında kendi klasörünü alır. Eğik çizgi olmadan tek bir klasör gir.",
   "places.error.ownedField": "Bu değeri konum belirler. Ayarlar, Depolama altında konumun ayrıntılarından değiştir.",
+  "places.error.unknownProvider": "Bu sunucu o tür bir depolamaya bağlanamaz.",
   "places.error.locationEstablished": "Eski adreste yedekler var ({domains} için {n} anlık görüntü) ve yeni adreste aynı depo yok.",
   "places.error.locationEstablishedPlain": "Eski adreste yedekler var ve yeni adreste aynı depo yok.",
   "places.error.probeFailed": "Bağlantı testi başarısız oldu: {reason}",

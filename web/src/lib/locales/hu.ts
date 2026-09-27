@@ -1536,6 +1536,7 @@ const hu: Partial<Translations> = {
   "places.error.appendOnlyOff": "Ez a tároló append-only, a tárhely viszont nem, így egy ottani nyesés törölhetné a pillanatképeit. Először kapcsold be az append-only módot a tárhelyen.",
   "places.error.restPathDeep": "A rest-server legfeljebb két szint mélyen hoz létre tárolókat, és minden tartomány saját mappát kap ez alatt. Egyetlen mappát adj meg, perjel nélkül.",
   "places.error.ownedField": "Ezt az értéket a tárhely határozza meg. A tárhely részleteiben módosíthatod a Beállítások, Tárolás alatt.",
+  "places.error.unknownProvider": "Ez a szerver nem tud ilyen típusú tárolóhoz csatlakozni.",
   "places.error.locationEstablished": "A régi címen mentések vannak ({domains}: {n} pillanatkép), és az új cím nem ugyanazt a tárolót tartalmazza.",
   "places.error.locationEstablishedPlain": "A régi címen mentések vannak, és az új cím nem ugyanazt a tárolót tartalmazza.",
   "places.error.probeFailed": "A kapcsolatteszt sikertelen: {reason}",

@@ -1575,3 +1575,19 @@ func TestAPlaceNamesTheCredentialSetItKeepsItsCredentialsIn(t *testing.T) {
 		t.Errorf("Shared credsRef = %v, want the empty name of the shared credentials", got)
 	}
 }
+
+func TestAnUnfinishedAddFormIsRefusedWithACode(t *testing.T) {
+	f := newPlacementFixture(t)
+	for _, c := range []struct {
+		body map[string]any
+		code string
+	}{
+		{map[string]any{"provider": "nope", "name": "X"}, "place-unknown-provider"},
+		{map[string]any{"provider": "sftp", "name": " "}, "place-name-missing"},
+		{map[string]any{"provider": "sftp", "name": "Garage"}, "place-unasked"},
+	} {
+		if res := f.do(http.MethodPost, "/api/places", c.body); res["ok"] != false || res["code"] != c.code {
+			t.Errorf("POST %v = %v, want %s", c.body, res, c.code)
+		}
+	}
+}

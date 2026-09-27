@@ -1533,6 +1533,7 @@ const he: Partial<Translations> = {
   "places.error.appendOnlyOff": "המאגר הזה במצב append-only והמקום לא, ולכן גיזום שם עלול למחוק את התצלומים שלו. הפעל קודם את מצב append-only במקום.",
   "places.error.restPathDeep": "rest-server יוצר מאגרים לעומק של שתי רמות לכל היותר, וכל תחום מקבל תיקייה משלו מתחת לזו. הזן תיקייה אחת, בלי לוכסן.",
   "places.error.ownedField": "המקום קובע את הערך הזה. שנה אותו בפרטים של המקום תחת הגדרות, אחסון.",
+  "places.error.unknownProvider": "השרת הזה לא יכול להתחבר לסוג אחסון כזה.",
   "places.error.locationEstablished": "one=בכתובת הישנה נמצאים גיבויים (תצלום אחד של {domains}), והחדשה אינה מכילה את אותו מאגר.|two=בכתובת הישנה נמצאים גיבויים (שני תצלומים של {domains}), והחדשה אינה מכילה את אותו מאגר.|other=בכתובת הישנה נמצאים גיבויים ({n} תצלומים של {domains}), והחדשה אינה מכילה את אותו מאגר.",
   "places.error.locationEstablishedPlain": "בכתובת הישנה נמצאים גיבויים, והחדשה אינה מכילה את אותו מאגר.",
   "places.error.probeFailed": "בדיקת החיבור נכשלה: {reason}",

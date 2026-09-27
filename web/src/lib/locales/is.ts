@@ -1553,6 +1553,7 @@ const is: Partial<Translations> = {
   "places.error.appendOnlyOff": "Þetta geymslusafn er aðeins-bæta-við en geymslustaðurinn ekki, svo hreinsun þar gæti eytt skyndimyndum þess. Kveiktu fyrst á aðeins-bæta-við á geymslustaðnum.",
   "places.error.restPathDeep": "rest-server býr til geymslusöfn í mesta lagi tveimur stigum niður, og hvert svæði fær eigin möppu undir þessari. Sláðu inn eina möppu, án skástriks.",
   "places.error.ownedField": "Geymslustaðurinn ákveður þetta gildi. Breyttu því í nánari upplýsingum geymslustaðarins undir Stillingar, Geymsla.",
+  "places.error.unknownProvider": "Þessi þjónn getur ekki tengst slíkri geymslu.",
   "places.error.locationEstablished": "one=Afrit eru á gamla vistfanginu ({n} skyndimynd af {domains}) og það nýja geymir ekki sama geymslusafn.|other=Afrit eru á gamla vistfanginu ({n} skyndimyndir af {domains}) og það nýja geymir ekki sama geymslusafn.",
   "places.error.locationEstablishedPlain": "Afrit eru á gamla vistfanginu og það nýja geymir ekki sama geymslusafn.",
   "places.error.probeFailed": "Tengingarprófun mistókst: {reason}",

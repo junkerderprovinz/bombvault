@@ -1553,6 +1553,7 @@ const ms: Partial<Translations> = {
   "places.error.appendOnlyOff": "Repositori ini tambah-sahaja tetapi tempatnya tidak, jadi pemangkasan di sana boleh memadam snapshotnya. Hidupkan tambah-sahaja pada tempat itu dahulu.",
   "places.error.restPathDeep": "rest-server mencipta repositori paling dalam dua aras, dan setiap domain mendapat folder sendiri di bawah folder ini. Masukkan satu folder sahaja, tanpa garis condong.",
   "places.error.ownedField": "Nilai ini ditetapkan oleh tempat. Ubahnya dalam butiran tempat di Tetapan, Storan.",
+  "places.error.unknownProvider": "Pelayan ini tidak dapat bersambung ke jenis storan itu.",
   "places.error.locationEstablished": "Sandaran berada di alamat lama ({n} snapshot bagi {domains}), dan alamat baharu tidak menyimpan repositori yang sama.",
   "places.error.locationEstablishedPlain": "Sandaran berada di alamat lama, dan alamat baharu tidak menyimpan repositori yang sama.",
   "places.error.probeFailed": "Ujian sambungan gagal: {reason}",

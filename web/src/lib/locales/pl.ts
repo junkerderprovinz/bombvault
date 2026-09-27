@@ -1528,6 +1528,7 @@ const pl: Partial<Translations> = {
   "places.error.appendOnlyOff": "To repozytorium jest append-only, a miejsce nie, więc przycinanie tam mogłoby usunąć jego migawki. Najpierw włącz append-only w miejscu.",
   "places.error.restPathDeep": "rest-server tworzy repozytoria najwyżej dwa poziomy w głąb, a każda domena dostaje pod tym folderem własny folder. Wpisz jeden folder, bez ukośnika.",
   "places.error.ownedField": "Tę wartość ustala miejsce. Zmień ją w szczegółach miejsca w Ustawieniach, Magazyn.",
+  "places.error.unknownProvider": "Ten serwer nie może połączyć się z tym rodzajem magazynu.",
   "places.error.locationEstablished": "one=Pod starym adresem znajdują się kopie zapasowe ({domains}: {n} migawka), a pod nowym nie ma tego samego repozytorium.|few=Pod starym adresem znajdują się kopie zapasowe ({domains}: {n} migawki), a pod nowym nie ma tego samego repozytorium.|many=Pod starym adresem znajdują się kopie zapasowe ({domains}: {n} migawek), a pod nowym nie ma tego samego repozytorium.|other=Pod starym adresem znajdują się kopie zapasowe ({domains}: {n} migawek), a pod nowym nie ma tego samego repozytorium.",
   "places.error.locationEstablishedPlain": "Pod starym adresem znajdują się kopie zapasowe, a pod nowym nie ma tego samego repozytorium.",
   "places.error.probeFailed": "Test połączenia nie powiódł się: {reason}",

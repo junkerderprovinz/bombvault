@@ -46,6 +46,9 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "place-append-only-off": "places.error.appendOnlyOff",
   "place-rest-path-deep": "places.error.restPathDeep",
   "place-owned-field": "places.error.ownedField",
+  "place-name-missing": "places.form.nameFirst",
+  "place-unasked": "places.form.whereFirst",
+  "place-unknown-provider": "places.error.unknownProvider",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {

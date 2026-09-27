@@ -1533,6 +1533,7 @@ const da: Partial<Translations> = {
   "places.error.appendOnlyOff": "Dette depot er append-only, men stedet er ikke, så en beskæring der kunne slette dets snapshots. Slå først append-only til på stedet.",
   "places.error.restPathDeep": "rest-server opretter depoter højst to niveauer dybt, og hvert domæne får sin egen mappe under denne. Angiv én mappe uden skråstreg.",
   "places.error.ownedField": "Stedet fastsætter denne værdi. Skift den i detaljerne for stedet under Indstillinger, Lagring.",
+  "places.error.unknownProvider": "Denne server kan ikke forbinde til den slags lager.",
   "places.error.locationEstablished": "one=Der ligger sikkerhedskopier på den gamle adresse ({n} snapshot af {domains}), og den nye rummer ikke det samme depot.|other=Der ligger sikkerhedskopier på den gamle adresse ({n} snapshots af {domains}), og den nye rummer ikke det samme depot.",
   "places.error.locationEstablishedPlain": "Der ligger sikkerhedskopier på den gamle adresse, og den nye rummer ikke det samme depot.",
   "places.error.probeFailed": "Forbindelsestesten mislykkedes: {reason}",
