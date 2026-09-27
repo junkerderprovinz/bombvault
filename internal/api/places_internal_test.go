@@ -702,8 +702,8 @@ func TestAFolderCannotTurnAPlaceIntoARepository(t *testing.T) {
 
 	res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"folders": map[string]string{"containers": ""}})
 
-	if res["ok"] != false || res["code"] != nil || res["error"] != errPlaceFolderBlank.Error() {
-		t.Fatalf("PATCH = %v, want a plain refusal of the blank folder", res)
+	if res["ok"] != false || res["code"] != "place-folder-blank" {
+		t.Fatalf("PATCH = %v, want place-folder-blank", res)
 	}
 	if row := f.storedTarget(target.ID); row.Repo != target.Repo {
 		t.Fatalf("target = %q, want it at %q", row.Repo, target.Repo)

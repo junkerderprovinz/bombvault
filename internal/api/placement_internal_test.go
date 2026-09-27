@@ -264,6 +264,7 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		store.ErrPlaceNameTaken:         "place-name-taken",
 		errPlaceHomeDomain:              "place-home-domain",
 		errPlaceIsRepository:            "place-is-repository",
+		errPlaceFolderBlank:             "place-folder-blank",
 		store.ErrPlaceDomainUnavailable: "place-domain-unavailable",
 		errPlaceAddressTaken:            "place-address-taken",
 		errPlaceOff:                     "place-off",
