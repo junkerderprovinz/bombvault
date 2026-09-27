@@ -36,6 +36,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/hostload"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
@@ -411,6 +412,9 @@ type Service struct {
 	suggestCache   map[string]suggestCacheEntry
 	suggestFlights map[string]*suggestFlight
 
+	// load measures the host while backups run, for the bottleneck line.
+	load *hostload.Sampler
+
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on
 	// every replication while over budget); the latch clears when growth drops
@@ -537,6 +541,11 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 		suggestFlights:    map[string]*suggestFlight{},
 	}
 	s.anomalies = newAnomalyEngine(s, time.Now)
+	s.load = hostload.NewSampler(procDir, loadEvery)
+	if st != nil {
+		st.SetRunStartedHook(s.runStarted)
+		st.AddRunFinishedHook(s.runEnded)
+	}
 	return s
 }
 

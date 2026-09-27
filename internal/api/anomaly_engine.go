@@ -162,7 +162,7 @@ func (e *anomalyEngine) Start(ctx context.Context) {
 	if e == nil {
 		return
 	}
-	e.svc.store.SetRunFinishedHook(e.runFinished)
+	e.svc.store.AddRunFinishedHook(e.runFinished)
 	if err := e.rebuildCache(); err != nil {
 		log.Printf("anomaly: read the findings at startup: %v", err)
 	}

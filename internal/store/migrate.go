@@ -2128,6 +2128,15 @@ CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expi
 		alreadySatisfied: columnPresent("targets", "backed_up_shape"),
 		sql:              `ALTER TABLE targets ADD COLUMN backed_up_shape TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// How busy the CPU, the disks and the network were during a backup, and
+		// the one thing that held it back when it was slow. JSON, written by the
+		// api package after the run.
+		version:          insightMigration + 1,
+		name:             "runs_load_summary",
+		alreadySatisfied: columnPresent("runs", "load_summary"),
+		sql:              `ALTER TABLE runs ADD COLUMN load_summary TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,

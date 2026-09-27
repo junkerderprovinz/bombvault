@@ -1122,7 +1122,7 @@ func mcpRunRow(v runView) map[string]any {
 	if v.FinishedAt != nil {
 		finished = *v.FinishedAt
 	}
-	return map[string]any{
+	row := map[string]any{
 		"id":              v.ID,
 		"domain":          domain,
 		"itemId":          v.TargetID,
@@ -1138,4 +1138,8 @@ func mcpRunRow(v runView) map[string]any {
 		"startedVia":      v.StartedVia,
 		"startedViaLabel": v.StartedViaLabel,
 	}
+	if v.Bottleneck != nil {
+		row["bottleneck"] = bottleneckSentence(v.Bottleneck)
+	}
+	return row
 }

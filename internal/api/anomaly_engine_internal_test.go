@@ -51,7 +51,7 @@ func newEngineFixture(t *testing.T) *engineFixture {
 	f.e = newAnomalyEngine(f.svc, func() time.Time { return time.Unix(f.now, 0) })
 	f.e.debounce = 0
 	f.svc.anomalies = f.e
-	f.st.SetRunFinishedHook(f.e.runFinished)
+	f.st.AddRunFinishedHook(f.e.runFinished)
 	return f
 }
 

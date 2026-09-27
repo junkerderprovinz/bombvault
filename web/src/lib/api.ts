@@ -479,6 +479,17 @@ export interface Run {
    *  purged from the list. */
   startedViaLabel?: string;
   startedViaRevoked?: boolean;
+  /** What held a slow backup back, when one thing clearly did. */
+  bottleneck?: Bottleneck;
+}
+
+/** The one resource a slow backup waited on. share is how busy it was, or
+ *  for an upload the share of its limit it used. */
+export interface Bottleneck {
+  kind: "disk" | "cpu" | "upload";
+  name?: string;
+  role?: "source" | "target" | "both";
+  share: number;
 }
 
 export interface ListRunsResponse {

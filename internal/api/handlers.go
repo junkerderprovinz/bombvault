@@ -25,6 +25,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/dbdump"
+	"github.com/junkerderprovinz/bombvault/internal/hostload"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
@@ -3812,6 +3813,8 @@ type runView struct {
 	// run the web interface or the scheduler started.
 	StartedViaLabel   string `json:"startedViaLabel"`
 	StartedViaRevoked bool   `json:"startedViaRevoked"`
+	// Bottleneck is what held a slow backup back, when one thing clearly did.
+	Bottleneck *hostload.Cause `json:"bottleneck,omitempty"`
 }
 
 // runTargetMaps resolves target_id → (human name, domain) across every domain,
@@ -3885,7 +3888,7 @@ func (h *Handler) runViews(runs []store.Run) []runView {
 	keys := h.mcpKeysBehind(runs)
 	views := make([]runView, 0, len(runs))
 	for _, r := range runs {
-		v := runView{Run: r, Target: name[r.TargetID], Domain: domain[r.TargetID]}
+		v := runView{Run: r, Target: name[r.TargetID], Domain: domain[r.TargetID], Bottleneck: runBottleneck(r.Load)}
 		if key, ok := keys[r.StartedViaKey]; ok {
 			v.StartedViaLabel = key.Label
 			v.StartedViaRevoked = key.RevokedAt > 0
