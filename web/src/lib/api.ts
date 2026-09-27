@@ -1358,6 +1358,18 @@ export interface ExcludeSuggestion {
   complete: boolean;
 }
 
+export interface ExcludePresetEntry {
+  line: string;
+  kind: string;
+  /** Starts unticked: the folder can also hold something the app cannot fetch again. */
+  optional: boolean;
+}
+
+export interface ExcludePreset {
+  app: string;
+  entries: ExcludePresetEntry[];
+}
+
 /**
  * GET /api/containers/{name}/excludes/suggest — the exclusion assistant's scan.
  * Returns exclude candidates (well-known junk dirs like cache/tmp/logs by name,
@@ -1411,6 +1423,8 @@ export function suggestContainerExcludes(
    *  the text stays translatable and an unknown id from a newer server renders
    *  nothing. Optional, so an older server still typechecks. */
   advisories?: string[] | null;
+  /** Folders a recognised app fills again by itself. Offered, never applied. */
+  preset?: ExcludePreset | null;
 }> {
   const q = source ? `?source=${source}` : "";
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/excludes/suggest${q}`);
