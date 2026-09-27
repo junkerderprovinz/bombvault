@@ -9,11 +9,12 @@ A BombVault beépített kiszolgálót tartalmaz a Model Context Protocolhoz (MCP
 | `get_health` | Verzió, a példány neve, fut-e mentés, és mit tehet ez a kulcs | olvasás |
 | `get_status` | Védettségi állapot tartományonként: utolsó sikeres mentés, várt időköz, ellenőrzések és off-site vizsgálatok, következő ütemezett futások | olvasás |
 | `get_coverage` | Mit véd a BombVault és mit nem, mindegyiknél az okkal | olvasás |
-| `list_items` | Minden védett konténer, VM és mappakészlet, a flash meghajtó és az alkalmazás beállításai, ütemezéssel, azzal, hogy egy mentés mit állít le, az utolsó mentéssel és annak idejével; az adatbázis-konténerek az utolsó dumpot is megadják; a ZFS-adatkészletek is szerepelnek, a legutóbbi ellenőrzésük eredményével | olvasás |
-| `list_runs` | Futási előzmények, a legújabbak elöl, tartomány, elem, állapot, fajta és idő szerint szűrhetően | olvasás |
+| `list_items` | Minden védett konténer, VM és mappakészlet, a flash meghajtó és az alkalmazás beállításai, ütemezéssel, azzal, hogy egy mentés mit állít le, az utolsó mentéssel és annak idejével; az adatbázis-konténerek az utolsó dumpot is megadják; a ZFS-adatkészletek is szerepelnek, a legutóbbi ellenőrzésük eredményével; a legutóbbi mentés óta más beállításokkal újra létrehozott konténer felsorolja a változásokat | olvasás |
+| `list_runs` | Futási előzmények, a legújabbak elöl, tartomány, elem, állapot, fajta és idő szerint szűrhetően; a lassú mentés, amelyet egyetlen dolog fékezett, megnevezi azt | olvasás |
 | `list_restore_points` | Egy elem visszaállítási pontjai az elsődleges tárolójából, konténernél az adatbázis-dumpjai is; egy ZFS-adatkészletnek mentésenként egy visszaállítási pontja van, az alatta lévő minden adatkészlet pillanatképével | olvasás |
 | `get_activity` | Mi fut éppen, fázissal és százalékkal | olvasás |
 | `get_storage_stats` | Egy tartomány elsődleges tárolójának méretelőzménye és heti növekedése, valamint a foglalt, szabad és teljes hely minden tárolójának lemezén vagy távoli helyén | olvasás |
+| `get_size_breakdown` | Mely mappák és fájlok foglalnak helyet egy konténer, VM vagy mappakészlet legújabb mentésében, és ebből mennyit adott hozzá a legutóbbi mentés | olvasás |
 | `list_anomalies` | Anomáliák, amelyeket a BombVault a mentésekben észrevett, állapot, súlyosság és tartomány szerint szűrhetők, a nyitott tételek összesítésével | olvasás |
 | `get_anomaly` | Egy ilyen észlelés, a nyugtázáskor hagyott megjegyzéssel | olvasás |
 | `start_backup` | Azonnal elmenti egy elem adatait | indítás |

@@ -373,6 +373,38 @@ func (r *Repo) SetUpdateCheck(containerName string, at int64, result string) err
 	return nil
 }
 
+// SetBackedUpShape records what the container looked like when its backup
+// succeeded. The api package owns the format.
+func (r *Repo) SetBackedUpShape(targetID, shape string) error {
+	res, err := r.db.Exec(`UPDATE targets SET backed_up_shape = ? WHERE id = ?`, shape, targetID)
+	if err != nil {
+		return fmt.Errorf("SetBackedUpShape: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("SetBackedUpShape: target %q not found", targetID)
+	}
+	return nil
+}
+
+// BackedUpShapes returns every recorded shape by target id, in one query for
+// the container list.
+func (r *Repo) BackedUpShapes() (map[string]string, error) {
+	rows, err := r.db.Query(`SELECT id, backed_up_shape FROM targets WHERE backed_up_shape <> ''`)
+	if err != nil {
+		return nil, fmt.Errorf("BackedUpShapes: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	out := map[string]string{}
+	for rows.Next() {
+		var id, shape string
+		if err := rows.Scan(&id, &shape); err != nil {
+			return nil, fmt.Errorf("BackedUpShapes: %w", err)
+		}
+		out[id] = shape
+	}
+	return out, rows.Err()
+}
+
 // SetTargetRepo writes a container's per-item repository override (#204): the ID of
 // a named repository from Settings, or "" to put it back on the Containers domain
 // repository.

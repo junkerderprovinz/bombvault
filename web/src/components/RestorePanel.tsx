@@ -14,6 +14,7 @@ import { Badge } from "./Badge";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
 import { FolderBrowser } from "./FolderBrowser";
 import { RecentRunsList } from "./RecentRunsList";
+import { SizeBreakdown } from "./SizeBreakdown";
 import { SnapshotFileTree } from "./SnapshotFileTree";
 import { loadErrorMessage } from "../lib/errors";
 import { useConfirm } from "../lib/useConfirm";
@@ -954,6 +955,7 @@ export function RestorePanel({
         </div>
       </Advanced>
       <RecentRunsList name={name} domain="container" t={t} />
+      <SizeBreakdown domain="containers" item={name} t={t} />
       {loading && (
         <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
       )}

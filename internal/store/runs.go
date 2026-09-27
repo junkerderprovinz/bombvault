@@ -32,11 +32,14 @@ type Run struct {
 	// StartedViaKey is the mcp_keys.id behind an MCP-started run, so the
 	// Activity log can name the client even after the key is revoked.
 	StartedViaKey string `json:"startedViaKey"`
+	// Load is how busy the host was during the run, as the api package
+	// writes it. Empty for a run that was not measured.
+	Load string `json:"-"`
 }
 
 // runCols is the column list of every full run query, in the order scanRun
 // reads them.
-const runCols = `id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id, started_via, started_via_key`
+const runCols = `id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id, started_via, started_via_key, load_summary`
 
 // RunMeta is what a caller knows about a run beyond its target and kind: the
 // pass it belongs to and who asked for it.
@@ -59,6 +62,12 @@ func (r *Repo) StartRunWith(targetID, kind string, meta RunMeta) (string, error)
 	if err != nil {
 		return "", fmt.Errorf("StartRunWith: %w", err)
 	}
+	r.hooksMu.RLock()
+	fn := r.runStarted
+	r.hooksMu.RUnlock()
+	if fn != nil {
+		fn(RunStarted{RunID: id, TargetID: targetID, Kind: kind})
+	}
 	return id, nil
 }
 
@@ -79,22 +88,33 @@ type RunMetrics struct {
 // FailRunningRun, which has no id to give, sets TargetID.
 type RunFinished struct{ RunID, TargetID string }
 
-// SetRunFinishedHook installs fn, called after every finish that changed a row.
+// AddRunFinishedHook adds fn, called after every finish that changed a row.
 // fn must not block and must not call back into the store: it runs on the
 // goroutine that finished the run, which holds the database's single connection.
-func (r *Repo) SetRunFinishedHook(fn func(RunFinished)) {
-	r.runFinishedMu.Lock()
-	defer r.runFinishedMu.Unlock()
-	r.runFinished = fn
+func (r *Repo) AddRunFinishedHook(fn func(RunFinished)) {
+	r.hooksMu.Lock()
+	defer r.hooksMu.Unlock()
+	r.runFinished = append(r.runFinished, fn)
 }
 
 func (r *Repo) notifyRunFinished(f RunFinished) {
-	r.runFinishedMu.RLock()
-	fn := r.runFinished
-	r.runFinishedMu.RUnlock()
-	if fn != nil {
+	r.hooksMu.RLock()
+	fns := r.runFinished
+	r.hooksMu.RUnlock()
+	for _, fn := range fns {
 		fn(f)
 	}
+}
+
+// RunStarted names a run that was just recorded.
+type RunStarted struct{ RunID, TargetID, Kind string }
+
+// SetRunStartedHook installs fn, called after every run is recorded, under the
+// same rules as a finish hook.
+func (r *Repo) SetRunStartedHook(fn func(RunStarted)) {
+	r.hooksMu.Lock()
+	defer r.hooksMu.Unlock()
+	r.runStarted = fn
 }
 
 // FinishRun records a run's final status, snapshot ID, bytes and optional
@@ -179,6 +199,14 @@ func (r *Repo) FailRunningRun(targetID, errMsg string) (int64, error) {
 		r.notifyRunFinished(RunFinished{TargetID: targetID})
 	}
 	return n, nil
+}
+
+// SetRunLoad stores how busy the host was during a finished run.
+func (r *Repo) SetRunLoad(runID, load string) error {
+	if _, err := r.db.Exec(`UPDATE runs SET load_summary = ? WHERE id = ?`, load, runID); err != nil {
+		return fmt.Errorf("SetRunLoad: %w", err)
+	}
+	return nil
 }
 
 // SetRunGroup ties runID to the parent run of a multi-domain pass such as
@@ -820,7 +848,7 @@ func scanRun(s scanner) (Run, error) {
 	err := s.Scan(
 		&run.ID, &run.TargetID, &run.Kind, &run.Status,
 		&run.StartedAt, &finishedAt, &snapID, &bytes, &errCol, &run.Acknowledged, &run.GroupID,
-		&run.StartedVia, &run.StartedViaKey,
+		&run.StartedVia, &run.StartedViaKey, &run.Load,
 	)
 	if err != nil {
 		return Run{}, err

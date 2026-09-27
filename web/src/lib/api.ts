@@ -87,6 +87,20 @@ export interface Container {
   /** The repositories hold dumps of this container and no files backup, so
    *  restoring it alone brings back an empty database. */
   dumpOnly: boolean;
+  /** How the container differs from its last good backup. Absent when it
+   *  was not recreated since. */
+  changedSinceBackup?: ContainerChange[];
+}
+
+/** One way a container differs from its last good backup: added is in the
+ *  backup only, removed there now only, updated an image pulled again under
+ *  the same name. A variable carries its name, never its value. */
+export interface ContainerChange {
+  field: "image" | "port" | "env" | "volume";
+  name?: string;
+  change: "added" | "changed" | "removed" | "updated";
+  backup?: string;
+  now?: string;
 }
 
 /** The engines BombVault can dump; "" for a container that is not a database. */
@@ -473,6 +487,17 @@ export interface Run {
    *  purged from the list. */
   startedViaLabel?: string;
   startedViaRevoked?: boolean;
+  /** What held a slow backup back, when one thing clearly did. */
+  bottleneck?: Bottleneck;
+}
+
+/** The one resource a slow backup waited on. share is how busy it was, or
+ *  for an upload the share of its limit it used. */
+export interface Bottleneck {
+  kind: "disk" | "cpu" | "cpulimit" | "upload";
+  name?: string;
+  role?: "source" | "target" | "both";
+  share: number;
 }
 
 export interface ListRunsResponse {
@@ -2570,6 +2595,52 @@ export function getSpike(): Promise<SpikeResponse> {
 }
 
 /** The newest runs. `run` adds that one run when it is older than the rest. */
+/** One row of a folder in a size breakdown. open marks a folder that can
+ *  be opened in turn. */
+export interface BreakdownEntry {
+  name: string;
+  dir?: boolean;
+  size: number;
+  files: number;
+  added: number;
+  open?: boolean;
+}
+
+/** One folder of an item's newest backup. size is what its files take before
+ *  deduplication and compression, added what the latest backup brought in
+ *  new or changed; first means there was no earlier backup. */
+export interface SizeBreakdown {
+  state: "ready" | "running" | "failed" | "none";
+  error?: string;
+  snapshot?: string;
+  time?: string;
+  first?: boolean;
+  partial?: boolean;
+  root?: string;
+  path: string;
+  size: number;
+  files: number;
+  added: number;
+  children: BreakdownEntry[];
+  other?: { count: number; size: number; files: number; added: number };
+}
+
+export type BreakdownDomain = "containers" | "vms" | "files";
+
+/** GET /api/breakdown: the size by folder of an item's newest backup. item is
+ *  a container or VM name, or a folder set's id. The first call starts the
+ *  work and answers with state "running". */
+export function getSizeBreakdown(
+  domain: BreakdownDomain,
+  item: string,
+  path: string,
+  retry = false
+): Promise<{ ok: boolean; error?: string; breakdown?: SizeBreakdown }> {
+  const q = new URLSearchParams({ domain, item, path });
+  if (retry) q.set("retry", "1");
+  return fetchJSON(`/api/breakdown?${q.toString()}`);
+}
+
 export function listRuns(run?: string): Promise<ListRunsResponse> {
   return fetchJSON(run ? `/api/runs?run=${encodeURIComponent(run)}` : "/api/runs");
 }

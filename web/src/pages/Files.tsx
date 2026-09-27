@@ -39,6 +39,7 @@ import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { RecentRunsList } from "../components/RecentRunsList";
+import { SizeBreakdown } from "../components/SizeBreakdown";
 import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
 import { RestoreProgress } from "../components/restore/RestoreProgress";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
@@ -745,6 +746,7 @@ function FileSetRestorePanel({
               )}
           </div>
           <RecentRunsList name={set.name} domain="files" t={t} />
+          <SizeBreakdown domain="files" item={set.id} t={t} />
           {loading && (
             <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
           )}

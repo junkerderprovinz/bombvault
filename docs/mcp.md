@@ -9,11 +9,12 @@ BombVault has a built-in server for the Model Context Protocol (MCP), the protoc
 | `get_health` | Version, instance name, whether a backup is running, and what this key may do | read |
 | `get_status` | Protection status per domain: last successful backup, expected interval, verification and off-site checks, next scheduled runs | read |
 | `get_coverage` | What BombVault protects and what it does not, with the reason for each | read |
-| `list_items` | Every protected container, VM, folder set, the flash drive and the app configuration, with its schedule, what a backup of it stops, its last backup and how long that took; database containers also carry their last dump; ZFS datasets are listed too, with the result of their last check | read |
-| `list_runs` | Run history, newest first, filterable by domain, item, status, kind and time | read |
+| `list_items` | Every protected container, VM, folder set, the flash drive and the app configuration, with its schedule, what a backup of it stops, its last backup and how long that took; database containers also carry their last dump; ZFS datasets are listed too, with the result of their last check; a container recreated with other settings since its last backup lists what changed | read |
+| `list_runs` | Run history, newest first, filterable by domain, item, status, kind and time; a slow backup that one thing held back names it | read |
 | `list_restore_points` | Restore points of one item from its primary repository, and for a container its database dumps; a ZFS dataset gets one restore point per backup, with a snapshot of every dataset below it | read |
 | `get_activity` | What is running right now, with phase and percentage | read |
 | `get_storage_stats` | Size history of one domain's primary repository and its growth per week, and the used, free and total space on the disk or remote of each of its repositories | read |
+| `get_size_breakdown` | Which folders and files take the space in the newest backup of one container, VM or folder set, and how much of each the latest backup added | read |
 | `list_anomalies` | Anomalies BombVault noticed in the backups, filterable by state, severity and domain, with a summary of what is open | read |
 | `get_anomaly` | One of those findings, with the note left when it was acknowledged | read |
 | `start_backup` | Backs up one item now | start |

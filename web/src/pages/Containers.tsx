@@ -28,6 +28,7 @@ import { RestorePanel } from "../components/RestorePanel";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
 import { ItemChecksLine } from "../components/ItemChecksLine";
 import { useItemChecks } from "../lib/useItemChecks";
+import { ContainerChangeNotice } from "../components/ContainerChangeNotice";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
 import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
 import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
@@ -2866,6 +2867,7 @@ export function ContainerRow({
               {container.name}
             </span>
             <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
+            <ContainerChangeNotice changes={container.changedSinceBackup} t={t} />
             {installed ? (
               <Badge tone={stateTone(container.state)}>{stateLabel(t, container.state)}</Badge>
             ) : (
