@@ -1,5 +1,4 @@
-// ---------------------------------------------------------------------------
-// ChipFilter — the schedule/backup chip strip shared by the Containers and
+// ChipFilter: the schedule/backup chip strip shared by the Containers and
 // VMs toolbars, plus the localStorage read it pairs with.
 //
 // ONE copy of the caption-span + small-well Selector chip: Containers.tsx and
@@ -7,9 +6,8 @@
 // near-identical-copies drift the SortControl/FilterControl comment in
 // Containers.tsx records for the pre-Selector rendering). Modeled on the
 // IncludeToggle/FilterPopover placement precedent for page-shared controls:
-// generic over its option set, no `t` inside — labels arrive pre-translated
+// generic over its option set, no `t` inside; labels arrive pre-translated
 // from the page, which keeps this module out of the i18n graph.
-// ---------------------------------------------------------------------------
 import { Selector } from "./Selector";
 
 export function ChipFilter<K extends string>({

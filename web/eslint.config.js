@@ -108,8 +108,9 @@ export default [
           // src/lib/pageShell.ts.
           exceptions: {
             // The seven-tab Selector strip is 1424px wide in German, and
-            // PAGE_SHELL's 1152px cap would wrap it onto two rows.
-            "Settings.tsx": "PAGE_SHELL_TABBED",
+            // PAGE_SHELL's 1152px cap would wrap it onto two rows. Below 48rem
+            // the card rhythm steps down to 24px like the other phone pages.
+            "Settings.tsx": "PAGE_SHELL_TABBED_RESPONSIVE",
             // Below 48rem the Card rhythm steps down to 24px (md:gap-10 is
             // gap-10 at/above it, so desktop is unchanged by construction).
             // Same 1152px cap. See PAGE_SHELL_RESPONSIVE in pageShell.ts.
@@ -118,6 +119,16 @@ export default [
             "VMs.tsx": "PAGE_SHELL_RESPONSIVE",
             "Recovery.tsx": "PAGE_SHELL_RESPONSIVE",
             "Files.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Flash.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Config.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Anomalies.tsx": "PAGE_SHELL_RESPONSIVE",
+            "ZFS.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Instances.tsx": "PAGE_SHELL_RESPONSIVE",
+            // The Instances lanes, each rendered as a tab panel through
+            // PAGE_SHELL_TABBED_RESPONSIVE.
+            "Receiver.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Fleet.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Pull.tsx": "PAGE_SHELL_RESPONSIVE",
             // Not a routed page: Layout renders it in place of the app shell
             // while auth is blocked.
             "Login.tsx": null,

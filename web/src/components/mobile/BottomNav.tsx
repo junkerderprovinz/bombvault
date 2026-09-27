@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // BottomNav; the mobile bottom bar.
 //
 // Below the 48rem breakpoint this is the desktop Sidebar's counterpart, and
@@ -64,6 +63,11 @@
 // .glim-coin-tile.glim-active in index.css). Status colors never touch
 // controls; tokens only, no hex.
 //
+// While a critical or warning finding is open, a dot in its tone sits on the
+// More trigger's glyph: the Anomalies row and its count live in the sheet, and
+// without the dot a phone would hide them one tap away. The count itself is
+// the sheet's, so the dot stays out of the accessibility tree.
+//
 // Tap-on-active: tapping the already-active destination scrolls the scroller
 // back to the top instead of navigating; and the navigation is actively
 // suppressed (preventDefault before react-router's own handler, see
@@ -71,7 +75,6 @@
 // duplicate history entry. The scroller is Layout's <main id="bv-main">, so
 // the mechanism is passed down from Layout as a prop and nothing here queries
 // the DOM for it.
-// ---------------------------------------------------------------------------
 import { useState, type CSSProperties, type MouseEvent } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import type { Settings } from "../../lib/api";
@@ -81,6 +84,7 @@ import { hidesLabel, labelWidth } from "../../lib/controls";
 import { hueVars } from "../../lib/appearance";
 import { useLabelMode } from "../../lib/useLabelMode";
 import { useTipBubble } from "../../lib/useTipBubble";
+import { useLoudAnomalies } from "../../lib/useAnomalies";
 import { IconEllipsis } from "../navGlyphs";
 import { MoreSheet } from "./MoreSheet";
 
@@ -129,6 +133,8 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
   // The More trigger's bubble: worded only in hiding modes, the same rule
   // the sidebar's rows follow (reactive mode brings the word back on hover).
   const moreTip = useTipBubble(showLabel || reactive ? undefined : t("nav.more"));
+  const loudAnomalies = useLoudAnomalies();
+  const anomalyDot = (settings?.anomalyEnabled ?? false) && loudAnomalies.count > 0;
 
   // NavLink's onClick fires before react-router's own Link handler, and Link
   // checks event.defaultPrevented before navigating (verified against the
@@ -217,8 +223,15 @@ export function BottomNav({ settings, authEnabled, scrollMainToTop }: BottomNavP
           >
             {/* The glyph box is the 24px slot-icon box (the 16px generated
                 glyph scales up to it, the same scaling the rail applies). */}
-            <span className="flex h-6 w-6 items-center justify-center rounded-control [&_svg]:h-6 [&_svg]:w-6">
+            <span className="relative flex h-6 w-6 items-center justify-center rounded-control [&_svg]:h-6 [&_svg]:w-6">
               <IconEllipsis />
+              {anomalyDot && (
+                <span
+                  data-testid="more-anomaly-dot"
+                  aria-hidden="true"
+                  className={`absolute -end-0.5 -top-0.5 h-2 w-2 rounded-full ${loudAnomalies.tone === "fail" ? "bg-statusFailSolid" : "bg-statusWarnSolid"}`}
+                />
+              )}
             </span>
             <span
               className={`max-w-full truncate ${showLabel ? "" : reactive ? "glim-label-reactive" : "sr-only"}`}

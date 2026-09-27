@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
 // useVisibilityGate; jsdom behavior proofs for the visibility pause gate (the
 // SSE/poll reconciliation fix).
 //
@@ -15,7 +14,6 @@
 // environment. Reading the module source is the repo's established doctrine
 // for exactly this (useMediaQuery.test.ts: "Node environment, no DOM: this
 // reads source text, it does not render").
-// ---------------------------------------------------------------------------
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";

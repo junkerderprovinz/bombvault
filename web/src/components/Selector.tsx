@@ -151,10 +151,12 @@ const SIZE: Record<
 /**
  * segmentPadding gives a segment with a glyph, or any segment of a strip beside
  * a button, the button height, since a box sized by its text comes out shorter
- * than the controls around it. Text-only strips keep the compact padding.
+ * than the controls around it. Text-only strips keep the compact padding, and
+ * grow to the button height only under a coarse pointer, where a 20px pill is
+ * too small to hit.
  */
 function segmentPadding(size: SelectorSize, hasGlyph: boolean, buttonHeight: boolean): string {
-  return hasGlyph || buttonHeight ? SIZE[size].glyphPadding : SIZE[size].padding;
+  return hasGlyph || buttonHeight ? SIZE[size].glyphPadding : `${SIZE[size].padding} pointer-coarse:min-h-(--btn-h)`;
 }
 
 // MIN_PINNED_WIDTH is the narrowest a pinned segment gets. The shared floor

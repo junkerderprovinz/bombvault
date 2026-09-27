@@ -299,7 +299,7 @@ export function ZFSRestorePanel({
           className="mt-2 flex flex-col gap-3 rounded-card bg-carbon-background p-3"
         >
           <Advanced>
-            <span className="flex items-center gap-2">
+            <span className="flex flex-wrap items-center gap-2">
               <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
                 {t("source.label")}
                 <InfoBubble tip={t("source.hint")} />

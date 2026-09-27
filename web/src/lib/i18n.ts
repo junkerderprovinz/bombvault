@@ -886,7 +886,7 @@ export const en = {
   "folders.cachedirToggle": "Skip cache folders (CACHEDIR.TAG)",
   "folders.cachedirScope": "Applies to the entire backup of this container, not only this folder.",
   // Live count for the mobile Save bar: how many folders the next backup
-  // hands restic. Invariant {n}, no plural forms — zero is a real answer.
+  // hands restic. Invariant {n}, no plural forms: zero is a real answer.
   "stophook.title": "Stop other containers",
   "stophook.hint": "Stop these other containers while this one is backed up (for example a database), then start them again afterwards.",
   "stophook.noCandidates": "No other installed containers found.",
@@ -1449,13 +1449,13 @@ export const en = {
   // SelectionTree's touch chevron: on a touch tree the expand affordance is
   // a real button (>=44x44, dedicated zone disjoint from the row's
   // tap-to-toggle), so unlike the desktop glyph it needs a spoken name.
-  // Generic on purpose — the treeitem's own accessible name already carries
+  // Generic on purpose: the treeitem's own accessible name already carries
   // the path; announcing "Expand /mnt/user/appdata" a second time over the
   // button would stutter.
   "common.expand": "Expand",
   "common.collapse": "Collapse",
   // Mobile stacked-detail back row: a visible label, never an icon-only
-  // affordance — the row reads chevron + "Back".
+  // affordance: the row reads chevron + "Back".
   "common.back": "Back",
   // Load-more affordance for windowed lists.
   "common.loadMore": "Load more",

@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // Home e2e: the real-binary contract for the phone Home.
 //
 // The dom twins prove the block semantics in jsdom (and stay on the desktop
@@ -29,7 +28,6 @@
 // correlates is staged into get /api/runs only after the POST (the
 // baseline-id correlation contract: a run present before the fire must never
 // correlate). The SPA, its fetches, the binary and every route shape are real.
-// ---------------------------------------------------------------------------
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 // The two device projects from playwright.config.ts. Everything else is a
@@ -211,7 +209,6 @@ async function yOf(locator: Locator): Promise<number> {
   return box!.y;
 }
 
-// ---------------------------------------------------------------------------
 
 test("Home is glanceable: blocks in order, offsite chip, trigger in the thumb zone", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the four-block Home is the phone contract");

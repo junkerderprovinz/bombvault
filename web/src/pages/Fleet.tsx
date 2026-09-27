@@ -28,7 +28,7 @@ import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetD
 import { credSetsChanged } from "../lib/useCloudCredSets";
 import { offsiteTargetsChanged } from "../lib/useOffsiteTargets";
 import { useT, type TranslationKey } from "../lib/i18n";
-import { PAGE_SHELL, PAGE_SHELL_TABBED } from "../lib/pageShell";
+import { PAGE_SHELL_RESPONSIVE, PAGE_SHELL_TABBED_RESPONSIVE } from "../lib/pageShell";
 import { SelectField } from "../components/SelectField";
 import { relativeTime } from "../lib/reltime";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
@@ -222,11 +222,11 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
   return (
     <div className="rounded-card bg-carbon-surface2 p-3 flex flex-col gap-2">
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="font-semibold text-carbon-text text-sm truncate">{offer.from || t("fleet.mesh.unknownPeer")}</span>
+        <span className="font-semibold text-carbon-text text-sm truncate max-md:whitespace-normal max-md:wrap-break-word">{offer.from || t("fleet.mesh.unknownPeer")}</span>
         <Badge tone={meshStatusTone(offer.status)}>{t(meshStatusLabelKey(offer.status))}</Badge>
         <span className="text-xs text-carbon-textMuted ms-auto">{relativeTime(t, offer.receivedAt)}</span>
       </div>
-      <p dir="ltr" className="text-xs font-mono text-carbon-textMuted truncate text-start">{offer.repo}</p>
+      <p dir="ltr" className="text-xs font-mono text-carbon-textMuted truncate text-start max-md:whitespace-normal max-md:break-all">{offer.repo}</p>
       {pending && (
         <div className="flex items-center gap-2 flex-wrap">
           <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
@@ -350,7 +350,7 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
               />
               <p className="text-caption text-carbon-textMuted">{t("fleet.mesh.baseUrlHint")}</p>
             </div>
-            <div className="flex items-center justify-end gap-2 pt-1">
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
               <Button
                 label={t("files.cancel")}
                 labelKey="files.cancel"
@@ -499,13 +499,13 @@ function FleetPeerCard({
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-carbon-text text-sm truncate">
+            <span className="font-semibold text-carbon-text text-sm truncate max-md:whitespace-normal max-md:wrap-break-word">
               {peer.lastPollInstanceName || peer.name}
             </span>
             {!peer.enabled && <Badge tone="neutral">{t("fleet.monitoringOff")}</Badge>}
             <Badge tone={pollTone}>{pollLabel}</Badge>
           </div>
-          <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start">{peer.url}</p>
+          <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start max-md:whitespace-normal max-md:break-all">{peer.url}</p>
         </div>
         {/* api.Version already starts with "v". */}
         {peer.lastPollVersion && (
@@ -537,7 +537,7 @@ function FleetPeerCard({
           }`}
         />
 
-        <div className="ms-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-2 flex-wrap max-md:w-full max-md:justify-end">
           <Button
             label={t("fleet.mesh.proposeButton")}
             labelKey="fleet.mesh.proposeButton"
@@ -722,7 +722,7 @@ function FleetDialog({
             like every setting row. */}
         <ToggleRow checked={enabled} onChange={setEnabled} label={t("fleet.enabledLabel")} />
 
-        <div className="flex items-center justify-end gap-2 pt-1">
+        <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
           <Button
             label={t("files.cancel")}
             labelKey="files.cancel"
@@ -800,7 +800,7 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
   const nextHue = () => hueSeq++;
 
   return (
-    <div className={embedded ? PAGE_SHELL_TABBED : PAGE_SHELL}>
+    <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           {!embedded && <h1 className="text-2xl font-semibold text-carbon-text">{t("fleet.title")}</h1>}

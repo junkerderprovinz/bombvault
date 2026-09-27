@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // Desktop-untouched: the per-page desktop invariance contract.
 //
 // The headline guarantee, made executable: for every routed destination,
@@ -36,7 +35,6 @@
 // ListToolbar/Load-more/chip-strip/wizard needles and the inverse
 // mobile-direction halves); this file pins the desktop half, and those
 // pages' asserts live beside those pages' phone treatments.
-// ---------------------------------------------------------------------------
 import { expect, test, type Page } from "@playwright/test";
 
 // The two desktop projects from playwright.config.ts (>= the 48rem chrome
@@ -75,7 +73,6 @@ for (const route of ROUTES) {
   });
 }
 
-// ---------------------------------------------------------------------------
 // The geometry half of "untouched": presence is not invariance. The shell's
 // desktop chrome sits at a contracted geometry on every destination: the
 // sidebar rail starts at the shell's 1rem gutter and ends left of the
@@ -86,7 +83,6 @@ for (const route of ROUTES) {
 // fails exactly like a per-route drift would; the relational asserts pin
 // consistency, so one destination cannot sit differently from the others.
 // jsdom computes no layout, so this guard only runs where layout is real.
-// ---------------------------------------------------------------------------
 const GEOMETRY_TOLERANCE_PX = 1;
 
 /** The shell's two structural boxes, the sidebar rail and the `bv-main`
@@ -157,7 +153,6 @@ test("desktop shell geometry is identical across every routed destination", asyn
   }
 });
 
-// ---------------------------------------------------------------------------
 // The >=48rem leakage pass for /dashboard: the one page with a phone face
 // asserts that nothing its phone half adds exists in the desktop DOM.
 // Role/text-based wherever possible so a restyle of the mobile chrome
@@ -165,7 +160,6 @@ test("desktop shell geometry is identical across every routed destination", asyn
 // StickyActionBar's exact chrome combination, which no desktop element
 // carries (verified app-wide when this pass landed, the only
 // `sticky bottom-0 z-10 bg-carbon-sidebar` element in src/ is the bar).
-// ---------------------------------------------------------------------------
 const DASHBOARD_ROUTES = ["/dashboard"];
 
 for (const route of DASHBOARD_ROUTES) {
@@ -185,11 +179,9 @@ for (const route of DASHBOARD_ROUTES) {
   });
 }
 
-// ---------------------------------------------------------------------------
 // The >=48rem leakage pass for /containers: the page the containers PR gave
 // a phone face (the card list, the stacked detail, the Save bar). Same
 // discipline as the Dashboard pass above.
-// ---------------------------------------------------------------------------
 const CONTAINER_ROUTES = ["/containers"];
 
 for (const route of CONTAINER_ROUTES) {
@@ -200,7 +192,7 @@ for (const route of CONTAINER_ROUTES) {
     // The sticky-in-flow Save bar (the stacked detail's footer): its exact
     // class signature exists nowhere on desktop.
     await expect(page.locator("div.sticky.bottom-0.z-10.bg-carbon-sidebar")).toHaveCount(0);
-    // The filled full-width accent control — the mobile Save / New-backup
+    // The filled full-width accent control: the mobile Save / New-backup
     // trigger's signature (Button tone="accent" over the caller's w-full
     // stage); no desktop control carries it.
     await expect(page.locator("button.w-full.bg-accent")).toHaveCount(0);
@@ -208,7 +200,7 @@ for (const route of CONTAINER_ROUTES) {
     await expect(page.getByRole("button", { name: "New backup" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Save folders" })).toHaveCount(0);
     // The stacked container detail's back row (accessible name
-    // "<container>, Back" — touch-tree.spec.ts's entry locator, generalized
+    // "<container>, Back", touch-tree.spec.ts's entry locator, generalized
     // past the fixture name).
     await expect(page.getByRole("button", { name: /, Back$/ })).toHaveCount(0);
     // The Save bar's live count statement (folders.handedToRestic).

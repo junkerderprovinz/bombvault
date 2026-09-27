@@ -664,3 +664,36 @@ describe("ZFS page", () => {
     ).toBeTruthy();
   });
 });
+
+// jsdom lays nothing out, so these pin the classes the phone layout rests on.
+describe("ZFS page at phone width", () => {
+  it("wraps the header actions inside the page instead of keeping them on one line", async () => {
+    await renderWithItems();
+    const row = screen.getByRole("button", { name: en["zfs.addDatasets"] }).parentElement!;
+    expect(row.className).toContain("flex-wrap");
+    expect(row.className).toContain("max-md:w-full");
+    expect(row.className.split(" ")).not.toContain("shrink-0");
+  });
+
+  it("puts a card's actions on a row of their own under the name", async () => {
+    await renderWithItems();
+    const row = screen.getByRole("button", { name: en["common.edit"] }).parentElement!;
+    expect(row.className).toContain("flex-wrap");
+    expect(row.className).toContain("max-md:w-full");
+    expect(screen.getByText("cache/appdata", { selector: "span" }).className).toContain("max-md:whitespace-normal");
+  });
+
+  it("lets the leftover sentence and its button wrap", async () => {
+    items = [item({ leftoverCount: 2 })];
+    await renderWithItems();
+    const button = screen.getByRole("button", { name: en["zfs.removeLeftovers"] });
+    expect(button.className).toContain("glim-btn-wrap");
+    expect(button.parentElement!.className).toContain("flex-wrap");
+  });
+
+  it("opens the member list from a finger-sized target under a touch pointer", async () => {
+    await renderWithItems();
+    const toggle = screen.getByRole("button", { name: countText(en["zfs.membersSummary"], "en", 1) });
+    expect(toggle.className).toContain("pointer-coarse:min-h-11");
+  });
+});

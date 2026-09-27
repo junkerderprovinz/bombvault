@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
 // StickyActionBar dom tests; the chrome contract of the shared sticky-in-flow
 // bar. Assert class, not computed layout; jsdom has no layout engine, so
 // "sticky works" is pinned as (a) the sticky/bottom-0 classes present and (b)
@@ -7,7 +6,6 @@
 // plus the chrome contract it shares with the BottomNav precedent (sidebar
 // surface, safe-area bottom padding), including the absence of a top
 // hairline: surfaces in this app are told apart by shade.
-// ---------------------------------------------------------------------------
 
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
@@ -40,24 +38,26 @@ describe("StickyActionBar", () => {
     expect(bar.className).not.toMatch(/(^|\s)fixed(\s|$)/);
   });
 
-  it("carries the chrome classes; sidebar surface, no hairline of its own, plain 12px bottom padding", () => {
+  it("carries the chrome classes; page-colour band, no hairline of its own, plain 12px bottom padding", () => {
     const { container } = render(
       <StickyActionBar>
         <div>row</div>
       </StickyActionBar>
     );
     const bar = container.firstElementChild as HTMLElement;
-    expect(bar.className).toContain("bg-carbon-sidebar");
+    // The band has the page colour, so the action stands on its own above
+    // the BottomNav card rather than reading as the edge of a card.
+    expect(bar.className).toContain("bg-carbon-background");
+    expect(bar.className).not.toContain("bg-carbon-sidebar");
     // No top hairline: surfaces in this app are told apart by shade, and the
     // bar sits on the page it overlays.
     expect(bar.className).not.toContain("border-t");
     expect(bar.className).not.toContain("border-carbon-border");
-    // Plain pb-3, and deliberately NO safe-area inset: the bar is sticky
+    // Plain pb-3, with no safe-area inset: the bar is sticky
     // inside main#bv-main, and BottomNav, main's flex sibling below it,
     // owns the home-indicator inset on its own host, so the bar never
     // reaches the screen edge. Reserving the inset here made the bar 22px
-    // taller than every other phone chrome row on devices that have one
-    // on devices that have one.
+    // taller than every other phone chrome row on devices that have one.
     expect(bar.className).toContain("pb-3");
     expect(bar.className).not.toContain("safe-area-bottom");
   });

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../components/Button";
-import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { ConfirmPrompt } from "../../components/ConfirmPrompt";
 import {
   deletePasskey,
   passkeyStatus,
@@ -135,16 +135,18 @@ export function PasskeyCard({
       {keys.length > 0 && (
         <ul className="flex flex-col gap-2">
           {keys.map((p) => (
+            // On a phone Remove goes under the name, which beside it is cut
+            // after a word or two, and the name and its facts wrap.
             <li
               key={p.id}
-              className="flex items-center justify-between gap-3 rounded-control bg-carbon-surface2 px-3 py-2"
+              className="flex items-center justify-between gap-3 rounded-control bg-carbon-surface2 px-3 py-2 max-md:flex-col max-md:items-start"
             >
               <div className="flex min-w-0 flex-col">
-                <span className="truncate text-sm text-carbon-text">{p.name}</span>
+                <span className="truncate text-sm text-carbon-text max-md:whitespace-normal max-md:wrap-anywhere">{p.name}</span>
                 {/* Two independent facts, joined by a separator. Whether the
                     second appears depends on the authenticator, so neither
                     sentence can carry the punctuation itself. */}
-                <span className="truncate text-xs text-carbon-textSub">
+                <span className="truncate text-xs text-carbon-textSub max-md:whitespace-normal max-md:wrap-anywhere">
                   {p.usableHere
                     ? t("auth.passkeyUsableHere")
                     : t("auth.passkeyOtherAddress").replace("{host}", p.rpId)}
@@ -188,7 +190,7 @@ export function PasskeyCard({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t("auth.passkeyNamePlaceholder")}
-            className="w-64 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
+            className="w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
           />
           <div className="flex items-center gap-3">
             <Button
@@ -215,7 +217,7 @@ export function PasskeyCard({
       )}
 
       {pendingDelete && (
-        <ConfirmDialog
+        <ConfirmPrompt
           title={t("auth.passkeyRemoveTitle")}
           message={t("auth.passkeyRemoveConfirm").replace("{name}", pendingDelete.name)}
           confirmLabel={t("auth.passkeyRemove")}

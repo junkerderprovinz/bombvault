@@ -77,8 +77,21 @@ test("recovery on a phone: the eye and the encryption switch are big enough to t
   await bootGerman(page, 360);
 
   const eye = page.getByRole("button", { name: "Wert anzeigen" }).first();
-  // touchscreen.tap takes viewport coordinates, so the box is read in view.
+  // touchscreen.tap takes viewport coordinates, so the box is read in view,
+  // and only once the page has stopped sliding in, or the tap can land
+  // beside the eye.
   await eye.scrollIntoViewIfNeeded();
+  await eye.evaluate(async (el) => {
+    const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    let last = "";
+    for (let still = 0; still < 3; ) {
+      await frame();
+      const r = el.getBoundingClientRect();
+      const now = `${r.left},${r.top},${r.width},${r.height}`;
+      still = now === last ? still + 1 : 0;
+      last = now;
+    }
+  });
   const eyeBox = (await eye.boundingBox())!;
   const fieldBox = (await eye.locator("xpath=preceding-sibling::input").boundingBox())!;
   expect(eyeBox.width, "the eye is narrower than a fingertip").toBeGreaterThanOrEqual(43.5);

@@ -19,7 +19,6 @@ import { en, I18nProvider } from "../../lib/i18n";
 
 const MESSAGE = "Delete container plex and everything in it? This cannot be undone.";
 
-// ---------------------------------------------------------------------------
 // Controlled matchMedia; why it must be built this way: useMediaQuery
 // caches its desktop MediaQueryList at module level on first use, so a
 // per-test re-stub of window.matchMedia can never reach an already-created
@@ -30,7 +29,6 @@ const MESSAGE = "Delete container plex and everything in it? This cannot be undo
 // a live getter) and setDesktopWidth() fires the change listeners; the
 // exact sequence a real browser resize produces, including the
 // useSyncExternalStore re-render.
-// ---------------------------------------------------------------------------
 interface FakeMql {
   matches: boolean;
   addEventListener(type: string, listener: () => void): void;
@@ -156,10 +154,8 @@ describe("ConfirmSheet (the mobile presentation, direct)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // The swap itself, through the real hook: same confirm() call, presentation
 // chosen by the width axis alone.
-// ---------------------------------------------------------------------------
 function ConfirmHarness({ options, results }: { options?: ConfirmOptions; results: boolean[] }) {
   const { confirm, confirmDialog } = useConfirm();
   return (

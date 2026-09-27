@@ -33,7 +33,7 @@ vi.mock("../lib/api", async () => {
     setVMInclude: vi.fn(async () => ({ ok: true })),
     // Page-level fetches (the single-layout tests below render the full <VMs>
     // page). The mobile block's own fetches (getSettings/getScheduleNext)
-    // never run under jsdom's desktop matchMedia — the stubs only have to
+    // never run under jsdom's desktop matchMedia; the stubs only have to
     // exist.
     listVMs: vi.fn(async () => ({ ok: true, vms: [] })),
     getSettings: vi.fn(async () => ({
@@ -199,20 +199,19 @@ describe("VMRow when the VM is no longer defined", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // The single-layout gate, tested on the desktop half. The VMs page renders as
-// ONE responsive layout: the two faces (desktop rows / mobile cards) are
-// gated in JSX on useIsDesktop(), so exactly one of them ever MOUNTS — there
+// one responsive layout: the two faces (desktop rows / mobile cards) are
+// gated in JSX on useIsDesktop(), so exactly one of them ever mounts: there
 // is no CSS-hidden twin kept in sync for nothing. jsdom's matchMedia stub
 // (src/lib/testSetup/matchMedia.ts) answers "desktop", so the full <VMs>
 // page here renders the DESKTOP presentation and the mobile card block is
 // never mounted; that makes jsdom the right place to pin the desktop half of
 // the contract:
-//   - the rendered DOM carries ZERO hidden-by-utility classes — a `md:hidden`
+//   - the rendered DOM carries zero hidden-by-utility classes: a `md:hidden`
 //     or `max-md:hidden` anywhere in the container means a face is being
 //     visually hidden instead of not mounted, the exact shape this page was
 //     rewritten away from;
-//   - the desktop list is NOT windowed — with more VMs than the mobile
+//   - the desktop list is not windowed: with more VMs than the mobile
 //     block's 20-row window, all 25 rows render and the mobile load-more
 //     stays absent;
 //   - the mobile-only surfaces (the summary counts line, the per-card
@@ -221,9 +220,8 @@ describe("VMRow when the VM is no longer defined", () => {
 // The phone face itself is exercised by the Playwright harness
 // (web/e2e/destination-vms.spec.ts); see the mount-discipline comment on
 // VMs().
-// ---------------------------------------------------------------------------
 describe("VMs page renders ONE layout (desktop identity in jsdom)", () => {
-  // More VMs than the mobile block's 20-row window — enough to prove the
+  // More VMs than the mobile block's 20-row window, enough to prove the
   // desktop list renders unwrapped while the mobile load-more stays absent.
   const manyVMs: VM[] = Array.from({ length: 25 }, (_, i) => ({
     name: `vm-${String(i).padStart(2, "0")}`,
@@ -257,7 +255,7 @@ describe("VMs page renders ONE layout (desktop identity in jsdom)", () => {
     expect(container.querySelector('[class*="md:hidden"]')).toBeNull();
     expect(container.querySelector('[class*="max-md:hidden"]')).toBeNull();
 
-    // The mobile block never mounts in jsdom — none of its unique surfaces
+    // The mobile block never mounts in jsdom: none of its unique surfaces
     // exist. The summary counts line (its text embeds the nav.vms key), the
     // per-card schedule entry, the gate-off settings link and the load-more
     // button are all mobile-only; the desktop list is not windowed, so all

@@ -38,7 +38,7 @@ function vmPayload(i: number, overrides: Record<string, unknown> = {}) {
   };
 }
 
-// GET /api/settings — the settings object mirrors the Settings interface
+// GET /api/settings: the settings object mirrors the Settings interface
 // field-for-field (the same discipline the desktop dom tests' typed fixtures
 // follow); callers override only the fields a scenario needs.
 function settingsBody(settingsOverrides: Record<string, unknown> = {}) {
@@ -158,7 +158,6 @@ async function stageVmsDomain(
   );
 }
 
-// ---------------------------------------------------------------------------
 
 test("mobile /vms: card list, search filter and the 20/40 load-more window", async ({ page }, testInfo) => {
   test.skip(
@@ -186,7 +185,7 @@ test("mobile /vms: card list, search filter and the 20/40 load-more window", asy
   await loadMore.tap();
   await expect(cards).toHaveCount(40);
   await expect(page.getByText("vm-39", { exact: true }).filter({ visible: true })).toBeVisible();
-  // Exhausted: hasMore is the ONLY signal the button may gate on — no rows
+  // Exhausted: hasMore is the only signal the button may gate on; no rows
   // beyond the window, no button.
   await expect(loadMore).toHaveCount(0);
 
@@ -209,7 +208,7 @@ test("mobile /vms: trigger deep-links the correlated run and a dismissed sheet i
   );
   await stageVmsDomain(page, [vmPayload(0)]);
 
-  // Flips the staged runs list as the story advances — [] is the pre-fire
+  // Flips the staged runs list as the story advances: [] is the pre-fire
   // baseline, running is the correlated watch, done is the terminal record
   // (run-detail-visibility.spec.ts's phase machine).
   const RUN_ID = "5f4e3d2c1b0a99887766554433221100";
@@ -235,8 +234,8 @@ test("mobile /vms: trigger deep-links the correlated run and a dismissed sheet i
                   error: "",
                   acknowledged: false,
                   // The backend records the run's target as the identifier the
-                  // action sent — the RAW libvirt name (VMs.test.tsx's whole
-                  // point), never the display name — and matchRun correlates
+                  // action sent, the raw libvirt name (VMs.test.tsx's whole
+                  // point), never the display name, and matchRun correlates
                   // on exactly that (r.target === libvirtName).
                   target: "id-00",
                   domain: "vm",
@@ -263,12 +262,12 @@ test("mobile /vms: trigger deep-links the correlated run and a dismissed sheet i
   runsPhase = "running";
 
   // The watch's first poll correlates the NEW run id → the component-local
-  // RunDetailSheet stacks in over the list (kind + target title grammar —
+  // RunDetailSheet stacks in over the list (kind + target title grammar:
   // the target text is the run's recorded identifier, the libvirt name).
   const sheet = page.getByRole("dialog", { name: "Backup · id-00" });
   await expect(sheet).toBeVisible();
 
-  // Dismiss. Later polls of the SAME watch still refresh the record — the
+  // Dismiss. Later polls of the same watch still refresh the record; the
   // latch must keep the sheet closed through them. (Scoped to the sheet: the
   // close affordance is the sheet's own, never a page-level query.)
   await sheet.getByRole("button", { name: "Close" }).tap();
@@ -276,7 +275,7 @@ test("mobile /vms: trigger deep-links the correlated run and a dismissed sheet i
   runsPhase = "done"; // the run finishes behind the closed sheet
 
   // The terminal poll provably landed (the button's success toast carries the
-  // recorded snapshot id's mono slice) — yet the sheet stays closed.
+  // recorded snapshot id's mono slice), yet the sheet stays closed.
   await expect(page.getByText(`Done · ${RUN_ID.slice(0, 8)}`)).toBeVisible();
   await expect(page.getByRole("dialog", { name: "Backup · id-00" })).toHaveCount(0);
 });
@@ -454,7 +453,7 @@ test("mobile /vms: gate-off shows the honest outline card and nothing else", asy
   await expect(page.getByText("1 VMs · 1 Scheduled")).toHaveCount(0);
 
   // The gate card's one action: the settings row that turns VMs on. Scoped to
-  // the main scroller — the mobile bottom-nav's own Settings tab would
+  // the main scroller: the mobile bottom-nav's own Settings tab would
   // otherwise make this a strict-mode collision, and the gate card's row is
   // the surface under test, not the app chrome.
   const settingsLink = page
@@ -474,7 +473,7 @@ test("desktop /vms: no mobile chrome on either desktop project", async ({
     "desktop-only: the >=48rem guard (desktop-768 boundary + desktop-1280)",
   );
 
-  // The desktop page, with the list NOT windowed — all 40 rows render, which
+  // The desktop page, with the list not windowed: all 40 rows render, which
   // is the counter-proof of the mobile block's 20-row window.
   await stageVmsDomain(page, Array.from({ length: 40 }, (_, i) => vmPayload(i)));
   await page.goto("/vms");

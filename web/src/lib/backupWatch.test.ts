@@ -85,7 +85,6 @@ describe("fireAndWaitRun busy retry", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // useBackupWatch's poll chain; the visibility contract the header comment in
 // backupWatch.ts promises: the chain never timer-polls a hidden page, refetches
 // on the return edge, and stays one chain no matter how violently the tab
@@ -100,7 +99,6 @@ describe("fireAndWaitRun busy retry", () => {
 // shadowed the way useVisibilityGate.test.ts drives it; transitions are
 // announced with the browser's own visibilitychange event, never by poking
 // module internals.
-// ---------------------------------------------------------------------------
 
 class FakeEventSource {
   onmessage: ((ev: unknown) => void) | null = null;

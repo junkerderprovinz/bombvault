@@ -130,22 +130,11 @@
 /* The phone arm of --settings-tab-seg-w. The desktop arm is the --nav-row-w
    pin, and the element carries it as a `md:` override (Settings.tsx), so the
    48rem literal stays in the one place that owns it (lib/useMediaQuery.ts)
-   rather than being written a second time here.
-
-   The width is the viewport minus what the row loses before the segments:
-   the page column's p-4 (2 x 1rem) and the strip's six gaps, which are the
-   container's own gap-1 (6 x 0.25rem), so 3.5rem, plus 1.5rem for a classic
-   scrollbar, which 100vw counts and the content box does not. That is about
-   15px in a desktop browser at phone width; on a phone the scrollbar is an
-   overlay and the reserve goes unused. Divided by seven it gives 44.3px at
-   390px, so seven segments sit on one row. Floored at 2.5rem so the narrowest
-   supported width cannot shrink a segment below tap-target scale; there the
-   floor costs one wrapped row, two bounded rows rather than the seven a fixed
-   pin gives. The row height is --nav-row-h at every width, labels truncate
-   inside the shrunken box (Selector's span.truncate), and each tab keeps its
-   glyph and accessible name. */
+   rather than being written a second time here. Below 48rem the strip is a
+   grid over the page column, so a tab takes its cell's width and the row
+   always spans the column, whatever a scrollbar takes from it. */
 :root {
-  --settings-tab-seg-w: max(2.5rem, calc((100vw - 5rem) / 7));
+  --settings-tab-seg-w: auto;
 }
 
 /* Safe-area insets; the three edges a device's own hardware claims (side
@@ -217,6 +206,37 @@
 .glim-btn-sm { min-width: var(--btn-w-sm); }
 .glim-btn-md { min-width: var(--btn-w-md); }
 .glim-btn-lg { min-width: var(--btn-w-lg); }
+
+/* For a button whose words are the only thing that tells it from its
+   neighbours. Below 48rem the column can be narrower than the label, so the
+   label wraps onto a second line instead of ending in an ellipsis, and the
+   button stays inside its row. The width stage is a desktop floor; kept here it
+   would push the button past a phone's edge. */
+@media (width < 48rem) {
+  .glim-btn.glim-btn-wrap {
+    height: auto;
+    min-height: var(--btn-h);
+    min-width: 0;
+    max-width: 100%;
+    padding-block: 0.375rem;
+  }
+
+  /* Less padding leaves the words room. HintSlot places its (i) by the same
+     variable from the span around the button, so the span takes it too. */
+  .glim-btn.glim-btn-wrap,
+  span:has(> .glim-btn.glim-btn-wrap) {
+    --btn-pad-x: 0.625rem;
+  }
+
+  /* A word wider than the button is hyphenated in the page's language, and
+     split without a hyphen only where no dictionary exists. */
+  .glim-btn-wrap .glim-btn-label {
+    white-space: normal;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    text-align: start;
+  }
+}
 
 /* The remove control inside a pill (Button variant="chip"). No width stage and
    no button height: it has to fit inside a 0.75rem-text pill. It takes the

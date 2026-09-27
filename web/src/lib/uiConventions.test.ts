@@ -164,7 +164,7 @@ ruleTester.run("one-icon-badge-size", rules["one-icon-badge-size"], {
 
 // A page component whose root does not use the shared page shell.
 const shellOptions = [
-  { exceptions: { "Settings.tsx": "PAGE_SHELL_TABBED", "Login.tsx": null } },
+  { exceptions: { "Settings.tsx": "PAGE_SHELL_TABBED_RESPONSIVE", "Login.tsx": null } },
 ];
 
 ruleTester.run("page-uses-page-shell", rules["page-uses-page-shell"], {
@@ -183,14 +183,20 @@ ruleTester.run("page-uses-page-shell", rules["page-uses-page-shell"], {
       options: shellOptions,
     },
     // Settings' exception, allowed by name and only for its own shell.
-    { code: `export function SettingsPage() { return <div className={PAGE_SHELL_TABBED}><h1 /></div>; }`, filename: SETTINGS, options: shellOptions },
+    { code: `export function SettingsPage() { return <div className={PAGE_SHELL_TABBED_RESPONSIVE}><h1 /></div>; }`, filename: SETTINGS, options: shellOptions },
     // A page that also renders as a tab panel of another page (Receiver, Fleet
     // and Pull inside Instances) may pick between the two shared shells, as
     // long as one arm is its own.
     {
-      code: `export function Fleet({ embedded }) { return <div className={embedded ? PAGE_SHELL_TABBED : PAGE_SHELL}><h1 /></div>; }`,
+      code: `export function Fleet({ embedded }) { return <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL}><h1 /></div>; }`,
       filename: PAGE,
       options: shellOptions,
+    },
+    // The same pick for a tab panel on the phone rhythm.
+    {
+      code: `export function Fleet({ embedded }) { return <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}><h1 /></div>; }`,
+      filename: PAGE,
+      options: [{ exceptions: { "Fleet.tsx": "PAGE_SHELL_RESPONSIVE" } }],
     },
     // Login is exempt: it never sits under <Outlet />.
     { code: `export function LoginPage() { return <div className="w-full max-w-sm"><h1 /></div>; }`, filename: LOGIN, options: shellOptions },
@@ -198,8 +204,8 @@ ruleTester.run("page-uses-page-shell", rules["page-uses-page-shell"], {
     { code: `export function Widget() { return <div className="flex flex-col gap-10 max-w-6xl" />; }`, filename: COMPONENT, options: shellOptions },
     // pages/Settings.tsx: label stacks built from the shell's classes at a much
     // smaller scale.
-    { code: `export function SettingsPage() { return <div className={PAGE_SHELL_TABBED}><div className="flex flex-col gap-1 max-w-40" /></div>; }`, filename: SETTINGS, options: shellOptions },
-    { code: `export function SettingsPage() { return <div className={PAGE_SHELL_TABBED}><div className="flex flex-col gap-1 text-xs max-w-xs" /></div>; }`, filename: SETTINGS, options: shellOptions },
+    { code: `export function SettingsPage() { return <div className={PAGE_SHELL_TABBED_RESPONSIVE}><div className="flex flex-col gap-1 max-w-40" /></div>; }`, filename: SETTINGS, options: shellOptions },
+    { code: `export function SettingsPage() { return <div className={PAGE_SHELL_TABBED_RESPONSIVE}><div className="flex flex-col gap-1 text-xs max-w-xs" /></div>; }`, filename: SETTINGS, options: shellOptions },
   ],
   invalid: [
     {
@@ -212,7 +218,7 @@ ruleTester.run("page-uses-page-shell", rules["page-uses-page-shell"], {
     },
     {
       // Both arms shared, but neither is this file's shell.
-      code: `export function Fleet({ embedded }) { return <div className={embedded ? PAGE_SHELL_TABBED : PAGE_SHELL_TABBED}><h1 /></div>; }`,
+      code: `export function Fleet({ embedded }) { return <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_TABBED_RESPONSIVE}><h1 /></div>; }`,
       filename: PAGE,
       options: shellOptions,
       errors: [{ messageId: "notShelled" }],
@@ -254,8 +260,15 @@ export default Fleet;`,
       errors: [{ messageId: "notShelled" }],
     },
     {
+      // The responsive tab-panel shell on a page whose own shell is the plain one.
+      code: `export function Fleet({ embedded }) { return <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}><h1 /></div>; }`,
+      filename: PAGE,
+      options: shellOptions,
+      errors: [{ messageId: "notShelled" }],
+    },
+    {
       // A page helping itself to Settings' exception.
-      code: `export function Fleet() { return <div className={PAGE_SHELL_TABBED}><h1 /></div>; }`,
+      code: `export function Fleet() { return <div className={PAGE_SHELL_TABBED_RESPONSIVE}><h1 /></div>; }`,
       filename: PAGE,
       options: shellOptions,
       errors: [{ messageId: "notShelled" }],

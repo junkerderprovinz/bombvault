@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // Playwright webServer pre-command: the fresh-DB half of the harness
 // guarantee. playwright.config.ts composes `node web/e2e/wipe-e2e-data.mjs &&
 // <binary>` so this runs immediately before the binary boots, in the
@@ -24,7 +23,6 @@
 // binary (the known Windows teardown hang) still holds the SQLite file and
 // the delete will fail. Kill it and re-run; the error below names the
 // candidate(s) by port, never by image name.
-// ---------------------------------------------------------------------------
 import { execFileSync } from "node:child_process";
 import { rmSync } from "node:fs";
 import { dirname, join } from "node:path";

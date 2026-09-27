@@ -5,7 +5,6 @@ import { Button } from "../Button";
 import { IconClose } from "../navGlyphs";
 import { useT } from "../../lib/i18n";
 
-// ---------------------------------------------------------------------------
 // BottomSheet; the mobile bottom-sheet primitive.
 //
 // lib/useConfirm.tsx's stateful mechanism re-expressed as a bottom-anchored
@@ -25,7 +24,6 @@ import { useT } from "../../lib/i18n";
 // sheet. The scrim is `aria-hidden` instead, and panel and scrim are
 // siblings (a DOM child of an aria-hidden element is hidden from
 // assistive technology).
-// ---------------------------------------------------------------------------
 
 export interface BottomSheetProps {
   /** Whether the sheet is open. The caller owns the state; every close path calls onClose. */
@@ -42,13 +40,14 @@ export interface BottomSheetProps {
   title: string;
   /** The sheet body. */
   children: ReactNode;
-  /** Full-height variant (the run detail sheet): h-dvh instead of the
-   *  max-h-[85dvh] cap; a boolean so the primitive owns its viewport
-   *  contract. */
+  /** Full-height variant (the run detail sheet): h-dvh, edge to edge,
+   *  instead of the floating max-h-[85dvh] card; a boolean so the primitive
+   *  owns its viewport contract. */
   fullHeight?: boolean;
   /** Optional action row pinned after the scroll body; flex-none, chrome
    *  language (sidebar surface over the body's, separation by tint alone,
-   *  no line), safe-area padded, never scrolled away; content padding is
+   *  no line), safe-area padded on the full-height sheet, never scrolled
+   *  away; content padding is
    *  the consumer's. */
   footer?: ReactNode;
   /** Optional id the panel's aria-describedby points at; the consumer owns
@@ -190,17 +189,21 @@ export function BottomSheet({ open, onClose, headerClose = true, title, children
       />
       {/* Bottom-anchored panel; a scrim sibling, not its DOM child (an
           aria-hidden element's child is hidden from assistive technology
-          too). */}
+          too). A capped sheet floats with the BottomNav card's insets and
+          rounding, so its closed position has to clear that gap as well;
+          the full-height sheet is a screen and stays edge to edge. */}
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={describedBy}
-        className={`fixed inset-x-0 bottom-0 z-50 flex ${
-          fullHeight ? "h-dvh" : "max-h-[85dvh]"
-        } flex-col rounded-t-card bg-carbon-surface shadow-2xl motion-safe:transition-transform motion-safe:duration-[var(--motion-page-dur)] ${
-          entered ? "translate-y-0" : "translate-y-full"
+        className={`fixed z-50 flex ${
+          fullHeight
+            ? "inset-x-0 bottom-0 h-dvh rounded-t-card"
+            : "bottom-[calc(var(--safe-area-bottom)+0.5rem)] left-[max(1rem,var(--safe-area-left))] right-[max(1rem,var(--safe-area-right))] max-h-[85dvh] overflow-hidden rounded-card"
+        } flex-col bg-carbon-surface shadow-2xl motion-safe:transition-transform motion-safe:duration-[var(--motion-page-dur)] ${
+          entered ? "translate-y-0" : fullHeight ? "translate-y-full" : "translate-y-[calc(100%+var(--safe-area-bottom)+0.5rem)]"
         }`}
       >
         {/* Side padding is inset-clamped: each physical side takes
@@ -244,17 +247,18 @@ export function BottomSheet({ open, onClose, headerClose = true, title, children
         </div>
         {/* Body (scrolls); its own scroll contains all interaction and
             background content is unreachable through the Tab trap, so no
-            body-scroll-lock. Bottom padding clears the device safe area,
-            but only when no footer follows: the footer is the last surface
-            on screen and pads itself, so a body inset beside one paid the
-            home-indicator gap twice, 34px of dead surface between the
-            message and the action row on an iPhone (a device with a
-            3, bug B9). Ternary between complete literal classes only: the
+            body-scroll-lock. On the full-height sheet the bottom padding
+            clears the device safe area, but only when no footer follows:
+            the footer is the last surface on screen and pads itself, so a
+            body inset beside one paid the home-indicator gap twice. A
+            floating sheet already sits above the safe area and only keeps
+            its rows off the rounded edge. Ternary between complete literal
+            classes only: the
             Tailwind JIT scans source text, so a token assembled from
             fragments would silently stop existing. */}
         <div
           className={`min-h-0 flex-1 overflow-y-auto overscroll-contain pl-[max(1rem,var(--safe-area-left))] pr-[max(1rem,var(--safe-area-right))] ${
-            footer === undefined ? "pb-[var(--safe-area-bottom)]" : ""
+            footer !== undefined ? "" : fullHeight ? "pb-[var(--safe-area-bottom)]" : "pb-3"
           }`}
         >
           {children}
@@ -262,10 +266,15 @@ export function BottomSheet({ open, onClose, headerClose = true, title, children
         {/* Footer (optional); pinned after the scroll body so actions never
             scroll away; chrome language (bottom bar / sticky action bar
             tokens), no line: the sidebar surface over the body's surface is
-            the separation, the app's tint-only rule. Last surface on
-            screen, so the home-indicator inset is here. */}
+            the separation, the app's tint-only rule. On the full-height
+            sheet it is the last surface on screen, so the home-indicator
+            inset is here. */}
         {footer !== undefined && (
-          <div className="flex-none bg-carbon-sidebar pb-[var(--safe-area-bottom)] pl-[max(1rem,var(--safe-area-left))] pr-[max(1rem,var(--safe-area-right))]">
+          <div
+            className={`flex-none bg-carbon-sidebar pl-[max(1rem,var(--safe-area-left))] pr-[max(1rem,var(--safe-area-right))] ${
+              fullHeight ? "pb-[var(--safe-area-bottom)]" : ""
+            }`}
+          >
             {footer}
           </div>
         )}

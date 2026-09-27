@@ -212,12 +212,10 @@ describe("BottomSheet", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Extension contracts. PropsHarness forwards the additive props onto an
 // already-open sheet; the capabilities are consumed with the sheet open,
 // exactly as RunDetailSheet (fullHeight and footer) and ConfirmSheet mount
 // them.
-// ---------------------------------------------------------------------------
 function PropsHarness({ sheetProps }: { sheetProps: Partial<BottomSheetProps> }) {
   return (
     <I18nProvider>
@@ -264,10 +262,33 @@ describe("BottomSheet extensions", () => {
       expect(el.className).toContain("pl-[max(1rem,var(--safe-area-left))]");
       expect(el.className).toContain("pr-[max(1rem,var(--safe-area-right))]");
     }
-    // The body keeps its bottom safe-area padding while no footer follows
-    // (this harness renders none): the body is the sheet's last surface, so
-    // the home-indicator inset is its to carry.
-    expect(body.className).toContain("pb-[var(--safe-area-bottom)]");
+    // A floating sheet sits above the safe area, so its body only keeps the
+    // rows off the rounded edge.
+    expect(body.className).toContain("pb-3");
+    expect(body.className).not.toContain("pb-[var(--safe-area-bottom)]");
+  });
+
+  it("floats a capped sheet as a rounded card and keeps the full-height sheet edge to edge", () => {
+    const { unmount } = render(<PropsHarness sheetProps={{}} />);
+    let panel = screen.getByRole("dialog");
+    // The BottomNav card's insets: each side clamps to its safe-area inset,
+    // the bottom clears the home indicator plus the same 8px gap.
+    expect(panel.className).toContain("rounded-card");
+    expect(panel.className).not.toContain("rounded-t-card");
+    expect(panel.className).toContain("left-[max(1rem,var(--safe-area-left))]");
+    expect(panel.className).toContain("right-[max(1rem,var(--safe-area-right))]");
+    expect(panel.className).toContain("bottom-[calc(var(--safe-area-bottom)+0.5rem)]");
+    expect(panel.className).not.toContain("inset-x-0");
+    unmount();
+
+    render(<PropsHarness sheetProps={{ fullHeight: true, footer: <p>footer actions</p> }} />);
+    panel = screen.getByRole("dialog");
+    expect(panel.className).toContain("inset-x-0");
+    expect(panel.className).toContain("bottom-0");
+    expect(panel.className).toContain("rounded-t-card");
+    // Here the footer is the last surface on screen and carries the inset.
+    const footer = screen.getByText("footer actions").parentElement as HTMLElement;
+    expect(footer.className).toContain("pb-[var(--safe-area-bottom)]");
   });
 
   it("puts the close button on the key-control height stage (glim-btn-key)", () => {
@@ -302,7 +323,7 @@ describe("BottomSheet extensions", () => {
     expect(panel.className).not.toMatch(/\bborder\b/);
   });
 
-  it("renders an optional footer after the scroll body, chrome-styled and safe-area padded", () => {
+  it("renders an optional footer after the scroll body, chrome-styled", () => {
     // Default: no footer element at all; the panel is header + body only.
     const { unmount } = render(<PropsHarness sheetProps={{}} />);
     const { panel } = headerAndBody();
@@ -313,19 +334,17 @@ describe("BottomSheet extensions", () => {
     const { body } = headerAndBody();
     const footer = screen.getByText("footer actions").parentElement as HTMLElement;
     // Chrome language: sidebar surface over the body's surface, separation
-    // by tint alone (the sheets carry no lines anywhere); safe-area bottom
-    // padding (the footer is the last surface on screen), inset-clamped
-    // sides like the rest of the panel.
+    // by tint alone (the sheets carry no lines anywhere), inset-clamped
+    // sides like the rest of the panel. On a floating sheet the footer is
+    // above the safe area and needs no bottom inset.
     expect(footer.className).toContain("bg-carbon-sidebar");
     expect(footer.className).not.toMatch(/border-\S+/);
-    expect(footer.className).toContain("pb-[var(--safe-area-bottom)]");
+    expect(footer.className).not.toContain("pb-[var(--safe-area-bottom)]");
     expect(footer.className).toContain("pl-[max(1rem,var(--safe-area-left))]");
     // And it comes after the scroll body; the "never scrolls away" ordering.
     expect(footer.previousElementSibling).toBe(body);
-    // With a footer present the body drops its own inset: the footer is the
-    // last surface and pads itself, so a
-    // body inset beside one paid the home-indicator gap twice, 34px of dead
-    // surface between the message and the action row on an iPhone.
+    // With a footer present the body has no bottom padding of its own.
+    expect(body.className).not.toContain("pb-3");
     expect(body.className).not.toContain("pb-[var(--safe-area-bottom)]");
   });
 });

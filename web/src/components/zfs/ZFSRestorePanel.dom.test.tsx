@@ -325,3 +325,13 @@ describe("ZFS restore panel", () => {
     expect(screen.getByRole("button", { name: en["common.copy"] })).toBeTruthy();
   });
 });
+
+// jsdom lays nothing out, so this pins the class the phone layout rests on.
+describe("ZFS restore panel at phone width", () => {
+  it("moves the source switch under its label when the two do not fit", async () => {
+    localStorage.setItem("bombvault.advanced", "1");
+    await openPanel();
+    const toggle = screen.getByRole("tab", { name: en["source.local"] }).closest("span.inline-flex")!;
+    expect(toggle.parentElement!.className).toContain("flex-wrap");
+  });
+});

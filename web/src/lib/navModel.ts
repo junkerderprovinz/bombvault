@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // Nav model; the one ordered navigation registry for the whole app.
 //
 // The mobile chrome (bottom bar, More sheet) derives its destinations from
@@ -43,7 +42,6 @@
 // modules that render UI already cross this seam in-repo (useConfirm.tsx ->
 // ConfirmDialog, toast.tsx -> Toast, dashboardLayout.tsx -> IconTipButton).
 // Nothing else comes from components/, and api.ts is read type-only.
-// ---------------------------------------------------------------------------
 import type { ComponentType } from "react";
 import type { Settings } from "./api";
 import type { TranslationKey } from "./i18n";

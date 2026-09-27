@@ -5,8 +5,8 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { TapPopover, type TapPopoverProps } from "./TapPopover";
 
 // Behavioral proof for the tap popover: tap-open, three dismissal paths
-// (consuming backdrop, Escape, re-tap), light focus — in on open, restored to
-// the trigger on every path — and explicitly NO focus trap.
+// (consuming backdrop, Escape, re-tap), light focus (in on open, restored to
+// the trigger on every path), and explicitly no focus trap.
 //
 // Class-token assertions (fixed/inset-0, -translate-x-1/2, w-max, glim-fade)
 // follow the same documented exception as BottomSheet.dom.test.tsx and
@@ -29,7 +29,7 @@ function Fixture(props: Partial<TapPopoverProps> = {}) {
   );
 }
 
-// The backdrop is a portal child that unmounts with the popover — a captured
+// The backdrop is a portal child that unmounts with the popover: a captured
 // reference goes stale across a close/reopen cycle (the element is detached,
 // and a dispatched click on it never reaches React's root listener). Always
 // query it fresh for the open under test.
@@ -67,7 +67,7 @@ describe("TapPopover", () => {
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
   });
 
-  it("dismisses on an outside tap that lands on the transparent consuming backdrop — never on the content beneath", () => {
+  it("dismisses on an outside tap that lands on the transparent consuming backdrop, never on the content beneath", () => {
     const onBackgroundClick = vi.fn();
     render(
       <div>
@@ -85,7 +85,7 @@ describe("TapPopover", () => {
 
     // The layer is a real full-viewport fixed element (a real
     // hit target, so outside taps die here) and visually transparent (a
-    // popover is not a modal — no scrim tint).
+    // popover is not a modal, no scrim tint).
     expect(backdrop.className).toContain("fixed");
     expect(backdrop.className).toContain("inset-0");
     expect(backdrop.className).not.toContain("bg-");
@@ -118,8 +118,8 @@ describe("TapPopover", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     expect(document.activeElement).toBe(trigger);
 
-    // Path 2: outside tap on the backdrop (fresh query — the reopen mounted
-    // a NEW backdrop element; the captured one is detached).
+    // Path 2: outside tap on the backdrop (fresh query: the reopen mounted
+    // a new backdrop element; the captured one is detached).
     trigger.focus();
     fireEvent.click(trigger);
     fireEvent.click(backdropEl());
@@ -132,7 +132,7 @@ describe("TapPopover", () => {
     expect(document.activeElement).toBe(trigger);
   });
 
-  it("does NOT trap Tab — focus can leave the panel to outside content and Tab is never preventDefault()ed", () => {
+  it("does not trap Tab: focus can leave the panel to outside content and Tab is never preventDefault()ed", () => {
     const { panel } = openFixture();
     expect(document.activeElement).toBe(panel);
 
@@ -154,9 +154,9 @@ describe("TapPopover", () => {
     // computeBubblePosition's clamped center X, applied before first paint.
     expect(panel.style.left).toMatch(/px$/);
     expect(panel.style.top).toMatch(/px$/);
-    // The centre-pairing contract: left is a CENTER, so the panel must carry
-    // w-max + -translate-x-1/2 (the .glim-bubble engine pairing) — dropping
-    // either puts the panel's left EDGE at the trigger's center.
+    // The centre-pairing contract: left is a center, so the panel must carry
+    // w-max + -translate-x-1/2 (the .glim-bubble engine pairing), dropping
+    // either puts the panel's left edge at the trigger's center.
     expect(panel.className).toContain("w-max");
     expect(panel.className).toContain("-translate-x-1/2");
     // Same entrance engine as every other floating surface.
@@ -182,7 +182,7 @@ describe("TapPopover", () => {
 
     fireEvent.click(backdrop);
     // onOpenChange(false) flowed to the owner, whose state flip unmounted the
-    // panel — the controlled loop, end to end (ColorPickerPopover's shape).
+    // panel, the controlled loop, end to end (ColorPickerPopover's shape).
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 

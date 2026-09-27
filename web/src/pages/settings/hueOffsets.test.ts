@@ -110,12 +110,10 @@ describe("settings selectors", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // The per-tab collision property itself. The groups name every hued selector
 // a tab can show at the same time, and the truthfulness test below keeps
 // them honest against the source: if a card moves tabs (ThemeCard did), the
 // stale group fails here instead of silently protecting the wrong screen.
-// ---------------------------------------------------------------------------
 
 /** Which hued selectors each tab can show simultaneously. The tab strip is
  *  implicit; it renders on every tab and is added by the test. A selector

@@ -1,4 +1,3 @@
-// ---------------------------------------------------------------------------
 // test:e2e's build-first step.
 //
 // `playwright test` boots the webServer from a prebuilt binary at the repo
@@ -17,7 +16,6 @@
 // Runs from package.json as `node e2e/ensure-binary.mjs` (cwd = web/), so
 // the repo root is one directory up; the build itself runs there, exactly
 // like CI's step.
-// ---------------------------------------------------------------------------
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";

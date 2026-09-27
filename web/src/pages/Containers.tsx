@@ -308,7 +308,7 @@ function loadBackupFilterKey(): BackupFilterKey {
   );
 }
 
-/** The page's four filter controls — the SAME block the desktop filter
+/** The page's four filter controls: the same block the desktop filter
  *  popover and the phone ListToolbar render, so the two toolbars cannot
  *  disagree about which dimensions the list filters by. Pure
  *  props-to-controls: the filter state and its handlers stay the page's. */
@@ -712,8 +712,8 @@ export function FoldersEditor({
    *  about. Optional only so the dom harnesses can omit it; the production
    *  caller (ContainerRow) always passes container.lastBackup. */
   lastBackup?: number | null;
-  /** Passed through to SelectionTree's viewportClassName —
-   *  the stacked detail renders the tree at natural height so the PAGE owns
+  /** Passed through to SelectionTree's viewportClassName: the stacked
+   *  detail renders the tree at natural height so the page owns
    *  scrolling instead of an inner clamp-height scrollbox. Optional; every
    *  existing mount (desktop ContainerRow) omits it and keeps the clamp. */
   treeViewportClassName?: string;
@@ -754,14 +754,14 @@ export function FoldersEditor({
   const [rowShake, setRowShake] = useState<Record<string, number>>({});
   // A React-state MIRROR of queueRef.current.inFlight, so
   // the Save bar (rendered by the parent, outside this component) can re-render
-  // when a drain starts and settles. The queue itself stays ref-driven — this
+  // when a drain starts and settles. The queue itself stays ref-driven: this
   // flag is publish-only and never read by the save logic.
   const [, setQueueBusy] = useState(false);
   // The path whose last toggle was refused client-side for emptying the
   // selection; SelectionTree renders the inline warn line under that row.
   const [blockedPath, setBlockedPath] = useState<string | null>(null);
-  // The tree's interaction mode derives from POINTER capability, never from
-  // viewport width — a landscape phone (>=48rem, the width-only chrome switch
+  // The tree's interaction mode derives from pointer capability, never from
+  // viewport width: a landscape phone (>=48rem, the width-only chrome switch
   // keeps the desktop Sidebar there) still has a coarse primary pointer and
   // gets the touch tree (tap = check),
   // while a hybrid touchpad laptop stays on the pointer tree. jsdom answers
@@ -781,7 +781,7 @@ export function FoldersEditor({
   // can therefore never clobber a newer toggle, and a burst collapses to one
   // draining request.
   //
-  // The queue also serializes the post-reset RELOAD —
+  // The queue also serializes the post-reset reload:
   // the `reload` flag below is set by a successful reset drain and consumed
   // by the finally chain only when no drain is owed, so the refetch GET
   // always starts with the queue idle and can never race (and locally
@@ -1017,7 +1017,7 @@ export function FoldersEditor({
             // exclusions, custom rows and cache toggles gone) must REPLACE
             // everything — the refetch re-runs the load block above,
             // re-seeding the mirror, the custom list, the caches map and the
-            // lastSavedCount baseline together. The refetch does NOT
+            // lastSavedCount baseline together. The refetch does not
             // start here. Flag it and let the finally chain below issue it
             // only once every stacked drain has settled — a GET fired at this
             // spot would race the drain the finally starts for a mutation
@@ -1085,7 +1085,7 @@ export function FoldersEditor({
           void attemptSave();
         }
       }
-      // The post-reset reload rides the queue TAIL — issued only when
+      // The post-reset reload rides the queue tail: issued only when
       // this finally did NOT chain a drain and nothing else is owed, so the
       // GET starts after every stacked drain has settled and its response
       // can only reflect final server state. When a drain WAS chained the
@@ -1492,9 +1492,9 @@ export function FoldersEditor({
         </div>
         {/* Square icon badge (icon-badge round, standing rule: every icon
             badge gets real hue integration + a hover tooltip carrying its
-            old label). Colour-engine integration is the SAME already-
+            old label). Colour-engine integration is the same already-
             verified mechanism the prior text-button version of this control
-            used: no `hueIndex` needed — this
+            used: no `hueIndex` needed, this
             panel already lives inside ContainerRow's own `.glim-hue`
             element, so Badge's `tone="active"` (icon-only → solid
             `bg-accent`/`text-accentContrast`, see Badge.tsx's own
@@ -1509,8 +1509,8 @@ export function FoldersEditor({
             that jdp rejected (see Badge.tsx's "ONE SIZE FOR SQUARE ICON
             BADGES" block). The 32px value is still exactly right here for the
             reason it always was — this badge shares an `items-end` row with a
-            FolderBrowser field that measures 32px live (`text-sm px-3 py-1.5`)
-            — it is simply no longer a number this call site owns. That shared
+            FolderBrowser field that measures 32px live (`text-sm px-3 py-1.5`),
+            it is simply no longer a number this call site owns. That shared
             row is the desktop presentation: under 48rem the row wraps (see
             the block directly above this control), so the badge's
             neighbourhood becomes the vertical one instead of the horizontal.
@@ -1547,14 +1547,14 @@ export function FoldersEditor({
 
 // The mobile card list + locally stacked detail.
 //
-// Both components render ONLY below the breakpoint (the page JSX-gates them
+// Both components render only below the breakpoint (the page JSX-gates them
 // on `!isDesktop`, and every desktop-only block above them is gated on
 // `isDesktop` in return), so exactly one face of the page is ever mounted at
-// a given width — no CSS-hidden second copy doing fetch work in the
-// background. The stacked detail lives IN this page (component-local
-// openContainer state) — it is not a BottomSheet and not a route.
+// a given width: no CSS-hidden second copy doing fetch work in the
+// background. The stacked detail lives in this page (component-local
+// openContainer state), it is not a BottomSheet and not a route.
 //
-// The per-card selection summary reuses the EXISTING mounts endpoint — the
+// The per-card selection summary reuses the existing mounts endpoint: the
 // container list payload carries no mount data, and no new endpoint is
 // authorised. One lazy GET per card, cached at module scope so re-renders and
 // list refetches never re-fire it; a cache entry is dropped when its detail
@@ -1562,7 +1562,7 @@ export function FoldersEditor({
 // count at all rather than a wrong one.
 
 /** Page-lifetime cache for the card summary/detail-meta fetches. Plain Map of
- *  promises — a failed fetch resolves to null and is NOT retried for the
+ *  promises: a failed fetch resolves to null and is not retried for the
  *  page's lifetime (a card without a count line beats a spinner forever). */
 const cardMountsCache = new Map<string, Promise<ContainerMountsResponse | null>>();
 
@@ -1578,7 +1578,7 @@ function mountsMeta(name: string): Promise<ContainerMountsResponse | null> {
 }
 
 /** The ticked-include count a fresh FoldersEditor would seed from this
- *  response — selected AND reachable mount sources plus custom paths, the
+ *  response: selected AND reachable mount sources plus custom paths, the
  *  exact load-block rule (Containers.tsx FoldersEditor). Same derivation
  *  family as folders.handedToRestic, so the card's count line and the Save
  *  bar's can never disagree about what "n" means. */
@@ -1589,7 +1589,7 @@ function tickedCountFrom(r: ContainerMountsResponse): number {
   ]).size;
 }
 
-/** The disclosure chips of one container card — the SAME block both faces of
+/** The disclosure chips of one container card: the same block both faces of
  *  the page render: the desktop row and the phone detail share the Selector,
  *  the section set, the advanced+installed gating and the "has data" dots,
  *  so the two faces cannot drift apart. The panes the chips open stay at the
@@ -1608,7 +1608,7 @@ function ContainerSectionChips({
 }: {
   container: Container;
   t: T;
-  /** Controlled open set — one section at a time, the desktop row's rule. */
+  /** Controlled open set: one section at a time, the desktop row's rule. */
   openSections: ReadonlySet<string>;
   onToggle: (id: string) => void;
   /** Trailing inline summary; the desktop row renders the last-backup line. */
@@ -1617,7 +1617,7 @@ function ContainerSectionChips({
 }) {
   const { advanced } = useAdvanced();
   const installed = container.installed;
-  // "Has data configured" dots — the same three facts the three editors
+  // "Has data configured" dots: the same three facts the three editors
   // render on the desktop card's chips.
   const stopHasData = (container.stopContainers ?? []).length > 0;
   const excludesHasData = (container.excludes ?? []).length > 0;
@@ -1664,7 +1664,7 @@ function MobileContainerCard({
 }: {
   container: Container;
   t: T;
-  /** Rainbow position — continues the desktop list's index space so the two
+  /** Rainbow position: continues the desktop list's index space so the two
    *  presentations of one list never hand the same hue to two containers. */
   index: number;
   /** Bumped by the page when a detail closes: cards of the edited container
@@ -1672,7 +1672,7 @@ function MobileContainerCard({
   nonce: number;
   onOpen: () => void;
 }) {
-  // null = not fetched yet / fetch failed — both render NO count line (a
+  // null = not fetched yet / fetch failed: both render no count line (a
   // missing number is honest, a wrong one is not).
   const [ticked, setTicked] = useState<number | null>(null);
   useEffect(() => {
@@ -1727,7 +1727,7 @@ function MobileContainerDetail({
    *  list: the parent closes the detail and refreshes. */
   onDeleted: () => void;
   /** The full installed set, straight through to StopContainersEditor's
-   *  picker — the same array the desktop row gets. */
+   *  picker: the same array the desktop row gets. */
   installedContainers: Container[];
   /** Not-installed entries this one can take over, as on the desktop row. */
   linkCandidates: string[];
@@ -1736,7 +1736,7 @@ function MobileContainerDetail({
   /** A link from another page asking to restore this container. */
   restoreRequest?: RestoreRequest;
 }) {
-  // The host mount root for the detail's mono meta line — served by the same
+  // The host mount root for the detail's mono meta line: served by the same
   // already-cached mounts response the cards use (React escaping
   // plus LTR isolation on the path; break-all wraps long host paths).
   const [hostMountRoot, setHostMountRoot] = useState<string | null>(null);
@@ -1755,8 +1755,8 @@ function MobileContainerDetail({
   // media switch). On correlation the RunDetailSheet opens over the detail
   // with the LIVE run (component-local hosting, no route). onRun fires on
   // every poll, so sheetRun always holds the freshest record (running →
-  // terminal renders truthfully); a sheet the user closed is NEVER re-opened
-  // by later polls of the same watch — the terminal outcome still toasts
+  // terminal renders truthfully); a sheet the user closed is never re-opened
+  // by later polls of the same watch: the terminal outcome still toasts
   // from BackupButton.
   const progressMap = useProgress();
   const progress = progressMap[`container:${container.name}`];
@@ -1764,8 +1764,8 @@ function MobileContainerDetail({
   const [sheetRun, setSheetRun] = useState<Run | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const sheetDismissed = useRef(false);
-  // The run id the watch last correlated: polls refresh the SAME run, so only
-  // a DIFFERENT id is a new fire — the latch's re-arm signal. Without it, one
+  // The run id the watch last correlated: polls refresh the same run, so only
+  // a different id is a new fire: the latch's re-arm signal. Without it, one
   // dismissal would silence every later "Back up now" press, and the user
   // would wait out the whole run for nothing but the terminal toast.
   const lastCorrelatedRun = useRef<string | null>(null);
@@ -1884,7 +1884,7 @@ function MobileContainerDetail({
           </Advanced>
         </div>
       )}
-      {/* The SAME editor the desktop row expands — one tree, one queue, zero
+      {/* The same editor the desktop row expands: one tree, one queue, zero
           forks. Keyed by container identity: switching targets can
           never inherit the previous container's mirror, browse cache or save
           queue. Advanced+installed gating mirrors the desktop row's folders
@@ -3791,10 +3791,10 @@ export function Containers() {
   // hint, instead of relying on the 409 round-trip.
   const running = anyActive(progress);
 
-  // The locally stacked detail's target. Component-local state on purpose —
-  // the detail is NOT a route and NOT a BottomSheet; it stacks IN the page
+  // The locally stacked detail's target. Component-local state on purpose:
+  // the detail is not a route and not a BottomSheet; it stacks in the page
   // column while the list itself is taken off the tree, so the phone shows
-  // ONE surface at a time and Back restores the list plus its scroll offset.
+  // one surface at a time and Back restores the list plus its scroll offset.
   const isDesktop = useIsDesktop();
   // Only the name is held: the detail reads its container out of the list on
   // every render, so a refetch reaches it the way it reaches a row. Holding
@@ -3845,8 +3845,8 @@ export function Containers() {
     document.getElementById("bv-main")?.scrollTo(0, listScrollRef.current);
   }, [openContainer]);
 
-  // While the stacked detail is open on a phone, the list CHROME (toolbar,
-  // bulk bar, feature panels) hides with the list — the detail replaces the
+  // While the stacked detail is open on a phone, the list chrome (toolbar,
+  // bulk bar, feature panels) hides with the list: the detail replaces the
   // list experience instead of stacking under its controls. Desktop is
   // untouched: isDesktop is always true there, so this is permanently false.
   const listChromeHidden = !isDesktop && openContainer !== null;
@@ -3921,7 +3921,7 @@ export function Containers() {
   // resets its window when the items array IDENTITY changes, so every array in
   // the chain must be stable across renders that don't change the filter result
   // (lib/useLoadMore.ts's consumer contract). The desktop derivation below reads
-  // the SAME memos — one predicate, two presentations; the two lists can never
+  // the same memos: one predicate, two presentations; the two lists can never
   // disagree.
   const query = search.trim().toLowerCase();
   const filtered = useMemo(() => containers.filter((c) => {
@@ -3967,16 +3967,16 @@ export function Containers() {
   const orphansVisible = filterKey !== "installed" && orphans.length > 0;
   const noMatch = containers.length > 0 && !liveVisible && !orphansVisible;
 
-  // The mobile card list paginates the RENDERED card array —
+  // The mobile card list paginates the rendered card array:
   // the filtered+sorted rows in server order, with the installed toggle's
   // section gate already applied. That gate is why this is its own array rather
   // than `sorted`: windowing all of `sorted` under filterKey="installed" would
   // let the window fill with not-installed rows that never render, and hasMore
-  // would then offer a "Load more" that shows nothing new — a dishonest button.
+  // would then offer a "Load more" that shows nothing new, a dishonest button.
   // Slicing what renders keeps hasMore honest by construction. Identity (not
   // deep equality) is useLoadMore's reset signal, so the memo keeps the window
-  // stable across unrelated renders and resets it exactly when a filter —
-  // search, schedule/backup chips, or the installed toggle — changes the list.
+  // stable across unrelated renders and resets it exactly when a filter
+  // (search, schedule/backup chips, or the installed toggle) changes the list.
   const mobileCards = useMemo(
     () => [
       ...(filterKey !== "notInstalled" ? live : []),
@@ -4192,7 +4192,7 @@ export function Containers() {
     // loading/error/empty branches), so it takes the same 40px as everything
     // else — verified live at 1152px, where it reads as its own band between
     // heading and list rather than looking orphaned.
-    //   Responsive rhythm: PAGE_SHELL_RESPONSIVE — gap-6 below the 48rem
+    //   Responsive rhythm: PAGE_SHELL_RESPONSIVE, gap-6 below the 48rem
     // breakpoint (the stacked detail + Save bar live on a phone), gap-10 at
     // and above, byte-identical to this page's settled desktop rhythm by
     // construction. Exception declared in eslint.config.js.
@@ -4258,7 +4258,7 @@ export function Containers() {
       )}
 
       {/* The locally stacked container detail, mobile only. Renders in the
-          page column ABOVE where the list sits — the back row is the first
+          page column above where the list sits: the back row is the first
           thing on screen after openCard scrolls to top. The list itself is
           off the tree while the detail is open (its scroll position saved and
           restored on Back).
@@ -4355,8 +4355,8 @@ export function Containers() {
           Directly above the list it filters — see the backup-order card's own
           comment above for why the two feature cards moved above this row.
           Desktop face: below the breakpoint the mobile card list's ListToolbar
-          carries the SAME state (search/filterKey/schedule/backup/sort) on the
-          shared primitives — the shape VMs.tsx's toolbar uses. One state, two
+          carries the same state (search/filterKey/schedule/backup/sort) on the
+          shared primitives, the shape VMs.tsx's toolbar uses. One state, two
           presentations; the `isDesktop` gate mounts exactly one of them per
           width. */}
       {isDesktop && !loading && !listChromeHidden && containers.length > 0 && (
@@ -4455,10 +4455,10 @@ export function Containers() {
         <p className="text-xs text-carbon-textSub">{t("containers.working")}</p>
       )}
 
-      {/* The desktop list — full row cards with their inline editors. JSX-gated
+      {/* The desktop list: full row cards with their inline editors. JSX-gated
           on `isDesktop`: at >=48rem this is the list; below it the phone gets
           the card list further down instead, and these rows (with their
-          editors' weight) never mount at all — the point of the gate, versus
+          editors' weight) never mount at all, the point of the gate, versus
           a CSS-hidden second copy. */}
       {isDesktop && !loading && filterKey !== "notInstalled" && live.length > 0 && (
         <div className="flex flex-col gap-3 glim-content-fade">
@@ -4481,12 +4481,12 @@ export function Containers() {
         </div>
       )}
 
-      {/* The mobile card list — summary line, toolbar, one card per installed
+      {/* The mobile card list: summary line, toolbar, one card per installed
           container, then the not-installed section. Phone-only (`!isDesktop`
           keeps it out of the desktop DOM entirely); off the tree while the
           stacked detail is open (listChromeHidden), with the saved scroll
           position restored on Back.
-          The ListToolbar binds the page's OWN search/filter/sort state — the
+          The ListToolbar binds the page's own search/filter/sort state: the
           exact state the desktop FilterPopover above reads, so there is one
           predicate with two presentations and no parallel mobile filter state
           to drift. Cards paginate through the ONE useLoadMore primitive over
@@ -4498,7 +4498,7 @@ export function Containers() {
           {live.length > 0 && (
             <p className="text-xs text-carbon-textMuted">
               {/* Derived from the same list payload the desktop protection
-                  summary reads — no new endpoint, no new key. */}
+                  summary reads, no new endpoint, no new key. */}
               {`${live.length} ${t("nav.containers")}${
                 live.some((c) => c.includeInSchedule)
                   ? ` · ${live.filter((c) => c.includeInSchedule).length} ${t("filter.scheduled")}`
@@ -4507,7 +4507,7 @@ export function Containers() {
             </p>
           )}
           {/* Rendered whenever the list has settled (mirrors the desktop
-              controls row's own `!loading` condition) — including when the
+              controls row's own `!loading` condition), including when the
               active filters currently match nothing, so a cleared search stays
               clearable (an unreachable toolbar would strand the empty state). */}
           <ListToolbar search={search} onSearch={setSearch} placeholder="containers.searchPlaceholder">
@@ -4543,10 +4543,10 @@ export function Containers() {
               ))}
             </div>
           )}
-          {/* The one load-more affordance, gated on hasMore — no
-              rows beyond the window, no button (hasMore is the ONLY signal
+          {/* The one load-more affordance, gated on hasMore: no
+              rows beyond the window, no button (hasMore is the only signal
               this may gate on); never auto-loads (no observer, no scroll
-              listener — lib/useLoadMore.ts's construction-level ban). */}
+              listener, lib/useLoadMore.ts's construction-level ban). */}
           {hasMore && (
             <Button
               label={t("common.loadMore")}
@@ -4562,8 +4562,8 @@ export function Containers() {
             />
           )}
           {/* Zero-match honesty: an explicit empty state, never a blank
-              column below the toolbar. The EXISTING filter.noMatch copy — the
-              same sentence the desktop face renders as a bare line — as a
+              column below the toolbar. The existing filter.noMatch copy (the
+              same sentence the desktop face renders as a bare line) as a
               card, the mobile empty-state language. Exactly one presentation
               renders at any width. */}
           {noMatch && (
@@ -4574,7 +4574,7 @@ export function Containers() {
         </div>
       )}
 
-      {/* Not-installed containers that still have backups. Desktop face —
+      {/* Not-installed containers that still have backups. Desktop face:
           the phone's card list renders its own not-installed section inline
           (see the mobile block above). */}
       {isDesktop && !loading && filterKey !== "installed" && orphans.length > 0 && (
@@ -4623,7 +4623,7 @@ export function Containers() {
       )}
 
       {/* No container matches the active search / schedule / backup / installed
-          filters. Desktop face — the mobile block's no-match card carries this
+          filters. Desktop face: the mobile block's no-match card carries this
           same copy below the breakpoint, so exactly one renders per width. */}
       {isDesktop && !loading && !error && !listChromeHidden && noMatch && (
         <p className="text-sm text-carbon-textMuted">{t("filter.noMatch")}</p>

@@ -11,7 +11,7 @@ import type { FileEntry, Run } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import type { TranslationKey } from "../../lib/i18n";
 import { humanBytes } from "../../lib/forecast";
-import { formatClockTime, formatDuration, formatTs } from "../../lib/reltime";
+import { NO_VALUE, formatClockTime, formatDuration, formatTs } from "../../lib/reltime";
 import { isOwnReason, isWarningNote, RunReasonText } from "../../lib/runReason";
 import { runTargetText, statusLabel, statusTone } from "../../lib/runDisplay";
 import { runKindLabel } from "../../lib/runKind";
@@ -29,7 +29,6 @@ import { ProgressBar } from "../ProgressBar";
 import { SnapshotFileTree } from "../SnapshotFileTree";
 import { BottomSheet } from "./BottomSheet";
 
-// ---------------------------------------------------------------------------
 // RunDetailSheet; the full-screen run-detail sheet.
 //
 // Hosted component-locally by whichever surface owns the run row (the
@@ -91,7 +90,6 @@ import { BottomSheet } from "./BottomSheet";
 //     run record; never extrapolated. The "everything" parent run streams no
 //     key of its own, so it shows its children's lines: while it runs, every
 //     live key belongs to it.
-// ---------------------------------------------------------------------------
 export interface RunDetailSheetProps {
   /** The run to render. The consumer refetches it (listRuns) on visibility
    *  return; the sheet is a pure view over this record and never
@@ -278,7 +276,6 @@ function HistoryLogSection({ run }: { run: Run }) {
   return <LogList lines={lines} />;
 }
 
-// ---------------------------------------------------------------------------
 // Tonal touch row (>=44px); the sheet's action-row shape, shared by the
 // footer's verify/browse rows and the body's restore entry. Hand-rolled rather
 // than Button because the browse disclosure row needs aria-expanded
@@ -290,7 +287,6 @@ function HistoryLogSection({ run }: { run: Run }) {
 // still takes its position in the sheet's hue rotation (.glim-hue): the
 // rotation's focus ring and any accent reading inside the row follow the
 // position, while the row's own fill stays the tonal token above.
-// ---------------------------------------------------------------------------
 function SheetActionRow({
   label,
   onClick,
@@ -562,8 +558,8 @@ export function RunDetailSheet({ run, open, onClose }: RunDetailSheetProps) {
   // for a missing timestamp rather than a blank tile, so the absence reads
   // as intentional.
   const durationSecs = run.finishedAt != null ? run.finishedAt - run.startedAt : null;
-  const durationText = durationSecs == null ? "—" : formatDuration(durationSecs) || "—";
-  const durationMissing = durationText === "—";
+  const durationText = durationSecs == null ? NO_VALUE : formatDuration(durationSecs) || NO_VALUE;
+  const durationMissing = durationText === NO_VALUE;
   // Runs with no snapshot (the Backup Everything parent, prune, verify) have
   // no volume and no snapshot id to show. humanBytes(0) would claim a
   // measured "0 B" and an empty mono slice would render a blank tile; both
@@ -571,7 +567,7 @@ export function RunDetailSheet({ run, open, onClose }: RunDetailSheetProps) {
   // the duration tile uses. A real zero-byte backup that has a snapshot
   // keeps its honest "0 B": the snapshot exists, the number is true.
   const hasSnapshot = run.snapshotId !== "";
-  const volumeText = hasSnapshot ? humanBytes(run.bytes) : "—";
+  const volumeText = hasSnapshot ? humanBytes(run.bytes) : NO_VALUE;
   const volumeMissing = !hasSnapshot;
 
   // No horizontal padding on either slot wrapper (footer below, body in the
@@ -692,7 +688,7 @@ export function RunDetailSheet({ run, open, onClose }: RunDetailSheetProps) {
               className={`truncate font-mono text-heading font-semibold tabular-nums ${hasSnapshot ? "" : "text-carbon-textMuted"}`}
               title={hasSnapshot ? run.snapshotId : undefined}
             >
-              {hasSnapshot ? run.snapshotId.slice(0, 8) : "—"}
+              {hasSnapshot ? run.snapshotId.slice(0, 8) : NO_VALUE}
             </span>
           </div>
         </div>

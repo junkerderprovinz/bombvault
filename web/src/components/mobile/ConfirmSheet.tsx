@@ -3,7 +3,6 @@ import { Button } from "../Button";
 import { IconCancel } from "../glyphs";
 import { BottomSheet } from "./BottomSheet";
 
-// ---------------------------------------------------------------------------
 // ConfirmSheet is useConfirm's presentation below the 48rem breakpoint. The
 // desktop card asks for a precise click on two side-by-side buttons inside a
 // max-w-md box, which ignores everything a thumb-reachable surface owns:
@@ -27,7 +26,6 @@ import { BottomSheet } from "./BottomSheet";
 // focus starts on Cancel. The message is the panel's aria-describedby target,
 // so a screen reader announces the question and not just the title; its id
 // comes from useId, since sheets can coexist.
-// ---------------------------------------------------------------------------
 export interface ConfirmSheetProps {
   /** Same generic window title ConfirmDialog takes (t("confirmDialog.title")). */
   title: string;

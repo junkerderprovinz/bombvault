@@ -31,13 +31,16 @@
 import { render, screen, cleanup, fireEvent, act, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Settings } from "../../lib/api";
+import type { AnomalySummary, Settings } from "../../lib/api";
 import { AdvancedProvider } from "../../lib/advanced";
+import { AnomalyProvider } from "../../lib/useAnomalies";
 
 const logout = vi.fn(async () => ({ ok: true }));
+const getAnomalySummary = vi.fn();
 vi.mock("../../lib/api", async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
   logout: () => logout(),
+  getAnomalySummary: () => getAnomalySummary(),
 }));
 
 const reload = vi.fn();
@@ -235,5 +238,57 @@ describe("MoreSheet row navigation closes the sheet", () => {
     });
     expect(screen.getByTestId("path-probe").textContent).toBe("/vms");
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("MoreSheet's Anomalies row", () => {
+  function summary(open: AnomalySummary["open"]): AnomalySummary {
+    return {
+      enabled: true,
+      ready: true,
+      generation: 1,
+      open,
+      recoveredCritical: 0,
+      learningItems: 0,
+      retentionHeld: 0,
+      evalErrors: 0,
+      notifyMuted: false,
+      backfill: { slots: 0, done: 0, failed: 0, filled: 0, withoutSummary: 0 },
+      unmeasuredVolumes: [],
+    };
+  }
+
+  function drawWithFindings(open: AnomalySummary["open"]) {
+    getAnomalySummary.mockResolvedValue({ ok: true, summary: summary(open) });
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <AdvancedProvider>
+          <AnomalyProvider>
+            <MoreSheet open onClose={() => undefined} settings={{ anomalyEnabled: true } as Settings} authEnabled={false} />
+          </AnomalyProvider>
+        </AdvancedProvider>
+      </MemoryRouter>,
+    );
+    return within(sheet()).getByRole("link", { name: /anomalies/i });
+  }
+
+  it("counts the open critical and warning findings as the rail does", async () => {
+    const row = drawWithFindings({ critical: 2, warning: 3, info: 4 });
+    const badge = await within(row).findByLabelText("Open critical and warning anomalies: 5");
+    expect(badge.textContent).toBe("5");
+    expect(badge.className).toContain("text-statusFail");
+  });
+
+  it("takes the warning tone when nothing critical is open", async () => {
+    const row = drawWithFindings({ critical: 0, warning: 2, info: 0 });
+    const badge = await within(row).findByLabelText("Open critical and warning anomalies: 2");
+    expect(badge.className).toContain("text-statusWarn");
+  });
+
+  it("shows no count for notes alone", async () => {
+    const row = drawWithFindings({ critical: 0, warning: 0, info: 6 });
+    await act(async () => {});
+    expect(getAnomalySummary).toHaveBeenCalled();
+    expect(row.textContent).toBe("Anomalies");
   });
 });

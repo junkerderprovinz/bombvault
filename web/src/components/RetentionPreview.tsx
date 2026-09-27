@@ -108,6 +108,7 @@ export function RetentionPreview({
           tone="neutral"
           busy={busy}
           onClick={() => void run()}
+          className="glim-btn-wrap"
         />
       </div>
 
@@ -123,7 +124,7 @@ export function RetentionPreview({
 
       {preview?.repos.map((repo) => (
         <div key={repo.name} className="rounded-control bg-carbon-surface2 px-3 py-2">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-x-2">
             <span className="text-sm text-carbon-text">{repo.name}</span>
             {repo.appendOnly && (
               <span className="text-xs text-carbon-textSub">{t("retentionPreview.appendOnly")}</span>
