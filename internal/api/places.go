@@ -723,8 +723,8 @@ type credsChange struct {
 // a set anything else names gets a set of its own, so the edit reaches this
 // place alone.
 func (s *Service) placeCredsChange(settings store.Settings, p store.Place, fields map[string]string) (*credsChange, error) {
-	provider, ok := places.ProviderByID(p.Provider)
-	if !ok || len(credFields[provider.Kind]) == 0 {
+	provider, _ := places.ProviderByID(p.Provider)
+	if len(credFields[provider.Kind]) == 0 {
 		return nil, nil
 	}
 	cur, err := s.credSetFor(settings, p.CredsRef)
@@ -884,10 +884,7 @@ func (s *Service) patchPlace(ctx context.Context, id string, body patchPlaceBody
 		}
 	}
 	if body.Address != nil {
-		provider, ok := places.ProviderByID(p.Provider)
-		if !ok {
-			return store.Place{}, nil, errUnknownProvider
-		}
+		provider, _ := places.ProviderByID(p.Provider)
 		if next.Base, err = places.Base(provider, body.Address, p.ID); err != nil {
 			return store.Place{}, nil, err
 		}
