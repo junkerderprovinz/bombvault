@@ -1803,9 +1803,10 @@ UPDATE offsite_targets SET off_premises = 1
 		// the alias survives the target it points at being edited or deleted
 		// around it.
 		//
-		// Versions 109 to 119 stay free because other builds record unrelated
-		// migrations as 109. The guard records this version without the body on
-		// a database that already has the table.
+		// A branch build recorded this body and the next two as 109 to 111,
+		// numbers the placement migrations own (see misnumbered), so they sit
+		// above those. The guard records this version without the body on a
+		// database that already has the table.
 		version: 120,
 		name:    "target_aliases",
 		sql: `CREATE TABLE IF NOT EXISTS target_aliases (
@@ -2379,6 +2380,20 @@ const mcpActivityMigration = 148
 // mcpOAuthMigration numbers the OAuth sign-in of the MCP endpoint.
 const mcpOAuthMigration = mcpActivityMigration + 4
 
+// misnumbered holds records that branch builds wrote under the numbers of the
+// placement migrations. Migrate forgets them, so the placement migrations run
+// there too; the guards of target_aliases, vm_uuid and
+// target_alias_prev_definition record those again under their own numbers.
+var misnumbered = []struct {
+	version int
+	name    string
+}{
+	{109, "target_aliases"},
+	{110, "vm_uuid"},
+	{111, "target_alias_prev_definition"},
+	{109, "named_repo_already_offsite"},
+}
+
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.
 //
@@ -2397,6 +2412,11 @@ func Migrate(db *sql.DB) error {
 	)`)
 	if err != nil {
 		return fmt.Errorf("migrate: create schema_migrations: %w", err)
+	}
+	for _, r := range misnumbered {
+		if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version = ? AND name = ?`, r.version, r.name); err != nil {
+			return fmt.Errorf("migrate: forget v%d (%s): %w", r.version, r.name, err)
+		}
 	}
 
 	for _, m := range migrations {
