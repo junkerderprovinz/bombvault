@@ -34,7 +34,7 @@ import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 // The off-site cadences are raw text inputs; rejectEveryNSchedules refuses
 // everyN for them on the server.
 import { CadenceBuilder } from "../components/CadenceBuilder";
-import { PAGE_SHELL_TABBED_RESPONSIVE } from "../lib/pageShell";
+import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { EffectiveScheduleLine } from "../components/EffectiveScheduleLine";
 import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
 import { Toggle } from "../components/Toggle";
@@ -2426,40 +2426,9 @@ export function SettingsPage() {
   const nextHue = () => hueSeq++;
 
   return (
-    // gap-10 (live-review round — "gap between the tab strip and the first
-    // card is too small"): was gap-6 (24px), same value the tab-panels
-    // wrapper further down used to use for the SAME job before its own
-    // gap-10 bump (see that wrapper's own comment). This outer wrapper had
-    // exactly two children when that bump landed — the heading+tab-strip
-    // block immediately below, and the tab-panels wrapper — so bumping ITS
-    // gap to gap-10 is what actually widens the space between the tab strip
-    // and the first Card's top edge to the same 40px rhythm every
-    // Card-to-Card gap already uses, without touching the (unrelated, still
-    // gap-6) space between the heading and the tab strip itself. AboutFooter
-    // (sticky-footer round, see its own header comment) is now a third
-    // child, after the tab-panels wrapper — the same gap-10 rhythm applies
-    // there too, for free, with no extra spacing utility needed on the
-    // footer itself.
-    //
-    // `flex-1` (sticky-footer round): makes this whole page root grow to
-    // fill the scrollable viewport's available height (app/Layout.tsx's
-    // `main` → its `glim-page-enter` child, both given a matching `flex-1 flex
-    // flex-col` for exactly this — see that file's own comments) instead of
-    // shrink-wrapping to its own content height. On its own this would just
-    // make the ROOT taller with blank space at the bottom (flex columns
-    // don't redistribute leftover space to children unless a child asks for
-    // it) — the tab-panels wrapper further down carries the matching
-    // `flex-1` that actually consumes that space, which is what pushes
-    // AboutFooter down to this column's bottom edge. Content taller than the
-    // available height still simply grows this element (and `main`'s
-    // scrollHeight with it) past that floor, which is what lets `main`
-    // scroll normally instead of clipping anything — see the tab-panels
-    // wrapper's own comment for why `flex-1` produces exactly that
-    // fill-or-grow behaviour with no separate min-height override needed.
-    //
-    // PAGE_SHELL_TABBED_RESPONSIVE is the one page root without the 1152px
-    // cap of the others; see lib/pageShell.ts.
-    <div className={PAGE_SHELL_TABBED_RESPONSIVE}>
+    // The root's gap is the card rhythm between the tab strip and the first
+    // card; the heading and the strip keep their own tighter gap inside.
+    <div className={PAGE_SHELL_RESPONSIVE}>
       {/* Heading + tab strip, grouped in their own gap-6 column (GlimStone
           follow-up pass, live-review round — the width-mismatch fix below
           needed a wrapper here to isolate this pair's own 24px gap from the

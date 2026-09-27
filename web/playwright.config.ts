@@ -85,6 +85,7 @@ const testMatch = [
   "settings-phone.spec.ts",
   "activity-log-jump.spec.ts",
   "selector-span.spec.ts",
+  "page-width.spec.ts",
 ];
 
 for (const spec of testMatch) {

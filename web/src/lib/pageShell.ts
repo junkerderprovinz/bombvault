@@ -28,8 +28,7 @@ export const PAGE_SHELL = "flex flex-col gap-10 max-w-6xl";
  * phone-width column.
  *
  * A stated, per-file exception (eslint.config.js) per page that adopts this
- * constant; the same data-not-inferred discipline as Settings'
- * PAGE_SHELL_TABBED_RESPONSIVE, and not a replacement of PAGE_SHELL itself:
+ * constant, and not a replacement of PAGE_SHELL itself:
  * retuning every routed page's mobile rhythm is nobody's decision but the
  * pages' own, and this constant exists because exactly the screens
  * restructured for phones carry it.
@@ -37,14 +36,9 @@ export const PAGE_SHELL = "flex flex-col gap-10 max-w-6xl";
 export const PAGE_SHELL_RESPONSIVE = "flex flex-col gap-6 md:gap-10 max-w-6xl";
 
 /**
- * The root wrapper for Settings and for a page embedded as a tab panel of
- * another page: PAGE_SHELL_RESPONSIVE's gaps without the width cap, plus the
- * `flex-1` that Settings' sticky AboutFooter needs to fill the main column.
- * Tab panels use it so they drop to 24px gaps below 48rem along with their
- * host page.
- *
- * Settings keeps the whole width of the main column. Its seven tabs span that
- * width and wrap into even rows where they do not fit, so the cap would only
- * take the one-row strip from the widest screens.
+ * The root wrapper for a page embedded as a tab panel of another page:
+ * PAGE_SHELL_RESPONSIVE's gaps without its width cap, which the host page
+ * already applies. The panel drops to 24px gaps below 48rem along with its
+ * host.
  */
-export const PAGE_SHELL_TABBED_RESPONSIVE = "flex flex-col gap-6 md:gap-10 flex-1";
+export const PAGE_SHELL_TABBED_RESPONSIVE = "flex flex-col gap-6 md:gap-10";
