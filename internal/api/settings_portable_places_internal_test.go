@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"maps"
 	"net/http"
 	"reflect"
@@ -1024,6 +1025,73 @@ func TestAnImportWaitsForAPlaceEditInProgress(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("the import never finished")
+	}
+}
+
+func TestAnImportIsRefusedWhileABackupRuns(t *testing.T) {
+	src := newPlacementFixture(t)
+	src.target("containers", "B2", b2Base+"/container")
+	exp := olderFileFor(t, src)
+
+	dst := newPlacementFixture(t)
+	if err := dst.svc.MigrateToPlaces(); err != nil {
+		t.Fatal(err)
+	}
+	before, err := dst.st.ListPlaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dst.holdDomain("vms", "backup")
+
+	if err := dst.h.applyImport(context.Background(), exp); !errors.Is(err, errPlacementBusy) {
+		t.Fatalf("apply = %v, want the busy refusal", err)
+	}
+	if now, err := dst.st.ListPlaces(); err != nil || !reflect.DeepEqual(now, before) {
+		t.Errorf("places = %+v, %v, want them untouched", now, err)
+	}
+	if targets, err := dst.st.ListOffsiteTargets(); err != nil || len(targets) != 0 {
+		t.Errorf("targets = %+v, %v, want nothing imported", targets, err)
+	}
+}
+
+func TestAFailedImportPutsThePlacesBack(t *testing.T) {
+	src := newPlacementFixture(t)
+	src.target("files", "Hetzner", "sftp:u1@hz.example:/files")
+	exp := olderFileFor(t, src)
+	exp.NamedRepos = nil
+
+	dst := newPlacementFixture(t)
+	seed := seedPlaces(dst)
+	seed.unraid.RetentionKeepLast = 30
+	if _, err := dst.st.WritePlace(store.PlaceWrite{Place: seed.unraid}); err != nil {
+		t.Fatal(err)
+	}
+	homes, err := dst.st.DomainPlaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Stands in for a write that fails while the places are gone.
+	if _, err := dst.db.Exec(`CREATE TRIGGER fail_insert BEFORE INSERT ON offsite_targets
+		BEGIN SELECT RAISE(ABORT, 'disk I/O error'); END`); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := dst.h.applyImport(context.Background(), exp); err == nil || !strings.Contains(err.Error(), "disk I/O error") {
+		t.Fatalf("apply = %v, want the failed write", err)
+	}
+
+	unraid, err := dst.st.GetPlace(seed.unraid.ID)
+	if err != nil || unraid.RetentionKeepLast != 30 {
+		t.Fatalf("Unraid = %+v, %v, want it back with its own retention", unraid, err)
+	}
+	if now, err := dst.st.DomainPlaces(); err != nil || !maps.Equal(now, homes) {
+		t.Errorf("homes = %v, %v, want %v", now, err, homes)
+	}
+	if repo, err := dst.st.GetNamedRepo(seed.repo.ID); err != nil || repo.PlaceID != seed.b2.ID || repo.PlaceDomain != "vms" {
+		t.Errorf("B2 VMs = %+v, %v, want it back on B2", repo, err)
+	}
+	if s, err := dst.st.GetSettings(); err != nil || s.PlacesMigrated == 0 {
+		t.Errorf("places_migrated = %d (err %v), want the places marked as there", s.PlacesMigrated, err)
 	}
 }
 

@@ -258,6 +258,63 @@ func (h *Handler) replacePlaces(exp settingsExport, prior []store.Place) error {
 	return nil
 }
 
+// placesBefore reads the places an import may have to put back, with their
+// home domains and every row on them.
+func (h *Handler) placesBefore(prior []store.Place) (store.PlacesImport, error) {
+	homes, err := h.store.DomainPlaces()
+	if err != nil {
+		return store.PlacesImport{}, err
+	}
+	in := store.PlacesImport{Places: prior, HomeDomains: homes}
+	for _, p := range prior {
+		rows, err := h.store.PlaceRows(p.ID)
+		if err != nil {
+			return store.PlacesImport{}, err
+		}
+		for _, r := range rows {
+			in.Links = append(in.Links, store.PlaceLink{RowID: r.ID, PlaceID: p.ID, Domain: r.PlaceDomain, Suffix: r.PlaceSuffix})
+		}
+	}
+	return in, nil
+}
+
+// putPlacesBack reinstalls what placesBefore read, less the rows the import
+// deleted, and has WritePlace move every location back to where its place
+// puts it, which is where the backups are.
+func (h *Handler) putPlacesBack(in store.PlacesImport) error {
+	targets, err := h.store.ListOffsiteTargets()
+	if err != nil {
+		return err
+	}
+	repos, err := h.store.ListNamedRepos()
+	if err != nil {
+		return err
+	}
+	live := map[string]bool{}
+	for _, r := range slices.Concat(targets, repos) {
+		live[r.ID] = true
+	}
+	for _, d := range places.Domains {
+		row, ok, err := h.store.PrimaryRemoteTarget(d)
+		if err != nil {
+			return err
+		}
+		if ok {
+			live[row.ID] = true
+		}
+	}
+	in.Links = slices.DeleteFunc(slices.Clone(in.Links), func(l store.PlaceLink) bool { return !live[l.RowID] })
+	if err := h.store.ReplacePlaces(in); err != nil {
+		return err
+	}
+	for _, p := range in.Places {
+		if _, err := h.store.WritePlace(store.PlaceWrite{Place: p}); err != nil {
+			return fmt.Errorf("storage place %q: %w", p.Name, err)
+		}
+	}
+	return nil
+}
+
 // placedImport is the file's places as this instance will store them. A place
 // whose base arrived redacted keeps the base it has here under the same id. A
 // home domain or row joins its place only where the location stored after the
