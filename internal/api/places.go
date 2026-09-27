@@ -1097,7 +1097,8 @@ func (s *Service) testPlace(ctx context.Context, id string) (places.ProbeResult,
 			continue
 		}
 		probed[r.Repo] = true
-		if at := s.probeFolder(ctx, r.Repo, mode); at.problem != nil {
+		// A direct repository may still run on credentials the place has left.
+		if at := s.probeFolder(ctx, r.Repo, s.rowMode(settings, r)); at.problem != nil {
 			fail(at.problem.Message)
 		}
 	}
