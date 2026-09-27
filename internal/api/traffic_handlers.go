@@ -93,7 +93,9 @@ func (h *Handler) handleGetStreaming(w http.ResponseWriter, r *http.Request) {
 		}
 		candidates = append(candidates, mediaCandidate{Name: c.Name, Image: c.Image, HostNetwork: c.NetworkMode == "host"})
 	}
-	slices.SortFunc(candidates, func(a, b mediaCandidate) int { return strings.Compare(a.Name, b.Name) })
+	slices.SortFunc(candidates, func(a, b mediaCandidate) int {
+		return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
+	})
 	servers := h.svc.mediaServers(r.Context(), cfg, time.Now())
 	if servers == nil {
 		servers = []string{}

@@ -109,11 +109,17 @@ func StartProxy(gate *Gate) (*Proxy, error) {
 	pass := hex.EncodeToString(secret)
 	ctx, cancel := context.WithCancel(context.Background())
 	p := &Proxy{
-		ln:     ln,
-		gate:   gate,
-		auth:   "Basic " + base64.StdEncoding.EncodeToString([]byte("bombvault:"+pass)),
-		url:    "http://bombvault:" + pass + "@" + ln.Addr().String(),
-		tr:     &http.Transport{Proxy: nil, DisableCompression: true, MaxIdleConnsPerHost: 8},
+		ln:   ln,
+		gate: gate,
+		auth: "Basic " + base64.StdEncoding.EncodeToString([]byte("bombvault:"+pass)),
+		url:  "http://bombvault:" + pass + "@" + ln.Addr().String(),
+		tr: &http.Transport{
+			Proxy:               nil,
+			DialContext:         (&net.Dialer{Timeout: 30 * time.Second, KeepAlive: 30 * time.Second}).DialContext,
+			IdleConnTimeout:     90 * time.Second,
+			DisableCompression:  true,
+			MaxIdleConnsPerHost: 8,
+		},
 		ctx:    ctx,
 		cancel: cancel,
 		conns:  map[net.Conn]struct{}{},
