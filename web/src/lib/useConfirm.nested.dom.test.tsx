@@ -5,15 +5,27 @@ import { useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { InfoBubble } from "../components/InfoBubble";
 import { I18nProvider, en } from "./i18n";
 import { useConfirm, useDialogKeys } from "./useConfirm";
 
-function Window({ onClose, onAnswer, extra }: { onClose: () => void; onAnswer: (ok: boolean) => void; extra?: ReactNode }) {
+function Window({
+  onClose,
+  onAnswer,
+  extra,
+  hint,
+}: {
+  onClose: () => void;
+  onAnswer: (ok: boolean) => void;
+  extra?: ReactNode;
+  hint?: string;
+}) {
   const cardRef = useRef<HTMLDivElement>(null);
   const { confirm, confirmDialog } = useConfirm();
   useDialogKeys(true, cardRef, onClose);
   return createPortal(
     <div ref={cardRef} role="dialog" aria-modal="true" aria-label="Add a place">
+      {hint && <InfoBubble tip={hint} />}
       <button type="button" onClick={() => void confirm("Use it?", { extra }).then(onAnswer)}>
         Accept
       </button>
@@ -131,5 +143,63 @@ describe("a question over a window", () => {
       back.push(document.activeElement as HTMLElement);
     }
     expect(back).toEqual(controls.map((_, i) => controls[(start - 1 - i + 2 * controls.length) % controls.length]));
+  });
+});
+
+describe("an info bubble open in a window", () => {
+  afterEach(cleanup);
+
+  const HINT = "Copies here stay on this server.";
+
+  it("takes the first Escape, and the window the next", () => {
+    const onClose = vi.fn();
+    render(
+      <I18nProvider>
+        <Window onClose={onClose} onAnswer={vi.fn()} hint={HINT} />
+      </I18nProvider>
+    );
+    fireEvent.mouseEnter(screen.getByLabelText(HINT));
+    expect(screen.getByRole("tooltip").textContent).toBe(HINT);
+
+    fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("takes the first Escape in a question, and the question the next", async () => {
+    const { onClose, onAnswer, question } = await ask(<InfoBubble tip={HINT} />);
+    fireEvent.mouseEnter(within(question).getByLabelText(HINT));
+
+    await act(async () => {
+      fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+    });
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    expect(onAnswer).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+    });
+    expect(onAnswer).toHaveBeenCalledWith(false);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("keeps the first Escape from a window that listens for it on its own", () => {
+    const own = vi.fn();
+    document.addEventListener("keydown", own, true);
+    try {
+      render(<InfoBubble tip={HINT} />);
+      fireEvent.mouseEnter(screen.getByLabelText(HINT));
+      fireEvent.keyDown(document.body, { key: "Escape" });
+      expect(screen.queryByRole("tooltip")).toBeNull();
+      expect(own).not.toHaveBeenCalled();
+
+      fireEvent.keyDown(document.body, { key: "Escape" });
+      expect(own).toHaveBeenCalledTimes(1);
+    } finally {
+      document.removeEventListener("keydown", own, true);
+    }
   });
 });

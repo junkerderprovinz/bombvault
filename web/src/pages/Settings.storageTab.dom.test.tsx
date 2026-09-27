@@ -122,7 +122,7 @@ it("has no card for repositories, placement defaults, backup paths or local rete
   for (const gone of ["Repositories", "Placement defaults", "Backup Paths", "Snapshot retention"]) {
     expect(titles.some((title) => title.startsWith(gone)), gone).toBe(false);
   }
-  expect(screen.queryByRole("textbox", { name: en["settings.containersPath"] })).toBeNull();
+  expect(screen.queryByDisplayValue("backups/containers")).toBeNull();
 });
 
 it("saves the restore folder 800 ms after the last key", async () => {

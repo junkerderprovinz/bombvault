@@ -347,13 +347,14 @@ type importSummary struct {
 }
 
 // importCredsPresence reports which credential kinds the file carries (never the
-// values). All false when the file has no credentials block.
+// values) and how many credential sets. All zero when the file has no
+// credentials block.
 type importCredsPresence struct {
 	Present  bool `json:"present"`
 	Cloud    bool `json:"cloud"`
 	Rclone   bool `json:"rclone"`
 	Notify   bool `json:"notify"`
-	CredSets bool `json:"credSets"`
+	CredSets int  `json:"credSets"`
 }
 
 // handleImportSettings validates a settings-export file and, with ?apply=true,
@@ -719,7 +720,7 @@ func credsPresence(c *exportCredentials) importCredsPresence {
 		Cloud:    cloudCredsMeaningful(c.Cloud),
 		Rclone:   strings.TrimSpace(c.Rclone) != "",
 		Notify:   notifyMeaningful(c.Notify),
-		CredSets: len(c.CredSets) > 0,
+		CredSets: len(c.CredSets),
 	}
 }
 

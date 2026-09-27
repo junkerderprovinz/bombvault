@@ -8,6 +8,7 @@ import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
+import { placesChanged } from "../lib/places";
 import { stubEventSource } from "../lib/placement.testsupport";
 
 const stored = {
@@ -53,10 +54,11 @@ beforeEach(() => {
   puts.length = 0;
   restores.length = 0;
   kept = [];
+  stored.configPath = "backups/config";
 });
 afterEach(cleanup);
 
-async function restoreFrom(path: string) {
+async function renderPage() {
   await act(async () => {
     render(
       <MemoryRouter>
@@ -68,10 +70,18 @@ async function restoreFrom(path: string) {
       </MemoryRouter>
     );
   });
-  fireEvent.change(screen.getByDisplayValue("backups/config"), { target: { value: path } });
+}
+
+async function restore() {
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: en["recovery.configRestore"] }));
   });
+}
+
+async function restoreFrom(path: string) {
+  await renderPage();
+  fireEvent.change(screen.getByDisplayValue("backups/config"), { target: { value: path } });
+  await restore();
 }
 
 describe("Recovery's own-settings restore", () => {
@@ -90,5 +100,17 @@ describe("Recovery's own-settings restore", () => {
     expect(restores).toEqual(["latest"]);
     expect(screen.getByDisplayValue("backups/old-config")).toBeTruthy();
     expect(screen.queryByText(en["recovery.placeKept"])).toBeNull();
+  });
+
+  it("restores from the place the Self-Backup row in step 3 moved it to", async () => {
+    await renderPage();
+    stored.configPath = "places/nas/config";
+    await act(async () => {
+      placesChanged();
+    });
+    expect(screen.getByDisplayValue("places/nas/config")).toBeTruthy();
+    await restore();
+    expect(puts[0]?.configPath).toBe("places/nas/config");
+    expect(restores).toEqual(["latest"]);
   });
 });

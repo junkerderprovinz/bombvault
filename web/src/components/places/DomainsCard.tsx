@@ -59,11 +59,13 @@ function useDomainRows(): DomainRows & { reload: () => Promise<void> } {
   return { ...state, reload };
 }
 
-export function DomainsCard({ hueIndex }: { hueIndex?: number }) {
+/** DomainRows is the Domains card without the card, for a page that already
+ *  gives the rows a surface, such as a step of Recovery. */
+export function DomainRows() {
   const { t } = useT();
   const { rows, places, unplaced, failed, reload } = useDomainRows();
   return (
-    <Card title={t("storageDomains.title")} hint={t("storageDomains.hint")} hueIndex={hueIndex}>
+    <>
       {failed && <p className="text-xs text-statusWarn">{t("storageDomains.loadFailed")}</p>}
       {rows && (
         <div className="flex flex-col gap-3">
@@ -79,6 +81,15 @@ export function DomainsCard({ hueIndex }: { hueIndex?: number }) {
           ))}
         </div>
       )}
+    </>
+  );
+}
+
+export function DomainsCard({ hueIndex }: { hueIndex?: number }) {
+  const { t } = useT();
+  return (
+    <Card title={t("storageDomains.title")} hint={t("storageDomains.hint")} hueIndex={hueIndex}>
+      <DomainRows />
     </Card>
   );
 }
