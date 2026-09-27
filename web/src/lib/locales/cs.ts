@@ -48,7 +48,6 @@ const cs: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Přehled",
-  "dashboard.subtitle": "Stav vašich záloh na první pohled.",
   "dashboard.summaryHealth": "Bod obnovení",
   "dashboard.summaryNextBackup": "Další záloha",
   "dashboard.summaryNextIn": "za {countdown}",
@@ -391,7 +390,6 @@ const cs: Partial<Translations> = {
   "folder.pathHint": "Cesta musí být relativní podcesta (bez úvodního / nebo ..)",
   "folder.couldNotRead": "Adresář nelze přečíst",
   "folder.browseFailed": "Procházení selhalo",
-  "containers.subtitle": "Spravujte zálohy, plány a obnovení kontejnerů.",
   "containers.emptyDocker": "Nenalezeny žádné kontejnery. Běží Docker?",
   "containers.bulkResult": "{ok} ok, {fail} selhalo",
   "vm.method.saveFailed": "Nepodařilo se změnit metodu zálohování. Nebyla změněna.",
@@ -469,7 +467,6 @@ const cs: Partial<Translations> = {
   "auth.passwordMinHint": "one=Nejméně {n} znak.|few=Nejméně {n} znaky.|many=Nejméně {n} znaku.|other=Nejméně {n} znaků.",
   // VMs page
   "vms.title": "Virtuální stroje",
-  "vms.subtitle": "Správa záloh VM, plánů a obnovení.",
   "vms.empty": "Žádné VMs nenalezeny. Běží libvirt/KVM?",
   "vms.backupSelected": "Zálohovat vybrané",
   "vms.restoreSelected": "Obnovit vybrané (nejnovější)",
@@ -635,7 +632,6 @@ const cs: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Záloha Flash",
-  "flash.subtitle": "Zálohujte a obnovujte USB Flash Unraidu (celý /boot).",
   "flash.backupTitle": "Zálohovat Flash",
   "flash.backupHint": "Zachytí celý USB Flash (/boot): OS Unraid, licenci, konfiguraci pole, sdílené složky, síť a konfiguraci pluginů.",
   "flash.backupNow": "Zálohovat Flash nyní",
@@ -822,7 +818,6 @@ const cs: Partial<Translations> = {
   "recovery.stored": "Uložil jsem ji bezpečně",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "Obnovte své kontejnery a VM z existující zálohy do této instalace.",
   "recovery.step1": "Může BombVault číst vaše zálohy?",
   "recovery.appKeyExplain": "Ke čtení existujících záloh potřebuje tento kontejner STEJNÝ APP_KEY, který používal dříve. Najdete jej ve své sadě pro obnovu. Nastavte jej v šabloně kontejneru Unraid, pokud ještě není, a poté proveďte opětovnou kontrolu.",
   "recovery.appKeyRemedy": "Šifrovací klíč neodpovídá těmto zálohám. Nastavte původní APP_KEY (ze své sady pro obnovu) v šabloně kontejneru a poté proveďte opětovnou kontrolu.",
@@ -867,7 +862,6 @@ const cs: Partial<Translations> = {
 
   // Config backup (BombVault's own settings)
   "config.title": "Autozáloha",
-  "config.subtitle": "Zálohujte vlastní nastavení BombVaultu, aby se znovu sestavený server mohl sám obnovit.",
   "config.settingsTitle": "Nastavení autozálohy",
   "config.settingsHint": "Chraňte vlastní konfiguraci BombVaultu (jeho databázi nastavení, přihlašovací údaje mimo lokalitu a SSH klíče), aby se čistá instalace mohla sama obnovit a navázat přesně tam, kde skončila.",
   "config.enabled": "Zálohovat nastavení BombVaultu",
@@ -1380,7 +1374,6 @@ const cs: Partial<Translations> = {
   "settings.everythingStarted": "Spuštěno. Poběží na serveru postupně přes všechny oblasti; výsledek sleduj v protokolu aktivit.",
   "settings.everythingAlreadyRunning": "Záloha všeho už probíhá.",
   "settings.everythingBusy": "Pracuji…",
-  "settings.subtitle": "Konfigurace BombVault. Změny se projeví okamžitě.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtry",
 
@@ -1407,7 +1400,6 @@ const cs: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "Složky",
   "files.title": "Složky",
-  "files.subtitle": "Zálohujte libovolné složky na tomto serveru, s plány, kopiemi mimo lokalitu a obnovami.",
   "files.setsTitle": "Sady složek",
   "files.empty": "Zatím žádné sady složek. Přidejte složku (sdílení, dokumenty, fotky, cokoli pod vašimi připojeními) a BombVault ji ochrání jako všechno ostatní: plány, kopie mimo lokalitu, kontroly integrity a obnovy. Samostatný nástroj na zálohování souborů není potřeba.",
   "files.addSet": "Přidat sadu složek",
@@ -1460,7 +1452,6 @@ const cs: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "Datové sady ZFS",
-  "zfs.subtitle": "Zálohuje datové sady ZFS společně s jejich podřízenými sadami z jediného snímku, s deduplikací, procházením souborů a obnovou jednotlivých souborů.",
   "settings.zfsEnabled": "Datové sady ZFS",
   "settings.zfsEnabledHint": "Zálohuje datové sady ZFS a jejich podřízené sady ze snímků, přes SSH spojení k tomuto serveru.",
   "settings.zfsPath": "Cesta datových sad ZFS",
@@ -2088,8 +2079,6 @@ const cs: Partial<Translations> = {
   "settings.fleetEnabledHint": "Sledujte stav ochrany propojených instancí BombVault (jen ke čtení)",
   "receiver.title": "Přijímač",
   "instances.title": "Instance",
-  "instances.subtitle": "Vše, co se týká jiného BombVaultu: repozitáře poslané sem, instance sledované přes HTTP a repozitáře, ze kterých tento stroj stahuje.",
-  "receiver.subtitle": "Sledujte externí kopie, které jiné instance BombVault odesílají na tento stroj, jen ke čtení.",
   "receiver.addRepo": "Přidat přijatý repozitář",
   "receiver.emptyTitle": "Přijaté repozitáře",
   "receiver.empty": "Zatím žádné přijaté repozitáře. Přidejte repozitář, do kterého jiný BombVault odesílá své externí kopie, a BombVault jej sleduje jen ke čtení: co dorazilo, kdy přišla poslední záloha a nezávislou kontrolu integrity na tomto hardwaru.",
@@ -2144,7 +2133,6 @@ const cs: Partial<Translations> = {
   "receiver.saveError": "Nepodařilo se uložit přijatý repozitář.",
   "pull.name": "Název",
   "pull.title": "Stažení",
-  "pull.subtitle": "Stáhněte zálohy z repozitáře jiného BombVaultu do tohoto.",
   "pull.addSource": "Přidat zdroj",
   "pull.emptyTitle": "Zdroje stahování",
   "pull.empty": "Zatím žádné zdroje stahování. Přidejte repozitář jiného BombVaultu a APP_KEY té instance a tento stroj bude jeho snímky stahovat do vlastního repozitáře podle plánu, který si zvolíte. Protistrana nemusí nastavit nic a nemusí být ani zapnutá.",
@@ -2173,7 +2161,6 @@ const cs: Partial<Translations> = {
   "settings.pullEnabled": "Stahování z jiných instancí",
   "settings.pullEnabledHint": "Stahovat zálohy jiného BombVaultu do vlastního repozitáře tohoto stroje (zapisuje sem data)",
   "fleet.title": "Flotila",
-  "fleet.subtitle": "Sledujte stav ochrany propojených instancí BombVault, jen ke čtení.",
   "fleet.addPeer": "Přidat instanci",
   "fleet.emptyTitle": "Instance flotily",
   "fleet.empty": "Zatím nebyly přidány žádné instance flotily. Přidejte URL a token flotily jiné instance BombVault a tento stroj bude jen ke čtení dotazovat její kartu ochrany, nic víc.",
@@ -2389,7 +2376,6 @@ const cs: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Disk s {domains} bude tímto tempem plný asi za {time}.",
   "anomaly.sentence.capacityLow": "Na disku s {domains} zbývá jen {free} ({percent}%).",
   "anomaly.sentence.unknown": "U položky {name} byla nalezena anomálie. Načti stránku znovu, aby se zobrazily podrobnosti.",
-  "anomaly.pageSubtitle": "Co se ve tvých zálohách změnilo a stojí za pohled.",
   "anomaly.offPage": "Detekce anomálií je vypnutá. Dřívější anomálie tu zůstávají vypsané.",
   "anomaly.retry": "Zkusit znovu",
   "anomaly.filter.severity": "Závažnost",

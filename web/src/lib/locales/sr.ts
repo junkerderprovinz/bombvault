@@ -51,7 +51,6 @@ const sr: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Контролна табла",
-  "dashboard.subtitle": "Стање резервних копија на један поглед.",
   "dashboard.summaryHealth": "Тачка враћања",
   "dashboard.summaryNextBackup": "Следећа резервна копија",
   "dashboard.summaryNextIn": "за {countdown}",
@@ -1094,7 +1093,6 @@ const sr: Partial<Translations> = {
   "folder.creating": "Прављење…",
   "folder.createFailed": "Фасцикла није могла да се направи",
   "folder.browseFailed": "Прегледање није успело",
-  "containers.subtitle": "Управљај резервним копијама, распоредима и враћањима контејнера.",
   "containers.emptyDocker": "Контејнери нису пронађени. Да ли Docker ради?",
   "containers.bulkResult": "{ok} успешно, {fail} неуспешно",
   "vm.method.saveFailed": "Метод резервног копирања није могао да се промени — није промењен.",
@@ -1234,7 +1232,6 @@ const sr: Partial<Translations> = {
 
   // VMs page
   "vms.title": "Виртуелне машине",
-  "vms.subtitle": "Управљај резервним копијама, распоредима и враћањима ВМ-ова.",
   "vms.empty": "ВМ-ови нису пронађени. Да ли libvirt/KVM ради?",
   "vms.backupSelected": "Направи резервну копију изабраних",
   "vms.restoreSelected": "Врати изабране (најновије)",
@@ -1247,7 +1244,6 @@ const sr: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Резервна копија Flash-а",
-  "flash.subtitle": "Прави резервну копију и враћа Unraid USB Flash (цео /boot).",
   "flash.backupTitle": "Направи резервну копију Flash-а",
   "flash.backupHint": "Обухвата цео USB Flash (/boot): Unraid OS, лиценцу, конфигурацију низа, дељене ресурсе, мрежу и конфигурацију додатака.",
   "flash.backupNow": "Направи резервну копију Flash-а сада",
@@ -1282,7 +1278,6 @@ const sr: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "Сопствена резервна копија",
-  "config.subtitle": "Направи резервну копију сопствених подешавања BombVault-а, тако да обновљен сервер може сам себе да врати.",
   "config.settingsTitle": "Подешавања сопствене резервне копије",
   "config.settingsHint": "Заштити сопствену конфигурацију BombVault-а — његову базу подешавања, спољне акредитиве и SSH кључеве — тако да свежа инсталација може себе да врати и настави тачно тамо где је стала.",
   "config.enabled": "Направи резервну копију подешавања BombVault-а",
@@ -1303,8 +1298,6 @@ const sr: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Пријемник",
   "instances.title": "Инстанце",
-  "instances.subtitle": "Све што се тиче другог BombVault-а: ризнице послате овамо, инстанце које се прате преко HTTP-а и ризнице из којих ова машина преузима.",
-  "receiver.subtitle": "Надгледај спољне копије које друге инстанце BombVault-а шаљу на овај уређај, само за читање.",
   "receiver.addRepo": "Додај примљени репозиторијум",
   "receiver.emptyTitle": "Примљени репозиторијуми",
   "receiver.empty": "Још нема примљених репозиторијума. Додај репозиторијум у који други BombVault шаље своје спољне копије, а BombVault га надгледа само за читање: шта је стигло, када је стигла последња резервна копија и независну проверу интегритета на овом хардверу.",
@@ -1359,7 +1352,6 @@ const sr: Partial<Translations> = {
   "receiver.saveError": "Примљени репозиторијум није могао да се сачува.",
   "pull.name": "Назив",
   "pull.title": "Повлачење",
-  "pull.subtitle": "Повуци резервне копије из репозиторијума другог BombVault-а у овај.",
   "pull.addSource": "Додај извор",
   "pull.emptyTitle": "Извори повлачења",
   "pull.empty": "Још нема извора повлачења. Додај репозиторијум другог BombVault-а и APP_KEY те инстанце, па ће овај уређај повлачити њене снимке у сопствени репозиторијум по распореду који изабереш. Друга страна не мора ништа да подешава нити мора да буде укључена.",
@@ -1388,7 +1380,6 @@ const sr: Partial<Translations> = {
   "settings.pullEnabled": "Повлачење са других инстанци",
   "settings.pullEnabledHint": "Повуци резервне копије другог BombVault-а у сопствени репозиторијум овог уређаја (овде уписује податке)",
   "fleet.title": "Флота",
-  "fleet.subtitle": "Прати стање заштите партнерских инстанци BombVault-а, само за читање.",
   "fleet.addPeer": "Додај партнера",
   "fleet.emptyTitle": "Партнери флоте",
   "fleet.empty": "Још нема партнера флоте. Додај URL и токен флоте друге инстанце BombVault-а, а овај уређај је прати само за читање, ради њене картице оцене заштите — ништа друго.",
@@ -1486,7 +1477,6 @@ const sr: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Опоравак",
-  "recovery.intro": "Опорави своје контејнере и ВМ-ове из постојеће резервне копије на ову инсталацију.",
   "recovery.step1": "Може ли BombVault да прочита твоје резервне копије?",
   "recovery.appKeyExplain": "Да прочита постојеће резервне копије, овом контејнеру треба ИСТИ APP_KEY који је коришћен раније — налази се у твом комплету за опоравак. Подеси га у Unraid шаблону контејнера ако већ није, па поново провери.",
   "recovery.appKeyRemedy": "Кључ за шифровање не поклапа се са овим резервним копијама. Подеси оригинални APP_KEY (из свог комплета за опоравак) у шаблону контејнера, па поново провери.",
@@ -1566,7 +1556,6 @@ const sr: Partial<Translations> = {
   "settings.everythingStarted": "Покренуто — на серверу тече редом кроз свако подручје; исход се види у дневнику активности.",
   "settings.everythingAlreadyRunning": "Потпуна резервна копија је већ у току.",
   "settings.everythingBusy": "Радим…",
-  "settings.subtitle": "Конфигурација BombVault-а — измене се примењују одмах.",
   "filter.button": "Филтери",
 
   // Settings — weekly digest card, backup-engine cache card, revoke-all sessions
@@ -1597,7 +1586,6 @@ const sr: Partial<Translations> = {
   // Files domain (folder-set backups, #62)
   "nav.files": "Фасцикле",
   "files.title": "Фасцикле",
-  "files.subtitle": "Направи резервну копију било којих фасцикли на овом серверу — са распоредима, спољним копијама и враћањима.",
   "files.setsTitle": "Скупови фасцикли",
   "files.empty": "Још нема скупова фасцикли. Додај фасциклу — дељене ресурсе, документа, фотографије, било шта под својим тачкама монтирања — а BombVault је штити као и све остало: распореди, спољне копије, провере интегритета и враћања. Посебан алат за резервну копију датотека није потребан.",
   "files.addSet": "Додај скуп фасцикли",
@@ -1650,7 +1638,6 @@ const sr: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS скупови података",
-  "zfs.subtitle": "Прави резервне копије ZFS скупова података заједно са њиховим подскуповима из једног снимка, уз дедупликацију, преглед датотека и враћање појединачне датотеке.",
   "settings.zfsEnabled": "ZFS скупови података",
   "settings.zfsEnabledHint": "Прави резервне копије ZFS скупова података и њихових подскупова из снимака, преко SSH везе са овим сервером.",
   "settings.zfsPath": "Путања ZFS скупова података",
@@ -2386,7 +2373,6 @@ const sr: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Диск са {domains} биће овим темпом пун за отприлике {time}.",
   "anomaly.sentence.capacityLow": "На диску са {domains} остало је само {free} ({percent}%).",
   "anomaly.sentence.unknown": "За {name} пронађена је аномалија. Поново учитај страницу за детаље.",
-  "anomaly.pageSubtitle": "Шта се променило у твојим резервним копијама и вреди погледа.",
   "anomaly.offPage": "Откривање аномалија је искључено. Раније аномалије остају наведене овде.",
   "anomaly.retry": "Покушај поново",
   "anomaly.filter.severity": "Озбиљност",

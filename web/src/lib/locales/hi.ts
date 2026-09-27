@@ -51,7 +51,6 @@ const hi: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "डैशबोर्ड",
-  "dashboard.subtitle": "आपके बैकअप की स्थिति एक नज़र में।",
   "dashboard.summaryHealth": "पुनर्प्राप्ति बिंदु",
   "dashboard.summaryNextBackup": "अगला बैकअप",
   "dashboard.summaryNextIn": "{countdown} में",
@@ -1098,7 +1097,6 @@ const hi: Partial<Translations> = {
   "folder.creating": "बनाया जा रहा है…",
   "folder.createFailed": "फ़ोल्डर नहीं बन पाया",
   "folder.browseFailed": "ब्राउज़ करना विफल हुआ",
-  "containers.subtitle": "कंटेनरों के बैकअप, शेड्यूल और रीस्टोर प्रबंधित करें।",
   "containers.emptyDocker": "कोई कंटेनर नहीं मिला। क्या Docker चल रहा है?",
   "containers.bulkResult": "{ok} सफल, {fail} विफल",
   "vm.method.saveFailed": "बैकअप का तरीका बदला नहीं जा सका। इसे बदला नहीं गया।",
@@ -1239,7 +1237,6 @@ const hi: Partial<Translations> = {
 
   // VMs page
   "vms.title": "वर्चुअल मशीनें",
-  "vms.subtitle": "VM के बैकअप, शेड्यूल और रीस्टोर प्रबंधित करें।",
   "vms.empty": "कोई VM नहीं मिली। क्या libvirt/KVM चल रहा है?",
   "vms.backupSelected": "चयनित का बैकअप लें",
   "vms.restoreSelected": "चयनित को रीस्टोर करें (नवीनतम)",
@@ -1252,7 +1249,6 @@ const hi: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "फ़्लैश बैकअप",
-  "flash.subtitle": "Unraid USB फ़्लैश (पूरा /boot) का बैकअप और रीस्टोर करें।",
   "flash.backupTitle": "फ़्लैश का बैकअप लें",
   "flash.backupHint": "पूरा USB फ़्लैश (/boot) कैप्चर करता है: Unraid OS, लाइसेंस, ऐरे कॉन्फ़िगरेशन, शेयर, नेटवर्क और प्लगइन कॉन्फ़िगरेशन।",
   "flash.backupNow": "अभी फ़्लैश का बैकअप लें",
@@ -1288,7 +1284,6 @@ const hi: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "सेल्फ़-बैकअप",
-  "config.subtitle": "BombVault की अपनी सेटिंग्स का बैकअप लेता है ताकि फिर से बनाया गया सर्वर खुद को रीस्टोर कर सके।",
   "config.settingsTitle": "सेल्फ़-बैकअप सेटिंग्स",
   "config.settingsHint": "BombVault की अपनी कॉन्फ़िगरेशन की रक्षा करता है (इसका सेटिंग्स डेटाबेस, ऑफ़-साइट क्रेडेंशियल्स और SSH कुंजियाँ) ताकि नई इंस्टॉलेशन खुद को रीस्टोर करके ठीक वहीं से जारी रह सके जहाँ छोड़ा था।",
   "config.enabled": "BombVault की सेटिंग्स का बैकअप लें",
@@ -1309,8 +1304,6 @@ const hi: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "रिसीवर",
   "instances.title": "इंस्टेंस",
-  "instances.subtitle": "किसी दूसरे BombVault से जुड़ी हर चीज़: यहाँ भेजे गए रिपॉज़िटरी, HTTP पर देखे जाने वाले इंस्टेंस, और वे रिपॉज़िटरी जिनसे यह मशीन खींचती है।",
-  "receiver.subtitle": "इस बॉक्स को दूसरे BombVault इंस्टेंस भेजने वाली ऑफ़-साइट कॉपियों की निगरानी करें, केवल पढ़ने के लिए।",
   "receiver.addRepo": "प्राप्त रिपॉज़िटरी जोड़ें",
   "receiver.emptyTitle": "प्राप्त रिपॉज़िटरीज़",
   "receiver.empty": "अभी तक कोई प्राप्त रिपॉज़िटरी नहीं है। वह रिपॉज़िटरी जोड़ें जिसमें कोई दूसरा BombVault अपनी ऑफ़-साइट कॉपियाँ भेजता है, और BombVault इसे केवल पढ़ने के लिए देखता है: क्या पहुँचा, आख़िरी बैकअप कब आया, और इस हार्डवेयर पर एक स्वतंत्र इंटीग्रिटी जाँच।",
@@ -1365,7 +1358,6 @@ const hi: Partial<Translations> = {
   "receiver.saveError": "प्राप्त रिपॉज़िटरी सहेजी नहीं जा सकी।",
   "pull.name": "नाम",
   "pull.title": "पुल",
-  "pull.subtitle": "दूसरे BombVault की रिपॉज़िटरी से बैकअप इस रिपॉज़िटरी में खींचें।",
   "pull.addSource": "स्रोत जोड़ें",
   "pull.emptyTitle": "पुल स्रोत",
   "pull.empty": "अभी कोई पुल स्रोत नहीं है। दूसरे BombVault की रिपॉज़िटरी और उस इंस्टेंस का APP_KEY जोड़ें, और यह बॉक्स आपकी चुनी हुई समय-सारणी पर उसके स्नैपशॉट अपनी रिपॉज़िटरी में खींच लेता है। दूसरी तरफ़ कुछ भी सेट करने की ज़रूरत नहीं है, और उसका चालू रहना भी ज़रूरी नहीं है।",
@@ -1394,7 +1386,6 @@ const hi: Partial<Translations> = {
   "settings.pullEnabled": "दूसरे इंस्टेंस से पुल करें",
   "settings.pullEnabledHint": "दूसरे BombVault के बैकअप इस बॉक्स की अपनी रिपॉज़िटरी में लाता है (यहाँ डेटा लिखता है)",
   "fleet.title": "फ़्लीट",
-  "fleet.subtitle": "जुड़े BombVault इंस्टेंस की सुरक्षा स्थिति देखें, केवल पढ़ने के लिए।",
   "fleet.addPeer": "इंस्टेंस जोड़ें",
   "fleet.emptyTitle": "फ़्लीट इंस्टेंस",
   "fleet.empty": "अभी तक फ़्लीट में कोई इंस्टेंस नहीं है। किसी दूसरे BombVault इंस्टेंस का URL और फ़्लीट टोकन जोड़ें, और यह बॉक्स केवल उसका सुरक्षा स्कोरकार्ड पाने के लिए केवल पढ़ने के तरीके से इसे पोल करता है, और कुछ नहीं।",
@@ -1492,7 +1483,6 @@ const hi: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "रिकवरी",
-  "recovery.intro": "इस इंस्टॉलेशन पर मौजूद बैकअप से अपने कंटेनर और VM रिकवर करें।",
   // Step 1
   "recovery.step1": "क्या BombVault आपके बैकअप पढ़ सकता है?",
   "recovery.appKeyExplain": "मौजूदा बैकअप पढ़ने के लिए, इस कंटेनर को पहले जैसा वही APP_KEY चाहिए। यह आपकी रिकवरी किट में है। अगर पहले से नहीं है तो इसे Unraid कंटेनर टेम्पलेट में सेट करें, फिर फिर से जाँचें।",
@@ -1579,7 +1569,6 @@ const hi: Partial<Translations> = {
   "settings.everythingStarted": "शुरू हो गया। यह सर्वर पर बारी-बारी से हर डोमेन से गुज़रता है; परिणाम एक्टिविटी लॉग में देखें।",
   "settings.everythingAlreadyRunning": "सब कुछ बैकअप पहले से चल रहा है।",
   "settings.everythingBusy": "काम चल रहा है…",
-  "settings.subtitle": "BombVault कॉन्फ़िगरेशन। बदलाव तुरंत लागू होते हैं।",
   // Filter drawer trigger
   "filter.button": "फ़िल्टर",
 
@@ -1612,7 +1601,6 @@ const hi: Partial<Translations> = {
   // Files domain
   "nav.files": "फ़ोल्डर",
   "files.title": "फ़ोल्डर",
-  "files.subtitle": "इस सर्वर के किसी भी फ़ोल्डर का बैकअप लें: शेड्यूल, ऑफ़-साइट कॉपियों और रीस्टोर के साथ।",
   "files.setsTitle": "फ़ोल्डर सेट",
   "files.empty": "अभी तक कोई फ़ोल्डर सेट नहीं है। एक फ़ोल्डर जोड़ें (शेयर, दस्तावेज़, फ़ोटो, आपके माउंट के अंतर्गत कुछ भी) और BombVault इसे बाकी सब की तरह सुरक्षित करता है: शेड्यूल, ऑफ़-साइट कॉपियाँ, इंटीग्रिटी जाँच और रीस्टोर। किसी अलग फ़ाइल-बैकअप टूल की ज़रूरत नहीं।",
   "files.addSet": "फ़ोल्डर सेट जोड़ें",
@@ -1666,7 +1654,6 @@ const hi: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS डेटासेट",
-  "zfs.subtitle": "ZFS डेटासेट को उनके चाइल्ड डेटासेट के साथ एक ही स्नैपशॉट से बैकअप करें, डीडुप्लिकेशन, फ़ाइल ब्राउज़िंग और एकल-फ़ाइल रीस्टोर के साथ।",
   "settings.zfsEnabled": "ZFS डेटासेट",
   "settings.zfsEnabledHint": "इस सर्वर से SSH कनेक्शन के ज़रिए स्नैपशॉट से ZFS डेटासेट और उनके चाइल्ड डेटासेट का बैकअप लेता है।",
   "settings.zfsPath": "ZFS डेटासेट का पथ",
@@ -2402,7 +2389,6 @@ const hi: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "{domains} रखने वाली डिस्क इस रफ़्तार से लगभग {time} में भर जाएगी।",
   "anomaly.sentence.capacityLow": "{domains} रखने वाली डिस्क पर केवल {free} बचा है ({percent}%)।",
   "anomaly.sentence.unknown": "{name} के लिए एक विसंगति मिली। विवरण देखने के लिए पृष्ठ फिर से लोड करें।",
-  "anomaly.pageSubtitle": "तुम्हारे बैकअप में क्या बदला है और नज़र डालने लायक है।",
   "anomaly.offPage": "विसंगति पहचान बंद है। पहले की विसंगतियाँ यहाँ सूचीबद्ध रहती हैं।",
   "anomaly.retry": "फिर कोशिश करें",
   "anomaly.filter.severity": "गंभीरता",

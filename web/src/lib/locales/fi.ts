@@ -48,7 +48,6 @@ const fi: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Kojelauta",
-  "dashboard.subtitle": "Varmuuskopioidesi tila yhdellä silmäyksellä.",
   "dashboard.summaryHealth": "Palautuspiste",
   "dashboard.summaryNextBackup": "Seuraava varmuuskopio",
   "dashboard.summaryNextIn": "{countdown} kuluttua",
@@ -391,7 +390,6 @@ const fi: Partial<Translations> = {
   "folder.pathHint": "Polun on oltava suhteellinen alipolku (ei alkavaa / tai ..)",
   "folder.couldNotRead": "Hakemistoa ei voitu lukea",
   "folder.browseFailed": "Selaus epäonnistui",
-  "containers.subtitle": "Hallitse konttien varmuuskopioita, ajastuksia ja palautuksia.",
   "containers.emptyDocker": "Kontteja ei löytynyt. Onko Docker käynnissä?",
   "containers.bulkResult": "{ok} ok, {fail} epäonnistui",
   "vm.method.saveFailed": "Varmuuskopiointitapaa ei voitu vaihtaa. Sitä ei muutettu.",
@@ -469,7 +467,6 @@ const fi: Partial<Translations> = {
   "auth.passwordMinHint": "one=Vähintään {n} merkki.|other=Vähintään {n} merkkiä.",
   // VMs page
   "vms.title": "Virtuaalikoneet",
-  "vms.subtitle": "Hallinnoi VM-varmuuskopioita, aikatauluja ja palautuksia.",
   "vms.empty": "VM:iä ei löydy. Onko libvirt/KVM käynnissä?",
   "vms.backupSelected": "Varmuuskopioi valitut",
   "vms.restoreSelected": "Palauta valitut (uusin)",
@@ -637,7 +634,6 @@ const fi: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash-varmuuskopio",
-  "flash.subtitle": "Varmuuskopioi ja palauta Unraid-USB-flash (koko /boot).",
   "flash.backupTitle": "Varmuuskopioi flash",
   "flash.backupHint": "Tallentaa koko USB-flashin (/boot): Unraid-käyttöjärjestelmä, lisenssi, array-määritys, jaot, verkko ja laajennusten määritys.",
   "flash.backupNow": "Varmuuskopioi flash nyt",
@@ -824,7 +820,6 @@ const fi: Partial<Translations> = {
   "recovery.stored": "Olen tallentanut sen turvallisesti",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "Palauta konttisi ja VM:si olemassa olevasta varmuuskopiosta tähän asennukseen.",
   "recovery.step1": "Voiko BombVault lukea varmuuskopioitasi?",
   "recovery.appKeyExplain": "Lukeakseen olemassa olevia varmuuskopioita tämä kontti tarvitsee SAMAN APP_KEY:n, jota se käytti aiemmin. Se on palautuspaketissasi. Aseta se Unraidin konttimalliin, ellei sitä ole jo asetettu, ja tarkista sitten uudelleen.",
   "recovery.appKeyRemedy": "Salausavain ei täsmää näiden varmuuskopioiden kanssa. Aseta alkuperäinen APP_KEY (palautuspaketistasi) konttimalliin ja tarkista sitten uudelleen.",
@@ -869,7 +864,6 @@ const fi: Partial<Translations> = {
 
   // Config backup (BombVault's own settings)
   "config.title": "Itsevarmuuskopio",
-  "config.subtitle": "Varmuuskopioi BombVaultin omat asetukset, jotta uudelleenrakennettu palvelin voi palauttaa itsensä.",
   "config.settingsTitle": "Itsevarmuuskopion asetukset",
   "config.settingsHint": "Suojaa BombVaultin oma konfiguraatio (sen asetustietokanta, etätunnukset ja SSH-avaimet), jotta uusi asennus voi palauttaa itsensä ja jatkaa juuri siitä, mihin se jäi.",
   "config.enabled": "Varmuuskopioi BombVaultin asetukset",
@@ -1382,7 +1376,6 @@ const fi: Partial<Translations> = {
   "settings.everythingStarted": "Käynnistetty. Se etenee palvelimella osa-alue kerrallaan; seuraa tulosta Toimintalokista.",
   "settings.everythingAlreadyRunning": "Täysvarmuuskopio on jo käynnissä.",
   "settings.everythingBusy": "Käsitellään…",
-  "settings.subtitle": "BombVaultin asetukset. Muutokset tulevat voimaan heti.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Suodattimet",
 
@@ -1409,7 +1402,6 @@ const fi: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "Kansiot",
   "files.title": "Kansiot",
-  "files.subtitle": "Varmuuskopioi mitä tahansa tämän palvelimen kansioita: aikatauluilla, etäkopioilla ja palautuksilla.",
   "files.setsTitle": "Kansiojoukot",
   "files.empty": "Ei vielä kansiojoukkoja. Lisää kansio (jaot, dokumentit, valokuvat, mikä tahansa liitostesi alla), ja BombVault suojaa sen kuten kaiken muunkin: aikataulut, etäkopiot, eheystarkistukset ja palautukset. Erillistä tiedostovarmuuskopiointityökalua ei tarvita.",
   "files.addSet": "Lisää kansiojoukko",
@@ -1462,7 +1454,6 @@ const fi: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS-tietojoukot",
-  "zfs.subtitle": "Varmuuskopioi ZFS-tietojoukot yhdessä niiden alitietojoukkojen kanssa yhdestä tilannevedoksesta, deduplikoinnilla, tiedostoselauksella ja yksittäisen tiedoston palautuksella.",
   "settings.zfsEnabled": "ZFS-tietojoukot",
   "settings.zfsEnabledHint": "Varmuuskopioi ZFS-tietojoukot ja niiden alitietojoukot tilannevedoksista tämän palvelimen SSH-yhteyden kautta.",
   "settings.zfsPath": "ZFS-tietojoukkojen polku",
@@ -2090,8 +2081,6 @@ const fi: Partial<Translations> = {
   "settings.fleetEnabledHint": "Tarkkaile liitettyjen BombVault-instanssien suojaustilaa (vain luku)",
   "receiver.title": "Vastaanotin",
   "instances.title": "Ilmentymät",
-  "instances.subtitle": "Kaikki mikä liittyy toiseen BombVaultiin: tänne lähetetyt arkistot, HTTP:n yli valvotut ilmentymät ja arkistot, joista tämä kone noutaa.",
-  "receiver.subtitle": "Valvo etäkopioita, joita muut BombVault-esiintymät lähettävät tälle koneelle, vain lukutilassa.",
   "receiver.addRepo": "Lisää vastaanotettu varasto",
   "receiver.emptyTitle": "Vastaanotetut varastot",
   "receiver.empty": "Ei vielä vastaanotettuja varastoja. Lisää varasto, johon toinen BombVault lähettää etäkopionsa, niin BombVault valvoo sitä vain lukutilassa: mitä saapui, milloin viimeisin varmuuskopio tuli ja riippumaton eheystarkistus tällä laitteistolla.",
@@ -2146,7 +2135,6 @@ const fi: Partial<Translations> = {
   "receiver.saveError": "Vastaanotettua varastoa ei voitu tallentaa.",
   "pull.name": "Nimi",
   "pull.title": "Nouto",
-  "pull.subtitle": "Nouda varmuuskopioita toisen BombVaultin varastosta tämän koneen omaan varastoon.",
   "pull.addSource": "Lisää lähde",
   "pull.emptyTitle": "Noutolähteet",
   "pull.empty": "Ei vielä noutolähteitä. Lisää toisen BombVaultin varasto ja kyseisen esiintymän APP_KEY, niin tämä kone noutaa sen snapshotit omaan varastoonsa valitsemallasi aikataululla. Toisen pään ei tarvitse määrittää mitään eikä sen tarvitse edes olla hereillä.",
@@ -2175,7 +2163,6 @@ const fi: Partial<Translations> = {
   "settings.pullEnabled": "Nouda muista esiintymistä",
   "settings.pullEnabledHint": "Nouda toisen BombVaultin varmuuskopiot tämän koneen omaan varastoon (kirjoittaa dataa tänne)",
   "fleet.title": "Laivue",
-  "fleet.subtitle": "Tarkkaile liitettyjen BombVault-instanssien suojaustilaa vain lukutilassa.",
   "fleet.addPeer": "Lisää instanssi",
   "fleet.emptyTitle": "Laivueinstanssit",
   "fleet.empty": "Laivueinstansseja ei ole vielä lisätty. Lisää toisen BombVault-instanssin URL-osoite ja laivue-token, niin tämä laite kyselee sen suojaustulostaulua vain lukutilassa, ei muuta.",
@@ -2391,7 +2378,6 @@ const fi: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Levy jolla {domains} sijaitsee on tähän tahtiin täynnä noin {time} kuluttua.",
   "anomaly.sentence.capacityLow": "Levyllä jolla {domains} sijaitsee on jäljellä vain {free} ({percent}%).",
   "anomaly.sentence.unknown": "Kohteelle {name} löytyi poikkeama. Lataa sivu uudelleen nähdäksesi tiedot.",
-  "anomaly.pageSubtitle": "Mikä varmuuskopioissasi on muuttunut ja ansaitsee vilkaisun.",
   "anomaly.offPage": "Poikkeamien tunnistus on pois päältä. Aiemmat poikkeamat pysyvät tässä listassa.",
   "anomaly.retry": "Yritä uudelleen",
   "anomaly.filter.severity": "Vakavuus",

@@ -21,7 +21,7 @@ async function bootGerman(page: Page, width: number): Promise<void> {
 async function cardGap(page: Page): Promise<string> {
   return page
     .getByRole("heading", { level: 1 })
-    .locator("xpath=../..")
+    .locator("xpath=..")
     .evaluate((root) => getComputedStyle(root).rowGap);
 }
 

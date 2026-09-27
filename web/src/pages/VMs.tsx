@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Link } from "react-router-dom";
 import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder, setVMRepo, getSettings } from "../lib/api";
 import type { AnomalyItem, VM, Snapshot, VmOrder, Run } from "../lib/api";
+import { PageTitle } from "../components/PageTitle";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FilterPopover } from "../components/FilterPopover";
 import { ChipFilter, loadStoredFilterKey } from "../components/ChipFilter";
@@ -1539,13 +1540,8 @@ export function VMs() {
           widths, the same header the Containers page renders. */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold text-carbon-text">
-            {t("vms.title")}
-          </h1>
-          <p className="mt-1 text-sm text-carbon-textSub">
-            {t("vms.subtitle")}
-          </p>
-          <div className="mt-2"><OffsiteIndicator domain="vms" /></div>
+          <PageTitle>{t("vms.title")}</PageTitle>
+          <OffsiteIndicator domain="vms" />
         </div>
         {/* Discover is the way back after a lost database, so it stays
             whether or not VM backups are switched on, as on Containers. */}

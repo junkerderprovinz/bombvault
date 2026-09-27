@@ -48,7 +48,6 @@ const ar: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "لوحة التحكم",
-  "dashboard.subtitle": "حالة النسخ الاحتياطي لديك في لمحة.",
   "dashboard.summaryHealth": "نقطة الاستعادة",
   "dashboard.summaryNextBackup": "النسخة الاحتياطية التالية",
   "dashboard.summaryNextIn": "خلال {countdown}",
@@ -391,7 +390,6 @@ const ar: Partial<Translations> = {
   "folder.pathHint": "يجب أن يكون المسار مسارًا فرعيًا نسبيًا (بدون / في البداية أو ..)",
   "folder.couldNotRead": "تعذّرت قراءة الدليل",
   "folder.browseFailed": "فشل الاستعراض",
-  "containers.subtitle": "إدارة نسخ الحاويات الاحتياطية وجداولها واستعاداتها.",
   "containers.emptyDocker": "لم يتم العثور على حاويات. هل Docker قيد التشغيل؟",
   "containers.bulkResult": "{ok} ناجحة، {fail} فاشلة",
   "vm.method.saveFailed": "تعذّر تغيير طريقة النسخ الاحتياطي. لم تتغيّر.",
@@ -469,7 +467,6 @@ const ar: Partial<Translations> = {
   "auth.passwordMinHint": "zero={n} حرف على الأقل.|one=حرف واحد على الأقل.|two=حرفان على الأقل.|few={n} أحرف على الأقل.|many={n} حرفاً على الأقل.|other={n} حرف على الأقل.",
   // VMs page
   "vms.title": "الآلات الافتراضية",
-  "vms.subtitle": "إدارة نسخ VM الاحتياطية والجداول والاستعادة.",
   "vms.empty": "لم يُعثر على VMs. هل libvirt/KVM يعمل؟",
   "vms.backupSelected": "نسخ المحدَّد احتياطياً",
   "vms.restoreSelected": "استعادة المحدَّد (الأحدث)",
@@ -637,7 +634,6 @@ const ar: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "نسخ Flash الاحتياطي",
-  "flash.subtitle": "نسخ واستعادة فلاش USB الخاص بـ Unraid (كامل ‎/boot).",
   "flash.backupTitle": "نسخ الفلاش احتياطياً",
   "flash.backupHint": "يلتقط فلاش USB بالكامل (‎/boot): نظام Unraid والترخيص وإعداد المصفوفة والمشاركات وإعداد الشبكة والإضافات.",
   "flash.backupNow": "نسخ الفلاش احتياطياً الآن",
@@ -827,7 +823,6 @@ const ar: Partial<Translations> = {
   "recovery.stored": "حفظتها بأمان",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "استعد الـ containers والـ VMs من نسخة احتياطية موجودة إلى هذا التثبيت.",
   "recovery.step1": "هل يستطيع BombVault قراءة نسخك الاحتياطية؟",
   "recovery.appKeyExplain": "لقراءة النسخ الاحتياطية الموجودة يحتاج هذا الـ container إلى نفس APP_KEY الذي استخدمه سابقاً. إنه في حقيبة الاستعادة الخاصة بك. اضبطه في قالب حاوية Unraid إن لم يكن مضبوطاً، ثم أعد الفحص.",
   "recovery.appKeyRemedy": "مفتاح التشفير لا يطابق هذه النسخ الاحتياطية. اضبط APP_KEY الأصلي (من حقيبة الاستعادة) في قالب الحاوية، ثم أعد الفحص.",
@@ -872,7 +867,6 @@ const ar: Partial<Translations> = {
 
   // Config backup (BombVault's own settings)
   "config.title": "النسخ الذاتي",
-  "config.subtitle": "انسخ إعدادات BombVault الخاصة احتياطياً حتى يتمكن خادم مُعاد بناؤه من استعادة نفسه.",
   "config.settingsTitle": "إعدادات النسخ الذاتي",
   "config.settingsHint": "احمِ إعدادات BombVault الخاصة (قاعدة بيانات الإعدادات وبيانات الاعتماد خارج الموقع ومفاتيح SSH) حتى يتمكن تثبيت جديد من استعادة نفسه ومتابعة العمل من حيث توقّف.",
   "config.enabled": "نسخ إعدادات BombVault احتياطياً",
@@ -1385,7 +1379,6 @@ const ar: Partial<Translations> = {
   "settings.everythingStarted": "بدأ. يعمل على الخادم عبر كل نطاق بالترتيب؛ راقب سجل النشاط لمعرفة النتيجة.",
   "settings.everythingAlreadyRunning": "هناك عملية نسخ احتياطي شامل قيد التشغيل بالفعل.",
   "settings.everythingBusy": "جارٍ التنفيذ…",
-  "settings.subtitle": "تكوين BombVault. تسري التغييرات فوراً.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "عوامل التصفية",
 
@@ -1412,7 +1405,6 @@ const ar: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "المجلدات",
   "files.title": "المجلدات",
-  "files.subtitle": "انسخ أي مجلدات على هذا الخادم احتياطياً، مع جداول زمنية ونسخ خارج الموقع واستعادة.",
   "files.setsTitle": "مجموعات المجلدات",
   "files.empty": "لا توجد مجموعات مجلدات بعد. أضف مجلداً (مشاركات، مستندات، صور، أي شيء ضمن نقاط التركيب لديك) وسيحميه BombVault مثل كل شيء آخر: جداول زمنية، نسخ خارج الموقع، فحوصات سلامة واستعادة. لا حاجة إلى أداة منفصلة للنسخ الاحتياطي للملفات.",
   "files.addSet": "إضافة مجموعة مجلدات",
@@ -1465,7 +1457,6 @@ const ar: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "مجموعات بيانات ZFS",
-  "zfs.subtitle": "انسخ مجموعات بيانات ZFS مع مجموعاتها الفرعية من لقطة واحدة، مع إزالة التكرار وتصفح الملفات واستعادة ملف مفرد.",
   "settings.zfsEnabled": "مجموعات بيانات ZFS",
   "settings.zfsEnabledHint": "انسخ مجموعات بيانات ZFS ومجموعاتها الفرعية من اللقطات، عبر اتصال SSH بهذا الخادم.",
   "settings.zfsPath": "مسار مجموعات بيانات ZFS",
@@ -2093,8 +2084,6 @@ const ar: Partial<Translations> = {
   "settings.fleetEnabledHint": "راقب حالة الحماية للنُسخ المتصلة من BombVault (للقراءة فقط)",
   "receiver.title": "المستقبِل",
   "instances.title": "المثيلات",
-  "instances.subtitle": "كل ما يتعلق بنسخة BombVault أخرى: المستودعات المرسلة إلى هنا، والمثيلات التي تُراقَب عبر HTTP، والمستودعات التي يجلب منها هذا الجهاز.",
-  "receiver.subtitle": "راقب النسخ الخارجية التي ترسلها نسخ BombVault الأخرى إلى هذا الجهاز، للقراءة فقط.",
   "receiver.addRepo": "إضافة مستودع مستلَم",
   "receiver.emptyTitle": "مستودعات مستلَمة",
   "receiver.empty": "لا توجد مستودعات مستلَمة بعد. أضف المستودع الذي يرسل إليه BombVault آخر نسخه الخارجية، وسيراقبه BombVault للقراءة فقط: ما الذي وصل، ومتى وصلت آخر نسخة احتياطية، وفحص سلامة مستقل على هذا العتاد.",
@@ -2149,7 +2138,6 @@ const ar: Partial<Translations> = {
   "receiver.saveError": "تعذّر حفظ المستودع المستلَم.",
   "pull.name": "الاسم",
   "pull.title": "سحب",
-  "pull.subtitle": "اسحب النسخ الاحتياطية من مستودع نسخة BombVault أخرى إلى هذا المستودع.",
   "pull.addSource": "إضافة مصدر",
   "pull.emptyTitle": "مصادر السحب",
   "pull.empty": "لا توجد مصادر سحب بعد. أضف مستودع نسخة BombVault أخرى ومفتاح APP_KEY الخاص بتلك النسخة، وسيسحب هذا الجهاز نسخها الاحتياطية إلى مستودعه الخاص وفق جدول تختاره أنت. لا يحتاج الطرف الآخر إلى ضبط أي شيء، ولا يلزم حتى أن يكون قيد التشغيل.",
@@ -2178,7 +2166,6 @@ const ar: Partial<Translations> = {
   "settings.pullEnabled": "السحب من النسخ الأخرى",
   "settings.pullEnabledHint": "يسحب النسخ الاحتياطية لنسخة BombVault أخرى إلى مستودع هذا الجهاز نفسه (يكتب بيانات هنا)",
   "fleet.title": "الأسطول",
-  "fleet.subtitle": "راقب حالة الحماية للنُسخ المتصلة من BombVault، للقراءة فقط.",
   "fleet.addPeer": "إضافة نسخة",
   "fleet.emptyTitle": "نسخ الأسطول",
   "fleet.empty": "لم تتم إضافة أي نسخ إلى الأسطول بعد. أضف عنوان URL ورمز الأسطول لنسخة BombVault أخرى، وستستعلم هذه الآلة عن بطاقة حمايتها للقراءة فقط، لا شيء آخر.",
@@ -2394,7 +2381,6 @@ const ar: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "سيمتلئ القرص الذي يحمل {domains} خلال نحو {time} بهذه الوتيرة.",
   "anomaly.sentence.capacityLow": "لم يبق على القرص الذي يحمل {domains} سوى {free} ({percent}%).",
   "anomaly.sentence.unknown": "عُثر على حالة شاذة لـ {name}. أعد تحميل الصفحة لرؤية التفاصيل.",
-  "anomaly.pageSubtitle": "ما تغيّر في نسخك الاحتياطية ويستحق نظرة.",
   "anomaly.offPage": "كشف الشذوذ مُعطَّل. تبقى حالات الشذوذ السابقة مدرجة هنا.",
   "anomaly.retry": "أعد المحاولة",
   "anomaly.filter.severity": "الخطورة",

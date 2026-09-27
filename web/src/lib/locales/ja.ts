@@ -48,7 +48,6 @@ const ja: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "ダッシュボード",
-  "dashboard.subtitle": "バックアップ状況を一目で。",
   "dashboard.summaryHealth": "復元ポイント",
   "dashboard.summaryNextBackup": "次回のバックアップ",
   "dashboard.summaryNextIn": "{countdown}後",
@@ -391,7 +390,6 @@ const ja: Partial<Translations> = {
   "folder.pathHint": "パスは相対サブパスである必要があります（先頭の / や .. は不可）",
   "folder.couldNotRead": "ディレクトリを読み取れませんでした",
   "folder.browseFailed": "参照に失敗しました",
-  "containers.subtitle": "コンテナのバックアップ・スケジュール・復元を管理します。",
   "containers.emptyDocker": "コンテナが見つかりません。Docker は実行中ですか？",
   "containers.bulkResult": "成功 {ok}、失敗 {fail}",
   "vm.method.saveFailed": "バックアップ方式を変更できませんでした。変更されていません。",
@@ -469,7 +467,6 @@ const ja: Partial<Translations> = {
   "auth.passwordMinHint": "{n} 文字以上にしてください。",
   // VMs page
   "vms.title": "仮想マシン",
-  "vms.subtitle": "VM のバックアップ、スケジュール、復元を管理します。",
   "vms.empty": "VM が見つかりません。libvirt/KVM は実行中ですか？",
   "vms.backupSelected": "選択をバックアップ",
   "vms.restoreSelected": "選択を復元（最新）",
@@ -630,7 +627,6 @@ const ja: Partial<Translations> = {
   "hooks.post": "バックアップ後コマンド",
 
   "flash.title": "フラッシュバックアップ",
-  "flash.subtitle": "Unraid の USB フラッシュ（/boot 全体）をバックアップ・復元します。",
   "flash.backupTitle": "フラッシュをバックアップ",
   "flash.backupHint": "USB フラッシュ全体（/boot）を取得します：Unraid OS、ライセンス、アレイ設定、共有、ネットワーク、プラグイン設定。",
   "flash.backupNow": "今すぐフラッシュをバックアップ",
@@ -816,7 +812,6 @@ const ja: Partial<Translations> = {
   "recovery.stored": "安全に保管しました",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "既存のバックアップからコンテナと VM をこのインストールに復元します。",
   "recovery.step1": "BombVault はバックアップを読み取れますか？",
   "recovery.appKeyExplain": "既存のバックアップを読み取るには、このコンテナに以前と同じ APP_KEY が必要です。リカバリーキットに記載されています。まだ設定していなければ Unraid のコンテナテンプレートで設定し、再確認してください。",
   "recovery.appKeyRemedy": "暗号化キーがこれらのバックアップと一致しません。元の APP_KEY（リカバリーキットに記載）をコンテナテンプレートに設定し、再確認してください。",
@@ -1277,7 +1272,6 @@ const ja: Partial<Translations> = {
 
   // Config backup (BombVault's own settings)
   "config.title": "セルフバックアップ",
-  "config.subtitle": "再構築したサーバーが自身を復元できるよう、BombVault 自身の設定をバックアップします。",
   "config.settingsTitle": "セルフバックアップ設定",
   "config.settingsHint": "BombVault 自身の構成（設定データベース、オフサイトの認証情報、SSH 鍵）を保護し、新規インストールが自身を復元して中断したところから再開できるようにします。",
   "config.enabled": "BombVault の設定をバックアップ",
@@ -1374,7 +1368,6 @@ const ja: Partial<Translations> = {
   "settings.everythingStarted": "開始しました。サーバー上で各ドメインを順番に処理します。結果はアクティビティログで確認してください。",
   "settings.everythingAlreadyRunning": "全体バックアップはすでに実行中です。",
   "settings.everythingBusy": "処理中…",
-  "settings.subtitle": "BombVault の設定。変更は即座に反映されます。",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "フィルター",
 
@@ -1401,7 +1394,6 @@ const ja: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "フォルダー",
   "files.title": "フォルダー",
-  "files.subtitle": "このサーバーの任意のフォルダーをバックアップ。スケジュール、オフサイトコピー、復元に対応。",
   "files.setsTitle": "フォルダーセット",
   "files.empty": "フォルダーセットはまだありません。フォルダーを追加してください（共有、ドキュメント、写真など、マウント配下のあらゆるもの）。BombVault が他のものと同じように保護します：スケジュール、オフサイトコピー、整合性チェック、復元。別のファイルバックアップツールは不要です。",
   "files.addSet": "フォルダーセットを追加",
@@ -1454,7 +1446,6 @@ const ja: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS データセット",
-  "zfs.subtitle": "ZFS データセットを子データセットごと 1 つのスナップショットからバックアップします。重複排除、ファイル閲覧、単一ファイルの復元に対応します。",
   "settings.zfsEnabled": "ZFS データセット",
   "settings.zfsEnabledHint": "このサーバーへの SSH 接続を使って、ZFS データセットとその子データセットをスナップショットからバックアップします。",
   "settings.zfsPath": "ZFS データセットのパス",
@@ -2082,8 +2073,6 @@ const ja: Partial<Translations> = {
   "settings.fleetEnabledHint": "接続された BombVault インスタンスの保護状態を確認します（読み取り専用）",
   "receiver.title": "レシーバー",
   "instances.title": "インスタンス",
-  "instances.subtitle": "他の BombVault に関わるものすべてです。ここへ送られてきたリポジトリ、HTTP 越しに見ているインスタンス、そしてこの機器が取得元にしているリポジトリ。",
-  "receiver.subtitle": "他の BombVault インスタンスがこのマシンに送信するオフサイトコピーを読み取り専用で監視します。",
   "receiver.addRepo": "受信リポジトリを追加",
   "receiver.emptyTitle": "受信リポジトリ",
   "receiver.empty": "受信リポジトリはまだありません。別の BombVault がオフサイトコピーを送信するリポジトリを追加すると、BombVault が読み取り専用で監視します。何が届いたか、最後のバックアップがいつ入ったか、そしてこのハードウェア上での独立した整合性チェックを行います。",
@@ -2138,7 +2127,6 @@ const ja: Partial<Translations> = {
   "receiver.saveError": "受信リポジトリを保存できませんでした。",
   "pull.name": "名前",
   "pull.title": "取得",
-  "pull.subtitle": "他の BombVault のリポジトリからバックアップをこのリポジトリに取得します。",
   "pull.addSource": "取得元を追加",
   "pull.emptyTitle": "取得元",
   "pull.empty": "取得元はまだありません。別の BombVault のリポジトリとそのインスタンスの APP_KEY を追加すると、このマシンが選んだスケジュールでそのスナップショットを自分のリポジトリに取得します。相手側は何も設定する必要がなく、起動している必要さえありません。",
@@ -2167,7 +2155,6 @@ const ja: Partial<Translations> = {
   "settings.pullEnabled": "他のインスタンスから取得",
   "settings.pullEnabledHint": "他の BombVault のバックアップをこのマシン自身のリポジトリに取得します（ここにデータを書き込みます）",
   "fleet.title": "フリート",
-  "fleet.subtitle": "接続された BombVault インスタンスの保護状態を読み取り専用で確認します。",
   "fleet.addPeer": "インスタンスを追加",
   "fleet.emptyTitle": "フリートインスタンス",
   "fleet.empty": "まだフリートインスタンスが追加されていません。別の BombVault インスタンスの URL とフリートトークンを追加すると、このマシンがその保護スコアカードを読み取り専用で照会します。それ以外は行いません。",
@@ -2383,7 +2370,6 @@ const ja: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "{domains} を置いているディスクは、このペースだとおよそ {time} で満杯になります。",
   "anomaly.sentence.capacityLow": "{domains} を置いているディスクの残りは {free} だけです ({percent}%)。",
   "anomaly.sentence.unknown": "{name} で異常が見つかりました。詳細を見るにはページを再読み込みしてください。",
-  "anomaly.pageSubtitle": "バックアップで変わった点と、目を通しておきたいこと。",
   "anomaly.offPage": "異常検知はオフです。これまでの異常はここに残ります。",
   "anomaly.retry": "再試行",
   "anomaly.filter.severity": "深刻度",

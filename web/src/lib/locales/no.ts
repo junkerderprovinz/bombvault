@@ -47,7 +47,6 @@ const no: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Dashboard",
-  "dashboard.subtitle": "Sikkerhetskopieringsstatusen din med ett blikk.",
   "dashboard.summaryHealth": "Gjenopprettingspunkt",
   "dashboard.summaryNextBackup": "Neste sikkerhetskopi",
   "dashboard.summaryNextIn": "om {countdown}",
@@ -388,7 +387,6 @@ const no: Partial<Translations> = {
   "folder.pathHint": "Stien må være en relativ understi (ingen innledende / eller ..)",
   "folder.couldNotRead": "Kunne ikke lese katalogen",
   "folder.browseFailed": "Bla gjennom mislyktes",
-  "containers.subtitle": "Administrer container-sikkerhetskopier, planer og gjenoppretting.",
   "containers.emptyDocker": "Ingen containere funnet. Kjører Docker?",
   "containers.bulkResult": "{ok} ok, {fail} mislyktes",
   "vm.method.saveFailed": "Kunne ikke endre sikkerhetskopimetoden. Den ble ikke endret.",
@@ -466,7 +464,6 @@ const no: Partial<Translations> = {
   "auth.passwordMinHint": "Minst {n} tegn.",
   // VMs page
   "vms.title": "Virtuelle maskiner",
-  "vms.subtitle": "Administrer VM-sikkerhetskopier, tidsplaner og gjenopprettinger.",
   "vms.empty": "Ingen VM-er funnet. Kjører libvirt/KVM?",
   "vms.backupSelected": "Sikkerhetskopier valgte",
   "vms.restoreSelected": "Gjenopprett valgte (nyeste)",
@@ -634,7 +631,6 @@ const no: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash-sikkerhetskopi",
-  "flash.subtitle": "Sikkerhetskopier og gjenopprett Unraid-USB-flashen (hele /boot).",
   "flash.backupTitle": "Sikkerhetskopier flashen",
   "flash.backupHint": "Fanger hele USB-flashen (/boot): Unraid-OS, lisens, array-config, delinger, nettverks- og plugin-config.",
   "flash.backupNow": "Sikkerhetskopier flash nå",
@@ -821,7 +817,6 @@ const no: Partial<Translations> = {
   "recovery.stored": "Jeg har lagret det trygt",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "Gjenopprett containerne og VM-ene dine fra en eksisterende sikkerhetskopi til denne installasjonen.",
   "recovery.step1": "Kan BombVault lese sikkerhetskopiene dine?",
   "recovery.appKeyExplain": "For å lese eksisterende sikkerhetskopier trenger denne containeren SAMME APP_KEY som før. Den ligger i gjenopprettingssettet ditt. Angi den i Unraid-containermalen hvis den ikke allerede er satt, og sjekk på nytt.",
   "recovery.appKeyRemedy": "Krypteringsnøkkelen stemmer ikke med disse sikkerhetskopiene. Angi den opprinnelige APP_KEY (fra gjenopprettingssettet ditt) i containermalen, og sjekk på nytt.",
@@ -1281,7 +1276,6 @@ const no: Partial<Translations> = {
 
   // Config backup (BombVault's own settings)
   "config.title": "Auto-sikkerhetskopi",
-  "config.subtitle": "Sikkerhetskopier BombVaults egne innstillinger så en gjenoppbygd server kan gjenopprette seg selv.",
   "config.settingsTitle": "Innstillinger for auto-sikkerhetskopi",
   "config.settingsHint": "Beskytt BombVaults egen konfigurasjon (innstillingsdatabasen, off-site-legitimasjonen og SSH-nøklene) så en fersk installasjon kan gjenopprette seg selv og fortsette akkurat der den slapp.",
   "config.enabled": "Sikkerhetskopier BombVaults innstillinger",
@@ -1382,7 +1376,6 @@ const no: Partial<Translations> = {
   "settings.everythingStarted": "Startet. Den kjører på serveren gjennom hvert domene etter tur; følg med i Aktivitetsloggen for resultatet.",
   "settings.everythingAlreadyRunning": "En full sikkerhetskopi pågår allerede.",
   "settings.everythingBusy": "Arbeider…",
-  "settings.subtitle": "BombVault-konfigurasjon. Endringer trer i kraft umiddelbart.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtre",
 
@@ -1409,7 +1402,6 @@ const no: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "Mapper",
   "files.title": "Mapper",
-  "files.subtitle": "Sikkerhetskopier hvilke som helst mapper på denne serveren, med tidsplaner, off-site-kopier og gjenoppretting.",
   "files.setsTitle": "Mappesett",
   "files.empty": "Ingen mappesett ennå. Legg til en mappe (delinger, dokumenter, bilder, hva som helst under monteringene dine) og BombVault beskytter den som alt annet: tidsplaner, off-site-kopier, integritetssjekker og gjenoppretting. Ikke behov for et eget verktøy for filsikkerhetskopiering.",
   "files.addSet": "Legg til mappesett",
@@ -1462,7 +1454,6 @@ const no: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS-datasett",
-  "zfs.subtitle": "Sikkerhetskopier ZFS-datasett sammen med underdatasettene deres fra ett øyeblikksbilde, med deduplisering, filutforsking og gjenoppretting av enkeltfiler.",
   "settings.zfsEnabled": "ZFS-datasett",
   "settings.zfsEnabledHint": "Sikkerhetskopierer ZFS-datasett og underdatasettene deres fra øyeblikksbilder, over SSH-forbindelsen til denne serveren.",
   "settings.zfsPath": "Sti for ZFS-datasett",
@@ -2090,8 +2081,6 @@ const no: Partial<Translations> = {
   "settings.fleetEnabledHint": "Overvåk beskyttelsesstatusen til tilkoblede BombVault-instanser (skrivebeskyttet)",
   "receiver.title": "Mottaker",
   "instances.title": "Instanser",
-  "instances.subtitle": "Alt som har med en annen BombVault å gjøre: repositorier sendt hit, instanser overvåket over HTTP og repositorier denne maskinen henter fra.",
-  "receiver.subtitle": "Overvåk off-site-kopiene som andre BombVault-instanser sender til denne maskinen, skrivebeskyttet.",
   "receiver.addRepo": "Legg til mottatt arkiv",
   "receiver.emptyTitle": "Mottatte arkiver",
   "receiver.empty": "Ingen mottatte arkiver ennå. Legg til arkivet som en annen BombVault sender off-site-kopiene sine til, så overvåker BombVault det skrivebeskyttet: hva som er kommet inn, når den siste sikkerhetskopien kom, og en uavhengig integritetskontroll på denne maskinvaren.",
@@ -2146,7 +2135,6 @@ const no: Partial<Translations> = {
   "receiver.saveError": "Kunne ikke lagre det mottatte arkivet.",
   "pull.name": "Navn",
   "pull.title": "Henting",
-  "pull.subtitle": "Hent sikkerhetskopier fra arkivet til en annen BombVault inn i arkivet til denne maskinen.",
   "pull.addSource": "Legg til kilde",
   "pull.emptyTitle": "Hentekilder",
   "pull.empty": "Ingen hentekilder ennå. Legg til arkivet til en annen BombVault og APP_KEY-en til den instansen, så henter denne maskinen snapshots derfra inn i sitt eget arkiv etter en tidsplan du velger. Den andre siden trenger ikke sette opp noe og trenger ikke engang være våken.",
@@ -2175,7 +2163,6 @@ const no: Partial<Translations> = {
   "settings.pullEnabled": "Hent fra andre instanser",
   "settings.pullEnabledHint": "Hent sikkerhetskopiene til en annen BombVault inn i det egne arkivet til denne maskinen (skriver data her)",
   "fleet.title": "Flåte",
-  "fleet.subtitle": "Overvåk beskyttelsesstatusen til tilkoblede BombVault-instanser, skrivebeskyttet.",
   "fleet.addPeer": "Legg til instans",
   "fleet.emptyTitle": "Flåteinstanser",
   "fleet.empty": "Ingen flåteinstanser lagt til ennå. Legg til URL-en og flåte-tokenet til en annen BombVault-instans, så spør denne maskinen skrivebeskyttet ut beskyttelsesoversikten dens, ikke noe annet.",
@@ -2391,7 +2378,6 @@ const no: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Disken med {domains} er full om omtrent {time} i dette tempoet.",
   "anomaly.sentence.capacityLow": "På disken med {domains} er det bare {free} igjen ({percent}%).",
   "anomaly.sentence.unknown": "Det ble funnet et avvik for {name}. Last siden på nytt for å se detaljene.",
-  "anomaly.pageSubtitle": "Hva som har endret seg i sikkerhetskopiene dine og fortjener et blikk.",
   "anomaly.offPage": "Avviksdeteksjon er slått av. Tidligere avvik blir stående her.",
   "anomaly.retry": "Prøv igjen",
   "anomaly.filter.severity": "Alvorlighet",

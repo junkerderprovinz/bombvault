@@ -48,7 +48,6 @@ const th: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "แดชบอร์ด",
-  "dashboard.subtitle": "สถานะการสำรองข้อมูลของคุณในพริบตา",
   "dashboard.summaryHealth": "จุดกู้คืน",
   "dashboard.summaryNextBackup": "การสำรองข้อมูลครั้งถัดไป",
   "dashboard.summaryNextIn": "ในอีก {countdown}",
@@ -391,7 +390,6 @@ const th: Partial<Translations> = {
   "folder.pathHint": "พาธต้องเป็นพาธย่อยแบบสัมพัทธ์ (ห้ามขึ้นต้นด้วย / หรือ ..)",
   "folder.couldNotRead": "อ่านไดเรกทอรีไม่ได้",
   "folder.browseFailed": "เรียกดูไม่สำเร็จ",
-  "containers.subtitle": "จัดการการสำรองข้อมูล กำหนดการ และการกู้คืนคอนเทนเนอร์",
   "containers.emptyDocker": "ไม่พบคอนเทนเนอร์ Docker กำลังทำงานอยู่หรือไม่?",
   "containers.bulkResult": "สำเร็จ {ok} ล้มเหลว {fail}",
   "vm.method.saveFailed": "เปลี่ยนวิธีสำรองข้อมูลไม่ได้ ยังไม่ถูกเปลี่ยน",
@@ -469,7 +467,6 @@ const th: Partial<Translations> = {
   "auth.passwordMinHint": "อย่างน้อย {n} ตัวอักษร",
   // VMs page
   "vms.title": "เครื่องเสมือน",
-  "vms.subtitle": "จัดการการสำรองข้อมูล ตารางเวลา และการกู้คืน VMs",
   "vms.empty": "ไม่พบ VMs libvirt/KVM กำลังทำงานอยู่หรือไม่?",
   "vms.backupSelected": "สำรองข้อมูลที่เลือก",
   "vms.restoreSelected": "กู้คืนที่เลือก (ล่าสุด)",
@@ -637,7 +634,6 @@ const th: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "การสำรองข้อมูล Flash",
-  "flash.subtitle": "สำรองและกู้คืนแฟลช USB ของ Unraid (ทั้ง ‎/boot)",
   "flash.backupTitle": "สำรองข้อมูลแฟลช",
   "flash.backupHint": "บันทึกแฟลช USB ทั้งหมด (‎/boot): ระบบปฏิบัติการ Unraid, ลิขสิทธิ์, การตั้งค่าอาร์เรย์, แชร์, เครือข่ายและการตั้งค่าปลั๊กอิน",
   "flash.backupNow": "สำรองข้อมูลแฟลชเดี๋ยวนี้",
@@ -827,7 +823,6 @@ const th: Partial<Translations> = {
   "recovery.stored": "ฉันเก็บไว้อย่างปลอดภัยแล้ว",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "กู้คืนคอนเทนเนอร์และ VMs ของคุณจากการสำรองข้อมูลที่มีอยู่มายังการติดตั้งนี้",
   "recovery.step1": "BombVault อ่านการสำรองข้อมูลของคุณได้หรือไม่?",
   "recovery.appKeyExplain": "ในการอ่านการสำรองข้อมูลที่มีอยู่ คอนเทนเนอร์นี้ต้องใช้ APP_KEY เดิมที่เคยใช้ ซึ่งอยู่ในชุดกู้คืนของคุณ ตั้งค่าใน container template ของ Unraid หากยังไม่ได้ตั้ง แล้วตรวจสอบอีกครั้ง",
   "recovery.appKeyRemedy": "คีย์เข้ารหัสไม่ตรงกับการสำรองข้อมูลเหล่านี้ ตั้งค่า APP_KEY เดิม (จากชุดกู้คืนของคุณ) ใน container template แล้วตรวจสอบอีกครั้ง",
@@ -888,7 +883,6 @@ const th: Partial<Translations> = {
 
   // Config Backup page
   "config.title": "สำรองข้อมูลตัวเอง",
-  "config.subtitle": "สำรองการตั้งค่าของ BombVault เอง เพื่อให้เซิร์ฟเวอร์ที่สร้างใหม่สามารถกู้คืนตัวเองได้",
   "config.settingsTitle": "การตั้งค่าสำรองข้อมูลตัวเอง",
   "config.settingsHint": "ปกป้องการกำหนดค่าของ BombVault เอง (ฐานข้อมูลการตั้งค่า ข้อมูลรับรองนอกสถานที่ และคีย์ SSH) เพื่อให้การติดตั้งใหม่สามารถกู้คืนตัวเองและทำงานต่อจากจุดที่ค้างไว้ได้ทันที",
   "config.enabled": "สำรองข้อมูลการตั้งค่าของ BombVault",
@@ -1385,7 +1379,6 @@ const th: Partial<Translations> = {
   "settings.everythingStarted": "เริ่มแล้ว จะทำงานบนเซิร์ฟเวอร์ทีละโดเมนตามลำดับ ติดตามผลลัพธ์ได้ที่บันทึกกิจกรรม",
   "settings.everythingAlreadyRunning": "มีการสำรองข้อมูลทั้งหมดกำลังทำงานอยู่แล้ว",
   "settings.everythingBusy": "กำลังดำเนินการ…",
-  "settings.subtitle": "การกำหนดค่า BombVault การเปลี่ยนแปลงมีผลทันที",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "ตัวกรอง",
 
@@ -1412,7 +1405,6 @@ const th: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "โฟลเดอร์",
   "files.title": "โฟลเดอร์",
-  "files.subtitle": "สำรองข้อมูลโฟลเดอร์ใดก็ได้บนเซิร์ฟเวอร์นี้ พร้อมตารางเวลา สำเนานอกสถานที่ และการกู้คืน",
   "files.setsTitle": "ชุดโฟลเดอร์",
   "files.empty": "ยังไม่มีชุดโฟลเดอร์ เพิ่มโฟลเดอร์ (แชร์ เอกสาร รูปภาพ อะไรก็ได้ภายใต้จุดเมานต์ของคุณ) แล้ว BombVault จะปกป้องมันเหมือนทุกอย่างอื่น: ตารางเวลา สำเนานอกสถานที่ การตรวจสอบความสมบูรณ์ และการกู้คืน ไม่ต้องใช้เครื่องมือสำรองไฟล์แยกต่างหาก",
   "files.addSet": "เพิ่มชุดโฟลเดอร์",
@@ -1465,7 +1457,6 @@ const th: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ชุดข้อมูล ZFS",
-  "zfs.subtitle": "สำรองชุดข้อมูล ZFS พร้อมชุดข้อมูลลูกจากสแนปช็อตเดียว พร้อมการลดข้อมูลซ้ำ การเรียกดูไฟล์ และการกู้คืนไฟล์เดี่ยว",
   "settings.zfsEnabled": "ชุดข้อมูล ZFS",
   "settings.zfsEnabledHint": "สำรองชุดข้อมูล ZFS และชุดข้อมูลลูกจากสแนปช็อต ผ่านการเชื่อมต่อ SSH ไปยังเซิร์ฟเวอร์นี้",
   "settings.zfsPath": "เส้นทางของชุดข้อมูล ZFS",
@@ -2093,8 +2084,6 @@ const th: Partial<Translations> = {
   "settings.fleetEnabledHint": "ตรวจสอบสถานะการป้องกันของอินสแตนซ์ BombVault ที่เชื่อมต่อ (อ่านอย่างเดียว)",
   "receiver.title": "ตัวรับ",
   "instances.title": "อินสแตนซ์",
-  "instances.subtitle": "ทุกอย่างที่เกี่ยวกับ BombVault เครื่องอื่น ได้แก่ คลังที่ส่งมาที่นี่ อินสแตนซ์ที่เฝ้าดูผ่าน HTTP และคลังที่เครื่องนี้ดึงข้อมูลมา",
-  "receiver.subtitle": "ตรวจสอบสำเนานอกสถานที่ที่อินสแตนซ์ BombVault อื่นส่งมายังเครื่องนี้ แบบอ่านอย่างเดียว",
   "receiver.addRepo": "เพิ่มที่เก็บที่รับ",
   "receiver.emptyTitle": "ที่เก็บที่รับ",
   "receiver.empty": "ยังไม่มีที่เก็บที่รับ เพิ่มที่เก็บที่ BombVault อื่นส่งสำเนานอกสถานที่มา แล้ว BombVault จะตรวจสอบแบบอ่านอย่างเดียว ได้แก่ สิ่งที่มาถึง เวลาที่สำรองข้อมูลล่าสุดเข้ามา และการตรวจสอบความสมบูรณ์แบบอิสระบนฮาร์ดแวร์นี้",
@@ -2149,7 +2138,6 @@ const th: Partial<Translations> = {
   "receiver.saveError": "ไม่สามารถบันทึกที่เก็บที่รับได้",
   "pull.name": "ชื่อ",
   "pull.title": "ดึง",
-  "pull.subtitle": "ดึงข้อมูลสำรองจากที่เก็บของ BombVault อื่นมายังที่เก็บนี้",
   "pull.addSource": "เพิ่มแหล่งที่มา",
   "pull.emptyTitle": "แหล่งที่ดึง",
   "pull.empty": "ยังไม่มีแหล่งที่ดึง เพิ่มที่เก็บของ BombVault อื่นและ APP_KEY ของอินสแตนซ์นั้น แล้วเครื่องนี้จะดึงสแนปช็อตของมันมาไว้ในที่เก็บของตัวเองตามกำหนดเวลาที่คุณเลือก ฝั่งโน้นไม่ต้องตั้งค่าอะไรเลย และไม่จำเป็นต้องเปิดทำงานอยู่ด้วยซ้ำ",
@@ -2178,7 +2166,6 @@ const th: Partial<Translations> = {
   "settings.pullEnabled": "ดึงจากอินสแตนซ์อื่น",
   "settings.pullEnabledHint": "ดึงข้อมูลสำรองของ BombVault อื่นมาไว้ในที่เก็บของเครื่องนี้เอง (เขียนข้อมูลลงที่นี่)",
   "fleet.title": "กองเรือ",
-  "fleet.subtitle": "ตรวจสอบสถานะการป้องกันของอินสแตนซ์ BombVault ที่เชื่อมต่อ แบบอ่านอย่างเดียว",
   "fleet.addPeer": "เพิ่มอินสแตนซ์",
   "fleet.emptyTitle": "อินสแตนซ์กองเรือ",
   "fleet.empty": "ยังไม่ได้เพิ่มอินสแตนซ์กองเรือ เพิ่ม URL และโทเคนกองเรือของอินสแตนซ์ BombVault อื่น แล้วเครื่องนี้จะสอบถามการ์ดคะแนนการป้องกันของมันแบบอ่านอย่างเดียว ไม่มีอะไรอื่น",
@@ -2394,7 +2381,6 @@ const th: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "ดิสก์ที่เก็บ {domains} จะเต็มในอีกประมาณ {time} ด้วยอัตรานี้",
   "anomaly.sentence.capacityLow": "ดิสก์ที่เก็บ {domains} เหลือเพียง {free} ({percent}%)",
   "anomaly.sentence.unknown": "พบความผิดปกติของ {name} โหลดหน้านี้ใหม่เพื่อดูรายละเอียด",
-  "anomaly.pageSubtitle": "สิ่งที่เปลี่ยนไปในข้อมูลสำรองของคุณและควรค่าแก่การดู",
   "anomaly.offPage": "การตรวจจับความผิดปกติถูกปิดอยู่ ความผิดปกติก่อนหน้านี้ยังคงอยู่ในรายการนี้",
   "anomaly.retry": "ลองอีกครั้ง",
   "anomaly.filter.severity": "ความรุนแรง",

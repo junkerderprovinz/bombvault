@@ -48,7 +48,6 @@ const sv: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Översikt",
-  "dashboard.subtitle": "Din säkerhetskopieringsstatus med en blick.",
   "dashboard.summaryHealth": "Återställningspunkt",
   "dashboard.summaryNextBackup": "Nästa säkerhetskopia",
   "dashboard.summaryNextIn": "om {countdown}",
@@ -391,7 +390,6 @@ const sv: Partial<Translations> = {
   "folder.pathHint": "Sökvägen måste vara en relativ delsökväg (ingen inledande / eller ..)",
   "folder.couldNotRead": "Kunde inte läsa katalogen",
   "folder.browseFailed": "Bläddring misslyckades",
-  "containers.subtitle": "Hantera containersäkerhetskopior, scheman och återställningar.",
   "containers.emptyDocker": "Inga containrar hittades. Körs Docker?",
   "containers.bulkResult": "{ok} ok, {fail} misslyckades",
   "vm.method.saveFailed": "Det gick inte att ändra säkerhetskopieringsmetoden, den ändrades inte.",
@@ -469,7 +467,6 @@ const sv: Partial<Translations> = {
   "auth.passwordMinHint": "Minst {n} tecken.",
   // VMs page
   "vms.title": "Virtuella maskiner",
-  "vms.subtitle": "Hantera VM-säkerhetskopior, scheman och återställningar.",
   "vms.empty": "Inga VMs hittades. Körs libvirt/KVM?",
   "vms.backupSelected": "Säkerhetskopiera markerade",
   "vms.restoreSelected": "Återställ markerade (senaste)",
@@ -637,7 +634,6 @@ const sv: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash-säkerhetskopia",
-  "flash.subtitle": "Säkerhetskopiera och återställ Unraid-USB-flashen (hela /boot).",
   "flash.backupTitle": "Säkerhetskopiera flashen",
   "flash.backupHint": "Fångar hela USB-flashen (/boot): Unraid-OS, licens, array-config, resurser, nätverks- och plugin-config.",
   "flash.backupNow": "Säkerhetskopiera flash nu",
@@ -824,7 +820,6 @@ const sv: Partial<Translations> = {
   "recovery.stored": "Jag har förvarat det säkert",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "Återställ dina containrar och VMs från en befintlig säkerhetskopia till den här installationen.",
   "recovery.step1": "Kan BombVault läsa dina säkerhetskopior?",
   "recovery.appKeyExplain": "För att läsa befintliga säkerhetskopior behöver den här containern SAMMA APP_KEY som den använde tidigare. Den finns i ditt återställningskit. Ange den i Unraid-containermallen om den inte redan är satt, och kontrollera sedan igen.",
   "recovery.appKeyRemedy": "Krypteringsnyckeln matchar inte dessa säkerhetskopior. Ange den ursprungliga APP_KEY (från ditt återställningskit) i containermallen och kontrollera sedan igen.",
@@ -885,7 +880,6 @@ const sv: Partial<Translations> = {
 
   // Config Backup page
   "config.title": "Auto-säkerhetskopia",
-  "config.subtitle": "Säkerhetskopiera BombVaults egna inställningar så att en ombyggd server kan återställa sig själv.",
   "config.settingsTitle": "Inställningar för auto-säkerhetskopiering",
   "config.settingsHint": "Skydda BombVaults egen konfiguration (dess inställningsdatabas, off-site-uppgifter och SSH-nycklar), så att en ny installation kan återställa sig själv och fortsätta exakt där den slutade.",
   "config.enabled": "Säkerhetskopiera BombVaults inställningar",
@@ -1382,7 +1376,6 @@ const sv: Partial<Translations> = {
   "settings.everythingStarted": "Startad. Den körs på servern genom varje domän i tur och ordning; följ Aktivitetsloggen för resultatet.",
   "settings.everythingAlreadyRunning": "En total säkerhetskopia pågår redan.",
   "settings.everythingBusy": "Arbetar…",
-  "settings.subtitle": "BombVault-konfiguration. Ändringar träder i kraft omedelbart.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filter",
 
@@ -1409,7 +1402,6 @@ const sv: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "Mappar",
   "files.title": "Mappar",
-  "files.subtitle": "Säkerhetskopiera valfria mappar på den här servern, med scheman, off-site-kopior och återställningar.",
   "files.setsTitle": "Mappuppsättningar",
   "files.empty": "Inga mappuppsättningar ännu. Lägg till en mapp (utdelningar, dokument, foton, vad som helst under dina monteringar), så skyddar BombVault den som allt annat: scheman, off-site-kopior, integritetskontroller och återställningar. Inget separat filbackupverktyg behövs.",
   "files.addSet": "Lägg till mappuppsättning",
@@ -1462,7 +1454,6 @@ const sv: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS-datauppsättningar",
-  "zfs.subtitle": "Säkerhetskopiera ZFS-datauppsättningar tillsammans med sina underuppsättningar från en enda ögonblicksbild, med deduplicering, filbläddring och återställning av enskilda filer.",
   "settings.zfsEnabled": "ZFS-datauppsättningar",
   "settings.zfsEnabledHint": "Säkerhetskopierar ZFS-datauppsättningar och deras underuppsättningar från ögonblicksbilder, via SSH-anslutningen till den här servern.",
   "settings.zfsPath": "Sökväg för ZFS-datauppsättningar",
@@ -2090,8 +2081,6 @@ const sv: Partial<Translations> = {
   "settings.fleetEnabledHint": "Övervaka skyddsstatus för anslutna BombVault-instanser (skrivskyddat)",
   "receiver.title": "Mottagare",
   "instances.title": "Instanser",
-  "instances.subtitle": "Allt som rör en annan BombVault: arkiv som skickats hit, instanser som bevakas över HTTP och arkiv som den här maskinen hämtar från.",
-  "receiver.subtitle": "Övervaka off-site-kopiorna som andra BombVault-instanser skickar till den här maskinen, skrivskyddat.",
   "receiver.addRepo": "Lägg till mottaget arkiv",
   "receiver.emptyTitle": "Mottagna arkiv",
   "receiver.empty": "Inga mottagna arkiv ännu. Lägg till arkivet dit en annan BombVault skickar sina off-site-kopior, så övervakar BombVault det skrivskyddat: vad som kommit in, när den senaste säkerhetskopian kom och en oberoende integritetskontroll på den här hårdvaran.",
@@ -2146,7 +2135,6 @@ const sv: Partial<Translations> = {
   "receiver.saveError": "Kunde inte spara det mottagna arkivet.",
   "pull.name": "Namn",
   "pull.title": "Hämtning",
-  "pull.subtitle": "Hämta säkerhetskopior från ett annat BombVaults arkiv in i den här maskinens eget.",
   "pull.addSource": "Lägg till källa",
   "pull.emptyTitle": "Hämtningskällor",
   "pull.empty": "Inga hämtningskällor än. Lägg till ett annat BombVaults arkiv och APP_KEY för den instansen, så hämtar den här maskinen dess snapshots till sitt eget arkiv enligt ett schema du väljer. Andra sidan behöver inte ställa in något och behöver inte ens vara vaken.",
@@ -2175,7 +2163,6 @@ const sv: Partial<Translations> = {
   "settings.pullEnabled": "Hämta från andra instanser",
   "settings.pullEnabledHint": "Hämta ett annat BombVaults säkerhetskopior till den här maskinens eget arkiv (skriver data här)",
   "fleet.title": "Flotta",
-  "fleet.subtitle": "Övervaka skyddsstatus för anslutna BombVault-instanser, skrivskyddat.",
   "fleet.addPeer": "Lägg till instans",
   "fleet.emptyTitle": "Flottinstanser",
   "fleet.empty": "Inga flottinstanser tillagda än. Lägg till en annan BombVault-instans URL och flotta-token, så frågar den här maskinen skrivskyddat ut dess skyddspoängkort, inget annat.",
@@ -2391,7 +2378,6 @@ const sv: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Disken med {domains} är full om ungefär {time} i den här takten.",
   "anomaly.sentence.capacityLow": "På disken med {domains} finns bara {free} kvar ({percent}%).",
   "anomaly.sentence.unknown": "En avvikelse hittades för {name}. Ladda om sidan för att se detaljerna.",
-  "anomaly.pageSubtitle": "Vad som har ändrats i dina säkerhetskopior och förtjänar en titt.",
   "anomaly.offPage": "Avvikelsedetektering är avstängd. Tidigare avvikelser står kvar här.",
   "anomaly.retry": "Försök igen",
   "anomaly.filter.severity": "Allvarlighet",

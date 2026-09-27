@@ -377,13 +377,13 @@ async function openTab(page: Page, width: number, tab: string, name: string): Pr
   await settle(page);
 }
 
-// The page root holds the heading block and the tab panels; the panels hold
-// the cards. Both carry the rhythm.
+// The page root holds the sr-only heading, the tab strip and the tab panels;
+// the panels hold the cards. Root and panels both carry the rhythm.
 async function gaps(page: Page): Promise<string[]> {
   return page
     .getByRole("heading", { level: 1 })
-    .locator("xpath=../../..")
-    .evaluate((root) => [getComputedStyle(root).rowGap, getComputedStyle(root.children[1]).rowGap]);
+    .locator("xpath=..")
+    .evaluate((root) => [getComputedStyle(root).rowGap, getComputedStyle(root.children[2]).rowGap]);
 }
 
 async function tabRows(page: Page): Promise<{ perRow: number[] }> {

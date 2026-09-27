@@ -26,6 +26,7 @@ import { relativeTime } from "../lib/reltime";
 import { humanBytes } from "../lib/forecast";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { NumberField } from "../components/NumberField";
+import { PageTitle } from "../components/PageTitle";
 import { IconReceiver } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
@@ -603,11 +604,16 @@ export function Receiver({ embedded = false }: { embedded?: boolean } = {}) {
 
   return (
     <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          {!embedded && <h1 className="text-2xl font-semibold text-carbon-text">{t("receiver.title")}</h1>}
-          <p className="mt-1 text-sm text-carbon-textSub">{t("receiver.subtitle")}</p>
-        </div>
+      {/* Nothing here is visible once the title is sr-only and the empty
+          state has hidden the Add button, so this row goes sr-only too and
+          leaves the flex layout: without it, an empty row still ate a gap
+          above the empty-state card. */}
+      <div
+        className={`flex items-start justify-between gap-4 flex-wrap${
+          showEmptyState ? " glim-page-title sr-only" : ""
+        }`}
+      >
+        {!embedded && <PageTitle>{t("receiver.title")}</PageTitle>}
         {!showEmptyState && (
           <Button
             label={t("receiver.addRepo")}

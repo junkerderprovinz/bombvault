@@ -47,7 +47,6 @@ const nl: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Dashboard",
-  "dashboard.subtitle": "Je back-upstatus in één oogopslag.",
   "dashboard.summaryHealth": "Herstelpunt",
   "dashboard.summaryNextBackup": "Volgende back-up",
   "dashboard.summaryNextIn": "over {countdown}",
@@ -386,7 +385,6 @@ const nl: Partial<Translations> = {
   "folder.pathHint": "Pad moet een relatief subpad zijn (geen voorloop-/ of ..)",
   "folder.couldNotRead": "Map kon niet worden gelezen",
   "folder.browseFailed": "Bladeren mislukt",
-  "containers.subtitle": "Beheer container-back-ups, schema's en herstel.",
   "containers.emptyDocker": "Geen containers gevonden. Draait Docker?",
   "containers.bulkResult": "{ok} ok, {fail} mislukt",
   "vm.method.saveFailed": "Kon de back-upmethode niet wijzigen. Er is niets veranderd.",
@@ -463,7 +461,6 @@ const nl: Partial<Translations> = {
   "auth.passwordMinHint": "one=Minimaal {n} teken.|other=Minimaal {n} tekens.",
   // VMs page
   "vms.title": "Virtuele machines",
-  "vms.subtitle": "VM-back-ups, planningen en herstel beheren.",
   "vms.empty": "Geen VM's gevonden. Draait libvirt/KVM?",
   "vms.backupSelected": "Selectie back-uppen",
   "vms.restoreSelected": "Selectie herstellen (nieuwste)",
@@ -631,7 +628,6 @@ const nl: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash-back-up",
-  "flash.subtitle": "Maak een back-up van en herstel de Unraid-USB-flash (de hele /boot).",
   "flash.backupTitle": "De flash back-uppen",
   "flash.backupHint": "Legt de volledige USB-flash (/boot) vast: Unraid-OS, licentie, array-config, shares, netwerk- en plug-inconfiguratie.",
   "flash.backupNow": "Flash nu back-uppen",
@@ -795,7 +791,6 @@ const nl: Partial<Translations> = {
   "recovery.stored": "Ik heb hem veilig bewaard",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "Herstel je containers en VM's uit een bestaande back-up op deze installatie.",
   "recovery.step1": "Kan BombVault je back-ups lezen?",
   "recovery.appKeyExplain": "Om bestaande back-ups te lezen heeft deze container DEZELFDE APP_KEY nodig als voorheen. Die staat in je herstelkit. Stel hem in de Unraid-containersjabloon in als dat nog niet is gebeurd en controleer opnieuw.",
   "recovery.appKeyRemedy": "De encryptiesleutel komt niet overeen met deze back-ups. Stel de originele APP_KEY (uit je herstelkit) in de containersjabloon in en controleer opnieuw.",
@@ -1278,7 +1273,6 @@ const nl: Partial<Translations> = {
 
   // Config backup (BombVault's own settings)
   "config.title": "Zelf-back-up",
-  "config.subtitle": "Maak een back-up van BombVaults eigen instellingen zodat een opnieuw opgebouwde server zichzelf kan herstellen.",
   "config.settingsTitle": "Zelf-back-upinstellingen",
   "config.settingsHint": "Bescherm BombVaults eigen configuratie (de instellingendatabase, off-site inloggegevens en SSH-sleutels), zodat een verse installatie zichzelf kan herstellen en precies verdergaat waar ze was gebleven.",
   "config.enabled": "BombVaults instellingen back-uppen",
@@ -1379,7 +1373,6 @@ const nl: Partial<Translations> = {
   "settings.everythingStarted": "Gestart. Draait op de server achtereenvolgens door elk domein; volg het Activiteitenlogboek voor het resultaat.",
   "settings.everythingAlreadyRunning": "Er loopt al een volledige back-up.",
   "settings.everythingBusy": "Bezig…",
-  "settings.subtitle": "BombVault-configuratie. Wijzigingen worden meteen van kracht.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filters",
 
@@ -1406,7 +1399,6 @@ const nl: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "Mappen",
   "files.title": "Mappen",
-  "files.subtitle": "Maak een back-up van willekeurige mappen op deze server, met planningen, off-site kopieën en herstel.",
   "files.setsTitle": "Mappensets",
   "files.empty": "Nog geen mappensets. Voeg een map toe (shares, documenten, foto's, alles onder je mounts), en BombVault beschermt hem zoals al het andere: planningen, off-site kopieën, integriteitscontroles en herstel. Geen aparte tool voor bestandsback-ups nodig.",
   "files.addSet": "Mappenset toevoegen",
@@ -1459,7 +1451,6 @@ const nl: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS-datasets",
-  "zfs.subtitle": "Maak een back-up van ZFS-datasets samen met hun onderliggende datasets vanuit één snapshot, met deduplicatie, bestandsverkenning en herstel van losse bestanden.",
   "settings.zfsEnabled": "ZFS-datasets",
   "settings.zfsEnabledHint": "Maakt een back-up van ZFS-datasets en hun onderliggende datasets vanuit snapshots, via de SSH-verbinding met deze server.",
   "settings.zfsPath": "Pad van de ZFS-datasets",
@@ -2087,8 +2078,6 @@ const nl: Partial<Translations> = {
   "settings.fleetEnabledHint": "Bewaak de beschermingsstatus van gekoppelde BombVault-instanties (alleen-lezen)",
   "receiver.title": "Ontvanger",
   "instances.title": "Instanties",
-  "instances.subtitle": "Alles wat met een andere BombVault te maken heeft: repository's die hierheen zijn gestuurd, instanties die via HTTP worden gevolgd, en repository's waaruit deze machine ophaalt.",
-  "receiver.subtitle": "Bewaak de off-site-kopieën die andere BombVault-instanties naar deze machine pushen, alleen-lezen.",
   "receiver.addRepo": "Ontvangen repo toevoegen",
   "receiver.emptyTitle": "Ontvangen repo's",
   "receiver.empty": "Nog geen ontvangen repository's. Voeg de repo toe waar een andere BombVault zijn off-site-kopieën naartoe pusht, en BombVault bewaakt hem alleen-lezen: wat er binnenkwam, wanneer de laatste back-up arriveerde en een onafhankelijke integriteitscontrole op deze hardware.",
@@ -2143,7 +2132,6 @@ const nl: Partial<Translations> = {
   "receiver.saveError": "Kon de ontvangen repo niet opslaan.",
   "pull.name": "Naam",
   "pull.title": "Ophalen",
-  "pull.subtitle": "Back-ups uit de repository van een andere BombVault naar deze halen.",
   "pull.addSource": "Bron toevoegen",
   "pull.emptyTitle": "Ophaalbronnen",
   "pull.empty": "Nog geen ophaalbronnen. Voeg de repository van een andere BombVault en de APP_KEY van die instantie toe, dan haalt deze machine de snapshots daarvan op in zijn eigen repository, volgens een planning die jij kiest. De andere kant hoeft niets in te stellen en hoeft niet eens aan te staan.",
@@ -2172,7 +2160,6 @@ const nl: Partial<Translations> = {
   "settings.pullEnabled": "Van andere instanties ophalen",
   "settings.pullEnabledHint": "Back-ups van een andere BombVault naar de eigen repository van deze machine halen (schrijft hier gegevens)",
   "fleet.title": "Vloot",
-  "fleet.subtitle": "Bewaak de beschermingsstatus van gekoppelde BombVault-instanties, alleen-lezen.",
   "fleet.addPeer": "Instantie toevoegen",
   "fleet.emptyTitle": "Vlootinstanties",
   "fleet.empty": "Nog geen vlootinstanties toegevoegd. Voeg de URL en het vloot-token van een andere BombVault-instantie toe, en deze machine bevraagt alleen-lezen de beschermingskaart ervan, niets anders.",
@@ -2388,7 +2375,6 @@ const nl: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "De schijf met {domains} is in dit tempo over ongeveer {time} vol.",
   "anomaly.sentence.capacityLow": "Op de schijf met {domains} is nog maar {free} vrij ({percent}%).",
   "anomaly.sentence.unknown": "Er is een anomalie gevonden voor {name}. Laad de pagina opnieuw voor de details.",
-  "anomaly.pageSubtitle": "Wat er in je back-ups is veranderd en een blik waard is.",
   "anomaly.offPage": "Anomaliedetectie staat uit. Eerdere anomalieën blijven hier staan.",
   "anomaly.retry": "Probeer opnieuw",
   "anomaly.filter.severity": "Ernst",

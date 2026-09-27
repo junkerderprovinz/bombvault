@@ -51,7 +51,6 @@ const lv: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Vadības panelis",
-  "dashboard.subtitle": "Jūsu rezerves kopiju statuss vienā skatā.",
   "dashboard.summaryHealth": "Atjaunošanas punkts",
   "dashboard.summaryNextBackup": "Nākamā rezerves kopija",
   "dashboard.summaryNextIn": "pēc {countdown}",
@@ -1098,7 +1097,6 @@ const lv: Partial<Translations> = {
   "folder.creating": "Izveido…",
   "folder.createFailed": "Neizdevās izveidot mapi",
   "folder.browseFailed": "Pārlūkošana neizdevās",
-  "containers.subtitle": "Pārvaldiet konteineru rezerves kopijas, grafikus un atjaunošanu.",
   "containers.emptyDocker": "Konteineri nav atrasti. Vai darbojas Docker?",
   "containers.bulkResult": "{ok} veiksmīgi, {fail} neveiksmīgi",
   "vm.method.saveFailed": "Neizdevās mainīt rezerves kopēšanas metodi. Tā netika pārslēgta.",
@@ -1239,7 +1237,6 @@ const lv: Partial<Translations> = {
 
   // VMs page
   "vms.title": "Virtuālās mašīnas",
-  "vms.subtitle": "Pārvaldiet VM rezerves kopijas, grafikus un atjaunošanu.",
   "vms.empty": "VM nav atrastas. Vai darbojas libvirt/KVM?",
   "vms.backupSelected": "Dublēt atlasītās",
   "vms.restoreSelected": "Atjaunot atlasītās (jaunāko)",
@@ -1252,7 +1249,6 @@ const lv: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash rezerves kopija",
-  "flash.subtitle": "Dublējiet un atjaunojiet Unraid USB Flash (visu /boot).",
   "flash.backupTitle": "Dublēt Flash",
   "flash.backupHint": "Uztver visu USB Flash (/boot): Unraid OS, licenci, masīva konfigurāciju, koplietojumus, tīklu un spraudņu konfigurāciju.",
   "flash.backupNow": "Dublēt Flash tagad",
@@ -1288,7 +1284,6 @@ const lv: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "Pašrezerve",
-  "config.subtitle": "Dublē paša BombVault iestatījumus, lai atjaunots serveris varētu pats sevi atjaunot.",
   "config.settingsTitle": "Pašrezerves iestatījumi",
   "config.settingsHint": "Aizsargā paša BombVault konfigurāciju (tā iestatījumu datubāzi, attālinātos akreditācijas datus un SSH atslēgas), lai jauna instalācija varētu pati sevi atjaunot un turpināt tieši no tās vietas, kur tā pārtrauca.",
   "config.enabled": "Dublēt BombVault iestatījumus",
@@ -1309,8 +1304,6 @@ const lv: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Uztvērējs",
   "instances.title": "Instances",
-  "instances.subtitle": "Viss, kas saistīts ar citu BombVault: šeit atsūtītie repozitoriji, pa HTTP uzraudzītās instances un repozitoriji, no kuriem šī mašīna ievelk.",
-  "receiver.subtitle": "Uzraugiet attālinātās kopijas, ko citas BombVault instances sūta uz šo ierīci, tikai lasīšanai.",
   "receiver.addRepo": "Pievienot saņemto repozitoriju",
   "receiver.emptyTitle": "Saņemtie repozitoriji",
   "receiver.empty": "Vēl nav saņemtu repozitoriju. Pievienojiet repozitoriju, kurā cits BombVault sūta savas attālinātās kopijas, un BombVault to uzraudzīs tikai lasīšanai: kas ir ieradies, kad ieradusies pēdējā rezerves kopija, un neatkarīgu integritātes pārbaudi šajā aparatūrā.",
@@ -1365,7 +1358,6 @@ const lv: Partial<Translations> = {
   "receiver.saveError": "Neizdevās saglabāt saņemto repozitoriju.",
   "pull.name": "Nosaukums",
   "pull.title": "Ievilkšana",
-  "pull.subtitle": "Ievelciet rezerves kopijas no cita BombVault repozitorija šajā repozitorijā.",
   "pull.addSource": "Pievienot avotu",
   "pull.emptyTitle": "Ievilkšanas avoti",
   "pull.empty": "Vēl nav ievilkšanas avotu. Pievienojiet cita BombVault repozitoriju un tās instances APP_KEY, un šī ierīce pēc jūsu izvēlēta grafika ievilks tā momentuzņēmumus savā repozitorijā. Otrai pusei nekas nav jākonfigurē, un tai pat nav jābūt ieslēgtai.",
@@ -1394,7 +1386,6 @@ const lv: Partial<Translations> = {
   "settings.pullEnabled": "Ievilkt no citām instancēm",
   "settings.pullEnabledHint": "Ievilkt cita BombVault rezerves kopijas šīs ierīces paša repozitorijā (šeit tiek ierakstīti dati)",
   "fleet.title": "Flote",
-  "fleet.subtitle": "Vērojiet saistīto BombVault instanču aizsardzības statusu, tikai lasīšanai.",
   "fleet.addPeer": "Pievienot instanci",
   "fleet.emptyTitle": "Flotes instances",
   "fleet.empty": "Flotē vēl nav instanču. Pievienojiet citas BombVault instances URL un flotes marķieri, un šī ierīce to aptaujās tikai lasīšanai, lai iegūtu tās aizsardzības rezultātu karti, un neko citu.",
@@ -1492,7 +1483,6 @@ const lv: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Atkopšana",
-  "recovery.intro": "Atjaunojiet konteinerus un VM no esošas rezerves kopijas šajā instalācijā.",
   // Step 1
   "recovery.step1": "Vai BombVault var nolasīt jūsu rezerves kopijas?",
   "recovery.appKeyExplain": "Lai nolasītu esošās rezerves kopijas, šim konteinerim nepieciešams TĀDS PATS APP_KEY, kāds izmantots iepriekš. Tas atrodas jūsu atkopšanas komplektā. Iestatiet to Unraid konteinera veidnē, ja tas vēl nav iestatīts, un pēc tam pārbaudiet vēlreiz.",
@@ -1579,7 +1569,6 @@ const lv: Partial<Translations> = {
   "settings.everythingStarted": "Palaists. Serverī darbojas pēc kārtas caur katru jomu; iznākumu redzēsi darbības žurnālā.",
   "settings.everythingAlreadyRunning": "Pilna rezerves kopija jau notiek.",
   "settings.everythingBusy": "Strādāju…",
-  "settings.subtitle": "BombVault konfigurācija. Izmaiņas stājas spēkā nekavējoties.",
   // Filter drawer trigger
   "filter.button": "Filtri",
 
@@ -1612,7 +1601,6 @@ const lv: Partial<Translations> = {
   // Files domain
   "nav.files": "Mapes",
   "files.title": "Mapes",
-  "files.subtitle": "Dublējiet jebkuru šī servera mapi, ar grafikiem, attālinātām kopijām un atjaunošanu.",
   "files.setsTitle": "Mapju kopas",
   "files.empty": "Vēl nav mapju kopu. Pievienojiet mapi (koplietojumus, dokumentus, fotoattēlus, jebko zem jūsu piesaistēm), un BombVault to aizsargā tāpat kā visu pārējo: grafikus, attālinātas kopijas, integritātes pārbaudes un atjaunošanu. Atsevišķs failu rezerves kopēšanas rīks nav nepieciešams.",
   "files.addSet": "Pievienot mapju kopu",
@@ -1666,7 +1654,6 @@ const lv: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS datu kopas",
-  "zfs.subtitle": "Dublējiet ZFS datu kopas kopā ar to bērnu kopām no vienas momentuzņēmuma, ar dublēšanās novēršanu, failu pārlūkošanu un atsevišķa faila atjaunošanu.",
   "settings.zfsEnabled": "ZFS datu kopas",
   "settings.zfsEnabledHint": "Dublē ZFS datu kopas un to bērnu kopas no momentuzņēmumiem, izmantojot SSH savienojumu ar šo serveri.",
   "settings.zfsPath": "ZFS datu kopu ceļš",
@@ -2402,7 +2389,6 @@ const lv: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Disks ar {domains} šādā tempā būs pilns aptuveni pēc {time}.",
   "anomaly.sentence.capacityLow": "Diskā ar {domains} palikuši tikai {free} ({percent}%).",
   "anomaly.sentence.unknown": "{name} atrasta anomālija. Pārlādē lapu, lai redzētu sīkāk.",
-  "anomaly.pageSubtitle": "Kas tavās rezerves kopijās ir mainījies un ir vērts apskatīt.",
   "anomaly.offPage": "Anomāliju noteikšana ir izslēgta. Iepriekšējās anomālijas paliek šeit sarakstā.",
   "anomaly.retry": "Mēģini vēlreiz",
   "anomaly.filter.severity": "Smagums",

@@ -28,6 +28,7 @@ import { labelModeChanged } from "../lib/useLabelMode";
 import { InfoBubble } from "../components/InfoBubble";
 import { RetentionPreview } from "../components/RetentionPreview";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
+import { PageTitle } from "../components/PageTitle";
 // Every cadence picker on this page edits a schedule that can count an
 // interval (#166): the six domains and Backup Everything from their last
 // successful backup, drills, tamper test and digest from schedule_job_runs.
@@ -2434,30 +2435,11 @@ export function SettingsPage() {
 
   return (
     // The root's gap is the card rhythm between the tab strip and the first
-    // card; the heading and the strip keep their own tighter gap inside.
+    // card. The page's h1 is sr-only and takes no space of its own, so the
+    // tab strip is the first thing anyone sees, at the page's own full width
+    // like every other tab's heading area.
     <div className={PAGE_SHELL_RESPONSIVE}>
-      {/* Heading + tab strip, grouped in their own gap-6 column (GlimStone
-          follow-up pass, live-review round — the width-mismatch fix below
-          needed a wrapper here to isolate this pair's own 24px gap from the
-          new gap-10 the OUTER wrapper now uses for the tab-strip-to-first-
-          card gap; before this pass, heading/strip/panels were three
-          siblings sharing one flat gap value). Deliberately NOT inside the
-          max-w-3xl reading column the panels wrapper further down used to
-          own alone (GlimStone follow-up pass, live-review point 7): every
-          OTHER page's own <h1>/<p> (Dashboard.tsx, Containers.tsx, VMs.tsx,
-          Files.tsx, Flash.tsx, Config.tsx, Receiver.tsx, Fleet.tsx) renders
-          at the page's own full width, un-capped — Settings.tsx was the one
-          page that swept its heading into the same narrow column as its
-          form content, which that pass undid to match that convention. */}
-      <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-carbon-text">
-          {t("settings.title")}
-        </h1>
-        <p className="mt-1 text-sm text-carbon-textSub">
-          {t("settings.subtitle")}
-        </p>
-      </div>
+      <PageTitle>{t("settings.title")}</PageTitle>
 
       {/* The tab strip. Each tab owns the rainbow position of its list index,
           and the strip spans the column the panels below share. */}
@@ -2508,28 +2490,12 @@ export function SettingsPage() {
         // tab's accessible name.
         className="max-md:[&_[data-sel-label]]:sr-only"
       />
-      </div>
 
-      {/* Tab panels. GlimStone follow-up pass, live-review round ("Settings
-          cards should match the tab row's width"): the `max-w-3xl` cap that
-          used to live on this wrapper is GONE — removed, not resized to a
-          new guessed number.
-
-            gap-10 (live-review round — "more air between Cards, there's
-          plenty of room"): was gap-6 (24px), already the single largest gap
-          value used anywhere in this app before this bump (verified — no
-          other call site reaches past gap-6). Every direct child of this
-          wrapper is either a whole Card (own bg-carbon-surface + p-5 box) or
-          an equivalent top-level section, so this one value IS the vertical
-          rhythm between Settings' Domains/Language/Theme/Accent/Shape/
-          Rainbow/Quiet-toasts blocks — bumping it here, and only here,
-          reaches every one of them. 40px (~1.67x the old 24px, inside the
-          requested 1.5-2x range) reads as a deliberate step up without the
-          Cards feeling disconnected from each other on the page. The outer
-          wrapper above reuses this same gap-10 value for the tab-strip-to-
-          first-card gap (a separate live-review ask, its own comment) —
-          matching this established rhythm rather than inventing a different
-          number for that gap too. */}
+      {/* Tab panels, at the page's own full width, un-capped. Every direct
+          child of this wrapper is either a whole Card (own bg-carbon-surface
+          + p-5 box) or an equivalent top-level section, so the root's gap-10
+          is the vertical rhythm between Settings' Domains/Language/Theme/
+          Accent/Shape/Rainbow/Quiet-toasts blocks. */}
       {/* key={tab} (GlimStone motion-engine animation 7, Settings tab slide):
           this ONE div wraps every `{tab === "x" && ...}` panel below — every
           Card inside it ALREADY fully unmounts/remounts on a tab switch via

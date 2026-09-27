@@ -24,6 +24,7 @@ import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconTrash } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { PageTitle } from "../components/PageTitle";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
 import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
 import { findingSnapshotId } from "../lib/anomalies";
@@ -325,13 +326,8 @@ export function Config() {
 
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold text-carbon-text">{t("config.title")}</h1>
-          <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
-        </div>
-        <p className="mt-1 text-sm text-carbon-textSub">{t("config.subtitle")}</p>
-      </div>
+      <PageTitle>{t("config.title")}</PageTitle>
+      <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
 
       {settings && (
         <ConfigSettingsCard t={t} settings={settings} setSettings={(u) => setSettings((prev) => (prev ? u(prev) : prev))} hueIndex={0} />

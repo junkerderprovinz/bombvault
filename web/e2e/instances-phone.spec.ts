@@ -274,7 +274,7 @@ async function gaps(page: Page): Promise<{ page: string; lane: string }> {
   return {
     page: await page
       .getByRole("heading", { level: 1 })
-      .locator("xpath=../..")
+      .locator("xpath=..")
       .evaluate((root) => getComputedStyle(root).rowGap),
     lane: await page.locator("#bv-main .glim-tab-slide > div").evaluate((root) => getComputedStyle(root).rowGap),
   };

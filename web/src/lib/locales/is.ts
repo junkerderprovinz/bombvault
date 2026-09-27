@@ -51,7 +51,6 @@ const is: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Stjórnborð",
-  "dashboard.subtitle": "Staða afritanna þinna í hnotskurn.",
   "dashboard.summaryHealth": "Endurheimtupunktur",
   "dashboard.summaryNextBackup": "Næsta afritun",
   "dashboard.summaryNextIn": "eftir {countdown}",
@@ -1098,7 +1097,6 @@ const is: Partial<Translations> = {
   "folder.creating": "Bý til…",
   "folder.createFailed": "Ekki tókst að búa til möppu",
   "folder.browseFailed": "Ekki tókst að skoða",
-  "containers.subtitle": "Stýrðu afritum, tímaáætlunum og endurheimt gáma.",
   "containers.emptyDocker": "Engir gámar fundust. Er Docker í keyrslu?",
   "containers.bulkResult": "{ok} tókst, {fail} mistókst",
   "vm.method.saveFailed": "Ekki tókst að breyta afritunaraðferð. Henni var ekki breytt.",
@@ -1239,7 +1237,6 @@ const is: Partial<Translations> = {
 
   // VMs page
   "vms.title": "Sýndarvélar",
-  "vms.subtitle": "Stýrðu afritum, tímaáætlunum og endurheimt sýndarvéla.",
   "vms.empty": "Engar sýndarvélar fundust. Er libvirt/KVM í keyrslu?",
   "vms.backupSelected": "Afrita valdar",
   "vms.restoreSelected": "Endurheimta valdar (nýjasta)",
@@ -1252,7 +1249,6 @@ const is: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash-afritun",
-  "flash.subtitle": "Afritaðu og endurheimtu Unraid USB Flash (allt /boot).",
   "flash.backupTitle": "Afrita Flash",
   "flash.backupHint": "Nær allri USB flash-einingunni (/boot): Unraid-stýrikerfi, leyfi, uppsetningu drifasafns, sameignum, netstillingum og viðbótarstillingum.",
   "flash.backupNow": "Afrita Flash núna",
@@ -1288,7 +1284,6 @@ const is: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "Sjálfvirk afritun",
-  "config.subtitle": "Afritar eigin stillingar BombVault svo endurbyggður netþjónn geti endurheimt sjálfan sig.",
   "config.settingsTitle": "Stillingar sjálfvirkrar afritunar",
   "config.settingsHint": "Verndar eigin stillingar BombVault (stillingagagnagrunn þess, fjarlæg aðgangsgögn og SSH-lykla) svo ný uppsetning geti endurheimt sjálfa sig og haldið áfram nákvæmlega þar sem frá var horfið.",
   "config.enabled": "Afrita stillingar BombVault",
@@ -1309,8 +1304,6 @@ const is: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Móttakandi",
   "instances.title": "Tilvik",
-  "instances.subtitle": "Allt sem snertir annað BombVault: söfn sem send eru hingað, tilvik sem fylgst er með um HTTP og söfn sem þessi vél sækir í.",
-  "receiver.subtitle": "Fylgstu með fjarlægum afritum sem önnur BombVault-tilvik senda á þessa vél, aðeins lestur.",
   "receiver.addRepo": "Bæta við mótteknu geymslusafni",
   "receiver.emptyTitle": "Móttekin geymslusöfn",
   "receiver.empty": "Engin móttekin geymslusöfn ennþá. Bættu við geymslusafninu sem annar BombVault sendir fjarlæg afrit sín í, og BombVault fylgist með því aðeins með lestri: hvað hefur borist, hvenær síðasta afrit barst, og sjálfstæð heilleikaathugun á þessum vélbúnaði.",
@@ -1365,7 +1358,6 @@ const is: Partial<Translations> = {
   "receiver.saveError": "Ekki tókst að vista móttekna geymslusafnið.",
   "pull.name": "Nafn",
   "pull.title": "Sækja",
-  "pull.subtitle": "Sæktu afrit úr geymslusafni annars BombVault inn í þetta.",
   "pull.addSource": "Bæta við uppsprettu",
   "pull.emptyTitle": "Uppsprettur",
   "pull.empty": "Engar uppsprettur ennþá. Bættu við geymslusafni annars BombVault og APP_KEY þess tilviks, þá sækir þessi vél skyndimyndir þess inn í sitt eigið geymslusafn á tímaáætlun sem þú velur. Hinn endinn þarf ekkert að stilla og þarf ekki einu sinni að vera í gangi.",
@@ -1394,7 +1386,6 @@ const is: Partial<Translations> = {
   "settings.pullEnabled": "Sækja frá öðrum tilvikum",
   "settings.pullEnabledHint": "Sæktu afrit annars BombVault inn í eigið geymslusafn þessarar vélar (skrifar gögn hingað)",
   "fleet.title": "Floti",
-  "fleet.subtitle": "Fylgstu með verndarstöðu tengdra BombVault-tilvika, aðeins lestur.",
   "fleet.addPeer": "Bæta við tilviki",
   "fleet.emptyTitle": "Flotatilvik",
   "fleet.empty": "Engin tilvik í flotanum ennþá. Bættu við slóð og flotatákni annars BombVault-tilviks, og þessi vél fyrirspyr það aðeins með lestri fyrir verndareinkunnaspjald þess, ekkert annað.",
@@ -1492,7 +1483,6 @@ const is: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Endurheimt",
-  "recovery.intro": "Endurheimtu gáma og sýndarvélar úr fyrirliggjandi afriti á þessari uppsetningu.",
   // Step 1
   "recovery.step1": "Getur BombVault lesið afritin þín?",
   "recovery.appKeyExplain": "Til að lesa fyrirliggjandi afrit þarf þessi gámur SAMA APP_KEY og var notaður áður. Það er í endurheimtarpakkanum þínum. Stilltu það í Unraid-gámasniðmátinu ef það er ekki þegar gert, athugaðu svo aftur.",
@@ -1579,7 +1569,6 @@ const is: Partial<Translations> = {
   "settings.everythingStarted": "Ræst. Hún keyrir á þjóninum gegnum hvert svið í röð; útkomuna sérðu í virknidagbókinni.",
   "settings.everythingAlreadyRunning": "Heildarafritun er þegar í gangi.",
   "settings.everythingBusy": "Vinn…",
-  "settings.subtitle": "Stilling BombVault. Breytingar taka gildi samstundis.",
   // Filter drawer trigger
   "filter.button": "Síur",
 
@@ -1612,7 +1601,6 @@ const is: Partial<Translations> = {
   // Files domain
   "nav.files": "Möppur",
   "files.title": "Möppur",
-  "files.subtitle": "Afritaðu hvaða möppu sem er á þessum netþjóni, með tímaáætlunum, fjarlægum afritum og endurheimt.",
   "files.setsTitle": "Möppusett",
   "files.empty": "Engin möppusett ennþá. Bættu við möppu (sameignum, skjölum, myndum, hverju sem er undir tengipunktum þínum) og BombVault verndar hana eins og allt annað: tímaáætlanir, fjarlæg afrit, heilleikaathuganir og endurheimt. Ekkert sérstakt skráaafritunartól er nauðsynlegt.",
   "files.addSet": "Bæta við möppusetti",
@@ -1666,7 +1654,6 @@ const is: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS-gagnasöfn",
-  "zfs.subtitle": "Taktu afrit af ZFS-gagnasöfnum ásamt undirgagnasöfnum þeirra úr einni skyndimynd, með afritunarþjöppun, skráaskoðun og endurheimt stakra skráa.",
   "settings.zfsEnabled": "ZFS-gagnasöfn",
   "settings.zfsEnabledHint": "Tekur afrit af ZFS-gagnasöfnum og undirgagnasöfnum þeirra úr skyndimyndum, um SSH-tenginguna við þennan þjón.",
   "settings.zfsPath": "Slóð ZFS-gagnasafna",
@@ -2402,7 +2389,6 @@ const is: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Diskurinn með {domains} verður fullur eftir um það bil {time} á þessum hraða.",
   "anomaly.sentence.capacityLow": "Á disknum með {domains} eru aðeins {free} eftir ({percent}%).",
   "anomaly.sentence.unknown": "Frávik fannst fyrir {name}. Endurhlaðu síðuna til að sjá nánar.",
-  "anomaly.pageSubtitle": "Hvað hefur breyst í afritunum þínum og er þess virði að skoða.",
   "anomaly.offPage": "Frávikagreining er slökkt. Fyrri frávik verða áfram á þessum lista.",
   "anomaly.retry": "Reyndu aftur",
   "anomaly.filter.severity": "Alvarleiki",

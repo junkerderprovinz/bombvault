@@ -48,7 +48,6 @@ const he: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "לוח בקרה",
-  "dashboard.subtitle": "מצב הגיבוי שלך במבט אחד.",
   "dashboard.summaryHealth": "נקודת שחזור",
   "dashboard.summaryNextBackup": "הגיבוי הבא",
   "dashboard.summaryNextIn": "בעוד {countdown}",
@@ -391,7 +390,6 @@ const he: Partial<Translations> = {
   "folder.pathHint": "הנתיב חייב להיות תת-נתיב יחסי (ללא / מוביל או ..)",
   "folder.couldNotRead": "לא ניתן לקרוא את הספרייה",
   "folder.browseFailed": "העיון נכשל",
-  "containers.subtitle": "ניהול גיבויים, תזמונים ושחזורים של קונטיינרים.",
   "containers.emptyDocker": "לא נמצאו קונטיינרים. האם Docker פועל?",
   "containers.bulkResult": "{ok} תקין, {fail} נכשלו",
   "vm.method.saveFailed": "לא ניתן לשנות את שיטת הגיבוי, היא לא שונתה.",
@@ -469,7 +467,6 @@ const he: Partial<Translations> = {
   "auth.passwordMinHint": "one=לפחות תו אחד.|two=לפחות שני תווים.|other=לפחות {n} תווים.",
   // VMs page
   "vms.title": "מכונות וירטואליות",
-  "vms.subtitle": "נהל גיבויים, לוחות זמנים ושחזורים של VMs.",
   "vms.empty": "לא נמצאו VMs. האם libvirt/KVM פועל?",
   "vms.backupSelected": "גבה את הנבחרים",
   "vms.restoreSelected": "שחזר את הנבחרים (אחרון)",
@@ -637,7 +634,6 @@ const he: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "גיבוי Flash",
-  "flash.subtitle": "גבה ושחזר את כונן ה-USB flash של Unraid (כל ה-‎/boot).",
   "flash.backupTitle": "גבה את ה-flash",
   "flash.backupHint": "לוכד את כל כונן ה-USB flash (‎/boot): מערכת Unraid, רישיון, תצורת מערך, שיתופים, רשת ותצורת תוספים.",
   "flash.backupNow": "גבה flash עכשיו",
@@ -824,7 +820,6 @@ const he: Partial<Translations> = {
   "recovery.stored": "שמרתי אותה בבטחה",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "שחזר את הקונטיינרים וה-VMs שלך מגיבוי קיים אל התקנה זו.",
   "recovery.step1": "האם BombVault יכול לקרוא את הגיבויים שלך?",
   "recovery.appKeyExplain": "כדי לקרוא גיבויים קיימים, קונטיינר זה זקוק לאותו APP_KEY שהשתמש בו קודם. הוא נמצא בערכת השחזור שלך. הגדר אותו בתבנית הקונטיינר של Unraid אם עדיין לא, ואז בדוק שוב.",
   "recovery.appKeyRemedy": "מפתח ההצפנה אינו תואם לגיבויים אלה. הגדר את ה-APP_KEY המקורי (מערכת השחזור שלך) בתבנית הקונטיינר, ואז בדוק שוב.",
@@ -1285,7 +1280,6 @@ const he: Partial<Translations> = {
 
   // Config backup (BombVault's own settings)
   "config.title": "גיבוי עצמי",
-  "config.subtitle": "גבה את ההגדרות של BombVault עצמו כדי ששרת שנבנה מחדש יוכל לשחזר את עצמו.",
   "config.settingsTitle": "הגדרות גיבוי עצמי",
   "config.settingsHint": "הגן על התצורה של BombVault עצמו (מסד ההגדרות שלו, פרטי ההתחברות מחוץ לאתר ומפתחות ה-SSH) כדי שהתקנה חדשה תוכל לשחזר את עצמה ולהמשיך בדיוק מהמקום שבו הפסיקה.",
   "config.enabled": "גבה את ההגדרות של BombVault",
@@ -1382,7 +1376,6 @@ const he: Partial<Translations> = {
   "settings.everythingStarted": "התחיל. הוא רץ על השרת בכל תחום בתורו; עקוב אחרי יומן הפעילות לתוצאה.",
   "settings.everythingAlreadyRunning": "גיבוי מלא כבר רץ.",
   "settings.everythingBusy": "מבצע…",
-  "settings.subtitle": "תצורת BombVault, השינויים נכנסים לתוקף מיד.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "מסננים",
 
@@ -1409,7 +1402,6 @@ const he: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "תיקיות",
   "files.title": "תיקיות",
-  "files.subtitle": "גבה כל תיקייה בשרת הזה, עם לוחות זמנים, עותקים מחוץ לאתר ושחזורים.",
   "files.setsTitle": "ערכות תיקיות",
   "files.empty": "אין עדיין ערכות תיקיות. הוסף תיקייה (שיתופים, מסמכים, תמונות, כל דבר תחת נקודות העיגון שלך), ו-BombVault יגן עליה כמו על כל השאר: לוחות זמנים, עותקים מחוץ לאתר, בדיקות תקינות ושחזורים. אין צורך בכלי גיבוי קבצים נפרד.",
   "files.addSet": "הוסף ערכת תיקיות",
@@ -1462,7 +1454,6 @@ const he: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "מערכי נתונים של ZFS",
-  "zfs.subtitle": "גבו מערכי נתונים של ZFS יחד עם מערכי הבן שלהם מתוך תצלום יחיד, עם דחיסת כפילויות, עיון בקבצים ושחזור קובץ בודד.",
   "settings.zfsEnabled": "מערכי נתונים של ZFS",
   "settings.zfsEnabledHint": "מגבה מערכי נתונים של ZFS ואת מערכי הבן שלהם מתוך תצלומים, דרך חיבור ה-SSH לשרת הזה.",
   "settings.zfsPath": "נתיב מערכי הנתונים של ZFS",
@@ -2090,8 +2081,6 @@ const he: Partial<Translations> = {
   "settings.fleetEnabledHint": "עקוב אחר מצב ההגנה של מופעי BombVault מקושרים (קריאה בלבד)",
   "receiver.title": "מקלט",
   "instances.title": "מופעים",
-  "instances.subtitle": "כל מה שקשור ל-BombVault אחר: מאגרים שנשלחו לכאן, מופעים שנצפים דרך HTTP, ומאגרים שהמכונה הזו מושכת מהם.",
-  "receiver.subtitle": "נטר את העותקים החיצוניים ש-BombVault אחרים דוחפים אל מכונה זו, בקריאה בלבד.",
   "receiver.addRepo": "הוסף מאגר שהתקבל",
   "receiver.emptyTitle": "מאגרים שהתקבלו",
   "receiver.empty": "אין עדיין מאגרים שהתקבלו. הוסף את המאגר שאליו BombVault אחר דוחף את העותקים החיצוניים שלו, ו-BombVault ינטר אותו בקריאה בלבד: מה הגיע, מתי נכנס הגיבוי האחרון, ובדיקת שלמות עצמאית על חומרה זו.",
@@ -2146,7 +2135,6 @@ const he: Partial<Translations> = {
   "receiver.saveError": "לא ניתן לשמור את המאגר שהתקבל.",
   "pull.name": "שם",
   "pull.title": "משיכה",
-  "pull.subtitle": "משוך גיבויים מהמאגר של BombVault אחר אל המאגר הזה.",
   "pull.addSource": "הוסף מקור",
   "pull.emptyTitle": "מקורות משיכה",
   "pull.empty": "אין עדיין מקורות משיכה. הוסף את המאגר של BombVault אחר ואת ה-APP_KEY של אותו מופע, ומכונה זו מושכת את הגיבויים שלו אל המאגר שלה עצמה, בלוח זמנים שתבחר. הצד המרוחק אינו צריך להגדיר דבר, ואפילו אינו צריך לפעול.",
@@ -2175,7 +2163,6 @@ const he: Partial<Translations> = {
   "settings.pullEnabled": "משיכה ממופעים אחרים",
   "settings.pullEnabledHint": "מושך את הגיבויים של BombVault אחר אל המאגר של מכונה זו עצמה (כותב כאן נתונים)",
   "fleet.title": "צי",
-  "fleet.subtitle": "עקוב אחר מצב ההגנה של מופעי BombVault מקושרים, בקריאה בלבד.",
   "fleet.addPeer": "הוסף מופע",
   "fleet.emptyTitle": "מופעי צי",
   "fleet.empty": "עדיין לא נוספו מופעי צי. הוסף כתובת URL ואסימון צי של מופע BombVault אחר, ומכונה זו תשאל בקריאה בלבד את כרטיס ההגנה שלו, ותו לא.",
@@ -2391,7 +2378,6 @@ const he: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "הדיסק שמחזיק את {domains} יתמלא בעוד כ-{time} בקצב הזה.",
   "anomaly.sentence.capacityLow": "בדיסק שמחזיק את {domains} נותרו רק {free} ({percent}%).",
   "anomaly.sentence.unknown": "נמצאה חריגה עבור {name}. טען מחדש את הדף כדי לראות פרטים.",
-  "anomaly.pageSubtitle": "מה השתנה בגיבויים שלך ושווה מבט.",
   "anomaly.offPage": "זיהוי החריגות כבוי. חריגות קודמות נשארות מופיעות כאן.",
   "anomaly.retry": "נסה שוב",
   "anomaly.filter.severity": "חומרה",

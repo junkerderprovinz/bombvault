@@ -48,7 +48,6 @@ const da: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Oversigt",
-  "dashboard.subtitle": "Din sikkerhedskopieringsstatus med et blik.",
   "dashboard.summaryHealth": "Gendannelsespunkt",
   "dashboard.summaryNextBackup": "Næste sikkerhedskopi",
   "dashboard.summaryNextIn": "om {countdown}",
@@ -391,7 +390,6 @@ const da: Partial<Translations> = {
   "folder.pathHint": "Stien skal være en relativ understi (ingen indledende / eller ..)",
   "folder.couldNotRead": "Kunne ikke læse mappen",
   "folder.browseFailed": "Gennemsyn mislykkedes",
-  "containers.subtitle": "Administrér containersikkerhedskopier, planer og gendannelser.",
   "containers.emptyDocker": "Ingen containere fundet. Kører Docker?",
   "containers.bulkResult": "{ok} ok, {fail} mislykkedes",
   "vm.method.saveFailed": "Kunne ikke ændre sikkerhedskopieringsmetoden. Den blev ikke ændret.",
@@ -469,7 +467,6 @@ const da: Partial<Translations> = {
   "auth.passwordMinHint": "Mindst {n} tegn.",
   // VMs page
   "vms.title": "Virtuelle maskiner",
-  "vms.subtitle": "Administrer VM-sikkerhedskopier, tidsplaner og gendannelser.",
   "vms.empty": "Ingen VMs fundet. Kører libvirt/KVM?",
   "vms.backupSelected": "Sikkerhedskopier valgte",
   "vms.restoreSelected": "Gendan valgte (nyeste)",
@@ -637,7 +634,6 @@ const da: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash-sikkerhedskopi",
-  "flash.subtitle": "Sikkerhedskopier og gendan Unraid-USB-flashen (hele /boot).",
   "flash.backupTitle": "Sikkerhedskopier flashen",
   "flash.backupHint": "Fanger hele USB-flashen (/boot): Unraid-OS, licens, array-config, delinger, netværks- og plugin-config.",
   "flash.backupNow": "Sikkerhedskopier flash nu",
@@ -824,7 +820,6 @@ const da: Partial<Translations> = {
   "recovery.stored": "Jeg har gemt det sikkert",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "Gendan dine containers og VMs fra en eksisterende sikkerhedskopi til denne installation.",
   "recovery.step1": "Kan BombVault læse dine sikkerhedskopier?",
   "recovery.appKeyExplain": "For at læse eksisterende sikkerhedskopier skal denne container bruge den SAMME APP_KEY, som den brugte før. Den findes i dit gendannelseskit. Angiv den i Unraid-containerskabelonen, hvis den ikke allerede er sat, og tjek så igen.",
   "recovery.appKeyRemedy": "Krypteringsnøglen matcher ikke disse sikkerhedskopier. Angiv den oprindelige APP_KEY (fra dit gendannelseskit) i containerskabelonen, og tjek så igen.",
@@ -869,7 +864,6 @@ const da: Partial<Translations> = {
 
   // Config backup (BombVault's own settings)
   "config.title": "Auto-sikkerhedskopi",
-  "config.subtitle": "Sikkerhedskopiér BombVaults egne indstillinger, så en genopbygget server kan gendanne sig selv.",
   "config.settingsTitle": "Indstillinger for auto-sikkerhedskopi",
   "config.settingsHint": "Beskyt BombVaults egen konfiguration (dens indstillingsdatabase, off-site-legitimationsoplysninger og SSH-nøgler), så en frisk installation kan gendanne sig selv og fortsætte præcis, hvor den slap.",
   "config.enabled": "Sikkerhedskopiér BombVaults indstillinger",
@@ -1382,7 +1376,6 @@ const da: Partial<Translations> = {
   "settings.everythingStarted": "Startet. Den kører på serveren gennem hvert område i rækkefølge; se Aktivitetsloggen for resultatet.",
   "settings.everythingAlreadyRunning": "Der kører allerede en fuld sikkerhedskopi.",
   "settings.everythingBusy": "Arbejder…",
-  "settings.subtitle": "BombVault-konfiguration. Ændringer træder i kraft med det samme.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtre",
 
@@ -1409,7 +1402,6 @@ const da: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "Mapper",
   "files.title": "Mapper",
-  "files.subtitle": "Sikkerhedskopiér vilkårlige mapper på denne server, med tidsplaner, off-site-kopier og gendannelser.",
   "files.setsTitle": "Mappesæt",
   "files.empty": "Ingen mappesæt endnu. Tilføj en mappe (shares, dokumenter, fotos, hvad som helst under dine monteringer), og BombVault beskytter den som alt andet: tidsplaner, off-site-kopier, integritetstjek og gendannelser. Intet separat filbackupværktøj nødvendigt.",
   "files.addSet": "Tilføj mappesæt",
@@ -1462,7 +1454,6 @@ const da: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS-datasæt",
-  "zfs.subtitle": "Sikkerhedskopiér ZFS-datasæt sammen med deres underdatasæt fra ét øjebliksbillede, med deduplikering, filgennemsyn og gendannelse af enkelte filer.",
   "settings.zfsEnabled": "ZFS-datasæt",
   "settings.zfsEnabledHint": "Sikkerhedskopierer ZFS-datasæt og deres underdatasæt fra øjebliksbilleder via SSH-forbindelsen til denne server.",
   "settings.zfsPath": "Sti til ZFS-datasæt",
@@ -2090,8 +2081,6 @@ const da: Partial<Translations> = {
   "settings.fleetEnabledHint": "Overvåg beskyttelsesstatus for tilknyttede BombVault-instanser (skrivebeskyttet)",
   "receiver.title": "Modtager",
   "instances.title": "Instanser",
-  "instances.subtitle": "Alt, der har med en anden BombVault at gøre: repositorier sendt hertil, instanser overvåget over HTTP og repositorier, denne maskine henter fra.",
-  "receiver.subtitle": "Overvåg de off-site-kopier, som andre BombVault-instanser sender til denne maskine, skrivebeskyttet.",
   "receiver.addRepo": "Tilføj modtaget arkiv",
   "receiver.emptyTitle": "Modtagne arkiver",
   "receiver.empty": "Ingen modtagne arkiver endnu. Tilføj arkivet, som en anden BombVault sender sine off-site-kopier til, så overvåger BombVault det skrivebeskyttet: hvad der er ankommet, hvornår den seneste sikkerhedskopi kom ind, og en uafhængig integritetskontrol på denne hardware.",
@@ -2146,7 +2135,6 @@ const da: Partial<Translations> = {
   "receiver.saveError": "Kunne ikke gemme det modtagne arkiv.",
   "pull.name": "Navn",
   "pull.title": "Hentning",
-  "pull.subtitle": "Hent sikkerhedskopier fra et andet BombVaults arkiv ind i denne maskines eget.",
   "pull.addSource": "Tilføj kilde",
   "pull.emptyTitle": "Hentekilder",
   "pull.empty": "Ingen hentekilder endnu. Tilføj arkivet fra et andet BombVault og APP_KEY for den instans, så henter denne maskine dens snapshots ind i sit eget arkiv efter en tidsplan, du vælger. Den anden side skal ikke sætte noget op og behøver ikke engang være vågen.",
@@ -2175,7 +2163,6 @@ const da: Partial<Translations> = {
   "settings.pullEnabled": "Hent fra andre instanser",
   "settings.pullEnabledHint": "Hent et andet BombVaults sikkerhedskopier ind i denne maskines eget arkiv (skriver data her)",
   "fleet.title": "Flåde",
-  "fleet.subtitle": "Overvåg beskyttelsesstatus for tilknyttede BombVault-instanser, skrivebeskyttet.",
   "fleet.addPeer": "Tilføj instans",
   "fleet.emptyTitle": "Flådeinstanser",
   "fleet.empty": "Ingen flådeinstanser tilføjet endnu. Tilføj en anden BombVault-instans' URL og flåde-token, så forespørger denne maskine skrivebeskyttet dens beskyttelsesoversigt, intet andet.",
@@ -2391,7 +2378,6 @@ const da: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Disken med {domains} er fuld om cirka {time} i dette tempo.",
   "anomaly.sentence.capacityLow": "På disken med {domains} er der kun {free} tilbage ({percent}%).",
   "anomaly.sentence.unknown": "Der blev fundet en afvigelse for {name}. Genindlæs siden for at se detaljerne.",
-  "anomaly.pageSubtitle": "Hvad der har ændret sig i dine sikkerhedskopier og fortjener et kig.",
   "anomaly.offPage": "Anomalidetektion er slået fra. Tidligere anomalier bliver stående her.",
   "anomaly.retry": "Prøv igen",
   "anomaly.filter.severity": "Alvorlighed",

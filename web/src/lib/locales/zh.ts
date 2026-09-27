@@ -48,7 +48,6 @@ const zh: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "仪表板",
-  "dashboard.subtitle": "一览您的备份状态。",
   "dashboard.summaryHealth": "恢复点",
   "dashboard.summaryNextBackup": "下次备份",
   "dashboard.summaryNextIn": "{countdown}后",
@@ -391,7 +390,6 @@ const zh: Partial<Translations> = {
   "folder.pathHint": "路径必须是相对子路径（不能以 / 开头或包含 ..）",
   "folder.couldNotRead": "无法读取目录",
   "folder.browseFailed": "浏览失败",
-  "containers.subtitle": "管理容器的备份、计划和恢复。",
   "containers.emptyDocker": "未找到容器。Docker 正在运行吗？",
   "containers.bulkResult": "成功 {ok}，失败 {fail}",
   "vm.method.saveFailed": "无法更改备份方式，未做更改。",
@@ -469,7 +467,6 @@ const zh: Partial<Translations> = {
   "auth.passwordMinHint": "至少 {n} 个字符。",
   // VMs page
   "vms.title": "虚拟机",
-  "vms.subtitle": "管理虚拟机备份、计划和还原。",
   "vms.empty": "未找到虚拟机。libvirt/KVM 是否正在运行？",
   "vms.backupSelected": "备份已选项",
   "vms.restoreSelected": "还原已选项（最新）",
@@ -630,7 +627,6 @@ const zh: Partial<Translations> = {
   "hooks.post": "备份后命令",
 
   "flash.title": "Flash 备份",
-  "flash.subtitle": "备份和恢复 Unraid USB Flash（整个 /boot）。",
   "flash.backupTitle": "备份 Flash",
   "flash.backupHint": "捕获整个 USB Flash（/boot）：Unraid OS、许可证、阵列配置、共享、网络和插件配置。",
   "flash.backupNow": "立即备份 Flash",
@@ -816,7 +812,6 @@ const zh: Partial<Translations> = {
   "recovery.stored": "我已妥善保存",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "将你的容器和虚拟机从现有备份恢复到此安装。",
   "recovery.step1": "BombVault 能读取你的备份吗？",
   "recovery.appKeyExplain": "要读取现有备份，此容器需要与之前相同的 APP_KEY，它就在你的恢复工具包中。若尚未设置，请在 Unraid 容器模板中设置它，然后重新检查。",
   "recovery.appKeyRemedy": "加密密钥与这些备份不匹配。请在容器模板中设置原始 APP_KEY（来自你的恢复工具包），然后重新检查。",
@@ -877,7 +872,6 @@ const zh: Partial<Translations> = {
 
   // Config Backup page
   "config.title": "自我备份",
-  "config.subtitle": "备份 BombVault 自身的设置，让重建的服务器能够自我还原。",
   "config.settingsTitle": "自我备份设置",
   "config.settingsHint": "保护 BombVault 自身的配置（它的设置数据库、异地凭据和 SSH 密钥），这样全新安装就能自我还原并从上次中断处继续。",
   "config.enabled": "备份 BombVault 的设置",
@@ -1374,7 +1368,6 @@ const zh: Partial<Translations> = {
   "settings.everythingStarted": "已开始，将在服务器上依次处理每个域；请在活动日志中查看结果。",
   "settings.everythingAlreadyRunning": "已有一个全部备份正在运行。",
   "settings.everythingBusy": "处理中…",
-  "settings.subtitle": "BombVault 配置。更改立即生效。",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "筛选",
 
@@ -1401,7 +1394,6 @@ const zh: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "文件夹",
   "files.title": "文件夹",
-  "files.subtitle": "备份此服务器上的任意文件夹。支持计划任务、异地副本和恢复。",
   "files.setsTitle": "文件夹集",
   "files.empty": "还没有文件夹集。添加一个文件夹（共享、文档、照片，挂载点下的任何内容），BombVault 会像保护其他内容一样保护它：计划任务、异地副本、完整性检查和恢复。无需单独的文件备份工具。",
   "files.addSet": "添加文件夹集",
@@ -1454,7 +1446,6 @@ const zh: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS 数据集",
-  "zfs.subtitle": "从同一个快照备份 ZFS 数据集及其子数据集，支持重复数据删除、文件浏览和单文件恢复。",
   "settings.zfsEnabled": "ZFS 数据集",
   "settings.zfsEnabledHint": "通过到本服务器的 SSH 连接，从快照备份 ZFS 数据集及其子数据集。",
   "settings.zfsPath": "ZFS 数据集路径",
@@ -2082,8 +2073,6 @@ const zh: Partial<Translations> = {
   "settings.fleetEnabledHint": "以只读方式查看其他 BombVault 实例的保护状态",
   "receiver.title": "接收端",
   "instances.title": "实例",
-  "instances.subtitle": "与另一台 BombVault 有关的一切：发送到这里的仓库、通过 HTTP 观察的实例，以及本机拉取的仓库。",
-  "receiver.subtitle": "以只读方式监控其他 BombVault 实例推送到本机的异地副本。",
   "receiver.addRepo": "添加接收仓库",
   "receiver.emptyTitle": "接收仓库",
   "receiver.empty": "尚无接收仓库。添加另一个 BombVault 推送其异地副本的仓库，BombVault 会以只读方式监控它：接收到了什么、最后一次备份何时到达，以及在此硬件上进行的独立完整性检查。",
@@ -2138,7 +2127,6 @@ const zh: Partial<Translations> = {
   "receiver.saveError": "无法保存接收仓库。",
   "pull.name": "名称",
   "pull.title": "拉取",
-  "pull.subtitle": "把另一个 BombVault 仓库中的备份拉取到本机仓库。",
   "pull.addSource": "添加来源",
   "pull.emptyTitle": "拉取来源",
   "pull.empty": "还没有拉取来源。添加另一个 BombVault 的仓库和那个实例的 APP_KEY，本机就会按你设定的计划把它的快照拉取到自己的仓库里。对方无需做任何配置，甚至不必处于开机状态。",
@@ -2167,7 +2155,6 @@ const zh: Partial<Translations> = {
   "settings.pullEnabled": "从其他实例拉取",
   "settings.pullEnabledHint": "把另一个 BombVault 的备份拉取到本机自己的仓库（会在此写入数据）",
   "fleet.title": "舰队",
-  "fleet.subtitle": "以只读方式查看其他 BombVault 实例的保护状态。",
   "fleet.addPeer": "添加实例",
   "fleet.emptyTitle": "舰队实例",
   "fleet.empty": "还没有添加任何实例。添加另一个 BombVault 实例的 URL 和 Fleet 令牌，本机将以只读方式查询它的保护评分卡，仅此而已。",
@@ -2383,7 +2370,6 @@ const zh: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "按当前速度，存放 {domains} 的磁盘约 {time} 后写满。",
   "anomaly.sentence.capacityLow": "存放 {domains} 的磁盘只剩 {free}（{percent}%）。",
   "anomaly.sentence.unknown": "在 {name} 上发现了异常。请重新加载页面查看详情。",
-  "anomaly.pageSubtitle": "备份里有哪些变化值得看一眼。",
   "anomaly.offPage": "异常检测已关闭。此前的异常仍然列在这里。",
   "anomaly.retry": "重试",
   "anomaly.filter.severity": "严重程度",

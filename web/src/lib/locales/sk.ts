@@ -51,7 +51,6 @@ const sk: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Prehľad",
-  "dashboard.subtitle": "Stav vašich záloh na jeden pohľad.",
   "dashboard.summaryHealth": "Bod obnovenia",
   "dashboard.summaryNextBackup": "Ďalšia záloha",
   "dashboard.summaryNextIn": "o {countdown}",
@@ -1098,7 +1097,6 @@ const sk: Partial<Translations> = {
   "folder.creating": "Vytvára sa…",
   "folder.createFailed": "Priečinok sa nepodarilo vytvoriť",
   "folder.browseFailed": "Prehľadávanie zlyhalo",
-  "containers.subtitle": "Spravujte zálohy, plány a obnovenie kontajnerov.",
   "containers.emptyDocker": "Nenašli sa žiadne kontajnery. Beží Docker?",
   "containers.bulkResult": "{ok} úspešne, {fail} zlyhalo",
   "vm.method.saveFailed": "Metódu zálohovania sa nepodarilo zmeniť, nebola prepnutá.",
@@ -1239,7 +1237,6 @@ const sk: Partial<Translations> = {
 
   // VMs page
   "vms.title": "Virtuálne stroje",
-  "vms.subtitle": "Spravujte zálohy, plány a obnovenie VM.",
   "vms.empty": "Nenašli sa žiadne VM. Beží libvirt/KVM?",
   "vms.backupSelected": "Zálohovať vybrané",
   "vms.restoreSelected": "Obnoviť vybrané (najnovšie)",
@@ -1252,7 +1249,6 @@ const sk: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Záloha Flash",
-  "flash.subtitle": "Zálohujte a obnovujte USB Flash Unraid (celé /boot).",
   "flash.backupTitle": "Zálohovať Flash",
   "flash.backupHint": "Zachytáva celú USB flash jednotku (/boot): OS Unraid, licenciu, konfiguráciu poľa, zdieľania, sieť a konfiguráciu doplnkov.",
   "flash.backupNow": "Zálohovať Flash teraz",
@@ -1288,7 +1284,6 @@ const sk: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "Vlastná záloha",
-  "config.subtitle": "Zálohuje vlastné nastavenia BombVault, aby sa znova zostavený server mohol obnoviť sám.",
   "config.settingsTitle": "Nastavenia vlastnej zálohy",
   "config.settingsHint": "Chráni vlastnú konfiguráciu BombVault (jeho databázu nastavení, externé poverenia a kľúče SSH), aby sa nová inštalácia mohla obnoviť sama a pokračovať presne tam, kde skončila.",
   "config.enabled": "Zálohovať nastavenia BombVault",
@@ -1309,8 +1304,6 @@ const sk: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Prijímač",
   "instances.title": "Inštancie",
-  "instances.subtitle": "Všetko, čo sa týka iného BombVaultu: repozitáre poslané sem, inštancie sledované cez HTTP a repozitáre, z ktorých tento stroj sťahuje.",
-  "receiver.subtitle": "Sledujte externé kópie, ktoré do tohto boxu posielajú iné inštancie BombVault, iba na čítanie.",
   "receiver.addRepo": "Pridať prijatý repozitár",
   "receiver.emptyTitle": "Prijaté repozitáre",
   "receiver.empty": "Zatiaľ žiadne prijaté repozitáre. Pridajte repozitár, do ktorého iný BombVault posiela svoje externé kópie, a BombVault ho bude sledovať iba na čítanie: čo dorazilo, kedy dorazila posledná záloha a nezávislú kontrolu integrity na tomto hardvéri.",
@@ -1365,7 +1358,6 @@ const sk: Partial<Translations> = {
   "receiver.saveError": "Prijatý repozitár sa nepodarilo uložiť.",
   "pull.name": "Názov",
   "pull.title": "Sťahovanie",
-  "pull.subtitle": "Stiahnite zálohy z repozitára iného BombVaultu do tohto.",
   "pull.addSource": "Pridať zdroj",
   "pull.emptyTitle": "Zdroje sťahovania",
   "pull.empty": "Zatiaľ žiadne zdroje sťahovania. Pridajte repozitár iného BombVaultu a APP_KEY tej inštancie a tento box bude jeho snímky sťahovať do vlastného repozitára podľa plánu, ktorý si zvolíte. Druhá strana nemusí nastaviť nič a nemusí byť ani zapnutá.",
@@ -1394,7 +1386,6 @@ const sk: Partial<Translations> = {
   "settings.pullEnabled": "Sťahovanie z iných inštancií",
   "settings.pullEnabledHint": "Sťahovať zálohy iného BombVaultu do vlastného repozitára tohto boxu (zapisuje sem dáta)",
   "fleet.title": "Flotila",
-  "fleet.subtitle": "Sledujte stav ochrany súvisiacich inštancií BombVault, iba na čítanie.",
   "fleet.addPeer": "Pridať inštanciu",
   "fleet.emptyTitle": "Inštancie flotily",
   "fleet.empty": "Zatiaľ žiadne inštancie vo flotile. Pridajte URL a token flotily inej inštancie BombVault a tento box ju bude dotazovať iba na čítanie kvôli jej skóre ochrany, nič viac.",
@@ -1492,7 +1483,6 @@ const sk: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Obnova",
-  "recovery.intro": "Obnovte svoje kontajnery a VM z existujúcej zálohy na tejto inštalácii.",
   // Step 1
   "recovery.step1": "Dokáže BombVault prečítať vaše zálohy?",
   "recovery.appKeyExplain": "Na čítanie existujúcich záloh tento kontajner potrebuje ROVNAKÝ APP_KEY, aký sa používal predtým. Je vo vašej súprave na obnovenie. Nastavte ho v šablóne kontajnera Unraid, ak ešte nie je nastavený, potom znova skontrolujte.",
@@ -1579,7 +1569,6 @@ const sk: Partial<Translations> = {
   "settings.everythingStarted": "Spustené. Beží na serveri postupne cez každú oblasť; výsledok uvidíš v denníku aktivít.",
   "settings.everythingAlreadyRunning": "Kompletná záloha už prebieha.",
   "settings.everythingBusy": "Pracujem…",
-  "settings.subtitle": "Konfigurácia BombVault. Zmeny sa uplatnia okamžite.",
   // Filter drawer trigger
   "filter.button": "Filtre",
 
@@ -1612,7 +1601,6 @@ const sk: Partial<Translations> = {
   // Files domain
   "nav.files": "Priečinky",
   "files.title": "Priečinky",
-  "files.subtitle": "Zálohujte akýkoľvek priečinok na tomto serveri, s plánmi, externými kópiami a obnovením.",
   "files.setsTitle": "Sady priečinkov",
   "files.empty": "Zatiaľ žiadne sady priečinkov. Pridajte priečinok (zdieľania, dokumenty, fotografie, čokoľvek pod vašimi pripojeniami) a BombVault ho chráni ako čokoľvek iné: plány, externé kópie, kontroly integrity a obnovenie. Nie je potrebný samostatný nástroj na zálohovanie súborov.",
   "files.addSet": "Pridať sadu priečinkov",
@@ -1666,7 +1654,6 @@ const sk: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "Dátové sady ZFS",
-  "zfs.subtitle": "Zálohujte dátové sady ZFS spolu s ich podriadenými sadami z jednej snímky, s dedupliáciou, prehliadaním súborov a obnovou jednotlivých súborov.",
   "settings.zfsEnabled": "Dátové sady ZFS",
   "settings.zfsEnabledHint": "Zálohuje dátové sady ZFS a ich podriadené sady zo snímok, cez SSH spojenie s týmto serverom.",
   "settings.zfsPath": "Cesta dátových sád ZFS",
@@ -2402,7 +2389,6 @@ const sk: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Disk s {domains} bude týmto tempom plný asi o {time}.",
   "anomaly.sentence.capacityLow": "Na disku s {domains} zostáva len {free} ({percent}%).",
   "anomaly.sentence.unknown": "Pri položke {name} sa našla anomália. Načítaj stránku znova, aby sa zobrazili podrobnosti.",
-  "anomaly.pageSubtitle": "Čo sa v tvojich zálohách zmenilo a stojí za pohľad.",
   "anomaly.offPage": "Zisťovanie anomálií je vypnuté. Skoršie anomálie tu zostávajú vypísané.",
   "anomaly.retry": "Skús znova",
   "anomaly.filter.severity": "Závažnosť",

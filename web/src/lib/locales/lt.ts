@@ -51,7 +51,6 @@ const lt: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Skydelis",
-  "dashboard.subtitle": "Atsarginių kopijų būsena vienu žvilgsniu.",
   "dashboard.summaryHealth": "Atkūrimo taškas",
   "dashboard.summaryNextBackup": "Kita atsarginė kopija",
   "dashboard.summaryNextIn": "po {countdown}",
@@ -1098,7 +1097,6 @@ const lt: Partial<Translations> = {
   "folder.creating": "Kuriama…",
   "folder.createFailed": "Nepavyko sukurti aplanko",
   "folder.browseFailed": "Naršymas nepavyko",
-  "containers.subtitle": "Tvarkykite konteinerių atsargines kopijas, tvarkaraščius ir atkūrimus.",
   "containers.emptyDocker": "Konteinerių nerasta. Ar veikia Docker?",
   "containers.bulkResult": "{ok} sėkmingai, {fail} nepavyko",
   "vm.method.saveFailed": "Nepavyko pakeisti atsarginio kopijavimo metodo. Jis nebuvo pakeistas.",
@@ -1239,7 +1237,6 @@ const lt: Partial<Translations> = {
 
   // VMs page
   "vms.title": "Virtualiosios mašinos",
-  "vms.subtitle": "Tvarkykite VM atsargines kopijas, tvarkaraščius ir atkūrimus.",
   "vms.empty": "VM nerasta. Ar veikia libvirt/KVM?",
   "vms.backupSelected": "Kopijuoti pažymėtas",
   "vms.restoreSelected": "Atkurti pažymėtas (naujausią)",
@@ -1252,7 +1249,6 @@ const lt: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash atsarginė kopija",
-  "flash.subtitle": "Kurkite atsarginę kopiją ir atkurkite Unraid USB Flash (visą /boot).",
   "flash.backupTitle": "Kopijuoti Flash",
   "flash.backupHint": "Užfiksuoja visą USB Flash (/boot): Unraid OS, licenciją, masyvo konfigūraciją, bendrinamus aplankus, tinklą ir papildinių konfigūraciją.",
   "flash.backupNow": "Kopijuoti Flash dabar",
@@ -1288,7 +1284,6 @@ const lt: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "Savarankiška atsarga",
-  "config.subtitle": "Kuria paties BombVault nustatymų atsarginę kopiją, kad atkurtas serveris galėtų atsikurti pats.",
   "config.settingsTitle": "Savarankiškos atsargos nustatymai",
   "config.settingsHint": "Saugo pačią BombVault konfigūraciją (jos nustatymų duomenų bazę, nuotolinius prisijungimo duomenis ir SSH raktus), kad naujas diegimas galėtų atkurti pats save ir tęsti nuo tos pačios vietos, kur baigė.",
   "config.enabled": "Kurti BombVault nustatymų atsarginę kopiją",
@@ -1309,8 +1304,6 @@ const lt: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Imtuvas",
   "instances.title": "Egzemplioriai",
-  "instances.subtitle": "Viskas, kas susiję su kitu BombVault: čia atsiųstos saugyklos, per HTTP stebimi egzemplioriai ir saugyklos, iš kurių ši mašina parsisiunčia.",
-  "receiver.subtitle": "Stebėkite nuotolines kopijas, kurias kiti BombVault egzemplioriai siunčia į šią dėžę, tik skaitymui.",
   "receiver.addRepo": "Pridėti gautą saugyklą",
   "receiver.emptyTitle": "Gautos saugyklos",
   "receiver.empty": "Gautų saugyklų dar nėra. Pridėkite saugyklą, į kurią kitas BombVault siunčia savo nuotolines kopijas, ir BombVault ją stebės tik skaitymui: kas atvyko, kada atvyko paskutinė atsarginė kopija, ir nepriklausomą vientisumo patikrą šiame aparatinės įrangos vienete.",
@@ -1365,7 +1358,6 @@ const lt: Partial<Translations> = {
   "receiver.saveError": "Nepavyko išsaugoti gautos saugyklos.",
   "pull.name": "Pavadinimas",
   "pull.title": "Traukimas",
-  "pull.subtitle": "Traukite atsargines kopijas iš kito BombVault saugyklos į šią.",
   "pull.addSource": "Pridėti šaltinį",
   "pull.emptyTitle": "Traukimo šaltiniai",
   "pull.empty": "Traukimo šaltinių dar nėra. Pridėkite kito BombVault saugyklą ir to egzemplioriaus APP_KEY, ir ši dėžė pagal jūsų pasirinktą tvarkaraštį trauks jo momentines kopijas į savo saugyklą. Kitai pusei nieko konfigūruoti nereikia ir ji net neprivalo būti įjungta.",
@@ -1394,7 +1386,6 @@ const lt: Partial<Translations> = {
   "settings.pullEnabled": "Traukti iš kitų egzempliorių",
   "settings.pullEnabledHint": "Traukti kito BombVault atsargines kopijas į šios dėžės savą saugyklą (čia įrašomi duomenys)",
   "fleet.title": "Parkas",
-  "fleet.subtitle": "Stebėkite susijusių BombVault egzempliorių apsaugos būseną, tik skaitymui.",
   "fleet.addPeer": "Pridėti egzempliorių",
   "fleet.emptyTitle": "Parko egzemplioriai",
   "fleet.empty": "Parke dar nėra egzempliorių. Pridėkite kito BombVault egzemplioriaus URL ir parko žetoną, ir ši dėžė jį apklaus tik skaitymui, kad gautų jo apsaugos vertinimo kortelę, daugiau nieko.",
@@ -1492,7 +1483,6 @@ const lt: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Atkūrimas",
-  "recovery.intro": "Atkurkite savo konteinerius ir VM iš esamos atsarginės kopijos šioje diegtyje.",
   // Step 1
   "recovery.step1": "Ar BombVault gali perskaityti jūsų atsargines kopijas?",
   "recovery.appKeyExplain": "Norint perskaityti esamas atsargines kopijas, šiam konteineriui reikia TO PATIES APP_KEY, kurį jis naudojo anksčiau. Jis yra jūsų atkūrimo rinkinyje. Nustatykite jį Unraid konteinerio šablone, jei dar nenustatytas, tada patikrinkite dar kartą.",
@@ -1579,7 +1569,6 @@ const lt: Partial<Translations> = {
   "settings.everythingStarted": "Paleista. Serveryje vykdoma iš eilės per kiekvieną sritį; rezultatą matysi veiklos žurnale.",
   "settings.everythingAlreadyRunning": "Pilna atsarginė kopija jau vykdoma.",
   "settings.everythingBusy": "Dirbama…",
-  "settings.subtitle": "BombVault konfigūracija. Pakeitimai įsigalioja iš karto.",
   // Filter drawer trigger
   "filter.button": "Filtrai",
 
@@ -1612,7 +1601,6 @@ const lt: Partial<Translations> = {
   // Files domain
   "nav.files": "Aplankai",
   "files.title": "Aplankai",
-  "files.subtitle": "Kurkite bet kurio šio serverio aplanko atsarginę kopiją, su tvarkaraščiais, nuotolinėmis kopijomis ir atkūrimais.",
   "files.setsTitle": "Aplankų rinkiniai",
   "files.empty": "Aplankų rinkinių dar nėra. Pridėkite aplanką (bendrinamus aplankus, dokumentus, nuotraukas, bet ką po jūsų prijungimais), ir BombVault jį saugo kaip ir viską kitą: tvarkaraščiais, nuotolinėmis kopijomis, vientisumo patikromis ir atkūrimais. Atskiro failų atsarginio kopijavimo įrankio nereikia.",
   "files.addSet": "Pridėti aplankų rinkinį",
@@ -1666,7 +1654,6 @@ const lt: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS duomenų rinkiniai",
-  "zfs.subtitle": "Kurkite ZFS duomenų rinkinių atsargines kopijas kartu su jų vaikiniais rinkiniais iš vienos momentinės kopijos, su dubliavimo šalinimu, failų naršymu ir atskiro failo atkūrimu.",
   "settings.zfsEnabled": "ZFS duomenų rinkiniai",
   "settings.zfsEnabledHint": "Kuria ZFS duomenų rinkinių ir jų vaikinių rinkinių atsargines kopijas iš momentinių kopijų, naudojant SSH ryšį su šiuo serveriu.",
   "settings.zfsPath": "ZFS duomenų rinkinių kelias",
@@ -2402,7 +2389,6 @@ const lt: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Diskas su {domains} tokiu tempu bus pilnas maždaug po {time}.",
   "anomaly.sentence.capacityLow": "Diske su {domains} liko tik {free} ({percent}%).",
   "anomaly.sentence.unknown": "Elementui {name} rasta anomalija. Įkelk puslapį iš naujo, kad pamatytum išsamiau.",
-  "anomaly.pageSubtitle": "Kas pasikeitė tavo atsarginėse kopijose ir vertas žvilgsnio.",
   "anomaly.offPage": "Anomalijų aptikimas išjungtas. Ankstesnės anomalijos lieka išvardytos čia.",
   "anomaly.retry": "Bandyk dar kartą",
   "anomaly.filter.severity": "Rimtumas",

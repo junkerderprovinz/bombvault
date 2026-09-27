@@ -47,7 +47,6 @@ const ro: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Panou principal",
-  "dashboard.subtitle": "Starea backupurilor tale dintr-o privire.",
   "dashboard.summaryHealth": "Punct de restaurare",
   "dashboard.summaryNextBackup": "Următorul backup",
   "dashboard.summaryNextIn": "în {countdown}",
@@ -388,7 +387,6 @@ const ro: Partial<Translations> = {
   "folder.pathHint": "Calea trebuie să fie o subcale relativă (fără / inițial sau ..)",
   "folder.couldNotRead": "Directorul nu a putut fi citit",
   "folder.browseFailed": "Răsfoirea a eșuat",
-  "containers.subtitle": "Gestionează backupurile, programările și restaurările containerelor.",
   "containers.emptyDocker": "Niciun container găsit. Rulează Docker?",
   "containers.bulkResult": "{ok} ok, {fail} eșuate",
   "vm.method.saveFailed": "Metoda de backup nu a putut fi schimbată. Nu a fost modificată.",
@@ -466,7 +464,6 @@ const ro: Partial<Translations> = {
   "auth.passwordMinHint": "one=Cel puțin {n} caracter.|few=Cel puțin {n} caractere.|other=Cel puțin {n} de caractere.",
   // VMs page
   "vms.title": "Mașini virtuale",
-  "vms.subtitle": "Gestionați copiile de rezervă, programările și restaurările VM.",
   "vms.empty": "Nu s-au găsit VM-uri. Rulează libvirt/KVM?",
   "vms.backupSelected": "Copiază selectatele",
   "vms.restoreSelected": "Restaurează selectatele (cel mai recent)",
@@ -634,7 +631,6 @@ const ro: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Backup Flash",
-  "flash.subtitle": "Faceți copii de rezervă și restaurați flash-ul USB Unraid (întregul /boot).",
   "flash.backupTitle": "Copiere de rezervă a flash-ului",
   "flash.backupHint": "Capturează întregul flash USB (/boot): sistemul Unraid, licența, configurația array, partajările, rețeaua și configurația plugin-urilor.",
   "flash.backupNow": "Copiază flash-ul acum",
@@ -800,7 +796,6 @@ const ro: Partial<Translations> = {
   "recovery.stored": "L-am păstrat în siguranță",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "Recuperează containerele și VM-urile dintr-o copie de rezervă existentă pe această instalare.",
   "recovery.step1": "Poate BombVault să-ți citească copiile de rezervă?",
   "recovery.appKeyExplain": "Pentru a citi copiile de rezervă existente, acest container are nevoie de ACELAȘI APP_KEY folosit anterior. Se află în kitul tău de recuperare. Setează-l în șablonul de container Unraid dacă nu este deja, apoi verifică din nou.",
   "recovery.appKeyRemedy": "Cheia de criptare nu corespunde acestor copii de rezervă. Setează APP_KEY original (din kitul de recuperare) în șablonul containerului, apoi verifică din nou.",
@@ -1284,7 +1279,6 @@ const ro: Partial<Translations> = {
 
   // Config backup (BombVault's own settings)
   "config.title": "Auto-backup",
-  "config.subtitle": "Fă backup propriilor setări ale BombVault, astfel încât un server reconstruit să se poată restaura singur.",
   "config.settingsTitle": "Setări auto-backup",
   "config.settingsHint": "Protejează propria configurație a BombVault (baza de date cu setări, credențialele off-site și cheile SSH) astfel încât o instalare nouă să se poată restaura singură și să continue exact de unde a rămas.",
   "config.enabled": "Fă backup setărilor BombVault",
@@ -1385,7 +1379,6 @@ const ro: Partial<Translations> = {
   "settings.everythingStarted": "Pornit. Rulează pe server prin fiecare domeniu, pe rând; urmărește Jurnalul de activitate pentru rezultat.",
   "settings.everythingAlreadyRunning": "Un backup total este deja în curs.",
   "settings.everythingBusy": "Se lucrează…",
-  "settings.subtitle": "Configurația BombVault. Modificările au efect imediat.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtre",
 
@@ -1412,7 +1405,6 @@ const ro: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "Foldere",
   "files.title": "Foldere",
-  "files.subtitle": "Faceți backup oricăror foldere de pe acest server, cu programări, copii externe și restaurări.",
   "files.setsTitle": "Seturi de foldere",
   "files.empty": "Încă nu există seturi de foldere. Adăugați un folder (partajări, documente, fotografii, orice se află sub montările dvs.), iar BombVault îl protejează ca pe orice altceva: programări, copii externe, verificări de integritate și restaurări. Nu este nevoie de un instrument separat de backup pentru fișiere.",
   "files.addSet": "Adaugă set de foldere",
@@ -1465,7 +1457,6 @@ const ro: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "Seturi de date ZFS",
-  "zfs.subtitle": "Salvați seturi de date ZFS împreună cu seturile lor copil dintr-un singur instantaneu, cu deduplicare, răsfoirea fișierelor și restaurarea unui singur fișier.",
   "settings.zfsEnabled": "Seturi de date ZFS",
   "settings.zfsEnabledHint": "Salvează seturi de date ZFS și seturile lor copil din instantanee, prin conexiunea SSH la acest server.",
   "settings.zfsPath": "Calea seturilor de date ZFS",
@@ -2093,8 +2084,6 @@ const ro: Partial<Translations> = {
   "settings.fleetEnabledHint": "Monitorizează starea de protecție a instanțelor BombVault conectate (doar în citire)",
   "receiver.title": "Receptor",
   "instances.title": "Instanțe",
-  "instances.subtitle": "Tot ce ține de un alt BombVault: depozite trimise aici, instanțe urmărite prin HTTP și depozite din care preia această mașină.",
-  "receiver.subtitle": "Monitorizează copiile externe pe care alte instanțe BombVault le trimit către această mașină, doar în citire.",
   "receiver.addRepo": "Adaugă depozit primit",
   "receiver.emptyTitle": "Depozite primite",
   "receiver.empty": "Încă niciun depozit primit. Adaugă depozitul în care un alt BombVault își trimite copiile externe, iar BombVault îl monitorizează doar în citire: ce a sosit, când a intrat ultima copie și o verificare de integritate independentă pe acest hardware.",
@@ -2149,7 +2138,6 @@ const ro: Partial<Translations> = {
   "receiver.saveError": "Nu s-a putut salva depozitul primit.",
   "pull.name": "Nume",
   "pull.title": "Preluare",
-  "pull.subtitle": "Preia copiile de siguranță din depozitul altui BombVault în acesta.",
   "pull.addSource": "Adaugă sursă",
   "pull.emptyTitle": "Surse de preluare",
   "pull.empty": "Încă nicio sursă de preluare. Adaugă depozitul altui BombVault și APP_KEY-ul acelei instanțe, iar această mașină îi preia copiile în propriul depozit, după un program ales de tine. Partea cealaltă nu trebuie să configureze nimic și nici măcar nu trebuie să fie pornită.",
@@ -2178,7 +2166,6 @@ const ro: Partial<Translations> = {
   "settings.pullEnabled": "Preluare din alte instanțe",
   "settings.pullEnabledHint": "Preia copiile altui BombVault în depozitul propriu al acestei mașini (scrie date aici)",
   "fleet.title": "Flotă",
-  "fleet.subtitle": "Monitorizează starea de protecție a instanțelor BombVault conectate, doar în citire.",
   "fleet.addPeer": "Adaugă instanță",
   "fleet.emptyTitle": "Instanțe de flotă",
   "fleet.empty": "Nicio instanță de flotă adăugată încă. Adaugă URL-ul și tokenul de flotă al altei instanțe BombVault, iar această mașină îi va interoga fișa de protecție doar în citire, nimic altceva.",
@@ -2394,7 +2381,6 @@ const ro: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Discul care conține {domains} se va umple în aproximativ {time} în ritmul actual.",
   "anomaly.sentence.capacityLow": "Pe discul care conține {domains} au mai rămas doar {free} ({percent}%).",
   "anomaly.sentence.unknown": "A fost găsită o anomalie pentru {name}. Reîncarcă pagina pentru detalii.",
-  "anomaly.pageSubtitle": "Ce s-a schimbat în copiile tale de siguranță și merită o privire.",
   "anomaly.offPage": "Detectarea anomaliilor este oprită. Anomaliile anterioare rămân listate aici.",
   "anomaly.retry": "Încearcă din nou",
   "anomaly.filter.severity": "Gravitate",

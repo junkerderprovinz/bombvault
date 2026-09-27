@@ -179,7 +179,6 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "excludes.placeholder": EXCLUDES_PLACEHOLDER_LTR_FRAGMENTS,
   "flash.backupHint": BOOT_VOLUME_LTR_FRAGMENTS,
   "flash.restoreNote": BOOT_VOLUME_LTR_FRAGMENTS,
-  "flash.subtitle": BOOT_VOLUME_LTR_FRAGMENTS,
   "jobs.flashScheduleHint": BOOT_VOLUME_LTR_FRAGMENTS,
   "settings.flashEnabledHint": BOOT_VOLUME_LTR_FRAGMENTS,
   "notify.unraidPlatformMismatch": UNRAID_PLATFORM_MISMATCH_LTR_FRAGMENTS,

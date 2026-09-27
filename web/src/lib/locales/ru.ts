@@ -47,7 +47,6 @@ const ru: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Панель",
-  "dashboard.subtitle": "Состояние ваших резервных копий с первого взгляда.",
   "dashboard.summaryHealth": "Точка восстановления",
   "dashboard.summaryNextBackup": "Следующая резервная копия",
   "dashboard.summaryNextIn": "через {countdown}",
@@ -386,7 +385,6 @@ const ru: Partial<Translations> = {
   "folder.pathHint": "Путь должен быть относительным подпутём (без ведущего / или ..)",
   "folder.couldNotRead": "Не удалось прочитать каталог",
   "folder.browseFailed": "Ошибка обзора",
-  "containers.subtitle": "Управление резервными копиями, расписаниями и восстановлением контейнеров.",
   "containers.emptyDocker": "Контейнеры не найдены. Docker запущен?",
   "containers.bulkResult": "{ok} ок, {fail} с ошибкой",
   "vm.method.saveFailed": "Не удалось изменить метод резервного копирования — он не был изменён.",
@@ -463,7 +461,6 @@ const ru: Partial<Translations> = {
   "auth.passwordMinHint": "one=Не менее {n} символа.|few=Не менее {n} символов.|many=Не менее {n} символов.|other=Не менее {n} символа.",
   // VMs page
   "vms.title": "Виртуальные машины",
-  "vms.subtitle": "Управление резервными копиями, расписаниями и восстановлением VM.",
   "vms.empty": "Виртуальных машин не найдено. Запущен ли libvirt/KVM?",
   "vms.backupSelected": "Создать копию выбранных",
   "vms.restoreSelected": "Восстановить выбранные (последнее)",
@@ -629,7 +626,6 @@ const ru: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Копия Flash",
-  "flash.subtitle": "Резервное копирование и восстановление USB-флешки Unraid (весь /boot).",
   "flash.backupTitle": "Создать копию Flash",
   "flash.backupHint": "Захватывает всю USB-флешку (/boot): ОС Unraid, лицензию, конфигурацию массива, общие ресурсы, сеть и конфигурацию плагинов.",
   "flash.backupNow": "Создать копию Flash сейчас",
@@ -816,7 +812,6 @@ const ru: Partial<Translations> = {
   "recovery.stored": "Я надёжно его сохранил",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "Восстановите свои контейнеры и ВМ из существующей резервной копии на эту установку.",
   "recovery.step1": "Может ли BombVault прочитать ваши резервные копии?",
   "recovery.appKeyExplain": "Чтобы прочитать существующие резервные копии, этому контейнеру нужен ТОТ ЖЕ APP_KEY, что и раньше — он есть в вашем наборе для восстановления. Задайте его в шаблоне контейнера Unraid, если он ещё не задан, и проверьте снова.",
   "recovery.appKeyRemedy": "Ключ шифрования не соответствует этим резервным копиям. Задайте исходный APP_KEY (из вашего набора для восстановления) в шаблоне контейнера и проверьте снова.",
@@ -1276,7 +1271,6 @@ const ru: Partial<Translations> = {
 
   // Config backup (BombVault's own settings)
   "config.title": "Автобэкап",
-  "config.subtitle": "Создайте резервную копию собственных настроек BombVault, чтобы пересобранный сервер мог восстановить себя сам.",
   "config.settingsTitle": "Настройки автобэкапа",
   "config.settingsHint": "Защитите собственную конфигурацию BombVault — его базу настроек, внешние учётные данные и SSH-ключи — чтобы свежая установка могла восстановить себя сама и продолжить ровно с того места, где остановилась.",
   "config.enabled": "Создавать резервную копию настроек BombVault",
@@ -1377,7 +1371,6 @@ const ru: Partial<Translations> = {
   "settings.everythingStarted": "Запущено — выполняется на сервере по очереди для каждого домена; результат смотрите в Журнале активности.",
   "settings.everythingAlreadyRunning": "Полный бэкап уже выполняется.",
   "settings.everythingBusy": "Выполняется…",
-  "settings.subtitle": "Конфигурация BombVault — изменения вступают в силу немедленно.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Фильтры",
 
@@ -1404,7 +1397,6 @@ const ru: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "Папки",
   "files.title": "Папки",
-  "files.subtitle": "Резервное копирование любых папок этого сервера — с расписаниями, внешними копиями и восстановлением.",
   "files.setsTitle": "Наборы папок",
   "files.empty": "Наборов папок пока нет. Добавьте папку — шары, документы, фото, что угодно в ваших точках монтирования — и BombVault защитит её, как и всё остальное: расписания, внешние копии, проверки целостности и восстановление. Отдельный инструмент для резервного копирования файлов не нужен.",
   "files.addSet": "Добавить набор папок",
@@ -1457,7 +1449,6 @@ const ru: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "Наборы данных ZFS",
-  "zfs.subtitle": "Резервное копирование наборов данных ZFS вместе с дочерними наборами из одного снимка, с дедупликацией, просмотром файлов и восстановлением отдельного файла.",
   "settings.zfsEnabled": "Наборы данных ZFS",
   "settings.zfsEnabledHint": "Копирует наборы данных ZFS и их дочерние наборы из снимков, через SSH-соединение с этим сервером.",
   "settings.zfsPath": "Путь для наборов данных ZFS",
@@ -2085,8 +2076,6 @@ const ru: Partial<Translations> = {
   "settings.fleetEnabledHint": "Следите за статусом защиты подключённых экземпляров BombVault (только для чтения)",
   "receiver.title": "Приёмник",
   "instances.title": "Экземпляры",
-  "instances.subtitle": "Всё, что связано с другим BombVault: присланные сюда репозитории, экземпляры, за которыми ведётся наблюдение по HTTP, и репозитории, из которых эта машина забирает.",
-  "receiver.subtitle": "Мониторьте внешние копии, которые другие экземпляры BombVault отправляют на эту машину, только для чтения.",
   "receiver.addRepo": "Добавить принятый репозиторий",
   "receiver.emptyTitle": "Принятые репозитории",
   "receiver.empty": "Пока нет принятых репозиториев. Добавьте репозиторий, в который другой BombVault отправляет свои внешние копии, и BombVault будет мониторить его только для чтения: что пришло, когда поступила последняя копия и независимая проверка целостности на этом оборудовании.",
@@ -2141,7 +2130,6 @@ const ru: Partial<Translations> = {
   "receiver.saveError": "Не удалось сохранить принятый репозиторий.",
   "pull.name": "Имя",
   "pull.title": "Подтягивание",
-  "pull.subtitle": "Подтягивайте резервные копии из репозитория другого BombVault в этот.",
   "pull.addSource": "Добавить источник",
   "pull.emptyTitle": "Источники подтягивания",
   "pull.empty": "Пока нет источников подтягивания. Добавьте репозиторий другого BombVault и APP_KEY того экземпляра, и эта машина будет подтягивать его снимки в собственный репозиторий по выбранному вами расписанию. Дальней стороне не нужно ничего настраивать, ей даже не нужно быть включённой.",
@@ -2170,7 +2158,6 @@ const ru: Partial<Translations> = {
   "settings.pullEnabled": "Подтягивание с других экземпляров",
   "settings.pullEnabledHint": "Подтягивать копии другого BombVault в собственный репозиторий этой машины (записывает сюда данные)",
   "fleet.title": "Флот",
-  "fleet.subtitle": "Следите за статусом защиты подключённых экземпляров BombVault только для чтения.",
   "fleet.addPeer": "Добавить экземпляр",
   "fleet.emptyTitle": "Экземпляры флота",
   "fleet.empty": "Пока не добавлено ни одного экземпляра флота. Добавьте URL и токен флота другого экземпляра BombVault, и эта машина будет только для чтения опрашивать его сводку защиты — и ничего больше.",
@@ -2386,7 +2373,6 @@ const ru: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Диск с {domains} при таком темпе заполнится примерно через {time}.",
   "anomaly.sentence.capacityLow": "На диске с {domains} осталось всего {free} ({percent}%).",
   "anomaly.sentence.unknown": "Для {name} найдена аномалия. Перезагрузи страницу, чтобы увидеть подробности.",
-  "anomaly.pageSubtitle": "Что изменилось в твоих резервных копиях и стоит внимания.",
   "anomaly.offPage": "Обнаружение аномалий выключено. Прежние аномалии остаются в этом списке.",
   "anomaly.retry": "Попробовать снова",
   "anomaly.filter.severity": "Серьёзность",

@@ -51,7 +51,6 @@ const eu: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Panela",
-  "dashboard.subtitle": "Zure babeskopien egoera begirada batean.",
   "dashboard.summaryHealth": "Berreskuratze-puntua",
   "dashboard.summaryNextBackup": "Hurrengo babeskopia",
   "dashboard.summaryNextIn": "{countdown} barru",
@@ -1098,7 +1097,6 @@ const eu: Partial<Translations> = {
   "folder.creating": "Sortzen…",
   "folder.createFailed": "Ezin izan da karpeta sortu",
   "folder.browseFailed": "Arakatzeak huts egin du",
-  "containers.subtitle": "Kudeatu edukiontzien babeskopiak, egutegiak eta berrezarpenak.",
   "containers.emptyDocker": "Ez da edukiontzirik aurkitu. Docker exekutatzen ari da?",
   "containers.bulkResult": "{ok} ondo, {fail} huts",
   "vm.method.saveFailed": "Ezin izan da babeskopia-metodoa aldatu. Ez da aldatu.",
@@ -1239,7 +1237,6 @@ const eu: Partial<Translations> = {
 
   // VMs page
   "vms.title": "Makina birtualak",
-  "vms.subtitle": "Kudeatu MBen babeskopiak, egutegiak eta berrezarpenak.",
   "vms.empty": "Ez da MBrik aurkitu. libvirt/KVM exekutatzen ari da?",
   "vms.backupSelected": "Egin hautatutakoen babeskopia",
   "vms.restoreSelected": "Berrezarri hautatutakoak (azkena)",
@@ -1252,7 +1249,6 @@ const eu: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash babeskopia",
-  "flash.subtitle": "Babestu eta berrezarri Unraid USB Flash-a (/boot osoa).",
   "flash.backupTitle": "Egin Flash-en babeskopia",
   "flash.backupHint": "USB Flash osoa (/boot) jasotzen du: Unraid OS, lizentzia, array konfigurazioa, partekatzeak, sarea eta plugin-konfigurazioa.",
   "flash.backupNow": "Egin Flash-en babeskopia orain",
@@ -1288,7 +1284,6 @@ const eu: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "Autobabeskopia",
-  "config.subtitle": "BombVaulten bere ezarpenen babeskopia egiten du, berreraikitako zerbitzari batek bere burua berrezarri ahal izateko.",
   "config.settingsTitle": "Autobabeskopiaren ezarpenak",
   "config.settingsHint": "BombVaulten bere konfigurazioa babesten du (ezarpenen datu-basea, kanpoko kredentzialak eta SSH gakoak) instalazio berri batek bere burua berrezarri eta utzi zuen puntu berean jarraitu ahal izateko.",
   "config.enabled": "Egin BombVaulten ezarpenen babeskopia",
@@ -1309,8 +1304,6 @@ const eu: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Hartzailea",
   "instances.title": "Instantziak",
-  "instances.subtitle": "Beste BombVault batekin zerikusia duen guztia: hona bidalitako biltegiak, HTTP bidez zaindutako instantziak eta makina honek ekartzen dituen biltegiak.",
-  "receiver.subtitle": "Gainbegiratu beste BombVault instantziek kutxa honetara bidaltzen dituzten kanpoko kopiak, irakurtzeko soilik.",
   "receiver.addRepo": "Gehitu jasotako biltegia",
   "receiver.emptyTitle": "Jasotako biltegiak",
   "receiver.empty": "Oraindik ez dago jasotako biltegirik. Gehitu beste BombVault batek bere kanpoko kopiak bidaltzen dituen biltegia, eta BombVaultek irakurtzeko soilik gainbegiratuko du: zer iritsi den, azken babeskopia noiz iritsi zen, eta hardware honetan egindako egiaztapen independente bat.",
@@ -1365,7 +1358,6 @@ const eu: Partial<Translations> = {
   "receiver.saveError": "Ezin izan da jasotako biltegia gorde.",
   "pull.name": "Izena",
   "pull.title": "Ekarri",
-  "pull.subtitle": "Ekarri beste BombVault baten biltegiko babeskopiak biltegi honetara.",
   "pull.addSource": "Gehitu iturburua",
   "pull.emptyTitle": "Ekartze-iturburuak",
   "pull.empty": "Oraindik ez dago ekartze-iturbururik. Gehitu beste BombVault baten biltegia eta instantzia horren APP_KEY, eta kutxa honek haren argazkiak bere biltegira ekarriko ditu zuk aukeratutako egutegiaren arabera. Beste aldeak ez du ezer konfiguratu behar, ezta piztuta egon behar ere.",
@@ -1394,7 +1386,6 @@ const eu: Partial<Translations> = {
   "settings.pullEnabled": "Ekarri beste instantzietatik",
   "settings.pullEnabledHint": "Ekarri beste BombVault baten babeskopiak kutxa honen biltegi propiora (hemen datuak idazten ditu)",
   "fleet.title": "Flota",
-  "fleet.subtitle": "Behatu erlazionatutako BombVault instantzien babes-egoera, irakurtzeko soilik.",
   "fleet.addPeer": "Gehitu instantzia",
   "fleet.emptyTitle": "Flotako instantziak",
   "fleet.empty": "Oraindik ez dago instantziarik flotan. Gehitu beste BombVault instantzia baten URLa eta flotaren tokena, eta kutxa honek irakurtzeko soilik kontsultatuko du bere babes-markadorea, besterik ez.",
@@ -1492,7 +1483,6 @@ const eu: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Berreskuratzea",
-  "recovery.intro": "Berrezarri zure edukiontziak eta MB instalazio honetan dagoen babeskopia batetik.",
   // Step 1
   "recovery.step1": "BombVaultek zure babeskopiak irakur ditzake?",
   "recovery.appKeyExplain": "Dauden babeskopiak irakurtzeko, edukiontzi honek lehen erabili zuen APP_KEY BERA behar du. Zure berreskuratze-kitan dago. Ezarri Unraid edukiontziaren txantiloian jada ez badago, eta egiaztatu berriz.",
@@ -1579,7 +1569,6 @@ const eu: Partial<Translations> = {
   "settings.everythingStarted": "Abiarazita: zerbitzarian exekutatzen ari da eremu bakoitzetik txandaka; emaitza jarduera-erregistroan ikusiko duzu.",
   "settings.everythingAlreadyRunning": "Babeskopia oso bat martxan dago jada.",
   "settings.everythingBusy": "Lanean…",
-  "settings.subtitle": "BombVaulten konfigurazioa. Aldaketak berehala aplikatzen dira.",
   // Filter drawer trigger
   "filter.button": "Iragazkiak",
 
@@ -1612,7 +1601,6 @@ const eu: Partial<Translations> = {
   // Files domain
   "nav.files": "Karpetak",
   "files.title": "Karpetak",
-  "files.subtitle": "Babestu zerbitzari honetako edozein karpeta (egutegiekin, kanpoko kopiekin eta berrezarpenekin).",
   "files.setsTitle": "Karpeta-multzoak",
   "files.empty": "Oraindik ez dago karpeta-multzorik. Gehitu karpeta bat (partekatzeak, dokumentuak, argazkiak, zure muntaketen azpiko edozer) eta BombVaultek gainerakoa bezala babesten du: egutegiak, kanpoko kopiak, osotasun-egiaztapenak eta berrezarpenak. Ez da fitxategi-babeskopiarako tresna bereizirik behar.",
   "files.addSet": "Gehitu karpeta-multzoa",
@@ -1666,7 +1654,6 @@ const eu: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS datu-multzoak",
-  "zfs.subtitle": "Egin ZFS datu-multzoen babeskopia beren azpi-multzoekin batera argazki bakar batetik, deduplikazioarekin, fitxategien arakatzearekin eta fitxategi bakarreko berrezartzearekin.",
   "settings.zfsEnabled": "ZFS datu-multzoak",
   "settings.zfsEnabledHint": "ZFS datu-multzoen eta beren azpi-multzoen babeskopia egiten du argazkietatik, zerbitzari honekiko SSH konexioaren bidez.",
   "settings.zfsPath": "ZFS datu-multzoen bidea",
@@ -2402,7 +2389,6 @@ const eu: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "{domains} dituen diskoa erritmo honetan {time} inguruan beteko da.",
   "anomaly.sentence.capacityLow": "{domains} dituen diskoan {free} besterik ez da geratzen ({percent}%).",
   "anomaly.sentence.unknown": "{name} elementuan anomalia bat aurkitu da. Kargatu orria berriro xehetasunak ikusteko.",
-  "anomaly.pageSubtitle": "Zure babeskopietan zer aldatu den eta begiratu bat merezi duena.",
   "anomaly.offPage": "Anomalien detekzioa itzalita dago. Lehengo anomaliak hemen zerrendatuta geratzen dira.",
   "anomaly.retry": "Saiatu berriro",
   "anomaly.filter.severity": "Larritasuna",

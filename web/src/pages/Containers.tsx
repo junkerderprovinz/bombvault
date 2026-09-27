@@ -3,6 +3,7 @@ import { listContainers, deleteBackups, forgetContainer, backupAll, restore, res
 import type { AnomalyItem, Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, Run } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { useIsCoarsePointer, useIsDesktop } from "../lib/useMediaQuery";
+import { PageTitle } from "../components/PageTitle";
 import { SelectionTree } from "../components/SelectionTree";
 import { RunDetailSheet } from "../components/mobile/RunDetailSheet";
 import { MobileListCard } from "../components/mobile/MobileListCard";
@@ -4197,13 +4198,8 @@ export function Containers() {
       {/* Page heading + Discover (disaster-recovery) action */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold text-carbon-text">
-            {t("containers.title")}
-          </h1>
-          <p className="mt-1 text-sm text-carbon-textSub">
-            {t("containers.subtitle")}
-          </p>
-          <div className="mt-2"><OffsiteIndicator domain="containers" /></div>
+          <PageTitle>{t("containers.title")}</PageTitle>
+          <OffsiteIndicator domain="containers" />
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button

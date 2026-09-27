@@ -66,6 +66,7 @@ import {
   type ForeignItem,
   type Snapshot,
 } from "../lib/api";
+import { PageTitle } from "../components/PageTitle";
 import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
@@ -1842,10 +1843,7 @@ export default function Recovery() {
 
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
-      <div>
-        <h1 className="text-2xl font-semibold text-carbon-text">{t("nav.recovery")}</h1>
-        <p className="mt-1 text-sm text-carbon-textSub max-w-2xl">{t("recovery.intro")}</p>
-      </div>
+      <PageTitle>{t("nav.recovery")}</PageTitle>
 
       <StepCard n={1} title={t("recovery.step1")} hint={t("recovery.appKeyExplain")} state={readableState} hueIndex={nextHue()}>
         <VerdictLine verdict={readVerdict} />

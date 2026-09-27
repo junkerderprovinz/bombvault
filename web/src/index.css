@@ -163,9 +163,12 @@
 
 /* A page starts on the rail's top line. One that opens with a card starts at
    the card's badge, which stands half its 22px above the card, or the badge
-   would be cut off at the top of the column. */
+   would be cut off at the top of the column. glim-page-title is the sr-only
+   page heading: it takes no space of its own, so a card right after it is
+   still the first thing anyone sees. */
 .glim-page-enter > .glim-notch-card:first-child,
-.glim-page-enter > :first-child > .glim-notch-card:first-child {
+.glim-page-enter > :first-child > .glim-notch-card:first-child,
+.glim-page-enter > :first-child > .glim-page-title:first-child + .glim-notch-card {
   margin-top: 11px;
 }
 

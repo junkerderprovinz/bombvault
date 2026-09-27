@@ -51,7 +51,6 @@ const et: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Töölaud",
-  "dashboard.subtitle": "Sinu varunduse olek ühe pilguga.",
   "dashboard.summaryHealth": "Taastepunkt",
   "dashboard.summaryNextBackup": "Järgmine varundus",
   "dashboard.summaryNextIn": "{countdown} pärast",
@@ -1098,7 +1097,6 @@ const et: Partial<Translations> = {
   "folder.creating": "Loomine…",
   "folder.createFailed": "Kausta ei õnnestunud luua",
   "folder.browseFailed": "Sirvimine ebaõnnestus",
-  "containers.subtitle": "Halda konteinerite varundusi, ajakavasid ja taastamisi.",
   "containers.emptyDocker": "Konteinereid ei leitud. Kas Docker töötab?",
   "containers.bulkResult": "{ok} õnnestus, {fail} ebaõnnestus",
   "vm.method.saveFailed": "Varundusmeetodit ei õnnestunud muuta. Seda ei vahetatud.",
@@ -1239,7 +1237,6 @@ const et: Partial<Translations> = {
 
   // VMs page
   "vms.title": "Virtuaalmasinad",
-  "vms.subtitle": "Halda VM-ide varundusi, ajakavasid ja taastamisi.",
   "vms.empty": "VM-e ei leitud. Kas libvirt/KVM töötab?",
   "vms.backupSelected": "Varunda valitud",
   "vms.restoreSelected": "Taasta valitud (uusim)",
@@ -1252,7 +1249,6 @@ const et: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flashi varundus",
-  "flash.subtitle": "Varunda ja taasta Unraidi USB-flash (kogu /boot).",
   "flash.backupTitle": "Varunda flash",
   "flash.backupHint": "Jäädvustab kogu USB-flashi (/boot): Unraidi OS, litsentsi, massiivi seadistuse, jagatud kaustad, võrgu- ja pluginaseaded.",
   "flash.backupNow": "Varunda flash kohe",
@@ -1288,7 +1284,6 @@ const et: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "Iseenda varundus",
-  "config.subtitle": "Varundab BombVaulti enda seaded, et ülesehitatud server saaks ennast taastada.",
   "config.settingsTitle": "Iseenda varunduse seaded",
   "config.settingsHint": "Kaitseb BombVaulti enda seadistust (seadete andmebaasi, väliseid mandaate ja SSH-võtmeid), et värske paigaldus saaks ennast taastada ja jätkata täpselt sealt, kus pooleli jäi.",
   "config.enabled": "Varunda BombVaulti seaded",
@@ -1309,8 +1304,6 @@ const et: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Vastuvõtja",
   "instances.title": "Eksemplarid",
-  "instances.subtitle": "Kõik, mis puudutab teist BombVaulti: siia saadetud hoidlad, HTTP kaudu jälgitavad eksemplarid ja hoidlad, millest see masin tõmbab.",
-  "receiver.subtitle": "Jälgi väliseid koopiaid, mida teised BombVault eksemplarid sellesse kasti saadavad, ainult lugemiseks.",
   "receiver.addRepo": "Lisa vastuvõetud hoidla",
   "receiver.emptyTitle": "Vastuvõetud hoidlad",
   "receiver.empty": "Vastuvõetud hoidlaid pole veel. Lisa hoidla, kuhu mõni teine BombVault oma väliseid koopiaid saadab, ja BombVault jälgib seda ainult lugemiseks: mis on saabunud, millal viimane varundus tuli, ja sõltumatu terviklikkuse kontroll sellel riistvaral.",
@@ -1365,7 +1358,6 @@ const et: Partial<Translations> = {
   "receiver.saveError": "Vastuvõetud hoidlat ei õnnestunud salvestada.",
   "pull.name": "Nimi",
   "pull.title": "Tõmbamine",
-  "pull.subtitle": "Tõmba varundused teise BombVaulti hoidlast siia hoidlasse.",
   "pull.addSource": "Lisa allikas",
   "pull.emptyTitle": "Tõmbeallikad",
   "pull.empty": "Tõmbeallikaid pole veel. Lisa mõne teise BombVaulti hoidla ja selle eksemplari APP_KEY, siis tõmbab see kast tema hetktõmmised enda hoidlasse sinu valitud ajakava järgi. Teisel poolel pole vaja midagi seadistada ega isegi ärkvel olla.",
@@ -1394,7 +1386,6 @@ const et: Partial<Translations> = {
   "settings.pullEnabled": "Tõmbamine teistest eksemplaridest",
   "settings.pullEnabledHint": "Tõmba teise BombVaulti varundused selle kasti enda hoidlasse (kirjutab siia andmeid)",
   "fleet.title": "Laevastik",
-  "fleet.subtitle": "Jälgi seotud BombVault eksemplaride kaitse olekut, ainult lugemiseks.",
   "fleet.addPeer": "Lisa eksemplar",
   "fleet.emptyTitle": "Laevastiku eksemplarid",
   "fleet.empty": "Laevastikus pole veel ühtegi eksemplari. Lisa mõne teise BombVault eksemplari URL ja laevastiku luba, ning see kast küsitleb seda ainult lugemiseks tema kaitse hindekaardi jaoks, mitte midagi enamat.",
@@ -1492,7 +1483,6 @@ const et: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Taastamine",
-  "recovery.intro": "Taasta oma konteinerid ja VM-id olemasolevast varundusest sellele paigaldusele.",
   // Step 1
   "recovery.step1": "Kas BombVault suudab su varundusi lugeda?",
   "recovery.appKeyExplain": "Olemasolevate varunduste lugemiseks vajab see konteiner SAMA APP_KEY-d, mida varem kasutati. See on sinu taastekomplektis. Määra see Unraidi konteineri mallis, kui see pole veel tehtud, ja kontrolli uuesti.",
@@ -1579,7 +1569,6 @@ const et: Partial<Translations> = {
   "settings.everythingStarted": "Käivitatud: see töötab serveris järjest läbi iga valdkonna; tulemust näed tegevuslogis.",
   "settings.everythingAlreadyRunning": "Täisvarundus juba käib.",
   "settings.everythingBusy": "Töötan…",
-  "settings.subtitle": "BombVaulti seadistus. Muudatused rakenduvad kohe.",
   // Filter drawer trigger
   "filter.button": "Filtrid",
 
@@ -1612,7 +1601,6 @@ const et: Partial<Translations> = {
   // Files domain
   "nav.files": "Kaustad",
   "files.title": "Kaustad",
-  "files.subtitle": "Varunda selle serveri suvalisi kaustu (ajakavade, väliste koopiate ja taastamistega).",
   "files.setsTitle": "Kaustakomplektid",
   "files.empty": "Kaustakomplekte pole veel. Lisa kaust (jagatud kaustad, dokumendid, fotod, ükskõik mis sinu haakepunktide all) ja BombVault kaitseb seda nagu kõike muud: ajakavad, välised koopiad, terviklikkuse kontrollid ja taastamised. Eraldi failivaruduse tööriista pole vaja.",
   "files.addSet": "Lisa kaustakomplekt",
@@ -1666,7 +1654,6 @@ const et: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS-i andmekogumid",
-  "zfs.subtitle": "Varunda ZFS-i andmekogumid koos nende alamkogumitega ühest hetktõmmisest, dedubleerimise, failisirvimise ja üksiku faili taastamisega.",
   "settings.zfsEnabled": "ZFS-i andmekogumid",
   "settings.zfsEnabledHint": "Varundab ZFS-i andmekogumid ja nende alamkogumid hetktõmmistest, kasutades SSH-ühendust selle serveriga.",
   "settings.zfsPath": "ZFS-i andmekogumite tee",
@@ -2402,7 +2389,6 @@ const et: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Ketas, millel on {domains}, saab sellise tempoga täis umbes {time} pärast.",
   "anomaly.sentence.capacityLow": "Kettal, millel on {domains}, on alles vaid {free} ({percent}%).",
   "anomaly.sentence.unknown": "Üksusele {name} leiti kõrvalekalle. Laadi leht uuesti, et näha üksikasju.",
-  "anomaly.pageSubtitle": "Mis on sinu varukoopiates muutunud ja väärib pilku.",
   "anomaly.offPage": "Anomaaliate tuvastamine on välja lülitatud. Varasemad anomaaliad jäävad siia nimekirja.",
   "anomaly.retry": "Proovi uuesti",
   "anomaly.filter.severity": "Raskusaste",

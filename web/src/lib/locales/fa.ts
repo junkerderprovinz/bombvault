@@ -51,7 +51,6 @@ const fa: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "داشبورد",
-  "dashboard.subtitle": "وضعیت پشتیبان‌گیری شما در یک نگاه.",
   "dashboard.summaryHealth": "نقطه بازیابی",
   "dashboard.summaryNextBackup": "پشتیبان بعدی",
   "dashboard.summaryNextIn": "تا {countdown} دیگر",
@@ -1098,7 +1097,6 @@ const fa: Partial<Translations> = {
   "folder.creating": "در حال ساخت…",
   "folder.createFailed": "ساخت پوشه ناموفق بود",
   "folder.browseFailed": "مرور ناموفق بود",
-  "containers.subtitle": "مدیریت پشتیبان‌گیری، زمان‌بندی و بازیابی کانتینرها.",
   "containers.emptyDocker": "هیچ کانتینری پیدا نشد. آیا Docker در حال اجراست؟",
   "containers.bulkResult": "{ok} موفق، {fail} ناموفق",
   "vm.method.saveFailed": "روش پشتیبان‌گیری تغییر نکرد. عوض نشد.",
@@ -1239,7 +1237,6 @@ const fa: Partial<Translations> = {
 
   // VMs page
   "vms.title": "ماشین‌های مجازی",
-  "vms.subtitle": "مدیریت پشتیبان‌گیری، زمان‌بندی و بازیابی ماشین‌های مجازی.",
   "vms.empty": "هیچ ماشین مجازی‌ای پیدا نشد. آیا libvirt/KVM در حال اجراست؟",
   "vms.backupSelected": "پشتیبان‌گیری از موارد انتخاب‌شده",
   "vms.restoreSelected": "بازیابی موارد انتخاب‌شده (آخرین نسخه)",
@@ -1252,7 +1249,6 @@ const fa: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "پشتیبان‌گیری فلش",
-  "flash.subtitle": "پشتیبان‌گیری و بازیابی فلش USB Unraid (کل /boot).",
   "flash.backupTitle": "پشتیبان‌گیری از فلش",
   "flash.backupHint": "کل درایو USB فلش (/boot) را ثبت می‌کند: سیستم‌عامل Unraid، مجوز، پیکربندی آرایه، اشتراک‌ها، شبکه و پیکربندی افزونه‌ها.",
   "flash.backupNow": "پشتیبان‌گیری از فلش همین حالا",
@@ -1288,7 +1284,6 @@ const fa: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "پشتیبان‌گیری خودکار",
-  "config.subtitle": "از تنظیمات خود BombVault پشتیبان می‌گیرد تا یک سرور بازسازی‌شده بتواند خودش را بازیابی کند.",
   "config.settingsTitle": "تنظیمات پشتیبان‌گیری خودکار",
   "config.settingsHint": "پیکربندی خود BombVault را محافظت می‌کند (پایگاه‌داده تنظیمات، اطلاعات ورود خارج از محل و کلیدهای SSH) تا نصب جدید بتواند خودش را بازیابی کرده و دقیقاً از همانجا که مانده بود ادامه دهد.",
   "config.enabled": "پشتیبان‌گیری از تنظیمات BombVault",
@@ -1309,8 +1304,6 @@ const fa: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "گیرنده",
   "instances.title": "نمونه‌ها",
-  "instances.subtitle": "هر چیزی که به یک BombVault دیگر مربوط است: مخزن‌هایی که به اینجا فرستاده شده‌اند، نمونه‌هایی که از راه HTTP زیر نظر هستند، و مخزن‌هایی که این دستگاه از آن‌ها می‌کشد.",
-  "receiver.subtitle": "نسخه‌های خارج از محلی که نمونه‌های دیگر BombVault به این جعبه ارسال می‌کنند را فقط به‌صورت خواندنی نظارت کنید.",
   "receiver.addRepo": "افزودن مخزن دریافتی",
   "receiver.emptyTitle": "مخزن‌های دریافتی",
   "receiver.empty": "هنوز مخزن دریافتی‌ای وجود ندارد. مخزنی را که BombVault دیگری نسخه‌های خارج از محلش را در آن می‌نویسد اضافه کنید، و BombVault آن را فقط به‌صورت خواندنی نظارت می‌کند: چه چیزی رسیده، آخرین پشتیبان کی رسیده، و یک بررسی یکپارچگی مستقل روی همین سخت‌افزار.",
@@ -1365,7 +1358,6 @@ const fa: Partial<Translations> = {
   "receiver.saveError": "مخزن دریافتی ذخیره نشد.",
   "pull.name": "نام",
   "pull.title": "واکشی",
-  "pull.subtitle": "پشتیبان‌ها را از مخزن یک BombVault دیگر به این مخزن بیاورید.",
   "pull.addSource": "افزودن منبع",
   "pull.emptyTitle": "منابع واکشی",
   "pull.empty": "هنوز منبع واکشی وجود ندارد. مخزن یک BombVault دیگر و APP_KEY همان نمونه را اضافه کنید تا این جعبه اسنپ‌شات‌های آن را بر اساس زمان‌بندی دلخواه شما به مخزن خودش بیاورد. طرف مقابل نیازی به هیچ تنظیمی ندارد و حتی لازم نیست روشن باشد.",
@@ -1394,7 +1386,6 @@ const fa: Partial<Translations> = {
   "settings.pullEnabled": "واکشی از نمونه‌های دیگر",
   "settings.pullEnabledHint": "پشتیبان‌های یک BombVault دیگر را به مخزن خودِ این جعبه می‌آورد (اینجا داده می‌نویسد)",
   "fleet.title": "ناوگان",
-  "fleet.subtitle": "وضعیت محافظت نمونه‌های BombVault مرتبط را فقط به‌صورت خواندنی رصد کنید.",
   "fleet.addPeer": "افزودن نمونه",
   "fleet.emptyTitle": "نمونه‌های ناوگان",
   "fleet.empty": "هنوز نمونه‌ای در ناوگان وجود ندارد. نشانی و توکن ناوگان نمونه دیگر BombVault را اضافه کنید، و این جعبه فقط به‌صورت خواندنی کارت امتیاز محافظت آن را می‌پرسد، نه چیزی بیشتر.",
@@ -1492,7 +1483,6 @@ const fa: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "بازیابی",
-  "recovery.intro": "کانتینرها و ماشین‌های مجازی خود را از یک پشتیبان موجود روی این نصب بازیابی کنید.",
   // Step 1
   "recovery.step1": "آیا BombVault می‌تواند پشتیبان‌های شما را بخواند؟",
   "recovery.appKeyExplain": "برای خواندن پشتیبان‌های موجود، این کانتینر به همان APP_KEY قبلی نیاز دارد. این در کیت بازیابی شماست. اگر هنوز تنظیم نشده، آن را در قالب کانتینر Unraid تنظیم کنید، سپس دوباره بررسی کنید.",
@@ -1579,7 +1569,6 @@ const fa: Partial<Translations> = {
   "settings.everythingStarted": "آغاز شد: روی سرور به‌ترتیب از هر حوزه عبور می‌کند؛ نتیجه را در گزارش فعالیت ببین.",
   "settings.everythingAlreadyRunning": "یک پشتیبان‌گیری کامل هم‌اکنون در حال اجراست.",
   "settings.everythingBusy": "در حال کار…",
-  "settings.subtitle": "پیکربندی BombVault. تغییرات فوراً اعمال می‌شوند.",
   // Filter drawer trigger
   "filter.button": "فیلترها",
 
@@ -1612,7 +1601,6 @@ const fa: Partial<Translations> = {
   // Files domain
   "nav.files": "پوشه‌ها",
   "files.title": "پوشه‌ها",
-  "files.subtitle": "از هر پوشه‌ای روی این سرور پشتیبان بگیرید، همراه با زمان‌بندی، نسخه‌های خارج از محل و بازیابی.",
   "files.setsTitle": "مجموعه‌های پوشه",
   "files.empty": "هنوز مجموعه پوشه‌ای وجود ندارد. یک پوشه اضافه کنید (اشتراک‌ها، اسناد، عکس‌ها، هرچیز زیر اتصال‌های شما) و BombVault آن را مانند بقیه محافظت می‌کند: زمان‌بندی، نسخه‌های خارج از محل، بررسی‌های یکپارچگی و بازیابی. نیازی به ابزار جداگانه پشتیبان‌گیری فایل نیست.",
   "files.addSet": "افزودن مجموعه پوشه",
@@ -1666,7 +1654,6 @@ const fa: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "مجموعه‌داده‌های ZFS",
-  "zfs.subtitle": "از مجموعه‌داده‌های ZFS همراه با مجموعه‌های فرزندشان از یک عکس لحظه‌ای پشتیبان بگیرید، با کاهش داده تکراری، مرور فایل‌ها و بازیابی تک‌فایل.",
   "settings.zfsEnabled": "مجموعه‌داده‌های ZFS",
   "settings.zfsEnabledHint": "از مجموعه‌داده‌های ZFS و مجموعه‌های فرزندشان از روی عکس‌های لحظه‌ای پشتیبان می‌گیرد، از طریق اتصال SSH به این سرور.",
   "settings.zfsPath": "مسیر مجموعه‌داده‌های ZFS",
@@ -2402,7 +2389,6 @@ const fa: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "دیسکی که {domains} را نگه می‌دارد با این آهنگ در حدود {time} پر می‌شود.",
   "anomaly.sentence.capacityLow": "روی دیسکی که {domains} را نگه می‌دارد تنها {free} مانده است ({percent}%).",
   "anomaly.sentence.unknown": "برای {name} ناهنجاری‌ای یافت شد. برای دیدن جزئیات صفحه را دوباره بارگذاری کنید.",
-  "anomaly.pageSubtitle": "چه چیزی در پشتیبان‌های تو تغییر کرده و ارزش یک نگاه را دارد.",
   "anomaly.offPage": "تشخیص ناهنجاری خاموش است. ناهنجاری‌های پیشین همچنان اینجا فهرست می‌مانند.",
   "anomaly.retry": "دوباره تلاش کن",
   "anomaly.filter.severity": "شدت",

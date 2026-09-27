@@ -24,6 +24,7 @@ import {
   proposeMeshOffer,
 } from "../lib/api";
 import { IconDisclosure } from "../components/IconDisclosure";
+import { PageTitle } from "../components/PageTitle";
 import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData } from "../lib/api";
 import { credSetsChanged } from "../lib/useCloudCredSets";
 import { offsiteTargetsChanged } from "../lib/useOffsiteTargets";
@@ -801,11 +802,16 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
 
   return (
     <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          {!embedded && <h1 className="text-2xl font-semibold text-carbon-text">{t("fleet.title")}</h1>}
-          <p className="mt-1 text-sm text-carbon-textSub">{t("fleet.subtitle")}</p>
-        </div>
+      {/* Nothing here is visible once the title is sr-only and the empty
+          state has hidden the Add button, so this row goes sr-only too and
+          leaves the flex layout: without it, an empty row still ate a gap
+          above the empty-state card. */}
+      <div
+        className={`flex items-start justify-between gap-4 flex-wrap${
+          showEmptyState ? " glim-page-title sr-only" : ""
+        }`}
+      >
+        {!embedded && <PageTitle>{t("fleet.title")}</PageTitle>}
         {!showEmptyState && (
           <Button
             label={t("fleet.addPeer")}

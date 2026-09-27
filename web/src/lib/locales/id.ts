@@ -51,7 +51,6 @@ const id: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Dasbor",
-  "dashboard.subtitle": "Status cadangan Anda sekilas.",
   "dashboard.summaryHealth": "Titik pemulihan",
   "dashboard.summaryNextBackup": "Cadangan berikutnya",
   "dashboard.summaryNextIn": "dalam {countdown}",
@@ -1098,7 +1097,6 @@ const id: Partial<Translations> = {
   "folder.creating": "Membuat…",
   "folder.createFailed": "Folder gagal dibuat",
   "folder.browseFailed": "Penjelajahan gagal",
-  "containers.subtitle": "Kelola pencadangan, jadwal, dan pemulihan container.",
   "containers.emptyDocker": "Tidak ada container yang ditemukan. Apakah Docker berjalan?",
   "containers.bulkResult": "{ok} berhasil, {fail} gagal",
   "vm.method.saveFailed": "Metode pencadangan gagal diubah. Tidak dialihkan.",
@@ -1239,7 +1237,6 @@ const id: Partial<Translations> = {
 
   // VMs page
   "vms.title": "Mesin Virtual",
-  "vms.subtitle": "Kelola pencadangan, jadwal, dan pemulihan VM.",
   "vms.empty": "Tidak ada VM yang ditemukan. Apakah libvirt/KVM berjalan?",
   "vms.backupSelected": "Cadangkan yang dipilih",
   "vms.restoreSelected": "Pulihkan yang dipilih (terbaru)",
@@ -1252,7 +1249,6 @@ const id: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Pencadangan Flash",
-  "flash.subtitle": "Cadangkan dan pulihkan Flash USB Unraid (seluruh /boot).",
   "flash.backupTitle": "Cadangkan flash",
   "flash.backupHint": "Menangkap seluruh USB flash (/boot): OS Unraid, lisensi, konfigurasi array, share, jaringan, dan konfigurasi plugin.",
   "flash.backupNow": "Cadangkan flash sekarang",
@@ -1288,7 +1284,6 @@ const id: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "Cadangan Mandiri",
-  "config.subtitle": "Mencadangkan pengaturan BombVault sendiri sehingga server yang dibangun ulang dapat memulihkan dirinya sendiri.",
   "config.settingsTitle": "Pengaturan Cadangan Mandiri",
   "config.settingsHint": "Melindungi konfigurasi BombVault sendiri (basis data pengaturannya, kredensial off-site, dan kunci SSH), sehingga instalasi baru dapat memulihkan dirinya sendiri dan melanjutkan tepat di titik terakhir.",
   "config.enabled": "Cadangkan pengaturan BombVault",
@@ -1309,8 +1304,6 @@ const id: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Penerima",
   "instances.title": "Instansi",
-  "instances.subtitle": "Segala hal tentang BombVault lain: repositori yang dikirim ke sini, instansi yang dipantau lewat HTTP, dan repositori yang ditarik mesin ini.",
-  "receiver.subtitle": "Pantau salinan off-site yang dikirim instance BombVault lain ke box ini, hanya baca.",
   "receiver.addRepo": "Tambah repositori diterima",
   "receiver.emptyTitle": "Repositori diterima",
   "receiver.empty": "Belum ada repositori yang diterima. Tambahkan repositori tempat BombVault lain mengirim salinan off-site-nya, dan BombVault mengawasinya hanya baca: apa yang tiba, kapan cadangan terakhir masuk, dan pemeriksaan integritas independen di perangkat keras ini.",
@@ -1365,7 +1358,6 @@ const id: Partial<Translations> = {
   "receiver.saveError": "Repositori yang diterima gagal disimpan.",
   "pull.name": "Nama",
   "pull.title": "Tarik",
-  "pull.subtitle": "Tarik cadangan dari repositori BombVault lain ke repositori ini.",
   "pull.addSource": "Tambah sumber",
   "pull.emptyTitle": "Sumber tarik",
   "pull.empty": "Belum ada sumber tarik. Tambahkan repositori BombVault lain beserta APP_KEY instance tersebut, dan box ini menarik snapshot-nya ke repositorinya sendiri sesuai jadwal yang Anda pilih. Sisi seberang tidak perlu mengonfigurasi apa pun, bahkan tidak perlu menyala.",
@@ -1394,7 +1386,6 @@ const id: Partial<Translations> = {
   "settings.pullEnabled": "Tarik dari instance lain",
   "settings.pullEnabledHint": "Tarik cadangan BombVault lain ke repositori milik box ini sendiri (menulis data di sini)",
   "fleet.title": "Armada",
-  "fleet.subtitle": "Amati status perlindungan instance BombVault yang terkait, hanya baca.",
   "fleet.addPeer": "Tambah instance",
   "fleet.emptyTitle": "Instance armada",
   "fleet.empty": "Belum ada instance di armada. Tambahkan URL dan token armada instance BombVault lain, dan box ini akan mengambilnya hanya baca untuk kartu skor perlindungannya, tidak lebih.",
@@ -1492,7 +1483,6 @@ const id: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Pemulihan",
-  "recovery.intro": "Pulihkan container dan VM Anda dari cadangan yang sudah ada ke instalasi ini.",
   // Step 1
   "recovery.step1": "Bisakah BombVault membaca cadangan Anda?",
   "recovery.appKeyExplain": "Untuk membaca cadangan yang ada, container ini memerlukan APP_KEY YANG SAMA seperti yang digunakan sebelumnya. Ada di kit pemulihan Anda. Atur di template container Unraid jika belum, lalu periksa ulang.",
@@ -1579,7 +1569,6 @@ const id: Partial<Translations> = {
   "settings.everythingStarted": "Dimulai. Berjalan di server melewati setiap domain secara bergantian; lihat log aktivitas untuk hasilnya.",
   "settings.everythingAlreadyRunning": "Proses Cadangkan Semua sudah berjalan.",
   "settings.everythingBusy": "Sedang bekerja…",
-  "settings.subtitle": "Konfigurasi BombVault. Perubahan berlaku segera.",
   // Filter drawer trigger
   "filter.button": "Filter",
 
@@ -1612,7 +1601,6 @@ const id: Partial<Translations> = {
   // Files domain
   "nav.files": "Folder",
   "files.title": "Folder",
-  "files.subtitle": "Cadangkan folder apa pun di server ini, dengan jadwal, salinan off-site, dan pemulihan.",
   "files.setsTitle": "Set folder",
   "files.empty": "Belum ada set folder. Tambahkan folder (share, dokumen, foto, apa pun di bawah mount Anda), dan BombVault melindunginya seperti yang lain: jadwal, salinan off-site, pemeriksaan integritas, dan pemulihan. Tidak diperlukan alat pencadangan file terpisah.",
   "files.addSet": "Tambah set folder",
@@ -1666,7 +1654,6 @@ const id: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "Dataset ZFS",
-  "zfs.subtitle": "Cadangkan dataset ZFS bersama dataset anaknya dari satu snapshot, dengan deduplikasi, penjelajahan berkas, dan pemulihan berkas tunggal.",
   "settings.zfsEnabled": "Dataset ZFS",
   "settings.zfsEnabledHint": "Mencadangkan dataset ZFS dan dataset anaknya dari snapshot, lewat koneksi SSH ke server ini.",
   "settings.zfsPath": "Jalur dataset ZFS",
@@ -2402,7 +2389,6 @@ const id: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Disk yang memuat {domains} akan penuh sekitar {time} lagi dengan laju ini.",
   "anomaly.sentence.capacityLow": "Pada disk yang memuat {domains} hanya tersisa {free} ({percent}%).",
   "anomaly.sentence.unknown": "Ditemukan anomali pada {name}. Muat ulang halaman untuk melihat detailnya.",
-  "anomaly.pageSubtitle": "Apa yang berubah di cadanganmu dan layak dilihat.",
   "anomaly.offPage": "Deteksi anomali dimatikan. Anomali sebelumnya tetap tercantum di sini.",
   "anomaly.retry": "Coba lagi",
   "anomaly.filter.severity": "Tingkat keparahan",

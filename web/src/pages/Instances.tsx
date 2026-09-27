@@ -10,6 +10,7 @@ import { getSettings } from "../lib/api";
 import type { Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
+import { PageTitle } from "../components/PageTitle";
 import { Selector } from "../components/Selector";
 import { IconReceiver, IconFleet, IconDownload } from "../components/navGlyphs";
 import { Receiver } from "./Receiver";
@@ -102,10 +103,7 @@ export function Instances() {
 
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
-      <div>
-        <h1 className="text-2xl font-semibold text-carbon-text">{t("instances.title")}</h1>
-        <p className="mt-1 text-sm text-carbon-textSub">{t("instances.subtitle")}</p>
-      </div>
+      <PageTitle>{t("instances.title")}</PageTitle>
 
       {visible.length > 1 && (
         <Selector

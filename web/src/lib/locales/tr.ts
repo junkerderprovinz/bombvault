@@ -48,7 +48,6 @@ const tr: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Kontrol Paneli",
-  "dashboard.subtitle": "Yedekleme durumunuz bir bakışta.",
   "dashboard.summaryHealth": "Kurtarma noktası",
   "dashboard.summaryNextBackup": "Sonraki yedek",
   "dashboard.summaryNextIn": "{countdown} sonra",
@@ -391,7 +390,6 @@ const tr: Partial<Translations> = {
   "folder.pathHint": "Yol göreli bir alt yol olmalı (başında / veya .. olmadan)",
   "folder.couldNotRead": "Dizin okunamadı",
   "folder.browseFailed": "Gözatma başarısız",
-  "containers.subtitle": "Konteyner yedeklerini, zamanlamaları ve geri yüklemeleri yönetin.",
   "containers.emptyDocker": "Konteyner bulunamadı. Docker çalışıyor mu?",
   "containers.bulkResult": "{ok} tamam, {fail} başarısız",
   "vm.method.saveFailed": "Yedekleme yöntemi değiştirilemedi. Değiştirilmedi.",
@@ -469,7 +467,6 @@ const tr: Partial<Translations> = {
   "auth.passwordMinHint": "En az {n} karakter.",
   // VMs page
   "vms.title": "Sanal Makineler",
-  "vms.subtitle": "VM yedeklemelerini, zamanlamalarını ve geri yüklemelerini yönetin.",
   "vms.empty": "VM bulunamadı. libvirt/KVM çalışıyor mu?",
   "vms.backupSelected": "Seçilenleri yedekle",
   "vms.restoreSelected": "Seçilenleri geri yükle (son)",
@@ -637,7 +634,6 @@ const tr: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash Yedeği",
-  "flash.subtitle": "Unraid USB flash'ı (tüm /boot) yedekleyin ve geri yükleyin.",
   "flash.backupTitle": "Flash'ı yedekle",
   "flash.backupHint": "Tüm USB flash'ı (/boot) yakalar: Unraid işletim sistemi, lisans, dizi yapılandırması, paylaşımlar, ağ ve eklenti yapılandırması.",
   "flash.backupNow": "Flash'ı şimdi yedekle",
@@ -824,7 +820,6 @@ const tr: Partial<Translations> = {
   "recovery.stored": "Güvenle sakladım",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "Konteynerlerinizi ve VM'lerinizi mevcut bir yedekten bu kuruluma geri yükleyin.",
   "recovery.step1": "BombVault yedeklerinizi okuyabiliyor mu?",
   "recovery.appKeyExplain": "Mevcut yedekleri okumak için bu konteynerin daha önce kullandığı AYNI APP_KEY gerekir. Bu, kurtarma kitinizde yer alır. Henüz ayarlı değilse Unraid konteyner şablonunda ayarlayın, ardından yeniden denetleyin.",
   "recovery.appKeyRemedy": "Şifreleme anahtarı bu yedeklerle eşleşmiyor. Orijinal APP_KEY'i (kurtarma kitinizden) konteyner şablonunda ayarlayın, ardından yeniden denetleyin.",
@@ -885,7 +880,6 @@ const tr: Partial<Translations> = {
 
   // Config Backup page
   "config.title": "Öz yedek",
-  "config.subtitle": "Yeniden oluşturulan bir sunucunun kendini geri yükleyebilmesi için BombVault'un kendi ayarlarını yedekleyin.",
   "config.settingsTitle": "Öz yedek ayarları",
   "config.settingsHint": "BombVault'un kendi yapılandırmasını (ayar veritabanı, site dışı kimlik bilgileri ve SSH anahtarları) koruyun; böylece yeni bir kurulum kendini geri yükleyip kaldığı yerden devam edebilir.",
   "config.enabled": "BombVault'un ayarlarını yedekle",
@@ -1382,7 +1376,6 @@ const tr: Partial<Translations> = {
   "settings.everythingStarted": "Başlatıldı. Sunucuda her alanı sırayla işler; sonucu Etkinlik Günlüğü'nden takip et.",
   "settings.everythingAlreadyRunning": "Zaten bir tam yedekleme çalışıyor.",
   "settings.everythingBusy": "Çalışıyor…",
-  "settings.subtitle": "BombVault yapılandırması. Değişiklikler hemen etkili olur.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtreler",
 
@@ -1409,7 +1402,6 @@ const tr: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "Klasörler",
   "files.title": "Klasörler",
-  "files.subtitle": "Bu sunucudaki herhangi bir klasörü yedekleyin: zamanlamalar, site dışı kopyalar ve geri yüklemelerle.",
   "files.setsTitle": "Klasör setleri",
   "files.empty": "Henüz klasör seti yok. Bir klasör ekleyin (paylaşımlar, belgeler, fotoğraflar, bağlama noktalarınızın altındaki her şey). BombVault onu diğer her şey gibi korur: zamanlamalar, site dışı kopyalar, bütünlük denetimleri ve geri yüklemeler. Ayrı bir dosya yedekleme aracına gerek yok.",
   "files.addSet": "Klasör seti ekle",
@@ -1462,7 +1454,6 @@ const tr: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS veri kümeleri",
-  "zfs.subtitle": "ZFS veri kümelerini alt veri kümeleriyle birlikte tek bir anlık görüntüden yedekleyin; yinelenen veri ayıklama, dosya gezme ve tek dosya geri yükleme ile.",
   "settings.zfsEnabled": "ZFS veri kümeleri",
   "settings.zfsEnabledHint": "ZFS veri kümelerini ve alt veri kümelerini anlık görüntülerden, bu sunucuya olan SSH bağlantısı üzerinden yedekler.",
   "settings.zfsPath": "ZFS veri kümeleri yolu",
@@ -2090,8 +2081,6 @@ const tr: Partial<Translations> = {
   "settings.fleetEnabledHint": "Bağlı BombVault örneklerinin koruma durumunu izleyin (salt okunur)",
   "receiver.title": "Alıcı",
   "instances.title": "Örnekler",
-  "instances.subtitle": "Başka bir BombVault ile ilgili her şey: buraya gönderilen depolar, HTTP üzerinden izlenen örnekler ve bu makinenin çektiği depolar.",
-  "receiver.subtitle": "Diğer BombVault örneklerinin bu makineye gönderdiği site dışı kopyaları salt okunur olarak izleyin.",
   "receiver.addRepo": "Alınan depo ekle",
   "receiver.emptyTitle": "Alınan depolar",
   "receiver.empty": "Henüz alınan depo yok. Başka bir BombVault'un site dışı kopyalarını gönderdiği depoyu ekleyin; BombVault onu salt okunur izler: ne geldiği, son yedeğin ne zaman geldiği ve bu donanımda bağımsız bir bütünlük denetimi.",
@@ -2146,7 +2135,6 @@ const tr: Partial<Translations> = {
   "receiver.saveError": "Alınan depo kaydedilemedi.",
   "pull.name": "Ad",
   "pull.title": "Çekme",
-  "pull.subtitle": "Başka bir BombVault'un deposundaki yedekleri buradaki depoya çekin.",
   "pull.addSource": "Kaynak ekle",
   "pull.emptyTitle": "Çekme kaynakları",
   "pull.empty": "Henüz çekme kaynağı yok. Başka bir BombVault'un deposunu ve o örneğin APP_KEY'ini ekleyin; bu makine, seçtiğiniz bir programa göre onun yedeklerini kendi deposuna çeker. Karşı tarafın hiçbir ayar yapması gerekmez, hatta açık olması bile gerekmez.",
@@ -2175,7 +2163,6 @@ const tr: Partial<Translations> = {
   "settings.pullEnabled": "Diğer örneklerden çek",
   "settings.pullEnabledHint": "Başka bir BombVault'un yedeklerini bu makinenin kendi deposuna çeker (buraya veri yazar)",
   "fleet.title": "Filo",
-  "fleet.subtitle": "Bağlı BombVault örneklerinin koruma durumunu salt okunur olarak izleyin.",
   "fleet.addPeer": "Örnek ekle",
   "fleet.emptyTitle": "Filo örnekleri",
   "fleet.empty": "Henüz filo örneği eklenmedi. Başka bir BombVault örneğinin URL'sini ve filo belirtecini ekleyin; bu makine onun koruma karnesini salt okunur olarak sorgular, başka bir şey yapmaz.",
@@ -2391,7 +2378,6 @@ const tr: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "{domains} içeren disk bu hızla yaklaşık {time} içinde dolacak.",
   "anomaly.sentence.capacityLow": "{domains} içeren diskte yalnızca {free} kaldı ({percent}%).",
   "anomaly.sentence.unknown": "{name} için bir anormallik bulundu. Ayrıntılar için sayfayı yeniden yükle.",
-  "anomaly.pageSubtitle": "Yedeklerinde ne değişti ve neye bakmaya değer.",
   "anomaly.offPage": "Anormallik algılama kapalı. Önceki anormallikler burada listelenmeye devam eder.",
   "anomaly.retry": "Yeniden dene",
   "anomaly.filter.severity": "Önem derecesi",

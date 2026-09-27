@@ -51,7 +51,6 @@ const sl: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Nadzorna plošča",
-  "dashboard.subtitle": "Stanje varnostnega kopiranja na en pogled.",
   "dashboard.summaryHealth": "Obnovitvena točka",
   "dashboard.summaryNextBackup": "Naslednja varnostna kopija",
   "dashboard.summaryNextIn": "čez {countdown}",
@@ -1094,7 +1093,6 @@ const sl: Partial<Translations> = {
   "folder.creating": "Ustvarjanje…",
   "folder.createFailed": "Mape ni bilo mogoče ustvariti",
   "folder.browseFailed": "Brskanje ni uspelo",
-  "containers.subtitle": "Upravljaj varnostne kopije, urnike in obnovitve vsebnikov.",
   "containers.emptyDocker": "Ni najdenih vsebnikov. Ali Docker teče?",
   "containers.bulkResult": "{ok} uspešnih, {fail} neuspešnih",
   "vm.method.saveFailed": "Metode varnostnega kopiranja ni bilo mogoče spremeniti, ni bila preklopljena.",
@@ -1234,7 +1232,6 @@ const sl: Partial<Translations> = {
 
   // VMs page
   "vms.title": "Navidezni stroji",
-  "vms.subtitle": "Upravljaj varnostne kopije, urnike in obnovitve VM-jev.",
   "vms.empty": "Ni najdenih VM-jev. Ali libvirt/KVM teče?",
   "vms.backupSelected": "Naredi varnostno kopijo izbranih",
   "vms.restoreSelected": "Obnovi izbrane (najnovejše)",
@@ -1247,7 +1244,6 @@ const sl: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Varnostna kopija Flash",
-  "flash.subtitle": "Varnostno kopiraj in obnovi Unraidov USB Flash (celoten /boot).",
   "flash.backupTitle": "Varnostno kopiraj Flash",
   "flash.backupHint": "Zajame celoten USB Flash (/boot): Unraid OS, licenco, konfiguracijo polja, souporabe, omrežje in konfiguracijo vtičnikov.",
   "flash.backupNow": "Naredi varnostno kopijo Flasha zdaj",
@@ -1282,7 +1278,6 @@ const sl: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "Lastna varnostna kopija",
-  "config.subtitle": "Varnostno kopiraj lastne nastavitve BombVaulta, tako da lahko obnovljen strežnik obnovi sam sebe.",
   "config.settingsTitle": "Nastavitve lastne varnostne kopije",
   "config.settingsHint": "Zaščiti lastno konfiguracijo BombVaulta (njegovo bazo nastavitev, poverilnice za zunanjo kopijo in SSH ključe), tako da lahko sveža namestitev obnovi sebe in nadaljuje tam, kjer je ostala.",
   "config.enabled": "Varnostno kopiraj nastavitve BombVaulta",
@@ -1303,8 +1298,6 @@ const sl: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Sprejemnik",
   "instances.title": "Primerki",
-  "instances.subtitle": "Vse, kar zadeva drug BombVault: repozitoriji, poslani sem, primerki, opazovani prek HTTP, in repozitoriji, iz katerih ta naprava prenaša.",
-  "receiver.subtitle": "Nadzoruj zunanje kopije, ki jih druge instance BombVault pošiljajo v to napravo, samo za branje.",
   "receiver.addRepo": "Dodaj prejeti repozitorij",
   "receiver.emptyTitle": "Prejeti repozitoriji",
   "receiver.empty": "Še ni prejetih repozitorijev. Dodaj repozitorij, kamor drug BombVault pošilja svoje zunanje kopije, in BombVault ga opazuje samo za branje: kaj je prispelo, kdaj je prišla zadnja varnostna kopija in neodvisno preverjanje celovitosti na tej strojni opremi.",
@@ -1359,7 +1352,6 @@ const sl: Partial<Translations> = {
   "receiver.saveError": "Prejetega repozitorija ni bilo mogoče shraniti.",
   "pull.name": "Ime",
   "pull.title": "Poteg",
-  "pull.subtitle": "Povleci varnostne kopije iz repozitorija drugega BombVaulta v tega.",
   "pull.addSource": "Dodaj vir",
   "pull.emptyTitle": "Viri potega",
   "pull.empty": "Še ni virov potega. Dodaj repozitorij drugega BombVaulta in APP_KEY tiste instance, in ta naprava bo njene posnetke po urniku, ki ga izbereš, povlekla v svoj repozitorij. Drugi strani ni treba nastaviti ničesar in ni treba niti, da je prižgana.",
@@ -1388,7 +1380,6 @@ const sl: Partial<Translations> = {
   "settings.pullEnabled": "Poteg iz drugih instanc",
   "settings.pullEnabledHint": "Povleci varnostne kopije drugega BombVaulta v lastni repozitorij te naprave (sem zapisuje podatke)",
   "fleet.title": "Flota",
-  "fleet.subtitle": "Spremljaj stanje zaščite partnerskih instanc BombVault, samo za branje.",
   "fleet.addPeer": "Dodaj partnerja",
   "fleet.emptyTitle": "Partnerji flote",
   "fleet.empty": "Še ni partnerjev flote. Dodaj URL in žeton flote druge instance BombVault, in ta naprava jo bo opazovala samo za branje, glede njene kartice ocene zaščite, nič drugega.",
@@ -1486,7 +1477,6 @@ const sl: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Obnova",
-  "recovery.intro": "Obnovi svoje vsebnike in VM-je iz obstoječe varnostne kopije na to namestitev.",
   "recovery.step1": "Ali lahko BombVault prebere tvoje varnostne kopije?",
   "recovery.appKeyExplain": "Za branje obstoječih varnostnih kopij ta vsebnik potrebuje ISTI APP_KEY, kot ga je uporabljal prej. Najdeš ga v svojem obnovitvenem kompletu. Nastavi ga v Unraidovi predlogi vsebnika, če še ni, nato znova preveri.",
   "recovery.appKeyRemedy": "Šifrirni ključ se ne ujema s temi varnostnimi kopijami. V predlogi vsebnika nastavi izvirni APP_KEY (iz svojega obnovitvenega kompleta), nato znova preveri.",
@@ -1566,7 +1556,6 @@ const sl: Partial<Translations> = {
   "settings.everythingStarted": "Zagnano. Na strežniku teče zaporedoma čez vsako področje; izid je viden v dnevniku dejavnosti.",
   "settings.everythingAlreadyRunning": "Popolna varnostna kopija že poteka.",
   "settings.everythingBusy": "Delam…",
-  "settings.subtitle": "Konfiguracija BombVault. Spremembe se uveljavijo takoj.",
   "filter.button": "Filtri",
 
   // Settings — weekly digest card, backup-engine cache card, revoke-all sessions
@@ -1597,7 +1586,6 @@ const sl: Partial<Translations> = {
   // Files domain (folder-set backups, #62)
   "nav.files": "Mape",
   "files.title": "Mape",
-  "files.subtitle": "Varnostno kopiraj poljubne mape na tem strežniku, z urniki, zunanjimi kopijami in obnovitvami.",
   "files.setsTitle": "Nabori map",
   "files.empty": "Še ni naborov map. Dodaj mapo (souporabe, dokumente, fotografije, kar koli pod svojimi priklopnimi točkami) in BombVault jo zaščiti tako kot vse drugo: urniki, zunanje kopije, preverjanja celovitosti in obnovitve. Ločeno orodje za varnostno kopiranje datotek ni potrebno.",
   "files.addSet": "Dodaj nabor map",
@@ -1650,7 +1638,6 @@ const sl: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "Nabori podatkov ZFS",
-  "zfs.subtitle": "Varnostno kopiraj nabore podatkov ZFS skupaj z njihovimi podrejenimi nabori iz enega posnetka, z razdvojevanjem, brskanjem po datotekah in obnovo posamezne datoteke.",
   "settings.zfsEnabled": "Nabori podatkov ZFS",
   "settings.zfsEnabledHint": "Varnostno kopira nabore podatkov ZFS in njihove podrejene nabore iz posnetkov, prek povezave SSH s tem strežnikom.",
   "settings.zfsPath": "Pot naborov podatkov ZFS",
@@ -2386,7 +2373,6 @@ const sl: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Disk z {domains} bo pri tem tempu poln čez približno {time}.",
   "anomaly.sentence.capacityLow": "Na disku z {domains} je ostalo samo {free} ({percent}%).",
   "anomaly.sentence.unknown": "Za {name} je bila najdena anomalija. Znova naloži stran za podrobnosti.",
-  "anomaly.pageSubtitle": "Kaj se je v tvojih varnostnih kopijah spremenilo in je vredno pogleda.",
   "anomaly.offPage": "Zaznavanje nepravilnosti je izklopljeno. Prejšnje nepravilnosti ostanejo navedene tukaj.",
   "anomaly.retry": "Poskusi znova",
   "anomaly.filter.severity": "Resnost",

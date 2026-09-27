@@ -48,7 +48,6 @@ const vi: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Tổng quan",
-  "dashboard.subtitle": "Trạng thái sao lưu của bạn trong nháy mắt.",
   "dashboard.summaryHealth": "Điểm khôi phục",
   "dashboard.summaryNextBackup": "Bản sao lưu tiếp theo",
   "dashboard.summaryNextIn": "sau {countdown}",
@@ -391,7 +390,6 @@ const vi: Partial<Translations> = {
   "folder.pathHint": "Đường dẫn phải là đường dẫn con tương đối (không có / ở đầu hoặc ..)",
   "folder.couldNotRead": "Không thể đọc thư mục",
   "folder.browseFailed": "Duyệt thất bại",
-  "containers.subtitle": "Quản lý bản sao lưu, lịch và khôi phục container.",
   "containers.emptyDocker": "Không tìm thấy container. Docker có đang chạy không?",
   "containers.bulkResult": "{ok} ổn, {fail} thất bại",
   "vm.method.saveFailed": "Không thể đổi phương thức sao lưu. Phương thức không thay đổi.",
@@ -469,7 +467,6 @@ const vi: Partial<Translations> = {
   "auth.passwordMinHint": "Ít nhất {n} ký tự.",
   // VMs page
   "vms.title": "Máy ảo",
-  "vms.subtitle": "Quản lý sao lưu, lịch trình và khôi phục VMs.",
   "vms.empty": "Không tìm thấy VMs. libvirt/KVM có đang chạy không?",
   "vms.backupSelected": "Sao lưu đã chọn",
   "vms.restoreSelected": "Khôi phục đã chọn (mới nhất)",
@@ -630,7 +627,6 @@ const vi: Partial<Translations> = {
   "hooks.post": "Lệnh sau sao lưu",
 
   "flash.title": "Sao lưu Flash",
-  "flash.subtitle": "Sao lưu và khôi phục USB Flash của Unraid (toàn bộ /boot).",
   "flash.backupTitle": "Sao lưu flash",
   "flash.backupHint": "Chụp toàn bộ USB Flash (/boot): Unraid OS, giấy phép, cấu hình mảng, share, mạng và cấu hình plugin.",
   "flash.backupNow": "Sao lưu flash ngay",
@@ -816,7 +812,6 @@ const vi: Partial<Translations> = {
   "recovery.stored": "Tôi đã cất giữ an toàn",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "Khôi phục các container và VMs của bạn từ một bản sao lưu hiện có vào bản cài đặt này.",
   "recovery.step1": "BombVault có đọc được các bản sao lưu của bạn không?",
   "recovery.appKeyExplain": "Để đọc các bản sao lưu hiện có, container này cần ĐÚNG APP_KEY mà nó đã dùng trước đây. Nó nằm trong bộ khôi phục của bạn. Hãy đặt nó trong container template của Unraid nếu chưa đặt, rồi kiểm tra lại.",
   "recovery.appKeyRemedy": "Khóa mã hóa không khớp với các bản sao lưu này. Hãy đặt APP_KEY gốc (từ bộ khôi phục của bạn) trong container template, rồi kiểm tra lại.",
@@ -877,7 +872,6 @@ const vi: Partial<Translations> = {
 
   // Config Backup page
   "config.title": "Tự sao lưu",
-  "config.subtitle": "Sao lưu các cài đặt của chính BombVault để một máy chủ dựng lại có thể tự khôi phục.",
   "config.settingsTitle": "Cài đặt tự sao lưu",
   "config.settingsHint": "Bảo vệ cấu hình của chính BombVault (cơ sở dữ liệu cài đặt, thông tin đăng nhập off-site và khóa SSH) để một bản cài đặt mới có thể tự khôi phục và tiếp tục ngay từ chỗ đã dừng.",
   "config.enabled": "Sao lưu cài đặt của BombVault",
@@ -1374,7 +1368,6 @@ const vi: Partial<Translations> = {
   "settings.everythingStarted": "Đã bắt đầu. Chạy trên máy chủ lần lượt qua từng miền; theo dõi Nhật ký hoạt động để biết kết quả.",
   "settings.everythingAlreadyRunning": "Đã có một lượt sao lưu toàn bộ đang chạy.",
   "settings.everythingBusy": "Đang xử lý…",
-  "settings.subtitle": "Cấu hình BombVault. Các thay đổi có hiệu lực ngay lập tức.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Bộ lọc",
 
@@ -1401,7 +1394,6 @@ const vi: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "Thư mục",
   "files.title": "Thư mục",
-  "files.subtitle": "Sao lưu bất kỳ thư mục nào trên máy chủ này, với lịch trình, bản sao off-site và khôi phục.",
   "files.setsTitle": "Bộ thư mục",
   "files.empty": "Chưa có bộ thư mục nào. Thêm một thư mục (chia sẻ, tài liệu, ảnh, bất cứ thứ gì dưới các điểm gắn kết của bạn) và BombVault sẽ bảo vệ nó như mọi thứ khác: lịch trình, bản sao off-site, kiểm tra tính toàn vẹn và khôi phục. Không cần công cụ sao lưu tập tin riêng.",
   "files.addSet": "Thêm bộ thư mục",
@@ -1454,7 +1446,6 @@ const vi: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "Tập dữ liệu ZFS",
-  "zfs.subtitle": "Sao lưu tập dữ liệu ZFS cùng với các tập con của chúng từ một ảnh chụp duy nhất, có khử trùng lặp, duyệt tệp và khôi phục từng tệp.",
   "settings.zfsEnabled": "Tập dữ liệu ZFS",
   "settings.zfsEnabledHint": "Sao lưu tập dữ liệu ZFS và các tập con của chúng từ ảnh chụp, qua kết nối SSH tới máy chủ này.",
   "settings.zfsPath": "Đường dẫn tập dữ liệu ZFS",
@@ -2082,8 +2073,6 @@ const vi: Partial<Translations> = {
   "settings.fleetEnabledHint": "Theo dõi trạng thái bảo vệ của các phiên bản BombVault liên kết (chỉ đọc)",
   "receiver.title": "Bộ nhận",
   "instances.title": "Phiên bản",
-  "instances.subtitle": "Mọi thứ liên quan đến một BombVault khác: các kho được gửi tới đây, các phiên bản được theo dõi qua HTTP, và các kho mà máy này kéo về.",
-  "receiver.subtitle": "Giám sát các bản sao ngoài mà các phiên bản BombVault khác đẩy tới máy này, ở chế độ chỉ đọc.",
   "receiver.addRepo": "Thêm kho đã nhận",
   "receiver.emptyTitle": "Kho đã nhận",
   "receiver.empty": "Chưa có kho đã nhận nào. Thêm kho mà một BombVault khác đẩy các bản sao ngoài của nó tới, và BombVault sẽ giám sát nó ở chế độ chỉ đọc: cái gì đã tới, khi nào bản sao lưu cuối cùng vào, và một kiểm tra toàn vẹn độc lập trên phần cứng này.",
@@ -2138,7 +2127,6 @@ const vi: Partial<Translations> = {
   "receiver.saveError": "Không thể lưu kho đã nhận.",
   "pull.name": "Tên",
   "pull.title": "Kéo về",
-  "pull.subtitle": "Kéo các bản sao lưu từ kho của một BombVault khác về kho này.",
   "pull.addSource": "Thêm nguồn",
   "pull.emptyTitle": "Nguồn kéo về",
   "pull.empty": "Chưa có nguồn kéo về nào. Thêm kho của một BombVault khác cùng APP_KEY của phiên bản đó, và máy này sẽ kéo các bản sao lưu của nó về kho của chính mình theo lịch bạn chọn. Phía bên kia không cần cấu hình gì và thậm chí không cần đang chạy.",
@@ -2167,7 +2155,6 @@ const vi: Partial<Translations> = {
   "settings.pullEnabled": "Kéo từ các phiên bản khác",
   "settings.pullEnabledHint": "Kéo bản sao lưu của một BombVault khác về kho của chính máy này (ghi dữ liệu tại đây)",
   "fleet.title": "Đội",
-  "fleet.subtitle": "Theo dõi trạng thái bảo vệ của các phiên bản BombVault liên kết, ở chế độ chỉ đọc.",
   "fleet.addPeer": "Thêm phiên bản",
   "fleet.emptyTitle": "Phiên bản đội",
   "fleet.empty": "Chưa có phiên bản đội nào được thêm. Thêm URL và mã thông báo đội của một phiên bản BombVault khác, máy này sẽ truy vấn thẻ điểm bảo vệ của nó ở chế độ chỉ đọc, không gì khác.",
@@ -2383,7 +2370,6 @@ const vi: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Ổ đĩa chứa {domains} sẽ đầy sau khoảng {time} với tốc độ hiện tại.",
   "anomaly.sentence.capacityLow": "Ổ đĩa chứa {domains} chỉ còn {free} ({percent}%).",
   "anomaly.sentence.unknown": "Đã tìm thấy một bất thường cho {name}. Hãy tải lại trang để xem chi tiết.",
-  "anomaly.pageSubtitle": "Những gì đã thay đổi trong bản sao lưu của bạn và đáng để xem.",
   "anomaly.offPage": "Phát hiện bất thường đang tắt. Các bất thường trước đó vẫn nằm trong danh sách này.",
   "anomaly.retry": "Thử lại",
   "anomaly.filter.severity": "Mức nghiêm trọng",

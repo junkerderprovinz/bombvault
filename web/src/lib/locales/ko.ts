@@ -48,7 +48,6 @@ const ko: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "대시보드",
-  "dashboard.subtitle": "백업 상태를 한눈에.",
   "dashboard.summaryHealth": "복원 지점",
   "dashboard.summaryNextBackup": "다음 백업",
   "dashboard.summaryNextIn": "{countdown} 후",
@@ -391,7 +390,6 @@ const ko: Partial<Translations> = {
   "folder.pathHint": "경로는 상대 하위 경로여야 합니다(선행 / 또는 .. 불가)",
   "folder.couldNotRead": "디렉터리를 읽을 수 없습니다",
   "folder.browseFailed": "찾아보기 실패",
-  "containers.subtitle": "컨테이너 백업, 일정, 복원을 관리합니다.",
   "containers.emptyDocker": "컨테이너를 찾을 수 없습니다. Docker가 실행 중인가요?",
   "containers.bulkResult": "성공 {ok}, 실패 {fail}",
   "vm.method.saveFailed": "백업 방식을 변경할 수 없습니다. 변경되지 않았습니다.",
@@ -469,7 +467,6 @@ const ko: Partial<Translations> = {
   "auth.passwordMinHint": "{n}자 이상이어야 합니다.",
   // VMs page
   "vms.title": "가상 머신",
-  "vms.subtitle": "VM 백업, 일정 및 복원을 관리합니다.",
   "vms.empty": "VM을 찾을 수 없습니다. libvirt/KVM이 실행 중인가요?",
   "vms.backupSelected": "선택 항목 백업",
   "vms.restoreSelected": "선택 항목 복원 (최신)",
@@ -630,7 +627,6 @@ const ko: Partial<Translations> = {
   "hooks.post": "백업 후 명령",
 
   "flash.title": "플래시 백업",
-  "flash.subtitle": "Unraid USB 플래시(/boot 전체)를 백업하고 복원합니다.",
   "flash.backupTitle": "플래시 백업",
   "flash.backupHint": "USB 플래시 전체(/boot)를 캡처합니다: Unraid OS, 라이선스, 배열 구성, 공유, 네트워크 및 플러그인 구성.",
   "flash.backupNow": "지금 플래시 백업",
@@ -816,7 +812,6 @@ const ko: Partial<Translations> = {
   "recovery.stored": "안전하게 보관했습니다",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "기존 백업에서 컨테이너와 VM을 이 설치본으로 복구합니다.",
   "recovery.step1": "BombVault가 백업을 읽을 수 있나요?",
   "recovery.appKeyExplain": "기존 백업을 읽으려면 이 컨테이너에 이전과 동일한 APP_KEY가 필요합니다. 복구 키트에 들어 있습니다. 아직 설정하지 않았다면 Unraid 컨테이너 템플릿에서 설정한 뒤 다시 확인하세요.",
   "recovery.appKeyRemedy": "암호화 키가 이 백업과 일치하지 않습니다. 원래 APP_KEY(복구 키트에 있음)를 컨테이너 템플릿에 설정한 뒤 다시 확인하세요.",
@@ -1277,7 +1272,6 @@ const ko: Partial<Translations> = {
 
   // Config backup (BombVault's own settings)
   "config.title": "셀프 백업",
-  "config.subtitle": "재구축된 서버가 스스로 복원할 수 있도록 BombVault 자체 설정을 백업합니다.",
   "config.settingsTitle": "셀프 백업 설정",
   "config.settingsHint": "BombVault 자체 구성(설정 데이터베이스, 오프사이트 자격 증명, SSH 키)을 보호하여 새 설치본이 스스로 복원하고 중단된 지점에서 바로 이어갈 수 있도록 합니다.",
   "config.enabled": "BombVault 설정 백업",
@@ -1374,7 +1368,6 @@ const ko: Partial<Translations> = {
   "settings.everythingStarted": "시작됨. 서버에서 모든 영역을 순서대로 처리합니다. 결과는 활동 로그에서 확인하세요.",
   "settings.everythingAlreadyRunning": "전체 백업이 이미 실행 중입니다.",
   "settings.everythingBusy": "처리 중…",
-  "settings.subtitle": "BombVault 구성. 변경 사항이 즉시 적용됩니다.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "필터",
 
@@ -1401,7 +1394,6 @@ const ko: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "폴더",
   "files.title": "폴더",
-  "files.subtitle": "이 서버의 어떤 폴더든 백업. 일정, 오프사이트 복사본, 복원 지원.",
   "files.setsTitle": "폴더 세트",
   "files.empty": "아직 폴더 세트가 없습니다. 폴더를 추가하세요(공유 폴더, 문서, 사진 등 마운트 아래의 모든 것). BombVault가 다른 모든 것과 똑같이 보호합니다: 일정, 오프사이트 복사본, 무결성 검사, 복원. 별도의 파일 백업 도구가 필요 없습니다.",
   "files.addSet": "폴더 세트 추가",
@@ -1454,7 +1446,6 @@ const ko: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS 데이터세트",
-  "zfs.subtitle": "ZFS 데이터세트를 하위 데이터세트와 함께 하나의 스냅샷에서 백업합니다. 중복 제거, 파일 탐색, 단일 파일 복원을 지원합니다.",
   "settings.zfsEnabled": "ZFS 데이터세트",
   "settings.zfsEnabledHint": "이 서버로의 SSH 연결을 사용해 ZFS 데이터세트와 하위 데이터세트를 스냅샷에서 백업합니다.",
   "settings.zfsPath": "ZFS 데이터세트 경로",
@@ -2082,8 +2073,6 @@ const ko: Partial<Translations> = {
   "settings.fleetEnabledHint": "연결된 BombVault 인스턴스의 보호 상태를 확인합니다 (읽기 전용)",
   "receiver.title": "수신기",
   "instances.title": "인스턴스",
-  "instances.subtitle": "다른 BombVault와 관련된 모든 것입니다. 이곳으로 보내진 저장소, HTTP로 지켜보는 인스턴스, 그리고 이 장비가 가져오는 저장소.",
-  "receiver.subtitle": "다른 BombVault 인스턴스가 이 컴퓨터로 푸시하는 오프사이트 복사본을 읽기 전용으로 모니터링합니다.",
   "receiver.addRepo": "수신 저장소 추가",
   "receiver.emptyTitle": "수신 저장소",
   "receiver.empty": "아직 수신된 저장소가 없습니다. 다른 BombVault가 오프사이트 복사본을 푸시하는 저장소를 추가하면 BombVault가 읽기 전용으로 모니터링합니다: 무엇이 도착했는지, 마지막 백업이 언제 들어왔는지, 그리고 이 하드웨어에서의 독립적인 무결성 검사.",
@@ -2138,7 +2127,6 @@ const ko: Partial<Translations> = {
   "receiver.saveError": "수신 저장소를 저장하지 못했습니다.",
   "pull.name": "이름",
   "pull.title": "가져오기",
-  "pull.subtitle": "다른 BombVault 저장소의 백업을 이 저장소로 가져옵니다.",
   "pull.addSource": "소스 추가",
   "pull.emptyTitle": "가져오기 소스",
   "pull.empty": "아직 가져오기 소스가 없습니다. 다른 BombVault의 저장소와 해당 인스턴스의 APP_KEY를 추가하면, 이 기기가 선택한 일정에 따라 그 스냅샷을 자체 저장소로 가져옵니다. 상대편은 아무것도 설정할 필요가 없고 켜져 있지 않아도 됩니다.",
@@ -2167,7 +2155,6 @@ const ko: Partial<Translations> = {
   "settings.pullEnabled": "다른 인스턴스에서 가져오기",
   "settings.pullEnabledHint": "다른 BombVault의 백업을 이 기기의 자체 저장소로 가져옵니다(여기에 데이터를 씁니다)",
   "fleet.title": "플릿",
-  "fleet.subtitle": "연결된 BombVault 인스턴스의 보호 상태를 읽기 전용으로 확인합니다.",
   "fleet.addPeer": "인스턴스 추가",
   "fleet.emptyTitle": "플릿 인스턴스",
   "fleet.empty": "아직 추가된 플릿 인스턴스가 없습니다. 다른 BombVault 인스턴스의 URL과 플릿 토큰을 추가하면, 이 기기가 해당 인스턴스의 보호 스코어카드를 읽기 전용으로 조회합니다. 그 이상은 하지 않습니다.",
@@ -2383,7 +2370,6 @@ const ko: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "{domains}을(를) 담은 디스크는 이 속도라면 약 {time} 뒤에 가득 찹니다.",
   "anomaly.sentence.capacityLow": "{domains}을(를) 담은 디스크에 {free}만 남았습니다({percent}%).",
   "anomaly.sentence.unknown": "{name}에서 이상 징후가 발견되었습니다. 자세한 내용을 보려면 페이지를 새로 고치세요.",
-  "anomaly.pageSubtitle": "백업에서 무엇이 달라졌고 살펴볼 만한지.",
   "anomaly.offPage": "이상 감지가 꺼져 있습니다. 이전 이상은 여기에 계속 남습니다.",
   "anomaly.retry": "다시 시도",
   "anomaly.filter.severity": "심각도",

@@ -10,6 +10,7 @@ import { Button } from "../components/Button";
 import { IconDisclosure } from "../components/IconDisclosure";
 import { FindingLine, RetentionNote, type FindingAction } from "../components/anomalies/FindingLine";
 import { ItemMonitoring } from "../components/anomalies/ItemMonitoring";
+import { PageTitle } from "../components/PageTitle";
 import type { AnomalyGlobals } from "../components/ItemAnomalySettings";
 import { Card } from "./settings/shared";
 import {
@@ -171,13 +172,10 @@ export function Anomalies() {
 
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
-      <div>
-        <h1 className="text-2xl font-semibold text-carbon-text">{t("anomaly.title")}</h1>
-        <p className="mt-1 text-sm text-carbon-textSub">{t("anomaly.pageSubtitle")}</p>
-        {settings && !settings.anomalyEnabled && (
-          <p className="mt-1 text-sm text-statusWarn">{t("anomaly.offPage")}</p>
-        )}
-      </div>
+      <PageTitle>{t("anomaly.title")}</PageTitle>
+      {settings && !settings.anomalyEnabled && (
+        <p className="text-sm text-statusWarn">{t("anomaly.offPage")}</p>
+      )}
 
       {open.failed ? (
         <div className="flex flex-col items-start gap-2">

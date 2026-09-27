@@ -106,7 +106,6 @@ export const en = {
 
   // Dashboard
   "dashboard.title": "Dashboard",
-  "dashboard.subtitle": "Your backup status at a glance.",
   "dashboard.summaryHealth": "Recovery point",
   "dashboard.summaryNextBackup": "Next backup",
   "dashboard.summaryNextIn": "in {countdown}",
@@ -1349,7 +1348,6 @@ export const en = {
   // rather than left as a key that looks generic-and-shared but is used
   // nowhere — the next person to need a reset label would have reached for it
   // and reintroduced exactly the ambiguity this round removed.)
-  "containers.subtitle": "Manage container backups, schedules, and restores.",
   "containers.emptyDocker": "No containers found. Is Docker running?",
   "containers.bulkResult": "{ok} ok, {fail} failed",
   "vm.method.saveFailed": "Couldn't change the backup method. It was not switched.",
@@ -1521,7 +1519,6 @@ export const en = {
 
   // VMs page
   "vms.title": "Virtual Machines",
-  "vms.subtitle": "Manage VM backups, schedules, and restores.",
   "vms.empty": "No VMs found. Is libvirt/KVM running?",
   "vms.backupSelected": "Back up selected",
   "vms.restoreSelected": "Restore selected (latest)",
@@ -1534,7 +1531,6 @@ export const en = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash Backup",
-  "flash.subtitle": "Back up and restore the Unraid USB flash (the whole /boot).",
   "flash.backupTitle": "Back up the flash",
   "flash.backupHint": "Captures the entire USB flash (/boot): Unraid OS, license, array config, shares, network and plugin config.",
   "flash.backupNow": "Back up flash now",
@@ -1588,7 +1584,6 @@ export const en = {
   // Config self-backup (BombVault's own settings). Minimal en/de set for Task 12;
   // the full 24-locale translation lands in Task 14.
   "config.title": "Self-Backup",
-  "config.subtitle": "Back up BombVault's own settings so a rebuilt server can restore itself.",
   "config.settingsTitle": "Self-Backup settings",
   "config.settingsHint": "Protect BombVault's own configuration (its settings database, off-site credentials and SSH keys) so a fresh install can restore itself and pick up right where it left off.",
   "config.enabled": "Back up BombVault's settings",
@@ -1610,8 +1605,6 @@ export const en = {
   // another BombVault pushes to)
   "receiver.title": "Receiver",
   "instances.title": "Instances",
-  "instances.subtitle": "Everything to do with another BombVault: repositories sent here, instances watched over HTTP, and repositories this box fetches from.",
-  "receiver.subtitle": "Monitor the off-site copies other BombVault instances push to this box, read-only.",
   "receiver.addRepo": "Add received repo",
   // Card-title Badge headline for the empty-state list card (GlimStone
   // follow-up pass, "half-overlap card notch") — distinct from receiver.title
@@ -1675,7 +1668,6 @@ export const en = {
   // into this one. The mirror image of off-site replication.
   "pull.name": "Name",
   "pull.title": "Pull",
-  "pull.subtitle": "Fetch backups out of another BombVault's repository into this one.",
   "pull.addSource": "Add source",
   "pull.emptyTitle": "Pull sources",
   "pull.empty": "No pull sources yet. Add another BombVault's repository and that instance's APP_KEY, and this box fetches its snapshots into its own repository on a schedule you choose. The far side needs to configure nothing and does not even have to be awake.",
@@ -1704,7 +1696,6 @@ export const en = {
   "settings.pullEnabled": "Pull from other instances",
   "settings.pullEnabledHint": "Fetch another BombVault's backups into this box's own repository (writes data here)",
   "fleet.title": "Fleet",
-  "fleet.subtitle": "Watch the protection status of peer BombVault instances, read-only.",
   "fleet.addPeer": "Add peer",
   // Card-title Badge headline for the empty-state list card (GlimStone
   // follow-up pass, "half-overlap card notch") — distinct from fleet.title
@@ -1808,7 +1799,6 @@ export const en = {
   // Guided Recovery tab. The `recovery.*` keys above belong to the encryption
   // kit; the page heading reads `nav.recovery`, the same word as the sidebar.
   "nav.recovery": "Recovery",
-  "recovery.intro": "Recover your containers and VMs from an existing backup onto this install.",
   // Step 1 — connection / APP_KEY readability check
   "recovery.step1": "Can BombVault read your backups?",
   "recovery.appKeyExplain": "To read existing backups this container needs the SAME APP_KEY it used before. It's in your recovery kit. Set it in the Unraid container template if it isn't already, then re-check.",
@@ -1903,7 +1893,6 @@ export const en = {
   "settings.everythingStarted": "Started. It runs on the server across every domain in turn; watch the Activity Log for the outcome.",
   "settings.everythingAlreadyRunning": "A Backup Everything pass is already running.",
   "settings.everythingBusy": "Working…",
-  "settings.subtitle": "BombVault configuration. Changes take effect immediately.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filters",
 
@@ -1938,7 +1927,6 @@ export const en = {
   // technical identifiers and deliberately keep the historical name.
   "nav.files": "Folders",
   "files.title": "Folders",
-  "files.subtitle": "Back up any folders on this server, with schedules, off-site copies and restores.",
   // Card-title Badge headline for the empty-state list card (GlimStone
   // follow-up pass, "half-overlap card notch") — distinct from files.title
   // (the page's own h1) since the two sit right on top of each other.
@@ -2043,7 +2031,6 @@ export const en = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS datasets",
-  "zfs.subtitle": "Back up ZFS datasets together with their child datasets from one snapshot, with deduplication, file browsing and single-file restore.",
   "settings.zfsEnabled": "ZFS datasets",
   "settings.zfsEnabledHint": "Back up ZFS datasets and their child datasets from snapshots, using the SSH connection to this server.",
   "settings.zfsPath": "ZFS datasets path",
@@ -2778,7 +2765,6 @@ export const en = {
   "anomaly.sentence.capacityEta": "The disk holding {domains} will be full in about {time} at the current rate.",
   "anomaly.sentence.capacityLow": "The disk holding {domains} has only {free} left ({percent}%).",
   "anomaly.sentence.unknown": "An anomaly was found for {name}. Reload the page to see details.",
-  "anomaly.pageSubtitle": "What changed in your backups and deserves a look.",
   "anomaly.offPage": "Anomaly detection is switched off. Earlier anomalies stay listed here.",
   "anomaly.retry": "Try again",
   "anomaly.filter.severity": "Severity",
@@ -2926,7 +2912,6 @@ export const de: Translations = {
   "mode.advancedView": "Erweiterte Ansicht",
 
   "dashboard.title": "Dashboard",
-  "dashboard.subtitle": "Dein Backup-Status auf einen Blick.",
   "dashboard.summaryHealth": "Wiederherstellungspunkt",
   "dashboard.summaryNextBackup": "Nächstes Backup",
   "dashboard.summaryNextIn": "in {countdown}",
@@ -3984,7 +3969,6 @@ export const de: Translations = {
   "folder.pathHint": "Pfad muss ein relativer Unterpfad sein (kein führendes / oder ..)",
   "folder.couldNotRead": "Verzeichnis konnte nicht gelesen werden",
   "folder.browseFailed": "Durchsuchen fehlgeschlagen",
-  "containers.subtitle": "Container-Backups, Zeitpläne und Wiederherstellungen verwalten.",
   "containers.emptyDocker": "Keine Container gefunden. Läuft Docker?",
   "containers.bulkResult": "{ok} ok, {fail} fehlgeschlagen",
   "vm.method.saveFailed": "Backup-Methode konnte nicht geändert werden. Sie wurde nicht umgestellt.",
@@ -4127,7 +4111,6 @@ export const de: Translations = {
 
   // VMs page
   "vms.title": "Virtuelle Maschinen",
-  "vms.subtitle": "VM-Backups, Zeitpläne und Wiederherstellungen verwalten.",
   "vms.empty": "Keine VMs gefunden. Läuft libvirt/KVM?",
   "vms.backupSelected": "Auswahl sichern",
   "vms.restoreSelected": "Auswahl wiederherstellen (neuestes)",
@@ -4140,7 +4123,6 @@ export const de: Translations = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash-Backup",
-  "flash.subtitle": "Den Unraid-USB-Stick (das ganze /boot) sichern und wiederherstellen.",
   "flash.backupTitle": "Flash sichern",
   "flash.backupHint": "Sichert den kompletten USB-Stick (/boot): Unraid-OS, Lizenz, Array-Config, Shares, Netzwerk und Plugin-Config.",
   "flash.backupNow": "Flash jetzt sichern",
@@ -4177,7 +4159,6 @@ export const de: Translations = {
   // Config-Selbst-Backup (BombVaults eigene Einstellungen). Minimaler en/de-Satz
   // für Task 12; die vollständige 24-Sprachen-Übersetzung folgt in Task 14.
   "config.title": "Selbst-Backup",
-  "config.subtitle": "Sichert BombVaults eigene Einstellungen, damit sich ein neu aufgesetzter Server selbst wiederherstellen kann.",
   "config.settingsTitle": "Selbst-Backup-Einstellungen",
   "config.settingsHint": "Schützt BombVaults eigene Konfiguration (die Einstellungsdatenbank, Offsite-Zugangsdaten und SSH-Schlüssel), damit eine frische Installation sich selbst wiederherstellt und genau dort weitermacht, wo sie aufgehört hat.",
   "config.enabled": "BombVaults Einstellungen sichern",
@@ -4199,8 +4180,6 @@ export const de: Translations = {
   // in das ein anderes BombVault schiebt)
   "receiver.title": "Empfänger",
   "instances.title": "Instanzen",
-  "instances.subtitle": "Alles, was mit einer anderen BombVault-Instanz zu tun hat: hierher gesendete Repositorien, per HTTP beobachtete Instanzen und Repositorien, aus denen diese Kiste holt.",
-  "receiver.subtitle": "Überwache die Off-site-Kopien, die andere BombVault-Instanzen auf diese Box schieben, rein lesend.",
   "receiver.addRepo": "Empfangenes Repo hinzufügen",
   "receiver.emptyTitle": "Empfangene Repos",
   "receiver.empty": "Noch keine empfangenen Repositories. Füge das Repo hinzu, in das ein anderes BombVault seine Off-site-Kopien schiebt, und BombVault überwacht es nur lesend: was angekommen ist, wann das letzte Backup eintraf und eine unabhängige Integritätsprüfung auf dieser Hardware.",
@@ -4256,7 +4235,6 @@ export const de: Translations = {
   // Holen (#227)
   "pull.name": "Name",
   "pull.title": "Holen",
-  "pull.subtitle": "Sicherungen aus dem Repositorium eines anderen BombVault in dieses hier holen.",
   "pull.addSource": "Quelle hinzufügen",
   "pull.emptyTitle": "Quellen",
   "pull.empty": "Noch keine Quellen. Trag das Repositorium eines anderen BombVault und dessen APP_KEY ein, dann holt diese Kiste seine Snapshots nach einem Zeitplan deiner Wahl in ihr eigenes Repositorium. Die Gegenseite muss nichts einrichten und nicht einmal wach sein.",
@@ -4285,7 +4263,6 @@ export const de: Translations = {
   "settings.pullEnabled": "Von anderen Instanzen holen",
   "settings.pullEnabledHint": "Sicherungen eines anderen BombVault in das eigene Repositorium dieser Kiste holen (schreibt hier Daten)",
   "fleet.title": "Flotte",
-  "fleet.subtitle": "Den Schutzstatus verbundener BombVault-Instanzen einsehen, rein lesend.",
   "fleet.addPeer": "Instanz hinzufügen",
   "fleet.emptyTitle": "Verbundene Instanzen",
   "fleet.empty": "Noch keine verbundenen Instanzen. Füge die URL und den Fleet-Token einer anderen BombVault-Instanz hinzu, und diese Box fragt nur lesend ihre Schutz-Scorecard ab, nicht mehr.",
@@ -4383,7 +4360,6 @@ export const de: Translations = {
 
   // Guided Recovery tab (disaster-recovery walkthrough)
   "nav.recovery": "Wiederherstellung",
-  "recovery.intro": "Stelle deine Container und VMs aus einem vorhandenen Backup auf dieser Installation wieder her.",
   // Schritt 1 — Verbindungs-/APP_KEY-Lesbarkeitsprüfung
   "recovery.step1": "Kann BombVault deine Backups lesen?",
   "recovery.appKeyExplain": "Um vorhandene Backups zu lesen, braucht dieser Container denselben APP_KEY wie zuvor. Er steht in deinem Recovery-Kit. Setze ihn im Unraid-Container-Template, falls noch nicht geschehen, und prüfe erneut.",
@@ -4476,7 +4452,6 @@ export const de: Translations = {
   "settings.everythingStarted": "Gestartet. Es läuft auf dem Server nacheinander über jeden Bereich; das Aktivitätsprotokoll zeigt das Ergebnis.",
   "settings.everythingAlreadyRunning": "Es läuft bereits ein Gesamt-Backup.",
   "settings.everythingBusy": "Arbeite…",
-  "settings.subtitle": "BombVault-Konfiguration. Änderungen wirken sofort.",
   // Filter-Auslöser (v5-Redesign)
   "filter.button": "Filter",
 
@@ -4510,7 +4485,6 @@ export const de: Translations = {
   // die historischen files.*-Namen; nur die angezeigten Werte heißen "Ordner")
   "nav.files": "Ordner",
   "files.title": "Ordner",
-  "files.subtitle": "Beliebige Ordner dieses Servers sichern, mit Zeitplänen, Off-site-Kopien und Wiederherstellungen.",
   "files.setsTitle": "Ordner-Sets",
   "files.empty": "Noch keine Ordner-Sets. Füge einen Ordner hinzu (Shares, Dokumente, Fotos, alles unter deinen Mounts) und BombVault schützt ihn wie alles andere: Zeitpläne, Off-site-Kopien, Integritätsprüfungen und Wiederherstellungen. Kein separates Datei-Backup-Tool nötig.",
   "files.addSet": "Ordner-Set hinzufügen",
@@ -4597,7 +4571,6 @@ export const de: Translations = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS-Datasets",
-  "zfs.subtitle": "Sichert ZFS-Datasets zusammen mit ihren Unter-Datasets aus einem einzigen Snapshot, mit Deduplizierung, Dateibrowser und Wiederherstellung einzelner Dateien.",
   "settings.zfsEnabled": "ZFS-Datasets",
   "settings.zfsEnabledHint": "Sichert ZFS-Datasets und ihre Unter-Datasets aus Snapshots, über die SSH-Verbindung zu diesem Server.",
   "settings.zfsPath": "ZFS-Datasets-Pfad",
@@ -5311,7 +5284,6 @@ export const de: Translations = {
   "anomaly.sentence.capacityEta": "Der Datenträger mit {domains} ist bei diesem Tempo in etwa {time} voll.",
   "anomaly.sentence.capacityLow": "Auf dem Datenträger mit {domains} sind nur noch {free} frei ({percent}%).",
   "anomaly.sentence.unknown": "Für {name} wurde eine Anomalie gefunden. Lade die Seite neu, um Details zu sehen.",
-  "anomaly.pageSubtitle": "Was sich in deinen Backups geändert hat und einen Blick wert ist.",
   "anomaly.offPage": "Die Anomalie-Erkennung ist ausgeschaltet. Frühere Anomalien bleiben hier aufgelistet.",
   "anomaly.retry": "Erneut versuchen",
   "anomaly.filter.severity": "Schweregrad",

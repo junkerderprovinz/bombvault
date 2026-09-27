@@ -51,7 +51,6 @@ const ca: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Tauler",
-  "dashboard.subtitle": "L'estat de les còpies de seguretat d'un cop d'ull.",
   "dashboard.summaryHealth": "Punt de recuperació",
   "dashboard.summaryNextBackup": "Pròxima còpia",
   "dashboard.summaryNextIn": "d’aquí a {countdown}",
@@ -1098,7 +1097,6 @@ const ca: Partial<Translations> = {
   "folder.creating": "Creant…",
   "folder.createFailed": "No s'ha pogut crear la carpeta",
   "folder.browseFailed": "Ha fallat l'exploració",
-  "containers.subtitle": "Gestiona còpies, horaris i restauracions de contenidors.",
   "containers.emptyDocker": "No s'ha trobat cap contenidor. S'està executant Docker?",
   "containers.bulkResult": "{ok} correctes, {fail} fallits",
   "vm.method.saveFailed": "No s'ha pogut canviar el mètode de còpia. No s'ha commutat.",
@@ -1239,7 +1237,6 @@ const ca: Partial<Translations> = {
 
   // VMs page
   "vms.title": "Màquines virtuals",
-  "vms.subtitle": "Gestiona còpies, horaris i restauracions de MV.",
   "vms.empty": "No s'ha trobat cap MV. S'està executant libvirt/KVM?",
   "vms.backupSelected": "Fes còpia dels seleccionats",
   "vms.restoreSelected": "Restaura els seleccionats (últim)",
@@ -1252,7 +1249,6 @@ const ca: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Còpia de Flash",
-  "flash.subtitle": "Fes còpia i restaura el USB Flash d'Unraid (tot el /boot).",
   "flash.backupTitle": "Fes còpia del Flash",
   "flash.backupHint": "Captura tota la unitat USB (/boot): SO Unraid, llicència, configuració de l'array, comparticions, xarxa i configuració de plugins.",
   "flash.backupNow": "Fes còpia del Flash ara",
@@ -1288,7 +1284,6 @@ const ca: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "Autocòpia",
-  "config.subtitle": "Fa còpia de la configuració pròpia de BombVault perquè un servidor reconstruït es pugui restaurar sol.",
   "config.settingsTitle": "Configuració de l'autocòpia",
   "config.settingsHint": "Protegeix la configuració pròpia de BombVault (la base de dades de configuració, les credencials externes i les claus SSH) perquè una instal·lació nova es pugui restaurar sola i continuar exactament on ho va deixar.",
   "config.enabled": "Fes còpia de la configuració de BombVault",
@@ -1309,8 +1304,6 @@ const ca: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Receptor",
   "instances.title": "Instàncies",
-  "instances.subtitle": "Tot el que té a veure amb un altre BombVault: dipòsits enviats aquí, instàncies vigilades per HTTP i dipòsits d'on recull aquesta màquina.",
-  "receiver.subtitle": "Supervisa les còpies externes que altres instàncies de BombVault envien a aquesta caixa, només lectura.",
   "receiver.addRepo": "Afegeix repositori rebut",
   "receiver.emptyTitle": "Repositoris rebuts",
   "receiver.empty": "Encara no hi ha repositoris rebuts. Afegeix el repositori on un altre BombVault envia les seves còpies externes, i BombVault el supervisa només en lectura: què ha arribat, quan va arribar l'última còpia, i una comprovació independent d'integritat en aquest maquinari.",
@@ -1365,7 +1358,6 @@ const ca: Partial<Translations> = {
   "receiver.saveError": "No s'ha pogut desar el repositori rebut.",
   "pull.name": "Nom",
   "pull.title": "Recollida",
-  "pull.subtitle": "Recull còpies de seguretat del repositori d'un altre BombVault cap a aquest.",
   "pull.addSource": "Afegeix font",
   "pull.emptyTitle": "Fonts de recollida",
   "pull.empty": "Encara no hi ha fonts de recollida. Afegeix el repositori d'un altre BombVault i la APP_KEY d'aquella instància, i aquesta caixa recollirà les seves instantànies dins del seu propi repositori segons l'horari que triïs. L'altre costat no ha de configurar res i ni tan sols cal que estigui engegat.",
@@ -1394,7 +1386,6 @@ const ca: Partial<Translations> = {
   "settings.pullEnabled": "Recollida d'altres instàncies",
   "settings.pullEnabledHint": "Recull les còpies d'un altre BombVault dins del repositori propi d'aquesta caixa (hi escriu dades)",
   "fleet.title": "Flota",
-  "fleet.subtitle": "Observa l'estat de protecció d'instàncies BombVault connexes, només lectura.",
   "fleet.addPeer": "Afegeix instància",
   "fleet.emptyTitle": "Instàncies de la flota",
   "fleet.empty": "Encara no hi ha instàncies a la flota. Afegeix la URL i el testimoni de flota d'una altra instància de BombVault, i aquesta caixa la consultarà només en lectura per obtenir el seu marcador de protecció, res més.",
@@ -1492,7 +1483,6 @@ const ca: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Recuperació",
-  "recovery.intro": "Recupera els teus contenidors i MV a partir d'una còpia existent en aquesta instal·lació.",
   // Step 1
   "recovery.step1": "Pot BombVault llegir les teves còpies?",
   "recovery.appKeyExplain": "Per llegir còpies existents, aquest contenidor necessita la MATEIXA APP_KEY que feia servir abans. És al teu kit de recuperació. Configura-la a la plantilla del contenidor Unraid si encara no ho està, i torna a comprovar.",
@@ -1579,7 +1569,6 @@ const ca: Partial<Translations> = {
   "settings.everythingStarted": "Iniciada. S'executa al servidor passant per cada àmbit per torns; consulta el registre d'activitat per veure'n el resultat.",
   "settings.everythingAlreadyRunning": "Ja s'està executant una còpia completa.",
   "settings.everythingBusy": "Treballant…",
-  "settings.subtitle": "Configuració de BombVault. Els canvis s'apliquen immediatament.",
   // Filter drawer trigger
   "filter.button": "Filtres",
 
@@ -1612,7 +1601,6 @@ const ca: Partial<Translations> = {
   // Files domain
   "nav.files": "Carpetes",
   "files.title": "Carpetes",
-  "files.subtitle": "Fes còpia de qualsevol carpeta d'aquest servidor, amb horaris, còpies externes i restauracions.",
   "files.setsTitle": "Conjunts de carpetes",
   "files.empty": "Encara no hi ha conjunts de carpetes. Afegeix una carpeta (comparticions, documents, fotos, qualsevol cosa sota els teus muntatges) i BombVault la protegeix com tota la resta: horaris, còpies externes, comprovacions d'integritat i restauracions. No cal cap eina separada de còpia de fitxers.",
   "files.addSet": "Afegeix conjunt de carpetes",
@@ -1666,7 +1654,6 @@ const ca: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "Conjunts de dades ZFS",
-  "zfs.subtitle": "Fes còpia de conjunts de dades ZFS juntament amb els seus conjunts fills des d'una sola instantània, amb deduplicació, exploració de fitxers i restauració d'un sol fitxer.",
   "settings.zfsEnabled": "Conjunts de dades ZFS",
   "settings.zfsEnabledHint": "Fa còpia de conjunts de dades ZFS i dels seus conjunts fills a partir d'instantànies, mitjançant la connexió SSH a aquest servidor.",
   "settings.zfsPath": "Ruta dels conjunts de dades ZFS",
@@ -2402,7 +2389,6 @@ const ca: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "El disc que conté {domains} s'omplirà d'aquí a uns {time} a aquest ritme.",
   "anomaly.sentence.capacityLow": "Al disc que conté {domains} només queden {free} ({percent}%).",
   "anomaly.sentence.unknown": "S'ha trobat una anomalia per a {name}. Torna a carregar la pàgina per veure'n els detalls.",
-  "anomaly.pageSubtitle": "Què ha canviat a les teves còpies de seguretat i mereix una ullada.",
   "anomaly.offPage": "La detecció d'anomalies està desactivada. Les anomalies anteriors continuen llistades aquí.",
   "anomaly.retry": "Torna-ho a provar",
   "anomaly.filter.severity": "Gravetat",

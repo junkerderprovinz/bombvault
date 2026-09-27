@@ -51,7 +51,6 @@ const ms: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Papan Pemuka",
-  "dashboard.subtitle": "Status sandaran anda sepintas lalu.",
   "dashboard.summaryHealth": "Titik pemulihan",
   "dashboard.summaryNextBackup": "Sandaran seterusnya",
   "dashboard.summaryNextIn": "dalam {countdown}",
@@ -1098,7 +1097,6 @@ const ms: Partial<Translations> = {
   "folder.creating": "Mencipta…",
   "folder.createFailed": "Folder gagal dicipta",
   "folder.browseFailed": "Semak imbas gagal",
-  "containers.subtitle": "Urus sandaran, jadual dan pemulihan bekas.",
   "containers.emptyDocker": "Tiada bekas dijumpai. Adakah Docker berjalan?",
   "containers.bulkResult": "{ok} berjaya, {fail} gagal",
   "vm.method.saveFailed": "Kaedah sandaran gagal ditukar. Ia tidak ditukar.",
@@ -1239,7 +1237,6 @@ const ms: Partial<Translations> = {
 
   // VMs page
   "vms.title": "Mesin Maya",
-  "vms.subtitle": "Urus sandaran, jadual dan pemulihan VM.",
   "vms.empty": "Tiada VM dijumpai. Adakah libvirt/KVM berjalan?",
   "vms.backupSelected": "Sandarkan yang dipilih",
   "vms.restoreSelected": "Pulihkan yang dipilih (terkini)",
@@ -1252,7 +1249,6 @@ const ms: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Sandaran Flash",
-  "flash.subtitle": "Sandarkan dan pulihkan Flash USB Unraid (keseluruhan /boot).",
   "flash.backupTitle": "Sandarkan flash",
   "flash.backupHint": "Menangkap keseluruhan USB flash (/boot): OS Unraid, lesen, konfigurasi array, perkongsian, rangkaian dan konfigurasi pemalam.",
   "flash.backupNow": "Sandarkan flash sekarang",
@@ -1288,7 +1284,6 @@ const ms: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "Sandaran Sendiri",
-  "config.subtitle": "Menyandarkan tetapan BombVault sendiri supaya pelayan yang dibina semula boleh memulihkan dirinya sendiri.",
   "config.settingsTitle": "Tetapan Sandaran Sendiri",
   "config.settingsHint": "Melindungi konfigurasi BombVault sendiri (pangkalan data tetapannya, kelayakan luar tapak dan kunci SSH), supaya pemasangan baharu boleh memulihkan dirinya sendiri dan meneruskan tepat di tempat ia berhenti.",
   "config.enabled": "Sandarkan tetapan BombVault",
@@ -1309,8 +1304,6 @@ const ms: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Penerima",
   "instances.title": "Instans",
-  "instances.subtitle": "Segala yang berkaitan dengan BombVault lain: repositori yang dihantar ke sini, instans yang dipantau melalui HTTP, dan repositori yang ditarik oleh mesin ini.",
-  "receiver.subtitle": "Pantau salinan luar tapak yang dihantar instans BombVault lain ke kotak ini, baca sahaja.",
   "receiver.addRepo": "Tambah repositori diterima",
   "receiver.emptyTitle": "Repositori diterima",
   "receiver.empty": "Belum ada repositori diterima. Tambah repositori di mana BombVault lain menghantar salinan luar tapaknya, dan BombVault memantaunya baca sahaja: apa yang tiba, bila sandaran terakhir tiba, dan semakan integriti bebas pada perkakasan ini.",
@@ -1365,7 +1358,6 @@ const ms: Partial<Translations> = {
   "receiver.saveError": "Repositori diterima gagal disimpan.",
   "pull.name": "Nama",
   "pull.title": "Tarik",
-  "pull.subtitle": "Tarik sandaran dari repositori BombVault lain ke repositori ini.",
   "pull.addSource": "Tambah sumber",
   "pull.emptyTitle": "Sumber tarikan",
   "pull.empty": "Belum ada sumber tarikan. Tambahkan repositori BombVault lain serta APP_KEY instans tersebut, dan kotak ini akan menarik snapshotnya ke repositorinya sendiri mengikut jadual yang anda pilih. Pihak seberang tidak perlu menetapkan apa-apa, malah tidak perlu dihidupkan.",
@@ -1394,7 +1386,6 @@ const ms: Partial<Translations> = {
   "settings.pullEnabled": "Tarik daripada instans lain",
   "settings.pullEnabledHint": "Tarik sandaran BombVault lain ke repositori kotak ini sendiri (menulis data di sini)",
   "fleet.title": "Armada",
-  "fleet.subtitle": "Perhatikan status perlindungan instans BombVault yang berkaitan, baca sahaja.",
   "fleet.addPeer": "Tambah instans",
   "fleet.emptyTitle": "Instans armada",
   "fleet.empty": "Belum ada instans dalam armada. Tambah URL dan token armada instans BombVault lain, dan kotak ini akan bertinjau baca sahaja untuk mendapatkan kad skor perlindungannya, tiada lagi.",
@@ -1492,7 +1483,6 @@ const ms: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Pemulihan",
-  "recovery.intro": "Pulihkan bekas dan VM anda daripada sandaran sedia ada pada pemasangan ini.",
   // Step 1
   "recovery.step1": "Bolehkah BombVault membaca sandaran anda?",
   "recovery.appKeyExplain": "Untuk membaca sandaran sedia ada, bekas ini memerlukan APP_KEY YANG SAMA seperti yang digunakan sebelum ini. Ia ada dalam kit pemulihan anda. Tetapkannya dalam templat bekas Unraid jika belum lagi, kemudian semak semula.",
@@ -1579,7 +1569,6 @@ const ms: Partial<Translations> = {
   "settings.everythingStarted": "Dimulakan. Ia berjalan pada pelayan melalui setiap domain secara bergilir; lihat log aktiviti untuk hasilnya.",
   "settings.everythingAlreadyRunning": "Proses Sandar Semua sedang berjalan.",
   "settings.everythingBusy": "Sedang bekerja…",
-  "settings.subtitle": "Konfigurasi BombVault. Perubahan berkuat kuasa serta-merta.",
   // Filter drawer trigger
   "filter.button": "Penapis",
 
@@ -1612,7 +1601,6 @@ const ms: Partial<Translations> = {
   // Files domain
   "nav.files": "Folder",
   "files.title": "Folder",
-  "files.subtitle": "Sandarkan mana-mana folder pada pelayan ini, dengan jadual, salinan luar tapak dan pemulihan.",
   "files.setsTitle": "Set folder",
   "files.empty": "Belum ada set folder. Tambah folder (perkongsian, dokumen, foto, apa sahaja di bawah mount anda), dan BombVault melindunginya seperti yang lain: jadual, salinan luar tapak, semakan integriti dan pemulihan. Tiada alat sandaran fail berasingan diperlukan.",
   "files.addSet": "Tambah set folder",
@@ -1666,7 +1654,6 @@ const ms: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "Set data ZFS",
-  "zfs.subtitle": "Sandarkan set data ZFS bersama set data anaknya daripada satu syot kilat, dengan penyahduaan, semak imbas fail dan pemulihan fail tunggal.",
   "settings.zfsEnabled": "Set data ZFS",
   "settings.zfsEnabledHint": "Menyandarkan set data ZFS dan set data anaknya daripada syot kilat, melalui sambungan SSH ke pelayan ini.",
   "settings.zfsPath": "Laluan set data ZFS",
@@ -2402,7 +2389,6 @@ const ms: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Cakera yang memuatkan {domains} akan penuh dalam kira-kira {time} pada kadar ini.",
   "anomaly.sentence.capacityLow": "Pada cakera yang memuatkan {domains} tinggal hanya {free} ({percent}%).",
   "anomaly.sentence.unknown": "Satu anomali ditemui bagi {name}. Muat semula halaman untuk melihat butirannya.",
-  "anomaly.pageSubtitle": "Apa yang berubah dalam sandaranmu dan berbaloi ditinjau.",
   "anomaly.offPage": "Pengesanan anomali dimatikan. Anomali terdahulu kekal disenaraikan di sini.",
   "anomaly.retry": "Cuba lagi",
   "anomaly.filter.severity": "Tahap keterukan",

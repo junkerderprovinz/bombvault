@@ -48,7 +48,6 @@ const hu: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Irányítópult",
-  "dashboard.subtitle": "Biztonsági mentéseid állapota egy pillantással.",
   "dashboard.summaryHealth": "Visszaállítási pont",
   "dashboard.summaryNextBackup": "Következő mentés",
   "dashboard.summaryNextIn": "{countdown} múlva",
@@ -391,7 +390,6 @@ const hu: Partial<Translations> = {
   "folder.pathHint": "Az útvonalnak relatív alútvonalnak kell lennie (nincs kezdő / vagy ..)",
   "folder.couldNotRead": "A könyvtár nem olvasható",
   "folder.browseFailed": "A tallózás sikertelen",
-  "containers.subtitle": "Konténer-mentések, ütemezések és visszaállítások kezelése.",
   "containers.emptyDocker": "Nem található konténer. Fut a Docker?",
   "containers.bulkResult": "{ok} rendben, {fail} sikertelen",
   "vm.method.saveFailed": "A mentési módszer nem módosítható. Nem változott.",
@@ -469,7 +467,6 @@ const hu: Partial<Translations> = {
   "auth.passwordMinHint": "Legalább {n} karakter.",
   // VMs page
   "vms.title": "Virtuális gépek",
-  "vms.subtitle": "VM mentések, ütemezések és visszaállítások kezelése.",
   "vms.empty": "Nem találhatók VM-ek. Fut a libvirt/KVM?",
   "vms.backupSelected": "Kijelöltek mentése",
   "vms.restoreSelected": "Kijelöltek visszaállítása (legújabb)",
@@ -637,7 +634,6 @@ const hu: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash mentés",
-  "flash.subtitle": "Az Unraid USB flash (az egész /boot) mentése és visszaállítása.",
   "flash.backupTitle": "A flash mentése",
   "flash.backupHint": "Rögzíti a teljes USB flasht (/boot): Unraid OS, licenc, tömbkonfiguráció, megosztások, hálózat és bővítmény-konfiguráció.",
   "flash.backupNow": "Flash mentése most",
@@ -827,7 +823,6 @@ const hu: Partial<Translations> = {
   "recovery.stored": "Biztonságosan eltároltam",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "Állítsd vissza a konténereidet és VM-jeidet egy meglévő biztonsági mentésből erre a telepítésre.",
   "recovery.step1": "Tudja a BombVault olvasni a mentéseidet?",
   "recovery.appKeyExplain": "A meglévő mentések olvasásához ennek a konténernek UGYANARRA az APP_KEY-re van szüksége, amit korábban használt. Ez a helyreállítási csomagodban van. Állítsd be az Unraid konténer-sablonban, ha még nincs, majd ellenőrizd újra.",
   "recovery.appKeyRemedy": "A titkosítási kulcs nem egyezik ezekkel a mentésekkel. Állítsd be az eredeti APP_KEY-t (a helyreállítási csomagodból) a konténer-sablonban, majd ellenőrizd újra.",
@@ -1288,7 +1283,6 @@ const hu: Partial<Translations> = {
 
   // Config backup (BombVault's own settings)
   "config.title": "Önmentés",
-  "config.subtitle": "Mentsd BombVault saját beállításait, hogy egy újraépített szerver helyre tudja állítani magát.",
   "config.settingsTitle": "Önmentés beállításai",
   "config.settingsHint": "Védd meg BombVault saját konfigurációját (a beállítás-adatbázisát, a telephelyen kívüli hitelesítő adatait és az SSH-kulcsait), hogy egy friss telepítés helyre tudja állítani magát, és pontosan ott folytassa, ahol abbahagyta.",
   "config.enabled": "BombVault beállításainak mentése",
@@ -1385,7 +1379,6 @@ const hu: Partial<Translations> = {
   "settings.everythingStarted": "Elindult. A szerveren sorban lefut minden területen; az eredményt a Tevékenységnaplóban követheted.",
   "settings.everythingAlreadyRunning": "Már fut egy teljes mentés.",
   "settings.everythingBusy": "Folyamatban…",
-  "settings.subtitle": "BombVault-konfiguráció. A módosítások azonnal életbe lépnek.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Szűrők",
 
@@ -1412,7 +1405,6 @@ const hu: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "Mappák",
   "files.title": "Mappák",
-  "files.subtitle": "Mentsd a szerver bármely mappáját, ütemezésekkel, telephelyen kívüli másolatokkal és visszaállításokkal.",
   "files.setsTitle": "Mappakészletek",
   "files.empty": "Még nincsenek mappakészletek. Adj hozzá egy mappát (megosztások, dokumentumok, fotók, bármi a csatolásaid alatt), és a BombVault ugyanúgy védi, mint minden mást: ütemezések, telephelyen kívüli másolatok, integritás-ellenőrzések és visszaállítások. Nincs szükség külön fájlmentő eszközre.",
   "files.addSet": "Mappakészlet hozzáadása",
@@ -1465,7 +1457,6 @@ const hu: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "ZFS-adatkészletek",
-  "zfs.subtitle": "ZFS-adatkészletek mentése a gyermekadatkészleteikkel együtt egyetlen pillanatfelvételből, deduplikációval, fájlböngészéssel és egyetlen fájl visszaállításával.",
   "settings.zfsEnabled": "ZFS-adatkészletek",
   "settings.zfsEnabledHint": "ZFS-adatkészleteket és gyermekadatkészleteiket menti pillanatfelvételekből, az ehhez a szerverhez tartó SSH-kapcsolaton keresztül.",
   "settings.zfsPath": "ZFS-adatkészletek útvonala",
@@ -2093,8 +2084,6 @@ const hu: Partial<Translations> = {
   "settings.fleetEnabledHint": "Kapcsolt BombVault-példányok védelmi állapotának megtekintése (csak olvasható)",
   "receiver.title": "Fogadó",
   "instances.title": "Példányok",
-  "instances.subtitle": "Minden, ami egy másik BombVaulttal kapcsolatos: ide küldött tárházak, HTTP-n figyelt példányok és tárházak, amelyekből ez a gép behúz.",
-  "receiver.subtitle": "Figyelje a külső másolatokat, amelyeket más BombVault-példányok küldenek erre a gépre, csak olvasható módban.",
   "receiver.addRepo": "Fogadott tároló hozzáadása",
   "receiver.emptyTitle": "Fogadott tárolók",
   "receiver.empty": "Még nincsenek fogadott tárolók. Adja hozzá a tárolót, amelybe egy másik BombVault a külső másolatait küldi, és a BombVault csak olvasható módban figyeli: mi érkezett, mikor jött be az utolsó mentés, és egy független sértetlenség-ellenőrzés ezen a hardveren.",
@@ -2149,7 +2138,6 @@ const hu: Partial<Translations> = {
   "receiver.saveError": "A fogadott tárolót nem sikerült menteni.",
   "pull.name": "Név",
   "pull.title": "Lehívás",
-  "pull.subtitle": "Mentések lehívása egy másik BombVault tárolójából ebbe a tárolóba.",
   "pull.addSource": "Forrás hozzáadása",
   "pull.emptyTitle": "Lehívási források",
   "pull.empty": "Még nincsenek lehívási források. Adja hozzá egy másik BombVault tárolóját és annak a példánynak az APP_KEY-ét, és ez a gép a választott ütemezés szerint lehívja a mentéseit a saját tárolójába. A túloldalon semmit sem kell beállítani, és még csak ébren sem kell lennie.",
@@ -2178,7 +2166,6 @@ const hu: Partial<Translations> = {
   "settings.pullEnabled": "Lehívás más példányokból",
   "settings.pullEnabledHint": "Egy másik BombVault mentéseinek lehívása ennek a gépnek a saját tárolójába (adatot ír ide)",
   "fleet.title": "Flotta",
-  "fleet.subtitle": "Kapcsolt BombVault-példányok védelmi állapotának megtekintése, csak olvasható módban.",
   "fleet.addPeer": "Példány hozzáadása",
   "fleet.emptyTitle": "Flottapéldányok",
   "fleet.empty": "Még nincs hozzáadott flottapéldány. Add hozzá egy másik BombVault-példány URL-jét és flotta-tokenjét, és ez a gép csak olvasható módban lekérdezi annak védelmi eredményjelzőjét, semmi mást.",
@@ -2394,7 +2381,6 @@ const hu: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "A(z) {domains} adatait tároló lemez ilyen ütemben körülbelül {time} múlva megtelik.",
   "anomaly.sentence.capacityLow": "A(z) {domains} adatait tároló lemezen már csak {free} szabad ({percent}%).",
   "anomaly.sentence.unknown": "A(z) {name} elemnél anomáliát találtunk. Töltsd újra az oldalt a részletekért.",
-  "anomaly.pageSubtitle": "Mi változott a mentéseidben, és mit érdemes megnézni.",
   "anomaly.offPage": "Az anomáliafelismerés ki van kapcsolva. A korábbi anomáliák itt maradnak felsorolva.",
   "anomaly.retry": "Próbáld újra",
   "anomaly.filter.severity": "Súlyosság",

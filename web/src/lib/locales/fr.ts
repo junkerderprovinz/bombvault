@@ -48,7 +48,6 @@ const fr: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Tableau de bord",
-  "dashboard.subtitle": "Votre état de sauvegarde en un coup d'œil.",
   "dashboard.summaryHealth": "Point de restauration",
   "dashboard.summaryNextBackup": "Prochaine sauvegarde",
   "dashboard.summaryNextIn": "dans {countdown}",
@@ -391,7 +390,6 @@ const fr: Partial<Translations> = {
   "folder.pathHint": "Le chemin doit être un sous-chemin relatif (pas de / initial ni de ..)",
   "folder.couldNotRead": "Impossible de lire le répertoire",
   "folder.browseFailed": "Échec du parcours",
-  "containers.subtitle": "Gérer les sauvegardes, plannings et restaurations des conteneurs.",
   "containers.emptyDocker": "Aucun conteneur trouvé. Docker est-il démarré ?",
   "containers.bulkResult": "{ok} ok, {fail} en échec",
   "vm.method.saveFailed": "Impossible de changer la méthode de sauvegarde, elle n'a pas été modifiée.",
@@ -469,7 +467,6 @@ const fr: Partial<Translations> = {
   "auth.passwordMinHint": "one=Au moins {n} caractère.|many=Au moins {n} caractères.|other=Au moins {n} caractères.",
   // VMs page
   "vms.title": "Machines virtuelles",
-  "vms.subtitle": "Gérer les sauvegardes, plannings et restaurations de VMs.",
   "vms.empty": "Aucune VM trouvée. libvirt/KVM est-il actif ?",
   "vms.backupSelected": "Sauvegarder la sélection",
   "vms.restoreSelected": "Restaurer la sélection (dernier)",
@@ -637,7 +634,6 @@ const fr: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Sauvegarde Flash",
-  "flash.subtitle": "Sauvegarder et restaurer la clé USB flash Unraid (tout le /boot).",
   "flash.backupTitle": "Sauvegarder le flash",
   "flash.backupHint": "Capture toute la clé USB flash (/boot) : OS Unraid, licence, config de la matrice, partages, réseau et config des plugins.",
   "flash.backupNow": "Sauvegarder le flash",
@@ -824,7 +820,6 @@ const fr: Partial<Translations> = {
   "recovery.stored": "Je l'ai conservé en lieu sûr",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.intro": "Récupérez vos conteneurs et VMs depuis une sauvegarde existante vers cette installation.",
   "recovery.step1": "BombVault peut-il lire vos sauvegardes ?",
   "recovery.appKeyExplain": "Pour lire des sauvegardes existantes, ce conteneur a besoin de la MÊME APP_KEY qu'auparavant : elle figure dans votre kit de récupération. Définissez-la dans le modèle de conteneur Unraid si ce n'est pas déjà fait, puis relancez la vérification.",
   "recovery.appKeyRemedy": "La clé de chiffrement ne correspond pas à ces sauvegardes. Définissez l'APP_KEY d'origine (de votre kit de récupération) dans le modèle de conteneur, puis relancez la vérification.",
@@ -1285,7 +1280,6 @@ const fr: Partial<Translations> = {
 
   // Config backup (BombVault's own settings)
   "config.title": "Auto-sauvegarde",
-  "config.subtitle": "Sauvegardez les propres réglages de BombVault pour qu'un serveur reconstruit puisse se restaurer lui-même.",
   "config.settingsTitle": "Réglages de l'auto-sauvegarde",
   "config.settingsHint": "Protégez la propre configuration de BombVault (sa base de réglages, ses identifiants hors site et ses clés SSH) pour qu'une installation neuve puisse se restaurer et reprendre exactement là où elle s'était arrêtée.",
   "config.enabled": "Sauvegarder les réglages de BombVault",
@@ -1382,7 +1376,6 @@ const fr: Partial<Translations> = {
   "settings.everythingStarted": "Démarré : elle s'exécute sur le serveur domaine par domaine ; consulte le Journal d'activité pour connaître le résultat.",
   "settings.everythingAlreadyRunning": "Une sauvegarde complète est déjà en cours.",
   "settings.everythingBusy": "En cours…",
-  "settings.subtitle": "Configuration de BombVault, les modifications prennent effet immédiatement.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filtres",
 
@@ -1409,7 +1402,6 @@ const fr: Partial<Translations> = {
   // Files domain (file-set backups, #62)
   "nav.files": "Dossiers",
   "files.title": "Dossiers",
-  "files.subtitle": "Sauvegardez n'importe quels dossiers de ce serveur, avec plannings, copies hors site et restaurations.",
   "files.setsTitle": "Jeux de dossiers",
   "files.empty": "Aucun jeu de dossiers pour l'instant. Ajoutez un dossier (partages, documents, photos, tout ce qui se trouve sous vos montages), et BombVault le protège comme tout le reste : plannings, copies hors site, contrôles d'intégrité et restaurations. Aucun outil de sauvegarde de fichiers séparé n'est nécessaire.",
   "files.addSet": "Ajouter un jeu de dossiers",
@@ -1462,7 +1454,6 @@ const fr: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "Jeux de données ZFS",
-  "zfs.subtitle": "Sauvegardez des jeux de données ZFS avec leurs jeux enfants depuis un seul instantané, avec déduplication, exploration des fichiers et restauration d'un fichier isolé.",
   "settings.zfsEnabled": "Jeux de données ZFS",
   "settings.zfsEnabledHint": "Sauvegarde des jeux de données ZFS et leurs jeux enfants depuis des instantanés, via la connexion SSH à ce serveur.",
   "settings.zfsPath": "Chemin des jeux de données ZFS",
@@ -2090,8 +2081,6 @@ const fr: Partial<Translations> = {
   "settings.fleetEnabledHint": "Surveillez l'état de protection des instances BombVault associées (lecture seule)",
   "receiver.title": "Récepteur",
   "instances.title": "Instances",
-  "instances.subtitle": "Tout ce qui concerne un autre BombVault : dépôts envoyés ici, instances surveillées par HTTP et dépôts dont cette machine récupère.",
-  "receiver.subtitle": "Surveillez les copies hors site que d'autres instances BombVault poussent vers cette machine, en lecture seule.",
   "receiver.addRepo": "Ajouter un dépôt reçu",
   "receiver.emptyTitle": "Dépôts reçus",
   "receiver.empty": "Aucun dépôt reçu pour l'instant. Ajoutez le dépôt vers lequel un autre BombVault pousse ses copies hors site, et BombVault le surveille en lecture seule : ce qui est arrivé, quand la dernière sauvegarde est entrée, et une vérification d'intégrité indépendante sur ce matériel.",
@@ -2146,7 +2135,6 @@ const fr: Partial<Translations> = {
   "receiver.saveError": "Impossible d'enregistrer le dépôt reçu.",
   "pull.name": "Nom",
   "pull.title": "Rapatriement",
-  "pull.subtitle": "Rapatrier des sauvegardes depuis le dépôt d'un autre BombVault vers celui-ci.",
   "pull.addSource": "Ajouter une source",
   "pull.emptyTitle": "Sources de rapatriement",
   "pull.empty": "Aucune source pour le moment. Indiquez le dépôt d'un autre BombVault et l'APP_KEY de cette instance : cette machine rapatrie ses snapshots dans son propre dépôt, selon le planning de votre choix. L'autre côté n'a rien à configurer et n'a même pas besoin d'être allumé.",
@@ -2175,7 +2163,6 @@ const fr: Partial<Translations> = {
   "settings.pullEnabled": "Rapatrier depuis d'autres instances",
   "settings.pullEnabledHint": "Rapatrier les sauvegardes d'un autre BombVault dans le dépôt de cette machine (écrit des données ici)",
   "fleet.title": "Flotte",
-  "fleet.subtitle": "Surveillez l'état de protection des instances BombVault associées, en lecture seule.",
   "fleet.addPeer": "Ajouter une instance",
   "fleet.emptyTitle": "Instances de la flotte",
   "fleet.empty": "Aucune instance de flotte ajoutée pour le moment. Ajoutez l'URL et le jeton de flotte d'une autre instance BombVault, et cette machine interrogera sa fiche de protection en lecture seule, rien de plus.",
@@ -2391,7 +2378,6 @@ const fr: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Le disque qui contient {domains} sera plein dans environ {time} à ce rythme.",
   "anomaly.sentence.capacityLow": "Il ne reste que {free} sur le disque qui contient {domains} ({percent}%).",
   "anomaly.sentence.unknown": "Une anomalie a été trouvée pour {name}. Rechargez la page pour voir les détails.",
-  "anomaly.pageSubtitle": "Ce qui a changé dans tes sauvegardes et mérite un coup d'œil.",
   "anomaly.offPage": "La détection d'anomalies est désactivée. Les anomalies passées restent listées ici.",
   "anomaly.retry": "Réessayer",
   "anomaly.filter.severity": "Gravité",

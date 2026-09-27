@@ -51,7 +51,6 @@ const bg: Partial<Translations> = {
 
   // Dashboard
   "dashboard.title": "Табло",
-  "dashboard.subtitle": "Състоянието на резервните ти копия с един поглед.",
   "dashboard.summaryHealth": "Точка за възстановяване",
   "dashboard.summaryNextBackup": "Следващо архивиране",
   "dashboard.summaryNextIn": "след {countdown}",
@@ -1098,7 +1097,6 @@ const bg: Partial<Translations> = {
   "folder.creating": "Създаване…",
   "folder.createFailed": "Папката не можа да бъде създадена",
   "folder.browseFailed": "Разглеждането е неуспешно",
-  "containers.subtitle": "Управлявай архивирания, графици и възстановявания на контейнери.",
   "containers.emptyDocker": "Не са намерени контейнери. Работи ли Docker?",
   "containers.bulkResult": "{ok} успешни, {fail} неуспешни",
   "vm.method.saveFailed": "Методът за архивиране не можа да бъде променен — не беше превключен.",
@@ -1239,7 +1237,6 @@ const bg: Partial<Translations> = {
 
   // VMs page
   "vms.title": "Виртуални машини",
-  "vms.subtitle": "Управлявай архивирания, графици и възстановявания на ВМ.",
   "vms.empty": "Не са намерени ВМ. Работи ли libvirt/KVM?",
   "vms.backupSelected": "Архивирай избраните",
   "vms.restoreSelected": "Възстанови избраните (последно)",
@@ -1252,7 +1249,6 @@ const bg: Partial<Translations> = {
 
   // Flash (Unraid USB) backup
   "flash.title": "Flash архивиране",
-  "flash.subtitle": "Архивирай и възстановявай USB флаш устройството на Unraid (цялото /boot).",
   "flash.backupTitle": "Архивирай Flash",
   "flash.backupHint": "Заснема цялото USB флаш устройство (/boot): Unraid OS, лиценз, конфигурация на масива, споделяния, мрежа и конфигурация на плъгини.",
   "flash.backupNow": "Архивирай Flash сега",
@@ -1288,7 +1284,6 @@ const bg: Partial<Translations> = {
 
   // Config self-backup
   "config.title": "Самобекъп",
-  "config.subtitle": "Архивира собствените настройки на BombVault, за да може пресъздаден сървър да се самовъзстанови.",
   "config.settingsTitle": "Настройки на самобекъпа",
   "config.settingsHint": "Защитава собствената конфигурация на BombVault — базата данни с настройки, данните за достъп извън обекта и SSH ключовете — така че нова инсталация да се самовъзстанови и да продължи точно откъдето е спряла.",
   "config.enabled": "Архивирай настройките на BombVault",
@@ -1309,8 +1304,6 @@ const bg: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Приемник",
   "instances.title": "Инстанции",
-  "instances.subtitle": "Всичко, свързано с друг BombVault: хранилища, изпратени тук, инстанции, наблюдавани по HTTP, и хранилища, от които тази машина изтегля.",
-  "receiver.subtitle": "Наблюдавай копията извън обекта, които други BombVault инстанции изпращат на тази кутия, само за четене.",
   "receiver.addRepo": "Добави получено хранилище",
   "receiver.emptyTitle": "Получени хранилища",
   "receiver.empty": "Все още няма получени хранилища. Добави хранилището, в което друг BombVault изпраща копията си извън обекта, и BombVault го наблюдава само за четене: какво е пристигнало, кога е дошло последното архивиране, и независима проверка на целостта на този хардуер.",
@@ -1365,7 +1358,6 @@ const bg: Partial<Translations> = {
   "receiver.saveError": "Полученото хранилище не можа да бъде запазено.",
   "pull.name": "Име",
   "pull.title": "Издърпване",
-  "pull.subtitle": "Издърпай архивите от хранилището на друг BombVault в това.",
   "pull.addSource": "Добави източник",
   "pull.emptyTitle": "Източници за издърпване",
   "pull.empty": "Все още няма източници за издърпване. Добави хранилището на друг BombVault и APP_KEY на онази инстанция, и тази кутия ще издърпва снапшотите му в собственото си хранилище по избран от теб график. Отсрещната страна не настройва нищо и дори не е нужно да е включена.",
@@ -1394,7 +1386,6 @@ const bg: Partial<Translations> = {
   "settings.pullEnabled": "Издърпване от други инстанции",
   "settings.pullEnabledHint": "Издърпвай архивите на друг BombVault в собственото хранилище на тази кутия (записва данни тук)",
   "fleet.title": "Флот",
-  "fleet.subtitle": "Следи статуса на защита на свързани BombVault инстанции, само за четене.",
   "fleet.addPeer": "Добави инстанция",
   "fleet.emptyTitle": "Инстанции във флота",
   "fleet.empty": "Все още няма инстанции във флота. Добави URL адреса и токена за флота на друга BombVault инстанция, и тази кутия ще я анкетира само за четене за резултатната ѝ карта на защита — нищо повече.",
@@ -1492,7 +1483,6 @@ const bg: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Възстановяване",
-  "recovery.intro": "Възстанови контейнерите и ВМ-те си от съществуващо архивиране на тази инсталация.",
   // Step 1
   "recovery.step1": "Може ли BombVault да прочете архивиранията ти?",
   "recovery.appKeyExplain": "За да прочете съществуващи архивирания, този контейнер се нуждае от СЪЩИЯ APP_KEY, който е използвал преди — той е в твоя комплект за възстановяване. Задай го в шаблона на Unraid контейнера, ако вече не е зададен, после провери отново.",
@@ -1579,7 +1569,6 @@ const bg: Partial<Translations> = {
   "settings.everythingStarted": "Стартирано — изпълнява се на сървъра последователно през всяка област; резултатът се вижда в дневника на дейностите.",
   "settings.everythingAlreadyRunning": "Вече се изпълнява пълен бекъп.",
   "settings.everythingBusy": "Работи…",
-  "settings.subtitle": "Конфигурация на BombVault — промените влизат в сила незабавно.",
   // Filter drawer trigger
   "filter.button": "Филтри",
 
@@ -1612,7 +1601,6 @@ const bg: Partial<Translations> = {
   // Files domain
   "nav.files": "Папки",
   "files.title": "Папки",
-  "files.subtitle": "Архивирай произволни папки на този сървър — с графици, копия извън обекта и възстановявания.",
   "files.setsTitle": "Набори от папки",
   "files.empty": "Все още няма набори от папки. Добави папка — споделяния, документи, снимки, каквото и да е под монтиранията ти — и BombVault я защитава като всичко останало: графици, копия извън обекта, проверки на целостта и възстановявания. Не е нужен отделен инструмент за архивиране на файлове.",
   "files.addSet": "Добави набор от папки",
@@ -1666,7 +1654,6 @@ const bg: Partial<Translations> = {
   // ZFS datasets
   "nav.zfs": "ZFS",
   "zfs.title": "Набори данни ZFS",
-  "zfs.subtitle": "Архивирай набори данни ZFS заедно с подчинените им набори от една моментна снимка, с дедупликация, разглеждане на файлове и възстановяване на отделен файл.",
   "settings.zfsEnabled": "Набори данни ZFS",
   "settings.zfsEnabledHint": "Архивира набори данни ZFS и подчинените им набори от моментни снимки, през SSH връзката към този сървър.",
   "settings.zfsPath": "Път за наборите данни ZFS",
@@ -2402,7 +2389,6 @@ const bg: Partial<Translations> = {
   "anomaly.sentence.capacityEta": "Дискът с {domains} ще се напълни при това темпо след около {time}.",
   "anomaly.sentence.capacityLow": "На диска с {domains} са останали само {free} ({percent}%).",
   "anomaly.sentence.unknown": "За {name} е намерена аномалия. Презареди страницата, за да видиш подробностите.",
-  "anomaly.pageSubtitle": "Какво се е променило в архивите ти и заслужава поглед.",
   "anomaly.offPage": "Откриването на аномалии е изключено. Предишните аномалии остават изброени тук.",
   "anomaly.retry": "Опитай отново",
   "anomaly.filter.severity": "Тежест",

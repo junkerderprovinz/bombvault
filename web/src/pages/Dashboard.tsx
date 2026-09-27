@@ -5,6 +5,7 @@ import { hueVars } from "../lib/appearance";
 import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getCoverage, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill, getScheduleNext, backupEverythingNow, acknowledgeAnomalies, markAnomaliesExpected, ApiError } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, CoverageReport, HistoryDay, DayStat, RepoStat, StorageForecast, ScheduleNext, AnomalySummary, AnomalyView, AnomalyActionResult } from "../lib/api";
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
+import { PageTitle } from "../components/PageTitle";
 import { useT } from "../lib/i18n";
 import { SelectField } from "../components/SelectField";
 import { isOwnReason, isWarningNote, RunReasonText } from "../lib/runReason";
@@ -3438,21 +3439,8 @@ export function Dashboard() {
               BombVault
             </span>
           </div>
-          {/* The house heading form, every tab identical (pageHeading guard):
-              no max-md shrink here even on mobile; a tab whose title is
-              smaller than its siblings' reads as less important than they
-              are, and every other tab's h1 is text-2xl at every width. */}
-          <h1 className="text-2xl font-semibold text-carbon-text">
-            {t("dashboard.title")}
-          </h1>
-          {/* The 12px meta line under the 20px heading: the subtitle
-              steps down to text-xs below the breakpoint. The live instance
-              facts beneath it (per-domain off-site replication indicators)
-              are shared with desktop and untouched. */}
-          <p className="mt-1 text-sm max-md:text-xs text-carbon-textSub">
-            {t("dashboard.subtitle")}
-          </p>
-          <div className="mt-2 flex flex-col gap-1">
+          <PageTitle>{t("dashboard.title")}</PageTitle>
+          <div className="flex flex-col gap-1">
             <OffsiteIndicator domain="containers" withLabel />
             <OffsiteIndicator domain="vms" withLabel />
             <OffsiteIndicator domain="flash" withLabel />

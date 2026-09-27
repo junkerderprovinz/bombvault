@@ -58,7 +58,15 @@ describe("the scrolling page column", () => {
 describe("a page that opens with a card", () => {
   it("starts at the card's badge, half the 22px badge above the card", () => {
     const css = readFileSync(join(here, "..", "index.css"), "utf8");
-    const rule = /\.glim-page-enter > \.glim-notch-card:first-child,\s*\.glim-page-enter > :first-child > \.glim-notch-card:first-child\s*\{([^}]*)\}/.exec(css);
+    const rule =
+      /\.glim-page-enter > \.glim-notch-card:first-child,\s*\.glim-page-enter > :first-child > \.glim-notch-card:first-child,\s*\.glim-page-enter > :first-child > \.glim-page-title:first-child \+ \.glim-notch-card\s*\{([^}]*)\}/.exec(
+        css,
+      );
     expect(rule?.[1]).toMatch(/margin-top:\s*11px/);
+  });
+
+  it("still finds that badge when the sr-only page heading comes first", () => {
+    const css = readFileSync(join(here, "..", "index.css"), "utf8");
+    expect(css).toContain(".glim-page-title:first-child + .glim-notch-card");
   });
 });
