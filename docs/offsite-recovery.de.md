@@ -63,7 +63,7 @@ Ein Bereich an einem entfernten Ort ist wie ein lokaler die Quelle seiner Kopien
 
 Markiere ein Off-site-Repo als Append-only, sodass Ransomware oder ein kompromittierter Host deine Backups nicht löschen oder überschreiben kann. Die Gegenseite (ein `restic/rest-server`, der im `--append-only`-Modus läuft) **erzwingt** es. BombVault **verifiziert** es nur und zeigt niemals grün allein auf eine Konfigurationsbehauptung hin.
 
-Das Fenster **Ort hinzufügen** enthält ein fertiges Rezept für einen rest-server im Append-only-Modus, mit einem Benutzer für dieses BombVault. Bei einem rest-server-Ort mit eingeschaltetem **Append-only** führt **Auf append-only prüfen** in den Details des Ortes den Manipulationstest für jeden Bereich aus, den der Ort speichert oder kopiert. So lässt sich Append-only-Off-site einrichten, ohne Konfigurationsdateien von Hand zu bearbeiten.
+Das Fenster **Ort hinzufügen** enthält ein fertiges Rezept für einen rest-server im Append-only-Modus, mit einem Benutzer für dieses BombVault. Bei einem rest-server-Ort mit eingeschaltetem **Append-only** führt **Auf append-only prüfen** in den Details des Ortes den Manipulationstest für jeden Bereichspfad, jede eingeschaltete Kopie und jedes Repository an diesem Ort aus und gibt eine Antwort für den ganzen Ort. So lässt sich Append-only-Off-site einrichten, ohne Konfigurationsdateien von Hand zu bearbeiten.
 
 !!! note "Eine erfolgreiche Löschung unter `/locks/` ist erwartet"
     Append-only heißt nicht, dass gar nichts mehr entfernt werden kann. restic muss seine eigenen Sperren setzen und wieder lösen, deshalb bleibt `/locks/` absichtlich schreib- und löschbar. Snapshots und die Daten dahinter, also genau das, worauf Ransomware zielt, lassen sich nicht entfernen. Wer die Gegenseite selbst abklopft, bekommt unter `/locks/` eine erfolgreiche Löschung: das ist richtig so und kein Loch im Schutz.
@@ -81,12 +81,14 @@ BombVault beweist die Append-only-Garantie regelmäßig, indem es tatsächlich e
 
 Ein echtes Kippen von geschützt zu ungeschützt löst einen einzelnen Alarm aus.
 
+An einem Ort prüft **Auf append-only prüfen** jeden Bereichspfad, jede eingeschaltete Kopie und jedes Repository dort mit dessen eigenen Zugangsdaten und fasst die Urteile zu einer Antwort zusammen: Nimmt ein einziges Repository ein Löschen an, lautet sie für den ganzen Ort *Löschen möglich*.
+
 ## DR-Übungen
 
 BombVault bietet zwei Stufen des Nachweises, dass deine Backups tatsächlich wiederherstellbar und nicht nur vorhanden sind.
 
 - **Wiederherstellungs-Prüfübungen (lokal).** BombVault führt regelmäßig `restic check --read-data-subset` aus (begrenzt, nie eine plattenfüllende Vollwiederherstellung) und zeigt pro Bereich ein Abzeichen *zuletzt als wiederherstellbar geprüft*. Die Taktung liegt unter Einstellungen, Zeitpläne; das Abzeichen unter Einstellungen, Integrität.
-- **DR-Übungen (Off-site).** BombVault stellt ein echtes Ziel aus dem Off-site-Repo in eine Wegwerf-Sandbox wieder her, prüft es Datei für Datei und Byte für Byte und räumt dann auf. Dies beweist, dass du aus dem Off-site wiederherstellen kannst, nicht nur, dass das Repo antwortet.
+- **DR-Übungen (Off-site).** BombVault stellt ein echtes Ziel aus dem Off-site-Repo in eine Wegwerf-Sandbox wieder her, prüft es Datei für Datei und Byte für Byte und räumt dann auf. Dies beweist, dass du aus dem Off-site wiederherstellen kannst, nicht nur, dass das Repo antwortet. Wird ein Bereich an mehrere Orte kopiert, kommt pro geplantem Lauf einer davon an die Reihe, und das Dashboard nennt den Ort der letzten Übung.
 
 Die **Ransomware-Schutz-Scorecard** im Dashboard fasst dies zu einer grün / gelb / rot-Haltung pro Bereich zusammen, mit einer altersgestempelten Checkliste (Off-site konfiguriert, Append-only verifiziert, Replikation aktuell, Wiederherstellungsübung bestanden, Verschlüsselung an, Kürzungsstrategie gesetzt). Jede rote Zeile verlinkt tief zur Behebung, und die Karte wird nur bei verifizierten Fakten grün.
 
@@ -124,7 +126,7 @@ Zwei Kisten: **TOWER** betreibt die Container und schiebt die Backups, **VAULT**
 
 Das erste Pfadsegment ist der htpasswd-Benutzer, hier `tower`, und jeder Bereich bekommt darunter seinen Ordner, zum Beispiel `rest:http://VAULT:8000/tower/container`. **Wo steht das Gerät?** mit **An einem anderen Ort** beantworten, auf **Hinzufügen** klicken und den Ort unter **Kopiert nach** für die Bereiche anhaken, die dorthin sollen.
 
-**3. Auf TOWER Append-only einschalten.** In den Details des Ortes unter **Schutz** den Schalter **Append-only** einschalten, dann auf **Auf append-only prüfen** klicken. Der Test prüft jeden Bereich, den der Ort speichert oder kopiert, und gibt eine Antwort für den ganzen Ort, die *Löschen verweigert* lauten muss. Was die Antworten bedeuten:
+**3. Auf TOWER Append-only einschalten.** In den Details des Ortes unter **Schutz** den Schalter **Append-only** einschalten, dann auf **Auf append-only prüfen** klicken. Der Test prüft jeden Bereichspfad, jede Kopie und jedes Repository an diesem Ort und gibt eine Antwort für den ganzen Ort, die *Löschen verweigert* lauten muss. Was die Antworten bedeuten:
 
 | Ergebnis | Was passiert ist |
 | --- | --- |
@@ -145,9 +147,9 @@ Das erste Pfadsegment ist der htpasswd-Benutzer, hier `tower`, und jeder Bereich
 
 Ein eigener **Recovery**-Tab führt eine frische oder neu aufgebaute Installation durch den Katastrophenfall, an einem Ort:
 
-1. **Stellt zuerst BombVaults eigene Einstellungen wieder her**, sodass die Backup-Pfade, Off-site-Ziele und Zugangsdaten, die der Rest des Ablaufs braucht, vorausgefüllt sind (angewendet per Selbst-Neustart über den Docker-Socket, sodass die laufende Einstellungsdatenbank nie unter einem offenen Handle überschrieben wird).
-2. **Prüft, dass BombVault deine Backups lesen kann** (der Verschlüsselungsschlüssel-Fallstrick vorab).
-3. Lässt dich **auf dein bestehendes Repo verweisen**: einen lokalen Ordner oder einen entfernten Ort, verbunden über dasselbe Fenster **Ort hinzufügen** wie unter Einstellungen, Speicher.
+1. **Prüft, dass BombVault deine Backups lesen kann** (der Verschlüsselungsschlüssel-Fallstrick vorab).
+2. **Stellt BombVaults eigene Einstellungen wieder her**, sodass die Backup-Pfade, Off-site-Ziele und Zugangsdaten, die der Rest des Ablaufs braucht, vorausgefüllt sind. Das Einstellungs-Backup wird von dem Ort gelesen, den die Zeile „Selbst-Backup“ unter **Gespeichert in** nennt, oder von der Kopie des Selbst-Backups unter **Kopiert nach**; der Schritt zeigt diesen Ort mit seiner Adresse. Um von einem anderen Ort zu lesen, änderst du zuerst die Zeile „Selbst-Backup“ in Schritt 3. Angewendet wird die Wiederherstellung per Selbst-Neustart über den Docker-Socket, sodass die laufende Einstellungsdatenbank nie unter einem offenen Handle überschrieben wird.
+3. **Hängt deine vorhandenen Backups an**, über die Zeilen der Karte Domänen: In der Zeile jedes Bereichs wählst du unter **Gespeichert in** den Ort, an dem seine Backups liegen, und unter **Kopiert nach** die Orte mit seinen Kopien. Einen Ort, den noch keine Zeile anbietet, etwa eine Freigabe, einen Server oder einen Cloud-Bucket, verbindest du mit **Ort hinzufügen**, demselben Fenster wie unter Einstellungen, Speicher. **Verbinden & prüfen** testet danach, ob sich die Backups lesen lassen.
 4. **Entdeckt** die darin gespeicherten Container, VMs und Dateisätze.
 5. **Stellt sie alle wieder her** (gestoppt belassen, sodass du sie bewusst startest), mit deinem Recovery-Kit einen Klick entfernt.
 

@@ -27,12 +27,12 @@ Jeder Ort ist eine Zeile mit seinem Anbieter, seiner Verwendung und seinem letzt
 
 - **Allgemein**: der Name, der Schalter, der den Ort ein- und ausschaltet, die Adresse und bei einem Gerät, das du selbst betreibst, **Wo steht das Gerät?** (siehe [Außer Haus](#off-the-premises)).
 - **Aufbewahrung**: letzte, täglich, wöchentlich und monatlich, für jedes Repository am Ort. Ein neuer Ort beginnt mit den voreingestellten Regeln; ein Ort, bei dem jede Regel auf null steht, kürzt nie.
-- **Schutz**: der Schalter **Append-only**. Durchsetzen muss es die Gegenseite; ist der Schalter an, kürzt und löscht BombVault dort nichts. Bei einem rest-server mit eingeschaltetem Append-only führt **Auf append-only prüfen** den Manipulationstest für jeden Bereich aus, den der Ort speichert oder kopiert, und zeigt eine Antwort für den ganzen Ort: *Löschen verweigert* oder *Löschen möglich* (siehe [Off-site & Wiederherstellung](offsite-recovery.md)). Diesen Abschnitt haben nur entfernte Orte, weil nichts auf dieser Box verhindern kann, dass ein lokales Repository gelöscht wird.
+- **Schutz**: der Schalter **Append-only**. Durchsetzen muss es die Gegenseite; ist der Schalter an, kürzt und löscht BombVault dort nichts. Bei einem rest-server mit eingeschaltetem Append-only führt **Auf append-only prüfen** den Manipulationstest für jeden Bereichspfad, jede eingeschaltete Kopie und jedes Repository an diesem Ort aus und zeigt eine Antwort für den ganzen Ort: *Löschen verweigert* oder *Löschen möglich* (siehe [Off-site & Wiederherstellung](offsite-recovery.md)). Diesen Abschnitt haben nur entfernte Orte, weil nichts auf dieser Box verhindern kann, dass ein lokales Repository gelöscht wird.
 - **Zugang**: die Zugangsdaten und bei S3 die Speicherklasse. Ein Ort, der die gemeinsamen Zugangsdaten benutzt, bekommt bei der ersten Änderung einen eigenen Satz. Ein direktes Repository am Ort, das die neuen Zugangsdaten nicht öffnen können, behält die alten, und die Antwort sagt das. Ordner-, SFTP- und rclone-Orte haben diesen Abschnitt nicht.
 - **Grenzen**: die Upload- und Download-Rate und das Wachstumsbudget.
 - **Ordner**: ein Schalter pro Bereich, mit dem Namen seines Ordners. Ein Bereich, der hier ausgeschaltet ist, kann den Ort nicht wählen.
 
-Wer die Aufbewahrung senkt oder Append-only ausschaltet, wird vorher gefragt und erfährt, wie viele Elemente das betrifft. Wird ein Ort ausgeschaltet, sind auch alle Repositories an ihm aus; ein Ort, an dem ein Bereich gespeichert ist, lässt sich nicht ausschalten.
+Wer die Aufbewahrung senkt, wird vorher gefragt und erfährt, wie viele Elemente das betrifft; wer Append-only ausschaltet, wird vorher gefragt und erfährt, wie viele Repositories an dem Ort den Schutz verlieren. Wird ein Ort ausgeschaltet, sind auch alle Repositories an ihm aus; ein Ort, an dem ein Bereich gespeichert ist, lässt sich nicht ausschalten.
 
 ## Die Karte Domänen {#domains}
 

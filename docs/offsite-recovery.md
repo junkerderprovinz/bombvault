@@ -63,7 +63,7 @@ A domain stored in a remote place is the source of its copies like a local one; 
 
 Flag an off-site repo append-only so ransomware, or a compromised host, cannot delete or rewrite your backups. The far side (a `restic/rest-server` running in `--append-only` mode) **enforces** it. BombVault only ever **verifies** it and never shows green on a configuration claim alone.
 
-The **Add place** window carries a ready-to-paste recipe for a rest-server in append-only mode, with one user for this BombVault. At a rest-server place with **Append-only** on, **Test append-only** in the place's details runs the tamper test for each domain the place stores or copies, so append-only off-site is reachable without hand-editing configs.
+The **Add place** window carries a ready-to-paste recipe for a rest-server in append-only mode, with one user for this BombVault. At a rest-server place with **Append-only** on, **Test append-only** in the place's details runs the tamper test against every domain path, switched-on copy and repository at the place and gives one answer for the place, so append-only off-site is reachable without hand-editing configs.
 
 !!! note "A successful delete under `/locks/` is expected"
     Append-only does not mean nothing can ever be removed. restic has to take and release its own locks, so `/locks/` stays writable and deletable by design. Snapshots and the data behind them, which is what ransomware would go after, cannot be removed. If you probe the far side yourself, a delete that succeeds under `/locks/` is correct behaviour and not a hole in the protection.
@@ -81,12 +81,14 @@ BombVault periodically proves the append-only guarantee by actually attempting a
 
 A real protected-to-unprotected flip fires a single alert.
 
+At a place, **Test append-only** probes each domain path, switched-on copy and repository there with its own credentials and folds the verdicts into one answer: a single repository that accepts a delete makes the whole place *deletes accepted*.
+
 ## DR drills
 
 BombVault offers two levels of proof that your backups are actually restorable, not just present.
 
 - **Restore-verification drills (local).** BombVault periodically runs `restic check --read-data-subset` (bounded, never a disk-filling full restore) and shows a *last verified restorable* badge per domain. The cadence lives on Settings, Schedules; the badge on Settings, Integrity.
-- **DR drills (off-site).** BombVault restores a real target from the off-site repo into a throwaway sandbox, verifies it file-for-file and byte-for-byte, then cleans up. This proves you can recover from off-site, not just that the repo answers.
+- **DR drills (off-site).** BombVault restores a real target from the off-site repo into a throwaway sandbox, verifies it file-for-file and byte-for-byte, then cleans up. This proves you can recover from off-site, not just that the repo answers. A domain copied to several places is drilled against one of them per scheduled run, in turn, and the Dashboard names the place of the last drill.
 
 The **ransomware-protection scorecard** on the Dashboard rolls this up into a green / amber / red posture per domain, with an age-stamped checklist (off-site configured, append-only verified, replication current, restore drill passed, encryption on, prune strategy set). Every red row deep-links to the fix, and the card only ever goes green on verified facts.
 
@@ -124,7 +126,7 @@ Two boxes: **TOWER** runs the containers and pushes backups; **VAULT** receives 
 
 The first path segment is the htpasswd user, here `tower`, and each domain gets its folder below it, for example `rest:http://VAULT:8000/tower/container`. Answer **Where is the device?** with **At another site**, click **Add**, and tick the place under **Copied to** for the domains that should go there.
 
-**3. On TOWER, switch Append-only on** under **Protection** in the place's details, then click **Test append-only**. The test probes every domain the place stores or copies and gives one answer for the place, which must be *deletes refused*. What the answers mean:
+**3. On TOWER, switch Append-only on** under **Protection** in the place's details, then click **Test append-only**. The test probes every domain path, copy and repository at the place and gives one answer for the place, which must be *deletes refused*. What the answers mean:
 
 | Result | What happened |
 | --- | --- |
@@ -145,9 +147,9 @@ The first path segment is the htpasswd user, here `tower`, and each domain gets 
 
 A dedicated **Recovery** tab walks a fresh or rebuilt install through the disaster case, in one place:
 
-1. **Restores BombVault's own settings first**, so the backup paths, off-site targets and credentials the rest of the flow needs come pre-filled (applied via a self-restart over the Docker socket, so the live settings database is never overwritten under an open handle).
-2. **Checks BombVault can read your backups** (the encryption-key gotcha up front).
-3. Lets you **point at your existing repo**: a local folder, or a remote place connected through the same **Add place** window as on Settings, Storage.
+1. **Checks BombVault can read your backups** (the encryption-key gotcha up front).
+2. **Restores BombVault's own settings**, so the backup paths, off-site targets and credentials the rest of the flow needs come pre-filled. It reads the settings backup from the place the Self-Backup row names under **Stored in**, or from the Self-Backup's copy under **Copied to**, and shows that place with its address; to read from another place, change the Self-Backup row in step 3 first. The restore is applied via a self-restart over the Docker socket, so the live settings database is never overwritten under an open handle.
+3. **Attaches your existing backups** through the rows of the Domains card: on each domain's row, choose the place its backups lie on under **Stored in** and the places holding its copies under **Copied to**. A place no row offers yet, such as a share, a server or a cloud bucket, is connected with **Add place**, the same window as on Settings, Storage. **Connect & preview** then checks that the backups can be read.
 4. **Discovers** the containers, VMs and file sets stored in it.
 5. **Restores them all** (left stopped, so you start them deliberately), with your recovery kit one click away.
 

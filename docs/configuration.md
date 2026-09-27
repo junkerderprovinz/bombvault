@@ -84,7 +84,7 @@ Off-site copies go to storage places. Add the place on **Settings, Storage** wit
 
 ## Portable settings (export and import) {#portable-settings-export-and-import}
 
-The **Export and import settings** card on the Settings page writes your whole BombVault configuration (domain settings, storage places, schedules, notifications) to a portable JSON file you can import on another instance, so moving to a new box or cloning a setup does not mean re-entering everything by hand. Import shows a preview and asks for confirmation, and it never touches your backup data or history.
+The **Export and import settings** card on the Settings page writes your whole BombVault configuration (domain settings, storage places, schedules, notifications) to a portable JSON file you can import on another instance, so moving to a new box or cloning a setup does not mean re-entering everything by hand. Import shows a preview and asks for confirmation, and it never touches your backup data or history. The preview counts the storage places in the file and, with the credentials, the credential sets; for an older file without places, BombVault builds them from the imported settings.
 
 !!! warning "The export can contain credentials"
     You choose whether to include the credentials of your places and notifications in the file. With credentials included, the export is as sensitive as your recovery kit, so store it somewhere safe. Without them, the file holds only non-secret settings.
