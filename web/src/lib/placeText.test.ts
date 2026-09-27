@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { countText, en, type TranslationKey } from "./i18n";
 import { domainName, folderStateText, placeErrorText, probeFactText, probeFailureText, providerName } from "./placeText";
+import { PLACE_DOMAINS } from "./places";
 
 const t = (key: TranslationKey, n?: number) => countText(en[key], "en", n);
 
@@ -124,5 +125,10 @@ describe("names", () => {
     }
     expect(providerName(t, "b2")).toBe("Backblaze B2");
     expect(domainName(t, "vms")).toBe("VMs");
+  });
+
+  it("names every domain a place keeps a folder for", () => {
+    expect(PLACE_DOMAINS).toContain("zfs");
+    for (const d of PLACE_DOMAINS) expect(domainName(t, d), d).not.toBe(d);
   });
 });

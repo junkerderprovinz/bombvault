@@ -70,6 +70,7 @@ const DEFAULT_FOLDERS: Record<PlaceDomain, string> = {
   flash: "flash",
   config: "config",
   files: "files",
+  zfs: "zfs",
 };
 
 type RetentionKey = "retentionKeepLast" | "retentionKeepDaily" | "retentionKeepWeekly" | "retentionKeepMonthly";

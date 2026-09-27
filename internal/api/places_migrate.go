@@ -199,6 +199,7 @@ type placesMigrationInput struct {
 	shared    CloudCreds                     // what a row without a set logs in with
 	existing  []store.Place                  // names and addresses the plan must not take
 	homes     map[string]string              // domains that have a home place already
+	idle      map[string]bool                // domains whose path nothing uses, left without a place
 }
 
 // plannedPlace is one place as the plan builds it up.
@@ -255,10 +256,10 @@ func planPlaces(in placesMigrationInput) placesPlan {
 // and the same safety settings from their primary rows.
 func (p *placesPlanner) planDomainPaths() {
 	for _, d := range places.Domains {
-		if p.in.homes[d] != "" {
+		path := domainPathRaw(d, p.in.settings)
+		if p.in.homes[d] != "" || p.in.idle[d] || path == "" {
 			continue
 		}
-		path := domainPathRaw(d, p.in.settings)
 		sp, ok := splitPlaceAddress(path)
 		if !ok {
 			p.unplaced = append(p.unplaced, d+" path")
@@ -702,5 +703,15 @@ func (s *Service) placesMigrationInput(settings store.Settings) (placesMigration
 	if in.homes, err = s.store.DomainPlaces(); err != nil {
 		return in, fmt.Errorf("read the home places: %w", err)
 	}
+	// A ZFS domain that is off, has no copy target and never backed up to its
+	// path does not get a place of its own for that path. Switched on later,
+	// it chooses one on its row.
+	zfsUsed := settings.ZFSEnabled || slices.ContainsFunc(in.targets, func(t store.OffsiteTarget) bool { return t.Domain == zfsDomain })
+	if !zfsUsed {
+		if zfsUsed, err = s.store.DomainPathBackedUp(zfsDomain); err != nil {
+			return in, fmt.Errorf("read the backups of the ZFS path: %w", err)
+		}
+	}
+	in.idle = map[string]bool{zfsDomain: !zfsUsed}
 	return in, nil
 }

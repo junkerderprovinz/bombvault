@@ -43,7 +43,7 @@ func TestLocalFoldersAreProbedByWhatLiesInThem(t *testing.T) {
 	res := f.svc.probeFolders(context.Background(), "user/bombvault", places.DefaultFolders(), f.svc.ModeFor(settingsOf(t, f.svc)))
 	want := map[string]places.FolderState{
 		"containers": places.FolderAbsent, "vms": places.FolderEmpty, "flash": places.FolderRepository,
-		"config": places.FolderFailed, "files": places.FolderAbsent,
+		"config": places.FolderFailed, "files": places.FolderAbsent, "zfs": places.FolderAbsent,
 	}
 	if !maps.Equal(res.Folders, want) {
 		t.Fatalf("folders = %v\nwant %v", res.Folders, want)

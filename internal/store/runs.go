@@ -494,6 +494,9 @@ func (r *Repo) DomainPathBackedUp(domain string) (bool, error) {
 	case "files":
 		q = `SELECT EXISTS (SELECT 1 FROM runs r JOIN file_sets f ON f.id = r.target_id
 			WHERE r.kind = 'backup' AND r.status = 'success' AND f.repo = '')`
+	case "zfs":
+		q = `SELECT EXISTS (SELECT 1 FROM runs r JOIN zfs_datasets z ON z.id = r.target_id
+			WHERE r.kind = 'backup' AND r.status = 'success' AND z.repo = '')`
 	case "flash", "config":
 		q = `SELECT EXISTS (SELECT 1 FROM runs WHERE kind = 'backup' AND status = 'success' AND target_id = ?)`
 		args = []any{FlashTargetID}

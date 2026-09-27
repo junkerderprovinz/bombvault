@@ -104,7 +104,7 @@ func TestARestServerIsProbedUnderItsUserWithItsCredentials(t *testing.T) {
 	eng := newEnvEngine(f)
 	base := "rest:https://nas:8000/tower"
 	eng.ids[base+"/container"] = "id-container"
-	for _, folder := range []string{"vms", "flash", "config", "files"} {
+	for _, folder := range []string{"vms", "flash", "config", "files", "zfs"} {
 		f.eng.opens[base+"/"+folder] = false
 	}
 	res := probeOf(t, f, "rest-server", map[string]string{"url": "https://nas:8000", "user": "tower", "password": "pw"})

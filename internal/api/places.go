@@ -397,7 +397,7 @@ func (s *Service) placeCredsView(settings store.Settings, p store.Place) PlaceCr
 func (s *Service) unplacedRows(d placeData) ([]UnplacedRow, error) {
 	out := []UnplacedRow{}
 	for _, dom := range places.Domains {
-		if d.homes[dom] != "" {
+		if d.homes[dom] != "" || dom == zfsDomain && !d.settings.ZFSEnabled {
 			continue
 		}
 		row, err := s.unplacedPath(d, dom)

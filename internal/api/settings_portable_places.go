@@ -469,6 +469,8 @@ func viewDomainColumns(v *settingsView, domain string) (path, offsite *string) {
 		return &v.ConfigPath, &v.ConfigOffsite
 	case "files":
 		return &v.FilesPath, &v.FilesOffsite
+	case "zfs":
+		return &v.ZFSPath, &v.ZFSOffsite
 	}
 	return nil, nil
 }

@@ -339,7 +339,7 @@ func checkV813Places(t *testing.T, f *placementFixture, s v813Scene) {
 			t.Errorf("home of %s = %q, want %q", d, got, want)
 		}
 	}
-	every := map[string]string{"containers": "", "vms": "", "flash": "", "config": "", "files": ""}
+	every := map[string]string{"containers": "", "vms": "", "flash": "", "config": "", "files": "", "zfs": ""}
 	type placeWant struct {
 		provider, base string
 		folders        map[string]string
@@ -351,16 +351,16 @@ func checkV813Places(t *testing.T, f *placementFixture, s v813Scene) {
 		"Unraid 2":       {"unraid-folder", "user/bombvault", map[string]string{"flash": "flash"}, false, 5},
 		"s3.example.com": {"s3-other", "s3:https://s3.example.com/bv-primary", map[string]string{"config": "config"}, true, 5},
 		"B2": {"b2", "s3:https://s3.us-west-004.backblazeb2.com/bv-bucket",
-			map[string]string{"containers": "containers", "vms": "vms", "flash": "flash", "config": "config", "files": "files"}, true, 3},
+			map[string]string{"containers": "containers", "vms": "vms", "flash": "flash", "config": "config", "files": "files", "zfs": "zfs"}, true, 3},
 		"Wasabi": {"wasabi", "s3:https://s3.eu-central-1.wasabisys.com/bv-files",
-			map[string]string{"files": "files", "containers": "container", "vms": "vms", "flash": "flash", "config": "config"}, true, 7},
+			map[string]string{"files": "files", "containers": "container", "vms": "vms", "flash": "flash", "config": "config", "zfs": "zfs"}, true, 7},
 		"Tower":        {"rest-server", "rest:http://tower:8000/bombvault-containers", map[string]string{"containers": "containers"}, true, 0},
 		"Tower VMs":    {"rest-server", "rest:http://tower:8000/bombvault-vms", map[string]string{"vms": "vms"}, true, 0},
 		"mesh: tower2": {"bombvault", "rest:http://tower2:8000/bombvault-flash", map[string]string{"flash": "flash"}, true, 0},
 		"Pi": {"sftp", "sftp:pi:",
-			map[string]string{"flash": "flash", "containers": "container", "vms": "vms", "config": "config", "files": "files"}, true, 0},
+			map[string]string{"flash": "flash", "containers": "container", "vms": "vms", "config": "config", "files": "files", "zfs": "zfs"}, true, 0},
 		"Drive": {"rclone", "rclone:r:",
-			map[string]string{"config": "config", "containers": "container", "vms": "vms", "flash": "flash", "files": "files"}, true, 0},
+			map[string]string{"config": "config", "containers": "container", "vms": "vms", "flash": "flash", "files": "files", "zfs": "zfs"}, true, 0},
 		"NAS":  {"share", "remotes/nas/bombvault", every, false, 5},
 		"Cold": {"s3-other", "s3:https://s3.example.com/bv-cold", every, true, 5},
 	}

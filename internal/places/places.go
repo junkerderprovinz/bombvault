@@ -18,7 +18,7 @@ const (
 )
 
 // Domains is the fixed order used everywhere a place lists its folders.
-var Domains = []string{"containers", "vms", "flash", "config", "files"}
+var Domains = []string{"containers", "vms", "flash", "config", "files", "zfs"}
 
 // Folders maps a domain to its folder at a place. A missing key means the
 // place does not offer that domain; an empty value means the base itself.
@@ -27,7 +27,7 @@ type Folders map[string]string
 // DefaultFolders are the folders of a new place, named like the default
 // domain paths.
 func DefaultFolders() Folders {
-	return Folders{"containers": "container", "vms": "vms", "flash": "flash", "config": "config", "files": "files"}
+	return Folders{"containers": "container", "vms": "vms", "flash": "flash", "config": "config", "files": "files", "zfs": "zfs"}
 }
 
 // Join builds the address of folder under base. After a trailing ':' (the

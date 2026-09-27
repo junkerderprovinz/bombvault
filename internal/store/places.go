@@ -514,6 +514,8 @@ func domainColumns(s *Settings, domain string) (path, offsite *string, immutable
 		return &s.ConfigPath, &s.ConfigOffsite, &s.ConfigOffsiteImmutable
 	case "files":
 		return &s.FilesPath, &s.FilesOffsite, &s.FilesOffsiteImmutable
+	case "zfs":
+		return &s.ZFSPath, &s.ZFSOffsite, &s.ZFSOffsiteImmutable
 	}
 	return nil, nil, nil
 }

@@ -395,7 +395,7 @@ describe("PlaceForm add", () => {
     await act(async () => {
       fireEvent.click(button("places.form.add"));
     });
-    expect(creates[0]!.folders).toEqual({ containers: "", vms: "", flash: "", config: "", files: "" });
+    expect(creates[0]!.folders).toEqual({ containers: "", vms: "", flash: "", config: "", files: "", zfs: "" });
   });
 
   it("adds a Nextcloud whose probe names no address yet", async () => {

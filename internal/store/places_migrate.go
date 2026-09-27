@@ -47,7 +47,7 @@ func (r *Repo) ApplyPlacesMigration(migrated []MigratedPlace) error {
 		}
 		paths := map[string]string{
 			"containers": settings.ContainersPath, "vms": settings.VMsPath, "flash": settings.FlashPath,
-			"config": settings.ConfigPath, "files": settings.FilesPath,
+			"config": settings.ConfigPath, "files": settings.FilesPath, "zfs": settings.ZFSPath,
 		}
 		for _, m := range migrated {
 			p, err := savePlaceTx(tx, m.Place, Place{}, false)

@@ -14,10 +14,10 @@ import {
 
 export type PlaceKind = "local" | "s3" | "rest" | "sftp" | "webdav" | "azure" | "rclone";
 export type PlaceGroup = "cloud" | "self" | "here";
-export type PlaceDomain = "containers" | "vms" | "flash" | "config" | "files";
+export type PlaceDomain = "containers" | "vms" | "flash" | "config" | "files" | "zfs";
 
 /** The fixed order a place lists its folders in, as the server's places.Domains. */
-export const PLACE_DOMAINS: PlaceDomain[] = ["containers", "vms", "flash", "config", "files"];
+export const PLACE_DOMAINS: PlaceDomain[] = ["containers", "vms", "flash", "config", "files", "zfs"];
 
 export interface CatalogField {
   key: string;

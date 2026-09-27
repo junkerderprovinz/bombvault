@@ -28,11 +28,25 @@ func (s *Service) unplacedPath(d placeData, domain string) (UnplacedRow, error) 
 }
 
 // pathItems counts the items whose backups go to the domain's own path. Flash
-// and config are one item each; an item of another domain goes there while
-// neither it nor the default it waits on names a repository.
+// and config are one item each, and a ZFS item goes there unless it names a
+// repository; an item of another domain goes there while neither it nor the
+// default it waits on names a repository.
 func (s *Service) pathItems(d placeData, domain string) (int, error) {
-	if domain == "flash" || domain == "config" {
+	switch domain {
+	case "flash", "config":
 		return 1, nil
+	case zfsDomain:
+		items, err := s.store.ListZFSDatasets()
+		if err != nil {
+			return 0, err
+		}
+		n := 0
+		for _, it := range items {
+			if it.Repo == "" {
+				n++
+			}
+		}
+		return n, nil
 	}
 	defaultHome := ""
 	for _, def := range d.defaults {

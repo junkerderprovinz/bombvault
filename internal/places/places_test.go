@@ -49,7 +49,7 @@ func TestAddressAddsTheSuffixForAnOfferedDomain(t *testing.T) {
 }
 
 func TestDefaultFoldersOfferEveryDomainUnderItsUsualName(t *testing.T) {
-	want := map[string]string{"containers": "container", "vms": "vms", "flash": "flash", "config": "config", "files": "files"}
+	want := map[string]string{"containers": "container", "vms": "vms", "flash": "flash", "config": "config", "files": "files", "zfs": "zfs"}
 	got := places.DefaultFolders()
 	if len(got) != len(places.Domains) {
 		t.Fatalf("DefaultFolders = %v, want one folder per domain", got)

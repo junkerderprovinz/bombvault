@@ -428,7 +428,7 @@ func namedRow(id, name, repo string) store.OffsiteTarget {
 func TestATargetPlaceOffersEveryDomainUnderTheUsualFolders(t *testing.T) {
 	in := migrationInput()
 	in.targets = []store.OffsiteTarget{offsiteRow("b2", "containers", "B2", b2Bucket+"/containers", 1)}
-	want := map[string]string{"containers": "containers", "vms": "vms", "flash": "flash", "config": "config", "files": "files"}
+	want := map[string]string{"containers": "containers", "vms": "vms", "flash": "flash", "config": "config", "files": "files", "zfs": "zfs"}
 	if got := placeNamed(t, planPlaces(in), "B2").Place.Folders; !maps.Equal(got, want) {
 		t.Fatalf("B2 folders = %v, want %v", got, want)
 	}
@@ -503,7 +503,7 @@ func TestPlacesThatDifferInMoreThanCredentialsStillOfferFreeDomains(t *testing.T
 	in := migrationInput()
 	in.targets = []store.OffsiteTarget{c, v}
 	plan := planPlaces(in)
-	if got := placeNamed(t, plan, "Tower").Place.Folders; !maps.Equal(got, map[string]string{"containers": "containers", "flash": "flash", "config": "config", "files": "files"}) {
+	if got := placeNamed(t, plan, "Tower").Place.Folders; !maps.Equal(got, map[string]string{"containers": "containers", "flash": "flash", "config": "config", "files": "files", "zfs": "zfs"}) {
 		t.Errorf("Tower folders = %v, want its own and the free domains", got)
 	}
 	// Tower took flash, config and files first; the containers default,
@@ -534,7 +534,7 @@ func TestARemoteHomePlaceATargetJoinsIsNamedAfterItAndOffersEveryDomain(t *testi
 	in.targets = []store.OffsiteTarget{files}
 	plan := planPlaces(in)
 	m, _, _ := placeOfRow(plan, "rest")
-	want := map[string]string{"flash": "flash", "files": "files", "containers": "container", "vms": "vms", "config": "config"}
+	want := map[string]string{"flash": "flash", "files": "files", "containers": "container", "vms": "vms", "config": "config", "zfs": "zfs"}
 	if m.Place.Name != "bvp rest" || !slices.Equal(m.HomeDomains, []string{"flash"}) || !maps.Equal(m.Place.Folders, want) {
 		t.Fatalf("place = %+v, want it named after the target, home to flash, with every domain", m)
 	}
@@ -615,7 +615,7 @@ func TestEachNamedRepositoryIsAPlaceOfItsOwn(t *testing.T) {
 	in := migrationInput()
 	in.named = []store.OffsiteTarget{namedRow("a", "NAS A", "remotes/nas/a"), off, cold}
 	plan := planPlaces(in)
-	every := map[string]string{"containers": "", "vms": "", "flash": "", "config": "", "files": ""}
+	every := map[string]string{"containers": "", "vms": "", "flash": "", "config": "", "files": "", "zfs": ""}
 	for _, id := range []string{"a", "b", "cold"} {
 		m, ref, ok := placeOfRow(plan, id)
 		if !ok || ref.Domain != "" || ref.Suffix != "" || len(m.Rows) != 1 || m.Place.Base != ref.Repo ||

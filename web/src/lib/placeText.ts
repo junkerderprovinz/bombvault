@@ -16,6 +16,7 @@ const DOMAIN_KEYS: Record<string, TranslationKey> = {
   flash: "nav.flash",
   config: "nav.config",
   files: "nav.files",
+  zfs: "nav.zfs",
 };
 
 /** domainNames joins domain names the way the language lists things. */

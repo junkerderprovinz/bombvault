@@ -45,7 +45,8 @@ type ExceptionItem struct {
 	Link     string `json:"link"`
 }
 
-// storageDomainRows is the five rows of the Domains card.
+// storageDomainRows is the rows of the Domains card, one per domain. ZFS has
+// a row while the domain is switched on, like its page in the sidebar.
 func (s *Service) storageDomainRows() ([]DomainRow, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -69,6 +70,9 @@ func (s *Service) storageDomainRows() ([]DomainRow, error) {
 	}
 	rows := make([]DomainRow, 0, len(places.Domains))
 	for _, d := range places.Domains {
+		if d == zfsDomain && !settings.ZFSEnabled {
+			continue
+		}
 		row, err := s.storageDomainRow(settings, d, all, homes[d], named, targets)
 		if err != nil {
 			return nil, err
