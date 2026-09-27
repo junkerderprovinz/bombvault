@@ -965,6 +965,33 @@ func olderFileFor(t *testing.T, src *placementFixture) settingsExport {
 	return exp
 }
 
+func TestAnImportWhoseScheduleCannotBeLoadedStillRebuildsThePlaces(t *testing.T) {
+	src := newPlacementFixture(t)
+	src.target("containers", "B2", b2Base+"/container")
+	exp := olderFileFor(t, src)
+	// Past the validation the handler runs, so only the reload refuses it.
+	exp.Settings.ContainersSchedule = "not a cadence"
+
+	dst := newPlacementFixture(t)
+	if err := dst.svc.MigrateToPlaces(); err != nil {
+		t.Fatal(err)
+	}
+	if err := dst.h.applyImport(context.Background(), exp); err == nil || !strings.Contains(err.Error(), "containers") {
+		t.Fatalf("apply = %v, want the reload's refusal of the containers schedule", err)
+	}
+
+	if s, err := dst.st.GetSettings(); err != nil || s.PlacesMigrated == 0 {
+		t.Errorf("places_migrated = %d (err %v), want the places rebuilt", s.PlacesMigrated, err)
+	}
+	targets, err := dst.st.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(targets) != 1 || targets[0].PlaceID == "" {
+		t.Errorf("targets = %+v, want the imported B2 target on a place", targets)
+	}
+}
+
 func TestAnImportWaitsForAPlaceEditInProgress(t *testing.T) {
 	src := newPlacementFixture(t)
 	src.target("containers", "B2", b2Base+"/container")
