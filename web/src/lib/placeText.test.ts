@@ -64,6 +64,17 @@ describe("placeErrorText", () => {
     );
   });
 
+  it("leaves out the count when the address held no counted snapshots of a domain", () => {
+    for (const res of [
+      { snapshots: 0, domains: [] },
+      { snapshots: 0, domains: ["containers"] },
+      { snapshots: 5, domains: [] },
+    ]) {
+      const text = placeErrorText(t, "en", { ok: false, code: "place-location-established", ...res }, "settings.error");
+      expect(text).toBe(en["places.error.locationEstablishedPlain"]);
+    }
+  });
+
   it("says why a probe refused the write, translated where the code is known", () => {
     const denied = placeErrorText(
       t,
