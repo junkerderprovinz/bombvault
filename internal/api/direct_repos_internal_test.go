@@ -406,6 +406,26 @@ func TestARestServerPathDeeperThanTwoLevelsIsRefused(t *testing.T) {
 	}
 }
 
+func TestARestServerBehindAPathPrefixTakesADirectRepositoryAsDeepAsItsTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("files", "rest", "rest:https://host.example/restic/user/files")
+	beside := "rest:https://host.example/restic/user/files-direct"
+	f.eng.opens[beside] = false
+	if res := f.do("POST", "/api/offsite/targets/"+target.ID+"/direct/test", map[string]any{"location": beside}); res["ok"] != true {
+		t.Fatalf("test beside a three-level target = %v", res)
+	}
+	if res := f.do("POST", "/api/repos", map[string]any{"name": "", "repo": beside, "companionOf": target.ID}); res["ok"] != true {
+		t.Fatalf("create beside a three-level target = %v", res)
+	}
+	if !slices.Equal(f.eng.ensured, []string{beside}) {
+		t.Fatalf("ensured %v", f.eng.ensured)
+	}
+	res := f.do("POST", "/api/offsite/targets/"+target.ID+"/direct/test", map[string]any{"location": beside + "/x"})
+	if res["ok"] != false || res["code"] != "rest-path-too-deep" {
+		t.Fatalf("test below the target's depth = %v", res)
+	}
+}
+
 func TestCreatingADirectRepositoryEnsuresItOnlyThen(t *testing.T) {
 	f := newPlacementFixture(t)
 	target := f.target("containers", "NAS", "backups/nas-offsite")

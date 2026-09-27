@@ -27,8 +27,9 @@ var errForeignDomain = errors.New("that direct repository belongs to a target of
 var errTargetInUse = errors.New("this target's direct repository is still in use")
 
 // errRestPathTooDeep refuses a rest-server location more than two path levels
-// down: rest-server creates a repository at /repo/ or /user/repo/ and answers
-// 404 below that, so the test would call the place empty and the create fail.
+// down, or deeper than its target where a reverse proxy adds a path prefix:
+// rest-server creates a repository at /repo/ or /user/repo/ and answers 404
+// below that, so the test would call the place empty and the create fail.
 var errRestPathTooDeep = errors.New("a rest-server creates repositories at most two folders deep")
 
 // errDirectAccessDenied marks a direct-repository probe that reached the
@@ -227,7 +228,7 @@ func directLocationFor(target store.OffsiteTarget) directSuggestion {
 
 // directLocation checks a direct repository location the way the Repositories
 // card checks any named one, plus the overlap rule, and returns it resolved.
-func (s *Service) directLocation(settings store.Settings, location string) (string, error) {
+func (s *Service) directLocation(settings store.Settings, target store.OffsiteTarget, location string) (string, error) {
 	if msg := staticNamedRepoRefusals(location, s.cfg.HostMountRoot); msg != "" {
 		return "", errors.New(msg)
 	}
@@ -235,13 +236,23 @@ func (s *Service) directLocation(settings store.Settings, location string) (stri
 	if err != nil {
 		return "", err
 	}
-	if place, elems := locationParts(loc); strings.HasPrefix(place, "rest:") && len(elems) > 2 {
+	if place, elems := locationParts(loc); strings.HasPrefix(place, "rest:") && len(elems) > restDepth(target) {
 		return "", errRestPathTooDeep
 	}
 	if err := s.locationClash(settings, loc, locationSelf{}); err != nil {
 		return "", err
 	}
 	return loc, nil
+}
+
+// restDepth is how many path levels a direct repository beside target may
+// have on a rest-server: two, or the target's own depth behind a path prefix.
+func restDepth(target store.OffsiteTarget) int {
+	place, elems := locationParts(target.Repo)
+	if strings.HasPrefix(place, "rest:") {
+		return max(2, len(elems))
+	}
+	return 2
 }
 
 // probeDirectLocation is the create dialog's connection test. It opens location
@@ -252,7 +263,7 @@ func (s *Service) probeDirectLocation(ctx context.Context, target store.OffsiteT
 	if err != nil {
 		return false, false, fmt.Errorf("read settings: %w", err)
 	}
-	loc, err := s.directLocation(settings, location)
+	loc, err := s.directLocation(settings, target, location)
 	if err != nil {
 		return false, false, err
 	}
@@ -365,7 +376,7 @@ func (s *Service) createDirectRepo(ctx context.Context, targetID, name, location
 	if err != nil {
 		return store.OffsiteTarget{}, fmt.Errorf("read settings: %w", err)
 	}
-	loc, err := s.directLocation(settings, location)
+	loc, err := s.directLocation(settings, target, location)
 	if err != nil {
 		return store.OffsiteTarget{}, err
 	}
