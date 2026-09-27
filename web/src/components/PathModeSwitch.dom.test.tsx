@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 // Selector.dom.test.tsx covers the Selector itself; these check how
 // PathModeSwitch wires it up. settings, setSettings and save only reach
-// OffsiteWizard, which no test here opens, so stubs are enough.
+// OffsiteWizard, which no test here opens, and the compression row, so stubs
+// are enough.
 import { describe, expect, it, vi } from "vitest";
 import { setLabelMode } from "../lib/controls";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach } from "vitest";
 import { PathModeSwitch } from "./PathModeSwitch";
 import type { Settings } from "../lib/api";
@@ -13,9 +14,9 @@ afterEach(() => {
   cleanup();
 });
 
-const STUB_SETTINGS = {} as unknown as Settings;
+const STUB_SETTINGS = { compression: { containers: "max", vms: "auto" } } as unknown as Settings;
 const noopSetSettings = () => {};
-const stubSave = async () => true;
+let stubSave = vi.fn(async () => true);
 
 function renderSwitch(value = "", onChange = vi.fn()) {
   render(
@@ -36,8 +37,8 @@ function renderSwitch(value = "", onChange = vi.fn()) {
 describe("PathModeSwitch, Selector integration", () => {
   it("renders a real tablist of two tabs, accessible by their plain-language names", () => {
     renderSwitch();
-    const list = screen.getByRole("tablist");
-    const tabs = screen.getAllByRole("tab");
+    const list = screen.getByRole("tablist", { name: "Containers path" });
+    const tabs = within(list).getAllByRole("tab");
     expect(tabs).toHaveLength(2);
     expect(list.getAttribute("aria-label")).toBe("Containers path");
     expect(screen.getByRole("tab", { name: "Local" })).toBeTruthy();
@@ -56,7 +57,7 @@ describe("PathModeSwitch, Selector integration", () => {
 
     setLabelMode("buttons", "glyph");
     renderSwitch();
-    for (const tab of screen.getAllByRole("tab")) {
+    for (const tab of within(screen.getByRole("tablist", { name: "Containers path" })).getAllByRole("tab")) {
       expect(tab.querySelector("span.truncate")).toBeNull();
     }
     expect(screen.getByRole("tab", { name: "Local" })).toBeTruthy();
@@ -86,7 +87,7 @@ describe("PathModeSwitch, Selector integration", () => {
     renderSwitch("user/appdata/containers");
     const local = screen.getByRole("tab", { name: "Local" });
     local.focus();
-    fireEvent.keyDown(screen.getByRole("tablist"), { key: "ArrowRight" });
+    fireEvent.keyDown(screen.getByRole("tablist", { name: "Containers path" }), { key: "ArrowRight" });
     expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Remote" }));
     expect((screen.getByRole("tab", { name: "Remote" }) as HTMLElement).tabIndex).toBe(0);
     expect((screen.getByRole("tab", { name: "Local" }) as HTMLElement).tabIndex).toBe(-1);
@@ -108,7 +109,19 @@ describe("PathModeSwitch, Selector integration", () => {
   it("puts the label and the Selector in the same row", () => {
     renderSwitch();
     const label = screen.getByText("Containers path");
-    const tablist = screen.getByRole("tablist");
+    const tablist = screen.getByRole("tablist", { name: "Containers path" });
     expect(label.parentElement).toBe(tablist.parentElement);
+  });
+
+  it("shows the domain repository's compression and saves a new choice", async () => {
+    stubSave = vi.fn(async () => true);
+    renderSwitch();
+    const modes = screen.getByRole("tablist", { name: "Compression" });
+    expect(within(modes).getByRole("tab", { name: "Maximum" }).getAttribute("aria-selected")).toBe("true");
+    await act(async () => {
+      fireEvent.click(within(modes).getByRole("tab", { name: "Off" }));
+    });
+    expect(stubSave).toHaveBeenCalledTimes(1);
+    expect(stubSave.mock.calls[0][0]).toEqual({ compression: { containers: "off", vms: "auto" } });
   });
 });

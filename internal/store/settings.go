@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -102,6 +103,13 @@ type Settings struct {
 	// saves a migration per new option. When empty, the first load seeds it
 	// from the browser.
 	DisplayPrefs string
+	// Compression is restic's --compression mode per repository this row
+	// configures, as a JSON object keyed by domain name for its own repository
+	// and "offsite:<domain>" for its primary off-site destination. A missing key
+	// is restic's default. Read and write it through CompressionFor and
+	// SetCompression, which keep it canonical so two equal settings compare
+	// equal.
+	Compression string
 	// RcloneConf is the rclone configuration (INI) for off-site repos, stored
 	// AES-256-GCM-encrypted at rest. Empty means no rclone backends configured.
 	RcloneConf string
@@ -314,7 +322,8 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       backup_cores, display_prefs,
 		       totp_secret, totp_enabled, totp_recovery,
 		       anomaly_enabled, anomaly_sensitivity, anomaly_notify_min, anomaly_retention_hold,
-		       retention_keep_yearly, offsite_retention_keep_yearly
+		       retention_keep_yearly, offsite_retention_keep_yearly,
+		       repo_compression
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -357,6 +366,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&s.TOTPSecret, &totpEnabled, &s.TOTPRecovery,
 		&anomalyEnabled, &s.AnomalySensitivity, &s.AnomalyNotifyMin, &anomalyRetentionHold,
 		&s.RetentionKeepYearly, &s.OffsiteRetentionKeepYearly,
+		&s.Compression,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing: run Migrate first")
@@ -556,7 +566,8 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  anomaly_notify_min           = ?,
 		  anomaly_retention_hold       = ?,
 		  retention_keep_yearly        = ?,
-		  offsite_retention_keep_yearly = ?
+		  offsite_retention_keep_yearly = ?,
+		  repo_compression             = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -608,6 +619,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		boolInt(s.AnomalyRetentionHold),
 		s.RetentionKeepYearly,
 		s.OffsiteRetentionKeepYearly,
+		s.Compression,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)
@@ -620,4 +632,35 @@ func boolInt(b bool) int {
 		return 1
 	}
 	return 0
+}
+
+// CompressionFor returns the stored mode for key, or "" when none is stored.
+func (s Settings) CompressionFor(key string) string {
+	return compressionMap(s.Compression)[key]
+}
+
+// SetCompression stores mode for key. An empty mode removes the key.
+func (s *Settings) SetCompression(key, mode string) {
+	m := compressionMap(s.Compression)
+	if mode == "" {
+		delete(m, key)
+	} else {
+		m[key] = mode
+	}
+	if len(m) == 0 {
+		s.Compression = ""
+		return
+	}
+	b, _ := json.Marshal(m) // a map of strings always encodes
+	s.Compression = string(b)
+}
+
+// compressionMap decodes the stored object. A value that does not decode is
+// treated as empty, so one bad write cannot stop every backup.
+func compressionMap(raw string) map[string]string {
+	m := map[string]string{}
+	if raw != "" {
+		_ = json.Unmarshal([]byte(raw), &m)
+	}
+	return m
 }

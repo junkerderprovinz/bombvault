@@ -1164,3 +1164,55 @@ func argsContain(args []string, needle string) bool {
 	}
 	return false
 }
+
+func TestCompressionReachesEveryWrite(t *testing.T) {
+	m := Mode{Encrypted: true, Compression: CompressionMax}
+	writes := map[string][]string{
+		"backup":         BackupArgs("/repo", []string{"/p"}, nil, m),
+		"backup dir":     BackupDirArgs("/repo", []string{"zfs:tank"}, m),
+		"backup stdin":   BackupStdinArgs("/repo", "/zvol", nil, m),
+		"backup command": BackupCommandArgs("/repo", "/dump.sql", nil, m, []string{"pg_dump"}),
+		"copy":           CopyArgs("/dest", "/src", nil, Limits{}, m),
+		"prune":          PruneArgs("/repo", m),
+		"forget prune":   ForgetPolicyArgs("/repo", RetentionPolicy{KeepLast: 1}, m, nil, true),
+	}
+	for name, args := range writes {
+		i := slices.Index(args, "--compression")
+		if i < 0 || i+1 >= len(args) || args[i+1] != "max" {
+			t.Errorf("%s: want --compression max, got %v", name, args)
+		}
+		if sub := slices.IndexFunc(args, func(a string) bool {
+			return a == "backup" || a == "copy" || a == "prune" || a == "forget"
+		}); sub < i {
+			t.Errorf("%s: --compression is a global flag and belongs before the subcommand, got %v", name, args)
+		}
+	}
+	if args := SnapshotsArgs("/repo", m); slices.Contains(args, "--compression") {
+		t.Errorf("a read has nothing to compress, got %v", args)
+	}
+}
+
+func TestAutomaticCompressionLeavesArgvAlone(t *testing.T) {
+	for _, c := range []Compression{"", CompressionAuto} {
+		got := BackupArgs("/repo", []string{"/p"}, nil, Mode{Encrypted: true, Compression: c})
+		if slices.Contains(got, "--compression") {
+			t.Fatalf("%q: restic's own default needs no flag, got %v", c, got)
+		}
+	}
+	got := CopyArgs("/dest", "/src", nil, Limits{}, Mode{Encrypted: true, Compression: CompressionOff})
+	if i := slices.Index(got, "--compression"); i < 0 || got[i+1] != "off" {
+		t.Fatalf("off must reach restic, got %v", got)
+	}
+}
+
+func TestParseCompression(t *testing.T) {
+	for in, want := range map[string]Compression{"": CompressionAuto, "auto": CompressionAuto, "off": CompressionOff, " MAX ": CompressionMax} {
+		got, err := ParseCompression(in)
+		if err != nil || got != want {
+			t.Errorf("ParseCompression(%q) = %q, %v; want %q", in, got, err, want)
+		}
+	}
+	if _, err := ParseCompression("best"); err == nil {
+		t.Error("an unknown mode must be refused")
+	}
+}

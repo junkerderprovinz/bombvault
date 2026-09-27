@@ -15,6 +15,7 @@ import { SelectField } from "./SelectField";
 import { Toggle } from "./Toggle";
 import { NumberField } from "./NumberField";
 import { InfoBubble } from "./InfoBubble";
+import { CompressionSelector } from "./CompressionSelector";
 import { Badge, type BadgeSize } from "./Badge";
 import { Button } from "./Button";
 import { IconAdd } from "./Sidebar";
@@ -58,6 +59,7 @@ function emptyDraft(domain: Domain): OffsiteTarget {
     retentionKeepWeekly: 0,
     retentionKeepMonthly: 0,
     retentionKeepYearly: 0,
+    compression: "auto",
     limitUpload: 0,
     limitDownload: 0,
     growthBudgetGb: 0,
@@ -207,6 +209,7 @@ export function OffsiteTargetsSection({
           retentionKeepWeekly: draft.retentionKeepWeekly,
           retentionKeepMonthly: draft.retentionKeepMonthly,
           retentionKeepYearly: draft.retentionKeepYearly,
+          compression: draft.compression,
           limitUpload: draft.limitUpload,
           limitDownload: draft.limitDownload,
           growthBudgetGb: draft.growthBudgetGb,
@@ -384,6 +387,11 @@ export function OffsiteTargetsSection({
               className={inputCls}
             />
           </label>
+
+          <CompressionSelector
+            value={draft.compression}
+            onChange={(c) => setDraft((d) => (d ? { ...d, compression: c } : d))}
+          />
 
           {/* Append-only (immutable) toggle */}
           <div className="flex items-start justify-between gap-4">

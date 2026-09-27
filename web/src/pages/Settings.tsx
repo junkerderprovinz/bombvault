@@ -16,6 +16,7 @@ import { CloudCard } from "./settings/CloudCard";
 import { NumberField } from "../components/NumberField";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { PathModeSwitch } from "../components/PathModeSwitch";
+import { CompressionSelector, saveCompression } from "../components/CompressionSelector";
 import {
   CONTROL_AXES,
   LABEL_MODES,
@@ -4175,6 +4176,12 @@ export function SettingsPage() {
                 <span className="text-xs text-carbon-textMuted">
                   {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
                 </span>
+                {settings[repoKey] && (
+                  <CompressionSelector
+                    value={settings.compression[`offsite:${domain}`]}
+                    onChange={(c) => void saveCompression(`offsite:${domain}`, c, settings, setSettings, save)}
+                  />
+                )}
               </>
             )}
             {/* Additional off-site targets (multi-off-site): extra copies of this

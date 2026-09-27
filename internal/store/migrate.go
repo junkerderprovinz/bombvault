@@ -2130,6 +2130,14 @@ CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expi
 ALTER TABLE settings ADD COLUMN offsite_retention_keep_yearly INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE offsite_targets ADD COLUMN retention_keep_yearly INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// restic's --compression per repository. Empty is restic's own default.
+		version:          retentionYearlyMigration + 1,
+		name:             "repo_compression",
+		alreadySatisfied: columnPresent("offsite_targets", "compression"),
+		sql: `ALTER TABLE settings ADD COLUMN repo_compression TEXT NOT NULL DEFAULT '';
+ALTER TABLE offsite_targets ADD COLUMN compression TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,

@@ -2181,6 +2181,9 @@ type settingsView struct {
 	RetentionKeepWeekly  int `json:"retentionKeepWeekly"`
 	RetentionKeepMonthly int `json:"retentionKeepMonthly"`
 	RetentionKeepYearly  int `json:"retentionKeepYearly"`
+	// Compression is restic's --compression per repository, keyed like
+	// store.Settings.Compression.
+	Compression map[string]string `json:"compression"`
 	// Separate off-site retention keep-policy (all 0 = off-site keeps everything).
 	OffsiteRetentionKeepLast    int `json:"offsiteRetentionKeepLast"`
 	OffsiteRetentionKeepDaily   int `json:"offsiteRetentionKeepDaily"`
@@ -2403,6 +2406,7 @@ func toView(s store.Settings) settingsView {
 		RetentionKeepWeekly:         s.RetentionKeepWeekly,
 		RetentionKeepMonthly:        s.RetentionKeepMonthly,
 		RetentionKeepYearly:         s.RetentionKeepYearly,
+		Compression:                 compressionView(s),
 		OffsiteRetentionKeepLast:    s.OffsiteRetentionKeepLast,
 		OffsiteRetentionKeepDaily:   s.OffsiteRetentionKeepDaily,
 		OffsiteRetentionKeepWeekly:  s.OffsiteRetentionKeepWeekly,
@@ -2799,6 +2803,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
+	if msg := rejectInvalidCompression(v.Compression); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
 
 	// Repo locations and the restore folder — the same guard the import path
 	// applies, so a value one path refuses cannot arrive through the other.
@@ -2948,6 +2956,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
 		cur.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
 		cur.RetentionKeepYearly = max(0, v.RetentionKeepYearly)
+		applyCompression(cur, v.Compression)
 		// Clamped to the machine's own thread count: a number above it is not a
 		// cap at all, and a negative one is meaningless. 0 stays 0 (= every core).
 		cur.BackupCores = min(max(0, v.BackupCores), runtime.NumCPU())

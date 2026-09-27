@@ -1627,6 +1627,7 @@ func (s *Service) offsiteModeForTarget(settings store.Settings, target store.Off
 	if target.StorageClass != "" {
 		mode.StorageClass = target.StorageClass
 	}
+	mode.Compression = storedCompression(target.Compression)
 	return mode
 }
 
@@ -2197,6 +2198,7 @@ func settingsOffsiteTarget(domain string, settings store.Settings, loc string) s
 		LimitUpload:          settings.OffsiteLimitUpload,
 		LimitDownload:        settings.OffsiteLimitDownload,
 		GrowthBudgetGB:       settings.OffsiteGrowthBudgetGB,
+		Compression:          settings.CompressionFor(offsiteCompressionKey(domain)),
 		Enabled:              true,
 	}
 }
@@ -17271,10 +17273,22 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("## Repository locations\n\n")
 	w("Paths are inside the BombVault container, under the host data mount (%s).\n", s.cfg.HostMountRoot)
 	w("On the host they live under your backup share; remote backends (rclone:/s3:/rest:/sftp:) are used as shown.\n\n")
+	// A repository written with a compression mode other than restic's default
+	// says so, because plain restic writing to it later would fall back to the
+	// default without anybody noticing.
+	compressed := false
+	kitCompression := func(stored string) string {
+		c := storedCompression(stored)
+		if c == "" {
+			return ""
+		}
+		compressed = true
+		return " (compression: " + string(c) + ")"
+	}
 	for _, rr := range repos {
-		w("- %s (local): %s\n", rr.Domain, orNone(rr.Local))
+		w("- %s (local): %s%s\n", rr.Domain, orNone(rr.Local), kitCompression(settings.CompressionFor(rr.Domain)))
 		if rr.Offsite != "" {
-			w("- %s (off-site): %s\n", rr.Domain, rr.Offsite)
+			w("- %s (off-site): %s%s\n", rr.Domain, rr.Offsite, kitCompression(settings.CompressionFor(offsiteCompressionKey(rr.Domain))))
 		}
 	}
 	w("\n")
@@ -17302,7 +17316,7 @@ func (s *Service) RecoveryKit() (string, error) {
 			if resolved, rErr := s.resolveRepo(n.Repo); rErr == nil {
 				loc = resolved
 			}
-			w("- %s: %s\n", n.Name, loc)
+			w("- %s: %s%s\n", n.Name, loc, kitCompression(n.Compression))
 			if items := s.namedRepoItemNames(n.ID); items != "" {
 				w("  holds: %s\n", items)
 			}
@@ -17327,11 +17341,17 @@ func (s *Service) RecoveryKit() (string, error) {
 	if loc, cErr := s.configRepoPath(settings); cErr == nil {
 		configLocal = loc
 	}
-	w("- config (local): %s\n", orNone(configLocal))
+	w("- config (local): %s%s\n", orNone(configLocal), kitCompression(settings.CompressionFor("config")))
 	if settings.ConfigOffsite != "" {
-		w("- config (off-site): %s\n", settings.ConfigOffsite)
+		w("- config (off-site): %s%s\n", settings.ConfigOffsite, kitCompression(settings.CompressionFor(offsiteCompressionKey("config"))))
 	}
 	w("\n")
+	if compressed {
+		w("A repository marked with a compression mode is written with restic's\n")
+		w("--compression option. Pass the same mode whenever you write to it with restic\n")
+		w("yourself, for example `restic -r <repo> --compression max backup <path>`.\n")
+		w("Reading and restoring need nothing extra.\n\n")
+	}
 	if mcpShipped {
 		w("Restoring this backup revokes every MCP key and every OAuth sign-in; create\n")
 		w("new keys and let cloud assistants sign in again under\n")

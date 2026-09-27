@@ -391,6 +391,11 @@ export const en = {
   // path already accepts a restic remote URL directly, so switching to Remote
   // opens the connection-test/safety-settings dialog instead of the folder browser.
   "settings.pathMode.local": "Local",
+  "settings.compression": "Compression",
+  "settings.compressionInfo": "How restic packs new data into this repository. Automatic is restic's default and suits most data. Maximum saves more space and costs more CPU time during backups and copies. Off stores data uncompressed, which helps when it is already compressed, such as video or photos. A repository in the old format version 1 cannot compress and ignores this setting.",
+  "settings.compression.off": "Off",
+  "settings.compression.auto": "Automatic",
+  "settings.compression.max": "Maximum",
   "settings.pathMode.remote": "Remote",
   // Hover/focus explanation for the icon-only Local/Remote segments above
   // (GlimStone follow-up round, point 2) — removing the text label loses the
@@ -3165,6 +3170,11 @@ export const de: Translations = {
   "settings.restoreFolder": "Standard-Restore-Ordner",
   "settings.restoreFolderHint": "Wohin 'in einen Ordner wiederherstellen' Snapshots standardmäßig entpackt.",
   "settings.pathMode.local": "Lokal",
+  "settings.compression": "Kompression",
+  "settings.compressionInfo": "Wie restic neue Daten in dieses Repository packt. Automatisch ist restics Standard und passt für die meisten Daten. Maximum spart mehr Platz und kostet bei Backups und Kopien mehr CPU-Zeit. Aus speichert unkomprimiert, was hilft, wenn die Daten schon komprimiert sind, etwa Videos oder Fotos. Ein Repository im alten Format 1 kann nicht komprimieren und ignoriert die Einstellung.",
+  "settings.compression.off": "Aus",
+  "settings.compression.auto": "Automatisch",
+  "settings.compression.max": "Maximum",
   "settings.pathMode.remote": "Remote",
   "settings.pathMode.localTip": "Lokaler Pfad auf diesem Host",
   "settings.pathMode.remoteTip": "Remote-restic-Repository",

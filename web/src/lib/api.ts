@@ -273,6 +273,10 @@ export interface Settings {
   retentionKeepWeekly: number;
   retentionKeepMonthly: number;
   retentionKeepYearly: number;
+  /** restic's --compression per repository: a domain name for its own
+   *  repository, "offsite:<domain>" for its primary off-site destination. The
+   *  server sends every key. */
+  compression: Record<string, Compression>;
   offsiteRetentionKeepLast: number;
   offsiteRetentionKeepDaily: number;
   offsiteRetentionKeepWeekly: number;
@@ -2263,6 +2267,7 @@ export interface OffsiteTarget {
   retentionKeepWeekly: number;
   retentionKeepMonthly: number;
   retentionKeepYearly: number;
+  compression: Compression;
   limitUpload: number;
   limitDownload: number;
   growthBudgetGb: number;
@@ -2293,7 +2298,11 @@ export interface NamedRepo {
   immutable: boolean;
   enabled: boolean;
   inUse: number;
+  compression: Compression;
 }
+
+/** restic's --compression mode. "auto" is restic's own default. */
+export type Compression = "off" | "auto" | "max";
 
 /** GET /api/repos — every named repository, in picker order. */
 export function listRepos(): Promise<OkEnvelope & { repos?: NamedRepo[] }> {

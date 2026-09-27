@@ -4,9 +4,10 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { InfoBubble } from "../../components/InfoBubble";
 import { Toggle } from "../../components/Toggle";
+import { CompressionSelector } from "../../components/CompressionSelector";
 import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
-import { createRepo, deleteRepo, listRepos, updateRepo, type NamedRepo } from "../../lib/api";
+import { createRepo, deleteRepo, listRepos, updateRepo, type Compression, type NamedRepo } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 
 // ReposCard — where the named repositories of #204 are written down.
@@ -111,6 +112,15 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
     await reload();
   }
 
+  async function setCompression(row: NamedRepo, next: Compression) {
+    const r = await updateRepo(row.id, { compression: next });
+    if (!r.ok) {
+      push(r.error ?? t("settings.error"), "fail");
+      return;
+    }
+    await reload();
+  }
+
   async function remove(row: NamedRepo) {
     // An UNKNOWN count gets its own sentence. "Still in use" is a statement of
     // fact the server did not make: it could not read the count at all, and
@@ -184,6 +194,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
                 label={t("repos.immutable")}
               />
             </label>
+            <CompressionSelector value={r.compression} onChange={(c) => void setCompression(r, c)} />
             <label className="flex items-center gap-2 text-xs text-carbon-textSub">
               {t("repos.enabled")}
               <Toggle checked={r.enabled} onChange={(v) => void setEnabled(r, v)} label={t("repos.enabled")} />

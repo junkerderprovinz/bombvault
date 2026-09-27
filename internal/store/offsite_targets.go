@@ -77,12 +77,15 @@ type OffsiteTarget struct {
 	RetentionKeepWeekly  int
 	RetentionKeepMonthly int
 	RetentionKeepYearly  int
-	LimitUpload          int
-	LimitDownload        int
-	GrowthBudgetGB       int
-	Enabled              bool
-	CreatedAt            int64
-	SortOrder            int
+	// Compression is restic's --compression mode for this repository; empty is
+	// restic's default.
+	Compression    string
+	LimitUpload    int
+	LimitDownload  int
+	GrowthBudgetGB int
+	Enabled        bool
+	CreatedAt      int64
+	SortOrder      int
 }
 
 // Off-site target roles (see OffsiteTarget.Role's doc comment).
@@ -130,8 +133,8 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	_, err := r.db.Exec(`
 		INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 		  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
-		  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order, retention_keep_yearly)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order, retention_keep_yearly, compression)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 		  domain                 = excluded.domain,
 		  name                   = excluded.name,
@@ -150,10 +153,11 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 		  growth_budget_gb       = excluded.growth_budget_gb,
 		  enabled                = excluded.enabled,
 		  sort_order             = excluded.sort_order,
-		  retention_keep_yearly  = excluded.retention_keep_yearly`,
+		  retention_keep_yearly  = excluded.retention_keep_yearly,
+		  compression            = excluded.compression`,
 		t.ID, t.Domain, t.Name, t.Repo, t.Role, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
-		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder, t.RetentionKeepYearly,
+		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder, t.RetentionKeepYearly, t.Compression,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
@@ -163,7 +167,7 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 
 const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 	retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
-	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order, retention_keep_yearly`
+	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order, retention_keep_yearly, compression`
 
 // ListOffsiteTargets returns all off-site REPLICATION DESTINATIONS (role =
 // 'offsite'; a domain's "primary" safety-config row, if any, is never among
@@ -427,7 +431,7 @@ func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 	err := s.Scan(
 		&t.ID, &t.Domain, &t.Name, &t.Repo, &t.Role, &t.CredsRef, &t.StorageClass, &immutable, &t.Schedule,
 		&t.RetentionKeepLast, &t.RetentionKeepDaily, &t.RetentionKeepWeekly, &t.RetentionKeepMonthly,
-		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder, &t.RetentionKeepYearly,
+		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder, &t.RetentionKeepYearly, &t.Compression,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("scanOffsiteTarget: %w", err)

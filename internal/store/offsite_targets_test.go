@@ -49,6 +49,7 @@ func TestOffsiteTargetCRUD(t *testing.T) {
 		RetentionKeepWeekly:  8,
 		RetentionKeepMonthly: 12,
 		RetentionKeepYearly:  4,
+		Compression:          "max",
 		LimitUpload:          1000,
 		LimitDownload:        2000,
 		GrowthBudgetGB:       50,
@@ -72,7 +73,7 @@ func TestOffsiteTargetCRUD(t *testing.T) {
 	if back.Domain != "containers" || back.Name != "Primary" || back.Repo != in.Repo ||
 		!back.Immutable || back.Schedule != "daily 03:00" ||
 		back.RetentionKeepLast != 7 || back.RetentionKeepDaily != 14 ||
-		back.RetentionKeepWeekly != 8 || back.RetentionKeepMonthly != 12 || back.RetentionKeepYearly != 4 ||
+		back.RetentionKeepWeekly != 8 || back.RetentionKeepMonthly != 12 || back.RetentionKeepYearly != 4 || back.Compression != "max" ||
 		back.LimitUpload != 1000 || back.LimitDownload != 2000 ||
 		back.GrowthBudgetGB != 50 || !back.Enabled {
 		t.Fatalf("GetOffsiteTarget round-trip mismatch: %+v", back)

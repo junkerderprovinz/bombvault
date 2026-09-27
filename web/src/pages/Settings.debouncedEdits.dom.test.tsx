@@ -55,6 +55,11 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
     retentionKeepWeekly: 4,
     retentionKeepMonthly: 6,
     retentionKeepYearly: 0,
+    compression: {
+      containers: "auto", vms: "auto", flash: "auto", config: "auto", files: "auto", zfs: "auto",
+      "offsite:containers": "auto", "offsite:vms": "auto", "offsite:flash": "auto",
+      "offsite:config": "auto", "offsite:files": "auto", "offsite:zfs": "auto",
+    },
     defaultLanguage: "en",
     registryAuths: [],
     ...over,
@@ -473,5 +478,22 @@ describe("the yearly retention rule", () => {
     const sent = putCalls[0].body;
     expect(sent.retentionKeepYearly).toBe(3);
     expect(sent.retentionKeepMonthly).toBe(6);
+  });
+});
+
+describe("a repository's compression", () => {
+  it("saves the choice at once, for that repository only", async () => {
+    await renderPage();
+    await gotoTab("storage");
+
+    const max = screen.getAllByText(en["settings.compression.max"])[0].closest("button") as HTMLButtonElement;
+    await act(async () => {
+      fireEvent.click(max);
+    });
+
+    await waitFor(() => expect(putCalls).toHaveLength(1));
+    const sent = putCalls[0].body.compression;
+    expect(sent.containers).toBe("max");
+    expect(sent.vms).toBe("auto");
   });
 });
