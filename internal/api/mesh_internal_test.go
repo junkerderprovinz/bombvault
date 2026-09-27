@@ -195,8 +195,9 @@ func TestAnAcceptedMeshOfferGoesBehindTheFieldTarget(t *testing.T) {
 	}
 }
 
-// A target taken over from a mesh offer is an additional target, so a settings
-// save on a domain without an off-site repo of its own keeps it.
+// A target taken over from a mesh offer stands at the offer's place, which a
+// settings save leaves alone even on a domain without an off-site repo of its
+// own.
 func TestAcceptedMeshTargetSurvivesSettingsSave(t *testing.T) {
 	appKey := strings.Repeat("d", 64)
 	h, st := meshHandlerFixture(t, appKey)
@@ -231,8 +232,8 @@ func TestAcceptedMeshTargetSurvivesSettingsSave(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(targets) != 1 || targets[0].Repo != offer.Repo || targets[0].SortOrder == 0 {
-		t.Fatalf("mesh target should survive a settings save outside sort order 0, got %+v", targets)
+	if len(targets) != 1 || targets[0].Repo != offer.Repo || !targets[0].Enabled || targets[0].PlaceID == "" {
+		t.Fatalf("mesh target should survive a settings save at its place, got %+v", targets)
 	}
 }
 
