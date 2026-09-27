@@ -79,7 +79,7 @@ func dropPlacesTx(tx *sql.Tx) error {
 	for _, q := range []string{
 		`DELETE FROM storage_places`,
 		`DELETE FROM storage_domain_places`,
-		`UPDATE offsite_targets SET place_id = '', place_domain = '', place_suffix = '' WHERE place_id <> ''`,
+		`UPDATE offsite_targets SET place_id = '', place_domain = '', place_suffix = '', off_with_place = 0 WHERE place_id <> ''`,
 	} {
 		if _, err := tx.Exec(q); err != nil {
 			return fmt.Errorf("drop places: %w", err)

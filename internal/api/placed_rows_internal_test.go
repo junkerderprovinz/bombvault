@@ -302,6 +302,38 @@ func TestAFlashChipSwitchedOffStaysOffAfterAnUnrelatedSettingsSave(t *testing.T)
 	}
 }
 
+func TestAConfigChipSwitchedOffStaysOffWhenItsPlaceIsSwitchedOffAndOn(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.storePlace(bucketAt("B2", "s3:https://s3.example.com/bucket"))
+	flash := f.placedFieldRow("flash", b2)
+	config := f.placedFieldRow("config", b2)
+	config.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(config); err != nil {
+		t.Fatal(err)
+	}
+	f.storePlace(b2)
+
+	for _, on := range []bool{false, true} {
+		if res := f.do(http.MethodPatch, "/api/places/"+b2.ID, map[string]any{"enabled": on}); res["ok"] != true {
+			t.Fatalf("PATCH enabled %v = %v", on, res)
+		}
+	}
+
+	if got := f.storedTarget(flash.ID); !got.Enabled {
+		t.Errorf("flash target = %+v, want it back on with its place", got)
+	}
+	if got := f.storedTarget(config.ID); got.Enabled {
+		t.Errorf("config target = %+v, want it off as it was before its place went off", got)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if settings.FlashOffsite != flash.Repo || settings.ConfigOffsite != "" {
+		t.Fatalf("flash field = %q, config field = %q, want flash filled and config empty", settings.FlashOffsite, settings.ConfigOffsite)
+	}
+}
+
 // acceptedOffer leaves an accepted mesh offer of location, as an accept does.
 func (f *placementFixture) acceptedOffer(location string) {
 	f.t.Helper()
