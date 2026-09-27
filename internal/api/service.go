@@ -920,30 +920,71 @@ func (s *Service) progBegin(ctx context.Context, key, phase string) (context.Con
 	}), startedAt
 }
 
+// countHeartbeat is how often a counted run repeats its last event while
+// restic prints nothing, as it does while it loads indexes or lists packs.
+// Without it a client takes a long silent step for a run that has died.
+var countHeartbeat = 5 * time.Second
+
 // progCounted returns a context that turns restic's counter lines into live
 // "maintenance" events for key: done, total, unit, and the seconds left in the
 // current step, estimated from how long its units have taken so far. A step is
 // a run of counters with the same unit and total, since restic starts a fresh
-// one for each part of a check or prune.
-func (s *Service) progCounted(ctx context.Context, key string, startedAt int64) context.Context {
+// one for each part of a check or prune. The last event is repeated every
+// countHeartbeat until stop, which the caller must run before its progEnd so no
+// repeat lands after the terminal event.
+func (s *Service) progCounted(ctx context.Context, key string, startedAt int64) (context.Context, func()) {
 	if s.progress == nil {
-		return ctx
+		return ctx, func() {}
 	}
+	var mu sync.Mutex
+	last := progress.Event{Key: key, Phase: "maintenance", Active: true, StartedAt: startedAt}
 	var step progress.CountProgress
 	var stepStart time.Time
+	publish := func(ev progress.Event) {
+		mu.Lock()
+		defer mu.Unlock()
+		last = ev
+		s.progress.Publish(ev)
+	}
+
+	quit := make(chan struct{})
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		t := time.NewTicker(countHeartbeat)
+		defer t.Stop()
+		for {
+			select {
+			case <-quit:
+				return
+			case <-t.C:
+				mu.Lock()
+				s.progress.Publish(last)
+				mu.Unlock()
+			}
+		}
+	}()
+	var once sync.Once
+	stop := func() {
+		once.Do(func() {
+			close(quit)
+			<-done
+		})
+	}
+
 	return progress.WithCountSink(ctx, func(c progress.CountProgress) {
 		now := time.Now()
 		if c.Unit != step.Unit || c.Total != step.Total || c.Done < step.Done {
 			stepStart = now
 		}
 		step = c
-		s.progress.Publish(progress.Event{
+		publish(progress.Event{
 			Key: key, Phase: "maintenance", Active: true, StartedAt: startedAt,
 			Percent: float64(c.Done) / float64(c.Total) * 100,
 			Done:    c.Done, Total: c.Total, Unit: c.Unit,
 			Remaining: remainingSeconds(now.Sub(stepStart), c.Done, c.Total),
 		})
-	})
+	}), stop
 }
 
 // remainingSeconds extrapolates the time left from the units done so far. It
@@ -15208,7 +15249,8 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 	vkey := "verify:" + domain
 	_, startedAt := s.progBegin(ctx, vkey, "maintenance")
 	defer func() { s.progEnd(vkey, "maintenance", err == nil, startedAt) }()
-	ctx = s.progCounted(ctx, vkey, startedAt)
+	ctx, stopCounting := s.progCounted(ctx, vkey, startedAt)
+	defer stopCounting()
 	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "verify")
 	if rErr != nil {
 		log.Printf("api: verify %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
@@ -15420,7 +15462,8 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 	dkey := "drill:" + domain
 	_, startedAt := s.progBegin(ctx, dkey, "maintenance")
 	defer func() { s.progEnd(dkey, "maintenance", err == nil, startedAt) }()
-	ctx = s.progCounted(ctx, dkey, startedAt)
+	ctx, stopCounting := s.progCounted(ctx, dkey, startedAt)
+	defer stopCounting()
 
 	// Reading back a subset of real pack data can be slow on a large repo; bound
 	// the whole pass over the domain's repositories.
@@ -16575,7 +16618,8 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	pkey := "prune:" + domain
 	_, startedAt := s.progBegin(ctx, pkey, "maintenance")
 	defer func() { s.progEnd(pkey, "maintenance", err == nil, startedAt) }()
-	ctx = s.progCounted(ctx, pkey, startedAt)
+	ctx, stopCounting := s.progCounted(ctx, pkey, startedAt)
+	defer stopCounting()
 	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "prune")
 	if rErr != nil {
 		log.Printf("api: prune %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal

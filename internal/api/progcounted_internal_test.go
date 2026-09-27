@@ -28,7 +28,8 @@ func TestProgCountedPublishesTheCounts(t *testing.T) {
 	s := &Service{progress: store}
 	ch, cancel := store.Subscribe()
 	defer cancel()
-	ctx := s.progCounted(context.Background(), "verify:containers", 1000)
+	ctx, stop := s.progCounted(context.Background(), "verify:containers", 1000)
+	defer stop()
 	progress.CountSinkFrom(ctx)(progress.CountProgress{Done: 12, Total: 47, Unit: "packs"})
 
 	ev := <-ch
@@ -37,5 +38,32 @@ func TestProgCountedPublishesTheCounts(t *testing.T) {
 	}
 	if ev.Percent < 25 || ev.Percent > 26 {
 		t.Fatalf("percent = %v", ev.Percent)
+	}
+}
+
+func TestProgCountedKeepsASilentStepAlive(t *testing.T) {
+	old := countHeartbeat
+	countHeartbeat = 10 * time.Millisecond
+	defer func() { countHeartbeat = old }()
+	store := progress.NewStore()
+	s := &Service{progress: store}
+	ch, cancel := store.Subscribe()
+	defer cancel()
+
+	ctx, stop := s.progCounted(context.Background(), "prune:vms", 1000)
+	progress.CountSinkFrom(ctx)(progress.CountProgress{Done: 3, Total: 9, Unit: "packs"})
+	first := <-ch
+	again := <-ch
+	if again.Key != "prune:vms" || !again.Active || again.Done != first.Done || again.Total != first.Total {
+		t.Fatalf("heartbeat = %+v, want the last count again", again)
+	}
+
+	stop()
+	for len(ch) > 0 {
+		<-ch
+	}
+	time.Sleep(50 * time.Millisecond)
+	if len(ch) != 0 {
+		t.Fatalf("an event came after stop: %+v", <-ch)
 	}
 }
