@@ -56,4 +56,13 @@ describe("MeshOffers", () => {
     expect(changed).toHaveBeenCalled();
     window.removeEventListener(PLACES_CHANGED, changed);
   });
+
+  it("says why an accept was refused in the reader's language", async () => {
+    fake.reply("acceptMeshOffer", { ok: false, code: "exclusion-unsaved", error: "the exclusion was not saved" });
+    renderWithProviders(<MeshOffers onAccepted={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: en["fleet.mesh.accept"] }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Confirm" }));
+    expect(await screen.findByText(en["placementCode.exclusionUnsaved"])).toBeTruthy();
+    expect(screen.queryByText("the exclusion was not saved")).toBeNull();
+  });
 });

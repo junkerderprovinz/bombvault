@@ -5,9 +5,9 @@ import { Button, type ButtonTone } from "./Button";
 import { SelectField } from "./SelectField";
 import { useNewTargetQuestion } from "./placement/NewTargetQuestion";
 import { acceptMeshOffer, declineMeshOffer, type MeshOffer, type OffsiteDomain } from "../lib/api";
-import type { TranslationKey, useT } from "../lib/i18n";
+import { useT, type TranslationKey } from "../lib/i18n";
 import { placementChanged } from "../lib/placementEvents";
-import { domainName } from "../lib/placeText";
+import { domainName, placeErrorText } from "../lib/placeText";
 import { PLACE_DOMAINS, placesChanged, type Place } from "../lib/places";
 import { relativeTime } from "../lib/reltime";
 import { useToast } from "../lib/toast";
@@ -59,6 +59,7 @@ export function MeshOfferRow({
 }) {
   const [domain, setDomain] = useState<string>(offer.suggestedDomain || "containers");
   const [busy, setBusy] = useState(false);
+  const { lang } = useT();
   const { push } = useToast();
   const { ask, dialog } = useNewTargetQuestion();
   const [shakeAccept, setShakeAccept] = useState(0);
@@ -97,7 +98,7 @@ export function MeshOfferRow({
         onChanged();
         if (res.place) onAccepted?.(res.place);
       } else {
-        push(res.error ?? t("fleet.mesh.saveError"), "fail");
+        push(placeErrorText(t, lang, res, "fleet.mesh.saveError"), "fail");
         setShakeAccept((n) => n + 1);
       }
     } catch (err) {
