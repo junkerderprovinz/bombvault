@@ -35,7 +35,10 @@ func newPortableHandler(t *testing.T, appKey string) (*Handler, *store.Repo) {
 	// the production default.
 	cfg := config.Config{AppKey: appKey, DataDir: t.TempDir(), HostMountRoot: "/host/user"}
 	svc := &Service{cfg: cfg, store: st}
-	return &Handler{cfg: cfg, store: st, svc: svc}, st
+	h := &Handler{cfg: cfg, store: st, svc: svc}
+	h.ha = h.newHomeAssistantBridge()
+	t.Cleanup(h.ha.Close)
+	return h, st
 }
 
 const (

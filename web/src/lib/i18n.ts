@@ -2679,9 +2679,9 @@ export const en = {
   "settingsIO.desc":
     "Save this instance's configuration to a file, or load a file exported earlier into this instance. Only settings and off-site destinations are moved. Your backups, snapshots and history are not affected.",
   "settingsIO.exportHeading": "Export",
-  "settingsIO.includeCreds": "Include credentials (off-site and notification secrets)",
+  "settingsIO.includeCreds": "Include credentials (off-site, notification and MQTT broker secrets)",
   "settingsIO.credsWarning":
-    "With credentials, this file is as sensitive as your recovery kit: it holds your off-site and notification secrets in readable form. Store it somewhere safe.",
+    "With credentials, this file is as sensitive as your recovery kit: it holds your off-site, notification and MQTT broker secrets in readable form. Store it somewhere safe.",
   "settingsIO.exportButton": "Export settings",
   // The import button's own label ([293]). It used to borrow chooseFile
   // ("Choose a settings file"), which names the file dialog rather than the
@@ -5289,9 +5289,9 @@ export const de: Translations = {
   "settingsIO.desc":
     "Speichere die Konfiguration dieser Instanz in einer Datei oder lade eine zuvor exportierte Datei in diese Instanz. Es werden nur Einstellungen und Off-site-Ziele übertragen. Deine Backups, Snapshots und der Verlauf bleiben unberührt.",
   "settingsIO.exportHeading": "Export",
-  "settingsIO.includeCreds": "Zugangsdaten einschließen (Off-site- und Benachrichtigungs-Geheimnisse)",
+  "settingsIO.includeCreds": "Zugangsdaten einschließen (Off-site-, Benachrichtigungs- und MQTT-Broker-Geheimnisse)",
   "settingsIO.credsWarning":
-    "Mit Zugangsdaten ist diese Datei so sensibel wie dein Recovery-Kit: Sie enthält deine Off-site- und Benachrichtigungs-Geheimnisse im Klartext. Bewahre sie sicher auf.",
+    "Mit Zugangsdaten ist diese Datei so sensibel wie dein Recovery-Kit: Sie enthält deine Off-site-, Benachrichtigungs- und MQTT-Broker-Geheimnisse im Klartext. Bewahre sie sicher auf.",
   "settingsIO.exportButton": "Einstellungen exportieren",
   "settingsIO.importButton": "Einstellungen importieren",
   "settingsIO.exporting": "Exportiere…",

@@ -109,4 +109,4 @@ Cada elemento pode ter a sua própria sensibilidade e o seu próprio mínimo de 
 O cartão **Exportar e importar definições** na página Definições escreve toda a sua configuração BombVault (definições de domínio, destinos externos, agendamentos, retenção, notificações) para um ficheiro JSON portátil que pode importar noutra instância, para que mudar para uma máquina nova ou clonar uma configuração não signifique reintroduzir tudo à mão. A importação mostra uma pré-visualização e pede confirmação, e nunca toca nos seus dados ou histórico de backup.
 
 !!! warning "A exportação pode conter credenciais"
-    Escolhe se inclui as credenciais externas e de notificação no ficheiro. Com as credenciais incluídas, a exportação é tão sensível como o seu kit de recuperação, por isso guarde-a num local seguro. Sem elas, o ficheiro contém apenas definições não secretas.
+    Escolhe se inclui as credenciais externas, de notificação e do broker MQTT no ficheiro. Com as credenciais incluídas, a exportação é tão sensível como o seu kit de recuperação, por isso guarde-a num local seguro. Sem elas, o ficheiro contém apenas definições não secretas.

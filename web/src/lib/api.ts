@@ -407,7 +407,8 @@ export interface GetSettingsResponse {
  * destination rows the file carries, `credentials` reports which secret kinds are
  * present (never the values), and `settingsGroups` names the setting areas the
  * file populates (machine ids: "domains","schedules","retention","offsite",
- * "drills","digest","monitoring","language","exportEncryption").
+ * "drills","digest","monitoring","language","exportEncryption","anomalies",
+ * "homeAssistant","network").
  */
 export interface ImportSettingsSummary {
   schemaVersion: number;
@@ -424,6 +425,7 @@ export interface ImportSettingsSummary {
     cloud: boolean;
     rclone: boolean;
     notify: boolean;
+    mqtt: boolean;
   };
   settingsGroups: string[];
 }

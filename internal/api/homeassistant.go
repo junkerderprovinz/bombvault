@@ -277,30 +277,16 @@ func (h *Handler) handleSetHomeAssistant(w http.ResponseWriter, r *http.Request)
 	}
 	body.Host = strings.TrimSpace(body.Host)
 	body.Prefix = strings.TrimSpace(body.Prefix)
-	switch {
-	case body.Host != "" && !mqttHostRe.MatchString(body.Host), body.Enabled && body.Host == "":
-		writeJSON(w, http.StatusOK, codedFailEnvelope(errMQTTHost, "mqtt-host-invalid"))
-		return
-	case body.Port < 1 || body.Port > 65535:
-		writeJSON(w, http.StatusOK, codedFailEnvelope(errMQTTPort, "mqtt-port-invalid"))
-		return
-	case len(body.Prefix) > 64 || !mqttPrefixRe.MatchString(body.Prefix):
-		writeJSON(w, http.StatusOK, codedFailEnvelope(errMQTTPrefix, "mqtt-prefix-invalid"))
+	if code, err := mqttSettingsRefusal(body.Enabled, body.Host, body.Port, body.Prefix); err != nil {
+		writeJSON(w, http.StatusOK, codedFailEnvelope(err, code))
 		return
 	}
 
 	s.Enabled, s.Host, s.Port, s.TLS, s.Prefix, s.Buttons = body.Enabled, body.Host, body.Port, body.TLS, body.Prefix, body.Buttons
 	s.Username = strings.TrimSpace(body.Username)
-	switch {
-	case s.Username == "":
-		s.PasswordEnc = nil
-	case body.Password != "":
-		sealed, err := secret.Encrypt(h.cfg.AppKey, []byte(body.Password))
-		if err != nil {
-			writeJSON(w, http.StatusOK, failEnvelope(err))
-			return
-		}
-		s.PasswordEnc = sealed
+	if err := h.sealBrokerPassword(&s, body.Password); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
 	}
 	if s.NodeID == "" {
 		s.NodeID = newNodeID()
@@ -316,6 +302,36 @@ func (h *Handler) handleSetHomeAssistant(w http.ResponseWriter, r *http.Request)
 	}
 	out["settings"] = h.homeAssistantView(s)
 	writeJSON(w, http.StatusOK, okEnvelope(out))
+}
+
+// mqttSettingsRefusal says why broker settings cannot be stored, with the code
+// the card translates. The settings import applies the same checks.
+func mqttSettingsRefusal(enabled bool, host string, port int, prefix string) (string, error) {
+	switch {
+	case host != "" && !mqttHostRe.MatchString(host), enabled && host == "":
+		return "mqtt-host-invalid", errMQTTHost
+	case port < 1 || port > 65535:
+		return "mqtt-port-invalid", errMQTTPort
+	case len(prefix) > 64 || !mqttPrefixRe.MatchString(prefix):
+		return "mqtt-prefix-invalid", errMQTTPrefix
+	}
+	return "", nil
+}
+
+// sealBrokerPassword stores password in s. An empty one keeps the stored
+// password, and an empty user name clears it.
+func (h *Handler) sealBrokerPassword(s *store.MQTTSettings, password string) error {
+	switch {
+	case s.Username == "":
+		s.PasswordEnc = nil
+	case password != "":
+		sealed, err := secret.Encrypt(h.cfg.AppKey, []byte(password))
+		if err != nil {
+			return err
+		}
+		s.PasswordEnc = sealed
+	}
+	return nil
 }
 
 // newNodeID names this instance in the topics: short, and random so two
