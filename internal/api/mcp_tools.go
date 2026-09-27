@@ -418,9 +418,20 @@ func (h *Handler) logMCPCall(ctx context.Context, tool, outcome string) {
 // logMCPRunCall is logMCPCall for a call about one run, which the key's log
 // links to.
 func (h *Handler) logMCPRunCall(ctx context.Context, tool, outcome, runID string) {
-	h.countMCPToolCall(tool, outcome)
 	caller, _ := mcpCallerFrom(ctx)
-	log.Printf("api: mcp: key %s ...%s tool %s -> %s", caller.KeyID, caller.Hint, tool, outcome)
+	switch caller.via() {
+	case viaMCP:
+		h.countMCPToolCall(tool, outcome)
+		log.Printf("api: mcp: key %s ...%s tool %s -> %s", caller.KeyID, caller.Hint, tool, outcome)
+	case viaAPI:
+		log.Printf("api: v1: token %s ...%s %s -> %s", caller.KeyID, caller.Hint, tool, outcome)
+	default:
+		log.Printf("api: %s: %s -> %s", caller.via(), tool, outcome)
+	}
+	// The Home Assistant buttons have no key row whose log could take the entry.
+	if caller.KeyID == "" {
+		return
+	}
 	h.recordMCPEvent(caller.KeyID, store.MCPKeyEvent{
 		At: h.mcp.now().Unix(), Tool: tool, Outcome: outcome, RunID: runID,
 		Routine: mcpRoutineCall(tool, outcome),

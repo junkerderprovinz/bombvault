@@ -38,6 +38,8 @@ Comme une sauvegarde arrête des services et fait sortir d'anciens points de res
 
 Un lancement de domaine ou de Backup Everything laisse de côté les éléments retenus par une limite et les nomme dans sa réponse. L'interface web et la planification ne sont concernées par aucune de ces limites. Le quota horaire est gardé en mémoire, un redémarrage de BombVault le remet donc à zéro.
 
+Les lancements via l'[API](api.md#errors) comptent dans les mêmes limites par élément que ceux via MCP, ainsi que pour la protection de rétention.
+
 ## Activer le serveur {#switch-on}
 
 1. Ouvre **Paramètres, Système, Serveur MCP** et clique sur le bouton de ton client. Un client qui n'est pas dans la liste se connecte via **Autre client**.

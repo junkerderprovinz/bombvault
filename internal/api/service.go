@@ -2090,10 +2090,15 @@ func (s *Service) notifyMCPKeyChange(ctx context.Context, event string, k store.
 	title := "BombVault: MCP key " + event
 	msg := fmt.Sprintf("The MCP key %q (ending in %s) was %s from %s. If this was not you, revoke it under Settings > System > MCP server.",
 		k.Label, k.Hint, event, addr)
-	if k.Kind == store.MCPKindOAuth {
+	switch k.Kind {
+	case store.MCPKindOAuth:
 		title = "BombVault: MCP client " + event
 		msg = fmt.Sprintf("The MCP client %q, signed in through OAuth, was %s from %s. If this was not you, revoke its access under Settings > System > MCP server.",
 			k.Label, event, addr)
+	case store.MCPKindAPI:
+		title = "BombVault: API token " + event
+		msg = fmt.Sprintf("The API token %q (ending in %s) was %s from %s. If this was not you, revoke it under Settings > System > API tokens.",
+			k.Label, k.Hint, event, addr)
 	}
 	go func() {
 		notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "mcp", notify.Event{Title: title, Message: msg, OK: false})
@@ -17532,8 +17537,8 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey stri
 	default:
 		msg = fmt.Sprintf("Backup of %s FAILED: %s", target, scrubError(backupErr))
 	}
-	if o := runOriginFromContext(ctx); o.Via == "mcp" {
-		msg += " " + s.mcpOriginSentence(o.KeyID)
+	if o := runOriginFromContext(ctx); o.Via != "" {
+		msg += " " + s.originSentence(o)
 	}
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok || cancelled || interrupted})
 
@@ -17561,16 +17566,23 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey stri
 	}
 }
 
-// mcpOriginSentence names the MCP key behind a backup for the notification
-// about it. A key the store cannot name still gets the sentence: what the
-// reader needs is that the backup came from neither the schedule nor the web
+// originSentence names what started a backup for the notification about it. A
+// key or token the store cannot name still gets the sentence: what the reader
+// needs is that the backup came from neither the schedule nor the web
 // interface.
-func (s *Service) mcpOriginSentence(keyID string) string {
-	key, err := s.store.GetMCPKey(keyID)
-	if err != nil || key.Label == "" {
-		return "Started through MCP."
+func (s *Service) originSentence(o RunOrigin) string {
+	if o.Via == viaMQTT {
+		return "Started from Home Assistant."
 	}
-	return fmt.Sprintf("Started through MCP with the key %q.", key.Label)
+	channel, noun := "MCP", "key"
+	if o.Via == viaAPI {
+		channel, noun = "the API", "token"
+	}
+	key, err := s.store.GetMCPKey(o.KeyID)
+	if err != nil || key.Label == "" {
+		return "Started through " + channel + "."
+	}
+	return fmt.Sprintf("Started through %s with the %s %q.", channel, noun, key.Label)
 }
 
 // statusSkipped marks a run BombVault intentionally did NOT perform because the

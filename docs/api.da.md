@@ -1,0 +1,70 @@
+# API og integrationer
+
+BombVault har et lille HTTP-API til scripts, dashboards og hjemmeautomatisering. Det læser det samme, som dashboardet viser, og kan starte en sikkerhedskopi. Alt andet, som gendannelser, sletning af kopier og indstillinger, bliver i brugerfladen.
+
+## Tokens {#tokens}
+
+Hver forespørgsel skal have et API-token, også når der ikke er sat en adgangskode. Opret et under **Indstillinger, System, API-tokens**:
+
+1. Skriv et navn, der siger, hvor tokenet bruges, for eksempel "Home Assistant" eller "Uptime Kuma".
+2. Slå **Tillad at starte sikkerhedskopier** til, hvis tokenet skal kunne starte kopier. Uden det kan det kun læse.
+3. Klik på **Opret token**. Tokenet vises én gang. BombVault gemmer kun et fingeraftryk af det, så kopiér det nu.
+
+Send tokenet i en header, enten `Authorization: Bearer <token>` eller `X-API-Key: <token>`. Et token starter med `bvapi_`. Det åbner kun API'et: en MCP-nøgle virker ikke her, og et token virker ikke til MCP.
+
+Hvert token har en flise med navnet, om det må starte kopier, de sidste fire tegn, hvornår og hvorfra det sidst blev brugt, og dagens kald. På flisen kan du omdøbe det, ændre hvad det må, udskifte det eller tilbagekalde det. **Log** viser de kopier, det startede, og dets seneste kald. Gendanner du BombVaults konfiguration fra en kopi, tilbagekaldes alle tokens, fordi kopien kan indeholde tokens, du har tilbagekaldt siden.
+
+Uden adgangskode kan alle, der kan åbne brugerfladen, også oprette et token. Åbner du BombVault under et navn, der ser offentligt ud, og er der ingen adgangskode, kan der ikke oprettes tokens fra den adresse, ligesom med [MCP-nøglerne](mcp.md#switch-on).
+
+## Endepunkter {#endpoints}
+
+| Rute | Hvad den returnerer eller gør | Token |
+|---|---|---|
+| `GET /api/v1/health` | Version, instansnavn, om en kopi kører, og hvad dette token må | læse |
+| `GET /api/v1/status` | Beskyttelsesstatus pr. område: seneste vellykkede kopi, forventet interval, kontroller, næste planlagte kørsler | læse |
+| `GET /api/v1/activity` | Hvad der kører lige nu, med fase og procent | læse |
+| `GET /api/v1/items` | Hvert beskyttet element med tidsplan, hvad en kopi stopper, og seneste kopi; `?domain=` for ét område | læse |
+| `GET /api/v1/runs` | Kørselshistorik, nyeste først; filtre `limit`, `domain`, `item`, `status`, `kind`, `since` | læse |
+| `GET /api/v1/anomalies` | Anomalier med et overblik over de åbne; filtre `state`, `severity`, `domain`, `limit` | læse |
+| `GET /api/v1/anomalies/{id}` | Én anomali | læse |
+| `GET /api/v1/storage/{domain}` | Størrelseshistorik, vækst pr. uge og ledig plads for hvert repository i et område | læse |
+| `POST /api/v1/backups` | Sikkerhedskopierer ét element (`{"domain":"containers","item":"plex"}`) eller et helt område (`{"domain":"vms"}`) | starte |
+| `POST /api/v1/backups/everything` | Kører Backup Everything | starte |
+| `POST /api/v1/runs/{id}/cancel` | Afbryder en kørende kopi, som dette token startede | starte |
+
+Områderne hedder `containers`, `vms`, `files`, `zfs`, `flash` og `config`. Tider er Unix-sekunder. Svarene er de samme som fra [MCP-værktøjerne](mcp.md#tools) med samme navn, så de to følges ad.
+
+En kopi, der startes her, er den samme, som brugerfladen starter: en kørende container stoppes, indtil dens kopi er færdig. Forespørgslen svarer med det samme, og `/api/v1/activity` og `/api/v1/runs` viser, hvordan det går.
+
+## Eksempler {#examples}
+
+```sh
+# Hvordan går det med sikkerhedskopierne?
+curl -s -H "Authorization: Bearer $BOMBVAULT_TOKEN" https://tower:3443/api/v1/status
+
+# Sikkerhedskopiér én container nu.
+curl -s -X POST -H "Authorization: Bearer $BOMBVAULT_TOKEN" \
+  -H "Content-Type: application/json" -d '{"domain":"containers","item":"plex"}' \
+  https://tower:3443/api/v1/backups
+```
+
+Med BombVaults eget selvsignerede certifikat tilføjer du `--cacert bombvault-cert.pem` (filen fra **Hent certifikat** på MCP-kortet) eller `-k` på et netværk, du stoler på.
+
+## Fejl og grænser {#errors}
+
+En fejl kommer tilbage som `{"error": {"code": "...", "message": "..."}}` med den tilsvarende status:
+
+| Status | Koder | Betydning |
+|---|---|---|
+| 400 | `invalid_argument`, `ambiguous` | Et argument mangler eller er forkert |
+| 401 | `no_token`, `invalid_token` | Intet token, eller ikke et aktivt |
+| 403 | `not_permitted` | Tokenet må kun læse, eller det startede ikke kørslen |
+| 404 | `not_found` | Intet sådant element, kørsel eller anomali |
+| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Noget andet kører, området er slået fra, eller der er intet at gøre |
+| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | En grænse holder forespørgslen tilbage; `Retry-After` siger, hvornår du kan prøve igen |
+
+Starter følger de samme grænser som [starter via MCP](mcp.md#starting-backups): 12 i timen pr. token, 15 minutter mellem to starter af samme element, højst 4 starter af et element på 24 timer og opbevaringsbeskyttelsen. De sidste tre tæller starter via MCP og via API'et sammen. Et token må lave 120 forespørgsler i minuttet. Fem mislykkede forsøg fra én adresse spærrer den i et minut.
+
+## OpenAPI {#openapi}
+
+BombVault leverer en beskrivelse af disse ruter på `/api/v1/openapi.json` (OpenAPI 3.1). Den kræver intet token. Indlæs den i Swagger UI, Postman eller en kodegenerator.

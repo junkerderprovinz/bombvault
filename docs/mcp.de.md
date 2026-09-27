@@ -38,6 +38,8 @@ Weil ein Backup Dinge anhält und alte Wiederherstellungspunkte verdrängt, sind
 
 Ein Start einer Domäne oder des Gesamt-Backups lässt die Elemente aus, die eine Grenze zurückhält, und nennt sie in der Antwort. Die Web-Oberfläche und der Zeitplan sind von alldem nicht betroffen. Das Stundenkontingent liegt im Speicher, ein Neustart von BombVault setzt es also zurück.
 
+Starts über die [API](api.md#errors) zählen bei den Grenzen je Element und beim Aufbewahrungsschutz mit den MCP-Starts zusammen.
+
 ## Einschalten {#switch-on}
 
 1. Öffne **Einstellungen, System, MCP-Server** und klick auf den Knopf deines Clients. Ein Client, der nicht in der Liste steht, verbindet sich über **Anderer Client**.

@@ -458,11 +458,11 @@ export interface Run {
   // runView.Domain value comment for it and missed this, its TS counterpart.
   domain: string;
   /** What asked for the run: "" for the web interface and the scheduler,
-   *  "mcp" for an assistant. */
-  startedVia?: "" | "mcp";
+   *  "mcp" for an assistant, "api" for an API token. */
+  startedVia?: "" | "mcp" | "api";
   startedViaKey?: string;
-  /** The operator's name for the MCP key behind the run, "" once that key is
-   *  purged from the list. */
+  /** The operator's name for the MCP key or API token behind the run, "" once
+   *  it is purged from the list. */
   startedViaLabel?: string;
   startedViaRevoked?: boolean;
 }
@@ -4868,6 +4868,62 @@ export function revokeMcpKey(id: string): Promise<OkEnvelope> {
 
 export function purgeMcpKey(id: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** GET /api/tokens: the API tokens for their settings card. A token is an MCP
+ *  key of another kind, with the same tile and log, that opens /api/v1. */
+export interface ApiTokensResponse extends OkEnvelope {
+  basePath: string;
+  openapiPath: string;
+  limit: number;
+  authEnabled: boolean;
+  /** False when no login password is set and the page was opened under a
+   *  public-looking host name: tokens can then neither be created nor replaced. */
+  hostAllowsKeys: boolean;
+  startsPerHour: number;
+  cooldownMinutes: number;
+  itemStartsPerDay: number;
+  tokens: McpKeyView[];
+  revoked: McpKeyView[];
+}
+
+export function listApiTokens(): Promise<ApiTokensResponse> {
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  return fetchJSON(`/api/tokens?since=${Math.floor(midnight.getTime() / 1000)}`);
+}
+
+export function createApiToken(label: string, canStartBackups: boolean): Promise<McpKeySecretResponse> {
+  return fetchJSON("/api/tokens", {
+    method: "POST",
+    body: JSON.stringify({ label, canStartBackups }),
+  });
+}
+
+export function updateApiToken(
+  id: string,
+  patch: { label?: string; canStartBackups?: boolean }
+): Promise<OkEnvelope & { item?: McpKeyView }> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function rotateApiToken(id: string): Promise<McpKeySecretResponse> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}/rotate`, { method: "POST" });
+}
+
+export function revokeApiToken(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}/revoke`, { method: "POST" });
+}
+
+export function purgeApiToken(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+export function getApiTokenActivity(id: string): Promise<McpKeyActivity> {
+  return fetchJSON(`/api/tokens/${encodeURIComponent(id)}/activity`);
 }
 
 /** Reissues BombVault's own certificate with `host` among its names, so a

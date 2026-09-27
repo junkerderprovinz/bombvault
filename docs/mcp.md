@@ -38,6 +38,8 @@ Because a backup stops things and rotates old restore points out, starts through
 
 A domain or Backup Everything start leaves out the items a limit holds back and names them in its answer. The web interface and the schedule are not limited by any of this. The hourly budget lives in memory, so a restart of BombVault resets it.
 
+Starts through the [API](api.md#errors) count toward the same limits per item as starts through MCP, and toward the retention guard.
+
 ## Switch it on {#switch-on}
 
 1. Open **Settings, System, MCP server** and click the button of your client. A client that is not listed connects through **Other client**.

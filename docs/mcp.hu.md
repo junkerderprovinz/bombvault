@@ -38,6 +38,8 @@ Mivel egy mentés leállít dolgokat és kiszorítja a régi visszaállítási p
 
 Egy tartomány vagy a Backup Everything indítása kihagyja azokat az elemeket, amelyeket valamelyik korlát visszatart, és megnevezi őket a válaszában. Egyik korlát sem vonatkozik a webes felületre és az ütemezésre. Az óránkénti keret a memóriában van, így a BombVault újraindítása lenullázza.
 
+Az [API-n](api.md#errors) keresztüli indítások ugyanabba az elemenkénti korlátba számítanak, mint az MCP-n keresztüliek, és a megőrzési védelembe is.
+
 ## Bekapcsolás {#switch-on}
 
 1. Nyisd meg a **Beállítások, Rendszer, MCP-kiszolgáló** részt, és kattints a kliensed gombjára. A listában nem szereplő kliens az **Egyéb kliens** gombon át csatlakozik.

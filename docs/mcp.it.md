@@ -38,6 +38,8 @@ Poiché un backup ferma dei servizi e fa uscire vecchi punti di ripristino, gli 
 
 Un avvio di dominio o di Backup Everything lascia fuori gli elementi trattenuti da un limite e li nomina nella risposta. L'interfaccia web e la pianificazione non sono toccate da nessuno di questi limiti. Il budget orario vive in memoria, quindi un riavvio di BombVault lo azzera.
 
+Gli avvii tramite l'[API](api.md#errors) contano negli stessi limiti per elemento degli avvii tramite MCP e nella protezione della conservazione.
+
 ## Attivarlo {#switch-on}
 
 1. Apri **Impostazioni, Sistema, Server MCP** e fai clic sul pulsante del tuo client. Un client che non è nell'elenco si collega tramite **Altro client**.

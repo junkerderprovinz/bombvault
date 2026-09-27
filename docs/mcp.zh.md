@@ -38,6 +38,8 @@ BombVault 内置了 Model Context Protocol（MCP）服务器，Claude Code 和 C
 
 启动一个域或 Backup Everything 时，被某项限制挡下的项目会被跳过，并在回答中列出名称。这些限制都不影响网页界面和计划。每小时的额度保存在内存中，所以重启 BombVault 会将其清零。
 
+通过 [API](api.md#errors) 的启动与通过 MCP 的启动一起计入每个项目的相同限制，也计入保留保护。
+
 ## 开启 {#switch-on}
 
 1. 打开 **设置、系统、MCP 服务器**，点击你所用客户端的按钮。不在列表中的客户端通过 **其他客户端** 连接。

@@ -123,4 +123,5 @@ nav:
   - zfs-datasets.md
   - offsite-recovery.md
   - mcp.md
+  - api.md
   - troubleshooting.md

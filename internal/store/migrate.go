@@ -2119,6 +2119,15 @@ CREATE TABLE IF NOT EXISTS mcp_oauth_tokens (
 CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_grant ON mcp_oauth_tokens(grant_id, kind);
 CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expires_at);`,
 	},
+	{
+		// API tokens are rows of mcp_keys with kind 'api'. Their names only have
+		// to differ from each other, so a token and an MCP key can both be called
+		// "Home Assistant".
+		version: apiMigrationBase,
+		name:    "mcp_keys_api_token_labels",
+		sql: `DROP INDEX IF EXISTS idx_mcp_keys_active_label;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_keys_active_label ON mcp_keys(kind = 'api', lower(label)) WHERE revoked_at = 0;`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2154,6 +2163,10 @@ const mcpActivityMigration = 148
 
 // mcpOAuthMigration numbers the OAuth sign-in of the MCP endpoint.
 const mcpOAuthMigration = mcpActivityMigration + 4
+
+// apiMigrationBase numbers the public API, the Home Assistant link and the
+// network announcement.
+const apiMigrationBase = 230
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

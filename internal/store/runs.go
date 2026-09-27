@@ -26,11 +26,11 @@ type Run struct {
 	// "Backup Everything", or empty for a run outside one.
 	GroupID string `json:"groupId"`
 	// StartedVia names what asked for this run when the audit trail has a name
-	// for it: "mcp" for the MCP endpoint, empty for the web interface and the
-	// scheduler.
+	// for it: "mcp" for the MCP endpoint, "api" for an API token, "mqtt" for a
+	// Home Assistant button, empty for the web interface and the scheduler.
 	StartedVia string `json:"startedVia"`
-	// StartedViaKey is the mcp_keys.id behind an MCP-started run, so the
-	// Activity log can name the client even after the key is revoked.
+	// StartedViaKey is the mcp_keys.id of the MCP key or API token behind the
+	// run, so the Activity log can name it even after it is revoked.
 	StartedViaKey string `json:"startedViaKey"`
 }
 
@@ -1261,12 +1261,13 @@ func placeholderList(n int) string {
 	return strings.TrimSuffix(strings.Repeat("?,", n), ",")
 }
 
-// LatestMCPStartAt returns the newest started_at among the finished MCP-started
-// runs of targetIDs at or after since, or 0 when there is none. It answers the
-// cooldown that keeps an assistant from starting the same target again and
-// again. A run still in flight is left out: the caller's own guard answers that
-// one as busy, which says more than a waiting time.
-func (r *Repo) LatestMCPStartAt(targetIDs []string, since int64) (int64, error) {
+// LatestExternalStartAt returns the newest started_at among the finished runs
+// of targetIDs that MCP, the API or Home Assistant started at or after since,
+// or 0 when there is none. It answers the cooldown that keeps a caller from
+// starting the same target again and again, whichever way it came in. A run
+// still in flight is left out: the caller's own guard answers that one as busy,
+// which says more than a waiting time.
+func (r *Repo) LatestExternalStartAt(targetIDs []string, since int64) (int64, error) {
 	var newest int64
 	for start := 0; start < len(targetIDs); start += lastBackupAmongChunk {
 		end := min(start+lastBackupAmongChunk, len(targetIDs))
@@ -1281,11 +1282,11 @@ func (r *Repo) LatestMCPStartAt(targetIDs []string, since int64) (int64, error) 
 		row := r.db.QueryRow(`
 			SELECT max(started_at)
 			FROM runs
-			WHERE started_via = 'mcp' AND status <> 'running' AND started_at >= ?
+			WHERE started_via != '' AND status <> 'running' AND started_at >= ?
 			  AND target_id IN (`+placeholderList(len(chunk))+`)`, args...)
 		var at sql.NullInt64
 		if err := row.Scan(&at); err != nil {
-			return 0, fmt.Errorf("LatestMCPStartAt: %w", err)
+			return 0, fmt.Errorf("LatestExternalStartAt: %w", err)
 		}
 		if at.Valid && at.Int64 > newest {
 			newest = at.Int64
@@ -1294,30 +1295,30 @@ func (r *Repo) LatestMCPStartAt(targetIDs []string, since int64) (int64, error) 
 	return newest, nil
 }
 
-// MCPBackupsSince counts the backups an MCP key started for targetID at or
-// after since and returns when the oldest of them began. It is the daily budget
-// a single item has, and oldest says when the next slot frees up. Every attempt
-// counts whatever became of it: the budget is about the downtime a start costs,
-// and a backup that failed or was cancelled had stopped the container all the
-// same.
-func (r *Repo) MCPBackupsSince(targetID string, since int64) (count int, oldest int64, err error) {
+// ExternalBackupsSince counts the backups MCP, the API or Home Assistant
+// started for targetID at or after since and returns when the oldest of them
+// began. It is the daily budget a single item has, and oldest says when the
+// next slot frees up. Every attempt counts whatever became of it: the budget is
+// about the downtime a start costs, and a backup that failed or was cancelled
+// had stopped the container all the same.
+func (r *Repo) ExternalBackupsSince(targetID string, since int64) (count int, oldest int64, err error) {
 	var first sql.NullInt64
 	err = r.db.QueryRow(`
 		SELECT count(*), min(started_at)
 		FROM runs
-		WHERE target_id = ? AND kind = 'backup' AND started_via = 'mcp'
+		WHERE target_id = ? AND kind = 'backup' AND started_via != ''
 		  AND started_at >= ?`, targetID, since).Scan(&count, &first)
 	if err != nil {
-		return 0, 0, fmt.Errorf("MCPBackupsSince: %w", err)
+		return 0, 0, fmt.Errorf("ExternalBackupsSince: %w", err)
 	}
 	return count, first.Int64, nil
 }
 
 // NewestBackupOrigins looks at the newest n successful runs of kind on targetID
-// and reports how many there are and how many an MCP key started. Under a
-// count-only retention policy that is what says whether one more MCP backup
-// would push the last operator-made one out of the repository.
-func (r *Repo) NewestBackupOrigins(targetID, kind string, n int) (total, viaMCP int, err error) {
+// and reports how many there are and how many MCP, the API or Home Assistant
+// started. Under a count-only retention policy that is what says whether one
+// more such backup would push the last operator-made one out of the repository.
+func (r *Repo) NewestBackupOrigins(targetID, kind string, n int) (total, external int, err error) {
 	if n <= 0 {
 		return 0, 0, nil
 	}
@@ -1338,14 +1339,14 @@ func (r *Repo) NewestBackupOrigins(targetID, kind string, n int) (total, viaMCP 
 			return 0, 0, fmt.Errorf("NewestBackupOrigins: %w", sErr)
 		}
 		total++
-		if via == "mcp" {
-			viaMCP++
+		if via != "" {
+			external++
 		}
 	}
 	if rErr := rows.Err(); rErr != nil {
 		return 0, 0, fmt.Errorf("NewestBackupOrigins: %w", rErr)
 	}
-	return total, viaMCP, nil
+	return total, external, nil
 }
 
 // BackupStamp is what a list of items says about a target's backup history

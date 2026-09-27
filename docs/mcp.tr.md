@@ -38,6 +38,8 @@ Bir yedekleme hizmetleri durdurduğu ve eski geri yükleme noktalarını dışar
 
 Bir alanın ya da Backup Everything'in başlatılması, bir sınırın geri tuttuğu öğeleri dışarıda bırakır ve yanıtında adlarını verir. Bu sınırların hiçbiri web arayüzünü ve zamanlamayı etkilemez. Saatlik kota bellekte tutulur, bu yüzden BombVault'un yeniden başlatılması onu sıfırlar.
 
+[API](api.md#errors) üzerinden başlatmalar, öğe başına aynı sınırlarda ve saklama korumasında MCP üzerinden başlatmalarla birlikte sayılır.
+
 ## Açmak {#switch-on}
 
 1. **Ayarlar, Sistem, MCP sunucusu** bölümünü aç ve istemcinin düğmesine tıkla. Listede olmayan bir istemci **Başka istemci** üzerinden bağlanır.

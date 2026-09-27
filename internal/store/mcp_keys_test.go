@@ -290,3 +290,84 @@ func TestTouchMCPKey(t *testing.T) {
 		t.Fatalf("a revoked key recorded a use: %d/%q", revoked.LastUsedAt, revoked.LastUsedFrom)
 	}
 }
+
+func addAPIToken(t *testing.T, r *store.Repo, id, label string, canStart bool, now int64) store.MCPKey {
+	t.Helper()
+	tok, err := r.CreateAPIToken(id, label, "digest-"+id, "h"+id, "check-"+id, canStart, now)
+	if err != nil {
+		t.Fatalf("CreateAPIToken(%s): %v", id, err)
+	}
+	return tok
+}
+
+func TestAPITokensAreKeptApartFromMCPKeys(t *testing.T) {
+	r := newMCPRepo(t)
+	addMCPKey(t, r, "assistant", "Home Assistant", true, 1000)
+	tok := addAPIToken(t, r, "ha", "Home Assistant", false, 1100)
+	if tok.Kind != store.MCPKindAPI {
+		t.Fatalf("Kind = %q, want %q", tok.Kind, store.MCPKindAPI)
+	}
+
+	keys, err := r.ActiveMCPKeys()
+	if err != nil {
+		t.Fatalf("ActiveMCPKeys: %v", err)
+	}
+	if len(keys) != 1 || keys[0].ID != "assistant" {
+		t.Fatalf("ActiveMCPKeys = %+v, want only the MCP key", keys)
+	}
+	tokens, err := r.ActiveAPITokens()
+	if err != nil {
+		t.Fatalf("ActiveAPITokens: %v", err)
+	}
+	if len(tokens) != 1 || tokens[0].ID != "ha" {
+		t.Fatalf("ActiveAPITokens = %+v, want only the token", tokens)
+	}
+
+	if _, err := r.CreateAPIToken("ha2", "home assistant", "digest-ha2", "h2", "check-ha2", false, 1200); !errors.Is(err, store.ErrMCPKeyLabelTaken) {
+		t.Fatalf("a second token with the same name gave %v, want ErrMCPKeyLabelTaken", err)
+	}
+	if _, err := r.CreateMCPKey("second", "home assistant", "", "digest-second", "hs", "check-second", true, 1300); !errors.Is(err, store.ErrMCPKeyLabelTaken) {
+		t.Fatalf("a second MCP key with the same name gave %v, want ErrMCPKeyLabelTaken", err)
+	}
+
+	rotated, err := r.RotateMCPKey("ha", "digest-new", "hnew", "check-new", 2000)
+	if err != nil {
+		t.Fatalf("replacing a token: %v", err)
+	}
+	if rotated.Kind != store.MCPKindAPI || rotated.Digest != "digest-new" {
+		t.Fatalf("replaced token = %+v, want the same token with the new digest", rotated)
+	}
+}
+
+func TestAPITokensHaveTheirOwnLimit(t *testing.T) {
+	r := newMCPRepo(t)
+	for i := 0; i < store.MCPKeyLimit; i++ {
+		addMCPKey(t, r, fmt.Sprintf("key%02d", i), fmt.Sprintf("key %d", i), true, 1000+int64(i))
+	}
+	for i := 0; i < store.APITokenLimit; i++ {
+		addAPIToken(t, r, fmt.Sprintf("tok%02d", i), fmt.Sprintf("token %d", i), true, 2000+int64(i))
+	}
+	if _, err := r.CreateAPIToken("one-too-many", "eleven", "digest-x", "hx", "check-x", true, 3000); !errors.Is(err, store.ErrMCPKeyLimit) {
+		t.Fatalf("the token over the limit gave %v, want ErrMCPKeyLimit", err)
+	}
+}
+
+func TestRevokeAllMCPKeysTakesTheAPITokensToo(t *testing.T) {
+	r := newMCPRepo(t)
+	addMCPKey(t, r, "a", "A", true, 1000)
+	addAPIToken(t, r, "b", "B", true, 1100)
+	n, err := r.RevokeAllMCPKeys("config-restore", 2000)
+	if err != nil {
+		t.Fatalf("RevokeAllMCPKeys: %v", err)
+	}
+	if n != 2 {
+		t.Fatalf("RevokeAllMCPKeys = %d, want the key and the token", n)
+	}
+	tokens, err := r.ActiveAPITokens()
+	if err != nil {
+		t.Fatalf("ActiveAPITokens: %v", err)
+	}
+	if len(tokens) != 0 {
+		t.Fatalf("ActiveAPITokens = %+v, want none after a configuration restore", tokens)
+	}
+}

@@ -38,6 +38,8 @@ Ponieważ kopia zatrzymuje usługi i wypycha stare punkty przywracania, uruchomi
 
 Uruchomienie domeny lub Backup Everything pomija elementy zatrzymane przez któryś limit i wymienia je w odpowiedzi. Żaden z tych limitów nie dotyczy interfejsu WWW ani harmonogramu. Budżet godzinowy jest trzymany w pamięci, więc restart BombVault go zeruje.
 
+Uruchomienia przez [API](api.md#errors) liczą się do tych samych limitów na element co uruchomienia przez MCP oraz do ochrony retencji.
+
 ## Włączanie {#switch-on}
 
 1. Otwórz **Ustawienia, System, Serwer MCP** i kliknij przycisk swojego klienta. Klient, którego nie ma na liście, łączy się przez **Inny klient**.

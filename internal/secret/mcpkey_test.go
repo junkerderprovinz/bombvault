@@ -105,3 +105,16 @@ func TestMCPKeyCheckDependsOnAppKeyAndIDOnly(t *testing.T) {
 		t.Fatal("check and digest share their domain separator")
 	}
 }
+
+func TestNewAPITokenCarriesItsOwnPrefix(t *testing.T) {
+	tok, err := NewAPIToken()
+	if err != nil {
+		t.Fatalf("NewAPIToken: %v", err)
+	}
+	if !strings.HasPrefix(tok, APITokenPrefix) || strings.HasPrefix(tok, MCPKeyPrefix) {
+		t.Fatalf("token %q, want the %q prefix and not the MCP one", tok, APITokenPrefix)
+	}
+	if len(tok) != len(APITokenPrefix)+43 {
+		t.Fatalf("len(%q) = %d, want the prefix and 43 base64url characters", tok, len(tok))
+	}
+}

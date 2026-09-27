@@ -76,7 +76,7 @@ func (h *Handler) toolStartBackup(ctx context.Context, req *mcp.CallToolRequest)
 	}
 
 	now := h.mcp.now()
-	release, refusal := h.mcpStartPreflight(ctx, tool, caller.KeyID, item.Name, []string{item.ID}, now)
+	release, refusal := h.mcpStartPreflight(ctx, tool, caller.budgetKey(), item.Name, []string{item.ID}, now)
 	if refusal != nil {
 		return refusal, nil
 	}
@@ -97,7 +97,7 @@ func (h *Handler) toolStartBackup(ctx context.Context, req *mcp.CallToolRequest)
 		return h.mcpFailure(ctx, tool, err), nil
 	}
 
-	sctx := WithRunOrigin(ctx, RunOrigin{Via: "mcp", KeyID: caller.KeyID})
+	sctx := WithRunOrigin(ctx, RunOrigin{Via: caller.via(), KeyID: caller.KeyID})
 	started, err := h.mcpStartOutsideEverything(func() (bool, error) { return h.startMCPItem(sctx, item) })
 	return h.mcpStartOutcome(ctx, tool, release, started, err, "a backup is already running", map[string]any{
 		"started":  true,
@@ -168,7 +168,7 @@ func (h *Handler) toolStartDomainBackup(ctx context.Context, req *mcp.CallToolRe
 
 	now := h.mcp.now()
 	targets := append([]string{domainRunTargetID(in.Domain)}, mcpItemIDs(items)...)
-	release, refusal := h.mcpStartPreflight(ctx, tool, caller.KeyID, in.Domain, targets, now)
+	release, refusal := h.mcpStartPreflight(ctx, tool, caller.budgetKey(), in.Domain, targets, now)
 	if refusal != nil {
 		return refusal, nil
 	}
@@ -200,7 +200,7 @@ func (h *Handler) toolStartDomainBackup(ctx context.Context, req *mcp.CallToolRe
 		return h.mcpFailure(ctx, tool, err), nil
 	}
 
-	sctx := WithRunOrigin(ctx, RunOrigin{Via: "mcp", KeyID: caller.KeyID})
+	sctx := WithRunOrigin(ctx, RunOrigin{Via: caller.via(), KeyID: caller.KeyID})
 	started, err := h.mcpStartOutsideEverything(func() (bool, error) { return h.startMCPDomain(sctx, in.Domain, kept) })
 	return h.mcpStartOutcome(ctx, tool, release, started, err, "a backup is already running", map[string]any{
 		"started":  true,
@@ -256,7 +256,7 @@ func (h *Handler) toolStartBackupEverything(ctx context.Context, req *mcp.CallTo
 	}
 
 	now := h.mcp.now()
-	release, refusal := h.mcpStartPreflight(ctx, tool, caller.KeyID, "everything", []string{store.EverythingTargetID}, now)
+	release, refusal := h.mcpStartPreflight(ctx, tool, caller.budgetKey(), "everything", []string{store.EverythingTargetID}, now)
 	if refusal != nil {
 		return refusal, nil
 	}
@@ -276,7 +276,7 @@ func (h *Handler) toolStartBackupEverything(ctx context.Context, req *mcp.CallTo
 	for _, domain := range guard.domains {
 		rows = append(rows, mcpStartItem{ID: domain, Name: domain})
 	}
-	sctx := WithEverythingSkips(WithRunOrigin(ctx, RunOrigin{Via: "mcp", KeyID: caller.KeyID}), guard.skip)
+	sctx := WithEverythingSkips(WithRunOrigin(ctx, RunOrigin{Via: caller.via(), KeyID: caller.KeyID}), guard.skip)
 	started, err := h.mcpStartEverythingAlone(sctx)
 	return h.mcpStartOutcome(ctx, tool, release, started, err, "a Backup Everything pass is already running", map[string]any{
 		"started":  true,
@@ -347,7 +347,7 @@ func (h *Handler) toolCancelBackup(ctx context.Context, req *mcp.CallToolRequest
 	}
 	if !caller.CanStartBackups {
 		h.logMCPCall(ctx, tool, "not_permitted")
-		return mcpToolError("not_permitted", mcpReadOnlyKeyMessage, nil), nil
+		return mcpToolError("not_permitted", caller.readOnlyMessage(), nil), nil
 	}
 	if !validRunID(in.RunID) {
 		h.logMCPCall(ctx, tool, "invalid_argument")
@@ -366,7 +366,7 @@ func (h *Handler) toolCancelBackup(ctx context.Context, req *mcp.CallToolRequest
 		h.logMCPRunCall(ctx, tool, "not_running", run.ID)
 		return mcpToolError("not_running", mcpNotRunningMessage, nil), nil
 	}
-	if run.StartedVia != "mcp" || run.StartedViaKey != caller.KeyID {
+	if run.StartedVia != caller.via() || run.StartedViaKey != caller.KeyID {
 		h.logMCPRunCall(ctx, tool, "not_permitted", run.ID)
 		return mcpToolError("not_permitted", "this run was not started by this key; cancel it in the web interface", nil), nil
 	}
@@ -435,7 +435,7 @@ func mcpEnabledDomains(s store.Settings) []string {
 func (h *Handler) mcpMayStart(ctx context.Context, tool string, caller mcpCaller) (store.Settings, *mcp.CallToolResult) {
 	if !caller.CanStartBackups {
 		h.logMCPCall(ctx, tool, "not_permitted")
-		return store.Settings{}, mcpToolError("not_permitted", mcpReadOnlyKeyMessage, nil)
+		return store.Settings{}, mcpToolError("not_permitted", caller.readOnlyMessage(), nil)
 	}
 	settings, err := h.store.GetSettings()
 	if err != nil {
@@ -465,11 +465,13 @@ func (h *Handler) mcpStartAllowed(ctx context.Context, tool string, caller mcpCa
 }
 
 // mcpStartPreflight holds the cooldown and the hourly budget against what a
-// call is about to start. The budget slot is taken here and given back by
-// release unless a backup began, so two calls arriving together cannot spend
-// the same slot. what names the target in the refusal.
+// call is about to start. The cooldown counts starts through MCP, the API and
+// Home Assistant alike, or a second way in would sidestep it. The budget slot
+// is taken here and given back by release unless a backup began, so two calls
+// arriving together cannot spend the same slot. what names the target in the
+// refusal.
 func (h *Handler) mcpStartPreflight(ctx context.Context, tool, keyID, what string, targetIDs []string, now time.Time) (func(), *mcp.CallToolResult) {
-	last, err := h.store.LatestMCPStartAt(targetIDs, now.Add(-mcpStartCooldown).Unix())
+	last, err := h.store.LatestExternalStartAt(targetIDs, now.Add(-mcpStartCooldown).Unix())
 	if err != nil {
 		return nil, h.mcpFailure(ctx, tool, err)
 	}
@@ -478,7 +480,7 @@ func (h *Handler) mcpStartPreflight(ctx context.Context, tool, keyID, what strin
 		wait := mcpStartCooldown - since
 		h.logMCPCall(ctx, tool, "cooldown")
 		return nil, mcpToolError("cooldown", fmt.Sprintf(
-			"a backup of %s was started through MCP %d minutes ago; wait %d minutes or start it in the web interface",
+			"a backup of %s was started outside the web interface %d minutes ago; wait %d minutes or start it in the web interface",
 			what, int(since.Minutes()), int(math.Ceil(wait.Minutes()))),
 			map[string]any{"retryAfterSeconds": secondsUntil(wait)})
 	}
@@ -555,21 +557,22 @@ type mcpHeldBack struct {
 	detail  map[string]any
 }
 
-// mcpRetentionHold reports why one more MCP-started backup of the item would be
-// one too many, and nil while it would not. Under a count-only policy the
-// window has to keep at least one restore point the schedule or the operator
-// made, and no item takes more than mcpItemStartsPerDay MCP backups a day
-// whatever the policy.
+// mcpRetentionHold reports why one more backup of the item started from outside
+// the web interface would be one too many, and nil while it would not. Under a
+// count-only policy the window has to keep at least one restore point the
+// schedule or the operator made, and no item takes more than
+// mcpItemStartsPerDay such backups a day whatever the policy. MCP, the API and
+// Home Assistant share both counts.
 func (h *Handler) mcpRetentionHold(s store.Settings, item mcpItem, now time.Time) (*mcpHeldBack, error) {
 	dayAgo := now.Add(-24 * time.Hour).Unix()
-	today, oldest, err := h.store.MCPBackupsSince(item.ID, dayAgo)
+	today, oldest, err := h.store.ExternalBackupsSince(item.ID, dayAgo)
 	if err != nil {
 		return nil, err
 	}
 	if today >= mcpItemStartsPerDay {
 		free := time.Unix(oldest, 0).Add(24 * time.Hour).Sub(now)
 		return &mcpHeldBack{
-			message: fmt.Sprintf("%s already got %d backups through MCP in the last 24 hours", item.Name, today),
+			message: fmt.Sprintf("%s already got %d backups started outside the web interface in the last 24 hours", item.Name, today),
 			detail:  map[string]any{"mcpStartsToday": today, "retryAfterSeconds": secondsUntil(free)},
 		}, nil
 	}
@@ -583,34 +586,34 @@ func (h *Handler) mcpRetentionHold(s store.Settings, item mcpItem, now time.Time
 	}
 	if keepLast == 1 {
 		return &mcpHeldBack{
-			message: fmt.Sprintf("retention keeps a single restore point of %s, and an MCP backup would make it the only one there is; "+
+			message: fmt.Sprintf("retention keeps a single restore point of %s, and a backup started this way would make it the only one there is; "+
 				"back it up in the web interface", item.Name),
 			detail: h.retentionRetryDetail(keepLast, 0, item.Domain, now),
 		}, nil
 	}
 	for _, kind := range mcpRetentionSeries(item.Domain) {
-		total, viaMCP, oErr := h.store.NewestBackupOrigins(item.ID, kind, keepLast-1)
+		total, external, oErr := h.store.NewestBackupOrigins(item.ID, kind, keepLast-1)
 		if oErr != nil {
 			return nil, oErr
 		}
-		if total == keepLast-1 && viaMCP == total {
+		if total == keepLast-1 && external == total {
 			return &mcpHeldBack{
-				message: fmt.Sprintf("retention keeps the newest %d restore points of %s and the last %d came through MCP; "+
-					"another one would leave only MCP-made restore points. "+
-					"The next scheduled backup makes room again, or start it in the web interface", keepLast, item.Name, viaMCP),
-				detail: h.retentionRetryDetail(keepLast, viaMCP, item.Domain, now),
+				message: fmt.Sprintf("retention keeps the newest %d restore points of %s and the last %d were started outside the web interface; "+
+					"another one would leave only such restore points. "+
+					"The next scheduled backup makes room again, or start it in the web interface", keepLast, item.Name, external),
+				detail: h.retentionRetryDetail(keepLast, external, item.Domain, now),
 			}, nil
 		}
 	}
 	if item.Domain == zfsDomain {
-		datasets, zErr := h.store.ZFSDatasetsWithMCPWindow(item.ID, keepLast-1)
+		datasets, zErr := h.store.ZFSDatasetsWithExternalWindow(item.ID, keepLast-1)
 		if zErr != nil {
 			return nil, zErr
 		}
 		if len(datasets) > 0 {
 			return &mcpHeldBack{
-				message: fmt.Sprintf("retention keeps the newest %d restore points of each dataset of %s, and the last %d of %s came through MCP; "+
-					"another one would leave only MCP-made restore points. "+
+				message: fmt.Sprintf("retention keeps the newest %d restore points of each dataset of %s, and the last %d of %s were started outside the web interface; "+
+					"another one would leave only such restore points. "+
 					"The next scheduled backup makes room again, or start it in the web interface", keepLast, item.Name, keepLast-1, datasets[0]),
 				detail: h.retentionRetryDetail(keepLast, keepLast-1, item.Domain, now),
 			}, nil

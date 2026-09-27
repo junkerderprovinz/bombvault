@@ -1,0 +1,568 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "BombVault API",
+    "version": "1",
+    "summary": "Read backup health and start backups from scripts and home automation.",
+    "description": "Every route needs an API token, created under Settings, System, API tokens. Send it as `Authorization: Bearer <token>` or as `X-API-Key: <token>`. A read-only token can call every GET route; the POST routes need a token that may start backups. Starts share their limits with MCP: a number of starts per hour per token, a pause between two starts of the same item, a number of starts per item per day, and the retention guard. Times are unix seconds unless a field says otherwise.",
+    "license": { "name": "AGPL-3.0", "identifier": "AGPL-3.0-only" }
+  },
+  "servers": [{ "url": "/" }],
+  "security": [{ "bearer": [] }, { "apiKey": [] }],
+  "tags": [
+    { "name": "read", "description": "Needs any active token." },
+    { "name": "start", "description": "Needs a token that may start backups." }
+  ],
+  "paths": {
+    "/api/v1/openapi.json": {
+      "get": {
+        "operationId": "getOpenAPI",
+        "summary": "This description",
+        "security": [],
+        "x-bombvault-scope": "open",
+        "responses": {
+          "200": { "description": "The OpenAPI document.", "content": { "application/json": { "schema": { "type": "object" } } } }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "getHealth",
+        "tags": ["read"],
+        "summary": "Health and what this token may do",
+        "x-bombvault-scope": "read",
+        "responses": {
+          "200": { "description": "BombVault answers.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Health" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/api/v1/status": {
+      "get": {
+        "operationId": "getStatus",
+        "tags": ["read"],
+        "summary": "Protection status per domain",
+        "description": "Last successful backup, expected interval, verification and off-site checks per domain, and the next scheduled runs.",
+        "x-bombvault-scope": "read",
+        "responses": {
+          "200": { "description": "The status.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Status" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/api/v1/activity": {
+      "get": {
+        "operationId": "getActivity",
+        "tags": ["read"],
+        "summary": "What is running now",
+        "x-bombvault-scope": "read",
+        "responses": {
+          "200": { "description": "The operations in flight.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Activity" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/api/v1/items": {
+      "get": {
+        "operationId": "listItems",
+        "tags": ["read"],
+        "summary": "Protected items",
+        "description": "Every protected container, VM, folder set, ZFS dataset, the flash drive and the app configuration, with schedule, what a backup stops and the last backup.",
+        "x-bombvault-scope": "read",
+        "parameters": [{ "$ref": "#/components/parameters/DomainFilter" }],
+        "responses": {
+          "200": { "description": "The items per domain.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Items" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/api/v1/runs": {
+      "get": {
+        "operationId": "listRuns",
+        "tags": ["read"],
+        "summary": "Run history, newest first",
+        "x-bombvault-scope": "read",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 } },
+          { "name": "domain", "in": "query", "schema": { "$ref": "#/components/schemas/RunDomain" } },
+          { "name": "item", "in": "query", "description": "One item: a container or VM by name, a folder set or ZFS dataset by id or name. Needs domain.", "schema": { "type": "string" } },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["running", "success", "failed", "cancelled", "skipped"] } },
+          { "name": "kind", "in": "query", "schema": { "type": "string", "enum": ["backup", "dbdump", "dbdumpsave", "dbimport", "restore", "update", "prune", "verify", "offsite", "drill", "drdrill", "tamper", "export"] } },
+          { "name": "since", "in": "query", "description": "Only runs that started at or after this unix time.", "schema": { "type": "integer", "minimum": 0 } }
+        ],
+        "responses": {
+          "200": { "description": "The runs.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Runs" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/api/v1/runs/{id}/cancel": {
+      "post": {
+        "operationId": "cancelRun",
+        "tags": ["start"],
+        "summary": "Cancel a backup this token started",
+        "description": "Backups the schedule, the web interface or another caller started cannot be cancelled here.",
+        "x-bombvault-scope": "start",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "The cancel went through, or came too late (cancelled false with a warning).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CancelResult" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/api/v1/anomalies": {
+      "get": {
+        "operationId": "listAnomalies",
+        "tags": ["read"],
+        "summary": "Anomalies in the backup history",
+        "x-bombvault-scope": "read",
+        "parameters": [
+          { "name": "state", "in": "query", "schema": { "type": "string", "enum": ["open", "closed", "all"], "default": "open" } },
+          { "name": "severity", "in": "query", "description": "Repeat the parameter or separate values with commas.", "schema": { "type": "array", "items": { "type": "string", "enum": ["critical", "warning", "info"] } }, "style": "form", "explode": true },
+          { "$ref": "#/components/parameters/DomainFilter" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } }
+        ],
+        "responses": {
+          "200": { "description": "The findings and a summary of what is open.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Anomalies" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/api/v1/anomalies/{id}": {
+      "get": {
+        "operationId": "getAnomaly",
+        "tags": ["read"],
+        "summary": "One anomaly",
+        "x-bombvault-scope": "read",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "The finding.", "content": { "application/json": { "schema": { "type": "object", "required": ["anomaly"], "properties": { "anomaly": { "$ref": "#/components/schemas/AnomalyDetail" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/api/v1/storage/{domain}": {
+      "get": {
+        "operationId": "getStorage",
+        "tags": ["read"],
+        "summary": "Repository size and free space of one domain",
+        "x-bombvault-scope": "read",
+        "parameters": [
+          { "name": "domain", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Domain" } },
+          { "name": "limit", "in": "query", "description": "How many size samples, newest first.", "schema": { "type": "integer", "minimum": 1, "maximum": 90, "default": 30 } }
+        ],
+        "responses": {
+          "200": { "description": "Size samples, growth and the room around each repository.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Storage" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/api/v1/backups": {
+      "post": {
+        "operationId": "startBackup",
+        "tags": ["start"],
+        "summary": "Back up one item or one domain",
+        "description": "With an item, backs up that item; without one, every protected item of the domain in one batch, then prunes and copies off-site once. Returns at once; the backup continues in BombVault. A running container is stopped until its backup finishes.",
+        "x-bombvault-scope": "start",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["domain"],
+                "properties": {
+                  "domain": { "$ref": "#/components/schemas/Domain" },
+                  "item": { "type": "string", "description": "A container or VM by name, a folder set or ZFS dataset by id or name, as /api/v1/items reports them. Leave it out to back up the whole domain." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "The backup started.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StartResult" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/api/v1/backups/everything": {
+      "post": {
+        "operationId": "startBackupEverything",
+        "tags": ["start"],
+        "summary": "Run the Backup Everything pass",
+        "x-bombvault-scope": "start",
+        "responses": {
+          "200": { "description": "The pass started.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StartResult" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearer": { "type": "http", "scheme": "bearer", "description": "An API token, which starts with bvapi_." },
+      "apiKey": { "type": "apiKey", "in": "header", "name": "X-API-Key" }
+    },
+    "parameters": {
+      "DomainFilter": { "name": "domain", "in": "query", "description": "Only this domain.", "schema": { "$ref": "#/components/schemas/Domain" } }
+    },
+    "responses": {
+      "BadRequest": { "description": "An argument is missing or wrong (invalid_argument, ambiguous).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Unauthorized": { "description": "No token, or not an active one (no_token, invalid_token).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Forbidden": { "description": "The token may only read, or the run was not started by it (not_permitted).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NotFound": { "description": "No such item, run or finding (not_found).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Conflict": { "description": "Something else is running, the domain is switched off, nothing is included, or the run is not running any more (busy, domain_off, nothing_to_back_up, not_running).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "TooManyRequests": {
+        "description": "A limit holds the request back (throttled, rate_limited, cooldown, retention_guard). Retry-After says when to try again where a time is known.",
+        "headers": { "Retry-After": { "schema": { "type": "integer" } } },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    },
+    "schemas": {
+      "Domain": { "type": "string", "enum": ["containers", "vms", "files", "zfs", "flash", "config"] },
+      "RunDomain": { "type": "string", "enum": ["containers", "vms", "files", "zfs", "flash", "config", "everything"] },
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "retryAfterSeconds": { "type": "integer" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "version": { "type": "string" },
+          "instanceName": { "type": "string" },
+          "serverTime": { "type": "integer" },
+          "backupRunning": { "type": "boolean" },
+          "everythingRunning": { "type": "boolean" },
+          "key": {
+            "type": "object",
+            "description": "The token this request came with.",
+            "properties": {
+              "label": { "type": "string" },
+              "canStartBackups": { "type": "boolean" },
+              "startsLeftThisHour": { "type": "integer" }
+            }
+          }
+        }
+      },
+      "DomainStatus": {
+        "type": "object",
+        "properties": {
+          "domain": { "$ref": "#/components/schemas/Domain" },
+          "enabled": { "type": "boolean" },
+          "schedule": { "type": "string" },
+          "coveredBy": { "type": "string", "description": "The Backup Everything cadence when that pass is the only thing backing the domain up." },
+          "lastSuccess": { "type": "integer", "description": "0 when there is none." },
+          "periodSeconds": { "type": "integer" },
+          "status": { "type": "string", "enum": ["off", "never", "overdue", "warn", "ok"] },
+          "lastVerified": { "type": "integer" },
+          "lastVerifiedOK": { "type": "boolean" },
+          "offsiteConfigured": { "type": "boolean" },
+          "offsiteImmutable": { "type": "boolean" },
+          "protection": { "type": "string", "enum": ["", "red", "amber", "green"] }
+        },
+        "additionalProperties": true
+      },
+      "NextRun": {
+        "type": "object",
+        "properties": {
+          "job": { "type": "string" },
+          "domain": { "type": "string" },
+          "next": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Status": {
+        "type": "object",
+        "properties": {
+          "domains": { "type": "array", "items": { "$ref": "#/components/schemas/DomainStatus" } },
+          "nextRuns": { "type": "array", "items": { "$ref": "#/components/schemas/NextRun" } },
+          "backupRunning": { "type": "boolean" },
+          "everythingRunning": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      },
+      "Activity": {
+        "type": "object",
+        "properties": {
+          "running": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "domain": { "type": "string" },
+                "item": { "type": "string" },
+                "phase": { "type": "string" },
+                "percent": { "type": "number" },
+                "startedAt": { "type": "integer" },
+                "runId": { "type": "string" }
+              }
+            }
+          },
+          "domainsBusy": { "type": "object", "additionalProperties": { "type": "string" } },
+          "backupRunning": { "type": "boolean" },
+          "everythingRunning": { "type": "boolean" }
+        }
+      },
+      "Item": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "installed": { "type": "boolean" },
+          "included": { "type": "boolean" },
+          "paused": { "type": "boolean" },
+          "schedule": { "type": "string" },
+          "lastCheckCode": { "type": "string" },
+          "stops": {
+            "type": "object",
+            "properties": {
+              "self": { "type": "boolean" },
+              "containers": { "type": "array", "items": { "type": "string" } },
+              "known": { "type": "boolean" }
+            }
+          },
+          "lastDurationSeconds": { "type": "integer" },
+          "lastSuccessAt": { "type": "integer" },
+          "lastRunAt": { "type": "integer" },
+          "lastRunStatus": { "type": "string" },
+          "database": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "Items": {
+        "type": "object",
+        "properties": {
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "domain": { "$ref": "#/components/schemas/Domain" },
+                "enabled": { "type": "boolean" },
+                "truncated": { "type": "boolean" },
+                "installedKnown": { "type": "boolean" },
+                "items": { "type": "array", "items": { "$ref": "#/components/schemas/Item" } }
+              }
+            }
+          }
+        }
+      },
+      "Run": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "domain": { "type": "string" },
+          "itemId": { "type": "string" },
+          "itemName": { "type": "string" },
+          "kind": { "type": "string" },
+          "status": { "type": "string" },
+          "startedAt": { "type": "integer" },
+          "finishedAt": { "type": "integer", "description": "0 while the run is still going." },
+          "bytes": { "type": "integer" },
+          "error": { "type": "string" },
+          "acknowledged": { "type": "boolean" },
+          "groupId": { "type": "string" },
+          "startedVia": { "type": "string", "enum": ["", "mcp", "api", "mqtt"], "description": "Empty for the web interface and the schedule." },
+          "startedViaLabel": { "type": "string" }
+        }
+      },
+      "Runs": {
+        "type": "object",
+        "properties": {
+          "runs": { "type": "array", "items": { "$ref": "#/components/schemas/Run" } },
+          "truncated": { "type": "boolean" }
+        }
+      },
+      "Anomaly": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "detector": { "type": "string", "enum": ["new_data", "source", "duration", "reliability", "integrity", "capacity"] },
+          "metric": { "type": "string" },
+          "severity": { "type": "string", "enum": ["critical", "warning", "info"] },
+          "state": { "type": "string" },
+          "scopeKind": { "type": "string" },
+          "domain": { "type": "string" },
+          "itemId": { "type": "string" },
+          "itemName": { "type": "string" },
+          "part": { "type": "string" },
+          "firstSeenAt": { "type": "integer" },
+          "lastSeenAt": { "type": "integer" },
+          "observed": { "type": "number" },
+          "expected": { "type": "number" },
+          "threshold": { "type": "number" },
+          "samples": { "type": "integer" },
+          "occurrences": { "type": "integer" },
+          "recoveredAt": { "type": "integer" },
+          "retentionHeld": { "type": "boolean" },
+          "lastGood": {
+            "type": "object",
+            "properties": {
+              "runId": { "type": "string" },
+              "snapshotId": { "type": "string" },
+              "at": { "type": "integer" }
+            }
+          },
+          "details": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "AnomalyDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Anomaly" },
+          {
+            "type": "object",
+            "properties": {
+              "ackNote": { "type": "string" },
+              "expectable": { "type": "boolean" }
+            }
+          }
+        ]
+      },
+      "Anomalies": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "object",
+            "properties": {
+              "enabled": { "type": "boolean" },
+              "ready": { "type": "boolean" },
+              "open": {
+                "type": "object",
+                "properties": {
+                  "critical": { "type": "integer" },
+                  "warning": { "type": "integer" },
+                  "info": { "type": "integer" }
+                }
+              },
+              "learningItems": { "type": "integer" },
+              "retentionHeld": { "type": "integer" }
+            }
+          },
+          "anomalies": { "type": "array", "items": { "$ref": "#/components/schemas/Anomaly" } },
+          "truncated": { "type": "boolean" }
+        }
+      },
+      "Storage": {
+        "type": "object",
+        "properties": {
+          "domain": { "$ref": "#/components/schemas/Domain" },
+          "samples": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": { "type": "integer" },
+                "rawSize": { "type": "integer" },
+                "restoreSize": { "type": "integer" },
+                "snapshots": { "type": "integer" }
+              }
+            }
+          },
+          "growthBytesPerWeek": { "type": ["number", "null"] },
+          "weeksToFull": { "type": ["number", "null"] },
+          "repositories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "primary": { "type": "boolean" },
+                "remote": { "type": "boolean" },
+                "at": { "type": ["integer", "null"] },
+                "usedBytes": { "type": ["integer", "null"] },
+                "freeBytes": { "type": ["integer", "null"] },
+                "totalBytes": { "type": ["integer", "null"] }
+              }
+            }
+          }
+        }
+      },
+      "StartResult": {
+        "type": "object",
+        "properties": {
+          "started": { "type": "boolean" },
+          "domain": { "type": "string" },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "stops": { "type": "object", "additionalProperties": true },
+                "lastDurationSeconds": { "type": "integer" }
+              }
+            }
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "reason": { "type": "string", "enum": ["no_folder", "retention_guard"] }
+              }
+            }
+          }
+        }
+      },
+      "CancelResult": {
+        "type": "object",
+        "properties": {
+          "cancelled": { "type": "boolean" },
+          "runId": { "type": "string" },
+          "domain": { "type": "string" },
+          "item": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" }
+            }
+          },
+          "warning": { "type": "string" }
+        }
+      }
+    }
+  }
+}

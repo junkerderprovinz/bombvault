@@ -126,6 +126,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Notifications | ✅ SMTP, Matrix, Apprise, more | ✅ Discord, Unraid | ✅ Unraid's agents | ✅ email, Telegram, HTTP | ✅ email, Pushover, webhook | ⚠️ via Borgmatic |
 | Anomaly detection (size, duration, shrink) | ✅ | ✅ | ❌ | ⚠️ paid Console | ❌ | ❌ |
 | AI assistant access (MCP) | ✅ | ✅ | ❌ | ⚠️ third party | ❌ | ❌ |
+| Documented HTTP API for scripts, with its own tokens | ✅ | ✅ | ❌ | ⚠️ undocumented | ⚠️ undocumented | ❌ |
 | Backs up desktops and laptops | ❌ | ❌ | ❌ | ✅ | ✅ | ⚠️ Windows experimental |
 | Runs outside Unraid | ✅ | ⚠️ replica only | ❌ | ✅ | ✅ | ✅ |
 | In Unraid Community Applications | ✅ | ✅ | ✅ | ✅ community template | ✅ community template | ✅ community template |
@@ -251,6 +252,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 - **Notifications** — webhook (Discord / Slack / Gotify / ntfy), Matrix, Healthchecks.io, **email (SMTP)**, a self-hosted **[Apprise API](https://github.com/caronc/apprise-api)** server (point BombVault at its `/notify/<key>` endpoint to fan out to Apprise's 100+ services — Telegram, Pushover, Signal, …) and **Unraid's native notification system** (over the SSH link); policy per backup: never / on failure / always. Each channel has its own on/off switch, so you can leave a webhook URL or a Matrix room configured and simply silence it instead of clearing the field and typing it back in later; Healthchecks sits in its own card with the same treatment. A scheduled run of many containers/VMs can send **one "N of M succeeded" summary** per run instead of a message per item (off by default — 45 containers no longer means 45 emails); manual backups still notify per item. **Healthchecks** gets the full lifecycle — a `/start` ping when a backup begins, then success / `/fail` on done — whenever a URL is set, independent of that policy, so it measures duration, catches a run that started but never finished, and stays green on success even with failure-only notifications. You can also give each domain (containers / VMs / flash / config / files / ZFS) its own Healthchecks check for per-domain runtime and history, or leave them blank to share one global check.
 - **Weekly digest** — one message per week through those same channels: run counts, how much new backup data landed, whether off-site is current, and the top failures. Off by default, with its own cadence on Settings → Notifications, so a week in which nothing needed you is still reported as such instead of being indistinguishable from a week the alerts never fired.
 - **Prometheus `/metrics`** — opt-in (default off, optional bearer token) for Grafana or Uptime Kuma; exposes backup status, sizes and timestamps, with no secrets or paths in the labels.
+- **HTTP API** under `/api/v1` for scripts and dashboards: status, items, runs, anomalies, storage and starting a backup, described in an OpenAPI file BombVault serves itself. Each script gets a named token, read-only or allowed to start backups, created under **Settings → System → API tokens**. See [docs/api.md](docs/api.md).
 
 </details>
 

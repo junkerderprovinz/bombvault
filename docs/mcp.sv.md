@@ -38,6 +38,8 @@ Eftersom en säkerhetskopia stoppar saker och trycker ut gamla återställningsp
 
 En start av en domän eller av Backup Everything hoppar över de objekt som en gräns håller tillbaka och nämner dem i svaret. Webbgränssnittet och schemat påverkas inte av något av detta. Timbudgeten finns i minnet, så en omstart av BombVault nollställer den.
 
+Starter via [API:t](api.md#errors) räknas in i samma gränser per objekt som starter via MCP, och i lagringsskyddet.
+
 ## Slå på det {#switch-on}
 
 1. Öppna **Inställningar, System, MCP-server** och klicka på knappen för din klient. En klient som inte finns i listan ansluter via **Annan klient**.

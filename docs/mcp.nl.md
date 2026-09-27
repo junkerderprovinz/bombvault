@@ -38,6 +38,8 @@ Omdat een back-up dingen stilzet en oude herstelpunten eruit duwt, zijn starts v
 
 Een start van een domein of van Backup Everything laat de items weg die een grens tegenhoudt en noemt ze in het antwoord. De webinterface en de planning hebben met geen van deze grenzen te maken. Het uurbudget staat in het geheugen, dus een herstart van BombVault zet het op nul.
 
+Starts via de [API](api.md#errors) tellen mee voor dezelfde grenzen per item als starts via MCP, en voor de bewaarbescherming.
+
 ## Inschakelen {#switch-on}
 
 1. Open **Instellingen, Systeem, MCP-server** en klik op de knop van je client. Een client die niet in de lijst staat, verbindt via **Andere client**.

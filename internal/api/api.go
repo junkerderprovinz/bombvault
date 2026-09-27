@@ -130,6 +130,18 @@ func (h *Handler) Router() http.Handler {
 		h.mountMCP(mux)
 	}
 
+	// The public API (api_v1.go) gates itself on its own tokens, like /mcp,
+	// and is allow-listed in authGate. The token routes below manage those
+	// tokens and stay session-protected.
+	h.mountAPIV1(mux)
+	mux.HandleFunc("GET /api/tokens", h.handleListAPITokens)
+	mux.HandleFunc("POST /api/tokens", h.handleCreateAPIToken)
+	mux.HandleFunc("PATCH /api/tokens/{id}", h.handleUpdateMCPKey)
+	mux.HandleFunc("POST /api/tokens/{id}/rotate", h.handleRotateMCPKey)
+	mux.HandleFunc("POST /api/tokens/{id}/revoke", h.handleRevokeMCPKey)
+	mux.HandleFunc("DELETE /api/tokens/{id}", h.handlePurgeMCPKey)
+	mux.HandleFunc("GET /api/tokens/{id}/activity", h.handleMCPKeyActivity)
+
 	// Public / auth endpoints — also allow-listed inside authGate.
 	mux.HandleFunc("GET /api/health", h.handleHealth)
 	mux.HandleFunc("GET /api/auth", h.handleAuthStatus)

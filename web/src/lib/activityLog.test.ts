@@ -893,3 +893,21 @@ describe("a run an assistant started", () => {
     expect(lines.map((l) => l.text).join(" ")).not.toContain("viaMcp");
   });
 });
+
+describe("a run an API token started", () => {
+  const viaApi = (over: Partial<Run>): Run =>
+    makeRun({ startedVia: "api", startedViaKey: "t1", startedViaLabel: "Uptime Kuma", ...over });
+
+  it("appends via API with the token's name", () => {
+    const lines = buildLogLines([viaApi({})], {}, [], resolveName, 2_000_000);
+    expect(lines[0].text).toMatch(/^activityLog\.viaApi /);
+    expect(lines[0].text).toContain("key=Uptime Kuma");
+  });
+
+  it("marks a revoked token and one without a name", () => {
+    const revoked = buildLogLines([viaApi({ startedViaRevoked: true })], {}, [], resolveName, 2_000_000);
+    expect(revoked[0].text).toContain("activityLog.viaApiRevoked");
+    const unnamed = buildLogLines([viaApi({ startedViaLabel: "" })], {}, [], resolveName, 2_000_000);
+    expect(unnamed[0].text).toContain("activityLog.viaApiUnknownKey");
+  });
+});
