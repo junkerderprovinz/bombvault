@@ -27,6 +27,14 @@ describe("PlacementFlow", () => {
     expect(await screen.findByText("Unraid → B2 and sftp:u1@box:/flash")).toBeTruthy();
   });
 
+  it("leaves the password out of a target without a name", async () => {
+    listed.targets = [
+      { id: "t1", domain: "flash", name: "", repo: "rest:https://bv:hunter2@tower:8000/flash", enabled: true, sortOrder: 0 },
+    ];
+    renderWithProviders(<PlacementFlow domain="flash" />);
+    expect(await screen.findByText("Unraid → rest:https://[redacted]@tower:8000/flash")).toBeTruthy();
+  });
+
   it("says nothing without an enabled target", async () => {
     listed.targets = [];
     const { container } = renderWithProviders(<PlacementFlow domain="config" />);
