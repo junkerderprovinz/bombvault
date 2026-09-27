@@ -134,6 +134,25 @@ func assembleImage(ctx context.Context, dump BlockDumper, repo, snapshotID strin
 	return f.Close()
 }
 
+// CheckBlocksLayout says whether the segment files listed for disk, by name
+// and size, are the whole disk the way a restore reads it back.
+func CheckBlocksLayout(disk BlocksDisk, segments map[string]int64) error {
+	count := (disk.Size + disk.Segment - 1) / disk.Segment
+	for name, size := range segments {
+		idx, ok := segmentIndex(name)
+		if !ok || idx >= count {
+			return fmt.Errorf("disk %s: unexpected segment %q", disk.Dev, name)
+		}
+		if want := min(disk.Segment, disk.Size-idx*disk.Segment); size != want {
+			return fmt.Errorf("disk %s: segment %q holds %d bytes, want %d", disk.Dev, name, size, want)
+		}
+	}
+	if int64(len(segments)) != count {
+		return fmt.Errorf("disk %s: the snapshot holds %d of %d segments", disk.Dev, len(segments), count)
+	}
+	return nil
+}
+
 func writeSegments(ctx context.Context, tr *tar.Reader, f *os.File, disk BlocksDisk) error {
 	count := (disk.Size + disk.Segment - 1) / disk.Segment
 	seen := make(map[int64]bool, count)

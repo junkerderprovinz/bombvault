@@ -130,6 +130,13 @@ instead of the method above:
 - A restore rebuilds the disk from its segments and converts it back to qcow2
   with `qemu-img`. The disk has the same content as at backup time, but the file
   is a new qcow2 file, and a backing chain comes back flattened.
+- The check before such a restore lists each disk it rebuilds and counts it at
+  the guest's full size, twice for qcow2, since the raw image and its converted
+  copy sit side by side until the old file is replaced. That is the most a disk
+  can take, so a shortfall by this count leaves the space line grey instead of
+  blocking. The restore check after the first backup, and **Check restore**,
+  also make sure the snapshot holds every segment of every disk at the size it
+  should have.
 - Only the newest `bombvault-` checkpoint is kept. Turning the switch off,
   taking the VM out of the schedule or deleting its backups removes it.
   Checkpoints of other tools are left alone.
