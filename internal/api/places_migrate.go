@@ -625,8 +625,23 @@ func (s *Service) MigrateToPlaces() error {
 	if err := s.store.ApplyPlacesMigration(plan.places); err != nil {
 		return fmt.Errorf("write the places: %w", err)
 	}
-	log.Printf("api: moved the storage settings onto %d places; %d rows or domain paths stay without a place", len(plan.places), len(plan.unplaced))
+	log.Printf("api: %s", movedOntoPlacesLine(len(plan.places), len(plan.unplaced)))
 	return nil
+}
+
+func movedOntoPlacesLine(places, unplaced int) string {
+	onto := fmt.Sprintf("%d places", places)
+	if places == 1 {
+		onto = "1 place"
+	}
+	left := fmt.Sprintf("%d rows or domain paths stay", unplaced)
+	switch unplaced {
+	case 0:
+		left = "no row or domain path stays"
+	case 1:
+		left = "1 row or domain path stays"
+	}
+	return "moved the storage settings onto " + onto + "; " + left + " without a place"
 }
 
 // placesMigrationInput reads what planPlaces needs, secrets included.

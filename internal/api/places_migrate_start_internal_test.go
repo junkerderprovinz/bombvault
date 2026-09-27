@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -38,6 +39,23 @@ func TestThePlacesMigrationRunsOnceAndMarksTheDatabase(t *testing.T) {
 	}
 	if row, _, err := f.st.GetOffsiteTarget(later.ID); err != nil || row.PlaceID != "" {
 		t.Fatalf("a target added after the move = %+v, %v, want it left alone", row, err)
+	}
+}
+
+func TestTheMoveLogCountsOnePlaceInTheSingular(t *testing.T) {
+	f := newPlacementFixture(t)
+	settings := settingsOf(t, f.svc)
+	settings.FlashPath = "backups/flash"
+	settings.ConfigPath = "backups/config"
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	logs := captureLog(t)
+	if err := f.svc.MigrateToPlaces(); err != nil {
+		t.Fatal(err)
+	}
+	if got := logs.String(); !strings.Contains(got, "onto 1 place;") || !strings.Contains(got, "no row or domain path stays without a place") {
+		t.Fatalf("log = %q, want one place and no row left over", got)
 	}
 }
 
