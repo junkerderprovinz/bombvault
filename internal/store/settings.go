@@ -81,6 +81,7 @@ type Settings struct {
 	RetentionKeepDaily   int
 	RetentionKeepWeekly  int
 	RetentionKeepMonthly int
+	RetentionKeepYearly  int
 	// Off-site retention policy, separate from the local one so the off-site
 	// repo can serve as a longer archive. All zero never prunes the off-site
 	// repo.
@@ -88,6 +89,7 @@ type Settings struct {
 	OffsiteRetentionKeepDaily   int
 	OffsiteRetentionKeepWeekly  int
 	OffsiteRetentionKeepMonthly int
+	OffsiteRetentionKeepYearly  int
 	// Bandwidth caps in KiB/s for off-site replication and remote backups,
 	// passed to restic as --limit-upload and --limit-download. 0 is unlimited.
 	OffsiteLimitUpload   int
@@ -311,7 +313,8 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       everything_schedule, everything_pre_hook, everything_post_hook,
 		       backup_cores, display_prefs,
 		       totp_secret, totp_enabled, totp_recovery,
-		       anomaly_enabled, anomaly_sensitivity, anomaly_notify_min, anomaly_retention_hold
+		       anomaly_enabled, anomaly_sensitivity, anomaly_notify_min, anomaly_retention_hold,
+		       retention_keep_yearly, offsite_retention_keep_yearly
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -353,6 +356,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&s.BackupCores, &s.DisplayPrefs,
 		&s.TOTPSecret, &totpEnabled, &s.TOTPRecovery,
 		&anomalyEnabled, &s.AnomalySensitivity, &s.AnomalyNotifyMin, &anomalyRetentionHold,
+		&s.RetentionKeepYearly, &s.OffsiteRetentionKeepYearly,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing: run Migrate first")
@@ -550,7 +554,9 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  anomaly_enabled              = ?,
 		  anomaly_sensitivity          = ?,
 		  anomaly_notify_min           = ?,
-		  anomaly_retention_hold       = ?
+		  anomaly_retention_hold       = ?,
+		  retention_keep_yearly        = ?,
+		  offsite_retention_keep_yearly = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -600,6 +606,8 @@ func updateSettings(e settingsExecer, s Settings) error {
 		s.AnomalySensitivity,
 		s.AnomalyNotifyMin,
 		boolInt(s.AnomalyRetentionHold),
+		s.RetentionKeepYearly,
+		s.OffsiteRetentionKeepYearly,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

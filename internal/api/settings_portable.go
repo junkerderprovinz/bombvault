@@ -733,8 +733,9 @@ func settingsGroups(v settingsView) []string {
 	// one setting an apply can switch ON for a box that never ran it, so the
 	// preview has to name it.
 	add("everything", v.EverythingSchedule != "")
-	add("retention", v.RetentionKeepLast > 0 || v.RetentionKeepDaily > 0 || v.RetentionKeepWeekly > 0 || v.RetentionKeepMonthly > 0 ||
-		v.OffsiteRetentionKeepLast > 0 || v.OffsiteRetentionKeepDaily > 0 || v.OffsiteRetentionKeepWeekly > 0 || v.OffsiteRetentionKeepMonthly > 0)
+	add("retention", v.RetentionKeepLast > 0 || v.RetentionKeepDaily > 0 || v.RetentionKeepWeekly > 0 || v.RetentionKeepMonthly > 0 || v.RetentionKeepYearly > 0 ||
+		v.OffsiteRetentionKeepLast > 0 || v.OffsiteRetentionKeepDaily > 0 || v.OffsiteRetentionKeepWeekly > 0 || v.OffsiteRetentionKeepMonthly > 0 ||
+		v.OffsiteRetentionKeepYearly > 0)
 	add("offsite", v.ContainersOffsite != "" || v.VMsOffsite != "" || v.FlashOffsite != "" || v.ConfigOffsite != "" ||
 		v.FilesOffsite != "" || v.ZFSOffsite != "")
 	add("drills", v.DrillsEnabled || v.DrillsSchedule != "" || v.OffsiteDrillsEnabled)
@@ -1089,10 +1090,12 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.RetentionKeepDaily = max(0, v.RetentionKeepDaily)
 	out.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
 	out.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
+	out.RetentionKeepYearly = max(0, v.RetentionKeepYearly)
 	out.OffsiteRetentionKeepLast = max(0, v.OffsiteRetentionKeepLast)
 	out.OffsiteRetentionKeepDaily = max(0, v.OffsiteRetentionKeepDaily)
 	out.OffsiteRetentionKeepWeekly = max(0, v.OffsiteRetentionKeepWeekly)
 	out.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
+	out.OffsiteRetentionKeepYearly = max(0, v.OffsiteRetentionKeepYearly)
 	out.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
 	out.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
 	out.MetricsEnabled = v.MetricsEnabled

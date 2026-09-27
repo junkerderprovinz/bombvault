@@ -670,7 +670,8 @@ func (h *Handler) retentionRetryDetail(keepLast, viaMCP int, domain string, now 
 
 // countOnlyKeepLast is how many restore points a policy keeps when it keeps by
 // count alone, and 0 for one with a daily, weekly or monthly rule underneath,
-// which holds the older days whatever a new snapshot rotates out.
+// which holds the older days whatever a new snapshot rotates out. A yearly rule
+// keeps one restore point a year, so the recent ones still live in the count.
 func countOnlyKeepLast(p restic.RetentionPolicy) int {
 	if p.KeepDaily > 0 || p.KeepWeekly > 0 || p.KeepMonthly > 0 {
 		return 0

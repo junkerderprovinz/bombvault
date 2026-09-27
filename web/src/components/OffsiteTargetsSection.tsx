@@ -14,6 +14,7 @@ import { STORAGE_CLASSES } from "../lib/storageClasses";
 import { SelectField } from "./SelectField";
 import { Toggle } from "./Toggle";
 import { NumberField } from "./NumberField";
+import { InfoBubble } from "./InfoBubble";
 import { Badge, type BadgeSize } from "./Badge";
 import { Button } from "./Button";
 import { IconAdd } from "./Sidebar";
@@ -56,6 +57,7 @@ function emptyDraft(domain: Domain): OffsiteTarget {
     retentionKeepDaily: 0,
     retentionKeepWeekly: 0,
     retentionKeepMonthly: 0,
+    retentionKeepYearly: 0,
     limitUpload: 0,
     limitDownload: 0,
     growthBudgetGb: 0,
@@ -204,6 +206,7 @@ export function OffsiteTargetsSection({
           retentionKeepDaily: draft.retentionKeepDaily,
           retentionKeepWeekly: draft.retentionKeepWeekly,
           retentionKeepMonthly: draft.retentionKeepMonthly,
+          retentionKeepYearly: draft.retentionKeepYearly,
           limitUpload: draft.limitUpload,
           limitDownload: draft.limitDownload,
           growthBudgetGb: draft.growthBudgetGb,
@@ -400,15 +403,19 @@ export function OffsiteTargetsSection({
           {/* Retention */}
           <div className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("offsite.targets.retentionTitle")}</span>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
               {([
-                ["retentionKeepLast", "settings.retentionLast"],
-                ["retentionKeepDaily", "settings.retentionDaily"],
-                ["retentionKeepWeekly", "settings.retentionWeekly"],
-                ["retentionKeepMonthly", "settings.retentionMonthly"],
-              ] as const).map(([key, label]) => (
+                ["retentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
+                ["retentionKeepDaily", "settings.retentionDaily", "settings.retentionDailyInfo"],
+                ["retentionKeepWeekly", "settings.retentionWeekly", "settings.retentionWeeklyInfo"],
+                ["retentionKeepMonthly", "settings.retentionMonthly", "settings.retentionMonthlyInfo"],
+                ["retentionKeepYearly", "settings.retentionYearly", "settings.retentionYearlyInfo"],
+              ] as const).map(([key, label, info]) => (
                 <label key={key} className="flex flex-col gap-1">
-                  <span className="text-xs text-carbon-textSub">{t(label)}</span>
+                  <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+                    {t(label)}
+                    <InfoBubble tip={t(info)} />
+                  </span>
                   <NumberField
                     min={0}
                     value={draft[key]}

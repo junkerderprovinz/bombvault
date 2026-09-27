@@ -23,6 +23,7 @@ type offsiteTargetView struct {
 	RetentionKeepDaily   int    `json:"retentionKeepDaily"`
 	RetentionKeepWeekly  int    `json:"retentionKeepWeekly"`
 	RetentionKeepMonthly int    `json:"retentionKeepMonthly"`
+	RetentionKeepYearly  int    `json:"retentionKeepYearly"`
 	LimitUpload          int    `json:"limitUpload"`
 	LimitDownload        int    `json:"limitDownload"`
 	GrowthBudgetGB       int    `json:"growthBudgetGb"`
@@ -45,6 +46,7 @@ func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
 		RetentionKeepDaily:   t.RetentionKeepDaily,
 		RetentionKeepWeekly:  t.RetentionKeepWeekly,
 		RetentionKeepMonthly: t.RetentionKeepMonthly,
+		RetentionKeepYearly:  t.RetentionKeepYearly,
 		LimitUpload:          t.LimitUpload,
 		LimitDownload:        t.LimitDownload,
 		GrowthBudgetGB:       t.GrowthBudgetGB,
@@ -77,6 +79,7 @@ func (v offsiteTargetView) toStoreTarget() store.OffsiteTarget {
 		RetentionKeepDaily:   max(0, v.RetentionKeepDaily),
 		RetentionKeepWeekly:  max(0, v.RetentionKeepWeekly),
 		RetentionKeepMonthly: max(0, v.RetentionKeepMonthly),
+		RetentionKeepYearly:  max(0, v.RetentionKeepYearly),
 		LimitUpload:          max(0, v.LimitUpload),
 		LimitDownload:        max(0, v.LimitDownload),
 		GrowthBudgetGB:       max(0, v.GrowthBudgetGB),

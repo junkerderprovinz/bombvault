@@ -2180,11 +2180,13 @@ type settingsView struct {
 	RetentionKeepDaily   int `json:"retentionKeepDaily"`
 	RetentionKeepWeekly  int `json:"retentionKeepWeekly"`
 	RetentionKeepMonthly int `json:"retentionKeepMonthly"`
+	RetentionKeepYearly  int `json:"retentionKeepYearly"`
 	// Separate off-site retention keep-policy (all 0 = off-site keeps everything).
 	OffsiteRetentionKeepLast    int `json:"offsiteRetentionKeepLast"`
 	OffsiteRetentionKeepDaily   int `json:"offsiteRetentionKeepDaily"`
 	OffsiteRetentionKeepWeekly  int `json:"offsiteRetentionKeepWeekly"`
 	OffsiteRetentionKeepMonthly int `json:"offsiteRetentionKeepMonthly"`
+	OffsiteRetentionKeepYearly  int `json:"offsiteRetentionKeepYearly"`
 	// Off-site transfer bandwidth caps (KiB/s; 0 = unlimited).
 	OffsiteLimitUpload   int `json:"offsiteLimitUpload"`
 	OffsiteLimitDownload int `json:"offsiteLimitDownload"`
@@ -2400,10 +2402,12 @@ func toView(s store.Settings) settingsView {
 		RetentionKeepDaily:          s.RetentionKeepDaily,
 		RetentionKeepWeekly:         s.RetentionKeepWeekly,
 		RetentionKeepMonthly:        s.RetentionKeepMonthly,
+		RetentionKeepYearly:         s.RetentionKeepYearly,
 		OffsiteRetentionKeepLast:    s.OffsiteRetentionKeepLast,
 		OffsiteRetentionKeepDaily:   s.OffsiteRetentionKeepDaily,
 		OffsiteRetentionKeepWeekly:  s.OffsiteRetentionKeepWeekly,
 		OffsiteRetentionKeepMonthly: s.OffsiteRetentionKeepMonthly,
+		OffsiteRetentionKeepYearly:  s.OffsiteRetentionKeepYearly,
 		OffsiteLimitUpload:          s.OffsiteLimitUpload,
 		OffsiteLimitDownload:        s.OffsiteLimitDownload,
 		BackupCores:                 s.BackupCores,
@@ -2668,6 +2672,7 @@ func applyOffsiteSettings(cur *store.Settings, v settingsView) {
 	cur.OffsiteRetentionKeepDaily = max(0, v.OffsiteRetentionKeepDaily)
 	cur.OffsiteRetentionKeepWeekly = max(0, v.OffsiteRetentionKeepWeekly)
 	cur.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
+	cur.OffsiteRetentionKeepYearly = max(0, v.OffsiteRetentionKeepYearly)
 	cur.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
 	cur.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
 	cur.ContainersOffsiteImmutable = v.ContainersOffsiteImmutable
@@ -2942,6 +2947,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.RetentionKeepDaily = max(0, v.RetentionKeepDaily)
 		cur.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
 		cur.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
+		cur.RetentionKeepYearly = max(0, v.RetentionKeepYearly)
 		// Clamped to the machine's own thread count: a number above it is not a
 		// cap at all, and a negative one is meaningless. 0 stays 0 (= every core).
 		cur.BackupCores = min(max(0, v.BackupCores), runtime.NumCPU())
@@ -3068,7 +3074,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable || s.ConfigOffsiteImmutable ||
 		s.FilesOffsiteImmutable || s.ZFSOffsiteImmutable) &&
 		(s.OffsiteRetentionKeepLast > 0 || s.OffsiteRetentionKeepDaily > 0 ||
-			s.OffsiteRetentionKeepWeekly > 0 || s.OffsiteRetentionKeepMonthly > 0) {
+			s.OffsiteRetentionKeepWeekly > 0 || s.OffsiteRetentionKeepMonthly > 0 || s.OffsiteRetentionKeepYearly > 0) {
 		warnings = append(warnings, "The off-site repo is append-only (immutable), so BombVault will not apply the off-site retention policy — enforce retention far-side (e.g. a rest-server prune cron) or use a maintenance window.")
 	}
 	if len(warnings) > 0 {

@@ -1568,6 +1568,7 @@ func (s *Service) retentionPolicy(settings store.Settings) restic.RetentionPolic
 		KeepDaily:   settings.RetentionKeepDaily,
 		KeepWeekly:  settings.RetentionKeepWeekly,
 		KeepMonthly: settings.RetentionKeepMonthly,
+		KeepYearly:  settings.RetentionKeepYearly,
 	}
 }
 
@@ -1582,6 +1583,7 @@ func (s *Service) offsiteRetentionPolicy(settings store.Settings) restic.Retenti
 		KeepDaily:   settings.OffsiteRetentionKeepDaily,
 		KeepWeekly:  settings.OffsiteRetentionKeepWeekly,
 		KeepMonthly: settings.OffsiteRetentionKeepMonthly,
+		KeepYearly:  settings.OffsiteRetentionKeepYearly,
 	}
 }
 
@@ -1596,6 +1598,7 @@ func targetOffsiteRetentionPolicy(t store.OffsiteTarget) restic.RetentionPolicy 
 		KeepDaily:   t.RetentionKeepDaily,
 		KeepWeekly:  t.RetentionKeepWeekly,
 		KeepMonthly: t.RetentionKeepMonthly,
+		KeepYearly:  t.RetentionKeepYearly,
 	}
 }
 
@@ -2190,6 +2193,7 @@ func settingsOffsiteTarget(domain string, settings store.Settings, loc string) s
 		RetentionKeepDaily:   settings.OffsiteRetentionKeepDaily,
 		RetentionKeepWeekly:  settings.OffsiteRetentionKeepWeekly,
 		RetentionKeepMonthly: settings.OffsiteRetentionKeepMonthly,
+		RetentionKeepYearly:  settings.OffsiteRetentionKeepYearly,
 		LimitUpload:          settings.OffsiteLimitUpload,
 		LimitDownload:        settings.OffsiteLimitDownload,
 		GrowthBudgetGB:       settings.OffsiteGrowthBudgetGB,
@@ -2873,7 +2877,8 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			settings.OffsiteRetentionKeepLast > 0 ||
 			settings.OffsiteRetentionKeepDaily > 0 ||
 			settings.OffsiteRetentionKeepWeekly > 0 ||
-			settings.OffsiteRetentionKeepMonthly > 0
+			settings.OffsiteRetentionKeepMonthly > 0 ||
+			settings.OffsiteRetentionKeepYearly > 0
 
 		out = append(out, DomainStatusEntry{
 			Domain:                d.name,

@@ -54,6 +54,7 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
     retentionKeepDaily: 7,
     retentionKeepWeekly: 4,
     retentionKeepMonthly: 6,
+    retentionKeepYearly: 0,
     defaultLanguage: "en",
     registryAuths: [],
     ...over,
@@ -450,5 +451,27 @@ describe("importing settings while an edit is still inside its debounce", () => 
     // so it must never reach the server.
     expect(putCalls).toHaveLength(0);
     await waitFor(() => expect(hostInputs()[0].value).toBe("imported.example.com"));
+  });
+});
+
+describe("the yearly retention rule", () => {
+  it("saves its count next to the other keep rules", async () => {
+    await renderPage();
+    await gotoTab("storage");
+
+    const label = screen.getByText(en["settings.retentionYearly"]).closest("label");
+    const input = label?.querySelector("input") as HTMLInputElement;
+    expect(input.value).toBe("0");
+    await act(async () => {
+      fireEvent.change(input, { target: { value: "3" } });
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(900);
+    });
+
+    await waitFor(() => expect(putCalls).toHaveLength(1));
+    const sent = putCalls[0].body;
+    expect(sent.retentionKeepYearly).toBe(3);
+    expect(sent.retentionKeepMonthly).toBe(6);
   });
 });

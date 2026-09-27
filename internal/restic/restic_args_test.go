@@ -2,6 +2,7 @@ package restic
 
 import (
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -369,6 +370,23 @@ func TestRetentionPolicyAny(t *testing.T) {
 	}
 	if !(RetentionPolicy{KeepWeekly: 1}).Any() {
 		t.Fatal("a set dimension must make the policy active")
+	}
+	if !(RetentionPolicy{KeepYearly: 3}).Any() {
+		t.Fatal("a yearly rule alone must make the policy active")
+	}
+}
+
+func TestForgetPolicyArgsKeepsYearlyAfterMonthly(t *testing.T) {
+	got := ForgetPolicyArgs("/repo",
+		RetentionPolicy{KeepLast: 2, KeepMonthly: 12, KeepYearly: 5}, Mode{Encrypted: true}, []string{"vm:win11"}, false)
+	want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--tag", "vm:win11", "--group-by", "",
+		"--keep-last", "2", "--keep-monthly", "12", "--keep-yearly", "5"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+	preview := ForgetPreviewArgs("/repo", RetentionPolicy{KeepYearly: 1}, Mode{Encrypted: true}, "flash")
+	if !slices.Contains(preview, "--keep-yearly") {
+		t.Fatalf("the preview must ask the same yearly question, got %v", preview)
 	}
 }
 

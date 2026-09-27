@@ -272,10 +272,12 @@ export interface Settings {
   retentionKeepDaily: number;
   retentionKeepWeekly: number;
   retentionKeepMonthly: number;
+  retentionKeepYearly: number;
   offsiteRetentionKeepLast: number;
   offsiteRetentionKeepDaily: number;
   offsiteRetentionKeepWeekly: number;
   offsiteRetentionKeepMonthly: number;
+  offsiteRetentionKeepYearly: number;
   offsiteLimitUpload: number;
   /** CPU threads each restic child may use, as GOMAXPROCS. 0 = every core,
    *  restic's own default ([558], issue #189). */
@@ -2042,6 +2044,7 @@ export type RetentionPreview = {
     keepDaily: number;
     keepWeekly: number;
     keepMonthly: number;
+    keepYearly: number;
   };
   repos: RetentionPreviewRepo[];
   skipped?: string[] | null;
@@ -2259,6 +2262,7 @@ export interface OffsiteTarget {
   retentionKeepDaily: number;
   retentionKeepWeekly: number;
   retentionKeepMonthly: number;
+  retentionKeepYearly: number;
   limitUpload: number;
   limitDownload: number;
   growthBudgetGb: number;

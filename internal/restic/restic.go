@@ -964,11 +964,12 @@ type RetentionPolicy struct {
 	KeepDaily   int
 	KeepWeekly  int
 	KeepMonthly int
+	KeepYearly  int
 }
 
 // Any reports whether at least one keep dimension is set, i.e. retention is on.
 func (p RetentionPolicy) Any() bool {
-	return p.KeepLast > 0 || p.KeepDaily > 0 || p.KeepWeekly > 0 || p.KeepMonthly > 0
+	return p.KeepLast > 0 || p.KeepDaily > 0 || p.KeepWeekly > 0 || p.KeepMonthly > 0 || p.KeepYearly > 0
 }
 
 // ForgetGroup is one entry of `restic forget --json`: the snapshots a keep
@@ -1026,6 +1027,9 @@ func keepFlags(p RetentionPolicy) []string {
 	}
 	if p.KeepMonthly > 0 {
 		args = append(args, "--keep-monthly", strconv.Itoa(p.KeepMonthly))
+	}
+	if p.KeepYearly > 0 {
+		args = append(args, "--keep-yearly", strconv.Itoa(p.KeepYearly))
 	}
 	return args
 }

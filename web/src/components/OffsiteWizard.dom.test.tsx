@@ -24,6 +24,7 @@ const PRIMARY_TARGET = {
   retentionKeepDaily: 0,
   retentionKeepWeekly: 0,
   retentionKeepMonthly: 0,
+  retentionKeepYearly: 0,
   limitUpload: 0,
   limitDownload: 0,
   growthBudgetGb: 0,
