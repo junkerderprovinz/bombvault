@@ -7,6 +7,10 @@
 // under dir="rtl". With select="one" moving also selects, as in a tab strip;
 // with select="many" the segments are toggle buttons.
 //
+// The strip spans its box and its segments share the width, so a card of
+// stacked selectors ends in one edge. A strip that shares a toolbar row with a
+// search field or buttons passes `inline` and hugs its segments instead.
+//
 // A caption such as "Sort by:" belongs in a plain <span> outside the component,
 // not a <label> around the row: a label around several tabs forwards its clicks
 // to the first one and gives screen readers that tab's name.
@@ -23,6 +27,7 @@ import { useLabelMode } from "../lib/useLabelMode";
 import type { ControlAxis } from "../lib/controls";
 import { hidesLabel, labelWidth } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
+import { segmentLayout, type SegmentWidths } from "../lib/segmentLayout";
 
 export interface SelectorItem {
   /** Stable id, handed back by onChange. */
@@ -46,18 +51,20 @@ export interface SelectorItem {
 
 export type SelectorSize = "sm" | "md" | "lg";
 
-/** "chip" gives every segment a pill of its own. "well" sets flush segments in
- *  a shared groove, and only the chosen one is filled. A plain "well" is the
- *  small, content-hugging strip for cards; with `equalWidth` and size="lg" it
- *  is the big page-level picker. */
+/** "well" sets flush segments in a shared groove, and only the chosen one is
+ *  filled. Without `equalWidth` it is the small scale for strips that repeat
+ *  per card; with `equalWidth` and size="lg" it is the big page-level picker.
+ *  "chip" gives every segment a pill of its own, for a row of disclosure
+ *  toggles that open sections rather than choose a value. */
 export type SelectorVariant = "chip" | "well";
 
 interface SelectorCommon {
   items: SelectorItem[];
   /** Accessible name for the strip, e.g. "Sort", "Settings sections". */
   label: string;
-  /** `md` (default) is the toolbar chip, `sm` the dense strip (heatmap toggle,
-   *  weekday pills), `lg` the page-level scale (Settings tabs and pickers). */
+  /** `md` (default) is the card and toolbar scale, `sm` the dense strip
+   *  (heatmap domains, weekday pills), `lg` the page-level scale (Settings
+   *  tabs and pickers). */
   size?: SelectorSize;
   /** Give segments the button height (`--btn-h`) instead of a padding-derived
    *  one, for a strip beside a real Button. Opt-in because a strip cannot see
@@ -72,24 +79,15 @@ interface SelectorCommon {
    *  a caller rendering a group gives each strip its own offset. The settings
    *  tree takes its offsets from HUE_OFFSET. */
   hueOffset?: number;
-  /** Page-tab look with no idle background, instead of the toolbar chip's idle
-   *  `bg-carbon-surface2` pill. Ignored under `variant="well"`. */
-  plain?: boolean;
   variant?: SelectorVariant;
   /** Pin every segment to the widest one's measured width, at least
-   *  MIN_PINNED_WIDTH, instead of letting each hug its label. Under "well" it
-   *  also fixes the height at `--badge-md`, which makes the big page-level
-   *  picker. */
+   *  MIN_PINNED_WIDTH where the row has room for it, instead of letting each
+   *  hug its label. Under "well" it also fixes the height at `--badge-md`,
+   *  which makes the big page-level picker. */
   equalWidth?: boolean;
-  /** A fixed CSS width for every segment, used instead of `equalWidth`'s
-   *  measurement. A measured width follows the widest translation and can
-   *  outgrow the page; a stage from lib/controls is known before the first
-   *  paint and bounded. */
-  segmentWidth?: string;
-  /** Deepens the idle chip fill to `bg-carbon-surface3`, for a "chip" strip on
-   *  a surface2 background, where the default idle fill would disappear.
-   *  Ignored under "well". */
-  raised?: boolean;
+  /** Hug the segments instead of spanning the box, for a strip that shares a
+   *  toolbar row with a search field or buttons. */
+  inline?: boolean;
   /** Disables every item (e.g. SourceToggle mid-restore). A per-item
    *  `disabled` still applies on top of this. */
   disabled?: boolean;
@@ -161,34 +159,58 @@ function segmentPadding(size: SelectorSize, hasGlyph: boolean, buttonHeight: boo
 
 // MIN_PINNED_WIDTH is the narrowest a pinned segment gets. The shared floor
 // keeps the pinned strips on one page at one width instead of each following
-// its own widest label; a label that needs more still gets it.
+// its own widest label; a label that needs more still gets it, up to
+// MAX_PINNED_WIDTH, so one long translation does not widen every segment of
+// its strip. Past that the label wraps, or the row is laid out by content.
 export const MIN_PINNED_WIDTH = 200;
-
-// The groove's padding and the gap between its segments, both 0.2rem.
-const GROOVE_STEP = 3.2;
+export const MAX_PINNED_WIDTH = 352;
 
 /**
- * rowFill returns the width a pinned segment takes in a row of `available`
- * pixels. While the whole strip fits on one line the segment keeps its pinned
- * width and the groove hugs it. Once it does not fit, the row is divided into
- * equal columns instead, so the groove stops drawing track no segment stands
- * on. The column count is the widest one that divides the strip: four segments
- * in a row that holds three go two and two, and three in the same row go one
- * per row rather than leaving a column empty underneath.
+ * pinnedWidth is the width every pinned segment gets: the widest label within
+ * the cap, and the shared floor where the row holds that many. On a phone the
+ * floor gives way to an even share of the row, so two short options sit side
+ * by side instead of one above the other. The share is rounded down, since an
+ * exact one comes back a hair short of fitting.
  */
-export function rowFill(pinned: number, count: number, available: number): number {
-  if (available <= 0) return pinned;
-  const fits = Math.floor((available + GROOVE_STEP) / (pinned + GROOVE_STEP));
-  if (fits >= count) return pinned;
-  let columns = 1;
-  for (let c = Math.max(1, fits); c > 1; c--) {
-    if (count % c === 0) {
-      columns = c;
-      break;
-    }
-  }
-  return (available - (columns - 1) * GROOVE_STEP) / columns;
+export function pinnedWidth(widest: number, count: number, room: number, gap: number): number {
+  const share = Math.floor((room - gap * (count - 1)) / count);
+  return Math.min(Math.max(widest, Math.min(MIN_PINNED_WIDTH, share)), MAX_PINNED_WIDTH);
 }
+
+/**
+ * segmentWidths measures each segment with its label on one line and at its
+ * narrowest. The segments are held to their flex share, so each is set to the
+ * size being read and given its own style back straight after. The width
+ * comes from the computed style, since a window's scale-in animation shrinks
+ * the bounding box.
+ */
+function segmentWidths(segs: HTMLElement[]): SegmentWidths[] {
+  const own = segs.map((s) => s.style.cssText);
+  const at = (width: string) => {
+    for (const s of segs) Object.assign(s.style, { flex: "none", width, minWidth: "0", maxWidth: "none" });
+    return segs.map((s) => parseFloat(getComputedStyle(s).width));
+  };
+  const oneLine = at("max-content");
+  const narrowest = at("min-content");
+  segs.forEach((s, i) => (s.style.cssText = own[i]));
+  return segs.map((_, i) => ({ oneLine: oneLine[i], narrowest: narrowest[i] }));
+}
+
+interface RowLayout {
+  pinned: number;
+  room: number;
+  gap: number;
+  perRow: number;
+  byContent: boolean;
+}
+
+const sameLayout = (a: RowLayout | null, b: RowLayout) =>
+  !!a &&
+  a.perRow === b.perRow &&
+  a.byContent === b.byContent &&
+  Math.abs(a.pinned - b.pinned) < 0.5 &&
+  Math.abs(a.room - b.room) < 0.5 &&
+  a.gap === b.gap;
 
 // The navigation math is pure so Selector.test.ts can cover it without a DOM.
 
@@ -246,8 +268,13 @@ interface SelectorTabProps {
   roved: boolean;
   className: string;
   style?: CSSProperties;
+  /** How the segment sits in the row. It goes on whatever element is the
+   *  row's flex item, the button or the span a disabled tip wraps it in. */
+  flex: CSSProperties;
+  /** Lets the label break onto a second line, for a pinned segment, where
+   *  segmentLayout decides when a label may wrap. Elsewhere it truncates. */
+  wraps: boolean;
   onSelect: () => void;
-  registerRef: (el: HTMLButtonElement | null) => void;
   /** The label-mode axis the strip follows; see labelAxis in Selector. */
   axis: ControlAxis;
 }
@@ -260,8 +287,9 @@ function SelectorTab({
   roved,
   className,
   style,
+  flex,
+  wraps,
   onSelect,
-  registerRef,
   axis,
 }: SelectorTabProps) {
   const labelMode = useLabelMode(axis);
@@ -288,10 +316,7 @@ function SelectorTab({
     <>
       {tooltip.wrap(
         <button
-          ref={(el) => {
-            tooltip.ref(el);
-            registerRef(el);
-          }}
+          ref={tooltip.ref}
           type="button"
           data-sel-id={item.id}
           role={many ? undefined : "tab"}
@@ -303,8 +328,8 @@ function SelectorTab({
           tabIndex={roved ? 0 : -1}
           style={
             reactive
-              ? ({ ...style, "--reactive-chars": labelWidth(item.label) } as CSSProperties)
-              : style
+              ? ({ ...style, ...flex, "--reactive-chars": labelWidth(item.label) } as CSSProperties)
+              : { ...style, ...flex }
           }
           className={`${className}${reactive ? " glim-reactive" : ""}`}
           onClick={onSelect}
@@ -315,14 +340,19 @@ function SelectorTab({
           {labelMode !== "text" && item.icon}
           {reactive ? (
             /* No `truncate` here: it would fight the max-width reveal. */
-            <span className="glim-label-reactive">{item.label}</span>
+            <span data-sel-label className="glim-label-reactive">
+              {item.label}
+            </span>
           ) : (
             (labelMode === "text" || !item.iconOnly) &&
             (!hidesLabel(labelMode) || !item.icon) && (
-              <span className="truncate">{item.label}</span>
+              <span data-sel-label className={wraps ? undefined : "truncate"}>
+                {item.label}
+              </span>
             )
           )}
         </button>,
+        flex,
       )}
       {tooltip.bubble}
     </>
@@ -337,11 +367,9 @@ export function Selector(props: SelectorProps) {
     buttonHeight = false,
     hue = true,
     hueOffset = 0,
-    plain = false,
-    variant = "chip",
+    variant = "well",
     equalWidth = false,
-    segmentWidth,
-    raised = false,
+    inline = false,
     disabled = false,
     className = "",
   } = props;
@@ -363,40 +391,6 @@ export function Selector(props: SelectorProps) {
   const reactiveStrip = labelModeForStrip === "reactive" && items.every((i) => !!i.icon && !i.iconOnly);
   const pinWidth = equalWidth && !(labelsOffScreen && size !== "lg");
 
-  // Pinning needs the widest segment's natural width, which only a DOM
-  // measurement gives. A flex share (`flex-1`) does not work: a shrink-to-fit
-  // parent adds up its zero basis and truncates the widest label.
-  //
-  // itemsKey stands in for `items` in the effect deps. Callers rebuild the array
-  // on every render, and re-measuring each time would flash the strip back to
-  // ragged widths.
-  const itemsKey = items.map((it) => it.label).join("");
-  const [matchedWidth, setMatchedWidth] = useState<number | null>(null);
-  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
-
-  // Unpin when the labels or the size change. A segment with an explicit width
-  // reports that width back, so it has to render at its natural width before it
-  // can be measured again. Both passes are layout effects and finish before the
-  // browser paints.
-  useLayoutEffect(() => {
-    if (pinWidth) setMatchedWidth(null);
-  }, [pinWidth, itemsKey, size]);
-
-  useLayoutEffect(() => {
-    if (!pinWidth || matchedWidth !== null) return;
-    // Refs past the current item count are left over from a longer render.
-    const nodes = itemRefs.current
-      .slice(0, items.length)
-      .filter((n): n is HTMLButtonElement => n !== null);
-    if (nodes.length === 0) return;
-    const widest = Math.max(
-      ...nodes.map((n) => n.getBoundingClientRect().width),
-      MIN_PINNED_WIDTH,
-    );
-    setMatchedWidth(widest);
-  }, [pinWidth, matchedWidth, itemsKey, size, items.length]);
-
-
   const many = props.select === "many";
   const chosen = props.select === "many" ? props.active : null;
   const only = props.select === "many" ? null : props.active;
@@ -405,33 +399,66 @@ export function Selector(props: SelectorProps) {
 
   const strip = useRef<HTMLDivElement>(null);
 
-  // rowFill needs the width the groove is allowed to take, which is the
-  // parent's content box. Measuring the groove itself would feed the segment
-  // widths it just set back into the next measurement, since the groove is
-  // `w-fit`. A box that measures nothing (a hidden card, a run under jsdom)
-  // leaves the pinned width alone.
-  const [rowWidth, setRowWidth] = useState<number | null>(null);
+  // How pinned segments share the row, from segmentLayout. Pinning needs each
+  // segment's natural width, which only the DOM knows; a flex share alone
+  // (`flex-1`) lets a shrink-to-fit parent add up zero bases and truncate the
+  // widest label. The room is the track's own content box while it spans, and
+  // its parent's while it hugs, since a hugging track is only as wide as the
+  // segments it holds. Measured again when the box or a segment resizes: a
+  // late web font changes what a label needs.
+  //
+  // itemsKey stands in for `items` in the deps. Callers rebuild the array on
+  // every render, and measuring each time would be wasted work.
+  const itemsKey = items.map((it) => it.label).join("\n");
+  const [layout, setLayout] = useState<RowLayout | null>(null);
   useLayoutEffect(() => {
-    const row = well && pinWidth ? strip.current?.parentElement : null;
-    if (!row) return;
+    if (!pinWidth) {
+      setLayout(null);
+      return;
+    }
+    const el = strip.current!;
+    const box = inline ? el.parentElement! : el;
+    const segs = Array.from(el.children) as HTMLElement[];
+    if (segs.length === 0) return;
     const measure = () => {
-      const style = getComputedStyle(row);
-      const inner =
-        row.clientWidth -
-        parseFloat(style.paddingInlineStart) -
-        parseFloat(style.paddingInlineEnd);
-      setRowWidth(inner - GROOVE_STEP * 2);
+      const own = getComputedStyle(el);
+      const inset = parseFloat(own.paddingLeft) + parseFloat(own.paddingRight);
+      const outer = inline ? getComputedStyle(box) : own;
+      const room =
+        box.clientWidth -
+        parseFloat(outer.paddingLeft) -
+        parseFloat(outer.paddingRight) -
+        (inline ? inset : 0);
+      // A hidden box measures nothing; it is laid out once it shows.
+      if (room <= 0) return;
+      const gap = parseFloat(own.columnGap) || 0;
+      const widths = segmentWidths(segs);
+      const pinned = pinnedWidth(Math.max(...widths.map((w) => w.oneLine)), segs.length, room, gap);
+      const next: RowLayout = { pinned, room, gap, ...segmentLayout(room, pinned, widths, gap) };
+      setLayout((prev) => (sameLayout(prev, next) ? prev : next));
     };
     measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(row);
-    return () => observer.disconnect();
-  }, [well, pinWidth]);
+    const watch = new ResizeObserver(measure);
+    watch.observe(box);
+    for (const seg of segs) watch.observe(seg);
+    return () => watch.disconnect();
+  }, [pinWidth, inline, itemsKey, size, labelModeForStrip]);
 
-  const pinnedWidth =
-    matchedWidth !== null && well && rowWidth !== null
-      ? rowFill(matchedWidth, items.length, rowWidth)
-      : matchedWidth;
+  // A pinned segment keeps the pinned width as its floor and grows into its
+  // share of the row, so every row ends at the track's edge once it wraps. The
+  // basis leaves one gap of slack against sub-pixel rounding, and the growth
+  // takes it back. The floor gives way to the room, so a box narrower than one
+  // segment squeezes it instead of pushing it out of the card. A segment that
+  // hugs its label grows too, and so does a pinned one whose row is laid out
+  // by content.
+  const byContent = pinWidth && !!layout?.byContent;
+  const segmentFlex: CSSProperties =
+    pinWidth && layout && !layout.byContent
+      ? {
+          minWidth: `${Math.min(layout.pinned, layout.room)}px`,
+          flex: `1 0 calc((100% - ${layout.perRow} * ${layout.gap}px) / ${layout.perRow})`,
+        }
+      : { flex: "1 0 auto" };
 
   const isOn = (id: string) => (chosen ? chosen.has(id) : only === id);
   const isItemDisabled = (item: SelectorItem) => disabled || !!item.disabled;
@@ -482,25 +509,28 @@ export function Selector(props: SelectorProps) {
       onKeyDown={onKeyDown}
       // The "well" groove is surface3 to stand out from both parents it sits
       // on, a Card (surface) and a CadenceBuilder well (surface2), and 0.2rem is
-      // the thinnest ring that still reads as a groove. `w-fit` hugs the
-      // segments; `self-start` would too, but it top-aligns the strip in rows
-      // that centre a label beside it. Both variants wrap, since a pinned strip
-      // is N times the widest label wide.
+      // the thinnest ring that still reads as a groove. A hugging track is
+      // `w-fit`; `self-start` would hug too, but it top-aligns the strip in rows
+      // that centre a label beside it. Tracks wrap rather than scroll, except
+      // one laid out by content, whose fit already allows for a pixel of
+      // rounding that would otherwise push its last segment onto a row alone.
       className={[
-        "flex items-center",
+        "flex flex-wrap items-center",
+        inline ? "w-fit max-w-full" : "w-full",
         well
-          ? "w-fit max-w-full flex-wrap gap-[0.2rem] rounded-pill bg-carbon-surface3 p-[0.2rem]"
-          : "flex-wrap gap-1",
+          ? "gap-[0.2rem] rounded-pill bg-carbon-surface3 p-[0.2rem]"
+          : "gap-1",
         className,
       ]
         .filter(Boolean)
         .join(" ")}
+      style={byContent ? { width: "100%", flexWrap: "nowrap" } : undefined}
     >
       {items.map((item, i) => {
         const on = isOn(item.id);
         const itemDisabled = disabledFlags[i];
         const cls = [
-          "inline-flex min-w-0 max-w-full items-center font-medium",
+          "inline-flex min-w-0 max-w-full items-center justify-center font-medium",
           // Well segments are rounded too, so the selected pill follows the
           // shape setting along with the groove.
           well
@@ -518,42 +548,25 @@ export function Selector(props: SelectorProps) {
               // above WCAG AA. A deeper groove needs a lighter text token.
               well
               ? "bg-transparent text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-              : plain
-                ? "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-                : raised
-                  ? "bg-carbon-surface3 text-carbon-textSub hover:bg-carbon-hoverRaised hover:text-carbon-text"
-                  : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text",
+              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text",
           // No gap while a reactive segment is closed: the collapsed label is
           // still a flex item, so the gap would push the glyph off centre. The
           // label brings its own margin when it opens.
           reactiveStrip ? "gap-0" : SIZE[size].gap,
           SIZE[size].text,
-          // Pinned segments are flex-none, so a row that is too narrow wraps
-          // instead of squeezing them. An unpinned iconOnly segment is the 32px
-          // square of Badge's size="icon"; Selector does not render through
-          // Badge, so the two sizes have to be kept in step by hand.
+          // An unpinned iconOnly segment is the 32px square of Badge's
+          // size="icon"; Selector does not render through Badge, so the two
+          // sizes have to be kept in step by hand.
           well && equalWidth
-            ? `flex-none justify-center text-center h-[var(--badge-md)] ${SIZE[size].padding}`
+            ? `text-center h-[var(--badge-md)] ${SIZE[size].padding}`
             : equalWidth
-              ? `flex-none justify-center text-center ${segmentPadding(size, !!item.icon, buttonHeight)}`
+              ? `text-center ${segmentPadding(size, !!item.icon, buttonHeight)}`
               : item.iconOnly
-                ? "justify-center h-8 w-8 p-0"
+                ? "h-8 w-8 p-0"
                 : segmentPadding(size, !!item.icon, buttonHeight),
         ]
           .filter(Boolean)
           .join(" ");
-
-        const hueStyle = hue
-          ? (hueVars(i + hueOffset) as CSSProperties)
-          : undefined;
-        const widthStyle: CSSProperties | undefined =
-          segmentWidth
-            ? { width: segmentWidth }
-            : pinWidth && pinnedWidth !== null
-            ? { width: `${pinnedWidth}px` }
-            : undefined;
-        const itemStyle =
-          hueStyle || widthStyle ? { ...hueStyle, ...widthStyle } : undefined;
 
         return (
           <SelectorTab
@@ -565,12 +578,11 @@ export function Selector(props: SelectorProps) {
             disabled={itemDisabled}
             roved={i === roved}
             className={cls}
-            style={itemStyle}
+            style={hue ? (hueVars(i + hueOffset) as CSSProperties) : undefined}
+            flex={segmentFlex}
+            wraps={pinWidth}
             onSelect={() => {
               if (!itemDisabled) onChange(item.id);
-            }}
-            registerRef={(el) => {
-              itemRefs.current[i] = el;
             }}
           />
         );

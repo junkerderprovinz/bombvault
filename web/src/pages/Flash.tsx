@@ -314,7 +314,7 @@ export function Flash() {
           </Badge>
         </h2>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
             {t("source.label")}
             <InfoBubble tip={t("source.hint")} />

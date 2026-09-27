@@ -27,18 +27,22 @@ export function isOffsiteSource(source: string): boolean {
 /**
  * Local / off-site toggle for the restore browser and the integrity card. With
  * `domain` set and more than one enabled off-site target, a picker next to it
- * chooses which copy to use.
+ * chooses which copy to use. It fills the rest of its row, or goes under its
+ * label where that leaves it less than 16rem, unless `inline` keeps it to its
+ * segments, for a row it shares with buttons.
  */
 export function SourceToggle({
   source,
   onChange,
   disabled,
   domain,
+  inline = false,
 }: {
   source: RepoSource;
   onChange: (s: RepoSource) => void;
   disabled?: boolean;
   domain?: OffsiteDomain;
+  inline?: boolean;
 }) {
   const { t } = useT();
   const targets = useOffsiteTargets(domain);
@@ -46,7 +50,7 @@ export function SourceToggle({
   const offsite = isOffsiteSource(source);
 
   return (
-    <span className="inline-flex items-center gap-2 flex-wrap">
+    <span className={`${inline ? "inline-flex" : "flex min-w-0 grow basis-64"} items-center gap-2 flex-wrap`}>
       {/*
         `active` collapses "offsite:<id>" to "offsite", which would otherwise
         match neither item and leave both unselected. Choosing "offsite" picks
@@ -70,6 +74,7 @@ export function SourceToggle({
         label={t("source.label")}
         select="one"
         equalWidth
+        inline={inline}
         active={offsite ? "offsite" : "local"}
         onChange={(id) => onChange(id as RepoSource)}
         disabled={disabled}

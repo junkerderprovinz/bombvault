@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ApiError, backupEverythingNow, downloadRecoveryKit, getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listVMs, listZFSDatasets, patchFileSet, patchZFSDataset, putSettings, replicateOffsite, setAuthPassword, setScheduleCadence, setVMScheduleCadence, testOffsite } from "../lib/api";
 import { useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
 import { FolderBrowser } from "../components/FolderBrowser";
@@ -1172,68 +1172,6 @@ export function SettingsPage() {
   useEffect(() => {
     tabRef.current = tab;
   }, [tab]);
-  // Tab-strip width tracking (GlimStone follow-up pass, live-review round —
-  // "the equal-width tab fix should match content, not stretch to fill" —
-  // see Selector.tsx's own `equalWidth`/`stretch` header for the corrected
-  // behaviour). The tab strip below now renders at its own hugged content
-  // width (sum of 7 fixed, matched-to-the-widest-label segments) instead of
-  // the page's full width, so the Card panels underneath it — which used to
-  // rely on "both are plain, unconstrained full-width children, so they
-  // match by construction" (see that wrapper's own comment) — need an
-  // explicit width to track now that the strip is no longer full-width.
-  // This width is measured, not guessed at, because the actual pixel value
-  // depends on the active locale's longest label ("Benachrichtigungen" in
-  // German is not the same width in every one of the 42 shipped locales) and
-  // on the live font/zoom the browser is actually rendering with — nothing
-  // about that is a fixed, hard-codable constant.
-  //
-  // A CALLBACK ref (state, not a plain useRef) — caught live, not in the
-  // harness: this component has an early `if (!settings) return (<...
-  // loading placeholder...>)` further down (before the tab strip's own JSX
-  // even exists), so the FIRST commit of this component's lifetime never
-  // renders the strip at all. A plain `useRef` + a mount-only
-  // `useLayoutEffect(fn, [])` runs exactly once, against THAT first
-  // (loading) commit, sees `tabStripRef.current === null`, and exits —
-  // permanently, since an empty dependency array never re-fires once
-  // `settings` later resolves and the real strip mounts. The ResizeObserver
-  // then simply never gets attached, `tabStripWidth` stays `null` forever,
-  // and the Card panels wrapper below silently never receives a max-width at
-  // all (confirmed live: verified against a real deployed container at a
-  // WIDE viewport where the strip fits on one line — the panels wrapper
-  // rendered at <main>'s own full content width, not the narrower tab-strip
-  // width, because no width was ever actually being applied; a narrower
-  // viewport had merely LOOKED correct by coincidence, since the tab strip's
-  // OWN `max-w-full` clamp and the panels wrapper's un-related default
-  // full-width block sizing happened to resolve to the identical <main>
-  // content-box number in that specific case). Storing the DOM node in STATE
-  // via the ref CALLBACK below fixes this the standard React way: React
-  // calls that callback exactly when the node is actually attached
-  // (regardless of which render pass that happens on), so the effect below,
-  // keyed on that state value, correctly (re-)runs once the strip genuinely
-  // exists — not just once at this component's very first commit.
-  const [tabStripEl, setTabStripEl] = useState<HTMLDivElement | null>(null);
-  const [tabStripWidth, setTabStripWidth] = useState<number | null>(null);
-
-  // ResizeObserver (not a resize-event listener): the strip's rendered width
-  // can change WITHOUT the window resizing at all — a locale swap changes
-  // every label's own natural width, and Selector's own two-pass measurement
-  // effect (see its file header) settles onto a new matched width entirely
-  // inside a layout-effect flush the window never hears about. Observing the
-  // actual box directly catches both the window-resize case AND this one.
-  // The ref is attached to a plain wrapping <div>, not `Selector` itself
-  // (that component has no forwarded ref) — see the JSX below for why an
-  // `inline-flex self-start` wrapper is also what makes this div hug the
-  // strip's own content width rather than the page's full width in the
-  // first place.
-  useLayoutEffect(() => {
-    if (!tabStripEl) return;
-    const measure = () => setTabStripWidth(tabStripEl.getBoundingClientRect().width);
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(tabStripEl);
-    return () => ro.disconnect();
-  }, [tabStripEl]);
-
   const [settings, setSettings] = useState<Settings | null>(null);
   // savedBaseline is the server's last-confirmed state. Every save persists its
   // own fields merged onto THIS baseline (not the live, possibly-edited
@@ -2519,24 +2457,8 @@ export function SettingsPage() {
     // wrapper's own comment for why `flex-1` produces exactly that
     // fill-or-grow behaviour with no separate min-height override needed.
     //
-    // PAGE_SHELL_TABBED_RESPONSIVE is the one stated exception to the app-wide page width
-    // (jdp live-review, "Können wir die nicht überall gleich breit machen?").
-    // Every other page now renders at PAGE_SHELL's 1152px; this root keeps the
-    // shared 40px desktop rhythm but has no max-width, and that is not an
-    // oversight. Measured live before deciding: capping this root at 1152px
-    // caps the 7-tab Selector strip inside it too, and the strip — `size="lg"`
-    // + `equalWidth`, so 7x its widest segment, 1424px in de — no longer fits
-    // on one line there (strip height 32px → 68px, the 7 tabs falling onto 2
-    // rows). That two-row strip is a bug an earlier round already fixed once,
-    // and the panels below are capped to this strip's MEASURED width per a
-    // standing instruction ("Settings cards should match the tab row's
-    // width"), so capping the root would regress both at once.
-    //   This is a genuine conflict between two of jdp's own asks rather than
-    // something to resolve silently: the honest fix is to make the STRIP
-    // narrower (drop `equalWidth`, whose natural hugged width is ~814px in de,
-    // or step `size` down from "lg"), after which this page could join the
-    // shared cap. That is a change to a deliberate prior decision, so it is
-    // flagged for jdp rather than taken here. See lib/pageShell.ts.
+    // PAGE_SHELL_TABBED_RESPONSIVE is the one page root without the 1152px
+    // cap of the others; see lib/pageShell.ts.
     <div className={PAGE_SHELL_TABBED_RESPONSIVE}>
       {/* Heading + tab strip, grouped in their own gap-6 column (GlimStone
           follow-up pass, live-review round — the width-mismatch fix below
@@ -2551,7 +2473,7 @@ export function SettingsPage() {
           at the page's own full width, un-capped — Settings.tsx was the one
           page that swept its heading into the same narrow column as its
           form content, which that pass undid to match that convention. */}
-      <div className="@container flex flex-col gap-6">
+      <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold text-carbon-text">
           {t("settings.title")}
@@ -2561,18 +2483,8 @@ export function SettingsPage() {
         </p>
       </div>
 
-      {/* The tab strip. Each tab owns the rainbow position of its list index.
-          It sits outside the max-w-3xl column of the panels, because seven
-          segments need about 814px in German and a capped strip wraps a lone
-          tab onto a second line. equalWidth pins every segment to the widest
-          label, and the panels below take the strip's measured width, so both
-          line up. `title` shows a label that equalWidth truncates.
-
-          self-start keeps the wrapper at the strip's own width: as a child of
-          a flex column it would stretch to the column, and the measurement
-          would read the column instead of the strip. Below 48rem the strip is
-          a grid as wide as the column, so there the wrapper stretches. */}
-      <div ref={setTabStripEl} className="inline-flex self-start max-w-full max-md:self-stretch">
+      {/* The tab strip. Each tab owns the rainbow position of its list index,
+          and the strip spans the column the panels below share. */}
       <Selector
         items={([
           ["general", t("settings.tab.general")],
@@ -2615,32 +2527,11 @@ export function SettingsPage() {
         }}
         size="lg"
         equalWidth
-        /* #178, [200]: the strip joins the size system, with jdp's stated
-           exception that these segments must be equal ALWAYS. groupWidth picks
-           the stage the longest tab name needs in the current language and
-           gives it to every tab, so the strip is uniform by construction
-           rather than by measurement. That also retires the failure this
-           file's own header describes: the measured pin once grew to 1424px
-           in German and wrapped the seven tabs onto two rows. */
-        // The rail's own row width, via the shared token — "gleich groß wie die
-        // tabs in der sidebar" is a promise, and a promise needs one number,
-        // not two that happen to agree today. It also gives the longest label
-        // ("Benachrichtigungen") the 16px it was missing, which is why that
-        // tab clipped its own text in reactive mode.
-        segmentWidth="var(--settings-tab-seg-w)"
-        // The desktop arm of that token, as a Tailwind variant so the 48rem
-        // number stays in lib/useMediaQuery.ts. Above the breakpoint every tab
-        // is the rail's row box again.
-        //
-        // Below it the strip is a grid over the column, where the phone arm
-        // (index.css) lets each tab fill its cell. Eight columns while a tab
-        // keeps 44px, which takes 23.75rem with the seven gaps; on a narrower
-        // column four, so the tabs sit four over four. No cell holds the German labels, which would show a
-        // letter and an ellipsis, so the glyph stands alone and the label
-        // stays the tab's accessible name.
-        className="md:[--settings-tab-seg-w:var(--nav-row-w)] max-md:grid max-md:flex-1 max-md:grid-cols-4 max-md:@min-[23.75rem]:grid-cols-8 max-md:[&_.truncate]:sr-only"
+        // Below 48rem no tab holds its German label, which would show a letter
+        // and an ellipsis, so the glyph stands alone and the label stays the
+        // tab's accessible name.
+        className="max-md:[&_[data-sel-label]]:sr-only"
       />
-      </div>
       </div>
 
       {/* Tab panels. GlimStone follow-up pass, live-review round ("Settings
@@ -2648,26 +2539,6 @@ export function SettingsPage() {
           used to live on this wrapper is GONE — removed, not resized to a
           new guessed number.
 
-          UPDATED (equalWidth correction round — see the tab strip's own
-          comment block above): back when `equalWidth` stretched the strip to
-          fill the full row, this wrapper needed no cap at all — both it and
-          the strip were simply full-width by construction, so they matched
-          automatically. Now that the strip hugs its own (narrower, content-
-          matched) width instead, that "both happen to be full-width"
-          assumption no longer holds — a truly uncapped Card would render
-          wider than the tabs sitting above it again, the exact mismatch this
-          whole feature exists to prevent. `style={{ maxWidth: tabStripWidth
-          }}` (below) is the fix: `tabStripWidth` is a REAL measured pixel
-          value (this component's own ResizeObserver, set up in the state
-          block near the top of SettingsPage), read off the actual rendered
-          tab strip rather than a guessed literal — so it tracks correctly
-          across every locale's own longest label, a window resize, or a
-          zoom level change, none of which a hard-coded number could.
-          `?? undefined` for the one frame before the observer's first
-          measurement lands (mount): `maxWidth: null` is not valid CSS and
-          React would warn, `undefined` simply omits the style property that
-          render, matching this wrapper's original uncapped look until the
-          real number is known.
             gap-10 (live-review round — "more air between Cards, there's
           plenty of room"): was gap-6 (24px), already the single largest gap
           value used anywhere in this app before this bump (verified — no
@@ -2717,7 +2588,7 @@ export function SettingsPage() {
       <div
         key={tab}
         className="flex flex-col gap-6 md:gap-10 glim-tab-slide flex-1"
-        style={{ maxWidth: tabStripWidth ?? undefined, "--tab-dir": tabDir } as CSSProperties}
+        style={{ "--tab-dir": tabDir } as CSSProperties}
       >
 
       {/* ------------------------------------------------------------------ */}
@@ -4747,11 +4618,6 @@ export function SettingsPage() {
           than the one it named. */}
       {tab === "look" && (
       <Card title={t("settings.shape")} hint={t("settings.shapeHint")} hueIndex={nextHue()}>
-        {/* No "don't stretch" wrapper div here any more — `variant="well"`
-            carries `w-fit max-w-full` itself as of round 8, which opts the
-            row out of this Card's `flex flex-col` default
-            `align-items: stretch` without an extra element. See the Theme
-            Card's own Selector above for the full note. */}
         <Selector
           items={[...SHAPES, ...(leafFound || shape === "leaf" ? (["leaf"] as const) : [])].map((s) => ({
             id: s,
@@ -4768,7 +4634,6 @@ export function SettingsPage() {
             setShape(next);
           }}
           size="lg"
-          variant="well"
           equalWidth
           hueOffset={HUE_OFFSET.shape}
         />
@@ -4801,8 +4666,6 @@ export function SettingsPage() {
           does. */}
       {tab === "look" && (
       <Card title={t("settings.motion")} hint={t("settings.motionHint")} hueIndex={nextHue()}>
-        {/* No "don't stretch" wrapper div, same as the Theme/Shape Selectors
-            right above — `variant="well"` hugs its own segments now. */}
         {/* THE FOURTH SEGMENT IS NOT ALWAYS THERE, GSS 1.17.0's hidden level.
             It is offered while it is CHOSEN - a picker that hid the value it
             is currently showing would be lying about the interface - and
@@ -4829,7 +4692,6 @@ export function SettingsPage() {
             setMotionIntensity(next);
           }}
           size="lg"
-          variant="well"
           equalWidth
           hueOffset={HUE_OFFSET.motion}
         />
@@ -4873,7 +4735,6 @@ export function SettingsPage() {
                   labelModeChanged();
                 }}
                 size="lg"
-                variant="well"
                 equalWidth
                 // Each row starts one colour further along the palette, so two
                 // selectors never repeat the same colour down the page.

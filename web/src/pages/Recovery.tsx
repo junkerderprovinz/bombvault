@@ -1202,6 +1202,8 @@ function StepDisclosure({
       <Selector
         items={[{ id: DISCLOSURE_ID, label, tip }]}
         label={label}
+        variant="chip"
+        inline
         select="many"
         size="lg"
         /* A rainbow hue encodes a position in a list, and a lone chip has

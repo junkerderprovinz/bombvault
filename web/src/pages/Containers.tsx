@@ -202,17 +202,11 @@ const SORT_KEYS = {
 // (parameterised over its option set), has since moved to
 // components/ChipFilter.tsx to serve Containers and VMs from one copy.
 //
-// All three render the SMALL horizontal selector (`variant="well"`, no
-// `equalWidth`) — jdp, live review: "Im Filtermenü: die Optionen bitte in
-// kleine horizontale Selektoren einpflegen". They used to be Selector's
-// default `chip` variant, where every idle option carries its own filled
-// `bg-carbon-surface2` pill, so a three-option filter read as three competing
-// buttons rather than one control with one choice made. The "well" track puts
-// them in a single grooved strip with transparent idle segments, which is the
-// same small selector Settings' notify/integrity rows and CadenceBuilder
-// already use — and the small one, not the pinned `equalWidth size="lg"` one,
-// because these sit inside FilterPopover's 256-416px panel where a 200px
-// per-segment floor would immediately wrap every option onto its own line.
+// All three render the small horizontal selector, the well without
+// `equalWidth`: one grooved control with one choice made, rather than three
+// competing buttons. They hug their segments as toolbar strips, and stay on the
+// small scale because they sit inside FilterPopover's 256-416px panel, where a
+// 200px per-segment floor would put every option on a row of its own.
 function SortControl({
   value,
   onChange,
@@ -228,7 +222,7 @@ function SortControl({
       <Selector
         items={(["name", "status", "ip"] as SortKey[]).map((k) => ({ id: k, label: t(SORT_KEYS[k]) }))}
         label={t("sort.label")}
-        variant="well"
+        inline
         select="one"
         active={value}
         onChange={(id) => onChange(id as SortKey)}
@@ -269,7 +263,7 @@ function FilterControl({
       <Selector
         items={(["all", "installed", "notInstalled"] as FilterKey[]).map((k) => ({ id: k, label: labels[k] }))}
         label={t("containers.filter")}
-        variant="well"
+        inline
         select="one"
         active={value}
         onChange={(id) => onChange(id as FilterKey)}
@@ -1643,6 +1637,8 @@ function ContainerSectionChips({
       <Selector
         items={sectionItems}
         label={t("containers.sectionsLabel")}
+        variant="chip"
+        inline
         select="many"
         active={openSections}
         buttonHeight
@@ -3310,7 +3306,7 @@ function StackCard({
       {open && (
         <div className="mt-1 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("stack.restoreHint")}</p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
             <SourceToggle source={source} onChange={setSource} disabled={busy} domain="containers" />
           </div>

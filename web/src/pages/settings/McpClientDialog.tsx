@@ -372,7 +372,6 @@ export function McpClientDialog({
               active={mode}
               onChange={(id) => setMode(id as "new" | "pick")}
               hueOffset={HUE_OFFSET.mcpClient}
-              className="self-start"
             />
           )}
           {mode === "new" && canMint && (

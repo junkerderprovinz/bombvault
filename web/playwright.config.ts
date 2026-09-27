@@ -84,6 +84,7 @@ const testMatch = [
   "instances-phone.spec.ts",
   "settings-phone.spec.ts",
   "activity-log-jump.spec.ts",
+  "selector-span.spec.ts",
 ];
 
 for (const spec of testMatch) {

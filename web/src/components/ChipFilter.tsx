@@ -27,7 +27,7 @@ export function ChipFilter<K extends string>({
       <Selector
         items={options.map((o) => ({ id: o.key, label: o.label }))}
         label={label}
-        variant="well"
+        inline
         select="one"
         active={value}
         onChange={(id) => onChange(id as K)}

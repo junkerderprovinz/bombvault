@@ -4,6 +4,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -37,8 +38,9 @@ export interface TipBubble {
   /** Wraps a disabled trigger in a span that still gets pointer events. A
    *  disabled <button> fires none, yet that is when the user most wants to
    *  know why. Applied only when disabled and there is a tip, so enabled
-   *  layouts are untouched. */
-  wrap: (node: ReactNode) => ReactNode;
+   *  layouts are untouched. `style` goes on the span, which takes the
+   *  trigger's place among its parent's flex items. */
+  wrap: (node: ReactNode, style?: CSSProperties) => ReactNode;
   /** Open and close by hand, for a call site with its own hover wrapper. */
   show: () => void;
   hide: () => void;
@@ -146,9 +148,9 @@ export function useTipBubble(tip?: string, disabled = false): TipBubble {
           document.body,
         )
       : null,
-    wrap: (node: ReactNode) =>
+    wrap: (node: ReactNode, style?: CSSProperties) =>
       disabled && tip ? (
-        <span className="inline-flex" onMouseEnter={show} onMouseLeave={hide}>
+        <span className="inline-flex" style={style} onMouseEnter={show} onMouseLeave={hide}>
           {node}
         </span>
       ) : (

@@ -94,7 +94,6 @@ export function PaypalDialog({ onClose }: { onClose: () => void }) {
                 setFrequency(id as GiveFrequency);
                 setStatus("idle");
               }}
-              variant="well"
               buttonHeight
             />
           </div>
@@ -103,7 +102,9 @@ export function PaypalDialog({ onClose }: { onClose: () => void }) {
             <span className="text-xs font-semibold uppercase tracking-widest text-carbon-textSub">
               {t("about.paypalAmount")}
             </span>
-            <div className="flex flex-wrap items-center gap-2">
+            {/* The presets keep the window's width, and the free amount stands
+                at the end of the row under them. */}
+            <div className="flex flex-col items-end gap-2">
               <Selector
                 items={PAYPAL_AMOUNTS.map((a) => ({ id: a, label: `${a} €` }))}
                 label={t("about.paypalAmount")}
@@ -116,7 +117,6 @@ export function PaypalDialog({ onClose }: { onClose: () => void }) {
                   setPreset(id);
                   setTyped("");
                 }}
-                variant="well"
                 buttonHeight
               />
               <input
