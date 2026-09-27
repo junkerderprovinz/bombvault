@@ -90,14 +90,15 @@ func (s *Service) newPass(settings store.Settings, p placementRead) (replication
 
 // targetVisit is what a pass does at one target.
 type targetVisit struct {
-	p         placementRead
-	owners    ownerContext
-	targetID  string
-	filtered  bool // a name is left out here, so every id restic gets is chosen by the rules
-	observe   bool // the target has a row, so what it holds is recorded
-	agingOnly bool // no item is copied here; the visit lists and ages what the target holds
-	aged      bool // it was aged under this state of the rules already
-	wasAged   bool // an aging mark exists, cleared when items are copied here again
+	p           placementRead
+	owners      ownerContext
+	targetID    string
+	filtered    bool // a name is left out here, so every id restic gets is chosen by the rules
+	observe     bool // the target has a row, so what it holds is recorded
+	agingOnly   bool // no item is copied here; the visit lists and ages what the target holds
+	aged        bool // it was aged under this state of the rules already
+	wasAged     bool // an aging mark exists, cleared when items are copied here again
+	unreachable bool // a source could not be reached, so the keep-policy does not run after this pass
 }
 
 // visit decides what the pass does at one target, and whether it opens it at
@@ -173,6 +174,8 @@ type sourceCopy struct {
 	send       []restic.Snapshot // what goes; with whole, what restic is expected to take
 	answers    bool              // the source holds snapshots of the domain
 	unmeasured bool              // whole, and its own listing failed; send is not a real estimate
+	left       []restic.Snapshot // taken out of send because the keep-policy forgets it right after
+	failed     bool
 }
 
 // copySources copies every source to one target; dst is the target's listing
@@ -212,7 +215,9 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 		}
 		plan = append(plan, c)
 	}
-	if dstErr == nil {
+	// The keep-policy does not run after a pass with a failed or unreachable
+	// source, so nothing is left out for it then.
+	if dstErr == nil && len(out.errs) == 0 && !v.unreachable {
 		s.leaveOutWhatTheTargetForgets(plan, dst, target)
 	}
 	for _, c := range plan {
@@ -224,7 +229,8 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 	copyCtx := s.progBeginCopySink(ctx, domain, startedAt, total, lastCopy)
 	lim := targetOffsiteLimits(target)
 	done := 0
-	for _, c := range plan {
+	for i := range plan {
+		c := &plan[i]
 		if !c.whole && len(c.send) == 0 {
 			if c.answers {
 				out.accounted++
@@ -248,12 +254,34 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 		if err != nil {
 			log.Printf("api: offsite %s: copying %s failed (continuing with the other sources): %v", domain, shortRepoName(c.src.Loc), scrubError(err)) //nolint:gosec // G706: domain is a fixed literal, the name is shortened and the error scrubbed here
 			out.errs = append(out.errs, fmt.Errorf("copying %s: %w", shortRepoName(c.src.Loc), err))
+			c.failed = true
 			continue
 		}
 		out.copied++
 		out.accounted++
 	}
+	if len(out.errs) > 0 {
+		s.copyWhatWasLeftOut(copyCtx, domain, dest, mode, lim, plan, done, &out)
+	}
 	return out
+}
+
+// copyWhatWasLeftOut sends what the keep-policy was expected to forget after a
+// copy failed, since the policy then does not run and the target would go
+// without those snapshots for as long as the failure lasts.
+func (s *Service) copyWhatWasLeftOut(ctx context.Context, domain, dest string, mode restic.Mode, lim restic.Limits, plan []sourceCopy, done int, out *copyOutcome) {
+	for _, c := range plan {
+		if c.failed || len(c.left) == 0 {
+			continue
+		}
+		landed, err := s.copyInChunks(ctx, dest, c.src.Loc, c.left, lim, mode, done)
+		out.landed = append(out.landed, landed...)
+		done += len(landed)
+		if err != nil {
+			log.Printf("api: offsite %s: copying the rest of %s failed: %v", domain, shortRepoName(c.src.Loc), scrubError(err)) //nolint:gosec // G706: domain is a fixed literal, the name is shortened and the error scrubbed here
+			out.errs = append(out.errs, fmt.Errorf("copying %s: %w", shortRepoName(c.src.Loc), err))
+		}
+	}
 }
 
 // planSource lists one source and decides what it sends to the target. held is
@@ -315,8 +343,15 @@ func (s *Service) leaveOutWhatTheTargetForgets(plan []sourceCopy, dst []restic.S
 	}
 	for i := range plan {
 		c := &plan[i]
-		kept := slices.DeleteFunc(slices.Clone(c.send), func(sn restic.Snapshot) bool { return forgotten[sn.ID] })
-		if len(kept) < len(c.send) {
+		var kept []restic.Snapshot
+		for _, sn := range c.send {
+			if forgotten[sn.ID] {
+				c.left = append(c.left, sn)
+			} else {
+				kept = append(kept, sn)
+			}
+		}
+		if len(c.left) > 0 {
 			c.send, c.whole = kept, false
 		}
 	}

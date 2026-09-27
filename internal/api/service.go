@@ -3816,6 +3816,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	if dstErr != nil {
 		log.Printf("api: offsite %s: could not list the destination before copying: %v", domain, scrubError(dstErr)) //nolint:gosec // G706: domain is a fixed literal, the error scrubbed here
 	}
+	visit.unreachable = len(unreachableSkips(skipped)) > 0
 	out := s.copySources(ctx, domain, dest, mode, target, visit, localRepos, dstSnaps, dstErr, startedAt, lastCopy)
 	copied, accounted, destIsASource := out.copied, out.accounted, out.destIsASource
 	// Carried past the maintenance below: whatever did arrive is aged, sampled and

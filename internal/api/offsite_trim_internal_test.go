@@ -2,6 +2,9 @@ package api
 
 import (
 	"context"
+	"errors"
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 	"time"
@@ -159,5 +162,52 @@ func TestAHeldItemIsCopiedWhole(t *testing.T) {
 	replicate(t, f, "files")
 	if got, want := copiedIDs(f, s3), [][]string{{"a1", "a2", "a3"}, {"c2", "c3"}}; !slices.EqualFunc(got, want, slices.Equal) {
 		t.Fatalf("copied %v, want all of A, whose aging is paused", got)
+	}
+}
+
+// replicateFailing runs a pass that reports an error.
+func replicateFailing(t *testing.T, f *placementFixture, domain string) {
+	t.Helper()
+	f.eng.copies, f.eng.forgets = nil, nil
+	if err := f.svc.ReplicateOffsite(context.Background(), domain); err == nil {
+		t.Fatal("ReplicateOffsite succeeded, want the failed source reported")
+	}
+}
+
+func TestNothingIsLeftOutWhenASourceCannotBeRead(t *testing.T) {
+	f, _, s3, _ := trimScene(t)
+	f.eng.listErr[f.root+"/nas"] = errors.New("nas is gone")
+
+	replicateFailing(t, f, "files")
+	if got, want := copiedIDs(f, s3), [][]string{{"a1", "a2", "a3"}}; !slices.EqualFunc(got, want, slices.Equal) {
+		t.Fatalf("copied %v, want all of A, since S3 is not aged after this pass", got)
+	}
+}
+
+func TestNothingIsLeftOutWhenASourceCannotBeReached(t *testing.T) {
+	f, _, s3, _ := trimScene(t)
+	if err := f.st.MarkRepoEstablished(f.root + "/nas"); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.RemoveAll(filepath.FromSlash(f.root + "/nas")); err != nil {
+		t.Fatal(err)
+	}
+
+	replicateFailing(t, f, "files")
+	if got, want := copiedIDs(f, s3), [][]string{{"a1", "a2", "a3"}}; !slices.EqualFunc(got, want, slices.Equal) {
+		t.Fatalf("copied %v, want all of A, since S3 is not aged after this pass", got)
+	}
+}
+
+func TestWhatWasLeftOutFollowsWhenAnotherSourceFailsToCopy(t *testing.T) {
+	f, _, s3, _ := trimScene(t)
+	f.eng.copyErr[f.root+"/nas"] = errors.New("connection reset")
+
+	replicateFailing(t, f, "files")
+	if got, want := copiedIDs(f, s3), [][]string{{"a2", "a3"}, {"c2", "c3"}, {"a1"}}; !slices.EqualFunc(got, want, slices.Equal) {
+		t.Fatalf("copied %v, want %v", got, want)
+	}
+	if got := forgetLines(f, s3); len(got) != 0 {
+		t.Fatalf("forgets = %v after a failed source", got)
 	}
 }
