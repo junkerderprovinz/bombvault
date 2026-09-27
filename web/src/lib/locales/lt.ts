@@ -2274,6 +2274,13 @@ const lt: Partial<Translations> = {
   "ha.portInvalid": "Prievadas yra skaičius nuo 1 iki 65535.",
   "ha.prefixInvalid": "Temų priešdėlį sudaro raidės, skaitmenys, brūkšneliai ir pabraukimai, tarp jų pasviri brūkšniai.",
   "ha.removeFailed": "Išsaugota, bet tarpininkas neatsakė, tad Home Assistant vis dar rodo įrenginį. Pašalink jį ten arba vėl įjunk ir išjunk tai, kai tarpininkas atsakys.",
+  "mdns.title": "Rasti tinkle",
+  "mdns.hint": "Per mDNS paskelbia BombVault vietiniame tinkle, kad naršyklė jį pasiektų kaip bombvault.local, o paslaugų naršyklės jį rodytų. Numatytajame Docker bridge tinkle skelbimas lieka Docker viduje; į vietinį tinklą jis pasiekia per br0, macvlan arba kompiuterio tinklą.",
+  "mdns.enable": "Skelbti vietiniame tinkle",
+  "mdns.statusOn": "Paskelbta kaip {url}",
+  "mdns.statusStarting": "Tikrinama, ar vardas tinkle laisvas",
+  "mdns.statusError": "Nepaskelbta: {error}",
+  "mdns.statusOff": "Išjungta",
 
   // Export / import settings
   "settingsIO.title": "Eksportuoti / importuoti nustatymus",

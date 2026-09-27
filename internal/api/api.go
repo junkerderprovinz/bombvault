@@ -78,6 +78,9 @@ type Handler struct {
 
 	// ha is the MQTT link to Home Assistant, created by Router.
 	ha *homeassistant.Bridge
+
+	// mdns is the running network announcement, if any.
+	mdns mdnsState
 }
 
 // NewHandler constructs the API handler.
@@ -153,6 +156,8 @@ func (h *Handler) Router() http.Handler {
 	}
 	mux.HandleFunc("GET /api/homeassistant", h.handleGetHomeAssistant)
 	mux.HandleFunc("PUT /api/homeassistant", h.handleSetHomeAssistant)
+	mux.HandleFunc("GET /api/mdns", h.handleGetMDNS)
+	mux.HandleFunc("PUT /api/mdns", h.handleSetMDNS)
 
 	// Public / auth endpoints — also allow-listed inside authGate.
 	mux.HandleFunc("GET /api/health", h.handleHealth)

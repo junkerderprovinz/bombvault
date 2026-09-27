@@ -2050,6 +2050,13 @@ const he: Partial<Translations> = {
   "ha.portInvalid": "הפורט הוא מספר מ-1 עד 65535.",
   "ha.prefixInvalid": "קידומת הנושאים מכילה אותיות, ספרות, מקפים וקווים תחתונים, עם לוכסנים ביניהם.",
   "ha.removeFailed": "נשמר, אבל המתווך לא ענה, ולכן Home Assistant עדיין מציג את המכשיר. הסר אותו שם, או הפעל וכבה את זה שוב כשהמתווך עונה.",
+  "mdns.title": "מציאה ברשת",
+  "mdns.hint": "מכריז על BombVault ברשת המקומית דרך mDNS, כך שדפדפן מגיע אליו בשם bombvault.local ודפדפני שירותים מציגים אותו. ברשת ה-bridge ברירת המחדל של Docker ההכרזה נשארת בתוך Docker; היא מגיעה לרשת המקומית דרך br0, macvlan או רשת המארח.",
+  "mdns.enable": "הכרז ברשת המקומית",
+  "mdns.statusOn": "מוכרז בתור {url}",
+  "mdns.statusStarting": "בודק שהשם פנוי ברשת",
+  "mdns.statusError": "לא מוכרז: {error}",
+  "mdns.statusOff": "כבוי",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

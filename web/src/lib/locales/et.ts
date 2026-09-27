@@ -2274,6 +2274,13 @@ const et: Partial<Translations> = {
   "ha.portInvalid": "Port on arv 1 kuni 65535.",
   "ha.prefixInvalid": "Teemade eesliide koosneb tähtedest, numbritest, sidekriipsudest ja allkriipsudest, mille vahel on kaldkriipsud.",
   "ha.removeFailed": "Salvestatud, aga vahendaja ei vastanud, seega näitab Home Assistant seadet endiselt. Eemalda see seal või lülita see siin uuesti sisse ja välja, kui vahendaja vastab.",
+  "mdns.title": "Leia võrgust",
+  "mdns.hint": "Teatab BombVaulti mDNS-i kaudu kohalikus võrgus, nii et brauser jõuab selleni nimega bombvault.local ja teenuste sirvijad näitavad seda. Dockeri vaikimisi bridge-võrgus jääb teade Dockeri sisse; kohalikku võrku jõuab see br0, macvlani või hosti võrgu kaudu.",
+  "mdns.enable": "Teata kohalikus võrgus",
+  "mdns.statusOn": "Teatatud kui {url}",
+  "mdns.statusStarting": "Kontrollin, kas nimi on võrgus vaba",
+  "mdns.statusError": "Pole teatatud: {error}",
+  "mdns.statusOff": "Väljas",
 
   // Export / import settings
   "settingsIO.title": "Ekspordi / impordi seaded",

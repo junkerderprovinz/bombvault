@@ -2145,6 +2145,15 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_keys_active_label ON mcp_keys(kind = '
   node_id      TEXT    NOT NULL DEFAULT ''
 );`,
 	},
+	{
+		// The switch for the mDNS announcement. No row means on.
+		version: apiMigrationBase + 2,
+		name:    "mdns_settings",
+		sql: `CREATE TABLE IF NOT EXISTS mdns_settings (
+  id      INTEGER PRIMARY KEY CHECK (id = 1),
+  enabled INTEGER NOT NULL DEFAULT 1
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,

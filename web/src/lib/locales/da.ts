@@ -2050,6 +2050,13 @@ const da: Partial<Translations> = {
   "ha.portInvalid": "Porten er et tal fra 1 til 65535.",
   "ha.prefixInvalid": "Emnepræfikset består af bogstaver, tal, bindestreger og understregninger med skråstreger imellem.",
   "ha.removeFailed": "Gemt, men brokeren svarede ikke, så Home Assistant viser stadig enheden. Fjern den der, eller slå dette til og fra igen, når brokeren svarer.",
+  "mdns.title": "Find på netværket",
+  "mdns.hint": "Annoncerer BombVault på det lokale netværk via mDNS, så en browser når den som bombvault.local, og tjenestebrowsere viser den. I Dockers standard-bridge-netværk bliver annonceringen inde i Docker; den når LAN'et via br0, macvlan eller værtens netværk.",
+  "mdns.enable": "Annoncér på det lokale netværk",
+  "mdns.statusOn": "Annonceret som {url}",
+  "mdns.statusStarting": "Tjekker, at navnet er ledigt på netværket",
+  "mdns.statusError": "Ikke annonceret: {error}",
+  "mdns.statusOff": "Fra",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

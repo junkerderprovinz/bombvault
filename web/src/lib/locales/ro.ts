@@ -2053,6 +2053,13 @@ const ro: Partial<Translations> = {
   "ha.portInvalid": "Portul este un număr de la 1 la 65535.",
   "ha.prefixInvalid": "Prefixul subiectelor conține litere, cifre, cratime și liniuțe de subliniere, cu bare oblice între ele.",
   "ha.removeFailed": "Salvat, dar brokerul nu a răspuns, așa că Home Assistant încă arată dispozitivul. Șterge-l acolo sau pornește și oprește din nou aceasta când brokerul răspunde.",
+  "mdns.title": "Găsește în rețea",
+  "mdns.hint": "Anunță BombVault în rețeaua locală prin mDNS, ca un browser să ajungă la el ca bombvault.local și browserele de servicii să îl afișeze. În rețeaua bridge implicită a Docker anunțul rămâne în Docker; ajunge în rețeaua locală prin br0, macvlan sau rețeaua gazdei.",
+  "mdns.enable": "Anunță în rețeaua locală",
+  "mdns.statusOn": "Anunțat ca {url}",
+  "mdns.statusStarting": "Se verifică dacă numele e liber în rețea",
+  "mdns.statusError": "Neanunțat: {error}",
+  "mdns.statusOff": "Oprit",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

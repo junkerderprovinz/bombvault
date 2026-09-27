@@ -93,3 +93,15 @@ Zařízení se jmenuje BombVault, případně BombVault s názvem instance v zá
 Názvy entit jsou anglicky, protože Home Assistant je přebírá tak, jak je BombVault posílá. Každá zapnutá oblast dostane vlastní entity a vypnutá o ně přijde. Tlačítka mají stejné limity jako [spuštění přes API](#errors). Stisknout je může každý, kdo smí do brokeru publikovat, proto brokeru dej heslo, nebo vypni **Tlačítka spouštějí zálohy**.
 
 BombVault čte svůj stav každých 15 sekund a zveřejní ho, když se něco změnilo, jako JSON pod `<předpona>/<uzel>/state`. Předpona je `bombvault`, dokud ji nezměníš, a uzel je krátký identifikátor, který si BombVault jednou zvolí. Zprávy zjišťování jdou pod výchozí předponu Home Assistant `homeassistant`. Obojí se uchovává (retained). Poslední vůle (last will) označí zařízení jako nedostupné, když se BombVault zastaví bez ohlášení. Vypnutím propojení BombVault zařízení i jeho entity z Home Assistant odstraní.
+
+## Najít BombVault v síti {#mdns}
+
+BombVault ohlašuje své webové rozhraní v místní síti přes mDNS, protokol, na kterém stojí Bonjour a Avahi. Prohlížeč ho pak najde jako `https://bombvault.local:3443`, s `HTTP_ONLY` jako `http://bombvault.local:3000`, a prohlížeče služeb ho vypíšou jako webovou službu s podtypem `_bombvault`. Jeho záznamy TXT nesou verzi a cestu. Přepínač je v **Nastavení, Systém, Najít v síti** a ve výchozím stavu je zapnutý. Pokud název už používá jiné zařízení, BombVault si vezme `bombvault-2.local` a tak dál a karta ukáže adresu, kterou dostal. Když se BombVault zastaví nebo ohlašování vypneš, dá o tom síti vědět a prohlížeče záznam hned odstraní.
+
+Zda ohlášení doputuje do tvé sítě, záleží na tom, jak je kontejner připojený:
+
+- **bridge**, výchozí volba v šabloně Unraid: ohlášení zůstane v síti Dockeru a v místní síti ho nikdo neuvidí. BombVault otevírej jako dosud přes adresu hostitele.
+- **br0** nebo jiná síť macvlan či ipvlan: kontejner má vlastní adresu v místní síti a ohlášení se tam dostane.
+- **host**: ohlášení jde ven přes rozhraní hostitele, vedle ohlášení samotného Unraidu.
+
+Ohlašují se jen adresy IPv4.

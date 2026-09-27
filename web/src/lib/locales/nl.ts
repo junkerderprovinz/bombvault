@@ -2047,6 +2047,13 @@ const nl: Partial<Translations> = {
   "ha.portInvalid": "De poort is een getal van 1 tot 65535.",
   "ha.prefixInvalid": "Het onderwerpvoorvoegsel bestaat uit letters, cijfers, streepjes en underscores, met schuine strepen ertussen.",
   "ha.removeFailed": "Opgeslagen, maar de broker antwoordde niet, dus Home Assistant toont het apparaat nog. Verwijder het daar, of zet dit opnieuw aan en uit zodra de broker antwoordt.",
+  "mdns.title": "Vinden op het netwerk",
+  "mdns.hint": "Maakt BombVault via mDNS bekend op het lokale netwerk, zodat een browser het bereikt als bombvault.local en servicebrowsers het tonen. In Dockers standaard bridge-netwerk blijft de aankondiging binnen Docker; via br0, macvlan of het hostnetwerk bereikt ze het LAN.",
+  "mdns.enable": "Bekendmaken op het lokale netwerk",
+  "mdns.statusOn": "Bekendgemaakt als {url}",
+  "mdns.statusStarting": "Controleren of de naam vrij is op het netwerk",
+  "mdns.statusError": "Niet bekendgemaakt: {error}",
+  "mdns.statusOff": "Uit",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

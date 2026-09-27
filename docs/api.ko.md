@@ -93,3 +93,15 @@ BombVault는 MQTT 검색을 통해 Home Assistant에 기기로 나타날 수 있
 엔티티 이름은 영어입니다. Home Assistant는 BombVault가 보낸 이름을 그대로 쓰기 때문입니다. 켜진 영역마다 엔티티가 생기고, 끈 영역은 엔티티를 잃습니다. 버튼에는 [API를 통한 시작](#errors)과 같은 제한이 적용됩니다. 브로커에 게시할 수 있는 사람은 누구나 누를 수 있으므로 브로커에 비밀번호를 설정하거나 **버튼으로 백업 시작**을 끄세요.
 
 BombVault는 15초마다 상태를 읽고, 바뀐 것이 있으면 `<접두사>/<노드>/state`에 JSON으로 게시합니다. 접두사는 바꾸지 않는 한 `bombvault`이고, 노드는 BombVault가 한 번 고르는 짧은 ID입니다. 검색 메시지는 Home Assistant의 기본 접두사 `homeassistant`로 갑니다. 둘 다 보존(retained)됩니다. BombVault가 예고 없이 멈추면 라스트 윌(last will)이 기기를 사용할 수 없음으로 표시합니다. 연동을 끄면 BombVault가 Home Assistant에서 기기와 엔티티를 제거합니다.
+
+## 네트워크에서 BombVault 찾기 {#mdns}
+
+BombVault는 Bonjour와 Avahi의 바탕이 되는 mDNS로 로컬 네트워크에 웹 화면을 알립니다. 그러면 브라우저에서 `https://bombvault.local:3443`(또는 `HTTP_ONLY`일 때 `http://bombvault.local:3000`)로 열 수 있고, 서비스 탐색기는 하위 유형 `_bombvault`가 있는 웹 서비스로 보여 줍니다. TXT 레코드에는 버전과 경로가 들어 있습니다. 스위치는 **설정, 시스템, 네트워크에서 찾기**에 있으며 기본으로 켜져 있습니다. 다른 기기가 이미 그 이름을 쓰고 있으면 BombVault는 `bombvault-2.local`처럼 다음 이름을 쓰고, 카드에 받은 주소를 보여 줍니다. BombVault가 멈추거나 알림을 끄면 네트워크에 알리므로 브라우저가 항목을 바로 지웁니다.
+
+알림이 네트워크에 닿는지는 컨테이너 연결 방식에 달려 있습니다.
+
+- **bridge**(Unraid 템플릿의 기본값): 알림이 Docker 네트워크 안에 머물러 LAN에서는 아무도 보지 못합니다. 지금처럼 호스트 주소로 BombVault를 여세요.
+- **br0** 또는 다른 macvlan, ipvlan 네트워크: 컨테이너가 LAN에 자기 주소를 가지므로 알림이 닿습니다.
+- **host**: 알림이 Unraid 자체의 알림과 함께 호스트의 인터페이스로 나갑니다.
+
+IPv4 주소만 알립니다.

@@ -93,3 +93,15 @@ Dispozitivul se numește BombVault, sau BombVault cu numele instanței între pa
 Numele entităților sunt în engleză, pentru că Home Assistant le preia așa cum le trimite BombVault. Fiecare domeniu pornit primește entități proprii, iar unul pe care îl oprești le pierde. Butoanele respectă aceleași limite ca [pornirile prin API](#errors). Oricine poate publica pe broker le poate apăsa, așa că pune o parolă brokerului sau oprește **Butoanele pornesc copii**.
 
 BombVault își citește starea la fiecare 15 secunde și o publică atunci când s-a schimbat ceva, ca JSON sub `<prefix>/<nod>/state`. Prefixul este `bombvault` cât timp nu îl schimbi, iar nodul este un identificator scurt pe care BombVault îl alege o dată. Mesajele de descoperire merg la prefixul implicit al Home Assistant, `homeassistant`. Ambele sunt păstrate (retained). Un ultim mesaj (last will) marchează dispozitivul ca indisponibil dacă BombVault se oprește fără să anunțe. Dacă oprești legătura, BombVault scoate dispozitivul și entitățile lui din Home Assistant.
+
+## Găsirea BombVault în rețea {#mdns}
+
+BombVault își anunță interfața web în rețeaua locală prin mDNS, protocolul din spatele Bonjour și Avahi. Un browser ajunge atunci la el ca `https://bombvault.local:3443`, sau `http://bombvault.local:3000` cu `HTTP_ONLY`, iar browserele de servicii îl afișează ca serviciu web cu subtipul `_bombvault`. Înregistrările sale TXT conțin versiunea și calea. Comutatorul se află în **Setări, Sistem, Găsește în rețea** și e pornit implicit. Dacă alt dispozitiv folosește deja numele, BombVault ia `bombvault-2.local` și așa mai departe, iar cardul arată adresa primită. Când BombVault se oprește sau oprești anunțul, anunță rețeaua, iar browserele scot imediat intrarea.
+
+Dacă anunțul ajunge în rețeaua ta depinde de felul în care e conectat containerul:
+
+- **bridge**, valoarea implicită din șablonul Unraid: anunțul rămâne în rețeaua Docker și nimeni din rețeaua locală nu îl vede. Deschide BombVault prin adresa gazdei, ca până acum.
+- **br0** sau altă rețea macvlan ori ipvlan: containerul are propria adresă în rețeaua locală, iar anunțul ajunge acolo.
+- **host**: anunțul iese prin interfețele gazdei, alături de cel al Unraid.
+
+Se anunță doar adrese IPv4.

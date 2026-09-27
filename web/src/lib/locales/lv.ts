@@ -2274,6 +2274,13 @@ const lv: Partial<Translations> = {
   "ha.portInvalid": "Ports ir skaitlis no 1 līdz 65535.",
   "ha.prefixInvalid": "Tēmu prefikss sastāv no burtiem, cipariem, defisēm un pasvītrām ar slīpsvītrām starp tiem.",
   "ha.removeFailed": "Saglabāts, bet brokeris neatbildēja, tāpēc Home Assistant joprojām rāda ierīci. Noņem to tur vai ieslēdz un izslēdz šo vēlreiz, kad brokeris atbild.",
+  "mdns.title": "Atrast tīklā",
+  "mdns.hint": "Izziņo BombVault lokālajā tīklā ar mDNS, lai pārlūks to sasniegtu kā bombvault.local un pakalpojumu pārlūki to parādītu. Docker noklusējuma bridge tīklā paziņojums paliek Docker iekšpusē; lokālo tīklu tas sasniedz caur br0, macvlan vai resursdatora tīklu.",
+  "mdns.enable": "Izziņot lokālajā tīklā",
+  "mdns.statusOn": "Izziņots kā {url}",
+  "mdns.statusStarting": "Pārbauda, vai nosaukums tīklā ir brīvs",
+  "mdns.statusError": "Nav izziņots: {error}",
+  "mdns.statusOff": "Izslēgts",
 
   // Export / import settings
   "settingsIO.title": "Eksportēt / importēt iestatījumus",

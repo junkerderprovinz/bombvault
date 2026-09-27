@@ -2042,6 +2042,13 @@ const zh: Partial<Translations> = {
   "ha.portInvalid": "端口是 1 到 65535 之间的数字。",
   "ha.prefixInvalid": "主题前缀由字母、数字、连字符和下划线组成，中间用斜杠分隔。",
   "ha.removeFailed": "已保存，但代理没有响应，所以 Home Assistant 仍显示该设备。请在那里删除它，或在代理响应后再次打开并关闭此项。",
+  "mdns.title": "在网络中查找",
+  "mdns.hint": "通过 mDNS 在局域网中广播 BombVault，这样浏览器可以用 bombvault.local 打开它，服务浏览器也能列出它。在 Docker 默认的 bridge 网络中，广播只停留在 Docker 内部；使用 br0、macvlan 或主机网络时，它能到达局域网。",
+  "mdns.enable": "在局域网中广播",
+  "mdns.statusOn": "已广播为 {url}",
+  "mdns.statusStarting": "正在检查名称在网络中是否可用",
+  "mdns.statusError": "未广播：{error}",
+  "mdns.statusOff": "关闭",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

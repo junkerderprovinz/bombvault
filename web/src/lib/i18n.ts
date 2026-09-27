@@ -2666,6 +2666,13 @@ export const en = {
   "ha.portInvalid": "The port is a number from 1 to 65535.",
   "ha.prefixInvalid": "The topic prefix takes letters, digits, dashes and underscores, with slashes between them.",
   "ha.removeFailed": "Saved, but the broker did not answer, so Home Assistant still lists the device. Remove it there, or switch this on and off again once the broker answers.",
+  "mdns.title": "Find on the network",
+  "mdns.hint": "Announces BombVault on the local network over mDNS, so a browser reaches it as bombvault.local and service browsers list it. In Docker's default bridge network the announcement stays inside Docker; it reaches the LAN on br0, macvlan or the host network.",
+  "mdns.enable": "Announce on the local network",
+  "mdns.statusOn": "Announced as {url}",
+  "mdns.statusStarting": "Checking that the name is free on the network",
+  "mdns.statusError": "Not announced: {error}",
+  "mdns.statusOff": "Off",
 
   // Export / import settings (portable config file)
   "settingsIO.title": "Export / import settings",
@@ -5269,6 +5276,13 @@ export const de: Translations = {
   "ha.portInvalid": "Der Port ist eine Zahl von 1 bis 65535.",
   "ha.prefixInvalid": "Das Themen-Präfix besteht aus Buchstaben, Ziffern, Binde- und Unterstrichen, mit Schrägstrichen dazwischen.",
   "ha.removeFailed": "Gespeichert, aber der Broker hat nicht geantwortet, deshalb führt Home Assistant das Gerät noch. Entferne es dort oder schalte das hier wieder ein und aus, sobald der Broker antwortet.",
+  "mdns.title": "Im Netzwerk finden",
+  "mdns.hint": "Kündigt BombVault per mDNS im lokalen Netz an, damit ein Browser es als bombvault.local erreicht und Dienst-Browser es auflisten. Im Standard-Bridge-Netz von Docker bleibt die Ankündigung innerhalb von Docker; über br0, macvlan oder das Host-Netz erreicht sie das LAN.",
+  "mdns.enable": "Im lokalen Netz ankündigen",
+  "mdns.statusOn": "Angekündigt als {url}",
+  "mdns.statusStarting": "Prüfe, ob der Name im Netz frei ist",
+  "mdns.statusError": "Nicht angekündigt: {error}",
+  "mdns.statusOff": "Aus",
 
   // Einstellungen exportieren / importieren (portable Konfigurationsdatei)
   "settingsIO.title": "Einstellungen exportieren / importieren",

@@ -2274,6 +2274,13 @@ const hr: Partial<Translations> = {
   "ha.portInvalid": "Port je broj od 1 do 65535.",
   "ha.prefixInvalid": "Prefiks tema sadrži slova, znamenke, crtice i podvlake, s kosim crtama između njih.",
   "ha.removeFailed": "Spremljeno, ali broker nije odgovorio, pa Home Assistant još prikazuje uređaj. Ukloni ga ondje ili ovo ponovno uključi i isključi kad broker odgovori.",
+  "mdns.title": "Pronađi na mreži",
+  "mdns.hint": "Najavljuje BombVault na lokalnoj mreži preko mDNS-a, tako da ga preglednik dohvati kao bombvault.local, a preglednici usluga ga prikažu. U zadanoj bridge mreži Dockera najava ostaje unutar Dockera; do lokalne mreže stiže preko br0, macvlana ili mreže domaćina.",
+  "mdns.enable": "Najavljuj na lokalnoj mreži",
+  "mdns.statusOn": "Najavljeno kao {url}",
+  "mdns.statusStarting": "Provjera je li naziv slobodan na mreži",
+  "mdns.statusError": "Nije najavljeno: {error}",
+  "mdns.statusOff": "Isključeno",
 
   // Export / import settings
   "settingsIO.title": "Izvoz / uvoz postavki",

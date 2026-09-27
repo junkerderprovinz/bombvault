@@ -2050,6 +2050,13 @@ const fi: Partial<Translations> = {
   "ha.portInvalid": "Portti on luku 1:stä 65535:een.",
   "ha.prefixInvalid": "Aiheiden etuliitteessä saa olla kirjaimia, numeroita, yhdysmerkkejä ja alaviivoja, niiden välissä vinoviivoja.",
   "ha.removeFailed": "Tallennettu, mutta välittäjä ei vastannut, joten Home Assistant näyttää laitteen yhä. Poista se sieltä, tai kytke tämä uudelleen päälle ja pois, kun välittäjä vastaa.",
+  "mdns.title": "Löydä verkosta",
+  "mdns.hint": "Ilmoittaa BombVaultin lähiverkossa mDNS:n kautta, jotta selain löytää sen nimellä bombvault.local ja palveluselaimet listaavat sen. Dockerin oletus-bridge-verkossa ilmoitus jää Dockerin sisälle; lähiverkkoon se ulottuu br0:n, macvlanin tai isännän verkon kautta.",
+  "mdns.enable": "Ilmoita lähiverkossa",
+  "mdns.statusOn": "Ilmoitettu osoitteella {url}",
+  "mdns.statusStarting": "Tarkistetaan, onko nimi vapaana verkossa",
+  "mdns.statusError": "Ei ilmoitettu: {error}",
+  "mdns.statusOff": "Pois",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

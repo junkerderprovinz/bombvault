@@ -2274,6 +2274,13 @@ const fa: Partial<Translations> = {
   "ha.portInvalid": "درگاه عددی از 1 تا 65535 است.",
   "ha.prefixInvalid": "پیشوند موضوع‌ها از حرف، رقم، خط تیره و زیرخط تشکیل می‌شود و میانشان خط مورب می‌آید.",
   "ha.removeFailed": "ذخیره شد، اما کارگزار پاسخ نداد، پس Home Assistant هنوز دستگاه را نشان می‌دهد. آن را آنجا حذف کن، یا وقتی کارگزار پاسخ داد این را دوباره روشن و خاموش کن.",
+  "mdns.title": "یافتن در شبکه",
+  "mdns.hint": "BombVault را با mDNS در شبکهٔ محلی اعلام می‌کند تا مرورگر با نام bombvault.local به آن برسد و مرورگرهای سرویس آن را فهرست کنند. در شبکهٔ bridge پیش‌فرض Docker، اعلام درون Docker می‌ماند؛ از راه br0، macvlan یا شبکهٔ میزبان به شبکهٔ محلی می‌رسد.",
+  "mdns.enable": "اعلام در شبکهٔ محلی",
+  "mdns.statusOn": "با نام {url} اعلام شد",
+  "mdns.statusStarting": "در حال بررسی آزاد بودن نام در شبکه",
+  "mdns.statusError": "اعلام نشده: {error}",
+  "mdns.statusOff": "خاموش",
 
   // Export / import settings
   "settingsIO.title": "خروجی/ورودی گرفتن از تنظیمات",

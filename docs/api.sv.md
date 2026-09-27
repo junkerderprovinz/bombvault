@@ -93,3 +93,15 @@ Enheten heter BombVault, eller BombVault med instansnamnet inom parentes, och ha
 Entiteternas namn är på engelska, eftersom Home Assistant tar dem som BombVault skickar dem. Varje påslaget område får egna entiteter, och ett område du stänger av förlorar dem. Knapparna följer samma gränser som [starter via API:t](#errors). Alla som får publicera på brokern kan trycka på dem, så ge brokern ett lösenord eller stäng av **Knappar startar säkerhetskopior**.
 
 BombVault läser sin status var 15:e sekund och publicerar den när något har ändrats, som JSON under `<prefix>/<nod>/state`. Prefixet är `bombvault` så länge du inte ändrar det, och noden är ett kort id som BombVault väljer en gång. Discovery-meddelandena går till Home Assistants standardprefix `homeassistant`. Båda behålls (retained). En last will markerar enheten som otillgänglig om BombVault stannar utan att säga till. Stänger du av kopplingen tar BombVault bort enheten och dess entiteter från Home Assistant.
+
+## Hitta BombVault i nätverket {#mdns}
+
+BombVault annonserar sitt webbgränssnitt i det lokala nätverket via mDNS, protokollet bakom Bonjour och Avahi. En webbläsare når det då som `https://bombvault.local:3443`, eller `http://bombvault.local:3000` med `HTTP_ONLY`, och tjänstebläddrare listar det som webbtjänst med undertypen `_bombvault`. TXT-posterna innehåller versionen och sökvägen. Reglaget finns under **Inställningar, System, Hitta i nätverket** och är på från början. Om en annan enhet redan använder namnet tar BombVault `bombvault-2.local` och så vidare, och kortet visar adressen det fick. När BombVault stannar eller du stänger av annonseringen säger det till nätverket, så att webbläsare tar bort posten direkt.
+
+Om annonseringen når ditt nätverk beror på hur containern är ansluten:
+
+- **bridge**, standard i Unraid-mallen: annonseringen stannar i Dockers nätverk och ingen på LAN:et ser den. Öppna BombVault på värdens adress som tidigare.
+- **br0** eller ett annat macvlan- eller ipvlan-nätverk: containern har en egen adress på LAN:et och annonseringen når dit.
+- **host**: annonseringen går ut över värdens gränssnitt, bredvid Unraids egen.
+
+Bara IPv4-adresser annonseras.

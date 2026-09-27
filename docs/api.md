@@ -93,3 +93,15 @@ The device is called BombVault, or BombVault with the instance name in brackets,
 Every switched-on domain gets its own entities, and a domain you switch off loses them. The buttons follow the same limits as [starts through the API](#errors). Anyone who can publish to the broker can press them, so give the broker a password, or switch **Buttons start backups** off.
 
 BombVault reads its state every 15 seconds and publishes it when something changed, as JSON under `<prefix>/<node>/state`. The prefix is `bombvault` unless you change it, and the node is a short id BombVault picks once. The discovery messages go to Home Assistant's default prefix `homeassistant`. Both are retained. A last will marks the device unavailable if BombVault stops without saying so. Switching the link off removes the device and its entities from Home Assistant.
+
+## Find BombVault on the network {#mdns}
+
+BombVault announces its web interface on the local network over mDNS, the protocol behind Bonjour and Avahi. A browser then reaches it as `https://bombvault.local:3443`, or `http://bombvault.local:3000` with `HTTP_ONLY`, and service browsers list it as a web service with the subtype `_bombvault`. Its TXT records carry the version and the path. The switch is under **Settings, System, Find on the network** and is on by default. If another device already uses the name, BombVault takes `bombvault-2.local` and so on, and the card shows the address it got. When BombVault stops or you switch the announcement off, it tells the network, so browsers drop the entry at once.
+
+Whether the announcement reaches your network depends on how the container is connected:
+
+- **bridge**, the default in the Unraid template: the announcement stays inside Docker's network and nobody on the LAN sees it. Open BombVault by the host's address as before.
+- **br0** or another macvlan or ipvlan network: the container has its own address on the LAN, and the announcement reaches it.
+- **host**: the announcement goes out on the host's interfaces, next to Unraid's own.
+
+Only IPv4 addresses are announced.

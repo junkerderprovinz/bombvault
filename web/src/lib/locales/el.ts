@@ -2050,6 +2050,13 @@ const el: Partial<Translations> = {
   "ha.portInvalid": "Η θύρα είναι αριθμός από 1 έως 65535.",
   "ha.prefixInvalid": "Το πρόθεμα θεμάτων δέχεται γράμματα, ψηφία, παύλες και κάτω παύλες, με καθέτους ανάμεσα.",
   "ha.removeFailed": "Αποθηκεύτηκε, αλλά ο broker δεν απάντησε, οπότε το Home Assistant δείχνει ακόμη τη συσκευή. Αφαίρεσέ την εκεί ή ενεργοποίησε και απενεργοποίησε ξανά αυτό όταν απαντήσει ο broker.",
+  "mdns.title": "Εύρεση στο δίκτυο",
+  "mdns.hint": "Ανακοινώνει το BombVault στο τοπικό δίκτυο μέσω mDNS, ώστε ένας φυλλομετρητής να το βρίσκει ως bombvault.local και οι περιηγητές υπηρεσιών να το εμφανίζουν. Στο προεπιλεγμένο δίκτυο bridge του Docker η ανακοίνωση μένει μέσα στο Docker· φτάνει στο τοπικό δίκτυο μέσω br0, macvlan ή του δικτύου του host.",
+  "mdns.enable": "Ανακοίνωση στο τοπικό δίκτυο",
+  "mdns.statusOn": "Ανακοινώθηκε ως {url}",
+  "mdns.statusStarting": "Έλεγχος ότι το όνομα είναι ελεύθερο στο δίκτυο",
+  "mdns.statusError": "Δεν ανακοινώθηκε: {error}",
+  "mdns.statusOff": "Ανενεργό",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

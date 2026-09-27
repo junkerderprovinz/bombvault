@@ -2050,6 +2050,13 @@ const it: Partial<Translations> = {
   "ha.portInvalid": "La porta è un numero da 1 a 65535.",
   "ha.prefixInvalid": "Il prefisso degli argomenti accetta lettere, cifre, trattini e trattini bassi, con barre tra di loro.",
   "ha.removeFailed": "Salvato, ma il broker non ha risposto, quindi Home Assistant mostra ancora il dispositivo. Rimuovilo lì, oppure riattiva e disattiva questo quando il broker risponde.",
+  "mdns.title": "Trova in rete",
+  "mdns.hint": "Annuncia BombVault sulla rete locale tramite mDNS, così un browser lo raggiunge come bombvault.local e i browser di servizi lo elencano. Nella rete bridge predefinita di Docker l'annuncio resta dentro Docker; raggiunge la LAN con br0, macvlan o la rete dell'host.",
+  "mdns.enable": "Annuncia sulla rete locale",
+  "mdns.statusOn": "Annunciato come {url}",
+  "mdns.statusStarting": "Verifico che il nome sia libero in rete",
+  "mdns.statusError": "Non annunciato: {error}",
+  "mdns.statusOff": "Spento",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

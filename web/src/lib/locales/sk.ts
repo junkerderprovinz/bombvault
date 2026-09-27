@@ -2274,6 +2274,13 @@ const sk: Partial<Translations> = {
   "ha.portInvalid": "Port je číslo od 1 do 65535.",
   "ha.prefixInvalid": "Predpona tém smie obsahovať písmená, číslice, pomlčky a podčiarkovníky, oddelené lomkami.",
   "ha.removeFailed": "Uložené, ale broker neodpovedal, takže Home Assistant zariadenie stále uvádza. Odstráň ho tam, alebo toto znova zapni a vypni, keď broker odpovie.",
+  "mdns.title": "Nájsť v sieti",
+  "mdns.hint": "Ohlasuje BombVault v miestnej sieti cez mDNS, takže ho prehliadač nájde ako bombvault.local a prehliadače služieb ho vypíšu. V predvolenej sieti bridge v Dockeri ohlásenie zostane vo vnútri Dockera; do miestnej siete sa dostane cez br0, macvlan alebo sieť hostiteľa.",
+  "mdns.enable": "Ohlasovať v miestnej sieti",
+  "mdns.statusOn": "Ohlásené ako {url}",
+  "mdns.statusStarting": "Overujem, či je názov v sieti voľný",
+  "mdns.statusError": "Neohlásené: {error}",
+  "mdns.statusOff": "Vypnuté",
 
   // Export / import settings
   "settingsIO.title": "Exportovať / importovať nastavenia",

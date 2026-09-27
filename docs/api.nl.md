@@ -93,3 +93,15 @@ Het apparaat heet BombVault, of BombVault met de instantienaam tussen haakjes, e
 De namen van de entiteiten zijn Engels, omdat Home Assistant ze overneemt zoals BombVault ze stuurt. Elk ingeschakeld domein krijgt eigen entiteiten, en een domein dat je uitzet verliest ze. De knoppen volgen dezelfde grenzen als [starts via de API](#errors). Iedereen die op de broker mag publiceren, kan erop drukken, dus geef de broker een wachtwoord of zet **Knoppen starten back-ups** uit.
 
 BombVault leest zijn status elke 15 seconden en publiceert die als er iets veranderd is, als JSON onder `<voorvoegsel>/<node>/state`. Het voorvoegsel is `bombvault` zolang je het niet wijzigt, en de node is een korte id die BombVault eenmalig kiest. De discovery-berichten gaan naar het standaardvoorvoegsel `homeassistant` van Home Assistant. Beide worden bewaard (retained). Een last will markeert het apparaat als niet beschikbaar als BombVault stopt zonder zich af te melden. Zet je de koppeling uit, dan verwijdert BombVault het apparaat en zijn entiteiten uit Home Assistant.
+
+## BombVault vinden op het netwerk {#mdns}
+
+BombVault maakt zijn webinterface via mDNS bekend op het lokale netwerk, het protocol achter Bonjour en Avahi. Een browser bereikt het dan als `https://bombvault.local:3443`, of `http://bombvault.local:3000` met `HTTP_ONLY`, en servicebrowsers tonen het als webdienst met het subtype `_bombvault`. De TXT-records bevatten de versie en het pad. De schakelaar staat onder **Instellingen, Systeem, Vinden op het netwerk** en staat standaard aan. Gebruikt een ander apparaat de naam al, dan neemt BombVault `bombvault-2.local` enzovoort, en de kaart toont het adres dat het kreeg. Stopt BombVault of zet je de aankondiging uit, dan meldt het zich af op het netwerk en halen browsers de vermelding meteen weg.
+
+Of de aankondiging je netwerk bereikt, hangt af van hoe de container verbonden is:
+
+- **bridge**, de standaard in de Unraid-template: de aankondiging blijft binnen het Docker-netwerk en niemand op het LAN ziet haar. Open BombVault zoals voorheen via het adres van de host.
+- **br0** of een ander macvlan- of ipvlan-netwerk: de container heeft een eigen adres op het LAN en de aankondiging bereikt het.
+- **host**: de aankondiging gaat via de interfaces van de host naar buiten, naast die van Unraid zelf.
+
+Alleen IPv4-adressen worden bekendgemaakt.

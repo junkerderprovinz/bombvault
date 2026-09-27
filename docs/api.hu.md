@@ -93,3 +93,15 @@ Az eszköz neve BombVault, vagy BombVault a példány nevével zárójelben, és
 Az entitások neve angol, mert a Home Assistant úgy veszi át őket, ahogy a BombVault küldi. Minden bekapcsolt terület saját entitásokat kap, a kikapcsolt elveszíti őket. A gombokra ugyanazok a korlátok vonatkoznak, mint az [API-n keresztüli indításokra](#errors). Bárki megnyomhatja őket, aki közzétehet a brókeren, ezért adj jelszót a brókernek, vagy kapcsold ki az **A gombok mentést indítanak** kapcsolót.
 
 A BombVault 15 másodpercenként beolvassa az állapotát, és közzéteszi, ha valami változott, JSON-ként a `<előtag>/<csomópont>/state` témában. Az előtag `bombvault`, amíg meg nem változtatod, a csomópont pedig egy rövid azonosító, amelyet a BombVault egyszer választ. A felderítési üzenetek a Home Assistant alapértelmezett `homeassistant` előtagjára mennek. Mindkettő megőrzött (retained). Egy utolsó üzenet (last will) elérhetetlennek jelöli az eszközt, ha a BombVault szó nélkül leáll. Ha kikapcsolod a kapcsolatot, a BombVault eltávolítja az eszközt és az entitásait a Home Assistantből.
+
+## A BombVault megtalálása a hálózaton {#mdns}
+
+A BombVault mDNS-sel bejelenti a webes felületét a helyi hálózaton, azzal a protokollal, amelyre a Bonjour és az Avahi épül. Egy böngésző így `https://bombvault.local:3443` címen éri el, `HTTP_ONLY` esetén `http://bombvault.local:3000` címen, a szolgáltatásböngészők pedig webszolgáltatásként listázzák `_bombvault` altípussal. A TXT-rekordjai a verziót és az útvonalat tartalmazzák. A kapcsoló a **Beállítások, Rendszer, Megtalálás a hálózaton** alatt van, és alapból be van kapcsolva. Ha egy másik eszköz már használja a nevet, a BombVault a `bombvault-2.local` nevet veszi fel és így tovább, a kártya pedig mutatja a kapott címet. Amikor a BombVault leáll, vagy kikapcsolod a bejelentést, szól a hálózatnak, és a böngészők azonnal eltávolítják a bejegyzést.
+
+Hogy a bejelentés eléri-e a hálózatodat, attól függ, hogyan csatlakozik a konténer:
+
+- **bridge**, az Unraid-sablon alapértéke: a bejelentés a Docker hálózatán belül marad, a helyi hálózaton senki sem látja. Nyisd meg a BombVaultot a gazdagép címén, mint eddig.
+- **br0** vagy más macvlan- vagy ipvlan-hálózat: a konténernek saját címe van a helyi hálózaton, és a bejelentés eléri azt.
+- **host**: a bejelentés a gazdagép csatolóin megy ki, az Unraid saját bejelentése mellett.
+
+Csak IPv4-címek kerülnek bejelentésre.

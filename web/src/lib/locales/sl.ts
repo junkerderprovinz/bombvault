@@ -2258,6 +2258,13 @@ const sl: Partial<Translations> = {
   "ha.portInvalid": "Vrata so število od 1 do 65535.",
   "ha.prefixInvalid": "Predpona tem vsebuje črke, števke, vezaje in podčrtaje, med njimi pa poševnice.",
   "ha.removeFailed": "Shranjeno, a posrednik ni odgovoril, zato Home Assistant še prikazuje napravo. Odstrani jo tam ali to znova vklopi in izklopi, ko posrednik odgovori.",
+  "mdns.title": "Najdi v omrežju",
+  "mdns.hint": "Oznani BombVault v lokalnem omrežju prek mDNS, da ga brskalnik doseže kot bombvault.local in ga brskalniki storitev prikažejo. V privzetem omrežju bridge v Dockerju oznanilo ostane znotraj Dockerja; do lokalnega omrežja pride prek br0, macvlan ali omrežja gostitelja.",
+  "mdns.enable": "Oznanjaj v lokalnem omrežju",
+  "mdns.statusOn": "Oznanjeno kot {url}",
+  "mdns.statusStarting": "Preverjanje, ali je ime v omrežju prosto",
+  "mdns.statusError": "Ni oznanjeno: {error}",
+  "mdns.statusOff": "Izklopljeno",
 
   // Export / import settings
   "settingsIO.title": "Izvoz/uvoz nastavitev",

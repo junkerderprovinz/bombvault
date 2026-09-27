@@ -2274,6 +2274,13 @@ const eu: Partial<Translations> = {
   "ha.portInvalid": "Ataka 1etik 65535era bitarteko zenbaki bat da.",
   "ha.prefixInvalid": "Gaien aurrizkiak letrak, zifrak, marratxoak eta azpimarrak onartzen ditu, tartean barrak dituela.",
   "ha.removeFailed": "Gordeta, baina brokerrak ez du erantzun, beraz Home Assistant-ek oraindik erakusten du gailua. Kendu han, edo piztu eta itzali berriro hau brokerrak erantzuten duenean.",
+  "mdns.title": "Aurkitu sarean",
+  "mdns.hint": "BombVault sare lokalean iragartzen du mDNS bidez, nabigatzaile batek bombvault.local gisa irits dadin eta zerbitzu-arakatzaileek zerrendan erakuts dezaten. Docker-en bridge sare lehenetsian iragarpena Docker barruan gelditzen da; sare lokalera br0, macvlan edo ostalariaren sarearen bidez iristen da.",
+  "mdns.enable": "Iragarri sare lokalean",
+  "mdns.statusOn": "{url} gisa iragarrita",
+  "mdns.statusStarting": "Izena sarean libre dagoen egiaztatzen",
+  "mdns.statusError": "Iragarri gabe: {error}",
+  "mdns.statusOff": "Itzalita",
 
   // Export / import settings
   "settingsIO.title": "Esportatu / inportatu ezarpenak",

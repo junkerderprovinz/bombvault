@@ -128,6 +128,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | AI assistant access (MCP) | ✅ | ✅ | ❌ | ⚠️ third party | ❌ | ❌ |
 | Documented HTTP API for scripts, with its own tokens | ✅ | ✅ | ❌ | ⚠️ undocumented | ⚠️ undocumented | ❌ |
 | Home Assistant integration | ✅ over MQTT | ✅ | ❌ | ⚠️ third party | ⚠️ third party | ⚠️ third party |
+| Announces itself on the network (mDNS) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Backs up desktops and laptops | ❌ | ❌ | ❌ | ✅ | ✅ | ⚠️ Windows experimental |
 | Runs outside Unraid | ✅ | ⚠️ replica only | ❌ | ✅ | ✅ | ✅ |
 | In Unraid Community Applications | ✅ | ✅ | ✅ | ✅ community template | ✅ community template | ✅ community template |
@@ -255,6 +256,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 - **Prometheus `/metrics`** — opt-in (default off, optional bearer token) for Grafana or Uptime Kuma; exposes backup status, sizes and timestamps, with no secrets or paths in the labels.
 - **HTTP API** under `/api/v1` for scripts and dashboards: status, items, runs, anomalies, storage and starting a backup, described in an OpenAPI file BombVault serves itself. Each script gets a named token, read-only or allowed to start backups, created under **Settings → System → API tokens**. See [docs/api.md](docs/api.md).
 - **Home Assistant** through MQTT discovery: BombVault appears as a device with sensors for status, the running job, open anomalies, the next scheduled backup and each domain's last backup, result and free space, plus a backup button per domain. Off by default; set the broker under **Settings → System → Home Assistant**. See [docs/api.md](docs/api.md#home-assistant).
+- **Found by name on the network**: BombVault announces its web interface over mDNS as `bombvault.local`, with its version in the TXT records. On by default; it reaches the LAN when the container runs on br0, macvlan or the host network. See [docs/api.md](docs/api.md#mdns).
 
 </details>
 

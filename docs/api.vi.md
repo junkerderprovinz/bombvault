@@ -93,3 +93,15 @@ Thiết bị có tên BombVault, hoặc BombVault kèm tên phiên bản chạy 
 Tên thực thể bằng tiếng Anh, vì Home Assistant dùng đúng tên BombVault gửi. Mỗi miền đang bật có thực thể riêng, và miền bạn tắt sẽ mất chúng. Các nút tuân theo cùng giới hạn như [bắt đầu qua API](#errors). Ai công bố được lên broker đều bấm được, nên hãy đặt mật khẩu cho broker hoặc tắt **Nút bấm bắt đầu sao lưu**.
 
 BombVault đọc trạng thái của mình mỗi 15 giây và công bố khi có thay đổi, dạng JSON tại `<tiền tố>/<nút>/state`. Tiền tố là `bombvault` nếu bạn không đổi, còn nút là một mã ngắn BombVault chọn một lần. Các thông điệp khám phá đi tới tiền tố mặc định của Home Assistant là `homeassistant`. Cả hai đều được giữ lại (retained). Thông điệp di chúc (last will) đánh dấu thiết bị là không khả dụng nếu BombVault dừng mà không báo trước. Khi tắt liên kết, BombVault gỡ thiết bị và các thực thể của nó khỏi Home Assistant.
+
+## Tìm BombVault trên mạng {#mdns}
+
+BombVault quảng bá giao diện web của mình trên mạng cục bộ qua mDNS, giao thức đứng sau Bonjour và Avahi. Khi đó trình duyệt vào được bằng `https://bombvault.local:3443`, hoặc `http://bombvault.local:3000` khi dùng `HTTP_ONLY`, và các trình duyệt dịch vụ liệt kê nó là dịch vụ web với kiểu con `_bombvault`. Các bản ghi TXT chứa phiên bản và đường dẫn. Công tắc nằm ở **Cài đặt, Hệ thống, Tìm trên mạng** và được bật sẵn. Nếu thiết bị khác đã dùng tên này, BombVault lấy `bombvault-2.local` và cứ thế tiếp tục, còn thẻ hiện địa chỉ nó nhận được. Khi BombVault dừng hoặc bạn tắt quảng bá, nó báo cho mạng biết, nên trình duyệt gỡ mục đó ngay.
+
+Lời quảng bá có tới được mạng của bạn hay không tùy vào cách container được kết nối:
+
+- **bridge**, mặc định trong mẫu Unraid: lời quảng bá chỉ ở trong mạng của Docker và không ai trên LAN thấy. Hãy mở BombVault bằng địa chỉ của máy chủ như trước.
+- **br0** hoặc một mạng macvlan hay ipvlan khác: container có địa chỉ riêng trên LAN và lời quảng bá tới được đó.
+- **host**: lời quảng bá đi ra qua các giao diện của máy chủ, bên cạnh lời quảng bá của chính Unraid.
+
+Chỉ quảng bá địa chỉ IPv4.

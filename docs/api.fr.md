@@ -93,3 +93,15 @@ L'appareil s'appelle BombVault, ou BombVault avec le nom de l'instance entre par
 Les noms des entités sont en anglais, car Home Assistant les reprend tels que BombVault les envoie. Chaque domaine activé a ses propres entités, et un domaine désactivé les perd. Les boutons suivent les mêmes limites que les [lancements via l'API](#errors). Toute personne qui peut publier sur le broker peut appuyer dessus : protège donc le broker par un mot de passe, ou désactive **Les boutons lancent des sauvegardes**.
 
 BombVault lit son état toutes les 15 secondes et le publie quand quelque chose a changé, en JSON sous `<préfixe>/<nœud>/state`. Le préfixe est `bombvault` tant que tu ne le changes pas, et le nœud est un court identifiant que BombVault choisit une fois. Les messages de découverte vont au préfixe par défaut de Home Assistant, `homeassistant`. Les deux sont conservés (retained). Un dernier message (last will) marque l'appareil comme indisponible si BombVault s'arrête sans prévenir. Désactiver la liaison retire l'appareil et ses entités de Home Assistant.
+
+## Trouver BombVault sur le réseau {#mdns}
+
+BombVault annonce son interface web sur le réseau local via mDNS, le protocole derrière Bonjour et Avahi. Un navigateur l'atteint alors sous `https://bombvault.local:3443`, ou `http://bombvault.local:3000` avec `HTTP_ONLY`, et les explorateurs de services le listent comme service web avec le sous-type `_bombvault`. Ses enregistrements TXT portent la version et le chemin. Le réglage se trouve sous **Paramètres, Système, Trouver sur le réseau** et il est activé par défaut. Si un autre appareil utilise déjà le nom, BombVault prend `bombvault-2.local` et ainsi de suite, et la carte affiche l'adresse obtenue. Quand BombVault s'arrête ou que tu désactives l'annonce, il le signale au réseau, et les navigateurs retirent l'entrée aussitôt.
+
+L'annonce atteint ton réseau selon la façon dont le conteneur est connecté :
+
+- **bridge**, le réglage par défaut du modèle Unraid : l'annonce reste dans le réseau de Docker et personne sur le réseau local ne la voit. Ouvre BombVault par l'adresse de l'hôte comme avant.
+- **br0** ou un autre réseau macvlan ou ipvlan : le conteneur a sa propre adresse sur le réseau local, et l'annonce l'atteint.
+- **host** : l'annonce sort par les interfaces de l'hôte, à côté de celle d'Unraid.
+
+Seules les adresses IPv4 sont annoncées.

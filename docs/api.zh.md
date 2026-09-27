@@ -93,3 +93,15 @@ BombVault 可以通过 MQTT 发现，以设备的形式出现在 Home Assistant 
 实体名称是英文的，因为 Home Assistant 会原样使用 BombVault 发送的名称。每个已启用的领域都有自己的实体，关闭的领域会失去它们。按钮与 [通过 API 启动](#errors) 受同样的限制。任何能向代理发布消息的人都能按下它们，所以请给代理设置密码，或关闭 **按钮启动备份**。
 
 BombVault 每 15 秒读取一次自身状态，有变化时以 JSON 发布到 `<前缀>/<节点>/state`。前缀默认为 `bombvault`，除非你修改它；节点是 BombVault 选定一次的短 ID。发现消息发送到 Home Assistant 的默认前缀 `homeassistant`。两者都会保留（retained）。如果 BombVault 未通知就停止，遗嘱消息（last will）会把设备标为不可用。关闭这个连接后，BombVault 会从 Home Assistant 中移除该设备及其实体。
+
+## 在网络中找到 BombVault {#mdns}
+
+BombVault 通过 mDNS（Bonjour 和 Avahi 背后的协议）在局域网中广播自己的网页界面。浏览器随后可以用 `https://bombvault.local:3443` 打开它，使用 `HTTP_ONLY` 时为 `http://bombvault.local:3000`；服务浏览器会把它列为子类型 `_bombvault` 的网页服务。它的 TXT 记录包含版本和路径。开关位于 **设置、系统、在网络中查找**，默认打开。如果名称已被其他设备占用，BombVault 会改用 `bombvault-2.local` 等名称，卡片会显示它得到的地址。当 BombVault 停止或你关闭广播时，它会通知网络，浏览器会立即移除该条目。
+
+广播能否到达你的网络，取决于容器的连接方式：
+
+- **bridge**，Unraid 模板中的默认设置：广播留在 Docker 网络内部，局域网中没人能看到。请像以前一样通过主机地址打开 BombVault。
+- **br0** 或其他 macvlan、ipvlan 网络：容器在局域网中有自己的地址，广播可以到达。
+- **host**：广播从主机的网络接口发出，与 Unraid 自己的广播并列。
+
+只广播 IPv4 地址。

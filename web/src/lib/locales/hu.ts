@@ -2053,6 +2053,13 @@ const hu: Partial<Translations> = {
   "ha.portInvalid": "A port 1 és 65535 közötti szám.",
   "ha.prefixInvalid": "A témaelőtag betűkből, számjegyekből, kötőjelekből és aláhúzásokból áll, köztük perjelekkel.",
   "ha.removeFailed": "Mentve, de a bróker nem válaszolt, ezért a Home Assistant még mutatja az eszközt. Távolítsd el ott, vagy kapcsold ezt újra be és ki, amint a bróker válaszol.",
+  "mdns.title": "Megtalálás a hálózaton",
+  "mdns.hint": "mDNS-sel bejelenti a BombVaultot a helyi hálózaton, így a böngésző bombvault.local néven eléri, a szolgáltatásböngészők pedig listázzák. A Docker alapértelmezett bridge hálózatában a bejelentés a Dockeren belül marad; br0-n, macvlanon vagy a gazdagép hálózatán eléri a helyi hálózatot.",
+  "mdns.enable": "Bejelentés a helyi hálózaton",
+  "mdns.statusOn": "Bejelentve ezen a címen: {url}",
+  "mdns.statusStarting": "Annak ellenőrzése, hogy a név szabad-e a hálózaton",
+  "mdns.statusError": "Nincs bejelentve: {error}",
+  "mdns.statusOff": "Ki",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

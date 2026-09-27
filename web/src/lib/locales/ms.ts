@@ -2274,6 +2274,13 @@ const ms: Partial<Translations> = {
   "ha.portInvalid": "Port ialah nombor dari 1 hingga 65535.",
   "ha.prefixInvalid": "Awalan topik terdiri daripada huruf, digit, sempang dan garis bawah, dengan garis condong di antaranya.",
   "ha.removeFailed": "Disimpan, tetapi broker tidak menjawab, jadi Home Assistant masih memaparkan peranti itu. Buang di sana, atau hidupkan dan matikan ini semula apabila broker menjawab.",
+  "mdns.title": "Cari dalam rangkaian",
+  "mdns.hint": "Mengumumkan BombVault dalam rangkaian setempat melalui mDNS, supaya pelayar mencapainya sebagai bombvault.local dan pelayar perkhidmatan menyenaraikannya. Dalam rangkaian bridge lalai Docker, pengumuman kekal di dalam Docker; ia sampai ke LAN melalui br0, macvlan atau rangkaian hos.",
+  "mdns.enable": "Umumkan dalam rangkaian setempat",
+  "mdns.statusOn": "Diumumkan sebagai {url}",
+  "mdns.statusStarting": "Menyemak sama ada nama itu bebas dalam rangkaian",
+  "mdns.statusError": "Tidak diumumkan: {error}",
+  "mdns.statusOff": "Mati",
 
   // Export / import settings
   "settingsIO.title": "Eksport / import tetapan",

@@ -4962,6 +4962,24 @@ export function setHomeAssistant(body: {
   return fetchJSON("/api/homeassistant", { method: "PUT", body: JSON.stringify(body) });
 }
 
+/** The mDNS announcement: whether it is switched on, whether it runs, and
+ *  the address it announces. */
+export interface MdnsState extends OkEnvelope {
+  enabled: boolean;
+  running: boolean;
+  url: string;
+  instance: string;
+  error: string;
+}
+
+export function getMdns(): Promise<MdnsState> {
+  return fetchJSON("/api/mdns");
+}
+
+export function setMdns(enabled: boolean): Promise<MdnsState> {
+  return fetchJSON("/api/mdns", { method: "PUT", body: JSON.stringify({ enabled }) });
+}
+
 /** Reissues BombVault's own certificate with `host` among its names, so a
  *  client reaching it at that address trusts it. */
 export function addMcpCertificateName(

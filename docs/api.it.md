@@ -93,3 +93,15 @@ Il dispositivo si chiama BombVault, oppure BombVault con il nome dell'istanza tr
 I nomi delle entità sono in inglese, perché Home Assistant li riprende così come BombVault li invia. Ogni dominio attivo ha le sue entità, e un dominio spento le perde. I pulsanti seguono gli stessi limiti degli [avvii tramite l'API](#errors). Chiunque possa pubblicare sul broker può premerli, quindi proteggi il broker con una password oppure disattiva **I pulsanti avviano backup**.
 
 BombVault legge il suo stato ogni 15 secondi e lo pubblica quando qualcosa è cambiato, come JSON sotto `<prefisso>/<nodo>/state`. Il prefisso è `bombvault` finché non lo cambi, e il nodo è un breve identificativo che BombVault sceglie una volta. I messaggi di rilevamento vanno al prefisso predefinito di Home Assistant, `homeassistant`. Entrambi sono conservati (retained). Un ultimo messaggio (last will) segna il dispositivo come non disponibile se BombVault si ferma senza avvisare. Disattivare il collegamento rimuove il dispositivo e le sue entità da Home Assistant.
+
+## Trovare BombVault in rete {#mdns}
+
+BombVault annuncia la sua interfaccia web sulla rete locale tramite mDNS, il protocollo dietro Bonjour e Avahi. Un browser lo raggiunge così come `https://bombvault.local:3443`, oppure `http://bombvault.local:3000` con `HTTP_ONLY`, e i browser di servizi lo elencano come servizio web con il sottotipo `_bombvault`. I suoi record TXT riportano la versione e il percorso. L'interruttore si trova in **Impostazioni, Sistema, Trova in rete** ed è attivo di serie. Se un altro dispositivo usa già il nome, BombVault prende `bombvault-2.local` e così via, e la scheda mostra l'indirizzo ottenuto. Quando BombVault si ferma o disattivi l'annuncio, lo comunica alla rete e i browser tolgono subito la voce.
+
+Se l'annuncio raggiunge la tua rete dipende da come è collegato il container:
+
+- **bridge**, l'impostazione predefinita del modello Unraid: l'annuncio resta nella rete di Docker e nessuno sulla LAN lo vede. Apri BombVault con l'indirizzo dell'host come prima.
+- **br0** o un'altra rete macvlan o ipvlan: il container ha un suo indirizzo sulla LAN e l'annuncio la raggiunge.
+- **host**: l'annuncio esce dalle interfacce dell'host, accanto a quello di Unraid.
+
+Vengono annunciati solo indirizzi IPv4.

@@ -85,6 +85,7 @@ import { DashboardWidgetCard } from "./settings/DashboardWidgetCard";
 import { McpServerCard } from "./settings/McpServerCard";
 import { ApiTokensCard } from "./settings/ApiTokensCard";
 import { HomeAssistantCard } from "./settings/HomeAssistantCard";
+import { NetworkCard } from "./settings/NetworkCard";
 import { mcpShipped } from "../lib/mcpSwitch";
 
 
@@ -4401,6 +4402,7 @@ export function SettingsPage() {
         {mcpShipped && <McpServerCard hueIndex={nextHue()} passwordSet={authEnabled} />}
         <ApiTokensCard hueIndex={nextHue()} passwordSet={authEnabled} />
         <HomeAssistantCard hueIndex={nextHue()} />
+        <NetworkCard hueIndex={nextHue()} />
         </>
       )}
 

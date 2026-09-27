@@ -2050,6 +2050,13 @@ const tr: Partial<Translations> = {
   "ha.portInvalid": "Bağlantı noktası 1 ile 65535 arasında bir sayıdır.",
   "ha.prefixInvalid": "Konu öneki harf, rakam, tire ve alt çizgiden oluşur, aralarında eğik çizgi olur.",
   "ha.removeFailed": "Kaydedildi, ancak aracı yanıt vermedi, bu yüzden Home Assistant cihazı hâlâ gösteriyor. Onu orada kaldır ya da aracı yanıt verince bunu yeniden açıp kapat.",
+  "mdns.title": "Ağda bul",
+  "mdns.hint": "BombVault'u mDNS ile yerel ağda duyurur; böylece tarayıcı ona bombvault.local adıyla ulaşır ve hizmet tarayıcıları onu listeler. Docker'ın varsayılan bridge ağında duyuru Docker içinde kalır; br0, macvlan ya da ana makine ağıyla yerel ağa ulaşır.",
+  "mdns.enable": "Yerel ağda duyur",
+  "mdns.statusOn": "{url} olarak duyuruldu",
+  "mdns.statusStarting": "Adın ağda boş olup olmadığı denetleniyor",
+  "mdns.statusError": "Duyurulmadı: {error}",
+  "mdns.statusOff": "Kapalı",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

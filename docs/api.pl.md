@@ -93,3 +93,15 @@ Urządzenie nazywa się BombVault albo BombVault z nazwą instancji w nawiasie i
 Nazwy encji są po angielsku, bo Home Assistant przejmuje je tak, jak wysyła je BombVault. Każdy włączony obszar dostaje własne encje, a wyłączony je traci. Przyciski podlegają tym samym limitom co [uruchomienia przez API](#errors). Nacisnąć je może każdy, kto może publikować w brokerze, więc zabezpiecz broker hasłem albo wyłącz **Przyciski uruchamiają kopie**.
 
 BombVault odczytuje swój stan co 15 sekund i publikuje go, gdy coś się zmieniło, jako JSON pod `<prefiks>/<węzeł>/state`. Prefiks to `bombvault`, dopóki go nie zmienisz, a węzeł to krótki identyfikator, który BombVault wybiera raz. Komunikaty wykrywania trafiają pod domyślny prefiks Home Assistant, `homeassistant`. Oba są zachowywane (retained). Ostatnia wola (last will) oznacza urządzenie jako niedostępne, jeśli BombVault zatrzyma się bez uprzedzenia. Wyłączenie połączenia usuwa urządzenie i jego encje z Home Assistant.
+
+## Znajdowanie BombVault w sieci {#mdns}
+
+BombVault ogłasza swój interfejs WWW w sieci lokalnej przez mDNS, protokół stojący za Bonjour i Avahi. Przeglądarka otwiera go wtedy jako `https://bombvault.local:3443`, a z `HTTP_ONLY` jako `http://bombvault.local:3000`, a przeglądarki usług pokazują go jako usługę WWW z podtypem `_bombvault`. Rekordy TXT zawierają wersję i ścieżkę. Przełącznik jest w **Ustawienia, System, Znajdź w sieci** i domyślnie jest włączony. Jeśli inne urządzenie używa już tej nazwy, BombVault bierze `bombvault-2.local` i tak dalej, a karta pokazuje otrzymany adres. Gdy BombVault się zatrzymuje albo wyłączysz ogłaszanie, informuje o tym sieć, a przeglądarki od razu usuwają wpis.
+
+To, czy ogłoszenie dotrze do twojej sieci, zależy od tego, jak podłączony jest kontener:
+
+- **bridge**, domyślne ustawienie w szablonie Unraid: ogłoszenie zostaje w sieci Dockera i nikt w sieci lokalnej go nie widzi. Otwieraj BombVault przez adres hosta jak dotąd.
+- **br0** albo inna sieć macvlan lub ipvlan: kontener ma własny adres w sieci lokalnej i ogłoszenie tam dociera.
+- **host**: ogłoszenie wychodzi przez interfejsy hosta, obok ogłoszenia samego Unraida.
+
+Ogłaszane są tylko adresy IPv4.

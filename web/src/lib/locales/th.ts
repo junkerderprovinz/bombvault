@@ -2053,6 +2053,13 @@ const th: Partial<Translations> = {
   "ha.portInvalid": "พอร์ตเป็นตัวเลขตั้งแต่ 1 ถึง 65535",
   "ha.prefixInvalid": "คำนำหน้าหัวข้อประกอบด้วยตัวอักษร ตัวเลข ขีด และขีดล่าง โดยมีเครื่องหมายทับคั่น",
   "ha.removeFailed": "บันทึกแล้ว แต่โบรกเกอร์ไม่ตอบ Home Assistant จึงยังแสดงอุปกรณ์อยู่ ลบอุปกรณ์ที่นั่น หรือเปิดแล้วปิดตัวเลือกนี้อีกครั้งเมื่อโบรกเกอร์ตอบ",
+  "mdns.title": "ค้นหาในเครือข่าย",
+  "mdns.hint": "ประกาศ BombVault ในเครือข่ายภายในผ่าน mDNS เพื่อให้เบราว์เซอร์เข้าถึงได้ด้วยชื่อ bombvault.local และเครื่องมือค้นหาบริการแสดงรายการได้ ในเครือข่าย bridge เริ่มต้นของ Docker การประกาศจะอยู่ภายใน Docker เท่านั้น ส่วน br0, macvlan หรือเครือข่ายของโฮสต์จะไปถึง LAN",
+  "mdns.enable": "ประกาศในเครือข่ายภายใน",
+  "mdns.statusOn": "ประกาศเป็น {url}",
+  "mdns.statusStarting": "กำลังตรวจว่าชื่อว่างอยู่ในเครือข่าย",
+  "mdns.statusError": "ไม่ได้ประกาศ: {error}",
+  "mdns.statusOff": "ปิด",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

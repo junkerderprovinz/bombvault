@@ -2274,6 +2274,13 @@ const ca: Partial<Translations> = {
   "ha.portInvalid": "El port és un nombre de l'1 al 65535.",
   "ha.prefixInvalid": "El prefix dels temes admet lletres, xifres, guions i guions baixos, amb barres entremig.",
   "ha.removeFailed": "S'ha desat, però el broker no ha respost, així que Home Assistant encara mostra el dispositiu. Elimina'l allà o torna a activar i desactivar això quan el broker respongui.",
+  "mdns.title": "Troba a la xarxa",
+  "mdns.hint": "Anuncia BombVault a la xarxa local per mDNS, perquè un navegador hi arribi com a bombvault.local i els exploradors de serveis el llistin. A la xarxa bridge per defecte de Docker l'anunci es queda dins de Docker; arriba a la xarxa local amb br0, macvlan o la xarxa de l'amfitrió.",
+  "mdns.enable": "Anuncia a la xarxa local",
+  "mdns.statusOn": "Anunciat com a {url}",
+  "mdns.statusStarting": "S'està comprovant que el nom és lliure a la xarxa",
+  "mdns.statusError": "No anunciat: {error}",
+  "mdns.statusOff": "Desactivat",
 
   // Export / import settings
   "settingsIO.title": "Exporta / importa configuració",

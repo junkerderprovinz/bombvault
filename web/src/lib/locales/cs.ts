@@ -2048,6 +2048,13 @@ const cs: Partial<Translations> = {
   "ha.portInvalid": "Port je číslo od 1 do 65535.",
   "ha.prefixInvalid": "Předpona témat smí obsahovat písmena, číslice, pomlčky a podtržítka, oddělená lomítky.",
   "ha.removeFailed": "Uloženo, ale broker neodpověděl, takže Home Assistant zařízení pořád uvádí. Odstraň ho tam, nebo tohle znovu zapni a vypni, až broker odpoví.",
+  "mdns.title": "Najít v síti",
+  "mdns.hint": "Ohlašuje BombVault v místní síti přes mDNS, takže ho prohlížeč najde jako bombvault.local a prohlížeče služeb ho vypíšou. Ve výchozí síti bridge v Dockeru ohlášení zůstane uvnitř Dockeru; do místní sítě se dostane přes br0, macvlan nebo síť hostitele.",
+  "mdns.enable": "Ohlašovat v místní síti",
+  "mdns.statusOn": "Ohlášeno jako {url}",
+  "mdns.statusStarting": "Ověřuji, že je název v síti volný",
+  "mdns.statusError": "Neohlášeno: {error}",
+  "mdns.statusOff": "Vypnuto",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

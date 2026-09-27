@@ -183,8 +183,15 @@ func (h *Handler) haStart(ctx context.Context, domain string) string {
 	return "started"
 }
 
-// StartIntegrations connects to the Home Assistant broker when the link is on.
+// StartIntegrations connects to the Home Assistant broker and starts the
+// network announcement, each when it is switched on. The announcement probes
+// its names for a second or so, which the boot does not wait for.
 func (h *Handler) StartIntegrations() {
+	if on, err := h.store.MDNSEnabled(); err != nil {
+		log.Printf("mdns: read the switch: %v", err)
+	} else if on {
+		go h.applyMDNS(true)
+	}
 	s, err := h.store.GetMQTTSettings()
 	if err != nil {
 		log.Printf("homeassistant: could not read the settings: %v", err)
@@ -197,10 +204,11 @@ func (h *Handler) StartIntegrations() {
 	}
 }
 
-// StopIntegrations marks BombVault unavailable in Home Assistant and
-// disconnects.
+// StopIntegrations marks BombVault unavailable in Home Assistant, sends the
+// mDNS goodbye and disconnects both.
 func (h *Handler) StopIntegrations() {
 	h.ha.Close()
+	h.stopMDNS()
 }
 
 type homeAssistantView struct {

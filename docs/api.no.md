@@ -93,3 +93,15 @@ Enheten heter BombVault, eller BombVault med instansnavnet i parentes, og har di
 Navnene på entitetene er på engelsk, fordi Home Assistant tar dem slik BombVault sender dem. Hvert område som er slått på, får egne entiteter, og et område du slår av, mister dem. Knappene følger de samme grensene som [starter via API-et](#errors). Alle som kan publisere på megleren, kan trykke på dem, så gi megleren et passord eller slå av **Knapper starter sikkerhetskopier**.
 
 BombVault leser statusen sin hvert 15. sekund og publiserer den når noe har endret seg, som JSON under `<prefiks>/<node>/state`. Prefikset er `bombvault` så lenge du ikke endrer det, og noden er en kort id BombVault velger én gang. Discovery-meldingene går til standardprefikset `homeassistant` i Home Assistant. Begge beholdes (retained). En last will merker enheten som utilgjengelig hvis BombVault stopper uten å si fra. Slår du forbindelsen av, fjerner BombVault enheten og entitetene fra Home Assistant.
+
+## Finn BombVault på nettverket {#mdns}
+
+BombVault kunngjør nettgrensesnittet sitt på det lokale nettverket via mDNS, protokollen bak Bonjour og Avahi. En nettleser når den da som `https://bombvault.local:3443`, eller `http://bombvault.local:3000` med `HTTP_ONLY`, og tjenestelesere viser den som nettjeneste med undertypen `_bombvault`. TXT-postene inneholder versjonen og stien. Bryteren ligger under **Innstillinger, System, Finn på nettverket** og er slått på fra start. Bruker en annen enhet allerede navnet, tar BombVault `bombvault-2.local` og så videre, og kortet viser adressen den fikk. Når BombVault stopper eller du slår kunngjøringen av, sier den fra på nettverket, og nettlesere fjerner oppføringen med en gang.
+
+Om kunngjøringen når nettverket ditt, avhenger av hvordan containeren er koblet til:
+
+- **bridge**, standarden i Unraid-malen: kunngjøringen blir i Dockers nettverk, og ingen på LAN-et ser den. Åpne BombVault på vertens adresse som før.
+- **br0** eller et annet macvlan- eller ipvlan-nettverk: containeren har sin egen adresse på LAN-et, og kunngjøringen når det.
+- **host**: kunngjøringen går ut over vertens grensesnitt, ved siden av Unraids egen.
+
+Bare IPv4-adresser kunngjøres.

@@ -2274,6 +2274,13 @@ const hi: Partial<Translations> = {
   "ha.portInvalid": "पोर्ट 1 से 65535 तक की एक संख्या है।",
   "ha.prefixInvalid": "टॉपिक उपसर्ग में अक्षर, अंक, डैश और अंडरस्कोर होते हैं, जिनके बीच स्लैश आते हैं।",
   "ha.removeFailed": "सहेजा गया, पर ब्रोकर ने जवाब नहीं दिया, इसलिए Home Assistant अब भी डिवाइस दिखाता है। उसे वहाँ हटाओ, या ब्रोकर के जवाब देने पर इसे फिर से चालू और बंद करो।",
+  "mdns.title": "नेटवर्क पर खोजो",
+  "mdns.hint": "mDNS के ज़रिए लोकल नेटवर्क पर BombVault की घोषणा करता है, ताकि ब्राउज़र उसे bombvault.local नाम से खोल सके और सर्विस ब्राउज़र उसे दिखाएँ। Docker के डिफ़ॉल्ट bridge नेटवर्क में घोषणा Docker के भीतर ही रहती है; br0, macvlan या होस्ट नेटवर्क पर यह LAN तक पहुँचती है।",
+  "mdns.enable": "लोकल नेटवर्क पर घोषणा करो",
+  "mdns.statusOn": "{url} के रूप में घोषित",
+  "mdns.statusStarting": "जाँच रहा है कि नाम नेटवर्क पर खाली है",
+  "mdns.statusError": "घोषित नहीं: {error}",
+  "mdns.statusOff": "बंद",
 
   // Export / import settings
   "settingsIO.title": "सेटिंग्स एक्सपोर्ट / इंपोर्ट करें",

@@ -2274,6 +2274,13 @@ const gl: Partial<Translations> = {
   "ha.portInvalid": "O porto é un número do 1 ao 65535.",
   "ha.prefixInvalid": "O prefixo dos temas admite letras, díxitos, guións e guións baixos, con barras entre eles.",
   "ha.removeFailed": "Gardado, pero o broker non respondeu, así que Home Assistant segue a amosar o dispositivo. Quítao alí, ou volve activar e desactivar isto cando o broker responda.",
+  "mdns.title": "Atopar na rede",
+  "mdns.hint": "Anuncia BombVault na rede local por mDNS, para que un navegador chegue a el como bombvault.local e os exploradores de servizos o amosen. Na rede bridge predeterminada de Docker o anuncio queda dentro de Docker; chega á rede local con br0, macvlan ou a rede do host.",
+  "mdns.enable": "Anunciar na rede local",
+  "mdns.statusOn": "Anunciado como {url}",
+  "mdns.statusStarting": "Comprobando que o nome está libre na rede",
+  "mdns.statusError": "Sen anunciar: {error}",
+  "mdns.statusOff": "Desactivado",
 
   // Export / import settings
   "settingsIO.title": "Exportar / importar configuración",

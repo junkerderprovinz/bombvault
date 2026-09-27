@@ -93,3 +93,15 @@ O dispositivo chama-se BombVault, ou BombVault com o nome da instância entre pa
 Os nomes das entidades estão em inglês, porque o Home Assistant usa-os tal como o BombVault os envia. Cada domínio ligado tem as suas entidades, e um domínio que desligues perde-as. Os botões seguem os mesmos limites dos [inícios pela API](#errors). Qualquer pessoa que consiga publicar no broker pode carregar neles, por isso protege o broker com uma palavra-passe ou desliga **Os botões iniciam cópias**.
 
 O BombVault lê o seu estado a cada 15 segundos e publica-o quando algo mudou, como JSON em `<prefixo>/<nó>/state`. O prefixo é `bombvault` enquanto não o mudares, e o nó é um identificador curto que o BombVault escolhe uma vez. As mensagens de descoberta vão para o prefixo predefinido do Home Assistant, `homeassistant`. Ambos ficam retidos (retained). Uma última mensagem (last will) marca o dispositivo como indisponível se o BombVault parar sem avisar. Desligar a ligação remove o dispositivo e as suas entidades do Home Assistant.
+
+## Encontrar o BombVault na rede {#mdns}
+
+O BombVault anuncia a sua interface web na rede local por mDNS, o protocolo por trás do Bonjour e do Avahi. Um navegador chega-lhe então como `https://bombvault.local:3443`, ou `http://bombvault.local:3000` com `HTTP_ONLY`, e os navegadores de serviços mostram-no como serviço web com o subtipo `_bombvault`. Os seus registos TXT levam a versão e o caminho. O interruptor está em **Definições, Sistema, Encontrar na rede** e vem ligado. Se outro dispositivo já usar o nome, o BombVault fica com `bombvault-2.local` e assim por diante, e o cartão mostra o endereço que obteve. Quando o BombVault para ou desligas o anúncio, avisa a rede, e os navegadores retiram a entrada de imediato.
+
+Se o anúncio chega à tua rede depende de como o contentor está ligado:
+
+- **bridge**, o predefinido no modelo do Unraid: o anúncio fica dentro da rede do Docker e ninguém na rede local o vê. Abre o BombVault pelo endereço do anfitrião como até agora.
+- **br0** ou outra rede macvlan ou ipvlan: o contentor tem o seu próprio endereço na rede local e o anúncio chega lá.
+- **host**: o anúncio sai pelas interfaces do anfitrião, ao lado do anúncio do próprio Unraid.
+
+Só são anunciados endereços IPv4.

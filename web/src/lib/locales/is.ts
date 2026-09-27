@@ -2274,6 +2274,13 @@ const is: Partial<Translations> = {
   "ha.portInvalid": "Gáttin er tala frá 1 til 65535.",
   "ha.prefixInvalid": "Forskeyti efna tekur bókstafi, tölustafi, bandstrik og undirstrik, með skástrikum á milli.",
   "ha.removeFailed": "Vistað, en miðlarinn svaraði ekki, svo Home Assistant sýnir tækið enn. Fjarlægðu það þar, eða kveiktu og slökktu á þessu aftur þegar miðlarinn svarar.",
+  "mdns.title": "Finna á netinu",
+  "mdns.hint": "Kynnir BombVault á staðarnetinu með mDNS, svo vafri nái í það sem bombvault.local og þjónustuvafrar birti það. Í sjálfgefnu bridge-neti Docker helst tilkynningin innan Docker; hún nær út á staðarnetið um br0, macvlan eða net hýsilsins.",
+  "mdns.enable": "Kynna á staðarnetinu",
+  "mdns.statusOn": "Kynnt sem {url}",
+  "mdns.statusStarting": "Athuga hvort heitið sé laust á netinu",
+  "mdns.statusError": "Ekki kynnt: {error}",
+  "mdns.statusOff": "Slökkt",
 
   // Export / import settings
   "settingsIO.title": "Flytja út / flytja inn stillingar",

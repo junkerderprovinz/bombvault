@@ -93,3 +93,15 @@ Cihazın adı BombVault'tur ya da parantez içinde örnek adıyla BombVault'tur 
 Varlık adları İngilizcedir, çünkü Home Assistant onları BombVault'un gönderdiği gibi alır. Açık her alan kendi varlıklarını alır, kapattığın bir alan onları kaybeder. Düğmeler [API üzerinden başlatmalarla](#errors) aynı sınırlara tabidir. Aracıya yayın yapabilen herkes onlara basabilir; bu yüzden aracıya bir parola ver ya da **Düğmeler yedekleme başlatır** seçeneğini kapat.
 
 BombVault durumunu her 15 saniyede bir okur ve bir şey değiştiğinde `<önek>/<düğüm>/state` altında JSON olarak yayımlar. Önek, sen değiştirmedikçe `bombvault`'tur; düğüm ise BombVault'un bir kez seçtiği kısa bir kimliktir. Keşif iletileri Home Assistant'ın varsayılan öneki `homeassistant`'a gider. İkisi de saklanır (retained). Son vasiyet (last will), BombVault haber vermeden durursa cihazı kullanılamaz olarak işaretler. Bağlantıyı kapatırsan BombVault cihazı ve varlıklarını Home Assistant'tan kaldırır.
+
+## BombVault'u ağda bulmak {#mdns}
+
+BombVault, web arayüzünü yerel ağda Bonjour ve Avahi'nin ardındaki protokol olan mDNS ile duyurur. Böylece bir tarayıcı ona `https://bombvault.local:3443` adresinden, `HTTP_ONLY` ile `http://bombvault.local:3000` adresinden ulaşır ve hizmet tarayıcıları onu `_bombvault` alt türüyle bir web hizmeti olarak listeler. TXT kayıtları sürümü ve yolu taşır. Anahtar **Ayarlar, Sistem, Ağda bul** altındadır ve varsayılan olarak açıktır. Ad başka bir cihaz tarafından kullanılıyorsa BombVault `bombvault-2.local` gibi bir sonraki adı alır ve kart aldığı adresi gösterir. BombVault durduğunda ya da duyuruyu kapattığında bunu ağa bildirir, tarayıcılar da kaydı hemen kaldırır.
+
+Duyurunun ağına ulaşıp ulaşmadığı konteynerin nasıl bağlandığına bağlıdır:
+
+- **bridge**, Unraid şablonundaki varsayılan: duyuru Docker ağının içinde kalır ve yerel ağda kimse görmez. BombVault'u eskisi gibi ana makinenin adresinden aç.
+- **br0** ya da başka bir macvlan veya ipvlan ağı: konteynerin yerel ağda kendi adresi vardır ve duyuru oraya ulaşır.
+- **host**: duyuru, Unraid'in kendi duyurusunun yanında ana makinenin arayüzlerinden çıkar.
+
+Yalnızca IPv4 adresleri duyurulur.

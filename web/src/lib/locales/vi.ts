@@ -2042,6 +2042,13 @@ const vi: Partial<Translations> = {
   "ha.portInvalid": "Cổng là một số từ 1 đến 65535.",
   "ha.prefixInvalid": "Tiền tố chủ đề gồm chữ cái, chữ số, gạch ngang và gạch dưới, có dấu gạch chéo ở giữa.",
   "ha.removeFailed": "Đã lưu, nhưng broker không trả lời, nên Home Assistant vẫn còn hiện thiết bị. Hãy xóa nó ở đó, hoặc bật rồi tắt mục này lại khi broker trả lời.",
+  "mdns.title": "Tìm trên mạng",
+  "mdns.hint": "Quảng bá BombVault trên mạng cục bộ qua mDNS, để trình duyệt vào được bằng tên bombvault.local và các trình duyệt dịch vụ liệt kê nó. Trong mạng bridge mặc định của Docker, lời quảng bá chỉ ở bên trong Docker; nó tới được mạng LAN qua br0, macvlan hoặc mạng của máy chủ.",
+  "mdns.enable": "Quảng bá trên mạng cục bộ",
+  "mdns.statusOn": "Đã quảng bá là {url}",
+  "mdns.statusStarting": "Đang kiểm tra tên còn trống trên mạng",
+  "mdns.statusError": "Chưa quảng bá: {error}",
+  "mdns.statusOff": "Tắt",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

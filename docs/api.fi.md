@@ -93,3 +93,15 @@ Laitteen nimi on BombVault tai BombVault, jonka perässä on instanssin nimi sul
 Entiteettien nimet ovat englanniksi, koska Home Assistant ottaa ne sellaisina kuin BombVault ne lähettää. Jokainen päällä oleva alue saa omat entiteettinsä, ja pois kytketty alue menettää ne. Painikkeisiin pätevät samat rajat kuin [API:n kautta tehtyihin käynnistyksiin](#errors). Kuka tahansa, joka voi julkaista välittäjään, voi painaa niitä, joten suojaa välittäjä salasanalla tai kytke **Painikkeet käynnistävät varmuuskopioita** pois.
 
 BombVault lukee tilansa 15 sekunnin välein ja julkaisee sen, kun jokin on muuttunut, JSON-muodossa aiheessa `<etuliite>/<solmu>/state`. Etuliite on `bombvault`, kunnes muutat sen, ja solmu on lyhyt tunniste, jonka BombVault valitsee kerran. Löytöviestit menevät Home Assistantin oletusetuliitteeseen `homeassistant`. Molemmat säilytetään (retained). Viimeinen viesti (last will) merkitsee laitteen saavuttamattomaksi, jos BombVault pysähtyy ilmoittamatta. Kun kytket yhteyden pois, BombVault poistaa laitteen ja sen entiteetit Home Assistantista.
+
+## Löydä BombVault verkosta {#mdns}
+
+BombVault ilmoittaa käyttöliittymänsä lähiverkossa mDNS:llä, joka on Bonjourin ja Avahin taustalla oleva protokolla. Selain löytää sen silloin osoitteesta `https://bombvault.local:3443` tai `HTTP_ONLY`-tilassa osoitteesta `http://bombvault.local:3000`, ja palveluselaimet listaavat sen verkkopalveluna alatyypillä `_bombvault`. TXT-tietueissa ovat versio ja polku. Kytkin on kohdassa **Asetukset, Järjestelmä, Löydä verkosta**, ja se on oletuksena päällä. Jos toinen laite käyttää jo nimeä, BombVault ottaa nimen `bombvault-2.local` ja niin edelleen, ja kortti näyttää saadun osoitteen. Kun BombVault pysähtyy tai kytket ilmoituksen pois, se kertoo siitä verkolle, ja selaimet poistavat merkinnän heti.
+
+Se, ulottuuko ilmoitus verkkoosi, riippuu siitä, miten kontti on kytketty:
+
+- **bridge**, Unraid-mallin oletus: ilmoitus jää Dockerin verkon sisälle, eikä kukaan lähiverkossa näe sitä. Avaa BombVault isännän osoitteella kuten ennenkin.
+- **br0** tai muu macvlan- tai ipvlan-verkko: kontilla on oma osoite lähiverkossa, ja ilmoitus ulottuu sinne.
+- **host**: ilmoitus lähtee isännän verkkoliitäntöjen kautta Unraidin oman ilmoituksen rinnalla.
+
+Vain IPv4-osoitteet ilmoitetaan.
