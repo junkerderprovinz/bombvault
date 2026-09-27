@@ -13,7 +13,7 @@ A BombVault beépített kiszolgálót tartalmaz a Model Context Protocolhoz (MCP
 | `list_runs` | Futási előzmények, a legújabbak elöl, tartomány, elem, állapot, fajta és idő szerint szűrhetően | olvasás |
 | `list_restore_points` | Egy elem visszaállítási pontjai az elsődleges tárolójából, konténernél az adatbázis-dumpjai is; egy ZFS-adatkészletnek mentésenként egy visszaállítási pontja van, az alatta lévő minden adatkészlet pillanatképével | olvasás |
 | `get_activity` | Mi fut éppen, fázissal és százalékkal | olvasás |
-| `get_storage_stats` | Egy tartomány elsődleges tárolójának méretelőzménye és heti növekedése | olvasás |
+| `get_storage_stats` | Egy tartomány elsődleges tárolójának méretelőzménye és heti növekedése, valamint a foglalt, szabad és teljes hely minden tárolójának lemezén vagy távoli helyén | olvasás |
 | `list_anomalies` | Anomáliák, amelyeket a BombVault a mentésekben észrevett, állapot, súlyosság és tartomány szerint szűrhetők, a nyitott tételek összesítésével | olvasás |
 | `get_anomaly` | Egy ilyen észlelés, a nyugtázáskor hagyott megjegyzéssel | olvasás |
 | `start_backup` | Azonnal elmenti egy elem adatait | indítás |

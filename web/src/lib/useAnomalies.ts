@@ -175,11 +175,12 @@ export function useAnomalySummary(): AnomalySummaryState {
 /**
  * useLoudAnomalies is the figure the navigation shows beside Anomalies: the
  * open critical and warning findings, in the tone of the worst of them. Notes
- * are left to the page.
+ * are left to the page, and with detection switched off the findings still
+ * stored are not raised.
  */
 export function useLoudAnomalies(): { count: number; tone: "fail" | "warn" } {
   const { summary } = useAnomalySummary();
-  if (!summary) return { count: 0, tone: "warn" };
+  if (!summary?.enabled) return { count: 0, tone: "warn" };
   return {
     count: summary.open.critical + summary.open.warning,
     tone: summary.open.critical > 0 ? "fail" : "warn",

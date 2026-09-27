@@ -5,21 +5,46 @@
  * binds a credential to a domain. So the case this card meets most often is
  * explaining why there is nothing to click.
  */
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DESKTOP_QUERY } from "../../lib/useMediaQuery";
 
 const passkeyStatus = vi.fn();
+const deletePasskey = vi.fn();
 vi.mock("../../lib/api", () => ({
   passkeyStatus: (...a: unknown[]) => passkeyStatus(...a),
   registerPasskey: vi.fn(),
-  deletePasskey: vi.fn(),
+  deletePasskey: (...a: unknown[]) => deletePasskey(...a),
   passkeysAvailableInBrowser: () => true,
 }));
 
 import { PasskeyCard } from "./PasskeyCard";
 
-beforeEach(() => passkeyStatus.mockReset());
-afterEach(cleanup);
+// The width query reads this flag, so a test can put the card on a phone. The
+// page keeps the first MediaQueryList it gets, so the stub is in place before
+// the first render.
+let desktop = true;
+window.matchMedia = ((query: string) => ({
+  get matches() {
+    return query === DESKTOP_QUERY ? desktop : /\bmin-width\s*:/.test(query);
+  },
+  media: query,
+  onchange: null,
+  addEventListener: () => {},
+  removeEventListener: () => {},
+  addListener: () => {},
+  removeListener: () => {},
+  dispatchEvent: () => false,
+})) as unknown as typeof window.matchMedia;
+
+beforeEach(() => {
+  passkeyStatus.mockReset();
+  deletePasskey.mockReset();
+});
+afterEach(() => {
+  cleanup();
+  desktop = true;
+});
 
 describe("PasskeyCard", () => {
   it("says why, instead of offering a button that cannot work", async () => {
@@ -89,5 +114,38 @@ describe("PasskeyCard", () => {
 
     await waitFor(() => expect(screen.getByText(/set a login password first/i)).toBeTruthy());
     expect(screen.queryByRole("button", { name: /set up/i })).toBeNull();
+  });
+
+  // The sheet's confirm button stays live while the call runs.
+  it("removes a double-tapped passkey once on a phone", async () => {
+    desktop = false;
+    passkeyStatus.mockResolvedValue({
+      ok: true,
+      supported: true,
+      rpId: "bombvault.example.com",
+      total: 1,
+      here: 1,
+      passkeys: [
+        {
+          id: "1",
+          name: "Handy",
+          rpId: "bombvault.example.com",
+          usableHere: true,
+          backedUp: true,
+          createdAt: 0,
+          lastUsedAt: 0,
+          transports: "internal",
+        },
+      ],
+    });
+    deletePasskey.mockResolvedValue({ ok: true });
+    render(<PasskeyCard passwordSet />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /remove/i }));
+    const confirm = within(screen.getByRole("dialog")).getByRole("button", { name: /remove/i });
+    fireEvent.click(confirm);
+    fireEvent.click(confirm);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(deletePasskey).toHaveBeenCalledTimes(1);
   });
 });

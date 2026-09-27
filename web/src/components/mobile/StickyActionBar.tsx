@@ -38,6 +38,7 @@ import type { ReactNode } from "react";
 export function StickyActionBar({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <div
+      data-testid="sticky-action-bar"
       className={`sticky bottom-0 z-10 bg-carbon-background pt-3 pb-3 ${className}`}
     >
       {/* Rows stack: count/busy row, then the primary action, then the

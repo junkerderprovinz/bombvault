@@ -390,3 +390,13 @@ describe("the database dump list", () => {
     expect(push).not.toHaveBeenCalled();
   });
 });
+
+// jsdom lays nothing out, so this pins the class the phone layout rests on.
+describe("the database dump list at phone width", () => {
+  it("lets the actions' labels wrap instead of running past the panel", async () => {
+    renderList();
+    for (const key of ["dbdump.download", "dbdump.import", "snapshots.delete"] as const) {
+      expect((await screen.findByRole("button", { name: en[key] })).className).toContain("glim-btn-wrap");
+    }
+  });
+});

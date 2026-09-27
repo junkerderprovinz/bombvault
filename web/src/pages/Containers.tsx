@@ -4228,7 +4228,7 @@ export function Containers() {
           count and points at the first card, so the switch is one click away. */}
       {!introDismissed && recognisedDatabases.length > 0 && (
         <div className="flex items-start gap-3 rounded-card bg-carbon-surface p-4 flex-wrap">
-          <p className="min-w-0 flex-1 text-sm text-carbon-textSub">
+          <p className="min-w-0 flex-1 text-sm text-carbon-textSub max-md:basis-full">
             {introBefore}
             <a className="text-accentText underline hover:no-underline" href={`#container-${recognisedDatabases[0].name}`}>
               <bdi>{recognisedDatabases[0].name}</bdi>
@@ -4239,6 +4239,7 @@ export function Containers() {
             label={t("dbdump.introDismiss")}
             labelKey="dbdump.introDismiss"
             onClick={dismissIntro}
+            className="max-md:ms-auto"
           />
         </div>
       )}

@@ -156,10 +156,8 @@ test("desktop shell geometry is identical across every routed destination", asyn
 // The >=48rem leakage pass for /dashboard: the one page with a phone face
 // asserts that nothing its phone half adds exists in the desktop DOM.
 // Role/text-based wherever possible so a restyle of the mobile chrome
-// cannot silently outdate the guard; the one class-signature check is the
-// StickyActionBar's exact chrome combination, which no desktop element
-// carries (verified app-wide when this pass landed, the only
-// `sticky bottom-0 z-10 bg-carbon-sidebar` element in src/ is the bar).
+// cannot silently outdate the guard; the StickyActionBar is found by its
+// test id, which a restyle leaves alone.
 const DASHBOARD_ROUTES = ["/dashboard"];
 
 for (const route of DASHBOARD_ROUTES) {
@@ -167,9 +165,8 @@ for (const route of DASHBOARD_ROUTES) {
     test.skip(!DESKTOP_PROJECTS.has(testInfo.project.name), "desktop-only: the >=48rem leakage contract");
     await page.goto(route);
 
-    // The sticky-in-flow action bar (the thumb-zone trigger's host): its
-    // exact class signature exists nowhere on desktop.
-    await expect(page.locator("div.sticky.bottom-0.z-10.bg-carbon-sidebar")).toHaveCount(0);
+    // The sticky-in-flow action bar (the thumb-zone trigger's host).
+    await expect(page.getByTestId("sticky-action-bar")).toHaveCount(0);
     // The filled full-width accent control, the Backup Everything trigger's
     // signature (Button tone="accent" over the caller's w-full stage); no
     // desktop control carries it.
@@ -189,9 +186,8 @@ for (const route of CONTAINER_ROUTES) {
     test.skip(!DESKTOP_PROJECTS.has(testInfo.project.name), "desktop-only: the >=48rem leakage contract");
     await page.goto(route);
 
-    // The sticky-in-flow Save bar (the stacked detail's footer): its exact
-    // class signature exists nowhere on desktop.
-    await expect(page.locator("div.sticky.bottom-0.z-10.bg-carbon-sidebar")).toHaveCount(0);
+    // The sticky-in-flow Save bar (the stacked detail's footer).
+    await expect(page.getByTestId("sticky-action-bar")).toHaveCount(0);
     // The filled full-width accent control: the mobile Save / New-backup
     // trigger's signature (Button tone="accent" over the caller's w-full
     // stage); no desktop control carries it.

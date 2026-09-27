@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge, type BadgeSize } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { ConfirmPrompt } from "../../components/ConfirmPrompt";
@@ -115,6 +115,10 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
   const [lists, setLists] = useState(0);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
+  // The phone's confirm sheet stays tappable while a call runs, and busy
+  // reaches the card's buttons only with the next render, so a second tap
+  // would run the call twice.
+  const inFlight = useRef(false);
   const [fresh, setFresh] = useState<FreshKey | null>(null);
   const [keyVisible, setKeyVisible] = useState(true);
   const [dialog, setDialog] = useState<McpClient | null>(null);
@@ -215,6 +219,8 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
     call: () => Promise<T>,
     okMessage: string
   ): Promise<T | null> {
+    if (inFlight.current) return null;
+    inFlight.current = true;
     setBusy(true);
     try {
       const res = await call();
@@ -232,6 +238,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       bumpShake(id);
       return null;
     } finally {
+      inFlight.current = false;
       setBusy(false);
       setPending(null);
     }

@@ -315,7 +315,9 @@ export function CadenceBuilder({
               const n = parseInt(e.target.value, 10);
               if (!isNaN(n) && n >= 1) update({ intervalDays: n });
             }}
-            className={`${inputCls} w-20`}
+            // A coarse pointer puts the steppers side by side, 64px of the
+            // field, so it widens to keep three digits in view.
+            className={`${inputCls} w-20 pointer-coarse:w-32`}
           />
           <span className="text-xs text-carbon-textMuted group-disabled:opacity-50">{t("cadence.daysUnit")}</span>
         </div>

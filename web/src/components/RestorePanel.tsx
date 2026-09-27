@@ -704,7 +704,7 @@ function SnapshotRow({
     // With the 32px icon badges, py-1.5 keeps the collapsed row at 44px, the
     // same as Config.tsx's ConfigSnapshotRow.
     <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
-      <div className="flex items-center gap-3 text-sm">
+      <div className="flex items-center gap-3 text-sm max-md:flex-wrap">
         <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
           {snap.id.slice(0, 8)}
         </span>

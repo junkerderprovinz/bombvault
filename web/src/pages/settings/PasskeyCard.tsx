@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/Button";
 import { ConfirmPrompt } from "../../components/ConfirmPrompt";
 import {
@@ -41,6 +41,9 @@ export function PasskeyCard({
   const [name, setName] = useState("");
   const [adding, setAdding] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<PasskeyView | null>(null);
+  // The phone's confirm sheet stays tappable while the removal runs, so a
+  // second tap would send it twice.
+  const removing = useRef(false);
 
   const reload = useCallback(async () => {
     try {
@@ -82,6 +85,8 @@ export function PasskeyCard({
   }
 
   async function remove(p: PasskeyView) {
+    if (removing.current) return;
+    removing.current = true;
     setBusy(true);
     try {
       const res = await deletePasskey(p.id);
@@ -92,6 +97,7 @@ export function PasskeyCard({
         push(res.error ?? t("common.removeFailed"), "fail");
       }
     } finally {
+      removing.current = false;
       setBusy(false);
       setPendingDelete(null);
     }

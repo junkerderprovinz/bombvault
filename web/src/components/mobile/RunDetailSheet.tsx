@@ -660,9 +660,8 @@ export function RunDetailSheet({ run, open, onClose }: RunDetailSheetProps) {
         )}
 
         {/* Stat triad: stat values take the heading role at weight 600
-            (text-heading font-semibold, the Fab label's typography) with
-            tabular numerals so values don't shimmer while a rerender moves
-            digits; the snapshot tile is mono with the full id as its title
+            (text-heading font-semibold) with tabular numerals so values
+            don't shimmer while a rerender moves digits; the snapshot tile is mono with the full id as its title
             (BackupButton toast precedent). Weight law: 400/600 only; the
             house weight discipline. */}
         <div className="grid grid-cols-3 gap-2">

@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { countText, en } from "../../lib/i18n";
 import type { McpKeyView, McpKeysResponse } from "../../lib/api";
 import { CLIENT_MARKS } from "../../lib/mcpClientMarks";
+import { DESKTOP_QUERY } from "../../lib/useMediaQuery";
 
 const listMcpKeys = vi.fn();
 const createMcpKey = vi.fn();
@@ -41,6 +42,23 @@ const pushed: { message: string; severity?: string }[] = [];
 vi.mock("../../lib/toast", () => ({
   useToast: () => ({ push: (message: string, severity?: string) => pushed.push({ message, severity }) }),
 }));
+
+// The width query reads this flag, so a test can put the card on a phone. The
+// page keeps the first MediaQueryList it gets, so the stub is in place before
+// the first render.
+let desktop = true;
+window.matchMedia = ((query: string) => ({
+  get matches() {
+    return query === DESKTOP_QUERY ? desktop : /\bmin-width\s*:/.test(query);
+  },
+  media: query,
+  onchange: null,
+  addEventListener: () => {},
+  removeEventListener: () => {},
+  addListener: () => {},
+  removeListener: () => {},
+  dispatchEvent: () => false,
+})) as unknown as typeof window.matchMedia;
 
 const { McpServerCard } = await import("./McpServerCard");
 
@@ -106,6 +124,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  desktop = true;
   vi.unstubAllGlobals();
   Reflect.deleteProperty(navigator, "clipboard");
 });
@@ -1165,5 +1184,41 @@ describe("the MCP card at phone width", () => {
     expect((await screen.findByRole("button", { name: en["mcp.certAddAddress"] })).className).toContain(
       "glim-btn-wrap"
     );
+  });
+});
+
+describe("a confirmation on a phone", () => {
+  // The sheet's confirm button stays live while the call runs, so a double tap
+  // reaches the card twice.
+  it("runs a double-tapped rotate, revoke or purge once", async () => {
+    desktop = false;
+    const answer = payload({
+      keys: [key()],
+      revoked: [key({ id: "r2", label: "old desktop", revokedAt: 1_700_100_000, revokedReason: "user" })],
+    });
+    await renderCard(answer);
+    rotateMcpKey.mockResolvedValue({ ok: true, key: "bvmcp_rotated9999", item: key() });
+    revokeMcpKey.mockResolvedValue({ ok: true });
+    purgeMcpKey.mockResolvedValue({ ok: true });
+
+    const doubleTap = async (action: string) => {
+      const confirm = within(screen.getByRole("dialog")).getByRole("button", { name: action });
+      fireEvent.click(confirm);
+      fireEvent.click(confirm);
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    };
+
+    fireEvent.click(await screen.findByRole("button", { name: en["mcp.rotate"] }));
+    await doubleTap(en["mcp.rotate"]);
+    expect(rotateMcpKey).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: en["mcp.revoke"] }));
+    await doubleTap(en["mcp.revoke"]);
+    expect(revokeMcpKey).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByText(countText(en["mcp.revokedList"], "en", 1).replace("{n}", "1")));
+    fireEvent.click(screen.getByRole("button", { name: en["common.delete"] }));
+    await doubleTap(en["common.delete"]);
+    expect(purgeMcpKey).toHaveBeenCalledTimes(1);
   });
 });

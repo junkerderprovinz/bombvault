@@ -89,9 +89,9 @@ afterEach(() => {
   localStorage.removeItem("bombvault.advanced");
 });
 
-function summary(open: AnomalySummary["open"]): AnomalySummary {
+function summary(open: AnomalySummary["open"], enabled = true): AnomalySummary {
   return {
-    enabled: true,
+    enabled,
     ready: true,
     generation: 1,
     open,
@@ -105,8 +105,8 @@ function summary(open: AnomalySummary["open"]): AnomalySummary {
   };
 }
 
-async function renderHome(open: AnomalySummary["open"]) {
-  getAnomalySummary.mockResolvedValue({ ok: true, summary: summary(open) });
+async function renderHome(open: AnomalySummary["open"], enabled = true) {
+  getAnomalySummary.mockResolvedValue({ ok: true, summary: summary(open, enabled) });
   render(
     <MemoryRouter>
       <I18nProvider>
@@ -172,6 +172,16 @@ describe("the phone Home's order", () => {
       { title: en["dashboard.storageTitle"], hue: "var(--rb-2)" },
       { title: en["anomaly.title"], hue: "var(--rb-3)" },
       ...safetyCards,
+    ]);
+  });
+
+  it("keeps the anomalies card below storage while detection is off", async () => {
+    await renderHome({ critical: 1, warning: 2, info: 0 }, false);
+    expect(column().slice(0, 4).map((c) => c.title)).toEqual([
+      en["dashboard.summaryNextBackup"],
+      en["dashboard.recentRuns"],
+      en["dashboard.storageTitle"],
+      en["anomaly.title"],
     ]);
   });
 

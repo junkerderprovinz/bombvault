@@ -112,3 +112,10 @@ it("warns that the data folder is in no backup at all", async () => {
   fireEvent.click(await screen.findByRole("button", { name: en["restore.open"] }));
   expect(await screen.findByText(en["dbdump.restoreNoneWarn"])).toBeTruthy();
 });
+
+// jsdom lays nothing out, so this pins the class the phone layout rests on.
+it("wraps a snapshot row with the badge on a phone instead of pushing its buttons out", async () => {
+  await renderPanel();
+  const badge = await screen.findByText(en["dbdump.pairedBadge"]);
+  expect(badge.closest("span.flex")!.parentElement!.className).toContain("max-md:flex-wrap");
+});

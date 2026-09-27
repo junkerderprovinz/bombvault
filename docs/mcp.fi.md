@@ -13,7 +13,7 @@ BombVaultissa on sisäänrakennettu palvelin Model Context Protocolille (MCP), j
 | `list_runs` | Ajohistoria uusimmat ensin, suodatettavissa toimialueen, kohteen, tilan, lajin ja ajan mukaan | luku |
 | `list_restore_points` | Yhden kohteen palautuspisteet sen ensisijaisesta repositoriosta, ja kontille myös sen tietokantadumpit; ZFS-datasetillä on yksi palautuspiste varmuuskopiota kohden, ja siinä on snapshot jokaisesta sen alla olevasta datasetista | luku |
 | `get_activity` | Mikä on käynnissä juuri nyt, vaiheen ja prosentin kera | luku |
-| `get_storage_stats` | Toimialueen ensisijaisen repositorion koon historia ja kasvu viikossa | luku |
+| `get_storage_stats` | Toimialueen ensisijaisen repositorion koon historia ja kasvu viikossa sekä käytetty, vapaa ja kokonaistila kunkin sen repositorion levyllä tai etäkohteessa | luku |
 | `list_anomalies` | Poikkeamat, jotka BombVault on huomannut varmuuskopioissa, suodatettavissa tilan, vakavuuden ja toimialueen mukaan, sekä yhteenveto avoimista | luku |
 | `get_anomaly` | Yksi näistä havainnoista sekä muistiinpano, joka jätettiin sitä kuitatessa | luku |
 | `start_backup` | Varmuuskopioi yhden kohteen heti | käynnistys |

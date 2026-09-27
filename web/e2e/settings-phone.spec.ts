@@ -5,7 +5,8 @@
 // its card, no stray backtick, and every control big enough to hit. Then the
 // arrangements that change on a phone: target and credential rows put their
 // actions under the name, repository and passkey rows wrap instead of cutting,
-// and the MCP card's confirmations come up as a sheet. On the desktop: the
+// the every-N-days field keeps three digits clear of its steppers, and the MCP
+// card's confirmations come up as a sheet. On the desktop: the
 // 40px rhythm and the unchanged strip of seven 200px tabs. German, because its
 // labels run longest; advanced mode on, so every expert control is there too.
 import { expect, test, type Page } from "@playwright/test";
@@ -29,7 +30,8 @@ const SETTINGS = {
   anomalySensitivity: "strict",
   anomalyNotifyMin: "warning",
   anomalyRetentionHold: true,
-  containersSchedule: "daily 03:00",
+  // Three digits in the every-N-days field, the most a phone has to fit.
+  containersSchedule: "everyN 120 03:00",
   vmsSchedule: "weekly Sun 04:30",
   flashSchedule: "daily 02:15",
   configSchedule: "daily 02:30",
@@ -509,6 +511,25 @@ test("settings storage on a phone: a repository shows its whole name and address
   }
   const row = page.locator("div.rounded-card").filter({ hasText: REPOS[0].name }).last();
   await expect(row.getByText("Nur anhängen", { exact: true })).toHaveCount(1);
+});
+
+test("settings schedules on a phone: the every-N-days field shows three digits beside its steppers", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the steppers sit side by side under a coarse pointer");
+  await openTab(page, 320, "schedules", "Zeitpläne");
+
+  const room = await page.locator("input.glim-num").evaluateAll((inputs) => {
+    const input = inputs.find((el) => (el as HTMLInputElement).value === "120") as HTMLInputElement | undefined;
+    if (!input) return null;
+    const style = getComputedStyle(input);
+    const ctx = document.createElement("canvas").getContext("2d")!;
+    ctx.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    return {
+      content: input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+      digits: ctx.measureText("000").width,
+    };
+  });
+  expect(room, "no every-N-days field holds 120").not.toBeNull();
+  expect(room!.content, "the digits' room beside the steppers").toBeGreaterThanOrEqual(room!.digits);
 });
 
 test("settings system on a phone: passkeys wrap and the MCP confirmations come up as a sheet", async ({ page }, testInfo) => {

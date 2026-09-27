@@ -192,8 +192,7 @@ describe("RunDetailSheet", () => {
     expect(screen.getByText("0f1e2d3c").className).toContain("tabular-nums");
     expect(screen.getByText("0f1e2d3c").className).toContain("font-mono");
     // Stat values take the heading role at weight 600 (text-heading
-    // font-semibold; the Fab label's typography), never the old text-sm
-    // font-medium pair. Pinned as class tokens, the documented jsdom
+    // font-semibold), never the old text-sm font-medium pair. Pinned as class tokens, the documented jsdom
     // exception (no computed geometry here).
     for (const value of ["4.7 GB", "1h 0m", "0f1e2d3c"]) {
       expect(screen.getByText(value).className).toContain("text-heading");

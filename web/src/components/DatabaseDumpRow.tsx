@@ -156,7 +156,7 @@ export function DatabaseDumpRow({ container, t }: { container: Container; t: T }
   const coverageLine = coverageKey(coverage);
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex min-w-0 max-w-full flex-col items-end gap-1">
       {confirmDialog}
       <ToggleRow
         label={t("dbdump.toggle")}
@@ -186,8 +186,8 @@ export function DatabaseDumpRow({ container, t }: { container: Container; t: T }
         <p className="text-xs text-statusWarn text-end">{t("dbdump.hookOverlap")}</p>
       )}
       {last && (
-        <p className="flex items-center gap-1.5 text-xs text-carbon-textMuted text-end">
-          <span>
+        <p className="flex min-w-0 items-center gap-1.5 text-xs text-carbon-textMuted text-end wrap-anywhere">
+          <span className="min-w-0">
             {beforeResult}
             {result.node}
             {afterResult}
