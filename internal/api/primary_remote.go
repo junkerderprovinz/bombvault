@@ -307,34 +307,8 @@ func (s *Service) RunPrimaryTamperTest(ctx context.Context, domain string) (verd
 	}
 	target.Repo = loc
 
-	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "tamper")
-	if rErr != nil {
-		log.Printf("api: primary tamper %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
-		runID = ""
-	}
-	defer func() {
-		if runID == "" {
-			return
-		}
-		status := "success"
-		detail := verdict.Detail
-		switch {
-		case err != nil:
-			status = statusSkipped
-			detail = truncateRunErr(err)
-		case !verdict.Testable:
-			status = statusSkipped
-		case !verdict.Protected:
-			status = "failed"
-		}
-		const maxDetail = 500
-		if len(detail) > maxDetail {
-			detail = detail[:maxDetail]
-		}
-		if fErr := s.store.FinishRun(runID, status, "", 0, detail); fErr != nil {
-			log.Printf("api: primary tamper %s: could not finish run record: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
-		}
-	}()
+	runID := s.startTamperRun(domain)
+	defer func() { s.finishTamperRun(runID, domain, verdict, err) }()
 
 	creds, _ := s.decodeCloud(settings)
 	return s.runTamperTestForTarget(ctx, domain, target, creds)

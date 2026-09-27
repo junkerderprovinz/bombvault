@@ -264,8 +264,10 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/places/probe", h.handleProbePlace)
 	mux.HandleFunc("POST /api/places", h.handleCreatePlace)
 	mux.HandleFunc("PATCH /api/places/{id}", h.handlePatchPlace)
+	mux.HandleFunc("PATCH /api/places/unplaced", h.handlePatchUnplaced)
 	mux.HandleFunc("DELETE /api/places/{id}", h.handleDeletePlace)
 	mux.HandleFunc("POST /api/places/{id}/test", h.handleTestPlace)
+	mux.HandleFunc("POST /api/places/{id}/tamper-test", h.handlePlaceTamperTest)
 	mux.HandleFunc("POST /api/places/{id}/repo", h.handleEnsurePlaceRepo)
 	mux.HandleFunc("POST /api/offsite/{domain}", h.handleReplicateOffsite)
 	// Primary-target probe; the per-target one is the /targets/{id}/test route above.

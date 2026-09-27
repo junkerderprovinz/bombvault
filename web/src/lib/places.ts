@@ -104,6 +104,12 @@ export interface UnplacedRow {
   role: "path" | "target" | "repository" | "direct";
   name: string;
   repo: string;
+  /** The row's append-only flag; a domain path keeps it on its domain's primary row. */
+  immutable: boolean;
+  /** The row takes an append-only switch of its own. */
+  protectable: boolean;
+  /** Items whose backups lie there, for the question before append-only goes off. */
+  items: number;
 }
 
 export type FolderState = "empty" | "repository" | "absent" | "error";
@@ -182,6 +188,16 @@ export type PlaceRefusal = OkEnvelope & {
   domains?: string[];
   probe?: OkEnvelope & ProbeResult;
 };
+
+/** One append-only verdict for the domain paths and copies at a place. */
+export interface TamperVerdict {
+  /** False where the kind cannot be probed; only a rest-server can. */
+  testable?: boolean;
+  /** Every domain path and copy there refused the delete. */
+  protected?: boolean;
+  /** What the server accepted, when it did. */
+  detail?: string;
+}
 
 export interface DomainChip {
   placeId: string;
@@ -277,9 +293,21 @@ export function testPlace(id: string): Promise<OkEnvelope & ProbeResult> {
   return post(placePath(id, "/test"));
 }
 
+/** Sends a harmless delete to every domain path and switched-on copy at the
+ *  place. A folder on this server is refused, since nothing can keep it from
+ *  deletion. */
+export function tamperTestPlace(id: string): Promise<PlaceRefusal & TamperVerdict> {
+  return post(placePath(id, "/tamper-test"));
+}
+
 /** Puts a row without a place at this place. An empty rowId is the domain's own path. */
 export function adoptRow(placeId: string, rowId: string, domain: string): Promise<PlaceRefusal & { place?: Place }> {
   return post(placePath(placeId, "/adopt"), { rowId, domain });
+}
+
+/** Switches append-only on a row without a place, named as adoptRow names it. */
+export function setUnplacedAppendOnly(rowId: string, domain: string, immutable: boolean): Promise<PlaceRefusal> {
+  return fetchJSON("/api/places/unplaced", { method: "PATCH", body: JSON.stringify({ rowId, domain, immutable }) });
 }
 
 /** The repository the place stands for in a domain, made when it is missing; "" is the domain path. */

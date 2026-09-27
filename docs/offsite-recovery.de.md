@@ -124,7 +124,7 @@ Zwei Kisten: **TOWER** betreibt die Container und schiebt die Backups, **VAULT**
 
 Das erste Pfadsegment ist der htpasswd-Benutzer, hier `tower`, und jeder Bereich bekommt darunter seinen Ordner, zum Beispiel `rest:http://VAULT:8000/tower/container`. **Wo steht das Gerät?** mit **An einem anderen Ort** beantworten, auf **Hinzufügen** klicken und den Ort unter **Kopiert nach** für die Bereiche anhaken, die dorthin sollen.
 
-**3. Auf TOWER Append-only einschalten.** In den Details des Ortes unter **Schutz** den Schalter **Append-only** einschalten, dann auf **Auf append-only prüfen** klicken. Der Test läuft für jeden Bereich, den der Ort speichert oder kopiert, und jeder muss *Löschen verweigert* melden. Was die Antworten bedeuten:
+**3. Auf TOWER Append-only einschalten.** In den Details des Ortes unter **Schutz** den Schalter **Append-only** einschalten, dann auf **Auf append-only prüfen** klicken. Der Test prüft jeden Bereich, den der Ort speichert oder kopiert, und gibt eine Antwort für den ganzen Ort, die *Löschen verweigert* lauten muss. Was die Antworten bedeuten:
 
 | Ergebnis | Was passiert ist |
 | --- | --- |

@@ -29,6 +29,7 @@ var (
 	errPlaceUnasked             = errors.New("say where the device stands: here or at another site")
 	errUnknownProvider          = errors.New("that is not a provider this server can connect")
 	errLocalAppendOnly          = errors.New("a folder on this server cannot be kept from deletion, so it takes no append-only switch")
+	errPlaceNothingToTest       = errors.New("no domain backs up or copies to this place, so there is nothing to test")
 )
 
 // writePlace writes a place and, when edit is set and changes them, the
@@ -132,6 +133,11 @@ type UnplacedRow struct {
 	Role   string `json:"role"`   // "path", "target", "repository" or "direct"
 	Name   string `json:"name"`
 	Repo   string `json:"repo"` // as stored
+	// Immutable is the row's append-only flag. A domain path keeps it on its
+	// domain's primary row, which guards the path only while it is remote.
+	Immutable   bool `json:"immutable"`
+	Protectable bool `json:"protectable"` // the row takes an append-only switch of its own
+	Items       int  `json:"items"`       // items whose backups go there, for the question before append-only goes off
 }
 
 // credField ties a catalog field key to its value in a credential set.
@@ -378,18 +384,28 @@ func (s *Service) placeCredsView(settings store.Settings, p store.Place) PlaceCr
 func (s *Service) unplacedRows(d placeData) ([]UnplacedRow, error) {
 	out := []UnplacedRow{}
 	for _, dom := range places.Domains {
-		if d.homes[dom] == "" {
-			out = append(out, UnplacedRow{Domain: dom, Role: "path", Repo: domainPathRaw(dom, d.settings)})
+		if d.homes[dom] != "" {
+			continue
 		}
+		row, err := s.unplacedPath(d, dom)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, row)
 	}
 	targets, err := s.store.ListOffsiteTargets()
 	if err != nil {
 		return nil, err
 	}
 	for _, t := range targets {
-		if t.PlaceID == "" {
-			out = append(out, UnplacedRow{RowID: t.ID, Domain: t.Domain, Role: "target", Name: t.Name, Repo: t.Repo})
+		if t.PlaceID != "" {
+			continue
 		}
+		items, err := s.copiedItems(t)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, UnplacedRow{RowID: t.ID, Domain: t.Domain, Role: "target", Name: t.Name, Repo: t.Repo, Immutable: t.Immutable, Items: items})
 	}
 	for _, r := range d.repos {
 		if r.PlaceID != "" {
@@ -399,7 +415,14 @@ func (s *Service) unplacedRows(d placeData) ([]UnplacedRow, error) {
 		if r.CompanionOf != "" {
 			role = "direct"
 		}
-		out = append(out, UnplacedRow{RowID: r.ID, Role: role, Name: r.Name, Repo: r.Repo})
+		items, err := s.store.ItemsUsingNamedRepo(r.ID)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, UnplacedRow{RowID: r.ID, Role: role, Name: r.Name, Repo: r.Repo, Immutable: r.Immutable, Items: items})
+	}
+	for i := range out {
+		out[i].Protectable = protectable(out[i])
 	}
 	return out, nil
 }

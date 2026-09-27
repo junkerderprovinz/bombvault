@@ -124,7 +124,7 @@ Two boxes: **TOWER** runs the containers and pushes backups; **VAULT** receives 
 
 The first path segment is the htpasswd user, here `tower`, and each domain gets its folder below it, for example `rest:http://VAULT:8000/tower/container`. Answer **Where is the device?** with **At another site**, click **Add**, and tick the place under **Copied to** for the domains that should go there.
 
-**3. On TOWER, switch Append-only on** under **Protection** in the place's details, then click **Test append-only**. The test runs for each domain the place stores or copies, and each must say *deletes refused*. What the answers mean:
+**3. On TOWER, switch Append-only on** under **Protection** in the place's details, then click **Test append-only**. The test probes every domain the place stores or copies and gives one answer for the place, which must be *deletes refused*. What the answers mean:
 
 | Result | What happened |
 | --- | --- |

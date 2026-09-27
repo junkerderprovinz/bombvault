@@ -1878,19 +1878,6 @@ export function deletePrimaryRemote(domain: PrimaryRemoteDomain): Promise<OkEnve
 }
 
 /**
- * POST /api/settings/primary-remote/{domain}/tamper-test — the same active
- * append-only probe tamperTest runs for an off-site destination, against a
- * domain's remote primary instead. Requires the safety settings to have been
- * saved first (with append-only on) — an unsaved config answers ok:false with
- * a "save first" reason rather than probing under a synthetic id.
- */
-export function primaryRemoteTamperTest(
-  domain: PrimaryRemoteDomain
-): Promise<OkEnvelope & { testable?: boolean; protected?: boolean; detail?: string }> {
-  return fetchJSON(`/api/settings/primary-remote/${domain}/tamper-test`, { method: "POST" });
-}
-
-/**
  * An off-site replication target row from the offsite_targets table (multi-off-site).
  * Matches OffsiteTargetView in internal/api/offsite_targets_crud.go exactly. Carries
  * NO secret fields: `credsRef` selects a stored credential set and `storageClass` is
