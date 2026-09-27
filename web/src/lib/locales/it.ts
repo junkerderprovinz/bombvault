@@ -1656,6 +1656,7 @@ const it: Partial<Translations> = {
   "places.details.keepWeekly": "Settimanali",
   "places.details.keepMonthly": "Mensili",
   "places.details.retentionLowerAsk": "one={n} elemento esegue il backup in questo luogo. Dalla sua prossima esecuzione questo luogo conserva meno snapshot e quelli più vecchi vengono rimossi con la potatura.|many={n} elementi eseguono il backup in questo luogo. Dalla loro prossima esecuzione questo luogo conserva meno snapshot e quelli più vecchi vengono rimossi con la potatura.|other={n} elementi eseguono il backup in questo luogo. Dalla loro prossima esecuzione questo luogo conserva meno snapshot e quelli più vecchi vengono rimossi con la potatura.",
+  "places.details.retentionUnsaved": "{name} mantiene la sua conservazione, perché i dettagli si sono chiusi prima di poter chiedere se conservare meno snapshot.",
   "places.details.limits": "Limiti",
   "places.details.limitUpload": "Caricamento, KiB/s",
   "places.details.limitDownload": "Scaricamento, KiB/s",

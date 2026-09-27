@@ -1654,6 +1654,7 @@ const cs: Partial<Translations> = {
   "places.details.keepWeekly": "Týdně",
   "places.details.keepMonthly": "Měsíčně",
   "places.details.retentionLowerAsk": "one=Na toto místo zálohuje {n} položka. Od jejího příštího běhu toto místo uchovává méně snímků a starší se odstraní.|few=Na toto místo zálohují {n} položky. Od jejich příštího běhu toto místo uchovává méně snímků a starší se odstraní.|many=Na toto místo zálohuje {n} položky. Od jejich příštího běhu toto místo uchovává méně snímků a starší se odstraní.|other=Na toto místo zálohuje {n} položek. Od jejich příštího běhu toto místo uchovává méně snímků a starší se odstraní.",
+  "places.details.retentionUnsaved": "{name} si ponechává své uchovávání, protože se podrobnosti zavřely dřív, než se mohly zeptat na uchovávání méně snímků.",
   "places.details.limits": "Limity",
   "places.details.limitUpload": "Nahrávání, KiB/s",
   "places.details.limitDownload": "Stahování, KiB/s",

@@ -1676,6 +1676,7 @@ const hr: Partial<Translations> = {
   "places.details.keepWeekly": "Tjedno",
   "places.details.keepMonthly": "Mjesečno",
   "places.details.retentionLowerAsk": "one={n} stavka se sigurnosno kopira na ovo mjesto. Od njezina sljedećeg pokretanja ovo mjesto zadržava manje snimki, a starije se uklanjaju čišćenjem.|few={n} stavke se sigurnosno kopiraju na ovo mjesto. Od njihova sljedećeg pokretanja ovo mjesto zadržava manje snimki, a starije se uklanjaju čišćenjem.|other={n} stavki se sigurnosno kopira na ovo mjesto. Od njihova sljedećeg pokretanja ovo mjesto zadržava manje snimki, a starije se uklanjaju čišćenjem.",
+  "places.details.retentionUnsaved": "Zadržavanje za {name} ostaje isto, jer su se detalji zatvorili prije nego što su mogli pitati o čuvanju manje snimki.",
   "places.details.limits": "Ograničenja",
   "places.details.limitUpload": "Slanje, KiB/s",
   "places.details.limitDownload": "Preuzimanje, KiB/s",

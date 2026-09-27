@@ -1676,6 +1676,7 @@ const id: Partial<Translations> = {
   "places.details.keepWeekly": "Mingguan",
   "places.details.keepMonthly": "Bulanan",
   "places.details.retentionLowerAsk": "{n} item dicadangkan ke tempat ini. Mulai proses berikutnya, tempat ini menyimpan lebih sedikit snapshot, dan yang lebih lama dipangkas.",
+  "places.details.retentionUnsaved": "{name} tetap memakai retensinya, karena detail ditutup sebelum sempat menanyakan penyimpanan snapshot yang lebih sedikit.",
   "places.details.limits": "Batas",
   "places.details.limitUpload": "Unggah, KiB/s",
   "places.details.limitDownload": "Unduh, KiB/s",

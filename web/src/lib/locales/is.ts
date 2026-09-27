@@ -1676,6 +1676,7 @@ const is: Partial<Translations> = {
   "places.details.keepWeekly": "Vikulega",
   "places.details.keepMonthly": "Mánaðarlega",
   "places.details.retentionLowerAsk": "one={n} atriði afritar á þennan geymslustað. Frá næstu keyrslu þess heldur geymslustaðurinn færri skyndimyndum og þær eldri eru hreinsaðar.|other={n} atriði afrita á þennan geymslustað. Frá næstu keyrslu þeirra heldur geymslustaðurinn færri skyndimyndum og þær eldri eru hreinsaðar.",
+  "places.details.retentionUnsaved": "{name} heldur varðveislu sinni, því nánari upplýsingum var lokað áður en þær gátu spurt um að halda færri skyndimyndum.",
   "places.details.limits": "Mörk",
   "places.details.limitUpload": "Upphleðsla, KiB/s",
   "places.details.limitDownload": "Niðurhal, KiB/s",

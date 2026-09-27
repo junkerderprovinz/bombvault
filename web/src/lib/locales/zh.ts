@@ -1649,6 +1649,7 @@ const zh: Partial<Translations> = {
   "places.details.keepWeekly": "每周",
   "places.details.keepMonthly": "每月",
   "places.details.retentionLowerAsk": "有 {n} 个项目备份到此存储位置。从它们的下一次运行起，此存储位置保留的快照会减少，较旧的快照会被清理。",
+  "places.details.retentionUnsaved": "{name} 的保留设置保持不变，因为详情在询问是否保留更少快照之前就已关闭。",
   "places.details.limits": "限制",
   "places.details.limitUpload": "上传，KiB/s",
   "places.details.limitDownload": "下载，KiB/s",

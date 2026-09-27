@@ -1649,6 +1649,7 @@ const ko: Partial<Translations> = {
   "places.details.keepWeekly": "주별",
   "places.details.keepMonthly": "월별",
   "places.details.retentionLowerAsk": "이 장소에 백업하는 항목이 {n}개입니다. 다음 실행부터 이 장소는 스냅샷을 더 적게 보관하며, 오래된 스냅샷은 정리됩니다.",
+  "places.details.retentionUnsaved": "스냅샷을 더 적게 보관할지 묻기 전에 세부 정보가 닫혀서 {name}의 보존 설정은 그대로입니다.",
   "places.details.limits": "제한",
   "places.details.limitUpload": "업로드, KiB/s",
   "places.details.limitDownload": "다운로드, KiB/s",

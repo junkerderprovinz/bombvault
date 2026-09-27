@@ -1656,6 +1656,7 @@ const fr: Partial<Translations> = {
   "places.details.keepWeekly": "Hebdomadaires",
   "places.details.keepMonthly": "Mensuels",
   "places.details.retentionLowerAsk": "one={n} élément sauvegarde vers ce lieu. Dès sa prochaine exécution, ce lieu conserve moins d'instantanés, et les plus anciens sont élagués.|many={n} éléments sauvegardent vers ce lieu. Dès leur prochaine exécution, ce lieu conserve moins d'instantanés, et les plus anciens sont élagués.|other={n} éléments sauvegardent vers ce lieu. Dès leur prochaine exécution, ce lieu conserve moins d'instantanés, et les plus anciens sont élagués.",
+  "places.details.retentionUnsaved": "{name} garde sa rétention, car les détails se sont fermés avant de pouvoir demander s'il faut conserver moins d'instantanés.",
   "places.details.limits": "Limites",
   "places.details.limitUpload": "Envoi, KiB/s",
   "places.details.limitDownload": "Téléchargement, KiB/s",

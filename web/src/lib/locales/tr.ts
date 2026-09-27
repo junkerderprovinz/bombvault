@@ -1656,6 +1656,7 @@ const tr: Partial<Translations> = {
   "places.details.keepWeekly": "Haftalık",
   "places.details.keepMonthly": "Aylık",
   "places.details.retentionLowerAsk": "Bu konuma {n} öge yedekleniyor. Bir sonraki çalıştırmadan itibaren bu konum daha az anlık görüntü tutar ve eskiler budanır.",
+  "places.details.retentionUnsaved": "{name} saklama ayarını koruyor, çünkü ayrıntılar daha az anlık görüntü tutma hakkında sormadan önce kapandı.",
   "places.details.limits": "Sınırlar",
   "places.details.limitUpload": "Yükleme, KiB/s",
   "places.details.limitDownload": "İndirme, KiB/s",

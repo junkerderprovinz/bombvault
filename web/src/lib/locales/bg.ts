@@ -1676,6 +1676,7 @@ const bg: Partial<Translations> = {
   "places.details.keepWeekly": "Седмични",
   "places.details.keepMonthly": "Месечни",
   "places.details.retentionLowerAsk": "one={n} елемент архивира на това място. От следващото му изпълнение мястото пази по-малко снапшоти, а по-старите се прочистват.|other={n} елемента архивират на това място. От следващото им изпълнение мястото пази по-малко снапшоти, а по-старите се прочистват.",
+  "places.details.retentionUnsaved": "{name} запазва задържането си, защото детайлите се затвориха, преди да попитат за пазене на по-малко снапшоти.",
   "places.details.limits": "Лимити",
   "places.details.limitUpload": "Качване, KiB/s",
   "places.details.limitDownload": "Изтегляне, KiB/s",

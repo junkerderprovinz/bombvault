@@ -1659,6 +1659,7 @@ const sl: Partial<Translations> = {
   "places.details.keepWeekly": "Tedensko",
   "places.details.keepMonthly": "Mesečno",
   "places.details.retentionLowerAsk": "one={n} element se varnostno kopira na to mesto. Od njegovega naslednjega zagona to mesto hrani manj posnetkov, starejši pa se počistijo.|two={n} elementa se varnostno kopirata na to mesto. Od njunega naslednjega zagona to mesto hrani manj posnetkov, starejši pa se počistijo.|few={n} elementi se varnostno kopirajo na to mesto. Od njihovega naslednjega zagona to mesto hrani manj posnetkov, starejši pa se počistijo.|other={n} elementov se varnostno kopira na to mesto. Od njihovega naslednjega zagona to mesto hrani manj posnetkov, starejši pa se počistijo.",
+  "places.details.retentionUnsaved": "Hramba za {name} ostaja enaka, ker so se podrobnosti zaprle, preden so lahko vprašale o hrambi manj posnetkov.",
   "places.details.limits": "Omejitve",
   "places.details.limitUpload": "Nalaganje, KiB/s",
   "places.details.limitDownload": "Prenos, KiB/s",

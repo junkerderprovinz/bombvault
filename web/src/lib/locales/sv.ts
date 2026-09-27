@@ -1656,6 +1656,7 @@ const sv: Partial<Translations> = {
   "places.details.keepWeekly": "Veckovis",
   "places.details.keepMonthly": "Månadsvis",
   "places.details.retentionLowerAsk": "one={n} objekt säkerhetskopieras till den här lagringsplatsen. Från dess nästa körning behåller lagringsplatsen färre ögonblicksbilder, och de äldre rensas bort.|other={n} objekt säkerhetskopieras till den här lagringsplatsen. Från deras nästa körning behåller lagringsplatsen färre ögonblicksbilder, och de äldre rensas bort.",
+  "places.details.retentionUnsaved": "{name} behåller sin kvarhållning, eftersom detaljerna stängdes innan de hann fråga om att behålla färre ögonblicksbilder.",
   "places.details.limits": "Gränser",
   "places.details.limitUpload": "Uppladdning, KiB/s",
   "places.details.limitDownload": "Nedladdning, KiB/s",

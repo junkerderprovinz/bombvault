@@ -1676,6 +1676,7 @@ const lv: Partial<Translations> = {
   "places.details.keepWeekly": "Iknedēļas",
   "places.details.keepMonthly": "Ikmēneša",
   "places.details.retentionLowerAsk": "zero={n} vienumu tiek dublēti šajā vietā. Sākot ar to nākamo palaišanu, šī vieta saglabās mazāk momentuzņēmumu, un vecākie tiks iztīrīti.|one={n} vienums tiek dublēts šajā vietā. Sākot ar tā nākamo palaišanu, šī vieta saglabās mazāk momentuzņēmumu, un vecākie tiks iztīrīti.|other={n} vienumi tiek dublēti šajā vietā. Sākot ar to nākamo palaišanu, šī vieta saglabās mazāk momentuzņēmumu, un vecākie tiks iztīrīti.",
+  "places.details.retentionUnsaved": "{name} saglabāšana paliek nemainīga, jo detaļas tika aizvērtas, pirms tās varēja pajautāt par mazāk momentuzņēmumu saglabāšanu.",
   "places.details.limits": "Ierobežojumi",
   "places.details.limitUpload": "Augšupielāde, KiB/s",
   "places.details.limitDownload": "Lejupielāde, KiB/s",

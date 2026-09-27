@@ -1659,6 +1659,7 @@ const hu: Partial<Translations> = {
   "places.details.keepWeekly": "Heti",
   "places.details.keepMonthly": "Havi",
   "places.details.retentionLowerAsk": "{n} elem ment erre a tárhelyre. A következő futásától a tárhely kevesebb pillanatképet őriz meg, a régebbieket pedig nyeséssel eltávolítja.",
+  "places.details.retentionUnsaved": "{name} megtartja a megőrzési beállítását, mert a részletek bezárultak, mielőtt rákérdezhettek volna a kevesebb pillanatkép megőrzésére.",
   "places.details.limits": "Korlátok",
   "places.details.limitUpload": "Feltöltés, KiB/s",
   "places.details.limitDownload": "Letöltés, KiB/s",

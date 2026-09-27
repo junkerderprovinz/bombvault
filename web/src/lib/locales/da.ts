@@ -1656,6 +1656,7 @@ const da: Partial<Translations> = {
   "places.details.keepWeekly": "Ugentlige",
   "places.details.keepMonthly": "Månedlige",
   "places.details.retentionLowerAsk": "one={n} element sikkerhedskopierer til dette sted. Fra dets næste kørsel beholder stedet færre snapshots, og de ældre fjernes ved beskæring.|other={n} elementer sikkerhedskopierer til dette sted. Fra deres næste kørsel beholder stedet færre snapshots, og de ældre fjernes ved beskæring.",
+  "places.details.retentionUnsaved": "{name} beholder sin opbevaring, fordi detaljerne blev lukket, før de kunne spørge om at beholde færre snapshots.",
   "places.details.limits": "Grænser",
   "places.details.limitUpload": "Upload-grænse, KiB/s",
   "places.details.limitDownload": "Download-grænse, KiB/s",

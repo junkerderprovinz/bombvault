@@ -1676,6 +1676,7 @@ const lt: Partial<Translations> = {
   "places.details.keepWeekly": "Kassavaitinės",
   "places.details.keepMonthly": "Kasmėnesinės",
   "places.details.retentionLowerAsk": "one={n} elementas kuria atsargines kopijas šioje saugojimo vietoje. Nuo kito jo paleidimo ši vieta saugos mažiau momentinių kopijų, o senesnės bus išvalytos.|few={n} elementai kuria atsargines kopijas šioje saugojimo vietoje. Nuo kito jų paleidimo ši vieta saugos mažiau momentinių kopijų, o senesnės bus išvalytos.|many={n} elemento kuria atsargines kopijas šioje saugojimo vietoje. Nuo kito jų paleidimo ši vieta saugos mažiau momentinių kopijų, o senesnės bus išvalytos.|other={n} elementų kuria atsargines kopijas šioje saugojimo vietoje. Nuo kito jų paleidimo ši vieta saugos mažiau momentinių kopijų, o senesnės bus išvalytos.",
+  "places.details.retentionUnsaved": "{name} saugojimas lieka toks pat, nes išsami informacija buvo uždaryta anksčiau, nei spėjo paklausti apie mažesnį momentinių kopijų skaičių.",
   "places.details.limits": "Apribojimai",
   "places.details.limitUpload": "Įkėlimas, KiB/s",
   "places.details.limitDownload": "Atsisiuntimas, KiB/s",

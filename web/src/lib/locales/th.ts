@@ -1659,6 +1659,7 @@ const th: Partial<Translations> = {
   "places.details.keepWeekly": "รายสัปดาห์",
   "places.details.keepMonthly": "รายเดือน",
   "places.details.retentionLowerAsk": "มี {n} รายการที่สำรองข้อมูลไปยังตำแหน่งจัดเก็บนี้ ตั้งแต่การทำงานครั้งถัดไป ตำแหน่งจัดเก็บนี้จะเก็บสแนปช็อตน้อยลง และสแนปช็อตที่เก่ากว่าจะถูกตัดทิ้ง",
+  "places.details.retentionUnsaved": "การเก็บรักษาของ {name} ยังคงเดิม เพราะรายละเอียดถูกปิดก่อนที่จะได้ถามเรื่องการเก็บสแนปช็อตน้อยลง",
   "places.details.limits": "ขีดจำกัด",
   "places.details.limitUpload": "อัปโหลด (KiB/s)",
   "places.details.limitDownload": "ดาวน์โหลด (KiB/s)",

@@ -1649,6 +1649,7 @@ const ja: Partial<Translations> = {
   "places.details.keepWeekly": "週次",
   "places.details.keepMonthly": "月次",
   "places.details.retentionLowerAsk": "{n} 件の項目がこの保存場所にバックアップしています。次回の実行から、この保存場所が保持するスナップショットは少なくなり、古いものは整理されます。",
+  "places.details.retentionUnsaved": "詳細がスナップショットを減らすかどうかを確認する前に閉じられたため、{name} の保持は変更されません。",
   "places.details.limits": "制限",
   "places.details.limitUpload": "アップロード (KiB/s)",
   "places.details.limitDownload": "ダウンロード (KiB/s)",

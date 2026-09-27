@@ -1656,6 +1656,7 @@ const he: Partial<Translations> = {
   "places.details.keepWeekly": "שבועי",
   "places.details.keepMonthly": "חודשי",
   "places.details.retentionLowerAsk": "one=פריט אחד מגבה אל המקום הזה. מההרצה הבאה שלו המקום שומר פחות תצלומים, והישנים יותר מוסרים בגיזום.|two=שני פריטים מגבים אל המקום הזה. מההרצה הבאה שלהם המקום שומר פחות תצלומים, והישנים יותר מוסרים בגיזום.|other={n} פריטים מגבים אל המקום הזה. מההרצה הבאה שלהם המקום שומר פחות תצלומים, והישנים יותר מוסרים בגיזום.",
+  "places.details.retentionUnsaved": "{name} שומר על הגדרות השמירה שלו, כי הפרטים נסגרו לפני שיכלו לשאול על שמירת פחות תצלומים.",
   "places.details.limits": "מגבלות",
   "places.details.limitUpload": "העלאה, KiB/s",
   "places.details.limitDownload": "הורדה, KiB/s",

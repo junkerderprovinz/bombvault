@@ -1676,6 +1676,7 @@ const et: Partial<Translations> = {
   "places.details.keepWeekly": "Nädalased",
   "places.details.keepMonthly": "Kuised",
   "places.details.retentionLowerAsk": "one={n} üksus varundab sellesse salvestuskohta. Alates selle järgmisest käivitusest säilitab salvestuskoht vähem hetktõmmiseid ja vanemad eemaldatakse.|other={n} üksust varundab sellesse salvestuskohta. Alates nende järgmisest käivitusest säilitab salvestuskoht vähem hetktõmmiseid ja vanemad eemaldatakse.",
+  "places.details.retentionUnsaved": "{name} jätab oma säilitamise samaks, sest üksikasjad suleti enne, kui need jõudsid küsida vähemate hetktõmmiste säilitamise kohta.",
   "places.details.limits": "Piirangud",
   "places.details.limitUpload": "Üleslaadimine, KiB/s",
   "places.details.limitDownload": "Allalaadimine, KiB/s",

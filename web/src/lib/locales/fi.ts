@@ -1656,6 +1656,7 @@ const fi: Partial<Translations> = {
   "places.details.keepWeekly": "Viikoittain",
   "places.details.keepMonthly": "Kuukausittain",
   "places.details.retentionLowerAsk": "one={n} kohde varmuuskopioituu tähän paikkaan. Sen seuraavasta ajosta alkaen tämä paikka säilyttää vähemmän tilannevedoksia, ja vanhemmat karsitaan.|other={n} kohdetta varmuuskopioituu tähän paikkaan. Niiden seuraavasta ajosta alkaen tämä paikka säilyttää vähemmän tilannevedoksia, ja vanhemmat karsitaan.",
+  "places.details.retentionUnsaved": "{name} säilyttää nykyisen säilytyksensä, koska tiedot suljettiin ennen kuin ne ehtivät kysyä vähempien tilannevedosten säilyttämisestä.",
   "places.details.limits": "Rajoitukset",
   "places.details.limitUpload": "Lähetys, KiB/s",
   "places.details.limitDownload": "Lataus, KiB/s",

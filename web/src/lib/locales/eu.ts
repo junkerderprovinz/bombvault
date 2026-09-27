@@ -1676,6 +1676,7 @@ const eu: Partial<Translations> = {
   "places.details.keepWeekly": "Astero",
   "places.details.keepMonthly": "Hilero",
   "places.details.retentionLowerAsk": "one={n} elementuk leku honetan egiten ditu babeskopiak. Bere hurrengo exekuziotik aurrera, leku honek argazki gutxiago gordeko ditu, eta zaharragoak garbituko dira.|other={n} elementuk leku honetan egiten dituzte babeskopiak. Beren hurrengo exekuziotik aurrera, leku honek argazki gutxiago gordeko ditu, eta zaharragoak garbituko dira.",
+  "places.details.retentionUnsaved": "{name}(e)k bere mantentzea gordetzen du, xehetasunak argazki gutxiago gordetzeaz galdetu aurretik itxi zirelako.",
   "places.details.limits": "Mugak",
   "places.details.limitUpload": "Igoera, KiB/s",
   "places.details.limitDownload": "Jaitsiera, KiB/s",

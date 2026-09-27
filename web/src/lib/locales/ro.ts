@@ -1659,6 +1659,7 @@ const ro: Partial<Translations> = {
   "places.details.keepWeekly": "Săptămânal",
   "places.details.keepMonthly": "Lunar",
   "places.details.retentionLowerAsk": "one={n} element se salvează în acest loc. De la următoarea lui rulare, acest loc păstrează mai puține instantanee, iar cele mai vechi sunt curățate.|few={n} elemente se salvează în acest loc. De la următoarea lor rulare, acest loc păstrează mai puține instantanee, iar cele mai vechi sunt curățate.|other={n} de elemente se salvează în acest loc. De la următoarea lor rulare, acest loc păstrează mai puține instantanee, iar cele mai vechi sunt curățate.",
+  "places.details.retentionUnsaved": "{name} își păstrează retenția, pentru că detaliile s-au închis înainte să poată întreba despre păstrarea mai puținor instantanee.",
   "places.details.limits": "Limite",
   "places.details.limitUpload": "Încărcare, KiB/s",
   "places.details.limitDownload": "Descărcare, KiB/s",

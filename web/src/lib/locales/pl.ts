@@ -1651,6 +1651,7 @@ const pl: Partial<Translations> = {
   "places.details.keepWeekly": "Tygodniowe",
   "places.details.keepMonthly": "Miesięczne",
   "places.details.retentionLowerAsk": "one={n} element tworzy kopie zapasowe w tym miejscu. Od jego następnego uruchomienia to miejsce zachowuje mniej migawek, a starsze są usuwane.|few={n} elementy tworzą kopie zapasowe w tym miejscu. Od ich następnego uruchomienia to miejsce zachowuje mniej migawek, a starsze są usuwane.|many={n} elementów tworzy kopie zapasowe w tym miejscu. Od ich następnego uruchomienia to miejsce zachowuje mniej migawek, a starsze są usuwane.|other={n} elementów tworzy kopie zapasowe w tym miejscu. Od ich następnego uruchomienia to miejsce zachowuje mniej migawek, a starsze są usuwane.",
+  "places.details.retentionUnsaved": "Retencja miejsca {name} się nie zmienia, bo szczegóły zamknięto, zanim mogły zapytać o zachowywanie mniejszej liczby migawek.",
   "places.details.limits": "Limity",
   "places.details.limitUpload": "Wysyłanie, KiB/s",
   "places.details.limitDownload": "Pobieranie, KiB/s",

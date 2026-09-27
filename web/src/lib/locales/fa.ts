@@ -1676,6 +1676,7 @@ const fa: Partial<Translations> = {
   "places.details.keepWeekly": "هفتگی",
   "places.details.keepMonthly": "ماهانه",
   "places.details.retentionLowerAsk": "{n} مورد در این مکان پشتیبان می‌گیرد. از اجرای بعدی، این مکان اسنپ‌شات‌های کمتری نگه می‌دارد و قدیمی‌ترها پاک‌سازی می‌شوند.",
+  "places.details.retentionUnsaved": "{name} نگه‌داری فعلی خود را حفظ می‌کند، چون جزئیات پیش از آنکه دربارهٔ نگه‌داشتن اسنپ‌شات‌های کمتر بپرسد بسته شد.",
   "places.details.limits": "محدودیت‌ها",
   "places.details.limitUpload": "بارگذاری، KiB/s",
   "places.details.limitDownload": "دانلود، KiB/s",

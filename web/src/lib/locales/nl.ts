@@ -1653,6 +1653,7 @@ const nl: Partial<Translations> = {
   "places.details.keepWeekly": "Wekelijks",
   "places.details.keepMonthly": "Maandelijks",
   "places.details.retentionLowerAsk": "one={n} item back-upt naar deze plek. Vanaf de volgende run bewaart deze plek minder snapshots en worden de oudere opgeschoond.|other={n} items back-uppen naar deze plek. Vanaf hun volgende run bewaart deze plek minder snapshots en worden de oudere opgeschoond.",
+  "places.details.retentionUnsaved": "{name} houdt zijn bewaarbeleid, omdat de details sloten voordat ze konden vragen of er minder snapshots bewaard moeten worden.",
   "places.details.limits": "Limieten",
   "places.details.limitUpload": "Uploaden, KiB/s",
   "places.details.limitDownload": "Downloaden, KiB/s",

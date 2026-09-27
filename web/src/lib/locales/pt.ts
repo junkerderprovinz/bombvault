@@ -1656,6 +1656,7 @@ const pt: Partial<Translations> = {
   "places.details.keepWeekly": "Semanais",
   "places.details.keepMonthly": "Mensais",
   "places.details.retentionLowerAsk": "one={n} item faz backup para este lugar. A partir da sua próxima execução, este lugar mantém menos instantâneos e os mais antigos são podados.|many={n} de itens fazem backup para este lugar. A partir das suas próximas execuções, este lugar mantém menos instantâneos e os mais antigos são podados.|other={n} itens fazem backup para este lugar. A partir das suas próximas execuções, este lugar mantém menos instantâneos e os mais antigos são podados.",
+  "places.details.retentionUnsaved": "{name} mantém a sua retenção, porque os detalhes fecharam antes de poderem perguntar se deve manter menos instantâneos.",
   "places.details.limits": "Limites",
   "places.details.limitUpload": "Envio, KiB/s",
   "places.details.limitDownload": "Receção, KiB/s",

@@ -178,6 +178,21 @@ describe("PlaceDetails saving", () => {
     expect(patches).toEqual([{ limitUpload: 800 }]);
   });
 
+  it("says a lower retention was not saved when the details close before they can ask", async () => {
+    const withItems = place({ usage: { homeDomains: [], defaults: [], copyDomains: [], items: 3, copies: 0, repositories: 0 } });
+    const tree = (open: boolean) => (
+      <I18nProvider>
+        <ToastProvider>{open && <PlaceDetails place={withItems} provider={B2} hostMountRoot="/mnt" onSaved={vi.fn()} />}</ToastProvider>
+      </I18nProvider>
+    );
+    const { rerender } = render(tree(true));
+    fireEvent.change(input(en["places.details.keepLast"]), { target: { value: "3" } });
+    rerender(tree(false));
+    await settle();
+    expect(patches).toEqual([]);
+    expect(screen.getByText(en["places.details.retentionUnsaved"].replace("{name}", "B2"))).toBeTruthy();
+  });
+
   it("asks before this place keeps fewer snapshots where items back up to it", async () => {
     details(place({ usage: { homeDomains: [], defaults: [], copyDomains: [], items: 3, copies: 0, repositories: 0 } }));
     fireEvent.change(input(en["places.details.keepLast"]), { target: { value: "3" } });

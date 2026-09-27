@@ -1676,6 +1676,7 @@ const hi: Partial<Translations> = {
   "places.details.keepWeekly": "साप्ताहिक",
   "places.details.keepMonthly": "मासिक",
   "places.details.retentionLowerAsk": "one={n} प्रविष्टि इस स्थान पर बैकअप लेती है। उसके अगले रन से यह स्थान कम स्नैपशॉट रखेगा, और पुराने प्रून कर दिए जाएँगे।|other={n} प्रविष्टियाँ इस स्थान पर बैकअप लेती हैं। उनके अगले रन से यह स्थान कम स्नैपशॉट रखेगा, और पुराने प्रून कर दिए जाएँगे।",
+  "places.details.retentionUnsaved": "{name} का रिटेंशन पहले जैसा रहता है, क्योंकि कम स्नैपशॉट रखने के बारे में पूछने से पहले ही विवरण बंद हो गए।",
   "places.details.limits": "सीमाएँ",
   "places.details.limitUpload": "अपलोड, KiB/s",
   "places.details.limitDownload": "डाउनलोड, KiB/s",

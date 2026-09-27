@@ -1676,6 +1676,7 @@ const gl: Partial<Translations> = {
   "places.details.keepWeekly": "Semanais",
   "places.details.keepMonthly": "Mensuais",
   "places.details.retentionLowerAsk": "one={n} elemento fai copia neste lugar. Desde a súa próxima execución, este lugar conserva menos instantáneas e límpanse as máis antigas.|other={n} elementos fan copia neste lugar. Desde a súa próxima execución, este lugar conserva menos instantáneas e límpanse as máis antigas.",
+  "places.details.retentionUnsaved": "{name} mantén a súa retención, porque os detalles pecháronse antes de poder preguntar por conservar menos instantáneas.",
   "places.details.limits": "Límites",
   "places.details.limitUpload": "Subida, KiB/s",
   "places.details.limitDownload": "Baixada, KiB/s",

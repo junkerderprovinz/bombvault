@@ -1654,6 +1654,7 @@ const es: Partial<Translations> = {
   "places.details.keepWeekly": "Semanales",
   "places.details.keepMonthly": "Mensuales",
   "places.details.retentionLowerAsk": "one={n} elemento se respalda en este lugar. A partir de su próxima ejecución, este lugar conserva menos instantáneas y las más antiguas se podan.|many={n} de elementos se respaldan en este lugar. A partir de su próxima ejecución, este lugar conserva menos instantáneas y las más antiguas se podan.|other={n} elementos se respaldan en este lugar. A partir de su próxima ejecución, este lugar conserva menos instantáneas y las más antiguas se podan.",
+  "places.details.retentionUnsaved": "{name} mantiene su retención, porque los detalles se cerraron antes de poder preguntar por conservar menos instantáneas.",
   "places.details.limits": "Límites",
   "places.details.limitUpload": "Subida, KiB/s",
   "places.details.limitDownload": "Bajada, KiB/s",

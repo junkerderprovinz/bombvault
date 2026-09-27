@@ -1649,6 +1649,7 @@ const vi: Partial<Translations> = {
   "places.details.keepWeekly": "Hằng tuần",
   "places.details.keepMonthly": "Hằng tháng",
   "places.details.retentionLowerAsk": "{n} mục sao lưu vào điểm lưu trữ này. Từ lần chạy tiếp theo của chúng, điểm lưu trữ này giữ ít snapshot hơn, và các snapshot cũ hơn sẽ bị dọn bớt.",
+  "places.details.retentionUnsaved": "{name} vẫn giữ cách lưu giữ cũ, vì phần chi tiết đã đóng trước khi kịp hỏi về việc giữ ít snapshot hơn.",
   "places.details.limits": "Giới hạn",
   "places.details.limitUpload": "Tải lên, KiB/s",
   "places.details.limitDownload": "Tải xuống, KiB/s",

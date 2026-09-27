@@ -31,7 +31,9 @@ import { useReveal } from "../../lib/useReveal";
 // A place's details save themselves: a switch or a choice at once, rolled back
 // with a shake when the server refuses, a typed field 800 ms after the last
 // key. A field still waiting when the details close is saved first, and a
-// lower retention asks its question before they go.
+// lower retention asks its question before they go. Details that vanish
+// without closing, on a tab switch, cannot ask, so a lower retention stays
+// unsaved and a toast says so.
 
 const DEBOUNCE_MS = 800;
 
@@ -166,9 +168,15 @@ export function PlaceDetails({
     },
   }));
 
+  // Set once the details are gone, when no question can be asked any more.
+  const unmounted = useRef(false);
   useEffect(() => {
     const waiting = timers.current;
-    return () => void runWaiting(waiting);
+    unmounted.current = false;
+    return () => {
+      unmounted.current = true;
+      void runWaiting(waiting);
+    };
   }, []);
 
   const bump = (key: string) => setShake((s) => ({ ...s, [key]: (s[key] ?? 0) + 1 }));
@@ -234,7 +242,12 @@ export function PlaceDetails({
       const patch: Partial<PatchPlaceBody> = {};
       for (const k of RETENTION_KEYS) if (next[k] !== now[k]) patch[k] = next[k];
       if (Object.keys(patch).length === 0) return;
-      if (retentionLowered(now, next) && now.usage.items > 0 && !(await confirm(t("places.details.retentionLowerAsk", now.usage.items)))) {
+      const asks = retentionLowered(now, next) && now.usage.items > 0;
+      if (asks && unmounted.current) {
+        push(t("places.details.retentionUnsaved").replace("{name}", now.name), "warn");
+        return;
+      }
+      if (asks && !(await confirm(t("places.details.retentionLowerAsk", now.usage.items)))) {
         setDraft((d) => {
           const back = { ...d };
           for (const k of RETENTION_KEYS) back[k] = now[k];

@@ -1676,6 +1676,7 @@ const ca: Partial<Translations> = {
   "places.details.keepWeekly": "Setmanals",
   "places.details.keepMonthly": "Mensuals",
   "places.details.retentionLowerAsk": "one={n} element fa còpia de seguretat en aquest lloc. A partir de la seva propera execució, aquest lloc conserva menys instantànies i les més antigues s'eliminen.|many={n} d'elements fan còpia de seguretat en aquest lloc. A partir de la seva propera execució, aquest lloc conserva menys instantànies i les més antigues s'eliminen.|other={n} elements fan còpia de seguretat en aquest lloc. A partir de la seva propera execució, aquest lloc conserva menys instantànies i les més antigues s'eliminen.",
+  "places.details.retentionUnsaved": "{name} manté la seva retenció, perquè els detalls s'han tancat abans de poder preguntar per conservar menys instantànies.",
   "places.details.limits": "Límits",
   "places.details.limitUpload": "Pujada, KiB/s",
   "places.details.limitDownload": "Baixada, KiB/s",
