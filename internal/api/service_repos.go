@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -877,6 +878,38 @@ func (s *Service) domainRepoSource(domain, source string) (store.Settings, strin
 	}
 	repo, err := s.repoFor(settings, domain, source)
 	return settings, repo, err
+}
+
+// localSnapshotCount counts the snapshots of a local repository from disk,
+// where restic keeps one file per snapshot named by its id and writes a new
+// one under a temporary name first. It is false for a remote repository and
+// for one whose snapshots cannot be read.
+func localSnapshotCount(repo string) (int, bool) {
+	if restic.IsRemoteRepo(repo) {
+		return 0, false
+	}
+	entries, err := os.ReadDir(filepath.Join(repo, "snapshots"))
+	if err != nil {
+		return 0, false
+	}
+	n := 0
+	for _, e := range entries {
+		if _, err := hex.DecodeString(e.Name()); err == nil && len(e.Name()) == 64 && e.Type().IsRegular() {
+			n++
+		}
+	}
+	return n, true
+}
+
+// currentSnapshotCount is how many snapshots a domain's repository for source
+// holds now, where it can be counted on disk. The daily size sample's count
+// can be a day old.
+func (s *Service) currentSnapshotCount(domain, source string) (int, bool) {
+	_, repo, err := s.domainRepoSource(domain, source)
+	if err != nil {
+		return 0, false
+	}
+	return localSnapshotCount(repo)
 }
 
 // localRepoMissing reports whether a local repo has not been initialised

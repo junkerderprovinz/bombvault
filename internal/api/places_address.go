@@ -65,15 +65,19 @@ func (s *Service) rowFacts(row store.OffsiteTarget) (addressFacts, error) {
 // domainPathFacts answers for a domain's own path.
 func (s *Service) domainPathFacts(settings store.Settings, domain string) (addressFacts, error) {
 	var f addressFacts
+	counted := false
 	if loc, err := s.repoFor(settings, domain, "local"); err == nil {
 		f.Established = s.repoEstablishmentOf(loc) != repoNeverEstablished
+		f.Snapshots, counted = localSnapshotCount(loc)
 	}
-	stat, found, err := s.store.LatestRepoStat(domain, "local")
-	if err != nil {
-		return f, err
-	}
-	if found {
-		f.Snapshots = int(stat.Snapshots)
+	if !counted {
+		stat, found, err := s.store.LatestRepoStat(domain, "local")
+		if err != nil {
+			return f, err
+		}
+		if found {
+			f.Snapshots = int(stat.Snapshots)
+		}
 	}
 	backed, err := s.store.DomainPathBackedUp(domain)
 	if err != nil {

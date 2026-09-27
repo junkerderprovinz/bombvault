@@ -279,7 +279,11 @@ func (h *Handler) handleStats(w http.ResponseWriter, r *http.Request) {
 	}
 	var latest any // null when there are no samples yet
 	if len(stats) > 0 {
-		latest = stats[len(stats)-1]
+		last := stats[len(stats)-1]
+		if n, ok := h.svc.currentSnapshotCount(domain, source); ok {
+			last.Snapshots = int64(n)
+		}
+		latest = last
 	} else {
 		// Without a sample, a detached and throttled collection fills the Storage
 		// card in on the next load instead of leaving it on "no data".
