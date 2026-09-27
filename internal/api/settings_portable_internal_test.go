@@ -978,3 +978,61 @@ func TestImportKeepsAdditionalTargetsLeftOnThePrimarySortOrder(t *testing.T) {
 		}
 	}
 }
+
+func TestSettingsExportImportCarriesTheStreamingAndIdleCards(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	want := store.TrafficSettings{StreamThrottle: true, MediaServers: []string{"plex"}, StreamMbit: 6, StreamLimitKiB: 300, StreamHoldMin: 9,
+		IdleCPUPct: 30, IdleNetMbit: 2, IdleQuietMin: 7}
+	if err := srcStore.SetTrafficSettings(want); err != nil {
+		t.Fatal(err)
+	}
+
+	body, exp := doExport(t, src, "")
+	if exp.Streaming == nil || !exp.Streaming.Enabled {
+		t.Fatalf("the export lacks the streaming card: %+v", exp.Streaming)
+	}
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	preview := doImport(t, dst, body, "")
+	groups := preview["summary"].(map[string]any)["settingsGroups"].([]any)
+	if !slices.Contains(groups, any("streaming")) || !slices.Contains(groups, any("idle")) {
+		t.Fatalf("the preview does not name the streaming and idle cards: %v", groups)
+	}
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+	got, err := dstStore.TrafficSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %+v, want %+v", got, want)
+	}
+}
+
+func TestAFileWithoutTheStreamingAndIdleCardsLeavesThemAlone(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	body, _ := doExport(t, src, "")
+	var raw map[string]any
+	if err := json.Unmarshal(body, &raw); err != nil {
+		t.Fatal(err)
+	}
+	delete(raw, "streaming")
+	delete(raw, "idle")
+	old, _ := json.Marshal(raw)
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	kept := store.TrafficSettings{StreamThrottle: true, MediaServers: []string{"jellyfin"}, StreamMbit: 3, StreamLimitKiB: 100, StreamHoldMin: 2,
+		IdleCPUPct: 40, IdleNetMbit: 5, IdleQuietMin: 4}
+	if err := dstStore.SetTrafficSettings(kept); err != nil {
+		t.Fatal(err)
+	}
+	if env := doImport(t, dst, old, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+	got, _ := dstStore.TrafficSettings()
+	if !reflect.DeepEqual(got, kept) {
+		t.Fatalf("an older file changed the streaming and idle cards: %+v", got)
+	}
+}

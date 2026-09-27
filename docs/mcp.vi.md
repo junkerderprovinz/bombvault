@@ -7,7 +7,7 @@ BombVault có sẵn một máy chủ cho Model Context Protocol (MCP), giao th�
 | Công cụ | Chức năng | Loại |
 |---|---|---|
 | `get_health` | Phiên bản, tên phiên bản cài đặt, có đang sao lưu không và khóa này được phép làm gì | đọc |
-| `get_status` | Trạng thái bảo vệ theo từng miền: lần sao lưu thành công gần nhất, khoảng thời gian dự kiến, các lần xác minh và kiểm tra off-site, các lần chạy theo lịch tiếp theo | đọc |
+| `get_status` | Trạng thái bảo vệ theo từng miền: lần sao lưu thành công gần nhất, khoảng thời gian dự kiến, các lần xác minh và kiểm tra off-site, các lần chạy theo lịch tiếp theo, các bản sao lưu đang chờ ứng dụng rảnh | đọc |
 | `get_coverage` | Những gì BombVault bảo vệ và không bảo vệ, kèm lý do cho từng mục | đọc |
 | `list_items` | Mọi container, VM và bộ thư mục được bảo vệ, ổ flash và cấu hình ứng dụng, kèm lịch, những gì một lần sao lưu sẽ dừng, lần sao lưu gần nhất và thời gian của nó; container cơ sở dữ liệu còn cho biết bản dump gần nhất; các dataset ZFS cũng được liệt kê, kèm kết quả lần kiểm tra gần nhất; container được tạo lại với cài đặt khác kể từ lần sao lưu gần nhất liệt kê những gì đã đổi | đọc |
 | `list_runs` | Lịch sử chạy, mới nhất trước, lọc được theo miền, mục, trạng thái, loại và thời gian; lần sao lưu chậm do một thứ kìm lại sẽ nêu tên thứ đó | đọc |

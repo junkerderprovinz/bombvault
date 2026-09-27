@@ -89,6 +89,7 @@ Configurează o replică off-site în fila **Setări, Off-site**. Vezi [Off-site
 - **Mai multe ținte off-site per domeniu:** fiecare domeniu poate replica către mai multe destinații off-site simultan. Adaugă ținte suplimentare în Setări, Off-site, fiecare cu propriul depozit, clasă de stocare S3, indicator append-only, retenție și buget de creștere; toate replică conform programării off-site a acelui domeniu. O configurare off-site unică existentă este preluată ca prima țintă.
 - **Retenție per sursă:** politica locală se află în Setări, Căi și Stocare; politica off-site în Setări, Off-site (las-o toată zero pentru a nu tăia niciodată automat instantaneele off-site).
 - **Limite de lățime de bandă:** limitează rata de upload/download restic sub Setări, Off-site.
+- **Întâi streamingul:** în Setări, Off-site, alegi serverele media (Plex, Jellyfin și Emby sunt preselectate după numele imaginii), rata de trimitere de la care unul contează ca făcând streaming, limita de încărcare în timpul streamingului și după cât timp de la un stream revine limita normală.
 - **Clasă de stocare la rece și de arhivă (S3):** pentru un depozit off-site S3 nativ, alege un nivel care permite restaurarea (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Remote-urile rclone își setează clasa în configurația rclone.
 
 ## Anomalii {#anomalies}

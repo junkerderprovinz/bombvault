@@ -7,7 +7,7 @@ BombVault har en indbygget server til Model Context Protocol (MCP), den protokol
 | Værktøj | Hvad det gør | Art |
 |---|---|---|
 | `get_health` | Version, instansnavn, om en sikkerhedskopi kører, og hvad denne nøgle må | læse |
-| `get_status` | Beskyttelsesstatus pr. domæne: seneste vellykkede sikkerhedskopi, forventet interval, verifikationer og off-site-kontroller, næste planlagte kørsler | læse |
+| `get_status` | Beskyttelsesstatus pr. domæne: seneste vellykkede sikkerhedskopi, forventet interval, verifikationer og off-site-kontroller, næste planlagte kørsler, backups, der venter på, at appen er i ro | læse |
 | `get_coverage` | Hvad BombVault beskytter, og hvad det ikke beskytter, med begrundelsen for hvert | læse |
 | `list_items` | Hver beskyttet container, VM og mappesæt, flash-drevet og app-konfigurationen, med tidsplan, hvad en sikkerhedskopi stopper, seneste sikkerhedskopi og hvor lang tid den tog; databasecontainere viser også deres seneste dump; ZFS-datasæt er også med, med resultatet af deres seneste kontrol; en container, der er oprettet igen med andre indstillinger siden sin seneste sikkerhedskopi, viser ændringerne | læse |
 | `list_runs` | Kørselshistorik, nyeste først, kan filtreres efter domæne, element, status, art og tid; en langsom sikkerhedskopi, som én ting holdt tilbage, nævner den | læse |

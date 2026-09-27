@@ -89,6 +89,7 @@ Opsæt en off-site-replika på fanen **Indstillinger, Off-site**. Se [Off-site o
 - **Flere off-site-destinationer pr. domæne:** hvert domæne kan replikere til flere off-site-destinationer på én gang. Tilføj ekstra destinationer på Indstillinger, Off-site, hver med sit eget repository, sin S3-lagringsklasse, sit append-only-flag, sin opbevaring og sit vækstbudget; de replikerer alle på det domænes off-site-tidsplan. En eksisterende enkelt off-site-opsætning overføres som den første destination.
 - **Opbevaring pr. kilde:** den lokale politik lever på Indstillinger, Stier og lagring; off-site-politikken på Indstillinger, Off-site (lad den stå helt-nul for aldrig at auto-trimme off-site-øjebliksbilleder).
 - **Båndbreddegrænser:** begræns restic-upload/download-hastigheden under Indstillinger, Off-site.
+- **Streaming først:** under Indstillinger, Off-site vælger du medieserverne (Plex, Jellyfin og Emby er forvalgt ud fra image-navnet), den sendehastighed hvorfra en server tæller som streamende, upload-grænsen under streaming og hvor længe efter en stream den normale grænse kommer tilbage.
 - **Kold- og arkivlagringsklasse (S3):** for et native S3 off-site-repo, vælg et gendannelses-læsbart niveau (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remotes sætter deres klasse i rclone-konfigurationen.
 
 ## Afvigelser {#anomalies}

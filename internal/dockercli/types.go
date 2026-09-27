@@ -35,6 +35,9 @@ type ContainerInfo struct {
 	Labels  map[string]string
 	// Mounts are the bind mounts only; see mapContainerSummary.
 	Mounts []MountPoint
+	// NetworkMode is "host" for a container on the host network, whose traffic
+	// Docker cannot count on its own.
+	NetworkMode string
 }
 
 // Docker is the host-control surface consumed by the backup orchestrator.

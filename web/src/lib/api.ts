@@ -35,6 +35,9 @@ export interface Container {
   /** Opt-in (#52): after a successful backup, pull the image and recreate the
    *  container if a newer image is available. Off by default. */
   updateAfterBackup?: boolean;
+  /** How long a scheduled backup waits at most for the app to be idle, in
+   *  hours; 0 when it does not wait. */
+  idleWaitHours?: number;
   /** When the post-backup update check last completed (unix seconds, 0 = never)
    *  and its outcome ('' | 'up-to-date' | 'updated' | 'failed') — makes
    *  "checked, up to date" distinguishable from "never reached". */
@@ -429,7 +432,8 @@ export interface GetSettingsResponse {
  * destination rows the file carries, `credentials` reports which secret kinds are
  * present (never the values), and `settingsGroups` names the setting areas the
  * file populates (machine ids: "domains","schedules","retention","offsite",
- * "drills","digest","monitoring","language","exportEncryption").
+ * "drills","digest","monitoring","language","exportEncryption","anomalies",
+ * "streaming","idle").
  */
 export interface ImportSettingsSummary {
   schemaVersion: number;
@@ -1363,6 +1367,15 @@ export function setUpdateAfterBackup(name: string, updateAfterBackup: boolean): 
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
     method: "PATCH",
     body: JSON.stringify({ updateAfterBackup }),
+  });
+}
+
+/** PATCH /api/containers/{name}: how long a scheduled backup waits at most for
+ *  the app to be idle; 0 switches the wait off. */
+export function setIdleWait(name: string, idleWaitHours: number): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ idleWaitHours }),
   });
 }
 
@@ -2388,6 +2401,38 @@ export interface PrimaryRemoteConfig {
   credsRef: string;
 }
 
+/** The "Streaming first" card. Saved with mediaServersAuto, the media
+ *  servers go back to being picked by image name. */
+export interface StreamingSettings {
+  enabled: boolean;
+  mediaServers: string[];
+  mediaServersAuto: boolean;
+  thresholdMbit: number;
+  limitKiB: number;
+  holdMin: number;
+}
+
+/** A container the card offers as a media server. hostNetwork marks one whose
+ *  traffic Docker cannot count. */
+export interface MediaCandidate {
+  name: string;
+  image: string;
+  hostNetwork: boolean;
+}
+
+/** GET /api/settings/streaming. `streaming` names the media server whose
+ *  stream slows off-site copies right now, "" for none. */
+export function getStreaming(): Promise<
+  OkEnvelope & { settings?: StreamingSettings; candidates?: MediaCandidate[]; streaming?: string }
+> {
+  return fetchJSON("/api/settings/streaming");
+}
+
+/** PUT /api/settings/streaming */
+export function setStreaming(v: StreamingSettings): Promise<OkEnvelope> {
+  return fetchJSON("/api/settings/streaming", { method: "PUT", body: JSON.stringify(v) });
+}
+
 /** GET /api/settings/primary-remote/{domain} */
 export function getPrimaryRemote(
   domain: PrimaryRemoteDomain
@@ -2701,6 +2746,47 @@ export async function getScheduleNext(): Promise<ScheduleNext[]> {
     "/api/schedule/next"
   );
   return res.ok ? (res.runs ?? []) : [];
+}
+
+/** Why an app counts as busy: the traffic.Busy constants of the backend. */
+export type IdleReason = "streaming" | "cpu" | "network" | "measuring";
+
+/** A scheduled backup held back until its app is idle. since and deadline are
+ *  Unix seconds; the backup starts at the deadline if the app is still busy. */
+export interface IdleWait {
+  domain: string;
+  name: string;
+  /** The compose project whose members wait together; absent for a container
+   *  that waits alone. busy names the member whose app holds the wait. */
+  stack?: string;
+  busy: string;
+  reason: IdleReason;
+  since: number;
+  deadline: number;
+}
+
+/** GET /api/schedule/waiting */
+export async function getScheduleWaiting(): Promise<IdleWait[]> {
+  const res = await fetchJSON<{ ok: boolean; waiting?: IdleWait[] }>("/api/schedule/waiting");
+  return res.ok ? (res.waiting ?? []) : [];
+}
+
+/** When an app that is no media server counts as idle: CPU below cpuPct
+ *  percent of a core and traffic below netMbit, for quietMin minutes. */
+export interface IdleSettings {
+  cpuPct: number;
+  netMbit: number;
+  quietMin: number;
+}
+
+/** GET /api/settings/idle */
+export function getIdle(): Promise<OkEnvelope & { settings?: IdleSettings }> {
+  return fetchJSON("/api/settings/idle");
+}
+
+/** PUT /api/settings/idle */
+export function setIdle(v: IdleSettings): Promise<OkEnvelope> {
+  return fetchJSON("/api/settings/idle", { method: "PUT", body: JSON.stringify(v) });
 }
 
 /**

@@ -89,6 +89,7 @@ Thiết lập một bản sao off-site trên tab **Settings, Off-site**. Xem [Of
 - **Nhiều đích off-site cho mỗi miền:** mỗi miền có thể nhân bản tới nhiều đích off-site cùng lúc. Thêm các đích bổ sung trên Settings, Off-site, mỗi đích có kho lưu trữ riêng, lớp lưu trữ S3, cờ append-only, lưu giữ và ngân sách tăng trưởng riêng; tất cả chúng nhân bản theo lịch trình off-site của miền đó. Một thiết lập off-site đơn hiện có được chuyển sang làm đích đầu tiên.
 - **Lưu giữ theo từng nguồn:** chính sách cục bộ nằm trên Settings, Paths & Storage; chính sách off-site trên Settings, Off-site (để tất cả bằng 0 để không bao giờ tự động dọn bớt các snapshot off-site).
 - **Giới hạn băng thông:** giới hạn tốc độ tải lên/tải xuống của restic dưới Settings, Off-site.
+- **Ưu tiên phát trực tuyến:** trong Settings, Off-site, chọn máy chủ media (Plex, Jellyfin và Emby được chọn sẵn theo tên image), tốc độ gửi mà từ đó một máy được coi là đang phát, giới hạn tải lên khi đang phát và bao lâu sau một luồng thì giới hạn thường quay lại.
 - **Lớp lưu trữ nguội và lưu trữ dài hạn (S3):** với một kho off-site S3 gốc, chọn một tầng có thể đọc để khôi phục (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Các remote rclone đặt lớp của chúng trong cấu hình rclone.
 
 ## Bất thường {#anomalies}

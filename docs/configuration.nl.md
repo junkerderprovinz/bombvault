@@ -89,6 +89,7 @@ Stel een off-site replica in op het tabblad **Instellingen, Off-site**. Zie [Off
 - **Meerdere off-site doelen per domein:** elk domein kan tegelijk naar meerdere off-site bestemmingen repliceren. Voeg extra doelen toe op Instellingen, Off-site, elk met zijn eigen repository, S3-opslagklasse, append-only-vlag, retentie en groeibudget; ze repliceren allemaal op de off-site planning van dat domein. Een bestaande enkele off-site setup wordt overgenomen als het eerste doel.
 - **Retentie per bron:** het lokale beleid staat op Instellingen, Paden en Opslag; het off-site beleid op Instellingen, Off-site (laat het geheel op nul om off-site snapshots nooit automatisch te trimmen).
 - **Bandbreedtelimieten:** begrens de restic-upload/downloadsnelheid onder Instellingen, Off-site.
+- **Streaming eerst:** kies onder Instellingen, Off-site de mediaservers (Plex, Jellyfin en Emby zijn voorgeselecteerd op imagenaam), de verzendsnelheid vanaf waar er een als streamend telt, de uploadlimiet tijdens het streamen en hoe lang na een stream de normale limiet terugkomt.
 - **Koude en archiefopslagklasse (S3):** kies voor een native S3 off-site repo een herstel-leesbare tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remotes stellen hun klasse in de rclone-config in.
 
 ## Anomalieën {#anomalies}

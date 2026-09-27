@@ -89,6 +89,7 @@ Skonfiguruj replikę poza siedzibą w zakładce **Ustawienia, Poza siedzibą**. 
 - **Wiele celów poza siedzibą na domenę:** każda domena może replikować do kilku celów poza siedzibą naraz. Dodaj dodatkowe cele w Ustawienia, Poza siedzibą, każdy z własnym repozytorium, klasą pamięci S3, flagą append-only, przechowywaniem i budżetem wzrostu; wszystkie replikują zgodnie z harmonogramem poza siedzibą tej domeny. Istniejąca pojedyncza konfiguracja poza siedzibą jest przenoszona jako pierwszy cel.
 - **Przechowywanie per źródło:** polityka lokalna znajduje się w Ustawienia, Ścieżki i Magazyn; polityka poza siedzibą w Ustawienia, Poza siedzibą (pozostaw ją całą na zero, aby nigdy nie przycinać automatycznie migawek poza siedzibą).
 - **Limity przepustowości:** ogranicz tempo wysyłania/pobierania restic w Ustawienia, Poza siedzibą.
+- **Najpierw streaming:** w Ustawienia, Poza siedzibą wybierz serwery multimediów (Plex, Jellyfin i Emby są wstępnie wybrane po nazwie obrazu), szybkość wysyłania, od której serwer uznaje się za streamujący, limit wysyłania podczas streamingu i po jakim czasie od końca streamu wraca zwykły limit.
 - **Zimna i archiwalna klasa pamięci (S3):** dla natywnego repozytorium S3 poza siedzibą wybierz warstwę czytelną przy przywracaniu (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Zdalne rclone ustawiają swoją klasę w konfiguracji rclone.
 
 ## Anomalie {#anomalies}

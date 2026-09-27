@@ -7,7 +7,7 @@ BombVault intègre un serveur pour le Model Context Protocol (MCP), le protocole
 | Outil | Ce qu'il fait | Type |
 |---|---|---|
 | `get_health` | Version, nom de l'instance, si une sauvegarde est en cours et ce que cette clé a le droit de faire | lecture |
-| `get_status` | État de protection par domaine : dernière sauvegarde réussie, intervalle attendu, vérifications et contrôles hors site, prochaines exécutions planifiées | lecture |
+| `get_status` | État de protection par domaine : dernière sauvegarde réussie, intervalle attendu, vérifications et contrôles hors site, prochaines exécutions planifiées, sauvegardes qui attendent une application au repos | lecture |
 | `get_coverage` | Ce que BombVault protège et ce qu'il ne protège pas, avec la raison pour chaque élément | lecture |
 | `list_items` | Chaque conteneur, VM, ensemble de dossiers protégé, la clé USB flash et la configuration de l'application, avec sa planification, ce qu'une sauvegarde arrête, sa dernière sauvegarde et sa durée ; les conteneurs de base de données indiquent aussi leur dernier dump ; les datasets ZFS y figurent aussi, avec le résultat de leur dernière vérification ; un conteneur recréé avec d'autres réglages depuis sa dernière sauvegarde indique ce qui a changé | lecture |
 | `list_runs` | Historique des exécutions, les plus récentes d'abord, filtrable par domaine, élément, statut, type et date ; une sauvegarde lente freinée par une seule chose la nomme | lecture |

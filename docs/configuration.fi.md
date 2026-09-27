@@ -89,6 +89,7 @@ Määritä etäreplika **Asetukset, Etä** -välilehdellä. Katso [Etäsijainti 
 - **Useita etäkohteita per toimialue:** jokainen toimialue voi replikoitua useaan etäkohteeseen kerralla. Lisää lisäkohteita kohtaan Asetukset, Etä, kukin omalla repositoriollaan, S3-tallennusluokallaan, append-only-lipullaan, säilytyksellään ja kasvubudjetillaan; ne kaikki replikoituvat kyseisen toimialueen etäaikataulun mukaan. Olemassa oleva yksittäinen etämääritys siirretään ensimmäiseksi kohteeksi.
 - **Säilytys lähdekohtaisesti:** paikallinen käytäntö asuu kohdassa Asetukset, Polut ja tallennus; etäkäytäntö kohdassa Asetukset, Etä (jätä se pelkiksi nolliksi, jotta etätilannevedoksia ei koskaan karsita automaattisesti).
 - **Kaistanleveyden rajat:** rajoita resticin lähetys-/latausnopeutta kohdassa Asetukset, Etä.
+- **Suoratoisto ensin:** valitse kohdassa Asetukset, Etä mediapalvelimet (Plex, Jellyfin ja Emby on esivalittu levykuvan nimen mukaan), lähetysnopeus, josta alkaen palvelin lasketaan suoratoistavaksi, lähetysraja suoratoiston aikana ja kuinka kauan suoratoiston jälkeen tavallinen raja palaa.
 - **Kylmä- ja arkistotallennusluokka (S3):** natiiville S3-etärepolle valitse palautuksesta luettava taso (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-etäsijainnit asettavat luokkansa rclone-määrityksessä.
 
 ## Poikkeamat {#anomalies}
