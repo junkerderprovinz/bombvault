@@ -61,6 +61,7 @@ import { SHAPES, getShape, leafTap, setShape, type Shape } from "../lib/shape";
 import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, stormTap, type MotionIntensity } from "../lib/motion";
 import { applyStoredDisco, discoTap, getDisco, setDisco } from "../lib/disco";
 import { HUE_OFFSET, Selector } from "../components/Selector";
+import { useIsDesktop } from "../lib/useMediaQuery";
 import { IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose } from "../components/Sidebar";
 // The integrity row's own two verbs ([324]). They live in the ACTION set
 // rather than the nav one, same split IconUpload already crosses.
@@ -1158,6 +1159,7 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
 // reordering, nothing to get wrong.
 export function SettingsPage() {
   const { t } = useT();
+  const isDesktop = useIsDesktop();
   const { summary: anomalySummary } = useAnomalySummary();
   const { confirm, confirmDialog } = useConfirm();
   const { advanced } = useAdvanced();
@@ -2485,6 +2487,9 @@ export function SettingsPage() {
         }}
         size="lg"
         equalWidth
+        // On a phone the tabs are pages of their own rather than one choice, so
+        // each stands as its own badge instead of sharing a groove.
+        variant={isDesktop ? "well" : "chip"}
         // Below 48rem no tab holds its German label, which would show a letter
         // and an ellipsis, so the glyph stands alone and the label stays the
         // tab's accessible name.

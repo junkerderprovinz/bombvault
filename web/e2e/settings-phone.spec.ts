@@ -396,6 +396,15 @@ async function tabRows(page: Page): Promise<{ perRow: number[] }> {
   });
 }
 
+async function tabFills(page: Page): Promise<{ strip: string; tabsWithoutFill: number }> {
+  return page.getByRole("tablist", { name: "Einstellungen" }).evaluate((strip) => ({
+    strip: getComputedStyle(strip).backgroundColor,
+    tabsWithoutFill: [...strip.querySelectorAll('[role="tab"]')].filter(
+      (tab) => getComputedStyle(tab).backgroundColor === "rgba(0, 0, 0, 0)",
+    ).length,
+  }));
+}
+
 for (const width of [320, 360]) {
   for (const [tab, name] of TABS) {
     test(`settings ${tab} @ ${width}px: nothing pans, clips or is too small to tap`, async ({ page }, testInfo) => {
@@ -405,6 +414,10 @@ for (const width of [320, 360]) {
       // Soft, so one run reports every check a tab fails rather than the first.
       expect.soft(await gaps(page), "the heading and card gaps").toEqual(["24px", "24px"]);
       expect.soft((await tabRows(page)).perRow, "the eight tabs sit four over four").toEqual([4, 4]);
+      expect.soft(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
+        strip: "rgba(0, 0, 0, 0)",
+        tabsWithoutFill: 0,
+      });
 
       const layout = await page.evaluate(() => {
         const main = document.querySelector("#bv-main");
