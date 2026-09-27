@@ -34,7 +34,7 @@ func TestShutdownEndsDetachedWorkBeforeWaitingForRequests(t *testing.T) {
 		<-release
 		w.WriteHeader(http.StatusOK)
 	})
-	srv := api.NewServer(config.Config{HTTPOnly: true, Port: port}, fstest.MapFS{}, router)
+	srv := api.NewServer(config.Config{BindHost: "127.0.0.1", HTTPOnly: true, Port: port}, fstest.MapFS{}, router)
 	srv.BeforeShutdown = func() { close(release) }
 
 	ctx, cancel := context.WithCancel(context.Background())

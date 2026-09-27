@@ -196,6 +196,12 @@ export default defineConfig({
       // writability is the only fail-fast boot check
       // (cmd/bombvault/main.go ensureDataDirWritable).
       DATA_DIR: "./.playwright-data",
+      // Loopback only, so Windows asks no firewall question for each new build.
+      BIND_HOST: "127.0.0.1",
+      // BombVault writes ~/.ssh/config at start; the run gets a home of its own
+      // so it never replaces the developer's.
+      HOME: join(repoRoot, ".playwright-data", "home"),
+      USERPROFILE: join(repoRoot, ".playwright-data", "home"),
       // Plain HTTP instead of any TLS-bypass flag.
       HTTP_ONLY: "true",
       PORT: e2ePort,

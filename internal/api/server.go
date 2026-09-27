@@ -30,10 +30,6 @@ import (
 //go:embed banner.txt
 var brandArt string
 
-// bindHost is explicit because binding to the container's hostname leaves the
-// WebUI unreachable.
-const bindHost = "0.0.0.0"
-
 // Server serves the API and the embedded SPA over HTTP or HTTPS.
 type Server struct {
 	cfg     config.Config
@@ -124,7 +120,7 @@ func (s *Server) Run(ctx context.Context) error {
 	var serve func() error
 
 	if s.cfg.HTTPOnly {
-		addr := net.JoinHostPort(bindHost, strconv.Itoa(s.cfg.Port))
+		addr := net.JoinHostPort(s.cfg.BindHost, strconv.Itoa(s.cfg.Port))
 		srv = &http.Server{
 			Addr:              addr,
 			Handler:           s.handler,
@@ -141,7 +137,7 @@ func (s *Server) Run(ctx context.Context) error {
 		if err := loadServedCertificate(certPath, keyPath); err != nil {
 			return fmt.Errorf("server: load cert: %w", err)
 		}
-		addr := net.JoinHostPort(bindHost, strconv.Itoa(s.cfg.HTTPSPort))
+		addr := net.JoinHostPort(s.cfg.BindHost, strconv.Itoa(s.cfg.HTTPSPort))
 		srv = &http.Server{
 			Addr:              addr,
 			Handler:           s.handler,
