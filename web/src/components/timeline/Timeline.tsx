@@ -1,6 +1,7 @@
 import { Fragment, useState, type ReactNode } from "react";
 import type { TimelineDomain, TimelineMark, TimelinePlace, TimelineRow } from "../../lib/api";
 import { useT } from "../../lib/i18n";
+import { placementChanged } from "../../lib/placementEvents";
 import { autoMark, newestId, sourceOfPlace } from "../../lib/timeline";
 import { useConfirm } from "../../lib/useConfirm";
 import { useHostLabel } from "../../lib/useHostLabel";
@@ -185,7 +186,7 @@ export function Timeline({
                     labelKey="common.delete"
                     tone="neutral"
                     disabled={place.appendOnly}
-                    title={place.appendOnly ? t("placementCode.appendOnly") : undefined}
+                    hint={place.appendOnly ? t("placementCode.appendOnly") : undefined}
                     onClick={() => setDeleting({ row, places: [mark.place] })}
                   />
                   <Button
@@ -221,6 +222,8 @@ export function Timeline({
           onDone={() => {
             setDeleting(null);
             reload();
+            // The cards count the copies at targets, so they read them again.
+            if (deleting.places.length === 0 || deleting.places.some((p) => p !== "local")) placementChanged();
           }}
           onClose={() => setDeleting(null)}
         />
