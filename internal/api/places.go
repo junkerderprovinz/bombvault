@@ -373,12 +373,13 @@ func (s *Service) placeCredsView(settings store.Settings, p store.Place) PlaceCr
 	if len(fields) == 0 {
 		return v
 	}
-	v.Shared = p.CredsRef == ""
 	set, err := s.credSetFor(settings, p.CredsRef)
 	if err != nil {
 		log.Printf("api: place %s: could not read its credentials: %v", p.ID, err) //nolint:gosec // G706: the id is store-generated
 		return v
 	}
+	// A set the place names but that is gone falls back to the shared one.
+	v.Shared = set.ID == ""
 	for _, f := range fields {
 		switch value := f.value(set); {
 		case value == "":
