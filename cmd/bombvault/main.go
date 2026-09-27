@@ -588,6 +588,8 @@ func run() error {
 	// The anomaly worker evaluates the backup history after every run and stops
 	// with the same context the server does.
 	svc.StartAnomalyEngine(ctx)
+	// Container load for slowing off-site uploads while a media server streams.
+	svc.StartTrafficWatch(ctx)
 
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
 	// An MCP listing of a repository that stopped answering holds its request

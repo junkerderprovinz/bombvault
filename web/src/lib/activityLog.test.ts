@@ -893,3 +893,29 @@ describe("a run an assistant started", () => {
     expect(lines.map((l) => l.text).join(" ")).not.toContain("viaMcp");
   });
 });
+
+describe("buildLogLines off-site copy slowed for a stream", () => {
+  it("says the copy runs slowed while it does", () => {
+    const progress: ProgressMap = {
+      "offsite:vms": { phase: "replicate", percent: 0, active: true, lastSeen: 5_000_000, throttle: "now" },
+    };
+    const [live] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(live.text).toBe("activityLog.lineOffsiteRunning domain=activityLog.domainVMs · offsite.throttleNow");
+  });
+
+  it("says a stream only reaches the copy at its next step", () => {
+    const progress: ProgressMap = {
+      "offsite:files": { phase: "replicate", percent: 0, active: true, lastSeen: 5_000_000, throttle: "next" },
+    };
+    const [live] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(live.text).toContain(" · offsite.throttleNext");
+  });
+
+  it("adds nothing while no stream holds the copy back", () => {
+    const progress: ProgressMap = {
+      "offsite:files": { phase: "replicate", percent: 0, active: true, lastSeen: 5_000_000 },
+    };
+    const [live] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(live.text).not.toContain("throttle");
+  });
+});

@@ -422,6 +422,8 @@ export const en = {
   "offsite.replicateNow": "Replicate now",
   "offsite.replicateStarted": "Replication started - it runs in the background; the running indicator shows progress.",
   "offsite.replicating": "Replicating…",
+  "offsite.throttleNow": "slowed for streaming",
+  "offsite.throttleNext": "stream running, slower from the next step",
   // Issue #159: appended next to offsite.replicating when the live progress
   // event carries a startedAt (see OffsiteIndicator) but no live per-snapshot
   // percentage is available YET (e.g. restic is still walking the source tree
@@ -642,6 +644,23 @@ export const en = {
   "settings.limitUpload": "Upload limit (KiB/s)",
   "settings.limitDownload": "Download limit (KiB/s)",
   "settings.limitHint": "0 = unlimited. Caps restic's off-site transfer rate.",
+  "streaming.title": "Streaming first",
+  "streaming.hint": "Off-site copies upload slower while a media server streams. BombVault reads each media server's outgoing traffic from Docker every 10 seconds.",
+  "streaming.toggle": "Slow off-site copies while streaming",
+  "streaming.toggleHint": "REST, S3, B2, Azure, Google Cloud, Swift and rclone over HTTP slow down at once. SFTP and local or mounted folders get the lower limit when their next copy step starts.",
+  "streaming.now": "{name} is streaming, so off-site copies are slowed.",
+  "streaming.servers": "Media servers",
+  "streaming.serversHint": "Until you choose, containers with Plex, Jellyfin or Emby in the image name count as media servers. Docker keeps no traffic count for a container on the host network, so BombVault can't see its streams.",
+  "streaming.pick": "Choose media servers",
+  "streaming.none": "No media server chosen.",
+  "streaming.hostNetwork": "host network, can't be measured",
+  "streaming.remove": "Remove {name}",
+  "streaming.threshold": "Stream above (Mbit/s)",
+  "streaming.thresholdHint": "A media server sending more than this counts as streaming.",
+  "streaming.limit": "Upload limit while streaming (KiB/s)",
+  "streaming.limitHint": "If the normal limit is lower, it stays.",
+  "streaming.hold": "Back to normal after (min)",
+  "streaming.holdHint": "How long the traffic has to stay below the threshold before the normal limit comes back.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Monitoring (Prometheus)",
@@ -2624,6 +2643,7 @@ export const en = {
   "settingsIO.group.language": "Language",
   "settingsIO.group.exportEncryption": "Export encryption",
   "settingsIO.group.anomalies": "Anomaly detection",
+  "settingsIO.group.streaming": "Streaming first",
 
   // Backup order (#119) — manual per-container backup sequence, Containers page.
   "backupOrder.title": "Backup order",
@@ -3183,6 +3203,8 @@ export const de: Translations = {
   "offsite.replicateNow": "Jetzt replizieren",
   "offsite.replicateStarted": "Replikation gestartet - sie läuft im Hintergrund; der Laufindikator zeigt den Fortschritt.",
   "offsite.replicating": "Repliziere…",
+  "offsite.throttleNow": "gebremst fürs Streaming",
+  "offsite.throttleNext": "Stream läuft, langsamer ab dem nächsten Schritt",
   "offsite.replicatingWithDuration": "Repliziere… ({duration})",
   "offsite.replicatingSnapshotPercent": "Repliziere… {percent} % gesamt (Snapshot {index} von {total})",
   "offsite.replicatingSnapshotPercentWithDuration": "Repliziere… {percent} % gesamt (Snapshot {index} von {total}) · {duration}",
@@ -3374,6 +3396,23 @@ export const de: Translations = {
   "settings.limitUpload": "Upload-Limit (KiB/s)",
   "settings.limitDownload": "Download-Limit (KiB/s)",
   "settings.limitHint": "0 = unbegrenzt. Begrenzt resticts Off-site-Transferrate.",
+  "streaming.title": "Streaming zuerst",
+  "streaming.hint": "Off-site-Kopien laden langsamer hoch, solange ein Mediaserver streamt. BombVault liest dazu alle 10 Sekunden den ausgehenden Verkehr jedes Mediaservers aus Docker.",
+  "streaming.toggle": "Off-site-Kopien beim Streaming bremsen",
+  "streaming.toggleHint": "REST, S3, B2, Azure, Google Cloud, Swift und rclone über HTTP werden sofort langsamer. SFTP sowie lokale und eingehängte Ordner bekommen die niedrigere Grenze, wenn ihr nächster Kopierschritt beginnt.",
+  "streaming.now": "{name} streamt, Off-site-Kopien sind gebremst.",
+  "streaming.servers": "Mediaserver",
+  "streaming.serversHint": "Solange du nichts auswählst, gelten Container mit Plex, Jellyfin oder Emby im Image-Namen als Mediaserver. Für einen Container im Host-Netz zählt Docker keinen eigenen Verkehr, BombVault sieht seine Streams also nicht.",
+  "streaming.pick": "Mediaserver auswählen",
+  "streaming.none": "Kein Mediaserver ausgewählt.",
+  "streaming.hostNetwork": "Host-Netz, nicht messbar",
+  "streaming.remove": "{name} entfernen",
+  "streaming.threshold": "Stream ab (Mbit/s)",
+  "streaming.thresholdHint": "Sendet ein Mediaserver mehr als das, gilt er als streamend.",
+  "streaming.limit": "Upload-Grenze beim Streaming (KiB/s)",
+  "streaming.limitHint": "Ist die normale Grenze niedriger, bleibt sie.",
+  "streaming.hold": "Zurück zum Normalen nach (Min.)",
+  "streaming.holdHint": "So lange muss der Verkehr unter der Schwelle bleiben, bevor die normale Grenze zurückkommt.",
 
   // Monitoring (Prometheus)
   "settings.metrics": "Monitoring (Prometheus)",
@@ -5144,6 +5183,7 @@ export const de: Translations = {
   "settingsIO.group.language": "Sprache",
   "settingsIO.group.exportEncryption": "Export-Verschlüsselung",
   "settingsIO.group.anomalies": "Anomalie-Erkennung",
+  "settingsIO.group.streaming": "Streaming zuerst",
 
   // Backup order (#119)
   "backupOrder.title": "Backup-Reihenfolge",

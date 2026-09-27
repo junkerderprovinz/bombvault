@@ -7,6 +7,7 @@ package dockercli
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -26,6 +27,7 @@ import (
 	"github.com/docker/go-connections/nat"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/traffic"
 )
 
 // Client is the real Docker adapter over the official SDK, talking to the
@@ -383,6 +385,36 @@ func waitExecExit(ctx context.Context, inspect func(context.Context) (running bo
 	}
 }
 
+// Stats reads a container's cumulative CPU and network counters once, without
+// the second sample docker stats waits a second for. A stopped container comes
+// back with Running false.
+func (c *Client) Stats(ctx context.Context, name string) (traffic.Sample, error) {
+	resp, err := c.api.ContainerStatsOneShot(ctx, name)
+	if err != nil {
+		return traffic.Sample{}, fmt.Errorf("dockercli: stats %s: %w", name, err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	var st container.StatsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&st); err != nil {
+		return traffic.Sample{}, fmt.Errorf("dockercli: stats %s: decode: %w", name, err)
+	}
+	return statsSample(st, time.Now()), nil
+}
+
+func statsSample(st container.StatsResponse, at time.Time) traffic.Sample {
+	s := traffic.Sample{
+		At:       at,
+		Running:  !st.Read.IsZero() && st.PidsStats.Current > 0,
+		CPUNanos: st.CPUStats.CPUUsage.TotalUsage,
+		HasNet:   len(st.Networks) > 0,
+	}
+	for _, n := range st.Networks {
+		s.RxBytes += n.RxBytes
+		s.TxBytes += n.TxBytes
+	}
+	return s
+}
+
 // Remove removes a container by name or ID.
 func (c *Client) Remove(ctx context.Context, name string) error {
 	if err := c.api.ContainerRemove(ctx, name, container.RemoveOptions{}); err != nil {
@@ -604,6 +636,8 @@ func mapContainerSummary(s container.Summary) ContainerInfo {
 		Created: s.Created,
 		Labels:  s.Labels,
 		Mounts:  mounts,
+
+		NetworkMode: s.HostConfig.NetworkMode,
 	}
 }
 

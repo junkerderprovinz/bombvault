@@ -294,6 +294,8 @@ func (h *Handler) Router() http.Handler {
 	// off-site target schema with role="primary" (see internal/api/primary_remote.go).
 	// Distinct from the /api/offsite/... routes above: a "primary" row is never a
 	// replication destination and is never reachable through them.
+	mux.HandleFunc("GET /api/settings/streaming", h.handleGetStreaming)
+	mux.HandleFunc("PUT /api/settings/streaming", h.handleSetStreaming)
 	mux.HandleFunc("GET /api/settings/primary-remote/{domain}", h.handleGetPrimaryRemote)
 	mux.HandleFunc("PUT /api/settings/primary-remote/{domain}", h.handleSetPrimaryRemote)
 	mux.HandleFunc("DELETE /api/settings/primary-remote/{domain}", h.handleDeletePrimaryRemote)

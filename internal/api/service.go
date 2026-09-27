@@ -411,6 +411,10 @@ type Service struct {
 	suggestCache   map[string]suggestCacheEntry
 	suggestFlights map[string]*suggestFlight
 
+	// trafficSt watches media servers and busy apps; see traffic.go.
+	trafficOnce sync.Once
+	trafficSt   *trafficState
+
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on
 	// every replication while over budget); the latch clears when growth drops
@@ -1004,6 +1008,7 @@ func (s *Service) progBeginCopySink(ctx context.Context, domain string, startedA
 		s.progress.Publish(progress.Event{
 			Key: key, Phase: "replicate", Active: true, StartedAt: startedAt,
 			Percent: cp.Percent, SnapshotIndex: cp.SnapshotIndex, SnapshotTotal: total,
+			Throttle: s.offsiteThrottle(domain),
 		})
 	})
 }
@@ -3540,7 +3545,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 				case <-hbDone:
 					return
 				case <-t.C:
-					e := progress.Event{Key: "offsite:" + domain, Phase: "replicate", Active: true, StartedAt: startedAt}
+					e := progress.Event{Key: "offsite:" + domain, Phase: "replicate", Active: true, StartedAt: startedAt, Throttle: s.offsiteThrottle(domain)}
 					if cp, total, ok := lastCopy.get(); ok {
 						e.Percent, e.SnapshotIndex, e.SnapshotTotal = cp.Percent, cp.SnapshotIndex, total
 					}
@@ -3807,7 +3812,10 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 				continue // the destination already holds all of them
 			}
 		}
-		if cErr := s.engine.Copy(copyCtx, dest, src.Loc, ids, targetOffsiteLimits(target), mode); cErr != nil {
+		lim, stepMode, release := s.throttleCopy(domain, dest, targetOffsiteLimits(target), mode)
+		cErr := s.engine.Copy(copyCtx, dest, src.Loc, ids, lim, stepMode)
+		release()
+		if cErr != nil {
 			log.Printf("api: offsite %s: copying %s failed (continuing with the other sources): %v", domain, shortRepoName(src.Loc), scrubError(cErr)) //nolint:gosec // G706: domain is a fixed literal, the name is shortened and the error scrubbed here
 			copyErrs = append(copyErrs, fmt.Errorf("copying %s: %w", shortRepoName(src.Loc), cErr))
 			continue

@@ -407,7 +407,8 @@ export interface GetSettingsResponse {
  * destination rows the file carries, `credentials` reports which secret kinds are
  * present (never the values), and `settingsGroups` names the setting areas the
  * file populates (machine ids: "domains","schedules","retention","offsite",
- * "drills","digest","monitoring","language","exportEncryption").
+ * "drills","digest","monitoring","language","exportEncryption","anomalies",
+ * "streaming").
  */
 export interface ImportSettingsSummary {
   schemaVersion: number;
@@ -2180,6 +2181,38 @@ export interface PrimaryRemoteConfig {
    *  #182: an S3 primary path with its own keys had no way to say so, and
    *  primaryModeFor applies this to real backups, not only to the test. */
   credsRef: string;
+}
+
+/** The "Streaming first" card. Saved with mediaServersAuto, the media
+ *  servers go back to being picked by image name. */
+export interface StreamingSettings {
+  enabled: boolean;
+  mediaServers: string[];
+  mediaServersAuto: boolean;
+  thresholdMbit: number;
+  limitKiB: number;
+  holdMin: number;
+}
+
+/** A container the card offers as a media server. hostNetwork marks one whose
+ *  traffic Docker cannot count. */
+export interface MediaCandidate {
+  name: string;
+  image: string;
+  hostNetwork: boolean;
+}
+
+/** GET /api/settings/streaming. `streaming` names the media server whose
+ *  stream slows off-site copies right now, "" for none. */
+export function getStreaming(): Promise<
+  OkEnvelope & { settings?: StreamingSettings; candidates?: MediaCandidate[]; streaming?: string }
+> {
+  return fetchJSON("/api/settings/streaming");
+}
+
+/** PUT /api/settings/streaming */
+export function setStreaming(v: StreamingSettings): Promise<OkEnvelope> {
+  return fetchJSON("/api/settings/streaming", { method: "PUT", body: JSON.stringify(v) });
 }
 
 /** GET /api/settings/primary-remote/{domain} */

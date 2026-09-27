@@ -2119,6 +2119,21 @@ CREATE TABLE IF NOT EXISTS mcp_oauth_tokens (
 CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_grant ON mcp_oauth_tokens(grant_id, kind);
 CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires ON mcp_oauth_tokens(expires_at);`,
 	},
+	{
+		// How BombVault tells a media server is streaming and how far it slows
+		// its off-site uploads meanwhile. A NULL media_servers means nobody
+		// picked any yet, so the image names decide.
+		version: trafficMigration,
+		name:    "traffic_settings",
+		sql: `CREATE TABLE IF NOT EXISTS traffic_settings (
+  id               INTEGER PRIMARY KEY CHECK (id = 1),
+  stream_throttle  INTEGER NOT NULL DEFAULT 0,
+  media_servers    TEXT,
+  stream_mbit      INTEGER NOT NULL DEFAULT 2,
+  stream_limit_kib INTEGER NOT NULL DEFAULT 512,
+  stream_hold_min  INTEGER NOT NULL DEFAULT 5
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2154,6 +2169,9 @@ const mcpActivityMigration = 148
 
 // mcpOAuthMigration numbers the OAuth sign-in of the MCP endpoint.
 const mcpOAuthMigration = mcpActivityMigration + 4
+
+// trafficMigration numbers the streaming and idle settings.
+const trafficMigration = 210
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

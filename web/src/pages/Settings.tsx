@@ -28,6 +28,7 @@ import { labelModeChanged } from "../lib/useLabelMode";
 import { InfoBubble } from "../components/InfoBubble";
 import { RetentionPreview } from "../components/RetentionPreview";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
+import { StreamingCard } from "./settings/StreamingCard";
 // Every cadence picker on this page edits a schedule that can count an
 // interval (#166): the six domains and Backup Everything from their last
 // successful backup, drills, tamper test and digest from schedule_job_runs.
@@ -4274,6 +4275,8 @@ export function SettingsPage() {
         </div>
       </Card>
       )}
+
+      {tab === "offsite" && advanced && <StreamingCard t={t} hueIndex={nextHue()} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* SYSTEM — Monitoring (Prometheus)                                   */}

@@ -89,6 +89,7 @@ Configurez un réplica hors site dans l'onglet **Paramètres, Hors site**. Voir 
 - **Plusieurs cibles hors site par domaine :** chaque domaine peut répliquer vers plusieurs destinations hors site à la fois. Ajoutez des cibles supplémentaires dans Paramètres, Hors site, chacune avec son propre dépôt, sa classe de stockage S3, son indicateur append-only, sa rétention et son budget de croissance ; elles répliquent toutes selon le planning hors site de ce domaine. Une configuration hors site unique existante est reprise comme première cible.
 - **Rétention par source :** la politique locale vit dans Paramètres, Chemins et stockage ; la politique hors site dans Paramètres, Hors site (laissez-la entièrement à zéro pour ne jamais rogner automatiquement les instantanés hors site).
 - **Limites de bande passante :** plafonnez le débit d'envoi/de téléchargement de restic sous Paramètres, Hors site.
+- **Le streaming d'abord :** dans Paramètres, Hors site, choisis les serveurs multimédias (Plex, Jellyfin et Emby sont présélectionnés d'après le nom de l'image), le débit d'envoi à partir duquel un serveur compte comme en streaming, la limite d'envoi pendant le streaming et le délai après un flux avant le retour de la limite normale.
 - **Classe de stockage froid et archivage (S3) :** pour un dépôt hors site S3 natif, choisissez un niveau lisible à la restauration (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Les remotes rclone définissent leur classe dans la config rclone.
 
 ## Anomalies {#anomalies}

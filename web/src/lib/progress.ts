@@ -49,7 +49,13 @@ export interface ProgressState {
   // `active` stays true meanwhile, so this is how to tell there is nothing left
   // to cancel.
   finished?: boolean;
+  // An off-site copy slowed for a media server's stream: "now" while it runs
+  // at the streaming limit, "next" while a stream runs that the copy can only
+  // meet from its next step.
+  throttle?: OffsiteThrottle;
 }
+
+export type OffsiteThrottle = "now" | "next";
 
 /** The steps that report bytes instead of a percentage. */
 export type ProgressStage = "dbdump" | "dbdumpsave" | "dbimport";
@@ -154,6 +160,7 @@ function applyEvent(ev: ProgressFrame): void {
     stage: ev.stage,
     bytes: ev.bytes,
     committed: ev.committed,
+    throttle: ev.throttle,
     finished: ev.active ? undefined : true,
   };
 
@@ -211,6 +218,7 @@ export function parseProgressFrame(data: string): ProgressFrame | null {
     stage: ev.stage && STAGES.includes(ev.stage) ? ev.stage : undefined,
     bytes: typeof ev.bytes === "number" ? ev.bytes : undefined,
     committed: ev.committed === true ? true : undefined,
+    throttle: ev.throttle === "now" || ev.throttle === "next" ? ev.throttle : undefined,
   };
 }
 

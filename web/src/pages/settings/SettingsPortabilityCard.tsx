@@ -22,6 +22,7 @@ const IMPORT_GROUP_KEYS: Record<string, TranslationKey> = {
   language: "settingsIO.group.language",
   exportEncryption: "settingsIO.group.exportEncryption",
   anomalies: "settingsIO.group.anomalies",
+  streaming: "settingsIO.group.streaming",
 };
 // SettingsPortabilityCard, lifted out of Settings.tsx ([337]).
 //

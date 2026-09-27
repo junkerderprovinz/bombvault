@@ -89,6 +89,7 @@ Sett opp en ekstern replika på **Innstillinger, Ekstern**-fanen. Se [Ekstern la
 - **Flere eksterne mål per domene:** hvert domene kan replikere til flere eksterne destinasjoner samtidig. Legg til ekstra mål på Innstillinger, Ekstern, hvert med sitt eget repository, sin S3-lagringsklasse, append-only-flagg, oppbevaring og vekstbudsjett; de replikerer alle på det domenets eksterne tidsplan. Et eksisterende enkelt ekstern-oppsett overføres som det første målet.
 - **Oppbevaring per kilde:** den lokale policyen ligger på Innstillinger, Stier og lagring; den eksterne policyen på Innstillinger, Ekstern (la den stå helt på null for aldri å auto-trimme eksterne øyeblikksbilder).
 - **Båndbreddegrenser:** begrens resticts opplastings-/nedlastingshastighet under Innstillinger, Ekstern.
+- **Strømming først:** under Innstillinger, Ekstern velger du medieserverne (Plex, Jellyfin og Emby er forhåndsvalgt ut fra image-navnet), sendehastigheten der en server regnes som strømmende, opplastingsgrensen under strømming og hvor lenge etter en strøm den vanlige grensen kommer tilbake.
 - **Kald og arkiv-lagringsklasse (S3):** for et native S3-eksternt repo, velg et gjenopprettingslesbart nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remoter setter klassen sin i rclone-konfigurasjonen.
 
 ## Avvik {#anomalies}

@@ -6,7 +6,7 @@
 
 import type { Run, ScheduleNext } from "./api";
 import { dumpLeftRunning, dumpWasCancelled, importHadErrors } from "./dbdump";
-import type { ProgressMap, ProgressStage, ProgressState } from "./progress";
+import type { OffsiteThrottle, ProgressMap, ProgressStage, ProgressState } from "./progress";
 import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
 import type { TranslationKey } from "./i18n";
@@ -245,6 +245,17 @@ const DOMAIN_OP_RUNNING_KEYS: Record<"prune" | "verify" | "drill" | "drdrill" | 
  * offsiteRunProgress, so this line and OffsiteIndicator agree on it.
  */
 function offsiteLiveLineText(resolveName: ResolveName, domain: LogDomain, state: ProgressState, duration: string): string {
+  const text = offsiteRunningText(resolveName, domain, state, duration);
+  return state.throttle ? `${text} · ${resolveName(THROTTLE_KEYS[state.throttle])}` : text;
+}
+
+/** What an off-site line says about a copy slowed for a stream. */
+export const THROTTLE_KEYS: Record<OffsiteThrottle, TranslationKey> = {
+  now: "offsite.throttleNow",
+  next: "offsite.throttleNext",
+};
+
+function offsiteRunningText(resolveName: ResolveName, domain: LogDomain, state: ProgressState, duration: string): string {
   const domainText = domainLabel(resolveName, domain);
   const run = offsiteRunProgress(state);
   if (run) {

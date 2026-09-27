@@ -57,6 +57,9 @@ type settingsExport struct {
 	OffsiteTargets []offsiteTargetView `json:"offsiteTargets"`
 	NamedRepos     []offsiteTargetView `json:"namedRepos,omitempty"`
 	Credentials    *exportCredentials  `json:"credentials,omitempty"`
+	// Streaming is the "Streaming first" card, absent from files written
+	// before it existed.
+	Streaming *streamingView `json:"streaming,omitempty"`
 	// predatesZFS is set when the file carries no zfsEnabled key: it comes from
 	// a build without the ZFS domain, so its empty ZFS fields say nothing about
 	// the ZFS setup of the instance it is applied to.
@@ -248,6 +251,11 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	traffic, err := h.store.TrafficSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 
 	exp := settingsExport{
 		SchemaVersion:  settingsExportSchema,
@@ -256,6 +264,7 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		Settings:       buildSettingsView(s),
 		OffsiteTargets: offsiteTargetsToViews(targets),
 		NamedRepos:     offsiteTargetsToViews(namedRepos),
+		Streaming:      streamingToView(traffic),
 	}
 
 	if withCredentials {
@@ -671,6 +680,11 @@ func validateExport(exp settingsExport, mountRoot string) string {
 	if msg := rejectInvalidAnomalySettings(exp.Settings); msg != "" {
 		return "invalid settings: " + msg
 	}
+	if exp.Streaming != nil {
+		if err := validateStreaming(*exp.Streaming); err != nil {
+			return "invalid streaming settings: " + err.Error()
+		}
+	}
 	return ""
 }
 
@@ -695,8 +709,22 @@ func summarizeExport(exp settingsExport) importSummary {
 		OffsiteTargets: len(exp.OffsiteTargets),
 		NamedRepos:     len(exp.NamedRepos),
 		Credentials:    credsPresence(exp.Credentials),
-		SettingsGroups: settingsGroups(exp.Settings),
+		SettingsGroups: exportGroups(exp),
 	}
+}
+
+// exportGroups is settingsGroups plus the blocks the file carries beside the
+// settings view. The streaming card is named only when it departs from how
+// the card ships.
+func exportGroups(exp settingsExport) []string {
+	groups := settingsGroups(exp.Settings)
+	if v := exp.Streaming; v != nil {
+		d := store.DefaultTrafficSettings()
+		if v.Enabled || !v.MediaServersAuto || v.ThresholdMbit != d.StreamMbit || v.LimitKiB != d.StreamLimitKiB || v.HoldMin != d.StreamHoldMin {
+			groups = append(groups, "streaming")
+		}
+	}
+	return groups
 }
 
 // credsPresence reports which credential kinds the file carries.
@@ -812,6 +840,16 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	// leave every item pointing at an id that no longer exists.
 	if len(exp.NamedRepos) > 0 {
 		if err := h.replaceNamedRepos(exp.NamedRepos); err != nil {
+			return err
+		}
+	}
+
+	if exp.Streaming != nil {
+		cur, err := h.store.TrafficSettings()
+		if err != nil {
+			return err
+		}
+		if err := h.store.SetTrafficSettings(applyStreamingView(cur, *exp.Streaming)); err != nil {
 			return err
 		}
 	}

@@ -90,6 +90,10 @@ type Event struct {
 	// Committed marks a backup whose restore point is written and that only
 	// starts its containers again, so it can no longer be cancelled.
 	Committed bool `json:"committed,omitempty"`
+	// Throttle marks an off-site copy slowed for a media server's stream:
+	// "now" while it runs at the streaming limit, "next" while a stream runs
+	// that the copy can only meet from its next step.
+	Throttle string `json:"throttle,omitempty"`
 }
 
 // Store is an in-process fan-out of progress Events. It keeps the latest active
