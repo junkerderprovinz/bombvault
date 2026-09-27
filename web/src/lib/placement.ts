@@ -68,10 +68,16 @@ export function homeOptionLabel(t: T, host: string, h: HomeOption): string {
   }
 }
 
-/** homeKey tells a place whose repository is still to be made apart from the
- *  domain path, since both have the id "", so Stored on offers each. */
+// The domain path has the id "" too, and names its home place, so only the
+// kind tells it apart from a place whose repository is still to be made.
+function placeToMake(h: HomeOption): boolean {
+  return !h.id && h.kind === "local" && h.placeId !== "";
+}
+
+/** homeKey gives a place whose repository is still to be made a value of its
+ *  own beside the domain path, so Stored on offers each. */
 export function homeKey(h: HomeOption): string {
-  return h.id || (h.kind === "local" && h.placeId ? `place:${h.placeId}` : "");
+  return placeToMake(h) ? `place:${h.placeId}` : h.id;
 }
 
 export function sendToLabel(t: T, s: SendToOption): string {
@@ -264,7 +270,7 @@ export function stepForSegment(seg: SegmentId, view: PlacementView, options: Pla
 export function stepForHome(repoId: string, view: PlacementView, options: PlacementOptions, t: T, host: string): PlacementStep {
   if (repoId === view.repo && !view.homeFollows) return NONE;
   const home = options.homes.find((h) => homeKey(h) === repoId);
-  if (home && !home.id && home.placeId) {
+  if (home && placeToMake(home)) {
     const label = homeOptionLabel(t, host, home);
     return { kind: "place", placeId: home.placeId, confirmHome: label, name: home.name, repoKind: "local", offsiteOnly: false };
   }
