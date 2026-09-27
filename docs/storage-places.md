@@ -57,7 +57,7 @@ A place can be removed only while nothing uses it: no domain is stored there, no
 
 ## Without a place {#without-a-place}
 
-An address that does not fit the form of a place plus a folder keeps working and is listed under **Without a place**, with its address. Native `b2:`, `gs:` and `swift:` addresses are among them. **Assign to place** attaches such a row to a place, after the same test as [changing an address](#addresses). A copy target without a place is also named on its domain's row, next to the chips, and keeps copying.
+An address that does not fit the form of a place plus a folder keeps working and is listed under **Without a place**, with its address. Native `b2:`, `gs:` and `swift:` addresses are among them. **Assign to place** attaches such a row to a place, after the same test as [changing an address](#addresses). A copy target without a place is also named on its domain's row, next to the chips, and keeps copying. A remote row there has its own **Append-only** switch, and switching it off asks first with the number of items that keep backups at that address. A direct repository follows the switch of its target.
 
 ## Off the premises {#off-the-premises}
 

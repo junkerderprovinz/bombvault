@@ -57,7 +57,7 @@ Ein Ort lässt sich nur entfernen, solange ihn nichts benutzt: Kein Bereich ist 
 
 ## Ohne Ort {#without-a-place}
 
-Eine Adresse, die nicht in die Form Ort plus Ordner passt, arbeitet weiter und steht mit ihrer Adresse unter **Ohne Ort**. Native `b2:`-, `gs:`- und `swift:`-Adressen gehören dazu. **Einem Ort zuordnen** hängt so eine Zeile an einen Ort, nach demselben Test wie beim [Ändern einer Adresse](#addresses). Ein Kopieziel ohne Ort steht außerdem in der Zeile seines Bereichs neben den Chips und kopiert weiter.
+Eine Adresse, die nicht in die Form Ort plus Ordner passt, arbeitet weiter und steht mit ihrer Adresse unter **Ohne Ort**. Native `b2:`-, `gs:`- und `swift:`-Adressen gehören dazu. **Einem Ort zuordnen** hängt so eine Zeile an einen Ort, nach demselben Test wie beim [Ändern einer Adresse](#addresses). Ein Kopieziel ohne Ort steht außerdem in der Zeile seines Bereichs neben den Chips und kopiert weiter. Eine entfernte Zeile dort hat einen eigenen Schalter **Append-only**. Wer ihn ausschaltet, wird vorher gefragt und erfährt, wie viele Einträge an dieser Adresse Backups haben. Ein Direkt-Repository folgt dem Schalter seines Ziels.
 
 ## Außer Haus {#off-the-premises}
 
