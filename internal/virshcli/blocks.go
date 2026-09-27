@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -89,16 +90,25 @@ func writeTemp(pattern, content string) (string, error) {
 	return f.Name(), nil
 }
 
-// BackupJobXML implements BlockBackups.
+// BackupJobXML implements BlockBackups. No running job is the usual answer,
+// so it is neither an error nor logged.
 func (c *Client) BackupJobXML(ctx context.Context, domain string) (string, error) {
-	out, err := c.run(ctx, "backup-dumpxml", domain)
+	out, stderr, err := c.exec(ctx, "backup-dumpxml", domain)
 	if err != nil {
-		if strings.Contains(strings.ToLower(err.Error()), "no domain backup job") {
+		if noBackupJob(stderr) {
 			return "", nil
 		}
-		return "", err
+		log.Printf("virshcli: %q failed: %s", "backup-dumpxml", stderr)
+		return "", fmt.Errorf("virshcli: backup-dumpxml: %s", lastReason(stderr))
 	}
 	return out, nil
+}
+
+// noBackupJob reports whether virsh stderr is libvirt's answer for a domain
+// that runs no backup job: "Domain backup job id not found: no domain backup
+// job present".
+func noBackupJob(stderr string) bool {
+	return strings.Contains(stderr, "no domain backup job present")
 }
 
 // AbortJob implements BlockBackups.

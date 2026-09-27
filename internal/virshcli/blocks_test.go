@@ -1,6 +1,12 @@
 package virshcli
 
 import (
+	"bytes"
+	"context"
+	"log"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -59,5 +65,71 @@ func TestParseDomainKeepsDiskFormat(t *testing.T) {
 	}
 	if len(d.Disks) != 2 || d.Disks[0].Format != "qcow2" || d.Disks[1].Format != "raw" {
 		t.Fatalf("disks = %+v", d.Disks)
+	}
+}
+
+func TestNoBackupJobMatchesOnlyLibvirtsNoJobAnswer(t *testing.T) {
+	if !noBackupJob("error: Domain backup job id not found: no domain backup job present\n") {
+		t.Fatal("libvirt's no-job answer is not recognised")
+	}
+	for _, stderr := range []string{
+		"error: failed to get domain 'win'\n",
+		"error: Requested operation is not valid: domain is not running\n",
+		"",
+	} {
+		if noBackupJob(stderr) {
+			t.Fatalf("%q counts as no job", stderr)
+		}
+	}
+}
+
+// fakeVirsh writes a script that prints stderr and exits 1, and returns a
+// client that runs it.
+func fakeVirsh(t *testing.T, stderr string) *Client {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("needs a shell script as the virsh binary")
+	}
+	dir := t.TempDir()
+	msg := filepath.Join(dir, "stderr")
+	if err := os.WriteFile(msg, []byte(stderr), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	bin := filepath.Join(dir, "virsh")
+	script := "#!/bin/sh\ncat '" + msg + "' >&2\nexit 1\n"
+	if err := os.WriteFile(bin, []byte(script), 0o700); err != nil { //nolint:gosec // G306: the test needs it executable
+		t.Fatal(err)
+	}
+	return &Client{bin: bin}
+}
+
+func captureLog(t *testing.T) *bytes.Buffer {
+	t.Helper()
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	t.Cleanup(func() { log.SetOutput(os.Stderr) })
+	return &buf
+}
+
+func TestBackupJobXMLTreatsNoJobAsNoneWithoutLogging(t *testing.T) {
+	c := fakeVirsh(t, "error: Domain backup job id not found: no domain backup job present\n")
+	logged := captureLog(t)
+	job, err := c.BackupJobXML(context.Background(), "win")
+	if err != nil || job != "" {
+		t.Fatalf("job %q, err %v; want no job and no error", job, err)
+	}
+	if logged.Len() != 0 {
+		t.Fatalf("logged %q for the normal case", logged.String())
+	}
+}
+
+func TestBackupJobXMLReportsOtherFailures(t *testing.T) {
+	c := fakeVirsh(t, "error: failed to get domain 'win'\n")
+	logged := captureLog(t)
+	if _, err := c.BackupJobXML(context.Background(), "win"); err == nil {
+		t.Fatal("a missing domain came back without an error")
+	}
+	if !strings.Contains(logged.String(), "failed to get domain") {
+		t.Fatalf("the failure was not logged: %q", logged.String())
 	}
 }
