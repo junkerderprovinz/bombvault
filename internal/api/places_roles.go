@@ -223,6 +223,13 @@ func (s *Service) adoptRow(ctx context.Context, placeID string, body adoptBody) 
 			return err
 		}
 	}
+	locks := &domainLocks{s: s}
+	defer locks.release()
+	if !sameRepoLocation(addr, row.Repo) {
+		if err := locks.take(domain); err != nil {
+			return err
+		}
+	}
 	// The same address with the same credentials is the same repository;
 	// anything else is opened first.
 	if !sameRepoLocation(addr, row.Repo) || !sameCreds {
@@ -394,6 +401,13 @@ func (s *Service) adoptDomainPath(ctx context.Context, settings store.Settings, 
 	before := s.retentionPolicyForRef(settings, domain, domainRepoRef{Own: true})
 	if err := placeKeeps(p, before, s.primaryIsImmutable(domain, loc)); err != nil {
 		return err
+	}
+	locks := &domainLocks{s: s}
+	defer locks.release()
+	if !sameRepoLocation(addr, old) {
+		if err := locks.take(domain); err != nil {
+			return err
+		}
 	}
 	if !sameRepoLocation(addr, old) || restic.IsRemoteRepo(loc) {
 		facts, err := s.domainPathFacts(settings, domain)

@@ -253,7 +253,9 @@ func (f *placementFixture) movesOf(before, after store.Place) ([]addressMove, er
 	if err != nil {
 		f.t.Fatal(err)
 	}
-	return f.svc.placeMoves(settings, before, after, rows, homes)
+	locks := &domainLocks{s: f.svc}
+	defer locks.release()
+	return f.svc.placeMoves(settings, before, after, rows, homes, locks)
 }
 
 func TestAnEditListsTheAddressesItMoves(t *testing.T) {

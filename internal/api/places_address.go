@@ -104,9 +104,42 @@ func (e *placeEstablishedErr) Error() string { return errPlaceLocationEstablishe
 
 func (e *placeEstablishedErr) Is(target error) bool { return target == errPlaceLocationEstablished }
 
+// domainLocks are the domain locks an edit holds for the addresses it moves,
+// taken before what lies at an address is read, as "Stored in" does, so no
+// backup or copy writes to an old address between that read and the write.
+type domainLocks struct {
+	s    *Service
+	held map[string]func()
+}
+
+// take locks the domain unless the edit holds it already. A repository that
+// serves every domain has none to take; items backing up to it count as
+// backups at its address.
+func (l *domainLocks) take(domain string) error {
+	if _, ok := l.held[domain]; ok || domain == "" {
+		return nil
+	}
+	unlock, ok := l.s.tryLockDomainFor(domain, placementLockReason)
+	if !ok {
+		return errPlacementBusy
+	}
+	if l.held == nil {
+		l.held = map[string]func(){}
+	}
+	l.held[domain] = unlock
+	return nil
+}
+
+func (l *domainLocks) release() {
+	for _, unlock := range l.held {
+		unlock()
+	}
+}
+
 // placeMoves lists every address of the place that an edit from before to
 // after changes: each row's, and the path of each domain whose home it is.
-func (s *Service) placeMoves(settings store.Settings, before, after store.Place, rows []store.OffsiteTarget, homes map[string]string) ([]addressMove, error) {
+// It takes the domain lock of each move into locks.
+func (s *Service) placeMoves(settings store.Settings, before, after store.Place, rows []store.OffsiteTarget, homes map[string]string, locks *domainLocks) ([]addressMove, error) {
 	var out []addressMove
 	for _, r := range rows {
 		// A domain's primary row follows its path, which the homes below cover.
@@ -119,6 +152,9 @@ func (s *Service) placeMoves(settings store.Settings, before, after store.Place,
 		}
 		if sameRepoLocation(addr, r.Repo) {
 			continue
+		}
+		if err := locks.take(r.PlaceDomain); err != nil {
+			return nil, err
 		}
 		facts, err := s.rowFacts(r)
 		if err != nil {
@@ -141,6 +177,9 @@ func (s *Service) placeMoves(settings store.Settings, before, after store.Place,
 		old := domainPathRaw(d, settings)
 		if sameRepoLocation(addr, old) {
 			continue
+		}
+		if err := locks.take(d); err != nil {
+			return nil, err
 		}
 		facts, err := s.domainPathFacts(settings, d)
 		if err != nil {
