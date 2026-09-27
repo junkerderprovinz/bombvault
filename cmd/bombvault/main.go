@@ -403,7 +403,7 @@ func run() error {
 		// can't make the drill silently vanish (records nothing → dashboard "never").
 		_, dErr := svc.RunRestoreDrill(context.Background(), domain, source, kind, true)
 		return dErr
-	}, st.OffsiteTargetsForDomain)
+	}, svc.DRDrillTargets)
 	scheduler.SetTamperJob(func(domain string) error {
 		_, tErr := svc.RunTamperTest(context.Background(), domain)
 		return tErr

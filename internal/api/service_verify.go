@@ -408,6 +408,37 @@ const drillSnapshotTimeout = 15 * time.Minute
 // a false "verified restorable" and a red a false failure.
 var errNothingToDrill = errors.New("no restorable file data in the newest off-site snapshot: nothing to drill")
 
+// DRDrillTargets lists the switched-on targets of a domain that stand off the
+// premises, which the scheduled DR drill takes in turn: a restore from a
+// target in the house proves nothing about losing the house.
+func (s *Service) DRDrillTargets(domain string) ([]store.OffsiteTarget, error) {
+	targets, err := s.enabledOffsiteTargets(domain)
+	if err != nil {
+		return nil, err
+	}
+	sites, err := s.store.PlaceSites()
+	if err != nil {
+		return nil, err
+	}
+	return offSiteTargets(targets, sites), nil
+}
+
+// drDrillTarget is the target a DR drill restores from. The bare "offsite"
+// source takes the first of DRDrillTargets, or with none the first switched-on
+// target as every other bare "offsite" does.
+func (s *Service) drDrillTarget(settings store.Settings, domain, source string) (store.OffsiteTarget, error) {
+	if source == "offsite" {
+		targets, err := s.DRDrillTargets(domain)
+		if err != nil {
+			return store.OffsiteTarget{}, err
+		}
+		if len(targets) > 0 {
+			return targets[0], nil
+		}
+	}
+	return s.offsiteTargetForSource(settings, domain, source)
+}
+
 // runDRDrill performs a real off-site disaster-recovery drill for a domain: it
 // restores the newest off-site snapshot of the drill target into a marker-guarded
 // sandbox under the restore folder, verifies the restored file count + bytes
@@ -424,7 +455,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
 	}
 	// A DR drill only ever restores from an off-site repo, so any other source
-	// takes the first enabled target. An "offsite:<id>" source drills that
+	// takes the target drDrillTarget picks. An "offsite:<id>" source drills that
 	// target, and the result is recorded for the domain all the same, naming
 	// the target, because it answers whether the domain restores from off-site.
 	if !isOffsiteSource(source) {
@@ -435,7 +466,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	if err != nil {
 		return store.RestoreDrill{}, fmt.Errorf("read settings: %w", err)
 	}
-	target, err := s.offsiteTargetForSource(settings, domain, source)
+	target, err := s.drDrillTarget(settings, domain, source)
 	if err != nil {
 		return store.RestoreDrill{}, err
 	}

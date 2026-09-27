@@ -225,6 +225,98 @@ func TestADRDrillOfASwitchedOffTargetDoesNotSetTheVerdict(t *testing.T) {
 	}
 }
 
+func TestADRDrillOfATargetInTheHouseProvesNothingOffSite(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
+	f.linkRow(nas.ID, f.storePlace(nasKeller()), "containers", "")
+	b2 := f.target("containers", "B2", b2Containers)
+	if err := f.st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "offsite", Kind: "dr", At: 100, OK: true, TargetID: nas.ID}); err != nil {
+		t.Fatal(err)
+	}
+	if d := f.domainStatus("containers"); d.LastDRDrillAt != 0 || d.DrillTarget != "" {
+		t.Fatalf("drill at %d on %q, want none: only the NAS in the house was drilled", d.LastDRDrillAt, d.DrillTarget)
+	}
+
+	if err := f.st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "offsite", Kind: "dr", At: 50, OK: true, TargetID: b2.ID}); err != nil {
+		t.Fatal(err)
+	}
+	if d := f.domainStatus("containers"); d.LastDRDrillAt != 50 || d.DrillTarget != "B2" {
+		t.Fatalf("drill at %d on %q, want the B2 drill at 50", d.LastDRDrillAt, d.DrillTarget)
+	}
+}
+
+func TestSwitchingOffTheFailingTargetLeavesTheOtherTargetsVerdict(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("flash", "B2", "s3:b2/flash")
+	hetzner := f.target("flash", "Hetzner", "sftp:u1@hetzner:/flash")
+	for _, d := range []store.RestoreDrill{
+		{Domain: "flash", Source: "offsite", Kind: "dr", At: 200, OK: true, TargetID: hetzner.ID},
+		{Domain: "flash", Source: "offsite", Kind: "dr", At: 300, Detail: "verification mismatch", TargetID: b2.ID},
+	} {
+		if err := f.st.AddRestoreDrill(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+	b2.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(b2); err != nil {
+		t.Fatal(err)
+	}
+	if d := f.domainStatus("flash"); !d.LastDRDrillOK || d.LastDRDrillAt != 200 || d.DrillTarget != "Hetzner" {
+		t.Fatalf("drill = ok %v at %d on %q, want the Hetzner drill", d.LastDRDrillOK, d.LastDRDrillAt, d.DrillTarget)
+	}
+
+	if _, err := f.st.DeleteOffsiteTargetIfUnused(b2.ID); err != nil {
+		t.Fatal(err)
+	}
+	if d := f.domainStatus("flash"); !d.LastDRDrillOK || d.DrillTarget != "Hetzner" {
+		t.Fatalf("drill = ok %v on %q after B2 was removed, want the Hetzner drill", d.LastDRDrillOK, d.DrillTarget)
+	}
+}
+
+func TestADrillFromBeforeTargetsStillCountsWithoutOne(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.st.AddRestoreDrill(store.RestoreDrill{Domain: "flash", Source: "offsite", Kind: "dr", At: 100, OK: true}); err != nil {
+		t.Fatal(err)
+	}
+	if d := f.domainStatus("flash"); !d.LastDRDrillOK || d.LastDRDrillAt != 100 {
+		t.Fatalf("drill = ok %v at %d, want the drill at 100", d.LastDRDrillOK, d.LastDRDrillAt)
+	}
+}
+
+func TestTheScheduledDRDrillTakesOnlyTargetsOffThePremises(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
+	f.linkRow(nas.ID, f.storePlace(nasKeller()), "containers", "")
+	b2 := f.target("containers", "B2", b2Containers)
+
+	got, err := f.svc.DRDrillTargets("containers")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].ID != b2.ID {
+		t.Fatalf("drill targets = %+v, want B2 alone", got)
+	}
+}
+
+func TestARunOffSiteDRDrillPicksATargetOffThePremises(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
+	f.linkRow(nas.ID, f.storePlace(nasKeller()), "containers", "")
+	b2 := f.target("containers", "B2", b2Containers)
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := f.svc.drDrillTarget(settings, "containers", "offsite")
+	if err != nil || got.ID != b2.ID {
+		t.Fatalf("target = %+v, %v, want B2", got, err)
+	}
+	if got, err := f.svc.drDrillTarget(settings, "containers", "offsite:"+nas.ID); err != nil || got.ID != nas.ID {
+		t.Fatalf("target = %+v, %v, want the NAS it was asked for", got, err)
+	}
+}
+
 func TestAProjectFolderCopiedOnlyInTheHouseIsNoOffsiteCopy(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.target("containers", "B2", "b2:bucket:containers")

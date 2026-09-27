@@ -43,20 +43,23 @@ func (s *Service) aggregateTamper(domain string) (had, protected bool, at int64)
 	return had, protected, at
 }
 
-// latestDRDrill is the DR drill a domain's card shows. The scheduled drill
-// takes the domain's targets in turn, so with several the newest failure
-// among each one's latest drill wins over the newest drill. Best-effort like
-// the other status reads: a store error leaves the drill out.
-func (s *Service) latestDRDrill(domain string) (store.RestoreDrill, bool) {
-	targets := s.offsiteTargetsFor(domain)
-	if len(targets) <= 1 {
-		dr, found, err := s.store.LatestRestoreDrillKind(domain, "offsite", "dr")
-		return dr, err == nil && found
+// latestDRDrill is the DR drill a domain's card shows, from the switched-on
+// targets off the premises. The scheduled drill takes them in turn, so the
+// newest failure among each one's latest drill wins over the newest drill. A
+// domain without targets shows its drill from before there were any.
+// Best-effort like the other status reads: a store error leaves the drill out.
+func (s *Service) latestDRDrill(domain string, sites store.PlaceSites) (store.RestoreDrill, bool) {
+	ids := []string{""}
+	if targets := s.offsiteTargetsFor(domain); len(targets) > 0 {
+		ids = ids[:0]
+		for _, t := range offSiteTargets(targets, sites) {
+			ids = append(ids, t.ID)
+		}
 	}
 	var out store.RestoreDrill
 	found := false
-	for _, t := range targets {
-		dr, ok, err := s.store.LatestDRDrillForTarget(domain, t.ID)
+	for _, id := range ids {
+		dr, ok, err := s.store.LatestDRDrillForTarget(domain, id)
 		if err != nil || !ok {
 			continue
 		}
@@ -579,7 +582,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		var lastDRDrillAt int64
 		var lastDRDrillOK bool
 		var drDetail, drTarget string
-		if dr, found := s.latestDRDrill(d.name); found {
+		if dr, found := s.latestDRDrill(d.name, sites); found {
 			lastDRDrillAt = dr.At
 			lastDRDrillOK = dr.OK
 			drDetail = dr.Detail
