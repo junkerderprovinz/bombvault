@@ -110,4 +110,4 @@ Elk item kan een eigen gevoeligheid en een eigen meldingsminimum hebben. Stel ze
 De kaart **Instellingen exporteren en importeren** op de Instellingen-pagina schrijft je hele BombVault-configuratie (domeininstellingen, off-site doelen, planningen, retentie, meldingen) naar een portable JSON-bestand dat je op een andere instantie kunt importeren, zodat verhuizen naar een nieuwe machine of een setup klonen niet betekent dat je alles met de hand opnieuw invoert. Import toont een voorbeeld en vraagt om bevestiging, en raakt nooit je back-updata of historie aan.
 
 !!! warning "De export kan inloggegevens bevatten"
-    Je kiest of je de off-site en meldingsinloggegevens in het bestand meeneemt. Met inloggegevens erbij is de export net zo gevoelig als je herstelkit, dus bewaar hem ergens veilig. Zonder die bevat het bestand alleen niet-geheime instellingen.
+    Je kiest of je de off-site-, meldings- en MQTT-brokerinloggegevens in het bestand meeneemt. Met inloggegevens erbij is de export net zo gevoelig als je herstelkit, dus bewaar hem ergens veilig. Zonder die bevat het bestand alleen niet-geheime instellingen.

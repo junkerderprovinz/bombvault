@@ -110,4 +110,4 @@ Každá položka může mít vlastní citlivost a vlastní minimum oznámení. N
 Karta **Export a import nastavení** na stránce Nastavení zapíše celou vaši konfiguraci BombVaultu (nastavení domén, cíle mimo lokalitu, plány, uchovávání, oznámení) do přenosného souboru JSON, který můžete importovat na jiné instanci, takže přechod na nový stroj nebo klonování sestavy neznamená znovu vše zadávat ručně. Import zobrazí náhled a požádá o potvrzení a nikdy se nedotkne vašich zálohovaných dat ani historie.
 
 !!! warning "Export může obsahovat přihlašovací údaje"
-    Vy zvolíte, zda do souboru zahrnout přihlašovací údaje mimo lokalitu a oznámení. Se zahrnutými přihlašovacími údaji je export stejně citlivý jako vaše sada pro obnovu, takže jej uložte na bezpečné místo. Bez nich soubor obsahuje jen netajná nastavení.
+    Vy zvolíte, zda do souboru zahrnout přihlašovací údaje mimo lokalitu, oznámení a brokeru MQTT. Se zahrnutými přihlašovacími údaji je export stejně citlivý jako vaše sada pro obnovu, takže jej uložte na bezpečné místo. Bez nich soubor obsahuje jen netajná nastavení.

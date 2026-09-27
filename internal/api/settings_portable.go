@@ -35,6 +35,8 @@ type exportCredentials struct {
 	// Notify is the notification config in cleartext (SMTP password / Matrix token
 	// included).
 	Notify notify.Config `json:"notify"`
+	// MQTTPassword is the password for the Home Assistant broker.
+	MQTTPassword string `json:"mqttPassword,omitempty"`
 }
 
 // settingsExport is the portable configuration envelope written by the export and
@@ -62,6 +64,10 @@ type settingsExport struct {
 	// cards, absent from files written before they existed.
 	Streaming *streamingView `json:"streaming,omitempty"`
 	Idle      *idleView      `json:"idle,omitempty"`
+	// HomeAssistant and MDNSEnabled are nil in a file from a build without
+	// them, and the import then leaves this instance's own settings alone.
+	HomeAssistant *homeAssistantExport `json:"homeAssistant,omitempty"`
+	MDNSEnabled   *bool                `json:"mdnsEnabled,omitempty"`
 	// predatesZFS is set when the file carries no zfsEnabled key: it comes from
 	// a build without the ZFS domain, so its empty ZFS fields say nothing about
 	// the ZFS setup of the instance it is applied to.
@@ -269,6 +275,10 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		Streaming:      streamingToView(traffic),
 		Idle:           idleToView(traffic),
 	}
+	if err := h.exportIntegrations(&exp); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 
 	if withCredentials {
 		creds, cErr := h.collectCredentials(s)
@@ -315,7 +325,11 @@ func (h *Handler) collectCredentials(s store.Settings) (*exportCredentials, erro
 	if err != nil {
 		return nil, fmt.Errorf("read notification config: %w", err)
 	}
-	return &exportCredentials{Cloud: cloud, Rclone: rclone, Notify: notifyConf}, nil
+	mqttPassword, err := h.brokerPassword()
+	if err != nil {
+		return nil, err
+	}
+	return &exportCredentials{Cloud: cloud, Rclone: rclone, Notify: notifyConf, MQTTPassword: mqttPassword}, nil
 }
 
 // importSummary is the preview payload: what an apply WOULD change, without writing.
@@ -336,6 +350,7 @@ type importCredsPresence struct {
 	Cloud   bool `json:"cloud"`
 	Rclone  bool `json:"rclone"`
 	Notify  bool `json:"notify"`
+	MQTT    bool `json:"mqtt"`
 }
 
 // handleImportSettings validates a settings-export file and, with ?apply=true,
@@ -699,7 +714,7 @@ func validateExport(exp settingsExport, mountRoot string) string {
 			return "invalid idle settings: " + err.Error()
 		}
 	}
-	return ""
+	return integrationsRefusal(exp)
 }
 
 // exportCadences lists every schedule string carried in a settings view. It must
@@ -729,7 +744,7 @@ func summarizeExport(exp settingsExport) importSummary {
 
 // exportGroups is settingsGroups plus the blocks the file carries beside the
 // settings view. The streaming card is named only when it departs from how
-// the card ships.
+// the card ships; the integrations name themselves (integrationGroups).
 func exportGroups(exp settingsExport) []string {
 	groups := settingsGroups(exp.Settings)
 	if v := exp.Streaming; v != nil {
@@ -744,7 +759,7 @@ func exportGroups(exp settingsExport) []string {
 			groups = append(groups, "idle")
 		}
 	}
-	return groups
+	return append(groups, integrationGroups(exp)...)
 }
 
 // credsPresence reports which credential kinds the file carries.
@@ -757,6 +772,7 @@ func credsPresence(c *exportCredentials) importCredsPresence {
 		Cloud:   cloudCredsMeaningful(c.Cloud),
 		Rclone:  strings.TrimSpace(c.Rclone) != "",
 		Notify:  notifyMeaningful(c.Notify),
+		MQTT:    c.MQTTPassword != "",
 	}
 }
 
@@ -888,6 +904,9 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 		if err := h.applyImportedCredentials(*exp.Credentials); err != nil {
 			return err
 		}
+	}
+	if err := h.applyImportedIntegrations(exp); err != nil {
+		return err
 	}
 
 	// Mirror the imported off-site config into the primary off-site target rows and

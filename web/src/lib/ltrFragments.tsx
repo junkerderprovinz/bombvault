@@ -164,6 +164,9 @@ export const MCP_OAUTH_PATHS_LTR_FRAGMENTS = ["/.well-known/", "/oauth/", "/mcp"
 /** Where a restored plugin's file sits on the flash. The name is put in after
  *  the isolation, so it lands inside it. */
 export const FLASH_PLUGIN_PATH_LTR_FRAGMENTS = ["/boot/config/plugins/{name}.plg"] as const;
+/** Where the public API lives, and where its description is. */
+export const API_BASE_LTR_FRAGMENTS = ["/api/v1"] as const;
+export const API_DESCRIPTION_LTR_FRAGMENTS = ["/api/v1/openapi.json"] as const;
 
 /**
  * LTR_FRAGMENTS_BY_KEY maps each translation key to its fragment list. The
@@ -198,6 +201,8 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "zfs.excludesHint": ZFS_EXCLUDE_EXAMPLE_LTR_FRAGMENTS,
   "mcp.oauthProxyNote": MCP_OAUTH_PATHS_LTR_FRAGMENTS,
   "flash.pluginRestored": FLASH_PLUGIN_PATH_LTR_FRAGMENTS,
+  "api.hint": API_BASE_LTR_FRAGMENTS,
+  "api.addressHint": API_DESCRIPTION_LTR_FRAGMENTS,
 } as const satisfies Record<string, readonly string[]>;
 
 /**

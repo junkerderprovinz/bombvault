@@ -110,4 +110,4 @@ Jokaisella kohteella voi olla oma herkkyys ja oma ilmoitusminimi. Aseta ne sivun
 **Vie ja tuo asetukset** -kortti Asetukset-sivulla kirjoittaa koko BombVault-kokoonpanosi (toimialueasetukset, etäkohteet, aikataulut, säilytys, ilmoitukset) siirrettävään JSON-tiedostoon, jonka voit tuoda toiseen instanssiin, joten uuteen laatikkoon siirtyminen tai kokoonpanon kloonaus ei tarkoita kaiken syöttämistä uudelleen käsin. Tuonti näyttää esikatselun ja pyytää vahvistusta, eikä se koskaan kosketa varmuuskopiodataasi tai historiaasi.
 
 !!! warning "Vienti voi sisältää tunnuksia"
-    Valitset itse, sisällytetäänkö etä- ja ilmoitustunnukset tiedostoon. Tunnusten kanssa vienti on yhtä arkaluontoinen kuin palautuspakettisi, joten säilytä se turvallisessa paikassa. Ilman niitä tiedosto sisältää vain salaamattomat asetukset.
+    Valitset itse, sisällytetäänkö etä-, ilmoitus- ja MQTT-välittäjän tunnukset tiedostoon. Tunnusten kanssa vienti on yhtä arkaluontoinen kuin palautuspakettisi, joten säilytä se turvallisessa paikassa. Ilman niitä tiedosto sisältää vain salaamattomat asetukset.

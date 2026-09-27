@@ -39,6 +39,8 @@ Fordi en sikkerhetskopi stopper ting og skyver ut gamle gjenopprettingspunkter, 
 
 En start av et domene eller av Backup Everything utelater elementene som en grense holder tilbake, og nevner dem i svaret. Webgrensesnittet og tidsplanen berøres ikke av noe av dette. Timebudsjettet ligger i minnet, så en omstart av BombVault nullstiller det.
 
+Starter via [API-et](api.md#errors) og fra [Home Assistant](api.md#home-assistant) teller med i de samme grensene per element som starter via MCP, og i oppbevaringsvernet.
+
 ## Slå det på {#switch-on}
 
 1. Åpne **Innstillinger, System, MCP-server**, og klikk på knappen for klienten din. En klient som ikke står i listen, kobler til via **Annen klient**.
@@ -54,7 +56,7 @@ Hver nøkkel har sin egen flis på kortet. Den viser navnet på nøkkelen, om de
 
 Ved siden av navnet viser flisen logoen til klienten nøkkelen ble laget for. En nøkkel laget via **Annen klient**, eller før kortet listet opp klienter, viser en nøkkel i stedet.
 
-**Logg** på en flis åpner det nøkkelen har gjort. Først kommer sikkerhetskopiene den startet, hver med status og en lenke til kjøringen i aktivitetsloggen på dashbordet. Under dem står kallene, nyeste først, med verktøyet og hva som ble av kallet. En avvisning sier hvorfor: nøkkelen kan bare lese, oppbevaringsvernet holdt sikkerhetskopien tilbake, en annen sikkerhetskopi kjørte allerede, elementet ble sikkerhetskopiert via MCP for noen minutter siden, eller nøkkelen sendte for mange forespørsler. En avbrytelse lenker til kjøringen det gjaldt.
+**Logg** på en flis åpner det nøkkelen har gjort. Først kommer sikkerhetskopiene den startet, hver med status og en lenke til kjøringen i aktivitetsloggen på dashbordet. Under dem står kallene, nyeste først, med verktøyet og hva som ble av kallet. En avvisning sier hvorfor: nøkkelen kan bare lese, oppbevaringsvernet holdt sikkerhetskopien tilbake, en annen sikkerhetskopi kjørte allerede, en sikkerhetskopi av elementet ble startet utenfor nettgrensesnittet for noen minutter siden, eller nøkkelen sendte for mange forespørsler. En avbrytelse lenker til kjøringen det gjaldt.
 
 BombVault tar vare på oppføringene til hver nøkkel i opptil 30 dager: de nyeste 500 vellykkede startene og avbrytelsene og ved siden av dem de nyeste 200 andre kallene (lesinger, avvisninger og feil), så en assistent som spør om en pågående sikkerhetskopi eller prøver et avvist kall igjen og igjen, ikke kan skyve starten ut av loggen. For hvert kall lagrer det verktøyet, utfallet og kjøringen en avbrytelse nevnte. Det lagrer aldri det assistenten sendte, og aldri nøkkelen eller fingeravtrykket. Diagnosepakken teller bare oppføringene, og en eksport av innstillingene utelater dem.
 
@@ -256,7 +258,7 @@ Det en assistent leser, går til AI-leverandøren bak den: navn på elementer, t
 | `429` | For mange feil nøkler fra denne adressen, eller flere enn 120 forespørsler i minuttet med én nøkkel. Vent ett minutt og sjekk om assistenten har gått seg fast i en løkke. |
 | Feil med "certificate", "self-signed" eller "unable to verify" | Klienten stoler ikke på BombVaults sertifikat. Se [TLS og sertifikater](#tls). |
 | `busy` | En annen sikkerhetskopi eller en vedlikeholdsoppgave opptar domenet. Prøv igjen når den er ferdig. |
-| `cooldown` | Dette elementet, dette domenet eller Backup Everything ble startet via MCP for mindre enn 15 minutter siden. |
+| `cooldown` | Dette elementet, dette domenet eller Backup Everything ble startet utenfor nettgrensesnittet for mindre enn 15 minutter siden. |
 | `retention_guard` | Én MCP-sikkerhetskopi til ville bare etterlate gjenopprettingspunkter fra MCP i et vindu med "behold de siste N", eller elementet har allerede fått 4 sikkerhetskopier via MCP de siste 24 timene, mislykkede og avbrutte medregnet. I det første tilfellet gir neste planlagte sikkerhetskopi plass, i det andre er elementet ledig igjen 24 timer etter den eldste av dem. Du kan alltid starte den i webgrensesnittet. |
 | `rate_limited` | Nøkkelen har brukt opp sine 12 starter for denne timen. |
 | `not_permitted` ved en start | Nøkkelen kan bare lese. Slå på **Tillat å starte sikkerhetskopier** i kortet; ny tilkobling trengs ikke. Ved en avbrytelse betyr det at denne nøkkelen ikke startet kjøringen. |

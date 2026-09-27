@@ -110,4 +110,4 @@ Her öğenin kendi hassasiyeti ve kendi bildirim alt sınırı olabilir. Bunlar�
 Ayarlar sayfasındaki **Ayarları dışa ve içe aktar** kartı, tüm BombVault yapılandırmanızı (etki alanı ayarları, site dışı hedefler, zamanlamalar, saklama, bildirimler) başka bir örnekte içe aktarabileceğiniz taşınabilir bir JSON dosyasına yazar, böylece yeni bir makineye taşınmak ya da bir kurulumu klonlamak her şeyi elle yeniden girmek anlamına gelmez. İçe aktarma bir önizleme gösterir ve onay ister ve yedekleme verilerinize ya da geçmişinize asla dokunmaz.
 
 !!! warning "Dışa aktarma kimlik bilgileri içerebilir"
-    Site dışı ve bildirim kimlik bilgilerini dosyaya dahil edip etmeyeceğinizi siz seçersiniz. Kimlik bilgileri dahilken, dışa aktarma kurtarma kitiniz kadar hassastır, bu nedenle onu güvenli bir yerde saklayın. Onlarsız, dosya yalnızca gizli olmayan ayarları tutar.
+    Site dışı, bildirim ve MQTT aracısı kimlik bilgilerini dosyaya dahil edip etmeyeceğinizi siz seçersiniz. Kimlik bilgileri dahilken, dışa aktarma kurtarma kitiniz kadar hassastır, bu nedenle onu güvenli bir yerde saklayın. Onlarsız, dosya yalnızca gizli olmayan ayarları tutar.

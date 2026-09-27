@@ -13,7 +13,8 @@ import (
 //
 // A client that signed in through OAuth is an MCPKey of Kind MCPKindOAuth. It
 // has no digest and no hint; OAuthClient names the registered client and
-// Resource the audience its tokens were issued for.
+// Resource the audience its tokens were issued for. An API token is an MCPKey
+// of Kind MCPKindAPI: the same material, but it opens /api/v1 and not /mcp.
 type MCPKey struct {
 	ID              string
 	Kind            string
@@ -37,10 +38,15 @@ type MCPKey struct {
 // the point; a list that grows past this is a sign nobody is retiring them.
 const MCPKeyLimit = 10
 
-// The two kinds of row in mcp_keys.
+// APITokenLimit is how many API tokens may be active at once, next to the MCP
+// keys rather than out of their budget.
+const APITokenLimit = 10
+
+// The kinds of row in mcp_keys.
 const (
 	MCPKindKey   = "key"
 	MCPKindOAuth = "oauth"
+	MCPKindAPI   = "api"
 )
 
 var (
@@ -73,6 +79,18 @@ func (r *Repo) ActiveMCPKeys() ([]MCPKey, error) {
 		return nil, fmt.Errorf("ActiveMCPKeys: %w", err)
 	}
 	return collectMCPKeys(rows, "ActiveMCPKeys")
+}
+
+// ActiveAPITokens returns the API tokens a request can still authenticate with,
+// oldest first.
+func (r *Repo) ActiveAPITokens() ([]MCPKey, error) {
+	rows, err := r.db.Query(`SELECT ` + mcpKeyCols + ` FROM mcp_keys
+		WHERE kind = 'api' AND revoked_at = 0 AND key_digest != ''
+		ORDER BY created_at, id`)
+	if err != nil {
+		return nil, fmt.Errorf("ActiveAPITokens: %w", err)
+	}
+	return collectMCPKeys(rows, "ActiveAPITokens")
 }
 
 // ListMCPKeys returns every key for the settings card: the active ones oldest
@@ -146,53 +164,66 @@ func (r *Repo) GetMCPKey(id string) (MCPKey, error) {
 // inside the transaction that writes the row, so two creates at once cannot
 // both find room.
 func (r *Repo) CreateMCPKey(id, label, client, digest, hint, check string, canStart bool, now int64) (MCPKey, error) {
+	return r.createKey(MCPKindKey, MCPKeyLimit, id, label, client, digest, hint, check, canStart, now)
+}
+
+// CreateAPIToken is CreateMCPKey for an API token, which counts against a
+// limit of its own and whose name only has to differ from the other tokens.
+func (r *Repo) CreateAPIToken(id, label, digest, hint, check string, canStart bool, now int64) (MCPKey, error) {
+	return r.createKey(MCPKindAPI, APITokenLimit, id, label, "", digest, hint, check, canStart, now)
+}
+
+func (r *Repo) createKey(kind string, limit int, id, label, client, digest, hint, check string, canStart bool, now int64) (MCPKey, error) {
 	tx, err := r.db.Begin()
 	if err != nil {
-		return MCPKey{}, fmt.Errorf("CreateMCPKey: %w", err)
+		return MCPKey{}, fmt.Errorf("create %s key: %w", kind, err)
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
 
 	var active int
-	if err := tx.QueryRow(`SELECT count(*) FROM mcp_keys WHERE kind = 'key' AND revoked_at = 0 AND key_digest != ''`).Scan(&active); err != nil {
-		return MCPKey{}, fmt.Errorf("CreateMCPKey count: %w", err)
+	if err := tx.QueryRow(`SELECT count(*) FROM mcp_keys WHERE kind = ? AND revoked_at = 0 AND key_digest != ''`, kind).Scan(&active); err != nil {
+		return MCPKey{}, fmt.Errorf("create %s key count: %w", kind, err)
 	}
-	if active >= MCPKeyLimit {
+	if active >= limit {
 		return MCPKey{}, ErrMCPKeyLimit
 	}
-	taken, err := mcpLabelTaken(tx, label, "")
+	taken, err := mcpLabelTaken(tx, kind, label, "")
 	if err != nil {
-		return MCPKey{}, fmt.Errorf("CreateMCPKey label: %w", err)
+		return MCPKey{}, fmt.Errorf("create %s key label: %w", kind, err)
 	}
 	if taken {
 		return MCPKey{}, ErrMCPKeyLabelTaken
 	}
-	_, err = tx.Exec(`INSERT INTO mcp_keys (id, label, client, key_digest, key_hint, key_check, can_start_backups, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, id, label, client, digest, hint, check, canStart, now)
+	_, err = tx.Exec(`INSERT INTO mcp_keys (id, kind, label, client, key_digest, key_hint, key_check, can_start_backups, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, id, kind, label, client, digest, hint, check, canStart, now)
 	if err != nil {
-		return MCPKey{}, fmt.Errorf("CreateMCPKey: %w", err)
+		return MCPKey{}, fmt.Errorf("create %s key: %w", kind, err)
 	}
 	if err := tx.Commit(); err != nil {
-		return MCPKey{}, fmt.Errorf("CreateMCPKey commit: %w", err)
+		return MCPKey{}, fmt.Errorf("create %s key commit: %w", kind, err)
 	}
 	return r.GetMCPKey(id)
 }
 
-// mcpLabelTaken reports whether another active key already carries label,
-// compared without regard to case as the unique index does.
-func mcpLabelTaken(tx *sql.Tx, label, exceptID string) (bool, error) {
+// mcpLabelTaken reports whether another active row on the same side already
+// carries label, compared without regard to case as the unique index does.
+// Keys and OAuth grants are one side, API tokens the other.
+func mcpLabelTaken(tx *sql.Tx, kind, label, exceptID string) (bool, error) {
 	var n int
 	err := tx.QueryRow(`SELECT count(*) FROM mcp_keys
-		WHERE revoked_at = 0 AND lower(label) = lower(?) AND id != ?`, label, exceptID).Scan(&n)
+		WHERE revoked_at = 0 AND lower(label) = lower(?) AND id != ?
+		  AND (kind = 'api') = (? = 'api')`, label, exceptID, kind).Scan(&n)
 	return n > 0, err
 }
 
-// RotateMCPKey gives an active key new secret material and keeps its id, label,
-// permission and creation time, so everything that references it stays valid.
-// An OAuth grant has no key to replace; its client signs in again instead.
+// RotateMCPKey gives an active key or API token new secret material and keeps
+// its id, label, permission and creation time, so everything that references
+// it stays valid. An OAuth grant has no key to replace; its client signs in
+// again instead.
 func (r *Repo) RotateMCPKey(id, digest, hint, check string, now int64) (MCPKey, error) {
 	res, err := r.db.Exec(`UPDATE mcp_keys
 		SET key_digest = ?, key_hint = ?, key_check = ?, rotated_at = ?
-		WHERE id = ? AND revoked_at = 0 AND kind = 'key'`, digest, hint, check, now, id)
+		WHERE id = ? AND revoked_at = 0 AND kind IN ('key', 'api')`, digest, hint, check, now, id)
 	if err != nil {
 		return MCPKey{}, fmt.Errorf("RotateMCPKey: %w", err)
 	}
@@ -211,15 +242,16 @@ func (r *Repo) UpdateMCPKey(id string, label *string, canStart *bool) (MCPKey, e
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
 
-	var active int
-	if err := tx.QueryRow(`SELECT count(*) FROM mcp_keys WHERE id = ? AND revoked_at = 0`, id).Scan(&active); err != nil {
-		return MCPKey{}, fmt.Errorf("UpdateMCPKey: %w", err)
-	}
-	if active == 0 {
+	var kind string
+	err = tx.QueryRow(`SELECT kind FROM mcp_keys WHERE id = ? AND revoked_at = 0`, id).Scan(&kind)
+	if errors.Is(err, sql.ErrNoRows) {
 		return MCPKey{}, ErrMCPKeyNotFound
 	}
+	if err != nil {
+		return MCPKey{}, fmt.Errorf("UpdateMCPKey: %w", err)
+	}
 	if label != nil {
-		taken, err := mcpLabelTaken(tx, *label, id)
+		taken, err := mcpLabelTaken(tx, kind, *label, id)
 		if err != nil {
 			return MCPKey{}, fmt.Errorf("UpdateMCPKey label: %w", err)
 		}

@@ -1581,7 +1581,7 @@ func TestGetRun(t *testing.T) {
 	}
 }
 
-func TestMCPStartQueries(t *testing.T) {
+func TestStartsFromOutsideTheWebInterfaceShareTheirLimits(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
 		t.Fatal(err)
@@ -1597,6 +1597,8 @@ func TestMCPStartQueries(t *testing.T) {
 		{id: "mcp5", targetID: "b", kind: "backup", status: "success", startedAt: 600, finishedAt: 610, via: "mcp", viaKey: "k1"},
 		{id: "mcp6", targetID: "c", kind: "backup", status: "running", startedAt: 700, via: "mcp", viaKey: "k1"},
 		{id: "mcp7", targetID: "e", kind: "backup", status: "cancelled", startedAt: 800, finishedAt: 805, via: "mcp", viaKey: "k1"},
+		{id: "api1", targetID: "f", kind: "backup", status: "success", startedAt: 900, finishedAt: 910, via: "api", viaKey: "t1"},
+		{id: "ha1", targetID: "f", kind: "backup", status: "success", startedAt: 1000, finishedAt: 1010, via: "mqtt"},
 	}
 	for _, row := range rows {
 		insertRunRow(t, db, row)
@@ -1614,14 +1616,15 @@ func TestMCPStartQueries(t *testing.T) {
 		{"since cuts the older starts", []string{"a"}, 501, 0},
 		{"a target without mcp runs", []string{"d"}, 0, 0},
 		{"no targets", nil, 0, 0},
+		{"api and home assistant starts count too", []string{"f"}, 0, 1000},
 	}
 	for _, c := range latest {
-		got, err := r.LatestMCPStartAt(c.targets, c.since)
+		got, err := r.LatestExternalStartAt(c.targets, c.since)
 		if err != nil {
-			t.Fatalf("LatestMCPStartAt(%v, %d): %v", c.targets, c.since, err)
+			t.Fatalf("LatestExternalStartAt(%v, %d): %v", c.targets, c.since, err)
 		}
 		if got != c.want {
-			t.Fatalf("%s: LatestMCPStartAt = %d, want %d", c.name, got, c.want)
+			t.Fatalf("%s: LatestExternalStartAt = %d, want %d", c.name, got, c.want)
 		}
 	}
 
@@ -1637,14 +1640,15 @@ func TestMCPStartQueries(t *testing.T) {
 		{"c", 0, 1, 700},
 		{"d", 0, 0, 0},
 		{"e", 0, 1, 800},
+		{"f", 0, 2, 900},
 	}
 	for _, c := range counts {
-		got, oldest, err := r.MCPBackupsSince(c.target, c.since)
+		got, oldest, err := r.ExternalBackupsSince(c.target, c.since)
 		if err != nil {
-			t.Fatalf("MCPBackupsSince(%s, %d): %v", c.target, c.since, err)
+			t.Fatalf("ExternalBackupsSince(%s, %d): %v", c.target, c.since, err)
 		}
 		if got != c.want || oldest != c.wantOldest {
-			t.Fatalf("MCPBackupsSince(%s, %d) = %d/%d, want %d/%d", c.target, c.since, got, oldest, c.want, c.wantOldest)
+			t.Fatalf("ExternalBackupsSince(%s, %d) = %d/%d, want %d/%d", c.target, c.since, got, oldest, c.want, c.wantOldest)
 		}
 	}
 
@@ -1667,6 +1671,13 @@ func TestMCPStartQueries(t *testing.T) {
 		if total != c.total || viaMCP != c.viaMCP {
 			t.Fatalf("%s: NewestBackupOrigins(a, %s, %d) = %d/%d, want %d/%d", c.name, c.kind, c.n, total, viaMCP, c.total, c.viaMCP)
 		}
+	}
+	total, remote, err := r.NewestBackupOrigins("f", "backup", 5)
+	if err != nil {
+		t.Fatalf("NewestBackupOrigins(f): %v", err)
+	}
+	if total != 2 || remote != 2 {
+		t.Fatalf("NewestBackupOrigins(f) = %d/%d, want the api and the home assistant start as 2/2", total, remote)
 	}
 }
 

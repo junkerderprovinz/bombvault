@@ -15,8 +15,8 @@ type runOriginKey struct{}
 // RunOrigin names who asked for a run. The zero value covers the web interface
 // and the scheduler, which the run history does not single out.
 type RunOrigin struct {
-	Via   string // "mcp"
-	KeyID string // mcp_keys.id
+	Via   string // "mcp", "api" or "mqtt"
+	KeyID string // mcp_keys.id of the key or token, empty for "mqtt"
 }
 
 // WithRunOrigin marks ctx as started by o, so every run row this package

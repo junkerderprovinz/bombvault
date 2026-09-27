@@ -39,6 +39,8 @@ Pentru că o copie oprește servicii și scoate afară puncte de restaurare vech
 
 O pornire de domeniu sau de Backup Everything lasă pe dinafară elementele reținute de o limită și le numește în răspuns. Interfața web și programarea nu sunt atinse de niciuna dintre aceste limite. Bugetul orar stă în memorie, așa că o repornire a BombVault îl readuce la zero.
 
+Pornirile prin [API](api.md#errors) și din [Home Assistant](api.md#home-assistant) se numără la aceleași limite pe element ca pornirile prin MCP și la protecția de retenție.
+
 ## Pornire {#switch-on}
 
 1. Deschide **Setări, Sistem, Server MCP** și dă clic pe butonul clientului tău. Un client care nu e în listă se conectează prin **Alt client**.
@@ -54,7 +56,7 @@ Fiecare cheie are propria dală pe card. Arată numele cheii, dacă poate porni 
 
 Lângă nume, placa arată sigla clientului pentru care a fost creată cheia. O cheie creată prin **Alt client**, sau înainte ca cardul să listeze clienți, arată în schimb o cheie.
 
-**Jurnal** pe o dală deschide ce a făcut acea cheie. Întâi vin copiile pe care le-a pornit, fiecare cu starea ei și un link către acea rulare în jurnalul de activitate de pe tabloul de bord. Dedesubt sunt apelurile ei, cele mai noi primele, cu instrumentul și rezultatul apelului. Un refuz spune de ce: cheia poate doar citi, protecția de păstrare a oprit copia, rula deja altă copie, elementul a fost copiat prin MCP acum câteva minute sau cheia a trimis prea multe cereri. O anulare trimite la rularea la care se referea.
+**Jurnal** pe o dală deschide ce a făcut acea cheie. Întâi vin copiile pe care le-a pornit, fiecare cu starea ei și un link către acea rulare în jurnalul de activitate de pe tabloul de bord. Dedesubt sunt apelurile ei, cele mai noi primele, cu instrumentul și rezultatul apelului. Un refuz spune de ce: cheia poate doar citi, protecția de păstrare a oprit copia, rula deja altă copie, o copie a elementului a fost pornită din afara interfeței web acum câteva minute sau cheia a trimis prea multe cereri. O anulare trimite la rularea la care se referea.
 
 BombVault păstrează intrările fiecărei chei cel mult 30 de zile: cele mai noi 500 de porniri și anulări reușite și, alături de ele, cele mai noi 200 de alte apeluri (citiri, refuzuri și erori), astfel încât un asistent care interoghează mereu o copie în curs sau reîncearcă mereu un apel refuzat nu poate împinge pornirea ei afară din jurnal. Pentru fiecare apel salvează instrumentul, rezultatul și rularea numită de o anulare. Nu salvează niciodată ce a trimis asistentul, nici cheia sau amprenta ei. Pachetul de diagnostic doar numără intrările, iar un export al setărilor le lasă deoparte.
 
@@ -256,7 +258,7 @@ Tot ce citește un asistent ajunge la furnizorul de IA din spatele lui: numele e
 | `429` | Prea multe chei greșite de la această adresă, sau mai mult de 120 de cereri pe minut cu o cheie. Așteaptă un minut și verifică dacă asistentul nu s-a blocat într-o buclă. |
 | Erori cu "certificate", "self-signed" sau "unable to verify" | Clientul nu are încredere în certificatul BombVault. Vezi [TLS și certificate](#tls). |
 | `busy` | Altă copie sau o sarcină de întreținere ocupă acel domeniu. Încearcă din nou după ce se termină. |
-| `cooldown` | Acest element, acest domeniu sau Backup Everything a fost pornit prin MCP acum mai puțin de 15 minute. |
+| `cooldown` | Acest element, acest domeniu sau Backup Everything a fost pornit din afara interfeței web acum mai puțin de 15 minute. |
 | `retention_guard` | Încă o copie MCP ar lăsa doar puncte de restaurare din MCP într-o fereastră "păstrează ultimele N", sau elementul a primit deja 4 copii prin MCP în ultimele 24 de ore, inclusiv cele eșuate și anulate. În primul caz următoarea copie programată face loc, în al doilea elementul e liber din nou la 24 de ore după cea mai veche dintre aceste copii. Din interfața web o poți porni oricând. |
 | `rate_limited` | Cheia și-a consumat cele 12 porniri din această oră. |
 | `not_permitted` la o pornire | Cheia poate doar să citească. Pornește **Permite pornirea copiilor** în card; nu e nevoie de reconectare. La o anulare înseamnă că rularea nu a fost pornită de această cheie. |

@@ -254,6 +254,9 @@ func (h *Handler) handleListMCPKeys(w http.ResponseWriter, r *http.Request) {
 	// Empty rather than nil, so the card always gets two arrays to iterate.
 	active, revoked := []mcpKeyView{}, []mcpKeyView{}
 	for _, k := range rows {
+		if k.Kind == store.MCPKindAPI {
+			continue
+		}
 		v := h.mcpKeyViewOf(k, inUse[k.ID], calls[k.ID])
 		if k.RevokedAt != 0 {
 			revoked = append(revoked, v)
@@ -369,7 +372,12 @@ func (h *Handler) handleRotateMCPKey(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyNeedsPassword, "mcp-key-needs-password"))
 		return
 	}
-	key, err := secret.NewMCPKey()
+	current, err := h.store.GetMCPKey(id)
+	if err != nil {
+		writeMCPError(w, err)
+		return
+	}
+	key, err := newKeyMaterial(current)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -506,11 +514,7 @@ func (h *Handler) handleAddMCPCertificateName(w http.ResponseWriter, r *http.Req
 // connection would otherwise hold that key back for the notifier's whole
 // budget and leave an unusable row behind if the client gave up first.
 func (h *Handler) recordMCPKeyChange(r *http.Request, k store.MCPKey, logged, event string) {
-	if k.Kind == store.MCPKindOAuth {
-		log.Printf("api: mcp: grant %s of client %s %s", k.ID, k.OAuthClient, logged)
-	} else {
-		log.Printf("api: mcp: key %s ...%s %s", k.ID, k.Hint, logged)
-	}
+	logKeyChange(k, logged)
 	if event == "" {
 		return
 	}
@@ -543,7 +547,7 @@ func RevokeMCPKeysAfterConfigRestore(st *store.Repo, dataDir string, now time.Ti
 		return fmt.Errorf("revoke MCP keys after the configuration restore: %w", err)
 	}
 	if n > 0 {
-		log.Printf("selfrestore: revoked %d MCP key(s): a restored configuration may contain keys that were revoked after it was saved; create new keys under Settings > System > MCP server", n)
+		log.Printf("selfrestore: revoked %d MCP key(s) and API token(s): a restored configuration may contain keys that were revoked after it was saved; create new ones under Settings > System", n)
 	}
 	return os.Remove(marker)
 }
