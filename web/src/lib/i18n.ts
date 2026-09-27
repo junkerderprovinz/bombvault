@@ -1461,11 +1461,12 @@ export const en = {
   "recovery.recheck": "Check",
   // Step 2 — restore BombVault's own settings first (optional, before attach)
   "recovery.stepConfig": "Restore BombVault's own settings",
-  "recovery.configHint": "On a rebuilt server, restore BombVault's own settings first (its backup paths, off-site targets and credentials) so the steps below come pre-filled. Point it at the settings backup you set up earlier. No settings backup? Skip this and attach your backups manually below.",
+  "recovery.configHint": "On a rebuilt server, restore BombVault's own settings first (its backup paths, off-site targets and credentials) so the steps below come pre-filled. The settings backup is read from the place shown here, which the Self-Backup row in step 3 sets. No settings backup? Skip this and attach your backups manually below.",
   "recovery.configAppKeyReminder": "Your APP_KEY must match this backup. That's the check in Step 1 above.",
   "recovery.configSourceLabel": "Where is the settings backup?",
-  "recovery.configLocalPath": "Local path",
-  "recovery.configOffsiteUrl": "Off-site repo URL",
+  "recovery.configOtherHome": "To restore from another place, choose it as Stored in on the Self-Backup row in step 3.",
+  "recovery.configOtherCopy": "To restore from another place, choose it as Stored in on the Self-Backup row in step 3 and restore from Local.",
+  "recovery.configNoCopy": "The Self-Backup has no copy yet. To restore from a copy, add its place under Copied to on the Self-Backup row in step 3.",
   "recovery.configRestore": "Restore",
   "recovery.configRestoring": "Restoring…",
   "recovery.configRestarting": "BombVault is restarting to apply your settings… this page reloads automatically when it's back.",
@@ -1477,7 +1478,7 @@ export const en = {
   // Step 3 — attach your backups
   "recovery.step2": "Attach your backups",
   "recovery.attachHint": "Point BombVault at your existing backups. On each domain's row, choose the place its backups lie on as Stored in, and the places that hold its copies under Copied to. A place no row offers yet, such as a share, a server or a cloud bucket, is connected with Add place.",
-  "recovery.credsSaveHint": "Adding a place and choosing on a row save at once. Connect & preview then checks that the backups can be read.",
+  "recovery.credsSaveHint": "A new place and every choice on a row are saved right away. Connect & preview then checks that the backups can be read.",
   "recovery.connectPreview": "Connect & preview",
   // Encryption mode — DETECTED, not asserted. The repositories themselves say
   // whether they need the APP_KEY-derived password, so the common path (attach
@@ -1491,7 +1492,7 @@ export const en = {
   "recovery.encAbsent": "No backup repository exists at these locations yet, so there is nothing to detect. Your choice below decides how it gets created.",
   "recovery.encUnknown": "Can't tell yet: the repositories couldn't be opened, so their encryption mode is unknown. Fix the location above and check again, or set it yourself if you already know.",
   "recovery.encConflict": "Your repositories disagree: some are encrypted, some are not. One setting can't open both. Point the odd one out at a new, empty location, or restore from the matching set only.",
-  "recovery.encUnconfigured": "No backup location configured yet. Set the paths below, then connect.",
+  "recovery.encUnconfigured": "No backup location configured yet. Choose where each domain's backups lie as Stored in on the rows below, or connect their place with Add place, then use Connect & preview.",
   "recovery.encDetectHint":
     "Encryption isn't a preference: a repository is created either with a password (derived from your APP_KEY) or without one, and that never changes afterwards. BombVault opens the configured repositories to see which it is, so restoring on a fresh box needs no guesswork. A repository that can't be reached is reported as unknown, never as unencrypted.",
   "recovery.encStateEncrypted": "encrypted",
@@ -2287,7 +2288,6 @@ export const en = {
   "placement.copyToHint": "A place that is not a copy target of this domain yet becomes one in the domain's row under Settings, Storage, Domains.",
   "storageDomains.unplacedTargets": "{list}, without a place",
   "storageDomains.unplacedTargetsHint": "The address of these targets fits no place, and they keep copying as before. Assign one to a place under Without a place to switch it here.",
-  "recovery.placeKept": "The location of the Self-Backup belongs to a storage place and stayed as it was. To restore from another place, choose it as Stored in on the Self-Backup row in step 3.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -3500,11 +3500,12 @@ export const de: Translations = {
   "recovery.recheck": "Prüfen",
   // Schritt 2 — zuerst BombVaults eigene Einstellungen wiederherstellen (optional)
   "recovery.stepConfig": "BombVaults eigene Einstellungen wiederherstellen",
-  "recovery.configHint": "Stelle auf einem neu aufgesetzten Server zuerst BombVaults eigene Einstellungen wieder her (Backup-Pfade, Off-site-Ziele und Zugangsdaten), damit die Schritte unten schon vorausgefüllt sind. Richte es auf das zuvor eingerichtete Einstellungs-Backup aus. Kein Einstellungs-Backup? Überspringe dies und hänge deine Backups unten manuell an.",
+  "recovery.configHint": "Stelle auf einem neu aufgesetzten Server zuerst BombVaults eigene Einstellungen wieder her (Backup-Pfade, Off-site-Ziele und Zugangsdaten), damit die Schritte unten schon vorausgefüllt sind. Das Einstellungs-Backup wird von dem Ort gelesen, der hier steht und den die Zeile „Selbst-Backup“ in Schritt 3 festlegt. Kein Einstellungs-Backup? Überspringe dies und hänge deine Backups unten manuell an.",
   "recovery.configAppKeyReminder": "Dein APP_KEY muss zu diesem Backup passen. Das ist die Prüfung in Schritt 1 oben.",
   "recovery.configSourceLabel": "Wo liegt das Einstellungs-Backup?",
-  "recovery.configLocalPath": "Lokaler Pfad",
-  "recovery.configOffsiteUrl": "Off-site-Repo-URL",
+  "recovery.configOtherHome": "Um von einem anderen Ort wiederherzustellen, wähle ihn in Schritt 3 in der Zeile „Selbst-Backup“ als „Gespeichert in“.",
+  "recovery.configOtherCopy": "Um von einem anderen Ort wiederherzustellen, wähle ihn in Schritt 3 in der Zeile „Selbst-Backup“ als „Gespeichert in“ und stelle von „Lokal“ wieder her.",
+  "recovery.configNoCopy": "Das Selbst-Backup hat noch keine Kopie. Um von einer Kopie wiederherzustellen, füge ihren Ort in Schritt 3 in der Zeile „Selbst-Backup“ unter „Kopiert nach“ hinzu.",
   "recovery.configRestore": "Wiederherstellen",
   "recovery.configRestoring": "Stelle wieder her…",
   "recovery.configRestarting": "BombVault startet neu, um deine Einstellungen anzuwenden… diese Seite lädt automatisch neu, sobald es wieder da ist.",
@@ -3528,7 +3529,7 @@ export const de: Translations = {
   "recovery.encAbsent": "An diesen Orten liegt noch kein Backup-Repository, es gibt also nichts zu erkennen. Deine Wahl unten entscheidet, wie es angelegt wird.",
   "recovery.encUnknown": "Noch nicht feststellbar: Die Repositories liessen sich nicht öffnen, ihr Verschlüsselungsmodus ist damit unbekannt. Korrigiere den Ort oben und prüfe erneut, oder stelle ihn selbst ein, wenn du ihn kennst.",
   "recovery.encConflict": "Deine Repositories widersprechen sich: Einige sind verschlüsselt, andere nicht. Eine Einstellung kann nicht beide öffnen. Richte den Ausreisser auf einen neuen, leeren Ort aus oder stelle nur aus dem passenden Satz wieder her.",
-  "recovery.encUnconfigured": "Noch kein Backup-Ort eingetragen. Trage unten die Pfade ein und verbinde dich dann.",
+  "recovery.encUnconfigured": "Noch kein Backup-Ort eingetragen. Wähle in den Zeilen unten als „Gespeichert in“, wo die Backups jeder Domäne liegen, oder verbinde ihren Ort mit „Ort hinzufügen“, dann „Verbinden & prüfen“.",
   "recovery.encDetectHint":
     "Verschlüsselung ist keine Vorliebe: Ein Repository wird entweder mit Passwort (aus deinem APP_KEY abgeleitet) oder ohne angelegt, und das ändert sich danach nie mehr. BombVault öffnet die eingetragenen Repositories, um zu sehen, was davon zutrifft. Auf einer frischen Kiste musst du also nicht raten. Ein Repository, das nicht erreichbar ist, gilt als unbekannt, niemals als unverschlüsselt.",
   "recovery.encStateEncrypted": "verschlüsselt",
@@ -4289,7 +4290,6 @@ export const de: Translations = {
   "placement.copyToHint": "Ein Ort, der noch kein Kopieziel dieser Domäne ist, wird es in der Zeile der Domäne unter Einstellungen, Speicher, Domänen.",
   "storageDomains.unplacedTargets": "{list}, ohne Ort",
   "storageDomains.unplacedTargetsHint": "Die Adresse dieser Ziele passt zu keinem Ort, und sie kopieren weiter wie bisher. Ordne eines unter „Ohne Ort“ einem Ort zu, um es hier zu schalten.",
-  "recovery.placeKept": "Der Ort des Selbst-Backups gehört zu einem Speicherort und ist geblieben, wie er war. Um von einem anderen Ort wiederherzustellen, wähle ihn in Schritt 3 in der Zeile „Selbst-Backup“ als „Gespeichert in“.",
 };
 
 // ---------------------------------------------------------------------------

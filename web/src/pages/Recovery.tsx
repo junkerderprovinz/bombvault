@@ -16,6 +16,7 @@ import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { AddPlaceDialog } from "../components/places/AddPlaceDialog";
 import { DomainRows } from "../components/places/DomainsCard";
+import { PlaceLine, useSelfBackupPlaces } from "../components/recovery/SelfBackupPlace";
 import { ToggleRow } from "./settings/shared";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { fireAndWaitRun } from "../lib/backupWatch";
@@ -982,9 +983,9 @@ function AddPlaceButton({ t, hostMountRoot }: { t: ReturnType<typeof useT>["t"];
       <Button
         label={t("places.add")}
         labelKey="places.add"
-        tone="accent"
+        tone="neutral"
         onClick={() => setAdding(true)}
-        className="glim-btn-key self-start"
+        className="self-start"
       />
       {adding && <AddPlaceDialog hostMountRoot={hostMountRoot} onClose={() => setAdding(false)} />}
     </>
@@ -1139,9 +1140,9 @@ export default function Recovery() {
   const [readNote, setReadNote] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
 
-  // The page keeps its own copy of the settings for the config location of
-  // step 2 and the encryption choice of step 3, and saves through the same
-  // calls as the Settings page. Places and domain rows save themselves.
+  // The page keeps its own copy of the settings for the config addresses step
+  // 2 shows and the encryption choice of step 3, which it saves through the
+  // same call as the Settings page. Places and domain rows save themselves.
   const [settings, setSettings] = useState<Settings | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
   const [attachState, setAttachState] = useState<"idle" | "saving">("idle");
@@ -1182,10 +1183,11 @@ export default function Recovery() {
 
   // The config step restores BombVault's own settings first, so attach and
   // discover come pre-filled. It is optional; without a settings backup the
-  // user attaches by hand. The location is saved right before the restore so
-  // the backend resolves the right repo.
+  // user attaches by hand. It reads from the place the Self-Backup row names,
+  // since a place owns the config path and a typed one would never be stored.
   const [configSource, setConfigSource] = useState<RepoSource>("local");
-  type ConfigPhase = "idle" | "saving" | "restarting" | "manual" | "reload" | "error";
+  const selfBackup = useSelfBackupPlaces();
+  type ConfigPhase = "idle" | "staging" | "restarting" | "manual" | "reload" | "error";
   const [configPhase, setConfigPhase] = useState<ConfigPhase>("idle");
   const [configError, setConfigError] = useState<string | null>(null);
   const [configSkipped, setConfigSkipped] = useState(false);
@@ -1304,50 +1306,19 @@ export default function Recovery() {
     }
   }, [settings, checkReadable, runEncryptionDetect, push, t]);
 
-  // restoreOwnConfig saves the chosen config-repo location, stages a restore of
-  // BombVault's own settings and follows the restart that applies it: with
-  // autoRestart it waits for the app and reloads, otherwise it shows the manual
-  // restart instruction.
+  // restoreOwnConfig stages a restore of BombVault's own settings from the
+  // Self-Backup's place, or from its copy, and follows the restart that
+  // applies it: with autoRestart it waits for the app and reloads, otherwise it
+  // shows the manual restart instruction.
+  const copyId = selfBackup?.copy?.targetId;
   const restoreOwnConfig = useCallback(async () => {
-    if (!settings) return;
-    setConfigPhase("saving");
+    if (configSource === "offsite" && !copyId) return;
+    setConfigPhase("staging");
     setConfigError(null);
-    // The same fresh baseline as in connectPreview.
-    const latest = await getSettings();
-    if (!latest.ok) {
-      const message = latest.error ?? t("config.loadSettingsFailed");
-      setConfigError(message);
-      setConfigPhase("error");
-      push(message, "fail");
-      setConfigShake((n) => n + 1);
-      return;
-    }
-    const base = latest.settings;
-    const field = configSource === "offsite" ? "configOffsite" : "configPath";
-    const patch: Partial<Settings> = { [field]: settings[field] };
-    const updated: Settings = { ...base, ...patch };
     try {
-      const saveRes = await putSettings(updated);
-      if (!saveRes.ok) {
-        const message = saveRes.error ?? t("settings.error");
-        setConfigError(message);
-        setConfigPhase("error");
-        push(message, "fail");
-        setConfigShake((n) => n + 1);
-        return;
-      }
-      // Staging now would read the stored location, not the one typed here.
-      if (saveRes.kept?.includes(field)) {
-        const message = t("recovery.placeKept");
-        setSettings((prev) => (prev ? { ...prev, [field]: base[field] } : base));
-        setConfigError(message);
-        setConfigPhase("error");
-        push(message, "warn");
-        setConfigShake((n) => n + 1);
-        return;
-      }
-      setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
-      const res = await restoreConfig("latest", configSource === "offsite" ? "offsite" : undefined);
+      // The copy the page shows, not whichever target the server would take
+      // first for a bare "offsite".
+      const res = await restoreConfig("latest", configSource === "offsite" ? `offsite:${copyId}` : undefined);
       if (!res.ok) {
         const message = isKeyMismatch(res.error) ? t("recovery.appKeyRemedy") : res.error ?? t("settings.error");
         setConfigError(message);
@@ -1389,8 +1360,9 @@ export default function Recovery() {
       push(message, "fail");
       setConfigShake((n) => n + 1);
     }
-  }, [settings, configSource, t, push]);
+  }, [configSource, copyId, t, push]);
 
+  const configBusy = configPhase === "staging" || configPhase === "restarting";
   const configStepState: StepState =
     configPhase === "error"
       ? "bad"
@@ -1459,7 +1431,7 @@ export default function Recovery() {
 
   // A write to a place or a domain row can move where the backups lie. What
   // Discover found at the old location goes, step 3 waits for another
-  // Connect & preview, and step 2 takes the config location the Self-Backup
+  // Connect & preview, and step 2 shows the config address the Self-Backup
   // row points at; the newest read wins.
   const locationRead = useRef(0);
   useEffect(
@@ -1580,8 +1552,8 @@ export default function Recovery() {
         </div>
 
         {/* Shown after every check, not only on failure: a good result confirms
-            the place. Raw paths, because a stuck user compares them with what
-            they typed. */}
+            the place. Raw paths, because a stuck user compares them with the
+            places the domain rows name. */}
         {readSources.length > 0 && readableState !== "idle" && (
           <p className="text-xs text-carbon-textMuted leading-relaxed wrap-break-word">
             {t("recovery.readFrom")}{" "}
@@ -1619,34 +1591,31 @@ export default function Recovery() {
               <>
                 <div className="flex items-center gap-2 flex-wrap pt-1">
                   <span className="text-xs text-carbon-textMuted">{t("recovery.configSourceLabel")}</span>
-                  <SourceToggle
-                    source={configSource}
-                    onChange={setConfigSource}
-                    disabled={configPhase === "saving" || configPhase === "restarting"}
-                  />
+                  <SourceToggle source={configSource} onChange={setConfigSource} disabled={configBusy} />
                 </div>
 
                 {configSource === "local" ? (
-                  <FolderBrowser
-                    label={t("recovery.configLocalPath")}
-                    value={settings.configPath}
-                    hostMountRoot={hostMountRoot}
-                    onChange={(v) => setSettings((prev) => (prev ? { ...prev, configPath: v } : prev))}
-                  />
-                ) : (
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs text-carbon-textSub">{t("recovery.configOffsiteUrl")}</label>
-                    <input
-                      value={settings.configOffsite}
-                      spellCheck={false}
-                      onChange={(e) =>
-                        setSettings((prev) => (prev ? { ...prev, configOffsite: e.target.value } : prev))
-                      }
-                      placeholder="rest:http://host:8000/repo"
-                      dir="ltr"
-                      className={`${offsiteInput} text-start`}
+                  <>
+                    <PlaceLine
+                      label={t("storageDomains.storedIn")}
+                      place={selfBackup?.home}
+                      name={selfBackup?.home?.name ?? ""}
+                      address={settings.configPath}
                     />
-                  </div>
+                    <p className="text-xs text-carbon-textMuted leading-relaxed">{t("recovery.configOtherHome")}</p>
+                  </>
+                ) : selfBackup?.copy ? (
+                  <>
+                    <PlaceLine
+                      label={t("storageDomains.copiedTo")}
+                      place={selfBackup.copy.place}
+                      name={selfBackup.copy.place?.name ?? selfBackup.copy.name}
+                      address={settings.configOffsite}
+                    />
+                    <p className="text-xs text-carbon-textMuted leading-relaxed">{t("recovery.configOtherCopy")}</p>
+                  </>
+                ) : (
+                  <p className="text-xs text-carbon-textMuted leading-relaxed">{t("recovery.configNoCopy")}</p>
                 )}
 
                 <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -1655,7 +1624,7 @@ export default function Recovery() {
                     labelKey="recovery.configSkip"
                     tone="neutral"
                     onClick={() => setConfigSkipped(true)}
-                    disabled={configPhase === "saving" || configPhase === "restarting"}
+                    disabled={configBusy}
                   />
                   <Button
                     key={configShake}
@@ -1663,9 +1632,9 @@ export default function Recovery() {
                     labelKey="recovery.configRestore"
                     tone="accent"
                     onClick={() => void restoreOwnConfig()}
-                    disabled={configPhase === "saving" || configPhase === "restarting"}
-                    busy={(configPhase === "saving" || configPhase === "restarting")}
-                    title={(configPhase === "saving" || configPhase === "restarting") ? t("recovery.configRestoring") : undefined}
+                    disabled={configBusy || (configSource === "offsite" && !copyId)}
+                    busy={configBusy}
+                    title={configBusy ? t("recovery.configRestoring") : undefined}
                     className={configShake ? "glim-shake" : ""}
                   />
                 </div>
