@@ -11,9 +11,11 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -786,6 +788,17 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	// place back over the import and a second import waits for this rebuild.
 	h.svc.placeEditMu.Lock()
 	defer h.svc.placeEditMu.Unlock()
+	// While the places are gone a domain path or a placed repository would age
+	// by the retention in the settings row instead of its place's, so no
+	// backup, copy or prune runs until they are back.
+	locks := domainLocks{s: h.svc}
+	release := sync.OnceFunc(locks.release)
+	defer release()
+	for _, d := range places.Domains {
+		if err := locks.take(d); err != nil {
+			return fmt.Errorf("the settings were not imported, %s is busy: %w", d, err)
+		}
+	}
 	// Read before the drop: a place whose base arrives redacted keeps the base
 	// it has here under the same id. A file without places rebuilds them only
 	// on an instance that was on places, since moving an instance onto places
@@ -798,16 +811,57 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	if err != nil {
 		return fmt.Errorf("the settings were not imported: %w", err)
 	}
-	rebuild := exp.Places == nil && (len(prior) > 0 || here.PlacesMigrated != 0)
+	onPlaces := len(prior) > 0 || here.PlacesMigrated != 0
+	rebuild := exp.Places == nil && onPlaces
+	before, err := h.placesBefore(prior)
+	if err != nil {
+		return fmt.Errorf("the settings were not imported: %w", err)
+	}
 	// The steps below then write rows on no place, so none of the rules that
 	// guard a placed row gets in their way. The places come back at the end,
-	// from the file or from the migration over what it imported. An apply that
-	// stops before then leaves the instance on no places with the migration
-	// mark clear, running from its settings and rows as they are.
+	// from the file or from the migration over what it imported, and a write
+	// that fails before then puts back the ones this instance had.
 	if err := h.store.DropPlaces(); err != nil {
 		return fmt.Errorf("the settings were not imported: %w", err)
 	}
+	if err := h.writeImport(exp, installed, prior); err != nil {
+		if !onPlaces {
+			return err
+		}
+		if pErr := h.putPlacesBack(before); pErr != nil {
+			return errors.Join(err, fmt.Errorf("the storage places could not be put back, so this instance runs without places: %w", pErr))
+		}
+		return err
+	}
 
+	// Mirror the imported off-site config into the primary off-site target rows and
+	// re-arm the scheduler, exactly like a settings save, so the imported schedules
+	// take effect. A test wiring may have no scheduler.
+	s, err := h.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	h.svc.syncAllPrimaryOffsiteTargets(s)
+	// The places are rebuilt before the reload, so a reload that fails leaves
+	// no instance that had places on none.
+	var placesErr error
+	if rebuild {
+		if err := h.svc.MigrateToPlaces(); err != nil {
+			placesErr = fmt.Errorf("the settings were imported, but the storage places could not be built from them, so this instance runs without places: %w", err)
+		}
+	}
+	// A backup the reload finds due waits for its domain.
+	release()
+	if h.scheduler != nil {
+		if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
+			return errors.Join(placesErr, err)
+		}
+	}
+	return placesErr
+}
+
+// writeImport writes what the file carries, the places last.
+func (h *Handler) writeImport(exp settingsExport, installed store.Installed, prior []store.Place) error {
 	// A hook command in the file is not installed (see mergeImportedSettings).
 	// Saying so tells an operator moving to a new box that the hook is the one
 	// part of Backup Everything that did not travel, before the night the
@@ -849,7 +903,7 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	// already protects the named repository it points at before the delete loop
 	// below runs.
 	h.svc.placementMu.Lock()
-	err = h.store.ImportPlacement(importedPlacement(exp), installed)
+	err := h.store.ImportPlacement(importedPlacement(exp), installed)
 	h.svc.placementMu.Unlock()
 	if err != nil {
 		return err
@@ -877,33 +931,9 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	// Last among the writes, so a place claims only what the steps above
 	// stored; see placedImport.
 	if exp.Places != nil {
-		if err := h.replacePlaces(exp, prior); err != nil {
-			return err
-		}
+		return h.replacePlaces(exp, prior)
 	}
-
-	// Mirror the imported off-site config into the primary off-site target rows and
-	// re-arm the scheduler, exactly like a settings save, so the imported schedules
-	// take effect. A test wiring may have no scheduler.
-	s, err := h.store.GetSettings()
-	if err != nil {
-		return err
-	}
-	h.svc.syncAllPrimaryOffsiteTargets(s)
-	// The places are rebuilt before the reload, so a reload that fails leaves
-	// no instance that had places on none.
-	var placesErr error
-	if rebuild {
-		if err := h.svc.MigrateToPlaces(); err != nil {
-			placesErr = fmt.Errorf("the settings were imported, but the storage places could not be built from them, so this instance runs without places: %w", err)
-		}
-	}
-	if h.scheduler != nil {
-		if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
-			return errors.Join(placesErr, err)
-		}
-	}
-	return placesErr
+	return nil
 }
 
 // installedForImport reads the containers and VMs installed on the host when
