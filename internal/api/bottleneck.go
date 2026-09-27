@@ -13,8 +13,11 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// procDir is where the kernel counters are read.
-var procDir = "/proc"
+// procDir and cgroupDir are where the kernel counters are read.
+var (
+	procDir   = "/proc"
+	cgroupDir = "/sys/fs/cgroup"
+)
 
 // loadEvery is how often the counters are read while a backup runs.
 const loadEvery = 5 * time.Second
@@ -175,6 +178,8 @@ func bottleneckSentence(c *hostload.Cause) string {
 	switch c.Kind {
 	case hostload.CauseCPU:
 		return fmt.Sprintf("The CPU was %d%% busy.", pct)
+	case hostload.CauseCPULimit:
+		return fmt.Sprintf("BombVault used %d%% of the CPU limit of its container.", pct)
 	case hostload.CauseUpload:
 		return fmt.Sprintf("The upload ran at %d%% of the repository's upload limit.", pct)
 	}

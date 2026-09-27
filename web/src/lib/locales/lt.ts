@@ -319,6 +319,7 @@ const lt: Partial<Translations> = {
   "bottleneck.targetDisk": "Paskirties diskas {name} buvo užimtas {pct} %.",
   "bottleneck.bothDisk": "Diskas {name}, kuriame yra ir šaltinis, ir paskirtis, buvo užimtas {pct} %.",
   "bottleneck.cpu": "Procesorius buvo užimtas {pct} %.",
+  "bottleneck.cpuLimit": "BombVault išnaudojo {pct} % savo konteinerio procesoriaus ribos.",
   "bottleneck.upload": "Įkėlimas vyko {pct} % savo ribos.",
   "run.colKind": "Tipas",
   "run.colStatus": "Būsena",

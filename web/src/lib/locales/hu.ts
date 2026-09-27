@@ -244,6 +244,7 @@ const hu: Partial<Translations> = {
   "bottleneck.targetDisk": "A(z) {name} céllemez {pct}%-ban volt foglalt.",
   "bottleneck.bothDisk": "A(z) {name} lemez, amelyen a forrás és a cél is van, {pct}%-ban volt foglalt.",
   "bottleneck.cpu": "A processzor {pct}%-ban volt foglalt.",
+  "bottleneck.cpuLimit": "A BombVault a konténere processzorkorlátjának {pct}%-át használta.",
   "bottleneck.upload": "A feltöltés a korlátja {pct}%-án futott.",
   "run.colKind": "Típus",
   "run.colStatus": "Állapot",

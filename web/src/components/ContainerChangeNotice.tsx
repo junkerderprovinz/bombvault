@@ -38,7 +38,7 @@ export function ContainerChangeNotice({ changes, t }: { changes?: ContainerChang
   if (lines.length > LISTED) listed.push(t("changeNotice.more", lines.length - LISTED));
   return (
     <span className="inline-flex items-center gap-1">
-      <Badge tone="warn" size="small" shape="pill">
+      <Badge tone="warn" size="small" shape="pill" className="whitespace-nowrap">
         {t("changeNotice.badge")}
       </Badge>
       <InfoBubble tip={t("changeNotice.hint").replace("{changes}", listed.join("; "))} />

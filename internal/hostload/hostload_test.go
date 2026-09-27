@@ -34,8 +34,8 @@ const mountinfo = `22 1 0:21 / / rw - overlay overlay rw
 `
 
 func TestParseStatCountsIdleAndIowaitAsNotBusy(t *testing.T) {
-	busy, total := parseStat([]byte("cpu  100 0 50 800 50 0 0 0 0 0\ncpu0 1 2 3 4\n"))
-	if busy != 150 || total != 1000 {
+	busy, total, cpus := parseStat([]byte("cpu  100 0 50 800 50 0 0 0 0 0\ncpu0 1 2 3 4\ncpu1 1 2 3 4\nintr 5\n"))
+	if busy != 150 || total != 1000 || cpus != 2 {
 		t.Fatalf("busy %d total %d", busy, total)
 	}
 }
@@ -65,7 +65,7 @@ func TestParseNetDevSumsWhatWasSentButLoopback(t *testing.T) {
 }
 
 func TestSamplerAveragesTheIntervalsOfARun(t *testing.T) {
-	s := NewSampler(t.TempDir(), time.Hour)
+	s := NewSampler(t.TempDir(), t.TempDir(), time.Hour)
 	s.windows["run"] = &window{disks: map[string]float64{}, startedAt: time.Now()}
 	a := Counters{CPUBusy: 0, CPUTotal: 100, DiskTicks: map[string]uint64{"sdb": 0, "sdc": 0}, TxBytes: 0, HasNet: true}
 	b := Counters{CPUBusy: 50, CPUTotal: 200, DiskTicks: map[string]uint64{"sdb": 5000, "sdc": 1000}, TxBytes: 10_000, HasNet: true}
@@ -85,7 +85,7 @@ func TestSamplerAveragesTheIntervalsOfARun(t *testing.T) {
 }
 
 func TestSamplerSkipsACounterThatWentBackwards(t *testing.T) {
-	s := NewSampler(t.TempDir(), time.Hour)
+	s := NewSampler(t.TempDir(), t.TempDir(), time.Hour)
 	s.windows["run"] = &window{disks: map[string]float64{}, startedAt: time.Now()}
 	s.addInterval(Counters{DiskTicks: map[string]uint64{"sdb": 9000}}, Counters{DiskTicks: map[string]uint64{"sdb": 10}}, 5*time.Second)
 	sum, _ := s.End("run")
@@ -95,7 +95,7 @@ func TestSamplerSkipsACounterThatWentBackwards(t *testing.T) {
 }
 
 func TestARunShorterThanOneSampleHasNoSummary(t *testing.T) {
-	s := NewSampler(t.TempDir(), time.Hour)
+	s := NewSampler(t.TempDir(), t.TempDir(), time.Hour)
 	s.Begin("run")
 	if _, ok := s.End("run"); ok {
 		t.Fatal("a run without a sample got a summary")
@@ -105,7 +105,7 @@ func TestARunShorterThanOneSampleHasNoSummary(t *testing.T) {
 func TestSamplerReadsTheCountersWhileARunIsOpen(t *testing.T) {
 	proc := t.TempDir()
 	write(t, proc, "stat", "cpu 10 0 10 80 0 0 0 0\n")
-	s := NewSampler(proc, 10*time.Millisecond)
+	s := NewSampler(proc, t.TempDir(), 10*time.Millisecond)
 	s.Begin("run")
 	write(t, proc, "stat", "cpu 100 0 10 90 0 0 0 0\n")
 	deadline := time.Now().Add(5 * time.Second)
@@ -219,5 +219,39 @@ func write(t *testing.T, dir, name, body string) {
 	}
 	if err := os.WriteFile(p, []byte(body), 0o600); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestReadCgroupTakesTheLowerOfQuotaAndCpuset(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, "cpu.stat", "usage_usec 5000\nuser_usec 4000\n")
+	write(t, dir, "cpu.max", "200000 100000\n")
+	write(t, dir, "cpuset.cpus.effective", "0-7,16\n")
+	if usec, limit := readCgroup(dir, 32); usec != 5000 || limit != 2 {
+		t.Fatalf("usec %d limit %v", usec, limit)
+	}
+	write(t, dir, "cpu.max", "max 100000\n")
+	if _, limit := readCgroup(dir, 32); limit != 9 {
+		t.Fatalf("cpuset limit %v", limit)
+	}
+	write(t, dir, "cpuset.cpus.effective", "0-31\n")
+	if _, limit := readCgroup(dir, 32); limit != 0 {
+		t.Fatalf("a container with every CPU has limit %v", limit)
+	}
+	if usec, limit := readCgroup(t.TempDir(), 32); usec != 0 || limit != 0 {
+		t.Fatalf("without cgroup v2: %d %v", usec, limit)
+	}
+}
+
+func TestSamplerMeasuresTheShareOfTheCPULimit(t *testing.T) {
+	s := NewSampler(t.TempDir(), t.TempDir(), time.Hour)
+	s.windows["run"] = &window{disks: map[string]float64{}, startedAt: time.Now()}
+	s.addInterval(Counters{CgroupUsec: 0, CPULimit: 2}, Counters{CgroupUsec: 9_500_000, CPULimit: 2}, 5*time.Second)
+	sum, _ := s.End("run")
+	if sum.CPULimit == nil || *sum.CPULimit != 0.95 {
+		t.Fatalf("summary %+v", sum)
+	}
+	if c := CauseOf(sum, 0); c == nil || c.Kind != CauseCPULimit {
+		t.Fatalf("cause %+v", c)
 	}
 }

@@ -319,6 +319,7 @@ const ca: Partial<Translations> = {
   "bottleneck.targetDisk": "El disc de destinació {name} estava ocupat al {pct} %.",
   "bottleneck.bothDisk": "El disc {name}, que conté l'origen i la destinació, estava ocupat al {pct} %.",
   "bottleneck.cpu": "La CPU estava ocupada al {pct} %.",
+  "bottleneck.cpuLimit": "BombVault ha fet servir el {pct} % del límit de CPU del seu contenidor.",
   "bottleneck.upload": "La pujada anava al {pct} % del seu límit.",
   "run.colKind": "Tipus",
   "run.colStatus": "Estat",

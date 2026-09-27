@@ -319,6 +319,7 @@ const eu: Partial<Translations> = {
   "bottleneck.targetDisk": "{name} helburu-diskoa % {pct} lanpetuta egon zen.",
   "bottleneck.bothDisk": "{name} diskoa, iturburua eta helburua dituena, % {pct} lanpetuta egon zen.",
   "bottleneck.cpu": "PUZa % {pct} lanpetuta egon zen.",
+  "bottleneck.cpuLimit": "BombVault-ek bere edukiontziaren PUZ mugaren % {pct} erabili zuen.",
   "bottleneck.upload": "Igoera bere mugaren % {pct}ean ibili zen.",
   "run.colKind": "Mota",
   "run.colStatus": "Egoera",

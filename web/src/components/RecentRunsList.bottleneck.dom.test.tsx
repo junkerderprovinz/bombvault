@@ -49,6 +49,7 @@ it("names the brake under a slow run and nothing under the others", async () => 
     runs: [
       run({ id: "slow", bottleneck: { kind: "disk", name: "disk1", role: "target", share: 0.976 } }),
       run({ id: "cpu", bottleneck: { kind: "cpu", share: 0.93 } }),
+      run({ id: "limit", bottleneck: { kind: "cpulimit", share: 0.99 } }),
       run({ id: "plain" }),
     ],
   });
@@ -57,5 +58,6 @@ it("names the brake under a slow run and nothing under the others", async () => 
   });
   expect(screen.getByText("Slower than usual. The target disk disk1 was 98% busy.")).toBeTruthy();
   expect(screen.getByText("Slower than usual. The CPU was 93% busy.")).toBeTruthy();
-  expect(screen.getAllByText(/Slower than usual/)).toHaveLength(2);
+  expect(screen.getByText("Slower than usual. BombVault used 99% of the CPU limit of its container.")).toBeTruthy();
+  expect(screen.getAllByText(/Slower than usual/)).toHaveLength(3);
 });

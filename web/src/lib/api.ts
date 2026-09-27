@@ -486,7 +486,7 @@ export interface Run {
 /** The one resource a slow backup waited on. share is how busy it was, or
  *  for an upload the share of its limit it used. */
 export interface Bottleneck {
-  kind: "disk" | "cpu" | "upload";
+  kind: "disk" | "cpu" | "cpulimit" | "upload";
   name?: string;
   role?: "source" | "target" | "both";
   share: number;

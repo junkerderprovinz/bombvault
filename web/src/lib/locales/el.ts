@@ -244,6 +244,7 @@ const el: Partial<Translations> = {
   "bottleneck.targetDisk": "Ο δίσκος προορισμού {name} ήταν απασχολημένος κατά {pct}%.",
   "bottleneck.bothDisk": "Ο δίσκος {name}, που έχει την προέλευση και τον προορισμό, ήταν απασχολημένος κατά {pct}%.",
   "bottleneck.cpu": "Ο επεξεργαστής ήταν απασχολημένος κατά {pct}%.",
+  "bottleneck.cpuLimit": "Το BombVault χρησιμοποίησε το {pct}% του ορίου επεξεργαστή του κοντέινέρ του.",
   "bottleneck.upload": "Η αποστολή έτρεχε στο {pct}% του ορίου της.",
   "run.colKind": "Τύπος",
   "run.colStatus": "Κατάσταση",

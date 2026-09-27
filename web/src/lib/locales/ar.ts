@@ -244,6 +244,7 @@ const ar: Partial<Translations> = {
   "bottleneck.targetDisk": "كان القرص الهدف {name} مشغولًا بنسبة {pct}%.",
   "bottleneck.bothDisk": "كان القرص {name}، الذي يحمل المصدر والهدف، مشغولًا بنسبة {pct}%.",
   "bottleneck.cpu": "كان المعالج مشغولًا بنسبة {pct}%.",
+  "bottleneck.cpuLimit": "استخدم BombVault نسبة {pct}% من حد المعالج لحاويته.",
   "bottleneck.upload": "جرى الرفع بنسبة {pct}% من حدّه.",
   "run.colKind": "النوع",
   "run.colStatus": "الحالة",

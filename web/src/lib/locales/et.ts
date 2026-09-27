@@ -319,6 +319,7 @@ const et: Partial<Translations> = {
   "bottleneck.targetDisk": "Sihtketas {name} oli {pct}% hõivatud.",
   "bottleneck.bothDisk": "Ketas {name}, kus on nii allikas kui ka siht, oli {pct}% hõivatud.",
   "bottleneck.cpu": "Protsessor oli {pct}% hõivatud.",
+  "bottleneck.cpuLimit": "BombVault kasutas {pct}% oma konteineri protsessoripiirist.",
   "bottleneck.upload": "Üleslaadimine käis {pct}% oma piirist.",
   "run.colKind": "Liik",
   "run.colStatus": "Olek",

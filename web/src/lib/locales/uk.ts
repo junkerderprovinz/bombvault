@@ -243,6 +243,7 @@ const uk: Partial<Translations> = {
   "bottleneck.targetDisk": "Цільовий диск {name} був завантажений на {pct}%.",
   "bottleneck.bothDisk": "Диск {name}, на якому і джерело, і ціль, був завантажений на {pct}%.",
   "bottleneck.cpu": "Процесор був завантажений на {pct}%.",
+  "bottleneck.cpuLimit": "BombVault використав {pct}% ліміту процесора свого контейнера.",
   "bottleneck.upload": "Вивантаження йшло на {pct}% свого ліміту.",
   "run.colKind": "Тип",
   "run.colStatus": "Статус",

@@ -244,6 +244,7 @@ const ko: Partial<Translations> = {
   "bottleneck.targetDisk": "대상 디스크 {name}의 사용률이 {pct}%였습니다.",
   "bottleneck.bothDisk": "원본과 대상이 있는 디스크 {name}의 사용률이 {pct}%였습니다.",
   "bottleneck.cpu": "CPU 사용률이 {pct}%였습니다.",
+  "bottleneck.cpuLimit": "BombVault가 컨테이너 CPU 한도의 {pct}%를 사용했습니다.",
   "bottleneck.upload": "업로드가 한도의 {pct}%로 진행되었습니다.",
   "run.colKind": "종류",
   "run.colStatus": "상태",

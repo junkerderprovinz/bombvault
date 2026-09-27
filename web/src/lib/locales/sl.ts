@@ -319,6 +319,7 @@ const sl: Partial<Translations> = {
   "bottleneck.targetDisk": "Ciljni disk {name} je bil zaseden {pct} %.",
   "bottleneck.bothDisk": "Disk {name}, na katerem sta vir in cilj, je bil zaseden {pct} %.",
   "bottleneck.cpu": "Procesor je bil zaseden {pct} %.",
+  "bottleneck.cpuLimit": "BombVault je porabil {pct} % omejitve procesorja svojega vsebnika.",
   "bottleneck.upload": "Nalaganje je teklo s {pct} % svoje omejitve.",
   "run.colKind": "Vrsta",
   "run.colStatus": "Stanje",

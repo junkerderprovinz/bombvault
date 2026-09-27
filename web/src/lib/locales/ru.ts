@@ -242,6 +242,7 @@ const ru: Partial<Translations> = {
   "bottleneck.targetDisk": "Целевой диск {name} был загружен на {pct}%.",
   "bottleneck.bothDisk": "Диск {name}, на котором и источник, и цель, был загружен на {pct}%.",
   "bottleneck.cpu": "Процессор был загружен на {pct}%.",
+  "bottleneck.cpuLimit": "BombVault использовал {pct}% лимита процессора своего контейнера.",
   "bottleneck.upload": "Выгрузка шла на {pct}% своего лимита.",
   "run.colKind": "Тип",
   "run.colStatus": "Статус",

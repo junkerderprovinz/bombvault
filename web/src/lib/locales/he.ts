@@ -244,6 +244,7 @@ const he: Partial<Translations> = {
   "bottleneck.targetDisk": "דיסק היעד {name} היה עסוק ב-{pct}%.",
   "bottleneck.bothDisk": "הדיסק {name}, שמחזיק את המקור ואת היעד, היה עסוק ב-{pct}%.",
   "bottleneck.cpu": "המעבד היה עסוק ב-{pct}%.",
+  "bottleneck.cpuLimit": "BombVault ניצל {pct}% ממגבלת המעבד של הקונטיינר שלו.",
   "bottleneck.upload": "ההעלאה רצה ב-{pct}% מהמגבלה שלה.",
   "run.colKind": "סוג",
   "run.colStatus": "סטטוס",

@@ -319,6 +319,7 @@ const lv: Partial<Translations> = {
   "bottleneck.targetDisk": "Mērķa disks {name} bija aizņemts {pct}% laika.",
   "bottleneck.bothDisk": "Disks {name}, kurā ir gan avots, gan mērķis, bija aizņemts {pct}% laika.",
   "bottleneck.cpu": "Procesors bija aizņemts {pct}% laika.",
+  "bottleneck.cpuLimit": "BombVault izmantoja {pct}% no sava konteinera procesora ierobežojuma.",
   "bottleneck.upload": "Augšupielāde notika ar {pct}% no sava ierobežojuma.",
   "run.colKind": "Veids",
   "run.colStatus": "Statuss",

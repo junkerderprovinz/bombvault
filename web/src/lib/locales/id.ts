@@ -319,6 +319,7 @@ const id: Partial<Translations> = {
   "bottleneck.targetDisk": "Disk tujuan {name} sibuk {pct}%.",
   "bottleneck.bothDisk": "Disk {name}, tempat sumber dan tujuan, sibuk {pct}%.",
   "bottleneck.cpu": "CPU sibuk {pct}%.",
+  "bottleneck.cpuLimit": "BombVault memakai {pct}% dari batas CPU kontainernya.",
   "bottleneck.upload": "Unggahan berjalan pada {pct}% dari batasnya.",
   "run.colKind": "Jenis",
   "run.colStatus": "Status",

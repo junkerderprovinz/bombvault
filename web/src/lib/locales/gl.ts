@@ -319,6 +319,7 @@ const gl: Partial<Translations> = {
   "bottleneck.targetDisk": "O disco de destino {name} estivo ocupado ao {pct} %.",
   "bottleneck.bothDisk": "O disco {name}, coa orixe e o destino, estivo ocupado ao {pct} %.",
   "bottleneck.cpu": "A CPU estivo ocupada ao {pct} %.",
+  "bottleneck.cpuLimit": "BombVault usou o {pct} % do límite de CPU do seu contedor.",
   "bottleneck.upload": "A subida ía ao {pct} % do seu límite.",
   "run.colKind": "Tipo",
   "run.colStatus": "Estado",

@@ -243,6 +243,7 @@ const no: Partial<Translations> = {
   "bottleneck.targetDisk": "Måldisken {name} var {pct} % opptatt.",
   "bottleneck.bothDisk": "Disken {name}, som har både kilde og mål, var {pct} % opptatt.",
   "bottleneck.cpu": "CPU-en var {pct} % opptatt.",
+  "bottleneck.cpuLimit": "BombVault brukte {pct} % av CPU-grensen til containeren sin.",
   "bottleneck.upload": "Opplastingen gikk med {pct} % av grensen sin.",
   "run.colKind": "Type",
   "run.colStatus": "Status",

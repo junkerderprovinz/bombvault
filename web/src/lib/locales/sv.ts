@@ -244,6 +244,7 @@ const sv: Partial<Translations> = {
   "bottleneck.targetDisk": "Måldisken {name} var {pct} % upptagen.",
   "bottleneck.bothDisk": "Disken {name}, som har både källa och mål, var {pct} % upptagen.",
   "bottleneck.cpu": "Processorn var {pct} % upptagen.",
+  "bottleneck.cpuLimit": "BombVault använde {pct} % av CPU-gränsen för sin container.",
   "bottleneck.upload": "Uppladdningen gick på {pct} % av sin gräns.",
   "run.colKind": "Typ",
   "run.colStatus": "Status",

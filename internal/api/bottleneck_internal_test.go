@@ -115,7 +115,7 @@ func TestAFewSecondsSlowerIsNotSlow(t *testing.T) {
 
 func TestTheHooksMeasureABackupRunFromStartToFinish(t *testing.T) {
 	svc, st, tg := bottleneckService(t)
-	svc.load = hostload.NewSampler(procDir, 10*time.Millisecond)
+	svc.load = hostload.NewSampler(procDir, t.TempDir(), 10*time.Millisecond)
 	id, err := st.StartRun(tg.ID, "backup")
 	if err != nil {
 		t.Fatal(err)
@@ -150,6 +150,7 @@ func TestBottleneckSentenceNamesTheRole(t *testing.T) {
 		{Kind: hostload.CauseDisk, Name: "disk1", Role: hostload.RoleTarget, Share: 0.98}: "The target disk disk1 was 98% busy.",
 		{Kind: hostload.CauseDisk, Name: "cache", Role: hostload.RoleSource, Share: 0.91}: "The source disk cache was 91% busy.",
 		{Kind: hostload.CauseCPU, Share: 0.95}:                                            "The CPU was 95% busy.",
+		{Kind: hostload.CauseCPULimit, Share: 0.97}:                                       "BombVault used 97% of the CPU limit of its container.",
 		{Kind: hostload.CauseUpload, Share: 1}:                                            "The upload ran at 100% of the repository's upload limit.",
 	} {
 		if got := bottleneckSentence(&c); got != want {

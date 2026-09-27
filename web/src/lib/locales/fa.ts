@@ -319,6 +319,7 @@ const fa: Partial<Translations> = {
   "bottleneck.targetDisk": "دیسک مقصد {name} {pct}٪ مشغول بود.",
   "bottleneck.bothDisk": "دیسک {name} که هم مبدأ و هم مقصد روی آن است، {pct}٪ مشغول بود.",
   "bottleneck.cpu": "پردازنده {pct}٪ مشغول بود.",
+  "bottleneck.cpuLimit": "BombVault {pct}٪ از سقف پردازندهٔ کانتینر خود را مصرف کرد.",
   "bottleneck.upload": "بارگذاری با {pct}٪ از سقف خود انجام شد.",
   "run.colKind": "نوع",
   "run.colStatus": "وضعیت",

@@ -319,6 +319,7 @@ const is: Partial<Translations> = {
   "bottleneck.targetDisk": "Markdiskurinn {name} var {pct}% upptekinn.",
   "bottleneck.bothDisk": "Diskurinn {name}, sem geymir uppruna og mark, var {pct}% upptekinn.",
   "bottleneck.cpu": "Örgjörvinn var {pct}% upptekinn.",
+  "bottleneck.cpuLimit": "BombVault notaði {pct}% af örgjörvahámarki gáms síns.",
   "bottleneck.upload": "Upphleðslan gekk á {pct}% af hámarki sínu.",
   "run.colKind": "Tegund",
   "run.colStatus": "Staða",

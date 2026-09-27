@@ -242,6 +242,7 @@ const nl: Partial<Translations> = {
   "bottleneck.targetDisk": "Doelschijf {name} was voor {pct}% bezet.",
   "bottleneck.bothDisk": "Schijf {name}, met bron en doel, was voor {pct}% bezet.",
   "bottleneck.cpu": "De CPU was voor {pct}% bezet.",
+  "bottleneck.cpuLimit": "BombVault gebruikte {pct}% van de CPU-limiet van zijn container.",
   "bottleneck.upload": "De upload liep op {pct}% van zijn limiet.",
   "run.colKind": "Soort",
   "run.colStatus": "Status",

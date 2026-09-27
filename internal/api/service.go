@@ -548,7 +548,7 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 		suggestFlights:    map[string]*suggestFlight{},
 	}
 	s.anomalies = newAnomalyEngine(s, time.Now)
-	s.load = hostload.NewSampler(procDir, loadEvery)
+	s.load = hostload.NewSampler(procDir, cgroupDir, loadEvery)
 	if st != nil {
 		st.SetRunStartedHook(s.runStarted)
 		st.AddRunFinishedHook(s.runEnded)

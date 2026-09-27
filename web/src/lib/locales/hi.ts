@@ -319,6 +319,7 @@ const hi: Partial<Translations> = {
   "bottleneck.targetDisk": "लक्ष्य डिस्क {name} {pct}% व्यस्त थी।",
   "bottleneck.bothDisk": "डिस्क {name}, जिस पर स्रोत और लक्ष्य दोनों हैं, {pct}% व्यस्त थी।",
   "bottleneck.cpu": "CPU {pct}% व्यस्त था।",
+  "bottleneck.cpuLimit": "BombVault ने अपने कंटेनर की CPU सीमा का {pct}% इस्तेमाल किया।",
   "bottleneck.upload": "अपलोड अपनी सीमा के {pct}% पर चला।",
   "run.colKind": "प्रकार",
   "run.colStatus": "स्थिति",

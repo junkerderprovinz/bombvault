@@ -244,6 +244,7 @@ const ja: Partial<Translations> = {
   "bottleneck.targetDisk": "保存先ディスク {name} の使用率は {pct}% でした。",
   "bottleneck.bothDisk": "ソースと保存先があるディスク {name} の使用率は {pct}% でした。",
   "bottleneck.cpu": "CPU の使用率は {pct}% でした。",
+  "bottleneck.cpuLimit": "BombVault はコンテナーの CPU 上限の {pct}% を使っていました。",
   "bottleneck.upload": "アップロードは上限の {pct}% で動いていました。",
   "run.colKind": "種別",
   "run.colStatus": "状態",

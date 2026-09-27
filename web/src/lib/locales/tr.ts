@@ -244,6 +244,7 @@ const tr: Partial<Translations> = {
   "bottleneck.targetDisk": "{name} hedef diski %{pct} meşguldü.",
   "bottleneck.bothDisk": "Kaynağı ve hedefi taşıyan {name} diski %{pct} meşguldü.",
   "bottleneck.cpu": "İşlemci %{pct} meşguldü.",
+  "bottleneck.cpuLimit": "BombVault, konteynerinin işlemci sınırının %{pct} kadarını kullandı.",
   "bottleneck.upload": "Yükleme sınırının %{pct} kadarıyla çalıştı.",
   "run.colKind": "Tür",
   "run.colStatus": "Durum",

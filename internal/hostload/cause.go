@@ -2,9 +2,10 @@ package hostload
 
 // Kinds of cause.
 const (
-	CauseDisk   = "disk"
-	CauseCPU    = "cpu"
-	CauseUpload = "upload"
+	CauseDisk     = "disk"
+	CauseCPU      = "cpu"
+	CauseCPULimit = "cpulimit"
+	CauseUpload   = "upload"
 )
 
 // Cause is the one resource that held a run back. Share is how busy it was,
@@ -35,6 +36,9 @@ func CauseOf(s Summary, uploadLimitBps float64) *Cause {
 	}
 	if s.CPU != nil && *s.CPU >= saturated {
 		found = append(found, Cause{Kind: CauseCPU, Share: *s.CPU})
+	}
+	if s.CPULimit != nil && *s.CPULimit >= saturated {
+		found = append(found, Cause{Kind: CauseCPULimit, Share: *s.CPULimit})
 	}
 	if uploadLimitBps > 0 && s.UploadBps != nil && *s.UploadBps >= saturated*uploadLimitBps {
 		found = append(found, Cause{Kind: CauseUpload, Share: min(*s.UploadBps/uploadLimitBps, 1)})

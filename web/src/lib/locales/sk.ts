@@ -319,6 +319,7 @@ const sk: Partial<Translations> = {
   "bottleneck.targetDisk": "Cieľový disk {name} bol vyťažený na {pct} %.",
   "bottleneck.bothDisk": "Disk {name} so zdrojom aj cieľom bol vyťažený na {pct} %.",
   "bottleneck.cpu": "Procesor bol vyťažený na {pct} %.",
+  "bottleneck.cpuLimit": "BombVault využil {pct} % limitu procesora svojho kontajnera.",
   "bottleneck.upload": "Nahrávanie bežalo na {pct} % svojho limitu.",
   "run.colKind": "Typ",
   "run.colStatus": "Stav",

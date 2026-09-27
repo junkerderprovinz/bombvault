@@ -243,6 +243,7 @@ const ro: Partial<Translations> = {
   "bottleneck.targetDisk": "Discul țintă {name} a fost ocupat {pct}%.",
   "bottleneck.bothDisk": "Discul {name}, cu sursa și ținta, a fost ocupat {pct}%.",
   "bottleneck.cpu": "Procesorul a fost ocupat {pct}%.",
+  "bottleneck.cpuLimit": "BombVault a folosit {pct}% din limita de procesor a containerului său.",
   "bottleneck.upload": "Încărcarea a mers la {pct}% din limita ei.",
   "run.colKind": "Tip",
   "run.colStatus": "Stare",

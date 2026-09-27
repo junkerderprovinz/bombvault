@@ -10,10 +10,16 @@ const DISK: Record<NonNullable<Bottleneck["role"]> | "", TranslationKey> = {
   both: "bottleneck.bothDisk",
 };
 
+const KIND: Record<Exclude<Bottleneck["kind"], "disk">, TranslationKey> = {
+  cpu: "bottleneck.cpu",
+  cpulimit: "bottleneck.cpuLimit",
+  upload: "bottleneck.upload",
+};
+
 /** bottleneckText is the line a slow run carries: that it was slow, and why. */
 export function bottleneckText(b: Bottleneck, t: T): string {
   const key: TranslationKey =
-    b.kind === "cpu" ? "bottleneck.cpu" : b.kind === "upload" ? "bottleneck.upload" : DISK[b.role ?? ""];
+    b.kind === "disk" ? DISK[b.role ?? ""] : KIND[b.kind];
   const cause = t(key)
     .replace("{name}", b.name ?? "")
     .replace("{pct}", String(Math.round(b.share * 100)));

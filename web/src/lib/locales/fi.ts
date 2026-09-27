@@ -244,6 +244,7 @@ const fi: Partial<Translations> = {
   "bottleneck.targetDisk": "Kohdelevy {name} oli {pct} % varattu.",
   "bottleneck.bothDisk": "Levy {name}, jolla ovat sekä lähde että kohde, oli {pct} % varattu.",
   "bottleneck.cpu": "Suoritin oli {pct} % varattu.",
+  "bottleneck.cpuLimit": "BombVault käytti {pct} % konttinsa suoritinrajasta.",
   "bottleneck.upload": "Lähetys kulki {pct} %:n nopeudella rajastaan.",
   "run.colKind": "Tyyppi",
   "run.colStatus": "Tila",

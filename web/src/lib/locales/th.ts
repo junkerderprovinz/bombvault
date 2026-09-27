@@ -244,6 +244,7 @@ const th: Partial<Translations> = {
   "bottleneck.targetDisk": "ดิสก์ปลายทาง {name} ทำงานอยู่ {pct}%",
   "bottleneck.bothDisk": "ดิสก์ {name} ซึ่งมีทั้งต้นทางและปลายทาง ทำงานอยู่ {pct}%",
   "bottleneck.cpu": "CPU ทำงานอยู่ {pct}%",
+  "bottleneck.cpuLimit": "BombVault ใช้ {pct}% ของขีดจำกัด CPU ของคอนเทนเนอร์",
   "bottleneck.upload": "การอัปโหลดวิ่งที่ {pct}% ของขีดจำกัด",
   "run.colKind": "ประเภท",
   "run.colStatus": "สถานะ",

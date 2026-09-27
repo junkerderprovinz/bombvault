@@ -244,6 +244,7 @@ const cs: Partial<Translations> = {
   "bottleneck.targetDisk": "Cílový disk {name} byl vytížen na {pct} %.",
   "bottleneck.bothDisk": "Disk {name} se zdrojem i cílem byl vytížen na {pct} %.",
   "bottleneck.cpu": "Procesor byl vytížen na {pct} %.",
+  "bottleneck.cpuLimit": "BombVault využil {pct} % limitu procesoru svého kontejneru.",
   "bottleneck.upload": "Nahrávání běželo na {pct} % svého limitu.",
   "run.colKind": "Typ",
   "run.colStatus": "Stav",

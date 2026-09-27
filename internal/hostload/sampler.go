@@ -9,8 +9,11 @@ import (
 // Summary is how busy things were over one run, as shares from 0 to 1.
 // CPU is nil when /proc/stat was unreadable, UploadBps when /proc/net/dev was.
 type Summary struct {
-	Samples   int        `json:"samples"`
-	CPU       *float64   `json:"cpu,omitempty"`
+	Samples int      `json:"samples"`
+	CPU     *float64 `json:"cpu,omitempty"`
+	// CPULimit is the share of its CPU limit the container used, nil when it
+	// has none.
+	CPULimit  *float64   `json:"cpuLimit,omitempty"`
 	Disks     []DiskLoad `json:"disks,omitempty"`
 	UploadBps *float64   `json:"uploadBps,omitempty"`
 }
@@ -31,6 +34,8 @@ type window struct {
 	samples   int
 	cpu       float64
 	cpuN      int
+	limit     float64
+	limitN    int
 	disks     map[string]float64
 	sent      float64
 	netSecs   float64
@@ -41,8 +46,8 @@ type window struct {
 // open and adds each interval to every open run. Nothing is read while no
 // run is open.
 type Sampler struct {
-	proc  string
-	every time.Duration
+	proc, cgroup string
+	every        time.Duration
 
 	mu      sync.Mutex
 	windows map[string]*window
@@ -51,9 +56,9 @@ type Sampler struct {
 	ticking bool
 }
 
-// NewSampler samples the counters below proc every interval.
-func NewSampler(proc string, every time.Duration) *Sampler {
-	return &Sampler{proc: proc, every: every, windows: map[string]*window{}}
+// NewSampler samples the counters below proc and cgroup every interval.
+func NewSampler(proc, cgroup string, every time.Duration) *Sampler {
+	return &Sampler{proc: proc, cgroup: cgroup, every: every, windows: map[string]*window{}}
 }
 
 // maxWindowAge drops a run that never reported its end, so a lost finish
@@ -66,7 +71,7 @@ func (s *Sampler) Begin(id string) {
 	defer s.mu.Unlock()
 	s.windows[id] = &window{disks: map[string]float64{}, startedAt: time.Now()}
 	if !s.ticking {
-		s.prev, s.prevAt = Read(s.proc), time.Now()
+		s.prev, s.prevAt = Read(s.proc, s.cgroup), time.Now()
 		s.ticking = true
 		go s.loop()
 	}
@@ -89,7 +94,7 @@ func (s *Sampler) loop() {
 	t := time.NewTicker(s.every)
 	defer t.Stop()
 	for range t.C {
-		cur, at := Read(s.proc), time.Now()
+		cur, at := Read(s.proc, s.cgroup), time.Now()
 		s.mu.Lock()
 		for id, w := range s.windows {
 			if at.Sub(w.startedAt) > maxWindowAge {
@@ -118,11 +123,19 @@ func (s *Sampler) addInterval(a, b Counters, dt time.Duration) {
 	if haveCPU {
 		cpu = float64(b.CPUBusy-a.CPUBusy) / float64(b.CPUTotal-a.CPUTotal)
 	}
+	limit, haveLimit := 0.0, b.CPULimit > 0 && b.CgroupUsec >= a.CgroupUsec
+	if haveLimit {
+		limit = min(float64(b.CgroupUsec-a.CgroupUsec)/(ms*1000*b.CPULimit), 1)
+	}
 	for _, w := range s.windows {
 		w.samples++
 		if haveCPU {
 			w.cpu += cpu
 			w.cpuN++
+		}
+		if haveLimit {
+			w.limit += limit
+			w.limitN++
 		}
 		for name, t := range b.DiskTicks {
 			if p, ok := a.DiskTicks[name]; ok && t >= p {
@@ -141,6 +154,10 @@ func (w *window) summary() Summary {
 	if w.cpuN > 0 {
 		cpu := w.cpu / float64(w.cpuN)
 		sum.CPU = &cpu
+	}
+	if w.limitN > 0 {
+		limit := w.limit / float64(w.limitN)
+		sum.CPULimit = &limit
 	}
 	if w.netSecs > 0 {
 		bps := w.sent / w.netSecs

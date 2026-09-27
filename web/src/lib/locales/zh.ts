@@ -244,6 +244,7 @@ const zh: Partial<Translations> = {
   "bottleneck.targetDisk": "目标磁盘 {name} 的占用率为 {pct}%。",
   "bottleneck.bothDisk": "同时存放源和目标的磁盘 {name} 的占用率为 {pct}%。",
   "bottleneck.cpu": "CPU 的占用率为 {pct}%。",
+  "bottleneck.cpuLimit": "BombVault 用掉了其容器 CPU 限额的 {pct}%。",
   "bottleneck.upload": "上传以其限速的 {pct}% 运行。",
   "run.colKind": "类型",
   "run.colStatus": "状态",

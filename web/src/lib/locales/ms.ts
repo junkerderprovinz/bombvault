@@ -319,6 +319,7 @@ const ms: Partial<Translations> = {
   "bottleneck.targetDisk": "Cakera sasaran {name} sibuk {pct}%.",
   "bottleneck.bothDisk": "Cakera {name}, yang memegang sumber dan sasaran, sibuk {pct}%.",
   "bottleneck.cpu": "CPU sibuk {pct}%.",
+  "bottleneck.cpuLimit": "BombVault menggunakan {pct}% daripada had CPU bekasnya.",
   "bottleneck.upload": "Muat naik berjalan pada {pct}% daripada hadnya.",
   "run.colKind": "Jenis",
   "run.colStatus": "Status",

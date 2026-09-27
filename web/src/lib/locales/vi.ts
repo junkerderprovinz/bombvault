@@ -244,6 +244,7 @@ const vi: Partial<Translations> = {
   "bottleneck.targetDisk": "Ổ đĩa đích {name} bận {pct}%.",
   "bottleneck.bothDisk": "Ổ đĩa {name}, chứa cả nguồn và đích, bận {pct}%.",
   "bottleneck.cpu": "CPU bận {pct}%.",
+  "bottleneck.cpuLimit": "BombVault đã dùng {pct}% giới hạn CPU của container.",
   "bottleneck.upload": "Việc tải lên chạy ở {pct}% giới hạn của nó.",
   "run.colKind": "Loại",
   "run.colStatus": "Trạng thái",
