@@ -9,11 +9,12 @@ BombVault are un server integrat pentru Model Context Protocol (MCP), protocolul
 | `get_health` | Versiunea, numele instanței, dacă rulează o copie și ce are voie să facă această cheie | citire |
 | `get_status` | Starea protecției pe fiecare domeniu: ultima copie reușită, intervalul așteptat, verificările și controalele off-site, următoarele rulări programate | citire |
 | `get_coverage` | Ce protejează BombVault și ce nu, cu motivul pentru fiecare | citire |
-| `list_items` | Fiecare container, VM și set de foldere protejat, stick-ul flash și configurația aplicației, cu programarea, ce oprește o copie, ultima copie și cât a durat; containerele de baze de date arată și ultimul dump; apar și seturile de date ZFS, cu rezultatul ultimei lor verificări | citire |
-| `list_runs` | Istoricul rulărilor, cele mai noi primele, filtrabil după domeniu, element, stare, tip și timp | citire |
+| `list_items` | Fiecare container, VM și set de foldere protejat, stick-ul flash și configurația aplicației, cu programarea, ce oprește o copie, ultima copie și cât a durat; containerele de baze de date arată și ultimul dump; apar și seturile de date ZFS, cu rezultatul ultimei lor verificări; un container recreat cu alte setări de la ultima copie arată ce s-a schimbat | citire |
+| `list_runs` | Istoricul rulărilor, cele mai noi primele, filtrabil după domeniu, element, stare, tip și timp; o copie lentă frânată de un singur lucru îl numește | citire |
 | `list_restore_points` | Punctele de restaurare ale unui element din depozitul lui principal și, pentru un container, dumpurile lui de baze de date; un set de date ZFS are câte un punct de restaurare pentru fiecare copie, cu un snapshot al fiecărui set de date de sub el | citire |
 | `get_activity` | Ce rulează chiar acum, cu fază și procent | citire |
 | `get_storage_stats` | Istoricul de dimensiune al depozitului principal al unui domeniu și creșterea lui pe săptămână | citire |
+| `get_size_breakdown` | Ce dosare și fișiere ocupă spațiu în cea mai nouă copie a unui container, a unei VM sau a unui set de dosare, și cât din ele a adăugat ultima copie | citire |
 | `list_anomalies` | Anomaliile observate de BombVault în copii, filtrabile după stare, gravitate și domeniu, cu un rezumat al celor deschise | citire |
 | `get_anomaly` | Una dintre aceste constatări, cu nota lăsată la confirmarea ei | citire |
 | `start_backup` | Face imediat copia unui element | pornire |

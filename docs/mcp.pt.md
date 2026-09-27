@@ -9,11 +9,12 @@ O BombVault tem um servidor integrado para o Model Context Protocol (MCP), o pro
 | `get_health` | Versão, nome da instância, se há uma cópia em curso e o que esta chave pode fazer | leitura |
 | `get_status` | Estado de proteção por domínio: última cópia bem-sucedida, intervalo esperado, verificações e controlos externos, próximas execuções agendadas | leitura |
 | `get_coverage` | O que o BombVault protege e o que não protege, com o motivo de cada caso | leitura |
-| `list_items` | Cada contentor, VM e conjunto de pastas protegido, a pen flash e a configuração da app, com o agendamento, o que uma cópia para, a última cópia e quanto demorou; os contentores de base de dados indicam também o último dump; os datasets ZFS também aparecem, com o resultado da sua última verificação | leitura |
-| `list_runs` | Histórico de execuções, as mais recentes primeiro, filtrável por domínio, elemento, estado, tipo e data | leitura |
+| `list_items` | Cada contentor, VM e conjunto de pastas protegido, a pen flash e a configuração da app, com o agendamento, o que uma cópia para, a última cópia e quanto demorou; os contentores de base de dados indicam também o último dump; os datasets ZFS também aparecem, com o resultado da sua última verificação; um contêiner recriado com outras configurações desde o último backup indica o que mudou | leitura |
+| `list_runs` | Histórico de execuções, as mais recentes primeiro, filtrável por domínio, elemento, estado, tipo e data; um backup lento travado por uma única coisa nomeia-a | leitura |
 | `list_restore_points` | Pontos de restauro de um elemento no seu repositório principal e, para um contentor, os seus dumps de base de dados; um dataset ZFS tem um ponto de restauro por cópia, com um snapshot de cada dataset abaixo dele | leitura |
 | `get_activity` | O que está a correr agora, com fase e percentagem | leitura |
 | `get_storage_stats` | Histórico de tamanho do repositório principal de um domínio e o seu crescimento semanal | leitura |
+| `get_size_breakdown` | Que pastas e arquivos ocupam espaço no backup mais recente de um contêiner, uma VM ou um conjunto de pastas, e quanto disso o último backup acrescentou | leitura |
 | `list_anomalies` | Anomalias que o BombVault detetou nas cópias, filtráveis por estado, gravidade e domínio, com um resumo do que está em aberto | leitura |
 | `get_anomaly` | Uma dessas ocorrências, com a nota deixada quando foi reconhecida | leitura |
 | `start_backup` | Faz já a cópia de um elemento | início |
