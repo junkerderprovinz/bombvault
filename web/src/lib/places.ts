@@ -46,6 +46,8 @@ export interface PlaceUsage {
   items: number;
   /** Snapshots its targets held at their last listing; they stay when the place goes. */
   copies: number;
+  /** Domain paths and repositories the place's switches reach. */
+  repositories: number;
 }
 
 export interface PlaceTestStatus {

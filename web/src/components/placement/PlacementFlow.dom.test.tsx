@@ -25,7 +25,7 @@ vi.mock("../placeMarks", () => ({
 const { PlacementFlow } = await import("./PlacementFlow");
 
 function place(id: string, name: string, provider: string, homeDomains: string[] = []): Place {
-  return { id, name, provider, usage: { homeDomains, defaults: [], copyDomains: [], items: 0, copies: 0 } } as unknown as Place;
+  return { id, name, provider, usage: { homeDomains, defaults: [], copyDomains: [], items: 0, copies: 0, repositories: 0 } } as unknown as Place;
 }
 
 describe("PlacementFlow", () => {

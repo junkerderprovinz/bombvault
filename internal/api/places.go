@@ -80,6 +80,9 @@ type PlaceUsage struct {
 	// Copies are the snapshots its targets held at their last listing, which
 	// stay there when the place is removed.
 	Copies int `json:"copies"`
+	// Repositories are the domain paths and rows the place's switches reach,
+	// which the question before append-only goes off counts.
+	Repositories int `json:"repositories"`
 }
 
 // PlaceCredsView is a place's credentials without their secrets.
@@ -259,6 +262,7 @@ func (s *Service) placeView(d placeData, p store.Place) (PlaceView, error) {
 			continue
 		}
 		v.Usage.HomeDomains = append(v.Usage.HomeDomains, dom)
+		v.Usage.Repositories++
 		f, err := s.domainPathFacts(d.settings, dom)
 		if err != nil {
 			return v, err
@@ -286,6 +290,7 @@ func (s *Service) placeView(d placeData, p store.Place) (PlaceView, error) {
 			lock(r.PlaceDomain)
 		}
 		v.Usage.Items += f.Items
+		v.Usage.Repositories++
 		if r.Role == store.RoleOffsite {
 			copying[r.Domain] = copying[r.Domain] || r.Enabled
 			v.Usage.Copies += f.Snapshots
