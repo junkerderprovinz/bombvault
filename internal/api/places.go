@@ -825,7 +825,13 @@ func applyPlacePatch(p store.Place, b patchPlaceBody, homes map[string]string) (
 		p.Name = name
 	}
 	if b.OffPremises != nil {
+		// A cloud or this server keeps the answer its provider fixes, as when
+		// the place was added.
+		provider, _ := places.ProviderByID(p.Provider)
 		p.OffPremises = *b.OffPremises
+		if provider.OffPremises != nil {
+			p.OffPremises = *provider.OffPremises
+		}
 	}
 	if b.StorageClass != nil {
 		class := strings.ToUpper(strings.TrimSpace(*b.StorageClass))
