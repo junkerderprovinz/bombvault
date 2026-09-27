@@ -374,32 +374,12 @@ export function StorageTab({
       </Card>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE: Plain-export encryption (age) and the restic repositories'   */}
-      {/* own encryption, merged into one card (GlimStone follow-up round,      */}
-      {/* merge B). Every field auto-saves instead of batching into a           */}
-      {/* Speichern button (#142's own mechanism), the two toggles use          */}
-      {/* autoSaveField (optimistic + revert-on-failure); the recipients field  */}
-      {/* debounces instead, same reasoning as the registries fields in the     */}
-      {/* Image Cleanup card above.                                            */}
-      {/*   Flash-ZIP-Export (#28) used to be a third sub-section in THIS same  */}
-      {/* card. Moved out in TWO steps, live-review (jdp): first "trenn bitte   */}
-      {/* flash zip export und den rest wieder in zwei separate cards", then,   */}
-      {/* superseding that, "soll die flash zip export toggle nicht einfach     */}
-      {/* in den flash tab? macht doch mehr sinn." It now lives on the Flash    */}
-      {/* page itself (pages/Flash.tsx's own FlashZipExportCard, exported from  */}
-      {/* this file the same way AccentCard and ThemeCard                       */}
-      {/* already are for cross-page reuse, see that component's own header     */}
-      {/* comment for the full move and why it's self-contained rather than     */}
-      {/* threaded through SettingsPage's own save()/autoSaveField()). This     */}
-      {/* card's own title/hint dropped every flash-zip-export mention          */}
-      {/* accordingly, it now only covers what's actually left: plain-export    */}
-      {/* encryption and repository encryption, both real "encrypt SOMETHING"   */}
-      {/* settings, so `settings.exportsEncryptionTitle`/`Hint` keep their OLD   */}
-      {/* key names (an internal identifier, not user-facing) with NEW values.  */}
-      {/* ------------------------------------------------------------------ */}
+      {/* Plain-export encryption and the repositories' own encryption share one
+          card. Each field saves on its own: the toggles optimistically with a
+          revert on failure, the recipients field debounced like the registry
+          fields in the Image Cleanup card above. */}
       <Card title={t("settings.exportsEncryptionTitle")} hint={t("settings.exportsEncryptionHint")} hueIndex={nextHue()}>
-        {/* Plain-export encryption (age) -------------------------------------- */}
+        {/* Plain-export encryption (age) */}
         <div className="flex flex-col gap-3">
           <ToggleRow
             label={t("export.encrypt.enable")}
@@ -438,71 +418,17 @@ export function StorageTab({
           )}
         </div>
 
-        {/* Repository encryption ---------------------------------------------- */}
-        {/* jdp, live review: "keine Überschrift und nochmal darunter der
-            Text. Nur die Überschrift als Text, alles andere in die
-            Infobubble." This sub-heading was the one holdout in this card
-            still pairing a bare <h3> with a permanent paragraph underneath
-            it (settings.encryptionWarning, now settings.encryptionHint),
-            its two siblings above already fold that same kind of one-time
-            "here's what this does" text into the heading's own InfoBubble
-            (flash.zipExport.hint, export.encrypt.hint+ageInfo). Renamed
-            .../Warning -> .../Hint on the move: it's no longer a
-            statusWarnBg banner, so it no longer earns the "Warning" name,
-            see the still-conditional flash.zipExport.plaintextWarn a few
-            lines up for the genuine, actively-risky warning case (only
-            rendered while the risk applies) this text never was: it's an
-            unconditional, one-time explainer of how the toggle behaves, the
-            exact content InfoBubble exists for. No `border-t` here either,
-            same reasoning as the Plain-export block above.
-              FOLLOW-UP (jdp, live-review, fresh screenshot proved a prior
-            round's claim wrong): that earlier pass only bubbled the STATIC
-            explainer above, it left the master ToggleRow's own DYNAMIC
-            status label ("Aktiviert (Passwort aus APP_KEY)" /
-            "Deaktiviert (kein Passwort)") sitting directly under this same
-            heading in plain view, which is exactly the line the fresh
-            screenshot still showed. `hideLabel` below hides it now, same as
-            its two siblings above; the state it used to carry moves into the
-            bubble's own tip, computed per render off the live
-            `settings.encryptionEnabled` value (the same values
-            settings.encryptionOn/Off already translate in every locale, just
-            read here instead of handed to the ToggleRow as visible text),
-            rather than a static string, so the bubble still answers "is this
-            actually on right now" concretely instead of only explaining the
-            feature in the abstract. The switch's own filled/unfilled track
-            still shows on/off at a glance without hovering anything. */}
+        {/* Repository encryption. The live on/off label is the caption and the
+            explainer sits in its bubble, as in the export block above. */}
         <div className="flex flex-col gap-3">
-          {/* No more standalone <h3> sub-heading here either, same fix, same
-              reasoning, as the Plain-export block above (jdp, live-review:
-              "Export und Verschlüsselung: Texte normal formatieren, es sind
-              keine Überschriften mehr"). `hideLabel` is gone: the ToggleRow's
-              own DYNAMIC on/off label ("Enabled (password derived from
-              APP_KEY)"/"Disabled (no password)") is now this sub-section's
-              only visible caption, at ToggleRow's normal `text-sm
-              text-carbon-text` weight, not the retired heading's bold/
-              uppercase/tracking-widest treatment. `settings.encryption` (the
-              old heading's own generic "Encryption"/"Verschlüsselung" text)
-              is retired, the row's own live on/off label already says more
-              than that static word did. The bubble's own tip drops the
-              on/off-state PREFIX it used to carry (`settings.encryptionOn`/
-              `Off` concatenated in front of `settings.encryptionHint`): that
-              existed only because the label sitting above it was hidden and
-              had nowhere else to show the current state, now that the
-              state IS the visible label, repeating it inside the bubble too
-              would just be the same sentence twice. */}
           <ToggleRow
             label={
               settings.encryptionEnabled
                 ? t("settings.encryptionOn")
                 : t("settings.encryptionOff")
             }
-            // The label says "password derived from APP_KEY" and used to stop
-            // there, which reads as an explanation and lands as a riddle: a
-            // reporter on the support forum went looking for that password to
-            // run restic by hand, could not find it, and only worked out that
-            // it sits in the recovery kit after a detour through a container
-            // shell. The kit is named here now, at the one place that raises
-            // the question.
+            // "Password derived from APP_KEY" alone sends people looking for a
+            // password to run restic by hand; the recovery kit is where it is.
             hint={`${t("settings.encryptionHint")} ${t("settings.encryptionPasswordWhere")}`}
             checked={settings.encryptionEnabled}
             onChange={(v) => void autoSaveField("encryptionEnabled", v, setEncSaveState, setEncSaveError)}
@@ -512,56 +438,12 @@ export function StorageTab({
           />
           {settings.encryptionEnabled && (
             <div className="flex flex-col gap-2">
-              {/* recovery.why is bubbled, not kept as permanent text, even though
-                  it explains a real data-loss risk: the RECURRING "you still
-                  haven't saved this" job is already owned by Dashboard.tsx's own
-                  separate, more prominent recovery.nagTitle/nagBody banner
-                  (dismissed only by recovery.stored), this paragraph is purely
-                  the one-time "here's why, if you're curious" context for the
-                  button below it, not the app's only safeguard against
-                  forgetting. */}
-              {/* No more heading-styled <h4> here either (jdp, live-review:
-                  "Wiederherstellungs-Kit bitte auch normal formatieren"), same
-                  fix, same reasoning, as the Plain-export/Encryption blocks
-                  above: this sub-section is just a caption plus a single
-                  icon-only download button beneath it, not a heading
-                  introducing its own block of content, so it shouldn't LOOK
-                  like a section heading either. Swapped the semantic `<h4>`
-                  for a plain `<span>` carrying ToggleRow's own exact label
-                  classes (`flex items-center gap-1.5 text-sm text-carbon-text`,
-                  see ToggleRow's own label span above) instead of the retired
-                  bold/uppercase/tracking-widest heading treatment, the ONE
-                  normal-caption style this page already uses everywhere else,
-                  reused verbatim rather than inventing a second one for this
-                  call site. The InfoBubble stays put unchanged; there's no
-                  ToggleRow here to fold it onto (this row is a caption + a
-                  bare download button, not a toggle). */}
+              {/* recovery.why sits in a bubble: the dashboard's recovery banner
+                  already asks until the kit is stored. */}
               <span className="flex items-center gap-1.5 text-sm text-carbon-text">
                 {t("recovery.title")}
                 <InfoBubble tip={t("recovery.why")} />
               </span>
-              {/* Icon-only + right-aligned (GlimStone follow-up round,
-                  live-review: "...ebenso der Recovery Kit herunterladen
-                  button. Beide sollen einen Glyph statt Text bekommen, mit
-                  Hover-Infobubble"), the visible "Recovery-Kit
-                  herunterladen" label moves onto the IconTipButton's own
-                  tip, the only remaining visible text in this sub-section is
-                  its heading, same "only heading + a bare bubbled/tooltipped
-                  control" shape the encryption toggle right above it now
-                  has. `self-end` (not a `flex justify-end` wrapper, this
-                  button is already a direct child of the section's own
-                  `flex flex-col` above) flips this from the row's start edge
-                  to its end edge, RTL-safe, same as every other logical
-                  start/end pairing on this page. `size="icon"` is the app's
-                  ONE square-icon-badge size (32px), the same footprint
-                  FolderBrowser's own Browse badge and the Registry-add badge
-                  above use, expressed as Badge's own size stage rather than a
-                  hand-written `h-8 w-8`. Converted from flat
-                  `bg-carbon-surface3` grey to a hue-carrying Badge in the same
-                  colour-engine round as those two: see the Registry-remove
-                  badge's own comment for the full reasoning, including why the
-                  enclosing Card's `.glim-hue` makes an explicit `hueIndex`
-                  unnecessary here. */}
               <Button
                 label={t("recovery.download")}
                 labelKey="recovery.download"
@@ -574,9 +456,7 @@ export function StorageTab({
                 className={"self-end shrink-0"}
               />
               {kitError && (
-                // Backend-provided error text shown verbatim BY DESIGN (e.g. the
-                // fail-closed "set a login password" refusal when auth is off),
-                // the API answers English and is not translated client-side.
+                // The server's refusal is shown as sent, in English.
                 <span className="text-xs text-statusFail wrap-break-word">✗ {kitError}</span>
               )}
             </div>
