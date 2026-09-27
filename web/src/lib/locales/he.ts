@@ -1361,6 +1361,7 @@ const he: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "כללי",
+  "settings.tab.look": "מראה",
   "settings.tab.storage": "נתיבים ואחסון",
   "settings.tab.schedules": "תזמונים",
   "settings.tab.offsite": "מחוץ לאתר",

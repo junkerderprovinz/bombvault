@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// LanguageCard, the UI-language picker on Settings' General tab: it opens and
+// LanguageCard, the UI-language picker at the top of Settings' Look tab: it opens and
 // closes, lists every language with its flag, switches through setLanguage()
 // and closes on Escape or an outside click.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -39,6 +39,12 @@ describe("LanguageCard", () => {
     renderCard();
     expect(screen.getByText("Language")).toBeTruthy();
     expect(screen.getByRole("button", { name: /English/ })).toBeTruthy();
+  });
+
+  it("stands at a field's height, like the buttons beside fields", () => {
+    localStorage.setItem(STORAGE_KEY, "en");
+    renderCard();
+    expect(screen.getByRole("button", { name: /English/ }).className).toContain("h-[var(--btn-h)]");
   });
 
   it("the trigger is closed by default and opens the listbox on click", () => {

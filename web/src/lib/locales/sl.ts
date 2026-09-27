@@ -1546,6 +1546,7 @@ const sl: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle
   "settings.tab.general": "Splošno",
+  "settings.tab.look": "Videz",
   "settings.tab.storage": "Poti in shramba",
   "settings.tab.schedules": "Urniki",
   "settings.tab.offsite": "Zunanja kopija",

@@ -1559,6 +1559,7 @@ const eu: Partial<Translations> = {
 
   // Settings — section tabs
   "settings.tab.general": "Orokorra",
+  "settings.tab.look": "Itxura",
   "settings.tab.storage": "Bideak eta biltegiratzea",
   "settings.tab.schedules": "Egutegiak",
   "settings.tab.offsite": "Kanpokoa",

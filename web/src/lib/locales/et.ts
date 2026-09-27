@@ -1559,6 +1559,7 @@ const et: Partial<Translations> = {
 
   // Settings — section tabs
   "settings.tab.general": "Üldine",
+  "settings.tab.look": "Välimus",
   "settings.tab.storage": "Rajad ja salvestusruum",
   "settings.tab.schedules": "Ajakavad",
   "settings.tab.offsite": "Väline",

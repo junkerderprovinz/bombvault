@@ -1364,6 +1364,7 @@ const ro: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "General",
+  "settings.tab.look": "Aspect",
   "settings.tab.storage": "Căi și stocare",
   "settings.tab.schedules": "Programări",
   "settings.tab.offsite": "Extern",

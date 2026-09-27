@@ -1559,6 +1559,7 @@ const is: Partial<Translations> = {
 
   // Settings — section tabs
   "settings.tab.general": "Almennt",
+  "settings.tab.look": "Útlit",
   "settings.tab.storage": "Slóðir og geymsla",
   "settings.tab.schedules": "Tímaáætlanir",
   "settings.tab.offsite": "Fjarlægt",

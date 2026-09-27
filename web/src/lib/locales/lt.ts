@@ -1559,6 +1559,7 @@ const lt: Partial<Translations> = {
 
   // Settings — section tabs
   "settings.tab.general": "Bendra",
+  "settings.tab.look": "Išvaizda",
   "settings.tab.storage": "Keliai ir saugykla",
   "settings.tab.schedules": "Tvarkaraščiai",
   "settings.tab.offsite": "Nuotolinis",

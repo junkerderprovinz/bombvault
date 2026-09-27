@@ -91,6 +91,7 @@ NAV = [
     # A Settings tab glyph from Streamline lives here rather than in
     # Settings.tsx, so the CC BY attribution stays in one file.
     ("IconTabSystem", "computer-devices/computer-chip-1.svg", "System tab"),
+    ("IconTabLook", "interface-essential/color-palette.svg", "Look tab: language, theme, shape, motion, labels and colours"),
     ("IconFlash", "computer-devices/usb-drive.svg", "The Unraid boot flash drive"),
 ]
 
@@ -271,7 +272,7 @@ EXTRA_NAV = [
     #   save                  - Vecteezy, Free License (attribution required)
     #   storage, local        - Font Awesome Free (CC BY 4.0)
     #   copy                  - Tabler Icons, filled variant (MIT)
-    #   integrity             - Material Design Icons (Apache 2.0)
+    #   integrity, tune       - Material Design Icons (Apache 2.0)
     #   verify                - shipped as an Illustrator export
     #
     # copy and verify each came with a transparent path covering the whole
@@ -287,6 +288,8 @@ EXTRA_NAV = [
              (3.0, 1.0, 18.0, 22.0), "integrity"),
     imported("IconTabStorage", "Paths and storage tab", "0 0 448 512",
              (0.0, 0.0, 448.0, 512.0), "storage"),
+    # GlimStone's General tab glyph in every app, Material's tune.
+    imported("IconTabGeneral", "General tab", "0 0 24 24", (3.0, 3.0, 18.0, 18.0), "tune"),
     # The bottom bar's More slot. Three equal dots on the text baseline: the
     # mark every platform uses for "there is more".
     ("IconEllipsis", "More, the overflow destination", "1.4 1.4 11.2 11.2",

@@ -1361,6 +1361,7 @@ const pt: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "Geral",
+  "settings.tab.look": "Aspeto",
   "settings.tab.storage": "Caminhos e armazenamento",
   "settings.tab.schedules": "Agendamentos",
   "settings.tab.offsite": "Externo",

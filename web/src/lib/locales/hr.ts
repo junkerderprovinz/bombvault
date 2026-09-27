@@ -1559,6 +1559,7 @@ const hr: Partial<Translations> = {
 
   // Settings — section tabs
   "settings.tab.general": "Opće",
+  "settings.tab.look": "Izgled",
   "settings.tab.storage": "Putanje i pohrana",
   "settings.tab.schedules": "Rasporedi",
   "settings.tab.offsite": "Izvanmrežno",

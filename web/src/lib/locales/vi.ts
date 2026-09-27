@@ -1353,6 +1353,7 @@ const vi: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "Chung",
+  "settings.tab.look": "Giao diện",
   "settings.tab.storage": "Đường dẫn và lưu trữ",
   "settings.tab.schedules": "Lịch trình",
   "settings.tab.offsite": "Ngoài site",

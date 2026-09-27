@@ -1353,6 +1353,7 @@ const zh: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "常规",
+  "settings.tab.look": "外观",
   "settings.tab.storage": "路径与存储",
   "settings.tab.schedules": "计划",
   "settings.tab.offsite": "异地",

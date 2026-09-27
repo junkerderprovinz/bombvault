@@ -1364,6 +1364,7 @@ const ar: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "عام",
+  "settings.tab.look": "المظهر",
   "settings.tab.storage": "المسارات والتخزين",
   "settings.tab.schedules": "الجداول",
   "settings.tab.offsite": "خارج الموقع",

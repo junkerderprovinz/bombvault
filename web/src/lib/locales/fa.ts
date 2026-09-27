@@ -1559,6 +1559,7 @@ const fa: Partial<Translations> = {
 
   // Settings — section tabs
   "settings.tab.general": "عمومی",
+  "settings.tab.look": "ظاهر",
   "settings.tab.storage": "مسیرها و فضای ذخیره‌سازی",
   "settings.tab.schedules": "زمان‌بندی‌ها",
   "settings.tab.offsite": "خارج از محل",

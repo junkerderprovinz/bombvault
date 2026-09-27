@@ -1353,6 +1353,7 @@ const ko: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "일반",
+  "settings.tab.look": "모양",
   "settings.tab.storage": "경로 및 저장소",
   "settings.tab.schedules": "일정",
   "settings.tab.offsite": "오프사이트",

@@ -1359,6 +1359,7 @@ const cs: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "Obecné",
+  "settings.tab.look": "Vzhled",
   "settings.tab.storage": "Cesty a úložiště",
   "settings.tab.schedules": "Plány",
   "settings.tab.offsite": "Mimo lokalitu",

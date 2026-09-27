@@ -1358,6 +1358,7 @@ const nl: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "Algemeen",
+  "settings.tab.look": "Uiterlijk",
   "settings.tab.storage": "Paden en opslag",
   "settings.tab.schedules": "Schema's",
   "settings.tab.offsite": "Off-site",

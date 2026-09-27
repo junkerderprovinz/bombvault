@@ -60,10 +60,12 @@ import { HUE_OFFSET, Selector } from "../components/Selector";
 import { IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose } from "../components/Sidebar";
 // The integrity row's own two verbs ([324]). They live in the ACTION set
 // rather than the nav one, same split IconUpload already crosses.
-// The two tab glyphs that are generated rather than drawn below. Aliased so the
+// The tab glyphs that are generated rather than drawn below. Aliased so the
 // wrappers further down keep their own names and TAB_ICON reads the same for
-// all seven, generated and hand-drawn alike.
+// every tab, generated and hand-drawn alike.
 import {
+  IconTabGeneral,
+  IconTabLook,
   IconTabOffsite as IconTabOffsiteGlyph,
   IconTabSystem as IconTabSystemGlyph,
   IconTabIntegrity as IconTabIntegrityGlyph,
@@ -945,11 +947,14 @@ export function EverythingSection({
 }
 
 
-// TabKey enumerates the 7 Settings tabs. The active tab is the single source of
+// TabKey enumerates the Settings tabs. The active tab is the single source of
 // truth for which card group renders; SettingsPage owns all shared state so every
 // tab shares one `settings`/`save()` instance regardless of which tab is visible.
+// Look holds the user-owned axes (language, theme, shape, motion, labels and
+// colours), which GlimStone keeps off the General tab in every app.
 type TabKey =
   | "general"
+  | "look"
   | "storage"
   | "schedules"
   | "offsite"
@@ -957,13 +962,12 @@ type TabKey =
   | "integrity"
   | "system";
 
-/** The tab strip's own left-to-right order — the single source of truth for
- *  "later" vs "earlier" that both the deep-link hashchange effect (below)
- *  and the tab-slide direction (GlimStone motion-engine animation 7, its own
- *  call site further down) read, instead of each keeping its own duplicate
- *  literal list of the same seven keys. */
+/** The tab strip's left-to-right order, which both the deep-link hashchange
+ *  effect and the tab-slide direction read to tell a later tab from an
+ *  earlier one. */
 const TAB_ORDER: TabKey[] = [
   "general",
+  "look",
   "storage",
   "schedules",
   "offsite",
@@ -978,96 +982,12 @@ const CARD_TAB: Record<string, TabKey> = {
   anomalies: "integrity",
 };
 
-// ---------------------------------------------------------------------------
-// Settings tab icons (GlimStone form-engine Phase 2, Task 3 — design-language
-// "top, with an icon": "Settings pages line their tabs up horizontally at the
-// top, each with a glyph. A tab with no label is a gap; a tab with the wrong
-// glyph is a lie — no icon beats the wrong one."). 16×16, stroke-based,
-// matching Sidebar.tsx's own icon weight/style but at the tab strip's smaller
-// scale. Local to Settings.tsx, not Sidebar.tsx's exported icon set: these
-// name Settings' own SECTIONS (domain toggles, storage paths, cadences,
-// off-site targets, alerts, integrity checks, system/SSH), which is a
-// different taxonomy than the sidebar's page destinations, and none of the
-// seven map onto an existing sidebar glyph without lying about what it is.
-// ---------------------------------------------------------------------------
-// FILLED (design-language.md "Icon glyphs" — every icon glyph is a solid
-// shape, `fill="currentColor"`, never a stroked outline): all seven tab
-// glyphs below were the last stroke-only holdouts in the app (GlimStone
-// follow-up round, full-area sweep after IconFolder/IconCloud/the off-site
-// action badges were fixed) — each redrawn using this section's own
-// established techniques: a closed silhouette flips directly (rule 218,
-// IconTabOffsite's cloud), a line glyph becomes a filled polygon (rule 219,
-// the shield's checkmark), and a structural detail that has to stay thin
-// (a switch track, a clock's hand, a slider's track) becomes a thin filled
-// shape instead of a stroke (rule 220).
-//
-// REGRESSION FIX (jdp, live review — "die Icons der Einstellungstabs sind,
-// wenn sie ausgewählt sind, bei manchen nicht mehr erkennbar"): that first
-// redraw pass gave the "knob"/"hand"/"checkmark" detail on four of these
-// seven (General, Schedules, Integrity, System) a SECOND colour —
-// `fill="var(--carbon-surface, transparent)"` painted on top of the
-// silhouette, standing in for what used to be a stroke's own natural gap.
-// Verified live (Playwright, both themes, idle+selected, real running
-// container build): that second colour is a fixed, THEME-scoped token,
-// while the badge's own ink when SELECTED is `text-accentContrast` — a
-// value derived from the accent colour alone, constant across both themes.
-// In light theme the pairing (near-black ink, white surface) contrasts
-// fine; in dark theme `--carbon-surface` is `#262626`, which sits right
-// next to that same near-black `#161616` ink (measured contrast ratio
-// ≈1.16:1 — nowhere near WCAG's 3:1 floor for a graphical detail) — the
-// knob/hand/checkmark all but disappear into the icon's own fill the
-// instant one of these four tabs is SELECTED in dark theme. Confirmed this
-// never regressed Offsite/Notifications: neither ever used a second fill at
-// all (a closed silhouette and a small solid tab, respectively).
-//
-// FIXED at the geometry level, not by picking a new hardcoded colour (a
-// different literal would just move the same coincidence to some other
-// accent/theme pairing later): each detail is now cut as REAL negative
-// space — one compound `<path fill-rule="evenodd">` per icon, silhouette
-// subpath plus detail subpath, so the "hole" is true transparency showing
-// whatever the badge's own live background actually is. That background is
-// by construction already the one thing this icon's `currentColor` ink is
-// chosen to contrast against (bg-accent + text-accentContrast when
-// selected, bg-carbon-surface2 + text-carbon-textSub when idle), so the cut
-// reads clearly in every theme/state/hue this control can ever carry —
-// including every rainbow-mode accent, not just the yellow default — with
-// no second token to fall out of sync again.
-// Each of these carries a viewBox cropped to its own INK, not the 0 0 16 16 it
-// was drawn on ([285], jdp: "auf den settingstabs ist das offsite icon zu
-// klein. da wirken die glyphen kleiner als auf den sidebar tabs").
-//
-// He was right and the box was not the reason: every one of these already
-// rendered into the same 20px square as a rail glyph. What differed was how
-// much of that square the drawing used. Measured live: the rail's Streamline
-// glyphs fill 98-100% of their box, while these hand-drawn ones filled 69% to
-// 88%, because each was drawn with a comfortable margin inside its 16-unit
-// grid. Two glyphs of the same nominal size, one visibly smaller.
-//
-// A cropped viewBox fixes that without touching a single path coordinate: the
-// numbers below are each glyph's measured ink box, squared off (side = the
-// larger of width and height) and centred on the ink, so the default
-// preserveAspectRatio="xMidYMid meet" scales it up to fill the box in its
-// dominant dimension and leaves the aspect ratio alone. Cropping rather than
-// redrawing also means the paths stay exactly the shapes that survived the
-// earlier legibility rounds.
-//
-// The explicit width/height="15" is gone with it: `.glim-seg > svg` has set the
-// real size since [241], so those attributes only documented a size that had
-// not been true for a while.
-function IconTabGeneral() {
-  // Two stacked switches — the domain on/off toggles this tab actually holds.
-  // Each pill + its knob is one evenodd path: the knob is a real cut-out,
-  // not a second painted colour (see the fix note above this section).
-  return (
-    <svg viewBox="1 1 14 14" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path
-        fillRule="evenodd"
-        d="M3,3 H9 A2,2 0 0 1 9,7 H3 A2,2 0 0 1 3,3 Z M9.15,5 A1.15,1.15 0 1 0 6.85,5 A1.15,1.15 0 1 0 9.15,5 Z M7,9 H13 A2,2 0 0 1 13,13 H7 A2,2 0 0 1 7,9 Z M9.15,11 A1.15,1.15 0 1 0 6.85,11 A1.15,1.15 0 1 0 9.15,11 Z"
-      />
-    </svg>
-  );
-}
-
+// The Settings tab glyphs. General and Look wear the glyphs GlimStone gives
+// those tabs in every app; the others name this app's own sections. Each is a
+// filled shape whose details are cut out as real holes (evenodd), so a
+// selected tab's ink reads against whatever ground the badge has, and each
+// viewBox is cropped to the drawing's ink so it fills its box as fully as the
+// rail's glyphs do.
 function IconTabStorage() {
   // jdp's own file now ([320]), cropped to its measured ink like every
   // other imported glyph. The hand-drawn disk stack it replaces went
@@ -1172,6 +1092,7 @@ export function markRegistryTokensStored(
 }
 const TAB_ICON: Record<TabKey, ReactNode> = {
   general: <IconTabGeneral />,
+  look: <IconTabLook />,
   storage: <IconTabStorage />,
   schedules: <IconTabSchedules />,
   offsite: <IconTabOffsite />,
@@ -2655,6 +2576,7 @@ export function SettingsPage() {
       <Selector
         items={([
           ["general", t("settings.tab.general")],
+          ["look", t("settings.tab.look")],
           ["storage", t("settings.tab.storage")],
           ["schedules", t("settings.tab.schedules")],
           ["offsite", t("settings.tab.offsite")],
@@ -2711,13 +2633,12 @@ export function SettingsPage() {
         // is the rail's row box again.
         //
         // Below it the strip is a grid over the column, where the phone arm
-        // (index.css) lets each tab fill its cell. Seven columns while a tab
-        // keeps 44px, which takes 20.75rem with the six gaps; on a narrower
-        // column four, so the tabs sit four over three instead of six over a
-        // lone seventh. No cell holds the German labels, which would show a
+        // (index.css) lets each tab fill its cell. Eight columns while a tab
+        // keeps 44px, which takes 23.75rem with the seven gaps; on a narrower
+        // column four, so the tabs sit four over four. No cell holds the German labels, which would show a
         // letter and an ellipsis, so the glyph stands alone and the label
         // stays the tab's accessible name.
-        className="md:[--settings-tab-seg-w:var(--nav-row-w)] max-md:grid max-md:flex-1 max-md:grid-cols-4 max-md:@min-[20.75rem]:grid-cols-7 max-md:[&_.truncate]:sr-only"
+        className="md:[--settings-tab-seg-w:var(--nav-row-w)] max-md:grid max-md:flex-1 max-md:grid-cols-4 max-md:@min-[23.75rem]:grid-cols-8 max-md:[&_.truncate]:sr-only"
       />
       </div>
       </div>
@@ -4814,115 +4735,17 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "system" && <PasskeyCard passwordSet={authEnabled} hueIndex={nextHue()} />}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* GENERAL — Language (GlimStone follow-up pass, live-review point 9). */}
-      {/* Moved out of Sidebar.tsx's footer — see LanguageCard's own header    */}
-      {/* comment above for the full move rationale. Sits right after Domains */}
-      {/* (a fundamental, whole-app setting, same register) and right before  */}
-      {/* the purely-cosmetic Appearance cluster below.                       */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "general" && <LanguageCard t={t} hueIndex={nextHue()} />}
+      {/* The Look tab: language first, at a field's height, then the other
+          axes the person owns. None of them waits for a Save. */}
+      {tab === "look" && <LanguageCard t={t} hueIndex={nextHue()} />}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* GENERAL — Theme (GlimStone follow-up pass, later live-review round). */}
-      {/* Moved out of Sidebar.tsx's footer — see ThemeCard's own header       */}
-      {/* comment above. Same register and immediately below Language: both   */}
-      {/* are fundamental, whole-app identity settings (not one of the purely */}
-      {/* cosmetic Appearance sub-topics below), so this Card sits right      */}
-      {/* after Language and right before Accent colour.                      */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "general" && <ThemeCard t={t} hueIndex={nextHue()} />}
+      {tab === "look" && <ThemeCard t={t} hueIndex={nextHue()} />}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* GENERAL — Appearance                                               */}
-      {/* GlimStone follow-up pass, live-review point 5: this used to be ONE  */}
-      {/* shared Card with four sub-topics (accent / shape / rainbow / quiet  */}
-      {/* toasts) separated by `border-t border-carbon-border` divider lines,  */}
-      {/* a violation of this app's own "never a                              */}
-      {/* border line, only shade/shadow" house rule (see index.css's shape-  */}
-      {/* token comments and Badge.tsx's file header: every OTHER visual      */}
-      {/* separation in this app comes from a surface's own elevation, not a  */}
-      {/* rule). Each of the four became its OWN Card that round — same       */}
-      {/* bg-carbon-surface + rounded-card + shadow every other Settings      */}
-      {/* topic already renders through, no divider needed because there's   */}
-      {/* no longer a shared surface to divide.                              */}
-      {/*   LATER live-review round (jdp: "Die card von Akzentfarbe und       */}
-      {/* Regenbogenmodus in eine mergen. Gehört ja zusammen"): accent and    */}
-      {/* rainbow are back to ONE Card below — see that Card's own header     */}
-      {/* comment for the merge, the hint relocation, and the hue-integration  */}
-      {/* fixes that landed in the same pass. Shape and Quiet toasts stay     */}
-      {/* their own separate Cards; `settings.appearance` (the old umbrella   */}
-      {/* title from the FOUR-way split) still has no call site and stays     */}
-      {/* removed from every locale rather than kept as a dead key. Same      */}
-      {/* "general" tab condition repeated per Card — the pattern every OTHER */}
-      {/* multi-Card tab on this page already uses (e.g. the "system" tab's   */}
-      {/* Security Card + Settings Portability Card further down — AboutFooter, */}
-      {/* the system tab's old THIRD tab-conditioned element, has since moved  */}
-      {/* out of this repeated-per-Card condition entirely; see its own header */}
-      {/* comment), not a wrapping Fragment introduced just for this section.  */}
-      {/* ------------------------------------------------------------------ */}
-
-      {/* Shape (GlimStone form-engine — shape engine; design-language.md's
-          "The user-owned axes": data-shape on <html>, round/soft/square,
-          one radius token set driving every rounded corner). lib/shape.ts is
-          the JS half (read/write/persist which of the three is chosen, stamp
-          the attribute), index.css already carries the matching
-          [data-shape="soft"|"square"] radius-token overrides. Lives directly
-          above the merged Colors Card below: same kind of setting
-          (client-only, applied at the app root — shape.ts's own header
-          comment), same "one picker, no Save step" shape.
-            Selector, not a bespoke button row: this IS "three mutually
-          exclusive options" (design-language.md's "The one horizontal
-          selector"), the exact shape Dashboard.tsx's heatmap-domain toggle
-          already uses this component for.
-            REVERSED (jdp, live-review, extremely emphatic standing rule —
-          "Der horizontale Selektor der Ecken ist nicht im Regenbogen-Modus
-          integriert... Es soll immer alles in die Farb- und Formengine
-          integriert werden!! IMMER!!"): this used to carry `hue={false}`,
-          reasoned at the time as "round/soft/square are a form choice, not a
-          position in a list, and tinting the segments would compete with
-          the choice itself." That is exactly the kind of self-authored
-          aesthetic exception jdp has now ruled out categorically — a
-          plausible-sounding taste judgement is never grounds to unilaterally
-          exclude a control from the colour engine. `hue` now stays on its
-          plain `true` default, so this Selector's three segments read
-          RAINBOW[0]/[1]/[2] like any other hue-enabled Selector in the app —
-          see Selector.tsx's own file header item 1 for the full reversal
-          note (Dashboard's heatmap toggle got the identical fix in the same
-          pass).
-            `size="lg"` (GlimStone follow-up pass, live-review point 1 —
-          up from the original "sm"): this is a full, standalone Settings
-          decision in its own right, the same visual register as the page's
-          OWN 7-tab Selector strip further up this file (also `size="lg"`),
-          not a tight toolbar chip like Dashboard's heatmap toggle or
-          CadenceBuilder's weekday pills — "sm" undersold it next to
-          everything else in this Card.
-            No `icon` per item anymore (live-review point 2): the original
-          per-option glyph (a small outlined square drawn at a SCALED-DOWN
-          6px/2px/0 preview radius — deliberately not the real 10px/5px/0
-          --radius-control values, for legibility at 14px) turned out to
-          undercut its own point live: a smaller-than-real preview sitting
-          right next to the label read as "round isn't very round," the
-          opposite of what it was meant to show. Text-only avoids that
-          entirely — the real Selector segment the user is looking at IS the
-          shape preview, at its own true radius, with no scaled-down stand-in
-          competing with it.
-            `variant="well" equalWidth` (GlimStone follow-up pass,
-          live-review point 7 — "turn the shape picker into a horizontal
-          selector styled like the one in TrickWork"): the FIRST call site to
-          exercise Selector's grooved variant (components/Selector.tsx's own
-          file header, item 5) — TrickWork's shared padded background with
-          flush, crossfade-only segments, no sliding pill. Picked for that
-          first try specifically because it's already icon-free (no glyph
-          competing with the groove's own look) and already the page's most
-          "three mutually exclusive settings, read together as one control"
-          Selector — the shape it suits best. A LATER round gave the Theme
-          Card's own light/dark picker (above) this exact same treatment, and
-          round 8 spread the variant itself (minus `equalWidth`) to every
-          small in-card selector in the app. The 7-tab strip above stays on
-          `variant="chip"` — it is a tab strip of individual badges, not a
-          grooved segmented control; see Selector.tsx's item 5b. */}
-      {tab === "general" && (
+      {/* Shape, the corner axis (lib/shape.ts). The segments carry no glyph:
+          each segment is drawn at the real radius, so the strip itself is the
+          preview, and a scaled-down stand-in beside it read as a weaker shape
+          than the one it named. */}
+      {tab === "look" && (
       <Card title={t("settings.shape")} hint={t("settings.shapeHint")} hueIndex={nextHue()}>
         {/* No "don't stretch" wrapper div here any more — `variant="well"`
             carries `w-fit max-w-full` itself as of round 8, which opts the
@@ -4976,7 +4799,7 @@ export function SettingsPage() {
           right above, and the Card's own heading badge gets a real
           `hueIndex={nextHue()}` the same way every other Card on this tab
           does. */}
-      {tab === "general" && (
+      {tab === "look" && (
       <Card title={t("settings.motion")} hint={t("settings.motionHint")} hueIndex={nextHue()}>
         {/* No "don't stretch" wrapper div, same as the Theme/Shape Selectors
             right above — `variant="well"` hugs its own segments now. */}
@@ -5013,7 +4836,7 @@ export function SettingsPage() {
       </Card>
       )}
 
-      {tab === "general" && (
+      {tab === "look" && (
       <>
       {/* Control labels (#178), how much of a control's identity is shown.
           One selector per chrome surface rather than one switch, because the
@@ -5120,7 +4943,7 @@ export function SettingsPage() {
           not hue-tinted, on purpose (see each Badge's own call-site comment
           for the full "a reset control must not blend into the very colours
           it resets" reasoning), so neither reads `hueIdx` at all. */}
-      {tab === "general" && (() => {
+      {tab === "look" && (() => {
       const hueIdx = nextHue();
       // "Is there anything left to reset?" for the palette row below — the
       // mirror of AccentCard's own `presetsAreDefault`, same case-insensitive

@@ -1882,6 +1882,7 @@ export const en = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "General",
+  "settings.tab.look": "Look",
   "settings.tab.storage": "Paths & Storage",
   "settings.tab.schedules": "Schedules",
   "settings.tab.offsite": "Off-site",
@@ -4453,6 +4454,7 @@ export const de: Translations = {
 
   // Einstellungen — Bereichs-Tabs + Zeitplan-Überschriften + Untertitel (v5-Redesign)
   "settings.tab.general": "Allgemein",
+  "settings.tab.look": "Aussehen",
   "settings.tab.storage": "Pfade & Speicher",
   "settings.tab.schedules": "Zeitpläne",
   "settings.tab.offsite": "Off-site",

@@ -1559,6 +1559,7 @@ const bg: Partial<Translations> = {
 
   // Settings — section tabs
   "settings.tab.general": "Общи",
+  "settings.tab.look": "Външен вид",
   "settings.tab.storage": "Пътища и съхранение",
   "settings.tab.schedules": "Графици",
   "settings.tab.offsite": "Извън обекта",

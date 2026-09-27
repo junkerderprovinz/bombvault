@@ -1356,6 +1356,7 @@ const uk: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "Загальні",
+  "settings.tab.look": "Вигляд",
   "settings.tab.storage": "Шляхи та сховище",
   "settings.tab.schedules": "Розклади",
   "settings.tab.offsite": "Зовнішнє",

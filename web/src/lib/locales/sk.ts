@@ -1559,6 +1559,7 @@ const sk: Partial<Translations> = {
 
   // Settings — section tabs
   "settings.tab.general": "Všeobecné",
+  "settings.tab.look": "Vzhľad",
   "settings.tab.storage": "Cesty a úložisko",
   "settings.tab.schedules": "Plány",
   "settings.tab.offsite": "Externé",

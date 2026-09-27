@@ -1,13 +1,13 @@
 // Settings at phone width, with a filled instance staged at the route layer: a
 // fresh harness database has every domain off and nothing configured, which
 // hides most of the page. On the phones, per tab: the 24px card rhythm, the
-// seven tabs four over three, nothing panning or reaching past the viewport or
+// eight tabs four over four, nothing panning or reaching past the viewport or
 // its card, no stray backtick, and every control big enough to hit. Then the
 // arrangements that change on a phone: target and credential rows put their
 // actions under the name, repository and passkey rows wrap instead of cutting,
 // the every-N-days field keeps three digits clear of its steppers, and the MCP
 // card's confirmations come up as a sheet. On the desktop: the
-// 40px rhythm and the unchanged strip of seven 200px tabs. German, because its
+// 40px rhythm and the unchanged strip of 200px tabs. German, because its
 // labels run longest; advanced mode on, so every expert control is there too.
 import { expect, test, type Page } from "@playwright/test";
 
@@ -297,6 +297,7 @@ const vm = (name: string, libvirtName: string, scheduleCadence = "") => ({
 
 const TABS = [
   ["general", "Allgemein"],
+  ["look", "Aussehen"],
   ["storage", "Pfade & Speicher"],
   ["schedules", "Zeitpläne"],
   ["offsite", "Off-site"],
@@ -404,7 +405,7 @@ for (const width of [320, 360]) {
 
       // Soft, so one run reports every check a tab fails rather than the first.
       expect.soft(await gaps(page), "the heading and card gaps").toEqual(["24px", "24px"]);
-      expect.soft((await tabRows(page)).perRow, "the seven tabs sit four over three").toEqual([4, 3]);
+      expect.soft((await tabRows(page)).perRow, "the eight tabs sit four over four").toEqual([4, 4]);
 
       const layout = await page.evaluate(() => {
         const main = document.querySelector("#bv-main");
@@ -571,7 +572,7 @@ test("settings on the desktop keeps the 40px rhythm and the strip of 200px tabs"
 
   expect(await gaps(page)).toEqual(["40px", "40px"]);
   const { widths } = await tabRows(page);
-  expect(widths).toEqual(Array(7).fill(200));
+  expect(widths).toEqual(Array(TABS.length).fill(200));
   for (const [, name] of TABS) {
     const label = page.getByRole("tab", { name, exact: true }).locator("span.truncate");
     expect(await label.evaluate((el) => el.getBoundingClientRect().width), `the ${name} label is hidden`).toBeGreaterThan(1);

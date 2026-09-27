@@ -1559,6 +1559,7 @@ const ca: Partial<Translations> = {
 
   // Settings — section tabs
   "settings.tab.general": "General",
+  "settings.tab.look": "Aparença",
   "settings.tab.storage": "Camins i emmagatzematge",
   "settings.tab.schedules": "Horaris",
   "settings.tab.offsite": "Extern",

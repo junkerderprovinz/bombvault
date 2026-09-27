@@ -1559,6 +1559,7 @@ const lv: Partial<Translations> = {
 
   // Settings — section tabs
   "settings.tab.general": "Vispārīgi",
+  "settings.tab.look": "Izskats",
   "settings.tab.storage": "Ceļi un krātuve",
   "settings.tab.schedules": "Grafiki",
   "settings.tab.offsite": "Attālināts",

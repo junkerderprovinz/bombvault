@@ -1559,6 +1559,7 @@ const gl: Partial<Translations> = {
 
   // Settings — section tabs
   "settings.tab.general": "Xeral",
+  "settings.tab.look": "Aparencia",
   "settings.tab.storage": "Camiños e almacenamento",
   "settings.tab.schedules": "Horarios",
   "settings.tab.offsite": "Externa",

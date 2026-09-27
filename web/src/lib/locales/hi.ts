@@ -1559,6 +1559,7 @@ const hi: Partial<Translations> = {
 
   // Settings — section tabs
   "settings.tab.general": "सामान्य",
+  "settings.tab.look": "रूप",
   "settings.tab.storage": "पथ और स्टोरेज",
   "settings.tab.schedules": "शेड्यूल",
   "settings.tab.offsite": "ऑफ़-साइट",

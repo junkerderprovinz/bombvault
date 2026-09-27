@@ -430,10 +430,11 @@ test("landscape 844x390: at >=48rem the desktop chrome owns the shell", async ({
 
 // The Settings tab strip at phone widths.
 // The strip pins every segment to the sidebar row-box width (--nav-row-w,
-// 200px) on desktop, and that pin on a 390px phone wrapped its seven flex-none
-// segments into seven stacked rows, roughly 350px of chrome before any
+// 200px) on desktop, and that pin on a phone would wrap its flex-none segments
+// into one stacked row each, several hundred pixels of chrome before any
 // Settings content. Below 48rem the strip is a grid over the page column: one
-// row of seven while a tab keeps 44px, otherwise four over three. Geometry,
+// row of eight while a tab keeps 44px, which takes 23.75rem, otherwise four
+// over four. Geometry,
 // not screenshots, per this file's contracts: the tabs per row, no tab under
 // 44px, and a row that spans the column. English on purpose: the cells do not
 // follow the labels, so the strip behaves the same in every locale, and en
@@ -460,7 +461,7 @@ async function assertStrip(page: Page, width: number, perRow: number[]): Promise
         column.clientWidth - parseFloat(style.paddingInlineStart) - parseFloat(style.paddingInlineEnd),
     };
   });
-  expect(geometry.tabs, "the Settings strip owns exactly the seven page tabs").toHaveLength(7);
+  expect(geometry.tabs, "the Settings strip owns exactly the eight page tabs").toHaveLength(8);
 
   const tops = [...new Set(geometry.tabs.map((t) => t.top))];
   const actual = tops.map((top) => geometry.tabs.filter((t) => t.top === top).length);
@@ -478,11 +479,11 @@ async function assertStrip(page: Page, width: number, perRow: number[]): Promise
 }
 
 for (const { width, perRow } of [
-  { width: 390, perRow: [7] },
-  { width: 360, perRow: [4, 3] },
-  { width: 320, perRow: [4, 3] },
+  { width: 390, perRow: [4, 4] },
+  { width: 360, perRow: [4, 4] },
+  { width: 320, perRow: [4, 4] },
 ]) {
-  test(`settings tab strip @ ${width}px: the seven tabs sit ${perRow.join(" over ")}`, async ({ page }, testInfo) => {
+  test(`settings tab strip @ ${width}px: the eight tabs sit ${perRow.join(" over ")}`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the grid lives below 48rem");
     await bootSeededPage(page, "en", width, "/settings");
     await assertStrip(page, width, perRow);
@@ -492,10 +493,10 @@ for (const { width, perRow } of [
 // The same strip in a desktop browser narrowed to a phone width. The shell
 // switches on width alone, so this is a state anyone reaches by dragging a
 // window edge, and it is where a real scrollbar shows up.
-test("settings tab strip @ 390px in a desktop window: one row with a scrollbar too", async ({ page }, testInfo) => {
+test("settings tab strip @ 390px in a desktop window: four over four with a scrollbar too", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-768", "one desktop project carries this; the pair would run it twice");
   await bootSeededPage(page, "en", 390, "/settings");
-  await assertStrip(page, 390, [7]);
+  await assertStrip(page, 390, [4, 4]);
 });
 
 // The appearance card's pinned wells, which spread over the row they get once
@@ -506,7 +507,7 @@ test("settings tab strip @ 390px in a desktop window: one row with a scrollbar t
 for (const width of [390, 360, 320]) {
   test(`appearance wells @ ${width}px: every groove row is filled`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the wells only wrap below 48rem");
-    await bootSeededPage(page, "de", width, "/settings");
+    await bootSeededPage(page, "de", width, "/settings#look");
 
     const wells = page.locator('[role="tablist"].bg-carbon-surface3, [role="group"].bg-carbon-surface3');
     await expect(wells.first()).toBeVisible();

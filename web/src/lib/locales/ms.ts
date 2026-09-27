@@ -1559,6 +1559,7 @@ const ms: Partial<Translations> = {
 
   // Settings — section tabs
   "settings.tab.general": "Umum",
+  "settings.tab.look": "Rupa",
   "settings.tab.storage": "Laluan & Storan",
   "settings.tab.schedules": "Jadual",
   "settings.tab.offsite": "Luar tapak",

@@ -1361,6 +1361,7 @@ const el: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "Γενικά",
+  "settings.tab.look": "Εμφάνιση",
   "settings.tab.storage": "Διαδρομές και αποθήκευση",
   "settings.tab.schedules": "Προγραμματισμοί",
   "settings.tab.offsite": "Εκτός τόπου",

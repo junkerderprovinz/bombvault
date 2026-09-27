@@ -127,13 +127,13 @@ const TAB_GROUPS: {
   selectors: { key: keyof typeof HUE_OFFSET; span?: boolean; marker: string; cardFile?: string }[];
 }[] = [
   {
-    tab: "general",
+    tab: "look",
     selectors: [
       { key: "labels", span: true, marker: "HUE_OFFSET.labels" },
       { key: "shape", marker: "HUE_OFFSET.shape" },
       { key: "motion", marker: "HUE_OFFSET.motion" },
-      // ThemeCard's own picker; the card lives on the General tab (its
-      // file carries the Selector, Settings.tsx's General region mounts it).
+      // ThemeCard's own picker; the card lives on the Look tab (its file
+      // carries the Selector, Settings.tsx's Look region mounts it).
       { key: "theme", marker: "<ThemeCard", cardFile: "ThemeCard.tsx" },
     ],
   },

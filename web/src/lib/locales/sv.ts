@@ -1361,6 +1361,7 @@ const sv: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "Allmänt",
+  "settings.tab.look": "Utseende",
   "settings.tab.storage": "Sökvägar och lagring",
   "settings.tab.schedules": "Scheman",
   "settings.tab.offsite": "Off-site",

@@ -1361,6 +1361,7 @@ const fi: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "Yleiset",
+  "settings.tab.look": "Ulkoasu",
   "settings.tab.storage": "Polut ja tallennus",
   "settings.tab.schedules": "Aikataulut",
   "settings.tab.offsite": "Etä",

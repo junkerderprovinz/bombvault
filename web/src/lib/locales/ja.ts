@@ -1353,6 +1353,7 @@ const ja: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "一般",
+  "settings.tab.look": "外観",
   "settings.tab.storage": "パスとストレージ",
   "settings.tab.schedules": "スケジュール",
   "settings.tab.offsite": "オフサイト",

@@ -1364,6 +1364,7 @@ const th: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "ทั่วไป",
+  "settings.tab.look": "รูปลักษณ์",
   "settings.tab.storage": "เส้นทางและที่จัดเก็บ",
   "settings.tab.schedules": "กำหนดการ",
   "settings.tab.offsite": "นอกสถานที่",

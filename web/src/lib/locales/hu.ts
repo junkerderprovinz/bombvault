@@ -1364,6 +1364,7 @@ const hu: Partial<Translations> = {
 
   // Settings — section tabs + schedule group headings + subtitle (v5 redesign)
   "settings.tab.general": "Általános",
+  "settings.tab.look": "Megjelenés",
   "settings.tab.storage": "Útvonalak és tárolás",
   "settings.tab.schedules": "Ütemezések",
   "settings.tab.offsite": "Telephelyen kívüli",
