@@ -28,21 +28,6 @@ export function domainName(t: T, domain: string): string {
   return key ? t(key) : domain;
 }
 
-const CODE_KEYS: Record<string, TranslationKey> = {
-  "place-name-taken": "places.error.nameTaken",
-  "place-home-domain": "places.error.homeDomain",
-  "place-is-repository": "places.error.isRepository",
-  "place-folder-blank": "places.error.folderBlank",
-  "place-domain-unavailable": "places.error.domainUnavailable",
-  "place-address-taken": "places.error.addressTaken",
-  "place-off": "places.error.off",
-  "place-repo-shared": "places.error.repoShared",
-  "place-no-append-only": "places.error.noAppendOnly",
-  "place-nothing-to-test": "places.error.nothingToTest",
-  "place-keeps-less": "places.error.keepsLess",
-  "place-append-only-off": "places.error.appendOnlyOff",
-};
-
 function holdersText(t: T, lang: string, h: PlaceHolders): string {
   const parts: string[] = [];
   if (h.homeDomains.length > 0) parts.push(t("places.holder.home").replace("{domains}", domainNames(t, lang, h.homeDomains)));
@@ -61,8 +46,8 @@ export function probeErrorText(t: T, lang: string, res: { code?: string; error?:
   return placementErrorText(t, lang, { ok: false, code, error: res.error }, "common.actionFailed");
 }
 
-/** placeErrorText is the sentence a refused place write shows. Codes this
- *  table does not know go to the placement table, then to the server's text. */
+/** placeErrorText is the sentence a refused place write shows. The codes that
+ *  carry no counts or names read from the placement table. */
 export function placeErrorText(t: T, lang: string, res: PlaceRefusal, fallback: TranslationKey): string {
   switch (res.code) {
     // Only a removal names what holds the place. Any other write refused this
@@ -78,8 +63,6 @@ export function placeErrorText(t: T, lang: string, res: PlaceRefusal, fallback: 
     case "place-probe-failed":
       return probeFailureText(t, lang, res.probe ?? res);
   }
-  const key = res.code ? keyOf(CODE_KEYS, res.code) : undefined;
-  if (key) return t(key);
   return placementErrorText(t, lang, res, fallback);
 }
 

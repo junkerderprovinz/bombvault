@@ -20,6 +20,18 @@ describe("placementErrorText", () => {
     }
   });
 
+  it("translates a place refusal that reaches a placement route", () => {
+    const codes = [
+      "place-name-taken", "place-home-domain", "place-is-repository", "place-folder-blank", "place-domain-unavailable",
+      "place-address-taken", "place-off", "place-repo-shared", "place-no-append-only", "place-nothing-to-test",
+      "place-keeps-less", "place-append-only-off",
+    ];
+    for (const code of codes) {
+      const text = placementErrorText(t, "en", { ok: false, error: "server text", code }, "settings.error");
+      expect(text, code).not.toBe("server text");
+    }
+  });
+
   it("names the defaults that hold a repository", () => {
     const refusal = (defaultDomains: PlacementDomain[]) => ({ ok: false, error: "x", code: "repo-in-use", defaultDomains });
     expect(placementErrorText(t, "en", refusal(["containers", "vms"]), "settings.error")).toBe(
