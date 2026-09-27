@@ -207,6 +207,9 @@ func (s *Service) adoptRow(ctx context.Context, placeID string, body adoptBody) 
 	if err != nil {
 		return err
 	}
+	if err := s.adoptionKeeps(settings, p, row); err != nil {
+		return err
+	}
 	addr, ok := store.PlaceAddress(p, domain, suffix)
 	if !ok {
 		return store.ErrPlaceDomainUnavailable
@@ -254,6 +257,42 @@ func (s *Service) checkAdoption(ctx context.Context, settings store.Settings, m 
 		}
 	}
 	return s.checkMoves(ctx, []addressMove{m}, mode)
+}
+
+// adoptionKeeps refuses to put a row at a place whose rules would keep fewer
+// of its snapshots, since the place mirrors them onto the row. A target hands
+// them on to its direct repository, which is held to the same.
+func (s *Service) adoptionKeeps(settings store.Settings, p store.Place, row store.OffsiteTarget) error {
+	before := rowRetentionPolicy(row)
+	if row.Role == store.RoleRepo {
+		before = s.retentionPolicyForRef(settings, "", domainRepoRef{Named: row})
+	}
+	if err := placeKeeps(p, before, row.Immutable); err != nil {
+		return err
+	}
+	if row.Role != store.RoleOffsite {
+		return nil
+	}
+	direct, found, err := s.store.CompanionFor(row.ID)
+	if err != nil || !found {
+		return err
+	}
+	return placeKeeps(p, rowRetentionPolicy(direct), direct.Immutable)
+}
+
+// placeKeeps refuses a repository that ages by before, or is append-only, a
+// place whose rules would have its next prune forget more. An append-only
+// place forgets nothing.
+func placeKeeps(p store.Place, before restic.RetentionPolicy, appendOnly bool) error {
+	switch {
+	case p.Immutable:
+		return nil
+	case appendOnly:
+		return errPlaceAppendOnlyOff
+	case retentionLowered(before, placeRetentionPolicy(p)):
+		return errPlaceKeepsLess
+	}
+	return nil
 }
 
 // unplacedRow is a target or named repository that belongs to no place.
@@ -350,6 +389,10 @@ func (s *Service) adoptDomainPath(ctx context.Context, settings store.Settings, 
 	old := domainPathRaw(domain, settings)
 	loc, err := s.resolveRepo(old)
 	if err != nil {
+		return err
+	}
+	before := s.retentionPolicyForRef(settings, domain, domainRepoRef{Own: true})
+	if err := placeKeeps(p, before, s.primaryIsImmutable(domain, loc)); err != nil {
 		return err
 	}
 	if !sameRepoLocation(addr, old) || restic.IsRemoteRepo(loc) {
