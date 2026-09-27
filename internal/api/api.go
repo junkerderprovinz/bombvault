@@ -264,6 +264,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/places/probe", h.handleProbePlace)
 	mux.HandleFunc("POST /api/places", h.handleCreatePlace)
 	mux.HandleFunc("PATCH /api/places/{id}", h.handlePatchPlace)
+	mux.HandleFunc("PATCH /api/places/unplaced", h.handlePatchUnplaced)
 	mux.HandleFunc("DELETE /api/places/{id}", h.handleDeletePlace)
 	mux.HandleFunc("POST /api/places/{id}/test", h.handleTestPlace)
 	mux.HandleFunc("POST /api/places/{id}/tamper-test", h.handlePlaceTamperTest)
