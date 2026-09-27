@@ -98,6 +98,9 @@ type OffsiteTarget struct {
 	PlaceID     string
 	PlaceDomain string
 	PlaceSuffix string
+	// OffWithPlace marks a row its place switched off. Switched on again, the
+	// place brings back only these, so a row switched off by itself stays off.
+	OffWithPlace bool
 }
 
 // remoteLocation is the SQL that asks of a location column what
@@ -146,7 +149,8 @@ const primaryRowName = "Primary (remote)"
 // The place columns are written for a new row only. A stored row keeps its
 // place, which AttachRowTx and DetachRowTx set, unless this write gives it
 // another address: then it leaves the place, which does not spell the new
-// address.
+// address. A write that switches the row on or off is the row's own choice,
+// so it drops the mark of a place that switched the row off.
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
@@ -174,8 +178,10 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
 	}
 	if companionOf != "" {
-		_, err = tx.Exec(`UPDATE offsite_targets SET name = ?, repo = ?, schedule = ?, enabled = ? WHERE id = ? AND role = ?`,
-			t.Name, t.Repo, t.Schedule, boolInt(t.Enabled), t.ID, t.Role)
+		_, err = tx.Exec(`UPDATE offsite_targets SET name = ?, repo = ?, schedule = ?, enabled = ?,
+			  off_with_place = CASE WHEN enabled = ? THEN off_with_place ELSE 0 END
+			WHERE id = ? AND role = ?`,
+			t.Name, t.Repo, t.Schedule, boolInt(t.Enabled), boolInt(t.Enabled), t.ID, t.Role)
 	} else {
 		_, err = tx.Exec(`
 			INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
@@ -199,7 +205,9 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			  limit_download         = excluded.limit_download,
 			  growth_budget_gb       = excluded.growth_budget_gb,
 			  enabled                = excluded.enabled,
-			  off_premises           = excluded.off_premises
+			  off_premises           = excluded.off_premises,
+			  off_with_place         = CASE WHEN offsite_targets.enabled = excluded.enabled
+			                                THEN offsite_targets.off_with_place ELSE 0 END
 			WHERE offsite_targets.role = excluded.role`,
 			t.ID, t.Domain, t.Name, t.Repo, t.Role, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 			t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
@@ -402,7 +410,7 @@ func targetSlotsTx(tx *sql.Tx, domain string) ([]targetSlot, error) {
 const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 	retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
-	companion_of, companion_lost, off_premises, place_id, place_domain, place_suffix`
+	companion_of, companion_lost, off_premises, place_id, place_domain, place_suffix, off_with_place`
 
 // ListOffsiteTargets returns all off-site REPLICATION DESTINATIONS (role =
 // 'offsite'; a domain's "primary" safety-config row, if any, is never among
@@ -962,12 +970,12 @@ func (r *Repo) DeletePrimaryRemoteTarget(domain string) error {
 
 func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 	var t OffsiteTarget
-	var immutable, enabled, lost, offPremises int
+	var immutable, enabled, lost, offPremises, offWithPlace int
 	err := s.Scan(
 		&t.ID, &t.Domain, &t.Name, &t.Repo, &t.Role, &t.CredsRef, &t.StorageClass, &immutable, &t.Schedule,
 		&t.RetentionKeepLast, &t.RetentionKeepDaily, &t.RetentionKeepWeekly, &t.RetentionKeepMonthly,
 		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder,
-		&t.CompanionOf, &lost, &offPremises, &t.PlaceID, &t.PlaceDomain, &t.PlaceSuffix,
+		&t.CompanionOf, &lost, &offPremises, &t.PlaceID, &t.PlaceDomain, &t.PlaceSuffix, &offWithPlace,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("scanOffsiteTarget: %w", err)
@@ -976,5 +984,6 @@ func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 	t.Enabled = enabled != 0
 	t.CompanionLost = lost != 0
 	t.OffPremises = offPremises != 0
+	t.OffWithPlace = offWithPlace != 0
 	return t, nil
 }

@@ -60,3 +60,23 @@ func TestRestoreDrillsRoundTrip(t *testing.T) {
 		t.Fatal("a different domain must not see containers drills")
 	}
 }
+
+func TestADrillKeepsTheTargetItRanAgainst(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	if err := r.AddRestoreDrill(store.RestoreDrill{Domain: "flash", Source: "offsite", Kind: "dr", At: 100, OK: true, TargetID: "b2"}); err != nil {
+		t.Fatal(err)
+	}
+
+	latest, _, err := r.LatestRestoreDrillKind("flash", "offsite", "dr")
+	if err != nil || latest.TargetID != "b2" {
+		t.Fatalf("latest dr drill = %+v, %v; want target b2", latest, err)
+	}
+	list, err := r.ListRestoreDrills("flash", "offsite", 1)
+	if err != nil || len(list) != 1 || list[0].TargetID != "b2" {
+		t.Fatalf("listed drills = %+v, %v; want one against b2", list, err)
+	}
+}

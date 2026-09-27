@@ -108,7 +108,7 @@ func gateProbes() []gateProbe {
 				DrillsSchedule:    "everyN 7 03:00",
 			},
 			wire: func(sc *Scheduler, runs *int, jobErr error) {
-				sc.SetDrillJob(func(_, _, _ string) error { *runs++; return jobErr })
+				sc.SetDrillJob(func(_, _, _ string) error { *runs++; return jobErr }, targetRows{}.list)
 			},
 		},
 		{

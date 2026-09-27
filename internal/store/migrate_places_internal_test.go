@@ -12,7 +12,7 @@ func TestAFreshDatabaseHasTheStoragePlaceSchema(t *testing.T) {
 			t.Errorf("table %s is missing", table)
 		}
 	}
-	for _, column := range []string{"place_id", "place_domain", "place_suffix"} {
+	for _, column := range []string{"place_id", "place_domain", "place_suffix", "off_with_place"} {
 		if !hasColumn(t, db, "offsite_targets", column) {
 			t.Errorf("offsite_targets.%s is missing", column)
 		}
@@ -54,15 +54,41 @@ func TestThePlaceSchemaIsRecordedWhereItAlreadyExists(t *testing.T) {
 	if err := Migrate(db); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version IN (123, 124, 125, 126)`); err != nil {
+	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version IN (123, 124, 125, 126, 127)`); err != nil {
 		t.Fatal(err)
 	}
 	if err := Migrate(db); err != nil {
 		t.Fatalf("migrate over a database that already has the place schema: %v", err)
 	}
-	for _, v := range []int{123, 124, 125, 126} {
+	for _, v := range []int{123, 124, 125, 126, 127} {
 		if !applied(t, db, v) {
 			t.Errorf("v%d was not recorded", v)
 		}
+	}
+}
+
+func TestRowsOffAtASwitchedOffPlaceComeBackWithItAfterTheUpgrade(t *testing.T) {
+	db := OpenMem(t)
+	migrateThrough(t, db, 126)
+	if _, err := db.Exec(`
+INSERT INTO storage_places (id, name, provider, kind, base, folders, enabled) VALUES
+  ('p-off', 'B2',  's3-other', 's3',    's3:b2',       '{"containers":"containers","flash":"flash"}', 0),
+  ('p-on',  'NAS', 'share',    'local', 'remotes/nas', '{"containers":"containers"}',                 1);
+INSERT INTO offsite_targets (id, domain, name, repo, role, enabled, created_at, sort_order, place_id, place_domain) VALUES
+  ('held',  'containers', 'B2',    's3:b2/containers',       'offsite', 0, 1000, 0, 'p-off', 'containers'),
+  ('on',    'flash',      'B2',    's3:b2/flash',            'offsite', 1, 1001, 0, 'p-off', 'flash'),
+  ('own',   'containers', 'NAS',   'remotes/nas/containers', 'offsite', 0, 1002, 1, 'p-on',  'containers'),
+  ('loose', 'vms',        'Loose', 's3:elsewhere/vms',       'offsite', 0, 1003, 0, '',      '');`); err != nil {
+		t.Fatal(err)
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	marked, err := stringsQ(db, `SELECT id FROM offsite_targets WHERE off_with_place = 1 ORDER BY id`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(marked) != 1 || marked[0] != "held" {
+		t.Fatalf("rows switched off by their place = %v, want only the one off at the place that is off", marked)
 	}
 }
