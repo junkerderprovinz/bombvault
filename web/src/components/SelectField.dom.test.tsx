@@ -64,8 +64,9 @@ it("opens a listbox and picks an option", () => {
   expect(trigger().getAttribute("aria-expanded")).toBe("false");
 });
 
-it("steps with the wheel while closed and skips a disabled option", () => {
+it("steps with the wheel while closed and focused, and skips a disabled option", () => {
   render(<Harness start="vms" />);
+  trigger().focus();
   // flash is disabled, so one notch down from vms lands on files.
   wheel(trigger(), 120);
   expect(screen.getByTestId("value").textContent).toBe("files");
@@ -74,6 +75,12 @@ it("steps with the wheel while closed and skips a disabled option", () => {
   expect(screen.getByTestId("value").textContent).toBe("files");
   // Back up, over the disabled entry again.
   wheel(trigger(), -120);
+  expect(screen.getByTestId("value").textContent).toBe("vms");
+});
+
+it("leaves the wheel to the page while the trigger has no focus", () => {
+  render(<Harness start="vms" />);
+  wheel(trigger(), 120);
   expect(screen.getByTestId("value").textContent).toBe("vms");
 });
 
