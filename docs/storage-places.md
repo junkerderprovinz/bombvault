@@ -27,7 +27,7 @@ Each place is a row with its provider, what it is used for and its last test or 
 
 - **General**: the name, the switch that turns the place on and off, the address and, for a device you run yourself, **Where is the device?** (see [Off the premises](#off-the-premises)).
 - **Retention**: keep-last, daily, weekly and monthly, for every repository at the place. A new place starts with the default rules; a place with every rule at zero never trims.
-- **Protection**: the **Append-only** switch. The far side has to enforce append-only; with the switch on, BombVault never prunes or deletes there. At a rest-server with append-only on, **Test append-only** runs the tamper test for each domain the place stores or copies and shows *deletes refused* or *deletes accepted* (see [Off-site & recovery](offsite-recovery.md)). Only remote places have this section, because nothing on this box can stop a local repository from being deleted.
+- **Protection**: the **Append-only** switch. The far side has to enforce append-only; with the switch on, BombVault never prunes or deletes there. At a rest-server with append-only on, **Test append-only** runs the tamper test against every domain the place stores or copies and shows one answer for the whole place, *deletes refused* or *deletes accepted* (see [Off-site & recovery](offsite-recovery.md)). Only remote places have this section, because nothing on this box can stop a local repository from being deleted.
 - **Access**: the credentials and, for S3, the storage class. A place that uses the shared credentials gets a set of its own at the first change. A direct repository at the place that the new credentials cannot open keeps the old ones, and the answer says so. Folder, SFTP and rclone places have no such section.
 - **Limits**: the upload and download rate and the growth budget.
 - **Folders**: one switch per domain, with the name of its folder. A domain switched off here cannot choose the place.
@@ -57,7 +57,7 @@ A place can be removed only while nothing uses it: no domain is stored there, no
 
 ## Without a place {#without-a-place}
 
-An address that does not fit the form of a place plus a folder keeps working and is listed under **Without a place**, with its address. Native `b2:`, `gs:` and `swift:` addresses are among them. **Assign to place** attaches such a row to a place, after the same test as [changing an address](#addresses). A copy target without a place is also named on its domain's row, next to the chips, and keeps copying.
+An address that does not fit the form of a place plus a folder keeps working and is listed under **Without a place**, with its address. Native `b2:`, `gs:` and `swift:` addresses are among them. **Assign to place** attaches such a row to a place, after the same test as [changing an address](#addresses). A copy target without a place is also named on its domain's row, next to the chips, and keeps copying. A remote row there has its own **Append-only** switch, and switching it off asks first with the number of items that keep backups at that address. A direct repository follows the switch of its target.
 
 ## Off the premises {#off-the-premises}
 

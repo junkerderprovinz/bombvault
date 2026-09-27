@@ -17,7 +17,9 @@ import {
   restServerRecipe,
   setDomainCopies,
   setDomainHome,
+  setUnplacedAppendOnly,
   subscribePlaces,
+  tamperTestPlace,
   testPlace,
   type CopiesPreview,
   type HomePreview,
@@ -58,16 +60,20 @@ describe("the places client", () => {
     await patchPlace("p/1", { retentionKeepLast: 3 });
     await deletePlace("p/1");
     await testPlace("p/1");
+    await tamperTestPlace("p/1");
     await adoptRow("p/1", "", "flash");
     await ensurePlaceRepo("p/1", "vms");
+    await setUnplacedAppendOnly("t9", "", true);
     expect(calls).toEqual([
       { url: "/api/places/probe", method: "POST", body: { provider: "b2", fields: { keyId: "k" } } },
       { url: "/api/places", method: "POST", body: { provider: "b2", fields: { keyId: "k" }, name: "B2" } },
       { url: "/api/places/p%2F1", method: "PATCH", body: { retentionKeepLast: 3 } },
       { url: "/api/places/p%2F1", method: "DELETE", body: undefined },
       { url: "/api/places/p%2F1/test", method: "POST", body: undefined },
+      { url: "/api/places/p%2F1/tamper-test", method: "POST", body: undefined },
       { url: "/api/places/p%2F1/adopt", method: "POST", body: { rowId: "", domain: "flash" } },
       { url: "/api/places/p%2F1/repo", method: "POST", body: { domain: "vms" } },
+      { url: "/api/places/unplaced", method: "PATCH", body: { rowId: "t9", domain: "", immutable: true } },
     ]);
   });
 

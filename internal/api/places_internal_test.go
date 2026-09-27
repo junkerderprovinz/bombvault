@@ -262,10 +262,10 @@ func TestRowsWithoutAPlaceWaitInTheirOwnGroup(t *testing.T) {
 	rows := rowsOf(f.do(http.MethodGet, "/api/places", nil)["unplaced"])
 
 	want := []map[string]any{
-		{"rowId": "", "domain": "flash", "role": "path", "name": "", "repo": "user/bombvault/flash"},
-		{"rowId": "", "domain": "config", "role": "path", "name": "", "repo": "user/bombvault/config"},
-		{"rowId": loose.ID, "domain": "vms", "role": "target", "name": "Old NAS", "repo": "remotes/oldnas/vms"},
-		{"rowId": nas.ID, "domain": "", "role": "repository", "name": "NAS", "repo": "nas"},
+		{"rowId": "", "domain": "flash", "role": "path", "name": "", "repo": "user/bombvault/flash", "immutable": false, "protectable": false, "items": float64(1)},
+		{"rowId": "", "domain": "config", "role": "path", "name": "", "repo": "user/bombvault/config", "immutable": false, "protectable": false, "items": float64(1)},
+		{"rowId": loose.ID, "domain": "vms", "role": "target", "name": "Old NAS", "repo": "remotes/oldnas/vms", "immutable": false, "protectable": false, "items": float64(0)},
+		{"rowId": nas.ID, "domain": "", "role": "repository", "name": "NAS", "repo": "nas", "immutable": false, "protectable": false, "items": float64(0)},
 	}
 	if !reflect.DeepEqual(rows, want) {
 		t.Fatalf("unplaced = %v, want %v", rows, want)
@@ -538,8 +538,8 @@ func TestAHomePlaceStaysSwitchedOn(t *testing.T) {
 func TestOnlyARemotePlaceTakesTheAppendOnlySwitch(t *testing.T) {
 	f := newPlacementFixture(t)
 	unraid := f.storePlace(localPlace("Unraid", "backups"))
-	if res := f.do(http.MethodPatch, "/api/places/"+unraid.ID, map[string]any{"immutable": true}); res["ok"] != false || res["code"] != nil {
-		t.Fatalf("append-only on a local place = %v, want a plain refusal", res)
+	if res := f.do(http.MethodPatch, "/api/places/"+unraid.ID, map[string]any{"immutable": true}); res["ok"] != false || res["code"] != "place-no-append-only" {
+		t.Fatalf("append-only on a local place = %v, want place-no-append-only", res)
 	}
 	b2 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
 	target := f.placeTarget(b2, "containers", "")

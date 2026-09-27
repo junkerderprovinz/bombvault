@@ -27,7 +27,7 @@ Jeder Ort ist eine Zeile mit seinem Anbieter, seiner Verwendung und seinem letzt
 
 - **Allgemein**: der Name, der Schalter, der den Ort ein- und ausschaltet, die Adresse und bei einem Gerät, das du selbst betreibst, **Wo steht das Gerät?** (siehe [Außer Haus](#off-the-premises)).
 - **Aufbewahrung**: letzte, täglich, wöchentlich und monatlich, für jedes Repository am Ort. Ein neuer Ort beginnt mit den voreingestellten Regeln; ein Ort, bei dem jede Regel auf null steht, kürzt nie.
-- **Schutz**: der Schalter **Append-only**. Durchsetzen muss es die Gegenseite; ist der Schalter an, kürzt und löscht BombVault dort nichts. Bei einem rest-server mit eingeschaltetem Append-only führt **Auf append-only prüfen** den Manipulationstest für jeden Bereich aus, den der Ort speichert oder kopiert, und zeigt *Löschen verweigert* oder *Löschen möglich* (siehe [Off-site & Wiederherstellung](offsite-recovery.md)). Diesen Abschnitt haben nur entfernte Orte, weil nichts auf dieser Box verhindern kann, dass ein lokales Repository gelöscht wird.
+- **Schutz**: der Schalter **Append-only**. Durchsetzen muss es die Gegenseite; ist der Schalter an, kürzt und löscht BombVault dort nichts. Bei einem rest-server mit eingeschaltetem Append-only führt **Auf append-only prüfen** den Manipulationstest für jeden Bereich aus, den der Ort speichert oder kopiert, und zeigt eine Antwort für den ganzen Ort: *Löschen verweigert* oder *Löschen möglich* (siehe [Off-site & Wiederherstellung](offsite-recovery.md)). Diesen Abschnitt haben nur entfernte Orte, weil nichts auf dieser Box verhindern kann, dass ein lokales Repository gelöscht wird.
 - **Zugang**: die Zugangsdaten und bei S3 die Speicherklasse. Ein Ort, der die gemeinsamen Zugangsdaten benutzt, bekommt bei der ersten Änderung einen eigenen Satz. Ein direktes Repository am Ort, das die neuen Zugangsdaten nicht öffnen können, behält die alten, und die Antwort sagt das. Ordner-, SFTP- und rclone-Orte haben diesen Abschnitt nicht.
 - **Grenzen**: die Upload- und Download-Rate und das Wachstumsbudget.
 - **Ordner**: ein Schalter pro Bereich, mit dem Namen seines Ordners. Ein Bereich, der hier ausgeschaltet ist, kann den Ort nicht wählen.
@@ -57,7 +57,7 @@ Ein Ort lässt sich nur entfernen, solange ihn nichts benutzt: Kein Bereich ist 
 
 ## Ohne Ort {#without-a-place}
 
-Eine Adresse, die nicht in die Form Ort plus Ordner passt, arbeitet weiter und steht mit ihrer Adresse unter **Ohne Ort**. Native `b2:`-, `gs:`- und `swift:`-Adressen gehören dazu. **Einem Ort zuordnen** hängt so eine Zeile an einen Ort, nach demselben Test wie beim [Ändern einer Adresse](#addresses). Ein Kopieziel ohne Ort steht außerdem in der Zeile seines Bereichs neben den Chips und kopiert weiter.
+Eine Adresse, die nicht in die Form Ort plus Ordner passt, arbeitet weiter und steht mit ihrer Adresse unter **Ohne Ort**. Native `b2:`-, `gs:`- und `swift:`-Adressen gehören dazu. **Einem Ort zuordnen** hängt so eine Zeile an einen Ort, nach demselben Test wie beim [Ändern einer Adresse](#addresses). Ein Kopieziel ohne Ort steht außerdem in der Zeile seines Bereichs neben den Chips und kopiert weiter. Eine entfernte Zeile dort hat einen eigenen Schalter **Append-only**. Wer ihn ausschaltet, wird vorher gefragt und erfährt, wie viele Einträge an dieser Adresse Backups haben. Ein Direkt-Repository folgt dem Schalter seines Ziels.
 
 ## Außer Haus {#off-the-premises}
 
