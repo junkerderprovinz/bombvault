@@ -22,7 +22,7 @@ export function relativeTime(t: T, unix: number): string {
 }
 
 /** NO_VALUE is the mark a table cell or tile shows for a missing value. */
-export const NO_VALUE = "—";
+export const NO_VALUE = "\u2014";
 
 /**
  * formatTs renders a unix timestamp as a localized date and time, or a dash
