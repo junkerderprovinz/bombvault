@@ -13,6 +13,7 @@ const id: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Cadangan Mandiri",
   "nav.settings": "Pengaturan",
+  "nav.menu": "Menu",
 
   // Mode toggle
   "about.title": "Tentang BombVault",

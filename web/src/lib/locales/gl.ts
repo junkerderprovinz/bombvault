@@ -13,6 +13,7 @@ const gl: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Autocopia",
   "nav.settings": "Configuración",
+  "nav.menu": "Menú",
 
   // Mode toggle
   "about.title": "Sobre BombVault",

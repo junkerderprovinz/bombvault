@@ -13,6 +13,7 @@ const hi: Partial<Translations> = {
   "nav.flash": "फ़्लैश",
   "nav.config": "सेल्फ़-बैकअप",
   "nav.settings": "सेटिंग्स",
+  "nav.menu": "मेनू",
 
   // Mode toggle
   "about.title": "BombVault के बारे में",

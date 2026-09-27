@@ -12,6 +12,7 @@ const es: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Ajustes",
+  "nav.menu": "Menú",
   "about.title": "Acerca de BombVault",
   "about.body": "Un solo caballero, una cruzada: herramientas de código abierto bien hechas que no existían con la forma que yo quería, construidas hasta que no falte nada. Todo gratis, sin cuentas, sin telemetría, sin anuncios y sin planes de pago. Ningún asterisco en ninguna parte. Nada legible sale nunca de tus propios muros. Forjado en tardes y fines de semana, con corazón y terquedad.",
   "about.coffee": "Si BombVault se ha ganado un sitio en tu servidor o tu ordenador, echa una moneda a tu caballero: ayuda a cubrir los costes y mantiene vivo el proyecto. Y hace que el corazón de este caballero lata un poco más rápido. Abajo hay tres caminos, elige el que te venga bien.",

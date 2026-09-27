@@ -12,6 +12,7 @@ const tr: Partial<Translations> = {
   "nav.vms": "VM'ler",
   "nav.flash": "Flash",
   "nav.settings": "Ayarlar",
+  "nav.menu": "Menü",
   "about.title": "BombVault hakkında",
   "about.body": "Tek şövalye, tek sefer: istediğim biçimde var olmayan, düzgün görünen açık kaynak araçlar, hiçbir şey eksik kalmayana kadar inşa ediliyor. Hepsi ücretsiz, hesap yok, telemetri yok, reklam yok, ücretli katman yok. Hiçbir yerde yıldız işareti yok. Okunabilir hiçbir şey kendi duvarlarından dışarı çıkmaz. Akşamları ve hafta sonları, yürekle ve inatla dövüldü.",
   "about.coffee": "BombVault sunucunda ya da bilgisayarında yerini hak ettiyse şövalyene bir sikke at: masrafları karşılamaya yardım eder ve projeyi ayakta tutar. Ayrıca bu şövalyenin kalbini biraz daha hızlı çarptırır. Aşağıda üç yol var, sana uyanı seç.",

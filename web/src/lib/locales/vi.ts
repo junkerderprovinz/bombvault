@@ -12,6 +12,7 @@ const vi: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Cài đặt",
+  "nav.menu": "Menu",
   "about.title": "Giới thiệu về BombVault",
   "about.body": "Một hiệp sĩ, một cuộc viễn chinh: những công cụ mã nguồn mở gọn đẹp vốn không tồn tại theo hình dạng tôi muốn, được xây cho đến khi không còn thiếu gì. Tất cả miễn phí, không tài khoản, không đo từ xa, không quảng cáo và không gói trả phí. Không có dấu sao ở đâu cả. Không có gì đọc được rời khỏi bức tường của bạn. Được rèn vào buổi tối và cuối tuần, bằng trái tim và sự cứng đầu.",
   "about.coffee": "Nếu BombVault đã xứng đáng có một chỗ trên máy chủ hay máy tính của bạn, hãy tung một đồng cho hiệp sĩ của bạn: nó giúp trang trải chi phí và giữ cho dự án sống. Và nó khiến trái tim của hiệp sĩ này đập nhanh hơn một chút. Bên dưới có ba lối, chọn lối nào hợp với bạn.",

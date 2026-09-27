@@ -13,6 +13,7 @@ const et: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Iseenda varundus",
   "nav.settings": "Seaded",
+  "nav.menu": "Menüü",
 
   // Mode toggle
   "about.title": "Teave BombVaulti kohta",

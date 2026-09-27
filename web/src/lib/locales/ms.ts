@@ -13,6 +13,7 @@ const ms: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Sandaran Sendiri",
   "nav.settings": "Tetapan",
+  "nav.menu": "Menu",
 
   // Mode toggle
   "about.title": "Perihal BombVault",

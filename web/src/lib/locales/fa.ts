@@ -13,6 +13,7 @@ const fa: Partial<Translations> = {
   "nav.flash": "فلش",
   "nav.config": "پشتیبان‌گیری خودکار",
   "nav.settings": "تنظیمات",
+  "nav.menu": "منو",
 
   // Mode toggle
   "about.title": "درباره BombVault",

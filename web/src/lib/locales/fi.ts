@@ -12,6 +12,7 @@ const fi: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Asetukset",
+  "nav.menu": "Valikko",
   "about.title": "Tietoja BombVaultista",
   "about.body": "Yksi ritari, yksi ristiretki: siistejä avoimen lähdekoodin työkaluja, joita ei ollut siinä muodossa kuin halusin, rakennettuna kunnes mitään ei puutu. Kaikki ilmaista, ilman tilejä, ilman telemetriaa, ilman mainoksia ja ilman maksullisia tasoja. Ei tähteä missään. Mikään luettava ei koskaan poistu omien muuriesi sisältä. Taottu iltaisin ja viikonloppuisin, sydämellä ja itsepäisyydellä.",
   "about.coffee": "Jos BombVault on ansainnut paikkansa palvelimellasi tai koneellasi, heitä kolikko ritarillesi: se auttaa kattamaan kulut ja pitää projektin hengissä. Ja se saa tämän ritarin sydämen lyömään hieman nopeammin. Alla on kolme tietä, valitse sinulle sopiva.",

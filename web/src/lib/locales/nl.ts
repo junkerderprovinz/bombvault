@@ -12,6 +12,7 @@ const nl: Partial<Translations> = {
   "nav.vms": "VM's",
   "nav.flash": "Flash",
   "nav.settings": "Instellingen",
+  "nav.menu": "Menu",
   "about.title": "Over BombVault",
   "about.body": "Eén ridder, één kruistocht: verzorgde opensourcetools die niet bestonden in de vorm die ik wilde, gebouwd tot er niets meer ontbreekt. Alles gratis, zonder accounts, zonder telemetrie, zonder advertenties en zonder betaalde versie. Nergens een sterretje. Niets leesbaars verlaat ooit je eigen muren. Gesmeed op avonden en weekenden, met hart en koppigheid.",
   "about.coffee": "Als BombVault een plek op je server of computer heeft verdiend, gooi dan een munt naar je ridder: het helpt de kosten te dekken en houdt het project in leven. En het laat het hart van deze ridder wat sneller kloppen. Hieronder staan drie wegen, kies er een die je bevalt.",

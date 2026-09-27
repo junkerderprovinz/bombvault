@@ -13,6 +13,7 @@ const lt: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Savarankiška atsarga",
   "nav.settings": "Nustatymai",
+  "nav.menu": "Meniu",
 
   // Mode toggle
   "about.title": "Apie BombVault",

@@ -12,6 +12,7 @@ const da: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Indstillinger",
+  "nav.menu": "Menu",
   "about.title": "Om BombVault",
   "about.body": "Én ridder, ét korstog: pæne open source-værktøjer, der ikke fandtes i den form, jeg ville have, bygget indtil intet mangler. Alt gratis, uden konti, uden telemetri, uden reklamer og uden betalte niveauer. Ingen stjerne nogen steder. Intet læsbart forlader nogensinde dine egne mure. Smedet om aftenen og i weekenden, med hjerte og stædighed.",
   "about.coffee": "Hvis BombVault har fortjent en plads på din server eller computer, så kast en mønt til din ridder: det hjælper med at dække omkostningerne og holder projektet i live. Og det får denne ridders hjerte til at slå lidt hurtigere. Nedenfor er der tre veje, tag den, der passer dig.",

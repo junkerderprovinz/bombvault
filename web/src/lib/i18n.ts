@@ -65,6 +65,7 @@ export const en = {
   "nav.flash": "Flash",
   "nav.config": "Self-Backup",
   "nav.settings": "Settings",
+  "nav.menu": "Menu",
   "about.title": "About BombVault",
   "about.body":
     "A one-knight crusade: good-looking open-source tools that did not exist in the shape I wanted, built until nothing is missing. It is free, with no accounts, no telemetry, no ads and no paid tier. No asterisk anywhere. Nothing readable ever leaves your own walls. Forged on evenings and weekends, with heart and stubbornness.",
@@ -3061,6 +3062,7 @@ export const de: Translations = {
   "nav.flash": "Flash",
   "nav.config": "Selbst-Backup",
   "nav.settings": "Einstellungen",
+  "nav.menu": "Menü",
   "about.title": "Über BombVault",
   "about.body":
     "Ein einzelner Ritter, ein Feldzug: ansehnliche quelloffene Werkzeuge, die es in der Form, die ich wollte, nicht gab, gebaut, bis nichts mehr fehlt. Alles kostenlos, ohne Konten, ohne Telemetrie, ohne Werbung, ohne Bezahlstufen. Nirgends ein Sternchen. Nichts Lesbares verlässt je deine eigenen Mauern. An Abenden und Wochenenden geschmiedet, mit Herz und Dickkopf.",

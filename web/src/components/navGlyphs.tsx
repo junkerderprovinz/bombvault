@@ -450,3 +450,19 @@ export function IconAnomalies() {
     </svg>
   );
 }
+
+/** Menu, the navigation rail on a narrow window. */
+export function IconMenu() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 14 14"
+      fill="currentColor"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      <rect x="1.4" y="2.4" width="11.2" height="2.2" rx="1.1" /><rect x="1.4" y="5.9" width="11.2" height="2.2" rx="1.1" /><rect x="1.4" y="9.4" width="11.2" height="2.2" rx="1.1" />
+    </svg>
+  );
+}

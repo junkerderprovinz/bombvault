@@ -13,6 +13,7 @@ const eu: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Autobabeskopia",
   "nav.settings": "Ezarpenak",
+  "nav.menu": "Menua",
 
   // Mode toggle
   "about.title": "BombVault-i buruz",

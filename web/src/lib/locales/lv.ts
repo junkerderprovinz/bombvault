@@ -13,6 +13,7 @@ const lv: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Pašrezerve",
   "nav.settings": "Iestatījumi",
+  "nav.menu": "Izvēlne",
 
   // Mode toggle
   "about.title": "Par BombVault",

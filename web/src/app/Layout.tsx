@@ -1,4 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
+import { Button } from "../components/Button";
+import { IconMenu } from "../components/navGlyphs";
 import { Sidebar } from "../components/Sidebar";
 import { useEffect, useState, useCallback } from "react";
 import { getSettings, getAuth, getHealth, type Settings } from "../lib/api";
@@ -6,6 +8,7 @@ import { LoginPage } from "../pages/Login";
 import { WhatsNewDialog } from "../components/WhatsNewDialog";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { sync as syncDisplayPrefs } from "../lib/displayPrefs";
+import { useT } from "../lib/i18n";
 
 // The last BombVault version this browser has seen. The "What's new" dialog
 // opens once when the running version differs.
@@ -33,6 +36,11 @@ export function Layout() {
   const [authEnabled, setAuthEnabled] = useState(false);
   const [whatsNewVersion, setWhatsNewVersion] = useState<string | null>(null);
   const location = useLocation();
+  const { t } = useT();
+  // The page the rail was opened on below the sm breakpoint. Choosing a page
+  // changes the path, which closes it without an effect.
+  const [railOpenedOn, setRailOpenedOn] = useState<string | null>(null);
+  const railOpen = railOpenedOn === location.pathname;
 
   // Runs on mount and again after a successful login.
   const checkAuth = useCallback(() => {
@@ -153,7 +161,18 @@ export function Layout() {
   return (
     <AnomalyProvider>
       <div className="flex h-screen overflow-hidden bg-carbon-background gap-4 p-4">
-        <Sidebar settings={settings} authEnabled={authEnabled} />
+        {/* Below sm the rail would leave a phone's page too narrow to use, so
+            it folds into the menu button and opens over the page. */}
+        {railOpen && (
+          <div
+            data-testid="rail-backdrop"
+            className="glim-modal-backdrop fixed inset-0 z-30 sm:hidden"
+            onClick={() => setRailOpenedOn(null)}
+          />
+        )}
+        <div className={`flex shrink-0 ${railOpen ? "max-sm:fixed max-sm:inset-y-4 max-sm:start-4 max-sm:z-40 max-sm:rounded-card max-sm:bg-carbon-surface max-sm:shadow-2xl" : "max-sm:hidden"}`}>
+          <Sidebar settings={settings} authEnabled={authEnabled} />
+        </div>
         {/* `main` is the scroll container. It and the route wrapper are flex
             columns so a short page can fill the height and push a footer to the
             bottom (Settings does this with AboutFooter); other pages render at
@@ -163,6 +182,15 @@ export function Layout() {
               at the bottom, so at the end of a scroll the last card ends level
               with the rail instead of 24px above it. */}
           <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col p-6 pb-0">
+            <div className="sm:hidden mb-4">
+              <Button
+                label={t("nav.menu")}
+                labelKey="nav.menu"
+                glyph={<IconMenu />}
+                ariaExpanded={railOpen}
+                onClick={() => setRailOpenedOn(railOpen ? null : location.pathname)}
+              />
+            </div>
             <Outlet />
           </div>
         </main>

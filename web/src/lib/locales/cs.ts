@@ -12,6 +12,7 @@ const cs: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Nastavení",
+  "nav.menu": "Nabídka",
   "about.title": "O aplikaci BombVault",
   "about.body": "Jeden rytíř, jedna výprava: pěkné open source nástroje, které v podobě, jakou jsem chtěl, neexistovaly, stavěné, dokud nic nechybí. Všechno zdarma, bez účtů, bez telemetrie, bez reklam a bez placených verzí. Nikde žádná hvězdička. Nic čitelného nikdy neopustí tvoje vlastní zdi. Kováno po večerech a o víkendech, se srdcem a tvrdohlavostí.",
   "about.coffee": "Jestli si BombVault zasloužil místo na tvém serveru nebo počítači, hoď groš svému rytíři: pomůže pokrýt náklady a udrží projekt naživu. A srdce tohohle rytíře díky tomu bije o něco rychleji. Níže jsou tři cesty, vyber si tu, která ti vyhovuje.",

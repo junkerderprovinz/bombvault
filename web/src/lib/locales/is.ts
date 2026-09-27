@@ -13,6 +13,7 @@ const is: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Sjálfvirk afritun",
   "nav.settings": "Stillingar",
+  "nav.menu": "Valmynd",
 
   // Mode toggle
   "about.title": "Um BombVault",

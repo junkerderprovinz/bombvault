@@ -13,6 +13,7 @@ const hr: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Samostalna sigurnosna kopija",
   "nav.settings": "Postavke",
+  "nav.menu": "Izbornik",
 
   // Mode toggle
   "about.title": "O aplikaciji BombVault",

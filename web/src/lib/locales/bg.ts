@@ -13,6 +13,7 @@ const bg: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Самобекъп",
   "nav.settings": "Настройки",
+  "nav.menu": "Меню",
 
   // Mode toggle
   "about.title": "Относно BombVault",

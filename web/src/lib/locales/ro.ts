@@ -12,6 +12,7 @@ const ro: Partial<Translations> = {
   "nav.vms": "VM-uri",
   "nav.flash": "Flash",
   "nav.settings": "Setări",
+  "nav.menu": "Meniu",
   "about.title": "Despre BombVault",
   "about.body": "Un singur cavaler, o cruciadă: unelte open source îngrijite, care nu existau în forma pe care o voiam, construite până nu mai lipsește nimic. Totul gratuit, fără conturi, fără telemetrie, fără reclame și fără abonamente. Niciun asterisc nicăieri. Nimic lizibil nu părăsește vreodată zidurile tale. Făurit seara și în weekend, cu inimă și încăpățânare.",
   "about.coffee": "Dacă BombVault și-a câștigat un loc pe serverul sau calculatorul tău, aruncă o monedă cavalerului tău: ajută la acoperirea costurilor și ține proiectul în viață. Și face inima acestui cavaler să bată puțin mai repede. Mai jos sunt trei căi, alege-o pe cea care ți se potrivește.",
