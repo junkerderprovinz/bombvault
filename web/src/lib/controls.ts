@@ -1,10 +1,9 @@
 import { save as saveDisplayPrefs } from "./displayPrefs";
 
 // The control label engine: how much of a control's identity is shown, its
-// text, its glyph or both. It has three independent axes, the action buttons,
-// the sidebar and the Settings tab strips, because a sidebar reduced to glyphs
-// changes the layout (the rail gets narrower) while a button reduced to glyphs
-// is only a density preference.
+// text, its glyph or both. One axis per chrome surface, because the right
+// answer differs: a rail reduced to glyphs changes the layout (it gets
+// narrower) while a button reduced to glyphs is only a density preference.
 //
 // Like motion.ts, shape.ts and accent.ts, the choice is read from localStorage
 // and applied as attributes on <html> before first paint, so the layout never
@@ -35,21 +34,23 @@ export function hidesLabel(mode: LabelMode): boolean {
   return mode === "glyph" || mode === "reactive";
 }
 
-/** The three axes, as a list so the settings card can iterate over them. */
-export type ControlAxis = "buttons" | "sidebar" | "tabs";
+/** The axes as a list, so the settings card can iterate over them. */
+export type ControlAxis = "buttons" | "sidebar" | "tabs" | "bottombar";
 
-export const CONTROL_AXES: ControlAxis[] = ["buttons", "sidebar", "tabs"];
+export const CONTROL_AXES: ControlAxis[] = ["buttons", "sidebar", "tabs", "bottombar"];
 
 const STORAGE_KEY: Record<ControlAxis, string> = {
   buttons: "bv-labels-buttons",
   sidebar: "bv-labels-sidebar",
   tabs: "bv-labels-tabs",
+  bottombar: "bv-labels-bottombar",
 };
 
 const ATTRIBUTE: Record<ControlAxis, string> = {
   buttons: "data-labels-buttons",
   sidebar: "data-labels-sidebar",
   tabs: "data-labels-tabs",
+  bottombar: "data-labels-bottombar",
 };
 
 /** DEFAULT is "textGlyph" on every axis: buttons with a label, sidebar rows

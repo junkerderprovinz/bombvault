@@ -13,6 +13,8 @@ const lv: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Pašrezerve",
   "nav.settings": "Iestatījumi",
+  "nav.more": "Vēl",
+  "nav.mobileNavigation": "Mobilā navigācija",
 
   // Mode toggle
   "about.title": "Par BombVault",
@@ -293,6 +295,9 @@ const lv: Partial<Translations> = {
   "run.colStarted": "Sākts",
   "run.colFinished": "Pabeigts",
   "run.colContainer": "Konteiners",
+  "home.newBackupConfirm": "Sākt tagad visu iespējoto jomu dublējumu? Konteineri tiek apturēti un pārstartēti pa vienam, kamēr darbojas to dublējums.",
+  "run.statVolume": "Datu apjoms",
+  "run.statSnapshot": "Momentuzņēmums",
 
   // Settings
   "settings.title": "Iestatījumi",
@@ -798,6 +803,9 @@ const lv: Partial<Translations> = {
   "settings.labels.buttons": "Pogas",
   "settings.labels.sidebar": "Sānjosla",
   "settings.labels.tabs": "Cilnes",
+  "settings.labels.bottombar": "Apakšjosla",
+  "settings.axisBottombarHint": "Attiecas tikai uz telefona izkārtojumu.",
+  "settings.axisSidebarHint": "Attiecas tikai uz darbvirsmas izkārtojumu.",
   "settings.labels.mode.text": "Teksts",
   "settings.labels.mode.textGlyph": "Teksts un simbols",
   "settings.labels.mode.glyph": "Simbols",
@@ -841,6 +849,7 @@ const lv: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Aizsardzības statuss",
   "dashboard.noOffsite": "Nav kopijas ārpus vietas",
+  "dashboard.statusLoadFailed": "Nevarēja ielādēt statusu",
   "dashboard.neverExcluded": "Nav ieplānots",
   "dashboard.neverExcludedTitle": "Apzināti atstāts ārpus grafika, tāpēc te nav ko dublēt.",
   "dashboard.neverSelf": "Savs konteiners",
@@ -1184,6 +1193,10 @@ const lv: Partial<Translations> = {
   "common.restoring": "Atjauno…",
   "common.done": "Gatavs",
   "common.close": "Aizvērt",
+  "common.expand": "Izvērst",
+  "common.collapse": "Sakļaut",
+  "common.back": "Atpakaļ",
+  "common.loadMore": "Ielādēt vēl",
   "common.loadingBackups": "Ielādē rezerves kopijas…",
   "common.saving": "Saglabā…",
   "common.restoreRunning": "Notiek atjaunošana…",

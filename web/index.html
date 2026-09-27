@@ -2,19 +2,47 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <!-- viewport-fit=cover extends the layout viewport into the device's own
+         unsafe edges (notch, rounded corners, home indicator). Without it the
+         system chrome insets the viewport and every env(safe-area-inset-*)
+         expression, surfaced as the --safe-area-* custom properties in
+         src/index.css, silently resolves to 0px, so the two declarations are
+         one contract and must change together. interactive-widget=resizes-
+         content makes the Android keyboard resize the layout viewport instead
+         of overlaying it, which is the behavior the Layout-level keyboard
+         mechanism builds on. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+    <!-- Browser-chrome color (mobile address bar / task switcher). The static
+         content (#161616 = dark --carbon-bg) is what a no-JS browser shows;
+         the FOUC script below resolves the real theme before first paint and
+         mirrors it into THIS tag (#f4f4f4 light), and src/lib/theme.ts's
+         paint() takes over on every theme application afterwards. The tag
+         sits ABOVE the script on purpose (maintainer #244 round 3, bug B8):
+         it used to live ~18 lines below it, so the script's own write
+         addressed a tag that did not exist yet and the first paint kept the
+         static dark value even in light mode. All three sets of values (the
+         static fallback, the script's map, theme.ts's THEME_COLOR) must
+         change together. -->
+    <meta name="theme-color" content="#161616" />
     <!-- FOUC prevention (GlimStone form-engine #1): data-theme is no longer
          hard-coded above, so the theme now genuinely defaults to the OS via
          prefers-color-scheme (design-language.md's "Default is system, not
          a hard-coded light or dark"). This script stamps the resolved
          data-theme attribute synchronously — before any CSS paints — so
          there's no flash of the wrong theme while lib/theme.ts's module
-         script (deferred by `type="module"`) is still loading. It ONLY sets
-         an attribute, it never hides content, matching this project's
+         script (deferred by `type="module"`) is still loading. It also
+         mirrors the resolved theme into the theme-color meta above it, so
+         the browser chrome is right from the first paint too. It ONLY sets
+         attributes, it never hides content, matching this project's
          established FOUC-killer convention (additive gating, never a blank
-         page). Duplicates lib/theme.ts's storage key/resolution logic since
-         it can't import that module here — keep the two in sync. -->
+         page). Duplicates lib/theme.ts's storage key/resolution logic and
+         THEME_COLOR map since it can't import that module here, so keep the
+         two in sync. -->
     <script>
       (function () {
+        var THEME_COLOR = { dark: "#161616", light: "#f4f4f4" };
         try {
           var stored = localStorage.getItem("bv-theme");
           var resolved =
@@ -24,14 +52,14 @@
                 ? "dark"
                 : "light";
           document.documentElement.setAttribute("data-theme", resolved);
+          document
+            .querySelector('meta[name="theme-color"]')
+            ?.setAttribute("content", THEME_COLOR[resolved]);
         } catch (e) {
           document.documentElement.setAttribute("data-theme", "dark");
         }
       })();
     </script>
-    <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="apple-touch-icon" href="/logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BombVault</title>
   </head>
   <body>

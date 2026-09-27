@@ -84,6 +84,37 @@ export interface SelectionTreeProps {
   /** Text of the blocked warning. The Files page passes its own, because the
    *  default names a reset action its card does not have. */
   blockedMessage?: string;
+  /** Interaction mode: "pointer" (the default, desktop
+   *  byte-identical — row click expands, checkbox toggles) or "touch" (row
+   *  tap toggles the check through the SAME guarded onToggle pipeline Space
+   *  uses, the chevron becomes a dedicated >=44x44 expand button, and rows
+   *  become full-width >=44px targets). This is a RENDER/HANDLER-layer branch
+   *  only: the APG state model underneath — roles, aria-checked
+   *  true/mixed/false, roving tabindex, Space-through-onToggle, cascade
+   *  semantics, save-queue wiring — is deliberately identical in both modes,
+   *  which is why there is ONE tree component and never a touch fork or
+   *  wrapper.
+   *
+   *  Callers derive it from useIsCoarsePointer — NEVER from
+   *  useIsDesktop or any width query: a landscape phone (>=48rem, desktop
+   *  chrome) still has a coarse primary pointer, and a hybrid touchpad
+   *  laptop still has a fine one. Width is the chrome axis only. */
+  interactionMode?: "pointer" | "touch";
+  /** Viewport (scroll container) classes for the tree root, REPLACING the
+   *  default `h-[clamp(12rem,55vh,32rem)] overflow-y-auto` cap. Absent keeps
+   *  the default byte-identically for every existing mount. Deliberately a
+   *  REPLACEMENT, not an append: two competing h-* utilities on one element
+   *  resolve by stylesheet order, which no call site can reason about (the
+   *  same doctrine as Button's TONE_TABLE / BottomSheet's tone union) — a
+   *  caller that needs a different viewport states the whole set.
+   *
+   *  The one consumer is the stacked container detail view: it
+   *  passes a full-height class ("h-auto") so the tree renders its natural
+   *  height and THE PAGE owns scrolling — the detail view owns the scroll,
+   *  the tree scrolls within it — instead of a second scroll container
+   *  clamped to a phone's viewport fraction inside an already-scrolling
+   *  page. */
+  viewportClassName?: string;
 }
 
 /** What one treeitem row needs; children specs derive from listings. */
@@ -121,9 +152,15 @@ export function SelectionTree({
   shakeCounts,
   blockedPath,
   blockedMessage,
+  interactionMode = "pointer",
+  viewportClassName,
 }: SelectionTreeProps) {
   const { t } = useT();
   // Newest last, which is the order saveExpanded trims by.
+  // The touch adaptation is an interaction-layer branch inside the one
+  // component: everything above the render is mode-blind, only the row JSX
+  // below branches on it.
+  const touch = interactionMode === "touch";
   const [expandedOrder, setExpandedOrder] = useState<string[]>(() => loadExpanded(containerName));
   const [listings, setListings] = useState<Record<string, Listing>>({});
   const [focusPath, setFocusPath] = useState<string | null>(null);
@@ -405,14 +442,52 @@ export function SelectionTree({
             if (el) rowRefs.current.set(spec.path, el);
             else rowRefs.current.delete(spec.path);
           }}
-          className={`flex items-start gap-2 text-xs min-w-0 ${spec.depth === 0 ? "min-h-8" : "min-h-7"} ${tone}${shaken ? " glim-shake" : ""}`}
+          className={
+            touch
+              ? // Touch: the full row IS the toggle target — >=44px
+                // tall, no hover-dependent styling, `touch-manipulation` to
+                // kill double-tap zoom without blocking scroll (never a
+                // touchstart preventDefault — that kills scrolling), and
+                // select-none because a long-press text selection is not a
+                // gesture this row offers. The depth-based desktop min-heights
+                // stay pointer-only: 44px replaces them, it is never smaller.
+                // Labels ride the 14px body register here (touch holds 14px
+                // where desktop renders 12px);
+                // the preview/meta lines keep their own explicit text-xs.
+                `flex items-start gap-2 text-sm min-w-0 min-h-[2.75rem] touch-manipulation select-none ${tone}${shaken ? " glim-shake" : ""}`
+              : `flex items-start gap-2 text-xs min-w-0 ${spec.depth === 0 ? "min-h-8" : "min-h-7"} ${tone}${shaken ? " glim-shake" : ""}`
+          }
           style={indent}
           onFocus={() => setFocusPath(spec.path)}
-          onClick={spec.expandable ? () => toggleExpansion(spec.path) : undefined}
+          onClick={
+            touch
+              ? // Tap-to-toggle through the ONE toggle pipeline: the
+                // exact guard Space uses — unreachable rows and
+                // rows with a save in flight cannot toggle, so a finger can
+                // never bypass a guard a keyboard cannot. focusNode first
+                // (Pitfall 2): a tap on a row that is not the roving target
+                // moves BOTH focus and the tabindex there, so Space after
+                // tapping row B acts on row B. Deliberately NOT the desktop
+                // expand-on-row-click: on touch, expansion has its own
+                // dedicated chevron zone below.
+                !spec.unreachable && !busyPaths?.has(spec.path)
+                  ? () => {
+                      focusNode(spec.path);
+                      onToggle(spec.path);
+                    }
+                  : undefined
+              : spec.expandable
+                ? () => toggleExpansion(spec.path)
+                : undefined
+          }
         >
           <span className="mt-0.5 w-4 shrink-0 flex items-center justify-center" aria-hidden="true">
-            {spec.expandable && (
-              // Decorative: clicking the row itself expands it.
+            {!touch && spec.expandable && (
+              // Decorative: clicking the row itself expands it. Touch mode
+              // drops the glyph (the labelled chevron button at the row end
+              // becomes the affordance; an unlabeled twin would be a second
+              // expansion control to keep in sync) but keeps the span as the
+              // 16px alignment register every checkbox in the column shares.
               <svg
                 width="10"
                 height="10"
@@ -426,7 +501,11 @@ export function SelectionTree({
           </span>
           {/* Hidden from assistive tech: the treeitem's aria-checked carries
               the state, and for a mixed node the input would announce
-              "checked". Keyboard users toggle with Space on the row. */}
+              "checked". Keyboard users toggle with Space on the row.
+              Touch mode makes the input purely presentational:
+              pointer-events-none lets a tap on the glyph fall through to the
+              row, and a readOnly input without onChange removes the native
+              toggle, which would otherwise double-fire with the row's own. */}
           <input
             ref={boxRef}
             type="checkbox"
@@ -434,9 +513,10 @@ export function SelectionTree({
             tabIndex={-1}
             checked={state === "checked" || state === "mixed"}
             disabled={spec.unreachable || !!busyPaths?.has(spec.path)}
+            readOnly={touch || undefined}
             onClick={(e) => e.stopPropagation()}
-            onChange={() => onToggle(spec.path)}
-            className="mt-0.5 shrink-0 accent-(--accent)"
+            onChange={touch ? undefined : () => onToggle(spec.path)}
+            className={`mt-0.5 shrink-0 accent-(--accent)${touch ? " pointer-events-none" : ""}`}
           />
           {spec.label}
           {spec.removable && (
@@ -448,6 +528,47 @@ export function SelectionTree({
                 onClick={() => onRemoveCustom(spec.path)}
               />
             </span>
+          )}
+          {touch && spec.expandable && (
+            // The touch expansion control: a real, labelled button in
+            // a dedicated >=44x44 zone, right-aligned — the toggle (row tap)
+            // and expand gestures NEVER share a hit area, which is the exact
+            // hazard the desktop arrangement (row click expands, checkbox
+            // toggles) would carry onto a touch tree. stopPropagation keeps
+            // the tap from also toggling through the row handler. The
+            // accessible name composes the row's host path with the
+            // expand/collapse action words ("{path} Expand"/"{path}
+            // Collapse") — a carried accessibility fix: the action alone
+            // ("Expand") names no row, and a screen-reader user cycling the
+            // row's controls hears WHICH path the zone expands. A tabbable
+            // control inside the row outside the roving set — same precedent
+            // as the retry Button and the exclusions disclosure: the keydown
+            // target guard hands it its own Space/Enter semantics.
+            //
+            // bv-convention-exception: one-icon-badge-size -- this is not an
+            // icon badge but a TOUCH TAP TARGET: the touch mode mandates
+            // a dedicated >=44x44px expand zone (the e2e geometry gate
+            // measures the box), and a 32px Badge tile would shrink the
+            // finger target the whole mode exists to provide.
+            <button
+              type="button"
+              aria-label={`${spec.path} ${t(expanded ? "common.collapse" : "common.expand")}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleExpansion(spec.path);
+              }}
+              className="ml-auto h-11 w-11 shrink-0 self-center flex items-center justify-center"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 12 12"
+                fill="none"
+                className={`transition-transform ${expanded ? "rotate-90" : "rtl:rotate-180"}`}
+              >
+                <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
+              </svg>
+            </button>
           )}
         </div>
         {blockedPath === spec.path && (
@@ -535,6 +656,13 @@ export function SelectionTree({
                     label={t("folders.retry")}
                     labelKey="folders.retry"
                     onClick={() => fetchListing(spec.path)}
+                    // The retry is the one INTERACTIVE notice control, and on
+                    // touch it is a tap target like any other: >=44px tall
+                    // without changing the notice's copy or shape —
+                    // the label and the surrounding text-xs register stay
+                    // verbatim; only the hit target grows, pointer mode keeps
+                    // the engine-sized control.
+                    className={touch ? "min-h-[2.75rem]" : ""}
                   />
                 </div>
               </div>
@@ -584,7 +712,10 @@ export function SelectionTree({
       role="tree"
       aria-label={t("folders.treeLabel")}
       onKeyDown={handleTreeKeyDown}
-      className="h-[clamp(12rem,55vh,32rem)] overflow-y-auto"
+      // Default viewport cap — replaced wholesale when a caller
+      // passes viewportClassName (see the prop's doc: replacement, never an
+      // append, so no two competing h-* utilities ever coexist here).
+      className={viewportClassName ?? "h-[clamp(12rem,55vh,32rem)] overflow-y-auto"}
     >
       {rootSpecs.map(renderSpec)}
     </div>

@@ -13,6 +13,8 @@ const et: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Iseenda varundus",
   "nav.settings": "Seaded",
+  "nav.more": "Rohkem",
+  "nav.mobileNavigation": "Mobiilne navigeerimine",
 
   // Mode toggle
   "about.title": "Teave BombVaulti kohta",
@@ -293,6 +295,9 @@ const et: Partial<Translations> = {
   "run.colStarted": "Alustatud",
   "run.colFinished": "Lõpetatud",
   "run.colContainer": "Konteiner",
+  "home.newBackupConfirm": "Käivitada kohe varukoopia kõigist lubatud valdkondadest? Konteinerid peatatakse ja taaskäivitatakse ükshaaval, samal ajal kui nende varukoopia töötab.",
+  "run.statVolume": "Andmete maht",
+  "run.statSnapshot": "Hetktõmmis",
 
   // Settings
   "settings.title": "Seaded",
@@ -798,6 +803,9 @@ const et: Partial<Translations> = {
   "settings.labels.buttons": "Nupud",
   "settings.labels.sidebar": "Külgriba",
   "settings.labels.tabs": "Vahekaardid",
+  "settings.labels.bottombar": "Alumine riba",
+  "settings.axisBottombarHint": "Mõjutab ainult telefoni paigutust.",
+  "settings.axisSidebarHint": "Mõjutab ainult töölaua paigutust.",
   "settings.labels.mode.text": "Tekst",
   "settings.labels.mode.textGlyph": "Tekst ja sümbol",
   "settings.labels.mode.glyph": "Sümbol",
@@ -841,6 +849,7 @@ const et: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Kaitse olek",
   "dashboard.noOffsite": "Väliskoopiat pole",
+  "dashboard.statusLoadFailed": "Oleku laadimine ei õnnestunud",
   "dashboard.neverExcluded": "Pole ajastatud",
   "dashboard.neverExcludedTitle": "Teadlikult ajakavast välja jäetud, siin pole midagi varundada.",
   "dashboard.neverSelf": "Enda konteiner",
@@ -1184,6 +1193,10 @@ const et: Partial<Translations> = {
   "common.restoring": "Taastamine…",
   "common.done": "Valmis",
   "common.close": "Sulge",
+  "common.expand": "Laienda",
+  "common.collapse": "Ahenda",
+  "common.back": "Tagasi",
+  "common.loadMore": "Laadi veel",
   "common.loadingBackups": "Varunduste laadimine…",
   "common.saving": "Salvestamine…",
   "common.restoreRunning": "Taastamine töötab…",
