@@ -278,6 +278,8 @@ func (s *Service) runItemProbe(ctx context.Context, it probeItem, snapshotID str
 		return probeResult{}, err
 	}
 	mode := s.primaryModeFor(settings, it.domain, repo)
+	// An interrupted run's lock would stop the restore below outright.
+	s.unlockStale(ctx, repo, mode)
 
 	sampler := newProbeSampler(rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), 0))) //nolint:gosec // G404: picks which files to read back, nothing secret
 	if err := s.engine.LsStream(ctx, repo, snapshotID, mode, sampler.add); err != nil {

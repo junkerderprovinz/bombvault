@@ -276,6 +276,7 @@ func (s *Service) restoreForStartTest(ctx context.Context, settings store.Settin
 		return startTestSetupError{err}
 	}
 	mode := s.primaryModeFor(settings, "containers", repo)
+	s.unlockStale(ctx, repo, mode)
 	rctx, cancel := context.WithTimeout(ctx, restoreTimeout)
 	defer cancel()
 	if _, want, sErr := s.engine.StatsRestoreSize(rctx, repo, snapshotID, mode); sErr == nil && want > 0 {

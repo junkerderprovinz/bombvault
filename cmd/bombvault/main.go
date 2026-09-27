@@ -53,6 +53,7 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "tcp-probe" {
 		os.Exit(tcpProbe(os.Args[2:], time.Second))
 	}
+	ignoreHangup()
 	if err := run(); err != nil {
 		log.Printf("fatal: %v", err)
 		os.Exit(1)

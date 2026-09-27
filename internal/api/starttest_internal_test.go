@@ -85,6 +85,16 @@ type startTestEngine struct {
 	ResticEngine
 	restored []string
 	err      error
+	calls    []string
+}
+
+func (e *startTestEngine) Unlock(_ context.Context, _ string, removeAll bool, _ restic.Mode) error {
+	if removeAll {
+		e.calls = append(e.calls, "Unlock(all)")
+	} else {
+		e.calls = append(e.calls, "Unlock")
+	}
+	return nil
 }
 
 func (e *startTestEngine) StatsRestoreSize(context.Context, string, string, restic.Mode) (int, int64, error) {
@@ -93,6 +103,7 @@ func (e *startTestEngine) StatsRestoreSize(context.Context, string, string, rest
 
 func (e *startTestEngine) RestoreAll(_ context.Context, _, snapshotID, target string, _ restic.Mode, _ ...string) error {
 	e.restored = append(e.restored, snapshotID+"->"+target)
+	e.calls = append(e.calls, "RestoreAll")
 	return e.err
 }
 
@@ -321,5 +332,16 @@ func TestCleanupRemovesOnlyStartTestLeftovers(t *testing.T) {
 	}
 	if _, err := os.Stat(unmarked); err != nil {
 		t.Fatal("a folder without the marker must stay")
+	}
+}
+
+func TestStartTestClearsStaleLocksBeforeItRestores(t *testing.T) {
+	d := &startTestDocker{states: []dockercli.IsolatedState{{Running: true, Health: "healthy"}}}
+	s, tg, eng := newStartTestService(t, d, whoamiRecipe())
+	if _, err := s.RunStartTest(context.Background(), tg.ID); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(eng.calls, []string{"Unlock", "RestoreAll"}) {
+		t.Fatalf("calls = %v, want stale locks cleared before the restore", eng.calls)
 	}
 }

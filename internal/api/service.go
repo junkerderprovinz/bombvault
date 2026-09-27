@@ -15269,17 +15269,11 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 		}
 	}()
 
-	// Clear a GENUINE stale orphan before `restic check` takes its lock: unlockStale
-	// runs plain `restic unlock`, which removes only locks restic itself deems stale
-	// (a dead PID on THIS host, or any lock past restic's ~30-min age threshold). A
-	// live/concurrent lock is never force-removed: we hold the domain lock for the
-	// whole verify, so no other BombVault op can collide, and `restic check` passes
-	// --retry-lock to wait out a transient cross-process lock instead of racing it.
-	// KNOWN BOUNDED GAP: an orphan from a PRIOR container incarnation carries that
-	// container's random hostname, so restic can't PID-probe it and won't call it
-	// stale until it is ~30 min old; until then check fails "already locked" (it
-	// self-heals, or a manual Unlock clears it). A stable container hostname closes
-	// this — see the repo-lock-serialization plan.
+	// Clear an interrupted run's lock before `restic check` takes its own:
+	// unlockStale removes locks restic calls stale and the ones an earlier run of
+	// BombVault on this host left behind, never a held one. A lock from a
+	// container that has since been recreated carries the old hostname, so it
+	// waits for restic's 30-minute rule; --retry-lock waits out a short one.
 	//
 	// Each repository in turn, under the one domain lock. The first failure is
 	// the answer: a domain whose data is spread over a domain repository and one
@@ -16319,9 +16313,9 @@ func isRepoUninitialized(err error) bool {
 		containsAny(msg, repoAbsenceMarkers) && !containsAny(msg, transportFailureMarkers)
 }
 
-// unlockStale best-effort clears stale locks (plain restic unlock: only locks
-// from dead processes or old enough — never an active concurrent lock). Logged,
-// never fatal.
+// unlockStale clears the locks no running process holds: the ones restic
+// calls stale, and the ones an earlier run of BombVault on this host left in a
+// local repository (see restic.Unlock). A held lock stays. Logged, never fatal.
 func (s *Service) unlockStale(ctx context.Context, repo string, mode restic.Mode) {
 	if err := s.engine.Unlock(ctx, repo, false, mode); err != nil {
 		log.Printf("api: stale-unlock failed (continuing): %v", err)

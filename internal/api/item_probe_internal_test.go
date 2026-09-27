@@ -27,6 +27,12 @@ type probeEngine struct {
 	dumped   []string
 	dumpErr  error
 	target   string
+	calls    []string
+}
+
+func (e *probeEngine) Unlock(_ context.Context, _ string, removeAll bool, _ restic.Mode) error {
+	e.calls = append(e.calls, fmt.Sprintf("Unlock(removeAll=%v)", removeAll))
+	return nil
 }
 
 func (e *probeEngine) LsStream(_ context.Context, _, _ string, _ restic.Mode, onEntry func(restic.FileEntry)) error {
@@ -38,6 +44,7 @@ func (e *probeEngine) LsStream(_ context.Context, _, _ string, _ restic.Mode, on
 
 func (e *probeEngine) RestoreVerify(_ context.Context, _, _ string, files []string, target string, _ restic.Mode) error {
 	e.restores = append(e.restores, files)
+	e.calls = append(e.calls, "RestoreVerify")
 	e.target = target
 	sizes := map[string]int64{}
 	for _, en := range e.entries {
@@ -247,5 +254,17 @@ func TestQueueFirstProbeIsOffUntilEnabled(t *testing.T) {
 	s.queueFirstProbe("abc")
 	if len(s.probeQueue) != 0 || s.probeWorking {
 		t.Fatal("a Service nobody enabled probes on must not queue any")
+	}
+}
+
+func TestItemProbeClearsStaleLocksBeforeItReads(t *testing.T) {
+	eng := &probeEngine{entries: []restic.FileEntry{fileEntry("/data/a.bin", 100)}}
+	s, tg := newProbeService(t, eng)
+	recordBackup(t, s.store, tg.ID, "abcd1234")
+	if _, err := s.ProbeItem(context.Background(), tg.ID); err != nil {
+		t.Fatal(err)
+	}
+	if len(eng.calls) < 2 || eng.calls[0] != "Unlock(removeAll=false)" || eng.calls[1] != "RestoreVerify" {
+		t.Fatalf("calls = %v, want only stale locks cleared before the restore", eng.calls)
 	}
 }
