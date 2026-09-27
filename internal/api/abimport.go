@@ -33,8 +33,8 @@ const (
 	abStatusNew         = "new"
 	abStatusImported    = "imported"
 	abStatusNoContainer = "no-container"
-	// abStatusNotBackedUp is a container BombVault knows but never backed up,
-	// so a restore would have no recreate recipe and no paths to put back.
+	// abStatusNotBackedUp is a container that exists but was never backed up
+	// here, so a restore would have no recreate recipe and no paths to put back.
 	abStatusNotBackedUp = "not-backed-up"
 )
 
@@ -115,6 +115,11 @@ func (s *Service) planAppdataImport(ctx context.Context, sub string) ([]abPlanne
 			switch {
 			case errors.Is(gErr, sql.ErrNoRows):
 				p.archive.Status = abStatusNoContainer
+				if s.docker != nil {
+					if _, iErr := s.docker.Inspect(ctx, a.Container); iErr == nil {
+						p.archive.Status = abStatusNotBackedUp
+					}
+				}
 				out = append(out, p)
 				continue
 			case gErr != nil:
@@ -259,7 +264,10 @@ func (s *Service) importAppdataArchive(ctx context.Context, p abPlanned, read fu
 	if err != nil {
 		return fmt.Errorf("staging folder: %w", err)
 	}
-	defer func() { _ = os.RemoveAll(staging) }()
+	defer func() {
+		_ = os.RemoveAll(staging)
+		_ = os.Remove(stagingRoot)
+	}()
 
 	archive := filepath.Join(p.backup.Path, p.archive.File)
 	if _, err := appdatabackup.Extract(ctx, archive, staging, s.toContainerPath, read); err != nil {

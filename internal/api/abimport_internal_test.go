@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -17,6 +18,8 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -164,6 +167,30 @@ func TestScanSaysWhatAnImportWouldDoWithEachArchive(t *testing.T) {
 	for k, v := range want {
 		if status[k] != v {
 			t.Errorf("%s = %q, want %q", k, status[k], v)
+		}
+	}
+}
+
+// importDocker knows one running container that BombVault never backed up.
+type importDocker struct{ dockercli.Docker }
+
+func (importDocker) Inspect(_ context.Context, name string) (model.Inspect, error) {
+	if name == "gone" {
+		return model.Inspect{Name: "/gone"}, nil
+	}
+	return model.Inspect{}, errors.New("no such container")
+}
+
+func TestScanTellsAContainerWithoutABackupFromOneThatDoesNotExist(t *testing.T) {
+	s, _, _, src := importFixture(t)
+	s.docker = importDocker{}
+	got, err := s.ScanAppdataBackup(context.Background(), src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, a := range got {
+		if a.Container == "gone" && a.Status != abStatusNotBackedUp {
+			t.Fatalf("gone = %q, want %q: the container exists, it only has no backup", a.Status, abStatusNotBackedUp)
 		}
 	}
 }
