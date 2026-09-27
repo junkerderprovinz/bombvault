@@ -112,6 +112,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
 | Restore brings a container back whole (image, env, ports, labels) | ✅ | ✅ | ⚠️ files and XML | ❌ | ❌ | ❌ |
 | Restore re-defines a VM, not only its disks | ✅ | ✅ | ⚠️ XML only | ❌ | ❌ | ❌ |
+| VM backups read only changed blocks | ✅ qcow2 | ✅ qcow2 | ❌ | ❌ | ❌ | ❌ |
 | Database dumps for recognised database containers | ✅ | ✅ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
 | Installed Unraid plugins | ✅ one by one from the flash backup | ✅ | ⚠️ in flash backup | ❌ | ❌ | ❌ |
 | ZFS datasets as a source | ✅ | ✅ | ❌ | ❌ | ⚠️ via action scripts | ⚠️ via Borgmatic |

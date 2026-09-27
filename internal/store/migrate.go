@@ -2277,6 +2277,19 @@ ALTER TABLE traffic_settings ADD COLUMN idle_quiet_min INTEGER NOT NULL DEFAULT 
   deadline INTEGER NOT NULL
 );`,
 	},
+	{
+		// Changed-block VM backups: the per-VM switch and how the last run
+		// read the disks. Keyed by target id so a rename keeps it.
+		version: vmBlocksMigration,
+		name:    "vm_block_backup",
+		sql: `CREATE TABLE IF NOT EXISTS vm_block_backup (
+  target_id   TEXT    PRIMARY KEY,
+  enabled     INTEGER NOT NULL DEFAULT 0,
+  last_mode   TEXT    NOT NULL DEFAULT '',
+  last_reason TEXT    NOT NULL DEFAULT '',
+  last_at     INTEGER NOT NULL DEFAULT 0
+);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2331,6 +2344,10 @@ const zfsPropertiesMigration = 200
 
 // trafficMigration numbers the streaming and idle settings.
 const trafficMigration = 210
+
+// vmBlocksMigration numbers the changed-block VM backup table. 220 to 229 are
+// kept for it so branches built alongside it do not collide.
+const vmBlocksMigration = 220
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

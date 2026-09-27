@@ -10299,6 +10299,7 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 	// keeps the VM restorable from off-site, so purging any off-site replica
 	// must not strand it.
 	if !isOffsiteSource(source) {
+		s.dropBlockCheckpointsIfOn(ctx, name)
 		if err := s.store.DeleteVMTarget(name); err != nil {
 			return fmt.Errorf("delete vm target: %w", err)
 		}
@@ -11573,6 +11574,12 @@ type VMView struct {
 	AliasConflicts []string `json:"aliasConflicts"`
 	// Aliases are the libvirt names this entry had before, oldest link first.
 	Aliases []string `json:"aliases"`
+	// BlockBackup is the changed-block switch. BlockMode and BlockReason say
+	// how the last backup read the disks while it is on: "changed", "full"
+	// or "classic", with a reason code for the latter two.
+	BlockBackup bool   `json:"blockBackup"`
+	BlockMode   string `json:"blockMode"`
+	BlockReason string `json:"blockReason"`
 }
 
 // vmUUID returns tg's libvirt UUID. An empty column is filled from the saved
@@ -11627,6 +11634,15 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		}
 	}
 	targets, _ := s.store.ListVMTargets()
+	blockRows, bErr := s.store.ListVMBlockBackups()
+	if bErr != nil {
+		log.Printf("api: list vms: changed-block settings: %v", bErr)
+	}
+	withBlocks := func(v *VMView, targetID string) {
+		if b := blockRows[targetID]; b.Enabled {
+			v.BlockBackup, v.BlockMode, v.BlockReason = true, b.LastMode, b.LastReason
+		}
+	}
 	byName := make(map[string]store.VMTarget, len(targets))
 	for _, t := range targets {
 		byName[t.Name] = t
@@ -11698,6 +11714,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 			v.IncludeInSchedule = t.IncludeInSchedule
 			v.ScheduleCadence = t.ScheduleCadence
 			v.Repo = t.Repo
+			withBlocks(&v, t.ID)
 			run, _ = s.store.LastSuccessfulBackup(t.ID)
 		}
 		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[vm.Name], snapTimesFailed)
@@ -12099,6 +12116,17 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		ZFSHost:          sshZFSHost{ssh: s.ssh},
 		ZvolRestic:       &resticZvolAdapter{engine: s.engine, mode: mode},
 	}
+	// With changed-block backups on, a running VM with qcow2 disks is read
+	// through the libvirt backup API instead; anything else keeps the method.
+	blockCfg, bErr := s.store.GetVMBlockBackup(tg.ID)
+	if bErr != nil {
+		log.Printf("api: backup vm: read changed-block setting of %q: %v", name, bErr) //nolint:gosec // G706: %q-quoted
+	}
+	var blockPlan vmBlockPlan
+	if blockCfg.Enabled {
+		blockPlan = s.planBlockBackup(ctx, name, domain, diskPaths, len(vmBlockDisks))
+	}
+
 	live := false
 	if method == "live" {
 		// Live snapshot only works on a RUNNING VM (blockcommit --active --pivot
@@ -12152,10 +12180,31 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	orchestrated = true
 	bctx, startedAt := s.progBegin(ctx, vkey, "backup")
 	var sum backup.Summary
-	if live {
-		sum, err = backup.BackupVMLive(bctx, deps)
-	} else {
-		sum, err = backup.BackupVMGraceful(bctx, deps)
+	classic := true
+	if blockPlan.host != nil {
+		var res backup.VMBlocksResult
+		res, err = s.backupVMBlocks(bctx, name, tg, blockPlan, repo, mode, deps.FormerNames, deps.Runs)
+		var unavailable *backup.BlocksUnavailableError
+		if errors.As(err, &unavailable) {
+			log.Printf("api: backup vm: %q: %v; backing it up the classic way", name, err) //nolint:gosec // G706: %q-quoted
+			blockPlan.reason = unavailable.Reason
+		} else {
+			classic = false
+			sum = res.Summary
+			if err == nil {
+				s.recordBlockRun(tg.ID, res.Mode, res.Reason)
+			}
+		}
+	}
+	if classic {
+		if live {
+			sum, err = backup.BackupVMLive(bctx, deps)
+		} else {
+			sum, err = backup.BackupVMGraceful(bctx, deps)
+		}
+		if err == nil && blockCfg.Enabled {
+			s.recordBlockRun(tg.ID, backup.BlocksModeClassic, blockPlan.reason)
+		}
 	}
 	s.progEnd(vkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "VM", name, vkey, err == nil, sum, err)
@@ -12166,7 +12215,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// A successful live backup commits its overlay back into the base and pivots
 	// the VM onto it, but leaves the orphaned overlay file behind — delete it so
 	// the next snapshot doesn't fail "already exists". No-op after graceful.
-	if live {
+	if live && classic {
 		s.removeStrayOverlays(diskPaths)
 	}
 	// Mirror the definition (encrypted) onto the backup storage so a freshly
@@ -12229,6 +12278,8 @@ type vmRestorePlan struct {
 	// comment for why (Task 3's job). Empty for a VM with only file-backed
 	// disks (v8.0.0 VM service-layer integration, Task 2).
 	blockDisks []backup.VMRestoreBlockDisk
+	// images are the disks of a changed-block snapshot and where each goes.
+	images []backup.VMRestoreImage
 }
 
 // prepareRestoreVM performs ALL of a VM restore's validation and resolution
@@ -12382,9 +12433,26 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	if len(diskPaths) == 0 {
 		return vmRestorePlan{}, errors.New("no restorable disk paths found in this backup")
 	}
-	sources, err := snapshotDiskSources(diskPaths, snap.Paths)
-	if err != nil {
-		return vmRestorePlan{}, err
+	// A changed-block snapshot holds each disk as segments, not as a file at
+	// its path, so its disks are matched through the manifest instead.
+	var blockManifest *backup.BlocksManifest
+	var blockDiskIdx []int
+	sources := diskPaths
+	if slices.Contains(snap.Tags, backup.BlocksTag) {
+		m, mErr := (&vmBlockRestic{engine: s.engine, mode: ref.mode}).Manifest(ctx, ref.repo, snapshotID)
+		if mErr != nil {
+			return vmRestorePlan{}, fmt.Errorf("restore vm: read the snapshot's disk list: %w", mErr)
+		}
+		idx, iErr := blockRestoreImages(m, diskPaths)
+		if iErr != nil {
+			return vmRestorePlan{}, iErr
+		}
+		blockManifest, blockDiskIdx = &m, idx
+	} else {
+		var err error
+		if sources, err = snapshotDiskSources(diskPaths, snap.Paths); err != nil {
+			return vmRestorePlan{}, err
+		}
 	}
 
 	domainXML := def.DomainXML
@@ -12396,7 +12464,7 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	// folder, an unmoved one onto itself. A snapshot folder restored into two
 	// folders would copy all of its disks into both, over any file of the same
 	// name there.
-	if destBase == "" && !slices.Equal(sources, diskPaths) {
+	if destBase == "" && blockManifest == nil && !slices.Equal(sources, diskPaths) {
 		targets := make(map[string]string, len(diskPaths))
 		for i, cp := range diskPaths {
 			src, dst := path.Dir(sources[i]), path.Dir(cp)
@@ -12449,6 +12517,14 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		// BEFORE any restic write. On failure nothing is written.
 		if err := s.guardVMRestoreDestination(ctx, ref, snapshotID, destDir); err != nil {
 			return vmRestorePlan{}, err
+		}
+	}
+
+	var images []backup.VMRestoreImage
+	if blockManifest != nil {
+		restoreDirs = nil
+		for i, d := range blockManifest.Disks {
+			images = append(images, backup.VMRestoreImage{Disk: d, Target: diskPaths[blockDiskIdx[i]]})
 		}
 	}
 
@@ -12603,6 +12679,7 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		wasRunning:   def.WasRunning,
 		preDefine:    preDefine,
 		blockDisks:   vmRestoreBlockDisks,
+		images:       images,
 	}, nil
 }
 
@@ -12938,6 +13015,9 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 	// scheduled jobs DO respect (see executeRestore).
 	unlock := s.lockDomainFor("vms", "restore")
 	defer unlock()
+	// The restored disks carry none of the bitmaps BombVault's checkpoints
+	// point at.
+	s.dropBlockCheckpoints(ctx, name)
 	// restic leaves a subtree target it creates root:root/0700, as in a container
 	// restore (#125), whether the target is another pool or the folder a rename
 	// moved the disks to. Pre-create each one readable; healRestoreDirOwnership
@@ -12960,17 +13040,20 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		// Boot after restore iff the VM was running when backed up (nil = old backup
 		// with no recorded state → boot, the historical behaviour) AND the restore
 		// didn't ask to leave it stopped.
-		StartAfter: (plan.wasRunning == nil || *plan.wasRunning) && !leaveStopped,
-		PreDefine:  plan.preDefine,
-		RepoPath:   plan.repo,
-		TargetID:   plan.targetID,
-		DataDir:    s.cfg.DataDir,
-		VM:         s.virsh,
-		Restic:     &resticAdapter{engine: s.engine, mode: plan.mode},
-		Runs:       runsAdapter{st: s.store, ctx: ctx},
-		BlockDisks: plan.blockDisks,
-		ZFSHost:    sshZFSHost{ssh: s.ssh},
-		ZvolRestic: &resticZvolAdapter{engine: s.engine, mode: plan.mode},
+		StartAfter:  (plan.wasRunning == nil || *plan.wasRunning) && !leaveStopped,
+		PreDefine:   plan.preDefine,
+		RepoPath:    plan.repo,
+		TargetID:    plan.targetID,
+		DataDir:     s.cfg.DataDir,
+		VM:          s.virsh,
+		Restic:      &resticAdapter{engine: s.engine, mode: plan.mode},
+		Runs:        runsAdapter{st: s.store, ctx: ctx},
+		BlockDisks:  plan.blockDisks,
+		ZFSHost:     sshZFSHost{ssh: s.ssh},
+		ZvolRestic:  &resticZvolAdapter{engine: s.engine, mode: plan.mode},
+		Images:      plan.images,
+		ImageDumper: &vmBlockRestic{engine: s.engine, mode: plan.mode},
+		Convert:     qemuImgConvert,
 	})
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
@@ -15006,13 +15089,20 @@ func (s *Service) SetVMMethod(_ context.Context, name, method string) error {
 
 // SetVMInclude updates the include_in_schedule flag for a VM, creating the
 // target if absent.
-func (s *Service) SetVMInclude(_ context.Context, name string, include bool) error {
+func (s *Service) SetVMInclude(ctx context.Context, name string, include bool) error {
 	if _, err := s.store.GetVMTargetByName(name); err != nil {
 		if _, uErr := s.store.UpsertVMTarget(store.VMTarget{Name: name, Method: "graceful"}); uErr != nil {
 			return fmt.Errorf("ensure vm target: %w", uErr)
 		}
 	}
-	return s.store.SetVMInclude(name, include)
+	if err := s.store.SetVMInclude(name, include); err != nil {
+		return err
+	}
+	// A VM taken out of the backups keeps no checkpoints of BombVault's.
+	if !include {
+		s.dropBlockCheckpointsIfOn(ctx, name)
+	}
+	return nil
 }
 
 // SetVMScheduleCadence sets a VM's per-item schedule override (#121), creating the
