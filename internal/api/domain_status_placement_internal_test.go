@@ -112,6 +112,37 @@ func TestATargetAtAPlaceOffThePremisesIsAnOffsiteCopy(t *testing.T) {
 	}
 }
 
+func TestTargetsInTheHouseAndOffItMakeAScheduledOffsiteDrill(t *testing.T) {
+	f := newPlacementFixture(t)
+	drillsOn(f)
+	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
+	f.linkRow(nas.ID, f.storePlace(nasKeller()), "containers", "")
+	f.target("containers", "B2", b2Containers)
+	f.container("nginx", "")
+
+	if d := f.domainStatus("containers"); !d.OffsiteDrillScheduled {
+		t.Fatal("B2 stands off the premises and takes its turn in the drill, so the off-site drill is scheduled")
+	}
+}
+
+func TestOnlyADomainTheDrillsJobCoversClaimsAScheduledOffsiteDrill(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.settings(func(s *store.Settings) {
+		s.ConfigEnabled = true
+		s.FilesEnabled = false
+		s.DrillsEnabled = true
+		s.OffsiteDrillsEnabled = true
+	})
+	f.target("config", "B2", "b2:bucket:config")
+	f.target("files", "B2", "b2:bucket:files")
+
+	for _, domain := range []string{"config", "files"} {
+		if d := f.domainStatus(domain); !d.OffsiteConfigured || d.OffsiteDrillScheduled {
+			t.Errorf("%s: configured %v, drill %v; want an off-site copy and no scheduled drill", domain, d.OffsiteConfigured, d.OffsiteDrillScheduled)
+		}
+	}
+}
+
 func TestOnlyCopiesToAnOffPremisesTargetMakeTheDomainConfigured(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.target("containers", "NAS", "remotes/nas/bv/containers")
@@ -123,6 +154,25 @@ func TestOnlyCopiesToAnOffPremisesTargetMakeTheDomainConfigured(t *testing.T) {
 
 	if f.domainStatus("containers").OffsiteConfigured {
 		t.Fatal("every item leaves B2 out and is copied only to the NAS in the house, so nothing is off site")
+	}
+}
+
+func TestTheStatusNamesTheTargetOfTheLastDRDrill(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("flash", "B2", "s3:b2/flash")
+	hetzner := f.target("flash", "Hetzner", "sftp:u1@hetzner:/flash")
+	if err := f.st.AddRestoreDrill(store.RestoreDrill{Domain: "flash", Source: "offsite", Kind: "dr", At: 100, OK: true, TargetID: hetzner.ID}); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.domainStatus("flash").DrillTarget; got != "Hetzner" {
+		t.Fatalf("drill target %q, want Hetzner", got)
+	}
+
+	if _, err := f.st.DeleteOffsiteTargetIfUnused(hetzner.ID); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.domainStatus("flash").DrillTarget; got != "" {
+		t.Fatalf("drill target %q after the target was removed, want none", got)
 	}
 }
 

@@ -23,6 +23,7 @@ function domain(over: Partial<DomainStatus> = {}): DomainStatus {
     lastVerifiedOK: false,
     verifiedDetail: "",
     drillDetail: "",
+    drillTarget: "",
     offsiteConfigured: true,
     offPremisesCovered: false,
     offsiteImmutable: false,

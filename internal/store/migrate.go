@@ -1898,6 +1898,18 @@ ALTER TABLE offsite_targets ADD COLUMN place_suffix TEXT NOT NULL DEFAULT '';`,
 		sql:              `ALTER TABLE settings ADD COLUMN places_migrated INTEGER NOT NULL DEFAULT 0;`,
 		alreadySatisfied: columnPresent("settings", "places_migrated"),
 	},
+	{
+		// Marks the rows a place switched off, the only ones it switches back
+		// on. A row found off at a place that is off has no record of which
+		// switch did it, so it goes with the place.
+		version:          127,
+		name:             "offsite_targets_off_with_place",
+		alreadySatisfied: columnPresent("offsite_targets", "off_with_place"),
+		sql: `
+ALTER TABLE offsite_targets ADD COLUMN off_with_place INTEGER NOT NULL DEFAULT 0;
+UPDATE offsite_targets SET off_with_place = 1
+ WHERE enabled = 0 AND place_id IN (SELECT id FROM storage_places WHERE enabled = 0);`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

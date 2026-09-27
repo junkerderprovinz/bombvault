@@ -22,7 +22,7 @@ func everyNDrillScheduler(t *testing.T, jr JobRunStore) (sc *Scheduler, drill Ne
 	noTargets := func() ([]store.Target, error) { return nil, nil }
 	sc = New(func(string) error { return nil }, noTargets)
 	sc.SetJobRunStore(jr)
-	sc.SetDrillJob(func(_, _, _ string) error { return nil })
+	sc.SetDrillJob(func(_, _, _ string) error { return nil }, targetRows{}.list)
 
 	settings := store.Settings{
 		DrillsEnabled:     true,

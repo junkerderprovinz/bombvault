@@ -83,6 +83,29 @@ func TestReplacePlacesLeavesOnlyTheImportedPlaces(t *testing.T) {
 	}
 }
 
+func TestARowOffWithItsImportedPlaceComesBackWhenThePlaceIsSwitchedOn(t *testing.T) {
+	r, db := placesRepo(t)
+	bucket := mustWritePlace(t, r, store.PlaceWrite{Place: bucketPlace()})
+	row := upsertRow(t, r, store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: addressAt(t, bucket, "containers", ""), Enabled: true})
+	attachRow(t, db, row.ID, bucket.ID, "containers", "")
+	bucket.Enabled = false
+	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+
+	if err := r.ReplacePlaces(store.PlacesImport{
+		Places: []store.Place{bucket},
+		Links:  []store.PlaceLink{{RowID: row.ID, PlaceID: bucket.ID, Domain: "containers"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+	bucket.Enabled = true
+	bucket = mustWritePlace(t, r, store.PlaceWrite{Place: bucket})
+
+	if got := switchesAt(t, r, bucket.ID); !got[row.ID] {
+		t.Fatalf("after the import and the place switched on the rows are %v, want the row back on", got)
+	}
+}
+
 func TestDropPlacesClearsEveryPlaceAndTheMigrationMark(t *testing.T) {
 	r := newRepo(t)
 	importRows(t, r)

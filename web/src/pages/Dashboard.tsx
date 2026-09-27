@@ -727,6 +727,9 @@ export function ProtectionCard({
             // that failed. A real failure (scheduled OR a manual run) is ALWAYS shown,
             // never masked by the opt-out — only "never drilled" goes neutral.
             const drFailed = !off && drCapable && d.lastDrDrillAt > 0 && !d.lastDrDrillOK;
+            // A domain with several targets drills them in turn, so the result
+            // says which one it restored from.
+            const drTarget = d.drillTarget ? ` · ${d.drillTarget}` : "";
             return (
               <div key={d.domain} className="flex flex-col gap-1 py-2.5 text-sm">
                 {/* Two-mode row layout (#66 follow-up). WIDE card (container query
@@ -858,7 +861,7 @@ export function ProtectionCard({
                             tone="ok"
                             wrap
                             className="max-w-full"
-                            title={`${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`}
+                            title={`${t("drill.provenOffsite")}${drTarget} · ${formatTs(d.lastDrDrillAt)}`}
                           >
                             ✓ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
                           </Badge>
@@ -872,8 +875,8 @@ export function ProtectionCard({
                             className="max-w-full"
                             title={
                               d.drillDetail
-                                ? `${t("drill.checkOffsiteDr")} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
-                                : `${t("drill.provenOffsite")} · ${formatTs(d.lastDrDrillAt)}`
+                                ? `${t("drill.checkOffsiteDr")}${drTarget} · ${t("drill.failReasonPrefix")} ${d.drillDetail} · ${formatTs(d.lastDrDrillAt)}`
+                                : `${t("drill.provenOffsite")}${drTarget} · ${formatTs(d.lastDrDrillAt)}`
                             }
                           >
                             ✗ {t("drill.provenOffsite")} · {relativeTime(t, d.lastDrDrillAt)}
@@ -899,7 +902,7 @@ export function ProtectionCard({
                   <div className="flex flex-wrap items-center gap-2 ps-1">
                     {drFailed && d.drillDetail && (
                       <span className="text-xs text-statusFail wrap-break-word" title={d.drillDetail}>
-                        {t("drill.checkOffsiteDr")} · {t("drill.failReasonPrefix")} {d.drillDetail}
+                        {t("drill.checkOffsiteDr")}{drTarget} · {t("drill.failReasonPrefix")} {d.drillDetail}
                       </span>
                     )}
                     {d.offsiteConfigured && (

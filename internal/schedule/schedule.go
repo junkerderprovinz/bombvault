@@ -31,6 +31,10 @@ type ListVMTargetsFunc func() ([]store.VMTarget, error)
 // ListFileSetsFunc returns the current list of file sets.
 type ListFileSetsFunc func() ([]store.FileSet, error)
 
+// ListOffsiteTargetsFunc returns a domain's off-site targets in their order,
+// switched off or not.
+type ListOffsiteTargetsFunc func(domain string) ([]store.OffsiteTarget, error)
+
 // LastRunFunc returns the time of the last successful backup for a domain, or
 // a zero time when there has been none. It keeps this package independent of
 // the store.
@@ -658,6 +662,7 @@ type Scheduler struct {
 	// a scheduled container run instead of with every member service.
 	stacksAfterBulkFn func(names []string)
 	drillFn           func(domain, source, kind string) error
+	drillTargetsFn    ListOffsiteTargetsFunc
 	tamperFn          func(domain string) error
 	digestFn          func() error
 	watchdogFn        func() error
@@ -884,9 +889,11 @@ func (s *Scheduler) SetStacksAfterBulkJob(fn func(names []string)) {
 }
 
 // SetDrillJob wires the scheduled restore-verification drills. drillFn is called
-// with (domain, source, kind) for each task from drillTasks. Call before Reload.
-func (s *Scheduler) SetDrillJob(drillFn func(domain, source, kind string) error) {
+// with (domain, source, kind) for each task from drillTasks, and targetsFn lists
+// the off-site targets a domain's DR drill takes in turn. Call before Reload.
+func (s *Scheduler) SetDrillJob(drillFn func(domain, source, kind string) error, targetsFn ListOffsiteTargetsFunc) {
 	s.drillFn = drillFn
+	s.drillTargetsFn = targetsFn
 }
 
 // SetTamperJob wires the scheduled off-site tamper tests. tamperFn is called for
@@ -1235,7 +1242,6 @@ func (s *Scheduler) ReloadWithDueChecks(
 	)
 
 	if settings.DrillsEnabled {
-		tasks := drillTasks(settings)
 		domains = append(domains, domainSpec{
 			cadence: settings.DrillsSchedule,
 			name:    "drills",
@@ -1244,6 +1250,9 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Print("schedule: drills job skipped, drills not wired (SetDrillJob)")
 					return
 				}
+				// Built when the pass runs, since adding or removing an off-site
+				// target does not reload the schedule.
+				tasks := s.drillTasks(settings)
 				if len(tasks) == 0 {
 					// Nothing was attempted. Recording a run here would hold off
 					// the first real pass for a whole everyN interval once a
@@ -1253,6 +1262,9 @@ func (s *Scheduler) ReloadWithDueChecks(
 				for _, tk := range tasks {
 					if err := s.drillFn(tk.domain, tk.source, tk.kind); err != nil {
 						log.Printf("schedule: drills job: %s/%s(%s): %v", tk.domain, tk.source, tk.kind, err)
+					}
+					if tk.targetID != "" {
+						s.passDrillTurn(tk.targetID)
 					}
 				}
 				// The pass counts as a run once every task was attempted, whatever
@@ -1683,40 +1695,116 @@ func (s *Scheduler) CatchUpMissed(now time.Time) []string {
 }
 
 // drillTask is one scheduled restore-verification drill: a (domain, source, kind)
-// tuple the drills job iterates when it fires.
+// tuple the drills job iterates when it fires. targetID is set on an off-site DR
+// drill, whose source names that target.
 type drillTask struct {
-	domain string
-	source string
-	kind   string
+	domain   string
+	source   string
+	kind     string
+	targetID string
 }
 
-// drillTasks returns the scheduled drill tasks: a local "subset" integrity check
-// for every enabled domain, plus an off-site "dr" drill for containers, VMs,
-// flash and files when their off-site repo is configured. Config gets no DR
-// drill, because a sandbox restore of the settings DB proves nothing; its real
-// recovery path is the staged restart.
-func drillTasks(settings store.Settings) []drillTask {
+// offsiteDrillDomains are the domains a scheduled DR drill can cover. Config is
+// not among them, because a sandbox restore of the settings DB proves nothing;
+// its real recovery path is the staged restart.
+var offsiteDrillDomains = []string{"containers", "vms", "flash", "files"}
+
+// drillTasks returns the tasks of one drills pass: a local "subset" integrity
+// check for every enabled domain, plus one off-site "dr" drill for each domain
+// with DrillTargets. A DR drill restores a whole snapshot, so a domain with
+// several targets gets one a pass, against the target nextDrillTarget picks.
+func (s *Scheduler) drillTasks(settings store.Settings) []drillTask {
 	var out []drillTask
 	for _, d := range enabledDrillDomains(settings) {
 		out = append(out, drillTask{domain: d, source: "local", kind: "subset"})
 	}
-	// An off-site DR drill downloads a whole snapshot, which costs egress on
-	// metered clouds, so these have their own switch.
-	if settings.OffsiteDrillsEnabled {
-		if settings.ContainersEnabled && settings.ContainersOffsite != "" {
-			out = append(out, drillTask{domain: "containers", source: "offsite", kind: "dr"})
+	for _, d := range offsiteDrillDomains {
+		if !offsiteDrillOn(settings, d) {
+			continue
 		}
-		if settings.VMsEnabled && settings.VMsOffsite != "" {
-			out = append(out, drillTask{domain: "vms", source: "offsite", kind: "dr"})
+		rows, err := s.drillTargetsFn(d)
+		if err != nil {
+			log.Printf("schedule: drills job: %s: no off-site DR drill this pass, its targets could not be read: %v", d, err)
+			continue
 		}
-		if settings.FlashEnabled && settings.FlashOffsite != "" {
-			out = append(out, drillTask{domain: "flash", source: "offsite", kind: "dr"})
+		targets := DrillTargets(settings, d, rows)
+		if len(targets) == 0 {
+			continue
 		}
-		if settings.FilesEnabled && settings.FilesOffsite != "" {
-			out = append(out, drillTask{domain: "files", source: "offsite", kind: "dr"})
+		t := s.nextDrillTarget(targets)
+		out = append(out, drillTask{domain: d, source: "offsite:" + t.ID, kind: "dr", targetID: t.ID})
+	}
+	return out
+}
+
+// DrillTargets returns the off-site targets the scheduled DR drill of domain
+// takes in turn: its switched-on targets, while drills, off-site drills and the
+// domain itself are on.
+func DrillTargets(settings store.Settings, domain string, targets []store.OffsiteTarget) []store.OffsiteTarget {
+	if !offsiteDrillOn(settings, domain) {
+		return nil
+	}
+	var out []store.OffsiteTarget
+	for _, t := range targets {
+		if t.Enabled {
+			out = append(out, t)
 		}
 	}
 	return out
+}
+
+// offsiteDrillOn reports whether the drills job runs a DR drill for domain. An
+// off-site DR drill downloads a whole snapshot, which costs egress on metered
+// clouds, so it has its own switch.
+func offsiteDrillOn(settings store.Settings, domain string) bool {
+	if !settings.DrillsEnabled || !settings.OffsiteDrillsEnabled {
+		return false
+	}
+	switch domain {
+	case "containers":
+		return settings.ContainersEnabled
+	case "vms":
+		return settings.VMsEnabled
+	case "flash":
+		return settings.FlashEnabled
+	case "files":
+		return settings.FilesEnabled
+	}
+	return false
+}
+
+// nextDrillTarget picks the target whose turn lies furthest back, the earlier
+// one on a tie. A target never drilled comes first, so a new one is not left
+// waiting behind the others. The turns are kept in the job-run store and
+// survive a restart; without one every pass takes the first target.
+func (s *Scheduler) nextDrillTarget(targets []store.OffsiteTarget) store.OffsiteTarget {
+	next := targets[0]
+	if s.jobRuns == nil {
+		return next
+	}
+	var oldest time.Time
+	for i, t := range targets {
+		at, err := s.jobRuns.LastScheduleJobRun(store.ScheduleJobDrillTarget(t.ID))
+		if err != nil {
+			log.Printf("schedule: drills job: the last turn of an off-site target could not be read, it counts as never drilled: %v", err)
+		}
+		if i == 0 || at.Before(oldest) {
+			next, oldest = t, at
+		}
+	}
+	return next
+}
+
+// passDrillTurn records that the DR drill took a target. It is recorded
+// whatever the verdict, or a target that keeps failing would hold the others
+// back; a failed write means the same target again next pass.
+func (s *Scheduler) passDrillTurn(targetID string) {
+	if s.jobRuns == nil {
+		return
+	}
+	if err := s.jobRuns.RecordScheduleJobRun(store.ScheduleJobDrillTarget(targetID), time.Now()); err != nil {
+		log.Printf("schedule: drills job: recording the turn of an off-site target failed, the next pass takes it again: %v", err)
+	}
 }
 
 // enabledDrillDomains returns each domain switched on in Settings. A disabled

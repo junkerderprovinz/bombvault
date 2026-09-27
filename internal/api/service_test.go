@@ -6236,6 +6236,38 @@ func TestRunDRDrillFlashWholeSnapshot(t *testing.T) {
 	}
 }
 
+// A drill against one target of several is the domain's off-site DR drill, so it
+// is recorded under "offsite" like any other and names the target it restored from.
+func TestADRDrillOfOneTargetIsRecordedForTheDomain(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps:     []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z"}},
+		lsEntries: []restic.FileEntry{{Path: "/config/go", Type: "file", Size: 42}},
+	}
+	svc, st := drDrillService(t, eng, "flash", "", "")
+	if _, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "flash", Name: "B2", Repo: "s3:b2/flash", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	hetzner, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "flash", Name: "Hetzner", Repo: "sftp:u1@hetzner:/flash", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	drill, err := svc.RunRestoreDrill(context.Background(), "flash", "offsite:"+hetzner.ID, "dr", true)
+	if err != nil {
+		t.Fatalf("RunRestoreDrill: %v", err)
+	}
+	if len(eng.restored) != 1 || !strings.HasPrefix(eng.restored[0], "sftp:u1@hetzner:/flash:") {
+		t.Fatalf("restored %v, want one restore from Hetzner", eng.restored)
+	}
+	if drill.Source != "offsite" || drill.TargetID != hetzner.ID {
+		t.Fatalf("drill = %+v, want source offsite naming Hetzner", drill)
+	}
+	latest, found, err := st.LatestRestoreDrillKind("flash", "offsite", "dr")
+	if err != nil || !found || latest.TargetID != hetzner.ID {
+		t.Fatalf("recorded dr drill = %+v, found %v, %v; want one naming Hetzner", latest, found, err)
+	}
+}
+
 // TestRunDRDrillVMsHappyPath pins the off-site DR drill for VMs, which works
 // like the one for containers (TestRunDRDrillHappyPath): a VM disk image is
 // only a bigger restore.

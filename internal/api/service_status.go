@@ -98,6 +98,9 @@ type DomainStatusEntry struct {
 	// can show why and which check failed (#30). Both are "" on success.
 	VerifiedDetail string `json:"verifiedDetail"`
 	DrillDetail    string `json:"drillDetail"`
+	// DrillTarget names the off-site target the last DR drill restored from, ""
+	// when that target is gone or the drill named none.
+	DrillTarget string `json:"drillTarget"`
 
 	// Ransomware-protection scorecard facts: whether the domain has an off-site
 	// copy, whether it is flagged append-only (immutable), and the age-stamped
@@ -124,9 +127,9 @@ type DomainStatusEntry struct {
 	// verified" badge (#63), independent of the DR fields above.
 	LastOffsiteSubsetAt int64 `json:"lastOffsiteSubsetAt"`
 	LastOffsiteSubsetOK bool  `json:"lastOffsiteSubsetOK"`
-	// OffsiteDrillScheduled is true when DrillsEnabled and OffsiteDrillsEnabled
-	// are set and the domain copies to a target off the premises. A drill
-	// against a target in the house is no off-site drill and does not count.
+	// OffsiteDrillScheduled is true when the domain copies off the premises and
+	// the targets its scheduled DR drill takes in turn include one off the
+	// premises. A drill against a target in the house is no off-site drill.
 	// When it is false but the domain has an off-site copy, the dashboard shows
 	// a muted "manual only" pill instead of a red drFailed (#37).
 	OffsiteDrillScheduled bool   `json:"offsiteDrillScheduled"`
@@ -551,11 +554,14 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		lastReplicationAt, lastReplicationOK := s.aggregateReplicationCurrency(d.name)
 		var lastDRDrillAt int64
 		var lastDRDrillOK bool
-		var drDetail string
+		var drDetail, drTarget string
 		if dr, found, drErr := s.store.LatestRestoreDrillKind(d.name, "offsite", "dr"); drErr == nil && found {
 			lastDRDrillAt = dr.At
 			lastDRDrillOK = dr.OK
 			drDetail = dr.Detail
+			if t, ok, tErr := s.store.GetOffsiteTarget(dr.TargetID); tErr == nil && ok {
+				drTarget = placementTargetName(t)
+			}
 		}
 		// The latest off-site subset drill (an integrity check against the off-site
 		// repo) drives the dashboard's "off-site verified" badge (#63). It is the
@@ -604,6 +610,9 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		protection := protectionLevel(now, in)
 		checks := protectionChecks(now, in)
 
+		drillsOffSite := copiesOffSite &&
+			len(offSiteTargets(schedule.DrillTargets(settings, d.name, s.offsiteTargetsFor(d.name)), sites)) > 0
+
 		// An off-site retention strategy is "configured" when the far side prunes
 		// (immutable), a growth budget is set, or an off-site keep policy is set.
 		pruneStrategySet := offsiteImmutable ||
@@ -635,8 +644,9 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			LastDRDrillOK:         lastDRDrillOK,
 			LastOffsiteSubsetAt:   lastOffsiteSubsetAt,
 			LastOffsiteSubsetOK:   lastOffsiteSubsetOK,
-			OffsiteDrillScheduled: settings.DrillsEnabled && settings.OffsiteDrillsEnabled && copiesOffSite,
+			OffsiteDrillScheduled: drillsOffSite,
 			DrillDetail:           drDetail,
+			DrillTarget:           drTarget,
 			Protection:            protection,
 			TamperState:           checks.Tamper,
 			ReplicationState:      checks.Replication,

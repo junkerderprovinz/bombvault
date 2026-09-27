@@ -51,6 +51,12 @@ func (r *Repo) ReplacePlaces(in PlacesImport) error {
 				return fmt.Errorf("ReplacePlaces: %w", err)
 			}
 		}
+		// The file does not say which switch turned a row off, so a row off
+		// at a place that is off goes with the place, as on upgrade.
+		if _, err := tx.Exec(`UPDATE offsite_targets SET off_with_place = 1
+			WHERE enabled = 0 AND place_id IN (SELECT id FROM storage_places WHERE enabled = 0)`); err != nil {
+			return fmt.Errorf("ReplacePlaces marks: %w", err)
+		}
 		if _, err := tx.Exec(`UPDATE settings SET places_migrated = ? WHERE id = 1`, now); err != nil {
 			return fmt.Errorf("ReplacePlaces mark: %w", err)
 		}
@@ -79,7 +85,7 @@ func dropPlacesTx(tx *sql.Tx) error {
 	for _, q := range []string{
 		`DELETE FROM storage_places`,
 		`DELETE FROM storage_domain_places`,
-		`UPDATE offsite_targets SET place_id = '', place_domain = '', place_suffix = '' WHERE place_id <> ''`,
+		`UPDATE offsite_targets SET place_id = '', place_domain = '', place_suffix = '', off_with_place = 0 WHERE place_id <> ''`,
 	} {
 		if _, err := tx.Exec(q); err != nil {
 			return fmt.Errorf("drop places: %w", err)

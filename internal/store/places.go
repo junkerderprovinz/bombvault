@@ -15,10 +15,13 @@ import (
 
 // AttachRowTx puts a row at a place. Its repo must already be the place's
 // address for domain plus suffix; WritePlace keeps it so from then on. An
-// empty domain is the place's base itself.
+// empty domain is the place's base itself. A row that changes place leaves
+// the mark of its old one behind, since only the place that switched a row
+// off may switch it back on.
 func AttachRowTx(tx *sql.Tx, rowID, placeID, domain, suffix string) error {
-	res, err := tx.Exec(`UPDATE offsite_targets SET place_id = ?, place_domain = ?, place_suffix = ? WHERE id = ?`,
-		placeID, domain, suffix, rowID)
+	res, err := tx.Exec(`UPDATE offsite_targets SET place_id = ?, place_domain = ?, place_suffix = ?,
+		  off_with_place = CASE WHEN place_id = ? THEN off_with_place ELSE 0 END
+		WHERE id = ?`, placeID, domain, suffix, placeID, rowID)
 	if err != nil {
 		return fmt.Errorf("place of row %s: %w", rowID, err)
 	}
@@ -224,7 +227,7 @@ func (r *Repo) WritePlace(w PlaceWrite) (Place, error) {
 	if err := homePrimariesTx(tx, p, homes); err != nil {
 		return Place{}, err
 	}
-	if err := mirrorPlaceRowsTx(tx, p, existed && !before.Enabled && p.Enabled); err != nil {
+	if err := mirrorPlaceRowsTx(tx, p); err != nil {
 		return Place{}, err
 	}
 	settings, err := getSettings(tx)
@@ -364,7 +367,7 @@ var ErrPlaceFolderMissing = errors.New("the place has no folder for a domain tha
 // as a target save does. A direct repository takes its address and switch
 // from p and the rest from its target, credentials excepted: new ones reach
 // it only once they open it.
-func mirrorPlaceRowsTx(tx *sql.Tx, p Place, turnedOn bool) error {
+func mirrorPlaceRowsTx(tx *sql.Tx, p Place) error {
 	rows, err := placeRowsQ(tx, p.ID)
 	if err != nil {
 		return fmt.Errorf("WritePlace rows: %w", err)
@@ -374,7 +377,7 @@ func mirrorPlaceRowsTx(tx *sql.Tx, p Place, turnedOn bool) error {
 		if !ok {
 			return fmt.Errorf("%w: %s", ErrPlaceFolderMissing, row.PlaceDomain)
 		}
-		set, vals := placedChanges(p, row, addr, turnedOn)
+		set, vals := placedChanges(p, row, addr)
 		if len(set) == 0 {
 			continue
 		}
@@ -399,11 +402,11 @@ func mirrorPlaceRowsTx(tx *sql.Tx, p Place, turnedOn bool) error {
 }
 
 // placedChanges lists the columns of row that differ from what p says, with
-// their new values. The place's switch reaches its rows one way: a place
-// that is off holds every row off, a place switched on in this write turns
-// every row on, and otherwise each row keeps its own, so a target switched
-// off by itself stays off through any other edit of the place.
-func placedChanges(p Place, row OffsiteTarget, addr string, turnedOn bool) ([]string, []any) {
+// their new values. A place that is off holds every row off and marks the
+// ones it switched off, and a place that is on switches the marked ones back
+// on. A row switched off by itself carries no mark, so it stays off through
+// any edit of the place, the place going off and on included.
+func placedChanges(p Place, row OffsiteTarget, addr string) ([]string, []any) {
 	var set []string
 	var vals []any
 	add := func(col string, differs bool, v any) {
@@ -428,14 +431,15 @@ func placedChanges(p Place, row OffsiteTarget, addr string, turnedOn bool) ([]st
 			add("off_premises", row.OffPremises != p.OffPremises, boolInt(p.OffPremises))
 		}
 	}
-	on := row.Enabled
+	on, marked := row.Enabled, row.OffWithPlace
 	switch {
-	case !p.Enabled:
-		on = false
-	case turnedOn:
-		on = true
+	case !p.Enabled && on:
+		on, marked = false, true
+	case p.Enabled && marked:
+		on, marked = true, false
 	}
 	add("enabled", row.Enabled != on, boolInt(on))
+	add("off_with_place", row.OffWithPlace != marked, boolInt(marked))
 	return set, vals
 }
 
@@ -496,9 +500,9 @@ func domainColumns(s *Settings, domain string) (path, offsite *string, immutable
 // homePrimariesTx keeps the primary row of every domain whose home place p
 // is. At a remote place that row carries the domain path's credentials,
 // caps, append-only flag and budget, so it is created when missing and moved
-// onto p from wherever it was; the row mirror then writes p into it. At a
-// local place none of that applies, so the row leaves its place and is
-// switched off.
+// onto p from wherever it was, on like the domain path it serves; the row
+// mirror then writes p into it, switch included. At a local place none of
+// that applies, so the row leaves its place and is switched off.
 func homePrimariesTx(tx *sql.Tx, p Place, homes map[string]string) error {
 	for _, domain := range places.Domains {
 		if homes[domain] != p.ID {
@@ -526,15 +530,15 @@ func homePrimariesTx(tx *sql.Tx, p Place, homes map[string]string) error {
 				return fmt.Errorf("%w: %s", ErrPlaceFolderMissing, domain)
 			}
 			if _, err := tx.Exec(`INSERT INTO offsite_targets (id, domain, name, repo, role, enabled, created_at, place_id, place_domain)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				newID(), domain, primaryRowName, addr, RolePrimary, boolInt(p.Enabled), time.Now().Unix(), p.ID, domain); err != nil {
+				VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)`,
+				newID(), domain, primaryRowName, addr, RolePrimary, time.Now().Unix(), p.ID, domain); err != nil {
 				return fmt.Errorf("WritePlace primary of %s: %w", domain, err)
 			}
 		case row.PlaceID != p.ID || row.PlaceDomain != domain || row.PlaceSuffix != "":
 			if err := AttachRowTx(tx, row.ID, p.ID, domain, ""); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(`UPDATE offsite_targets SET enabled = ? WHERE id = ?`, boolInt(p.Enabled), row.ID); err != nil {
+			if _, err := tx.Exec(`UPDATE offsite_targets SET enabled = 1 WHERE id = ?`, row.ID); err != nil {
 				return fmt.Errorf("WritePlace primary of %s: %w", domain, err)
 			}
 		}
@@ -616,7 +620,8 @@ func (r *Repo) DeletePlaceIfUnused(id string) (int, error) {
 			}
 		}
 	}
-	if _, err := tx.Exec(`UPDATE offsite_targets SET place_id = '', place_domain = '', place_suffix = '' WHERE place_id = ?`, id); err != nil {
+	if _, err := tx.Exec(`UPDATE offsite_targets SET place_id = '', place_domain = '', place_suffix = '', off_with_place = 0
+		WHERE place_id = ?`, id); err != nil {
 		return 0, fmt.Errorf("DeletePlaceIfUnused: %w", err)
 	}
 	if _, err := tx.Exec(`DELETE FROM storage_places WHERE id = ?`, id); err != nil {
@@ -728,7 +733,7 @@ func stringsQ(q queryer, query string, args ...any) ([]string, error) {
 // address: the place does not spell the new one, and the row goes on working
 // from the address it was given.
 func detachMovedRowTx(tx *sql.Tx, id, role, repo string) error {
-	_, err := tx.Exec(`UPDATE offsite_targets SET place_id = '', place_domain = '', place_suffix = ''
+	_, err := tx.Exec(`UPDATE offsite_targets SET place_id = '', place_domain = '', place_suffix = '', off_with_place = 0
 		WHERE id = ? AND role = ? AND place_id <> '' AND repo <> ?`, id, role, repo)
 	return err
 }

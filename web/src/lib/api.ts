@@ -411,6 +411,7 @@ export interface DomainStatus {
   lastVerifiedOK: boolean; // whether that last drill passed
   verifiedDetail: string; // scrubbed reason of the last LOCAL subset drill; "" on success
   drillDetail: string; // scrubbed reason of the last OFF-SITE DR drill; "" on success
+  drillTarget: string; // the off-site target that drill restored from; "" when none is named
   // Ransomware-protection scorecard facts (v4). Protection is the red/amber/green
   // aggregate; "" for a disabled domain (the dashboard card renders nothing for it).
   offsiteConfigured: boolean; // an off-site repo is configured for this domain
@@ -426,9 +427,9 @@ export interface DomainStatus {
   // the only off-site drill VMs can run. Drives the "off-site verified" badge (#63).
   lastOffsiteSubsetAt: number; // unix seconds; 0 = never
   lastOffsiteSubsetOK: boolean; // whether that check passed
-  // Whether the scheduled off-site DR drill is active (DrillsEnabled &&
-  // OffsiteDrillsEnabled && offsiteConfigured); a target in the house does not
-  // count. When false but offsiteConfigured, the dashboard shows a neutral
+  // Whether the scheduled off-site DR drill is active: the targets it takes in
+  // turn include one off the premises, which a target in the house does not
+  // count as. When false but offsiteConfigured, the dashboard shows a neutral
   // "manual only" pill instead of a red failure.
   offsiteDrillScheduled: boolean;
   protection: string; // "" (disabled) | "red" | "amber" | "green"
@@ -454,6 +455,7 @@ export interface RestoreDrill {
   // off-site sandbox restore). Distinguishes an off-site DR check from a local
   // subset integrity check (which can also run against the off-site repo).
   kind: string;
+  targetId: string; // the off-site target a DR drill ran against; "" otherwise
 }
 
 /** The "Backup Everything" pass used to ride along here as its own
