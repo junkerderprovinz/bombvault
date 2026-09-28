@@ -187,6 +187,26 @@ func TestStartTestBindsOnlyTheRestoredData(t *testing.T) {
 	}
 }
 
+func TestStartTestDropsABindThatRunsThroughASymlink(t *testing.T) {
+	root := filepath.ToSlash(t.TempDir())
+	sandbox := root + "/restore/bombvault-starttest-whoami-1"
+	outside := root + "/original"
+	if err := os.MkdirAll(sandbox+"/host/user", 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(outside+"/whoami", 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, sandbox+"/host/user/appdata"); err != nil {
+		t.Skipf("symbolic links are not available here: %v", err)
+	}
+	s := &Service{cfg: config.Config{HostMountRoot: "/host/user", HostSourceRoot: "/mnt"}}
+	def := containerDefinition{Inspect: whoamiRecipe(), AppdataPaths: []string{"/host/user/appdata/whoami"}}
+	if got := s.startTestBinds(def, sandbox); len(got) != 0 {
+		t.Fatalf("binds = %v, want none through the restored link", got)
+	}
+}
+
 func TestFirstTCPPortPicksTheLowestTCPPort(t *testing.T) {
 	if got := firstTCPPort([]string{"8443/tcp", "53/udp", "443/tcp"}); got != "443" {
 		t.Fatalf("port = %q", got)
