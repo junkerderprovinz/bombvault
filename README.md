@@ -109,7 +109,7 @@ BombVault backs up a self-hosted server and brings it back. A restored container
 - Copies backups off site, encrypted, to one or more targets, which can be append-only.
 - Flags backups that look wrong, such as much more new data than usual, a source that shrank or a run that took far longer. When a source shrinks sharply, its old backups are kept until you acknowledge the finding.
 - Can update a container right after its backup, so a bad update is one restore away. Off by default.
-- Shows your other BombVault boxes in a Fleet tab and lets them share off-site storage.
+- Pairs your BombVault boxes with twelve words, shows them in a Fleet tab and lets them share off-site storage, over an end-to-end encrypted relay when they are on different networks.
 - Answers AI assistants over MCP: status, coverage, restore points, and a backup when the key allows it. See [docs/mcp.md](docs/mcp.md).
 
 The idea of one-click backup with automatic reinstall comes from [**VolumeVault**](https://github.com/Darkdragon14/VolumeVault) by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0). BombVault is a separate implementation on restic; see [Credits](#10-credits).
