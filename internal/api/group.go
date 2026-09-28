@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/discovery"
 	"github.com/junkerderprovinz/bombvault/internal/group"
@@ -350,6 +351,12 @@ type groupView struct {
 	PasswordSet bool           `json:"passwordSet"`
 	Members     []group.Member `json:"members"`
 	Relay       relayView      `json:"relay"`
+	// JoinedAgo is how many seconds ago this instance created or joined its
+	// group, and MemberSeen whether another member has shown up since. The
+	// page tells a group waiting for its second instance from one that never
+	// forms by them, on the server's clock rather than the browser's.
+	JoinedAgo  int64 `json:"joinedAgo"`
+	MemberSeen bool  `json:"memberSeen"`
 }
 
 type relayView struct {
@@ -375,13 +382,25 @@ func (h *Handler) groupViewNow() (groupView, error) {
 	if g.RelayServe {
 		clients = h.svc.relayServer().Len()
 	}
+	members := h.svc.pairing().Members()
+	now := time.Now()
+	if len(members) > 0 && g.MemberSeenAt.IsZero() {
+		if err := h.store.MarkGroupMemberSeen(now); err != nil {
+			return groupView{}, err
+		}
+		g.MemberSeenAt = now
+	}
+	var joinedAgo int64
+	if !g.JoinedAt.IsZero() {
+		joinedAgo = max(int64(now.Sub(g.JoinedAt).Seconds()), 0)
+	}
 	return groupView{
 		OK:          true,
 		Active:      h.svc.pairing().Active(),
 		InstanceID:  g.InstanceID,
 		Name:        instanceDisplayName(settings),
 		PasswordSet: settings.AuthPasswordHash != "",
-		Members:     h.svc.pairing().Members(),
+		Members:     members,
 		Relay: relayView{
 			Mode:         g.RelayMode,
 			URL:          g.RelayURL,
@@ -390,6 +409,8 @@ func (h *Handler) groupViewNow() (groupView, error) {
 			Serve:        g.RelayServe,
 			ServeClients: clients,
 		},
+		JoinedAgo:  joinedAgo,
+		MemberSeen: !g.MemberSeenAt.IsZero(),
 	}, nil
 }
 
@@ -448,7 +469,7 @@ func (h *Handler) storeGroupSecret(sec []byte) error {
 		}
 		enc = sealed
 	}
-	if err := h.store.SetGroupSecret(enc); err != nil {
+	if err := h.store.SetGroupSecret(enc, time.Now()); err != nil {
 		return err
 	}
 	h.svc.applyGroup()

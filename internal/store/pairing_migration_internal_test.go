@@ -2,6 +2,7 @@ package store
 
 import (
 	"testing"
+	"time"
 )
 
 // An instance updated from a build with fleet tokens and hand-entered APP_KEYs
@@ -65,5 +66,26 @@ func TestPairingMigrationKeepsOldEntriesAndMarksThemForPairing(t *testing.T) {
 	g, err := r.GetGroupState()
 	if err != nil || len(g.InstanceID) != 32 || len(g.SecretEnc) != 0 {
 		t.Fatalf("group state after migration = %+v, %v", g, err)
+	}
+}
+
+// A group that exists when the upgrade runs counts as entered then, so its
+// page gets a minute of searching before it says anything.
+func TestAnExistingGroupCountsAsEnteredAtTheUpgrade(t *testing.T) {
+	db := OpenMem(t)
+	bootAs(t, db, pairingMigration+4)
+	if _, err := db.Exec(`UPDATE group_state SET secret_enc = x'0102' WHERE id = 1`); err != nil {
+		t.Fatal(err)
+	}
+	before := time.Now().Add(-time.Second)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	g, err := New(db).GetGroupState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if g.JoinedAt.Before(before) || g.JoinedAt.After(time.Now().Add(time.Second)) || !g.MemberSeenAt.IsZero() {
+		t.Fatalf("joined %v, seen %v; want now and never", g.JoinedAt, g.MemberSeenAt)
 	}
 }

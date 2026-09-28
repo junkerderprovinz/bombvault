@@ -2169,6 +2169,18 @@ ALTER TABLE pull_sources ADD COLUMN restic_password_enc BLOB NOT NULL DEFAULT x'
 		sql: `UPDATE settings SET fleet_token = '';
 UPDATE fleet_peers SET token_enc = x'';`,
 	},
+	{
+		// When this instance entered its group and when it first saw another
+		// member there, so the Pairing tab can tell a group still waiting for
+		// its second instance from one that never forms. A group that exists
+		// already counts as entered at the upgrade, with nobody seen yet.
+		version:          pairingMigration + 5,
+		name:             "group_state_joined",
+		alreadySatisfied: columnPresent("group_state", "joined_at"),
+		sql: `ALTER TABLE group_state ADD COLUMN joined_at INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE group_state ADD COLUMN member_seen_at INTEGER NOT NULL DEFAULT 0;
+UPDATE group_state SET joined_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE length(secret_enc) > 0;`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
