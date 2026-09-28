@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -60,12 +61,12 @@ func main() {
 	}
 }
 
-// healthcheck is the Docker HEALTHCHECK probe (#60, requested by @BaukeZwart). It
+// healthcheck is the Docker HEALTHCHECK probe. It
 // asks the engine's own /api/health endpoint (open, LAN trust model) whether it is
 // serving and returns 0 on HTTP 200, non-zero otherwise, so an auto-heal tool
 // (e.g. Autoheal / willfarrell) can restart a container whose engine has wedged.
-// It reuses this binary, so the image needs no shell or curl. PORT/HTTPS_PORT come
-// from the environment (the Dockerfile sets both).
+// It reuses this binary, so the image needs no shell or curl. BIND_HOST, PORT and
+// HTTPS_PORT come from the environment (the Dockerfile sets both ports).
 func healthcheck() int {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -75,13 +76,23 @@ func healthcheck() int {
 	if httpsPort == "" {
 		httpsPort = "3443"
 	}
-	return healthcheckAt(port, httpsPort)
+	return healthcheckAt(healthcheckHost(os.Getenv("BIND_HOST")), port, httpsPort)
+}
+
+// healthcheckHost is where the probe finds the WebUI: loopback when it listens on
+// every interface, else the one address it is bound to.
+func healthcheckHost(bind string) string {
+	if bind == "" || net.ParseIP(bind).IsUnspecified() {
+		return "127.0.0.1"
+	}
+	return bind
 }
 
 // healthcheckAt is the testable core: it tries HTTP first, then HTTPS (the local
-// cert is self-signed, so verification is skipped — this is a liveness probe on
-// loopback, not a trust boundary), and returns 0 as soon as /api/health answers 200.
-func healthcheckAt(port, httpsPort string) int {
+// cert is self-signed, so verification is skipped; this is a liveness probe on
+// the container's own address, not a trust boundary), and returns 0 as soon as
+// /api/health answers 200.
+func healthcheckAt(host, port, httpsPort string) int {
 	client := &http.Client{
 		Timeout: 4 * time.Second,
 		Transport: &http.Transport{
@@ -89,10 +100,10 @@ func healthcheckAt(port, httpsPort string) int {
 		},
 	}
 	for _, url := range []string{
-		"http://127.0.0.1:" + port + "/api/health",
-		"https://127.0.0.1:" + httpsPort + "/api/health",
+		"http://" + net.JoinHostPort(host, port) + "/api/health",
+		"https://" + net.JoinHostPort(host, httpsPort) + "/api/health",
 	} {
-		resp, err := client.Get(url) //nolint:gosec // G107: 127.0.0.1 with an env-configured port, not user input
+		resp, err := client.Get(url) //nolint:gosec // G107: the container's own listen address from its environment, not user input
 		if err != nil {
 			continue
 		}
