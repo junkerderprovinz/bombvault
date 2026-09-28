@@ -436,6 +436,9 @@ func run() error {
 			log.Printf("schedule: stack backup: %v", err)
 		}
 	})
+	// The restore probe after an item's first backup waits for the rest of
+	// its scheduled run instead of taking the domain between two items.
+	scheduler.SetRunBracket(svc.OpenScheduledRun)
 	// #95: batched off-site replication for scheduled multi-item domains. After the
 	// whole backup loop the domain is replicated ONCE (the per-item inline copy is
 	// suppressed via WithBulkReplicateSuppressed above), so a high-latency off-site

@@ -420,6 +420,11 @@ type Service struct {
 	suggestCache   map[string]suggestCacheEntry
 	suggestFlights map[string]*suggestFlight
 
+	// runsOpen counts the scheduled multi-item runs open per domain; see
+	// OpenScheduledRun.
+	runsOpenMu sync.Mutex
+	runsOpen   map[string]int
+
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on
 	// every replication while over budget); the latch clears when growth drops
@@ -16499,21 +16504,16 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 // The tags it returns are the items whose old backups it kept because an
 // unusual backup is holding them.
 func (s *Service) PruneDomain(ctx context.Context, domain, source string) ([]string, error) {
-	return s.pruneDomain(ctx, domain, source, true)
+	return s.pruneDomain(ctx, domain, source, false)
 }
 
-// PruneAfterBulk runs ONE local prune for a domain after a bulk backup loop,
-// replacing the per-item inline prune that the bulk run deferred: under the #95
-// bulk flag applyRetention runs each item's forget WITHOUT --prune, so the
-// expensive space-reclaim happens here exactly once per run. It reuses the
-// PruneDomain core, so the batched prune takes the domain lock itself (the bulk
-// loop has released all locks by now), publishes maintenance progress and
-// records a kind="prune" run — visible in Run History/Activity Log exactly like
-// a manual prune. LOCAL repo only: off-site retention stays inside
-// copyToOffsite, and an immutable off-site repo is never pruned from this box.
-// Skipped silently when no local retention policy is configured (mirroring
-// applyRetention's own gate — nothing was forgotten, so there is nothing to
-// reclaim). Best-effort: failures are logged, never propagated.
+// PruneAfterBulk runs one local prune for a domain after a scheduled multi-item
+// run, whose items forgot their old snapshots without --prune (#95), so space
+// is reclaimed once per run. It records a prune run like a manual prune does,
+// and waits for the domain like the off-site copy after it: whatever took the
+// domain in the gap after the last item, the space still has to come back.
+// Off-site retention stays in copyToOffsite. It does nothing without a local
+// retention policy, and failures are logged only.
 func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -16523,19 +16523,17 @@ func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 	if !s.retentionPolicy(settings).Any() {
 		return // no retention policy → the per-item passes forgot nothing (applyRetention's gate)
 	}
-	// applyPolicy=false: the per-item tag-scoped forgets already ran inline during
-	// the loop (without --prune), so this pass is a plain space-reclaim.
-	if _, err := s.pruneDomain(ctx, domain, "local", false); err != nil {
+	if _, err := s.pruneDomain(ctx, domain, "local", true); err != nil {
 		log.Printf("api: prune %s: batched prune failed: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 	}
 }
 
-// pruneDomain is the shared core of PruneDomain and PruneAfterBulk. applyPolicy
-// selects the manual-prune semantics (a configured retention policy is APPLIED:
-// per-identity forget --keep-* then one prune — "apply retention now") versus a
-// plain space-reclaim (`restic prune` only — the batched post-bulk pass, whose
-// per-item forgets already ran inline without --prune).
-func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyPolicy bool) (paused []string, err error) {
+// pruneDomain is the shared core of PruneDomain and PruneAfterBulk. A manual
+// prune applies a configured retention policy (forget --keep-* per identity,
+// then one prune) and refuses a busy domain. The pass after a bulk run
+// (afterBulk) is a plain `restic prune`, since the items' forgets already ran,
+// and waits for the domain.
+func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterBulk bool) (paused []string, err error) {
 	// EVERY repository this domain's items write to (#204). Prune is what turns a
 	// forgotten snapshot back into free space, so pruning only the domain
 	// repository means the space retention freed on a named one is never
@@ -16594,7 +16592,11 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		return nil, err
 	}
 	skipped = append(skipped, missing...)
-	unlock, ok := s.tryLockDomainFor(domain, "prune")
+	lock := s.tryLockDomainFor
+	if afterBulk {
+		lock = s.waitLockDomainFor
+	}
+	unlock, ok := lock(domain, "prune")
 	if !ok {
 		return nil, errDomainBusy
 	}
@@ -16640,11 +16642,11 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	// keep-flags would delete every snapshot, so that path is guarded by p.Any().
 	// The policy is per-source: pruning the off-site repo uses the off-site policy
 	// (not the local one), so an archive off-site isn't trimmed to the local rules.
-	// The batched post-bulk pass skips this (applyPolicy=false): its per-item
+	// The batched post-bulk pass skips this: its per-item
 	// forgets already ran inline, so re-running them would only cost 44 more
 	// exclusive-lock round-trips for nothing.
 	policy := restic.RetentionPolicy{}
-	if applyPolicy {
+	if !afterBulk {
 		policy = s.retentionPolicyForSource(settings, source)
 	}
 	for _, r := range repos {
