@@ -83,7 +83,7 @@ Palataksesi takaisin palautuksen jälkeen kopioi yksittäisiä tiedostoja tietoj
 BombVault tallentaa jokaisen varmuuskopion mukana kunkin tietojoukon paikallisesti asetetut ZFS-ominaisuudet: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity ja omat käyttäjäominaisuutesi. Periytyvät ja vain luku -arvot jätetään pois, koska ne palaavat itsestään. Varmuuskopioissa ajalta ennen kuin BombVault tallensi niitä ei ole yhtään.
 
 - **Uuteen tietojoukkoon** ajaa `zfs create` -komennon jokaisella tallennetulla ominaisuudella. casesensitivity, normalization ja utf8only voi asettaa vain näin. Liitoskohta jätetään pois, jotta kopio ei törmää alkuperäiseen, samoin `canmount`, `readonly` ja salaus, jotta palautus voi kirjoittaa. Salatun alle luotu uusi tietojoukko saa sen salauksen. Yläpuolisen tietojoukon on oltava olemassa. Jos jokin epäonnistuu luonnin jälkeen, uusi tietojoukko jää palvelimelle, koska BombVault ei koskaan tuhoa tietojoukkoa.
-- **Palauta tietojoukkoon** näyttää tallennetut ominaisuudet palautuksen vieressä. **Aseta myös nämä ominaisuudet** asettaa ne, jotka olemassa oleva tietojoukko vielä hyväksyy, ennen kuin yhtään tiedostoa kirjoitetaan. Ilman tätä kytkintä tietojoukko säilyttää asetuksensa.
+- **Palauta tietojoukkoon** näyttää tallennetut ominaisuudet palautuksen vieressä. **Aseta myös nämä ominaisuudet** asettaa ne, jotka olemassa oleva tietojoukko vielä hyväksyy, ennen kuin yhtään tiedostoa kirjoitetaan. Kiintiöt ja varaukset asetetaan vasta tiedostojen jälkeen, jotta ne eivät voi estää niitä. Ilman tätä kytkintä tietojoukko säilyttää asetuksensa.
 
 ## Mitä varmuuskopio sisältää {#contents}
 

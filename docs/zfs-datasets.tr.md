@@ -83,7 +83,7 @@ Bir geri yüklemeden sonra geri dönmek için veri kümesinin içindeki `.zfs/sn
 BombVault her yedekle birlikte her veri kümesinin yerel olarak ayarlanmış ZFS özelliklerini saklar: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity ve kendi kullanıcı özelliklerin. Devralınan ve salt okunur değerler dışarıda bırakılır, çünkü kendiliğinden geri gelirler. BombVault bunları saklamaya başlamadan önceki yedeklerde hiç yoktur.
 
 - **Yeni bir veri kümesine** her saklanan özellikle `zfs create` çalıştırır. casesensitivity, normalization ve utf8only yalnızca bu şekilde ayarlanabilir. Kopya orijinalle çakışmasın diye bağlama noktası dışarıda bırakılır; geri yükleme yazabilsin diye `canmount`, `readonly` ve şifreleme de. Şifreli bir veri kümesinin altındaki yeni veri kümesi onun şifrelemesini alır. Üstteki veri kümesi mevcut olmalıdır. Oluşturulduktan sonra bir şey başarısız olursa yeni veri kümesi sunucuda kalır, çünkü BombVault asla bir veri kümesini yok etmez.
-- **Veri kümesinin içine geri yükle** saklanan özellikleri geri yüklemenin yanında gösterir. **Bu özellikleri de ayarla**, var olan bir veri kümesinin hâlâ kabul ettiği özellikleri herhangi bir dosya yazılmadan önce ayarlar. Bu anahtar olmadan veri kümesi ayarlarını korur.
+- **Veri kümesinin içine geri yükle** saklanan özellikleri geri yüklemenin yanında gösterir. **Bu özellikleri de ayarla**, var olan bir veri kümesinin hâlâ kabul ettiği özellikleri herhangi bir dosya yazılmadan önce ayarlar. Kotalar ve rezervasyonlar dosyalardan sonra ayarlanır, böylece dosyaları reddedemezler. Bu anahtar olmadan veri kümesi ayarlarını korur.
 
 ## Yedekte ne var {#contents}
 

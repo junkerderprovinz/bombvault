@@ -731,13 +731,12 @@ func (s *Service) runRestoreZFS(ctx context.Context, plan zfsRestorePlan) error 
 		}
 		plan.covered = covered
 	}
-	if len(plan.setProps) > 0 {
-		sctx, cancel := context.WithTimeout(ctx, zfsSnapshotTimeout)
-		err := s.zfs.SetProperties(sctx, plan.dataset, plan.setProps)
-		cancel()
-		if err != nil {
-			return &backup.ZFSRefusal{Code: "set-properties-failed", Detail: plan.dataset + ": " + zfsDetail(err.Error())}
-		}
+	// Compression and record size have to be in place before the files are
+	// written to apply to them; a quota or reservation could refuse them, so
+	// those follow the files.
+	props, limits := zfs.SplitLimits(plan.setProps)
+	if err := s.setZFSRestoreProperties(ctx, plan.dataset, props); err != nil {
+		return err
 	}
 	if plan.consistency != nil {
 		thaw, _, err := plan.consistency.Freeze(ctx)
@@ -750,6 +749,19 @@ func (s *Service) runRestoreZFS(ctx context.Context, plan zfsRestorePlan) error 
 		if err := s.restoreZFSStep(ctx, plan, step); err != nil {
 			return err
 		}
+	}
+	return s.setZFSRestoreProperties(ctx, plan.dataset, limits)
+}
+
+func (s *Service) setZFSRestoreProperties(ctx context.Context, dataset string, p zfs.Properties) error {
+	if len(p) == 0 {
+		return nil
+	}
+	sctx, cancel := context.WithTimeout(ctx, zfsSnapshotTimeout)
+	err := s.zfs.SetProperties(sctx, dataset, p)
+	cancel()
+	if err != nil {
+		return &backup.ZFSRefusal{Code: "set-properties-failed", Detail: dataset + ": " + zfsDetail(err.Error())}
 	}
 	return nil
 }
