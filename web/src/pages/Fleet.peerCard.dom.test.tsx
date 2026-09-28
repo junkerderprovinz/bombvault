@@ -53,6 +53,19 @@ vi.mock("../lib/api", async (importOriginal) => {
     getHealth: () => Promise.resolve({ ok: true, version: "v9.2.1" }),
     getStatus: () => Promise.resolve({ ok: true, domains: [] }),
     listMeshOffers: () => Promise.resolve({ ok: true, offers: [] }),
+    proposeMeshOffer: () =>
+      Promise.resolve({
+        ok: true,
+        snippet: {
+          user: "bombvault-containers",
+          password: "s3cr3t",
+          htpasswd: "bombvault-containers:$2a$12$hash",
+          dockerRun: "docker run ...",
+          compose: "services: ...",
+          unraid: "<Container/>",
+          repo: "rest:http://192.168.1.50:8000/bombvault-containers/containers",
+        },
+      }),
   };
 });
 
@@ -184,5 +197,26 @@ describe("fleet card details", () => {
     });
     expect(detailsOpen()).toBe(false);
     expect(localStorage.getItem("bombvault.fleetDetailsOpen")).toBe("0");
+  });
+});
+
+describe("offering storage to a peer", () => {
+  it("names the peer in the receiver-is-waiting note once the offer is sent", async () => {
+    peers = [peer({ name: "attic" })];
+    await renderFleet();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["fleet.mesh.proposeButton"] }));
+    });
+    await act(async () => {
+      fireEvent.change(screen.getByPlaceholderText("http://192.168.1.50:8000"), {
+        target: { value: "http://192.168.1.50:8000" },
+      });
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["fleet.mesh.send"] }));
+    });
+    const note = await screen.findByText(/waiting for the first copy/);
+    expect(note.textContent).toContain("attic");
+    expect(note.textContent).not.toContain("{peer}");
   });
 });

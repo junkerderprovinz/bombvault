@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const lv: Partial<Translations> = {
+  "receiver.waiting": "Gaida pirmo kopiju",
+  "receiver.waitingTip": "Šī krātuve vēl nav saņēmusi nevienu momentuzņēmumu. Tā pati kļūs aktīva, tiklīdz pienāks pirmā kopija, tāpēc pa to laiku šeit nav nekā, kas jālabo.",
+  "fleet.mesh.receiverWaiting": "Tavs paša uztvērējs {peer} jau ir iestatīts un gaida pirmo kopiju.",
+  "pull.credsAutoHint": "Ja atstāj Nav, BombVault automātiski atkārtoti izmanto saglabātu pieteikšanos tai pašai adresei, piemēram, tādu, ko jau izveidojis tīkla piedāvājums.",
   // General
   "language.label": "Valoda",
   "theme.dark": "Tumša",

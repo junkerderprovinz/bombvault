@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const fi: Partial<Translations> = {
+  "receiver.waiting": "Odottaa ensimmäistä kopiota",
+  "receiver.waitingTip": "Tämä arkisto ei ole vielä vastaanottanut tilannevedosta. Se vaihtuu itsestään aktiiviseksi heti, kun ensimmäinen kopio saapuu, joten täällä ei ole sillä välin mitään korjattavaa.",
+  "fleet.mesh.receiverWaiting": "Oma vastaanottajasi kohteelle {peer} on jo asetettu ja odottaa ensimmäistä kopiota.",
+  "pull.credsAutoHint": "Jos valintana pysyy Ei mitään, BombVault käyttää automaattisesti uudelleen samaan osoitteeseen tallennettuja kirjautumistietoja, esimerkiksi verkkotarjouksen jo luomia.",
   // General
   "language.label": "Kieli",
   "theme.dark": "Tumma",

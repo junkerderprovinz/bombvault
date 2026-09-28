@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const vi: Partial<Translations> = {
+  "receiver.waiting": "Đang chờ bản sao đầu tiên",
+  "receiver.waitingTip": "Kho này chưa nhận được ảnh chụp nhanh nào. Nó sẽ tự chuyển sang hoạt động ngay khi bản sao đầu tiên đến, nên trong lúc đó không có gì cần sửa ở đây cả.",
+  "fleet.mesh.receiverWaiting": "Bộ nhận của riêng bạn cho {peer} đã được thiết lập và đang chờ bản sao đầu tiên.",
+  "pull.credsAutoHint": "Nếu để ở Không có, BombVault sẽ tự động dùng lại thông tin đăng nhập đã lưu cho cùng địa chỉ, chẳng hạn thông tin mà một đề nghị mesh đã tạo sẵn.",
   // General
   "language.label": "Ngôn ngữ",
   "theme.dark": "Tối",

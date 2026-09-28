@@ -3648,6 +3648,10 @@ export interface ReceivedRepoView {
   memberId: string;
   /** Set up before pairing existed: pair it with its instance again. */
   needsPairing: boolean;
+  /** True until the repo has opened with at least one snapshot in it: normal
+   *  right after "Offer storage" or a manual Add, before the sender's first
+   *  copy lands. */
+  waiting: boolean;
 }
 
 /** A received repo PLUS the live read-only status attached by the list endpoint. */

@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const fr: Partial<Translations> = {
+  "receiver.waiting": "En attente de la première copie",
+  "receiver.waitingTip": "Ce dépôt n'a encore reçu aucun instantané. Il passe à actif tout seul dès que la première copie arrive, donc il n'y a rien à corriger ici entre-temps.",
+  "fleet.mesh.receiverWaiting": "Votre propre récepteur pour {peer} est déjà configuré et attend la première copie.",
+  "pull.credsAutoHint": "Laissé sur Aucun, BombVault réutilise automatiquement une connexion enregistrée pour la même adresse, par exemple une déjà créée par une offre de maillage.",
   // General
   "language.label": "Langue",
   "theme.dark": "Sombre",

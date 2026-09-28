@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const it: Partial<Translations> = {
+  "receiver.waiting": "In attesa della prima copia",
+  "receiver.waitingTip": "Questo repository non ha ancora ricevuto nessuno snapshot. Passa da solo ad attivo non appena arriva la prima copia, quindi nel frattempo qui non c'è nulla da sistemare.",
+  "fleet.mesh.receiverWaiting": "Il tuo ricevitore per {peer} è già configurato e attende la prima copia.",
+  "pull.credsAutoHint": "Lasciato su Nessuna, BombVault riutilizza automaticamente un accesso salvato per lo stesso indirizzo, ad esempio uno già creato da un'offerta mesh.",
   // General
   "language.label": "Lingua",
   "theme.dark": "Scuro",

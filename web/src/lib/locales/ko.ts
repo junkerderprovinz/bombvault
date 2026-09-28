@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const ko: Partial<Translations> = {
+  "receiver.waiting": "첫 복사본을 기다리는 중",
+  "receiver.waitingTip": "이 저장소는 아직 스냅숏을 받지 못했습니다. 첫 복사본이 도착하면 스스로 활성 상태로 전환되므로, 그때까지 여기서 고칠 것은 없습니다.",
+  "fleet.mesh.receiverWaiting": "{peer}용 수신기가 이미 설정되어 첫 복사본을 기다리고 있습니다.",
+  "pull.credsAutoHint": "없음으로 두면 BombVault가 같은 주소용으로 저장된 로그인을 자동으로 재사용합니다. 예를 들어 메시 제안이 이미 만들어 둔 것처럼요.",
   // General
   "language.label": "언어",
   "theme.dark": "어둡게",

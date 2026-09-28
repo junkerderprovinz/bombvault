@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const tr: Partial<Translations> = {
+  "receiver.waiting": "İlk kopyayı bekliyor",
+  "receiver.waitingTip": "Bu depo henüz herhangi bir anlık görüntü almadı. İlk kopya geldiğinde kendiliğinden etkin duruma geçer, bu yüzden bu arada burada düzeltilecek bir şey yok.",
+  "fleet.mesh.receiverWaiting": "{peer} için kendi alıcın zaten kuruldu ve ilk kopyayı bekliyor.",
+  "pull.credsAutoHint": "Yok seçili bırakılırsa BombVault aynı adres için kaydedilmiş bir girişi otomatik olarak yeniden kullanır, örneğin bir mesh teklifinin zaten oluşturduğu gibi.",
   // General
   "language.label": "Dil",
   "theme.dark": "Koyu",

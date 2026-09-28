@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const ca: Partial<Translations> = {
+  "receiver.waiting": "Esperant la primera còpia",
+  "receiver.waitingTip": "Aquest repositori encara no ha rebut cap instantània. Passa a actiu tot sol quan arriba la primera còpia, així que mentrestant no cal arreglar res aquí.",
+  "fleet.mesh.receiverWaiting": "El teu propi receptor per a {peer} ja està configurat i espera la primera còpia.",
+  "pull.credsAutoHint": "Si es deixa a Cap, BombVault reutilitza automàticament una credencial desada per a la mateixa adreça, com ara una que ja hagi creat una oferta de malla.",
   // General
   "language.label": "Idioma",
   "theme.dark": "Fosc",

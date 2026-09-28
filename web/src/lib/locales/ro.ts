@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const ro: Partial<Translations> = {
+  "receiver.waiting": "Așteaptă prima copie",
+  "receiver.waitingTip": "Acest depozit nu a primit încă nicio instantanee. Trece singur în activ imediat ce sosește prima copie, așa că între timp nu este nimic de reparat aici.",
+  "fleet.mesh.receiverWaiting": "Propriul tău receptor pentru {peer} este deja configurat și așteaptă prima copie.",
+  "pull.credsAutoHint": "Dacă rămâne pe Niciuna, BombVault reutilizează automat o autentificare salvată pentru aceeași adresă, de exemplu una deja creată de o ofertă mesh.",
   // General
   "language.label": "Limbă",
   "theme.dark": "Întunecat",

@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const da: Partial<Translations> = {
+  "receiver.waiting": "Venter på den første kopi",
+  "receiver.waitingTip": "Dette repository har endnu ikke modtaget et snapshot. Det skifter selv til aktiv, så snart den første kopi ankommer, så der er intet at rette her i mellemtiden.",
+  "fleet.mesh.receiverWaiting": "Din egen modtager til {peer} er allerede sat op og venter på den første kopi.",
+  "pull.credsAutoHint": "Efterlades det på Ingen, genbruger BombVault automatisk et gemt login til samme adresse, for eksempel et som et mesh-tilbud allerede har oprettet.",
   // General
   "language.label": "Sprog",
   "theme.dark": "Mørkt",

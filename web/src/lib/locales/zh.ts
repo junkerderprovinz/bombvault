@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const zh: Partial<Translations> = {
+  "receiver.waiting": "等待第一份副本",
+  "receiver.waitingTip": "此仓库尚未收到任何快照。第一份副本到达后会自动切换为活动状态，因此在此期间这里无需修复任何东西。",
+  "fleet.mesh.receiverWaiting": "你为 {peer} 设置的接收端已经就绪，正在等待第一份副本。",
+  "pull.credsAutoHint": "保持在无时，BombVault 会自动为同一地址重用已保存的登录信息，例如网格提议已经创建的那个。",
   // General
   "language.label": "语言",
   "theme.dark": "深色",

@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const is: Partial<Translations> = {
+  "receiver.waiting": "Bíður eftir fyrsta afritinu",
+  "receiver.waitingTip": "Þetta gagnasafn hefur ekki fengið neina skyndimynd ennþá. Það verður sjálfkrafa virkt um leið og fyrsta afritið berst, svo það er ekkert að laga hér á meðan.",
+  "fleet.mesh.receiverWaiting": "Þinn eigin móttakari fyrir {peer} er þegar uppsettur og bíður eftir fyrsta afritinu.",
+  "pull.credsAutoHint": "Sé Ekkert látið halda sér, endurnýtir BombVault sjálfkrafa vistað innskráningu fyrir sama vistfang, til dæmis eina sem möskvatilboð hefur þegar búið til.",
   // General
   "language.label": "Tungumál",
   "theme.dark": "Dökkt",

@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const id: Partial<Translations> = {
+  "receiver.waiting": "Menunggu salinan pertama",
+  "receiver.waitingTip": "Repositori ini belum menerima snapshot apa pun. Ia akan berubah menjadi aktif dengan sendirinya begitu salinan pertama tiba, jadi sementara itu tidak ada yang perlu diperbaiki di sini.",
+  "fleet.mesh.receiverWaiting": "Penerima Anda sendiri untuk {peer} sudah disiapkan dan menunggu salinan pertama.",
+  "pull.credsAutoHint": "Jika dibiarkan pada Tidak ada, BombVault otomatis memakai ulang info masuk tersimpan untuk alamat yang sama, misalnya yang sudah dibuat oleh penawaran mesh.",
   // General
   "language.label": "Bahasa",
   "theme.dark": "Gelap",

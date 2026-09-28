@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const pl: Partial<Translations> = {
+  "receiver.waiting": "Czeka na pierwszą kopię",
+  "receiver.waitingTip": "To repozytorium nie otrzymało jeszcze żadnej migawki. Samo przełączy się na aktywne, gdy tylko dotrze pierwsza kopia, więc tymczasem nie ma tu nic do naprawienia.",
+  "fleet.mesh.receiverWaiting": "Twój własny odbiornik dla {peer} jest już skonfigurowany i czeka na pierwszą kopię.",
+  "pull.credsAutoHint": "Jeśli zostanie ustawione na Brak, BombVault automatycznie ponownie użyje zapisanego logowania dla tego samego adresu, na przykład tego, które utworzyła już oferta sieci mesh.",
   // General
   "language.label": "Język",
   "theme.dark": "Ciemny",

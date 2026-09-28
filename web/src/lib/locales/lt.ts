@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const lt: Partial<Translations> = {
+  "receiver.waiting": "Laukiama pirmos kopijos",
+  "receiver.waitingTip": "Ši saugykla dar negavo nė vieno momentinio vaizdo. Ji pati taps aktyvi, kai tik atkeliaus pirma kopija, tad kol kas čia nėra ko taisyti.",
+  "fleet.mesh.receiverWaiting": "Tavo paties imtuvas, skirtas {peer}, jau sukonfigūruotas ir laukia pirmos kopijos.",
+  "pull.credsAutoHint": "Palikus Jokio, BombVault automatiškai pakartotinai naudoja tam pačiam adresui išsaugotus prisijungimo duomenis, pavyzdžiui, tuos, kuriuos jau sukūrė tinklo pasiūlymas.",
   // General
   "language.label": "Kalba",
   "theme.dark": "Tamsi",

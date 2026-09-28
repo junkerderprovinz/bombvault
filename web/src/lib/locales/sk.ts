@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const sk: Partial<Translations> = {
+  "receiver.waiting": "Čaká na prvú kópiu",
+  "receiver.waitingTip": "Tento repozitár ešte nedostal žiadnu snímku. Sám sa prepne na aktívny hneď, ako príde prvá kópia, takže medzitým tu nie je čo opravovať.",
+  "fleet.mesh.receiverWaiting": "Tvoj vlastný prijímač pre {peer} je už nastavený a čaká na prvú kópiu.",
+  "pull.credsAutoHint": "Ak zostane na Žiadne, BombVault automaticky znovu použije uložené prihlásenie pre rovnakú adresu, napríklad také, ktoré už vytvorila sieťová ponuka.",
   // General
   "language.label": "Jazyk",
   "theme.dark": "Tmavý",

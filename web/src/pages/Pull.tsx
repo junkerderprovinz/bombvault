@@ -335,6 +335,7 @@ function PullDialog({
               ]}
               className={inputCls}
             />
+            {credsRef === "" && <p className="text-caption text-carbon-textMuted">{t("pull.credsAutoHint")}</p>}
           </div>
 
           <div className="flex flex-col gap-1.5">

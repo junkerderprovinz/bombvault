@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const he: Partial<Translations> = {
+  "receiver.waiting": "ממתין להעתק הראשון",
+  "receiver.waitingTip": "המאגר הזה עדיין לא קיבל תמונת מצב. הוא עובר למצב פעיל מעצמו ברגע שמגיע ההעתק הראשון, כך שבינתיים אין כאן שום דבר לתקן.",
+  "fleet.mesh.receiverWaiting": "המקלט שלך עבור {peer} כבר מוגדר וממתין להעתק הראשון.",
+  "pull.credsAutoHint": "אם נשאר על ללא, BombVault משתמש שוב אוטומטית בפרטי התחברות שמורים לאותה כתובת, כמו אלה שהצעת רשת כבר יצרה.",
   // General
   "language.label": "שפה",
   "theme.dark": "כהה",

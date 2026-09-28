@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const sl: Partial<Translations> = {
+  "receiver.waiting": "Čaka na prvo kopijo",
+  "receiver.waitingTip": "To skladišče še ni prejelo nobenega posnetka. Samo preide v aktivno stanje, takoj ko prispe prva kopija, zato tukaj medtem ni ničesar za popraviti.",
+  "fleet.mesh.receiverWaiting": "Tvoj lastni sprejemnik za {peer} je že nastavljen in čaka na prvo kopijo.",
+  "pull.credsAutoHint": "Če ostane na Brez, BombVault samodejno znova uporabi shranjeno prijavo za isti naslov, na primer tako, ki jo je že ustvarila mrežna ponudba.",
   // General
   "language.label": "Jezik",
   "theme.dark": "Temna",

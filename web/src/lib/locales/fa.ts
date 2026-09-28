@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const fa: Partial<Translations> = {
+  "receiver.waiting": "در انتظار اولین نسخه",
+  "receiver.waitingTip": "این مخزن هنوز هیچ عکس‌فوری‌ای دریافت نکرده است. به‌محض رسیدن اولین نسخه، خودش به‌حالت فعال تغییر می‌کند، پس در این میان چیزی برای تعمیر اینجا نیست.",
+  "fleet.mesh.receiverWaiting": "گیرنده خودت برای {peer} از قبل تنظیم شده و منتظر اولین نسخه است.",
+  "pull.credsAutoHint": "اگر روی هیچ‌کدام بماند، BombVault به‌طور خودکار یک ورود ذخیره‌شده برای همان آدرس را دوباره استفاده می‌کند، مثل چیزی که یک پیشنهاد مش از قبل ساخته است.",
   // General
   "language.label": "زبان",
   "theme.dark": "تیره",

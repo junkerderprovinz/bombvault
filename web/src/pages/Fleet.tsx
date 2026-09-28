@@ -403,6 +403,10 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
         ) : (
           <>
             <p className="text-xs text-statusOk">{t("fleet.mesh.sent").replace("{peer}", peer.name)}</p>
+            <span className="flex items-center gap-1.5 text-xs text-carbon-textMuted">
+              {t("fleet.mesh.receiverWaiting").replace("{peer}", peer.name)}
+              <InfoBubble tip={t("receiver.waitingTip")} />
+            </span>
             <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.deployNow")}</p>
             <div className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">{t("fleet.mesh.dockerRun")}</span>

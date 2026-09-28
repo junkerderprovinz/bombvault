@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const gl: Partial<Translations> = {
+  "receiver.waiting": "Á espera da primeira copia",
+  "receiver.waitingTip": "Este repositorio aínda non recibiu ningunha instantánea. Pasa a activo por si só en canto chega a primeira copia, así que mentres tanto non hai nada que arranxar aquí.",
+  "fleet.mesh.receiverWaiting": "O teu propio receptor para {peer} xa está configurado e agarda a primeira copia.",
+  "pull.credsAutoHint": "Se se deixa en Ningunha, BombVault reutiliza automaticamente un inicio de sesión gardado para o mesmo enderezo, como un que xa creou unha oferta de malla.",
   // General
   "language.label": "Idioma",
   "theme.dark": "Escuro",

@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const nl: Partial<Translations> = {
+  "receiver.waiting": "Wacht op de eerste kopie",
+  "receiver.waitingTip": "Deze repository heeft nog geen snapshot ontvangen. Zodra de eerste kopie binnenkomt, wordt hij vanzelf actief, dus er valt hier ondertussen niets te repareren.",
+  "fleet.mesh.receiverWaiting": "Je eigen ontvanger voor {peer} is al ingesteld en wacht op de eerste kopie.",
+  "pull.credsAutoHint": "Blijft dit op Geen staan, dan hergebruikt BombVault automatisch een opgeslagen login voor hetzelfde adres, bijvoorbeeld een die een mesh-aanbod al heeft aangemaakt.",
   // General
   "language.label": "Taal",
   "theme.dark": "Donker",

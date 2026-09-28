@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const hi: Partial<Translations> = {
+  "receiver.waiting": "पहली कॉपी का इंतज़ार",
+  "receiver.waitingTip": "इस रिपॉज़िटरी को अभी तक कोई स्नैपशॉट नहीं मिला है। पहली कॉपी आते ही यह अपने आप सक्रिय हो जाएगी, इसलिए इस बीच यहाँ ठीक करने को कुछ नहीं है।",
+  "fleet.mesh.receiverWaiting": "{peer} के लिए आपका अपना रिसीवर पहले से सेट है और पहली कॉपी का इंतज़ार कर रहा है।",
+  "pull.credsAutoHint": "कोई नहीं पर छोड़ने पर, BombVault उसी पते के लिए सेव किया गया लॉगिन अपने आप फिर से इस्तेमाल करता है, जैसे कोई मेश ऑफ़र पहले ही बना चुका हो।",
   // General
   "language.label": "भाषा",
   "theme.dark": "डार्क",

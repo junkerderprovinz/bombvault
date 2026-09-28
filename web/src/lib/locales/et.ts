@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const et: Partial<Translations> = {
+  "receiver.waiting": "Ootab esimest koopiat",
+  "receiver.waitingTip": "See hoidla ei ole veel ühtegi hetktõmmist saanud. See lülitub ise aktiivseks niipea, kui esimene koopia saabub, seega pole siin vahepeal midagi parandada.",
+  "fleet.mesh.receiverWaiting": "Sinu enda vastuvõtja peeri {peer} jaoks on juba seadistatud ja ootab esimest koopiat.",
+  "pull.credsAutoHint": "Kui jätta valikuks Puudub, kasutab BombVault sama aadressi jaoks automaatselt salvestatud sisselogimisandmeid, näiteks neid, mille on juba loonud võrgupakkumine.",
   // General
   "language.label": "Keel",
   "theme.dark": "Tume",

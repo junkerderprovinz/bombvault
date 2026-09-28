@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const eu: Partial<Translations> = {
+  "receiver.waiting": "Lehen kopiaren zain",
+  "receiver.waitingTip": "Biltegi honek oraindik ez du argazkirik jaso. Bere kabuz aktibo bihurtuko da lehen kopia iritsi bezain laster, beraz, bitartean ez dago konpontzeko ezer hemen.",
+  "fleet.mesh.receiverWaiting": "{peer}(r)entzako zeure hartzailea jadanik konfiguratuta dago eta lehen kopiaren zain dago.",
+  "pull.credsAutoHint": "Bat ere ez aukeran uzten bada, BombVault-ek helbide bererako gordetako saioa automatikoki berrerabiltzen du, esaterako sare-eskaintza batek jada sortu duena.",
   // General
   "language.label": "Hizkuntza",
   "theme.dark": "Iluna",

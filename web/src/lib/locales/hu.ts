@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const hu: Partial<Translations> = {
+  "receiver.waiting": "Az első másolatra vár",
+  "receiver.waitingTip": "Ez a tároló még nem kapott pillanatképet. Magától aktívvá válik, amint megérkezik az első másolat, tehát addig nincs itt semmi javítanivaló.",
+  "fleet.mesh.receiverWaiting": "A saját fogadód a(z) {peer} számára már be van állítva, és az első másolatra vár.",
+  "pull.credsAutoHint": "Ha Nincs marad, a BombVault automatikusan újra felhasznál egy elmentett bejelentkezést ugyanahhoz a címhez, például egyet, amit egy hálós ajánlat már létrehozott.",
   // General
   "language.label": "Nyelv",
   "theme.dark": "Sötét",

@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const ja: Partial<Translations> = {
+  "receiver.waiting": "最初のコピーを待っています",
+  "receiver.waitingTip": "このリポジトリはまだスナップショットを受信していません。最初のコピーが届き次第、自動的にアクティブに切り替わるので、その間ここで直す必要はありません。",
+  "fleet.mesh.receiverWaiting": "{peer} 用の自分のレシーバーはすでに設定済みで、最初のコピーを待っています。",
+  "pull.credsAutoHint": "「なし」のままにしておくと、BombVault は同じアドレス用に保存済みのログイン情報を自動的に再利用します。たとえばメッシュオファーがすでに作成したものです。",
   // General
   "language.label": "言語",
   "theme.dark": "ダーク",

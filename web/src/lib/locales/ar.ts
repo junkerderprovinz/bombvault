@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const ar: Partial<Translations> = {
+  "receiver.waiting": "بانتظار أول نسخة",
+  "receiver.waitingTip": "لم يستلم هذا المستودع أي نسخة لقطة بعد. يتحول إلى نشط من تلقاء نفسه بمجرد وصول أول نسخة، فلا شيء يحتاج إلى إصلاح هنا في هذه الأثناء.",
+  "fleet.mesh.receiverWaiting": "المستقبِل الخاص بك لدى {peer} مُعدّ بالفعل وينتظر أول نسخة.",
+  "pull.credsAutoHint": "إن تُرك على لا شيء، يعيد BombVault تلقائيًا استخدام بيانات دخول محفوظة لنفس العنوان، مثل تلك التي أنشأها عرض شبكي بالفعل.",
   // General
   "language.label": "اللغة",
   "theme.dark": "داكن",

@@ -1,6 +1,10 @@
 import type { Translations } from "../i18n";
 
 const sr: Partial<Translations> = {
+  "receiver.waiting": "Чека прву копију",
+  "receiver.waitingTip": "Ово складиште још није примило ниједан снимак. Само ће прећи у активно чим стигне прва копија, тако да овде у међувремену нема шта да се поправља.",
+  "fleet.mesh.receiverWaiting": "Твој сопствени пријемник за {peer} је већ подешен и чека прву копију.",
+  "pull.credsAutoHint": "Ако остане на Ништа, BombVault аутоматски поново користи сачувану пријаву за исту адресу, на пример ону коју је већ направила мрежна понуда.",
   // General
   "language.label": "Језик",
   "theme.dark": "Тамна",

@@ -248,7 +248,14 @@ function ReceivedRepoCard({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-carbon-text text-sm truncate max-md:whitespace-normal max-md:wrap-break-word">{repo.name}</span>
             {!repo.enabled && <Badge tone="neutral">{t("receiver.monitoringOff")}</Badge>}
+            {repo.enabled && repo.waiting && (
+              <Badge tone="warn">
+                {t("receiver.waiting")}
+                <InfoBubble tip={t("receiver.waitingTip")} onAccent />
+              </Badge>
+            )}
             {repo.enabled &&
+              !repo.waiting &&
               (repo.reachable ? (
                 <Badge tone="ok">{t("receiver.reachable")}</Badge>
               ) : (
