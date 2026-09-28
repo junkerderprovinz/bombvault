@@ -247,6 +247,21 @@ func TestStartTestRecordsACopyThatStops(t *testing.T) {
 	}
 }
 
+func TestStartTestNamesWhatTheCopyRanWithoutWhenItFails(t *testing.T) {
+	d := &startTestDocker{states: []dockercli.IsolatedState{{Running: false, ExitCode: 1}}}
+	in := whoamiRecipe()
+	in.HostConfig.CapAdd = []string{"NET_ADMIN"}
+	in.HostConfig.SecurityOpt = []string{"apparmor=unconfined"}
+	s, tg, _ := newStartTestService(t, d, in)
+	rec, err := s.RunStartTest(context.Background(), tg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.OK || !strings.Contains(rec.Detail, "NET_ADMIN") || !strings.Contains(rec.Detail, "apparmor=unconfined") {
+		t.Fatalf("start test = %+v, want a failure that names the privileges left out", rec)
+	}
+}
+
 func TestStartTestChecksThePortWithoutAHealthcheck(t *testing.T) {
 	d := &startTestDocker{states: []dockercli.IsolatedState{{Running: true, ExposedPorts: []string{"80/tcp"}}}}
 	s, tg, _ := newStartTestService(t, d, whoamiRecipe())

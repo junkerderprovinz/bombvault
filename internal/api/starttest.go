@@ -247,9 +247,20 @@ func (s *Service) runStartTestCopy(ctx context.Context, host dockercli.StartTest
 		Labels:      map[string]string{dockercli.StartTestLabel + ".of": tg.ContainerName},
 	}
 	if err := host.StartIsolated(ctx, spec); err != nil {
-		return "", fmt.Errorf("the copy did not start: %w", err)
+		return "", withoutPrivileges(fmt.Errorf("the copy did not start: %w", err), def.Inspect)
 	}
-	return s.judgeStartTest(ctx, host, name, netName, suffix)
+	method, err := s.judgeStartTest(ctx, host, name, netName, suffix)
+	return method, withoutPrivileges(err, def.Inspect)
+}
+
+// withoutPrivileges adds to a failed start test what the copy ran without,
+// since an app that needs an added capability fails for that reason alone.
+func withoutPrivileges(err error, in model.Inspect) error {
+	granted := dockercli.GrantedPrivileges(in)
+	if err == nil || len(granted) == 0 {
+		return err
+	}
+	return fmt.Errorf("%w; the copy ran without what the original is granted: %s", err, strings.Join(granted, "; "))
 }
 
 // restoreForStartTest restores the backup's data into the sandbox under the
