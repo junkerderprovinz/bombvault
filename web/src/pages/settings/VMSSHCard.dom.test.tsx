@@ -80,3 +80,15 @@ it("turns the button red with Not connected and a cross, shakes it and gives the
   const reason = screen.getByText("Permission denied (publickey)");
   expect(reason.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
+
+// jsdom lays nothing out, so the tokens stand in for the geometry: a flex
+// item keeps its content's width unless it may shrink, and the command then
+// ran out of the card on the right.
+it("wraps the authorize command inside its box instead of running out of the card", async () => {
+  await runTest();
+  const command = document.querySelector("pre")!;
+  expect(command.textContent).toContain("ssh-ed25519 AAAA bombvault");
+  expect(command.className).toContain("min-w-0");
+  expect(command.className).toContain("whitespace-pre-wrap");
+  expect(command.className).toContain("break-all");
+});
