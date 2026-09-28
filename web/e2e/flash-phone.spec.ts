@@ -242,30 +242,41 @@ async function expectNothingPansOrClips(page: Page): Promise<void> {
   await expect(page.locator("#bv-main")).not.toContainText("`");
 }
 
-// Each backup row by its short id, with the id's box and its two actions.
-async function rowBoxes(page: Page, id: string) {
-  const idText = page.getByText(id.slice(0, 8), { exact: true });
-  const row = idText.locator("xpath=../..");
-  return {
-    id: (await idText.boundingBox())!,
-    download: (await row.getByRole("button", { name: "Download (.zip)" }).boundingBox())!,
-    remove: (await row.getByRole("button", { name: "Löschen", exact: true }).boundingBox())!,
-  };
+// Each backup row by its short id, with the id's box and its two actions. One
+// read covers all rows, because WebKit on a busy machine spends most of a
+// second on each round trip.
+async function rowBoxes(page: Page, ids: string[]) {
+  return page.evaluate(
+    (shorts) =>
+      shorts.map((short) => {
+        const idText = [...document.querySelectorAll("#bv-main span")].find((el) => el.textContent === short);
+        if (!idText) throw new Error(`no backup row ${short}`);
+        const row = idText.parentElement!.parentElement!;
+        const box = (el: Element | undefined) => {
+          if (!el) throw new Error(`backup row ${short} lacks an action`);
+          const r = el.getBoundingClientRect();
+          return { x: r.x, y: r.y, width: r.width, height: r.height };
+        };
+        const button = (name: string) => box([...row.querySelectorAll("button")].find((b) => b.textContent?.trim() === name));
+        return { short, id: box(idText), download: button("Download (.zip)"), remove: button("Löschen") };
+      }),
+    ids.map((id) => id.slice(0, 8)),
+  );
 }
 
 for (const width of [320, 360]) {
   test(`flash @ ${width}px: both sources fit, and each backup's actions wrap under it`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
+    test.slow(testInfo.project.name === "mobile-iphone", "WebKit runs this walk through both sources near the 30s budget when the machine is busy");
     // A finding's restore link picks the flagged backup, which then stands out.
     await bootGerman(page, width, { query: `?restore=${LOCAL[1].id}` });
 
     expect(await cardGap(page)).toBe("24px");
     await expect(page.getByText("Als Anomalie markiert")).toBeVisible();
     await expectNothingPansOrClips(page);
-    for (const { id } of LOCAL) {
-      const box = await rowBoxes(page, id);
-      expect(box.download.y, `the actions of ${id.slice(0, 8)} share the id's line`).toBeGreaterThanOrEqual(box.id.y + box.id.height);
-      expect(box.remove.x + box.remove.width, `Löschen of ${id.slice(0, 8)} passes the edge`).toBeLessThanOrEqual(width);
+    for (const box of await rowBoxes(page, LOCAL.map((s) => s.id))) {
+      expect(box.download.y, `the actions of ${box.short} share the id's line`).toBeGreaterThanOrEqual(box.id.y + box.id.height);
+      expect(box.remove.x + box.remove.width, `Löschen of ${box.short} passes the edge`).toBeLessThanOrEqual(width);
     }
 
     // The copies at a target, picked on each backup's own place switch.
@@ -276,9 +287,8 @@ for (const width of [320, 360]) {
     }
     await settle(page);
     await expectNothingPansOrClips(page);
-    for (const { id } of OFFSITE) {
-      const box = await rowBoxes(page, id);
-      expect(box.download.y, `the actions of ${id.slice(0, 8)} share the id's line`).toBeGreaterThanOrEqual(box.id.y + box.id.height);
+    for (const box of await rowBoxes(page, OFFSITE.map((s) => s.id))) {
+      expect(box.download.y, `the actions of ${box.short} share the id's line`).toBeGreaterThanOrEqual(box.id.y + box.id.height);
     }
 
     // useConfirm answers with the bottom sheet on a phone, whose buttons have
@@ -288,7 +298,7 @@ for (const width of [320, 360]) {
     await expect(dialog.getByText("Diese Sicherung hier löschen", { exact: false })).toBeVisible();
     // WebKit reports the sheet visible before it slides in, so wait until its
     // answers are on screen and have held still for three frames.
-    await dialog.evaluate(async (sheet) => {
+    const answers = await dialog.evaluate(async (sheet) => {
       const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
       let last = "";
       for (let still = 0; still < 3; ) {
@@ -299,12 +309,17 @@ for (const width of [320, 360]) {
         still = now === last && onScreen ? still + 1 : 0;
         last = now;
       }
+      return [...sheet.querySelectorAll("button")].map((b) => {
+        const r = b.getBoundingClientRect();
+        return { name: b.textContent?.trim(), x: r.x, y: r.y, width: r.width, height: r.height };
+      });
     });
     for (const name of ["Abbrechen", "Löschen"]) {
-      const box = (await dialog.getByRole("button", { name, exact: true }).boundingBox())!;
-      expect(box.x, `${name} starts off screen`).toBeGreaterThanOrEqual(0);
-      expect(box.x + box.width, `${name} passes the edge`).toBeLessThanOrEqual(width);
-      expect(box.y + box.height, `${name} sits below the fold`).toBeLessThanOrEqual(800);
+      const box = answers.find((b) => b.name === name);
+      expect(box, `the sheet has no ${name}`).toBeDefined();
+      expect(box!.x, `${name} starts off screen`).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width, `${name} passes the edge`).toBeLessThanOrEqual(width);
+      expect(box!.y + box!.height, `${name} sits below the fold`).toBeLessThanOrEqual(800);
     }
   });
 }
@@ -324,9 +339,8 @@ test("flash on the desktop keeps the 40px rhythm and each backup's actions on on
   await bootGerman(page, testInfo.project.use.viewport!.width);
 
   expect(await cardGap(page)).toBe("40px");
-  for (const { id } of LOCAL) {
-    const box = await rowBoxes(page, id);
-    const middle = (b: { y: number; height: number }) => Math.round(b.y + b.height / 2);
-    expect(middle(box.remove), `Löschen of ${id.slice(0, 8)} left the download's line`).toBe(middle(box.download));
+  const middle = (b: { y: number; height: number }) => Math.round(b.y + b.height / 2);
+  for (const box of await rowBoxes(page, LOCAL.map((s) => s.id))) {
+    expect(middle(box.remove), `Löschen of ${box.short} left the download's line`).toBe(middle(box.download));
   }
 });
