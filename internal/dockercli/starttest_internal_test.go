@@ -13,9 +13,11 @@ func TestIsolatedConfigTakesAwayEveryWayOut(t *testing.T) {
 			Image: "lscr.io/linuxserver/nextcloud",
 			Env:   []string{"PUID=99"},
 			Labels: map[string]string{
-				"com.docker.compose.project": "cloud",
-				"net.unraid.docker.managed":  "dockerman",
-				"org.opencontainers.version": "1",
+				"com.docker.compose.project":            "cloud",
+				"net.unraid.docker.managed":             "dockerman",
+				"org.opencontainers.version":            "1",
+				"traefik.enable":                        "true",
+				"com.centurylinklabs.watchtower.enable": "true",
 			},
 		},
 		HostConfig: model.HostConfig{
@@ -26,6 +28,11 @@ func TestIsolatedConfigTakesAwayEveryWayOut(t *testing.T) {
 			NetworkMode:   "br0.20",
 			PidMode:       "host",
 			Devices:       []model.DeviceMapping{{PathOnHost: "/dev/dri"}},
+			CapAdd:        []string{"SYS_ADMIN", "NET_ADMIN"},
+			CapDrop:       []string{"MKNOD"},
+			SecurityOpt:   []string{"apparmor=unconfined", "seccomp=unconfined", "systempaths=unconfined", "no-new-privileges:true"},
+			Sysctls:       map[string]string{"net.ipv4.ip_forward": "1"},
+			CgroupParent:  "/system.slice",
 		},
 		Network: model.NetworkEndpoint{Name: "br0.20", IPv4Address: "192.168.20.5"},
 	}
@@ -65,14 +72,17 @@ func TestIsolatedConfigTakesAwayEveryWayOut(t *testing.T) {
 	if cfg.Labels[StartTestLabel] != "1" || cfg.Labels["bombvault.starttest.of"] != "nextcloud" {
 		t.Fatalf("labels = %v", cfg.Labels)
 	}
-	if _, ok := cfg.Labels["com.docker.compose.project"]; ok {
-		t.Fatal("the copy must not join the compose project")
+	if len(cfg.Labels) != 2 {
+		t.Fatalf("labels = %v, want only BombVault's own: another tool would act on the copy", cfg.Labels)
 	}
-	if _, ok := cfg.Labels["net.unraid.docker.managed"]; ok {
-		t.Fatal("the copy must not show as a managed Unraid app")
+	if len(hc.CapAdd) != 0 || len(hc.Sysctls) != 0 || hc.CgroupParent != "" {
+		t.Fatalf("added privileges must be gone: caps=%v sysctls=%v cgroup=%q", hc.CapAdd, hc.Sysctls, hc.CgroupParent)
 	}
-	if cfg.Labels["org.opencontainers.version"] != "1" {
-		t.Fatal("other labels stay")
+	if len(hc.SecurityOpt) != 1 || hc.SecurityOpt[0] != "no-new-privileges:true" {
+		t.Fatalf("security options = %v, want only the one that restricts", hc.SecurityOpt)
+	}
+	if len(hc.CapDrop) != 1 {
+		t.Fatalf("dropped capabilities = %v, want them kept", hc.CapDrop)
 	}
 	if from.HostConfig.Privileged != true || len(from.HostConfig.Binds) != 2 {
 		t.Fatal("the recipe itself must stay untouched")
