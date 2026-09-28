@@ -6,10 +6,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -98,13 +101,7 @@ func TestAnnounceWithARewrittenAddressIsIgnored(t *testing.T) {
 // test wants to spoil.
 func signedPost(t *testing.T, url string, peerAuth []byte, sender string, sent time.Time, req relay.ProxyRequest) int {
 	t.Helper()
-	payload, _ := json.Marshal(req)
-	unix := strconv.FormatInt(sent.Unix(), 10)
-	r, _ := http.NewRequest(http.MethodPost, url+directPath, bytes.NewReader(payload))
-	r.Header.Set(headerPeer, sender)
-	r.Header.Set(headerTime, unix)
-	r.Header.Set(headerSignature, directSignature(peerAuth, sender, unix, payload))
-	resp, err := NewManager(echo).hc.Do(r)
+	resp, err := NewManager(echo).hc.Do(directRequest(url, peerAuth, sender, sent, req))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,14 +109,113 @@ func signedPost(t *testing.T, url string, peerAuth []byte, sender string, sent t
 	return resp.StatusCode
 }
 
+func directRequest(url string, peerAuth []byte, sender string, sent time.Time, req relay.ProxyRequest) *http.Request {
+	payload, _ := json.Marshal(req)
+	unix := strconv.FormatInt(sent.Unix(), 10)
+	r, _ := http.NewRequest(http.MethodPost, url+directPath, bytes.NewReader(payload))
+	r.Header.Set(headerPeer, sender)
+	r.Header.Set(headerTarget, req.Target)
+	r.Header.Set(headerTime, unix)
+	r.Header.Set(headerSignature, directSignature(peerAuth, sender, unix, payload))
+	return r
+}
+
 func sealedFor(t *testing.T, target string) relay.ProxyRequest {
 	t.Helper()
+	return sealedCall(t, target, relay.ProxyCall{Method: "GET", Path: "/api/group/peer/status"})
+}
+
+func sealedCall(t *testing.T, target string, call relay.ProxyCall) relay.ProxyRequest {
+	t.Helper()
 	id, _ := relay.NewRequestID()
-	sealed, err := relay.SealCall(relay.DeriveFrameKey(testSecret), id, target, relay.ProxyCall{Method: "GET", Path: "/api/group/peer/status"})
+	sealed, err := relay.SealCall(relay.DeriveFrameKey(testSecret), id, target, call)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return relay.ProxyRequest{RequestID: id, Target: target, Sealed: sealed}
+}
+
+// countingBody reports how much of a request body the server read.
+type countingBody struct {
+	r    io.Reader
+	read atomic.Int64
+}
+
+func (c *countingBody) Read(p []byte) (int, error) {
+	n, err := c.r.Read(p)
+	c.read.Add(int64(n))
+	return n, err
+}
+
+func (c *countingBody) Close() error { return nil }
+
+func TestAStaleOrMisaddressedDirectCallIsRefusedBeforeItsBodyIsRead(t *testing.T) {
+	b := NewManager(echo)
+	t.Cleanup(b.Close)
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
+	good := PeerAuthKey(testSecret)
+	for name, r := range map[string]*http.Request{
+		"stale":        directRequest("", good, "id-a", time.Now().Add(-10*time.Minute), sealedFor(t, "id-b")),
+		"misaddressed": directRequest("", good, "id-a", time.Now(), sealedFor(t, "id-c")),
+	} {
+		body := &countingBody{r: io.MultiReader(r.Body, bytes.NewReader(make([]byte, 4<<20)))}
+		r.Body, r.ContentLength = body, -1
+		w := httptest.NewRecorder()
+		b.ServeDirect(w, r)
+		if w.Code != http.StatusForbidden || body.read.Load() != 0 {
+			t.Errorf("a %s call got HTTP %d after %d bytes were read, want 403 before any", name, w.Code, body.read.Load())
+		}
+	}
+}
+
+func TestADirectCallOverTheSizeLimitIsRefused(t *testing.T) {
+	_, pb := member(t, "id-b", "Attic", testSecret, echo)
+	big := sealedCall(t, "id-b", relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/mesh-offer", Body: bytes.Repeat([]byte("x"), MaxCallBytes)})
+	if code := signedPost(t, pb.URL, PeerAuthKey(testSecret), "id-a", time.Now(), big); code != http.StatusForbidden {
+		t.Fatalf("a signed call over the limit got HTTP %d, want 403", code)
+	}
+}
+
+func TestDirectCallsBeyondTheCapAreTurnedAway(t *testing.T) {
+	release := make(chan struct{})
+	var serving atomic.Int32
+	b := NewManager(func(context.Context, relay.ProxyCall) (int, []byte) {
+		serving.Add(1)
+		<-release
+		return http.StatusOK, nil
+	})
+	t.Cleanup(b.Close)
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
+	good := PeerAuthKey(testSecret)
+	var wg sync.WaitGroup
+	defer func() {
+		close(release)
+		wg.Wait()
+	}()
+	for range maxDirectCalls {
+		wg.Go(func() {
+			b.ServeDirect(httptest.NewRecorder(), directRequest("", good, "id-a", time.Now(), sealedFor(t, "id-b")))
+		})
+	}
+	deadline := time.Now().Add(10 * time.Second)
+	for serving.Load() < maxDirectCalls && time.Now().Before(deadline) {
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	extra := make(chan int, 1)
+	wg.Go(func() {
+		w := httptest.NewRecorder()
+		b.ServeDirect(w, directRequest("", good, "id-a", time.Now(), sealedFor(t, "id-b")))
+		extra <- w.Code
+	})
+	select {
+	case code := <-extra:
+		if code != http.StatusServiceUnavailable {
+			t.Fatalf("the call past the cap got HTTP %d, want 503", code)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("the call past the cap waited for a slot instead of being turned away")
+	}
 }
 
 func TestDirectCallIsRefusedUnlessSignedFreshAndNew(t *testing.T) {

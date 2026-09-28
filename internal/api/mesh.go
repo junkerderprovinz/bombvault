@@ -36,8 +36,10 @@ type meshOfferRequest struct {
 	RESTPassword    string `json:"restPassword"`
 }
 
-// meshOfferBodyMax caps an offer's body.
-const meshOfferBodyMax = 1 << 20
+// meshOfferBodyMax caps an offer's body. A real offer is a few hundred bytes,
+// and the cap keeps the largest one inside group.MaxCallBytes once it is
+// sealed and encoded for the wire.
+const meshOfferBodyMax = 64 << 10
 
 // handlePeerMeshOffer stores a member's offer as a pending store.MeshOffer
 // for the admin to review. POST /api/group/peer/mesh-offer

@@ -91,10 +91,17 @@ const directPath = "/api/group/call"
 
 const (
 	headerPeer      = "X-Bombvault-Peer"
+	headerTarget    = "X-Bombvault-Target"
 	headerTime      = "X-Bombvault-Time"
 	headerSignature = "X-Bombvault-Signature"
-	// directBodyLimit caps one direct call or answer.
-	directBodyLimit = 8 << 20
+	// MaxCallBytes caps a direct call as it arrives, before anything in it
+	// is checked. A mesh offer, the largest call a member makes, stays far
+	// below it.
+	MaxCallBytes = 1 << 20
+	// maxAnswerBytes caps a direct answer, which can carry a whole scorecard.
+	maxAnswerBytes = 8 << 20
+	// maxDirectCalls is how many direct calls are served at once.
+	maxDirectCalls = 16
 )
 
 type keys struct {
@@ -118,6 +125,8 @@ type Manager struct {
 	replay *relay.ReplayGuard
 	disc   *discovery.Service
 	hc     *http.Client
+	// slots holds one token per direct call being served.
+	slots chan struct{}
 
 	mu     sync.Mutex
 	cfg    Config
@@ -132,6 +141,7 @@ func NewManager(serve relay.Handler) *Manager {
 		serve:  serve,
 		replay: relay.NewReplayGuard(),
 		disc:   discovery.New(),
+		slots:  make(chan struct{}, maxDirectCalls),
 		hc: &http.Client{
 			Timeout: relay.CallTimeout,
 			CheckRedirect: func(*http.Request, []*http.Request) error {
@@ -355,6 +365,7 @@ func (m *Manager) callDirect(ctx context.Context, k *keys, self string, p discov
 	now := strconv.FormatInt(time.Now().Unix(), 10)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set(headerPeer, self)
+	req.Header.Set(headerTarget, p.ID)
 	req.Header.Set(headerTime, now)
 	req.Header.Set(headerSignature, directSignature(k.peerAuth, self, now, payload))
 
@@ -363,7 +374,7 @@ func (m *Manager) callDirect(ctx context.Context, k *keys, self string, p discov
 		return relay.ProxyResult{}, fmt.Errorf("group: %s is not reachable directly: %w", p.Name, err)
 	}
 	defer resp.Body.Close() //nolint:errcheck // nothing to do about a failed close of a read body
-	raw, err := io.ReadAll(io.LimitReader(resp.Body, directBodyLimit))
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, maxAnswerBytes))
 	if err != nil {
 		return relay.ProxyResult{}, err
 	}
@@ -398,18 +409,27 @@ func (m *Manager) ServeDirect(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	body, err := io.ReadAll(io.LimitReader(r.Body, directBodyLimit))
-	if err != nil {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-	sender, unix := r.Header.Get(headerPeer), r.Header.Get(headerTime)
+	// The route is public, so whatever a stranger can send without the key
+	// is checked before the body is read.
+	sender, target, unix := r.Header.Get(headerPeer), r.Header.Get(headerTarget), r.Header.Get(headerTime)
 	sent, err := strconv.ParseInt(unix, 10, 64)
-	if err != nil || sender == "" {
+	if err != nil || sender == "" || target != self || r.ContentLength > MaxCallBytes {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
 	if d := time.Since(time.Unix(sent, 0)); d > relay.ClockSkew || d < -relay.ClockSkew {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+	select {
+	case m.slots <- struct{}{}:
+		defer func() { <-m.slots }()
+	default:
+		http.Error(w, "busy", http.StatusServiceUnavailable)
+		return
+	}
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, MaxCallBytes))
+	if err != nil {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
@@ -419,7 +439,7 @@ func (m *Manager) ServeDirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req relay.ProxyRequest
-	if json.Unmarshal(body, &req) != nil || req.RequestID == "" || req.Target != self {
+	if json.Unmarshal(body, &req) != nil || req.RequestID == "" || req.Target != target {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}

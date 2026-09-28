@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
@@ -473,5 +474,18 @@ func TestAnOldFleetRowIsTakenOverByTheMemberWithItsName(t *testing.T) {
 	}
 	if peers[0].ID != old.ID || peers[0].MemberID != b.id(t) || peers[0].NeedsPairing() {
 		t.Fatalf("fleet row = %+v, want the old row paired with attic", peers[0])
+	}
+}
+
+func TestTheLargestMeshOfferFitsADirectCall(t *testing.T) {
+	call := relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/mesh-offer", Body: bytes.Repeat([]byte("x"), meshOfferBodyMax)}
+	id, _ := relay.NewRequestID()
+	sealed, err := relay.SealCall(relay.DeriveFrameKey([]byte("0123456789abcdef")), id, strings.Repeat("f", 32), call)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wire, _ := json.Marshal(relay.ProxyRequest{RequestID: id, Target: strings.Repeat("f", 32), Sealed: sealed})
+	if len(wire) > group.MaxCallBytes {
+		t.Fatalf("an offer at the %d byte cap is %d bytes on the wire, over the %d a member takes directly", meshOfferBodyMax, len(wire), group.MaxCallBytes)
 	}
 }
