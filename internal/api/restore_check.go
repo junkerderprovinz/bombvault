@@ -133,6 +133,10 @@ type restoreScope struct {
 	fixedNeed int64
 	fixedAt   string
 	download  bool
+	// newDataset is the ZFS dataset a restore creates. It is empty until the
+	// restore writes into it, so the dry run compares against an empty folder
+	// and the plan lists the files under the dataset's name.
+	newDataset string
 }
 
 // CheckRestore runs the pre-flight checks for a restore and, when they get
@@ -474,7 +478,7 @@ func fileSetFilesScope(plan fileSetFilesRestorePlan) restoreScope {
 
 // zfsScope mirrors restoreZFSStep and restoreZFSFile.
 func zfsScope(plan zfsRestorePlan) restoreScope {
-	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, inPlace: plan.inPlace}
+	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, inPlace: plan.inPlace, newDataset: plan.newDataset}
 	excludes := make([]string, len(plan.covered))
 	for i, c := range plan.covered {
 		excludes[i] = escapeGlobLiteral(c)

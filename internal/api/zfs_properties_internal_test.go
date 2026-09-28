@@ -3,10 +3,13 @@ package api
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
@@ -237,5 +240,66 @@ func TestZFSRestoreSetsQuotasAfterTheFilesAndTheRestBefore(t *testing.T) {
 	after, okA := restoredAt["set quota=1024 "+zfsRoot]
 	if !okB || !okA || before != 0 || after != 1 {
 		t.Fatalf("restores done when each set ran = %v, want compression before the files and the quota after", restoredAt)
+	}
+}
+
+// emptyTargetEngine answers a dry run for a target that must be empty, and
+// records what that target held when restic would have compared against it.
+type emptyTargetEngine struct {
+	*zfsFakeEngine
+	targets []string
+	held    []int
+}
+
+func (e *emptyTargetEngine) RepoOpensErr(context.Context, string, restic.Mode) error { return nil }
+
+func (e *emptyTargetEngine) RestorePreview(_ context.Context, _ string, st restic.PreviewStep, _ restic.Mode, onItem func(restic.PreviewItem)) error {
+	e.targets = append(e.targets, st.Target)
+	entries, _ := os.ReadDir(st.Target)
+	e.held = append(e.held, len(entries))
+	onItem(restic.PreviewItem{Action: "restored", Item: "/photos/a.jpg", Size: 5})
+	return nil
+}
+
+// A dataset that does not exist yet is empty, so its plan lists every file as
+// new, even when BombVault cannot see where its parent is mounted.
+func TestZFSRestoreCheckIntoANewDatasetComparesAgainstNothing(t *testing.T) {
+	for _, source := range []string{"/mnt", "/srv/data"} {
+		s, st, host, eng := zfsRestoreFixture(t)
+		host.strictTree = true
+		s.cfg.HostSourceRoot = source
+		check := &emptyTargetEngine{zfsFakeEngine: eng}
+		s.engine = check
+		s.diskStat = func(string) (diskStatResult, error) { return diskStatResult{Free: 1 << 30, Volume: "pool:cache"}, nil }
+		if err := os.MkdirAll(filepath.Join(s.cfg.HostMountRoot, "unrelated"), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		d := zfsSeedItem(t, st, zfsRoot)
+		req := zfsRestoreRequest(zfsRoot)
+		req.NewDataset = "cache/copy"
+		req.SafetySnapshot = false
+
+		res, err := s.CheckRestore(context.Background(), RestoreCheckRequest{Kind: checkZFS, Name: d.ID, Source: "local", ZFS: req})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if res.Plan == nil || res.Plan.Added != 1 || res.Plan.Extra != 0 {
+			t.Fatalf("%s: plan = %+v", source, res.Plan)
+		}
+		for i, target := range check.targets {
+			if target == s.cfg.HostMountRoot || check.held[i] != 0 {
+				t.Fatalf("%s: the dry run compared against %s, which held %d entries", source, target, check.held[i])
+			}
+			if _, err := os.Stat(target); !os.IsNotExist(err) {
+				t.Fatalf("%s: the empty folder %s outlived the check", source, target)
+			}
+		}
+		if f := res.Plan.Files; len(f) != 1 || !strings.HasSuffix(f[0].Path, "cache/copy/photos/a.jpg") {
+			t.Fatalf("%s: files = %+v", source, f)
+		}
+		// Where the dataset will be mounted decides the room; unknown, it stays grey.
+		if want := map[bool]string{true: lineOK, false: lineSkip}[source == "/mnt"]; lineOf(t, res, lineSpace).Status != want {
+			t.Fatalf("%s: space = %+v, want %s", source, lineOf(t, res, lineSpace), want)
+		}
 	}
 }
