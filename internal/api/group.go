@@ -30,7 +30,7 @@ func (s *Service) buildGroup() {
 	s.groupOnce.Do(func() {
 		s.groupMgr = group.NewManager(s.servePeer)
 		s.relaySrv = relay.NewServer()
-		s.relaySrv.Admit = s.groupMgr.AdmitsRelayKey
+		s.relaySrv.Admit = func(key string) bool { return s.relayServe.Load() && s.groupMgr.AdmitsRelayKey(key) }
 		// Behind a trusted reverse proxy the relay counts failed handshakes
 		// per client, as the login throttle does, not per proxy.
 		s.relaySrv.ClientAddr = func(r *http.Request) string { return clientKeyBehind(s.cfg.TrustedProxies, r) }
@@ -101,6 +101,10 @@ func (s *Service) applyGroup() {
 		Mode:       group.Mode(g.RelayMode),
 		RelayURL:   g.RelayURL,
 	})
+	// Connections admitted under the old key or before the switch went off
+	// would otherwise stay open until they drop.
+	s.relayServe.Store(g.RelayServe)
+	s.relayServer().Revoke()
 }
 
 // instanceDisplayName is the name other members show this instance under.

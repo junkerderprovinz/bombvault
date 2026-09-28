@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/coder/websocket"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
@@ -524,4 +525,60 @@ func TestTheLargestMeshOfferFitsADirectCall(t *testing.T) {
 	if len(wire) > group.MaxCallBytes {
 		t.Fatalf("an offer at the %d byte cap is %d bytes on the wire, over the %d a member takes directly", meshOfferBodyMax, len(wire), group.MaxCallBytes)
 	}
+}
+
+// dialServedRelay connects to the relay an instance serves the way a member
+// would and reports once the relay has registered the connection.
+func dialServedRelay(t *testing.T, in *instance, url string) *websocket.Conn {
+	t.Helper()
+	g, err := in.st.GetGroupState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sec, err := in.svc.groupSecret(g)
+	if err != nil || sec == nil {
+		t.Fatalf("group secret: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	ws, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(url, "http")+relayConnectPath, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = ws.CloseNow() })
+	ident, _ := relay.SealIdentity(relay.DeriveFrameKey(sec), "member", relay.Identity{Name: "member"})
+	hello, _ := relay.Encode(relay.TypeHello, relay.Hello{Key: relay.DeriveKey(sec), Announce: relay.Announce{InstanceID: "member", Sealed: ident}})
+	if err := ws.Write(ctx, websocket.MessageText, hello); err != nil {
+		t.Fatal(err)
+	}
+	waitForRelayClients(t, in, 1)
+	return ws
+}
+
+func waitForRelayClients(t *testing.T, in *instance, want int) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for in.svc.relayServer().Len() != want {
+		if time.Now().After(deadline) {
+			t.Fatalf("the served relay holds %d connections, want %d", in.svc.relayServer().Len(), want)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func TestTheServedRelayDropsItsConnectionsWhenTheSwitchGoesOffOrTheGroupIsLeft(t *testing.T) {
+	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	srv := httptest.NewServer(in.router)
+	t.Cleanup(srv.Close)
+	in.do(t, http.MethodPut, "/api/group/relay", map[string]any{"mode": "off", "serve": true})
+	in.do(t, http.MethodPost, "/api/group/phrase", nil)
+
+	dialServedRelay(t, in, srv.URL)
+	in.do(t, http.MethodPut, "/api/group/relay", map[string]any{"serve": false})
+	waitForRelayClients(t, in, 0)
+
+	in.do(t, http.MethodPut, "/api/group/relay", map[string]any{"serve": true})
+	dialServedRelay(t, in, srv.URL)
+	in.do(t, http.MethodDelete, "/api/group", nil)
+	waitForRelayClients(t, in, 0)
 }

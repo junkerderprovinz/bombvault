@@ -538,3 +538,24 @@ func TestEnvelopeShapeIsStable(t *testing.T) {
 		})
 	}
 }
+
+func TestRevokeClosesTheConnectionsOnAKeyNoLongerAdmitted(t *testing.T) {
+	s := NewServer()
+	var served atomic.Value
+	served.Store("old-key-0123456789abcdef0123456789")
+	s.Admit = func(key string) bool { return key == served.Load() }
+	old := join(t, s, "old-key-0123456789abcdef0123456789", "alpha")
+	s.Revoke()
+	if old.closed.Load() || s.Len() != 1 {
+		t.Fatal("Revoke closed a connection whose key is still admitted")
+	}
+
+	served.Store("new-key-0123456789abcdef0123456789")
+	s.Revoke()
+	if !old.closed.Load() || s.Len() != 0 {
+		t.Fatalf("after the key changed the old connection is open=%v, registered=%d", !old.closed.Load(), s.Len())
+	}
+	if s.Join("old-key-0123456789abcdef0123456789", newFakeConn(), Announce{InstanceID: "bravo"}) {
+		t.Fatal("a connection that passed the handshake on the old key joined after the change")
+	}
+}

@@ -503,9 +503,12 @@ type Service struct {
 	// groupOnce builds groupMgr, which connects this instance to the others
 	// that share its pairing phrase, and relaySrv, the relay it serves when
 	// that switch is on. Built on first use, so a Service literal works too.
-	groupOnce      sync.Once
-	groupMgr       *group.Manager
-	relaySrv       *relay.Server
+	groupOnce sync.Once
+	groupMgr  *group.Manager
+	relaySrv  *relay.Server
+	// relayServe mirrors the stored serve switch for relaySrv.Admit, which
+	// runs on every relay handshake.
+	relayServe     atomic.Bool
 	peerMuxOnce    sync.Once
 	peerMuxHandler http.Handler
 }

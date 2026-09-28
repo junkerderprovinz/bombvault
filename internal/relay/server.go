@@ -124,8 +124,8 @@ func (s *Server) Len() int {
 // both ways. A connection announcing an instance id already on the key
 // replaces the old one, which is what a reconnect after a silently dead
 // socket looks like; requests still waiting on the old one fail at once.
-// Join reports false when the limits are reached or the connection joined
-// already, and the caller then closes it.
+// Join reports false when Admit no longer admits the key, the limits are
+// reached or the connection joined already, and the caller then closes it.
 func (s *Server) Join(key string, c Conn, a Announce) bool {
 	cl := &client{
 		conn:     c,
@@ -136,7 +136,9 @@ func (s *Server) Join(key string, c Conn, a Announce) bool {
 	}
 
 	s.mu.Lock()
-	if _, ok := s.clients[c]; ok {
+	// Admit is asked again under the lock, so a key revoked while this
+	// connection was shaking hands cannot slip in behind Revoke.
+	if _, ok := s.clients[c]; ok || !s.admits(key) {
 		s.mu.Unlock()
 		return false
 	}
@@ -203,6 +205,24 @@ func (s *Server) Leave(c Conn) {
 	gone := frameOf(TypePresence, Presence{InstanceID: cl.announce.InstanceID})
 	for _, sib := range siblings {
 		s.enqueue(sib, gone)
+	}
+}
+
+// Revoke closes every connection whose key Admit no longer admits. An
+// instance serving a relay calls it when its group or its serve switch
+// changes, since Admit is only asked on connect.
+func (s *Server) Revoke() {
+	s.mu.Lock()
+	var gone []Conn
+	for c, cl := range s.clients {
+		if !s.admits(cl.key) {
+			gone = append(gone, c)
+		}
+	}
+	s.mu.Unlock()
+	for _, c := range gone {
+		s.Leave(c)
+		_ = c.CloseNow()
 	}
 }
 
@@ -431,7 +451,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	s.limiter.succeed(addr)
 	if !s.Join(hello.Key, c, hello.Announce) {
-		_ = c.Close(websocket.StatusPolicyViolation, "too many instances are already connected with this relay key")
+		_ = c.Close(websocket.StatusPolicyViolation, "this relay cannot take the connection: the key is no longer served or too many instances use it")
 		return
 	}
 	defer s.Leave(c)
