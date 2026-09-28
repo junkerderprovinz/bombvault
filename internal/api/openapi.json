@@ -238,7 +238,7 @@
     "responses": {
       "BadRequest": { "description": "An argument is missing or wrong (invalid_argument, ambiguous).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
       "Unauthorized": { "description": "No token, or not an active one (no_token, invalid_token).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
-      "Forbidden": { "description": "The token may only read, or the run was not started by it (not_permitted).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "Forbidden": { "description": "The token may only read or the run was not started by it (not_permitted), or the request came from a page on another origin (forbidden_origin).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
       "NotFound": { "description": "No such item, run or finding (not_found).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
       "Conflict": { "description": "Something else is running, the domain is switched off, nothing is included, or the run is not running any more (busy, domain_off, nothing_to_back_up, not_running).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
       "TooManyRequests": {
