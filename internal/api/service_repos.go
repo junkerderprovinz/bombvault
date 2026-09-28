@@ -182,7 +182,7 @@ func (s *Service) validateItemRepoID(domain, id string) error {
 	}
 	named, err := s.store.GetNamedRepo(id)
 	if err != nil {
-		return errors.New("no such repository; pick one from the list in Settings")
+		return errors.New("no such repository; pick one from the item's list")
 	}
 	if !named.Enabled {
 		return fmt.Errorf("the repository %q is switched off", named.Name)

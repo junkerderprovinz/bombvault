@@ -1665,7 +1665,6 @@ const hr: Partial<Translations> = {
   "zfs.repoEffective": "Pohranjeno u {repo}",
   "zfs.repo": "Repozitorij za ovu stavku",
   "zfs.repoPlaceholder": "ostavi prazno za repozitorij ZFS skupova podataka",
-  "zfs.repoHint": "Gdje leže kopije ove stavke. Ostavi prazno i upotrijebit će se repozitorij ZFS skupova podataka. Na popisu su repozitoriji koje si postavio u Postavkama.",
   "zfs.repoLocked": "Ovo se više ne može mijenjati kad stavka ima kopije: ostaju u repozitoriju u koji su zapisane. Prvo obriši kopije ove stavke.",
   "zfs.membersSummary": "one={n} skup podataka|few={n} skupa podataka|other={n} skupova podataka",
   "zfs.skippedCount": "one={n} preskočeni skup podataka|few={n} preskočena skupa podataka|other={n} preskočenih skupova podataka",

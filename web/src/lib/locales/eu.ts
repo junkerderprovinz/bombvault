@@ -1665,7 +1665,6 @@ const eu: Partial<Translations> = {
   "zfs.repoEffective": "Hemen gordeta: {repo}",
   "zfs.repo": "Elementu honen biltegia",
   "zfs.repoPlaceholder": "utzi hutsik ZFS datu multzoen biltegia erabiltzeko",
-  "zfs.repoHint": "Non dauden elementu honen kopiak. Hutsik uzten baduzu, ZFS datu multzoen biltegia erabiltzen da. Zerrendan Ezarpenetan sortu dituzun biltegiak daude.",
   "zfs.repoLocked": "Hau ezin da aldatu elementuak kopiak dituenean: idatzi ziren biltegian geratzen dira. Ezabatu lehenik elementu honen kopiak.",
   "zfs.membersSummary": "{n} datu multzo",
   "zfs.skippedCount": "{n} datu multzo saltatuta",

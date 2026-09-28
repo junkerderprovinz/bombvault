@@ -1461,7 +1461,6 @@ const sv: Partial<Translations> = {
   "zfs.repoEffective": "Lagrad i {repo}",
   "zfs.repo": "Förråd för den här posten",
   "zfs.repoPlaceholder": "lämna tomt för att använda ZFS-datauppsättningarnas förråd",
-  "zfs.repoHint": "Var den här postens säkerhetskopior hamnar. Lämnar du fältet tomt används ZFS-datauppsättningarnas förråd. Listan innehåller de förråd du satt upp under Inställningar.",
   "zfs.repoLocked": "Det går inte att ändra när posten väl har säkerhetskopior: de stannar i det förråd de skrevs till. Ta bort postens säkerhetskopior först.",
   "zfs.membersSummary": "one={n} datauppsättning|other={n} datauppsättningar",
   "zfs.skippedCount": "one={n} överhoppad datauppsättning|other={n} överhoppade datauppsättningar",

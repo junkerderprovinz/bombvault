@@ -1456,7 +1456,6 @@ const pl: Partial<Translations> = {
   "zfs.repoEffective": "Przechowywane w {repo}",
   "zfs.repo": "Repozytorium dla tej pozycji",
   "zfs.repoPlaceholder": "zostaw puste, aby użyć repozytorium zbiorów danych ZFS",
-  "zfs.repoHint": "Gdzie leżą kopie tej pozycji. Zostaw puste, a użyte zostanie repozytorium zbiorów danych ZFS. Na liście są repozytoria, które utworzyłeś w Ustawieniach.",
   "zfs.repoLocked": "Tego nie da się już zmienić, gdy pozycja ma kopie: zostają w repozytorium, do którego zostały zapisane. Usuń najpierw kopie tej pozycji.",
   "zfs.membersSummary": "one={n} zbiór danych|few={n} zbiory danych|many={n} zbiorów danych|other={n} zbiorów danych",
   "zfs.skippedCount": "one={n} pominięty zbiór danych|few={n} pominięte zbiory danych|many={n} pominiętych zbiorów danych|other={n} pominiętych zbiorów danych",

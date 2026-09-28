@@ -1648,7 +1648,6 @@ const sl: Partial<Translations> = {
   "zfs.repoEffective": "Shranjeno v {repo}",
   "zfs.repo": "Odložišče za ta vnos",
   "zfs.repoPlaceholder": "pusti prazno za odložišče zbirk podatkov ZFS",
-  "zfs.repoHint": "Kje ležijo kopije tega vnosa. Pusti prazno in uporabljeno bo odložišče zbirk podatkov ZFS. Na seznamu so odložišča, ki si jih nastavil v Nastavitvah.",
   "zfs.repoLocked": "Tega ni več mogoče spremeniti, ko ima vnos kopije: ostanejo v odložišču, v katerega so bile zapisane. Najprej izbriši kopije tega vnosa.",
   "zfs.membersSummary": "one={n} zbirka podatkov|two={n} zbirki podatkov|few={n} zbirke podatkov|other={n} zbirk podatkov",
   "zfs.skippedCount": "one={n} preskočena zbirka podatkov|two={n} preskočeni zbirki podatkov|few={n} preskočene zbirke podatkov|other={n} preskočenih zbirk podatkov",

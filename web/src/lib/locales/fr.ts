@@ -1461,7 +1461,6 @@ const fr: Partial<Translations> = {
   "zfs.repoEffective": "Stocké dans {repo}",
   "zfs.repo": "Dépôt pour cet élément",
   "zfs.repoPlaceholder": "laisser vide pour utiliser le dépôt des jeux de données ZFS",
-  "zfs.repoHint": "Où sont stockées les sauvegardes de cet élément. Laissez vide et il utilise le dépôt des jeux de données ZFS. La liste contient les dépôts que vous avez définis dans les Réglages.",
   "zfs.repoLocked": "Cela ne peut plus changer une fois que l'élément a des sauvegardes : elles restent dans le dépôt où elles ont été écrites. Supprimez d'abord les sauvegardes de cet élément.",
   "zfs.membersSummary": "one={n} jeu de données|other={n} jeux de données",
   "zfs.skippedCount": "one={n} jeu de données ignoré|other={n} jeux de données ignorés",

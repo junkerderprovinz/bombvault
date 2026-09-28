@@ -1459,7 +1459,6 @@ const es: Partial<Translations> = {
   "zfs.repoEffective": "Guardado en {repo}",
   "zfs.repo": "Repositorio para este elemento",
   "zfs.repoPlaceholder": "déjalo vacío para usar el repositorio de conjuntos de datos ZFS",
-  "zfs.repoHint": "Dónde se guardan las copias de este elemento. Si lo dejas vacío usa el repositorio de conjuntos de datos ZFS. La lista contiene los repositorios que configuraste en Ajustes.",
   "zfs.repoLocked": "Esto ya no se puede cambiar cuando el elemento tiene copias: se quedan en el repositorio donde se escribieron. Borra primero las copias de este elemento.",
   "zfs.membersSummary": "one={n} conjunto de datos|other={n} conjuntos de datos",
   "zfs.skippedCount": "one={n} conjunto de datos omitido|other={n} conjuntos de datos omitidos",

@@ -1665,7 +1665,6 @@ const id: Partial<Translations> = {
   "zfs.repoEffective": "Tersimpan di {repo}",
   "zfs.repo": "Repositori untuk butir ini",
   "zfs.repoPlaceholder": "kosongkan untuk memakai repositori set data ZFS",
-  "zfs.repoHint": "Tempat cadangan butir ini disimpan. Kosongkan dan repositori set data ZFS yang dipakai. Daftar ini berisi repositori yang kamu siapkan di Pengaturan.",
   "zfs.repoLocked": "Ini tidak bisa diubah lagi begitu butir punya cadangan: semuanya tetap di repositori tempat ditulis. Hapus dulu cadangan butir ini.",
   "zfs.membersSummary": "{n} set data",
   "zfs.skippedCount": "{n} set data dilewati",

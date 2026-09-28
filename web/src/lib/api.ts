@@ -2204,6 +2204,10 @@ export interface NamedRepo {
   companionOf: string;
   /** An import deleted its target, which leaves it a plain repository. */
   companionLost: boolean;
+  /** The place it was made at, "" for one made elsewhere. */
+  placeId: string;
+  /** The domain it was made for at that place, "" when every domain there shares it. */
+  placeDomain: string;
 }
 
 /** GET /api/repos — every named repository, in picker order. */

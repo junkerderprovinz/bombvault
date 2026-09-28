@@ -1454,7 +1454,6 @@ const vi: Partial<Translations> = {
   "zfs.repoEffective": "Lưu trong {repo}",
   "zfs.repo": "Kho cho mục này",
   "zfs.repoPlaceholder": "để trống để dùng kho của tập dữ liệu ZFS",
-  "zfs.repoHint": "Nơi các bản sao của mục này nằm. Để trống thì dùng kho của tập dữ liệu ZFS. Danh sách gồm những kho bạn đã lập trong Thiết lập.",
   "zfs.repoLocked": "Không đổi được nữa một khi mục đã có bản sao: chúng ở lại kho nơi chúng được ghi. Xóa các bản sao của mục này trước.",
   "zfs.membersSummary": "{n} tập dữ liệu",
   "zfs.skippedCount": "{n} tập dữ liệu bị bỏ qua",

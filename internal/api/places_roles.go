@@ -50,7 +50,8 @@ func repositoryTaken(p store.Place, rows []store.OffsiteTarget, homes map[string
 // one. With create false it only says what it would create, "direct" or
 // "repository".
 func (s *Service) placeRepoFor(ctx context.Context, p store.Place, domain string, create bool) (string, string, error) {
-	if !validPlacementDomain(domain) {
+	// A ZFS item has no placement but picks its repository all the same.
+	if !validPlacementDomain(domain) && domain != "zfs" {
 		return "", "", errInvalidPlacement
 	}
 	if !p.Enabled {

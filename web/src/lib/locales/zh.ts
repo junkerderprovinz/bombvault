@@ -1454,7 +1454,6 @@ const zh: Partial<Translations> = {
   "zfs.repoEffective": "存放在 {repo}",
   "zfs.repo": "这个条目的仓库",
   "zfs.repoPlaceholder": "留空则使用 ZFS 数据集仓库",
-  "zfs.repoHint": "这个条目的备份放在哪里。留空就用 ZFS 数据集仓库。列表里是你在设置中建好的仓库。",
   "zfs.repoLocked": "条目一旦有了备份，这项就不能再改：备份留在写入它们的那个仓库里。请先删掉这个条目的备份。",
   "zfs.membersSummary": "{n} 个数据集",
   "zfs.skippedCount": "跳过了 {n} 个数据集",

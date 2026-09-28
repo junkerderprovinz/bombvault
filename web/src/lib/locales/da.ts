@@ -1461,7 +1461,6 @@ const da: Partial<Translations> = {
   "zfs.repoEffective": "Gemt i {repo}",
   "zfs.repo": "Depot for dette element",
   "zfs.repoPlaceholder": "lad stå tomt for at bruge ZFS-datasættenes depot",
-  "zfs.repoHint": "Hvor dette elements sikkerhedskopier ligger. Lad feltet stå tomt, så bruges ZFS-datasættenes depot. Listen indeholder de depoter, du har oprettet under Indstillinger.",
   "zfs.repoLocked": "Det kan ikke ændres, når elementet først har sikkerhedskopier: de bliver i det depot, de blev skrevet til. Slet først elementets sikkerhedskopier.",
   "zfs.membersSummary": "{n} datasæt",
   "zfs.skippedCount": "one={n} oversprunget datasæt|other={n} oversprungne datasæt",

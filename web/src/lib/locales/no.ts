@@ -1461,7 +1461,6 @@ const no: Partial<Translations> = {
   "zfs.repoEffective": "Lagret i {repo}",
   "zfs.repo": "Depot for dette elementet",
   "zfs.repoPlaceholder": "la stå tomt for å bruke depotet til ZFS-datasettene",
-  "zfs.repoHint": "Hvor sikkerhetskopiene til dette elementet ligger. Lar du det stå tomt, brukes depotet til ZFS-datasettene. Listen inneholder depotene du har satt opp under Innstillinger.",
   "zfs.repoLocked": "Dette kan ikke endres når elementet først har sikkerhetskopier: de blir i depotet de ble skrevet til. Slett sikkerhetskopiene til dette elementet først.",
   "zfs.membersSummary": "{n} datasett",
   "zfs.skippedCount": "{n} datasett hoppet over",

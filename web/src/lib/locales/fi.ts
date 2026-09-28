@@ -1461,7 +1461,6 @@ const fi: Partial<Translations> = {
   "zfs.repoEffective": "Tallennettu kohteeseen {repo}",
   "zfs.repo": "Tämän kohteen säilö",
   "zfs.repoPlaceholder": "jätä tyhjäksi, niin käytetään ZFS-tietojoukkojen säilöä",
-  "zfs.repoHint": "Missä tämän kohteen varmuuskopiot ovat. Jätä tyhjäksi, niin käytetään ZFS-tietojoukkojen säilöä. Listalla ovat ne säilöt jotka määritit Asetuksissa.",
   "zfs.repoLocked": "Tätä ei voi enää muuttaa kun kohteella on varmuuskopioita: ne jäävät siihen säilöön johon ne kirjoitettiin. Poista ensin tämän kohteen varmuuskopiot.",
   "zfs.membersSummary": "one={n} tietojoukko|other={n} tietojoukkoa",
   "zfs.skippedCount": "one={n} ohitettu tietojoukko|other={n} ohitettua tietojoukkoa",

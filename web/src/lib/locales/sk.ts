@@ -1665,7 +1665,6 @@ const sk: Partial<Translations> = {
   "zfs.repoEffective": "Uložené v {repo}",
   "zfs.repo": "Repozitár pre túto položku",
   "zfs.repoPlaceholder": "nechaj prázdne, nech sa použije repozitár ZFS dátových sád",
-  "zfs.repoHint": "Kde ležia zálohy tejto položky. Nechaj prázdne a použije sa repozitár ZFS dátových sád. V zozname sú repozitáre, ktoré si si založil v Nastaveniach.",
   "zfs.repoLocked": "Len čo má položka zálohy, toto sa už nedá zmeniť: zostanú v repozitári, do ktorého boli zapísané. Zmaž najprv zálohy tejto položky.",
   "zfs.membersSummary": "one={n} dátová sada|few={n} dátové sady|other={n} dátových sád",
   "zfs.skippedCount": "one={n} preskočená dátová sada|few={n} preskočené dátové sady|other={n} preskočených dátových sád",

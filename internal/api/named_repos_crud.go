@@ -63,6 +63,11 @@ type namedRepoView struct {
 	// CompanionLost marks a direct repository whose target an import deleted:
 	// it still holds backups, but nothing on this box links to it anymore.
 	CompanionLost bool `json:"companionLost"`
+	// PlaceID and PlaceDomain name the place the repository was made at and the
+	// domain it was made for there, "" for every domain at a place that is
+	// itself a repository.
+	PlaceID     string `json:"placeId"`
+	PlaceDomain string `json:"placeDomain"`
 }
 
 func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
@@ -84,6 +89,7 @@ func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
 			LimitDownload: t.LimitDownload, Immutable: t.Immutable, Enabled: t.Enabled,
 			OffPremises: t.OffPremises, InUse: n,
 			CompanionOf: t.CompanionOf, CompanionLost: t.CompanionLost,
+			PlaceID: t.PlaceID, PlaceDomain: t.PlaceDomain,
 		})
 	}
 	return out

@@ -1665,7 +1665,6 @@ const ms: Partial<Translations> = {
   "zfs.repoEffective": "Disimpan dalam {repo}",
   "zfs.repo": "Repositori untuk item ini",
   "zfs.repoPlaceholder": "biarkan kosong untuk repositori set data ZFS",
-  "zfs.repoHint": "Tempat sandaran item ini disimpan. Biarkan kosong dan repositori set data ZFS digunakan. Senarai ini mengandungi repositori yang kamu sediakan dalam Tetapan.",
   "zfs.repoLocked": "Ini tidak boleh diubah lagi sebaik item mempunyai sandaran: semuanya kekal dalam repositori tempat ia ditulis. Padam sandaran item ini dahulu.",
   "zfs.membersSummary": "{n} set data",
   "zfs.skippedCount": "{n} set data dilangkau",

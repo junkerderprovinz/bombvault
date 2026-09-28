@@ -1461,7 +1461,6 @@ const tr: Partial<Translations> = {
   "zfs.repoEffective": "Şurada saklanıyor: {repo}",
   "zfs.repo": "Bu kayıt için depo",
   "zfs.repoPlaceholder": "ZFS veri kümeleri deposunu kullanmak için boş bırak",
-  "zfs.repoHint": "Bu kaydın yedekleri nerede duruyor. Boş bırakırsan ZFS veri kümeleri deposu kullanılır. Listede Ayarlar'da kurduğun depolar var.",
   "zfs.repoLocked": "Kaydın yedekleri olduktan sonra bu değiştirilemez: yazıldıkları depoda kalırlar. Önce bu kaydın yedeklerini sil.",
   "zfs.membersSummary": "{n} veri kümesi",
   "zfs.skippedCount": "{n} veri kümesi atlandı",

@@ -1464,7 +1464,6 @@ const hu: Partial<Translations> = {
   "zfs.repoEffective": "Itt tárolva: {repo}",
   "zfs.repo": "Tároló ehhez a tételhez",
   "zfs.repoPlaceholder": "hagyd üresen a ZFS adatkészletek tárolójához",
-  "zfs.repoHint": "Hol vannak ennek a tételnek a mentései. Ha üresen hagyod, a ZFS adatkészletek tárolója lesz. A listában azok a tárolók vannak, amelyeket a Beállításokban vettél fel.",
   "zfs.repoLocked": "Ez már nem módosítható, ha a tételnek vannak mentései: abban a tárolóban maradnak, amelybe kerültek. Előbb töröld a tétel mentéseit.",
   "zfs.membersSummary": "{n} adatkészlet",
   "zfs.skippedCount": "{n} kihagyott adatkészlet",

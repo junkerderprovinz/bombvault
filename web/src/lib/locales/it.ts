@@ -1461,7 +1461,6 @@ const it: Partial<Translations> = {
   "zfs.repoEffective": "Archiviato in {repo}",
   "zfs.repo": "Repository per questo elemento",
   "zfs.repoPlaceholder": "lascia vuoto per usare il repository dei dataset ZFS",
-  "zfs.repoHint": "Dove finiscono i backup di questo elemento. Se lo lasci vuoto usa il repository dei dataset ZFS. L'elenco contiene i repository che hai configurato nelle Impostazioni.",
   "zfs.repoLocked": "Non si può più cambiare una volta che l'elemento ha backup: restano nel repository in cui sono stati scritti. Elimina prima i backup di questo elemento.",
   "zfs.membersSummary": "{n} dataset",
   "zfs.skippedCount": "one={n} dataset saltato|other={n} dataset saltati",

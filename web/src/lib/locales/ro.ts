@@ -1464,7 +1464,6 @@ const ro: Partial<Translations> = {
   "zfs.repoEffective": "Stocat în {repo}",
   "zfs.repo": "Depozit pentru acest element",
   "zfs.repoPlaceholder": "lasă gol ca să folosești depozitul seturilor de date ZFS",
-  "zfs.repoHint": "Unde ajung copiile acestui element. Dacă îl lași gol folosește depozitul seturilor de date ZFS. În listă sunt depozitele pe care le-ai configurat în Setări.",
   "zfs.repoLocked": "Asta nu se mai poate schimba odată ce elementul are copii: rămân în depozitul în care au fost scrise. Șterge întâi copiile acestui element.",
   "zfs.membersSummary": "one={n} set de date|few={n} seturi de date|other={n} de seturi de date",
   "zfs.skippedCount": "one={n} set de date sărit|few={n} seturi de date sărite|other={n} de seturi de date sărite",

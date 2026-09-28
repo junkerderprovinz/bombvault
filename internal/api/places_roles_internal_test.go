@@ -50,6 +50,24 @@ func TestAPlaceWithoutARepositoryOfTheDomainGetsANamedOne(t *testing.T) {
 	}
 }
 
+func TestTheRepositoryListNamesThePlaceAndDomainARepositoryWasMadeFor(t *testing.T) {
+	f := newPlacementFixture(t)
+	s3 := f.storePlace(s3Place("B2", "s3:https://s3.example.com/bucket"))
+	id, _ := f.placeRepo(s3.ID, "zfs")["repoId"].(string)
+
+	for _, r := range f.do(http.MethodGet, "/api/repos", nil)["repos"].([]any) {
+		row := r.(map[string]any)
+		if row["id"] != id {
+			continue
+		}
+		if row["placeId"] != s3.ID || row["placeDomain"] != "zfs" {
+			t.Fatalf("listed repository = %v, want placeId %s and placeDomain zfs", row, s3.ID)
+		}
+		return
+	}
+	t.Fatalf("the repository %q made at the place is not listed", id)
+}
+
 func TestTheHomePlaceStandsForTheDomainPath(t *testing.T) {
 	f := newPlacementFixture(t)
 	unraid := f.storePlace(localPlace("Unraid", "backups"), "containers")

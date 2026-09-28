@@ -1454,7 +1454,6 @@ const ko: Partial<Translations> = {
   "zfs.repoEffective": "{repo}에 저장됨",
   "zfs.repo": "이 항목의 저장소",
   "zfs.repoPlaceholder": "비워 두면 ZFS 데이터세트 저장소를 씁니다",
-  "zfs.repoHint": "이 항목의 백업이 놓이는 곳입니다. 비워 두면 ZFS 데이터세트 저장소를 씁니다. 목록에는 설정에서 만든 저장소가 들어 있습니다.",
   "zfs.repoLocked": "항목에 백업이 생기면 더는 바꿀 수 없습니다. 백업은 쓰인 저장소에 남습니다. 먼저 이 항목의 백업을 지우세요.",
   "zfs.membersSummary": "데이터세트 {n}개",
   "zfs.skippedCount": "건너뛴 데이터세트 {n}개",

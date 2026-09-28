@@ -1665,7 +1665,6 @@ const lv: Partial<Translations> = {
   "zfs.repoEffective": "Glabājas krātuvē {repo}",
   "zfs.repo": "Šī vienuma krātuve",
   "zfs.repoPlaceholder": "atstāj tukšu, lai izmantotu ZFS datu kopu krātuvi",
-  "zfs.repoHint": "Kur glabājas šī vienuma dublējumi. Atstāj tukšu, un tiek izmantota ZFS datu kopu krātuve. Sarakstā ir krātuves, ko izveidoji Iestatījumos.",
   "zfs.repoLocked": "To vairs nevar mainīt, tiklīdz vienumam ir dublējumi: tie paliek krātuvē, kurā tika ierakstīti. Vispirms izdzēs šī vienuma dublējumus.",
   "zfs.membersSummary": "one={n} datu kopa|other={n} datu kopas",
   "zfs.skippedCount": "one={n} izlaista datu kopa|other={n} izlaistas datu kopas",

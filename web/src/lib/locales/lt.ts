@@ -1665,7 +1665,6 @@ const lt: Partial<Translations> = {
   "zfs.repoEffective": "Saugoma saugykloje {repo}",
   "zfs.repo": "Šio įrašo saugykla",
   "zfs.repoPlaceholder": "palik tuščią, kad būtų naudojama ZFS duomenų rinkinių saugykla",
-  "zfs.repoHint": "Kur laikomos šio įrašo kopijos. Palikus tuščią naudojama ZFS duomenų rinkinių saugykla. Sąraše yra saugyklos, kurias sukūrei Nustatymuose.",
   "zfs.repoLocked": "To pakeisti nebegalima, kai įrašas jau turi kopijų: jos lieka toje saugykloje, į kurią buvo įrašytos. Pirma ištrink šio įrašo kopijas.",
   "zfs.membersSummary": "one={n} duomenų rinkinys|few={n} duomenų rinkiniai|other={n} duomenų rinkinių",
   "zfs.skippedCount": "one={n} praleistas duomenų rinkinys|few={n} praleisti duomenų rinkiniai|other={n} praleistų duomenų rinkinių",

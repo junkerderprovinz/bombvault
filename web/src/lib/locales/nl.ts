@@ -1458,7 +1458,6 @@ const nl: Partial<Translations> = {
   "zfs.repoEffective": "Opgeslagen in {repo}",
   "zfs.repo": "Repository voor dit item",
   "zfs.repoPlaceholder": "leeg laten voor de repository van de ZFS-datasets",
-  "zfs.repoHint": "Waar de back-ups van dit item staan. Laat het leeg en het gebruikt de repository van de ZFS-datasets. In de lijst staan de repositories die je in Instellingen hebt aangemaakt.",
   "zfs.repoLocked": "Dit kan niet meer veranderen zodra het item back-ups heeft: die blijven in de repository waarin ze zijn geschreven. Verwijder eerst de back-ups van dit item.",
   "zfs.membersSummary": "one={n} dataset|other={n} datasets",
   "zfs.skippedCount": "one={n} overgeslagen dataset|other={n} overgeslagen datasets",

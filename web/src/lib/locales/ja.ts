@@ -1454,7 +1454,6 @@ const ja: Partial<Translations> = {
   "zfs.repoEffective": "保存先: {repo}",
   "zfs.repo": "この項目のリポジトリ",
   "zfs.repoPlaceholder": "空のままにすると ZFS データセットのリポジトリを使います",
-  "zfs.repoHint": "この項目のバックアップが置かれる場所です。空のままなら ZFS データセットのリポジトリを使います。一覧には設定で作ったリポジトリが並びます。",
   "zfs.repoLocked": "項目にバックアップができたあとは変えられません。書き込まれたリポジトリに残るためです。先にこの項目のバックアップを削除してください。",
   "zfs.membersSummary": "データセット {n} 件",
   "zfs.skippedCount": "飛ばしたデータセット {n} 件",

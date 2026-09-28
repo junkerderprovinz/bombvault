@@ -1665,7 +1665,6 @@ const is: Partial<Translations> = {
   "zfs.repoEffective": "Geymt í {repo}",
   "zfs.repo": "Geymsla fyrir þetta atriði",
   "zfs.repoPlaceholder": "skildu eftir autt til að nota geymslu ZFS-gagnasafnanna",
-  "zfs.repoHint": "Hvar afrit þessa atriðis liggja. Skildu reitinn eftir auðan og geymsla ZFS-gagnasafnanna er notuð. Á listanum eru geymslurnar sem þú settir upp í Stillingum.",
   "zfs.repoLocked": "Þessu verður ekki breytt eftir að atriðið á afrit: þau verða áfram í geymslunni sem þau voru skrifuð í. Eyddu fyrst afritum þessa atriðis.",
   "zfs.membersSummary": "one={n} gagnasafn|other={n} gagnasöfn",
   "zfs.skippedCount": "one={n} gagnasafni var sleppt|other={n} gagnasöfnum var sleppt",

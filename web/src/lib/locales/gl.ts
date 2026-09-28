@@ -1665,7 +1665,6 @@ const gl: Partial<Translations> = {
   "zfs.repoEffective": "Gardado en {repo}",
   "zfs.repo": "Repositorio para este elemento",
   "zfs.repoPlaceholder": "déixao baleiro para usar o repositorio dos conxuntos de datos ZFS",
-  "zfs.repoHint": "Onde se gardan as copias deste elemento. Se o deixas baleiro usa o repositorio dos conxuntos de datos ZFS. Na lista están os repositorios que configuraches en Axustes.",
   "zfs.repoLocked": "Isto xa non se pode cambiar cando o elemento ten copias: quedan no repositorio onde foron escritas. Borra primeiro as copias deste elemento.",
   "zfs.membersSummary": "one={n} conxunto de datos|other={n} conxuntos de datos",
   "zfs.skippedCount": "one={n} conxunto de datos omitido|other={n} conxuntos de datos omitidos",

@@ -1665,7 +1665,6 @@ const ca: Partial<Translations> = {
   "zfs.repoEffective": "Desat a {repo}",
   "zfs.repo": "Dipòsit per a aquest element",
   "zfs.repoPlaceholder": "deixa-ho buit per fer servir el dipòsit dels conjunts de dades ZFS",
-  "zfs.repoHint": "On es desen les còpies d'aquest element. Si ho deixes buit fa servir el dipòsit dels conjunts de dades ZFS. A la llista hi ha els dipòsits que has configurat a Configuració.",
   "zfs.repoLocked": "Això ja no es pot canviar quan l'element té còpies: es queden al dipòsit on es van escriure. Esborra primer les còpies d'aquest element.",
   "zfs.membersSummary": "one={n} conjunt de dades|other={n} conjunts de dades",
   "zfs.skippedCount": "one={n} conjunt de dades omès|other={n} conjunts de dades omesos",

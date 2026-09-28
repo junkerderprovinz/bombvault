@@ -1665,7 +1665,6 @@ const et: Partial<Translations> = {
   "zfs.repoEffective": "Hoitakse hoidlas {repo}",
   "zfs.repo": "Selle kirje hoidla",
   "zfs.repoPlaceholder": "jäta tühjaks, et kasutada ZFS-andmestike hoidlat",
-  "zfs.repoHint": "Kus selle kirje varukoopiad asuvad. Jäta tühjaks, siis kasutatakse ZFS-andmestike hoidlat. Nimekirjas on hoidlad, mille Seadetes lõid.",
   "zfs.repoLocked": "Seda ei saa enam muuta, kui kirjel on varukoopiad: need jäävad hoidlasse, kuhu need kirjutati. Kustuta enne selle kirje varukoopiad.",
   "zfs.membersSummary": "one={n} andmestik|other={n} andmestikku",
   "zfs.skippedCount": "one={n} vahele jäetud andmestik|other={n} vahele jäetud andmestikku",
