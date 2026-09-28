@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-// The Pairing tab: three numbered step cards, the phrase card and the relay
-// card. The phrase card asks first whether this is the first instance, checks
+// The Pairing tab: one sentence on what pairing does, three numbered step
+// cards, the phrase card and the relay card. The phrase card asks first whether this is the first instance, checks
 // typed words against the word list as they arrive, and says after a minute
 // alone what probably went wrong.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -105,6 +105,11 @@ afterEach(() => {
 });
 
 describe("step cards", () => {
+  it("open with what pairing does in one sentence", async () => {
+    await renderTab();
+    expect(screen.getByText(en["pairing.lead"], { exact: false })).not.toBeNull();
+  });
+
   it("number the three steps and name the answers they refer to", async () => {
     await renderTab();
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
@@ -306,19 +311,57 @@ describe("the word list", () => {
   });
 });
 
+function howItWorks(): HTMLButtonElement {
+  return screen.getByRole("button", { name: en["relay.howItWorks"] }) as HTMLButtonElement;
+}
+
 describe("relay card", () => {
+  it("says what the relay is for and whether it is connected", async () => {
+    await renderTab();
+    expect(screen.getByText(en["relay.lead"])).not.toBeNull();
+    expect(screen.getByTestId("relay-state").textContent).toBe(en["instances.connected"]);
+    cleanup();
+    group = makeGroup({ relay: { ...makeGroup().relay, connected: false } });
+    await renderTab();
+    expect(screen.getByTestId("relay-state").textContent).toBe(en["instances.notConnected"]);
+    cleanup();
+    group = makeGroup({ relay: { ...makeGroup().relay, mode: "off", connected: false } });
+    await renderTab();
+    expect(screen.getByTestId("relay-state").textContent).toBe(en["relay.off"]);
+  });
+
+  it("keeps the picture and what the relay sees behind a disclosure", async () => {
+    await renderTab();
+    expect(howItWorks().getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByRole("img", { name: en["relay.projectAlt"] })).toBeNull();
+    expect(screen.queryByText(en["relay.e2e"], { exact: false })).toBeNull();
+    await act(async () => {
+      fireEvent.click(howItWorks());
+    });
+    expect(howItWorks().getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("img", { name: en["relay.projectAlt"] })).not.toBeNull();
+    expect(screen.getByText(en["relay.projectSees"])).not.toBeNull();
+    expect(screen.getByText(en["relay.e2e"], { exact: false })).not.toBeNull();
+  });
+
   it("offers the three routes and starts on the stored one", async () => {
     await renderTab();
     for (const key of ["relay.project", "relay.own", "relay.off"] as const) {
       expect(screen.getByRole("tab", { name: en[key] })).not.toBeNull();
     }
     expect(screen.getByRole("tab", { name: en["relay.project"] }).getAttribute("aria-selected")).toBe("true");
+    await act(async () => {
+      fireEvent.click(howItWorks());
+    });
     expect(screen.getByRole("img", { name: en["relay.projectAlt"] })).not.toBeNull();
     expect(screen.queryByLabelText(en["relay.addressLabel"], { exact: false })).toBeNull();
   });
 
   it("switches the picture and saves the route when another is picked", async () => {
     await renderTab();
+    await act(async () => {
+      fireEvent.click(howItWorks());
+    });
     await act(async () => {
       fireEvent.click(screen.getByRole("tab", { name: en["relay.off"] }));
     });

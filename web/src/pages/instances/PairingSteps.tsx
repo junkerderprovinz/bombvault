@@ -1,10 +1,11 @@
-// PairingSteps explains pairing in three numbered cards before any button does
-// anything: yes on the first instance, no and the words on every other, done.
+// PairingSteps opens the tab with what pairing is for in one sentence, then
+// three numbered cards before any button does anything: yes on the first
+// instance, no and the words on every other, done.
 import { Fragment, type ReactNode } from "react";
 import { StepCard } from "../../components/recovery/StepCard";
 import { InfoBubble } from "../../components/InfoBubble";
 import type { useT } from "../../lib/i18n";
-import { FactGlyph, StepPicture } from "./pairingArt";
+import { StepPicture } from "./pairingArt";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -38,7 +39,12 @@ export function PairingSteps({ t, hues }: { t: T; hues: [number, number, number]
     },
   ];
   return (
-    <section aria-label={t("pairing.howTitle")} className="flex flex-col gap-6">
+    <section aria-label={t("pairing.howTitle")} className="flex flex-col gap-8 md:gap-10">
+      {/* The step cards' number badges straddle their top edge and would
+          crowd the sentence at the usual gap. */}
+      <p className="text-base font-medium text-carbon-text md:text-lg">
+        {t("pairing.lead")} <InfoBubble tip={t("pairing.keyNote")} />
+      </p>
       {/* On a phone the picture moves beside the words, so three cards do
           not take three screens. */}
       <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-6">
@@ -53,14 +59,6 @@ export function PairingSteps({ t, hues }: { t: T; hues: [number, number, number]
           </StepCard>
         ))}
       </div>
-      <p className="flex items-start gap-2.5 text-sm text-carbon-textSub">
-        <span className="text-accentText">
-          <FactGlyph kind="lock" />
-        </span>
-        <span>
-          {t("pairing.keyNote")} <InfoBubble tip={t("pairing.keyNoteTip")} />
-        </span>
-      </p>
     </section>
   );
 }

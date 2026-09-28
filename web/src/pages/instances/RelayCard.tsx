@@ -1,10 +1,13 @@
 // RelayCard picks how this instance reaches members on other networks: the
-// project relay, an own relay, or none. Each route gets a picture, one
-// sentence, what it needs and what the relay sees. Every control saves on its
-// own, as the rest of the settings do.
-import { useEffect, useRef, useState } from "react";
+// project relay, an own relay, or none. It leads with what a relay is for and
+// whether it is connected; each route gets one sentence and what it needs, and
+// the picture with what the relay sees waits behind "How does it work?".
+// Every control saves on its own, as the rest of the settings do.
+import { useEffect, useId, useRef, useState } from "react";
 import { Card, ToggleRow } from "../settings/shared";
 import { Badge } from "../../components/Badge";
+import { Button } from "../../components/Button";
+import { IconDisclosure } from "../../components/IconDisclosure";
 import { InfoBubble } from "../../components/InfoBubble";
 import { Selector } from "../../components/Selector";
 import { setRelay, type GroupState, type RelayMode } from "../../lib/api";
@@ -127,6 +130,8 @@ export function RelayCard({
   const [mode, setMode] = useState<RelayMode>(group.relay.mode);
   const [url, setUrl] = useState(group.relay.url);
   const [urlError, setUrlError] = useState<string | null>(null);
+  const [howOpen, setHowOpen] = useState(false);
+  const howId = useId();
   const editing = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -176,15 +181,24 @@ export function RelayCard({
 
   const copy = COPY[mode];
   const relay = group.relay;
-  const connectState =
-    !group.active || mode === "off" ? null : relay.connected ? (
-      <Badge tone="ok">{t("relay.connected")}</Badge>
+  // The relay is only dialled inside a group, so outside one a missing
+  // connection is the expected state rather than a fault.
+  const state =
+    mode === "off" ? (
+      <Badge tone="neutral" size="large">{t("relay.off")}</Badge>
+    ) : relay.connected ? (
+      <Badge tone="ok" size="large">{t("instances.connected")}</Badge>
     ) : (
-      <Badge tone="warn">{t("relay.notConnected")}</Badge>
+      <Badge tone={group.active ? "fail" : "neutral"} size="large">{t("instances.notConnected")}</Badge>
     );
 
   return (
     <Card title={t("relay.title")} hint={t("relay.hint")} hueIndex={hueIndex}>
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <p className="min-w-0 flex-[1_1_16rem] text-[15px] text-carbon-text">{t("relay.lead")}</p>
+        <span data-testid="relay-state">{state}</span>
+      </div>
+
       <Selector
         items={MODES.map((m) => ({ id: m, label: t(COPY[m].name), icon: <RouteGlyph kind={m} /> }))}
         label={t("relay.title")}
@@ -195,29 +209,11 @@ export function RelayCard({
         equalWidth
       />
 
-      <div className="grid grid-cols-1 items-center gap-5 md:grid-cols-2 md:gap-10">
-        <RouteDiagram
-          mode={mode}
-          alt={t(copy.alt)}
-          labels={{
-            relay: t("relay.diagramRelay"),
-            projectHost: hostOf(relay.projectUrl),
-            ownAddress: t("relay.diagramOwnAddress"),
-            yourNetwork: t("relay.diagramYourNetwork"),
-            otherNetwork: t("relay.diagramOtherNetwork"),
-            yourLan: t("relay.diagramYourLan"),
-          }}
-        />
-        <div className="flex flex-col gap-3.5">
-          <p className="text-[15px] text-carbon-text">
-            {mode === "project" ? t(copy.sentence).replace("{host}", hostOf(relay.projectUrl)) : t(copy.sentence)}
-          </p>
-          <div className="flex flex-col gap-2">
-            <Fact glyph="need" label={t("relay.needLabel")} text={t(copy.need)} />
-            <Fact glyph="sees" label={t("relay.seesLabel")} text={t(copy.sees)} />
-          </div>
-          {connectState && <div>{connectState}</div>}
-        </div>
+      <div className="flex flex-col gap-2">
+        <p className="text-sm text-carbon-textSub">
+          {mode === "project" ? t(copy.sentence).replace("{host}", hostOf(relay.projectUrl)) : t(copy.sentence)}
+        </p>
+        <Fact glyph="need" label={t("relay.needLabel")} text={t(copy.need)} />
       </div>
 
       {mode === "own" && (
@@ -291,32 +287,63 @@ export function RelayCard({
         </div>
       )}
 
-      <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
-        <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-carbon-textSub">
-          <span className="inline-flex items-center gap-2">
-            <LegendKey />
-            {t("relay.legendKey")}
-          </span>
-          <span className="inline-flex items-center gap-2">
-            <LegendMessage />
-            {t("relay.legendMessage")}
-          </span>
-        </div>
-        <p className="flex items-start gap-2.5 text-sm text-carbon-textSub">
-          <span className="text-accentText">
-            <FactGlyph kind="lock" />
-          </span>
-          <span>
-            {t("relay.e2e")} <InfoBubble tip={t("relay.e2eTip")} />
-          </span>
-        </p>
-        <p className="flex items-start gap-2.5 text-sm text-carbon-textSub">
-          <span className="text-accentText">
-            <FactGlyph kind="box" />
-          </span>
-          <span>{t("relay.backupsNever")}</span>
-        </p>
+      <div>
+        <Button
+          label={t("relay.howItWorks")}
+          labelKey="relay.howItWorks"
+          tone="neutral"
+          onClick={() => setHowOpen((v) => !v)}
+          ariaExpanded={howOpen}
+          ariaControls={howId}
+          glyph={<IconDisclosure open={howOpen} />}
+        />
       </div>
+
+      {howOpen && (
+        <div id={howId} className="flex flex-col gap-4 border-t border-carbon-border pt-4">
+          <div className="grid grid-cols-1 items-center gap-5 md:grid-cols-2 md:gap-10">
+            <RouteDiagram
+              mode={mode}
+              alt={t(copy.alt)}
+              labels={{
+                relay: t("relay.diagramRelay"),
+                projectHost: hostOf(relay.projectUrl),
+                ownAddress: t("relay.diagramOwnAddress"),
+                yourNetwork: t("relay.diagramYourNetwork"),
+                otherNetwork: t("relay.diagramOtherNetwork"),
+                yourLan: t("relay.diagramYourLan"),
+              }}
+            />
+            <div className="flex flex-col gap-3">
+              <Fact glyph="sees" label={t("relay.seesLabel")} text={t(copy.sees)} />
+              <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-carbon-textSub">
+                <span className="inline-flex items-center gap-2">
+                  <LegendKey />
+                  {t("relay.legendKey")}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <LegendMessage />
+                  {t("relay.legendMessage")}
+                </span>
+              </div>
+            </div>
+          </div>
+          <p className="flex items-start gap-2.5 text-sm text-carbon-textSub">
+            <span className="text-accentText">
+              <FactGlyph kind="lock" />
+            </span>
+            <span>
+              {t("relay.e2e")} <InfoBubble tip={t("relay.e2eTip")} />
+            </span>
+          </p>
+          <p className="flex items-start gap-2.5 text-sm text-carbon-textSub">
+            <span className="text-accentText">
+              <FactGlyph kind="box" />
+            </span>
+            <span>{t("relay.backupsNever")}</span>
+          </p>
+        </div>
+      )}
     </Card>
   );
 }

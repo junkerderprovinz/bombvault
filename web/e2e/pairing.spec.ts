@@ -175,7 +175,11 @@ for (const width of [1280, 390]) {
     await expectFits(page);
     await page.getByRole("tab", { name: "Kein Relay" }).click();
     await expect(page.locator("#relay-address")).toHaveCount(0);
+    // The picture and what the relay sees open in place, and fit too.
+    await page.getByRole("button", { name: "Wie funktioniert das?" }).click();
     await expect(page.getByRole("img", { name: /Instanz C in einem anderen Netz/ })).toBeVisible();
+    await settle(page);
+    await expectFits(page);
 
     // Alone, with the relay down: both hints and the paste field fit.
     Object.assign(f, { members: [], memberSeen: false, joinedAgo: 90, mode: "project", connected: false });

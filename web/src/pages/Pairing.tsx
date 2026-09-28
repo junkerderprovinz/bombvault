@@ -1,7 +1,8 @@
 // Pairing is the Instances tab where instances become one group by twelve
-// words: three cards explain it, one card holds the words and the members,
-// and one picks the relay for members on other networks. Receivers, pull
-// sources and the Fleet view all build on the group this tab sets up.
+// words: a sentence and three cards explain it, one card holds the words and
+// the members, and one picks the relay for members on other networks.
+// Receivers, pull sources and the Fleet tab all build on the group this tab
+// sets up.
 import { useCallback, useEffect, useState } from "react";
 import { getGroup, type GroupState } from "../lib/api";
 import { useT } from "../lib/i18n";
