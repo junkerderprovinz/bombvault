@@ -8,10 +8,11 @@ import { acceptMeshOffer, declineMeshOffer, type MeshOffer, type OffsiteDomain }
 import { useT, type TranslationKey } from "../lib/i18n";
 import { placementChanged } from "../lib/placementEvents";
 import { domainName, placeErrorText } from "../lib/placeText";
-import { PLACE_DOMAINS, placesChanged, type Place } from "../lib/places";
+import { placesChanged, type Place } from "../lib/places";
 import { relativeTime } from "../lib/reltime";
 import { useToast } from "../lib/toast";
 import { credSetsChanged } from "../lib/useCloudCredSets";
+import { useOfferedDomains } from "../lib/useOfferedDomains";
 import { offsiteTargetsChanged } from "../lib/useOffsiteTargets";
 
 // An offer is a rest-server another BombVault runs for this one, for one
@@ -57,7 +58,10 @@ export function MeshOfferRow({
   /** Neutral inside a window whose own buttons carry the accent. */
   acceptTone?: ButtonTone;
 }) {
-  const [domain, setDomain] = useState<string>(offer.suggestedDomain || "containers");
+  const [picked, setDomain] = useState<string>(offer.suggestedDomain || "containers");
+  const offered = useOfferedDomains();
+  // An offer for ZFS while ZFS is off lands on containers until it is picked.
+  const domain = (offered as string[]).includes(picked) ? picked : "containers";
   const [busy, setBusy] = useState(false);
   const { lang } = useT();
   const { push } = useToast();
@@ -72,7 +76,7 @@ export function MeshOfferRow({
     // second target.
     setBusy(true);
     const answer = await ask({
-      // The select offers only PLACE_DOMAINS, all of them off-site domains.
+      // The select offers only place domains, all of them off-site domains.
       domain: domain as OffsiteDomain,
       location: offer.repo,
       name: offer.from || t("fleet.mesh.unknownPeer"),
@@ -145,7 +149,7 @@ export function MeshOfferRow({
               value={domain}
               onChange={setDomain}
               label={t("fleet.mesh.applyTo")}
-              options={PLACE_DOMAINS.map((d) => ({ value: d, label: domainName(t, d) }))}
+              options={offered.map((d) => ({ value: d, label: domainName(t, d) }))}
               className="rounded-control bg-carbon-surface3 text-carbon-text text-xs px-2 py-1 glim-field-focus-well"
             />
           </label>

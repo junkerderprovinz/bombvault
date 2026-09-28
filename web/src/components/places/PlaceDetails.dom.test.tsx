@@ -33,6 +33,13 @@ vi.mock("../../lib/places", async (importOriginal) => {
   };
 });
 
+const host = vi.hoisted(() => ({ zfsEnabled: false }));
+
+vi.mock("../../lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/api")>()),
+  getSettings: () => Promise.resolve({ ok: true, settings: { zfsEnabled: host.zfsEnabled } }),
+}));
+
 const { PlaceDetails } = await import("./PlaceDetails");
 
 function place(over: Partial<Place> = {}): Place {
@@ -425,6 +432,21 @@ describe("PlaceDetails sections", () => {
     details(place({ repository: true, folders: { containers: "" } }));
     for (const d of ["Containers", "VMs", "Flash"]) expect(folder(d)).toHaveProperty("disabled", true);
     expect(screen.getByLabelText(en["places.details.isRepository"])).toBeTruthy();
+  });
+
+  it("offers a folder for ZFS datasets only while ZFS is on, or where the place has one", async () => {
+    const offersZFS = async (p: Place) => {
+      details(p);
+      await act(async () => {});
+      const shown = screen.queryByRole("switch", { name: en["nav.zfs"] }) !== null;
+      cleanup();
+      return shown;
+    };
+    host.zfsEnabled = false;
+    expect(await offersZFS(place())).toBe(false);
+    expect(await offersZFS(place({ folders: { containers: "container", zfs: "zfs" } }))).toBe(true);
+    host.zfsEnabled = true;
+    expect(await offersZFS(place())).toBe(true);
   });
 
   it("writes each domain's name on the switch that offers it", () => {

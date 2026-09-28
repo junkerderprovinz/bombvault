@@ -26,6 +26,7 @@ import {
 import { STORAGE_CLASSES } from "../../lib/storageClasses";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { useOfferedDomains } from "../../lib/useOfferedDomains";
 import { useReveal } from "../../lib/useReveal";
 
 // A place's details save themselves: a switch or a choice at once, rolled back
@@ -139,6 +140,7 @@ export function PlaceDetails({
   ref?: Ref<PlaceDetailsHandle>;
 }) {
   const { t, lang } = useT();
+  const domains = useOfferedDomains();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [draft, setDraft] = useState<Place>(place);
@@ -539,7 +541,7 @@ export function PlaceDetails({
         hueIndex={hueIndex}
       >
         <div key={`folders-${shake.folders ?? 0}`} className={`flex flex-col gap-2 ${shaken("folders")}`}>
-          {PLACE_DOMAINS.map((d) => {
+          {PLACE_DOMAINS.filter((d) => domains.includes(d) || d in place.folders).map((d) => {
             const offered = d in draft.folders;
             const locked = place.repository || place.locked[d] === true;
             return (

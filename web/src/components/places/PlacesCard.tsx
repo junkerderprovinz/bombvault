@@ -11,7 +11,6 @@ import { Card } from "../../pages/settings/shared";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { domainName, placeErrorText } from "../../lib/placeText";
 import {
-  PLACE_DOMAINS,
   adoptRow,
   listPlaces,
   placesChanged,
@@ -22,6 +21,7 @@ import {
 } from "../../lib/places";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { useOfferedDomains } from "../../lib/useOfferedDomains";
 import { usePlacesCatalog } from "../../lib/usePlacesCatalog";
 
 // Everything the card shows comes from the database, so opening the Storage
@@ -73,6 +73,7 @@ function AppendOnlySwitch({ row }: { row: UnplacedRow }) {
 
 function UnplacedRowView({ row, places }: { row: UnplacedRow; places: Place[] }) {
   const { t, lang } = useT();
+  const domains = useOfferedDomains();
   const { push } = useToast();
   const [placeId, setPlaceId] = useState("");
   // Only a named repository has no domain of its own; "" lets every domain share it.
@@ -147,7 +148,7 @@ function UnplacedRowView({ row, places }: { row: UnplacedRow; places: Place[] })
             onChange={setDomain}
             options={[
               { value: "", label: t("places.unplaced.allDomains") },
-              ...PLACE_DOMAINS.map((d) => ({ value: d, label: domainName(t, d) })),
+              ...domains.map((d) => ({ value: d, label: domainName(t, d) })),
             ]}
             className={PICK_CLASS}
           />

@@ -33,6 +33,11 @@ vi.mock("../../lib/places", async (importOriginal) => {
   };
 });
 
+vi.mock("../../lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/api")>()),
+  getSettings: () => Promise.resolve({ ok: true, settings: { zfsEnabled: false } }),
+}));
+
 const { PlacesCard } = await import("./PlacesCard");
 
 function loose(over: Partial<UnplacedRow> & Pick<UnplacedRow, "rowId" | "domain" | "role" | "repo">): UnplacedRow {
@@ -173,6 +178,16 @@ describe("PlacesCard", () => {
       expect(document.getElementById(label.getAttribute("for") ?? "")?.getAttribute("role")).toBe("combobox");
     }
   });
+  it("links a repository without a place to no ZFS folder while ZFS is off", async () => {
+    listed.unplaced = [loose({ rowId: "r3", domain: "", role: "repository", name: "Archive", repo: "remotes/archive" })];
+    await card();
+    const row = screen.getByText("remotes/archive").closest("div.rounded-card") as HTMLElement;
+    fireEvent.click(within(row).getByRole("combobox", { name: en["places.unplaced.domain"] }));
+    const offered = screen.getAllByRole("option").map((o) => o.textContent);
+    expect(offered).toContain(en["nav.vms"]);
+    expect(offered).not.toContain(en["nav.zfs"]);
+  });
+
   it("gives a row without a place an append-only switch only where the flag means something", async () => {
     listed.unplaced = [
       loose({ rowId: "t1", domain: "vms", role: "target", name: "B2 native", repo: "b2:bucket:vms", protectable: true }),

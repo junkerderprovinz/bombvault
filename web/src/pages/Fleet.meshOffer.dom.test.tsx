@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { en } from "../lib/i18n";
 import { renderWithProviders, targetPreview } from "../lib/placement.testsupport";
 
 const fake = await vi.hoisted(async () => (await import("../lib/placement.testsupport")).createPlacementApi());
+const host = vi.hoisted(() => ({ zfsEnabled: false }));
 
 vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),
@@ -25,13 +27,16 @@ vi.mock("../lib/api", async (importOriginal) => ({
       ],
     }),
   getSettings: () =>
-    Promise.resolve({ ok: true, settings: { fleetEnabled: true }, hostMountRoot: "/host/user", platform: "unraid" }),
+    Promise.resolve({ ok: true, settings: { fleetEnabled: true, zfsEnabled: host.zfsEnabled }, hostMountRoot: "/host/user", platform: "unraid" }),
 }));
 
 const { Fleet } = await import("./Fleet");
 
 describe("accepting a mesh offer", () => {
-  beforeEach(() => fake.reset());
+  beforeEach(() => {
+    fake.reset();
+    host.zfsEnabled = false;
+  });
   afterEach(cleanup);
 
   it("asks what the new target receives and sends the chosen exclusions along", async () => {
@@ -73,6 +78,20 @@ describe("accepting a mesh offer", () => {
     fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Confirm" }));
     expect(await screen.findByText("That name already has copy rules of its own.")).toBeTruthy();
     expect(screen.queryByText("copy rule taken")).toBeNull();
+  });
+
+  it("offers ZFS datasets to apply the offer to only while ZFS is on", async () => {
+    const offered = async () => {
+      renderWithProviders(<Fleet />);
+      const field = await screen.findByRole("combobox", { name: en["fleet.mesh.applyTo"] });
+      await act(async () => {});
+      fireEvent.click(field);
+      return screen.getAllByRole("option").map((o) => o.textContent);
+    };
+    expect(await offered()).not.toContain(en["nav.zfs"]);
+    cleanup();
+    host.zfsEnabled = true;
+    expect(await offered()).toContain(en["nav.zfs"]);
   });
 
   it("accepts nothing when the question is cancelled", async () => {
