@@ -9,7 +9,8 @@
 //
 // The strip spans its box and its segments share the width, so a card of
 // stacked selectors ends in one edge. A strip that shares a toolbar row with a
-// search field or buttons passes `inline` and hugs its segments instead.
+// search field or buttons passes `inline` and hugs its segments instead. Page
+// tabs pass `fit` and stay on one row.
 //
 // A caption such as "Sort by:" belongs in a plain <span> outside the component,
 // not a <label> around the row: a label around several tabs forwards its clicks
@@ -86,8 +87,13 @@ interface SelectorCommon {
    *  which makes the big page-level picker. */
   equalWidth?: boolean;
   /** Hug the segments instead of spanning the box, for a strip that shares a
-   *  toolbar row with a search field or buttons, and for page tabs. */
+   *  toolbar row with a search field or buttons. */
   inline?: boolean;
+  /** Keep every segment on one row, which they share evenly up to
+   *  MAX_PINNED_WIDTH each, for page tabs. When the longest label does not
+   *  fit its share, every segment shows its glyph alone, and the label stays
+   *  its accessible name and tooltip. Overrides `equalWidth` and `inline`. */
+  fit?: boolean;
   /** Disables every item (e.g. SourceToggle mid-restore). A per-item
    *  `disabled` still applies on top of this. */
   disabled?: boolean;
@@ -277,6 +283,10 @@ interface SelectorTabProps {
   /** Lets the label break onto a second line, for a pinned segment, where
    *  segmentLayout decides when a label may wrap. Elsewhere it truncates. */
   wraps: boolean;
+  /** Shows the glyph alone because the label does not fit a strip that keeps
+   *  to one row. The label stays in the DOM as the accessible name, and so
+   *  the strip can measure it again. */
+  squeezed: boolean;
   onSelect: () => void;
   /** The label-mode axis the strip follows; see labelAxis in Selector. */
   axis: ControlAxis;
@@ -292,6 +302,7 @@ function SelectorTab({
   style,
   flex,
   wraps,
+  squeezed,
   onSelect,
   axis,
 }: SelectorTabProps) {
@@ -308,7 +319,7 @@ function SelectorTab({
   // `title`, the reason for the segment's state, is appended. Identical parts
   // collapse because the Settings tab strip passes `title: label` for its
   // truncated labels.
-  const explains = item.tip ?? (nameHidden ? item.label : undefined);
+  const explains = item.tip ?? (nameHidden || squeezed ? item.label : undefined);
   const tip = [...new Set([explains, item.title].filter(Boolean))].join(" — ") || undefined;
   // No bubble in reactive mode, where hovering brings the words back. A
   // disabled segment keeps it: it takes no hover, so its tip is the only thing
@@ -349,7 +360,7 @@ function SelectorTab({
           ) : (
             (labelMode === "text" || !item.iconOnly) &&
             (!hidesLabel(labelMode) || !item.icon) && (
-              <span data-sel-label className={wraps ? undefined : "truncate"}>
+              <span data-sel-label className={squeezed ? "sr-only" : wraps ? undefined : "truncate"}>
                 {item.label}
               </span>
             )
@@ -373,6 +384,7 @@ export function Selector(props: SelectorProps) {
     variant = "well",
     equalWidth = false,
     inline = false,
+    fit = false,
     disabled = false,
     className = "",
   } = props;
@@ -392,7 +404,10 @@ export function Selector(props: SelectorProps) {
   // stays a row of equal tabs in glyph mode.
   const labelsOffScreen = hidesLabel(labelModeForStrip) && items.every((i) => !!i.icon);
   const reactiveStrip = labelModeForStrip === "reactive" && items.every((i) => !!i.icon && !i.iconOnly);
-  const pinWidth = equalWidth && !(labelsOffScreen && size !== "lg");
+  const pinWidth = equalWidth && !fit && !(labelsOffScreen && size !== "lg");
+  // A strip that keeps to one row can only drop its labels where they are on
+  // screen and every segment has a glyph to show instead.
+  const canSqueeze = fit && labelModeForStrip === "textGlyph" && items.every((i) => !!i.icon);
 
   const many = props.select === "many";
   const chosen = props.select === "many" ? props.active : null;
@@ -462,6 +477,36 @@ export function Selector(props: SelectorProps) {
     return () => watch.disconnect();
   }, [pinWidth, inline, itemsKey, disabledKey, size, labelModeForStrip]);
 
+  // Whether the longest label fits its share of a one-row strip. The labels
+  // are put back on screen for the measurement, so a strip that has dropped
+  // them sees when they fit again.
+  const [squeezed, setSqueezed] = useState(false);
+  useLayoutEffect(() => {
+    if (!canSqueeze) {
+      setSqueezed(false);
+      return;
+    }
+    const el = strip.current!;
+    const measure = () => {
+      const segs = Array.from(el.querySelectorAll<HTMLElement>("[data-sel-id]"));
+      const own = getComputedStyle(el);
+      const room = el.clientWidth - parseFloat(own.paddingLeft) - parseFloat(own.paddingRight);
+      if (room <= 0 || segs.length === 0) return;
+      const gap = parseFloat(own.columnGap) || 0;
+      const share = Math.min((room - gap * (segs.length - 1)) / segs.length, MAX_PINNED_WIDTH);
+      const hidden = Array.from(el.querySelectorAll("[data-sel-label].sr-only"));
+      for (const l of hidden) l.classList.remove("sr-only");
+      const widest = Math.max(...segmentWidths(segs).map((w) => w.oneLine));
+      for (const l of hidden) l.classList.add("sr-only");
+      setSqueezed(widest > share);
+    };
+    measure();
+    const watch = new ResizeObserver(measure);
+    watch.observe(el);
+    void document.fonts?.ready.then(measure);
+    return () => watch.disconnect();
+  }, [canSqueeze, itemsKey, disabledKey, size]);
+
   // A pinned segment keeps the pinned width as its floor and grows into its
   // share of the row, so every row ends at the track's edge once it wraps. The
   // basis leaves one gap of slack against sub-pixel rounding, and the growth
@@ -476,21 +521,25 @@ export function Selector(props: SelectorProps) {
   const byContent = pinWidth && !!layout?.byContent;
   const pinnedRows = pinWidth && layout && !layout.byContent ? layout : null;
   const hugged = inline && pinnedRows;
-  const segmentFlex: CSSProperties = hugged
-    ? { flex: `0 0 ${Math.min(hugged.pinned, hugged.room)}px` }
-    : pinnedRows
-      ? {
-          minWidth: `${Math.min(pinnedRows.pinned, pinnedRows.room)}px`,
-          flex: `1 0 calc((100% - ${pinnedRows.perRow} * ${pinnedRows.gap}px) / ${pinnedRows.perRow})`,
-        }
-      : { flex: "1 0 auto" };
-  const trackStyle: CSSProperties | undefined = byContent
-    ? { width: "100%", flexWrap: "nowrap" }
+  const segmentFlex: CSSProperties = fit
+    ? { flex: "1 1 0", minWidth: 0, maxWidth: `${MAX_PINNED_WIDTH}px` }
     : hugged
-      ? {
-          maxWidth: `${hugged.perRow * hugged.pinned + (hugged.perRow - 1) * hugged.gap + hugged.inset + 1}px`,
-        }
-      : undefined;
+      ? { flex: `0 0 ${Math.min(hugged.pinned, hugged.room)}px` }
+      : pinnedRows
+        ? {
+            minWidth: `${Math.min(pinnedRows.pinned, pinnedRows.room)}px`,
+            flex: `1 0 calc((100% - ${pinnedRows.perRow} * ${pinnedRows.gap}px) / ${pinnedRows.perRow})`,
+          }
+        : { flex: "1 0 auto" };
+  const trackStyle: CSSProperties | undefined = fit
+    ? { flexWrap: "nowrap" }
+    : byContent
+      ? { width: "100%", flexWrap: "nowrap" }
+      : hugged
+        ? {
+            maxWidth: `${hugged.perRow * hugged.pinned + (hugged.perRow - 1) * hugged.gap + hugged.inset + 1}px`,
+          }
+        : undefined;
 
   const isOn = (id: string) => (chosen ? chosen.has(id) : only === id);
   const isItemDisabled = (item: SelectorItem) => disabled || !!item.disabled;
@@ -548,7 +597,7 @@ export function Selector(props: SelectorProps) {
       // rounding that would otherwise push its last segment onto a row alone.
       className={[
         "flex flex-wrap items-center",
-        inline ? "w-fit max-w-full" : "w-full",
+        inline && !fit ? "w-fit max-w-full" : "w-full",
         well
           ? "gap-[0.2rem] rounded-pill bg-carbon-surface3 p-[0.2rem]"
           : "gap-1",
@@ -613,6 +662,7 @@ export function Selector(props: SelectorProps) {
             style={hue ? (hueVars(i + hueOffset) as CSSProperties) : undefined}
             flex={segmentFlex}
             wraps={pinWidth}
+            squeezed={canSqueeze && squeezed}
             onSelect={() => {
               if (!itemDisabled) onChange(item.id);
             }}
