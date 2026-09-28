@@ -94,7 +94,7 @@ for (const width of [320, 360, 390]) {
 
     // Step 2 restores the settings from the Self-Backup's copy at another
     // site, and step 3 lists where each domain's backups lie.
-    await page.getByRole("tab", { name: "Offsite" }).first().click();
+    await page.getByRole("tab", { name: "Kopiert nach" }).first().click();
     await expect(page.getByText(CONFIG_TARGETS[0].repo, { exact: true })).toBeVisible();
     await page.getByRole("region", { name: "Container", exact: true }).getByRole("button", { name: "2 Einträge" }).click();
     await settle(page);
