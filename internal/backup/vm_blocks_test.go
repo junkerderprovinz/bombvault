@@ -34,6 +34,11 @@ type blockVM struct {
 	refuseAll   bool
 	jobs        int
 	bytesRead   int64
+	// agent makes the guest agent answer; thawFails is how many thaws fail
+	// before one works. calls logs the job's steps in order.
+	agent     bool
+	thawFails int
+	calls     []string
 }
 
 func newBlockVM(size int) *blockVM {
@@ -98,9 +103,26 @@ func (v *blockVM) CheckpointRedefine(_ context.Context, _, def string, validate 
 	return nil
 }
 
-func (v *blockVM) GuestAgentPing(context.Context, string) bool { return false }
-func (v *blockVM) FSFreeze(context.Context, string) error      { return nil }
-func (v *blockVM) FSThaw(context.Context, string) error        { return nil }
+func (v *blockVM) GuestAgentPing(context.Context, string) bool { return v.agent }
+
+func (v *blockVM) FSFreeze(context.Context, string) error {
+	v.calls = append(v.calls, "freeze")
+	return nil
+}
+
+func (v *blockVM) FSThaw(context.Context, string) error {
+	v.calls = append(v.calls, "thaw")
+	if v.thawFails > 0 {
+		v.thawFails--
+		return errors.New("guest agent is not responding")
+	}
+	return nil
+}
+
+func (v *blockVM) EndLeftoverJob(context.Context, string) error {
+	v.calls = append(v.calls, "end-leftover")
+	return nil
+}
 
 func (v *blockVM) StartJob(_ context.Context, _, base, checkpoint string, _ []string) (backup.BlockJob, error) {
 	if v.refuseAll || (base != "" && v.refuseIncr) {
@@ -124,6 +146,7 @@ func (v *blockVM) StartJob(_ context.Context, _, base, checkpoint string, _ []st
 	v.checkpoints[checkpoint] = map[int64]bool{}
 	v.order = append(v.order, checkpoint)
 	v.jobs++
+	v.calls = append(v.calls, "begin")
 	return &blockJob{vm: v, data: bytes.Clone(v.disk), changed: changed}, nil
 }
 
@@ -134,6 +157,7 @@ type blockJob struct {
 }
 
 func (j *blockJob) Open(context.Context, string) (backup.BlockReader, error) {
+	j.vm.calls = append(j.vm.calls, "open")
 	return &blockReader{job: j}, nil
 }
 func (j *blockJob) Stop(context.Context) error { return nil }
@@ -345,6 +369,8 @@ type blockRig struct {
 	kept  *keptCheckpoint
 	stage string
 	clock time.Time
+	// thawFailures collects what the run reports when the guest stays frozen.
+	thawFailures []error
 }
 
 func newBlockRig(t *testing.T, size int) *blockRig {
@@ -375,6 +401,7 @@ func (r *blockRig) backup() (backup.VMBlocksResult, error) {
 		Restic:      r.repo,
 		Runs:        r.runs,
 		Now:         func() time.Time { return now },
+		ThawFailed:  func(err error) { r.thawFailures = append(r.thawFailures, err) },
 	})
 }
 
@@ -788,5 +815,36 @@ func TestRestoreVMLeavesAVMWithForeignCheckpointsRunning(t *testing.T) {
 		if strings.HasPrefix(e, "destroy:") || strings.HasPrefix(e, "forget:") {
 			t.Fatalf("calls = %v, want the VM left alone", vm.log)
 		}
+	}
+}
+
+func TestBlocksFreezeTheGuestOnlyWhileTheJobStarts(t *testing.T) {
+	r := newBlockRig(t, 8<<20)
+	r.vm.agent = true
+	r.mustBackup()
+	want := []string{"end-leftover", "freeze", "begin", "thaw", "open"}
+	if !slices.Equal(r.vm.calls, want) {
+		t.Fatalf("steps = %v, want %v", r.vm.calls, want)
+	}
+}
+
+func TestBlocksRetryTheThawAndReportAGuestThatStaysFrozen(t *testing.T) {
+	defer backup.SetThawRetryForTest(time.Millisecond)()
+	r := newBlockRig(t, 8<<20)
+	r.vm.agent = true
+	r.vm.thawFails = 2
+	r.mustBackup()
+	if n := slices.Index(r.vm.calls, "open"); n < 0 || !slices.Equal(r.vm.calls[:n], []string{"end-leftover", "freeze", "begin", "thaw", "thaw", "thaw"}) {
+		t.Fatalf("steps = %v, want two retries of the thaw", r.vm.calls)
+	}
+	if len(r.thawFailures) != 0 {
+		t.Fatalf("reported %v although the third thaw worked", r.thawFailures)
+	}
+
+	r.vm.calls = nil
+	r.vm.thawFails = 100
+	r.mustBackup()
+	if len(r.thawFailures) != 1 {
+		t.Fatalf("reported %d thaw failures, want one", len(r.thawFailures))
 	}
 }

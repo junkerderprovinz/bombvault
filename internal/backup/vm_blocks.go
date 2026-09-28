@@ -147,6 +147,9 @@ type BlockHost interface {
 	GuestAgentPing(ctx context.Context, domain string) bool
 	FSFreeze(ctx context.Context, domain string) error
 	FSThaw(ctx context.Context, domain string) error
+	// EndLeftoverJob ends a backup job an interrupted run of BombVault's left
+	// running, which would hold the disks. Anyone else's job stays.
+	EndLeftoverJob(ctx context.Context, domain string) error
 	// StartJob starts a pull-mode job over devs that creates checkpoint and,
 	// with a non-empty base, reports the changes since base.
 	StartJob(ctx context.Context, domain, base, checkpoint string, devs []string) (BlockJob, error)
@@ -205,6 +208,9 @@ type VMBlocksDeps struct {
 	Restic      BlockRestic
 	Runs        Runs
 	Now         func() time.Time
+	// ThawFailed hears about a guest whose filesystems stayed frozen after
+	// every thaw attempt.
+	ThawFailed func(err error)
 }
 
 // VMBlocksResult says how the disks were read.
@@ -266,6 +272,10 @@ func BackupVMBlocks(ctx context.Context, d VMBlocksDeps) (VMBlocksResult, error)
 	}
 
 	cleanCtx := context.WithoutCancel(ctx)
+	if err := d.Host.EndLeftoverJob(ctx, d.Name); err != nil {
+		SettleBlockCheckpoints(cleanCtx, d.Host, d.Checkpoints, d.Name, kept)
+		return VMBlocksResult{}, &BlocksUnavailableError{Reason: BlocksReasonJobFailed, Err: err}
+	}
 	job, err := startFrozen(ctx, d, base, checkpoint, devs)
 	if err != nil && base != "" && errors.Is(err, ErrBlockJobRefused) {
 		log.Printf("vm blocks: %q: incremental start from %s refused (%v); reading every block", d.Name, base, err)
@@ -392,7 +402,7 @@ type chainPrev struct {
 
 // startFrozen starts the job with the guest's filesystems frozen when its
 // agent answers. The job fixes its point in time when it starts, so the
-// guest is thawed right after.
+// guest is thawed right after and nothing else happens in between.
 func startFrozen(ctx context.Context, d VMBlocksDeps, base, checkpoint string, devs []string) (BlockJob, error) {
 	frozen := false
 	if d.Host.GuestAgentPing(ctx, d.Name) {
@@ -404,11 +414,37 @@ func startFrozen(ctx context.Context, d VMBlocksDeps, base, checkpoint string, d
 	}
 	job, err := d.Host.StartJob(ctx, d.Name, base, checkpoint, devs)
 	if frozen {
-		if tErr := d.Host.FSThaw(context.WithoutCancel(ctx), d.Name); tErr != nil {
-			log.Printf("vm blocks: %q: thaw failed: %v", d.Name, tErr)
-		}
+		thaw(context.WithoutCancel(ctx), d)
 	}
 	return job, err
+}
+
+// thawAttempts and thawRetryDelay bound how long a failing thaw is retried:
+// five attempts over about fifteen seconds, the wait doubling each time.
+const thawAttempts = 5
+
+var thawRetryDelay = time.Second
+
+// thaw thaws the guest, retrying a failure, since a guest left frozen stops
+// writing altogether. The backup goes on either way.
+func thaw(ctx context.Context, d VMBlocksDeps) {
+	wait := thawRetryDelay
+	for attempt := 1; ; attempt++ {
+		err := d.Host.FSThaw(ctx, d.Name)
+		if err == nil {
+			return
+		}
+		if attempt == thawAttempts {
+			log.Printf("vm blocks: %q: thaw failed %d times, the guest may still be frozen: %v", d.Name, attempt, err)
+			if d.ThawFailed != nil {
+				d.ThawFailed(err)
+			}
+			return
+		}
+		log.Printf("vm blocks: %q: thaw failed (%v); trying again", d.Name, err)
+		time.Sleep(wait)
+		wait *= 2
+	}
 }
 
 func stopJob(ctx context.Context, d VMBlocksDeps, job BlockJob) {

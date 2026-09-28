@@ -121,7 +121,9 @@ instead of the method above:
 - It starts a pull-mode backup job (`virsh backup-begin`) that creates a
   checkpoint named `bombvault-<time>` at the same instant, and reads the disks
   over the SSH link through a forwarded Unix socket. When the guest agent
-  answers, the guest's filesystems are frozen while the job starts.
+  answers, the guest's filesystems are frozen only while the job starts. A
+  thaw that fails is tried again for about fifteen seconds, and if the guest
+  still does not thaw, BombVault sends a notification.
 - The first run reads every allocated block. Later runs read only the blocks
   the checkpoint's bitmap marks as written since the previous backup.
 - Each disk is stored as a folder of fixed-size segments holding what the guest
