@@ -130,7 +130,12 @@ export function PlacementRow({
     if (step.kind === "place") {
       try {
         const question = t("placement.confirmHome").replace("{name}", () => name).replace("{home}", () => step.confirmHome);
-        if (!(await confirm(question, { confirmLabel: t("placement.saveHome"), confirmLabelKey: "placement.saveHome" }))) return;
+        const yes = await confirm(question, {
+          confirmLabel: t("placement.saveHome"),
+          confirmLabelKey: "placement.saveHome",
+          cancelTone: "neutral",
+        });
+        if (!yes) return;
         // The repository is made once the question is answered, not before.
         const res = await ensurePlaceRepo(step.placeId, item.domain);
         if (!res.ok || res.repoId === undefined) {

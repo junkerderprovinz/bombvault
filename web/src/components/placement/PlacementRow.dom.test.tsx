@@ -378,6 +378,7 @@ describe("PlacementRow with places that hold no repository yet", () => {
     renderRow(placementView());
     const dialog = await setHome("NAS Keller");
     expect(dialog.textContent).toContain("Back up nginx to NAS Keller from now on?");
+    expect(accentButtons(dialog)).toEqual(["Set"]);
     expect(placeRepos.calls).toEqual([]);
     fireEvent.click(within(dialog).getByRole("button", { name: "Set" }));
     await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, { home: { repo: "repo-new" } }]]));
