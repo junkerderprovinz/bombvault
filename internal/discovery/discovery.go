@@ -43,6 +43,9 @@ type Peer struct {
 	Version string `json:"version,omitempty"`
 	// URL is where the announcer answers direct calls.
 	URL string `json:"url"`
+	// Sent is the Unix time the announce went out. The tag covers it, so a
+	// captured announce stops passing once it is old.
+	Sent int64 `json:"sent,omitempty"`
 	// Tag proves group membership; see the package comment.
 	Tag string `json:"tag,omitempty"`
 	// LastSeen is set by the receiver, never sent.
@@ -54,6 +57,7 @@ type Peer struct {
 type Service struct {
 	mu     sync.Mutex
 	self   Peer
+	sign   func(Peer) string
 	accept func(Peer) bool
 	peers  map[string]Peer
 
@@ -77,10 +81,12 @@ func New() *Service {
 }
 
 // SetSelf replaces what this instance announces from the next tick on. An
-// empty ID or URL stops the announcing.
-func (s *Service) SetSelf(self Peer) {
+// empty ID or URL stops the announcing. Each announce is stamped with the
+// time it goes out and, unless sign is nil, tagged with what sign returns
+// for it.
+func (s *Service) SetSelf(self Peer, sign func(Peer) string) {
 	s.mu.Lock()
-	s.self = self
+	s.self, s.sign = self, sign
 	s.mu.Unlock()
 }
 
@@ -94,10 +100,10 @@ func (s *Service) SetAccept(accept func(Peer) bool) {
 	s.mu.Unlock()
 }
 
-func (s *Service) currentSelf() Peer {
+func (s *Service) currentSelf() (Peer, func(Peer) string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.self
+	return s.self, s.sign
 }
 
 // Start joins the multicast group and begins announcing. It never blocks.
@@ -205,9 +211,13 @@ func (s *Service) pruneLocked(cutoff time.Time) {
 func (s *Service) announceLoop(conn *ipv4.PacketConn, addr *net.UDPAddr) {
 	defer close(s.done)
 	send := func() {
-		self := s.currentSelf()
+		self, sign := s.currentSelf()
 		if self.ID == "" || self.URL == "" {
 			return
+		}
+		self.Sent = time.Now().Unix()
+		if sign != nil {
+			self.Tag = sign(self)
 		}
 		payload, err := json.Marshal(self)
 		if err != nil {
@@ -263,7 +273,13 @@ func (s *Service) Observe(p Peer) {
 	if p.ID == s.self.ID || s.accept == nil || !s.accept(p) {
 		return
 	}
-	if _, known := s.peers[p.ID]; !known && len(s.peers) >= maxPeers {
+	known, ok := s.peers[p.ID]
+	// Datagrams can arrive out of order, and an older announce played back
+	// must not bring back an address the member has since left.
+	if ok && p.Sent < known.Sent {
+		return
+	}
+	if !ok && len(s.peers) >= maxPeers {
 		s.pruneLocked(time.Now().Add(-peerTTL))
 		if len(s.peers) >= maxPeers {
 			return

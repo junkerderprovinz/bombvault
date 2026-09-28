@@ -55,7 +55,7 @@ func member(t *testing.T, id, name string, secret []byte, serve relay.Handler) (
 	t.Cleanup(srv.Close)
 	t.Cleanup(m.Close)
 	m.Apply(Config{Secret: secret, InstanceID: id, Name: name, Version: "9.9.9", DirectURL: srv.URL, Mode: ModeOff})
-	p := discovery.Peer{ID: id, Name: name, Version: "9.9.9", URL: srv.URL}
+	p := discovery.Peer{ID: id, Name: name, Version: "9.9.9", URL: srv.URL, Sent: time.Now().Unix()}
 	if secret != nil {
 		p.Tag = announceTag(PeerAuthKey(secret), p)
 	}
@@ -84,6 +84,24 @@ func TestAnnounceFromAnotherGroupIsNotAMember(t *testing.T) {
 	a.disc.Observe(stranger)
 	if got := a.Members(); len(got) != 0 {
 		t.Fatalf("members = %+v, want nobody from another group", got)
+	}
+}
+
+func TestAnAnnounceOlderThanTheSkewIsIgnored(t *testing.T) {
+	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
+	_, pb := member(t, "id-b", "Attic", testSecret, echo)
+	pb.Sent = time.Now().Add(-10 * time.Minute).Unix()
+	pb.Tag = announceTag(PeerAuthKey(testSecret), pb)
+	a.disc.Observe(pb)
+	if got := a.Members(); len(got) != 0 {
+		t.Fatalf("members = %+v, want an announce from ten minutes ago ignored", got)
+	}
+
+	_, fresh := member(t, "id-c", "Garage", testSecret, echo)
+	fresh.Sent++
+	a.disc.Observe(fresh)
+	if got := a.Members(); len(got) != 0 {
+		t.Fatalf("members = %+v, want an announce whose time was changed after signing ignored", got)
 	}
 }
 

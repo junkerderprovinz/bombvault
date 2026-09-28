@@ -25,8 +25,8 @@ func acceptTag(tag string) func(Peer) bool {
 func TestTwoMembersFindEachOther(t *testing.T) {
 	requireNetwork(t)
 	a, b := New(), New()
-	a.SetSelf(Peer{ID: "id-a", Name: "Cellar", URL: "https://192.168.1.10:3443", Tag: "member"})
-	b.SetSelf(Peer{ID: "id-b", Name: "Attic", URL: "https://192.168.1.11:3443", Tag: "member"})
+	a.SetSelf(Peer{ID: "id-a", Name: "Cellar", URL: "https://192.168.1.10:3443", Tag: "member"}, nil)
+	b.SetSelf(Peer{ID: "id-b", Name: "Attic", URL: "https://192.168.1.11:3443", Tag: "member"}, nil)
 	a.SetAccept(acceptTag("member"))
 	b.SetAccept(acceptTag("member"))
 	a.Start()
@@ -54,7 +54,7 @@ func TestTwoMembersFindEachOther(t *testing.T) {
 
 func TestAnnounceWithoutTheGroupTagIsIgnored(t *testing.T) {
 	s := New()
-	s.SetSelf(Peer{ID: "id-self", URL: "https://192.168.1.2:3443"})
+	s.SetSelf(Peer{ID: "id-self", URL: "https://192.168.1.2:3443"}, nil)
 	s.SetAccept(acceptTag("member"))
 	s.Observe(Peer{ID: "id-stranger", URL: "https://192.168.1.66:3443", Tag: "guess"})
 	s.Observe(Peer{ID: "id-member", URL: "https://192.168.1.3:3443", Tag: "member"})
@@ -84,7 +84,7 @@ func TestChangingTheGroupForgetsItsPeers(t *testing.T) {
 
 func TestAnInstanceIsNotItsOwnPeer(t *testing.T) {
 	s := New()
-	s.SetSelf(Peer{ID: "id-self", URL: "https://192.168.1.2:3443", Tag: "member"})
+	s.SetSelf(Peer{ID: "id-self", URL: "https://192.168.1.2:3443", Tag: "member"}, nil)
 	s.SetAccept(acceptTag("member"))
 	s.Observe(Peer{ID: "id-self", URL: "https://192.168.1.2:3443", Tag: "member"})
 	if got := s.Peers(); len(got) != 0 {
@@ -171,4 +171,15 @@ func only(peers []Peer, ids ...string) []Peer {
 		}
 	}
 	return out
+}
+
+func TestAnOlderAnnounceDoesNotReplaceANewerOne(t *testing.T) {
+	s := New()
+	s.SetSelf(Peer{ID: "id-self", URL: "https://192.168.1.2:3443"}, nil)
+	s.SetAccept(acceptTag("member"))
+	s.Observe(Peer{ID: "id-member", URL: "https://192.168.1.3:3443", Sent: 200, Tag: "member"})
+	s.Observe(Peer{ID: "id-member", URL: "https://192.168.1.99:3443", Sent: 100, Tag: "member"})
+	if got := s.Peers(); len(got) != 1 || got[0].URL != "https://192.168.1.3:3443" {
+		t.Fatalf("peers = %+v, want the newer address kept", got)
+	}
 }

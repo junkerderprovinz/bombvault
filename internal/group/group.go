@@ -214,13 +214,15 @@ func (m *Manager) Apply(cfg Config) {
 
 	if k == nil {
 		m.disc.SetAccept(nil)
-		m.disc.SetSelf(discovery.Peer{})
+		m.disc.SetSelf(discovery.Peer{}, nil)
 		return
 	}
 	self := discovery.Peer{ID: cfg.InstanceID, Name: cfg.Name, Version: cfg.Version, URL: cfg.DirectURL}
-	self.Tag = announceTag(k.peerAuth, self)
-	m.disc.SetSelf(self)
+	m.disc.SetSelf(self, func(p discovery.Peer) string { return announceTag(k.peerAuth, p) })
 	m.disc.SetAccept(func(p discovery.Peer) bool {
+		if d := time.Since(time.Unix(p.Sent, 0)); d > relay.ClockSkew || d < -relay.ClockSkew {
+			return false
+		}
 		return hmac.Equal([]byte(p.Tag), []byte(announceTag(k.peerAuth, p)))
 	})
 }
@@ -237,11 +239,13 @@ func relayURLFor(cfg Config) string {
 	}
 }
 
-// announceTag signs everything a discovery announce claims, so a device on
-// the network cannot point members at an address of its choosing.
+// announceTag signs everything a discovery announce claims, its time
+// included, so a device on the network can neither point members at an
+// address of its choosing nor keep a departed member listed by playing its
+// announces back.
 func announceTag(peerAuth []byte, p discovery.Peer) string {
 	mac := hmac.New(sha256.New, peerAuth)
-	mac.Write([]byte("announce\x00" + p.ID + "\x00" + p.URL + "\x00" + p.Name + "\x00" + p.Version))
+	mac.Write([]byte("announce\x00" + p.ID + "\x00" + p.URL + "\x00" + p.Name + "\x00" + p.Version + "\x00" + strconv.FormatInt(p.Sent, 10)))
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
