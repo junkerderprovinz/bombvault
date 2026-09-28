@@ -58,7 +58,7 @@ Lỗi trả về dưới dạng `{"error": {"code": "...", "message": "..."}}` k
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | Thiếu tham số hoặc tham số sai |
 | 401 | `no_token`, `invalid_token` | Không có mã, hoặc mã không còn hoạt động |
-| 403 | `not_permitted` | Mã chỉ được đọc, hoặc không phải mã đã bắt đầu lần chạy đó |
+| 403 | `not_permitted`, `forbidden_origin` | Mã chỉ được đọc, hoặc không phải mã đã bắt đầu lần chạy đó, hoặc yêu cầu đến từ một trang có nguồn gốc (origin) khác |
 | 404 | `not_found` | Không có mục, lần chạy hoặc bất thường đó |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Đã có việc khác đang chạy, miền đang tắt, hoặc không có gì để làm |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Một giới hạn giữ yêu cầu lại; `Retry-After` cho biết khi nào thử lại |
@@ -74,7 +74,7 @@ BombVault cung cấp mô tả các tuyến này tại `/api/v1/openapi.json` (Op
 BombVault có thể xuất hiện trong Home Assistant như một thiết bị, nhờ cơ chế khám phá MQTT. Home Assistant cần tích hợp MQTT của nó và một broker, ví dụ tiện ích bổ sung Mosquitto. Không cần thành phần riêng nào.
 
 1. Trong BombVault, mở **Cài đặt, Hệ thống, Home Assistant**.
-2. Nhập địa chỉ và cổng của broker, cùng tên người dùng và mật khẩu nếu broker yêu cầu. Bật **Dùng TLS** nếu broker dùng TLS, thường ở cổng 8883; chứng chỉ của broker phải hợp lệ cho địa chỉ bạn nhập.
+2. Nhập địa chỉ và cổng của broker, cùng tên người dùng và mật khẩu nếu broker yêu cầu. Bật **Dùng TLS** nếu broker dùng TLS, thường ở cổng 8883; chứng chỉ của broker phải hợp lệ cho địa chỉ bạn nhập. Nếu bạn đổi địa chỉ, cổng hoặc tên người dùng, hãy nhập lại mật khẩu: BombVault không chuyển mật khẩu đã lưu sang broker hay người dùng khác.
 3. Bật **Kết nối với Home Assistant** và bấm **Lưu**. Thẻ sẽ cho biết khi kết nối đã thông.
 
 Thiết bị có tên BombVault, hoặc BombVault kèm tên phiên bản chạy trong ngoặc, và có các thực thể sau:
@@ -90,7 +90,7 @@ Thiết bị có tên BombVault, hoặc BombVault kèm tên phiên bản chạy 
 | *Miền* repository free space | Dung lượng trống nơi đặt kho chính của miền, nếu BombVault đọc được |
 | Back up *miền* | Nút sao lưu cả miền |
 
-Tên thực thể bằng tiếng Anh, vì Home Assistant dùng đúng tên BombVault gửi. Mỗi miền đang bật có thực thể riêng, và miền bạn tắt sẽ mất chúng. Các nút tuân theo cùng giới hạn như [bắt đầu qua API](#errors). Ai công bố được lên broker đều bấm được, nên hãy đặt mật khẩu cho broker hoặc tắt **Nút bấm bắt đầu sao lưu**.
+Tên thực thể bằng tiếng Anh, vì Home Assistant dùng đúng tên BombVault gửi. Mỗi miền đang bật có thực thể riêng, và miền bạn tắt sẽ mất chúng. Các nút xuất hiện khi bạn bật **Nút bấm bắt đầu sao lưu**, mục này tắt khi mới cài đặt. Các nút tuân theo cùng giới hạn như [bắt đầu qua API](#errors). Ngoài ra BombVault chỉ nhận mỗi lần một lần bấm cho mỗi miền và tối đa sáu lần mỗi phút, đồng thời bỏ qua lần bấm mà broker giữ lại dưới dạng tin nhắn retained. Ai công bố được lên broker đều bấm được, nên hãy đặt mật khẩu cho broker.
 
 BombVault đọc trạng thái của mình mỗi 15 giây và công bố khi có thay đổi, dạng JSON tại `<tiền tố>/<nút>/state`. Tiền tố là `bombvault` nếu bạn không đổi, còn nút là một mã ngắn BombVault chọn một lần. Các thông điệp khám phá đi tới tiền tố mặc định của Home Assistant là `homeassistant`. Cả hai đều được giữ lại (retained). Thông điệp di chúc (last will) đánh dấu thiết bị là không khả dụng nếu BombVault dừng mà không báo trước. Khi tắt liên kết, BombVault gỡ thiết bị và các thực thể của nó khỏi Home Assistant.
 
@@ -102,6 +102,6 @@ Lời quảng bá có tới được mạng của bạn hay không tùy vào cá
 
 - **bridge**, mặc định trong mẫu Unraid: lời quảng bá chỉ ở trong mạng của Docker và không ai trên LAN thấy. Hãy mở BombVault bằng địa chỉ của máy chủ như trước.
 - **br0** hoặc một mạng macvlan hay ipvlan khác: container có địa chỉ riêng trên LAN và lời quảng bá tới được đó.
-- **host**: lời quảng bá đi ra qua các giao diện của máy chủ, bên cạnh lời quảng bá của chính Unraid.
+- **host**: lời quảng bá đi ra qua các giao diện của máy chủ, bên cạnh lời quảng bá của chính Unraid. Các cầu nối của Docker và libvirt bị bỏ qua.
 
 Chỉ quảng bá địa chỉ IPv4.

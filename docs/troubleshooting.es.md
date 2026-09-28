@@ -29,7 +29,7 @@ Las instantáneas en vivo necesitan el agente invitado de qemu instalado en la V
 
 ## Una copia falló con "repository is already locked"
 
-Suele tratarse de un bloqueo de restic huérfano dejado atrás cuando el contenedor se actualizó o reinició a mitad de operación. BombVault detecta un bloqueo huérfano de forma demostrable, lo fuerza a limpiar y lo reintenta una vez, automáticamente. Si persiste, usa **Ajustes, Integridad y mantenimiento, Desbloquear** para el dominio afectado con el fin de limpiar un bloqueo obsoleto a mano. Un problema genuino sigue saliendo a la superficie en lugar de quedar oculto.
+Suele tratarse de un bloqueo de restic huérfano dejado atrás cuando el contenedor se actualizó o reinició a mitad de operación. BombVault detecta un bloqueo huérfano de forma demostrable, lo fuerza a limpiar y lo reintenta una vez, automáticamente. Si persiste, usa **Ajustes, Integridad y mantenimiento, Desbloquear** para el dominio afectado con el fin de limpiar un bloqueo obsoleto a mano. Un problema genuino sigue saliendo a la superficie en lugar de quedar oculto. Tras un reinicio, BombVault espera a que ese bloqueo lleve diez minutos sin renovarse. Un restic que sigue en marcha, por ejemplo en un segundo BombVault sobre el mismo repositorio, renueva su bloqueo cada cinco minutos.
 
 ## Mi copia externa no ocurrió tras una copia
 

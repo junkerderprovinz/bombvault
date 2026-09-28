@@ -58,7 +58,7 @@ En fejl kommer tilbage som `{"error": {"code": "...", "message": "..."}}` med de
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | Et argument mangler eller er forkert |
 | 401 | `no_token`, `invalid_token` | Intet token, eller ikke et aktivt |
-| 403 | `not_permitted` | Tokenet må kun læse, eller det startede ikke kørslen |
+| 403 | `not_permitted`, `forbidden_origin` | Tokenet må kun læse, eller det startede ikke kørslen, eller anmodningen kom fra en side med en anden oprindelse |
 | 404 | `not_found` | Intet sådant element, kørsel eller anomali |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Noget andet kører, området er slået fra, eller der er intet at gøre |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | En grænse holder forespørgslen tilbage; `Retry-After` siger, hvornår du kan prøve igen |
@@ -74,7 +74,7 @@ BombVault leverer en beskrivelse af disse ruter på `/api/v1/openapi.json` (Open
 BombVault kan vises i Home Assistant som en enhed via MQTT-discovery. Home Assistant skal bruge sin MQTT-integration og en broker, for eksempel Mosquitto-tilføjelsen. Der skal ikke installeres nogen egen komponent.
 
 1. Åbn **Indstillinger, System, Home Assistant** i BombVault.
-2. Skriv brokerens adresse og port, og brugernavn og adgangskode, hvis den beder om dem. Slå **Brug TLS** til, hvis brokeren taler TLS, som regel på port 8883; dens certifikat skal være gyldigt for den adresse, du skrev.
+2. Skriv brokerens adresse og port, og brugernavn og adgangskode, hvis den beder om dem. Slå **Brug TLS** til, hvis brokeren taler TLS, som regel på port 8883; dens certifikat skal være gyldigt for den adresse, du skrev. Ændrer du adressen, porten eller brugernavnet, skal du indtaste adgangskoden igen: BombVault giver ikke den gemte videre til en anden broker eller bruger.
 3. Slå **Forbind til Home Assistant** til, og klik på **Gem**. Kortet viser, når forbindelsen er oppe.
 
 Enheden hedder BombVault, eller BombVault med instansnavnet i parentes, og har disse entiteter:
@@ -90,7 +90,7 @@ Enheden hedder BombVault, eller BombVault med instansnavnet i parentes, og har d
 | *Område* repository free space | Ledig plads der, hvor dets primære repository ligger, hvis BombVault kan læse den |
 | Back up *område* | En knap, der sikkerhedskopierer hele området |
 
-Entiteternes navne er på engelsk, fordi Home Assistant overtager dem, som BombVault sender dem. Hvert område, der er slået til, får sine egne entiteter, og et område, du slår fra, mister dem. Knapperne følger de samme grænser som [starter via API'et](#errors). Alle, der kan udgive på brokeren, kan trykke på dem, så giv brokeren en adgangskode, eller slå **Knapper starter sikkerhedskopier** fra.
+Entiteternes navne er på engelsk, fordi Home Assistant overtager dem, som BombVault sender dem. Hvert område, der er slået til, får sine egne entiteter, og et område, du slår fra, mister dem. Knapperne dukker op, når du slår **Knapper starter sikkerhedskopier** til; en ny installation har det slået fra. De følger de samme grænser som [starter via API'et](#errors). Derudover tager BombVault kun imod ét tryk ad gangen pr. område og højst seks i minuttet, og ser bort fra et tryk, som brokeren har gemt som retained-besked. Alle, der kan udgive på brokeren, kan trykke på dem, så giv brokeren en adgangskode.
 
 BombVault læser sin status hvert 15. sekund og udgiver den, når noget har ændret sig, som JSON under `<præfiks>/<node>/state`. Præfikset er `bombvault`, så længe du ikke ændrer det, og noden er et kort id, som BombVault vælger én gang. Discovery-beskederne går til Home Assistants standardpræfiks `homeassistant`. Begge gemmes (retained). En last will markerer enheden som utilgængelig, hvis BombVault stopper uden at melde fra. Slår du forbindelsen fra, fjerner BombVault enheden og dens entiteter fra Home Assistant.
 
@@ -102,6 +102,6 @@ Om annonceringen når dit netværk, afhænger af, hvordan containeren er forbund
 
 - **bridge**, standarden i Unraid-skabelonen: annonceringen bliver i Dockers netværk, og ingen på LAN'et ser den. Åbn BombVault på værtens adresse som før.
 - **br0** eller et andet macvlan- eller ipvlan-netværk: containeren har sin egen adresse på LAN'et, og annonceringen når det.
-- **host**: annonceringen går ud over værtens interfaces ved siden af Unraids egen.
+- **host**: annonceringen går ud over værtens interfaces ved siden af Unraids egen. Docker- og libvirt-broerne springes over.
 
 Kun IPv4-adresser annonceres.

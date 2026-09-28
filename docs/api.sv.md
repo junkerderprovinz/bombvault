@@ -58,7 +58,7 @@ Ett fel kommer tillbaka som `{"error": {"code": "...", "message": "..."}}` med m
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | Ett argument saknas eller är fel |
 | 401 | `no_token`, `invalid_token` | Inget token, eller inget aktivt |
-| 403 | `not_permitted` | Tokenet får bara läsa, eller det startade inte körningen |
+| 403 | `not_permitted`, `forbidden_origin` | Tokenet får bara läsa, eller det startade inte körningen, eller så kom begäran från en sida med ett annat ursprung |
 | 404 | `not_found` | Inget sådant objekt, körning eller avvikelse |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Något annat körs, området är avstängt eller det finns inget att göra |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | En gräns håller tillbaka förfrågan; `Retry-After` säger när du kan försöka igen |
@@ -74,7 +74,7 @@ BombVault levererar en beskrivning av de här rutterna på `/api/v1/openapi.json
 BombVault kan dyka upp i Home Assistant som en enhet via MQTT-discovery. Home Assistant behöver sin MQTT-integration och en broker, till exempel tillägget Mosquitto. Ingen egen komponent behövs.
 
 1. Öppna **Inställningar, System, Home Assistant** i BombVault.
-2. Ange brokerns adress och port, och användarnamn och lösenord om den kräver det. Slå på **Använd TLS** om brokern använder TLS, oftast på port 8883; dess certifikat måste gälla för adressen du angav.
+2. Ange brokerns adress och port, och användarnamn och lösenord om den kräver det. Slå på **Använd TLS** om brokern använder TLS, oftast på port 8883; dess certifikat måste gälla för adressen du angav. Om du ändrar adressen, porten eller användarnamnet måste du ange lösenordet igen: BombVault skickar inte det sparade vidare till en annan broker eller användare.
 3. Slå på **Anslut till Home Assistant** och klicka på **Spara**. Kortet visar när anslutningen är uppe.
 
 Enheten heter BombVault, eller BombVault med instansnamnet inom parentes, och har de här entiteterna:
@@ -90,7 +90,7 @@ Enheten heter BombVault, eller BombVault med instansnamnet inom parentes, och ha
 | *Område* repository free space | Ledigt utrymme där dess primära repository ligger, om BombVault kan läsa det |
 | Back up *område* | En knapp som säkerhetskopierar hela området |
 
-Entiteternas namn är på engelska, eftersom Home Assistant tar dem som BombVault skickar dem. Varje påslaget område får egna entiteter, och ett område du stänger av förlorar dem. Knapparna följer samma gränser som [starter via API:t](#errors). Alla som får publicera på brokern kan trycka på dem, så ge brokern ett lösenord eller stäng av **Knappar startar säkerhetskopior**.
+Entiteternas namn är på engelska, eftersom Home Assistant tar dem som BombVault skickar dem. Varje påslaget område får egna entiteter, och ett område du stänger av förlorar dem. Knapparna dyker upp när du slår på **Knappar startar säkerhetskopior**, som är avslaget i en ny installation. De följer samma gränser som [starter via API:t](#errors). Dessutom tar BombVault emot ett tryck i taget per område och högst sex per minut, och bortser från ett tryck som brokern har sparat som retained-meddelande. Alla som får publicera på brokern kan trycka på dem, så ge brokern ett lösenord.
 
 BombVault läser sin status var 15:e sekund och publicerar den när något har ändrats, som JSON under `<prefix>/<nod>/state`. Prefixet är `bombvault` så länge du inte ändrar det, och noden är ett kort id som BombVault väljer en gång. Discovery-meddelandena går till Home Assistants standardprefix `homeassistant`. Båda behålls (retained). En last will markerar enheten som otillgänglig om BombVault stannar utan att säga till. Stänger du av kopplingen tar BombVault bort enheten och dess entiteter från Home Assistant.
 
@@ -102,6 +102,6 @@ Om annonseringen når ditt nätverk beror på hur containern är ansluten:
 
 - **bridge**, standard i Unraid-mallen: annonseringen stannar i Dockers nätverk och ingen på LAN:et ser den. Öppna BombVault på värdens adress som tidigare.
 - **br0** eller ett annat macvlan- eller ipvlan-nätverk: containern har en egen adress på LAN:et och annonseringen når dit.
-- **host**: annonseringen går ut över värdens gränssnitt, bredvid Unraids egen.
+- **host**: annonseringen går ut över värdens gränssnitt, bredvid Unraids egen. Docker- och libvirt-bryggorna hoppas över.
 
 Bara IPv4-adresser annonseras.

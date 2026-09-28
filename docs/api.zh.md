@@ -58,7 +58,7 @@ curl -s -X POST -H "Authorization: Bearer $BOMBVAULT_TOKEN" \
 |---|---|---|
 | 400 | `invalid_argument`、`ambiguous` | 参数缺失或错误 |
 | 401 | `no_token`、`invalid_token` | 没有令牌，或令牌不是可用的 |
-| 403 | `not_permitted` | 令牌只能读取，或该运行不是它启动的 |
+| 403 | `not_permitted`, `forbidden_origin` | 令牌只能读取，或该运行不是它启动的，或请求来自其他源的页面 |
 | 404 | `not_found` | 没有这样的项目、运行或异常 |
 | 409 | `busy`、`domain_off`、`nothing_to_back_up`、`not_running` | 已有其他操作在运行、领域已关闭，或无事可做 |
 | 429 | `throttled`、`rate_limited`、`cooldown`、`retention_guard` | 某项限制暂缓了请求；`Retry-After` 说明何时重试 |
@@ -74,7 +74,7 @@ BombVault 在 `/api/v1/openapi.json` 提供这些路由的说明（OpenAPI 3.1�
 BombVault 可以通过 MQTT 发现，以设备的形式出现在 Home Assistant 中。Home Assistant 需要启用它的 MQTT 集成，并有一个代理，例如 Mosquitto 加载项。不需要任何专用组件。
 
 1. 在 BombVault 中打开 **设置、系统、Home Assistant**。
-2. 输入代理的地址和端口；如果代理要求，再输入用户名和密码。如果代理使用 TLS（通常在端口 8883），就打开 **使用 TLS**；它的证书必须对你输入的地址有效。
+2. 输入代理的地址和端口；如果代理要求，再输入用户名和密码。如果代理使用 TLS（通常在端口 8883），就打开 **使用 TLS**；它的证书必须对你输入的地址有效。如果你改了地址、端口或用户名，请重新输入密码：BombVault 不会把已保存的密码交给另一个代理或另一个用户。
 3. 打开 **连接到 Home Assistant** 并点击 **保存**。连接建立后，卡片会显示出来。
 
 设备名为 BombVault，或在括号中带上实例名称的 BombVault，包含以下实体：
@@ -90,7 +90,7 @@ BombVault 可以通过 MQTT 发现，以设备的形式出现在 Home Assistant 
 | *领域* repository free space | 其主仓库所在位置的剩余空间（如果 BombVault 能读取） |
 | Back up *领域* | 备份整个领域的按钮 |
 
-实体名称是英文的，因为 Home Assistant 会原样使用 BombVault 发送的名称。每个已启用的领域都有自己的实体，关闭的领域会失去它们。按钮与 [通过 API 启动](#errors) 受同样的限制。任何能向代理发布消息的人都能按下它们，所以请给代理设置密码，或关闭 **按钮启动备份**。
+实体名称是英文的，因为 Home Assistant 会原样使用 BombVault 发送的名称。每个已启用的领域都有自己的实体，关闭的领域会失去它们。打开 **按钮启动备份** 后按钮才会出现；新安装时它是关闭的。按钮与 [通过 API 启动](#errors) 受同样的限制。此外，BombVault 每个领域同一时间只接受一次按下，每分钟最多六次，并会忽略代理作为保留（retained）消息存下的按下。任何能向代理发布消息的人都能按下它们，所以请给代理设置密码。
 
 BombVault 每 15 秒读取一次自身状态，有变化时以 JSON 发布到 `<前缀>/<节点>/state`。前缀默认为 `bombvault`，除非你修改它；节点是 BombVault 选定一次的短 ID。发现消息发送到 Home Assistant 的默认前缀 `homeassistant`。两者都会保留（retained）。如果 BombVault 未通知就停止，遗嘱消息（last will）会把设备标为不可用。关闭这个连接后，BombVault 会从 Home Assistant 中移除该设备及其实体。
 
@@ -102,6 +102,6 @@ BombVault 通过 mDNS（Bonjour 和 Avahi 背后的协议）在局域网中广�
 
 - **bridge**，Unraid 模板中的默认设置：广播留在 Docker 网络内部，局域网中没人能看到。请像以前一样通过主机地址打开 BombVault。
 - **br0** 或其他 macvlan、ipvlan 网络：容器在局域网中有自己的地址，广播可以到达。
-- **host**：广播从主机的网络接口发出，与 Unraid 自己的广播并列。
+- **host**：广播从主机的网络接口发出，与 Unraid 自己的广播并列。Docker 和 libvirt 的网桥不在其中。
 
 只广播 IPv4 地址。

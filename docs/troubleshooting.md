@@ -29,7 +29,7 @@ Live snapshots need the qemu guest agent installed in the VM and the disk on `/m
 
 ## A backup failed with "repository is already locked"
 
-This is usually an orphaned restic lock left behind when the container was updated or restarted mid-operation. BombVault detects a provably orphaned lock, force-clears it and retries once, automatically. If it persists, use **Settings, Integrity & maintenance, Unlock** for the affected domain to clear a stale lock by hand. A genuine problem still surfaces rather than being hidden.
+This is usually an orphaned restic lock left behind when the container was updated or restarted mid-operation. BombVault detects a provably orphaned lock, force-clears it and retries once, automatically. If it persists, use **Settings, Integrity & maintenance, Unlock** for the affected domain to clear a stale lock by hand. A genuine problem still surfaces rather than being hidden. After a restart BombVault waits until such a lock has gone ten minutes without a refresh. A restic that is still running, for example in a second BombVault on the same repository, refreshes its lock every five minutes.
 
 ## My off-site copy did not happen after a backup
 

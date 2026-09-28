@@ -29,7 +29,7 @@ Gli snapshot a caldo necessitano del qemu guest agent installato nella VM e del 
 
 ## Un backup è fallito con "repository is already locked"
 
-Di solito è un lock restic orfano lasciato quando il container è stato aggiornato o riavviato a metà operazione. BombVault rileva un lock dimostrabilmente orfano, lo rimuove forzatamente e ritenta una volta, automaticamente. Se persiste, usa **Impostazioni, Integrità e manutenzione, Sblocca** per il dominio interessato per rimuovere a mano un lock bloccato. Un problema autentico si presenta comunque invece di essere nascosto.
+Di solito è un lock restic orfano lasciato quando il container è stato aggiornato o riavviato a metà operazione. BombVault rileva un lock dimostrabilmente orfano, lo rimuove forzatamente e ritenta una volta, automaticamente. Se persiste, usa **Impostazioni, Integrità e manutenzione, Sblocca** per il dominio interessato per rimuovere a mano un lock bloccato. Un problema autentico si presenta comunque invece di essere nascosto. Dopo un riavvio BombVault aspetta che un lock del genere resti dieci minuti senza essere rinnovato. Un restic ancora in esecuzione, per esempio in un secondo BombVault sullo stesso repository, rinnova il suo lock ogni cinque minuti.
 
 ## La mia copia off-site non è avvenuta dopo un backup
 

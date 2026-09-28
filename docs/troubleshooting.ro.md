@@ -29,7 +29,7 @@ Instantaneele live au nevoie de qemu guest agent instalat în VM și de discul p
 
 ## Un backup a eșuat cu "repository is already locked"
 
-Acesta este de obicei un blocaj restic orfan lăsat în urmă când containerul a fost actualizat sau repornit în mijlocul unei operațiuni. BombVault detectează un blocaj dovedibil orfan, îl forțează să se elibereze și reîncearcă o dată, automat. Dacă persistă, folosește **Setări, Integritate și mentenanță, Unlock** pentru domeniul afectat pentru a elibera manual un blocaj rămas. O problemă reală tot iese la suprafață în loc să fie ascunsă.
+Acesta este de obicei un blocaj restic orfan lăsat în urmă când containerul a fost actualizat sau repornit în mijlocul unei operațiuni. BombVault detectează un blocaj dovedibil orfan, îl forțează să se elibereze și reîncearcă o dată, automat. Dacă persistă, folosește **Setări, Integritate și mentenanță, Unlock** pentru domeniul afectat pentru a elibera manual un blocaj rămas. O problemă reală tot iese la suprafață în loc să fie ascunsă. După o repornire, BombVault așteaptă până când o astfel de blocare a stat zece minute fără reîmprospătare. Un restic care încă rulează, de exemplu într-un al doilea BombVault pe același depozit, își reîmprospătează blocarea la fiecare cinci minute.
 
 ## Copia mea off-site nu s-a întâmplat după un backup
 

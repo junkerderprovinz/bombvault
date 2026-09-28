@@ -29,7 +29,7 @@ Záloha VM komunikuje s libvirt přes SSH, nikdy přes připojení.
 
 ## Záloha selhala s "repository is already locked"
 
-Toto je obvykle osiřelý restic zámek zanechaný, když byl kontejner aktualizován nebo restartován uprostřed operace. BombVault detekuje prokazatelně osiřelý zámek, násilně jej vyčistí a jednou zopakuje, automaticky. Pokud přetrvává, použijte **Nastavení, Integrita a údržba, Odemknout** pro postiženou doménu k ručnímu vyčištění zaseklého zámku. Skutečný problém se stále objeví, místo aby byl skryt.
+Toto je obvykle osiřelý restic zámek zanechaný, když byl kontejner aktualizován nebo restartován uprostřed operace. BombVault detekuje prokazatelně osiřelý zámek, násilně jej vyčistí a jednou zopakuje, automaticky. Pokud přetrvává, použijte **Nastavení, Integrita a údržba, Odemknout** pro postiženou doménu k ručnímu vyčištění zaseklého zámku. Skutečný problém se stále objeví, místo aby byl skryt. Po restartu BombVault čeká, dokud takový zámek nebude deset minut bez obnovení. Restic, který ještě běží, třeba v druhém BombVaultu nad stejným repozitářem, svůj zámek obnovuje každých pět minut.
 
 ## Moje kopie mimo lokalitu neproběhla po záloze
 

@@ -58,7 +58,7 @@ Chyba se vrátí jako `{"error": {"code": "...", "message": "..."}}` s odpovída
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | Argument chybí nebo je špatně |
 | 401 | `no_token`, `invalid_token` | Žádný token, nebo ne aktivní |
-| 403 | `not_permitted` | Token smí jen číst, nebo ten běh nespustil |
+| 403 | `not_permitted`, `forbidden_origin` | Token smí jen číst, nebo ten běh nespustil, nebo požadavek přišel ze stránky s jiným původem |
 | 404 | `not_found` | Taková položka, běh nebo anomálie neexistuje |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Už něco běží, oblast je vypnutá, nebo není co dělat |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Limit požadavek zdrží; `Retry-After` říká, kdy to zkusit znovu |
@@ -74,7 +74,7 @@ BombVault poskytuje popis těchto cest na `/api/v1/openapi.json` (OpenAPI 3.1). 
 BombVault se může v Home Assistant objevit jako zařízení díky zjišťování MQTT. Home Assistant k tomu potřebuje svou integraci MQTT a broker, třeba doplněk Mosquitto. Žádná vlastní komponenta není potřeba.
 
 1. V BombVault otevři **Nastavení, Systém, Home Assistant**.
-2. Zadej adresu a port brokeru, a pokud je vyžaduje, i uživatelské jméno a heslo. Zapni **Použít TLS**, pokud broker používá TLS, obvykle na portu 8883; jeho certifikát musí platit pro zadanou adresu.
+2. Zadej adresu a port brokeru, a pokud je vyžaduje, i uživatelské jméno a heslo. Zapni **Použít TLS**, pokud broker používá TLS, obvykle na portu 8883; jeho certifikát musí platit pro zadanou adresu. Když změníš adresu, port nebo uživatelské jméno, zadej heslo znovu: BombVault uložené heslo jinému brokeru ani uživateli nepředá.
 3. Zapni **Připojit k Home Assistant** a klikni na **Uložit**. Karta ukáže, až spojení naběhne.
 
 Zařízení se jmenuje BombVault, případně BombVault s názvem instance v závorce, a má tyto entity:
@@ -90,7 +90,7 @@ Zařízení se jmenuje BombVault, případně BombVault s názvem instance v zá
 | *Oblast* repository free space | Volné místo tam, kde leží její hlavní repozitář, pokud ho BombVault umí přečíst |
 | Back up *oblast* | Tlačítko, které zálohuje celou oblast |
 
-Názvy entit jsou anglicky, protože Home Assistant je přebírá tak, jak je BombVault posílá. Každá zapnutá oblast dostane vlastní entity a vypnutá o ně přijde. Tlačítka mají stejné limity jako [spuštění přes API](#errors). Stisknout je může každý, kdo smí do brokeru publikovat, proto brokeru dej heslo, nebo vypni **Tlačítka spouštějí zálohy**.
+Názvy entit jsou anglicky, protože Home Assistant je přebírá tak, jak je BombVault posílá. Každá zapnutá oblast dostane vlastní entity a vypnutá o ně přijde. Tlačítka se objeví, jakmile zapneš **Tlačítka spouštějí zálohy**; nová instalace to má vypnuté. Mají stejné limity jako [spuštění přes API](#errors). Navíc BombVault bere pro každou oblast jen jedno stisknutí najednou a nejvýš šest za minutu a stisknutí, které broker uchoval jako retained zprávu, ignoruje. Stisknout je může každý, kdo smí do brokeru publikovat, proto brokeru dej heslo.
 
 BombVault čte svůj stav každých 15 sekund a zveřejní ho, když se něco změnilo, jako JSON pod `<předpona>/<uzel>/state`. Předpona je `bombvault`, dokud ji nezměníš, a uzel je krátký identifikátor, který si BombVault jednou zvolí. Zprávy zjišťování jdou pod výchozí předponu Home Assistant `homeassistant`. Obojí se uchovává (retained). Poslední vůle (last will) označí zařízení jako nedostupné, když se BombVault zastaví bez ohlášení. Vypnutím propojení BombVault zařízení i jeho entity z Home Assistant odstraní.
 
@@ -102,6 +102,6 @@ Zda ohlášení doputuje do tvé sítě, záleží na tom, jak je kontejner při
 
 - **bridge**, výchozí volba v šabloně Unraid: ohlášení zůstane v síti Dockeru a v místní síti ho nikdo neuvidí. BombVault otevírej jako dosud přes adresu hostitele.
 - **br0** nebo jiná síť macvlan či ipvlan: kontejner má vlastní adresu v místní síti a ohlášení se tam dostane.
-- **host**: ohlášení jde ven přes rozhraní hostitele, vedle ohlášení samotného Unraidu.
+- **host**: ohlášení jde ven přes rozhraní hostitele, vedle ohlášení samotného Unraidu. Mosty Dockeru a libvirtu vynechává.
 
 Ohlašují se jen adresy IPv4.

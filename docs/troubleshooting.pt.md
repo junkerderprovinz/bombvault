@@ -29,7 +29,7 @@ Os instantâneos a quente precisam do agente convidado qemu instalado na VM e do
 
 ## Um backup falhou com "repository is already locked"
 
-Isto é geralmente um bloqueio restic órfão deixado para trás quando o container foi atualizado ou reiniciado a meio de uma operação. O BombVault deteta um bloqueio comprovadamente órfão, força a sua limpeza e reexperimenta uma vez, automaticamente. Se persistir, use **Definições, Integridade e manutenção, Desbloquear** para o domínio afetado para limpar um bloqueio preso à mão. Um problema genuíno continua a vir ao de cima em vez de ser escondido.
+Isto é geralmente um bloqueio restic órfão deixado para trás quando o container foi atualizado ou reiniciado a meio de uma operação. O BombVault deteta um bloqueio comprovadamente órfão, força a sua limpeza e reexperimenta uma vez, automaticamente. Se persistir, use **Definições, Integridade e manutenção, Desbloquear** para o domínio afetado para limpar um bloqueio preso à mão. Um problema genuíno continua a vir ao de cima em vez de ser escondido. Depois de um reinício, o BombVault espera até esse bloqueio passar dez minutos sem ser renovado. Um restic ainda em execução, por exemplo num segundo BombVault no mesmo repositório, renova o bloqueio a cada cinco minutos.
 
 ## A minha cópia externa não aconteceu após um backup
 

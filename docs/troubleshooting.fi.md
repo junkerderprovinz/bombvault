@@ -29,7 +29,7 @@ Live-tilannevedokset tarvitsevat qemu guest agentin asennettuna VM:ään ja levy
 
 ## Varmuuskopio epäonnistui virheeseen "repository is already locked"
 
-Tämä on yleensä orpo restic-lukko, joka jäi jälkeen kun kontti päivitettiin tai käynnistettiin uudelleen kesken toiminnan. BombVault havaitsee todistettavasti orvon lukon, pakottaa sen auki ja yrittää uudelleen kerran, automaattisesti. Jos se jää pysyväksi, käytä **Asetukset, Eheys ja ylläpito, Avaa lukitus** kyseiselle toimialueelle poistaaksesi jumittuneen lukon käsin. Todellinen ongelma nousee silti pintaan sen sijaan että piiloutuisi.
+Tämä on yleensä orpo restic-lukko, joka jäi jälkeen kun kontti päivitettiin tai käynnistettiin uudelleen kesken toiminnan. BombVault havaitsee todistettavasti orvon lukon, pakottaa sen auki ja yrittää uudelleen kerran, automaattisesti. Jos se jää pysyväksi, käytä **Asetukset, Eheys ja ylläpito, Avaa lukitus** kyseiselle toimialueelle poistaaksesi jumittuneen lukon käsin. Todellinen ongelma nousee silti pintaan sen sijaan että piiloutuisi. Uudelleenkäynnistyksen jälkeen BombVault odottaa, kunnes tällaista lukkoa ei ole uusittu kymmeneen minuuttiin. Yhä käynnissä oleva restic, esimerkiksi toisessa samaa tietovarastoa käyttävässä BombVaultissa, uusii lukkonsa viiden minuutin välein.
 
 ## Etäkopiotani ei tapahtunut varmuuskopion jälkeen
 
