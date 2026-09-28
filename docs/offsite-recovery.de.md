@@ -59,6 +59,14 @@ Ein Bereich an einem entfernten Ort ist wie ein lokaler die Quelle seiner Kopien
 !!! note "Zugangsdaten gehören zum Ort"
     Ein entfernter Ort hat seine eigenen Zugangsdaten. Ein Ort, der mit den gemeinsamen Cloud-Zugangsdaten eingerichtet wurde, benutzt sie weiter, bis sein Zugang in seinen Details geändert wird.
 
+### SMB und WebDAV ohne Host-Mount {#smb-webdav}
+
+Die rclone-Variante des Fensters **Ort hinzufügen** hat ein Formular für eine Windows- oder Samba-Freigabe und für einen WebDAV-Server (Nextcloud, ownCloud, SharePoint oder einen anderen). Trag einen kurzen Namen ein, dazu Host und Freigabe (SMB) oder URL und Servertyp (WebDAV), Benutzer und Passwort, und BombVault schreibt den rclone-Abschnitt für dich. rclone verschleiert das Passwort selbst, bevor es gespeichert wird; ein Ziel mit einem Namen, den es schon gibt, ersetzt diesen Abschnitt, statt einen zweiten anzulegen.
+
+Das neue Remote erscheint dann in der Liste der Remotes im Formular, wo du es für den Ort auswählst. Die Freigabe ist das erste Pfadsegment, nicht Teil des Namens.
+
+Das ist der bessere Weg, als die Freigabe auf Unraid einzuhängen: restic rät davon ab, ein Repository auf einer eingehängten CIFS-Freigabe zu halten, und hier wird nichts eingehängt. NFS fehlt im Formular, weil weder restic noch rclone ein NFS-Backend hat; für NFS hängst du den Export auf dem Host ein und fügst ihn als Ort mit **Andere Freigabe** hinzu.
+
 ## Unveränderliches (Append-only) Off-site
 
 Markiere ein Off-site-Repo als Append-only, sodass Ransomware oder ein kompromittierter Host deine Backups nicht löschen oder überschreiben kann. Die Gegenseite (ein `restic/rest-server`, der im `--append-only`-Modus läuft) **erzwingt** es. BombVault **verifiziert** es nur und zeigt niemals grün allein auf eine Konfigurationsbehauptung hin.
@@ -174,6 +182,15 @@ Ein Klick lädt den **Master-Key**, das **abgeleitete restic-Passwort** und die 
 
 !!! warning "Der neueste Snapshot ist nicht immer der richtige"
     Seit restic 0.17 zeigt `restic snapshots` die Größe jedes Snapshots. Nach einem Datenverlust kann der neueste Snapshot der geleerte sein, stelle also keinen Snapshot wieder her, der viel kleiner ist als die davor. Nach Ransomware kann es der verschlüsselte in der üblichen Größe sein. Wenn BombVault noch läuft, sieh zuerst auf der Seite **Anomalien** nach: Sie nennt das letzte gute Backup. Für eine Wiederherstellung braucht es keine Anomalie-Daten von BombVault, und die Aufbewahrungspause behält immer nur mehr Snapshots.
+
+### Das Kit versiegeln
+
+Wenn du die age-Verschlüsselung für die schlichten Exporte eingeschaltet hast (Einstellungen), wird auch das Kit damit versiegelt und als `bombvault-recovery-kit.md.age` heruntergeladen. Es ist ASCII-armored statt binär, also weiterhin reiner Text: Du kannst es wie bisher in einen Passwortmanager einfügen oder ausdrucken, nur ist der Inhalt ohne deinen Schlüssel nicht lesbar.
+
+!!! warning "Den age-Schlüssel nicht im Kit aufbewahren"
+    Um ein versiegeltes Kit zu öffnen, brauchst du deinen **privaten** age-Schlüssel. Bewahre ihn an einem Ort auf, der nicht vom Kit selbst abhängt, sonst musst du zwei Dinge wiederherstellen statt einem. Das Versiegeln lohnt sich, wenn das Kit an einem Ort liegt, den du nicht ganz im Griff hast (ein geteilter Passwortmanager, Cloud-Notizen, ein Ausdruck im Büro); ein Kit in deinem eigenen Safe schützt schon der Safe.
+
+    Ist die Verschlüsselung an und kein brauchbarer Empfänger eingerichtet, wird der Download gleich verweigert. BombVault gibt den Master-Key nie ersatzweise im Klartext heraus.
 
 ### Wenn das Kit gerade nicht zur Hand ist
 

@@ -1,6 +1,6 @@
 # Lugares de almacenamiento
 
-Un lugar de almacenamiento es un sitio donde BombVault guarda copias de seguridad: una carpeta en este Unraid, un recurso compartido en un NAS, un bucket en un proveedor de nube, un rest-server, una cuenta SFTP o un Nextcloud. Conectas cada lugar una sola vez, en **Ajustes, Almacenamiento**, y sus credenciales, su retención, su protección y el sitio donde se encuentra le pertenecen. Después, los cinco dominios (contenedores, VMs, el flash, la propia configuración de BombVault y los conjuntos de archivos) eligen entre los lugares: dónde se almacena cada dominio y adónde se copia.
+Un lugar de almacenamiento es un sitio donde BombVault guarda copias de seguridad: una carpeta en este Unraid, un recurso compartido en un NAS, un bucket en un proveedor de nube, un rest-server, una cuenta SFTP o un Nextcloud. Conectas cada lugar una sola vez, en **Ajustes, Almacenamiento**, y sus credenciales, su retención, su protección y el sitio donde se encuentra le pertenecen. Después, los dominios (contenedores, VMs, el flash, la propia configuración de BombVault, los conjuntos de archivos y los conjuntos de datos ZFS) eligen entre los lugares: dónde se almacena cada dominio y adónde se copia. Los conjuntos de datos ZFS tienen su fila en la tarjeta Dominios mientras el dominio ZFS está activado.
 
 ## Añadir un lugar {#add-a-place}
 
@@ -15,7 +15,7 @@ Un lugar nuevo todavía no lo usa ningún dominio. Elígelo en **Almacenado en**
 
 ## Carpetas {#folders}
 
-Un lugar tiene una carpeta por dominio: `container`, `vms`, `flash`, `config` y `files`, los mismos nombres que usan las ubicaciones de copia predeterminadas. Las carpetas aparecen en los detalles del lugar y se pueden renombrar ahí (consulta [Cambiar una dirección](#addresses)). Un dominio sin carpeta en un lugar no puede elegir ese lugar.
+Un lugar tiene una carpeta por dominio: `container`, `vms`, `flash`, `config`, `files` y `zfs`, los mismos nombres que usan las ubicaciones de copia predeterminadas. Las carpetas aparecen en los detalles del lugar y se pueden renombrar ahí (consulta [Cambiar una dirección](#addresses)). Un dominio sin carpeta en un lugar no puede elegir ese lugar.
 
 Cuando un dominio usa un lugar en las dos funciones, la segunda función recibe un sufijo y la primera conserva su carpeta. Un lugar que ya recibe las copias de un dominio guarda en `<folder>-direct` los elementos enviados directamente a él; un lugar que ya almacena un dominio recibe sus copias en `<folder>-copies`.
 

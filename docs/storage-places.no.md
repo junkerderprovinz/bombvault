@@ -1,6 +1,6 @@
 # Lagringssteder
 
-Et lagringssted er et sted der BombVault oppbevarer sikkerhetskopier: en mappe på denne Unraid-serveren, en delt ressurs på en NAS, en bucket hos en skyleverandør, en rest-server, en SFTP-konto eller en Nextcloud. Du kobler til hvert lagringssted én gang, på **Innstillinger, Lagring**, og legitimasjonen, oppbevaringen, beskyttelsen og lokasjonen hører til lagringsstedet. De fem domenene (containere, VM-er, flashen, BombVaults egen konfigurasjon og filsett) velger deretter blant lagringsstedene: hvor hvert domene lagres, og hvor det kopieres.
+Et lagringssted er et sted der BombVault oppbevarer sikkerhetskopier: en mappe på denne Unraid-serveren, en delt ressurs på en NAS, en bucket hos en skyleverandør, en rest-server, en SFTP-konto eller en Nextcloud. Du kobler til hvert lagringssted én gang, på **Innstillinger, Lagring**, og legitimasjonen, oppbevaringen, beskyttelsen og lokasjonen hører til lagringsstedet. Domenene (containere, VM-er, flashen, BombVaults egen konfigurasjon, filsett og ZFS-datasett) velger deretter blant lagringsstedene: hvor hvert domene lagres, og hvor det kopieres. ZFS-datasettene har sin rad på Domener-kortet så lenge ZFS-domenet er slått på.
 
 ## Legge til et lagringssted {#add-a-place}
 
@@ -15,7 +15,7 @@ Et nytt lagringssted brukes ennå ikke av noe domene. Velg det under **Lagret p�
 
 ## Mapper {#folders}
 
-Et lagringssted har én mappe per domene: `container`, `vms`, `flash`, `config` og `files`, de samme navnene som standardstiene for sikkerhetskopier bruker. Mappene står oppført i detaljene til lagringsstedet og kan få nytt navn der (se [Endre en adresse](#addresses)). Et domene uten mappe på et lagringssted kan ikke velge det lagringsstedet.
+Et lagringssted har én mappe per domene: `container`, `vms`, `flash`, `config`, `files` og `zfs`, de samme navnene som standardstiene for sikkerhetskopier bruker. Mappene står oppført i detaljene til lagringsstedet og kan få nytt navn der (se [Endre en adresse](#addresses)). Et domene uten mappe på et lagringssted kan ikke velge det lagringsstedet.
 
 Når et domene bruker et lagringssted i begge roller, får den andre rollen et suffiks, og den første beholder mappen sin. Et lagringssted som allerede mottar kopiene til et domene, lagrer elementene som sendes rett dit, i `<folder>-direct`; et lagringssted som allerede lagrer et domene, mottar kopiene i `<folder>-copies`.
 

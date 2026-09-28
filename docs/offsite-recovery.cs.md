@@ -59,6 +59,14 @@ Doména uložená na vzdáleném místě je zdrojem svých kopií stejně jako m
 !!! note "Přihlašovací údaje patří místu"
     Vzdálené místo má vlastní přihlašovací údaje. Místo nastavené se sdílenými přihlašovacími údaji ke cloudu je používá dál, dokud se jeho přístup nezmění v jeho podrobnostech.
 
+### SMB a WebDAV bez připojení na hostiteli {#smb-webdav}
+
+Formulář rclone v okně **Přidat místo** má formulář pro sdílenou složku Windows nebo Samba a pro server WebDAV (Nextcloud, ownCloud, SharePoint nebo jakýkoli jiný). Vyplňte krátký název, hostitele a sdílenou složku (SMB) nebo URL a typ serveru (WebDAV), uživatele a heslo a BombVault za vás zapíše sekci rclone. rclone heslo před uložením sám zamaskuje; přidání cíle s názvem, který už existuje, tuto sekci nahradí, místo aby přidalo druhou.
+
+Nový remote se pak objeví v seznamu remotes ve formuláři, kde ho pro místo vyberete. Sdílená složka je první část cesty, ne součást názvu.
+
+Je to lepší cesta než připojit sdílenou složku na Unraidu: restic nedoporučuje držet repozitář na připojené sdílené složce CIFS a tady se nic nepřipojuje. NFS ve formuláři není, protože ani restic, ani rclone nemá backend NFS; pro NFS připojte export na hostiteli a přidejte ho jako místo přes **Jiné sdílení**.
+
 ## Neměnné (append-only) mimo lokalitu
 
 Označte repozitář mimo lokalitu jako append-only, aby ransomware nebo kompromitovaný hostitel nemohl smazat nebo přepsat vaše zálohy. Druhá strana (`restic/rest-server` běžící v režimu `--append-only`) to **vynucuje**. BombVault to pouze **ověřuje** a nikdy nezobrazí zelenou jen na základě konfiguračního tvrzení.
@@ -174,6 +182,15 @@ Jedno kliknutí stáhne **hlavní klíč**, **odvozené heslo restic** a **přes
 
 !!! warning "Nejnovější snímek není vždy ten, který obnovit"
     Od restic 0.17 ukazuje `restic snapshots` velikost každého snímku. Po ztrátě dat může být nejnovější snímek ten vyprázdněný, proto neobnovujte snímek, který je mnohem menší než ty před ním. Po ransomwaru to může být ten zašifrovaný v obvyklé velikosti. Pokud BombVault ještě běží, podívejte se nejdřív na jeho stránku **Anomálie**: uvádí poslední dobrou zálohu. Obnova nepotřebuje žádná data o anomáliích z BombVault a pozastavení uchovávání vždy jen ponechá více snímků.
+
+### Zapečetění sady
+
+Pokud jste zapnuli šifrování age pro prosté exporty (Nastavení), zapečetí se jím i sada pro obnovu a stáhne se jako `bombvault-recovery-kit.md.age`. Je ve formátu ASCII armor, ne binární, takže zůstává prostým textem: vložení do správce hesel nebo vytištění funguje přesně jako dřív, jen je obsah bez vašeho klíče nečitelný.
+
+!!! warning "Klíč age neukládejte do sady"
+    K otevření zapečetěné sady potřebujete svůj **soukromý** klíč age. Uložte jej někam, kde nezávisí na sadě samotné, jinak budete obnovovat dvě věci místo jedné. Zapečetění se vyplatí, když je sada uložená někde, co nemáte plně pod kontrolou (sdílený správce hesel, poznámky v cloudu, výtisk v kanceláři); sadu ve vlastním trezoru už chrání trezor.
+
+    Když je šifrování zapnuté a není nastaven žádný použitelný příjemce, stažení se rovnou odmítne. BombVault nikdy nesáhne k tomu, aby hlavní klíč vydal jako prostý text.
 
 ### Když sada není po ruce
 

@@ -1,6 +1,6 @@
 # Điểm lưu trữ
 
-Một điểm lưu trữ là nơi BombVault giữ các bản sao lưu: một thư mục trên Unraid này, một share trên NAS, một bucket tại một nhà cung cấp đám mây, một rest-server, một tài khoản SFTP hoặc một Nextcloud. Bạn kết nối mỗi điểm lưu trữ một lần, trên **Cài đặt, Lưu trữ**, và thông tin đăng nhập, mức lưu giữ, bảo vệ và vị trí đều thuộc về chính điểm lưu trữ đó. Sau đó năm miền (container, VM, flash, cấu hình của chính BombVault và bộ tập tin) chọn từ các điểm lưu trữ: mỗi miền được lưu ở đâu và được sao chép đến đâu.
+Một điểm lưu trữ là nơi BombVault giữ các bản sao lưu: một thư mục trên Unraid này, một share trên NAS, một bucket tại một nhà cung cấp đám mây, một rest-server, một tài khoản SFTP hoặc một Nextcloud. Bạn kết nối mỗi điểm lưu trữ một lần, trên **Cài đặt, Lưu trữ**, và thông tin đăng nhập, mức lưu giữ, bảo vệ và vị trí đều thuộc về chính điểm lưu trữ đó. Sau đó các miền (container, VM, flash, cấu hình của chính BombVault, bộ tập tin và tập dữ liệu ZFS) chọn từ các điểm lưu trữ: mỗi miền được lưu ở đâu và được sao chép đến đâu. Tập dữ liệu ZFS có hàng riêng trên thẻ Miền khi miền ZFS được bật.
 
 ## Thêm một điểm lưu trữ {#add-a-place}
 
@@ -15,7 +15,7 @@ Một điểm lưu trữ mới chưa được miền nào dùng. Hãy chọn nó
 
 ## Thư mục {#folders}
 
-Một điểm lưu trữ giữ một thư mục cho mỗi miền: `container`, `vms`, `flash`, `config` và `files`, cũng là các tên mà vị trí sao lưu mặc định dùng. Các thư mục được liệt kê trong phần chi tiết của điểm lưu trữ và có thể đổi tên ở đó (xem [Đổi địa chỉ](#addresses)). Một miền không có thư mục tại một điểm lưu trữ thì không thể chọn điểm lưu trữ đó.
+Một điểm lưu trữ giữ một thư mục cho mỗi miền: `container`, `vms`, `flash`, `config`, `files` và `zfs`, cũng là các tên mà vị trí sao lưu mặc định dùng. Các thư mục được liệt kê trong phần chi tiết của điểm lưu trữ và có thể đổi tên ở đó (xem [Đổi địa chỉ](#addresses)). Một miền không có thư mục tại một điểm lưu trữ thì không thể chọn điểm lưu trữ đó.
 
 Khi một miền dùng một điểm lưu trữ cho cả hai vai trò, vai trò thứ hai được thêm một hậu tố còn vai trò thứ nhất giữ nguyên thư mục của nó. Một điểm lưu trữ đã nhận các bản sao của một miền sẽ lưu những mục được gửi thẳng tới nó trong `<folder>-direct`; một điểm lưu trữ đã lưu một miền sẽ nhận các bản sao của miền đó trong `<folder>-copies`.
 

@@ -15,7 +15,7 @@ Activez le domaine sous **Paramètres, Général** (Jeux de données ZFS). La pa
 
 ## Éléments et jeux de données enfants {#items-and-children}
 
-Ouvrez **Ajouter des jeux de données** sur la page ZFS. La liste vient du serveur. Choisissez le jeu de données situé tout en haut de ce que vous voulez sauvegarder, par exemple `cache/appdata`, et l'élément le couvre ainsi que chaque jeu de données en dessous.
+Ouvrez **Ajouter des jeux de données** sur la page ZFS. La liste vient du serveur. Choisissez le jeu de données situé tout en haut de ce que vous voulez sauvegarder, par exemple `cache/appdata`, et l'élément le couvre ainsi que chaque jeu de données en dessous. Ses sauvegardes vont là où la ligne ZFS de la carte Domaines, dans **Paramètres, Stockage**, les stocke, et sont copiées vers les lieux cochés à cet endroit sous **Copié vers** ; un élément peut à la place indiquer son propre dépôt dans la boîte de dialogue.
 
 - **Les nouveaux jeux de données enfants s'ajoutent d'eux-mêmes.** Un jeu de données créé plus tard sous l'élément est sauvegardé lors de l'exécution suivante, qui le signale comme nouveau. Sa première sauvegarde le lit entièrement une fois ; ensuite, seules les modifications sont lues.
 - **Vous pouvez exclure des enfants isolés.** Désactivez un enfant dans les réglages de l'élément et il est exclu avec tout ce qui se trouve en dessous. Un enfant exclu qui n'existe plus sur le serveur est signalé comme tel et peut être retiré de la liste.

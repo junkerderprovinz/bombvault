@@ -1,6 +1,6 @@
 # Luoghi di archiviazione
 
-Un luogo di archiviazione è un posto in cui BombVault conserva i backup: una cartella su questo Unraid, una condivisione su un NAS, un bucket presso un provider cloud, un rest-server, un account SFTP o un Nextcloud. Colleghi ogni luogo una sola volta, in **Impostazioni, Archiviazione**, e credenziali, conservazione, protezione e posizione appartengono al luogo. I cinque domini (container, VM, la flash, la configurazione di BombVault stesso e i set di file) scelgono poi tra i luoghi: dove viene salvato ogni dominio e dove viene copiato.
+Un luogo di archiviazione è un posto in cui BombVault conserva i backup: una cartella su questo Unraid, una condivisione su un NAS, un bucket presso un provider cloud, un rest-server, un account SFTP o un Nextcloud. Colleghi ogni luogo una sola volta, in **Impostazioni, Archiviazione**, e credenziali, conservazione, protezione e posizione appartengono al luogo. I domini (container, VM, la flash, la configurazione di BombVault stesso, i set di file e i dataset ZFS) scelgono poi tra i luoghi: dove viene salvato ogni dominio e dove viene copiato. I dataset ZFS hanno la loro riga nella scheda Domini finché il dominio ZFS è attivo.
 
 ## Aggiungere un luogo {#add-a-place}
 
@@ -15,7 +15,7 @@ Un nuovo luogo non è ancora usato da nessun dominio. Sceglilo in **Salvato su**
 
 ## Cartelle {#folders}
 
-Un luogo tiene una cartella per dominio: `container`, `vms`, `flash`, `config` e `files`, gli stessi nomi usati dalle posizioni di backup predefinite. Le cartelle sono elencate nei dettagli del luogo e lì si possono rinominare (vedi [Cambiare un indirizzo](#addresses)). Un dominio senza cartella in un luogo non può scegliere quel luogo.
+Un luogo tiene una cartella per dominio: `container`, `vms`, `flash`, `config`, `files` e `zfs`, gli stessi nomi usati dalle posizioni di backup predefinite. Le cartelle sono elencate nei dettagli del luogo e lì si possono rinominare (vedi [Cambiare un indirizzo](#addresses)). Un dominio senza cartella in un luogo non può scegliere quel luogo.
 
 Quando un dominio usa un luogo in entrambi i ruoli, il secondo ruolo riceve un suffisso e il primo mantiene la sua cartella. Un luogo che riceve già le copie di un dominio salva in `<folder>-direct` gli elementi inviati direttamente a lui; un luogo che salva già un dominio ne riceve le copie in `<folder>-copies`.
 

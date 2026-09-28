@@ -59,6 +59,14 @@ Một miền được lưu ở điểm lưu trữ từ xa là nguồn của các
 !!! note "Thông tin đăng nhập thuộc về điểm lưu trữ"
     Một điểm lưu trữ từ xa giữ thông tin đăng nhập riêng của nó. Một điểm lưu trữ được thiết lập bằng thông tin đăng nhập đám mây dùng chung sẽ tiếp tục dùng chúng cho đến khi quyền truy cập của nó được thay đổi trong phần chi tiết.
 
+### SMB và WebDAV không cần gắn kết trên host {#smb-webdav}
+
+Biểu mẫu rclone của cửa sổ **Thêm điểm lưu trữ** có một biểu mẫu cho share Windows hoặc Samba và cho máy chủ WebDAV (Nextcloud, ownCloud, SharePoint hoặc bất kỳ máy chủ nào khác). Điền một tên ngắn, host và share (SMB) hoặc URL và loại máy chủ (WebDAV), người dùng và mật khẩu, rồi BombVault sẽ ghi phần rclone cho bạn. rclone tự làm rối mật khẩu trước khi lưu; thêm một đích có tên đã tồn tại sẽ thay thế phần đó thay vì thêm phần thứ hai.
+
+Remote mới sau đó xuất hiện trong danh sách remote của biểu mẫu, nơi bạn chọn nó cho điểm lưu trữ. Share là đoạn đầu tiên của đường dẫn, không phải một phần của tên.
+
+Đây là cách tốt hơn so với gắn kết share trên Unraid: restic khuyên không nên giữ kho trên một share CIFS đã gắn kết, và ở đây không có gì được gắn kết. NFS không có trong biểu mẫu vì cả restic lẫn rclone đều không có backend NFS; với NFS, hãy gắn kết export trên host và thêm nó làm điểm lưu trữ bằng **Chia sẻ khác**.
+
 ## Off-site bất biến (append-only)
 
 Đánh dấu một kho off-site là append-only để ransomware, hoặc một máy chủ bị xâm nhập, không thể xóa hay ghi lại các bản sao lưu của bạn. Phía bên kia (một `restic/rest-server` chạy ở chế độ `--append-only`) **thực thi** điều đó. BombVault chỉ luôn **xác minh** nó và không bao giờ hiển thị xanh chỉ dựa trên một tuyên bố cấu hình.
@@ -174,6 +182,15 @@ Một cú nhấp tải xuống **khóa chính**, **mật khẩu restic dẫn xu�
 
 !!! warning "Snapshot mới nhất không phải lúc nào cũng là cái nên khôi phục"
     Từ restic 0.17, `restic snapshots` hiển thị kích thước của mỗi snapshot. Sau khi mất dữ liệu, snapshot mới nhất có thể là cái đã bị làm trống, vì vậy đừng khôi phục một snapshot nhỏ hơn nhiều so với các snapshot trước nó. Sau ransomware, đó có thể là cái đã bị mã hóa với kích thước bình thường. Nếu BombVault vẫn chạy, hãy xem trang **Bất thường** trước: trang này nêu bản sao lưu tốt cuối cùng. Việc khôi phục không cần dữ liệu bất thường nào của BombVault, và việc tạm dừng lưu giữ chỉ giữ lại nhiều snapshot hơn.
+
+### Niêm phong bộ khôi phục
+
+Nếu bạn đã bật mã hóa age cho các bản xuất thô (Cài đặt), bộ khôi phục cũng được niêm phong bằng nó và tải về dưới tên `bombvault-recovery-kit.md.age`. Tệp ở dạng ASCII armor chứ không phải nhị phân, nên vẫn là văn bản thô: dán vào trình quản lý mật khẩu hay in ra vẫn dùng được y như trước, chỉ là không đọc được nội dung nếu không có khóa của bạn.
+
+!!! warning "Đừng cất khóa age bên trong bộ khôi phục"
+    Để mở một bộ khôi phục đã niêm phong, bạn cần khóa age **riêng tư** của mình. Hãy cất nó ở nơi không phụ thuộc vào chính bộ khôi phục, nếu không bạn sẽ phải khôi phục hai thứ thay vì một. Niêm phong đáng làm khi bộ khôi phục được cất ở nơi bạn không hoàn toàn kiểm soát (một trình quản lý mật khẩu dùng chung, ghi chú trên đám mây, bản in ở văn phòng); bộ khôi phục trong két sắt của riêng bạn thì két sắt đã bảo vệ rồi.
+
+    Khi mã hóa đang bật mà chưa cấu hình người nhận nào dùng được, việc tải về bị từ chối ngay. BombVault không bao giờ quay sang trao khóa chính dưới dạng văn bản thô.
 
 ### Khi không có bộ khôi phục trong tay
 

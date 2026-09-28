@@ -15,7 +15,7 @@ Attiva il dominio in **Impostazioni, Generale** (Dataset ZFS). La pagina ZFS mos
 
 ## Elementi e dataset figli {#items-and-children}
 
-Apri **Aggiungi dataset** nella pagina ZFS. L'elenco arriva dal server. Scegli il dataset più in alto di ciò che vuoi salvare, per esempio `cache/appdata`, e l'elemento copre quel dataset e ogni dataset sotto di esso.
+Apri **Aggiungi dataset** nella pagina ZFS. L'elenco arriva dal server. Scegli il dataset più in alto di ciò che vuoi salvare, per esempio `cache/appdata`, e l'elemento copre quel dataset e ogni dataset sotto di esso. I suoi backup vanno dove li salva la riga ZFS della scheda Domini in **Impostazioni, Archiviazione**, e vengono copiati nei luoghi spuntati lì in **Copiato su**; in alternativa un elemento può indicare nella finestra di dialogo un repository tutto suo.
 
 - **I nuovi dataset figli entrano da soli.** Un dataset creato più tardi sotto l'elemento viene salvato con l'esecuzione successiva, che lo segnala come nuovo. Il suo primo backup lo legge per intero una volta; poi vengono lette solo le modifiche.
 - **Puoi escludere singoli figli.** Disattiva un figlio nelle impostazioni dell'elemento e viene escluso insieme a tutto ciò che sta sotto. Un figlio escluso che non esiste più sul server viene segnalato come tale e si può togliere dall'elenco.

@@ -15,7 +15,7 @@ Ota toimialue käyttöön kohdassa **Asetukset, Yleiset** (ZFS-tietojoukot). ZFS
 
 ## Kohteet ja alatietojoukot {#items-and-children}
 
-Avaa ZFS-sivulla **Lisää tietojoukkoja**. Luettelo tulee palvelimelta. Valitse ylin tietojoukko siitä, mitä haluat varmuuskopioida, esimerkiksi `cache/appdata`, niin kohde kattaa sen ja jokaisen sen alla olevan tietojoukon.
+Avaa ZFS-sivulla **Lisää tietojoukkoja**. Luettelo tulee palvelimelta. Valitse ylin tietojoukko siitä, mitä haluat varmuuskopioida, esimerkiksi `cache/appdata`, niin kohde kattaa sen ja jokaisen sen alla olevan tietojoukon. Sen varmuuskopiot menevät sinne, minne Toimialueet-kortin ZFS-rivi kohdassa **Asetukset, Tallennustila** ne tallentaa, ja ne kopioidaan paikkoihin, jotka on rastitettu siellä kohdassa **Kopiointikohteet**; kohde voi sen sijaan nimetä ikkunassa oman säilönsä.
 
 - **Uudet alatietojoukot tulevat mukaan itsestään.** Myöhemmin kohteen alle luotu tietojoukko varmuuskopioidaan seuraavalla ajolla, ja se ajo mainitsee sen uutena. Sen ensimmäinen varmuuskopio lukee sen kerran kokonaan; sen jälkeen luetaan vain muutokset.
 - **Voit jättää yksittäisiä alatietojoukkoja pois.** Kytke yksi pois kohteen asetuksista, niin se jää pois kaiken alleen kuuluvan kanssa. Pois jätetty alatietojoukko, jota ei enää ole palvelimella, merkitään sellaiseksi, ja sen voi poistaa luettelosta.

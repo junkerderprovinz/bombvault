@@ -59,6 +59,14 @@ Un domaine stocké dans un lieu distant est la source de ses copies, comme un do
 !!! note "Les identifiants appartiennent au lieu"
     Un lieu distant garde ses propres identifiants. Un lieu configuré avec les identifiants cloud partagés continue de les utiliser jusqu'à ce que son accès soit modifié dans ses détails.
 
+### SMB et WebDAV sans montage sur l'hôte {#smb-webdav}
+
+La variante rclone de la fenêtre **Ajouter un lieu** comporte un formulaire pour un partage Windows ou Samba et pour un serveur WebDAV (Nextcloud, ownCloud, SharePoint ou tout autre). Renseignez un nom court, l'hôte et le partage (SMB) ou l'URL et le type de serveur (WebDAV), l'utilisateur et le mot de passe, et BombVault écrit la section rclone pour vous. rclone masque lui-même le mot de passe avant qu'il soit enregistré ; ajouter une destination avec un nom qui existe déjà remplace cette section au lieu d'en ajouter une seconde.
+
+Le nouveau remote apparaît ensuite dans la liste des remotes du formulaire, où vous le choisissez pour le lieu. Le partage est le premier segment du chemin, il ne fait pas partie du nom.
+
+C'est une meilleure voie que de monter le partage sur Unraid : restic déconseille de garder un dépôt sur un partage CIFS monté, et ici rien n'est monté. NFS ne figure pas dans le formulaire, car ni restic ni rclone n'a de backend NFS ; pour NFS, montez l'export sur l'hôte et ajoutez-le comme lieu avec **Autre partage**.
+
 ## Hors site immuable (append-only)
 
 Marquez un dépôt hors site en append-only afin qu'un rançongiciel, ou un hôte compromis, ne puisse ni supprimer ni réécrire vos sauvegardes. Le côté distant (un `restic/rest-server` s'exécutant en mode `--append-only`) l'**impose**. BombVault ne fait que le **vérifier** et n'affiche jamais du vert sur la seule foi d'une déclaration de configuration.
@@ -174,6 +182,15 @@ Un clic télécharge la **clé maîtresse**, le **mot de passe restic dérivé**
 
 !!! warning "Le snapshot le plus récent n'est pas toujours celui à restaurer"
     Depuis restic 0.17, `restic snapshots` affiche la taille de chaque snapshot. Après une perte de données, le snapshot le plus récent peut être celui qui a été vidé : ne restaurez donc pas un snapshot beaucoup plus petit que les précédents. Après un rançongiciel, ce peut être le snapshot chiffré, de taille habituelle. Si BombVault tourne encore, consultez d'abord sa page **Anomalies** : elle indique la dernière bonne sauvegarde. Une restauration n'a besoin d'aucune donnée d'anomalie de BombVault, et la pause de rétention ne fait jamais que garder plus de snapshots.
+
+### Sceller le kit
+
+Si vous avez activé le chiffrement age pour les exports en clair (Paramètres), le kit est lui aussi scellé avec et se télécharge sous le nom `bombvault-recovery-kit.md.age`. Il est en ASCII armor plutôt qu'en binaire, il reste donc du texte brut : le coller dans un gestionnaire de mots de passe ou l'imprimer fonctionne exactement comme avant, son contenu est simplement illisible sans votre clé.
+
+!!! warning "Ne rangez pas la clé age dans le kit"
+    Pour ouvrir un kit scellé, il vous faut votre clé age **privée**. Gardez-la à un endroit qui ne dépend pas du kit lui-même, sinon vous aurez deux choses à récupérer au lieu d'une. Le scellement vaut la peine quand le kit est conservé à un endroit que vous ne maîtrisez pas entièrement (un gestionnaire de mots de passe partagé, des notes dans le cloud, une copie imprimée au bureau) ; un kit dans votre propre coffre est déjà protégé par le coffre.
+
+    Avec le chiffrement activé et aucun destinataire utilisable configuré, le téléchargement est refusé d'emblée. BombVault ne se rabat jamais sur la remise de la clé maîtresse en clair.
 
 ### Si le kit n'est pas sous la main
 

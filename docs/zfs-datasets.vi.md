@@ -15,7 +15,7 @@ Bật miền trong **Cài đặt, Chung** (Tập dữ liệu ZFS). Khi đó tran
 
 ## Mục và tập dữ liệu con {#items-and-children}
 
-Mở **Thêm tập dữ liệu** trên trang ZFS. Danh sách lấy từ máy chủ. Chọn tập dữ liệu nằm cao nhất trong những gì bạn muốn sao lưu, ví dụ `cache/appdata`, và mục sẽ bao gồm nó cùng mọi tập dữ liệu dưới nó.
+Mở **Thêm tập dữ liệu** trên trang ZFS. Danh sách lấy từ máy chủ. Chọn tập dữ liệu nằm cao nhất trong những gì bạn muốn sao lưu, ví dụ `cache/appdata`, và mục sẽ bao gồm nó cùng mọi tập dữ liệu dưới nó. Các bản sao lưu của mục được lưu ở nơi mà hàng ZFS của thẻ Miền trên **Cài đặt, Lưu trữ** lưu chúng, và được sao chép đến các điểm lưu trữ được đánh dấu ở đó dưới **Sao chép đến**; thay vào đó, một mục có thể chỉ định kho riêng của nó trong hộp thoại.
 
 - **Tập dữ liệu con mới tự được thêm vào.** Một tập dữ liệu được tạo sau này dưới mục sẽ được sao lưu ở lần chạy kế tiếp, và lần chạy đó ghi nó là mới. Bản sao lưu đầu tiên đọc toàn bộ nó một lần; sau đó chỉ đọc phần thay đổi.
 - **Bạn có thể loại trừ từng tập con.** Tắt một tập con trong cài đặt của mục thì nó bị loại trừ cùng mọi thứ bên dưới. Một tập con đã loại trừ mà không còn trên máy chủ sẽ được đánh dấu như vậy và có thể xóa khỏi danh sách.

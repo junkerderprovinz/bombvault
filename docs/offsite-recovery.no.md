@@ -59,6 +59,14 @@ Et domene som er lagret på et eksternt lagringssted, er kilden til kopiene sine
 !!! note "Legitimasjonen hører til lagringsstedet"
     Et eksternt lagringssted har sin egen legitimasjon. Et lagringssted som ble satt opp med den delte skylegitimasjonen, fortsetter å bruke den til tilgangen endres i detaljene til lagringsstedet.
 
+### SMB og WebDAV uten montering på verten {#smb-webdav}
+
+rclone-skjemaet i vinduet **Legg til lagringssted** har et skjema for en Windows- eller Samba-deling og for en WebDAV-server (Nextcloud, ownCloud, SharePoint eller en annen). Fyll inn et kort navn, verten og delingen (SMB) eller URL-en og servertypen (WebDAV), brukeren og passordet, så skriver BombVault rclone-seksjonen for deg. rclone tilslører selv passordet før det lagres; legger du til et mål med et navn som allerede finnes, erstattes den seksjonen i stedet for at en ny legges til.
+
+Den nye remoten vises deretter i skjemaets liste over remoter, der du velger den for lagringsstedet. Delingen er det første leddet i stien, ikke en del av navnet.
+
+Dette er en bedre vei enn å montere delingen på Unraid: restic fraråder å ha et depot på en montert CIFS-deling, og her monteres ingenting. NFS er ikke med i skjemaet fordi verken restic eller rclone har en NFS-backend; for NFS monterer du eksporten på verten og legger den til som lagringssted med **Annen delt ressurs**.
+
 ## Uforanderlig (append-only) ekstern
 
 Flagg et eksternt repo append-only så løsepengevirus, eller en kompromittert host, ikke kan slette eller skrive om sikkerhetskopiene dine. Den andre siden (en `restic/rest-server` som kjører i `--append-only`-modus) **håndhever** det. BombVault kun **verifiserer** det og viser aldri grønt på en konfigurasjonspåstand alene.
@@ -174,6 +182,15 @@ Ett klikk laster ned **hovednøkkelen**, det **utledede restic-passordet** og de
 
 !!! warning "Det nyeste snapshotet er ikke alltid det som skal gjenopprettes"
     Siden restic 0.17 viser `restic snapshots` størrelsen på hvert snapshot. Etter datatap kan det nyeste snapshotet være det tømte, så ikke gjenopprett et snapshot som er mye mindre enn de før det. Etter løsepengevirus kan det være det krypterte i vanlig størrelse. Kjører BombVault fortsatt, se først på siden **Avvik**: den nevner den siste gode sikkerhetskopien. En gjenoppretting trenger ingen avviksdata fra BombVault, og oppbevaringspausen beholder bare flere snapshots.
+
+### Forsegle settet
+
+Hvis du har slått på age-kryptering for de vanlige eksportene (Innstillinger), forsegles også gjenopprettingssettet med den og lastes ned som `bombvault-recovery-kit.md.age`. Det er ASCII-armert i stedet for binært, så det er fortsatt ren tekst: å lime det inn i en passordbehandler eller skrive det ut fungerer akkurat som før, innholdet er bare uleselig uten nøkkelen din.
+
+!!! warning "Ikke oppbevar age-nøkkelen i settet"
+    Du trenger din **private** age-nøkkel for å åpne et forseglet sett. Oppbevar den et sted som ikke avhenger av selve settet, ellers har du to ting å gjenopprette i stedet for én. Forsegling lønner seg når settet ligger et sted du ikke har full kontroll over (en delt passordbehandler, notater i skyen, en utskrift på et kontor); et sett i din egen safe er allerede beskyttet av safen.
+
+    Med kryptering på og ingen brukbar mottaker satt opp blir nedlastingen avvist med en gang. BombVault faller aldri tilbake på å utlevere hovednøkkelen i klartekst.
 
 ### Når settet ikke er for hånden
 

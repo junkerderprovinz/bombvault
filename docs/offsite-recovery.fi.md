@@ -59,6 +59,14 @@ Etäpaikkaan tallennettu toimialue on kopioidensa lähde samoin kuin paikallinen
 !!! note "Tunnukset kuuluvat paikalle"
     Etäpaikalla on omat tunnuksensa. Paikka, joka on määritetty jaetuilla pilvitunnuksilla, käyttää niitä, kunnes sen pääsyasetuksia muutetaan paikan tiedoissa.
 
+### SMB ja WebDAV ilman liitosta isäntään {#smb-webdav}
+
+**Lisää paikka** -ikkunan rclone-vaihtoehdossa on lomake Windows- tai Samba-jaolle ja WebDAV-palvelimelle (Nextcloud, ownCloud, SharePoint tai mikä tahansa muu). Täytä lyhyt nimi, isäntä ja jako (SMB) tai URL ja palvelintyyppi (WebDAV), käyttäjä ja salasana, niin BombVault kirjoittaa rclone-osion puolestasi. rclone hämärtää salasanan itse ennen sen tallentamista; jos lisäät kohteen nimellä, joka on jo olemassa, se korvaa kyseisen osion eikä lisää toista.
+
+Uusi etäyhteys näkyy sen jälkeen lomakkeen etäyhteyksien luettelossa, josta valitset sen paikalle. Jako on polun ensimmäinen osa, ei osa nimeä.
+
+Tämä on parempi tie kuin jaon liittäminen Unraidiin: restic neuvoo olemaan pitämättä arkistoa liitetyllä CIFS-jaolla, eikä tässä liitetä mitään. NFS puuttuu lomakkeesta, koska resticillä ja rclonella ei kummallakaan ole NFS-taustajärjestelmää; NFS:ää varten liitä vienti isäntään ja lisää se paikaksi valinnalla **Muu jako**.
+
 ## Muuttumaton (append-only) etäsijainti
 
 Merkitse etärepo append-only-tilaan, jotta kiristysohjelma, tai vaarantunut isäntä, ei voi poistaa tai uudelleenkirjoittaa varmuuskopioitasi. Vastapuoli (`restic/rest-server`, joka pyörii `--append-only`-tilassa) **valvoo** sitä. BombVault vain aina **todentaa** sen eikä koskaan näytä vihreää pelkän kokoonpanoväitteen perusteella.
@@ -174,6 +182,15 @@ Yksi napsautus lataa **pääavaimen**, **johdetun restic-salasanan** ja **tarkat
 
 !!! warning "Uusin tilannevedos ei aina ole se, joka kannattaa palauttaa"
     Restic 0.17:stä lähtien `restic snapshots` näyttää jokaisen tilannevedoksen koon. Tietojen menetyksen jälkeen uusin tilannevedos voi olla tyhjennetty, joten älä palauta tilannevedosta, joka on paljon edellisiä pienempi. Kiristyshaittaohjelman jälkeen se voi olla salattu, tavallisen kokoinen. Jos BombVault on yhä käynnissä, katso ensin sen sivu **Poikkeamat**: se nimeää viimeisen hyvän varmuuskopion. Palautus ei tarvitse BombVaultin poikkeamatietoja, ja säilytyksen tauko vain säilyttää enemmän tilannevedoksia.
+
+### Paketin sinetöinti
+
+Jos olet kytkenyt age-salauksen päälle selkokielisille vienneille (Asetukset), myös palautuspaketti sinetöidään sillä ja latautuu nimellä `bombvault-recovery-kit.md.age`. Se on ASCII-panssaroitu eikä binäärinen, joten se on yhä pelkkää tekstiä: sen voi liittää salasanojen hallintaan tai tulostaa aivan kuten ennenkin, sisältöä ei vain voi lukea ilman avaintasi.
+
+!!! warning "Älä säilytä age-avainta paketin sisällä"
+    Sinetöidyn paketin avaamiseen tarvitset **yksityisen age-avaimesi**. Säilytä se paikassa, joka ei riipu paketista itsestään, muuten sinulla on palautettavana kaksi asiaa yhden sijaan. Sinetöinti kannattaa, kun paketti on paikassa, jota et täysin hallitse (jaettu salasanojen hallinta, pilvimuistiinpanot, tuloste toimistossa); omassa kassakaapissasi olevaa pakettia suojaa jo kassakaappi.
+
+    Kun salaus on päällä eikä käyttökelpoista vastaanottajaa ole määritetty, lataus estetään suoraan. BombVault ei koskaan turvaudu antamaan pääavainta selkotekstinä.
 
 ### Kun paketti ei ole käsillä
 

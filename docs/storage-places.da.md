@@ -1,6 +1,6 @@
 # Lagringssteder
 
-Et lagringssted er et sted, hvor BombVault opbevarer sikkerhedskopier: en mappe på denne Unraid, en deling på et NAS, en bucket hos en cloududbyder, en rest-server, en SFTP-konto eller en Nextcloud. Du forbinder hvert sted én gang, på **Indstillinger, Lagring**, og dets legitimationsoplysninger, opbevaring, beskyttelse og lokation hører til stedet. De fem domæner (containere, VM'er, flashen, BombVaults egen konfiguration og mappesæt) vælger derefter blandt stederne: hvor hvert domæne gemmes, og hvor det kopieres til.
+Et lagringssted er et sted, hvor BombVault opbevarer sikkerhedskopier: en mappe på denne Unraid, en deling på et NAS, en bucket hos en cloududbyder, en rest-server, en SFTP-konto eller en Nextcloud. Du forbinder hvert sted én gang, på **Indstillinger, Lagring**, og dets legitimationsoplysninger, opbevaring, beskyttelse og lokation hører til stedet. Domænerne (containere, VM'er, flashen, BombVaults egen konfiguration, mappesæt og ZFS-datasæt) vælger derefter blandt stederne: hvor hvert domæne gemmes, og hvor det kopieres til. ZFS-datasættene har deres række på kortet Domæner, så længe ZFS-domænet er slået til.
 
 ## Tilføj et sted {#add-a-place}
 
@@ -15,7 +15,7 @@ Et nyt sted bruges endnu ikke af noget domæne. Vælg det under **Gemt på** ell
 
 ## Mapper {#folders}
 
-Et sted har én mappe pr. domæne: `container`, `vms`, `flash`, `config` og `files`, de samme navne som standardstierne til sikkerhedskopier. Mapperne står i stedets detaljer og kan omdøbes der (se [Ændring af en adresse](#addresses)). Et domæne uden mappe på et sted kan ikke vælge det sted.
+Et sted har én mappe pr. domæne: `container`, `vms`, `flash`, `config`, `files` og `zfs`, de samme navne som standardstierne til sikkerhedskopier. Mapperne står i stedets detaljer og kan omdøbes der (se [Ændring af en adresse](#addresses)). Et domæne uden mappe på et sted kan ikke vælge det sted.
 
 Når et domæne bruger et sted i begge roller, får den anden rolle et suffiks, og den første beholder sin mappe. Et sted, der allerede modtager et domænes kopier, gemmer de elementer, der sendes direkte dertil, i `<folder>-direct`; et sted, der allerede gemmer et domæne, modtager dets kopier i `<folder>-copies`.
 

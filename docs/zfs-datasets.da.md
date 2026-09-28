@@ -15,7 +15,7 @@ Slå domænet til under **Indstillinger, Generelt** (ZFS-datasæt). ZFS-siden vi
 
 ## Elementer og underdatasæt {#items-and-children}
 
-Åbn **Tilføj datasæt** på ZFS-siden. Listen kommer fra serveren. Vælg det datasæt, der ligger øverst i det, du vil sikkerhedskopiere, for eksempel `cache/appdata`, og elementet dækker det og alle datasæt under det.
+Åbn **Tilføj datasæt** på ZFS-siden. Listen kommer fra serveren. Vælg det datasæt, der ligger øverst i det, du vil sikkerhedskopiere, for eksempel `cache/appdata`, og elementet dækker det og alle datasæt under det. Dets sikkerhedskopier havner, hvor ZFS-rækken på kortet Domæner under **Indstillinger, Lagring** gemmer dem, og kopieres til de steder, der er sat flueben ved under **Kopieret til**; et element kan i stedet angive sit eget arkiv i dialogen.
 
 - **Nye underdatasæt kommer selv med.** Et datasæt, der senere oprettes under elementet, sikkerhedskopieres ved næste kørsel, og den kørsel nævner det som nyt. Dets første sikkerhedskopi læser det helt én gang; derefter læses kun ændringer.
 - **Du kan udelade enkelte underdatasæt.** Slå et fra i elementets indstillinger, så udelades det sammen med alt under det. Et udeladt underdatasæt, der ikke længere findes på serveren, markeres som sådan og kan fjernes fra listen.

@@ -1,6 +1,6 @@
 # Miejsca przechowywania
 
-Miejsce przechowywania to miejsce, w którym BombVault trzyma kopie zapasowe: folder na tym serwerze Unraid, udział na NAS, zasobnik u dostawcy chmury, rest-server, konto SFTP albo Nextcloud. Każde miejsce podłączasz raz, w **Ustawienia, Magazyn**, a jego poświadczenia, przechowywanie, ochrona i lokalizacja należą do niego. Pięć domen (kontenery, VM, flash, własna konfiguracja BombVault i zestawy plików) wybiera potem spośród miejsc: gdzie każda domena jest przechowywana i dokąd jest kopiowana.
+Miejsce przechowywania to miejsce, w którym BombVault trzyma kopie zapasowe: folder na tym serwerze Unraid, udział na NAS, zasobnik u dostawcy chmury, rest-server, konto SFTP albo Nextcloud. Każde miejsce podłączasz raz, w **Ustawienia, Magazyn**, a jego poświadczenia, przechowywanie, ochrona i lokalizacja należą do niego. Domeny (kontenery, VM, flash, własna konfiguracja BombVault, zestawy plików i zbiory danych ZFS) wybierają potem spośród miejsc: gdzie każda domena jest przechowywana i dokąd jest kopiowana. Zbiory danych ZFS mają swój wiersz na karcie Domeny, dopóki domena ZFS jest włączona.
 
 ## Dodawanie miejsca {#add-a-place}
 
@@ -15,7 +15,7 @@ Nowe miejsce nie jest jeszcze używane przez żadną domenę. Wybierz je pod **P
 
 ## Foldery {#folders}
 
-Miejsce trzyma jeden folder na domenę: `container`, `vms`, `flash`, `config` i `files`, czyli nazwy, których używają domyślne lokalizacje kopii zapasowych. Foldery są wymienione w szczegółach miejsca i tam można zmienić ich nazwy (zobacz [Zmiana adresu](#addresses)). Domena, która nie ma folderu w danym miejscu, nie może go wybrać.
+Miejsce trzyma jeden folder na domenę: `container`, `vms`, `flash`, `config`, `files` i `zfs`, czyli nazwy, których używają domyślne lokalizacje kopii zapasowych. Foldery są wymienione w szczegółach miejsca i tam można zmienić ich nazwy (zobacz [Zmiana adresu](#addresses)). Domena, która nie ma folderu w danym miejscu, nie może go wybrać.
 
 Gdy domena używa miejsca w obu rolach, druga rola dostaje przyrostek, a pierwsza zachowuje swój folder. Miejsce, które już otrzymuje kopie domeny, trzyma elementy wysyłane wprost do niego w `<folder>-direct`; miejsce, które już przechowuje domenę, otrzymuje jej kopie w `<folder>-copies`.
 

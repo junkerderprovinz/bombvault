@@ -15,7 +15,7 @@ Activează domeniul în **Setări, General** (Seturi de date ZFS). Pagina ZFS ar
 
 ## Elemente și seturi de date copil {#items-and-children}
 
-Deschide **Adaugă seturi de date** pe pagina ZFS. Lista vine de pe server. Alege setul de date aflat cel mai sus din ce vrei să salvezi, de exemplu `cache/appdata`, iar elementul îl acoperă pe el și fiecare set de date de sub el.
+Deschide **Adaugă seturi de date** pe pagina ZFS. Lista vine de pe server. Alege setul de date aflat cel mai sus din ce vrei să salvezi, de exemplu `cache/appdata`, iar elementul îl acoperă pe el și fiecare set de date de sub el. Backupurile lui ajung acolo unde le stochează rândul ZFS al cardului Domenii din **Setări, Stocare** și sunt copiate în locurile bifate acolo la **Copiat în**; în schimb, un element poate indica în dialog un depozit propriu.
 
 - **Seturile de date copil noi se adaugă singure.** Un set de date creat mai târziu sub element este salvat la următoarea rulare, care îl semnalează ca nou. Prima lui copie îl citește complet o dată; după aceea sunt citite doar modificările.
 - **Poți lăsa pe dinafară copii individuali.** Dezactivează un copil în setările elementului și este lăsat pe dinafară împreună cu tot ce e sub el. Un copil exclus care nu mai există pe server este marcat ca atare și poate fi scos din listă.

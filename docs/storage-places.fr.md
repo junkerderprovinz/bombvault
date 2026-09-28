@@ -1,6 +1,6 @@
 # Lieux de stockage
 
-Un lieu de stockage est un endroit où BombVault conserve des sauvegardes : un dossier sur cet Unraid, un partage sur un NAS, un bucket chez un fournisseur cloud, un rest-server, un compte SFTP ou un Nextcloud. Vous connectez chaque lieu une seule fois, dans **Paramètres, Stockage**, et ses identifiants, sa rétention, sa protection et sa localisation lui appartiennent. Les cinq domaines (conteneurs, VMs, la flash, la propre configuration de BombVault et les jeux de fichiers) choisissent ensuite parmi les lieux : où chaque domaine est stocké et vers où il est copié.
+Un lieu de stockage est un endroit où BombVault conserve des sauvegardes : un dossier sur cet Unraid, un partage sur un NAS, un bucket chez un fournisseur cloud, un rest-server, un compte SFTP ou un Nextcloud. Vous connectez chaque lieu une seule fois, dans **Paramètres, Stockage**, et ses identifiants, sa rétention, sa protection et sa localisation lui appartiennent. Les domaines (conteneurs, VMs, la flash, la propre configuration de BombVault, les jeux de fichiers et les jeux de données ZFS) choisissent ensuite parmi les lieux : où chaque domaine est stocké et vers où il est copié. Les jeux de données ZFS ont leur ligne sur la carte Domaines tant que le domaine ZFS est activé.
 
 ## Ajouter un lieu {#add-a-place}
 
@@ -15,7 +15,7 @@ Un nouveau lieu n'est encore utilisé par aucun domaine. Choisissez-le sous **St
 
 ## Dossiers {#folders}
 
-Un lieu conserve un dossier par domaine : `container`, `vms`, `flash`, `config` et `files`, les noms qu'utilisent les emplacements de sauvegarde par défaut. Les dossiers sont listés dans les détails du lieu et peuvent y être renommés (voir [Changer une adresse](#addresses)). Un domaine sans dossier dans un lieu ne peut pas choisir ce lieu.
+Un lieu conserve un dossier par domaine : `container`, `vms`, `flash`, `config`, `files` et `zfs`, les noms qu'utilisent les emplacements de sauvegarde par défaut. Les dossiers sont listés dans les détails du lieu et peuvent y être renommés (voir [Changer une adresse](#addresses)). Un domaine sans dossier dans un lieu ne peut pas choisir ce lieu.
 
 Quand un domaine utilise un lieu dans les deux rôles, le second rôle reçoit un suffixe et le premier garde son dossier. Un lieu qui reçoit déjà les copies d'un domaine stocke les éléments envoyés directement vers lui dans `<folder>-direct` ; un lieu qui stocke déjà un domaine reçoit ses copies dans `<folder>-copies`.
 

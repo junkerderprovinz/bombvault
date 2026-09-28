@@ -59,6 +59,14 @@ Een domein op een externe plek is net als een lokaal domein de bron van zijn kop
 !!! note "Inloggegevens horen bij de plek"
     Een externe plek bewaart zijn eigen inloggegevens. Een plek die met de gedeelde cloud-inloggegevens is ingesteld, blijft die gebruiken tot de toegang ervan in de details wordt gewijzigd.
 
+### SMB en WebDAV zonder mount op de host {#smb-webdav}
+
+Het rclone-formulier van het venster **Plek toevoegen** heeft een formulier voor een Windows- of Samba-share en voor een WebDAV-server (Nextcloud, ownCloud, SharePoint of een andere). Vul een korte naam in, de host en share (SMB) of de URL en het servertype (WebDAV), de gebruiker en het wachtwoord, en BombVault schrijft de rclone-sectie voor je. rclone versluiert het wachtwoord zelf voordat het wordt opgeslagen; een bestemming toevoegen met een naam die al bestaat, vervangt die sectie in plaats van een tweede toe te voegen.
+
+De nieuwe remote verschijnt daarna in de lijst met remotes van het formulier, waar je hem voor de plek kiest. De share is het eerste deel van het pad, geen deel van de naam.
+
+Dit is een betere route dan de share op Unraid mounten: restic raadt af een repository op een gemounte CIFS-share te bewaren, en hier wordt niets gemount. NFS staat niet in het formulier, omdat restic noch rclone een NFS-backend heeft; mount voor NFS de export op de host en voeg hem toe als plek met **Andere share**.
+
 ## Onveranderlijk (append-only) off-site
 
 Vlag een off-site repo als append-only zodat ransomware, of een gecompromitteerde host, je back-ups niet kan verwijderen of herschrijven. De andere kant (een `restic/rest-server` in `--append-only`-modus) **dwingt** het af. BombVault **verifieert** het alleen en toont nooit groen op basis van louter een configuratie-claim.
@@ -174,6 +182,15 @@ Eén klik downloadt de **hoofdsleutel**, het **afgeleide restic-wachtwoord** en 
 
 !!! warning "De nieuwste snapshot is niet altijd de juiste om te herstellen"
     Sinds restic 0.17 toont `restic snapshots` de grootte van elke snapshot. Na dataverlies kan de nieuwste snapshot de leeggemaakte zijn, dus herstel geen snapshot die veel kleiner is dan de vorige. Na ransomware kan het de versleutelde zijn, met de gebruikelijke grootte. Draait BombVault nog, kijk dan eerst op de pagina **Anomalieën**: die noemt de laatste goede back-up. Een herstel heeft geen anomaliegegevens van BombVault nodig, en de retentiepauze bewaart alleen maar meer snapshots.
+
+### De kit verzegelen
+
+Als je age-versleuteling voor de platte exports hebt aangezet (Instellingen), wordt de kit daar ook mee verzegeld en downloadt hij als `bombvault-recovery-kit.md.age`. Hij is ASCII-armored in plaats van binair, dus nog steeds platte tekst: hem in een wachtwoordbeheerder plakken of afdrukken werkt precies als voorheen, alleen is de inhoud zonder je sleutel onleesbaar.
+
+!!! warning "Bewaar de age-sleutel niet in de kit"
+    Om een verzegelde kit te openen heb je je **privésleutel** voor age nodig. Bewaar die op een plek die niet van de kit zelf afhangt, anders moet je twee dingen herstellen in plaats van één. Verzegelen loont als de kit ergens ligt waar je niet volledig over gaat (een gedeelde wachtwoordbeheerder, notities in de cloud, een afdruk op kantoor); een kit in je eigen kluis wordt al door de kluis beschermd.
+
+    Met versleuteling aan en geen bruikbare ontvanger ingesteld wordt de download meteen geweigerd. BombVault valt nooit terug op het afgeven van de hoofdsleutel in leesbare vorm.
 
 ### Als het pakket niet bij de hand is
 

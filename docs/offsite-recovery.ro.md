@@ -59,6 +59,14 @@ Un domeniu stocat într-un loc la distanță este sursa copiilor lui, la fel ca 
 !!! note "Acreditările țin de loc"
     Un loc la distanță își păstrează propriile acreditări. Un loc configurat cu acreditările cloud comune le folosește în continuare, până când accesul lui este schimbat în detaliile sale.
 
+### SMB și WebDAV fără montare pe gazdă {#smb-webdav}
+
+Formularul rclone din fereastra **Adaugă loc** are un formular pentru o partajare Windows sau Samba și pentru un server WebDAV (Nextcloud, ownCloud, SharePoint sau oricare altul). Completează un nume scurt, gazda și partajarea (SMB) sau URL-ul și tipul serverului (WebDAV), utilizatorul și parola, iar BombVault scrie secțiunea rclone pentru tine. rclone ascunde singur parola înainte să fie stocată; adăugarea unei destinații cu un nume care există deja înlocuiește acea secțiune în loc să adauge una a doua.
+
+Noul remote apare apoi în lista de remote-uri a formularului, unde îl alegi pentru loc. Partajarea este primul segment al căii, nu face parte din nume.
+
+Aceasta e o cale mai bună decât montarea partajării pe Unraid: restic nu recomandă păstrarea unui depozit pe o partajare CIFS montată, iar aici nu se montează nimic. NFS nu apare în formular pentru că nici restic, nici rclone nu au un backend NFS; pentru NFS, montează exportul pe gazdă și adaugă-l ca loc cu **Altă partajare**.
+
 ## Off-site imuabil (append-only)
 
 Marchează un depozit off-site ca append-only astfel încât ransomware-ul, sau o gazdă compromisă, să nu poată șterge sau rescrie backupurile tale. Partea îndepărtată (un `restic/rest-server` rulând în mod `--append-only`) **o impune**. BombVault doar **o verifică** și nu arată niciodată verde doar pe baza unei afirmații de configurare.
@@ -174,6 +182,15 @@ Un clic descarcă **cheia principală**, **parola restic derivată** și **loca�
 
 !!! warning "Cel mai nou snapshot nu este întotdeauna cel de restaurat"
     Începând cu restic 0.17, `restic snapshots` arată dimensiunea fiecărui snapshot. După o pierdere de date, cel mai nou snapshot poate fi cel golit, așa că nu restaura un snapshot mult mai mic decât cele dinaintea lui. După un ransomware poate fi cel criptat, de dimensiune obișnuită. Dacă BombVault încă rulează, uită-te mai întâi pe pagina sa **Anomalii**: ea numește ultimul backup bun. O restaurare nu are nevoie de niciun fel de date despre anomalii din BombVault, iar pauza retenției doar păstrează mai multe snapshoturi.
+
+### Sigilarea kitului
+
+Dacă ai activat criptarea age pentru exporturile în clar (Setări), kitul este sigilat și el cu ea și se descarcă drept `bombvault-recovery-kit.md.age`. Este în format ASCII armor, nu binar, deci rămâne text simplu: lipirea lui într-un manager de parole sau tipărirea funcționează exact ca înainte, doar că fără cheia ta conținutul nu poate fi citit.
+
+!!! warning "Nu păstra cheia age în kit"
+    Ca să deschizi un kit sigilat ai nevoie de cheia ta age **privată**. Păstreaz-o într-un loc care nu depinde de kitul însuși, altfel vei avea două lucruri de recuperat în loc de unul. Sigilarea merită când kitul stă într-un loc pe care nu îl controlezi pe deplin (un manager de parole partajat, notițe în cloud, o copie tipărită într-un birou); un kit în propriul seif este deja protejat de seif.
+
+    Cu criptarea activă și fără niciun destinatar utilizabil configurat, descărcarea este refuzată de la început. BombVault nu recurge niciodată la a preda cheia principală în clar.
 
 ### Când kitul nu e la îndemână
 

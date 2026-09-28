@@ -15,7 +15,7 @@ Kapcsold be a tartományt a **Beállítások, Általános** alatt (ZFS-adatkész
 
 ## Elemek és gyermek-adatkészletek {#items-and-children}
 
-Nyisd meg a ZFS oldalon az **Adatkészletek hozzáadása** lehetőséget. A lista a kiszolgálóról jön. Válaszd ki azt az adatkészletet, amely a menteni kívánt rész legtetején van, például `cache/appdata`, és az elem lefedi azt és az alatta lévő összes adatkészletet.
+Nyisd meg a ZFS oldalon az **Adatkészletek hozzáadása** lehetőséget. A lista a kiszolgálóról jön. Válaszd ki azt az adatkészletet, amely a menteni kívánt rész legtetején van, például `cache/appdata`, és az elem lefedi azt és az alatta lévő összes adatkészletet. Mentései oda kerülnek, ahová a Tartományok kártya ZFS sora a **Beállítások, Tárolás** alatt tárolja őket, és azokra a tárhelyekre másolódnak, amelyek ott a **Másolva ide** alatt be vannak pipálva; egy elem ehelyett a párbeszédablakban saját tárolót is megadhat.
 
 - **Az új gyermek-adatkészletek maguktól csatlakoznak.** Az elem alatt később létrehozott adatkészletet a következő futás menti, és azt újként jelzi. Az első mentés egyszer teljes egészében beolvassa; utána csak a változások kerülnek beolvasásra.
 - **Egyes gyermekeket kihagyhatsz.** Kapcsolj ki egyet az elem beállításaiban, és az alatta lévő mindennel együtt kimarad. Egy kihagyott gyermek, amely már nem létezik a kiszolgálón, ilyenként jelölődik, és eltávolítható a listából.

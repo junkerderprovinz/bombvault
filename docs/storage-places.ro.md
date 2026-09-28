@@ -1,6 +1,6 @@
 # Locuri de stocare
 
-Un loc de stocare este un loc în care BombVault păstrează copii de siguranță: un folder pe acest Unraid, o partajare pe un NAS, un bucket la un furnizor de cloud, un rest-server, un cont SFTP sau un Nextcloud. Conectezi fiecare loc o singură dată, în **Setări, Stocare**, iar datele lui de acces, retenția, protecția și locația în care se află țin de el. Cele cinci domenii (containere, VM-uri, flash-ul, configurația proprie a BombVault și seturile de fișiere) aleg apoi dintre locuri: unde este stocat fiecare domeniu și unde este copiat.
+Un loc de stocare este un loc în care BombVault păstrează copii de siguranță: un folder pe acest Unraid, o partajare pe un NAS, un bucket la un furnizor de cloud, un rest-server, un cont SFTP sau un Nextcloud. Conectezi fiecare loc o singură dată, în **Setări, Stocare**, iar datele lui de acces, retenția, protecția și locația în care se află țin de el. Domeniile (containere, VM-uri, flash-ul, configurația proprie a BombVault, seturile de fișiere și seturile de date ZFS) aleg apoi dintre locuri: unde este stocat fiecare domeniu și unde este copiat. Seturile de date ZFS au rândul lor pe cardul Domenii cât timp domeniul ZFS este pornit.
 
 ## Adăugarea unui loc {#add-a-place}
 
@@ -15,7 +15,7 @@ Un loc nou nu este folosit încă de niciun domeniu. Alege-l la **Stocat în** s
 
 ## Foldere {#folders}
 
-Un loc păstrează câte un folder pentru fiecare domeniu: `container`, `vms`, `flash`, `config` și `files`, aceleași nume pe care le folosesc căile implicite de backup. Folderele sunt listate în detaliile locului și pot fi redenumite acolo (vezi [Schimbarea unei adrese](#addresses)). Un domeniu fără folder într-un loc nu poate alege acel loc.
+Un loc păstrează câte un folder pentru fiecare domeniu: `container`, `vms`, `flash`, `config`, `files` și `zfs`, aceleași nume pe care le folosesc căile implicite de backup. Folderele sunt listate în detaliile locului și pot fi redenumite acolo (vezi [Schimbarea unei adrese](#addresses)). Un domeniu fără folder într-un loc nu poate alege acel loc.
 
 Când un domeniu folosește un loc în ambele roluri, al doilea rol primește un sufix, iar primul își păstrează folderul. Un loc care primește deja copiile unui domeniu stochează elementele trimise direct către el în `<folder>-direct`; un loc care stochează deja un domeniu îi primește copiile în `<folder>-copies`.
 

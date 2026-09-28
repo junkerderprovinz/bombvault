@@ -15,7 +15,7 @@ Schakel het domein in onder **Instellingen, Algemeen** (ZFS-datasets). De ZFS-pa
 
 ## Items en onderliggende datasets {#items-and-children}
 
-Open **Datasets toevoegen** op de ZFS-pagina. De lijst komt van de server. Kies de dataset die het hoogst staat van wat je wilt back-uppen, bijvoorbeeld `cache/appdata`, en het item omvat die dataset en elke dataset eronder.
+Open **Datasets toevoegen** op de ZFS-pagina. De lijst komt van de server. Kies de dataset die het hoogst staat van wat je wilt back-uppen, bijvoorbeeld `cache/appdata`, en het item omvat die dataset en elke dataset eronder. De back-ups ervan komen terecht waar de ZFS-rij van de kaart Domeinen op **Instellingen, Opslag** ze opslaat, en worden gekopieerd naar de plekken die daar onder **Gekopieerd naar** zijn aangevinkt; een item kan in het dialoogvenster in plaats daarvan een eigen repository opgeven.
 
 - **Nieuwe onderliggende datasets komen er vanzelf bij.** Een dataset die later onder het item wordt aangemaakt, wordt bij de volgende run geback-upt, en die run meldt hem als nieuw. Zijn eerste back-up leest hem één keer volledig; daarna worden alleen wijzigingen gelezen.
 - **Je kunt losse onderliggende datasets weglaten.** Schakel er een uit in de instellingen van het item en hij blijft buiten, samen met alles eronder. Een weggelaten onderliggende dataset die niet meer op de server bestaat, wordt zo gemarkeerd en kan uit de lijst worden verwijderd.

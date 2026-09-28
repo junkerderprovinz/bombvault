@@ -1,6 +1,6 @@
 # Tárhelyek
 
-A tárhely egy hely, ahol a BombVault mentéseket tart: egy mappa ezen az Unraidon, egy megosztás egy NAS-on, egy bucket egy felhőszolgáltatónál, egy rest-server, egy SFTP-fiók vagy egy Nextcloud. Minden tárhelyet egyszer csatlakoztatsz, a **Beállítások, Tárolás** alatt, és a hitelesítő adatai, a megőrzése, a védelme és a helyszíne is hozzá tartozik. Az öt tartomány (a konténerek, a VM-ek, a flash, a BombVault saját konfigurációja és a fájlkészletek) ezután a tárhelyek közül választ: hol tárolódjon, és hová másolódjon.
+A tárhely egy hely, ahol a BombVault mentéseket tart: egy mappa ezen az Unraidon, egy megosztás egy NAS-on, egy bucket egy felhőszolgáltatónál, egy rest-server, egy SFTP-fiók vagy egy Nextcloud. Minden tárhelyet egyszer csatlakoztatsz, a **Beállítások, Tárolás** alatt, és a hitelesítő adatai, a megőrzése, a védelme és a helyszíne is hozzá tartozik. A tartományok (a konténerek, a VM-ek, a flash, a BombVault saját konfigurációja, a fájlkészletek és a ZFS-adatkészletek) ezután a tárhelyek közül választanak: hol tárolódjon az egyes tartomány, és hová másolódjon. A ZFS-adatkészleteknek akkor van soruk a Tartományok kártyán, amikor a ZFS tartomány be van kapcsolva.
 
 ## Tárhely hozzáadása {#add-a-place}
 
@@ -15,7 +15,7 @@ Egy új tárhelyet még egyetlen tartomány sem használ. Válaszd ki a **Tárol
 
 ## Mappák {#folders}
 
-Egy tárhely tartományonként egy mappát tart: `container`, `vms`, `flash`, `config` és `files`, ugyanazokkal a nevekkel, mint az alapértelmezett mentési helyek. A mappák a tárhely részleteiben szerepelnek, és ott át is nevezhetők (lásd: [Cím módosítása](#addresses)). Az a tartomány, amelynek nincs mappája egy tárhelyen, nem választhatja azt a tárhelyet.
+Egy tárhely tartományonként egy mappát tart: `container`, `vms`, `flash`, `config`, `files` és `zfs`, ugyanazokkal a nevekkel, mint az alapértelmezett mentési helyek. A mappák a tárhely részleteiben szerepelnek, és ott át is nevezhetők (lásd: [Cím módosítása](#addresses)). Az a tartomány, amelynek nincs mappája egy tárhelyen, nem választhatja azt a tárhelyet.
 
 Ha egy tartomány mindkét szerepben használ egy tárhelyet, a második szerep utótagot kap, az első pedig megtartja a mappáját. Az a tárhely, amely már fogadja egy tartomány másolatait, a közvetlenül oda küldött elemeket a `<folder>-direct` mappában tárolja; az a tárhely, amely már tárol egy tartományt, a másolatait a `<folder>-copies` mappában fogadja.
 

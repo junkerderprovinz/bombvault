@@ -59,6 +59,14 @@ Un dominio salvato in un luogo remoto è la sorgente delle sue copie come uno lo
 !!! note "Le credenziali appartengono al luogo"
     Un luogo remoto conserva le proprie credenziali. Un luogo configurato con le credenziali cloud condivise continua a usarle finché il suo accesso non viene cambiato nei suoi dettagli.
 
+### SMB e WebDAV senza montaggio sull'host {#smb-webdav}
+
+La variante rclone della finestra **Aggiungi luogo** ha un modulo per una condivisione Windows o Samba e per un server WebDAV (Nextcloud, ownCloud, SharePoint o qualsiasi altro). Inserisci un nome breve, l'host e la condivisione (SMB) oppure l'URL e il tipo di server (WebDAV), l'utente e la password, e BombVault scrive per te la sezione di rclone. rclone offusca da sé la password prima che venga salvata; aggiungere una destinazione con un nome che esiste già sostituisce quella sezione invece di aggiungerne una seconda.
+
+Il nuovo remote compare poi nell'elenco dei remote del modulo, dove lo scegli per il luogo. La condivisione è il primo segmento del percorso, non fa parte del nome.
+
+È una strada migliore che montare la condivisione su Unraid: restic sconsiglia di tenere un repository su una condivisione CIFS montata, e qui non si monta nulla. NFS non è nel modulo perché né restic né rclone hanno un backend NFS; per NFS, monta l'export sull'host e aggiungilo come luogo con **Altra condivisione**.
+
 ## Off-site immutabile (append-only)
 
 Contrassegna un repo off-site come append-only così ransomware, o un host compromesso, non possano eliminare o riscrivere i tuoi backup. L'altro lato (un `restic/rest-server` in esecuzione in modalità `--append-only`) lo **impone**. BombVault lo **verifica** soltanto e non mostra mai verde sulla sola affermazione di una configurazione.
@@ -174,6 +182,15 @@ Un clic scarica la **chiave master**, la **password restic derivata** e le **pos
 
 !!! warning "Lo snapshot più recente non è sempre quello da ripristinare"
     Da restic 0.17, `restic snapshots` mostra la dimensione di ogni snapshot. Dopo una perdita di dati lo snapshot più recente può essere quello svuotato, quindi non ripristinare uno snapshot molto più piccolo dei precedenti. Dopo un ransomware può essere quello cifrato, di dimensione normale. Se BombVault funziona ancora, controlla prima la sua pagina **Anomalie**: indica l'ultimo backup buono. Un ripristino non ha bisogno di alcun dato sulle anomalie di BombVault, e la pausa della conservazione mantiene sempre solo più snapshot.
+
+### Sigillare il kit
+
+Se hai attivato la cifratura age per le esportazioni in chiaro (Impostazioni), anche il kit viene sigillato con essa e si scarica come `bombvault-recovery-kit.md.age`. È in formato ASCII armor anziché binario, quindi resta testo semplice: incollarlo in un gestore di password o stamparlo funziona esattamente come prima, solo che il contenuto è illeggibile senza la tua chiave.
+
+!!! warning "Non conservare la chiave age dentro il kit"
+    Per aprire un kit sigillato ti serve la tua chiave age **privata**. Tienila in un posto che non dipenda dal kit stesso, altrimenti avrai due cose da recuperare invece di una. Sigillare conviene quando il kit è conservato in un posto che non controlli del tutto (un gestore di password condiviso, note nel cloud, una copia stampata in ufficio); un kit nella tua cassaforte è già protetto dalla cassaforte.
+
+    Con la cifratura attiva e nessun destinatario utilizzabile configurato, il download viene rifiutato subito. BombVault non ripiega mai sul consegnare la chiave master in chiaro.
 
 ### Se il kit non è a portata di mano
 

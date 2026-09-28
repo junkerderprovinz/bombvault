@@ -15,7 +15,7 @@ Slå på domänen under **Inställningar, Allmänt** (ZFS-datauppsättningar). Z
 
 ## Objekt och underliggande datauppsättningar {#items-and-children}
 
-Öppna **Lägg till datauppsättningar** på ZFS-sidan. Listan kommer från servern. Välj den datauppsättning som ligger överst i det du vill säkerhetskopiera, till exempel `cache/appdata`, så omfattar objektet den och alla datauppsättningar under den.
+Öppna **Lägg till datauppsättningar** på ZFS-sidan. Listan kommer från servern. Välj den datauppsättning som ligger överst i det du vill säkerhetskopiera, till exempel `cache/appdata`, så omfattar objektet den och alla datauppsättningar under den. Dess säkerhetskopior hamnar där ZFS-raden på kortet Domäner under **Inställningar, Lagring** sparar dem, och kopieras till de lagringsplatser som är ikryssade där under **Kopierad till**; ett objekt kan i stället ange ett eget repository i dialogen.
 
 - **Nya underliggande datauppsättningar kommer med av sig själva.** En datauppsättning som skapas senare under objektet säkerhetskopieras vid nästa körning, och den körningen anger den som ny. Dess första säkerhetskopia läser den helt en gång; därefter läses bara ändringar.
 - **Du kan utelämna enskilda underliggande datauppsättningar.** Slå av en i objektets inställningar så lämnas den utanför tillsammans med allt under den. En utelämnad underliggande datauppsättning som inte längre finns på servern markeras som sådan och kan tas bort från listan.

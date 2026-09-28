@@ -1,6 +1,6 @@
 # Lugares de armazenamento
 
-Um lugar de armazenamento é um sítio onde o BombVault guarda backups: uma pasta neste Unraid, uma partilha num NAS, um bucket num provedor de nuvem, um rest-server, uma conta SFTP ou um Nextcloud. Ligue cada lugar uma vez, em **Definições, Armazenamento**, e as credenciais, a retenção, a proteção e a localização pertencem a esse lugar. Os cinco domínios (containers, VMs, o flash, a configuração do próprio BombVault e os conjuntos de ficheiros) escolhem depois entre os lugares: onde cada domínio é guardado e para onde é copiado.
+Um lugar de armazenamento é um sítio onde o BombVault guarda backups: uma pasta neste Unraid, uma partilha num NAS, um bucket num provedor de nuvem, um rest-server, uma conta SFTP ou um Nextcloud. Ligue cada lugar uma vez, em **Definições, Armazenamento**, e as credenciais, a retenção, a proteção e a localização pertencem a esse lugar. Os domínios (containers, VMs, o flash, a configuração do próprio BombVault, os conjuntos de ficheiros e os conjuntos de dados ZFS) escolhem depois entre os lugares: onde cada domínio é guardado e para onde é copiado. Os conjuntos de dados ZFS têm a sua linha no cartão Domínios enquanto o domínio ZFS estiver ligado.
 
 ## Adicionar um lugar {#add-a-place}
 
@@ -15,7 +15,7 @@ Um lugar novo ainda não é usado por nenhum domínio. Escolha-o em **Guardado e
 
 ## Pastas {#folders}
 
-Um lugar tem uma pasta por domínio: `container`, `vms`, `flash`, `config` e `files`, os nomes que as localizações de backup predefinidas usam. As pastas aparecem nos detalhes do lugar e podem ser renomeadas aí (consulte [Mudar um endereço](#addresses)). Um domínio sem pasta num lugar não pode escolher esse lugar.
+Um lugar tem uma pasta por domínio: `container`, `vms`, `flash`, `config`, `files` e `zfs`, os nomes que as localizações de backup predefinidas usam. As pastas aparecem nos detalhes do lugar e podem ser renomeadas aí (consulte [Mudar um endereço](#addresses)). Um domínio sem pasta num lugar não pode escolher esse lugar.
 
 Quando um domínio usa um lugar nas duas funções, a segunda função recebe um sufixo e a primeira mantém a sua pasta. Um lugar que já recebe as cópias de um domínio guarda os itens enviados diretamente para ele em `<folder>-direct`; um lugar que já guarda um domínio recebe as cópias dele em `<folder>-copies`.
 

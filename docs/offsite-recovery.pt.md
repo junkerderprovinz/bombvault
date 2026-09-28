@@ -59,6 +59,14 @@ Um domínio guardado num lugar remoto é a origem das suas cópias, tal como um 
 !!! note "As credenciais pertencem ao lugar"
     Um lugar remoto tem as suas próprias credenciais. Um lugar configurado com as credenciais de nuvem partilhadas continua a usá-las até o seu acesso ser alterado nos seus detalhes.
 
+### SMB e WebDAV sem montagem no host {#smb-webdav}
+
+O formulário rclone da janela **Adicionar lugar** tem um formulário para uma partilha Windows ou Samba e para um servidor WebDAV (Nextcloud, ownCloud, SharePoint ou outro qualquer). Preencha um nome curto, o host e a partilha (SMB) ou o URL e o tipo de servidor (WebDAV), o utilizador e a palavra-passe, e o BombVault escreve a secção rclone por si. O próprio rclone ofusca a palavra-passe antes de ser guardada; adicionar um destino com um nome que já existe substitui essa secção em vez de acrescentar uma segunda.
+
+O novo remoto aparece depois na lista de remotos do formulário, onde o escolhe para o lugar. A partilha é o primeiro segmento do caminho, não parte do nome.
+
+Este caminho é melhor do que montar a partilha no Unraid: o restic desaconselha guardar um repositório numa partilha CIFS montada, e aqui nada é montado. O NFS não está no formulário porque nem o restic nem o rclone têm um backend NFS; para NFS, monte a exportação no host e adicione-a como lugar com **Outra partilha**.
+
 ## Externo imutável (append-only)
 
 Marque um repo externo como append-only para que ransomware, ou um host comprometido, não possa eliminar ou reescrever os seus backups. O lado remoto (um `restic/rest-server` a correr em modo `--append-only`) **impõe-no**. O BombVault apenas o **verifica** e nunca mostra verde só com base numa afirmação de configuração.
@@ -174,6 +182,15 @@ Um clique transfere a **chave mestra**, a **palavra-passe restic derivada**, e a
 
 !!! warning "O snapshot mais recente nem sempre é o que deve restaurar"
     Desde o restic 0.17, `restic snapshots` mostra o tamanho de cada snapshot. Após uma perda de dados, o snapshot mais recente pode ser o que foi esvaziado, por isso não restaure um snapshot muito mais pequeno do que os anteriores. Após um ransomware pode ser o cifrado, com o tamanho habitual. Se o BombVault ainda estiver a correr, veja primeiro a sua página **Anomalias**: ela indica o último backup bom. Um restauro não precisa de nenhum dado de anomalias do BombVault, e a pausa da retenção só mantém mais snapshots.
+
+### Selar o kit
+
+Se ativou a encriptação age para as exportações simples (Definições), o kit também fica selado com ela e é descarregado como `bombvault-recovery-kit.md.age`. Está em ASCII armor em vez de binário, por isso continua a ser texto simples: colá-lo num gestor de palavras-passe ou imprimi-lo funciona exatamente como antes, apenas o conteúdo fica ilegível sem a sua chave.
+
+!!! warning "Não guarde a chave age dentro do kit"
+    Para abrir um kit selado precisa da sua chave age **privada**. Guarde-a num sítio que não dependa do próprio kit, ou terá duas coisas para recuperar em vez de uma. Selar compensa quando o kit fica guardado num sítio que não controla por completo (um gestor de palavras-passe partilhado, notas na nuvem, uma impressão num escritório); um kit no seu próprio cofre já está protegido pelo cofre.
+
+    Com a encriptação ligada e nenhum destinatário utilizável configurado, a transferência é recusada de imediato. O BombVault nunca recorre a entregar a chave mestra em claro.
 
 ### Se não tiveres o kit à mão
 

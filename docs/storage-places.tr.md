@@ -1,6 +1,6 @@
 # Depolama konumları
 
-Depolama konumu, BombVault'un yedekleri tuttuğu bir yerdir: bu Unraid'deki bir klasör, bir NAS'taki bir paylaşım, bir bulut sağlayıcısındaki bir bucket, bir rest-server, bir SFTP hesabı ya da bir Nextcloud. Her konumu **Ayarlar, Depolama** sekmesinde bir kez bağlarsınız; kimlik bilgileri, saklama kuralları, koruması ve bulunduğu yer o konuma aittir. Beş etki alanı (konteynerler, VM'ler, flash, BombVault'un kendi yapılandırması ve dosya kümeleri) ardından bu konumlar arasından seçim yapar: her etki alanının nerede depolanacağını ve nereye kopyalanacağını.
+Depolama konumu, BombVault'un yedekleri tuttuğu bir yerdir: bu Unraid'deki bir klasör, bir NAS'taki bir paylaşım, bir bulut sağlayıcısındaki bir bucket, bir rest-server, bir SFTP hesabı ya da bir Nextcloud. Her konumu **Ayarlar, Depolama** sekmesinde bir kez bağlarsınız; kimlik bilgileri, saklama kuralları, koruması ve bulunduğu yer o konuma aittir. Etki alanları (konteynerler, VM'ler, flash, BombVault'un kendi yapılandırması, dosya kümeleri ve ZFS veri kümeleri) ardından bu konumlar arasından seçim yapar: her etki alanının nerede depolanacağını ve nereye kopyalanacağını. ZFS etki alanı açık olduğu sürece ZFS veri kümelerinin Alanlar kartında kendi satırı vardır.
 
 ## Konum ekleme {#add-a-place}
 
@@ -15,7 +15,7 @@ Yeni bir konumu henüz hiçbir etki alanı kullanmaz. Onu [Alanlar kartında](#d
 
 ## Klasörler {#folders}
 
-Bir konum her etki alanı için bir klasör tutar: `container`, `vms`, `flash`, `config` ve `files`, yani varsayılan yedekleme yollarının kullandığı adlar. Klasörler konumun ayrıntılarında listelenir ve orada yeniden adlandırılabilir (bkz. [Adres değiştirme](#addresses)). Bir konumda klasörü olmayan bir etki alanı o konumu seçemez.
+Bir konum her etki alanı için bir klasör tutar: `container`, `vms`, `flash`, `config`, `files` ve `zfs`, yani varsayılan yedekleme yollarının kullandığı adlar. Klasörler konumun ayrıntılarında listelenir ve orada yeniden adlandırılabilir (bkz. [Adres değiştirme](#addresses)). Bir konumda klasörü olmayan bir etki alanı o konumu seçemez.
 
 Bir etki alanı bir konumu iki rolde birden kullandığında ikinci rol bir sonek alır, ilk rol klasörünü korur. Bir etki alanının kopyalarını zaten alan bir konum, doğrudan ona gönderilen ögeleri `<folder>-direct` içinde depolar; bir etki alanını zaten depolayan bir konum ise o etki alanının kopyalarını `<folder>-copies` içinde alır.
 

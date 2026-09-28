@@ -15,7 +15,7 @@ Etki alanını **Ayarlar, Genel** altında açın (ZFS veri kümeleri). ZFS sayf
 
 ## Öğeler ve alt veri kümeleri {#items-and-children}
 
-ZFS sayfasında **Veri kümesi ekle**'yi açın. Liste sunucudan gelir. Yedeklemek istediğiniz şeyin en üstündeki veri kümesini seçin, örneğin `cache/appdata`; öğe onu ve altındaki her veri kümesini kapsar.
+ZFS sayfasında **Veri kümesi ekle**'yi açın. Liste sunucudan gelir. Yedeklemek istediğiniz şeyin en üstündeki veri kümesini seçin, örneğin `cache/appdata`; öğe onu ve altındaki her veri kümesini kapsar. Yedekleri, **Ayarlar, Depolama** altındaki Alanlar kartının ZFS satırı onları nerede saklıyorsa oraya gider ve orada **Kopyalama hedefleri** altında işaretlenen konumlara kopyalanır; bir öğe bunun yerine pencerede kendi deposunu belirtebilir.
 
 - **Yeni alt veri kümeleri kendiliğinden katılır.** Öğenin altında sonradan oluşturulan bir veri kümesi sonraki çalıştırmada yedeklenir ve o çalıştırma onu yeni olarak belirtir. İlk yedeği onu bir kez tamamen okur; sonrasında yalnızca değişiklikler okunur.
 - **Tek tek alt veri kümelerini dışarıda bırakabilirsiniz.** Öğenin ayarlarında birini kapatın; altındaki her şeyle birlikte dışarıda kalır. Sunucuda artık bulunmayan dışarıda bırakılmış bir alt veri kümesi böyle işaretlenir ve listeden kaldırılabilir.

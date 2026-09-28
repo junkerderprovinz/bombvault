@@ -1,6 +1,6 @@
 # Tallennuspaikat
 
-Tallennuspaikka on paikka, jossa BombVault säilyttää varmuuskopioita: kansio tässä Unraidissa, jako NAS-laitteella, bucket pilvipalvelussa, rest-server, SFTP-tili tai Nextcloud. Yhdistät jokaisen paikan kerran kohdassa **Asetukset, Tallennustila**, ja sen tunnukset, säilytys, suojaus ja sijainti kuuluvat sille. Viisi toimialuetta (kontit, virtuaalikoneet, flash, BombVaultin omat asetukset ja tiedostojoukot) valitsevat sitten näistä paikoista, mihin kukin toimialue tallennetaan ja minne se kopioidaan.
+Tallennuspaikka on paikka, jossa BombVault säilyttää varmuuskopioita: kansio tässä Unraidissa, jako NAS-laitteella, bucket pilvipalvelussa, rest-server, SFTP-tili tai Nextcloud. Yhdistät jokaisen paikan kerran kohdassa **Asetukset, Tallennustila**, ja sen tunnukset, säilytys, suojaus ja sijainti kuuluvat sille. Toimialueet (kontit, virtuaalikoneet, flash, BombVaultin omat asetukset, tiedostojoukot ja ZFS-tietojoukot) valitsevat sitten näistä paikoista, mihin kukin toimialue tallennetaan ja minne se kopioidaan. ZFS-tietojoukoilla on oma rivinsä Toimialueet-kortilla silloin, kun ZFS-toimialue on kytketty päälle.
 
 ## Paikan lisääminen {#add-a-place}
 
@@ -15,7 +15,7 @@ Uutta paikkaa ei vielä käytä mikään toimialue. Valitse se [Toimialueet-kort
 
 ## Kansiot {#folders}
 
-Paikassa on yksi kansio kutakin toimialuetta kohden: `container`, `vms`, `flash`, `config` ja `files`, samat nimet kuin oletusarvoisissa varmuuskopiosijainneissa. Kansiot näkyvät paikan tiedoissa, ja niitä voi nimetä siellä uudelleen (katso [Osoitteen muuttaminen](#addresses)). Toimialue, jolla ei ole kansiota paikassa, ei voi valita sitä paikkaa.
+Paikassa on yksi kansio kutakin toimialuetta kohden: `container`, `vms`, `flash`, `config`, `files` ja `zfs`, samat nimet kuin oletusarvoisissa varmuuskopiosijainneissa. Kansiot näkyvät paikan tiedoissa, ja niitä voi nimetä siellä uudelleen (katso [Osoitteen muuttaminen](#addresses)). Toimialue, jolla ei ole kansiota paikassa, ei voi valita sitä paikkaa.
 
 Kun toimialue käyttää samaa paikkaa kummassakin roolissa, toinen rooli saa päätteen ja ensimmäinen säilyttää kansionsa. Paikka, joka jo vastaanottaa toimialueen kopiot, tallentaa suoraan sinne lähetetyt kohteet kansioon `<folder>-direct`; paikka, johon toimialue jo tallennetaan, vastaanottaa sen kopiot kansioon `<folder>-copies`.
 

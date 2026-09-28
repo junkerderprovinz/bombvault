@@ -15,7 +15,7 @@ Zapněte doménu v **Nastavení, Obecné** (Datové sady ZFS). Stránka ZFS pak 
 
 ## Položky a podřízené datové sady {#items-and-children}
 
-Na stránce ZFS otevřete **Přidat datové sady**. Seznam pochází ze serveru. Vyberte datovou sadu, která je nejvýše z toho, co chcete zálohovat, například `cache/appdata`, a položka pokryje ji i každou datovou sadu pod ní.
+Na stránce ZFS otevřete **Přidat datové sady**. Seznam pochází ze serveru. Vyberte datovou sadu, která je nejvýše z toho, co chcete zálohovat, například `cache/appdata`, a položka pokryje ji i každou datovou sadu pod ní. Její zálohy jdou tam, kam je ukládá řádek ZFS na kartě Domény v **Nastavení, Úložiště**, a kopírují se na místa, která jsou tam zaškrtnutá pod **Kopírováno do**; položka může místo toho v dialogu určit vlastní repozitář.
 
 - **Nové podřízené datové sady se přidávají samy.** Datová sada vytvořená později pod položkou se zálohuje při dalším běhu a ten ji uvede jako novou. Její první záloha ji jednou přečte celou; potom se čtou jen změny.
 - **Jednotlivé podřízené sady můžete vynechat.** Vypněte jednu v nastavení položky a bude vynechána i se vším pod ní. Vynechaná podřízená sada, která už na serveru neexistuje, je tak označena a lze ji ze seznamu odebrat.

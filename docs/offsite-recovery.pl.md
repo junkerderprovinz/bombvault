@@ -59,6 +59,14 @@ Domena przechowywana w miejscu zdalnym jest źródłem swoich kopii tak samo jak
 !!! note "Poświadczenia należą do miejsca"
     Miejsce zdalne ma własne poświadczenia. Miejsce skonfigurowane ze wspólnymi poświadczeniami chmury używa ich dalej, dopóki jego dostęp nie zostanie zmieniony w szczegółach miejsca.
 
+### SMB i WebDAV bez montowania na hoście {#smb-webdav}
+
+Formularz rclone w oknie **Dodaj miejsce** zawiera formularz dla udziału Windows lub Samba oraz dla serwera WebDAV (Nextcloud, ownCloud, SharePoint lub dowolnego innego). Wpisz krótką nazwę, host i udział (SMB) albo URL i typ serwera (WebDAV), użytkownika i hasło, a BombVault zapisze za ciebie sekcję rclone. rclone sam zaciemnia hasło przed zapisaniem; dodanie celu o nazwie, która już istnieje, zastępuje tę sekcję zamiast dodawać drugą.
+
+Nowy zasób zdalny pojawia się potem na liście zasobów zdalnych formularza, gdzie wybierasz go dla miejsca. Udział jest pierwszym członem ścieżki, a nie częścią nazwy.
+
+To lepsza droga niż montowanie udziału na Unraid: restic odradza trzymanie repozytorium na zamontowanym udziale CIFS, a tutaj nic nie jest montowane. NFS nie ma w formularzu, bo ani restic, ani rclone nie ma backendu NFS; w przypadku NFS zamontuj eksport na hoście i dodaj go jako miejsce przez **Inny udział**.
+
 ## Niezmienna (append-only) kopia poza siedzibą
 
 Oznacz repozytorium poza siedzibą jako append-only, aby ransomware lub skompromitowany host nie mogły usunąć ani nadpisać Twoich kopii. Druga strona (`restic/rest-server` działający w trybie `--append-only`) **wymusza** to. BombVault jedynie to **weryfikuje** i nigdy nie pokazuje zielonego na podstawie samej deklaracji konfiguracji.
@@ -174,6 +182,15 @@ Jedno kliknięcie pobiera **klucz główny**, **wyprowadzone hasło restic** ora
 
 !!! warning "Najnowsza migawka nie zawsze jest tą do przywrócenia"
     Od restic 0.17 polecenie `restic snapshots` pokazuje rozmiar każdej migawki. Po utracie danych najnowsza migawka może być tą opróżnioną, więc nie przywracaj migawki dużo mniejszej niż poprzednie. Po ataku ransomware może to być migawka zaszyfrowana o zwykłym rozmiarze. Jeśli BombVault nadal działa, najpierw zajrzyj na jego stronę **Anomalie**: wskazuje ostatnią dobrą kopię. Przywracanie nie potrzebuje żadnych danych o anomaliach z BombVault, a wstrzymanie retencji zawsze tylko zachowuje więcej migawek.
+
+### Pieczętowanie zestawu
+
+Jeśli włączyłeś szyfrowanie age dla eksportów jawnych (Ustawienia), zestaw odzyskiwania też jest nim pieczętowany i pobiera się jako `bombvault-recovery-kit.md.age`. Jest w formacie ASCII armor, a nie binarnym, więc nadal jest zwykłym tekstem: wklejenie go do menedżera haseł lub wydrukowanie działa dokładnie tak jak wcześniej, tylko treść jest nieczytelna bez twojego klucza.
+
+!!! warning "Nie przechowuj klucza age w zestawie"
+    Do otwarcia zapieczętowanego zestawu potrzebujesz swojego **prywatnego** klucza age. Trzymaj go w miejscu, które nie zależy od samego zestawu, bo inaczej będziesz mieć do odzyskania dwie rzeczy zamiast jednej. Pieczętowanie się opłaca, gdy zestaw leży w miejscu, którego nie kontrolujesz w pełni (współdzielony menedżer haseł, notatki w chmurze, wydruk w biurze); zestaw we własnym sejfie chroni już sejf.
+
+    Przy włączonym szyfrowaniu i braku skonfigurowanego użytecznego odbiorcy pobieranie jest od razu odrzucane. BombVault nigdy nie wraca do wydania klucza głównego jawnym tekstem.
 
 ### Gdy zestawu nie ma pod ręką
 

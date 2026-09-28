@@ -1,6 +1,6 @@
 # Úložná místa
 
-Úložné místo je kterékoli místo, kde BombVault uchovává zálohy: složka na tomto Unraidu, sdílená složka na NAS, bucket u cloudového poskytovatele, rest-server, účet SFTP nebo Nextcloud. Každé místo připojíte jednou, v **Nastavení, Úložiště**, a jeho přihlašovací údaje, uchovávání, ochrana a poloha patří k němu. Pět domén (kontejnery, VM, flash, vlastní konfigurace BombVaultu a sady složek) si pak z míst vybírá: kde je každá doména uložena a kam se kopíruje.
+Úložné místo je kterékoli místo, kde BombVault uchovává zálohy: složka na tomto Unraidu, sdílená složka na NAS, bucket u cloudového poskytovatele, rest-server, účet SFTP nebo Nextcloud. Každé místo připojíte jednou, v **Nastavení, Úložiště**, a jeho přihlašovací údaje, uchovávání, ochrana a poloha patří k němu. Domény (kontejnery, VM, flash, vlastní konfigurace BombVaultu, sady složek a datové sady ZFS) si pak z míst vybírají: kde je každá doména uložena a kam se kopíruje. Datové sady ZFS mají svůj řádek na kartě Domény, dokud je doména ZFS zapnutá.
 
 ## Přidání místa {#add-a-place}
 
@@ -15,7 +15,7 @@ Nové místo zatím žádná doména nepoužívá. Zvolte ho pod **Uloženo v** 
 
 ## Složky {#folders}
 
-Místo drží jednu složku na doménu: `container`, `vms`, `flash`, `config` a `files`, tedy názvy, které používají výchozí umístění záloh. Složky jsou uvedené v podrobnostech místa a lze je tam přejmenovat (viz [Změna adresy](#addresses)). Doména, která na místě nemá složku, si toto místo nemůže zvolit.
+Místo drží jednu složku na doménu: `container`, `vms`, `flash`, `config`, `files` a `zfs`, tedy názvy, které používají výchozí umístění záloh. Složky jsou uvedené v podrobnostech místa a lze je tam přejmenovat (viz [Změna adresy](#addresses)). Doména, která na místě nemá složku, si toto místo nemůže zvolit.
 
 Když doména používá místo v obou rolích, druhá role dostane příponu a první si ponechá svou složku. Místo, které už přijímá kopie domény, ukládá položky poslané přímo na něj do `<folder>-direct`; místo, na kterém už je doména uložena, přijímá její kopie do `<folder>-copies`.
 

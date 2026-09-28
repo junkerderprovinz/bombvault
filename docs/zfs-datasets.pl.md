@@ -15,7 +15,7 @@ Włącz domenę w **Ustawienia, Ogólne** (Zbiory danych ZFS). Strona ZFS pokaż
 
 ## Elementy i zbiory podrzędne {#items-and-children}
 
-Otwórz **Dodaj zbiory danych** na stronie ZFS. Lista pochodzi z serwera. Wybierz zbiór danych położony najwyżej w tym, co chcesz kopiować, na przykład `cache/appdata`, a element obejmie go i każdy zbiór danych pod nim.
+Otwórz **Dodaj zbiory danych** na stronie ZFS. Lista pochodzi z serwera. Wybierz zbiór danych położony najwyżej w tym, co chcesz kopiować, na przykład `cache/appdata`, a element obejmie go i każdy zbiór danych pod nim. Jego kopie trafiają tam, gdzie zapisuje je wiersz ZFS na karcie Domeny w **Ustawienia, Magazyn**, i są kopiowane do miejsc zaznaczonych tam pod **Kopiowane do**; zamiast tego element może w oknie dialogowym wskazać własne repozytorium.
 
 - **Nowe zbiory podrzędne dołączają same.** Zbiór danych utworzony później pod elementem jest kopiowany w następnym przebiegu, który oznacza go jako nowy. Jego pierwsza kopia odczytuje go raz w całości; potem odczytywane są tylko zmiany.
 - **Możesz pominąć pojedyncze zbiory podrzędne.** Wyłącz jeden w ustawieniach elementu, a zostanie pominięty razem ze wszystkim pod nim. Pominięty zbiór podrzędny, którego nie ma już na serwerze, jest tak oznaczony i można go usunąć z listy.

@@ -1,6 +1,6 @@
 # Lagringsplatser
 
-En lagringsplats är ett ställe där BombVault förvarar säkerhetskopior: en mapp på den här Unraid-servern, en utdelning på en NAS, en bucket hos en molnleverantör, en rest-server, ett SFTP-konto eller en Nextcloud. Du ansluter varje lagringsplats en gång, under **Inställningar, Lagring**, och dess inloggningsuppgifter, retention, skydd och uppgiften om var den står hör till den. De fem domänerna (containrar, VM:ar, flashen, BombVaults egen konfiguration och filuppsättningar) väljer sedan bland lagringsplatserna: var varje domän sparas och vart den kopieras.
+En lagringsplats är ett ställe där BombVault förvarar säkerhetskopior: en mapp på den här Unraid-servern, en utdelning på en NAS, en bucket hos en molnleverantör, en rest-server, ett SFTP-konto eller en Nextcloud. Du ansluter varje lagringsplats en gång, under **Inställningar, Lagring**, och dess inloggningsuppgifter, retention, skydd och uppgiften om var den står hör till den. Domänerna (containrar, VM:ar, flashen, BombVaults egen konfiguration, filuppsättningar och ZFS-datauppsättningar) väljer sedan bland lagringsplatserna: var varje domän sparas och vart den kopieras. ZFS-datauppsättningarna har sin rad på kortet Domäner så länge ZFS-domänen är påslagen.
 
 ## Lägga till en lagringsplats {#add-a-place}
 
@@ -15,7 +15,7 @@ En ny lagringsplats används inte av någon domän än. Välj den under **Sparad
 
 ## Mappar {#folders}
 
-En lagringsplats har en mapp per domän: `container`, `vms`, `flash`, `config` och `files`, samma namn som standardplatserna för säkerhetskopior använder. Mapparna listas i lagringsplatsens detaljer och kan byta namn där (se [Ändra en adress](#addresses)). En domän utan mapp på en lagringsplats kan inte välja den lagringsplatsen.
+En lagringsplats har en mapp per domän: `container`, `vms`, `flash`, `config`, `files` och `zfs`, samma namn som standardplatserna för säkerhetskopior använder. Mapparna listas i lagringsplatsens detaljer och kan byta namn där (se [Ändra en adress](#addresses)). En domän utan mapp på en lagringsplats kan inte välja den lagringsplatsen.
 
 När en domän använder en lagringsplats i båda rollerna får den andra rollen ett suffix och den första behåller sin mapp. En lagringsplats som redan tar emot en domäns kopior sparar de objekt som skickas direkt dit i `<folder>-direct`; en lagringsplats som redan sparar en domän tar emot dess kopior i `<folder>-copies`.
 

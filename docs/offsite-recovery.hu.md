@@ -59,6 +59,14 @@ Egy távoli tárhelyen tárolt tartomány ugyanúgy a másolatainak forrása, mi
 !!! note "A hitelesítő adatok a tárhelyhez tartoznak"
     Egy távoli tárhely saját hitelesítő adatokat tart. Az a tárhely, amelyet a közös felhő-hitelesítő adatokkal állítottak be, addig használja azokat, amíg a hozzáférését meg nem változtatod a részleteiben.
 
+### SMB és WebDAV csatolás nélkül a gazdagépen {#smb-webdav}
+
+A **Tárhely hozzáadása** ablak rclone változatában van egy űrlap Windows- vagy Samba-megosztáshoz és WebDAV-szerverhez (Nextcloud, ownCloud, SharePoint vagy bármely más). Add meg a rövid nevet, a gazdagépet és a megosztást (SMB) vagy az URL-t és a szerver típusát (WebDAV), a felhasználót és a jelszót, és a BombVault megírja helyetted az rclone-szakaszt. Az rclone maga homályosítja el a jelszót, mielőtt eltárolná; ha már létező névvel adsz hozzá célt, az lecseréli azt a szakaszt, ahelyett hogy egy másodikat adna hozzá.
+
+Az új remote ezután megjelenik az űrlap remote-listájában, ahol kiválasztod a tárhelyhez. A megosztás az útvonal első szegmense, nem része a névnek.
+
+Ez jobb út, mint a megosztást az Unraidre csatolni: a restic nem javasolja, hogy tárolót csatolt CIFS-megosztáson tarts, itt pedig semmi sincs csatolva. Az NFS azért nincs az űrlapon, mert sem a resticnek, sem az rclone-nak nincs NFS-háttere; NFS-hez csatold az exportot a gazdagépre, és add hozzá tárhelyként a **Más megosztás** választással.
+
 ## Módosíthatatlan (append-only) telephelyen kívüli
 
 Jelölj egy telephelyen kívüli tárolót append-only-ként, hogy a zsarolóvírus vagy egy feltört hoszt ne tudja törölni vagy átírni a mentéseidet. A túloldal (egy `restic/rest-server` `--append-only` módban futva) **érvényesíti**. A BombVault csak **ellenőrzi**, és soha nem mutat zöldet pusztán egy konfigurációs állítás alapján.
@@ -174,6 +182,15 @@ Egy kattintás letölti a **mesterkulcsot**, a **származtatott restic jelszót*
 
 !!! warning "Nem mindig a legújabb pillanatképet kell visszaállítani"
     A restic 0.17 óta a `restic snapshots` minden pillanatkép méretét mutatja. Adatvesztés után a legújabb pillanatkép lehet a kiürített, ezért ne állíts vissza olyan pillanatképet, amely sokkal kisebb az előzőeknél. Zsarolóvírus után lehet a titkosított, szokásos méretben. Ha a BombVault még fut, előbb nézd meg az **Anomáliák** oldalát: megnevezi az utolsó jó mentést. A visszaállításhoz nincs szükség a BombVault anomáliaadataira, és a megőrzés szüneteltetése mindig csak több pillanatképet tart meg.
+
+### A csomag lezárása
+
+Ha bekapcsoltad az age-titkosítást az egyszerű exportokhoz (Beállítások), a helyreállítási csomag is le lesz vele zárva, és `bombvault-recovery-kit.md.age` néven töltődik le. ASCII armor formátumú, nem bináris, így továbbra is egyszerű szöveg: ugyanúgy beillesztheted egy jelszókezelőbe vagy kinyomtathatod, mint korábban, csak a tartalma olvashatatlan a kulcsod nélkül.
+
+!!! warning "Ne a csomagban tárold az age-kulcsot"
+    Egy lezárt csomag megnyitásához szükséged van az age **privát** kulcsodra. Olyan helyen tartsd, amely nem magától a csomagtól függ, különben egy helyett két dolgot kell helyreállítanod. A lezárás akkor éri meg, ha a csomagot olyan helyen tárolod, amely felett nincs teljes rendelkezésed (megosztott jelszókezelő, felhős jegyzetek, nyomtatott példány egy irodában); a saját széfedben lévő csomagot már a széf védi.
+
+    Ha a titkosítás be van kapcsolva, de nincs használható címzett beállítva, a letöltést eleve elutasítja. A BombVault soha nem adja ki helyette nyílt szövegként a mesterkulcsot.
 
 ### Ha a csomag épp nincs kéznél
 

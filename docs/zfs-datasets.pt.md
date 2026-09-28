@@ -15,7 +15,7 @@ Ative o domínio em **Definições, Geral** (Conjuntos de dados ZFS). A página 
 
 ## Elementos e conjuntos de dados filhos {#items-and-children}
 
-Abra **Adicionar conjuntos de dados** na página ZFS. A lista vem do servidor. Escolha o conjunto de dados que está mais acima naquilo que quer guardar, por exemplo `cache/appdata`, e o elemento abrange-o a ele e a todos os conjuntos de dados abaixo dele.
+Abra **Adicionar conjuntos de dados** na página ZFS. A lista vem do servidor. Escolha o conjunto de dados que está mais acima naquilo que quer guardar, por exemplo `cache/appdata`, e o elemento abrange-o a ele e a todos os conjuntos de dados abaixo dele. Os seus backups ficam onde a linha ZFS do cartão Domínios em **Definições, Armazenamento** os guarda, e são copiados para os lugares marcados aí em **Copiado para**; em vez disso, um elemento pode indicar um repositório próprio na caixa de diálogo.
 
 - **Os novos conjuntos de dados filhos entram sozinhos.** Um conjunto de dados criado mais tarde abaixo do elemento é guardado na execução seguinte, que o indica como novo. O primeiro backup lê-o por inteiro uma vez; depois só são lidas as alterações.
 - **Pode deixar de fora filhos individuais.** Desative um filho nas definições do elemento e ele fica de fora juntamente com tudo o que está abaixo. Um filho excluído que já não existe no servidor é assinalado como tal e pode ser retirado da lista.

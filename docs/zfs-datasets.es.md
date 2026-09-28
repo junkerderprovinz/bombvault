@@ -15,7 +15,7 @@ Activa el dominio en **Ajustes, General** (Conjuntos de datos ZFS). La página Z
 
 ## Elementos y conjuntos de datos hijos {#items-and-children}
 
-Abre **Añadir conjuntos de datos** en la página ZFS. La lista viene del servidor. Elige el conjunto de datos que está más arriba de lo que quieres copiar, por ejemplo `cache/appdata`, y el elemento lo cubre a él y a todos los conjuntos de datos que tiene debajo.
+Abre **Añadir conjuntos de datos** en la página ZFS. La lista viene del servidor. Elige el conjunto de datos que está más arriba de lo que quieres copiar, por ejemplo `cache/appdata`, y el elemento lo cubre a él y a todos los conjuntos de datos que tiene debajo. Sus copias van donde las guarda la fila ZFS de la tarjeta Dominios en **Ajustes, Almacenamiento**, y se copian a los lugares marcados ahí en **Copiado a**; en su lugar, un elemento puede indicar un repositorio propio en el diálogo.
 
 - **Los conjuntos de datos hijos nuevos se añaden solos.** Un conjunto de datos creado más tarde bajo el elemento se copia en la siguiente ejecución, que lo señala como nuevo. Su primera copia lo lee entero una vez; después solo se leen los cambios.
 - **Puedes dejar fuera hijos sueltos.** Desactiva un hijo en los ajustes del elemento y queda fuera junto con todo lo que tiene debajo. Un hijo excluido que ya no existe en el servidor se marca como tal y se puede quitar de la lista.

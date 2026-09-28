@@ -1,6 +1,6 @@
 # Opslagplekken
 
-Een opslagplek is een plek waar BombVault back-ups bewaart: een map op deze Unraid, een share op een NAS, een bucket bij een cloudprovider, een rest-server, een SFTP-account of een Nextcloud. Je verbindt elke plek één keer, op **Instellingen, Opslag**, en de inloggegevens, retentie, bescherming en locatie horen bij die plek. De vijf domeinen (containers, VM's, de flash, BombVaults eigen configuratie en bestandssets) kiezen daarna uit de plekken: waar elk domein wordt opgeslagen en waarheen het wordt gekopieerd.
+Een opslagplek is een plek waar BombVault back-ups bewaart: een map op deze Unraid, een share op een NAS, een bucket bij een cloudprovider, een rest-server, een SFTP-account of een Nextcloud. Je verbindt elke plek één keer, op **Instellingen, Opslag**, en de inloggegevens, retentie, bescherming en locatie horen bij die plek. De domeinen (containers, VM's, de flash, BombVaults eigen configuratie, bestandssets en ZFS-datasets) kiezen daarna uit de plekken: waar elk domein wordt opgeslagen en waarheen het wordt gekopieerd. De ZFS-datasets hebben hun rij op de kaart Domeinen zolang het ZFS-domein is ingeschakeld.
 
 ## Een plek toevoegen {#add-a-place}
 
@@ -15,7 +15,7 @@ Een nieuwe plek wordt nog door geen enkel domein gebruikt. Kies de plek onder **
 
 ## Mappen {#folders}
 
-Een plek heeft één map per domein: `container`, `vms`, `flash`, `config` en `files`, dezelfde namen als de standaardlocaties voor back-ups. De mappen staan in de details van de plek en kunnen daar worden hernoemd (zie [Een adres wijzigen](#addresses)). Een domein zonder map op een plek kan die plek niet kiezen.
+Een plek heeft één map per domein: `container`, `vms`, `flash`, `config`, `files` en `zfs`, dezelfde namen als de standaardlocaties voor back-ups. De mappen staan in de details van de plek en kunnen daar worden hernoemd (zie [Een adres wijzigen](#addresses)). Een domein zonder map op een plek kan die plek niet kiezen.
 
 Gebruikt een domein een plek in beide rollen, dan krijgt de tweede rol een achtervoegsel en houdt de eerste zijn map. Een plek die al de kopieën van een domein ontvangt, bewaart de items die er rechtstreeks naartoe worden gestuurd in `<folder>-direct`; een plek waar een domein al is opgeslagen, ontvangt de kopieën ervan in `<folder>-copies`.
 

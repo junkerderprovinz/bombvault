@@ -59,6 +59,14 @@ Uzak bir konumda depolanan bir etki alanı da, yerel bir etki alanı gibi, kopya
 !!! note "Kimlik bilgileri konuma aittir"
     Uzak bir konum kendi kimlik bilgilerini tutar. Ortak bulut kimlik bilgileriyle kurulmuş bir konum, erişimi konumun ayrıntılarında değiştirilene kadar onları kullanmaya devam eder.
 
+### Ana makinede bağlama olmadan SMB ve WebDAV {#smb-webdav}
+
+**Konum ekle** penceresinin rclone formunda bir Windows veya Samba paylaşımı ve bir WebDAV sunucusu (Nextcloud, ownCloud, SharePoint ya da başka herhangi biri) için bir form bulunur. Kısa bir ad, ana makineyi ve paylaşımı (SMB) ya da URL'yi ve sunucu türünü (WebDAV), kullanıcıyı ve parolayı girin; BombVault rclone bölümünü sizin için yazar. rclone parolayı kaydedilmeden önce kendisi gizler; zaten var olan bir adla hedef eklemek, ikinci bir bölüm eklemek yerine o bölümü değiştirir.
+
+Yeni uzak tanım ardından formun uzak tanımlar listesinde görünür ve onu orada konum için seçersiniz. Paylaşım adın bir parçası değil, yolun ilk bölümüdür.
+
+Bu, paylaşımı Unraid'e bağlamaktan daha iyi bir yoldur: restic bir depoyu bağlanmış bir CIFS paylaşımında tutmayı önermez ve burada hiçbir şey bağlanmaz. NFS formda yoktur, çünkü ne restic'in ne de rclone'un bir NFS arka ucu vardır; NFS için dışa aktarımı ana makineye bağlayın ve **Başka bir paylaşım** ile konum olarak ekleyin.
+
 ## Değiştirilemez (yalnızca ekleme) site dışı
 
 Fidye yazılımı ya da ele geçirilmiş bir host yedeklerinizi silemesin veya yeniden yazamasın diye bir site dışı depoyu yalnızca ekleme olarak işaretleyin. Karşı taraf (`--append-only` modunda çalışan bir `restic/rest-server`) bunu **uygular**. BombVault yalnızca bunu **doğrular** ve asla yalnızca bir yapılandırma iddiası üzerine yeşil göstermez.
@@ -174,6 +182,15 @@ Tek tık, **ana anahtarı**, **türetilen restic parolasını** ve **tam depo ko
 
 !!! warning "En yeni anlık görüntü her zaman geri yüklenecek olan değildir"
     restic 0.17'den beri `restic snapshots` her anlık görüntünün boyutunu gösterir. Veri kaybından sonra en yeni anlık görüntü boşaltılmış olan olabilir, bu yüzden öncekilerden çok daha küçük bir anlık görüntüyü geri yüklemeyin. Fidye yazılımından sonra olağan boyutta şifrelenmiş olan olabilir. BombVault hâlâ çalışıyorsa önce **Anormallikler** sayfasına bakın: son iyi yedeği gösterir. Geri yükleme için BombVault'un anomali verilerine gerek yoktur ve saklama duraklatması yalnızca daha fazla anlık görüntü tutar.
+
+### Kitin mühürlenmesi
+
+Düz dışa aktarmalar için age şifrelemesini açtıysanız (Ayarlar), kurtarma kiti de onunla mühürlenir ve `bombvault-recovery-kit.md.age` olarak iner. İkili değil ASCII armor biçimindedir, bu yüzden hâlâ düz metindir: bir parola yöneticisine yapıştırmak ya da yazdırmak tam önceki gibi çalışır, yalnızca içerik anahtarınız olmadan okunamaz.
+
+!!! warning "age anahtarını kitin içinde saklamayın"
+    Mühürlü bir kiti açmak için age **özel** anahtarınız gerekir. Onu kitin kendisine bağlı olmayan bir yerde tutun, yoksa kurtarmanız gereken bir yerine iki şey olur. Mühürleme, kit tam olarak denetleyemediğiniz bir yerde saklandığında işe yarar (paylaşılan bir parola yöneticisi, buluttaki notlar, bir ofisteki çıktı); kendi kasanızdaki bir kiti zaten kasa korur.
+
+    Şifreleme açıkken kullanılabilir bir alıcı ayarlanmamışsa indirme doğrudan reddedilir. BombVault asla bunun yerine ana anahtarı düz metin olarak vermeye başvurmaz.
 
 ### Kurtarma seti elinizin altında değilse
 

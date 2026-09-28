@@ -59,6 +59,14 @@ En domän som sparas på en fjärransluten lagringsplats är källan till sina k
 !!! note "Inloggningsuppgifterna hör till lagringsplatsen"
     En fjärransluten lagringsplats har sina egna inloggningsuppgifter. En lagringsplats som sattes upp med de gemensamma molnuppgifterna fortsätter att använda dem tills dess åtkomst ändras i dess detaljer.
 
+### SMB och WebDAV utan montering på värden {#smb-webdav}
+
+rclone-formuläret i fönstret **Lägg till lagringsplats** har ett formulär för en Windows- eller Samba-utdelning och för en WebDAV-server (Nextcloud, ownCloud, SharePoint eller någon annan). Fyll i ett kort namn, värden och utdelningen (SMB) eller URL:en och servertypen (WebDAV), användaren och lösenordet, så skriver BombVault rclone-avsnittet åt dig. rclone döljer själv lösenordet innan det sparas; lägger du till ett mål med ett namn som redan finns ersätts det avsnittet i stället för att ett andra läggs till.
+
+Den nya fjärren visas sedan i formulärets lista över fjärrar, där du väljer den för lagringsplatsen. Utdelningen är det första segmentet i sökvägen, inte en del av namnet.
+
+Det här är en bättre väg än att montera utdelningen på Unraid: restic avråder från att ha ett repository på en monterad CIFS-utdelning, och här monteras ingenting. NFS finns inte i formuläret eftersom varken restic eller rclone har en NFS-backend; för NFS monterar du exporten på värden och lägger till den som lagringsplats med **Annan utdelning**.
+
 ## Oföränderligt (append-only) off-site
 
 Flagga ett off-site-repo append-only så att ransomware, eller en komprometterad värd, inte kan radera eller skriva om dina säkerhetskopior. Den bortre sidan (en `restic/rest-server` som körs i `--append-only`-läge) **upprätthåller** det. BombVault **verifierar** det bara och visar aldrig grönt enbart på ett konfigurationspåstående.
@@ -174,6 +182,15 @@ Ett klick laddar ner **huvudnyckeln**, det **härledda restic-lösenordet** och 
 
 !!! warning "Den senaste snapshoten är inte alltid den som ska återställas"
     Sedan restic 0.17 visar `restic snapshots` storleken på varje snapshot. Efter dataförlust kan den senaste snapshoten vara den tömda, så återställ inte en snapshot som är mycket mindre än de före den. Efter ransomware kan det vara den krypterade, i vanlig storlek. Om BombVault fortfarande körs, titta först på sidan **Avvikelser**: den anger den senaste bra säkerhetskopian. En återställning behöver inga avvikelsedata från BombVault, och gallringspausen behåller bara fler snapshots.
+
+### Försegla kitet
+
+Om du har slagit på age-kryptering för de vanliga exporterna (Inställningar) förseglas även återställningskitet med den och laddas ned som `bombvault-recovery-kit.md.age`. Det är ASCII-armerat i stället för binärt, så det är fortfarande ren text: att klistra in det i en lösenordshanterare eller skriva ut det fungerar precis som förut, innehållet går bara inte att läsa utan din nyckel.
+
+!!! warning "Förvara inte age-nyckeln i kitet"
+    Du behöver din **privata** age-nyckel för att öppna ett förseglat kit. Förvara den någonstans som inte beror på själva kitet, annars har du två saker att återställa i stället för en. Försegling lönar sig när kitet förvaras någonstans du inte har full kontroll över (en delad lösenordshanterare, anteckningar i molnet, en utskrift på ett kontor); ett kit i ditt eget kassaskåp skyddas redan av kassaskåpet.
+
+    Med kryptering påslagen och ingen användbar mottagare inställd nekas nedladdningen direkt. BombVault faller aldrig tillbaka på att lämna ut huvudnyckeln i klartext.
 
 ### När paketet inte finns till hands
 

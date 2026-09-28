@@ -59,6 +59,14 @@ Et domæne gemt på et fjernt sted er kilden til sine kopier ligesom et lokalt; 
 !!! note "Legitimationsoplysninger hører til stedet"
     Et fjernt sted har sine egne legitimationsoplysninger. Et sted, der er sat op med de fælles cloud-legitimationsoplysninger, bliver ved med at bruge dem, indtil dets adgang ændres i dets detaljer.
 
+### SMB og WebDAV uden mount på værten {#smb-webdav}
+
+rclone-formularen i vinduet **Tilføj sted** har en formular til en Windows- eller Samba-deling og til en WebDAV-server (Nextcloud, ownCloud, SharePoint eller en anden). Udfyld et kort navn, værten og delingen (SMB) eller URL'en og servertypen (WebDAV), brugeren og adgangskoden, så skriver BombVault rclone-sektionen for dig. rclone tilslører selv adgangskoden, før den gemmes; tilføjer du en destination med et navn, der allerede findes, erstattes den sektion i stedet for at der kommer en ekstra.
+
+Den nye remote står derefter i formularens liste over remotes, hvor du vælger den til stedet. Delingen er det første led i stien, ikke en del af navnet.
+
+Det er en bedre vej end at mounte delingen på Unraid: restic fraråder at have et arkiv på en mountet CIFS-deling, og her mountes intet. NFS er ikke i formularen, fordi hverken restic eller rclone har en NFS-backend; til NFS mounter du exporten på værten og tilføjer den som sted med **Anden deling**.
+
 ## Uforanderlig (append-only) off-site
 
 Flag et off-site-repo append-only, så ransomware eller en kompromitteret vært ikke kan slette eller omskrive dine sikkerhedskopier. Den anden side (en `restic/rest-server`, der kører i `--append-only`-tilstand) **håndhæver** det. BombVault **verificerer** det kun altid og viser aldrig grønt alene på en konfigurationspåstand.
@@ -174,6 +182,15 @@ Dette er den brik, der gør katastrofegendannelse mulig, selv når der ikke er n
 
 !!! warning "Det nyeste snapshot er ikke altid det, der skal gendannes"
     Siden restic 0.17 viser `restic snapshots` størrelsen på hvert snapshot. Efter datatab kan det nyeste snapshot være det tømte, så gendan ikke et snapshot, der er langt mindre end dem før det. Efter ransomware kan det være det krypterede i den sædvanlige størrelse. Hvis BombVault stadig kører, så se først på siden **Afvigelser**: den nævner den seneste gode sikkerhedskopi. En gendannelse kræver ingen anomalidata fra BombVault, og opbevaringspausen beholder kun flere snapshots.
+
+### Forsegling af kittet
+
+Hvis du har slået age-kryptering til for de almindelige eksporter (Indstillinger), forsegles kittet også med den og hentes som `bombvault-recovery-kit.md.age`. Det er ASCII-armeret i stedet for binært, så det er stadig ren tekst: at indsætte det i en adgangskodeadministrator eller printe det virker præcis som før, indholdet kan bare ikke læses uden din nøgle.
+
+!!! warning "Opbevar ikke age-nøglen i kittet"
+    Du skal bruge din **private** age-nøgle for at åbne et forseglet kit. Opbevar den et sted, der ikke afhænger af selve kittet, ellers har du to ting at gendanne i stedet for én. Forsegling er umagen værd, når kittet ligger et sted, du ikke har fuld kontrol over (en delt adgangskodeadministrator, noter i skyen, en udskrift på et kontor); et kit i dit eget pengeskab er allerede beskyttet af pengeskabet.
+
+    Med kryptering slået til og ingen brugbar modtager sat op afvises hentningen helt. BombVault falder aldrig tilbage til at udlevere hovednøglen i klartekst.
 
 ### Når sættet ikke er ved hånden
 

@@ -15,7 +15,7 @@ Slå på domenet under **Innstillinger, Generelt** (ZFS-datasett). ZFS-siden vis
 
 ## Elementer og underdatasett {#items-and-children}
 
-Åpne **Legg til datasett** på ZFS-siden. Listen kommer fra serveren. Velg datasettet som ligger øverst i det du vil sikkerhetskopiere, for eksempel `cache/appdata`, og elementet dekker det og alle datasett under det.
+Åpne **Legg til datasett** på ZFS-siden. Listen kommer fra serveren. Velg datasettet som ligger øverst i det du vil sikkerhetskopiere, for eksempel `cache/appdata`, og elementet dekker det og alle datasett under det. Sikkerhetskopiene havner der ZFS-raden på Domener-kortet under **Innstillinger, Lagring** lagrer dem, og kopieres til lagringsstedene som er huket av der under **Kopiert til**; et element kan i stedet oppgi et eget depot i dialogen.
 
 - **Nye underdatasett blir med av seg selv.** Et datasett som opprettes senere under elementet, sikkerhetskopieres ved neste kjøring, og den kjøringen nevner det som nytt. Den første sikkerhetskopien leser det helt én gang; deretter leses bare endringer.
 - **Du kan utelate enkelte underdatasett.** Slå et av i elementets innstillinger, så blir det utelatt sammen med alt under det. Et utelatt underdatasett som ikke lenger finnes på serveren, merkes slik og kan fjernes fra listen.
