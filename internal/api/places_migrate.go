@@ -715,3 +715,63 @@ func (s *Service) placesMigrationInput(settings store.Settings) (placesMigration
 	in.idle = map[string]bool{zfsDomain: !zfsUsed}
 	return in, nil
 }
+
+// PlaceSwitchedOnZFS gives a ZFS domain switched on after the move onto places
+// the home the move skipped while it was off: the place whose base holds the
+// path takes its last element as the zfs folder, or the path gets a place of
+// its own.
+func (s *Service) PlaceSwitchedOnZFS() error {
+	s.placeEditMu.Lock()
+	defer s.placeEditMu.Unlock()
+	return s.placeSwitchedOnZFSLocked()
+}
+
+// placeSwitchedOnZFSLocked is PlaceSwitchedOnZFS for a caller that holds
+// placeEditMu, as an import does.
+func (s *Service) placeSwitchedOnZFSLocked() error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	if settings.PlacesMigrated == 0 || !settings.ZFSEnabled {
+		return nil
+	}
+	sp, ok := splitPlaceAddress(settings.ZFSPath)
+	if !ok || sp.folder == "" {
+		return nil
+	}
+	homes, err := s.store.DomainPlaces()
+	if err != nil || homes[zfsDomain] != "" {
+		return err
+	}
+	in, err := s.placesMigrationInput(settings)
+	if err != nil {
+		return err
+	}
+	primary := in.primaries[zfsDomain]
+	p := &placesPlanner{in: in, names: map[string]bool{}}
+	for _, e := range in.existing {
+		if e.Kind != string(sp.kind) || e.Base != sp.base || (sp.kind != places.KindLocal && e.CredsRef != primary.CredsRef) {
+			continue
+		}
+		folder, has := e.Folders[zfsDomain]
+		if has && folder != sp.folder || !has && p.claimedElsewhere(settings.ZFSPath, nil) {
+			continue
+		}
+		e.Folders[zfsDomain] = sp.folder
+		_, err := s.writePlace(store.PlaceWrite{Place: e, HomeDomains: map[string]string{zfsDomain: e.ID}}, nil)
+		return err
+	}
+	in.targets, in.named = nil, nil
+	in.idle = map[string]bool{}
+	for _, d := range places.Domains {
+		in.idle[d] = d != zfsDomain
+	}
+	for _, m := range planPlaces(in).places {
+		if slices.Contains(m.HomeDomains, zfsDomain) {
+			_, err := s.writePlace(store.PlaceWrite{Place: m.Place, HomeDomains: map[string]string{zfsDomain: ""}}, nil)
+			return err
+		}
+	}
+	return nil
+}

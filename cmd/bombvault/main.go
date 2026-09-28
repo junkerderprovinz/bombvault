@@ -335,6 +335,9 @@ func run() error {
 	if err := svc.MigrateToPlaces(); err != nil {
 		log.Printf("places: could not move the storage settings onto places, keeping them as they are until the next start: %v", err)
 	}
+	if err := svc.PlaceSwitchedOnZFS(); err != nil {
+		log.Printf("places: could not give the ZFS path a place, it stays under Without a place: %v", err)
+	}
 
 	// Per-domain scheduler; the containers job calls the service's Backup, the
 	// VMs job calls BackupVM (wired via SetVMJob below). Each scheduled item runs

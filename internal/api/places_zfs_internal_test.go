@@ -117,3 +117,109 @@ func TestAnUnusedZFSPathGetsNoPlace(t *testing.T) {
 		t.Fatal("the ZFS path, switched on, is not offered to go on a place")
 	}
 }
+
+// switchZFSOn saves the settings form with ZFS on, the way the General tab
+// does.
+func (f *placementFixture) switchZFSOn() {
+	f.t.Helper()
+	form, _ := f.do(http.MethodGet, "/api/settings", nil)["settings"].(map[string]any)
+	form["zfsEnabled"] = true
+	if res := f.do(http.MethodPut, "/api/settings", form); res["ok"] != true {
+		f.t.Fatalf("PUT /api/settings = %v", res)
+	}
+}
+
+func (f *placementFixture) zfsHome() (store.Place, map[string]string) {
+	f.t.Helper()
+	homes, err := f.st.DomainPlaces()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	if homes["zfs"] == "" {
+		f.t.Fatalf("the ZFS domain has no home place (homes %v)", homes)
+	}
+	home, err := f.st.GetPlace(homes["zfs"])
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	return home, homes
+}
+
+func TestZFSOnAtTheMoveSharesThePlaceOfItsNeighbours(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.settings(func(s *store.Settings) { s.ZFSEnabled, s.ZFSPath = true, "backups/zfs" })
+	if err := f.svc.MigrateToPlaces(); err != nil {
+		t.Fatalf("MigrateToPlaces: %v", err)
+	}
+	home, homes := f.zfsHome()
+	if home.ID != homes["containers"] || home.Folders["zfs"] != "zfs" {
+		t.Fatalf("ZFS home %s with folders %v, want the containers' place %s with the folder zfs", home.Name, home.Folders, homes["containers"])
+	}
+}
+
+func TestZFSSwitchedOnAfterTheMoveGetsTheHomeTheMoveWouldHaveGiven(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.settings(func(s *store.Settings) { s.ZFSPath = "backups/zfs" })
+	if err := f.svc.MigrateToPlaces(); err != nil {
+		t.Fatalf("MigrateToPlaces: %v", err)
+	}
+	f.switchZFSOn()
+
+	home, homes := f.zfsHome()
+	if home.ID != homes["containers"] || home.Folders["zfs"] != "zfs" {
+		t.Fatalf("ZFS home %s with folders %v, want the containers' place %s with the folder zfs", home.Name, home.Folders, homes["containers"])
+	}
+	if got := settingsOf(t, f.svc).ZFSPath; got != "backups/zfs" {
+		t.Fatalf("ZFS path = %q, want it as it was", got)
+	}
+	res := f.do(http.MethodGet, "/api/storage/domains", nil)
+	rows, _ := res["domains"].([]any)
+	i := slices.IndexFunc(rows, func(r any) bool { return r.(map[string]any)["domain"] == "zfs" })
+	if i < 0 || rows[i].(map[string]any)["homePlace"] != home.ID {
+		t.Fatalf("domain rows = %v, want the ZFS row stored in %s", rows, home.ID)
+	}
+}
+
+func TestZFSSwitchedOnUnderNoPlaceGetsAPlaceOfItsOwn(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.settings(func(s *store.Settings) { s.ZFSPath = "pool/zfs" })
+	if err := f.svc.MigrateToPlaces(); err != nil {
+		t.Fatalf("MigrateToPlaces: %v", err)
+	}
+	f.switchZFSOn()
+
+	home, homes := f.zfsHome()
+	if home.ID == homes["containers"] || home.Base != "pool" || home.Folders["zfs"] != "zfs" || home.Kind != string(places.KindLocal) {
+		t.Fatalf("ZFS home = %+v, want a local place of its own at pool with the folder zfs", home)
+	}
+}
+
+func TestAStartPlacesAZFSDomainThatWasSwitchedOnWithoutAHome(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.settings(func(s *store.Settings) { s.ZFSPath = "backups/zfs" })
+	if err := f.svc.MigrateToPlaces(); err != nil {
+		t.Fatalf("MigrateToPlaces: %v", err)
+	}
+	f.settings(func(s *store.Settings) { s.ZFSEnabled = true })
+	if err := f.svc.PlaceSwitchedOnZFS(); err != nil {
+		t.Fatalf("PlaceSwitchedOnZFS: %v", err)
+	}
+	home, homes := f.zfsHome()
+	if home.ID != homes["containers"] || home.Folders["zfs"] != "zfs" {
+		t.Fatalf("ZFS home %s with folders %v, want the containers' place", home.Name, home.Folders)
+	}
+	before, err := f.st.ListPlaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.PlaceSwitchedOnZFS(); err != nil {
+		t.Fatalf("second PlaceSwitchedOnZFS: %v", err)
+	}
+	after, err := f.st.ListPlaces()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(after) != len(before) {
+		t.Fatalf("a second start went from %d to %d places", len(before), len(after))
+	}
+}

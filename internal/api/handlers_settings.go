@@ -934,6 +934,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		h.svc.anomalies.settingsChanged()
 	}
 	h.svc.syncAllPrimaryOffsiteTargets(s)
+	if err := h.svc.PlaceSwitchedOnZFS(); err != nil {
+		log.Printf("places: could not give the ZFS path a place, it stays under Without a place: %v", err)
+	}
 	// The CPU cap reaches restic through the environment of the next child it
 	// starts, so it applies without a restart; a running backup keeps its value.
 	restic.SetMaxProcs(s.BackupCores)

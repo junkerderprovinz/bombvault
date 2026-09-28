@@ -907,6 +907,9 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 			placesErr = fmt.Errorf("the settings were imported, but the storage places could not be built from them, so this instance runs without places: %w", err)
 		}
 	}
+	if err := h.svc.placeSwitchedOnZFSLocked(); err != nil {
+		log.Printf("places: could not give the ZFS path a place, it stays under Without a place: %v", err)
+	}
 	// A backup the reload finds due waits for its domain.
 	release()
 	if h.scheduler != nil {
