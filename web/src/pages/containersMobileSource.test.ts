@@ -191,3 +191,10 @@ describe("the folder tree's interaction mode follows the pointer axis", () => {
     ).toBe(false);
   });
 });
+
+describe("the phone card counts its paths in the reader's plural", () => {
+  it("hands the count to t so one path reads as one path", () => {
+    expect(containers.includes('t("folders.previewPaths", ticked)')).toBe(true);
+    expect(containers.includes('t("folders.previewPaths").replace')).toBe(false);
+  });
+});

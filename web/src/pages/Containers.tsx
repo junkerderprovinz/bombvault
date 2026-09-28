@@ -1696,7 +1696,7 @@ function MobileContainerCard({
         // folders.previewPaths ("{n} paths") is the sanctioned existing key
         // for this line: the ticked include count is the mount+custom folder
         // count the editor derives.
-        ticked === null ? undefined : t("folders.previewPaths").replace("{n}", String(ticked))
+        ticked === null ? undefined : t("folders.previewPaths", ticked)
       }
       badge={
         container.installed ? (
