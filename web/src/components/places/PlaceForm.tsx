@@ -188,6 +188,8 @@ export function PlaceForm({
   const [probing, setProbing] = useState(false);
   const [name, setName] = useState(() => providerName(t, provider.id));
   const [where, setWhere] = useState<"here" | "away" | null>(null);
+  // The recipe runs the server append-only, so the place starts that way.
+  const [fromRecipe, setFromRecipe] = useState(false);
   const [adding, setAdding] = useState(false);
   const [shake, setShake] = useState({ test: 0, add: 0 });
   const [remotes, setRemotes] = useState<string[]>([]);
@@ -276,6 +278,7 @@ export function PlaceForm({
         name: name.trim(),
         offPremises: asks ? where === "away" : undefined,
         folders: fresh.repoIds?.[""] ? Object.fromEntries(PLACE_DOMAINS.map((d) => [d, ""])) : undefined,
+        immutable: fromRecipe || undefined,
       });
       if (res.ok && res.place) {
         onAdded(res.place);
@@ -372,7 +375,12 @@ export function PlaceForm({
         </div>
 
         {provider.id === "rest-server" && (
-          <RestServerRecipe onLogin={(user, password) => setFields((f) => ({ ...f, user, password }))} />
+          <RestServerRecipe
+            onLogin={(user, password) => {
+              setFields((f) => ({ ...f, user, password }));
+              setFromRecipe(true);
+            }}
+          />
         )}
         {provider.id === "bombvault" && <MeshOffers onAccepted={onAccepted} />}
 

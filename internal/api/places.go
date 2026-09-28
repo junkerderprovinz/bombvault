@@ -498,6 +498,9 @@ type createPlaceBody struct {
 	Name        string            `json:"name"`
 	OffPremises *bool             `json:"offPremises"`
 	Folders     map[string]string `json:"folders"`
+	// Immutable starts the place append-only, for a server set up that way
+	// from the recipe.
+	Immutable bool `json:"immutable"`
 }
 
 // createPlace probes the form once more, since no secret is kept between the
@@ -516,6 +519,9 @@ func (s *Service) createPlace(ctx context.Context, body createPlaceBody) (store.
 		if err := checkFolders(body.Folders); err != nil {
 			return store.Place{}, err
 		}
+	}
+	if body.Immutable && provider.Kind == places.KindLocal {
+		return store.Place{}, errLocalAppendOnly
 	}
 	off, err := offPremisesFor(provider, body.OffPremises)
 	if err != nil {
@@ -553,7 +559,7 @@ func (s *Service) createPlace(ctx context.Context, body createPlaceBody) (store.
 		return store.Place{}, err
 	}
 	p := newPlace(settings, provider, name, base, folders, off)
-	p.ID = id
+	p.ID, p.Immutable = id, body.Immutable
 	if len(credFields[provider.Kind]) == 0 {
 		return s.writePlace(store.PlaceWrite{Place: p}, nil)
 	}

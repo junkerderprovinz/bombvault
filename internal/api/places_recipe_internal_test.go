@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/junkerderprovinz/bombvault/internal/places"
 )
 
 func TestTheRestServerRecipeMakesOneUserForThisBombVault(t *testing.T) {
@@ -38,5 +40,33 @@ func TestARecipeUserIsTheInstanceNameInPlainLetters(t *testing.T) {
 		if got := recipeUser(name); got != want {
 			t.Errorf("recipeUser(%q) = %q, want %q", name, got, want)
 		}
+	}
+}
+
+func TestAPlaceAddedFromTheRecipeStartsAppendOnly(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.probeAnswers(places.ProbeResult{OK: true, Base: "rest:https://backup.example.com/tower"})
+
+	res := f.do(http.MethodPost, "/api/places", map[string]any{
+		"provider": "rest-server", "name": "Rest server", "offPremises": true, "immutable": true,
+		"fields": map[string]string{"url": "https://backup.example.com", "user": "tower", "password": "pw"},
+	})
+
+	all, err := f.st.ListPlaces()
+	if res["ok"] != true || err != nil || len(all) != 1 || !all[0].Immutable {
+		t.Fatalf("POST /api/places = %v; places %+v, %v, want the place append-only", res, all, err)
+	}
+}
+
+func TestAFolderPlaceCannotStartAppendOnly(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.probeAnswers(places.ProbeResult{OK: true, Base: "nas"})
+
+	_, res := f.doStatus(http.MethodPost, "/api/places", map[string]any{
+		"provider": "unraid-folder", "name": "NAS", "immutable": true, "fields": map[string]string{"path": "nas"},
+	})
+
+	if res["ok"] == true || res["code"] != "place-no-append-only" {
+		t.Fatalf("POST /api/places = %v, want the local append-only refusal", res)
 	}
 }

@@ -439,7 +439,7 @@ export function PlaceDetails({
               <Toggle label={t("places.details.appendOnly")} checked={draft.immutable} onChange={(v) => void setAppendOnly(v)} />
               <InfoBubble tip={t("places.details.appendOnlyHint")} />
             </span>
-            {place.kind === "rest" && draft.immutable && place.usage.repositories > 0 && (
+            {place.kind === "rest" && place.usage.repositories > 0 && (
               <Button
                 key={`tamper-${shake.tamper ?? 0}`}
                 label={t("places.details.tamperTest")}

@@ -491,6 +491,35 @@ describe("PlaceForm rest-server", () => {
     await testConnection();
     expect(probes[0]!.fields).toMatchObject({ url: "http://nas:8000", user: "tower", password: "Xy12" });
   });
+
+  it("starts a place set up from the recipe append-only, as the recipe runs the server", async () => {
+    probeAnswer = { ok: true, base: "rest:http://nas:8000/tower" };
+    await form(REST);
+    await act(async () => {
+      fireEvent.click(button("places.recipe.show"));
+    });
+    type(en["places.field.url"], "http://nas:8000");
+    await testConnection();
+    fireEvent.click(screen.getByRole("tab", { name: en["places.form.here"] }));
+    await act(async () => {
+      fireEvent.click(button("places.form.add"));
+    });
+    expect(creates[0]).toMatchObject({ provider: "rest-server", immutable: true });
+  });
+
+  it("leaves append-only to the details for a server it did not set up", async () => {
+    probeAnswer = { ok: true, base: "rest:http://nas:8000/tower" };
+    await form(REST);
+    type(en["places.field.url"], "http://nas:8000");
+    type(en["places.field.user"], "tower");
+    type(en["places.field.password"], "pw");
+    await testConnection();
+    fireEvent.click(screen.getByRole("tab", { name: en["places.form.here"] }));
+    await act(async () => {
+      fireEvent.click(button("places.form.add"));
+    });
+    expect(creates[0]!.immutable).toBeUndefined();
+  });
 });
 
 const BOMBVAULT: CatalogProvider = { ...REST, id: "bombvault" };

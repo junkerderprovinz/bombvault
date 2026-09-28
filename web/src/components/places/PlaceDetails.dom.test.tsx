@@ -347,6 +347,20 @@ describe("PlaceDetails sections", () => {
     expect(screen.queryByText(en["places.details.tamperProtected"])).toBeNull();
   });
 
+  it("offers the tamper test at a rest-server with append-only off, to see whether the server protects", () => {
+    details(
+      place({
+        kind: "rest",
+        provider: "rest-server",
+        immutable: false,
+        usage: { homeDomains: [], defaults: [], copyDomains: ["containers"], items: 0, copies: 2, repositories: 1 },
+        creds: { shared: false, fields: { user: "tower" }, set: ["password"] },
+      }),
+      undefined
+    );
+    expect(screen.getByRole("button", { name: en["places.details.tamperTest"] })).toBeTruthy();
+  });
+
   it("offers the tamper test at a place that is itself one repository", () => {
     details(
       place({
