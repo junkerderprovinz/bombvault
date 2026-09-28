@@ -11,10 +11,13 @@ import (
 )
 
 // Limits of a tree. Files deeper than MaxDepth below the root count into the
-// folder at that depth, so the work stays bounded on a deep tree.
+// folder at that depth, so the work stays bounded on a deep tree. Past
+// MaxFolders folders the files of a new one count into its deepest folder
+// already kept, which bounds the memory on a wide tree.
 const (
 	MaxDepth   = 8
 	MaxNodes   = 2000
+	MaxFolders = 50_000
 	PerFolder  = 20
 	filesKept  = 5
 	MaxChanged = 500_000
@@ -61,16 +64,17 @@ type folder struct {
 
 // Builder takes a snapshot listing entry by entry.
 type Builder struct {
-	root    string
-	changed map[string]struct{}
-	folders map[string]*folder
+	root       string
+	changed    map[string]struct{}
+	folders    map[string]*folder
+	maxFolders int
 }
 
 // NewBuilder adds up the snapshot below root. changed holds the absolute
 // paths of the files the latest backup added or changed; nil when there was
 // no earlier backup to compare with, so every file counts as added.
 func NewBuilder(root string, changed map[string]struct{}) *Builder {
-	return &Builder{root: path.Clean(root), changed: changed, folders: map[string]*folder{"": {}}}
+	return &Builder{root: path.Clean(root), changed: changed, folders: map[string]*folder{"": {}}, maxFolders: MaxFolders}
 }
 
 // CommonRoot is the deepest folder that holds every path.
@@ -120,17 +124,21 @@ func parent(r string) string {
 	return ""
 }
 
-func (b *Builder) folder(r string) *folder {
-	f, ok := b.folders[r]
-	if !ok {
-		f = &folder{}
-		b.folders[r] = f
-		if r != "" {
-			p := b.folder(parent(r))
-			p.subdirs = append(p.subdirs, r)
-		}
+// folder is the folder r, created with its parents while there is room. Once
+// the cap is reached it is the deepest parent of r already kept, and exact is
+// false.
+func (b *Builder) folder(r string) (f *folder, exact bool) {
+	if f, ok := b.folders[r]; ok {
+		return f, true
 	}
-	return f
+	p, exact := b.folder(parent(r))
+	if !exact || len(b.folders) >= b.maxFolders {
+		return p, false
+	}
+	f = &folder{}
+	b.folders[r] = f
+	p.subdirs = append(p.subdirs, r)
+	return f, true
 }
 
 // Add takes one node of the listing. restic lists a folder before what it
@@ -159,11 +167,12 @@ func (b *Builder) Add(p, typ string, size int64) {
 	} else if _, ok := b.changed[path.Clean(p)]; ok {
 		added = size
 	}
-	f := b.folder(capDepth(parent(r), depth-1))
+	f, exact := b.folder(capDepth(parent(r), depth-1))
 	f.size += size
 	f.files++
 	f.added += added
-	if depth-1 <= MaxDepth {
+	// A file counted into a parent is not that parent's own to list.
+	if exact && depth-1 <= MaxDepth {
 		f.keepFile(Entry{Name: path.Base(r), Size: size, Files: 1, Added: added})
 	}
 }
