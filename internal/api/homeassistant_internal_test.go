@@ -140,3 +140,28 @@ func TestTheRunningSensorNamesTheDomainOfAWholeDomainRun(t *testing.T) {
 		t.Fatalf("a whole-domain run reads %q", got)
 	}
 }
+
+// A stored password belongs to the broker and user it was entered for. Sent
+// on to another host, port or user, it would reach whoever runs that one.
+func TestAChangedBrokerDropsTheStoredPassword(t *testing.T) {
+	_, router, repo, _ := newMCPGateHandler(t)
+	const saved = `{"enabled":false,"host":"10.0.0.2","port":1883,"username":"bv","password":"s3cret","tls":false,"prefix":"bombvault","buttons":false}`
+	for _, moved := range []string{
+		`{"enabled":false,"host":"10.0.0.9","port":1883,"username":"bv","password":"","tls":false,"prefix":"bombvault","buttons":false}`,
+		`{"enabled":false,"host":"10.0.0.2","port":1884,"username":"bv","password":"","tls":false,"prefix":"bombvault","buttons":false}`,
+		`{"enabled":false,"host":"10.0.0.2","port":1883,"username":"other","password":"","tls":false,"prefix":"bombvault","buttons":false}`,
+	} {
+		putHomeAssistant(t, router, saved)
+		out := putHomeAssistant(t, router, moved)
+		if out["ok"] != true {
+			t.Fatalf("save refused: %v", out)
+		}
+		stored, err := repo.GetMQTTSettings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(stored.PasswordEnc) != 0 {
+			t.Fatalf("%s kept the password of the broker before", moved)
+		}
+	}
+}

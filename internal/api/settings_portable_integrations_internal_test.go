@@ -169,3 +169,29 @@ func TestImportRefusesHomeAssistantSettingsTheCardRefuses(t *testing.T) {
 		t.Fatalf("the refused file changed the settings: %+v (err=%v)", s, err)
 	}
 }
+
+// A plain file pointing at another broker brings no password along, and the
+// one stored here is not sent to that broker either.
+func TestImportingAnotherBrokerWithoutItsPasswordDropsTheStoredOne(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	seedIntegrations(t, srcStore, appKeyA, false)
+	s, err := srcStore.GetMQTTSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Host = "10.9.9.9"
+	if err := srcStore.SaveMQTTSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	body, _ := doExport(t, src, "")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	seedIntegrations(t, dstStore, appKeyB, false)
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply envelope wrong: %v", env)
+	}
+	if pw := brokerPasswordOf(t, dstStore, appKeyB); pw != "" {
+		t.Fatalf("the password of 127.0.0.1 went along to 10.9.9.9: %q", pw)
+	}
+}

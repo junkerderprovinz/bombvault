@@ -255,7 +255,8 @@ func (h *Handler) handleGetHomeAssistant(w http.ResponseWriter, _ *http.Request)
 }
 
 // handleSetHomeAssistant saves the broker settings and reconnects. A password
-// left empty keeps the stored one; clearing the user name clears both.
+// left empty keeps the stored one for the same broker and user (see
+// sealBrokerPassword).
 func (h *Handler) handleSetHomeAssistant(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Enabled  bool   `json:"enabled"`
@@ -282,9 +283,10 @@ func (h *Handler) handleSetHomeAssistant(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	prev := s
 	s.Enabled, s.Host, s.Port, s.TLS, s.Prefix, s.Buttons = body.Enabled, body.Host, body.Port, body.TLS, body.Prefix, body.Buttons
 	s.Username = strings.TrimSpace(body.Username)
-	if err := h.sealBrokerPassword(&s, body.Password); err != nil {
+	if err := h.sealBrokerPassword(prev, &s, body.Password); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -318,11 +320,15 @@ func mqttSettingsRefusal(enabled bool, host string, port int, prefix string) (st
 	return "", nil
 }
 
-// sealBrokerPassword stores password in s. An empty one keeps the stored
-// password, and an empty user name clears it.
-func (h *Handler) sealBrokerPassword(s *store.MQTTSettings, password string) error {
+// sealBrokerPassword stores password in s, which prev held before the change.
+// An empty one keeps the stored password while host, port and user stay the
+// same, since sent to another broker or as another user it would reach
+// whoever runs that one. An empty user name clears it.
+func (h *Handler) sealBrokerPassword(prev store.MQTTSettings, s *store.MQTTSettings, password string) error {
 	switch {
 	case s.Username == "":
+		s.PasswordEnc = nil
+	case password == "" && (s.Host != prev.Host || s.Port != prev.Port || s.Username != prev.Username):
 		s.PasswordEnc = nil
 	case password != "":
 		sealed, err := secret.Encrypt(h.cfg.AppKey, []byte(password))
