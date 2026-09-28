@@ -66,6 +66,21 @@ test("a card's selector spans the card's content box", async ({ page }, testInfo
   expect(Math.abs(historyWidths.track - historyWidths.box), JSON.stringify(historyWidths)).toBeLessThanOrEqual(1);
 });
 
+test("a page-level tab strip never wraps, even with eight tabs", async ({ page }, testInfo) => {
+  // The phone width case (glyph-only, one row down to 320px) has its own
+  // geometry coverage in narrow-viewport.spec.ts; this checks the desktop
+  // scale of the same `fit` strip.
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: narrow-viewport.spec.ts covers the phone scale");
+  await stage(page);
+
+  await page.goto("/settings");
+  const tabs = page.getByRole("tablist", { name: "Settings" });
+  await expect(tabs).toBeVisible();
+  expect(await tabs.evaluate((el) => getComputedStyle(el).flexWrap)).toBe("nowrap");
+  const tops = await tabs.getByRole("tab").evaluateAll((els) => new Set(els.map((el) => Math.round(el.getBoundingClientRect().top))).size);
+  expect(tops, "all eight tabs share one row").toBe(1);
+});
+
 test("a toolbar's selector hugs its segments", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the list toolbar is the phone's");
   await stage(page);

@@ -119,10 +119,16 @@ afterEach(() => {
 });
 
 describe("module switches", () => {
-  it("are named after the Instances tabs they show", async () => {
+  it("names receiver and pull after the Instances tabs they show", async () => {
     await renderGeneralTab();
-    for (const key of ["receiver.title", "fleet.title", "pull.title"] as const) {
+    for (const key of ["receiver.title", "pull.title"] as const) {
       expect(screen.getByRole("switch", { name: en[key] })).not.toBeNull();
     }
+  });
+
+  it("names the fleet switch after Instances, not the Flotte tab", async () => {
+    await renderGeneralTab();
+    expect(screen.getByRole("switch", { name: en["instances.title"] })).not.toBeNull();
+    expect(screen.queryByRole("switch", { name: en["fleet.title"] })).toBeNull();
   });
 });

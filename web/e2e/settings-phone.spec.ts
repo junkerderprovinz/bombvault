@@ -412,7 +412,7 @@ for (const width of [320, 360]) {
 
       // Soft, so one run reports every check a tab fails rather than the first.
       expect.soft(await gaps(page), "the heading and card gaps").toEqual(["24px", "24px"]);
-      expect.soft((await tabRows(page)).perRow, "the eight tabs sit four over four").toEqual([4, 4]);
+      expect.soft((await tabRows(page)).perRow, "the eight tabs stay on one row").toEqual([8]);
       expect.soft(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
         strip: "rgba(0, 0, 0, 0)",
         tabsWithoutFill: 0,
@@ -484,7 +484,7 @@ test("settings on a phone: each tab shows its glyph alone and keeps its name", a
     const tab = page.getByRole("tab", { name, exact: true });
     await expect(tab).toBeVisible();
     const box = (await tab.boundingBox())!;
-    expect(box.width, `the ${name} tab is narrower than a fingertip`).toBeGreaterThanOrEqual(43.5);
+    expect(box.width, `the ${name} tab is under the 24px tap-target floor`).toBeGreaterThanOrEqual(23.5);
     // The label is there for the accessible name only; shown, it would be a
     // letter and an ellipsis.
     const label = tab.locator("[data-sel-label]");
@@ -577,7 +577,7 @@ test("settings system on a phone: passkeys wrap and the MCP confirmations come u
   expect(box.y + box.height).toBeLessThanOrEqual(800);
 });
 
-test("settings on the desktop keeps the 40px rhythm and separate tabs of one width", async ({ page }, testInfo) => {
+test("settings on the desktop keeps the 40px rhythm and one row of same-width tabs", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await openTab(page, testInfo.project.use.viewport!.width, "general", "Allgemein");
 
@@ -585,10 +585,15 @@ test("settings on the desktop keeps the 40px rhythm and separate tabs of one wid
   const { perRow } = await tabRows(page);
   expect(perRow.reduce((a, b) => a + b, 0)).toBe(TABS.length);
   expect(Math.max(...perRow) - Math.min(...perRow), "the rows are as even as the count allows").toBeLessThanOrEqual(1);
+  // The column stays well under eight German tabs' worth of full labels, so
+  // even the shortest, Allgemein, drops to its glyph along with the rest:
+  // fit squeezes every segment together once the longest one does not fit
+  // its even share.
   for (const [, name] of TABS) {
-    const label = page.getByRole("tab", { name, exact: true }).locator("[data-sel-label]");
-    const fits = await label.evaluate((el) => el.getBoundingClientRect().width > 1 && el.scrollWidth <= el.clientWidth);
-    expect(fits, `the ${name} label is hidden or cut`).toBe(true);
+    const tab = page.getByRole("tab", { name, exact: true });
+    await expect(tab).toBeVisible();
+    const label = tab.locator("[data-sel-label]");
+    expect(await label.evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
   }
   expect(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
     strip: "rgba(0, 0, 0, 0)",

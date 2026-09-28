@@ -11,7 +11,6 @@ import { useT } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { PageTitle } from "../components/PageTitle";
 import { Selector } from "../components/Selector";
-import { useIsDesktop } from "../lib/useMediaQuery";
 import { IconReceiver, IconFleet, IconDownload } from "../components/navGlyphs";
 import { Receiver } from "./Receiver";
 import { Fleet } from "./Fleet";
@@ -49,7 +48,6 @@ function tabFromHash(): InstanceTab {
 
 export function Instances() {
   const { t } = useT();
-  const isDesktop = useIsDesktop();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [tab, setTab] = useState<InstanceTab>(tabFromHash);
   const [tabDir, setTabDir] = useState<1 | -1>(1);
@@ -126,10 +124,9 @@ export function Instances() {
             if (isTab(id)) choose(id);
           }}
           size="lg"
-          equalWidth
-          // Separate tabs, as in Settings.
+          // Separate tabs, as in Settings, on one row even when all four show.
           variant="chip"
-          inline={isDesktop}
+          fit
         />
       )}
 
