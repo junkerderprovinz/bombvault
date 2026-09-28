@@ -1068,6 +1068,12 @@ func TestSubcommandSkipsGlobalFlagValues(t *testing.T) {
 		{"check", CheckArgs("repo", Mode{}), "check"},
 		{"prune", PruneArgs("repo", Mode{}), "prune"},
 		{"copy", CopyArgs("dest", "src", nil, Limits{UploadKBps: 100, DownloadKBps: 50}, Mode{}), "copy"},
+		{"compressed backup", BackupArgs("repo", []string{"/x"}, nil, Mode{Compression: CompressionMax}), "backup"},
+		{"compressed dir backup", BackupDirArgs("repo", nil, Mode{Compression: CompressionOff}), "backup"},
+		{"compressed stdin backup", BackupStdinArgs("repo", "/db.sql", nil, Mode{Compression: CompressionMax}), "backup"},
+		{"compressed forget --prune", ForgetArgs("repo", []string{"abc"}, true, Mode{Compression: CompressionMax}), "forget"},
+		{"compressed prune", PruneArgs("repo", Mode{Compression: CompressionOff}), "prune"},
+		{"compressed copy", CopyArgs("dest", "src", nil, Limits{}, Mode{Compression: CompressionMax}), "copy"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
