@@ -100,13 +100,14 @@ func (f *fakeBroker) get(topic string) (string, bool) {
 }
 
 type message struct {
-	topic   string
-	payload string
+	topic    string
+	payload  string
+	retained bool
 }
 
 func (m message) Duplicate() bool   { return false }
 func (m message) Qos() byte         { return 1 }
-func (m message) Retained() bool    { return false }
+func (m message) Retained() bool    { return m.retained }
 func (m message) Topic() string     { return m.topic }
 func (m message) MessageID() uint16 { return 1 }
 func (m message) Payload() []byte   { return []byte(m.payload) }
@@ -320,4 +321,96 @@ func TestDiscoveryTiesEveryEntityToOneDevice(t *testing.T) {
 	if n := len(topics.AllDiscoveryTopics()); n != 4+len(Domains)*4 {
 		t.Fatalf("%d possible topics, want %d", n, 4+len(Domains)*4)
 	}
+}
+
+func (f *fakeBroker) deliver(filter string, m message) {
+	f.mu.Lock()
+	cb := f.handlers[filter]
+	f.mu.Unlock()
+	cb(f, m)
+}
+
+func expectNoStart(t *testing.T, r *rig, why string) {
+	t.Helper()
+	select {
+	case d := <-r.started:
+		t.Fatalf("%s started %s", why, d)
+	case <-time.After(100 * time.Millisecond):
+	}
+}
+
+func expectStart(t *testing.T, r *rig, domain string) {
+	t.Helper()
+	select {
+	case d := <-r.started:
+		if d != domain {
+			t.Fatalf("started %q, want %q", d, domain)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatalf("the press of %s started nothing", domain)
+	}
+}
+
+// A retained press is replayed by the broker to every new subscriber, so it
+// would start a backup on each reconnect.
+func TestARetainedPressStartsNothing(t *testing.T) {
+	r := newRig(t)
+	if err := r.bridge.Apply(testConfig); err != nil {
+		t.Fatal(err)
+	}
+	topics := testConfig.topics()
+	r.broker.deliver(topics.CommandFilter(), message{topic: topics.Command("containers"), payload: "PRESS", retained: true})
+	expectNoStart(t, r, "a retained press")
+}
+
+func TestAPressWhileOneIsPendingForItsDomainIsIgnored(t *testing.T) {
+	r := newRig(t)
+	release := make(chan struct{})
+	start := r.bridge.src.Start
+	r.bridge.src.Start = func(ctx context.Context, domain string) string {
+		out := start(ctx, domain)
+		<-release
+		return out
+	}
+	if err := r.bridge.Apply(testConfig); err != nil {
+		t.Fatal(err)
+	}
+	topics := testConfig.topics()
+	r.broker.press(topics.CommandFilter(), topics.Command("containers"), "PRESS")
+	expectStart(t, r, "containers")
+	r.broker.press(topics.CommandFilter(), topics.Command("containers"), "PRESS")
+	expectNoStart(t, r, "a second press while the first was pending")
+	r.broker.press(topics.CommandFilter(), topics.Command("flash"), "PRESS")
+	expectStart(t, r, "flash")
+	close(release)
+	time.Sleep(50 * time.Millisecond)
+	r.broker.press(topics.CommandFilter(), topics.Command("containers"), "PRESS")
+	expectStart(t, r, "containers")
+}
+
+func TestPressesAreLimitedPerMinute(t *testing.T) {
+	r := newRig(t)
+	clock := time.Date(2026, 9, 28, 12, 0, 0, 0, time.UTC)
+	var clockMu sync.Mutex
+	r.bridge.now = func() time.Time {
+		clockMu.Lock()
+		defer clockMu.Unlock()
+		return clock
+	}
+	if err := r.bridge.Apply(testConfig); err != nil {
+		t.Fatal(err)
+	}
+	topics := testConfig.topics()
+	for range pressesPerMinute {
+		r.broker.press(topics.CommandFilter(), topics.Command("containers"), "PRESS")
+		expectStart(t, r, "containers")
+		time.Sleep(20 * time.Millisecond)
+	}
+	r.broker.press(topics.CommandFilter(), topics.Command("containers"), "PRESS")
+	expectNoStart(t, r, "a press over the limit")
+	clockMu.Lock()
+	clock = clock.Add(time.Minute + time.Second)
+	clockMu.Unlock()
+	r.broker.press(topics.CommandFilter(), topics.Command("containers"), "PRESS")
+	expectStart(t, r, "containers")
 }

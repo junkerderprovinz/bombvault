@@ -22,9 +22,11 @@ type MQTTSettings struct {
 	NodeID      string
 }
 
-// DefaultMQTTSettings is what a fresh install starts from.
+// DefaultMQTTSettings is what a fresh install starts from. The buttons start
+// off, so switching the link on does not let every client of the broker start
+// backups.
 func DefaultMQTTSettings() MQTTSettings {
-	return MQTTSettings{Port: 1883, Prefix: "bombvault", Buttons: true}
+	return MQTTSettings{Port: 1883, Prefix: "bombvault"}
 }
 
 // GetMQTTSettings returns the stored settings, or the defaults before the
