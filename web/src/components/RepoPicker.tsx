@@ -79,8 +79,8 @@ export function RepoPicker({
     <div className="flex flex-col gap-1">
       <label className="flex items-center gap-1 text-xs text-carbon-textSub">
         {t(labelKey)}
-        <InfoBubble tip={t(hintKey)} />
-        {locked && <InfoBubble tip={t(lockedKey)} />}
+        {/* One (i) per label: a frozen choice adds its reason to the hint. */}
+        <InfoBubble tip={locked ? `${t(hintKey)} ${t(lockedKey)}` : t(hintKey)} />
       </label>
       <SelectField
         value={value}
