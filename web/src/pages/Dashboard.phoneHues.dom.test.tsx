@@ -13,7 +13,7 @@
 // with the desktop media query held at "phone"; jsdom otherwise answers
 // desktop and the phone surface would never mount.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
@@ -118,10 +118,6 @@ function renderPage() {
   );
 }
 
-async function settle() {
-  await new Promise((r) => setTimeout(r, 0));
-}
-
 /** A class-carrying engine position: .glim-hue on the element and a resolved
  *  --item-hue inline (hueVars always sets it). */
 function expectEnginePosition(el: HTMLElement, label: string) {
@@ -132,7 +128,7 @@ function expectEnginePosition(el: HTMLElement, label: string) {
 describe("phone rows carry the colour engine", () => {
   it("puts the failure counter row and the recent-run rows on the engine", async () => {
     renderPage();
-    await settle();
+    await act(async () => {});
 
     const counter = screen.getByRole("button", {
       name: `${en["dashboard.statErrors"]}: 1`,
@@ -150,7 +146,7 @@ describe("phone rows carry the colour engine", () => {
 
   it("puts the run sheet's action rows on the engine", async () => {
     renderPage();
-    await settle();
+    await act(async () => {});
 
     const rows = screen
       .getAllByRole("button", { name: /plex/i })
@@ -165,7 +161,7 @@ describe("phone rows carry the colour engine", () => {
 
   it("puts the phone activity-log card on the engine", async () => {
     renderPage();
-    await settle();
+    await act(async () => {});
 
     const title = screen.getAllByText(en["activityLog.title"])[0];
     let el: HTMLElement | null = title;
