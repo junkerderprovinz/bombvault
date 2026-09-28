@@ -28,6 +28,7 @@ class NoopEventSource {
 let points: ZFSRestorePoint[] = [];
 let ack: ZFSRestoreAck = { ok: true, started: true, target: "/mnt/cache/appdata" };
 const sent: { id: string; req: ZFSRestoreRequest; source?: string }[] = [];
+const checked: { zfs?: ZFSRestoreRequest }[] = [];
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -42,8 +43,9 @@ vi.mock("../../lib/api", async (importOriginal) => {
     listRuns: () => Promise.resolve({ ok: true, runs: [] }),
     listOffsiteTargets: () => Promise.resolve({ ok: true, targets: [] }),
     browse: () => Promise.resolve({ ok: true, dirs: [] }),
-    checkRestore: () =>
-      Promise.resolve({
+    checkRestore: (req: { zfs?: ZFSRestoreRequest }) => {
+      checked.push(req);
+      return Promise.resolve({
         ok: true,
         ready: true,
         checks: [
@@ -53,7 +55,8 @@ vi.mock("../../lib/api", async (importOriginal) => {
           { id: "space", status: "ok", need: 1, free: 2 },
         ],
         plan: null,
-      }),
+      });
+    },
   };
 });
 
@@ -167,6 +170,7 @@ beforeEach(() => {
   ];
   ack = { ok: true, started: true, target: "/mnt/cache/appdata" };
   sent.length = 0;
+  checked.length = 0;
   localStorage.clear();
 });
 
@@ -347,7 +351,9 @@ describe("ZFS restore panel", () => {
     expect((name as HTMLInputElement).value).toBe("cache/appdata-restored");
     fireEvent.change(name, { target: { value: "cache/copy" } });
     expect(screen.queryByRole("switch", { name: en["zfs.restore.safetySnapshot"] })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: en["snapshots.restore"] }));
+    const restore = () => screen.getByRole("button", { name: en["snapshots.restore"] }) as HTMLButtonElement;
+    await waitFor(() => expect(restore().disabled).toBe(false));
+    fireEvent.click(restore());
     fireEvent.click(
       within(await screen.findByRole("dialog")).getByRole("button", { name: en["snapshots.restore"] }),
     );
@@ -355,6 +361,16 @@ describe("ZFS restore panel", () => {
     expect(sent[0].req.newDataset).toBe("cache/copy");
     expect(sent[0].req.targetPath).toBe("");
     expect(sent[0].req.safetySnapshot).toBe(false);
+  });
+
+  it("checks a restore into a new dataset as one", async () => {
+    await openPanel();
+    fireEvent.click(modeTab(en["zfs.restore.newDataset"]));
+    fireEvent.change(screen.getByRole("textbox", { name: en["zfs.restore.newDatasetName"] }), {
+      target: { value: "cache/copy" },
+    });
+    await waitFor(() => expect(checked.at(-1)?.zfs?.newDataset).toBe("cache/copy"));
+    expect(checked.at(-1)?.zfs?.targetPath).toBe("");
   });
 
   it("shows the stored properties and sets them only when asked", async () => {

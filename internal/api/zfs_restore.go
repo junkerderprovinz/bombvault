@@ -462,6 +462,13 @@ func (s *Service) planZFSRestoreNewDataset(ctx context.Context, plan *zfsRestore
 	case zfsErrCode(err) != "not-found":
 		return ZFSRestoreAck{}, zfsRefuse(zfsErrCode(err), name)
 	}
+	if isPlanOnly(ctx) {
+		target := s.zfsNewDatasetPath(ctx, name)
+		plan.dataset = req.Dataset
+		plan.steps = []zfsRestoreStep{{snapshotID: member.SnapshotID, target: target}}
+		plan.snapshotID = member.SnapshotID
+		return ZFSRestoreAck{Target: target}, nil
+	}
 	cctx, cancel := context.WithTimeout(ctx, zfsSnapshotTimeout)
 	err = s.zfs.Create(cctx, name, member.Properties)
 	cancel()
@@ -480,6 +487,21 @@ func (s *Service) planZFSRestoreNewDataset(ctx context.Context, plan *zfsRestore
 	plan.steps = []zfsRestoreStep{{snapshotID: member.SnapshotID, target: cpath}}
 	plan.snapshotID = member.SnapshotID
 	return ZFSRestoreAck{Target: cpath, Created: name}, nil
+}
+
+// zfsNewDatasetPath is where the container will see a dataset that does not
+// exist yet: below its parent's mount, since it inherits the mountpoint, or
+// at the pool's usual place under /mnt when the parent has no mount it can see.
+func (s *Service) zfsNewDatasetPath(ctx context.Context, name string) string {
+	parent, base := path.Split(name)
+	parent = strings.TrimSuffix(parent, "/")
+	if cpath, _, code := s.zfsRestoreMount(ctx, parent, parent); code == "" {
+		return path.Join(cpath, base)
+	}
+	if cpath, ok := s.toContainerPath("/mnt/" + name); ok {
+		return cpath
+	}
+	return s.cfg.HostMountRoot
 }
 
 // zfsAwaitWritableMount waits for a dataset created a moment ago to reach the
