@@ -84,6 +84,11 @@ func newInstance(t *testing.T, name, appKey string) *instance {
 	}); err != nil {
 		t.Fatal(err)
 	}
+	// The default is the project relay, and a test must not dial it; tests
+	// that need a relay start their own.
+	if err := st.SetGroupRelay("off", "", false); err != nil {
+		t.Fatal(err)
+	}
 	cfg := config.Config{AppKey: appKey, DataDir: t.TempDir(), HostMountRoot: "/host/user", HTTPOnly: true}
 	eng := &passwordEngine{}
 	svc := NewService(cfg, st, nil, nil, eng)
