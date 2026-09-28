@@ -2159,19 +2159,16 @@ func isBoilerplateReason(line string) bool {
 		strings.Contains(l, "for further troubleshooting")
 }
 
-// subcommandValueFlags are restic's GLOBAL flags that take a value and are
-// placed before the subcommand word (see repoFlag, retryLockFlags, limitFlags,
-// storageClassFlags): -r <repo>, --retry-lock <duration> (every lock-taking op),
-// --limit-upload/--limit-download <KiB/s> (CopyArgs), and -o <key=value> (the
-// s3.storage-class option). Without skipping their values, subcommand() below
-// would misidentify the flag's VALUE (e.g. "5m", a limit number, or
-// "s3.storage-class=...") as the subcommand name, since it is otherwise just "the
-// first arg not starting with -".
+// subcommandValueFlags are the global flags the builders place before the
+// subcommand that take a value (repoFlag, retryLockFlags, limitFlags,
+// compressionFlags, storageClassFlags). subcommand skips their values, or it
+// would take "5m" or "max" for the subcommand.
 var subcommandValueFlags = map[string]bool{
 	"-r":               true,
 	"--retry-lock":     true,
 	"--limit-upload":   true,
 	"--limit-download": true,
+	"--compression":    true,
 	"-o":               true, // -o s3.storage-class=<class> (storageClassFlags)
 }
 
@@ -2772,7 +2769,7 @@ func (r Restic) ForgetPreview(ctx context.Context, repo string, p RetentionPolic
 func (r Restic) Unlock(ctx context.Context, repo string, removeAll bool, m Mode) error {
 	var orphanErr error
 	if !removeAll {
-		orphanErr = r.removeOrphanLocks(ctx, repo, m, processStart)
+		orphanErr = r.removeOrphanLocks(ctx, repo, m, processStart, time.Now())
 	}
 	if _, err := r.run(ctx, UnlockArgs(repo, removeAll, m), m); err != nil {
 		return err

@@ -58,7 +58,7 @@ BombVault 자체 서명 인증서를 쓴다면 `--cacert bombvault-cert.pem`(MCP
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | 인수가 없거나 틀림 |
 | 401 | `no_token`, `invalid_token` | 토큰이 없거나 활성 토큰이 아님 |
-| 403 | `not_permitted` | 토큰이 읽기 전용이거나 그 실행을 시작한 토큰이 아님 |
+| 403 | `not_permitted`, `forbidden_origin` | 토큰이 읽기 전용이거나 그 실행을 시작한 토큰이 아님, 또는 요청이 다른 출처(origin)의 페이지에서 옴 |
 | 404 | `not_found` | 그런 항목, 실행, 이상 징후가 없음 |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | 다른 작업이 실행 중이거나, 영역이 꺼져 있거나, 할 일이 없음 |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | 제한 때문에 요청이 보류됨. 다시 시도할 시점은 `Retry-After`가 알려 줌 |
@@ -74,7 +74,7 @@ BombVault는 이 경로들의 설명을 `/api/v1/openapi.json`(OpenAPI 3.1)에�
 BombVault는 MQTT 검색을 통해 Home Assistant에 기기로 나타날 수 있습니다. Home Assistant에는 MQTT 연동과 Mosquitto 애드온 같은 브로커가 필요합니다. 별도의 구성 요소는 필요 없습니다.
 
 1. BombVault에서 **설정, 시스템, Home Assistant**를 엽니다.
-2. 브로커의 주소와 포트를 입력하고, 요구하면 사용자 이름과 비밀번호도 입력합니다. 브로커가 TLS를 쓰면(보통 포트 8883) **TLS 사용**을 켭니다. 인증서는 입력한 주소에 유효해야 합니다.
+2. 브로커의 주소와 포트를 입력하고, 요구하면 사용자 이름과 비밀번호도 입력합니다. 브로커가 TLS를 쓰면(보통 포트 8883) **TLS 사용**을 켭니다. 인증서는 입력한 주소에 유효해야 합니다. 주소, 포트, 사용자 이름을 바꾸면 비밀번호를 다시 입력하세요. BombVault는 저장된 비밀번호를 다른 브로커나 다른 사용자에게 넘기지 않습니다.
 3. **Home Assistant에 연결**을 켜고 **저장**을 누릅니다. 연결되면 카드에 표시됩니다.
 
 기기 이름은 BombVault이거나, 괄호 안에 인스턴스 이름이 붙은 BombVault이며, 다음 엔티티가 있습니다.
@@ -90,7 +90,7 @@ BombVault는 MQTT 검색을 통해 Home Assistant에 기기로 나타날 수 있
 | *영역* repository free space | 기본 저장소가 있는 곳의 여유 공간(BombVault가 읽을 수 있는 경우) |
 | Back up *영역* | 영역 전체를 백업하는 버튼 |
 
-엔티티 이름은 영어입니다. Home Assistant는 BombVault가 보낸 이름을 그대로 쓰기 때문입니다. 켜진 영역마다 엔티티가 생기고, 끈 영역은 엔티티를 잃습니다. 버튼에는 [API를 통한 시작](#errors)과 같은 제한이 적용됩니다. 브로커에 게시할 수 있는 사람은 누구나 누를 수 있으므로 브로커에 비밀번호를 설정하거나 **버튼으로 백업 시작**을 끄세요.
+엔티티 이름은 영어입니다. Home Assistant는 BombVault가 보낸 이름을 그대로 쓰기 때문입니다. 켜진 영역마다 엔티티가 생기고, 끈 영역은 엔티티를 잃습니다. 버튼은 **버튼으로 백업 시작**을 켜면 나타납니다. 새로 설치하면 꺼져 있습니다. 버튼에는 [API를 통한 시작](#errors)과 같은 제한이 적용됩니다. 여기에 더해 BombVault는 영역마다 한 번에 한 번의 누름만 받고 1분에 최대 여섯 번까지만 받으며, 브로커가 retained 메시지로 보관한 누름은 무시합니다. 브로커에 게시할 수 있는 사람은 누구나 누를 수 있으므로 브로커에 비밀번호를 설정하세요.
 
 BombVault는 15초마다 상태를 읽고, 바뀐 것이 있으면 `<접두사>/<노드>/state`에 JSON으로 게시합니다. 접두사는 바꾸지 않는 한 `bombvault`이고, 노드는 BombVault가 한 번 고르는 짧은 ID입니다. 검색 메시지는 Home Assistant의 기본 접두사 `homeassistant`로 갑니다. 둘 다 보존(retained)됩니다. BombVault가 예고 없이 멈추면 라스트 윌(last will)이 기기를 사용할 수 없음으로 표시합니다. 연동을 끄면 BombVault가 Home Assistant에서 기기와 엔티티를 제거합니다.
 
@@ -102,6 +102,6 @@ BombVault는 Bonjour와 Avahi의 바탕이 되는 mDNS로 로컬 네트워크에
 
 - **bridge**(Unraid 템플릿의 기본값): 알림이 Docker 네트워크 안에 머물러 LAN에서는 아무도 보지 못합니다. 지금처럼 호스트 주소로 BombVault를 여세요.
 - **br0** 또는 다른 macvlan, ipvlan 네트워크: 컨테이너가 LAN에 자기 주소를 가지므로 알림이 닿습니다.
-- **host**: 알림이 Unraid 자체의 알림과 함께 호스트의 인터페이스로 나갑니다.
+- **host**: 알림이 Unraid 자체의 알림과 함께 호스트의 인터페이스로 나갑니다. Docker와 libvirt의 브리지는 제외됩니다.
 
 IPv4 주소만 알립니다.

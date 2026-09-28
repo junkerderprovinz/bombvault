@@ -91,3 +91,18 @@ describe("HomeAssistantCard", () => {
     await waitFor(() => expect(pushed).toContainEqual({ message: en["ha.removeFailed"], severity: "fail" }));
   });
 });
+
+describe("HomeAssistantCard password", () => {
+  it("stops showing the stored password once the broker changes", async () => {
+    getHomeAssistant.mockResolvedValue({
+      ok: true,
+      settings: settings({ host: "10.0.0.2", username: "bv", passwordSet: true }),
+      cooldownMinutes: 15,
+      itemStartsPerDay: 4,
+    });
+    render(<HomeAssistantCard hueIndex={0} />);
+    expect(await screen.findByPlaceholderText(en["cloud.secretSet"])).toBeTruthy();
+    fireEvent.change(screen.getByPlaceholderText(en["ha.hostPlaceholder"]), { target: { value: "10.0.0.9" } });
+    expect(screen.queryByPlaceholderText(en["cloud.secretSet"])).toBeNull();
+  });
+});

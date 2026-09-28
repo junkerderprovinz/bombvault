@@ -58,7 +58,7 @@ A hiba `{"error": {"code": "...", "message": "..."}}` formában tér vissza, a m
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | Egy argumentum hiányzik vagy hibás |
 | 401 | `no_token`, `invalid_token` | Nincs token, vagy nem aktív |
-| 403 | `not_permitted` | A token csak olvashat, vagy nem ő indította a futást |
+| 403 | `not_permitted`, `forbidden_origin` | A token csak olvashat, vagy nem ő indította a futást, vagy a kérés más eredetű oldalról jött |
 | 404 | `not_found` | Nincs ilyen elem, futás vagy anomália |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Már fut valami, a terület ki van kapcsolva, vagy nincs teendő |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Egy korlát visszatartja a kérést; a `Retry-After` megmondja, mikor próbálkozhatsz újra |
@@ -74,7 +74,7 @@ A BombVault ezeknek az útvonalaknak a leírását a `/api/v1/openapi.json` cím
 A BombVault eszközként jelenhet meg a Home Assistantben, MQTT-felderítéssel. Ehhez a Home Assistantnek kell a saját MQTT-integrációja és egy bróker, például a Mosquitto bővítmény. Saját komponensre nincs szükség.
 
 1. A BombVaultban nyisd meg a **Beállítások, Rendszer, Home Assistant** részt.
-2. Add meg a bróker címét és portját, és ha kéri, a felhasználónevet és a jelszót. Kapcsold be a **TLS használata** kapcsolót, ha a bróker TLS-t használ, általában a 8883-as porton; a tanúsítványának érvényesnek kell lennie a megadott címre.
+2. Add meg a bróker címét és portját, és ha kéri, a felhasználónevet és a jelszót. Kapcsold be a **TLS használata** kapcsolót, ha a bróker TLS-t használ, általában a 8883-as porton; a tanúsítványának érvényesnek kell lennie a megadott címre. Ha módosítod a címet, a portot vagy a felhasználónevet, add meg újra a jelszót: a BombVault a tároltat nem adja tovább másik brókernek vagy felhasználónak.
 3. Kapcsold be a **Csatlakozás a Home Assistanthez** kapcsolót, és kattints a **Mentés** gombra. A kártya mutatja, amikor a kapcsolat felépült.
 
 Az eszköz neve BombVault, vagy BombVault a példány nevével zárójelben, és ezek az entitásai vannak:
@@ -90,7 +90,7 @@ Az eszköz neve BombVault, vagy BombVault a példány nevével zárójelben, és
 | *Terület* repository free space | A szabad hely ott, ahol a fő tárolója van, ha a BombVault ki tudja olvasni |
 | Back up *terület* | Egy gomb, amely az egész területet menti |
 
-Az entitások neve angol, mert a Home Assistant úgy veszi át őket, ahogy a BombVault küldi. Minden bekapcsolt terület saját entitásokat kap, a kikapcsolt elveszíti őket. A gombokra ugyanazok a korlátok vonatkoznak, mint az [API-n keresztüli indításokra](#errors). Bárki megnyomhatja őket, aki közzétehet a brókeren, ezért adj jelszót a brókernek, vagy kapcsold ki az **A gombok mentést indítanak** kapcsolót.
+Az entitások neve angol, mert a Home Assistant úgy veszi át őket, ahogy a BombVault küldi. Minden bekapcsolt terület saját entitásokat kap, a kikapcsolt elveszíti őket. A gombok akkor jelennek meg, ha bekapcsolod az **A gombok mentést indítanak** kapcsolót; új telepítésnél ez ki van kapcsolva. A gombokra ugyanazok a korlátok vonatkoznak, mint az [API-n keresztüli indításokra](#errors). Ezen felül a BombVault területenként egyszerre egy nyomást fogad, percenként legfeljebb hatot, és figyelmen kívül hagyja azt a nyomást, amelyet a bróker retained üzenetként megőrzött. Bárki megnyomhatja őket, aki közzétehet a brókeren, ezért adj jelszót a brókernek.
 
 A BombVault 15 másodpercenként beolvassa az állapotát, és közzéteszi, ha valami változott, JSON-ként a `<előtag>/<csomópont>/state` témában. Az előtag `bombvault`, amíg meg nem változtatod, a csomópont pedig egy rövid azonosító, amelyet a BombVault egyszer választ. A felderítési üzenetek a Home Assistant alapértelmezett `homeassistant` előtagjára mennek. Mindkettő megőrzött (retained). Egy utolsó üzenet (last will) elérhetetlennek jelöli az eszközt, ha a BombVault szó nélkül leáll. Ha kikapcsolod a kapcsolatot, a BombVault eltávolítja az eszközt és az entitásait a Home Assistantből.
 
@@ -102,6 +102,6 @@ Hogy a bejelentés eléri-e a hálózatodat, attól függ, hogyan csatlakozik a 
 
 - **bridge**, az Unraid-sablon alapértéke: a bejelentés a Docker hálózatán belül marad, a helyi hálózaton senki sem látja. Nyisd meg a BombVaultot a gazdagép címén, mint eddig.
 - **br0** vagy más macvlan- vagy ipvlan-hálózat: a konténernek saját címe van a helyi hálózaton, és a bejelentés eléri azt.
-- **host**: a bejelentés a gazdagép csatolóin megy ki, az Unraid saját bejelentése mellett.
+- **host**: a bejelentés a gazdagép csatolóin megy ki, az Unraid saját bejelentése mellett. A Docker és a libvirt hídjai kimaradnak.
 
 Csak IPv4-címek kerülnek bejelentésre.

@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/netip"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -23,10 +24,11 @@ var group = &net.UDPAddr{IP: net.IPv4(224, 0, 0, 251), Port: 5353}
 const probeTries = 10
 
 // iface is one network interface the responder answers on, with the
-// addresses it gives out there.
+// addresses it gives out there and the networks they belong to.
 type iface struct {
 	ifi   net.Interface
 	addrs []netip.Addr
+	nets  []netip.Prefix
 }
 
 // Responder answers multicast DNS queries for one service until Close.
@@ -244,6 +246,9 @@ func (r *Responder) read() {
 
 func (r *Responder) handle(msg []byte, cm *ipv4.ControlMessage, src net.Addr) {
 	ifc, known := r.ifaceOf(cm)
+	if !onLink(src, ifc.nets) {
+		return
+	}
 	z, err := r.zone(ifc.addrs)
 	if err != nil {
 		return
@@ -286,8 +291,46 @@ func (r *Responder) ifaceOf(cm *ipv4.ControlMessage) (iface, bool) {
 	var all iface
 	for _, ifc := range r.ifaces {
 		all.addrs = append(all.addrs, ifc.addrs...)
+		all.nets = append(all.nets, ifc.nets...)
 	}
 	return all, false
+}
+
+// onLink reports whether a query came from the host itself or from inside one
+// of the networks of the interface it came in on. RFC 6762 section 11 has a
+// responder ignore anybody else, so it cannot be asked from beyond the link.
+func onLink(src net.Addr, nets []netip.Prefix) bool {
+	udp, ok := src.(*net.UDPAddr)
+	if !ok {
+		return false
+	}
+	ip, ok := netip.AddrFromSlice(udp.IP)
+	if !ok {
+		return false
+	}
+	ip = ip.Unmap()
+	if ip.IsLoopback() {
+		return true
+	}
+	for _, n := range nets {
+		if n.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
+// announcedOn reports whether an interface leads to the network a browser
+// looks on. Docker's and libvirt's bridges and their veth ends lead only to
+// containers and VMs on this host. Unraid names its LAN bridge br0, which
+// stays.
+func announcedOn(name string) bool {
+	for _, p := range []string{"docker", "br-", "virbr", "veth"} {
+		if strings.HasPrefix(name, p) {
+			return false
+		}
+	}
+	return true
 }
 
 // interfaces lists the interfaces that are up, carry multicast and have an
@@ -299,7 +342,7 @@ func interfaces() ([]iface, error) {
 	}
 	var out []iface
 	for _, ifi := range list {
-		if ifi.Flags&net.FlagUp == 0 || ifi.Flags&net.FlagMulticast == 0 || ifi.Flags&net.FlagLoopback != 0 {
+		if ifi.Flags&net.FlagUp == 0 || ifi.Flags&net.FlagMulticast == 0 || ifi.Flags&net.FlagLoopback != 0 || !announcedOn(ifi.Name) {
 			continue
 		}
 		addrs, err := ifi.Addrs()
@@ -307,6 +350,7 @@ func interfaces() ([]iface, error) {
 			continue
 		}
 		var v4 []netip.Addr
+		var nets []netip.Prefix
 		for _, a := range addrs {
 			ipn, ok := a.(*net.IPNet)
 			if !ok {
@@ -319,10 +363,12 @@ func interfaces() ([]iface, error) {
 			ip = ip.Unmap()
 			if ip.Is4() && !ip.IsLinkLocalUnicast() {
 				v4 = append(v4, ip)
+				ones, _ := ipn.Mask.Size()
+				nets = append(nets, netip.PrefixFrom(ip, ones).Masked())
 			}
 		}
 		if len(v4) > 0 {
-			out = append(out, iface{ifi: ifi, addrs: v4})
+			out = append(out, iface{ifi: ifi, addrs: v4, nets: nets})
 		}
 	}
 	if len(out) == 0 {

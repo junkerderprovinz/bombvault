@@ -58,7 +58,7 @@ Błąd wraca jako `{"error": {"code": "...", "message": "..."}}` z odpowiednim s
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | Brakuje argumentu albo jest błędny |
 | 401 | `no_token`, `invalid_token` | Brak tokenu albo token nieaktywny |
-| 403 | `not_permitted` | Token może tylko czytać albo nie uruchomił tego przebiegu |
+| 403 | `not_permitted`, `forbidden_origin` | Token może tylko czytać albo nie uruchomił tego przebiegu, albo żądanie przyszło ze strony o innym pochodzeniu |
 | 404 | `not_found` | Nie ma takiego elementu, przebiegu ani anomalii |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Coś innego już działa, obszar jest wyłączony albo nie ma nic do zrobienia |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Limit wstrzymuje żądanie; `Retry-After` mówi, kiedy spróbować ponownie |
@@ -74,7 +74,7 @@ BombVault udostępnia opis tych tras pod `/api/v1/openapi.json` (OpenAPI 3.1). N
 BombVault może pojawić się w Home Assistant jako urządzenie dzięki wykrywaniu MQTT. Home Assistant potrzebuje do tego swojej integracji MQTT i brokera, na przykład dodatku Mosquitto. Żaden własny komponent nie jest potrzebny.
 
 1. W BombVault otwórz **Ustawienia, System, Home Assistant**.
-2. Wpisz adres i port brokera, a także nazwę użytkownika i hasło, jeśli ich wymaga. Włącz **Użyj TLS**, jeśli broker używa TLS, zwykle na porcie 8883; jego certyfikat musi być ważny dla wpisanego adresu.
+2. Wpisz adres i port brokera, a także nazwę użytkownika i hasło, jeśli ich wymaga. Włącz **Użyj TLS**, jeśli broker używa TLS, zwykle na porcie 8883; jego certyfikat musi być ważny dla wpisanego adresu. Jeśli zmienisz adres, port albo nazwę użytkownika, wpisz hasło ponownie: BombVault nie przekazuje zapisanego hasła innemu brokerowi ani innemu użytkownikowi.
 3. Włącz **Połącz z Home Assistant** i kliknij **Zapisz**. Karta pokazuje, kiedy połączenie działa.
 
 Urządzenie nazywa się BombVault albo BombVault z nazwą instancji w nawiasie i ma takie encje:
@@ -90,7 +90,7 @@ Urządzenie nazywa się BombVault albo BombVault z nazwą instancji w nawiasie i
 | *Obszar* repository free space | Wolne miejsce tam, gdzie leży jego główne repozytorium, jeśli BombVault może je odczytać |
 | Back up *obszar* | Przycisk, który kopiuje cały obszar |
 
-Nazwy encji są po angielsku, bo Home Assistant przejmuje je tak, jak wysyła je BombVault. Każdy włączony obszar dostaje własne encje, a wyłączony je traci. Przyciski podlegają tym samym limitom co [uruchomienia przez API](#errors). Nacisnąć je może każdy, kto może publikować w brokerze, więc zabezpiecz broker hasłem albo wyłącz **Przyciski uruchamiają kopie**.
+Nazwy encji są po angielsku, bo Home Assistant przejmuje je tak, jak wysyła je BombVault. Każdy włączony obszar dostaje własne encje, a wyłączony je traci. Przyciski pojawiają się, gdy włączysz **Przyciski uruchamiają kopie**; w nowej instalacji jest to wyłączone. Podlegają tym samym limitom co [uruchomienia przez API](#errors). Do tego BombVault przyjmuje naraz tylko jedno naciśnięcie na obszar i najwyżej sześć na minutę, a naciśnięcie, które broker zachował jako wiadomość retained, pomija. Nacisnąć je może każdy, kto może publikować w brokerze, więc zabezpiecz broker hasłem.
 
 BombVault odczytuje swój stan co 15 sekund i publikuje go, gdy coś się zmieniło, jako JSON pod `<prefiks>/<węzeł>/state`. Prefiks to `bombvault`, dopóki go nie zmienisz, a węzeł to krótki identyfikator, który BombVault wybiera raz. Komunikaty wykrywania trafiają pod domyślny prefiks Home Assistant, `homeassistant`. Oba są zachowywane (retained). Ostatnia wola (last will) oznacza urządzenie jako niedostępne, jeśli BombVault zatrzyma się bez uprzedzenia. Wyłączenie połączenia usuwa urządzenie i jego encje z Home Assistant.
 
@@ -102,6 +102,6 @@ To, czy ogłoszenie dotrze do twojej sieci, zależy od tego, jak podłączony je
 
 - **bridge**, domyślne ustawienie w szablonie Unraid: ogłoszenie zostaje w sieci Dockera i nikt w sieci lokalnej go nie widzi. Otwieraj BombVault przez adres hosta jak dotąd.
 - **br0** albo inna sieć macvlan lub ipvlan: kontener ma własny adres w sieci lokalnej i ogłoszenie tam dociera.
-- **host**: ogłoszenie wychodzi przez interfejsy hosta, obok ogłoszenia samego Unraida.
+- **host**: ogłoszenie wychodzi przez interfejsy hosta, obok ogłoszenia samego Unraida. Mosty Dockera i libvirt są pomijane.
 
 Ogłaszane są tylko adresy IPv4.

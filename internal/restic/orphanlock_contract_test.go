@@ -10,8 +10,23 @@ import (
 	"time"
 )
 
+// lockFiles counts the finished lock files. restic writes a lock under a
+// temporary name first and renames it, and that name is no lock yet.
+func lockFiles(t *testing.T, dir string) int {
+	t.Helper()
+	entries, _ := os.ReadDir(dir)
+	n := 0
+	for _, e := range entries {
+		if lockIDRe.MatchString(e.Name()) {
+			n++
+		}
+	}
+	return n
+}
+
 // A restic killed while it holds a lock leaves the lock file behind. Once this
-// process counts as started after it, the lock is an earlier run's and goes.
+// process counts as started after it and the lock has gone unrefreshed for
+// longer than restic's refresh interval, the lock is an earlier run's and goes.
 func TestRemoveOrphanLocksClearsTheLockOfAKilledRestic(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("reads /proc")
@@ -37,10 +52,7 @@ func TestRemoveOrphanLocksClearsTheLockOfAKilledRestic(t *testing.T) {
 		t.Fatal(err)
 	}
 	locks := filepath.Join(repo, "locks")
-	for i := 0; ; i++ {
-		if entries, _ := os.ReadDir(locks); len(entries) > 0 {
-			break
-		}
+	for i := 0; lockFiles(t, locks) == 0; i++ {
 		if i > 100 {
 			t.Fatal("restic took no lock")
 		}
@@ -50,16 +62,23 @@ func TestRemoveOrphanLocksClearsTheLockOfAKilledRestic(t *testing.T) {
 	_ = cmd.Wait()
 	_ = stdin.Close()
 
-	if err := r.removeOrphanLocks(ctx, repo, m, time.Now().Add(-time.Hour)); err != nil {
+	later := time.Now().Add(lockRefreshSilence + time.Minute)
+	if err := r.removeOrphanLocks(ctx, repo, m, time.Now().Add(-time.Hour), later); err != nil {
 		t.Fatal(err)
 	}
-	if entries, _ := os.ReadDir(locks); len(entries) != 1 {
-		t.Fatalf("a lock taken after the cut-off must stay, locks dir has %d entries", len(entries))
+	if n := lockFiles(t, locks); n != 1 {
+		t.Fatalf("a lock taken after the cut-off must stay, %d locks left", n)
 	}
-	if err := r.removeOrphanLocks(ctx, repo, m, time.Now()); err != nil {
+	if err := r.removeOrphanLocks(ctx, repo, m, time.Now(), time.Now()); err != nil {
 		t.Fatal(err)
 	}
-	if entries, _ := os.ReadDir(locks); len(entries) != 0 {
-		t.Fatalf("the killed restic's lock is still there: %d entries", len(entries))
+	if n := lockFiles(t, locks); n != 1 {
+		t.Fatalf("a lock refreshed moments ago must stay, %d locks left", n)
+	}
+	if err := r.removeOrphanLocks(ctx, repo, m, time.Now(), later); err != nil {
+		t.Fatal(err)
+	}
+	if n := lockFiles(t, locks); n != 0 {
+		t.Fatalf("the killed restic's lock is still there: %d locks", n)
 	}
 }

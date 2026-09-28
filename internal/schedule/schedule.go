@@ -723,6 +723,9 @@ type Scheduler struct {
 	// idleHold takes a scheduled container that has to wait for its app to be
 	// idle out of the run; see SetIdleHold.
 	idleHold IdleHoldFunc
+	// runBracket marks a multi-item run open until the func it returns is
+	// called; see SetRunBracket.
+	runBracket func(domain string) func()
 
 	// hcRunStart and hcRunFinish send one Healthchecks start and one result ping
 	// per scheduled multi-item run instead of one per item.
@@ -960,6 +963,21 @@ func (s *Scheduler) SetIdleHold(fn IdleHoldFunc) {
 	s.idleHold = fn
 }
 
+// SetRunBracket wires what learns that a scheduled multi-item run of a domain
+// started, from before its first item until after its prune and off-site
+// copy. Between two items the domain lock is free, and fn lets other work
+// that could take it wait for the whole run instead.
+func (s *Scheduler) SetRunBracket(fn func(domain string) func()) {
+	s.runBracket = fn
+}
+
+func (s *Scheduler) openRun(domain string) func() {
+	if s.runBracket == nil {
+		return func() {}
+	}
+	return s.runBracket(domain)
+}
+
 // holdBusy drops the containers whose app is busy from a scheduled run. They
 // run later on their own, so the wait holds neither the domain lock nor the
 // containers behind them.
@@ -1194,6 +1212,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 				if !DomainRunHasWork(targets) {
 					return
 				}
+				defer s.openRun("containers")()
 				s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 					return RunContainersJob(targets, s.backup)
 				})
@@ -1237,6 +1256,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 				if !DomainRunHasVMWork(vms) {
 					return
 				}
+				defer s.openRun("vms")()
 				s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
 					return RunVMsJob(vms, s.backupVM)
 				})
@@ -1297,6 +1317,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 				if !DomainRunHasFileWork(sets) {
 					return
 				}
+				defer s.openRun("files")()
 				s.runAggregatedHC("files", func() (int, int, []ItemFailure) {
 					return RunFilesJob(sets, s.backupFiles)
 				})
@@ -1327,6 +1348,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 				if !DomainRunHasZFSWork(ds) {
 					return
 				}
+				defer s.openRun("zfs")()
 				s.runAggregatedHC("zfs", func() (int, int, []ItemFailure) {
 					return RunZFSJob(ds, s.backupZFS)
 				})
@@ -1760,6 +1782,7 @@ func (s *Scheduler) scheduledContainers(names []string) []store.Target {
 // backUpContainers backs up containers outside a domain run, with their compose
 // project folders, since only a domain run backs those up otherwise.
 func (s *Scheduler) backUpContainers(targets []store.Target) {
+	defer s.openRun("containers")()
 	s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 		return RunContainersJob(targets, s.backup)
 	})
@@ -1795,6 +1818,7 @@ func (s *Scheduler) runVMItem(name string) {
 	if one == nil || !one.IncludeInSchedule {
 		return
 	}
+	defer s.openRun("vms")()
 	s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
 		return RunVMsJob([]store.VMTarget{*one}, s.backupVM)
 	})
@@ -1825,6 +1849,7 @@ func (s *Scheduler) runFileSetItem(id string) {
 	if one == nil || !one.Enabled {
 		return
 	}
+	defer s.openRun("files")()
 	s.runAggregatedHC("files", func() (int, int, []ItemFailure) {
 		return RunFilesJob([]store.FileSet{*one}, s.backupFiles)
 	})
@@ -1854,6 +1879,7 @@ func (s *Scheduler) runZFSItem(id string) {
 	if one == nil || !one.Enabled {
 		return
 	}
+	defer s.openRun("zfs")()
 	s.runAggregatedHC("zfs", func() (int, int, []ItemFailure) {
 		return RunZFSJob([]store.ZFSDataset{*one}, s.backupZFS)
 	})

@@ -283,3 +283,31 @@ func TestAPITokenListLeavesTheMCPKeysOut(t *testing.T) {
 		t.Fatalf("the MCP card lists %v, want only the key", got)
 	}
 }
+
+// A page on another origin can make a browser send a token it holds, so the
+// API refuses an Origin that is not its own, as the MCP endpoint does.
+func TestAPIV1RefusesARequestFromAnotherOrigin(t *testing.T) {
+	h, router, repo, _ := newMCPGateHandler(t)
+	token, _ := seedAPIToken(t, h, repo, "Dashboard", false)
+	for origin, want := range map[string]int{
+		"":                    http.StatusOK,
+		"http://example.com":  http.StatusOK,
+		"http://evil.example": http.StatusForbidden,
+		"null":                http.StatusForbidden,
+	} {
+		r := httptest.NewRequest(http.MethodGet, "/api/v1/health", nil)
+		r.Host = "example.com"
+		r.Header.Set("Authorization", "Bearer "+token)
+		if origin != "" {
+			r.Header.Set("Origin", origin)
+		}
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, r)
+		if w.Code != want {
+			t.Errorf("Origin %q answered %d, want %d: %s", origin, w.Code, want, w.Body)
+		}
+		if want == http.StatusForbidden && !strings.Contains(w.Body.String(), `"forbidden_origin"`) {
+			t.Errorf("Origin %q: body %s, want the code forbidden_origin", origin, w.Body)
+		}
+	}
+}

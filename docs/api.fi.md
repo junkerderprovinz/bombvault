@@ -58,7 +58,7 @@ Virhe palaa muodossa `{"error": {"code": "...", "message": "..."}}` vastaavalla 
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | Argumentti puuttuu tai on väärä |
 | 401 | `no_token`, `invalid_token` | Ei tokenia, tai se ei ole aktiivinen |
-| 403 | `not_permitted` | Token saa vain lukea, tai se ei käynnistänyt ajoa |
+| 403 | `not_permitted`, `forbidden_origin` | Token saa vain lukea, tai se ei käynnistänyt ajoa, tai pyyntö tuli sivulta, jolla on eri alkuperä |
 | 404 | `not_found` | Tällaista kohdetta, ajoa tai poikkeamaa ei ole |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Jotain muuta on käynnissä, alue on pois päältä tai tehtävää ei ole |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Raja pidättää pyynnön; `Retry-After` kertoo, milloin voi yrittää uudelleen |
@@ -74,7 +74,7 @@ BombVault tarjoaa näiden reittien kuvauksen osoitteessa `/api/v1/openapi.json` 
 BombVault voi näkyä Home Assistantissa laitteena MQTT-löydön kautta. Home Assistant tarvitsee MQTT-integraationsa ja välittäjän, esimerkiksi Mosquitto-lisäosan. Omaa komponenttia ei tarvita.
 
 1. Avaa BombVaultissa **Asetukset, Järjestelmä, Home Assistant**.
-2. Anna välittäjän osoite ja portti sekä käyttäjänimi ja salasana, jos se niitä pyytää. Kytke **Käytä TLS:ää** päälle, jos välittäjä käyttää TLS:ää, yleensä portissa 8883; sen varmenteen on oltava voimassa antamallesi osoitteelle.
+2. Anna välittäjän osoite ja portti sekä käyttäjänimi ja salasana, jos se niitä pyytää. Kytke **Käytä TLS:ää** päälle, jos välittäjä käyttää TLS:ää, yleensä portissa 8883; sen varmenteen on oltava voimassa antamallesi osoitteelle. Jos muutat osoitetta, porttia tai käyttäjänimeä, anna salasana uudelleen: BombVault ei anna tallennettua salasanaa toiselle välittäjälle tai käyttäjälle.
 3. Kytke **Yhdistä Home Assistantiin** päälle ja napsauta **Tallenna**. Kortti näyttää, kun yhteys on muodostettu.
 
 Laitteen nimi on BombVault tai BombVault, jonka perässä on instanssin nimi suluissa, ja sillä on nämä entiteetit:
@@ -90,7 +90,7 @@ Laitteen nimi on BombVault tai BombVault, jonka perässä on instanssin nimi sul
 | *Alue* repository free space | Vapaa tila siellä, missä sen ensisijainen repository on, jos BombVault pystyy lukemaan sen |
 | Back up *alue* | Painike, joka varmuuskopioi koko alueen |
 
-Entiteettien nimet ovat englanniksi, koska Home Assistant ottaa ne sellaisina kuin BombVault ne lähettää. Jokainen päällä oleva alue saa omat entiteettinsä, ja pois kytketty alue menettää ne. Painikkeisiin pätevät samat rajat kuin [API:n kautta tehtyihin käynnistyksiin](#errors). Kuka tahansa, joka voi julkaista välittäjään, voi painaa niitä, joten suojaa välittäjä salasanalla tai kytke **Painikkeet käynnistävät varmuuskopioita** pois.
+Entiteettien nimet ovat englanniksi, koska Home Assistant ottaa ne sellaisina kuin BombVault ne lähettää. Jokainen päällä oleva alue saa omat entiteettinsä, ja pois kytketty alue menettää ne. Painikkeet tulevat näkyviin, kun kytket **Painikkeet käynnistävät varmuuskopioita** päälle; uudessa asennuksessa se on pois. Painikkeisiin pätevät samat rajat kuin [API:n kautta tehtyihin käynnistyksiin](#errors). Lisäksi BombVault ottaa kerrallaan vastaan yhden painalluksen aluetta kohden ja enintään kuusi minuutissa, ja se ohittaa painalluksen, jonka välittäjä on säilyttänyt retained-viestinä. Kuka tahansa, joka voi julkaista välittäjään, voi painaa niitä, joten suojaa välittäjä salasanalla.
 
 BombVault lukee tilansa 15 sekunnin välein ja julkaisee sen, kun jokin on muuttunut, JSON-muodossa aiheessa `<etuliite>/<solmu>/state`. Etuliite on `bombvault`, kunnes muutat sen, ja solmu on lyhyt tunniste, jonka BombVault valitsee kerran. Löytöviestit menevät Home Assistantin oletusetuliitteeseen `homeassistant`. Molemmat säilytetään (retained). Viimeinen viesti (last will) merkitsee laitteen saavuttamattomaksi, jos BombVault pysähtyy ilmoittamatta. Kun kytket yhteyden pois, BombVault poistaa laitteen ja sen entiteetit Home Assistantista.
 
@@ -102,6 +102,6 @@ Se, ulottuuko ilmoitus verkkoosi, riippuu siitä, miten kontti on kytketty:
 
 - **bridge**, Unraid-mallin oletus: ilmoitus jää Dockerin verkon sisälle, eikä kukaan lähiverkossa näe sitä. Avaa BombVault isännän osoitteella kuten ennenkin.
 - **br0** tai muu macvlan- tai ipvlan-verkko: kontilla on oma osoite lähiverkossa, ja ilmoitus ulottuu sinne.
-- **host**: ilmoitus lähtee isännän verkkoliitäntöjen kautta Unraidin oman ilmoituksen rinnalla.
+- **host**: ilmoitus lähtee isännän verkkoliitäntöjen kautta Unraidin oman ilmoituksen rinnalla. Dockerin ja libvirtin sillat jätetään pois.
 
 Vain IPv4-osoitteet ilmoitetaan.

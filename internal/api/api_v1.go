@@ -213,15 +213,19 @@ func handleAPIV1OpenAPI(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-// serveAPIV1 is the gate in front of one route: address throttle, token, the
-// token's request budget, then the tool. It mirrors serveMCP, and a token's
-// failures count against the same per-address throttle as a login.
+// serveAPIV1 is the gate in front of one route: origin, address throttle,
+// token, the token's request budget, then the tool. It mirrors serveMCP, and a
+// token's failures count against the same per-address throttle as a login.
 func (h *Handler) serveAPIV1(route apiV1Route) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokens, err := h.store.ActiveAPITokens()
 		if err != nil {
 			log.Printf("api: v1: could not read the tokens: %v", err)
 			writeAPIV1Error(w, http.StatusServiceUnavailable, "unavailable", "the API is unavailable")
+			return
+		}
+		if foreignOrigin(r) {
+			writeAPIV1Error(w, http.StatusForbidden, "forbidden_origin", "cross-origin requests are not accepted")
 			return
 		}
 		addr := h.loginClientKey(r)

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -72,5 +73,64 @@ func TestSettingsExportImportCarriesRetentionCompressionTrafficAndIntegrationsTo
 	}
 	if on, err := dstStore.MDNSEnabled(); err != nil || on {
 		t.Fatalf("network announcement = %v (err=%v), want off", on, err)
+	}
+}
+
+// A file written before the yearly rule and per-destination compression has no
+// keys for them, which says nothing about this instance's own values.
+func TestImportOfFileWithoutYearlyRulesKeepsTheStoredOnes(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	body, _ := doExport(t, src, "")
+
+	var raw map[string]any
+	if err := json.Unmarshal(body, &raw); err != nil {
+		t.Fatal(err)
+	}
+	settings := raw["settings"].(map[string]any)
+	delete(settings, "retentionKeepYearly")
+	delete(settings, "offsiteRetentionKeepYearly")
+	for _, tv := range raw["offsiteTargets"].([]any) {
+		delete(tv.(map[string]any), "retentionKeepYearly")
+		delete(tv.(map[string]any), "compression")
+	}
+	older, err := json.Marshal(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	s, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.RetentionKeepYearly = 4
+	s.OffsiteRetentionKeepYearly = 6
+	if err := dstStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := dstStore.UpsertOffsiteTarget(store.OffsiteTarget{
+		ID: "tgt-2", Domain: "containers", Name: "Archive", Repo: "s3:offsite-archive", Enabled: true, CreatedAt: 2000, SortOrder: 1,
+		RetentionKeepYearly: 3, Compression: "max",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if env := doImport(t, dst, older, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.RetentionKeepYearly != 4 || got.OffsiteRetentionKeepYearly != 6 {
+		t.Fatalf("yearly rules = %d local, %d off-site, want 4 and 6", got.RetentionKeepYearly, got.OffsiteRetentionKeepYearly)
+	}
+	if got.RetentionKeepDaily != 7 {
+		t.Fatalf("the rest of the retention must still apply: keep daily %d", got.RetentionKeepDaily)
+	}
+	archive, found, err := dstStore.GetOffsiteTarget("tgt-2")
+	if err != nil || !found || archive.RetentionKeepYearly != 3 || archive.Compression != "max" {
+		t.Fatalf("the archive came back as %+v (found=%v, err=%v)", archive, found, err)
 	}
 }

@@ -33,3 +33,11 @@ func TestMQTTSettingsStartFromDefaultsAndRoundTrip(t *testing.T) {
 		t.Fatalf("read back %+v, want %+v", got, want)
 	}
 }
+
+// Switching the link on must not let every client of the broker start backups
+// before the operator chose to allow it.
+func TestMQTTButtonsStartSwitchedOff(t *testing.T) {
+	if store.DefaultMQTTSettings().Buttons {
+		t.Fatal("the buttons are on before anybody switched them on")
+	}
+}

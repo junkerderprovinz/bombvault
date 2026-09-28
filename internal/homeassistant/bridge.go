@@ -8,6 +8,7 @@ import (
 	"errors"
 	"log"
 	"net"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -106,6 +107,10 @@ const pollEvery = 15 * time.Second
 // settings save or a shutdown.
 const waitFor = 5 * time.Second
 
+// pressesPerMinute caps the button presses the bridge acts on, whoever sends
+// them. The per-item limits of a start still apply on top.
+const pressesPerMinute = 6
+
 // Bridge keeps one MQTT connection per configuration and publishes to it.
 type Bridge struct {
 	src Source
@@ -123,11 +128,19 @@ type Bridge struct {
 	lastState []byte
 	stopLoop  context.CancelFunc
 	loopDone  chan struct{}
+
+	// now is time.Now; tests move it.
+	now func() time.Time
+	// pending holds the domains whose press is still being started, and
+	// pressed when the presses of the last minute came in.
+	pressMu sync.Mutex
+	pending map[string]bool
+	pressed []time.Time
 }
 
 // NewBridge returns a bridge that is not connected to anything yet.
 func NewBridge(src Source) *Bridge {
-	return &Bridge{src: src, newClient: mqtt.NewClient}
+	return &Bridge{src: src, newClient: mqtt.NewClient, now: time.Now, pending: map[string]bool{}}
 }
 
 // Status reports the connection for the settings card.
@@ -247,17 +260,13 @@ func (b *Bridge) onConnect(c mqtt.Client, cfg Config) {
 		if domain == "" || string(m.Payload()) != "PRESS" {
 			return
 		}
-		go func() {
-			b.mu.Lock()
-			buttons := b.cfg.Buttons
-			b.mu.Unlock()
-			if !buttons {
-				log.Printf("homeassistant: ignored the %s button, buttons are switched off", domain)
-				return
-			}
-			outcome := b.src.Start(context.Background(), domain)
-			log.Printf("homeassistant: %s button -> %s", domain, outcome)
-		}()
+		// The broker hands a retained press to every new subscriber, so it would
+		// start a backup on each reconnect.
+		if m.Retained() {
+			log.Printf("homeassistant: ignored a retained press of the %s button", domain)
+			return
+		}
+		go b.press(domain)
 	})
 	b.mu.Lock()
 	// A reconnect republishes everything: a broker without persistence has
@@ -266,6 +275,46 @@ func (b *Bridge) onConnect(c mqtt.Client, cfg Config) {
 	b.mu.Unlock()
 	c.Publish(t.Availability(), 1, true, "online")
 	b.Refresh()
+}
+
+// press starts a domain for its button, unless the buttons are off, a press of
+// the same domain is still being started, or the minute's presses are used up.
+func (b *Bridge) press(domain string) {
+	b.mu.Lock()
+	buttons := b.cfg.Buttons
+	b.mu.Unlock()
+	if !buttons {
+		log.Printf("homeassistant: ignored the %s button, buttons are switched off", domain)
+		return
+	}
+	if why := b.takePress(domain); why != "" {
+		log.Printf("homeassistant: ignored the %s button, %s", domain, why)
+		return
+	}
+	defer func() {
+		b.pressMu.Lock()
+		delete(b.pending, domain)
+		b.pressMu.Unlock()
+	}()
+	outcome := b.src.Start(context.Background(), domain)
+	log.Printf("homeassistant: %s button -> %s", domain, outcome)
+}
+
+// takePress books a press, or says why it is refused.
+func (b *Bridge) takePress(domain string) string {
+	b.pressMu.Lock()
+	defer b.pressMu.Unlock()
+	if b.pending[domain] {
+		return "the last press is still being started"
+	}
+	now := b.now()
+	b.pressed = slices.DeleteFunc(b.pressed, func(at time.Time) bool { return now.Sub(at) >= time.Minute })
+	if len(b.pressed) >= pressesPerMinute {
+		return "too many presses in the last minute"
+	}
+	b.pressed = append(b.pressed, now)
+	b.pending[domain] = true
+	return ""
 }
 
 // Refresh reads the state and publishes what changed: the discovery configs

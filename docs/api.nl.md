@@ -58,7 +58,7 @@ Een fout komt terug als `{"error": {"code": "...", "message": "..."}}` met de bi
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | Een argument ontbreekt of klopt niet |
 | 401 | `no_token`, `invalid_token` | Geen token, of geen actief token |
-| 403 | `not_permitted` | Het token mag alleen lezen, of het heeft die run niet gestart |
+| 403 | `not_permitted`, `forbidden_origin` | Het token mag alleen lezen, of het heeft die run niet gestart, of het verzoek kwam van een pagina met een andere oorsprong |
 | 404 | `not_found` | Zo'n item, run of anomalie bestaat niet |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Er loopt al iets, het domein staat uit, of er is niets te doen |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Een grens houdt de aanvraag tegen; `Retry-After` zegt wanneer het weer kan |
@@ -74,7 +74,7 @@ BombVault levert een beschrijving van deze routes op `/api/v1/openapi.json` (Ope
 BombVault kan in Home Assistant als apparaat verschijnen, via MQTT-discovery. Home Assistant heeft daarvoor zijn MQTT-integratie en een broker nodig, bijvoorbeeld de Mosquitto-add-on. Een eigen component is niet nodig.
 
 1. Open in BombVault **Instellingen, Systeem, Home Assistant**.
-2. Vul het adres en de poort van de broker in, en gebruikersnaam en wachtwoord als hij daarom vraagt. Zet **TLS gebruiken** aan als de broker TLS spreekt, meestal op poort 8883; zijn certificaat moet geldig zijn voor het adres dat je invulde.
+2. Vul het adres en de poort van de broker in, en gebruikersnaam en wachtwoord als hij daarom vraagt. Zet **TLS gebruiken** aan als de broker TLS spreekt, meestal op poort 8883; zijn certificaat moet geldig zijn voor het adres dat je invulde. Verander je het adres, de poort of de gebruikersnaam, voer dan het wachtwoord opnieuw in: BombVault geeft het opgeslagen wachtwoord niet door aan een andere broker of gebruiker.
 3. Zet **Verbinden met Home Assistant** aan en klik op **Opslaan**. De kaart laat zien wanneer de verbinding staat.
 
 Het apparaat heet BombVault, of BombVault met de instantienaam tussen haakjes, en heeft deze entiteiten:
@@ -90,7 +90,7 @@ Het apparaat heet BombVault, of BombVault met de instantienaam tussen haakjes, e
 | *Domein* repository free space | De vrije ruimte waar zijn primaire repository staat, als BombVault die kan lezen |
 | Back up *domein* | Een knop die het hele domein back-upt |
 
-De namen van de entiteiten zijn Engels, omdat Home Assistant ze overneemt zoals BombVault ze stuurt. Elk ingeschakeld domein krijgt eigen entiteiten, en een domein dat je uitzet verliest ze. De knoppen volgen dezelfde grenzen als [starts via de API](#errors). Iedereen die op de broker mag publiceren, kan erop drukken, dus geef de broker een wachtwoord of zet **Knoppen starten back-ups** uit.
+De namen van de entiteiten zijn Engels, omdat Home Assistant ze overneemt zoals BombVault ze stuurt. Elk ingeschakeld domein krijgt eigen entiteiten, en een domein dat je uitzet verliest ze. De knoppen verschijnen zodra je **Knoppen starten back-ups** inschakelt; op een nieuwe installatie staat dat uit. Ze volgen dezelfde grenzen als [starts via de API](#errors). Daarnaast neemt BombVault per domein één druk tegelijk aan en hoogstens zes per minuut, en negeert het een druk die de broker als retained bericht heeft bewaard. Iedereen die op de broker mag publiceren, kan erop drukken, dus geef de broker een wachtwoord.
 
 BombVault leest zijn status elke 15 seconden en publiceert die als er iets veranderd is, als JSON onder `<voorvoegsel>/<node>/state`. Het voorvoegsel is `bombvault` zolang je het niet wijzigt, en de node is een korte id die BombVault eenmalig kiest. De discovery-berichten gaan naar het standaardvoorvoegsel `homeassistant` van Home Assistant. Beide worden bewaard (retained). Een last will markeert het apparaat als niet beschikbaar als BombVault stopt zonder zich af te melden. Zet je de koppeling uit, dan verwijdert BombVault het apparaat en zijn entiteiten uit Home Assistant.
 
@@ -102,6 +102,6 @@ Of de aankondiging je netwerk bereikt, hangt af van hoe de container verbonden i
 
 - **bridge**, de standaard in de Unraid-template: de aankondiging blijft binnen het Docker-netwerk en niemand op het LAN ziet haar. Open BombVault zoals voorheen via het adres van de host.
 - **br0** of een ander macvlan- of ipvlan-netwerk: de container heeft een eigen adres op het LAN en de aankondiging bereikt het.
-- **host**: de aankondiging gaat via de interfaces van de host naar buiten, naast die van Unraid zelf.
+- **host**: de aankondiging gaat via de interfaces van de host naar buiten, naast die van Unraid zelf. De bridges van Docker en libvirt blijven erbuiten.
 
 Alleen IPv4-adressen worden bekendgemaakt.

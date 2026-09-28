@@ -16,7 +16,7 @@
 // with the desktop media query held at "phone"; jsdom otherwise answers
 // desktop and the phone surface would never mount.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
@@ -117,10 +117,6 @@ function renderPage() {
   );
 }
 
-async function settle() {
-  await new Promise((r) => setTimeout(r, 0));
-}
-
 /** The phone recent-runs section, located by its filled section label. */
 function recentRunsSection(): HTMLElement {
   const labels = screen.getAllByText(en["dashboard.recentRuns"]);
@@ -132,7 +128,7 @@ describe("Dashboard phone recent-runs states", () => {
   it("reads checking while the runs read is in flight, never a claim", async () => {
     runsAnswer = () => new Promise(() => {}); // never settles
     renderPage();
-    await settle();
+    await act(async () => {});
     const section = recentRunsSection();
     expect(within(section).getAllByText(en["dashboard.checking"]).length).toBeGreaterThan(0);
     expect(within(section).queryByText(en["dashboard.noRuns"])).toBeNull();
@@ -144,7 +140,7 @@ describe("Dashboard phone recent-runs states", () => {
     // read rendered "No runs yet", an answer the read never gave.
     runsAnswer = () => Promise.reject(new Error("boom"));
     renderPage();
-    await settle();
+    await act(async () => {});
     const section = recentRunsSection();
     expect(within(section).getByText(en["dashboard.loadRunsFailed"])).toBeTruthy();
     expect(within(section).queryByText(en["dashboard.noRuns"])).toBeNull();
@@ -152,7 +148,7 @@ describe("Dashboard phone recent-runs states", () => {
 
   it("says no runs yet only once the read answered and none exist", async () => {
     renderPage();
-    await settle();
+    await act(async () => {});
     const section = recentRunsSection();
     expect(within(section).getByText(en["dashboard.noRuns"])).toBeTruthy();
     expect(within(section).queryByText(en["dashboard.loadRunsFailed"])).toBeNull();
@@ -168,7 +164,7 @@ describe("Dashboard phone recent-runs states", () => {
         ],
       });
     renderPage();
-    await settle();
+    await act(async () => {});
     const section = recentRunsSection();
     expect(within(section).getAllByText(/plex|jellyfin/i).length).toBeGreaterThan(0);
     expect(within(section).queryByText(en["dashboard.noRuns"])).toBeNull();

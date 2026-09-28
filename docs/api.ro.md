@@ -58,7 +58,7 @@ O eroare se întoarce ca `{"error": {"code": "...", "message": "..."}}`, cu star
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | Un argument lipsește sau e greșit |
 | 401 | `no_token`, `invalid_token` | Niciun token, sau nu unul activ |
-| 403 | `not_permitted` | Tokenul poate doar citi, sau nu el a pornit rularea |
+| 403 | `not_permitted`, `forbidden_origin` | Tokenul poate doar citi, sau nu el a pornit rularea, sau cererea a venit de pe o pagină cu altă origine |
 | 404 | `not_found` | Nu există acel element, acea rulare sau anomalie |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Rulează deja altceva, domeniul e oprit sau nu e nimic de făcut |
 | 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | O limită reține cererea; `Retry-After` spune când poți încerca din nou |
@@ -74,7 +74,7 @@ BombVault servește o descriere a acestor rute la `/api/v1/openapi.json` (OpenAP
 BombVault poate apărea în Home Assistant ca dispozitiv, prin descoperirea MQTT. Home Assistant are nevoie de integrarea sa MQTT și de un broker, de exemplu add-on-ul Mosquitto. Nu e nevoie de nicio componentă proprie.
 
 1. În BombVault, deschide **Setări, Sistem, Home Assistant**.
-2. Introdu adresa și portul brokerului, iar utilizatorul și parola dacă le cere. Pornește **Folosește TLS** dacă brokerul folosește TLS, de obicei pe portul 8883; certificatul lui trebuie să fie valid pentru adresa introdusă.
+2. Introdu adresa și portul brokerului, iar utilizatorul și parola dacă le cere. Pornește **Folosește TLS** dacă brokerul folosește TLS, de obicei pe portul 8883; certificatul lui trebuie să fie valid pentru adresa introdusă. Dacă schimbi adresa, portul sau numele de utilizator, introdu din nou parola: BombVault nu dă parola salvată mai departe unui alt broker sau utilizator.
 3. Pornește **Conectează la Home Assistant** și apasă **Salvare**. Cardul arată când conexiunea e activă.
 
 Dispozitivul se numește BombVault, sau BombVault cu numele instanței între paranteze, și are aceste entități:
@@ -90,7 +90,7 @@ Dispozitivul se numește BombVault, sau BombVault cu numele instanței între pa
 | *Domeniu* repository free space | Spațiul liber acolo unde se află depozitul său principal, dacă BombVault îl poate citi |
 | Back up *domeniu* | Un buton care copiază tot domeniul |
 
-Numele entităților sunt în engleză, pentru că Home Assistant le preia așa cum le trimite BombVault. Fiecare domeniu pornit primește entități proprii, iar unul pe care îl oprești le pierde. Butoanele respectă aceleași limite ca [pornirile prin API](#errors). Oricine poate publica pe broker le poate apăsa, așa că pune o parolă brokerului sau oprește **Butoanele pornesc copii**.
+Numele entităților sunt în engleză, pentru că Home Assistant le preia așa cum le trimite BombVault. Fiecare domeniu pornit primește entități proprii, iar unul pe care îl oprești le pierde. Butoanele apar după ce pornești **Butoanele pornesc copii**, oprit la o instalare nouă. Respectă aceleași limite ca [pornirile prin API](#errors). În plus, BombVault primește o singură apăsare odată pentru fiecare domeniu și cel mult șase pe minut, și ignoră o apăsare pe care brokerul a păstrat-o ca mesaj retained. Oricine poate publica pe broker le poate apăsa, așa că pune o parolă brokerului.
 
 BombVault își citește starea la fiecare 15 secunde și o publică atunci când s-a schimbat ceva, ca JSON sub `<prefix>/<nod>/state`. Prefixul este `bombvault` cât timp nu îl schimbi, iar nodul este un identificator scurt pe care BombVault îl alege o dată. Mesajele de descoperire merg la prefixul implicit al Home Assistant, `homeassistant`. Ambele sunt păstrate (retained). Un ultim mesaj (last will) marchează dispozitivul ca indisponibil dacă BombVault se oprește fără să anunțe. Dacă oprești legătura, BombVault scoate dispozitivul și entitățile lui din Home Assistant.
 
@@ -102,6 +102,6 @@ Dacă anunțul ajunge în rețeaua ta depinde de felul în care e conectat conta
 
 - **bridge**, valoarea implicită din șablonul Unraid: anunțul rămâne în rețeaua Docker și nimeni din rețeaua locală nu îl vede. Deschide BombVault prin adresa gazdei, ca până acum.
 - **br0** sau altă rețea macvlan ori ipvlan: containerul are propria adresă în rețeaua locală, iar anunțul ajunge acolo.
-- **host**: anunțul iese prin interfețele gazdei, alături de cel al Unraid.
+- **host**: anunțul iese prin interfețele gazdei, alături de cel al Unraid. Punțile Docker și libvirt sunt lăsate deoparte.
 
 Se anunță doar adrese IPv4.

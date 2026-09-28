@@ -24,6 +24,10 @@ func TestBackupExit3Warning(t *testing.T) {
 		"Warning: at least one source file could not be read"); !errors.Is(got, ErrBackupSourceUnreadable) {
 		t.Fatalf("exit-3 backup: want ErrBackupSourceUnreadable, got %v", got)
 	}
+	compressed := BackupArgs("/repo", []string{"/data"}, nil, Mode{Compression: CompressionMax})
+	if got := backupExit3Err(compressed, exitErr(3), ""); !errors.Is(got, ErrBackupSourceUnreadable) {
+		t.Fatalf("exit-3 backup with --compression: want ErrBackupSourceUnreadable, got %v", got)
+	}
 	if got := backupExit3Err([]string{"backup", "/data"}, exitErr(1),
 		"Fatal: unable to open repository"); got != nil {
 		t.Fatalf("exit-1 backup: want nil (hard failure), got %v", got)
