@@ -92,7 +92,7 @@ async function restore() {
 
 async function offsite() {
   await act(async () => {
-    fireEvent.click(within(configStep()).getByRole("tab", { name: en["source.offsite"] }));
+    fireEvent.click(within(configStep()).getByRole("tab", { name: en["storageDomains.copiedTo"] }));
   });
 }
 
@@ -107,6 +107,27 @@ describe("Recovery's own-settings restore", () => {
     await restore();
     expect(puts).toEqual([]);
     expect(restores).toEqual([["latest", undefined]]);
+  });
+
+  it("names a WebDAV place at another site by its name, its site and the server address", async () => {
+    stored.configPath = "rclone:bvp5a92:bombvault/config";
+    places = [
+      place("p-unraid", "Unraid", "unraid-folder", ["containers"]),
+      {
+        ...place("5a92", "Nextcloud", "nextcloud", ["config"], true),
+        kind: "webdav",
+        base: "rclone:bvp5a92:bombvault",
+        creds: { shared: false, fields: { url: "https://cloud.example.com/remote.php/dav/files/anna/", user: "anna" }, set: ["password"] },
+      } as Place,
+    ];
+    await renderPage();
+    const step = configStep();
+    expect(within(step).getByText("Nextcloud")).toBeTruthy();
+    expect(within(step).getByText(en["places.row.otherSite"])).toBeTruthy();
+    expect(within(step).getByText("https://cloud.example.com/remote.php/dav/files/anna/bombvault/config")).toBeTruthy();
+    expect(within(step).queryByText(/rclone:bvp/)).toBeNull();
+    expect(within(step).queryByRole("tab", { name: en["source.local"] })).toBeNull();
+    expect(within(step).getByRole("tab", { name: en["storageDomains.storedIn"] })).toBeTruthy();
   });
 
   it("follows the Self-Backup row when it moves to another place", async () => {

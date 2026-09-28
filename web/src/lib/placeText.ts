@@ -1,6 +1,6 @@
 import type { TranslationKey, useT } from "./i18n";
 import { placementErrorText } from "./placementCodes";
-import type { FolderState, PlaceHolders, PlaceKind, PlaceRefusal, ProbeFact } from "./places";
+import type { FolderState, Place, PlaceHolders, PlaceKind, PlaceRefusal, ProbeFact } from "./places";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -164,4 +164,14 @@ const KIND_KEYS: Record<PlaceKind, TranslationKey> = {
 
 export function kindName(t: T, kind: PlaceKind): string {
   return t(KIND_KEYS[kind]);
+}
+
+/** readableAddress is an address at a place as a person reads it. A WebDAV
+ *  place's rclone remote exists only inside BombVault, so its server address
+ *  stands in for it. */
+export function readableAddress(place: Place | undefined, address: string): string {
+  const url = place?.kind === "webdav" ? place.creds.fields.url : undefined;
+  const path = /^rclone:[^:]+:(.*)$/.exec(address)?.[1];
+  if (!url || path === undefined) return address;
+  return `${url.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 }

@@ -13,10 +13,10 @@ import { Button } from "../components/Button";
 import { IconDatabase, IconRestore } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { FolderBrowser } from "../components/FolderBrowser";
-import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import type { RepoSource } from "../components/SourceToggle";
 import { AddPlaceDialog } from "../components/places/AddPlaceDialog";
 import { DomainRows } from "../components/places/DomainsCard";
-import { CopyPicker, PlaceLine, useSelfBackupPlaces } from "../components/recovery/SelfBackupPlace";
+import { ConfigSourceChoice, CopyPicker, PlaceLine, useSelfBackupPlaces } from "../components/recovery/SelfBackupPlace";
 import { ToggleRow } from "./settings/shared";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { fireAndWaitRun } from "../lib/backupWatch";
@@ -1821,13 +1821,17 @@ export default function Recovery() {
               <>
                 <div className="flex items-center gap-2 flex-wrap pt-1">
                   <span className="text-xs text-carbon-textMuted">{t("recovery.configSourceLabel")}</span>
-                  <SourceToggle source={configSource} onChange={setConfigSource} disabled={configBusy} />
+                  <ConfigSourceChoice
+                    home={selfBackup?.home}
+                    copies={configSource !== "local"}
+                    onChange={(copies) => setConfigSource(copies ? "offsite" : "local")}
+                    disabled={configBusy}
+                  />
                 </div>
 
                 {configSource === "local" ? (
                   <>
                     <PlaceLine
-                      label={t("storageDomains.storedIn")}
                       place={selfBackup?.home}
                       name={selfBackup?.home?.name ?? ""}
                       address={settings.configPath}
