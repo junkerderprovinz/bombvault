@@ -123,7 +123,7 @@ var absPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
 // back half of the password vanish as unlabeled path noise, but
 // "wJalrXUtnFEMI" (the front half) is left sitting in the output in plain
 // text. A password with no embedded "/" is unaffected.
-var credentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
+var credentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s/@"']+@`)
 
 // scrubSecrets strips absolute-path-like tokens and then URL-embedded
 // "user:pass@" credentials from s, in that order.
