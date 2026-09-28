@@ -1,10 +1,9 @@
-// Instances puts the three pages about another BombVault behind one entry, a
-// tab each. They stay separate pages because they hold different things: a
-// receiver is a repository somebody else sent here (location plus their
-// APP_KEY), a fleet peer is a running instance asked over HTTP for its
-// scorecard (URL plus bearer token), and a pull source is somebody else's
-// repository this box fetches from. Each tab is gated on its own setting, and
-// with only one switched on there is no strip.
+// Instances puts everything about other BombVault instances behind one entry,
+// a tab each. Pairing comes first, because the other three build on its
+// group: a receiver watches a repository a member sends here, a fleet peer is
+// a member asked for its scorecard, and a pull source is a member's
+// repository this box fetches from. Pairing shows whenever one of those is
+// on; each of the three is gated on its own setting.
 import { useEffect, useState, type CSSProperties } from "react";
 import { getSettings } from "../lib/api";
 import type { Settings } from "../lib/api";
@@ -16,11 +15,14 @@ import { IconReceiver, IconFleet, IconDownload } from "../components/navGlyphs";
 import { Receiver } from "./Receiver";
 import { Fleet } from "./Fleet";
 import { Pull } from "./Pull";
+import { Pairing } from "./Pairing";
+import { IconLink } from "../components/glyphs";
 
-export const INSTANCE_TABS = ["receiver", "fleet", "pull"] as const;
+export const INSTANCE_TABS = ["pairing", "receiver", "fleet", "pull"] as const;
 export type InstanceTab = (typeof INSTANCE_TABS)[number];
 
 const TAB_ICON: Record<InstanceTab, React.ReactNode> = {
+  pairing: <IconLink />,
   receiver: <IconReceiver />,
   fleet: <IconFleet />,
   // Receiver's glyph twice would be ambiguous in glyph mode, and pulling moves
@@ -38,9 +40,9 @@ function isTab(v: string): v is InstanceTab {
 function tabFromHash(): InstanceTab {
   try {
     const h = window.location.hash.replace(/^#/, "");
-    return isTab(h) ? h : "receiver";
+    return isTab(h) ? h : "pairing";
   } catch {
-    return "receiver";
+    return "pairing";
   }
 }
 
@@ -73,12 +75,14 @@ export function Instances() {
   // i18n.orphans.test.ts count every page title as used; its scanner reads the
   // source text, comments included.
   const tabLabel: Record<InstanceTab, string> = {
+    pairing: t("pairing.title"),
     receiver: t("receiver.title"),
     fleet: t("fleet.title"),
     pull: t("pull.title"),
   };
 
   const enabled: Record<InstanceTab, boolean> = {
+    pairing: (settings?.receiverEnabled || settings?.fleetEnabled || settings?.pullEnabled) ?? false,
     receiver: settings?.receiverEnabled ?? false,
     fleet: settings?.fleetEnabled ?? false,
     pull: settings?.pullEnabled ?? false,
@@ -128,6 +132,7 @@ export function Instances() {
           sending it the way the click went, as in Settings. */}
       {active && (
         <div key={active} className="glim-tab-slide flex flex-col" style={{ "--tab-dir": tabDir } as CSSProperties}>
+          {active === "pairing" && <Pairing embedded />}
           {active === "receiver" && <Receiver embedded />}
           {active === "fleet" && <Fleet embedded />}
           {active === "pull" && <Pull embedded />}

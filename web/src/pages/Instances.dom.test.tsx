@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-// Each Instances tab is gated on its own setting: no tab for a feature that is
-// off, no strip for a single choice, and a hash naming a disabled tab falls
-// back to the first enabled one.
+// Pairing leads the Instances tabs, and each other tab is gated on its own
+// setting: no tab for a feature that is off, and a hash naming a disabled tab
+// falls back to pairing.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
@@ -22,6 +22,7 @@ vi.mock("../lib/api", async (importOriginal) => {
 vi.mock("./Receiver", () => ({ Receiver: () => <div>PANEL receiver</div> }));
 vi.mock("./Fleet", () => ({ Fleet: () => <div>PANEL fleet</div> }));
 vi.mock("./Pull", () => ({ Pull: () => <div>PANEL pull</div> }));
+vi.mock("./Pairing", () => ({ Pairing: () => <div>PANEL pairing</div> }));
 
 const { Instances } = await import("./Instances");
 
@@ -44,13 +45,15 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("instances tab strip", () => {
-  it("shows one tab per switched-on feature, and the first one's panel", async () => {
+  it("leads with pairing and shows one tab per switched-on feature", async () => {
     await renderPage();
+    const tabs = screen.getAllByRole("tab").map((el) => el.textContent?.trim());
+    expect(tabs[0]).toBe(en["pairing.title"]);
     expect(screen.queryByRole("tab", { name: en["receiver.title"] })).not.toBeNull();
     expect(screen.queryByRole("tab", { name: en["fleet.title"] })).not.toBeNull();
     expect(screen.queryByRole("tab", { name: en["pull.title"] })).not.toBeNull();
-    expect(screen.queryByText("PANEL receiver")).not.toBeNull();
-    expect(screen.queryByText("PANEL fleet")).toBeNull();
+    expect(screen.queryByText("PANEL pairing")).not.toBeNull();
+    expect(screen.queryByText("PANEL receiver")).toBeNull();
   });
 
   it("leaves out the tab of a feature that is switched off", async () => {
@@ -60,20 +63,20 @@ describe("instances tab strip", () => {
     expect(screen.queryByRole("tab", { name: en["pull.title"] })).not.toBeNull();
   });
 
-  it("renders no strip at all when only one feature is on", async () => {
+  it("keeps pairing beside a single switched-on feature", async () => {
     flags = { receiverEnabled: true, fleetEnabled: false, pullEnabled: false };
     await renderPage();
-    expect(screen.queryByRole("tablist")).toBeNull();
-    expect(screen.queryByText("PANEL receiver")).not.toBeNull();
+    const tabs = screen.getAllByRole("tab").map((el) => el.textContent?.trim());
+    expect(tabs).toEqual([en["pairing.title"], en["receiver.title"]]);
   });
 
-  it("falls back to an enabled tab when the hash names a disabled one", async () => {
+  it("falls back to pairing when the hash names a disabled tab", async () => {
     // A bookmark saved while pulling was still on.
     window.location.hash = "#pull";
     flags = { receiverEnabled: true, fleetEnabled: false, pullEnabled: false };
     await renderPage();
     expect(screen.queryByText("PANEL pull")).toBeNull();
-    expect(screen.queryByText("PANEL receiver")).not.toBeNull();
+    expect(screen.queryByText("PANEL pairing")).not.toBeNull();
   });
 
   it("opens the tab the hash names when that one is on", async () => {
@@ -90,10 +93,11 @@ describe("instances tab strip", () => {
     expect(screen.queryByText("PANEL receiver")).toBeNull();
     expect(screen.queryByText("PANEL fleet")).toBeNull();
     expect(screen.queryByText("PANEL pull")).toBeNull();
+    expect(screen.queryByText("PANEL pairing")).toBeNull();
     expect(screen.queryByText(en["instances.title"])).not.toBeNull();
   });
 
-  it("gives the three tabs three different names", async () => {
+  it("gives every tab a different name", async () => {
     await renderPage();
     const names = screen.getAllByRole("tab").map((el) => el.textContent?.trim());
     expect(new Set(names).size).toBe(names.length);

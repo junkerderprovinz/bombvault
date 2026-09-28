@@ -4101,13 +4101,6 @@ export function SettingsPage() {
           settings={settings}
           setSettings={setSettings}
           save={save}
-          tokenSet={settings.fleetTokenSet}
-          onTokenSet={(set) => {
-            setSettings((prev) => (prev ? { ...prev, fleetTokenSet: set } : prev));
-            if (savedBaseline.current) {
-              savedBaseline.current = { ...savedBaseline.current, fleetTokenSet: set };
-            }
-          }}
           hueIndex={nextHue()}
         />
         {mcpShipped && <McpServerCard hueIndex={nextHue()} passwordSet={authEnabled} />}

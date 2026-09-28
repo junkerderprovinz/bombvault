@@ -1,7 +1,8 @@
 // Receiver monitors the repositories other BombVault instances push off-site
 // copies to: snapshots per source, last-received time, an independent restic
 // check on this hardware and the dead man's switch. A repo is opened read-only
-// with the sending instance's APP_KEY, stored encrypted and never shown again.
+// with the sending instance's restic password, which the server fetches over
+// the pairing group and never shows.
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
@@ -30,8 +31,7 @@ import { PageTitle } from "../components/PageTitle";
 import { IconReceiver } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
-import { RevealInput } from "../components/RevealInput";
-import { useReveal } from "../lib/useReveal";
+import { MemberField } from "./instances/MemberField";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
@@ -47,10 +47,6 @@ function itemLabel(item: string, t: T): string {
   if (isDbDumpIdentity(item)) return t("dbdump.retentionItem").replace("{name}", dbDumpNameOf(item));
   return item || "-";
 }
-
-// Mirrors the backend's foreignKeyRe for instant feedback; the server checks
-// the key again and probes the repo with it.
-const APP_KEY_RE = /^[0-9a-f]{64}$/;
 
 function fmtReceived(iso: string, t: T): string {
   if (!iso) return t("receiver.never");
@@ -259,6 +255,12 @@ function ReceivedRepoCard({
                 <Badge tone="fail">{t("receiver.unreachable")}</Badge>
               ))}
             <Badge tone={checkTone}>{checkLabel}</Badge>
+            {repo.needsPairing && (
+              <Badge tone="warn">
+                {t("pairing.pairAgain")}
+                <InfoBubble tip={t("pairing.pairAgainTip")} onAccent />
+              </Badge>
+            )}
           </div>
           <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start max-md:whitespace-normal max-md:break-all">{repo.repo}</p>
         </div>
@@ -371,8 +373,7 @@ function ReceiverDialog({
   const { push } = useToast();
   const [name, setName] = useState(initial?.name ?? "");
   const [repo, setRepo] = useState(initial?.repo ?? "");
-  const [appKey, setAppKey] = useState("");
-  const revealAppKey = useReveal();
+  const [memberId, setMemberId] = useState("");
   const [deadManHours, setDeadManHours] = useState(initial?.deadManHours ?? 26);
   const [checkCadence, setCheckCadence] = useState(initial?.checkCadence ?? "");
   const [readDataPercent, setReadDataPercent] = useState(initial?.readDataPercent ?? 0);
@@ -381,9 +382,11 @@ function ReceiverDialog({
   const [shake, setShake] = useState(0);
 
   const editing = initial !== null;
-  // On edit an empty key keeps the stored one; on create a key is required.
-  const keyOk = appKey === "" ? editing : APP_KEY_RE.test(appKey);
-  const canSave = name.trim() !== "" && repo.trim() !== "" && keyOk && !saving;
+  // An edit of a paired repo may keep its pairing; a new repo, or one from
+  // before pairing, needs its sending instance.
+  const keepPairing = editing && !initial.needsPairing;
+  const memberOk = memberId !== "" || keepPairing;
+  const canSave = name.trim() !== "" && repo.trim() !== "" && memberOk && !saving;
 
   // The dialog closes on success, so a toast is the only notice either way.
   async function handleSave() {
@@ -397,8 +400,8 @@ function ReceiverDialog({
       setShake((n) => n + 1);
       return;
     }
-    if (!keyOk) {
-      push(t("receiver.appKeyInvalid"), "fail");
+    if (!memberOk) {
+      push(t("receiver.memberRequired"), "fail");
       setShake((n) => n + 1);
       return;
     }
@@ -406,7 +409,7 @@ function ReceiverDialog({
     const input: ReceivedRepoInput = {
       name: name.trim(),
       repo: repo.trim(),
-      appKey: appKey.trim(),
+      memberId,
       deadManHours: Number.isFinite(deadManHours) ? deadManHours : 26,
       checkCadence: checkCadence.trim(),
       readDataPercent: Math.max(0, Math.min(100, Number.isFinite(readDataPercent) ? readDataPercent : 0)),
@@ -469,6 +472,15 @@ function ReceiverDialog({
             />
           </div>
 
+          <MemberField
+            t={t}
+            label={t("receiver.member")}
+            value={memberId}
+            onChange={setMemberId}
+            keepOption={keepPairing}
+            onPickLocation={setRepo}
+          />
+
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-carbon-textSub">{t("receiver.repoLocation")}</label>
             <input
@@ -482,24 +494,6 @@ function ReceiverDialog({
               className={`${inputCls} font-mono text-start`}
             />
             <p className="text-caption text-carbon-textMuted">{t("receiver.repoLocationHint")}</p>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("receiver.appKey")}</label>
-            <RevealInput
-              {...revealAppKey}
-              value={appKey}
-              onChange={(e) => setAppKey(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder={editing ? t("receiver.appKeyKeep") : "0123456789abcdef…"}
-              wrapperClassName="w-full"
-              className={`${inputCls} font-mono`}
-            />
-            <p className="text-caption text-carbon-textMuted">{t("receiver.appKeyHint")}</p>
-            {appKey !== "" && !APP_KEY_RE.test(appKey) && (
-              <p className="text-caption text-statusFail">{t("receiver.appKeyInvalid")}</p>
-            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

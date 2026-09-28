@@ -318,16 +318,9 @@ export interface Settings {
   drDrillTarget: string;
   /** DR-drill target VM ("" = auto: the most recently backed-up VM). */
   drDrillTargetVm: string;
-  /** This instance's own display name, reported to polling fleet peers so a
-   *  peer's Fleet page can label this box. Not a secret. */
+  /** The name the other members of this instance's pairing group show it
+   *  under. Not a secret. */
   instanceName: string;
-  /** Peer status token (GET /api/fleet/status), authorizing OTHER instances'
-   *  Fleet views to poll THIS instance. Same write-only contract as
-   *  widgetToken: GET always returns "" and a blank save keeps the stored one;
-   *  fleetTokenSet reports presence. Managed via generateFleetToken /
-   *  disableFleetToken (the Settings card), not via this field. */
-  fleetToken: string;
-  fleetTokenSet: boolean;
   /** #56: after a post-backup container update, remove the superseded old image.
    *  Opt-in (default off) — keeping the old image makes a snapshot rollback cheap. */
   pruneImageAfterUpdate: boolean;
@@ -536,7 +529,7 @@ export interface RestoreDrill {
  *  `everythingSchedule`, for the dashboard's "next backup" cell to rank against
  *  the five domain cadences (#186). That cell reads GET /api/schedule/next now,
  *  where the pass is one entry among the rest (#187), so the field is gone from
- *  both this payload and /api/fleet/status. Each DomainStatus still reports
+ *  both this payload and the Fleet scorecard. Each DomainStatus still reports
  *  whether the pass is what covers it, via `coveredBy`. */
 export interface StatusResponse {
   ok: boolean;
@@ -3622,11 +3615,13 @@ export function foreignContainerWarnings(
 // ---------------------------------------------------------------------------
 // Receiver dashboard API — READ-ONLY monitoring of an append-only off-site repo
 // that ANOTHER BombVault instance pushes to. Matches internal/api/receiver_*.go.
-// Repos are opened read-only with the SENDING instance's APP_KEY (never
-// EnsureRepo, never a write); the key is encrypted at rest and never returned.
+// Repos are opened read-only with the sending instance's restic password,
+// which arrives over the pairing group; it is sealed at rest and never
+// returned.
 // ---------------------------------------------------------------------------
 
-/** The stored config + last-check verdict of a received repo (never the key). */
+/** The stored config + last-check verdict of a received repo (never the
+ *  password). */
 export interface ReceivedRepoView {
   id: string;
   name: string;
@@ -3649,8 +3644,10 @@ export interface ReceivedRepoView {
   enabled: boolean;
   createdAt: number;
   sortOrder: number;
-  /** A sending key is stored; the key itself is NEVER returned. */
-  hasAppKey: boolean;
+  /** The sending instance in the pairing group. */
+  memberId: string;
+  /** Set up before pairing existed: pair it with its instance again. */
+  needsPairing: boolean;
 }
 
 /** A received repo PLUS the live read-only status attached by the list endpoint. */
@@ -3662,11 +3659,12 @@ export interface ReceivedRepoStatus extends ReceivedRepoView {
   reachable: boolean;
 }
 
-/** The create/update request body. On PUT an empty appKey keeps the stored key. */
+/** The create/update request body. Naming a member pairs the repo with it; on
+ *  PUT an empty memberId keeps the stored password. */
 export interface ReceivedRepoInput {
   name: string;
   repo: string;
-  appKey: string;
+  memberId: string;
   deadManHours: number;
   checkCadence: string;
   readDataPercent: number;
@@ -3705,8 +3703,7 @@ export interface ReceiverCheckResult {
  * fetches snapshots out of. The mirror image of off-site replication.
  * ------------------------------------------------------------------------- */
 
-/** A configured pull source. The stored APP_KEY is never returned, only whether
- *  one is there. */
+/** A configured pull source. The stored restic password is never returned. */
 export interface PullSourceView {
   id: string;
   name: string;
@@ -3725,16 +3722,18 @@ export interface PullSourceView {
   enabled: boolean;
   createdAt: number;
   sortOrder: number;
-  /** A source key is stored; the key itself is NEVER returned. */
-  hasAppKey: boolean;
+  /** The source instance in the pairing group. */
+  memberId: string;
+  /** Set up before pairing existed: pair it with its instance again. */
+  needsPairing: boolean;
 }
 
-/** The create/update request body. On PUT an empty appKey keeps the stored key,
- *  so editing a name cannot silently disarm a source. */
+/** The create/update request body. Naming a member pairs the source with it;
+ *  on PUT an empty memberId keeps the stored password. */
 export interface PullSourceInput {
   name: string;
   repo: string;
-  appKey: string;
+  memberId: string;
   credsRef: string;
   domain: string;
   cadence: string;
@@ -3750,7 +3749,7 @@ export function listPullSources(): Promise<OkEnvelope & { sources?: PullSourceVi
 }
 
 /** POST /api/pull/sources - register a source. The server opens it read-only
- *  before it saves anything, so a mistyped location or key is refused here
+ *  before it saves anything, so a mistyped location is refused here
  *  rather than at four in the morning. */
 export function createPullSource(in_: PullSourceInput): Promise<OkEnvelope & { source?: PullSourceView }> {
   return fetchJSON("/api/pull/sources", {
@@ -3759,8 +3758,8 @@ export function createPullSource(in_: PullSourceInput): Promise<OkEnvelope & { s
   });
 }
 
-/** PUT /api/pull/sources/{id} - update a source (an empty appKey keeps the
- *  stored one). */
+/** PUT /api/pull/sources/{id} - update a source (an empty memberId keeps the
+ *  stored password). */
 export function updatePullSource(
   id: string,
   in_: PullSourceInput
@@ -3795,9 +3794,10 @@ export function listReceivedRepos(): Promise<OkEnvelope & { repos?: ReceivedRepo
   return fetchJSON("/api/receiver/repos");
 }
 
-/** POST /api/receiver/repos — register a received repo. The server validates the
- *  app key shape, encrypts it at rest, and PROBES the repo read-only before
- *  saving; an unopenable repo is rejected and nothing is persisted. */
+/** POST /api/receiver/repos: register a received repo. The server fetches the
+ *  sending member's restic password over the group and probes the repo
+ *  read-only before saving; an unopenable repo is rejected and nothing is
+ *  persisted. */
 export function createReceivedRepo(
   input: ReceivedRepoInput
 ): Promise<OkEnvelope & { repo?: ReceivedRepoView }> {
@@ -3807,8 +3807,8 @@ export function createReceivedRepo(
   });
 }
 
-/** PUT /api/receiver/repos/{id} — update a received repo (empty appKey keeps the
- *  stored key). Unknown id answers 404 {ok:false}. */
+/** PUT /api/receiver/repos/{id}: update a received repo (an empty memberId
+ *  keeps the stored password). Unknown id answers 404 {ok:false}. */
 export function updateReceivedRepo(
   id: string,
   input: ReceivedRepoInput
@@ -3848,20 +3848,113 @@ export function checkReceivedRepo(
   });
 }
 
-// ---------------------------------------------------------------------------
-// Fleet view API — a list of PEER BombVault instances this box polls, read-
-// only, for their protection status. Two distinct tokens per relationship:
-// this instance's OWN fleetToken (on Settings, what OTHER instances present
-// to poll THIS one) vs. each FleetPeer's token (what THIS instance presents
-// to poll THAT peer).
-// ---------------------------------------------------------------------------
+// Pairing group API. Instances that share a twelve-word phrase form a group;
+// members on one network talk directly, the others over a relay, and every
+// call between them is sealed under a key derived from the phrase.
+
+/** Another instance in the group that is reachable now. */
+export interface GroupMember {
+  id: string;
+  name: string;
+  version: string;
+  /** Announced itself on this network, so calls go to it directly. */
+  direct: boolean;
+  /** Connected to the same relay. */
+  relay: boolean;
+}
+
+export type RelayMode = "project" | "own" | "off";
+
+export interface RelayState {
+  mode: RelayMode;
+  /** The own relay's address, kept while another mode is picked. */
+  url: string;
+  /** The project relay's address, for the page to show. */
+  projectUrl: string;
+  connected: boolean;
+  /** This instance serves a relay under /relay/connect. */
+  serve: boolean;
+  /** How many instances use this one as their relay right now. */
+  serveClients: number;
+}
+
+export interface GroupState extends OkEnvelope {
+  active: boolean;
+  instanceId: string;
+  name: string;
+  /** A login password is set, so showing the phrase again asks for it. */
+  passwordSet: boolean;
+  members: GroupMember[];
+  relay: RelayState;
+}
+
+/** Why a phrase did not decode, with the word at fault. */
+export interface PhraseRefusal extends OkEnvelope {
+  reason?: "word_count" | "unknown_word" | "checksum";
+  word?: string;
+  position?: number;
+  count?: number;
+}
+
+/** A repository location a member offers for receiver and pull pairing. */
+export interface MemberRepo {
+  domain: string;
+  name: string;
+  location: string;
+}
+
+/** GET /api/group - whether this instance is paired, its members and relay. */
+export function getGroup(): Promise<GroupState> {
+  return fetchJSON("/api/group");
+}
+
+/** POST /api/group/phrase - start a group. The answer carries the phrase, the
+ *  only time it comes without the password. */
+export function createPhrase(): Promise<OkEnvelope & { phrase?: string; group?: GroupState }> {
+  return fetchJSON("/api/group/phrase", { method: "POST" });
+}
+
+/** POST /api/group/phrase/show - the phrase again; asks for the login
+ *  password when one is set. */
+export function showPhrase(password: string): Promise<OkEnvelope & { phrase?: string }> {
+  return fetchJSON("/api/group/phrase/show", { method: "POST", body: JSON.stringify({ password }) });
+}
+
+/** POST /api/group/join - join the group a phrase belongs to. */
+export function joinGroup(phrase: string): Promise<GroupState & PhraseRefusal> {
+  return fetchJSON("/api/group/join", { method: "POST", body: JSON.stringify({ phrase }) });
+}
+
+/** DELETE /api/group - leave the group. */
+export function leaveGroup(): Promise<GroupState> {
+  return fetchJSON("/api/group", { method: "DELETE" });
+}
+
+/** PUT /api/group/relay - change the relay route, the own relay's address or
+ *  the serve switch; fields left out keep their value. */
+export function setRelay(patch: { mode?: RelayMode; url?: string; serve?: boolean }): Promise<GroupState> {
+  return fetchJSON("/api/group/relay", { method: "PUT", body: JSON.stringify(patch) });
+}
+
+/** GET /api/group/members/{id}/repos - the locations a member offers. */
+export function memberRepos(id: string): Promise<OkEnvelope & { instanceName?: string; repos?: MemberRepo[] }> {
+  return fetchJSON(`/api/group/members/${encodeURIComponent(id)}/repos`);
+}
+
+// Fleet view API: the protection status of the other members of the group.
 
 export interface FleetPeer {
   id: string;
+  /** The member this row follows; "" on a row from before pairing. */
+  memberId: string;
   name: string;
-  /** The peer's base URL, e.g. "https://192.168.1.50:3443". */
+  /** Where a row from before pairing was polled. Only shown. */
   url: string;
   enabled: boolean;
+  /** Set up before pairing existed: pair the instance again. */
+  needsPairing: boolean;
+  direct: boolean;
+  relay: boolean;
   /** Unix seconds of the last poll attempt; 0 = never. */
   lastPollAt: number;
   /** null = never polled, else whether the last poll succeeded. */
@@ -3870,47 +3963,22 @@ export interface FleetPeer {
   /** The name/version the peer reported about itself on the last successful poll. */
   lastPollInstanceName: string;
   lastPollVersion: string;
-  /** The peer's cached protection scorecard from the last successful poll —
-   *  same shape as StatusResponse.domains, renderable with the same UI. */
+  /** The peer's cached protection scorecard from the last successful poll,
+   *  the same shape as StatusResponse.domains. */
   lastPollDomains: DomainStatus[];
   createdAt: number;
   sortOrder: number;
-  /** A peer token is stored; the token itself is NEVER returned. */
-  hasToken: boolean;
 }
 
-/** The create/update request body. On PUT an empty token keeps the stored one. */
-export interface FleetPeerInput {
-  name: string;
-  url: string;
-  token: string;
-  enabled: boolean;
-  sortOrder: number;
-}
-
-/** GET /api/fleet/peers — every registered fleet peer with its cached status. */
+/** GET /api/fleet/peers - every member with its cached status. */
 export function listFleetPeers(): Promise<OkEnvelope & { peers?: FleetPeer[] }> {
   return fetchJSON("/api/fleet/peers");
 }
 
-/** POST /api/fleet/peers — register a fleet peer. The server validates the
- *  peer actually answers GET /api/fleet/status with the given token before
- *  saving; an unreachable/wrong-token peer is rejected and nothing is
- *  persisted. The first poll's result is recorded immediately. */
-export function createFleetPeer(
-  input: FleetPeerInput
-): Promise<OkEnvelope & { peer?: FleetPeer }> {
-  return fetchJSON("/api/fleet/peers", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
-}
-
-/** PUT /api/fleet/peers/{id} — update a fleet peer (empty token keeps the
- *  stored one). Unknown id answers 404 {ok:false}. */
+/** PUT /api/fleet/peers/{id} - switch polling on or off. */
 export function updateFleetPeer(
   id: string,
-  input: FleetPeerInput
+  input: { enabled?: boolean; sortOrder?: number }
 ): Promise<OkEnvelope & { peer?: FleetPeer }> {
   return fetchJSON(`/api/fleet/peers/${encodeURIComponent(id)}`, {
     method: "PUT",
@@ -3918,42 +3986,29 @@ export function updateFleetPeer(
   });
 }
 
-/** DELETE /api/fleet/peers/{id} — drop the DB row only; the peer instance is
- *  never contacted for this. */
+/** DELETE /api/fleet/peers/{id} - drop the row; the member is not contacted
+ *  and comes back while it is in the group. */
 export function deleteFleetPeer(id: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/fleet/peers/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 }
 
-/** POST /api/fleet/peers/{id}/poll — poll this peer now and return the fresh
- *  persisted result. Unknown id answers 404 {ok:false}. */
+/** POST /api/fleet/peers/{id}/poll - poll this member now. */
 export function pollFleetPeer(id: string): Promise<OkEnvelope & { peer?: FleetPeer }> {
   return fetchJSON(`/api/fleet/peers/${encodeURIComponent(id)}/poll`, {
     method: "POST",
   });
 }
 
-/**
- * POST /api/fleet/token — generate (or rotate) this instance's own fleet
- * status token (what OTHER instances present to poll THIS one). The server
- * stores it and returns it ONCE; it is never echoed again (settings GET only
- * reports fleetTokenSet). Rotating revokes the previous token — every peer
- * that had this instance configured with the OLD token needs the new one.
- */
-export function generateFleetToken(): Promise<OkEnvelope & { token?: string }> {
-  return fetchJSON("/api/fleet/token", { method: "POST" });
+/** POST /api/fleet/peers/{id}/check/{domain} - ask the member to check one
+ *  domain's repository now. */
+export function checkFleetPeer(id: string, domain: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/fleet/peers/${encodeURIComponent(id)}/check/${encodeURIComponent(domain)}`, {
+    method: "POST",
+  });
 }
 
-/**
- * DELETE /api/fleet/token — clear this instance's own fleet token. GET
- * /api/fleet/status immediately fails closed with 403 again for every peer.
- */
-export function disableFleetToken(): Promise<OkEnvelope> {
-  return fetchJSON("/api/fleet/token", { method: "DELETE" });
-}
-
-// ---------------------------------------------------------------------------
 // Mesh off-site API — a fleet peer OFFERING its own off-site storage (a
 // rest-server it deploys itself), so the two admins don't have to exchange a
 // URL and password out of band. BombVault never hosts storage itself; accept

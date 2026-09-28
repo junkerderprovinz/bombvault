@@ -18,7 +18,8 @@ export function StepCard({
   /** Explanation shown in an InfoBubble on the heading. Steps whose body is
    *  only controls and live results leave it out. */
   hint?: string;
-  state: StepState;
+  /** The status dot in the corner; a step that only explains leaves it out. */
+  state?: StepState;
   children: ReactNode;
   /** Rainbow position shared by the heading and every accent control in the
    *  card. Without it the card keeps the theme accent. */
@@ -34,7 +35,7 @@ export function StepCard({
   const hueStyle = hueOn ? (hueVars(hueIndex) as CSSProperties) : undefined;
   return (
     <div
-      className={`relative glim-notch-card rounded-card bg-carbon-surface p-4${hueOn ? " glim-hue" : ""}`}
+      className={`relative glim-notch-card rounded-card bg-carbon-surface p-4${state ? "" : " pt-7"}${hueOn ? " glim-hue" : ""}`}
       style={hueStyle}
     >
       {/* The number and the title are two heading badges in the flow of one
@@ -58,9 +59,11 @@ export function StepCard({
           {hint && <InfoBubble tip={hint} onAccent />}
         </Badge>
       </h2>
-      <div className="flex mb-2">
-        <span className={`ms-auto h-2.5 w-2.5 rounded-full ${dot}`} />
-      </div>
+      {state && (
+        <div className="flex mb-2">
+          <span className={`ms-auto h-2.5 w-2.5 rounded-full ${dot}`} />
+        </div>
+      )}
       <div className="text-sm text-carbon-textMuted flex flex-col gap-2">{children}</div>
     </div>
   );

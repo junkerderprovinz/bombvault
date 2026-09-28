@@ -23,9 +23,8 @@ import { PageTitle } from "../components/PageTitle";
 import { IconReceiver } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
-import { RevealInput } from "../components/RevealInput";
+import { MemberField } from "./instances/MemberField";
 import { SelectField } from "../components/SelectField";
-import { useReveal } from "../lib/useReveal";
 import { useCloudCredSets } from "../lib/useCloudCredSets";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
@@ -35,10 +34,6 @@ import { useTestVerdict } from "../lib/useTestVerdict";
 import { ToggleRow } from "./settings/shared";
 
 type T = ReturnType<typeof useT>["t"];
-
-// The same 64-lowercase-hex guard the backend enforces. The server re-validates
-// and probes; this only gives the field instant feedback.
-const APP_KEY_RE = /^[0-9a-f]{64}$/;
 
 const inputCls =
   "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus";
@@ -115,6 +110,12 @@ function PullSourceCard({
             <span className="font-medium text-carbon-text">{source.name}</span>
             <Badge tone={verdict.tone}>{verdict.label}</Badge>
             <Badge tone="neutral">{t(`nav.${source.domain}` as never)}</Badge>
+            {source.needsPairing && (
+              <Badge tone="warn">
+                {t("pairing.pairAgain")}
+                <InfoBubble tip={t("pairing.pairAgainTip")} onAccent />
+              </Badge>
+            )}
           </div>
           {/* A repository address is not prose; an RTL interface must not
               reorder it. */}
@@ -203,14 +204,13 @@ function PullDialog({
   const { push } = useToast();
   const [name, setName] = useState(initial?.name ?? "");
   const [repo, setRepo] = useState(initial?.repo ?? "");
-  const [appKey, setAppKey] = useState("");
-  const revealAppKey = useReveal();
+  const [memberId, setMemberId] = useState("");
   const [domain, setDomain] = useState<PullDomain>((initial?.domain as PullDomain) ?? "containers");
   const [cadence, setCadence] = useState(initial?.cadence ?? "");
-  // The login for the storage the source repository lies on; the APP_KEY only
-  // opens the repository itself. pull.go withholds this box's own credentials,
-  // so an s3:, b2: or authenticated rest: source needs a set here, and without
-  // one the refusal misleadingly names the APP_KEY.
+  // The login for the storage the source repository lies on; the restic
+  // password only opens the repository itself. pull.go withholds this box's
+  // own credentials, so an s3:, b2: or authenticated rest: source needs a set
+  // here, and without one the refusal misleadingly names the password.
   const [credsRef, setCredsRef] = useState(initial?.credsRef ?? "");
   const credSets = useCloudCredSets();
   const [limitDownload, setLimitDownload] = useState(initial?.limitDownload ?? 0);
@@ -219,9 +219,10 @@ function PullDialog({
   const [shake, setShake] = useState(0);
 
   const editing = initial !== null;
-  // On edit an empty key keeps the stored one; on create a key is required.
-  const keyOk = appKey === "" ? editing : APP_KEY_RE.test(appKey);
-  const canSave = name.trim() !== "" && repo.trim() !== "" && keyOk && !saving;
+  // An edit of a paired source may keep its pairing; a new source, or one from
+  // before pairing, needs its instance.
+  const keepPairing = editing && !initial.needsPairing;
+  const canSave = name.trim() !== "" && repo.trim() !== "" && (memberId !== "" || keepPairing) && !saving;
 
   async function handleSave() {
     if (!canSave) {
@@ -232,7 +233,7 @@ function PullDialog({
     const body: PullSourceInput = {
       name: name.trim(),
       repo: repo.trim(),
-      appKey,
+      memberId,
       credsRef,
       domain,
       cadence,
@@ -291,6 +292,15 @@ function PullDialog({
             />
           </div>
 
+          <MemberField
+            t={t}
+            label={t("pull.member")}
+            value={memberId}
+            onChange={setMemberId}
+            keepOption={keepPairing}
+            onPickLocation={setRepo}
+          />
+
           <div className="flex flex-col gap-1.5">
             <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
               {t("pull.repoLocation")}
@@ -304,24 +314,6 @@ function PullDialog({
               autoComplete="off"
               dir="ltr"
               placeholder="rest:http://192.168.1.9:8000/their-containers"
-              className={inputCls}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("pull.appKey")}
-              <InfoBubble tip={t("pull.appKeyHint")} />
-            </span>
-            <RevealInput
-              {...revealAppKey}
-              value={appKey}
-              onChange={(e) => setAppKey(e.target.value.trim())}
-              spellCheck={false}
-              autoComplete="off"
-              dir="ltr"
-              placeholder={editing ? "••••••••" : "64 hex"}
-              wrapperClassName="w-full"
               className={inputCls}
             />
           </div>
