@@ -291,7 +291,7 @@ export function RouteGlyph({ kind }: { kind: "project" | "own" | "off" | "server
   }
 }
 
-export function FactGlyph({ kind }: { kind: "need" | "sees" | "search" | "shield" | "lock" | "box" }) {
+export function FactGlyph({ kind }: { kind: "need" | "sees" | "search" | "shield" | "lock" | "hidden" }) {
   const common = {
     viewBox: "0 0 16 16",
     width: 16,
@@ -340,11 +340,12 @@ export function FactGlyph({ kind }: { kind: "need" | "sees" | "search" | "shield
           <path d="M5.2 7V5.1a2.8 2.8 0 0 1 5.6 0V7" />
         </svg>
       );
-    case "box":
+    case "hidden":
       return (
         <svg {...common}>
-          <path d="M8 1.8 13.8 5v6L8 14.2 2.2 11V5z" />
-          <path d="M2.4 5.1 8 8.2l5.6-3.1M8 8.2v5.8" />
+          <path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" />
+          <circle cx="8" cy="8" r="2.1" />
+          <path d="M2.6 2.6l10.8 10.8" />
         </svg>
       );
   }

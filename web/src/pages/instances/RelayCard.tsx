@@ -1,7 +1,8 @@
 // RelayCard picks how this instance reaches members on other networks: the
 // project relay, an own relay, or none. It leads with what a relay is for and
-// whether it is connected; each route gets one sentence and what it needs, and
-// the picture with what the relay sees waits behind "How does it work?".
+// whether it is connected; each route gets one sentence and what it needs.
+// "How does it work?" opens three short sections: the route picture, what the
+// relay sees next to what it never does, and the encryption underneath both.
 // Every control saves on its own, as the rest of the settings do.
 import { useEffect, useId, useRef, useState } from "react";
 import { Card, ToggleRow } from "../settings/shared";
@@ -25,7 +26,7 @@ const MODES: RelayMode[] = ["project", "own", "off"];
 // travels in the clear, so the card says so.
 const PLAINTEXT_RELAY = /^(ws|http):\/\//i;
 
-const COPY: Record<RelayMode, { name: TranslationKey; sentence: TranslationKey; need: TranslationKey; sees: TranslationKey; alt: TranslationKey }> = {
+const COPY: Record<RelayMode, { name: TranslationKey; sentence: TranslationKey; need?: TranslationKey; sees: TranslationKey; alt: TranslationKey }> = {
   project: {
     name: "relay.project",
     sentence: "relay.projectSentence",
@@ -33,10 +34,11 @@ const COPY: Record<RelayMode, { name: TranslationKey; sentence: TranslationKey; 
     sees: "relay.projectSees",
     alt: "relay.projectAlt",
   },
+  // No `need`: the two source cards right below already say what an own
+  // relay takes, in more detail than a one-line hint could.
   own: {
     name: "relay.own",
     sentence: "relay.ownSentence",
-    need: "relay.ownNeed",
     sees: "relay.ownSees",
     alt: "relay.ownAlt",
   },
@@ -213,7 +215,7 @@ export function RelayCard({
         <p className="text-sm text-carbon-textSub">
           {mode === "project" ? t(copy.sentence).replace("{host}", hostOf(relay.projectUrl)) : t(copy.sentence)}
         </p>
-        <Fact glyph="need" label={t("relay.needLabel")} text={t(copy.need)} />
+        {copy.need && <Fact glyph="need" label={t("relay.needLabel")} text={t(copy.need)} />}
       </div>
 
       {mode === "own" && (
@@ -300,22 +302,22 @@ export function RelayCard({
       </div>
 
       {howOpen && (
-        <div id={howId} className="flex flex-col gap-4 border-t border-carbon-border pt-4">
-          <div className="grid grid-cols-1 items-center gap-5 md:grid-cols-2 md:gap-10">
-            <RouteDiagram
-              mode={mode}
-              alt={t(copy.alt)}
-              labels={{
-                relay: t("relay.diagramRelay"),
-                projectHost: hostOf(relay.projectUrl),
-                ownAddress: t("relay.diagramOwnAddress"),
-                yourNetwork: t("relay.diagramYourNetwork"),
-                otherNetwork: t("relay.diagramOtherNetwork"),
-                yourLan: t("relay.diagramYourLan"),
-              }}
-            />
-            <div className="flex flex-col gap-3">
-              <Fact glyph="sees" label={t("relay.seesLabel")} text={t(copy.sees)} />
+        <div id={howId} className="flex flex-col gap-5 border-t border-carbon-border pt-4">
+          <section className="flex flex-col gap-3">
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-carbon-textMuted">{t("relay.howDoesTitle")}</h4>
+            <div className="grid grid-cols-1 items-center gap-5 md:grid-cols-2 md:gap-10">
+              <RouteDiagram
+                mode={mode}
+                alt={t(copy.alt)}
+                labels={{
+                  relay: t("relay.diagramRelay"),
+                  projectHost: hostOf(relay.projectUrl),
+                  ownAddress: t("relay.diagramOwnAddress"),
+                  yourNetwork: t("relay.diagramYourNetwork"),
+                  otherNetwork: t("relay.diagramOtherNetwork"),
+                  yourLan: t("relay.diagramYourLan"),
+                }}
+              />
               <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-carbon-textSub">
                 <span className="inline-flex items-center gap-2">
                   <LegendKey />
@@ -327,21 +329,42 @@ export function RelayCard({
                 </span>
               </div>
             </div>
-          </div>
-          <p className="flex items-start gap-2.5 text-sm text-carbon-textSub">
-            <span className="text-accentText">
-              <FactGlyph kind="lock" />
-            </span>
-            <span>
-              {t("relay.e2e")} <InfoBubble tip={t("relay.e2eTip")} />
-            </span>
-          </p>
-          <p className="flex items-start gap-2.5 text-sm text-carbon-textSub">
-            <span className="text-accentText">
-              <FactGlyph kind="box" />
-            </span>
-            <span>{t("relay.backupsNever")}</span>
-          </p>
+          </section>
+
+          {/* Sees / does not see, side by side, so the one honest limit (the
+              routing metadata) sits right next to everything it does not
+              cost. */}
+          <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-2 rounded-control bg-carbon-surface2 p-3.5">
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-carbon-text">
+                <FactGlyph kind="sees" />
+                {t("relay.seesLabel")}
+              </span>
+              <p className="text-sm text-carbon-textSub">{t(copy.sees)}</p>
+            </div>
+            <div className="flex flex-col gap-2 rounded-control bg-carbon-surface2 p-3.5">
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-carbon-text">
+                <FactGlyph kind="hidden" />
+                {t("relay.notSeesLabel")}
+              </span>
+              <ul className="flex list-disc flex-col gap-1 ps-4 text-sm text-carbon-textSub">
+                <li>{t("relay.notSeesContent")}</li>
+                <li>{t("relay.notSeesBackups")}</li>
+              </ul>
+            </div>
+          </section>
+
+          <section className="flex flex-col gap-2">
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-carbon-textMuted">{t("relay.encryptionTitle")}</h4>
+            <p className="flex items-start gap-2.5 text-sm text-carbon-textSub">
+              <span className="text-accentText">
+                <FactGlyph kind="lock" />
+              </span>
+              <span>
+                {t("relay.e2e")} <InfoBubble tip={t("relay.e2eTip")} />
+              </span>
+            </p>
+          </section>
         </div>
       )}
     </Card>
