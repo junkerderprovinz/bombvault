@@ -1382,6 +1382,7 @@ const hr: Partial<Translations> = {
   "relay.addressAfter": "Adresa poslije, na primjer",
   "relay.addressLabel": "Adresa vašeg releja",
   "relay.addressTip": "Ova se adresa odnosi samo na ovu instancu. Unesite je na svakoj instanci koja treba biti dostupna preko vašeg releja.",
+  "relay.plaintextWarning": "Ova adresa nema TLS, pa ključ releja putuje mrežom kao običan tekst. Svatko usput ga može pročitati i pridružiti se vašoj grupi na releju. Ne može pročitati što vaše instance šalju jedna drugoj, ali vidi koje instance razgovaraju i kada. Koristite to samo u mreži kojoj vjerujete.",
   "relay.diagramRelay": "Relej",
   "relay.diagramOwnAddress": "vaša adresa",
   "relay.diagramYourNetwork": "Vaša mreža",

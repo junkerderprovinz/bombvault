@@ -1376,6 +1376,7 @@ const sl: Partial<Translations> = {
   "relay.addressAfter": "Naslov nato, na primer",
   "relay.addressLabel": "Naslov tvojega relaya",
   "relay.addressTip": "Ta naslov velja samo za to instanco. Vnesi ga na vsaki instanci, ki naj bo dosegljiva prek tvojega relaya.",
+  "relay.plaintextWarning": "Ta naslov nima TLS, zato ključ relaya potuje po omrežju kot navadno besedilo. Kdorkoli na poti ga lahko prebere in se pridruži tvoji skupini na relayu. Ne more prebrati, kaj si tvoje instance pošiljajo, vidi pa, katere instance in kdaj komunicirajo. To uporabljaj samo v omrežju, ki mu zaupaš.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "tvoj naslov",
   "relay.diagramYourNetwork": "Tvoje omrežje",

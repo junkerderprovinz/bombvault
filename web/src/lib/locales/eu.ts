@@ -1382,6 +1382,7 @@ const eu: Partial<Translations> = {
   "relay.addressAfter": "Ondoren helbidea, adibidez",
   "relay.addressLabel": "Zure bitartekariaren helbidea",
   "relay.addressTip": "Helbide hau instantzia honi bakarrik dagokio. Sartu zure bitartekariaren bidez eskuragarri egon behar duen instantzia bakoitzean.",
+  "relay.plaintextWarning": "Helbide honek ez du TLSrik, beraz bitartekariaren gakoak testu arruntean zeharkatzen du sarea. Bidean dagoen edonork irakur dezake eta zure taldearekin bat egin bitartekarian. Ezin du irakurri zure instantziek elkarri bidaltzen diotena, baina ikusten du zein instantziak hitz egiten duten eta noiz. Erabili hau konfiantzazko sare batean bakarrik.",
   "relay.diagramRelay": "Bitartekaria",
   "relay.diagramOwnAddress": "zure helbidea",
   "relay.diagramYourNetwork": "Zure sarea",

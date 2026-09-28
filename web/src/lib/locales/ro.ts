@@ -2162,6 +2162,7 @@ const ro: Partial<Translations> = {
   "relay.addressAfter": "Adresa după aceea, de exemplu",
   "relay.addressLabel": "Adresa relay-ului tău",
   "relay.addressTip": "Această adresă se aplică doar acestei instanțe. Introdu-o pe fiecare instanță care ar trebui să fie accesibilă prin relay-ul tău.",
+  "relay.plaintextWarning": "Această adresă nu are TLS, așa că cheia relay-ului traversează rețeaua ca text simplu. Oricine de pe traseu o poate citi și se poate alătura grupului tău pe relay. Nu poate citi ce își trimit instanțele tale, dar vede ce instanțe comunică și când. Folosește asta doar într-o rețea în care ai încredere.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "adresa ta",
   "relay.diagramYourNetwork": "Rețeaua ta",

@@ -1382,6 +1382,7 @@ const gl: Partial<Translations> = {
   "relay.addressAfter": "Enderezo despois, por exemplo",
   "relay.addressLabel": "Enderezo do teu relé",
   "relay.addressTip": "Este enderezo só se aplica a esta instancia. Introdúceo en cada instancia que deba ser accesible a través do teu relé.",
+  "relay.plaintextWarning": "Este enderezo non ten TLS, así que a chave do relé atravesa a rede en texto simple. Calquera que estea no camiño pode lela e unirse ao teu grupo no relé. Non pode ler o que se envían as túas instancias, pero ve que instancias falan entre si e cando. Úsao só nunha rede na que confíes.",
   "relay.diagramRelay": "Relé",
   "relay.diagramOwnAddress": "o teu enderezo",
   "relay.diagramYourNetwork": "A túa rede",

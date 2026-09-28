@@ -2154,6 +2154,7 @@ const pl: Partial<Translations> = {
   "relay.addressAfter": "Adres potem, na przykład",
   "relay.addressLabel": "Adres twojego relay",
   "relay.addressTip": "Ten adres dotyczy tylko tej instancji. Wpisz go na każdej instancji, która ma być osiągalna przez twój relay.",
+  "relay.plaintextWarning": "Ten adres nie ma TLS, więc klucz relaya przechodzi przez sieć otwartym tekstem. Każdy po drodze może go odczytać i dołączyć do twojej grupy na relayu. Nie odczyta tego, co twoje instancje wysyłają sobie nawzajem, ale zobaczy, które instancje i kiedy się komunikują. Używaj tego tylko w sieci, której ufasz.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "twój adres",
   "relay.diagramYourNetwork": "Twoja sieć",

@@ -2151,6 +2151,7 @@ const ko: Partial<Translations> = {
   "relay.addressAfter": "이후 주소, 예를 들어",
   "relay.addressLabel": "릴레이 주소",
   "relay.addressTip": "이 주소는 이 인스턴스에만 적용됩니다. 릴레이를 통해 접근 가능해야 하는 각 인스턴스에 입력하세요.",
+  "relay.plaintextWarning": "이 주소에는 TLS가 없어서 릴레이 키가 평문으로 네트워크를 지나갑니다. 경로상의 누구나 키를 읽고 릴레이에서 사용자의 그룹에 들어올 수 있습니다. 인스턴스끼리 주고받는 내용은 읽을 수 없지만, 어떤 인스턴스가 언제 통신하는지는 볼 수 있습니다. 신뢰하는 네트워크에서만 사용하세요.",
   "relay.diagramRelay": "릴레이",
   "relay.diagramOwnAddress": "내 주소",
   "relay.diagramYourNetwork": "내 네트워크",

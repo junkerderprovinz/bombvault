@@ -1382,6 +1382,7 @@ const id: Partial<Translations> = {
   "relay.addressAfter": "Alamat setelahnya, misalnya",
   "relay.addressLabel": "Alamat relay Anda",
   "relay.addressTip": "Alamat ini hanya berlaku untuk instance ini. Masukkan pada setiap instance yang seharusnya dapat dijangkau melalui relay Anda.",
+  "relay.plaintextWarning": "Alamat ini tidak memakai TLS, jadi kunci relay melintasi jaringan sebagai teks biasa. Siapa pun di sepanjang jalur dapat membacanya dan bergabung dengan grup Anda di relay. Ia tidak dapat membaca apa yang dikirim instance Anda satu sama lain, tetapi dapat melihat instance mana yang berkomunikasi dan kapan. Gunakan ini hanya di jaringan yang Anda percayai.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "alamat Anda",
   "relay.diagramYourNetwork": "Jaringan Anda",

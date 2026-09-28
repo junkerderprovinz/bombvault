@@ -1382,6 +1382,7 @@ const is: Partial<Translations> = {
   "relay.addressAfter": "Vistfang eftir á, til dæmis",
   "relay.addressLabel": "Vistfang relaysins þíns",
   "relay.addressTip": "Þetta vistfang á aðeins við um þetta tilvik. Sláðu það inn á hverju tilviki sem á að vera aðgengilegt um relayið þitt.",
+  "relay.plaintextWarning": "Þetta vistfang er ekki með TLS, svo lykill relaysins fer um netið sem ódulkóðaður texti. Hver sem er á leiðinni getur lesið hann og gengið í hópinn þinn á relayinu. Hann getur ekki lesið það sem tilvikin þín senda hvert öðru, en hann sér hvaða tilvik tala saman og hvenær. Notaðu þetta aðeins á neti sem þú treystir.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "þitt vistfang",
   "relay.diagramYourNetwork": "Þitt net",

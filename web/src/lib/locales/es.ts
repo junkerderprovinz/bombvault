@@ -2157,6 +2157,7 @@ const es: Partial<Translations> = {
   "relay.addressAfter": "Dirección después, por ejemplo",
   "relay.addressLabel": "La dirección de tu repetidor",
   "relay.addressTip": "Esta dirección se aplica solo a esta instancia. Introdúcela en cada instancia que deba ser accesible a través de tu repetidor.",
+  "relay.plaintextWarning": "Esta dirección no tiene TLS, así que la clave del repetidor cruza la red en texto plano. Cualquiera que esté en el camino puede leerla y unirse a tu grupo en el repetidor. No puede leer lo que se envían tus instancias, pero ve qué instancias hablan entre sí y cuándo. Úsalo solo en una red de confianza.",
   "relay.diagramRelay": "Repetidor",
   "relay.diagramOwnAddress": "tu dirección",
   "relay.diagramYourNetwork": "Tu red",

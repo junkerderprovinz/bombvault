@@ -2159,6 +2159,7 @@ const it: Partial<Translations> = {
   "relay.addressAfter": "Indirizzo in seguito, per esempio",
   "relay.addressLabel": "L'indirizzo del tuo relay",
   "relay.addressTip": "Questo indirizzo vale solo per questa istanza. Inseriscilo su ogni istanza che deve essere raggiungibile tramite il tuo relay.",
+  "relay.plaintextWarning": "Questo indirizzo non ha TLS, quindi la chiave del relay attraversa la rete in chiaro. Chiunque lungo il percorso può leggerla e unirsi al tuo gruppo sul relay. Non può leggere ciò che le tue istanze si scambiano, ma vede quali istanze comunicano e quando. Usalo solo su una rete di cui ti fidi.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "il tuo indirizzo",
   "relay.diagramYourNetwork": "La tua rete",

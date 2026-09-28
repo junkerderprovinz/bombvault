@@ -2159,6 +2159,7 @@ const fr: Partial<Translations> = {
   "relay.addressAfter": "Adresse ensuite, par exemple",
   "relay.addressLabel": "Adresse de votre relais",
   "relay.addressTip": "Cette adresse ne s'applique qu'à cette instance. Saisissez-la sur chaque instance qui doit être joignable via votre relais.",
+  "relay.plaintextWarning": "Cette adresse n'a pas de TLS : la clé du relais traverse donc le réseau en clair. Toute personne sur le trajet peut la lire et rejoindre votre groupe sur le relais. Elle ne peut pas lire ce que vos instances s'envoient, mais elle voit quelles instances communiquent et quand. N'utilisez cela que sur un réseau de confiance.",
   "relay.diagramRelay": "Relais",
   "relay.diagramOwnAddress": "votre adresse",
   "relay.diagramYourNetwork": "Votre réseau",

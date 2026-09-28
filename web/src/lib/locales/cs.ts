@@ -2157,6 +2157,7 @@ const cs: Partial<Translations> = {
   "relay.addressAfter": "Adresa poté, například",
   "relay.addressLabel": "Adresa vašeho přeposílače",
   "relay.addressTip": "Tato adresa platí jen pro tuto instanci. Zadejte ji na každé instanci, která má být dostupná přes váš přeposílač.",
+  "relay.plaintextWarning": "Tato adresa nemá TLS, takže klíč přeposílače prochází sítí jako prostý text. Kdokoli po cestě ho může přečíst a připojit se k vaší skupině na přeposílači. Nepřečte, co si vaše instance posílají, ale uvidí, které instance spolu komunikují a kdy. Používejte to jen v síti, které důvěřujete.",
   "relay.diagramRelay": "Přeposílač",
   "relay.diagramOwnAddress": "vaše adresa",
   "relay.diagramYourNetwork": "Vaše síť",

@@ -2151,6 +2151,7 @@ const zh: Partial<Translations> = {
   "relay.addressAfter": "之后的地址，例如",
   "relay.addressLabel": "你的中继地址",
   "relay.addressTip": "这个地址只适用于这台实例。请在每台需要通过你的中继访问的实例上都填写它。",
+  "relay.plaintextWarning": "这个地址没有 TLS，所以中继密钥以明文形式经过网络。途中的任何人都能读到它，并借此在中继上加入你的群组。他们读不到你的实例之间发送的内容，但能看到哪些实例在什么时候通信。只在你信任的网络中使用。",
   "relay.diagramRelay": "中继",
   "relay.diagramOwnAddress": "你的地址",
   "relay.diagramYourNetwork": "你的网络",

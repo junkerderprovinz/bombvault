@@ -2159,6 +2159,7 @@ const fi: Partial<Translations> = {
   "relay.addressAfter": "Osoite jälkeenpäin, esimerkiksi",
   "relay.addressLabel": "Releesi osoite",
   "relay.addressTip": "Tämä osoite koskee vain tätä instanssia. Syötä se jokaiseen instanssiin, jonka pitäisi olla tavoitettavissa releesi kautta.",
+  "relay.plaintextWarning": "Tässä osoitteessa ei ole TLS:ää, joten releen avain kulkee verkossa selväkielisenä. Kuka tahansa matkan varrella voi lukea sen ja liittyä ryhmääsi releellä. Hän ei voi lukea, mitä instanssisi lähettävät toisilleen, mutta näkee, mitkä instanssit viestivät keskenään ja milloin. Käytä tätä vain verkossa, johon luotat.",
   "relay.diagramRelay": "Rele",
   "relay.diagramOwnAddress": "oma osoite",
   "relay.diagramYourNetwork": "Oma verkko",

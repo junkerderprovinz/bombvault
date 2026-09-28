@@ -1382,6 +1382,7 @@ const ca: Partial<Translations> = {
   "relay.addressAfter": "Adreça després, per exemple",
   "relay.addressLabel": "L'adreça del teu repetidor",
   "relay.addressTip": "Aquesta adreça s'aplica només a aquesta instància. Introdueix-la a cada instància que hagi de ser accessible a través del teu repetidor.",
+  "relay.plaintextWarning": "Aquesta adreça no té TLS, així que la clau del repetidor travessa la xarxa en text pla. Qualsevol que hi hagi pel camí la pot llegir i unir-se al teu grup al repetidor. No pot llegir el que s'envien les teves instàncies, però veu quines instàncies parlen entre elles i quan. Fes-ho servir només en una xarxa de confiança.",
   "relay.diagramRelay": "Repetidor",
   "relay.diagramOwnAddress": "la teva adreça",
   "relay.diagramYourNetwork": "La teva xarxa",

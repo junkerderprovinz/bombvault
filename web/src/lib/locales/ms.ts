@@ -1382,6 +1382,7 @@ const ms: Partial<Translations> = {
   "relay.addressAfter": "Alamat selepas itu, contohnya",
   "relay.addressLabel": "Alamat relay anda",
   "relay.addressTip": "Alamat ini hanya terpakai untuk instans ini. Masukkan pada setiap instans yang patut boleh dicapai melalui relay anda.",
+  "relay.plaintextWarning": "Alamat ini tiada TLS, jadi kunci relay melalui rangkaian sebagai teks biasa. Sesiapa di sepanjang laluan boleh membacanya dan menyertai kumpulan anda pada relay. Mereka tidak boleh membaca apa yang dihantar oleh instans anda sesama sendiri, tetapi boleh melihat instans mana yang berhubung dan bila. Gunakan ini hanya pada rangkaian yang anda percayai.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "alamat anda",
   "relay.diagramYourNetwork": "Rangkaian anda",

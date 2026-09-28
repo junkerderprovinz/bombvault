@@ -1382,6 +1382,7 @@ const et: Partial<Translations> = {
   "relay.addressAfter": "Aadress pärast seda, näiteks",
   "relay.addressLabel": "Su edastaja aadress",
   "relay.addressTip": "See aadress kehtib ainult selle eksemplari kohta. Sisesta see igasse eksemplari, mis peaks olema su edastaja kaudu kättesaadav.",
+  "relay.plaintextWarning": "Sellel aadressil pole TLS-i, seega liigub edastaja võti võrgus lihttekstina. Igaüks teel saab seda lugeda ja edastajas sinu grupiga liituda. Ta ei saa lugeda, mida su eksemplarid üksteisele saadavad, kuid näeb, millised eksemplarid omavahel suhtlevad ja millal. Kasuta seda ainult võrgus, mida usaldad.",
   "relay.diagramRelay": "Edastaja",
   "relay.diagramOwnAddress": "sinu aadress",
   "relay.diagramYourNetwork": "Sinu võrk",

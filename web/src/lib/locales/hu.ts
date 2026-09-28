@@ -2162,6 +2162,7 @@ const hu: Partial<Translations> = {
   "relay.addressAfter": "Cím ezután, például",
   "relay.addressLabel": "A relayed címe",
   "relay.addressTip": "Ez a cím csak erre a példányra vonatkozik. Add meg minden példányon, amelynek elérhetőnek kell lennie a relayeden keresztül.",
+  "relay.plaintextWarning": "Ennek a címnek nincs TLS-e, így a relay kulcsa titkosítatlan szövegként halad át a hálózaton. Bárki útközben elolvashatja, és csatlakozhat vele a csoportodhoz a relayen. Azt nem olvashatja el, amit a példányaid egymásnak küldenek, de látja, mely példányok és mikor beszélnek egymással. Csak megbízható hálózaton használd.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "saját címed",
   "relay.diagramYourNetwork": "A hálózatod",

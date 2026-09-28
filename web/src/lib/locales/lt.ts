@@ -1382,6 +1382,7 @@ const lt: Partial<Translations> = {
   "relay.addressAfter": "Adresas vėliau, pavyzdžiui",
   "relay.addressLabel": "Jūsų relay adresas",
   "relay.addressTip": "Šis adresas galioja tik šiam egzemplioriui. Įveskite jį kiekviename egzemplioriuje, kuris turi būti pasiekiamas per jūsų relay.",
+  "relay.plaintextWarning": "Šis adresas neturi TLS, todėl relay raktas tinklu keliauja atviru tekstu. Bet kas pakeliui gali jį perskaityti ir prisijungti prie jūsų grupės relay. Jis negali perskaityti, ką jūsų egzemplioriai siunčia vienas kitam, bet mato, kurie egzemplioriai ir kada bendrauja. Naudokite tai tik tinkle, kuriuo pasitikite.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "jūsų adresas",
   "relay.diagramYourNetwork": "Jūsų tinklas",

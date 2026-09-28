@@ -2159,6 +2159,7 @@ const no: Partial<Translations> = {
   "relay.addressAfter": "Adresse etterpå, for eksempel",
   "relay.addressLabel": "Adressen til relayet ditt",
   "relay.addressTip": "Denne adressen gjelder bare for denne instansen. Angi den på hver instans som skal være tilgjengelig via relayet ditt.",
+  "relay.plaintextWarning": "Denne adressen har ikke TLS, så relay-nøkkelen går over nettverket i klartekst. Alle underveis kan lese den og bli med i gruppen din på relayet. De kan ikke lese hva instansene dine sender hverandre, men de ser hvilke instanser som snakker sammen, og når. Bruk dette bare på et nettverk du stoler på.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "din adresse",
   "relay.diagramYourNetwork": "Nettverket ditt",

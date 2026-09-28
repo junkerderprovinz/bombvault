@@ -18,6 +18,10 @@ type T = ReturnType<typeof useT>["t"];
 
 const MODES: RelayMode[] = ["project", "own", "off"];
 
+// An own relay without TLS still works on a LAN, but its relay key then
+// travels in the clear, so the card says so.
+const PLAINTEXT_RELAY = /^(ws|http):\/\//i;
+
 const COPY: Record<RelayMode, { name: TranslationKey; sentence: TranslationKey; need: TranslationKey; sees: TranslationKey; alt: TranslationKey }> = {
   project: {
     name: "relay.project",
@@ -278,6 +282,11 @@ export function RelayCard({
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 text-start glim-field-focus"
             />
             {urlError && <p className="text-caption text-statusFail">{urlError}</p>}
+            {!urlError && PLAINTEXT_RELAY.test(url.trim()) && (
+              <p className="rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">
+                {t("relay.plaintextWarning")}
+              </p>
+            )}
           </div>
         </div>
       )}

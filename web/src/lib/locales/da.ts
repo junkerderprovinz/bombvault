@@ -2159,6 +2159,7 @@ const da: Partial<Translations> = {
   "relay.addressAfter": "Adresse bagefter, for eksempel",
   "relay.addressLabel": "Din videresenders adresse",
   "relay.addressTip": "Denne adresse gælder kun for denne instans. Indtast den på hver instans, der skal være tilgængelig gennem din videresender.",
+  "relay.plaintextWarning": "Denne adresse har ikke TLS, så videresenderens nøgle krydser netværket i klartekst. Alle undervejs kan læse den og slutte sig til din gruppe på videresenderen. De kan ikke læse, hvad dine instanser sender hinanden, men de kan se, hvilke instanser der taler sammen, og hvornår. Brug det kun på et netværk, du stoler på.",
   "relay.diagramRelay": "Videresender",
   "relay.diagramOwnAddress": "din adresse",
   "relay.diagramYourNetwork": "Dit netværk",

@@ -130,6 +130,18 @@ describe("relay card", () => {
     expect(relayCalls).toContainEqual({ url: "relay.example.org" });
     expect(screen.queryByRole("button", { name: en["settings.save"] })).toBeNull();
   });
+
+  it("warns that an address without TLS carries the relay key in plain text", async () => {
+    group = makeGroup({ relay: { ...makeGroup().relay, mode: "own", url: "wss://relay.example.org" } });
+    await renderTab();
+    expect(screen.queryByText(en["relay.plaintextWarning"])).toBeNull();
+    for (const address of ["ws://192.168.1.9:8080", "http://tower.local:3000"]) {
+      fireEvent.change(document.getElementById("relay-address") as HTMLInputElement, { target: { value: address } });
+      expect(screen.getByText(en["relay.plaintextWarning"])).not.toBeNull();
+    }
+    fireEvent.change(document.getElementById("relay-address") as HTMLInputElement, { target: { value: "https://relay.example.org" } });
+    expect(screen.queryByText(en["relay.plaintextWarning"])).toBeNull();
+  });
 });
 
 describe("phrase card", () => {

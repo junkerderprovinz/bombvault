@@ -1382,6 +1382,7 @@ const lv: Partial<Translations> = {
   "relay.addressAfter": "Adrese pēc tam, piemēram",
   "relay.addressLabel": "Jūsu relay adrese",
   "relay.addressTip": "Šī adrese attiecas tikai uz šo instanci. Ievadiet to katrā instancē, kurai jābūt sasniedzamai caur jūsu relay.",
+  "relay.plaintextWarning": "Šai adresei nav TLS, tāpēc relay atslēga tīklā pārvietojas kā atklāts teksts. Ikviens pa ceļam to var nolasīt un pievienoties jūsu grupai relay. Viņš nevar nolasīt, ko jūsu instances sūta cita citai, bet redz, kuras instances un kad sazinās. Izmantojiet to tikai tīklā, kuram uzticaties.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "jūsu adrese",
   "relay.diagramYourNetwork": "Jūsu tīkls",

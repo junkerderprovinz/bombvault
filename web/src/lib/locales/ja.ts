@@ -2151,6 +2151,7 @@ const ja: Partial<Translations> = {
   "relay.addressAfter": "その後のアドレス、例えば",
   "relay.addressLabel": "あなたのリレーのアドレス",
   "relay.addressTip": "このアドレスはこのインスタンスにのみ適用されます。リレー経由で到達可能にしたい各インスタンスに入力してください。",
+  "relay.plaintextWarning": "このアドレスには TLS がないため、リレーの鍵が平文でネットワークを流れます。経路上の誰でもそれを読み取り、リレー上であなたのグループに参加できます。インスタンス同士が送る内容は読めませんが、どのインスタンスがいつ通信しているかは見えます。信頼できるネットワークでのみ使ってください。",
   "relay.diagramRelay": "リレー",
   "relay.diagramOwnAddress": "自分のアドレス",
   "relay.diagramYourNetwork": "あなたのネットワーク",

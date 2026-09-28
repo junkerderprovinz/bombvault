@@ -1382,6 +1382,7 @@ const sk: Partial<Translations> = {
   "relay.addressAfter": "Adresa potom, napríklad",
   "relay.addressLabel": "Adresa vášho relay",
   "relay.addressTip": "Táto adresa platí len pre túto inštanciu. Zadajte ju na každej inštancii, ktorá by mala byť dostupná cez váš relay.",
+  "relay.plaintextWarning": "Táto adresa nemá TLS, takže kľúč relay prechádza sieťou ako obyčajný text. Ktokoľvek po ceste ho môže prečítať a pripojiť sa k vašej skupine na relay. Neprečíta, čo si vaše inštancie posielajú, ale uvidí, ktoré inštancie spolu komunikujú a kedy. Používajte to len v sieti, ktorej dôverujete.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "vaša adresa",
   "relay.diagramYourNetwork": "Vaša sieť",

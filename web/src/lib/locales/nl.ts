@@ -2156,6 +2156,7 @@ const nl: Partial<Translations> = {
   "relay.addressAfter": "Adres daarna, bijvoorbeeld",
   "relay.addressLabel": "Het adres van je relay",
   "relay.addressTip": "Dit adres geldt alleen voor deze instantie. Voer het in op elke instantie die via je relay bereikbaar moet zijn.",
+  "relay.plaintextWarning": "Dit adres heeft geen TLS, dus de relaysleutel gaat als platte tekst over het netwerk. Iedereen onderweg kan hem lezen en daarmee lid worden van je groep op de relay. Wat je instanties elkaar sturen, kan die niet lezen, maar wel welke instanties wanneer met elkaar praten. Gebruik dit alleen op een netwerk dat je vertrouwt.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "jouw adres",
   "relay.diagramYourNetwork": "Jouw netwerk",

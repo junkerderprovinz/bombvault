@@ -2151,6 +2151,7 @@ const vi: Partial<Translations> = {
   "relay.addressAfter": "Địa chỉ sau đó, ví dụ",
   "relay.addressLabel": "Địa chỉ relay của bạn",
   "relay.addressTip": "Địa chỉ này chỉ áp dụng cho phiên bản này. Nhập nó trên mọi phiên bản cần truy cập được qua relay của bạn.",
+  "relay.plaintextWarning": "Địa chỉ này không có TLS, nên khóa relay đi qua mạng dưới dạng văn bản thường. Bất kỳ ai trên đường truyền đều có thể đọc nó và tham gia nhóm của bạn trên relay. Họ không đọc được những gì các phiên bản của bạn gửi cho nhau, nhưng thấy được phiên bản nào trao đổi với nhau và vào lúc nào. Chỉ dùng cách này trên mạng mà bạn tin tưởng.",
   "relay.diagramRelay": "Relay",
   "relay.diagramOwnAddress": "địa chỉ của bạn",
   "relay.diagramYourNetwork": "Mạng của bạn",

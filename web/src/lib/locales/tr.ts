@@ -2159,6 +2159,7 @@ const tr: Partial<Translations> = {
   "relay.addressAfter": "Sonra gelen adres, örneğin",
   "relay.addressLabel": "Rölenin adresi",
   "relay.addressTip": "Bu adres yalnızca bu örnek için geçerlidir. Rölen üzerinden erişilebilir olması gereken her örneğe gir.",
+  "relay.plaintextWarning": "Bu adreste TLS yok, bu yüzden röle anahtarı ağda düz metin olarak geçer. Yol üzerindeki herkes onu okuyup röledeki grubuna katılabilir. Örneklerinin birbirine ne gönderdiğini okuyamaz, ama hangi örneklerin ne zaman konuştuğunu görür. Bunu yalnızca güvendiğin bir ağda kullan.",
   "relay.diagramRelay": "Röle",
   "relay.diagramOwnAddress": "senin adresin",
   "relay.diagramYourNetwork": "Senin ağın",

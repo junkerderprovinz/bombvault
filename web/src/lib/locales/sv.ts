@@ -2159,6 +2159,7 @@ const sv: Partial<Translations> = {
   "relay.addressAfter": "Adress efteråt, till exempel",
   "relay.addressLabel": "Adressen till ditt relä",
   "relay.addressTip": "Den här adressen gäller bara den här instansen. Ange den på varje instans som ska gå att nå via ditt relä.",
+  "relay.plaintextWarning": "Den här adressen saknar TLS, så reläets nyckel går över nätverket i klartext. Vem som helst längs vägen kan läsa den och gå med i din grupp på reläet. De kan inte läsa vad dina instanser skickar till varandra, men de ser vilka instanser som pratar med varandra och när. Använd det bara i ett nätverk du litar på.",
   "relay.diagramRelay": "Relä",
   "relay.diagramOwnAddress": "din adress",
   "relay.diagramYourNetwork": "Ditt nätverk",
