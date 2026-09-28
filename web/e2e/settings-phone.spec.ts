@@ -7,7 +7,7 @@
 // actions under the name, repository and passkey rows wrap instead of cutting,
 // the every-N-days field keeps three digits clear of its steppers, and the MCP
 // card's confirmations come up as a sheet. On the desktop: the 40px rhythm and
-// a strip of tabs that spans the column in even rows. German, because its
+// separate tabs of one width in even rows, hugging them. German, because its
 // labels run longest; advanced mode on, so every expert control is there too.
 import { expect, test, type Page } from "@playwright/test";
 
@@ -412,7 +412,7 @@ for (const width of [320, 360]) {
 
       // Soft, so one run reports every check a tab fails rather than the first.
       expect.soft(await gaps(page), "the heading and card gaps").toEqual(["24px", "24px"]);
-      expect.soft((await tabRows(page)).perRow, "the eight tabs sit four over four").toEqual([4, 4]);
+      expect.soft((await tabRows(page)).perRow, "the eight tabs stay on one row").toEqual([8]);
       expect.soft(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
         strip: "rgba(0, 0, 0, 0)",
         tabsWithoutFill: 0,
@@ -484,7 +484,7 @@ test("settings on a phone: each tab shows its glyph alone and keeps its name", a
     const tab = page.getByRole("tab", { name, exact: true });
     await expect(tab).toBeVisible();
     const box = (await tab.boundingBox())!;
-    expect(box.width, `the ${name} tab is narrower than a fingertip`).toBeGreaterThanOrEqual(43.5);
+    expect(box.width, `the ${name} tab is under the 24px tap-target floor`).toBeGreaterThanOrEqual(23.5);
     // The label is there for the accessible name only; shown, it would be a
     // letter and an ellipsis.
     const label = tab.locator("[data-sel-label]");
@@ -577,28 +577,36 @@ test("settings system on a phone: passkeys wrap and the MCP confirmations come u
   expect(box.y + box.height).toBeLessThanOrEqual(800);
 });
 
-test("settings on the desktop keeps the 40px rhythm and a strip that spans the column", async ({ page }, testInfo) => {
+test("settings on the desktop keeps the 40px rhythm and one row of tabs", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await openTab(page, testInfo.project.use.viewport!.width, "general", "Allgemein");
 
   expect(await gaps(page)).toEqual(["40px", "40px"]);
-  const { perRow } = await tabRows(page);
-  expect(perRow.reduce((a, b) => a + b, 0)).toBe(TABS.length);
-  expect(Math.max(...perRow) - Math.min(...perRow), "the rows are as even as the count allows").toBeLessThanOrEqual(1);
+  expect((await tabRows(page)).perRow).toEqual([TABS.length]);
+  expect(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
+    strip: "rgba(0, 0, 0, 0)",
+    tabsWithoutFill: 0,
+  });
+  // The eight German names do not fit this column together, so every tab
+  // drops to its glyph at once rather than some keeping their words.
+  for (const [, name] of TABS) {
+    const tab = page.getByRole("tab", { name, exact: true });
+    await expect(tab).toBeVisible();
+    const label = tab.locator("[data-sel-label]");
+    expect(await label.evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
+  }
+});
+
+test("settings on a wide screen shows every tab with its name in one row", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
+  await openTab(page, 1920, "general", "Allgemein");
+
+  expect((await tabRows(page)).perRow).toEqual([TABS.length]);
+  // Benachrichtigungen is wider than an even eighth of the row; each tab is
+  // as wide as its own name, so it still fits whole.
   for (const [, name] of TABS) {
     const label = page.getByRole("tab", { name, exact: true }).locator("[data-sel-label]");
-    const fits = await label.evaluate((el) => el.getBoundingClientRect().width > 1 && el.scrollWidth <= el.clientWidth);
-    expect(fits, `the ${name} label is hidden or cut`).toBe(true);
+    await expect(label).toBeVisible();
+    expect(await label.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), `"${name}" is cut off`).toBe(true);
   }
-  // The strip spans the column the cards below share.
-  const strip = page.getByRole("tablist", { name: "Einstellungen" });
-  const span = await strip.evaluate((el) => {
-    const column = el.parentElement!;
-    const style = getComputedStyle(column);
-    return {
-      strip: el.getBoundingClientRect().width,
-      column: column.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
-    };
-  });
-  expect(Math.abs(span.strip - span.column)).toBeLessThanOrEqual(1);
 });

@@ -403,6 +403,51 @@ func TestCreatingASecondGroupIsRefusedUntilTheFirstIsLeft(t *testing.T) {
 	}
 }
 
+// backdateJoin moves the moment in stored as having entered its group.
+func backdateJoin(t *testing.T, in *instance, by time.Duration) {
+	t.Helper()
+	g, err := in.st.GetGroupState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := in.st.SetGroupSecret(g.SecretEnc, time.Now().Add(-by)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestTheGroupSaysHowLongAgoItWasEnteredAndWhetherAnyoneCame(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	if _, out := a.do(t, http.MethodGet, "/api/group", nil); out["joinedAgo"] != float64(0) || out["memberSeen"] != false {
+		t.Fatalf("outside a group: %v %v, want 0 and false", out["joinedAgo"], out["memberSeen"])
+	}
+
+	if code, _ := a.do(t, http.MethodPost, "/api/group/phrase", nil); code != http.StatusOK {
+		t.Fatalf("create: %d", code)
+	}
+	backdateJoin(t, a, 90*time.Second)
+	_, out := a.do(t, http.MethodGet, "/api/group", nil)
+	if ago, _ := out["joinedAgo"].(float64); ago < 90 || ago > 120 || out["memberSeen"] != false {
+		t.Fatalf("alone for a while: joinedAgo %v, memberSeen %v; want about 90 and false", out["joinedAgo"], out["memberSeen"])
+	}
+	if code, _ := a.do(t, http.MethodDelete, "/api/group", nil); code != http.StatusOK {
+		t.Fatalf("leave: %d", code)
+	}
+
+	pairThroughRelay(t, a, b)
+	if _, out := a.do(t, http.MethodGet, "/api/group", nil); out["memberSeen"] != true {
+		t.Fatalf("with attic in the group: memberSeen %v, want true", out["memberSeen"])
+	}
+	b.svc.StopGroup()
+	deadline := time.Now().Add(10 * time.Second)
+	for len(a.svc.pairing().Members()) > 0 && time.Now().Before(deadline) {
+		time.Sleep(20 * time.Millisecond)
+	}
+	if _, out := a.do(t, http.MethodGet, "/api/group", nil); out["memberSeen"] != true || len(out["members"].([]any)) != 0 {
+		t.Fatalf("with attic gone again: members %v, memberSeen %v; want none and still true", out["members"], out["memberSeen"])
+	}
+}
+
 func TestTheRelaySocketExistsOnlyWhileServing(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
 	in.do(t, http.MethodPost, "/api/group/phrase", nil)

@@ -1,7 +1,7 @@
 // The small pictures of the Pairing tab: one per step card and one per relay
 // route. They draw with the theme's own tokens, so they follow dark and light
 // and take the hue of the card they sit in through --accent.
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import type { RelayMode } from "../../lib/api";
 
 const NODE = "var(--carbon-surface2)";
@@ -246,43 +246,56 @@ export function StepPicture({ step }: { step: 1 | 2 | 3 }) {
   );
 }
 
-/** Small line glyphs for the relay card's facts and routes. */
-export function RouteGlyph({ kind }: { kind: "project" | "own" | "off" | "server" }) {
-  const common = {
-    viewBox: "0 0 20 20",
-    width: 20,
-    height: 20,
+const CLOUD = "M5.4 16.5h9.2a3.9 3.9 0 0 0 .6-7.8A5.4 5.4 0 0 0 4.9 7.3a4.6 4.6 0 0 0 .5 9.2z";
+
+/** RouteGlyph draws a relay route as a filled glyph, the way the selector's
+ *  other glyphs are drawn; the two relay sources keep line glyphs. */
+export function RouteGlyph({ kind }: { kind: RelayMode | "relay" | "server" }) {
+  // useId has colons, which a url(#...) reference does not take in every browser.
+  const cut = `route-cut${useId().replace(/[^\w-]/g, "")}`;
+  const box = { viewBox: "0 0 20 20", width: 20, height: 20, "aria-hidden": true as const };
+  const line = {
+    ...box,
     fill: "none",
     stroke: "currentColor",
     strokeWidth: 1.7,
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
-    "aria-hidden": true,
   };
   switch (kind) {
     case "project":
       return (
-        <svg {...common}>
-          <path d="M5.5 15.5h9a3.4 3.4 0 0 0 .4-6.8A5 5 0 0 0 5.3 7.6 4 4 0 0 0 5.5 15.5z" />
+        <svg {...box} fill="currentColor">
+          <path d={CLOUD} />
         </svg>
       );
     case "own":
       return (
-        <svg {...common}>
-          <path d="M3.5 7h12M12.5 4l3 3-3 3M16.5 13h-12M7.5 10l-3 3 3 3" />
+        <svg {...box} fill="currentColor">
+          <path d="M10 2.4 2.3 9.2c-.5.4-.2 1.2.5 1.2h1.6V17a1 1 0 0 0 1 1h3.1v-4.6h3V18h3.1a1 1 0 0 0 1-1v-6.6h1.6c.7 0 1-.8.5-1.2z" />
         </svg>
       );
     case "off":
+      // The slash is cut out of the cloud so it reads on any ground.
       return (
-        <svg {...common}>
-          <path d="M3 9.2 10 3.2l7 6" />
-          <path d="M5 8v8.5h10V8" />
-          <path d="M8.5 16.5v-4.5h3v4.5" />
+        <svg {...box} fill="currentColor">
+          <mask id={cut}>
+            <rect width="20" height="20" fill="white" />
+            <path d="M3 3l14 14" stroke="black" strokeWidth="3.6" strokeLinecap="round" />
+          </mask>
+          <path d={CLOUD} mask={`url(#${cut})`} />
+          <path d="M3.2 3.2l13.6 13.6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      );
+    case "relay":
+      return (
+        <svg {...line}>
+          <path d="M3.5 7h12M12.5 4l3 3-3 3M16.5 13h-12M7.5 10l-3 3 3 3" />
         </svg>
       );
     case "server":
       return (
-        <svg {...common}>
+        <svg {...line}>
           <rect x="3.5" y="9" width="13" height="8" rx="1.8" />
           <path d="M6.5 13h.01" />
           <path d="M7 5.8a4.4 4.4 0 0 1 6 0M4.8 3.6a7.6 7.6 0 0 1 10.4 0" />
@@ -291,7 +304,7 @@ export function RouteGlyph({ kind }: { kind: "project" | "own" | "off" | "server
   }
 }
 
-export function FactGlyph({ kind }: { kind: "need" | "sees" | "search" | "shield" | "lock" | "box" }) {
+export function FactGlyph({ kind }: { kind: "need" | "sees" | "search" | "shield" | "lock" | "hidden" }) {
   const common = {
     viewBox: "0 0 16 16",
     width: 16,
@@ -340,11 +353,70 @@ export function FactGlyph({ kind }: { kind: "need" | "sees" | "search" | "shield
           <path d="M5.2 7V5.1a2.8 2.8 0 0 1 5.6 0V7" />
         </svg>
       );
-    case "box":
+    case "hidden":
       return (
         <svg {...common}>
-          <path d="M8 1.8 13.8 5v6L8 14.2 2.2 11V5z" />
-          <path d="M2.4 5.1 8 8.2l5.6-3.1M8 8.2v5.8" />
+          <path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" />
+          <circle cx="8" cy="8" r="2.1" />
+          <path d="M2.6 2.6l10.8 10.8" />
+        </svg>
+      );
+  }
+}
+
+/** The glyphs of the phrase card: the two answers to its question, the next
+ *  step, the path to it, and the warning and done marks of the hints. */
+export function PhraseGlyph({ kind, size = 16 }: { kind: "create" | "enter" | "arrow" | "chevron" | "warn" | "check"; size?: number }) {
+  const common = {
+    viewBox: "0 0 20 20",
+    width: size,
+    height: size,
+    fill: "none",
+    stroke: "currentColor",
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+    className: "shrink-0",
+  };
+  switch (kind) {
+    case "create":
+      return (
+        <svg {...common} strokeWidth={1.8}>
+          <rect x="3" y="3" width="14" height="14" rx="3.5" />
+          <path d="M10 6.8v6.4M6.8 10h6.4" />
+        </svg>
+      );
+    case "enter":
+      return (
+        <svg {...common} strokeWidth={1.6}>
+          <rect x="2.5" y="5" width="15" height="10" rx="2.2" />
+          <path d="M5.5 8.2h.01M8.5 8.2h.01M11.5 8.2h.01M14.5 8.2h.01M6.5 11.8h7" />
+        </svg>
+      );
+    case "arrow":
+      return (
+        <svg {...common} strokeWidth={2.4} className="shrink-0 rtl:-scale-x-100">
+          <path d="M3.8 10h11.9M11.3 5.6 15.7 10l-4.4 4.4" />
+        </svg>
+      );
+    case "chevron":
+      return (
+        <svg {...common} strokeWidth={2.4} className="shrink-0 rtl:-scale-x-100">
+          <path d="M7.5 4.2 13.3 10l-5.8 5.8" />
+        </svg>
+      );
+    case "warn":
+      return (
+        <svg {...common} strokeWidth={1.7}>
+          <path d="M10 3 18 16.5H2z" />
+          <path d="M10 8.2v3.6" />
+          <circle cx="10" cy="14.1" r=".9" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case "check":
+      return (
+        <svg {...common} strokeWidth={2.6}>
+          <path d="M4.4 10.5 8.2 14.1 15.6 6.1" />
         </svg>
       );
   }

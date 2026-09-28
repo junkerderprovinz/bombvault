@@ -428,15 +428,17 @@ test("landscape 844x390: at >=48rem the desktop chrome owns the shell", async ({
   await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
 });
 
-// The Settings tab strip at phone widths. Below 48rem each tab shows its glyph
-// alone, so the eight share one row while a tab keeps 44px and go four over
-// four below that, instead of stacking eight rows of chrome above the page.
-// Geometry, not screenshots, per this file's contracts: the tabs per row, no
-// tab under 44px, and a strip that spans the column. English on purpose: with
-// the labels hidden the strip behaves the same in every locale, and en keeps
-// the assertion on that mechanism rather than on a locale's typography.
+// The Settings tab strip at phone widths. It never wraps to a second row,
+// however many tabs there are: the eight share the row evenly up to a width
+// cap each (Selector's `fit`), and once a label no longer fits its share
+// every tab drops to its glyph alone, the name staying its accessible name
+// and tooltip. Geometry, not screenshots, per this file's contracts: one row,
+// no tab under the 24px tap-target floor, and a strip that spans the column.
+// English on purpose: with the labels hidden the strip behaves the same in
+// every locale, and en keeps the assertion on that mechanism rather than on
+// a locale's typography.
 
-async function assertStrip(page: Page, width: number, perRow: number[]): Promise<void> {
+async function assertStrip(page: Page, width: number): Promise<void> {
   const strip = page.getByRole("tablist", { name: "Settings" });
   await expect(strip).toBeVisible();
   await settle(page);
@@ -460,12 +462,11 @@ async function assertStrip(page: Page, width: number, perRow: number[]): Promise
   });
   expect(geometry.tabs, "the Settings strip owns exactly the eight page tabs").toHaveLength(8);
 
-  const tops = [...new Set(geometry.tabs.map((t) => t.top))];
-  const actual = tops.map((top) => geometry.tabs.filter((t) => t.top === top).length);
-  expect(actual, `the tabs per row at ${width}px`).toEqual(perRow);
+  const tops = new Set(geometry.tabs.map((t) => t.top));
+  expect(tops.size, `the tabs stay on one row at ${width}px`).toBe(1);
 
   for (const { width: w } of geometry.tabs) {
-    expect(w, `a Settings tab shrunk to ${w}px, under a fingertip`).toBeGreaterThanOrEqual(43.5);
+    expect(w, `a Settings tab shrunk to ${w}px, under the 24px tap-target floor`).toBeGreaterThanOrEqual(23.5);
   }
 
   // The strip spans the column, as the cards below do.
@@ -475,25 +476,21 @@ async function assertStrip(page: Page, width: number, perRow: number[]): Promise
   ).toBeLessThanOrEqual(1);
 }
 
-for (const { width, perRow } of [
-  { width: 390, perRow: [4, 4] },
-  { width: 360, perRow: [4, 4] },
-  { width: 320, perRow: [4, 4] },
-]) {
-  test(`settings tab strip @ ${width}px: the eight tabs sit ${perRow.join(" over ")}`, async ({ page }, testInfo) => {
+for (const width of [390, 360, 320]) {
+  test(`settings tab strip @ ${width}px: the eight tabs stay on one row`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the glyph-only strip lives below 48rem");
     await bootSeededPage(page, "en", width, "/settings");
-    await assertStrip(page, width, perRow);
+    await assertStrip(page, width);
   });
 }
 
 // The same strip in a desktop browser narrowed to a phone width. The shell
 // switches on width alone, so this is a state anyone reaches by dragging a
 // window edge, and it is where a real scrollbar shows up.
-test("settings tab strip @ 390px in a desktop window: four over four with a scrollbar too", async ({ page }, testInfo) => {
+test("settings tab strip @ 390px in a desktop window: one row with a scrollbar too", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-768", "one desktop project carries this; the pair would run it twice");
   await bootSeededPage(page, "en", 390, "/settings");
-  await assertStrip(page, 390, [4, 4]);
+  await assertStrip(page, 390);
 });
 
 // The appearance card's pinned wells, which spread over the row they get once

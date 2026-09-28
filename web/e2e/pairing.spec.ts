@@ -1,36 +1,65 @@
-// The Pairing tab at 1280px and at 390px, in German because its labels run
-// longest: the three step cards, the phrase card and the relay card fit the
-// screen, and the relay selector swaps the route and shows the address field
-// for an own relay only. The group is staged at the route layer, since a fresh
-// harness database is in no group.
+// The Pairing tab, in German because its labels run longest. The layout test
+// checks that the step cards, the phrase card and the relay card fit at
+// 1280px and 390px. The flow tests stand in two instances with two pages and
+// a faked group API each, since a harness database is in no group: one where
+// both generate a phrase and are told after a minute how to merge
+// (https://github.com/junkerderprovinz/bombvault/issues/270), and one where
+// the second enters the phrase and pairs with the first one's words.
 import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
-function group(mode: string) {
+// The BIP39 test vector: twelve listed words that check out.
+const PHRASE = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+
+interface Member {
+  id: string;
+  name: string;
+  version: string;
+  direct: boolean;
+  relay: boolean;
+}
+
+/** One faked instance: what its GET /api/group answers, changed by the
+ *  routes the page calls and by the test. */
+interface Instance {
+  name: string;
+  active: boolean;
+  joinedAgo: number;
+  memberSeen: boolean;
+  members: Member[];
+  mode: string;
+  connected: boolean;
+  /** Who a join with PHRASE finds in the group. */
+  joinFinds: Member[];
+}
+
+function instance(name: string, over: Partial<Instance> = {}): Instance {
+  return { name, active: false, joinedAgo: 0, memberSeen: false, members: [], mode: "project", connected: true, joinFinds: [], ...over };
+}
+
+function view(f: Instance) {
   return {
     ok: true,
-    active: true,
-    instanceId: "self",
-    name: "Tower Linz",
+    active: f.active,
+    instanceId: f.name,
+    name: f.name,
     passwordSet: true,
-    members: [
-      { id: "m1", name: "Schwiegereltern Tower Gmunden Keller", version: "v9.2.0", direct: false, relay: true },
-      { id: "m2", name: "Büro Linz", version: "v9.2.0", direct: true, relay: true },
-    ],
+    members: f.members,
     relay: {
-      mode,
+      mode: f.mode,
       url: "wss://relay.familie-hofer.example.at",
       projectUrl: "wss://relay.halleluja.design/relay/connect",
-      connected: true,
+      connected: f.active && f.connected,
       serve: false,
       serveClients: 0,
     },
+    joinedAgo: f.active ? f.joinedAgo : 0,
+    memberSeen: f.memberSeen,
   };
 }
 
-async function stage(page: Page): Promise<void> {
-  let mode = "project";
+async function stage(page: Page, f: Instance): Promise<void> {
   await page.route("**/api/settings", async (route) => {
     if (route.request().method() !== "GET") return route.fallback();
     const res = await route.fetch();
@@ -38,11 +67,24 @@ async function stage(page: Page): Promise<void> {
     body.settings = { ...body.settings, receiverEnabled: true, fleetEnabled: true, pullEnabled: true };
     await route.fulfill({ response: res, json: body });
   });
-  await page.route("**/api/group", (route) => route.fulfill({ json: group(mode) }));
+  await page.route("**/api/group", async (route) => {
+    if (route.request().method() === "DELETE") Object.assign(f, { active: false, joinedAgo: 0, memberSeen: false, members: [] });
+    await route.fulfill({ json: view(f) });
+  });
+  await page.route("**/api/group/phrase", async (route) => {
+    Object.assign(f, { active: true, joinedAgo: 0, memberSeen: false, members: [] });
+    await route.fulfill({ json: { ok: true, phrase: PHRASE, group: view(f) } });
+  });
+  await page.route("**/api/group/join", async (route) => {
+    const { phrase } = route.request().postDataJSON() as { phrase: string };
+    if (phrase !== PHRASE) return route.fulfill({ json: { ok: false, reason: "checksum" } });
+    Object.assign(f, { active: true, joinedAgo: 0, members: f.joinFinds, memberSeen: f.joinFinds.length > 0 });
+    await route.fulfill({ json: view(f) });
+  });
   await page.route("**/api/group/relay", async (route) => {
     const patch = route.request().postDataJSON() as { mode?: string };
-    if (patch.mode) mode = patch.mode;
-    await route.fulfill({ json: group(mode) });
+    if (patch.mode) f.mode = patch.mode;
+    await route.fulfill({ json: view(f) });
   });
   await page.route("**/api/display-prefs*", (route) => route.abort());
   await page.addInitScript(() => window.localStorage.setItem("bv-lang", "de"));
@@ -88,31 +130,40 @@ async function expectFits(page: Page): Promise<void> {
   expect(found.pastCard, "controls stick out of their card").toEqual([]);
 }
 
-async function open(page: Page, width: number): Promise<void> {
-  await stage(page);
+async function open(page: Page, f: Instance, width = 1280): Promise<void> {
+  await stage(page, f);
   await page.setViewportSize({ width, height: 900 });
   await page.goto("/instances#pairing");
   await expect(page.getByRole("tab", { name: "Kopplung" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByText("Hier ablesen")).toBeVisible();
+  await expect(page.getByText("Erste Instanz", { exact: true })).toBeVisible();
   await settle(page);
 }
 
+const phraseCard = (page: Page) => page.locator("[data-stage]");
+const generate = (page: Page) => page.getByRole("button", { name: /Phrase generieren/ });
+const enter = (page: Page) => page.getByRole("button", { name: /Phrase eingeben/ });
+
+const attic: Member = { id: "attic", name: "Schwiegereltern Tower Gmunden Keller", version: "v9.2.1", direct: false, relay: true };
+const cellar: Member = { id: "cellar", name: "Büro Linz", version: "v9.2.1", direct: true, relay: true };
+
 for (const width of [1280, 390]) {
-  test(`pairing @ ${width}px: steps, phrase and relay fit, and the route switches`, async ({ page }, testInfo) => {
+  test(`pairing @ ${width}px: steps, tiles, the alone hint and relay fit`, async ({ page }, testInfo) => {
     const phone = MOBILE_PROJECTS.has(testInfo.project.name);
     test.skip(phone !== (width === 390), width === 390 ? "phone width runs on the phone projects" : "desktop width runs on the desktop projects");
     test.skip(!phone && testInfo.project.use.viewport!.width < width, "the 768px project cannot show 1280px");
-    await open(page, width);
+    const f = instance("Tower Linz", { active: true, members: [attic, cellar], memberSeen: true, joinedAgo: 600 });
+    await open(page, f, width);
 
-    for (const title of ["Hier ablesen", "Drüben eintippen", "Fertig"]) {
+    for (const title of ["Erste Instanz", "Jede weitere", "Fertig"]) {
       await expect(page.getByRole("heading", { level: 2, name: new RegExp(title) })).toBeVisible();
     }
     await expect(page.getByText("Schwiegereltern Tower Gmunden Keller")).toBeVisible();
+    await expect(phraseCard(page).getByText("Gekoppelt", { exact: true })).toBeVisible();
     await expectFits(page);
 
     // The three cards sit side by side on the desktop and stack on a phone.
     const tops = await page
-      .getByRole("heading", { level: 2, name: /Hier ablesen|Drüben eintippen|Fertig/ })
+      .getByRole("heading", { level: 2, name: /Erste Instanz|Jede weitere|Fertig/ })
       .evaluateAll((hs) => hs.map((h) => Math.round(h.getBoundingClientRect().top)));
     expect(new Set(tops).size).toBe(width === 1280 ? 1 : 3);
 
@@ -122,9 +173,103 @@ for (const width of [1280, 390]) {
     await expect(page.getByText("Woher du ein Relay bekommst")).toBeVisible();
     await settle(page);
     await expectFits(page);
-
     await page.getByRole("tab", { name: "Kein Relay" }).click();
     await expect(page.locator("#relay-address")).toHaveCount(0);
+    // The picture and what the relay sees open in place, and fit too.
+    await page.getByRole("button", { name: "Wie funktioniert das?" }).click();
     await expect(page.getByRole("img", { name: /Instanz C in einem anderen Netz/ })).toBeVisible();
+    await settle(page);
+    await expectFits(page);
+
+    // Alone, with the relay down: both hints and the paste field fit.
+    Object.assign(f, { members: [], memberSeen: false, joinedAgo: 90, mode: "project", connected: false });
+    await page.reload();
+    await expect(phraseCard(page)).toHaveAttribute("data-stage", "alone");
+    await expect(page.getByRole("heading", { name: "Relay nicht erreichbar" })).toBeVisible();
+    await settle(page);
+    await expectFits(page);
+
+    // Outside a group: the two tiles fit, and the paste field opens under them.
+    Object.assign(f, { active: false });
+    await page.reload();
+    await expect(generate(page)).toBeVisible();
+    await enter(page).click();
+    await expect(page.getByLabel(/Die zwölf Wörter deiner ersten Instanz/)).toBeVisible();
+    await settle(page);
+    await expectFits(page);
   });
 }
+
+test("two instances that both generate a phrase are told after a minute how to become one group", async ({ page, context }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "the flow runs once, on the desktop");
+  const a = instance("Tower Linz");
+  const b = instance("Büro Linz");
+  const pageB = await context.newPage();
+  for (const [p, f] of [
+    [page, a],
+    [pageB, b],
+  ] as const) {
+    await p.clock.install();
+    await open(p, f);
+    await generate(p).click();
+    await expect(phraseCard(p)).toHaveAttribute("data-stage", "new");
+    await expect(p.getByText("Neue Gruppe", { exact: true })).toBeVisible();
+    await expect(p.getByText("Jetzt auf der anderen Instanz")).toBeVisible();
+  }
+
+  a.joinedAgo = b.joinedAgo = 61;
+  for (const p of [page, pageB]) {
+    await p.clock.fastForward(11_000);
+    await expect(phraseCard(p)).toHaveAttribute("data-stage", "alone");
+    await expect(p.getByText("Noch allein", { exact: true })).toBeVisible();
+    await expect(p.getByText("Auf beiden Instanzen eine Phrase erstellt?")).toBeVisible();
+    await expect(p.getByText("Diese Gruppe verlassen")).toBeVisible();
+    await expect(p.getByText("Die Wörter der anderen Instanz eingeben")).toBeVisible();
+    await expect(p.getByLabel("Die zwölf Wörter der anderen Instanz")).toBeDisabled();
+  }
+
+  // B follows the two steps with A's words and finds A.
+  b.joinFinds = [{ id: "a", name: "Tower Linz", version: "v9.2.1", direct: true, relay: false }];
+  await pageB.getByRole("button", { name: "Gruppe verlassen" }).click();
+  await expect(pageB.getByText("Verlassen", { exact: true })).toBeVisible();
+  const field = pageB.getByLabel("Die zwölf Wörter der anderen Instanz");
+  await expect(field).toBeEnabled();
+  await field.fill(PHRASE);
+  await pageB.getByRole("button", { name: "Koppeln" }).click();
+  await expect(phraseCard(pageB)).toHaveAttribute("data-stage", "paired");
+  await expect(phraseCard(pageB).getByText("Gekoppelt", { exact: true })).toBeVisible();
+});
+
+test("the second instance enters the phrase, pastes the numbered words and both read paired", async ({ page, context }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "the flow runs once, on the desktop");
+  const a = instance("Tower Linz");
+  const b = instance("Büro Linz", { joinFinds: [{ id: "a", name: "Tower Linz", version: "v9.2.1", direct: true, relay: false }] });
+  await page.clock.install();
+  await open(page, a);
+  await generate(page).click();
+  await expect(page.getByRole("list", { name: "Die zwölf Wörter" })).toContainText("about");
+
+  const pageB = await context.newPage();
+  await open(pageB, b);
+  await enter(pageB).click();
+  const field = pageB.getByLabel("Die zwölf Wörter deiner ersten Instanz");
+  const pair = pageB.getByRole("button", { name: "Koppeln" });
+  await field.fill("abandon abandon unveel ");
+  await expect(pageB.getByRole("alert")).toHaveText("Wort 3 („unveel“) steht nicht auf der Wortliste.");
+  await expect(pair).toBeDisabled();
+  await field.fill(
+    PHRASE.split(" ")
+      .map((w, i) => `${i + 1}. ${w}`)
+      .join("\n"),
+  );
+  await expect(pageB.getByText("12 von 12 Wörtern")).toBeVisible();
+  await expect(pair).toBeEnabled();
+  await pair.click();
+  await expect(phraseCard(pageB).getByText("Gekoppelt", { exact: true })).toBeVisible();
+  await expect(pageB.getByText("Tower Linz", { exact: true }).last()).toBeVisible();
+
+  Object.assign(a, { members: [{ id: "b", name: "Büro Linz", version: "v9.2.1", direct: true, relay: false }], memberSeen: true });
+  await page.clock.fastForward(11_000);
+  await expect(phraseCard(page)).toHaveAttribute("data-stage", "paired");
+  await expect(phraseCard(page).getByText("Gekoppelt", { exact: true })).toBeVisible();
+});

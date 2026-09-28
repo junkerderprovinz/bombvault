@@ -64,7 +64,6 @@ import { SHAPES, getShape, leafTap, setShape, type Shape } from "../lib/shape";
 import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, stormTap, type MotionIntensity } from "../lib/motion";
 import { applyStoredDisco, discoTap, getDisco, setDisco } from "../lib/disco";
 import { HUE_OFFSET, Selector } from "../components/Selector";
-import { useIsDesktop } from "../lib/useMediaQuery";
 import { IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose } from "../components/Sidebar";
 // The integrity row's own two verbs ([324]). They live in the ACTION set
 // rather than the nav one, same split IconUpload already crosses.
@@ -1165,7 +1164,6 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
 // reordering, nothing to get wrong.
 export function SettingsPage() {
   const { t } = useT();
-  const isDesktop = useIsDesktop();
   const { summary: anomalySummary } = useAnomalySummary();
   const { confirm, confirmDialog } = useConfirm();
   const { advanced } = useAdvanced();
@@ -2450,8 +2448,7 @@ export function SettingsPage() {
     <div className={PAGE_SHELL_RESPONSIVE}>
       <PageTitle>{t("settings.title")}</PageTitle>
 
-      {/* The tab strip. Each tab owns the rainbow position of its list index,
-          and the strip spans the column the panels below share. */}
+      {/* The tab strip. Each tab owns the rainbow position of its list index. */}
       <Selector
         items={([
           ["general", t("settings.tab.general")],
@@ -2493,14 +2490,13 @@ export function SettingsPage() {
           }
         }}
         size="lg"
-        equalWidth
-        // On a phone the tabs are pages of their own rather than one choice, so
-        // each stands as its own badge instead of sharing a groove.
-        variant={isDesktop ? "well" : "chip"}
-        // Below 48rem no tab holds its German label, which would show a letter
-        // and an ellipsis, so the glyph stands alone and the label stays the
-        // tab's accessible name.
-        className="max-md:[&_[data-sel-label]]:sr-only"
+        // Tabs are pages rather than one choice, so each stands on its own
+        // instead of sharing a groove, as wide as the widest name.
+        variant="chip"
+        // Eight tabs never wrap to a second row: they share the row evenly
+        // and drop to their glyph, tab name as tooltip, once German's longest
+        // label no longer fits its share.
+        fit
       />
 
       {/* Tab panels, at the page's own full width, un-capped. Every direct
@@ -2958,7 +2954,7 @@ export function SettingsPage() {
           hueIndex={5}
         />
         <ToggleRow
-          label={t("settings.receiverEnabled")}
+          label={t("receiver.title")}
           hint={t("settings.receiverEnabledHint")}
           checked={settings.receiverEnabled}
           onChange={(v) => void toggleDomainEnabled("receiverEnabled", v)}
@@ -2967,8 +2963,11 @@ export function SettingsPage() {
           pulseNonce={fieldPulse.receiverEnabled}
           hueIndex={6}
         />
+        {/* Named after Instances, not the Fleet tab it shows: unlike
+            Receiver and Pull below, "Flotte" alone does not say what this
+            domain is. */}
         <ToggleRow
-          label={t("settings.fleetEnabled")}
+          label={t("instances.title")}
           hint={t("settings.fleetEnabledHint")}
           checked={settings.fleetEnabled}
           onChange={(v) => void toggleDomainEnabled("fleetEnabled", v)}
@@ -2982,7 +2981,7 @@ export function SettingsPage() {
             box's own repository. Its hint says so rather than leaving it to be
             discovered. */}
         <ToggleRow
-          label={t("settings.pullEnabled")}
+          label={t("pull.title")}
           hint={t("settings.pullEnabledHint")}
           checked={settings.pullEnabled}
           onChange={(v) => void toggleDomainEnabled("pullEnabled", v)}

@@ -66,6 +66,21 @@ test("a card's selector spans the card's content box", async ({ page }, testInfo
   expect(Math.abs(historyWidths.track - historyWidths.box), JSON.stringify(historyWidths)).toBeLessThanOrEqual(1);
 });
 
+test("a page-level tab strip never wraps, even with eight tabs", async ({ page }, testInfo) => {
+  // The phone width case (glyph-only, one row down to 320px) has its own
+  // geometry coverage in narrow-viewport.spec.ts; this checks the desktop
+  // scale of the same `fit` strip.
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: narrow-viewport.spec.ts covers the phone scale");
+  await stage(page);
+
+  await page.goto("/settings");
+  const tabs = page.getByRole("tablist", { name: "Settings" });
+  await expect(tabs).toBeVisible();
+  expect(await tabs.evaluate((el) => getComputedStyle(el).flexWrap)).toBe("nowrap");
+  const tops = await tabs.getByRole("tab").evaluateAll((els) => new Set(els.map((el) => Math.round(el.getBoundingClientRect().top))).size);
+  expect(tops, "all eight tabs share one row").toBe(1);
+});
+
 test("a toolbar's selector hugs its segments", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the list toolbar is the phone's");
   await stage(page);
@@ -77,4 +92,31 @@ test("a toolbar's selector hugs its segments", async ({ page }, testInfo) => {
   // spanned the row would take all of it and drop under the caption.
   const sortWidths = await widths(sort);
   expect(sortWidths.track, JSON.stringify(sortWidths)).toBeLessThan(sortWidths.box - 20);
+});
+
+test("a VM's method strip keeps its size through a save", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop row carries it; the phone renders the same component");
+  await stage(page);
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/api/vms/haos", async (route) => {
+    if (route.request().method() !== "PATCH") return route.continue();
+    await held;
+    await route.fulfill({ json: { ok: true } });
+  });
+
+  await page.goto("/vms");
+  const strip = page.getByRole("tablist", { name: "Method", exact: true }).first();
+  await expect(strip).toBeVisible();
+  const width = () => strip.evaluate((el) => el.getBoundingClientRect().width);
+  const before = await width();
+
+  await strip.getByRole("tab", { name: "Live snapshot" }).click();
+  await expect(strip.getByRole("tab", { name: "Live snapshot" })).toBeDisabled();
+  expect(await width(), "while saving").toBeCloseTo(before, 0);
+  release();
+  await expect(strip.getByRole("tab", { name: "Live snapshot" })).toBeEnabled();
+  // The strip measures itself again in a resize callback, a frame or two on.
+  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  expect(await width(), "after saving").toBeCloseTo(before, 0);
 });

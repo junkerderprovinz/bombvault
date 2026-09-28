@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -194,5 +196,17 @@ func TestWordlistIsTheOfficialOne(t *testing.T) {
 	}
 	if words[0] != "abandon" || words[len(words)-1] != "zoo" {
 		t.Fatalf("wordlist bounds = %q..%q, want abandon..zoo", words[0], words[len(words)-1])
+	}
+}
+
+// The Pairing tab checks each typed word against its own copy of the list,
+// which has to be this one or it rejects good words and passes bad ones.
+func TestTheBrowserWordListIsThisOne(t *testing.T) {
+	browser, err := os.ReadFile(filepath.Join("..", "..", "web", "src", "lib", "bip39-english.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(browser, []byte(wordlistFile)) {
+		t.Fatal("web/src/lib/bip39-english.txt differs from english.txt; copy english.txt over it")
 	}
 }

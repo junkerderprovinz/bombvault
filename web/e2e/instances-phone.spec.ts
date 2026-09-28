@@ -4,7 +4,8 @@
 // the tab panel, and with every card open and every remove armed, no pan, no
 // control past the viewport or its card, no text cut short and no stray
 // backtick, in the lists, the dialogs and the empty states. On the desktop:
-// the 40px rhythm and the one-line cards and inventory table as they were.
+// the 40px rhythm, separate tabs of one width, and the one-line cards and
+// inventory table as they were.
 // German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
 
@@ -282,10 +283,10 @@ const LANES = ["receiver", "fleet", "pull"] as const;
 type Lane = (typeof LANES)[number];
 
 // The button a lane is ready by. Fleet rows come from the pairing group, so
-// that lane has nothing to add and waits for a card's poll button instead.
+// that lane has nothing to add and waits for a member card's offer button.
 const ADD_LABEL: Record<Lane, string> = {
   receiver: "Empfangenes Repo hinzufügen",
-  fleet: "Jetzt abfragen",
+  fleet: "Speicher anbieten",
   pull: "Quelle hinzufügen",
 };
 
@@ -470,11 +471,29 @@ for (const lane of LANES) {
 
     expect(await gaps(page)).toEqual({ page: "40px", lane: "40px" });
     await expectFits(page, "#bv-main", { desktop: true });
+    expect(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
+      strip: "rgba(0, 0, 0, 0)",
+      tabsWithoutFill: 0,
+    });
+    // One row of tabs, each keeping its whole name: in even shares where the
+    // widest fits one, sized to the names where only the row as a whole does.
+    const tabs = await page
+      .getByRole("tablist", { name: "Instanzen" })
+      .getByRole("tab")
+      .evaluateAll((els) =>
+        els.map((tab) => {
+          const label = tab.querySelector<HTMLElement>("[data-sel-label]")!;
+          return { top: Math.round(tab.getBoundingClientRect().top), cut: label.scrollWidth > label.clientWidth + 1 };
+        }),
+      );
+    expect(new Set(tabs.map((tab) => tab.top)).size, "tab rows").toBe(1);
+    expect(tabs.filter((tab) => tab.cut), "tabs with a cut-off name").toEqual([]);
     if (lane === "pull") return;
 
     // Names and addresses stay one truncated line, and the receiver's
-    // last-received block stays beside the name.
-    const card = page.locator("#bv-main div.rounded-card.glim-hue").first();
+    // last-received block stays beside the name. The Fleet lane opens with
+    // this instance's card, which has no actions, so a member's card stands in.
+    const card = page.locator("#bv-main div.rounded-card.glim-hue:not([data-self])").first();
     // A fleet card of a paired member shows no address, only its name.
     const oneLine = [card.locator("span.font-semibold").first()];
     if (lane !== "fleet") oneLine.push(card.locator("p.font-mono").first());
@@ -488,7 +507,8 @@ for (const lane of LANES) {
       await expect(page.locator("#bv-main table")).toHaveCount(RECEIVED.length);
     }
     // At 768px the armed confirm needs a second row; at 1280px there is room.
-    if (width >= 1280) {
+    // Fleet cards share the row two by two and wrap their actions as needed.
+    if (width >= 1280 && lane !== "fleet") {
       const tops = await card
         .getByRole("button", { name: /^(Details|Bearbeiten|Entfernen bestätigen)$/ })
         .evaluateAll((buttons) => [...new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().top)))]);

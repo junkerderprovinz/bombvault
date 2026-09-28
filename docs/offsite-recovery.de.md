@@ -66,9 +66,9 @@ Die **Ransomware-Schutz-Scorecard** im Dashboard fasst dies zu einer grün / gel
 
 ## Instanzen koppeln {#pairing}
 
-Empfänger, Holen, die Fleet-Ansicht und Mesh-Off-site sprechen alle mit einem anderen BombVault. Das tun sie als Mitglieder einer Kopplungsgruppe, und in die Gruppe kommt eine Instanz mit zwölf Wörtern.
+Empfänger, Holen, die Flotte und Mesh-Off-site sprechen alle mit einem anderen BombVault. Das tun sie als Mitglieder einer Kopplungsgruppe, und in die Gruppe kommt eine Instanz mit zwölf Wörtern.
 
-Öffne auf der ersten Instanz **Instanzen → Kopplung** und drück auf **Phrase erstellen**. Es erscheinen zwölf Wörter. Öffne auf jeder weiteren Instanz denselben Reiter, drück auf **Phrase eingeben** und tipp sie ein. Das letzte Wort enthält eine Prüfsumme: Ein vertipptes oder vertauschtes Wort fällt sofort auf, und die Seite nennt das Wort und seine Stelle. Koppeln geht nur mit einem Anmeldepasswort auf jeder Instanz, weil die Wörter die Backups aller Instanzen der Gruppe öffnen. Die Phrase lässt sich später wieder anzeigen, sobald du dieses Passwort eingibst. Mit **Gruppe verlassen** nimmst du eine Instanz wieder heraus.
+Öffne auf der ersten Instanz **Instanzen → Kopplung** und klick auf **Phrase generieren**. Es erscheinen zwölf Wörter. Öffne auf jeder weiteren Instanz denselben Reiter, klick auf **Phrase eingeben** und füg die Wörter ein oder tipp sie ab. Ein Wort, das nicht auf der Liste steht, nennt die Seite schon beim Tippen mit seiner Stelle, und das letzte Wort enthält eine Prüfsumme: Ein vertipptes oder vertauschtes Wort fällt auf, bevor etwas gekoppelt wird. Erstell die Phrase nur auf einer Instanz, denn zwei Instanzen, die beide eine Phrase erstellen, bilden zwei getrennte Gruppen. Meldet sich eine Minute lang niemand, zeigt der Reiter, wie du die überzählige Gruppe verlässt und der anderen beitrittst. Koppeln geht nur mit einem Anmeldepasswort auf jeder Instanz, weil die Wörter die Backups aller Instanzen der Gruppe öffnen. Die Phrase lässt sich später wieder anzeigen, sobald du dieses Passwort eingibst. Mit **Gruppe verlassen** nimmst du eine Instanz wieder heraus.
 
 Wer die Wörter kennt, kommt in die Gruppe. Behandle sie also wie ein Passwort.
 

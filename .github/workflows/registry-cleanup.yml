@@ -1,0 +1,78 @@
+name: Registry Cleanup
+
+# Deletes a single image tag from GHCR and Docker Hub, run by hand. A GHCR
+# version that also carries "latest" is refused.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to delete (e.g. 1.0.1)"
+        required: true
+
+env:
+  IMAGE_NAME: bombvault
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Delete tag from GHCR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          api="/users/${{ github.repository_owner }}/packages/container/${IMAGE_NAME}"
+          if ! versions=$(gh api --paginate "${api}/versions"); then
+            echo "::warning::GHCR: listing versions failed (token scope?), skipping GHCR"
+            exit 0
+          fi
+          id=$(echo "$versions" | jq -r --arg t "$TAG" \
+            '.[] | select(.metadata.container.tags | index($t)) | .id' | head -1)
+          if [ -z "$id" ]; then
+            echo "GHCR: no version tagged '$TAG', nothing to do"
+            exit 0
+          fi
+          tags=$(echo "$versions" | jq -r --arg t "$TAG" \
+            '.[] | select(.metadata.container.tags | index($t)) | .metadata.container.tags | join(", ")')
+          echo "GHCR: version $id carries tags: $tags"
+          case ", $tags," in
+            *", latest,"*)
+              echo "::error::Refusing to delete: this version also carries 'latest'"
+              exit 1
+              ;;
+          esac
+          gh api -X DELETE "${api}/versions/${id}"
+          echo "GHCR: deleted version $id (tag $TAG)"
+
+      - name: Delete tag from Docker Hub
+        if: ${{ vars.DOCKERHUB_USERNAME != '' }}
+        env:
+          DH_USER: ${{ vars.DOCKERHUB_USERNAME }}
+          DH_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ -z "$DH_PASS" ]; then
+            echo "::warning::DOCKERHUB_TOKEN not set, skipping Docker Hub"
+            exit 0
+          fi
+          jwt=$(curl -s -X POST -H "Content-Type: application/json" \
+            -d "{\"username\":\"$DH_USER\",\"password\":\"$DH_PASS\"}" \
+            https://hub.docker.com/v2/users/login/ | jq -r .token)
+          if [ -z "$jwt" ] || [ "$jwt" = "null" ]; then
+            echo "::error::Docker Hub login failed"
+            exit 1
+          fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X DELETE \
+            -H "Authorization: JWT $jwt" \
+            "https://hub.docker.com/v2/repositories/${DH_USER}/${IMAGE_NAME}/tags/${TAG}/")
+          echo "Docker Hub: DELETE tags/${TAG} -> HTTP $code"
+          case "$code" in
+            2*) echo "Docker Hub: deleted" ;;
+            404) echo "Docker Hub: tag already gone" ;;
+            *) echo "::error::Docker Hub: unexpected status $code"; exit 1 ;;
+          esac
