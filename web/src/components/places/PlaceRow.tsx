@@ -106,7 +106,9 @@ export function PlaceRow({
         <PlaceMark provider={place.provider} size={32} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="truncate text-sm font-semibold text-carbon-text">{place.name}</span>
+            <span className="truncate text-sm font-semibold text-carbon-text max-md:whitespace-normal max-md:wrap-anywhere">
+              {place.name}
+            </span>
             {place.offPremises && <Badge tone="neutral">{t("places.row.otherSite")}</Badge>}
             {!place.enabled && <Badge tone="neutral">{t("places.row.off")}</Badge>}
           </div>
@@ -116,7 +118,9 @@ export function PlaceRow({
           <span className="text-xs text-carbon-textSub">{usage.length > 0 ? usage.join(" · ") : t("places.row.unused")}</span>
           <span className={`text-xs ${last && !last.ok ? "text-statusFail" : "text-carbon-textMuted"}`}>{lastText}</span>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        {/* On a phone the actions take their own row under the name, which
+            beside them shrinks to a few characters. */}
+        <div className="flex flex-wrap items-center gap-2 max-md:w-full">
           <Button
             label={t(open ? "places.row.closeDetails" : "places.row.showDetails")}
             labelKey={open ? "places.row.closeDetails" : "places.row.showDetails"}

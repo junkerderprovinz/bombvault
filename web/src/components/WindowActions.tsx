@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
  * to the end of the line, with the action that goes ahead given last (GlimStone
  * rule 15 and "Button order in a pair"). Under RTL the row mirrors with the page.
  */
-export function WindowActions({ children }: { children: ReactNode }) {
-  return <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 px-5 py-4">{children}</div>;
+export function WindowActions({ children, className }: { children: ReactNode; className?: string }) {
+  const row = "flex shrink-0 flex-wrap items-center justify-end gap-3 px-5 py-4";
+  return <div className={className ? `${row} ${className}` : row}>{children}</div>;
 }

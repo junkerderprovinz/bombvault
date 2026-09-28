@@ -131,7 +131,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
         return (
           <div key={s.id} className="flex items-center gap-1.5 rounded-card bg-carbon-surface2 p-3 text-sm text-carbon-text">
             <PlaceMark provider={owner.provider} />
-            <span className="truncate">{owner.name}</span>
+            <span className="min-w-0 truncate max-md:whitespace-normal max-md:wrap-anywhere">{owner.name}</span>
             <InfoBubble tip={t("cloud.credSets.placeOwned")} />
           </div>
         );

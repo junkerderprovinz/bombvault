@@ -551,7 +551,9 @@ export function PlaceDetails({
                   checked={offered}
                   disabled={locked}
                   onChange={(v) => setOffered(d, v)}
-                  className="w-40 justify-between"
+                  // On a phone the switch takes the row, so the folder name
+                  // below it keeps the width to be read and typed in.
+                  className="w-40 justify-between max-md:w-full"
                 />
                 <input
                   type="text"

@@ -1856,6 +1856,7 @@ export default function Recovery() {
                     tone="neutral"
                     onClick={() => setConfigSkipped(true)}
                     disabled={configBusy}
+                    className="glim-btn-wrap"
                   />
                   <Button
                     key={configShake}

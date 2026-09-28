@@ -244,6 +244,22 @@
     hyphens: auto;
     text-align: start;
   }
+
+  /* The same for the chips of a Selector (className="glim-seg-wrap") whose
+     labels are names, such as the places a domain is copied to: the chip grows
+     a line rather than cutting the name short or running past its row. */
+  .glim-seg-wrap .glim-seg-btn {
+    height: auto;
+    min-height: var(--btn-h);
+    padding-block: 0.375rem;
+    justify-content: flex-start;
+  }
+
+  .glim-seg-wrap .glim-seg-btn .truncate {
+    white-space: normal;
+    overflow-wrap: break-word;
+    text-align: start;
+  }
 }
 
 /* The remove control inside a pill (Button variant="chip"). No width stage and

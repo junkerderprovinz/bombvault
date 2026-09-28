@@ -364,8 +364,10 @@ describe.each(WINDOWS)("$name", (w) => {
     const header = dialog.firstElementChild!;
     if (header.querySelector("h2")) expect(header.querySelectorAll("button"), "a button in the title row").toHaveLength(0);
 
-    // The shared row, also where a part of the window renders it.
-    expect(row.className, "the row is WindowActions").toBe(sharedRow());
+    // The shared row, also where a part of the window renders it. A window
+    // may lay it out its own way below 48rem.
+    const desktop = (cls: string) => cls.split(/\s+/).filter((c) => !c.startsWith("max-md:")).join(" ");
+    expect(desktop(row.className), "the row is WindowActions").toBe(sharedRow());
   });
 });
 

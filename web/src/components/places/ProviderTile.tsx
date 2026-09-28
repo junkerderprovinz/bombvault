@@ -71,7 +71,7 @@ export function ProviderTile({
         onMouseEnter={tip.handlers.onMouseEnter}
         onMouseLeave={tip.handlers.onMouseLeave}
         style={{ ...hueVars(hueIndex), ...(lit && { "--tile": lit.color, "--tile-ink": lit.ink }) } as CSSProperties}
-        className={`glim-coin-tile glim-hue flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-2 rounded-control px-2 ${look}`}
+        className={`glim-coin-tile glim-hue flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-2 rounded-control px-2 max-md:aspect-square max-md:h-auto max-md:w-full ${look}`}
       >
         {showMark && <PlaceMark provider={provider.id} size={48} />}
         {showName && <span className="line-clamp-2 text-center text-xs font-medium leading-tight">{name}</span>}
@@ -116,8 +116,10 @@ export function ProviderGrid({
               </Badge>
             </h3>
             {/* Columns as wide as a tile, so every group lines up under the
-                one above, and the spare width split on both sides. */}
-            <div className="grid grid-cols-[repeat(auto-fill,7rem)] justify-center gap-2">
+                one above, and the spare width split on both sides. On a phone
+                two 7rem columns leave a wide margin, so there the tiles
+                shrink until a third fits and fill the row. */}
+            <div className="grid grid-cols-[repeat(auto-fill,7rem)] justify-center gap-2 max-md:grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))]">
               {members.map((p) => {
                 const i = ordered.indexOf(p);
                 return (

@@ -62,12 +62,14 @@ describe("ProviderGrid", () => {
     ]);
   });
 
-  it("gives every tile the same fixed size whatever its name", () => {
+  it("gives every tile the same size whatever its name: fixed on the desktop, its cell's square on a phone", () => {
     grid();
     for (const tile of tiles()) {
-      expect(tile.className).toMatch(/\bh-28\b/);
-      expect(tile.className).toMatch(/\bw-28\b/);
-      expect(tile.className).not.toContain("aspect-square");
+      const classes = tile.className.split(/\s+/);
+      expect(classes).toContain("h-28");
+      expect(classes).toContain("w-28");
+      expect(classes).not.toContain("aspect-square");
+      expect(classes).toEqual(expect.arrayContaining(["max-md:aspect-square", "max-md:h-auto", "max-md:w-full"]));
     }
     const long = within(tiles()[2]!).getByText("Hetzner Object Storage");
     expect(long.className).toContain("line-clamp-2");

@@ -439,9 +439,11 @@ export function PlaceForm({
         )}
       </div>
 
-      <WindowActions>
-        <Button label={t("places.form.back")} labelKey="places.form.back" tone="neutral" onClick={onBack} />
-        <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onCancel} />
+      {/* Four buttons wrap into a ragged heap on a phone, so there they stack
+          full width like a sheet's answers, in the same order. */}
+      <WindowActions className="max-md:flex-col max-md:items-stretch">
+        <Button label={t("places.form.back")} labelKey="places.form.back" tone="neutral" onClick={onBack} className="max-md:w-full" />
+        <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onCancel} className="max-md:w-full" />
         <Button
           key={`test-${shake.test}`}
           label={t("places.form.test")}
@@ -450,7 +452,7 @@ export function PlaceForm({
           busy={probing}
           disabled={probing || adding}
           onClick={() => void test()}
-          className={shake.test ? "glim-shake" : ""}
+          className={`max-md:w-full ${shake.test ? "glim-shake" : ""}`}
         />
         <Button
           key={`add-${shake.add}`}
@@ -461,7 +463,7 @@ export function PlaceForm({
           disabled={!canAdd}
           title={waitsFor ? t(waitsFor) : undefined}
           onClick={() => void add()}
-          className={shake.add ? "glim-shake" : ""}
+          className={`max-md:w-full ${shake.add ? "glim-shake" : ""}`}
         />
       </WindowActions>
     </>

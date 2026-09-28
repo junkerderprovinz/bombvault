@@ -352,7 +352,10 @@ export function DomainRowView({
         <span className="text-sm font-semibold text-carbon-text">{domain}</span>
         {/* A plain anchor rather than a router Link: on Settings itself only
             a hashchange switches the tab, and a router push fires none. */}
-        <a href="/settings#schedules" className="text-xs text-carbon-textSub hover:underline">
+        <a
+          href="/settings#schedules"
+          className="text-xs text-carbon-textSub hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-6 pointer-coarse:items-center"
+        >
           {cadenceLabel(row.schedule, t)}
         </a>
       </div>
@@ -394,7 +397,7 @@ export function DomainRowView({
               <span className="text-carbon-textSub">{t("storageDomains.noCopyPlace")}</span>
             )}
             {row.chips.length > 0 && (
-              <div key={`chips-${shake.chips}`} className={shake.chips ? "glim-shake" : undefined}>
+              <div key={`chips-${shake.chips}`} className={`min-w-0 max-w-full ${shake.chips ? "glim-shake" : ""}`}>
                 <Selector
                   items={chipItems}
                   label={t("storageDomains.copiedTo")}
@@ -404,6 +407,7 @@ export function DomainRowView({
                   raised
                   disabled={busy}
                   onChange={(id) => void toggleChip(id, !ticked.has(id))}
+                  className="glim-seg-wrap"
                 />
               </div>
             )}
