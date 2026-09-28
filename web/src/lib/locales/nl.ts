@@ -686,7 +686,7 @@ const nl: Partial<Translations> = {
   "settings.retentionOffsite": "Off-site repo",
   "settings.retentionOffsiteTitle": "Off-site bewaarbeleid",
   "settings.retentionOffsiteHint": "Een apart beleid voor de off-site repo, zodat je die langer als archief kunt bewaren. Alles 0 = elke off-site back-up bewaren (geen off-site opschoning).",
-  "settings.retentionCombineInfo": "De vier regels combineren met OF: een snapshot blijft bestaan als één enkele regel die zou bewaren. Ze tellen niet op tot een vast aantal. Geldt apart voor elk geback-upt item.",
+  "settings.retentionCombineInfo": "De vijf regels combineren met OF: een snapshot blijft bestaan als één enkele regel die zou bewaren. Ze tellen niet op tot een vast aantal. Geldt apart voor elk geback-upt item.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

@@ -692,7 +692,7 @@ const fi: Partial<Translations> = {
   "settings.retentionOffsite": "Etärepo",
   "settings.retentionOffsiteTitle": "Etäsäilytys",
   "settings.retentionOffsiteHint": "Erillinen käytäntö etärepolle, jotta voit säilyttää sitä pidempään arkistona. Kaikki 0 = säilytä jokainen etävarmuuskopio (ei etäkarsintaa).",
-  "settings.retentionCombineInfo": "Neljä sääntöä yhdistyvät TAI-logiikalla: snapshot säilyy, jos mikä tahansa yksittäinen sääntö säilyttäisi sen. Ne eivät summaudu kiinteäksi määräksi. Koskee jokaista varmuuskopioitua kohdetta erikseen.",
+  "settings.retentionCombineInfo": "Viisi sääntöä yhdistyvät TAI-logiikalla: snapshot säilyy, jos mikä tahansa yksittäinen sääntö säilyttäisi sen. Ne eivät summaudu kiinteäksi määräksi. Koskee jokaista varmuuskopioitua kohdetta erikseen.",
 
   // Off-site (rclone)
   "rclone.title": "Etäsijainti (rclone)",

@@ -692,7 +692,7 @@ const es: Partial<Translations> = {
   "settings.retentionOffsite": "Repo externo",
   "settings.retentionOffsiteTitle": "Retención externa",
   "settings.retentionOffsiteHint": "Una política separada para el repo externo, para conservarlo más tiempo como archivo. Todo en 0 = conservar cada copia externa (sin purga externa).",
-  "settings.retentionCombineInfo": "Las cuatro reglas se combinan con O: una copia sobrevive si cualquier regla la conservaría. No se suman a un número fijo. Se aplica por separado a cada elemento respaldado.",
+  "settings.retentionCombineInfo": "Las cinco reglas se combinan con O: una copia sobrevive si cualquier regla la conservaría. No se suman a un número fijo. Se aplica por separado a cada elemento respaldado.",
 
   // Off-site (rclone)
   "rclone.title": "Externo (rclone)",

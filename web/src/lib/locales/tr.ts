@@ -692,7 +692,7 @@ const tr: Partial<Translations> = {
   "settings.retentionOffsite": "Uzak repo",
   "settings.retentionOffsiteTitle": "Uzak saklama",
   "settings.retentionOffsiteHint": "Uzak repo için ayrı bir politika; arşiv olarak daha uzun tutabilirsin. Hepsi 0 = her uzak yedeği sakla (uzak budama yok).",
-  "settings.retentionCombineInfo": "Dört kural VEYA ile birleşir: herhangi bir kural onu tutacaksa anlık görüntü hayatta kalır. Sabit bir sayıya toplanmazlar. Yedeklenen her öğeye ayrı ayrı uygulanır.",
+  "settings.retentionCombineInfo": "Beş kural VEYA ile birleşir: herhangi bir kural onu tutacaksa anlık görüntü hayatta kalır. Sabit bir sayıya toplanmazlar. Yedeklenen her öğeye ayrı ayrı uygulanır.",
 
   // Off-site (rclone)
   "rclone.title": "Dış konum (rclone)",

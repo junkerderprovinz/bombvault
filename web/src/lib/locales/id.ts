@@ -647,7 +647,7 @@ const id: Partial<Translations> = {
   "settings.retentionWeeklyInfo": "Menyimpan satu snapshot untuk setiap N minggu kalender terakhir yang memiliki cadangan.",
   "settings.retentionMonthlyInfo": "Menyimpan satu snapshot untuk setiap N bulan kalender terakhir yang memiliki cadangan.",
   "settings.retentionYearlyInfo": "Menyimpan satu snapshot untuk setiap N tahun kalender terakhir yang memiliki cadangan.",
-  "settings.retentionCombineInfo": "Keempat aturan ini digabungkan dengan ATAU: snapshot bertahan jika aturan mana pun akan mempertahankannya. Tidak dijumlahkan menjadi jumlah tetap. Berlaku terpisah untuk setiap item yang dicadangkan.",
+  "settings.retentionCombineInfo": "Kelima aturan ini digabungkan dengan ATAU: snapshot bertahan jika aturan mana pun akan mempertahankannya. Tidak dijumlahkan menjadi jumlah tetap. Berlaku terpisah untuk setiap item yang dicadangkan.",
   "settings.retentionLocal": "Repositori lokal",
   "settings.retentionOffsite": "Repositori off-site",
   "settings.retentionOffsiteTitle": "Retensi off-site",

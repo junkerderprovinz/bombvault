@@ -647,7 +647,7 @@ const hi: Partial<Translations> = {
   "settings.retentionWeeklyInfo": "बैकअप वाले आख़िरी N कैलेंडर सप्ताहों में से हर एक के लिए एक स्नैपशॉट रखता है।",
   "settings.retentionMonthlyInfo": "बैकअप वाले आख़िरी N कैलेंडर महीनों में से हर एक के लिए एक स्नैपशॉट रखता है।",
   "settings.retentionYearlyInfo": "बैकअप वाले आख़िरी N कैलेंडर वर्षों में से हर एक के लिए एक स्नैपशॉट रखता है।",
-  "settings.retentionCombineInfo": "ये चार नियम OR के साथ मिलते हैं: कोई स्नैपशॉट बच जाता है अगर कोई भी नियम उसे रखता। ये किसी तय संख्या में नहीं जुड़ते। यह हर बैकअप किए गए आइटम पर अलग से लागू होता है।",
+  "settings.retentionCombineInfo": "ये पाँच नियम OR के साथ मिलते हैं: कोई स्नैपशॉट बच जाता है अगर कोई भी नियम उसे रखता। ये किसी तय संख्या में नहीं जुड़ते। यह हर बैकअप किए गए आइटम पर अलग से लागू होता है।",
   "settings.retentionLocal": "लोकल रिपॉज़िटरी",
   "settings.retentionOffsite": "ऑफ़-साइट रिपॉज़िटरी",
   "settings.retentionOffsiteTitle": "ऑफ़-साइट रिटेंशन",

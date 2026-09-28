@@ -689,7 +689,7 @@ const ko: Partial<Translations> = {
   "settings.retentionOffsite": "오프사이트 저장소",
   "settings.retentionOffsiteTitle": "오프사이트 보존",
   "settings.retentionOffsiteHint": "오프사이트 저장소를 위한 별도 정책으로, 아카이브로 더 오래 보관할 수 있습니다. 모두 0 = 모든 오프사이트 백업 보관(오프사이트 정리 없음).",
-  "settings.retentionCombineInfo": "네 가지 규칙은 OR로 결합됩니다: 어느 한 규칙이라도 보관하려는 스냅샷은 남습니다. 고정된 개수로 합산되지 않습니다. 백업된 각 항목에 개별적으로 적용됩니다.",
+  "settings.retentionCombineInfo": "다섯 가지 규칙은 OR로 결합됩니다: 어느 한 규칙이라도 보관하려는 스냅샷은 남습니다. 고정된 개수로 합산되지 않습니다. 백업된 각 항목에 개별적으로 적용됩니다.",
 
   "rclone.title": "오프사이트 (rclone)",
   "rclone.hint": "rclone 설정을 붙여넣어 클라우드(Backblaze B2, S3, Google Drive 등)로 백업합니다. 암호화하여 저장됩니다. SMB/NFS는 rclone이 필요 없습니다. Unraid에 공유를 마운트하고 백업 경로를 그곳으로 설정하세요.",

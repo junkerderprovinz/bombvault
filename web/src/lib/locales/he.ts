@@ -692,7 +692,7 @@ const he: Partial<Translations> = {
   "settings.retentionOffsite": "מאגר מרוחק",
   "settings.retentionOffsiteTitle": "שמירה מרוחקת",
   "settings.retentionOffsiteHint": "מדיניות נפרדת למאגר המרוחק, כדי לשמור אותו זמן רב יותר כארכיון. הכול 0 = שמור כל גיבוי מרוחק (ללא גיזום מרוחק).",
-  "settings.retentionCombineInfo": "ארבעת הכללים משולבים באו: גיבוי נשמר אם כלל כלשהו היה שומר אותו. הם לא מצטברים למספר קבוע. חל בנפרד על כל פריט מגובה.",
+  "settings.retentionCombineInfo": "חמשת הכללים משולבים באו: גיבוי נשמר אם כלל כלשהו היה שומר אותו. הם לא מצטברים למספר קבוע. חל בנפרד על כל פריט מגובה.",
 
   // Off-site (rclone)
   "rclone.title": "מחוץ לאתר (rclone)",

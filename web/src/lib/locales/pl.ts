@@ -684,7 +684,7 @@ const pl: Partial<Translations> = {
   "settings.retentionOffsite": "Repo zdalne",
   "settings.retentionOffsiteTitle": "Przechowywanie zdalne",
   "settings.retentionOffsiteHint": "Osobna polityka dla repo zdalnego, aby trzymać je dłużej jako archiwum. Wszystko 0 = zachowaj każdą kopię zdalną (bez czyszczenia zdalnego).",
-  "settings.retentionCombineInfo": "Cztery reguły łączą się operatorem LUB: migawka przetrwa, jeśli zachowałaby ją choć jedna reguła. Nie sumują się do stałej liczby. Dotyczy osobno każdego kopiowanego elementu.",
+  "settings.retentionCombineInfo": "Pięć reguł łączy się operatorem LUB: migawka przetrwa, jeśli zachowałaby ją choć jedna reguła. Nie sumują się do stałej liczby. Dotyczy osobno każdego kopiowanego elementu.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

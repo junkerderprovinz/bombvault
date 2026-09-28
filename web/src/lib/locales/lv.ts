@@ -647,7 +647,7 @@ const lv: Partial<Translations> = {
   "settings.retentionWeeklyInfo": "Saglabā vienu momentuzņēmumu katrai no pēdējām N kalendārajām nedēļām ar rezerves kopiju.",
   "settings.retentionMonthlyInfo": "Saglabā vienu momentuzņēmumu katram no pēdējiem N kalendārajiem mēnešiem ar rezerves kopiju.",
   "settings.retentionYearlyInfo": "Saglabā vienu momentuzņēmumu katram no pēdējiem N kalendārajiem gadiem ar rezerves kopiju.",
-  "settings.retentionCombineInfo": "Šie četri noteikumi tiek apvienoti ar VAI: momentuzņēmums saglabājas, ja to saglabātu jebkurš noteikums. Tie nesummējas fiksētā skaitā. Piemēro atsevišķi katram dublētajam vienumam.",
+  "settings.retentionCombineInfo": "Šie pieci noteikumi tiek apvienoti ar VAI: momentuzņēmums saglabājas, ja to saglabātu jebkurš noteikums. Tie nesummējas fiksētā skaitā. Piemēro atsevišķi katram dublētajam vienumam.",
   "settings.retentionLocal": "Vietējais repozitorijs",
   "settings.retentionOffsite": "Attālinātais repozitorijs",
   "settings.retentionOffsiteTitle": "Attālinātā saglabāšana",

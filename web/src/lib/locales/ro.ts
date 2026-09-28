@@ -689,7 +689,7 @@ const ro: Partial<Translations> = {
   "settings.retentionOffsite": "Repo off-site",
   "settings.retentionOffsiteTitle": "Retenție off-site",
   "settings.retentionOffsiteHint": "O politică separată pentru repo-ul off-site, ca să-l păstrezi mai mult ca arhivă. Toate 0 = păstrează fiecare backup off-site (fără curățare off-site).",
-  "settings.retentionCombineInfo": "Cele patru reguli se combină prin SAU: un instantaneu supraviețuiește dacă orice regulă l-ar păstra. Nu se adună la un număr fix. Se aplică separat fiecărui element salvat.",
+  "settings.retentionCombineInfo": "Cele cinci reguli se combină prin SAU: un instantaneu supraviețuiește dacă orice regulă l-ar păstra. Nu se adună la un număr fix. Se aplică separat fiecărui element salvat.",
 
   // Off-site (rclone)
   "rclone.title": "În afara sitului (rclone)",
