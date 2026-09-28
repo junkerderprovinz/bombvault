@@ -525,7 +525,7 @@ describe("Selector fit", () => {
     { id: "b", label: "Beta", icon: <span /> },
   ];
 
-  it("keeps the track to one row, each segment sharing it up to MAX_PINNED_WIDTH", () => {
+  it("keeps the track to one row, the segments sharing it evenly up to MAX_PINNED_WIDTH", () => {
     render(<Selector items={ICON_TWO} label="Test strip" active="a" onChange={() => {}} fit />);
     const list = screen.getByRole("tablist");
     expect(list.style.flexWrap).toBe("nowrap");
@@ -535,7 +535,7 @@ describe("Selector fit", () => {
     expect(tab.style.maxWidth).toBe(`${MAX_PINNED_WIDTH}px`);
   });
 
-  it("drops every segment to its glyph once the widest label no longer fits its share", () => {
+  it("drops every segment to its glyph once the labels together no longer fit the row", () => {
     const restore = layOut(200, oneLine(500, 90));
     try {
       render(<Selector items={ICON_TWO} label="Test strip" active="a" onChange={() => {}} fit />);
@@ -544,6 +544,7 @@ describe("Selector fit", () => {
       // does not implement.
       const tab = seg("a");
       expect(tab.querySelector("[data-sel-label]")!.className).toContain("sr-only");
+      expect(tab.style.flex).toBe("1 1 0px");
       fireEvent.mouseEnter(tab);
       expect(document.querySelector(".glim-bubble")?.textContent).toBe("Alpha");
     } finally {
@@ -551,11 +552,23 @@ describe("Selector fit", () => {
     }
   });
 
-  it("keeps the labels on screen while the widest still fits its share", () => {
-    const restore = layOut(900, oneLine(90, 90));
+  it("keeps the labels on screen while they fit the row together, even when one is wider than an even share", () => {
+    const restore = layOut(400, oneLine(250, 90));
     try {
       render(<Selector items={ICON_TWO} label="Test strip" active="a" onChange={() => {}} fit />);
       expect(seg("a").querySelector("[data-sel-label]")!.className).not.toContain("sr-only");
+      expect(seg("a").style.flex).toBe("1 1 auto");
+    } finally {
+      restore();
+    }
+  });
+
+  it("shares the row evenly while the widest label fits an even share", () => {
+    const restore = layOut(400, oneLine(150, 90));
+    try {
+      render(<Selector items={ICON_TWO} label="Test strip" active="a" onChange={() => {}} fit />);
+      expect(seg("a").querySelector("[data-sel-label]")!.className).not.toContain("sr-only");
+      expect(seg("a").style.flex).toBe("1 1 0px");
     } finally {
       restore();
     }

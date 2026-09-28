@@ -89,10 +89,11 @@ interface SelectorCommon {
   /** Hug the segments instead of spanning the box, for a strip that shares a
    *  toolbar row with a search field or buttons. */
   inline?: boolean;
-  /** Keep every segment on one row, which they share evenly up to
-   *  MAX_PINNED_WIDTH each, for page tabs. When the longest label does not
-   *  fit its share, every segment shows its glyph alone, and the label stays
-   *  its accessible name and tooltip. Overrides `equalWidth` and `inline`. */
+  /** Keep every segment on one row, up to MAX_PINNED_WIDTH each, for page
+   *  tabs. The segments share the row evenly while the widest label fits a
+   *  share, then size to their labels, and once the labels do not fit
+   *  together every segment shows its glyph alone, the label staying its
+   *  accessible name and tooltip. Overrides `equalWidth` and `inline`. */
   fit?: boolean;
   /** Disables every item (e.g. SourceToggle mid-restore). A per-item
    *  `disabled` still applies on top of this. */
@@ -477,13 +478,15 @@ export function Selector(props: SelectorProps) {
     return () => watch.disconnect();
   }, [pinWidth, inline, itemsKey, disabledKey, size, labelModeForStrip]);
 
-  // Whether the longest label fits its share of a one-row strip. The labels
-  // are put back on screen for the measurement, so a strip that has dropped
-  // them sees when they fit again.
-  const [squeezed, setSqueezed] = useState(false);
+  // How a one-row strip holds its labels: in even shares while the widest
+  // fits one, at each label's own width while they fit together, and as
+  // glyphs alone after that. The labels are put back on screen for the
+  // measurement, so a strip that has dropped them sees when they fit again.
+  const [fitMode, setFitMode] = useState<"even" | "content" | "squeezed">("even");
+  const squeezed = fitMode === "squeezed";
   useLayoutEffect(() => {
     if (!canSqueeze) {
-      setSqueezed(false);
+      setFitMode("even");
       return;
     }
     const el = strip.current!;
@@ -493,12 +496,13 @@ export function Selector(props: SelectorProps) {
       const room = el.clientWidth - parseFloat(own.paddingLeft) - parseFloat(own.paddingRight);
       if (room <= 0 || segs.length === 0) return;
       const gap = parseFloat(own.columnGap) || 0;
-      const share = Math.min((room - gap * (segs.length - 1)) / segs.length, MAX_PINNED_WIDTH);
       const hidden = Array.from(el.querySelectorAll("[data-sel-label].sr-only"));
       for (const l of hidden) l.classList.remove("sr-only");
-      const widest = Math.max(...segmentWidths(segs).map((w) => w.oneLine));
+      const widths = segmentWidths(segs).map((w) => w.oneLine);
       for (const l of hidden) l.classList.add("sr-only");
-      setSqueezed(widest > share);
+      const free = room - gap * (segs.length - 1);
+      const needed = widths.reduce((sum, w) => sum + w, 0);
+      setFitMode(Math.max(...widths) <= free / segs.length ? "even" : needed <= free ? "content" : "squeezed");
     };
     measure();
     const watch = new ResizeObserver(measure);
@@ -521,8 +525,11 @@ export function Selector(props: SelectorProps) {
   const byContent = pinWidth && !!layout?.byContent;
   const pinnedRows = pinWidth && layout && !layout.byContent ? layout : null;
   const hugged = inline && pinnedRows;
+  // In the content mode a segment starts from its label's width and shares
+  // out what is left, so a long name such as "Benachrichtigungen" keeps its
+  // words while the short ones give up room.
   const segmentFlex: CSSProperties = fit
-    ? { flex: "1 1 0", minWidth: 0, maxWidth: `${MAX_PINNED_WIDTH}px` }
+    ? { flex: fitMode === "content" ? "1 1 auto" : "1 1 0", minWidth: 0, maxWidth: `${MAX_PINNED_WIDTH}px` }
     : hugged
       ? { flex: `0 0 ${Math.min(hugged.pinned, hugged.room)}px` }
       : pinnedRows

@@ -577,39 +577,36 @@ test("settings system on a phone: passkeys wrap and the MCP confirmations come u
   expect(box.y + box.height).toBeLessThanOrEqual(800);
 });
 
-test("settings on the desktop keeps the 40px rhythm and one row of same-width tabs", async ({ page }, testInfo) => {
+test("settings on the desktop keeps the 40px rhythm and one row of tabs", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await openTab(page, testInfo.project.use.viewport!.width, "general", "Allgemein");
 
   expect(await gaps(page)).toEqual(["40px", "40px"]);
-  const { perRow } = await tabRows(page);
-  expect(perRow.reduce((a, b) => a + b, 0)).toBe(TABS.length);
-  expect(Math.max(...perRow) - Math.min(...perRow), "the rows are as even as the count allows").toBeLessThanOrEqual(1);
-  // The column stays well under eight German tabs' worth of full labels, so
-  // even the shortest, Allgemein, drops to its glyph along with the rest:
-  // fit squeezes every segment together once the longest one does not fit
-  // its even share.
+  expect((await tabRows(page)).perRow).toEqual([TABS.length]);
+  expect(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
+    strip: "rgba(0, 0, 0, 0)",
+    tabsWithoutFill: 0,
+  });
+  // The eight German names do not fit this column together, so every tab
+  // drops to its glyph at once rather than some keeping their words.
   for (const [, name] of TABS) {
     const tab = page.getByRole("tab", { name, exact: true });
     await expect(tab).toBeVisible();
     const label = tab.locator("[data-sel-label]");
     expect(await label.evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
   }
-  expect(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
-    strip: "rgba(0, 0, 0, 0)",
-    tabsWithoutFill: 0,
-  });
-  // Every tab is as wide as the next, and the strip ends where its widest row
-  // does instead of running on to the column's edge.
-  const strip = page.getByRole("tablist", { name: "Einstellungen" });
-  const span = await strip.evaluate((el) => {
-    const tabs = [...el.querySelectorAll('[role="tab"]')].map((tab) => tab.getBoundingClientRect());
-    return {
-      widths: tabs.map((box) => Math.round(box.width)),
-      strip: el.getBoundingClientRect().right,
-      lastEdge: Math.max(...tabs.map((box) => box.right)),
-    };
-  });
-  expect(new Set(span.widths).size, `tab widths ${span.widths.join(", ")}`).toBe(1);
-  expect(span.strip - span.lastEdge, "track past the last tab").toBeLessThanOrEqual(1);
+});
+
+test("settings on a wide screen shows every tab with its name in one row", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
+  await openTab(page, 1920, "general", "Allgemein");
+
+  expect((await tabRows(page)).perRow).toEqual([TABS.length]);
+  // Benachrichtigungen is wider than an even eighth of the row; each tab is
+  // as wide as its own name, so it still fits whole.
+  for (const [, name] of TABS) {
+    const label = page.getByRole("tab", { name, exact: true }).locator("[data-sel-label]");
+    await expect(label).toBeVisible();
+    expect(await label.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), `"${name}" is cut off`).toBe(true);
+  }
 });

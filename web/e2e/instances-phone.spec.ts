@@ -475,11 +475,19 @@ for (const lane of LANES) {
       strip: "rgba(0, 0, 0, 0)",
       tabsWithoutFill: 0,
     });
-    const tabWidths = await page
+    // One row of tabs, each keeping its whole name: in even shares where the
+    // widest fits one, sized to the names where only the row as a whole does.
+    const tabs = await page
       .getByRole("tablist", { name: "Instanzen" })
       .getByRole("tab")
-      .evaluateAll((tabs) => tabs.map((tab) => Math.round(tab.getBoundingClientRect().width)));
-    expect(new Set(tabWidths).size, `tab widths ${tabWidths.join(", ")}`).toBe(1);
+      .evaluateAll((els) =>
+        els.map((tab) => {
+          const label = tab.querySelector<HTMLElement>("[data-sel-label]")!;
+          return { top: Math.round(tab.getBoundingClientRect().top), cut: label.scrollWidth > label.clientWidth + 1 };
+        }),
+      );
+    expect(new Set(tabs.map((tab) => tab.top)).size, "tab rows").toBe(1);
+    expect(tabs.filter((tab) => tab.cut), "tabs with a cut-off name").toEqual([]);
     if (lane === "pull") return;
 
     // Names and addresses stay one truncated line, and the receiver's
