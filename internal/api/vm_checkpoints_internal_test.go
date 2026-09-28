@@ -168,3 +168,51 @@ func TestEndLeftoverBlockJobEndsOnlyBombVaultsOwn(t *testing.T) {
 		}
 	}
 }
+
+const leftoverJob = "<domainbackup mode='pull'><server transport='unix' socket='" + remoteNBDSocketPrefix + "abc.sock'/></domainbackup>"
+
+func TestStartupEndsWhatAnInterruptedBlockBackupLeft(t *testing.T) {
+	v := &checkpointVirsh{
+		running: true,
+		job:     leftoverJob,
+		names:   []string{"bombvault-1", "bombvault-2", "nightly"},
+		bitmaps: map[string]bool{"bombvault-1": true, "bombvault-2": true, "nightly": true},
+	}
+	s, kept := checkpointService(t, v)
+	s.SweepBlockBackupLeftovers(t.Context())
+	if !slices.Contains(v.calls, "abort") {
+		t.Fatalf("calls = %v, want the leftover job ended", v.calls)
+	}
+	if !slices.Equal(v.names, []string{"nightly"}) {
+		t.Fatalf("checkpoints on record = %v, want only the foreign one", v.names)
+	}
+	if !v.bitmaps["bombvault-1"] || v.bitmaps["bombvault-2"] {
+		t.Fatalf("bitmaps = %v, want the kept one and not the interrupted run's", v.bitmaps)
+	}
+	if def, _ := kept.Load(); backup.CheckpointName(def) != "bombvault-1" {
+		t.Fatalf("kept definition = %q", def)
+	}
+}
+
+func TestTurningBlockBackupsOffEndsALeftoverJob(t *testing.T) {
+	v := &checkpointVirsh{running: true, job: leftoverJob, bitmaps: map[string]bool{"bombvault-1": true}}
+	s, _ := checkpointService(t, v)
+	if err := s.SetVMBlockBackup(t.Context(), "win", false); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(v.calls, "abort") {
+		t.Fatalf("calls = %v, want the leftover job ended", v.calls)
+	}
+}
+
+func TestTurningBlockBackupsOffLeavesARunningBackupAlone(t *testing.T) {
+	v := &checkpointVirsh{running: true, job: leftoverJob, names: []string{"bombvault-2"}, bitmaps: map[string]bool{"bombvault-1": true, "bombvault-2": true}}
+	s, _ := checkpointService(t, v)
+	s.bindBackupRun("vm:win", "run-1")
+	if err := s.SetVMBlockBackup(t.Context(), "win", false); err != nil {
+		t.Fatal(err)
+	}
+	if len(v.calls) != 0 {
+		t.Fatalf("calls = %v, want the running backup's job and checkpoints left alone", v.calls)
+	}
+}

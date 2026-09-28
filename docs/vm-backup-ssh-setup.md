@@ -147,8 +147,11 @@ instead of the method above:
   (`virsh checkpoint-create --redefine`) before it starts. libvirt refuses to
   undefine a VM that has checkpoints, so this is what lets Unraid's **Remove
   VM** and a restore work as usual.
+- A backup job that BombVault left running because it stopped in the middle
+  of a backup is ended when BombVault starts again, and so are the
+  checkpoints that run left on record.
 - Turning the switch off, taking the VM out of the schedule or deleting its
-  backups deletes the bitmap too while the VM runs. On a VM that is off,
+  backups also ends such a job and deletes the bitmap too while the VM runs. On a VM that is off,
   libvirt cannot delete it, and it stays in the image unused.
 - Checkpoints of other tools are left alone. A VM that has some cannot be
   restored until they are deleted, and the restore stops before it touches

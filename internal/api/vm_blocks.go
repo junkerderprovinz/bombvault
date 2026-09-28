@@ -202,7 +202,9 @@ func (s *Service) SetVMBlockBackup(ctx context.Context, name string, on bool) er
 	if err := s.store.SetVMBlockBackupEnabled(tg.ID, on); err != nil {
 		return err
 	}
-	if !on {
+	// A backup of the VM that is running now drops the chain itself when it
+	// finds the switch off.
+	if !on && !s.vmBackupRunning(name) {
 		s.dropBlockCheckpoints(ctx, name)
 	}
 	return nil
@@ -215,16 +217,16 @@ func (s *Service) dropBlockCheckpointsIfOn(ctx context.Context, name string) {
 	if err != nil {
 		return
 	}
-	if b, err := s.store.GetVMBlockBackup(tg.ID); err == nil && b.Enabled {
+	if b, err := s.store.GetVMBlockBackup(tg.ID); err == nil && b.Enabled && !s.vmBackupRunning(name) {
 		s.dropBlockCheckpoints(ctx, name)
 	}
 }
 
-// dropBlockCheckpoints ends BombVault's changed-block chain on the VM: the
-// kept checkpoint with its bitmap and every checkpoint of BombVault's still on
-// record. Best-effort: a VM that is gone took them with it. libvirt deletes a
-// bitmap only while the VM runs, so on a VM that is off the kept one stays in
-// the image, unused.
+// dropBlockCheckpoints ends BombVault's changed-block chain on the VM: a job
+// an interrupted run left, the kept checkpoint with its bitmap and every
+// checkpoint of BombVault's still on record. Best-effort: a VM that is gone took them with it. libvirt
+// deletes a bitmap only while the VM runs, so on a VM that is off the kept
+// one stays in the image, unused.
 func (s *Service) dropBlockCheckpoints(ctx context.Context, name string) {
 	bb, ok := s.virsh.(virshcli.BlockBackups)
 	if !ok {
@@ -241,6 +243,9 @@ func (s *Service) dropBlockCheckpoints(ctx context.Context, name string) {
 		}
 		return
 	}
+	if err := endLeftoverBlockJob(ctx, bb, name); err != nil {
+		log.Printf("api: vm %q: %v", name, err) //nolint:gosec // G706: %q-quoted
+	}
 	if kept != "" {
 		if def, err := kept.Load(); err == nil && def != "" {
 			if err := bb.CheckpointRedefine(ctx, name, def, false); err != nil {
@@ -249,6 +254,52 @@ func (s *Service) dropBlockCheckpoints(ctx context.Context, name string) {
 		}
 	}
 	backup.SettleBlockCheckpoints(ctx, bb, kept, name, "")
+}
+
+// vmBackupRunning reports whether a backup of the VM is under way.
+func (s *Service) vmBackupRunning(name string) bool {
+	s.cancelMu.Lock()
+	defer s.cancelMu.Unlock()
+	_, ok := s.backupRuns["vm:"+name]
+	return ok
+}
+
+// SweepBlockBackupLeftovers ends what changed-block backups left on their VMs
+// when BombVault stopped in the middle of one: the backup job, which holds the
+// disks, and the checkpoints on record, which keep the VM from being
+// undefined. The kept checkpoint's bitmap stays for the next run.
+func (s *Service) SweepBlockBackupLeftovers(ctx context.Context) {
+	bb, ok := s.virsh.(virshcli.BlockBackups)
+	if !ok {
+		return
+	}
+	rows, err := s.store.ListVMBlockBackups()
+	if err != nil {
+		log.Printf("api: changed-block leftovers: %v", err)
+		return
+	}
+	defer s.lockDomainFor("vms", "startup-sweep")()
+	for id, row := range rows {
+		if !row.Enabled {
+			continue
+		}
+		tg, err := s.store.GetVMTargetByID(id)
+		if err != nil {
+			continue
+		}
+		if _, err := bb.CheckpointNames(ctx, tg.Name); err != nil {
+			continue
+		}
+		if err := endLeftoverBlockJob(ctx, bb, tg.Name); err != nil {
+			log.Printf("api: vm %q: %v", tg.Name, err) //nolint:gosec // G706: %q-quoted
+		}
+		kept := s.blockCheckpointFile(id)
+		def, err := kept.Load()
+		if err != nil {
+			log.Printf("api: vm %q: read the kept checkpoint: %v", tg.Name, err) //nolint:gosec // G706: %q-quoted
+		}
+		backup.SettleBlockCheckpoints(ctx, bb, kept, tg.Name, backup.CheckpointName(def))
+	}
 }
 
 // blockCheckpointFile keeps the definition of a VM's checkpoint between
