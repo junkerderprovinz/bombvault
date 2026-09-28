@@ -208,3 +208,39 @@ func TestConnectionWithATooShortKeyIsRejected(t *testing.T) {
 		t.Errorf("%d connections registered, want the short-keyed one rejected", relaySrv.Len())
 	}
 }
+
+func TestAnOversizedFrameBeforeTheHelloIsRefused(t *testing.T) {
+	relaySrv := NewServer()
+	srv := httptest.NewServer(relaySrv)
+	t.Cleanup(srv.Close)
+	c := rawDial(t, "ws"+strings.TrimPrefix(srv.URL, "http")+connectPath)
+
+	ctx, cancel := context.WithTimeout(context.Background(), wsTimeout)
+	defer cancel()
+	frame, _ := Encode(TypeHello, Hello{Key: strings.Repeat("k", 64<<10), Announce: Announce{InstanceID: "alpha"}})
+	_ = c.Write(ctx, websocket.MessageText, frame)
+	if _, _, err := c.Read(ctx); websocket.CloseStatus(err) != websocket.StatusMessageTooBig {
+		t.Fatalf("a 64 KiB first frame got %v, want the connection closed as too big", err)
+	}
+	if relaySrv.Len() != 0 {
+		t.Errorf("%d connections registered, want none", relaySrv.Len())
+	}
+}
+
+func TestFramesAfterTheHelloMayBeLarge(t *testing.T) {
+	srv := httptest.NewServer(NewServer())
+	t.Cleanup(srv.Close)
+	url := "ws" + strings.TrimPrefix(srv.URL, "http") + connectPath
+	alpha := dialInstance(t, url, "shared-relay-test-key-0123456789ab", "alpha")
+	bravo := dialInstance(t, url, "shared-relay-test-key-0123456789ab", "bravo")
+	bravo.SetReadLimit(readLimit)
+	readFrame(t, alpha, TypeAnnounce)
+	readFrame(t, bravo, TypeAnnounce)
+
+	big := ProxyCall{Method: "POST", Path: "/x", Body: []byte(strings.Repeat("x", 1<<20))}
+	writeFrame(t, alpha, TypeProxyRequest, ProxyRequest{RequestID: "r1", Target: "bravo", Sealed: sealFor(t, "r1", "bravo", big)})
+	var req ProxyRequest
+	if err := readFrame(t, bravo, TypeProxyRequest).Into(&req); err != nil || req.RequestID != "r1" {
+		t.Fatalf("bravo got %+v, %v; want the 1 MiB call", req, err)
+	}
+}

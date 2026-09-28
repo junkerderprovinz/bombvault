@@ -23,6 +23,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/junkerderprovinz/bombvault/internal/discovery"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
@@ -176,6 +177,7 @@ func (m *Manager) Close() {
 // Apply switches the Manager to cfg: it rebuilds the relay connection and the
 // discovery announce, and closes whatever the old configuration had open.
 func (m *Manager) Apply(cfg Config) {
+	cfg.Name = clipName(cfg.Name)
 	var k *keys
 	if len(cfg.Secret) > 0 {
 		k = deriveKeys(cfg.Secret)
@@ -225,6 +227,21 @@ func (m *Manager) Apply(cfg Config) {
 		}
 		return hmac.Equal([]byte(p.Tag), []byte(announceTag(k.peerAuth, p)))
 	})
+}
+
+// maxNameBytes keeps the name an instance goes by inside what a discovery
+// announce and a relay hello may carry.
+const maxNameBytes = 200
+
+func clipName(name string) string {
+	if len(name) <= maxNameBytes {
+		return name
+	}
+	cut := maxNameBytes
+	for cut > 0 && !utf8.RuneStart(name[cut]) {
+		cut--
+	}
+	return name[:cut]
 }
 
 // relayURLFor is the address the relay client dials, or empty for none.

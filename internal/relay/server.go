@@ -27,7 +27,10 @@ const (
 	// helloTimeout bounds how long a socket may stay open without saying who
 	// it is.
 	helloTimeout = 10 * time.Second
-	// readLimit caps one inbound frame.
+	// helloLimit caps what a connection may send before its hello is
+	// verified. A hello is a key, an instance id and a short sealed identity.
+	helloLimit = 4 << 10
+	// readLimit caps one inbound frame once the hello has passed.
 	readLimit = 8 << 20
 	// pendingTTL bounds how long an unanswered request is remembered.
 	pendingTTL = 2 * time.Minute
@@ -436,7 +439,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	c.SetReadLimit(readLimit)
+	c.SetReadLimit(helloLimit)
 
 	hello, err := readHello(r.Context(), c)
 	if err != nil {
@@ -454,6 +457,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_ = c.Close(websocket.StatusPolicyViolation, "this relay cannot take the connection: the key is no longer served or too many instances use it")
 		return
 	}
+	c.SetReadLimit(readLimit)
 	defer s.Leave(c)
 	for {
 		_, frame, err := c.Read(r.Context())

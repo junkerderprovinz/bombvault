@@ -15,6 +15,7 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/coder/websocket"
 	"github.com/junkerderprovinz/bombvault/internal/discovery"
@@ -360,5 +361,24 @@ func TestLeavingTheGroupForgetsEveryMember(t *testing.T) {
 	}
 	if _, _, err := a.Call(context.Background(), "id-b", "GET", "/api/group/peer/status", nil); err == nil {
 		t.Fatal("an instance that left could still call a member")
+	}
+}
+
+func TestAnInstanceWithAVeryLongNameStillReachesTheRelay(t *testing.T) {
+	rs := httptest.NewServer(relay.NewServer())
+	t.Cleanup(rs.Close)
+	a, b := NewManager(echo), NewManager(echo)
+	t.Cleanup(a.Close)
+	t.Cleanup(b.Close)
+	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Name: strings.Repeat("é", 5000), Mode: ModeOwn, RelayURL: rs.URL})
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Mode: ModeOwn, RelayURL: rs.URL})
+
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) && len(b.Members()) == 0 {
+		time.Sleep(20 * time.Millisecond)
+	}
+	got := b.Members()
+	if len(got) != 1 || len(got[0].Name) == 0 || len(got[0].Name) > maxNameBytes || !utf8.ValidString(got[0].Name) {
+		t.Fatalf("B's members = %+v, want A under its name clipped to whole characters", got)
 	}
 }
