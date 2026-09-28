@@ -685,7 +685,7 @@ const cs: Partial<Translations> = {
   "settings.retentionDailyInfo": "Ponechá jeden snapshot pro každý z posledních N kalendářních dnů se zálohou: jeden denně, ne N záloh.",
   "settings.retentionWeeklyInfo": "Ponechá jeden snapshot pro každý z posledních N kalendářních týdnů se zálohou.",
   "settings.retentionMonthlyInfo": "Ponechá jeden snapshot pro každý z posledních N kalendářních měsíců se zálohou.",
-  "settings.retentionYearlyInfo": "Ponechá jeden snapshot pro každý z posledních N kalendářních let se zálohou.",
+  "settings.retentionYearlyInfo": "Ponechá jeden snapshot pro každý z posledních N kalendářních let se zálohou. Když je let méně, ponechá i ten nejstarší.",
   "settings.retentionLocal": "Místní repo",
   "settings.retentionOffsite": "Vzdálené repo",
   "settings.retentionOffsiteTitle": "Vzdálené uchovávání",

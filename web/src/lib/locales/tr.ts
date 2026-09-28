@@ -687,7 +687,7 @@ const tr: Partial<Translations> = {
   "settings.retentionDailyInfo": "Yedeği olan son N takvim gününün her biri için bir anlık görüntü tutar. Günde bir, N yedek değil.",
   "settings.retentionWeeklyInfo": "Yedeği olan son N takvim haftasının her biri için bir anlık görüntü tutar.",
   "settings.retentionMonthlyInfo": "Yedeği olan son N takvim ayının her biri için bir anlık görüntü tutar.",
-  "settings.retentionYearlyInfo": "Yedeği olan son N takvim yılının her biri için bir anlık görüntü tutar.",
+  "settings.retentionYearlyInfo": "Yedeği olan son N takvim yılının her biri için bir anlık görüntü tutar. Daha az yıl varsa en eskisi de tutulur.",
   "settings.retentionLocal": "Yerel repo",
   "settings.retentionOffsite": "Uzak repo",
   "settings.retentionOffsiteTitle": "Uzak saklama",

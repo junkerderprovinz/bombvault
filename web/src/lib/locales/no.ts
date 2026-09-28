@@ -684,7 +684,7 @@ const no: Partial<Translations> = {
   "settings.retentionDailyInfo": "Beholder ett øyeblikksbilde for hver av de siste N kalenderdagene med en sikkerhetskopi, ett per dag, ikke N sikkerhetskopier.",
   "settings.retentionWeeklyInfo": "Beholder ett øyeblikksbilde for hver av de siste N kalenderukene med en sikkerhetskopi.",
   "settings.retentionMonthlyInfo": "Beholder ett øyeblikksbilde for hver av de siste N kalendermånedene med en sikkerhetskopi.",
-  "settings.retentionYearlyInfo": "Beholder ett øyeblikksbilde for hvert av de siste N kalenderårene med en sikkerhetskopi.",
+  "settings.retentionYearlyInfo": "Beholder ett øyeblikksbilde for hvert av de siste N kalenderårene med en sikkerhetskopi. Er det færre år enn det, beholdes også det eldste.",
   "settings.retentionLocal": "Lokalt repo",
   "settings.retentionOffsite": "Off-site-repo",
   "settings.retentionOffsiteTitle": "Off-site-oppbevaring",

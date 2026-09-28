@@ -646,7 +646,7 @@ const et: Partial<Translations> = {
   "settings.retentionDailyInfo": "Säilitab ühe hetktõmmise iga viimase N kalendripäeva kohta, mil varundus toimus, ühe päeva kohta, mitte N varundust.",
   "settings.retentionWeeklyInfo": "Säilitab ühe hetktõmmise iga viimase N kalendrinädala kohta, mil varundus toimus.",
   "settings.retentionMonthlyInfo": "Säilitab ühe hetktõmmise iga viimase N kalendrikuu kohta, mil varundus toimus.",
-  "settings.retentionYearlyInfo": "Säilitab ühe hetktõmmise iga viimase N kalendriaasta kohta, mil varundus toimus.",
+  "settings.retentionYearlyInfo": "Säilitab ühe hetktõmmise iga viimase N kalendriaasta kohta, mil varundus toimus. Kui aastaid on vähem, säilitatakse ka kõige vanem.",
   "settings.retentionCombineInfo": "Need viis reeglit kombineeritakse VÕI-loogikaga: hetktõmmis säilib, kui mõni reegel seda säilitaks. Need ei liidu kindlaks arvuks. Rakendub eraldi igale varundatud üksusele.",
   "settings.retentionLocal": "Kohalik hoidla",
   "settings.retentionOffsite": "Väline hoidla",

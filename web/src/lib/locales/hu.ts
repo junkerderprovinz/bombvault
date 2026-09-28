@@ -687,7 +687,7 @@ const hu: Partial<Translations> = {
   "settings.retentionDailyInfo": "Egy pillanatképet őriz meg az utolsó N naptári nap mindegyikéből, amelyben van mentés: naponta egyet, nem N mentést.",
   "settings.retentionWeeklyInfo": "Egy pillanatképet őriz meg az utolsó N naptári hét mindegyikéből, amelyben van mentés.",
   "settings.retentionMonthlyInfo": "Egy pillanatképet őriz meg az utolsó N naptári hónap mindegyikéből, amelyben van mentés.",
-  "settings.retentionYearlyInfo": "Egy pillanatképet őriz meg az utolsó N naptári év mindegyikéből, amelyben van mentés.",
+  "settings.retentionYearlyInfo": "Egy pillanatképet őriz meg az utolsó N naptári év mindegyikéből, amelyben van mentés. Ha kevesebb év van, a legrégebbit is megtartja.",
   "settings.retentionLocal": "Helyi repó",
   "settings.retentionOffsite": "Távoli repó",
   "settings.retentionOffsiteTitle": "Távoli megőrzés",

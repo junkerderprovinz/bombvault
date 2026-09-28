@@ -687,7 +687,7 @@ const he: Partial<Translations> = {
   "settings.retentionDailyInfo": "שומר גיבוי אחד עבור כל אחד מ-N ימי הקלנדר האחרונים שיש בהם גיבוי: אחד ליום, לא N גיבויים.",
   "settings.retentionWeeklyInfo": "שומר גיבוי אחד עבור כל אחד מ-N שבועות הקלנדר האחרונים שיש בהם גיבוי.",
   "settings.retentionMonthlyInfo": "שומר גיבוי אחד עבור כל אחד מ-N חודשי הקלנדר האחרונים שיש בהם גיבוי.",
-  "settings.retentionYearlyInfo": "שומר גיבוי אחד עבור כל אחת מ-N שנות הקלנדר האחרונות שיש בהן גיבוי.",
+  "settings.retentionYearlyInfo": "שומר גיבוי אחד עבור כל אחת מ-N שנות הקלנדר האחרונות שיש בהן גיבוי. אם יש פחות שנים, נשמר גם הגיבוי הישן ביותר.",
   "settings.retentionLocal": "מאגר מקומי",
   "settings.retentionOffsite": "מאגר מרוחק",
   "settings.retentionOffsiteTitle": "שמירה מרוחקת",

@@ -687,7 +687,7 @@ const fr: Partial<Translations> = {
   "settings.retentionDailyInfo": "Conserve un instantané pour chacun des N derniers jours calendaires ayant une sauvegarde, un par jour, pas N sauvegardes.",
   "settings.retentionWeeklyInfo": "Conserve un instantané pour chacune des N dernières semaines calendaires ayant une sauvegarde.",
   "settings.retentionMonthlyInfo": "Conserve un instantané pour chacun des N derniers mois calendaires ayant une sauvegarde.",
-  "settings.retentionYearlyInfo": "Conserve un instantané pour chacune des N dernières années civiles ayant une sauvegarde.",
+  "settings.retentionYearlyInfo": "Conserve un instantané pour chacune des N dernières années civiles ayant une sauvegarde. S'il y a moins d'années, le plus ancien est conservé aussi.",
   "settings.retentionLocal": "Dépôt local",
   "settings.retentionOffsite": "Dépôt hors-site",
   "settings.retentionOffsiteTitle": "Rétention hors-site",

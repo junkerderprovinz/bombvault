@@ -682,7 +682,7 @@ const uk: Partial<Translations> = {
   "settings.retentionDailyInfo": "Зберігає один знімок за кожен із останніх N календарних днів із резервною копією — один на день, а не N копій.",
   "settings.retentionWeeklyInfo": "Зберігає один знімок за кожен із останніх N календарних тижнів із резервною копією.",
   "settings.retentionMonthlyInfo": "Зберігає один знімок за кожен із останніх N календарних місяців із резервною копією.",
-  "settings.retentionYearlyInfo": "Зберігає один знімок за кожен із останніх N календарних років із резервною копією.",
+  "settings.retentionYearlyInfo": "Зберігає один знімок за кожен із останніх N календарних років із резервною копією. Якщо років менше, зберігається й найстаріший.",
   "settings.retentionLocal": "Локальний репо",
   "settings.retentionOffsite": "Віддалений репо",
   "settings.retentionOffsiteTitle": "Віддалене зберігання",

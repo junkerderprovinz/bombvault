@@ -684,7 +684,7 @@ const vi: Partial<Translations> = {
   "settings.retentionDailyInfo": "Giữ lại một bản chụp cho mỗi ngày trong N ngày dương lịch gần nhất có bản sao lưu. Một bản mỗi ngày, không phải N bản.",
   "settings.retentionWeeklyInfo": "Giữ lại một bản chụp cho mỗi tuần trong N tuần dương lịch gần nhất có bản sao lưu.",
   "settings.retentionMonthlyInfo": "Giữ lại một bản chụp cho mỗi tháng trong N tháng dương lịch gần nhất có bản sao lưu.",
-  "settings.retentionYearlyInfo": "Giữ lại một bản chụp cho mỗi năm trong N năm dương lịch gần nhất có bản sao lưu.",
+  "settings.retentionYearlyInfo": "Giữ lại một bản chụp cho mỗi năm trong N năm dương lịch gần nhất có bản sao lưu. Nếu có ít năm hơn, bản cũ nhất cũng được giữ lại.",
   "settings.retentionLocal": "Kho cục bộ",
   "settings.retentionOffsite": "Kho off-site",
   "settings.retentionOffsiteTitle": "Lưu giữ off-site",
