@@ -316,9 +316,33 @@ func (s *Service) startTestBinds(def containerDefinition, sandbox string) []stri
 		if !reachable || !slices.ContainsFunc(def.AppdataPaths, func(p string) bool { return cp == p || strings.HasPrefix(cp, p+"/") }) {
 			continue
 		}
-		out = append(out, s.toHostPath(path.Join(sandbox, cp))+":"+rest)
+		copied := path.Join(sandbox, cp)
+		if throughSymlink(sandbox, copied) {
+			log.Printf("api: start test: leaving out the bind %s, a symbolic link in the restored data leads it elsewhere", cp) //nolint:gosec // G706: a path of the recipe
+			continue
+		}
+		out = append(out, s.toHostPath(copied)+":"+rest)
 	}
 	return out
+}
+
+// throughSymlink reports whether a part of p below sandbox is a symbolic
+// link. Docker resolves a bind source on the host, so a link the backup
+// brought along could point the copy at the original's files. Docker creates
+// a part that does not exist yet as a plain folder.
+func throughSymlink(sandbox, p string) bool {
+	cur := sandbox
+	for _, part := range strings.Split(strings.TrimPrefix(p, sandbox+"/"), "/") {
+		cur = path.Join(cur, part)
+		fi, err := os.Lstat(cur)
+		if err != nil {
+			return false
+		}
+		if fi.Mode()&os.ModeSymlink != 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // judgeStartTest waits for the copy to prove itself: healthy by its own
