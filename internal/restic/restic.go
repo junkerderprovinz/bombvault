@@ -2689,7 +2689,7 @@ func (r Restic) ForgetPreview(ctx context.Context, repo string, p RetentionPolic
 func (r Restic) Unlock(ctx context.Context, repo string, removeAll bool, m Mode) error {
 	var orphanErr error
 	if !removeAll {
-		orphanErr = r.removeOrphanLocks(ctx, repo, m, processStart)
+		orphanErr = r.removeOrphanLocks(ctx, repo, m, processStart, time.Now())
 	}
 	if _, err := r.run(ctx, UnlockArgs(repo, removeAll, m), m); err != nil {
 		return err

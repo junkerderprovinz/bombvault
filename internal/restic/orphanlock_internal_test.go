@@ -12,24 +12,29 @@ import (
 	"time"
 )
 
-func TestOrphanLockNeedsAnEarlierLockOfThisHostWhoseOwnerIsGone(t *testing.T) {
+func TestOrphanLockNeedsAnEarlierUnrefreshedLockOfThisHostWhoseOwnerIsGone(t *testing.T) {
 	started := time.Date(2026, 9, 27, 18, 0, 0, 0, time.UTC)
 	before := started.Add(-time.Minute)
+	later := started.Add(lockRefreshSilence)
 	gone := func(int) bool { return false }
 	alive := func(int) bool { return true }
 	cases := []struct {
 		name  string
 		lock  lockFile
+		now   time.Time
 		owner func(int) bool
 		want  bool
 	}{
-		{"an earlier run's lock whose owner is gone", lockFile{Hostname: "bv", PID: 43, Time: before}, gone, true},
-		{"a lock whose owner may still run", lockFile{Hostname: "bv", PID: 43, Time: before}, alive, false},
-		{"a lock taken since this run started", lockFile{Hostname: "bv", PID: 43, Time: started.Add(time.Second)}, gone, false},
-		{"a lock from another host", lockFile{Hostname: "nas", PID: 43, Time: before}, gone, false},
+		{"an earlier run's lock whose owner is gone", lockFile{Hostname: "bv", PID: 43, Time: before}, later, gone, true},
+		{"a lock whose owner may still run", lockFile{Hostname: "bv", PID: 43, Time: before}, later, alive, false},
+		{"a lock taken since this run started", lockFile{Hostname: "bv", PID: 43, Time: started.Add(time.Second)}, later, gone, false},
+		{"a lock from another host", lockFile{Hostname: "nas", PID: 43, Time: before}, later, gone, false},
+		// Every install is called bombvault, and a second one on the same
+		// repository runs under a PID this one cannot see.
+		{"a lock refreshed within restic's interval", lockFile{Hostname: "bv", PID: 43, Time: before}, started.Add(3 * time.Minute), gone, false},
 	}
 	for _, c := range cases {
-		if got := orphanLock(c.lock, "bv", started, c.owner); got != c.want {
+		if got := orphanLock(c.lock, "bv", started, c.now, c.owner); got != c.want {
 			t.Errorf("%s: orphan = %v, want %v", c.name, got, c.want)
 		}
 	}
@@ -121,7 +126,7 @@ func TestRemoveOrphanLocksLeavesTheLockOfAResticThisProcessRuns(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := (Restic{Bin: bin}).removeOrphanLocks(context.Background(), repo, Mode{}, processStart); err != nil {
+	if err := (Restic{Bin: bin}).removeOrphanLocks(context.Background(), repo, Mode{}, processStart, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := os.Stat(lockPath); err != nil {
