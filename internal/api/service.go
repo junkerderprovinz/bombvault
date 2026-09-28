@@ -12194,6 +12194,9 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		} else {
 			classic = false
 			sum = res.Summary
+			if cfg, cErr := s.store.GetVMBlockBackup(tg.ID); cErr == nil && !cfg.Enabled {
+				s.dropBlockCheckpoints(context.WithoutCancel(ctx), name)
+			}
 			if err == nil {
 				s.recordBlockRun(tg.ID, res.Mode, res.Reason)
 			}
