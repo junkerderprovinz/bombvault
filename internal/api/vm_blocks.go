@@ -21,6 +21,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/nbd"
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
@@ -161,7 +162,25 @@ func (s *Service) backupVMBlocks(ctx context.Context, name string, tg store.VMTa
 		Checkpoints: s.blockCheckpointFile(tg.ID),
 		Restic:      &vmBlockRestic{engine: s.engine, mode: mode},
 		Runs:        runs,
+		ThawFailed:  func(err error) { s.notifyGuestStillFrozen(context.WithoutCancel(ctx), name, err) },
 	})
+}
+
+// notifyGuestStillFrozen reports a VM whose filesystems may still be frozen
+// after a changed-block backup, which stops every write inside it until
+// someone thaws them.
+func (s *Service) notifyGuestStillFrozen(ctx context.Context, name string, err error) {
+	c, cErr := s.NotifyConfig()
+	if cErr != nil || !c.Active() {
+		return
+	}
+	msg := fmt.Sprintf("BombVault froze the filesystems of VM %s for its backup and could not thaw them again (%v). Nothing inside the VM can write until they are thawed: run \"virsh domfsthaw %s\" on the host or restart the VM.", name, scrubError(err), name)
+	notify.Send(ctx, c, "vms", notify.Event{Title: "BombVault", Message: msg, OK: false})
+	if s.unraidGate(c.Unraid) {
+		if e := s.sendUnraidNotify(ctx, "BombVault: VM "+name+" may still be frozen", msg, "alert"); e != nil {
+			log.Printf("notify: unraid: %v", e)
+		}
+	}
 }
 
 // recordBlockRun stores how a VM with changed-block backups on was read.
@@ -284,17 +303,27 @@ func (h *vmBlockHost) GuestAgentPing(ctx context.Context, domain string) bool {
 	return h.ping(ctx, domain)
 }
 
-func (h *vmBlockHost) StartJob(ctx context.Context, domain, base, checkpoint string, devs []string) (backup.BlockJob, error) {
-	// A job left running by an interrupted backup holds the disks; only one
-	// that exports on BombVault's own socket is ended here.
-	if job, err := h.BackupJobXML(ctx, domain); err == nil && job != "" {
-		if strings.HasPrefix(virshcli.BackupJobSocket(job), remoteNBDSocketPrefix) {
-			log.Printf("api: vm %q: ending a backup job left by an interrupted run", domain) //nolint:gosec // G706: %q-quoted
-			if aErr := h.AbortJob(ctx, domain); aErr != nil {
-				return nil, fmt.Errorf("end leftover backup job: %w", aErr)
-			}
-		}
+func (h *vmBlockHost) EndLeftoverJob(ctx context.Context, domain string) error {
+	return endLeftoverBlockJob(ctx, h.BlockBackups, domain)
+}
+
+// endLeftoverBlockJob ends a backup job an interrupted run left running. Only
+// one that exports on BombVault's own socket is touched.
+func endLeftoverBlockJob(ctx context.Context, bb virshcli.BlockBackups, domain string) error {
+	job, err := bb.BackupJobXML(ctx, domain)
+	if err != nil || job == "" || !strings.HasPrefix(virshcli.BackupJobSocket(job), remoteNBDSocketPrefix) {
+		return nil
 	}
+	log.Printf("api: vm %q: ending a backup job left by an interrupted run", domain) //nolint:gosec // G706: %q-quoted
+	if err := bb.AbortJob(ctx, domain); err != nil {
+		return fmt.Errorf("end leftover backup job: %w", err)
+	}
+	return nil
+}
+
+// StartJob only starts the job, since the guest may be frozen while it runs.
+// The socket forward follows with the first Open.
+func (h *vmBlockHost) StartJob(ctx context.Context, domain, base, checkpoint string, devs []string) (backup.BlockJob, error) {
 	disks := make([]virshcli.BackupDisk, 0, len(devs)+len(h.skip))
 	for _, dev := range devs {
 		disks = append(disks, virshcli.BackupDisk{Dev: dev, Scratch: h.hostDisks[dev] + ".bombvault-scratch"})
@@ -306,14 +335,7 @@ func (h *vmBlockHost) StartJob(ctx context.Context, domain, base, checkpoint str
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", backup.ErrBlockJobRefused, err)
 	}
-	stop, err := h.fwd.ForwardUnix(ctx, h.localSock, h.remoteSock)
-	if err != nil {
-		cctx := context.WithoutCancel(ctx)
-		_ = h.AbortJob(cctx, domain)
-		_ = h.CheckpointDelete(cctx, domain, checkpoint)
-		return nil, err
-	}
-	return &vmBlockJob{host: h, domain: domain, incremental: base != "", stopForward: stop}, nil
+	return &vmBlockJob{host: h, domain: domain, incremental: base != ""}, nil
 }
 
 type vmBlockJob struct {
@@ -329,6 +351,13 @@ func (j *vmBlockJob) Open(ctx context.Context, dev string) (backup.BlockReader, 
 	if j.incremental {
 		contexts = append(contexts, bitmap)
 	}
+	if j.stopForward == nil {
+		stop, err := j.host.fwd.ForwardUnix(ctx, j.host.localSock, j.host.remoteSock)
+		if err != nil {
+			return nil, err
+		}
+		j.stopForward = stop
+	}
 	c, err := nbd.Dial(ctx, "unix", j.host.localSock, dev, contexts)
 	if err != nil {
 		return nil, err
@@ -342,7 +371,9 @@ func (j *vmBlockJob) Open(ctx context.Context, dev string) (backup.BlockReader, 
 
 func (j *vmBlockJob) Stop(ctx context.Context) error {
 	err := j.host.AbortJob(ctx, j.domain)
-	j.stopForward()
+	if j.stopForward != nil {
+		j.stopForward()
+	}
 	return err
 }
 

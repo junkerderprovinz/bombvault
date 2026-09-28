@@ -118,3 +118,53 @@ func TestTurningBlockBackupsOffOnAStoppedVMLeavesNoCheckpointOnRecord(t *testing
 		t.Fatalf("checkpoints on record = %v, want none so the VM can be undefined", v.names)
 	}
 }
+
+type recordingForwarder struct{ calls *[]string }
+
+func (f recordingForwarder) ForwardUnix(context.Context, string, string) (func(), error) {
+	*f.calls = append(*f.calls, "forward")
+	return func() {}, nil
+}
+
+func TestBlockJobForwardsTheSocketOnlyOnceADiskIsRead(t *testing.T) {
+	v := &checkpointVirsh{running: true}
+	h := &vmBlockHost{
+		BlockBackups: v,
+		fwd:          recordingForwarder{calls: &v.calls},
+		hostDisks:    map[string]string{"vda": "/mnt/user/domains/win/vdisk1.qcow2"},
+		localSock:    t.TempDir() + "/nbd.sock",
+		remoteSock:   remoteNBDSocketPrefix + "x.sock",
+	}
+	job, err := h.StartJob(t.Context(), "win", "", "bombvault-2", []string{"vda"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if slices.Contains(v.calls, "forward") {
+		t.Fatal("the socket was forwarded while the guest may still be frozen")
+	}
+	_, _ = job.Open(t.Context(), "vda")
+	if !slices.Contains(v.calls, "forward") {
+		t.Fatalf("calls = %v, want the forward when the disk is opened", v.calls)
+	}
+	if err := job.Stop(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestEndLeftoverBlockJobEndsOnlyBombVaultsOwn(t *testing.T) {
+	for _, tc := range []struct {
+		socket string
+		abort  bool
+	}{
+		{remoteNBDSocketPrefix + "abc.sock", true},
+		{"/var/run/other-tool.sock", false},
+	} {
+		v := &checkpointVirsh{running: true, job: "<domainbackup mode='pull'><server transport='unix' socket='" + tc.socket + "'/></domainbackup>"}
+		if err := endLeftoverBlockJob(t.Context(), v, "win"); err != nil {
+			t.Fatal(err)
+		}
+		if got := slices.Contains(v.calls, "abort"); got != tc.abort {
+			t.Fatalf("socket %s: aborted = %v, want %v", tc.socket, got, tc.abort)
+		}
+	}
+}
