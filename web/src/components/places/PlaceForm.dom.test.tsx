@@ -520,6 +520,23 @@ describe("PlaceForm rest-server", () => {
     });
     expect(creates[0]!.immutable).toBeUndefined();
   });
+
+  it("leaves append-only to the details once the recipe's login is typed over", async () => {
+    probeAnswer = { ok: true, base: "rest:http://nas:8000/backup" };
+    await form(REST);
+    await act(async () => {
+      fireEvent.click(button("places.recipe.show"));
+    });
+    type(en["places.field.url"], "http://nas:8000");
+    type(en["places.field.user"], "backup");
+    type(en["places.field.password"], "pw");
+    await testConnection();
+    fireEvent.click(screen.getByRole("tab", { name: en["places.form.here"] }));
+    await act(async () => {
+      fireEvent.click(button("places.form.add"));
+    });
+    expect(creates[0]!.immutable).toBeUndefined();
+  });
 });
 
 const BOMBVAULT: CatalogProvider = { ...REST, id: "bombvault" };

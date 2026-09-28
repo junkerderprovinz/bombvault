@@ -188,8 +188,9 @@ export function PlaceForm({
   const [probing, setProbing] = useState(false);
   const [name, setName] = useState(() => providerName(t, provider.id));
   const [where, setWhere] = useState<"here" | "away" | null>(null);
-  // The recipe runs the server append-only, so the place starts that way.
-  const [fromRecipe, setFromRecipe] = useState(false);
+  // The recipe runs the server append-only, so a place with its login starts
+  // that way. A login typed over it may be any server.
+  const [recipeLogin, setRecipeLogin] = useState<{ user: string; password: string } | null>(null);
   const [adding, setAdding] = useState(false);
   const [shake, setShake] = useState({ test: 0, add: 0 });
   const [remotes, setRemotes] = useState<string[]>([]);
@@ -210,6 +211,8 @@ export function PlaceForm({
         ? "places.form.whereFirst"
         : null;
   const canAdd = waitsFor === null && !adding;
+  const fromRecipe =
+    recipeLogin !== null && recipeLogin.user === fields.user && recipeLogin.password === fields.password;
 
   // The tile that opened the form is gone, and focus with it.
   useEffect(() => {
@@ -378,7 +381,7 @@ export function PlaceForm({
           <RestServerRecipe
             onLogin={(user, password) => {
               setFields((f) => ({ ...f, user, password }));
-              setFromRecipe(true);
+              setRecipeLogin({ user, password });
             }}
           />
         )}
