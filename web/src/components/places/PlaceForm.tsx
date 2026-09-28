@@ -240,7 +240,18 @@ export function PlaceForm({
       setProbe(res);
       setProbedWith(typed);
       if (!res.ok) {
-        push(probeFailureText(t, lang, res), "fail");
+        // A folder that failed leaves the answer's own code and error empty,
+        // so the first such folder is the reason.
+        const folder = res.code || res.error ? undefined : PLACE_DOMAINS.find((d) => res.errors?.[d]);
+        push(
+          folder
+            ? t("places.error.probeFailed").replace(
+                "{reason}",
+                `${domainName(t, folder)}: ${probeErrorText(t, lang, res.errors![folder]!)}`
+              )
+            : probeFailureText(t, lang, res),
+          "fail"
+        );
         setShake((s) => ({ ...s, test: s.test + 1 }));
       }
     } catch (err) {
@@ -346,8 +357,10 @@ export function PlaceForm({
   const facts = (fresh?.facts ?? []).map((f) => probeFactText(t, f)).filter((s): s is string => s !== null);
   const probed = PLACE_DOMAINS.filter((d) => fresh?.folders?.[d]);
   // A key that may list its buckets answers with the list alone until one is
-  // chosen, and an empty panel would read as a result.
-  const found = fresh?.ok && (fresh.base || facts.length > 0 || probed.length > 0) ? fresh : null;
+  // chosen, and an empty panel would read as a result. A failed folder fails
+  // the whole test, and the panel is where it says which one and why.
+  const found =
+    fresh && (fresh.ok || probed.length > 0) && (fresh.base || facts.length > 0 || probed.length > 0) ? fresh : null;
 
   return (
     <>
