@@ -705,7 +705,7 @@ func (s *Service) placesMigrationInput(settings store.Settings) (placesMigration
 	}
 	// A ZFS domain that is off, has no copy target and never backed up to its
 	// path does not get a place of its own for that path. Switched on later,
-	// it chooses one on its row.
+	// PlaceSwitchedOnZFS gives it one.
 	zfsUsed := settings.ZFSEnabled || slices.ContainsFunc(in.targets, func(t store.OffsiteTarget) bool { return t.Domain == zfsDomain })
 	if !zfsUsed {
 		if zfsUsed, err = s.store.DomainPathBackedUp(zfsDomain); err != nil {

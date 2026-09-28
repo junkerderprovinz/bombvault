@@ -194,6 +194,25 @@ func TestZFSSwitchedOnUnderNoPlaceGetsAPlaceOfItsOwn(t *testing.T) {
 	}
 }
 
+func TestZFSSwitchedOnByAnImportGetsTheHomeTheMoveWouldHaveGiven(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.settings(func(s *store.Settings) { s.ZFSPath = "backups/zfs" })
+	if err := f.svc.MigrateToPlaces(); err != nil {
+		t.Fatalf("MigrateToPlaces: %v", err)
+	}
+	res := importEdited(t, f, func(exp map[string]any) {
+		exp["settings"].(map[string]any)["zfsEnabled"] = true
+	})
+	if res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+
+	home, homes := f.zfsHome()
+	if home.ID != homes["containers"] || home.Folders["zfs"] != "zfs" {
+		t.Fatalf("ZFS home %s with folders %v, want the containers' place %s with the folder zfs", home.Name, home.Folders, homes["containers"])
+	}
+}
+
 func TestAStartPlacesAZFSDomainThatWasSwitchedOnWithoutAHome(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.settings(func(s *store.Settings) { s.ZFSPath = "backups/zfs" })
