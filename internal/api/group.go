@@ -678,8 +678,11 @@ func (s *Service) openResticPassword(enc []byte) (string, error) {
 // ConvertLegacyAppKeys replaces every APP_KEY a receiver or pull source
 // stored before pairing existed with the restic password derived from it, so
 // those entries keep working and no other instance's master key stays on
-// disk. It runs at boot and does nothing once every row is converted.
+// disk. It runs at boot and does nothing once every row is converted. After a
+// conversion it compacts the database, since SQLite keeps the old bytes in
+// free pages and the write-ahead log.
 func (s *Service) ConvertLegacyAppKeys() error {
+	converted := 0
 	convert := func(enc []byte) ([]byte, error) {
 		plain, err := secret.Decrypt(s.cfg.AppKey, enc)
 		if err != nil {
@@ -708,6 +711,7 @@ func (s *Service) ConvertLegacyAppKeys() error {
 		if err := s.store.UpdateReceivedRepo(rr); err != nil {
 			return err
 		}
+		converted++
 	}
 
 	sources, err := s.store.ListPullSources()
@@ -726,8 +730,12 @@ func (s *Service) ConvertLegacyAppKeys() error {
 		if err := s.store.UpdatePullSource(ps); err != nil {
 			return err
 		}
+		converted++
 	}
-	return nil
+	if converted == 0 {
+		return nil
+	}
+	return s.store.Compact()
 }
 
 // resticPasswordRe is the shape restickey.Derive produces.

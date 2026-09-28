@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -661,5 +663,44 @@ func TestAMembersRefusalReachesThePageAsAFixedMessage(t *testing.T) {
 	err := a.svc.callMember(context.Background(), b.id(t), http.MethodPost, "/api/group/peer/check/bogus", nil, nil)
 	if !errors.Is(err, errMemberRefused) {
 		t.Fatalf("a refused call = %v, want %v", err, errMemberRefused)
+	}
+}
+
+// The old ciphertext must leave the database files, not only the rows:
+// SQLite keeps rewritten bytes in free space and the write-ahead log.
+func TestConvertedAppKeysLeaveNoBytesInTheDatabaseFiles(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "bombvault.db")
+	db, err := store.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	st := store.New(db)
+	appKey := strings.Repeat("a1", 32)
+	enc, err := secret.Encrypt(appKey, []byte(strings.Repeat("c3", 32)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreatePullSource(store.PullSource{Name: "old", Repo: "rest:http://x/old", Domain: "containers", LegacyAppKeyEnc: enc}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateReceivedRepo(store.ReceivedRepo{Name: "old", Repo: "/host/user/old", LegacyAppKeyEnc: enc}); err != nil {
+		t.Fatal(err)
+	}
+	svc := NewService(config.Config{AppKey: appKey, DataDir: t.TempDir()}, st, nil, nil, &passwordEngine{})
+	if err := svc.ConvertLegacyAppKeys(); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range []string{path, path + "-wal"} {
+		raw, err := os.ReadFile(f) //nolint:gosec // G304: the database files under the test's own TempDir
+		if err != nil && !os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		if bytes.Contains(raw, enc) {
+			t.Errorf("%s still holds the converted APP_KEY's ciphertext", filepath.Base(f))
+		}
 	}
 }
