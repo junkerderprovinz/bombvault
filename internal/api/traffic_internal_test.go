@@ -28,9 +28,18 @@ type trafficDocker struct {
 	cpu   map[string]uint64
 	down  map[string]bool
 	reads map[string]int
+	// listGate, when set, holds every List until it is closed.
+	listGate chan struct{}
 }
 
-func (d *trafficDocker) List(context.Context) ([]dockercli.ContainerInfo, error) {
+func (d *trafficDocker) List(ctx context.Context) ([]dockercli.ContainerInfo, error) {
+	if d.listGate != nil {
+		select {
+		case <-d.listGate:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
 	return d.infos, nil
 }
 
@@ -60,6 +69,18 @@ func newTrafficService(t *testing.T) (*Service, *store.Repo, *trafficDocker) {
 		reads: map[string]int{},
 	}
 	s.docker = d
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersSchedule = "daily 03:00"
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		s.EndDetachedWork()
+		s.waits().wg.Wait()
+	})
 	return s, st, d
 }
 
