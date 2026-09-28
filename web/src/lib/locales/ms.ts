@@ -2186,6 +2186,7 @@ const ms: Partial<Translations> = {
   "places.holder.default": "lalai untuk {domains}",
   "places.holder.items": "{n} item disimpan di sana",
   "places.holder.direct": "{n} repositori terus sedang digunakan",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Alamat ini sudah menyimpan repositori restic, jadi tempat ini ialah repositori itu.",
   "places.probe.bucketsHidden": "Kunci ini tidak dibenarkan menyenaraikan bucketnya, jadi taip nama bucket itu.",
   "places.probe.bucketNew": "Kunci ini tidak melihat bucket bernama {bucket}. restic menciptanya semasa sandaran pertama.",

@@ -2163,6 +2163,7 @@ const nl: Partial<Translations> = {
   "places.holder.default": "de standaard voor {domains}",
   "places.holder.items": "one={n} item dat daar is opgeslagen|other={n} items die daar zijn opgeslagen",
   "places.holder.direct": "one={n} directe repository in gebruik|other={n} directe repositories in gebruik",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Op dit adres staat al een restic-repository, dus deze plek is die repository.",
   "places.probe.bucketsHidden": "De sleutel mag zijn buckets niet opsommen, dus typ de naam van de bucket.",
   "places.probe.bucketNew": "De sleutel ziet geen bucket met de naam {bucket}. restic maakt die aan bij de eerste back-up.",

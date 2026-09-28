@@ -2186,6 +2186,7 @@ const eu: Partial<Translations> = {
   "places.holder.default": "{domains}(r)en lehenetsia",
   "places.holder.items": "one=han gordetzen den {n} elementu|other=han gordetzen diren {n} elementu",
   "places.holder.direct": "one=erabileran dagoen {n} biltegi zuzen|other=erabileran dauden {n} biltegi zuzen",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Helbide honetan jada badago restic biltegi bat, beraz lekua biltegi hori bera da.",
   "places.probe.bucketsHidden": "Gakoak ezin ditu bere bucketak zerrendatu, beraz idatzi bucketaren izena.",
   "places.probe.bucketNew": "Gakoak ez du {bucket} izeneko bucketik ikusten. restic-ek lehen babeskopiarekin sortzen du.",

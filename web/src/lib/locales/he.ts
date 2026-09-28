@@ -2166,6 +2166,7 @@ const he: Partial<Translations> = {
   "places.holder.default": "ברירת המחדל של {domains}",
   "places.holder.items": "one=פריט אחד מאוחסן שם|two=שני פריטים מאוחסנים שם|other={n} פריטים מאוחסנים שם",
   "places.holder.direct": "one=מאגר ישיר אחד בשימוש|two=שני מאגרים ישירים בשימוש|other={n} מאגרים ישירים בשימוש",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "בכתובת הזו כבר נמצא מאגר restic, ולכן המקום הוא המאגר הזה.",
   "places.probe.bucketsHidden": "המפתח אינו רשאי להציג את רשימת ה-buckets שלו, לכן הקלד את שם ה-bucket.",
   "places.probe.bucketNew": "המפתח אינו רואה bucket בשם {bucket}. restic ייצור אותו בגיבוי הראשון.",

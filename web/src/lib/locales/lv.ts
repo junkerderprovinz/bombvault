@@ -2186,6 +2186,7 @@ const lv: Partial<Translations> = {
   "places.holder.default": "noklusējums, ko izmanto {domains}",
   "places.holder.items": "zero={n} vienumu glabājas tur|one={n} vienums glabājas tur|other={n} vienumi glabājas tur",
   "places.holder.direct": "zero={n} tiešo krātuvju lietošanā|one={n} tiešā krātuve lietošanā|other={n} tiešās krātuves lietošanā",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Šajā adresē jau ir restic krātuve, tāpēc šī vieta ir tā pati krātuve.",
   "places.probe.bucketsHidden": "Atslēga nedrīkst skatīt bucket sarakstu, tāpēc ievadiet bucket nosaukumu.",
   "places.probe.bucketNew": "Atslēga neredz bucket ar nosaukumu {bucket}. restic to izveidos ar pirmo dublējumu.",

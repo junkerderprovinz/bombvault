@@ -2186,6 +2186,7 @@ const id: Partial<Translations> = {
   "places.holder.default": "bawaan untuk {domains}",
   "places.holder.items": "{n} item disimpan di sana",
   "places.holder.direct": "{n} repositori langsung sedang dipakai",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Alamat ini sudah berisi repositori restic, jadi tempat ini adalah repositori itu.",
   "places.probe.bucketsHidden": "Kunci ini tidak boleh menampilkan daftar bucket-nya, jadi ketik nama bucket-nya.",
   "places.probe.bucketNew": "Kunci ini tidak melihat bucket bernama {bucket}. restic membuatnya pada cadangan pertama.",

@@ -2166,6 +2166,7 @@ const da: Partial<Translations> = {
   "places.holder.default": "standarden for {domains}",
   "places.holder.items": "one={n} element gemt der|other={n} elementer gemt der",
   "places.holder.direct": "one={n} direkte depot i brug|other={n} direkte depoter i brug",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Denne adresse rummer allerede et restic-depot, så stedet er det depot.",
   "places.probe.bucketsHidden": "Nøglen må ikke liste sine buckets, så indtast bucketens navn.",
   "places.probe.bucketNew": "Nøglen ser ingen bucket ved navn {bucket}. restic opretter den ved første sikkerhedskopi.",

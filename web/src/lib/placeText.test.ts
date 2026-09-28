@@ -38,12 +38,12 @@ describe("placeErrorText", () => {
       {
         ok: false,
         code: "place-in-use",
-        holders: { homeDomains: ["containers", "vms"], defaults: ["files"], items: [{ domain: "files", key: "a" }], directInUse: [] },
+        holders: { homeDomains: ["containers", "vms"], defaults: ["files"], items: [{ domain: "files", key: "a", name: "Music" }], directInUse: [], directNames: [] },
       },
       "settings.error"
     );
     expect(text).toBe(
-      "This place is still in use: where Containers and VMs are stored, the default for Folders, and 1 item stored there. Change that first."
+      "This place is still in use: where Containers and VMs are stored, the default for Folders, and 1 item stored there (Music). Change that first."
     );
   });
 

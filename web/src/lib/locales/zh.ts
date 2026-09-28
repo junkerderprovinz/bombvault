@@ -2159,6 +2159,7 @@ const zh: Partial<Translations> = {
   "places.holder.default": "{domains} 的默认值",
   "places.holder.items": "{n} 个项目存放于此",
   "places.holder.direct": "{n} 个直接存储库正在使用",
+  "places.holder.named": "{holder}（{names}）",
   "places.probe.baseIsRepository": "此地址上已有一个 restic 存储库，因此该存储位置就是这个存储库。",
   "places.probe.bucketsHidden": "此密钥无权列出存储桶，请输入存储桶的名称。",
   "places.probe.bucketNew": "此密钥看不到名为 {bucket} 的存储桶。restic 会在首次备份时创建它。",

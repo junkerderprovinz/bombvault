@@ -2166,6 +2166,7 @@ const tr: Partial<Translations> = {
   "places.holder.default": "{domains} için varsayılan",
   "places.holder.items": "orada depolanan {n} öge",
   "places.holder.direct": "kullanımda olan {n} doğrudan depo",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Bu adreste zaten bir restic deposu var, yani konum bu deponun kendisi olur.",
   "places.probe.bucketsHidden": "Anahtarın bucket'ları listeleme izni yok, bu yüzden bucket'ın adını yaz.",
   "places.probe.bucketNew": "Anahtar {bucket} adında bir bucket görmüyor. restic onu ilk yedeklemede oluşturur.",

@@ -2186,6 +2186,7 @@ const bg: Partial<Translations> = {
   "places.holder.default": "стойност по подразбиране за {domains}",
   "places.holder.items": "one={n} елемент, съхраняван там|other={n} елемента, съхранявани там",
   "places.holder.direct": "one={n} директно хранилище в употреба|other={n} директни хранилища в употреба",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "На този адрес вече има restic хранилище, така че мястото е това хранилище.",
   "places.probe.bucketsHidden": "Ключът няма право да изброява bucket-ите си, затова въведи името на bucket-а.",
   "places.probe.bucketNew": "Ключът не вижда bucket с име {bucket}. restic ще го създаде при първото архивиране.",

@@ -2169,6 +2169,7 @@ const th: Partial<Translations> = {
   "places.holder.default": "ค่าเริ่มต้นของ {domains}",
   "places.holder.items": "รายการที่จัดเก็บที่นั่น {n} รายการ",
   "places.holder.direct": "ที่เก็บข้อมูลโดยตรงที่ใช้อยู่ {n} แห่ง",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "ที่อยู่นี้มีที่เก็บข้อมูล restic อยู่แล้ว ตำแหน่งจัดเก็บนี้จึงเป็นที่เก็บข้อมูลนั้น",
   "places.probe.bucketsHidden": "คีย์นี้ไม่มีสิทธิ์แสดงรายการ bucket จึงต้องพิมพ์ชื่อ bucket เอง",
   "places.probe.bucketNew": "คีย์นี้ไม่เห็น bucket ชื่อ {bucket} restic จะสร้างขึ้นเมื่อสำรองข้อมูลครั้งแรก",

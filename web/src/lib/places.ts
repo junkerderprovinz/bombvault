@@ -154,6 +154,8 @@ export interface CreatePlaceBody {
   /** Only for a provider that asks "Where is the device?". */
   offPremises?: boolean;
   folders?: Record<string, string>;
+  /** Starts the place append-only, for a server set up from the recipe. */
+  immutable?: boolean;
 }
 
 export interface PatchPlaceBody {
@@ -180,8 +182,10 @@ export interface PatchPlaceBody {
 export interface PlaceHolders {
   homeDomains: string[];
   defaults: string[];
-  items: { domain: string; key: string }[];
+  items: { domain: string; key: string; name: string }[];
   directInUse: string[];
+  /** The direct repositories in use, by name. */
+  directNames: string[];
 }
 
 /** A refused place write, with the fields some codes carry. */

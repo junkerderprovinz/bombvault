@@ -1319,7 +1319,7 @@ func TestAHomePlaceIsNotRemovedAndTheAnswerSaysWhatHoldsIt(t *testing.T) {
 	if res["ok"] != false || res["code"] != "place-in-use" || !slices.Equal(homes, []string{"containers", "vms"}) {
 		t.Fatalf("DELETE = %v, want place-in-use held by containers and vms", res)
 	}
-	for _, key := range []string{"defaults", "items", "directInUse"} {
+	for _, key := range []string{"defaults", "items", "directInUse", "directNames"} {
 		if !reflect.DeepEqual(holders[key], []any{}) {
 			t.Errorf("holders %s = %v, want an empty list", key, holders[key])
 		}
@@ -1342,8 +1342,26 @@ func TestARemovalRefusalNamesTheDefaultsAndItemsOnThePlace(t *testing.T) {
 
 	holders, _ := res["holders"].(map[string]any)
 	if res["code"] != "place-in-use" || !reflect.DeepEqual(holders["defaults"], []any{"containers"}) ||
-		!reflect.DeepEqual(holders["items"], []any{map[string]any{"domain": "containers", "key": "nginx"}}) {
+		!reflect.DeepEqual(holders["items"], []any{map[string]any{"domain": "containers", "key": "nginx", "name": "nginx"}}) {
 		t.Fatalf("DELETE = %v, want place-in-use held by the containers default and nginx", res)
+	}
+}
+
+func TestARemovalRefusalNamesTheFolderSetAndTheDirectRepositoryOnThePlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	rest := f.storePlace(s3Place("Rest server", "s3:https://s3.example.com/bucket"))
+	target := f.placeTarget(rest, "files", "")
+	direct := f.direct(target)
+	f.linkRow(direct.ID, rest, "files", directSuffix)
+	music := f.fileSet("Music", direct.ID)
+
+	res := f.do(http.MethodDelete, "/api/places/"+rest.ID, nil)
+
+	holders, _ := res["holders"].(map[string]any)
+	if res["code"] != "place-in-use" ||
+		!reflect.DeepEqual(holders["items"], []any{map[string]any{"domain": "files", "key": music.ID, "name": "Music"}}) ||
+		!reflect.DeepEqual(holders["directNames"], []any{direct.Name}) {
+		t.Fatalf("DELETE = %v, want place-in-use naming Music and %s", res, direct.Name)
 	}
 }
 

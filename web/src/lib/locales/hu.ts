@@ -2169,6 +2169,7 @@ const hu: Partial<Translations> = {
   "places.holder.default": "{domains} alapértelmezése",
   "places.holder.items": "{n} ott tárolt elem",
   "places.holder.direct": "{n} használatban lévő közvetlen tároló",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Ezen a címen már van egy restic tároló, így a tárhely maga ez a tároló.",
   "places.probe.bucketsHidden": "A kulcs nem listázhatja a bucketjeit, ezért írd be a bucket nevét.",
   "places.probe.bucketNew": "A kulcs nem lát {bucket} nevű bucketet. A restic az első mentéskor létrehozza.",

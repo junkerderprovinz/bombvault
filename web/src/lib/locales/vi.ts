@@ -2159,6 +2159,7 @@ const vi: Partial<Translations> = {
   "places.holder.default": "mặc định cho {domains}",
   "places.holder.items": "{n} mục được lưu ở đó",
   "places.holder.direct": "{n} kho trực tiếp đang được dùng",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Địa chỉ này đã chứa một kho restic, nên điểm lưu trữ chính là kho đó.",
   "places.probe.bucketsHidden": "Khóa không được phép liệt kê các bucket của nó, nên hãy nhập tên bucket.",
   "places.probe.bucketNew": "Khóa không thấy bucket nào tên {bucket}. restic sẽ tạo bucket này ở lần sao lưu đầu tiên.",

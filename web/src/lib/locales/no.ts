@@ -2166,6 +2166,7 @@ const no: Partial<Translations> = {
   "places.holder.default": "standarden for {domains}",
   "places.holder.items": "one={n} element lagret der|other={n} elementer lagret der",
   "places.holder.direct": "one={n} direkte depot i bruk|other={n} direkte depoter i bruk",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Denne adressen inneholder allerede et restic-depot, så lagringsstedet er det depotet.",
   "places.probe.bucketsHidden": "Nøkkelen får ikke liste opp bucketene sine, så skriv inn navnet på bucketen.",
   "places.probe.bucketNew": "Nøkkelen ser ingen bucket som heter {bucket}. restic oppretter den ved første sikkerhetskopi.",

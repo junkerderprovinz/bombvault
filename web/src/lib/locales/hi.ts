@@ -2186,6 +2186,7 @@ const hi: Partial<Translations> = {
   "places.holder.default": "{domains} के लिए डिफ़ॉल्ट",
   "places.holder.items": "one=वहाँ संग्रहीत {n} प्रविष्टि|other=वहाँ संग्रहीत {n} प्रविष्टियाँ",
   "places.holder.direct": "one=उपयोग में {n} डायरेक्ट रिपॉज़िटरी|other=उपयोग में {n} डायरेक्ट रिपॉज़िटरीज़",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "इस पते पर पहले से एक restic रिपॉज़िटरी है, इसलिए यह स्थान वही रिपॉज़िटरी है।",
   "places.probe.bucketsHidden": "यह कुंजी अपने बकेट सूचीबद्ध नहीं कर सकती, इसलिए बकेट का नाम टाइप करें।",
   "places.probe.bucketNew": "कुंजी को {bucket} नाम का कोई बकेट नहीं दिखता। restic पहले बैकअप के साथ इसे बना देता है।",

@@ -2169,6 +2169,7 @@ const ro: Partial<Translations> = {
   "places.holder.default": "valoarea implicită pentru {domains}",
   "places.holder.items": "one={n} element stocat acolo|few={n} elemente stocate acolo|other={n} de elemente stocate acolo",
   "places.holder.direct": "one={n} depozit direct în uz|few={n} depozite directe în uz|other={n} de depozite directe în uz",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "La această adresă există deja un depozit restic, deci locul este acel depozit.",
   "places.probe.bucketsHidden": "Cheia nu are voie să listeze bucket-urile, așa că introdu numele bucket-ului.",
   "places.probe.bucketNew": "Cheia nu vede niciun bucket numit {bucket}. restic îl creează la prima copie de siguranță.",

@@ -28,6 +28,7 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "placement.flow",
   "dbdump.versionLabel",
   "zfs.safety.row",
+  "places.holder.named",
 
   // Protocol and product names every locale writes in Latin script. Each also
   // appears untranslated in the locales' own surrounding prose.

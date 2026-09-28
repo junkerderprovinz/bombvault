@@ -2161,6 +2161,7 @@ const ru: Partial<Translations> = {
   "places.holder.default": "значение по умолчанию для {domains}",
   "places.holder.items": "one={n} элемент хранится там|few={n} элемента хранятся там|many={n} элементов хранятся там|other={n} элемента хранятся там",
   "places.holder.direct": "one={n} прямой репозиторий используется|few={n} прямых репозитория используются|many={n} прямых репозиториев используются|other={n} прямого репозитория используются",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "По этому адресу уже есть репозиторий restic, поэтому это место и есть этот репозиторий.",
   "places.probe.bucketsHidden": "Ключу не разрешено выводить список своих бакетов, поэтому введите имя бакета.",
   "places.probe.bucketNew": "Ключ не видит бакет с именем {bucket}. restic создаст его при первом резервном копировании.",

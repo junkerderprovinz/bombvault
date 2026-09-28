@@ -169,7 +169,7 @@ describe("PlaceRow", () => {
       ok: false,
       code: "place-in-use",
       error: "place in use",
-      holders: { homeDomains: ["containers"], defaults: [], items: [], directInUse: [] },
+      holders: { homeDomains: ["containers"], defaults: [], items: [], directInUse: [], directNames: [] },
     };
     row();
     await act(async () => {
@@ -180,5 +180,45 @@ describe("PlaceRow", () => {
     });
     expect(screen.getByText("This place is still in use: where Containers are stored. Change that first.")).toBeTruthy();
     expect(button("places.row.remove").className).toContain("glim-shake");
+  });
+
+  it("names the items and the direct repository that hold it, and keeps saying so until dismissed", async () => {
+    vi.useFakeTimers();
+    try {
+      deleteAnswer = {
+        ok: false,
+        code: "place-in-use",
+        error: "place in use",
+        holders: {
+          homeDomains: [],
+          defaults: [],
+          items: [{ domain: "files", key: "f1", name: "Music" }],
+          directInUse: ["t1"],
+          directNames: ["Rest server direct"],
+        },
+      };
+      row();
+      await act(async () => {
+        fireEvent.click(button("places.row.remove"));
+      });
+      await act(async () => {
+        fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["places.row.remove"] }));
+      });
+      const said = "This place is still in use: 1 item stored there (Music) and 1 direct repository in use (Rest server direct). Change that first.";
+      await act(async () => {
+        vi.advanceTimersByTime(60_000);
+      });
+      expect(screen.getByRole("alert").textContent).toContain(said);
+      fireEvent.click(screen.getByRole("button", { name: en["common.close"] }));
+      expect(screen.queryByText(said)).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("names the kind once where the provider is called the same", () => {
+    row(place({ provider: "rest-server", kind: "rest", name: "Rest server" }));
+    expect(screen.getByText(en["places.kind.rest"])).toBeTruthy();
+    expect(screen.queryByText(`${en["places.kind.rest"]} · ${en["places.kind.rest"]}`)).toBeNull();
   });
 });

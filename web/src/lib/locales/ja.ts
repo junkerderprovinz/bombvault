@@ -2159,6 +2159,7 @@ const ja: Partial<Translations> = {
   "places.holder.default": "{domains} の既定",
   "places.holder.items": "そこに保存されている項目 {n} 件",
   "places.holder.direct": "使用中のダイレクトリポジトリ {n} 件",
+  "places.holder.named": "{holder}（{names}）",
   "places.probe.baseIsRepository": "このアドレスにはすでに restic リポジトリがあるため、この保存場所はそのリポジトリになります。",
   "places.probe.bucketsHidden": "このキーにはバケットを一覧表示する権限がないため、バケット名を入力してください。",
   "places.probe.bucketNew": "このキーからは {bucket} という名前のバケットが見えません。restic が最初のバックアップで作成します。",

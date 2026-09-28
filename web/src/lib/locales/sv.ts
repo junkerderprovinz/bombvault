@@ -2166,6 +2166,7 @@ const sv: Partial<Translations> = {
   "places.holder.default": "standardvärdet för {domains}",
   "places.holder.items": "one={n} objekt sparat där|other={n} objekt sparade där",
   "places.holder.direct": "one={n} direktarkiv i bruk|other={n} direktarkiv i bruk",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Den här adressen innehåller redan ett restic-arkiv, så lagringsplatsen är det arkivet.",
   "places.probe.bucketsHidden": "Nyckeln får inte lista sina buckets, så skriv in bucketens namn.",
   "places.probe.bucketNew": "Nyckeln ser ingen bucket som heter {bucket}. restic skapar den vid den första säkerhetskopieringen.",

@@ -2166,6 +2166,7 @@ const pt: Partial<Translations> = {
   "places.holder.default": "o padrão para {domains}",
   "places.holder.items": "one={n} item guardado lá|many={n} de itens guardados lá|other={n} itens guardados lá",
   "places.holder.direct": "one={n} repositório direto em uso|many={n} de repositórios diretos em uso|other={n} repositórios diretos em uso",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Este endereço já contém um repositório restic, por isso o lugar é esse repositório.",
   "places.probe.bucketsHidden": "A chave não tem permissão para listar os buckets, por isso escreve o nome do bucket.",
   "places.probe.bucketNew": "A chave não vê nenhum bucket chamado {bucket}. O restic cria-o com o primeiro backup.",

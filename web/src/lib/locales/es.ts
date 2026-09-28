@@ -2164,6 +2164,7 @@ const es: Partial<Translations> = {
   "places.holder.default": "el valor predeterminado de {domains}",
   "places.holder.items": "one={n} elemento almacenado allí|many={n} de elementos almacenados allí|other={n} elementos almacenados allí",
   "places.holder.direct": "one={n} repositorio directo en uso|many={n} de repositorios directos en uso|other={n} repositorios directos en uso",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Esta dirección ya contiene un repositorio de restic, así que el lugar es ese repositorio.",
   "places.probe.bucketsHidden": "La clave no puede listar sus buckets, así que escribe el nombre del bucket.",
   "places.probe.bucketNew": "La clave no ve ningún bucket llamado {bucket}. restic lo crea con la primera copia de seguridad.",

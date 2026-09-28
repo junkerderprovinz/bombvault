@@ -2169,6 +2169,7 @@ const sl: Partial<Translations> = {
   "places.holder.default": "privzeta vrednost ({domains})",
   "places.holder.items": "one={n} element je shranjen tam|two={n} elementa sta shranjena tam|few={n} elementi so shranjeni tam|other={n} elementov je shranjenih tam",
   "places.holder.direct": "one={n} neposredni repozitorij v uporabi|two={n} neposredna repozitorija v uporabi|few={n} neposredni repozitoriji v uporabi|other={n} neposrednih repozitorijev v uporabi",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Na tem naslovu že leži repozitorij restic, zato je mesto ta repozitorij.",
   "places.probe.bucketsHidden": "Ključ ne sme izpisati svojih veder, zato vnesi ime vedra.",
   "places.probe.bucketNew": "Ključ ne vidi vedra z imenom {bucket}. restic ga ustvari ob prvi varnostni kopiji.",

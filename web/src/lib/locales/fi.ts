@@ -2166,6 +2166,7 @@ const fi: Partial<Translations> = {
   "places.holder.default": "oletus toimialueille {domains}",
   "places.holder.items": "one={n} kohde tallennetaan sinne|other={n} kohdetta tallennetaan sinne",
   "places.holder.direct": "one={n} suora arkisto käytössä|other={n} suoraa arkistoa käytössä",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Tässä osoitteessa on jo restic-arkisto, joten paikka on tämä arkisto.",
   "places.probe.bucketsHidden": "Avain ei saa listata buckettejaan, joten kirjoita bucketin nimi.",
   "places.probe.bucketNew": "Avain ei näe bucketia nimeltä {bucket}. restic luo sen ensimmäisen varmuuskopion yhteydessä.",

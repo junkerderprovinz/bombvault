@@ -2186,6 +2186,7 @@ const sk: Partial<Translations> = {
   "places.holder.default": "predvolená hodnota pre {domains}",
   "places.holder.items": "one={n} položka, ktorá sa tam ukladá|few={n} položky, ktoré sa tam ukladajú|many={n} položky, ktoré sa tam ukladajú|other={n} položiek, ktoré sa tam ukladajú",
   "places.holder.direct": "one={n} používaný priamy repozitár|few={n} používané priame repozitáre|many={n} používaného priameho repozitára|other={n} používaných priamych repozitárov",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Na tejto adrese už je repozitár restic, takže toto miesto je tým repozitárom.",
   "places.probe.bucketsHidden": "Kľúč nesmie vypisovať svoje buckety, zadaj preto názov bucketu.",
   "places.probe.bucketNew": "Kľúč nevidí žiadny bucket s názvom {bucket}. restic ho vytvorí pri prvej zálohe.",

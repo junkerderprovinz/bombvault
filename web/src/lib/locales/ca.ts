@@ -2186,6 +2186,7 @@ const ca: Partial<Translations> = {
   "places.holder.default": "el valor per defecte de {domains}",
   "places.holder.items": "one={n} element emmagatzemat allà|many={n} d'elements emmagatzemats allà|other={n} elements emmagatzemats allà",
   "places.holder.direct": "one={n} repositori directe en ús|many={n} de repositoris directes en ús|other={n} repositoris directes en ús",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Aquesta adreça ja conté un repositori restic, així que el lloc és aquest repositori.",
   "places.probe.bucketsHidden": "La clau no pot llistar els seus buckets, així que escriu el nom del bucket.",
   "places.probe.bucketNew": "La clau no veu cap bucket anomenat {bucket}. restic el crea amb la primera còpia de seguretat.",

@@ -2186,6 +2186,7 @@ const fa: Partial<Translations> = {
   "places.holder.default": "پیش‌فرض {domains}",
   "places.holder.items": "{n} مورد ذخیره‌شده در آنجا",
   "places.holder.direct": "{n} مخزن مستقیم در حال استفاده",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "در این نشانی از قبل یک مخزن restic هست، پس این مکان همان مخزن است.",
   "places.probe.bucketsHidden": "این کلید اجازهٔ فهرست کردن باکت‌هایش را ندارد، پس نام باکت را تایپ کنید.",
   "places.probe.bucketNew": "این کلید باکتی به نام {bucket} نمی‌بیند. restic آن را با اولین پشتیبان می‌سازد.",

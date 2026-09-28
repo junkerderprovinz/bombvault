@@ -2169,6 +2169,7 @@ const sr: Partial<Translations> = {
   "places.holder.default": "подразумевано за {domains}",
   "places.holder.items": "one={n} ставка се чува тамо|few={n} ставке се чувају тамо|other={n} ставки се чува тамо",
   "places.holder.direct": "one={n} директни репозиторијум у употреби|few={n} директна репозиторијума у употреби|other={n} директних репозиторијума у употреби",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "На овој адреси већ постоји restic репозиторијум, па је место тај репозиторијум.",
   "places.probe.bucketsHidden": "Кључ не сме да излистава своје кофе, па унеси назив кофе.",
   "places.probe.bucketNew": "Кључ не види кофу под називом {bucket}. restic је прави при првој резервној копији.",

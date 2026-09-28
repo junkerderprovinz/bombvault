@@ -2186,6 +2186,7 @@ const is: Partial<Translations> = {
   "places.holder.default": "sjálfgefið gildi fyrir {domains}",
   "places.holder.items": "one={n} atriði geymt þar|other={n} atriði geymd þar",
   "places.holder.direct": "one={n} beint geymslusafn í notkun|other={n} bein geymslusöfn í notkun",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Á þessu vistfangi er nú þegar restic-geymslusafn, svo geymslustaðurinn er það geymslusafn.",
   "places.probe.bucketsHidden": "Lykillinn hefur ekki leyfi til að telja upp bucketa, svo sláðu inn nafn bucketsins.",
   "places.probe.bucketNew": "Lykillinn sér engan bucket sem heitir {bucket}. restic býr hann til við fyrsta afritið.",

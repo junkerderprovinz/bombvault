@@ -2186,6 +2186,7 @@ const hr: Partial<Translations> = {
   "places.holder.default": "zadano za {domains}",
   "places.holder.items": "one={n} stavka pohranjena ovdje|few={n} stavke pohranjene ovdje|other={n} stavki pohranjenih ovdje",
   "places.holder.direct": "one={n} izravni repozitorij u upotrebi|few={n} izravna repozitorija u upotrebi|other={n} izravnih repozitorija u upotrebi",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Na ovoj adresi već postoji restic repozitorij, pa je mjesto upravo taj repozitorij.",
   "places.probe.bucketsHidden": "Ključ ne smije ispisati svoje buckete, pa upiši naziv bucketa.",
   "places.probe.bucketNew": "Ključ ne vidi bucket s nazivom {bucket}. restic ga stvara pri prvoj sigurnosnoj kopiji.",

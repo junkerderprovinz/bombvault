@@ -2161,6 +2161,7 @@ const pl: Partial<Translations> = {
   "places.holder.default": "{domains} (miejsce domyślne)",
   "places.holder.items": "one={n} element zapisany tutaj|few={n} elementy zapisane tutaj|many={n} elementów zapisanych tutaj|other={n} elementów zapisanych tutaj",
   "places.holder.direct": "one={n} repozytorium bezpośrednie w użyciu|few={n} repozytoria bezpośrednie w użyciu|many={n} repozytoriów bezpośrednich w użyciu|other={n} repozytoriów bezpośrednich w użyciu",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Pod tym adresem jest już repozytorium restic, więc to miejsce jest tym repozytorium.",
   "places.probe.bucketsHidden": "Klucz nie może wyświetlić listy swoich zasobników, więc wpisz nazwę zasobnika.",
   "places.probe.bucketNew": "Klucz nie widzi zasobnika o nazwie {bucket}. restic utworzy go przy pierwszej kopii zapasowej.",

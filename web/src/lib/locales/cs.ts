@@ -2164,6 +2164,7 @@ const cs: Partial<Translations> = {
   "places.holder.default": "výchozí hodnota pro {domains}",
   "places.holder.items": "one={n} položka se tam ukládá|few={n} položky se tam ukládají|many={n} položky se tam ukládá|other={n} položek se tam ukládá",
   "places.holder.direct": "one={n} používaný přímý repozitář|few={n} používané přímé repozitáře|many={n} používaného přímého repozitáře|other={n} používaných přímých repozitářů",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Na této adrese už leží repozitář restic, takže toto místo je tímto repozitářem.",
   "places.probe.bucketsHidden": "Klíč nesmí vypisovat své buckety, zadej proto název bucketu.",
   "places.probe.bucketNew": "Klíč nevidí žádný bucket s názvem {bucket}. restic ho vytvoří při první záloze.",

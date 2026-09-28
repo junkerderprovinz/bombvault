@@ -2159,6 +2159,7 @@ const ko: Partial<Translations> = {
   "places.holder.default": "{domains}의 기본값",
   "places.holder.items": "그곳에 저장된 항목 {n}개",
   "places.holder.direct": "사용 중인 직접 저장소 {n}개",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "이 주소에는 이미 restic 저장소가 있으므로, 이 장소가 곧 그 저장소입니다.",
   "places.probe.bucketsHidden": "이 키에는 버킷 목록을 볼 권한이 없으니 버킷 이름을 직접 입력하세요.",
   "places.probe.bucketNew": "이 키로는 {bucket}(이)라는 버킷이 보이지 않습니다. restic이 첫 백업 때 버킷을 만듭니다.",

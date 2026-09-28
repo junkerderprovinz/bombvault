@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -1080,13 +1081,36 @@ func (s *Service) dropUnusedCredSet(id string) {
 }
 
 // placeHoldersView is what keeps a place from being removed, as the refusal
-// names it.
-func placeHoldersView(h store.PlaceHolders) map[string]any {
+// names it: the items by their names and each direct repository in use by
+// its own.
+func (s *Service) placeHoldersView(h store.PlaceHolders) (map[string]any, error) {
+	labels, read := map[store.ItemRef]string{}, map[string]bool{}
 	items := make([]map[string]string, 0, len(h.Items))
 	for _, it := range h.Items {
-		items = append(items, map[string]string{"domain": it.Domain, "key": it.Key})
+		if !read[it.Domain] {
+			all, err := s.domainItems(it.Domain)
+			if err != nil {
+				return nil, err
+			}
+			for _, d := range all {
+				labels[d.ref] = d.label
+			}
+			read[it.Domain] = true
+		}
+		items = append(items, map[string]string{"domain": it.Domain, "key": it.Key, "name": cmp.Or(labels[it], it.Key)})
 	}
-	return map[string]any{"homeDomains": h.HomeDomains, "defaults": h.Defaults, "items": items, "directInUse": h.DirectInUse}
+	named, err := s.store.ListNamedRepos()
+	if err != nil {
+		return nil, err
+	}
+	directNames := make([]string, 0, len(h.DirectInUse))
+	for _, targetID := range h.DirectInUse {
+		if i := slices.IndexFunc(named, func(r store.OffsiteTarget) bool { return r.CompanionOf == targetID }); i >= 0 {
+			directNames = append(directNames, named[i].Name)
+		}
+	}
+	return map[string]any{"homeDomains": h.HomeDomains, "defaults": h.Defaults, "items": items,
+		"directInUse": h.DirectInUse, "directNames": directNames}, nil
 }
 
 // handleDeletePlace serves DELETE /api/places/{id}.
@@ -1102,7 +1126,12 @@ func (h *Handler) handleDeletePlace(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, failEnvelope(hErr))
 			return
 		}
-		placementFail(w, err, map[string]any{"holders": placeHoldersView(holders)})
+		view, vErr := h.svc.placeHoldersView(holders)
+		if vErr != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(vErr))
+			return
+		}
+		placementFail(w, err, map[string]any{"holders": view})
 	case err != nil:
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 	default:

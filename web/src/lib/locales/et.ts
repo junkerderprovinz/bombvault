@@ -2186,6 +2186,7 @@ const et: Partial<Translations> = {
   "places.holder.default": "{domains} vaikeväärtus osutab siia",
   "places.holder.items": "one={n} üksus salvestab siia|other={n} üksust salvestab siia",
   "places.holder.direct": "one={n} otsehoidla on kasutusel|other={n} otsehoidlat on kasutusel",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Sellel aadressil on juba restic hoidla, seega on salvestuskoht ise see hoidla.",
   "places.probe.bucketsHidden": "Võti ei tohi oma bucketeid loetleda, seega sisesta bucketi nimi.",
   "places.probe.bucketNew": "Võti ei näe bucketit nimega {bucket}. restic loob selle esimese varundusega.",

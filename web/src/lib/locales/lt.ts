@@ -2186,6 +2186,7 @@ const lt: Partial<Translations> = {
   "places.holder.default": "{domains} ją naudoja kaip numatytąją",
   "places.holder.items": "one=čia saugomas {n} elementas|few=čia saugomi {n} elementai|many=čia saugoma {n} elemento|other=čia saugoma {n} elementų",
   "places.holder.direct": "one=naudojama {n} tiesioginė saugykla|few=naudojamos {n} tiesioginės saugyklos|many=naudojama {n} tiesioginės saugyklos|other=naudojama {n} tiesioginių saugyklų",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Šiuo adresu jau yra restic saugykla, todėl ši saugojimo vieta ir yra ta saugykla.",
   "places.probe.bucketsHidden": "Raktas negali išvardyti savo bucket, todėl įvesk bucket pavadinimą.",
   "places.probe.bucketNew": "Raktas nemato bucket pavadinimu {bucket}. restic jį sukurs per pirmą atsarginę kopiją.",

@@ -2169,6 +2169,7 @@ const ar: Partial<Translations> = {
   "places.holder.default": "الافتراضي لـ {domains}",
   "places.holder.items": "zero=لا عناصر مخزّنة هناك|one=عنصر واحد مخزَّن هناك|two=عنصران مخزَّنان هناك|few={n} عناصر مخزّنة هناك|many={n} عنصرًا مخزَّنًا هناك|other={n} عنصر مخزَّن هناك",
   "places.holder.direct": "zero=لا مستودعات مباشرة قيد الاستخدام|one=مستودع مباشر واحد قيد الاستخدام|two=مستودعان مباشران قيد الاستخدام|few={n} مستودعات مباشرة قيد الاستخدام|many={n} مستودعًا مباشرًا قيد الاستخدام|other={n} مستودع مباشر قيد الاستخدام",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "يحتوي هذا العنوان بالفعل على مستودع restic، لذا فالمكان هو ذلك المستودع.",
   "places.probe.bucketsHidden": "لا يُسمح للمفتاح بعرض الـ buckets الخاصة به، لذا اكتب اسم الـ bucket.",
   "places.probe.bucketNew": "لا يرى المفتاح bucket باسم {bucket}. يُنشئه restic مع أول نسخة احتياطية.",

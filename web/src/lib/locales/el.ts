@@ -2166,6 +2166,7 @@ const el: Partial<Translations> = {
   "places.holder.default": "η προεπιλογή για {domains}",
   "places.holder.items": "one={n} στοιχείο αποθηκεύεται εκεί|other={n} στοιχεία αποθηκεύονται εκεί",
   "places.holder.direct": "one={n} άμεσο αποθετήριο σε χρήση|other={n} άμεσα αποθετήρια σε χρήση",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Αυτή η διεύθυνση περιέχει ήδη ένα αποθετήριο restic, οπότε ο χώρος είναι αυτό το αποθετήριο.",
   "places.probe.bucketsHidden": "Το κλειδί δεν επιτρέπεται να εμφανίσει τα buckets του, οπότε πληκτρολογήστε το όνομα του bucket.",
   "places.probe.bucketNew": "Το κλειδί δεν βλέπει bucket με όνομα {bucket}. Το restic το δημιουργεί με το πρώτο αντίγραφο ασφαλείας.",

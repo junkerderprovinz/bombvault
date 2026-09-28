@@ -33,9 +33,12 @@ function holdersText(t: T, lang: string, h: PlaceHolders): string {
   const parts: string[] = [];
   if (h.homeDomains.length > 0) parts.push(t("places.holder.home").replace("{domains}", domainNames(t, lang, h.homeDomains)));
   if (h.defaults.length > 0) parts.push(t("places.holder.default").replace("{domains}", domainNames(t, lang, h.defaults)));
-  if (h.items.length > 0) parts.push(t("places.holder.items", h.items.length));
-  if (h.directInUse.length > 0) parts.push(t("places.holder.direct", h.directInUse.length));
-  return new Intl.ListFormat(lang, { type: "conjunction" }).format(parts);
+  const list = (names: string[]) => new Intl.ListFormat(lang, { type: "conjunction" }).format(names);
+  const named = (holder: string, names: string[]) =>
+    t("places.holder.named").replace("{holder}", () => holder).replace("{names}", () => list(names));
+  if (h.items.length > 0) parts.push(named(t("places.holder.items", h.items.length), h.items.map((it) => it.name)));
+  if (h.directNames.length > 0) parts.push(named(t("places.holder.direct", h.directNames.length), h.directNames));
+  return list(parts);
 }
 
 /** probeErrorText is why a probe or one of its folders failed, in words: the

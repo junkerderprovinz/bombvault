@@ -2186,6 +2186,7 @@ const gl: Partial<Translations> = {
   "places.holder.default": "valor por defecto de {domains}",
   "places.holder.items": "one={n} elemento gardado alí|other={n} elementos gardados alí",
   "places.holder.direct": "one={n} repositorio directo en uso|other={n} repositorios directos en uso",
+  "places.holder.named": "{holder} ({names})",
   "places.probe.baseIsRepository": "Este enderezo xa contén un repositorio restic, así que o lugar é ese repositorio.",
   "places.probe.bucketsHidden": "A clave non pode listar os seus buckets, así que escribe o nome do bucket.",
   "places.probe.bucketNew": "A clave non ve ningún bucket chamado {bucket}. restic créao coa primeira copia.",
