@@ -7778,6 +7778,11 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 	})
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
+		// The restored disks carry none of the bitmaps a kept checkpoint
+		// points at.
+		if tg, err := s.store.GetVMTargetByName(name); err == nil {
+			s.blockCheckpointFile(tg.ID).clear()
+		}
 	}
 	s.progEnd(rkey, "restore", rerr == nil, startedAt)
 	return rerr
@@ -13023,9 +13028,6 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 	// scheduled jobs DO respect (see executeRestore).
 	unlock := s.lockDomainFor("vms", "restore")
 	defer unlock()
-	// The restored disks carry none of the bitmaps BombVault's checkpoints
-	// point at.
-	s.dropBlockCheckpoints(ctx, name)
 	// restic leaves a subtree target it creates root:root/0700, as in a container
 	// restore (#125), whether the target is another pool or the folder a rename
 	// moved the disks to. Pre-create each one readable; healRestoreDirOwnership
@@ -13065,6 +13067,11 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 	})
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
+		// The restored disks carry none of the bitmaps a kept checkpoint
+		// points at.
+		if tg, err := s.store.GetVMTargetByName(name); err == nil {
+			s.blockCheckpointFile(tg.ID).clear()
+		}
 	}
 	s.progEnd(rkey, "restore", rerr == nil, startedAt)
 	return rerr
