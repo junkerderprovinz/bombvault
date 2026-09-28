@@ -41,13 +41,11 @@ type namedRepoView struct {
 	LimitUpload   int    `json:"limitUpload"`
 	LimitDownload int    `json:"limitDownload"`
 	// Immutable marks the repository append-only: nothing on this box may delete
-	// from it. Set here and on the Repositories card, and honoured by all six
-	// gates that can destroy data: the retention after a backup, snapshot delete
-	// and the three bulk deletes ask primaryIsImmutable, while prune asks
-	// refAppendOnly, which reads the row the reference already carries. The field
-	// was stored and read long before there was a way to set it, and then for a
-	// while it could be set while the five primaryIsImmutable gates
-	// short-circuited past it on a local path.
+	// from it. Set here, by the append-only switch of the place the repository
+	// lies at, or by the switch on its row under "Without a place", and honoured by
+	// all six gates that can destroy data: the retention after a backup, snapshot
+	// delete and the three bulk deletes ask primaryIsImmutable, while prune asks
+	// refAppendOnly, which reads the row the reference already carries.
 	Immutable bool `json:"immutable"`
 	Enabled   bool `json:"enabled"`
 	// OffPremises counts the repository as a site of its own for sites and 3-2-1
@@ -205,12 +203,11 @@ func staticNamedRepoRefusals(loc, mountRoot string) string {
 // resolved here rather than at backup time for the same reason the per-item
 // choice is: a location that only fails when a run happens fails inside a run
 // record, hours later, with nobody watching.
-// checkClass says whether this request actually CARRIED a storage class. A PATCH
+// checkClass says whether this request carried a storage class at all. A PATCH
 // that does not mention the field must not be refused over a value stored before
-// the allowlist existed: the Repositories card has no storage-class input, so
-// such a row could otherwise never be edited again, and the two safety toggles
-// that ARE on the card would be unreachable on exactly the repository somebody
-// most wants to protect.
+// the allowlist existed: a request that only switches append-only or the row
+// itself could otherwise never change such a row, on exactly the repository
+// somebody most wants to protect.
 // checkLocation is true for a create and for an edit that moves the location,
 // the same scoping handleUpdateOffsiteTarget uses. A row that already sits
 // inside another place, which an import can install, would otherwise be refused
