@@ -127,8 +127,9 @@ export function Instances() {
           }}
           size="lg"
           equalWidth
-          // On a phone each tab is a page of its own, as in Settings.
-          variant={isDesktop ? "well" : "chip"}
+          // Separate tabs, as in Settings.
+          variant="chip"
+          inline={isDesktop}
         />
       )}
 

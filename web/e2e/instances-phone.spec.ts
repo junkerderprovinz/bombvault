@@ -4,7 +4,8 @@
 // the tab panel, and with every card open and every remove armed, no pan, no
 // control past the viewport or its card, no text cut short and no stray
 // backtick, in the lists, the dialogs and the empty states. On the desktop:
-// the 40px rhythm and the one-line cards and inventory table as they were.
+// the 40px rhythm, separate tabs of one width, and the one-line cards and
+// inventory table as they were.
 // German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
 
@@ -470,6 +471,15 @@ for (const lane of LANES) {
 
     expect(await gaps(page)).toEqual({ page: "40px", lane: "40px" });
     await expectFits(page, "#bv-main", { desktop: true });
+    expect(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
+      strip: "rgba(0, 0, 0, 0)",
+      tabsWithoutFill: 0,
+    });
+    const tabWidths = await page
+      .getByRole("tablist", { name: "Instanzen" })
+      .getByRole("tab")
+      .evaluateAll((tabs) => tabs.map((tab) => Math.round(tab.getBoundingClientRect().width)));
+    expect(new Set(tabWidths).size, `tab widths ${tabWidths.join(", ")}`).toBe(1);
     if (lane === "pull") return;
 
     // Names and addresses stay one truncated line, and the receiver's

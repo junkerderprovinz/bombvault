@@ -7,7 +7,7 @@
 // actions under the name, repository and passkey rows wrap instead of cutting,
 // the every-N-days field keeps three digits clear of its steppers, and the MCP
 // card's confirmations come up as a sheet. On the desktop: the 40px rhythm and
-// a strip of tabs that spans the column in even rows. German, because its
+// separate tabs of one width in even rows, hugging them. German, because its
 // labels run longest; advanced mode on, so every expert control is there too.
 import { expect, test, type Page } from "@playwright/test";
 
@@ -577,7 +577,7 @@ test("settings system on a phone: passkeys wrap and the MCP confirmations come u
   expect(box.y + box.height).toBeLessThanOrEqual(800);
 });
 
-test("settings on the desktop keeps the 40px rhythm and a strip that spans the column", async ({ page }, testInfo) => {
+test("settings on the desktop keeps the 40px rhythm and separate tabs of one width", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   await openTab(page, testInfo.project.use.viewport!.width, "general", "Allgemein");
 
@@ -590,15 +590,21 @@ test("settings on the desktop keeps the 40px rhythm and a strip that spans the c
     const fits = await label.evaluate((el) => el.getBoundingClientRect().width > 1 && el.scrollWidth <= el.clientWidth);
     expect(fits, `the ${name} label is hidden or cut`).toBe(true);
   }
-  // The strip spans the column the cards below share.
+  expect(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
+    strip: "rgba(0, 0, 0, 0)",
+    tabsWithoutFill: 0,
+  });
+  // Every tab is as wide as the next, and the strip ends where its widest row
+  // does instead of running on to the column's edge.
   const strip = page.getByRole("tablist", { name: "Einstellungen" });
   const span = await strip.evaluate((el) => {
-    const column = el.parentElement!;
-    const style = getComputedStyle(column);
+    const tabs = [...el.querySelectorAll('[role="tab"]')].map((tab) => tab.getBoundingClientRect());
     return {
-      strip: el.getBoundingClientRect().width,
-      column: column.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+      widths: tabs.map((box) => Math.round(box.width)),
+      strip: el.getBoundingClientRect().right,
+      lastEdge: Math.max(...tabs.map((box) => box.right)),
     };
   });
-  expect(Math.abs(span.strip - span.column)).toBeLessThanOrEqual(1);
+  expect(new Set(span.widths).size, `tab widths ${span.widths.join(", ")}`).toBe(1);
+  expect(span.strip - span.lastEdge, "track past the last tab").toBeLessThanOrEqual(1);
 });

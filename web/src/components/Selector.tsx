@@ -86,7 +86,7 @@ interface SelectorCommon {
    *  which makes the big page-level picker. */
   equalWidth?: boolean;
   /** Hug the segments instead of spanning the box, for a strip that shares a
-   *  toolbar row with a search field or buttons. */
+   *  toolbar row with a search field or buttons, and for page tabs. */
   inline?: boolean;
   /** Disables every item (e.g. SourceToggle mid-restore). A per-item
    *  `disabled` still applies on top of this. */
@@ -200,6 +200,8 @@ interface RowLayout {
   pinned: number;
   room: number;
   gap: number;
+  /** The track's own padding, which a hugging track adds to its segments. */
+  inset: number;
   perRow: number;
   byContent: boolean;
 }
@@ -210,7 +212,8 @@ const sameLayout = (a: RowLayout | null, b: RowLayout) =>
   a.byContent === b.byContent &&
   Math.abs(a.pinned - b.pinned) < 0.5 &&
   Math.abs(a.room - b.room) < 0.5 &&
-  a.gap === b.gap;
+  a.gap === b.gap &&
+  a.inset === b.inset;
 
 // The navigation math is pure so Selector.test.ts can cover it without a DOM.
 
@@ -440,8 +443,16 @@ export function Selector(props: SelectorProps) {
       if (room <= 0) return;
       const gap = parseFloat(own.columnGap) || 0;
       const widths = segmentWidths(segs);
-      const pinned = pinnedWidth(Math.max(...widths.map((w) => w.oneLine)), segs.length, room, gap);
-      const next: RowLayout = { pinned, room, gap, ...segmentLayout(room, pinned, widths, gap) };
+      const widest = Math.max(...widths.map((w) => w.oneLine));
+      let pinned = pinnedWidth(widest, segs.length, room, gap);
+      let rows = segmentLayout(room, pinned, widths, gap);
+      // A hugging strip that wraps takes the floor its rows have room for, so
+      // a tab is as wide in a strip of eight as in a strip of four.
+      if (inline && !rows.byContent && rows.perRow < segs.length) {
+        pinned = pinnedWidth(widest, rows.perRow, room, gap);
+        rows = segmentLayout(room, pinned, widths, gap);
+      }
+      const next: RowLayout = { pinned, room, gap, inset, ...rows };
       setLayout((prev) => (sameLayout(prev, next) ? prev : next));
     };
     measure();
@@ -458,14 +469,28 @@ export function Selector(props: SelectorProps) {
   // segment squeezes it instead of pushing it out of the card. A segment that
   // hugs its label grows too, and so does a pinned one whose row is laid out
   // by content.
+  //
+  // In a hugging strip the pinned segments keep their width, and the track is
+  // held to one row's worth of them, a pixel over against rounding, so it wraps
+  // into even rows that end where the segments do.
   const byContent = pinWidth && !!layout?.byContent;
-  const segmentFlex: CSSProperties =
-    pinWidth && layout && !layout.byContent
+  const pinnedRows = pinWidth && layout && !layout.byContent ? layout : null;
+  const hugged = inline && pinnedRows;
+  const segmentFlex: CSSProperties = hugged
+    ? { flex: `0 0 ${Math.min(hugged.pinned, hugged.room)}px` }
+    : pinnedRows
       ? {
-          minWidth: `${Math.min(layout.pinned, layout.room)}px`,
-          flex: `1 0 calc((100% - ${layout.perRow} * ${layout.gap}px) / ${layout.perRow})`,
+          minWidth: `${Math.min(pinnedRows.pinned, pinnedRows.room)}px`,
+          flex: `1 0 calc((100% - ${pinnedRows.perRow} * ${pinnedRows.gap}px) / ${pinnedRows.perRow})`,
         }
       : { flex: "1 0 auto" };
+  const trackStyle: CSSProperties | undefined = byContent
+    ? { width: "100%", flexWrap: "nowrap" }
+    : hugged
+      ? {
+          maxWidth: `${hugged.perRow * hugged.pinned + (hugged.perRow - 1) * hugged.gap + hugged.inset + 1}px`,
+        }
+      : undefined;
 
   const isOn = (id: string) => (chosen ? chosen.has(id) : only === id);
   const isItemDisabled = (item: SelectorItem) => disabled || !!item.disabled;
@@ -531,7 +556,7 @@ export function Selector(props: SelectorProps) {
       ]
         .filter(Boolean)
         .join(" ")}
-      style={byContent ? { width: "100%", flexWrap: "nowrap" } : undefined}
+      style={trackStyle}
     >
       {items.map((item, i) => {
         const on = isOn(item.id);

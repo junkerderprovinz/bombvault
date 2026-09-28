@@ -2443,8 +2443,7 @@ export function SettingsPage() {
     <div className={PAGE_SHELL_RESPONSIVE}>
       <PageTitle>{t("settings.title")}</PageTitle>
 
-      {/* The tab strip. Each tab owns the rainbow position of its list index,
-          and the strip spans the column the panels below share. */}
+      {/* The tab strip. Each tab owns the rainbow position of its list index. */}
       <Selector
         items={([
           ["general", t("settings.tab.general")],
@@ -2487,9 +2486,11 @@ export function SettingsPage() {
         }}
         size="lg"
         equalWidth
-        // On a phone the tabs are pages of their own rather than one choice, so
-        // each stands as its own badge instead of sharing a groove.
-        variant={isDesktop ? "well" : "chip"}
+        // Tabs are pages rather than one choice, so each stands on its own
+        // instead of sharing a groove, as wide as the widest name. On a phone
+        // they span the column four to a row.
+        variant="chip"
+        inline={isDesktop}
         // Below 48rem no tab holds its German label, which would show a letter
         // and an ellipsis, so the glyph stands alone and the label stays the
         // tab's accessible name.

@@ -252,14 +252,15 @@ describe("Selector under a coarse pointer", () => {
 });
 
 // jsdom lays nothing out, so the room and each segment's widths are stubbed:
-// the track reports `room` as its clientWidth, and a segment measured at
-// max-content or min-content reports its entry in `widths`.
+// the track, or the `data-room` box a hugging track sits in, reports `room` as
+// its clientWidth, and a segment measured at max-content or min-content
+// reports its entry in `widths`.
 function layOut(room: number, widths: Record<string, { oneLine: number; narrowest: number }>) {
   const clientWidth = Object.getOwnPropertyDescriptor(Element.prototype, "clientWidth")!;
   Object.defineProperty(Element.prototype, "clientWidth", {
     configurable: true,
     get(this: Element) {
-      return this.getAttribute("aria-orientation") === "horizontal" ? room : 0;
+      return this.getAttribute("aria-orientation") === "horizontal" || this.hasAttribute("data-room") ? room : 0;
     },
   });
   const computed = window.getComputedStyle;
@@ -432,6 +433,23 @@ describe("Selector equalWidth", () => {
       const wrapper = seg("b").parentElement!;
       expect(wrapper.tagName).toBe("SPAN");
       expect(wrapper.style.minWidth).toBe("260px");
+    } finally {
+      restore();
+    }
+  });
+
+  it("keeps a hugging strip's segments at one width in even rows that end with them", () => {
+    const eight = ["a", "b", "c", "d", "e", "f", "g", "h"].map((id) => ({ id, label: id.toUpperCase() }));
+    const restore = layOut(900, Object.fromEntries(eight.map((i) => [i.id, { oneLine: 150, narrowest: 150 }])));
+    try {
+      render(
+        <div data-room>
+          <Selector items={eight} label="Test strip" active="a" onChange={() => {}} equalWidth inline variant="chip" />
+        </div>,
+      );
+      // Four to a row leave each the full floor, however narrow the labels.
+      for (const item of eight) expect(seg(item.id).style.flex).toBe(`0 0 ${MIN_PINNED_WIDTH}px`);
+      expect(screen.getByRole("tablist").style.maxWidth).toBe(`${4 * MIN_PINNED_WIDTH + 3 * 3.2 + 1}px`);
     } finally {
       restore();
     }
