@@ -15718,7 +15718,8 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 
 // pickDRSnapshot resolves the newest off-site snapshot to drill for a domain.
 // containers: the DRDrillTarget container (or, when unset, the most recently
-// backed-up container), scoped to its container:<name> tag. vms: the
+// backed-up container), scoped to its container:<name> tag, or to its database
+// dumps when those are all it has. vms: the
 // DRDrillTargetVM VM (or, when unset, the most recently backed-up VM), scoped to
 // its vm:<name> tag — same pattern as containers. flash: the newest snapshot
 // outright (flash is a single whole-USB image, no per-item scoping). files
@@ -15759,15 +15760,11 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 		if err != nil {
 			return "", err
 		}
-		tag := tagPfx + target
-		var scoped []restic.Snapshot
-		for _, snap := range all {
-			for _, t := range snap.Tags {
-				if t == tag {
-					scoped = append(scoped, snap)
-					break
-				}
-			}
+		scoped := snapshotsTagged(all, tagPfx+target)
+		if len(scoped) == 0 && domain == "containers" {
+			// A container without appdata paths leaves its database dumps and
+			// nothing else.
+			scoped = snapshotsTagged(all, dbDumpIdentity(target))
 		}
 		if len(scoped) == 0 {
 			return "", fmt.Errorf("no off-site snapshot for drill target %q", target)
