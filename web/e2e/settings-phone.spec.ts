@@ -1,17 +1,24 @@
 // Settings at phone width, with a filled instance staged at the route layer: a
 // fresh harness database has every domain off and nothing configured, which
 // hides most of the page. On the phones, per tab: the 24px card rhythm, the
-// seven tabs four over three, nothing panning or reaching past the viewport or
-// its card, no stray backtick, and every control big enough to hit. Then the
-// arrangements that change on a phone: target and credential rows put their
-// actions under the name, repository and passkey rows wrap instead of cutting,
-// the every-N-days field keeps three digits clear of its steppers, and the MCP
-// card's confirmations come up as a sheet. On the desktop: the
-// 40px rhythm and the unchanged strip of seven 200px tabs. German, because its
-// labels run longest; advanced mode on, so every expert control is there too.
+// six tabs in one row, nothing panning or reaching past the viewport or its
+// card, no stray backtick, and every control big enough to hit. Then the
+// arrangements that change on a phone: place rows put their actions under the
+// name, rows without a place and passkey rows wrap instead of cutting, the
+// every-N-days field keeps three digits clear of its steppers, and the MCP
+// card's confirmations come up as a sheet. On the desktop: the 40px rhythm and
+// the unchanged strip of six 200px tabs. German, because its labels run
+// longest; advanced mode on, so every expert control is there too.
 import { expect, test, type Page } from "@playwright/test";
+import { PLACES, UNPLACED, stagePlaces } from "./places";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
+
+// A settings read the page makes as the test ends would otherwise fail it
+// from inside a route handler whose response is already gone.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
 
 const NOW = Math.floor(Date.now() / 1000);
 
@@ -73,86 +80,6 @@ const SETTINGS = {
     { host: "registry.gitlab.example-company.internal:5050", username: "deploy-bot-readonly", token: "", tokenSet: true },
   ],
 };
-
-const repo = (id: string, name: string, url: string, extra: Record<string, unknown> = {}) => ({
-  id,
-  name,
-  repo: url,
-  credsRef: "",
-  storageClass: "",
-  limitUpload: 0,
-  limitDownload: 0,
-  immutable: false,
-  enabled: true,
-  inUse: 2,
-  ...extra,
-});
-
-const REPOS = [
-  repo("r1", "Wasabi Frankfurt (Langzeitarchiv)", "s3:https://s3.eu-central-1.wasabisys.com/bombvault-offsite-langzeitarchiv/container", {
-    credsRef: "c1",
-    immutable: true,
-  }),
-  repo("r2", "Hetzner Storage Box", "sftp:u123456@u123456.your-storagebox.de:/home/bombvault/vms"),
-  repo("r3", "Zweitserver bei den Eltern", "rest:https://backup.eltern-zuhause.example.net:8000/bombvault/", {
-    enabled: false,
-    inUse: 0,
-  }),
-];
-
-function targets(domain: string) {
-  const target = (id: string, name: string, url: string, extra: Record<string, unknown>) => ({
-    id: `${domain}-${id}`,
-    domain,
-    name,
-    repo: url,
-    credsRef: "",
-    storageClass: "",
-    immutable: false,
-    schedule: "",
-    retentionKeepLast: 3,
-    retentionKeepDaily: 7,
-    retentionKeepWeekly: 4,
-    retentionKeepMonthly: 6,
-    limitUpload: 0,
-    limitDownload: 0,
-    growthBudgetGb: 0,
-    enabled: true,
-    createdAt: NOW - 86400 * 30,
-    ...extra,
-  });
-  return [
-    target("t1", "Wasabi Frankfurt (Langzeitarchiv)", `s3:https://s3.eu-central-1.wasabisys.com/bombvault-offsite-langzeitarchiv/${domain}`, {
-      credsRef: "c1",
-      immutable: true,
-      sortOrder: 1,
-    }),
-    target("t2", "Hetzner Storage Box", `sftp:u123456@u123456.your-storagebox.de:/home/bombvault/${domain}`, { sortOrder: 2 }),
-  ];
-}
-
-const CRED_SETS = [
-  {
-    id: "c1",
-    name: "Wasabi Schlüssel (nur Schreiben)",
-    s3KeyId: "BEISPIEL-SCHLUESSEL-ID",
-    s3Region: "eu-central-1",
-    restUser: "",
-    s3StorageClass: "STANDARD_IA",
-    s3SecretSet: true,
-    restPasswordSet: false,
-  },
-  {
-    id: "c2",
-    name: "rest-server Eltern",
-    s3KeyId: "",
-    s3Region: "",
-    restUser: "bombvault-tower",
-    s3StorageClass: "",
-    s3SecretSet: false,
-    restPasswordSet: true,
-  },
-];
 
 const NOTIFY = {
   on: "failure",
@@ -297,9 +224,8 @@ const vm = (name: string, libvirtName: string, scheduleCadence = "") => ({
 
 const TABS = [
   ["general", "Allgemein"],
-  ["storage", "Pfade & Speicher"],
+  ["storage", "Speicher"],
   ["schedules", "Zeitpläne"],
-  ["offsite", "Off-site"],
   ["notifications", "Benachrichtigungen"],
   ["integrity", "Integrität"],
   ["system", "System"],
@@ -324,11 +250,7 @@ async function stage(page: Page): Promise<void> {
   });
   await page.route("**/api/auth", json({ ok: true, enabled: true, authed: true, totp: true, recoveryCodesLeft: 7, minPasswordLen: 12 }));
   await page.route("**/api/auth/passkeys", json(PASSKEYS));
-  await page.route("**/api/repos", json({ ok: true, repos: REPOS }));
-  await page.route("**/api/offsite/targets*", (route) => {
-    const domain = new URL(route.request().url()).searchParams.get("domain") ?? "containers";
-    return route.fulfill({ json: { ok: true, targets: targets(domain) } });
-  });
+  await stagePlaces(page);
   await page.route(
     "**/api/cloud",
     json({
@@ -341,7 +263,6 @@ async function stage(page: Page): Promise<void> {
       s3StorageClass: "STANDARD_IA",
     }),
   );
-  await page.route("**/api/cloud/creds-sets", json({ ok: true, sets: CRED_SETS }));
   await page.route("**/api/rclone", json({ ok: true, remotes: ["gdrive-familienarchiv", "onedrive-business-backup"] }));
   await page.route("**/api/notify", json({ ok: true, notify: NOTIFY, matrixTokenSet: true, smtpPasswordSet: true }));
   await page.route("**/api/mcp/keys?*", json(MCP));
@@ -404,7 +325,7 @@ for (const width of [320, 360]) {
 
       // Soft, so one run reports every check a tab fails rather than the first.
       expect.soft(await gaps(page), "the heading and card gaps").toEqual(["24px", "24px"]);
-      expect.soft((await tabRows(page)).perRow, "the seven tabs sit four over three").toEqual([4, 3]);
+      expect.soft((await tabRows(page)).perRow, "the six tabs sit in one row").toEqual([6]);
 
       const layout = await page.evaluate(() => {
         const main = document.querySelector("#bv-main");
@@ -480,28 +401,25 @@ test("settings on a phone: each tab shows its glyph alone and keeps its name", a
   }
 });
 
-test("settings offsite on a phone: target and credential rows put their actions under the name", async ({ page }, testInfo) => {
+test("settings storage on a phone: place rows put their actions under the name", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
-  await openTab(page, 320, "offsite", "Off-site");
+  await openTab(page, 320, "storage", "Speicher");
 
-  const names = [
-    ...targets("containers").map((t) => ({ name: t.name, action: "Bearbeiten" })),
-    ...CRED_SETS.map((s) => ({ name: s.name, action: "Bearbeiten" })),
-  ];
-  for (const { name, action } of names) {
-    const row = page.locator(".rounded-card").filter({ hasText: name }).filter({ has: page.getByRole("button", { name: action }) }).last();
-    const nameBox = (await row.getByText(name, { exact: true }).first().boundingBox())!;
-    const actionBox = (await row.getByRole("button", { name: action }).first().boundingBox())!;
+  for (const { name } of PLACES) {
+    const row = page.locator("div.rounded-card.glim-hue").filter({ hasText: name }).filter({ has: page.getByRole("button", { name: "Testen" }) }).last();
+    const nameBox = (await row.getByText(name, { exact: true }).boundingBox())!;
+    const actionBox = (await row.getByRole("button", { name: "Details", exact: true }).boundingBox())!;
     expect(actionBox.y, `the actions of "${name}" share the name's row`).toBeGreaterThanOrEqual(nameBox.y + nameBox.height);
-    expect(nameBox.width, `"${name}" is squeezed beside its actions`).toBeGreaterThan(100);
+    const cut = await row.getByText(name, { exact: true }).evaluate((node) => node.scrollWidth > node.clientWidth + 1);
+    expect(cut, `"${name}" is cut off`).toBe(false);
   }
 });
 
-test("settings storage on a phone: a repository shows its whole name and address, each switch labelled once", async ({ page }, testInfo) => {
+test("settings storage on a phone: a row without a place shows its whole name and address, each switch labelled once", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
-  await openTab(page, 320, "storage", "Pfade & Speicher");
+  await openTab(page, 320, "storage", "Speicher");
 
-  for (const r of REPOS) {
+  for (const r of UNPLACED) {
     for (const text of [r.name, r.repo]) {
       const el = page.getByText(text, { exact: true });
       await expect(el).toBeVisible();
@@ -509,8 +427,8 @@ test("settings storage on a phone: a repository shows its whole name and address
       expect(cut, `"${text}" is cut off`).toBe(false);
     }
   }
-  const row = page.locator("div.rounded-card").filter({ hasText: REPOS[0].name }).last();
-  await expect(row.getByText("Nur anhängen", { exact: true })).toHaveCount(1);
+  const row = page.locator("div.rounded-card").filter({ hasText: UNPLACED[0].repo }).last();
+  await expect(row.getByText("Append-only", { exact: true })).toHaveCount(1);
 });
 
 test("settings schedules on a phone: the every-N-days field shows three digits beside its steppers", async ({ page }, testInfo) => {
@@ -571,7 +489,7 @@ test("settings on the desktop keeps the 40px rhythm and the strip of 200px tabs"
 
   expect(await gaps(page)).toEqual(["40px", "40px"]);
   const { widths } = await tabRows(page);
-  expect(widths).toEqual(Array(7).fill(200));
+  expect(widths).toEqual(Array(6).fill(200));
   for (const [, name] of TABS) {
     const label = page.getByRole("tab", { name, exact: true }).locator("span.truncate");
     expect(await label.evaluate((el) => el.getBoundingClientRect().width), `the ${name} label is hidden`).toBeGreaterThan(1);

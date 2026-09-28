@@ -10,6 +10,12 @@ import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
+// A settings read the page makes as the test ends would otherwise fail it
+// from inside a route handler whose response is already gone.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 const hex = (seed: string) => seed.repeat(32);
 
 const snap = (seed: string, time: string, original?: string) => ({

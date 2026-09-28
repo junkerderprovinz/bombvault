@@ -9,6 +9,12 @@ import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
+// A settings read the page makes as the test ends would otherwise fail it
+// from inside a route handler whose response is already gone.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 const NOW = Math.floor(Date.now() / 1000);
 const HOUR = 3600;
 const DAY = 86400;

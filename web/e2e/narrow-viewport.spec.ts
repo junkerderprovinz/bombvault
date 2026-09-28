@@ -430,10 +430,10 @@ test("landscape 844x390: at >=48rem the desktop chrome owns the shell", async ({
 
 // The Settings tab strip at phone widths.
 // The strip pins every segment to the sidebar row-box width (--nav-row-w,
-// 200px) on desktop, and that pin on a 390px phone wrapped its seven flex-none
-// segments into seven stacked rows, roughly 350px of chrome before any
+// 200px) on desktop, and that pin on a 390px phone would wrap its flex-none
+// segments into one stacked row each, some 300px of chrome before any
 // Settings content. Below 48rem the strip is a grid over the page column: one
-// row of seven while a tab keeps 44px, otherwise four over three. Geometry,
+// row of six while a tab keeps 44px, otherwise three over three. Geometry,
 // not screenshots, per this file's contracts: the tabs per row, no tab under
 // 44px, and a row that spans the column. English on purpose: the cells do not
 // follow the labels, so the strip behaves the same in every locale, and en
@@ -460,7 +460,7 @@ async function assertStrip(page: Page, width: number, perRow: number[]): Promise
         column.clientWidth - parseFloat(style.paddingInlineStart) - parseFloat(style.paddingInlineEnd),
     };
   });
-  expect(geometry.tabs, "the Settings strip owns exactly the seven page tabs").toHaveLength(7);
+  expect(geometry.tabs, "the Settings strip owns exactly the six page tabs").toHaveLength(6);
 
   const tops = [...new Set(geometry.tabs.map((t) => t.top))];
   const actual = tops.map((top) => geometry.tabs.filter((t) => t.top === top).length);
@@ -478,11 +478,11 @@ async function assertStrip(page: Page, width: number, perRow: number[]): Promise
 }
 
 for (const { width, perRow } of [
-  { width: 390, perRow: [7] },
-  { width: 360, perRow: [4, 3] },
-  { width: 320, perRow: [4, 3] },
+  { width: 390, perRow: [6] },
+  { width: 360, perRow: [6] },
+  { width: 320, perRow: [6] },
 ]) {
-  test(`settings tab strip @ ${width}px: the seven tabs sit ${perRow.join(" over ")}`, async ({ page }, testInfo) => {
+  test(`settings tab strip @ ${width}px: the six tabs sit ${perRow.join(" over ")}`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the grid lives below 48rem");
     await bootSeededPage(page, "en", width, "/settings");
     await assertStrip(page, width, perRow);
@@ -495,7 +495,7 @@ for (const { width, perRow } of [
 test("settings tab strip @ 390px in a desktop window: one row with a scrollbar too", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-768", "one desktop project carries this; the pair would run it twice");
   await bootSeededPage(page, "en", 390, "/settings");
-  await assertStrip(page, 390, [7]);
+  await assertStrip(page, 390, [6]);
 });
 
 // The appearance card's pinned wells, which spread over the row they get once

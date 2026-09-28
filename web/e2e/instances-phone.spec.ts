@@ -3,12 +3,20 @@
 // lists nothing). On the phones, per lane: the 24px rhythm on the page and in
 // the tab panel, and with every card open and every remove armed, no pan, no
 // control past the viewport or its card, no text cut short and no stray
-// backtick, in the lists, the dialogs and the empty states. On the desktop:
-// the 40px rhythm and the one-line cards and inventory table as they were.
-// German, because its labels run longest.
+// backtick, in the lists, the dialogs and the empty states. The credential
+// sets the pull sources log in with put their actions under the name. On the
+// desktop: the 40px rhythm and the one-line cards and inventory table as they
+// were. German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
+import { stagePlaces } from "./places";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
+
+// A settings read the page makes as the test ends would otherwise fail it
+// from inside a route handler whose response is already gone.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
 
 const now = Math.floor(Date.now() / 1000);
 const iso = (secondsAgo: number) => new Date((now - secondsAgo) * 1000).toISOString();
@@ -198,6 +206,13 @@ const SNIPPET = {
   repo: "rest:http://bombvault-mesh@192.168.178.20:8000/tower-containers",
 };
 
+// Two sets of the pull sources' own and one a storage place keeps its secrets in.
+const CRED_SETS = [
+  { id: "c1", name: "Wasabi Schlüssel (nur Schreiben)", s3KeyId: "BEISPIEL-SCHLUESSEL-ID", s3Region: "eu-central-1", restUser: "", s3StorageClass: "", s3SecretSet: true, restPasswordSet: false },
+  { id: "c2", name: "rest-server Nachbarschafts-Tower", s3KeyId: "", s3Region: "", restUser: "bombvault-pull-oberhuber", s3StorageClass: "", s3SecretSet: false, restPasswordSet: true },
+  { id: "c3", name: "Büro Linz (nur Lesen)", s3KeyId: "BUERO-LINZ-LESESCHLUESSEL", s3Region: "eu-central-2", restUser: "", s3StorageClass: "STANDARD_IA", s3SecretSet: true, restPasswordSet: false },
+];
+
 type Staged = { empty?: boolean };
 
 async function stage(page: Page, { empty = false }: Staged = {}): Promise<void> {
@@ -224,6 +239,8 @@ async function stage(page: Page, { empty = false }: Staged = {}): Promise<void> 
   await page.route("**/api/pull/sources", (route) =>
     route.fulfill({ json: { ok: true, sources: empty ? [] : PULLS } }),
   );
+  await page.route("**/api/cloud/creds-sets", (route) => route.fulfill({ json: { ok: true, sets: empty ? [] : CRED_SETS } }));
+  await stagePlaces(page);
   // Same seeding as narrow-viewport.spec.ts: the stored locale is the look,
   // and the server's display prefs must not overwrite it mid-boot.
   await page.route("**/api/display-prefs*", (route) => route.abort());
@@ -266,7 +283,9 @@ async function openEverything(page: Page): Promise<void> {
   const details = page.locator("#bv-main").getByRole("button", { name: "Details", exact: true });
   for (let i = 0; i < (await details.count()); i++) await details.nth(i).click();
   const remove = page.locator("#bv-main").getByRole("button", { name: "Entfernen", exact: true });
-  while ((await remove.count()) > 0) await remove.first().click();
+  // Bounded, since the credential card arms one remove at a time and takes
+  // the last one back when another is armed.
+  for (let left = await remove.count(); left > 0; left--) await remove.first().click();
   await settle(page);
 }
 
@@ -391,6 +410,21 @@ for (const width of [320, 360]) {
       }
     });
   }
+
+  test(`pull @ ${width}px: credential rows put their actions under the name`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
+    await openLane(page, width, "pull");
+
+    for (const set of CRED_SETS.slice(1)) {
+      const row = page.locator("#bv-main .rounded-card").filter({ hasText: set.name }).filter({ has: page.getByRole("button", { name: "Bearbeiten" }) }).last();
+      const nameBox = (await row.getByText(set.name, { exact: true }).boundingBox())!;
+      const actionBox = (await row.getByRole("button", { name: "Bearbeiten" }).boundingBox())!;
+      expect(actionBox.y, `the actions of "${set.name}" share the name's row`).toBeGreaterThanOrEqual(nameBox.y + nameBox.height);
+      expect(nameBox.width, `"${set.name}" is squeezed beside its actions`).toBeGreaterThan(100);
+    }
+    // The set a place keeps is named after the place and has no actions here.
+    await expect(page.locator("#bv-main").getByText(CRED_SETS[0].name, { exact: true })).toHaveCount(0);
+  });
 
   test(`empty lanes @ ${width}px: nothing pans or clips`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
