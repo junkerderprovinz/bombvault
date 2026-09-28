@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"strings"
 	"time"
 
@@ -147,16 +148,13 @@ func (c *Client) StartIsolated(ctx context.Context, spec IsolatedSpec) error {
 func isolatedConfig(spec IsolatedSpec) (*container.Config, *container.HostConfig) {
 	cfg, hostCfg := buildCreateConfig(spec.From)
 
-	labels := map[string]string{}
-	for k, v := range spec.From.Config.Labels {
-		// Compose would count the copy as a member of the project, Unraid as
-		// one of its managed apps.
-		if strings.HasPrefix(k, "com.docker.compose.") || strings.HasPrefix(k, "net.unraid.docker.") {
-			continue
-		}
-		labels[k] = v
+	// None of the original's labels: Compose would count the copy as a member
+	// of the project, Unraid as a managed app, and a reverse proxy or an
+	// updater would route to it or act on it.
+	labels := maps.Clone(spec.Labels)
+	if labels == nil {
+		labels = map[string]string{}
 	}
-	maps.Copy(labels, spec.Labels)
 	labels[StartTestLabel] = "1"
 	cfg.Labels = labels
 
@@ -177,12 +175,54 @@ func isolatedConfig(spec IsolatedSpec) (*container.Config, *container.HostConfig
 	hostCfg.PidMode = ""
 	hostCfg.IpcMode = ""
 	hostCfg.UsernsMode = ""
+	// Added capabilities, unconfined profiles, sysctls and another cgroup
+	// parent would give the copy what the original was granted on the host. A
+	// copy that cannot start without them fails its test.
+	hostCfg.CapAdd = nil
+	hostCfg.SecurityOpt = restrictingSecurityOpts(spec.From.HostConfig.SecurityOpt)
+	hostCfg.Sysctls = nil
+	hostCfg.CgroupParent = ""
 	hostCfg.NanoCPUs = spec.NanoCPUs
 	hostCfg.Memory = spec.MemoryBytes
 	hostCfg.MemorySwap = spec.MemoryBytes
 	pids := spec.PidsLimit
 	hostCfg.PidsLimit = &pids
 	return cfg, hostCfg
+}
+
+// restrictingSecurityOpts keeps only no-new-privileges, the one security
+// option that takes something away.
+func restrictingSecurityOpts(opts []string) []string {
+	var out []string
+	for _, o := range opts {
+		if strings.HasPrefix(o, "no-new-privileges") {
+			out = append(out, o)
+		}
+	}
+	return out
+}
+
+// GrantedPrivileges names what a recipe adds to a container beyond Docker's
+// defaults, which a start test's copy runs without.
+func GrantedPrivileges(in model.Inspect) []string {
+	hc := in.HostConfig
+	var out []string
+	if len(hc.CapAdd) > 0 {
+		out = append(out, "capabilities "+strings.Join(hc.CapAdd, ", "))
+	}
+	for _, o := range hc.SecurityOpt {
+		if !strings.HasPrefix(o, "no-new-privileges") {
+			out = append(out, "security option "+o)
+		}
+	}
+	if len(hc.Sysctls) > 0 {
+		keys := slices.Sorted(maps.Keys(hc.Sysctls))
+		out = append(out, "sysctls "+strings.Join(keys, ", "))
+	}
+	if hc.CgroupParent != "" {
+		out = append(out, "cgroup parent "+hc.CgroupParent)
+	}
+	return out
 }
 
 // IsolatedState reads the state of a start test's copy.

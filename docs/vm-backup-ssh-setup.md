@@ -121,7 +121,9 @@ instead of the method above:
 - It starts a pull-mode backup job (`virsh backup-begin`) that creates a
   checkpoint named `bombvault-<time>` at the same instant, and reads the disks
   over the SSH link through a forwarded Unix socket. When the guest agent
-  answers, the guest's filesystems are frozen while the job starts.
+  answers, the guest's filesystems are frozen only while the job starts. A
+  thaw that fails is tried again for about fifteen seconds, and if the guest
+  still does not thaw, BombVault sends a notification.
 - The first run reads every allocated block. Later runs read only the blocks
   the checkpoint's bitmap marks as written since the previous backup.
 - Each disk is stored as a folder of fixed-size segments holding what the guest
@@ -137,9 +139,23 @@ instead of the method above:
   blocking. The restore check after the first backup, and **Check restore**,
   also make sure the snapshot holds every segment of every disk at the size it
   should have.
-- Only the newest `bombvault-` checkpoint is kept. Turning the switch off,
-  taking the VM out of the schedule or deleting its backups removes it.
-  Checkpoints of other tools are left alone.
+- Between runs the VM has no checkpoint on record in libvirt. BombVault keeps
+  the definition of the newest `bombvault-` checkpoint under
+  `/config/vm-checkpoints` and removes only libvirt's record of it
+  (`virsh checkpoint-delete --metadata`). Its bitmap stays in the qcow2 file
+  and keeps counting writes, and the next run puts the checkpoint back
+  (`virsh checkpoint-create --redefine`) before it starts. libvirt refuses to
+  undefine a VM that has checkpoints, so this is what lets Unraid's **Remove
+  VM** and a restore work as usual.
+- A backup job that BombVault left running because it stopped in the middle
+  of a backup is ended when BombVault starts again, and so are the
+  checkpoints that run left on record.
+- Turning the switch off, taking the VM out of the schedule or deleting its
+  backups also ends such a job and deletes the bitmap too while the VM runs. On a VM that is off,
+  libvirt cannot delete it, and it stays in the image unused.
+- Checkpoints of other tools are left alone. A VM that has some cannot be
+  restored until they are deleted, and the restore stops before it touches
+  the VM.
 
 The switch falls back on its own. A missing or broken checkpoint, a disk that
 changed size, or a newest snapshot that is not a changed-block one means the

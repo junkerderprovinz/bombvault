@@ -247,9 +247,20 @@ func (s *Service) runStartTestCopy(ctx context.Context, host dockercli.StartTest
 		Labels:      map[string]string{dockercli.StartTestLabel + ".of": tg.ContainerName},
 	}
 	if err := host.StartIsolated(ctx, spec); err != nil {
-		return "", fmt.Errorf("the copy did not start: %w", err)
+		return "", withoutPrivileges(fmt.Errorf("the copy did not start: %w", err), def.Inspect)
 	}
-	return s.judgeStartTest(ctx, host, name, netName, suffix)
+	method, err := s.judgeStartTest(ctx, host, name, netName, suffix)
+	return method, withoutPrivileges(err, def.Inspect)
+}
+
+// withoutPrivileges adds to a failed start test what the copy ran without,
+// since an app that needs an added capability fails for that reason alone.
+func withoutPrivileges(err error, in model.Inspect) error {
+	granted := dockercli.GrantedPrivileges(in)
+	if err == nil || len(granted) == 0 {
+		return err
+	}
+	return fmt.Errorf("%w; the copy ran without what the original is granted: %s", err, strings.Join(granted, "; "))
 }
 
 // restoreForStartTest restores the backup's data into the sandbox under the
@@ -305,9 +316,33 @@ func (s *Service) startTestBinds(def containerDefinition, sandbox string) []stri
 		if !reachable || !slices.ContainsFunc(def.AppdataPaths, func(p string) bool { return cp == p || strings.HasPrefix(cp, p+"/") }) {
 			continue
 		}
-		out = append(out, s.toHostPath(path.Join(sandbox, cp))+":"+rest)
+		copied := path.Join(sandbox, cp)
+		if throughSymlink(sandbox, copied) {
+			log.Printf("api: start test: leaving out the bind %s, a symbolic link in the restored data leads it elsewhere", cp) //nolint:gosec // G706: a path of the recipe
+			continue
+		}
+		out = append(out, s.toHostPath(copied)+":"+rest)
 	}
 	return out
+}
+
+// throughSymlink reports whether a part of p below sandbox is a symbolic
+// link. Docker resolves a bind source on the host, so a link the backup
+// brought along could point the copy at the original's files. Docker creates
+// a part that does not exist yet as a plain folder.
+func throughSymlink(sandbox, p string) bool {
+	cur := sandbox
+	for _, part := range strings.Split(strings.TrimPrefix(p, sandbox+"/"), "/") {
+		cur = path.Join(cur, part)
+		fi, err := os.Lstat(cur)
+		if err != nil {
+			return false
+		}
+		if fi.Mode()&os.ModeSymlink != 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // judgeStartTest waits for the copy to prove itself: healthy by its own

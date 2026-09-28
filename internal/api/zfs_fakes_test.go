@@ -44,6 +44,9 @@ type fakeZFSHost struct {
 	// dataset was created, for a test that mounts it.
 	props    map[string]zfs.Properties
 	onCreate func(dataset string)
+	// onSet runs when properties are set, for a test that checks what
+	// happened before.
+	onSet func()
 	// strictTree lists only the asked root and its descendants, and answers
 	// not-found for a root the tree does not hold.
 	strictTree bool
@@ -207,6 +210,9 @@ func (h *fakeZFSHost) SetProperties(_ context.Context, dataset string, p zfs.Pro
 		return err
 	}
 	h.record(strings.Join(args[1:], " "))
+	if h.onSet != nil {
+		h.onSet()
+	}
 	return nil
 }
 

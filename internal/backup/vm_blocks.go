@@ -2,6 +2,7 @@ package backup
 
 import (
 	"context"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"log"
@@ -108,13 +109,47 @@ type BlockJob interface {
 	Stop(ctx context.Context) error
 }
 
+// CheckpointHost is libvirt's checkpoint bookkeeping.
+type CheckpointHost interface {
+	CheckpointNames(ctx context.Context, domain string) ([]string, error)
+	// CheckpointDelete removes a checkpoint with its bitmap.
+	CheckpointDelete(ctx context.Context, domain, checkpoint string) error
+	// CheckpointForget removes only libvirt's record and keeps the bitmap.
+	CheckpointForget(ctx context.Context, domain, checkpoint string) error
+	CheckpointXML(ctx context.Context, domain, checkpoint string) (string, error)
+	CheckpointRedefine(ctx context.Context, domain, checkpointXML string, validate bool) error
+}
+
+// CheckpointStore keeps the definition of the one checkpoint a VM's next
+// changed-block backup builds on. Between runs libvirt holds only its bitmap:
+// libvirt refuses to undefine a shut-off domain that has checkpoints, which
+// would break a restore and the host's own "remove VM".
+type CheckpointStore interface {
+	// Load returns the kept definition, "" when there is none.
+	Load() (string, error)
+	Save(checkpointXML string) error
+}
+
+// CheckpointName reads the name out of a checkpoint definition.
+func CheckpointName(checkpointXML string) string {
+	var doc struct {
+		Name string `xml:"name"`
+	}
+	if xml.Unmarshal([]byte(checkpointXML), &doc) != nil {
+		return ""
+	}
+	return strings.TrimSpace(doc.Name)
+}
+
 // BlockHost is the libvirt side of a changed-block backup.
 type BlockHost interface {
-	CheckpointNames(ctx context.Context, domain string) ([]string, error)
-	CheckpointDelete(ctx context.Context, domain, checkpoint string) error
+	CheckpointHost
 	GuestAgentPing(ctx context.Context, domain string) bool
 	FSFreeze(ctx context.Context, domain string) error
 	FSThaw(ctx context.Context, domain string) error
+	// EndLeftoverJob ends a backup job an interrupted run of BombVault's left
+	// running, which would hold the disks. Anyone else's job stays.
+	EndLeftoverJob(ctx context.Context, domain string) error
 	// StartJob starts a pull-mode job over devs that creates checkpoint and,
 	// with a non-empty base, reports the changes since base.
 	StartJob(ctx context.Context, domain, base, checkpoint string, devs []string) (BlockJob, error)
@@ -168,9 +203,14 @@ type VMBlocksDeps struct {
 	// Latest is the VM's newest snapshot, nil when it has none.
 	Latest *BlocksLatest
 	Host   BlockHost
-	Restic BlockRestic
-	Runs   Runs
-	Now    func() time.Time
+	// Checkpoints keeps the definition of the checkpoint between runs.
+	Checkpoints CheckpointStore
+	Restic      BlockRestic
+	Runs        Runs
+	Now         func() time.Time
+	// ThawFailed hears about a guest whose filesystems stayed frozen after
+	// every thaw attempt.
+	ThawFailed func(err error)
 }
 
 // VMBlocksResult says how the disks were read.
@@ -223,6 +263,7 @@ func BackupVMBlocks(ctx context.Context, d VMBlocksDeps) (VMBlocksResult, error)
 	if err != nil {
 		return VMBlocksResult{}, &BlocksUnavailableError{Reason: BlocksReasonJobFailed, Err: err}
 	}
+	kept := recallCheckpoint(ctx, d, &names)
 	base, prev, reason := chainBase(ctx, d, names)
 
 	checkpoint := BlocksCheckpointPrefix + d.Now().UTC().Format("20060102150405")
@@ -230,6 +271,11 @@ func BackupVMBlocks(ctx context.Context, d VMBlocksDeps) (VMBlocksResult, error)
 		checkpoint += "x"
 	}
 
+	cleanCtx := context.WithoutCancel(ctx)
+	if err := d.Host.EndLeftoverJob(ctx, d.Name); err != nil {
+		SettleBlockCheckpoints(cleanCtx, d.Host, d.Checkpoints, d.Name, kept)
+		return VMBlocksResult{}, &BlocksUnavailableError{Reason: BlocksReasonJobFailed, Err: err}
+	}
 	job, err := startFrozen(ctx, d, base, checkpoint, devs)
 	if err != nil && base != "" && errors.Is(err, ErrBlockJobRefused) {
 		log.Printf("vm blocks: %q: incremental start from %s refused (%v); reading every block", d.Name, base, err)
@@ -237,39 +283,87 @@ func BackupVMBlocks(ctx context.Context, d VMBlocksDeps) (VMBlocksResult, error)
 		job, err = startFrozen(ctx, d, "", checkpoint, devs)
 	}
 	if err != nil {
-		dropCheckpoint(context.WithoutCancel(ctx), d, checkpoint)
+		SettleBlockCheckpoints(cleanCtx, d.Host, d.Checkpoints, d.Name, kept)
 		return VMBlocksResult{}, &BlocksUnavailableError{Reason: BlocksReasonJobFailed, Err: err}
 	}
 
 	runID, err := d.Runs.Start(d.TargetID, kindBackup)
 	if err != nil {
 		stopJob(ctx, d, job)
-		dropCheckpoint(context.WithoutCancel(ctx), d, checkpoint)
+		SettleBlockCheckpoints(cleanCtx, d.Host, d.Checkpoints, d.Name, kept)
 		return VMBlocksResult{}, fmt.Errorf("vm backup: record run start: %w", err)
 	}
 
 	res, runErr := runBlocks(ctx, d, job, base, prev, reason, checkpoint)
 	stopJob(ctx, d, job)
-	cleanCtx := context.WithoutCancel(ctx)
 	if err := os.RemoveAll(d.StageDir); err != nil {
 		log.Printf("vm blocks: %q: remove staging folder: %v", d.Name, err)
 	}
 	forgetPartials(cleanCtx, d)
 	if runErr != nil {
-		dropCheckpoint(cleanCtx, d, checkpoint)
+		SettleBlockCheckpoints(cleanCtx, d.Host, d.Checkpoints, d.Name, kept)
 		_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(runErr))
 		return VMBlocksResult{}, runErr
 	}
 	// Only the checkpoint the new snapshot was read at is needed from here.
-	for _, n := range names {
-		if strings.HasPrefix(n, BlocksCheckpointPrefix) && n != checkpoint {
-			dropCheckpoint(cleanCtx, d, n)
-		}
-	}
+	SettleBlockCheckpoints(cleanCtx, d.Host, d.Checkpoints, d.Name, checkpoint)
 	if err := d.Runs.Finish(runID, statusSuccess, res.Summary, ""); err != nil {
 		return res, fmt.Errorf("vm backup: record run finish: %w", err)
 	}
 	return res, nil
+}
+
+// recallCheckpoint gives libvirt back the kept checkpoint when it does not
+// know it, adding it to names, and returns its name. A bitmap that is gone
+// or broken makes libvirt refuse, and the run reads every block.
+func recallCheckpoint(ctx context.Context, d VMBlocksDeps, names *[]string) string {
+	def, err := d.Checkpoints.Load()
+	if err != nil {
+		log.Printf("vm blocks: %q: read the kept checkpoint: %v", d.Name, err)
+		return ""
+	}
+	name := CheckpointName(def)
+	if name == "" || slices.Contains(*names, name) {
+		return name
+	}
+	if err := d.Host.CheckpointRedefine(ctx, d.Name, def, true); err != nil {
+		log.Printf("vm blocks: %q: checkpoint %s cannot be restored (%v); reading every block", d.Name, name, err)
+		return ""
+	}
+	*names = append(*names, name)
+	return name
+}
+
+// SettleBlockCheckpoints leaves the domain without any of BombVault's
+// checkpoints on record. Every one but keep goes with its bitmap; keep's
+// definition goes to store and only its record is removed, so its bitmap
+// keeps counting changes for the next run. An empty keep drops them all.
+func SettleBlockCheckpoints(ctx context.Context, host CheckpointHost, store CheckpointStore, domain, keep string) {
+	names, err := host.CheckpointNames(ctx, domain)
+	if err != nil {
+		log.Printf("vm blocks: %q: list checkpoints: %v", domain, err)
+		return
+	}
+	for _, n := range names {
+		if strings.HasPrefix(n, BlocksCheckpointPrefix) && n != keep {
+			dropCheckpoint(ctx, host, domain, n)
+		}
+	}
+	if keep == "" || !slices.Contains(names, keep) {
+		return
+	}
+	def, err := host.CheckpointXML(ctx, domain, keep)
+	if err == nil {
+		err = store.Save(def)
+	}
+	if err != nil {
+		log.Printf("vm blocks: %q: keep checkpoint %s: %v; the next run reads every block", domain, keep, err)
+		dropCheckpoint(ctx, host, domain, keep)
+		return
+	}
+	if err := host.CheckpointForget(ctx, domain, keep); err != nil {
+		log.Printf("vm blocks: %q: forget checkpoint %s: %v", domain, keep, err)
+	}
 }
 
 // chainBase decides whether this run can build on the newest snapshot. It
@@ -308,7 +402,7 @@ type chainPrev struct {
 
 // startFrozen starts the job with the guest's filesystems frozen when its
 // agent answers. The job fixes its point in time when it starts, so the
-// guest is thawed right after.
+// guest is thawed right after and nothing else happens in between.
 func startFrozen(ctx context.Context, d VMBlocksDeps, base, checkpoint string, devs []string) (BlockJob, error) {
 	frozen := false
 	if d.Host.GuestAgentPing(ctx, d.Name) {
@@ -320,11 +414,37 @@ func startFrozen(ctx context.Context, d VMBlocksDeps, base, checkpoint string, d
 	}
 	job, err := d.Host.StartJob(ctx, d.Name, base, checkpoint, devs)
 	if frozen {
-		if tErr := d.Host.FSThaw(context.WithoutCancel(ctx), d.Name); tErr != nil {
-			log.Printf("vm blocks: %q: thaw failed: %v", d.Name, tErr)
-		}
+		thaw(context.WithoutCancel(ctx), d)
 	}
 	return job, err
+}
+
+// thawAttempts and thawRetryDelay bound how long a failing thaw is retried:
+// five attempts over about fifteen seconds, the wait doubling each time.
+const thawAttempts = 5
+
+var thawRetryDelay = time.Second
+
+// thaw thaws the guest, retrying a failure, since a guest left frozen stops
+// writing altogether. The backup goes on either way.
+func thaw(ctx context.Context, d VMBlocksDeps) {
+	wait := thawRetryDelay
+	for attempt := 1; ; attempt++ {
+		err := d.Host.FSThaw(ctx, d.Name)
+		if err == nil {
+			return
+		}
+		if attempt == thawAttempts {
+			log.Printf("vm blocks: %q: thaw failed %d times, the guest may still be frozen: %v", d.Name, attempt, err)
+			if d.ThawFailed != nil {
+				d.ThawFailed(err)
+			}
+			return
+		}
+		log.Printf("vm blocks: %q: thaw failed (%v); trying again", d.Name, err)
+		time.Sleep(wait)
+		wait *= 2
+	}
 }
 
 func stopJob(ctx context.Context, d VMBlocksDeps, job BlockJob) {
@@ -333,9 +453,16 @@ func stopJob(ctx context.Context, d VMBlocksDeps, job BlockJob) {
 	}
 }
 
-func dropCheckpoint(ctx context.Context, d VMBlocksDeps, checkpoint string) {
-	if err := d.Host.CheckpointDelete(ctx, d.Name, checkpoint); err != nil {
-		log.Printf("vm blocks: %q: delete checkpoint %s: %v", d.Name, checkpoint, err)
+// dropCheckpoint deletes a checkpoint with its bitmap. libvirt refuses that
+// when the bitmap is already gone or the domain is off, and then at least
+// its record goes.
+func dropCheckpoint(ctx context.Context, host CheckpointHost, domain, checkpoint string) {
+	err := host.CheckpointDelete(ctx, domain, checkpoint)
+	if err == nil {
+		return
+	}
+	if fErr := host.CheckpointForget(ctx, domain, checkpoint); fErr != nil {
+		log.Printf("vm blocks: %q: delete checkpoint %s: %v; forget it: %v", domain, checkpoint, err, fErr)
 	}
 }
 

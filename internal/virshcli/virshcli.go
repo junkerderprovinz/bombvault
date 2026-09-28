@@ -176,7 +176,7 @@ func IsNotFound(err error) bool {
 // State returns the domain state ("running", "shut off", ...), or ("", nil)
 // when the domain does not exist, like dockercli.InspectName.
 func (c *Client) State(ctx context.Context, name string) (string, error) {
-	out, err := c.run(ctx, "domstate", name)
+	out, err := c.run(ctx, "domstate", "--", name)
 	if err != nil {
 		if IsNotFound(err) {
 			return "", nil
@@ -188,7 +188,7 @@ func (c *Client) State(ctx context.Context, name string) (string, error) {
 
 // DumpXML returns the domain XML for the named VM.
 func (c *Client) DumpXML(ctx context.Context, name string) (string, error) {
-	out, err := c.run(ctx, "dumpxml", name)
+	out, err := c.run(ctx, "dumpxml", "--", name)
 	if err != nil {
 		return "", err
 	}
@@ -198,7 +198,7 @@ func (c *Client) DumpXML(ctx context.Context, name string) (string, error) {
 // DumpXMLInactive returns the persistent domain XML (virsh dumpxml --inactive),
 // the defined config without runtime-only or hot-plugged devices.
 func (c *Client) DumpXMLInactive(ctx context.Context, name string) (string, error) {
-	out, err := c.run(ctx, "dumpxml", "--inactive", name)
+	out, err := c.run(ctx, "dumpxml", "--inactive", "--", name)
 	if err != nil {
 		return "", err
 	}
@@ -207,13 +207,13 @@ func (c *Client) DumpXMLInactive(ctx context.Context, name string) (string, erro
 
 // Shutdown sends an ACPI graceful-shutdown signal.
 func (c *Client) Shutdown(ctx context.Context, name string) error {
-	_, err := c.run(ctx, "shutdown", name)
+	_, err := c.run(ctx, "shutdown", "--", name)
 	return err
 }
 
 // Destroy force-offs the domain. Tolerates already-off ("domain is not running").
 func (c *Client) Destroy(ctx context.Context, name string) error {
-	_, err := c.run(ctx, "destroy", name)
+	_, err := c.run(ctx, "destroy", "--", name)
 	if err != nil {
 		msg := strings.ToLower(err.Error())
 		if strings.Contains(msg, "domain is not running") ||
@@ -227,7 +227,7 @@ func (c *Client) Destroy(ctx context.Context, name string) error {
 
 // Start boots the domain.
 func (c *Client) Start(ctx context.Context, name string) error {
-	_, err := c.run(ctx, "start", name)
+	_, err := c.run(ctx, "start", "--", name)
 	return err
 }
 
@@ -239,7 +239,7 @@ func (c *Client) Define(ctx context.Context, xmlPath string) error {
 
 // Undefine removes the domain definition including NVRAM. Tolerates not-defined.
 func (c *Client) Undefine(ctx context.Context, name string) error {
-	_, err := c.run(ctx, "undefine", "--nvram", name)
+	_, err := c.run(ctx, "undefine", "--nvram", "--", name)
 	if err != nil {
 		msg := strings.ToLower(err.Error())
 		if strings.Contains(msg, "failed to undefine") ||
@@ -258,7 +258,7 @@ func (c *Client) Autostart(ctx context.Context, name string, on bool) error {
 	if !on {
 		args = append(args, "--disable")
 	}
-	args = append(args, name)
+	args = append(args, "--", name)
 	_, err := c.run(ctx, args...)
 	return err
 }
@@ -291,13 +291,13 @@ func (c *Client) SnapshotCreateDiskOnly(ctx context.Context, name, snapName stri
 
 // BlockCommitActivePivot merges the active overlay back into the base and pivots.
 func (c *Client) BlockCommitActivePivot(ctx context.Context, name, device string) error {
-	_, err := c.run(ctx, "blockcommit", name, device, "--active", "--pivot", "--wait")
+	_, err := c.run(ctx, "blockcommit", "--active", "--pivot", "--wait", "--", name, device)
 	return err
 }
 
 // GuestAgentPing reports whether the qemu guest agent answers inside the VM.
 func (c *Client) GuestAgentPing(ctx context.Context, name string) bool {
-	_, err := c.run(ctx, "qemu-agent-command", name, `{"execute":"guest-ping"}`)
+	_, err := c.run(ctx, "qemu-agent-command", "--", name, `{"execute":"guest-ping"}`)
 	return err == nil
 }
 

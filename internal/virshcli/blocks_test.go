@@ -133,3 +133,94 @@ func TestBackupJobXMLReportsOtherFailures(t *testing.T) {
 		t.Fatalf("the failure was not logged: %q", logged.String())
 	}
 }
+
+// recordingVirsh writes a script that appends its arguments, one per line,
+// to a file and succeeds, and returns a client that runs it with that file.
+func recordingVirsh(t *testing.T) (*Client, string) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("needs a shell script as the virsh binary")
+	}
+	dir := t.TempDir()
+	calls := filepath.Join(dir, "calls")
+	bin := filepath.Join(dir, "virsh")
+	script := "#!/bin/sh\nfor a in \"$@\"; do case \"$a\" in *.xml) cat \"$a\" >> '" + calls + "'; echo >> '" + calls + "';; *) echo \"$a\" >> '" + calls + "';; esac; done\necho '@@end' >> '" + calls + "'\n"
+	if err := os.WriteFile(bin, []byte(script), 0o700); err != nil { //nolint:gosec // G306: the test needs it executable
+		t.Fatal(err)
+	}
+	return &Client{bin: bin}, calls
+}
+
+func recordedCalls(t *testing.T, file string) []string {
+	t.Helper()
+	b, err := os.ReadFile(file) //nolint:gosec // G304: a file of the test
+	if err != nil {
+		t.Fatal(err)
+	}
+	var calls []string
+	for _, c := range strings.Split(strings.TrimSuffix(string(b), "@@end\n"), "\n@@end\n") {
+		calls = append(calls, strings.Join(strings.Fields(c), " "))
+	}
+	return calls
+}
+
+func TestCheckpointForgetKeepsTheBitmap(t *testing.T) {
+	c, file := recordingVirsh(t)
+	if err := c.CheckpointForget(context.Background(), "win", "bombvault-1"); err != nil {
+		t.Fatal(err)
+	}
+	if got := recordedCalls(t, file); len(got) != 1 || got[0] != "checkpoint-delete --metadata -- win bombvault-1" {
+		t.Fatalf("calls = %q", got)
+	}
+}
+
+func TestCheckpointRedefineSendsTheSavedDefinition(t *testing.T) {
+	c, file := recordingVirsh(t)
+	def := "<domaincheckpoint><name>bombvault-1</name></domaincheckpoint>"
+	if err := c.CheckpointRedefine(context.Background(), "win", def, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.CheckpointRedefine(context.Background(), "win", def, false); err != nil {
+		t.Fatal(err)
+	}
+	got := recordedCalls(t, file)
+	want := []string{
+		"checkpoint-create --redefine --redefine-validate -- win " + def,
+		"checkpoint-create --redefine -- win " + def,
+	}
+	if len(got) != 2 || got[0] != want[0] || got[1] != want[1] {
+		t.Fatalf("calls = %q, want %q", got, want)
+	}
+}
+
+func TestDomainNamesAreNeverReadAsOptions(t *testing.T) {
+	c, file := recordingVirsh(t)
+	ctx := context.Background()
+	const dom = "--undefine"
+	_, _ = c.CheckpointNames(ctx, dom)
+	_ = c.CheckpointDelete(ctx, dom, "bombvault-1")
+	_ = c.BackupBegin(ctx, dom, "<domainbackup/>", "<domaincheckpoint/>")
+	_, _ = c.BackupJobXML(ctx, dom)
+	_ = c.AbortJob(ctx, dom)
+	_ = c.FSFreeze(ctx, dom)
+	_ = c.FSThaw(ctx, dom)
+	_, _ = c.State(ctx, dom)
+	_, _ = c.DumpXML(ctx, dom)
+	_, _ = c.DumpXMLInactive(ctx, dom)
+	_ = c.Shutdown(ctx, dom)
+	_ = c.Destroy(ctx, dom)
+	_ = c.Start(ctx, dom)
+	_ = c.Undefine(ctx, dom)
+	_ = c.Autostart(ctx, dom, false)
+	_ = c.BlockCommitActivePivot(ctx, dom, "vda")
+	_ = c.GuestAgentPing(ctx, dom)
+	calls := recordedCalls(t, file)
+	if len(calls) != 17 {
+		t.Fatalf("%d calls recorded: %q", len(calls), calls)
+	}
+	for _, call := range calls {
+		if !strings.Contains(" "+call+" ", " -- "+dom+" ") {
+			t.Errorf("%q passes the domain where virsh could read it as an option", call)
+		}
+	}
+}

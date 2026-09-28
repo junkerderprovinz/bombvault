@@ -23,8 +23,9 @@ import (
 
 const blockGrain = 64 << 10
 
-// blockVM is a running VM with one disk whose writes libvirt tracks in one
-// bitmap per checkpoint.
+// blockVM is a running VM with one disk whose writes qemu tracks in one
+// bitmap per checkpoint. order is libvirt's record of the checkpoints, kept
+// apart from the bitmaps the way checkpoint-delete --metadata separates them.
 type blockVM struct {
 	disk        []byte
 	checkpoints map[string]map[int64]bool
@@ -33,6 +34,11 @@ type blockVM struct {
 	refuseAll   bool
 	jobs        int
 	bytesRead   int64
+	// agent makes the guest agent answer; thawFails is how many thaws fail
+	// before one works. calls logs the job's steps in order.
+	agent     bool
+	thawFails int
+	calls     []string
 }
 
 func newBlockVM(size int) *blockVM {
@@ -52,15 +58,71 @@ func (v *blockVM) CheckpointNames(context.Context, string) ([]string, error) {
 	return slices.Clone(v.order), nil
 }
 
+// bitmaps lists the checkpoint bitmaps in the image, sorted.
+func (v *blockVM) bitmaps() []string {
+	var out []string
+	for n := range v.checkpoints {
+		out = append(out, n)
+	}
+	slices.Sort(out)
+	return out
+}
+
 func (v *blockVM) CheckpointDelete(_ context.Context, _, name string) error {
+	if !slices.Contains(v.order, name) {
+		return errors.New("no domain checkpoint with matching name")
+	}
+	if _, ok := v.checkpoints[name]; !ok {
+		return fmt.Errorf("bitmap %q not found in backing chain", name)
+	}
 	delete(v.checkpoints, name)
+	return v.CheckpointForget(context.Background(), "", name)
+}
+
+func (v *blockVM) CheckpointForget(_ context.Context, _, name string) error {
 	v.order = slices.DeleteFunc(v.order, func(n string) bool { return n == name })
 	return nil
 }
 
-func (v *blockVM) GuestAgentPing(context.Context, string) bool { return false }
-func (v *blockVM) FSFreeze(context.Context, string) error      { return nil }
-func (v *blockVM) FSThaw(context.Context, string) error        { return nil }
+func (v *blockVM) CheckpointXML(_ context.Context, _, name string) (string, error) {
+	if !slices.Contains(v.order, name) {
+		return "", errors.New("no domain checkpoint with matching name")
+	}
+	return "<domaincheckpoint><name>" + name + "</name></domaincheckpoint>", nil
+}
+
+func (v *blockVM) CheckpointRedefine(_ context.Context, _, def string, validate bool) error {
+	name := backup.CheckpointName(def)
+	if slices.Contains(v.order, name) {
+		return errors.New("checkpoint already exists")
+	}
+	if _, ok := v.checkpoints[name]; !ok && validate {
+		return fmt.Errorf("checkpoint inconsistent: missing or broken bitmap %q", name)
+	}
+	v.order = append(v.order, name)
+	return nil
+}
+
+func (v *blockVM) GuestAgentPing(context.Context, string) bool { return v.agent }
+
+func (v *blockVM) FSFreeze(context.Context, string) error {
+	v.calls = append(v.calls, "freeze")
+	return nil
+}
+
+func (v *blockVM) FSThaw(context.Context, string) error {
+	v.calls = append(v.calls, "thaw")
+	if v.thawFails > 0 {
+		v.thawFails--
+		return errors.New("guest agent is not responding")
+	}
+	return nil
+}
+
+func (v *blockVM) EndLeftoverJob(context.Context, string) error {
+	v.calls = append(v.calls, "end-leftover")
+	return nil
+}
 
 func (v *blockVM) StartJob(_ context.Context, _, base, checkpoint string, _ []string) (backup.BlockJob, error) {
 	if v.refuseAll || (base != "" && v.refuseIncr) {
@@ -69,7 +131,7 @@ func (v *blockVM) StartJob(_ context.Context, _, base, checkpoint string, _ []st
 	var changed []backup.Range
 	if base != "" {
 		bm, ok := v.checkpoints[base]
-		if !ok {
+		if !ok || !slices.Contains(v.order, base) {
 			return nil, errors.New("no such checkpoint")
 		}
 		var grains []int64
@@ -84,6 +146,7 @@ func (v *blockVM) StartJob(_ context.Context, _, base, checkpoint string, _ []st
 	v.checkpoints[checkpoint] = map[int64]bool{}
 	v.order = append(v.order, checkpoint)
 	v.jobs++
+	v.calls = append(v.calls, "begin")
 	return &blockJob{vm: v, data: bytes.Clone(v.disk), changed: changed}, nil
 }
 
@@ -94,6 +157,7 @@ type blockJob struct {
 }
 
 func (j *blockJob) Open(context.Context, string) (backup.BlockReader, error) {
+	j.vm.calls = append(j.vm.calls, "open")
 	return &blockReader{job: j}, nil
 }
 func (j *blockJob) Stop(context.Context) error { return nil }
@@ -281,13 +345,32 @@ func (f *fakeBlockRepo) latest(name string) *backup.BlocksLatest {
 	return nil
 }
 
+// keptCheckpoint is BombVault's own copy of the checkpoint definition.
+type keptCheckpoint struct {
+	def     string
+	failing bool
+}
+
+func (k *keptCheckpoint) Load() (string, error) { return k.def, nil }
+
+func (k *keptCheckpoint) Save(def string) error {
+	if k.failing {
+		return errors.New("disk full")
+	}
+	k.def = def
+	return nil
+}
+
 type blockRig struct {
 	t     *testing.T
 	vm    *blockVM
 	repo  *fakeBlockRepo
 	runs  *fakeRuns
+	kept  *keptCheckpoint
 	stage string
 	clock time.Time
+	// thawFailures collects what the run reports when the guest stays frozen.
+	thawFailures []error
 }
 
 func newBlockRig(t *testing.T, size int) *blockRig {
@@ -296,6 +379,7 @@ func newBlockRig(t *testing.T, size int) *blockRig {
 		vm:    newBlockVM(size),
 		repo:  newFakeBlockRepo(),
 		runs:  &fakeRuns{},
+		kept:  &keptCheckpoint{},
 		stage: filepath.Join(t.TempDir(), "stage"),
 		clock: time.Unix(1_800_000_000, 0),
 	}
@@ -305,17 +389,19 @@ func (r *blockRig) backup() (backup.VMBlocksResult, error) {
 	r.clock = r.clock.Add(time.Hour)
 	now := r.clock
 	return backup.BackupVMBlocks(context.Background(), backup.VMBlocksDeps{
-		Name:     "win",
-		TargetID: "t1",
-		Disks:    []backup.BlocksDisk{{Dev: "vda", Path: "/host/user/domains/win/vdisk1.img", Format: "raw", Mode: 0o644}},
-		RepoPath: "/repo",
-		StageDir: r.stage,
-		Budget:   8 << 20,
-		Latest:   r.repo.latest("win"),
-		Host:     r.vm,
-		Restic:   r.repo,
-		Runs:     r.runs,
-		Now:      func() time.Time { return now },
+		Name:        "win",
+		TargetID:    "t1",
+		Disks:       []backup.BlocksDisk{{Dev: "vda", Path: "/host/user/domains/win/vdisk1.img", Format: "raw", Mode: 0o644}},
+		RepoPath:    "/repo",
+		StageDir:    r.stage,
+		Budget:      8 << 20,
+		Latest:      r.repo.latest("win"),
+		Host:        r.vm,
+		Checkpoints: r.kept,
+		Restic:      r.repo,
+		Runs:        r.runs,
+		Now:         func() time.Time { return now },
+		ThawFailed:  func(err error) { r.thawFailures = append(r.thawFailures, err) },
 	})
 }
 
@@ -382,8 +468,60 @@ func TestBlocksRestoreEqualsDiskAfterIncrementalRuns(t *testing.T) {
 			t.Fatalf("snapshot %s restores to other bytes than the disk had", id[:8])
 		}
 	}
-	if len(r.vm.order) != 1 || r.vm.order[0] != third.Checkpoint {
-		t.Fatalf("checkpoints = %v, want only %s", r.vm.order, third.Checkpoint)
+	if !slices.Equal(r.vm.bitmaps(), []string{third.Checkpoint}) {
+		t.Fatalf("bitmaps = %v, want only %s", r.vm.bitmaps(), third.Checkpoint)
+	}
+}
+
+func TestBlocksLeaveNoCheckpointOnTheDomainBetweenRuns(t *testing.T) {
+	r := newBlockRig(t, 16<<20)
+	r.vm.write(0, fill(1<<20, 1))
+	first := r.mustBackup()
+	if len(r.vm.order) != 0 {
+		t.Fatalf("checkpoints on the domain after a run = %v, want none so it can be undefined", r.vm.order)
+	}
+	if backup.CheckpointName(r.kept.def) != first.Checkpoint {
+		t.Fatalf("kept definition = %q, want %s", r.kept.def, first.Checkpoint)
+	}
+	r.vm.write(9<<20, fill(4096, 2))
+	r.vm.bytesRead = 0
+	second := r.mustBackup()
+	if second.Mode != backup.BlocksModeChanged || r.vm.bytesRead > 8<<20 {
+		t.Fatalf("run on a restored checkpoint = %s/%s, %d bytes read", second.Mode, second.Reason, r.vm.bytesRead)
+	}
+	if len(r.vm.order) != 0 || !slices.Equal(r.vm.bitmaps(), []string{second.Checkpoint}) {
+		t.Fatalf("checkpoints %v, bitmaps %v after the second run", r.vm.order, r.vm.bitmaps())
+	}
+	if r.restoredSum(second.Summary.SnapshotID) != sha256.Sum256(r.vm.disk) {
+		t.Fatal("restore differs after a run on a restored checkpoint")
+	}
+}
+
+func TestBlocksClearLeftoverCheckpointsOfAnInterruptedRun(t *testing.T) {
+	r := newBlockRig(t, 16<<20)
+	first := r.mustBackup()
+	r.vm.checkpoints["bombvault-19990101000000"] = map[int64]bool{}
+	r.vm.order = append(r.vm.order, "bombvault-19990101000000")
+	r.vm.write(0, fill(4096, 5))
+	res := r.mustBackup()
+	if res.Mode != backup.BlocksModeChanged {
+		t.Fatalf("run = %s/%s, want changed blocks from %s", res.Mode, res.Reason, first.Checkpoint)
+	}
+	if len(r.vm.order) != 0 || !slices.Equal(r.vm.bitmaps(), []string{res.Checkpoint}) {
+		t.Fatalf("checkpoints %v, bitmaps %v, want only the new bitmap", r.vm.order, r.vm.bitmaps())
+	}
+}
+
+func TestBlocksDropTheNewCheckpointWhenItsDefinitionCannotBeKept(t *testing.T) {
+	r := newBlockRig(t, 8<<20)
+	r.kept.failing = true
+	r.mustBackup()
+	if len(r.vm.order) != 0 || len(r.vm.bitmaps()) != 0 {
+		t.Fatalf("checkpoints %v, bitmaps %v, want nothing left behind", r.vm.order, r.vm.bitmaps())
+	}
+	r.kept.failing = false
+	if res := r.mustBackup(); res.Mode != backup.BlocksModeFull || res.Reason != backup.BlocksReasonNoCheckpoint {
+		t.Fatalf("run = %s/%s, want a full read", res.Mode, res.Reason)
 	}
 }
 
@@ -392,8 +530,8 @@ func TestBlocksLeavesForeignCheckpointsAlone(t *testing.T) {
 	r.vm.checkpoints["nightly"] = map[int64]bool{}
 	r.vm.order = append(r.vm.order, "nightly")
 	r.mustBackup()
-	res := r.mustBackup()
-	if !slices.Equal(r.vm.order, []string{"nightly", res.Checkpoint}) {
+	r.mustBackup()
+	if !slices.Equal(r.vm.order, []string{"nightly"}) || r.vm.checkpoints["nightly"] == nil {
 		t.Fatalf("checkpoints = %v", r.vm.order)
 	}
 }
@@ -420,7 +558,7 @@ func TestBlocksReadsEverythingWhenCheckpointIsGone(t *testing.T) {
 	r := newBlockRig(t, 16<<20)
 	r.vm.write(0, fill(1<<20, 1))
 	first := r.mustBackup()
-	_ = r.vm.CheckpointDelete(context.Background(), "win", first.Checkpoint)
+	delete(r.vm.checkpoints, first.Checkpoint)
 	r.vm.write(9<<20, fill(1<<20, 2))
 	res := r.mustBackup()
 	if res.Mode != backup.BlocksModeFull || res.Reason != backup.BlocksReasonNoCheckpoint {
@@ -489,8 +627,8 @@ func TestBlocksFailureKeepsTheOldChain(t *testing.T) {
 	if _, err := r.backup(); err == nil {
 		t.Fatal("a failed restic run reported success")
 	}
-	if !slices.Equal(r.vm.order, []string{first.Checkpoint}) {
-		t.Fatalf("checkpoints after a failure = %v, want only %s", r.vm.order, first.Checkpoint)
+	if len(r.vm.order) != 0 || !slices.Equal(r.vm.bitmaps(), []string{first.Checkpoint}) {
+		t.Fatalf("checkpoints %v, bitmaps %v after a failure, want only the bitmap of %s", r.vm.order, r.vm.bitmaps(), first.Checkpoint)
 	}
 	if got := r.runs.finishes; len(got) != 2 || got[1] != "failed" {
 		t.Fatalf("run outcomes = %v", got)
@@ -514,8 +652,8 @@ func TestBlocksUnavailableWhenNoJobStarts(t *testing.T) {
 	if !errors.As(err, &unavailable) || unavailable.Reason != backup.BlocksReasonJobFailed {
 		t.Fatalf("err = %v, want the classic fallback", err)
 	}
-	if r.runs.started != 0 || len(r.vm.order) != 0 {
-		t.Fatalf("a run was recorded (%d) or a checkpoint kept (%v)", r.runs.started, r.vm.order)
+	if r.runs.started != 0 || len(r.vm.order) != 0 || len(r.vm.bitmaps()) != 0 {
+		t.Fatalf("a run was recorded (%d) or a checkpoint kept (%v, %v)", r.runs.started, r.vm.order, r.vm.bitmaps())
 	}
 }
 
@@ -620,5 +758,93 @@ func TestRestoreVMRebuildsBlockImagesBeforeDefine(t *testing.T) {
 	b, _ := os.ReadFile(target) //nolint:gosec // a temp file of the test
 	if !bytes.Equal(b, r.vm.disk) {
 		t.Fatal("the rebuilt disk differs from the backed-up one")
+	}
+}
+
+// checkpointedVM is a VM whose domain has checkpoints on record, which make
+// libvirt refuse to undefine it once it is off.
+type checkpointedVM struct {
+	*fakeVM
+	names []string
+}
+
+func (v *checkpointedVM) CheckpointNames(context.Context, string) ([]string, error) {
+	return slices.Clone(v.names), nil
+}
+
+func (v *checkpointedVM) CheckpointForget(_ context.Context, _, name string) error {
+	v.log = append(v.log, "forget:"+name)
+	v.names = slices.DeleteFunc(v.names, func(n string) bool { return n == name })
+	return nil
+}
+
+func (v *checkpointedVM) Undefine(ctx context.Context, name string) error {
+	if len(v.names) > 0 {
+		return errors.New("cannot undefine domain with checkpoints")
+	}
+	return v.fakeVM.Undefine(ctx, name)
+}
+
+func TestRestoreVMClearsOwnCheckpointsBeforeTheVMGoesOff(t *testing.T) {
+	vm := &checkpointedVM{fakeVM: &fakeVM{stateVal: "running"}, names: []string{"bombvault-20260101000000"}}
+	deps := sampleVMRestoreDeps(t, vm.fakeVM, &fakeRestic{}, &fakeRuns{})
+	deps.VM = vm
+	if err := backup.RestoreVM(t.Context(), deps); err != nil {
+		t.Fatal(err)
+	}
+	forget, destroy := slices.Index(vm.log, "forget:bombvault-20260101000000"), -1
+	for i, e := range vm.log {
+		if strings.HasPrefix(e, "destroy:") {
+			destroy = i
+		}
+	}
+	if forget < 0 || destroy < 0 || forget > destroy {
+		t.Fatalf("calls = %v, want the checkpoint cleared before the destroy", vm.log)
+	}
+}
+
+func TestRestoreVMLeavesAVMWithForeignCheckpointsRunning(t *testing.T) {
+	vm := &checkpointedVM{fakeVM: &fakeVM{stateVal: "running"}, names: []string{"nightly"}}
+	deps := sampleVMRestoreDeps(t, vm.fakeVM, &fakeRestic{}, &fakeRuns{})
+	deps.VM = vm
+	err := backup.RestoreVM(t.Context(), deps)
+	if err == nil || !strings.Contains(err.Error(), "nightly") {
+		t.Fatalf("err = %v, want a refusal naming the checkpoint", err)
+	}
+	for _, e := range vm.log {
+		if strings.HasPrefix(e, "destroy:") || strings.HasPrefix(e, "forget:") {
+			t.Fatalf("calls = %v, want the VM left alone", vm.log)
+		}
+	}
+}
+
+func TestBlocksFreezeTheGuestOnlyWhileTheJobStarts(t *testing.T) {
+	r := newBlockRig(t, 8<<20)
+	r.vm.agent = true
+	r.mustBackup()
+	want := []string{"end-leftover", "freeze", "begin", "thaw", "open"}
+	if !slices.Equal(r.vm.calls, want) {
+		t.Fatalf("steps = %v, want %v", r.vm.calls, want)
+	}
+}
+
+func TestBlocksRetryTheThawAndReportAGuestThatStaysFrozen(t *testing.T) {
+	defer backup.SetThawRetryForTest(time.Millisecond)()
+	r := newBlockRig(t, 8<<20)
+	r.vm.agent = true
+	r.vm.thawFails = 2
+	r.mustBackup()
+	if n := slices.Index(r.vm.calls, "open"); n < 0 || !slices.Equal(r.vm.calls[:n], []string{"end-leftover", "freeze", "begin", "thaw", "thaw", "thaw"}) {
+		t.Fatalf("steps = %v, want two retries of the thaw", r.vm.calls)
+	}
+	if len(r.thawFailures) != 0 {
+		t.Fatalf("reported %v although the third thaw worked", r.thawFailures)
+	}
+
+	r.vm.calls = nil
+	r.vm.thawFails = 100
+	r.mustBackup()
+	if len(r.thawFailures) != 1 {
+		t.Fatalf("reported %d thaw failures, want one", len(r.thawFailures))
 	}
 }

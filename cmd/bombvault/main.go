@@ -543,9 +543,19 @@ func run() error {
 		defer cancel()
 		svc.SweepZFSLeftoversOnStartup(sctx)
 	}()
-	// A start test that was running when BombVault stopped left its copy,
-	// network and restored data behind.
+	// A changed-block VM backup that was running when BombVault stopped left
+	// its backup job on the VM and its checkpoints on record. virsh goes over
+	// SSH, so this runs in the background like the ZFS sweep.
 	go func() {
+		cctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+		svc.SweepBlockBackupLeftovers(cctx)
+	}()
+	// A start test that was running when BombVault stopped left its copy,
+	// network and restored data behind. They go before the scheduler and the
+	// web interface start, so no new test can meet them and none of it is
+	// removed from under one.
+	func() {
 		cctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 		svc.CleanupStartTestLeftovers(cctx)

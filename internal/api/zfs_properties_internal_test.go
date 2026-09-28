@@ -182,3 +182,60 @@ func TestZFSRestoreRefusesToApplyPropertiesNobodyStored(t *testing.T) {
 		t.Fatalf("started=%v err=%v, want a refusal", started, err)
 	}
 }
+
+func TestZFSRestoreCheckIntoANewDatasetCreatesNothing(t *testing.T) {
+	s, st, host, _ := zfsRestoreFixture(t)
+	host.strictTree = true
+	d := zfsSeedItem(t, st, zfsRoot)
+	req := zfsRestoreRequest(zfsRoot)
+	req.NewDataset = "cache/copy"
+	req.SafetySnapshot = false
+
+	plan, _, err := s.prepareRestoreZFS(planOnly(context.Background()), d.ID, "local", req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range host.recorded() {
+		if strings.HasPrefix(c, "create") {
+			t.Fatalf("the check created the dataset: %q", c)
+		}
+	}
+	if len(plan.steps) != 1 || plan.steps[0].target != zfsMemberPath(s.cfg.HostMountRoot, "cache/copy") {
+		t.Fatalf("steps = %+v, want one restore into where the new dataset will be", plan.steps)
+	}
+}
+
+func TestZFSRestoreCheckStillRefusesANewDatasetThatExists(t *testing.T) {
+	s, st, host, _ := zfsRestoreFixture(t)
+	host.strictTree = true
+	d := zfsSeedItem(t, st, zfsRoot)
+	req := zfsRestoreRequest(zfsRoot)
+	req.NewDataset = zfsChild
+	if _, _, err := s.prepareRestoreZFS(planOnly(context.Background()), d.ID, "local", req); err == nil || !strings.Contains(err.Error(), "dataset-exists") {
+		t.Fatalf("err = %v, want dataset-exists", err)
+	}
+}
+
+func TestZFSRestoreSetsQuotasAfterTheFilesAndTheRestBefore(t *testing.T) {
+	s, st, host, eng := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+	zfsSeedProperties(t, st, d.ID, map[string]string{"compression": "zstd", "quota": "1024"})
+	restoredAt := map[string]int{}
+	host.onSet = func() {
+		calls := host.calls
+		restoredAt[calls[len(calls)-1]] = len(eng.restores)
+	}
+	req := zfsRestoreRequest(zfsRoot)
+	req.ApplyProperties = true
+	if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req); err != nil || !started {
+		t.Fatalf("start: %v %v", started, err)
+	}
+	if run := zfsAwaitRestore(t, st, d.ID); run.Status != "success" {
+		t.Fatalf("restore run = %+v", run)
+	}
+	before, okB := restoredAt["set compression=zstd "+zfsRoot]
+	after, okA := restoredAt["set quota=1024 "+zfsRoot]
+	if !okB || !okA || before != 0 || after != 1 {
+		t.Fatalf("restores done when each set ran = %v, want compression before the files and the quota after", restoredAt)
+	}
+}

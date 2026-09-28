@@ -83,7 +83,7 @@ Ca să revii după o restaurare, copiază fișiere individuale din `.zfs/snapsho
 BombVault salvează la fiecare backup proprietățile ZFS setate local ale fiecărui set de date: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity și propriile tale proprietăți de utilizator. Valorile moștenite și cele doar pentru citire sunt lăsate deoparte, pentru că revin singure. Backupurile de dinainte ca BombVault să le salveze nu au niciuna.
 
 - **Într-un set de date nou** rulează `zfs create` cu fiecare proprietate salvată. casesensitivity, normalization și utf8only pot fi setate doar așa. Punctul de montare este lăsat deoparte, ca să nu se ciocnească copia de original, la fel `canmount`, `readonly` și criptarea, ca restaurarea să poată scrie. Un set de date nou sub unul criptat îi preia criptarea. Setul de date de deasupra trebuie să existe. Dacă ceva eșuează după creare, setul de date nou rămâne pe server, pentru că BombVault nu distruge niciodată un set de date.
-- **Restaurează în setul de date** arată proprietățile salvate lângă restaurare. **Setează și aceste proprietăți** le setează pe cele pe care un set de date existent le mai acceptă, înainte să fie scris vreun fișier. Fără acest comutator, setul de date își păstrează setările.
+- **Restaurează în setul de date** arată proprietățile salvate lângă restaurare. **Setează și aceste proprietăți** le setează pe cele pe care un set de date existent le mai acceptă, înainte să fie scris vreun fișier. Cotele și rezervările se setează după fișiere, ca să nu le poată refuza. Fără acest comutator, setul de date își păstrează setările.
 
 ## Ce conține copia {#contents}
 

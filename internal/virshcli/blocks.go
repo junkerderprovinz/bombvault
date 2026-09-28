@@ -19,6 +19,16 @@ type BlockBackups interface {
 	// CheckpointDelete removes one checkpoint and merges its bitmap away.
 	// A checkpoint that is already gone is not an error.
 	CheckpointDelete(ctx context.Context, domain, checkpoint string) error
+	// CheckpointForget removes only libvirt's record of a checkpoint and
+	// leaves its bitmap in the disk image. A checkpoint that is already gone
+	// is not an error.
+	CheckpointForget(ctx context.Context, domain, checkpoint string) error
+	// CheckpointXML returns a checkpoint's definition without the domain.
+	CheckpointXML(ctx context.Context, domain, checkpoint string) (string, error)
+	// CheckpointRedefine brings back a forgotten checkpoint from its
+	// definition. With validate, libvirt first checks that the bitmap is
+	// still in the image, which it can only do while the domain runs.
+	CheckpointRedefine(ctx context.Context, domain, checkpointXML string, validate bool) error
 	// BackupBegin starts a backup job from a <domainbackup> document and
 	// creates the checkpoint described by checkpointXML at the same instant.
 	BackupBegin(ctx context.Context, domain, backupXML, checkpointXML string) error
@@ -37,7 +47,7 @@ var _ BlockBackups = (*Client)(nil)
 
 // CheckpointNames implements BlockBackups.
 func (c *Client) CheckpointNames(ctx context.Context, domain string) ([]string, error) {
-	out, err := c.run(ctx, "checkpoint-list", domain, "--name")
+	out, err := c.run(ctx, "checkpoint-list", "--name", "--", domain)
 	if err != nil {
 		return nil, err
 	}
@@ -52,10 +62,39 @@ func (c *Client) CheckpointNames(ctx context.Context, domain string) ([]string, 
 
 // CheckpointDelete implements BlockBackups.
 func (c *Client) CheckpointDelete(ctx context.Context, domain, checkpoint string) error {
-	_, err := c.run(ctx, "checkpoint-delete", domain, checkpoint)
+	_, err := c.run(ctx, "checkpoint-delete", "--", domain, checkpoint)
 	if err != nil && strings.Contains(strings.ToLower(err.Error()), "no domain checkpoint") {
 		return nil
 	}
+	return err
+}
+
+// CheckpointForget implements BlockBackups.
+func (c *Client) CheckpointForget(ctx context.Context, domain, checkpoint string) error {
+	_, err := c.run(ctx, "checkpoint-delete", "--metadata", "--", domain, checkpoint)
+	if err != nil && strings.Contains(strings.ToLower(err.Error()), "no domain checkpoint") {
+		return nil
+	}
+	return err
+}
+
+// CheckpointXML implements BlockBackups.
+func (c *Client) CheckpointXML(ctx context.Context, domain, checkpoint string) (string, error) {
+	return c.run(ctx, "checkpoint-dumpxml", "--no-domain", "--", domain, checkpoint)
+}
+
+// CheckpointRedefine implements BlockBackups.
+func (c *Client) CheckpointRedefine(ctx context.Context, domain, checkpointXML string, validate bool) error {
+	f, err := writeTemp("bombvault-checkpoint-*.xml", checkpointXML)
+	if err != nil {
+		return err
+	}
+	defer os.Remove(f) //nolint:errcheck // a leftover temp file is harmless
+	args := []string{"checkpoint-create", "--redefine"}
+	if validate {
+		args = append(args, "--redefine-validate")
+	}
+	_, err = c.run(ctx, append(args, "--", domain, f)...)
 	return err
 }
 
@@ -72,7 +111,7 @@ func (c *Client) BackupBegin(ctx context.Context, domain, backupXML, checkpointX
 		return err
 	}
 	defer os.Remove(cp) //nolint:errcheck // a leftover temp file is harmless
-	_, err = c.run(ctx, "backup-begin", domain, bk, cp)
+	_, err = c.run(ctx, "backup-begin", "--", domain, bk, cp)
 	return err
 }
 
@@ -93,7 +132,7 @@ func writeTemp(pattern, content string) (string, error) {
 // BackupJobXML implements BlockBackups. No running job is the usual answer,
 // so it is neither an error nor logged.
 func (c *Client) BackupJobXML(ctx context.Context, domain string) (string, error) {
-	out, stderr, err := c.exec(ctx, "backup-dumpxml", domain)
+	out, stderr, err := c.exec(ctx, "backup-dumpxml", "--", domain)
 	if err != nil {
 		if noBackupJob(stderr) {
 			return "", nil
@@ -113,7 +152,7 @@ func noBackupJob(stderr string) bool {
 
 // AbortJob implements BlockBackups.
 func (c *Client) AbortJob(ctx context.Context, domain string) error {
-	_, err := c.run(ctx, "domjobabort", domain)
+	_, err := c.run(ctx, "domjobabort", "--", domain)
 	if err != nil && strings.Contains(strings.ToLower(err.Error()), "no job") {
 		return nil
 	}
@@ -122,13 +161,13 @@ func (c *Client) AbortJob(ctx context.Context, domain string) error {
 
 // FSFreeze implements BlockBackups.
 func (c *Client) FSFreeze(ctx context.Context, domain string) error {
-	_, err := c.run(ctx, "domfsfreeze", domain)
+	_, err := c.run(ctx, "domfsfreeze", "--", domain)
 	return err
 }
 
 // FSThaw implements BlockBackups.
 func (c *Client) FSThaw(ctx context.Context, domain string) error {
-	_, err := c.run(ctx, "domfsthaw", domain)
+	_, err := c.run(ctx, "domfsthaw", "--", domain)
 	return err
 }
 

@@ -462,6 +462,13 @@ func (s *Service) planZFSRestoreNewDataset(ctx context.Context, plan *zfsRestore
 	case zfsErrCode(err) != "not-found":
 		return ZFSRestoreAck{}, zfsRefuse(zfsErrCode(err), name)
 	}
+	if isPlanOnly(ctx) {
+		target := s.zfsNewDatasetPath(ctx, name)
+		plan.dataset = req.Dataset
+		plan.steps = []zfsRestoreStep{{snapshotID: member.SnapshotID, target: target}}
+		plan.snapshotID = member.SnapshotID
+		return ZFSRestoreAck{Target: target}, nil
+	}
 	cctx, cancel := context.WithTimeout(ctx, zfsSnapshotTimeout)
 	err = s.zfs.Create(cctx, name, member.Properties)
 	cancel()
@@ -480,6 +487,21 @@ func (s *Service) planZFSRestoreNewDataset(ctx context.Context, plan *zfsRestore
 	plan.steps = []zfsRestoreStep{{snapshotID: member.SnapshotID, target: cpath}}
 	plan.snapshotID = member.SnapshotID
 	return ZFSRestoreAck{Target: cpath, Created: name}, nil
+}
+
+// zfsNewDatasetPath is where the container will see a dataset that does not
+// exist yet: below its parent's mount, since it inherits the mountpoint, or
+// at the pool's usual place under /mnt when the parent has no mount it can see.
+func (s *Service) zfsNewDatasetPath(ctx context.Context, name string) string {
+	parent, base := path.Split(name)
+	parent = strings.TrimSuffix(parent, "/")
+	if cpath, _, code := s.zfsRestoreMount(ctx, parent, parent); code == "" {
+		return path.Join(cpath, base)
+	}
+	if cpath, ok := s.toContainerPath("/mnt/" + name); ok {
+		return cpath
+	}
+	return s.cfg.HostMountRoot
 }
 
 // zfsAwaitWritableMount waits for a dataset created a moment ago to reach the
@@ -709,13 +731,12 @@ func (s *Service) runRestoreZFS(ctx context.Context, plan zfsRestorePlan) error 
 		}
 		plan.covered = covered
 	}
-	if len(plan.setProps) > 0 {
-		sctx, cancel := context.WithTimeout(ctx, zfsSnapshotTimeout)
-		err := s.zfs.SetProperties(sctx, plan.dataset, plan.setProps)
-		cancel()
-		if err != nil {
-			return &backup.ZFSRefusal{Code: "set-properties-failed", Detail: plan.dataset + ": " + zfsDetail(err.Error())}
-		}
+	// Compression and record size have to be in place before the files are
+	// written to apply to them; a quota or reservation could refuse them, so
+	// those follow the files.
+	props, limits := zfs.SplitLimits(plan.setProps)
+	if err := s.setZFSRestoreProperties(ctx, plan.dataset, props); err != nil {
+		return err
 	}
 	if plan.consistency != nil {
 		thaw, _, err := plan.consistency.Freeze(ctx)
@@ -728,6 +749,19 @@ func (s *Service) runRestoreZFS(ctx context.Context, plan zfsRestorePlan) error 
 		if err := s.restoreZFSStep(ctx, plan, step); err != nil {
 			return err
 		}
+	}
+	return s.setZFSRestoreProperties(ctx, plan.dataset, limits)
+}
+
+func (s *Service) setZFSRestoreProperties(ctx context.Context, dataset string, p zfs.Properties) error {
+	if len(p) == 0 {
+		return nil
+	}
+	sctx, cancel := context.WithTimeout(ctx, zfsSnapshotTimeout)
+	err := s.zfs.SetProperties(sctx, dataset, p)
+	cancel()
+	if err != nil {
+		return &backup.ZFSRefusal{Code: "set-properties-failed", Detail: dataset + ": " + zfsDetail(err.Error())}
 	}
 	return nil
 }
