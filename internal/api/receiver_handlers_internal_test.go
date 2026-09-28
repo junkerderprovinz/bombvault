@@ -79,7 +79,7 @@ func TestReceiverCreateValidation(t *testing.T) {
 	h.handleCreateReceiverRepo(w, postJSONReq(t, "/api/receiver/repos", map[string]any{
 		"repo": "rest:https://box:8000/vault", "memberId": "member-nobody-knows",
 	}))
-	if resp := decodeResp(t, w); resp["ok"] != false || !strings.Contains(resp["error"].(string), "could not reach") {
+	if resp := decodeResp(t, w); resp["ok"] != false || resp["error"] != errMemberGone.Error() {
 		t.Fatalf("a member outside the group must be rejected: %v", resp)
 	}
 

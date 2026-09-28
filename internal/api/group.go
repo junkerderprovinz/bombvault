@@ -188,9 +188,19 @@ func (r *peerRecorder) Header() http.Header         { return r.header }
 func (r *peerRecorder) Write(b []byte) (int, error) { return r.body.Write(b) }
 func (r *peerRecorder) WriteHeader(status int)      { r.status = status }
 
+// The errors callMember returns. Whatever a member or a relay says about a
+// failure stays in this instance's log: their text and status codes are not
+// this instance's to show, and a member could otherwise learn through the
+// page what an address it announced answers.
+var (
+	errMemberGone       = errors.New("that instance is not reachable in the group right now")
+	errMemberSilent     = errors.New("that instance did not answer")
+	errMemberUnreadable = errors.New("that instance sent an answer this one cannot read")
+	errMemberRefused    = errors.New("that instance could not do this; its log says why")
+)
+
 // callMember asks a member one of the peerRoutes and decodes its JSON answer
-// into out. A member that answered with ok=false comes back as an error with
-// its message.
+// into out.
 func (s *Service) callMember(ctx context.Context, memberID, method, path string, in, out any) error {
 	var body []byte
 	if in != nil {
@@ -201,24 +211,27 @@ func (s *Service) callMember(ctx context.Context, memberID, method, path string,
 		body = b
 	}
 	status, raw, err := s.pairing().Call(ctx, memberID, method, path, body)
+	if errors.Is(err, group.ErrNotMember) {
+		return errMemberGone
+	}
 	if err != nil {
-		return err
+		log.Printf("group: %s %s to member %q: %v", method, path, memberID, err)
+		return errMemberSilent
 	}
 	var env struct {
 		OK    bool   `json:"ok"`
 		Error string `json:"error"`
 	}
 	if err := json.Unmarshal(raw, &env); err != nil {
-		return fmt.Errorf("the other instance answered HTTP %d without a readable body", status)
+		log.Printf("group: %s %s to member %q answered HTTP %d without a readable body", method, path, memberID, status)
+		return errMemberUnreadable
 	}
 	if !env.OK {
-		if env.Error == "" {
-			env.Error = fmt.Sprintf("the other instance answered HTTP %d", status)
-		}
-		return errors.New(env.Error)
+		log.Printf("group: %s %s to member %q answered HTTP %d: %q", method, path, memberID, status, env.Error)
+		return errMemberRefused
 	}
-	if out != nil {
-		return json.Unmarshal(raw, out)
+	if out != nil && json.Unmarshal(raw, out) != nil {
+		return errMemberUnreadable
 	}
 	return nil
 }
@@ -642,7 +655,7 @@ func (s *Service) pairedPassword(ctx context.Context, memberID string) ([]byte, 
 	}
 	var p peerPairing
 	if err := s.callMember(ctx, memberID, http.MethodGet, "/api/group/peer/pairing", nil, &p); err != nil {
-		return nil, fmt.Errorf("could not reach the other instance: %w", err)
+		return nil, err
 	}
 	if !resticPasswordRe.MatchString(p.ResticPassword) {
 		return nil, errors.New("the other instance sent no usable restic password")

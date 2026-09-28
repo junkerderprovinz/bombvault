@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -581,4 +582,84 @@ func TestTheServedRelayDropsItsConnectionsWhenTheSwitchGoesOffOrTheGroupIsLeft(t
 	dialServedRelay(t, in, srv.URL)
 	in.do(t, http.MethodDelete, "/api/group", nil)
 	waitForRelayClients(t, in, 0)
+}
+
+// hostileRelay is a relay that introduces a member called evil and answers
+// every call to it with text of its own choosing, as a relay operator could.
+func hostileRelay(t *testing.T, sec []byte, text string) *httptest.Server {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := websocket.Accept(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer func() { _ = c.CloseNow() }()
+		ctx := r.Context()
+		if _, _, err := c.Read(ctx); err != nil {
+			return
+		}
+		ident, _ := relay.SealIdentity(relay.DeriveFrameKey(sec), "evil", relay.Identity{Name: "evil"})
+		announce, _ := relay.Encode(relay.TypeAnnounce, relay.Announce{InstanceID: "evil", Sealed: ident})
+		if c.Write(ctx, websocket.MessageText, announce) != nil {
+			return
+		}
+		for {
+			_, frame, err := c.Read(ctx)
+			if err != nil {
+				return
+			}
+			var req relay.ProxyRequest
+			if env, _ := relay.Decode(frame); env.Type != relay.TypeProxyRequest || env.Into(&req) != nil {
+				continue
+			}
+			answer, _ := relay.Encode(relay.TypeProxyResponse, relay.ProxyResponse{RequestID: req.RequestID, Error: text})
+			_ = c.Write(ctx, websocket.MessageText, answer)
+		}
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+func TestWhatARelaySaysAboutAFailureNeverReachesThePage(t *testing.T) {
+	in := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	_, created := in.do(t, http.MethodPost, "/api/group/phrase", nil)
+	sec, err := seedphrase.Decode(fmt.Sprint(created["phrase"]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	const text = "HTTP 418 from http://10.0.0.7:8080/admin"
+	rs := hostileRelay(t, sec, text)
+	in.do(t, http.MethodPut, "/api/group/relay", map[string]any{"mode": "own", "url": rs.URL})
+	deadline := time.Now().Add(10 * time.Second)
+	for len(in.svc.pairing().Members()) == 0 && time.Now().Before(deadline) {
+		time.Sleep(20 * time.Millisecond)
+	}
+
+	err = in.svc.callMember(context.Background(), "evil", http.MethodGet, "/api/group/peer/status", nil, nil)
+	if !errors.Is(err, errMemberSilent) {
+		t.Fatalf("call through the relay = %v, want %v", err, errMemberSilent)
+	}
+	if err := in.svc.RunFleetPolls(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	peers, err := in.st.ListFleetPeers()
+	if err != nil || len(peers) != 1 {
+		t.Fatalf("fleet peers = %+v, %v", peers, err)
+	}
+	if got := peers[0].LastPollError; got != errMemberSilent.Error() {
+		t.Fatalf("the Fleet page would show %q, want %q", got, errMemberSilent)
+	}
+	if err := in.svc.callMember(context.Background(), "nobody", http.MethodGet, "/api/group/peer/status", nil, nil); !errors.Is(err, errMemberGone) {
+		t.Fatalf("call to an instance outside the group = %v, want %v", err, errMemberGone)
+	}
+}
+
+func TestAMembersRefusalReachesThePageAsAFixedMessage(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, a, b)
+	err := a.svc.callMember(context.Background(), b.id(t), http.MethodPost, "/api/group/peer/check/bogus", nil, nil)
+	if !errors.Is(err, errMemberRefused) {
+		t.Fatalf("a refused call = %v, want %v", err, errMemberRefused)
+	}
 }

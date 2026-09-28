@@ -229,12 +229,16 @@ func (c *Client) Call(ctx context.Context, target string, call ProxyCall) (Proxy
 	select {
 	case <-ctx.Done():
 		return ProxyResult{}, fmt.Errorf("relay: %s did not answer: %w", target, ctx.Err())
-	case resp := <-answer:
+	case resp, ok := <-answer:
+		if !ok {
+			return ProxyResult{}, errors.New("relay: the relay connection dropped before the answer arrived")
+		}
 		// Error is the one field a hostile relay can write, so an unsealed
-		// response is never taken as a result. That limits a relay to denial
-		// of service.
+		// response is never taken as a result, and its text goes no further
+		// than this instance's log. That limits a relay to denial of service.
 		if resp.Error != "" {
-			return ProxyResult{}, errors.New("relay: " + resp.Error)
+			log.Printf("relay: the relay answered for %s: %q", target, resp.Error)
+			return ProxyResult{}, fmt.Errorf("relay: %s did not answer", target)
 		}
 		result, err := OpenResult(c.frameKey, id, resp.Sealed)
 		if err != nil {
@@ -436,8 +440,11 @@ func (c *Client) disconnected() {
 		delete(c.pending, id)
 	}
 	c.mu.Unlock()
+	// Closed rather than sent to, so Call can tell this from an error the
+	// relay wrote. Each channel left the map under the lock, so nothing else
+	// sends on it.
 	for _, answer := range waiting {
-		answer <- ProxyResponse{Error: "the relay connection dropped before the answer arrived"}
+		close(answer)
 	}
 	c.changed()
 }

@@ -344,12 +344,12 @@ func TestCallFailsFastRatherThanWaiting(t *testing.T) {
 			wantErr: "not connected",
 		},
 		{
-			// The relay answers this one, and the client has to pass its
-			// text on.
+			// The relay answers this one. Its text is the relay's to
+			// choose, so the error says only that no answer came.
 			name:    "nobody is connected as the target",
 			connect: true,
 			target:  "nobody",
-			wantErr: "no instance nobody is connected",
+			wantErr: "nobody did not answer",
 		},
 	}
 	for _, tc := range tests {
@@ -371,6 +371,9 @@ func TestCallFailsFastRatherThanWaiting(t *testing.T) {
 			}
 			if !strings.Contains(err.Error(), tc.wantErr) {
 				t.Errorf("got %v, want it to mention %q", err, tc.wantErr)
+			}
+			if strings.Contains(err.Error(), "connected with this relay key") {
+				t.Errorf("got %v, which carries the relay's own text", err)
 			}
 			if time.Since(began) >= CallTimeout {
 				t.Errorf("the call took %v, want it to fail without waiting out the timeout", time.Since(began))
@@ -435,8 +438,9 @@ func TestCallInFlightFailsWhenTheConnectionDies(t *testing.T) {
 		}
 		// Two paths race and either is correct: alpha notices its own
 		// connection died ("dropped"), or the relay notices bravo left first
-		// and fails the call through failPending.
-		if !strings.Contains(err.Error(), "dropped") && !strings.Contains(err.Error(), "disconnected before it replied") {
+		// and fails the call through failPending, whose text alpha keeps to
+		// its log.
+		if !strings.Contains(err.Error(), "dropped") && !strings.Contains(err.Error(), "bravo did not answer") {
 			t.Errorf("got %v, want it to say the connection dropped or that the target disconnected first", err)
 		}
 	case <-time.After(wsTimeout):
