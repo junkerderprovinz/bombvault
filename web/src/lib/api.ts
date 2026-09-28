@@ -3887,6 +3887,11 @@ export interface GroupState extends OkEnvelope {
   passwordSet: boolean;
   members: GroupMember[];
   relay: RelayState;
+  /** Seconds since this instance created or joined its group, by the
+   *  server's clock; 0 outside a group. */
+  joinedAgo: number;
+  /** Another member has shown up since this instance entered the group. */
+  memberSeen: boolean;
 }
 
 /** Why a phrase did not decode, with the word at fault. */

@@ -1,5 +1,5 @@
 // PairingSteps explains pairing in three numbered cards before any button does
-// anything: read the phrase here, type it there, done.
+// anything: yes on the first instance, no and the words on every other, done.
 import { Fragment, type ReactNode } from "react";
 import { StepCard } from "../../components/recovery/StepCard";
 import { InfoBubble } from "../../components/InfoBubble";
@@ -33,7 +33,7 @@ export function PairingSteps({ t, hues }: { t: T; hues: [number, number, number]
     },
     {
       title: t("pairing.step3Title"),
-      body: emphasize(t("pairing.step3Body"), "page", t("instances.title")),
+      body: t("pairing.step3Body"),
       tip: t("pairing.step3Tip"),
     },
   ];

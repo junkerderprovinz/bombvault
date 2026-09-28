@@ -45,7 +45,7 @@ export function Pairing({ embedded = false }: { embedded?: boolean } = {}) {
       {!embedded && <PageTitle>{t("pairing.title")}</PageTitle>}
       <PairingSteps t={t} hues={[0, 1, 2]} />
       {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
-      {group && <PhraseCard group={group} onGroup={setGroup} t={t} hueIndex={3} />}
+      {group && <PhraseCard group={group} onGroup={setGroup} onRefresh={load} t={t} hueIndex={3} />}
       {group && <RelayCard group={group} onGroup={setGroup} t={t} hueIndex={4} />}
     </div>
   );

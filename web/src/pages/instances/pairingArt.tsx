@@ -349,3 +349,61 @@ export function FactGlyph({ kind }: { kind: "need" | "sees" | "search" | "shield
       );
   }
 }
+
+/** The glyphs of the phrase card: the two answers to its question, the next
+ *  step, the path to it, and the warning and done marks of the hints. */
+export function PhraseGlyph({ kind, size = 16 }: { kind: "create" | "enter" | "arrow" | "chevron" | "warn" | "check"; size?: number }) {
+  const common = {
+    viewBox: "0 0 20 20",
+    width: size,
+    height: size,
+    fill: "none",
+    stroke: "currentColor",
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+    className: "shrink-0",
+  };
+  switch (kind) {
+    case "create":
+      return (
+        <svg {...common} strokeWidth={1.8}>
+          <rect x="3" y="3" width="14" height="14" rx="3.5" />
+          <path d="M10 6.8v6.4M6.8 10h6.4" />
+        </svg>
+      );
+    case "enter":
+      return (
+        <svg {...common} strokeWidth={1.6}>
+          <rect x="2.5" y="5" width="15" height="10" rx="2.2" />
+          <path d="M5.5 8.2h.01M8.5 8.2h.01M11.5 8.2h.01M14.5 8.2h.01M6.5 11.8h7" />
+        </svg>
+      );
+    case "arrow":
+      return (
+        <svg {...common} strokeWidth={2.4} className="shrink-0 rtl:-scale-x-100">
+          <path d="M3.8 10h11.9M11.3 5.6 15.7 10l-4.4 4.4" />
+        </svg>
+      );
+    case "chevron":
+      return (
+        <svg {...common} strokeWidth={2.4} className="shrink-0 rtl:-scale-x-100">
+          <path d="M7.5 4.2 13.3 10l-5.8 5.8" />
+        </svg>
+      );
+    case "warn":
+      return (
+        <svg {...common} strokeWidth={1.7}>
+          <path d="M10 3 18 16.5H2z" />
+          <path d="M10 8.2v3.6" />
+          <circle cx="10" cy="14.1" r=".9" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case "check":
+      return (
+        <svg {...common} strokeWidth={2.6}>
+          <path d="M4.4 10.5 8.2 14.1 15.6 6.1" />
+        </svg>
+      );
+  }
+}
