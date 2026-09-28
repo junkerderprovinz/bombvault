@@ -434,6 +434,9 @@ func run() error {
 	// A scheduled container whose app is busy waits outside its run, and is
 	// backed up on its own once the app is idle or the wait is over.
 	scheduler.SetIdleHold(svc.HoldForIdle)
+	// The restore probe after an item's first backup waits for the rest of
+	// its scheduled run instead of taking the domain between two items.
+	scheduler.SetRunBracket(svc.OpenScheduledRun)
 	svc.SetHeldContainerRun(scheduler.RunContainersNow)
 	// Waits a restart cut short go on with their own deadline.
 	svc.ResumeIdleWaits()

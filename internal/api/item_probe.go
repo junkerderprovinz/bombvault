@@ -185,13 +185,35 @@ func (s *Service) firstProbeDue(targetID string) (bool, string, error) {
 	return true, run.SnapshotID, nil
 }
 
-// waitProbeLock takes the domain once nothing else wants it: a batch or a
-// Backup Everything pass keeps going first, since a probe between two of its
-// items would hold the next one up.
+// OpenScheduledRun marks a scheduled multi-item run of domain as open until
+// the returned func is called. The scheduler brackets each such run with it.
+func (s *Service) OpenScheduledRun(domain string) func() {
+	s.runsOpenMu.Lock()
+	defer s.runsOpenMu.Unlock()
+	if s.runsOpen == nil {
+		s.runsOpen = map[string]int{}
+	}
+	s.runsOpen[domain]++
+	return func() {
+		s.runsOpenMu.Lock()
+		defer s.runsOpenMu.Unlock()
+		s.runsOpen[domain]--
+	}
+}
+
+func (s *Service) scheduledRunOpen(domain string) bool {
+	s.runsOpenMu.Lock()
+	defer s.runsOpenMu.Unlock()
+	return s.runsOpen[domain] > 0
+}
+
+// waitProbeLock takes the domain once nothing else wants it: a batch, a
+// Backup Everything pass or a scheduled run of the domain keeps going first,
+// since a probe between two of its items would hold the next one up.
 func (s *Service) waitProbeLock(domain string) (func(), bool) {
 	deadline := time.Now().Add(drillLockWait)
 	for {
-		if !s.batchActive.Load() && !s.everythingActive.Load() {
+		if !s.batchActive.Load() && !s.everythingActive.Load() && !s.scheduledRunOpen(domain) {
 			if unlock, ok := s.tryLockDomainFor(domain, "verify"); ok {
 				return unlock, true
 			}
