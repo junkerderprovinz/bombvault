@@ -25,7 +25,8 @@ func lockFiles(t *testing.T, dir string) int {
 }
 
 // A restic killed while it holds a lock leaves the lock file behind. Once this
-// process counts as started after it, the lock is an earlier run's and goes.
+// process counts as started after it and the lock has gone unrefreshed for
+// longer than restic's refresh interval, the lock is an earlier run's and goes.
 func TestRemoveOrphanLocksClearsTheLockOfAKilledRestic(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("reads /proc")
@@ -61,13 +62,20 @@ func TestRemoveOrphanLocksClearsTheLockOfAKilledRestic(t *testing.T) {
 	_ = cmd.Wait()
 	_ = stdin.Close()
 
-	if err := r.removeOrphanLocks(ctx, repo, m, time.Now().Add(-time.Hour)); err != nil {
+	later := time.Now().Add(lockRefreshSilence + time.Minute)
+	if err := r.removeOrphanLocks(ctx, repo, m, time.Now().Add(-time.Hour), later); err != nil {
 		t.Fatal(err)
 	}
 	if n := lockFiles(t, locks); n != 1 {
 		t.Fatalf("a lock taken after the cut-off must stay, %d locks left", n)
 	}
-	if err := r.removeOrphanLocks(ctx, repo, m, time.Now()); err != nil {
+	if err := r.removeOrphanLocks(ctx, repo, m, time.Now(), time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	if n := lockFiles(t, locks); n != 1 {
+		t.Fatalf("a lock refreshed moments ago must stay, %d locks left", n)
+	}
+	if err := r.removeOrphanLocks(ctx, repo, m, time.Now(), later); err != nil {
 		t.Fatal(err)
 	}
 	if n := lockFiles(t, locks); n != 0 {
