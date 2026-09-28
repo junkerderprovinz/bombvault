@@ -258,7 +258,9 @@ func TestDBDumpStreamStdoutIsOnlyTheDump(t *testing.T) {
 // restic waits for it. The helper's own deadline has to end the process without
 // touching the blocked writer.
 func TestDBDumpStreamHardDeadlineDoesNotWaitForWriter(t *testing.T) {
-	shrinkDeadline(t, 30*time.Millisecond)
+	// Long enough for the fake to report its pid under a loaded full run, which
+	// the orphan stop needs, and still far inside the two seconds below.
+	shrinkDeadline(t, 300*time.Millisecond)
 
 	ex := &fakeExecer{run: func(_ context.Context, stdout, stderr io.Writer) (int, error) {
 		_, _ = io.WriteString(stderr, dbdump.PIDLinePrefix+"4711\n")
