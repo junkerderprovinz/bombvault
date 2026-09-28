@@ -238,7 +238,7 @@ type Service struct {
 	// same reason diskFree is one: nil uses the platform statfs and the rclone
 	// binary. Accessed via diskStatFn and rcloneAboutFn.
 	diskStat    func(path string) (diskStatResult, error)
-	rcloneAbout func(ctx context.Context, remote string) (aboutResult, error)
+	rcloneAbout func(ctx context.Context, remote string, env []string) (aboutResult, error)
 	// dirNonEmptyProbe is the container-restore overwrite guard's "does this
 	// destination already hold data" seam: nil uses the real filesystem
 	// (dirNonEmpty); tests inject a fake. Accessed via dirNonEmptyFn.

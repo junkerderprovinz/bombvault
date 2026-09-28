@@ -74,13 +74,13 @@ func (s *Service) diskStatFn() func(string) (diskStatResult, error) {
 
 // rcloneAboutFn returns the remote-capacity probe a test injected, or the
 // rclone binary reading this instance's own configuration.
-func (s *Service) rcloneAboutFn() func(context.Context, string) (aboutResult, error) {
+func (s *Service) rcloneAboutFn() func(context.Context, string, []string) (aboutResult, error) {
 	if s.rcloneAbout != nil {
 		return s.rcloneAbout
 	}
 	config := filepath.Join(s.cfg.DataDir, "rclone.conf")
-	return func(ctx context.Context, remote string) (aboutResult, error) {
-		return rcloneAbout(ctx, config, remote)
+	return func(ctx context.Context, remote string, env []string) (aboutResult, error) {
+		return rcloneAbout(ctx, config, remote, env)
 	}
 }
 

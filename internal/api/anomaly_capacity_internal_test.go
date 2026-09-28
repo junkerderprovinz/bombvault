@@ -272,7 +272,7 @@ func newCapacityFixture(t *testing.T) *capacityFixture {
 		}
 		return diskStatResult{Volume: f.probe.volume, Free: f.probe.free, Total: f.probe.total}, nil
 	}
-	svc.rcloneAbout = func(context.Context, string) (aboutResult, error) {
+	svc.rcloneAbout = func(context.Context, string, []string) (aboutResult, error) {
 		f.abouts++
 		if f.aboutErr != nil {
 			return aboutResult{}, f.aboutErr

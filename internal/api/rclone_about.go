@@ -34,13 +34,14 @@ type aboutResult struct {
 
 // rcloneAbout asks an rclone remote how much room it has, using this
 // instance's own rclone configuration rather than whatever the process
-// environment happens to carry.
-func rcloneAbout(ctx context.Context, configPath, remote string) (aboutResult, error) {
+// environment happens to carry. env is what restic gets for the repository,
+// which defines the remote of a place.
+func rcloneAbout(ctx context.Context, configPath, remote string, env []string) (aboutResult, error) {
 	ctx, cancel := context.WithTimeout(ctx, rcloneAboutTimeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "rclone", rcloneAboutArgs(remote)...) //nolint:gosec // G204: the remote comes from a stored repository location
-	cmd.Env = append(os.Environ(), "RCLONE_CONFIG="+configPath)
+	cmd.Env = append(append(os.Environ(), "RCLONE_CONFIG="+configPath), env...)
 	out, err := cmd.Output()
 	if err != nil {
 		var exit *exec.ExitError

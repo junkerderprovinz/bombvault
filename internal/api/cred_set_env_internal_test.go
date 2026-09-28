@@ -1,9 +1,11 @@
 package api
 
 import (
+	"context"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/places"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -85,5 +87,29 @@ func TestAPlaceRunsWithTheEnvironmentOfItsRows(t *testing.T) {
 	shared, err := s.placeEnv(store.Place{ID: "c2", Kind: "s3"})
 	if err != nil || !slices.Equal(shared, s.ModeFor(settingsOf(t, s)).Env) {
 		t.Fatalf("a place on the shared credentials runs with %v, %v", shared, err)
+	}
+}
+
+func TestAWebDAVPathIsMeasuredThroughTheRemoteOfItsPath(t *testing.T) {
+	s := kindService(t)
+	settings := settingsOf(t, s)
+	settings.ContainersPath = "rclone:" + places.RemoteName(davPlace) + ":bombvault/container"
+	if err := s.store.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.store.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: settings.ContainersPath, CredsRef: "dav", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	s.anomalies = newAnomalyEngine(s, func() time.Time { return time.Unix(testNow, 0) })
+	var asked []string
+	s.rcloneAbout = func(_ context.Context, remote string, env []string) (aboutResult, error) {
+		asked = env
+		return aboutResult{Free: 1 << 40}, nil
+	}
+	s.sampleVolumesFor(context.Background(), "containers")
+	for _, want := range davEnv(davPlace) {
+		if !slices.Contains(asked, want) {
+			t.Fatalf("rclone about ran with %v, want the place's remote %v", asked, davEnv(davPlace))
+		}
 	}
 }

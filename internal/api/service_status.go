@@ -1096,7 +1096,7 @@ const (
 // that failed because the disk is full is exactly the reading the capacity rule
 // needs, and the repository statistics are written only after a good one.
 func (s *Service) sampleVolumesFor(ctx context.Context, domain string) {
-	_, repos, _, err := s.domainReposForOp(domain, "local")
+	settings, repos, _, err := s.domainReposForOp(domain, "local")
 	if err != nil {
 		log.Printf("api: capacity: %s: the repositories could not be resolved: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		return
@@ -1117,7 +1117,7 @@ func (s *Service) sampleVolumesFor(ctx context.Context, domain string) {
 	var unmeasured []string
 	wrote := false
 	for _, ref := range repos {
-		sample, err := s.probeVolume(ctx, ref, seen, now)
+		sample, err := s.probeVolume(ctx, settings, domain, ref, seen, now)
 		switch {
 		case errors.Is(err, errAboutUnsupported) || errors.Is(err, errVolumeUnmeasurable):
 			unmeasured = append(unmeasured, s.refName(ref))
@@ -1146,8 +1146,9 @@ func (s *Service) sampleVolumesFor(ctx context.Context, domain string) {
 var errVolumeUnmeasurable = errors.New("this backend reports no capacity")
 
 // probeVolume measures one repository, or returns nil when the volume it sits
-// on was read recently enough.
-func (s *Service) probeVolume(ctx context.Context, ref domainRepoRef,
+// on was read recently enough. rclone is asked with the environment a backup
+// gets, since a place's remote is defined only there.
+func (s *Service) probeVolume(ctx context.Context, settings store.Settings, domain string, ref domainRepoRef,
 	seen map[string]int64, now int64) (*store.VolumeSample, error) {
 
 	if !restic.IsRemoteRepo(ref.Loc) {
@@ -1179,7 +1180,7 @@ func (s *Service) probeVolume(ctx context.Context, ref domainRepoRef,
 		return nil, err
 	}
 	s.anomalies.noteVolumeProbe(volume, now)
-	about, err := s.rcloneAboutFn()(ctx, remote)
+	about, err := s.rcloneAboutFn()(ctx, remote, s.primaryModeFor(settings, domain, ref.Loc).Env)
 	if err != nil {
 		return nil, err
 	}
