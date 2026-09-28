@@ -105,6 +105,10 @@ type zfsRestorePlan struct {
 	snapshotID string
 	// setProps are applied to the in-place dataset before the files.
 	setProps zfs.Properties
+	// newDataset is the dataset a restore creates. A check plans it against
+	// nothing, since it will be empty; its steps' target is where it will be
+	// mounted, "" when that cannot be told yet.
+	newDataset string
 }
 
 // ListZFSRestorePoints groups an item's member snapshots into the run instants
@@ -465,6 +469,7 @@ func (s *Service) planZFSRestoreNewDataset(ctx context.Context, plan *zfsRestore
 	if isPlanOnly(ctx) {
 		target := s.zfsNewDatasetPath(ctx, name)
 		plan.dataset = req.Dataset
+		plan.newDataset = name
 		plan.steps = []zfsRestoreStep{{snapshotID: member.SnapshotID, target: target}}
 		plan.snapshotID = member.SnapshotID
 		return ZFSRestoreAck{Target: target}, nil
@@ -491,7 +496,8 @@ func (s *Service) planZFSRestoreNewDataset(ctx context.Context, plan *zfsRestore
 
 // zfsNewDatasetPath is where the container will see a dataset that does not
 // exist yet: below its parent's mount, since it inherits the mountpoint, or
-// at the pool's usual place under /mnt when the parent has no mount it can see.
+// at the pool's usual place under /mnt when the parent has no mount it can
+// see. It is "" when neither can be told.
 func (s *Service) zfsNewDatasetPath(ctx context.Context, name string) string {
 	parent, base := path.Split(name)
 	parent = strings.TrimSuffix(parent, "/")
@@ -501,7 +507,7 @@ func (s *Service) zfsNewDatasetPath(ctx context.Context, name string) string {
 	if cpath, ok := s.toContainerPath("/mnt/" + name); ok {
 		return cpath
 	}
-	return s.cfg.HostMountRoot
+	return ""
 }
 
 // zfsAwaitWritableMount waits for a dataset created a moment ago to reach the
