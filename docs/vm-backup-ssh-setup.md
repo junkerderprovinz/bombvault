@@ -137,9 +137,20 @@ instead of the method above:
   blocking. The restore check after the first backup, and **Check restore**,
   also make sure the snapshot holds every segment of every disk at the size it
   should have.
-- Only the newest `bombvault-` checkpoint is kept. Turning the switch off,
-  taking the VM out of the schedule or deleting its backups removes it.
-  Checkpoints of other tools are left alone.
+- Between runs the VM has no checkpoint on record in libvirt. BombVault keeps
+  the definition of the newest `bombvault-` checkpoint under
+  `/config/vm-checkpoints` and removes only libvirt's record of it
+  (`virsh checkpoint-delete --metadata`). Its bitmap stays in the qcow2 file
+  and keeps counting writes, and the next run puts the checkpoint back
+  (`virsh checkpoint-create --redefine`) before it starts. libvirt refuses to
+  undefine a VM that has checkpoints, so this is what lets Unraid's **Remove
+  VM** and a restore work as usual.
+- Turning the switch off, taking the VM out of the schedule or deleting its
+  backups deletes the bitmap too while the VM runs. On a VM that is off,
+  libvirt cannot delete it, and it stays in the image unused.
+- Checkpoints of other tools are left alone. A VM that has some cannot be
+  restored until they are deleted, and the restore stops before it touches
+  the VM.
 
 The switch falls back on its own. A missing or broken checkpoint, a disk that
 changed size, or a newest snapshot that is not a changed-block one means the
