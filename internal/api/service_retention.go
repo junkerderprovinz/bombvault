@@ -421,8 +421,7 @@ func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo string, 
 	return out, paused, errors.Join(errs...)
 }
 
-// snapshotsTagged is every snapshot carrying tag, the keep list of an item
-// whose retention is paused.
+// snapshotsTagged is every snapshot carrying tag.
 func snapshotsTagged(snaps []restic.Snapshot, tag string) []restic.Snapshot {
 	var out []restic.Snapshot
 	for _, sn := range snaps {
