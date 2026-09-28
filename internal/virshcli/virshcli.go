@@ -39,7 +39,7 @@ var absPathRe = regexp.MustCompile(`(/[^\s:'"]+)+`)
 // same scrub internal/restic applies to its errors (its credentialRe comment
 // covers the trade-offs). A libvirt URI rarely carries a password, so this is
 // defence in depth.
-var credentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
+var credentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s/@"']+@`)
 
 // run executes virsh and returns its trimmed stdout. On failure it logs the
 // full stderr and returns only the scrubbed last line of it.

@@ -246,8 +246,8 @@ export function CadenceBuilder({
         {label}
       </legend>
 
-      {/* `variant="well"` without `equalWidth` is the small scale of the
-          grooved selector; see Selector.tsx. */}
+      {/* Without `equalWidth` this is the small scale of the grooved
+          selector; see Selector.tsx. */}
       <Selector
         items={offered.map((m) => ({
           id: m,
@@ -266,7 +266,6 @@ export function CadenceBuilder({
         select="one"
         active={state.mode}
         onChange={(id) => update({ mode: id as CadenceMode })}
-        variant="well"
       />
 
       {/* Explains a missing Every N days, which a user may know from another
@@ -300,7 +299,7 @@ export function CadenceBuilder({
             active={new Set(state.weekdays)}
             onChange={toggleWeekday}
             size="sm"
-            variant="well"
+            className="flex-1"
           />
         </div>
       )}

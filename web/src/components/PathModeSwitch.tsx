@@ -70,35 +70,31 @@ export function PathModeSwitch({
 
   return (
     <div className="flex flex-col gap-1.5">
-      {/* The label and the switch are one decision about one path, so they
-          share a row; FolderBrowser's own label is turned off below. On a
-          phone the pinned switch does not fit beside the label and goes under
-          it. */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <label className="text-xs text-carbon-textSub">{label}</label>
-        <Selector
-          items={[
-            {
-              id: "local",
-              label: t("settings.pathMode.local"),
-              icon: <IconLocal />,
-              tip: t("settings.pathMode.localTip"),
-            },
-            {
-              id: "remote",
-              label: t("settings.pathMode.remote"),
-              icon: <IconCloud />,
-              tip: t("settings.pathMode.remoteTip"),
-            },
-          ]}
-          label={label}
-          size="sm"
-          select="one"
-          equalWidth
-          active={remoteMode ? "remote" : "local"}
-          onChange={(id) => (id === "remote" ? setRemoteMode(true) : switchToLocal())}
-        />
-      </div>
+      {/* The label heads the switch and the path under it, so the paths of a
+          card line up; FolderBrowser's own label is turned off below. */}
+      <label className="text-xs text-carbon-textSub">{label}</label>
+      <Selector
+        items={[
+          {
+            id: "local",
+            label: t("settings.pathMode.local"),
+            icon: <IconLocal />,
+            tip: t("settings.pathMode.localTip"),
+          },
+          {
+            id: "remote",
+            label: t("settings.pathMode.remote"),
+            icon: <IconCloud />,
+            tip: t("settings.pathMode.remoteTip"),
+          },
+        ]}
+        label={label}
+        size="sm"
+        select="one"
+        equalWidth
+        active={remoteMode ? "remote" : "local"}
+        onChange={(id) => (id === "remote" ? setRemoteMode(true) : switchToLocal())}
+      />
 
       {remoteMode ? (
         <div className="flex flex-col gap-1.5">

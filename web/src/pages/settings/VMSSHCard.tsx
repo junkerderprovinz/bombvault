@@ -8,6 +8,8 @@ import { tLtr } from "../../lib/ltrFragments";
 import { authorizeCommand } from "../../lib/sshAuthorize";
 import { useToast } from "../../lib/toast";
 import { Card } from "./shared";
+import { TestButton, VerdictLine } from "../../components/TestButton";
+import { useTestVerdict } from "../../lib/useTestVerdict";
 import { useEffect, useState } from "react";
 
 // VMSSHCard shows BombVault's SSH public key (to authorize on the Unraid host)
@@ -17,10 +19,7 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
   const { push } = useToast();
   const [host, setHost] = useState("");
   const [pub, setPub] = useState("");
-  const [testState, setTestState] = useState<"idle" | "testing" | "ok" | "noLibvirt" | "fail">("idle");
-  // Bumped on a failed test; the Test button is keyed on it, so each bump
-  // replays its shake.
-  const [shake, setShake] = useState(0);
+  const test = useTestVerdict(host, t("vm.ssh.testFail"));
 
   const authorizeCmd = authorizeCommand(pub);
 
@@ -35,22 +34,14 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
       .catch(() => undefined);
   }, []);
 
-  async function handleTest() {
-    setTestState("testing");
-    try {
+  // Without libvirt the link still works, and ZFS backups need nothing more,
+  // so the test passes and the line above the button names what is missing.
+  function handleTest() {
+    void test.run(async () => {
       const r = await testVMSSH();
-      if (r.ok) {
-        setTestState(r.libvirt === false ? "noLibvirt" : "ok");
-      } else {
-        setTestState("fail");
-        push(r.error ?? t("vm.ssh.testFail"), "fail");
-        setShake((n) => n + 1);
-      }
-    } catch {
-      setTestState("fail");
-      push(t("vm.ssh.testFail"), "fail");
-      setShake((n) => n + 1);
-    }
+      if (!r.ok) return { ok: false, reason: r.error ?? t("vm.ssh.testFail") };
+      return r.libvirt === false ? { ok: true, note: t("vm.ssh.testNoLibvirt"), caveat: true } : { ok: true };
+    });
   }
 
   // copyText falls back to execCommand in non-secure contexts (#112).
@@ -137,31 +128,18 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
           </Badge>
         </div>
 
+        <VerdictLine verdict={test.verdict} />
         <div className="flex items-center gap-3">
-          <Button
-            key={shake || 0}
+          <TestButton
             label={t("vm.ssh.test")}
             labelKey="vm.ssh.test"
             // Accent, not neutral: it is the one thing this card asks you to
             // do, and the card is useless until it has been done once.
             tone="accent"
+            test={test}
             onClick={handleTest}
-            disabled={testState === "testing"}
-            busy={testState === "testing"}
-            title={testState === "testing" ? t("vm.ssh.testing") : undefined}
-            className={shake ? "glim-shake" : ""}
             hueIndex={hueIndex}
           />
-          {testState === "ok" && (
-            <span className="text-sm text-statusOk">{t("vm.ssh.testOk")}</span>
-          )}
-          {testState === "noLibvirt" && (
-            <span className="text-sm text-statusWarn">{t("vm.ssh.testNoLibvirt")}</span>
-          )}
-          {/* The error itself went to the toast; this only marks the state. */}
-          {testState === "fail" && (
-            <span className="text-sm text-statusFail">{t("vm.ssh.testFail")}</span>
-          )}
         </div>
       </div>
     </Card>

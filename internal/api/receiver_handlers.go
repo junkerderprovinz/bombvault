@@ -8,14 +8,13 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
-	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // A box that receives off-site copies registers the received repo here and
 // monitors it read-only: inventory, an independent restic check, dead-man's
 // switch and integrity alerts. All endpoints sit behind authGate. The sending
-// instance's APP_KEY is encrypted at rest and never returned.
+// instance's restic password is sealed at rest and never returned.
 
 // receivedRepoView is a received repo's configuration and last-check status as
 // the SPA sees it.
@@ -33,7 +32,8 @@ type receivedRepoView struct {
 	Enabled           bool   `json:"enabled"`
 	CreatedAt         int64  `json:"createdAt"`
 	SortOrder         int    `json:"sortOrder"`
-	HasAppKey         bool   `json:"hasAppKey"`
+	MemberID          string `json:"memberId"`
+	NeedsPairing      bool   `json:"needsPairing"`
 }
 
 // receivedRepoStatus adds the live status the list endpoint probes: the newest
@@ -47,13 +47,14 @@ type receivedRepoStatus struct {
 	Reachable     bool   `json:"reachable"`
 }
 
-// receivedRepoInput is the create/update request body. AppKey is the sending
-// instance's 64-hex APP_KEY; on update an empty AppKey keeps the stored key.
-// Enabled is a pointer so its absence is distinguishable from an explicit false.
+// receivedRepoInput is the create/update request body. MemberID names the
+// sending instance in the pairing group; on update an empty MemberID keeps the
+// stored password. Enabled is a pointer so its absence is distinguishable from
+// an explicit false.
 type receivedRepoInput struct {
 	Name            string `json:"name"`
 	Repo            string `json:"repo"`
-	AppKey          string `json:"appKey"`
+	MemberID        string `json:"memberId"`
 	DeadManHours    int    `json:"deadManHours"`
 	CheckCadence    string `json:"checkCadence"`
 	ReadDataPercent int    `json:"readDataPercent"`
@@ -81,7 +82,8 @@ func receivedRepoToView(rr store.ReceivedRepo) receivedRepoView {
 		Enabled:           rr.Enabled,
 		CreatedAt:         rr.CreatedAt,
 		SortOrder:         rr.SortOrder,
-		HasAppKey:         len(rr.AppKeyEnc) > 0,
+		MemberID:          rr.MemberID,
+		NeedsPairing:      rr.NeedsPairing(),
 	}
 }
 
@@ -103,10 +105,9 @@ func validateReceiverCadence(c string) (string, string) {
 }
 
 // buildReceivedRepo validates in and folds it onto existing (the zero value on
-// create), returning the row to persist or a user-facing error message. The app
-// key is encrypted with this instance's APP_KEY before it reaches the store.
+// create), returning the row to persist or a user-facing error message.
 // Identity and last-check columns come from existing, so an edit keeps them.
-func (h *Handler) buildReceivedRepo(in receivedRepoInput, existing store.ReceivedRepo, isCreate bool) (store.ReceivedRepo, string) {
+func (h *Handler) buildReceivedRepo(ctx context.Context, in receivedRepoInput, existing store.ReceivedRepo, isCreate bool) (store.ReceivedRepo, string) {
 	repo := strings.TrimSpace(in.Repo)
 	if repo == "" {
 		return store.ReceivedRepo{}, "repo must not be empty"
@@ -116,22 +117,18 @@ func (h *Handler) buildReceivedRepo(in receivedRepoInput, existing store.Receive
 	rr.Name = strings.TrimSpace(in.Name)
 	rr.Repo = repo
 
-	key := strings.TrimSpace(in.AppKey)
-	switch {
-	case key == "" && isCreate:
-		return store.ReceivedRepo{}, "the sending APP_KEY is required (64 lowercase hex characters)"
-	case key == "":
-		// Update with no new key: keep the stored ciphertext untouched.
-		rr.AppKeyEnc = existing.AppKeyEnc
-	default:
-		if !foreignKeyRe.MatchString(key) {
-			return store.ReceivedRepo{}, "the sending APP_KEY must be exactly 64 lowercase hex characters"
-		}
-		enc, err := secret.Encrypt(h.cfg.AppKey, []byte(key))
+	// Naming a member pairs the row with it: the member's restic password is
+	// fetched over the group now. An edit that names none keeps the password
+	// already stored.
+	switch memberID := strings.TrimSpace(in.MemberID); {
+	case memberID == "" && isCreate:
+		return store.ReceivedRepo{}, "choose the instance that sends these copies"
+	case memberID != "":
+		enc, err := h.svc.pairedPassword(ctx, memberID)
 		if err != nil {
-			return store.ReceivedRepo{}, "could not encrypt the sending APP_KEY"
+			return store.ReceivedRepo{}, scrubError(err)
 		}
-		rr.AppKeyEnc = enc
+		rr.MemberID, rr.ResticPasswordEnc = memberID, enc
 	}
 
 	cadence, msg := validateReceiverCadence(in.CheckCadence)
@@ -184,13 +181,13 @@ func (h *Handler) handleListReceiverRepos(w http.ResponseWriter, r *http.Request
 
 // handleCreateReceiverRepo registers a received repo. POST /api/receiver/repos.
 // The repo has to open read-only before the row is saved, so a mistyped
-// location or key never lands in the dashboard.
+// location never lands in the dashboard.
 func (h *Handler) handleCreateReceiverRepo(w http.ResponseWriter, r *http.Request) {
 	var in receivedRepoInput
 	if !decodeBody(w, r, &in) {
 		return
 	}
-	rr, msg := h.buildReceivedRepo(in, store.ReceivedRepo{}, true)
+	rr, msg := h.buildReceivedRepo(r.Context(), in, store.ReceivedRepo{}, true)
 	if msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
@@ -225,7 +222,7 @@ func (h *Handler) handleUpdateReceiverRepo(w http.ResponseWriter, r *http.Reques
 	if !decodeBody(w, r, &in) {
 		return
 	}
-	rr, msg := h.buildReceivedRepo(in, existing, false)
+	rr, msg := h.buildReceivedRepo(r.Context(), in, existing, false)
 	if msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return

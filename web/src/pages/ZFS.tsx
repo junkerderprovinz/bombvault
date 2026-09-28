@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 
 import { Badge } from "../components/Badge";
+import { PageTitle } from "../components/PageTitle";
 import { Button } from "../components/Button";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { InfoBubble } from "../components/InfoBubble";
@@ -132,9 +133,8 @@ export function ZFS() {
     <div className={PAGE_SHELL_RESPONSIVE}>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold text-carbon-text">{t("zfs.title")}</h1>
-          <p className="mt-1 text-sm text-carbon-textSub">{t("zfs.subtitle")}</p>
-          <div className="mt-2"><OffsiteIndicator domain="zfs" /></div>
+          <PageTitle>{t("zfs.title")}</PageTitle>
+          <OffsiteIndicator domain="zfs" />
         </div>
         <div className="flex items-center gap-2 flex-wrap md:shrink-0 max-md:w-full">
           <Button

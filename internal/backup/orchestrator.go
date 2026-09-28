@@ -1034,7 +1034,7 @@ func publishedHostPorts(in model.Inspect) map[string]bool {
 // their own copy.
 var (
 	runErrPathRe       = regexp.MustCompile(`(/[^\s:"']+)+`)
-	runErrCredentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
+	runErrCredentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s/@"']+@`)
 )
 
 // scrubRunErr strips absolute-path-like tokens and then URL-embedded

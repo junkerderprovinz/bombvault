@@ -80,7 +80,7 @@ func TestPullNeverWritesToTheSource(t *testing.T) {
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
-	enc, err := secret.Encrypt(ourKey, []byte(theirKey))
+	enc, err := secret.Encrypt(ourKey, []byte(restickey.Derive(theirKey)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,12 +96,13 @@ func TestPullNeverWritesToTheSource(t *testing.T) {
 	}
 
 	ps := store.PullSource{
-		ID:        "p1",
-		Name:      "Tower next door",
-		Repo:      srcLoc,
-		AppKeyEnc: enc,
-		Domain:    "containers",
-		Enabled:   true,
+		ID:                "p1",
+		Name:              "Tower next door",
+		Repo:              srcLoc,
+		MemberID:          "member-tower",
+		ResticPasswordEnc: enc,
+		Domain:            "containers",
+		Enabled:           true,
 	}
 	if _, err := svc.PullFromSource(context.Background(), ps); err != nil {
 		t.Fatalf("the pull failed before it could prove anything: %v", err)

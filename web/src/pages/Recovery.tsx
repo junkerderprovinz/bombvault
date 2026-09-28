@@ -11,6 +11,8 @@ import { AppdataBackupImport } from "../components/recovery/AppdataBackupImport"
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
+import { TestButton, VerdictLine } from "../components/TestButton";
+import type { Verdict } from "../lib/useTestVerdict";
 import { IconDatabase, IconRestore } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { FolderBrowser } from "../components/FolderBrowser";
@@ -65,6 +67,7 @@ import {
   type ForeignItem,
   type Snapshot,
 } from "../lib/api";
+import { PageTitle } from "../components/PageTitle";
 import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { useConfirm } from "../lib/useConfirm";
 import { checkRestoreOnce, restoreBlockReason } from "../lib/useRestoreCheck";
@@ -1231,6 +1234,8 @@ function StepDisclosure({
       <Selector
         items={[{ id: DISCLOSURE_ID, label, tip }]}
         label={label}
+        variant="chip"
+        inline
         select="many"
         size="lg"
         /* A rainbow hue encodes a position in a list, and a lone chip has
@@ -1420,6 +1425,10 @@ export default function Recovery() {
   // pill colour without turning the pill amber.
   const [readNote, setReadNote] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  // A failed check the Check button started shakes it; one run after attaching
+  // a location does not.
+  const [readShake, setReadShake] = useState(0);
+  const [readShook, setReadShook] = useState(false);
 
   // Step 2 keeps its own copy of the settings and saves through the same calls
   // as the Settings page; CloudCard and RcloneCard save themselves.
@@ -1493,6 +1502,7 @@ export default function Recovery() {
   // closure.
   const checkReadable = useCallback(async (): Promise<StepState> => {
     setChecking(true);
+    setReadShook(false);
     setLastError(null);
     try {
       const [c, v, f, z] = await Promise.all([
@@ -1862,34 +1872,35 @@ export default function Recovery() {
   // One page-wide hue sequence, handed out in JSX evaluation order, so a
   // branch that is not rendered leaves no gap. ForeignRestoreCard gets the
   // function itself so its headings continue the sequence.
+  // A key mismatch explains itself in the box under the button.
+  const readVerdict: Verdict | null =
+    checking || readableState === "idle"
+      ? null
+      : { ok: readableState === "ok", reason: readableState === "warn" ? t("recovery.notReachable") : undefined };
+  async function recheck() {
+    if ((await checkReadable()) === "ok") return;
+    setReadShook(true);
+    setReadShake((n) => n + 1);
+  }
+
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
 
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
-      <div>
-        <h1 className="text-2xl font-semibold text-carbon-text">{t("nav.recovery")}</h1>
-        <p className="mt-1 text-sm text-carbon-textSub max-w-2xl">{t("recovery.intro")}</p>
-      </div>
+      <PageTitle>{t("nav.recovery")}</PageTitle>
 
       <StepCard n={1} title={t("recovery.step1")} hint={t("recovery.appKeyExplain")} state={readableState} hueIndex={nextHue()}>
+        <VerdictLine verdict={readVerdict} />
         <div className="flex items-center gap-3">
-          <Button
+          <TestButton
             label={t("recovery.recheck")}
             labelKey="recovery.recheck"
+            words="check"
             tone="accent"
-            onClick={() => void checkReadable()}
-            disabled={checking}
-            busy={checking}
-            title={checking ? t("dashboard.checking") : undefined}
+            test={{ verdict: readVerdict, running: checking, shake: readShake, shaking: readShook }}
+            onClick={() => void recheck()}
           />
-
-          {readableState === "ok" && (
-            <span className="text-sm text-statusOk">{t("recovery.readable")}</span>
-          )}
-          {readableState === "warn" && (
-            <span className="text-sm text-statusWarn">{t("recovery.notReachable")}</span>
-          )}
         </div>
 
         {/* Shown after every check, not only on failure: a good result confirms

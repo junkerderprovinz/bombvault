@@ -22,6 +22,7 @@ import { tLtr } from "../lib/ltrFragments";
 import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
 import { ItemChecksLine } from "../components/ItemChecksLine";
 import { useItemChecks } from "../lib/useItemChecks";
+import { PageTitle } from "../components/PageTitle";
 import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
 import { MissingRestorePoint, restorePointOf } from "../components/restore/MissingRestorePoint";
 import { findingSnapshotId } from "../lib/anomalies";
@@ -281,17 +282,10 @@ export function Flash() {
   }, [source, reloadTick]);
 
   return (
-    // The OffsiteIndicator sits inside the heading div, so the shell gap alone
-    // spaces the heading and the cards.
     <div className={PAGE_SHELL_RESPONSIVE}>
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold text-carbon-text">{t("flash.title")}</h1>
-          <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
-        </div>
-        <p className="mt-1 text-sm text-carbon-textSub">{tLtr(t, "flash.subtitle")}</p>
-        <div className="mt-2"><OffsiteIndicator domain="flash" /></div>
-      </div>
+      <PageTitle>{t("flash.title")}</PageTitle>
+      <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
+      <OffsiteIndicator domain="flash" />
 
       {/* The outer div holds the heading badge, so it carries the notch hover
           zone and the hue, and stays unpadded so its top edge matches the
@@ -344,7 +338,7 @@ export function Flash() {
           </Badge>
         </h2>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
             {t("source.label")}
             <InfoBubble tip={t("source.hint")} />

@@ -1,15 +1,15 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
-	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// pullSourceView is a pull source as the SPA sees it. The stored APP_KEY never
-// goes back out, so the view only says whether one is set.
+// pullSourceView is a pull source as the SPA sees it. The stored restic
+// password never goes back out.
 type pullSourceView struct {
 	ID              string `json:"id"`
 	Name            string `json:"name"`
@@ -26,16 +26,18 @@ type pullSourceView struct {
 	Enabled         bool   `json:"enabled"`
 	CreatedAt       int64  `json:"createdAt"`
 	SortOrder       int    `json:"sortOrder"`
-	HasAppKey       bool   `json:"hasAppKey"`
+	MemberID        string `json:"memberId"`
+	NeedsPairing    bool   `json:"needsPairing"`
 }
 
-// pullSourceInput is the create/update request body. AppKey is the source
-// instance's 64-hex APP_KEY; on update an empty AppKey keeps the stored one.
+// pullSourceInput is the create/update request body. MemberID names the source
+// instance in the pairing group; on update an empty MemberID keeps the stored
+// password.
 // Enabled is a pointer so its absence is distinguishable from an explicit false.
 type pullSourceInput struct {
 	Name          string `json:"name"`
 	Repo          string `json:"repo"`
-	AppKey        string `json:"appKey"`
+	MemberID      string `json:"memberId"`
 	CredsRef      string `json:"credsRef"`
 	Domain        string `json:"domain"`
 	Cadence       string `json:"cadence"`
@@ -61,7 +63,8 @@ func pullSourceToView(ps store.PullSource) pullSourceView {
 		Enabled:         ps.Enabled,
 		CreatedAt:       ps.CreatedAt,
 		SortOrder:       ps.SortOrder,
-		HasAppKey:       len(ps.AppKeyEnc) > 0,
+		MemberID:        ps.MemberID,
+		NeedsPairing:    ps.NeedsPairing(),
 	}
 	if ps.LastPullOK.Valid {
 		ok := ps.LastPullOK.Bool
@@ -77,7 +80,7 @@ var pullDomains = map[string]bool{"containers": true, "vms": true, "files": true
 
 // buildPullSource validates in and folds it onto existing (the zero value on
 // create), returning the row to persist or a user-facing message.
-func (h *Handler) buildPullSource(in pullSourceInput, existing store.PullSource, isCreate bool) (store.PullSource, string) {
+func (h *Handler) buildPullSource(ctx context.Context, in pullSourceInput, existing store.PullSource, isCreate bool) (store.PullSource, string) {
 	repo := strings.TrimSpace(in.Repo)
 	if repo == "" {
 		return store.PullSource{}, "the repository location must not be empty"
@@ -96,23 +99,18 @@ func (h *Handler) buildPullSource(in pullSourceInput, existing store.PullSource,
 	ps.Domain = domain
 	ps.CredsRef = strings.TrimSpace(in.CredsRef)
 
-	key := strings.TrimSpace(in.AppKey)
-	switch {
-	case key == "" && isCreate:
-		return store.PullSource{}, "the source instance's APP_KEY is required (64 lowercase hex characters)"
-	case key == "":
-		// An edit without a key keeps the stored one, so a rename does not
-		// clear it.
-		ps.AppKeyEnc = existing.AppKeyEnc
-	default:
-		if !foreignKeyRe.MatchString(key) {
-			return store.PullSource{}, "the APP_KEY must be exactly 64 lowercase hex characters"
-		}
-		enc, err := secret.Encrypt(h.cfg.AppKey, []byte(key))
+	// Naming a member pairs the source with it: the member's restic password
+	// is fetched over the group now. An edit that names none keeps the
+	// password already stored.
+	switch memberID := strings.TrimSpace(in.MemberID); {
+	case memberID == "" && isCreate:
+		return store.PullSource{}, "choose the instance whose backups this box pulls"
+	case memberID != "":
+		enc, err := h.svc.pairedPassword(ctx, memberID)
 		if err != nil {
-			return store.PullSource{}, "could not encrypt the APP_KEY"
+			return store.PullSource{}, scrubError(err)
 		}
-		ps.AppKeyEnc = enc
+		ps.MemberID, ps.ResticPasswordEnc = memberID, enc
 	}
 
 	cadence, msg := validateReceiverCadence(in.Cadence)
@@ -149,13 +147,13 @@ func (h *Handler) handleListPullSources(w http.ResponseWriter, _ *http.Request) 
 
 // handleCreatePullSource registers a source. POST /api/pull/sources.
 // The source has to open read-only before the row is saved, so a mistyped
-// location or key is rejected on the form instead of failing every night.
+// location is rejected on the form instead of failing every night.
 func (h *Handler) handleCreatePullSource(w http.ResponseWriter, r *http.Request) {
 	var in pullSourceInput
 	if !decodeBody(w, r, &in) {
 		return
 	}
-	ps, msg := h.buildPullSource(in, store.PullSource{}, true)
+	ps, msg := h.buildPullSource(r.Context(), in, store.PullSource{}, true)
 	if msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
@@ -188,7 +186,7 @@ func (h *Handler) handleUpdatePullSource(w http.ResponseWriter, r *http.Request)
 	if !decodeBody(w, r, &in) {
 		return
 	}
-	ps, msg := h.buildPullSource(in, existing, false)
+	ps, msg := h.buildPullSource(r.Context(), in, existing, false)
 	if msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return

@@ -124,7 +124,7 @@ var absPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
 // back half of the password vanish as unlabeled path noise, but
 // "wJalrXUtnFEMI" (the front half) is left sitting in the output in plain
 // text. A password with no embedded "/" is unaffected.
-var credentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
+var credentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s/@"']+@`)
 
 // scrubSecrets strips absolute-path-like tokens and then URL-embedded
 // "user:pass@" credentials from s, in that order.
@@ -2362,16 +2362,9 @@ type settingsView struct {
 	AnomalySensitivity   string `json:"anomalySensitivity"`
 	AnomalyNotifyMin     string `json:"anomalyNotifyMin"`
 	AnomalyRetentionHold *bool  `json:"anomalyRetentionHold"`
-	// InstanceName is this instance's own display name, reported to polling
-	// fleet peers so a peer's Fleet page can label this box. Not a secret.
+	// InstanceName is this instance's own display name, the name the other
+	// members of its pairing group show it under. Not a secret.
 	InstanceName string `json:"instanceName"`
-	// Peer status token (GET /api/fleet/status), authorizing OTHER instances'
-	// Fleet views to poll THIS instance. Same secret contract as WidgetToken:
-	// GET always returns FleetToken blank with FleetTokenSet reporting presence;
-	// on PUT a blank FleetToken keeps the stored one. Generated/cleared via
-	// POST/DELETE /api/fleet/token (the Settings card).
-	FleetToken    string `json:"fleetToken"`
-	FleetTokenSet bool   `json:"fleetTokenSet"`
 	// EverythingSchedule is the cadence for the "Backup Everything" pass (a 6th,
 	// independent pseudo-domain that runs containers/vms/flash/files/config in
 	// sequence). 'off' (the default) leaves it fully inert. EverythingPreHook /
@@ -2379,7 +2372,7 @@ type settingsView struct {
 	// container (HostShell) before/after the whole pass — not secrets, so they
 	// round-trip plainly like every other schedule/hook field.
 	EverythingSchedule string `json:"everythingSchedule"`
-	// Never echoed, for the same reason FleetToken above is not: a hook is a
+	// Never echoed, for the same reason WidgetToken is not: a hook is a
 	// shell command the operator wrote, and the useful ones carry a secret in
 	// the URL (a healthchecks.io ping is a UUID, an ntfy call a token). With no
 	// login password set authGate is a pass-through by design, so returning
@@ -2505,8 +2498,6 @@ func toView(s store.Settings) settingsView {
 		AnomalyNotifyMin:            s.AnomalyNotifyMin,
 		AnomalyRetentionHold:        &s.AnomalyRetentionHold,
 		InstanceName:                s.InstanceName,
-		FleetToken:                  "", // secret — never echoed; FleetTokenSet reports presence
-		FleetTokenSet:               s.FleetToken != "",
 		EverythingSchedule:          s.EverythingSchedule,
 		EverythingPreHook:           s.EverythingPreHook,
 		EverythingPostHook:          s.EverythingPostHook,
@@ -2961,7 +2952,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Whether this save touched detection at all, so the engine judges every
 	// series again only when the rules behind it moved.
-	var anomalyChanged bool
+	var anomalyChanged, nameChanged bool
 
 	// Write the form's OWN fields onto the CURRENT row, one assignment each —
 	// never `*cur = store.Settings{…}`. A whole-struct literal writes every
@@ -3041,9 +3032,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			cur.DBDumpsEnabled = *v.DBDumpsEnabled
 		}
 		anomalyChanged = applyAnomalySettings(cur, v)
+		nameChanged = cur.InstanceName != strings.TrimSpace(v.InstanceName)
 		cur.InstanceName = strings.TrimSpace(v.InstanceName)
 		cur.EverythingSchedule = v.EverythingSchedule
-		// Blank keeps the stored command, same contract as the three tokens
+		// Blank keeps the stored command, same contract as the two tokens
 		// below: the GET never echoes a hook, so EVERY tab's baseline submits
 		// blanks for them, and taking those at face value would erase a hook on
 		// the next save of an unrelated card. Removing one on purpose therefore
@@ -3064,7 +3056,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 
 		// Write-only secrets: blank in the form means "keep the stored one", and
 		// the stored one is read here, inside the transaction — so a token minted
-		// by POST /api/{widget,fleet}/token while this form was open is kept, not
+		// by POST /api/widget/token while this form was open is kept, not
 		// reverted to the value it had when the page loaded.
 		if t := strings.TrimSpace(v.MetricsToken); t != "" {
 			cur.MetricsToken = t
@@ -3072,13 +3064,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		if t := strings.TrimSpace(v.WidgetToken); t != "" {
 			cur.WidgetToken = t
 		}
-		if t := strings.TrimSpace(v.FleetToken); t != "" {
-			cur.FleetToken = t
-		}
 		// Registry credentials (#106): nil = the field was absent (an old client)
 		// → keep the stored blob. A present list REPLACES it, with a blank token
 		// per host filled from the stored one — resolved HERE, against `cur`, for
-		// exactly the reason the three tokens above are: the GET never echoes a
+		// exactly the reason the two tokens above are: the GET never echoes a
 		// token, so EVERY tab's baseline submits blanks for the stored hosts, and
 		// resolving them against the pre-transaction snapshot would revert a token
 		// rotated by a save that landed meanwhile — even a save that only touched
@@ -3108,6 +3097,11 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
+	}
+	if nameChanged {
+		// The group announces the name, so members see a rename without a
+		// restart.
+		h.svc.applyGroup()
 	}
 	// Dual-write: mirror the just-saved off-site config into each domain's PRIMARY
 	// offsite_targets row so the replication path (which now reads those rows) sees
@@ -4343,18 +4337,24 @@ func loginClientKey(r *http.Request) string {
 // a configured trusted proxy, the throttle keys on the client that proxy names
 // rather than on the proxy itself.
 func (h *Handler) loginClientKey(r *http.Request) string {
+	return clientKeyBehind(h.cfg.TrustedProxies, r)
+}
+
+// clientKeyBehind is loginClientKey for any caller that knows the trusted
+// proxies, such as the relay this instance serves.
+func clientKeyBehind(proxies []net.IPNet, r *http.Request) string {
 	peer := loginClientKey(r)
-	if len(h.cfg.TrustedProxies) == 0 {
+	if len(proxies) == 0 {
 		return peer
 	}
 	ip := net.ParseIP(peer)
-	if ip == nil || !trusted(h.cfg.TrustedProxies, ip) {
+	if ip == nil || !trusted(proxies, ip) {
 		// Somebody other than the proxy is talking to us directly. Their own
 		// address is the key, and their header is ignored — otherwise naming a
 		// trusted proxy would hand the spoofing hole to everyone else.
 		return peer
 	}
-	if fwd := forwardedClient(r.Header.Get("X-Forwarded-For"), h.cfg.TrustedProxies); fwd != "" {
+	if fwd := forwardedClient(r.Header.Get("X-Forwarded-For"), proxies); fwd != "" {
 		return fwd
 	}
 	return peer
@@ -5049,14 +5049,11 @@ func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 //     both endpoints gate themselves via the stored widget token instead,
 //     failing closed with 403 when none is set. POST/DELETE /api/widget/token
 //     stay session-protected — only a logged-in admin manages the token.)
-//   - GET  /api/fleet/status  (another BombVault instance's Fleet view polling
-//     this one — same reasoning as the widget, self-gated on the stored fleet
-//     token instead, failing closed with 403 when none is set. POST/DELETE
-//     /api/fleet/token and the /api/fleet/peers CRUD stay session-protected.)
-//   - POST /api/fleet/mesh-offer  (a peer offering its own off-site storage —
-//     same self-gated fleet token as the status poll above; the ONLY write
-//     endpoint on this allowlist. It only ever stores a pending offer for a
-//     human to review; accept/decline/propose stay session-protected.)
+//   - POST /api/group/call and GET /relay/connect  (a member of the pairing
+//     group calling this instance directly, and the relay socket while this
+//     instance serves one. Neither carries a session: the call is signed and
+//     sealed with keys only members hold, the socket admits the group's relay
+//     key only, and outside a group both answer 404.)
 //   - GET /api/auth/passkeys and the two POST /api/auth/passkey/login halves
 //     (they are how somebody who is not signed in signs in, beside /api/login.
 //     The status answers an unauthenticated caller with counts and whether this
@@ -5123,7 +5120,7 @@ func authGatePublicPath(path string) bool {
 	case "/api/auth", "/api/login", "/api/health",
 		"/metrics",
 		"/widget", "/api/widget/data",
-		"/api/fleet/status", "/api/fleet/mesh-offer",
+		"/api/group/call", relayConnectPath,
 		"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish",
 		mcpEndpointPath,
 		oauthResourceMeta, oauthServerMetaPath, oauthRegisterPath, oauthTokenPath, oauthRevokePath:

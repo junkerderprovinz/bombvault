@@ -1,6 +1,6 @@
-// The page column ends where the chrome ends: bottom padding inside the
-// scroll container can never be scrolled away and leaves the last card short
-// of it. On the desktop that chrome is the rail, on a phone the bottom bar
+// The page column starts and ends where the chrome does: its first row stands
+// on the rail's top line, and bottom padding inside the scroll container can
+// never be scrolled away and leaves the last card short of it. On the desktop that chrome is the rail, on a phone the bottom bar
 // with the sticky action bar above it, so both scrollers are checked. This
 // reads Layout.tsx, because jsdom does no layout and a render test could only
 // compare the same class string.
@@ -31,9 +31,15 @@ describe("the scrolling page column", () => {
   it("carries no bottom padding, so the last card ends level with the rail", () => {
     const cls = pageWrapper![1];
     expect(cls).toContain("pb-0");
-    // `p-6` covers the other three sides; no pb-N or py-N may override it.
     expect(/\bpb-(?!0\b)\d/.test(cls)).toBe(false);
     expect(/\bpy-\d/.test(cls)).toBe(false);
+  });
+
+  it("carries no top padding, so the first row starts on the rail's top line", () => {
+    const cls = pageWrapper![1];
+    expect(cls).toContain("pt-0");
+    expect(/\b(p|pt)-(?!0\b)\d/.test(cls)).toBe(false);
+    expect(cls).toContain("px-6");
   });
 
   it("has a phone scroller", () => {
@@ -46,5 +52,21 @@ describe("the scrolling page column", () => {
     expect(cls).toContain("pb-0");
     expect(/\bpb-(?!0\b)\d/.test(cls)).toBe(false);
     expect(/\bpy-\d/.test(cls)).toBe(false);
+  });
+});
+
+describe("a page that opens with a card", () => {
+  it("starts at the card's badge, half the 22px badge above the card", () => {
+    const css = readFileSync(join(here, "..", "index.css"), "utf8");
+    const rule =
+      /\.glim-page-enter > \.glim-notch-card:first-child,\s*\.glim-page-enter > :first-child > \.glim-notch-card:first-child,\s*\.glim-page-enter > :first-child > \.glim-page-title:first-child \+ \.glim-notch-card\s*\{([^}]*)\}/.exec(
+        css,
+      );
+    expect(rule?.[1]).toMatch(/margin-top:\s*11px/);
+  });
+
+  it("still finds that badge when the sr-only page heading comes first", () => {
+    const css = readFileSync(join(here, "..", "index.css"), "utf8");
+    expect(css).toContain(".glim-page-title:first-child + .glim-notch-card");
   });
 });

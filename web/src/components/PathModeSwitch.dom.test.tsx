@@ -52,13 +52,13 @@ describe("PathModeSwitch, Selector integration", () => {
   it("follows the buttons label mode instead of being pinned to a glyph", () => {
     setLabelMode("buttons", "textGlyph");
     renderSwitch();
-    expect(screen.getByRole("tab", { name: "Local" }).querySelector("span.truncate")).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Local" }).querySelector("[data-sel-label]")).toBeTruthy();
     cleanup();
 
     setLabelMode("buttons", "glyph");
     renderSwitch();
     for (const tab of within(screen.getByRole("tablist", { name: "Containers path" })).getAllByRole("tab")) {
-      expect(tab.querySelector("span.truncate")).toBeNull();
+      expect(tab.querySelector("[data-sel-label]")).toBeNull();
     }
     expect(screen.getByRole("tab", { name: "Local" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Remote" })).toBeTruthy();

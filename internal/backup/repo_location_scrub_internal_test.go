@@ -16,6 +16,12 @@ var repoScrubCases = []struct {
 	gone []string
 }{
 	{
+		name: "a URL with an empty user name loses its password",
+		in:   `Fatal: fetching "//:hunter2@mirror.example.com/x" failed`,
+		keep: []string{"mirror.example.com"},
+		gone: []string{"hunter2"},
+	},
+	{
 		name: "the reported case keeps its whole address",
 		in:   "Fatal: create repository at s3:http://192.168.1.50:8333/bucket failed",
 		keep: []string{"s3:http://192.168.1.50:8333/bucket", "create repository"},

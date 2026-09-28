@@ -1,7 +1,7 @@
 // ToggleRow is a pure, hookless component, so these tests call it as a
 // function and inspect the element tree. shakeNonce and pulseNonce together
 // form the inner Toggle's key: every new failure or success remounts the
-// button and replays its .glim-shake or .glim-pulse animation, even when the
+// button and replays its .glim-shake or .glim-confirm animation, even when the
 // same outcome repeats.
 import { describe, expect, it } from "vitest";
 import { ToggleRow } from "./settings/shared";
@@ -99,12 +99,12 @@ describe("ToggleRow shakeNonce", () => {
 });
 
 describe("ToggleRow pulseNonce", () => {
-  it("a truthy pulseNonce keys the Toggle and applies .glim-pulse", () => {
+  it("a truthy pulseNonce keys the Toggle and applies .glim-confirm", () => {
     const el = findToggleElement(
       ToggleRow({ label: "VMs", checked: true, onChange: () => {}, pulseNonce: 1 })
     );
     expect(el.key).toBe("0:1");
-    expect(String(el.props?.className)).toContain("glim-pulse");
+    expect(String(el.props?.className)).toContain("glim-confirm");
     expect(String(el.props?.className)).not.toContain("glim-shake");
   });
 
@@ -116,18 +116,18 @@ describe("ToggleRow pulseNonce", () => {
       ToggleRow({ label: "VMs", checked: true, onChange: () => {}, pulseNonce: 2 })
     );
     expect(first.key).not.toBe(second.key);
-    expect(String(first.props?.className)).toContain("glim-pulse");
-    expect(String(second.props?.className)).toContain("glim-pulse");
+    expect(String(first.props?.className)).toContain("glim-confirm");
+    expect(String(second.props?.className)).toContain("glim-confirm");
   });
 
-  it("prefers .glim-shake over .glim-pulse when both are truthy", () => {
+  it("prefers .glim-shake over .glim-confirm when both are truthy", () => {
     // A save either fails or succeeds, but the precedence should not be left
     // to chance.
     const el = findToggleElement(
       ToggleRow({ label: "VMs", checked: true, onChange: () => {}, shakeNonce: 1, pulseNonce: 1 })
     );
     expect(String(el.props?.className)).toContain("glim-shake");
-    expect(String(el.props?.className)).not.toContain("glim-pulse");
+    expect(String(el.props?.className)).not.toContain("glim-confirm");
   });
 
   it("a failure after a prior success still gets a fresh key", () => {
@@ -142,11 +142,11 @@ describe("ToggleRow pulseNonce", () => {
     expect(afterSuccess.key).not.toBe(afterFailure.key);
   });
 
-  it("still renders no .glim-pulse on a fresh page load even when the map hands back 0/undefined", () => {
+  it("still renders no .glim-confirm on a fresh page load even when the map hands back 0/undefined", () => {
     const el = findToggleElement(
       ToggleRow({ label: "VMs", checked: true, onChange: () => {}, pulseNonce: undefined })
     );
     expect(el.key == null).toBe(true);
-    expect(String(el.props?.className)).not.toContain("glim-pulse");
+    expect(String(el.props?.className)).not.toContain("glim-confirm");
   });
 });

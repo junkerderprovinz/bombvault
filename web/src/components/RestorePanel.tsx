@@ -946,7 +946,7 @@ export function RestorePanel({
     <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
       {/* Basic mode always reads the local repo. */}
       <Advanced>
-        <div className="flex items-center gap-2 py-2 border-b border-carbon-border">
+        <div className="flex flex-wrap items-center gap-2 py-2 border-b border-carbon-border">
           <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
             {t("source.label")}
             <InfoBubble tip={t("source.hint")} />

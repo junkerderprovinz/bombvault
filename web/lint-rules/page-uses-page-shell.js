@@ -15,8 +15,8 @@
 // Exceptions are configured in eslint.config.js rather than inferred:
 //
 //     exceptions: {
-//       "Settings.tsx": "PAGE_SHELL_TABBED_RESPONSIVE",  // its 7-tab strip needs 1424px
-//       "Login.tsx": null,                               // not a routed page at all
+//       "Dashboard.tsx": "PAGE_SHELL_RESPONSIVE",  // 24px card gaps on a phone
+//       "Login.tsx": null,                         // not a routed page at all
 //     }
 //
 // The rule only visits src/pages/*.tsx and only recognises the default export

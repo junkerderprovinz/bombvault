@@ -14,14 +14,14 @@ import (
 
 // authGatePublicPaths is the complete allowlist: the login screen and the
 // health check have to work without a session and while the store is failing.
-// The widget, fleet and passkey handlers check their own token or gate the
-// answer inside the handler, because an embedding iframe, a polling peer and
+// The widget, group and passkey handlers check their own token or gate the
+// answer inside the handler, because an embedding iframe, a group member and
 // somebody who is not signed in yet carry no session cookie. /mcp is self-gated
 // on its own keys and answers 404 while none exists; the key management routes
 // under /api/mcp stay session-protected.
 var authGatePublicPaths = []string{
 	"/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data",
-	"/api/fleet/status", "/api/fleet/mesh-offer",
+	"/api/group/call", "/relay/connect",
 	"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish",
 	"/mcp",
 }

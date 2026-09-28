@@ -411,8 +411,8 @@ export function IntegrityCard({
             setKind(val as DrillKind);
             setState({});
           }}
-          variant="well"
           disabled={Object.values(state).some((v) => v === "busy")}
+          className="flex-1"
         />
       </div>
 

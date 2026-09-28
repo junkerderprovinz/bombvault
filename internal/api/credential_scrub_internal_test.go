@@ -143,3 +143,12 @@ func TestScrubSecretsPreservesHostname(t *testing.T) {
 		t.Fatalf("scrubSecrets destroyed the hostname an operator needs to diagnose which off-site target failed, got %q", got)
 	}
 }
+
+// A URL may carry a password with no user name before it, which is how some
+// rest-server and S3 setups are written down.
+func TestScrubRepoLocationRemovesAPasswordWithoutAUserName(t *testing.T) {
+	got := scrubRepoLocation("rest:https://:hunter2@box.example:8000/attic")
+	if strings.Contains(got, "hunter2") || !strings.Contains(got, "box.example:8000/attic") {
+		t.Fatalf("scrubRepoLocation = %q, want the password gone and the location kept", got)
+	}
+}

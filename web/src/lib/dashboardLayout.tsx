@@ -1,13 +1,13 @@
 // Customizable dashboard layout: card order, visibility and width per browser,
-// kept in localStorage. Reordering uses native HTML5 drag-and-drop, with the
-// move up/down buttons as the keyboard and touch fallback.
+// kept in localStorage. A card is carried by the grip in its control bar
+// (lib/dragLift.ts), with the move up/down buttons as the keyboard's way.
 
 import {
   useCallback,
   useEffect,
   useRef,
   useState,
-  type DragEvent as ReactDragEvent,
+  type PointerEventHandler,
   type ReactNode,
 } from "react";
 import { IconTipButton } from "../components/IconTipButton";
@@ -16,15 +16,6 @@ import type { TranslationKey } from "./i18n";
 const KEY = "bombvault.dashboardLayout";
 
 type T = (key: TranslationKey) => string;
-
-// BlockDragHandlers are built by the Dashboard for each block. onDragOver has
-// to call preventDefault, or the browser never fires drop.
-export interface BlockDragHandlers {
-  onDragStart: (e: ReactDragEvent<HTMLElement>) => void;
-  onDragOver: (e: ReactDragEvent<HTMLElement>) => void;
-  onDrop: (e: ReactDragEvent<HTMLElement>) => void;
-  onDragEnd: (e: ReactDragEvent<HTMLElement>) => void;
-}
 
 // CardWidth "half" puts two cards side by side in the Dashboard grid. Cards
 // that were never toggled are "full".
@@ -160,6 +151,17 @@ export function useDashboardLayout(defaultOrder: string[]) {
     });
   }, []);
 
+  // A drop hands over the visible cards in their new order. The hidden ones
+  // keep their places, and the visible ones fill the places visible cards held.
+  const setVisibleOrder = useCallback((visible: string[]) => {
+    setState((prev) => {
+      const moving = new Set(visible);
+      const next = visible.slice();
+      const order = prev.order.map((id) => (moving.has(id) ? (next.shift() ?? id) : id));
+      return { order, hidden: prev.hidden, widths: prev.widths };
+    });
+  }, []);
+
   const toggleHidden = useCallback((id: string) => {
     setState((prev) => {
       const hidden = new Set(prev.hidden);
@@ -200,6 +202,7 @@ export function useDashboardLayout(defaultOrder: string[]) {
     getVisibleIds,
     move,
     reorder,
+    setVisibleOrder,
     toggleHidden,
     toggleWidth,
     getWidth,
@@ -269,7 +272,8 @@ export interface CustomizableBlockProps {
   isFirst: boolean;
   isLast: boolean;
   editing: boolean;
-  dragHandlers: BlockDragHandlers;
+  /** Starts carrying the card; the grid cell around it is what lifts. */
+  onGripPointerDown: PointerEventHandler<HTMLSpanElement>;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onHide: () => void;
@@ -291,7 +295,7 @@ export function CustomizableBlock({
   isFirst,
   isLast,
   editing,
-  dragHandlers,
+  onGripPointerDown,
   onMoveUp,
   onMoveDown,
   onHide,
@@ -300,60 +304,17 @@ export function CustomizableBlock({
   t,
   children,
 }: CustomizableBlockProps) {
-  // dragenter and dragleave also fire for every child element, so a depth
-  // counter keeps the drop indicator from flickering.
-  const depth = useRef(0);
-  const [over, setOver] = useState(false);
-
-  const handleDragEnter = (e: ReactDragEvent<HTMLElement>) => {
-    e.preventDefault();
-    depth.current += 1;
-    setOver(true);
-  };
-  const handleDragLeave = () => {
-    depth.current -= 1;
-    if (depth.current <= 0) {
-      depth.current = 0;
-      setOver(false);
-    }
-  };
-  const handleDrop = (e: ReactDragEvent<HTMLElement>) => {
-    depth.current = 0;
-    setOver(false);
-    dragHandlers.onDrop(e);
-  };
-  const handleDragEnd = (e: ReactDragEvent<HTMLElement>) => {
-    depth.current = 0;
-    setOver(false);
-    dragHandlers.onDragEnd(e);
-  };
-
   if (!editing) return <>{children}</>;
 
   return (
-    <div
-      role="group"
-      aria-label={`${label} (${index + 1}/${total})`}
-      data-block-id={id}
-      draggable
-      onDragStart={dragHandlers.onDragStart}
-      onDragEnter={handleDragEnter}
-      onDragOver={dragHandlers.onDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      onDragEnd={handleDragEnd}
-      className="relative rounded-card"
-    >
-      {/* Absolute, so the drop indicator never shifts the layout. */}
-      {over && (
-        <div
-          className="pointer-events-none absolute -top-3 start-0 end-0 h-0.5 rounded-control bg-carbon-text"
-          aria-hidden="true"
-        />
-      )}
-
+    <div role="group" aria-label={`${label} (${index + 1}/${total})`} data-block-id={id} className="rounded-card">
       <div className="mb-2 flex items-center gap-2 rounded-card bg-carbon-surface2 px-2 py-1.5">
-        <span className="shrink-0 cursor-move select-none text-carbon-textMuted" aria-hidden="true">
+        {/* The grip is for a pointer; the keyboard uses the arrows. */}
+        <span
+          className="shrink-0 cursor-grab touch-none select-none text-carbon-textMuted active:cursor-grabbing"
+          aria-hidden="true"
+          onPointerDown={onGripPointerDown}
+        >
           <GripIcon />
         </span>
         <span className="min-w-0 flex-1 truncate text-xs font-semibold uppercase tracking-wider text-carbon-textSub">

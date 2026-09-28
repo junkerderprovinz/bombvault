@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -8,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -27,45 +29,22 @@ func meshHandlerFixture(t *testing.T, appKey string) (*Handler, *store.Repo) {
 	}
 	st := store.New(db)
 	cfg := config.Config{AppKey: appKey}
-	svc := &Service{cfg: cfg, store: st, engine: restic.Restic{Bin: "restic"}}
+	svc := NewService(cfg, st, nil, nil, restic.Restic{Bin: "restic"})
 	return &Handler{cfg: cfg, store: st, svc: svc}, st
 }
 
-func TestFleetMeshOfferReceive(t *testing.T) {
+func TestMemberMeshOfferIsStoredPendingWithItsPasswordSealed(t *testing.T) {
 	appKey := strings.Repeat("a", 64)
 	h, st := meshHandlerFixture(t, appKey)
-	s, err := st.GetSettings()
-	if err != nil {
-		t.Fatal(err)
-	}
-	s.FleetToken = "correct-token"
-	if err := st.UpdateSettings(s); err != nil {
-		t.Fatal(err)
-	}
 
 	body, _ := json.Marshal(meshOfferRequest{
 		FromName: "tower-a", SuggestedDomain: "containers",
 		Repo:     "rest:http://192.168.1.50:8000/bombvault-containers/containers",
 		RESTUser: "bombvault-containers", RESTPassword: "s3cr3t",
 	})
-
-	w := httptest.NewRecorder()
-	r := jsonReq(http.MethodPost, "/api/fleet/mesh-offer", strings.NewReader(string(body)))
-	r.Header.Set("X-Fleet-Token", "wrong")
-	h.handleFleetMeshOfferReceive(w, r)
-	if w.Code != http.StatusForbidden {
-		t.Fatalf("wrong token: want 403, got %d", w.Code)
-	}
-	if all, _ := st.ListMeshOffers(); len(all) != 0 {
-		t.Fatalf("a refused offer must persist nothing, got %d rows", len(all))
-	}
-
-	w = httptest.NewRecorder()
-	r = jsonReq(http.MethodPost, "/api/fleet/mesh-offer", strings.NewReader(string(body)))
-	r.Header.Set("X-Fleet-Token", "correct-token")
-	h.handleFleetMeshOfferReceive(w, r)
-	if w.Code != http.StatusOK {
-		t.Fatalf("correct token: want 200, got %d body=%s", w.Code, w.Body.String())
+	status, out := h.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/mesh-offer", Body: body})
+	if status != http.StatusOK {
+		t.Fatalf("offer: want 200, got %d body=%s", status, out)
 	}
 	all, err := st.ListMeshOffers()
 	if err != nil {
@@ -351,65 +330,5 @@ func TestDeclineMeshOffer(t *testing.T) {
 	h.handleDeclineMeshOffer(w, r)
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("unknown id: want 404, got %d", w.Code)
-	}
-}
-
-// The fake peer records the token and the offer, whose repo must be built
-// from the base URL the admin gave.
-func TestProposeMeshOffer(t *testing.T) {
-	var gotToken string
-	var gotOffer meshOfferRequest
-	peer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotToken = r.Header.Get("X-Fleet-Token")
-		_ = json.NewDecoder(r.Body).Decode(&gotOffer)
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer peer.Close()
-
-	appKey := strings.Repeat("d", 64)
-	h, st := meshHandlerFixture(t, appKey)
-	s, err := st.GetSettings()
-	if err != nil {
-		t.Fatal(err)
-	}
-	s.InstanceName = "tower-a"
-	if err := st.UpdateSettings(s); err != nil {
-		t.Fatal(err)
-	}
-
-	enc, err := secret.Encrypt(appKey, []byte("peer-token-for-b"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	fp, err := st.CreateFleetPeer(store.FleetPeer{Name: "tower-b", URL: peer.URL, TokenEnc: enc, Enabled: true})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	w := httptest.NewRecorder()
-	r := postJSONReq(t, "/api/fleet/peers/"+fp.ID+"/mesh-offer", map[string]any{
-		"domain": "containers", "baseUrl": "http://192.168.1.9:8000",
-	})
-	r.SetPathValue("id", fp.ID)
-	h.handleProposeMeshOffer(w, r)
-	resp := decodeResp(t, w)
-	if resp["ok"] != true {
-		t.Fatalf("propose must succeed: %v", resp)
-	}
-
-	if gotToken != "peer-token-for-b" { //nolint:gosec // G101: a test-fixture literal, not a real credential
-		t.Fatalf("peer received token %q, want the decrypted stored peer token", gotToken)
-	}
-	if gotOffer.FromName != "tower-a" {
-		t.Fatalf("offer fromName = %q, want this instance's InstanceName", gotOffer.FromName)
-	}
-	if gotOffer.SuggestedDomain != "containers" {
-		t.Fatalf("offer suggestedDomain = %q, want %q", gotOffer.SuggestedDomain, "containers")
-	}
-	if !strings.HasPrefix(gotOffer.Repo, "rest:http://192.168.1.9:8000/bombvault-containers/containers") {
-		t.Fatalf("offer repo = %q, want it built from the provided baseUrl", gotOffer.Repo)
-	}
-	if gotOffer.RESTUser != "bombvault-containers" || gotOffer.RESTPassword == "" {
-		t.Fatalf("offer credentials incomplete: %+v", gotOffer)
 	}
 }

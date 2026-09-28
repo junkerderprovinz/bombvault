@@ -1,7 +1,7 @@
-// Every motion level answers every motion token. A level that omits one
-// inherits the bare :root value, which is the lively one, so a quiet level
-// would keep a lively number and the storm would keep the default's. Allowed
-// omissions are listed with their reason.
+// Every motion level answers every motion token, the drag lift's scale and
+// landing included. A level that omits one inherits the bare :root value, which
+// is the lively one, so a quiet level would keep a lively number and the storm
+// would keep the default's. Allowed omissions are listed with their reason.
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,7 +18,7 @@ const CSS = RAW.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "));
 function tokensAt(at: number): Set<string> {
   if (at < 0) return new Set();
   const body = CSS.slice(at, CSS.indexOf("\n}", at));
-  return new Set([...body.matchAll(/(--motion-[a-z-]+)\s*:/g)].map((m) => m[1]));
+  return new Set([...body.matchAll(/(--motion-[a-z-]+|--drag-lift-scale|--drag-settle-dur)\s*:/g)].map((m) => m[1]));
 }
 
 /** The tokens declared in one `:root...{ }` block, by selector. */
@@ -47,6 +47,26 @@ describe("motion tokens", () => {
   it("declares the lively default on the bare root", () => {
     // With only a handful, the comparisons below would check nothing.
     expect(lively.size).toBeGreaterThanOrEqual(20);
+  });
+
+  it("gives the window, the reactive label, the confirm swell, the wiggle and the drag lift a dial each", () => {
+    for (const dial of [
+      "--motion-control-dur",
+      "--motion-modal-dur",
+      "--motion-modal-travel",
+      "--motion-label-dur",
+      "--motion-label-ease",
+      "--motion-label-shift",
+      "--motion-label-squash",
+      "--motion-confirm-dur",
+      "--motion-confirm-scale",
+      "--motion-wiggle-dur",
+      "--motion-wiggle-angle",
+      "--drag-lift-scale",
+      "--drag-settle-dur",
+    ]) {
+      expect(lively.has(dial), dial).toBe(true);
+    }
   });
 
   for (const level of ["subtle", "off"]) {

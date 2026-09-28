@@ -135,14 +135,9 @@ type Settings struct {
 	// widget and both endpoints answer 403; unlike MetricsToken there is no open
 	// mode.
 	WidgetToken string
-	// InstanceName is this instance's display name, reported in
-	// GET /api/fleet/status so a peer's Fleet page can label this box. When it
-	// is empty the Fleet page shows the URL it polled.
+	// InstanceName is this instance's display name, the name the other
+	// members of its pairing group show it under.
 	InstanceName string
-	// FleetToken authorizes the session-free GET /api/fleet/status (via ?token=
-	// or X-Fleet-Token) that other instances' Fleet views poll. Empty disables
-	// the endpoint with 403, as for WidgetToken.
-	FleetToken string
 	// DrillsEnabled turns on scheduled restore-verification drills. Off by
 	// default, because a drill reads back real pack data and costs I/O.
 	DrillsEnabled bool
@@ -320,7 +315,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       reconcile_unraid_update_status,
 		       per_item_schedules,
 		       cloud_cred_sets,
-		       fleet_enabled, pull_enabled, db_dumps_enabled, instance_name, fleet_token,
+		       fleet_enabled, pull_enabled, db_dumps_enabled, instance_name,
 		       everything_schedule, everything_pre_hook, everything_post_hook,
 		       backup_cores, display_prefs,
 		       totp_secret, totp_enabled, totp_recovery,
@@ -363,7 +358,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&reconcileUnraidUpdateStatus,
 		&perItemSchedules,
 		&s.CloudCredSets,
-		&fleetEnabled, &pullEnabled, &dbDumpsEnabled, &s.InstanceName, &s.FleetToken,
+		&fleetEnabled, &pullEnabled, &dbDumpsEnabled, &s.InstanceName,
 		&s.EverythingSchedule, &s.EverythingPreHook, &s.EverythingPostHook,
 		&s.BackupCores, &s.DisplayPrefs,
 		&s.TOTPSecret, &totpEnabled, &s.TOTPRecovery,
@@ -557,7 +552,6 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  pull_enabled                 = ?,
 		  db_dumps_enabled             = ?,
 		  instance_name                = ?,
-		  fleet_token                  = ?,
 		  everything_schedule          = ?,
 		  everything_pre_hook          = ?,
 		  everything_post_hook         = ?,
@@ -610,7 +604,6 @@ func updateSettings(e settingsExecer, s Settings) error {
 		boolInt(s.PullEnabled),
 		boolInt(s.DBDumpsEnabled),
 		s.InstanceName,
-		s.FleetToken,
 		s.EverythingSchedule,
 		s.EverythingPreHook,
 		s.EverythingPostHook,

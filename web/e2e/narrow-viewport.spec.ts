@@ -428,16 +428,13 @@ test("landscape 844x390: at >=48rem the desktop chrome owns the shell", async ({
   await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
 });
 
-// The Settings tab strip at phone widths.
-// The strip pins every segment to the sidebar row-box width (--nav-row-w,
-// 200px) on desktop, and that pin on a 390px phone wrapped its seven flex-none
-// segments into seven stacked rows, roughly 350px of chrome before any
-// Settings content. Below 48rem the strip is a grid over the page column: one
-// row of seven while a tab keeps 44px, otherwise four over three. Geometry,
-// not screenshots, per this file's contracts: the tabs per row, no tab under
-// 44px, and a row that spans the column. English on purpose: the cells do not
-// follow the labels, so the strip behaves the same in every locale, and en
-// keeps the assertion on that mechanism rather than on a locale's typography.
+// The Settings tab strip at phone widths. Below 48rem each tab shows its glyph
+// alone, so the eight share one row while a tab keeps 44px and go four over
+// four below that, instead of stacking eight rows of chrome above the page.
+// Geometry, not screenshots, per this file's contracts: the tabs per row, no
+// tab under 44px, and a strip that spans the column. English on purpose: with
+// the labels hidden the strip behaves the same in every locale, and en keeps
+// the assertion on that mechanism rather than on a locale's typography.
 
 async function assertStrip(page: Page, width: number, perRow: number[]): Promise<void> {
   const strip = page.getByRole("tablist", { name: "Settings" });
@@ -456,11 +453,12 @@ async function assertStrip(page: Page, width: number, perRow: number[]): Promise
         const box = tab.getBoundingClientRect();
         return { top: Math.round(box.top), left: box.left, right: box.right, width: box.width };
       }),
+      strip: el.getBoundingClientRect().width,
       available:
         column.clientWidth - parseFloat(style.paddingInlineStart) - parseFloat(style.paddingInlineEnd),
     };
   });
-  expect(geometry.tabs, "the Settings strip owns exactly the seven page tabs").toHaveLength(7);
+  expect(geometry.tabs, "the Settings strip owns exactly the eight page tabs").toHaveLength(8);
 
   const tops = [...new Set(geometry.tabs.map((t) => t.top))];
   const actual = tops.map((top) => geometry.tabs.filter((t) => t.top === top).length);
@@ -470,20 +468,20 @@ async function assertStrip(page: Page, width: number, perRow: number[]): Promise
     expect(w, `a Settings tab shrunk to ${w}px, under a fingertip`).toBeGreaterThanOrEqual(43.5);
   }
 
-  // The full row spans the column, so the cards below, which take the strip's
-  // width, span it too.
-  const first = geometry.tabs.filter((t) => t.top === tops[0]);
-  const span = Math.max(...first.map((t) => t.right)) - Math.min(...first.map((t) => t.left));
-  expect(Math.abs(span - geometry.available), `the row spans ${span.toFixed(1)}px of ${geometry.available}px`).toBeLessThanOrEqual(1);
+  // The strip spans the column, as the cards below do.
+  expect(
+    Math.abs(geometry.strip - geometry.available),
+    `the strip spans ${geometry.strip.toFixed(1)}px of ${geometry.available}px`,
+  ).toBeLessThanOrEqual(1);
 }
 
 for (const { width, perRow } of [
-  { width: 390, perRow: [7] },
-  { width: 360, perRow: [4, 3] },
-  { width: 320, perRow: [4, 3] },
+  { width: 390, perRow: [4, 4] },
+  { width: 360, perRow: [4, 4] },
+  { width: 320, perRow: [4, 4] },
 ]) {
-  test(`settings tab strip @ ${width}px: the seven tabs sit ${perRow.join(" over ")}`, async ({ page }, testInfo) => {
-    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the grid lives below 48rem");
+  test(`settings tab strip @ ${width}px: the eight tabs sit ${perRow.join(" over ")}`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the glyph-only strip lives below 48rem");
     await bootSeededPage(page, "en", width, "/settings");
     await assertStrip(page, width, perRow);
   });
@@ -492,21 +490,21 @@ for (const { width, perRow } of [
 // The same strip in a desktop browser narrowed to a phone width. The shell
 // switches on width alone, so this is a state anyone reaches by dragging a
 // window edge, and it is where a real scrollbar shows up.
-test("settings tab strip @ 390px in a desktop window: one row with a scrollbar too", async ({ page }, testInfo) => {
+test("settings tab strip @ 390px in a desktop window: four over four with a scrollbar too", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-768", "one desktop project carries this; the pair would run it twice");
   await bootSeededPage(page, "en", 390, "/settings");
-  await assertStrip(page, 390, [7]);
+  await assertStrip(page, 390, [4, 4]);
 });
 
 // The appearance card's pinned wells, which spread over the row they get once
-// they wrap (Selector's rowFill). A groove is a raised surface, so track with
+// they wrap (segmentLayout). A groove is a raised surface, so track with
 // nothing on it reads as part of the control; the check is that every row the
 // groove draws is covered, in a locale whose labels run longer than English so
 // a row cannot pass by being roomy.
 for (const width of [390, 360, 320]) {
   test(`appearance wells @ ${width}px: every groove row is filled`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the wells only wrap below 48rem");
-    await bootSeededPage(page, "de", width, "/settings");
+    await bootSeededPage(page, "de", width, "/settings#look");
 
     const wells = page.locator('[role="tablist"].bg-carbon-surface3, [role="group"].bg-carbon-surface3');
     await expect(wells.first()).toBeVisible();
@@ -530,20 +528,20 @@ for (const width of [390, 360, 320]) {
 
     expect(bare, `grooves with bare track: ${JSON.stringify(bare)}`).toEqual([]);
 
-    // The segments stay tappable while they spread, and a row of them is a
-    // row of equals rather than one stretched leftover.
+    // The segments stay tappable while they spread, and each row is a row of
+    // equals. A short last row stretches its cells rather than leaving a hole,
+    // so the rows may differ from each other by that much.
     const ragged = await wells.evaluateAll((strips) =>
       strips
         .map((strip) => {
-          const widths = [...strip.children].map((child) =>
-            Math.round(child.getBoundingClientRect().width),
-          );
-          const heights = [...strip.children].map((child) =>
-            Math.round(child.getBoundingClientRect().height),
-          );
-          return { label: strip.getAttribute("aria-label"), widths: [...new Set(widths)], heights };
+          const boxes = [...strip.children].map((child) => child.getBoundingClientRect());
+          const rows = [...new Set(boxes.map((box) => Math.round(box.top)))].map((top) => [
+            ...new Set(boxes.filter((box) => Math.round(box.top) === top).map((box) => Math.round(box.width))),
+          ]);
+          const heights = boxes.map((box) => Math.round(box.height));
+          return { label: strip.getAttribute("aria-label"), rows, heights };
         })
-        .filter((strip) => strip.widths.length > 1 || strip.heights.some((h) => h < 40)),
+        .filter((strip) => strip.rows.some((row) => row.length > 1) || strip.heights.some((h) => h < 40)),
     );
     expect(ragged, `uneven or untappable segments: ${JSON.stringify(ragged)}`).toEqual([]);
   });

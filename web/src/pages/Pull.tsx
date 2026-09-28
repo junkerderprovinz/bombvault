@@ -19,23 +19,21 @@ import { PAGE_SHELL_RESPONSIVE, PAGE_SHELL_TABBED_RESPONSIVE } from "../lib/page
 import { relativeTime } from "../lib/reltime";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { NumberField } from "../components/NumberField";
+import { PageTitle } from "../components/PageTitle";
 import { IconReceiver } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
-import { RevealInput } from "../components/RevealInput";
+import { MemberField } from "./instances/MemberField";
 import { SelectField } from "../components/SelectField";
-import { useReveal } from "../lib/useReveal";
 import { useCloudCredSets } from "../lib/useCloudCredSets";
 import { useToast } from "../lib/toast";
 import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
+import { TestButton, VerdictLine } from "../components/TestButton";
+import { useTestVerdict } from "../lib/useTestVerdict";
 import { ToggleRow } from "./settings/shared";
 
 type T = ReturnType<typeof useT>["t"];
-
-// The same 64-lowercase-hex guard the backend enforces. The server re-validates
-// and probes; this only gives the field instant feedback.
-const APP_KEY_RE = /^[0-9a-f]{64}$/;
 
 const inputCls =
   "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus";
@@ -78,14 +76,12 @@ function PullSourceCard({
     }
   }
 
-  async function handleTest() {
-    setBusy(true);
-    try {
+  const test = useTestVerdict([source.repo, source.credsRef, source.domain], t("pull.pullFailed"));
+  function handleTest() {
+    void test.run(async () => {
       const res = await testPullSource(source.id);
-      push(res.ok ? t("pull.testOk") : (res.error ?? t("pull.pullFailed")), res.ok ? "success" : "fail");
-    } finally {
-      setBusy(false);
-    }
+      return res.ok ? { ok: true } : { ok: false, reason: res.error ?? t("pull.pullFailed") };
+    });
   }
 
   async function handleRemove() {
@@ -114,6 +110,12 @@ function PullSourceCard({
             <span className="font-medium text-carbon-text">{source.name}</span>
             <Badge tone={verdict.tone}>{verdict.label}</Badge>
             <Badge tone="neutral">{t(`nav.${source.domain}` as never)}</Badge>
+            {source.needsPairing && (
+              <Badge tone="warn">
+                {t("pairing.pairAgain")}
+                <InfoBubble tip={t("pairing.pairAgainTip")} onAccent />
+              </Badge>
+            )}
           </div>
           {/* A repository address is not prose; an RTL interface must not
               reorder it. */}
@@ -138,21 +140,23 @@ function PullSourceCard({
         <p className="text-xs text-statusFail wrap-break-word">{source.lastPullError}</p>
       )}
 
+      <VerdictLine verdict={test.verdict} />
+
       <div className="flex items-center gap-2 flex-wrap">
         <Button
           label={t("pull.pullNow")}
           labelKey="pull.pullNow"
           tone="accent"
           onClick={() => void handlePull()}
-          disabled={busy || !source.enabled}
+          disabled={busy || test.running || !source.enabled}
           busy={busy}
           hueIndex={index}
         />
-        <Button
+        <TestButton
           label={t("offsite.test")}
           labelKey="offsite.test"
-          tone="neutral"
-          onClick={() => void handleTest()}
+          test={test}
+          onClick={handleTest}
           disabled={busy}
           hueIndex={index}
         />
@@ -200,14 +204,13 @@ function PullDialog({
   const { push } = useToast();
   const [name, setName] = useState(initial?.name ?? "");
   const [repo, setRepo] = useState(initial?.repo ?? "");
-  const [appKey, setAppKey] = useState("");
-  const revealAppKey = useReveal();
+  const [memberId, setMemberId] = useState("");
   const [domain, setDomain] = useState<PullDomain>((initial?.domain as PullDomain) ?? "containers");
   const [cadence, setCadence] = useState(initial?.cadence ?? "");
-  // The login for the storage the source repository lies on; the APP_KEY only
-  // opens the repository itself. pull.go withholds this box's own credentials,
-  // so an s3:, b2: or authenticated rest: source needs a set here, and without
-  // one the refusal misleadingly names the APP_KEY.
+  // The login for the storage the source repository lies on; the restic
+  // password only opens the repository itself. pull.go withholds this box's
+  // own credentials, so an s3:, b2: or authenticated rest: source needs a set
+  // here, and without one the refusal misleadingly names the password.
   const [credsRef, setCredsRef] = useState(initial?.credsRef ?? "");
   const credSets = useCloudCredSets();
   const [limitDownload, setLimitDownload] = useState(initial?.limitDownload ?? 0);
@@ -216,9 +219,10 @@ function PullDialog({
   const [shake, setShake] = useState(0);
 
   const editing = initial !== null;
-  // On edit an empty key keeps the stored one; on create a key is required.
-  const keyOk = appKey === "" ? editing : APP_KEY_RE.test(appKey);
-  const canSave = name.trim() !== "" && repo.trim() !== "" && keyOk && !saving;
+  // An edit of a paired source may keep its pairing; a new source, or one from
+  // before pairing, needs its instance.
+  const keepPairing = editing && !initial.needsPairing;
+  const canSave = name.trim() !== "" && repo.trim() !== "" && (memberId !== "" || keepPairing) && !saving;
 
   async function handleSave() {
     if (!canSave) {
@@ -229,7 +233,7 @@ function PullDialog({
     const body: PullSourceInput = {
       name: name.trim(),
       repo: repo.trim(),
-      appKey,
+      memberId,
       credsRef,
       domain,
       cadence,
@@ -288,6 +292,15 @@ function PullDialog({
             />
           </div>
 
+          <MemberField
+            t={t}
+            label={t("pull.member")}
+            value={memberId}
+            onChange={setMemberId}
+            keepOption={keepPairing}
+            onPickLocation={setRepo}
+          />
+
           <div className="flex flex-col gap-1.5">
             <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
               {t("pull.repoLocation")}
@@ -301,24 +314,6 @@ function PullDialog({
               autoComplete="off"
               dir="ltr"
               placeholder="rest:http://192.168.1.9:8000/their-containers"
-              className={inputCls}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("pull.appKey")}
-              <InfoBubble tip={t("pull.appKeyHint")} />
-            </span>
-            <RevealInput
-              {...revealAppKey}
-              value={appKey}
-              onChange={(e) => setAppKey(e.target.value.trim())}
-              spellCheck={false}
-              autoComplete="off"
-              dir="ltr"
-              placeholder={editing ? "••••••••" : "64 hex"}
-              wrapperClassName="w-full"
               className={inputCls}
             />
           </div>
@@ -442,11 +437,16 @@ export function Pull({ embedded = false }: { embedded?: boolean } = {}) {
 
   return (
     <div className={embedded ? PAGE_SHELL_TABBED_RESPONSIVE : PAGE_SHELL_RESPONSIVE}>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          {!embedded && <h1 className="text-2xl font-semibold text-carbon-text">{t("pull.title")}</h1>}
-          <p className="mt-1 text-sm text-carbon-textSub">{t("pull.subtitle")}</p>
-        </div>
+      {/* Nothing here is visible once the title is sr-only and the empty
+          state has hidden the Add button, so this row goes sr-only too and
+          leaves the flex layout: without it, an empty row still ate a gap
+          above the empty-state card. */}
+      <div
+        className={`flex items-start justify-between gap-4 flex-wrap${
+          showEmptyState ? " glim-page-title sr-only" : ""
+        }`}
+      >
+        {!embedded && <PageTitle>{t("pull.title")}</PageTitle>}
         {!showEmptyState && (
           <Button
             label={t("pull.addSource")}

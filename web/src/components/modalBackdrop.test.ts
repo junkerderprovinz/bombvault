@@ -100,7 +100,7 @@ it("takes its darkness from the token, not from a literal", () => {
   expect(
     painting[0],
     "the backdrop paints a literal colour. It takes --glim-scrim, which the\n" +
-      "theme blocks set to .65 dark and .55 light.",
+      "theme blocks set to .72 dark and .62 light.",
   ).toMatch(/var\(--glim-scrim\)/);
 });
 
@@ -111,4 +111,29 @@ it("keeps the darkness in the class, not beside it", () => {
   for (const { where, text } of backdrops) {
     expect(text, where).not.toMatch(/bg-black\//);
   }
+});
+
+it("blurs the page behind the window outside any motion query", () => {
+  const css = readFileSync(join(src, "index.css"), "utf8");
+  const painting = Array.from(css.matchAll(/\.glim-modal-backdrop\s*\{([^}]*)\}/g))
+    .map((r) => r[1])
+    .find((body) => /background/.test(body));
+  expect(painting).toMatch(/(^|\s)backdrop-filter:\s*blur\(var\(--glim-scrim-blur\)\)/);
+  expect(painting).toMatch(/-webkit-backdrop-filter:\s*blur\(var\(--glim-scrim-blur\)\)/);
+});
+
+it("darkens by .72 on the dark theme and .62 on the light one, blurring 6px", () => {
+  const css = readFileSync(join(src, "index.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const scrims = Array.from(css.matchAll(/--glim-scrim:\s*([^;]+);/g)).map((m) => m[1].trim());
+  // The dark default, the explicit light theme, and the light theme without
+  // JavaScript.
+  expect(scrims).toEqual(["rgba(0, 0, 0, .72)", "rgba(0, 0, 0, .62)", "rgba(0, 0, 0, .62)"]);
+  expect(css).toMatch(/--glim-scrim-blur:\s*6px;/);
+});
+
+it("keeps the darkening without the blur for reduced transparency", () => {
+  const css = readFileSync(join(src, "index.css"), "utf8");
+  const at = css.indexOf("@media (prefers-reduced-transparency: reduce)");
+  expect(at).toBeGreaterThanOrEqual(0);
+  expect(css.slice(at, css.indexOf("}\n}", at))).toMatch(/--glim-scrim-blur:\s*0px/);
 });

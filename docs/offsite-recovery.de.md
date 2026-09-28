@@ -64,6 +64,28 @@ BombVault bietet zwei Stufen des Nachweises, dass deine Backups tatsächlich wie
 
 Die **Ransomware-Schutz-Scorecard** im Dashboard fasst dies zu einer grün / gelb / rot-Haltung pro Bereich zusammen, mit einer altersgestempelten Checkliste (Off-site konfiguriert, Append-only verifiziert, Replikation aktuell, Wiederherstellungsübung bestanden, Verschlüsselung an, Kürzungsstrategie gesetzt). Jede rote Zeile verlinkt tief zur Behebung, und die Karte wird nur bei verifizierten Fakten grün.
 
+## Instanzen koppeln {#pairing}
+
+Empfänger, Holen, die Fleet-Ansicht und Mesh-Off-site sprechen alle mit einem anderen BombVault. Das tun sie als Mitglieder einer Kopplungsgruppe, und in die Gruppe kommt eine Instanz mit zwölf Wörtern.
+
+Öffne auf der ersten Instanz **Instanzen → Kopplung** und drück auf **Phrase erstellen**. Es erscheinen zwölf Wörter. Öffne auf jeder weiteren Instanz denselben Reiter, drück auf **Phrase eingeben** und tipp sie ein. Das letzte Wort enthält eine Prüfsumme: Ein vertipptes oder vertauschtes Wort fällt sofort auf, und die Seite nennt das Wort und seine Stelle. Koppeln geht nur mit einem Anmeldepasswort auf jeder Instanz, weil die Wörter die Backups aller Instanzen der Gruppe öffnen. Die Phrase lässt sich später wieder anzeigen, sobald du dieses Passwort eingibst. Mit **Gruppe verlassen** nimmst du eine Instanz wieder heraus.
+
+Wer die Wörter kennt, kommt in die Gruppe. Behandle sie also wie ein Passwort.
+
+**Wie sich die Mitglieder erreichen.** Im selben Netzwerk finden sie sich per Multicast und sprechen direkt miteinander. Instanzen in verschiedenen Netzen laufen über ein Relay, das du auf demselben Reiter wählst:
+
+- **Projekt-Relay** (Vorgabe): `relay.halleluja.design`, dasselbe Relay, das auch KnightLoader nutzt. Einzurichten gibt es nichts.
+- **Eigenes Relay**: der Container **BombVault Relay** aus den Unraid Community Apps oder eine deiner Instanzen, die schon von außen erreichbar ist, mit eingeschaltetem **Als Relay dienen**. Diese Instanz antwortet dann unter `/relay/connect` an ihrer eigenen Adresse, hinter dem Reverse Proxy und dem Zertifikat, die sie schon hat, und lässt nur deine Gruppe hinein. Trag die Adresse des Relays auf jeder Instanz ein, die es nutzen soll.
+- **Kein Relay**: Die Mitglieder finden sich nur im selben Netzwerk.
+
+**Was das Relay sieht.** Jeder Aufruf zwischen Mitgliedern ist mit AES-256-GCM unter einem Schlüssel versiegelt, der aus den zwölf Wörtern entsteht und deine Instanzen nie verlässt. Das Relay erfährt einen Hash, über den es die Verbindungen zusammenführt, dazu für welche Instanz eine Nachricht ist, wie groß sie ist und wann sie durchläuft. Ein direkter Aufruf im lokalen Netz ist genauso versiegelt und zusätzlich signiert, damit hängt nichts am selbstsignierten Zertifikat einer Instanz.
+
+**Was über die Gruppe läuft.** Die Fleet-Scorecard, die Bitte, eine Domäne jetzt zu prüfen, Mesh-Off-site-Angebote und was Empfänger und Holen brauchen: die Repository-Adressen der anderen Instanz und ihr Restic-Passwort. Backup-Daten laufen nie darüber, die gehen weiter direkt zu den Restic-Backends. Auch der APP_KEY nicht: Das Restic-Passwort öffnet die Repositorys der anderen Instanz und sonst nichts, weder ihre gespeicherten Geheimnisse noch Sitzungen oder Wiederherstellungscodes.
+
+**Einträge von vor der Kopplung.** Fleet-Gegenstellen mit Fleet-Token sowie Empfänger und Holen-Quellen mit dem APP_KEY der anderen Instanz bleiben nach dem Update erhalten und tragen **Neu koppeln**. Empfänger und Quellen laufen weiter: Beim ersten Start ersetzt BombVault jeden gespeicherten APP_KEY durch das daraus abgeleitete Restic-Passwort. Kopple beide Instanzen, bearbeite dann den Eintrag und wähl seine Instanz. Eine Fleet-Gegenstelle übernimmt ihre alte Zeile, sobald eine Instanz mit demselben Namen in der Gruppe auftaucht.
+
+Den APP_KEY von Hand braucht nur noch die [Wiederherstellung aus einem anderen BombVault-Repo](#restore-from-another-bombvault-repo), für den Fall, dass die andere Instanz weg ist und in keiner Gruppe mehr antworten kann.
+
 ## Empfänger-Dashboard (die empfangende Seite)
 
 ![Die empfangende Seite, nur lesend beobachtet, mit einer Integritätsprüfung auf dieser Hardware.](assets/screenshots/receiver.png)
@@ -72,7 +94,7 @@ Die **Ransomware-Schutz-Scorecard** im Dashboard fasst dies zu einer grün / gel
 
 Alles oben ist die *sendende* Seite. Auf der Box, die unveränderliche Off-site-Kopien von einem anderen BombVault **empfängt**, gibt dir das Empfänger-Dashboard eine unabhängige, schreibgeschützte Überwachung dieser Repositorys auf der empfangenden Hardware, sodass ein stiller Fehler am fernen Ende nicht unbemerkt bleibt.
 
-Schalte den **Empfänger**-Schalter in den Einstellungen ein, um einen **Empfänger**-Tab freizulegen. Er ist standardmäßig aus; aktiviere ihn nur auf einer Box, die tatsächlich unveränderliche Off-site-Backups empfängt. Registriere dann ein empfangenes Repository (schreibgeschützt, geöffnet mit dem Schlüssel der sendenden Instanz), um zu erhalten:
+Schalte den **Empfänger**-Schalter in den Einstellungen ein, um einen **Empfänger**-Tab freizulegen. Er ist standardmäßig aus; aktiviere ihn nur auf einer Box, die tatsächlich unveränderliche Off-site-Backups empfängt. Registriere dann ein empfangenes Repository (schreibgeschützt, geöffnet mit dem Restic-Passwort der sendenden Instanz, das über die [Kopplungsgruppe](#pairing) kommt), um zu erhalten:
 
 - **Einen nach Quelle gruppierten Snapshot-Bestand**, sodass du genau sehen kannst, welche Container, VMs und Dateisätze eingetroffen sind.
 - **Zuletzt empfangen** pro Quelle, sodass du weißt, wie frisch jede ist.
@@ -106,12 +128,12 @@ Das erste Pfadsegment ist der htpasswd-Benutzer, das zweite das Repository. Trag
 | **NICHT geschützt** | VAULT hat ein Löschen angenommen. `--append-only` fehlt oder wurde entfernt. |
 | **unentschieden** | Weder noch. Meist ist die URL nicht die, die restic selbst benutzt, oder die Zugangsdaten haben sich geändert. Es wird nichts vermerkt und kein Alarm ausgelöst. |
 
-**4. Auf VAULT ansehen, was ankommt.** *Einstellungen → Empfänger* einschalten, den Reiter **Empfänger** öffnen und das Repository schreibgeschützt registrieren.
+**4. Auf VAULT ansehen, was ankommt.** Die beiden Kisten koppeln ([Instanzen koppeln](#pairing)), *Einstellungen → Empfänger* einschalten, den Reiter **Empfänger** öffnen und das Repository schreibgeschützt registrieren, mit TOWER als sendender Instanz.
 
 !!! warning "Der Ort ist ein Pfad **innerhalb** des Containers, relativ zum Host-Mount geschrieben"
     Trage `user/appdata/rest-server/bombvault-containers/containers` ein, **nicht** `/mnt/user/appdata/…`. BombVault läuft in einem Container, in dem das `/mnt` des Hosts an anderer Stelle eingehängt ist; ein absoluter Host-Pfad existiert dort nicht. Fügst du trotzdem einen ein, nennt BombVault dir jetzt den relativen Pfad, den du stattdessen brauchst.
 
-    Der **sendende APP_KEY** ist der Schlüssel von TOWER, nicht der von VAULT. Du findest ihn auf TOWER unter *Einstellungen → System*.
+    VAULT bekommt das Restic-Passwort von TOWER beim Speichern über die Gruppe; niemand tippt einen Schlüssel ab.
 
 **5. Wenn du magst, mach es gegenseitig.** Dieselben fünf Schritte in die andere Richtung: ein rest-server auf TOWER, der VAULTs Kopie annimmt. Dann erzwingt jede Kiste die Unveränderlichkeit für die andere, und keine kann die Backups der anderen löschen.
 
@@ -128,7 +150,7 @@ Ein eigener **Recovery**-Tab führt eine frische oder neu aufgebaute Installatio
 !!! tip "Geplante Migration versus Katastrophe"
     Die geführte Wiederherstellung stellt BombVaults eigene Einstellungen aus einem Backup wieder her. Für einen *geplanten* Umzug auf eine neue Box kannst du deine Konfiguration stattdessen direkt mit der Karte **Einstellungen exportieren und importieren** (eine portable JSON-Datei) mitnehmen. Siehe [Konfiguration](configuration.md#portable-settings-export-and-import).
 
-### Wiederherstellung aus einem anderen BombVault-Repo
+### Wiederherstellung aus einem anderen BombVault-Repo {#restore-from-another-bombvault-repo}
 
 Eine separate Karte im **Recovery**-Tab öffnet das Repo einer *anderen* BombVault-Instanz (eine unter `/mnt` eingehängte Freigabe oder eine Remote-URL) mit **dem `APP_KEY` dieser Instanz**, in einer einmaligen, schreibgeschützten Sitzung. Durchstöbere die dort gespeicherten Container, VMs und Dateisätze, wähle einen Snapshot und stelle ihn wieder her, und das wiederhergestellte Objekt wird ein normaler lokaler Container, eine VM oder ein Dateisatz. Es wird niemals etwas in das andere Repo geschrieben, und deine eigenen Backup-Einstellungen bleiben unangetastet (die Sitzung lebt im Speicher und läuft von selbst ab). Einen Container von Server A auf Server B zu verschieben bedeutet nicht mehr, deine Repo-Einstellungen umzustellen und danach zurückzudrehen. Live-Server-zu-Server-Föderation ist ausdrücklich außerhalb des Umfangs; dies ist ein bewusster Einmal-Pull.
 

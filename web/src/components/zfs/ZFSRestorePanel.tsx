@@ -401,6 +401,7 @@ export function ZFSRestorePanel({
                   select="one"
                   active={active}
                   buttonHeight
+                  inline
                   onChange={(id) => {
                     if (id === "newDataset" && newDataset === "" && !wholeTree) setNewDataset(`${dataset}-restored`);
                     setMode(id as Mode);

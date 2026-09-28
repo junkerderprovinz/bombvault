@@ -11,8 +11,10 @@
 //     an onClick) takes the same neutral chrome as the controls beside it. Its
 //     label names the action, and destructive ones confirm first anyway.
 //
-// There are no exceptions, ConfirmDialog's commit button included: in a
-// confirm dialog the question does the warning, not the button.
+// ConfirmDialog's commit button is no exception: in a confirm dialog the
+// question does the warning, not the button. The one control that wears a
+// status colour is a test's button showing its verdict (TestButton), where the
+// colour is the answer; its tone is computed, so this rule never sees it.
 import {
   attrStringValue,
   baseUtility,

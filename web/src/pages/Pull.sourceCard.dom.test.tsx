@@ -24,7 +24,8 @@ const base: PullSourceView = {
   enabled: true,
   createdAt: 1_600_000_000,
   sortOrder: 0,
-  hasAppKey: true,
+  memberId: "member-1",
+  needsPairing: false,
 };
 
 let rows: PullSourceView[] = [base];

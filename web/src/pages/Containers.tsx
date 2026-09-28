@@ -3,6 +3,7 @@ import { listContainers, deleteBackups, forgetContainer, backupAll, restore, res
 import type { AnomalyItem, Container, ItemChecks, ExcludePreset, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, Run } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { useIsCoarsePointer, useIsDesktop } from "../lib/useMediaQuery";
+import { PageTitle } from "../components/PageTitle";
 import { SelectionTree } from "../components/SelectionTree";
 import { RunDetailSheet } from "../components/mobile/RunDetailSheet";
 import { MobileListCard } from "../components/mobile/MobileListCard";
@@ -55,7 +56,7 @@ import { ProgressBar } from "../components/ProgressBar";
 import { tLtr, withLtrFragments, withLtrPlaceholder, EXCLUDES_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { relativeTime } from "../lib/reltime";
-import { useDragReorder } from "../lib/useDragReorder";
+import { useReorder } from "../lib/dragLift";
 import { useConfirm } from "../lib/useConfirm";
 import { hueVars } from "../lib/appearance";
 import { Selector, type SelectorItem } from "../components/Selector";
@@ -209,17 +210,11 @@ const SORT_KEYS = {
 // (parameterised over its option set), has since moved to
 // components/ChipFilter.tsx to serve Containers and VMs from one copy.
 //
-// All three render the SMALL horizontal selector (`variant="well"`, no
-// `equalWidth`) — jdp, live review: "Im Filtermenü: die Optionen bitte in
-// kleine horizontale Selektoren einpflegen". They used to be Selector's
-// default `chip` variant, where every idle option carries its own filled
-// `bg-carbon-surface2` pill, so a three-option filter read as three competing
-// buttons rather than one control with one choice made. The "well" track puts
-// them in a single grooved strip with transparent idle segments, which is the
-// same small selector Settings' notify/integrity rows and CadenceBuilder
-// already use — and the small one, not the pinned `equalWidth size="lg"` one,
-// because these sit inside FilterPopover's 256-416px panel where a 200px
-// per-segment floor would immediately wrap every option onto its own line.
+// All three render the small horizontal selector, the well without
+// `equalWidth`: one grooved control with one choice made, rather than three
+// competing buttons. They hug their segments as toolbar strips, and stay on the
+// small scale because they sit inside FilterPopover's 256-416px panel, where a
+// 200px per-segment floor would put every option on a row of its own.
 function SortControl({
   value,
   onChange,
@@ -235,7 +230,7 @@ function SortControl({
       <Selector
         items={(["name", "status", "ip"] as SortKey[]).map((k) => ({ id: k, label: t(SORT_KEYS[k]) }))}
         label={t("sort.label")}
-        variant="well"
+        inline
         select="one"
         active={value}
         onChange={(id) => onChange(id as SortKey)}
@@ -276,7 +271,7 @@ function FilterControl({
       <Selector
         items={(["all", "installed", "notInstalled"] as FilterKey[]).map((k) => ({ id: k, label: labels[k] }))}
         label={t("containers.filter")}
-        variant="well"
+        inline
         select="one"
         active={value}
         onChange={(id) => onChange(id as FilterKey)}
@@ -1650,6 +1645,8 @@ function ContainerSectionChips({
       <Selector
         items={sectionItems}
         label={t("containers.sectionsLabel")}
+        variant="chip"
+        inline
         select="many"
         active={openSections}
         buttonHeight
@@ -3363,7 +3360,7 @@ export function StackCard({
       {open && (
         <div className="mt-1 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("stack.restoreHint")}</p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
             <SourceToggle source={source} onChange={setSource} disabled={busy} domain="containers" />
           </div>
@@ -3493,8 +3490,7 @@ function BackupOrderPanel({
   const [shakeSave, setShakeSave] = useState(0);
   const [shakeReset, setShakeReset] = useState(0);
   const hydrated = useRef(false);
-  // #124: collapse the whole card (persisted per browser) and reorder rows by
-  // native drag-and-drop (live reorder via the shared useDragReorder hook below).
+  // #124: collapse the whole card, persisted per browser.
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem(BACKUP_ORDER_COLLAPSED_KEY) === "1";
@@ -3548,22 +3544,21 @@ function BackupOrderPanel({
     setSaveState("idle");
   }
 
-  // Drag-and-drop reorder: lift `from` out and drop it at `to` (arrows do a swap;
-  // a drag can jump several rows at once, so this splices instead).
-  function reorder(from: number, to: number) {
-    setNames((prev) => {
-      if (from === to || to < 0 || to >= prev.length) return prev;
-      const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
-      return next;
-    });
-    setSaveState("idle");
-  }
-
-  // Live drag-to-reorder: the shared hook calls reorder() as a row is dragged over
-  // another, so the rows shift immediately instead of only settling on drop.
-  const { dragIndex, rowProps } = useDragReorder<HTMLLIElement>(reorder, saveState === "saving");
+  // A row is carried by its grip and lands in its gap; the arrows are the
+  // keyboard's way to do the same.
+  const list = useRef<HTMLOListElement>(null);
+  const drag = useReorder({
+    ids: names,
+    container: list,
+    attr: "data-order-name",
+    axis: "y",
+    arm: "move",
+    enabled: saveState !== "saving",
+    onReorder: (next) => {
+      setNames(next);
+      setSaveState("idle");
+    },
+  });
 
   function toggleCollapsed() {
     setCollapsed((v) => {
@@ -3706,18 +3701,21 @@ function BackupOrderPanel({
           <p className="text-xs text-carbon-textMuted">{t("backupOrder.empty")}</p>
         ) : (
           <>
-            <ol className="flex flex-col gap-1">
-              {names.map((name, i) => (
+            {/* The list is the rows' offsetParent, the layout a drag measures
+                in. While a row is carried the others wiggle. */}
+            <ol ref={list} className={`relative flex flex-col gap-1 ${drag.held !== null ? "glim-drag-armed" : ""}`}>
+              {drag.order.map((name, i) => (
                 <li
                   key={name}
-                  {...rowProps(i)}
-                  className={`flex items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-1.5 ${
-                    dragIndex === i ? "opacity-40" : ""
-                  }`}
+                  data-order-name={name}
+                  className={`flex select-none items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-1.5 ${drag.look(name)}`}
                 >
-                  {/* Drag grip — a mouse affordance; keyboard users reorder with the
-                      arrow buttons below (so the grip is decorative / aria-hidden). */}
-                  <span className="shrink-0 cursor-grab text-carbon-textSub active:cursor-grabbing" aria-hidden="true">
+                  {/* The grip is for a pointer; the keyboard uses the arrows. */}
+                  <span
+                    className="shrink-0 cursor-grab touch-none text-carbon-textSub active:cursor-grabbing"
+                    aria-hidden="true"
+                    onPointerDown={(e) => drag.press(e, name)}
+                  >
                     <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
                       <circle cx="3" cy="3" r="1" />
                       <circle cx="7" cy="3" r="1" />
@@ -4254,13 +4252,8 @@ export function Containers() {
       {/* Page heading + Discover (disaster-recovery) action */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold text-carbon-text">
-            {t("containers.title")}
-          </h1>
-          <p className="mt-1 text-sm text-carbon-textSub">
-            {t("containers.subtitle")}
-          </p>
-          <div className="mt-2"><OffsiteIndicator domain="containers" /></div>
+          <PageTitle>{t("containers.title")}</PageTitle>
+          <OffsiteIndicator domain="containers" />
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button

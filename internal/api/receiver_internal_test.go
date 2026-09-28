@@ -27,15 +27,15 @@ func receiverTestService(appKey string) *Service {
 	}
 }
 
-// makeReceivedRepo encrypts sendingKey under appKey and returns a ReceivedRepo
-// pointing at repo, as a registered receiver row would.
+// makeReceivedRepo seals the restic password sendingKey derives under appKey
+// and returns a ReceivedRepo pointing at repo, as a paired receiver row would.
 func makeReceivedRepo(t *testing.T, appKey, sendingKey, repo string, readDataPct int) store.ReceivedRepo {
 	t.Helper()
-	enc, err := secret.Encrypt(appKey, []byte(sendingKey))
+	enc, err := secret.Encrypt(appKey, []byte(restickey.Derive(sendingKey)))
 	if err != nil {
-		t.Fatalf("Encrypt sending key: %v", err)
+		t.Fatalf("Encrypt restic password: %v", err)
 	}
-	return store.ReceivedRepo{Repo: repo, AppKeyEnc: enc, ReadDataPercent: readDataPct, Enabled: true}
+	return store.ReceivedRepo{Repo: repo, MemberID: "member-sender", ResticPasswordEnc: enc, ReadDataPercent: readDataPct, Enabled: true}
 }
 
 // seedReceivedRepo initializes a real encrypted restic repo as the sending
@@ -175,7 +175,7 @@ func TestReceiverEnabledInSettingsView(t *testing.T) {
 // A received repo's location goes through the same path resolution as every
 // other repo field. BombVault runs in a container without /mnt/user, so a user
 // who types the path Unraid shows has to be told the path is the problem and
-// what to type instead, not that the APP_KEY is wrong.
+// what to type instead, not that the password is wrong.
 func TestReceiverOpenResolvesTheHostPath(t *testing.T) {
 	appKey := strings.Repeat("a", 64)
 	svc := receiverTestService(appKey)
@@ -188,8 +188,8 @@ func TestReceiverOpenResolvesTheHostPath(t *testing.T) {
 		t.Fatal("an absolute host path must be rejected with an explanation, not opened")
 	}
 	msg := err.Error()
-	if strings.Contains(msg, "APP_KEY") {
-		t.Fatalf("the path is the problem; the message must not blame the key: %q", msg)
+	if strings.Contains(msg, "password") {
+		t.Fatalf("the path is the problem; the message must not blame the password: %q", msg)
 	}
 	if !strings.Contains(msg, "absolute host path") {
 		t.Fatalf("the message must name the path problem, got %q", msg)

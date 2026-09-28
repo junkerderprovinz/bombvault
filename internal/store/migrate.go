@@ -2325,6 +2325,56 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_keys_active_label ON mcp_keys(kind = '
   enabled INTEGER NOT NULL DEFAULT 1
 );`,
 	},
+	{
+		// The pairing group: this instance's id within it, the secret behind
+		// the twelve words sealed under the APP_KEY, and the relay settings.
+		version: pairingMigration,
+		name:    "group_state",
+		sql: `CREATE TABLE IF NOT EXISTS group_state (
+  id          INTEGER PRIMARY KEY CHECK (id = 1),
+  instance_id TEXT    NOT NULL DEFAULT '',
+  secret_enc  BLOB    NOT NULL DEFAULT x'',
+  relay_mode  TEXT    NOT NULL DEFAULT 'project',
+  relay_url   TEXT    NOT NULL DEFAULT '',
+  relay_serve INTEGER NOT NULL DEFAULT 0
+);
+INSERT OR IGNORE INTO group_state (id, instance_id) VALUES (1, lower(hex(randomblob(16))));`,
+	},
+	{
+		// A fleet peer is a group member. Rows from before pairing keep their
+		// cached status with an empty member_id, which the Fleet page shows as
+		// "pair again".
+		version:          pairingMigration + 1,
+		name:             "fleet_peers_member",
+		alreadySatisfied: columnPresent("fleet_peers", "member_id"),
+		sql:              `ALTER TABLE fleet_peers ADD COLUMN member_id TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// Receivers and pull sources keep the other instance's restic
+		// password instead of its APP_KEY. The stored APP_KEYs are converted
+		// at boot, where the key that seals them is known; the empty
+		// member_id marks the rows as needing to be paired again.
+		version:          pairingMigration + 2,
+		name:             "received_repos_member",
+		alreadySatisfied: columnPresent("received_repos", "member_id"),
+		sql: `ALTER TABLE received_repos ADD COLUMN member_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE received_repos ADD COLUMN restic_password_enc BLOB NOT NULL DEFAULT x'';`,
+	},
+	{
+		version:          pairingMigration + 3,
+		name:             "pull_sources_member",
+		alreadySatisfied: columnPresent("pull_sources", "member_id"),
+		sql: `ALTER TABLE pull_sources ADD COLUMN member_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE pull_sources ADD COLUMN restic_password_enc BLOB NOT NULL DEFAULT x'';`,
+	},
+	{
+		// The fleet tokens are gone with pairing; nothing reads the columns,
+		// and a credential nothing checks should not sit in the database.
+		version: pairingMigration + 4,
+		name:    "fleet_token_cleared",
+		sql: `UPDATE settings SET fleet_token = '';
+UPDATE fleet_peers SET token_enc = x'';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2387,6 +2437,10 @@ const vmBlocksMigration = 220
 // apiMigrationBase numbers the public API, the Home Assistant link and the
 // network announcement.
 const apiMigrationBase = 230
+
+// pairingMigration numbers pairing by phrase. It starts at 250, above the
+// numbers other branches have taken.
+const pairingMigration = 250
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

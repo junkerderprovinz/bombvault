@@ -24,6 +24,9 @@ import { Badge } from "./Badge";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
 import { Button } from "./Button";
+import { TestButton, VerdictLine } from "./TestButton";
+import { useTestVerdict } from "../lib/useTestVerdict";
+import { offsiteVerdict } from "../lib/offsiteVerdict";
 
 // Guided off-site setup for one domain. It has no persistence of its own: the
 // repo URL, immutable flag and growth budget go through the same `settings`,
@@ -240,7 +243,7 @@ export function OffsiteWizard({
   // Shown while the URL is typed, before a connection test answers 401.
   const userMismatch = restPathUserMismatch(repoURL, selectedCredSet ? selectedCredSet.restUser : sharedRestUser);
 
-  const [testBusy, setTestBusy] = useState(false);
+  const test = useTestVerdict([repoURL, credsRef], t("offsite.testFailed"));
 
   // save() takes a SaveState callback; the repo field has no use for the state.
   const [, setRepoState] = useState<SaveState>("idle");
@@ -355,22 +358,8 @@ export function OffsiteWizard({
     }
   }
 
-  async function runTest() {
-    setTestBusy(true);
-    try {
-      const r = primary ? await testPrimaryRemote(domain) : await testOffsite(domain);
-      if (r.ok && r.reachable && r.initialized) {
-        push(t("offsite.testOk"), "success");
-      } else if (r.ok && r.reachable) {
-        push(t("offsite.testUninitialized"), "warn");
-      } else {
-        push(r.error ?? t("offsite.testFailed"), "fail");
-      }
-    } catch (e) {
-      push(e instanceof Error ? e.message : t("offsite.testFailed"), "fail");
-    } finally {
-      setTestBusy(false);
-    }
+  function runTest() {
+    void test.run(async () => offsiteVerdict(primary ? await testPrimaryRemote(domain) : await testOffsite(domain), t));
   }
 
   // A failure to run the test is a toast; a verdict stays inline.
@@ -726,20 +715,18 @@ export function OffsiteWizard({
           </div>
         )}
 
-        {/* Hued like TestConnectionButton outside the wizard, which runs the
+        {/* Hued like the Test connection outside the wizard, which runs the
             same probe. */}
+        <VerdictLine verdict={test.verdict} />
         <div className="flex items-center gap-3">
-          <Badge
-            as="button"
-            tone="active"
-            size="small"
+          <TestButton
+            label={t("offsite.test")}
+            labelKey="offsite.test"
+            tone="accent"
             hueIndex={hueIndex}
-            onClick={() => void runTest()}
-            disabled={testBusy}
-            className="pointer-coarse:h-(--btn-h) pointer-coarse:px-3"
-          >
-            {testBusy ? t("offsite.testing") : t("offsite.test")}
-          </Badge>
+            test={test}
+            onClick={runTest}
+          />
         </div>
       </div>
 

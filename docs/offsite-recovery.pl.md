@@ -64,6 +64,28 @@ BombVault oferuje dwa poziomy dowodu, że Twoje kopie są faktycznie przywracaln
 
 **Karta wyników ochrony przed ransomware** na panelu zbiera to w postawę zielony / bursztynowy / czerwony per domena, z listą kontrolną ze znacznikiem wieku (skonfigurowano poza siedzibą, zweryfikowano append-only, replikacja aktualna, próba przywracania zaliczona, szyfrowanie włączone, ustawiono strategię przycinania). Każdy czerwony wiersz linkuje bezpośrednio do naprawy, a karta przechodzi na zielony tylko na podstawie zweryfikowanych faktów.
 
+## Parowanie instancji {#pairing}
+
+Odbiorcy, źródła pobierania, widok Fleet i Mesh poza siedzibą, wszystkie rozmawiają z inną instancją BombVault. Robią to jako członkowie jednej grupy parowania, a instancja dołącza do grupy dwunastoma słowami.
+
+Na pierwszej instancji otwórz **Instancje → Parowanie** i naciśnij **Utwórz frazę**. Pojawi się dwanaście słów. Na każdej kolejnej instancji otwórz tę samą zakładkę, naciśnij **Wpisz frazę** i wpisz je. Ostatnie słowo niesie sumę kontrolną, więc źle wpisane albo zamienione miejscami słowo od razu rzuca się w oczy, a strona podaje słowo i jego miejsce. Parowanie wymaga hasła logowania na każdej instancji, bo słowa otwierają kopie zapasowe wszystkich instancji w grupie. Frazę można później wyświetlić ponownie po wpisaniu tego hasła. **Opuść grupę** wyprowadza instancję z powrotem.
+
+Każdy, kto zna słowa, może dołączyć do grupy, więc traktuj je jak hasło.
+
+**Jak członkowie się odnajdują.** W tej samej sieci znajdują się przez multicast i rozmawiają bezpośrednio. Instancje w różnych sieciach idą przez przekaźnik, wybierany na tej samej zakładce:
+
+- **Przekaźnik projektu** (domyślny): `relay.halleluja.design`, ten sam przekaźnik, którego używa też KnightLoader. Nic do skonfigurowania.
+- **Własny przekaźnik**: kontener **BombVault Relay** z Unraid Community Apps, albo jedna z twoich instancji, która jest już dostępna z zewnątrz, z włączonym **Działaj jako przekaźnik**. Ta instancja odpowiada wtedy pod `/relay/connect` na swoim własnym adresie, za odwrotnym proxy i certyfikatem, które już ma, i wpuszcza tylko twoją grupę. Wpisz adres przekaźnika na każdej instancji, która ma go używać.
+- **Żaden przekaźnik**: członkowie odnajdują się tylko w tej samej sieci.
+
+**Co widzi przekaźnik.** Każde połączenie między członkami jest zapieczętowane AES-256-GCM kluczem wyprowadzonym z dwunastu słów, a ten klucz nigdy nie opuszcza twoich instancji. Przekaźnik poznaje skrót grupujący połączenia, dla której instancji jest wiadomość, jak duża jest i kiedy przechodzi. Bezpośrednie połączenie w sieci lokalnej jest zapieczętowane tak samo i dodatkowo podpisane, więc nic nie zależy od certyfikatu samopodpisanego, który serwuje instancja.
+
+**Co przechodzi przez grupę.** Karta wyników Fleet, prośba o sprawdzenie jednej domeny teraz, oferty Mesh dotyczące kopii poza siedzibą oraz to, czego potrzebuje odbiorca lub źródło pobierania: adresy repozytoriów drugiej instancji i jej hasło restic. Dane kopii zapasowej nigdy tamtędy nie idą, nadal trafiają prosto do backendów restic. APP_KEY też nie: hasło restic otwiera tylko repozytoria tej instancji i nic więcej, ani jej zapisanych sekretów, sesji, ani kodów odzyskiwania.
+
+**Wpisy sprzed parowania.** Partnerzy Fleet dodani tokenem fleet oraz odbiorcy i źródła pobierania skonfigurowane APP_KEY-em drugiej instancji zostają po aktualizacji i są oznaczone **Sparuj ponownie**. Odbiorcy i źródła pobierania nadal działają: przy pierwszym uruchomieniu BombVault zastępuje każdy zapisany APP_KEY wyprowadzonym z niego hasłem restic. Sparuj obie instancje, potem edytuj wpis i wybierz jego instancję. Partner Fleet przejmuje swój stary wiersz, gdy tylko w grupie pojawi się instancja o tej samej nazwie.
+
+Jedynym miejscem, które nadal wymaga ręcznego podania APP_KEY, jest [Przywracanie z innego repozytorium BombVault](#restore-from-another-bombvault-repo), na wypadek gdy druga instancja zniknęła i nie może już odpowiedzieć w żadnej grupie.
+
 ## Panel odbiorcy (strona odbierająca)
 
 ![Strona odbierająca, obserwowana tylko do odczytu, z kontrolą spójności na tej maszynie.](assets/screenshots/receiver.png)
@@ -72,7 +94,7 @@ BombVault oferuje dwa poziomy dowodu, że Twoje kopie są faktycznie przywracaln
 
 Wszystko powyżej to strona *wysyłająca*. Na maszynie, która **odbiera** niezmienne kopie poza siedzibą od innego BombVault, panel odbiorcy daje Ci niezależne, tylko do odczytu monitorowanie tych repozytoriów na sprzęcie odbierającym, więc ciche niepowodzenie po drugiej stronie nie pozostaje niezauważone.
 
-Włącz przełącznik **Odbiorca** w Ustawieniach, aby odsłonić zakładkę **Odbiorca**. Jest domyślnie wyłączony; włącz go tylko na maszynie, która faktycznie odbiera niezmienne kopie poza siedzibą. Następnie zarejestruj otrzymane repozytorium (tylko do odczytu, otwarte kluczem instancji wysyłającej), aby uzyskać:
+Włącz przełącznik **Odbiorca** w Ustawieniach, aby odsłonić zakładkę **Odbiorca**. Jest domyślnie wyłączony; włącz go tylko na maszynie, która faktycznie odbiera niezmienne kopie poza siedzibą. Następnie zarejestruj otrzymane repozytorium (tylko do odczytu, otwarte hasłem restic instancji wysyłającej, które dociera przez [grupę parowania](#pairing)), aby uzyskać:
 
 - **Inwentarz migawek pogrupowany według źródła**, więc widzisz dokładnie, które kontenery, VM i zestawy plików dotarły.
 - **Ostatnio otrzymane** per źródło, więc wiesz, jak świeże jest każde z nich.
@@ -106,12 +128,12 @@ Pierwszy segment ścieżki to użytkownik htpasswd, drugi to repozytorium. Wpisz
 | **NIE chronione** | VAULT przyjął usunięcie. Brakuje `--append-only` albo je usunięto. |
 | **nierozstrzygnięte** | Ani jedno, ani drugie. Zwykle adres nie jest tym, którego używa sam restic, albo zmieniły się dane logowania. Nic nie jest zapisywane i nie uruchamia się alarm. |
 
-**4. Na VAULT patrz, co przychodzi.** Włącz *Ustawienia → Odbiornik*, otwórz zakładkę **Odbiornik** i zarejestruj repozytorium tylko do odczytu.
+**4. Na VAULT patrz, co przychodzi.** Sparuj obie maszyny ([Parowanie instancji](#pairing)), włącz *Ustawienia → Odbiornik*, otwórz zakładkę **Odbiornik** i zarejestruj repozytorium tylko do odczytu, wskazując TOWER jako instancję wysyłającą.
 
 !!! warning "Lokalizacja to ścieżka **wewnątrz** kontenera, zapisana względem montowania hosta"
     Wpisz `user/appdata/rest-server/bombvault-containers/containers`, a **nie** `/mnt/user/appdata/…`. BombVault działa w kontenerze, w którym `/mnt` hosta jest zamontowane gdzie indziej; bezwzględna ścieżka hosta tam nie istnieje. Jeśli ją wkleisz, BombVault poda ci teraz ścieżkę względną, której należy użyć.
 
-    **Wysyłający APP_KEY** to klucz TOWER, a nie VAULT. Znajdziesz go na TOWER w *Ustawienia → System*.
+    VAULT dostaje hasło restic od TOWER przez grupę w chwili zapisu; nikt nie musi przepisywać klucza.
 
 **5. Jeśli chcesz, zrób to wzajemnie.** Powtórz te same pięć kroków w drugą stronę: rest-server na TOWER przyjmujący kopię z VAULT. Wtedy każda maszyna wymusza niezmienność dla drugiej i żadna nie może usunąć kopii tej drugiej.
 
@@ -128,7 +150,7 @@ Dedykowana zakładka **Odzyskiwanie** prowadzi świeżą lub odbudowaną instala
 !!! tip "Zaplanowana migracja kontra awaria"
     Odzyskiwanie z przewodnikiem przywraca własne ustawienia BombVault z kopii zapasowej. Do *zaplanowanego* przejścia na nową maszynę możesz zamiast tego przenieść swoją konfigurację bezpośrednio za pomocą karty **Eksport i import ustawień** (przenośny plik JSON). Zobacz [Konfiguracja](configuration.md#portable-settings-export-and-import).
 
-### Przywracanie z innego repozytorium BombVault
+### Przywracanie z innego repozytorium BombVault {#restore-from-another-bombvault-repo}
 
 Osobna karta w zakładce **Odzyskiwanie** otwiera repozytorium *innej* instancji BombVault (udział zamontowany pod `/mnt` lub zdalny URL) za pomocą **`APP_KEY` tej instancji**, w jednorazowej sesji tylko do odczytu. Przeglądaj przechowywane tam kontenery, VM i zestawy plików, wybierz migawkę i przywróć ją, a przywrócony obiekt staje się normalnym lokalnym kontenerem, VM lub zestawem plików. Nic nigdy nie jest zapisywane do drugiego repozytorium, a Twoje własne ustawienia kopii pozostają nietknięte (sesja żyje w pamięci i wygasa sama). Przeniesienie kontenera z serwera A na serwer B nie oznacza już przekierowywania ustawień repozytorium i cofania ich potem. Federacja serwer-do-serwera na żywo jest wyraźnie poza zakresem; to celowe jednorazowe pobranie.
 

@@ -351,14 +351,18 @@ export function ActivityLog({
             );
           })}
         </div>
+        {/* Centred: in a corner the button covers the log's scrollbar. The row
+            spans the log so the centring also holds under dir="rtl". */}
         {!autoFollow && (
-          <Button
-            label={t("activityLog.jumpToLatest")}
-            labelKey="activityLog.jumpToLatest"
-            tone="neutral"
-            onClick={jumpToLatest}
-            className="absolute bottom-3 end-3"
-          />
+          <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
+            <Button
+              label={t("activityLog.jumpToLatest")}
+              labelKey="activityLog.jumpToLatest"
+              tone="neutral"
+              onClick={jumpToLatest}
+              className="pointer-events-auto"
+            />
+          </div>
         )}
       </div>
     </div>

@@ -66,10 +66,25 @@ describe("ZFS connection card", () => {
     connectionFails = true;
     renderCard();
     expect(await screen.findByText(en["common.networkError"])).toBeTruthy();
+    // The test on opening the card was nobody's click, so its failure does
+    // not shake the button.
+    const failed = screen.getByRole("button", { name: en["verdict.notConnected"] });
+    expect(failed.className).toContain("bg-statusFailSolid");
+    expect(failed.className).not.toContain("glim-shake");
     connectionFails = false;
-    fireEvent.click(screen.getByRole("button", { name: en["zfs.connection.test"] }));
+    fireEvent.click(failed);
     expect(await screen.findByText("Connected as root@192.168.1.10")).toBeTruthy();
+    expect(screen.getByRole("button", { name: en["verdict.connected"] }).className).toContain("bg-statusOkSolid");
     expect(connectionCalls).toBe(2);
+  });
+
+  it("shakes the button when a test someone clicked fails", async () => {
+    renderCard();
+    await screen.findByText("Connected as root@192.168.1.10");
+    connection = result({ ok: false, code: "ssh-auth", version: "" });
+    fireEvent.click(screen.getByRole("button", { name: en["verdict.connected"] }));
+    const failed = await screen.findByRole("button", { name: en["verdict.notConnected"] });
+    expect(failed.className).toContain("glim-shake");
   });
 
   it("collapses a working connection to the target and the version", async () => {
@@ -101,7 +116,7 @@ describe("ZFS connection card", () => {
     expect(screen.getByLabelText(en["zfs.fix.zfs-permission"])).toBeTruthy();
     screen.getByRole("button", { name: en["zfs.connection.details"] }).click();
     expect(await screen.findByText("cannot create snapshot: permission denied")).toBeTruthy();
-    expect(screen.getByRole("button", { name: en["zfs.connection.test"] })).toBeTruthy();
+    expect(screen.getByRole("button", { name: en["verdict.notConnected"] })).toBeTruthy();
   });
 
   it("hands out the key and the authorize command when the server refused it", async () => {

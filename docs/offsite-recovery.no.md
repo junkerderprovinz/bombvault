@@ -64,6 +64,28 @@ BombVault tilbyr to nivåer av bevis for at sikkerhetskopiene dine faktisk er gj
 
 **Poengkortet for løsepengevirusbeskyttelse** på Dashboardet ruller dette opp i en grønn / gul / rød holdning per domene, med en aldersstemplet sjekkliste (ekstern konfigurert, append-only verifisert, replikering oppdatert, gjenopprettingsøvelse bestått, kryptering på, beskjæringsstrategi satt). Hver rød rad dyplenker til fiksen, og kortet blir bare grønt på verifiserte fakta.
 
+## Koble instanser sammen {#pairing}
+
+Mottakere, hentekilder, Fleet-visningen og Mesh-ekstern snakker alle med en annen BombVault. De gjør det som medlemmer av én paringsgruppe, og en instans blir med i gruppen med tolv ord.
+
+Åpne **Instanser → Paring** på den første instansen og trykk **Opprett frase**. Tolv ord dukker opp. Åpne den samme fanen på hver av de andre instansene, trykk **Angi frase** og tast dem inn. Det siste ordet bærer en sjekksum, så et feiltastet eller ombyttet ord fanges opp med det samme, og siden navngir ordet og plasseringen dets. Paring krever et innloggingspassord på hver instans, fordi ordene åpner sikkerhetskopiene til alle instansene i gruppen. Frasen kan vises igjen senere når du har skrevet inn det passordet. **Forlat gruppen** tar en instans ut igjen.
+
+Alle som kjenner ordene kan bli med i gruppen, så behandle dem som et passord.
+
+**Hvordan medlemmene når hverandre.** På samme nettverk finner de hverandre via multicast og snakker direkte sammen. Instanser på ulike nettverk går gjennom et relé, valgt på samme fane:
+
+- **Prosjektrelé** (standarden): `relay.halleluja.design`, det samme reléet som KnightLoader også bruker. Ingenting å sette opp.
+- **Eget relé**: containeren **BombVault Relay** fra Unraid Community Apps, eller en av instansene dine som allerede er tilgjengelig utenfra med **Fungere som relé** slått på. Den instansen svarer da på `/relay/connect` på sin egen adresse, bak revers-proxyen og sertifikatet den allerede har, og slipper bare inn din gruppe. Skriv inn reléets adresse på hver instans som skal bruke det.
+- **Ingen relé**: medlemmer finner bare hverandre på samme nettverk.
+
+**Hva reléet ser.** Hvert kall mellom medlemmer er forseglet med AES-256-GCM under en nøkkel utledet fra de tolv ordene, og den nøkkelen forlater aldri instansene dine. Reléet får vite en hash som grupperer forbindelsene, hvilken instans en melding er til, hvor stor den er og når den passerer. Et direkte kall på det lokale nettverket er forseglet på samme måte og signert i tillegg, så ingenting avhenger av det selvsignerte sertifikatet en instans tilbyr.
+
+**Hva som går over gruppen.** Fleet-poengkortet, en forespørsel om å sjekke ett domene nå, Mesh-tilbud om ekstern kopiering, og det en mottaker eller hentekilde trenger: den andre instansens repository-adresser og dens restic-passord. Sikkerhetskopidata går aldri denne veien, det går fortsatt rett til restic-backendene. Heller ikke APP_KEY: restic-passordet åpner bare den instansens repositorier og ingenting annet, verken lagrede hemmeligheter, økter eller gjenopprettingskoder.
+
+**Oppføringer fra før paringen.** Fleet-motparter lagt til med et fleet-token, og mottakere og hentekilder satt opp med den andre instansens APP_KEY, blir stående etter oppdateringen og merkes **Par på nytt**. Mottakere og hentekilder fortsetter å virke: ved første oppstart erstatter BombVault hver lagrede APP_KEY med restic-passordet utledet fra den. Par begge instansene, rediger så oppføringen og velg instansen dens. En Fleet-motpart tar over sin gamle rad så snart en instans med samme navn dukker opp i gruppen.
+
+Det eneste stedet som fortsatt tar imot en APP_KEY for hånd, er [Gjenopprett fra et annet BombVault-repo](#restore-from-another-bombvault-repo), for tilfellet der den andre instansen er borte og ikke lenger kan svare i noen gruppe.
+
 ## Mottaker-dashboard (mottakssiden)
 
 ![Den mottakende siden, overvåket skrivebeskyttet, med en integritetssjekk kjørt på denne maskinen.](assets/screenshots/receiver.png)
@@ -72,7 +94,7 @@ BombVault tilbyr to nivåer av bevis for at sikkerhetskopiene dine faktisk er gj
 
 Alt ovenfor er *sende*-siden. På boksen som **mottar** uforanderlige eksterne kopier fra en annen BombVault, gir Mottaker-dashboardet deg uavhengig, skrivebeskyttet overvåking av disse repositoriene på mottaks-maskinvaren, så en stille feil i den andre enden ikke går ubemerket hen.
 
-Slå på **Mottaker**-bryteren i Innstillinger for å avdekke en **Mottaker**-fane. Den er av som standard; aktiver den kun på en boks som faktisk mottar uforanderlige eksterne sikkerhetskopier. Registrer deretter et mottatt repository (skrivebeskyttet, åpnet med den sendende instansens nøkkel) for å få:
+Slå på **Mottaker**-bryteren i Innstillinger for å avdekke en **Mottaker**-fane. Den er av som standard; aktiver den kun på en boks som faktisk mottar uforanderlige eksterne sikkerhetskopier. Registrer deretter et mottatt repository (skrivebeskyttet, åpnet med restic-passordet til den sendende instansen, som det får over [paringsgruppen](#pairing)) for å få:
 
 - **Et øyeblikksbilde-inventar gruppert etter kilde**, så du kan se nøyaktig hvilke containere, VM-er og filsett som har landet.
 - **Sist mottatt** per kilde, så du vet hvor fersk hver enkelt er.
@@ -106,12 +128,12 @@ Første ledd i stien er htpasswd-brukeren, det andre er arkivet. Skriv inn den g
 | **IKKE beskyttet** | VAULT godtok en sletting. `--append-only` mangler eller er fjernet. |
 | **uavklart** | Verken eller. Som regel er adressen ikke den restic selv bruker, eller legitimasjonen er endret. Ingenting registreres, og ingen varsling utløses. |
 
-**4. Se på VAULT hva som kommer inn.** Slå på *Innstillinger → Mottaker*, åpne fanen **Mottaker**, og registrer arkivet skrivebeskyttet.
+**4. Se på VAULT hva som kommer inn.** Par de to boksene ([Koble instanser sammen](#pairing)), slå på *Innstillinger → Mottaker*, åpne fanen **Mottaker**, og registrer arkivet skrivebeskyttet med TOWER som sendende instans.
 
 !!! warning "Plasseringen er en sti **inne i** containeren, skrevet relativt til vertsmonteringen"
     Skriv inn `user/appdata/rest-server/bombvault-containers/containers`, **ikke** `/mnt/user/appdata/…`. BombVault kjører i en container der vertens `/mnt` er montert et annet sted; en absolutt vertssti finnes ikke der. Limer du inn en, forteller BombVault deg nå den relative stien du skal bruke i stedet.
 
-    **Sendende APP_KEY** er TOWERs nøkkel, ikke VAULTs. Du finner den på TOWER under *Innstillinger → System*.
+    VAULT får TOWERs restic-passord over gruppen når du lagrer; ingen behøver å taste inn en nøkkel.
 
 **5. Gjør det gjensidig, hvis du vil.** Gjenta de samme fem trinnene motsatt vei: en rest-server på TOWER som tar imot VAULTs kopi. Da håndhever hver maskin uforanderligheten for den andre, og ingen kan slette den andres sikkerhetskopier.
 
@@ -128,7 +150,7 @@ En egen **Gjenoppretting**-fane leder en ny eller gjenoppbygd installasjon gjenn
 !!! tip "Planlagt migrering versus katastrofe"
     Veiledet gjenoppretting gjenoppretter BombVaults egne innstillinger fra en sikkerhetskopi. For en *planlagt* flytting til en ny boks kan du i stedet ta med konfigurasjonen din direkte via kortet **Eksporter og importer innstillinger** (en portabel JSON-fil). Se [Konfigurasjon](configuration.md#portable-settings-export-and-import).
 
-### Gjenopprett fra et annet BombVault-repo
+### Gjenopprett fra et annet BombVault-repo {#restore-from-another-bombvault-repo}
 
 Et separat kort på **Gjenoppretting**-fanen åpner et *annet* BombVault-instans' repo (en deling montert under `/mnt`, eller en fjern-URL) med **den instansens `APP_KEY`**, i en engangs, skrivebeskyttet økt. Bla gjennom containerne, VM-ene og filsettene lagret der, velg et øyeblikksbilde og gjenopprett det, og det gjenopprettede objektet blir en normal lokal container, VM eller filsett. Ingenting skrives noensinne til det andre repoet, og dine egne sikkerhetskopiinnstillinger forblir urørte (økten lever i minnet og utløper av seg selv). Å flytte en container fra server A til server B betyr ikke lenger å peke om repo-innstillingene dine og reversere dem etterpå. Live server-til-server-føderasjon er eksplisitt utenfor omfang; dette er en bevisst engangs-henting.
 

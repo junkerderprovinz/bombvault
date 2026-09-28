@@ -69,17 +69,48 @@ it("runs the give buttons hosted-page first, wallet last", () => {
   expect(paypal).toBeLessThan(crypto);
 });
 
-it("gives the report sentence the extra line above it, and only that one", () => {
+it("stands the give row a blank line apart from the sentences around it", () => {
   renderCard();
-  const report = screen.getByText(en["about.report"], { exact: false });
-  const body = screen.getByText(en["about.body"], { exact: false });
-  const coffee = screen.getByText(en["about.coffee"], { exact: false });
+  const row = screen.getByRole("button", { name: new RegExp(en["about.coffeeButton"], "i") }).closest(
+    ".glim-readme-btn-rows"
+  );
+  // Without the space the buttons sit as close to the report sentence below
+  // as to the sentence they answer, and the eye pairs them with the wrong one.
+  expect(row?.className).toContain("glim-about-give");
+  for (const key of ["about.body", "about.coffee", "about.report"] as const) {
+    expect(screen.getByText(en[key], { exact: false }).className, key).not.toMatch(/\bm[ty]-/);
+  }
+});
 
-  // Without the break the coffee button sits as close to the sentence below it
-  // as to the one it belongs to, and the eye pairs it with the wrong text.
-  expect(report.className).toContain("mt-2");
-  expect(body.className).not.toContain("mt-2");
-  expect(coffee.className).not.toContain("mt-2");
+it("gives and reports with README buttons that light up in their brand's colour", () => {
+  renderCard();
+  const tiles: [string, string][] = [
+    [en["about.coffeeButton"], "glim-tile-coffee"],
+    [en["about.paypal"], "glim-tile-paypal"],
+    [en["about.crypto"], "glim-tile-bitcoin"],
+    [en["about.repo"], "glim-tile-github"],
+    [en["about.mail"], "glim-tile-house"],
+  ];
+  for (const [name, tile] of tiles) {
+    const button = screen.getByRole("button", { name: new RegExp(name, "i") });
+    expect(button.className, name).toContain("glim-brand-tile");
+    expect(button.closest(".glim-readme-btn-unit")?.className, name).toContain(tile);
+  }
+});
+
+it("wears Buy Me a Coffee's own artwork and an envelope that opens under the pointer", () => {
+  renderCard();
+  const coffee = screen.getByRole("button", { name: new RegExp(en["about.coffeeButton"], "i") });
+  expect(coffee.querySelector(".glim-readme-btn-art svg")).not.toBeNull();
+
+  const mail = screen.getByRole("button", { name: new RegExp(en["about.mail"], "i") });
+  const rest = mail.querySelector("svg.glim-mark-rest");
+  const open = mail.querySelector("svg.glim-mark-hover");
+  // One box for both, centred on the closed envelope, so it does not jump;
+  // the open flap may rise past the box.
+  expect(rest?.getAttribute("viewBox")).toBe("2 2.32 20 19.36");
+  expect(open?.getAttribute("viewBox")).toBe("2 2.32 20 19.36");
+  expect(open?.getAttribute("overflow")).toBe("visible");
 });
 
 it("puts every way to give under the sentence that asks, and none of them elsewhere", () => {

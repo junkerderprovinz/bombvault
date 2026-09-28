@@ -64,6 +64,28 @@ BombVault offre due livelli di prova che i tuoi backup siano effettivamente ripr
 
 La **scorecard della protezione dal ransomware** sulla Dashboard riassume tutto questo in una postura verde / ambra / rossa per dominio, con una checklist con marca temporale (off-site configurato, append-only verificato, replica aggiornata, esercitazione di ripristino superata, cifratura attiva, strategia di pota impostata). Ogni riga rossa collega direttamente alla soluzione, e la scheda diventa verde solo su fatti verificati.
 
+## Associazione delle istanze {#pairing}
+
+I Riceventi, le fonti di Prelievo, la vista Flotta e il Mesh fuori sede parlano tutti con un altro BombVault. Lo fanno come membri di un unico gruppo di associazione, e un'istanza si unisce al gruppo con dodici parole.
+
+Sulla prima istanza apri **Istanze → Associazione** e premi **Crea frase**. Appaiono dodici parole. Su ogni altra istanza apri la stessa scheda, premi **Inserisci frase** e digitale. L'ultima parola porta un checksum, così una parola digitata male o scambiata viene rilevata sul momento, e la pagina indica la parola e la sua posizione. L'associazione richiede una password di accesso su ogni istanza, perché le parole aprono i backup di tutte le istanze del gruppo. La frase può essere mostrata di nuovo in seguito, dopo aver inserito quella password. **Esci dal gruppo** fa uscire di nuovo un'istanza.
+
+Chiunque conosca le parole può unirsi al gruppo, trattale quindi come una password.
+
+**Come i membri si raggiungono.** Sulla stessa rete si trovano tramite multicast e si parlano direttamente. Le istanze su reti diverse passano da un relay, scelto nella stessa scheda:
+
+- **Relay del progetto** (predefinito): `relay.halleluja.design`, lo stesso relay usato anche da KnightLoader. Niente da configurare.
+- **Relay personale**: il container **BombVault Relay** dalle Unraid Community Apps, oppure una delle tue istanze già raggiungibile dall'esterno con **Servi da relay** attivato. Quell'istanza risponde poi su `/relay/connect` al proprio indirizzo, dietro il reverse proxy e il certificato che già possiede, e fa entrare solo il tuo gruppo. Inserisci l'indirizzo del relay su ogni istanza che deve usarlo.
+- **Nessun relay**: i membri si trovano solo sulla stessa rete.
+
+**Cosa vede il relay.** Ogni chiamata tra membri è sigillata con AES-256-GCM sotto una chiave derivata dalle dodici parole, e quella chiave non lascia mai le tue istanze. Il relay apprende un hash che raggruppa le connessioni, a quale istanza è destinato un messaggio, quanto è grande e quando passa. Una chiamata diretta sulla rete locale è sigillata allo stesso modo e anche firmata, così nulla dipende dal certificato autofirmato che un'istanza serve.
+
+**Cosa viaggia sul gruppo.** La Scorecard della Flotta, una richiesta di controllare subito un dominio, le offerte di storage fuori sede del Mesh, e ciò di cui un Ricevente o una fonte di Prelievo ha bisogno: le posizioni del repository dell'altra istanza e la sua password restic. I dati di backup invece mai: vanno sempre direttamente ai backend restic. Nemmeno l'APP_KEY: la password restic apre i repository di quell'istanza e nient'altro, non i suoi segreti memorizzati, non le sue sessioni, non i suoi codici di ripristino.
+
+**Voci precedenti all'associazione.** I peer di Flotta aggiunti con un token di flotta, e i Riceventi e le fonti di Prelievo configurati con l'APP_KEY dell'altra istanza, restano dopo l'aggiornamento e sono contrassegnati **Associa di nuovo**. I Riceventi e le fonti di Prelievo continuano a funzionare: al primo avvio BombVault sostituisce ogni APP_KEY memorizzato con la password restic da esso derivata. Associa entrambe le istanze, poi modifica la voce e scegli la sua istanza. Un peer di Flotta riprende la sua vecchia riga non appena un'istanza con lo stesso nome compare nel gruppo.
+
+L'unico posto che richiede ancora un APP_KEY a mano è [Ripristino da un altro repo BombVault](#restore-from-another-bombvault-repo), per il caso in cui l'altra istanza sia scomparsa e non possa rispondere in un gruppo.
+
 ## Dashboard ricevente (il lato ricevente)
 
 ![Il lato ricevente, osservato in sola lettura, con un controllo di integrità eseguito su questa macchina.](assets/screenshots/receiver.png)
@@ -72,7 +94,7 @@ La **scorecard della protezione dal ransomware** sulla Dashboard riassume tutto 
 
 Tutto quanto sopra è il lato *mittente*. Sulla macchina che **riceve** copie off-site immutabili da un altro BombVault, la dashboard Ricevente ti offre un monitoraggio indipendente e in sola lettura di quei repository sull'hardware ricevente, così un fallimento silenzioso all'altra estremità non passa inosservato.
 
-Attiva l'interruttore **Ricevente** in Impostazioni per rivelare una scheda **Ricevente**. È disattivato di default; abilitalo solo su una macchina che riceve effettivamente backup off-site immutabili. Poi registra un repository ricevuto (in sola lettura, aperto con la chiave dell'istanza mittente) per ottenere:
+Attiva l'interruttore **Ricevente** in Impostazioni per rivelare una scheda **Ricevente**. È disattivato di default; abilitalo solo su una macchina che riceve effettivamente backup off-site immutabili. Poi registra un repository ricevuto (in sola lettura, aperto con la password restic dell'istanza mittente, che ottiene tramite il [gruppo di associazione](#pairing)) per ottenere:
 
 - **Un inventario di snapshot raggruppato per sorgente**, così puoi vedere esattamente quali container, VM e set di file sono arrivati.
 - **Ultimo ricevuto** per sorgente, così sai quanto è fresco ciascuno.
@@ -106,12 +128,12 @@ Il primo segmento del percorso è l'utente htpasswd, il secondo il repository. I
 | **NON protetto** | VAULT ha accettato una cancellazione. Manca `--append-only` oppure è stato rimosso. |
 | **non conclusivo** | Né l'uno né l'altro. Di solito l'URL non è quello che usa restic, oppure le credenziali sono cambiate. Non viene registrato nulla e non scatta alcun avviso. |
 
-**4. Su VAULT, guarda cosa arriva.** Attiva *Impostazioni → Ricevitore*, apri la scheda **Ricevitore** e registra il repository in sola lettura.
+**4. Su VAULT, guarda cosa arriva.** Associa le due macchine ([Associazione delle istanze](#pairing)), attiva *Impostazioni → Ricevitore*, apri la scheda **Ricevitore** e registra il repository in sola lettura con TOWER come istanza mittente.
 
 !!! warning "La posizione è un percorso **dentro** il container, scritto relativo al mount dell'host"
     Inserisci `user/appdata/rest-server/bombvault-containers/containers`, **non** `/mnt/user/appdata/…`. BombVault gira in un container in cui il `/mnt` dell'host è montato altrove; un percorso host assoluto lì non esiste. Se ne incolli uno, BombVault ora ti indica il percorso relativo da usare.
 
-    L'**APP_KEY di invio** è la chiave di TOWER, non quella di VAULT. La trovi su TOWER in *Impostazioni → Sistema*.
+    VAULT ottiene la password restic di TOWER tramite il gruppo quando salvi; nessuno deve digitare una chiave.
 
 **5. Rendilo reciproco, se vuoi.** Ripeti gli stessi cinque passi nella direzione opposta: un rest-server su TOWER che riceve la copia di VAULT. Ogni macchina impone allora l'immutabilità all'altra, e nessuna può cancellare i backup dell'altra.
 
@@ -128,7 +150,7 @@ Una scheda **Ripristino** dedicata accompagna un'installazione pulita o ricostru
 !!! tip "Migrazione pianificata contro disastro"
     Il ripristino guidato ripristina le impostazioni di BombVault stesso da un backup. Per uno spostamento *pianificato* su una nuova macchina, puoi invece portare la tua configurazione direttamente con la scheda **Esporta e importa impostazioni** (un file JSON portatile). Vedi [Configurazione](configuration.md#portable-settings-export-and-import).
 
-### Ripristino da un altro repo BombVault
+### Ripristino da un altro repo BombVault {#restore-from-another-bombvault-repo}
 
 Una scheda separata nella scheda **Ripristino** apre il repo di un'*altra* istanza BombVault (una condivisione montata sotto `/mnt`, o un URL remoto) con l'**`APP_KEY` di quell'istanza**, in una sessione monouso e in sola lettura. Sfoglia i container, le VM e i set di file memorizzati lì, scegli uno snapshot e ripristinalo, e l'oggetto ripristinato diventa un normale container, VM o set di file locale. Nulla viene mai scritto nell'altro repo, e le tue impostazioni di backup restano intatte (la sessione risiede in memoria e scade da sé). Spostare un container dal server A al server B non significa più ripuntare le impostazioni del tuo repo e riportarle indietro dopo. La federazione dal vivo server-a-server è esplicitamente fuori ambito; questa è una deliberata estrazione monouso.
 
