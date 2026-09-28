@@ -772,7 +772,7 @@ const es: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Eliminar todas las copias",
-  "snapshots.deleteAllConfirm": "¿Eliminar TODAS las copias locales de esta VM? Las instantáneas se eliminan permanentemente y el repositorio local se poda. Las copias en los destinos externos se quedan. No se puede deshacer.",
+  "snapshots.deleteAllConfirm": "¿Eliminar todas las copias locales de esta VM? Las instantáneas se eliminan permanentemente y el repositorio local se poda. Las copias en los destinos externos se quedan. No se puede deshacer.",
   "snapshots.deletingAll": "Eliminando…",
 
   // Snapshot tags + compare (diff)
@@ -1315,7 +1315,7 @@ const es: Partial<Translations> = {
   "files.noPathHint": "Reconstruido desde las copias sin carpeta. Define una carpeta para volver a copiarlo. Restaurar en una carpeta ya funciona.",
   "files.deleteSet": "Eliminar conjunto de carpetas",
   "files.deleteSetConfirm": "¿Quitar este conjunto de carpetas de la lista? Sus copias no se eliminan y podrán redescubrirse más tarde.",
-  "files.deleteBackupsConfirm": "¿Eliminar TODAS las copias locales de este conjunto de carpetas? Las instantáneas se eliminan permanentemente, el repositorio local se poda y el conjunto se olvida. Las copias en los destinos externos se quedan, sin ningún conjunto que las conozca. No se puede deshacer.",
+  "files.deleteBackupsConfirm": "¿Eliminar todas las copias locales de este conjunto de carpetas? Las instantáneas se eliminan permanentemente, el repositorio local se poda y el conjunto se olvida. Las copias en los destinos externos se quedan, sin ningún conjunto que las conozca. No se puede deshacer.",
   "files.restoreOriginal": "Restaurar en la ubicación original",
   "files.restoreOriginalConfirm": "¿Restaurar esta copia sobre la carpeta del conjunto? Los archivos existentes se sobrescribirán.",
   "files.restoreToFolder": "Restaurar en una carpeta",
@@ -1459,6 +1459,7 @@ const es: Partial<Translations> = {
   "zfs.repoEffective": "Guardado en {repo}",
   "zfs.repo": "Repositorio para este elemento",
   "zfs.repoPlaceholder": "déjalo vacío para usar el repositorio de conjuntos de datos ZFS",
+  "zfs.repoPickHint": "Dónde se guardan las copias de este elemento. Si lo dejas vacío, usa el repositorio de conjuntos de datos ZFS. La lista incluye tus repositorios y cada lugar con una carpeta para conjuntos de datos ZFS; al elegir un lugar, se crea allí el repositorio del elemento.",
   "zfs.repoLocked": "Esto ya no se puede cambiar cuando el elemento tiene copias: se quedan en el repositorio donde se escribieron. Borra primero las copias de este elemento.",
   "zfs.membersSummary": "one={n} conjunto de datos|other={n} conjuntos de datos",
   "zfs.skippedCount": "one={n} conjunto de datos omitido|other={n} conjuntos de datos omitidos",
@@ -2429,7 +2430,7 @@ const es: Partial<Translations> = {
   "placementCode.homeUnreadable": "No se pudo leer la ubicación del elemento, así que no se borró nada.",
   "placementCode.snapshotMissing": "Esta copia de seguridad ya no está en el lugar elegido.",
   "placementCode.directAccessDenied": "La clave no puede leer este lugar. Una clave limitada a la carpeta propia del destino no puede alcanzar la carpeta contigua a ella; limita la clave a la carpeta superior al destino en su lugar.",
-  "placementCode.restPathTooDeep": "Un rest-server crea repositorios como máximo a dos carpetas de profundidad, como /files-direct o /user/files-direct. Elige una ruta más corta.",
+  "placementCode.restPathTooDeep": "Un rest-server crea repositorios como máximo a dos carpetas de profundidad, como /files-direct o /user/files-direct. Un lugar guarda cada dominio en una carpeta bajo su ruta, así que la ruta de un lugar rest-server solo puede tener una carpeta. Elige una ruta más corta.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo ahora conserva menos. Elementos cuya única copia está ahí: {n}.",

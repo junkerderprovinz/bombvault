@@ -764,7 +764,7 @@ const da: Partial<Translations> = {
 
   // Backups extra (delete all + diff)
   "snapshots.deleteAll": "Slet alle sikkerhedskopier",
-  "snapshots.deleteAllConfirm": "Slet ALLE lokale sikkerhedskopier af denne VM? Øjebliksbillederne fjernes permanent og det lokale repositorie beskæres. Kopier på eksterne mål bliver. Kan ikke fortrydes.",
+  "snapshots.deleteAllConfirm": "Slet alle lokale sikkerhedskopier af denne VM? Øjebliksbillederne fjernes permanent og det lokale repositorie beskæres. Kopier på eksterne mål bliver. Kan ikke fortrydes.",
   "snapshots.deletingAll": "Sletter…",
 
   // Snapshot tags + compare (diff)
@@ -1317,7 +1317,7 @@ const da: Partial<Translations> = {
   "files.noPathHint": "Genopbygget fra sikkerhedskopier uden mappe. Angiv en mappe for at sikkerhedskopiere igen. Gendannelse til en mappe virker allerede.",
   "files.deleteSet": "Slet mappesæt",
   "files.deleteSetConfirm": "Fjerne dette mappesæt fra listen? Dets sikkerhedskopier slettes ikke og kan genopdages senere.",
-  "files.deleteBackupsConfirm": "Slet ALLE lokale sikkerhedskopier af dette mappesæt? Øjebliksbillederne fjernes permanent, det lokale repositorie beskæres, og sættet glemmes. Kopier på eksterne mål bliver, uden et sæt der kender dem. Kan ikke fortrydes.",
+  "files.deleteBackupsConfirm": "Slet alle lokale sikkerhedskopier af dette mappesæt? Øjebliksbillederne fjernes permanent, det lokale repositorie beskæres, og sættet glemmes. Kopier på eksterne mål bliver, uden et sæt der kender dem. Kan ikke fortrydes.",
   "files.restoreOriginal": "Gendan på oprindelig placering",
   "files.restoreOriginalConfirm": "Gendanne denne sikkerhedskopi oven i sættets mappe? Eksisterende filer overskrives.",
   "files.restoreToFolder": "Gendan til en mappe",
@@ -1461,6 +1461,7 @@ const da: Partial<Translations> = {
   "zfs.repoEffective": "Gemt i {repo}",
   "zfs.repo": "Depot for dette element",
   "zfs.repoPlaceholder": "lad stå tomt for at bruge ZFS-datasættenes depot",
+  "zfs.repoPickHint": "Hvor elementets sikkerhedskopier gemmes. Lader du feltet stå tomt, bruges ZFS-datasættenes depot. Listen rummer dine depoter og hvert sted med en mappe til ZFS-datasæt; vælger du et sted, oprettes elementets depot der.",
   "zfs.repoLocked": "Det kan ikke ændres, når elementet først har sikkerhedskopier: de bliver i det depot, de blev skrevet til. Slet først elementets sikkerhedskopier.",
   "zfs.membersSummary": "{n} datasæt",
   "zfs.skippedCount": "one={n} oversprunget datasæt|other={n} oversprungne datasæt",
@@ -2431,7 +2432,7 @@ const da: Partial<Translations> = {
   "placementCode.homeUnreadable": "Elementets placering kunne ikke læses, så intet blev slettet.",
   "placementCode.snapshotMissing": "Denne sikkerhedskopi er ikke længere på det valgte sted.",
   "placementCode.directAccessDenied": "Nøglen kan ikke læse dette sted. En nøgle, der er begrænset til destinationens egen mappe, kan ikke nå mappen ved siden af den; begræns i stedet nøglen til mappen over destinationen.",
-  "placementCode.restPathTooDeep": "En rest-server opretter depoter højst to mapper dybt, fx /files-direct eller /user/files-direct. Vælg en kortere sti.",
+  "placementCode.restPathTooDeep": "En rest-server opretter depoter højst to mapper dybt, fx /files-direct eller /user/files-direct. Et sted holder hvert domæne i en mappe under sin sti, så stien til et rest-server-sted kun kan være én mappe. Vælg en kortere sti.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkte bevarer nu mindre. Elementer hvis eneste kopi ligger der: {n}.",

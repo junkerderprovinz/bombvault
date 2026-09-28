@@ -764,7 +764,7 @@ const fr: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Supprimer toutes les sauvegardes",
-  "snapshots.deleteAllConfirm": "Supprimer TOUTES les sauvegardes locales de cette VM ? Les instantanés sont supprimés définitivement et le dépôt local est élagué. Les copies sur les cibles hors site restent. Cette action est irréversible.",
+  "snapshots.deleteAllConfirm": "Supprimer toutes les sauvegardes locales de cette VM ? Les instantanés sont supprimés définitivement et le dépôt local est élagué. Les copies sur les cibles hors site restent. Cette action est irréversible.",
   "snapshots.deletingAll": "Suppression…",
 
   // Snapshot tags + compare (diff)
@@ -1317,7 +1317,7 @@ const fr: Partial<Translations> = {
   "files.noPathHint": "Reconstruit depuis les sauvegardes sans dossier. Définissez un dossier pour le sauvegarder à nouveau. La restauration dans un dossier fonctionne déjà.",
   "files.deleteSet": "Supprimer le jeu de dossiers",
   "files.deleteSetConfirm": "Retirer ce jeu de dossiers de la liste ? Ses sauvegardes ne sont pas supprimées et pourront être redécouvertes plus tard.",
-  "files.deleteBackupsConfirm": "Supprimer TOUTES les sauvegardes locales de ce jeu de dossiers ? Les instantanés sont définitivement supprimés, le dépôt local est élagué et le jeu est oublié. Les copies sur les cibles hors site restent, sans plus aucun jeu qui les connaisse. Irréversible.",
+  "files.deleteBackupsConfirm": "Supprimer toutes les sauvegardes locales de ce jeu de dossiers ? Les instantanés sont définitivement supprimés, le dépôt local est élagué et le jeu est oublié. Les copies sur les cibles hors site restent, sans plus aucun jeu qui les connaisse. Irréversible.",
   "files.restoreOriginal": "Restaurer à l'emplacement d'origine",
   "files.restoreOriginalConfirm": "Restaurer cette sauvegarde par-dessus le dossier du jeu ? Les fichiers existants seront écrasés.",
   "files.restoreToFolder": "Restaurer dans un dossier",
@@ -1461,6 +1461,7 @@ const fr: Partial<Translations> = {
   "zfs.repoEffective": "Stocké dans {repo}",
   "zfs.repo": "Dépôt pour cet élément",
   "zfs.repoPlaceholder": "laisser vide pour utiliser le dépôt des jeux de données ZFS",
+  "zfs.repoPickHint": "Où sont stockées les sauvegardes de cet élément. Laissez vide et il utilise le dépôt des jeux de données ZFS. La liste contient vos dépôts et chaque lieu doté d'un dossier pour les jeux de données ZFS ; choisir un lieu y crée son dépôt.",
   "zfs.repoLocked": "Cela ne peut plus changer une fois que l'élément a des sauvegardes : elles restent dans le dépôt où elles ont été écrites. Supprimez d'abord les sauvegardes de cet élément.",
   "zfs.membersSummary": "one={n} jeu de données|other={n} jeux de données",
   "zfs.skippedCount": "one={n} jeu de données ignoré|other={n} jeux de données ignorés",
@@ -2431,7 +2432,7 @@ const fr: Partial<Translations> = {
   "placementCode.homeUnreadable": "Impossible de lire l'emplacement de l'élément, donc rien n'a été supprimé.",
   "placementCode.snapshotMissing": "Cette sauvegarde n'est plus à l'endroit choisi.",
   "placementCode.directAccessDenied": "La clé ne peut pas lire cet emplacement. Une clé limitée au dossier propre de la cible ne peut pas atteindre le dossier voisin ; limitez plutôt la clé au dossier au-dessus de la cible.",
-  "placementCode.restPathTooDeep": "Un rest-server crée des dépôts à deux dossiers de profondeur au plus, comme /files-direct ou /user/files-direct. Choisissez un chemin plus court.",
+  "placementCode.restPathTooDeep": "Un rest-server crée des dépôts à deux dossiers de profondeur au plus, comme /files-direct ou /user/files-direct. Un lieu range chaque domaine dans un dossier sous son chemin, donc le chemin d'un lieu rest-server ne peut compter qu'un seul dossier. Choisissez un chemin plus court.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct conserve désormais moins. Éléments dont c'est la seule copie : {n}.",

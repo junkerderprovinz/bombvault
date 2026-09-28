@@ -1464,6 +1464,7 @@ const ar: Partial<Translations> = {
   "zfs.repoEffective": "مخزن في {repo}",
   "zfs.repo": "المستودع لهذا العنصر",
   "zfs.repoPlaceholder": "اتركه فارغًا لاستخدام مستودع مجموعات بيانات ZFS",
+  "zfs.repoPickHint": "المكان الذي تُحفظ فيه نسخ هذا العنصر. إذا تركته فارغًا يُستخدم مستودع مجموعات بيانات ZFS. تضم القائمة مستودعاتك وكل مكان فيه مجلد لمجموعات بيانات ZFS؛ واختيار مكان يُنشئ مستودع هذا العنصر هناك.",
   "zfs.repoLocked": "لا يمكن تغيير هذا بعد أن تصير للعنصر نسخ: تبقى في المستودع الذي كُتبت فيه. احذف نسخ هذا العنصر أولًا.",
   "zfs.membersSummary": "one=مجموعة بيانات واحدة|two=مجموعتا بيانات|few={n} مجموعات بيانات|many={n} مجموعة بيانات|other={n} مجموعة بيانات",
   "zfs.skippedCount": "one=مجموعة بيانات واحدة متخطاة|two=مجموعتا بيانات متخطاتان|few={n} مجموعات بيانات متخطاة|many={n} مجموعة بيانات متخطاة|other={n} مجموعة بيانات متخطاة",
@@ -2434,7 +2435,7 @@ const ar: Partial<Translations> = {
   "placementCode.homeUnreadable": "تعذّرت قراءة موقع العنصر، لذا لم يُحذف شيء.",
   "placementCode.snapshotMissing": "هذه النسخة الاحتياطية لم تعد في المكان المختار.",
   "placementCode.directAccessDenied": "المفتاح لا يستطيع قراءة هذا المكان. مفتاح مقتصر على مجلد الهدف نفسه لا يستطيع الوصول إلى المجلد المجاور له؛ اقصر المفتاح بدلاً من ذلك على المجلد الذي يعلو الهدف.",
-  "placementCode.restPathTooDeep": "يُنشئ rest-server المستودعات على عمق مجلدين كحد أقصى، مثل /files-direct أو /user/files-direct. اختر مسارًا أقصر.",
+  "placementCode.restPathTooDeep": "يُنشئ rest-server المستودعات على عمق مجلدين كحد أقصى، مثل /files-direct أو /user/files-direct. يحفظ المكان كل نطاق في مجلد تحت مساره، لذلك لا يمكن أن يكون مسار مكان rest-server إلا مجلدًا واحدًا. اختر مسارًا أقصر.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} المباشر يحتفظ الآن بأقل. العناصر التي نسختها الوحيدة هناك: {n}.",

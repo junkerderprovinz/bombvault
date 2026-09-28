@@ -1454,6 +1454,7 @@ const ko: Partial<Translations> = {
   "zfs.repoEffective": "{repo}에 저장됨",
   "zfs.repo": "이 항목의 저장소",
   "zfs.repoPlaceholder": "비워 두면 ZFS 데이터세트 저장소를 씁니다",
+  "zfs.repoPickHint": "이 항목의 백업이 놓이는 곳입니다. 비워 두면 ZFS 데이터세트 저장소를 씁니다. 목록에는 내 저장소와 ZFS 데이터세트용 폴더가 있는 모든 장소가 들어 있습니다. 장소를 고르면 그곳에 저장소가 만들어집니다.",
   "zfs.repoLocked": "항목에 백업이 생기면 더는 바꿀 수 없습니다. 백업은 쓰인 저장소에 남습니다. 먼저 이 항목의 백업을 지우세요.",
   "zfs.membersSummary": "데이터세트 {n}개",
   "zfs.skippedCount": "건너뛴 데이터세트 {n}개",
@@ -2424,7 +2425,7 @@ const ko: Partial<Translations> = {
   "placementCode.homeUnreadable": "항목의 위치를 읽을 수 없어 아무것도 삭제되지 않았습니다.",
   "placementCode.snapshotMissing": "이 백업은 더 이상 선택한 위치에 없습니다.",
   "placementCode.directAccessDenied": "키는 이 위치를 읽을 수 없습니다. 대상 자신의 폴더로 제한된 키는 그 옆 폴더에는 닿지 못합니다. 대신 키를 대상보다 한 단계 위 폴더로 제한하세요.",
-  "placementCode.restPathTooDeep": "rest-server는 저장소를 최대 두 폴더 깊이까지만 만듭니다(예: /files-direct 또는 /user/files-direct). 더 짧은 경로를 선택하세요.",
+  "placementCode.restPathTooDeep": "rest-server는 저장소를 최대 두 폴더 깊이까지만 만듭니다(예: /files-direct 또는 /user/files-direct). 장소는 각 도메인을 자기 경로 아래의 폴더에 두므로 rest-server 장소의 경로는 폴더 하나만 될 수 있습니다. 더 짧은 경로를 선택하세요.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 직접은 이제 더 적게 보관합니다. 유일한 사본이 그곳에 있는 항목: {n}개.",

@@ -764,7 +764,7 @@ const tr: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Tüm yedekleri sil",
-  "snapshots.deleteAllConfirm": "Bu VM'nin TÜM yerel yedekleri silinsin mi? Anlık görüntüler kalıcı olarak kaldırılır ve yerel depo budanır. Dış hedeflerdeki kopyalar kalır. Bu işlem geri alınamaz.",
+  "snapshots.deleteAllConfirm": "Bu VM'nin tüm yerel yedekleri silinsin mi? Anlık görüntüler kalıcı olarak kaldırılır ve yerel depo budanır. Dış hedeflerdeki kopyalar kalır. Bu işlem geri alınamaz.",
   "snapshots.deletingAll": "Siliniyor…",
 
   // Snapshot tags + compare (diff)
@@ -1317,7 +1317,7 @@ const tr: Partial<Translations> = {
   "files.noPathHint": "Klasör olmadan yedeklerden yeniden oluşturuldu. Yeniden yedeklemek için bir klasör ayarlayın. Bir klasöre geri yükleme şimdiden çalışıyor.",
   "files.deleteSet": "Klasör setini sil",
   "files.deleteSetConfirm": "Bu klasör seti listeden kaldırılsın mı? Yedekleri silinmez ve daha sonra yeniden keşfedilebilir.",
-  "files.deleteBackupsConfirm": "Bu klasör setinin TÜM yerel yedekleri silinsin mi? Anlık görüntüler kalıcı olarak kaldırılır, yerel depo budanır ve set unutulur. Dış hedeflerdeki kopyalar kalır, ama onları bilen bir set kalmaz. Geri alınamaz.",
+  "files.deleteBackupsConfirm": "Bu klasör setinin tüm yerel yedekleri silinsin mi? Anlık görüntüler kalıcı olarak kaldırılır, yerel depo budanır ve set unutulur. Dış hedeflerdeki kopyalar kalır, ama onları bilen bir set kalmaz. Geri alınamaz.",
   "files.restoreOriginal": "Orijinal konuma geri yükle",
   "files.restoreOriginalConfirm": "Bu yedek, setin klasörünün üzerine geri yüklensin mi? Mevcut dosyaların üzerine yazılır.",
   "files.restoreToFolder": "Bir klasöre geri yükle",
@@ -1461,6 +1461,7 @@ const tr: Partial<Translations> = {
   "zfs.repoEffective": "Şurada saklanıyor: {repo}",
   "zfs.repo": "Bu kayıt için depo",
   "zfs.repoPlaceholder": "ZFS veri kümeleri deposunu kullanmak için boş bırak",
+  "zfs.repoPickHint": "Bu kaydın yedeklerinin saklandığı yer. Boş bırakırsan ZFS veri kümeleri deposu kullanılır. Listede depoların ve ZFS veri kümeleri için klasörü olan her konum yer alır; bir konum seçersen kaydın deposu orada oluşturulur.",
   "zfs.repoLocked": "Kaydın yedekleri olduktan sonra bu değiştirilemez: yazıldıkları depoda kalırlar. Önce bu kaydın yedeklerini sil.",
   "zfs.membersSummary": "{n} veri kümesi",
   "zfs.skippedCount": "{n} veri kümesi atlandı",
@@ -2431,7 +2432,7 @@ const tr: Partial<Translations> = {
   "placementCode.homeUnreadable": "Ögenin konumu okunamadı, bu yüzden hiçbir şey silinmedi.",
   "placementCode.snapshotMissing": "Bu yedek artık seçilen yerde değil.",
   "placementCode.directAccessDenied": "Anahtar bu yeri okuyamaz. Hedefin kendi klasörüyle sınırlı bir anahtar, yanındaki klasöre erişemez; bunun yerine anahtarı hedefin üstündeki klasörle sınırla.",
-  "placementCode.restPathTooDeep": "rest-server depoları en fazla iki klasör derinliğinde oluşturur, örneğin /files-direct veya /user/files-direct. Daha kısa bir yol seçin.",
+  "placementCode.restPathTooDeep": "rest-server depoları en fazla iki klasör derinliğinde oluşturur, örneğin /files-direct veya /user/files-direct. Bir konum her alanı kendi yolunun altındaki bir klasörde tutar, bu yüzden bir rest-server konumunun yolu yalnızca tek bir klasör olabilir. Daha kısa bir yol seçin.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} doğrudan artık daha az tutuyor. Tek kopyası orada olan ögeler: {n}.",

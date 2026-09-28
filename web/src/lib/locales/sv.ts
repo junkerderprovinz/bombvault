@@ -764,7 +764,7 @@ const sv: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Ta bort alla säkerhetskopior",
-  "snapshots.deleteAllConfirm": "Ta bort ALLA lokala säkerhetskopior av denna VM? Ögonblicksbilderna tas bort permanent och det lokala arkivet rensas. Kopior på externa mål finns kvar. Detta kan inte ångras.",
+  "snapshots.deleteAllConfirm": "Ta bort alla lokala säkerhetskopior av denna VM? Ögonblicksbilderna tas bort permanent och det lokala arkivet rensas. Kopior på externa mål finns kvar. Detta kan inte ångras.",
   "snapshots.deletingAll": "Tar bort…",
 
   // Snapshot tags + compare (diff)
@@ -1317,7 +1317,7 @@ const sv: Partial<Translations> = {
   "files.noPathHint": "Återuppbyggd från säkerhetskopior utan mapp. Ange en mapp för att säkerhetskopiera igen. Återställning till en mapp fungerar redan.",
   "files.deleteSet": "Ta bort mappuppsättning",
   "files.deleteSetConfirm": "Ta bort denna mappuppsättning från listan? Dess säkerhetskopior tas inte bort och kan återupptäckas senare.",
-  "files.deleteBackupsConfirm": "Ta bort ALLA lokala säkerhetskopior av denna mappuppsättning? Ögonblicksbilderna tas bort permanent, det lokala repositoriet rensas och uppsättningen glöms. Kopior på externa mål finns kvar, utan någon uppsättning som känner till dem. Detta kan inte ångras.",
+  "files.deleteBackupsConfirm": "Ta bort alla lokala säkerhetskopior av denna mappuppsättning? Ögonblicksbilderna tas bort permanent, det lokala repositoriet rensas och uppsättningen glöms. Kopior på externa mål finns kvar, utan någon uppsättning som känner till dem. Detta kan inte ångras.",
   "files.restoreOriginal": "Återställ till ursprunglig plats",
   "files.restoreOriginalConfirm": "Återställa denna säkerhetskopia över uppsättningens mapp? Befintliga filer skrivs över.",
   "files.restoreToFolder": "Återställ till en mapp",
@@ -1461,6 +1461,7 @@ const sv: Partial<Translations> = {
   "zfs.repoEffective": "Lagrad i {repo}",
   "zfs.repo": "Förråd för den här posten",
   "zfs.repoPlaceholder": "lämna tomt för att använda ZFS-datauppsättningarnas förråd",
+  "zfs.repoPickHint": "Var postens säkerhetskopior lagras. Lämna tomt så används ZFS-datauppsättningarnas förråd. Listan innehåller dina förråd och varje lagringsplats med en mapp för ZFS-datauppsättningar; väljer du en lagringsplats skapas postens förråd där.",
   "zfs.repoLocked": "Det går inte att ändra när posten väl har säkerhetskopior: de stannar i det förråd de skrevs till. Ta bort postens säkerhetskopior först.",
   "zfs.membersSummary": "one={n} datauppsättning|other={n} datauppsättningar",
   "zfs.skippedCount": "one={n} överhoppad datauppsättning|other={n} överhoppade datauppsättningar",
@@ -2431,7 +2432,7 @@ const sv: Partial<Translations> = {
   "placementCode.homeUnreadable": "Objektets plats kunde inte läsas, så inget raderades.",
   "placementCode.snapshotMissing": "Den här säkerhetskopian finns inte längre på den valda platsen.",
   "placementCode.directAccessDenied": "Nyckeln kan inte läsa den här platsen. En nyckel som är begränsad till målets egen mapp når inte mappen bredvid den; begränsa i stället nyckeln till mappen ovanför målet.",
-  "placementCode.restPathTooDeep": "En rest-server skapar arkiv högst två mappar djupt, till exempel /files-direct eller /user/files-direct. Välj en kortare sökväg.",
+  "placementCode.restPathTooDeep": "En rest-server skapar arkiv högst två mappar djupt, till exempel /files-direct eller /user/files-direct. En lagringsplats har varje domän i en mapp under sin sökväg, så sökvägen för en rest-server-lagringsplats kan bara vara en mapp. Välj en kortare sökväg.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt behåller nu mindre. Objekt vars enda kopia finns där: {n}.",

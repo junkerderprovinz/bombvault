@@ -1454,6 +1454,7 @@ const ja: Partial<Translations> = {
   "zfs.repoEffective": "保存先: {repo}",
   "zfs.repo": "この項目のリポジトリ",
   "zfs.repoPlaceholder": "空のままにすると ZFS データセットのリポジトリを使います",
+  "zfs.repoPickHint": "この項目のバックアップが置かれる場所です。空のままなら ZFS データセットのリポジトリを使います。一覧には、あなたのリポジトリと、ZFS データセット用のフォルダーを持つすべての保存場所が並びます。保存場所を選ぶと、そこにリポジトリが作られます。",
   "zfs.repoLocked": "項目にバックアップができたあとは変えられません。書き込まれたリポジトリに残るためです。先にこの項目のバックアップを削除してください。",
   "zfs.membersSummary": "データセット {n} 件",
   "zfs.skippedCount": "飛ばしたデータセット {n} 件",
@@ -2424,7 +2425,7 @@ const ja: Partial<Translations> = {
   "placementCode.homeUnreadable": "項目の保存場所を読み取れなかったため、何も削除されませんでした。",
   "placementCode.snapshotMissing": "このバックアップは選択した場所にもうありません。",
   "placementCode.directAccessDenied": "キーはこの場所を読み取れません。ターゲット自身のフォルダーに限定したキーは、隣のフォルダーには届きません。代わりにキーをターゲットの一つ上のフォルダーに限定してください。",
-  "placementCode.restPathTooDeep": "rest-server がリポジトリを作成できるのはフォルダー2階層までです（例: /files-direct、/user/files-direct）。もっと短いパスを選んでください。",
+  "placementCode.restPathTooDeep": "rest-server がリポジトリを作成できるのはフォルダー2階層までです（例: /files-direct、/user/files-direct）。保存場所は各ドメインをそのパスの下のフォルダーに置くため、rest-server の保存場所のパスは 1 つのフォルダーだけにできます。もっと短いパスを選んでください。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ダイレクトは今、保持量が減りました。唯一のコピーがそこにある項目: {n}。",

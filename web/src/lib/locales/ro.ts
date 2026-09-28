@@ -830,7 +830,7 @@ const ro: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Șterge toate copiile de rezervă",
-  "snapshots.deleteAllConfirm": "Ștergeți TOATE copiile de rezervă locale ale acestei VM? Instantaneele sunt eliminate permanent și depozitul local este curățat. Copiile de pe țintele externe rămân. Nu poate fi anulat.",
+  "snapshots.deleteAllConfirm": "Ștergeți toate copiile de rezervă locale ale acestei VM? Instantaneele sunt eliminate permanent și depozitul local este curățat. Copiile de pe țintele externe rămân. Nu poate fi anulat.",
   "snapshots.deletingAll": "Se șterge…",
 
   // Snapshot tags + compare (diff)
@@ -1320,7 +1320,7 @@ const ro: Partial<Translations> = {
   "files.noPathHint": "Reconstruit din copiile de rezervă fără folder. Setați un folder pentru a-l copia din nou. Restaurarea într-un folder funcționează deja.",
   "files.deleteSet": "Șterge setul de foldere",
   "files.deleteSetConfirm": "Eliminați acest set de foldere din listă? Copiile sale de rezervă nu sunt șterse și pot fi redescoperite mai târziu.",
-  "files.deleteBackupsConfirm": "Ștergeți TOATE copiile de rezervă locale ale acestui set de foldere? Instantaneele sunt eliminate permanent, depozitul local este curățat, iar setul este uitat. Copiile de pe țintele externe rămân, fără vreun set care să le cunoască. Nu poate fi anulat.",
+  "files.deleteBackupsConfirm": "Ștergeți toate copiile de rezervă locale ale acestui set de foldere? Instantaneele sunt eliminate permanent, depozitul local este curățat, iar setul este uitat. Copiile de pe țintele externe rămân, fără vreun set care să le cunoască. Nu poate fi anulat.",
   "files.restoreOriginal": "Restaurare în locația originală",
   "files.restoreOriginalConfirm": "Restaurați această copie peste folderul setului? Fișierele existente vor fi suprascrise.",
   "files.restoreToFolder": "Restaurare într-un folder",
@@ -1464,6 +1464,7 @@ const ro: Partial<Translations> = {
   "zfs.repoEffective": "Stocat în {repo}",
   "zfs.repo": "Depozit pentru acest element",
   "zfs.repoPlaceholder": "lasă gol ca să folosești depozitul seturilor de date ZFS",
+  "zfs.repoPickHint": "Unde ajung copiile acestui element. Dacă îl lași gol folosește depozitul seturilor de date ZFS. În listă sunt depozitele tale și fiecare loc cu un folder pentru seturile de date ZFS; alegerea unui loc creează acolo depozitul.",
   "zfs.repoLocked": "Asta nu se mai poate schimba odată ce elementul are copii: rămân în depozitul în care au fost scrise. Șterge întâi copiile acestui element.",
   "zfs.membersSummary": "one={n} set de date|few={n} seturi de date|other={n} de seturi de date",
   "zfs.skippedCount": "one={n} set de date sărit|few={n} seturi de date sărite|other={n} de seturi de date sărite",
@@ -2434,7 +2435,7 @@ const ro: Partial<Translations> = {
   "placementCode.homeUnreadable": "Locația elementului nu a putut fi citită, așa că nu s-a șters nimic.",
   "placementCode.snapshotMissing": "Această copie de rezervă nu mai este în locul ales.",
   "placementCode.directAccessDenied": "Cheia nu poate citi acest loc. O cheie limitată la dosarul propriu al țintei nu poate ajunge la dosarul alăturat; limitează în schimb cheia la dosarul de deasupra țintei.",
-  "placementCode.restPathTooDeep": "Un rest-server creează depozite la cel mult două foldere adâncime, de exemplu /files-direct sau /user/files-direct. Alege o cale mai scurtă.",
+  "placementCode.restPathTooDeep": "Un rest-server creează depozite la cel mult două foldere adâncime, de exemplu /files-direct sau /user/files-direct. Un loc păstrează fiecare domeniu într-un folder sub calea sa, așa că calea unui loc rest-server poate fi un singur folder. Alege o cale mai scurtă.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct păstrează acum mai puțin. Elemente a căror unică copie este acolo: {n}.",

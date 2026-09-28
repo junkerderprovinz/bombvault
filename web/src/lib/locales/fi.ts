@@ -764,7 +764,7 @@ const fi: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Poista kaikki varmuuskopiot",
-  "snapshots.deleteAllConfirm": "Poistetaanko KAIKKI tämän VM:n paikalliset varmuuskopiot? Tilannevedokset poistetaan pysyvästi ja paikallinen repositorio karsitaan. Etäkohteiden kopiot säilyvät. Tätä ei voi peruuttaa.",
+  "snapshots.deleteAllConfirm": "Poistetaanko kaikki tämän VM:n paikalliset varmuuskopiot? Tilannevedokset poistetaan pysyvästi ja paikallinen repositorio karsitaan. Etäkohteiden kopiot säilyvät. Tätä ei voi peruuttaa.",
   "snapshots.deletingAll": "Poistetaan…",
 
   // Snapshot tags + compare (diff)
@@ -1317,7 +1317,7 @@ const fi: Partial<Translations> = {
   "files.noPathHint": "Rakennettu uudelleen varmuuskopioista ilman kansiota. Aseta kansio, jotta varmuuskopiointi onnistuu taas. Palautus kansioon toimii jo nyt.",
   "files.deleteSet": "Poista kansiojoukko",
   "files.deleteSetConfirm": "Poistetaanko tämä kansiojoukko luettelosta? Sen varmuuskopioita ei poisteta, ja ne voi löytää myöhemmin uudelleen.",
-  "files.deleteBackupsConfirm": "Poistetaanko KAIKKI tämän kansiojoukon paikalliset varmuuskopiot? Tilannevedokset poistetaan pysyvästi, paikallinen repositorio karsitaan ja joukko unohdetaan. Etäkohteiden kopiot säilyvät, mutta mikään joukko ei enää tunne niitä. Tätä ei voi peruuttaa.",
+  "files.deleteBackupsConfirm": "Poistetaanko kaikki tämän kansiojoukon paikalliset varmuuskopiot? Tilannevedokset poistetaan pysyvästi, paikallinen repositorio karsitaan ja joukko unohdetaan. Etäkohteiden kopiot säilyvät, mutta mikään joukko ei enää tunne niitä. Tätä ei voi peruuttaa.",
   "files.restoreOriginal": "Palauta alkuperäiseen sijaintiin",
   "files.restoreOriginalConfirm": "Palautetaanko tämä varmuuskopio joukon kansion päälle? Olemassa olevat tiedostot korvataan.",
   "files.restoreToFolder": "Palauta kansioon",
@@ -1461,6 +1461,7 @@ const fi: Partial<Translations> = {
   "zfs.repoEffective": "Tallennettu kohteeseen {repo}",
   "zfs.repo": "Tämän kohteen säilö",
   "zfs.repoPlaceholder": "jätä tyhjäksi, niin käytetään ZFS-tietojoukkojen säilöä",
+  "zfs.repoPickHint": "Missä tämän kohteen varmuuskopiot ovat. Jätä tyhjäksi, niin käytetään ZFS-tietojoukkojen säilöä. Listalla ovat säilösi ja jokainen paikka, jossa on kansio ZFS-tietojoukoille; paikan valinta luo sen säilön sinne.",
   "zfs.repoLocked": "Tätä ei voi enää muuttaa kun kohteella on varmuuskopioita: ne jäävät siihen säilöön johon ne kirjoitettiin. Poista ensin tämän kohteen varmuuskopiot.",
   "zfs.membersSummary": "one={n} tietojoukko|other={n} tietojoukkoa",
   "zfs.skippedCount": "one={n} ohitettu tietojoukko|other={n} ohitettua tietojoukkoa",
@@ -2431,7 +2432,7 @@ const fi: Partial<Translations> = {
   "placementCode.homeUnreadable": "Kohteen sijaintia ei voitu lukea, joten mitään ei poistettu.",
   "placementCode.snapshotMissing": "Tätä varmuuskopiota ei enää ole valitussa paikassa.",
   "placementCode.directAccessDenied": "Avain ei voi lukea tätä paikkaa. Kohteen omaan kansioon rajattu avain ei pääse sen vieressä olevaan kansioon; rajaa avain sen sijaan kohteen yläpuolella olevaan kansioon.",
-  "placementCode.restPathTooDeep": "rest-server luo arkistoja enintään kahden kansion syvyyteen, esimerkiksi /files-direct tai /user/files-direct. Valitse lyhyempi polku.",
+  "placementCode.restPathTooDeep": "rest-server luo arkistoja enintään kahden kansion syvyyteen, esimerkiksi /files-direct tai /user/files-direct. Paikka pitää jokaisen toimialueen omassa kansiossaan polkunsa alla, joten rest-server-paikan polku voi olla vain yksi kansio. Valitse lyhyempi polku.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} suoraan säilyttää nyt vähemmän. Kohteet, joiden ainoa kopio on siellä: {n}.",

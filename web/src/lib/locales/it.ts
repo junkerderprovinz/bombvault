@@ -764,7 +764,7 @@ const it: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Elimina tutti i backup",
-  "snapshots.deleteAllConfirm": "Eliminare TUTTI i backup locali di questa VM? Gli snapshot vengono rimossi definitivamente e il repository locale viene potato. Le copie sulle destinazioni off-site restano. Operazione irreversibile.",
+  "snapshots.deleteAllConfirm": "Eliminare tutti i backup locali di questa VM? Gli snapshot vengono rimossi definitivamente e il repository locale viene potato. Le copie sulle destinazioni off-site restano. Operazione irreversibile.",
   "snapshots.deletingAll": "Eliminazione…",
 
   // Snapshot tags + compare (diff)
@@ -1317,7 +1317,7 @@ const it: Partial<Translations> = {
   "files.noPathHint": "Ricostruito dai backup senza cartella. Imposta una cartella per eseguirne di nuovo il backup. Il ripristino in una cartella funziona già.",
   "files.deleteSet": "Elimina set di cartelle",
   "files.deleteSetConfirm": "Rimuovere questo set di cartelle dall'elenco? I suoi backup non vengono eliminati e potranno essere riscoperti in seguito.",
-  "files.deleteBackupsConfirm": "Eliminare TUTTI i backup locali di questo set di cartelle? Gli snapshot vengono rimossi definitivamente, il repository locale viene potato e il set viene dimenticato. Le copie sulle destinazioni off-site restano, senza più un set che le conosca. Operazione irreversibile.",
+  "files.deleteBackupsConfirm": "Eliminare tutti i backup locali di questo set di cartelle? Gli snapshot vengono rimossi definitivamente, il repository locale viene potato e il set viene dimenticato. Le copie sulle destinazioni off-site restano, senza più un set che le conosca. Operazione irreversibile.",
   "files.restoreOriginal": "Ripristina nella posizione originale",
   "files.restoreOriginalConfirm": "Ripristinare questo backup sopra la cartella del set? I file esistenti verranno sovrascritti.",
   "files.restoreToFolder": "Ripristina in una cartella",
@@ -1461,6 +1461,7 @@ const it: Partial<Translations> = {
   "zfs.repoEffective": "Archiviato in {repo}",
   "zfs.repo": "Repository per questo elemento",
   "zfs.repoPlaceholder": "lascia vuoto per usare il repository dei dataset ZFS",
+  "zfs.repoPickHint": "Dove finiscono i backup di questo elemento. Se lo lasci vuoto usa il repository dei dataset ZFS. L'elenco contiene i tuoi repository e ogni luogo con una cartella per i dataset ZFS; scegliere un luogo crea lì il suo repository.",
   "zfs.repoLocked": "Non si può più cambiare una volta che l'elemento ha backup: restano nel repository in cui sono stati scritti. Elimina prima i backup di questo elemento.",
   "zfs.membersSummary": "{n} dataset",
   "zfs.skippedCount": "one={n} dataset saltato|other={n} dataset saltati",
@@ -2431,7 +2432,7 @@ const it: Partial<Translations> = {
   "placementCode.homeUnreadable": "Impossibile leggere la posizione dell'elemento, quindi non è stato eliminato nulla.",
   "placementCode.snapshotMissing": "Questo backup non si trova più nel luogo scelto.",
   "placementCode.directAccessDenied": "La chiave non riesce a leggere questo posto. Una chiave limitata alla cartella propria della destinazione non riesce a raggiungere la cartella accanto; limita invece la chiave alla cartella sopra la destinazione.",
-  "placementCode.restPathTooDeep": "Un rest-server crea repository al massimo a due cartelle di profondità, come /files-direct o /user/files-direct. Scegli un percorso più corto.",
+  "placementCode.restPathTooDeep": "Un rest-server crea repository al massimo a due cartelle di profondità, come /files-direct o /user/files-direct. Un luogo tiene ogni dominio in una cartella sotto il suo percorso, quindi il percorso di un luogo rest-server può essere una sola cartella. Scegli un percorso più corto.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} diretto ora conserva meno. Elementi la cui unica copia è lì: {n}.",

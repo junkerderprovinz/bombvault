@@ -837,7 +837,7 @@ const nl: Partial<Translations> = {
 
   // Backups (delete all)
   "snapshots.deleteAll": "Alle back-ups verwijderen",
-  "snapshots.deleteAllConfirm": "ALLE lokale back-ups van deze VM verwijderen? De snapshots worden permanent verwijderd en de lokale repository wordt opgeschoond. Kopieën op off-site bestemmingen blijven. Kan niet ongedaan worden gemaakt.",
+  "snapshots.deleteAllConfirm": "Alle lokale back-ups van deze VM verwijderen? De snapshots worden permanent verwijderd en de lokale repository wordt opgeschoond. Kopieën op off-site bestemmingen blijven. Kan niet ongedaan worden gemaakt.",
   "snapshots.deletingAll": "Verwijderen…",
 
   // Restore to folder
@@ -1314,7 +1314,7 @@ const nl: Partial<Translations> = {
   "files.noPathHint": "Opnieuw opgebouwd uit back-ups zonder map. Stel een map in om weer te back-uppen. Herstellen naar een map werkt nu al.",
   "files.deleteSet": "Mappenset verwijderen",
   "files.deleteSetConfirm": "Deze mappenset uit de lijst verwijderen? De back-ups worden niet verwijderd en kunnen later opnieuw worden ontdekt.",
-  "files.deleteBackupsConfirm": "ALLE lokale back-ups van deze mappenset verwijderen? De snapshots worden permanent verwijderd, de lokale repository wordt opgeschoond en de set wordt vergeten. Kopieën op off-site bestemmingen blijven, zonder set die ze nog kent. Kan niet ongedaan worden gemaakt.",
+  "files.deleteBackupsConfirm": "Alle lokale back-ups van deze mappenset verwijderen? De snapshots worden permanent verwijderd, de lokale repository wordt opgeschoond en de set wordt vergeten. Kopieën op off-site bestemmingen blijven, zonder set die ze nog kent. Kan niet ongedaan worden gemaakt.",
   "files.restoreOriginal": "Herstellen op oorspronkelijke locatie",
   "files.restoreOriginalConfirm": "Deze back-up over de map van de set herstellen? Bestaande bestanden worden overschreven.",
   "files.restoreToFolder": "Herstellen naar een map",
@@ -1458,6 +1458,7 @@ const nl: Partial<Translations> = {
   "zfs.repoEffective": "Opgeslagen in {repo}",
   "zfs.repo": "Repository voor dit item",
   "zfs.repoPlaceholder": "leeg laten voor de repository van de ZFS-datasets",
+  "zfs.repoPickHint": "Waar de back-ups van dit item staan. Laat het leeg en het gebruikt de repository van de ZFS-datasets. In de lijst staan je repository's en elke plek met een map voor ZFS-datasets; kies je een plek, dan wordt daar de repository aangemaakt.",
   "zfs.repoLocked": "Dit kan niet meer veranderen zodra het item back-ups heeft: die blijven in de repository waarin ze zijn geschreven. Verwijder eerst de back-ups van dit item.",
   "zfs.membersSummary": "one={n} dataset|other={n} datasets",
   "zfs.skippedCount": "one={n} overgeslagen dataset|other={n} overgeslagen datasets",
@@ -2428,7 +2429,7 @@ const nl: Partial<Translations> = {
   "placementCode.homeUnreadable": "De locatie van het item kon niet worden gelezen, dus is er niets verwijderd.",
   "placementCode.snapshotMissing": "Deze back-up staat niet meer op de gekozen plek.",
   "placementCode.directAccessDenied": "De sleutel kan deze plek niet lezen. Een sleutel die beperkt is tot de eigen map van het doel, kan niet bij de map ernaast; beperk de sleutel in plaats daarvan tot de map boven het doel.",
-  "placementCode.restPathTooDeep": "Een rest-server maakt repository's hoogstens twee mappen diep aan, zoals /files-direct of /user/files-direct. Kies een korter pad.",
+  "placementCode.restPathTooDeep": "Een rest-server maakt repository's hoogstens twee mappen diep aan, zoals /files-direct of /user/files-direct. Een plek bewaart elk domein in een map onder zijn pad, dus het pad van een rest-server-plek kan maar één map zijn. Kies een korter pad.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct bewaart nu minder. Items waarvan de enige kopie daar staat: {n}.",

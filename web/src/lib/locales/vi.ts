@@ -757,7 +757,7 @@ const vi: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Xóa tất cả bản sao lưu",
-  "snapshots.deleteAllConfirm": "Xóa TẤT CẢ bản sao lưu cục bộ của VM này? Các snapshot bị xóa vĩnh viễn và kho cục bộ được dọn bớt. Các bản sao ở đích ngoại vi vẫn được giữ lại. Không thể hoàn tác.",
+  "snapshots.deleteAllConfirm": "Xóa tất cả bản sao lưu cục bộ của VM này? Các snapshot bị xóa vĩnh viễn và kho cục bộ được dọn bớt. Các bản sao ở đích ngoại vi vẫn được giữ lại. Không thể hoàn tác.",
   "snapshots.deletingAll": "Đang xóa…",
 
   // Snapshot tags + compare (diff)
@@ -1310,7 +1310,7 @@ const vi: Partial<Translations> = {
   "files.noPathHint": "Được dựng lại từ các bản sao lưu mà không có thư mục. Đặt một thư mục để sao lưu lại. Khôi phục vào thư mục đã hoạt động ngay.",
   "files.deleteSet": "Xóa bộ thư mục",
   "files.deleteSetConfirm": "Gỡ bộ thư mục này khỏi danh sách? Các bản sao lưu của nó không bị xóa và có thể được phát hiện lại sau.",
-  "files.deleteBackupsConfirm": "Xóa TẤT CẢ bản sao lưu cục bộ của bộ thư mục này? Các snapshot bị xóa vĩnh viễn, kho cục bộ được dọn bớt và bộ sẽ bị quên. Các bản sao ở đích ngoại vi vẫn được giữ lại, nhưng không còn bộ nào biết đến chúng. Không thể hoàn tác.",
+  "files.deleteBackupsConfirm": "Xóa tất cả bản sao lưu cục bộ của bộ thư mục này? Các snapshot bị xóa vĩnh viễn, kho cục bộ được dọn bớt và bộ sẽ bị quên. Các bản sao ở đích ngoại vi vẫn được giữ lại, nhưng không còn bộ nào biết đến chúng. Không thể hoàn tác.",
   "files.restoreOriginal": "Khôi phục về vị trí gốc",
   "files.restoreOriginalConfirm": "Khôi phục bản sao lưu này đè lên thư mục của bộ? Các tập tin hiện có sẽ bị ghi đè.",
   "files.restoreToFolder": "Khôi phục vào một thư mục",
@@ -1454,6 +1454,7 @@ const vi: Partial<Translations> = {
   "zfs.repoEffective": "Lưu trong {repo}",
   "zfs.repo": "Kho cho mục này",
   "zfs.repoPlaceholder": "để trống để dùng kho của tập dữ liệu ZFS",
+  "zfs.repoPickHint": "Nơi lưu các bản sao của mục này. Để trống thì dùng kho của tập dữ liệu ZFS. Danh sách gồm các kho của bạn và mọi điểm lưu trữ có thư mục cho tập dữ liệu ZFS; chọn một điểm lưu trữ sẽ tạo kho của mục tại đó.",
   "zfs.repoLocked": "Không đổi được nữa một khi mục đã có bản sao: chúng ở lại kho nơi chúng được ghi. Xóa các bản sao của mục này trước.",
   "zfs.membersSummary": "{n} tập dữ liệu",
   "zfs.skippedCount": "{n} tập dữ liệu bị bỏ qua",
@@ -2424,7 +2425,7 @@ const vi: Partial<Translations> = {
   "placementCode.homeUnreadable": "Không thể đọc vị trí của mục, vì vậy không có gì bị xóa.",
   "placementCode.snapshotMissing": "Bản sao lưu này không còn ở vị trí đã chọn.",
   "placementCode.directAccessDenied": "Khóa này không thể đọc được vị trí này. Khóa chỉ giới hạn trong thư mục riêng của đích sẽ không thể tiếp cận thư mục bên cạnh nó; hãy giới hạn khóa vào thư mục phía trên đích thay vì vậy.",
-  "placementCode.restPathTooDeep": "rest-server chỉ tạo kho sâu tối đa hai thư mục, ví dụ /files-direct hoặc /user/files-direct. Hãy chọn đường dẫn ngắn hơn.",
+  "placementCode.restPathTooDeep": "rest-server chỉ tạo kho sâu tối đa hai thư mục, ví dụ /files-direct hoặc /user/files-direct. Một điểm lưu trữ giữ mỗi miền trong một thư mục bên dưới đường dẫn của nó, nên đường dẫn của một điểm lưu trữ rest-server chỉ được có một thư mục. Hãy chọn đường dẫn ngắn hơn.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} trực tiếp giờ giữ ít hơn. Các mục có bản sao duy nhất ở đó: {n}.",

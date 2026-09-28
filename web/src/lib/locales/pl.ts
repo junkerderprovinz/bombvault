@@ -756,7 +756,7 @@ const pl: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Usuń wszystkie kopie zapasowe",
-  "snapshots.deleteAllConfirm": "Usunąć WSZYSTKIE lokalne kopie zapasowe tej maszyny wirtualnej? Migawki zostaną trwale usunięte, a lokalne repozytorium przycięte. Kopie w zdalnych celach pozostają. Nie można cofnąć.",
+  "snapshots.deleteAllConfirm": "Usunąć wszystkie lokalne kopie zapasowe tej maszyny wirtualnej? Migawki zostaną trwale usunięte, a lokalne repozytorium przycięte. Kopie w zdalnych celach pozostają. Nie można cofnąć.",
   "snapshots.deletingAll": "Usuwanie…",
 
   // Snapshot tags + compare (diff)
@@ -1312,7 +1312,7 @@ const pl: Partial<Translations> = {
   "files.noPathHint": "Odbudowany z kopii zapasowych bez folderu. Ustaw folder, aby znów tworzyć kopie. Przywracanie do folderu działa już teraz.",
   "files.deleteSet": "Usuń zestaw folderów",
   "files.deleteSetConfirm": "Usunąć ten zestaw folderów z listy? Jego kopie zapasowe nie zostaną usunięte i można je później odkryć ponownie.",
-  "files.deleteBackupsConfirm": "Usunąć WSZYSTKIE lokalne kopie zapasowe tego zestawu folderów? Migawki zostaną trwale usunięte, lokalne repozytorium przycięte, a zestaw zapomniany. Kopie w zdalnych celach pozostają, ale żaden zestaw już ich nie zna. Nie można cofnąć.",
+  "files.deleteBackupsConfirm": "Usunąć wszystkie lokalne kopie zapasowe tego zestawu folderów? Migawki zostaną trwale usunięte, lokalne repozytorium przycięte, a zestaw zapomniany. Kopie w zdalnych celach pozostają, ale żaden zestaw już ich nie zna. Nie można cofnąć.",
   "files.restoreOriginal": "Przywróć do oryginalnej lokalizacji",
   "files.restoreOriginalConfirm": "Przywrócić tę kopię na folder zestawu? Istniejące pliki zostaną nadpisane.",
   "files.restoreToFolder": "Przywróć do folderu",
@@ -1456,6 +1456,7 @@ const pl: Partial<Translations> = {
   "zfs.repoEffective": "Przechowywane w {repo}",
   "zfs.repo": "Repozytorium dla tej pozycji",
   "zfs.repoPlaceholder": "zostaw puste, aby użyć repozytorium zbiorów danych ZFS",
+  "zfs.repoPickHint": "Gdzie leżą kopie tej pozycji. Zostaw puste, a użyte zostanie repozytorium zbiorów danych ZFS. Na liście są twoje repozytoria i każde miejsce z folderem na zbiory danych ZFS; wybranie miejsca tworzy w nim repozytorium.",
   "zfs.repoLocked": "Tego nie da się już zmienić, gdy pozycja ma kopie: zostają w repozytorium, do którego zostały zapisane. Usuń najpierw kopie tej pozycji.",
   "zfs.membersSummary": "one={n} zbiór danych|few={n} zbiory danych|many={n} zbiorów danych|other={n} zbiorów danych",
   "zfs.skippedCount": "one={n} pominięty zbiór danych|few={n} pominięte zbiory danych|many={n} pominiętych zbiorów danych|other={n} pominiętych zbiorów danych",
@@ -2426,7 +2427,7 @@ const pl: Partial<Translations> = {
   "placementCode.homeUnreadable": "Nie udało się odczytać lokalizacji elementu, więc nic nie zostało usunięte.",
   "placementCode.snapshotMissing": "Tej kopii zapasowej nie ma już w wybranym miejscu.",
   "placementCode.directAccessDenied": "Klucz nie może odczytać tego miejsca. Klucz ograniczony do własnego katalogu celu nie sięga do katalogu obok niego; ogranicz klucz zamiast tego do katalogu nad celem.",
-  "placementCode.restPathTooDeep": "rest-server tworzy repozytoria najwyżej dwa foldery w głąb, np. /files-direct lub /user/files-direct. Wybierz krótszą ścieżkę.",
+  "placementCode.restPathTooDeep": "rest-server tworzy repozytoria najwyżej dwa foldery w głąb, np. /files-direct lub /user/files-direct. Miejsce przechowuje każdą domenę w folderze pod swoją ścieżką, więc ścieżka miejsca rest-server może mieć tylko jeden folder. Wybierz krótszą ścieżkę.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} bezpośrednio przechowuje teraz mniej. Elementy, których jedyna kopia tam jest: {n}.",

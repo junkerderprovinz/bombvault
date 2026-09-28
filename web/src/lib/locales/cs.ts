@@ -762,7 +762,7 @@ const cs: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Smazat všechny zálohy",
-  "snapshots.deleteAllConfirm": "Smazat VŠECHNY místní zálohy tohoto VM? Snímky budou trvale odstraněny a místní repozitář bude vyčištěn. Kopie ve vzdálených cílech zůstanou. Tuto akci nelze vrátit zpět.",
+  "snapshots.deleteAllConfirm": "Smazat všechny místní zálohy tohoto VM? Snímky budou trvale odstraněny a místní repozitář bude vyčištěn. Kopie ve vzdálených cílech zůstanou. Tuto akci nelze vrátit zpět.",
   "snapshots.deletingAll": "Mazání…",
 
   // Snapshot tags + compare (diff)
@@ -1315,7 +1315,7 @@ const cs: Partial<Translations> = {
   "files.noPathHint": "Obnoveno ze záloh bez složky. Nastavte složku, aby se sada znovu zálohovala. Obnova do složky funguje už teď.",
   "files.deleteSet": "Smazat sadu složek",
   "files.deleteSetConfirm": "Odebrat tuto sadu složek ze seznamu? Její zálohy se nesmažou a lze je později znovu objevit.",
-  "files.deleteBackupsConfirm": "Smazat VŠECHNY místní zálohy této sady složek? Snímky budou trvale odstraněny, místní repozitář vyčištěn a sada zapomenuta. Kopie ve vzdálených cílech zůstanou, ale žádná sada o nich už nebude vědět. Nelze vrátit zpět.",
+  "files.deleteBackupsConfirm": "Smazat všechny místní zálohy této sady složek? Snímky budou trvale odstraněny, místní repozitář vyčištěn a sada zapomenuta. Kopie ve vzdálených cílech zůstanou, ale žádná sada o nich už nebude vědět. Nelze vrátit zpět.",
   "files.restoreOriginal": "Obnovit na původní místo",
   "files.restoreOriginalConfirm": "Obnovit tuto zálohu přes složku sady? Stávající soubory budou přepsány.",
   "files.restoreToFolder": "Obnovit do složky",
@@ -1459,6 +1459,7 @@ const cs: Partial<Translations> = {
   "zfs.repoEffective": "Uloženo v {repo}",
   "zfs.repo": "Repozitář pro tuto položku",
   "zfs.repoPlaceholder": "nech prázdné, ať se použije repozitář ZFS datových sad",
+  "zfs.repoPickHint": "Kde jsou uložené zálohy této položky. Když ho necháš prázdné, použije se repozitář ZFS datových sad. V seznamu jsou tvoje repozitáře a každé místo se složkou pro ZFS datové sady; když zvolíš místo, vytvoří se tam repozitář této položky.",
   "zfs.repoLocked": "Jakmile má položka zálohy, tohle už se nedá změnit: zůstanou v repozitáři, do kterého byly zapsané. Smaž nejdřív zálohy této položky.",
   "zfs.membersSummary": "one={n} datová sada|few={n} datové sady|other={n} datových sad",
   "zfs.skippedCount": "one={n} přeskočená datová sada|few={n} přeskočené datové sady|other={n} přeskočených datových sad",
@@ -2429,7 +2430,7 @@ const cs: Partial<Translations> = {
   "placementCode.homeUnreadable": "Umístění položky se nepodařilo načíst, takže nic nebylo smazáno.",
   "placementCode.snapshotMissing": "Tato záloha už není na zvoleném místě.",
   "placementCode.directAccessDenied": "Klíč nemůže tento cíl přečíst. Klíč omezený na vlastní složku cíle se nedostane do složky vedle ní; omezte klíč místo toho na složku nad cílem.",
-  "placementCode.restPathTooDeep": "rest-server vytváří repozitáře nejvýše dvě složky hluboko, například /files-direct nebo /user/files-direct. Zvol kratší cestu.",
+  "placementCode.restPathTooDeep": "rest-server vytváří repozitáře nejvýše dvě složky hluboko, například /files-direct nebo /user/files-direct. Místo ukládá každou doménu do složky pod svou cestou, takže cesta místa s rest-serverem smí mít jen jednu složku. Zvol kratší cestu.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} přímo teď uchovává méně. Položky, jejichž jediná kopie je tam: {n}.",

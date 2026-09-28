@@ -1454,6 +1454,7 @@ const zh: Partial<Translations> = {
   "zfs.repoEffective": "存放在 {repo}",
   "zfs.repo": "这个条目的仓库",
   "zfs.repoPlaceholder": "留空则使用 ZFS 数据集仓库",
+  "zfs.repoPickHint": "这个条目的备份存放的位置。留空则使用 ZFS 数据集仓库。列表中有现有的仓库，以及每个带有 ZFS 数据集文件夹的存储位置；选择一个存储位置，就会在那里创建这个条目的仓库。",
   "zfs.repoLocked": "条目一旦有了备份，这项就不能再改：备份留在写入它们的那个仓库里。请先删掉这个条目的备份。",
   "zfs.membersSummary": "{n} 个数据集",
   "zfs.skippedCount": "跳过了 {n} 个数据集",
@@ -2424,7 +2425,7 @@ const zh: Partial<Translations> = {
   "placementCode.homeUnreadable": "无法读取该项目的位置，因此未删除任何内容。",
   "placementCode.snapshotMissing": "此备份不再位于所选位置。",
   "placementCode.directAccessDenied": "密钥无法读取此位置。限定在目标自身文件夹的密钥无法到达它旁边的文件夹；应把密钥限定在目标上一级的文件夹。",
-  "placementCode.restPathTooDeep": "rest-server 最多只能在两层文件夹深处创建存储库，例如 /files-direct 或 /user/files-direct。请选择更短的路径。",
+  "placementCode.restPathTooDeep": "rest-server 最多只能在两层文件夹深处创建存储库，例如 /files-direct 或 /user/files-direct。存储位置会把每个域放在其路径下的一个文件夹中，因此 rest-server 存储位置的路径只能有一层文件夹。请选择更短的路径。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 直接现在保留得更少。唯一副本在那里的项目：{n}。",

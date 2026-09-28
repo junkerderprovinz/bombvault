@@ -764,7 +764,7 @@ const hu: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Összes mentés törlése",
-  "snapshots.deleteAllConfirm": "Törli ennek a VM-nek az ÖSSZES helyi mentését? A pillanatképek véglegesen eltávolításra kerülnek, és a helyi tároló megnyesésre kerül. A külső célokon lévő másolatok megmaradnak. Ez nem vonható vissza.",
+  "snapshots.deleteAllConfirm": "Törli ennek a VM-nek az összes helyi mentését? A pillanatképek véglegesen eltávolításra kerülnek, és a helyi tároló megnyesésre kerül. A külső célokon lévő másolatok megmaradnak. Ez nem vonható vissza.",
   "snapshots.deletingAll": "Törlés…",
 
   // Snapshot tags + compare (diff)
@@ -1320,7 +1320,7 @@ const hu: Partial<Translations> = {
   "files.noPathHint": "Mappa nélkül, mentésekből újjáépítve. Állíts be egy mappát az újbóli mentéshez. A mappába való visszaállítás már most működik.",
   "files.deleteSet": "Mappakészlet törlése",
   "files.deleteSetConfirm": "Eltávolítod ezt a mappakészletet a listáról? A mentései nem törlődnek, és később újra felfedezhetők.",
-  "files.deleteBackupsConfirm": "Törlöd ennek a mappakészletnek az ÖSSZES helyi mentését? A pillanatképek véglegesen eltávolításra kerülnek, a helyi tároló megnyesésre kerül, és a készlet elfelejtődik. A külső célokon lévő másolatok megmaradnak, de egy készlet sem tud róluk. Nem vonható vissza.",
+  "files.deleteBackupsConfirm": "Törlöd ennek a mappakészletnek az összes helyi mentését? A pillanatképek véglegesen eltávolításra kerülnek, a helyi tároló megnyesésre kerül, és a készlet elfelejtődik. A külső célokon lévő másolatok megmaradnak, de egy készlet sem tud róluk. Nem vonható vissza.",
   "files.restoreOriginal": "Visszaállítás az eredeti helyre",
   "files.restoreOriginalConfirm": "Visszaállítod ezt a mentést a készlet mappájára? A meglévő fájlok felülíródnak.",
   "files.restoreToFolder": "Visszaállítás mappába",
@@ -1464,6 +1464,7 @@ const hu: Partial<Translations> = {
   "zfs.repoEffective": "Itt tárolva: {repo}",
   "zfs.repo": "Tároló ehhez a tételhez",
   "zfs.repoPlaceholder": "hagyd üresen a ZFS adatkészletek tárolójához",
+  "zfs.repoPickHint": "Hol vannak ennek a tételnek a mentései. Ha üresen hagyod, a ZFS adatkészletek tárolója lesz. A listában a tárolóid és minden olyan tárhely szerepel, amelyen van mappa a ZFS adatkészletek számára; ha tárhelyet választasz, ott létrejön a hozzá tartozó tároló.",
   "zfs.repoLocked": "Ez már nem módosítható, ha a tételnek vannak mentései: abban a tárolóban maradnak, amelybe kerültek. Előbb töröld a tétel mentéseit.",
   "zfs.membersSummary": "{n} adatkészlet",
   "zfs.skippedCount": "{n} kihagyott adatkészlet",
@@ -2434,7 +2435,7 @@ const hu: Partial<Translations> = {
   "placementCode.homeUnreadable": "Az elem helyét nem sikerült beolvasni, ezért semmi sem törlődött.",
   "placementCode.snapshotMissing": "Ez a mentés már nincs a kiválasztott helyen.",
   "placementCode.directAccessDenied": "A kulcs nem tudja beolvasni ezt a helyet. A cél saját mappájára korlátozott kulcs nem éri el a mellette lévő mappát; korlátozd inkább a kulcsot a cél feletti mappára.",
-  "placementCode.restPathTooDeep": "A rest-server legfeljebb két mappa mélységben hoz létre tárolókat, például /files-direct vagy /user/files-direct. Válassz rövidebb útvonalat.",
+  "placementCode.restPathTooDeep": "A rest-server legfeljebb két mappa mélységben hoz létre tárolókat, például /files-direct vagy /user/files-direct. Egy tárhely minden tartományt egy mappában tart az útvonala alatt, ezért egy rest-server tárhely útvonala csak egyetlen mappa lehet. Válassz rövidebb útvonalat.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} közvetlenül most kevesebbet őriz meg. Elemek, amelyeknek egyetlen másolata ott van: {n}.",

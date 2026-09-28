@@ -761,7 +761,7 @@ const no: Partial<Translations> = {
 
   // Backups (delete all)
   "snapshots.deleteAll": "Slett alle sikkerhetskopier",
-  "snapshots.deleteAllConfirm": "Slette ALLE lokale sikkerhetskopier av denne VM-en? Snapshotene fjernes permanent og det lokale repositoriet beskjæres. Kopier på eksterne mål blir værende. Kan ikke angres.",
+  "snapshots.deleteAllConfirm": "Slette alle lokale sikkerhetskopier av denne VM-en? Snapshotene fjernes permanent og det lokale repositoriet beskjæres. Kopier på eksterne mål blir værende. Kan ikke angres.",
   "snapshots.deletingAll": "Sletter…",
 
   // Snapshot tags + compare (diff)
@@ -1317,7 +1317,7 @@ const no: Partial<Translations> = {
   "files.noPathHint": "Gjenoppbygd fra sikkerhetskopier uten mappe. Angi en mappe for å sikkerhetskopiere igjen. Gjenoppretting til en mappe virker allerede.",
   "files.deleteSet": "Slett mappesett",
   "files.deleteSetConfirm": "Fjerne dette mappesettet fra listen? Sikkerhetskopiene slettes ikke og kan gjenoppdages senere.",
-  "files.deleteBackupsConfirm": "Slette ALLE lokale sikkerhetskopier av dette mappesettet? Snapshotene fjernes permanent, det lokale repositoriet beskjæres og settet glemmes. Kopier på eksterne mål blir værende, uten noe sett som kjenner dem. Kan ikke angres.",
+  "files.deleteBackupsConfirm": "Slette alle lokale sikkerhetskopier av dette mappesettet? Snapshotene fjernes permanent, det lokale repositoriet beskjæres og settet glemmes. Kopier på eksterne mål blir værende, uten noe sett som kjenner dem. Kan ikke angres.",
   "files.restoreOriginal": "Gjenopprett til opprinnelig plassering",
   "files.restoreOriginalConfirm": "Gjenopprette denne sikkerhetskopien over settets mappe? Eksisterende filer overskrives.",
   "files.restoreToFolder": "Gjenopprett til en mappe",
@@ -1461,6 +1461,7 @@ const no: Partial<Translations> = {
   "zfs.repoEffective": "Lagret i {repo}",
   "zfs.repo": "Depot for dette elementet",
   "zfs.repoPlaceholder": "la stå tomt for å bruke depotet til ZFS-datasettene",
+  "zfs.repoPickHint": "Hvor sikkerhetskopiene til dette elementet ligger. Lar du det stå tomt, brukes depotet til ZFS-datasettene. Listen inneholder depotene dine og hvert lagringssted med en mappe for ZFS-datasett; velger du et lagringssted, opprettes depotet der.",
   "zfs.repoLocked": "Dette kan ikke endres når elementet først har sikkerhetskopier: de blir i depotet de ble skrevet til. Slett sikkerhetskopiene til dette elementet først.",
   "zfs.membersSummary": "{n} datasett",
   "zfs.skippedCount": "{n} datasett hoppet over",
@@ -2431,7 +2432,7 @@ const no: Partial<Translations> = {
   "placementCode.homeUnreadable": "Elementets plassering kunne ikke leses, så ingenting ble slettet.",
   "placementCode.snapshotMissing": "Denne sikkerhetskopien er ikke lenger på det valgte stedet.",
   "placementCode.directAccessDenied": "Nøkkelen kan ikke lese dette stedet. En nøkkel som er begrenset til målets egen mappe, når ikke mappen ved siden av; begrens i stedet nøkkelen til mappen over målet.",
-  "placementCode.restPathTooDeep": "En rest-server oppretter depoter høyst to mapper dypt, for eksempel /files-direct eller /user/files-direct. Velg en kortere sti.",
+  "placementCode.restPathTooDeep": "En rest-server oppretter depoter høyst to mapper dypt, for eksempel /files-direct eller /user/files-direct. Et lagringssted holder hvert domene i en mappe under stien sin, så stien til et rest-server-lagringssted kan bare være én mappe. Velg en kortere sti.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkte beholder nå mindre. Elementer der eneste kopi ligger der: {n}.",

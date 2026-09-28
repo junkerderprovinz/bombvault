@@ -761,7 +761,7 @@ const pt: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Eliminar todos os backups",
-  "snapshots.deleteAllConfirm": "Eliminar TODOS os backups locais desta VM? Os instantâneos são removidos permanentemente e o repositório local é podado. As cópias nos destinos externos ficam. Não pode ser desfeito.",
+  "snapshots.deleteAllConfirm": "Eliminar todos os backups locais desta VM? Os instantâneos são removidos permanentemente e o repositório local é podado. As cópias nos destinos externos ficam. Não pode ser desfeito.",
   "snapshots.deletingAll": "A eliminar…",
 
   // Snapshot tags + compare (diff)
@@ -1317,7 +1317,7 @@ const pt: Partial<Translations> = {
   "files.noPathHint": "Reconstruído a partir dos backups sem pasta. Defina uma pasta para voltar a fazer backup. Restaurar para uma pasta já funciona.",
   "files.deleteSet": "Eliminar conjunto de pastas",
   "files.deleteSetConfirm": "Remover este conjunto de pastas da lista? Os seus backups não são eliminados e podem ser redescobertos mais tarde.",
-  "files.deleteBackupsConfirm": "Eliminar TODOS os backups locais deste conjunto de pastas? Os snapshots são removidos permanentemente, o repositório local é podado e o conjunto é esquecido. As cópias nos destinos externos ficam, sem nenhum conjunto que as conheça. Não pode ser desfeito.",
+  "files.deleteBackupsConfirm": "Eliminar todos os backups locais deste conjunto de pastas? Os snapshots são removidos permanentemente, o repositório local é podado e o conjunto é esquecido. As cópias nos destinos externos ficam, sem nenhum conjunto que as conheça. Não pode ser desfeito.",
   "files.restoreOriginal": "Restaurar no local original",
   "files.restoreOriginalConfirm": "Restaurar este backup sobre a pasta do conjunto? Os ficheiros existentes serão sobrescritos.",
   "files.restoreToFolder": "Restaurar para uma pasta",
@@ -1461,6 +1461,7 @@ const pt: Partial<Translations> = {
   "zfs.repoEffective": "Guardado em {repo}",
   "zfs.repo": "Repositório para este item",
   "zfs.repoPlaceholder": "deixa vazio para usar o repositório dos conjuntos de dados ZFS",
+  "zfs.repoPickHint": "Onde ficam as cópias deste item. Se deixares vazio usa o repositório dos conjuntos de dados ZFS. A lista tem os teus repositórios e cada lugar com uma pasta para conjuntos de dados ZFS; escolher um lugar cria lá o seu repositório.",
   "zfs.repoLocked": "Isto já não se pode mudar depois de o item ter cópias: ficam no repositório onde foram escritas. Apaga primeiro as cópias deste item.",
   "zfs.membersSummary": "one={n} conjunto de dados|other={n} conjuntos de dados",
   "zfs.skippedCount": "one={n} conjunto de dados ignorado|other={n} conjuntos de dados ignorados",
@@ -2431,7 +2432,7 @@ const pt: Partial<Translations> = {
   "placementCode.homeUnreadable": "Não foi possível ler a localização do item, por isso nada foi apagado.",
   "placementCode.snapshotMissing": "Este backup já não está no lugar escolhido.",
   "placementCode.directAccessDenied": "A chave não consegue ler este lugar. Uma chave limitada à pasta do próprio destino não consegue alcançar a pasta ao lado dela; limite antes a chave à pasta acima do destino.",
-  "placementCode.restPathTooDeep": "Um rest-server cria repositórios no máximo a duas pastas de profundidade, como /files-direct ou /user/files-direct. Escolha um caminho mais curto.",
+  "placementCode.restPathTooDeep": "Um rest-server cria repositórios no máximo a duas pastas de profundidade, como /files-direct ou /user/files-direct. Um lugar guarda cada domínio numa pasta abaixo do seu caminho, por isso o caminho de um lugar rest-server só pode ter uma pasta. Escolha um caminho mais curto.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direto agora conserva menos. Itens cuja única cópia está lá: {n}.",
