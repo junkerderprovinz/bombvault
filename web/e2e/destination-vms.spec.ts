@@ -118,8 +118,6 @@ function settingsBody(settingsOverrides: Record<string, unknown> = {}) {
       drDrillTarget: "",
       drDrillTargetVm: "",
       instanceName: "e2e-harness",
-      fleetToken: "",
-      fleetTokenSet: false,
       pruneImageAfterUpdate: false,
       resticCacheMaxMB: 4096,
       digestEnabled: false,

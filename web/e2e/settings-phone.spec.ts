@@ -57,7 +57,6 @@ const SETTINGS = {
   metricsEnabled: true,
   metricsTokenSet: true,
   widgetTokenSet: true,
-  fleetTokenSet: true,
   instanceName: "Tower im Keller (Hauptserver)",
   drillsEnabled: true,
   drillsSchedule: "weekly Sun 05:00",
