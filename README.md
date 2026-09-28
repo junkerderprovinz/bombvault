@@ -89,18 +89,30 @@ If it has earned a place on your server or computer, toss a coin to your knight:
 
 ## 1. What is this?
 
-BombVault is a self-hosted, **Unraid-native** web app for **backup and full disaster recovery** of your Docker containers and KVM/libvirt VMs; it also runs on a plain Docker host or TrueNAS Scale (see [Other platforms](#other-platforms)). It ships as a single Docker container, gives you a modern web UI that follows your system's light/dark preference, or the theme you pick yourself, and handles the whole lifecycle:
+BombVault backs up a self-hosted server and brings it back. A restored container runs again with its image, settings and data, and a restored VM is defined again with its disks and NVRAM. It runs as one Docker container on Unraid, TrueNAS Scale or a plain Docker host (see [Other platforms](#other-platforms)), and stores everything with restic.
 
-- **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), the whole Unraid flash (`/boot`), any folders you point it at (named **file sets** with per-set excludes), ZFS datasets with their child datasets (read from one snapshot, with optional containers stopped only for the instant of the snapshot), and its own `/config` (settings database + off-site credentials). Recognised PostgreSQL, MySQL and MariaDB containers are **dumped before each backup**, straight into the repository as a restore point of their own.
-- **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before, and VMs are re-defined in the VM Manager with their disks + NVRAM reattached.
-- **Schedules** incremental backups in the background (per domain) from one place — the **Schedules** tab under Settings — with one-click *"include all in schedule"* for containers and VMs, so you never have to think about it.
-- **Backs the whole server up in one pass**: *Backup Everything* (Settings → Schedules) runs containers, VMs, flash, folders, ZFS datasets and the self-backup once each, in that order, under a single entry in the Activity Log. Give it a post-command and one ping after the pass tells you the entire server is protected, instead of six separate schedules you have to correlate by hand. Off by default, and independent of each domain's own schedule.
-- **Optionally updates a container right after its backup** — flip on *Update after successful backup* on a container (advanced, off by default) and BombVault pulls the newest image and recreates it, but only when there's actually a newer image. A fresh restore point always exists first, so a bad update is one restore away. Optional extras: a **notification per updated container** so you know to check it, and **image cleanup** (Settings → Paths & Storage) that removes the superseded image afterwards — a base image shared by other containers is never deleted.
-- **Keeps an eye on your other BombVault boxes** — turn on **Fleet** (Settings, off by default) and a **Fleet** tab lists the other instances you run, each with its own protection scorecard. It is read-only in both directions: this box only ever *asks* a peer for its status. Fleet peers can also hand each other off-site storage, so setting up a mutual off-site no longer means mailing repository addresses and passwords around.
-- **Notices when a backup looks wrong.** BombVault compares each backup of an item with that item's own history: much more new data than usual, most of the data stored again, a source or database dump that is suddenly almost empty or much smaller, far fewer files, a much slower restic run, repeated or intermittent failures, a restore check that stopped passing, and a disk that is about to fill up. It learns from 10 backups per item and reads the existing history from restic 0.17 snapshots, so an existing install does not start from zero. When a source shrinks sharply, or one backup stores most of the data again, the old backups of that item are kept until you acknowledge the anomaly, and the anomaly links to the last good backup. A ZFS item is checked dataset by dataset, so a child dataset that was emptied shows even in a large tree.
-- **Answers your AI assistant.** The built-in MCP server lets Claude Code, Cursor, GitHub Copilot, LM Studio or another MCP client read backup status, coverage, run history, restore points (database dumps and ZFS datasets included) and the open anomalies, and, with a key that allows it, start a backup. Every client gets a key of its own and its setup from its own button on the card; restores, deletions and settings stay in the web interface. See [docs/mcp.md](docs/mcp.md).
+**What it backs up**
 
-The core idea — one-click backup *and* automatic re-install of Docker containers — comes from [**VolumeVault**](https://github.com/Darkdragon14/VolumeVault) by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0). BombVault is a fresh, independent implementation with restic as the engine; see [Credits](#10-credits).
+| | |
+|---|---|
+| **Containers** | appdata and the container definition; PostgreSQL, MySQL and MariaDB containers are dumped first |
+| **VMs** | disks, XML and UEFI NVRAM, ZFS zvols included |
+| **Unraid flash** | the whole `/boot`, on Unraid |
+| **Folders** | any path, as file sets with their own excludes |
+| **ZFS datasets** | with their children, read from one snapshot |
+| **BombVault itself** | its settings and off-site credentials |
+
+**What it does with them**
+
+- Runs backups on a schedule per area, or the whole server in one pass with *Backup Everything*.
+- Restores containers and VMs in place, so you don't set them up again by hand.
+- Copies backups off site, encrypted, to one or more targets, which can be append-only.
+- Flags backups that look wrong, such as much more new data than usual, a source that shrank or a run that took far longer. When a source shrinks sharply, its old backups are kept until you acknowledge the finding.
+- Can update a container right after its backup, so a bad update is one restore away. Off by default.
+- Shows your other BombVault boxes in a Fleet tab and lets them share off-site storage.
+- Answers AI assistants over MCP: status, coverage, restore points, and a backup when the key allows it. See [docs/mcp.md](docs/mcp.md).
+
+The idea of one-click backup with automatic reinstall comes from [**VolumeVault**](https://github.com/Darkdragon14/VolumeVault) by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0). BombVault is a separate implementation on restic; see [Credits](#10-credits).
 
 ### How it compares
 
@@ -130,7 +142,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Runs outside Unraid | ✅ | ⚠️ replica only | ❌ | ✅ | ✅ | ✅ |
 | In Unraid Community Applications | ✅ | ✅ | ✅ | ✅ community template | ✅ community template | ✅ community template |
 | Web UI | ✅ | ✅ | ✅ in Unraid's UI | ✅ | ✅ | ⚠️ third party |
-| Web UI usable on a phone | ❌ in progress | ✅ per its README | ❓ | ✅ | ❓ | ❓ |
+| Web UI usable on a phone | ✅ | ✅ per its README | ❓ | ✅ | ❓ | ❓ |
 | Track record | ⚠️ since 2026, one maintainer | ⚠️ since 2026, one maintainer | ⚠️ since 2023, feature-frozen | ✅ since 2008 | ✅ since 2019 | ✅ since 2015 |
 
 ✅ yes · ⚠️ partly · ❌ no · ❓ not found in code or docs. "In progress" means the work is under way but not in a release yet. Checked on 25 September 2026 against BombVault v9.0.0 and the current code and docs of the others.
