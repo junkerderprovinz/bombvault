@@ -5,6 +5,8 @@ import { Card } from "../settings/shared";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { RevealInput } from "../../components/RevealInput";
+import { IconAdd } from "../../components/Sidebar";
+import { IconEye, IconSignOut } from "../../components/glyphs";
 import {
   createPhrase,
   joinGroup,
@@ -180,6 +182,7 @@ export function PhraseCard({
                 key={`create-${shake}`}
                 label={t("pairing.create")}
                 labelKey="pairing.create"
+                glyph={<IconAdd />}
                 tone="accent"
                 onClick={() => void create()}
                 disabled={busy}
@@ -268,6 +271,7 @@ export function PhraseCard({
                   key={`show-${shake}`}
                   label={t("pairing.show")}
                   labelKey="pairing.show"
+                  glyph={<IconEye />}
                   tone="accent"
                   onClick={() => void show()}
                   disabled={busy || password === ""}
@@ -293,13 +297,14 @@ export function PhraseCard({
 
           <div className="flex flex-wrap items-center justify-end gap-2">
             {phrase ? (
-              <Button label={t("pairing.hide")} labelKey="pairing.hide" tone="neutral" onClick={() => setPhrase(null)} />
+              <Button label={t("pairing.hide")} labelKey="pairing.hide" glyph={<IconEye />} tone="neutral" onClick={() => setPhrase(null)} />
             ) : (
               !askPassword && (
                 <Button
                   key={`reveal-${shake}`}
                   label={t("pairing.show")}
                   labelKey="pairing.show"
+                  glyph={<IconEye />}
                   tone="neutral"
                   onClick={() => (group.passwordSet ? setAskPassword(true) : void show())}
                   disabled={busy}
@@ -312,6 +317,7 @@ export function PhraseCard({
                 key={`leave-${shake}`}
                 label={t("pairing.confirmLeave")}
                 labelKey="pairing.confirmLeave"
+                glyph={<IconSignOut />}
                 tone="neutral"
                 onClick={() => void leave()}
                 disabled={busy}
@@ -319,7 +325,7 @@ export function PhraseCard({
                 className={shakeCls}
               />
             ) : (
-              <Button label={t("pairing.leave")} labelKey="pairing.leave" tone="neutral" onClick={() => setConfirmLeave(true)} />
+              <Button label={t("pairing.leave")} labelKey="pairing.leave" glyph={<IconSignOut />} tone="neutral" onClick={() => setConfirmLeave(true)} />
             )}
           </div>
         </>
