@@ -289,6 +289,19 @@ describe("after a minute alone", () => {
     expect(screen.getByText(en["pairing.otherNetTitle"])).not.toBeNull();
   });
 
+  it("puts a missing relay ahead of a second group and turns the project relay on", async () => {
+    group = alone({ relay: { ...makeGroup().relay, mode: "off", connected: false } });
+    await renderTab();
+    const noRelay = screen.getByText(en["pairing.otherNetTitle"]);
+    const twoGroups = screen.getByText(en["pairing.twoTitle"]);
+    expect(noRelay.compareDocumentPosition(twoGroups) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["relay.project"] }));
+    });
+    expect(relayCalls).toContainEqual({ mode: "project" });
+    expect(screen.queryByText(en["pairing.otherNetTitle"])).toBeNull();
+  });
+
   it("says what to check when the relay cannot be reached", async () => {
     group = alone({ relay: { ...makeGroup().relay, connected: false } });
     await renderTab();

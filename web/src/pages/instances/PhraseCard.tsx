@@ -14,6 +14,7 @@ import {
   createPhrase,
   joinGroup,
   leaveGroup,
+  setRelay,
   showPhrase,
   type GroupMember,
   type GroupState,
@@ -451,11 +452,35 @@ export function PhraseCard({
     </div>
   );
 
+  // Without a relay, instances in Docker's bridge network never hear each
+  // other's multicast, so a missing relay is the likelier cause than a second
+  // group and comes first.
+  const noRelay = group.relay.mode === "off" && (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div className="min-w-0 flex-[1_1_16rem]">
+        <Lead title={t("pairing.otherNetTitle")}>
+          {t("pairing.otherNetBody")} <InfoBubble tip={t("pairing.relayCheckTip")} />
+        </Lead>
+      </div>
+      <Button
+        label={t("relay.project")}
+        labelKey="relay.project"
+        glyph={<RouteGlyph kind="project" />}
+        tone="neutral"
+        onClick={() => void run(async () => onGroup(await setRelay({ mode: "project" })))}
+        disabled={busy}
+        busy={busy}
+      />
+    </div>
+  );
+
   function aloneHint(left: boolean) {
     return (
       <Hint title={t("pairing.aloneTitle")}>
         {!left && <p>{t("pairing.aloneLead")}</p>}
         {!left && <Rule />}
+        {!left && noRelay}
+        {!left && noRelay && <Rule />}
         <Lead title={t("pairing.twoTitle")}>{t("pairing.twoBody")}</Lead>
         <div className="grid grid-cols-[24px_minmax(0,1fr)] items-start gap-x-3 gap-y-2.5">
           <StepNumber n={1} done={left} />
@@ -510,10 +535,10 @@ export function PhraseCard({
             {revealed}
           </>
         )}
-        {group.relay.mode === "off" && (
+        {left && noRelay && (
           <>
             <Rule />
-            <Lead title={t("pairing.otherNetTitle")}>{t("pairing.otherNetBody")}</Lead>
+            {noRelay}
           </>
         )}
       </Hint>
