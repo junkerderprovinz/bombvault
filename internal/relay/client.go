@@ -41,7 +41,8 @@ const (
 // opened call, never a routing field the relay was free to write.
 type Handler func(ctx context.Context, call ProxyCall) (status int, body []byte)
 
-// ClientOptions configures a Client. Every field but OnChange is required.
+// ClientOptions configures a Client. Every field but Replay and OnChange is
+// required.
 type ClientOptions struct {
 	// URL is the relay's address, http(s) or ws(s), with or without the
 	// connect path.
@@ -56,6 +57,10 @@ type ClientOptions struct {
 	Identity Identity
 	// Serve answers calls siblings make to this instance.
 	Serve Handler
+	// Replay admits the calls Serve gets. nil gives the client a guard of its
+	// own; an instance that also takes direct calls passes the guard those
+	// go through.
+	Replay *ReplayGuard
 	// OnChange fires when a sibling arrives or leaves and when the connection
 	// comes up or goes down. It runs on the client's goroutine and must not
 	// block.
@@ -72,6 +77,7 @@ type Client struct {
 	instanceID string
 	identity   Identity
 	serve      Handler
+	replay     *ReplayGuard
 	onChange   func()
 
 	minBackoff time.Duration
@@ -109,6 +115,10 @@ func NewClient(opts ClientOptions) (*Client, error) {
 	if opts.Serve == nil {
 		return nil, errors.New("relay: no handler for calls from siblings")
 	}
+	replay := opts.Replay
+	if replay == nil {
+		replay = NewReplayGuard()
+	}
 	return &Client{
 		url:        connect,
 		key:        opts.Key,
@@ -116,6 +126,7 @@ func NewClient(opts ClientOptions) (*Client, error) {
 		instanceID: opts.InstanceID,
 		identity:   opts.Identity,
 		serve:      opts.Serve,
+		replay:     replay,
 		onChange:   opts.OnChange,
 		minBackoff: minBackoff,
 		maxBackoff: maxBackoff,
@@ -378,10 +389,12 @@ func (c *Client) handle(ctx context.Context, conn *websocket.Conn, frame []byte)
 }
 
 // answer runs one inbound call and sends the result back. A call that does
-// not open gets no reply, since a reply would only confirm the key.
+// not open gets no reply, since a reply would only confirm the key; nor does
+// one that is old or ran before, which is a relay sending a captured frame
+// again.
 func (c *Client) answer(ctx context.Context, conn *websocket.Conn, req ProxyRequest) {
 	call, err := OpenCall(c.frameKey, req.RequestID, c.instanceID, req.Sealed)
-	if err != nil {
+	if err != nil || !c.replay.Admit(call) {
 		return
 	}
 	serveCtx, cancel := context.WithTimeout(ctx, CallTimeout)

@@ -93,9 +93,6 @@ const (
 	headerPeer      = "X-Bombvault-Peer"
 	headerTime      = "X-Bombvault-Time"
 	headerSignature = "X-Bombvault-Signature"
-	// clockSkew is how far a direct call's timestamp may be from this
-	// instance's clock.
-	clockSkew = 2 * time.Minute
 	// directBodyLimit caps one direct call or answer.
 	directBodyLimit = 8 << 20
 )
@@ -117,23 +114,24 @@ func deriveKeys(secret []byte) *keys {
 // Manager keeps this instance's side of the group running: the discovery
 // announce, the relay connection and the direct transport.
 type Manager struct {
-	serve relay.Handler
-	disc  *discovery.Service
-	hc    *http.Client
+	serve  relay.Handler
+	replay *relay.ReplayGuard
+	disc   *discovery.Service
+	hc     *http.Client
 
 	mu     sync.Mutex
 	cfg    Config
 	keys   *keys
 	client *relay.Client
-	seen   map[string]time.Time
 }
 
 // NewManager returns a Manager that answers members' calls with serve. It is
 // in no group until Apply is called with a secret.
 func NewManager(serve relay.Handler) *Manager {
 	return &Manager{
-		serve: serve,
-		disc:  discovery.New(),
+		serve:  serve,
+		replay: relay.NewReplayGuard(),
+		disc:   discovery.New(),
 		hc: &http.Client{
 			Timeout: relay.CallTimeout,
 			CheckRedirect: func(*http.Request, []*http.Request) error {
@@ -147,7 +145,6 @@ func NewManager(serve relay.Handler) *Manager {
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // G402: see the comment above
 			},
 		},
-		seen: map[string]time.Time{},
 	}
 }
 
@@ -184,6 +181,7 @@ func (m *Manager) Apply(cfg Config) {
 				InstanceID: cfg.InstanceID,
 				Identity:   relay.Identity{Name: cfg.Name, Version: cfg.Version},
 				Serve:      m.serve,
+				Replay:     m.replay,
 			})
 			if err != nil {
 				log.Printf("group: relay not started: %v", err)
@@ -411,7 +409,7 @@ func (m *Manager) ServeDirect(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
-	if d := time.Since(time.Unix(sent, 0)); d > clockSkew || d < -clockSkew {
+	if d := time.Since(time.Unix(sent, 0)); d > relay.ClockSkew || d < -relay.ClockSkew {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
@@ -421,12 +419,12 @@ func (m *Manager) ServeDirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req relay.ProxyRequest
-	if json.Unmarshal(body, &req) != nil || req.RequestID == "" || req.Target != self || !m.firstSighting(req.RequestID) {
+	if json.Unmarshal(body, &req) != nil || req.RequestID == "" || req.Target != self {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
 	call, err := relay.OpenCall(k.frameKey, req.RequestID, self, req.Sealed)
-	if err != nil {
+	if err != nil || !m.replay.Admit(call) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
@@ -438,23 +436,4 @@ func (m *Manager) ServeDirect(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(relay.ProxyResponse{RequestID: req.RequestID, Sealed: sealed})
-}
-
-// firstSighting records a request id and reports whether it is new. Ids are
-// kept for twice the allowed clock skew, which covers every call whose
-// timestamp would still pass.
-func (m *Manager) firstSighting(id string) bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	now := time.Now()
-	for seen, at := range m.seen {
-		if now.Sub(at) > 2*clockSkew {
-			delete(m.seen, seen)
-		}
-	}
-	if _, dup := m.seen[id]; dup {
-		return false
-	}
-	m.seen[id] = now
-	return true
 }

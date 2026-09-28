@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"net/http"
 	"testing"
+	"time"
 )
 
 func TestSealedCallRoundTrips(t *testing.T) {
@@ -27,6 +28,9 @@ func TestSealedCallRoundTrips(t *testing.T) {
 	}
 	if !bytes.Equal(got.Body, want.Body) {
 		t.Errorf("body opened as %s, want it byte for byte", got.Body)
+	}
+	if got.ID != "r1" || time.Since(time.Unix(got.Sent, 0)) > time.Minute {
+		t.Errorf("opened id %q sent at %d, want r1 stamped now", got.ID, got.Sent)
 	}
 }
 

@@ -257,6 +257,77 @@ func TestClientAnswersASiblingsCall(t *testing.T) {
 	}
 }
 
+func TestACallSentAgainOrLateIsNotRun(t *testing.T) {
+	addr, _ := relayOn(t, "127.0.0.1:0")
+	var mu sync.Mutex
+	var ran []string
+	alpha := startClient(t, addr, "shared-relay-test-key-0123456789ab", "alpha", func(_ context.Context, call ProxyCall) (int, []byte) {
+		mu.Lock()
+		ran = append(ran, call.ID)
+		mu.Unlock()
+		return http.StatusOK, nil
+	})
+	waitFor(t, "alpha to connect", alpha.Connected)
+	bravo := dialInstance(t, "ws://"+addr+connectPath, "shared-relay-test-key-0123456789ab", "bravo")
+	readFrame(t, bravo, TypeAnnounce)
+
+	check := ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/check/containers"}
+	first := ProxyRequest{RequestID: "r1", Target: "alpha", Sealed: sealFor(t, "r1", "alpha", check)}
+	late := check
+	late.Sent = time.Now().Add(-10 * time.Minute).Unix()
+	writeFrame(t, bravo, TypeProxyRequest, first)
+	writeFrame(t, bravo, TypeProxyRequest, first)
+	writeFrame(t, bravo, TypeProxyRequest, ProxyRequest{RequestID: "r2", Target: "alpha", Sealed: sealFor(t, "r2", "alpha", late)})
+	writeFrame(t, bravo, TypeProxyRequest, ProxyRequest{RequestID: "r3", Target: "alpha", Sealed: sealFor(t, "r3", "alpha", check)})
+
+	// Each call is answered on its own goroutine, so the answers to r1 and
+	// r3 may come in either order.
+	answered := map[string]bool{}
+	for range 2 {
+		var resp ProxyResponse
+		if err := readFrame(t, bravo, TypeProxyResponse).Into(&resp); err != nil {
+			t.Fatalf("proxy-response: %v", err)
+		}
+		answered[resp.RequestID] = true
+	}
+	if !answered["r1"] || !answered["r3"] {
+		t.Fatalf("answered %v, want r1 and r3", answered)
+	}
+	quiet, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+	defer cancel()
+	if _, frame, err := bravo.Read(quiet); err == nil {
+		t.Fatalf("a third answer came: %s", frame)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(ran) != 2 {
+		t.Fatalf("ran %v, want r1 and r3 once each", ran)
+	}
+}
+
+func TestReplayGuardAdmitsACallOnceWithinTheSkew(t *testing.T) {
+	g := NewReplayGuard()
+	now := time.Unix(1_800_000_000, 0)
+	g.now = func() time.Time { return now }
+	call := ProxyCall{ID: "a", Sent: now.Unix()}
+	if !g.Admit(call) || g.Admit(call) {
+		t.Fatal("a fresh call must pass once and only once")
+	}
+	for name, c := range map[string]ProxyCall{
+		"old":       {ID: "b", Sent: now.Add(-ClockSkew - time.Second).Unix()},
+		"future":    {ID: "c", Sent: now.Add(ClockSkew + time.Second).Unix()},
+		"unstamped": {ID: "", Sent: now.Unix()},
+	} {
+		if g.Admit(c) {
+			t.Errorf("an %s call was admitted", name)
+		}
+	}
+	now = now.Add(3 * ClockSkew)
+	if !g.Admit(ProxyCall{ID: "d", Sent: now.Unix()}) || len(g.seen) != 1 {
+		t.Fatalf("remembered %d ids, want only the one from inside the window", len(g.seen))
+	}
+}
+
 // TestCallFailsFastRatherThanWaiting: a call that cannot reach its peer fails
 // at once, not at the end of CallTimeout.
 func TestCallFailsFastRatherThanWaiting(t *testing.T) {

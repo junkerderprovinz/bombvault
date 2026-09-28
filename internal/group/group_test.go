@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/coder/websocket"
 	"github.com/junkerderprovinz/bombvault/internal/discovery"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
 )
@@ -178,6 +180,59 @@ func TestMembersOnDifferentNetworksCallThroughTheRelay(t *testing.T) {
 	}
 	if !a.AdmitsRelayKey(relay.DeriveKey(testSecret)) || a.AdmitsRelayKey(relay.DeriveKey([]byte("fedcba9876543210"))) {
 		t.Fatal("AdmitsRelayKey does not admit exactly this group's key")
+	}
+}
+
+// A relay operator holds every frame it carried. One it sends on to the
+// member's direct address instead must meet the same record of ids.
+func TestACallRunOverTheRelayIsRefusedWhenSentAgainDirectly(t *testing.T) {
+	rs := httptest.NewServer(relay.NewServer())
+	t.Cleanup(rs.Close)
+	b := NewManager(echo)
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, b.ServeDirect)
+	direct := httptest.NewTLSServer(mux)
+	t.Cleanup(direct.Close)
+	t.Cleanup(b.Close)
+	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", DirectURL: direct.URL, Mode: ModeOwn, RelayURL: rs.URL})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	ws, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(rs.URL, "http")+"/relay/connect", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = ws.CloseNow() })
+	frameKey := relay.DeriveFrameKey(testSecret)
+	ident, _ := relay.SealIdentity(frameKey, "id-a", relay.Identity{Name: "Cellar"})
+	write := func(typ string, data any) {
+		frame, _ := relay.Encode(typ, data)
+		if err := ws.Write(ctx, websocket.MessageText, frame); err != nil {
+			t.Fatal(err)
+		}
+	}
+	read := func(typ string) relay.Envelope {
+		for {
+			_, frame, err := ws.Read(ctx)
+			if err != nil {
+				t.Fatalf("waiting for %s: %v", typ, err)
+			}
+			if env, _ := relay.Decode(frame); env.Type == typ {
+				return env
+			}
+		}
+	}
+	write(relay.TypeHello, relay.Hello{Key: relay.DeriveKey(testSecret), Announce: relay.Announce{InstanceID: "id-a", Sealed: ident}})
+	read(relay.TypeAnnounce)
+
+	req := sealedFor(t, "id-b")
+	write(relay.TypeProxyRequest, req)
+	var resp relay.ProxyResponse
+	if err := read(relay.TypeProxyResponse).Into(&resp); err != nil || resp.RequestID != req.RequestID || len(resp.Sealed) == 0 {
+		t.Fatalf("the call over the relay got %+v, %v", resp, err)
+	}
+	if code := signedPost(t, direct.URL, PeerAuthKey(testSecret), "id-a", time.Now(), req); code != http.StatusForbidden {
+		t.Fatalf("the same call sent directly got HTTP %d, want 403", code)
 	}
 }
 

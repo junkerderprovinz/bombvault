@@ -1,6 +1,9 @@
 package relay
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 // The frame types. Anything else on the socket is ignored, so a newer peer
 // does not cost an older one its connection.
@@ -101,6 +104,11 @@ type ProxyCall struct {
 	Method string `json:"method"`
 	Path   string `json:"path"`
 	Body   []byte `json:"body,omitempty"`
+	// ID and Sent are the request id and the Unix time the call was sealed
+	// at. They travel inside the seal, where a relay cannot change them, so
+	// the receiver can refuse a frame it has run before or one that is old.
+	ID   string `json:"id"`
+	Sent int64  `json:"sent"`
 }
 
 // ProxyResponse is the wire form of the answer to one ProxyRequest.
@@ -129,7 +137,12 @@ func responseAAD(requestID string) string {
 
 // SealCall seals one call, bound to its request id and target, so a relay
 // that redirects it to another instance produces a frame that does not open.
+// It stamps the call with requestID and, unless Sent is set, the current time.
 func SealCall(key []byte, requestID, target string, call ProxyCall) ([]byte, error) {
+	call.ID = requestID
+	if call.Sent == 0 {
+		call.Sent = time.Now().Unix()
+	}
 	plain, err := json.Marshal(call)
 	if err != nil {
 		return nil, err
@@ -144,7 +157,7 @@ func OpenCall(key []byte, requestID, target string, sealed []byte) (ProxyCall, e
 		return ProxyCall{}, err
 	}
 	var call ProxyCall
-	if err := json.Unmarshal(plain, &call); err != nil {
+	if err := json.Unmarshal(plain, &call); err != nil || call.ID != requestID {
 		return ProxyCall{}, ErrSealed
 	}
 	return call, nil
