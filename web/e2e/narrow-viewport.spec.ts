@@ -489,6 +489,15 @@ for (const { width, perRow } of [
   });
 }
 
+// Larger text raises the six-column threshold past the column, which is where
+// the strip falls back to three over three.
+test("settings tab strip @ 360px with 20px text: the six tabs sit 3 over 3", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the grid lives below 48rem");
+  await bootSeededPage(page, "en", 360, "/settings");
+  await page.addStyleTag({ content: "html { font-size: 20px }" });
+  await assertStrip(page, 360, [3, 3]);
+});
+
 // The same strip in a desktop browser narrowed to a phone width. The shell
 // switches on width alone, so this is a state anyone reaches by dragging a
 // window edge, and it is where a real scrollbar shows up.

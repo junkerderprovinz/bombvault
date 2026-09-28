@@ -1,10 +1,10 @@
 // The recovery wizard at phone width. The page is a single column already, so
 // these checks cover what a phone adds: the 24px card rhythm, nothing panning,
-// clipping or cut short with the Self-Backup's copy and the domain rows of the
-// storage places on screen, the add-place window inside the screen, and the
-// secret fields' eye and the encryption switch staying large enough to hit
-// under a coarse pointer. German, because its labels run longest. The desktop
-// half pins the 40px rhythm and the unchanged 15px eye.
+// clipping or cut short on a fresh install and with the Self-Backup's copy and
+// the domain rows of the storage places on screen, the add-place window inside
+// the screen, and the secret fields' eye and the encryption switch staying
+// large enough to hit under a coarse pointer. German, because its labels run
+// longest. The desktop half pins the 40px rhythm and the unchanged 15px eye.
 import { expect, test, type Page } from "@playwright/test";
 import { CONFIG_TARGETS, stagePlaces } from "./places";
 
@@ -97,6 +97,15 @@ for (const width of [320, 360, 390]) {
     await page.getByRole("tab", { name: "Offsite" }).first().click();
     await expect(page.getByText(CONFIG_TARGETS[0].repo, { exact: true })).toBeVisible();
     await page.getByRole("region", { name: "Container", exact: true }).getByRole("button", { name: "2 Einträge" }).click();
+    await settle(page);
+
+    expect(await cardGap(page)).toBe("24px");
+    await expectFits(page);
+  });
+
+  test(`recovery @ ${width}px on a fresh install: nothing pans, clips or is cut short`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
+    await bootGerman(page, width);
     await settle(page);
 
     expect(await cardGap(page)).toBe("24px");
