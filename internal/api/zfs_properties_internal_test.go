@@ -215,3 +215,27 @@ func TestZFSRestoreCheckStillRefusesANewDatasetThatExists(t *testing.T) {
 		t.Fatalf("err = %v, want dataset-exists", err)
 	}
 }
+
+func TestZFSRestoreSetsQuotasAfterTheFilesAndTheRestBefore(t *testing.T) {
+	s, st, host, eng := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+	zfsSeedProperties(t, st, d.ID, map[string]string{"compression": "zstd", "quota": "1024"})
+	restoredAt := map[string]int{}
+	host.onSet = func() {
+		calls := host.calls
+		restoredAt[calls[len(calls)-1]] = len(eng.restores)
+	}
+	req := zfsRestoreRequest(zfsRoot)
+	req.ApplyProperties = true
+	if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req); err != nil || !started {
+		t.Fatalf("start: %v %v", started, err)
+	}
+	if run := zfsAwaitRestore(t, st, d.ID); run.Status != "success" {
+		t.Fatalf("restore run = %+v", run)
+	}
+	before, okB := restoredAt["set compression=zstd "+zfsRoot]
+	after, okA := restoredAt["set quota=1024 "+zfsRoot]
+	if !okB || !okA || before != 0 || after != 1 {
+		t.Fatalf("restores done when each set ran = %v, want compression before the files and the quota after", restoredAt)
+	}
+}

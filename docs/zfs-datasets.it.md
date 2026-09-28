@@ -83,7 +83,7 @@ Per tornare indietro dopo un ripristino, copia singoli file da `.zfs/snapshot/bo
 BombVault salva a ogni backup le proprietà ZFS impostate localmente di ogni dataset: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity e le tue proprietà utente. I valori ereditati e di sola lettura restano fuori, perché tornano da soli. I backup di prima che BombVault le salvasse non ne hanno.
 
 - **In un nuovo dataset** esegue `zfs create` con ogni proprietà salvata. casesensitivity, normalization e utf8only si possono impostare solo così. Il punto di montaggio resta fuori perché la copia non si scontri con l'originale, e così `canmount`, `readonly` e la cifratura, perché il ripristino possa scrivere. Un nuovo dataset sotto uno cifrato ne eredita la cifratura. Il dataset superiore deve esistere. Se qualcosa fallisce dopo la creazione, il nuovo dataset resta sul server, perché BombVault non distrugge mai un dataset.
-- **Ripristina dentro il dataset** mostra le proprietà salvate accanto al ripristino. **Imposta anche queste proprietà** imposta quelle che un dataset esistente accetta ancora, prima di scrivere qualsiasi file. Senza questo interruttore il dataset mantiene le sue impostazioni.
+- **Ripristina dentro il dataset** mostra le proprietà salvate accanto al ripristino. **Imposta anche queste proprietà** imposta quelle che un dataset esistente accetta ancora, prima di scrivere qualsiasi file. Quote e prenotazioni vengono impostate dopo i file, così non possono rifiutarli. Senza questo interruttore il dataset mantiene le sue impostazioni.
 
 ## Cosa c'è nel backup {#contents}
 

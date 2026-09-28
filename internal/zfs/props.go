@@ -34,6 +34,34 @@ var notApplied = map[string]bool{
 	"pbkdf2iters": true,
 }
 
+// limits are the properties that can refuse writes into a dataset or take
+// space from its pool.
+var limits = map[string]bool{
+	"quota":          true,
+	"refquota":       true,
+	"reservation":    true,
+	"refreservation": true,
+}
+
+// SplitLimits separates the quotas and reservations from the other
+// properties, so a restore can set them once its files are written.
+func SplitLimits(p Properties) (rest, lim Properties) {
+	for k, v := range p {
+		if limits[k] {
+			if lim == nil {
+				lim = Properties{}
+			}
+			lim[k] = v
+			continue
+		}
+		if rest == nil {
+			rest = Properties{}
+		}
+		rest[k] = v
+	}
+	return rest, lim
+}
+
 // CreateOnly reports whether a property can only be passed to zfs create.
 func CreateOnly(name string) bool {
 	_, ok := createOnlyDefaults[name]

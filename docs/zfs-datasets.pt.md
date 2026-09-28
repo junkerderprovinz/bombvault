@@ -83,7 +83,7 @@ Para voltar atrás depois de um restauro, copie ficheiros individuais de `.zfs/s
 O BombVault guarda em cada cópia as propriedades ZFS definidas localmente de cada conjunto de dados: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity e as suas próprias propriedades de utilizador. Os valores herdados e só de leitura ficam de fora, porque voltam sozinhos. As cópias de antes de o BombVault as guardar não têm nenhuma.
 
 - **Num conjunto de dados novo** executa `zfs create` com cada propriedade guardada. casesensitivity, normalization e utf8only só podem ser definidas assim. O ponto de montagem fica de fora para a cópia não colidir com o original, tal como `canmount`, `readonly` e a encriptação, para o restauro poder escrever. Um conjunto de dados novo abaixo de um encriptado herda a sua encriptação. O conjunto de dados acima tem de existir. Se algo falhar depois de criado, o conjunto de dados novo fica no servidor, porque o BombVault nunca destrói um conjunto de dados.
-- **Restaurar dentro do conjunto de dados** mostra as propriedades guardadas junto ao restauro. **Definir também estas propriedades** define as que um conjunto de dados existente ainda aceita, antes de escrever qualquer ficheiro. Sem esse interruptor, o conjunto de dados mantém as suas definições.
+- **Restaurar dentro do conjunto de dados** mostra as propriedades guardadas junto ao restauro. **Definir também estas propriedades** define as que um conjunto de dados existente ainda aceita, antes de escrever qualquer ficheiro. As quotas e reservas são definidas depois dos ficheiros, para não os poderem recusar. Sem esse interruptor, o conjunto de dados mantém as suas definições.
 
 ## O que está no backup {#contents}
 

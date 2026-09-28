@@ -83,7 +83,7 @@ Chcete-li se po obnově vrátit, zkopírujte jednotlivé soubory z `.zfs/snapsho
 BombVault s každou zálohou uloží lokálně nastavené vlastnosti ZFS každé datové sady: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity a tvoje vlastní uživatelské vlastnosti. Zděděné hodnoty a hodnoty jen pro čtení se vynechají, protože se vrátí samy. Zálohy z doby, kdy je BombVault ještě neukládal, žádné nemají.
 
 - **Do nové datové sady** spustí `zfs create` se všemi uloženými vlastnostmi. casesensitivity, normalization a utf8only jde nastavit jen takto. Přípojný bod se vynechá, aby kopie nekolidovala s originálem, stejně jako `canmount`, `readonly` a šifrování, aby obnova mohla zapisovat. Nová datová sada pod šifrovanou převezme její šifrování. Nadřazená datová sada musí existovat. Když po vytvoření něco selže, nová datová sada zůstane na serveru, protože BombVault nikdy datovou sadu neničí.
-- **Obnovit do datové sady** ukáže uložené vlastnosti vedle obnovy. **Nastavit i tyto vlastnosti** nastaví ty, které existující datová sada ještě přijme, dřív než se zapíše jakýkoli soubor. Bez tohoto přepínače si datová sada ponechá své nastavení.
+- **Obnovit do datové sady** ukáže uložené vlastnosti vedle obnovy. **Nastavit i tyto vlastnosti** nastaví ty, které existující datová sada ještě přijme, dřív než se zapíše jakýkoli soubor. Kvóty a rezervace se nastaví až po souborech, aby je nemohly odmítnout. Bez tohoto přepínače si datová sada ponechá své nastavení.
 
 ## Co záloha obsahuje {#contents}
 

@@ -83,7 +83,7 @@ Um nach einer Wiederherstellung zurückzugehen, kopiere einzelne Dateien aus `.z
 BombVault speichert mit jedem Backup die lokal gesetzten ZFS-Eigenschaften jedes Datasets: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity und deine eigenen Benutzereigenschaften. Geerbte und schreibgeschützte Werte bleiben weg, weil sie von selbst zurückkommen. Backups aus der Zeit, bevor BombVault sie gespeichert hat, haben keine.
 
 - **In ein neues Dataset** ruft `zfs create` mit jeder gespeicherten Eigenschaft auf. casesensitivity, normalization und utf8only lassen sich nur so setzen. Der Mountpoint bleibt weg, damit die Kopie nicht mit dem Original kollidiert, ebenso `canmount`, `readonly` und die Verschlüsselung, damit die Wiederherstellung schreiben kann. Ein neues Dataset unter einem verschlüsselten übernimmt dessen Verschlüsselung. Das Dataset darüber muss existieren. Schlägt nach dem Anlegen etwas fehl, bleibt das neue Dataset auf dem Server, weil BombVault nie ein Dataset zerstört.
-- **In das Dataset zurückschreiben** zeigt die gespeicherten Eigenschaften neben der Wiederherstellung. **Diese Eigenschaften auch setzen** setzt die, die ein bestehendes Dataset noch annimmt, bevor eine Datei geschrieben wird. Ohne diesen Schalter behält das Dataset seine Einstellungen.
+- **In das Dataset zurückschreiben** zeigt die gespeicherten Eigenschaften neben der Wiederherstellung. **Diese Eigenschaften auch setzen** setzt die, die ein bestehendes Dataset noch annimmt, bevor eine Datei geschrieben wird. Quotas und Reservierungen kommen erst nach den Dateien, damit sie sie nicht abweisen können. Ohne diesen Schalter behält das Dataset seine Einstellungen.
 
 ## Was im Backup steckt {#contents}
 
