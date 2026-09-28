@@ -2,7 +2,7 @@ import { Fragment, useState } from "react";
 import { Button } from "../Button";
 import type { ItemRef, PlacementView } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { observedLine, planLines, stackNoteText, type StatusLine } from "../../lib/placement";
+import { domainPathLabel, observedLine, planLines, stackNoteText, type StatusLine } from "../../lib/placement";
 import { useHostLabel } from "../../lib/useHostLabel";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { OffsiteRemovalDialog } from "./OffsiteRemovalDialog";
@@ -33,7 +33,8 @@ export function PlacementStatus({
   const { options } = usePlacementOptions(item.domain);
   const [removing, setRemoving] = useState<{ id: string; name: string } | null>(null);
 
-  const plan = view.plan ? planLines(t, lang, host, item.domain, view.plan, options?.targets.length === 0) : [];
+  const home = domainPathLabel(host, options);
+  const plan = view.plan ? planLines(t, lang, home, item.domain, view.plan, options?.targets.length === 0) : [];
   const observed = view.observed ? observedLine(t, view.observed) : [];
 
   return (
@@ -71,7 +72,7 @@ export function PlacementStatus({
           />
         </div>
       ))}
-      {view.stackNote && <p className="text-carbon-textSub">{stackNoteText(t, lang, host, view.stackNote)}</p>}
+      {view.stackNote && <p className="text-carbon-textSub">{stackNoteText(t, lang, home, view.stackNote)}</p>}
       {removing && (
         <OffsiteRemovalDialog
           item={item}

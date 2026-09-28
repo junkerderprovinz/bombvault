@@ -2,8 +2,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import {
+  homeOption,
   olderCopies,
   placementObserved,
+  placementOptions,
   placementPlan,
   placementView,
   renderWithProviders,
@@ -34,6 +36,16 @@ describe("PlacementStatus", () => {
     expect(screen.getByText("Copied to B2.")).toBeTruthy();
     expect(screen.getByText("At 2 sites")).toBeTruthy();
     expect(screen.getByText("3-2-1 met")).toBeTruthy();
+  });
+
+  it("names the domain path after the place it lies at", async () => {
+    fake.reply("getPlacementOptions", {
+      ok: true,
+      options: placementOptions({ domain: "files", homes: [homeOption({ name: "Pool", placeId: "p-pool", provider: "unraid-folder" })] }),
+    });
+    const view = placementView({ plan: placementPlan({ home: "" }) });
+    renderWithProviders(<PlacementStatus item={{ domain: "files", key: "docs" }} name="Documents" view={view} onChanged={vi.fn()} />);
+    expect(await screen.findByText("On Pool.")).toBeTruthy();
   });
 
   it("offers to delete older copies at a target no longer ticked", async () => {

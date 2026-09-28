@@ -164,14 +164,18 @@ func (it timelineItem) incomplete(run restic.Snapshot, own []restic.Snapshot) bo
 }
 
 // homePlace is where the item writes: its repository, or the domain path while
-// it has none. A repository that is switched off or gone leaves the place
-// unreadable, the same answer a restore from it gives, rather than a silent fall
-// back to the domain path.
+// it has none, named after the domain's home place. A repository that is
+// switched off or gone leaves the place unreadable, the same answer a restore
+// from it gives, rather than a silent fall back to the domain path.
 func (s *Service) homePlace(settings store.Settings, it timelineItem) placeRef {
 	p := placeRef{timelinePlace: timelinePlace{Place: "local", Kind: "home", Enabled: true}}
 	if it.homeID != "" {
 		if named, err := s.store.GetNamedRepo(it.homeID); err == nil {
 			p.Label, p.Enabled = named.Name, named.Enabled
+		}
+	} else if homes, err := s.store.DomainPlaces(); err == nil && homes[it.domain] != "" {
+		if home, err := s.store.GetPlace(homes[it.domain]); err == nil {
+			p.Label = home.Name
 		}
 	}
 	p.repo, p.openErr = s.itemRepoPath(it.homeID, func() (string, error) { return s.repoFor(settings, it.domain, "local") })

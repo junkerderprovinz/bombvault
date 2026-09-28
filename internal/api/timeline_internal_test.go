@@ -196,6 +196,23 @@ func TestTimelineReadsTheItemsOwnRepository(t *testing.T) {
 	}
 }
 
+func TestTimelineNamesTheDomainPathAfterItsHomePlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.MigrateToPlaces(); err != nil {
+		t.Fatalf("MigrateToPlaces: %v", err)
+	}
+	f.container("nginx", "")
+	f.hold(f.domainPath("containers"), snap("d1d1d1d1", 1_757_000_000, "container:nginx"))
+
+	tl, err := f.svc.Timeline(context.Background(), "containers", "nginx")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p := tl.Places[0]; p.Place != "local" || p.Label != "Unraid" {
+		t.Fatalf("home = %+v, want the domain path named after its place Unraid", p)
+	}
+}
+
 func TestTimelineWaitsForARemoteHomeLikeATarget(t *testing.T) {
 	f := newPlacementFixture(t)
 	box := f.namedRepo("Storagebox", "sftp:u@box:/bv")

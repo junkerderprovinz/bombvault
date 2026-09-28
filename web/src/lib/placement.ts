@@ -95,6 +95,13 @@ function homeLabel(t: T, host: string, repoId: string, options: PlacementOptions
   return sendTo ? sendToLabel(t, sendTo) : null;
 }
 
+/** domainPathLabel is what the domain's own path goes by: the name of the
+ *  place it lies at, or the host while it lies at none. */
+export function domainPathLabel(host: string, options: PlacementOptions | null): string {
+  const own = options?.homes.find((h) => h.id === "");
+  return own?.placeId ? own.name : host;
+}
+
 /** viewHomeLabel names a card's home: as the lists offer it, or marked when it
  *  is switched off or has no row any more. A direct repository the lists leave
  *  out, because its target is switched off, still takes backups and goes by
