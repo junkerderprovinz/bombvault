@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 // The Pairing tab: one sentence on what pairing does, three numbered step
-// cards, the phrase card and the relay card. The phrase card asks first whether this is the first instance, checks
-// typed words against the word list as they arrive, and says after a minute
-// alone what probably went wrong.
+// cards, the phrase card and the relay card. The phrase card offers two
+// tiles, generate or enter a phrase, checks typed words against the word
+// list as they arrive, and says after a minute alone what probably went
+// wrong.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
@@ -118,20 +119,18 @@ describe("step cards", () => {
       `2${en["pairing.step2Title"]}`,
       `3${en["pairing.step3Title"]}`,
     ]);
-    expect(screen.getByText(en["pairing.create"], { selector: "strong" })).not.toBeNull();
     expect(screen.getByText(en["pairing.enter"], { selector: "strong" })).not.toBeNull();
   });
 });
 
-describe("the question outside a group", () => {
-  it("offers yes and no as tiles and shows no input before an answer", async () => {
+describe("the tiles outside a group", () => {
+  it("offers generate and enter as tiles and shows no input before either is pressed", async () => {
     group = outside();
     await renderTab();
-    expect(screen.getByText(en["pairing.ask"])).not.toBeNull();
-    const yes = screen.getByRole("button", { name: new RegExp(en["pairing.create"]) });
-    const no = screen.getByRole("button", { name: new RegExp(en["pairing.enter"]) });
-    expect(yes.getAttribute("aria-pressed")).toBe("false");
-    expect(no.getAttribute("aria-pressed")).toBe("false");
+    const generate = screen.getByRole("button", { name: new RegExp(en["pairing.create"]) });
+    const enter = screen.getByRole("button", { name: new RegExp(en["pairing.enter"]) });
+    expect(generate.getAttribute("aria-pressed")).toBe("false");
+    expect(enter.getAttribute("aria-pressed")).toBe("false");
     expect(screen.queryByLabelText(en["pairing.enterLabel"])).toBeNull();
   });
 
@@ -202,7 +201,7 @@ describe("the question outside a group", () => {
     expect(screen.getByText(en["pairing.waitNext"])).not.toBeNull();
   });
 
-  it("leaves the empty group and opens the input when it was not the first instance after all", async () => {
+  it("leaves the empty group and opens the input when the phrase already exists elsewhere", async () => {
     group = outside();
     await renderTab();
     await act(async () => {

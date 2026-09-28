@@ -1,7 +1,7 @@
-// PhraseCard is where an instance joins a group. Outside one it asks whether
-// this is the first instance: yes creates the phrase, no takes the words of
-// the first. Inside one it shows who else is there, and when nobody has come
-// after a minute it says the likely reasons with the steps that fix them.
+// PhraseCard is where an instance joins a group. Outside one it offers two
+// tiles: generate a phrase, or enter one that already exists. Inside one it
+// shows who else is there, and when nobody has come after a minute it says
+// the likely reasons with the steps that fix them.
 import { useEffect, useState, type ReactNode } from "react";
 import { Card } from "../settings/shared";
 import { Badge, type BadgeTone } from "../../components/Badge";
@@ -537,9 +537,6 @@ export function PhraseCard({
     body = (
       <>
         {lockedNote}
-        <h3 className="flex items-center gap-2 text-base font-semibold leading-snug text-carbon-text sm:text-[17px]">
-          {t("pairing.ask")} <InfoBubble tip={t("pairing.askTip")} />
-        </h3>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Choice
             key={`create-${shake}`}

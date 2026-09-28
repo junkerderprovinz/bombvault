@@ -2,9 +2,9 @@
 // checks that the step cards, the phrase card and the relay card fit at
 // 1280px and 390px. The flow tests stand in two instances with two pages and
 // a faked group API each, since a harness database is in no group: one where
-// both answer yes and are told after a minute how to merge
+// both generate a phrase and are told after a minute how to merge
 // (https://github.com/junkerderprovinz/bombvault/issues/270), and one where
-// the second answers no and pairs with the first one's words.
+// the second enters the phrase and pairs with the first one's words.
 import { expect, test, type Page } from "@playwright/test";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -140,14 +140,14 @@ async function open(page: Page, f: Instance, width = 1280): Promise<void> {
 }
 
 const phraseCard = (page: Page) => page.locator("[data-stage]");
-const yes = (page: Page) => page.getByRole("button", { name: /Ja, Phrase erstellen/ });
-const no = (page: Page) => page.getByRole("button", { name: /Nein, ich habe die Wörter schon/ });
+const generate = (page: Page) => page.getByRole("button", { name: /Phrase generieren/ });
+const enter = (page: Page) => page.getByRole("button", { name: /Phrase eingeben/ });
 
 const attic: Member = { id: "attic", name: "Schwiegereltern Tower Gmunden Keller", version: "v9.2.1", direct: false, relay: true };
 const cellar: Member = { id: "cellar", name: "Büro Linz", version: "v9.2.1", direct: true, relay: true };
 
 for (const width of [1280, 390]) {
-  test(`pairing @ ${width}px: steps, question, the alone hint and relay fit`, async ({ page }, testInfo) => {
+  test(`pairing @ ${width}px: steps, tiles, the alone hint and relay fit`, async ({ page }, testInfo) => {
     const phone = MOBILE_PROJECTS.has(testInfo.project.name);
     test.skip(phone !== (width === 390), width === 390 ? "phone width runs on the phone projects" : "desktop width runs on the desktop projects");
     test.skip(!phone && testInfo.project.use.viewport!.width < width, "the 768px project cannot show 1280px");
@@ -189,18 +189,18 @@ for (const width of [1280, 390]) {
     await settle(page);
     await expectFits(page);
 
-    // Outside a group: the two answers fit, and the paste field opens under them.
+    // Outside a group: the two tiles fit, and the paste field opens under them.
     Object.assign(f, { active: false });
     await page.reload();
-    await expect(yes(page)).toBeVisible();
-    await no(page).click();
+    await expect(generate(page)).toBeVisible();
+    await enter(page).click();
     await expect(page.getByLabel(/Die zwölf Wörter deiner ersten Instanz/)).toBeVisible();
     await settle(page);
     await expectFits(page);
   });
 }
 
-test("two instances that both answer yes are told after a minute how to become one group", async ({ page, context }, testInfo) => {
+test("two instances that both generate a phrase are told after a minute how to become one group", async ({ page, context }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-1280", "the flow runs once, on the desktop");
   const a = instance("Tower Linz");
   const b = instance("Büro Linz");
@@ -211,7 +211,7 @@ test("two instances that both answer yes are told after a minute how to become o
   ] as const) {
     await p.clock.install();
     await open(p, f);
-    await yes(p).click();
+    await generate(p).click();
     await expect(phraseCard(p)).toHaveAttribute("data-stage", "new");
     await expect(p.getByText("Neue Gruppe", { exact: true })).toBeVisible();
     await expect(p.getByText("Jetzt auf der anderen Instanz")).toBeVisible();
@@ -240,18 +240,18 @@ test("two instances that both answer yes are told after a minute how to become o
   await expect(phraseCard(pageB).getByText("Gekoppelt", { exact: true })).toBeVisible();
 });
 
-test("the second instance answers no, pastes the numbered words and both read paired", async ({ page, context }, testInfo) => {
+test("the second instance enters the phrase, pastes the numbered words and both read paired", async ({ page, context }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-1280", "the flow runs once, on the desktop");
   const a = instance("Tower Linz");
   const b = instance("Büro Linz", { joinFinds: [{ id: "a", name: "Tower Linz", version: "v9.2.1", direct: true, relay: false }] });
   await page.clock.install();
   await open(page, a);
-  await yes(page).click();
+  await generate(page).click();
   await expect(page.getByRole("list", { name: "Die zwölf Wörter" })).toContainText("about");
 
   const pageB = await context.newPage();
   await open(pageB, b);
-  await no(pageB).click();
+  await enter(pageB).click();
   const field = pageB.getByLabel("Die zwölf Wörter deiner ersten Instanz");
   const pair = pageB.getByRole("button", { name: "Koppeln" });
   await field.fill("abandon abandon unveel ");
