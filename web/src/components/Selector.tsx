@@ -409,7 +409,13 @@ export function Selector(props: SelectorProps) {
   //
   // itemsKey stands in for `items` in the deps. Callers rebuild the array on
   // every render, and measuring each time would be wasted work.
+  //
+  // A segment that turns disabled with a tip is mounted afresh inside the
+  // tip's wrapper, so the segments are looked up on every measure, and the
+  // watch moves to the new ones through disabledKey. A detached segment has
+  // no computed width, and measuring it would drop the pinned width.
   const itemsKey = items.map((it) => it.label).join("\n");
+  const disabledKey = items.map((it) => (disabled || it.disabled ? "1" : "0")).join("");
   const [layout, setLayout] = useState<RowLayout | null>(null);
   useLayoutEffect(() => {
     if (!pinWidth) {
@@ -418,9 +424,10 @@ export function Selector(props: SelectorProps) {
     }
     const el = strip.current!;
     const box = inline ? el.parentElement! : el;
-    const segs = Array.from(el.children) as HTMLElement[];
-    if (segs.length === 0) return;
+    const segments = () => Array.from(el.querySelectorAll<HTMLElement>("[data-sel-id]"));
+    if (segments().length === 0) return;
     const measure = () => {
+      const segs = segments();
       const own = getComputedStyle(el);
       const inset = parseFloat(own.paddingLeft) + parseFloat(own.paddingRight);
       const outer = inline ? getComputedStyle(box) : own;
@@ -440,9 +447,9 @@ export function Selector(props: SelectorProps) {
     measure();
     const watch = new ResizeObserver(measure);
     watch.observe(box);
-    for (const seg of segs) watch.observe(seg);
+    for (const seg of segments()) watch.observe(seg);
     return () => watch.disconnect();
-  }, [pinWidth, inline, itemsKey, size, labelModeForStrip]);
+  }, [pinWidth, inline, itemsKey, disabledKey, size, labelModeForStrip]);
 
   // A pinned segment keeps the pinned width as its floor and grows into its
   // share of the row, so every row ends at the track's edge once it wraps. The

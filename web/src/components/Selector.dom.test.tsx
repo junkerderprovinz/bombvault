@@ -275,6 +275,8 @@ function layOut(room: number, widths: Record<string, { oneLine: number; narrowes
     };
     if (w && set === "max-content") overrides.width = `${w.oneLine}px`;
     if (w && set === "min-content") overrides.width = `${w.narrowest}px`;
+    // A browser computes no style for a node outside the document.
+    if (!el.isConnected) overrides.width = "";
     return new Proxy(style, {
       get: (target, key: string) => (key in overrides ? overrides[key] : Reflect.get(target, key)),
     });
@@ -431,6 +433,37 @@ describe("Selector equalWidth", () => {
       expect(wrapper.tagName).toBe("SPAN");
       expect(wrapper.style.minWidth).toBe("260px");
     } finally {
+      restore();
+    }
+  });
+
+  it("keeps its pinned width while the strip is disabled and after", () => {
+    const restore = layOut(900, oneLine(220, 180, 260));
+    const observers: Array<() => void> = [];
+    const native = window.ResizeObserver;
+    window.ResizeObserver = class {
+      constructor(callback: () => void) {
+        observers.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+    const resize = () => act(() => observers.forEach((callback) => callback()));
+    const items = ITEMS.map((item) => ({ ...item, tip: `${item.label} tip` }));
+    try {
+      const strip = (disabled: boolean) => (
+        <Selector items={items} label="Test strip" active="a" onChange={() => {}} equalWidth disabled={disabled} />
+      );
+      const { rerender } = render(strip(false));
+      rerender(strip(true));
+      resize();
+      expect(seg("a").parentElement!.style.minWidth).toBe("260px");
+      rerender(strip(false));
+      resize();
+      for (const id of ["a", "b", "c"]) expect(seg(id).style.minWidth).toBe("260px");
+    } finally {
+      window.ResizeObserver = native;
       restore();
     }
   });
