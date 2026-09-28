@@ -130,6 +130,14 @@ export function HomeAssistantCard({ hueIndex }: { hueIndex?: number }) {
   } else if (saved?.enabled) {
     statusText = t("ha.statusConnecting");
   }
+  // The server keeps a stored password only for the broker and user it was
+  // entered for, so the field stops showing it as set once either changes.
+  const passwordKept =
+    !!saved?.passwordSet &&
+    form !== null &&
+    form.host.trim() === saved.host &&
+    form.port === saved.port &&
+    form.username.trim() === saved.username;
 
   return (
     <Card title={t("ha.title")} hint={t("ha.hint")} hueIndex={hueIndex}>
@@ -186,7 +194,7 @@ export function HomeAssistantCard({ hueIndex }: { hueIndex?: number }) {
                 onChange={(e) => edit({ password: e.target.value })}
                 spellCheck={false}
                 autoComplete="new-password"
-                placeholder={saved?.passwordSet ? t("cloud.secretSet") : ""}
+                placeholder={passwordKept ? t("cloud.secretSet") : ""}
                 wrapperClassName="w-full"
                 className={fieldCls}
               />

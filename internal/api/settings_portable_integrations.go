@@ -93,6 +93,7 @@ func (h *Handler) applyImportedIntegrations(exp settingsExport) error {
 		if err != nil {
 			return err
 		}
+		prev := s
 		s.Enabled, s.Host, s.Port, s.TLS, s.Buttons = v.Enabled, strings.TrimSpace(v.Host), v.Port, v.TLS, v.Buttons
 		s.Prefix = strings.TrimSpace(v.Prefix)
 		s.Username = strings.TrimSpace(v.Username)
@@ -100,7 +101,7 @@ func (h *Handler) applyImportedIntegrations(exp settingsExport) error {
 		if exp.Credentials != nil {
 			password = exp.Credentials.MQTTPassword
 		}
-		if err := h.sealBrokerPassword(&s, password); err != nil {
+		if err := h.sealBrokerPassword(prev, &s, password); err != nil {
 			return fmt.Errorf("store the MQTT broker password: %w", err)
 		}
 		if s.NodeID == "" {
