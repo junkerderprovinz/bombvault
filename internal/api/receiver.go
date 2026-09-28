@@ -20,8 +20,24 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
+
+// openSealedSecret returns a stored secret in the clear, or "" when none is
+// stored. Unlike openResticPassword, a missing value is not an error: a
+// rest-server login is optional, since not every received repo sits behind
+// one.
+func (s *Service) openSealedSecret(enc []byte) (string, error) {
+	if len(enc) == 0 {
+		return "", nil
+	}
+	plain, err := secret.Decrypt(s.cfg.AppKey, enc)
+	if err != nil {
+		return "", errors.New("a stored credential could not be opened")
+	}
+	return string(plain), nil
+}
 
 // ReceiverSource is one backup source found in a received repository: a unique
 // (hostname, BombVault item tag) pair.
@@ -86,11 +102,24 @@ func (s *Service) receiverOpen(ctx context.Context, rr store.ReceivedRepo) (stri
 	if err != nil {
 		return "", restic.Mode{}, err
 	}
+	// A rest-server holding a received repo is append-only and usually behind
+	// its own htpasswd login, separate from the restic repository password
+	// above: without it every probe gets a 401 before restic even reaches the
+	// encryption question. RESTPasswordEnc is empty for a location that needs
+	// none (a local path, or a server left open on a trusted LAN).
+	restPassword, err := s.openSealedSecret(rr.RESTPasswordEnc)
+	if err != nil {
+		return "", restic.Mode{}, err
+	}
+	var env []string
+	if rr.RESTUser != "" || restPassword != "" {
+		env = []string{"RESTIC_REST_USERNAME=" + rr.RESTUser, "RESTIC_REST_PASSWORD=" + restPassword}
+	}
 	// NoLock keeps the read-only probe from writing a lock file into the received
 	// (append-only) repo. Try the encrypted mode a BombVault sender always uses,
 	// then fall back to a plain repo.
-	encMode := restic.Mode{Encrypted: true, Password: password, NoLock: true}
-	plainMode := restic.Mode{NoLock: true}
+	encMode := restic.Mode{Encrypted: true, Password: password, NoLock: true, Env: env}
+	plainMode := restic.Mode{NoLock: true, Env: env}
 	switch {
 	case s.engine.RepoOpens(ctx, repo, encMode):
 		return repo, encMode, nil

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
+	"net/url"
 	"path"
 	"path/filepath"
 	"strings"
@@ -29,6 +31,76 @@ import (
 // The two ends have different passwords, because each instance derives its own
 // from its APP_KEY, and restic.Mode.From carries the source's. The source's
 // password arrives over the pairing group; its APP_KEY never does.
+
+// repoHost extracts the network host a restic repository location reaches,
+// for matching it against a stored credential set's own endpoint. Empty when
+// the location names no host at all, such as a bare path or a b2: bucket,
+// which authenticates by account id rather than by address.
+func repoHost(loc string) string {
+	loc = strings.TrimSpace(loc)
+	switch {
+	case strings.HasPrefix(loc, "rest:"):
+		u, err := url.Parse(strings.TrimPrefix(loc, "rest:"))
+		if err != nil {
+			return ""
+		}
+		return u.Hostname()
+	case strings.HasPrefix(loc, "s3:"):
+		rest := strings.TrimPrefix(loc, "s3:")
+		rest = strings.TrimPrefix(strings.TrimPrefix(rest, "https://"), "http://")
+		if i := strings.IndexByte(rest, '/'); i >= 0 {
+			rest = rest[:i]
+		}
+		if i := strings.LastIndexByte(rest, '@'); i >= 0 {
+			rest = rest[i+1:]
+		}
+		if host, _, err := net.SplitHostPort(rest); err == nil {
+			rest = host
+		}
+		return rest
+	case strings.HasPrefix(loc, "sftp:"):
+		rest := strings.TrimPrefix(loc, "sftp:")
+		if i := strings.IndexByte(rest, '@'); i >= 0 {
+			rest = rest[i+1:]
+		}
+		if i := strings.IndexAny(rest, ":/"); i >= 0 {
+			rest = rest[:i]
+		}
+		return rest
+	default:
+		return ""
+	}
+}
+
+// pullCredsRefForHost returns the CredsRef of an existing off-site target or
+// pull source that already reaches host, so a new pull source pointed at the
+// same endpoint, typically one an "Offer storage" mesh setup already holds
+// credentials for, needs none typed in by hand.
+//
+// Only host equality decides this. It reads nothing from the group and asks
+// the peer for nothing: a pull source's own login can be an S3 or B2 key with
+// delete rights on the far end's copy, and that must never cross the group the
+// way a receiver's read-only restic password does.
+func (s *Service) pullCredsRefForHost(host string) string {
+	if host == "" {
+		return ""
+	}
+	if targets, err := s.store.ListOffsiteTargets(); err == nil {
+		for _, tg := range targets {
+			if tg.CredsRef != "" && repoHost(tg.Repo) == host {
+				return tg.CredsRef
+			}
+		}
+	}
+	if sources, err := s.store.ListPullSources(); err == nil {
+		for _, ps := range sources {
+			if ps.CredsRef != "" && repoHost(ps.Repo) == host {
+				return ps.CredsRef
+			}
+		}
+	}
+	return ""
+}
 
 // pullOpen resolves a pull source's location and opens it read-only, returning
 // the location and the mode to read it with. It follows receiverOpen and adds

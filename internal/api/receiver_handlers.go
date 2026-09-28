@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -34,6 +35,10 @@ type receivedRepoView struct {
 	SortOrder         int    `json:"sortOrder"`
 	MemberID          string `json:"memberId"`
 	NeedsPairing      bool   `json:"needsPairing"`
+	// Waiting is true until the repo has opened with at least one snapshot in
+	// it: normal right after "Offer storage" or a manual Add, before the
+	// sender's first copy lands.
+	Waiting bool `json:"waiting"`
 }
 
 // receivedRepoStatus adds the live status the list endpoint probes: the newest
@@ -60,6 +65,12 @@ type receivedRepoInput struct {
 	ReadDataPercent int    `json:"readDataPercent"`
 	Enabled         *bool  `json:"enabled"`
 	SortOrder       int    `json:"sortOrder"`
+	// RESTUser/RESTPassword are the append-only rest-server's own login, for a
+	// rest: location behind one that the "Offer storage" flow did not set up.
+	// A blank password keeps whatever is already stored, the same convention
+	// MemberID's password follows.
+	RESTUser     string `json:"restUser"`
+	RESTPassword string `json:"restPassword"`
 }
 
 func receivedRepoToView(rr store.ReceivedRepo) receivedRepoView {
@@ -84,6 +95,7 @@ func receivedRepoToView(rr store.ReceivedRepo) receivedRepoView {
 		SortOrder:         rr.SortOrder,
 		MemberID:          rr.MemberID,
 		NeedsPairing:      rr.NeedsPairing(),
+		Waiting:           rr.Waiting,
 	}
 }
 
@@ -131,6 +143,17 @@ func (h *Handler) buildReceivedRepo(ctx context.Context, in receivedRepoInput, e
 		rr.MemberID, rr.ResticPasswordEnc = memberID, enc
 	}
 
+	// A blank password keeps whatever rest-server login is already stored, the
+	// same convention the restic password above follows; "Offer storage"
+	// already seals one in, so most rows never go through this branch by hand.
+	if pass := in.RESTPassword; pass != "" {
+		enc, err := secret.Encrypt(h.svc.cfg.AppKey, []byte(pass))
+		if err != nil {
+			return store.ReceivedRepo{}, scrubError(err)
+		}
+		rr.RESTUser, rr.RESTPasswordEnc = strings.TrimSpace(in.RESTUser), enc
+	}
+
 	cadence, msg := validateReceiverCadence(in.CheckCadence)
 	if msg != "" {
 		return store.ReceivedRepo{}, msg
@@ -173,6 +196,11 @@ func (h *Handler) handleListReceiverRepos(w http.ResponseWriter, r *http.Request
 			st.LastReceived = newest
 			st.SnapshotCount = count
 			st.Reachable = true
+			if rr.Waiting && count > 0 {
+				if uErr := h.store.UpdateReceivedRepoWaiting(rr.ID, false); uErr == nil {
+					st.Waiting = false
+				}
+			}
 		}
 		out = append(out, st)
 	}
@@ -180,8 +208,10 @@ func (h *Handler) handleListReceiverRepos(w http.ResponseWriter, r *http.Request
 }
 
 // handleCreateReceiverRepo registers a received repo. POST /api/receiver/repos.
-// The repo has to open read-only before the row is saved, so a mistyped
-// location never lands in the dashboard.
+// A repo that cannot yet be opened, because the sender has not copied into it
+// or the rest-server behind it is not deployed yet, is expected before the
+// first backup and saves waiting rather than being refused; the list endpoint
+// and the daily watch turn it active once a snapshot arrives.
 func (h *Handler) handleCreateReceiverRepo(w http.ResponseWriter, r *http.Request) {
 	var in receivedRepoInput
 	if !decodeBody(w, r, &in) {
@@ -192,10 +222,7 @@ func (h *Handler) handleCreateReceiverRepo(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	if err := h.svc.receiverProbe(r.Context(), rr); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
+	rr.Waiting = h.svc.receiverProbe(r.Context(), rr) != nil
 	stored, err := h.store.CreateReceivedRepo(rr)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -205,8 +232,11 @@ func (h *Handler) handleCreateReceiverRepo(w http.ResponseWriter, r *http.Reques
 }
 
 // handleUpdateReceiverRepo edits a received repo in place.
-// PUT /api/receiver/repos/{id}. As with create, the repo has to open read-only
-// before the edit is saved.
+// PUT /api/receiver/repos/{id}. As with create, a repo that still cannot open
+// keeps the waiting state instead of blocking the edit; one that already had
+// its first snapshot never regresses into "waiting" just because this one
+// probe caught it mid-outage, that is what the reachable/unreachable badge is
+// for.
 func (h *Handler) handleUpdateReceiverRepo(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	existing, ok, err := h.store.GetReceivedRepo(id)
@@ -227,10 +257,7 @@ func (h *Handler) handleUpdateReceiverRepo(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	if err := h.svc.receiverProbe(r.Context(), rr); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
+	rr.Waiting = existing.Waiting && h.svc.receiverProbe(r.Context(), rr) != nil
 	if err := h.store.UpdateReceivedRepo(rr); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

@@ -49,13 +49,25 @@ type ReceivedRepo struct {
 	Enabled           bool
 	CreatedAt         int64
 	SortOrder         int
+	// Waiting is true for a row saved before its repo could be opened, either
+	// because the sender has not copied into it yet or the rest-server behind
+	// it is not deployed yet. The receiver watch and the list endpoint clear
+	// it the first time the repo opens with at least one snapshot.
+	Waiting bool
+	// RESTUser and RESTPasswordEnc are the append-only rest-server's own
+	// login, needed only when Repo is a rest: location behind one. Sealed the
+	// same way ResticPasswordEnc is; RESTPasswordEnc empty means the location
+	// needs no such login (a local path, or a server with none configured).
+	RESTUser        string
+	RESTPasswordEnc []byte
 }
 
 // NeedsPairing reports whether the row predates pairing and names no member.
 func (rr ReceivedRepo) NeedsPairing() bool { return rr.MemberID == "" }
 
 const receivedRepoCols = `id, member_id, name, repo, restic_password_enc, app_key_enc, dead_man_hours, check_cadence, read_data_percent,
-	last_check_at, last_check_ok, last_check_error, last_check_read_data, enabled, created_at, sort_order`
+	last_check_at, last_check_ok, last_check_error, last_check_read_data, enabled, created_at, sort_order,
+	waiting, rest_user, rest_password_enc`
 
 // CreateReceivedRepo inserts a new received repo, assigning an ID and CreatedAt
 // when they are unset, and returns the stored row.
@@ -71,12 +83,14 @@ func (r *Repo) CreateReceivedRepo(rr ReceivedRepo) (ReceivedRepo, error) {
 	}
 	rr.ResticPasswordEnc = notNullBlob(rr.ResticPasswordEnc)
 	rr.LegacyAppKeyEnc = notNullBlob(rr.LegacyAppKeyEnc)
+	rr.RESTPasswordEnc = notNullBlob(rr.RESTPasswordEnc)
 	_, err := r.db.Exec(`
 		INSERT INTO received_repos (`+receivedRepoCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		rr.ID, rr.MemberID, rr.Name, rr.Repo, rr.ResticPasswordEnc, rr.LegacyAppKeyEnc, rr.DeadManHours, rr.CheckCadence, rr.ReadDataPercent,
 		rr.LastCheckAt, nullBool(rr.LastCheckOK), rr.LastCheckError, boolInt(rr.LastCheckReadData),
 		boolInt(rr.Enabled), rr.CreatedAt, rr.SortOrder,
+		boolInt(rr.Waiting), rr.RESTUser, rr.RESTPasswordEnc,
 	)
 	if err != nil {
 		return ReceivedRepo{}, fmt.Errorf("CreateReceivedRepo: %w", err)
@@ -92,6 +106,7 @@ func (r *Repo) UpdateReceivedRepo(rr ReceivedRepo) error {
 	}
 	rr.ResticPasswordEnc = notNullBlob(rr.ResticPasswordEnc)
 	rr.LegacyAppKeyEnc = notNullBlob(rr.LegacyAppKeyEnc)
+	rr.RESTPasswordEnc = notNullBlob(rr.RESTPasswordEnc)
 	_, err := r.db.Exec(`
 		UPDATE received_repos SET
 		  member_id            = ?,
@@ -107,14 +122,28 @@ func (r *Repo) UpdateReceivedRepo(rr ReceivedRepo) error {
 		  last_check_error     = ?,
 		  last_check_read_data = ?,
 		  enabled              = ?,
-		  sort_order           = ?
+		  sort_order           = ?,
+		  waiting              = ?,
+		  rest_user            = ?,
+		  rest_password_enc    = ?
 		WHERE id = ?`,
 		rr.MemberID, rr.Name, rr.Repo, rr.ResticPasswordEnc, rr.LegacyAppKeyEnc, rr.DeadManHours, rr.CheckCadence, rr.ReadDataPercent,
 		rr.LastCheckAt, nullBool(rr.LastCheckOK), rr.LastCheckError, boolInt(rr.LastCheckReadData),
-		boolInt(rr.Enabled), rr.SortOrder, rr.ID,
+		boolInt(rr.Enabled), rr.SortOrder,
+		boolInt(rr.Waiting), rr.RESTUser, rr.RESTPasswordEnc, rr.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateReceivedRepo: %w", err)
+	}
+	return nil
+}
+
+// UpdateReceivedRepoWaiting writes just the waiting flag, so promoting a row
+// to active cannot clobber a concurrent edit of the rest of it. Updating a
+// missing id is not an error.
+func (r *Repo) UpdateReceivedRepoWaiting(id string, waiting bool) error {
+	if _, err := r.db.Exec(`UPDATE received_repos SET waiting = ? WHERE id = ?`, boolInt(waiting), id); err != nil {
+		return fmt.Errorf("UpdateReceivedRepoWaiting: %w", err)
 	}
 	return nil
 }
@@ -182,16 +211,18 @@ func (r *Repo) DeleteReceivedRepo(id string) error {
 
 func scanReceivedRepo(s scanner) (ReceivedRepo, error) {
 	var rr ReceivedRepo
-	var readData, enabled int
+	var readData, enabled, waiting int
 	err := s.Scan(
 		&rr.ID, &rr.MemberID, &rr.Name, &rr.Repo, &rr.ResticPasswordEnc, &rr.LegacyAppKeyEnc, &rr.DeadManHours, &rr.CheckCadence, &rr.ReadDataPercent,
 		&rr.LastCheckAt, &rr.LastCheckOK, &rr.LastCheckError, &readData, &enabled, &rr.CreatedAt, &rr.SortOrder,
+		&waiting, &rr.RESTUser, &rr.RESTPasswordEnc,
 	)
 	if err != nil {
 		return ReceivedRepo{}, fmt.Errorf("scanReceivedRepo: %w", err)
 	}
 	rr.LastCheckReadData = readData != 0
 	rr.Enabled = enabled != 0
+	rr.Waiting = waiting != 0
 	return rr, nil
 }
 

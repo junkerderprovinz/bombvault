@@ -98,6 +98,12 @@ func (h *Handler) buildPullSource(ctx context.Context, in pullSourceInput, exist
 	ps.Repo = repo
 	ps.Domain = domain
 	ps.CredsRef = strings.TrimSpace(in.CredsRef)
+	// Left blank, reuse whatever credential set already reaches this host
+	// instead of making the admin pick or retype a login BombVault already
+	// holds, typically the one a mesh "Offer storage" setup created.
+	if ps.CredsRef == "" {
+		ps.CredsRef = h.svc.pullCredsRefForHost(repoHost(repo))
+	}
 
 	// Naming a member pairs the source with it: the member's restic password
 	// is fetched over the group now. An edit that names none keeps the

@@ -149,6 +149,55 @@ func TestReceivedRepoCRUD(t *testing.T) {
 	}
 }
 
+// TestReceivedRepoWaitingAndRESTCreds round-trips the waiting flag and the
+// rest-server login a mesh offer seals onto the row, and checks that
+// UpdateReceivedRepoWaiting flips only that column.
+func TestReceivedRepoWaitingAndRESTCreds(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	appKey := strings.Repeat("ef", 32)
+	restEnc, err := secret.Encrypt(appKey, []byte("rest-secret"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.CreateReceivedRepo(store.ReceivedRepo{
+		Name: "Waiting", Repo: "rest:http://box:8000/vault", Enabled: true,
+		Waiting: true, RESTUser: "bombvault-containers", RESTPasswordEnc: restEnc,
+	})
+	if err != nil {
+		t.Fatalf("CreateReceivedRepo: %v", err)
+	}
+	back, ok, err := r.GetReceivedRepo(got.ID)
+	if err != nil || !ok {
+		t.Fatalf("GetReceivedRepo: ok=%v err=%v", ok, err)
+	}
+	if !back.Waiting || back.RESTUser != "bombvault-containers" {
+		t.Fatalf("round-trip lost waiting/rest_user: %+v", back)
+	}
+	dec, err := secret.Decrypt(appKey, back.RESTPasswordEnc)
+	if err != nil || string(dec) != "rest-secret" {
+		t.Fatalf("rest password round-trip mismatch: got %q err=%v", dec, err)
+	}
+
+	if err := r.UpdateReceivedRepoWaiting(got.ID, false); err != nil {
+		t.Fatalf("UpdateReceivedRepoWaiting: %v", err)
+	}
+	promoted, _, err := r.GetReceivedRepo(got.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if promoted.Waiting {
+		t.Fatal("UpdateReceivedRepoWaiting(false) left the row waiting")
+	}
+	if promoted.RESTUser != "bombvault-containers" {
+		t.Fatalf("UpdateReceivedRepoWaiting must not touch the rest login: %+v", promoted)
+	}
+}
+
 // TestReceiverEnabledPersists expects ReceiverEnabled to default to false and
 // to survive an update.
 func TestReceiverEnabledPersists(t *testing.T) {

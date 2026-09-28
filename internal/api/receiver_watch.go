@@ -150,10 +150,39 @@ func (s *Service) runReceiverChecksAt(ctx context.Context, now int64) error {
 		if !rr.Enabled {
 			continue
 		}
+		if rr.Waiting {
+			rr = s.receiverPromoteIfReady(ctx, rr)
+			if rr.Waiting {
+				// Nothing has arrived yet: neither sweep would find a source to
+				// judge, and the "cannot open" log line they'd both print is
+				// expected here, not a finding.
+				continue
+			}
+		}
 		s.receiverDeadManSweep(ctx, c, alertsOn, rr, now)
 		s.receiverScheduledCheck(ctx, c, alertsOn, rr, now)
 	}
 	return nil
+}
+
+// receiverPromoteIfReady flips a waiting received repo to active once a
+// read-only probe finds its first snapshot, so both the dashboard and this
+// daily watch stop treating it as new. It returns rr unchanged when it is not
+// waiting, cannot yet be opened, or has no snapshots.
+func (s *Service) receiverPromoteIfReady(ctx context.Context, rr store.ReceivedRepo) store.ReceivedRepo {
+	if !rr.Waiting {
+		return rr
+	}
+	_, count, err := s.receiverNewest(ctx, rr)
+	if err != nil || count == 0 {
+		return rr
+	}
+	if err := s.store.UpdateReceivedRepoWaiting(rr.ID, false); err != nil {
+		log.Printf("api: receiver: promote %q from waiting failed: %v", rr.Name, err) //nolint:gosec // G706: rr.Name is %q-quoted
+		return rr
+	}
+	rr.Waiting = false
+	return rr
 }
 
 // receiverDeadManSweep evaluates the dead-man's switch for one repo's sources

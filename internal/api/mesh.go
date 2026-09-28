@@ -231,9 +231,11 @@ type meshProposeResponse struct {
 }
 
 // handleProposeMeshOffer offers storage to a group member. It generates a
-// one-time rest-server credential, sends the connection details to the
-// member's mesh-offer inbox over the group, and returns the deploy snippet.
-// Deploying the rest-server is left to the admin.
+// one-time rest-server credential, registers this instance's own receiver for
+// it right away (waiting for the first copy, since the rest-server is not
+// even deployed yet), sends the connection details to the member's
+// mesh-offer inbox over the group, and returns the deploy snippet. Deploying
+// the rest-server itself is left to the admin.
 // POST /api/fleet/peers/{id}/mesh-offer
 func (h *Handler) handleProposeMeshOffer(w http.ResponseWriter, r *http.Request) {
 	peer, ok := h.lookupFleetPeer(w, r)
@@ -264,6 +266,40 @@ func (h *Handler) handleProposeMeshOffer(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	repo := fmt.Sprintf("rest:%s/%s/%s", base, snip.User, in.Domain)
+
+	// The receiver row needs the member's restic password to ever open the
+	// repo, the same fetch a manual Add does; a failure here means the offer
+	// would leave nothing on this side to show for it, so it aborts before
+	// anything reaches the peer.
+	resticPasswordEnc, err := h.svc.pairedPassword(r.Context(), peer.MemberID)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	restPasswordEnc, err := secret.Encrypt(h.cfg.AppKey, []byte(snip.Password))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	label := peer.Name
+	if label == "" {
+		label = "mesh peer"
+	}
+	if _, err := h.store.CreateReceivedRepo(store.ReceivedRepo{
+		Name:              fmt.Sprintf("%s (%s)", label, in.Domain),
+		Repo:              repo,
+		MemberID:          peer.MemberID,
+		ResticPasswordEnc: resticPasswordEnc,
+		RESTUser:          snip.User,
+		RESTPasswordEnc:   restPasswordEnc,
+		DeadManHours:      26,
+		CheckCadence:      "daily 04:00",
+		Enabled:           true,
+		Waiting:           true,
+	}); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 
 	settings, err := h.store.GetSettings()
 	if err != nil {

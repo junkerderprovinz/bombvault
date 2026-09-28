@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -294,5 +295,76 @@ func TestDeadManSkipsDBDumpItems(t *testing.T) {
 	}
 	if got[0].source != "container:pg @ tower" {
 		t.Fatalf("source = %q, want the container item", got[0].source)
+	}
+}
+
+// A waiting repo that finally shows a snapshot promotes on the very sweep
+// that finds it, and that sweep must not also fire the dead-man's switch: a
+// source that just started sending is not overdue.
+func TestReceiverWatchPromotesAWaitingRepoWithoutAlerting(t *testing.T) {
+	if _, err := exec.LookPath("restic"); err != nil {
+		t.Skip("no restic")
+	}
+	const hour = int64(3600)
+	appKey := strings.Repeat("ab", 32)
+	sendingKey := strings.Repeat("cd", 32)
+	repo := seedReceivedRepo(t, sendingKey)
+
+	svc, st, bodies := receiverWatchService(t, appKey)
+	rr := makeReceivedRepo(t, appKey, sendingKey, repo, 0)
+	rr.DeadManHours = 26
+	rr.CheckCadence = "off"
+	rr.Waiting = true
+	created, err := st.CreateReceivedRepo(rr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sources, err := svc.receiverDeadManSources(context.Background(), created)
+	if err != nil {
+		t.Fatalf("receiverDeadManSources: %v", err)
+	}
+	var newest int64
+	for _, s := range sources {
+		if s.newest > newest {
+			newest = s.newest
+		}
+	}
+
+	// A vantage point shortly after the newest snapshot: fresh by the
+	// dead-man's own yardstick, so a spurious alert here can only come from
+	// the promotion itself, not from the sweep running late.
+	if err := svc.runReceiverChecksAt(context.Background(), newest+hour); err != nil {
+		t.Fatal(err)
+	}
+	if n := countContaining(bodies(), "No backup received from"); n != 0 {
+		t.Fatalf("a repo promoted on this very sweep must not also alert, got %d", n)
+	}
+	got, _, err := st.GetReceivedRepo(created.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Waiting {
+		t.Fatal("a repo with snapshots must have promoted out of waiting")
+	}
+}
+
+// A waiting repo whose rest-server is not deployed yet cannot be opened at
+// all. The sweep must leave it alone rather than logging that as a finding.
+func TestReceiverWatchLeavesAnUnreachableWaitingRepoQuiet(t *testing.T) {
+	appKey := strings.Repeat("ab", 32)
+	svc, st, bodies := receiverWatchService(t, appKey)
+	rr := makeReceivedRepo(t, appKey, strings.Repeat("cd", 32), filepath.Join(t.TempDir(), "not-deployed-yet"), 0)
+	rr.DeadManHours = 26
+	rr.CheckCadence = "daily 04:00"
+	rr.Waiting = true
+	if _, err := st.CreateReceivedRepo(rr); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.runReceiverChecksAt(context.Background(), 2_000_000_000); err != nil {
+		t.Fatal(err)
+	}
+	if n := len(bodies()); n != 0 {
+		t.Fatalf("a repo that still cannot open must not alert at all, got %d notifications", n)
 	}
 }

@@ -2181,6 +2181,22 @@ UPDATE fleet_peers SET token_enc = x'';`,
 ALTER TABLE group_state ADD COLUMN member_seen_at INTEGER NOT NULL DEFAULT 0;
 UPDATE group_state SET joined_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE length(secret_enc) > 0;`,
 	},
+	{
+		// A received repo the sender has not copied into yet, whether offered
+		// through the one-click mesh setup or added by hand before the first
+		// backup lands, is saved waiting instead of refused. The receiver watch
+		// and the list endpoint flip it to active once a snapshot arrives.
+		// rest_user/rest_password_enc are the append-only rest-server's own
+		// login, sealed the same way restic_password_enc is: a received repo
+		// had no way to authenticate to a password-protected rest-server
+		// before this, since only the sending instance kept that password.
+		version:          pairingMigration + 6,
+		name:             "received_repos_waiting_and_rest_creds",
+		alreadySatisfied: columnPresent("received_repos", "waiting"),
+		sql: `ALTER TABLE received_repos ADD COLUMN waiting INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE received_repos ADD COLUMN rest_user TEXT NOT NULL DEFAULT '';
+ALTER TABLE received_repos ADD COLUMN rest_password_enc BLOB NOT NULL DEFAULT x'';`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
