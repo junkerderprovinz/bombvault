@@ -64,6 +64,28 @@ BombVault offre deux niveaux de preuve que vos sauvegardes sont réellement rest
 
 Le **tableau de bord de protection contre les rançongiciels** du tableau de bord synthétise cela en une posture verte / orange / rouge par domaine, avec une liste de contrôle horodatée (hors site configuré, append-only vérifié, réplication à jour, essai de restauration réussi, chiffrement activé, stratégie d'élagage définie). Chaque ligne rouge renvoie directement au correctif, et la carte ne passe au vert que sur des faits vérifiés.
 
+## Appairage des instances {#pairing}
+
+Les Récepteurs, les sources de Rapatriement, la vue Flotte et le Mesh hors site parlent tous à un autre BombVault. Ils le font en tant que membres d'un même groupe d'appairage, et une instance rejoint le groupe avec douze mots.
+
+Sur la première instance, ouvrez **Instances → Appairage** et appuyez sur **Créer une phrase**. Douze mots apparaissent. Sur chaque autre instance, ouvrez le même onglet, appuyez sur **Saisir une phrase** et tapez-les. Le dernier mot porte une somme de contrôle, si bien qu'un mot mal saisi ou interverti est détecté sur-le-champ, et la page nomme le mot et sa position. La phrase peut être réaffichée plus tard ; si un mot de passe de connexion est défini, BombVault le demande d'abord. **Quitter le groupe** fait ressortir une instance.
+
+Quiconque connaît les mots peut rejoindre le groupe, traitez-les donc comme un mot de passe.
+
+**Comment les membres se joignent.** Sur le même réseau, ils se trouvent par multicast et se parlent directement. Les instances sur des réseaux différents passent par un relais, choisi sur le même onglet :
+
+- **Relais du projet** (par défaut) : `relay.halleluja.design`, le relais qu'utilise aussi KnightLoader. Rien à configurer.
+- **Relais personnel** : le conteneur **BombVault Relay** des Unraid Community Apps, ou l'une de vos instances déjà joignable depuis l'extérieur avec **Servir de relais** activé. Cette instance répond alors sur `/relay/connect` à sa propre adresse, derrière le reverse proxy et le certificat qu'elle possède déjà, et n'y laisse entrer que votre groupe. Saisissez l'adresse du relais sur chaque instance qui doit l'utiliser.
+- **Aucun relais** : les membres ne se trouvent que sur le même réseau.
+
+**Ce que voit le relais.** Chaque appel entre membres est scellé avec AES-256-GCM sous une clé dérivée des douze mots, et cette clé ne quitte jamais vos instances. Le relais apprend un hash qui regroupe les connexions, pour quelle instance un message est destiné, sa taille et son horodatage. Un appel direct sur le réseau local est scellé de la même façon et signé également, si bien que rien ne dépend du certificat auto-signé que sert une instance.
+
+**Ce qui transite par le groupe.** La Fiche de protection de la Flotte, une demande de vérification immédiate d'un domaine, les offres de stockage hors site du Mesh, et ce dont un Récepteur ou une source de Rapatriement a besoin : les emplacements de dépôt de l'autre instance et son mot de passe restic. Les données de sauvegarde, elles, n'y passent jamais : elles vont toujours directement aux backends restic. L'`APP_KEY` non plus : le mot de passe restic ouvre les dépôts de cette instance et rien d'autre, ni ses secrets stockés, ni ses sessions, ni ses codes de récupération.
+
+**Entrées antérieures à l'appairage.** Les pairs de la Flotte ajoutés avec un jeton de flotte, ainsi que les Récepteurs et sources de Rapatriement configurés avec l'`APP_KEY` de l'autre instance, restent après la mise à jour et sont marqués **Appairer à nouveau**. Les Récepteurs et sources de Rapatriement continuent de fonctionner : à son premier démarrage, BombVault remplace chaque `APP_KEY` stocké par le mot de passe restic qui en est dérivé. Appairez les deux instances, puis modifiez l'entrée et choisissez son instance. Un pair de la Flotte reprend son ancienne ligne dès qu'une instance du même nom apparaît dans le groupe.
+
+Le seul endroit qui prend encore un `APP_KEY` à la main est [Restauration depuis un autre dépôt BombVault](#restore-from-another-bombvault-repo), pour le cas où l'autre instance a disparu et ne peut pas répondre dans un groupe.
+
 ## Tableau de bord récepteur (le côté réception)
 
 ![Le côté récepteur, surveillé en lecture seule, avec un contrôle d'intégrité exécuté sur cette machine.](assets/screenshots/receiver.png)
@@ -72,7 +94,7 @@ Le **tableau de bord de protection contre les rançongiciels** du tableau de bor
 
 Tout ce qui précède est le côté *émetteur*. Sur la machine qui **reçoit** des copies hors site immuables d'un autre BombVault, le tableau de bord récepteur vous donne une surveillance indépendante et en lecture seule de ces dépôts sur le matériel de réception, afin qu'une défaillance silencieuse à l'autre bout ne passe pas inaperçue.
 
-Activez la bascule **Récepteur** dans les Paramètres pour révéler un onglet **Récepteur**. Il est désactivé par défaut ; ne l'activez que sur une machine qui reçoit réellement des sauvegardes hors site immuables. Enregistrez ensuite un dépôt reçu (en lecture seule, ouvert avec la clé de l'instance émettrice) pour obtenir :
+Activez la bascule **Récepteur** dans les Paramètres pour révéler un onglet **Récepteur**. Il est désactivé par défaut ; ne l'activez que sur une machine qui reçoit réellement des sauvegardes hors site immuables. Enregistrez ensuite un dépôt reçu (en lecture seule, ouvert avec le mot de passe restic de l'instance émettrice, qu'il obtient via le [groupe d'appairage](#pairing)) pour obtenir :
 
 - **Un inventaire d'instantanés groupé par source**, afin que vous puissiez voir exactement quels conteneurs, VMs et jeux de fichiers sont arrivés.
 - **La dernière réception** par source, afin que vous sachiez à quel point chacune est fraîche.
@@ -106,12 +128,12 @@ Le premier segment du chemin est l'utilisateur htpasswd, le second le dépôt. S
 | **NON protégé** | VAULT a accepté une suppression. `--append-only` manque ou a été retiré. |
 | **non concluant** | Ni l'un ni l'autre. En général, l'URL n'est pas celle qu'utilise restic lui-même, ou les identifiants ont changé. Rien n'est enregistré et aucune alerte n'est déclenchée. |
 
-**4. Sur VAULT, regardez ce qui arrive.** Activez *Paramètres → Récepteur*, ouvrez l'onglet **Récepteur** et enregistrez le dépôt en lecture seule.
+**4. Sur VAULT, regardez ce qui arrive.** Appairez les deux machines ([Appairage des instances](#pairing)), activez *Paramètres → Récepteur*, ouvrez l'onglet **Récepteur** et enregistrez le dépôt en lecture seule avec TOWER comme instance émettrice.
 
 !!! warning "L'emplacement est un chemin **à l'intérieur** du conteneur, écrit relativement au montage hôte"
     Saisissez `user/appdata/rest-server/bombvault-containers/containers`, et **non** `/mnt/user/appdata/…`. BombVault s'exécute dans un conteneur où le `/mnt` de l'hôte est monté ailleurs ; un chemin hôte absolu n'y existe pas. Si vous en collez un, BombVault vous indique désormais le chemin relatif à utiliser.
 
-    L'**APP_KEY d'envoi** est la clé de TOWER, pas celle de VAULT. Vous la trouvez sur TOWER sous *Paramètres → Système*.
+    VAULT reçoit le mot de passe restic de TOWER via le groupe au moment où vous enregistrez ; personne n'a de clé à saisir.
 
 **5. Rendez-le mutuel, si vous le souhaitez.** Répétez les mêmes cinq étapes dans l'autre sens : un rest-server sur TOWER qui reçoit la copie de VAULT. Chaque machine impose alors l'immuabilité à l'autre, et aucune ne peut supprimer les sauvegardes de l'autre.
 
@@ -128,7 +150,7 @@ Un onglet **Récupération** dédié accompagne une installation neuve ou recons
 !!! tip "Migration planifiée versus sinistre"
     La récupération guidée restaure les propres réglages de BombVault depuis une sauvegarde. Pour un déplacement *planifié* vers une nouvelle machine, vous pouvez plutôt emporter votre configuration directement avec la carte **Exporter et importer les réglages** (un fichier JSON portable). Voir [Configuration](configuration.md#portable-settings-export-and-import).
 
-### Restauration depuis un autre dépôt BombVault
+### Restauration depuis un autre dépôt BombVault {#restore-from-another-bombvault-repo}
 
 Une carte distincte dans l'onglet **Récupération** ouvre le dépôt d'une *autre* instance BombVault (un partage monté sous `/mnt`, ou une URL distante) avec **l'`APP_KEY` de cette instance**, dans une session unique en lecture seule. Parcourez les conteneurs, VMs et jeux de fichiers qui y sont stockés, choisissez un instantané et restaurez-le, et l'objet restauré devient un conteneur, une VM ou un jeu de fichiers local normal. Rien n'est jamais écrit dans l'autre dépôt, et vos propres réglages de sauvegarde restent intacts (la session vit en mémoire et expire d'elle-même). Déplacer un conteneur du serveur A vers le serveur B ne signifie plus repointer vos réglages de dépôt puis les rétablir ensuite. La fédération serveur-à-serveur en direct est explicitement hors du périmètre ; c'est un tirage ponctuel délibéré.
 

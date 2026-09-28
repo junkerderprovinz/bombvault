@@ -64,6 +64,28 @@ BombVault tilbyder to niveauer af bevis for, at dine sikkerhedskopier faktisk ka
 
 **Ransomware-beskyttelses-scorekortet** på Oversigten samler dette til en grøn / gul / rød position pr. domæne, med en aldersstemplet tjekliste (off-site konfigureret, append-only verificeret, replikering aktuel, gendannelsesøvelse bestået, kryptering til, beskæringsstrategi sat). Hver rød række dyb-linker til rettelsen, og kortet bliver kun nogensinde grønt på verificerede fakta.
 
+## Parring af instanser {#pairing}
+
+Modtagere, hentekilder, Fleet-visningen og Mesh-off-site taler alle med en anden BombVault. De gør det som medlemmer af én parringsgruppe, og en instans kommer med i gruppen med tolv ord.
+
+Åbn **Instanser → Parring** på den første instans, og tryk på **Opret sætning**. Der dukker tolv ord op. Åbn den samme fane på hver af de andre instanser, tryk på **Indtast sætning**, og skriv dem ind. Det sidste ord bærer et tjeksum, så et forkert tastet eller byttet om ord bliver opdaget med det samme, og siden angiver ordet og dets placering. Sætningen kan vises igen senere; er der sat en adgangskode til login, spørger BombVault om den først. **Forlad gruppen** tager en instans ud igen.
+
+Enhver, der kender ordene, kan komme med i gruppen, så behandl dem som en adgangskode.
+
+**Sådan finder medlemmerne hinanden.** På samme netværk finder de hinanden via multicast og taler direkte sammen. Instanser på forskellige netværk går gennem et relay, som vælges på den samme fane:
+
+- **Projektrelay** (standard): `relay.halleluja.design`, det samme relay som KnightLoader også bruger. Intet at sætte op.
+- **Eget relay**: containeren **BombVault Relay** fra Unraid Community Apps, eller en af dine instanser, der allerede er tilgængelig udefra, med **Fungér som relay** slået til. Den instans svarer så på `/relay/connect` på sin egen adresse, bag den reverse proxy og det certifikat, den allerede har, og lukker kun din gruppe ind. Indtast relayets adresse på hver instans, der skal bruge det.
+- **Intet relay**: medlemmerne finder kun hinanden på samme netværk.
+
+**Hvad relayet ser.** Hvert opkald mellem medlemmer er forseglet med AES-256-GCM under en nøgle udledt af de tolv ord, og den nøgle forlader aldrig dine instanser. Relayet lærer et hash, der grupperer forbindelserne, hvilken instans en besked er til, hvor stor den er, og hvornår den passerer. Et direkte opkald på det lokale netværk er forseglet på samme måde og signeret oveni, så intet afhænger af det selvsignerede certifikat, en instans udsteder.
+
+**Hvad der rejser over gruppen.** Fleet-scorekortet, en anmodning om at tjekke en domæne nu, Mesh-off-site-tilbud, og det, en modtager eller hentekilde har brug for: den anden instans' repository-placeringer og dens restic-adgangskode. Sikkerhedskopidata gør det aldrig; de går stadig direkte til restic-backendene. Det gør APP_KEY heller ikke: restic-adgangskoden åbner den instans' repositorier og intet andet, hverken dens gemte hemmeligheder, sessioner eller gendannelseskoder.
+
+**Poster fra før parring.** Fleet-modparter tilføjet med et fleet-token, samt modtagere og hentekilder sat op med den anden instans' APP_KEY, forbliver efter opdateringen og er markeret **Par igen**. Modtagere og hentekilder bliver ved med at virke: ved sin første start erstatter BombVault hver gemt APP_KEY med den restic-adgangskode, der udledes af den. Par begge instanser, og redigér så posten og vælg dens instans. En Fleet-modpart overtager sin gamle række, så snart en instans med samme navn dukker op i gruppen.
+
+Det eneste sted, der stadig tager imod en APP_KEY manuelt, er [Gendan fra et andet BombVault-repo](#restore-from-another-bombvault-repo), til det tilfælde, hvor den anden instans er væk og ikke kan svare i en gruppe.
+
 ## Modtager-dashboard (den modtagende side)
 
 ![Den modtagende side, overvåget skrivebeskyttet, med en integritetskontrol kørt på denne maskine.](assets/screenshots/receiver.png)
@@ -72,7 +94,7 @@ BombVault tilbyder to niveauer af bevis for, at dine sikkerhedskopier faktisk ka
 
 Alt ovenstående er den *afsendende* side. På den boks, der **modtager** uforanderlige off-site-kopier fra en anden BombVault, giver modtager-dashboardet dig uafhængig, skrivebeskyttet overvågning af disse repositorier på den modtagende hardware, så en tavs fejl i den anden ende ikke går ubemærket hen.
 
-Slå **Receiver**-omskifteren til i Indstillinger for at afsløre en **Receiver**-fane. Den er som standard fra; aktivér den kun på en boks, der faktisk modtager uforanderlige off-site-sikkerhedskopier. Registrer så et modtaget repository (skrivebeskyttet, åbnet med den afsendende instans' nøgle) for at få:
+Slå **Receiver**-omskifteren til i Indstillinger for at afsløre en **Receiver**-fane. Den er som standard fra; aktivér den kun på en boks, der faktisk modtager uforanderlige off-site-sikkerhedskopier. Registrer så et modtaget repository (skrivebeskyttet, åbnet med den afsendende instans' restic-adgangskode, som den får over [parringsgruppen](#pairing)) for at få:
 
 - **Et øjebliksbillede-inventar grupperet efter kilde**, så du kan se præcis, hvilke containere, VM'er og filsæt der er landet.
 - **Sidst-modtaget** pr. kilde, så du ved, hvor frisk hver enkelt er.
@@ -106,12 +128,12 @@ Første led i stien er htpasswd-brugeren, det andet er arkivet. Indtast den gene
 | **IKKE beskyttet** | VAULT accepterede en sletning. `--append-only` mangler eller er fjernet. |
 | **ikke entydigt** | Hverken eller. Som regel er adressen ikke den, restic selv bruger, eller legitimationen er ændret. Intet registreres, og ingen advarsel udløses. |
 
-**4. Se på VAULT, hvad der kommer ind.** Slå *Indstillinger → Modtager* til, åbn fanen **Modtager**, og registrér arkivet skrivebeskyttet.
+**4. Se på VAULT, hvad der kommer ind.** Par de to bokse ([Parring af instanser](#pairing)), slå *Indstillinger → Modtager* til, åbn fanen **Modtager**, og registrér arkivet skrivebeskyttet med TOWER som den afsendende instans.
 
 !!! warning "Placeringen er en sti **inde i** containeren, skrevet relativt til værtsmonteringen"
     Indtast `user/appdata/rest-server/bombvault-containers/containers`, **ikke** `/mnt/user/appdata/…`. BombVault kører i en container, hvor værtens `/mnt` er monteret et andet sted; en absolut værtssti findes ikke derinde. Indsætter du en, fortæller BombVault dig nu den relative sti, du skal bruge i stedet.
 
-    **Afsendende APP_KEY** er TOWERs nøgle, ikke VAULTs. Du finder den på TOWER under *Indstillinger → System*.
+    VAULT får TOWERs restic-adgangskode over gruppen, når du gemmer; ingen skal skrive en nøgle af.
 
 **5. Gør det gensidigt, hvis du vil.** Gentag de samme fem trin den anden vej: en rest-server på TOWER, der modtager VAULTs kopi. Så håndhæver hver maskine uforanderligheden for den anden, og ingen kan slette den andens sikkerhedskopier.
 
@@ -128,7 +150,7 @@ En dedikeret **Recovery**-fane fører en frisk eller genopbygget installation ge
 !!! tip "Planlagt migrering versus katastrofe"
     Guidet gendannelse gendanner BombVaults egne indstillinger fra en sikkerhedskopi. For et *planlagt* flyt til en ny boks kan du i stedet bære din konfiguration over direkte med kortet **Eksportér og importér indstillinger** (en bærbar JSON-fil). Se [Konfiguration](configuration.md#portable-settings-export-and-import).
 
-### Gendan fra et andet BombVault-repo
+### Gendan fra et andet BombVault-repo {#restore-from-another-bombvault-repo}
 
 Et separat kort på **Recovery**-fanen åbner et *andet* BombVault-instans' repo (en share monteret under `/mnt`, eller en remote-URL) med **den instans' `APP_KEY`**, i en engangs, skrivebeskyttet session. Gennemse de containere, VM'er og filsæt, der er gemt der, vælg et øjebliksbillede og gendan det, og det gendannede objekt bliver en normal lokal container, VM eller filsæt. Intet skrives nogensinde til det andet repo, og dine egne sikkerhedskopiindstillinger forbliver urørte (sessionen lever i hukommelsen og udløber af sig selv). At flytte en container fra server A til server B betyder ikke længere at ompege dine repo-indstillinger og tilbageføre dem bagefter. Live server-til-server-federation er eksplicit uden for scope; dette er et bevidst engangstræk.
 

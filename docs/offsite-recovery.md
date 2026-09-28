@@ -72,6 +72,28 @@ BombVault offers two levels of proof that your backups are actually restorable, 
 
 The **ransomware-protection scorecard** on the Dashboard rolls this up into a green / amber / red posture per domain, with an age-stamped checklist (off-site configured, append-only verified, replication current, restore drill passed, encryption on, prune strategy set). Every red row deep-links to the fix, and the card only ever goes green on verified facts.
 
+## Pairing instances {#pairing}
+
+Receivers, pull sources, the Fleet view and Mesh off-site all talk to another BombVault. They do it as members of one pairing group, and an instance joins the group with twelve words.
+
+On the first instance open **Instances → Pairing** and press **Create phrase**. Twelve words appear. On every other instance open the same tab, press **Enter phrase** and type them. The last word carries a checksum, so a mistyped or swapped word is caught on the spot, and the page names the word and its position. The phrase can be shown again later; with a login password set, BombVault asks for it first. **Leave group** takes an instance out again.
+
+Anyone who knows the words can join the group, so treat them like a password.
+
+**How members reach each other.** On the same network they find each other by multicast and talk directly. Instances on different networks go through a relay, picked on the same tab:
+
+- **Project relay** (the default): `relay.halleluja.design`, the relay KnightLoader uses as well. Nothing to set up.
+- **Own relay**: the **BombVault Relay** container from the Unraid Community Apps, or one of your instances that is already reachable from outside with **Serve as relay** switched on. That instance then answers at `/relay/connect` on its own address, behind the reverse proxy and certificate it already has, and lets in your group only. Enter the relay's address on every instance that should use it.
+- **No relay**: members find each other on the same network only.
+
+**What the relay sees.** Every call between members is sealed with AES-256-GCM under a key derived from the twelve words, and that key never leaves your instances. The relay learns a hash that groups the connections, which instance a message is for, how big it is and when it passes. A direct call on the local network is sealed the same way and signed as well, so nothing depends on the self-signed certificate an instance serves.
+
+**What travels over the group.** The Fleet scorecard, a request to check one domain now, Mesh off-site offers, and what a receiver or pull source needs: the other instance's repository locations and its restic password. Backup data never does; it still goes straight to the restic backends. Nor does the APP_KEY: the restic password opens that instance's repositories and nothing else, not its stored secrets, sessions or recovery codes.
+
+**Entries from before pairing.** Fleet peers added with a fleet token, and receivers and pull sources set up with the other instance's APP_KEY, stay after the update and are marked **Pair again**. Receivers and pull sources keep working: at its first start BombVault replaces each stored APP_KEY with the restic password derived from it. Pair both instances, then edit the entry and choose its instance. A Fleet peer takes its old row over as soon as an instance with the same name shows up in the group.
+
+The one place that still takes an APP_KEY by hand is [Restore from another BombVault repo](#restore-from-another-bombvault-repo), for the case where the other instance is gone and cannot answer in a group.
+
 ## Receiver dashboard (the receiving side)
 
 ![The receiving side, watched read-only, with an integrity check run on this hardware.](assets/screenshots/receiver.png)
@@ -80,7 +102,7 @@ The **ransomware-protection scorecard** on the Dashboard rolls this up into a gr
 
 Everything above is the *sending* side. On the box that **receives** immutable off-site copies from another BombVault, the Receiver dashboard gives you independent, read-only monitoring of those repositories on the receiving hardware, so a silent failure at the far end does not go unnoticed.
 
-Turn on the **Receiver** toggle in Settings to reveal a **Receiver** tab. It is off by default; enable it only on a box that actually receives immutable off-site backups. Then register a received repository (read-only, opened with the sending instance's key) to get:
+Turn on the **Receiver** toggle in Settings to reveal a **Receiver** tab. It is off by default; enable it only on a box that actually receives immutable off-site backups. Then register a received repository (read-only, opened with the sending instance's restic password, which it gets over the [pairing group](#pairing)) to get:
 
 - **A snapshot inventory grouped by source**, so you can see exactly which containers, VMs and file sets have landed.
 - **Last-received** per source, so you know how fresh each one is.
@@ -114,12 +136,12 @@ The first path segment is the htpasswd user, the second is the repository. Enter
 | **NOT protected** | VAULT accepted a delete. `--append-only` is missing or was removed. |
 | **inconclusive** | Neither. Usually the URL is not the one restic itself uses, or the credentials changed. Nothing is recorded and no alert fires. |
 
-**4. On VAULT, watch what arrives.** Turn on *Settings → Receiver*, open the **Receiver** tab and register the repository read-only.
+**4. On VAULT, watch what arrives.** Pair the two boxes ([Pairing instances](#pairing)), turn on *Settings → Receiver*, open the **Receiver** tab and register the repository read-only with TOWER as the sending instance.
 
 !!! warning "The location is a path **inside** the container, written relative to the host mount"
     Enter `user/appdata/rest-server/bombvault-containers/containers`, **not** `/mnt/user/appdata/...`. BombVault runs in a container, where the host's `/mnt` is mounted elsewhere; an absolute host path does not exist inside it. If you paste one, BombVault now tells you the relative path to use instead.
 
-    The **Sending APP_KEY** is TOWER's key, not VAULT's. Find it on TOWER under *Settings → System*.
+    VAULT gets TOWER's restic password over the group when you save; nobody types a key.
 
 **5. Make it mutual, if you want.** Repeat the same five steps in the other direction: a rest-server on TOWER receiving VAULT's copy. Each box then enforces immutability for the other, and neither can delete the other's backups.
 
@@ -136,7 +158,7 @@ A dedicated **Recovery** tab walks a fresh or rebuilt install through the disast
 !!! tip "Planned migration versus disaster"
     Guided recovery restores BombVault's own settings from a backup. For a *planned* move to a new box, you can instead carry your configuration over directly with the **Export and import settings** card (a portable JSON file). See [Configuration](configuration.md#portable-settings-export-and-import).
 
-### Restore from another BombVault repo
+### Restore from another BombVault repo {#restore-from-another-bombvault-repo}
 
 A separate card on the **Recovery** tab opens a *different* BombVault instance's repo (a share mounted under `/mnt`, or a remote URL) with **that instance's `APP_KEY`**, in a one-time, read-only session. Browse the containers, VMs and file sets stored there, pick a snapshot and restore it, and the restored object becomes a normal local container, VM or file set. Nothing is ever written to the other repo, and your own backup settings stay untouched (the session lives in memory and expires by itself). Moving a container from server A to server B no longer means repointing your repo settings and reverting them afterwards. This card is a deliberate one-shot: it opens a session, restores what you pick, and forgets the other instance. If you want a standing arrangement instead, where this box fetches another instance's snapshots into its own repository on a schedule, that is the **Pull** tab of the **Instances** page.
 

@@ -64,6 +64,28 @@ BombVault biedt twee niveaus van bewijs dat je back-ups daadwerkelijk herstelbaa
 
 De **ransomwarebeschermings-scorecard** op het Dashboard vat dit samen tot een groene / oranje / rode houding per domein, met een van datum voorziene checklist (off-site geconfigureerd, append-only geverifieerd, replicatie actueel, hersteloefening geslaagd, versleuteling aan, prune-strategie ingesteld). Elke rode rij linkt diep door naar de fix, en de kaart wordt alleen groen op geverifieerde feiten.
 
+## Koppeling van instanties {#pairing}
+
+Ontvangers, ophaalbronnen, het Fleet-overzicht en Mesh-off-site praten allemaal met een andere BombVault. Dat doen ze als leden van één koppelingsgroep, en een instantie treedt tot de groep toe met twaalf woorden.
+
+Open op de eerste instantie **Instanties → Koppeling** en druk op **Zin aanmaken**. Er verschijnen twaalf woorden. Open op elke andere instantie hetzelfde tabblad, druk op **Zin invoeren** en typ ze in. Het laatste woord bevat een checksum, zodat een verkeerd getypt of verwisseld woord meteen wordt opgemerkt, en de pagina noemt het woord en zijn plaats. De zin kan later opnieuw worden getoond; is er een inlogwachtwoord ingesteld, dan vraagt BombVault daar eerst om. Met **Groep verlaten** haal je een instantie er weer uit.
+
+Iedereen die de woorden kent kan tot de groep toetreden, behandel ze dus als een wachtwoord.
+
+**Hoe leden elkaar bereiken.** Op hetzelfde netwerk vinden ze elkaar via multicast en praten ze rechtstreeks met elkaar. Instanties op verschillende netwerken lopen via een relay, gekozen op hetzelfde tabblad:
+
+- **Project-relay** (de standaard): `relay.halleluja.design`, dezelfde relay die ook KnightLoader gebruikt. Niets in te stellen.
+- **Eigen relay**: de container **BombVault Relay** uit de Unraid Community Apps, of een van je instanties die al van buitenaf bereikbaar is met **Als relay dienen** aangezet. Die instantie antwoordt dan op `/relay/connect` op zijn eigen adres, achter de reverse proxy en het certificaat die hij al heeft, en laat alleen jouw groep binnen. Vul het adres van de relay in op elke instantie die hem moet gebruiken.
+- **Geen relay**: leden vinden elkaar alleen op hetzelfde netwerk.
+
+**Wat de relay ziet.** Elke oproep tussen leden is verzegeld met AES-256-GCM onder een sleutel die is afgeleid van de twaalf woorden, en die sleutel verlaat je instanties nooit. De relay komt een hash te weten die de verbindingen groepeert, voor welke instantie een bericht bedoeld is, hoe groot het is en wanneer het langskomt. Een rechtstreekse oproep op het lokale netwerk is op dezelfde manier verzegeld en bovendien ondertekend, zodat niets afhangt van het zelfondertekende certificaat dat een instantie serveert.
+
+**Wat er over de groep loopt.** De Fleet-scorecard, een verzoek om nu één domein te controleren, Mesh-off-site-aanbiedingen, en wat een ontvanger of ophaalbron nodig heeft: de repository-locaties van de andere instantie en zijn restic-wachtwoord. Back-updata gaat er nooit overheen, die gaat nog steeds rechtstreeks naar de restic-backends. De APP_KEY ook niet: het restic-wachtwoord opent alleen de repository's van die instantie en verder niets, niet zijn opgeslagen geheimen, sessies of herstelcodes.
+
+**Items van vóór de koppeling.** Fleet-tegenpartijen die met een fleet-token zijn toegevoegd, en ontvangers en ophaalbronnen die met de APP_KEY van de andere instantie zijn ingesteld, blijven na de update bestaan en zijn gemarkeerd met **Opnieuw koppelen**. Ontvangers en ophaalbronnen blijven werken: bij de eerste start vervangt BombVault elke opgeslagen APP_KEY door het daaruit afgeleide restic-wachtwoord. Koppel beide instanties, bewerk daarna de invoer en kies zijn instantie. Een Fleet-tegenpartij neemt zijn oude rij over zodra een instantie met dezelfde naam in de groep verschijnt.
+
+De enige plek die nog met de hand een APP_KEY vraagt, is [Herstellen vanuit een andere BombVault-repo](#restore-from-another-bombvault-repo), voor het geval de andere instantie weg is en in geen enkele groep meer kan antwoorden.
+
 ## Ontvanger-dashboard (de ontvangende kant)
 
 ![De ontvangende kant, alleen-lezen bewaakt, met een integriteitscontrole op deze machine.](assets/screenshots/receiver.png)
@@ -72,7 +94,7 @@ De **ransomwarebeschermings-scorecard** op het Dashboard vat dit samen tot een g
 
 Alles hierboven is de *zendende* kant. Op de machine die onveranderlijke off-site kopieën van een andere BombVault **ontvangt**, geeft het Ontvanger-dashboard je onafhankelijke, alleen-lezen monitoring van die repositories op de ontvangende hardware, zodat een stille fout aan de andere kant niet onopgemerkt blijft.
 
-Zet de schakelaar **Ontvanger** in Instellingen aan om een tabblad **Ontvanger** te onthullen. Het is standaard uit; schakel het alleen in op een machine die daadwerkelijk onveranderlijke off-site back-ups ontvangt. Registreer daarna een ontvangen repository (alleen-lezen, geopend met de sleutel van de zendende instantie) om te krijgen:
+Zet de schakelaar **Ontvanger** in Instellingen aan om een tabblad **Ontvanger** te onthullen. Het is standaard uit; schakel het alleen in op een machine die daadwerkelijk onveranderlijke off-site back-ups ontvangt. Registreer daarna een ontvangen repository (alleen-lezen, geopend met het restic-wachtwoord van de zendende instantie, dat het via de [koppelingsgroep](#pairing) krijgt) om te krijgen:
 
 - **Een snapshotinventaris gegroepeerd per bron**, zodat je precies kunt zien welke containers, VM's en bestandssets zijn geland.
 - **Laatst ontvangen** per bron, zodat je weet hoe vers elk is.
@@ -106,12 +128,12 @@ Het eerste padsegment is de htpasswd-gebruiker, het tweede de repository. Vul de
 | **NIET beschermd** | VAULT accepteerde een verwijdering. `--append-only` ontbreekt of is verwijderd. |
 | **niet doorslaggevend** | Geen van beide. Meestal is de URL niet die welke restic zelf gebruikt, of de inloggegevens zijn gewijzigd. Er wordt niets vastgelegd en geen waarschuwing gegeven. |
 
-**4. Kijk op VAULT wat er binnenkomt.** Zet *Instellingen → Ontvanger* aan, open het tabblad **Ontvanger** en registreer de repository alleen-lezen.
+**4. Kijk op VAULT wat er binnenkomt.** Koppel de twee machines ([Koppeling van instanties](#pairing)), zet *Instellingen → Ontvanger* aan, open het tabblad **Ontvanger** en registreer de repository alleen-lezen met TOWER als de zendende instantie.
 
 !!! warning "De locatie is een pad **binnen** de container, geschreven ten opzichte van de host-mount"
     Vul `user/appdata/rest-server/bombvault-containers/containers` in, **niet** `/mnt/user/appdata/…`. BombVault draait in een container waar de `/mnt` van de host elders is gemount; een absoluut hostpad bestaat daar niet. Plak je er toch een, dan noemt BombVault nu het relatieve pad dat je nodig hebt.
 
-    De **verzendende APP_KEY** is de sleutel van TOWER, niet die van VAULT. Je vindt hem op TOWER onder *Instellingen → Systeem*.
+    VAULT krijgt het restic-wachtwoord van TOWER via de groep zodra je opslaat; niemand hoeft een sleutel over te typen.
 
 **5. Maak het wederzijds, als je wilt.** Herhaal dezelfde vijf stappen in de andere richting: een rest-server op TOWER die de kopie van VAULT ontvangt. Elke machine dwingt dan onveranderlijkheid af voor de andere, en geen van beide kan de back-ups van de ander verwijderen.
 
@@ -128,7 +150,7 @@ Een speciaal tabblad **Herstel** leidt een verse of herbouwde installatie op é�
 !!! tip "Geplande migratie versus noodgeval"
     Begeleid herstel herstelt BombVaults eigen instellingen vanuit een back-up. Voor een *geplande* verhuizing naar een nieuwe machine kun je in plaats daarvan je configuratie rechtstreeks meenemen met de kaart **Instellingen exporteren en importeren** (een portable JSON-bestand). Zie [Configuratie](configuration.md#portable-settings-export-and-import).
 
-### Herstellen vanuit een andere BombVault-repo
+### Herstellen vanuit een andere BombVault-repo {#restore-from-another-bombvault-repo}
 
 Een aparte kaart op het tabblad **Herstel** opent de repo van een *andere* BombVault-instantie (een share gemount onder `/mnt`, of een remote URL) met **de `APP_KEY` van die instantie**, in een eenmalige, alleen-lezen sessie. Blader door de containers, VM's en bestandssets die daar zijn opgeslagen, kies een snapshot en herstel hem, en het herstelde object wordt een normale lokale container, VM of bestandsset. Er wordt nooit iets naar de andere repo geschreven, en je eigen back-upinstellingen blijven onaangeroerd (de sessie leeft in het geheugen en verloopt vanzelf). Een container van server A naar server B verplaatsen betekent niet langer je repo-instellingen omleiden en die achteraf terugdraaien. Live server-naar-server-federatie valt uitdrukkelijk buiten het bereik; dit is een bewuste eenmalige pull.
 

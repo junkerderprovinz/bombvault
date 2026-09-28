@@ -64,6 +64,28 @@ BombVault, yedeklerinizin yalnızca mevcut değil, gerçekten geri yüklenebilir
 
 Kontrol Paneli'ndeki **fidye yazılımı koruması karnesi** bunu etki alanı başına yeşil / sarı / kırmızı bir duruşa, yaş damgalı bir kontrol listesiyle (site dışı yapılandırıldı, yalnızca ekleme doğrulandı, çoğaltma güncel, geri yükleme tatbikatı geçti, şifreleme açık, budama stratejisi ayarlandı) toplar. Her kırmızı satır düzeltmeye derin bağlantı verir ve kart yalnızca doğrulanmış gerçekler üzerine yeşile döner.
 
+## Örnekleri eşleştirme {#pairing}
+
+Alıcılar, çekme kaynakları, Filo görünümü ve Mesh site dışı, hepsi başka bir BombVault ile konuşur. Bunu tek bir eşleştirme grubunun üyeleri olarak yaparlar ve bir örnek gruba on iki kelimeyle katılır.
+
+İlk örnekte **Örnekler → Eşleştirme** sekmesini açın ve **İfade oluştur**'a basın. On iki kelime görünür. Diğer her örnekte aynı sekmeyi açın, **İfadeyi gir**'e basın ve kelimeleri yazın. Son kelime bir sağlama toplamı taşır, böylece yanlış yazılan ya da yer değiştiren bir kelime anında yakalanır ve sayfa o kelimeyi ve konumunu belirtir. İfade daha sonra tekrar gösterilebilir; bir oturum açma parolası ayarlıysa BombVault önce onu ister. **Gruptan ayrıl**, bir örneği gruptan tekrar çıkarır.
+
+Kelimeleri bilen herkes gruba katılabilir, bu yüzden onlara bir parola gibi davranın.
+
+**Üyeler birbirine nasıl ulaşır.** Aynı ağdaysa birbirlerini çoklu yayınla bulur ve doğrudan konuşurlar. Farklı ağlardaki örnekler, aynı sekmeden seçilen bir röle üzerinden gider:
+
+- **Proje rölesi** (varsayılan): `relay.halleluja.design`, KnightLoader'ın da kullandığı röle. Kurulacak hiçbir şey yok.
+- **Kendi röleniz**: Unraid Community Apps'ten **BombVault Relay** konteyneri ya da **Röle olarak hizmet ver** açık olan, dışarıdan zaten erişilebilir örneklerinizden biri. O örnek daha sonra kendi adresinde `/relay/connect`'te yanıt verir, zaten sahip olduğu ters proxy ve sertifikanın arkasında, ve yalnızca grubunuzu içeri alır. Röleyi kullanması gereken her örneğe rölenin adresini girin.
+- **Röle yok**: üyeler yalnızca aynı ağda birbirini bulur.
+
+**Rölenin gördükleri.** Üyeler arasındaki her çağrı, on iki kelimeden türetilen bir anahtar altında AES-256-GCM ile mühürlenir ve bu anahtar örneklerinizden asla çıkmaz. Röle yalnızca bağlantıları gruplayan bir özet, bir mesajın hangi örnek için olduğunu, ne kadar büyük olduğunu ve ne zaman geçtiğini öğrenir. Yerel ağdaki doğrudan bir çağrı da aynı şekilde mühürlenir ve ayrıca imzalanır, böylece hiçbir şey bir örneğin sunduğu kendinden imzalı sertifikaya bağlı değildir.
+
+**Grup üzerinden neler geçer.** Filo karnesi, bir etki alanını şimdi kontrol etme isteği, Mesh site dışı teklifleri ve bir alıcının ya da çekme kaynağının ihtiyaç duyduğu şey: diğer örneğin depo konumları ve onun restic parolası. Yedekleme verisi asla geçmez; her zaman doğrudan restic arka uçlarına gider. APP_KEY da geçmez: restic parolası yalnızca o örneğin depolarını açar, başka hiçbir şeyi açmaz, ne saklanan sırlarını, ne oturumlarını ne de kurtarma kodlarını.
+
+**Eşleştirmeden önceki kayıtlar.** Bir filo belirteciyle eklenen filo eşleri ile diğer örneğin APP_KEY'iyle kurulan alıcılar ve çekme kaynakları, güncellemeden sonra da kalır ve **Yeniden eşleştir** olarak işaretlenir. Alıcılar ve çekme kaynakları çalışmaya devam eder: ilk başlangıcında BombVault, saklanan her APP_KEY'i ondan türetilen restic parolasıyla değiştirir. İki örneği eşleştirin, ardından kaydı düzenleyip örneğini seçin. Bir filo eşi, aynı adı taşıyan bir örnek grupta belirir belirmez eski satırını devralır.
+
+Elle bir APP_KEY almaya devam eden tek yer [Başka bir BombVault deposundan geri yükleme](#restore-from-another-bombvault-repo)'dir; diğer örneğin kaybolduğu ve bir grup içinde yanıt veremediği durumlar için.
+
 ## Alıcı kontrol paneli (alan taraf)
 
 ![Alıcı taraf, salt okunur izlenir, bütünlük kontrolü bu makinede çalıştırılır.](assets/screenshots/receiver.png)
@@ -72,7 +94,7 @@ Kontrol Paneli'ndeki **fidye yazılımı koruması karnesi** bunu etki alanı ba
 
 Yukarıdaki her şey *gönderen* taraftır. Başka bir BombVault'tan değiştirilemez site dışı kopyalar **alan** makinede, Alıcı kontrol paneli size o depoların alan donanımda bağımsız, salt okunur izlemesini verir, böylece karşı uçtaki sessiz bir hata fark edilmeden kalmaz.
 
-Bir **Alıcı** sekmesini ortaya çıkarmak için Ayarlar'da **Alıcı** geçişini açın. Varsayılan olarak kapalıdır; onu yalnızca gerçekten değiştirilemez site dışı yedekler alan bir makinede etkinleştirin. Ardından şunları elde etmek için alınan bir depoyu (salt okunur, gönderen örneğin anahtarıyla açılmış) kaydedin:
+Bir **Alıcı** sekmesini ortaya çıkarmak için Ayarlar'da **Alıcı** geçişini açın. Varsayılan olarak kapalıdır; onu yalnızca gerçekten değiştirilemez site dışı yedekler alan bir makinede etkinleştirin. Ardından şunları elde etmek için alınan bir depoyu (salt okunur, gönderen örneğin restic parolasıyla açılmış; bu parola [eşleştirme grubu](#pairing) üzerinden gelir) kaydedin:
 
 - **Kaynağa göre gruplanmış bir anlık görüntü envanteri**, böylece hangi konteynerlerin, VM'lerin ve dosya kümelerinin geldiğini tam olarak görebilirsiniz.
 - Kaynak başına **Son alınan**, böylece her birinin ne kadar taze olduğunu bilirsiniz.
@@ -106,12 +128,12 @@ Yolun ilk parçası htpasswd kullanıcısı, ikincisi depodur. Oluşturulan kull
 | **KORUNMUYOR** | VAULT bir silmeyi kabul etti. `--append-only` yok ya da kaldırılmış. |
 | **belirsiz** | İkisi de değil. Genelde adres restic'in kendi kullandığı adres değildir ya da kimlik bilgileri değişmiştir. Hiçbir şey kaydedilmez ve uyarı verilmez. |
 
-**4. VAULT üzerinde neyin geldiğini izleyin.** *Ayarlar → Alıcı* seçeneğini açın, **Alıcı** sekmesini açın ve depoyu salt okunur olarak kaydedin.
+**4. VAULT üzerinde neyin geldiğini izleyin.** İki makineyi eşleştirin ([Örnekleri eşleştirme](#pairing)), *Ayarlar → Alıcı* seçeneğini açın, **Alıcı** sekmesini açın ve depoyu gönderen örnek olarak TOWER ile salt okunur olarak kaydedin.
 
 !!! warning "Konum, kapsayıcının **içindeki** bir yoldur ve ana makine bağlama noktasına göre yazılır"
     `user/appdata/rest-server/bombvault-containers/containers` girin, `/mnt/user/appdata/…` **değil**. BombVault, ana makinenin `/mnt` dizininin başka yere bağlandığı bir kapsayıcıda çalışır; mutlak ana makine yolu orada yoktur. Yapıştırırsanız BombVault artık kullanmanız gereken göreli yolu söyler.
 
-    **Gönderen APP_KEY**, VAULT'un değil TOWER'ın anahtarıdır. TOWER üzerinde *Ayarlar → Sistem* altında bulunur.
+    Kaydettiğinizde VAULT, TOWER'ın restic parolasını grup üzerinden alır; kimsenin bir anahtar yazması gerekmez.
 
 **5. İsterseniz karşılıklı yapın.** Aynı beş adımı ters yönde yineleyin: TOWER üzerinde VAULT'un kopyasını alan bir rest-server. Böylece her makine diğeri için değiştirilemezliği dayatır ve hiçbiri diğerinin yedeklerini silemez.
 
@@ -128,7 +150,7 @@ Yolun ilk parçası htpasswd kullanıcısı, ikincisi depodur. Oluşturulan kull
 !!! tip "Planlı geçiş ve felaket karşılaştırması"
     Rehberli kurtarma, BombVault'un kendi ayarlarını bir yedekten geri yükler. Yeni bir makineye *planlı* bir taşınma için, bunun yerine yapılandırmanızı **Ayarları dışa ve içe aktar** kartıyla (taşınabilir bir JSON dosyası) doğrudan taşıyabilirsiniz. Bkz. [Yapılandırma](configuration.md#portable-settings-export-and-import).
 
-### Başka bir BombVault deposundan geri yükleme
+### Başka bir BombVault deposundan geri yükleme {#restore-from-another-bombvault-repo}
 
 **Kurtarma** sekmesindeki ayrı bir kart, *farklı* bir BombVault örneğinin deposunu (`/mnt` altında bağlanmış bir paylaşım ya da bir uzak URL) **o örneğin `APP_KEY`'iyle**, tek seferlik, salt okunur bir oturumda açar. Orada saklanan konteynerlere, VM'lere ve dosya kümelerine göz atın, bir anlık görüntü seçip geri yükleyin; geri yüklenen nesne normal bir yerel konteyner, VM ya da dosya kümesi olur. Diğer depoya asla hiçbir şey yazılmaz ve kendi yedekleme ayarlarınız dokunulmadan kalır (oturum bellekte yaşar ve kendiliğinden sona erer). Bir konteyneri A sunucusundan B sunucusuna taşımak artık depo ayarlarınızı yeniden yönlendirmek ve sonrasında geri almak anlamına gelmez. Canlı sunucudan sunucuya federasyon açıkça kapsam dışıdır; bu kasıtlı bir tek atışlık çekmedir.
 

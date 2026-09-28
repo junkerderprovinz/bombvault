@@ -64,6 +64,28 @@ O BombVault oferece dois níveis de prova de que os seus backups são de facto r
 
 O **scorecard de proteção contra ransomware** no Painel resume isto numa postura verde / âmbar / vermelha por domínio, com uma checklist com marca de idade (externo configurado, append-only verificado, replicação atual, ensaio de restauro passado, encriptação ligada, estratégia de poda definida). Cada linha vermelha liga diretamente à correção, e o cartão só fica verde com factos verificados.
 
+## Emparelhamento de instâncias {#pairing}
+
+Recetores, origens de recolha, a vista Fleet e o Mesh externo falam todos com outro BombVault. Fazem-no como membros de um único grupo de emparelhamento, e uma instância entra no grupo com doze palavras.
+
+Na primeira instância, abra **Instâncias → Emparelhamento** e prima **Criar frase**. Aparecem doze palavras. Em cada uma das outras instâncias, abra o mesmo separador, prima **Introduzir frase** e escreva-as. A última palavra traz uma soma de verificação, por isso uma palavra escrita incorretamente ou trocada é detetada de imediato, e a página indica a palavra e a sua posição. A frase pode ser mostrada de novo mais tarde; com uma palavra-passe de acesso definida, o BombVault pede-a primeiro. **Sair do grupo** retira uma instância outra vez.
+
+Quem quer que conheça as palavras pode entrar no grupo, por isso trate-as como uma palavra-passe.
+
+**Como os membros se alcançam.** Na mesma rede encontram-se por multicast e falam diretamente entre si. Instâncias em redes diferentes passam por um retransmissor, escolhido no mesmo separador:
+
+- **Retransmissor do projeto** (a predefinição): `relay.halleluja.design`, o mesmo retransmissor que o KnightLoader também usa. Nada a configurar.
+- **Retransmissor próprio**: o contentor **BombVault Relay** das Unraid Community Apps, ou uma das suas instâncias que já esteja acessível a partir de fora com **Servir de retransmissor** ativado. Essa instância passa a responder em `/relay/connect` no seu próprio endereço, atrás do proxy reverso e do certificado que já tem, e deixa entrar apenas o seu grupo. Introduza o endereço do retransmissor em cada instância que o deva usar.
+- **Sem retransmissor**: os membros só se encontram na mesma rede.
+
+**O que o retransmissor vê.** Cada chamada entre membros é selada com AES-256-GCM sob uma chave derivada das doze palavras, e essa chave nunca sai das suas instâncias. O retransmissor fica a saber um hash que agrupa as ligações, para que instância é uma mensagem, qual o seu tamanho e quando passa. Uma chamada direta na rede local é selada da mesma forma e assinada também, por isso nada depende do certificado autoassinado que uma instância serve.
+
+**O que viaja pelo grupo.** O scorecard do Fleet, um pedido para verificar um domínio agora, as ofertas do Mesh para off-site, e o que um recetor ou uma origem de recolha precisa: as localizações do repositório da outra instância e a sua palavra-passe restic. Os dados de backup nunca viajam por aqui, continuam a ir diretamente para os backends restic. Nem a APP_KEY: a palavra-passe restic abre apenas os repositórios dessa instância e mais nada, nem os seus segredos guardados, sessões ou códigos de recuperação.
+
+**Entradas anteriores ao emparelhamento.** Pares do Fleet adicionados com um token de fleet, e recetores e origens de recolha configurados com a APP_KEY da outra instância, mantêm-se depois da atualização e ficam marcados **Emparelhar novamente**. Os recetores e as origens de recolha continuam a funcionar: no primeiro arranque, o BombVault substitui cada APP_KEY guardada pela palavra-passe restic derivada dela. Emparelhe as duas instâncias, depois edite a entrada e escolha a sua instância. Um par do Fleet retoma a sua linha antiga assim que surge no grupo uma instância com o mesmo nome.
+
+O único sítio que ainda pede uma APP_KEY à mão é [Restaurar a partir de outro repo BombVault](#restore-from-another-bombvault-repo), para o caso de a outra instância ter desaparecido e já não poder responder em nenhum grupo.
+
 ## Painel recetor (o lado que recebe)
 
 ![O lado recetor, vigiado apenas para leitura, com uma verificação de integridade feita nesta máquina.](assets/screenshots/receiver.png)
@@ -72,7 +94,7 @@ O **scorecard de proteção contra ransomware** no Painel resume isto numa postu
 
 Tudo acima é o lado *emissor*. Na máquina que **recebe** cópias externas imutáveis de outro BombVault, o painel Recetor dá-lhe monitorização independente e só de leitura desses repositórios no hardware recetor, para que uma falha silenciosa no lado remoto não passe despercebida.
 
-Ligue o interruptor **Recetor** em Definições para revelar um separador **Recetor**. Está desligado por predefinição; ative-o apenas numa máquina que de facto recebe backups externos imutáveis. Depois registe um repositório recebido (só de leitura, aberto com a chave da instância emissora) para obter:
+Ligue o interruptor **Recetor** em Definições para revelar um separador **Recetor**. Está desligado por predefinição; ative-o apenas numa máquina que de facto recebe backups externos imutáveis. Depois registe um repositório recebido (só de leitura, aberto com a palavra-passe restic da instância emissora, que a recebe através do [grupo de emparelhamento](#pairing)) para obter:
 
 - **Um inventário de instantâneos agrupado por origem**, para que possa ver exatamente quais containers, VMs e conjuntos de ficheiros aterraram.
 - **Último recebido** por origem, para que saiba quão fresco cada um é.
@@ -106,12 +128,12 @@ O primeiro segmento do caminho é o utilizador htpasswd, o segundo é o reposit�
 | **NÃO protegido** | O VAULT aceitou uma eliminação. Falta `--append-only` ou foi retirado. |
 | **inconclusivo** | Nem uma coisa nem outra. Normalmente o URL não é o que o restic usa, ou as credenciais mudaram. Nada é registado e nenhum alerta é disparado. |
 
-**4. No VAULT, veja o que chega.** Ative *Definições → Recetor*, abra o separador **Recetor** e registe o repositório em apenas leitura.
+**4. No VAULT, veja o que chega.** Emparelhe as duas máquinas ([Emparelhamento de instâncias](#pairing)), ative *Definições → Recetor*, abra o separador **Recetor** e registe o repositório em apenas leitura com o TOWER como instância emissora.
 
 !!! warning "A localização é um caminho **dentro** do contentor, escrito relativamente à montagem do anfitrião"
     Introduza `user/appdata/rest-server/bombvault-containers/containers`, e **não** `/mnt/user/appdata/…`. O BombVault corre num contentor onde o `/mnt` do anfitrião está montado noutro sítio; um caminho absoluto do anfitrião não existe lá. Se colar um, o BombVault indica-lhe agora o caminho relativo a usar.
 
-    A **APP_KEY emissora** é a chave do TOWER, não a do VAULT. Encontra-a no TOWER em *Definições → Sistema*.
+    O VAULT recebe a palavra-passe restic do TOWER através do grupo ao guardar; ninguém precisa de escrever uma chave.
 
 **5. Torne-o mútuo, se quiser.** Repita os mesmos cinco passos no sentido inverso: um rest-server no TOWER a receber a cópia do VAULT. Cada máquina impõe então a imutabilidade à outra, e nenhuma pode apagar as cópias da outra.
 
@@ -128,7 +150,7 @@ Um separador **Recuperação** dedicado acompanha uma instalação de raiz ou re
 !!! tip "Migração planeada versus desastre"
     A recuperação guiada restaura as próprias definições do BombVault a partir de um backup. Para uma mudança *planeada* para uma máquina nova, pode em vez disso levar a sua configuração consigo diretamente com o cartão **Exportar e importar definições** (um ficheiro JSON portátil). Consulte [Configuração](configuration.md#portable-settings-export-and-import).
 
-### Restaurar a partir de outro repo BombVault
+### Restaurar a partir de outro repo BombVault {#restore-from-another-bombvault-repo}
 
 Um cartão separado no separador **Recuperação** abre o repo de uma instância BombVault *diferente* (uma partilha montada sob `/mnt`, ou um URL remoto) com a **`APP_KEY` dessa instância**, numa sessão pontual e só de leitura. Navegue pelos containers, VMs e conjuntos de ficheiros lá armazenados, escolha um instantâneo e restaure-o, e o objeto restaurado torna-se um container, VM ou conjunto de ficheiros local normal. Nada é alguma vez escrito no outro repo, e as suas próprias definições de backup ficam intactas (a sessão vive em memória e expira por si própria). Mover um container do servidor A para o servidor B deixa de significar reapontar as suas definições de repo e revertê-las depois. A federação ao vivo servidor-a-servidor está explicitamente fora de âmbito; isto é um puxão pontual deliberado.
 

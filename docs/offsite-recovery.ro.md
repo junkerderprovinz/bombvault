@@ -64,6 +64,28 @@ BombVault oferă două niveluri de dovadă că backupurile tale sunt efectiv res
 
 **Fișa de evaluare a protecției împotriva ransomware** de pe panoul principal rezumă acestea într-o postură verde / galben / roșu per domeniu, cu o listă de verificare marcată cu vârsta (off-site configurat, append-only verificat, replicare curentă, exercițiu de restaurare trecut, criptare activată, strategie de curățare setată). Fiecare rând roșu are link direct către remediu, iar cardul devine verde doar pe fapte verificate.
 
+## Împerecherea instanțelor {#pairing}
+
+Receptorii, sursele de preluare, vizualizarea Fleet și Mesh off-site vorbesc toate cu un alt BombVault. O fac ca membri ai unui singur grup de împerechere, iar o instanță se alătură grupului cu douăsprezece cuvinte.
+
+Pe prima instanță, deschide **Instanțe → Împerechere** și apasă **Creează fraza**. Apar douăsprezece cuvinte. Pe fiecare altă instanță, deschide aceeași filă, apasă **Introdu fraza** și tastează-le. Ultimul cuvânt poartă o sumă de control, așa că un cuvânt scris greșit sau schimbat între ele este prins pe loc, iar pagina numește cuvântul și poziția lui. Fraza poate fi afișată din nou mai târziu; cu o parolă de autentificare setată, BombVault o cere mai întâi. **Părăsește grupul** scoate o instanță din nou afară.
+
+Oricine cunoaște cuvintele se poate alătura grupului, așa că tratează-le ca pe o parolă.
+
+**Cum se găsesc membrii între ei.** În aceeași rețea se găsesc prin multicast și vorbesc direct. Instanțele din rețele diferite trec printr-un releu, ales pe aceeași filă:
+
+- **Releul proiectului** (implicit): `relay.halleluja.design`, același releu pe care îl folosește și KnightLoader. Nimic de configurat.
+- **Releu propriu**: containerul **BombVault Relay** din Unraid Community Apps, sau una dintre instanțele tale care este deja accesibilă din exterior cu **Funcționează ca releu** activat. Acea instanță răspunde apoi la `/relay/connect` pe propria adresă, în spatele reverse proxy-ului și certificatului pe care le are deja, și lasă să intre doar grupul tău. Introdu adresa releului pe fiecare instanță care ar trebui să îl folosească.
+- **Fără releu**: membrii se găsesc doar în aceeași rețea.
+
+**Ce vede releul.** Fiecare apel dintre membri este sigilat cu AES-256-GCM sub o cheie derivată din cele douăsprezece cuvinte, iar acea cheie nu părăsește niciodată instanțele tale. Releul află un hash care grupează conexiunile, pentru ce instanță este destinat un mesaj, cât de mare este și când trece. Un apel direct în rețeaua locală este sigilat la fel și semnat în plus, așa că nimic nu depinde de certificatul autosemnat pe care îl servește o instanță.
+
+**Ce circulă prin grup.** Fișa de evaluare Fleet, o cerere de a verifica un domeniu acum, ofertele Mesh pentru off-site, și ce are nevoie un receptor sau o sursă de preluare: locațiile de depozit ale celeilalte instanțe și parola ei restic. Datele de backup nu circulă niciodată așa, ele merg în continuare direct la backend-urile restic. Nici APP_KEY: parola restic deschide doar depozitele acelei instanțe și nimic altceva, nici secretele ei stocate, sesiunile sau codurile de recuperare.
+
+**Intrări dinainte de împerechere.** Partenerii Fleet adăugați cu un token fleet, precum și receptorii și sursele de preluare configurate cu APP_KEY-ul celeilalte instanțe, rămân după actualizare și sunt marcați **Reîmperechează**. Receptorii și sursele de preluare continuă să funcționeze: la prima pornire, BombVault înlocuiește fiecare APP_KEY stocat cu parola restic derivată din el. Împerechează ambele instanțe, apoi editează intrarea și alege instanța ei. Un partener Fleet își preia rândul vechi imediat ce o instanță cu același nume apare în grup.
+
+Singurul loc care încă cere un APP_KEY manual este [Restaurare dintr-un alt depozit BombVault](#restore-from-another-bombvault-repo), pentru cazul în care cealaltă instanță a dispărut și nu mai poate răspunde în niciun grup.
+
 ## Panou de recepție (partea de recepție)
 
 ![Partea care primește, urmărită doar în citire, cu o verificare de integritate rulată pe această mașină.](assets/screenshots/receiver.png)
@@ -72,7 +94,7 @@ BombVault oferă două niveluri de dovadă că backupurile tale sunt efectiv res
 
 Tot ce este mai sus este partea de *trimitere*. Pe stația care **primește** copii off-site imuabile de la un alt BombVault, panoul de recepție îți oferă monitorizare independentă, doar în citire, a acelor depozite pe hardware-ul care primește, astfel încât o eșuare tăcută la capătul îndepărtat să nu treacă neobservată.
 
-Activează comutatorul **Receiver** în Setări pentru a dezvălui o filă **Receiver**. Este oprit implicit; activează-l doar pe o stație care primește efectiv backupuri off-site imuabile. Apoi înregistrează un depozit primit (doar în citire, deschis cu cheia instanței care trimite) pentru a obține:
+Activează comutatorul **Receiver** în Setări pentru a dezvălui o filă **Receiver**. Este oprit implicit; activează-l doar pe o stație care primește efectiv backupuri off-site imuabile. Apoi înregistrează un depozit primit (doar în citire, deschis cu parola restic a instanței care trimite, primită prin [grupul de împerechere](#pairing)) pentru a obține:
 
 - **Un inventar de instantanee grupat pe sursă**, astfel încât să poți vedea exact care containere, VM-uri și seturi de fișiere au sosit.
 - **Ultima primire** per sursă, astfel încât să știi cât de proaspătă este fiecare.
@@ -106,12 +128,12 @@ Primul segment al căii este utilizatorul htpasswd, al doilea este depozitul. In
 | **NU este protejat** | VAULT a acceptat o ștergere. Lipsește `--append-only` sau a fost scos. |
 | **neconcludent** | Nici una, nici alta. De obicei adresa nu este cea folosită de restic însuși, sau acreditările s-au schimbat. Nu se înregistrează nimic și nu se declanșează nicio alertă. |
 
-**4. Pe VAULT, urmărește ce sosește.** Activează *Setări → Receptor*, deschide fila **Receptor** și înregistrează depozitul doar pentru citire.
+**4. Pe VAULT, urmărește ce sosește.** Împerechează cele două stații ([Împerecherea instanțelor](#pairing)), activează *Setări → Receptor*, deschide fila **Receptor** și înregistrează depozitul doar pentru citire, cu TOWER ca instanță expeditoare.
 
 !!! warning "Locația este o cale **din interiorul** containerului, scrisă relativ la montarea gazdei"
     Introdu `user/appdata/rest-server/bombvault-containers/containers`, **nu** `/mnt/user/appdata/…`. BombVault rulează într-un container unde `/mnt` al gazdei este montat în altă parte; o cale absolută a gazdei nu există acolo. Dacă lipești una, BombVault îți spune acum ce cale relativă să folosești.
 
-    **APP_KEY-ul expeditor** este cheia TOWER, nu a VAULT. O găsești pe TOWER la *Setări → Sistem*.
+    VAULT primește parola restic de la TOWER prin grup la salvare; nimeni nu trebuie să tasteze o cheie.
 
 **5. Fă-l reciproc, dacă vrei.** Repetă aceiași cinci pași în sens invers: un rest-server pe TOWER care primește copia VAULT. Atunci fiecare mașină impune imutabilitatea pentru cealaltă, și niciuna nu poate șterge copiile celeilalte.
 
@@ -128,7 +150,7 @@ O filă dedicată **Recuperare** conduce o instalare nouă sau reconstruită pri
 !!! tip "Migrare planificată versus dezastru"
     Recuperarea ghidată restaurează propriile setări ale BombVault dintr-un backup. Pentru o mutare *planificată* pe o stație nouă, poți în schimb să-ți muți configurația direct cu cardul **Export și import setări** (un fișier JSON portabil). Vezi [Configurare](configuration.md#portable-settings-export-and-import).
 
-### Restaurare dintr-un alt depozit BombVault
+### Restaurare dintr-un alt depozit BombVault {#restore-from-another-bombvault-repo}
 
 Un card separat în fila **Recuperare** deschide depozitul unei *alte* instanțe BombVault (o partajare montată sub `/mnt`, sau un URL la distanță) cu **`APP_KEY`-ul acelei instanțe**, într-o sesiune unică, doar în citire. Răsfoiește containerele, VM-urile și seturile de fișiere stocate acolo, alege un instantaneu și restaurează-l, iar obiectul restaurat devine un container, VM sau set de fișiere local normal. Nimic nu este scris vreodată în celălalt depozit, iar propriile tale setări de backup rămân neatinse (sesiunea trăiește în memorie și expiră singură). Mutarea unui container de pe serverul A pe serverul B nu mai înseamnă repointarea setărilor depozitului tău și revenirea lor ulterioară. Federarea live server-la-server este explicit în afara scopului; aceasta este o extragere deliberată de unică folosință.
 
