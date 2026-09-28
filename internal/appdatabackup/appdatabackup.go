@@ -167,85 +167,137 @@ func Extract(ctx context.Context, archive string, dest string, mapPath func(stri
 	return extractTar(ctx, tar.NewReader(r), dest, mapPath)
 }
 
-type dirMeta struct {
-	path string
-	hdr  *tar.Header
+// extraction unpacks below one folder through an os.Root, so no path it
+// touches can resolve outside that folder. Symbolic links from the archive are
+// created only after every file is written, so nothing is ever written through
+// one, and a hard link may only point at a file this extraction wrote.
+type extraction struct {
+	root     *os.Root
+	written  map[string]bool
+	dirs     []entryMeta
+	symlinks []entryMeta
+	st       Stats
+}
+
+type entryMeta struct {
+	rel string
+	hdr *tar.Header
 }
 
 func extractTar(ctx context.Context, tr *tar.Reader, dest string, mapPath func(string) (string, bool)) (Stats, error) {
-	var st Stats
-	var dirs []dirMeta
+	if err := os.MkdirAll(dest, 0o700); err != nil {
+		return Stats{}, err
+	}
+	root, err := os.OpenRoot(dest)
+	if err != nil {
+		return Stats{}, err
+	}
+	defer func() { _ = root.Close() }()
+	x := &extraction{root: root, written: map[string]bool{}}
 	for {
 		if err := ctx.Err(); err != nil {
-			return st, err
+			return x.st, err
 		}
 		hdr, err := tr.Next()
 		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
-			return st, fmt.Errorf("read archive: %w", err)
+			return x.st, fmt.Errorf("read archive: %w", err)
 		}
-		target, ok := entryTarget(hdr.Name, dest, mapPath)
+		rel, ok := entryTarget(hdr.Name, mapPath)
 		if !ok {
-			st.Skipped++
+			x.st.Skipped++
 			continue
 		}
-		switch hdr.Typeflag {
-		case tar.TypeDir:
-			if err := os.MkdirAll(target, 0o755); err != nil { //nolint:gosec // G301: the mode from the archive is applied at the end
-				return st, err
-			}
-			dirs = append(dirs, dirMeta{target, hdr})
-		case tar.TypeReg:
-			n, err := writeFile(target, tr, hdr)
-			if err != nil {
-				return st, err
-			}
-			st.Files++
-			st.Bytes += n
-		case tar.TypeSymlink:
-			if err := makeParent(target); err != nil {
-				return st, err
-			}
-			_ = os.Remove(target)
-			if err := os.Symlink(hdr.Linkname, target); err != nil {
-				return st, err
-			}
-			st.Files++
-		case tar.TypeLink:
-			src, ok := entryTarget(hdr.Linkname, dest, mapPath)
-			if !ok {
-				st.Skipped++
-				continue
-			}
-			if err := makeParent(target); err != nil {
-				return st, err
-			}
-			_ = os.Remove(target)
-			if err := os.Link(src, target); err != nil {
-				return st, err
-			}
-			st.Files++
-		default:
-			st.Skipped++
+		if err := x.entry(tr, hdr, rel, mapPath); err != nil {
+			return x.st, err
+		}
+	}
+	for _, l := range x.symlinks {
+		if err := x.symlink(l); err != nil {
+			return x.st, err
 		}
 	}
 	// Directories get their mode and time last: a read-only one would refuse
 	// its files, and every file written into one moves its time.
-	for i := len(dirs) - 1; i >= 0; i-- {
-		applyMeta(dirs[i].path, dirs[i].hdr)
+	for i := len(x.dirs) - 1; i >= 0; i-- {
+		d := x.dirs[i]
+		if fi, err := root.Lstat(d.rel); err == nil && fi.IsDir() {
+			x.applyMeta(d.rel, d.hdr)
+		}
 	}
-	if st.Files == 0 && st.Skipped > 0 {
-		return st, ErrOutsideSource
+	if x.st.Files == 0 && x.st.Skipped > 0 {
+		return x.st, ErrOutsideSource
 	}
-	return st, nil
+	return x.st, nil
 }
 
-// entryTarget maps an archive name to its place below dest. Names are cleaned
-// as absolute paths first, so "..", a missing leading slash and doubled
-// slashes cannot reach outside dest.
-func entryTarget(name, dest string, mapPath func(string) (string, bool)) (string, bool) {
+func (x *extraction) entry(r io.Reader, hdr *tar.Header, rel string, mapPath func(string) (string, bool)) error {
+	switch hdr.Typeflag {
+	case tar.TypeDir:
+		if err := x.root.MkdirAll(rel, 0o755); err != nil { //nolint:gosec // G301: the mode from the archive is applied at the end
+			return err
+		}
+		x.dirs = append(x.dirs, entryMeta{rel, hdr})
+	case tar.TypeReg:
+		n, err := x.writeFile(rel, r, hdr)
+		if err != nil {
+			return err
+		}
+		x.written[rel] = true
+		x.st.Files++
+		x.st.Bytes += n
+	case tar.TypeSymlink:
+		x.symlinks = append(x.symlinks, entryMeta{rel, hdr})
+	case tar.TypeLink:
+		src, ok := entryTarget(hdr.Linkname, mapPath)
+		if !ok || !x.written[src] {
+			x.st.Skipped++
+			return nil
+		}
+		if err := x.makeParent(rel); err != nil {
+			return err
+		}
+		_ = x.root.Remove(rel)
+		if err := x.root.Link(src, rel); err != nil {
+			return err
+		}
+		x.written[rel] = true
+		x.st.Files++
+	default:
+		x.st.Skipped++
+	}
+	return nil
+}
+
+// symlink creates a link from the archive where nothing but a file or
+// another link is in its way. The link itself is never followed.
+func (x *extraction) symlink(l entryMeta) error {
+	if err := x.makeParent(l.rel); err != nil {
+		return err
+	}
+	if fi, err := x.root.Lstat(l.rel); err == nil {
+		if fi.IsDir() {
+			x.st.Skipped++
+			return nil
+		}
+		if err := x.root.Remove(l.rel); err != nil {
+			return err
+		}
+	}
+	if err := x.root.Symlink(l.hdr.Linkname, l.rel); err != nil {
+		return err
+	}
+	_ = x.root.Lchown(l.rel, l.hdr.Uid, l.hdr.Gid)
+	x.st.Files++
+	return nil
+}
+
+// entryTarget maps an archive name to its path relative to the staging
+// folder. Names are cleaned as absolute paths first, so "..", a missing
+// leading slash and doubled slashes cannot reach outside it.
+func entryTarget(name string, mapPath func(string) (string, bool)) (string, bool) {
 	clean := path.Clean("/" + strings.TrimPrefix(name, "./"))
 	mapped, ok := mapPath(clean)
 	if !ok {
@@ -255,39 +307,44 @@ func entryTarget(name, dest string, mapPath func(string) (string, bool)) (string
 	if mapped == "/" {
 		return "", false
 	}
-	return filepath.Join(dest, filepath.FromSlash(mapped)), true
+	return filepath.FromSlash(strings.TrimPrefix(mapped, "/")), true
 }
 
-func makeParent(p string) error {
-	return os.MkdirAll(filepath.Dir(p), 0o755) //nolint:gosec // G301: a directory the archive did not list gets the usual mode
+func (x *extraction) makeParent(rel string) error {
+	return x.root.MkdirAll(filepath.Dir(rel), 0o755) //nolint:gosec // G301: a directory the archive did not list gets the usual mode
 }
 
-func writeFile(target string, r io.Reader, hdr *tar.Header) (int64, error) {
-	if err := makeParent(target); err != nil {
+func (x *extraction) writeFile(rel string, r io.Reader, hdr *tar.Header) (int64, error) {
+	if err := x.makeParent(rel); err != nil {
 		return 0, err
 	}
-	_ = os.Remove(target)
-	out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600) //nolint:gosec // G304: target was mapped below the staging folder
+	_ = x.root.Remove(rel)
+	out, err := x.root.OpenFile(rel, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
 		return 0, err
 	}
 	n, err := io.Copy(out, r) //nolint:gosec // G110: the archive is the user's own backup, extracted to disk as it was
+	if err == nil {
+		_ = out.Chmod(os.FileMode(hdr.Mode).Perm()) //nolint:gosec // G115: tar modes fit in 32 bits
+		_ = out.Chown(hdr.Uid, hdr.Gid)
+	}
 	if cerr := out.Close(); err == nil {
 		err = cerr
 	}
 	if err != nil {
 		return n, err
 	}
-	applyMeta(target, hdr)
+	_ = x.root.Chtimes(rel, hdr.ModTime, hdr.ModTime)
 	return n, nil
 }
 
-// applyMeta puts back mode, owner and time as far as the platform lets it.
-// Owner changes need root and fail elsewhere, which only costs the owner.
-func applyMeta(target string, hdr *tar.Header) {
-	_ = os.Chmod(target, os.FileMode(hdr.Mode).Perm()) //nolint:gosec // G115: tar modes fit in 32 bits
-	_ = os.Lchown(target, hdr.Uid, hdr.Gid)
-	_ = os.Chtimes(target, hdr.ModTime, hdr.ModTime)
+// applyMeta puts back a directory's mode, owner and time as far as the
+// platform lets it. Owner changes need root and fail elsewhere, which only
+// costs the owner.
+func (x *extraction) applyMeta(rel string, hdr *tar.Header) {
+	_ = x.root.Chmod(rel, os.FileMode(hdr.Mode).Perm()) //nolint:gosec // G115: tar modes fit in 32 bits
+	_ = x.root.Lchown(rel, hdr.Uid, hdr.Gid)
+	_ = x.root.Chtimes(rel, hdr.ModTime, hdr.ModTime)
 }
 
 type countingReader struct {
