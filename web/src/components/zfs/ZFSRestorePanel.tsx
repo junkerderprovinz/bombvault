@@ -213,6 +213,7 @@ export function ZFSRestorePanel({
     open &&
     stamp !== "" &&
     (active !== "folder" || targetPath.trim() !== "") &&
+    (active !== "newDataset" || newDataset.trim() !== "") &&
     (active !== "select" || picked.size > 0);
   const check = useRestoreCheck(
     complete
@@ -226,6 +227,7 @@ export function ZFSRestorePanel({
             wholeTree,
             paths: active === "select" ? [...picked] : [],
             targetPath: active === "folder" ? targetPath.trim() : "",
+            newDataset: active === "newDataset" ? newDataset.trim() : "",
             confirm: true,
           },
         }
