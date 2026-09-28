@@ -231,3 +231,21 @@ func TestLoadTreatsTemplatePlaceholderAsUnset(t *testing.T) {
 		t.Errorf("a real address was taken for the placeholder: %q", c.LibvirtHost)
 	}
 }
+
+func TestLoadListensOnEveryInterfaceUnlessBindHostIsSet(t *testing.T) {
+	key := strings.Repeat("a", 64)
+	c, err := config.Load(map[string]string{"APP_KEY": key})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.BindHost != "0.0.0.0" {
+		t.Errorf("BindHost = %q, want 0.0.0.0", c.BindHost)
+	}
+	c, err = config.Load(map[string]string{"APP_KEY": key, "BIND_HOST": "127.0.0.1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.BindHost != "127.0.0.1" {
+		t.Errorf("BindHost = %q, want 127.0.0.1", c.BindHost)
+	}
+}
