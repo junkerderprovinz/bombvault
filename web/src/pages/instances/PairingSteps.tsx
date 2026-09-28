@@ -1,6 +1,6 @@
 // PairingSteps opens the tab with what pairing is for in one sentence, then
-// three numbered cards before any button does anything: yes on the first
-// instance, no and the words on every other, done.
+// three numbered cards before any button does anything: generate a phrase on
+// the first instance, enter it on every other, done.
 import { Fragment, type ReactNode } from "react";
 import { StepCard } from "../../components/recovery/StepCard";
 import { InfoBubble } from "../../components/InfoBubble";
@@ -24,7 +24,7 @@ export function PairingSteps({ t, hues }: { t: T; hues: [number, number, number]
   const steps = [
     {
       title: t("pairing.step1Title"),
-      body: emphasize(t("pairing.step1Body"), "button", t("pairing.create")),
+      body: t("pairing.step1Body"),
       tip: t("pairing.step1Tip"),
     },
     {
