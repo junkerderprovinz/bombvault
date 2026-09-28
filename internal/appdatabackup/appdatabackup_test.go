@@ -16,10 +16,11 @@ import (
 )
 
 type entry struct {
-	name string
-	body string
-	dir  bool
-	link string
+	name    string
+	body    string
+	dir     bool
+	link    string
+	symlink string
 }
 
 // writeArchive builds an archive the way the plugin does: tar -c -P over the
@@ -36,6 +37,8 @@ func writeArchive(t *testing.T, file string, entries []entry) {
 			h.Typeflag, h.Mode, h.Size = tar.TypeDir, 0o755, 0
 		case e.link != "":
 			h.Typeflag, h.Linkname, h.Size = tar.TypeLink, e.link, 0
+		case e.symlink != "":
+			h.Typeflag, h.Linkname, h.Size = tar.TypeSymlink, e.symlink, 0
 		}
 		if err := tw.WriteHeader(h); err != nil {
 			t.Fatal(err)
@@ -217,5 +220,110 @@ func TestExtractOfAnArchiveWithNothingToMapFails(t *testing.T) {
 	_, err := Extract(context.Background(), file, filepath.Join(dir, "s"), hostToStaging, nil)
 	if !errors.Is(err, ErrOutsideSource) {
 		t.Fatalf("err = %v, want ErrOutsideSource", err)
+	}
+}
+
+// needSymlinks skips a test where the platform does not let this user create
+// symbolic links, as on Windows without developer mode.
+func needSymlinks(t *testing.T) {
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.Symlink("target", filepath.Join(dir, "probe")); err != nil {
+		t.Skipf("symbolic links are not available here: %v", err)
+	}
+}
+
+// outsideDir is a folder beside the staging folder with one file in it.
+func outsideDir(t *testing.T, dir string) string {
+	t.Helper()
+	out := filepath.Join(dir, "outside")
+	if err := os.MkdirAll(out, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(out, "secret.txt"), []byte("secret"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
+
+func TestExtractNeverWritesThroughASymlinkFromTheArchive(t *testing.T) {
+	needSymlinks(t)
+	for name, target := range map[string]func(out string) string{
+		"absolute": func(out string) string { return out },
+		"relative": func(string) string { return "../../../../../../outside" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			dir := t.TempDir()
+			out := outsideDir(t, dir)
+			file := filepath.Join(dir, "evil.tar")
+			writeArchive(t, file, []entry{
+				{name: "/mnt/user/appdata/app/link", symlink: target(out)},
+				{name: "/mnt/user/appdata/app/link/secret.txt", body: "overwritten"},
+				{name: "/mnt/user/appdata/app/link/new.txt", body: "planted"},
+			})
+			_, _ = Extract(context.Background(), file, filepath.Join(dir, "staging"), hostToStaging, nil)
+			if b, _ := os.ReadFile(filepath.Join(out, "secret.txt")); string(b) != "secret" { //nolint:gosec // G304: inside the test's temp folder
+				t.Fatalf("a file outside the staging folder now holds %q", b)
+			}
+			if _, err := os.Lstat(filepath.Join(out, "new.txt")); err == nil {
+				t.Fatal("a file was planted outside the staging folder")
+			}
+		})
+	}
+}
+
+func TestExtractLinksOnlyToFilesItWrote(t *testing.T) {
+	needSymlinks(t)
+	dir := t.TempDir()
+	out := outsideDir(t, dir)
+	file := filepath.Join(dir, "evil.tar")
+	writeArchive(t, file, []entry{
+		{name: "/mnt/user/appdata/app/link", symlink: out},
+		{name: "/mnt/user/appdata/app/stolen", link: "/mnt/user/appdata/app/link/secret.txt"},
+		{name: "/mnt/user/appdata/app/other", link: "/mnt/user/appdata/app/never-written"},
+	})
+	dest := filepath.Join(dir, "staging")
+	_, _ = Extract(context.Background(), file, dest, hostToStaging, nil)
+	for _, n := range []string{"stolen", "other"} {
+		if _, err := os.Lstat(filepath.Join(dest, "host", "user", "user", "appdata", "app", n)); err == nil {
+			t.Fatalf("hard link %s was created", n)
+		}
+	}
+	if b, _ := os.ReadFile(filepath.Join(out, "secret.txt")); string(b) != "secret" { //nolint:gosec // G304: inside the test's temp folder
+		t.Fatalf("secret = %q", b)
+	}
+}
+
+func TestExtractRestoresLegitimateSymlinks(t *testing.T) {
+	needSymlinks(t)
+	dir := t.TempDir()
+	file := filepath.Join(dir, "app.tar")
+	writeArchive(t, file, []entry{
+		{name: "/mnt/user/appdata/app/", dir: true},
+		{name: "/mnt/user/appdata/app/current", symlink: "releases/v2"},
+		{name: "/mnt/user/appdata/app/releases/v2/app.conf", body: "conf"},
+		{name: "/mnt/user/appdata/app/media", symlink: "/mnt/user/media"},
+		{name: "/mnt/user/appdata/app/releases/v2/copy.conf", link: "/mnt/user/appdata/app/releases/v2/app.conf"},
+	})
+	dest := filepath.Join(dir, "staging")
+	st, err := Extract(context.Background(), file, dest, hostToStaging, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	app := filepath.Join(dest, "host", "user", "user", "appdata", "app")
+	for link, want := range map[string]string{"current": "releases/v2", "media": "/mnt/user/media"} {
+		got, err := os.Readlink(filepath.Join(app, link))
+		if err != nil || filepath.ToSlash(got) != want {
+			t.Fatalf("%s -> %q (%v), want %q", link, got, err, want)
+		}
+	}
+	if b, err := os.ReadFile(filepath.Join(app, "current", "app.conf")); err != nil || string(b) != "conf" { //nolint:gosec // G304: inside the test's temp folder
+		t.Fatalf("file through the relative link = %q %v", b, err)
+	}
+	if b, err := os.ReadFile(filepath.Join(app, "releases", "v2", "copy.conf")); err != nil || string(b) != "conf" { //nolint:gosec // G304: inside the test's temp folder
+		t.Fatalf("hard link = %q %v", b, err)
+	}
+	if st.Files != 4 {
+		t.Fatalf("stats = %+v, want two files and two symlinks", st)
 	}
 }
