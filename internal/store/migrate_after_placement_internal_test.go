@@ -6,9 +6,10 @@ import (
 	"testing"
 )
 
-// BombVault 9.1.0 shipped every migration up to 153. The storage place
-// migrations follow them, so an instance on 9.1.0 applies exactly those on its
-// next start, and one on 9.0.0 the placement and the place migrations.
+// Builds of the placement release carry every migration up to 153, the
+// placement ones at 109 to 119 among them. The storage place migrations follow
+// them, so such a database applies exactly those on its next start. The
+// released 9.0.0 and 9.1.0 lack the placement migrations and take both sets.
 
 func isPlaceMigration(version int) bool { return version >= placesMigrationBase }
 
@@ -30,19 +31,19 @@ func bootWithout(t *testing.T, db *sql.DB, skip func(version int) bool) {
 	}
 }
 
-// seedV910 adds to seedV900 what 9.1.0 records of its own: a placement default
-// and a copy rule.
-func seedV910(t *testing.T, db *sql.DB) {
+// seedPlacementBuild adds to seedV900 what a placement build records of its
+// own: a placement default and a copy rule.
+func seedPlacementBuild(t *testing.T, db *sql.DB) {
 	t.Helper()
 	seedV900(t, db)
 	if _, err := db.Exec(`
 INSERT INTO placement_defaults (domain, home, skip, confirmed_at, updated_at) VALUES ('vms', 'r-box', '["c-extra"]', 3000, 3000);
 INSERT INTO offsite_copy_rules (domain, identity, skip, updated_at) VALUES ('containers', 'container:postgres', '["c-extra"]', 3000);`); err != nil {
-		t.Fatalf("seed 9.1.0: %v", err)
+		t.Fatalf("seed a placement build: %v", err)
 	}
 }
 
-var v910Tables = append(slices.Clone(v900Tables), "placement_defaults", "offsite_copy_rules")
+var placementBuildTables = append(slices.Clone(v900Tables), "placement_defaults", "offsite_copy_rules")
 
 // snapshotTables renders every row of tables over the columns they have now.
 func snapshotTables(t *testing.T, db *sql.DB, tables []string) (map[string][]string, map[string][]string) {
@@ -100,11 +101,11 @@ func checkUpgrade(t *testing.T, db *sql.DB, tables []string) {
 	}
 }
 
-func TestPlaceMigrationsApplyToA910Database(t *testing.T) {
+func TestPlaceMigrationsApplyToAPlacementBuildDatabase(t *testing.T) {
 	db := OpenMem(t)
 	bootWithout(t, db, isPlaceMigration)
-	seedV910(t, db)
-	checkUpgrade(t, db, v910Tables)
+	seedPlacementBuild(t, db)
+	checkUpgrade(t, db, placementBuildTables)
 
 	rows, err := stringsQ(db, `SELECT id FROM offsite_targets WHERE place_id <> '' OR place_domain <> '' OR off_with_place <> 0`)
 	if err != nil {
@@ -118,6 +119,7 @@ func TestPlaceMigrationsApplyToA910Database(t *testing.T) {
 	}
 }
 
+// 9.1.0 added no migrations, so its database is the 9.0.0 one.
 func TestPlacementAndPlaceMigrationsApplyToA900Database(t *testing.T) {
 	db := OpenMem(t)
 	bootWithout(t, db, func(v int) bool { return isPlacementMigration(v) || isPlaceMigration(v) })
