@@ -223,7 +223,7 @@ export function RelayCard({
           <span className="text-xs font-semibold uppercase tracking-widest text-carbon-textMuted">{t("relay.sourcesTitle")}</span>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Source
-              icon={<RouteGlyph kind="own" />}
+              icon={<RouteGlyph kind="relay" />}
               onAccent
               name={t("relay.containerName")}
               sub={t("relay.containerSub")}

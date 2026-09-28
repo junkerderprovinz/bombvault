@@ -25,17 +25,14 @@ export function PairingSteps({ t, hues }: { t: T; hues: [number, number, number]
     {
       title: t("pairing.step1Title"),
       body: t("pairing.step1Body"),
-      tip: t("pairing.step1Tip"),
     },
     {
       title: t("pairing.step2Title"),
       body: emphasize(t("pairing.step2Body"), "button", t("pairing.enter")),
-      tip: t("pairing.step2Tip"),
     },
     {
       title: t("pairing.step3Title"),
       body: t("pairing.step3Body"),
-      tip: t("pairing.step3Tip"),
     },
   ];
   return (
@@ -52,9 +49,7 @@ export function PairingSteps({ t, hues }: { t: T; hues: [number, number, number]
           <StepCard key={i} n={i + 1} title={s.title} hueIndex={hues[i]}>
             <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-4 md:flex md:flex-col md:items-stretch md:gap-3">
               <StepPicture step={(i + 1) as 1 | 2 | 3} />
-              <p className="text-carbon-textSub">
-                {s.body} <InfoBubble tip={s.tip} />
-              </p>
+              <p className="text-carbon-textSub">{s.body}</p>
             </div>
           </StepCard>
         ))}
