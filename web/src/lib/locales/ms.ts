@@ -621,7 +621,7 @@ const ms: Partial<Translations> = {
   "settings.retentionDailyInfo": "Menyimpan satu snapshot bagi setiap N hari kalendar terakhir yang mempunyai sandaran, satu setiap hari, bukan N sandaran.",
   "settings.retentionWeeklyInfo": "Menyimpan satu snapshot bagi setiap N minggu kalendar terakhir yang mempunyai sandaran.",
   "settings.retentionMonthlyInfo": "Menyimpan satu snapshot bagi setiap N bulan kalendar terakhir yang mempunyai sandaran.",
-  "settings.retentionYearlyInfo": "Menyimpan satu snapshot bagi setiap N tahun kalendar terakhir yang mempunyai sandaran.",
+  "settings.retentionYearlyInfo": "Menyimpan satu snapshot bagi setiap N tahun kalendar terakhir yang mempunyai sandaran. Jika tahunnya lebih sedikit, yang tertua turut disimpan.",
   "settings.retentionCombineInfo": "Kelima-lima peraturan ini digabungkan dengan ATAU: snapshot terus wujud jika mana-mana peraturan akan mengekalkannya. Ia tidak dijumlahkan kepada bilangan tetap. Terpakai secara berasingan kepada setiap item yang disandarkan.",
   "settings.retentionLocal": "Repositori setempat",
   "settings.retentionOffsite": "Repositori luar tapak",

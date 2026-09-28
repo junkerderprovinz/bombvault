@@ -665,7 +665,7 @@ const fi: Partial<Translations> = {
   "settings.retentionDailyInfo": "Säilyttää yhden snapshotin jokaiselta viimeiseltä N kalenteripäivältä, jolla on varmuuskopio: yksi päivässä, ei N varmuuskopiota.",
   "settings.retentionWeeklyInfo": "Säilyttää yhden snapshotin jokaiselta viimeiseltä N kalenteriviikolta, jolla on varmuuskopio.",
   "settings.retentionMonthlyInfo": "Säilyttää yhden snapshotin jokaiselta viimeiseltä N kalenterikuukaudelta, jolla on varmuuskopio.",
-  "settings.retentionYearlyInfo": "Säilyttää yhden snapshotin jokaiselta viimeiseltä N kalenterivuodelta, jolla on varmuuskopio.",
+  "settings.retentionYearlyInfo": "Säilyttää yhden snapshotin jokaiselta viimeiseltä N kalenterivuodelta, jolla on varmuuskopio. Jos vuosia on vähemmän, myös vanhin säilytetään.",
   "settings.retentionLocal": "Paikallinen repo",
   "settings.retentionOffsite": "Etärepo",
   "settings.retentionOffsiteTitle": "Etäsäilytys",

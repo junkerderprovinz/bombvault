@@ -662,7 +662,7 @@ const ko: Partial<Translations> = {
   "settings.retentionDailyInfo": "백업이 있는 마지막 N개의 달력 일마다 스냅샷 하나씩을 보관합니다. 하루에 하나이며, N개의 백업이 아닙니다.",
   "settings.retentionWeeklyInfo": "백업이 있는 마지막 N개의 달력 주마다 스냅샷 하나씩을 보관합니다.",
   "settings.retentionMonthlyInfo": "백업이 있는 마지막 N개의 달력 월마다 스냅샷 하나씩을 보관합니다.",
-  "settings.retentionYearlyInfo": "백업이 있는 마지막 N개의 달력 연도마다 스냅샷 하나씩을 보관합니다.",
+  "settings.retentionYearlyInfo": "백업이 있는 마지막 N개의 달력 연도마다 스냅샷 하나씩을 보관합니다. 연도가 그보다 적으면 가장 오래된 스냅샷도 보관합니다.",
   "settings.retentionLocal": "로컬 저장소",
   "settings.retentionOffsite": "오프사이트 저장소",
   "settings.retentionOffsiteTitle": "오프사이트 보존",

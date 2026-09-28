@@ -662,7 +662,7 @@ const ja: Partial<Translations> = {
   "settings.retentionDailyInfo": "バックアップのある直近 N 暦日それぞれについて1つのスナップショットを保持します。1日1個であり、N 個のバックアップではありません。",
   "settings.retentionWeeklyInfo": "バックアップのある直近 N 暦週それぞれについて1つのスナップショットを保持します。",
   "settings.retentionMonthlyInfo": "バックアップのある直近 N 暦月それぞれについて1つのスナップショットを保持します。",
-  "settings.retentionYearlyInfo": "バックアップのある直近 N 暦年それぞれについて1つのスナップショットを保持します。",
+  "settings.retentionYearlyInfo": "バックアップのある直近 N 暦年それぞれについて1つのスナップショットを保持します。年数がそれより少ない間は、最も古いものも保持します。",
   "settings.retentionLocal": "ローカルリポジトリ",
   "settings.retentionOffsite": "オフサイトリポジトリ",
   "settings.retentionOffsiteTitle": "オフサイトの保持",

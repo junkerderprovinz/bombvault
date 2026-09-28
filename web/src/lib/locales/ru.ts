@@ -657,7 +657,7 @@ const ru: Partial<Translations> = {
   "settings.retentionDailyInfo": "Хранит один снимок за каждый из последних N календарных дней с резервной копией — один в день, а не N копий.",
   "settings.retentionWeeklyInfo": "Хранит один снимок за каждую из последних N календарных недель с резервной копией.",
   "settings.retentionMonthlyInfo": "Хранит один снимок за каждый из последних N календарных месяцев с резервной копией.",
-  "settings.retentionYearlyInfo": "Хранит один снимок за каждый из последних N календарных лет с резервной копией.",
+  "settings.retentionYearlyInfo": "Хранит один снимок за каждый из последних N календарных лет с резервной копией. Если лет меньше, сохраняется и самый старый.",
   "settings.retentionLocal": "Локальный репо",
   "settings.retentionOffsite": "Удалённый репо",
   "settings.retentionOffsiteTitle": "Удалённое хранение",

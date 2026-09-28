@@ -657,7 +657,7 @@ const pl: Partial<Translations> = {
   "settings.retentionDailyInfo": "Zachowuje jedną migawkę dla każdego z ostatnich N dni kalendarzowych z kopią zapasową, jedną dziennie, nie N kopii.",
   "settings.retentionWeeklyInfo": "Zachowuje jedną migawkę dla każdego z ostatnich N tygodni kalendarzowych z kopią zapasową.",
   "settings.retentionMonthlyInfo": "Zachowuje jedną migawkę dla każdego z ostatnich N miesięcy kalendarzowych z kopią zapasową.",
-  "settings.retentionYearlyInfo": "Zachowuje jedną migawkę dla każdego z ostatnich N lat kalendarzowych z kopią zapasową.",
+  "settings.retentionYearlyInfo": "Zachowuje jedną migawkę dla każdego z ostatnich N lat kalendarzowych z kopią zapasową. Gdy lat jest mniej, zachowuje też najstarszą.",
   "settings.retentionLocal": "Repo lokalne",
   "settings.retentionOffsite": "Repo zdalne",
   "settings.retentionOffsiteTitle": "Przechowywanie zdalne",

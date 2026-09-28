@@ -662,7 +662,7 @@ const zh: Partial<Translations> = {
   "settings.retentionDailyInfo": "为最近 N 个有备份的日历日各保留一个快照：每天一个，而非 N 个备份。",
   "settings.retentionWeeklyInfo": "为最近 N 个有备份的日历周各保留一个快照。",
   "settings.retentionMonthlyInfo": "为最近 N 个有备份的日历月各保留一个快照。",
-  "settings.retentionYearlyInfo": "为最近 N 个有备份的日历年各保留一个快照。",
+  "settings.retentionYearlyInfo": "为最近 N 个有备份的日历年各保留一个快照。年份不足时，也会保留最早的那个。",
   "settings.retentionLocal": "本地仓库",
   "settings.retentionOffsite": "异地仓库",
   "settings.retentionOffsiteTitle": "异地保留",

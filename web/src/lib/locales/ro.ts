@@ -662,7 +662,7 @@ const ro: Partial<Translations> = {
   "settings.retentionDailyInfo": "Păstrează câte un instantaneu pentru fiecare dintre ultimele N zile calendaristice cu o copie de rezervă, una pe zi, nu N copii.",
   "settings.retentionWeeklyInfo": "Păstrează câte un instantaneu pentru fiecare dintre ultimele N săptămâni calendaristice cu o copie de rezervă.",
   "settings.retentionMonthlyInfo": "Păstrează câte un instantaneu pentru fiecare dintre ultimele N luni calendaristice cu o copie de rezervă.",
-  "settings.retentionYearlyInfo": "Păstrează câte un instantaneu pentru fiecare dintre ultimii N ani calendaristici cu o copie de rezervă.",
+  "settings.retentionYearlyInfo": "Păstrează câte un instantaneu pentru fiecare dintre ultimii N ani calendaristici cu o copie de rezervă. Dacă sunt mai puțini ani, îl păstrează și pe cel mai vechi.",
   "settings.retentionLocal": "Repo local",
   "settings.retentionOffsite": "Repo off-site",
   "settings.retentionOffsiteTitle": "Retenție off-site",

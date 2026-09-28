@@ -665,7 +665,7 @@ const ar: Partial<Translations> = {
   "settings.retentionDailyInfo": "يحتفظ بنسخة واحدة لكل يوم من آخر N يوم تقويمي يحتوي على نسخة احتياطية: نسخة واحدة يومياً، وليس N نسخة.",
   "settings.retentionWeeklyInfo": "يحتفظ بنسخة واحدة لكل أسبوع من آخر N أسبوع تقويمي يحتوي على نسخة احتياطية.",
   "settings.retentionMonthlyInfo": "يحتفظ بنسخة واحدة لكل شهر من آخر N شهر تقويمي يحتوي على نسخة احتياطية.",
-  "settings.retentionYearlyInfo": "يحتفظ بنسخة واحدة لكل سنة من آخر N سنة تقويمية تحتوي على نسخة احتياطية.",
+  "settings.retentionYearlyInfo": "يحتفظ بنسخة واحدة لكل سنة من آخر N سنة تقويمية تحتوي على نسخة احتياطية. وإذا كانت السنوات أقل من ذلك، تُحفظ أقدم نسخة أيضاً.",
   "settings.retentionLocal": "المستودع المحلي",
   "settings.retentionOffsite": "المستودع الخارجي",
   "settings.retentionOffsiteTitle": "الاحتفاظ الخارجي",

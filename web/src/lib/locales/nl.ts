@@ -659,7 +659,7 @@ const nl: Partial<Translations> = {
   "settings.retentionDailyInfo": "Bewaart één snapshot voor elk van de laatste N kalenderdagen met een back-up, één per dag, geen N back-ups.",
   "settings.retentionWeeklyInfo": "Bewaart één snapshot voor elk van de laatste N kalenderweken met een back-up.",
   "settings.retentionMonthlyInfo": "Bewaart één snapshot voor elk van de laatste N kalendermaanden met een back-up.",
-  "settings.retentionYearlyInfo": "Bewaart één snapshot voor elk van de laatste N kalenderjaren met een back-up.",
+  "settings.retentionYearlyInfo": "Bewaart één snapshot voor elk van de laatste N kalenderjaren met een back-up. Zijn er minder jaren, dan blijft ook de oudste bewaard.",
   "settings.retentionLocal": "Lokale repo",
   "settings.retentionOffsite": "Off-site repo",
   "settings.retentionOffsiteTitle": "Off-site bewaarbeleid",

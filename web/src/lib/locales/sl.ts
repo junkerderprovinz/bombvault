@@ -621,7 +621,7 @@ const sl: Partial<Translations> = {
   "settings.retentionDailyInfo": "Ohrani en posnetek za vsak dan izmed zadnjih N koledarskih dni, v katerem je bila narejena varnostna kopija: en na dan, ne N kopij.",
   "settings.retentionWeeklyInfo": "Ohrani en posnetek za vsak teden izmed zadnjih N koledarskih tednov, v katerem je bila narejena varnostna kopija.",
   "settings.retentionMonthlyInfo": "Ohrani en posnetek za vsak mesec izmed zadnjih N koledarskih mesecev, v katerem je bila narejena varnostna kopija.",
-  "settings.retentionYearlyInfo": "Ohrani en posnetek za vsako leto izmed zadnjih N koledarskih let, v katerem je bila narejena varnostna kopija.",
+  "settings.retentionYearlyInfo": "Ohrani en posnetek za vsako leto izmed zadnjih N koledarskih let, v katerem je bila narejena varnostna kopija. Če je let manj, ohrani tudi najstarejšega.",
   "settings.retentionCombineInfo": "Vseh pet pravil se združuje z ALI: posnetek preživi, če bi ga ohranilo katero koli od pravil. Ne seštevajo se v fiksno število. Uporablja se ločeno za vsak varnostno kopiran element.",
   "settings.retentionLocal": "Lokalni repozitorij",
   "settings.retentionOffsite": "Zunanji repozitorij",

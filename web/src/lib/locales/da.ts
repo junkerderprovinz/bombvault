@@ -665,7 +665,7 @@ const da: Partial<Translations> = {
   "settings.retentionDailyInfo": "Beholder ét snapshot for hver af de sidste N kalenderdage med en sikkerhedskopi: én pr. dag, ikke N sikkerhedskopier.",
   "settings.retentionWeeklyInfo": "Beholder ét snapshot for hver af de sidste N kalenderuger med en sikkerhedskopi.",
   "settings.retentionMonthlyInfo": "Beholder ét snapshot for hver af de sidste N kalendermåneder med en sikkerhedskopi.",
-  "settings.retentionYearlyInfo": "Beholder ét snapshot for hvert af de sidste N kalenderår med en sikkerhedskopi.",
+  "settings.retentionYearlyInfo": "Beholder ét snapshot for hvert af de sidste N kalenderår med en sikkerhedskopi. Er der færre år end det, beholdes det ældste også.",
   "settings.retentionLocal": "Lokalt repo",
   "settings.retentionOffsite": "Off-site-repo",
   "settings.retentionOffsiteTitle": "Off-site-opbevaring",

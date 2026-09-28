@@ -665,7 +665,7 @@ const it: Partial<Translations> = {
   "settings.retentionDailyInfo": "Mantiene uno snapshot per ciascuno degli ultimi N giorni di calendario con un backup: uno al giorno, non N backup.",
   "settings.retentionWeeklyInfo": "Mantiene uno snapshot per ciascuna delle ultime N settimane di calendario con un backup.",
   "settings.retentionMonthlyInfo": "Mantiene uno snapshot per ciascuno degli ultimi N mesi di calendario con un backup.",
-  "settings.retentionYearlyInfo": "Mantiene uno snapshot per ciascuno degli ultimi N anni di calendario con un backup.",
+  "settings.retentionYearlyInfo": "Mantiene uno snapshot per ciascuno degli ultimi N anni di calendario con un backup. Se gli anni sono meno, viene mantenuto anche il più vecchio.",
   "settings.retentionLocal": "Repo locale",
   "settings.retentionOffsite": "Repo off-site",
   "settings.retentionOffsiteTitle": "Conservazione off-site",

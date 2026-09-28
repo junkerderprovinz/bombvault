@@ -665,7 +665,7 @@ const es: Partial<Translations> = {
   "settings.retentionDailyInfo": "Conserva una copia por cada uno de los últimos N días naturales con una copia de seguridad, una al día, no N copias.",
   "settings.retentionWeeklyInfo": "Conserva una copia por cada una de las últimas N semanas naturales con una copia de seguridad.",
   "settings.retentionMonthlyInfo": "Conserva una copia por cada uno de los últimos N meses naturales con una copia de seguridad.",
-  "settings.retentionYearlyInfo": "Conserva una copia por cada uno de los últimos N años naturales con una copia de seguridad.",
+  "settings.retentionYearlyInfo": "Conserva una copia por cada uno de los últimos N años naturales con una copia de seguridad. Si hay menos años, también se conserva la más antigua.",
   "settings.retentionLocal": "Repo local",
   "settings.retentionOffsite": "Repo externo",
   "settings.retentionOffsiteTitle": "Retención externa",
