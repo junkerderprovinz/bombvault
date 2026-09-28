@@ -2067,9 +2067,7 @@ const it: Partial<Translations> = {
   "settingsIO.group.anomalies": "Rilevamento delle anomalie",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Dashboard ricevitore",
   "settings.receiverEnabledHint": "Monitora un repository off-site in sola aggiunta verso cui un altro BombVault invia (sola lettura)",
-  "settings.fleetEnabled": "Vista flotta",
   "settings.fleetEnabledHint": "Monitora lo stato di protezione delle istanze BombVault collegate (sola lettura)",
   "receiver.title": "Ricevitore",
   "instances.title": "Istanze",
@@ -2291,7 +2289,6 @@ const it: Partial<Translations> = {
   "pull.nothingNew": "Niente di nuovo da prelevare.",
   "pull.pulled": "one=Prelevato {n} snapshot.|many=Prelevati {n} snapshot.|other=Prelevati {n} snapshot.",
   "pull.saveError": "Impossibile salvare la sorgente.",
-  "settings.pullEnabled": "Preleva da altre istanze",
   "settings.pullEnabledHint": "Preleva i backup di un altro BombVault nel repository di questa macchina (scrive dati qui)",
   "fleet.title": "Flotta",
   "fleet.emptyTitle": "Istanze della flotta",

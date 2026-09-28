@@ -2062,9 +2062,7 @@ const uk: Partial<Translations> = {
   "settingsIO.group.anomalies": "Виявлення аномалій",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Панель приймача",
   "settings.receiverEnabledHint": "Моніторинг зовнішнього репозиторію «лише додавання», куди надсилає інший BombVault (лише читання)",
-  "settings.fleetEnabled": "Огляд флоту",
   "settings.fleetEnabledHint": "Стежте за станом захисту підключених екземплярів BombVault (лише для читання)",
   "receiver.title": "Приймач",
   "instances.title": "Екземпляри",
@@ -2286,7 +2284,6 @@ const uk: Partial<Translations> = {
   "pull.nothingNew": "Немає нічого нового для стягування.",
   "pull.pulled": "one=Стягнуто {n} копію.|few=Стягнуто {n} копії.|many=Стягнуто {n} копій.|other=Стягнуто {n} копії.",
   "pull.saveError": "Не вдалося зберегти джерело стягування.",
-  "settings.pullEnabled": "Стягування з інших екземплярів",
   "settings.pullEnabledHint": "Стягувати копії іншого BombVault до власного репозиторію цієї машини (записує сюди дані)",
   "fleet.title": "Флот",
   "fleet.emptyTitle": "Екземпляри флоту",

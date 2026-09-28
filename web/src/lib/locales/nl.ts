@@ -2064,9 +2064,7 @@ const nl: Partial<Translations> = {
   "settingsIO.group.anomalies": "Anomaliedetectie",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Ontvanger-dashboard",
   "settings.receiverEnabledHint": "Bewaak een alleen-toevoegen off-site-repo waar een andere BombVault naartoe pusht (alleen-lezen)",
-  "settings.fleetEnabled": "Vlootweergave",
   "settings.fleetEnabledHint": "Bewaak de beschermingsstatus van gekoppelde BombVault-instanties (alleen-lezen)",
   "receiver.title": "Ontvanger",
   "instances.title": "Instanties",
@@ -2288,7 +2286,6 @@ const nl: Partial<Translations> = {
   "pull.nothingNew": "Niets nieuws om op te halen.",
   "pull.pulled": "one={n} snapshot opgehaald.|other={n} snapshots opgehaald.",
   "pull.saveError": "Kon de bron niet opslaan.",
-  "settings.pullEnabled": "Van andere instanties ophalen",
   "settings.pullEnabledHint": "Back-ups van een andere BombVault naar de eigen repository van deze machine halen (schrijft hier gegevens)",
   "fleet.title": "Vloot",
   "fleet.emptyTitle": "Vlootinstanties",

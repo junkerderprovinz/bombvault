@@ -2067,9 +2067,7 @@ const fr: Partial<Translations> = {
   "settingsIO.group.anomalies": "Détection d'anomalies",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Tableau de bord récepteur",
   "settings.receiverEnabledHint": "Surveiller un dépôt hors site en ajout seul dans lequel un autre BombVault pousse (lecture seule)",
-  "settings.fleetEnabled": "Vue flotte",
   "settings.fleetEnabledHint": "Surveillez l'état de protection des instances BombVault associées (lecture seule)",
   "receiver.title": "Récepteur",
   "instances.title": "Instances",
@@ -2291,7 +2289,6 @@ const fr: Partial<Translations> = {
   "pull.nothingNew": "Rien de nouveau à rapatrier.",
   "pull.pulled": "one={n} snapshot rapatrié.|many={n} snapshots rapatriés.|other={n} snapshots rapatriés.",
   "pull.saveError": "Impossible d'enregistrer la source.",
-  "settings.pullEnabled": "Rapatrier depuis d'autres instances",
   "settings.pullEnabledHint": "Rapatrier les sauvegardes d'un autre BombVault dans le dépôt de cette machine (écrit des données ici)",
   "fleet.title": "Flotte",
   "fleet.emptyTitle": "Instances de la flotte",

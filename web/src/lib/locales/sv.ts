@@ -2067,9 +2067,7 @@ const sv: Partial<Translations> = {
   "settingsIO.group.anomalies": "Avvikelsedetektering",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Mottagarpanel",
   "settings.receiverEnabledHint": "Övervaka ett off-site-arkiv med enbart tillägg dit en annan BombVault skickar (skrivskyddat)",
-  "settings.fleetEnabled": "Flottvy",
   "settings.fleetEnabledHint": "Övervaka skyddsstatus för anslutna BombVault-instanser (skrivskyddat)",
   "receiver.title": "Mottagare",
   "instances.title": "Instanser",
@@ -2291,7 +2289,6 @@ const sv: Partial<Translations> = {
   "pull.nothingNew": "Inget nytt att hämta.",
   "pull.pulled": "one=Hämtade {n} snapshot.|other=Hämtade {n} snapshots.",
   "pull.saveError": "Kunde inte spara källan.",
-  "settings.pullEnabled": "Hämta från andra instanser",
   "settings.pullEnabledHint": "Hämta ett annat BombVaults säkerhetskopior till den här maskinens eget arkiv (skriver data här)",
   "fleet.title": "Flotta",
   "fleet.emptyTitle": "Flottinstanser",

@@ -2070,9 +2070,7 @@ const ar: Partial<Translations> = {
   "settingsIO.group.anomalies": "اكتشاف الحالات الشاذة",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "لوحة المستقبِل",
   "settings.receiverEnabledHint": "مراقبة مستودع خارجي للإلحاق فقط يرسل إليه BombVault آخر (للقراءة فقط)",
-  "settings.fleetEnabled": "عرض الأسطول",
   "settings.fleetEnabledHint": "راقب حالة الحماية للنُسخ المتصلة من BombVault (للقراءة فقط)",
   "receiver.title": "المستقبِل",
   "instances.title": "المثيلات",
@@ -2294,7 +2292,6 @@ const ar: Partial<Translations> = {
   "pull.nothingNew": "لا جديد لسحبه.",
   "pull.pulled": "zero=لم يتم سحب أي نسخة.|one=تم سحب نسخة واحدة.|two=تم سحب نسختين.|few=تم سحب {n} نسخ.|many=تم سحب {n} نسخة.|other=تم سحب {n} نسخة.",
   "pull.saveError": "تعذّر حفظ مصدر السحب.",
-  "settings.pullEnabled": "السحب من النسخ الأخرى",
   "settings.pullEnabledHint": "يسحب النسخ الاحتياطية لنسخة BombVault أخرى إلى مستودع هذا الجهاز نفسه (يكتب بيانات هنا)",
   "fleet.title": "الأسطول",
   "fleet.emptyTitle": "نسخ الأسطول",

@@ -2067,9 +2067,7 @@ const he: Partial<Translations> = {
   "settingsIO.group.anomalies": "זיהוי חריגות",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "לוח מקלט",
   "settings.receiverEnabledHint": "ניטור מאגר חיצוני להוספה-בלבד שאליו שולח BombVault אחר (קריאה בלבד)",
-  "settings.fleetEnabled": "תצוגת צי",
   "settings.fleetEnabledHint": "עקוב אחר מצב ההגנה של מופעי BombVault מקושרים (קריאה בלבד)",
   "receiver.title": "מקלט",
   "instances.title": "מופעים",
@@ -2291,7 +2289,6 @@ const he: Partial<Translations> = {
   "pull.nothingNew": "אין דבר חדש למשיכה.",
   "pull.pulled": "one=נמשך גיבוי אחד.|two=נמשכו שני גיבויים.|other=נמשכו {n} גיבויים.",
   "pull.saveError": "לא ניתן לשמור את מקור המשיכה.",
-  "settings.pullEnabled": "משיכה ממופעים אחרים",
   "settings.pullEnabledHint": "מושך את הגיבויים של BombVault אחר אל המאגר של מכונה זו עצמה (כותב כאן נתונים)",
   "fleet.title": "צי",
   "fleet.emptyTitle": "מופעי צי",

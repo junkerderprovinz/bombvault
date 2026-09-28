@@ -2067,9 +2067,7 @@ const da: Partial<Translations> = {
   "settingsIO.group.anomalies": "Afvigelsesovervågning",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Modtagerpanel",
   "settings.receiverEnabledHint": "Overvåg et off-site-arkiv med kun tilføjelse, som en anden BombVault sender til (skrivebeskyttet)",
-  "settings.fleetEnabled": "Flådeoversigt",
   "settings.fleetEnabledHint": "Overvåg beskyttelsesstatus for tilknyttede BombVault-instanser (skrivebeskyttet)",
   "receiver.title": "Modtager",
   "instances.title": "Instanser",
@@ -2291,7 +2289,6 @@ const da: Partial<Translations> = {
   "pull.nothingNew": "Intet nyt at hente.",
   "pull.pulled": "one=Hentede {n} snapshot.|other=Hentede {n} snapshots.",
   "pull.saveError": "Kunne ikke gemme kilden.",
-  "settings.pullEnabled": "Hent fra andre instanser",
   "settings.pullEnabledHint": "Hent et andet BombVaults sikkerhedskopier ind i denne maskines eget arkiv (skriver data her)",
   "fleet.title": "Flåde",
   "fleet.emptyTitle": "Flådeinstanser",

@@ -2950,7 +2950,7 @@ export function SettingsPage() {
           hueIndex={5}
         />
         <ToggleRow
-          label={t("settings.receiverEnabled")}
+          label={t("receiver.title")}
           hint={t("settings.receiverEnabledHint")}
           checked={settings.receiverEnabled}
           onChange={(v) => void toggleDomainEnabled("receiverEnabled", v)}
@@ -2960,7 +2960,7 @@ export function SettingsPage() {
           hueIndex={6}
         />
         <ToggleRow
-          label={t("settings.fleetEnabled")}
+          label={t("fleet.title")}
           hint={t("settings.fleetEnabledHint")}
           checked={settings.fleetEnabled}
           onChange={(v) => void toggleDomainEnabled("fleetEnabled", v)}
@@ -2974,7 +2974,7 @@ export function SettingsPage() {
             box's own repository. Its hint says so rather than leaving it to be
             discovered. */}
         <ToggleRow
-          label={t("settings.pullEnabled")}
+          label={t("pull.title")}
           hint={t("settings.pullEnabledHint")}
           checked={settings.pullEnabled}
           onChange={(v) => void toggleDomainEnabled("pullEnabled", v)}

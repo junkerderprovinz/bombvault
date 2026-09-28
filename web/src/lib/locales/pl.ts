@@ -2062,9 +2062,7 @@ const pl: Partial<Translations> = {
   "settingsIO.group.anomalies": "Wykrywanie anomalii",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Panel odbiornika",
   "settings.receiverEnabledHint": "Monitoruj repozytorium off-site tylko-do-dopisywania, do którego wysyła inny BombVault (tylko do odczytu)",
-  "settings.fleetEnabled": "Widok floty",
   "settings.fleetEnabledHint": "Obserwuj status ochrony połączonych instancji BombVault (tylko do odczytu)",
   "receiver.title": "Odbiornik",
   "instances.title": "Instancje",
@@ -2286,7 +2284,6 @@ const pl: Partial<Translations> = {
   "pull.nothingNew": "Nie ma nic nowego do pobrania.",
   "pull.pulled": "one=Pobrano {n} migawkę.|few=Pobrano {n} migawki.|many=Pobrano {n} migawek.|other=Pobrano {n} migawek.",
   "pull.saveError": "Nie udało się zapisać źródła.",
-  "settings.pullEnabled": "Pobieraj z innych instancji",
   "settings.pullEnabledHint": "Pobieraj kopie zapasowe innego BombVault do własnego repozytorium tej maszyny (zapisuje tu dane)",
   "fleet.title": "Flota",
   "fleet.emptyTitle": "Instancje floty",

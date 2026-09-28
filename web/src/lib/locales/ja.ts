@@ -2059,9 +2059,7 @@ const ja: Partial<Translations> = {
   "settingsIO.group.anomalies": "異常検出",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "レシーバーダッシュボード",
   "settings.receiverEnabledHint": "別の BombVault が送信する追記専用のオフサイトリポジトリを監視（読み取り専用）",
-  "settings.fleetEnabled": "フリートビュー",
   "settings.fleetEnabledHint": "接続された BombVault インスタンスの保護状態を確認します（読み取り専用）",
   "receiver.title": "レシーバー",
   "instances.title": "インスタンス",
@@ -2283,7 +2281,6 @@ const ja: Partial<Translations> = {
   "pull.nothingNew": "新しく取得するものはありません。",
   "pull.pulled": "スナップショットを {n} 件取得しました。",
   "pull.saveError": "取得元を保存できませんでした。",
-  "settings.pullEnabled": "他のインスタンスから取得",
   "settings.pullEnabledHint": "他の BombVault のバックアップをこのマシン自身のリポジトリに取得します（ここにデータを書き込みます）",
   "fleet.title": "フリート",
   "fleet.emptyTitle": "フリートインスタンス",

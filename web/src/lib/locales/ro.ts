@@ -2070,9 +2070,7 @@ const ro: Partial<Translations> = {
   "settingsIO.group.anomalies": "Detectarea anomaliilor",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Panou receptor",
   "settings.receiverEnabledHint": "Monitorizează un depozit extern doar-adăugare în care trimite un alt BombVault (doar citire)",
-  "settings.fleetEnabled": "Vizualizare flotă",
   "settings.fleetEnabledHint": "Monitorizează starea de protecție a instanțelor BombVault conectate (doar în citire)",
   "receiver.title": "Receptor",
   "instances.title": "Instanțe",
@@ -2294,7 +2292,6 @@ const ro: Partial<Translations> = {
   "pull.nothingNew": "Nimic nou de preluat.",
   "pull.pulled": "one=S-a preluat {n} copie.|few=S-au preluat {n} copii.|other=S-au preluat {n} de copii.",
   "pull.saveError": "Nu s-a putut salva sursa de preluare.",
-  "settings.pullEnabled": "Preluare din alte instanțe",
   "settings.pullEnabledHint": "Preia copiile altui BombVault în depozitul propriu al acestei mașini (scrie date aici)",
   "fleet.title": "Flotă",
   "fleet.emptyTitle": "Instanțe de flotă",

@@ -2070,9 +2070,7 @@ const hu: Partial<Translations> = {
   "settingsIO.group.anomalies": "Anomáliafelismerés",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Fogadó irányítópult",
   "settings.receiverEnabledHint": "Csak-hozzáfűzés külső tároló figyelése, amelybe egy másik BombVault küld (csak olvasható)",
-  "settings.fleetEnabled": "Flottanézet",
   "settings.fleetEnabledHint": "Kapcsolt BombVault-példányok védelmi állapotának megtekintése (csak olvasható)",
   "receiver.title": "Fogadó",
   "instances.title": "Példányok",
@@ -2294,7 +2292,6 @@ const hu: Partial<Translations> = {
   "pull.nothingNew": "Nincs új lehívnivaló.",
   "pull.pulled": "Lehívva: {n} mentés.",
   "pull.saveError": "A lehívási forrást nem sikerült menteni.",
-  "settings.pullEnabled": "Lehívás más példányokból",
   "settings.pullEnabledHint": "Egy másik BombVault mentéseinek lehívása ennek a gépnek a saját tárolójába (adatot ír ide)",
   "fleet.title": "Flotta",
   "fleet.emptyTitle": "Flottapéldányok",

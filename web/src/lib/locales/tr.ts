@@ -2067,9 +2067,7 @@ const tr: Partial<Translations> = {
   "settingsIO.group.anomalies": "Anormallik algılama",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Alıcı panosu",
   "settings.receiverEnabledHint": "Başka bir BombVault'un gönderdiği yalnızca-ekleme site dışı deposunu izle (salt okunur)",
-  "settings.fleetEnabled": "Filo görünümü",
   "settings.fleetEnabledHint": "Bağlı BombVault örneklerinin koruma durumunu izleyin (salt okunur)",
   "receiver.title": "Alıcı",
   "instances.title": "Örnekler",
@@ -2291,7 +2289,6 @@ const tr: Partial<Translations> = {
   "pull.nothingNew": "Çekilecek yeni bir şey yok.",
   "pull.pulled": "{n} yedek çekildi.",
   "pull.saveError": "Çekme kaynağı kaydedilemedi.",
-  "settings.pullEnabled": "Diğer örneklerden çek",
   "settings.pullEnabledHint": "Başka bir BombVault'un yedeklerini bu makinenin kendi deposuna çeker (buraya veri yazar)",
   "fleet.title": "Filo",
   "fleet.emptyTitle": "Filo örnekleri",

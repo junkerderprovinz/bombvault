@@ -2067,9 +2067,7 @@ const no: Partial<Translations> = {
   "settingsIO.group.anomalies": "Avviksdeteksjon",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Mottakerpanel",
   "settings.receiverEnabledHint": "Overvåk et off-site-arkiv med kun tillegg som en annen BombVault sender til (skrivebeskyttet)",
-  "settings.fleetEnabled": "Flåtevisning",
   "settings.fleetEnabledHint": "Overvåk beskyttelsesstatusen til tilkoblede BombVault-instanser (skrivebeskyttet)",
   "receiver.title": "Mottaker",
   "instances.title": "Instanser",
@@ -2291,7 +2289,6 @@ const no: Partial<Translations> = {
   "pull.nothingNew": "Ikke noe nytt å hente.",
   "pull.pulled": "one=Hentet {n} øyeblikksbilde.|other=Hentet {n} øyeblikksbilder.",
   "pull.saveError": "Kunne ikke lagre kilden.",
-  "settings.pullEnabled": "Hent fra andre instanser",
   "settings.pullEnabledHint": "Hent sikkerhetskopiene til en annen BombVault inn i det egne arkivet til denne maskinen (skriver data her)",
   "fleet.title": "Flåte",
   "fleet.emptyTitle": "Flåteinstanser",

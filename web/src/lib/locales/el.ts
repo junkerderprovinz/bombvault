@@ -2067,9 +2067,7 @@ const el: Partial<Translations> = {
   "settingsIO.group.anomalies": "Εντοπισμός ανωμαλιών",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Πίνακας δέκτη",
   "settings.receiverEnabledHint": "Παρακολούθηση εξωτερικού αποθετηρίου μόνο-προσθήκης όπου στέλνει ένα άλλο BombVault (μόνο ανάγνωση)",
-  "settings.fleetEnabled": "Προβολή στόλου",
   "settings.fleetEnabledHint": "Παρακολουθήστε την κατάσταση προστασίας συνδεδεμένων εγκαταστάσεων BombVault (μόνο για ανάγνωση)",
   "receiver.title": "Δέκτης",
   "instances.title": "Στιγμιότυπα",
@@ -2291,7 +2289,6 @@ const el: Partial<Translations> = {
   "pull.nothingNew": "Δεν υπάρχει κάτι νέο για άντληση.",
   "pull.pulled": "one=Αντλήθηκε {n} αντίγραφο.|other=Αντλήθηκαν {n} αντίγραφα.",
   "pull.saveError": "Δεν ήταν δυνατή η αποθήκευση της πηγής άντλησης.",
-  "settings.pullEnabled": "Άντληση από άλλες εγκαταστάσεις",
   "settings.pullEnabledHint": "Φέρνει τα αντίγραφα ασφαλείας ενός άλλου BombVault στο αποθετήριο αυτού του μηχανήματος (γράφει δεδομένα εδώ)",
   "fleet.title": "Στόλος",
   "fleet.emptyTitle": "Εγκαταστάσεις στόλου",

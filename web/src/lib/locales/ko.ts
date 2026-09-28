@@ -2059,9 +2059,7 @@ const ko: Partial<Translations> = {
   "settingsIO.group.anomalies": "이상 징후 감지",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "수신기 대시보드",
   "settings.receiverEnabledHint": "다른 BombVault가 푸시하는 추가 전용 오프사이트 저장소를 모니터링(읽기 전용)",
-  "settings.fleetEnabled": "플릿 보기",
   "settings.fleetEnabledHint": "연결된 BombVault 인스턴스의 보호 상태를 확인합니다 (읽기 전용)",
   "receiver.title": "수신기",
   "instances.title": "인스턴스",
@@ -2283,7 +2281,6 @@ const ko: Partial<Translations> = {
   "pull.nothingNew": "새로 가져올 것이 없습니다.",
   "pull.pulled": "스냅샷 {n}개를 가져왔습니다.",
   "pull.saveError": "가져오기 소스를 저장하지 못했습니다.",
-  "settings.pullEnabled": "다른 인스턴스에서 가져오기",
   "settings.pullEnabledHint": "다른 BombVault의 백업을 이 기기의 자체 저장소로 가져옵니다(여기에 데이터를 씁니다)",
   "fleet.title": "플릿",
   "fleet.emptyTitle": "플릿 인스턴스",

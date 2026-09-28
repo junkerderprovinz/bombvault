@@ -2070,9 +2070,7 @@ const th: Partial<Translations> = {
   "settingsIO.group.anomalies": "การตรวจจับความผิดปกติ",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "แดชบอร์ดตัวรับ",
   "settings.receiverEnabledHint": "ตรวจสอบที่เก็บนอกสถานที่แบบเพิ่มต่อเท่านั้นที่ BombVault อื่นส่งมา (อ่านอย่างเดียว)",
-  "settings.fleetEnabled": "มุมมองกองเรือ",
   "settings.fleetEnabledHint": "ตรวจสอบสถานะการป้องกันของอินสแตนซ์ BombVault ที่เชื่อมต่อ (อ่านอย่างเดียว)",
   "receiver.title": "ตัวรับ",
   "instances.title": "อินสแตนซ์",
@@ -2294,7 +2292,6 @@ const th: Partial<Translations> = {
   "pull.nothingNew": "ไม่มีอะไรใหม่ให้ดึง",
   "pull.pulled": "ดึงสแนปช็อตมาแล้ว {n} รายการ",
   "pull.saveError": "ไม่สามารถบันทึกแหล่งที่ดึงได้",
-  "settings.pullEnabled": "ดึงจากอินสแตนซ์อื่น",
   "settings.pullEnabledHint": "ดึงข้อมูลสำรองของ BombVault อื่นมาไว้ในที่เก็บของเครื่องนี้เอง (เขียนข้อมูลลงที่นี่)",
   "fleet.title": "กองเรือ",
   "fleet.emptyTitle": "อินสแตนซ์กองเรือ",

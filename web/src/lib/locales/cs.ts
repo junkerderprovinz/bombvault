@@ -2065,9 +2065,7 @@ const cs: Partial<Translations> = {
   "settingsIO.group.anomalies": "Rozpoznávání anomálií",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Panel přijímače",
   "settings.receiverEnabledHint": "Sledovat externí repozitář pouze pro připojení, do kterého odesílá jiný BombVault (jen ke čtení)",
-  "settings.fleetEnabled": "Zobrazení flotily",
   "settings.fleetEnabledHint": "Sledujte stav ochrany propojených instancí BombVault (jen ke čtení)",
   "receiver.title": "Přijímač",
   "instances.title": "Instance",
@@ -2289,7 +2287,6 @@ const cs: Partial<Translations> = {
   "pull.nothingNew": "Není co stahovat.",
   "pull.pulled": "one=Stažen {n} snímek.|few=Staženy {n} snímky.|many=Staženo {n} snímku.|other=Staženo {n} snímků.",
   "pull.saveError": "Zdroj stahování se nepodařilo uložit.",
-  "settings.pullEnabled": "Stahování z jiných instancí",
   "settings.pullEnabledHint": "Stahovat zálohy jiného BombVaultu do vlastního repozitáře tohoto stroje (zapisuje sem data)",
   "fleet.title": "Flotila",
   "fleet.emptyTitle": "Instance flotily",

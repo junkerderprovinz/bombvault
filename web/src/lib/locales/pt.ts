@@ -2067,9 +2067,7 @@ const pt: Partial<Translations> = {
   "settingsIO.group.anomalies": "Deteção de anomalias",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Painel do recetor",
   "settings.receiverEnabledHint": "Monitorizar um repositório externo apenas-anexar para onde outro BombVault envia (só leitura)",
-  "settings.fleetEnabled": "Vista de frota",
   "settings.fleetEnabledHint": "Monitorize o estado de proteção de instâncias BombVault associadas (só leitura)",
   "receiver.title": "Recetor",
   "instances.title": "Instâncias",
@@ -2291,7 +2289,6 @@ const pt: Partial<Translations> = {
   "pull.nothingNew": "Nada de novo para recolher.",
   "pull.pulled": "one=Recolhido {n} snapshot.|many=Recolhidos {n} de snapshots.|other=Recolhidos {n} snapshots.",
   "pull.saveError": "Não foi possível guardar a origem.",
-  "settings.pullEnabled": "Recolher de outras instâncias",
   "settings.pullEnabledHint": "Recolher os backups de outro BombVault para o repositório próprio desta máquina (escreve dados aqui)",
   "fleet.title": "Frota",
   "fleet.emptyTitle": "Instâncias da frota",

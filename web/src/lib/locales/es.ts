@@ -2065,9 +2065,7 @@ const es: Partial<Translations> = {
   "settingsIO.group.anomalies": "Detección de anomalías",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Panel de receptor",
   "settings.receiverEnabledHint": "Supervisar un repositorio externo de solo anexado al que otro BombVault envía (solo lectura)",
-  "settings.fleetEnabled": "Vista de flota",
   "settings.fleetEnabledHint": "Supervisa el estado de protección de las instancias de BombVault vinculadas (solo lectura)",
   "receiver.title": "Receptor",
   "instances.title": "Instancias",
@@ -2289,7 +2287,6 @@ const es: Partial<Translations> = {
   "pull.nothingNew": "No hay nada nuevo que recoger.",
   "pull.pulled": "one=Se ha recogido {n} snapshot.|many=Se han recogido {n} de snapshots.|other=Se han recogido {n} snapshots.",
   "pull.saveError": "No se pudo guardar la fuente.",
-  "settings.pullEnabled": "Recoger de otras instancias",
   "settings.pullEnabledHint": "Recoger las copias de otro BombVault en el repositorio propio de esta máquina (escribe datos aquí)",
   "fleet.title": "Flota",
   "fleet.emptyTitle": "Instancias de la flota",

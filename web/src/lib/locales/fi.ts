@@ -2067,9 +2067,7 @@ const fi: Partial<Translations> = {
   "settingsIO.group.anomalies": "Poikkeamien tunnistus",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Vastaanottimen kojelauta",
   "settings.receiverEnabledHint": "Valvo vain-lisäys-etävarastoa, johon toinen BombVault lähettää (vain luku)",
-  "settings.fleetEnabled": "Laivuenäkymä",
   "settings.fleetEnabledHint": "Tarkkaile liitettyjen BombVault-instanssien suojaustilaa (vain luku)",
   "receiver.title": "Vastaanotin",
   "instances.title": "Ilmentymät",
@@ -2291,7 +2289,6 @@ const fi: Partial<Translations> = {
   "pull.nothingNew": "Ei mitään uutta noudettavaa.",
   "pull.pulled": "one=Noudettiin {n} snapshot.|other=Noudettiin {n} snapshotia.",
   "pull.saveError": "Lähdettä ei voitu tallentaa.",
-  "settings.pullEnabled": "Nouda muista esiintymistä",
   "settings.pullEnabledHint": "Nouda toisen BombVaultin varmuuskopiot tämän koneen omaan varastoon (kirjoittaa dataa tänne)",
   "fleet.title": "Laivue",
   "fleet.emptyTitle": "Laivueinstanssit",

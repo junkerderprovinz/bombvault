@@ -2059,9 +2059,7 @@ const zh: Partial<Translations> = {
   "settingsIO.group.anomalies": "异常检测",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "接收端仪表板",
   "settings.receiverEnabledHint": "监控另一个 BombVault 推送到的仅追加异地仓库（只读）",
-  "settings.fleetEnabled": "舰队视图",
   "settings.fleetEnabledHint": "以只读方式查看其他 BombVault 实例的保护状态",
   "receiver.title": "接收端",
   "instances.title": "实例",
@@ -2283,7 +2281,6 @@ const zh: Partial<Translations> = {
   "pull.nothingNew": "没有可拉取的新内容。",
   "pull.pulled": "本次拉取了 {n} 个快照。",
   "pull.saveError": "无法保存拉取来源。",
-  "settings.pullEnabled": "从其他实例拉取",
   "settings.pullEnabledHint": "把另一个 BombVault 的备份拉取到本机自己的仓库（会在此写入数据）",
   "fleet.title": "舰队",
   "fleet.emptyTitle": "舰队实例",

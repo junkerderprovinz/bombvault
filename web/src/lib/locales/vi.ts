@@ -2059,9 +2059,7 @@ const vi: Partial<Translations> = {
   "settingsIO.group.anomalies": "Phát hiện bất thường",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Bảng điều khiển bộ nhận",
   "settings.receiverEnabledHint": "Giám sát kho lưu trữ ngoài chỉ-thêm mà một BombVault khác đẩy tới (chỉ đọc)",
-  "settings.fleetEnabled": "Xem đội",
   "settings.fleetEnabledHint": "Theo dõi trạng thái bảo vệ của các phiên bản BombVault liên kết (chỉ đọc)",
   "receiver.title": "Bộ nhận",
   "instances.title": "Phiên bản",
@@ -2283,7 +2281,6 @@ const vi: Partial<Translations> = {
   "pull.nothingNew": "Không có gì mới để kéo.",
   "pull.pulled": "Đã kéo về {n} bản chụp.",
   "pull.saveError": "Không thể lưu nguồn kéo về.",
-  "settings.pullEnabled": "Kéo từ các phiên bản khác",
   "settings.pullEnabledHint": "Kéo bản sao lưu của một BombVault khác về kho của chính máy này (ghi dữ liệu tại đây)",
   "fleet.title": "Đội",
   "fleet.emptyTitle": "Phiên bản đội",

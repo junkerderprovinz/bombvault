@@ -2062,9 +2062,7 @@ const ru: Partial<Translations> = {
   "settingsIO.group.anomalies": "Обнаружение аномалий",
 
   // Receiver dashboard
-  "settings.receiverEnabled": "Панель приёмника",
   "settings.receiverEnabledHint": "Мониторинг внешнего репозитория «только добавление», в который отправляет другой BombVault (только чтение)",
-  "settings.fleetEnabled": "Обзор флота",
   "settings.fleetEnabledHint": "Следите за статусом защиты подключённых экземпляров BombVault (только для чтения)",
   "receiver.title": "Приёмник",
   "instances.title": "Экземпляры",
@@ -2286,7 +2284,6 @@ const ru: Partial<Translations> = {
   "pull.nothingNew": "Подтягивать нечего.",
   "pull.pulled": "one=Подтянут {n} снимок.|few=Подтянуто {n} снимка.|many=Подтянуто {n} снимков.|other=Подтянуто {n} снимка.",
   "pull.saveError": "Не удалось сохранить источник подтягивания.",
-  "settings.pullEnabled": "Подтягивание с других экземпляров",
   "settings.pullEnabledHint": "Подтягивать копии другого BombVault в собственный репозиторий этой машины (записывает сюда данные)",
   "fleet.title": "Флот",
   "fleet.emptyTitle": "Экземпляры флота",
