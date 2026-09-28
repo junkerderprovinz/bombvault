@@ -11,6 +11,7 @@ import { useT } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { PageTitle } from "../components/PageTitle";
 import { Selector } from "../components/Selector";
+import { useIsDesktop } from "../lib/useMediaQuery";
 import { IconReceiver, IconFleet, IconDownload } from "../components/navGlyphs";
 import { Receiver } from "./Receiver";
 import { Fleet } from "./Fleet";
@@ -48,6 +49,7 @@ function tabFromHash(): InstanceTab {
 
 export function Instances() {
   const { t } = useT();
+  const isDesktop = useIsDesktop();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [tab, setTab] = useState<InstanceTab>(tabFromHash);
   const [tabDir, setTabDir] = useState<1 | -1>(1);
@@ -125,6 +127,8 @@ export function Instances() {
           }}
           size="lg"
           equalWidth
+          // On a phone each tab is a page of its own, as in Settings.
+          variant={isDesktop ? "well" : "chip"}
         />
       )}
 

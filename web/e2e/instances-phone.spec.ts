@@ -374,6 +374,15 @@ async function expectDialogFits(page: Page, title: string): Promise<void> {
   await expectFits(page, "[data-probe]");
 }
 
+async function tabFills(page: Page): Promise<{ strip: string; tabsWithoutFill: number }> {
+  return page.getByRole("tablist", { name: "Instanzen" }).evaluate((strip) => ({
+    strip: getComputedStyle(strip).backgroundColor,
+    tabsWithoutFill: [...strip.querySelectorAll('[role="tab"]')].filter(
+      (tab) => getComputedStyle(tab).backgroundColor === "rgba(0, 0, 0, 0)",
+    ).length,
+  }));
+}
+
 for (const width of [320, 360]) {
   for (const lane of LANES) {
     test(`${lane} @ ${width}px: every card open, nothing pans, clips or is cut short`, async ({ page }, testInfo) => {
@@ -384,6 +393,10 @@ for (const width of [320, 360]) {
 
       expect(await gaps(page)).toEqual({ page: "24px", lane: "24px" });
       await expectFits(page, "#bv-main");
+      expect(await tabFills(page), "each tab is its own badge, with no groove behind the strip").toEqual({
+        strip: "rgba(0, 0, 0, 0)",
+        tabsWithoutFill: 0,
+      });
 
       if (lane !== "fleet") {
         // The last-received or last-pull block moves under the name and
