@@ -543,8 +543,10 @@ func run() error {
 		svc.SweepZFSLeftoversOnStartup(sctx)
 	}()
 	// A start test that was running when BombVault stopped left its copy,
-	// network and restored data behind.
-	go func() {
+	// network and restored data behind. They go before the scheduler and the
+	// web interface start, so no new test can meet them and none of it is
+	// removed from under one.
+	func() {
 		cctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 		svc.CleanupStartTestLeftovers(cctx)
