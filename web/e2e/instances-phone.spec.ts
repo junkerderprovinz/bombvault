@@ -283,10 +283,10 @@ const LANES = ["receiver", "fleet", "pull"] as const;
 type Lane = (typeof LANES)[number];
 
 // The button a lane is ready by. Fleet rows come from the pairing group, so
-// that lane has nothing to add and waits for a card's poll button instead.
+// that lane has nothing to add and waits for a member card's offer button.
 const ADD_LABEL: Record<Lane, string> = {
   receiver: "Empfangenes Repo hinzufügen",
-  fleet: "Jetzt abfragen",
+  fleet: "Speicher anbieten",
   pull: "Quelle hinzufügen",
 };
 
@@ -483,8 +483,9 @@ for (const lane of LANES) {
     if (lane === "pull") return;
 
     // Names and addresses stay one truncated line, and the receiver's
-    // last-received block stays beside the name.
-    const card = page.locator("#bv-main div.rounded-card.glim-hue").first();
+    // last-received block stays beside the name. The Fleet lane opens with
+    // this instance's card, which has no actions, so a member's card stands in.
+    const card = page.locator("#bv-main div.rounded-card.glim-hue:not([data-self])").first();
     // A fleet card of a paired member shows no address, only its name.
     const oneLine = [card.locator("span.font-semibold").first()];
     if (lane !== "fleet") oneLine.push(card.locator("p.font-mono").first());
@@ -498,7 +499,8 @@ for (const lane of LANES) {
       await expect(page.locator("#bv-main table")).toHaveCount(RECEIVED.length);
     }
     // At 768px the armed confirm needs a second row; at 1280px there is room.
-    if (width >= 1280) {
+    // Fleet cards share the row two by two and wrap their actions as needed.
+    if (width >= 1280 && lane !== "fleet") {
       const tops = await card
         .getByRole("button", { name: /^(Details|Bearbeiten|Entfernen bestätigen)$/ })
         .evaluateAll((buttons) => [...new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().top)))]);
