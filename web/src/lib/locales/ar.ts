@@ -670,7 +670,7 @@ const ar: Partial<Translations> = {
   "settings.retentionOffsite": "المستودع الخارجي",
   "settings.retentionOffsiteTitle": "الاحتفاظ الخارجي",
   "settings.retentionOffsiteHint": "سياسة منفصلة للمستودع الخارجي لتحتفظ به أطول كأرشيف. الكل 0 = الاحتفاظ بكل نسخة خارجية (دون تقليم خارجي).",
-  "settings.retentionCombineInfo": "تتحد القواعد الأربع بمنطق أو (OR): تبقى النسخة إذا احتفظت بها أي قاعدة واحدة. لا تُجمع إلى عدد ثابت. تُطبَّق بشكل منفصل على كل عنصر تم نسخه احتياطياً.",
+  "settings.retentionCombineInfo": "تتحد القواعد الخمس بمنطق أو (OR): تبقى النسخة إذا احتفظت بها أي قاعدة واحدة. لا تُجمع إلى عدد ثابت. تُطبَّق بشكل منفصل على كل عنصر تم نسخه احتياطياً.",
 
   // Off-site (rclone)
   "rclone.title": "خارج الموقع (rclone)",

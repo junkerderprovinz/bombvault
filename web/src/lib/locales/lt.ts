@@ -622,7 +622,7 @@ const lt: Partial<Translations> = {
   "settings.retentionWeeklyInfo": "Saugo po vieną momentinę kopiją kiekvienai iš paskutinių N kalendorinių savaičių, kurioje buvo atlikta kopija.",
   "settings.retentionMonthlyInfo": "Saugo po vieną momentinę kopiją kiekvienam iš paskutinių N kalendorinių mėnesių, kuriame buvo atlikta kopija.",
   "settings.retentionYearlyInfo": "Saugo po vieną momentinę kopiją kiekvieniems iš paskutinių N kalendorinių metų, kuriais buvo atlikta kopija.",
-  "settings.retentionCombineInfo": "Šios keturios taisyklės derinamos su ARBA: momentinė kopija išlieka, jei bet kuri taisyklė ją saugotų. Jos nesusumuojamos į fiksuotą skaičių. Taikoma atskirai kiekvienam kopijuojamam elementui.",
+  "settings.retentionCombineInfo": "Šios penkios taisyklės derinamos su ARBA: momentinė kopija išlieka, jei bet kuri taisyklė ją saugotų. Jos nesusumuojamos į fiksuotą skaičių. Taikoma atskirai kiekvienam kopijuojamam elementui.",
   "settings.retentionLocal": "Vietinė saugykla",
   "settings.retentionOffsite": "Nuotolinė saugykla",
   "settings.retentionOffsiteTitle": "Nuotolinis saugojimas",

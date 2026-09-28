@@ -668,7 +668,7 @@ const cs: Partial<Translations> = {
   "settings.retentionOffsite": "Vzdálené repo",
   "settings.retentionOffsiteTitle": "Vzdálené uchovávání",
   "settings.retentionOffsiteHint": "Samostatná zásada pro vzdálené repo, aby se dalo držet déle jako archiv. Vše 0 = zachovat každou vzdálenou zálohu (bez čištění vzdáleného).",
-  "settings.retentionCombineInfo": "Čtyři pravidla se kombinují pomocí NEBO: snapshot přežije, pokud by ho zachovalo jakékoli jedno pravidlo. Nesčítají se do pevného počtu. Platí zvlášť pro každou zálohovanou položku.",
+  "settings.retentionCombineInfo": "Pět pravidel se kombinuje pomocí NEBO: snapshot přežije, pokud by ho zachovalo jakékoli jedno pravidlo. Nesčítají se do pevného počtu. Platí zvlášť pro každou zálohovanou položku.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

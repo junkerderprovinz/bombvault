@@ -667,7 +667,7 @@ const no: Partial<Translations> = {
   "settings.retentionOffsite": "Off-site-repo",
   "settings.retentionOffsiteTitle": "Off-site-oppbevaring",
   "settings.retentionOffsiteHint": "En egen policy for off-site-repoet, så du kan beholde det lenger som arkiv. Alt 0 = behold hver off-site-sikkerhetskopi (ingen off-site-opprydding).",
-  "settings.retentionCombineInfo": "De fire reglene kombineres med ELLER: et øyeblikksbilde overlever hvis én eneste regel ville beholdt det. De legges ikke sammen til et fast antall. Gjelder separat for hvert sikkerhetskopierte element.",
+  "settings.retentionCombineInfo": "De fem reglene kombineres med ELLER: et øyeblikksbilde overlever hvis én eneste regel ville beholdt det. De legges ikke sammen til et fast antall. Gjelder separat for hvert sikkerhetskopierte element.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",

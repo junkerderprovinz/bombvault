@@ -622,7 +622,7 @@ const sk: Partial<Translations> = {
   "settings.retentionWeeklyInfo": "Uchováva jednu snímku pre každý z posledných N kalendárnych týždňov, ktoré majú zálohu.",
   "settings.retentionMonthlyInfo": "Uchováva jednu snímku pre každý z posledných N kalendárnych mesiacov, ktoré majú zálohu.",
   "settings.retentionYearlyInfo": "Uchováva jednu snímku pre každý z posledných N kalendárnych rokov, ktoré majú zálohu.",
-  "settings.retentionCombineInfo": "Tieto štyri pravidlá sa kombinujú s ALEBO: snímka prežije, ak by ju uchovalo ktorékoľvek pravidlo. Nesčítavajú sa na pevný počet. Platí samostatne pre každú zálohovanú položku.",
+  "settings.retentionCombineInfo": "Týchto päť pravidiel sa kombinuje s ALEBO: snímka prežije, ak by ju uchovalo ktorékoľvek pravidlo. Nesčítavajú sa na pevný počet. Platí samostatne pre každú zálohovanú položku.",
   "settings.retentionLocal": "Lokálny repozitár",
   "settings.retentionOffsite": "Externý repozitár",
   "settings.retentionOffsiteTitle": "Externé uchovávanie",

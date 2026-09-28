@@ -622,7 +622,7 @@ const gl: Partial<Translations> = {
   "settings.retentionWeeklyInfo": "Conserva unha instantánea por cada unha das últimas N semanas do calendario cunha copia.",
   "settings.retentionMonthlyInfo": "Conserva unha instantánea por cada un dos últimos N meses do calendario cunha copia.",
   "settings.retentionYearlyInfo": "Conserva unha instantánea por cada un dos últimos N anos do calendario cunha copia.",
-  "settings.retentionCombineInfo": "As catro regras combínanse con OU: unha instantánea sobrevive se calquera regra a conservaría. Non se suman a un número fixo. Aplícase por separado a cada elemento copiado.",
+  "settings.retentionCombineInfo": "As cinco regras combínanse con OU: unha instantánea sobrevive se calquera regra a conservaría. Non se suman a un número fixo. Aplícase por separado a cada elemento copiado.",
   "settings.retentionLocal": "Repositorio local",
   "settings.retentionOffsite": "Repositorio externo",
   "settings.retentionOffsiteTitle": "Retención externa",

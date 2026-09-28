@@ -667,7 +667,7 @@ const vi: Partial<Translations> = {
   "settings.retentionOffsite": "Kho off-site",
   "settings.retentionOffsiteTitle": "Lưu giữ off-site",
   "settings.retentionOffsiteHint": "Một chính sách riêng cho kho off-site, để giữ lâu hơn như kho lưu trữ. Tất cả bằng 0 = giữ mọi bản sao lưu off-site (không dọn off-site).",
-  "settings.retentionCombineInfo": "Bốn quy tắc kết hợp theo kiểu HOẶC: một bản chụp tồn tại nếu bất kỳ quy tắc nào giữ lại nó. Chúng không cộng dồn thành một số cố định. Áp dụng riêng cho từng mục được sao lưu.",
+  "settings.retentionCombineInfo": "Năm quy tắc kết hợp theo kiểu HOẶC: một bản chụp tồn tại nếu bất kỳ quy tắc nào giữ lại nó. Chúng không cộng dồn thành một số cố định. Áp dụng riêng cho từng mục được sao lưu.",
 
   "rclone.title": "Ngoại vi (rclone)",
   "rclone.hint": "Dán cấu hình rclone để sao lưu lên đám mây (Backblaze B2, S3, Google Drive, …). Nó được lưu trữ mã hóa. SMB/NFS không cần rclone: gắn kết share trên Unraid và đặt Đường dẫn sao lưu trỏ tới đó.",

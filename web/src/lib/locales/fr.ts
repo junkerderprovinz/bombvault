@@ -670,7 +670,7 @@ const fr: Partial<Translations> = {
   "settings.retentionOffsite": "Dépôt hors-site",
   "settings.retentionOffsiteTitle": "Rétention hors-site",
   "settings.retentionOffsiteHint": "Une politique distincte pour le dépôt hors-site, pour le conserver plus longtemps comme archive. Tout à 0 = conserver chaque sauvegarde hors-site (pas de purge hors-site).",
-  "settings.retentionCombineInfo": "Les quatre règles se combinent avec OU : un instantané survit si une seule règle le conserverait. Elles ne s'additionnent pas en un nombre fixe. S'applique séparément à chaque élément sauvegardé.",
+  "settings.retentionCombineInfo": "Les cinq règles se combinent avec OU : un instantané survit si une seule règle le conserverait. Elles ne s'additionnent pas en un nombre fixe. S'applique séparément à chaque élément sauvegardé.",
 
   // Off-site (rclone)
   "rclone.title": "Hors site (rclone)",

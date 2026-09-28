@@ -622,7 +622,7 @@ const ca: Partial<Translations> = {
   "settings.retentionWeeklyInfo": "Conserva un instantani per cadascuna de les últimes N setmanes del calendari amb còpia.",
   "settings.retentionMonthlyInfo": "Conserva un instantani per cadascun dels últims N mesos del calendari amb còpia.",
   "settings.retentionYearlyInfo": "Conserva un instantani per cadascun dels últims N anys del calendari amb còpia.",
-  "settings.retentionCombineInfo": "Les quatre regles es combinen amb O: un instantani sobreviu si qualsevol regla el conservaria. No se sumen a un nombre fix. S'aplica per separat a cada element copiat.",
+  "settings.retentionCombineInfo": "Les cinc regles es combinen amb O: un instantani sobreviu si qualsevol regla el conservaria. No se sumen a un nombre fix. S'aplica per separat a cada element copiat.",
   "settings.retentionLocal": "Repositori local",
   "settings.retentionOffsite": "Repositori extern",
   "settings.retentionOffsiteTitle": "Retenció externa",

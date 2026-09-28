@@ -622,7 +622,7 @@ const is: Partial<Translations> = {
   "settings.retentionWeeklyInfo": "Geymir eitt snapshot fyrir hverja af síðustu N almanaksvikum sem hafa afrit.",
   "settings.retentionMonthlyInfo": "Geymir eitt snapshot fyrir hvern af síðustu N almanaksmánuðum sem hafa afrit.",
   "settings.retentionYearlyInfo": "Geymir eitt snapshot fyrir hvert af síðustu N almanaksárum sem hafa afrit.",
-  "settings.retentionCombineInfo": "Þessar fjórar reglur sameinast með EÐA: snapshot lifir af ef einhver regla myndi geyma það. Þær leggjast ekki saman í fasta tölu. Gildir sérstaklega fyrir hvern afritaðan hlut.",
+  "settings.retentionCombineInfo": "Þessar fimm reglur sameinast með EÐA: snapshot lifir af ef einhver regla myndi geyma það. Þær leggjast ekki saman í fasta tölu. Gildir sérstaklega fyrir hvern afritaðan hlut.",
   "settings.retentionLocal": "Staðbundið geymslusafn",
   "settings.retentionOffsite": "Fjarlægt geymslusafn",
   "settings.retentionOffsiteTitle": "Fjarlæg varðveisla",

@@ -667,7 +667,7 @@ const ja: Partial<Translations> = {
   "settings.retentionOffsite": "オフサイトリポジトリ",
   "settings.retentionOffsiteTitle": "オフサイトの保持",
   "settings.retentionOffsiteHint": "オフサイトリポジトリ用の別ポリシー。アーカイブとして長く保持できます。すべて0＝オフサイトのバックアップをすべて保持（オフサイトの整理なし）。",
-  "settings.retentionCombineInfo": "4つのルールはOR条件で組み合わさります。いずれか1つのルールが保持すると判断すれば、そのスナップショットは残ります。固定数に加算されるわけではありません。バックアップ対象ごとに個別に適用されます。",
+  "settings.retentionCombineInfo": "5つのルールはOR条件で組み合わさります。いずれか1つのルールが保持すると判断すれば、そのスナップショットは残ります。固定数に加算されるわけではありません。バックアップ対象ごとに個別に適用されます。",
 
   "rclone.title": "オフサイト (rclone)",
   "rclone.hint": "rclone 設定を貼り付けてクラウド（Backblaze B2、S3、Google Drive など）へバックアップします。暗号化して保存されます。SMB/NFS には rclone は不要です。共有を Unraid にマウントし、バックアップパスをそこに設定してください。",

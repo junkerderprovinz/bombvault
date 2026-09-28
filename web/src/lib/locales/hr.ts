@@ -622,7 +622,7 @@ const hr: Partial<Translations> = {
   "settings.retentionWeeklyInfo": "Zadržava jednu snimku za svaki od posljednjih N kalendarskih tjedana koji ima sigurnosnu kopiju.",
   "settings.retentionMonthlyInfo": "Zadržava jednu snimku za svaki od posljednjih N kalendarskih mjeseci koji ima sigurnosnu kopiju.",
   "settings.retentionYearlyInfo": "Zadržava jednu snimku za svaku od posljednjih N kalendarskih godina koja ima sigurnosnu kopiju.",
-  "settings.retentionCombineInfo": "Ova četiri pravila kombiniraju se s ILI: snimka preživljava ako bi je bilo koje pravilo zadržalo. Ne zbrajaju se u fiksni broj. Primjenjuje se zasebno na svaku stavku s izrađenom sigurnosnom kopijom.",
+  "settings.retentionCombineInfo": "Ovih pet pravila kombinira se s ILI: snimka preživljava ako bi je bilo koje pravilo zadržalo. Ne zbrajaju se u fiksni broj. Primjenjuje se zasebno na svaku stavku s izrađenom sigurnosnom kopijom.",
   "settings.retentionLocal": "Lokalni repozitorij",
   "settings.retentionOffsite": "Izvanmrežni repozitorij",
   "settings.retentionOffsiteTitle": "Izvanmrežno zadržavanje",

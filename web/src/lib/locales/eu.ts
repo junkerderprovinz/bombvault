@@ -622,7 +622,7 @@ const eu: Partial<Translations> = {
   "settings.retentionWeeklyInfo": "Babeskopia duen azken N egutegi-asteko argazki bat gordetzen du.",
   "settings.retentionMonthlyInfo": "Babeskopia duen azken N egutegi-hilabeteko argazki bat gordetzen du.",
   "settings.retentionYearlyInfo": "Babeskopia duen azken N egutegi-urteko argazki bat gordetzen du.",
-  "settings.retentionCombineInfo": "Lau arauak EDO logikarekin konbinatzen dira: arau batek gordeko lukeen argazki bat bizirik irauten du. Ez dira zenbaki finko batera batzen. Babestutako elementu bakoitzari bereizita aplikatzen zaio.",
+  "settings.retentionCombineInfo": "Bost arauak EDO logikarekin konbinatzen dira: arau batek gordeko lukeen argazki bat bizirik irauten du. Ez dira zenbaki finko batera batzen. Babestutako elementu bakoitzari bereizita aplikatzen zaio.",
   "settings.retentionLocal": "Biltegi lokala",
   "settings.retentionOffsite": "Kanpoko biltegia",
   "settings.retentionOffsiteTitle": "Kanpoko mantentzea",

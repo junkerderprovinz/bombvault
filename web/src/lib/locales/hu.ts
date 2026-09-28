@@ -670,7 +670,7 @@ const hu: Partial<Translations> = {
   "settings.retentionOffsite": "Távoli repó",
   "settings.retentionOffsiteTitle": "Távoli megőrzés",
   "settings.retentionOffsiteHint": "Külön szabály a távoli repóhoz, hogy archívumként tovább megőrizhesd. Minden 0 = minden távoli mentés megőrzése (nincs távoli takarítás).",
-  "settings.retentionCombineInfo": "A négy szabály VAGY logikával kombinálódik: egy pillanatkép megmarad, ha bármelyik szabály megőrizné. Nem adódnak össze egy rögzített számmá. Külön érvényes minden mentett elemre.",
+  "settings.retentionCombineInfo": "Az öt szabály VAGY logikával kombinálódik: egy pillanatkép megmarad, ha bármelyik szabály megőrizné. Nem adódnak össze egy rögzített számmá. Külön érvényes minden mentett elemre.",
 
   // Off-site (rclone)
   "rclone.title": "Külső helyszín (rclone)",
