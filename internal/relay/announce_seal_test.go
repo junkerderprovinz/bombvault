@@ -29,7 +29,7 @@ func TestIdentitySealRoundTrips(t *testing.T) {
 // rather than comparing structs, since an empty field is also what a
 // forgotten json tag produces.
 func TestTheSealedIdentityIsNotInTheEncodedFrame(t *testing.T) {
-	sealed, err := SealIdentity(testFrameKey, "alpha", Identity{Name: "jdp-workstation", Version: "2.1.0"})
+	sealed, err := SealIdentity(testFrameKey, "alpha", Identity{Name: "lab-workstation", Version: "2.1.0"})
 	if err != nil {
 		t.Fatalf("seal: %v", err)
 	}
@@ -37,7 +37,7 @@ func TestTheSealedIdentityIsNotInTheEncodedFrame(t *testing.T) {
 	if err != nil {
 		t.Fatalf("encode: %v", err)
 	}
-	for _, secret := range []string{"jdp-workstation", "2.1.0"} {
+	for _, secret := range []string{"lab-workstation", "2.1.0"} {
 		if bytes.Contains(frame, []byte(secret)) {
 			t.Errorf("the encoded announce contains %q in the clear:\n%s", secret, frame)
 		}
